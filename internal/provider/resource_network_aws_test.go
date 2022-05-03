@@ -35,7 +35,7 @@ const (
 	scenarioStateAwsNetworkIsProvisioning = "The new aws network is in provisioning state"
 	scenarioStateAwsNetworkHasBeenCreated = "The new aws network has been just created"
 	scenarioStateAwsNetworkHasBeenDeleted = "The new aws network has been deleted"
-	awsNetworkScenarioName                = "confluentcloud_network aws Resource Lifecycle"
+	awsNetworkScenarioName                = "confluent_network aws Resource Lifecycle"
 	awsNetworkCloud                       = "AWS"
 	awsNetworkRegion                      = "us-east-2"
 	awsNetworkConnectionType              = "PRIVATELINK"
@@ -143,7 +143,7 @@ func TestAccAwsNetwork(t *testing.T) {
 
 	awsNetworkDisplayName := "s-n9553"
 	awsNetworkResourceLabel := "test"
-	fullAwsNetworkResourceLabel := fmt.Sprintf("confluentcloud_network.%s", awsNetworkResourceLabel)
+	fullAwsNetworkResourceLabel := fmt.Sprintf("confluent_network.%s", awsNetworkResourceLabel)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -216,7 +216,7 @@ func testAccCheckAwsNetworkDestroy(s *terraform.State) error {
 	c := testAccProvider.Meta().(*Client)
 	// Loop through the resources in state, verifying each aws network is destroyed
 	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "confluentcloud_network" {
+		if rs.Type != "confluent_network" {
 			continue
 		}
 		deletedAwsNetworkId := rs.Primary.ID
@@ -237,10 +237,10 @@ func testAccCheckAwsNetworkDestroy(s *terraform.State) error {
 
 func testAccCheckAwsNetworkConfig(mockServerUrl, networkDisplayName, resourceLabel string) string {
 	return fmt.Sprintf(`
-	provider "confluentcloud" {
+	provider "confluent" {
  		endpoint = "%s"
 	}
-	resource "confluentcloud_network" "%s" {
+	resource "confluent_network" "%s" {
         display_name     = "%s"
 	    cloud            = "%s"
 	    region           = "%s"
@@ -256,10 +256,10 @@ func testAccCheckAwsNetworkConfig(mockServerUrl, networkDisplayName, resourceLab
 
 func testAccCheckAwsNetworkConfigWithoutDisplayNameAndZonesSet(mockServerUrl, resourceLabel string) string {
 	return fmt.Sprintf(`
-	provider "confluentcloud" {
+	provider "confluent" {
  		endpoint = "%s"
 	}
-	resource "confluentcloud_network" "%s" {
+	resource "confluent_network" "%s" {
 	    cloud            = "%s"
 	    region           = "%s"
 	    connection_types = ["%s"]

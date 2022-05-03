@@ -35,7 +35,7 @@ const (
 	scenarioStateGcpPeeringIsDeprovisioning = "The new gcp peering is deprovisioning"
 	scenarioStateGcpPeeringHasBeenCreated   = "The new gcp peering has been just created"
 	scenarioStateGcpPeeringHasBeenDeleted   = "The new gcp peering's deletion has been just completed"
-	gcpPeeringScenarioName                  = "confluentcloud_gcp Peering Gcp Resource Lifecycle"
+	gcpPeeringScenarioName                  = "confluent_gcp Peering Gcp Resource Lifecycle"
 	gcpPeeringEnvironmentId                 = "env-gz903"
 	gcpPeeringNetworkId                     = "n-gez54g"
 	gcpPeeringId                            = "peer-6me8yg"
@@ -150,7 +150,7 @@ func TestAccGcpPeeringAccess(t *testing.T) {
 
 	gcpPeeringDisplayName := "my-test-peering"
 	gcpPeeringResourceLabel := "test"
-	fullGcpPeeringResourceLabel := fmt.Sprintf("confluentcloud_peering.%s", gcpPeeringResourceLabel)
+	fullGcpPeeringResourceLabel := fmt.Sprintf("confluent_peering.%s", gcpPeeringResourceLabel)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -217,7 +217,7 @@ func testAccCheckGcpPeeringDestroy(s *terraform.State) error {
 	c := testAccProvider.Meta().(*Client)
 	// Loop through the resources in state, verifying each gcp peering is destroyed
 	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "confluentcloud_peering" {
+		if rs.Type != "confluent_peering" {
 			continue
 		}
 		deletedPeeringId := rs.Primary.ID
@@ -238,10 +238,10 @@ func testAccCheckGcpPeeringDestroy(s *terraform.State) error {
 
 func testAccCheckGcpPeeringConfig(mockServerUrl, displayName, resourceLabel string) string {
 	return fmt.Sprintf(`
-	provider "confluentcloud" {
+	provider "confluent" {
  		endpoint = "%s"
 	}
-	resource "confluentcloud_peering" "%s" {
+	resource "confluent_peering" "%s" {
         display_name = "%s"
 	    gcp {
 		  project = "%s"
@@ -259,10 +259,10 @@ func testAccCheckGcpPeeringConfig(mockServerUrl, displayName, resourceLabel stri
 
 func testAccCheckGcpPeeringConfigWithoutDisplayNameSet(mockServerUrl, resourceLabel string) string {
 	return fmt.Sprintf(`
-	provider "confluentcloud" {
+	provider "confluent" {
  		endpoint = "%s"
 	}
-	resource "confluentcloud_peering" "%s" {
+	resource "confluent_peering" "%s" {
 	    gcp {
 		  project = "%s"
           vpc_network = "%s"

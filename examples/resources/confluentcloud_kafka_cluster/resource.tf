@@ -1,8 +1,8 @@
-resource "confluentcloud_environment" "test-env" {
+resource "confluent_environment" "test-env" {
   display_name = "Development"
 }
 
-resource "confluentcloud_kafka_cluster" "basic-cluster-on-aws" {
+resource "confluent_kafka_cluster" "basic-cluster-on-aws" {
   display_name = "basic_kafka_cluster_on_aws"
   availability = "SINGLE_ZONE"
   cloud        = "AWS"
@@ -10,11 +10,11 @@ resource "confluentcloud_kafka_cluster" "basic-cluster-on-aws" {
   basic {}
 
   environment {
-    id = confluentcloud_environment.test-env.id
+    id = confluent_environment.test-env.id
   }
 }
 
-resource "confluentcloud_kafka_cluster" "basic-cluster-on-azure" {
+resource "confluent_kafka_cluster" "basic-cluster-on-azure" {
   display_name = "basic_kafka_cluster_on_azure"
   availability = "SINGLE_ZONE"
   cloud        = "AZURE"
@@ -22,11 +22,11 @@ resource "confluentcloud_kafka_cluster" "basic-cluster-on-azure" {
   basic {}
 
   environment {
-    id = confluentcloud_environment.test-env.id
+    id = confluent_environment.test-env.id
   }
 }
 
-resource "confluentcloud_kafka_cluster" "basic-cluster-on-gcp" {
+resource "confluent_kafka_cluster" "basic-cluster-on-gcp" {
   display_name = "basic_kafka_cluster_on_gcp"
   availability = "SINGLE_ZONE"
   cloud        = "GCP"
@@ -34,11 +34,11 @@ resource "confluentcloud_kafka_cluster" "basic-cluster-on-gcp" {
   basic {}
 
   environment {
-    id = confluentcloud_environment.test-env.id
+    id = confluent_environment.test-env.id
   }
 }
 
-resource "confluentcloud_kafka_cluster" "standard-cluster-on-aws" {
+resource "confluent_kafka_cluster" "standard-cluster-on-aws" {
   display_name = "standard_kafka_cluster_on_aws"
   availability = "SINGLE_ZONE"
   cloud        = "AWS"
@@ -46,11 +46,11 @@ resource "confluentcloud_kafka_cluster" "standard-cluster-on-aws" {
   standard {}
 
   environment {
-    id = confluentcloud_environment.test-env.id
+    id = confluent_environment.test-env.id
   }
 }
 
-resource "confluentcloud_kafka_cluster" "standard-cluster-on-azure" {
+resource "confluent_kafka_cluster" "standard-cluster-on-azure" {
   display_name = "standard_kafka_cluster_on_azure"
   availability = "SINGLE_ZONE"
   cloud        = "AZURE"
@@ -58,11 +58,11 @@ resource "confluentcloud_kafka_cluster" "standard-cluster-on-azure" {
   standard {}
 
   environment {
-    id = confluentcloud_environment.test-env.id
+    id = confluent_environment.test-env.id
   }
 }
 
-resource "confluentcloud_kafka_cluster" "standard-cluster-on-gcp" {
+resource "confluent_kafka_cluster" "standard-cluster-on-gcp" {
   display_name = "standard_kafka_cluster_on_gcp"
   availability = "SINGLE_ZONE"
   cloud        = "GCP"
@@ -70,11 +70,11 @@ resource "confluentcloud_kafka_cluster" "standard-cluster-on-gcp" {
   standard {}
 
   environment {
-    id = confluentcloud_environment.test-env.id
+    id = confluent_environment.test-env.id
   }
 }
 
-resource "confluentcloud_kafka_cluster" "dedicated-cluster-on-aws" {
+resource "confluent_kafka_cluster" "dedicated-cluster-on-aws" {
   display_name = "dedicated_kafka_cluster_on_aws"
   availability = "SINGLE_ZONE"
   cloud        = "AWS"
@@ -84,11 +84,11 @@ resource "confluentcloud_kafka_cluster" "dedicated-cluster-on-aws" {
   }
 
   environment {
-    id = confluentcloud_environment.test-env.id
+    id = confluent_environment.test-env.id
   }
 }
 
-resource "confluentcloud_kafka_cluster" "dedicated-cluster-on-azure" {
+resource "confluent_kafka_cluster" "dedicated-cluster-on-azure" {
   display_name = "dedicated_kafka_cluster_on_azure"
   availability = "SINGLE_ZONE"
   cloud        = "AZURE"
@@ -98,11 +98,11 @@ resource "confluentcloud_kafka_cluster" "dedicated-cluster-on-azure" {
   }
 
   environment {
-    id = confluentcloud_environment.test-env.id
+    id = confluent_environment.test-env.id
   }
 }
 
-resource "confluentcloud_kafka_cluster" "dedicated-cluster-on-gcp" {
+resource "confluent_kafka_cluster" "dedicated-cluster-on-gcp" {
   display_name = "dedicated_kafka_cluster_on_gcp"
   availability = "SINGLE_ZONE"
   cloud        = "GCP"
@@ -112,6 +112,6 @@ resource "confluentcloud_kafka_cluster" "dedicated-cluster-on-gcp" {
   }
 
   environment {
-    id = confluentcloud_environment.test-env.id
+    id = confluent_environment.test-env.id
   }
 }

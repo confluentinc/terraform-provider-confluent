@@ -1,3 +1,3 @@
-resource "confluentcloud_environment" "prod" {
+resource "confluent_environment" "prod" {
   display_name = "Production"
 }

@@ -31,7 +31,7 @@ import (
 )
 
 const (
-	terraformProviderUserAgent = "terraform-provider-confluentcloud"
+	terraformProviderUserAgent = "terraform-provider-confluent"
 )
 
 const (
@@ -98,23 +98,23 @@ func New(version string) func() *schema.Provider {
 				},
 			},
 			DataSourcesMap: map[string]*schema.Resource{
-				"confluentcloud_kafka_cluster":   kafkaDataSource(),
-				"confluentcloud_kafka_topic":     kafkaTopicDataSource(),
-				"confluentcloud_environment":     environmentDataSource(),
-				"confluentcloud_service_account": serviceAccountDataSource(),
-				"confluentcloud_user":            userDataSource(),
+				"confluent_kafka_cluster":   kafkaDataSource(),
+				"confluent_kafka_topic":     kafkaTopicDataSource(),
+				"confluent_environment":     environmentDataSource(),
+				"confluent_service_account": serviceAccountDataSource(),
+				"confluent_user":            userDataSource(),
 			},
 			ResourcesMap: map[string]*schema.Resource{
-				"confluentcloud_api_key":             apiKeyResource(),
-				"confluentcloud_kafka_cluster":       kafkaResource(),
-				"confluentcloud_environment":         environmentResource(),
-				"confluentcloud_service_account":     serviceAccountResource(),
-				"confluentcloud_kafka_topic":         kafkaTopicResource(),
-				"confluentcloud_kafka_acl":           kafkaAclResource(),
-				"confluentcloud_network":             networkResource(),
-				"confluentcloud_peering":             peeringResource(),
-				"confluentcloud_private_link_access": privateLinkAccessResource(),
-				"confluentcloud_role_binding":        roleBindingResource(),
+				"confluent_api_key":             apiKeyResource(),
+				"confluent_kafka_cluster":       kafkaResource(),
+				"confluent_environment":         environmentResource(),
+				"confluent_service_account":     serviceAccountResource(),
+				"confluent_kafka_topic":         kafkaTopicResource(),
+				"confluent_kafka_acl":           kafkaAclResource(),
+				"confluent_network":             networkResource(),
+				"confluent_peering":             peeringResource(),
+				"confluent_private_link_access": privateLinkAccessResource(),
+				"confluent_role_binding":        roleBindingResource(),
 			},
 		}
 

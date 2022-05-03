@@ -111,7 +111,7 @@ func kafkaAclResource() *schema.Resource {
 				Required:     true,
 				ForceNew:     true,
 				Description:  "The principal for the ACL.",
-				ValidateFunc: validation.StringMatch(regexp.MustCompile("^User:(sa|u)-"), "the principal must start with 'User:sa-' or 'User:u-'. Follow the upgrade guide at https://registry.terraform.io/providers/confluentinc/confluentcloud/latest/docs/guides/upgrade-guide-0.4.0 to upgrade to the latest version of Terraform Provider for Confluent Cloud"),
+				ValidateFunc: validation.StringMatch(regexp.MustCompile("^User:(sa|u)-"), "the principal must start with 'User:sa-' or 'User:u-'. Follow the upgrade guide at https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/guides/upgrade-guide-0.4.0 to upgrade to the latest version of Terraform Provider for Confluent Cloud"),
 			},
 			paramHost: {
 				Type:        schema.TypeString,
@@ -191,7 +191,7 @@ func kafkaAclCreate(ctx context.Context, d *schema.ResourceData, meta interface{
 	kafkaAclId := createKafkaAclId(kafkaRestClient.clusterId, acl)
 	d.SetId(kafkaAclId)
 
-	// https://github.com/confluentinc/terraform-provider-confluentcloud/issues/40#issuecomment-1048782379
+	// https://github.com/confluentinc/terraform-provider-confluent/issues/40#issuecomment-1048782379
 	time.Sleep(kafkaRestAPIWaitAfterCreate)
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating Kafka ACLs %q", d.Id()), map[string]interface{}{kafkaAclLoggingKey: d.Id()})

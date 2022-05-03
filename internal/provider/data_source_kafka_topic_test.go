@@ -32,10 +32,10 @@ import (
 )
 
 const (
-	topicDataSourceScenarioName = "confluentcloud_kafka_topic Data Source Lifecycle"
+	topicDataSourceScenarioName = "confluent_kafka_topic Data Source Lifecycle"
 )
 
-var fullTopicDataSourceLabel = fmt.Sprintf("data.confluentcloud_kafka_topic.%s", topicResourceLabel)
+var fullTopicDataSourceLabel = fmt.Sprintf("data.confluent_kafka_topic.%s", topicResourceLabel)
 
 func TestAccDataSourceTopic(t *testing.T) {
 	containerPort := "8080"
@@ -130,10 +130,10 @@ func TestAccDataSourceTopic(t *testing.T) {
 
 func testAccCheckDataSourceTopicConfig(confluentCloudBaseUrl, mockServerUrl string) string {
 	return fmt.Sprintf(`
-	provider "confluentcloud" {
+	provider "confluent" {
       endpoint = "%s"
     }
-	data "confluentcloud_kafka_topic" "%s" {
+	data "confluent_kafka_topic" "%s" {
 	  kafka_cluster {
         id = "%s"
       }

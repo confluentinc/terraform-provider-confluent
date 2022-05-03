@@ -10,13 +10,13 @@ page_title: "Sample Project"
 or a video https://registry.terraform.io/providers/databrickslabs/databricks/latest/docs/guides/experimental-exporter
 
 Use the Confluent Cloud Terraform provider to enable the lifecycle management of Confluent Cloud resources:
-   * [Environments](https://registry.terraform.io/providers/confluentinc/confluentcloud/latest/docs/resources/confluentcloud_environment)
-   * [Kafka Clusters](https://registry.terraform.io/providers/confluentinc/confluentcloud/latest/docs/resources/confluentcloud_kafka_cluster)
-   * [Topics](https://registry.terraform.io/providers/confluentinc/confluentcloud/latest/docs/resources/confluentcloud_kafka_topic)
-   * [Service Accounts](https://registry.terraform.io/providers/confluentinc/confluentcloud/latest/docs/resources/confluentcloud_service_account)
-   * [Cloud API Keys and Kafka API Keys](https://registry.terraform.io/providers/confluentinc/confluentcloud/latest/docs/resources/confluentcloud_api_key)
-   * [Access Control Lists (ACLs)](https://registry.terraform.io/providers/confluentinc/confluentcloud/latest/docs/resources/confluentcloud_kafka_acl)
-   * [Role Bindings](https://registry.terraform.io/providers/confluentinc/confluentcloud/latest/docs/resources/confluentcloud_role_binding)
+   * [Environments](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_environment)
+   * [Kafka Clusters](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_cluster)
+   * [Topics](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_topic)
+   * [Service Accounts](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_service_account)
+   * [Cloud API Keys and Kafka API Keys](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_api_key)
+   * [Access Control Lists (ACLs)](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_acl)
+   * [Role Bindings](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_role_binding)
 
 In this guide, you will:
 
@@ -67,11 +67,11 @@ In this guide, you will:
 3. The Cloud API key and secret are generated for the `tf_runner` service account. Save your Cloud API key and secret in a secure location. You will need this API key and secret **to use the Confluent Cloud Terraform Provider**.
 4. [Assign](https://confluent.cloud/settings/org/assignments) the `OrganizationAdmin` role to the `tf_runner` service account by following [this guide](https://docs.confluent.io/cloud/current/access-management/access-control/cloud-rbac.html#add-a-role-binding-for-a-user-or-service-account).
 
-![Assigning the OrganizationAdmin role to tf_runner service account](https://github.com/confluentinc/terraform-provider-confluentcloud/raw/master/docs/guides/OrganizationAdmin.png)
+![Assigning the OrganizationAdmin role to tf_runner service account](https://github.com/confluentinc/terraform-provider-confluent/raw/master/docs/guides/OrganizationAdmin.png)
 
 ## Create Resources on Confluent Cloud via Terraform
 
-1. Clone the [repository](https://github.com/confluentinc/terraform-provider-confluentcloud) containing the example configurations:
+1. Clone the [repository](https://github.com/confluentinc/terraform-provider-confluent) containing the example configurations:
 
     ```bash
     git clone https://github.com/confluentinc/terraform-provider-confluent.git
@@ -192,4 +192,4 @@ Now you've created and destroyed an entire Confluent Cloud deployment!
 
 Visit the [Confluent Cloud Console](https://confluent.cloud/environments) to verify the resources have been destroyed to avoid unexpected charges.
 
-If you're interested in additional Confluent Cloud infrastructure configurations view our [repository](https://github.com/confluentinc/terraform-provider-confluentcloud/tree/master/examples/configurations) for more end-to-end examples.
+If you're interested in additional Confluent Cloud infrastructure configurations view our [repository](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations) for more end-to-end examples.

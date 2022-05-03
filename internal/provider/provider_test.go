@@ -33,10 +33,10 @@ const (
 func init() {
 	testAccProvider = New(testVersion)()
 	testAccProviders = map[string]*schema.Provider{
-		"confluentcloud": testAccProvider,
+		"confluent": testAccProvider,
 	}
 	testAccProviderFactories = map[string]func() (*schema.Provider, error){
-		"confluentcloud": func() (*schema.Provider, error) {
+		"confluent": func() (*schema.Provider, error) {
 			return testAccProvider, nil
 		},
 	}

@@ -33,7 +33,7 @@ import (
 const (
 	scenarioStateRoleBindingHasBeenCreated = "The new role binding has been just created"
 	scenarioStateRoleBindingHasBeenDeleted = "The requested role binding has been deleted"
-	rolebindingScenarioName                = "confluentcloud_role_binding Resource Lifecycle"
+	rolebindingScenarioName                = "confluent_role_binding Resource Lifecycle"
 	roleBindingId                          = "rb-OOXL7"
 	roleBindingUrlPath                     = "/iam/v2/role-bindings/rb-OOXL7"
 )
@@ -118,7 +118,7 @@ func TestAccRoleBinding(t *testing.T) {
 	rbRolename := "CloudClusterAdmin"
 	rbCrn := "crn://confluent.cloud/organization=0d9c5d94-e4fe-44ec-9cf1-bd99761fca75/environment=env-ym2y0k/cloud-cluster=lkc-xrk0ng"
 	rbResourceLabel := "test_rb_resource_label"
-	fullRbResourceLabel := fmt.Sprintf("confluentcloud_role_binding.%s", rbResourceLabel)
+	fullRbResourceLabel := fmt.Sprintf("confluent_role_binding.%s", rbResourceLabel)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -154,7 +154,7 @@ func testAccCheckRoleBindingDestroy(s *terraform.State) error {
 	c := testAccProvider.Meta().(*Client)
 	// Loop through the resources in state, verifying each role binding is destroyed
 	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "confluentcloud_role_binding" {
+		if rs.Type != "confluent_role_binding" {
 			continue
 		}
 		deletedRoleBindingId := rs.Primary.ID
@@ -175,10 +175,10 @@ func testAccCheckRoleBindingDestroy(s *terraform.State) error {
 
 func testAccCheckRoleBindingConfig(mockServerUrl, label, principal, roleName, crn string) string {
 	return fmt.Sprintf(`
-	provider "confluentcloud" {
+	provider "confluent" {
 		endpoint = "%s"
 	}
-	resource "confluentcloud_role_binding" "%s" {
+	resource "confluent_role_binding" "%s" {
 		principal = "%s"
 		role_name = "%s"
 		crn_pattern = "%s"

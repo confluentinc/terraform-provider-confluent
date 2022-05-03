@@ -1,39 +1,35 @@
 ---
-page_title: "Provider: Confluent Cloud"
+page_title: "Provider: Confluent"
 subcategory: ""
 description: |-
   
 ---
 
-# [Confluent Cloud Provider](https://registry.terraform.io/providers/confluentinc/confluentcloud/latest/docs) is deprecated in favor of [Confluent Provider](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs)
+# Confluent Cloud Provider
 
-!> **Warning:** The [Confluent Cloud Provider](https://registry.terraform.io/providers/confluentinc/confluentcloud/latest/docs) is deprecated in favor of the [Confluent Provider](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs).
+Simplify Apache Kafka Terraform deployment with the Confluent Terraform Provider. Manage Environments, Kafka Clusters, Kafka Topics, Kafka ACLs, Service Accounts, and more in Confluent.
 
-Simplify Apache Kafka Terraform deployment with the Confluent Cloud Terraform Provider. Manage Environments, Kafka Clusters, Kafka Topics, Kafka ACLs, Service Accounts, and more in Confluent Cloud.
-
-Use the Confluent Cloud provider to deploy and manage [Confluent Cloud](https://www.confluent.io/confluent-cloud/) infrastructure. You must provide appropriate credentials to use the provider. The navigation menu provides details about the resources that you can interact with (_Resources_), and a guide (_Guides_) for how you can get started.
+Use the Confluent provider to deploy and manage [Confluent Cloud](https://www.confluent.io/confluent-cloud/) infrastructure. You must provide appropriate credentials to use the provider. The navigation menu provides details about the resources that you can interact with (_Resources_), and a guide (_Guides_) for how you can get started.
 
 -> **Note:** The Confluent Cloud Terraform provider is available in an **Preview Program** for early adopters. Preview features are introduced to gather customer feedback. This feature should be used only for evaluation and non-production testing purposes or to provide feedback to Confluent, particularly as it becomes more widely available in follow-on editions.  
 **Preview Program** features are intended for evaluation use in development and testing environments only, and not for production use. The warranty, SLA, and Support Services provisions of your agreement with Confluent do not apply to Preview Program features. Preview Program features are considered to be a Proof of Concept as defined in the Confluent Cloud Terms of Service. Confluent may discontinue providing preview releases of the Preview Program features at any time in Confluent’s sole discretion.
-
-!> **Warning:** Early Access versions of the Confluent Cloud Terraform Provider (versions 0.1.0 and 0.2.0) are deprecated.
 
 ## Example Usage
 
 Terraform `0.13` and later:
 
 ```terraform
-# Configure the Confluent Cloud Provider
+# Configure the Confluent Provider
 terraform {
   required_providers {
-    confluentcloud = {
-      source  = "confluentinc/confluentcloud"
-      version = "0.5.0"
+    confluent = {
+      source  = "confluentinc/confluent"
+      version = "0.7.0"
     }
   }
 }
 
-provider "confluentcloud" {
+provider "confluent" {
   api_key    = var.confluent_cloud_api_key    # optionally use CONFLUENT_CLOUD_API_KEY env var
   api_secret = var.confluent_cloud_api_secret # optionally use CONFLUENT_CLOUD_API_SECRET env var
 }
@@ -46,7 +42,7 @@ Confluent Cloud requires API keys to manage access and authentication to differe
 
 ## Provider Authentication
 
-Confluent Cloud Terraform provider allows authentication by using environment variables or static credentials.
+Confluent Terraform provider allows authentication by using environment variables or static credentials.
 
 ### Environment Variables
 
@@ -64,7 +60,7 @@ $ export CONFLUENT_CLOUD_API_SECRET="<cloud_api_secret>"
 You can also provide static credentials in-line directly, or by input variable (do not forget to declare the variables as [sensitive](https://learn.hashicorp.com/tutorials/terraform/sensitive-variables#refactor-database-credentials)):
 
 ```terraform
-provider "confluentcloud" {
+provider "confluent" {
   api_key    = var.confluent_cloud_api_key
   api_secret = var.confluent_cloud_api_secret
 }
@@ -74,7 +70,7 @@ provider "confluentcloud" {
 
 ## Helpful Links/Information
 
-* [Report Bugs](https://github.com/confluentinc/terraform-provider-confluentcloud/issues)
+* [Report Bugs](https://github.com/confluentinc/terraform-provider-confluent/issues)
 
 * [Request Features](mailto:cflt-tf-access@confluent.io?subject=Feature%20Request)
 

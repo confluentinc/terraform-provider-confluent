@@ -37,13 +37,13 @@ const (
 	scenarioStateKafkaApiKeyHasBeenSyncedConfirmationRead = "The new kafka api key has been just synced (final read)"
 	scenarioStateKafkaApiKeyHasBeenUpdated                = "The new kafka api key's description and display_name have been just updated"
 	scenarioStateKafkaApiKeyHasBeenDeleted                = "The new kafka api key has been deleted"
-	kafkaApiKeyScenarioName                               = "confluentcloud_api_key (Kafka API Key) Resource Lifecycle"
+	kafkaApiKeyScenarioName                               = "confluent_api_key (Kafka API Key) Resource Lifecycle"
 
 	scenarioStateCloudApiKeyHasBeenCreated = "The new cloud api key has been just created"
 	scenarioStateCloudApiKeyHasBeenSynced  = "The new cloud api key has been just synced"
 	scenarioStateCloudApiKeyHasBeenUpdated = "The new cloud api key's description and display_name have been just updated"
 	scenarioStateCloudApiKeyHasBeenDeleted = "The new cloud api key has been deleted"
-	cloudApiKeyScenarioName                = "confluentcloud_api_key (Cloud API Key) Resource Lifecycle"
+	cloudApiKeyScenarioName                = "confluent_api_key (Cloud API Key) Resource Lifecycle"
 )
 
 func TestAccKafkaApiKey(t *testing.T) {
@@ -199,7 +199,7 @@ func TestAccKafkaApiKey(t *testing.T) {
 	kafkaApiKeyUpdatedDisplayName := "CI Kafka API Key updated"
 	kafkaApiKeyUpdatedDescription := "This API key provides kafka access to cluster x updated"
 	kafkaApiKeyResourceLabel := "test_cluster_api_key_resource_label"
-	fullKafkaApiKeyResourceLabel := fmt.Sprintf("confluentcloud_api_key.%s", kafkaApiKeyResourceLabel)
+	fullKafkaApiKeyResourceLabel := fmt.Sprintf("confluent_api_key.%s", kafkaApiKeyResourceLabel)
 	ownerId := "sa-12mgdv"
 	ownerApiVersion := "iam/v2"
 	ownerKind := "ServiceAccount"
@@ -394,7 +394,7 @@ func TestAccCloudApiKey(t *testing.T) {
 	cloudApiKeyUpdatedDisplayName := "CI Cloud API Key updated"
 	cloudApiKeyUpdatedDescription := "temp description updated"
 	cloudApiKeyResourceLabel := "test_cloud_api_key_resource_label"
-	fullCloudApiKeyResourceLabel := fmt.Sprintf("confluentcloud_api_key.%s", cloudApiKeyResourceLabel)
+	fullCloudApiKeyResourceLabel := fmt.Sprintf("confluent_api_key.%s", cloudApiKeyResourceLabel)
 	ownerId := "sa-12mgdv"
 	ownerApiVersion := "iam/v2"
 	ownerKind := "ServiceAccount"
@@ -449,7 +449,7 @@ func testAccCheckApiKeyDestroy(s *terraform.State) error {
 	c := testAccProvider.Meta().(*Client)
 	// Loop through the resources in state, verifying each kafka api key is destroyed
 	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "confluentcloud_api_key" {
+		if rs.Type != "confluent_api_key" {
 			continue
 		}
 		deletedApiKeyId := rs.Primary.ID
@@ -470,10 +470,10 @@ func testAccCheckApiKeyDestroy(s *terraform.State) error {
 
 func testAccCheckKafkaApiKeyConfig(mockServerUrl, kafkaApiKeyResourceLabel, kafkaApiKeyDisplayName, kafkaApiKeyDescription, ownerId, ownerApiVersion, ownerKind, resourceId, resourceApiVersion, resourceKind, environmentId string) string {
 	return fmt.Sprintf(`
-	provider "confluentcloud" {
+	provider "confluent" {
 		endpoint = "%s"
 	}
-	resource "confluentcloud_api_key" "%s" {
+	resource "confluent_api_key" "%s" {
 		display_name = "%s"
 		description = "%s"
 		owner {
@@ -495,10 +495,10 @@ func testAccCheckKafkaApiKeyConfig(mockServerUrl, kafkaApiKeyResourceLabel, kafk
 
 func testAccCheckCloudApiKeyConfig(mockServerUrl, cloudApiKeyResourceLabel, cloudApiKeyDisplayName, cloudApiKeyDescription, ownerId, ownerApiVersion, ownerKind string) string {
 	return fmt.Sprintf(`
-	provider "confluentcloud" {
+	provider "confluent" {
 		endpoint = "%s"
 	}
-	resource "confluentcloud_api_key" "%s" {
+	resource "confluent_api_key" "%s" {
 		display_name = "%s"
 		description = "%s"
 		owner {

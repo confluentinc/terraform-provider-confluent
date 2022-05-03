@@ -35,7 +35,7 @@ const (
 	scenarioStateAzurePeeringIsDeprovisioning = "The new azure peering is deprovisioning"
 	scenarioStateAzurePeeringHasBeenCreated   = "The new azure peering has been just created"
 	scenarioStateAzurePeeringHasBeenDeleted   = "The new azure peering's deletion has been just completed"
-	azurePeeringScenarioName                  = "confluentcloud_azure Peering Azure Resource Lifecycle"
+	azurePeeringScenarioName                  = "confluent_azure Peering Azure Resource Lifecycle"
 	azurePeeringEnvironmentId                 = "env-gz903"
 	azurePeeringNetworkId                     = "n-6k5026"
 	azurePeeringId                            = "peer-g49jz6"
@@ -151,7 +151,7 @@ func TestAccAzurePeeringAccess(t *testing.T) {
 
 	azurePeeringDisplayName := "my-test-peering"
 	azurePeeringResourceLabel := "test"
-	fullAzurePeeringResourceLabel := fmt.Sprintf("confluentcloud_peering.%s", azurePeeringResourceLabel)
+	fullAzurePeeringResourceLabel := fmt.Sprintf("confluent_peering.%s", azurePeeringResourceLabel)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -218,7 +218,7 @@ func testAccCheckAzurePeeringDestroy(s *terraform.State) error {
 	c := testAccProvider.Meta().(*Client)
 	// Loop through the resources in state, verifying each azure peering is destroyed
 	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "confluentcloud_peering" {
+		if rs.Type != "confluent_peering" {
 			continue
 		}
 		deletedPeeringId := rs.Primary.ID
@@ -239,10 +239,10 @@ func testAccCheckAzurePeeringDestroy(s *terraform.State) error {
 
 func testAccCheckAzurePeeringConfig(mockServerUrl, displayName, resourceLabel string) string {
 	return fmt.Sprintf(`
-	provider "confluentcloud" {
+	provider "confluent" {
  		endpoint = "%s"
 	}
-	resource "confluentcloud_peering" "%s" {
+	resource "confluent_peering" "%s" {
         display_name = "%s"
 	    azure {
 		  tenant = "%s"
@@ -261,10 +261,10 @@ func testAccCheckAzurePeeringConfig(mockServerUrl, displayName, resourceLabel st
 
 func testAccCheckAzurePeeringConfigWithoutDisplayNameSet(mockServerUrl, resourceLabel string) string {
 	return fmt.Sprintf(`
-	provider "confluentcloud" {
+	provider "confluent" {
  		endpoint = "%s"
 	}
-	resource "confluentcloud_peering" "%s" {
+	resource "confluent_peering" "%s" {
 	    azure {
 		  tenant = "%s"
           vnet = "%s"

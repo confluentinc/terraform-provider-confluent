@@ -37,7 +37,7 @@ To do this, populate a Terraform CLI configuration file (`~/.terraformrc` for al
 ```hcl
 provider_installation {
   dev_overrides {
-    "terraform.confluent.io/confluentinc/confluentcloud" = "/Users/{REPLACE WITH YOUR PATH}/terraform-provider-confluentcloud/bin/darwin-amd64"
+    "terraform.confluent.io/confluentinc/confluent" = "/Users/{REPLACE WITH YOUR PATH}/terraform-provider-confluent/bin/darwin-amd64"
   }
 
   # Install all other providers directly from their origin provider

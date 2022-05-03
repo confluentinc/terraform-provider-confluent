@@ -35,7 +35,7 @@ const (
 	scenarioStateAwsPeeringIsDeprovisioning = "The new aws peering is deprovisioning"
 	scenarioStateAwsPeeringHasBeenCreated   = "The new aws peering has been just created"
 	scenarioStateAwsPeeringHasBeenDeleted   = "The new aws peering's deletion has been just completed"
-	awsPeeringScenarioName                  = "confluentcloud_awsPeering AWS Resource Lifecycle"
+	awsPeeringScenarioName                  = "confluent_awsPeering AWS Resource Lifecycle"
 	awsPeeringEnvironmentId                 = "env-gz903"
 	awsPeeringNetworkId                     = "n-6k5026"
 	awsPeeringId                            = "peer-gez27g"
@@ -155,7 +155,7 @@ func TestAccAwsPeeringAccess(t *testing.T) {
 
 	awsPeeringDisplayName := "my-test-peering"
 	awsPeeringResourceLabel := "test"
-	fullAwsPeeringResourceLabel := fmt.Sprintf("confluentcloud_peering.%s", awsPeeringResourceLabel)
+	fullAwsPeeringResourceLabel := fmt.Sprintf("confluent_peering.%s", awsPeeringResourceLabel)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -218,7 +218,7 @@ func testAccCheckAwsPeeringDestroy(s *terraform.State) error {
 	c := testAccProvider.Meta().(*Client)
 	// Loop through the resources in state, verifying each aws peering is destroyed
 	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "confluentcloud_peering" {
+		if rs.Type != "confluent_peering" {
 			continue
 		}
 		deletedPeeringId := rs.Primary.ID
@@ -239,10 +239,10 @@ func testAccCheckAwsPeeringDestroy(s *terraform.State) error {
 
 func testAccCheckAwsPeeringConfig(mockServerUrl, displayName, resourceLabel string) string {
 	return fmt.Sprintf(`
-	provider "confluentcloud" {
+	provider "confluent" {
  		endpoint = "%s"
 	}
-	resource "confluentcloud_peering" "%s" {
+	resource "confluent_peering" "%s" {
         display_name = "%s"
 	    aws {
 		  account = "%s"
@@ -263,10 +263,10 @@ func testAccCheckAwsPeeringConfig(mockServerUrl, displayName, resourceLabel stri
 
 func testAccCheckAwsPeeringConfigWithoutDisplayNameSet(mockServerUrl, resourceLabel string) string {
 	return fmt.Sprintf(`
-	provider "confluentcloud" {
+	provider "confluent" {
  		endpoint = "%s"
 	}
-	resource "confluentcloud_peering" "%s" {
+	resource "confluent_peering" "%s" {
 	    aws {
 		  account = "%s"
           vpc = "%s"

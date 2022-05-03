@@ -161,6 +161,10 @@ sed -i '' 's/confluentcloud_kafka_topic/confluent_kafka_topic/' terraform.tfstat
 sed -i '' 's/confluentcloud_role_binding/confluent_role_binding/' terraform.tfstate
 sed -i '' 's/confluentcloud_service_account/confluent_service_account/' terraform.tfstate
 
+# [Optional] Remove the dependency lock file .teraform.lock.hcl that tracks and selects provider versions
+rm -rf .terraform/                          
+rm .terraform.lock.hcl
+
 # Find, download, and install new Confluent Provider (confluentinc/confluent) locally
 terraform init
 ```

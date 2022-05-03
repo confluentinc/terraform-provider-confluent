@@ -39,7 +39,7 @@ const (
 	paramSecret                 = "secret"
 	paramConfigs                = "config"
 	kafkaRestAPIWaitAfterCreate = 10 * time.Second
-	docsUrl                     = "https://registry.terraform.io/providers/confluentinc/confluentcloud/latest/docs/resources/confluentcloud_kafka_topic"
+	docsUrl                     = "https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_topic"
 )
 
 // https://docs.confluent.io/cloud/current/clusters/broker-config.html#custom-topic-settings-for-all-cluster-types
@@ -152,7 +152,7 @@ func kafkaTopicCreate(ctx context.Context, d *schema.ResourceData, meta interfac
 	kafkaTopicId := createKafkaTopicId(kafkaRestClient.clusterId, topicName)
 	d.SetId(kafkaTopicId)
 
-	// https://github.com/confluentinc/terraform-provider-confluentcloud/issues/40#issuecomment-1048782379
+	// https://github.com/confluentinc/terraform-provider-confluent/issues/40#issuecomment-1048782379
 	time.Sleep(kafkaRestAPIWaitAfterCreate)
 
 	createdKafkaTopicJson, err := json.Marshal(createdKafkaTopic)

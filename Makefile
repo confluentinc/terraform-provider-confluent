@@ -10,7 +10,7 @@ VAULT_INSTALLED_VERSION := $(shell $(BIN_PATH)/vault -version 2>/dev/null | head
 VAULT_DL_LOC := https://vault-zipfile-public-cache.s3-us-west-2.amazonaws.com/vault_$(VAULT_VERSION_NO_V)_$(HOST_OS)_amd64.zip
 
 # Project variables
-NAME        := terraform-provider-confluentcloud
+NAME        := terraform-provider-confluent
 # Build variables
 BUILD_DIR   := bin
 VERSION     ?= $(shell git describe --tags --exact-match 2>/dev/null || git describe --tags 2>/dev/null || echo "v0.0.0-$(COMMIT_HASH)")
@@ -74,7 +74,7 @@ testacc:
 
 install: build
 	mkdir -p ~/.terraform.d/plugins/darwin_amd64
-	cp ./bin/darwin-amd64/terraform-provider-confluentcloud ~/.terraform.d/plugins/darwin_amd64/
+	cp ./bin/darwin-amd64/terraform-provider-confluent ~/.terraform.d/plugins/darwin_amd64/
 
 .PHONY: gox
 gox:
@@ -101,7 +101,7 @@ log-%:
 ## Scan and validate third-party dependency licenses
 lint-licenses: build
 	[ -t 0 ] && args="" || args="-plain" ; \
-	GITHUB_TOKEN=$(GITHUB_TOKEN) golicense $${args} .golicense.hcl ./bin/$(shell go env GOOS)-$(shell go env GOARCH)/terraform-provider-confluentcloud ; \
+	GITHUB_TOKEN=$(GITHUB_TOKEN) golicense $${args} .golicense.hcl ./bin/$(shell go env GOOS)-$(shell go env GOARCH)/terraform-provider-confluent ; \
 	echo ; \
 
 .PHONY: install-vault

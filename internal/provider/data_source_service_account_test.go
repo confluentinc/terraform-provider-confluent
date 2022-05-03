@@ -32,7 +32,7 @@ import (
 
 const (
 	saApiVersion             = "iam/v2"
-	saDataSourceScenarioName = "confluentcloud_service_account Data Source Lifecycle"
+	saDataSourceScenarioName = "confluent_service_account Data Source Lifecycle"
 	saId                     = "sa-1jjv26"
 	saDisplayName            = "test_service_account_display_name"
 	saDescription            = "The initial description of service account"
@@ -107,7 +107,7 @@ func TestAccDataSourceServiceAccount(t *testing.T) {
 			http.StatusOK,
 		))
 
-	fullServiceAccountDataSourceLabel := fmt.Sprintf("data.confluentcloud_service_account.%s", saResourceLabel)
+	fullServiceAccountDataSourceLabel := fmt.Sprintf("data.confluent_service_account.%s", saResourceLabel)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -143,10 +143,10 @@ func TestAccDataSourceServiceAccount(t *testing.T) {
 
 func testAccCheckDataSourceServiceAccountConfigWithIdSet(mockServerUrl, saResourceLabel, saId string) string {
 	return fmt.Sprintf(`
-	provider "confluentcloud" {
+	provider "confluent" {
 		endpoint = "%s"
 	}
-	data "confluentcloud_service_account" "%s" {
+	data "confluent_service_account" "%s" {
 		id = "%s"
 	}
 	`, mockServerUrl, saResourceLabel, saId)
@@ -154,10 +154,10 @@ func testAccCheckDataSourceServiceAccountConfigWithIdSet(mockServerUrl, saResour
 
 func testAccCheckDataSourceServiceAccountConfigWithDisplayNameSet(mockServerUrl, saResourceLabel, displayName string) string {
 	return fmt.Sprintf(`
-	provider "confluentcloud" {
+	provider "confluent" {
 		endpoint = "%s"
 	}
-	data "confluentcloud_service_account" "%s" {
+	data "confluent_service_account" "%s" {
 		display_name = "%s"
 	}
 	`, mockServerUrl, saResourceLabel, displayName)

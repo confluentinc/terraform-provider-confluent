@@ -34,7 +34,7 @@ const (
 	scenarioStateSaHasBeenCreated             = "The new service account has been just created"
 	scenarioStateSaDescriptionHaveBeenUpdated = "The new service account's description have been just updated"
 	scenarioStateSaHasBeenDeleted             = "The new service account has been deleted"
-	saScenarioName                            = "confluentcloud_service_account Resource Lifecycle"
+	saScenarioName                            = "confluent_service_account Resource Lifecycle"
 )
 
 func TestAccServiceAccount(t *testing.T) {
@@ -139,7 +139,7 @@ func TestAccServiceAccount(t *testing.T) {
 	// in order to test tf update (step #3)
 	saUpdatedDescription := "The updated description of service account"
 	saResourceLabel := "test_sa_resource_label"
-	fullSaResourceLabel := fmt.Sprintf("confluentcloud_service_account.%s", saResourceLabel)
+	fullSaResourceLabel := fmt.Sprintf("confluent_service_account.%s", saResourceLabel)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -193,7 +193,7 @@ func testAccCheckServiceAccountDestroy(s *terraform.State) error {
 	c := testAccProvider.Meta().(*Client)
 	// Loop through the resources in state, verifying each service account is destroyed
 	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "confluentcloud_service_account" {
+		if rs.Type != "confluent_service_account" {
 			continue
 		}
 		deletedServiceAccountId := rs.Primary.ID
@@ -216,10 +216,10 @@ func testAccCheckServiceAccountDestroy(s *terraform.State) error {
 
 func testAccCheckServiceAccountConfig(mockServerUrl, saResourceLabel, saDisplayName, saDescription string) string {
 	return fmt.Sprintf(`
-	provider "confluentcloud" {
+	provider "confluent" {
 		endpoint = "%s"
 	}
-	resource "confluentcloud_service_account" "%s" {
+	resource "confluent_service_account" "%s" {
 		display_name = "%s"
 		description = "%s"
 	}

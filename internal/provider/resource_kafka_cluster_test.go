@@ -34,7 +34,7 @@ const (
 	scenarioStateKafkaHasBeenCreated = "A new Kafka Basic cluster has been just created"
 	scenarioStateKafkaHasBeenUpdated = "The new Kafka cluster's kind has been just updated to Standard"
 	scenarioStateKafkaHasBeenDeleted = "The new Kafka cluster has been deleted"
-	kafkaScenarioName                = "confluentcloud_kafka Resource Lifecycle"
+	kafkaScenarioName                = "confluent_kafka Resource Lifecycle"
 	kafkaClusterId                   = "lkc-19ynpv"
 	kafkaEnvId                       = "env-1jrymj"
 	kafkaNetworkId                   = "n-123abc"
@@ -52,7 +52,7 @@ const (
 
 var createKafkaPath = "/cmk/v2/clusters"
 var readKafkaPath = fmt.Sprintf("/cmk/v2/clusters/%s", kafkaClusterId)
-var fullKafkaResourceLabel = fmt.Sprintf("confluentcloud_kafka_cluster.%s", kafkaResourceLabel)
+var fullKafkaResourceLabel = fmt.Sprintf("confluent_kafka_cluster.%s", kafkaResourceLabel)
 
 func TestAccCluster(t *testing.T) {
 	containerPort := "8080"
@@ -231,7 +231,7 @@ func testAccCheckClusterDestroy(s *terraform.State) error {
 	c := testAccProvider.Meta().(*Client)
 	// Loop through the resources in state, verifying each environment is destroyed
 	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "confluentcloud_kafka_cluster" {
+		if rs.Type != "confluent_kafka_cluster" {
 			continue
 		}
 		deletedClusterId := rs.Primary.ID
@@ -254,10 +254,10 @@ func testAccCheckClusterDestroy(s *terraform.State) error {
 
 func testAccCheckClusterConfig(mockServerUrl, clusterType string) string {
 	return fmt.Sprintf(`
-	provider "confluentcloud" {
+	provider "confluent" {
  		endpoint = "%s"
 	}
-	resource "confluentcloud_kafka_cluster" "basic-cluster" {
+	resource "confluent_kafka_cluster" "basic-cluster" {
 		display_name = "%s"
 		availability = "%s"
 		cloud = "%s"

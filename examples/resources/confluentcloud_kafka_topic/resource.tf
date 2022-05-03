@@ -1,8 +1,8 @@
-resource "confluentcloud_environment" "test-env" {
+resource "confluent_environment" "test-env" {
   display_name = "Development"
 }
 
-resource "confluentcloud_kafka_cluster" "basic-cluster" {
+resource "confluent_kafka_cluster" "basic-cluster" {
   display_name = "basic_kafka_cluster"
   availability = "SINGLE_ZONE"
   cloud = "GCP"
@@ -10,24 +10,24 @@ resource "confluentcloud_kafka_cluster" "basic-cluster" {
   basic {}
 
   environment {
-    id = confluentcloud_environment.test-env.id
+    id = confluent_environment.test-env.id
   }
 }
 
-resource "confluentcloud_kafka_topic" "orders" {
+resource "confluent_kafka_topic" "orders" {
   kafka_cluster {
-    id = confluentcloud_kafka_cluster.basic-cluster.id
+    id = confluent_kafka_cluster.basic-cluster.id
   }
   topic_name = "orders"
   partitions_count = 4
-  http_endpoint = confluentcloud_kafka_cluster.basic-cluster.http_endpoint
+  http_endpoint = confluent_kafka_cluster.basic-cluster.http_endpoint
   config = {
     "cleanup.policy" = "compact"
     "max.message.bytes" = "12345"
     "retention.ms" = "67890"
   }
   credentials {
-    key = "<Kafka API Key for confluentcloud_kafka_cluster.basic-cluster>"
-    secret = "<Kafka API Secret for confluentcloud_kafka_cluster.basic-cluster>"
+    key = "<Kafka API Key for confluent_kafka_cluster.basic-cluster>"
+    secret = "<Kafka API Secret for confluent_kafka_cluster.basic-cluster>"
   }
 }

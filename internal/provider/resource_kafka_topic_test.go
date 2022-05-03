@@ -36,7 +36,7 @@ const (
 	scenarioStateTopicHasBeenCreated = "A new topic has been just created"
 	scenarioStateTopicHasBeenUpdated = "A new topic has been just updated"
 	scenarioStateTopicHasBeenDeleted = "The topic has been deleted"
-	topicScenarioName                = "confluentcloud_kafka_topic Resource Lifecycle"
+	topicScenarioName                = "confluent_kafka_topic Resource Lifecycle"
 	clusterId                        = "lkc-190073"
 	partitionCount                   = 4
 	firstConfigName                  = "max.message.bytes"
@@ -55,7 +55,7 @@ const (
 	numberOfResourceAttributes       = "7"
 )
 
-var fullTopicResourceLabel = fmt.Sprintf("confluentcloud_kafka_topic.%s", topicResourceLabel)
+var fullTopicResourceLabel = fmt.Sprintf("confluent_kafka_topic.%s", topicResourceLabel)
 var createKafkaTopicPath = fmt.Sprintf("/kafka/v3/clusters/%s/topics", clusterId)
 var readKafkaTopicPath = fmt.Sprintf("/kafka/v3/clusters/%s/topics/%s", clusterId, topicName)
 var readKafkaTopicConfigPath = fmt.Sprintf("/kafka/v3/clusters/%s/topics/%s/configs", clusterId, topicName)
@@ -263,7 +263,7 @@ func testAccCheckTopicDestroy(s *terraform.State) error {
 	c := testAccProvider.Meta().(*Client).kafkaRestClientFactory.CreateKafkaRestClient(mockTopicTestServerUrl, clusterId, kafkaApiKey, kafkaApiSecret)
 	// Loop through the resources in state, verifying each Kafka topic is destroyed
 	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "confluentcloud_kafka_topic" {
+		if rs.Type != "confluent_kafka_topic" {
 			continue
 		}
 		deletedTopicId := rs.Primary.ID
@@ -283,10 +283,10 @@ func testAccCheckTopicDestroy(s *terraform.State) error {
 
 func testAccCheckTopicConfig(confluentCloudBaseUrl, mockServerUrl string) string {
 	return fmt.Sprintf(`
-	provider "confluentcloud" {
+	provider "confluent" {
       endpoint = "%s"
     }
-	resource "confluentcloud_kafka_topic" "%s" {
+	resource "confluent_kafka_topic" "%s" {
 	  kafka_cluster {
         id = "%s"
       }
@@ -310,10 +310,10 @@ func testAccCheckTopicConfig(confluentCloudBaseUrl, mockServerUrl string) string
 
 func testAccCheckTopicUpdatedConfig(confluentCloudBaseUrl, mockServerUrl string) string {
 	return fmt.Sprintf(`
-	provider "confluentcloud" {
+	provider "confluent" {
       endpoint = "%s"
     }
-	resource "confluentcloud_kafka_topic" "%s" {
+	resource "confluent_kafka_topic" "%s" {
 	  kafka_cluster {
         id = "%s"
       }
