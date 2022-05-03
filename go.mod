@@ -1,11 +1,11 @@
-module github.com/confluentinc/terraform-provider-ccloud
+module github.com/confluentinc/terraform-provider-confluent
 
 go 1.15
 
 require (
 	github.com/antihax/optional v1.0.0
-	github.com/confluentinc/ccloud-sdk-go-v2-internal/cmk v0.0.9
 	github.com/confluentinc/ccloud-sdk-go-v2/apikeys v0.1.0
+	github.com/confluentinc/ccloud-sdk-go-v2/cmk v0.6.0
 	github.com/confluentinc/ccloud-sdk-go-v2/iam v0.7.0
 	github.com/confluentinc/ccloud-sdk-go-v2/kafkarest v0.3.0
 	github.com/confluentinc/ccloud-sdk-go-v2/mds v0.3.0
@@ -21,12 +21,12 @@ require (
 )
 
 replace (
+	github.com/Microsoft/hcsshim => github.com/Microsoft/hcsshim v0.8.24
+	github.com/buger/jsonparser => github.com/buger/jsonparser v1.0.0
+	github.com/containerd/imgcrypt => github.com/containerd/imgcrypt v1.1.4
+	github.com/containernetworking/cni => github.com/containernetworking/cni v0.8.1
+	github.com/dgrijalva/jwt-go => github.com/golang-jwt/jwt v3.2.1+incompatible
 	github.com/opencontainers/image-spec => github.com/opencontainers/image-spec v1.0.2
 	github.com/opencontainers/runc => github.com/opencontainers/runc v1.0.3
-	github.com/containerd/imgcrypt => github.com/containerd/imgcrypt v1.1.4
-	github.com/buger/jsonparser => github.com/buger/jsonparser v1.0.0
-	github.com/Microsoft/hcsshim => github.com/Microsoft/hcsshim v0.8.24
-	github.com/dgrijalva/jwt-go => github.com/golang-jwt/jwt v3.2.1+incompatible
-	github.com/containernetworking/cni => github.com/containernetworking/cni v0.8.1
 	github.com/satori/go.uuid v1.2.0 => github.com/satori/go.uuid v1.2.1-0.20181016170032-d91630c85102
 )

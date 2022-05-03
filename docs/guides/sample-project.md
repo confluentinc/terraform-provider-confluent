@@ -6,8 +6,7 @@ page_title: "Sample Project"
 
 ## Summary
 
-**TODO**: add a gif (video) similar to https://confluent.slack.com/archives/C01880K2BAA/p1645121816881439
-or a video https://registry.terraform.io/providers/databrickslabs/databricks/latest/docs/guides/experimental-exporter
+[![asciicast](https://asciinema.org/a/491871.svg)](https://asciinema.org/a/491871)
 
 Use the Confluent Cloud Terraform provider to enable the lifecycle management of Confluent Cloud resources:
    * [Environments](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_environment)
@@ -67,7 +66,7 @@ In this guide, you will:
 3. The Cloud API key and secret are generated for the `tf_runner` service account. Save your Cloud API key and secret in a secure location. You will need this API key and secret **to use the Confluent Cloud Terraform Provider**.
 4. [Assign](https://confluent.cloud/settings/org/assignments) the `OrganizationAdmin` role to the `tf_runner` service account by following [this guide](https://docs.confluent.io/cloud/current/access-management/access-control/cloud-rbac.html#add-a-role-binding-for-a-user-or-service-account).
 
-![Assigning the OrganizationAdmin role to tf_runner service account](https://github.com/confluentinc/terraform-provider-confluent/raw/master/docs/guides/OrganizationAdmin.png)
+![Assigning the OrganizationAdmin role to tf_runner service account](https://github.com/confluentinc/terraform-provider-confluent/raw/master/docs/images/OrganizationAdmin.png)
 
 ## Create Resources on Confluent Cloud via Terraform
 
@@ -177,7 +176,7 @@ In this guide, you will:
 
 3. Execute printed out commands.
 
-   -> **Note:** Sending full key-value pairs from the command line was enabled by adding two flags to the Confluent CLI v2 command, `parse-key` and `delimiter`. Adding `--from-beginning` flag enabled printing all messages from the beginning of the topic.
+   -> **Note:** Add the `--from-beginning` flag to enable printing all messages from the beginning of the topic.
 
 ## [Optional] Teardown Confluent Cloud resources
 Run the following command to destroy all the resources you created:

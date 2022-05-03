@@ -17,8 +17,8 @@ package provider
 import (
 	"context"
 	"fmt"
-	cmk "github.com/confluentinc/ccloud-sdk-go-v2-internal/cmk/v2"
 	apikeys "github.com/confluentinc/ccloud-sdk-go-v2/apikeys/v2"
+	cmk "github.com/confluentinc/ccloud-sdk-go-v2/cmk/v2"
 	iamv1 "github.com/confluentinc/ccloud-sdk-go-v2/iam/v1"
 	iam "github.com/confluentinc/ccloud-sdk-go-v2/iam/v2"
 	mds "github.com/confluentinc/ccloud-sdk-go-v2/mds/v2"

@@ -15,7 +15,7 @@
 package main
 
 import (
-	"github.com/confluentinc/terraform-provider-ccloud/internal/provider"
+	"github.com/confluentinc/terraform-provider-confluent/internal/provider"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
 )

@@ -1,6 +1,8 @@
 ## 0.7.0 (May 3, 2022)
 
-Enables automated provisioning with no more manual intervention!
+Enables fully automated provisioning with no more manual intervention!
+
+This new Provider ([Confluent Terraform Provider](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs)) is an important step toward providing a unified experience for provisioning Confluent Cloud and Confluent Platform resources. Follow the [Confluent Provider 0.7.0: Upgrade Guide](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/guides/upgrade-guide-0.7.0) to upgrade from version `0.5.0` of the [Confluent Cloud Terraform Provider](https://registry.terraform.io/providers/confluentinc/confluentcloud/latest/docs) to version `0.7.0` of the [Confluent Terraform Provider](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs).
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v0.6.0...v0.7.0)
 
@@ -26,7 +28,7 @@ Enables automated provisioning with no more manual intervention!
 * Added other minor fixes ([#57](https://github.com/confluentinc/terraform-provider-confluentcloud/issues/57)).
 
 **Breaking changes:**
-* All resources and data sources have been renamed in the new [Confluent Terraform Provider](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs). The prefix has changed from `confluentcloud` to `confluent`. For example, `confluentcloud_environment` resource was updated to `confluent_environment`. Please follow the [Confluent Provider 0.7.0: Upgrade Guide](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/guides/upgrade-guide-0.7.0) to update your TF state file.
+* All resources and data sources have been renamed in the new [Confluent Terraform Provider](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs). The prefix has been changed from `confluentcloud` to `confluent`. For example, the `confluentcloud_environment` resource was updated to `confluent_environment`. Please follow the [Confluent Provider 0.7.0: Upgrade Guide](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/guides/upgrade-guide-0.7.0) to update your TF state file.
 * Changed `kafka_cluster` attribute type from `string` to `block` for 'confluent_kafka_acl' and 'confluent_kafka_topic' resources and data sources.
 * Made `host` attribute required for 'confluent_kafka_acl' resource.
 

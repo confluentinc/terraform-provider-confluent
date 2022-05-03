@@ -97,6 +97,8 @@ The following arguments are supported:
 
 - `environment` (Required Configuration Block) supports the following:
     - `id` - (Required String) The ID of the Environment that the Kafka cluster belongs to, for example, `env-abc123`.
+- `network` (Optional Configuration Block) supports the following:
+  - `id` - (Required String) The ID of the Network that the Kafka cluster belongs to, for example, `n-abc123`.
 
 ## Attributes Reference
 

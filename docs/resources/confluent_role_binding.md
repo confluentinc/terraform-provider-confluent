@@ -34,7 +34,16 @@ resource "confluent_role_binding" "cluster-example-rb" {
 resource "confluent_role_binding" "topic-example-rb" {
   principal   = "User:${confluent_service_account.test.id}"
   role_name   = "DeveloperWrite"
-  crn_pattern = "${confluent_kafka_cluster.basic.rbac_crn}/kafka=${confluent_kafka_cluster.basic.id}/topic=${confluent_kafka_topic.orders.topic_name}"
+  crn_pattern = "${confluent_kafka_cluster.basic.rbac_crn}/kafka=${confluent_kafka_cluster.standard.id}/topic=${confluent_kafka_topic.orders.topic_name}"
+}
+
+resource "confluent_role_binding" "group-example-rb" {
+  principal = "User:${confluent_service_account.test.id}"
+  role_name = "DeveloperRead"
+  // The existing value of crn_pattern's suffix (group=confluent_cli_consumer_*) are set up to match Confluent CLI's default consumer group ID ("confluent_cli_consumer_<uuid>").
+  // https://docs.confluent.io/confluent-cli/current/command-reference/kafka/topic/confluent_kafka_topic_consume.html
+  // Update it to match your target consumer group ID.
+  crn_pattern = "${confluent_kafka_cluster.basic.rbac_crn}/kafka=${confluent_kafka_cluster.standard.id}/group=confluent_cli_consumer_*"
 }
 ```
 

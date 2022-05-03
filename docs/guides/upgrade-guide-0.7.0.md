@@ -12,7 +12,7 @@ This guide is intended to help with the upgrading process and focuses only on th
 ## Upgrade Notes
 
 - [Provider Version Configuration](#provider-version-configuration)
-- [Updating Terraform Configuration](#updating-terraform-configuration)
+- [Upgrade Terraform Configuration](#upgrade-terraform-configuration)
 - [Upgrade State File](#upgrade-state-file)
 
 ## Provider Version Configuration
@@ -69,7 +69,7 @@ terraform {
 provider "confluent" {
 ```
 
-## Updating Terraform Configuration
+## Upgrade Terraform Configuration
 
 ### Changes to `confluentcloud_kafka_acl` resource
 * `host` attribute is now required. Update your configuration to set it to `"*"`.
@@ -160,10 +160,6 @@ sed -i '' 's/confluentcloud_kafka_cluster/confluent_kafka_cluster/' terraform.tf
 sed -i '' 's/confluentcloud_kafka_topic/confluent_kafka_topic/' terraform.tfstate
 sed -i '' 's/confluentcloud_role_binding/confluent_role_binding/' terraform.tfstate
 sed -i '' 's/confluentcloud_service_account/confluent_service_account/' terraform.tfstate
-
-# [Optional] Remove the dependency lock file .teraform.lock.hcl that tracks and selects provider versions
-rm -rf .terraform/                          
-rm .terraform.lock.hcl
 
 # Find, download, and install new Confluent Provider (confluentinc/confluent) locally
 terraform init
