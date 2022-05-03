@@ -183,7 +183,8 @@ func TestAccAcls(t *testing.T) {
 				Config: testAccCheckAclConfig(confluentCloudBaseUrl, mockAclTestServerUrl),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckAclExists(fullAclResourceLabel),
-					resource.TestCheckResourceAttr(fullAclResourceLabel, "kafka_cluster", clusterId),
+					resource.TestCheckResourceAttr(fullAclResourceLabel, "kafka_cluster.#", "1"),
+					resource.TestCheckResourceAttr(fullAclResourceLabel, "kafka_cluster.0.id", clusterId),
 					resource.TestCheckResourceAttr(fullAclResourceLabel, "id", fmt.Sprintf("%s/%s#%s#%s#%s#%s#%s#%s", clusterId, aclResourceType, aclResourceName, aclPatternType, aclPrincipalWithResourceId, aclHost, aclOperation, aclPermission)),
 					resource.TestCheckResourceAttr(fullAclResourceLabel, "resource_type", aclResourceType),
 					resource.TestCheckResourceAttr(fullAclResourceLabel, "resource_name", aclResourceName),
@@ -238,12 +239,14 @@ func testAccCheckAclConfig(confluentCloudBaseUrl, mockServerUrl string) string {
       endpoint = "%s"
     }
 	resource "confluentcloud_kafka_acl" "%s" {
-	  kafka_cluster = "%s"
-
+	  kafka_cluster {
+        id = "%s"
+      }
 	  resource_type = "%s"
 	  resource_name = "%s"
 	  pattern_type = "%s"
 	  principal = "%s"
+	  host = "*"
 	  operation = "%s"
 	  permission = "%s"
 

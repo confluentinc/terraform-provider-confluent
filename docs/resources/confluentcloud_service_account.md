@@ -33,14 +33,18 @@ The following arguments are supported:
 
 In addition to the preceding arguments, the following attributes are exported:
 
-- `id` - (String) The ID of the Service Account (e.g., `sa-abc123`).
-- `api_version` - (String) An API Version of the schema version of the Service Account, for example, `iam/v2`.
-- `kind` - (String) A kind of the Service Account, for example, `ServiceAccount`.
+- `id` - (Required String) The ID of the Service Account (e.g., `sa-abc123`).
+- `api_version` - (Required String) An API Version of the schema version of the Service Account, for example, `iam/v2`.
+- `kind` - (Required String) A kind of the Service Account, for example, `ServiceAccount`.
 
 ## Import
+
+-> **Note:** `CONFLUENT_CLOUD_API_KEY` and `CONFLUENT_CLOUD_API_SECRET` environment variables must be set before importing a Service Account.
 
 You can import a Service Account by using Service Account ID, for example:
 
 ```
+$ export CONFLUENT_CLOUD_API_KEY="<cloud_api_key>"
+$ export CONFLUENT_CLOUD_API_SECRET="<cloud_api_secret>"
 $ terraform import confluentcloud_service_account.my_sa sa-abc123
 ```

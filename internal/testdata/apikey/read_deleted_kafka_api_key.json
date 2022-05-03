@@ -1,0 +1,11 @@
+{
+  "errors": [
+    {
+      "id": "eb90cf6f31fa41bae06979256a0c97c2",
+      "status": "403",
+      "code": "forbidden_access",
+      "detail": "Forbidden Access",
+      "source": {}
+    }
+  ]
+}

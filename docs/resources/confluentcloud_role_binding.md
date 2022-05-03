@@ -15,16 +15,28 @@ description: |-
 ## Example Usage
 
 ```terraform
-resource "confluentcloud_service_account" "test_sa" {
-  display_name = "test_sa"
-  description = "description for test_sa"
+resource "confluentcloud_role_binding" "environment-example-rb" {
+  principal   = "User:${confluentcloud_service_account.test.id}"
+  role_name   = "EnvironmentAdmin"
+  crn_pattern = confluentcloud_environment.stag.resource_name
 }
-resource "confluentcloud_role_binding" "example-rb" {
-  principal = "User:${confluentcloud_service_account.test_sa.id}"
-  role_name  = "CloudClusterAdmin"
-  crn_pattern = confluentcloud_kafka_cluster.standard-cluster-on-aws.rbac_crn
-  # The expected crn_pattern for a topic named "example_topic"
-  # crn_pattern = "${confluentcloud_kafka_cluster.standard-cluster-on-aws.rbac_crn}/kafka=${confluentcloud_kafka_cluster.standard-cluster-on-aws.id}/topic=example_topic"
+
+resource "confluentcloud_role_binding" "network-example-rb" {
+  principal   = "User:${confluentcloud_service_account.test.id}"
+  role_name   = "NetworkAdmin"
+  crn_pattern = confluentcloud_network.privatelink.resource_name
+}
+
+resource "confluentcloud_role_binding" "cluster-example-rb" {
+  principal   = "User:${confluentcloud_service_account.test.id}"
+  role_name   = "CloudClusterAdmin"
+  crn_pattern = confluentcloud_kafka_cluster.basic.rbac_crn
+}
+
+resource "confluentcloud_role_binding" "topic-example-rb" {
+  principal   = "User:${confluentcloud_service_account.test.id}"
+  role_name   = "DeveloperWrite"
+  crn_pattern = "${confluentcloud_kafka_cluster.basic.rbac_crn}/kafka=${confluentcloud_kafka_cluster.basic.id}/topic=${confluentcloud_kafka_topic.orders.topic_name}"
 }
 ```
 
@@ -41,12 +53,16 @@ The following arguments are supported:
 
 In addition to the preceding arguments, the following attributes are exported:
 
-- `id` - (String) The ID of the Role Binding (e.g., `rb-f3a90de`).
+- `id` - (Required String) The ID of the Role Binding (e.g., `rb-f3a90de`).
 
 ## Import
+
+-> **Note:** `CONFLUENT_CLOUD_API_KEY` and `CONFLUENT_CLOUD_API_SECRET` environment variables must be set before importing a Role Binding.
 
 You can import a Role Binding by using Role Binding ID, for example:
 
 ```
+$ export CONFLUENT_CLOUD_API_KEY="<cloud_api_key>"
+$ export CONFLUENT_CLOUD_API_SECRET="<cloud_api_secret>"
 $ terraform import confluentcloud_role_binding.my_rb rb-f3a90de
 ```

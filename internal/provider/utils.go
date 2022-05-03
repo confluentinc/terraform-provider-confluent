@@ -17,25 +17,62 @@ package provider
 import (
 	"context"
 	"fmt"
-	cmk "github.com/confluentinc/ccloud-sdk-go-v2/cmk/v2"
+	cmk "github.com/confluentinc/ccloud-sdk-go-v2-internal/cmk/v2"
+	apikeys "github.com/confluentinc/ccloud-sdk-go-v2/apikeys/v2"
 	iamv1 "github.com/confluentinc/ccloud-sdk-go-v2/iam/v1"
 	iam "github.com/confluentinc/ccloud-sdk-go-v2/iam/v2"
 	kafkarestv3 "github.com/confluentinc/ccloud-sdk-go-v2/kafkarest/v3"
 	mds "github.com/confluentinc/ccloud-sdk-go-v2/mds/v2"
+	net "github.com/confluentinc/ccloud-sdk-go-v2/networking/v1"
 	org "github.com/confluentinc/ccloud-sdk-go-v2/org/v2"
 	"github.com/hashicorp/go-retryablehttp"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"io"
-	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"reflect"
 	"strings"
 	"time"
 )
 
-const crnKafkaSuffix = "/kafka="
+const (
+	crnKafkaSuffix              = "/kafka="
+	kafkaAclLoggingKey          = "kafka_acl_id"
+	kafkaClusterLoggingKey      = "kafka_cluster_id"
+	kafkaTopicLoggingKey        = "kafka_topic_id"
+	serviceAccountLoggingKey    = "service_account_id"
+	userLoggingKey              = "user_id"
+	environmentLoggingKey       = "environment_id"
+	roleBindingLoggingKey       = "role_binding_id"
+	apiKeyLoggingKey            = "api_key_id"
+	networkLoggingKey           = "network_key_id"
+	privateLinkAccessLoggingKey = "private_link_access_id"
+	peeringLoggingKey           = "peering_id"
+)
+
+func (c *Client) apiKeysApiContext(ctx context.Context) context.Context {
+	if c.apiKey != "" && c.apiSecret != "" {
+		return context.WithValue(context.Background(), apikeys.ContextBasicAuth, apikeys.BasicAuth{
+			UserName: c.apiKey,
+			Password: c.apiSecret,
+		})
+	}
+	tflog.Warn(ctx, "Could not find Cloud API Key")
+	return ctx
+}
+
+func kafkaRestApiContextWithClusterApiKey(ctx context.Context, kafkaApiKey string, kafkaApiSecret string) context.Context {
+	if kafkaApiKey != "" && kafkaApiSecret != "" {
+		return context.WithValue(context.Background(), kafkarestv3.ContextBasicAuth, kafkarestv3.BasicAuth{
+			UserName: kafkaApiKey,
+			Password: kafkaApiSecret,
+		})
+	}
+	tflog.Warn(ctx, "Could not find Kafka API Key")
+	return ctx
+}
 
 func (c *Client) cmkApiContext(ctx context.Context) context.Context {
 	if c.apiKey != "" && c.apiSecret != "" {
@@ -44,7 +81,7 @@ func (c *Client) cmkApiContext(ctx context.Context) context.Context {
 			Password: c.apiSecret,
 		})
 	}
-	log.Printf("[WARN] Could not find credentials for Confluent Cloud")
+	tflog.Warn(ctx, "Could not find Cloud API Key")
 	return ctx
 }
 
@@ -55,7 +92,7 @@ func (c *Client) iamApiContext(ctx context.Context) context.Context {
 			Password: c.apiSecret,
 		})
 	}
-	log.Printf("[WARN] Could not find credentials for Confluent Cloud")
+	tflog.Warn(ctx, "Could not find Cloud API Key")
 	return ctx
 }
 
@@ -66,7 +103,7 @@ func (c *Client) iamV1ApiContext(ctx context.Context) context.Context {
 			Password: c.apiSecret,
 		})
 	}
-	log.Printf("[WARN] Could not find credentials for Confluent Cloud")
+	tflog.Warn(ctx, "Could not find Cloud API Key")
 	return ctx
 }
 
@@ -77,7 +114,18 @@ func (c *Client) mdsApiContext(ctx context.Context) context.Context {
 			Password: c.apiSecret,
 		})
 	}
-	log.Printf("[WARN] Could not find credentials for Confluent Cloud")
+	tflog.Warn(ctx, "Could not find Cloud API Key")
+	return ctx
+}
+
+func (c *Client) netApiContext(ctx context.Context) context.Context {
+	if c.apiKey != "" && c.apiSecret != "" {
+		return context.WithValue(context.Background(), net.ContextBasicAuth, net.BasicAuth{
+			UserName: c.apiKey,
+			Password: c.apiSecret,
+		})
+	}
+	tflog.Warn(ctx, "Could not find Cloud API Key")
 	return ctx
 }
 
@@ -88,13 +136,24 @@ func (c *Client) orgApiContext(ctx context.Context) context.Context {
 			Password: c.apiSecret,
 		})
 	}
-	log.Printf("[WARN] Could not find credentials for Confluent Cloud")
+	tflog.Warn(ctx, "Could not find Cloud API Key")
+	return ctx
+}
+
+func orgApiContext(ctx context.Context, cloudApiKey, cloudApiSecret string) context.Context {
+	if cloudApiKey != "" && cloudApiSecret != "" {
+		return context.WithValue(context.Background(), org.ContextBasicAuth, org.BasicAuth{
+			UserName: cloudApiKey,
+			Password: cloudApiSecret,
+		})
+	}
+	tflog.Warn(ctx, "Cloud API Key or Cloud API Secret is empty")
 	return ctx
 }
 
 func getTimeoutFor(clusterType string) time.Duration {
 	if clusterType == kafkaClusterTypeDedicated {
-		return 24 * time.Hour
+		return 72 * time.Hour
 	} else {
 		return 1 * time.Hour
 	}
@@ -117,7 +176,7 @@ func stringToAclResourceType(aclResourceType string) (kafkarestv3.AclResourceTyp
 	case "DELEGATION_TOKEN":
 		return kafkarestv3.ACLRESOURCETYPE_DELEGATION_TOKEN, nil
 	}
-	return "", fmt.Errorf("unknown ACL resource type was found: %s", aclResourceType)
+	return "", fmt.Errorf("unknown ACL resource type was found: %q", aclResourceType)
 }
 
 func stringToAclPatternType(aclPatternType string) (kafkarestv3.AclPatternType, error) {
@@ -133,7 +192,7 @@ func stringToAclPatternType(aclPatternType string) (kafkarestv3.AclPatternType, 
 	case "PREFIXED":
 		return kafkarestv3.ACLPATTERNTYPE_PREFIXED, nil
 	}
-	return "", fmt.Errorf("unknown ACL pattern type was found: %s", aclPatternType)
+	return "", fmt.Errorf("unknown ACL pattern type was found: %q", aclPatternType)
 }
 
 func stringToAclOperation(aclOperation string) (kafkarestv3.AclOperation, error) {
@@ -165,7 +224,7 @@ func stringToAclOperation(aclOperation string) (kafkarestv3.AclOperation, error)
 	case "IDEMPOTENT_WRITE":
 		return kafkarestv3.ACLOPERATION_IDEMPOTENT_WRITE, nil
 	}
-	return "", fmt.Errorf("unknown ACL operation was found: %s", aclOperation)
+	return "", fmt.Errorf("unknown ACL operation was found: %q", aclOperation)
 }
 
 func stringToAclPermission(aclPermission string) (kafkarestv3.AclPermission, error) {
@@ -179,7 +238,7 @@ func stringToAclPermission(aclPermission string) (kafkarestv3.AclPermission, err
 	case "ALLOW":
 		return kafkarestv3.ACLPERMISSION_ALLOW, nil
 	}
-	return "", fmt.Errorf("unknown ACL permission was found: %s", aclPermission)
+	return "", fmt.Errorf("unknown ACL permission was found: %q", aclPermission)
 }
 
 type Acl struct {
@@ -236,7 +295,7 @@ func (c *KafkaRestClient) apiContext(ctx context.Context) context.Context {
 			Password: c.clusterApiSecret,
 		})
 	}
-	log.Printf("[WARN] Could not find cluster credentials for Confluent Cloud for clusterId=%s", c.clusterId)
+	tflog.Warn(ctx, fmt.Sprintf("Could not find Kafka API Key for Kafka Cluster %q", c.clusterId), map[string]interface{}{kafkaClusterLoggingKey: c.clusterId})
 	return ctx
 }
 
@@ -278,20 +337,16 @@ func (f KafkaRestClientFactory) CreateKafkaRestClient(httpEndpoint, clusterId, c
 	}
 }
 
-func extractStringAttributeFromListBlockOfSizeOne(d *schema.ResourceData, blockName, attributeName string) (string, error) {
-	// d.Get() will return "" if the key is not present
-	value := d.Get(fmt.Sprintf("%s.0.%s", blockName, attributeName)).(string)
-	if value == "" {
-		return "", fmt.Errorf("could not find %s attribute in %s block", attributeName, blockName)
-	}
-	return value, nil
+func setStringAttributeInListBlockOfSizeOne(blockName, attributeName, attributeValue string, d *schema.ResourceData) error {
+	return d.Set(blockName, []interface{}{map[string]interface{}{
+		attributeName: attributeValue,
+	}})
 }
 
-// createDiagnosticsWithDetails will convert GenericOpenAPIError error into a Diagnostics with details.
-// It should be used instead of diag.FromErr() in this project
-// since diag.FromErr() returns just HTTP status code and its generic name (i.e., "400 Bad Request")
-// (because of its usage of GenericOpenAPIError.Error()).
-func createDiagnosticsWithDetails(err error) diag.Diagnostics {
+// createDescriptiveError will convert GenericOpenAPIError error into an error with a more descriptive error message.
+// diag.FromErr(createDescriptiveError(err)) should be used instead of diag.FromErr(err) in this project
+// since GenericOpenAPIError.Error() returns just HTTP status code and its generic name (i.e., "400 Bad Request")
+func createDescriptiveError(err error) error {
 	if err == nil {
 		return nil
 	}
@@ -299,33 +354,31 @@ func createDiagnosticsWithDetails(err error) diag.Diagnostics {
 	errorMessage := err.Error()
 	// Add error.detail to the final error message
 	if genericOpenAPIError, ok := err.(GenericOpenAPIError); ok {
-		var failure = genericOpenAPIError.Model()
-		var reflectedFailure = reflect.ValueOf(&failure).Elem().Elem()
-		errs := reflect.Indirect(reflectedFailure).FieldByName("Errors")
-		kafkaRestErrDetailPtr := reflect.Indirect(reflectedFailure).FieldByName("Message")
-		if errs.Kind() == reflect.Slice && errs.Len() > 0 {
-			nest := errs.Index(0)
-			detailPtr := nest.FieldByName("Detail")
-			if detailPtr.IsValid() && !detailPtr.IsNil() {
-				errorMessage = fmt.Sprintf("%s: %s", errorMessage, reflect.Indirect(detailPtr))
+		failure := genericOpenAPIError.Model()
+		reflectedFailure := reflect.ValueOf(&failure).Elem().Elem()
+		reflectedFailureValue := reflect.Indirect(reflectedFailure)
+		if reflectedFailureValue.IsValid() {
+			errs := reflectedFailureValue.FieldByName("Errors")
+			kafkaRestErrDetailPtr := reflectedFailureValue.FieldByName("Message")
+			if errs.Kind() == reflect.Slice && errs.Len() > 0 {
+				nest := errs.Index(0)
+				detailPtr := nest.FieldByName("Detail")
+				if detailPtr.IsValid() && !detailPtr.IsNil() {
+					errorMessage = fmt.Sprintf("%s: %s", errorMessage, reflect.Indirect(detailPtr))
+				}
+			} else if kafkaRestErrDetailPtr.IsValid() && !kafkaRestErrDetailPtr.IsNil() {
+				errorMessage = fmt.Sprintf("%s: %s", errorMessage, reflect.Indirect(kafkaRestErrDetailPtr))
 			}
-		} else if kafkaRestErrDetailPtr.IsValid() && !kafkaRestErrDetailPtr.IsNil() {
-			errorMessage = fmt.Sprintf("%s: %s", errorMessage, reflect.Indirect(kafkaRestErrDetailPtr))
 		}
 	}
-	return diag.Diagnostics{
-		diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  errorMessage,
-		},
-	}
+	return fmt.Errorf(errorMessage)
 }
 
 // Reports whether the response has http.StatusForbidden status due to an invalid Cloud API Key vs other reasons
 // which is useful to distinguish from scenarios where http.StatusForbidden represents http.StatusNotFound for
 // security purposes.
-func HasStatusForbiddenDueToInvalidAPIKey(response *http.Response) bool {
-	if HasStatusForbidden(response) {
+func ResponseHasStatusForbiddenDueToInvalidAPIKey(response *http.Response) bool {
+	if ResponseHasExpectedStatusCode(response, http.StatusForbidden) {
 		bodyBytes, err := io.ReadAll(response.Body)
 		if err != nil {
 			return false
@@ -337,27 +390,35 @@ func HasStatusForbiddenDueToInvalidAPIKey(response *http.Response) bool {
 	return false
 }
 
-// Reports whether the response has http.StatusForbidden status
-func HasStatusForbidden(response *http.Response) bool {
-	return response != nil && response.StatusCode == http.StatusForbidden
+func ResponseHasExpectedStatusCode(response *http.Response, expectedStatusCode int) bool {
+	return response != nil && response.StatusCode == expectedStatusCode
 }
 
-// Reports whether the response has http.StatusNotFound status
-func HasStatusNotFound(response *http.Response) bool {
-	return response != nil && response.StatusCode == http.StatusNotFound
+func isNonKafkaRestApiResourceNotFound(response *http.Response) bool {
+	return ResponseHasExpectedStatusCode(response, http.StatusNotFound) ||
+		(ResponseHasExpectedStatusCode(response, http.StatusForbidden) && !ResponseHasStatusForbiddenDueToInvalidAPIKey(response))
 }
 
 // APIF-2043: TEMPORARY METHOD
 // Converts principal with a resourceID (User:sa-01234) to principal with an integer ID (User:6789)
 func principalWithResourceIdToPrincipalWithIntegerId(c *Client, principalWithResourceId string) (string, error) {
-	// There's input validation that principal attribute must start with "User:sa-"
+	// There's input validation that principal attribute must start with "User:sa-" or "User:u-"
 	// User:sa-abc123 -> sa-abc123
 	resourceId := principalWithResourceId[5:]
-	integerId, err := saResourceIdToSaIntegerId(c, resourceId)
-	if err != nil {
-		return "", err
+	if strings.HasPrefix(principalWithResourceId, "User:sa-") {
+		integerId, err := saResourceIdToSaIntegerId(c, resourceId)
+		if err != nil {
+			return "", err
+		}
+		return fmt.Sprintf("%s%d", principalPrefix, integerId), nil
+	} else if strings.HasPrefix(principalWithResourceId, "User:u-") {
+		integerId, err := userResourceIdToUserIntegerId(c, resourceId)
+		if err != nil {
+			return "", err
+		}
+		return fmt.Sprintf("%s%d", principalPrefix, integerId), nil
 	}
-	return fmt.Sprintf("%s%d", principalPrefix, integerId), nil
+	return "", fmt.Errorf("the principal must start with 'User:sa-' or 'User:u-'")
 }
 
 // APIF-2043: TEMPORARY METHOD
@@ -379,6 +440,25 @@ func saResourceIdToSaIntegerId(c *Client, saResourceId string) (int, error) {
 	return 0, fmt.Errorf("the service account with resource ID=%s was not found", saResourceId)
 }
 
+// APIF-2043: TEMPORARY METHOD
+// Converts user's resourceID (u-abc123) to its integer ID (67890)
+func userResourceIdToUserIntegerId(c *Client, userResourceId string) (int, error) {
+	list, _, err := c.iamV1Client.UsersV1Api.ListV1Users(c.iamV1ApiContext(context.Background())).Execute()
+	if err != nil {
+		return 0, err
+	}
+	for _, user := range list.GetUsers() {
+		if user.GetResourceId() == userResourceId {
+			if user.HasId() {
+				return int(user.GetId()), nil
+			} else {
+				return 0, fmt.Errorf("the matching integer ID for a user with resource ID=%s is nil", userResourceId)
+			}
+		}
+	}
+	return 0, fmt.Errorf("the user with resource ID=%s was not found", userResourceId)
+}
+
 func clusterCrnToRbacClusterCrn(clusterCrn string) (string, error) {
 	// Converts
 	// crn://confluent.cloud/organization=./environment=./cloud-cluster=lkc-198rjz/kafka=lkc-198rjz
@@ -389,15 +469,6 @@ func clusterCrnToRbacClusterCrn(clusterCrn string) (string, error) {
 		return "", fmt.Errorf("could not find %s in %s", crnKafkaSuffix, clusterCrn)
 	}
 	return clusterCrn[:lastIndex], nil
-}
-
-func stringInSlice(target string, slice []string) bool {
-	for _, value := range slice {
-		if value == target {
-			return true
-		}
-	}
-	return false
 }
 
 func convertToStringStringMap(data map[string]interface{}) map[string]string {
@@ -412,4 +483,59 @@ func convertToStringStringMap(data map[string]interface{}) map[string]string {
 
 func ptr(s string) *string {
 	return &s
+}
+
+func kafkaClusterBlockV0() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			paramKafkaCluster: kafkaClusterIdSchema(),
+		},
+	}
+}
+func kafkaClusterBlockStateUpgradeV0(ctx context.Context, rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
+	kafkaClusterIdString := rawState[paramKafkaCluster].(string)
+	rawState[paramKafkaCluster] = []interface{}{map[string]interface{}{
+		paramId: kafkaClusterIdString,
+	}}
+	return rawState, nil
+}
+
+// Extracts "foo" from "https://api.confluent.cloud/iam/v2/service-accounts?page_token=foo"
+func extractPageToken(nextPageUrlString string) (string, error) {
+	nextPageUrl, err := url.Parse(nextPageUrlString)
+	if err != nil {
+		return "", fmt.Errorf("could not parse %q into URL, %s", nextPageUrlString, createDescriptiveError(err))
+	}
+	pageToken := nextPageUrl.Query().Get(pageTokenQueryParameter)
+	if pageToken == "" {
+		return "", fmt.Errorf("could not parse the value for %q query parameter from %q", pageTokenQueryParameter, nextPageUrlString)
+	}
+	return pageToken, nil
+}
+
+func verifyListValues(values, acceptedValues []string, ignoreCase bool) error {
+	for _, actualValue := range values {
+		found := stringInSlice(actualValue, acceptedValues, ignoreCase)
+		if !found {
+			return fmt.Errorf("expected %s to be one of %v, got %s", actualValue, acceptedValues, actualValue)
+		}
+	}
+	return nil
+}
+
+func stringInSlice(target string, slice []string, ignoreCase bool) bool {
+	for _, v := range slice {
+		if v == target || (ignoreCase && strings.EqualFold(v, target)) {
+			return true
+		}
+	}
+	return false
+}
+
+func convertToStringSlice(items []interface{}) []string {
+	stringItems := make([]string, len(items))
+	for i, item := range items {
+		stringItems[i] = fmt.Sprint(item)
+	}
+	return stringItems
 }

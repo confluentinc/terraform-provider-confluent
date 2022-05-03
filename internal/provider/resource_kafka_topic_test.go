@@ -208,7 +208,8 @@ func TestAccTopic(t *testing.T) {
 				Config: testAccCheckTopicConfig(confluentCloudBaseUrl, mockTopicTestServerUrl),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckTopicExists(fullTopicResourceLabel),
-					resource.TestCheckResourceAttr(fullTopicResourceLabel, "kafka_cluster", clusterId),
+					resource.TestCheckResourceAttr(fullTopicResourceLabel, "kafka_cluster.#", "1"),
+					resource.TestCheckResourceAttr(fullTopicResourceLabel, "kafka_cluster.0.id", clusterId),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "id", fmt.Sprintf("%s/%s", clusterId, topicName)),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "%", numberOfResourceAttributes),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "topic_name", topicName),
@@ -227,7 +228,8 @@ func TestAccTopic(t *testing.T) {
 				Config: testAccCheckTopicUpdatedConfig(confluentCloudBaseUrl, mockTopicTestServerUrl),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckTopicExists(fullTopicResourceLabel),
-					resource.TestCheckResourceAttr(fullTopicResourceLabel, "kafka_cluster", clusterId),
+					resource.TestCheckResourceAttr(fullTopicResourceLabel, "kafka_cluster.#", "1"),
+					resource.TestCheckResourceAttr(fullTopicResourceLabel, "kafka_cluster.0.id", clusterId),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "id", fmt.Sprintf("%s/%s", clusterId, topicName)),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "%", numberOfResourceAttributes),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "topic_name", topicName),
@@ -285,7 +287,9 @@ func testAccCheckTopicConfig(confluentCloudBaseUrl, mockServerUrl string) string
       endpoint = "%s"
     }
 	resource "confluentcloud_kafka_topic" "%s" {
-	  kafka_cluster = "%s"
+	  kafka_cluster {
+        id = "%s"
+      }
 	
 	  topic_name = "%s"
 	  partitions_count = "%d"
@@ -310,7 +314,9 @@ func testAccCheckTopicUpdatedConfig(confluentCloudBaseUrl, mockServerUrl string)
       endpoint = "%s"
     }
 	resource "confluentcloud_kafka_topic" "%s" {
-	  kafka_cluster = "%s"
+	  kafka_cluster {
+        id = "%s"
+      }
 	
 	  topic_name = "%s"
 	  partitions_count = "%d"

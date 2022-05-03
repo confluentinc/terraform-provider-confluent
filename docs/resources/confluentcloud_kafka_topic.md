@@ -32,7 +32,9 @@ resource "confluentcloud_kafka_cluster" "basic-cluster" {
 }
 
 resource "confluentcloud_kafka_topic" "orders" {
-  kafka_cluster      = confluentcloud_kafka_cluster.basic-cluster.id
+  kafka_cluster {
+    id = confluentcloud_kafka_cluster.basic-cluster.id
+  }
   topic_name         = "orders"
   partitions_count   = 4
   http_endpoint      = confluentcloud_kafka_cluster.basic-cluster.http_endpoint
@@ -53,8 +55,9 @@ resource "confluentcloud_kafka_topic" "orders" {
 
 The following arguments are supported:
 
-- `kafka_cluster` - (Required String) The ID of the Kafka cluster, for example, `lkc-abc123`.
-- `topic_name` - (Required String) The name of the topic, for example, `orders-1`. The topic name can be up to 255 characters in length and can contain only alphanumeric characters, hyphens, and underscores.
+- `kafka_cluster` - (Required Configuration Block) supports the following:
+    - `id` - (Required String) The ID of the Kafka cluster, for example, `lkc-abc123`.
+- `topic_name` - (Required String) The name of the topic, for example, `orders-1`. The topic name can be up to 255 characters in length, and can include the following characters: a-z, A-Z, 0-9, . (dot), _ (underscore), and - (dash). As a best practice, we recommend against using any personally identifiable information (PII) when naming your topic.
 - `http_endpoint` - (Required String) The REST endpoint of the Kafka cluster, for example, `https://pkc-00000.us-central1.gcp.confluent.cloud:443`).
 - `credentials` (Required Configuration Block) supports the following:
     - `key` - (Required String) The Kafka API Key.
@@ -65,7 +68,7 @@ The following arguments are supported:
 -> **Note:** To rotate a Kafka API key, create a new Kafka API key, update `credentials` block in all configuration files to use the new Kafka API key, run `terraform apply`, and remove the old Kafka API key.
 
 - `partitions_count` - (Optional Number) The number of partitions to create in the topic. Defaults to `6`.
-- `config` - (Optional String Map) The custom topic settings to set:
+- `config` - (Optional Map) The custom topic settings to set:
     - `name` - (Required String) The configuration name, for example, `cleanup.policy`.
     - `value` - (Required String) The configuration value, for example, `compact`.
 
@@ -80,13 +83,13 @@ The following arguments are supported:
 
 In addition to the preceding arguments, the following attributes are exported:
 
-- `id` - (String) The ID of the Kafka topic, in the format `<Kafka cluster ID>/<Kafka Topic name>`, for example, `lkc-abc123/orders-1`.
+- `id` - (Required String) The ID of the Kafka topic, in the format `<Kafka cluster ID>/<Kafka Topic name>`, for example, `lkc-abc123/orders-1`.
 
 ## Import
 
 -> **Note:** `KAFKA_API_KEY` (`credentials.key`), `KAFKA_API_SECRET` (`credentials.secret`), and `KAFKA_HTTP_ENDPOINT` (`http_endpoint`) environment variables must be set before importing a Kafka topic.
 
-Import Kafka topics by using the Kafka cluster ID and Kafka topic name in the format `<Kafka cluster ID>/<Kafka topic name>`, for example:
+You can import a Kafka topic by using the Kafka cluster ID and Kafka topic name in the format `<Kafka cluster ID>/<Kafka topic name>`, for example:
 
 ```shell
 $ export KAFKA_API_KEY="<kafka_api_key>"

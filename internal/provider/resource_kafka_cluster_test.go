@@ -37,6 +37,7 @@ const (
 	kafkaScenarioName                = "confluentcloud_kafka Resource Lifecycle"
 	kafkaClusterId                   = "lkc-19ynpv"
 	kafkaEnvId                       = "env-1jrymj"
+	kafkaNetworkId                   = "n-123abc"
 	kafkaDisplayName                 = "TestCluster"
 	kafkaApiVersion                  = "cmk/v2"
 	kafkaKind                        = "Cluster"
@@ -178,6 +179,8 @@ func TestAccCluster(t *testing.T) {
 					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "standard.#", "0"),
 					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "environment.#", "1"),
 					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "environment.0.id", kafkaEnvId),
+					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "network.#", "1"),
+					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "network.0.id", kafkaNetworkId),
 					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "http_endpoint", kafkaHttpEndpoint),
 					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "rbac_crn", kafkaRbacCrn),
 				),
@@ -198,6 +201,8 @@ func TestAccCluster(t *testing.T) {
 					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "display_name", kafkaDisplayName),
 					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "environment.#", "1"),
 					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "environment.0.id", kafkaEnvId),
+					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "network.#", "1"),
+					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "network.0.id", kafkaNetworkId),
 					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "http_endpoint", kafkaHttpEndpoint),
 					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "rbac_crn", kafkaRbacCrn),
 				),

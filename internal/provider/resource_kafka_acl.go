@@ -16,13 +16,14 @@ package provider
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/antihax/optional"
 	kafkarestv3 "github.com/confluentinc/ccloud-sdk-go-v2/kafkarest/v3"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"log"
 	"net/http"
 	"regexp"
 	"strings"
@@ -84,7 +85,7 @@ func kafkaAclResource() *schema.Resource {
 			StateContext: kafkaAclImport,
 		},
 		Schema: map[string]*schema.Schema{
-			paramClusterId: clusterIdSchema(),
+			paramKafkaCluster: kafkaClusterBlockSchema(),
 			paramResourceType: {
 				Type:         schema.TypeString,
 				Required:     true,
@@ -110,12 +111,11 @@ func kafkaAclResource() *schema.Resource {
 				Required:     true,
 				ForceNew:     true,
 				Description:  "The principal for the ACL.",
-				ValidateFunc: validation.StringMatch(regexp.MustCompile("^User:sa-"), "the principal must start with 'User:sa-'. Follow the upgrade guide at https://registry.terraform.io/providers/confluentinc/confluentcloud/latest/docs/guides/upgrade-guide-0.4.0 to upgrade to the latest version of Terraform Provider for Confluent Cloud"),
+				ValidateFunc: validation.StringMatch(regexp.MustCompile("^User:(sa|u)-"), "the principal must start with 'User:sa-' or 'User:u-'. Follow the upgrade guide at https://registry.terraform.io/providers/confluentinc/confluentcloud/latest/docs/guides/upgrade-guide-0.4.0 to upgrade to the latest version of Terraform Provider for Confluent Cloud"),
 			},
 			paramHost: {
 				Type:        schema.TypeString,
-				Optional:    true,
-				Default:     "*",
+				Required:    true,
 				ForceNew:    true,
 				Description: "The host for the ACL.",
 			},
@@ -134,35 +134,41 @@ func kafkaAclResource() *schema.Resource {
 				ValidateFunc: validation.StringInSlice(acceptedPermissions, false),
 			},
 			paramHttpEndpoint: {
-				Type:        schema.TypeString,
-				Required:    true,
-				ForceNew:    true,
-				Description: "The REST endpoint of the Kafka cluster (e.g., `https://pkc-00000.us-central1.gcp.confluent.cloud:443`).",
+				Type:         schema.TypeString,
+				Required:     true,
+				ForceNew:     true,
+				Description:  "The REST endpoint of the Kafka cluster (e.g., `https://pkc-00000.us-central1.gcp.confluent.cloud:443`).",
+				ValidateFunc: validation.StringMatch(regexp.MustCompile("^http"), "the REST endpoint must start with 'https://'"),
 			},
 			paramCredentials: credentialsSchema(),
+		},
+		SchemaVersion: 1,
+		StateUpgraders: []schema.StateUpgrader{
+			{
+				Type:    kafkaClusterBlockV0().CoreConfigSchema().ImpliedType(),
+				Upgrade: kafkaClusterBlockStateUpgradeV0,
+				Version: 0,
+			},
 		},
 	}
 }
 
 func kafkaAclCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	httpEndpoint := d.Get(paramHttpEndpoint).(string)
-	clusterId := d.Get(paramClusterId).(string)
-	clusterApiKey, clusterApiSecret, err := extractClusterApiKeyAndApiSecret(d)
-	if err != nil {
-		return createDiagnosticsWithDetails(err)
-	}
+	clusterId := extractStringValueFromBlock(d, paramKafkaCluster, paramId)
+	clusterApiKey, clusterApiSecret := extractClusterApiKeyAndApiSecret(d)
 	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(httpEndpoint, clusterId, clusterApiKey, clusterApiSecret)
 	acl, err := extractAcl(d)
 	if err != nil {
-		return createDiagnosticsWithDetails(err)
+		return diag.FromErr(createDescriptiveError(err))
 	}
 	// APIF-2038: Kafka REST API only accepts integer ID at the moment
 	c := meta.(*Client)
 	principalWithIntegerId, err := principalWithResourceIdToPrincipalWithIntegerId(c, acl.Principal)
 	if err != nil {
-		return createDiagnosticsWithDetails(err)
+		return diag.FromErr(createDescriptiveError(err))
 	}
-	kafkaAclRequestData := kafkarestv3.CreateAclRequestData{
+	createAclRequest := kafkarestv3.CreateAclRequestData{
 		ResourceType: acl.ResourceType,
 		ResourceName: acl.ResourceName,
 		PatternType:  acl.PatternType,
@@ -171,19 +177,24 @@ func kafkaAclCreate(ctx context.Context, d *schema.ResourceData, meta interface{
 		Operation:    acl.Operation,
 		Permission:   acl.Permission,
 	}
+	createAclRequestJson, err := json.Marshal(createAclRequest)
+	if err != nil {
+		return diag.Errorf("error creating Kafka ACLs: error marshaling %#v to json: %s", createAclRequest, createDescriptiveError(err))
+	}
+	tflog.Debug(ctx, fmt.Sprintf("Creating new Kafka ACLs: %s", createAclRequestJson))
 
-	resp, err := executeKafkaAclCreate(ctx, kafkaRestClient, kafkaAclRequestData)
+	_, err = executeKafkaAclCreate(ctx, kafkaRestClient, createAclRequest)
 
 	if err != nil {
-		log.Printf("[ERROR] Kafka ACL create failed %v, %v, %s", kafkaAclRequestData, resp, err)
-		return createDiagnosticsWithDetails(err)
+		return diag.Errorf("error creating Kafka ACLs: %s", createDescriptiveError(err))
 	}
 	kafkaAclId := createKafkaAclId(kafkaRestClient.clusterId, acl)
 	d.SetId(kafkaAclId)
-	log.Printf("[DEBUG] Created kafka ACL %s", kafkaAclId)
 
 	// https://github.com/confluentinc/terraform-provider-confluentcloud/issues/40#issuecomment-1048782379
 	time.Sleep(kafkaRestAPIWaitAfterCreate)
+
+	tflog.Debug(ctx, fmt.Sprintf("Finished creating Kafka ACLs %q", d.Id()), map[string]interface{}{kafkaAclLoggingKey: d.Id()})
 
 	return kafkaAclRead(ctx, d, meta)
 }
@@ -196,26 +207,23 @@ func executeKafkaAclCreate(ctx context.Context, c *KafkaRestClient, requestData 
 }
 
 func kafkaAclDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	log.Printf("[INFO] Kafka ACL delete for %s", d.Id())
+	tflog.Debug(ctx, fmt.Sprintf("Deleting Kafka ACLs %q", d.Id()), map[string]interface{}{kafkaAclLoggingKey: d.Id()})
 
 	httpEndpoint := d.Get(paramHttpEndpoint).(string)
-	clusterId := d.Get(paramClusterId).(string)
-	clusterApiKey, clusterApiSecret, err := extractClusterApiKeyAndApiSecret(d)
-	if err != nil {
-		return createDiagnosticsWithDetails(err)
-	}
+	clusterId := extractStringValueFromBlock(d, paramKafkaCluster, paramId)
+	clusterApiKey, clusterApiSecret := extractClusterApiKeyAndApiSecret(d)
 	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(httpEndpoint, clusterId, clusterApiKey, clusterApiSecret)
 
 	acl, err := extractAcl(d)
 	if err != nil {
-		return createDiagnosticsWithDetails(err)
+		return diag.FromErr(createDescriptiveError(err))
 	}
 
 	// APIF-2038: Kafka REST API only accepts integer ID at the moment
 	client := meta.(*Client)
 	principalWithIntegerId, err := principalWithResourceIdToPrincipalWithIntegerId(client, acl.Principal)
 	if err != nil {
-		return createDiagnosticsWithDetails(err)
+		return diag.FromErr(createDescriptiveError(err))
 	}
 
 	opts := &kafkarestv3.DeleteKafkaV3AclsOpts{
@@ -231,8 +239,10 @@ func kafkaAclDelete(ctx context.Context, d *schema.ResourceData, meta interface{
 	_, _, err = kafkaRestClient.apiClient.ACLV3Api.DeleteKafkaV3Acls(kafkaRestClient.apiContext(ctx), kafkaRestClient.clusterId, opts)
 
 	if err != nil {
-		return diag.Errorf("error deleting kafka ACL (%s), err: %s", d.Id(), err)
+		return diag.Errorf("error deleting Kafka ACLs %q: %s", d.Id(), createDescriptiveError(err))
 	}
+
+	tflog.Debug(ctx, fmt.Sprintf("Finished deleting Kafka ACLs %q", d.Id()), map[string]interface{}{kafkaAclLoggingKey: d.Id()})
 
 	return nil
 }
@@ -242,19 +252,16 @@ func executeKafkaAclRead(ctx context.Context, c *KafkaRestClient, opts *kafkares
 }
 
 func kafkaAclRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	log.Printf("[INFO] Kafka ACL read for %s", d.Id())
+	tflog.Debug(ctx, fmt.Sprintf("Reading Kafka ACLs %q", d.Id()), map[string]interface{}{kafkaAclLoggingKey: d.Id()})
 
 	httpEndpoint := d.Get(paramHttpEndpoint).(string)
-	clusterId := d.Get(paramClusterId).(string)
-	clusterApiKey, clusterApiSecret, err := extractClusterApiKeyAndApiSecret(d)
-	if err != nil {
-		return createDiagnosticsWithDetails(err)
-	}
+	clusterId := extractStringValueFromBlock(d, paramKafkaCluster, paramId)
+	clusterApiKey, clusterApiSecret := extractClusterApiKeyAndApiSecret(d)
 	client := meta.(*Client)
 	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(httpEndpoint, clusterId, clusterApiKey, clusterApiSecret)
 	acl, err := extractAcl(d)
 	if err != nil {
-		return createDiagnosticsWithDetails(err)
+		return diag.FromErr(createDescriptiveError(err))
 	}
 
 	// APIF-2043: TEMPORARY CODE for v0.x.0 -> v0.4.0 migration
@@ -262,14 +269,16 @@ func kafkaAclRead(ctx context.Context, d *schema.ResourceData, meta interface{})
 	// This hack is necessary since terraform plan will use the principal's value (integerId) from terraform.state
 	// instead of using the new provided resourceId from main.tf (the user will be forced to replace integerId with resourceId
 	// that we have an input validation for using "User:sa-" for principal attribute.
-	if !strings.HasPrefix(acl.Principal, "User:sa-") {
+	if !(strings.HasPrefix(acl.Principal, "User:sa-") || strings.HasPrefix(acl.Principal, "User:u-")) {
 		d.SetId("")
 		return nil
 	}
 
-	_, err = readAndSetAclResourceConfigurationArguments(ctx, d, client, kafkaRestClient, acl)
+	_, err = readAclAndSetAttributes(ctx, d, client, kafkaRestClient, acl)
 
-	return createDiagnosticsWithDetails(err)
+	tflog.Debug(ctx, fmt.Sprintf("Finished reading Kafka ACLs %q", d.Id()), map[string]interface{}{kafkaAclLoggingKey: d.Id()})
+
+	return diag.FromErr(createDescriptiveError(err))
 }
 
 func createKafkaAclId(clusterId string, acl Acl) string {
@@ -284,7 +293,7 @@ func createKafkaAclId(clusterId string, acl Acl) string {
 	}, "#"))
 }
 
-func readAndSetAclResourceConfigurationArguments(ctx context.Context, d *schema.ResourceData, client *Client, c *KafkaRestClient, acl Acl) ([]*schema.ResourceData, error) {
+func readAclAndSetAttributes(ctx context.Context, d *schema.ResourceData, client *Client, c *KafkaRestClient, acl Acl) ([]*schema.ResourceData, error) {
 	// APIF-2038: Kafka REST API only accepts integer ID at the moment
 	principalWithIntegerId, err := principalWithResourceIdToPrincipalWithIntegerId(client, acl.Principal)
 	if err != nil {
@@ -303,13 +312,11 @@ func readAndSetAclResourceConfigurationArguments(ctx context.Context, d *schema.
 
 	remoteAcls, resp, err := executeKafkaAclRead(ctx, c, opts)
 	if err != nil {
-		log.Printf("[ERROR] Kafka ACL get failed for id %s, %v, %s", acl, resp, err)
+		tflog.Warn(ctx, fmt.Sprintf("Error reading Kafka ACLs %q: %s", d.Id(), createDescriptiveError(err)), map[string]interface{}{kafkaAclLoggingKey: d.Id()})
 
-		// https://learn.hashicorp.com/tutorials/terraform/provider-setup
-		isResourceNotFound := HasStatusNotFound(resp)
+		isResourceNotFound := ResponseHasExpectedStatusCode(resp, http.StatusNotFound)
 		if isResourceNotFound && !d.IsNewResource() {
-			log.Printf("[WARN] Kafka ACL with id=%s is not found", d.Id())
-			// If the resource isn't available, Terraform destroys the resource in state.
+			tflog.Warn(ctx, fmt.Sprintf("Removing Kafka ACLs %q in TF state because Kafka ACLs could not be found on the server", d.Id()), map[string]interface{}{kafkaAclLoggingKey: d.Id()})
 			d.SetId("")
 			return nil, nil
 		}
@@ -317,12 +324,19 @@ func readAndSetAclResourceConfigurationArguments(ctx context.Context, d *schema.
 		return nil, err
 	}
 	if len(remoteAcls.Data) == 0 {
-		return nil, fmt.Errorf("no Kafka ACLs were matched for id=%s", d.Id())
+		return nil, fmt.Errorf("error reading Kafka ACLs %q: no Kafka ACLs were matched", d.Id())
 	} else if len(remoteAcls.Data) > 1 {
-		return nil, fmt.Errorf("multiple Kafka ACLs were matched for id=%s: %v", d.Id(), remoteAcls.Data)
+		// TODO: use remoteAcls.Data
+		return nil, fmt.Errorf("error reading Kafka ACLs %q: multiple Kafka ACLs were matched", d.Id())
 	}
 	matchedAcl := remoteAcls.Data[0]
-	if err := d.Set(paramClusterId, c.clusterId); err != nil {
+	matchedAclJson, err := json.Marshal(matchedAcl)
+	if err != nil {
+		return nil, fmt.Errorf("error reading Kafka ACLs: error marshaling %#v to json: %s", matchedAcl, createDescriptiveError(err))
+	}
+	tflog.Debug(ctx, fmt.Sprintf("Fetched Kafka ACLs %q: %s", d.Id(), matchedAclJson), map[string]interface{}{kafkaAclLoggingKey: d.Id()})
+
+	if err := setStringAttributeInListBlockOfSizeOne(paramKafkaCluster, paramId, c.clusterId, d); err != nil {
 		return nil, err
 	}
 	if err := d.Set(paramResourceType, matchedAcl.ResourceType); err != nil {
@@ -354,11 +368,12 @@ func readAndSetAclResourceConfigurationArguments(ctx context.Context, d *schema.
 		return nil, err
 	}
 	d.SetId(createKafkaAclId(c.clusterId, acl))
-	return []*schema.ResourceData{d}, err
+
+	return []*schema.ResourceData{d}, nil
 }
 
 func kafkaAclImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	log.Printf("[INFO] Kafka ACL import for %s", d.Id())
+	tflog.Debug(ctx, fmt.Sprintf("Importing Kafka ACLs %q", d.Id()), map[string]interface{}{kafkaAclLoggingKey: d.Id()})
 
 	kafkaImportEnvVars, err := checkEnvironmentVariablesForKafkaImportAreSet()
 	if err != nil {
@@ -370,7 +385,7 @@ func kafkaAclImport(ctx context.Context, d *schema.ResourceData, meta interface{
 	parts := strings.Split(clusterIdAndSerializedAcl, "/")
 
 	if len(parts) != 2 {
-		return nil, fmt.Errorf("invalid format for kafka ACL import: expected '<lkc ID>/<resource type>#<resource name>#<pattern type>#<principal>#<host>#<operation>#<permission>'")
+		return nil, fmt.Errorf("error importing Kafka ACLs: invalid format: expected '<lkc ID>/<resource type>#<resource name>#<pattern type>#<principal>#<host>#<operation>#<permission>'")
 	}
 
 	clusterId := parts[0]
@@ -384,7 +399,13 @@ func kafkaAclImport(ctx context.Context, d *schema.ResourceData, meta interface{
 	client := meta.(*Client)
 	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(kafkaImportEnvVars.kafkaHttpEndpoint, clusterId, kafkaImportEnvVars.kafkaApiKey, kafkaImportEnvVars.kafkaApiSecret)
 
-	return readAndSetAclResourceConfigurationArguments(ctx, d, client, kafkaRestClient, acl)
+	// Mark resource as new to avoid d.Set("") when getting 404
+	d.MarkNewResource()
+	if _, err := readAclAndSetAttributes(ctx, d, client, kafkaRestClient, acl); err != nil {
+		return nil, fmt.Errorf("error importing Kafka ACLs %q: %s", d.Id(), createDescriptiveError(err))
+	}
+	tflog.Debug(ctx, fmt.Sprintf("Finished importing Kafka ACLs %q", d.Id()), map[string]interface{}{kafkaAclLoggingKey: d.Id()})
+	return []*schema.ResourceData{d}, nil
 }
 
 func deserializeAcl(serializedAcl string) (Acl, error) {
@@ -423,7 +444,7 @@ func deserializeAcl(serializedAcl string) (Acl, error) {
 
 func kafkaAclUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	if d.HasChangesExcept(paramCredentials) {
-		return diag.Errorf("only %s block can be updated for a Kafka ACL", paramCredentials)
+		return diag.Errorf("error updating Kafka ACLs %q: only %q block can be updated for Kafka ACLs", d.Id(), paramCredentials)
 	}
 	return kafkaAclRead(ctx, d, meta)
 }

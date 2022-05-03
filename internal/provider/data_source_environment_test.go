@@ -34,6 +34,7 @@ const (
 	environmentId                    = "env-q2opmd"
 	environmentDataSourceDisplayName = "test_env_display_name"
 	environmentDataSourceLabel       = "test_env_data_source_label"
+	environmentDataSourceEndpoint    = "crn://confluent.cloud/organizations=foo/environments=env-q2opmd"
 )
 
 func TestAccDataSourceEnvironment(t *testing.T) {
@@ -109,6 +110,7 @@ func TestAccDataSourceEnvironment(t *testing.T) {
 					testAccCheckEnvironmentExists(fmt.Sprintf("data.confluentcloud_environment.%s", environmentDataSourceLabel)),
 					resource.TestCheckResourceAttr(fmt.Sprintf("data.confluentcloud_environment.%s", environmentDataSourceLabel), paramId, environmentId),
 					resource.TestCheckResourceAttr(fmt.Sprintf("data.confluentcloud_environment.%s", environmentDataSourceLabel), paramDisplayName, environmentDataSourceDisplayName),
+					resource.TestCheckResourceAttr(fmt.Sprintf("data.confluentcloud_environment.%s", environmentDataSourceLabel), paramResourceName, environmentDataSourceEndpoint),
 				),
 			},
 		},

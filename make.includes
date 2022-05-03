@@ -3,6 +3,7 @@ DEFAULT_BUMP := patch
 
 include ./mk-include/cc-begin.mk
 include ./mk-include/cc-semver.mk
+include ./mk-include/cc-semaphore.mk
 include ./mk-include/cc-go.mk
 include ./mk-include/cc-vault.mk
 include ./mk-include/cc-end.mk

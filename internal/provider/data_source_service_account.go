@@ -16,10 +16,20 @@ package provider
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	v2 "github.com/confluentinc/ccloud-sdk-go-v2/iam/v2"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"log"
+	"net/http"
+)
+
+const (
+	// The maximum allowable page size - 1 (to avoid off-by-one errors) when listing service accounts using IAM V2 API
+	// https://docs.confluent.io/cloud/current/api.html#operation/listIamV2ServiceAccounts
+	listServiceAccountsPageSize = 99
+	pageTokenQueryParameter     = "page_token"
 )
 
 func serviceAccountDataSource() *schema.Resource {
@@ -73,64 +83,109 @@ func serviceAccountDataSourceRead(ctx context.Context, d *schema.ResourceData, m
 	} else if displayName != "" {
 		return serviceAccountDataSourceReadUsingDisplayName(ctx, d, meta, displayName)
 	} else {
-		return diag.Errorf("error creating confluentcloud_service_account data source: one of \"%s\" or \"%s\" must be specified but they're both empty", paramId, paramDisplayName)
+		return diag.Errorf("error reading Service Account: exactly one of %q or %q must be specified but they're both empty", paramId, paramDisplayName)
 	}
 }
 
 func serviceAccountDataSourceReadUsingDisplayName(ctx context.Context, d *schema.ResourceData, meta interface{}, displayName string) diag.Diagnostics {
-	log.Printf("[INFO] Service account read using \"%s\"=%s", paramDisplayName, displayName)
+	tflog.Debug(ctx, fmt.Sprintf("Reading Service Account %q=%q", paramDisplayName, displayName))
 
-	c := meta.(*Client)
-	serviceAccountList, resp, err := c.iamClient.ServiceAccountsIamV2Api.ListIamV2ServiceAccounts(c.iamApiContext(ctx)).Execute()
+	client := meta.(*Client)
+	serviceAccounts, err := loadServiceAccounts(ctx, client)
 	if err != nil {
-		log.Printf("[ERROR] Service accounts get failed %v, %s", resp, err)
-		return createDiagnosticsWithDetails(err)
+		return diag.Errorf("error reading Service Account %q: %s", displayName, createDescriptiveError(err))
 	}
-	if orgHasMultipleSAsWithTargetDisplayName(serviceAccountList, displayName) {
-		return diag.Errorf("There are multiple service accounts with display_name=%s", displayName)
+	if orgHasMultipleSAsWithTargetDisplayName(serviceAccounts, displayName) {
+		return diag.Errorf("error reading Service Account: there are multiple Service Accounts with %q=%q", paramDisplayName, displayName)
 	}
-
-	for _, serviceAccount := range serviceAccountList.GetData() {
+	for _, serviceAccount := range serviceAccounts {
 		if serviceAccount.GetDisplayName() == displayName {
-			return setServiceAccountDataSourceAttributes(d, serviceAccount)
+			if _, err := setServiceAccountAttributes(d, serviceAccount); err != nil {
+				return diag.FromErr(createDescriptiveError(err))
+			}
+			return nil
 		}
 	}
 
-	return diag.Errorf("The service account with display_name=%s was not found", displayName)
+	return diag.Errorf("error reading Service Account: Service Account with %q=%q was not found", paramDisplayName, displayName)
+}
+
+func loadServiceAccounts(ctx context.Context, c *Client) ([]v2.IamV2ServiceAccount, error) {
+	serviceAccounts := make([]v2.IamV2ServiceAccount, 0)
+
+	allServiceAccountsAreCollected := false
+	pageToken := ""
+	for !allServiceAccountsAreCollected {
+		serviceAccountPageList, _, err := executeListServiceAccounts(ctx, c, pageToken)
+		if err != nil {
+			return nil, fmt.Errorf("error reading Service Accounts: %s", createDescriptiveError(err))
+		}
+		serviceAccounts = append(serviceAccounts, serviceAccountPageList.GetData()...)
+
+		// nextPageUrlStringNullable is nil for the last page
+		nextPageUrlStringNullable := serviceAccountPageList.GetMetadata().Next
+
+		if nextPageUrlStringNullable.IsSet() {
+			nextPageUrlString := *nextPageUrlStringNullable.Get()
+			pageToken, err = extractPageToken(nextPageUrlString)
+			if err != nil {
+				return nil, fmt.Errorf("error reading Service Accounts: %s", createDescriptiveError(err))
+			}
+		} else {
+			allServiceAccountsAreCollected = true
+		}
+	}
+	return serviceAccounts, nil
+}
+
+func executeListServiceAccounts(ctx context.Context, c *Client, pageToken string) (v2.IamV2ServiceAccountList, *http.Response, error) {
+	if pageToken != "" {
+		return c.iamClient.ServiceAccountsIamV2Api.ListIamV2ServiceAccounts(c.iamApiContext(ctx)).PageSize(listServiceAccountsPageSize).PageToken(pageToken).Execute()
+	} else {
+		return c.iamClient.ServiceAccountsIamV2Api.ListIamV2ServiceAccounts(c.iamApiContext(ctx)).PageSize(listServiceAccountsPageSize).Execute()
+	}
 }
 
 func serviceAccountDataSourceReadUsingId(ctx context.Context, d *schema.ResourceData, meta interface{}, serviceAccountId string) diag.Diagnostics {
-	log.Printf("[INFO] Service account read using \"%s\"=%s", paramId, serviceAccountId)
+	tflog.Debug(ctx, fmt.Sprintf("Reading Service Account %q=%q", paramId, serviceAccountId), map[string]interface{}{serviceAccountLoggingKey: serviceAccountId})
 
 	c := meta.(*Client)
-	serviceAccount, resp, err := executeServiceAccountRead(c.iamApiContext(ctx), c, serviceAccountId)
+	serviceAccount, _, err := executeServiceAccountRead(c.iamApiContext(ctx), c, serviceAccountId)
 	if err != nil {
-		log.Printf("[ERROR] Service account get failed for id %s, %v, %s", serviceAccountId, resp, err)
-		return createDiagnosticsWithDetails(err)
+		return diag.Errorf("error reading Service Account %q: %s", serviceAccountId, createDescriptiveError(err))
 	}
-	return setServiceAccountDataSourceAttributes(d, serviceAccount)
-}
+	serviceAccountJson, err := json.Marshal(serviceAccount)
+	if err != nil {
+		return diag.Errorf("error reading Service Account %q: error marshaling %#v to json: %s", serviceAccountId, serviceAccount, createDescriptiveError(err))
+	}
+	tflog.Debug(ctx, fmt.Sprintf("Fetched Service Account %q: %s", serviceAccountId, serviceAccountJson), map[string]interface{}{serviceAccountLoggingKey: serviceAccountId})
 
-func setServiceAccountDataSourceAttributes(d *schema.ResourceData, serviceAccount v2.IamV2ServiceAccount) diag.Diagnostics {
-	if err := d.Set(paramApiVersion, serviceAccount.GetApiVersion()); err != nil {
-		return createDiagnosticsWithDetails(err)
+	if _, err := setServiceAccountAttributes(d, serviceAccount); err != nil {
+		return diag.FromErr(createDescriptiveError(err))
 	}
-	if err := d.Set(paramKind, serviceAccount.GetKind()); err != nil {
-		return createDiagnosticsWithDetails(err)
-	}
-	if err := d.Set(paramDisplayName, serviceAccount.GetDisplayName()); err != nil {
-		return createDiagnosticsWithDetails(err)
-	}
-	if err := d.Set(paramDescription, serviceAccount.GetDescription()); err != nil {
-		return createDiagnosticsWithDetails(err)
-	}
-	d.SetId(serviceAccount.GetId())
 	return nil
 }
 
-func orgHasMultipleSAsWithTargetDisplayName(serviceAccountList v2.IamV2ServiceAccountList, displayName string) bool {
+func setServiceAccountAttributes(d *schema.ResourceData, serviceAccount v2.IamV2ServiceAccount) (*schema.ResourceData, error) {
+	if err := d.Set(paramApiVersion, serviceAccount.GetApiVersion()); err != nil {
+		return nil, createDescriptiveError(err)
+	}
+	if err := d.Set(paramKind, serviceAccount.GetKind()); err != nil {
+		return nil, createDescriptiveError(err)
+	}
+	if err := d.Set(paramDisplayName, serviceAccount.GetDisplayName()); err != nil {
+		return nil, createDescriptiveError(err)
+	}
+	if err := d.Set(paramDescription, serviceAccount.GetDescription()); err != nil {
+		return nil, createDescriptiveError(err)
+	}
+	d.SetId(serviceAccount.GetId())
+	return d, nil
+}
+
+func orgHasMultipleSAsWithTargetDisplayName(serviceAccounts []v2.IamV2ServiceAccount, displayName string) bool {
 	var numberOfServiceAccountsWithTargetDisplayName = 0
-	for _, serviceAccount := range serviceAccountList.GetData() {
+	for _, serviceAccount := range serviceAccounts {
 		if serviceAccount.GetDisplayName() == displayName {
 			numberOfServiceAccountsWithTargetDisplayName += 1
 		}

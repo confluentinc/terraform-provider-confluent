@@ -1,0 +1,10 @@
+{
+  "errors": [
+    {
+      "id": "95cf8748227e30bc94d2ca351f96a34c",
+      "status": "404",
+      "detail": "The private-link-access pla-3prjy6 was not found.",
+      "source": {}
+    }
+  ]
+}

@@ -14,6 +14,7 @@
 To compile the provider, run `make build`. This will build the provider and put the provider binary in the `bin` directory.
 
 ```shell
+$ make deps
 $ make build
 ```
 
@@ -38,5 +39,9 @@ provider_installation {
   dev_overrides {
     "terraform.confluent.io/confluentinc/confluentcloud" = "/Users/{REPLACE WITH YOUR PATH}/terraform-provider-confluentcloud/bin/darwin-amd64"
   }
+
+  # Install all other providers directly from their origin provider
+  # registries as normal. If you omit this, no other providers will be available.
+  direct {}
 }
 ```

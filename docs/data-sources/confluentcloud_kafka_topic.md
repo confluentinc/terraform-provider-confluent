@@ -16,7 +16,9 @@ description: |-
 
 ```terraform
 data "confluentcloud_kafka_topic" "orders" {
-  kafka_cluster = confluentcloud_kafka_cluster.basic-cluster.id
+  kafka_cluster {
+    id = confluentcloud_kafka_cluster.basic-cluster.id
+  }
 
   topic_name    = "orders"
   http_endpoint = confluentcloud_kafka_cluster.basic-cluster.http_endpoint
@@ -38,7 +40,8 @@ output "config" {
 
 The following arguments are supported:
 
-- `kafka_cluster` - (Required String) The ID of the Kafka cluster, for example, `lkc-abc123`.
+- `kafka_cluster` - (Required Configuration Block) supports the following:
+  - `id` - (Required String) The ID of the Kafka cluster, for example, `lkc-abc123`.
 - `topic_name` - (Required String) The name of the topic, for example, `orders-1`. The topic name can be up to 255 characters in length and can contain only alphanumeric characters, hyphens, and underscores.
 - `http_endpoint` - (Required String) The REST endpoint of the Kafka cluster, for example, `https://pkc-00000.us-central1.gcp.confluent.cloud:443`).
 - `credentials` (Required Configuration Block) supports the following:
@@ -53,10 +56,10 @@ The following arguments are supported:
 
 In addition to the preceding arguments, the following attributes are exported:
 
-- `id` - (String) The ID of the Kafka topic, in the format `<Kafka cluster ID>/<Kafka Topic name>`, for example, `lkc-abc123/orders-1`.
-- `partitions_count` - (Number) The number of partitions to create in the topic. Defaults to `6`.
-- `config` - (String Map) The custom topic settings:
-    - `name` - (String) The setting name, for example, `cleanup.policy`.
-    - `value` - (String) The setting value, for example, `compact`.
+- `id` - (Required String) The ID of the Kafka topic, in the format `<Kafka cluster ID>/<Kafka Topic name>`, for example, `lkc-abc123/orders-1`.
+- `partitions_count` - (Required Number) The number of partitions to create in the topic. Defaults to `6`.
+- `config` - (Optional Map) The custom topic settings:
+    - `name` - (Required String) The setting name, for example, `cleanup.policy`.
+    - `value` - (Required String) The setting value, for example, `compact`.
 
 -> **Note:** For more information on the topic settings, see [Custom topic settings for all cluster types](https://docs.confluent.io/cloud/current/clusters/broker-config.html#custom-topic-settings-for-all-cluster-types).

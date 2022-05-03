@@ -16,19 +16,17 @@ package provider
 
 import (
 	"context"
+	"fmt"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"log"
 )
 
 func kafkaTopicDataSource() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: kafkaTopicDataSourceRead,
 		Schema: map[string]*schema.Schema{
-			paramClusterId: {
-				Type:     schema.TypeString,
-				Required: true,
-			},
+			paramKafkaCluster: kafkaClusterBlockDataSourceSchema(),
 			paramTopicName: {
 				Type:     schema.TypeString,
 				Required: true,
@@ -55,50 +53,37 @@ func kafkaTopicDataSource() *schema.Resource {
 
 func kafkaTopicDataSourceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	httpEndpoint := d.Get(paramHttpEndpoint).(string)
-	clusterId := d.Get(paramClusterId).(string)
-	clusterApiKey, clusterApiSecret, err := extractClusterApiKeyAndApiSecret(d)
-	if err != nil {
-		return createDiagnosticsWithDetails(err)
-	}
+	clusterId := extractStringValueFromBlock(d, paramKafkaCluster, paramId)
+	clusterApiKey, clusterApiSecret := extractClusterApiKeyAndApiSecret(d)
 	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(httpEndpoint, clusterId, clusterApiKey, clusterApiSecret)
 	topicName := d.Get(paramTopicName).(string)
-	log.Printf("[INFO] Service account read for %s", topicName)
+	tflog.Debug(ctx, fmt.Sprintf("Reading Kafka Topic %q", topicName))
 
-	err = executeKafkaTopicDataSourceRead(ctx, d, kafkaRestClient, topicName)
+	// Mark resource as new to avoid d.Set("") when getting 404
+	d.MarkNewResource()
 
-	return createDiagnosticsWithDetails(err)
+	if _, err := readTopicAndSetAttributes(ctx, d, kafkaRestClient, topicName); err != nil {
+		return diag.Errorf("error reading Kafka Topic %q: %s", topicName, createDescriptiveError(err))
+	}
+
+	tflog.Debug(ctx, fmt.Sprintf("Finished reading Kafka Topic %q", topicName))
+
+	return nil
 }
 
-// same as readAndSetTopicResourceConfigurationArguments but doesn't include resource deletion from TF state for 404
-// and doesn't include credentials.
-func executeKafkaTopicDataSourceRead(ctx context.Context, d *schema.ResourceData, c *KafkaRestClient, topicName string) error {
-	kafkaTopic, resp, err := c.apiClient.TopicV3Api.GetKafkaV3Topic(c.apiContext(ctx), c.clusterId, topicName)
-	if err != nil {
-		log.Printf("[ERROR] Kafka topic get failed for id %s, %v, %s", topicName, resp, err)
-		return err
+func kafkaClusterBlockDataSourceSchema() *schema.Schema {
+	return &schema.Schema{
+		Type: schema.TypeList,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramId: {
+					Type:     schema.TypeString,
+					Required: true,
+				},
+			},
+		},
+		Required: true,
+		MinItems: 1,
+		MaxItems: 1,
 	}
-	if err := d.Set(paramClusterId, kafkaTopic.ClusterId); err != nil {
-		return err
-	}
-	if err := d.Set(paramTopicName, kafkaTopic.TopicName); err != nil {
-		return err
-	}
-	if err := d.Set(paramPartitionsCount, kafkaTopic.PartitionsCount); err != nil {
-		return err
-	}
-
-	configs, err := loadTopicConfigs(ctx, d, c, topicName)
-	if err != nil {
-		return err
-	}
-	if err := d.Set(paramConfigs, configs); err != nil {
-		return err
-	}
-
-	if err := d.Set(paramHttpEndpoint, c.httpEndpoint); err != nil {
-		return err
-	}
-	kafkaTopicId := createKafkaTopicId(c.clusterId, topicName)
-	d.SetId(kafkaTopicId)
-	return nil
 }

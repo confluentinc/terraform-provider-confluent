@@ -1,0 +1,35 @@
+{
+  "api_version": "networking/v1",
+  "id": "pla-gz8rlg",
+  "kind": "PrivateLinkAccess",
+  "metadata": {
+    "created_at": "2022-04-12T06:55:04.039742Z",
+    "resource_name": "crn://confluent.cloud/organization=foo/environment=env-gz903/network=n-p8xo76/private-link-access=pla-gz8rlg",
+    "self": "https://api.confluent.cloud/networking/v1/private-link-accesses/pla-gz8rlg?environment=env-gz903",
+    "updated_at": "2022-04-12T06:55:04.039742Z"
+  },
+  "spec": {
+    "cloud": {
+      "kind": "networking.v1.AzurePrivateLinkAccess",
+      "subscription": "1234abcd-12ab-34cd-1234-123456abcdef"
+    },
+    "display_name": "prod-pl-use3",
+    "environment": {
+      "api_version": "org/v2",
+      "id": "env-gz903",
+      "kind": "Environment",
+      "related": "https://api.confluent.cloud/v2/environments/env-gz903",
+      "resource_name": "crn://confluent.cloud/organization=foo/environment=env-gz903"
+    },
+    "network": {
+      "api_version": "networking/v1",
+      "id": "n-p8xo76",
+      "kind": "Network",
+      "related": "https://api.confluent.cloud/networking/v1/networks/n-p8xo76?environment=env-gz903",
+      "resource_name": "crn://confluent.cloud/organization=foo/environment=env-gz903/network=n-p8xo76"
+    }
+  },
+  "status": {
+    "phase": "PROVISIONING"
+  }
+}

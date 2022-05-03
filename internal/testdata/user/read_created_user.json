@@ -1,0 +1,13 @@
+{
+  "api_version": "iam/v2",
+  "email": "test3@gmail.com",
+  "full_name": "Alex #3",
+  "id": "u-1jjv23",
+  "kind": "User",
+  "metadata": {
+    "created_at": "2021-12-10T12:13:06.81192Z",
+    "resource_name": "crn://confluent.cloud/user=u-1jjv23",
+    "self": "https://api.confluent.cloud/iam/v2/users/u-1jjv23",
+    "updated_at": "2022-01-10T21:49:56.484301Z"
+  }
+}

@@ -18,12 +18,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	cmk "github.com/confluentinc/ccloud-sdk-go-v2/cmk/v2"
+	cmk "github.com/confluentinc/ccloud-sdk-go-v2-internal/cmk/v2"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"log"
 	"net/http"
+	"regexp"
 	"strings"
 )
 
@@ -38,16 +39,19 @@ const (
 	paramBootStrapEndpoint    = "bootstrap_endpoint"
 	paramHttpEndpoint         = "http_endpoint"
 	paramCku                  = "cku"
+	paramEncryptionKey        = "encryption_key"
 	paramRbacCrn              = "rbac_crn"
 
-	stateInProgress = "in-progress"
-	stateDone       = "done"
-	stateFailed     = "FAILED"
-	stateUnknown    = "UNKNOWN"
+	stateInProgress = "IN_PROGRESS"
+	stateDone       = "DONE"
 
-	waitUntilProvisioned        = "PROVISIONED"
-	waitUntilBootstrapAvailable = "BOOTSTRAP_AVAILABLE"
-	waitUntilNone               = "NONE"
+	stateFailed        = "FAILED"
+	stateUnknown       = "UNKNOWN"
+	stateUnexpected    = "UNEXEPCTED"
+	stateProvisioned   = "PROVISIONED"
+	stateReady         = "READY"
+	stateProvisioning  = "PROVISIONING"
+	statePendingAccept = "PENDING_ACCEPT"
 
 	singleZone = "SINGLE_ZONE"
 	multiZone  = "MULTI_ZONE"
@@ -57,6 +61,7 @@ var acceptedAvailabilityZones = []string{singleZone, multiZone}
 var acceptedCloudProviders = []string{"AWS", "AZURE", "GCP"}
 var acceptedClusterTypes = []string{paramBasicCluster, paramStandardCluster, paramDedicatedCluster}
 var paramDedicatedCku = fmt.Sprintf("%s.0.%s", paramDedicatedCluster, paramCku)
+var paramDedicatedEncryptionKey = fmt.Sprintf("%s.0.%s", paramDedicatedCluster, paramEncryptionKey)
 
 func kafkaResource() *schema.Resource {
 	return &schema.Resource{
@@ -104,6 +109,7 @@ func kafkaResource() *schema.Resource {
 				ForceNew:    true,
 				Description: "The cloud service provider region where the Kafka cluster is running.",
 			},
+			paramNetwork:          optionalNetworkSchema(),
 			paramBasicCluster:     basicClusterSchema(),
 			paramStandardCluster:  standardClusterSchema(),
 			paramDedicatedCluster: dedicatedClusterSchema(),
@@ -125,6 +131,12 @@ func kafkaResource() *schema.Resource {
 			},
 			paramEnvironment: environmentSchema(),
 		},
+		Timeouts: &schema.ResourceTimeout{
+			// https://docs.confluent.io/cloud/current/clusters/cluster-types.html#provisioning-time
+			Create: schema.DefaultTimeout(getTimeoutFor(kafkaClusterTypeDedicated)),
+			// https://docs.confluent.io/cloud/current/clusters/cluster-types.html#resizing-time
+			Update: schema.DefaultTimeout(getTimeoutFor(kafkaClusterTypeDedicated)),
+		},
 	}
 }
 
@@ -132,26 +144,34 @@ func kafkaUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 	c := meta.(*Client)
 
 	displayName := d.Get(paramDisplayName).(string)
-	environmentId, err := validEnvironmentId(d)
-	if err != nil {
-		return createDiagnosticsWithDetails(err)
-	}
+	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
 	clusterType := extractClusterType(d)
 	// Non-zero value means CKU has been set
 	cku := extractCku(d)
 	if d.HasChange(paramDisplayName) {
-		updateReq := cmk.NewCmkV2ClusterUpdate()
+		updateClusterRequest := cmk.NewCmkV2ClusterUpdate()
 		updateSpec := cmk.NewCmkV2ClusterSpecUpdate()
 		updateSpec.SetDisplayName(displayName)
 		updateSpec.SetEnvironment(cmk.ObjectReference{Id: environmentId})
-		updateReq.SetSpec(*updateSpec)
-		req := c.cmkClient.ClustersCmkV2Api.UpdateCmkV2Cluster(c.cmkApiContext(ctx), d.Id()).CmkV2ClusterUpdate(*updateReq)
+		updateClusterRequest.SetSpec(*updateSpec)
+		updateClusterRequestJson, err := json.Marshal(updateClusterRequest)
+		if err != nil {
+			return diag.Errorf("error updating Kafka Cluster %q: error marshaling %#v to json: %s", d.Id(), updateClusterRequest, createDescriptiveError(err))
+		}
+		tflog.Debug(ctx, fmt.Sprintf("Updating Kafka Cluster %q: %s", d.Id(), updateClusterRequestJson), map[string]interface{}{kafkaClusterLoggingKey: d.Id()})
 
-		_, _, err := req.Execute()
+		req := c.cmkClient.ClustersCmkV2Api.UpdateCmkV2Cluster(c.cmkApiContext(ctx), d.Id()).CmkV2ClusterUpdate(*updateClusterRequest)
+
+		updatedCluster, _, err := req.Execute()
 
 		if err != nil {
-			return createDiagnosticsWithDetails(err)
+			return diag.Errorf("error updating Kafka Cluster %q: %s", d.Id(), createDescriptiveError(err))
 		}
+		updatedClusterJson, err := json.Marshal(updatedCluster)
+		if err != nil {
+			return diag.Errorf("error updating Kafka Cluster %q: error marshaling %#v to json: %s", d.Id(), updatedCluster, createDescriptiveError(err))
+		}
+		tflog.Debug(ctx, fmt.Sprintf("Updated Kafka Cluster %q: %s", d.Id(), updatedClusterJson), map[string]interface{}{kafkaClusterLoggingKey: d.Id()})
 	}
 
 	// Allow only Basic -> Standard upgrade
@@ -161,55 +181,75 @@ func kafkaUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 	isForbiddenDedicatedUpdate := d.HasChange(paramDedicatedCluster) && (d.HasChange(paramBasicCluster) || d.HasChange(paramStandardCluster))
 
 	if isBasicStandardUpdate {
-		updateReq := cmk.NewCmkV2ClusterUpdate()
+		updateClusterRequest := cmk.NewCmkV2ClusterUpdate()
 		updateSpec := cmk.NewCmkV2ClusterSpecUpdate()
 		updateSpec.SetConfig(cmk.CmkV2StandardAsCmkV2ClusterSpecUpdateConfigOneOf(cmk.NewCmkV2Standard(kafkaClusterTypeStandard)))
 		updateSpec.SetEnvironment(cmk.ObjectReference{Id: environmentId})
-		updateReq.SetSpec(*updateSpec)
-		req := c.cmkClient.ClustersCmkV2Api.UpdateCmkV2Cluster(c.cmkApiContext(ctx), d.Id()).CmkV2ClusterUpdate(*updateReq)
+		updateClusterRequest.SetSpec(*updateSpec)
+		updateClusterRequestJson, err := json.Marshal(updateClusterRequest)
+		if err != nil {
+			return diag.Errorf("error updating Kafka Cluster %q: error marshaling %#v to json: %s", d.Id(), updateClusterRequest, createDescriptiveError(err))
+		}
+		tflog.Debug(ctx, fmt.Sprintf("Updating Kafka Cluster %q: %s", d.Id(), updateClusterRequestJson), map[string]interface{}{kafkaClusterLoggingKey: d.Id()})
 
-		_, _, err := req.Execute()
+		req := c.cmkClient.ClustersCmkV2Api.UpdateCmkV2Cluster(c.cmkApiContext(ctx), d.Id()).CmkV2ClusterUpdate(*updateClusterRequest)
+
+		updatedCluster, _, err := req.Execute()
 
 		if err != nil {
-			return createDiagnosticsWithDetails(err)
+			return diag.Errorf("error updating Kafka Cluster %q: %s", d.Id(), createDescriptiveError(err))
 		}
+		updatedClusterJson, err := json.Marshal(updatedCluster)
+		if err != nil {
+			return diag.Errorf("error updating Kafka Cluster %q: error marshaling %#v to json: %s", d.Id(), updatedCluster, createDescriptiveError(err))
+		}
+		tflog.Debug(ctx, fmt.Sprintf("Updated Kafka Cluster %q: %s", d.Id(), updatedClusterJson), map[string]interface{}{kafkaClusterLoggingKey: d.Id()})
 	} else if isForbiddenStandardBasicDowngrade || isForbiddenDedicatedUpdate {
-		return diag.Errorf("clusters can only be upgraded from 'Basic' to 'Standard'")
+		return diag.Errorf("error updating Kafka Cluster %q: clusters can only be upgraded from 'Basic' to 'Standard'", d.Id())
 	}
 
 	isCkuUpdate := d.HasChange(paramDedicatedCluster) && clusterType == kafkaClusterTypeDedicated && d.HasChange(paramDedicatedCku)
 	if isCkuUpdate {
 		availability := d.Get(paramAvailability).(string)
-		err = ckuCheck(cku, availability)
+		err := ckuCheck(cku, availability)
 		if err != nil {
-			return createDiagnosticsWithDetails(err)
+			return diag.FromErr(createDescriptiveError(err))
 		}
 
-		updateReq := cmk.NewCmkV2ClusterUpdate()
+		updateClusterRequest := cmk.NewCmkV2ClusterUpdate()
 		updateSpec := cmk.NewCmkV2ClusterSpecUpdate()
 		updateSpec.SetConfig(cmk.CmkV2DedicatedAsCmkV2ClusterSpecUpdateConfigOneOf(cmk.NewCmkV2Dedicated(kafkaClusterTypeDedicated, cku)))
 		updateSpec.SetEnvironment(cmk.ObjectReference{Id: environmentId})
-		updateReq.SetSpec(*updateSpec)
-		req := c.cmkClient.ClustersCmkV2Api.UpdateCmkV2Cluster(c.cmkApiContext(ctx), d.Id()).CmkV2ClusterUpdate(*updateReq)
-
-		_, _, err := req.Execute()
+		updateClusterRequest.SetSpec(*updateSpec)
+		updateClusterRequestJson, err := json.Marshal(updateClusterRequest)
 		if err != nil {
-			return createDiagnosticsWithDetails(err)
+			return diag.Errorf("error updating Kafka Cluster %q: error marshaling %#v to json: %s", d.Id(), updateClusterRequest, createDescriptiveError(err))
 		}
+		tflog.Debug(ctx, fmt.Sprintf("Updating Kafka Cluster %q: %s", d.Id(), updateClusterRequestJson), map[string]interface{}{kafkaClusterLoggingKey: d.Id()})
+		req := c.cmkClient.ClustersCmkV2Api.UpdateCmkV2Cluster(c.cmkApiContext(ctx), d.Id()).CmkV2ClusterUpdate(*updateClusterRequest)
 
-		log.Printf("[DEBUG] Waiting for Kafka cluster CKU update to complete")
+		updatedCluster, _, err := req.Execute()
+		if err != nil {
+			return diag.Errorf("error updating Kafka Cluster %q: %s", d.Id(), createDescriptiveError(err))
+		}
 
 		if err := waitForKafkaClusterCkuUpdateToComplete(c.cmkApiContext(ctx), c, environmentId, d.Id(), cku); err != nil {
-			return diag.Errorf("error waiting for CKU update of Kafka cluster (%s): %s", d.Id(), err)
+			return diag.Errorf("error waiting for Kafka Cluster %q to perform CKU update: %s", d.Id(), createDescriptiveError(err))
 		}
+		updatedClusterJson, err := json.Marshal(updatedCluster)
+		if err != nil {
+			return diag.Errorf("error updating Kafka Cluster %q: error marshaling %#v to json: %s", d.Id(), updatedCluster, createDescriptiveError(err))
+		}
+		tflog.Debug(ctx, fmt.Sprintf("Updated Kafka Cluster %q: %s", d.Id(), updatedClusterJson), map[string]interface{}{kafkaClusterLoggingKey: d.Id()})
 	}
+
+	tflog.Debug(ctx, fmt.Sprintf("Finished updating Kafka Cluster %q", d.Id()), map[string]interface{}{kafkaClusterLoggingKey: d.Id()})
 
 	return kafkaRead(ctx, d, meta)
 }
 
 func executeKafkaCreate(ctx context.Context, c *Client, cluster *cmk.CmkV2Cluster) (cmk.CmkV2Cluster, *http.Response, error) {
 	req := c.cmkClient.ClustersCmkV2Api.CreateCmkV2Cluster(c.cmkApiContext(ctx)).CmkV2Cluster(*cluster)
-
 	return req.Execute()
 }
 
@@ -221,14 +261,8 @@ func kafkaCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 	cloud := d.Get(paramCloud).(string)
 	region := d.Get(paramRegion).(string)
 	clusterType := extractClusterType(d)
-	environmentId, err := validEnvironmentId(d)
-	if err != nil {
-		return createDiagnosticsWithDetails(err)
-	}
-	err = setEnvironmentId(environmentId, d)
-	if err != nil {
-		return createDiagnosticsWithDetails(err)
-	}
+	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
+	networkId := extractStringValueFromBlock(d, paramNetwork, paramId)
 
 	spec := cmk.NewCmkV2ClusterSpec()
 	spec.SetDisplayName(displayName)
@@ -241,37 +275,47 @@ func kafkaCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 		spec.SetConfig(cmk.CmkV2StandardAsCmkV2ClusterSpecConfigOneOf(cmk.NewCmkV2Standard(kafkaClusterTypeStandard)))
 	} else if clusterType == kafkaClusterTypeDedicated {
 		cku := extractCku(d)
-		err = ckuCheck(cku, availability)
+		err := ckuCheck(cku, availability)
 		if err != nil {
-			return createDiagnosticsWithDetails(err)
+			return diag.FromErr(createDescriptiveError(err))
 		}
-		spec.SetConfig(cmk.CmkV2DedicatedAsCmkV2ClusterSpecConfigOneOf(cmk.NewCmkV2Dedicated(kafkaClusterTypeDedicated, cku)))
+		encryptionKey := extractEncryptionKey(d)
+
+		config := cmk.NewCmkV2Dedicated(kafkaClusterTypeDedicated, cku)
+		if encryptionKey != "" {
+			config.SetEncryptionKey(encryptionKey)
+		}
+
+		spec.SetConfig(cmk.CmkV2DedicatedAsCmkV2ClusterSpecConfigOneOf(config))
 	} else {
-		log.Printf("[ERROR] Creating Kafka cluster create failed: unknown Kafka cluster type was provided: %s", clusterType)
-		return diag.Errorf("kafka cluster create failed: unknown Kafka cluster type was provided: %s", clusterType)
+		return diag.Errorf("error creating Kafka Cluster: unknown Kafka Cluster type was provided: %q", clusterType)
 	}
 	spec.SetEnvironment(cmk.ObjectReference{Id: environmentId})
-	cluster := cmk.CmkV2Cluster{Spec: spec}
-
-	specBytes, err := json.Marshal(spec)
-	if err != nil {
-		log.Printf("[ERROR] JSON marshaling failed on spec: %s", err)
-		return createDiagnosticsWithDetails(err)
+	if networkId != "" {
+		spec.SetNetwork(cmk.ObjectReference{Id: networkId})
 	}
-	log.Printf("[DEBUG] Creating Kafka cluster with spec %s", specBytes)
-
-	kafka, resp, err := executeKafkaCreate(c.cmkApiContext(ctx), c, &cluster)
+	createClusterRequest := cmk.CmkV2Cluster{Spec: spec}
+	createClusterRequestJson, err := json.Marshal(createClusterRequest)
 	if err != nil {
-		log.Printf("[ERROR] Kafka cluster create failed %v, %v, %s", cluster, resp, err)
-		return createDiagnosticsWithDetails(err)
+		return diag.Errorf("error creating Kafka Cluster: error marshaling %#v to json: %s", createClusterRequest, createDescriptiveError(err))
 	}
-	d.SetId(kafka.GetId())
+	tflog.Debug(ctx, fmt.Sprintf("Creating new Kafka Cluster: %s", createClusterRequestJson))
 
-	log.Printf("[DEBUG] Creating Kafka cluster %s", kafka.GetId())
+	createdKafkaCluster, _, err := executeKafkaCreate(c.cmkApiContext(ctx), c, &createClusterRequest)
+	if err != nil {
+		return diag.Errorf("error creating Kafka Cluster %q: %s", displayName, createDescriptiveError(err))
+	}
+	d.SetId(createdKafkaCluster.GetId())
 
 	if err := waitForKafkaClusterToProvision(c.cmkApiContext(ctx), c, environmentId, d.Id(), clusterType); err != nil {
-		return diag.Errorf("error waiting for Kafka cluster (%s) to provision: %s", d.Id(), err)
+		return diag.Errorf("error waiting for Kafka Cluster %q to provision: %s", d.Id(), createDescriptiveError(err))
 	}
+
+	createdKafkaClusterJson, err := json.Marshal(createdKafkaCluster)
+	if err != nil {
+		return diag.Errorf("error creating Kafka Cluster %q: error marshaling %#v to json: %s", d.Id(), createdKafkaCluster, createDescriptiveError(err))
+	}
+	tflog.Debug(ctx, fmt.Sprintf("Finished creating Kafka Cluster %q: %s", d.Id(), createdKafkaClusterJson), map[string]interface{}{kafkaClusterLoggingKey: d.Id()})
 
 	return kafkaRead(ctx, d, meta)
 }
@@ -292,47 +336,54 @@ func extractClusterType(d *schema.ResourceData) string {
 }
 
 func extractCku(d *schema.ResourceData) int32 {
-	// CKUs are only defined for dedicated clusters
-	if kafkaClusterTypeDedicated != extractClusterType(d) {
-		return 0
-	}
-
 	// d.Get() will return 0 if the key is not present
 	return int32(d.Get(paramDedicatedCku).(int))
 }
 
+func extractEncryptionKey(d *schema.ResourceData) string {
+	// d.Get() will return "" if the key is not present
+	return d.Get(paramDedicatedEncryptionKey).(string)
+}
+
 func kafkaDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	tflog.Debug(ctx, fmt.Sprintf("Deleting Kafka Cluster %q", d.Id()), map[string]interface{}{kafkaClusterLoggingKey: d.Id()})
 	c := meta.(*Client)
 
-	environmentId, err := validEnvironmentId(d)
-	if err != nil {
-		return createDiagnosticsWithDetails(err)
-	}
+	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
 
 	req := c.cmkClient.ClustersCmkV2Api.DeleteCmkV2Cluster(c.cmkApiContext(ctx), d.Id()).Environment(environmentId)
-	_, err = req.Execute()
+	_, err := req.Execute()
 
 	if err != nil {
-		return diag.Errorf("error deleting Kafka cluster (%s), err: %s", d.Id(), err)
+		return diag.Errorf("error deleting Kafka Cluster %q: %s", d.Id(), createDescriptiveError(err))
 	}
+
+	tflog.Debug(ctx, fmt.Sprintf("Finished deleting Kafka Cluster %q", d.Id()), map[string]interface{}{kafkaClusterLoggingKey: d.Id()})
 
 	return nil
 }
 
 func kafkaImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	tflog.Debug(ctx, fmt.Sprintf("Importing Kafka Cluster %q", d.Id()), map[string]interface{}{kafkaClusterLoggingKey: d.Id()})
+
 	envIDAndClusterID := d.Id()
 	parts := strings.Split(envIDAndClusterID, "/")
 
 	if len(parts) != 2 {
-		return nil, fmt.Errorf("invalid format for kafka import: expected '<env ID>/<lkc ID>'")
+		return nil, fmt.Errorf("error importing Kafka Cluster: invalid format: expected '<env ID>/<lkc ID>'")
 	}
 
 	environmentId := parts[0]
 	clusterId := parts[1]
 	d.SetId(clusterId)
-	log.Printf("[INFO] Kafka import for %s", clusterId)
 
-	return readAndSetResourceConfigurationArguments(ctx, d, meta, environmentId, clusterId)
+	// Mark resource as new to avoid d.Set("") when getting 404
+	d.MarkNewResource()
+	if _, err := readKafkaClusterAndSetAttributes(ctx, d, meta, environmentId, clusterId); err != nil {
+		return nil, fmt.Errorf("error importing Kafka Cluster %q: %s", d.Id(), err)
+	}
+	tflog.Debug(ctx, fmt.Sprintf("Finished importing Kafka Cluster %q", d.Id()), map[string]interface{}{kafkaClusterLoggingKey: d.Id()})
+	return []*schema.ResourceData{d}, nil
 }
 
 func executeKafkaRead(ctx context.Context, c *Client, environmentId string, clusterId string) (cmk.CmkV2Cluster, *http.Response, error) {
@@ -341,102 +392,45 @@ func executeKafkaRead(ctx context.Context, c *Client, environmentId string, clus
 }
 
 func kafkaRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	tflog.Debug(ctx, fmt.Sprintf("Reading Kafka Cluster %q", d.Id()), map[string]interface{}{kafkaClusterLoggingKey: d.Id()})
+
 	clusterId := d.Id()
-	log.Printf("[INFO] Kafka read for %s", clusterId)
-	environmentId, err := validEnvironmentId(d)
-	if err != nil {
-		log.Printf("[ERROR] %s", err)
-		return createDiagnosticsWithDetails(err)
+	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
+
+	if _, err := readKafkaClusterAndSetAttributes(ctx, d, meta, environmentId, clusterId); err != nil {
+		return diag.FromErr(fmt.Errorf("error reading Kafka Cluster %q: %s", d.Id(), createDescriptiveError(err)))
 	}
 
-	_, err = readAndSetResourceConfigurationArguments(ctx, d, meta, environmentId, clusterId)
-
-	return createDiagnosticsWithDetails(err)
+	return nil
 }
 
-func readAndSetResourceConfigurationArguments(ctx context.Context, d *schema.ResourceData, meta interface{}, environmentId, clusterId string) ([]*schema.ResourceData, error) {
+func readKafkaClusterAndSetAttributes(ctx context.Context, d *schema.ResourceData, meta interface{}, environmentId, clusterId string) ([]*schema.ResourceData, error) {
 	c := meta.(*Client)
 
 	cluster, resp, err := executeKafkaRead(c.cmkApiContext(ctx), c, environmentId, clusterId)
 	if err != nil {
-		log.Printf("[ERROR] Kafka cluster get failed for id %s, %v, %s", clusterId, resp, err)
+		tflog.Warn(ctx, fmt.Sprintf("Error reading Kafka Cluster %q: %s", d.Id(), createDescriptiveError(err)), map[string]interface{}{kafkaClusterLoggingKey: d.Id()})
 
-		// https://learn.hashicorp.com/tutorials/terraform/provider-setup
-		isResourceNotFound := HasStatusForbidden(resp) && !HasStatusForbiddenDueToInvalidAPIKey(resp)
+		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
 		if isResourceNotFound && !d.IsNewResource() {
-			log.Printf("[WARN] Kafka cluster with id=%s is not found", d.Id())
-			// If the resource isn't available, Terraform destroys the resource in state.
+			tflog.Warn(ctx, fmt.Sprintf("Removing Kafka Cluster %q in TF state because Kafka Cluster could not be found on the server", d.Id()), map[string]interface{}{kafkaClusterLoggingKey: d.Id()})
 			d.SetId("")
 			return nil, nil
 		}
 
 		return nil, err
 	}
-
-	if err := d.Set(paramApiVersion, cluster.GetApiVersion()); err != nil {
-		return nil, err
-	}
-	if err := d.Set(paramKind, cluster.GetKind()); err != nil {
-		return nil, err
-	}
-	if err := d.Set(paramDisplayName, cluster.Spec.GetDisplayName()); err != nil {
-		return nil, err
-	}
-	if err := d.Set(paramAvailability, cluster.Spec.GetAvailability()); err != nil {
-		return nil, err
-	}
-	if err := d.Set(paramCloud, cluster.Spec.GetCloud()); err != nil {
-		return nil, err
-	}
-	if err := d.Set(paramRegion, cluster.Spec.GetRegion()); err != nil {
-		return nil, err
-	}
-
-	// Reset all 3 cluster types since only one of these 3 should be set
-	if err := d.Set(paramBasicCluster, []interface{}{}); err != nil {
-		return nil, err
-	}
-	if err := d.Set(paramStandardCluster, []interface{}{}); err != nil {
-		return nil, err
-	}
-	if err := d.Set(paramDedicatedCluster, []interface{}{}); err != nil {
-		return nil, err
-	}
-
-	// Set a specific cluster type
-	if cluster.Spec.Config.CmkV2Basic != nil {
-		if err := d.Set(paramBasicCluster, []interface{}{make(map[string]string)}); err != nil {
-			return nil, err
-		}
-	} else if cluster.Spec.Config.CmkV2Standard != nil {
-		if err := d.Set(paramStandardCluster, []interface{}{make(map[string]string)}); err != nil {
-			return nil, err
-		}
-	} else if cluster.Spec.Config.CmkV2Dedicated != nil {
-		if err := d.Set(paramDedicatedCluster, []interface{}{map[string]interface{}{
-			paramCku: cluster.Status.Cku,
-		}}); err != nil {
-			return nil, err
-		}
-	}
-
-	if err := d.Set(paramBootStrapEndpoint, cluster.Spec.GetKafkaBootstrapEndpoint()); err != nil {
-		return nil, err
-	}
-	if err := d.Set(paramHttpEndpoint, cluster.Spec.GetHttpEndpoint()); err != nil {
-		return nil, err
-	}
-	rbacCrn, err := clusterCrnToRbacClusterCrn(cluster.Metadata.GetResourceName())
+	clusterJson, err := json.Marshal(cluster)
 	if err != nil {
-		log.Printf("[ERROR] Could not construct %s for kafka cluster with id=%s", paramRbacCrn, d.Id())
-		return nil, err
+		return nil, fmt.Errorf("error reading Kafka Cluster %q: error marshaling %#v to json: %s", clusterId, cluster, createDescriptiveError(err))
 	}
-	if err := d.Set(paramRbacCrn, rbacCrn); err != nil {
-		return nil, err
+	tflog.Debug(ctx, fmt.Sprintf("Fetched Kafka Cluster %q: %s", d.Id(), clusterJson), map[string]interface{}{kafkaClusterLoggingKey: d.Id()})
+
+	if _, err := setKafkaClusterAttributes(d, cluster); err != nil {
+		return nil, createDescriptiveError(err)
 	}
-	if err := setEnvironmentId(environmentId, d); err != nil {
-		return nil, err
-	}
+
+	tflog.Debug(ctx, fmt.Sprintf("Finished reading Kafka Cluster %q", d.Id()), map[string]interface{}{kafkaClusterLoggingKey: d.Id()})
 
 	return []*schema.ResourceData{d}, nil
 }
@@ -479,6 +473,11 @@ func dedicatedClusterSchema() *schema.Schema {
 					// TODO: add validation for CKUs >= 2 of MULTI_ZONE dedicated clusters
 					ValidateFunc: validation.IntAtLeast(1),
 				},
+				paramEncryptionKey: {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "The ID of the encryption key that is used to encrypt the data in the Kafka cluster.",
+				},
 			},
 		},
 		ExactlyOneOf: acceptedClusterTypes,
@@ -492,4 +491,115 @@ func ckuCheck(cku int32, availability string) error {
 		return fmt.Errorf("multi-zone dedicated clusters must have at least 2 CKUs")
 	}
 	return nil
+}
+
+func setKafkaClusterAttributes(d *schema.ResourceData, cluster cmk.CmkV2Cluster) (*schema.ResourceData, error) {
+	if err := d.Set(paramApiVersion, cluster.GetApiVersion()); err != nil {
+		return nil, err
+	}
+	if err := d.Set(paramKind, cluster.GetKind()); err != nil {
+		return nil, err
+	}
+	if err := d.Set(paramDisplayName, cluster.Spec.GetDisplayName()); err != nil {
+		return nil, err
+	}
+	if err := d.Set(paramAvailability, cluster.Spec.GetAvailability()); err != nil {
+		return nil, err
+	}
+	if err := d.Set(paramCloud, cluster.Spec.GetCloud()); err != nil {
+		return nil, err
+	}
+	if err := d.Set(paramRegion, cluster.Spec.GetRegion()); err != nil {
+		return nil, err
+	}
+
+	// Reset all 3 cluster types since only one of these 3 should be set
+	if err := d.Set(paramBasicCluster, []interface{}{}); err != nil {
+		return nil, err
+	}
+	if err := d.Set(paramStandardCluster, []interface{}{}); err != nil {
+		return nil, err
+	}
+	if err := d.Set(paramDedicatedCluster, []interface{}{}); err != nil {
+		return nil, err
+	}
+
+	// Set a specific cluster type
+	if cluster.Spec.Config.CmkV2Basic != nil {
+		if err := d.Set(paramBasicCluster, []interface{}{make(map[string]string)}); err != nil {
+			return nil, err
+		}
+	} else if cluster.Spec.Config.CmkV2Standard != nil {
+		if err := d.Set(paramStandardCluster, []interface{}{make(map[string]string)}); err != nil {
+			return nil, err
+		}
+	} else if cluster.Spec.Config.CmkV2Dedicated != nil {
+		if err := d.Set(paramDedicatedCluster, []interface{}{map[string]interface{}{
+			paramCku:           cluster.Status.GetCku(),
+			paramEncryptionKey: cluster.Spec.Config.CmkV2Dedicated.GetEncryptionKey(),
+		}}); err != nil {
+			return nil, err
+		}
+	}
+
+	if err := d.Set(paramBootStrapEndpoint, cluster.Spec.GetKafkaBootstrapEndpoint()); err != nil {
+		return nil, err
+	}
+	if err := d.Set(paramHttpEndpoint, cluster.Spec.GetHttpEndpoint()); err != nil {
+		return nil, err
+	}
+	rbacCrn, err := clusterCrnToRbacClusterCrn(cluster.Metadata.GetResourceName())
+	if err != nil {
+		return nil, fmt.Errorf("error reading Kafka Cluster %q: could not construct %s", d.Id(), paramRbacCrn)
+	}
+	if err := d.Set(paramRbacCrn, rbacCrn); err != nil {
+		return nil, err
+	}
+	if err := setStringAttributeInListBlockOfSizeOne(paramEnvironment, paramId, cluster.Spec.Environment.GetId(), d); err != nil {
+		return nil, err
+	}
+	if err := setStringAttributeInListBlockOfSizeOne(paramNetwork, paramId, cluster.Spec.Network.GetId(), d); err != nil {
+		return nil, err
+	}
+	d.SetId(cluster.GetId())
+	return d, nil
+}
+
+func optionalNetworkSchema() *schema.Schema {
+	return &schema.Schema{
+		Type:        schema.TypeList,
+		MinItems:    1,
+		MaxItems:    1,
+		Optional:    true,
+		Computed:    true,
+		Description: "Network represents a network (VPC) in Confluent Cloud. All Networks exist within Confluent-managed cloud provider accounts.",
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramId: {
+					Type:         schema.TypeString,
+					Required:     true,
+					ForceNew:     true,
+					Description:  "The unique identifier for the network.",
+					ValidateFunc: validation.StringMatch(regexp.MustCompile("^n-"), "the network ID must be of the form 'n-'"),
+				},
+			},
+		},
+	}
+}
+
+func optionalNetworkDataSourceSchema() *schema.Schema {
+	return &schema.Schema{
+		Type:        schema.TypeList,
+		Computed:    true,
+		Description: "Network represents a network (VPC) in Confluent Cloud. All Networks exist within Confluent-managed cloud provider accounts.",
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramId: {
+					Type:        schema.TypeString,
+					Computed:    true,
+					Description: "The unique identifier for the network.",
+				},
+			},
+		},
+	}
 }

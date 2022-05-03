@@ -17,68 +17,210 @@ package provider
 import (
 	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"log"
-	"strings"
+	"net/http"
 	"time"
 )
 
+func waitForCreatedKafkaApiKeyToSync(ctx context.Context, c *KafkaRestClient) error {
+	stateConf := &resource.StateChangeConf{
+		Pending: []string{stateInProgress},
+		Target:  []string{stateDone},
+		Refresh: kafkaApiKeySyncStatus(ctx, c),
+		// Default timeout for a resource
+		// https://www.terraform.io/plugin/sdkv2/resources/retries-and-customizable-timeouts
+		// Based on the tests, Kafka API Key takes about 2 minutes to sync
+		Timeout:      20 * time.Minute,
+		Delay:        1 * time.Minute,
+		PollInterval: 1 * time.Minute,
+		// Expects 2x http.StatusOK before exiting which adds PollInterval to the total time it takes to sync an API Key
+		// but helps to ensure the API Key is synced across all brokers.
+		ContinuousTargetOccurence: 2,
+	}
+
+	tflog.Debug(ctx, fmt.Sprintf("Waiting for Kafka API Key %q to sync", c.clusterApiKey), map[string]interface{}{apiKeyLoggingKey: c.clusterApiKey})
+	if _, err := stateConf.WaitForStateContext(ctx); err != nil {
+		return err
+	}
+	return nil
+}
+
+func waitForCreatedCloudApiKeyToSync(ctx context.Context, c *Client, cloudApiKey, cloudApiSecret string) error {
+	stateConf := &resource.StateChangeConf{
+		Pending: []string{stateInProgress},
+		Target:  []string{stateDone},
+		Refresh: cloudApiKeySyncStatus(ctx, c, cloudApiKey, cloudApiSecret),
+		// Default timeout for a resource
+		// https://www.terraform.io/plugin/sdkv2/resources/retries-and-customizable-timeouts
+		// Based on the tests, Cloud API Key takes about 10 seconds to sync (or even faster)
+		Timeout:      20 * time.Minute,
+		Delay:        15 * time.Second,
+		PollInterval: 1 * time.Minute,
+	}
+
+	tflog.Debug(ctx, fmt.Sprintf("Waiting for Cloud API Key %q to sync", cloudApiKey), map[string]interface{}{apiKeyLoggingKey: cloudApiKey})
+	if _, err := stateConf.WaitForStateContext(c.orgApiContext(ctx)); err != nil {
+		return err
+	}
+	return nil
+}
+
 func waitForKafkaClusterToProvision(ctx context.Context, c *Client, environmentId, clusterId, clusterType string) error {
 	stateConf := &resource.StateChangeConf{
-		Pending:      []string{stateInProgress},
-		Target:       []string{stateDone},
-		Refresh:      kafkaClusterProvisionStatus(c.cmkApiContext(ctx), c, environmentId, clusterId),
+		Pending: []string{stateProvisioning},
+		Target:  []string{stateProvisioned},
+		Refresh: kafkaClusterProvisionStatus(c.cmkApiContext(ctx), c, environmentId, clusterId),
+		// https://docs.confluent.io/cloud/current/clusters/cluster-types.html#provisioning-time
 		Timeout:      getTimeoutFor(clusterType),
 		Delay:        5 * time.Second,
 		PollInterval: 1 * time.Minute,
 	}
 
-	log.Printf("[DEBUG] Waiting for Kafka cluster provisioning to become %s", stateDone)
-	_, err := stateConf.WaitForStateContext(c.cmkApiContext(ctx))
-	return err
+	tflog.Debug(ctx, fmt.Sprintf("Waiting for Kafka Cluster %q provisioning status to become %q", clusterId, stateProvisioned), map[string]interface{}{kafkaClusterLoggingKey: clusterId})
+	if _, err := stateConf.WaitForStateContext(c.cmkApiContext(ctx)); err != nil {
+		return err
+	}
+	return nil
 }
 
-func waitForKafkaClusterCkuUpdateToComplete(ctx context.Context, c *Client, environmentId, clusterId string, cku int32) error {
+func waitForPrivateLinkAccessToProvision(ctx context.Context, c *Client, environmentId, privateLinkAccessId string) error {
 	stateConf := &resource.StateChangeConf{
-		Pending:      []string{stateInProgress},
-		Target:       []string{stateDone},
-		Refresh:      kafkaClusterCkuUpdateStatus(c.cmkApiContext(ctx), c, environmentId, clusterId, cku),
-		Timeout:      24 * time.Hour,
+		Pending:      []string{stateProvisioning},
+		Target:       []string{stateReady},
+		Refresh:      privateLinkAccessProvisionStatus(c.netApiContext(ctx), c, environmentId, privateLinkAccessId),
+		Timeout:      networkingAPICreateTimeout,
 		Delay:        5 * time.Second,
 		PollInterval: 1 * time.Minute,
 	}
 
-	log.Printf("[DEBUG] Waiting for Kafka cluster provisioning to become %s", stateDone)
-	_, err := stateConf.WaitForStateContext(c.cmkApiContext(ctx))
-	return err
+	tflog.Debug(ctx, fmt.Sprintf("Waiting for Private Link Access %q provisioning status to become %q", privateLinkAccessId, stateReady), map[string]interface{}{privateLinkAccessLoggingKey: privateLinkAccessId})
+	if _, err := stateConf.WaitForStateContext(c.netApiContext(ctx)); err != nil {
+		return err
+	}
+	return nil
+}
+
+func waitForNetworkToProvision(ctx context.Context, c *Client, environmentId, networkId string) error {
+	stateConf := &resource.StateChangeConf{
+		Pending: []string{stateProvisioning},
+		Target:  []string{stateReady},
+		Refresh: networkProvisionStatus(c.netApiContext(ctx), c, environmentId, networkId),
+		Timeout: networkingAPICreateTimeout,
+		// TODO: increase delay
+		Delay:        5 * time.Second,
+		PollInterval: 1 * time.Minute,
+	}
+
+	tflog.Debug(ctx, fmt.Sprintf("Waiting for Network %q provisioning status to become %q", networkId, stateReady), map[string]interface{}{networkLoggingKey: networkId})
+	if _, err := stateConf.WaitForStateContext(c.netApiContext(ctx)); err != nil {
+		return err
+	}
+	return nil
+}
+
+func waitForPeeringToProvision(ctx context.Context, c *Client, environmentId, peeringId string) error {
+	stateConf := &resource.StateChangeConf{
+		Pending: []string{stateProvisioning},
+		Target:  []string{stateReady, statePendingAccept},
+		Refresh: peeringProvisionStatus(c.netApiContext(ctx), c, environmentId, peeringId),
+		Timeout: networkingAPICreateTimeout,
+		// TODO: increase delay
+		Delay:        5 * time.Second,
+		PollInterval: 1 * time.Minute,
+	}
+
+	tflog.Debug(ctx, fmt.Sprintf("Waiting for Peering %q provisioning status to become %q", peeringId, statePendingAccept), map[string]interface{}{networkLoggingKey: peeringId})
+	if _, err := stateConf.WaitForStateContext(c.netApiContext(ctx)); err != nil {
+		return err
+	}
+	return nil
+}
+
+func waitForKafkaClusterCkuUpdateToComplete(ctx context.Context, c *Client, environmentId, clusterId string, cku int32) error {
+	stateConf := &resource.StateChangeConf{
+		Pending: []string{stateInProgress},
+		Target:  []string{stateDone},
+		Refresh: kafkaClusterCkuUpdateStatus(c.cmkApiContext(ctx), c, environmentId, clusterId, cku),
+		// https://docs.confluent.io/cloud/current/clusters/cluster-types.html#resizing-time
+		Timeout:      getTimeoutFor(kafkaClusterTypeDedicated),
+		Delay:        5 * time.Second,
+		PollInterval: 1 * time.Minute,
+	}
+
+	tflog.Debug(ctx, fmt.Sprintf("Waiting for Kafka Cluster %q CKU update", clusterId), map[string]interface{}{kafkaClusterLoggingKey: clusterId})
+	if _, err := stateConf.WaitForStateContext(c.cmkApiContext(ctx)); err != nil {
+		return err
+	}
+	return nil
+}
+
+func waitForPrivateLinkAccessToBeDeleted(ctx context.Context, c *Client, environmentId, privateLinkAccessId string) error {
+	stateConf := &resource.StateChangeConf{
+		Pending:      []string{stateInProgress},
+		Target:       []string{stateDone},
+		Refresh:      privateLinkAccessDeleteStatus(c.netApiContext(ctx), c, environmentId, privateLinkAccessId),
+		Timeout:      networkingAPIDeleteTimeout,
+		Delay:        1 * time.Minute,
+		PollInterval: 1 * time.Minute,
+	}
+
+	tflog.Debug(ctx, fmt.Sprintf("Waiting for Private Link Access %q to be deleted", privateLinkAccessId), map[string]interface{}{privateLinkAccessLoggingKey: privateLinkAccessId})
+	if _, err := stateConf.WaitForStateContext(c.netApiContext(ctx)); err != nil {
+		return err
+	}
+	return nil
+}
+
+func waitForPeeringToBeDeleted(ctx context.Context, c *Client, environmentId, peeringId string) error {
+	stateConf := &resource.StateChangeConf{
+		Pending:      []string{stateInProgress},
+		Target:       []string{stateDone},
+		Refresh:      peeringDeleteStatus(c.netApiContext(ctx), c, environmentId, peeringId),
+		Timeout:      networkingAPIDeleteTimeout,
+		Delay:        1 * time.Minute,
+		PollInterval: 1 * time.Minute,
+	}
+
+	tflog.Debug(ctx, fmt.Sprintf("Waiting for Peering %q to be deleted", peeringId), map[string]interface{}{peeringLoggingKey: peeringId})
+	if _, err := stateConf.WaitForStateContext(c.netApiContext(ctx)); err != nil {
+		return err
+	}
+	return nil
 }
 
 func waitForKafkaTopicToBeDeleted(ctx context.Context, c *KafkaRestClient, topicName string) error {
 	stateConf := &resource.StateChangeConf{
 		Pending:      []string{stateInProgress},
 		Target:       []string{stateDone},
-		Refresh:      kafkaTopicStatus(c.apiContext(ctx), c, topicName),
+		Refresh:      kafkaTopicDeleteStatus(c.apiContext(ctx), c, topicName),
 		Timeout:      1 * time.Hour,
 		Delay:        10 * time.Second,
 		PollInterval: 1 * time.Minute,
 	}
 
-	log.Printf("[DEBUG] Waiting for Kafka topic to be deleted")
-	_, err := stateConf.WaitForStateContext(c.apiContext(ctx))
-	return err
+	topicId := createKafkaTopicId(c.clusterId, topicName)
+	tflog.Debug(ctx, fmt.Sprintf("Waiting for Kafka Topic %q to be deleted", topicId), map[string]interface{}{kafkaTopicLoggingKey: topicId})
+	if _, err := stateConf.WaitForStateContext(c.apiContext(ctx)); err != nil {
+		return err
+	}
+	return nil
 }
 
-func kafkaTopicStatus(ctx context.Context, c *KafkaRestClient, topicName string) resource.StateRefreshFunc {
+func kafkaTopicDeleteStatus(ctx context.Context, c *KafkaRestClient, topicName string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
 		kafkaTopic, resp, err := c.apiClient.TopicV3Api.GetKafkaV3Topic(c.apiContext(ctx), c.clusterId, topicName)
+		topicId := createKafkaTopicId(c.clusterId, topicName)
 		if err != nil {
-			log.Printf("[WARN] Kafka topic get failed for id %s, %v, %s", topicName, resp, err)
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Kafka Topic %q: %s", topicId, createDescriptiveError(err)), map[string]interface{}{kafkaTopicLoggingKey: topicId})
 
 			// 404 means that the topic has been deleted
-			isResourceNotFound := HasStatusNotFound(resp)
+			isResourceNotFound := ResponseHasExpectedStatusCode(resp, http.StatusNotFound)
 			if isResourceNotFound {
 				// Result (the 1st argument) can't be nil
 				return 0, stateDone, nil
+			} else {
+				return nil, stateFailed, err
 			}
 		}
 		return kafkaTopic, stateInProgress, nil
@@ -87,16 +229,13 @@ func kafkaTopicStatus(ctx context.Context, c *KafkaRestClient, topicName string)
 
 func kafkaClusterCkuUpdateStatus(ctx context.Context, c *Client, environmentId string, clusterId string, desiredCku int32) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		cluster, resp, err := executeKafkaRead(c.cmkApiContext(ctx), c, environmentId, clusterId)
+		cluster, _, err := executeKafkaRead(c.cmkApiContext(ctx), c, environmentId, clusterId)
 		if err != nil {
-			log.Printf("[ERROR] Failed to fetch kafka cluster (%s): %+v, %s", clusterId, resp, err)
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Kafka Cluster %q: %s", clusterId, createDescriptiveError(err)), map[string]interface{}{kafkaClusterLoggingKey: clusterId})
 			return nil, stateUnknown, err
 		}
 
-		jsonCluster, _ := cluster.MarshalJSON()
-		log.Printf("[DEBUG] Kafka cluster %s", jsonCluster)
-
-		log.Printf("[DEBUG] Waiting for CKU update of Kafka cluster")
+		tflog.Debug(ctx, fmt.Sprintf("Waiting for Kafka Cluster %q CKU update", clusterId), map[string]interface{}{kafkaClusterLoggingKey: clusterId})
 		// Wail until actual # of CKUs is the same as desired one
 		// spec.cku is the user’s desired # of CKUs, and status.cku is the current # of CKUs in effect
 		// because the change is still pending, for example
@@ -111,31 +250,157 @@ func kafkaClusterCkuUpdateStatus(ctx context.Context, c *Client, environmentId s
 
 func kafkaClusterProvisionStatus(ctx context.Context, c *Client, environmentId string, clusterId string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		cluster, resp, err := executeKafkaRead(c.cmkApiContext(ctx), c, environmentId, clusterId)
+		cluster, _, err := executeKafkaRead(c.cmkApiContext(ctx), c, environmentId, clusterId)
 		if err != nil {
-			log.Printf("[ERROR] Kafka cluster get failed for id %s, %+v, %s", clusterId, resp, err)
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Kafka Cluster %q: %s", clusterId, createDescriptiveError(err)), map[string]interface{}{kafkaClusterLoggingKey: clusterId})
 			return nil, stateUnknown, err
 		}
 
-		jsonCluster, _ := cluster.MarshalJSON()
-		log.Printf("[DEBUG] Kafka cluster %s", jsonCluster)
+		tflog.Debug(ctx, fmt.Sprintf("Waiting for Kafka Cluster %q provisioning status to become %q: current status is %q", clusterId, stateProvisioned, cluster.Status.GetPhase()), map[string]interface{}{kafkaClusterLoggingKey: clusterId})
+		if cluster.Status.GetPhase() == stateProvisioning || cluster.Status.GetPhase() == stateProvisioned {
+			return cluster, cluster.Status.GetPhase(), nil
+		} else if cluster.Status.GetPhase() == stateFailed {
+			return nil, stateFailed, fmt.Errorf("kafka Cluster %q provisioning status is %q", clusterId, stateFailed)
+		}
+		// Kafka Cluster is in an unexpected state
+		return nil, stateUnexpected, fmt.Errorf("kafka Cluster %q is an unexpected state %q", clusterId, cluster.Status.GetPhase())
+	}
+}
 
-		if strings.ToUpper(c.waitUntil) == waitUntilProvisioned {
-			log.Printf("[DEBUG] Waiting for Kafka cluster to be PROVISIONED: current status %s", cluster.Status.GetPhase())
-			if cluster.Status.GetPhase() == waitUntilProvisioned {
-				return cluster, stateDone, nil
-			} else if cluster.Status.GetPhase() == stateFailed {
-				return nil, stateFailed, fmt.Errorf("[ERROR] Kafka cluster provisioning has failed")
-			}
-			return cluster, stateInProgress, nil
-		} else if strings.ToUpper(c.waitUntil) == waitUntilBootstrapAvailable {
-			log.Printf("[DEBUG] Waiting for Kafka cluster's boostrap endpoint to be available")
-			if cluster.Spec.GetKafkaBootstrapEndpoint() == "" {
-				return cluster, stateInProgress, nil
-			}
-			return cluster, stateDone, nil
+func privateLinkAccessProvisionStatus(ctx context.Context, c *Client, environmentId string, privateLinkAccessId string) resource.StateRefreshFunc {
+	return func() (result interface{}, s string, err error) {
+		privateLinkAccess, _, err := executePrivateLinkAccessRead(c.netApiContext(ctx), c, environmentId, privateLinkAccessId)
+		if err != nil {
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Private Link Access %q: %s", privateLinkAccessId, createDescriptiveError(err)), map[string]interface{}{privateLinkAccessLoggingKey: privateLinkAccessId})
+			return nil, stateUnknown, err
 		}
 
-		return cluster, stateDone, nil
+		tflog.Debug(ctx, fmt.Sprintf("Waiting for Private Link Access %q provisioning status to become %q: current status is %q", privateLinkAccessId, stateReady, privateLinkAccess.Status.GetPhase()), map[string]interface{}{privateLinkAccessLoggingKey: privateLinkAccessId})
+		if privateLinkAccess.Status.GetPhase() == stateProvisioning || privateLinkAccess.Status.GetPhase() == stateReady {
+			return privateLinkAccess, privateLinkAccess.Status.GetPhase(), nil
+		} else if privateLinkAccess.Status.GetPhase() == stateFailed {
+			return nil, stateFailed, fmt.Errorf("private Link Access %q provisioning status is %q: %s", privateLinkAccessId, stateFailed, privateLinkAccess.Status.GetErrorMessage())
+		}
+		// Private Link Access is in an unexpected state
+		return nil, stateUnexpected, fmt.Errorf("private Link Access %q is an unexpected state %q: %s", privateLinkAccessId, privateLinkAccess.Status.GetPhase(), privateLinkAccess.Status.GetErrorMessage())
+	}
+}
+
+func networkProvisionStatus(ctx context.Context, c *Client, environmentId string, networkId string) resource.StateRefreshFunc {
+	return func() (result interface{}, s string, err error) {
+		network, _, err := executeNetworkRead(c.netApiContext(ctx), c, environmentId, networkId)
+		if err != nil {
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Network %q: %s", networkId, createDescriptiveError(err)), map[string]interface{}{networkLoggingKey: networkId})
+			return nil, stateUnknown, err
+		}
+
+		tflog.Debug(ctx, fmt.Sprintf("Waiting for Network %q provisioning status to become %q: current status is %q", networkId, stateReady, network.Status.GetPhase()), map[string]interface{}{networkLoggingKey: networkId})
+		if network.Status.GetPhase() == stateProvisioning || network.Status.GetPhase() == stateReady {
+			return network, network.Status.GetPhase(), nil
+		} else if network.Status.GetPhase() == stateFailed {
+			return nil, stateFailed, fmt.Errorf("network %q provisioning status is %q: %s", networkId, stateFailed, network.Status.GetErrorMessage())
+		}
+		// Network is in an unexpected state
+		return nil, stateUnexpected, fmt.Errorf("network %q is an unexpected state %q: %s", networkId, network.Status.GetPhase(), network.Status.GetErrorMessage())
+	}
+}
+
+func peeringProvisionStatus(ctx context.Context, c *Client, environmentId string, peeringId string) resource.StateRefreshFunc {
+	return func() (result interface{}, s string, err error) {
+		peering, _, err := executePeeringRead(c.netApiContext(ctx), c, environmentId, peeringId)
+		if err != nil {
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Peering %q: %s", peeringId, createDescriptiveError(err)), map[string]interface{}{peeringLoggingKey: peeringId})
+			return nil, stateUnknown, err
+		}
+
+		tflog.Debug(ctx, fmt.Sprintf("Waiting for Peering %q provisioning status to become %q: current status is %q", peeringId, statePendingAccept, peering.Status.GetPhase()), map[string]interface{}{peeringLoggingKey: peeringId})
+		if peering.Status.GetPhase() == stateProvisioning || peering.Status.GetPhase() == stateReady || peering.Status.GetPhase() == statePendingAccept {
+			return peering, peering.Status.GetPhase(), nil
+		} else if peering.Status.GetPhase() == stateFailed {
+			return nil, stateFailed, fmt.Errorf("peering %q provisioning status is %q: %s", peeringId, stateFailed, peering.Status.GetErrorMessage())
+		}
+		// Peering is in an unexpected state
+		return nil, stateUnexpected, fmt.Errorf("peering %q is an unexpected state %q: %s", peeringId, peering.Status.GetPhase(), peering.Status.GetErrorMessage())
+	}
+}
+
+func privateLinkAccessDeleteStatus(ctx context.Context, c *Client, environmentId, privateLinkAccessId string) resource.StateRefreshFunc {
+	return func() (result interface{}, s string, err error) {
+		privateLinkAccess, resp, err := executePrivateLinkAccessRead(c.netApiContext(ctx), c, environmentId, privateLinkAccessId)
+		if err != nil {
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Private Link Access %q: %s", privateLinkAccessId, createDescriptiveError(err)), map[string]interface{}{privateLinkAccessLoggingKey: privateLinkAccessId})
+
+			isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
+			if isResourceNotFound {
+				tflog.Debug(ctx, fmt.Sprintf("Finishing Private Link Access %q deletion process: Received %d status code when reading %q Private Link Access", privateLinkAccessId, resp.StatusCode, privateLinkAccessId), map[string]interface{}{privateLinkAccessLoggingKey: privateLinkAccessId})
+				return 0, stateDone, nil
+			} else {
+				tflog.Debug(ctx, fmt.Sprintf("Exiting Private Link Access %q deletion process: Failed when reading Private Link Access: %s: %s", privateLinkAccessId, createDescriptiveError(err), privateLinkAccess.Status.GetErrorMessage()), map[string]interface{}{privateLinkAccessLoggingKey: privateLinkAccessId})
+				return nil, stateFailed, err
+			}
+		}
+		tflog.Debug(ctx, fmt.Sprintf("Performing Private Link Access %q deletion process: Private Link Access %d's status is %q", privateLinkAccessId, resp.StatusCode, privateLinkAccess.Status.GetPhase()), map[string]interface{}{privateLinkAccessLoggingKey: privateLinkAccessId})
+		return privateLinkAccess, stateInProgress, nil
+	}
+}
+
+func peeringDeleteStatus(ctx context.Context, c *Client, environmentId, peeringId string) resource.StateRefreshFunc {
+	return func() (result interface{}, s string, err error) {
+		peering, resp, err := executePeeringRead(c.netApiContext(ctx), c, environmentId, peeringId)
+		if err != nil {
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Peering %q: %s", peeringId, createDescriptiveError(err)), map[string]interface{}{peeringLoggingKey: peeringId})
+
+			isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
+			if isResourceNotFound {
+				tflog.Debug(ctx, fmt.Sprintf("Finishing Peering %q deletion process: Received %d status code when reading %q Peering", peeringId, resp.StatusCode, peeringId), map[string]interface{}{peeringLoggingKey: peeringId})
+				return 0, stateDone, nil
+			} else {
+				tflog.Debug(ctx, fmt.Sprintf("Exiting Peering %q deletion process: Failed when reading Peering: %s: %s", peeringId, createDescriptiveError(err), peering.Status.GetErrorMessage()), map[string]interface{}{peeringLoggingKey: peeringId})
+				return nil, stateFailed, err
+			}
+		}
+		tflog.Debug(ctx, fmt.Sprintf("Performing Peering %q deletion process: Peering %d's status is %q", peeringId, resp.StatusCode, peering.Status.GetPhase()), map[string]interface{}{peeringLoggingKey: peeringId})
+		return peering, stateInProgress, nil
+	}
+}
+
+func cloudApiKeySyncStatus(ctx context.Context, c *Client, cloudApiKey, cloudApiSecret string) resource.StateRefreshFunc {
+	return func() (result interface{}, s string, err error) {
+		_, resp, err := c.orgClient.EnvironmentsOrgV2Api.ListOrgV2Environments(orgApiContext(ctx, cloudApiKey, cloudApiSecret)).Execute()
+		if resp != nil && resp.StatusCode == http.StatusOK {
+			tflog.Debug(ctx, fmt.Sprintf("Finishing Cloud API Key %q sync process: Received %d status code when listing environments", cloudApiKey, resp.StatusCode), map[string]interface{}{apiKeyLoggingKey: cloudApiKey})
+			return 0, stateDone, nil
+			// Status codes for unsynced API Keys might change over time, so it's safer to rely on a timeout to fail
+		} else if resp != nil && (resp.StatusCode == http.StatusForbidden || resp.StatusCode == http.StatusUnauthorized) {
+			tflog.Debug(ctx, fmt.Sprintf("Performing Cloud API Key %q sync process: Received %d status code when listing environments", cloudApiKey, resp.StatusCode), map[string]interface{}{apiKeyLoggingKey: cloudApiKey})
+			return 0, stateInProgress, nil
+		} else if err != nil {
+			tflog.Debug(ctx, fmt.Sprintf("Exiting Cloud API Key %q sync process: Failed when listing Environments: %s", cloudApiKey, createDescriptiveError(err)), map[string]interface{}{apiKeyLoggingKey: cloudApiKey})
+			return nil, stateFailed, fmt.Errorf("error listing Environments using Cloud API Key %q: %s", cloudApiKey, createDescriptiveError(err))
+		} else {
+			tflog.Debug(ctx, fmt.Sprintf("Exiting Cloud API Key %q sync process: Received unexpected response when listing Environments: %#v", cloudApiKey, resp), map[string]interface{}{apiKeyLoggingKey: cloudApiKey})
+			return nil, stateUnexpected, fmt.Errorf("error listing Environments using Kafka API Key %q: received a response with unexpected %d status code", cloudApiKey, resp.StatusCode)
+		}
+	}
+}
+
+func kafkaApiKeySyncStatus(ctx context.Context, c *KafkaRestClient) resource.StateRefreshFunc {
+	return func() (result interface{}, s string, err error) {
+		_, resp, err := c.apiClient.TopicV3Api.ListKafkaV3Topics(kafkaRestApiContextWithClusterApiKey(ctx, c.clusterApiKey, c.clusterApiSecret), c.clusterId)
+		if resp != nil && resp.StatusCode == http.StatusOK {
+			tflog.Debug(ctx, fmt.Sprintf("Finishing Kafka API Key %q sync process: Received %d status code when listing Kafka Topics", c.clusterApiKey, resp.StatusCode), map[string]interface{}{apiKeyLoggingKey: c.clusterApiKey})
+			return 0, stateDone, nil
+			// Status codes for unsynced API Keys might change over time, so it's safer to rely on a timeout to fail
+			// That said, now Kafka REST API returns http.StatusUnauthorized
+		} else if resp != nil && (resp.StatusCode == http.StatusForbidden || resp.StatusCode == http.StatusUnauthorized) {
+			tflog.Debug(ctx, fmt.Sprintf("Performing Kafka API Key %q sync process: Received %d status code when listing Kafka Topics", c.clusterApiKey, resp.StatusCode), map[string]interface{}{apiKeyLoggingKey: c.clusterApiKey})
+			return 0, stateInProgress, nil
+		} else if err != nil {
+			tflog.Debug(ctx, fmt.Sprintf("Exiting Kafka API Key %q sync process: Failed when listing Kafka Topics: %s", c.clusterApiKey, createDescriptiveError(err)), map[string]interface{}{apiKeyLoggingKey: c.clusterApiKey})
+			return nil, stateFailed, fmt.Errorf("error listing Kafka Topics using Kafka API Key %q: %s", c.clusterApiKey, err)
+		} else {
+			tflog.Debug(ctx, fmt.Sprintf("Exiting Kafka API Key %q sync process: Received unexpected response when listing Kafka Topics: %#v", c.clusterApiKey, resp), map[string]interface{}{apiKeyLoggingKey: c.clusterApiKey})
+			return nil, stateUnexpected, fmt.Errorf("error listing Kafka Topics using Kafka API Key %q: received a response with unexpected %d status code", c.clusterApiKey, resp.StatusCode)
+		}
 	}
 }

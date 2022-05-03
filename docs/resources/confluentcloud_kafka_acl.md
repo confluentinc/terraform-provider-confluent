@@ -32,7 +32,9 @@ resource "confluentcloud_kafka_cluster" "basic-cluster" {
 }
 
 resource "confluentcloud_kafka_acl" "describe-basic-cluster" {
-  kafka_cluster = confluentcloud_kafka_cluster.basic-cluster.id
+  kafka_cluster {
+    id = confluentcloud_kafka_cluster.basic-cluster.id
+  }
   resource_type = "CLUSTER"
   resource_name = "kafka-cluster"
   pattern_type  = "LITERAL"
@@ -53,7 +55,8 @@ resource "confluentcloud_kafka_acl" "describe-basic-cluster" {
 
 The following arguments are supported:
 
-- `kafka_cluster` - (Required String) The ID of the Kafka cluster, for example, `lkc-abc123`.
+- `kafka_cluster` - (Required Configuration Block) supports the following:
+  - `id` - (Required String) The ID of the Kafka cluster, for example, `lkc-abc123`.
 - `resource_type` - (Required String) The type of the resource. Accepted values are: `UNKNOWN`, `ANY`, `TOPIC`, `GROUP`, `CLUSTER`, `TRANSACTIONAL_ID`, `DELEGATION_TOKEN`.
 - `resource_name` - (Required String) The resource name for the ACL.
 - `pattern_type` - (Required String) The pattern type for the ACL. Accepted values are: `UNKNOWN`,`ANY`,`MATCH`, `LITERAL`, and `PREFIXED`.
@@ -64,7 +67,7 @@ The following arguments are supported:
 - `credentials` (Required Configuration Block) supports the following:
     - `key` - (Required String) The Kafka API Key.
     - `secret` - (Required String) The Kafka API Secret.
-- `host` - (Optional String) The host for the ACL. Defaults to `*`.
+- `host` - (Required String) The host for the ACL. Should be set to `*` for Confluent Cloud.
 
 -> **Note:** A Kafka API key consists of a key and a secret. Kafka API keys are required to interact with Kafka clusters in Confluent Cloud. Each Kafka API key is valid for one specific Kafka cluster.
 
@@ -76,15 +79,17 @@ The following arguments are supported:
 
 In addition to the preceding arguments, the following attributes are exported:
 
-- `id` - (String) The ID of the Kafka ACL in the format `<Kafka cluster ID>/<Kafka ACL resource type>#<Kafka ACL resource name>#<Kafka ACL pattern type>#<Kafka ACL principal>#<Kafka ACL host>#<Kafka ACL operation>#<Kafka ACL permission>`.
+- `id` - (Required String) The ID of the Kafka ACL in the format `<Kafka cluster ID>/<Kafka ACL resource type>#<Kafka ACL resource name>#<Kafka ACL pattern type>#<Kafka ACL principal>#<Kafka ACL host>#<Kafka ACL operation>#<Kafka ACL permission>`.
 
 ## Import
 
--> **Note:** `KAFKA_API_KEY` (`credentials.key`), `KAFKA_API_SECRET` (`credentials.secret`), and `KAFKA_HTTP_ENDPOINT` (`http_endpoint`) environment variables must be set before importing a Kafka topic.
+-> **Note:** `CONFLUENT_CLOUD_API_KEY`, `CONFLUENT_CLOUD_API_SECRET`, `KAFKA_API_KEY` (`credentials.key`), `KAFKA_API_SECRET` (`credentials.secret`), and `KAFKA_HTTP_ENDPOINT` (`http_endpoint`) environment variables must be set before importing Kafka ACLs.
 
-Import Kafka ACLs by using the Kafka cluster ID and attributes of `confluentcloud_kafka_acl` resource in the format `<Kafka cluster ID>/<Kafka ACL resource type>#<Kafka ACL resource name>#<Kafka ACL pattern type>#<Kafka ACL principal>#<Kafka ACL host>#<Kafka ACL operation>#<Kafka ACL permission>`, for example:
+You can import Kafka ACLs by using the Kafka cluster ID and attributes of `confluentcloud_kafka_acl` resource in the format `<Kafka cluster ID>/<Kafka ACL resource type>#<Kafka ACL resource name>#<Kafka ACL pattern type>#<Kafka ACL principal>#<Kafka ACL host>#<Kafka ACL operation>#<Kafka ACL permission>`, for example:
 
 ```shell
+$ export CONFLUENT_CLOUD_API_KEY="<cloud_api_key>"
+$ export CONFLUENT_CLOUD_API_SECRET="<cloud_api_secret>"
 $ export KAFKA_API_KEY="<kafka_api_key>"
 $ export KAFKA_API_SECRET="<kafka_api_secret>"
 $ export KAFKA_HTTP_ENDPOINT="<kafka_http_endpoint>"

@@ -140,6 +140,7 @@ func TestAccEnvironment(t *testing.T) {
 	// in order to test tf update (step #3)
 	environmentDisplayUpdatedName := "test_env_display_updated_name"
 	environmentResourceLabel := "test_env_resource_label"
+	environmentResourceEndpoint := "crn://confluent.cloud/organizations=foo/environments=env-q2opmd"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -168,6 +169,7 @@ func TestAccEnvironment(t *testing.T) {
 					testAccCheckEnvironmentExists(fmt.Sprintf("confluentcloud_environment.%s", environmentResourceLabel)),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluentcloud_environment.%s", environmentResourceLabel), "id", "env-q2opmd"),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluentcloud_environment.%s", environmentResourceLabel), "display_name", environmentDisplayUpdatedName),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluentcloud_environment.%s", environmentResourceLabel), "resource_name", environmentResourceEndpoint),
 				),
 			},
 			{
@@ -236,9 +238,9 @@ func testAccCheckEnvironmentExists(n string) resource.TestCheckFunc {
 }
 
 func checkStubCount(t *testing.T, client *wiremock.Client, rule *wiremock.StubRule, requestTypeAndEndpoint string, expectedCount int64) {
-	verifyStub, _ := client.Verify(rule.Request(), expectedCountOne)
+	verifyStub, _ := client.Verify(rule.Request(), expectedCount)
 	actualCount, _ := client.GetCountRequests(rule.Request())
 	if !verifyStub {
-		t.Fatalf("expected %v %s requests but found %v", expectedCount, requestTypeAndEndpoint, actualCount)
+		t.Fatalf("expected %#v %s requests but found %#v", expectedCount, requestTypeAndEndpoint, actualCount)
 	}
 }

@@ -17,15 +17,16 @@ package provider
 import (
 	"context"
 	"fmt"
-	cmk "github.com/confluentinc/ccloud-sdk-go-v2/cmk/v2"
+	cmk "github.com/confluentinc/ccloud-sdk-go-v2-internal/cmk/v2"
+	apikeys "github.com/confluentinc/ccloud-sdk-go-v2/apikeys/v2"
 	iamv1 "github.com/confluentinc/ccloud-sdk-go-v2/iam/v1"
 	iam "github.com/confluentinc/ccloud-sdk-go-v2/iam/v2"
 	mds "github.com/confluentinc/ccloud-sdk-go-v2/mds/v2"
+	net "github.com/confluentinc/ccloud-sdk-go-v2/networking/v1"
 	org "github.com/confluentinc/ccloud-sdk-go-v2/org/v2"
-	"github.com/hashicorp/go-cty/cty"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"log"
 	"strings"
 )
 
@@ -38,7 +39,6 @@ const (
 	paramCloud       = "cloud"
 	paramRegion      = "region"
 	paramEnvironment = "environment"
-	paramWaitUntil   = "wait_until"
 	paramId          = "id"
 	paramDisplayName = "display_name"
 	paramDescription = "description"
@@ -46,16 +46,17 @@ const (
 )
 
 type Client struct {
+	apiKeysClient          *apikeys.APIClient
 	iamClient              *iam.APIClient
 	iamV1Client            *iamv1.APIClient
 	cmkClient              *cmk.APIClient
+	netClient              *net.APIClient
 	orgClient              *org.APIClient
 	kafkaRestClientFactory *KafkaRestClientFactory
 	mdsClient              *mds.APIClient
 	userAgent              string
 	apiKey                 string
 	apiSecret              string
-	waitUntil              string
 }
 
 // Customize configs for terraform-plugin-docs
@@ -73,7 +74,6 @@ func init() {
 
 func New(version string) func() *schema.Provider {
 	return func() *schema.Provider {
-		log.Printf("[INFO] Creating Confluent Cloud Provider")
 		provider := &schema.Provider{
 			Schema: map[string]*schema.Schema{
 				"api_key": {
@@ -96,33 +96,25 @@ func New(version string) func() *schema.Provider {
 					Default:     "https://api.confluent.cloud",
 					Description: "The base endpoint of Confluent Cloud API.",
 				},
-				paramWaitUntil: {
-					Type:        schema.TypeString,
-					Optional:    true,
-					Default:     waitUntilProvisioned,
-					Description: "Terraform apply will wait until the specified field that is populated.",
-					ValidateDiagFunc: func(i interface{}, path cty.Path) diag.Diagnostics {
-						waitUntil := i.(string)
-						if waitUntil != waitUntilBootstrapAvailable && waitUntil != waitUntilProvisioned && waitUntil != waitUntilNone {
-							return diag.Errorf("wait until can only be one of %s, %s or %s", waitUntilProvisioned, waitUntilBootstrapAvailable, waitUntilNone)
-						}
-						return nil
-					},
-				},
 			},
 			DataSourcesMap: map[string]*schema.Resource{
 				"confluentcloud_kafka_cluster":   kafkaDataSource(),
 				"confluentcloud_kafka_topic":     kafkaTopicDataSource(),
 				"confluentcloud_environment":     environmentDataSource(),
 				"confluentcloud_service_account": serviceAccountDataSource(),
+				"confluentcloud_user":            userDataSource(),
 			},
 			ResourcesMap: map[string]*schema.Resource{
-				"confluentcloud_kafka_cluster":   kafkaResource(),
-				"confluentcloud_environment":     environmentResource(),
-				"confluentcloud_service_account": serviceAccountResource(),
-				"confluentcloud_kafka_topic":     kafkaTopicResource(),
-				"confluentcloud_kafka_acl":       kafkaAclResource(),
-				"confluentcloud_role_binding":    roleBindingResource(),
+				"confluentcloud_api_key":             apiKeyResource(),
+				"confluentcloud_kafka_cluster":       kafkaResource(),
+				"confluentcloud_environment":         environmentResource(),
+				"confluentcloud_service_account":     serviceAccountResource(),
+				"confluentcloud_kafka_topic":         kafkaTopicResource(),
+				"confluentcloud_kafka_acl":           kafkaAclResource(),
+				"confluentcloud_network":             networkResource(),
+				"confluentcloud_peering":             peeringResource(),
+				"confluentcloud_private_link_access": privateLinkAccessResource(),
+				"confluentcloud_role_binding":        roleBindingResource(),
 			},
 		}
 
@@ -150,6 +142,7 @@ func environmentSchema() *schema.Schema {
 			},
 		},
 		Required:    true,
+		MinItems:    1,
 		MaxItems:    1,
 		ForceNew:    true,
 		Description: "Environment objects represent an isolated namespace for your Confluent resources for organizational purposes.",
@@ -174,76 +167,58 @@ func environmentDataSourceSchema() *schema.Schema {
 	}
 }
 
-func validEnvironmentId(d *schema.ResourceData) (string, error) {
-	envIdResource := extractEnvironmentId(d)
-	if envIdResource != nil {
-		return *envIdResource, nil
-	}
-	return "", fmt.Errorf("the environment ID must be provided")
-}
-
-func extractEnvironmentId(d *schema.ResourceData) *string {
-	envData := d.Get(paramEnvironment).([]interface{})
-	if len(envData) == 0 || envData[0] == nil {
-		return nil
-	}
-	envMap := envData[0].(map[string]interface{})
-	if environmentId, ok := envMap[paramId].(string); ok && len(environmentId) > 0 {
-		return &environmentId
-	}
-	return nil
-}
-
-func setEnvironmentId(environmentId string, d *schema.ResourceData) error {
-	return d.Set(paramEnvironment, []interface{}{map[string]interface{}{
-		paramId: environmentId,
-	}})
-}
-
 func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Provider, providerVersion string) (interface{}, diag.Diagnostics) {
-	log.Printf("[INFO] Initializing ConfluentCloud provider")
+	tflog.Info(ctx, "Initializing Terraform Provider for Confluent Cloud")
 	endpoint := d.Get("endpoint").(string)
 	apiKey := d.Get("api_key").(string)
 	apiSecret := d.Get("api_secret").(string)
-	waitUntil := d.Get(paramWaitUntil).(string)
 
 	userAgent := p.UserAgent(terraformProviderUserAgent, fmt.Sprintf("%s (https://confluent.cloud; support@confluent.io)", providerVersion))
 
+	apiKeysCfg := apikeys.NewConfiguration()
 	cmkCfg := cmk.NewConfiguration()
 	iamCfg := iam.NewConfiguration()
 	iamV1Cfg := iamv1.NewConfiguration()
 	mdsCfg := mds.NewConfiguration()
+	netCfg := net.NewConfiguration()
 	orgCfg := org.NewConfiguration()
 
+	apiKeysCfg.Servers[0].URL = endpoint
 	cmkCfg.Servers[0].URL = endpoint
 	iamCfg.Servers[0].URL = endpoint
 	iamV1Cfg.Servers[0].URL = endpoint
 	mdsCfg.Servers[0].URL = endpoint
+	netCfg.Servers[0].URL = endpoint
 	orgCfg.Servers[0].URL = endpoint
 
+	apiKeysCfg.UserAgent = userAgent
 	cmkCfg.UserAgent = userAgent
 	iamCfg.UserAgent = userAgent
 	iamV1Cfg.UserAgent = userAgent
 	mdsCfg.UserAgent = userAgent
+	netCfg.UserAgent = userAgent
 	orgCfg.UserAgent = userAgent
 
+	apiKeysCfg.HTTPClient = createRetryableHttpClientWithExponentialBackoff()
 	cmkCfg.HTTPClient = createRetryableHttpClientWithExponentialBackoff()
 	iamCfg.HTTPClient = createRetryableHttpClientWithExponentialBackoff()
 	iamV1Cfg.HTTPClient = createRetryableHttpClientWithExponentialBackoff()
 	mdsCfg.HTTPClient = createRetryableHttpClientWithExponentialBackoff()
+	netCfg.HTTPClient = createRetryableHttpClientWithExponentialBackoff()
 	orgCfg.HTTPClient = createRetryableHttpClientWithExponentialBackoff()
 
 	client := Client{
+		apiKeysClient:          apikeys.NewAPIClient(apiKeysCfg),
 		cmkClient:              cmk.NewAPIClient(cmkCfg),
 		iamClient:              iam.NewAPIClient(iamCfg),
 		iamV1Client:            iamv1.NewAPIClient(iamV1Cfg),
+		netClient:              net.NewAPIClient(netCfg),
 		orgClient:              org.NewAPIClient(orgCfg),
 		kafkaRestClientFactory: &KafkaRestClientFactory{userAgent: userAgent},
 		mdsClient:              mds.NewAPIClient(mdsCfg),
 		userAgent:              userAgent,
 		apiKey:                 apiKey,
 		apiSecret:              apiSecret,
-		waitUntil:              waitUntil,
 	}
 
 	return &client, nil

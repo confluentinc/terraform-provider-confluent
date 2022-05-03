@@ -15,14 +15,14 @@ NAME        := terraform-provider-confluentcloud
 BUILD_DIR   := bin
 VERSION     ?= $(shell git describe --tags --exact-match 2>/dev/null || git describe --tags 2>/dev/null || echo "v0.0.0-$(COMMIT_HASH)")
 # Go variables
-GOCMD       := GO111MODULE=on go
-GOBUILD     ?= CGO_ENABLED=0 $(GOCMD) build -mod=mod
-GOOS        ?= $(shell go env GOOS)
-GOARCH      ?= $(shell go env GOARCH)
-GOFILES     ?= $(shell find . -type f -name '*.go' -not -path "./vendor/*")
+GOCMD         := GO111MODULE=on go
+GOBUILD       ?= CGO_ENABLED=0 $(GOCMD) build -mod=vendor
+GOOS          ?= $(shell go env GOOS)
+GOARCH        ?= $(shell go env GOARCH)
+GOFILES       ?= $(shell find . -type f -name '*.go' -not -path "./vendor/*")
 
 .PHONY: all
-all: clean test testacc tools lint lint-licenses build
+all: clean deps test testacc tools lint lint-licenses build
 
 
 .PHONY: checkfmt
@@ -46,6 +46,11 @@ lint: ## Run linter
 clean: ## Clean workspace
 	@ $(MAKE) --no-print-directory log-$@
 	rm -rf ./$(BUILD_DIR)
+
+.PHONY: deps
+deps: ## Fetch dependencies
+	@ $(MAKE) --no-print-directory log-$@
+	$(GOCMD) mod vendor
 
 .PHONY: build
 build: clean ## Build binary for current OS/ARCH

@@ -1,0 +1,43 @@
+{
+  "api_version": "networking/v1",
+  "id": "n-p8xo76",
+  "kind": "Network",
+  "metadata": {
+    "created_at": "2022-04-12T06:18:51.396359Z",
+    "resource_name": "crn://confluent.cloud/organization=foo/environment=env-gz903/network=n-p8xo76",
+    "self": "https://api.confluent.cloud/networking/v1/networks/n-p8xo76?environment=env-gz903",
+    "updated_at": "2022-04-12T06:18:51.396359Z"
+  },
+  "spec": {
+    "cidr": "10.1.0.0/16",
+    "cloud": "AZURE",
+    "connection_types": [
+      "PRIVATELINK"
+    ],
+    "display_name": "s-nk99e",
+    "environment": {
+      "api_version": "org/v2",
+      "id": "env-gz903",
+      "kind": "Environment",
+      "related": "https://api.confluent.cloud/v2/environments/env-gz903",
+      "resource_name": "crn://confluent.cloud/organization=foo/environment=env-gz903"
+    },
+    "region": "centralus",
+    "zones": [
+      "1",
+      "2",
+      "3"
+    ]
+  },
+  "status": {
+    "cloud": {
+      "kind": "networking.v1.AzureNetwork",
+      "private_link_service_aliases": {},
+      "subscription": "1234abcd-12ab-34cd-1234-123456abcdef",
+      "vnet": ""
+    },
+    "dns_domain": "",
+    "phase": "PROVISIONING",
+    "zonal_subdomains": {}
+  }
+}

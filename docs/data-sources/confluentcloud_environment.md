@@ -27,16 +27,14 @@ data "confluentcloud_environment" "example_using_name" {
   display_name = "stag"
 }
 
-resource "confluentcloud_kafka_cluster" "basic-cluster" {
-  display_name = "basic_kafka_cluster_in_${data.confluentcloud_environment.example_using_id.display_name}"
-  availability = "SINGLE_ZONE"
-  cloud        = "AWS"
-  region       = "us-east-2"
-  basic {}
+data "confluentcloud_service_account" "example_using_name" {
+  display_name = "test_sa"
+}
 
-  environment {
-    id = data.confluentcloud_environment.example.id
-  }
+resource "confluentcloud_role_binding" "test-role-binding" {
+  principal   = "User:${data.confluentcloud_service_account.example_using_name.id}"
+  role_name   = "EnvironmentAdmin"
+  crn_pattern = data.confluentcloud_environment.example_using_name.resource_name
 }
 ```
 
@@ -45,12 +43,15 @@ resource "confluentcloud_kafka_cluster" "basic-cluster" {
 
 The following arguments are supported (specify either `id` or `display_name`, not both):
 
-- `id` - (Optional String) The ID of the Environment (e.g., `env-abc123`).
+- `id` - (Optional String) The ID of the Environment, for example, `env-abc123`.
 - `display_name` - (Optional String) A human-readable name for the Environment.
+
+-> **Note:** Exactly one from the `id` and `display_name` attributes must be specified.
 
 ## Attributes Reference
 
 The following attributes are exported:
 
-- `id` - (String) The ID of the Environment (e.g., `env-abc123`).
-- `display_name` - (String) A human-readable name for the Environment.
+- `id` - (Required String) The ID of the Environment, for example, `env-abc123`.
+- `display_name` - (Required String) A human-readable name for the Environment.
+- `resource_name` - (Required String) The Confluent Resource Name of the Environment, for example, `crn://confluent.cloud/organizations=1111aaaa-11aa-11aa-11aa-111111aaaaaa/environments=env-abc123`.

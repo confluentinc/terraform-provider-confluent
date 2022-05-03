@@ -1,0 +1,30 @@
+{
+  "api_version": "iam/v2",
+  "id": "HRVR6K4VMXYD2LDZ",
+  "kind": "ApiKey",
+  "metadata": {
+    "created_at": "2022-03-23T06:49:17.727825Z",
+    "resource_name": "crn://api.confluent.cloud/organization=foo/service-account=sa-12mgdv/api-key=HRVR6K4VMXYD2LDZ",
+    "self": "http://api.confluent.cloud/v2/api-keys/HRVR6K4VMXYD2LDZ",
+    "updated_at": "2022-03-23T06:49:17.727825Z"
+  },
+  "spec": {
+    "description": "temp description",
+    "display_name": "CI Cloud API Key",
+    "owner": {
+      "api_version": "iam/v2",
+      "id": "sa-12mgdv",
+      "kind": "ServiceAccount",
+      "related": "http://api.confluent.cloud/v2/service-accounts/sa-12mgdv",
+      "resource_name": "crn://api.confluent.cloud/organization=foo/service-account=sa-12mgdv"
+    },
+    "resource": {
+      "api_version": "iam/v2",
+      "id": "cloud",
+      "kind": "Cloud",
+      "related": "cloud",
+      "resource_name": "cloud"
+    },
+    "secret": "p07o8EyjQvink5NmErBffigyynQXrTsYGKBzIgr3M10Mg+JOgnObYjlqCC1Q1id1"
+  }
+}

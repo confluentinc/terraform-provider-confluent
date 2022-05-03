@@ -1,0 +1,30 @@
+{
+  "api_version": "iam/v2",
+  "id": "7FJIYKQ4SGQDQ72H",
+  "kind": "ApiKey",
+  "metadata": {
+    "created_at": "2022-03-23T06:16:59.527572Z",
+    "resource_name": "crn://api.confluent.cloud/organization=foo/service-account=sa-12mgdv/api-key=7FJIYKQ4SGQDQ72H",
+    "self": "http://api.confluent.cloud/v2/api-keys/7FJIYKQ4SGQDQ72H",
+    "updated_at": "2022-03-23T06:16:59.527572Z"
+  },
+  "spec": {
+    "description": "This API key provides kafka access to cluster x",
+    "display_name": "CI Kafka API Key",
+    "owner": {
+      "api_version": "iam/v2",
+      "id": "sa-12mgdv",
+      "kind": "ServiceAccount",
+      "related": "http://api.confluent.cloud/v2/service-accounts/sa-12mgdv",
+      "resource_name": "crn://api.confluent.cloud/organization=foo/service-account=sa-12mgdv"
+    },
+    "resource": {
+      "api_version": "cmk/v2",
+      "id": "lkc-zmmq63",
+      "kind": "Cluster",
+      "related": "http://api.confluent.cloud/v2/clusters/lkc-zmmq63",
+      "resource_name": "crn://api.confluent.cloud/organization=foo/cluster=lkc-zmmq63"
+    },
+    "secret": ""
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "api_version": "networking/v1",
+  "id": "pla-3prjy6",
+  "kind": "PrivateLinkAccess",
+  "metadata": {
+    "created_at": "2021-11-26T18:40:19.258051Z",
+    "resource_name": "crn://devel.cpdev.cloud/organization=foo/environment=env-5wyjmz/network=n-5p59z6/private-link-access=pla-3prjy6",
+    "self": "https://api.devel.cpdev.cloud/networking/v1/private-link-accesses/pla-3prjy6?environment=env-5wyjmz",
+    "updated_at": "2021-11-26T20:17:29.168045Z"
+  },
+  "spec": {
+    "cloud": {
+      "account": "012345678901",
+      "kind": "networking.v1.AwsPrivateLinkAccess"
+    },
+    "display_name": "prod-pl-use2-updated",
+    "environment": {
+      "api_version": "v2",
+      "id": "env-5wyjmz",
+      "kind": "Environment",
+      "related": "https://api.devel.cpdev.cloud/v2/environments/env-5wyjmz",
+      "resource_name": "crn://devel.cpdev.cloud/organization=foo/environment=env-5wyjmz"
+    },
+    "network": {
+      "api_version": "networking/v1",
+      "id": "n-5p59z6",
+      "kind": "Network",
+      "related": "https://api.devel.cpdev.cloud/networking/v1/networks/n-5p59z6?environment=env-5wyjmz",
+      "resource_name": "crn://devel.cpdev.cloud/organization=foo/environment=env-5wyjmz/network=n-5p59z6"
+    }
+  },
+  "status": {
+    "phase": "DEPROVISIONING"
+  }
+}

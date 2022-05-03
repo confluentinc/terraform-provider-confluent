@@ -80,6 +80,17 @@ func TestAccDataSourceCluster(t *testing.T) {
 			http.StatusOK,
 		))
 
+	readClustersResponse, _ := ioutil.ReadFile("../testdata/kafka/read_kafkas.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/cmk/v2/clusters")).
+		InScenario(dataSourceKafkaScenarioName).
+		WithQueryParam("environment", wiremock.EqualTo(kafkaEnvId)).
+		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
+		WillReturn(
+			string(readClustersResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
@@ -87,7 +98,29 @@ func TestAccDataSourceCluster(t *testing.T) {
 		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckDataSourceClusterConfig(mockServerUrl, paramBasicCluster),
+				Config: testAccCheckDataSourceClusterConfigWithIdSet(mockServerUrl),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckClusterExists(fullKafkaDataSourceLabel),
+					resource.TestCheckResourceAttr(fullKafkaDataSourceLabel, "id", kafkaClusterId),
+					resource.TestCheckResourceAttr(fullKafkaDataSourceLabel, "api_version", kafkaApiVersion),
+					resource.TestCheckResourceAttr(fullKafkaDataSourceLabel, "kind", kafkaKind),
+					resource.TestCheckResourceAttr(fullKafkaDataSourceLabel, "display_name", kafkaDisplayName),
+					resource.TestCheckResourceAttr(fullKafkaDataSourceLabel, "availability", kafkaAvailability),
+					resource.TestCheckResourceAttr(fullKafkaDataSourceLabel, "bootstrap_endpoint", kafkaBootstrapEndpoint),
+					resource.TestCheckResourceAttr(fullKafkaDataSourceLabel, "cloud", kafkaCloud),
+					resource.TestCheckResourceAttr(fullKafkaDataSourceLabel, "basic.#", "1"),
+					resource.TestCheckResourceAttr(fullKafkaDataSourceLabel, "basic.0.%", "0"),
+					resource.TestCheckResourceAttr(fullKafkaDataSourceLabel, "standard.#", "0"),
+					resource.TestCheckResourceAttr(fullKafkaDataSourceLabel, "environment.#", "1"),
+					resource.TestCheckResourceAttr(fullKafkaDataSourceLabel, "environment.0.id", kafkaEnvId),
+					resource.TestCheckResourceAttr(fullKafkaDataSourceLabel, "network.#", "1"),
+					resource.TestCheckResourceAttr(fullKafkaDataSourceLabel, "network.0.id", kafkaNetworkId),
+					resource.TestCheckResourceAttr(fullKafkaDataSourceLabel, "http_endpoint", kafkaHttpEndpoint),
+					resource.TestCheckResourceAttr(fullKafkaDataSourceLabel, "rbac_crn", kafkaRbacCrn),
+				),
+			},
+			{
+				Config: testAccCheckDataSourceClusterConfigWithDisplayNameSet(mockServerUrl),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckClusterExists(fullKafkaDataSourceLabel),
 					resource.TestCheckResourceAttr(fullKafkaDataSourceLabel, "id", kafkaClusterId),
@@ -110,7 +143,7 @@ func TestAccDataSourceCluster(t *testing.T) {
 	})
 }
 
-func testAccCheckDataSourceClusterConfig(mockServerUrl, clusterType string) string {
+func testAccCheckDataSourceClusterConfigWithIdSet(mockServerUrl string) string {
 	return fmt.Sprintf(`
 	provider "confluentcloud" {
  		endpoint = "%s"
@@ -122,4 +155,18 @@ func testAccCheckDataSourceClusterConfig(mockServerUrl, clusterType string) stri
 	  	}
 	}
 	`, mockServerUrl, kafkaClusterId, kafkaEnvId)
+}
+
+func testAccCheckDataSourceClusterConfigWithDisplayNameSet(mockServerUrl string) string {
+	return fmt.Sprintf(`
+	provider "confluentcloud" {
+ 		endpoint = "%s"
+	}
+	data "confluentcloud_kafka_cluster" "basic-cluster" {
+		display_name = "%s"
+	  	environment {
+			id = "%s"
+	  	}
+	}
+	`, mockServerUrl, kafkaDisplayName, kafkaEnvId)
 }

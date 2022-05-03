@@ -15,11 +15,14 @@ resource "confluentcloud_kafka_cluster" "basic-cluster" {
 }
 
 resource "confluentcloud_kafka_acl" "describe-basic-cluster" {
-  kafka_cluster = confluentcloud_kafka_cluster.basic-cluster.id
+  kafka_cluster {
+    id = confluentcloud_kafka_cluster.basic-cluster.id
+  }
   resource_type = "CLUSTER"
   resource_name = "kafka-cluster"
   pattern_type = "LITERAL"
   principal = "User:sa-xyz123"
+  host = "*"
   operation = "DESCRIBE"
   permission = "ALLOW"
   http_endpoint = confluentcloud_kafka_cluster.basic-cluster.http_endpoint

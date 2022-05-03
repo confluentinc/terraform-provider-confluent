@@ -4,344 +4,192 @@ page_title: "Sample Project"
 
 # Sample Project for Confluent Cloud Terraform Provider
 
-!> **Warning:** The [Confluent Cloud Provider](https://registry.terraform.io/providers/confluentinc/confluentcloud/latest/docs) is deprecated in favor of the [Confluent Provider](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs).
+## Summary
 
-Use the Confluent Cloud Terraform provider to automate the workflow for creating
-a _Service Account_, a _Confluent Cloud environment_, a _Kafka cluster_, and
-_Topics_. Also, you can use this provider to assign permissions (_ACLs_) that
-enable access to the topics you create.
+**TODO**: add a gif (video) similar to https://confluent.slack.com/archives/C01880K2BAA/p1645121816881439
+or a video https://registry.terraform.io/providers/databrickslabs/databricks/latest/docs/guides/experimental-exporter
+
+Use the Confluent Cloud Terraform provider to enable the lifecycle management of Confluent Cloud resources:
+   * [Environments](https://registry.terraform.io/providers/confluentinc/confluentcloud/latest/docs/resources/confluentcloud_environment)
+   * [Kafka Clusters](https://registry.terraform.io/providers/confluentinc/confluentcloud/latest/docs/resources/confluentcloud_kafka_cluster)
+   * [Topics](https://registry.terraform.io/providers/confluentinc/confluentcloud/latest/docs/resources/confluentcloud_kafka_topic)
+   * [Service Accounts](https://registry.terraform.io/providers/confluentinc/confluentcloud/latest/docs/resources/confluentcloud_service_account)
+   * [Cloud API Keys and Kafka API Keys](https://registry.terraform.io/providers/confluentinc/confluentcloud/latest/docs/resources/confluentcloud_api_key)
+   * [Access Control Lists (ACLs)](https://registry.terraform.io/providers/confluentinc/confluentcloud/latest/docs/resources/confluentcloud_kafka_acl)
+   * [Role Bindings](https://registry.terraform.io/providers/confluentinc/confluentcloud/latest/docs/resources/confluentcloud_role_binding)
 
 In this guide, you will:
 
-1. [Get a Confluent Cloud API Key](#get-a-confluent-cloud-api-key)
-2. [Run Terraform to create your Kafka cluster](#run-terraform-to-create-your-kafka-cluster)
-3. [Inspect your automatically created resources](#inspect-your-resources)
-4. [Run Terraform to create a Kafka topic and ACLs](#run-terraform-to-create-a-kafka-topic)
-5. [Clean up and delete resources](#clean-up-and-delete-resources)
+1. [Create a Cloud API Key](#create-a-cloud-api-key)
+   * Create a [service account](https://docs.confluent.io/cloud/current/access-management/identity/service-accounts.html) called `tf_runner`in Confluent Cloud
+   * Assign the `OrganizationAdmin` [role](https://docs.confluent.io/cloud/current/access-management/access-control/cloud-rbac.html#organizationadmin) to the `tf_runner` service account
+   * Create a [Cloud API Key](https://docs.confluent.io/cloud/current/access-management/authenticate/api-keys/api-keys.html#cloud-cloud-api-keys) for the `tf_runner` service account
+2. [Create Resources on Confluent Cloud via Terraform](#create-resources-on-confluent-cloud-via-terraform)
+   * Select the appropriate Terraform configuration from a list of example configurations that describe the following infrastructure setup:
+      * An [environment](https://docs.confluent.io/cloud/current/access-management/hierarchy/cloud-environments.html) named `Staging` that contains a [Kafka cluster](https://docs.confluent.io/cloud/current/clusters/index.html) called `inventory` with a [Kafka topic](https://docs.confluent.io/cloud/current/client-apps/topics/manage.html) named `orders`
+      * 3 service accounts: `app_manager`, `app_producer`, and `app_consumer` with an associated [Kafka API Key](https://docs.confluent.io/cloud/current/access-management/authenticate/api-keys/api-keys.html#resource-specific-api-keys) each
+      * Appropriate permissions for service accounts granted either using [Role-based Access Control (RBAC)](https://docs.confluent.io/cloud/current/access-management/access-control/cloud-rbac.html) or [ACLs](https://docs.confluent.io/cloud/current/access-management/access-control/acl.html):
+         * the `app_manager` service account's Kafka API Key is used for creating the `orders` topic on the `inventory` Kafka cluster and creating ACLs if needed.
+         * the `app_producer` service account's Kafka API Key is used for _producing_ messages to the `orders` topic
+         * the `app_consumer` service account's Kafka API Key is used for _consuming_ messages from the `orders` topic
+         
+         -> **Note:** API Keys inherit the permissions granted to the owner.
+
+   * Initialize and apply the selected Terraform configuration
+3. [[Optional] Run a quick test](#optional-run-a-quick-test)
+   * Use the [Confluent CLI v2](https://docs.confluent.io/confluent-cli/current/migrate.html#directly-install-confluent-cli-v2-x) to 
+      * Produce messages to the `orders` topic using the `app_producer` service account's Kafka API Key
+      * Consume messages from the `orders` topic using the `app_consumer` service account's Kafka API Key
+4. [[Optional] Destroy created resources on Confluent Cloud](#optional-teardown-confluent-cloud-resources)
 
 ## Prerequisites
 
--> **Note:** The Confluent Cloud Terraform provider is available in an **Preview Program** for early adopters. Preview features are introduced to gather customer feedback. This feature should be used only for evaluation and non-production testing purposes or to provide feedback to Confluent, particularly as it becomes more widely available in follow-on editions.  
-**Preview Program** features are intended for evaluation use in development and testing environments only, and not for production use. The warranty, SLA, and Support Services provisions of your agreement with Confluent do not apply to Preview Program features. Preview Program features are considered to be a Proof of Concept as defined in the Confluent Cloud Terms of Service. Confluent may discontinue providing preview releases of the Preview Program features at any time in Confluent’s sole discretion.
+1.  A Confluent Cloud account. If you do not have a Confluent Cloud account, [create one now](https://www.confluent.io/confluent-cloud/tryfree/). 
+2.  Terraform (0.14+) installed:
+    * Install Terraform version manager [tfutils/tfenv](https://github.com/tfutils/tfenv)
+    * Alternatively, install the [Terraform CLI](https://learn.hashicorp.com/tutorials/terraform/install-cli#install-terraform)
+    * To ensure you're using the acceptable version of Terraform you may run the following command:
 
-!> **Warning:** Early Access versions of the Confluent Cloud Terraform Provider (versions 0.1.0 and 0.2.0) are deprecated.
+        ```bash
+        terraform version
+        ```
+    
+        Your output should resemble:
+        ```bash
+        Terraform v0.14.0 # any version >= v0.14.0 is OK
+        ...
+        ```
 
-- A Confluent Cloud account. **[Sign up here](https://www.confluent.io/get-started?product=cloud)**
+## Create a Cloud API Key
 
-## Get a Confluent Cloud API Key
+1. Open the [Confluent Cloud Console](https://confluent.cloud/settings/api-keys/create) and click **Granular access** tab, and then click **Next**.
+2. Click **Create a new one to create** tab. Enter the new service account name (`tf_runner`), then click **Next**.
+3. The Cloud API key and secret are generated for the `tf_runner` service account. Save your Cloud API key and secret in a secure location. You will need this API key and secret **to use the Confluent Cloud Terraform Provider**.
+4. [Assign](https://confluent.cloud/settings/org/assignments) the `OrganizationAdmin` role to the `tf_runner` service account by following [this guide](https://docs.confluent.io/cloud/current/access-management/access-control/cloud-rbac.html#add-a-role-binding-for-a-user-or-service-account).
 
-The following steps show how to get the Confluent Cloud API key and secret that
-you need to access Confluent Cloud programmatically.
+![Assigning the OrganizationAdmin role to tf_runner service account](https://github.com/confluentinc/terraform-provider-confluentcloud/raw/master/docs/guides/OrganizationAdmin.png)
 
--> **Note:** When you create the Cloud API key, you must select **Global access**.
+## Create Resources on Confluent Cloud via Terraform
 
-1.  Create a Cloud API key and secret by using the
-    [Confluent Cloud Console](https://confluent.cloud/settings/api-keys) or the
-    [Confluent CLI](https://docs.confluent.io/confluent-cli/current/command-reference/api-key/confluent_api-key_create.html).
-    They're required for creating any Confluent Cloud resources.
-
-    If you're using the Confluent CLI, the following command creates your
-    API key and secret.
+1. Clone the [repository](https://github.com/confluentinc/terraform-provider-confluentcloud) containing the example configurations:
 
     ```bash
-    confluent api-key create --resource "cloud" 
+    git clone https://github.com/confluentinc/terraform-provider-confluent.git
     ```
 
-    Save your API key and secret in a secure location.
-
-2.  Run the following commands to set the `CONFLUENT_CLOUD_API_KEY` and
-    `CONFLUENT_CLOUD_API_SECRET` environment variables:
+2. Change into `configurations` subdirectory:
 
     ```bash
-    export CONFLUENT_CLOUD_API_KEY="<cloud_api_key>"
-    export CONFLUENT_CLOUD_API_SECRET="<cloud_api_secret>"
-    ```
-    
-    -> **Note:** Quotation marks are required around the API key and secret strings.
-
-    The provider uses these environment variables to authenticate to
-    Confluent Cloud.
-
-## Run Terraform to create your Kafka cluster 
-
-Run Terraform to create a service account and an environment that has a
-Kafka cluster.
-
-1.  Create a new file named `main.tf` and copy the following Terraform template
-    into it.
-
-    ```terraform
-
-    # Example for using Confluent Cloud https://docs.confluent.io/cloud/current/api.html
-    # that creates multiple resources: a service account, an environment, a basic cluster, a topic, and 2 ACLs.
-    # Configure Confluent Cloud provider
-    terraform {
-      required_providers {
-        confluentcloud = {
-          source  = "confluentinc/confluentcloud"
-          version = "0.5.0"
-        }
-      }
-    }
-    
-    provider "confluentcloud" {}
-
-    resource "confluentcloud_service_account" "test-sa" {
-      display_name = "test_sa"
-      description = "description for test_sa"
-    }
-
-    resource "confluentcloud_environment" "test-env" {
-      display_name = "test_env"
-    }
-
-    resource "confluentcloud_kafka_cluster" "test-basic-cluster" {
-      display_name = "test_cluster"
-      availability = "SINGLE_ZONE"
-      cloud = "GCP"
-      region = "us-central1"
-      basic {}
-      environment {
-        id = confluentcloud_environment.test-env.id
-      }
-    }
+    cd terraform-provider-confluent/examples/configurations
     ```
 
-2.  Run the following command to initialize the Confluent Cloud Terraform provider:
+3. The `configurations` directory has a subdirectory for each of the following configurations:
+    * `basic-kafka-acls`: _Basic_ Kafka cluster with authorization using ACLs
+    * `standard-kafka-acls`: _Standard_ Kafka cluster with authorization using ACLs
+    * `standard-kafka-rbac`: _Standard_ Kafka cluster with authorization using RBAC
+    * `dedicated-public-kafka-acls`: _Dedicated_ Kafka cluster that is accessible over the public internet with authorization using ACLs
+    * `dedicated-public-kafka-rbac`: _Dedicated_ Kafka cluster that is accessible over the public internet with authorization using RBAC
+    * `dedicated-privatelink-aws-kafka-acls`: _Dedicated_ Kafka cluster on AWS that is accessible via PrivateLink connections with authorization using ACLs
+    * `dedicated-privatelink-aws-kafka-rbac`: _Dedicated_ Kafka cluster on AWS that is accessible via PrivateLink connections with authorization using RBAC
+    * `dedicated-privatelink-azure-kafka-rbac`: _Dedicated_ Kafka cluster on Azure that is accessible via PrivateLink connections with authorization using RBAC
+    * `dedicated-privatelink-azure-kafka-acls`: _Dedicated_ Kafka cluster on Azure that is accessible via PrivateLink connections with authorization using ACLs
+    * `dedicated-vnet-peering-azure-kafka-acls`: _Dedicated_ Kafka cluster on Azure that is accessible via VPC Peering connections with authorization using ACLs
+    * `dedicated-vnet-peering-azure-kafka-rbac`: _Dedicated_ Kafka cluster on Azure that is accessible via VPC Peering connections with authorization using RBAC
+    * `dedicated-vpc-peering-aws-kafka-acls`: _Dedicated_ Kafka cluster on AWS that is accessible via VPC Peering connections with authorization using ACLs
+    * `dedicated-vpc-peering-aws-kafka-rbac`: _Dedicated_ Kafka cluster on AWS that is accessible via VPC Peering connections with authorization using RBAC
+    * `dedicated-vpc-peering-gcp-kafka-acls`: _Dedicated_ Kafka cluster on GCP that is accessible via VPC Peering connections with authorization using ACLs
+    * `dedicated-vpc-peering-gcp-kafka-rbac`: _Dedicated_ Kafka cluster on GCP that is accessible via VPC Peering connections with authorization using RBAC
 
+    -> **Note:** _Basic_ Kafka cluster with authorization using RBAC configuration is not supported, because both `DeveloperRead` and `DeveloperWrite` roles are not available for _Basic_ Kafka clusters.
+    
+    -> **Note:** When considering whether to use RBAC or ACLs for access control, it is suggested you use RBAC as the default because of its ease of use and manageability at scale, but for edge cases where you need to have more granular access control, or wish to explicitly deny access, ACLs may make more sense. For example, you could use RBAC to allow access for a group of users, but an ACL to deny access for a particular member of that group.
+
+    -> **Note:** When using a private networking option, you must execute `terraform` on a system with connectivity to the Kafka REST API. Check the [Kafka REST API docs](https://docs.confluent.io/cloud/current/api.html#tag/Topic-(v3)) to learn more about it.
+
+5. Select the target configuration and change into its directory:
+    ```bash
+    # Using the example configuration #1 as an example 
+    cd basic-kafka-acls
+    ```
+
+6. Download and install the providers defined in the configuration:
     ```bash
     terraform init
     ```
 
-3.  Run the following command to create the plan:
-
+7. Use the saved Cloud API Key of the `tf_runner` service account to set values to the `confluent_cloud_api_key` and `confluent_cloud_api_secret` input variables [using environment variables](https://www.terraform.io/language/values/variables#environment-variables):
     ```bash
-    terraform plan -out=tfplan_add_sa_env_and_cluster
+    export TF_VAR_confluent_cloud_api_key="<cloud_api_key>"
+    export TF_VAR_confluent_cloud_api_secret="<cloud_api_secret>"
     ```
 
-4.  Run the following command to apply the plan and create cloud resources:
+8. Ensure the configuration is syntactically valid and internally consistent:
+    ```bash
+    terraform validate
+    ```
+   
+9. Apply the configuration:
+    ```bash
+    terraform apply
+    ```
+
+10. You have now created infrastructure using Terraform! Visit the [Confluent Cloud Console](https://confluent.cloud/environments) or use the [Confluent CLI v2](https://docs.confluent.io/confluent-cli/current/migrate.html#directly-install-confluent-cli-v2-x) to see the resources you provisioned.
+
+## [Optional] Run a Quick Test
+
+1.  Ensure you're using the acceptable version of the [Confluent CLI v2](https://docs.confluent.io/confluent-cli/current/migrate.html#directly-install-confluent-cli-v2-x) by running the following command:
 
     ```bash
-    terraform apply tfplan_add_sa_env_and_cluster
+    confluent version
+    ```
+    
+    Your output should resemble:
+    ```bash
+    ...
+    Version:     v2.5.1 # any version >= v2.0 is OK
+    ...
+    ```
+2.  Run the following command to print out generated Confluent CLI v2 commands with the correct resource IDs injected:  
+
+    ```bash
+    # Alternatively, you could also run terraform output -json resource-ids
+    terraform output resource-ids
     ```
 
     Your output should resemble:
-
+    
+    ```bash
+    # 1. Log in to Confluent Cloud
+    $ confluent login
+    
+    # 2. Produce key-value records to topic '<TOPIC_NAME>' by using <APP-PRODUCER'S NAME>'s Kafka API Key
+    # Enter a few records and then press 'Ctrl-C' when you're done.
+    # Sample records:
+    # {"number":1,"date":18500,"shipping_address":"899 W Evelyn Ave, Mountain View, CA 94041, USA","cost":15.00}
+    # {"number":2,"date":18501,"shipping_address":"1 Bedford St, London WC2E 9HG, United Kingdom","cost":5.00}
+    # {"number":3,"date":18502,"shipping_address":"3307 Northland Dr Suite 400, Austin, TX 78731, USA","cost":10.00} 
+    $ confluent kafka topic produce <TOPIC_NAME> --environment <ENVIRONMENT_ID> --cluster <CLUSTER_ID> --api-key "<APP-PRODUCER'S KAFKA API KEY>" --api-secret "<APP-PRODUCER'S KAFKA API SECRET>"
+    
+    # 3. Consume records from topic '<TOPIC_NAME>' by using <APP-CONSUMER'S NAME>'s Kafka API Key
+    $ confluent kafka topic consume <TOPIC_NAME> --from-beginning --environment <ENVIRONMENT_ID> --cluster <CLUSTER_ID> --api-key "<APP-CONSUMER'S KAFKA API KEY>" --api-secret "<APP-CONSUMER'S KAFKA API SECRET>"
+    # When you are done, press 'Ctrl-C'.
     ```
-    confluentcloud_service_account.test-sa: Creating...
-    confluentcloud_environment.test-env: Creating...
-    confluentcloud_environment.test-env: Creation complete after 1s [id=env-***] <--- the Environment's ID
-    confluentcloud_kafka_cluster.test-basic-cluster: Creating...
-    confluentcloud_service_account.test-sa: Creation complete after 1s [id=sa-***] <--- the Service Account's ID
-    confluentcloud_kafka_cluster.test-basic-cluster: Still creating... [10s elapsed]
-    confluentcloud_kafka_cluster.test-basic-cluster: Creation complete after 14s [id=lkc-***] <--- the Kafka cluster's ID
 
-    Apply complete! Resources: 3 added, 0 changed, 0 destroyed.
-    ```
+3. Execute printed out commands.
 
-    Terraform creates a `test_sa` service account and a `test_env` environment
-    that has a Kafka cluster, named `test_cluster`.
+   -> **Note:** Sending full key-value pairs from the command line was enabled by adding two flags to the Confluent CLI v2 command, `parse-key` and `delimiter`. Adding `--from-beginning` flag enabled printing all messages from the beginning of the topic.
 
-## Inspect your resources
-
-You can find the created resources (and their IDs: `sa-***`, `env-***`, `lkc-***` 
-from Terraform output) on both [Cloud Console](https://confluent.cloud/environments) and
-[Confluent CLI](https://docs.confluent.io/confluent-cli/current/overview.html).
-
-## Run Terraform to create a Kafka topic
-
-In previous steps, you used the Confluent Cloud Provider to create a Service Account, an
-environment, and a Kafka cluster, but your cluster doesn't have any topics.
-In this step, you create an API key to access the Kafka cluster, and you use
-it in a plan to create a Kafka topic and related ACLs that authorize access.
-
--> **Important** You must manually provision API keys for the service account so it can authenticate with the cluster. ACL management covers only authorization, not authentication and is a manual step after the creation of the Kafka cluster.
-
-The following steps show how to create a Kafka API key and use it in a 
-Terraform file to create a topic and its related ACLs.
-
-Create an API key and secret for the Kafka cluster by using the
-[Confluent Cloud Console](https://confluent.cloud/settings/api-keys) or the
-[Confluent CLI](https://docs.confluent.io/confluent-cli/current/command-reference/api-key/confluent_api-key_create.html).
-The Kafka API key is distinct from the Cloud API key and is required for
-creating Kafka topics and ACLs.
-
-### Use the Cloud Console to get your Kafka API key
-
-The following steps show how to create a Kafka API key by using the Cloud Console.
-
-1.  Click into the **test_env** environment and then click **test_cluster**.
-
-2.  In the navigation menu on the left, click **Data integration** and click **API keys**.
-
-3.  Click **Add key**, and in the Create Key page, click **Global access** and
-    **Next**. Your API key is generated and displayed for easy copying.
-4.  Copy and save your API key and secret in a secure location. When you're
-    done, click **I have saved my API key** and click **Save**.
-
-### Use the Cloud CLI to get your Kafka API key
-
-If you're using the Confluent CLI, the following command creates your
-API key and secret. Replace `<cluster_id>` and `<env_id>` with your cluster ID and environment ID respectively.
+## [Optional] Teardown Confluent Cloud resources
+Run the following command to destroy all the resources you created:
 
 ```bash
-confluent api-key create --resource <cluster_id> --environment <env_id> 
+terraform destroy
 ```
 
-Save your Kafka API key and secret in a secure location.
+This command destroys all the resources specified in your Terraform state. `terraform destroy` doesn't destroy resources running elsewhere that aren't managed by the current Terraform project.
 
-### Add your Kafka API key to a Terraform file
+Now you've created and destroyed an entire Confluent Cloud deployment!
 
-1.  Create a new file named `variables.tf` and copy the following template into
-    it.
+Visit the [Confluent Cloud Console](https://confluent.cloud/environments) to verify the resources have been destroyed to avoid unexpected charges.
 
-    ```terraform
-
-    variable "kafka_api_key" {
-      type = string
-      description = "Kafka API Key"
-    }
-
-    variable "kafka_api_secret" {
-      type = string
-      description = "Kafka API Secret"
-      sensitive = true  
-    }
-
-    ```
-
-2.  Create a new file named `terraform.tfvars` and copy the following into it.
-    Copy the below template and substitute the correct values for each variable.
-
-    -> **Important:** Do not store production secrets in a `.tfvars` file. Instead,
-    [use environment variables, encrypted files, or a secret store](https://blog.gruntwork.io/a-comprehensive-guide-to-managing-secrets-in-your-terraform-code-1d586955ace1)
-
-    ```terraform
-    kafka_api_key="<key>"
-    kafka_api_secret="<secret>"
-    ```
-
-    -> **Note:** Quotation marks are required around the API key and secret strings.
-
-3.  Append the following resource definitions into `main.tf` and save the file.
-
-    ```terraform
-    resource "confluentcloud_kafka_topic" "orders" {
-      kafka_cluster = confluentcloud_kafka_cluster.test-basic-cluster.id
-      topic_name = "orders"
-      partitions_count = 4
-      http_endpoint = confluentcloud_kafka_cluster.test-basic-cluster.http_endpoint
-      config = {
-        "cleanup.policy" = "compact"
-        "max.message.bytes" = "12345"
-        "retention.ms" = "6789000"
-      }
-      credentials {
-        key = var.kafka_api_key
-        secret = var.kafka_api_secret
-      }
-    }
-    
-    resource "confluentcloud_kafka_acl" "describe-orders" {
-      kafka_cluster = confluentcloud_kafka_cluster.test-basic-cluster.id
-      resource_type = "TOPIC"
-      resource_name = confluentcloud_kafka_topic.orders.topic_name
-      pattern_type = "LITERAL"
-      principal = "User:${confluentcloud_service_account.test-sa.id}"
-      operation = "DESCRIBE"
-      permission = "ALLOW"
-      http_endpoint = confluentcloud_kafka_cluster.test-basic-cluster.http_endpoint
-      credentials {
-        key = var.kafka_api_key
-        secret = var.kafka_api_secret
-      }
-    }
-    
-    resource "confluentcloud_kafka_acl" "describe-test-basic-cluster" {
-      kafka_cluster = confluentcloud_kafka_cluster.test-basic-cluster.id
-      resource_type = "CLUSTER"
-      resource_name = "kafka-cluster"
-      pattern_type = "LITERAL"
-      principal = "User:${confluentcloud_service_account.test-sa.id}"
-      operation = "DESCRIBE"
-      permission = "ALLOW"
-      http_endpoint = confluentcloud_kafka_cluster.test-basic-cluster.http_endpoint
-      credentials {
-        key = var.kafka_api_key
-        secret = var.kafka_api_secret
-      }
-    }
-    ```
-
-4.  Run the following command to create the plan.
-
-    ```bash
-    terraform plan -out=tfplan_add_topic_and_2_acls
-    ```
-
-    Your output should resemble:
-
-5.  Run the following command to apply the plan.
-    
-    ```bash
-    terraform apply tfplan_add_topic_and_2_acls
-    ```
-
-    Your output should resemble:
-
-    ```
-    confluentcloud_kafka_acl.describe-test-basic-cluster: Creating...
-    confluentcloud_kafka_topic.orders: Creating...
-    confluentcloud_kafka_acl.describe-test-basic-cluster: Creation complete after 1s [id=lkc-odgpo/CLUSTER#kafka-cluster#LITERAL#User:sa-l7v772#*#DESCRIBE#ALLOW]
-    confluentcloud_kafka_topic.orders: Creation complete after 2s [id=lkc-odgpo/orders]
-    confluentcloud_kafka_acl.describe-orders: Creating...
-    confluentcloud_kafka_acl.describe-orders: Creation complete after 0s [id=lkc-odgpo/TOPIC#orders#LITERAL#User:sa-l7v772#*#DESCRIBE#ALLOW]
-
-    Apply complete! Resources: 3 added, 0 changed, 0 destroyed.
-    ```
-6.  Inspect created ACLs:
-    
-    ```bash
-    confluent kafka acl list --cluster lkc-odgpo --environment env-31dgj
-    ```
-    
-    Your output should resemble:
-    
-    ```
-    Principal    | Permission | Operation | ResourceType | ResourceName  | PatternType
-    -----------------+------------+-----------+--------------+---------------+--------------
-    User:sa-l7v772 | ALLOW      | DESCRIBE  | TOPIC        | orders        | LITERAL
-    User:sa-l7v772 | ALLOW      | DESCRIBE  | CLUSTER      | kafka-cluster | LITERAL
-    ```    
-
-### Clean up and delete resources
-
-To clean up and remove the resources you've created, run the following command:
-
-```bash
-terraform destroy --auto-approve
-```
-
-Your output should resemble:
-
-```
-confluentcloud_service_account.test-sa: Destroying... [id=sa-l7v772]
-confluentcloud_kafka_acl.describe-orders: Destroying... [id=lkc-odgpo/TOPIC#orders#LITERAL#User:sa-l7v772#*#DESCRIBE#ALLOW]
-confluentcloud_kafka_acl.describe-test-basic-cluster: Destroying... [id=lkc-odgpo/CLUSTER#kafka-cluster#LITERAL#User:sa-l7v772#*#DESCRIBE#ALLOW]
-confluentcloud_kafka_acl.describe-orders: Destruction complete after 2s
-confluentcloud_kafka_acl.describe-test-basic-cluster: Destruction complete after 2s
-confluentcloud_kafka_topic.orders: Destroying... [id=lkc-odgpo/orders]
-confluentcloud_service_account.test-sa: Destruction complete after 2s
-confluentcloud_kafka_topic.orders: Destruction complete after 0s
-confluentcloud_kafka_cluster.test-basic-cluster: Destroying... [id=lkc-odgpo]
-confluentcloud_kafka_cluster.test-basic-cluster: Still destroying... [id=lkc-odgpo, 10s elapsed]
-confluentcloud_kafka_cluster.test-basic-cluster: Still destroying... [id=lkc-odgpo, 20s elapsed]
-confluentcloud_kafka_cluster.test-basic-cluster: Destruction complete after 23s
-confluentcloud_environment.test-env: Destroying... [id=env-31dgj]
-confluentcloud_environment.test-env: Destroying... [id=env-31dgj]
-confluentcloud_environment.test-env: Destruction complete after 1s
-
-Apply complete! Resources: 0 added, 0 changed, 7 destroyed.
-```
-
--> **Next steps:** Explore examples in the [Confluent Cloud Provider repo](https://github.com/confluentinc/terraform-provider-confluentcloud/tree/master/examples)
+If you're interested in additional Confluent Cloud infrastructure configurations view our [repository](https://github.com/confluentinc/terraform-provider-confluentcloud/tree/master/examples/configurations) for more end-to-end examples.

@@ -112,7 +112,8 @@ func TestAccDataSourceTopic(t *testing.T) {
 				Config: testAccCheckDataSourceTopicConfig(confluentCloudBaseUrl, mockTopicTestServerUrl),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckTopicExists(fullTopicDataSourceLabel),
-					resource.TestCheckResourceAttr(fullTopicDataSourceLabel, "kafka_cluster", clusterId),
+					resource.TestCheckResourceAttr(fullTopicDataSourceLabel, "kafka_cluster.#", "1"),
+					resource.TestCheckResourceAttr(fullTopicDataSourceLabel, "kafka_cluster.0.id", clusterId),
 					resource.TestCheckResourceAttr(fullTopicDataSourceLabel, "id", fmt.Sprintf("%s/%s", clusterId, topicName)),
 					resource.TestCheckResourceAttr(fullTopicDataSourceLabel, "%", numberOfResourceAttributes),
 					resource.TestCheckResourceAttr(fullTopicDataSourceLabel, "topic_name", topicName),
@@ -133,7 +134,9 @@ func testAccCheckDataSourceTopicConfig(confluentCloudBaseUrl, mockServerUrl stri
       endpoint = "%s"
     }
 	data "confluentcloud_kafka_topic" "%s" {
-	  kafka_cluster = "%s"
+	  kafka_cluster {
+        id = "%s"
+      }
 	
 	  topic_name = "%s"
 	  http_endpoint = "%s"

@@ -15,7 +15,9 @@ resource "confluentcloud_kafka_cluster" "basic-cluster" {
 }
 
 resource "confluentcloud_kafka_topic" "orders" {
-  kafka_cluster = confluentcloud_kafka_cluster.basic-cluster.id
+  kafka_cluster {
+    id = confluentcloud_kafka_cluster.basic-cluster.id
+  }
   topic_name = "orders"
   partitions_count = 4
   http_endpoint = confluentcloud_kafka_cluster.basic-cluster.http_endpoint

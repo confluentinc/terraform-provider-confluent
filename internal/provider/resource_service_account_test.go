@@ -206,7 +206,7 @@ func testAccCheckServiceAccountDestroy(s *terraform.State) error {
 		} else if err == nil && deletedServiceAccount.Id != nil {
 			// Otherwise return the error
 			if *deletedServiceAccount.Id == rs.Primary.ID {
-				return fmt.Errorf("service account (%s) still exists", rs.Primary.ID)
+				return fmt.Errorf("service account (%q) still exists", rs.Primary.ID)
 			}
 		}
 		return err
