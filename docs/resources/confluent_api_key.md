@@ -129,4 +129,4 @@ The following arguments are supported:
 
 In addition to the preceding arguments, the following attributes are exported:
 
-- `secret` - (Required String) The API key secret.
+- `secret` - (Required String) The secret of the API Key.
