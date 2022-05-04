@@ -159,7 +159,7 @@ In addition to the preceding arguments, the following attributes are exported:
 
 You can import a Peering by using Environment ID and Peering ID, in the format `<Environment ID>/<Peering ID>`. The following example shows how to import a Peering:
 
-```
+```shell
 $ export CONFLUENT_CLOUD_API_KEY="<cloud_api_key>"
 $ export CONFLUENT_CLOUD_API_SECRET="<cloud_api_secret>"
 $ terraform import confluent_peering.my_peer env-abc123/peer-abc123

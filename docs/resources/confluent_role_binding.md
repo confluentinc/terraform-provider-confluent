@@ -68,7 +68,7 @@ In addition to the preceding arguments, the following attributes are exported:
 
 You can import a Role Binding by using Role Binding ID, for example:
 
-```
+```shell
 $ export CONFLUENT_CLOUD_API_KEY="<cloud_api_key>"
 $ export CONFLUENT_CLOUD_API_SECRET="<cloud_api_secret>"
 $ terraform import confluent_role_binding.my_rb rb-f3a90de

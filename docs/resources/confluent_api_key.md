@@ -125,8 +125,6 @@ The following arguments are supported:
     - `environment` (Required Configuration Block) supports the following:
         - `id` - (Required String) The ID of the Environment that the managed resource belongs to, for example, `env-abc123`.
 
-
-
 ## Attributes Reference
 
 In addition to the preceding arguments, the following attributes are exported:

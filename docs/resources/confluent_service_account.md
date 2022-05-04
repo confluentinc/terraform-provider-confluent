@@ -41,7 +41,7 @@ In addition to the preceding arguments, the following attributes are exported:
 
 You can import a Service Account by using Service Account ID, for example:
 
-```
+```shell
 $ export CONFLUENT_CLOUD_API_KEY="<cloud_api_key>"
 $ export CONFLUENT_CLOUD_API_SECRET="<cloud_api_secret>"
 $ terraform import confluent_service_account.my_sa sa-abc123

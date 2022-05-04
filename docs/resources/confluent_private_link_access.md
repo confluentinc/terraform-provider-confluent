@@ -107,7 +107,7 @@ In addition to the preceding arguments, the following attributes are exported:
 
 You can import a Private Link Access by using Environment ID and Private Link Access ID, in the format `<Environment ID>/<Private Link Access ID>`. The following example shows how to import a Private Link Access:
 
-```
+```shell
 $ export CONFLUENT_CLOUD_API_KEY="<cloud_api_key>"
 $ export CONFLUENT_CLOUD_API_SECRET="<cloud_api_secret>"
 $ terraform import confluent_private_link_access.my_pla env-abc123/pla-abc123

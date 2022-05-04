@@ -116,7 +116,7 @@ In addition to the preceding arguments, the following attributes are exported:
 
 You can import a Kafka cluster by using Environment ID and Kafka cluster ID, in the format `<Environment ID>/<Kafka cluster ID>`, e.g.
 
-```
+```shell
 $ export CONFLUENT_CLOUD_API_KEY="<cloud_api_key>"
 $ export CONFLUENT_CLOUD_API_SECRET="<cloud_api_secret>"
 $ terraform import confluent_kafka_cluster.my_kafka env-abc123/lkc-abc123

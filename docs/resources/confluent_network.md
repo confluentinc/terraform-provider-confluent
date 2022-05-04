@@ -90,7 +90,7 @@ In addition to the preceding arguments, the following attributes are exported:
 
 You can import a Network by using Environment ID and Network ID, in the format `<Environment ID>/<Network ID>`. The following example shows how to import a Network:
 
-```
+```shell
 $ export CONFLUENT_CLOUD_API_KEY="<cloud_api_key>"
 $ export CONFLUENT_CLOUD_API_SECRET="<cloud_api_secret>"
 $ terraform import confluent_network.my_network env-abc123/n-abc123
