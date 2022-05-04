@@ -2,13 +2,13 @@
 page_title: "Sample Project"
 ---
 
-# Sample Project for Confluent Cloud Terraform Provider
+# Sample Project for Confluent Terraform Provider
 
 ## Summary
 
 [![asciicast](https://asciinema.org/a/491871.svg)](https://asciinema.org/a/491871)
 
-Use the Confluent Cloud Terraform provider to enable the lifecycle management of Confluent Cloud resources:
+Use the Confluent Terraform provider to enable the lifecycle management of Confluent Cloud resources:
    * [Environments](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_environment)
    * [Kafka Clusters](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_cluster)
    * [Topics](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_topic)
@@ -63,7 +63,7 @@ In this guide, you will:
 
 1. Open the [Confluent Cloud Console](https://confluent.cloud/settings/api-keys/create) and click **Granular access** tab, and then click **Next**.
 2. Click **Create a new one to create** tab. Enter the new service account name (`tf_runner`), then click **Next**.
-3. The Cloud API key and secret are generated for the `tf_runner` service account. Save your Cloud API key and secret in a secure location. You will need this API key and secret **to use the Confluent Cloud Terraform Provider**.
+3. The Cloud API key and secret are generated for the `tf_runner` service account. Save your Cloud API key and secret in a secure location. You will need this API key and secret **to use the Confluent Terraform Provider**.
 4. [Assign](https://confluent.cloud/settings/org/assignments) the `OrganizationAdmin` role to the `tf_runner` service account by following [this guide](https://docs.confluent.io/cloud/current/access-management/access-control/cloud-rbac.html#add-a-role-binding-for-a-user-or-service-account).
 
 ![Assigning the OrganizationAdmin role to tf_runner service account](https://github.com/confluentinc/terraform-provider-confluent/raw/master/docs/images/OrganizationAdmin.png)

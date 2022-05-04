@@ -5,13 +5,13 @@ description: |-
   
 ---
 
-# Confluent Cloud Provider
+# Confluent Provider
 
 Simplify Apache Kafka Terraform deployment with the Confluent Terraform Provider. Manage Environments, Kafka Clusters, Kafka Topics, Kafka ACLs, Service Accounts, and more in Confluent.
 
 Use the Confluent provider to deploy and manage [Confluent Cloud](https://www.confluent.io/confluent-cloud/) infrastructure. You must provide appropriate credentials to use the provider. The navigation menu provides details about the resources that you can interact with (_Resources_), and a guide (_Guides_) for how you can get started.
 
--> **Note:** The Confluent Cloud Terraform provider is available in an **Preview Program** for early adopters. Preview features are introduced to gather customer feedback. This feature should be used only for evaluation and non-production testing purposes or to provide feedback to Confluent, particularly as it becomes more widely available in follow-on editions.  
+-> **Note:** The Confluent Terraform provider is available in an **Preview Program** for early adopters. Preview features are introduced to gather customer feedback. This feature should be used only for evaluation and non-production testing purposes or to provide feedback to Confluent, particularly as it becomes more widely available in follow-on editions.  
 **Preview Program** features are intended for evaluation use in development and testing environments only, and not for production use. The warranty, SLA, and Support Services provisions of your agreement with Confluent do not apply to Preview Program features. Preview Program features are considered to be a Proof of Concept as defined in the Confluent Cloud Terms of Service. Confluent may discontinue providing preview releases of the Preview Program features at any time in Confluent’s sole discretion.
 
 [![asciicast](https://asciinema.org/a/491871.svg)](https://asciinema.org/a/491871)
