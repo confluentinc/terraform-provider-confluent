@@ -34,7 +34,7 @@ const (
 	environmentId                    = "env-q2opmd"
 	environmentDataSourceDisplayName = "test_env_display_name"
 	environmentDataSourceLabel       = "test_env_data_source_label"
-	environmentDataSourceEndpoint    = "crn://confluent.cloud/organizations=foo/environments=env-q2opmd"
+	environmentDataSourceEndpoint    = "crn://confluent.cloud/organization=foo/environment=env-q2opmd"
 )
 
 func TestAccDataSourceEnvironment(t *testing.T) {

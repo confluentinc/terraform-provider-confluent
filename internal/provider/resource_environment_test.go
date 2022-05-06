@@ -140,7 +140,7 @@ func TestAccEnvironment(t *testing.T) {
 	// in order to test tf update (step #3)
 	environmentDisplayUpdatedName := "test_env_display_updated_name"
 	environmentResourceLabel := "test_env_resource_label"
-	environmentResourceEndpoint := "crn://confluent.cloud/organizations=foo/environments=env-q2opmd"
+	environmentResourceEndpoint := "crn://confluent.cloud/organization=foo/environment=env-q2opmd"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },

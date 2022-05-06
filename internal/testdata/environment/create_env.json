@@ -6,7 +6,7 @@
     "self": "https://api.confluent.cloud/v2/environments/env-q2opmd",
     "created_at": "2021-08-08T18:23:41.849685Z",
     "updated_at": "2021-08-08T18:23:41.849685Z",
-    "resource_name": "crn://confluent.cloud/organizations=foo/environments=env-q2opmd"
+    "resource_name": "crn://confluent.cloud/organization=foo/environment=env-q2opmd"
   },
   "display_name": "test_env_name"
 }

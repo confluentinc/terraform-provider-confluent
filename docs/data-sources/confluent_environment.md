@@ -52,4 +52,4 @@ The following attributes are exported:
 
 - `id` - (Required String) The ID of the Environment, for example, `env-abc123`.
 - `display_name` - (Required String) A human-readable name for the Environment.
-- `resource_name` - (Required String) The Confluent Resource Name of the Environment, for example, `crn://confluent.cloud/organizations=1111aaaa-11aa-11aa-11aa-111111aaaaaa/environments=env-abc123`.
+- `resource_name` - (Required String) The Confluent Resource Name of the Environment, for example, `crn://confluent.cloud/organization=1111aaaa-11aa-11aa-11aa-111111aaaaaa/environment=env-abc123`.
