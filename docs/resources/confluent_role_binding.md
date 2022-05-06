@@ -13,6 +13,12 @@ description: |-
 ## Example Usage
 
 ```terraform
+resource "confluent_role_binding" "org-example-rb" {
+  principal   = "User:${confluent_service_account.test.id}"
+  role_name   = "MetricsViewer"
+  crn_pattern = data.confluent_organization.demo.resource_name
+}
+
 resource "confluent_role_binding" "environment-example-rb" {
   principal   = "User:${confluent_service_account.test.id}"
   role_name   = "EnvironmentAdmin"

@@ -103,6 +103,7 @@ func New(version string) func() *schema.Provider {
 				"confluent_environment":     environmentDataSource(),
 				"confluent_service_account": serviceAccountDataSource(),
 				"confluent_user":            userDataSource(),
+				"confluent_organization":    organizationDataSource(),
 			},
 			ResourcesMap: map[string]*schema.Resource{
 				"confluent_api_key":             apiKeyResource(),

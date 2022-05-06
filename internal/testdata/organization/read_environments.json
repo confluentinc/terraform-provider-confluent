@@ -1,0 +1,32 @@
+{
+  "api_version": "org/v2",
+  "data": [
+    {
+      "api_version": "org/v2",
+      "display_name": "stag",
+      "id": "env-ab123",
+      "kind": "Environment",
+      "metadata": {
+        "created_at": "2022-02-16T06:57:18.247721Z",
+        "resource_name": "crn://confluent.cloud/organization=1111aaaa-11aa-11aa-11aa-111111aaaaaa/environment=env-q2opmd",
+        "self": "https://api.confluent.cloud/org/v2/environments/env-ab123",
+        "updated_at": "2022-02-16T06:57:18.247721Z"
+      }
+    },
+    {
+      "api_version": "org/v2",
+      "display_name": "test_env_display_name",
+      "id": "env-q2opmd",
+      "kind": "Environment",
+      "metadata": {
+        "created_at": "2022-02-18T20:18:05.449482Z",
+        "resource_name": "crn://confluent.cloud/organization=1111aaaa-11aa-11aa-11aa-111111aaaaaa/environment=env-q2opmd",
+        "self": "https://api.confluent.cloud/org/v2/environments/env-q2opmd",
+        "updated_at": "2022-02-18T20:18:05.449482Z"
+      }
+    }
+  ],
+  "kind": "EnvironmentList",
+  "metadata": {
+  }
+}
