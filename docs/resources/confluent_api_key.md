@@ -129,6 +129,7 @@ The following arguments are supported:
 
 In addition to the preceding arguments, the following attributes are exported:
 
+- `id` - (Required String) The ID of the API Key, for example, `EGWX3S4BVNQIRBMJ`.
 - `secret` - (Required String) The secret of the API Key.
 
 ## Import

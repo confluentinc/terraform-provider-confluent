@@ -42,8 +42,8 @@ resource "confluent_kafka_topic" "orders" {
     "retention.ms"      = "67890"
   }
   credentials {
-    key    = "<Kafka API Key for confluent_kafka_cluster.basic-cluster>"
-    secret = "<Kafka API Secret for confluent_kafka_cluster.basic-cluster>"
+    key    = confluent_api_key.app-manager-kafka-api-key.id
+    secret = confluent_api_key.app-manager-kafka-api-key.secret
   }
 }
 ```
