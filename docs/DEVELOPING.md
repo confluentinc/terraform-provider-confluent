@@ -5,9 +5,9 @@
 - Terraform `>= 0.14`
    * We recommend you to use Terraform version manager [tfutils/tfenv](https://github.com/tfutils/tfenv)
       * `tfenv install 0.15.3`, `tfenv use 0.15.3`
-- Go `1.17` (to build the provider plugin)
+- Go `1.18` (to build the provider plugin)
    * We recommend you to use Go version manager [syndbg/goenv](https://github.com/syndbg/goenv/blob/master/INSTALL.md)
-      * `goenv install 1.17.0`
+      * `goenv install 1.18.0`
 
 ## Quick Start
 

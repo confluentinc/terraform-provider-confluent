@@ -49,5 +49,12 @@ In addition to the preceding arguments, the following attributes are exported:
 - `standard` - (Optional Configuration Block) The configuration of the Standard Kafka cluster.
 - `dedicated` - (Optional Configuration Block) The configuration of the Dedicated Kafka cluster. It supports the following:
     - `cku` - (Required Number) The number of Confluent Kafka Units (CKUs) for Dedicated cluster types. The minimum number of CKUs for `SINGLE_ZONE` dedicated clusters is `1` whereas `MULTI_ZONE` dedicated clusters must have more than `2` CKUs.
+    - `encryption_key` - (Optional String) The ID of the encryption key that is used to encrypt the data in the Kafka cluster, for example, `arn:aws:kms:us-west-2:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab` (key Amazon Resource Name) for AWS or `projects/my-test-project/locations/global/keyRings/test-byok/cryptoKeys/test` for GCP. Append required permissions to the key policy before creating a Kafka cluster, see [Encrypt Confluent Cloud Clusters using Self-Managed Keys](https://docs.confluent.io/cloud/current/clusters/byok/index.html) for more details. At the moment, self-managed encryption keys are only available for the Dedicated clusters on AWS or GCP.
 
 -> **Note:** At least one from the `basic`, `standard`, and `dedicated` configuration blocks will be specified.
+
+- `network` (Optional Configuration Block) supports the following:
+    - `id` - (Required String) The ID of the Network that the Kafka cluster belongs to, for example, `n-abc123`.
+- `bootstrap_endpoint` - (Required String) The bootstrap endpoint used by Kafka clients to connect to the Kafka cluster. (e.g., `pkc-00000.us-central1.gcp.confluent.cloud:9092`).
+- `http_endpoint` - (Required String) The REST endpoint of the Kafka cluster (e.g., `https://pkc-00000.us-central1.gcp.confluent.cloud:443`).
+- `rbac_crn` - (Required String) The Confluent Resource Name of the Kafka cluster, for example, `crn://confluent.cloud/organization=1111aaaa-11aa-11aa-11aa-111111aaaaaa/environment=env-abc123/cloud-cluster=lkc-abc123`.

@@ -1,0 +1,455 @@
+{
+  "name": "io.confluent.kafka.connect.datagen.DatagenConnector",
+  "groups": [
+    "Output messages",
+    "Datagen Details",
+    "How should we connect to your data?",
+    "Transforms",
+    "Kafka Cluster credentials",
+    "Number of tasks for this connector",
+    "Predicates",
+    "Which topic do you want to send data to?"
+  ],
+  "error_count": 0,
+  "configs": [
+    {
+      "definition": {
+        "name": "connector.class",
+        "type": "STRING",
+        "required": true,
+        "default_value": "",
+        "importance": "HIGH",
+        "documentation": "",
+        "group": "How should we connect to your data?",
+        "width": "NONE",
+        "display_name": "Connector class",
+        "dependents": [],
+        "order": 1,
+        "alias": ""
+      },
+      "value": {
+        "name": "connector.class",
+        "value": "DatagenSourceInternal",
+        "recommended_values": [],
+        "errors": [],
+        "visible": true
+      },
+      "metadata": {}
+    },
+    {
+      "definition": {
+        "name": "name",
+        "type": "STRING",
+        "required": true,
+        "default_value": "",
+        "importance": "HIGH",
+        "documentation": "Sets a name for your connector.",
+        "group": "How should we connect to your data?",
+        "width": "NONE",
+        "display_name": "Connector name",
+        "dependents": [],
+        "order": 2,
+        "alias": ""
+      },
+      "value": {
+        "name": "name",
+        "value": "test",
+        "recommended_values": [],
+        "errors": [],
+        "visible": true
+      },
+      "metadata": {}
+    },
+    {
+      "definition": {
+        "name": "kafka.auth.mode",
+        "type": "STRING",
+        "required": false,
+        "default_value": "KAFKA_API_KEY",
+        "importance": "HIGH",
+        "documentation": "Kafka Authentication mode. It can be one of KAFKA_API_KEY or SERVICE_ACCOUNT. It defaults to KAFKA_API_KEY mode.",
+        "group": "Kafka Cluster credentials",
+        "width": "NONE",
+        "display_name": "Kafka Cluster Authentication mode",
+        "dependents": [],
+        "order": 1,
+        "alias": ""
+      },
+      "value": {
+        "name": "kafka.auth.mode",
+        "value": "",
+        "recommended_values": [
+          "KAFKA_API_KEY",
+          "SERVICE_ACCOUNT"
+        ],
+        "errors": [],
+        "visible": true
+      },
+      "metadata": {}
+    },
+    {
+      "definition": {
+        "name": "kafka.api.key",
+        "type": "PASSWORD",
+        "required": false,
+        "default_value": "",
+        "importance": "HIGH",
+        "documentation": "",
+        "group": "Kafka Cluster credentials",
+        "width": "NONE",
+        "display_name": "Kafka API Key",
+        "dependents": [],
+        "order": 2,
+        "alias": ""
+      },
+      "value": {
+        "name": "kafka.api.key",
+        "value": "****************",
+        "recommended_values": [],
+        "errors": [],
+        "visible": true
+      },
+      "metadata": {}
+    },
+    {
+      "definition": {
+        "name": "kafka.service.account.id",
+        "type": "STRING",
+        "required": false,
+        "default_value": "",
+        "importance": "HIGH",
+        "documentation": "The Service Account that will be used to generate the API keys to communicate with Kafka Cluster.",
+        "group": "Kafka Cluster credentials",
+        "width": "NONE",
+        "display_name": "Kafka Service Account",
+        "dependents": [],
+        "order": 2,
+        "alias": ""
+      },
+      "value": {
+        "name": "kafka.service.account.id",
+        "value": "",
+        "recommended_values": [],
+        "errors": [],
+        "visible": true
+      },
+      "metadata": {}
+    },
+    {
+      "definition": {
+        "name": "kafka.api.secret",
+        "type": "PASSWORD",
+        "required": false,
+        "default_value": "",
+        "importance": "HIGH",
+        "documentation": "",
+        "group": "Kafka Cluster credentials",
+        "width": "NONE",
+        "display_name": "Kafka API Secret",
+        "dependents": [
+          "kafka.api.key"
+        ],
+        "order": 3,
+        "alias": ""
+      },
+      "value": {
+        "name": "kafka.api.secret",
+        "value": "****************",
+        "recommended_values": [],
+        "errors": [],
+        "visible": true
+      },
+      "metadata": {}
+    },
+    {
+      "definition": {
+        "name": "kafka.topic",
+        "type": "STRING",
+        "required": true,
+        "default_value": "",
+        "importance": "HIGH",
+        "documentation": "Identifies the topic name to write the data to.",
+        "group": "Which topic do you want to send data to?",
+        "width": "NONE",
+        "display_name": "Topic name",
+        "dependents": [],
+        "order": 1,
+        "alias": ""
+      },
+      "value": {
+        "name": "kafka.topic",
+        "value": "test_connector",
+        "recommended_values": [],
+        "errors": [],
+        "visible": true
+      },
+      "metadata": {}
+    },
+    {
+      "definition": {
+        "name": "output.data.format",
+        "type": "STRING",
+        "required": true,
+        "default_value": "",
+        "importance": "HIGH",
+        "documentation": "Sets the output Kafka record value format. Valid entries are AVRO, JSON_SR, PROTOBUF, or JSON. Note that you need to have Confluent Cloud Schema Registry configured if using a schema-based message format like AVRO, JSON_SR, and PROTOBUF",
+        "group": "Output messages",
+        "width": "NONE",
+        "display_name": "Select output record value format",
+        "dependents": [
+          "schema.registry.url"
+        ],
+        "order": 1,
+        "alias": ""
+      },
+      "value": {
+        "name": "output.data.format",
+        "value": "JSON",
+        "recommended_values": [
+          "AVRO",
+          "JSON",
+          "JSON_SR",
+          "PROTOBUF"
+        ],
+        "errors": [],
+        "visible": true
+      },
+      "metadata": {}
+    },
+    {
+      "definition": {
+        "name": "json.output.decimal.format",
+        "type": "STRING",
+        "required": false,
+        "default_value": "BASE64",
+        "importance": "LOW",
+        "documentation": "Specify the JSON/JSON_SR serialization format for Connect DECIMAL logical type values with two allowed literals:\nBASE64 to serialize DECIMAL logical types as base64 encoded binary data and\nNUMERIC to serialize Connect DECIMAL logical type values in JSON/JSON_SR as a number representing the decimal value.",
+        "group": "Output messages",
+        "width": "NONE",
+        "display_name": "JSON output decimal format",
+        "dependents": [],
+        "order": 3,
+        "alias": ""
+      },
+      "value": {
+        "name": "json.output.decimal.format",
+        "value": "",
+        "recommended_values": [
+          "BASE64",
+          "NUMERIC"
+        ],
+        "errors": [],
+        "visible": true
+      },
+      "metadata": {}
+    },
+    {
+      "definition": {
+        "name": "schema.string",
+        "type": "STRING",
+        "required": false,
+        "default_value": "",
+        "importance": "HIGH",
+        "documentation": "Specify the datagen schema as a string. Cannot be used along with quickstart.",
+        "group": "Datagen Details",
+        "width": "NONE",
+        "display_name": "Schema",
+        "dependents": [],
+        "order": 1,
+        "alias": ""
+      },
+      "value": {
+        "name": "schema.string",
+        "value": "",
+        "recommended_values": [],
+        "errors": [],
+        "visible": true
+      },
+      "metadata": {}
+    },
+    {
+      "definition": {
+        "name": "quickstart",
+        "type": "STRING",
+        "required": false,
+        "default_value": "",
+        "importance": "HIGH",
+        "documentation": "Select from built-in quickstart schema specifications. Cannot be used along with string schema. Refer to kafka-connect-datagen on Github for additional information. USERS_ denotes an array of USERS data.",
+        "group": "Datagen Details",
+        "width": "NONE",
+        "display_name": "Quickstart",
+        "dependents": [],
+        "order": 2,
+        "alias": ""
+      },
+      "value": {
+        "name": "quickstart",
+        "value": "ORDERS",
+        "recommended_values": [
+          "CLICKSTREAM",
+          "CLICKSTREAM_CODES",
+          "CLICKSTREAM_USERS",
+          "CREDIT_CARDS",
+          "INVENTORY",
+          "ORDERS",
+          "PAGEVIEWS",
+          "PRODUCT",
+          "PURCHASES",
+          "RATINGS",
+          "STOCK_TRADES",
+          "STORES",
+          "TRANSACTIONS",
+          "USERS",
+          "USERS_"
+        ],
+        "errors": [],
+        "visible": true
+      },
+      "metadata": {}
+    },
+    {
+      "definition": {
+        "name": "schema.keyfield",
+        "type": "STRING",
+        "required": false,
+        "default_value": "",
+        "importance": "HIGH",
+        "documentation": "Specify the key field",
+        "group": "Datagen Details",
+        "width": "NONE",
+        "display_name": "Key Field",
+        "dependents": [],
+        "order": 3,
+        "alias": ""
+      },
+      "value": {
+        "name": "schema.keyfield",
+        "value": "",
+        "recommended_values": [],
+        "errors": [],
+        "visible": true
+      },
+      "metadata": {}
+    },
+    {
+      "definition": {
+        "name": "max.interval",
+        "type": "INT",
+        "required": true,
+        "default_value": "1000",
+        "importance": "HIGH",
+        "documentation": "Set the maximum interval (in milliseconds) between each message.",
+        "group": "Datagen Details",
+        "width": "NONE",
+        "display_name": "Max interval between messages (ms)",
+        "dependents": [],
+        "order": 4,
+        "alias": ""
+      },
+      "value": {
+        "name": "max.interval",
+        "value": "1000",
+        "recommended_values": [],
+        "errors": [],
+        "visible": true
+      },
+      "metadata": {}
+    },
+    {
+      "definition": {
+        "name": "iterations",
+        "type": "INT",
+        "required": false,
+        "default_value": "-1",
+        "importance": "LOW",
+        "documentation": "The number of messages produced per task. Default(-1) is unlimited messages.",
+        "group": "Datagen Details",
+        "width": "NONE",
+        "display_name": "Message Count",
+        "dependents": [],
+        "order": 5,
+        "alias": ""
+      },
+      "value": {
+        "name": "iterations",
+        "value": "-1",
+        "recommended_values": [],
+        "errors": [],
+        "visible": true
+      },
+      "metadata": {}
+    },
+    {
+      "definition": {
+        "name": "tasks.max",
+        "type": "INT",
+        "required": true,
+        "default_value": "",
+        "importance": "HIGH",
+        "documentation": "",
+        "group": "Number of tasks for this connector",
+        "width": "NONE",
+        "display_name": "Tasks",
+        "dependents": [],
+        "order": 1,
+        "alias": ""
+      },
+      "value": {
+        "name": "tasks.max",
+        "value": "1",
+        "recommended_values": [],
+        "errors": [],
+        "visible": true
+      },
+      "metadata": {}
+    },
+    {
+      "definition": {
+        "name": "transforms",
+        "type": "LIST",
+        "required": false,
+        "default_value": "",
+        "importance": "LOW",
+        "documentation": "Aliases for the transformations to be applied to records.",
+        "group": "Transforms",
+        "width": "LONG",
+        "display_name": "Transforms",
+        "dependents": [],
+        "order": 7,
+        "alias": ""
+      },
+      "value": {
+        "name": "transforms",
+        "value": "",
+        "recommended_values": [],
+        "errors": [],
+        "visible": true
+      },
+      "metadata": {}
+    },
+    {
+      "definition": {
+        "name": "predicates",
+        "type": "LIST",
+        "required": false,
+        "default_value": "",
+        "importance": "LOW",
+        "documentation": "Aliases for the predicates used by transformations.",
+        "group": "Predicates",
+        "width": "LONG",
+        "display_name": "Predicates",
+        "dependents": [],
+        "order": 8,
+        "alias": ""
+      },
+      "value": {
+        "name": "predicates",
+        "value": "",
+        "recommended_values": [],
+        "errors": [],
+        "visible": true
+      },
+      "metadata": {}
+    }
+  ]
+}

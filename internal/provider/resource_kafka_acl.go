@@ -156,7 +156,7 @@ func kafkaAclResource() *schema.Resource {
 func kafkaAclCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	httpEndpoint := d.Get(paramHttpEndpoint).(string)
 	clusterId := extractStringValueFromBlock(d, paramKafkaCluster, paramId)
-	clusterApiKey, clusterApiSecret := extractClusterApiKeyAndApiSecret(d)
+	clusterApiKey, clusterApiSecret, _ := extractClusterApiKeyAndApiSecret(d)
 	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(httpEndpoint, clusterId, clusterApiKey, clusterApiSecret)
 	acl, err := extractAcl(d)
 	if err != nil {
@@ -211,7 +211,7 @@ func kafkaAclDelete(ctx context.Context, d *schema.ResourceData, meta interface{
 
 	httpEndpoint := d.Get(paramHttpEndpoint).(string)
 	clusterId := extractStringValueFromBlock(d, paramKafkaCluster, paramId)
-	clusterApiKey, clusterApiSecret := extractClusterApiKeyAndApiSecret(d)
+	clusterApiKey, clusterApiSecret, _ := extractClusterApiKeyAndApiSecret(d)
 	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(httpEndpoint, clusterId, clusterApiKey, clusterApiSecret)
 
 	acl, err := extractAcl(d)
@@ -256,7 +256,7 @@ func kafkaAclRead(ctx context.Context, d *schema.ResourceData, meta interface{})
 
 	httpEndpoint := d.Get(paramHttpEndpoint).(string)
 	clusterId := extractStringValueFromBlock(d, paramKafkaCluster, paramId)
-	clusterApiKey, clusterApiSecret := extractClusterApiKeyAndApiSecret(d)
+	clusterApiKey, clusterApiSecret, _ := extractClusterApiKeyAndApiSecret(d)
 	client := meta.(*Client)
 	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(httpEndpoint, clusterId, clusterApiKey, clusterApiSecret)
 	acl, err := extractAcl(d)
@@ -385,7 +385,7 @@ func kafkaAclImport(ctx context.Context, d *schema.ResourceData, meta interface{
 	parts := strings.Split(clusterIdAndSerializedAcl, "/")
 
 	if len(parts) != 2 {
-		return nil, fmt.Errorf("error importing Kafka ACLs: invalid format: expected '<lkc ID>/<resource type>#<resource name>#<pattern type>#<principal>#<host>#<operation>#<permission>'")
+		return nil, fmt.Errorf("error importing Kafka ACLs: invalid format: expected '<Kafka cluster ID>/<resource type>#<resource name>#<pattern type>#<principal>#<host>#<operation>#<permission>'")
 	}
 
 	clusterId := parts[0]
@@ -411,7 +411,7 @@ func kafkaAclImport(ctx context.Context, d *schema.ResourceData, meta interface{
 func deserializeAcl(serializedAcl string) (Acl, error) {
 	parts := strings.Split(serializedAcl, "#")
 	if len(parts) != 7 {
-		return Acl{}, fmt.Errorf("invalid format for kafka ACL import: expected '<lkc ID>/<resource type>#<resource name>#<pattern type>#<principal>#<host>#<operation>#<permission>'")
+		return Acl{}, fmt.Errorf("invalid format for kafka ACL import: expected '<Kafka cluster ID>/<resource type>#<resource name>#<pattern type>#<principal>#<host>#<operation>#<permission>'")
 	}
 
 	resourceType, err := stringToAclResourceType(parts[0])

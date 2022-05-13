@@ -19,6 +19,7 @@ import (
 	"fmt"
 	apikeys "github.com/confluentinc/ccloud-sdk-go-v2/apikeys/v2"
 	cmk "github.com/confluentinc/ccloud-sdk-go-v2/cmk/v2"
+	connect "github.com/confluentinc/ccloud-sdk-go-v2/connect/v1"
 	iamv1 "github.com/confluentinc/ccloud-sdk-go-v2/iam/v1"
 	iam "github.com/confluentinc/ccloud-sdk-go-v2/iam/v2"
 	kafkarestv3 "github.com/confluentinc/ccloud-sdk-go-v2/kafkarest/v3"
@@ -48,6 +49,7 @@ const (
 	roleBindingLoggingKey       = "role_binding_id"
 	apiKeyLoggingKey            = "api_key_id"
 	networkLoggingKey           = "network_key_id"
+	connectorLoggingKey         = "connector_key_id"
 	privateLinkAccessLoggingKey = "private_link_access_id"
 	peeringLoggingKey           = "peering_id"
 )
@@ -121,6 +123,17 @@ func (c *Client) mdsApiContext(ctx context.Context) context.Context {
 func (c *Client) netApiContext(ctx context.Context) context.Context {
 	if c.apiKey != "" && c.apiSecret != "" {
 		return context.WithValue(context.Background(), net.ContextBasicAuth, net.BasicAuth{
+			UserName: c.apiKey,
+			Password: c.apiSecret,
+		})
+	}
+	tflog.Warn(ctx, "Could not find Cloud API Key")
+	return ctx
+}
+
+func (c *Client) connectApiContext(ctx context.Context) context.Context {
+	if c.apiKey != "" && c.apiSecret != "" {
+		return context.WithValue(context.Background(), connect.ContextBasicAuth, connect.BasicAuth{
 			UserName: c.apiKey,
 			Password: c.apiSecret,
 		})

@@ -6,7 +6,7 @@ page_title: "Sample Project"
 
 ## Summary
 
-[![asciicast](https://asciinema.org/a/491871.svg)](https://asciinema.org/a/491871)
+[![asciicast](https://asciinema.org/a/493726.svg)](https://asciinema.org/a/493726)
 
 Use the Confluent Terraform provider to enable the lifecycle management of Confluent Cloud resources:
    * [Environments](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_environment)
@@ -83,21 +83,21 @@ In this guide, you will:
     ```
 
 3. The `configurations` directory has a subdirectory for each of the following configurations:
-    * `basic-kafka-acls`: _Basic_ Kafka cluster with authorization using ACLs
-    * `standard-kafka-acls`: _Standard_ Kafka cluster with authorization using ACLs
-    * `standard-kafka-rbac`: _Standard_ Kafka cluster with authorization using RBAC
-    * `dedicated-public-kafka-acls`: _Dedicated_ Kafka cluster that is accessible over the public internet with authorization using ACLs
-    * `dedicated-public-kafka-rbac`: _Dedicated_ Kafka cluster that is accessible over the public internet with authorization using RBAC
-    * `dedicated-privatelink-aws-kafka-acls`: _Dedicated_ Kafka cluster on AWS that is accessible via PrivateLink connections with authorization using ACLs
-    * `dedicated-privatelink-aws-kafka-rbac`: _Dedicated_ Kafka cluster on AWS that is accessible via PrivateLink connections with authorization using RBAC
-    * `dedicated-privatelink-azure-kafka-rbac`: _Dedicated_ Kafka cluster on Azure that is accessible via PrivateLink connections with authorization using RBAC
-    * `dedicated-privatelink-azure-kafka-acls`: _Dedicated_ Kafka cluster on Azure that is accessible via PrivateLink connections with authorization using ACLs
-    * `dedicated-vnet-peering-azure-kafka-acls`: _Dedicated_ Kafka cluster on Azure that is accessible via VPC Peering connections with authorization using ACLs
-    * `dedicated-vnet-peering-azure-kafka-rbac`: _Dedicated_ Kafka cluster on Azure that is accessible via VPC Peering connections with authorization using RBAC
-    * `dedicated-vpc-peering-aws-kafka-acls`: _Dedicated_ Kafka cluster on AWS that is accessible via VPC Peering connections with authorization using ACLs
-    * `dedicated-vpc-peering-aws-kafka-rbac`: _Dedicated_ Kafka cluster on AWS that is accessible via VPC Peering connections with authorization using RBAC
-    * `dedicated-vpc-peering-gcp-kafka-acls`: _Dedicated_ Kafka cluster on GCP that is accessible via VPC Peering connections with authorization using ACLs
-    * `dedicated-vpc-peering-gcp-kafka-rbac`: _Dedicated_ Kafka cluster on GCP that is accessible via VPC Peering connections with authorization using RBAC
+    * [`basic-kafka-acls`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/basic-kafka-acls): _Basic_ Kafka cluster with authorization using ACLs
+    * [`standard-kafka-acls`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/standard-kafka-acls): _Standard_ Kafka cluster with authorization using ACLs
+    * [`standard-kafka-rbac`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/standard-kafka-rbac): _Standard_ Kafka cluster with authorization using RBAC
+    * [`dedicated-public-kafka-acls`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/dedicated-public-kafka-acls): _Dedicated_ Kafka cluster that is accessible over the public internet with authorization using ACLs
+    * [`dedicated-public-kafka-rbac`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/dedicated-public-kafka-rbac): _Dedicated_ Kafka cluster that is accessible over the public internet with authorization using RBAC
+    * [`dedicated-privatelink-aws-kafka-acls`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/dedicated-privatelink-aws-kafka-acls): _Dedicated_ Kafka cluster on AWS that is accessible via PrivateLink connections with authorization using ACLs
+    * [`dedicated-privatelink-aws-kafka-rbac`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/dedicated-privatelink-aws-kafka-rbac): _Dedicated_ Kafka cluster on AWS that is accessible via PrivateLink connections with authorization using RBAC
+    * [`dedicated-privatelink-azure-kafka-rbac`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/dedicated-privatelink-azure-kafka-rbac): _Dedicated_ Kafka cluster on Azure that is accessible via PrivateLink connections with authorization using RBAC
+    * [`dedicated-privatelink-azure-kafka-acls`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/dedicated-privatelink-azure-kafka-acls): _Dedicated_ Kafka cluster on Azure that is accessible via PrivateLink connections with authorization using ACLs
+    * [`dedicated-vnet-peering-azure-kafka-acls`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/dedicated-vnet-peering-azure-kafka-acls): _Dedicated_ Kafka cluster on Azure that is accessible via VPC Peering connections with authorization using ACLs
+    * [`dedicated-vnet-peering-azure-kafka-rbac`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/dedicated-vnet-peering-azure-kafka-rbac): _Dedicated_ Kafka cluster on Azure that is accessible via VPC Peering connections with authorization using RBAC
+    * [`dedicated-vpc-peering-aws-kafka-acls`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/dedicated-vpc-peering-aws-kafka-acls): _Dedicated_ Kafka cluster on AWS that is accessible via VPC Peering connections with authorization using ACLs
+    * [`dedicated-vpc-peering-aws-kafka-rbac`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/dedicated-vpc-peering-aws-kafka-rbac): _Dedicated_ Kafka cluster on AWS that is accessible via VPC Peering connections with authorization using RBAC
+    * [`dedicated-vpc-peering-gcp-kafka-acls`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/dedicated-vpc-peering-gcp-kafka-acls): _Dedicated_ Kafka cluster on GCP that is accessible via VPC Peering connections with authorization using ACLs
+    * [`dedicated-vpc-peering-gcp-kafka-rbac`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/dedicated-vpc-peering-gcp-kafka-rbac): _Dedicated_ Kafka cluster on GCP that is accessible via VPC Peering connections with authorization using RBAC
 
     -> **Note:** _Basic_ Kafka cluster with authorization using RBAC configuration is not supported, because both `DeveloperRead` and `DeveloperWrite` roles are not available for _Basic_ Kafka clusters.
     

@@ -1,0 +1,17 @@
+{
+  "name": "test_connector",
+  "connector": {
+    "state": "RUNNING",
+    "worker_id": "test-connector",
+    "trace": ""
+  },
+  "tasks": [
+    {
+      "id": 0,
+      "state": "STOPPED",
+      "worker_id": "test-connector",
+      "msg": ""
+    }
+  ],
+  "type": "unknown"
+}

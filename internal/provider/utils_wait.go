@@ -119,6 +119,25 @@ func waitForNetworkToProvision(ctx context.Context, c *Client, environmentId, ne
 	return nil
 }
 
+func waitForConnectorToProvision(ctx context.Context, c *Client, displayName, environmentId, clusterId string) error {
+	stateConf := &resource.StateChangeConf{
+		Pending:      []string{stateProvisioning},
+		Target:       []string{stateRunning},
+		Refresh:      connectorProvisionStatus(c.connectApiContext(ctx), c, displayName, environmentId, clusterId),
+		Timeout:      connectAPICreateTimeout,
+		Delay:        5 * time.Second,
+		PollInterval: 45 * time.Second,
+		// Workaround to fix `PROVISIONING` -> `RUNNING` -> `FAILED`.
+		ContinuousTargetOccurence: 4,
+	}
+
+	tflog.Debug(ctx, fmt.Sprintf("Waiting for Connector %q=%q provisioning status to become %q", paramDisplayName, displayName, stateRunning))
+	if _, err := stateConf.WaitForStateContext(c.connectApiContext(ctx)); err != nil {
+		return err
+	}
+	return nil
+}
+
 func waitForPeeringToProvision(ctx context.Context, c *Client, environmentId, peeringId string) error {
 	stateConf := &resource.StateChangeConf{
 		Pending: []string{stateProvisioning},
@@ -302,6 +321,22 @@ func networkProvisionStatus(ctx context.Context, c *Client, environmentId string
 		}
 		// Network is in an unexpected state
 		return nil, stateUnexpected, fmt.Errorf("network %q is an unexpected state %q: %s", networkId, network.Status.GetPhase(), network.Status.GetErrorMessage())
+	}
+}
+
+func connectorProvisionStatus(ctx context.Context, c *Client, displayName, environmentId, clusterId string) resource.StateRefreshFunc {
+	return func() (result interface{}, s string, err error) {
+		connector, _, err := executeConnectorStatusCreate(c.connectApiContext(ctx), c, displayName, environmentId, clusterId)
+		if err != nil {
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Connector %q=%q: %s", paramDisplayName, displayName, createDescriptiveError(err)))
+			return nil, stateUnknown, err
+		}
+
+		tflog.Debug(ctx, fmt.Sprintf("Waiting for Connector %q=%q provisioning status to become %q: current status is %q", paramDisplayName, displayName, stateRunning, connector.Connector.GetState()))
+		if connector.Connector.GetState() == stateProvisioning || connector.Connector.GetState() == stateRunning {
+			return connector, connector.Connector.GetState(), nil
+		}
+		return nil, stateFailed, fmt.Errorf("connector %q=%q provisioning status is %q: %s", paramDisplayName, displayName, connector.Connector.GetState(), connector.Connector.GetTrace())
 	}
 }
 

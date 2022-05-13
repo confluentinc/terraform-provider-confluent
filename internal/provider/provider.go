@@ -19,6 +19,7 @@ import (
 	"fmt"
 	apikeys "github.com/confluentinc/ccloud-sdk-go-v2/apikeys/v2"
 	cmk "github.com/confluentinc/ccloud-sdk-go-v2/cmk/v2"
+	connect "github.com/confluentinc/ccloud-sdk-go-v2/connect/v1"
 	iamv1 "github.com/confluentinc/ccloud-sdk-go-v2/iam/v1"
 	iam "github.com/confluentinc/ccloud-sdk-go-v2/iam/v2"
 	mds "github.com/confluentinc/ccloud-sdk-go-v2/mds/v2"
@@ -50,6 +51,7 @@ type Client struct {
 	iamClient              *iam.APIClient
 	iamV1Client            *iamv1.APIClient
 	cmkClient              *cmk.APIClient
+	connectClient          *connect.APIClient
 	netClient              *net.APIClient
 	orgClient              *org.APIClient
 	kafkaRestClientFactory *KafkaRestClientFactory
@@ -109,6 +111,7 @@ func New(version string) func() *schema.Provider {
 				"confluent_api_key":             apiKeyResource(),
 				"confluent_kafka_cluster":       kafkaResource(),
 				"confluent_environment":         environmentResource(),
+				"confluent_connector":           connectorResource(),
 				"confluent_service_account":     serviceAccountResource(),
 				"confluent_kafka_topic":         kafkaTopicResource(),
 				"confluent_kafka_acl":           kafkaAclResource(),
@@ -178,6 +181,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 
 	apiKeysCfg := apikeys.NewConfiguration()
 	cmkCfg := cmk.NewConfiguration()
+	connectCfg := connect.NewConfiguration()
 	iamCfg := iam.NewConfiguration()
 	iamV1Cfg := iamv1.NewConfiguration()
 	mdsCfg := mds.NewConfiguration()
@@ -186,6 +190,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 
 	apiKeysCfg.Servers[0].URL = endpoint
 	cmkCfg.Servers[0].URL = endpoint
+	connectCfg.Servers[0].URL = endpoint
 	iamCfg.Servers[0].URL = endpoint
 	iamV1Cfg.Servers[0].URL = endpoint
 	mdsCfg.Servers[0].URL = endpoint
@@ -194,6 +199,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 
 	apiKeysCfg.UserAgent = userAgent
 	cmkCfg.UserAgent = userAgent
+	connectCfg.UserAgent = userAgent
 	iamCfg.UserAgent = userAgent
 	iamV1Cfg.UserAgent = userAgent
 	mdsCfg.UserAgent = userAgent
@@ -202,6 +208,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 
 	apiKeysCfg.HTTPClient = createRetryableHttpClientWithExponentialBackoff()
 	cmkCfg.HTTPClient = createRetryableHttpClientWithExponentialBackoff()
+	connectCfg.HTTPClient = createRetryableHttpClientWithExponentialBackoff()
 	iamCfg.HTTPClient = createRetryableHttpClientWithExponentialBackoff()
 	iamV1Cfg.HTTPClient = createRetryableHttpClientWithExponentialBackoff()
 	mdsCfg.HTTPClient = createRetryableHttpClientWithExponentialBackoff()
@@ -211,6 +218,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	client := Client{
 		apiKeysClient:          apikeys.NewAPIClient(apiKeysCfg),
 		cmkClient:              cmk.NewAPIClient(cmkCfg),
+		connectClient:          connect.NewAPIClient(connectCfg),
 		iamClient:              iam.NewAPIClient(iamCfg),
 		iamV1Client:            iamv1.NewAPIClient(iamV1Cfg),
 		netClient:              net.NewAPIClient(netCfg),

@@ -1,3 +1,16 @@
+## 0.8.0 (May 12, 2022)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v0.7.0...v0.8.0)
+
+**New features**
+* Added new `confluent_connector` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_connector) ([#6](https://github.com/confluentinc/terraform-provider-confluent/issues/6)).
+* Added new `confluent_organization` [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_organization) ([#20](https://github.com/confluentinc/terraform-provider-confluent/issues/20)).
+* [Implemented](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_api_key#import) `import` for `confluent_api_key` resource ([#17](https://github.com/confluentinc/terraform-provider-confluent/issues/17)).
+
+**Bug fixes:**
+* Updated input validation for `confluent_private_link_access` and `confluent_kafka_cluster` resources ([#18](https://github.com/confluentinc/terraform-provider-confluent/issues/18)).
+* Fixed minor documentation issues ([#15](https://github.com/confluentinc/terraform-provider-confluent/issues/15)).
+
 ## 0.7.0 (May 3, 2022)
 
 Enables fully automated provisioning with no more manual intervention!

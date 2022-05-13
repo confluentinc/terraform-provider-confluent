@@ -1,0 +1,51 @@
+{
+  "test_connector": {
+    "status": {
+      "name": "test_connector",
+      "connector": {
+        "state": "RUNNING",
+        "worker_id": "test_connector",
+        "trace": ""
+      },
+      "tasks": [
+        {
+          "id": 0,
+          "state": "RUNNING",
+          "worker_id": "test_connector",
+          "msg": ""
+        }
+      ],
+      "type": "unknown"
+    },
+    "info": {
+      "name": "test_connector",
+      "type": "unknown",
+      "config": {
+        "cloud.environment": "stag",
+        "cloud.provider": "aws",
+        "connector.class": "DatagenSourceInternal",
+        "kafka.api.key": "****************",
+        "kafka.api.secret": "****************",
+        "kafka.endpoint": "SASL_SSL://pkc-abc456.us-east-1.aws.confluent.cloud:9092",
+        "kafka.region": "us-east-1",
+        "kafka.topic": "test_topic",
+        "name": "test_connector",
+        "output.data.format": "AVRO",
+        "quickstart": "ORDERS",
+        "tasks.max": "1",
+        "max.interval": "123"
+      },
+      "tasks": [
+        {
+          "connector": "test_connector",
+          "task": 0
+        }
+      ]
+    },
+    "id": {
+      "id": "lcc-abc123",
+      "id_type": "ID"
+    },
+    "extensions": {}
+  }
+}

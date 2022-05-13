@@ -338,7 +338,7 @@ func requiredNetworkSchema() *schema.Schema {
 					Required:     true,
 					ForceNew:     true,
 					Description:  "The unique identifier for the network.",
-					ValidateFunc: validation.StringMatch(regexp.MustCompile("^n-"), "the network ID must be of the form 'n-'"),
+					ValidateFunc: validation.StringMatch(regexp.MustCompile("^(n-|nr-)"), "the network ID must start with 'n-' or 'nr-'"),
 				},
 			},
 		},

@@ -24,6 +24,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"net/http"
+	"os"
 	"regexp"
 	"strings"
 )
@@ -53,6 +54,9 @@ func apiKeyResource() *schema.Resource {
 		ReadContext:   apiKeyRead,
 		UpdateContext: apiKeyUpdate,
 		DeleteContext: apiKeyDelete,
+		Importer: &schema.ResourceImporter{
+			StateContext: apiKeyImport,
+		},
 		Schema: map[string]*schema.Schema{
 			paramDisplayName: {
 				Type:         schema.TypeString,
@@ -439,4 +443,47 @@ func waitForApiKeyToSync(ctx context.Context, c *Client, createdApiKey apikeys.I
 		}
 	}
 	return nil
+}
+
+func apiKeyImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	tflog.Debug(ctx, fmt.Sprintf("Importing API Key %q", d.Id()), map[string]interface{}{apiKeyLoggingKey: d.Id()})
+
+	apiKeySecret := os.Getenv("API_KEY_SECRET")
+	if apiKeySecret == "" {
+		return nil, fmt.Errorf("error importing API Key %q: API_KEY_SECRET environment variable is empty but it must be set", d.Id())
+	}
+
+	envIdAndKafkaAPIKeyId := d.Id()
+	parts := strings.Split(envIdAndKafkaAPIKeyId, "/")
+	if len(parts) == 1 {
+		tflog.Debug(ctx, fmt.Sprintf("Importing Cloud API Key %q", d.Id()), map[string]interface{}{apiKeyLoggingKey: d.Id()})
+	} else if len(parts) == 2 {
+		environmentId := parts[0]
+		kafkaApiKeyId := parts[1]
+
+		d.SetId(kafkaApiKeyId)
+		// Preset environmentId when importing Kafka API Key
+		if err := d.Set(paramResource, []interface{}{map[string]interface{}{
+			paramEnvironment: []interface{}{map[string]interface{}{
+				paramId: environmentId,
+			}},
+		}}); err != nil {
+			return nil, createDescriptiveError(err)
+		}
+
+		tflog.Debug(ctx, fmt.Sprintf("Importing Kafka API Key %q", d.Id()), map[string]interface{}{apiKeyLoggingKey: d.Id()})
+	} else {
+		return nil, fmt.Errorf("error importing API Key: invalid format: expected '<API Key ID> for Cloud API Key or <env ID>/<topic name>' for Kafka API Key")
+	}
+
+	// Mark resource as new to avoid d.Set("") when getting 404
+	d.MarkNewResource()
+	if diagnostics := apiKeyRead(ctx, d, meta); diagnostics != nil {
+		return nil, fmt.Errorf("error importing API Key %q: %s", d.Id(), diagnostics[0].Summary)
+	}
+	if err := d.Set(paramSecret, apiKeySecret); err != nil {
+		return nil, createDescriptiveError(err)
+	}
+	tflog.Debug(ctx, fmt.Sprintf("Finished importing API Key %q", d.Id()), map[string]interface{}{apiKeyLoggingKey: d.Id()})
+	return []*schema.ResourceData{d}, nil
 }

@@ -10,7 +10,7 @@ global_job_config:
     - name: vault_sem2_approle
   prologue:
     commands:
-      - sem-version go 1.17
+      - sem-version go 1.18
       - export "GOPATH=$(go env GOPATH)"
       - >-
         export

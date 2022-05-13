@@ -25,6 +25,7 @@ import (
 	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -208,6 +209,12 @@ func TestAccKafkaApiKey(t *testing.T) {
 	resourceKind := "Cluster"
 	environmentId := "env-12345"
 
+	// Set fake values for secrets since those are required for importing
+	os.Setenv("API_KEY_SECRET", "gtH2gI504c0rqSppdMPqFu7BypmleQVImiJGNxlCNlhR2kNhGY86XGi49Rp3bmaY")
+	defer func() {
+		os.Unsetenv("API_KEY_SECRET")
+	}()
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
@@ -239,6 +246,18 @@ func TestAccKafkaApiKey(t *testing.T) {
 				),
 			},
 			{
+				// https://www.terraform.io/docs/extend/resources/import.html
+				ResourceName:      fullKafkaApiKeyResourceLabel,
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateIdFunc: func(state *terraform.State) (string, error) {
+					resources := state.RootModule().Resources
+					kafkaApiKeyId := resources[fullKafkaApiKeyResourceLabel].Primary.ID
+					environmentId := resources[fullKafkaApiKeyResourceLabel].Primary.Attributes["managed_resource.0.environment.0.id"]
+					return environmentId + "/" + kafkaApiKeyId, nil
+				},
+			},
+			{
 				Config: testAccCheckKafkaApiKeyConfig(mockServerUrl, kafkaApiKeyResourceLabel, kafkaApiKeyUpdatedDisplayName, kafkaApiKeyUpdatedDescription, ownerId, ownerApiVersion, ownerKind, resourceId, resourceApiVersion, resourceKind, environmentId),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckApiKeyExists(fullKafkaApiKeyResourceLabel),
@@ -260,6 +279,18 @@ func TestAccKafkaApiKey(t *testing.T) {
 					resource.TestCheckResourceAttr(fullKafkaApiKeyResourceLabel, "managed_resource.0.environment.0.id", "env-12345"),
 					resource.TestCheckResourceAttr(fullKafkaApiKeyResourceLabel, "secret", "gtH2gI504c0rqSppdMPqFu7BypmleQVImiJGNxlCNlhR2kNhGY86XGi49Rp3bmaY"),
 				),
+			},
+			{
+				// https://www.terraform.io/docs/extend/resources/import.html
+				ResourceName:      fullKafkaApiKeyResourceLabel,
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateIdFunc: func(state *terraform.State) (string, error) {
+					resources := state.RootModule().Resources
+					kafkaApiKeyId := resources[fullKafkaApiKeyResourceLabel].Primary.ID
+					environmentId := resources[fullKafkaApiKeyResourceLabel].Primary.Attributes["managed_resource.0.environment.0.id"]
+					return environmentId + "/" + kafkaApiKeyId, nil
+				},
 			},
 		},
 	})
@@ -399,6 +430,12 @@ func TestAccCloudApiKey(t *testing.T) {
 	ownerApiVersion := "iam/v2"
 	ownerKind := "ServiceAccount"
 
+	// Set fake values for secrets since those are required for importing
+	os.Setenv("API_KEY_SECRET", "p07o8EyjQvink5NmErBffigyynQXrTsYGKBzIgr3M10Mg+JOgnObYjlqCC1Q1id1")
+	defer func() {
+		os.Unsetenv("API_KEY_SECRET")
+	}()
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
@@ -422,6 +459,12 @@ func TestAccCloudApiKey(t *testing.T) {
 				),
 			},
 			{
+				// https://www.terraform.io/docs/extend/resources/import.html
+				ResourceName:      fullCloudApiKeyResourceLabel,
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+			{
 				Config: testAccCheckCloudApiKeyConfig(mockServerUrl, cloudApiKeyResourceLabel, cloudApiKeyUpdatedDisplayName, cloudApiKeyUpdatedDescription, ownerId, ownerApiVersion, ownerKind),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckApiKeyExists(fullCloudApiKeyResourceLabel),
@@ -435,6 +478,12 @@ func TestAccCloudApiKey(t *testing.T) {
 					resource.TestCheckResourceAttr(fullCloudApiKeyResourceLabel, "owner.0.kind", "ServiceAccount"),
 					resource.TestCheckResourceAttr(fullCloudApiKeyResourceLabel, "secret", "p07o8EyjQvink5NmErBffigyynQXrTsYGKBzIgr3M10Mg+JOgnObYjlqCC1Q1id1"),
 				),
+			},
+			{
+				// https://www.terraform.io/docs/extend/resources/import.html
+				ResourceName:      fullCloudApiKeyResourceLabel,
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})

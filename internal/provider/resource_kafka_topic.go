@@ -64,10 +64,10 @@ func extractConfigs(configs map[string]interface{}) []kafkarestv3.CreateTopicReq
 }
 
 // TODO: remove
-func extractClusterApiKeyAndApiSecret(d *schema.ResourceData) (string, string) {
+func extractClusterApiKeyAndApiSecret(d *schema.ResourceData) (string, string, bool) {
 	clusterApiKey := extractStringValueFromBlock(d, paramCredentials, paramKey)
 	clusterApiSecret := extractStringValueFromBlock(d, paramCredentials, paramSecret)
-	return clusterApiKey, clusterApiSecret
+	return clusterApiKey, clusterApiSecret, clusterApiKey != ""
 }
 
 func kafkaTopicResource() *schema.Resource {
@@ -128,7 +128,7 @@ func kafkaTopicResource() *schema.Resource {
 func kafkaTopicCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	httpEndpoint := d.Get(paramHttpEndpoint).(string)
 	clusterId := extractStringValueFromBlock(d, paramKafkaCluster, paramId)
-	clusterApiKey, clusterApiSecret := extractClusterApiKeyAndApiSecret(d)
+	clusterApiKey, clusterApiSecret, _ := extractClusterApiKeyAndApiSecret(d)
 	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(httpEndpoint, clusterId, clusterApiKey, clusterApiSecret)
 	topicName := d.Get(paramTopicName).(string)
 
@@ -176,7 +176,7 @@ func kafkaTopicDelete(ctx context.Context, d *schema.ResourceData, meta interfac
 
 	httpEndpoint := d.Get(paramHttpEndpoint).(string)
 	clusterId := extractStringValueFromBlock(d, paramKafkaCluster, paramId)
-	clusterApiKey, clusterApiSecret := extractClusterApiKeyAndApiSecret(d)
+	clusterApiKey, clusterApiSecret, _ := extractClusterApiKeyAndApiSecret(d)
 	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(httpEndpoint, clusterId, clusterApiKey, clusterApiSecret)
 	topicName := d.Get(paramTopicName).(string)
 
@@ -200,7 +200,7 @@ func kafkaTopicRead(ctx context.Context, d *schema.ResourceData, meta interface{
 
 	httpEndpoint := d.Get(paramHttpEndpoint).(string)
 	clusterId := extractStringValueFromBlock(d, paramKafkaCluster, paramId)
-	clusterApiKey, clusterApiSecret := extractClusterApiKeyAndApiSecret(d)
+	clusterApiKey, clusterApiSecret, _ := extractClusterApiKeyAndApiSecret(d)
 	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(httpEndpoint, clusterId, clusterApiKey, clusterApiSecret)
 	topicName := d.Get(paramTopicName).(string)
 
@@ -286,7 +286,7 @@ func kafkaTopicImport(ctx context.Context, d *schema.ResourceData, meta interfac
 	clusterIDAndTopicName := d.Id()
 	parts := strings.Split(clusterIDAndTopicName, "/")
 	if len(parts) != 2 {
-		return nil, fmt.Errorf("error importing Kafka Topic: invalid format: expected '<lkc ID>/<topic name>'")
+		return nil, fmt.Errorf("error importing Kafka Topic: invalid format: expected '<Kafka cluster ID>/<topic name>'")
 	}
 
 	clusterId := parts[0]
@@ -406,7 +406,7 @@ func kafkaTopicUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 		}
 		httpEndpoint := d.Get(paramHttpEndpoint).(string)
 		clusterId := extractStringValueFromBlock(d, paramKafkaCluster, paramId)
-		clusterApiKey, clusterApiSecret := extractClusterApiKeyAndApiSecret(d)
+		clusterApiKey, clusterApiSecret, _ := extractClusterApiKeyAndApiSecret(d)
 		kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(httpEndpoint, clusterId, clusterApiKey, clusterApiSecret)
 		topicName := d.Get(paramTopicName).(string)
 		updateTopicRequestJson, err := json.Marshal(updateTopicRequest)

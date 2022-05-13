@@ -112,3 +112,12 @@ $ export CONFLUENT_CLOUD_API_KEY="<cloud_api_key>"
 $ export CONFLUENT_CLOUD_API_SECRET="<cloud_api_secret>"
 $ terraform import confluent_private_link_access.my_pla env-abc123/pla-abc123
 ```
+
+!> **Warning:** Do not forget to delete terminal command history afterwards for security purposes.
+
+## Getting Started
+The following end-to-end examples might help to get started with `confluent_private_link_access` resource:
+  * [`dedicated-privatelink-aws-kafka-acls`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/dedicated-privatelink-aws-kafka-acls): _Dedicated_ Kafka cluster on AWS that is accessible via PrivateLink connections with authorization using ACLs
+  * [`dedicated-privatelink-aws-kafka-rbac`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/dedicated-privatelink-aws-kafka-rbac): _Dedicated_ Kafka cluster on AWS that is accessible via PrivateLink connections with authorization using RBAC
+  * [`dedicated-privatelink-azure-kafka-rbac`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/dedicated-privatelink-azure-kafka-rbac): _Dedicated_ Kafka cluster on Azure that is accessible via PrivateLink connections with authorization using RBAC
+  * [`dedicated-privatelink-azure-kafka-acls`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/dedicated-privatelink-azure-kafka-acls): _Dedicated_ Kafka cluster on Azure that is accessible via PrivateLink connections with authorization using ACLs

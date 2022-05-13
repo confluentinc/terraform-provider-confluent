@@ -170,6 +170,8 @@ Check that the replacement was successful by running the following command:
 grep "confluentcloud" terraform.tfstate
 ```
 
+The command should output 0 matches.
+
 ##### Sanity Check
 
 Check that the upgrade was successful by ensuring that your environment

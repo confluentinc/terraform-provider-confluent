@@ -50,6 +50,7 @@ const (
 	stateUnexpected    = "UNEXEPCTED"
 	stateProvisioned   = "PROVISIONED"
 	stateReady         = "READY"
+	stateRunning       = "RUNNING"
 	stateProvisioning  = "PROVISIONING"
 	statePendingAccept = "PENDING_ACCEPT"
 
@@ -370,7 +371,7 @@ func kafkaImport(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 	parts := strings.Split(envIDAndClusterID, "/")
 
 	if len(parts) != 2 {
-		return nil, fmt.Errorf("error importing Kafka Cluster: invalid format: expected '<env ID>/<lkc ID>'")
+		return nil, fmt.Errorf("error importing Kafka Cluster: invalid format: expected '<env ID>/<Kafka cluster ID>'")
 	}
 
 	environmentId := parts[0]
@@ -580,7 +581,7 @@ func optionalNetworkSchema() *schema.Schema {
 					Required:     true,
 					ForceNew:     true,
 					Description:  "The unique identifier for the network.",
-					ValidateFunc: validation.StringMatch(regexp.MustCompile("^n-"), "the network ID must be of the form 'n-'"),
+					ValidateFunc: validation.StringMatch(regexp.MustCompile("^(n-|nr-)"), "the network ID must start with 'n-' or 'nr-'"),
 				},
 			},
 		},

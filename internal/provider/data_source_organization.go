@@ -45,7 +45,7 @@ func organizationDataSource() *schema.Resource {
 }
 
 func organizationDataSourceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	tflog.Debug(ctx, fmt.Sprintf("Reading Organization"))
+	tflog.Debug(ctx, "Reading Organization")
 
 	c := meta.(*Client)
 	environments, _, err := c.orgClient.EnvironmentsOrgV2Api.ListOrgV2Environments(c.orgApiContext(ctx)).Execute()
