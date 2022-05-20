@@ -132,6 +132,8 @@ In addition to the preceding arguments, the following attributes are exported:
 - `id` - (Required String) The ID of the API Key, for example, `EGWX3S4BVNQIRBMJ`.
 - `secret` - (Required String) The secret of the API Key.
 
+-> **Note:** If human access is required, you can read out and store the `secret` attribute itself in a key vault.
+
 ## Import
 
 -> **Note:** You must set the `API_KEY_SECRET` (`secret`) environment variable before importing an API Key.
