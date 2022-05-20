@@ -35,9 +35,9 @@ resource "confluent_network" "peering" {
 resource "confluent_peering" "gcp" {
   display_name = "GCP Peering"
   gcp {
-    project       = var.customer_project_id
-    vpc_network   = var.customer_vpc_network
-    custom_routes = var.custom_routes
+    project              = var.customer_project_id
+    vpc_network          = var.customer_vpc_network
+    import_custom_routes = var.import_custom_routes
   }
   environment {
     id = confluent_environment.staging.id
