@@ -22,7 +22,7 @@ GOARCH        ?= $(shell go env GOARCH)
 GOFILES       ?= $(shell find . -type f -name '*.go' -not -path "./vendor/*")
 
 .PHONY: all
-all: clean deps test testacc tools lint lint-licenses build
+all: clean deps test testacc tools lint-licenses build
 
 
 .PHONY: checkfmt
@@ -36,11 +36,6 @@ checkfmt: ## Check formatting of all go files
 fmt: ## Format all go files
 	@ $(MAKE) --no-print-directory log-$@
 	goimports -w $(GOFILES)
-
-.PHONY: lint
-lint: ## Run linter
-	@ $(MAKE) --no-print-directory log-$@
-	GO111MODULE=on golangci-lint run ./...
 
 .PHONY: clean
 clean: ## Clean workspace
@@ -84,15 +79,10 @@ gox:
 goimports:
 	GO111MODULE=off go get -u golang.org/x/tools/cmd/goimports
 
-.PHONY: golangci
-golangci:
-	curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s  -- -b $(shell go env GOPATH)/bin $(GOLANGCI_VERSION)
-
-
 .PHONY: tools
 tools: ## Install required tools
 	@ $(MAKE) --no-print-directory log-$@
-	@ $(MAKE) --no-print-directory goimports golangci gox
+	@ $(MAKE) --no-print-directory goimports gox
 
 log-%:
 	@ grep -h -E '^$*:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m==> %s\033[0m\n", $$2}'

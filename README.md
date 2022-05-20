@@ -5,7 +5,7 @@ This provider is maintained by Confluent.
 
 ## Quick Starts
 
-- [Running an example](docs/guides/sample-project.md)
+- [Running an example](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/guides/sample-project)
 - [Developing the provider](docs/DEVELOPING.md)
 
 ## Documentation

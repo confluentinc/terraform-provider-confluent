@@ -39,7 +39,7 @@ blocks:
       jobs:
         - name: "Build & Test & Release"
           commands:
-            # all: clean test testacc tools lint lint-licenses build
+            # all: clean test testacc tools lint-licenses build
             - make all
             # Run make-release CI if the current commit is not tagged
             - if [[ -z $(git tag --points-at HEAD) ]]; then export MAKEFILE_NAME=make.includes && make -f make.includes release-ci; fi
