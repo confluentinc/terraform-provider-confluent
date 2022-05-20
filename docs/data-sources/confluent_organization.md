@@ -6,7 +6,7 @@ description: |-
   
 ---
 
-# confluent_user Data Source
+# confluent_organization Data Source
 
 `confluent_organization` describes an Organization data source.
 
