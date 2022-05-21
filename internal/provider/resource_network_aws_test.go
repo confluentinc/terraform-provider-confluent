@@ -41,9 +41,17 @@ const (
 	awsNetworkConnectionType              = "PRIVATELINK"
 	awsNetworkEnvironmentId               = "env-gz903"
 	awsNetworkId                          = "n-pr1jy6"
+	awsDnsDomain                          = "pr1jy6.us-east-2.aws.confluent.cloud"
 	awsNetworkVpc                         = "vpc-03e78ba4db7bb1789"
 	awsNetworkPrivateLinkEndpointService  = "com.amazonaws.vpce.us-east-2.vpce-svc-0089db43e25590123"
 	awsNetworkResourceName                = "crn://confluent.cloud/organization=foo/environment=env-gz903/network=n-pr1jy6"
+
+	firstZoneAwsNetwork           = "use2-az1"
+	firstZoneSubdomainAwsNetwork  = "use2-az1.pr1jy6.us-east-2.aws.confluent.cloud"
+	secondZoneAwsNetwork          = "use2-az2"
+	secondZoneSubdomainAwsNetwork = "use2-az2.pr1jy6.us-east-2.aws.confluent.cloud"
+	thirdZoneAwsNetwork           = "use2-az3"
+	thirdZoneSubdomainAwsNetwork  = "use2-az3.pr1jy6.us-east-2.aws.confluent.cloud"
 )
 
 var awsNetworkZones = []string{"use2-az1", "use2-az2", "use2-az3"}
@@ -169,6 +177,11 @@ func TestAccAwsNetwork(t *testing.T) {
 					resource.TestCheckResourceAttr(fullAwsNetworkResourceLabel, fmt.Sprintf("%s.1", paramZones), awsNetworkZones[1]),
 					resource.TestCheckResourceAttr(fullAwsNetworkResourceLabel, fmt.Sprintf("%s.2", paramZones), awsNetworkZones[2]),
 					resource.TestCheckResourceAttr(fullAwsNetworkResourceLabel, paramResourceName, awsNetworkResourceName),
+					resource.TestCheckResourceAttr(fullAwsNetworkResourceLabel, paramDnsDomain, awsDnsDomain),
+					resource.TestCheckResourceAttr(fullAwsNetworkResourceLabel, "zonal_subdomains.%", "3"),
+					resource.TestCheckResourceAttr(fullAwsNetworkResourceLabel, fmt.Sprintf("%s.%s", paramZonalSubdomains, firstZoneAwsNetwork), firstZoneSubdomainAwsNetwork),
+					resource.TestCheckResourceAttr(fullAwsNetworkResourceLabel, fmt.Sprintf("%s.%s", paramZonalSubdomains, secondZoneAwsNetwork), secondZoneSubdomainAwsNetwork),
+					resource.TestCheckResourceAttr(fullAwsNetworkResourceLabel, fmt.Sprintf("%s.%s", paramZonalSubdomains, thirdZoneAwsNetwork), thirdZoneSubdomainAwsNetwork),
 					resource.TestCheckResourceAttr(fullAwsNetworkResourceLabel, fmt.Sprintf("%s.0.%s", paramAws, paramVpc), awsNetworkVpc),
 					resource.TestCheckResourceAttr(fullAwsNetworkResourceLabel, fmt.Sprintf("%s.0.%s", paramAws, paramPrivateLinkEndpointService), awsNetworkPrivateLinkEndpointService),
 				),
@@ -190,6 +203,11 @@ func TestAccAwsNetwork(t *testing.T) {
 					resource.TestCheckResourceAttr(fullAwsNetworkResourceLabel, fmt.Sprintf("%s.1", paramZones), awsNetworkZones[1]),
 					resource.TestCheckResourceAttr(fullAwsNetworkResourceLabel, fmt.Sprintf("%s.2", paramZones), awsNetworkZones[2]),
 					resource.TestCheckResourceAttr(fullAwsNetworkResourceLabel, paramResourceName, awsNetworkResourceName),
+					resource.TestCheckResourceAttr(fullAwsNetworkResourceLabel, paramDnsDomain, awsDnsDomain),
+					resource.TestCheckResourceAttr(fullAwsNetworkResourceLabel, "zonal_subdomains.%", "3"),
+					resource.TestCheckResourceAttr(fullAwsNetworkResourceLabel, fmt.Sprintf("%s.%s", paramZonalSubdomains, firstZoneAwsNetwork), firstZoneSubdomainAwsNetwork),
+					resource.TestCheckResourceAttr(fullAwsNetworkResourceLabel, fmt.Sprintf("%s.%s", paramZonalSubdomains, secondZoneAwsNetwork), secondZoneSubdomainAwsNetwork),
+					resource.TestCheckResourceAttr(fullAwsNetworkResourceLabel, fmt.Sprintf("%s.%s", paramZonalSubdomains, thirdZoneAwsNetwork), thirdZoneSubdomainAwsNetwork),
 					resource.TestCheckResourceAttr(fullAwsNetworkResourceLabel, fmt.Sprintf("%s.0.%s", paramAws, paramVpc), awsNetworkVpc),
 					resource.TestCheckResourceAttr(fullAwsNetworkResourceLabel, fmt.Sprintf("%s.0.%s", paramAws, paramPrivateLinkEndpointService), awsNetworkPrivateLinkEndpointService),
 				),

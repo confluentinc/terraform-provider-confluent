@@ -35,6 +35,8 @@ const (
 	paramZones                      = "zones"
 	paramPrivateLinkEndpointService = "private_link_endpoint_service"
 	paramPrivateLinkServiceAliases  = "private_link_service_aliases"
+	paramDnsDomain                  = "dns_domain"
+	paramZonalSubdomains            = "zonal_subdomains"
 
 	connectionTypePrivateLink    = "PRIVATELINK"
 	connectionTypeTransitGateway = "TRANSITGATEWAY"
@@ -91,6 +93,19 @@ func networkResource() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "The Confluent Resource Name of the Network.",
+			},
+			paramDnsDomain: {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The root DNS domain for the network if applicable. Present on networks that support PrivateLink.",
+			},
+			paramZonalSubdomains: {
+				Type: schema.TypeMap,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+				Computed:    true,
+				Description: "The DNS subdomain for each zone. Present on networks that support PrivateLink. Keys are zones and values are DNS domains.",
 			},
 			paramAws:   awsNetworkSchema(),
 			paramAzure: azureNetworkSchema(),
@@ -309,6 +324,13 @@ func setNetworkAttributes(d *schema.ResourceData, network net.NetworkingV1Networ
 		return nil, err
 	}
 	if err := d.Set(paramZones, network.Spec.GetZones()); err != nil {
+		return nil, err
+	}
+
+	if err := d.Set(paramDnsDomain, network.Status.GetDnsDomain()); err != nil {
+		return nil, err
+	}
+	if err := d.Set(paramZonalSubdomains, network.Status.GetZonalSubdomains()); err != nil {
 		return nil, err
 	}
 

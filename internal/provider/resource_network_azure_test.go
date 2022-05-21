@@ -40,7 +40,15 @@ const (
 	azureNetworkConnectionType              = "PRIVATELINK"
 	azureNetworkEnvironmentId               = "env-gz903"
 	azureNetworkId                          = "n-p8xo76"
+	azureDnsDomain                          = "p8xo76.centralus.azure.confluent.cloud"
 	azureNetworkResourceName                = "crn://confluent.cloud/organization=foo/environment=env-gz903/network=n-p8xo76"
+
+	firstZoneAzureNetwork           = "1"
+	firstZoneSubdomainAzureNetwork  = "az1.p8xo76.centralus.azure.confluent.cloud"
+	secondZoneAzureNetwork          = "2"
+	secondZoneSubdomainAzureNetwork = "az2.p8xo76.centralus.azure.confluent.cloud"
+	thirdZoneAzureNetwork           = "3"
+	thirdZoneSubdomainAzureNetwork  = "az3.p8xo76.centralus.azure.confluent.cloud"
 
 	firstPlaAliasName   = "1"
 	firstPlaAliasValue  = "s-nk99e-privatelink-1.8c43dcd0-695c-1234-bc35-11fe6abb303a.centralus.azure.privatelinkservice"
@@ -171,6 +179,11 @@ func TestAccAzureNetwork(t *testing.T) {
 					resource.TestCheckResourceAttr(fullAzureNetworkResourceLabel, fmt.Sprintf("%s.1", paramZones), "2"),
 					resource.TestCheckResourceAttr(fullAzureNetworkResourceLabel, fmt.Sprintf("%s.2", paramZones), "3"),
 					resource.TestCheckResourceAttr(fullAzureNetworkResourceLabel, paramResourceName, azureNetworkResourceName),
+					resource.TestCheckResourceAttr(fullAzureNetworkResourceLabel, paramDnsDomain, azureDnsDomain),
+					resource.TestCheckResourceAttr(fullAzureNetworkResourceLabel, "zonal_subdomains.%", "3"),
+					resource.TestCheckResourceAttr(fullAzureNetworkResourceLabel, fmt.Sprintf("%s.%s", paramZonalSubdomains, firstZoneAzureNetwork), firstZoneSubdomainAzureNetwork),
+					resource.TestCheckResourceAttr(fullAzureNetworkResourceLabel, fmt.Sprintf("%s.%s", paramZonalSubdomains, secondZoneAzureNetwork), secondZoneSubdomainAzureNetwork),
+					resource.TestCheckResourceAttr(fullAzureNetworkResourceLabel, fmt.Sprintf("%s.%s", paramZonalSubdomains, thirdZoneAzureNetwork), thirdZoneSubdomainAzureNetwork),
 					resource.TestCheckResourceAttr(fullAzureNetworkResourceLabel, "azure.0.private_link_service_aliases.%", "3"),
 					resource.TestCheckResourceAttr(fullAzureNetworkResourceLabel, fmt.Sprintf("%s.0.%s.%s", paramAzure, paramPrivateLinkServiceAliases, firstPlaAliasName), firstPlaAliasValue),
 					resource.TestCheckResourceAttr(fullAzureNetworkResourceLabel, fmt.Sprintf("%s.0.%s.%s", paramAzure, paramPrivateLinkServiceAliases, secondPlaAliasName), secondPlaAliasValue),
@@ -194,6 +207,11 @@ func TestAccAzureNetwork(t *testing.T) {
 					resource.TestCheckResourceAttr(fullAzureNetworkResourceLabel, fmt.Sprintf("%s.1", paramZones), "2"),
 					resource.TestCheckResourceAttr(fullAzureNetworkResourceLabel, fmt.Sprintf("%s.2", paramZones), "3"),
 					resource.TestCheckResourceAttr(fullAzureNetworkResourceLabel, paramResourceName, azureNetworkResourceName),
+					resource.TestCheckResourceAttr(fullAzureNetworkResourceLabel, paramDnsDomain, azureDnsDomain),
+					resource.TestCheckResourceAttr(fullAzureNetworkResourceLabel, "zonal_subdomains.%", "3"),
+					resource.TestCheckResourceAttr(fullAzureNetworkResourceLabel, fmt.Sprintf("%s.%s", paramZonalSubdomains, firstZoneAzureNetwork), firstZoneSubdomainAzureNetwork),
+					resource.TestCheckResourceAttr(fullAzureNetworkResourceLabel, fmt.Sprintf("%s.%s", paramZonalSubdomains, secondZoneAzureNetwork), secondZoneSubdomainAzureNetwork),
+					resource.TestCheckResourceAttr(fullAzureNetworkResourceLabel, fmt.Sprintf("%s.%s", paramZonalSubdomains, thirdZoneAzureNetwork), thirdZoneSubdomainAzureNetwork),
 					resource.TestCheckResourceAttr(fullAzureNetworkResourceLabel, "azure.0.private_link_service_aliases.%", "3"),
 					resource.TestCheckResourceAttr(fullAzureNetworkResourceLabel, fmt.Sprintf("%s.0.%s.%s", paramAzure, paramPrivateLinkServiceAliases, firstPlaAliasName), firstPlaAliasValue),
 					resource.TestCheckResourceAttr(fullAzureNetworkResourceLabel, fmt.Sprintf("%s.0.%s.%s", paramAzure, paramPrivateLinkServiceAliases, secondPlaAliasName), secondPlaAliasValue),
