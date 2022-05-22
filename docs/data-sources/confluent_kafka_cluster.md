@@ -8,12 +8,12 @@ description: |-
 
 # confluent_kafka_cluster Data Source
 
-`confluent_kafka_cluster` describes a Kafka cluster data source. The data source requires the ID of the Kafka cluster (e.g., `lkc-abc123`) and the Environment ID it belongs to (e.g., `env-xyz456`).
+`confluent_kafka_cluster` describes a Kafka cluster data source.
 
 ## Example Usage
 
 ```terraform
-data "confluent_kafka_cluster" "test-basic-cluster" {
+data "confluent_kafka_cluster" "example_using_id" {
   id = "lkc-abc123"
   environment {
     id = "env-xyz456"
@@ -22,7 +22,18 @@ data "confluent_kafka_cluster" "test-basic-cluster" {
 
 resource "confluent_service_account" "test-sa" {
   display_name = "app_mgr"
-  description = "app_mgr for ${data.confluent_kafka_cluster.test-basic-cluster.display_name}"
+  description = "app_mgr for ${data.confluent_kafka_cluster.example_using_id.display_name}"
+}
+
+data "confluent_kafka_cluster" "example_using_name" {
+  display_name = "basic_kafka_cluster"
+  environment {
+    id = "env-xyz456"
+  }
+}
+
+output "example_using_name" {
+  value = data.confluent_kafka_cluster.example_using_name
 }
 ```
 
@@ -31,14 +42,18 @@ resource "confluent_service_account" "test-sa" {
 
 The following arguments are supported:
 
-- `id` - (Required String) The ID of the Kafka cluster, for example, `lkc-abc123`.
+- `id` - (Optional String) The ID of the Kafka cluster, for example, `lkc-abc123`.
+- `display_name` - (Optional String) A human-readable name for the Kafka cluster.
 - `environment` (Required Configuration Block) supports the following:
     - `id` - (Required String) The ID of the Environment that the Kafka cluster belongs to, for example, `env-xyz456`.
+
+-> **Note:** Exactly one from the `id` and `display_name` attributes must be specified.
 
 ## Attributes Reference
 
 In addition to the preceding arguments, the following attributes are exported:
 
+- `id` - (Required String) The ID of the Kafka cluster, for example, `lkc-abc123`.
 - `api_version` - (Required String) An API Version of the schema version of the Kafka cluster, for example, `cmk/v2`.
 - `kind` - (Required String) A kind of the Kafka cluster, for example, `Cluster`.
 - `display_name` - (Required String) The name of the Kafka cluster.

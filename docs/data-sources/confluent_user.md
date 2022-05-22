@@ -8,7 +8,7 @@ description: |-
 
 # confluent_user Data Source
 
-`confluent_user` describes a User data source. The data source requires the ID of the User (e.g., `u-abc123`).
+`confluent_user` describes a User data source.
 
 ## Example Usage
 

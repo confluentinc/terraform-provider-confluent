@@ -8,7 +8,7 @@ description: |-
 
 # confluent_environment Data Source
 
-`confluent_environment` describes an Environment data source. The data source requires the ID of the Environment (e.g., `env-abc123`).
+`confluent_environment` describes an Environment data source.
 
 ## Example Usage
 

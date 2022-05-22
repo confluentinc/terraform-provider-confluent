@@ -8,7 +8,7 @@ description: |-
 
 # confluent_service_account Data Source
 
-`confluent_service_account` describes a Service Account data source. The data source requires the ID of the Service Account (e.g., `sa-abc123`).
+`confluent_service_account` describes a Service Account data source.
 
 ## Example Usage
 
