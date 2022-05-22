@@ -71,13 +71,13 @@ In addition to the preceding arguments, the following attributes are exported:
 
 - `id` - (Required String) The ID of the Network, for example, `n-abc123`.
 - `resource_name` - (Required String) The Confluent Resource Name of the Network.
+- `dns_domain` - (Optional String) The root DNS domain for the network, for example, `pr123a.us-east-2.aws.confluent.cloud` if applicable. Present on Networks that support Private Link.
+- `zonal_subdomains` - (Optional Map) The DNS subdomain for each zone. Present on networks that support Private Link. Keys are zone names, for example, `use2-az1` and values are DNS domains, for example, `use2-az1.pr123a.us-east-2.aws.confluent.cloud`.
 - `aws` - (Optional Configuration Block) The AWS-specific network details if available. It supports the following:
     - `vpc` - (Required String) The AWS VPC ID for the network.
     - `private_link_endpoint_service` - (Optional String) The AWS VPC endpoint service for the network (used for Private Link) if available.
 - `azure` - (Optional Configuration Block) The Azure-specific network details if available. It supports the following:
-    - `private_link_service_aliases` - (Optional Map) The mapping of zones to Private Link Service Aliases if available. Keys are zones and values are [Azure Private Link Service Aliases](https://docs.microsoft.com/en-us/azure/private-link/private-link-service-overview#share-your-service).
-        - `zone` - (Required String) The zone name, for example, `1`.
-        - `private_link_service_aliase` - (Required String) The Private Link Service Alias, for example, `s-aa11a-privatelink-1.1c12abc3-695c-1234-bc35-11fe6abb303a.centralus.azure.privatelinkservice`.
+    - `private_link_service_aliases` - (Optional Map) The mapping of zones to Private Link Service Aliases if available. Keys are zone names, for example, `1` and values are [Azure Private Link Service Aliases](https://docs.microsoft.com/en-us/azure/private-link/private-link-service-overview#share-your-service), for example, `s-nk99e-privatelink-1.8c43dcd0-695c-1234-bc35-11fe6abb303a.centralus.azure.privatelinkservice`.
 - `gcp` - (Optional Configuration Block) The GCP-specific network details if available. It supports the following:
     - `project` - (Required String) The GCP project.
     - `vpc_network` - (Required String) The GCP VPC network name.
