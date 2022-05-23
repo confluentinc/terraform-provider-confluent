@@ -103,9 +103,10 @@ func New(version string) func() *schema.Provider {
 				"confluent_kafka_cluster":   kafkaDataSource(),
 				"confluent_kafka_topic":     kafkaTopicDataSource(),
 				"confluent_environment":     environmentDataSource(),
+				"confluent_network":         networkDataSource(),
+				"confluent_organization":    organizationDataSource(),
 				"confluent_service_account": serviceAccountDataSource(),
 				"confluent_user":            userDataSource(),
-				"confluent_organization":    organizationDataSource(),
 			},
 			ResourcesMap: map[string]*schema.Resource{
 				"confluent_api_key":             apiKeyResource(),

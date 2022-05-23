@@ -127,9 +127,13 @@ func loadServiceAccounts(ctx context.Context, c *Client) ([]v2.IamV2ServiceAccou
 
 		if nextPageUrlStringNullable.IsSet() {
 			nextPageUrlString := *nextPageUrlStringNullable.Get()
-			pageToken, err = extractPageToken(nextPageUrlString)
-			if err != nil {
-				return nil, fmt.Errorf("error reading Service Accounts: %s", createDescriptiveError(err))
+			if nextPageUrlString == "" {
+				allServiceAccountsAreCollected = true
+			} else {
+				pageToken, err = extractPageToken(nextPageUrlString)
+				if err != nil {
+					return nil, fmt.Errorf("error reading Service Accounts: %s", createDescriptiveError(err))
+				}
 			}
 		} else {
 			allServiceAccountsAreCollected = true

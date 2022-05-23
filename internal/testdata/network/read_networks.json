@@ -1,0 +1,109 @@
+{
+  "api_version": "networking/v1",
+  "data": [
+    {
+      "api_version": "networking/v1",
+      "id": "n-pr1jy6",
+      "kind": "Network",
+      "metadata": {
+        "created_at": "2022-04-12T05:55:00.597337Z",
+        "resource_name": "crn://confluent.cloud/organization=foo/environment=env-gz903/network=n-pr1jy6",
+        "self": "https://api.confluent.cloud/networking/v1/networks/n-pr1jy6?environment=env-gz903",
+        "updated_at": "2022-04-12T05:59:17.545389Z"
+      },
+      "spec": {
+        "cidr": "10.1.0.0/16",
+        "cloud": "AWS",
+        "connection_types": [
+          "PRIVATELINK"
+        ],
+        "display_name": "s-n9553",
+        "environment": {
+          "api_version": "org/v2",
+          "id": "env-gz903",
+          "kind": "Environment",
+          "related": "https://api.confluent.cloud/v2/environments/env-gz903",
+          "resource_name": "crn://confluent.cloud/organization=foo/environment=env-gz903"
+        },
+        "region": "us-east-2",
+        "zones": [
+          "use2-az1",
+          "use2-az2",
+          "use2-az3"
+        ]
+      },
+      "status": {
+        "cloud": {
+          "account": "012345678901",
+          "kind": "networking.v1.AwsNetwork",
+          "private_link_endpoint_service": "com.amazonaws.vpce.us-east-2.vpce-svc-0089db43e25590123",
+          "vpc": "vpc-03e78ba4db7bb1789"
+        },
+        "dns_domain": "pr1jy6.us-east-2.aws.confluent.cloud",
+        "phase": "READY",
+        "zonal_subdomains": {
+          "use2-az1": "use2-az1.pr1jy6.us-east-2.aws.confluent.cloud",
+          "use2-az2": "use2-az2.pr1jy6.us-east-2.aws.confluent.cloud",
+          "use2-az3": "use2-az3.pr1jy6.us-east-2.aws.confluent.cloud"
+        }
+      }
+    },
+    {
+      "api_version": "networking/v1",
+      "id": "n-p8xo76",
+      "kind": "Network",
+      "metadata": {
+        "created_at": "2022-04-12T06:18:51.396359Z",
+        "resource_name": "crn://confluent.cloud/organization=foo/environment=env-gz903/network=n-p8xo76",
+        "self": "https://api.confluent.cloud/networking/v1/networks/n-p8xo76?environment=env-gz903",
+        "updated_at": "2022-04-12T06:26:25.822418Z"
+      },
+      "spec": {
+        "cidr": "10.1.0.0/16",
+        "cloud": "AZURE",
+        "connection_types": [
+          "PRIVATELINK"
+        ],
+        "display_name": "s-nk99e",
+        "environment": {
+          "api_version": "org/v2",
+          "id": "env-gz903",
+          "kind": "Environment",
+          "related": "https://api.confluent.cloud/v2/environments/env-gz903",
+          "resource_name": "crn://confluent.cloud/organization=foo/environment=env-gz903"
+        },
+        "region": "centralus",
+        "zones": [
+          "1",
+          "2",
+          "3"
+        ]
+      },
+      "status": {
+        "cloud": {
+          "kind": "networking.v1.AzureNetwork",
+          "private_link_service_aliases": {
+            "1": "s-nk99e-privatelink-1.8c43dcd0-695c-1234-bc35-11fe6abb303a.centralus.azure.privatelinkservice",
+            "2": "s-nk99e-privatelink-2.e4519a80-fcf9-1234-9163-167aa681e792.centralus.azure.privatelinkservice",
+            "3": "s-nk99e-privatelink-3.cb77af9e-3db1-1234-bf18-0f8dfba7662b.centralus.azure.privatelinkservice"
+          },
+          "subscription": "1234abcd-12ab-34cd-1234-123456abcdef",
+          "vnet": "s-nk99e"
+        },
+        "dns_domain": "p8xo76.centralus.azure.confluent.cloud",
+        "phase": "READY",
+        "zonal_subdomains": {
+          "1": "az1.p8xo76.centralus.azure.confluent.cloud",
+          "2": "az2.p8xo76.centralus.azure.confluent.cloud",
+          "3": "az3.p8xo76.centralus.azure.confluent.cloud"
+        }
+      }
+    }
+  ],
+  "kind": "NetworkList",
+  "metadata": {
+    "first": "https://api.confluent.cloud/networking/v1/networks",
+    "next": "",
+    "total_size": 2
+  }
+}

@@ -110,7 +110,7 @@ func kafkaDataSourceRead(ctx context.Context, d *schema.ResourceData, meta inter
 }
 
 func kafkaDataSourceReadUsingDisplayName(ctx context.Context, d *schema.ResourceData, meta interface{}, environmentId, displayName string) diag.Diagnostics {
-	tflog.Debug(ctx, fmt.Sprintf("Reading Environment %q=%q", paramDisplayName, displayName))
+	tflog.Debug(ctx, fmt.Sprintf("Reading Kafka Cluster %q=%q", paramDisplayName, displayName))
 
 	c := meta.(*Client)
 	kafkaClusters, err := loadKafkaClusters(ctx, c, environmentId)
@@ -180,9 +180,13 @@ func loadKafkaClusters(ctx context.Context, c *Client, environmentId string) ([]
 
 		if nextPageUrlStringNullable.IsSet() {
 			nextPageUrlString := *nextPageUrlStringNullable.Get()
-			pageToken, err = extractPageToken(nextPageUrlString)
-			if err != nil {
-				return nil, fmt.Errorf("error reading Kafka Clusters: %s", createDescriptiveError(err))
+			if nextPageUrlString == "" {
+				allClustersAreCollected = true
+			} else {
+				pageToken, err = extractPageToken(nextPageUrlString)
+				if err != nil {
+					return nil, fmt.Errorf("error reading Kafka Clusters: %s", createDescriptiveError(err))
+				}
 			}
 		} else {
 			allClustersAreCollected = true

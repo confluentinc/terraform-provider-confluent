@@ -115,9 +115,13 @@ func loadEnvironments(ctx context.Context, c *Client) ([]v2.OrgV2Environment, er
 
 		if nextPageUrlStringNullable.IsSet() {
 			nextPageUrlString := *nextPageUrlStringNullable.Get()
-			pageToken, err = extractPageToken(nextPageUrlString)
-			if err != nil {
-				return nil, fmt.Errorf("error reading Environments: %s", createDescriptiveError(err))
+			if nextPageUrlString == "" {
+				allEnvironmentsAreCollected = true
+			} else {
+				pageToken, err = extractPageToken(nextPageUrlString)
+				if err != nil {
+					return nil, fmt.Errorf("error reading Environments: %s", createDescriptiveError(err))
+				}
 			}
 		} else {
 			allEnvironmentsAreCollected = true

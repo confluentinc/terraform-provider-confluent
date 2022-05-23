@@ -151,9 +151,13 @@ func loadUsers(ctx context.Context, c *Client) ([]v2.IamV2User, error) {
 
 		if nextPageUrlStringNullable.IsSet() {
 			nextPageUrlString := *nextPageUrlStringNullable.Get()
-			pageToken, err = extractPageToken(nextPageUrlString)
-			if err != nil {
-				return nil, fmt.Errorf("error reading Users: %s", createDescriptiveError(err))
+			if nextPageUrlString == "" {
+				collectedAllUsers = true
+			} else {
+				pageToken, err = extractPageToken(nextPageUrlString)
+				if err != nil {
+					return nil, fmt.Errorf("error reading Users: %s", createDescriptiveError(err))
+				}
 			}
 		} else {
 			collectedAllUsers = true
