@@ -38,7 +38,7 @@ resource "confluent_private_link_access" "aws" {
     id = confluent_environment.development.id
   }
   network {
-    id = confluent_network.private-link.id
+    id = confluent_network.aws-private-link.id
   }
 }
 ```
