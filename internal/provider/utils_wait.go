@@ -121,12 +121,13 @@ func waitForNetworkToProvision(ctx context.Context, c *Client, environmentId, ne
 
 func waitForConnectorToProvision(ctx context.Context, c *Client, displayName, environmentId, clusterId string) error {
 	stateConf := &resource.StateChangeConf{
-		Pending:      []string{stateProvisioning},
-		Target:       []string{stateRunning},
-		Refresh:      connectorProvisionStatus(c.connectApiContext(ctx), c, displayName, environmentId, clusterId),
-		Timeout:      connectAPICreateTimeout,
-		Delay:        5 * time.Second,
-		PollInterval: 45 * time.Second,
+		Pending: []string{stateProvisioning},
+		Target:  []string{stateRunning},
+		Refresh: connectorProvisionStatus(c.connectApiContext(ctx), c, displayName, environmentId, clusterId),
+		Timeout: connectAPICreateTimeout,
+		Delay:   5 * time.Second,
+		// TODO: decrease the constant once CNC-154 is done.
+		PollInterval: 2 * time.Minute,
 		// Workaround to fix `PROVISIONING` -> `RUNNING` -> `FAILED`.
 		ContinuousTargetOccurence: 4,
 	}
