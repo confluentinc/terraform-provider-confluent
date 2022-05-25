@@ -1,3 +1,16 @@
+## 0.9.0 (May 25, 2022)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v0.8.0...v0.9.0)
+
+**New features**
+* Added new `confluent_network` [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_network) ([#39](https://github.com/confluentinc/terraform-provider-confluent/issues/39)).
+* Added `dns_domain` and `zonal_subdomains` computed attributes for `confluent_network` resource ([#40](https://github.com/confluentinc/terraform-provider-confluent/issues/40)).
+* Decreased the creation time of `confluent_role_binding` resource by 4.5x ([#24](https://github.com/confluentinc/terraform-provider-confluent/issues/24)).
+
+**Bug fixes:**
+* Fixed provisioning error for `confluent_connector` resource ([#43](https://github.com/confluentinc/terraform-provider-confluent/issues/43)).
+* Fixed minor documentation issues ([#31](https://github.com/confluentinc/terraform-provider-confluent/issues/31), [#36](https://github.com/confluentinc/terraform-provider-confluent/issues/36)).
+
 ## 0.8.0 (May 12, 2022)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v0.7.0...v0.8.0)
