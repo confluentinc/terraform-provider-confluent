@@ -32,7 +32,7 @@ const (
 	paramRoleName   = "role_name"
 	paramCrnPattern = "crn_pattern"
 
-	rbacWaitAfterCreateToSync = 40 * time.Second
+	rbacWaitAfterCreateToSync = 90 * time.Second
 )
 
 func roleBindingResource() *schema.Resource {
