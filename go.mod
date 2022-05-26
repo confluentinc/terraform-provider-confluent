@@ -103,6 +103,7 @@ replace (
 	github.com/containernetworking/cni => github.com/containernetworking/cni v0.8.1
 	github.com/dgrijalva/jwt-go => github.com/golang-jwt/jwt v3.2.1+incompatible
 	github.com/opencontainers/image-spec => github.com/opencontainers/image-spec v1.0.2
-	github.com/opencontainers/runc => github.com/opencontainers/runc v1.0.3
+	github.com/opencontainers/runc => github.com/opencontainers/runc v1.1.2
 	github.com/satori/go.uuid v1.2.0 => github.com/satori/go.uuid v1.2.1-0.20181016170032-d91630c85102
+	gopkg.in/yaml.v3 => gopkg.in/yaml.v3 v3.0.0
 )
