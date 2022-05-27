@@ -4,6 +4,9 @@ aws_account_id = "012345678901"
 
 # The VPC ID that you want to connect to Confluent Cloud Cluster
 # https://us-east-1.console.aws.amazon.com/vpc/home?region=us-east-1#vpcs:
+# DNS hostnames and DNS resolution should be enabled:
+# * Your VPC -> Actions -> Edit DNS hostnames
+# * Your VPC -> Actions -> Edit DNS resolution
 vpc_id = "vpc-abcdef0123456789a"
 
 # The region of your VPC that you want to connect to Confluent Cloud Cluster
