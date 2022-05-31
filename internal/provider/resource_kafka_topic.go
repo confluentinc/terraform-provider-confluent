@@ -85,8 +85,8 @@ func kafkaTopicResource() *schema.Resource {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				Description:  "The name of the topic.",
-				ValidateFunc: validation.StringIsNotEmpty,
+				Description:  "The name of the topic, for example, `orders-1`.",
+				ValidateFunc: validation.StringMatch(regexp.MustCompile(`^[a-zA-Z0-9\\._\-]+$`), "The topic name can be up to 249 characters in length, and can include the following characters: a-z, A-Z, 0-9, . (dot), _ (underscore), and - (dash)."),
 			},
 			paramPartitionsCount: {
 				Type:         schema.TypeInt,
