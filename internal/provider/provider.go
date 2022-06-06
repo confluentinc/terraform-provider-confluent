@@ -107,6 +107,7 @@ func New(version string) func() *schema.Provider {
 				"confluent_organization":        organizationDataSource(),
 				"confluent_peering":             peeringDataSource(),
 				"confluent_private_link_access": privateLinkAccessDataSource(),
+				"confluent_role_binding":    roleBindingDataSource(),
 				"confluent_service_account":     serviceAccountDataSource(),
 				"confluent_user":                userDataSource(),
 			},

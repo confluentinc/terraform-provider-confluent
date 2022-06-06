@@ -36,6 +36,11 @@ const (
 	rolebindingScenarioName                = "confluent_role_binding Resource Lifecycle"
 	roleBindingId                          = "rb-OOXL7"
 	roleBindingUrlPath                     = "/iam/v2/role-bindings/rb-OOXL7"
+
+	rbPrincipal     = "User:u-vr99n5"
+	rbRolename      = "CloudClusterAdmin"
+	rbCrn           = "crn://confluent.cloud/organization=0d9c5d94-e4fe-44ec-9cf1-bd99761fca75/environment=env-ym2y0k/cloud-cluster=lkc-xrk0ng"
+	rbResourceLabel = "test_rb_resource_label"
 )
 
 func TestAccRoleBinding(t *testing.T) {
@@ -114,10 +119,6 @@ func TestAccRoleBinding(t *testing.T) {
 		)
 	_ = wiremockClient.StubFor(deleteRolebindingStub)
 
-	rbPrincipal := "User:u-vr99n5"
-	rbRolename := "CloudClusterAdmin"
-	rbCrn := "crn://confluent.cloud/organization=0d9c5d94-e4fe-44ec-9cf1-bd99761fca75/environment=env-ym2y0k/cloud-cluster=lkc-xrk0ng"
-	rbResourceLabel := "test_rb_resource_label"
 	fullRbResourceLabel := fmt.Sprintf("confluent_role_binding.%s", rbResourceLabel)
 
 	resource.Test(t, resource.TestCase{
