@@ -170,21 +170,6 @@ func executeListPrivateLinkAccesses(ctx context.Context, c *Client, environmentI
 	}
 }
 
-func networkDataSourceSchema() *schema.Schema {
-	return &schema.Schema{
-		Type: schema.TypeList,
-		Elem: &schema.Resource{
-			Schema: map[string]*schema.Schema{
-				paramId: {
-					Type:     schema.TypeString,
-					Computed: true,
-				},
-			},
-		},
-		Computed: true,
-	}
-}
-
 func awsPlaDataSourceSchema() *schema.Schema {
 	return &schema.Schema{
 		Type:     schema.TypeList,
