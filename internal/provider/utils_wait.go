@@ -127,8 +127,8 @@ func waitForConnectorToProvision(ctx context.Context, c *Client, displayName, en
 		Timeout: connectAPICreateTimeout,
 		Delay:   5 * time.Second,
 		// TODO: decrease the constant once CNC-154 is done.
-		PollInterval: 2 * time.Minute,
-		// Workaround to fix `PROVISIONING` -> `RUNNING` -> `FAILED`.
+		PollInterval: 4 * time.Minute,
+		// Workaround to fix PROVISIONING -> FAILED -> RUNNING.
 		ContinuousTargetOccurence: 4,
 	}
 
