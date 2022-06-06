@@ -103,7 +103,7 @@ The following arguments are supported:
   - `value` - (Required String) The configuration setting value, for example, `S3_SINK`.
 - `config_sensitive` - (Required Map) The custom connector _sensitive_ configuration settings to set:
   - `name` - (Required String) The configuration setting name, for example, `aws.secret.access.key`.
-  - `value` - (Required String) The configuration setting value, for example, `***REDACTED***`.
+  - `value` - (Required String, Sensitive) The configuration setting value, for example, `***REDACTED***`.
 
 -> **Note:** The `config_sensitive` block is only used during creation of a connector. To avoid storing secrets in your Terraform configuration and Terraform state files, set `config_sensitive = {}` in your Terraform configuration right after creation or use `lifecycle { ignore_changes = [config_sensitive,] }` [block](https://www.terraform.io/language/meta-arguments/lifecycle#syntax-and-arguments).
 
