@@ -156,7 +156,7 @@ func kafkaAclResource() *schema.Resource {
 func kafkaAclCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	httpEndpoint := d.Get(paramHttpEndpoint).(string)
 	clusterId := extractStringValueFromBlock(d, paramKafkaCluster, paramId)
-	clusterApiKey, clusterApiSecret, _ := extractClusterApiKeyAndApiSecret(d)
+	clusterApiKey, clusterApiSecret := extractClusterApiKeyAndApiSecret(d)
 	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(httpEndpoint, clusterId, clusterApiKey, clusterApiSecret)
 	acl, err := extractAcl(d)
 	if err != nil {
@@ -211,7 +211,7 @@ func kafkaAclDelete(ctx context.Context, d *schema.ResourceData, meta interface{
 
 	httpEndpoint := d.Get(paramHttpEndpoint).(string)
 	clusterId := extractStringValueFromBlock(d, paramKafkaCluster, paramId)
-	clusterApiKey, clusterApiSecret, _ := extractClusterApiKeyAndApiSecret(d)
+	clusterApiKey, clusterApiSecret := extractClusterApiKeyAndApiSecret(d)
 	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(httpEndpoint, clusterId, clusterApiKey, clusterApiSecret)
 
 	acl, err := extractAcl(d)
@@ -256,7 +256,7 @@ func kafkaAclRead(ctx context.Context, d *schema.ResourceData, meta interface{})
 
 	httpEndpoint := d.Get(paramHttpEndpoint).(string)
 	clusterId := extractStringValueFromBlock(d, paramKafkaCluster, paramId)
-	clusterApiKey, clusterApiSecret, _ := extractClusterApiKeyAndApiSecret(d)
+	clusterApiKey, clusterApiSecret := extractClusterApiKeyAndApiSecret(d)
 	client := meta.(*Client)
 	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(httpEndpoint, clusterId, clusterApiKey, clusterApiSecret)
 	acl, err := extractAcl(d)

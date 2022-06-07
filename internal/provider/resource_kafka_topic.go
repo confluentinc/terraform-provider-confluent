@@ -63,11 +63,10 @@ func extractConfigs(configs map[string]interface{}) []kafkarestv3.CreateTopicReq
 	return configResult
 }
 
-// TODO: remove
-func extractClusterApiKeyAndApiSecret(d *schema.ResourceData) (string, string, bool) {
+func extractClusterApiKeyAndApiSecret(d *schema.ResourceData) (string, string) {
 	clusterApiKey := extractStringValueFromBlock(d, paramCredentials, paramKey)
 	clusterApiSecret := extractStringValueFromBlock(d, paramCredentials, paramSecret)
-	return clusterApiKey, clusterApiSecret, clusterApiKey != ""
+	return clusterApiKey, clusterApiSecret
 }
 
 func kafkaTopicResource() *schema.Resource {
@@ -128,7 +127,7 @@ func kafkaTopicResource() *schema.Resource {
 func kafkaTopicCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	httpEndpoint := d.Get(paramHttpEndpoint).(string)
 	clusterId := extractStringValueFromBlock(d, paramKafkaCluster, paramId)
-	clusterApiKey, clusterApiSecret, _ := extractClusterApiKeyAndApiSecret(d)
+	clusterApiKey, clusterApiSecret := extractClusterApiKeyAndApiSecret(d)
 	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(httpEndpoint, clusterId, clusterApiKey, clusterApiSecret)
 	topicName := d.Get(paramTopicName).(string)
 
@@ -176,7 +175,7 @@ func kafkaTopicDelete(ctx context.Context, d *schema.ResourceData, meta interfac
 
 	httpEndpoint := d.Get(paramHttpEndpoint).(string)
 	clusterId := extractStringValueFromBlock(d, paramKafkaCluster, paramId)
-	clusterApiKey, clusterApiSecret, _ := extractClusterApiKeyAndApiSecret(d)
+	clusterApiKey, clusterApiSecret := extractClusterApiKeyAndApiSecret(d)
 	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(httpEndpoint, clusterId, clusterApiKey, clusterApiSecret)
 	topicName := d.Get(paramTopicName).(string)
 
@@ -200,7 +199,7 @@ func kafkaTopicRead(ctx context.Context, d *schema.ResourceData, meta interface{
 
 	httpEndpoint := d.Get(paramHttpEndpoint).(string)
 	clusterId := extractStringValueFromBlock(d, paramKafkaCluster, paramId)
-	clusterApiKey, clusterApiSecret, _ := extractClusterApiKeyAndApiSecret(d)
+	clusterApiKey, clusterApiSecret := extractClusterApiKeyAndApiSecret(d)
 	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(httpEndpoint, clusterId, clusterApiKey, clusterApiSecret)
 	topicName := d.Get(paramTopicName).(string)
 
@@ -406,7 +405,7 @@ func kafkaTopicUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 		}
 		httpEndpoint := d.Get(paramHttpEndpoint).(string)
 		clusterId := extractStringValueFromBlock(d, paramKafkaCluster, paramId)
-		clusterApiKey, clusterApiSecret, _ := extractClusterApiKeyAndApiSecret(d)
+		clusterApiKey, clusterApiSecret := extractClusterApiKeyAndApiSecret(d)
 		kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(httpEndpoint, clusterId, clusterApiKey, clusterApiSecret)
 		topicName := d.Get(paramTopicName).(string)
 		updateTopicRequestJson, err := json.Marshal(updateTopicRequest)
