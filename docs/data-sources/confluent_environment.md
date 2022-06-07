@@ -8,6 +8,8 @@ description: |-
 
 # confluent_environment Data Source
 
+<img src="https://img.shields.io/badge/Lifecycle%20Stage-Public%20Preview-%2300afba" alt="">
+
 `confluent_environment` describes an Environment data source.
 
 ## Example Usage

@@ -8,6 +8,8 @@ description: |-
 
 # confluent_environment Resource
 
+<img src="https://img.shields.io/badge/Lifecycle%20Stage-Public%20Preview-%2300afba" alt="">
+
 `confluent_environment` provides an Environment resource. The resource lets you create, edit and delete environments on Confluent Cloud.
 
 ## Example Usage

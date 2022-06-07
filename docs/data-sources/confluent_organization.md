@@ -8,6 +8,8 @@ description: |-
 
 # confluent_organization Data Source
 
+<img src="https://img.shields.io/badge/Lifecycle%20Stage-Public%20Preview-%2300afba" alt="">
+
 `confluent_organization` describes an Organization data source.
 
 ## Example Usage

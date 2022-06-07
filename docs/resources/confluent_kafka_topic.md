@@ -8,6 +8,8 @@ description: |-
 
 # confluent_kafka_topic Resource
 
+<img src="https://img.shields.io/badge/Lifecycle%20Stage-Public%20Preview-%2300afba" alt="">
+
 `confluent_kafka_topic` provides a Kafka Topic resource that enables creating and deleting Kafka Topics on a Kafka cluster on Confluent Cloud.
 
 ## Example Usage

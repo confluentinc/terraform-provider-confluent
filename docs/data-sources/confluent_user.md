@@ -8,6 +8,8 @@ description: |-
 
 # confluent_user Data Source
 
+<img src="https://img.shields.io/badge/Lifecycle%20Stage-Public%20Preview-%2300afba" alt="">
+
 `confluent_user` describes a User data source.
 
 ## Example Usage

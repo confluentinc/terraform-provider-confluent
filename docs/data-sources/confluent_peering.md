@@ -8,6 +8,8 @@ description: |-
 
 # confluent_peering Data Source
 
+<img src="https://img.shields.io/badge/Lifecycle%20Stage-Public%20Preview-%2300afba" alt="">
+
 `confluent_peering` describes a Peering data source.
 
 ## Example Usage

@@ -8,6 +8,8 @@ description: |-
 
 # confluent_connector Resource
 
+<img src="https://img.shields.io/badge/Lifecycle%20Stage-Public%20Preview-%2300afba" alt="">
+
 `confluent_connector` provides a connector resource that enables creating, editing, and deleting connectors on Confluent Cloud.
 
 -> **Note:** Use the Confluent Cloud Console to simplify [generating the config](https://docs.confluent.io/cloud/current/connectors/cc-s3-sink.html#using-the-ccloud-console) of your desired connector.

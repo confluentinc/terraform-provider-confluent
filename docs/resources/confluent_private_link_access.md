@@ -8,6 +8,8 @@ description: |-
 
 # confluent_private_link_access Resource
 
+<img src="https://img.shields.io/badge/Lifecycle%20Stage-Public%20Preview-%2300afba" alt="">
+
 `confluent_private_link_access` provides a Private Link Access resource that enables creating and deleting access to PrivateLink endpoints by AWS account or Azure subscription.
 
 ## Example Usage

@@ -8,6 +8,8 @@ description: |-
 
 # confluent_role_binding Data Source
 
+<img src="https://img.shields.io/badge/Lifecycle%20Stage-Public%20Preview-%2300afba" alt="">
+
 `confluent_role_binding` describes a Role Binding.
 
 ## Example Usage

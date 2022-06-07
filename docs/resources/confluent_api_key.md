@@ -8,6 +8,8 @@ description: |-
 
 # confluent_api_key Resource
 
+<img src="https://img.shields.io/badge/Lifecycle%20Stage-Public%20Preview-%2300afba" alt="">
+
 `confluent_api_key` provides an API Key resource that enables creating, editing, and deleting Cloud API Keys and Kafka API Keys on Confluent Cloud.
 
 ## Example Usage

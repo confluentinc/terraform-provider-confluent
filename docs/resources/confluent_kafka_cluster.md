@@ -8,6 +8,8 @@ description: |-
 
 # confluent_kafka_cluster Resource
 
+<img src="https://img.shields.io/badge/Lifecycle%20Stage-Public%20Preview-%2300afba" alt="">
+
 `confluent_kafka_cluster` provides a Kafka cluster resource that enables creating, editing, and deleting Kafka clusters on Confluent Cloud.
 
 ## Example Usage

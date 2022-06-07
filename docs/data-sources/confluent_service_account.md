@@ -8,6 +8,8 @@ description: |-
 
 # confluent_service_account Data Source
 
+<img src="https://img.shields.io/badge/Lifecycle%20Stage-Public%20Preview-%2300afba" alt="">
+
 `confluent_service_account` describes a Service Account data source.
 
 ## Example Usage
