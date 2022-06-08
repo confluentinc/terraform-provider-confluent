@@ -253,9 +253,10 @@ func TestAccConnector(t *testing.T) {
 			},
 			{
 				// https://www.terraform.io/docs/extend/resources/import.html
-				ResourceName:      fullConnectorResourceLabel,
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            fullConnectorResourceLabel,
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{paramSensitiveConfig},
 				ImportStateIdFunc: func(state *terraform.State) (string, error) {
 					resources := state.RootModule().Resources
 					environmentId := resources[fullConnectorResourceLabel].Primary.Attributes["environment.0.id"]
@@ -285,9 +286,10 @@ func TestAccConnector(t *testing.T) {
 			},
 			{
 				// https://www.terraform.io/docs/extend/resources/import.html
-				ResourceName:      fullConnectorResourceLabel,
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            fullConnectorResourceLabel,
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{paramSensitiveConfig},
 				ImportStateIdFunc: func(state *terraform.State) (string, error) {
 					resources := state.RootModule().Resources
 					environmentId := resources[fullConnectorResourceLabel].Primary.Attributes["environment.0.id"]
@@ -332,7 +334,9 @@ func testAccCheckConnectorConfig(mockServerUrl, environmentConnectorLabel, conne
 		kafka_cluster {
 		  id = "lkc-vnwdjz"
 		}
-		config_sensitive = {}
+		config_sensitive = {
+		  "foo"             = "bar"
+		}
 		config_nonsensitive = {
 		  "name"            = "%s"
 		  "connector.class" = "DatagenSourceInternal"
@@ -357,7 +361,9 @@ func testAccCheckUpdatedConnectorConfig(mockServerUrl, environmentConnectorLabel
 		kafka_cluster {
 		  id = "lkc-vnwdjz"
 		}
-		config_sensitive = {}
+		config_sensitive = {
+		  "foo"             = "bar"
+		}
 		config_nonsensitive = {
 		  "name"            = "%s"
 		  "connector.class" = "DatagenSourceInternal"

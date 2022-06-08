@@ -99,7 +99,7 @@ func connectorCreate(ctx context.Context, d *schema.ResourceData, meta interface
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
 	clusterId := extractStringValueFromBlock(d, paramKafkaCluster, paramId)
 
-	mergedConfig, nonsensitiveConfig := extractConnectorConfigs(d)
+	mergedConfig, sensitiveConfig, nonsensitiveConfig := extractConnectorConfigs(d)
 	displayName := d.Get(connectorConfigFullAttributeName).(string)
 	if displayName == "" {
 		return diag.Errorf("error creating Connector: %q attribute is missing in %q block", connectorConfigAttributeName, paramNonSensitiveConfig)
@@ -142,6 +142,11 @@ func connectorCreate(ctx context.Context, d *schema.ResourceData, meta interface
 	_, err = json.Marshal(createdConnector)
 	if err != nil {
 		return diag.Errorf("error creating Connector %q: error marshaling %#v to json: %s", d.Id(), createdConnector, createDescriptiveError(err))
+	}
+
+	// Save sensitive configs
+	if err := d.Set(paramSensitiveConfig, sensitiveConfig); err != nil {
+		return diag.FromErr(createDescriptiveError(err))
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating Connector %q", displayName))
@@ -223,9 +228,7 @@ func readConnectorAndSetAttributes(ctx context.Context, d *schema.ResourceData, 
 }
 
 func setConnectorAttributes(d *schema.ResourceData, connector connect.ConnectV1ConnectorExpansion, environmentId, clusterId string) (*schema.ResourceData, error) {
-	if err := d.Set(paramSensitiveConfig, make(map[string]string)); err != nil {
-		return nil, err
-	}
+	// paramSensitiveConfig is set in connectorCreate()
 	config := connector.Info.GetConfig()
 	if err := d.Set(paramNonSensitiveConfig, extractNonsensitiveConfigs(config)); err != nil {
 		return nil, err
@@ -253,7 +256,7 @@ func connectorUpdate(ctx context.Context, d *schema.ResourceData, meta interface
 		environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
 		clusterId := extractStringValueFromBlock(d, paramKafkaCluster, paramId)
 		// Update doesn't require secret topic configuration values to be set
-		updatedConfig, nonsensitiveUpdatedConfig := extractConnectorConfigs(d)
+		updatedConfig, _, nonsensitiveUpdatedConfig := extractConnectorConfigs(d)
 
 		debugUpdatedConfigJson, err := json.Marshal(nonsensitiveUpdatedConfig)
 		if err != nil {
@@ -326,6 +329,9 @@ func connectorImport(ctx context.Context, d *schema.ResourceData, meta interface
 	if _, err := readConnectorAndSetAttributes(ctx, d, meta, connectorName, environmentId, clusterId); err != nil {
 		return nil, fmt.Errorf("error importing Connector %q: %s", d.Id(), createDescriptiveError(err))
 	}
+	if err := d.Set(paramSensitiveConfig, make(map[string]string)); err != nil {
+		return nil, createDescriptiveError(err)
+	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished importing Connector %q", d.Id()), map[string]interface{}{connectorLoggingKey: d.Id()})
 	return []*schema.ResourceData{d}, nil
 }
@@ -376,7 +382,7 @@ func extractRequiredStringValueFromMap(config map[string]string, key, configName
 	return "", fmt.Errorf("%q does not exist in %q", key, configName)
 }
 
-func extractConnectorConfigs(d *schema.ResourceData) (map[string]string, map[string]string) {
+func extractConnectorConfigs(d *schema.ResourceData) (map[string]string, map[string]string, map[string]string) {
 	sensitiveConfigs := convertToStringStringMap(d.Get(paramSensitiveConfig).(map[string]interface{}))
 	nonsensitiveConfigs := convertToStringStringMap(d.Get(paramNonSensitiveConfig).(map[string]interface{}))
 
@@ -386,5 +392,5 @@ func extractConnectorConfigs(d *schema.ResourceData) (map[string]string, map[str
 		sensitiveConfigs,
 	)
 
-	return config, nonsensitiveConfigs
+	return config, sensitiveConfigs, nonsensitiveConfigs
 }
