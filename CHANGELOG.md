@@ -1,3 +1,20 @@
+## 0.10.0 (June 7, 2022)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v0.9.0...v0.10.0)
+
+**New features**
+* Added new `confluent_private_link_access`, `confluent_peering`, `confluent_role_binding` data sources.
+* Added more granular examples: [kafka-ops-env-admin-product-team](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/kafka-ops-env-admin-product-team) and [kafka-ops-kafka-admin-product-team](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/kafka-ops-kafka-admin-product-team).
+
+**Bug fixes:**
+* Adjusted waiting time for `confluent_role_binding` resource to avoid sync issues.
+* Added client validation for topic name for `confluent_kafka_topic`.
+* Resolved 4 Dependabot alerts.
+* Update SDK for API Key Mgmt API to display more descriptive errors for `confluent_api_key`.
+* Fixed importing error for `confluent_connector`.
+* Fixed provisioning error for `confluent_connector` resource ([#43](https://github.com/confluentinc/terraform-provider-confluent/issues/43)).
+* Fixed minor documentation issues.
+
 ## 0.9.0 (May 25, 2022)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v0.8.0...v0.9.0)
