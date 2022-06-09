@@ -32,8 +32,8 @@ terraform {
 }
 
 provider "confluent" {
-  api_key    = var.confluent_cloud_api_key    # optionally use CONFLUENT_CLOUD_API_KEY env var
-  api_secret = var.confluent_cloud_api_secret # optionally use CONFLUENT_CLOUD_API_SECRET env var
+  cloud_api_key    = var.confluent_cloud_api_key    # optionally use CONFLUENT_CLOUD_API_KEY env var
+  cloud_api_secret = var.confluent_cloud_api_secret # optionally use CONFLUENT_CLOUD_API_SECRET env var
 }
 # Create the resources
 ```
@@ -63,8 +63,8 @@ You can also provide static credentials in-line directly, or by input variable (
 
 ```terraform
 provider "confluent" {
-  api_key    = var.confluent_cloud_api_key
-  api_secret = var.confluent_cloud_api_secret
+  cloud_api_key    = var.confluent_cloud_api_key
+  cloud_api_secret = var.confluent_cloud_api_secret
 }
 ```
 

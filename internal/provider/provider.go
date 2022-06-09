@@ -83,9 +83,25 @@ func New(version string) func() *schema.Provider {
 					Optional:    true,
 					Sensitive:   true,
 					DefaultFunc: schema.EnvDefaultFunc("CONFLUENT_CLOUD_API_KEY", ""),
+					Deprecated:  "Use \"cloud_api_key\" attribute instead",
+					Description: "The Confluent Cloud API Key.",
+				},
+				"cloud_api_key": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Sensitive:   true,
+					DefaultFunc: schema.EnvDefaultFunc("CONFLUENT_CLOUD_API_KEY", ""),
 					Description: "The Confluent Cloud API Key.",
 				},
 				"api_secret": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Sensitive:   true,
+					DefaultFunc: schema.EnvDefaultFunc("CONFLUENT_CLOUD_API_SECRET", ""),
+					Deprecated:  "Use \"cloud_api_secret\" attribute instead",
+					Description: "The Confluent Cloud API Secret.",
+				},
+				"cloud_api_secret": {
 					Type:        schema.TypeString,
 					Optional:    true,
 					Sensitive:   true,
@@ -107,7 +123,7 @@ func New(version string) func() *schema.Provider {
 				"confluent_organization":        organizationDataSource(),
 				"confluent_peering":             peeringDataSource(),
 				"confluent_private_link_access": privateLinkAccessDataSource(),
-				"confluent_role_binding":    roleBindingDataSource(),
+				"confluent_role_binding":        roleBindingDataSource(),
 				"confluent_service_account":     serviceAccountDataSource(),
 				"confluent_user":                userDataSource(),
 			},
@@ -178,8 +194,18 @@ func environmentDataSourceSchema() *schema.Schema {
 func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Provider, providerVersion string) (interface{}, diag.Diagnostics) {
 	tflog.Info(ctx, "Initializing Terraform Provider for Confluent Cloud")
 	endpoint := d.Get("endpoint").(string)
-	apiKey := d.Get("api_key").(string)
-	apiSecret := d.Get("api_secret").(string)
+	apiKey := d.Get("cloud_api_key").(string)
+	apiSecret := d.Get("cloud_api_secret").(string)
+
+	// TODO: remove once "api_key" and "api_secret" attributes are deleted
+	// If the key does exist in the schema but doesn't exist in the configuration,
+	// then the default value for that type will be returned. For strings, this is "".
+	if apiKey == "" {
+		apiKey = d.Get("api_key").(string)
+	}
+	if apiSecret == "" {
+		apiSecret = d.Get("api_secret").(string)
+	}
 
 	userAgent := p.UserAgent(terraformProviderUserAgent, fmt.Sprintf("%s (https://confluent.cloud; support@confluent.io)", providerVersion))
 
