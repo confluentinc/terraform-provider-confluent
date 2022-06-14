@@ -125,11 +125,11 @@ func waitForConnectorToProvision(ctx context.Context, c *Client, displayName, en
 		Target:  []string{stateRunning},
 		Refresh: connectorProvisionStatus(c.connectApiContext(ctx), c, displayName, environmentId, clusterId),
 		Timeout: connectAPICreateTimeout,
-		Delay:   5 * time.Second,
+		// Workaround to fix PROVISIONING -> RUNNING -> FAILED -> RUNNING that should be completed within the first 15 minutes
 		// TODO: decrease the constant once CNC-154 is done.
-		PollInterval: 4 * time.Minute,
-		// Workaround to fix PROVISIONING -> FAILED -> RUNNING.
-		ContinuousTargetOccurence: 4,
+		// Wait for 15 minutes before sending the 1st request
+		Delay:        15 * time.Minute,
+		PollInterval: 1 * time.Minute,
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for Connector %q=%q provisioning status to become %q", paramDisplayName, displayName, stateRunning))

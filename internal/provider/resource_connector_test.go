@@ -122,42 +122,12 @@ func TestAccConnector(t *testing.T) {
 			http.StatusOK,
 		)
 	_ = wiremockClient.StubFor(readRunningConnectorStub1)
-	readRunningConnectorStub2 := wiremock.Get(wiremock.URLPathEqualTo("/connect/v1/environments/env-1j3m9j/clusters/lkc-vnwdjz/connectors/test_connector/status")).
-		InScenario(connectorScenarioName).
-		WhenScenarioStateIs(scenarioStateConnectorIsRunning1).
-		WillSetStateTo(scenarioStateConnectorIsRunning2).
-		WillReturn(
-			string(runningConnectorResponse),
-			contentTypeJSONHeader,
-			http.StatusOK,
-		)
-	_ = wiremockClient.StubFor(readRunningConnectorStub2)
-	readRunningConnectorStub3 := wiremock.Get(wiremock.URLPathEqualTo("/connect/v1/environments/env-1j3m9j/clusters/lkc-vnwdjz/connectors/test_connector/status")).
-		InScenario(connectorScenarioName).
-		WhenScenarioStateIs(scenarioStateConnectorIsRunning2).
-		WillSetStateTo(scenarioStateConnectorIsRunning3).
-		WillReturn(
-			string(runningConnectorResponse),
-			contentTypeJSONHeader,
-			http.StatusOK,
-		)
-	_ = wiremockClient.StubFor(readRunningConnectorStub3)
-	readRunningConnectorStub4 := wiremock.Get(wiremock.URLPathEqualTo("/connect/v1/environments/env-1j3m9j/clusters/lkc-vnwdjz/connectors/test_connector/status")).
-		InScenario(connectorScenarioName).
-		WhenScenarioStateIs(scenarioStateConnectorIsRunning3).
-		WillSetStateTo(scenarioStateConnectorIsRunning4).
-		WillReturn(
-			string(runningConnectorResponse),
-			contentTypeJSONHeader,
-			http.StatusOK,
-		)
-	_ = wiremockClient.StubFor(readRunningConnectorStub4)
 
 	createdConnectorResponse, _ := ioutil.ReadFile("../testdata/connector/read_created_connectors.json")
 	readCreatedConnectorStub := wiremock.Get(wiremock.URLPathEqualTo("/connect/v1/environments/env-1j3m9j/clusters/lkc-vnwdjz/connectors")).
 		WithQueryParam("expand", wiremock.EqualTo("info,status,id")).
 		InScenario(connectorScenarioName).
-		WhenScenarioStateIs(scenarioStateConnectorIsRunning4).
+		WhenScenarioStateIs(scenarioStateConnectorIsRunning1).
 		WillSetStateTo(scenarioStateConnectorHasBeenCreated).
 		WillReturn(
 			string(createdConnectorResponse),
