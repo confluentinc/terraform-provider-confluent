@@ -78,14 +78,14 @@ func New(version string) func() *schema.Provider {
 	return func() *schema.Provider {
 		provider := &schema.Provider{
 			Schema: map[string]*schema.Schema{
-				"api_key": {
+				"cloud_api_key": {
 					Type:        schema.TypeString,
 					Optional:    true,
 					Sensitive:   true,
 					DefaultFunc: schema.EnvDefaultFunc("CONFLUENT_CLOUD_API_KEY", ""),
 					Description: "The Confluent Cloud API Key.",
 				},
-				"api_secret": {
+				"cloud_api_secret": {
 					Type:        schema.TypeString,
 					Optional:    true,
 					Sensitive:   true,
@@ -107,7 +107,7 @@ func New(version string) func() *schema.Provider {
 				"confluent_organization":        organizationDataSource(),
 				"confluent_peering":             peeringDataSource(),
 				"confluent_private_link_access": privateLinkAccessDataSource(),
-				"confluent_role_binding":    roleBindingDataSource(),
+				"confluent_role_binding":        roleBindingDataSource(),
 				"confluent_service_account":     serviceAccountDataSource(),
 				"confluent_user":                userDataSource(),
 			},
@@ -178,8 +178,8 @@ func environmentDataSourceSchema() *schema.Schema {
 func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Provider, providerVersion string) (interface{}, diag.Diagnostics) {
 	tflog.Info(ctx, "Initializing Terraform Provider for Confluent Cloud")
 	endpoint := d.Get("endpoint").(string)
-	apiKey := d.Get("api_key").(string)
-	apiSecret := d.Get("api_secret").(string)
+	apiKey := d.Get("cloud_api_key").(string)
+	apiSecret := d.Get("cloud_api_secret").(string)
 
 	userAgent := p.UserAgent(terraformProviderUserAgent, fmt.Sprintf("%s (https://confluent.cloud; support@confluent.io)", providerVersion))
 
