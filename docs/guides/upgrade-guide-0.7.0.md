@@ -126,7 +126,7 @@ provider "confluent" {
     }
     ```
 
-### Changes to all resource and data sources
+### Changes to all resources and data sources
 All resources and data sources have been renamed in the new [Confluent Terraform Provider](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs). The prefix has changed from `confluentcloud` to `confluent`. For example, `confluentcloud_environment` resource was updated to `confluent_environment`. Therefore, run the following commands to update your TF configuration file, for example, called `main.tf`.
 ```bash
 # In-place rename resources confluentcloud_environment -> confluent_environment etc in main.tf
