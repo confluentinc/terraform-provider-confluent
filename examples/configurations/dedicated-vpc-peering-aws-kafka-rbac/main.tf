@@ -114,7 +114,7 @@ resource "confluent_kafka_topic_v3" "orders" {
     id = confluent_kafka_cluster_v2.dedicated.id
   }
   topic_name    = "orders"
-  http_endpoint = confluent_kafka_cluster_v2.dedicated.http_endpoint
+  rest_endpoint = confluent_kafka_cluster_v2.dedicated.rest_endpoint
   credentials {
     key    = confluent_api_key_v2.app-manager-kafka-api-key.id
     secret = confluent_api_key_v2.app-manager-kafka-api-key.secret

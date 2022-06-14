@@ -281,10 +281,10 @@ func getEnv(key, defaultValue string) string {
 func checkEnvironmentVariablesForKafkaImportAreSet() (KafkaImportEnvVars, error) {
 	kafkaApiKey := getEnv("KAFKA_API_KEY", "")
 	kafkaApiSecret := getEnv("KAFKA_API_SECRET", "")
-	kafkaHttpEndpoint := getEnv("KAFKA_HTTP_ENDPOINT", "")
+	kafkaHttpEndpoint := getEnv("KAFKA_REST_ENDPOINT", "")
 	canImport := kafkaApiKey != "" && kafkaApiSecret != "" && kafkaHttpEndpoint != ""
 	if !canImport {
-		return KafkaImportEnvVars{}, fmt.Errorf("KAFKA_API_KEY, KAFKA_API_SECRET, and KAFKA_HTTP_ENDPOINT must be set for kafka topic / ACL import")
+		return KafkaImportEnvVars{}, fmt.Errorf("KAFKA_API_KEY, KAFKA_API_SECRET, and KAFKA_REST_ENDPOINT must be set for kafka topic / ACL import")
 	}
 	return KafkaImportEnvVars{
 		kafkaApiKey:       kafkaApiKey,
@@ -298,7 +298,7 @@ type KafkaRestClient struct {
 	clusterId        string
 	clusterApiKey    string
 	clusterApiSecret string
-	httpEndpoint     string
+	restEndpoint     string
 }
 
 func (c *KafkaRestClient) apiContext(ctx context.Context) context.Context {
@@ -336,9 +336,9 @@ type GenericOpenAPIError interface {
 	Model() interface{}
 }
 
-func (f KafkaRestClientFactory) CreateKafkaRestClient(httpEndpoint, clusterId, clusterApiKey, clusterApiSecret string) *KafkaRestClient {
+func (f KafkaRestClientFactory) CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret string) *KafkaRestClient {
 	config := kafkarestv3.NewConfiguration()
-	config.BasePath = httpEndpoint
+	config.BasePath = restEndpoint
 	config.UserAgent = f.userAgent
 	config.HTTPClient = createRetryableHttpClientWithExponentialBackoff()
 	return &KafkaRestClient{
@@ -346,7 +346,7 @@ func (f KafkaRestClientFactory) CreateKafkaRestClient(httpEndpoint, clusterId, c
 		clusterId:        clusterId,
 		clusterApiKey:    clusterApiKey,
 		clusterApiSecret: clusterApiSecret,
-		httpEndpoint:     httpEndpoint,
+		restEndpoint:     restEndpoint,
 	}
 }
 

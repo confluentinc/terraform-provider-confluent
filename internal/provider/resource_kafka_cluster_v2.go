@@ -37,7 +37,7 @@ const (
 	paramDedicatedCluster     = "dedicated"
 	paramAvailability         = "availability"
 	paramBootStrapEndpoint    = "bootstrap_endpoint"
-	paramHttpEndpoint         = "http_endpoint"
+	paramRestEndpoint         = "rest_endpoint"
 	paramCku                  = "cku"
 	paramEncryptionKey        = "encryption_key"
 	paramRbacCrn              = "rbac_crn"
@@ -119,7 +119,7 @@ func kafkaResource() *schema.Resource {
 				Computed:    true,
 				Description: "The bootstrap endpoint used by Kafka clients to connect to the Kafka cluster.",
 			},
-			paramHttpEndpoint: {
+			paramRestEndpoint: {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "The REST endpoint of the Kafka cluster.",
@@ -546,7 +546,7 @@ func setKafkaClusterAttributes(d *schema.ResourceData, cluster cmk.CmkV2Cluster)
 	if err := d.Set(paramBootStrapEndpoint, cluster.Spec.GetKafkaBootstrapEndpoint()); err != nil {
 		return nil, err
 	}
-	if err := d.Set(paramHttpEndpoint, cluster.Spec.GetHttpEndpoint()); err != nil {
+	if err := d.Set(paramRestEndpoint, cluster.Spec.GetHttpEndpoint()); err != nil {
 		return nil, err
 	}
 	rbacCrn, err := clusterCrnToRbacClusterCrn(cluster.Metadata.GetResourceName())

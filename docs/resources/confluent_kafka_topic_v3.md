@@ -37,7 +37,7 @@ resource "confluent_kafka_topic_v3" "orders" {
   }
   topic_name         = "orders"
   partitions_count   = 4
-  http_endpoint      = confluent_kafka_cluster_v2.basic-cluster.http_endpoint
+  rest_endpoint      = confluent_kafka_cluster_v2.basic-cluster.rest_endpoint
   config = {
     "cleanup.policy"    = "compact"
     "max.message.bytes" = "12345"
@@ -58,7 +58,7 @@ The following arguments are supported:
 - `kafka_cluster` - (Required Configuration Block) supports the following:
     - `id` - (Required String) The ID of the Kafka cluster, for example, `lkc-abc123`.
 - `topic_name` - (Required String) The name of the topic, for example, `orders-1`. The topic name can be up to 249 characters in length, and can include the following characters: a-z, A-Z, 0-9, . (dot), _ (underscore), and - (dash). As a best practice, we recommend against using any personally identifiable information (PII) when naming your topic.
-- `http_endpoint` - (Required String) The REST endpoint of the Kafka cluster, for example, `https://pkc-00000.us-central1.gcp.confluent.cloud:443`).
+- `rest_endpoint` - (Required String) The REST endpoint of the Kafka cluster, for example, `https://pkc-00000.us-central1.gcp.confluent.cloud:443`).
 - `credentials` (Required Configuration Block) supports the following:
     - `key` - (Required String) The Kafka API Key.
     - `secret` - (Required String, Sensitive) The Kafka API Secret.
@@ -87,14 +87,14 @@ In addition to the preceding arguments, the following attributes are exported:
 
 ## Import
 
--> **Note:** `KAFKA_API_KEY` (`credentials.key`), `KAFKA_API_SECRET` (`credentials.secret`), and `KAFKA_HTTP_ENDPOINT` (`http_endpoint`) environment variables must be set before importing a Kafka topic.
+-> **Note:** `KAFKA_API_KEY` (`credentials.key`), `KAFKA_API_SECRET` (`credentials.secret`), and `KAFKA_REST_ENDPOINT` (`rest_endpoint`) environment variables must be set before importing a Kafka topic.
 
 You can import a Kafka topic by using the Kafka cluster ID and Kafka topic name in the format `<Kafka cluster ID>/<Kafka topic name>`, for example:
 
 ```shell
 $ export KAFKA_API_KEY="<kafka_api_key>"
 $ export KAFKA_API_SECRET="<kafka_api_secret>"
-$ export KAFKA_HTTP_ENDPOINT="<kafka_http_endpoint>"
+$ export KAFKA_REST_ENDPOINT="<kafka_rest_endpoint>"
 $ terraform import confluent_kafka_topic_v3.my_topic lkc-abc123/orders-123
 ```
 

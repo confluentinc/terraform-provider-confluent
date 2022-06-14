@@ -95,7 +95,7 @@ func kafkaTopicResource() *schema.Resource {
 				Description:  "The number of partitions to create in the topic.",
 				ValidateFunc: validation.IntAtLeast(1),
 			},
-			paramHttpEndpoint: {
+			paramRestEndpoint: {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
@@ -125,10 +125,10 @@ func kafkaTopicResource() *schema.Resource {
 }
 
 func kafkaTopicCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	httpEndpoint := d.Get(paramHttpEndpoint).(string)
+	restEndpoint := d.Get(paramRestEndpoint).(string)
 	clusterId := extractStringValueFromBlock(d, paramKafkaCluster, paramId)
 	clusterApiKey, clusterApiSecret := extractClusterApiKeyAndApiSecret(d)
-	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(httpEndpoint, clusterId, clusterApiKey, clusterApiSecret)
+	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret)
 	topicName := d.Get(paramTopicName).(string)
 
 	createTopicRequest := kafkarestv3.CreateTopicRequestData{
@@ -173,10 +173,10 @@ func executeKafkaTopicCreate(ctx context.Context, c *KafkaRestClient, requestDat
 func kafkaTopicDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	tflog.Debug(ctx, fmt.Sprintf("Deleting Kafka Topic %q", d.Id()), map[string]interface{}{kafkaTopicLoggingKey: d.Id()})
 
-	httpEndpoint := d.Get(paramHttpEndpoint).(string)
+	restEndpoint := d.Get(paramRestEndpoint).(string)
 	clusterId := extractStringValueFromBlock(d, paramKafkaCluster, paramId)
 	clusterApiKey, clusterApiSecret := extractClusterApiKeyAndApiSecret(d)
-	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(httpEndpoint, clusterId, clusterApiKey, clusterApiSecret)
+	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret)
 	topicName := d.Get(paramTopicName).(string)
 
 	_, err := kafkaRestClient.apiClient.TopicV3Api.DeleteKafkaV3Topic(kafkaRestClient.apiContext(ctx), kafkaRestClient.clusterId, topicName)
@@ -197,10 +197,10 @@ func kafkaTopicDelete(ctx context.Context, d *schema.ResourceData, meta interfac
 func kafkaTopicRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	tflog.Debug(ctx, fmt.Sprintf("Reading Kafka Topic %q", d.Id()), map[string]interface{}{kafkaTopicLoggingKey: d.Id()})
 
-	httpEndpoint := d.Get(paramHttpEndpoint).(string)
+	restEndpoint := d.Get(paramRestEndpoint).(string)
 	clusterId := extractStringValueFromBlock(d, paramKafkaCluster, paramId)
 	clusterApiKey, clusterApiSecret := extractClusterApiKeyAndApiSecret(d)
-	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(httpEndpoint, clusterId, clusterApiKey, clusterApiSecret)
+	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret)
 	topicName := d.Get(paramTopicName).(string)
 
 	_, err := readTopicAndSetAttributes(ctx, d, kafkaRestClient, topicName)
@@ -343,7 +343,7 @@ func readTopicAndSetAttributes(ctx context.Context, d *schema.ResourceData, c *K
 	if err := setKafkaCredentials(c.clusterApiKey, c.clusterApiSecret, d); err != nil {
 		return nil, err
 	}
-	if err := d.Set(paramHttpEndpoint, c.httpEndpoint); err != nil {
+	if err := d.Set(paramRestEndpoint, c.restEndpoint); err != nil {
 		return nil, err
 	}
 	d.SetId(createKafkaTopicId(c.clusterId, topicName))
@@ -403,10 +403,10 @@ func kafkaTopicUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 		updateTopicRequest := kafkarestv3.AlterConfigBatchRequestData{
 			Data: topicSettingsUpdateBatch,
 		}
-		httpEndpoint := d.Get(paramHttpEndpoint).(string)
+		restEndpoint := d.Get(paramRestEndpoint).(string)
 		clusterId := extractStringValueFromBlock(d, paramKafkaCluster, paramId)
 		clusterApiKey, clusterApiSecret := extractClusterApiKeyAndApiSecret(d)
-		kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(httpEndpoint, clusterId, clusterApiKey, clusterApiSecret)
+		kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret)
 		topicName := d.Get(paramTopicName).(string)
 		updateTopicRequestJson, err := json.Marshal(updateTopicRequest)
 		if err != nil {

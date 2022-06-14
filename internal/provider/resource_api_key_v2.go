@@ -397,16 +397,16 @@ func validateApiKey(apiKey apikeys.IamV2ApiKey) error {
 	return nil
 }
 
-// Send a GetCluster request to CMK API to find out http_endpoint for a given (environmentId, clusterId) pair
+// Send a GetCluster request to CMK API to find out rest_endpoint for a given (environmentId, clusterId) pair
 func fetchHttpEndpointOfKafkaCluster(ctx context.Context, c *Client, environmentId, clusterId string) (string, error) {
 	cluster, _, err := executeKafkaRead(c.cmkApiContext(ctx), c, environmentId, clusterId)
 	if err != nil {
 		return "", fmt.Errorf("error reading Kafka Cluster %q: %s", clusterId, createDescriptiveError(err))
 	}
-	if httpEndpoint := cluster.Spec.GetHttpEndpoint(); len(httpEndpoint) > 0 {
-		return httpEndpoint, nil
+	if restEndpoint := cluster.Spec.GetHttpEndpoint(); len(restEndpoint) > 0 {
+		return restEndpoint, nil
 	} else {
-		return "", fmt.Errorf("http_endpoint is nil or empty for Kafka Cluster %q", clusterId)
+		return "", fmt.Errorf("rest_endpoint is nil or empty for Kafka Cluster %q", clusterId)
 	}
 }
 
@@ -421,11 +421,11 @@ func waitForApiKeyToSync(ctx context.Context, c *Client, createdApiKey apikeys.I
 	if isResourceSpecificApiKey {
 		if isKafkaApiKey(createdApiKey) {
 			clusterId := createdApiKey.Spec.Resource.GetId()
-			httpEndpoint, err := fetchHttpEndpointOfKafkaCluster(ctx, c, environmentId, clusterId)
+			restEndpoint, err := fetchHttpEndpointOfKafkaCluster(ctx, c, environmentId, clusterId)
 			if err != nil {
-				return fmt.Errorf("error fetching Kafka Cluster %q's %q attribute: %s", clusterId, paramHttpEndpoint, createDescriptiveError(err))
+				return fmt.Errorf("error fetching Kafka Cluster %q's %q attribute: %s", clusterId, paramRestEndpoint, createDescriptiveError(err))
 			}
-			kafkaRestClient := c.kafkaRestClientFactory.CreateKafkaRestClient(httpEndpoint, clusterId, createdApiKey.GetId(), createdApiKey.Spec.GetSecret())
+			kafkaRestClient := c.kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, createdApiKey.GetId(), createdApiKey.Spec.GetSecret())
 			if err := waitForCreatedKafkaApiKeyToSync(ctx, kafkaRestClient); err != nil {
 				return fmt.Errorf("error waiting for Kafka API Key %q to sync: %s", createdApiKey.GetId(), createDescriptiveError(err))
 			}

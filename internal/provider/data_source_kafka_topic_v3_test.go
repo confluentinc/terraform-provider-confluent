@@ -95,11 +95,11 @@ func TestAccDataSourceTopic(t *testing.T) {
 	// Set fake values for secrets since those are required for importing
 	_ = os.Setenv("KAFKA_API_KEY", kafkaApiKey)
 	_ = os.Setenv("KAFKA_API_SECRET", kafkaApiSecret)
-	_ = os.Setenv("KAFKA_HTTP_ENDPOINT", mockTopicTestServerUrl)
+	_ = os.Setenv("KAFKA_REST_ENDPOINT", mockTopicTestServerUrl)
 	defer func() {
 		_ = os.Unsetenv("KAFKA_API_KEY")
 		_ = os.Unsetenv("KAFKA_API_SECRET")
-		_ = os.Unsetenv("KAFKA_HTTP_ENDPOINT")
+		_ = os.Unsetenv("KAFKA_REST_ENDPOINT")
 	}()
 
 	resource.Test(t, resource.TestCase{
@@ -118,7 +118,7 @@ func TestAccDataSourceTopic(t *testing.T) {
 					resource.TestCheckResourceAttr(fullTopicDataSourceLabel, "%", numberOfResourceAttributes),
 					resource.TestCheckResourceAttr(fullTopicDataSourceLabel, "topic_name", topicName),
 					resource.TestCheckResourceAttr(fullTopicDataSourceLabel, "partitions_count", strconv.Itoa(partitionCount)),
-					resource.TestCheckResourceAttr(fullTopicDataSourceLabel, "http_endpoint", mockTopicTestServerUrl),
+					resource.TestCheckResourceAttr(fullTopicDataSourceLabel, "rest_endpoint", mockTopicTestServerUrl),
 					resource.TestCheckResourceAttr(fullTopicDataSourceLabel, "config.%", "2"),
 					resource.TestCheckResourceAttr(fullTopicDataSourceLabel, "config.max.message.bytes", "12345"),
 					resource.TestCheckResourceAttr(fullTopicDataSourceLabel, "config.retention.ms", "6789"),
@@ -139,7 +139,7 @@ func testAccCheckDataSourceTopicConfig(confluentCloudBaseUrl, mockServerUrl stri
       }
 	
 	  topic_name = "%s"
-	  http_endpoint = "%s"
+	  rest_endpoint = "%s"
 
 	  credentials {
 		key = "%s"

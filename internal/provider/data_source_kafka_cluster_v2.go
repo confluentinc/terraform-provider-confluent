@@ -80,7 +80,7 @@ func kafkaDataSource() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			paramHttpEndpoint: {
+			paramRestEndpoint: {
 				Type:     schema.TypeString,
 				Computed: true,
 			},

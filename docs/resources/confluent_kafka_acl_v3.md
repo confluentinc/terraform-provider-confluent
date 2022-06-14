@@ -42,7 +42,7 @@ resource "confluent_kafka_acl_v3" "describe-basic-cluster" {
   host          = "*"
   operation     = "DESCRIBE"
   permission    = "ALLOW"
-  http_endpoint = confluent_kafka_cluster_v2.basic-cluster.http_endpoint
+  rest_endpoint = confluent_kafka_cluster_v2.basic-cluster.rest_endpoint
   credentials {
     key    = confluent_api_key_v2.app-manager-kafka-api-key.id
     secret = confluent_api_key_v2.app-manager-kafka-api-key.secret
@@ -63,7 +63,7 @@ The following arguments are supported:
 - `principal` - (Required String) The principal for the ACL.
 - `operation` - (Required String) The operation type for the ACL. Accepted values are: `UNKNOWN`, `ANY`, `ALL`, `READ`, `WRITE`, `CREATE`, `DELETE`, `ALTER`, `DESCRIBE`, `CLUSTER_ACTION`, `DESCRIBE_CONFIGS`, `ALTER_CONFIGS`, and `IDEMPOTENT_WRITE`.
 - `permission` - (Required String) The permission for the ACL. Accepted values are: `UNKNOWN`, `ANY`, `DENY`, and `ALLOW`.
-- `http_endpoint` - (Required String) The REST endpoint of the Kafka cluster, for example, `https://pkc-00000.us-central1.gcp.confluent.cloud:443`.
+- `rest_endpoint` - (Required String) The REST endpoint of the Kafka cluster, for example, `https://pkc-00000.us-central1.gcp.confluent.cloud:443`.
 - `credentials` (Required Configuration Block) supports the following:
     - `key` - (Required String) The Kafka API Key.
     - `secret` - (Required String, Sensitive) The Kafka API Secret.
@@ -83,7 +83,7 @@ In addition to the preceding arguments, the following attributes are exported:
 
 ## Import
 
--> **Note:** `CONFLUENT_CLOUD_API_KEY`, `CONFLUENT_CLOUD_API_SECRET`, `KAFKA_API_KEY` (`credentials.key`), `KAFKA_API_SECRET` (`credentials.secret`), and `KAFKA_HTTP_ENDPOINT` (`http_endpoint`) environment variables must be set before importing Kafka ACLs.
+-> **Note:** `CONFLUENT_CLOUD_API_KEY`, `CONFLUENT_CLOUD_API_SECRET`, `KAFKA_API_KEY` (`credentials.key`), `KAFKA_API_SECRET` (`credentials.secret`), and `KAFKA_REST_ENDPOINT` (`rest_endpoint`) environment variables must be set before importing Kafka ACLs.
 
 You can import Kafka ACLs by using the Kafka cluster ID and attributes of `confluent_kafka_acl_v3` resource in the format `<Kafka cluster ID>/<Kafka ACL resource type>#<Kafka ACL resource name>#<Kafka ACL pattern type>#<Kafka ACL principal>#<Kafka ACL host>#<Kafka ACL operation>#<Kafka ACL permission>`, for example:
 
@@ -92,7 +92,7 @@ $ export CONFLUENT_CLOUD_API_KEY="<cloud_api_key>"
 $ export CONFLUENT_CLOUD_API_SECRET="<cloud_api_secret>"
 $ export KAFKA_API_KEY="<kafka_api_key>"
 $ export KAFKA_API_SECRET="<kafka_api_secret>"
-$ export KAFKA_HTTP_ENDPOINT="<kafka_http_endpoint>"
+$ export KAFKA_REST_ENDPOINT="<kafka_rest_endpoint>"
 $ terraform import confluent_kafka_acl_v3.describe-cluster "lkc-12345/CLUSTER#kafka-cluster#LITERAL#User:sa-xyz123#*#DESCRIBE#ALLOW"
 ```
 

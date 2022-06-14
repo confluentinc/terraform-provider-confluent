@@ -190,11 +190,11 @@ func TestAccTopic(t *testing.T) {
 	// Set fake values for secrets since those are required for importing
 	_ = os.Setenv("KAFKA_API_KEY", kafkaApiKey)
 	_ = os.Setenv("KAFKA_API_SECRET", kafkaApiSecret)
-	_ = os.Setenv("KAFKA_HTTP_ENDPOINT", mockTopicTestServerUrl)
+	_ = os.Setenv("KAFKA_REST_ENDPOINT", mockTopicTestServerUrl)
 	defer func() {
 		_ = os.Unsetenv("KAFKA_API_KEY")
 		_ = os.Unsetenv("KAFKA_API_SECRET")
-		_ = os.Unsetenv("KAFKA_HTTP_ENDPOINT")
+		_ = os.Unsetenv("KAFKA_REST_ENDPOINT")
 	}()
 
 	resource.Test(t, resource.TestCase{
@@ -214,7 +214,7 @@ func TestAccTopic(t *testing.T) {
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "%", numberOfResourceAttributes),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "topic_name", topicName),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "partitions_count", strconv.Itoa(partitionCount)),
-					resource.TestCheckResourceAttr(fullTopicResourceLabel, "http_endpoint", mockTopicTestServerUrl),
+					resource.TestCheckResourceAttr(fullTopicResourceLabel, "rest_endpoint", mockTopicTestServerUrl),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "config.%", "2"),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "config.max.message.bytes", "12345"),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "config.retention.ms", "6789"),
@@ -234,7 +234,7 @@ func TestAccTopic(t *testing.T) {
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "%", numberOfResourceAttributes),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "topic_name", topicName),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "partitions_count", strconv.Itoa(partitionCount)),
-					resource.TestCheckResourceAttr(fullTopicResourceLabel, "http_endpoint", mockTopicTestServerUrl),
+					resource.TestCheckResourceAttr(fullTopicResourceLabel, "rest_endpoint", mockTopicTestServerUrl),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "config.%", "4"),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, fmt.Sprintf("config.%s", firstConfigName), firstConfigValue),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, fmt.Sprintf("config.%s", secondConfigName), secondConfigUpdatedValue),
@@ -293,7 +293,7 @@ func testAccCheckTopicConfig(confluentCloudBaseUrl, mockServerUrl string) string
 	
 	  topic_name = "%s"
 	  partitions_count = "%d"
-	  http_endpoint = "%s"
+	  rest_endpoint = "%s"
 	
 	  config = {
 		"%s" = "%s"
@@ -320,7 +320,7 @@ func testAccCheckTopicUpdatedConfig(confluentCloudBaseUrl, mockServerUrl string)
 	
 	  topic_name = "%s"
 	  partitions_count = "%d"
-	  http_endpoint = "%s"
+	  rest_endpoint = "%s"
 	
 	  config = {
 		"%s" = "%s"

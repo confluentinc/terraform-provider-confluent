@@ -133,7 +133,7 @@ func kafkaAclResource() *schema.Resource {
 				Description:  "The permission for the ACL.",
 				ValidateFunc: validation.StringInSlice(acceptedPermissions, false),
 			},
-			paramHttpEndpoint: {
+			paramRestEndpoint: {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
@@ -154,10 +154,10 @@ func kafkaAclResource() *schema.Resource {
 }
 
 func kafkaAclCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	httpEndpoint := d.Get(paramHttpEndpoint).(string)
+	restEndpoint := d.Get(paramRestEndpoint).(string)
 	clusterId := extractStringValueFromBlock(d, paramKafkaCluster, paramId)
 	clusterApiKey, clusterApiSecret := extractClusterApiKeyAndApiSecret(d)
-	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(httpEndpoint, clusterId, clusterApiKey, clusterApiSecret)
+	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret)
 	acl, err := extractAcl(d)
 	if err != nil {
 		return diag.FromErr(createDescriptiveError(err))
@@ -209,10 +209,10 @@ func executeKafkaAclCreate(ctx context.Context, c *KafkaRestClient, requestData 
 func kafkaAclDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	tflog.Debug(ctx, fmt.Sprintf("Deleting Kafka ACLs %q", d.Id()), map[string]interface{}{kafkaAclLoggingKey: d.Id()})
 
-	httpEndpoint := d.Get(paramHttpEndpoint).(string)
+	restEndpoint := d.Get(paramRestEndpoint).(string)
 	clusterId := extractStringValueFromBlock(d, paramKafkaCluster, paramId)
 	clusterApiKey, clusterApiSecret := extractClusterApiKeyAndApiSecret(d)
-	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(httpEndpoint, clusterId, clusterApiKey, clusterApiSecret)
+	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret)
 
 	acl, err := extractAcl(d)
 	if err != nil {
@@ -254,11 +254,11 @@ func executeKafkaAclRead(ctx context.Context, c *KafkaRestClient, opts *kafkares
 func kafkaAclRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	tflog.Debug(ctx, fmt.Sprintf("Reading Kafka ACLs %q", d.Id()), map[string]interface{}{kafkaAclLoggingKey: d.Id()})
 
-	httpEndpoint := d.Get(paramHttpEndpoint).(string)
+	restEndpoint := d.Get(paramRestEndpoint).(string)
 	clusterId := extractStringValueFromBlock(d, paramKafkaCluster, paramId)
 	clusterApiKey, clusterApiSecret := extractClusterApiKeyAndApiSecret(d)
 	client := meta.(*Client)
-	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(httpEndpoint, clusterId, clusterApiKey, clusterApiSecret)
+	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret)
 	acl, err := extractAcl(d)
 	if err != nil {
 		return diag.FromErr(createDescriptiveError(err))
@@ -364,7 +364,7 @@ func readAclAndSetAttributes(ctx context.Context, d *schema.ResourceData, client
 	if err := setKafkaCredentials(c.clusterApiKey, c.clusterApiSecret, d); err != nil {
 		return nil, err
 	}
-	if err := d.Set(paramHttpEndpoint, c.httpEndpoint); err != nil {
+	if err := d.Set(paramRestEndpoint, c.restEndpoint); err != nil {
 		return nil, err
 	}
 	d.SetId(createKafkaAclId(c.clusterId, acl))

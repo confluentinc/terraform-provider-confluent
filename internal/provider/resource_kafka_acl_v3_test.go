@@ -165,11 +165,11 @@ func TestAccAcls(t *testing.T) {
 	// Set fake values for secrets since those are required for importing
 	_ = os.Setenv("KAFKA_API_KEY", kafkaApiKey)
 	_ = os.Setenv("KAFKA_API_SECRET", kafkaApiSecret)
-	_ = os.Setenv("KAFKA_HTTP_ENDPOINT", mockAclTestServerUrl)
+	_ = os.Setenv("KAFKA_REST_ENDPOINT", mockAclTestServerUrl)
 	defer func() {
 		_ = os.Unsetenv("KAFKA_API_KEY")
 		_ = os.Unsetenv("KAFKA_API_SECRET")
-		_ = os.Unsetenv("KAFKA_HTTP_ENDPOINT")
+		_ = os.Unsetenv("KAFKA_REST_ENDPOINT")
 	}()
 
 	resource.Test(t, resource.TestCase{
@@ -250,7 +250,7 @@ func testAccCheckAclConfig(confluentCloudBaseUrl, mockServerUrl string) string {
 	  operation = "%s"
 	  permission = "%s"
 
-	  http_endpoint = "%s"
+	  rest_endpoint = "%s"
 
 	  credentials {
 		key = "test_key"

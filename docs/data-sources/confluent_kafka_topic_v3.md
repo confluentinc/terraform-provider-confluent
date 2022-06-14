@@ -21,7 +21,7 @@ data "confluent_kafka_topic_v3" "orders" {
   }
 
   topic_name    = "orders"
-  http_endpoint = confluent_kafka_cluster_v2.basic-cluster.http_endpoint
+  rest_endpoint = confluent_kafka_cluster_v2.basic-cluster.rest_endpoint
 
   credentials {
     key    = "<Kafka API Key for confluent_kafka_cluster_v2.basic-cluster>"
@@ -43,7 +43,7 @@ The following arguments are supported:
 - `kafka_cluster` - (Required Configuration Block) supports the following:
   - `id` - (Required String) The ID of the Kafka cluster, for example, `lkc-abc123`.
 - `topic_name` - (Required String) The name of the topic, for example, `orders-1`. The topic name can be up to 255 characters in length and can contain only alphanumeric characters, hyphens, and underscores.
-- `http_endpoint` - (Required String) The REST endpoint of the Kafka cluster, for example, `https://pkc-00000.us-central1.gcp.confluent.cloud:443`).
+- `rest_endpoint` - (Required String) The REST endpoint of the Kafka cluster, for example, `https://pkc-00000.us-central1.gcp.confluent.cloud:443`).
 - `credentials` (Required Configuration Block) supports the following:
     - `key` - (Required String) The Kafka API Key.
     - `secret` - (Required String) The Kafka API Secret.

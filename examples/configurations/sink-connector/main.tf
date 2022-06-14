@@ -78,7 +78,7 @@ resource "confluent_kafka_topic_v3" "orders" {
     id = confluent_kafka_cluster_v2.basic.id
   }
   topic_name    = "orders"
-  http_endpoint = confluent_kafka_cluster_v2.basic.http_endpoint
+  rest_endpoint = confluent_kafka_cluster_v2.basic.rest_endpoint
   credentials {
     key    = confluent_api_key_v2.app-manager-kafka-api-key.id
     secret = confluent_api_key_v2.app-manager-kafka-api-key.secret
@@ -121,7 +121,7 @@ resource "confluent_kafka_acl_v3" "app-producer-write-on-topic" {
   host          = "*"
   operation     = "WRITE"
   permission    = "ALLOW"
-  http_endpoint = confluent_kafka_cluster_v2.basic.http_endpoint
+  rest_endpoint = confluent_kafka_cluster_v2.basic.rest_endpoint
   credentials {
     key    = confluent_api_key_v2.app-manager-kafka-api-key.id
     secret = confluent_api_key_v2.app-manager-kafka-api-key.secret
@@ -168,7 +168,7 @@ resource "confluent_kafka_acl_v3" "app-consumer-read-on-topic" {
   host          = "*"
   operation     = "READ"
   permission    = "ALLOW"
-  http_endpoint = confluent_kafka_cluster_v2.basic.http_endpoint
+  rest_endpoint = confluent_kafka_cluster_v2.basic.rest_endpoint
   credentials {
     key    = confluent_api_key_v2.app-manager-kafka-api-key.id
     secret = confluent_api_key_v2.app-manager-kafka-api-key.secret
@@ -190,7 +190,7 @@ resource "confluent_kafka_acl_v3" "app-consumer-read-on-group" {
   host          = "*"
   operation     = "READ"
   permission    = "ALLOW"
-  http_endpoint = confluent_kafka_cluster_v2.basic.http_endpoint
+  rest_endpoint = confluent_kafka_cluster_v2.basic.rest_endpoint
   credentials {
     key    = confluent_api_key_v2.app-manager-kafka-api-key.id
     secret = confluent_api_key_v2.app-manager-kafka-api-key.secret
@@ -214,7 +214,7 @@ resource "confluent_kafka_acl_v3" "app-connector-describe-on-cluster" {
   host          = "*"
   operation     = "DESCRIBE"
   permission    = "ALLOW"
-  http_endpoint = confluent_kafka_cluster_v2.basic.http_endpoint
+  rest_endpoint = confluent_kafka_cluster_v2.basic.rest_endpoint
   credentials {
     key    = confluent_api_key_v2.app-manager-kafka-api-key.id
     secret = confluent_api_key_v2.app-manager-kafka-api-key.secret
@@ -232,7 +232,7 @@ resource "confluent_kafka_acl_v3" "app-connector-read-on-target-topic" {
   host          = "*"
   operation     = "READ"
   permission    = "ALLOW"
-  http_endpoint = confluent_kafka_cluster_v2.basic.http_endpoint
+  rest_endpoint = confluent_kafka_cluster_v2.basic.rest_endpoint
   credentials {
     key    = confluent_api_key_v2.app-manager-kafka-api-key.id
     secret = confluent_api_key_v2.app-manager-kafka-api-key.secret
@@ -250,7 +250,7 @@ resource "confluent_kafka_acl_v3" "app-connector-create-on-dlq-lcc-topics" {
   host          = "*"
   operation     = "CREATE"
   permission    = "ALLOW"
-  http_endpoint = confluent_kafka_cluster_v2.basic.http_endpoint
+  rest_endpoint = confluent_kafka_cluster_v2.basic.rest_endpoint
   credentials {
     key    = confluent_api_key_v2.app-manager-kafka-api-key.id
     secret = confluent_api_key_v2.app-manager-kafka-api-key.secret
@@ -268,7 +268,7 @@ resource "confluent_kafka_acl_v3" "app-connector-write-on-dlq-lcc-topics" {
   host          = "*"
   operation     = "WRITE"
   permission    = "ALLOW"
-  http_endpoint = confluent_kafka_cluster_v2.basic.http_endpoint
+  rest_endpoint = confluent_kafka_cluster_v2.basic.rest_endpoint
   credentials {
     key    = confluent_api_key_v2.app-manager-kafka-api-key.id
     secret = confluent_api_key_v2.app-manager-kafka-api-key.secret
@@ -286,7 +286,7 @@ resource "confluent_kafka_acl_v3" "app-connector-create-on-success-lcc-topics" {
   host          = "*"
   operation     = "CREATE"
   permission    = "ALLOW"
-  http_endpoint = confluent_kafka_cluster_v2.basic.http_endpoint
+  rest_endpoint = confluent_kafka_cluster_v2.basic.rest_endpoint
   credentials {
     key    = confluent_api_key_v2.app-manager-kafka-api-key.id
     secret = confluent_api_key_v2.app-manager-kafka-api-key.secret
@@ -304,7 +304,7 @@ resource "confluent_kafka_acl_v3" "app-connector-write-on-success-lcc-topics" {
   host          = "*"
   operation     = "WRITE"
   permission    = "ALLOW"
-  http_endpoint = confluent_kafka_cluster_v2.basic.http_endpoint
+  rest_endpoint = confluent_kafka_cluster_v2.basic.rest_endpoint
   credentials {
     key    = confluent_api_key_v2.app-manager-kafka-api-key.id
     secret = confluent_api_key_v2.app-manager-kafka-api-key.secret
@@ -322,7 +322,7 @@ resource "confluent_kafka_acl_v3" "app-connector-create-on-error-lcc-topics" {
   host          = "*"
   operation     = "CREATE"
   permission    = "ALLOW"
-  http_endpoint = confluent_kafka_cluster_v2.basic.http_endpoint
+  rest_endpoint = confluent_kafka_cluster_v2.basic.rest_endpoint
   credentials {
     key    = confluent_api_key_v2.app-manager-kafka-api-key.id
     secret = confluent_api_key_v2.app-manager-kafka-api-key.secret
@@ -340,7 +340,7 @@ resource "confluent_kafka_acl_v3" "app-connector-write-on-error-lcc-topics" {
   host          = "*"
   operation     = "WRITE"
   permission    = "ALLOW"
-  http_endpoint = confluent_kafka_cluster_v2.basic.http_endpoint
+  rest_endpoint = confluent_kafka_cluster_v2.basic.rest_endpoint
   credentials {
     key    = confluent_api_key_v2.app-manager-kafka-api-key.id
     secret = confluent_api_key_v2.app-manager-kafka-api-key.secret
@@ -358,7 +358,7 @@ resource "confluent_kafka_acl_v3" "app-connector-read-on-connect-lcc-group" {
   host          = "*"
   operation     = "READ"
   permission    = "ALLOW"
-  http_endpoint = confluent_kafka_cluster_v2.basic.http_endpoint
+  rest_endpoint = confluent_kafka_cluster_v2.basic.rest_endpoint
   credentials {
     key    = confluent_api_key_v2.app-manager-kafka-api-key.id
     secret = confluent_api_key_v2.app-manager-kafka-api-key.secret
