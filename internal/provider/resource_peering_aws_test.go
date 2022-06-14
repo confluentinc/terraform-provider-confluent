@@ -155,7 +155,7 @@ func TestAccAwsPeeringAccess(t *testing.T) {
 
 	awsPeeringDisplayName := "my-test-peering"
 	awsPeeringResourceLabel := "test"
-	fullAwsPeeringResourceLabel := fmt.Sprintf("confluent_peering.%s", awsPeeringResourceLabel)
+	fullAwsPeeringResourceLabel := fmt.Sprintf("confluent_peering_v1.%s", awsPeeringResourceLabel)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -218,7 +218,7 @@ func testAccCheckAwsPeeringDestroy(s *terraform.State) error {
 	c := testAccProvider.Meta().(*Client)
 	// Loop through the resources in state, verifying each aws peering is destroyed
 	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "confluent_peering" {
+		if rs.Type != "confluent_peering_v1" {
 			continue
 		}
 		deletedPeeringId := rs.Primary.ID
@@ -242,7 +242,7 @@ func testAccCheckAwsPeeringConfig(mockServerUrl, displayName, resourceLabel stri
 	provider "confluent" {
  		endpoint = "%s"
 	}
-	resource "confluent_peering" "%s" {
+	resource "confluent_peering_v1" "%s" {
         display_name = "%s"
 	    aws {
 		  account = "%s"
@@ -266,7 +266,7 @@ func testAccCheckAwsPeeringConfigWithoutDisplayNameSet(mockServerUrl, resourceLa
 	provider "confluent" {
  		endpoint = "%s"
 	}
-	resource "confluent_peering" "%s" {
+	resource "confluent_peering_v1" "%s" {
 	    aws {
 		  account = "%s"
           vpc = "%s"

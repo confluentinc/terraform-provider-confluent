@@ -151,7 +151,7 @@ func TestAccAzurePeeringAccess(t *testing.T) {
 
 	azurePeeringDisplayName := "my-test-peering"
 	azurePeeringResourceLabel := "test"
-	fullAzurePeeringResourceLabel := fmt.Sprintf("confluent_peering.%s", azurePeeringResourceLabel)
+	fullAzurePeeringResourceLabel := fmt.Sprintf("confluent_peering_v1.%s", azurePeeringResourceLabel)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -218,7 +218,7 @@ func testAccCheckAzurePeeringDestroy(s *terraform.State) error {
 	c := testAccProvider.Meta().(*Client)
 	// Loop through the resources in state, verifying each azure peering is destroyed
 	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "confluent_peering" {
+		if rs.Type != "confluent_peering_v1" {
 			continue
 		}
 		deletedPeeringId := rs.Primary.ID
@@ -242,7 +242,7 @@ func testAccCheckAzurePeeringConfig(mockServerUrl, displayName, resourceLabel st
 	provider "confluent" {
  		endpoint = "%s"
 	}
-	resource "confluent_peering" "%s" {
+	resource "confluent_peering_v1" "%s" {
         display_name = "%s"
 	    azure {
 		  tenant = "%s"
@@ -264,7 +264,7 @@ func testAccCheckAzurePeeringConfigWithoutDisplayNameSet(mockServerUrl, resource
 	provider "confluent" {
  		endpoint = "%s"
 	}
-	resource "confluent_peering" "%s" {
+	resource "confluent_peering_v1" "%s" {
 	    azure {
 		  tenant = "%s"
           vnet = "%s"

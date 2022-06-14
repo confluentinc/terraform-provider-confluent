@@ -12,42 +12,42 @@ provider "confluent" {
   cloud_api_secret = var.confluent_cloud_api_secret
 }
 
-resource "confluent_environment" "staging" {
+resource "confluent_environment_v2" "staging" {
   display_name = "Staging"
 }
 
-resource "confluent_service_account" "env-manager" {
+resource "confluent_service_account_v2" "env-manager" {
   display_name = "env-manager"
   description  = "Service account to manage resources under 'Staging' environment"
 }
 
-resource "confluent_role_binding" "env-manager-env-admin" {
-  principal   = "User:${confluent_service_account.env-manager.id}"
+resource "confluent_role_binding_v2" "env-manager-env-admin" {
+  principal   = "User:${confluent_service_account_v2.env-manager.id}"
   role_name   = "EnvironmentAdmin"
-  crn_pattern = confluent_environment.staging.resource_name
+  crn_pattern = confluent_environment_v2.staging.resource_name
 }
 
-resource "confluent_api_key" "env-manager-cloud-api-key" {
+resource "confluent_api_key_v2" "env-manager-cloud-api-key" {
   display_name = "env-manager-cloud-api-key"
   description  = "Cloud API Key to be shared with Product team to manage resources under 'Staging' environment"
   owner {
-    id          = confluent_service_account.env-manager.id
-    api_version = confluent_service_account.env-manager.api_version
-    kind        = confluent_service_account.env-manager.kind
+    id          = confluent_service_account_v2.env-manager.id
+    api_version = confluent_service_account_v2.env-manager.api_version
+    kind        = confluent_service_account_v2.env-manager.kind
   }
 
   depends_on = [
-    confluent_role_binding.env-manager-env-admin
+    confluent_role_binding_v2.env-manager-env-admin
   ]
 }
 
 # Kafka Ops team creates all service accounts for now until CIAM-1882 is resolved since OrganizationAdmin role is required for SA creation
-resource "confluent_service_account" "app-consumer" {
+resource "confluent_service_account_v2" "app-consumer" {
   display_name = "app-consumer"
   description  = "Service account to consume from 'orders' topic of 'inventory' Kafka cluster"
 }
 
-resource "confluent_service_account" "app-producer" {
+resource "confluent_service_account_v2" "app-producer" {
   display_name = "app-producer"
   description  = "Service account to produce to 'orders' topic of 'inventory' Kafka cluster"
 }
