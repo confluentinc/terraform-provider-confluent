@@ -14,7 +14,7 @@ Use the Confluent provider to deploy and manage [Confluent Cloud](https://www.co
 -> **Note:** The Confluent Terraform provider is available in an **Preview Program** for early adopters. Preview features are introduced to gather customer feedback. This feature should be used only for evaluation and non-production testing purposes or to provide feedback to Confluent, particularly as it becomes more widely available in follow-on editions.  
 **Preview Program** features are intended for evaluation use in development and testing environments only, and not for production use. The warranty, SLA, and Support Services provisions of your agreement with Confluent do not apply to Preview Program features. Preview Program features are considered to be a Proof of Concept as defined in the Confluent Cloud Terms of Service. Confluent may discontinue providing preview releases of the Preview Program features at any time in Confluent’s sole discretion.
 
-[![asciicast](https://asciinema.org/a/500179.svg)](https://asciinema.org/a/500179)
+[![asciicast](https://asciinema.org/a/501764.svg)](https://asciinema.org/a/501764)
 
 ## Example Usage
 
@@ -26,7 +26,7 @@ terraform {
   required_providers {
     confluent = {
       source  = "confluentinc/confluent"
-      version = "0.10.0"
+      version = "0.11.0"
     }
   }
 }
@@ -75,7 +75,5 @@ provider "confluent" {
 * [Report Bugs](https://github.com/confluentinc/terraform-provider-confluent/issues)
 
 * [Request Features](mailto:cflt-tf-access@confluent.io?subject=Feature%20Request)
-
--> **Note:** If you can see `Error: 429 Too Many Requests` when running `terraform plan` or `terraform apply`, please follow [this piece of advice](https://github.com/confluentinc/terraform-provider-confluentcloud/issues/15#issuecomment-972131964).
 
 -> **Note:** If you are running into issues when trying to write a reusable module using this provider, please look at [this message](https://github.com/confluentinc/terraform-provider-confluentcloud/issues/20#issuecomment-1011833161) to resolve the problem.

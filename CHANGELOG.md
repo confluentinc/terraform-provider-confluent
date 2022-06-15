@@ -1,3 +1,14 @@
+## 0.11.0 (June 15, 2022)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v0.10.0...v0.11.0)
+
+**Breaking changes:**
+* Renamed all resources and data sources to contain a version postfix that matches their API group version (find a full list [here](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/guides/upgrade-guide-0.11.0)). For example, the `confluent_environment` resource was renamed to `confluent_environment_v2` to match [org/v2](https://docs.confluent.io/cloud/current/api.html#tag/Environments-(orgv2)) API group version.
+* Renamed `http_endpoint` attribute to `rest_endpoint` for `confluent_kafka_cluster`, `confluent_kafka_topic`, `confluent_kafka_acl` resources and data sources to match _Cluster settings_ tab on the Confluent Cloud Console where the corresponding attribute is called _REST endpoint_.
+* Renamed `api_key` and `api_secret` attributes of `provider` block to `cloud_api_key` and `cloud_api_secret`, respectively.
+
+Follow [Confluent Provider 0.11.0: Upgrade Guide](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/guides/upgrade-guide-0.11.0) to update your TF state and TF configuration files accordingly.
+
 ## 0.10.0 (June 7, 2022)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v0.9.0...v0.10.0)
