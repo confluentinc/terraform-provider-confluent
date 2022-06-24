@@ -30,12 +30,12 @@ import (
 )
 
 const (
-	dataSourcePeeringScenarioName = "confluent_peering_v1 Data Source Lifecycle"
+	dataSourcePeeringScenarioName = "confluent_peering Data Source Lifecycle"
 	peeringDataSourceLabel        = "example"
 	peeringDataSourceDisplayName  = "my-test-peering"
 )
 
-var fullPeeringDataSourceLabel = fmt.Sprintf("data.confluent_peering_v1.%s", peeringDataSourceLabel)
+var fullPeeringDataSourceLabel = fmt.Sprintf("data.confluent_peering.%s", peeringDataSourceLabel)
 
 func TestAccDataSourcePeering(t *testing.T) {
 	containerPort := "8080"
@@ -140,7 +140,7 @@ func testAccCheckDataSourcePeeringWithDisplayNameSet(mockServerUrl string) strin
 	provider "confluent" {
  		endpoint = "%s"
 	}
-	data "confluent_peering_v1" "%s" {
+	data "confluent_peering" "%s" {
 		display_name = "%s"
 	  	environment {
 			id = "%s"
@@ -154,7 +154,7 @@ func testAccCheckDataSourcePeeringWithIdSet(mockServerUrl string) string {
 	provider "confluent" {
  		endpoint = "%s"
 	}
-	data "confluent_peering_v1" "%s" {
+	data "confluent_peering" "%s" {
 	    id = "%s"
 	    environment {
 		  id = "%s"

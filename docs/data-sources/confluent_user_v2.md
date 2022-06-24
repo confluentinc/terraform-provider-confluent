@@ -27,11 +27,11 @@ data "confluent_user_v2" "example_using_email" {
   email = "test123@gmail.com"
 }
 
-resource "confluent_environment_v2" "test-env" {
+resource "confluent_environment" "test-env" {
   display_name = "env_for_${data.confluent_user_v2.example_using_id.full_name}"
 }
 
-resource "confluent_kafka_cluster_v2" "standard-cluster-on-aws" {
+resource "confluent_kafka_cluster" "standard-cluster-on-aws" {
   display_name = "standard_kafka_cluster_on_aws"
   availability = "SINGLE_ZONE"
   cloud        = "AWS"
@@ -39,14 +39,14 @@ resource "confluent_kafka_cluster_v2" "standard-cluster-on-aws" {
   standard {}
 
   environment {
-    id = confluent_environment_v2.test-env.id
+    id = confluent_environment.test-env.id
   }
 }
 
-resource "confluent_role_binding_v2" "test-role-binding" {
+resource "confluent_role_binding" "test-role-binding" {
   principal   = "User:${data.confluent_user_v2.example_using_email.id}"
   role_name   = "CloudClusterAdmin"
-  crn_pattern = confluent_kafka_cluster_v2.standard-cluster-on-aws.rbac_crn 
+  crn_pattern = confluent_kafka_cluster.standard-cluster-on-aws.rbac_crn 
 }
 
 data "confluent_user_v2" "example_using_full_name" {

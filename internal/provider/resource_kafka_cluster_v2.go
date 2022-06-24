@@ -128,7 +128,7 @@ func kafkaResource() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 				Description: "The Confluent Resource Name of the Kafka cluster suitable for " +
-					"confluent_role_binding_v2's crn_pattern.",
+					"confluent_role_binding's crn_pattern.",
 			},
 			paramEnvironment: environmentSchema(),
 		},

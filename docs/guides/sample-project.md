@@ -9,13 +9,13 @@ page_title: "Sample Project"
 [![asciicast](https://asciinema.org/a/501764.svg)](https://asciinema.org/a/501764)
 
 Use the Confluent Terraform provider to enable the lifecycle management of Confluent Cloud resources:
-   * [Environments](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_environment_v2)
-   * [Kafka Clusters](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_cluster_v2)
-   * [Topics](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_topic_v3)
-   * [Service Accounts](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_service_account_v2)
-   * [Cloud API Keys and Kafka API Keys](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_api_key_v2)
-   * [Access Control Lists (ACLs)](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_acl_v3)
-   * [Role Bindings](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_role_binding_v2)
+   * [Environments](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_environment)
+   * [Kafka Clusters](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_cluster)
+   * [Topics](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_topic)
+   * [Service Accounts](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_service_account)
+   * [Cloud API Keys and Kafka API Keys](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_api_key)
+   * [Access Control Lists (ACLs)](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_acl)
+   * [Role Bindings](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_role_binding)
 
 In this guide, you will:
 

@@ -33,7 +33,7 @@ const (
 	dataSourceKafkaScenarioName = "confluent_kafka Data Source Lifecycle"
 )
 
-var fullKafkaDataSourceLabel = fmt.Sprintf("data.confluent_kafka_cluster_v2.%s", kafkaResourceLabel)
+var fullKafkaDataSourceLabel = fmt.Sprintf("data.confluent_kafka_cluster.%s", kafkaResourceLabel)
 
 func TestAccDataSourceCluster(t *testing.T) {
 	containerPort := "8080"
@@ -148,7 +148,7 @@ func testAccCheckDataSourceClusterConfigWithIdSet(mockServerUrl string) string {
 	provider "confluent" {
  		endpoint = "%s"
 	}
-	data "confluent_kafka_cluster_v2" "basic-cluster" {
+	data "confluent_kafka_cluster" "basic-cluster" {
 		id = "%s"
 	  	environment {
 			id = "%s"
@@ -162,7 +162,7 @@ func testAccCheckDataSourceClusterConfigWithDisplayNameSet(mockServerUrl string)
 	provider "confluent" {
  		endpoint = "%s"
 	}
-	data "confluent_kafka_cluster_v2" "basic-cluster" {
+	data "confluent_kafka_cluster" "basic-cluster" {
 		display_name = "%s"
 	  	environment {
 			id = "%s"

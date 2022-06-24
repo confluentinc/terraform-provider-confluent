@@ -36,7 +36,7 @@ const (
 	scenarioStateAwsPlaHasBeenCreated          = "The new aws private link access has been just created"
 	scenarioStateAwsPlaIsInDeprovisioningState = "The new aws private link access is in deprovisioning state"
 	scenarioStateAwsPlaHasBeenDeleted          = "The new aws private link access's deletion has been just completed"
-	awsPlaScenarioName                         = "confluent_private_link_access_v1 Resource Lifecycle"
+	awsPlaScenarioName                         = "confluent_private_link_access Resource Lifecycle"
 	awsPlaEnvironmentId                        = "env-5wyjmz"
 	awsPlaNetworkId                            = "n-5p59z6"
 	awsPlaId                                   = "pla-3prjy6"
@@ -150,7 +150,7 @@ func TestAccAwsPrivateLinkAccess(t *testing.T) {
 
 	awsPlaDisplayName := "prod-pl-use2"
 	awsPlaResourceLabel := "test"
-	fullAwsPlaResourceLabel := fmt.Sprintf("confluent_private_link_access_v1.%s", awsPlaResourceLabel)
+	fullAwsPlaResourceLabel := fmt.Sprintf("confluent_private_link_access.%s", awsPlaResourceLabel)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -211,7 +211,7 @@ func testAccCheckAwsPlaDestroy(s *terraform.State) error {
 	c := testAccProvider.Meta().(*Client)
 	// Loop through the resources in state, verifying each private link access is destroyed
 	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "confluent_private_link_access_v1" {
+		if rs.Type != "confluent_private_link_access" {
 			continue
 		}
 		deletedPrivateLinkAccessId := rs.Primary.ID
@@ -235,7 +235,7 @@ func testAccCheckAwsPlaConfig(mockServerUrl, displayName, resourceLabel string) 
 	provider "confluent" {
  		endpoint = "%s"
 	}
-	resource "confluent_private_link_access_v1" "%s" {
+	resource "confluent_private_link_access" "%s" {
         display_name = "%s"
 	    aws {
 		  account = "%s"
@@ -255,7 +255,7 @@ func testAccCheckAwsPlaConfigWithoutDisplayNameSet(mockServerUrl, resourceLabel 
 	provider "confluent" {
  		endpoint = "%s"
 	}
-	resource "confluent_private_link_access_v1" "%s" {
+	resource "confluent_private_link_access" "%s" {
 	    aws {
 		  account = "%s"
  		}

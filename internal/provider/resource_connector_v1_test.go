@@ -41,7 +41,7 @@ const (
 	scenarioStateConnectorHasBeenCreated     = "The new connector has been just created"
 	scenarioStateConnectorNameHasBeenUpdated = "The new connector's name has been just updated"
 	scenarioStateConnectorHasBeenDeleted     = "The new connector has been deleted"
-	connectorScenarioName                    = "confluent_connector_v1 Resource Lifecycle"
+	connectorScenarioName                    = "confluent_connector Resource Lifecycle"
 )
 
 func TestAccConnector(t *testing.T) {
@@ -193,7 +193,7 @@ func TestAccConnector(t *testing.T) {
 		))
 
 	connectorResourceLabel := "test_connector_resource_label"
-	fullConnectorResourceLabel := fmt.Sprintf("confluent_connector_v1.%s", connectorResourceLabel)
+	fullConnectorResourceLabel := fmt.Sprintf("confluent_connector.%s", connectorResourceLabel)
 	connectorDisplayName := "test_connector"
 
 	resource.Test(t, resource.TestCase{
@@ -276,7 +276,7 @@ func testAccCheckConnectorDestroy(s *terraform.State) error {
 	c := testAccProvider.Meta().(*Client)
 	// Loop through the resources in state, verifying each connector is destroyed
 	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "confluent_connector_v1" {
+		if rs.Type != "confluent_connector" {
 			continue
 		}
 		deletedConnectorName := rs.Primary.Attributes["config_nonsensitive.name"]
@@ -297,7 +297,7 @@ func testAccCheckConnectorConfig(mockServerUrl, environmentConnectorLabel, conne
 	provider "confluent" {
  		endpoint = "%s"
 	}
-	resource "confluent_connector_v1" "%s" {
+	resource "confluent_connector" "%s" {
 		environment {
 		  id = "env-1j3m9j"
 		}
@@ -324,7 +324,7 @@ func testAccCheckUpdatedConnectorConfig(mockServerUrl, environmentConnectorLabel
 	provider "confluent" {
  		endpoint = "%s"
 	}
-	resource "confluent_connector_v1" "%s" {
+	resource "confluent_connector" "%s" {
 		environment {
 		  id = "env-1j3m9j"
 		}

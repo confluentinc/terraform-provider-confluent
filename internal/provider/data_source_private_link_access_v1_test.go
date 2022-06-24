@@ -30,12 +30,12 @@ import (
 )
 
 const (
-	dataSourcePrivateLinkAccessScenarioName = "confluent_private_link_access_v1 Data Source Lifecycle"
+	dataSourcePrivateLinkAccessScenarioName = "confluent_private_link_access Data Source Lifecycle"
 	plaDataSourceLabel                      = "example"
 	plaDataSourceDisplayName                = "prod-pl-use2"
 )
 
-var fullPrivateLinkAccessDataSourceLabel = fmt.Sprintf("data.confluent_private_link_access_v1.%s", plaDataSourceLabel)
+var fullPrivateLinkAccessDataSourceLabel = fmt.Sprintf("data.confluent_private_link_access.%s", plaDataSourceLabel)
 
 func TestAccDataSourcePrivateLinkAccess(t *testing.T) {
 	containerPort := "8080"
@@ -138,7 +138,7 @@ func testAccCheckDataSourcePlaWithDisplayNameSet(mockServerUrl string) string {
 	provider "confluent" {
  		endpoint = "%s"
 	}
-	data "confluent_private_link_access_v1" "%s" {
+	data "confluent_private_link_access" "%s" {
 		display_name = "%s"
 	  	environment {
 			id = "%s"
@@ -152,7 +152,7 @@ func testAccCheckDataSourcePlaWithIdSet(mockServerUrl string) string {
 	provider "confluent" {
  		endpoint = "%s"
 	}
-	data "confluent_private_link_access_v1" "%s" {
+	data "confluent_private_link_access" "%s" {
 	    id = "%s"
 	    environment {
 		  id = "%s"

@@ -52,7 +52,7 @@ const (
 
 var createKafkaPath = "/cmk/v2/clusters"
 var readKafkaPath = fmt.Sprintf("/cmk/v2/clusters/%s", kafkaClusterId)
-var fullKafkaResourceLabel = fmt.Sprintf("confluent_kafka_cluster_v2.%s", kafkaResourceLabel)
+var fullKafkaResourceLabel = fmt.Sprintf("confluent_kafka_cluster.%s", kafkaResourceLabel)
 
 func TestAccCluster(t *testing.T) {
 	containerPort := "8080"
@@ -231,7 +231,7 @@ func testAccCheckClusterDestroy(s *terraform.State) error {
 	c := testAccProvider.Meta().(*Client)
 	// Loop through the resources in state, verifying each environment is destroyed
 	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "confluent_kafka_cluster_v2" {
+		if rs.Type != "confluent_kafka_cluster" {
 			continue
 		}
 		deletedClusterId := rs.Primary.ID
@@ -257,7 +257,7 @@ func testAccCheckClusterConfig(mockServerUrl, clusterType string) string {
 	provider "confluent" {
  		endpoint = "%s"
 	}
-	resource "confluent_kafka_cluster_v2" "basic-cluster" {
+	resource "confluent_kafka_cluster" "basic-cluster" {
 		display_name = "%s"
 		availability = "%s"
 		cloud = "%s"

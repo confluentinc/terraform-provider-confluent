@@ -34,7 +34,7 @@ const (
 	scenarioStateAzureNetworkIsProvisioning = "The new azure network is in provisioning state"
 	scenarioStateAzureNetworkHasBeenCreated = "The new azure network has been just created"
 	scenarioStateAzureNetworkHasBeenDeleted = "The new azure network has been deleted"
-	azureNetworkScenarioName                = "confluent_network_v1 azure Resource Lifecycle"
+	azureNetworkScenarioName                = "confluent_network azure Resource Lifecycle"
 	azureNetworkCloud                       = "AZURE"
 	azureNetworkRegion                      = "centralus"
 	azureNetworkConnectionType              = "PRIVATELINK"
@@ -153,7 +153,7 @@ func TestAccAzureNetwork(t *testing.T) {
 
 	azureNetworkDisplayName := "s-nk99e"
 	azureNetworkResourceLabel := "test"
-	fullAzureNetworkResourceLabel := fmt.Sprintf("confluent_network_v1.%s", azureNetworkResourceLabel)
+	fullAzureNetworkResourceLabel := fmt.Sprintf("confluent_network.%s", azureNetworkResourceLabel)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -240,7 +240,7 @@ func testAccCheckAzureNetworkDestroy(s *terraform.State) error {
 	c := testAccProvider.Meta().(*Client)
 	// Loop through the resources in state, verifying each azure network is destroyed
 	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "confluent_network_v1" {
+		if rs.Type != "confluent_network" {
 			continue
 		}
 		deletedAzureNetworkId := rs.Primary.ID
@@ -264,7 +264,7 @@ func testAccCheckAzureNetworkConfig(mockServerUrl, networkDisplayName, resourceL
 	provider "confluent" {
  		endpoint = "%s"
 	}
-	resource "confluent_network_v1" "%s" {
+	resource "confluent_network" "%s" {
         display_name     = "%s"
 	    cloud            = "%s"
 	    region           = "%s"
@@ -281,7 +281,7 @@ func testAccCheckAzureNetworkConfigWithoutDisplayNameSet(mockServerUrl, resource
 	provider "confluent" {
  		endpoint = "%s"
 	}
-	resource "confluent_network_v1" "%s" {
+	resource "confluent_network" "%s" {
 	    cloud            = "%s"
 	    region           = "%s"
 	    connection_types = ["%s"]

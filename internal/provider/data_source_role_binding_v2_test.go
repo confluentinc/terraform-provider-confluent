@@ -30,7 +30,7 @@ import (
 )
 
 const (
-	roleBindingDataSourceScenarioName = "confluent_role_binding_v2 Data Source Lifecycle"
+	roleBindingDataSourceScenarioName = "confluent_role_binding Data Source Lifecycle"
 )
 
 func TestAccDataSourceRoleBinding(t *testing.T) {
@@ -77,7 +77,7 @@ func TestAccDataSourceRoleBinding(t *testing.T) {
 			http.StatusOK,
 		))
 
-	fullRbDataSourceLabel := fmt.Sprintf("data.confluent_role_binding_v2.%s", rbResourceLabel)
+	fullRbDataSourceLabel := fmt.Sprintf("data.confluent_role_binding.%s", rbResourceLabel)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -104,7 +104,7 @@ func testAccCheckRoleBindingDataSourceConfig(mockServerUrl string) string {
 	provider "confluent" {
 		endpoint = "%s"
 	}
-	data "confluent_role_binding_v2" "%s" {
+	data "confluent_role_binding" "%s" {
 		id = "%s"
 	}
 	`, mockServerUrl, rbResourceLabel, roleBindingId)

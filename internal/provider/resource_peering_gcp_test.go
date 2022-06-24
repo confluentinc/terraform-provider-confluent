@@ -150,7 +150,7 @@ func TestAccGcpPeeringAccess(t *testing.T) {
 
 	gcpPeeringDisplayName := "my-test-peering"
 	gcpPeeringResourceLabel := "test"
-	fullGcpPeeringResourceLabel := fmt.Sprintf("confluent_peering_v1.%s", gcpPeeringResourceLabel)
+	fullGcpPeeringResourceLabel := fmt.Sprintf("confluent_peering.%s", gcpPeeringResourceLabel)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -217,7 +217,7 @@ func testAccCheckGcpPeeringDestroy(s *terraform.State) error {
 	c := testAccProvider.Meta().(*Client)
 	// Loop through the resources in state, verifying each gcp peering is destroyed
 	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "confluent_peering_v1" {
+		if rs.Type != "confluent_peering" {
 			continue
 		}
 		deletedPeeringId := rs.Primary.ID
@@ -241,7 +241,7 @@ func testAccCheckGcpPeeringConfig(mockServerUrl, displayName, resourceLabel stri
 	provider "confluent" {
  		endpoint = "%s"
 	}
-	resource "confluent_peering_v1" "%s" {
+	resource "confluent_peering" "%s" {
         display_name = "%s"
 	    gcp {
 		  project = "%s"
@@ -262,7 +262,7 @@ func testAccCheckGcpPeeringConfigWithoutDisplayNameSet(mockServerUrl, resourceLa
 	provider "confluent" {
  		endpoint = "%s"
 	}
-	resource "confluent_peering_v1" "%s" {
+	resource "confluent_peering" "%s" {
 	    gcp {
 		  project = "%s"
           vpc_network = "%s"

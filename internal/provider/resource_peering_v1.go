@@ -118,7 +118,7 @@ func peeringCreate(ctx context.Context, d *schema.ResourceData, meta interface{}
 		gcpPeering.SetImportCustomRoutes(importCustomerRoutes)
 		spec.SetCloud(net.NetworkingV1PeeringSpecCloudOneOf{NetworkingV1GcpPeering: gcpPeering})
 	} else {
-		return diag.Errorf("None of %q, %q, %q blocks was provided for confluent_peering_v1 resource", paramAws, paramAzure, paramGcp)
+		return diag.Errorf("None of %q, %q, %q blocks was provided for confluent_peering resource", paramAws, paramAzure, paramGcp)
 	}
 	spec.SetNetwork(net.ObjectReference{Id: networkId})
 	spec.SetEnvironment(net.ObjectReference{Id: environmentId})
@@ -353,7 +353,7 @@ func awsPeeringSchema() *schema.Schema {
 					Elem:        &schema.Schema{Type: schema.TypeString},
 					Description: "List of routes for the peering.",
 					// TODO: ValidateFunc and ValidateDiagFunc are not yet supported on lists or sets.
-					// TODO: copy validation from confluent_network_v1.cidr attribute
+					// TODO: copy validation from confluent_network.cidr attribute
 				},
 				paramCustomerRegion: {
 					Type:         schema.TypeString,

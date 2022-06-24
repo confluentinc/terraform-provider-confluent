@@ -34,7 +34,7 @@ const (
 	scenarioStateEnvHasBeenCreated     = "The new environment has been just created"
 	scenarioStateEnvNameHasBeenUpdated = "The new environment's name has been just updated"
 	scenarioStateEnvHasBeenDeleted     = "The new environment has been deleted"
-	envScenarioName                    = "confluent_environment_v2 Resource Lifecycle"
+	envScenarioName                    = "confluent_environment Resource Lifecycle"
 	expectedCountOne                   = int64(1)
 )
 
@@ -152,28 +152,28 @@ func TestAccEnvironment(t *testing.T) {
 			{
 				Config: testAccCheckEnvironmentConfig(mockServerUrl, environmentResourceLabel, environmentDisplayName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckEnvironmentExists(fmt.Sprintf("confluent_environment_v2.%s", environmentResourceLabel)),
-					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_environment_v2.%s", environmentResourceLabel), "id", "env-q2opmd"),
-					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_environment_v2.%s", environmentResourceLabel), "display_name", environmentDisplayName),
+					testAccCheckEnvironmentExists(fmt.Sprintf("confluent_environment.%s", environmentResourceLabel)),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_environment.%s", environmentResourceLabel), "id", "env-q2opmd"),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_environment.%s", environmentResourceLabel), "display_name", environmentDisplayName),
 				),
 			},
 			{
 				// https://www.terraform.io/docs/extend/resources/import.html
-				ResourceName:      fmt.Sprintf("confluent_environment_v2.%s", environmentResourceLabel),
+				ResourceName:      fmt.Sprintf("confluent_environment.%s", environmentResourceLabel),
 				ImportState:       true,
 				ImportStateVerify: true,
 			},
 			{
 				Config: testAccCheckEnvironmentConfig(mockServerUrl, environmentResourceLabel, environmentDisplayUpdatedName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckEnvironmentExists(fmt.Sprintf("confluent_environment_v2.%s", environmentResourceLabel)),
-					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_environment_v2.%s", environmentResourceLabel), "id", "env-q2opmd"),
-					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_environment_v2.%s", environmentResourceLabel), "display_name", environmentDisplayUpdatedName),
-					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_environment_v2.%s", environmentResourceLabel), "resource_name", environmentResourceEndpoint),
+					testAccCheckEnvironmentExists(fmt.Sprintf("confluent_environment.%s", environmentResourceLabel)),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_environment.%s", environmentResourceLabel), "id", "env-q2opmd"),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_environment.%s", environmentResourceLabel), "display_name", environmentDisplayUpdatedName),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_environment.%s", environmentResourceLabel), "resource_name", environmentResourceEndpoint),
 				),
 			},
 			{
-				ResourceName:      fmt.Sprintf("confluent_environment_v2.%s", environmentResourceLabel),
+				ResourceName:      fmt.Sprintf("confluent_environment.%s", environmentResourceLabel),
 				ImportState:       true,
 				ImportStateVerify: true,
 			},
@@ -189,7 +189,7 @@ func testAccCheckEnvironmentDestroy(s *terraform.State) error {
 	c := testAccProvider.Meta().(*Client)
 	// Loop through the resources in state, verifying each environment is destroyed
 	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "confluent_environment_v2" {
+		if rs.Type != "confluent_environment" {
 			continue
 		}
 		deletedEnvironmentId := rs.Primary.ID
@@ -215,7 +215,7 @@ func testAccCheckEnvironmentConfig(mockServerUrl, environmentResourceLabel, envi
 	provider "confluent" {
  		endpoint = "%s"
 	}
-	resource "confluent_environment_v2" "%s" {
+	resource "confluent_environment" "%s" {
 		display_name = "%s"
 	}
 	`, mockServerUrl, environmentResourceLabel, environmentDisplayName)

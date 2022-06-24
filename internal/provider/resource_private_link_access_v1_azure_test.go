@@ -36,7 +36,7 @@ const (
 	scenarioStateAzurePlaHasBeenCreated          = "The new azure private link access has been just created"
 	scenarioStateAzurePlaIsInDeprovisioningState = "The new azure private link access is in deprovisioning state"
 	scenarioStateAzurePlaHasBeenDeleted          = "The new azure private link access's deletion has been just completed"
-	azurePlaScenarioName                         = "confluent_private_link_access_v1 Resource Lifecycle"
+	azurePlaScenarioName                         = "confluent_private_link_access Resource Lifecycle"
 	azurePlaEnvironmentId                        = "env-gz903"
 	azurePlaNetworkId                            = "n-p8xo76"
 	azurePlaId                                   = "pla-gz8rlg"
@@ -150,7 +150,7 @@ func TestAccAzurePrivateLinkAccess(t *testing.T) {
 
 	azurePlaDisplayName := "prod-pl-use3"
 	azurePlaResourceLabel := "test"
-	fullAzurePlaResourceLabel := fmt.Sprintf("confluent_private_link_access_v1.%s", azurePlaResourceLabel)
+	fullAzurePlaResourceLabel := fmt.Sprintf("confluent_private_link_access.%s", azurePlaResourceLabel)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -211,7 +211,7 @@ func testAccCheckAzurePlaDestroy(s *terraform.State) error {
 	c := testAccProvider.Meta().(*Client)
 	// Loop through the resources in state, verifying each private link access is destroyed
 	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "confluent_private_link_access_v1" {
+		if rs.Type != "confluent_private_link_access" {
 			continue
 		}
 		deletedPrivateLinkAccessId := rs.Primary.ID
@@ -235,7 +235,7 @@ func testAccCheckAzurePlaConfig(mockServerUrl, displayName, resourceLabel string
 	provider "confluent" {
  		endpoint = "%s"
 	}
-	resource "confluent_private_link_access_v1" "%s" {
+	resource "confluent_private_link_access" "%s" {
         display_name = "%s"
 	    azure {
 		  subscription = "%s"
@@ -255,7 +255,7 @@ func testAccCheckAzurePlaConfigWithoutDisplayNameSet(mockServerUrl, resourceLabe
 	provider "confluent" {
  		endpoint = "%s"
 	}
-	resource "confluent_private_link_access_v1" "%s" {
+	resource "confluent_private_link_access" "%s" {
 	    azure {
 		  subscription = "%s"
  		}

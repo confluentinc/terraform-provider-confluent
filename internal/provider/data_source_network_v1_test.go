@@ -31,13 +31,13 @@ import (
 )
 
 const (
-	dataSourceNetworkScenarioName = "confluent_network_v1 Data Source Lifecycle"
+	dataSourceNetworkScenarioName = "confluent_network Data Source Lifecycle"
 	networkDataSourceLabel        = "example"
 	azureNetworkDisplayName       = "s-nk99e"
 	awsNetworkDisplayName         = "s-n9553"
 )
 
-var fullNetworkDataSourceLabel = fmt.Sprintf("data.confluent_network_v1.%s", networkDataSourceLabel)
+var fullNetworkDataSourceLabel = fmt.Sprintf("data.confluent_network.%s", networkDataSourceLabel)
 
 func TestAccDataSourceNetwork(t *testing.T) {
 	containerPort := "8080"
@@ -164,7 +164,7 @@ func testAccCheckDataSourceAzureNetworkConfigWithDisplayNameSet(mockServerUrl st
 	provider "confluent" {
  		endpoint = "%s"
 	}
-	data "confluent_network_v1" "%s" {
+	data "confluent_network" "%s" {
 		display_name = "%s"
 	  	environment {
 			id = "%s"
@@ -178,7 +178,7 @@ func testAccCheckDataSourceAwsNetworkConfigWithIdSet(mockServerUrl string) strin
 	provider "confluent" {
  		endpoint = "%s"
 	}
-	data "confluent_network_v1" "%s" {
+	data "confluent_network" "%s" {
 	    id = "%s"
 	    environment {
 		  id = "%s"

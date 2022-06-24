@@ -34,7 +34,7 @@ import (
 const (
 	scenarioStateAclHasBeenCreated = "A new ACL has been just created"
 	scenarioStateAclHasBeenDeleted = "The ACL has been deleted"
-	aclScenarioName                = "confluent_kafka_acl_v3 Resource Lifecycle"
+	aclScenarioName                = "confluent_kafka_acl Resource Lifecycle"
 	aclPatternType                 = "LITERAL"
 	aclResourceName                = "kafka-cluster"
 	aclPrincipalWithIntegerId      = "User:732363"
@@ -46,7 +46,7 @@ const (
 	aclResourceLabel               = "test_acl_resource_label"
 )
 
-var fullAclResourceLabel = fmt.Sprintf("confluent_kafka_acl_v3.%s", aclResourceLabel)
+var fullAclResourceLabel = fmt.Sprintf("confluent_kafka_acl.%s", aclResourceLabel)
 var createKafkaAclPath = fmt.Sprintf("/kafka/v3/clusters/%s/acls", clusterId)
 var readServiceAccountsPath = "/service_accounts"
 var readKafkaAclPath = fmt.Sprintf("/kafka/v3/clusters/%s/acls?host=%s&operation=%s&pattern_type=%s&permission=%s&principal=%s&resource_name=%s&resource_type=%s", clusterId, aclHost, aclOperation, aclPatternType, aclPermission, aclPrincipalWithIntegerId, aclResourceName, aclResourceType)
@@ -214,7 +214,7 @@ func testAccCheckAclDestroy(s *terraform.State) error {
 	c := testAccProvider.Meta().(*Client).kafkaRestClientFactory.CreateKafkaRestClient(mockAclTestServerUrl, clusterId, kafkaApiKey, kafkaApiSecret)
 	// Loop through the resources in state, verifying each ACL is destroyed
 	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "confluent_kafka_acl_v3" {
+		if rs.Type != "confluent_kafka_acl" {
 			continue
 		}
 		deletedAclId := rs.Primary.ID
@@ -238,7 +238,7 @@ func testAccCheckAclConfig(confluentCloudBaseUrl, mockServerUrl string) string {
 	provider "confluent" {
       endpoint = "%s"
     }
-	resource "confluent_kafka_acl_v3" "%s" {
+	resource "confluent_kafka_acl" "%s" {
 	  kafka_cluster {
         id = "%s"
       }
