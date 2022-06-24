@@ -17,7 +17,8 @@ example, `main.tf`) before upgrading.
 
 - [Provider Version Configuration](#provider-version-configuration)
 - [Upgrade Terraform Configuration](#upgrade-terraform-configuration)
-- [Upgrade State File](#upgrade-state-file)
+- [Upgrade State File Using sed Command](#upgrade-state-file-using-sed-command)
+- [Upgrade State File Using import Command](#upgrade-state-file-using-import-command)
 
 ## Provider Version Configuration
 
@@ -209,7 +210,9 @@ sed -i '' 's/confluent_service_account/confluent_service_account_v2/g' main.tf
 sed -i '' 's/confluent_user/confluent_user_v2/g' main.tf
 ```
 
-## Upgrade State File
+## Upgrade State File Using sed Command
+
+-> **Note:** If you have a remote backend configured, skip this section and continue reading at [Upgrade State File Using import Command](#upgrade-state-file-using-import-command).
 
 Similarly, you need to rename
 
@@ -259,6 +262,66 @@ confluent_kafka_topic_v3.orders: Refreshing state... [id=lkc-abc123/orders]
 confluent_kafka_acl_v3.describe-orders: Refreshing state... [id=lkc-abc123/TOPIC#orders#LITERAL#User:sa-xyz123#*#DESCRIBE#ALLOW]
 ...
 No changes. Infrastructure is up-to-date.
+```
+
+## Upgrade State File Using import Command
+
+Another way to upgrade the Terraform state file is to reimport resources manually, which is especially useful if the remote backend is configured.
+
+Run the `terraform state list` command to display the full list of managed resources to import:
+
+```bash
+$ terraform state list
+confluent_service_account.test-sa
+confluent_environment.test-env
+...
+```
+
+To migrate from the old resource to the new resource, remove the old resource from the state, and then use Terraform's `import` [command](https://www.terraform.io/cli/import#import) command to migrate to the new resource.
+
+To import a resource in Terraform, you need its Resource ID, which you can get by running the following command.
+```bash
+$ echo confluent_service_account.test-sa.id | terraform console 
+"sa-xyz123"
+```
+
+Now you can remove the existing resource:
+
+```bash
+$ terraform state rm confluent_service_account.test-sa
+Removed confluent_service_account.test-sa
+Successfully removed 1 resource instance(s).
+```
+
+With the old resource removed from Terraform's state file, run the following command to import it into the Terraform state file as the new resource.
+
+```bash
+$ terraform import confluent_service_account_v2.test-sa "sa-xyz123"
+confluent_service_account_v2.test-sa: Importing from ID "sa-xyz123"...
+confluent_service_account_v2.test-sa: Import prepared!
+  Prepared confluent_service_account_v2 for import
+confluent_service_account_v2.test-sa: Refreshing state... [id=sa-xyz123]
+
+Import successful!
+
+The resources that were imported are shown above. These resources are now in
+your Terraform state and will henceforth be managed by Terraform.
+```
+
+-> **Note:** Some resources might require you to set environment variables before running `terraform import`, which is why it might be useful to check out _Import_ [section](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_acl_v3#import) on a corresponding doc page.
+
+Once this has been done for all the managed resources, the `terraform plan` command should show no changes:
+
+```bash
+terraform plan                                                       
+...
+confluent_service_account_v2.test-sa: Refreshing state... [id=sa-xyz123]
+
+No changes. Infrastructure is up-to-date.
+
+This means that Terraform did not detect any differences between your
+configuration and real physical resources that exist. As a result, no
+actions need to be performed.
 ```
 
 If you run into any problems,
