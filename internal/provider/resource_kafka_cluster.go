@@ -38,6 +38,7 @@ const (
 	paramAvailability         = "availability"
 	paramBootStrapEndpoint    = "bootstrap_endpoint"
 	paramRestEndpoint         = "rest_endpoint"
+	paramHttpEndpoint         = "http_endpoint"
 	paramCku                  = "cku"
 	paramEncryptionKey        = "encryption_key"
 	paramRbacCrn              = "rbac_crn"
@@ -137,6 +138,14 @@ func kafkaResource() *schema.Resource {
 			Create: schema.DefaultTimeout(getTimeoutFor(kafkaClusterTypeDedicated)),
 			// https://docs.confluent.io/cloud/current/clusters/cluster-types.html#resizing-time
 			Update: schema.DefaultTimeout(getTimeoutFor(kafkaClusterTypeDedicated)),
+		},
+		SchemaVersion: 1,
+		StateUpgraders: []schema.StateUpgrader{
+			{
+				Type:    kafkaResourceV0().CoreConfigSchema().ImpliedType(),
+				Upgrade: kafkaStateUpgradeV0,
+				Version: 0,
+			},
 		},
 	}
 }
