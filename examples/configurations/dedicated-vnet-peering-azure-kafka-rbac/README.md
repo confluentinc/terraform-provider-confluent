@@ -1,8 +1,8 @@
-### Note
+### Notes
 
-When using this example, you must execute `terraform` on a system with connectivity to the Kafka REST API. Check the [Kafka REST API docs](https://docs.confluent.io/cloud/current/api.html#tag/Topic-(v3)) to learn more about it.
+1. When using this example, you must execute `terraform` on a system with connectivity to the Kafka REST API. Check the [Kafka REST API docs](https://docs.confluent.io/cloud/current/api.html#tag/Topic-(v3)) to learn more about it.
 
-Go to the following URL using your AD tenant ID (`<tenant-id>`) and approve:
+2. Go to the following URL using your AD tenant ID (`<tenant-id>`) and approve:
 
 ```
 https://login.microsoftonline.com/<tenant-id>/oauth2/authorize?client_id=f0955e3a-9013-4cf4-a1ea-21587621c9cc&response_type=code
@@ -22,4 +22,4 @@ error: Authorization_RequestDenied: Insufficient privileges to complete the
 operation.
 ```
 
-See [VNet Peering on Azure](https://docs.confluent.io/cloud/current/networking/peering/azure-peering.html) for more details.
+3. See [VNet Peering on Azure](https://docs.confluent.io/cloud/current/networking/peering/azure-peering.html) for more details.
