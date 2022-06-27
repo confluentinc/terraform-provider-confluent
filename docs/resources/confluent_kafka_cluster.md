@@ -14,14 +14,14 @@ description: |-
 
 ## Example Usage
 
-### Example AWS cluster
+### Example Kafka clusters on AWS
 
 ```terraform
-resource "confluent_environment" "test-env" {
+resource "confluent_environment" "development" {
   display_name = "Development"
 }
 
-resource "confluent_kafka_cluster" "basic-cluster" {
+resource "confluent_kafka_cluster" "basic" {
   display_name = "basic_kafka_cluster"
   availability = "SINGLE_ZONE"
   cloud        = "AWS"
@@ -29,19 +29,57 @@ resource "confluent_kafka_cluster" "basic-cluster" {
   basic {}
 
   environment {
-    id = confluent_environment.test-env.id
+    id = confluent_environment.development.id
+  }
+}
+
+resource "confluent_kafka_cluster" "standard" {
+  display_name = "standard_kafka_cluster"
+  availability = "SINGLE_ZONE"
+  cloud        = "AWS"
+  region       = "us-east-2"
+  standard {}
+
+  environment {
+    id = confluent_environment.development.id
+  }
+}
+
+resource "confluent_kafka_cluster" "dedicated" {
+  display_name = "dedicated_kafka_cluster"
+  availability = "MULTI_ZONE"
+  cloud        = "AWS"
+  region       = "us-east-2"
+  dedicated {
+    cku = 2
+  }
+
+  environment {
+    id = confluent_environment.development.id
   }
 }
 ```
 
-### Example Azure cluster
+### Example Kafka clusters on Azure
 
 ```terraform
-resource "confluent_environment" "test-env" {
+resource "confluent_environment" "development" {
   display_name = "Development"
 }
 
-resource "confluent_kafka_cluster" "standard-cluster" {
+resource "confluent_kafka_cluster" "basic" {
+  display_name = "basic_kafka_cluster"
+  availability = "SINGLE_ZONE"
+  cloud        = "AZURE"
+  region       = "centralus"
+  basic {}
+
+  environment {
+    id = confluent_environment.development.id
+  }
+}
+
+resource "confluent_kafka_cluster" "standard" {
   display_name = "standard_kafka_cluster"
   availability = "SINGLE_ZONE"
   cloud        = "AZURE"
@@ -49,19 +87,57 @@ resource "confluent_kafka_cluster" "standard-cluster" {
   standard {}
 
   environment {
-    id = confluent_environment.test-env.id
+    id = confluent_environment.development.id
+  }
+}
+
+resource "confluent_kafka_cluster" "dedicated" {
+  display_name = "dedicated_kafka_cluster"
+  availability = "MULTI_ZONE"
+  cloud        = "AZURE"
+  region       = "centralus"
+  dedicated {
+    cku = 2
+  }
+
+  environment {
+    id = confluent_environment.development.id
   }
 }
 ```
 
-### Example GCP cluster
+### Example Kafka clusters on GCP
 
 ```terraform
-resource "confluent_environment" "test-env" {
+resource "confluent_environment" "development" {
   display_name = "Development"
 }
 
-resource "confluent_kafka_cluster" "dedicated-cluster" {
+resource "confluent_kafka_cluster" "basic" {
+  display_name = "basic_kafka_cluster"
+  availability = "SINGLE_ZONE"
+  cloud        = "GCP"
+  region       = "us-central1"
+  basic {}
+
+  environment {
+    id = confluent_environment.development.id
+  }
+}
+
+resource "confluent_kafka_cluster" "standard" {
+  display_name = "standard_kafka_cluster"
+  availability = "SINGLE_ZONE"
+  cloud        = "GCP"
+  region       = "us-central1"
+  standard {}
+
+  environment {
+    id = confluent_environment.development.id
+  }
+}
+
+resource "confluent_kafka_cluster" "dedicated" {
   display_name = "dedicated_kafka_cluster"
   availability = "MULTI_ZONE"
   cloud        = "GCP"
@@ -71,7 +147,7 @@ resource "confluent_kafka_cluster" "dedicated-cluster" {
   }
 
   environment {
-    id = confluent_environment.test-env.id
+    id = confluent_environment.development.id
   }
 }
 ```
@@ -88,17 +164,17 @@ The following arguments are supported:
 - `basic` - (Optional Configuration Block) The configuration of the Basic Kafka cluster.
 - `standard` - (Optional Configuration Block) The configuration of the Standard Kafka cluster.
 - `dedicated` - (Optional Configuration Block) The configuration of the Dedicated Kafka cluster. It supports the following:
-    - `cku` - (Required Number) The number of Confluent Kafka Units (CKUs) for Dedicated cluster types. The minimum number of CKUs for `SINGLE_ZONE` dedicated clusters is `1` whereas `MULTI_ZONE` dedicated clusters must have more than `2` CKUs.
-    - `encryption_key` - (Optional String) The ID of the encryption key that is used to encrypt the data in the Kafka cluster, for example, `arn:aws:kms:us-west-2:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab` (key Amazon Resource Name) for AWS or `projects/my-test-project/locations/global/keyRings/test-byok/cryptoKeys/test` for GCP. Append required permissions to the key policy before creating a Kafka cluster, see [Encrypt Confluent Cloud Clusters using Self-Managed Keys](https://docs.confluent.io/cloud/current/clusters/byok/index.html) for more details. At the moment, self-managed encryption keys are only available for the Dedicated clusters on AWS or GCP.
+  - `cku` - (Required Number) The number of Confluent Kafka Units (CKUs) for Dedicated cluster types. The minimum number of CKUs for `SINGLE_ZONE` dedicated clusters is `1` whereas `MULTI_ZONE` dedicated clusters must have more than `2` CKUs.
+  - `encryption_key` - (Optional String) The ID of the encryption key that is used to encrypt the data in the Kafka cluster, for example, `arn:aws:kms:us-west-2:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab` (key Amazon Resource Name) for AWS or `projects/my-test-project/locations/global/keyRings/test-byok/cryptoKeys/test` for GCP. Append required permissions to the key policy before creating a Kafka cluster, see [Encrypt Confluent Cloud Clusters using Self-Managed Keys](https://docs.confluent.io/cloud/current/clusters/byok/index.html) for more details. At the moment, self-managed encryption keys are only available for the Dedicated clusters on AWS or GCP.
 
 -> **Note:** Exactly one from the `basic`, `standard`, and `dedicated` configuration blocks must be specified.
 
 !> **Warning:** You can only upgrade clusters from `basic` to `standard`.
 
--> **Note:** Currently, provisioning of a Dedicated Kafka cluster takes around 25 minutes on average but might take up to 24 hours. If you can't wait for the `terraform apply` step to finish, you can exit it and import the cluster by using the `terraform import` command once it has been provisioned. When the cluster is provisioned, you will receive an email notification, and you can also follow updates on the Target Environment web page of the Confluent Cloud website. 
+-> **Note:** Currently, provisioning of a Dedicated Kafka cluster takes around 25 minutes on average but might take up to 24 hours. If you can't wait for the `terraform apply` step to finish, you can exit it and import the cluster by using the `terraform import` command once it has been provisioned. When the cluster is provisioned, you will receive an email notification, and you can also follow updates on the Target Environment web page of the Confluent Cloud website.
 
 - `environment` (Required Configuration Block) supports the following:
-    - `id` - (Required String) The ID of the Environment that the Kafka cluster belongs to, for example, `env-abc123`.
+  - `id` - (Required String) The ID of the Environment that the Kafka cluster belongs to, for example, `env-abc123`.
 - `network` (Optional Configuration Block) supports the following:
   - `id` - (Required String) The ID of the Network that the Kafka cluster belongs to, for example, `n-abc123`.
 
@@ -129,18 +205,18 @@ $ terraform import confluent_kafka_cluster.my_kafka env-abc123/lkc-abc123
 
 ## Getting Started
 The following end-to-end examples might help to get started with `confluent_kafka_cluster` resource:
-  * [`basic-kafka-acls`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/basic-kafka-acls): _Basic_ Kafka cluster with authorization using ACLs
-  * [`standard-kafka-acls`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/standard-kafka-acls): _Standard_ Kafka cluster with authorization using ACLs
-  * [`standard-kafka-rbac`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/standard-kafka-rbac): _Standard_ Kafka cluster with authorization using RBAC
-  * [`dedicated-public-kafka-acls`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/dedicated-public-kafka-acls): _Dedicated_ Kafka cluster that is accessible over the public internet with authorization using ACLs
-  * [`dedicated-public-kafka-rbac`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/dedicated-public-kafka-rbac): _Dedicated_ Kafka cluster that is accessible over the public internet with authorization using RBAC
-  * [`dedicated-privatelink-aws-kafka-acls`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/dedicated-privatelink-aws-kafka-acls): _Dedicated_ Kafka cluster on AWS that is accessible via PrivateLink connections with authorization using ACLs
-  * [`dedicated-privatelink-aws-kafka-rbac`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/dedicated-privatelink-aws-kafka-rbac): _Dedicated_ Kafka cluster on AWS that is accessible via PrivateLink connections with authorization using RBAC
-  * [`dedicated-privatelink-azure-kafka-rbac`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/dedicated-privatelink-azure-kafka-rbac): _Dedicated_ Kafka cluster on Azure that is accessible via PrivateLink connections with authorization using RBAC
-  * [`dedicated-privatelink-azure-kafka-acls`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/dedicated-privatelink-azure-kafka-acls): _Dedicated_ Kafka cluster on Azure that is accessible via PrivateLink connections with authorization using ACLs
-  * [`dedicated-vnet-peering-azure-kafka-acls`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/dedicated-vnet-peering-azure-kafka-acls): _Dedicated_ Kafka cluster on Azure that is accessible via VPC Peering connections with authorization using ACLs
-  * [`dedicated-vnet-peering-azure-kafka-rbac`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/dedicated-vnet-peering-azure-kafka-rbac): _Dedicated_ Kafka cluster on Azure that is accessible via VPC Peering connections with authorization using RBAC
-  * [`dedicated-vpc-peering-aws-kafka-acls`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/dedicated-vpc-peering-aws-kafka-acls): _Dedicated_ Kafka cluster on AWS that is accessible via VPC Peering connections with authorization using ACLs
-  * [`dedicated-vpc-peering-aws-kafka-rbac`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/dedicated-vpc-peering-aws-kafka-rbac): _Dedicated_ Kafka cluster on AWS that is accessible via VPC Peering connections with authorization using RBAC
-  * [`dedicated-vpc-peering-gcp-kafka-acls`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/dedicated-vpc-peering-gcp-kafka-acls): _Dedicated_ Kafka cluster on GCP that is accessible via VPC Peering connections with authorization using ACLs
-  * [`dedicated-vpc-peering-gcp-kafka-rbac`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/dedicated-vpc-peering-gcp-kafka-rbac): _Dedicated_ Kafka cluster on GCP that is accessible via VPC Peering connections with authorization using RBAC
+* [`basic-kafka-acls`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/basic-kafka-acls): _Basic_ Kafka cluster with authorization using ACLs
+* [`standard-kafka-acls`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/standard-kafka-acls): _Standard_ Kafka cluster with authorization using ACLs
+* [`standard-kafka-rbac`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/standard-kafka-rbac): _Standard_ Kafka cluster with authorization using RBAC
+* [`dedicated-public-kafka-acls`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/dedicated-public-kafka-acls): _Dedicated_ Kafka cluster that is accessible over the public internet with authorization using ACLs
+* [`dedicated-public-kafka-rbac`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/dedicated-public-kafka-rbac): _Dedicated_ Kafka cluster that is accessible over the public internet with authorization using RBAC
+* [`dedicated-privatelink-aws-kafka-acls`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/dedicated-privatelink-aws-kafka-acls): _Dedicated_ Kafka cluster on AWS that is accessible via PrivateLink connections with authorization using ACLs
+* [`dedicated-privatelink-aws-kafka-rbac`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/dedicated-privatelink-aws-kafka-rbac): _Dedicated_ Kafka cluster on AWS that is accessible via PrivateLink connections with authorization using RBAC
+* [`dedicated-privatelink-azure-kafka-rbac`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/dedicated-privatelink-azure-kafka-rbac): _Dedicated_ Kafka cluster on Azure that is accessible via PrivateLink connections with authorization using RBAC
+* [`dedicated-privatelink-azure-kafka-acls`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/dedicated-privatelink-azure-kafka-acls): _Dedicated_ Kafka cluster on Azure that is accessible via PrivateLink connections with authorization using ACLs
+* [`dedicated-vnet-peering-azure-kafka-acls`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/dedicated-vnet-peering-azure-kafka-acls): _Dedicated_ Kafka cluster on Azure that is accessible via VPC Peering connections with authorization using ACLs
+* [`dedicated-vnet-peering-azure-kafka-rbac`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/dedicated-vnet-peering-azure-kafka-rbac): _Dedicated_ Kafka cluster on Azure that is accessible via VPC Peering connections with authorization using RBAC
+* [`dedicated-vpc-peering-aws-kafka-acls`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/dedicated-vpc-peering-aws-kafka-acls): _Dedicated_ Kafka cluster on AWS that is accessible via VPC Peering connections with authorization using ACLs
+* [`dedicated-vpc-peering-aws-kafka-rbac`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/dedicated-vpc-peering-aws-kafka-rbac): _Dedicated_ Kafka cluster on AWS that is accessible via VPC Peering connections with authorization using RBAC
+* [`dedicated-vpc-peering-gcp-kafka-acls`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/dedicated-vpc-peering-gcp-kafka-acls): _Dedicated_ Kafka cluster on GCP that is accessible via VPC Peering connections with authorization using ACLs
+* [`dedicated-vpc-peering-gcp-kafka-rbac`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/dedicated-vpc-peering-gcp-kafka-rbac): _Dedicated_ Kafka cluster on GCP that is accessible via VPC Peering connections with authorization using RBAC
