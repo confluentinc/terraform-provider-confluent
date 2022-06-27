@@ -31,14 +31,14 @@ import (
 )
 
 const (
-	organizationDataSourceScenarioName = "confluent_organization_v2 Data Source Lifecycle"
+	organizationDataSourceScenarioName = "confluent_organization Data Source Lifecycle"
 	organizationDataSourceLabel        = "test_organization_data_source_label"
 
 	expectedOrgResourceName = "crn://confluent.cloud/organization=1111aaaa-11aa-11aa-11aa-111111aaaaaa"
 	expectedOrgId           = "1111aaaa-11aa-11aa-11aa-111111aaaaaa"
 )
 
-var fullOrganizationDataSourceLabel = fmt.Sprintf("data.confluent_organization_v2.%s", organizationDataSourceLabel)
+var fullOrganizationDataSourceLabel = fmt.Sprintf("data.confluent_organization.%s", organizationDataSourceLabel)
 
 func TestAccDataSourceOrganization(t *testing.T) {
 	containerPort := "8080"
@@ -107,7 +107,7 @@ func testAccCheckDataSourceOrganizationConfig(confluentCloudBaseUrl string) stri
 	provider "confluent" {
       endpoint = "%s"
     }
-	data "confluent_organization_v2" "%s" {
+	data "confluent_organization" "%s" {
 	}
 	`, confluentCloudBaseUrl, organizationDataSourceLabel)
 }

@@ -33,7 +33,7 @@ import (
 
 const (
 	userApiVersion             = "iam/v2"
-	userDataSourceScenarioName = "confluent_user_v2 Data Source Lifecycle"
+	userDataSourceScenarioName = "confluent_user Data Source Lifecycle"
 	userId                     = "u-1jjv23"
 	userEmail                  = "test3@gmail.com"
 	userFullName               = "Alex #3"
@@ -107,7 +107,7 @@ func TestAccDataSourceUser(t *testing.T) {
 			http.StatusOK,
 		))
 
-	fullUserDataSourceLabel := fmt.Sprintf("data.confluent_user_v2.%s", userResourceLabel)
+	fullUserDataSourceLabel := fmt.Sprintf("data.confluent_user.%s", userResourceLabel)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -157,7 +157,7 @@ func testAccCheckDataSourceUserConfigWithIdSet(mockServerUrl, userResourceLabel,
 	provider "confluent" {
 		endpoint = "%s"
 	}
-	data "confluent_user_v2" "%s" {
+	data "confluent_user" "%s" {
 		id = "%s"
 	}
 	`, mockServerUrl, userResourceLabel, userId)
@@ -168,7 +168,7 @@ func testAccCheckDataSourceUserConfigWithEmailSet(mockServerUrl, userResourceLab
 	provider "confluent" {
 		endpoint = "%s"
 	}
-	data "confluent_user_v2" "%s" {
+	data "confluent_user" "%s" {
 		email = "%s"
 	}
 	`, mockServerUrl, userResourceLabel, email)
@@ -179,7 +179,7 @@ func testAccCheckDataSourceUserConfigWithFullNameSet(mockServerUrl, userResource
 	provider "confluent" {
 		endpoint = "%s"
 	}
-	data "confluent_user_v2" "%s" {
+	data "confluent_user" "%s" {
 		full_name = "%s"
 	}
 	`, mockServerUrl, userResourceLabel, fullName)
