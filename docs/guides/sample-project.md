@@ -109,6 +109,8 @@ In this guide, you will:
 
     -> **Note:** When using a private networking option, you must execute `terraform` on a system with connectivity to the Kafka REST API. Check the [Kafka REST API docs](https://docs.confluent.io/cloud/current/api.html#tag/Topic-(v3)) to learn more about it.
 
+    -> **Note:** If you're interested in a more granular setup with TF configuration split between a Kafka Ops team and a Product team, see [kafka-ops-env-admin-product-team](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/kafka-ops-env-admin-product-team) and [kafka-ops-kafka-admin-product-team](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/kafka-ops-kafka-admin-product-team).
+
 5. Select the target configuration and change into its directory:
     ```bash
     # Using the example configuration #1 as an example 
