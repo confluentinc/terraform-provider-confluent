@@ -4,7 +4,7 @@ page_title: "Confluent Provider 0.12.0: Upgrade Guide"
 # Confluent Provider 0.12.0: Upgrade Guide
 
 This guide is intended to help with the upgrading process and focuses only on the changes necessary to upgrade to
-version `0.12.0` of Confluent Provider from either 
+version `0.12.0` of Confluent Provider from either
 * version `0.11.0` of Confluent Provider or
 * version `0.10.0` of Confluent Provider.
 
@@ -124,6 +124,50 @@ sed -i '' 's/confluent_service_account_v2/confluent_service_account/g' terraform
 sed -i '' 's/confluent_organization_v2/confluent_organization/g' terraform.tfstate
 sed -i '' 's/confluent_user_v2/confluent_user/g' terraform.tfstate
 ```
+
+The `0.12.0` release automatically updates the version of the schema in your TF state file if you run the following commands:
+
+```bash
+terraform plan
+```
+
+Your output should resemble:
+```
+...
+confluent_service_account.test-sa: Refreshing state... [id=sa-xyz123]
+confluent_environment.test-env: Refreshing state... [id=env-dge456]
+confluent_kafka_cluster.test-basic-cluster: Refreshing state... [id=lkc-abc123]
+confluent_kafka_acl.describe-test-basic-cluster: Refreshing state... [id=lkc-abc123/CLUSTER#kafka-cluster#LITERAL#User:sa-xyz123#*#DESCRIBE#ALLOW]
+confluent_kafka_topic.orders: Refreshing state... [id=lkc-abc123/orders]
+confluent_kafka_acl.describe-orders: Refreshing state... [id=lkc-abc123/TOPIC#orders#LITERAL#User:sa-xyz123#*#DESCRIBE#ALLOW]
+
+No changes. Infrastructure is up-to-date.
+
+This means that Terraform did not detect any differences between your
+configuration and real physical resources that exist. As a result, no
+actions need to be performed.
+```
+
+and
+
+```bash
+terraform apply
+```
+
+Your output should resemble:
+```
+...
+confluent_service_account.test-sa: Refreshing state... [id=sa-xyz123]
+confluent_environment.test-env: Refreshing state... [id=env-dge456]
+confluent_kafka_cluster.test-basic-cluster: Refreshing state... [id=lkc-abc123]
+confluent_kafka_acl.describe-test-basic-cluster: Refreshing state... [id=lkc-abc123/CLUSTER#kafka-cluster#LITERAL#User:sa-xyz123#*#DESCRIBE#ALLOW]
+confluent_kafka_topic.orders: Refreshing state... [id=lkc-abc123/orders]
+confluent_kafka_acl.describe-orders: Refreshing state... [id=lkc-abc123/TOPIC#orders#LITERAL#User:sa-xyz123#*#DESCRIBE#ALLOW]
+
+Apply complete! Resources: 0 added, 0 changed, 0 destroyed.
+```
+
+-> **Note:** Even though the previous commands didn't show any changes, it's required to run these commands, because they update the version of the schema in your TF state file through `StateUpgrader` [function](https://www.terraform.io/plugin/sdkv2/resources/state-migration#terraform-v0-12-sdk-state-migrations).
 
 ### Sanity Check
 
