@@ -113,12 +113,17 @@ func kafkaTopicResource() *schema.Resource {
 			},
 			paramCredentials: credentialsSchema(),
 		},
-		SchemaVersion: 1,
+		SchemaVersion: 2,
 		StateUpgraders: []schema.StateUpgrader{
 			{
 				Type:    kafkaClusterBlockV0().CoreConfigSchema().ImpliedType(),
 				Upgrade: kafkaClusterBlockStateUpgradeV0,
 				Version: 0,
+			},
+			{
+				Type:    kafkaTopicResourceV1().CoreConfigSchema().ImpliedType(),
+				Upgrade: kafkaStateUpgradeV0,
+				Version: 1,
 			},
 		},
 	}
