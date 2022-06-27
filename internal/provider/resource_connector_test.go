@@ -35,9 +35,6 @@ const (
 	scenarioStateConnectorHasBeenCreating    = "The new connector has been creating"
 	scenarioStateConnectorIsProvisioning     = "The new connector is in provisioning state"
 	scenarioStateConnectorIsRunning1         = "The new connector is in running state #1"
-	scenarioStateConnectorIsRunning2         = "The new connector is in running state #2"
-	scenarioStateConnectorIsRunning3         = "The new connector is in running state #3"
-	scenarioStateConnectorIsRunning4         = "The new connector is in running state #4"
 	scenarioStateConnectorHasBeenCreated     = "The new connector has been just created"
 	scenarioStateConnectorNameHasBeenUpdated = "The new connector's name has been just updated"
 	scenarioStateConnectorHasBeenDeleted     = "The new connector has been deleted"
@@ -212,6 +209,7 @@ func TestAccConnector(t *testing.T) {
 					resource.TestCheckResourceAttr(fullConnectorResourceLabel, fmt.Sprintf("%s.0.%s", paramEnvironment, paramId), "env-1j3m9j"),
 					resource.TestCheckResourceAttr(fullConnectorResourceLabel, fmt.Sprintf("%s.#", paramKafkaCluster), "1"),
 					resource.TestCheckResourceAttr(fullConnectorResourceLabel, fmt.Sprintf("%s.0.%s", paramKafkaCluster, paramId), "lkc-vnwdjz"),
+					resource.TestCheckResourceAttr(fullConnectorResourceLabel, paramStatus, "RUNNING"),
 					resource.TestCheckResourceAttr(fullConnectorResourceLabel, fmt.Sprintf("%s.%%", paramNonSensitiveConfig), "6"),
 					resource.TestCheckResourceAttr(fullConnectorResourceLabel, fmt.Sprintf("%s.%s", paramNonSensitiveConfig, connectorConfigAttributeClass), "DatagenSourceInternal"),
 					resource.TestCheckResourceAttr(fullConnectorResourceLabel, fmt.Sprintf("%s.%s", paramNonSensitiveConfig, "kafka.topic"), "test_topic"),
@@ -244,6 +242,7 @@ func TestAccConnector(t *testing.T) {
 					resource.TestCheckResourceAttr(fullConnectorResourceLabel, fmt.Sprintf("%s.0.%s", paramEnvironment, paramId), "env-1j3m9j"),
 					resource.TestCheckResourceAttr(fullConnectorResourceLabel, fmt.Sprintf("%s.#", paramKafkaCluster), "1"),
 					resource.TestCheckResourceAttr(fullConnectorResourceLabel, fmt.Sprintf("%s.0.%s", paramKafkaCluster, paramId), "lkc-vnwdjz"),
+					resource.TestCheckResourceAttr(fullConnectorResourceLabel, paramStatus, "RUNNING"),
 					resource.TestCheckResourceAttr(fullConnectorResourceLabel, fmt.Sprintf("%s.%%", paramNonSensitiveConfig), "7"),
 					resource.TestCheckResourceAttr(fullConnectorResourceLabel, fmt.Sprintf("%s.%s", paramNonSensitiveConfig, connectorConfigAttributeClass), "DatagenSourceInternal"),
 					resource.TestCheckResourceAttr(fullConnectorResourceLabel, fmt.Sprintf("%s.%s", paramNonSensitiveConfig, "kafka.topic"), "test_topic"),
