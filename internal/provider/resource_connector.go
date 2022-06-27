@@ -41,9 +41,6 @@ const (
 	connectorConfigInternalAttributePrefix = "config.internal."
 
 	twoStarsOrMorePattern = "^[*]{2,}"
-
-	paramStatus = "status"
-	statePaused = "PAUSED"
 )
 
 var connectorConfigFullAttributeName = fmt.Sprintf("%s.name", paramNonSensitiveConfig)
@@ -70,11 +67,6 @@ func connectorResource() *schema.Resource {
 		Schema: map[string]*schema.Schema{
 			paramEnvironment:  environmentSchema(),
 			paramKafkaCluster: kafkaClusterBlockSchema(),
-			paramStatus: {
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
-			},
 			paramNonSensitiveConfig: {
 				Type: schema.TypeMap,
 				Elem: &schema.Schema{
@@ -238,7 +230,6 @@ func readConnectorAndSetAttributes(ctx context.Context, d *schema.ResourceData, 
 func setConnectorAttributes(d *schema.ResourceData, connector connect.ConnectV1ConnectorExpansion, environmentId, clusterId string) (*schema.ResourceData, error) {
 	// paramSensitiveConfig is set in connectorCreate()
 	config := connector.Info.GetConfig()
-	status := connector.Status.GetConnector()
 	if err := d.Set(paramNonSensitiveConfig, extractNonsensitiveConfigs(config)); err != nil {
 		return nil, err
 	}
@@ -248,58 +239,22 @@ func setConnectorAttributes(d *schema.ResourceData, connector connect.ConnectV1C
 	if err := setStringAttributeInListBlockOfSizeOne(paramKafkaCluster, paramId, clusterId, d); err != nil {
 		return nil, err
 	}
-	if err := d.Set(paramStatus, status.GetState()); err != nil {
-		return nil, err
-	}
 	d.SetId(connector.Id.GetId())
 	return d, nil
 }
 
 func connectorUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if d.HasChangesExcept(paramNonSensitiveConfig, paramSensitiveConfig, paramStatus) {
-		return diag.Errorf("error updating Connector %q: only %q attribute, %q and %q blocks can be updated for Connector", d.Id(), paramStatus, paramNonSensitiveConfig, paramSensitiveConfig)
-	}
-	c := meta.(*Client)
-	displayName := d.Get(connectorConfigFullAttributeName).(string)
-	if displayName == "" {
-		return diag.Errorf("error updating Connector %q: %q attribute is missing in %q block", d.Id(), connectorConfigAttributeName, paramNonSensitiveConfig)
-	}
-	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
-	clusterId := extractStringValueFromBlock(d, paramKafkaCluster, paramId)
-	if d.HasChange(paramStatus) {
-		oldValue, newValue := d.GetChange(paramStatus)
-		oldStatus := oldValue.(string)
-		newStatus := newValue.(string)
-		shouldPauseConnector := (oldStatus == stateRunning) && (newStatus == statePaused)
-		shouldResumeConnector := (oldStatus == statePaused) && (newStatus == stateRunning)
-		if shouldPauseConnector {
-			tflog.Debug(ctx, fmt.Sprintf("Pausing Connector %q", d.Id()), map[string]interface{}{connectorLoggingKey: d.Id()})
-
-			req := c.connectClient.LifecycleV1Api.PauseConnectv1Connector(c.connectApiContext(ctx), displayName, environmentId, clusterId)
-			_, err := req.Execute()
-			if err != nil {
-				return diag.Errorf("error updating Connector %q: %s", d.Id(), createDescriptiveError(err))
-			}
-			if err := waitForConnectorToChangeStatus(c.connectApiContext(ctx), c, displayName, environmentId, clusterId, stateRunning, statePaused); err != nil {
-				return diag.Errorf("error waiting for Connector %q to be updated: %s", d.Id(), createDescriptiveError(err))
-			}
-		} else if shouldResumeConnector {
-			tflog.Debug(ctx, fmt.Sprintf("Resuming Connector %q", d.Id()), map[string]interface{}{connectorLoggingKey: d.Id()})
-
-			req := c.connectClient.LifecycleV1Api.ResumeConnectv1Connector(c.connectApiContext(ctx), displayName, environmentId, clusterId)
-			_, err := req.Execute()
-			if err != nil {
-				return diag.Errorf("error updating Connector %q: %s", d.Id(), createDescriptiveError(err))
-			}
-			if err := waitForConnectorToChangeStatus(c.connectApiContext(ctx), c, displayName, environmentId, clusterId, statePaused, stateRunning); err != nil {
-				return diag.Errorf("error waiting for Connector %q to be updated: %s", d.Id(), createDescriptiveError(err))
-			}
-		} else {
-			return diag.Errorf("error updating Connector %q: only %q->%q or %q->%q transitions are supported but %q->%q was attempted", d.Id(), statePaused, stateRunning, stateRunning, statePaused, oldStatus, newStatus)
-		}
-		tflog.Debug(ctx, fmt.Sprintf("Finished updating Connector %q", d.Id()), map[string]interface{}{connectorLoggingKey: d.Id()})
+	if d.HasChangesExcept(paramNonSensitiveConfig, paramSensitiveConfig) {
+		return diag.Errorf("error updating Connector %q: only %q and %q blocks can be updated for Connector", d.Id(), paramNonSensitiveConfig, paramSensitiveConfig)
 	}
 	if d.HasChange(paramNonSensitiveConfig) {
+		c := meta.(*Client)
+		displayName := d.Get(connectorConfigFullAttributeName).(string)
+		if displayName == "" {
+			return diag.Errorf("error updating Connector %q: %q attribute is missing in %q block", d.Id(), connectorConfigAttributeName, paramNonSensitiveConfig)
+		}
+		environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
+		clusterId := extractStringValueFromBlock(d, paramKafkaCluster, paramId)
 		// Update doesn't require secret topic configuration values to be set
 		updatedConfig, _, nonsensitiveUpdatedConfig := extractConnectorConfigs(d)
 
@@ -312,7 +267,7 @@ func connectorUpdate(ctx context.Context, d *schema.ResourceData, meta interface
 		req := c.connectClient.ConnectorsV1Api.CreateOrUpdateConnectv1ConnectorConfig(c.connectApiContext(ctx), displayName, environmentId, clusterId).RequestBody(updatedConfig)
 		updatedConnector, resp, err := req.Execute()
 
-		// Delete once APIF-2634 is resolved
+		// 400 is returned in a response, err = "undefined response type"
 		if resp != nil && resp.StatusCode != http.StatusOK {
 			return diag.Errorf("error updating Connector %q: %s", d.Id(), resp.Status)
 		}
