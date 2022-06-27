@@ -1,3 +1,12 @@
+## 0.12.0 (June 27, 2022)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v0.11.0...v0.12.0)
+
+**Breaking changes:**
+* Reverted resource versioning changes introduced in `0.11.0`. For example, the `confluent_environment_v2` resource was renamed to `confluent_environment`. User feedback on versioned resources made it clear that the pain of manually updating the TF state file outweighs the potential benefits of deprecation flexibility that versioned resources could have provided. In order to avoid forcing users to edit their TF state files (either manually or by running commands like `terraform state mv`) in the future, TF [state migrations](https://www.terraform.io/plugin/sdkv2/resources/state-migration) will be handled within the Confluent Terraform Provider whenever possible.
+
+Follow [Confluent Provider 0.12.0: Upgrade Guide](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/guides/upgrade-guide-0.12.0) to update your TF state and TF configuration files accordingly (direct updates from both [0.10.0](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/guides/upgrade-guide-0.12.0#upgrade-guide-upgrading-from-version-0100-of-confluent-provider) and [0.11.0](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/guides/upgrade-guide-0.12.0#upgrade-guide-upgrading-from-version-0110-of-confluent-provider) to `0.12.0` are supported).
+
 ## 0.11.0 (June 15, 2022)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v0.10.0...v0.11.0)
