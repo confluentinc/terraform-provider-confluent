@@ -30,8 +30,9 @@ import (
 )
 
 const (
-	paramOwner    = "owner"
-	paramResource = "managed_resource"
+	paramOwner               = "owner"
+	paramResource            = "managed_resource"
+	paramDisableWaitForReady = "disable_wait_for_ready"
 
 	serviceAccountKind   = "ServiceAccount"
 	userKind             = "User"
@@ -79,6 +80,12 @@ func apiKeyResource() *schema.Resource {
 				Sensitive:   true,
 				Description: "The API Key Secret.",
 			},
+			paramDisableWaitForReady: {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  false,
+				ForceNew: true,
+			},
 		},
 	}
 }
@@ -88,6 +95,7 @@ func apiKeyCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 
 	displayName := d.Get(paramDisplayName).(string)
 	description := d.Get(paramDescription).(string)
+	skipSync := d.Get(paramDisableWaitForReady).(bool)
 
 	ownerId := extractStringValueFromBlock(d, paramOwner, paramId)
 	ownerKind := extractStringValueFromBlock(d, paramOwner, paramKind)
@@ -125,11 +133,14 @@ func apiKeyCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 		return diag.Errorf("Created API Key is malformed: %s", err)
 	}
 
-	// Wait until the API Key is synced and is ready to use
-	tflog.Debug(ctx, fmt.Sprintf("Waiting for API Key %q to sync", createdApiKey.GetId()), map[string]interface{}{apiKeyLoggingKey: createdApiKey.GetId()})
-	if err := waitForApiKeyToSync(ctx, c, createdApiKey, isResourceSpecificApiKey, environmentId); err != nil {
-		return diag.FromErr(createDescriptiveError(err))
+	if !skipSync {
+		// Wait until the API Key is synced and is ready to use
+		tflog.Debug(ctx, fmt.Sprintf("Waiting for API Key %q to sync", createdApiKey.GetId()), map[string]interface{}{apiKeyLoggingKey: createdApiKey.GetId()})
+		if err := waitForApiKeyToSync(ctx, c, createdApiKey, isResourceSpecificApiKey, environmentId); err != nil {
+			return diag.FromErr(createDescriptiveError(err))
+		}
 	}
+
 	// Save the API Key Secret
 	if err := d.Set(paramSecret, createdApiKey.Spec.GetSecret()); err != nil {
 		return diag.FromErr(createDescriptiveError(err))
@@ -260,6 +271,12 @@ func setApiKeyAttributes(d *schema.ResourceData, apiKey apikeys.IamV2ApiKey) (*s
 	if isResourceSpecificApiKey {
 		environmentId := extractStringValueFromNestedBlock(d, paramResource, paramEnvironment, paramId)
 		if err := setManagedResource(apiKey, environmentId, d); err != nil {
+			return nil, createDescriptiveError(err)
+		}
+	}
+	// Explicitly set paramDisableWaitForReady to the default value if unset
+	if _, ok := d.GetOk(paramDisableWaitForReady); !ok {
+		if err := d.Set(paramDisableWaitForReady, d.Get(paramDisableWaitForReady)); err != nil {
 			return nil, createDescriptiveError(err)
 		}
 	}

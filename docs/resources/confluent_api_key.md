@@ -116,6 +116,7 @@ The following arguments are supported:
 
 - `display_name` - (Required String) A human-readable name for the API Key.
 - `description` - (Optional String) A free-form description of the API Account.
+- `disable_wait_for_ready` - (Optional Boolean) An optional flag to disable wait-for-readiness on create. Its primary use case is for Cluster API Keys for private networking options when readiness check fails. Must be unset when importing. Defaults to `false`.
 - `owner` (Required Configuration Block) supports the following:
     - `id` - (Required String) The ID of the owner that the API Key belongs to, for example, `sa-abc123` or `u-abc123`.
     - `api_version` - (Required String) The API group and version of the owner that the API Key belongs to, for example, `iam/v2`.
