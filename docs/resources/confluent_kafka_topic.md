@@ -15,7 +15,7 @@ description: |-
 ## Example Usage
 
 ```terraform
-resource "confluent_environment" "test-env" {
+resource "confluent_environment" "development" {
   display_name = "Development"
 }
 
@@ -27,7 +27,7 @@ resource "confluent_kafka_cluster" "basic-cluster" {
   basic {}
 
   environment {
-    id = confluent_environment.test-env.id
+    id = confluent_environment.development.id
   }
 }
 
