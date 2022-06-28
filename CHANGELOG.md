@@ -1,3 +1,15 @@
+## 0.13.0 (June 28, 2022)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v0.12.0...v0.13.0)
+
+**New features**
+* Added support for `kafka_api_key`, `kafka_api_secret`, `kafka_rest_endpoint` attributes in a `provider` block to make `rest_endpoint` attribute and `credentials` block optional for `confluent_kafka_acl` and `confluent_kafka_topic` resources ([#37](https://github.com/confluentinc/terraform-provider-confluent/issues/37), [#54](https://github.com/confluentinc/terraform-provider-confluent/issues/54)).
+* Added `disable_wait_for_ready` attribute to disable readiness check for `confluent_api_key` resource ([#25](https://github.com/confluentinc/terraform-provider-confluent/issues/25), [#51](https://github.com/confluentinc/terraform-provider-confluent/issues/51)).
+* Added support for pausing / resuming a connector by adding `status` attribute for `confluent_connector` resource.
+
+**Bug fixes:**
+* Updated docs and added a new [managing-single-cluster](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/managing-single-cluster) example.
+
 ## 0.12.0 (June 27, 2022)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v0.11.0...v0.12.0)
