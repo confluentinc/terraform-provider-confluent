@@ -139,6 +139,23 @@ func waitForConnectorToProvision(ctx context.Context, c *Client, displayName, en
 	return nil
 }
 
+func waitForConnectorToChangeStatus(ctx context.Context, c *Client, displayName, environmentId, clusterId, currentStatus, targetStatus string) error {
+	stateConf := &resource.StateChangeConf{
+		Pending:      []string{currentStatus},
+		Target:       []string{targetStatus},
+		Refresh:      connectorUpdateStatus(c.connectApiContext(ctx), c, displayName, environmentId, clusterId),
+		Timeout:      1 * time.Hour,
+		Delay:        30 * time.Second,
+		PollInterval: 1 * time.Minute,
+	}
+
+	tflog.Debug(ctx, fmt.Sprintf("Waiting for Connector %q=%q status to become %q", paramDisplayName, displayName, targetStatus))
+	if _, err := stateConf.WaitForStateContext(c.connectApiContext(ctx)); err != nil {
+		return err
+	}
+	return nil
+}
+
 func waitForPeeringToProvision(ctx context.Context, c *Client, environmentId, peeringId string) error {
 	stateConf := &resource.StateChangeConf{
 		Pending: []string{stateProvisioning},
@@ -338,6 +355,17 @@ func connectorProvisionStatus(ctx context.Context, c *Client, displayName, envir
 			return connector, connector.Connector.GetState(), nil
 		}
 		return nil, stateFailed, fmt.Errorf("connector %q=%q provisioning status is %q: %s", paramDisplayName, displayName, connector.Connector.GetState(), connector.Connector.GetTrace())
+	}
+}
+
+func connectorUpdateStatus(ctx context.Context, c *Client, displayName, environmentId, clusterId string) resource.StateRefreshFunc {
+	return func() (result interface{}, s string, err error) {
+		connector, _, err := executeConnectorStatusCreate(c.connectApiContext(ctx), c, displayName, environmentId, clusterId)
+		if err != nil {
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Connector %q=%q: %s", paramDisplayName, displayName, createDescriptiveError(err)))
+			return nil, stateUnknown, err
+		}
+		return connector, connector.Connector.GetState(), nil
 	}
 }
 

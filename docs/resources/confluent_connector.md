@@ -106,6 +106,7 @@ The following arguments are supported:
 - `config_sensitive` - (Required Map) The custom connector _sensitive_ configuration settings to set:
   - `name` - (Required String) The configuration setting name, for example, `aws.secret.access.key`.
   - `value` - (Required String, Sensitive) The configuration setting value, for example, `***REDACTED***`.
+- `status` (Optional String) The status of the connector (one of `"NONE"`, `"PROVISIONING"`, `"RUNNING"`, `"DEGRADED"`, `"FAILED"`, `"PAUSED"`, `"DELETED"`). Pausing (`"RUNNING" -> "PAUSED"`) and resuming (`"PAUSED" -> "RUNNING"`) a connector is supported via an update operation.
 
 -> **Note:** If there are no _sensitive_ configuration settings for your connector, set `config_sensitive = {}` explicitly.
 
