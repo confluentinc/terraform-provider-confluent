@@ -83,16 +83,16 @@ In addition to the preceding arguments, the following attributes are exported:
 
 ## Import
 
--> **Note:** `CONFLUENT_CLOUD_API_KEY`, `CONFLUENT_CLOUD_API_SECRET`, `KAFKA_API_KEY` (`credentials.key`), `KAFKA_API_SECRET` (`credentials.secret`), and `KAFKA_REST_ENDPOINT` (`rest_endpoint`) environment variables must be set before importing Kafka ACLs.
+-> **Note:** `CONFLUENT_CLOUD_API_KEY`, `CONFLUENT_CLOUD_API_SECRET`, `IMPORT_KAFKA_API_KEY` (`credentials.key`), `IMPORT_KAFKA_API_SECRET` (`credentials.secret`), and `IMPORT_KAFKA_REST_ENDPOINT` (`rest_endpoint`) environment variables must be set before importing Kafka ACLs.
 
 You can import Kafka ACLs by using the Kafka cluster ID and attributes of `confluent_kafka_acl` resource in the format `<Kafka cluster ID>/<Kafka ACL resource type>#<Kafka ACL resource name>#<Kafka ACL pattern type>#<Kafka ACL principal>#<Kafka ACL host>#<Kafka ACL operation>#<Kafka ACL permission>`, for example:
 
 ```shell
 $ export CONFLUENT_CLOUD_API_KEY="<cloud_api_key>"
 $ export CONFLUENT_CLOUD_API_SECRET="<cloud_api_secret>"
-$ export KAFKA_API_KEY="<kafka_api_key>"
-$ export KAFKA_API_SECRET="<kafka_api_secret>"
-$ export KAFKA_REST_ENDPOINT="<kafka_rest_endpoint>"
+$ export IMPORT_KAFKA_API_KEY="<kafka_api_key>"
+$ export IMPORT_KAFKA_API_SECRET="<kafka_api_secret>"
+$ export IMPORT_KAFKA_REST_ENDPOINT="<kafka_rest_endpoint>"
 $ terraform import confluent_kafka_acl.describe-cluster "lkc-12345/CLUSTER#kafka-cluster#LITERAL#User:sa-xyz123#*#DESCRIBE#ALLOW"
 ```
 

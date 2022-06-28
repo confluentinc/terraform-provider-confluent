@@ -111,7 +111,7 @@ func kafkaAclResource() *schema.Resource {
 				Required:     true,
 				ForceNew:     true,
 				Description:  "The principal for the ACL.",
-				ValidateFunc: validation.StringMatch(regexp.MustCompile("^User:(sa|u)-"), "the principal must start with 'User:sa-' or 'User:u-'. Follow the upgrade guide at https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/guides/upgrade-guide-0.4.0 to upgrade to the latest version of Terraform Provider for Confluent Cloud"),
+				ValidateFunc: validation.StringMatch(regexp.MustCompile("^User:(sa|u)-"), "the principal must start with 'User:sa-' or 'User:u-'."),
 			},
 			paramHost: {
 				Type:        schema.TypeString,
@@ -135,7 +135,7 @@ func kafkaAclResource() *schema.Resource {
 			},
 			paramRestEndpoint: {
 				Type:         schema.TypeString,
-				Required:     true,
+				Optional:     true,
 				ForceNew:     true,
 				Description:  "The REST endpoint of the Kafka cluster (e.g., `https://pkc-00000.us-central1.gcp.confluent.cloud:443`).",
 				ValidateFunc: validation.StringMatch(regexp.MustCompile("^http"), "the REST endpoint must start with 'https://'"),
@@ -159,10 +159,16 @@ func kafkaAclResource() *schema.Resource {
 }
 
 func kafkaAclCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	restEndpoint := d.Get(paramRestEndpoint).(string)
+	restEndpoint, err := extractRestEndpoint(meta.(*Client), d, false)
+	if err != nil {
+		return diag.Errorf("error creating Kafka ACLs: %s", createDescriptiveError(err))
+	}
 	clusterId := extractStringValueFromBlock(d, paramKafkaCluster, paramId)
-	clusterApiKey, clusterApiSecret := extractClusterApiKeyAndApiSecret(d)
-	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret)
+	clusterApiKey, clusterApiSecret, err := extractClusterApiKeyAndApiSecret(meta.(*Client), d, false)
+	if err != nil {
+		return diag.Errorf("error creating Kafka ACLs: %s", createDescriptiveError(err))
+	}
+	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isKafkaMetadataSet)
 	acl, err := extractAcl(d)
 	if err != nil {
 		return diag.FromErr(createDescriptiveError(err))
@@ -214,10 +220,13 @@ func executeKafkaAclCreate(ctx context.Context, c *KafkaRestClient, requestData 
 func kafkaAclDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	tflog.Debug(ctx, fmt.Sprintf("Deleting Kafka ACLs %q", d.Id()), map[string]interface{}{kafkaAclLoggingKey: d.Id()})
 
-	restEndpoint := d.Get(paramRestEndpoint).(string)
+	restEndpoint, err := extractRestEndpoint(meta.(*Client), d, false)
+	if err != nil {
+		return diag.Errorf("error deleting Kafka ACLs: %s", createDescriptiveError(err))
+	}
 	clusterId := extractStringValueFromBlock(d, paramKafkaCluster, paramId)
-	clusterApiKey, clusterApiSecret := extractClusterApiKeyAndApiSecret(d)
-	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret)
+	clusterApiKey, clusterApiSecret, err := extractClusterApiKeyAndApiSecret(meta.(*Client), d, false)
+	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isKafkaMetadataSet)
 
 	acl, err := extractAcl(d)
 	if err != nil {
@@ -259,11 +268,17 @@ func executeKafkaAclRead(ctx context.Context, c *KafkaRestClient, opts *kafkares
 func kafkaAclRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	tflog.Debug(ctx, fmt.Sprintf("Reading Kafka ACLs %q", d.Id()), map[string]interface{}{kafkaAclLoggingKey: d.Id()})
 
-	restEndpoint := d.Get(paramRestEndpoint).(string)
+	restEndpoint, err := extractRestEndpoint(meta.(*Client), d, false)
+	if err != nil {
+		return diag.Errorf("error reading Kafka ACLs: %s", createDescriptiveError(err))
+	}
 	clusterId := extractStringValueFromBlock(d, paramKafkaCluster, paramId)
-	clusterApiKey, clusterApiSecret := extractClusterApiKeyAndApiSecret(d)
+	clusterApiKey, clusterApiSecret, err := extractClusterApiKeyAndApiSecret(meta.(*Client), d, false)
+	if err != nil {
+		return diag.Errorf("error reading Kafka ACLs: %s", createDescriptiveError(err))
+	}
 	client := meta.(*Client)
-	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret)
+	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isKafkaMetadataSet)
 	acl, err := extractAcl(d)
 	if err != nil {
 		return diag.FromErr(createDescriptiveError(err))
@@ -366,11 +381,13 @@ func readAclAndSetAttributes(ctx context.Context, d *schema.ResourceData, client
 	if err := d.Set(paramPermission, matchedAcl.Permission); err != nil {
 		return nil, err
 	}
-	if err := setKafkaCredentials(c.clusterApiKey, c.clusterApiSecret, d); err != nil {
-		return nil, err
-	}
-	if err := d.Set(paramRestEndpoint, c.restEndpoint); err != nil {
-		return nil, err
+	if !c.isMetadataSetInProviderBlock {
+		if err := setKafkaCredentials(c.clusterApiKey, c.clusterApiSecret, d); err != nil {
+			return nil, err
+		}
+		if err := d.Set(paramRestEndpoint, c.restEndpoint); err != nil {
+			return nil, err
+		}
 	}
 	d.SetId(createKafkaAclId(c.clusterId, acl))
 
@@ -380,9 +397,13 @@ func readAclAndSetAttributes(ctx context.Context, d *schema.ResourceData, client
 func kafkaAclImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	tflog.Debug(ctx, fmt.Sprintf("Importing Kafka ACLs %q", d.Id()), map[string]interface{}{kafkaAclLoggingKey: d.Id()})
 
-	kafkaImportEnvVars, err := checkEnvironmentVariablesForKafkaImportAreSet()
+	restEndpoint, err := extractRestEndpoint(meta.(*Client), d, true)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error importing Kafka Topic: %s", createDescriptiveError(err))
+	}
+	clusterApiKey, clusterApiSecret, err := extractClusterApiKeyAndApiSecret(meta.(*Client), d, true)
+	if err != nil {
+		return nil, fmt.Errorf("error importing Kafka Topic: %s", createDescriptiveError(err))
 	}
 
 	clusterIdAndSerializedAcl := d.Id()
@@ -402,7 +423,7 @@ func kafkaAclImport(ctx context.Context, d *schema.ResourceData, meta interface{
 	}
 
 	client := meta.(*Client)
-	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(kafkaImportEnvVars.kafkaHttpEndpoint, clusterId, kafkaImportEnvVars.kafkaApiKey, kafkaImportEnvVars.kafkaApiSecret)
+	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isKafkaMetadataSet)
 
 	// Mark resource as new to avoid d.Set("") when getting 404
 	d.MarkNewResource()

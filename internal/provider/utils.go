@@ -55,10 +55,10 @@ const (
 )
 
 func (c *Client) apiKeysApiContext(ctx context.Context) context.Context {
-	if c.apiKey != "" && c.apiSecret != "" {
+	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
 		return context.WithValue(context.Background(), apikeys.ContextBasicAuth, apikeys.BasicAuth{
-			UserName: c.apiKey,
-			Password: c.apiSecret,
+			UserName: c.cloudApiKey,
+			Password: c.cloudApiSecret,
 		})
 	}
 	tflog.Warn(ctx, "Could not find Cloud API Key")
@@ -77,10 +77,10 @@ func kafkaRestApiContextWithClusterApiKey(ctx context.Context, kafkaApiKey strin
 }
 
 func (c *Client) cmkApiContext(ctx context.Context) context.Context {
-	if c.apiKey != "" && c.apiSecret != "" {
+	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
 		return context.WithValue(context.Background(), cmk.ContextBasicAuth, cmk.BasicAuth{
-			UserName: c.apiKey,
-			Password: c.apiSecret,
+			UserName: c.cloudApiKey,
+			Password: c.cloudApiSecret,
 		})
 	}
 	tflog.Warn(ctx, "Could not find Cloud API Key")
@@ -88,10 +88,10 @@ func (c *Client) cmkApiContext(ctx context.Context) context.Context {
 }
 
 func (c *Client) iamApiContext(ctx context.Context) context.Context {
-	if c.apiKey != "" && c.apiSecret != "" {
+	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
 		return context.WithValue(context.Background(), iam.ContextBasicAuth, iam.BasicAuth{
-			UserName: c.apiKey,
-			Password: c.apiSecret,
+			UserName: c.cloudApiKey,
+			Password: c.cloudApiSecret,
 		})
 	}
 	tflog.Warn(ctx, "Could not find Cloud API Key")
@@ -99,10 +99,10 @@ func (c *Client) iamApiContext(ctx context.Context) context.Context {
 }
 
 func (c *Client) iamV1ApiContext(ctx context.Context) context.Context {
-	if c.apiKey != "" && c.apiSecret != "" {
+	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
 		return context.WithValue(context.Background(), iamv1.ContextBasicAuth, iamv1.BasicAuth{
-			UserName: c.apiKey,
-			Password: c.apiSecret,
+			UserName: c.cloudApiKey,
+			Password: c.cloudApiSecret,
 		})
 	}
 	tflog.Warn(ctx, "Could not find Cloud API Key")
@@ -110,10 +110,10 @@ func (c *Client) iamV1ApiContext(ctx context.Context) context.Context {
 }
 
 func (c *Client) mdsApiContext(ctx context.Context) context.Context {
-	if c.apiKey != "" && c.apiSecret != "" {
+	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
 		return context.WithValue(context.Background(), mds.ContextBasicAuth, mds.BasicAuth{
-			UserName: c.apiKey,
-			Password: c.apiSecret,
+			UserName: c.cloudApiKey,
+			Password: c.cloudApiSecret,
 		})
 	}
 	tflog.Warn(ctx, "Could not find Cloud API Key")
@@ -121,10 +121,10 @@ func (c *Client) mdsApiContext(ctx context.Context) context.Context {
 }
 
 func (c *Client) netApiContext(ctx context.Context) context.Context {
-	if c.apiKey != "" && c.apiSecret != "" {
+	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
 		return context.WithValue(context.Background(), net.ContextBasicAuth, net.BasicAuth{
-			UserName: c.apiKey,
-			Password: c.apiSecret,
+			UserName: c.cloudApiKey,
+			Password: c.cloudApiSecret,
 		})
 	}
 	tflog.Warn(ctx, "Could not find Cloud API Key")
@@ -132,10 +132,10 @@ func (c *Client) netApiContext(ctx context.Context) context.Context {
 }
 
 func (c *Client) connectApiContext(ctx context.Context) context.Context {
-	if c.apiKey != "" && c.apiSecret != "" {
+	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
 		return context.WithValue(context.Background(), connect.ContextBasicAuth, connect.BasicAuth{
-			UserName: c.apiKey,
-			Password: c.apiSecret,
+			UserName: c.cloudApiKey,
+			Password: c.cloudApiSecret,
 		})
 	}
 	tflog.Warn(ctx, "Could not find Cloud API Key")
@@ -143,10 +143,10 @@ func (c *Client) connectApiContext(ctx context.Context) context.Context {
 }
 
 func (c *Client) orgApiContext(ctx context.Context) context.Context {
-	if c.apiKey != "" && c.apiSecret != "" {
+	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
 		return context.WithValue(context.Background(), org.ContextBasicAuth, org.BasicAuth{
-			UserName: c.apiKey,
-			Password: c.apiSecret,
+			UserName: c.cloudApiKey,
+			Password: c.cloudApiSecret,
 		})
 	}
 	tflog.Warn(ctx, "Could not find Cloud API Key")
@@ -264,12 +264,6 @@ type Acl struct {
 	Permission   kafkarestv3.AclPermission
 }
 
-type KafkaImportEnvVars struct {
-	kafkaApiKey       string
-	kafkaApiSecret    string
-	kafkaHttpEndpoint string
-}
-
 func getEnv(key, defaultValue string) string {
 	value := os.Getenv(key)
 	if value == "" {
@@ -278,27 +272,13 @@ func getEnv(key, defaultValue string) string {
 	return value
 }
 
-func checkEnvironmentVariablesForKafkaImportAreSet() (KafkaImportEnvVars, error) {
-	kafkaApiKey := getEnv("KAFKA_API_KEY", "")
-	kafkaApiSecret := getEnv("KAFKA_API_SECRET", "")
-	kafkaHttpEndpoint := getEnv("KAFKA_REST_ENDPOINT", "")
-	canImport := kafkaApiKey != "" && kafkaApiSecret != "" && kafkaHttpEndpoint != ""
-	if !canImport {
-		return KafkaImportEnvVars{}, fmt.Errorf("KAFKA_API_KEY, KAFKA_API_SECRET, and KAFKA_REST_ENDPOINT must be set for kafka topic / ACL import")
-	}
-	return KafkaImportEnvVars{
-		kafkaApiKey:       kafkaApiKey,
-		kafkaApiSecret:    kafkaApiSecret,
-		kafkaHttpEndpoint: kafkaHttpEndpoint,
-	}, nil
-}
-
 type KafkaRestClient struct {
-	apiClient        *kafkarestv3.APIClient
-	clusterId        string
-	clusterApiKey    string
-	clusterApiSecret string
-	restEndpoint     string
+	apiClient                    *kafkarestv3.APIClient
+	clusterId                    string
+	clusterApiKey                string
+	clusterApiSecret             string
+	restEndpoint                 string
+	isMetadataSetInProviderBlock bool
 }
 
 func (c *KafkaRestClient) apiContext(ctx context.Context) context.Context {
@@ -336,17 +316,18 @@ type GenericOpenAPIError interface {
 	Model() interface{}
 }
 
-func (f KafkaRestClientFactory) CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret string) *KafkaRestClient {
+func (f KafkaRestClientFactory) CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret string, isMetadataSetInProviderBlock bool) *KafkaRestClient {
 	config := kafkarestv3.NewConfiguration()
 	config.BasePath = restEndpoint
 	config.UserAgent = f.userAgent
 	config.HTTPClient = createRetryableHttpClientWithExponentialBackoff()
 	return &KafkaRestClient{
-		apiClient:        kafkarestv3.NewAPIClient(config),
-		clusterId:        clusterId,
-		clusterApiKey:    clusterApiKey,
-		clusterApiSecret: clusterApiSecret,
-		restEndpoint:     restEndpoint,
+		apiClient:                    kafkarestv3.NewAPIClient(config),
+		clusterId:                    clusterId,
+		clusterApiKey:                clusterApiKey,
+		clusterApiSecret:             clusterApiSecret,
+		restEndpoint:                 restEndpoint,
+		isMetadataSetInProviderBlock: isMetadataSetInProviderBlock,
 	}
 }
 

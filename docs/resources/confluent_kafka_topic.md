@@ -87,14 +87,14 @@ In addition to the preceding arguments, the following attributes are exported:
 
 ## Import
 
--> **Note:** `KAFKA_API_KEY` (`credentials.key`), `KAFKA_API_SECRET` (`credentials.secret`), and `KAFKA_REST_ENDPOINT` (`rest_endpoint`) environment variables must be set before importing a Kafka topic.
+-> **Note:** `IMPORT_KAFKA_API_KEY` (`credentials.key`), `IMPORT_KAFKA_API_SECRET` (`credentials.secret`), and `IMPORT_KAFKA_REST_ENDPOINT` (`rest_endpoint`) environment variables must be set before importing a Kafka topic.
 
 You can import a Kafka topic by using the Kafka cluster ID and Kafka topic name in the format `<Kafka cluster ID>/<Kafka topic name>`, for example:
 
 ```shell
-$ export KAFKA_API_KEY="<kafka_api_key>"
-$ export KAFKA_API_SECRET="<kafka_api_secret>"
-$ export KAFKA_REST_ENDPOINT="<kafka_rest_endpoint>"
+$ export IMPORT_KAFKA_API_KEY="<kafka_api_key>"
+$ export IMPORT_KAFKA_API_SECRET="<kafka_api_secret>"
+$ export IMPORT_KAFKA_REST_ENDPOINT="<kafka_rest_endpoint>"
 $ terraform import confluent_kafka_topic.my_topic lkc-abc123/orders-123
 ```
 

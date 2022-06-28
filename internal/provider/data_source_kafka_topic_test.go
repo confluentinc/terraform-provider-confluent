@@ -24,7 +24,6 @@ import (
 	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
-	"os"
 	"strconv"
 	"testing"
 
@@ -91,16 +90,6 @@ func TestAccDataSourceTopic(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		))
-
-	// Set fake values for secrets since those are required for importing
-	_ = os.Setenv("KAFKA_API_KEY", kafkaApiKey)
-	_ = os.Setenv("KAFKA_API_SECRET", kafkaApiSecret)
-	_ = os.Setenv("KAFKA_REST_ENDPOINT", mockTopicTestServerUrl)
-	defer func() {
-		_ = os.Unsetenv("KAFKA_API_KEY")
-		_ = os.Unsetenv("KAFKA_API_SECRET")
-		_ = os.Unsetenv("KAFKA_REST_ENDPOINT")
-	}()
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },

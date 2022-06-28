@@ -9,7 +9,7 @@
 
     ```
     # Creates an environment and a network
-    terraform apply -target=confluent_network_v1.private-link
+    terraform apply -target=confluent_network.private-link
     ```
 
    If you run into

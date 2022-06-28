@@ -57,8 +57,12 @@ type Client struct {
 	kafkaRestClientFactory *KafkaRestClientFactory
 	mdsClient              *mds.APIClient
 	userAgent              string
-	apiKey                 string
-	apiSecret              string
+	cloudApiKey            string
+	cloudApiSecret         string
+	kafkaApiKey            string
+	kafkaApiSecret         string
+	kafkaRestEndpoint      string
+	isKafkaMetadataSet     bool
 }
 
 // Customize configs for terraform-plugin-docs
@@ -91,6 +95,26 @@ func New(version string) func() *schema.Provider {
 					Sensitive:   true,
 					DefaultFunc: schema.EnvDefaultFunc("CONFLUENT_CLOUD_API_SECRET", ""),
 					Description: "The Confluent Cloud API Secret.",
+				},
+				"kafka_api_key": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Sensitive:   true,
+					DefaultFunc: schema.EnvDefaultFunc("KAFKA_API_KEY", ""),
+					Description: "The Kafka Cluster API Key.",
+				},
+				"kafka_api_secret": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Sensitive:   true,
+					DefaultFunc: schema.EnvDefaultFunc("KAFKA_API_SECRET", ""),
+					Description: "The Kafka Cluster API Secret.",
+				},
+				"kafka_rest_endpoint": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					DefaultFunc: schema.EnvDefaultFunc("KAFKA_REST_ENDPOINT", ""),
+					Description: "The Kafka Cluster REST Endpoint.",
 				},
 				"endpoint": {
 					Type:        schema.TypeString,
@@ -178,8 +202,19 @@ func environmentDataSourceSchema() *schema.Schema {
 func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Provider, providerVersion string) (interface{}, diag.Diagnostics) {
 	tflog.Info(ctx, "Initializing Terraform Provider for Confluent Cloud")
 	endpoint := d.Get("endpoint").(string)
-	apiKey := d.Get("cloud_api_key").(string)
-	apiSecret := d.Get("cloud_api_secret").(string)
+	cloudApiKey := d.Get("cloud_api_key").(string)
+	cloudApiSecret := d.Get("cloud_api_secret").(string)
+	kafkaApiKey := d.Get("kafka_api_key").(string)
+	kafkaApiSecret := d.Get("kafka_api_secret").(string)
+	kafkaRestEndpoint := d.Get("kafka_rest_endpoint").(string)
+
+	// All 3 attributes should be set or not set at the same time
+	allKafkaAttributesAreSet := (kafkaApiKey != "") && (kafkaApiSecret != "") && (kafkaRestEndpoint != "")
+	allKafkaAttributesAreNotSet := (kafkaApiKey == "") && (kafkaApiSecret == "") && (kafkaRestEndpoint == "")
+	justOneOrTwoKafkaAttributesAreSet := !(allKafkaAttributesAreSet || allKafkaAttributesAreNotSet)
+	if justOneOrTwoKafkaAttributesAreSet {
+		return nil, diag.Errorf("All 3 kafka_api_key, kafka_api_secret, kafka_rest_endpoint attributes should be set or not set in the provider block at the same time")
+	}
 
 	userAgent := p.UserAgent(terraformProviderUserAgent, fmt.Sprintf("%s (https://confluent.cloud; support@confluent.io)", providerVersion))
 
@@ -230,8 +265,13 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 		kafkaRestClientFactory: &KafkaRestClientFactory{userAgent: userAgent},
 		mdsClient:              mds.NewAPIClient(mdsCfg),
 		userAgent:              userAgent,
-		apiKey:                 apiKey,
-		apiSecret:              apiSecret,
+		cloudApiKey:            cloudApiKey,
+		cloudApiSecret:         cloudApiSecret,
+		kafkaApiKey:            kafkaApiKey,
+		kafkaApiSecret:         kafkaApiSecret,
+		kafkaRestEndpoint:      kafkaRestEndpoint,
+		// For simplicity, treat all 3 variables as a "single" one
+		isKafkaMetadataSet: allKafkaAttributesAreSet,
 	}
 
 	return &client, nil
