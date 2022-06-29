@@ -8,7 +8,7 @@ description: |-
 
 # confluent_kafka_topic Data Source
 
-<img src="https://img.shields.io/badge/Lifecycle%20Stage-Public%20Preview-%2345c6e8" alt="">
+<img src="https://img.shields.io/badge/Lifecycle%20Stage-General%20Availability-%2345c6e8" alt="">
 
 `confluent_kafka_topic` describes a Kafka Topic data source.
 

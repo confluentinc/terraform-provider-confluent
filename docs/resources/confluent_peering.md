@@ -9,7 +9,7 @@ description: |-
 
 # confluent_peering Resource
 
-<img src="https://img.shields.io/badge/Lifecycle%20Stage-Public%20Preview-%2345c6e8" alt="">
+<img src="https://img.shields.io/badge/Lifecycle%20Stage-General%20Availability-%2345c6e8" alt="">
 
 `confluent_peering` provides a Peering resource that enables creating, editing, and deleting Peerings on Confluent Cloud.
 
