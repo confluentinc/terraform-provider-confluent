@@ -10,6 +10,9 @@ description: |-
 
 <img src="https://img.shields.io/badge/Lifecycle%20Stage-Public%20Preview-%2300afba" alt="">
 
+-> **Note:** `confluent_connector` resource is available in an **Preview Program** for early adopters. Preview features are introduced to gather customer feedback. This feature should be used only for evaluation and non-production testing purposes or to provide feedback to Confluent, particularly as it becomes more widely available in follow-on editions.  
+**Preview Program** features are intended for evaluation use in development and testing environments only, and not for production use. The warranty, SLA, and Support Services provisions of your agreement with Confluent do not apply to Preview Program features. Preview Program features are considered to be a Proof of Concept as defined in the Confluent Cloud Terms of Service. Confluent may discontinue providing preview releases of the Preview Program features at any time in Confluent’s sole discretion.
+
 `confluent_connector` provides a connector resource that enables creating, editing, and deleting connectors on Confluent Cloud.
 
 -> **Note:** Use the Confluent Cloud Console to simplify [generating the config](https://docs.confluent.io/cloud/current/connectors/cc-s3-sink.html#using-the-ccloud-console) of your desired connector.
