@@ -1,3 +1,13 @@
+## 1.0.0 (June 30, 2022)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v0.13.0...v1.0.0)
+
+[The Confluent Terraform Provider](https://registry.terraform.io/providers/confluentinc/confluent/latest) is now Generally Available and recommended for use in production workflows.
+
+**Bug fixes:**
+* Fixed "undefined response type" error for `confluent_connector` resource ([#53](https://github.com/confluentinc/terraform-provider-confluent/issues/53)).
+* Updated docs.
+
 ## 0.13.0 (June 28, 2022)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v0.12.0...v0.13.0)
