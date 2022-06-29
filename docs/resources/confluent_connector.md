@@ -15,7 +15,9 @@ description: |-
 
 `confluent_connector` provides a connector resource that enables creating, editing, and deleting connectors on Confluent Cloud.
 
--> **Note:** Use the Confluent Cloud Console to simplify [generating the config](https://docs.confluent.io/cloud/current/connectors/cc-s3-sink.html#using-the-ccloud-console) of your desired connector.
+-> **Note:** Use [Confluent docs](https://docs.confluent.io/cloud/current/connectors/index.html) or the [Confluent Cloud Console](https://docs.confluent.io/cloud/current/connectors/cc-s3-sink.html#using-the-ccloud-console) to pregenerate the configuration for your desired connector and to see what ACLs are required to be created.
+
+-> **Note:** Provisioning a connector takes 15 minutes on average. Work is ongoing to decrease connector provisioning time in future releases.
 
 ## Example Usage
 
