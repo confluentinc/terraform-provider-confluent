@@ -8,7 +8,7 @@ description: |-
 
 # confluent_role_binding Resource
 
-<img src="https://img.shields.io/badge/Lifecycle%20Stage-Public%20Preview-%2300afba" alt="">
+<img src="https://img.shields.io/badge/Lifecycle%20Stage-Public%20Preview-%2345c6e8" alt="">
 
 `confluent_role_binding` provides a Role Binding resource that enables creating, reading, and deleting role bindings on Confluent Cloud.
 

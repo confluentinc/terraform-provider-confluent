@@ -8,7 +8,7 @@ description: |-
 
 # confluent_kafka_acl Resource
 
-<img src="https://img.shields.io/badge/Lifecycle%20Stage-Public%20Preview-%2300afba" alt="">
+<img src="https://img.shields.io/badge/Lifecycle%20Stage-Public%20Preview-%2345c6e8" alt="">
 
 `confluent_kafka_acl` provides a Kafka ACL resource that enables creating and deleting Kafka ACLs on Confluent Cloud.
 

@@ -8,7 +8,7 @@ description: |-
 
 # confluent_network Resource
 
-<img src="https://img.shields.io/badge/Lifecycle%20Stage-Public%20Preview-%2300afba" alt="">
+<img src="https://img.shields.io/badge/Lifecycle%20Stage-Public%20Preview-%2345c6e8" alt="">
 
 `confluent_network` provides a Network resource that enables creating, editing, and deleting Networks on Confluent Cloud.
 
