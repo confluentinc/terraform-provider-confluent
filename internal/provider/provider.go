@@ -247,12 +247,18 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 
 	apiKeysCfg.HTTPClient = createRetryableHttpClientWithExponentialBackoff()
 	cmkCfg.HTTPClient = createRetryableHttpClientWithExponentialBackoff()
-	connectCfg.HTTPClient = createRetryableHttpClientWithExponentialBackoff()
+	// TODO: Uncomment once APIF-2660 is completed
+	// connectCfg.HTTPClient = createRetryableHttpClientWithExponentialBackoff()
 	iamCfg.HTTPClient = createRetryableHttpClientWithExponentialBackoff()
 	iamV1Cfg.HTTPClient = createRetryableHttpClientWithExponentialBackoff()
 	mdsCfg.HTTPClient = createRetryableHttpClientWithExponentialBackoff()
 	netCfg.HTTPClient = createRetryableHttpClientWithExponentialBackoff()
 	orgCfg.HTTPClient = createRetryableHttpClientWithExponentialBackoff()
+
+	// TODO: Delete once APIF-2660 is completed
+	tempConnectClient := createRetryableHttpClientWithExponentialBackoff()
+	tempConnectClient.Transport = &ItsActuallyJsonRoundTripper{tempConnectClient.Transport}
+	connectCfg.HTTPClient = tempConnectClient
 
 	client := Client{
 		apiKeysClient:          apikeys.NewAPIClient(apiKeysCfg),
