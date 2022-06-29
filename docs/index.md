@@ -60,8 +60,17 @@ Confluent Terraform provider allows authentication by using environment variable
 Run the following commands to set the `CONFLUENT_CLOUD_API_KEY` and `CONFLUENT_CLOUD_API_SECRET` environment variables:
 
 ```shell
+# Option #1 when managing multiple clusters in the same Terraform workspace
 $ export CONFLUENT_CLOUD_API_KEY="<cloud_api_key>"
 $ export CONFLUENT_CLOUD_API_SECRET="<cloud_api_secret>"
+
+# Option #2 when managing a single cluster in the same Terraform workspace
+# See https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/managing-single-cluster for more details
+$ export CONFLUENT_CLOUD_API_KEY="<cloud_api_key>"
+$ export CONFLUENT_CLOUD_API_SECRET="<cloud_api_secret>"
+$ export KAFKA_REST_ENDPOINT="<kafka_rest_endpoint>"
+$ export KAFKA_API_KEY="<kafka_api_key>"
+$ export KAFKA_API_SECRET="<kafka_api_secret>"
 ```
 
 -> **Note:** Quotation marks are required around the API key and secret strings.
