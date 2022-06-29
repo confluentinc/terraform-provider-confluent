@@ -42,7 +42,7 @@ const (
 	connectionTypeTransitGateway = "TRANSITGATEWAY"
 	connectionTypePeering        = "PEERING"
 
-	networkingAPICreateTimeout = 1 * time.Hour
+	networkingAPICreateTimeout = 2 * time.Hour
 	networkingAPIDeleteTimeout = 5 * time.Hour
 )
 
