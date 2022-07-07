@@ -67,7 +67,7 @@ The following arguments are supported:
 
 -> **Note:** A Kafka API key consists of a key and a secret. Kafka API keys are required to interact with Kafka clusters in Confluent Cloud. Each Kafka API key is valid for one specific Kafka cluster.
 
--> **Note:** To rotate a Kafka API key, create a new Kafka API key, update `credentials` block in all configuration files to use the new Kafka API key, run `terraform apply`, and remove the old Kafka API key.
+-> **Note:** To rotate a Kafka API key, create a new Kafka API key, update `credentials` block in all configuration files to use the new Kafka API key, run `terraform apply -target="confluent_kafka_topic.orders"`, and remove the old Kafka API key. Alternatively, in case the old Kafka API Key was deleted already, you might need to run `terraform plan -refresh=false -target="confluent_kafka_topic.orders" -out=rotate-kafka-api-key` and `terraform apply rotate-kafka-api-key` instead.
 
 - `partitions_count` - (Optional Number) The number of partitions to create in the topic. Defaults to `6`.
 - `config` - (Optional Map) The custom topic settings to set:
