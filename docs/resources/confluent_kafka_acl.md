@@ -73,6 +73,8 @@ The following arguments are supported:
 
 -> **Note:** A Kafka API key consists of a key and a secret. Kafka API keys are required to interact with Kafka clusters in Confluent Cloud. Each Kafka API key is valid for one specific Kafka cluster.
 
+-> **Note:** You must set the `cloud_api_key` and `cloud_api_secret` [provider arguments](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs#provider-authentication) temporarily when you interact with the `confluent_kafka_acl` resource, because of some implementation details, otherwise you will see `Error: 401 Unauthorized` error.
+
 !> **Warning:** Terraform doesn't encrypt the sensitive `credentials` value of the `confluent_kafka_acl` resource, so you must keep your state file secure to avoid exposing it. Refer to the [Terraform documentation](https://www.terraform.io/docs/language/state/sensitive-data.html) to learn more about securing your state file.
 
 -> **Note:** To rotate a Kafka API key, create a new Kafka API key, update `credentials` block in all configuration files to use the new Kafka API key, run `terraform apply`, and remove the old Kafka API key.
