@@ -69,7 +69,7 @@ The following arguments are supported:
     - `secret` - (Required String, Sensitive) The Kafka API Secret.
 - `host` - (Required String) The host for the ACL. Should be set to `*` for Confluent Cloud.
 
--> **Note:** Omit the `rest_endpoint` attribute and `credentials` block if the `kafka_rest_endpoint`, `kafka_rest_endpoint`, and `kafka_rest_endpoint` attributes are all set in a `provider` block (see [option #2](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs#example-usage)).
+-> **Note:** Omit the `rest_endpoint` attribute and `credentials` block if the `kafka_rest_endpoint`, `kafka_api_key`, and `kafka_api_secret` attributes are all set in a `provider` block (see [option #2](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs#example-usage)).
 
 -> **Note:** A Kafka API key consists of a key and a secret. Kafka API keys are required to interact with Kafka clusters in Confluent Cloud. Each Kafka API key is valid for one specific Kafka cluster.
 
