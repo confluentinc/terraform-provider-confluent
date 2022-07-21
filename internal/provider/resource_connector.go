@@ -185,7 +185,7 @@ func executeConnectorRead(ctx context.Context, c *Client, displayName, environme
 		return connector, resp, nil
 	}
 
-	return *connect.NewConnectV1ConnectorExpansionWithDefaults(), &http.Response{StatusCode: http.StatusNotFound}, fmt.Errorf("connector %q was not found", clusterId)
+	return *connect.NewConnectV1ConnectorExpansionWithDefaults(), &http.Response{StatusCode: http.StatusNotFound}, fmt.Errorf("connector %q was not found", displayName)
 }
 
 func connectorRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
