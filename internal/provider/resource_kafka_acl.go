@@ -295,10 +295,13 @@ func kafkaAclRead(ctx context.Context, d *schema.ResourceData, meta interface{})
 	}
 
 	_, err = readAclAndSetAttributes(ctx, d, client, kafkaRestClient, acl)
+	if err != nil {
+		return diag.Errorf("error reading Kafka ACLs: %s", createDescriptiveError(err))
+	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished reading Kafka ACLs %q", d.Id()), map[string]interface{}{kafkaAclLoggingKey: d.Id()})
 
-	return diag.FromErr(createDescriptiveError(err))
+	return nil
 }
 
 func createKafkaAclId(clusterId string, acl Acl) string {

@@ -266,10 +266,13 @@ func kafkaTopicRead(ctx context.Context, d *schema.ResourceData, meta interface{
 	topicName := d.Get(paramTopicName).(string)
 
 	_, err = readTopicAndSetAttributes(ctx, d, kafkaRestClient, topicName)
+	if err != nil {
+		return diag.Errorf("error reading Kafka Topic: %s", createDescriptiveError(err))
+	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished reading Kafka Topic %q", d.Id()), map[string]interface{}{kafkaTopicLoggingKey: d.Id()})
 
-	return diag.FromErr(createDescriptiveError(err))
+	return nil
 }
 
 func createKafkaTopicId(clusterId, topicName string) string {
