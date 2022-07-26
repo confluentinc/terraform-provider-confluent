@@ -79,6 +79,10 @@ resource "confluent_role_binding" "app-manager-kafka-cluster-admin" {
 resource "confluent_api_key" "app-manager-kafka-api-key" {
   display_name = "app-manager-kafka-api-key"
   description  = "Kafka API Key that is owned by 'app-manager' service account"
+
+  // Set this to true if the machine where Terraform is run does not have access to the private network
+  // disable_wait_for_ready = true
+
   owner {
     id          = confluent_service_account.app-manager.id
     api_version = confluent_service_account.app-manager.api_version
@@ -128,6 +132,10 @@ resource "confluent_service_account" "app-consumer" {
 resource "confluent_api_key" "app-consumer-kafka-api-key" {
   display_name = "app-consumer-kafka-api-key"
   description  = "Kafka API Key that is owned by 'app-consumer' service account"
+
+  // Set this to true if the machine where Terraform is run does not have access to the private network
+  // disable_wait_for_ready = true
+
   owner {
     id          = confluent_service_account.app-consumer.id
     api_version = confluent_service_account.app-consumer.api_version
@@ -176,6 +184,10 @@ resource "confluent_service_account" "app-producer" {
 resource "confluent_api_key" "app-producer-kafka-api-key" {
   display_name = "app-producer-kafka-api-key"
   description  = "Kafka API Key that is owned by 'app-producer' service account"
+
+  // Set this to true if the machine where Terraform is run does not have access to the private network
+  // disable_wait_for_ready = true
+
   owner {
     id          = confluent_service_account.app-producer.id
     api_version = confluent_service_account.app-producer.api_version
