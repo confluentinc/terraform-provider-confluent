@@ -79,6 +79,10 @@ resource "confluent_role_binding" "app-manager-kafka-cluster-admin" {
 resource "confluent_api_key" "app-manager-kafka-api-key" {
   display_name = "app-manager-kafka-api-key"
   description  = "Kafka API Key that is owned by 'app-manager' service account"
+
+  # Set optional `disable_wait_for_ready` attribute (defaults to `false`) to `true` if the machine where Terraform is not run within a private network
+  # disable_wait_for_ready = true
+
   owner {
     id          = confluent_service_account.app-manager.id
     api_version = confluent_service_account.app-manager.api_version
@@ -108,6 +112,8 @@ resource "confluent_api_key" "app-manager-kafka-api-key" {
   ]
 }
 
+// Provisioning Kafka Topics requires access to the REST endpoint on the Kafka cluster
+// If Terraform is not run from within the private network, this will not work
 resource "confluent_kafka_topic" "orders" {
   kafka_cluster {
     id = confluent_kafka_cluster.dedicated.id
@@ -128,6 +134,10 @@ resource "confluent_service_account" "app-consumer" {
 resource "confluent_api_key" "app-consumer-kafka-api-key" {
   display_name = "app-consumer-kafka-api-key"
   description  = "Kafka API Key that is owned by 'app-consumer' service account"
+
+  # Set optional `disable_wait_for_ready` attribute (defaults to `false`) to `true` if the machine where Terraform is not run within a private network
+  # disable_wait_for_ready = true
+
   owner {
     id          = confluent_service_account.app-consumer.id
     api_version = confluent_service_account.app-consumer.api_version
@@ -150,6 +160,8 @@ resource "confluent_api_key" "app-consumer-kafka-api-key" {
   ]
 }
 
+// Provisioning Kafka ACLs requires access to the REST endpoint on the Kafka cluster
+// If Terraform is not run from within the private network, this will not work
 resource "confluent_kafka_acl" "app-producer-write-on-topic" {
   kafka_cluster {
     id = confluent_kafka_cluster.dedicated.id
@@ -176,6 +188,10 @@ resource "confluent_service_account" "app-producer" {
 resource "confluent_api_key" "app-producer-kafka-api-key" {
   display_name = "app-producer-kafka-api-key"
   description  = "Kafka API Key that is owned by 'app-producer' service account"
+
+  # Set optional `disable_wait_for_ready` attribute (defaults to `false`) to `true` if the machine where Terraform is not run within a private network
+  # disable_wait_for_ready = true
+
   owner {
     id          = confluent_service_account.app-producer.id
     api_version = confluent_service_account.app-producer.api_version
@@ -202,6 +218,9 @@ resource "confluent_api_key" "app-producer-kafka-api-key" {
 // needs to be authorized to perform 'READ' operation on both Topic and Group resources:
 // confluent_kafka_acl.app-consumer-read-on-topic, confluent_kafka_acl.app-consumer-read-on-group.
 // https://docs.confluent.io/platform/current/kafka/authorization.html#using-acls
+
+// Provisioning Kafka ACLs requires access to the REST endpoint on the Kafka cluster
+// If Terraform is not run from within the private network, this will not work
 resource "confluent_kafka_acl" "app-consumer-read-on-topic" {
   kafka_cluster {
     id = confluent_kafka_cluster.dedicated.id
@@ -220,6 +239,8 @@ resource "confluent_kafka_acl" "app-consumer-read-on-topic" {
   }
 }
 
+// Provisioning Kafka ACLs requires access to the REST endpoint on the Kafka cluster
+// If Terraform is not run from within the private network, this will not work
 resource "confluent_kafka_acl" "app-consumer-read-on-group" {
   kafka_cluster {
     id = confluent_kafka_cluster.dedicated.id
