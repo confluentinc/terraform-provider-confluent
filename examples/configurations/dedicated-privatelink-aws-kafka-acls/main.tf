@@ -336,6 +336,10 @@ resource "aws_vpc_endpoint" "privatelink" {
 
   subnet_ids          = [for zone, subnet_id in var.subnets_to_privatelink : subnet_id]
   private_dns_enabled = false
+
+  depends_on = [
+    confluent_private_link_access.aws,
+  ]
 }
 
 resource "aws_route53_zone" "privatelink" {
