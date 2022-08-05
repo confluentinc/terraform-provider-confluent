@@ -26,6 +26,7 @@ resource "confluent_network" "private-link" {
   cloud            = "AWS"
   region           = var.region
   connection_types = ["PRIVATELINK"]
+  zones            = keys(var.subnets_to_privatelink)
   environment {
     id = confluent_environment.staging.id
   }
