@@ -121,14 +121,12 @@ func waitForNetworkToProvision(ctx context.Context, c *Client, environmentId, ne
 
 func waitForConnectorToProvision(ctx context.Context, c *Client, displayName, environmentId, clusterId string) error {
 	stateConf := &resource.StateChangeConf{
-		Pending: []string{stateProvisioning},
-		Target:  []string{stateRunning},
-		Refresh: connectorProvisionStatus(c.connectApiContext(ctx), c, displayName, environmentId, clusterId),
-		Timeout: connectAPICreateTimeout,
-		// Workaround to fix PROVISIONING -> RUNNING -> FAILED -> RUNNING that should be completed within the first 15 minutes
-		// TODO: decrease the constant once CNC-154 is done.
-		// Wait for 15 minutes before sending the 1st request
-		Delay:        15 * time.Minute,
+		// Allow PROVISIONING -> DEGRADED -> RUNNING transition
+		Pending:      []string{stateProvisioning, stateDegraded},
+		Target:       []string{stateRunning},
+		Refresh:      connectorProvisionStatus(c.connectApiContext(ctx), c, displayName, environmentId, clusterId),
+		Timeout:      connectAPICreateTimeout,
+		Delay:        1 * time.Minute,
 		PollInterval: 1 * time.Minute,
 	}
 
@@ -351,7 +349,9 @@ func connectorProvisionStatus(ctx context.Context, c *Client, displayName, envir
 		}
 
 		tflog.Debug(ctx, fmt.Sprintf("Waiting for Connector %q=%q provisioning status to become %q: current status is %q", paramDisplayName, displayName, stateRunning, connector.Connector.GetState()))
-		if connector.Connector.GetState() == stateProvisioning || connector.Connector.GetState() == stateRunning {
+		if connector.Connector.GetState() == stateProvisioning ||
+			connector.Connector.GetState() == stateDegraded ||
+			connector.Connector.GetState() == stateRunning {
 			return connector, connector.Connector.GetState(), nil
 		}
 		return nil, stateFailed, fmt.Errorf("connector %q=%q provisioning status is %q: %s", paramDisplayName, displayName, connector.Connector.GetState(), connector.Connector.GetTrace())

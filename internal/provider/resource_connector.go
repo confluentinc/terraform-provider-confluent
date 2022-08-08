@@ -30,7 +30,8 @@ import (
 )
 
 const (
-	connectAPICreateTimeout = 24 * time.Hour
+	connectAPICreateTimeout   = 24 * time.Hour
+	connectAPIWaitAfterCreate = 5 * time.Second
 
 	paramSensitiveConfig    = "config_sensitive"
 	paramNonSensitiveConfig = "config_nonsensitive"
@@ -42,8 +43,9 @@ const (
 
 	twoStarsOrMorePattern = "^[*]{2,}"
 
-	paramStatus = "status"
-	statePaused = "PAUSED"
+	paramStatus   = "status"
+	statePaused   = "PAUSED"
+	stateDegraded = "DEGRADED"
 )
 
 var connectorConfigFullAttributeName = fmt.Sprintf("%s.name", paramNonSensitiveConfig)
@@ -140,11 +142,18 @@ func connectorCreate(ctx context.Context, d *schema.ResourceData, meta interface
 
 	createdConnector, _, err := executeConnectorCreate(c.connectApiContext(ctx), c, environmentId, clusterId, createConnectorRequest)
 	if err != nil {
-		return diag.Errorf("error creating Connector %q: %s. Connector with the same name might exist already, you might need to remove it manually before retrying.", displayName, createDescriptiveError(err))
+		return diag.Errorf("error creating Connector %q: %s", displayName, createDescriptiveError(err))
 	}
+	// There's no ID attribute in createdConnector, so we have to send another request to a different endpoint to get a connector object with ID attribute
+	time.Sleep(connectAPIWaitAfterCreate)
+	createdConnectorWithId, _, err := executeConnectorRead(c.connectApiContext(ctx), c, displayName, environmentId, clusterId)
+	if err != nil {
+		return diag.Errorf("error creating Connector %q: error reading created Connector: %s", displayName, createDescriptiveError(createConfigValidationError(validationResponse)))
+	}
+	d.SetId(createdConnectorWithId.Id.GetId())
 
 	if err := waitForConnectorToProvision(c.connectApiContext(ctx), c, displayName, environmentId, clusterId); err != nil {
-		return diag.Errorf("error waiting for Connector %q to provision: %s. You might need to remove Connector manually before retrying.", displayName, createDescriptiveError(err))
+		return diag.Errorf("error waiting for Connector %q to provision: %s", displayName, createDescriptiveError(err))
 	}
 
 	_, err = json.Marshal(createdConnector)

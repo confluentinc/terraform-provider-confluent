@@ -33,6 +33,7 @@ import (
 const (
 	scenarioStateConnectorHasBeenValidated   = "The new connector config has been just validated"
 	scenarioStateConnectorHasBeenCreating    = "The new connector has been creating"
+	scenarioStateConnectorFetchingId         = "The new connector is in provisioning state, list all connectors"
 	scenarioStateConnectorIsProvisioning     = "The new connector is in provisioning state"
 	scenarioStateConnectorIsRunning1         = "The new connector is in running state #1"
 	scenarioStateConnectorHasBeenCreated     = "The new connector has been just created"
@@ -96,10 +97,23 @@ func TestAccConnector(t *testing.T) {
 		)
 	_ = wiremockClient.StubFor(createConnectorStub)
 
+	createdConnectorResponse, _ := ioutil.ReadFile("../testdata/connector/read_created_connectors.json")
+	readCreatedConnectorsStub := wiremock.Get(wiremock.URLPathEqualTo("/connect/v1/environments/env-1j3m9j/clusters/lkc-vnwdjz/connectors")).
+		WithQueryParam("expand", wiremock.EqualTo("info,status,id")).
+		InScenario(connectorScenarioName).
+		WhenScenarioStateIs(scenarioStateConnectorHasBeenCreating).
+		WillSetStateTo(scenarioStateConnectorFetchingId).
+		WillReturn(
+			string(createdConnectorResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		)
+	_ = wiremockClient.StubFor(readCreatedConnectorsStub)
+
 	provisioningConnectorResponse, _ := ioutil.ReadFile("../testdata/connector/read_provisioning_connector.json")
 	readProvisioningConnectorStub := wiremock.Get(wiremock.URLPathEqualTo("/connect/v1/environments/env-1j3m9j/clusters/lkc-vnwdjz/connectors/test_connector/status")).
 		InScenario(connectorScenarioName).
-		WhenScenarioStateIs(scenarioStateConnectorHasBeenCreating).
+		WhenScenarioStateIs(scenarioStateConnectorFetchingId).
 		WillSetStateTo(scenarioStateConnectorIsProvisioning).
 		WillReturn(
 			string(provisioningConnectorResponse),
@@ -120,7 +134,6 @@ func TestAccConnector(t *testing.T) {
 		)
 	_ = wiremockClient.StubFor(readRunningConnectorStub1)
 
-	createdConnectorResponse, _ := ioutil.ReadFile("../testdata/connector/read_created_connectors.json")
 	readCreatedConnectorStub := wiremock.Get(wiremock.URLPathEqualTo("/connect/v1/environments/env-1j3m9j/clusters/lkc-vnwdjz/connectors")).
 		WithQueryParam("expand", wiremock.EqualTo("info,status,id")).
 		InScenario(connectorScenarioName).
