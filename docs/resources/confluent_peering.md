@@ -23,10 +23,10 @@ resource "confluent_environment" "development" {
 }
 
 resource "confluent_network" "aws-peering" {
-  display_name = "AWS Peering Network"
-  cloud = "AWS"
-  region = "us-east-2"
-  cidr = "10.10.0.0/16"
+  display_name     = "AWS Peering Network"
+  cloud            = "AWS"
+  region           = "us-east-2"
+  cidr             = "10.10.0.0/16"
   connection_types = ["PEERING"]
   environment {
     id = confluent_environment.development.id
@@ -36,9 +36,9 @@ resource "confluent_network" "aws-peering" {
 resource "confluent_peering" "aws" {
   display_name = "AWS Peering"
   aws {
-    account = "012345678901"
-    vpc = "vpc-abcdef0123456789a"
-    routes = ["172.31.0.0/16"]
+    account         = "012345678901"
+    vpc             = "vpc-abcdef0123456789a"
+    routes          = ["172.31.0.0/16"]
     customer_region = "us-east-2"
   }
   environment {
@@ -58,10 +58,10 @@ resource "confluent_environment" "development" {
 }
 
 resource "confluent_network" "azure-peering" {
-  display_name = "Azure Peering Network"
-  cloud = "AZURE"
-  region = "centralus"
-  cidr = "10.10.0.0/16"
+  display_name     = "Azure Peering Network"
+  cloud            = "AZURE"
+  region           = "centralus"
+  cidr             = "10.10.0.0/16"
   connection_types = ["PEERING"]
   environment {
     id = confluent_environment.development.id
@@ -71,8 +71,8 @@ resource "confluent_network" "azure-peering" {
 resource "confluent_peering" "azure" {
   display_name = "Azure Peering"
   azure {
-    tenant = "1111tttt-1111-1111-1111-111111tttttt"
-    vnet = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/my-rg/providers/Microsoft.Network/virtualNetworks/my-vnet"
+    tenant          = "1111tttt-1111-1111-1111-111111tttttt"
+    vnet            = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/my-rg/providers/Microsoft.Network/virtualNetworks/my-vnet"
     customer_region = "centralus"
   }
   environment {

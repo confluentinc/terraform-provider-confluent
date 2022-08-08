@@ -20,11 +20,12 @@ resource "confluent_environment" "development" {
   display_name = "Development"
 }
 
-resource "confluent_network" "private-link" {
-  display_name = "Private Link Network"
-  cloud = "AZURE"
-  region = "eastus2"
+resource "confluent_network" "aws-private-link" {
+  display_name     = "AWS Private Link Network"
+  cloud            = "AWS"
+  region           = "us-east-1"
   connection_types = ["PRIVATELINK"]
+  zones            = ["use1-az1", "use1-az2", "use1-az6"]
   environment {
     id = confluent_environment.development.id
   }
@@ -37,11 +38,11 @@ resource "confluent_environment" "development" {
   display_name = "Development"
 }
 
-resource "confluent_network" "peering" {
-  display_name = "AWS Peering Network"
-  cloud = "AWS"
-  region = "us-east-2"
-  cidr = "10.10.0.0/16"
+resource "confluent_network" "azure-peering" {
+  display_name     = "Azure Peering Network"
+  cloud            = "AZURE"
+  region           = "eastus2"
+  cidr             = "10.10.0.0/16"
   connection_types = ["PEERING"]
   environment {
     id = confluent_environment.development.id

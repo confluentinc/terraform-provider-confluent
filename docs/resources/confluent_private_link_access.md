@@ -22,10 +22,11 @@ resource "confluent_environment" "development" {
 }
 
 resource "confluent_network" "aws-private-link" {
-  display_name = "AWS Private Link Network"
-  cloud = "AWS"
-  region = "us-east-2"
+  display_name     = "AWS Private Link Network"
+  cloud            = "AWS"
+  region           = "us-east-1"
   connection_types = ["PRIVATELINK"]
+  zones            = ["use1-az1", "use1-az2", "use1-az6"]
   environment {
     id = confluent_environment.development.id
   }
