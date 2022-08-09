@@ -1,3 +1,16 @@
+## 1.1.0 (August 9, 2022)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.0.0...v1.1.0)
+
+**New features**
+* Released `confluent_connector` resource is now Generally Available and recommended for use in production workflows.
+
+**Bug fixes:**
+* Fixed a connector provisioning bug where it was impossible to delete `confluent_connector` via TF if provisioning failed.
+* Updated [dedicated-privatelink-aws-kafka-acls](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/dedicated-privatelink-aws-kafka-acls) and [dedicated-privatelink-aws-kafka-rbac](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/dedicated-privatelink-aws-kafka-rbac) 
+examples to use `zones` attribute of `confluent_network` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_network) such that created network / Kafka cluster's zones match user VPC's zones ([#80](https://github.com/confluentinc/terraform-provider-confluent/issues/80), [#81](https://github.com/confluentinc/terraform-provider-confluent/issues/81)).
+* Updated docs.
+
 ## 1.0.0 (June 30, 2022)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v0.13.0...v1.0.0)
