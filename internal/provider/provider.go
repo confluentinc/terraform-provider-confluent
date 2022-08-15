@@ -22,6 +22,7 @@ import (
 	connect "github.com/confluentinc/ccloud-sdk-go-v2/connect/v1"
 	iamv1 "github.com/confluentinc/ccloud-sdk-go-v2/iam/v1"
 	iam "github.com/confluentinc/ccloud-sdk-go-v2/iam/v2"
+	ksql "github.com/confluentinc/ccloud-sdk-go-v2/ksql/v2"
 	mds "github.com/confluentinc/ccloud-sdk-go-v2/mds/v2"
 	net "github.com/confluentinc/ccloud-sdk-go-v2/networking/v1"
 	org "github.com/confluentinc/ccloud-sdk-go-v2/org/v2"
@@ -44,6 +45,7 @@ const (
 	paramDisplayName = "display_name"
 	paramDescription = "description"
 	paramKind        = "kind"
+	paramCsu         = "csu"
 )
 
 type Client struct {
@@ -54,6 +56,7 @@ type Client struct {
 	connectClient          *connect.APIClient
 	netClient              *net.APIClient
 	orgClient              *org.APIClient
+	ksqlClient             *ksql.APIClient
 	kafkaRestClientFactory *KafkaRestClientFactory
 	mdsClient              *mds.APIClient
 	userAgent              string
@@ -139,6 +142,7 @@ func New(version string) func() *schema.Provider {
 				"confluent_api_key":             apiKeyResource(),
 				"confluent_kafka_cluster":       kafkaResource(),
 				"confluent_environment":         environmentResource(),
+				"confluent_ksql_cluster":        ksqlResource(),
 				"confluent_connector":           connectorResource(),
 				"confluent_service_account":     serviceAccountResource(),
 				"confluent_kafka_topic":         kafkaTopicResource(),
@@ -226,6 +230,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	mdsCfg := mds.NewConfiguration()
 	netCfg := net.NewConfiguration()
 	orgCfg := org.NewConfiguration()
+	ksqlCfg := ksql.NewConfiguration()
 
 	apiKeysCfg.Servers[0].URL = endpoint
 	cmkCfg.Servers[0].URL = endpoint
@@ -235,6 +240,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	mdsCfg.Servers[0].URL = endpoint
 	netCfg.Servers[0].URL = endpoint
 	orgCfg.Servers[0].URL = endpoint
+	ksqlCfg.Servers[0].URL = endpoint
 
 	apiKeysCfg.UserAgent = userAgent
 	cmkCfg.UserAgent = userAgent
@@ -244,6 +250,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	mdsCfg.UserAgent = userAgent
 	netCfg.UserAgent = userAgent
 	orgCfg.UserAgent = userAgent
+	ksqlCfg.UserAgent = userAgent
 
 	apiKeysCfg.HTTPClient = createRetryableHttpClientWithExponentialBackoff()
 	cmkCfg.HTTPClient = createRetryableHttpClientWithExponentialBackoff()
@@ -254,6 +261,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	mdsCfg.HTTPClient = createRetryableHttpClientWithExponentialBackoff()
 	netCfg.HTTPClient = createRetryableHttpClientWithExponentialBackoff()
 	orgCfg.HTTPClient = createRetryableHttpClientWithExponentialBackoff()
+	ksqlCfg.HTTPClient = createRetryableHttpClientWithExponentialBackoff()
 
 	// TODO: Delete once APIF-2660 is completed
 	tempConnectClient := createRetryableHttpClientWithExponentialBackoff()
@@ -268,6 +276,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 		iamV1Client:            iamv1.NewAPIClient(iamV1Cfg),
 		netClient:              net.NewAPIClient(netCfg),
 		orgClient:              org.NewAPIClient(orgCfg),
+		ksqlClient:             ksql.NewAPIClient(ksqlCfg),
 		kafkaRestClientFactory: &KafkaRestClientFactory{userAgent: userAgent},
 		mdsClient:              mds.NewAPIClient(mdsCfg),
 		userAgent:              userAgent,

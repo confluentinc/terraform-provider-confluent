@@ -1,0 +1,11 @@
+{
+  "errors": [
+    {
+      "id": "ed42afdc-f0d5-4c0d-b428-9fc6ed6e279d",
+      "status": "501",
+      "code": "out_of_gas",
+      "title": "DeLorean Out Of Gas",
+      "detail": "The DeLorean has run out of gas, but Doc Brown will fill 'er up for you asap"
+    }
+  ]
+}
