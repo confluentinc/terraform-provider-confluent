@@ -7,4 +7,5 @@ variable "confluent_cloud_api_key" {
 variable "confluent_cloud_api_secret" {
   description = "Confluent Cloud API Secret"
   type        = string
+  sensitive   = true
 }
