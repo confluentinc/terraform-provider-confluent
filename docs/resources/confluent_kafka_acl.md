@@ -58,7 +58,7 @@ The following arguments are supported:
 - `kafka_cluster` - (Required Configuration Block) supports the following:
   - `id` - (Required String) The ID of the Kafka cluster, for example, `lkc-abc123`.
 - `resource_type` - (Required String) The type of the resource. Accepted values are: `UNKNOWN`, `ANY`, `TOPIC`, `GROUP`, `CLUSTER`, `TRANSACTIONAL_ID`, `DELEGATION_TOKEN`.
-- `resource_name` - (Required String) The resource name for the ACL.
+- `resource_name` - (Required String) The resource name for the ACL. Must be "kafka-cluster" if `resource_type` equals to `CLUSTER`.
 - `pattern_type` - (Required String) The pattern type for the ACL. Accepted values are: `UNKNOWN`,`ANY`,`MATCH`, `LITERAL`, and `PREFIXED`.
 - `principal` - (Required String) The principal for the ACL.
 - `operation` - (Required String) The operation type for the ACL. Accepted values are: `UNKNOWN`, `ANY`, `ALL`, `READ`, `WRITE`, `CREATE`, `DELETE`, `ALTER`, `DESCRIBE`, `CLUSTER_ACTION`, `DESCRIBE_CONFIGS`, `ALTER_CONFIGS`, and `IDEMPOTENT_WRITE`.
