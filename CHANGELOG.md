@@ -2,7 +2,7 @@
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.1.0...v1.2.0)
 
-**New features**
+**New features:**
 * Added new `confluent_identity_provider` and `confluent_identity_pool` resources and data sources in a [Limited Availability lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
 
 **Bug fixes:**
@@ -13,7 +13,7 @@
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.0.0...v1.1.0)
 
-**New features**
+**New features:**
 * Released `confluent_connector` resource is now Generally Available and recommended for use in production workflows.
 
 **Bug fixes:**
