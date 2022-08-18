@@ -1,3 +1,14 @@
+## 1.2.0 (August 18, 2022)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.1.0...v1.2.0)
+
+**New features**
+* Added new `confluent_identity_provider` and `confluent_identity_pool` resources and data sources in a [Limited Availability lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
+
+**Bug fixes:**
+* Allow users to update the `config_sensitive` attribute for the `confluent_connector` resource ([#84](https://github.com/confluentinc/terraform-provider-confluent/issues/84)).
+* Updated docs.
+
 ## 1.1.0 (August 9, 2022)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.0.0...v1.1.0)
