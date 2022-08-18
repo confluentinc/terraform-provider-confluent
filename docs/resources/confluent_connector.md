@@ -8,7 +8,7 @@ description: |-
 
 # confluent_connector Resource
 
-<img src="https://img.shields.io/badge/Lifecycle%20Stage-General%20Availability-%2345c6e8" alt="">
+[![General Availability](https://img.shields.io/badge/Lifecycle%20Stage-General%20Availability-%2345c6e8)](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy)
 
 `confluent_connector` provides a connector resource that enables creating, editing, and deleting connectors on Confluent Cloud.
 

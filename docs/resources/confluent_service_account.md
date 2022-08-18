@@ -8,7 +8,7 @@ description: |-
 
 # confluent_service_account Resource
 
-<img src="https://img.shields.io/badge/Lifecycle%20Stage-General%20Availability-%2345c6e8" alt="">
+[![General Availability](https://img.shields.io/badge/Lifecycle%20Stage-General%20Availability-%2345c6e8)](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy)
 
 `confluent_service_account` provides a Service Account resource that enables creating, editing, and deleting service accounts on Confluent Cloud.
 
