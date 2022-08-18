@@ -17,6 +17,10 @@ description: |-
 ```terraform
 resource "confluent_environment" "development" {
   display_name = "Development"
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "confluent_kafka_cluster" "basic-cluster" {
@@ -28,6 +32,10 @@ resource "confluent_kafka_cluster" "basic-cluster" {
 
   environment {
     id = confluent_environment.development.id
+  }
+
+  lifecycle {
+    prevent_destroy = true
   }
 }
 

@@ -12,6 +12,8 @@ description: |-
 
 `confluent_private_link_access` provides a Private Link Access resource that enables creating and deleting access to PrivateLink endpoints by AWS account or Azure subscription.
 
+-> **Note:** It is recommended to set `lifecycle { prevent_destroy = true }` on production instances to prevent accidental Private Link Access deletion. This setting rejects plans that would destroy or recreate the Private Link Access, such as attempting to change uneditable attributes. Read more about it in the [Terraform docs](https://www.terraform.io/language/meta-arguments/lifecycle#prevent_destroy).
+
 ## Example Usage
 
 ### Example Private Link Access on AWS
@@ -30,6 +32,10 @@ resource "confluent_network" "aws-private-link" {
   environment {
     id = confluent_environment.development.id
   }
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "confluent_private_link_access" "aws" {
@@ -42,6 +48,10 @@ resource "confluent_private_link_access" "aws" {
   }
   network {
     id = confluent_network.aws-private-link.id
+  }
+
+  lifecycle {
+    prevent_destroy = true
   }
 }
 ```
@@ -61,6 +71,10 @@ resource "confluent_network" "azure-private-link" {
   environment {
     id = confluent_environment.development.id
   }
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "confluent_private_link_access" "azure" {
@@ -73,6 +87,10 @@ resource "confluent_private_link_access" "azure" {
   }
   network {
     id = confluent_network.azure-private-link.id
+  }
+
+  lifecycle {
+    prevent_destroy = true
   }
 }
 ```

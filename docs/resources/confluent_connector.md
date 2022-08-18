@@ -14,6 +14,8 @@ description: |-
 
 -> **Note:** Use [Confluent docs](https://docs.confluent.io/cloud/current/connectors/index.html) or the [Confluent Cloud Console](https://docs.confluent.io/cloud/current/connectors/cc-s3-sink.html#using-the-ccloud-console) to pregenerate the configuration for your desired connector and to see what ACLs are required to be created.
 
+-> **Note:** It is recommended to set `lifecycle { prevent_destroy = true }` on production instances to prevent accidental connector deletion. This setting rejects plans that would destroy or recreate the connector, such as attempting to change uneditable attributes. Read more about it in the [Terraform docs](https://www.terraform.io/language/meta-arguments/lifecycle#prevent_destroy).
+
 ## Example Usage
 
 ### Example [Datagen Source Connector](https://docs.confluent.io/cloud/current/connectors/cc-datagen-source.html) that uses a service account to communicate with your Kafka cluster
@@ -45,6 +47,10 @@ resource "confluent_connector" "source" {
     confluent_kafka_acl.app-connector-create-on-data-preview-topics,
     confluent_kafka_acl.app-connector-write-on-data-preview-topics,
   ]
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 ```
 
@@ -88,6 +94,10 @@ resource "confluent_connector" "sink" {
     confluent_kafka_acl.app-connector-write-on-error-lcc-topics,
     confluent_kafka_acl.app-connector-read-on-connect-lcc-group,
   ]
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 ```
 

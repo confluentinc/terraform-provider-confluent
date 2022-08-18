@@ -107,3 +107,5 @@ provider "confluent" {
 * [Request Features](mailto:cflt-tf-access@confluent.io?subject=Feature%20Request)
 
 -> **Note:** If you are running into issues when trying to write a reusable module using this provider, please look at [this message](https://github.com/confluentinc/terraform-provider-confluentcloud/issues/20#issuecomment-1011833161) to resolve the problem.
+
+-> **Note:** It is recommended to set `lifecycle { prevent_destroy = true }` on production instances to prevent accidental instance deletion. This setting rejects plans that would destroy or recreate the instance, such as attempting to change uneditable attributes. Read more about it in the [Terraform docs](https://www.terraform.io/language/meta-arguments/lifecycle#prevent_destroy).

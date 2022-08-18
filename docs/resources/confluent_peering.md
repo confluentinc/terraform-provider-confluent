@@ -13,6 +13,8 @@ description: |-
 
 `confluent_peering` provides a Peering resource that enables creating, editing, and deleting Peerings on Confluent Cloud.
 
+-> **Note:** It is recommended to set `lifecycle { prevent_destroy = true }` on production instances to prevent accidental Peering deletion. This setting rejects plans that would destroy or recreate the Peering, such as attempting to change uneditable attributes. Read more about it in the [Terraform docs](https://www.terraform.io/language/meta-arguments/lifecycle#prevent_destroy).
+
 ## Example Usage
 
 ### Example Peering on AWS
@@ -31,6 +33,10 @@ resource "confluent_network" "aws-peering" {
   environment {
     id = confluent_environment.development.id
   }
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "confluent_peering" "aws" {
@@ -46,6 +52,10 @@ resource "confluent_peering" "aws" {
   }
   network {
     id = confluent_network.aws-peering.id
+  }
+
+  lifecycle {
+    prevent_destroy = true
   }
 }
 ```
@@ -66,6 +76,10 @@ resource "confluent_network" "azure-peering" {
   environment {
     id = confluent_environment.development.id
   }
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "confluent_peering" "azure" {
@@ -81,6 +95,10 @@ resource "confluent_peering" "azure" {
   network {
     id = confluent_network.azure-peering.id
   }
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 ```
 
@@ -89,6 +107,10 @@ resource "confluent_peering" "azure" {
 ```terraform
 resource "confluent_environment" "development" {
   display_name = "Development"
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "confluent_network" "gcp-peering" {
@@ -99,6 +121,10 @@ resource "confluent_network" "gcp-peering" {
   connection_types = ["PEERING"]
   environment {
     id = confluent_environment.development.id
+  }
+
+  lifecycle {
+    prevent_destroy = true
   }
 }
 
@@ -114,6 +140,10 @@ resource "confluent_peering" "gcp" {
   }
   network {
     id = confluent_network.gcp-peering.id
+  }
+
+  lifecycle {
+    prevent_destroy = true
   }
 }
 ```

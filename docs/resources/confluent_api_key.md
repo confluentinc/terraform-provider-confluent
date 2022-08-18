@@ -12,12 +12,18 @@ description: |-
 
 `confluent_api_key` provides an API Key resource that enables creating, editing, and deleting Cloud API Keys and Kafka API Keys on Confluent Cloud.
 
+-> **Note:** It is recommended to set `lifecycle { prevent_destroy = true }` on production instances to prevent accidental API Key deletion. This setting rejects plans that would destroy or recreate the API Key, such as attempting to change uneditable attributes. Read more about it in the [Terraform docs](https://www.terraform.io/language/meta-arguments/lifecycle#prevent_destroy).
+
 ## Example Usage
 
 ### Example Kafka API Key
 ```terraform
 resource "confluent_environment" "staging" {
   display_name = "Staging"
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "confluent_kafka_cluster" "basic" {
@@ -28,6 +34,10 @@ resource "confluent_kafka_cluster" "basic" {
   basic {}
   environment {
     id = confluent_environment.staging.id
+  }
+
+  lifecycle {
+    prevent_destroy = true
   }
 }
 
@@ -71,6 +81,10 @@ resource "confluent_api_key" "app-manager-kafka-api-key" {
   depends_on = [
     confluent_role_binding.app-manager-kafka-cluster-admin
   ]
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 ```
 
@@ -78,6 +92,10 @@ resource "confluent_api_key" "app-manager-kafka-api-key" {
 ```terraform
 resource "confluent_environment" "staging" {
   display_name = "Staging"
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "confluent_service_account" "env-manager" {
@@ -106,6 +124,10 @@ resource "confluent_api_key" "env-manager-cloud-api-key" {
   depends_on = [
     confluent_role_binding.app-manager-env-admin
   ]
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 ```
 

@@ -12,6 +12,8 @@ description: |-
 
 `confluent_kafka_cluster` provides a Kafka cluster resource that enables creating, editing, and deleting Kafka clusters on Confluent Cloud.
 
+-> **Note:** It is recommended to set `lifecycle { prevent_destroy = true }` on production instances to prevent accidental cluster deletion. This setting rejects plans that would destroy or recreate the cluster, such as attempting to change uneditable attributes. Read more about it in the [Terraform docs](https://www.terraform.io/language/meta-arguments/lifecycle#prevent_destroy).
+
 ## Example Usage
 
 ### Example Kafka clusters on AWS
@@ -19,6 +21,10 @@ description: |-
 ```terraform
 resource "confluent_environment" "development" {
   display_name = "Development"
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "confluent_kafka_cluster" "basic" {
@@ -31,6 +37,10 @@ resource "confluent_kafka_cluster" "basic" {
   environment {
     id = confluent_environment.development.id
   }
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "confluent_kafka_cluster" "standard" {
@@ -42,6 +52,10 @@ resource "confluent_kafka_cluster" "standard" {
 
   environment {
     id = confluent_environment.development.id
+  }
+
+  lifecycle {
+    prevent_destroy = true
   }
 }
 
@@ -56,6 +70,10 @@ resource "confluent_kafka_cluster" "dedicated" {
 
   environment {
     id = confluent_environment.development.id
+  }
+
+  lifecycle {
+    prevent_destroy = true
   }
 }
 ```
@@ -65,6 +83,10 @@ resource "confluent_kafka_cluster" "dedicated" {
 ```terraform
 resource "confluent_environment" "development" {
   display_name = "Development"
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "confluent_kafka_cluster" "basic" {
@@ -77,6 +99,10 @@ resource "confluent_kafka_cluster" "basic" {
   environment {
     id = confluent_environment.development.id
   }
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "confluent_kafka_cluster" "standard" {
@@ -88,6 +114,10 @@ resource "confluent_kafka_cluster" "standard" {
 
   environment {
     id = confluent_environment.development.id
+  }
+
+  lifecycle {
+    prevent_destroy = true
   }
 }
 
@@ -102,6 +132,10 @@ resource "confluent_kafka_cluster" "dedicated" {
 
   environment {
     id = confluent_environment.development.id
+  }
+
+  lifecycle {
+    prevent_destroy = true
   }
 }
 ```
@@ -123,6 +157,10 @@ resource "confluent_kafka_cluster" "basic" {
   environment {
     id = confluent_environment.development.id
   }
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "confluent_kafka_cluster" "standard" {
@@ -134,6 +172,10 @@ resource "confluent_kafka_cluster" "standard" {
 
   environment {
     id = confluent_environment.development.id
+  }
+
+  lifecycle {
+    prevent_destroy = true
   }
 }
 
@@ -148,6 +190,10 @@ resource "confluent_kafka_cluster" "dedicated" {
 
   environment {
     id = confluent_environment.development.id
+  }
+
+  lifecycle {
+    prevent_destroy = true
   }
 }
 ```

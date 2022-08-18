@@ -12,6 +12,8 @@ description: |-
 
 `confluent_network` provides a Network resource that enables creating, editing, and deleting Networks on Confluent Cloud.
 
+-> **Note:** It is recommended to set `lifecycle { prevent_destroy = true }` on production instances to prevent accidental network deletion. This setting rejects plans that would destroy or recreate the network, such as attempting to change uneditable attributes. Read more about it in the [Terraform docs](https://www.terraform.io/language/meta-arguments/lifecycle#prevent_destroy).
+
 ## Example Usage
 
 ### Example Network that supports Private Link Connections
@@ -36,6 +38,10 @@ resource "confluent_network" "aws-private-link" {
 ```terraform
 resource "confluent_environment" "development" {
   display_name = "Development"
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "confluent_network" "azure-peering" {
@@ -46,6 +52,10 @@ resource "confluent_network" "azure-peering" {
   connection_types = ["PEERING"]
   environment {
     id = confluent_environment.development.id
+  }
+
+  lifecycle {
+    prevent_destroy = true
   }
 }
 ```
