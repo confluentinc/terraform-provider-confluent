@@ -40,6 +40,9 @@ const (
 	scenarioStateConnectorNameHasBeenUpdated = "The new connector's name has been just updated"
 	scenarioStateConnectorHasBeenDeleted     = "The new connector has been deleted"
 	connectorScenarioName                    = "confluent_connector Resource Lifecycle"
+	sensitiveAttributeKey                    = "foo"
+	sensitiveAttributeValue                  = "bar"
+	sensitiveAttributeUpdatedValue           = "bar updated"
 )
 
 func TestAccConnector(t *testing.T) {
@@ -223,6 +226,8 @@ func TestAccConnector(t *testing.T) {
 					resource.TestCheckResourceAttr(fullConnectorResourceLabel, fmt.Sprintf("%s.#", paramKafkaCluster), "1"),
 					resource.TestCheckResourceAttr(fullConnectorResourceLabel, fmt.Sprintf("%s.0.%s", paramKafkaCluster, paramId), "lkc-vnwdjz"),
 					resource.TestCheckResourceAttr(fullConnectorResourceLabel, paramStatus, "RUNNING"),
+					resource.TestCheckResourceAttr(fullConnectorResourceLabel, fmt.Sprintf("%s.%%", paramSensitiveConfig), "1"),
+					resource.TestCheckResourceAttr(fullConnectorResourceLabel, fmt.Sprintf("%s.%s", paramSensitiveConfig, sensitiveAttributeKey), sensitiveAttributeValue),
 					resource.TestCheckResourceAttr(fullConnectorResourceLabel, fmt.Sprintf("%s.%%", paramNonSensitiveConfig), "6"),
 					resource.TestCheckResourceAttr(fullConnectorResourceLabel, fmt.Sprintf("%s.%s", paramNonSensitiveConfig, connectorConfigAttributeClass), "DatagenSourceInternal"),
 					resource.TestCheckResourceAttr(fullConnectorResourceLabel, fmt.Sprintf("%s.%s", paramNonSensitiveConfig, "kafka.topic"), "test_topic"),
@@ -256,6 +261,8 @@ func TestAccConnector(t *testing.T) {
 					resource.TestCheckResourceAttr(fullConnectorResourceLabel, fmt.Sprintf("%s.#", paramKafkaCluster), "1"),
 					resource.TestCheckResourceAttr(fullConnectorResourceLabel, fmt.Sprintf("%s.0.%s", paramKafkaCluster, paramId), "lkc-vnwdjz"),
 					resource.TestCheckResourceAttr(fullConnectorResourceLabel, paramStatus, "RUNNING"),
+					resource.TestCheckResourceAttr(fullConnectorResourceLabel, fmt.Sprintf("%s.%%", paramSensitiveConfig), "1"),
+					resource.TestCheckResourceAttr(fullConnectorResourceLabel, fmt.Sprintf("%s.%s", paramSensitiveConfig, sensitiveAttributeKey), sensitiveAttributeUpdatedValue),
 					resource.TestCheckResourceAttr(fullConnectorResourceLabel, fmt.Sprintf("%s.%%", paramNonSensitiveConfig), "7"),
 					resource.TestCheckResourceAttr(fullConnectorResourceLabel, fmt.Sprintf("%s.%s", paramNonSensitiveConfig, connectorConfigAttributeClass), "DatagenSourceInternal"),
 					resource.TestCheckResourceAttr(fullConnectorResourceLabel, fmt.Sprintf("%s.%s", paramNonSensitiveConfig, "kafka.topic"), "test_topic"),
@@ -317,7 +324,7 @@ func testAccCheckConnectorConfig(mockServerUrl, environmentConnectorLabel, conne
 		  id = "lkc-vnwdjz"
 		}
 		config_sensitive = {
-		  "foo"             = "bar"
+		  "%s"             = "%s"
 		}
 		config_nonsensitive = {
 		  "name"            = "%s"
@@ -328,7 +335,7 @@ func testAccCheckConnectorConfig(mockServerUrl, environmentConnectorLabel, conne
 		  "quickstart" = "ORDERS"
 		}
 	}
-	`, mockServerUrl, environmentConnectorLabel, connectorDisplayName)
+	`, mockServerUrl, environmentConnectorLabel, sensitiveAttributeKey, sensitiveAttributeValue, connectorDisplayName)
 }
 
 func testAccCheckUpdatedConnectorConfig(mockServerUrl, environmentConnectorLabel, connectorDisplayName string) string {
@@ -344,7 +351,7 @@ func testAccCheckUpdatedConnectorConfig(mockServerUrl, environmentConnectorLabel
 		  id = "lkc-vnwdjz"
 		}
 		config_sensitive = {
-		  "foo"             = "bar"
+		  "%s"             = "%s"
 		}
 		config_nonsensitive = {
 		  "name"            = "%s"
@@ -356,7 +363,7 @@ func testAccCheckUpdatedConnectorConfig(mockServerUrl, environmentConnectorLabel
 		  "quickstart" = "ORDERS"
 		}
 	}
-	`, mockServerUrl, environmentConnectorLabel, connectorDisplayName)
+	`, mockServerUrl, environmentConnectorLabel, sensitiveAttributeKey, sensitiveAttributeUpdatedValue, connectorDisplayName)
 }
 
 func testAccCheckConnectorExists(n string) resource.TestCheckFunc {

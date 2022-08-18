@@ -308,7 +308,7 @@ func connectorUpdate(ctx context.Context, d *schema.ResourceData, meta interface
 		}
 		tflog.Debug(ctx, fmt.Sprintf("Finished updating Connector %q", d.Id()), map[string]interface{}{connectorLoggingKey: d.Id()})
 	}
-	if d.HasChange(paramNonSensitiveConfig) {
+	if d.HasChanges(paramNonSensitiveConfig, paramSensitiveConfig) {
 		// Update doesn't require secret topic configuration values to be set
 		updatedConfig, _, nonsensitiveUpdatedConfig := extractConnectorConfigs(d)
 
