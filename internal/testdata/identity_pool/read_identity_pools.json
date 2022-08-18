@@ -1,0 +1,42 @@
+{
+  "kind": "IdentityPoolList",
+  "metadata": {
+    "self": "https://confluent.cloud/api/iam/v2/identity-providers/op-4EY/identity-pools"
+  },
+  "data": [
+    {
+      "api_version": "iam/v2",
+      "kind": "IdentityPool",
+      "metadata": {
+        "self": "https://confluent.cloud/api/iam/v2/identity-providers/op-4EY/identity-pools/pool-AzXR",
+        "resource_name": "crn://confluent.cloud/organization=1111aaaa-11aa-11aa-11aa-111111aaaaaa/identity-provider=op-4EY/identity-pool=pool-AzXR",
+        "created_at": "2022-08-17T20:54:06.219057Z",
+        "updated_at": "2022-08-17T20:54:06.219057Z"
+      },
+      "id": "pool-AzXR",
+      "display_name": "My Identity Pool",
+      "description": "Prod Access to Kafka clusters to Release Engineering",
+      "identity_claim": "claims.sub",
+      "filter": "claims.aud==\"confluent\" && claims.group!=\"invalid_group\"",
+      "principal": "pool-AzXR",
+      "state": "ENABLED"
+    },
+    {
+      "api_version": "iam/v2",
+      "kind": "IdentityPool",
+      "metadata": {
+        "self": "https://confluent.cloud/api/iam/v2/identity-providers/op-4EY/identity-pools/pool-Vk56",
+        "resource_name": "crn://confluent.cloud/organization=1111aaaa-11aa-11aa-11aa-111111aaaaaa/identity-provider=op-4EY/identity-pool=pool-Vk56",
+        "created_at": "2022-08-17T20:55:42.125924Z",
+        "updated_at": "2022-08-17T20:55:42.125924Z"
+      },
+      "id": "pool-Vk56",
+      "display_name": "My Identity Pool 2",
+      "description": "Prod Access to Kafka clusters to Release Engineering 2",
+      "identity_claim": "claims.sub",
+      "filter": "claims.aud==\"confluent\" && claims.group!=\"invalid_group\"",
+      "principal": "pool-Vk56",
+      "state": "ENABLED"
+    }
+  ]
+}

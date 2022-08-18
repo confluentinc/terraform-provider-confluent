@@ -1,0 +1,17 @@
+{
+  "api_version": "iam/v2",
+  "kind": "IdentityPool",
+  "metadata": {
+    "self": "https://confluent.cloud/api/iam/v2/identity-providers/op-4EY/identity-pools/pool-AzXR",
+    "resource_name": "crn://confluent.cloud/organization=1111aaaa-11aa-11aa-11aa-111111aaaaaa/identity-provider=op-4EY/identity-pool=pool-AzXR",
+    "created_at": "2022-08-17T20:54:06.219057Z",
+    "updated_at": "2022-08-17T20:54:06.219057Z"
+  },
+  "id": "pool-AzXR",
+  "display_name": "My Identity Pool updated",
+  "description": "Prod Access to Kafka clusters to Release Engineering updated",
+  "identity_claim": "aud",
+  "filter": "claims.aud==\"confluent\"",
+  "principal": "pool-AzXR",
+  "state": "ENABLED"
+}

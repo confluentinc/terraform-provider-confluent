@@ -22,6 +22,7 @@ import (
 	connect "github.com/confluentinc/ccloud-sdk-go-v2/connect/v1"
 	iamv1 "github.com/confluentinc/ccloud-sdk-go-v2/iam/v1"
 	iam "github.com/confluentinc/ccloud-sdk-go-v2/iam/v2"
+	oidc "github.com/confluentinc/ccloud-sdk-go-v2/identity-provider/v2"
 	mds "github.com/confluentinc/ccloud-sdk-go-v2/mds/v2"
 	net "github.com/confluentinc/ccloud-sdk-go-v2/networking/v1"
 	org "github.com/confluentinc/ccloud-sdk-go-v2/org/v2"
@@ -56,6 +57,7 @@ type Client struct {
 	orgClient              *org.APIClient
 	kafkaRestClientFactory *KafkaRestClientFactory
 	mdsClient              *mds.APIClient
+	oidcClient             *oidc.APIClient
 	userAgent              string
 	cloudApiKey            string
 	cloudApiSecret         string
@@ -127,6 +129,8 @@ func New(version string) func() *schema.Provider {
 				"confluent_kafka_cluster":       kafkaDataSource(),
 				"confluent_kafka_topic":         kafkaTopicDataSource(),
 				"confluent_environment":         environmentDataSource(),
+				"confluent_identity_pool":       identityPoolDataSource(),
+				"confluent_identity_provider":   identityProviderDataSource(),
 				"confluent_network":             networkDataSource(),
 				"confluent_organization":        organizationDataSource(),
 				"confluent_peering":             peeringDataSource(),
@@ -139,6 +143,8 @@ func New(version string) func() *schema.Provider {
 				"confluent_api_key":             apiKeyResource(),
 				"confluent_kafka_cluster":       kafkaResource(),
 				"confluent_environment":         environmentResource(),
+				"confluent_identity_pool":       identityPoolResource(),
+				"confluent_identity_provider":   identityProviderResource(),
 				"confluent_connector":           connectorResource(),
 				"confluent_service_account":     serviceAccountResource(),
 				"confluent_kafka_topic":         kafkaTopicResource(),
@@ -225,6 +231,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	iamV1Cfg := iamv1.NewConfiguration()
 	mdsCfg := mds.NewConfiguration()
 	netCfg := net.NewConfiguration()
+	oidcCfg := oidc.NewConfiguration()
 	orgCfg := org.NewConfiguration()
 
 	apiKeysCfg.Servers[0].URL = endpoint
@@ -234,6 +241,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	iamV1Cfg.Servers[0].URL = endpoint
 	mdsCfg.Servers[0].URL = endpoint
 	netCfg.Servers[0].URL = endpoint
+	oidcCfg.Servers[0].URL = endpoint
 	orgCfg.Servers[0].URL = endpoint
 
 	apiKeysCfg.UserAgent = userAgent
@@ -243,6 +251,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	iamV1Cfg.UserAgent = userAgent
 	mdsCfg.UserAgent = userAgent
 	netCfg.UserAgent = userAgent
+	oidcCfg.UserAgent = userAgent
 	orgCfg.UserAgent = userAgent
 
 	apiKeysCfg.HTTPClient = createRetryableHttpClientWithExponentialBackoff()
@@ -253,6 +262,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	iamV1Cfg.HTTPClient = createRetryableHttpClientWithExponentialBackoff()
 	mdsCfg.HTTPClient = createRetryableHttpClientWithExponentialBackoff()
 	netCfg.HTTPClient = createRetryableHttpClientWithExponentialBackoff()
+	oidcCfg.HTTPClient = createRetryableHttpClientWithExponentialBackoff()
 	orgCfg.HTTPClient = createRetryableHttpClientWithExponentialBackoff()
 
 	// TODO: Delete once APIF-2660 is completed
@@ -267,6 +277,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 		iamClient:              iam.NewAPIClient(iamCfg),
 		iamV1Client:            iamv1.NewAPIClient(iamV1Cfg),
 		netClient:              net.NewAPIClient(netCfg),
+		oidcClient:             oidc.NewAPIClient(oidcCfg),
 		orgClient:              org.NewAPIClient(orgCfg),
 		kafkaRestClientFactory: &KafkaRestClientFactory{userAgent: userAgent},
 		mdsClient:              mds.NewAPIClient(mdsCfg),
