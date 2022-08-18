@@ -17,7 +17,8 @@ aws_account_id = "012345678901"
 vpc_id = "vpc-abcdef0123456789a"
 
 # The AWS VPC CIDR blocks or subsets.
-# This must be from the supported CIDR blocks and must not overlap with your Confluent Cloud CIDR block or any other network peering connection VPC CIDR (learn more about the requirements [here](https://docs.confluent.io/cloud/current/networking/peering/aws-peering.html#vpc-peering-on-aws)). You can find AWS VPC CIDR [here](https://console.aws.amazon.com/vpc/) under **Your VPCs -> Target VPC -> Details** section of the AWS Management Console.
+# This must be from the supported CIDR blocks and must not overlap with your Confluent Cloud CIDR block or any other network peering connection VPC CIDR (learn more about the requirements [here](https://docs.confluent.io/cloud/current/networking/peering/aws-peering.html#vpc-peering-on-aws)).
+# You can find AWS VPC CIDR [here](https://console.aws.amazon.com/vpc/) under **Your VPCs -> Target VPC -> Details** section of the AWS Management Console.
 routes = ["172.31.0.0/16"]
 
 # Add credentials and other settings to $HOME/.aws/config
