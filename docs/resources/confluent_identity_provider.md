@@ -47,7 +47,7 @@ The following arguments are supported:
 - `display_name` - (Required String) A human-readable name for the Identity Provider.
 - `description` - (Required String) A description for the Identity Provider.
 - `issuer` - (Required String) A publicly reachable issuer URI for the Identity Provider. The unique issuer URI string represents the entity for issuing tokens.
-- `jwks_uri` - (Required String) A publicly reachable JSON Web Key Set (JWKS) URI for the Identity Provider. JSON Web Key Sets (JWKS) provides a set of keys containing the public keys used to verify any JSON Web Token (JWT) issued by your OAuth 2.0 identity provider.
+- `jwks_uri` - (Required String) A publicly reachable JSON Web Key Set (JWKS) URI for the Identity Provider. A JSON Web Key Set (JWKS) provides a set of keys containing the public keys used to verify any JSON Web Token (JWT) issued by your OAuth 2.0 identity provider.
 
 -> **Note:** When using Azure AD identity provider, you can find your Azure Tenant ID in the [Azure Portal under Azure Active Directory](https://portal.azure.com/#blade/Microsoft_AAD_IAM/ActiveDirectoryMenuBlade/Overview). Must be a valid **32 character UUID string**.
 
@@ -55,7 +55,7 @@ The following arguments are supported:
 
 In addition to the preceding arguments, the following attributes are exported:
 
-- `id` - (Required String) The ID of the Identity Provider (e.g., `op-abc123`).
+- `id` - (Required String) The ID of the Identity Provider, for example, `op-abc123`.
 
 ## Import
 

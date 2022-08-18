@@ -65,7 +65,7 @@ resource "confluent_identity_pool" "example" {
 The following arguments are supported:
 
 - `identity_provider` (Required Configuration Block) supports the following:
-    - `id` - (Required String) The ID of the Identity Provider that the Identity Pool belongs to, for example, `op-abc123`.
+    - `id` - (Required String) The ID of the Identity Provider associated with the Identity Pool, for example, `op-abc123`.
 - `display_name` - (Required String) A human-readable name for the Identity Pool.
 - `description` - (Required String) A description for the Identity Pool.
 - `identity_claim` - (Required String) The JSON Web Token (JWT) claim to extract the authenticating identity to Confluent resources from (see [Registered Claim Names](https://datatracker.ietf.org/doc/html/rfc7519#section-4.1) for more details). This appears in the audit log records, showing, for example, that "identity Z used identity pool X to access topic A".
@@ -75,7 +75,7 @@ The following arguments are supported:
 
 In addition to the preceding arguments, the following attributes are exported:
 
-- `id` - (Required String) The ID of the Identity Pool (e.g., `pool-xyz456`).
+- `id` - (Required String) The ID of the Identity Pool, for example, `pool-xyz456`.
 
 ## Import
 
