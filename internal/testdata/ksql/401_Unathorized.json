@@ -1,0 +1,11 @@
+{
+  "errors": [
+    {
+      "id": "ed42afdc-f0d5-4c0d-b428-9fc6ed6e279d",
+      "status": "401",
+      "code": "user_unauthenticated",
+      "title": "Authentication Required",
+      "detail": "Valid authentication credentials must be provided"
+    }
+  ]
+}
