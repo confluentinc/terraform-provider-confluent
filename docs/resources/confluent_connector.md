@@ -65,8 +65,8 @@ resource "confluent_connector" "sink" {
   }
 
   config_sensitive = {
+    "aws.access.key.id"     = "***REDACTED***"
     "aws.secret.key.id"     = "***REDACTED***"
-    "aws.secret.access.key" = "***REDACTED***"
   }
 
   config_nonsensitive = {
