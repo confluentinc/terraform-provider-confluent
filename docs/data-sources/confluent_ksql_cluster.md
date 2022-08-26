@@ -1,6 +1,6 @@
 # confluent_ksql_cluster Data Source
 
-[![Open Preview](https://img.shields.io/badge/Lifecycle%20Stage-Open%20Preview-%2345c6e8)](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy)
+[![Open Preview](https://img.shields.io/badge/Lifecycle%20Stage-Open%20Preview-%2300afba)](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy)
 
 `confluent_ksql_cluster` describes a ksqlDB cluster data source.
 

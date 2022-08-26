@@ -1,6 +1,6 @@
 # confluent_ksql_cluster Resource
 
-[![Open Preview](https://img.shields.io/badge/Lifecycle%20Stage-Open%20Preview-%2345c6e8)](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy)
+[![Open Preview](https://img.shields.io/badge/Lifecycle%20Stage-Open%20Preview-%2300afba)](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy)
 
 `confluent_ksql_cluster` provides a ksqlDB cluster resource that enables creating, editing, and deleting ksqlDB clusters on Confluent Cloud.
 
