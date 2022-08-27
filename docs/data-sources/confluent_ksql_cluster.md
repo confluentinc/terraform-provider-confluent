@@ -19,7 +19,7 @@ output "example_using_id" {
 }
 
 data "confluent_ksql_cluster" "example_using_name" {
-  display_name = "basic_ksqldb-cluster"
+  display_name = "ksqldb_cluster"
   environment {
     id = "env-xyz456"
   }

@@ -25,7 +25,7 @@ resource "confluent_kafka_cluster" "basic" {
 
 resource "confluent_service_account" "app-ksql" {
   display_name = "app-ksql"
-  description  = "Service account that the ksqlDB cluster uses to talk to the Kafka cluster"
+  description  = "Service account to manage 'example' ksqlDB cluster"
 }
 
 resource "confluent_role_binding" "app-ksql-kafka-cluster-admin" {

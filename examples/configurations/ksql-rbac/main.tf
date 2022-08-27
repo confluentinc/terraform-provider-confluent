@@ -2,7 +2,7 @@ terraform {
   required_providers {
     confluent = {
       source  = "confluentinc/confluent"
-      version = "1.0.0"
+      version = "1.2.0"
     }
   }
 }
@@ -22,7 +22,7 @@ resource "confluent_kafka_cluster" "basic" {
   display_name = "inventory"
   availability = "SINGLE_ZONE"
   cloud        = "AWS"
-  region       = "us-east-1"
+  region       = "us-east-2"
   basic {}
   environment {
     id = confluent_environment.staging.id
