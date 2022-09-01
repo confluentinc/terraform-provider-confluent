@@ -143,13 +143,13 @@ resource "confluent_api_key" "app-producer-kafka-api-key" {
 
 // Note that in order to consume from a topic, the principal of the consumer ('app-consumer' service account)
 // needs to be authorized to perform 'READ' operation on both Topic and Group resources:
-resource "confluent_role_binding" "app-producer-developer-read-from-topic" {
+resource "confluent_role_binding" "app-consumer-developer-read-from-topic" {
   principal   = "User:${confluent_service_account.app-consumer.id}"
   role_name   = "DeveloperRead"
   crn_pattern = "${confluent_kafka_cluster.standard.rbac_crn}/kafka=${confluent_kafka_cluster.standard.id}/topic=${confluent_kafka_topic.orders.topic_name}"
 }
 
-resource "confluent_role_binding" "app-producer-developer-read-from-group" {
+resource "confluent_role_binding" "app-consumer-developer-read-from-group" {
   principal = "User:${confluent_service_account.app-consumer.id}"
   role_name = "DeveloperRead"
   // The existing value of crn_pattern's suffix (group=confluent_cli_consumer_*) are set up to match Confluent CLI's default consumer group ID ("confluent_cli_consumer_<uuid>").
