@@ -36,9 +36,10 @@ const (
 	paramAws                   = "aws"
 	awsPrivateLinkAccessKind   = "AwsPrivateLinkAccess"
 	azurePrivateLinkAccessKind = "AzurePrivateLinkAccess"
+	gcpPrivateLinkAccessKind   = "GcpPrivateServiceConnectAccess"
 )
 
-var acceptedCloudProvidersForPrivateLinkAccess = []string{paramAws, paramAzure}
+var acceptedCloudProvidersForPrivateLinkAccess = []string{paramAws, paramAzure, paramGcp}
 
 func privateLinkAccessResource() *schema.Resource {
 	return &schema.Resource{
@@ -58,6 +59,7 @@ func privateLinkAccessResource() *schema.Resource {
 			},
 			paramAws:         awsSchema(),
 			paramAzure:       azureSchema(),
+			paramGcp:         gcpSchema(),
 			paramNetwork:     requiredNetworkSchema(),
 			paramEnvironment: environmentSchema(),
 		},
@@ -101,6 +103,8 @@ func privateLinkAccessCreate(ctx context.Context, d *schema.ResourceData, meta i
 	awsAccount := extractStringValueFromBlock(d, paramAws, paramAccount)
 	// Non-empty value means Azure subscription attribute has been set
 	azureSubscription := extractStringValueFromBlock(d, paramAzure, paramSubscription)
+	// Non-empty value means GCP project attribute has been set
+	gcpProject := extractStringValueFromBlock(d, paramGcp, paramProject)
 
 	spec := net.NewNetworkingV1PrivateLinkAccessSpec()
 	if displayName != "" {
@@ -110,6 +114,8 @@ func privateLinkAccessCreate(ctx context.Context, d *schema.ResourceData, meta i
 		spec.SetCloud(net.NetworkingV1PrivateLinkAccessSpecCloudOneOf{NetworkingV1AwsPrivateLinkAccess: net.NewNetworkingV1AwsPrivateLinkAccess(awsPrivateLinkAccessKind, awsAccount)})
 	} else if azureSubscription != "" {
 		spec.SetCloud(net.NetworkingV1PrivateLinkAccessSpecCloudOneOf{NetworkingV1AzurePrivateLinkAccess: net.NewNetworkingV1AzurePrivateLinkAccess(azurePrivateLinkAccessKind, azureSubscription)})
+	} else if gcpProject != "" {
+		spec.SetCloud(net.NetworkingV1PrivateLinkAccessSpecCloudOneOf{NetworkingV1GcpPrivateServiceConnectAccess: net.NewNetworkingV1GcpPrivateServiceConnectAccess(gcpPrivateLinkAccessKind, gcpProject)})
 	}
 	spec.SetNetwork(net.ObjectReference{Id: networkId})
 	spec.SetEnvironment(net.ObjectReference{Id: environmentId})
@@ -207,6 +213,12 @@ func setPrivateLinkAccessAttributes(d *schema.ResourceData, privateLinkAccess ne
 	} else if privateLinkAccess.Spec.Cloud.NetworkingV1AzurePrivateLinkAccess != nil {
 		if err := d.Set(paramAzure, []interface{}{map[string]interface{}{
 			paramSubscription: privateLinkAccess.Spec.Cloud.NetworkingV1AzurePrivateLinkAccess.GetSubscription(),
+		}}); err != nil {
+			return nil, err
+		}
+	} else if privateLinkAccess.Spec.Cloud.NetworkingV1GcpPrivateServiceConnectAccess != nil {
+		if err := d.Set(paramGcp, []interface{}{map[string]interface{}{
+			paramProject: privateLinkAccess.Spec.Cloud.NetworkingV1GcpPrivateServiceConnectAccess.GetProject(),
 		}}); err != nil {
 			return nil, err
 		}
@@ -314,6 +326,27 @@ func azureSchema() *schema.Schema {
 					ForceNew:    true,
 					Description: "Azure subscription to allow for PrivateLink access.",
 					// TODO: add ValidateFunc
+				},
+			},
+		},
+		ExactlyOneOf: acceptedCloudProvidersForPrivateLinkAccess,
+	}
+}
+
+func gcpSchema() *schema.Schema {
+	return &schema.Schema{
+		Type:     schema.TypeList,
+		MinItems: 1,
+		MaxItems: 1,
+		Optional: true,
+		ForceNew: true,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramProject: {
+					Type:        schema.TypeString,
+					Required:    true,
+					ForceNew:    true,
+					Description: "The GCP project ID to allow for Private Service Connect access.",
 				},
 			},
 		},

@@ -64,5 +64,7 @@ In addition to the preceding arguments, the following attributes are exported:
   - `account` - (Required String) The AWS account ID to enable for the Private Link Access. You can find your AWS account ID [here](https://console.aws.amazon.com/billing/home?#/account) under **My Account** in your AWS Management Console. Must be a **12 character string**.
 - `azure` - (Optional Configuration Block) The Azure-specific Private Link Access details if available. It supports the following:
   - `subscription` - (Required String) The Azure subscription ID to enable for the Private Link Access. You can find your Azure subscription ID in the subscription section of your [Microsoft Azure Portal](https://portal.azure.com/#blade/Microsoft_Azure_Billing/SubscriptionsBlade). Must be a valid **32 character UUID string**.
+- `gcp` - (Optional Configuration Block) The GCP-specific Private Service Connect details if available. It supports the following:
+  - `project` - (Required String) The GCP project ID to allow for Private Service Connect access. You can find your Google Cloud Project ID under **Project ID** section of your [Google Cloud Console dashboard](https://console.cloud.google.com/home/dashboard).
 
--> **Note:** Use the `aws[0]` or `azure[0]` prefix for referencing these attributes, for example, `data.confluent_private_link_access.example_using_name.aws[0].account`.
+-> **Note:** Use the `aws[0]`, `azure[0]`, `gcp[0]` prefix for referencing these attributes, for example, `data.confluent_private_link_access.example_using_name.aws[0].account`.

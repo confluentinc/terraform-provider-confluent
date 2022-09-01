@@ -55,6 +55,7 @@ func privateLinkAccessDataSource() *schema.Resource {
 			},
 			paramAws:   awsPlaDataSourceSchema(),
 			paramAzure: azurePlaDataSourceSchema(),
+			paramGcp:   gcpPlaDataSourceSchema(),
 		},
 	}
 }
@@ -196,6 +197,22 @@ func azurePlaDataSourceSchema() *schema.Schema {
 					Type:        schema.TypeString,
 					Computed:    true,
 					Description: "Azure subscription to allow for PrivateLink access.",
+				},
+			},
+		},
+	}
+}
+
+func gcpPlaDataSourceSchema() *schema.Schema {
+	return &schema.Schema{
+		Type:     schema.TypeList,
+		Computed: true,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramProject: {
+					Type:        schema.TypeString,
+					Computed:    true,
+					Description: "GCP project to allow for Private Service Connect access.",
 				},
 			},
 		},

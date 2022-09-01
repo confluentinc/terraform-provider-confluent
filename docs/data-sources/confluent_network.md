@@ -75,7 +75,8 @@ In addition to the preceding arguments, the following attributes are exported:
     - `zone` - (Required String) The zone name, for example, `1`.
     - `private_link_service_aliase` - (Required String) The Private Link Service Alias, for example, `s-aa11a-privatelink-1.1c12abc3-695c-1234-bc35-11fe6abb303a.centralus.azure.privatelinkservice`.
 - `gcp` - (Optional Configuration Block) The GCP-specific network details if available. It supports the following:
-  - `project` - (Required String) The GCP project.
+  - `project` - (Required String) The GCP project ID.
   - `vpc_network` - (Required String) The GCP VPC network name.
+  - `private_service_connect_service_attachments` - (Optional Map) The mapping of zones to Private Service Connect service attachments if available. Keys are zones and values are [GCP Private Service Connect service attachment](https://cloud.google.com/vpc/docs/configure-private-service-connect-producer#api_7).
 
 -> **Note:** Use the `aws[0]`, `azure[0]`, or `gcp[0]` prefix for referencing these attributes, for example, `data.confluent_network.private-link.azure[0].private_link_service_aliases`.

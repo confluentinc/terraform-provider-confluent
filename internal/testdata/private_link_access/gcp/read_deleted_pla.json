@@ -1,0 +1,10 @@
+{
+  "errors": [
+    {
+      "id": "7e2af1ca2ec2dc485276ee35241579d7",
+      "status": "404",
+      "detail": "The private-link-access pla-gewd7g was not found.",
+      "source": {}
+    }
+  ]
+}

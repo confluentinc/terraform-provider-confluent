@@ -30,13 +30,14 @@ import (
 )
 
 const (
-	paramConnectionTypes            = "connection_types"
-	paramCidr                       = "cidr"
-	paramZones                      = "zones"
-	paramPrivateLinkEndpointService = "private_link_endpoint_service"
-	paramPrivateLinkServiceAliases  = "private_link_service_aliases"
-	paramDnsDomain                  = "dns_domain"
-	paramZonalSubdomains            = "zonal_subdomains"
+	paramConnectionTypes                         = "connection_types"
+	paramCidr                                    = "cidr"
+	paramZones                                   = "zones"
+	paramPrivateLinkEndpointService              = "private_link_endpoint_service"
+	paramPrivateLinkServiceAliases               = "private_link_service_aliases"
+	paramPrivateServiceConnectServiceAttachments = "private_service_connect_service_attachments"
+	paramDnsDomain                               = "dns_domain"
+	paramZonalSubdomains                         = "zonal_subdomains"
 
 	connectionTypePrivateLink    = "PRIVATELINK"
 	connectionTypeTransitGateway = "TRANSITGATEWAY"
@@ -169,16 +170,20 @@ func gcpNetworkSchema() *schema.Schema {
 				paramProject: {
 					Type:        schema.TypeString,
 					Computed:    true,
-					Optional:    true,
-					ForceNew:    true,
 					Description: "The GCP project.",
 				},
 				paramVpcNetwork: {
 					Type:        schema.TypeString,
 					Computed:    true,
-					Optional:    true,
-					ForceNew:    true,
 					Description: "The GCP VPC network name.",
+				},
+				paramPrivateServiceConnectServiceAttachments: {
+					Type: schema.TypeMap,
+					Elem: &schema.Schema{
+						Type: schema.TypeString,
+					},
+					Computed:    true,
+					Description: "The mapping of zones to Private Service Connect service attachments if available. Keys are zones and values are [GCP Private Service Connect service attachment](https://cloud.google.com/vpc/docs/configure-private-service-connect-producer#api_7).",
 				},
 			},
 		},
@@ -349,7 +354,8 @@ func setNetworkAttributes(d *schema.ResourceData, network net.NetworkingV1Networ
 	} else if strings.EqualFold(paramGcp, network.Spec.GetCloud()) {
 		if err := d.Set(paramGcp, []interface{}{map[string]interface{}{
 			paramProject:    network.Status.Cloud.NetworkingV1GcpNetwork.GetProject(),
-			paramVpcNetwork: network.Status.Cloud.NetworkingV1GcpNetwork.GetVpcNetwork()}}); err != nil {
+			paramVpcNetwork: network.Status.Cloud.NetworkingV1GcpNetwork.GetVpcNetwork(),
+			paramPrivateServiceConnectServiceAttachments: network.Status.Cloud.NetworkingV1GcpNetwork.GetPrivateServiceConnectServiceAttachments()}}); err != nil {
 			return nil, err
 		}
 	}

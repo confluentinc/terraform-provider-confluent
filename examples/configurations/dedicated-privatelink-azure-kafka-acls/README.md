@@ -55,7 +55,7 @@
     terraform apply
     ```
 
-3. One commmon deployment workflow for environments with private networking is as follows:
+3. One common deployment workflow for environments with private networking is as follows:
 
     * A initial (centrally-run) Terraform deployment provisions infrastructure: network, Kafka cluster, and other resources on cloud provider of your choice to setup private network connectivity (like DNS records)
 
