@@ -1,3 +1,10 @@
+## 1.4.0 (September 1, 2022)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.3.0...v1.4.0)
+
+**New features:**
+* Added support for [GCP Private Service Connect](https://cloud.google.com/vpc/docs/private-service-connect) by updating `confluent_network`, `confluent_private_link_access` [resources](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_network) and corresponding [data](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_private_link_access) [sources](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_network). See [dedicated-private-service-connect-gcp-kafka-acls](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/dedicated-private-service-connect-gcp-kafka-acls) and [dedicated-private-service-connect-gcp-kafka-rbac](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/dedicated-private-service-connect-gcp-kafka-rbac) examples for more details.
+
 ## 1.3.0 (August 29, 2022)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.2.0...v1.3.0)
