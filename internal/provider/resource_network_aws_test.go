@@ -17,10 +17,6 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/docker/go-connections/nat"
-	"github.com/stretchr/testify/require"
-	"github.com/testcontainers/testcontainers-go"
-	"github.com/testcontainers/testcontainers-go/wait"
 	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
@@ -59,32 +55,15 @@ var awsNetworkZones = []string{"use2-az1", "use2-az2", "use2-az3"}
 var awsNetworkUrlPath = fmt.Sprintf("/networking/v1/networks/%s", awsNetworkId)
 
 func TestAccAwsNetwork(t *testing.T) {
-	containerPort := "8080"
-	containerPortTcp := fmt.Sprintf("%s/tcp", containerPort)
 	ctx := context.Background()
-	listeningPort := wait.ForListeningPort(nat.Port(containerPortTcp))
-	req := testcontainers.ContainerRequest{
-		Image:        "rodolpheche/wiremock",
-		ExposedPorts: []string{containerPortTcp},
-		WaitingFor:   listeningPort,
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
 	}
-	wiremockContainer, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
-		ContainerRequest: req,
-		Started:          true,
-	})
-
-	require.NoError(t, err)
-
-	// nolint:errcheck
 	defer wiremockContainer.Terminate(ctx)
 
-	host, err := wiremockContainer.Host(ctx)
-	require.NoError(t, err)
-
-	wiremockHttpMappedPort, err := wiremockContainer.MappedPort(ctx, nat.Port(containerPort))
-	require.NoError(t, err)
-
-	mockServerUrl := fmt.Sprintf("http://%s:%s", host, wiremockHttpMappedPort.Port())
+	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
 	// nolint:errcheck
 	defer wiremockClient.Reset()

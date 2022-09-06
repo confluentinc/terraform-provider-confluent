@@ -48,32 +48,15 @@ const (
 )
 
 func TestAccKafkaApiKey(t *testing.T) {
-	containerPort := "8080"
-	containerPortTcp := fmt.Sprintf("%s/tcp", containerPort)
 	ctx := context.Background()
-	listeningPort := wait.ForListeningPort(nat.Port(containerPortTcp))
-	req := testcontainers.ContainerRequest{
-		Image:        "rodolpheche/wiremock",
-		ExposedPorts: []string{containerPortTcp},
-		WaitingFor:   listeningPort,
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
 	}
-	wiremockContainer, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
-		ContainerRequest: req,
-		Started:          true,
-	})
-
-	require.NoError(t, err)
-
-	// nolint:errcheck
 	defer wiremockContainer.Terminate(ctx)
 
-	host, err := wiremockContainer.Host(ctx)
-	require.NoError(t, err)
-
-	wiremockHttpMappedPort, err := wiremockContainer.MappedPort(ctx, nat.Port(containerPort))
-	require.NoError(t, err)
-
-	mockServerUrl := fmt.Sprintf("http://%s:%s", host, wiremockHttpMappedPort.Port())
+	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
 	// nolint:errcheck
 	defer wiremockClient.Reset()

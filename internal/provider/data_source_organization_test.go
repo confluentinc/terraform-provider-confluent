@@ -17,11 +17,7 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/docker/go-connections/nat"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"github.com/stretchr/testify/require"
-	"github.com/testcontainers/testcontainers-go"
-	"github.com/testcontainers/testcontainers-go/wait"
 	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
@@ -41,33 +37,16 @@ const (
 var fullOrganizationDataSourceLabel = fmt.Sprintf("data.confluent_organization.%s", organizationDataSourceLabel)
 
 func TestAccDataSourceOrganization(t *testing.T) {
-	containerPort := "8080"
-	containerPortTcp := fmt.Sprintf("%s/tcp", containerPort)
 	ctx := context.Background()
-	listeningPort := wait.ForListeningPort(nat.Port(containerPortTcp))
-	req := testcontainers.ContainerRequest{
-		Image:        "rodolpheche/wiremock",
-		ExposedPorts: []string{containerPortTcp},
-		WaitingFor:   listeningPort,
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
 	}
-	wiremockContainer, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
-		ContainerRequest: req,
-		Started:          true,
-	})
-
-	require.NoError(t, err)
-
-	// nolint:errcheck
 	defer wiremockContainer.Terminate(ctx)
 
-	host, err := wiremockContainer.Host(ctx)
-	require.NoError(t, err)
-
-	wiremockHttpMappedPort, err := wiremockContainer.MappedPort(ctx, nat.Port(containerPort))
-	require.NoError(t, err)
-
-	confluentCloudBaseUrl := fmt.Sprintf("http://%s:%s", host, wiremockHttpMappedPort.Port())
-	wiremockClient := wiremock.NewClient(confluentCloudBaseUrl)
+	mockServerUrl := wiremockContainer.URI
+	wiremockClient := wiremock.NewClient(mockServerUrl)
 	// nolint:errcheck
 	defer wiremockClient.Reset()
 
@@ -91,7 +70,7 @@ func TestAccDataSourceOrganization(t *testing.T) {
 		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckDataSourceOrganizationConfig(confluentCloudBaseUrl),
+				Config: testAccCheckDataSourceOrganizationConfig(mockServerUrl),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckOrganizationExists(fullOrganizationDataSourceLabel),
 					resource.TestCheckResourceAttr(fullOrganizationDataSourceLabel, "id", expectedOrgId),
