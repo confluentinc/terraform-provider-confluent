@@ -90,9 +90,8 @@ func waitForKafkaClusterToProvision(ctx context.Context, c *Client, environmentI
 
 func waitForKsqlClusterToProvision(ctx context.Context, c *Client, environmentId, clusterId string) error {
 	stateConf := &resource.StateChangeConf{
-		Pending: []string{stateProvisioning},
-		// TODO: KSQL-1235: Remove stateUp when cc-scheduler is updated
-		Target:       []string{stateUp, stateProvisioned},
+		Pending:      []string{stateProvisioning},
+		Target:       []string{stateProvisioned},
 		Refresh:      ksqlClusterProvisionStatus(c.ksqlApiContext(ctx), c, environmentId, clusterId),
 		Timeout:      ksqlCreateTimeout,
 		Delay:        5 * time.Second,
