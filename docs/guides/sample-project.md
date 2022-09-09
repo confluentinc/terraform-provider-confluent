@@ -140,6 +140,8 @@ In this guide, you will:
     terraform apply
     ```
 
+   !> **Warning:** Before running `terraform apply`, please take a look at the corresponding [README file](https://github.com/confluentinc/terraform-provider-confluent/blob/master/examples/configurations/basic-kafka-acls/README.md) for other instructions.
+
 10. You have now created infrastructure using Terraform! Visit the [Confluent Cloud Console](https://confluent.cloud/environments) or use the [Confluent CLI v2](https://docs.confluent.io/confluent-cli/current/migrate.html#directly-install-confluent-cli-v2-x) to see the resources you provisioned.
 
 ## [Optional] Run a Quick Test

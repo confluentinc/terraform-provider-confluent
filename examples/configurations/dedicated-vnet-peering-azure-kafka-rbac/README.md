@@ -1,6 +1,8 @@
 ### Notes
 
-1. This example assumes that Terraform is run from a host in the private network, where it will have connectivity to the [Kafka REST API](https://docs.confluent.io/cloud/current/api.html#tag/Topic-(v3)) in other words, to the [REST endpoint](https://docs.confluent.io/cloud/current/clusters/broker-config.html#access-cluster-settings-in-the-ccloud-console) on the provisioned Kafka cluster. If it is not, you must make these changes:
+1. See [Sample Project for Confluent Terraform Provider](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/guides/sample-project) that provides step-by-step instructions of running this example.
+
+2. This example assumes that Terraform is run from a host in the private network, where it will have connectivity to the [Kafka REST API](https://docs.confluent.io/cloud/current/api.html#tag/Topic-(v3)) in other words, to the [REST endpoint](https://docs.confluent.io/cloud/current/clusters/broker-config.html#access-cluster-settings-in-the-ccloud-console) on the provisioned Kafka cluster. If it is not, you must make these changes:
 
     * Update the `confluent_api_key` resources by setting their `disable_wait_for_ready` flag to `true`. Otherwise, Terraform will attempt to validate API key creation by listing topics, which will fail without access to the Kafka REST API. Otherwise, you might see errors like:
 
@@ -10,7 +12,7 @@
 
     * Remove the `confluent_kafka_topic` resource. These resources are provisioned using the Kafka REST API, which is only accessible from the private network.
 
-2. Go to the following URL using your AD tenant ID (`<tenant-id>`) and approve:
+3. Go to the following URL using your AD tenant ID (`<tenant-id>`) and approve:
 
     ```
     https://login.microsoftonline.com/<tenant-id>/oauth2/authorize?client_id=f0955e3a-9013-4cf4-a1ea-21587621c9cc&response_type=code
@@ -31,7 +33,7 @@
     operation.
     ```
 
-3. One common deployment workflow for environments with private networking is as follows:
+4. One common deployment workflow for environments with private networking is as follows:
 
     * A initial (centrally-run) Terraform deployment provisions infrastructure: network, Kafka cluster, and other resources on cloud provider of your choice to setup private network connectivity (like DNS records)
 
@@ -40,4 +42,4 @@
     * Note that RBAC role bindings can be provisioned in either the first or second step, as they are provisioned through the [Confluent Cloud API](https://docs.confluent.io/cloud/current/api.html), not the [Kafka REST API](https://docs.confluent.io/cloud/current/api.html#tag/Topic-(v3))
 
 
-4. See [VNet Peering on Azure](https://docs.confluent.io/cloud/current/networking/peering/azure-peering.html) for more details.
+5. See [VNet Peering on Azure](https://docs.confluent.io/cloud/current/networking/peering/azure-peering.html) for more details.
