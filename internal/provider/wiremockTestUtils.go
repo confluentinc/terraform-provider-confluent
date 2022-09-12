@@ -15,12 +15,12 @@ type WiremockContainer struct {
 }
 
 func setupWiremock(ctx context.Context) (*WiremockContainer, error) {
+	port := nat.Port("8080")
 	req := testcontainers.ContainerRequest{
 		Image:        "wiremock/wiremock:2.32.0-alpine",
-		ExposedPorts: []string{"8080/tcp", "8443/tcp"},
-		WaitingFor:   wait.ForListeningPort("8080"),
-		// docker run -it --rm -p 8443:8443 wiremock/wiremock --https-port 8443 --verbose
-		Cmd: []string{"--https-port", "8443", "--verbose"},
+		ExposedPorts: []string{"8080/tcp"},
+		WaitingFor:   wait.ForListeningPort(port),
+		// docker run -it --rm -p 8080:8080 wiremock/wiremock --verbose
 	}
 	container, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
 		ContainerRequest: req,
@@ -30,7 +30,7 @@ func setupWiremock(ctx context.Context) (*WiremockContainer, error) {
 		return nil, err
 	}
 
-	mappedPort, err := container.MappedPort(ctx, "8080")
+	mappedPort, err := container.MappedPort(ctx, port)
 	if err != nil {
 		return nil, err
 	}
