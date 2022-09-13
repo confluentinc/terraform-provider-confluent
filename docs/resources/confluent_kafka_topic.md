@@ -85,13 +85,15 @@ The following arguments are supported:
 
 - `partitions_count` - (Optional Number) The number of partitions to create in the topic. Defaults to `6`.
 - `config` - (Optional Map) The custom topic settings to set:
-    - `name` - (Required String) The configuration name, for example, `cleanup.policy`.
-    - `value` - (Required String) The configuration value, for example, `compact`.
+    - `name` - (Required String) The setting name, for example, `cleanup.policy`.
+    - `value` - (Required String) The setting value, for example, `compact`.
+
+-> **Note:** For more information on the topic settings, see [Custom topic settings for all cluster types](https://docs.confluent.io/cloud/current/clusters/broker-config.html#custom-topic-settings-for-all-cluster-types) and [Schema Validation Configuration options on a topic](https://docs.confluent.io/cloud/current/sr/broker-side-schema-validation.html#sv-configuration-options-on-a-topic).
 
 -> **Note:** Updates for the following topic settings are supported: `delete.retention.ms`,
              `max.message.bytes`, `max.compaction.lag.ms`, `message.timestamp.difference.max.ms`, `message.timestamp.type`,
-             `min.compaction.lag.ms`, `min.insync.replicas`, `retention.bytes`, `retention.ms`, `segment.bytes`, `segment.ms`.
-             For more information on these topic settings (for example, minimum and maximum values), see [Custom topic settings for all cluster types](https://docs.confluent.io/cloud/current/clusters/broker-config.html#custom-topic-settings-for-all-cluster-types).
+             `min.compaction.lag.ms`, `min.insync.replicas`, `retention.bytes`, `retention.ms`, `segment.bytes`, `segment.ms`,
+             `confluent.key.schema.validation`, `confluent.value.schema.validation`, `confluent.key.subject.name.strategy`, `confluent.value.subject.name.strategy`.
 
 !> **Warning:** Terraform doesn't encrypt the sensitive `credentials` value of the `confluent_kafka_topic` resource, so you must keep your state file secure to avoid exposing it. Refer to the [Terraform documentation](https://www.terraform.io/docs/language/state/sensitive-data.html) to learn more about securing your state file.
 
