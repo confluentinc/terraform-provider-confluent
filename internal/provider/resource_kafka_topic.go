@@ -18,7 +18,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/antihax/optional"
 	kafkarestv3 "github.com/confluentinc/ccloud-sdk-go-v2/kafkarest/v3"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -40,6 +39,7 @@ const (
 	paramConfigs                = "config"
 	kafkaRestAPIWaitAfterCreate = 10 * time.Second
 	docsUrl                     = "https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_topic"
+	dynamicTopicConfig          = "DYNAMIC_TOPIC_CONFIG"
 )
 
 // https://docs.confluent.io/cloud/current/clusters/broker-config.html#custom-topic-settings-for-all-cluster-types
@@ -57,7 +57,7 @@ func extractConfigs(configs map[string]interface{}) []kafkarestv3.CreateTopicReq
 		v := value.(string)
 		configResult[i] = kafkarestv3.CreateTopicRequestDataConfigs{
 			Name:  name,
-			Value: &v,
+			Value: *kafkarestv3.NewNullableString(&v),
 		}
 		i += 1
 	}
@@ -182,11 +182,13 @@ func kafkaTopicCreate(ctx context.Context, d *schema.ResourceData, meta interfac
 	}
 	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isKafkaMetadataSet)
 	topicName := d.Get(paramTopicName).(string)
+	partitionsCountInt32 := int32(d.Get(paramPartitionsCount).(int))
+	configs := extractConfigs(d.Get(paramConfigs).(map[string]interface{}))
 
 	createTopicRequest := kafkarestv3.CreateTopicRequestData{
 		TopicName:       topicName,
-		PartitionsCount: int32(d.Get(paramPartitionsCount).(int)),
-		Configs:         extractConfigs(d.Get(paramConfigs).(map[string]interface{})),
+		PartitionsCount: &partitionsCountInt32,
+		Configs:         &configs,
 	}
 	createTopicRequestJson, err := json.Marshal(createTopicRequest)
 	if err != nil {
@@ -216,10 +218,7 @@ func kafkaTopicCreate(ctx context.Context, d *schema.ResourceData, meta interfac
 }
 
 func executeKafkaTopicCreate(ctx context.Context, c *KafkaRestClient, requestData kafkarestv3.CreateTopicRequestData) (kafkarestv3.TopicData, *http.Response, error) {
-	opts := &kafkarestv3.CreateKafkaV3TopicOpts{
-		CreateTopicRequestData: optional.NewInterface(requestData),
-	}
-	return c.apiClient.TopicV3Api.CreateKafkaV3Topic(c.apiContext(ctx), c.clusterId, opts)
+	return c.apiClient.TopicV3Api.CreateKafkaTopic(c.apiContext(ctx), c.clusterId).CreateTopicRequestData(requestData).Execute()
 }
 
 func kafkaTopicDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -237,7 +236,7 @@ func kafkaTopicDelete(ctx context.Context, d *schema.ResourceData, meta interfac
 	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isKafkaMetadataSet)
 	topicName := d.Get(paramTopicName).(string)
 
-	_, err = kafkaRestClient.apiClient.TopicV3Api.DeleteKafkaV3Topic(kafkaRestClient.apiContext(ctx), kafkaRestClient.clusterId, topicName)
+	_, err = kafkaRestClient.apiClient.TopicV3Api.DeleteKafkaTopic(kafkaRestClient.apiContext(ctx), kafkaRestClient.clusterId, topicName).Execute()
 
 	if err != nil {
 		return diag.Errorf("error deleting Kafka Topic %q: %s", d.Id(), createDescriptiveError(err))
@@ -374,7 +373,7 @@ func kafkaTopicImport(ctx context.Context, d *schema.ResourceData, meta interfac
 }
 
 func readTopicAndSetAttributes(ctx context.Context, d *schema.ResourceData, c *KafkaRestClient, topicName string) ([]*schema.ResourceData, error) {
-	kafkaTopic, resp, err := c.apiClient.TopicV3Api.GetKafkaV3Topic(c.apiContext(ctx), c.clusterId, topicName)
+	kafkaTopic, resp, err := c.apiClient.TopicV3Api.GetKafkaTopic(c.apiContext(ctx), c.clusterId, topicName).Execute()
 	if err != nil {
 		tflog.Warn(ctx, fmt.Sprintf("Error reading Kafka Topic %q: %s", d.Id(), createDescriptiveError(err)), map[string]interface{}{kafkaTopicLoggingKey: d.Id()})
 
@@ -464,7 +463,7 @@ func kafkaTopicUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 				if isTopicSettingEditable {
 					topicSettingsUpdateBatch = append(topicSettingsUpdateBatch, kafkarestv3.AlterConfigBatchRequestDataData{
 						Name:  topicSettingName,
-						Value: ptr(newTopicSettingValue),
+						Value: *kafkarestv3.NewNullableString(ptr(newTopicSettingValue)),
 					})
 				} else {
 					return diag.Errorf("error updating Kafka Topic %q: %q topic setting is read-only and cannot be updated. "+
@@ -513,12 +512,12 @@ func kafkaTopicUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 
 		var updatedTopicSettings, outdatedTopicSettings []string
 		for _, v := range topicSettingsUpdateBatch {
-			if v.Value == nil {
+			if !v.Value.IsSet() {
 				// It will never happen because of the way we construct topicSettingsUpdateBatch
 				continue
 			}
 			topicSettingName := v.Name
-			expectedValue := *v.Value
+			expectedValue := *v.Value.Get()
 			actualValue, ok := actualTopicSettings[topicSettingName]
 			if ok && actualValue != expectedValue {
 				outdatedTopicSettings = append(outdatedTopicSettings, topicSettingName)
@@ -540,10 +539,7 @@ func kafkaTopicUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 }
 
 func executeKafkaTopicUpdate(ctx context.Context, c *KafkaRestClient, topicName string, requestData kafkarestv3.AlterConfigBatchRequestData) (*http.Response, error) {
-	opts := &kafkarestv3.UpdateKafkaV3TopicConfigBatchOpts{
-		AlterConfigBatchRequestData: optional.NewInterface(requestData),
-	}
-	return c.apiClient.ConfigsV3Api.UpdateKafkaV3TopicConfigBatch(c.apiContext(ctx), c.clusterId, topicName, opts)
+	return c.apiClient.ConfigsV3Api.UpdateKafkaTopicConfigBatch(c.apiContext(ctx), c.clusterId, topicName).AlterConfigBatchRequestData(requestData).Execute()
 }
 
 func setKafkaCredentials(kafkaApiKey, kafkaApiSecret string, d *schema.ResourceData) error {
@@ -554,7 +550,7 @@ func setKafkaCredentials(kafkaApiKey, kafkaApiSecret string, d *schema.ResourceD
 }
 
 func loadTopicConfigs(ctx context.Context, d *schema.ResourceData, c *KafkaRestClient, topicName string) (map[string]string, error) {
-	topicConfigList, _, err := c.apiClient.ConfigsV3Api.ListKafkaV3TopicConfigs(c.apiContext(ctx), c.clusterId, topicName)
+	topicConfigList, _, err := c.apiClient.ConfigsV3Api.ListKafkaTopicConfigs(c.apiContext(ctx), c.clusterId, topicName).Execute()
 	if err != nil {
 		return nil, fmt.Errorf("error reading Kafka Topic %q: could not load configs %s", topicName, createDescriptiveError(err))
 	}
@@ -562,8 +558,8 @@ func loadTopicConfigs(ctx context.Context, d *schema.ResourceData, c *KafkaRestC
 	config := make(map[string]string)
 	for _, remoteConfig := range topicConfigList.Data {
 		// Extract configs that were set via terraform vs set by default
-		if remoteConfig.Source == kafkarestv3.CONFIGSOURCE_DYNAMIC_TOPIC_CONFIG && remoteConfig.Value != nil {
-			config[remoteConfig.Name] = *remoteConfig.Value
+		if remoteConfig.Source == dynamicTopicConfig && remoteConfig.Value.IsSet() {
+			config[remoteConfig.Name] = *remoteConfig.Value.Get()
 		}
 	}
 	configJson, err := json.Marshal(config)

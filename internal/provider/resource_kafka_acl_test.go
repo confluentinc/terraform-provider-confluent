@@ -220,7 +220,7 @@ func testAccCheckAclDestroy(s *terraform.State) error {
 			continue
 		}
 		deletedAclId := rs.Primary.ID
-		aclList, _, err := c.apiClient.ACLV3Api.GetKafkaV3Acls(c.apiContext(context.Background()), clusterId, nil)
+		aclList, _, err := c.apiClient.ACLV3Api.GetKafkaAcls(c.apiContext(context.Background()), clusterId).ResourceType(aclResourceType).ResourceName(aclResourceName).PatternType(aclPatternType).Principal(aclPrincipalWithIntegerId).Host(aclHost).Operation(aclOperation).Permission(aclPermission).Execute()
 
 		if len(aclList.Data) == 0 {
 			return nil

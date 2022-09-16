@@ -18,7 +18,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/antihax/optional"
 	kafkarestv3 "github.com/confluentinc/ccloud-sdk-go-v2/kafkarest/v3"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -52,26 +51,14 @@ func extractAcl(d *schema.ResourceData) (Acl, error) {
 	if err != nil {
 		return Acl{}, err
 	}
-	patternType, err := stringToAclPatternType(d.Get(paramPatternType).(string))
-	if err != nil {
-		return Acl{}, err
-	}
-	operation, err := stringToAclOperation(d.Get(paramOperation).(string))
-	if err != nil {
-		return Acl{}, err
-	}
-	permission, err := stringToAclPermission(d.Get(paramPermission).(string))
-	if err != nil {
-		return Acl{}, err
-	}
 	return Acl{
 		ResourceType: resourceType,
 		ResourceName: d.Get(paramResourceName).(string),
-		PatternType:  patternType,
+		PatternType:  d.Get(paramPatternType).(string),
 		Principal:    d.Get(paramPrincipal).(string),
 		Host:         d.Get(paramHost).(string),
-		Operation:    operation,
-		Permission:   permission,
+		Operation:    d.Get(paramOperation).(string),
+		Permission:   d.Get(paramPermission).(string),
 	}, nil
 }
 
@@ -211,10 +198,7 @@ func kafkaAclCreate(ctx context.Context, d *schema.ResourceData, meta interface{
 }
 
 func executeKafkaAclCreate(ctx context.Context, c *KafkaRestClient, requestData kafkarestv3.CreateAclRequestData) (*http.Response, error) {
-	opts := &kafkarestv3.CreateKafkaV3AclsOpts{
-		CreateAclRequestData: optional.NewInterface(requestData),
-	}
-	return c.apiClient.ACLV3Api.CreateKafkaV3Acls(c.apiContext(ctx), c.clusterId, opts)
+	return c.apiClient.ACLV3Api.CreateKafkaAcls(c.apiContext(ctx), c.clusterId).CreateAclRequestData(requestData).Execute()
 }
 
 func kafkaAclDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -240,17 +224,7 @@ func kafkaAclDelete(ctx context.Context, d *schema.ResourceData, meta interface{
 		return diag.FromErr(createDescriptiveError(err))
 	}
 
-	opts := &kafkarestv3.DeleteKafkaV3AclsOpts{
-		ResourceType: optional.NewInterface(acl.ResourceType),
-		ResourceName: optional.NewString(acl.ResourceName),
-		PatternType:  optional.NewInterface(acl.PatternType),
-		Principal:    optional.NewString(principalWithIntegerId),
-		Host:         optional.NewString(acl.Host),
-		Operation:    optional.NewInterface(acl.Operation),
-		Permission:   optional.NewInterface(acl.Permission),
-	}
-
-	_, _, err = kafkaRestClient.apiClient.ACLV3Api.DeleteKafkaV3Acls(kafkaRestClient.apiContext(ctx), kafkaRestClient.clusterId, opts)
+	_, _, err = executeKafkaAclDelete(kafkaRestClient.apiContext(ctx), kafkaRestClient, acl, principalWithIntegerId)
 
 	if err != nil {
 		return diag.Errorf("error deleting Kafka ACLs %q: %s", d.Id(), createDescriptiveError(err))
@@ -261,8 +235,12 @@ func kafkaAclDelete(ctx context.Context, d *schema.ResourceData, meta interface{
 	return nil
 }
 
-func executeKafkaAclRead(ctx context.Context, c *KafkaRestClient, opts *kafkarestv3.GetKafkaV3AclsOpts) (kafkarestv3.AclDataList, *http.Response, error) {
-	return c.apiClient.ACLV3Api.GetKafkaV3Acls(c.apiContext(ctx), c.clusterId, opts)
+func executeKafkaAclDelete(ctx context.Context, c *KafkaRestClient, acl Acl, principalWithIntegerId string) (kafkarestv3.InlineResponse200, *http.Response, error) {
+	return c.apiClient.ACLV3Api.DeleteKafkaAcls(c.apiContext(ctx), c.clusterId).ResourceType(acl.ResourceType).ResourceName(acl.ResourceName).PatternType(acl.PatternType).Principal(principalWithIntegerId).Host(acl.Host).Operation(acl.Operation).Permission(acl.Permission).Execute()
+}
+
+func executeKafkaAclRead(ctx context.Context, c *KafkaRestClient, acl Acl, principalWithIntegerId string) (kafkarestv3.AclDataList, *http.Response, error) {
+	return c.apiClient.ACLV3Api.GetKafkaAcls(c.apiContext(ctx), c.clusterId).ResourceType(acl.ResourceType).ResourceName(acl.ResourceName).PatternType(acl.PatternType).Principal(principalWithIntegerId).Host(acl.Host).Operation(acl.Operation).Permission(acl.Permission).Execute()
 }
 
 func kafkaAclRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -323,17 +301,7 @@ func readAclAndSetAttributes(ctx context.Context, d *schema.ResourceData, client
 		return nil, err
 	}
 
-	opts := &kafkarestv3.GetKafkaV3AclsOpts{
-		ResourceType: optional.NewInterface(acl.ResourceType),
-		ResourceName: optional.NewString(acl.ResourceName),
-		PatternType:  optional.NewInterface(acl.PatternType),
-		Principal:    optional.NewString(principalWithIntegerId),
-		Host:         optional.NewString(acl.Host),
-		Operation:    optional.NewInterface(acl.Operation),
-		Permission:   optional.NewInterface(acl.Permission),
-	}
-
-	remoteAcls, resp, err := executeKafkaAclRead(ctx, c, opts)
+	remoteAcls, resp, err := executeKafkaAclRead(ctx, c, acl, principalWithIntegerId)
 	if err != nil {
 		tflog.Warn(ctx, fmt.Sprintf("Error reading Kafka ACLs %q: %s", d.Id(), createDescriptiveError(err)), map[string]interface{}{kafkaAclLoggingKey: d.Id()})
 
@@ -447,27 +415,15 @@ func deserializeAcl(serializedAcl string) (Acl, error) {
 	if err != nil {
 		return Acl{}, err
 	}
-	patternType, err := stringToAclPatternType(parts[2])
-	if err != nil {
-		return Acl{}, err
-	}
-	operation, err := stringToAclOperation(parts[5])
-	if err != nil {
-		return Acl{}, err
-	}
-	permission, err := stringToAclPermission(parts[6])
-	if err != nil {
-		return Acl{}, err
-	}
 
 	return Acl{
 		ResourceType: resourceType,
 		ResourceName: parts[1],
-		PatternType:  patternType,
+		PatternType:  parts[2],
 		Principal:    parts[3],
 		Host:         parts[4],
-		Operation:    operation,
-		Permission:   permission,
+		Operation:    parts[5],
+		Permission:   parts[6],
 	}, nil
 }
 

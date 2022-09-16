@@ -267,7 +267,7 @@ func testAccCheckTopicDestroy(s *terraform.State) error {
 			continue
 		}
 		deletedTopicId := rs.Primary.ID
-		_, response, err := c.apiClient.TopicV3Api.GetKafkaV3Topic(c.apiContext(context.Background()), clusterId, topicName)
+		_, response, err := c.apiClient.TopicV3Api.GetKafkaTopic(c.apiContext(context.Background()), clusterId, topicName).Execute()
 		if response != nil && (response.StatusCode == http.StatusForbidden || response.StatusCode == http.StatusNotFound) {
 			return nil
 		} else if err == nil && deletedTopicId != "" {
