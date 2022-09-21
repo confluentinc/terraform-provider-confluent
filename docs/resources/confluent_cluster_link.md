@@ -92,7 +92,7 @@ source Kafka cluster ID, and destination Kafka cluster ID, in the format `<Clust
 ```shell
 $ export IMPORT_SOURCE_KAFKA_BOOTSTRAP_ENDPOINT="<source_kafka_bootstrap_endpoint>"
 $ export IMPORT_SOURCE_KAFKA_API_KEY="<source_kafka_api_key>"
-$ export IMPORT_SOURCE_KAFKA_API_SECRET"<source_kafka_api_secret>"
+$ export IMPORT_SOURCE_KAFKA_API_SECRET="<source_kafka_api_secret>"
 $ export IMPORT_DESTINATION_KAFKA_REST_ENDPOINT="<destination_kafka_rest_endpoint>"
 $ export IMPORT_DESTINATION_KAFKA_API_KEY="<destination_kafka_api_key>"
 $ export IMPORT_DESTINATION_KAFKA_API_SECRET="<destination_kafka_api_secret>"
