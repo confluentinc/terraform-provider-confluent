@@ -175,6 +175,24 @@ func waitForConnectorToChangeStatus(ctx context.Context, c *Client, displayName,
 	return nil
 }
 
+func waitForKafkaMirrorTopicToChangeStatus(ctx context.Context, c *KafkaRestClient, clusterId, linkName, mirrorTopicName, currentStatus, targetStatus string) error {
+	stateConf := &resource.StateChangeConf{
+		Pending:      []string{currentStatus},
+		Target:       []string{targetStatus},
+		Refresh:      kafkaMirrorTopicUpdateStatus(c.apiContext(ctx), c, clusterId, linkName, mirrorTopicName),
+		Timeout:      5 * time.Minute,
+		Delay:        2 * time.Second,
+		PollInterval: 1 * time.Minute,
+	}
+
+	kafkaMirrorTopicId := createKafkaMirrorTopicId(clusterId, linkName, mirrorTopicName)
+	tflog.Debug(ctx, fmt.Sprintf("Waiting for Kafka Mirror Topic %q to be deleted", kafkaMirrorTopicId), map[string]interface{}{kafkaMirrorTopicLoggingKey: kafkaMirrorTopicId})
+	if _, err := stateConf.WaitForStateContext(c.apiContext(ctx)); err != nil {
+		return err
+	}
+	return nil
+}
+
 func waitForPeeringToProvision(ctx context.Context, c *Client, environmentId, peeringId string) error {
 	stateConf := &resource.StateChangeConf{
 		Pending: []string{stateProvisioning},
@@ -263,6 +281,24 @@ func waitForKafkaTopicToBeDeleted(ctx context.Context, c *KafkaRestClient, topic
 	return nil
 }
 
+func waitForKafkaMirrorTopicToBeDeleted(ctx context.Context, c *KafkaRestClient, linkName, mirrorTopicName string) error {
+	stateConf := &resource.StateChangeConf{
+		Pending:      []string{stateInProgress},
+		Target:       []string{stateDone},
+		Refresh:      kafkaMirrorTopicDeleteStatus(c.apiContext(ctx), c, linkName, mirrorTopicName),
+		Timeout:      1 * time.Hour,
+		Delay:        10 * time.Second,
+		PollInterval: 1 * time.Minute,
+	}
+
+	kafkaMirrorTopicId := createKafkaMirrorTopicId(c.clusterId, linkName, mirrorTopicName)
+	tflog.Debug(ctx, fmt.Sprintf("Waiting for Kafka Topic %q to be deleted", kafkaMirrorTopicId), map[string]interface{}{kafkaMirrorTopicLoggingKey: kafkaMirrorTopicId})
+	if _, err := stateConf.WaitForStateContext(c.apiContext(ctx)); err != nil {
+		return err
+	}
+	return nil
+}
+
 func kafkaTopicDeleteStatus(ctx context.Context, c *KafkaRestClient, topicName string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
 		kafkaTopic, resp, err := c.apiClient.TopicV3Api.GetKafkaTopic(c.apiContext(ctx), c.clusterId, topicName).Execute()
@@ -280,6 +316,64 @@ func kafkaTopicDeleteStatus(ctx context.Context, c *KafkaRestClient, topicName s
 			}
 		}
 		return kafkaTopic, stateInProgress, nil
+	}
+}
+
+func kafkaMirrorTopicDeleteStatus(ctx context.Context, c *KafkaRestClient, linkName, mirrorTopicName string) resource.StateRefreshFunc {
+	return func() (result interface{}, s string, err error) {
+		kafkaTopic, resp, err := c.apiClient.ClusterLinkingV3Api.ReadKafkaMirrorTopic(c.apiContext(ctx), c.clusterId, linkName, mirrorTopicName).Execute()
+		kafkaMirrorTopicId := createKafkaMirrorTopicId(c.clusterId, linkName, mirrorTopicName)
+		if err != nil {
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Kafka Mirror Topic %q: %s", kafkaMirrorTopicId, createDescriptiveError(err)), map[string]interface{}{kafkaMirrorTopicLoggingKey: kafkaMirrorTopicId})
+
+			// 404 means that the topic has been deleted
+			isResourceNotFound := ResponseHasExpectedStatusCode(resp, http.StatusNotFound)
+			if isResourceNotFound {
+				// Result (the 1st argument) can't be nil
+				return 0, stateDone, nil
+			} else {
+				return nil, stateFailed, err
+			}
+		}
+		return kafkaTopic, stateInProgress, nil
+	}
+}
+
+func waitForClusterLinkToBeDeleted(ctx context.Context, c *KafkaRestClient, linkName string) error {
+	stateConf := &resource.StateChangeConf{
+		Pending:      []string{stateInProgress},
+		Target:       []string{stateDone},
+		Refresh:      clusterLinkDeleteStatus(c.apiContext(ctx), c, linkName),
+		Timeout:      1 * time.Hour,
+		Delay:        10 * time.Second,
+		PollInterval: 1 * time.Minute,
+	}
+
+	topicId := createClusterLinkId(c.clusterId, linkName)
+	tflog.Debug(ctx, fmt.Sprintf("Waiting for Cluster Link %q to be deleted", topicId), map[string]interface{}{clusterLinkLoggingKey: topicId})
+	if _, err := stateConf.WaitForStateContext(c.apiContext(ctx)); err != nil {
+		return err
+	}
+	return nil
+}
+
+func clusterLinkDeleteStatus(ctx context.Context, c *KafkaRestClient, linkName string) resource.StateRefreshFunc {
+	return func() (result interface{}, s string, err error) {
+		clusterLink, resp, err := c.apiClient.ClusterLinkingV3Api.GetKafkaLink(c.apiContext(ctx), c.clusterId, linkName).Execute()
+		clusterLinkId := createClusterLinkId(c.clusterId, linkName)
+		if err != nil {
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Cluster Link %q: %s", clusterLinkId, createDescriptiveError(err)), map[string]interface{}{clusterLinkLoggingKey: clusterLinkId})
+
+			// 404 means that the cluster link has been deleted
+			isResourceNotFound := ResponseHasExpectedStatusCode(resp, http.StatusNotFound)
+			if isResourceNotFound {
+				// Result (the 1st argument) can't be nil
+				return 0, stateDone, nil
+			} else {
+				return nil, stateFailed, err
+			}
+		}
+		return clusterLink, stateInProgress, nil
 	}
 }
 
@@ -406,6 +500,19 @@ func connectorUpdateStatus(ctx context.Context, c *Client, displayName, environm
 			return nil, stateUnknown, err
 		}
 		return connector, connector.Connector.GetState(), nil
+	}
+}
+
+func kafkaMirrorTopicUpdateStatus(ctx context.Context, c *KafkaRestClient, clusterId, linkName, mirrorTopicName string) resource.StateRefreshFunc {
+	return func() (result interface{}, s string, err error) {
+		mirrorKafkaTopic, _, err := c.apiClient.ClusterLinkingV3Api.ReadKafkaMirrorTopic(c.apiContext(ctx), clusterId, linkName, mirrorTopicName).Execute()
+		kafkaMirrorTopicId := createKafkaMirrorTopicId(clusterId, linkName, mirrorTopicName)
+
+		if err != nil {
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Kafka Mirror Topic %q: %s", kafkaMirrorTopicId, createDescriptiveError(err)), map[string]interface{}{kafkaMirrorTopicLoggingKey: kafkaMirrorTopicId})
+			return nil, stateUnknown, err
+		}
+		return mirrorKafkaTopic, string(mirrorKafkaTopic.GetMirrorStatus()), nil
 	}
 }
 

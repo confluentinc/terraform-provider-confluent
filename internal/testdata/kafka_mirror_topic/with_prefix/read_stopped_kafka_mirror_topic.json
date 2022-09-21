@@ -1,0 +1,44 @@
+{
+  "kind": "KafkaMirrorData",
+  "metadata": {
+    "self": "https://pkc-3588w.us-east-1.aws.confluent.cloud/kafka/v3/clusters/lkc-81knqq/links/ui-test/mirrors/us_orders"
+  },
+  "link_name": "ui-test",
+  "mirror_topic_name": "us_orders",
+  "source_topic_name": "orders",
+  "num_partitions": 6,
+  "mirror_lags": [
+    {
+      "partition": 0,
+      "lag": 0,
+      "last_source_fetch_offset": -1
+    },
+    {
+      "partition": 1,
+      "lag": 0,
+      "last_source_fetch_offset": -1
+    },
+    {
+      "partition": 2,
+      "lag": 0,
+      "last_source_fetch_offset": -1
+    },
+    {
+      "partition": 3,
+      "lag": 0,
+      "last_source_fetch_offset": -1
+    },
+    {
+      "partition": 4,
+      "lag": 0,
+      "last_source_fetch_offset": -1
+    },
+    {
+      "partition": 5,
+      "lag": 0,
+      "last_source_fetch_offset": -1
+    }
+  ],
+  "mirror_status": "STOPPED",
+  "state_time_ms": 1662878304410
+}

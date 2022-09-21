@@ -57,6 +57,8 @@ const (
 	ksqlClusterLoggingKey       = "ksql_cluster_id"
 	identityProviderLoggingKey  = "identity_provider_id"
 	identityPoolLoggingKey      = "identity_pool_id"
+	clusterLinkLoggingKey       = "cluster_link_id"
+	kafkaMirrorTopicLoggingKey  = "kafka_mirror_topic_id"
 )
 
 func (c *Client) apiKeysApiContext(ctx context.Context) context.Context {

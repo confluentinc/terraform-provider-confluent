@@ -1,0 +1,12 @@
+{
+  "kind": "KafkaLinkData",
+  "metadata": {
+    "self": "https://pkc-3588w.us-east-1.aws.confluent.cloud/kafka/v3/clusters/lkc-81knqq/links/ui-test"
+  },
+  "source_cluster_id": "lkc-nv0zqv",
+  "destination_cluster_id": null,
+  "link_name": "ui-test",
+  "link_id": "ab3d070c-457e-433d-81e5-a3c5a5c59025",
+  "cluster_link_id": "qz0HDEV-Qz2B5aPFpcWQJQ",
+  "topic_names": []
+}

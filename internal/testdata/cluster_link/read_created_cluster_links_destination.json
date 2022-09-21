@@ -1,0 +1,45 @@
+{
+  "kind": "KafkaLinkDataList",
+  "metadata": {
+    "self": "https://pkc-3588w.us-east-1.aws.confluent.cloud/kafka/v3/clusters/lkc-81knqq/links",
+    "next": null
+  },
+  "data": [
+    {
+      "kind": "KafkaLinkData",
+      "metadata": {
+        "self": "https://pkc-3588w.us-east-1.aws.confluent.cloud/kafka/v3/clusters/lkc-81knqq/links/api-link"
+      },
+      "source_cluster_id": "lkc-nv0zqv",
+      "destination_cluster_id": null,
+      "link_name": "api-link",
+      "link_id": "ddc353bc-0b0f-4f63-a9cc-c1eca61d19dd",
+      "cluster_link_id": "3cNTvAsPT2OpzMHsph0Z3Q",
+      "topic_names": []
+    },
+    {
+      "kind": "KafkaLinkData",
+      "metadata": {
+        "self": "https://pkc-3588w.us-east-1.aws.confluent.cloud/kafka/v3/clusters/lkc-81knqq/links/ui-test"
+      },
+      "source_cluster_id": "lkc-nv0zqv",
+      "destination_cluster_id": null,
+      "link_name": "ui-test",
+      "link_id": "ab3d070c-457e-433d-81e5-a3c5a5c59025",
+      "cluster_link_id": "qz0HDEV-Qz2B5aPFpcWQJQ",
+      "topic_names": []
+    },
+    {
+      "kind": "KafkaLinkData",
+      "metadata": {
+        "self": "https://pkc-3588w.us-east-1.aws.confluent.cloud/kafka/v3/clusters/lkc-81knqq/links/api-link-2"
+      },
+      "source_cluster_id": "lkc-nv0zqv",
+      "destination_cluster_id": null,
+      "link_name": "api-link-2",
+      "link_id": "9185f9f2-3b50-4b8f-b600-239f3770db6a",
+      "cluster_link_id": "kYX58jtQS4-2ACOfN3Dbag",
+      "topic_names": []
+    }
+  ]
+}

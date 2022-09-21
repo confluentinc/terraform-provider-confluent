@@ -145,6 +145,7 @@ func New(version string) func() *schema.Provider {
 			},
 			ResourcesMap: map[string]*schema.Resource{
 				"confluent_api_key":             apiKeyResource(),
+				"confluent_cluster_link":        clusterLinkResource(),
 				"confluent_kafka_cluster":       kafkaResource(),
 				"confluent_environment":         environmentResource(),
 				"confluent_identity_pool":       identityPoolResource(),
@@ -153,6 +154,7 @@ func New(version string) func() *schema.Provider {
 				"confluent_connector":           connectorResource(),
 				"confluent_service_account":     serviceAccountResource(),
 				"confluent_kafka_topic":         kafkaTopicResource(),
+				"confluent_kafka_mirror_topic":  kafkaMirrorTopicResource(),
 				"confluent_kafka_acl":           kafkaAclResource(),
 				"confluent_network":             networkResource(),
 				"confluent_peering":             peeringResource(),
