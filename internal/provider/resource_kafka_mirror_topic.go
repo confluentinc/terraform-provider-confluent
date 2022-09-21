@@ -30,13 +30,14 @@ import (
 )
 
 const (
-	paramClusterLink      = "cluster_link"
-	paramMirrorTopicName  = "mirror_topic_name"
-	paramSourceKafkaTopic = "source_kafka_topic"
-	stateActive           = "ACTIVE"
-	stateStopped          = "STOPPED"
-	stateFailedOver       = "FAILED_OVER"
-	statePromoted         = "PROMOTED"
+	paramClusterLink                 = "cluster_link"
+	paramMirrorTopicName             = "mirror_topic_name"
+	paramSourceKafkaTopic            = "source_kafka_topic"
+	stateActive                      = "ACTIVE"
+	stateStopped                     = "STOPPED"
+	stateFailedOver                  = "FAILED_OVER"
+	statePromoted                    = "PROMOTED"
+	paramKafkaMirrorTopicCredentials = "kafka_cluster.0.credentials"
 )
 
 var acceptedKafkaMirrorTopicStates = []string{stateActive, statePaused, stateFailedOver, statePromoted}
@@ -270,9 +271,8 @@ func kafkaMirrorTopicImport(ctx context.Context, d *schema.ResourceData, meta in
 }
 
 func kafkaMirrorTopicUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	// TODO: add support for credentials update
-	if d.HasChangesExcept(paramStatus) {
-		return diag.Errorf("error updating Kafka Mirror Topic %q: only %q attribute can be updated for Connector", d.Id(), paramStatus)
+	if d.HasChangesExcept(paramKafkaCluster, paramKafkaMirrorTopicCredentials, paramStatus) {
+		return diag.Errorf("error updating Kafka Mirror Topic %q: only %q and %q attributes can be updated for Kafka Mirror Topic", d.Id(), paramKafkaMirrorTopicCredentials, paramStatus)
 	}
 	kafkaRestClient, err := createKafkaRestClientFromKafkaBlock(d, meta)
 	if err != nil {
@@ -443,7 +443,6 @@ func mirrorTopicKafkaClusterBlockSchema() *schema.Schema {
 		MinItems: 1,
 		MaxItems: 1,
 		Required: true,
-		ForceNew: true,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				paramId: {

@@ -57,6 +57,9 @@ const (
 	importSourceKafkaBootstrapEndpointEnvVar      = "IMPORT_SOURCE_KAFKA_BOOTSTRAP_ENDPOINT"
 	importDestinationKafkaRestEndpointEnvVar      = "IMPORT_DESTINATION_KAFKA_REST_ENDPOINT"
 	importDestinationKafkaBootstrapEndpointEnvVar = "IMPORT_DESTINATION_KAFKA_BOOTSTRAP_ENDPOINT"
+
+	paramSourceKafkaCredentials      = "source_kafka_cluster.0.credentials"
+	paramDestinationKafkaCredentials = "destination_kafka_cluster.0.credentials"
 )
 
 var sourceKafkaCredentialsBlockKey = fmt.Sprintf("%s.0.%s.#", paramSourceKafkaCluster, paramCredentials)
@@ -66,7 +69,7 @@ func clusterLinkResource() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: clusterLinkCreate,
 		ReadContext:   clusterLinkRead,
-		// TODO: add an update to support credentials update
+		UpdateContext: clusterLinkUpdate,
 		DeleteContext: clusterLinkDelete,
 		Importer: &schema.ResourceImporter{
 			StateContext: clusterLinkImport,
@@ -250,6 +253,13 @@ func setClusterLinkAttributes(d *schema.ResourceData, c *KafkaRestClient, cluste
 
 	d.SetId(createClusterLinkId(c.clusterId, clusterLink.LinkName))
 	return d, nil
+}
+
+func clusterLinkUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	if d.HasChangesExcept(paramSourceKafkaCluster, paramSourceKafkaCredentials, paramDestinationKafkaCluster, paramDestinationKafkaCredentials) {
+		return diag.Errorf("error updating Cluster Link %q: only %q and %q attributes can be updated for Cluster Link", d.Id(), paramSourceKafkaCredentials, paramDestinationKafkaCredentials)
+	}
+	return clusterLinkRead(ctx, d, meta)
 }
 
 func clusterLinkDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -456,7 +466,6 @@ func clusterLinkKafkaClusterBlockSchema(blockName string) *schema.Schema {
 		MinItems: 1,
 		MaxItems: 1,
 		Required: true,
-		ForceNew: true,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				paramId: {
