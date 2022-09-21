@@ -86,8 +86,6 @@ In addition to the preceding arguments, the following attributes are exported:
 
 ## Import
 
--> **Note:** `IMPORT_KAFKA_API_KEY` (`kafka_cluster.credentials.key`), `IMPORT_KAFKA_API_SECRET` (`kafka_cluster.credentials.secret`), and `IMPORT_KAFKA_REST_ENDPOINT` (`kafka_cluster.rest_endpoint`) environment variables must be set before importing a Kafka mirror topic.
-
 You can import a Kafka mirror topic by using the cluster link name, cluster link mode, cluster link connection mode,
 source Kafka cluster ID, and destination Kafka cluster ID, in the format `<Cluster link name>/<Cluster link mode>/<Cluster connection mode>/<Source Kafka cluster ID>/<Destination Kafka cluster ID>`, for example:
 
