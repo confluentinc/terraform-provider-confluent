@@ -42,7 +42,7 @@ resource "confluent_role_binding" "cluster-example-rb" {
 resource "confluent_role_binding" "topic-example-rb" {
   principal   = "User:${confluent_service_account.test.id}"
   role_name   = "DeveloperWrite"
-  crn_pattern = "${confluent_kafka_cluster.basic.rbac_crn}/kafka=${confluent_kafka_cluster.standard.id}/topic=${confluent_kafka_topic.orders.topic_name}"
+  crn_pattern = "${confluent_kafka_cluster.standard.rbac_crn}/kafka=${confluent_kafka_cluster.standard.id}/topic=${confluent_kafka_topic.orders.topic_name}"
 }
 
 resource "confluent_role_binding" "group-example-rb" {
@@ -52,6 +52,16 @@ resource "confluent_role_binding" "group-example-rb" {
   // https://docs.confluent.io/confluent-cli/current/command-reference/kafka/topic/confluent_kafka_topic_consume.html
   // Update it to match your target consumer group ID.
   crn_pattern = "${confluent_kafka_cluster.basic.rbac_crn}/kafka=${confluent_kafka_cluster.standard.id}/group=confluent_cli_consumer_*"
+}
+
+resource "confluent_role_binding" "connector-example-rb" {
+  principal   = "User:${confluent_service_account.test.id}"
+  role_name   = "DeveloperRead"
+  crn_pattern = "${confluent_kafka_cluster.standard.rbac_crn}/connector=${local.connector_name}"
+}
+
+locals {
+  connector_name = lookup(confluent_connector.test.config_nonsensitive, "name", "\"name\" attribute is missing")
 }
 ```
 
