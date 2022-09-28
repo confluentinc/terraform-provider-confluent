@@ -14,21 +14,7 @@
 
    * Remove the `confluent_kafka_topic` resource. These resources are provisioned using the Kafka REST API, which is only accessible from the private network.
 
-3. Apply Terraform configuration in 2 steps:
-
-    ```
-    # Creates an environment and a network
-    terraform apply -target=confluent_network.private-service-connect
-    ```
-
-   In order to apply remaining changes run:
-
-    ```
-    # Creates others resources (except already created environment and network) declared in main.tf
-    terraform apply
-    ```
-
-4. One common deployment workflow for environments with private networking is as follows:
+3. One common deployment workflow for environments with private networking is as follows:
 
    * A initial (centrally-run) Terraform deployment provisions infrastructure: network, Kafka cluster, and other resources on cloud provider of your choice to setup private network connectivity (like DNS records)
 
@@ -37,4 +23,4 @@
    * Note that RBAC role bindings can be provisioned in either the first or second step, as they are provisioned through the [Confluent Cloud API](https://docs.confluent.io/cloud/current/api.html), not the [Kafka REST API](https://docs.confluent.io/cloud/current/api.html#tag/Topic-(v3))
 
 
-5. See [Use GCP Private Service Connect](https://docs.confluent.io/cloud/current/networking/private-links/gcp-private-service-connect.html) for more details.
+4. See [Use GCP Private Service Connect](https://docs.confluent.io/cloud/current/networking/private-links/gcp-private-service-connect.html) for more details.

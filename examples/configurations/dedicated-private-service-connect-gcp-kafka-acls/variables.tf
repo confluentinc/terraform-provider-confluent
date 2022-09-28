@@ -28,3 +28,8 @@ variable "customer_subnetwork_name" {
   description = "The subnetwork name to provision Private Service Connect endpoint to Confluent Cloud"
   type        = string
 }
+
+variable "subnet_name_by_zone" {
+  description = "A map of Zone to Subnet Name"
+  type        = map(string)
+}

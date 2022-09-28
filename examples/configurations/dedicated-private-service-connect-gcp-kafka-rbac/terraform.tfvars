@@ -4,6 +4,13 @@ customer_project_id        = "superb-gear-347917"
 # The region of Confluent Cloud Network
 region                     = "us-central1"
 
+# A map of Zone to Subnet Name
+subnet_name_by_zone = {
+  "us-central1-a" = "default",
+  "us-central1-b" = "default",
+  "us-central1-c" = "default",
+}
+
 # The VPC network name that you want to connect to Confluent Cloud Cluster
 customer_vpc_network       = "default"
 

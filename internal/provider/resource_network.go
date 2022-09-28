@@ -486,11 +486,11 @@ func validateCidr(cidr, cloud string, connectionTypes []string) error {
 	return nil
 }
 
-// zones can only be specified for AWS networks used with PrivateLink
+// zones can only be specified for AWS networks used with PrivateLink or for GCP networks used with Private Service Connect
 func validateZones(zones []string, cloud string, connectionTypes []string) error {
-	isAwsPrivateLink := cloud == strings.ToUpper(paramAws) && stringInSlice(connectionTypePrivateLink, connectionTypes, false)
-	if len(zones) > 0 && !isAwsPrivateLink {
-		return fmt.Errorf("zones can only be specified for AWS networks used with PrivateLink")
+	isAwsPrivateLinkOrGcpPrivateServiceConnect := (cloud == strings.ToUpper(paramAws) || cloud == strings.ToUpper(paramGcp)) && stringInSlice(connectionTypePrivateLink, connectionTypes, false)
+	if len(zones) > 0 && !isAwsPrivateLinkOrGcpPrivateServiceConnect {
+		return fmt.Errorf("zones can only be specified for AWS networks used with PrivateLink or for GCP networks used with Private Service Connect")
 	}
 	return nil
 }
