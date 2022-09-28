@@ -22,9 +22,10 @@ import (
 
 var (
 	// Injected from linker flags like `go build -ldflags "-X main.version=$VERSION" -X ...`
-	version = ""
+	version   = ""
+	userAgent = ""
 )
 
 func main() {
-	plugin.Serve(&plugin.ServeOpts{ProviderFunc: provider.New(version)})
+	plugin.Serve(&plugin.ServeOpts{ProviderFunc: provider.New(version, userAgent)})
 }

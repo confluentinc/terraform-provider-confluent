@@ -83,7 +83,7 @@ func init() {
 	}
 }
 
-func New(version string) func() *schema.Provider {
+func New(version, userAgent string) func() *schema.Provider {
 	return func() *schema.Provider {
 		provider := &schema.Provider{
 			Schema: map[string]*schema.Schema{
@@ -164,7 +164,7 @@ func New(version string) func() *schema.Provider {
 		}
 
 		provider.ConfigureContextFunc = func(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
-			return providerConfigure(ctx, d, provider, version)
+			return providerConfigure(ctx, d, provider, version, userAgent)
 		}
 
 		return provider
@@ -212,7 +212,7 @@ func environmentDataSourceSchema() *schema.Schema {
 	}
 }
 
-func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Provider, providerVersion string) (interface{}, diag.Diagnostics) {
+func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Provider, providerVersion, additionalUserAgent string) (interface{}, diag.Diagnostics) {
 	tflog.Info(ctx, "Initializing Terraform Provider for Confluent Cloud")
 	endpoint := d.Get("endpoint").(string)
 	cloudApiKey := d.Get("cloud_api_key").(string)
@@ -230,6 +230,9 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	}
 
 	userAgent := p.UserAgent(terraformProviderUserAgent, fmt.Sprintf("%s (https://confluent.cloud; support@confluent.io)", providerVersion))
+	if additionalUserAgent != "" {
+		userAgent = fmt.Sprintf("%s %s", additionalUserAgent, userAgent)
+	}
 
 	apiKeysCfg := apikeys.NewConfiguration()
 	cmkCfg := cmk.NewConfiguration()

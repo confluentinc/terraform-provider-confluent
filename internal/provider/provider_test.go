@@ -31,7 +31,7 @@ const (
 )
 
 func init() {
-	testAccProvider = New(testVersion)()
+	testAccProvider = New(testVersion, "")()
 	testAccProviders = map[string]*schema.Provider{
 		"confluent": testAccProvider,
 	}
@@ -46,7 +46,7 @@ func init() {
 }
 
 func TestProvider_InternalValidate(t *testing.T) {
-	if err := New(testVersion)().InternalValidate(); err != nil {
+	if err := New(testVersion, "")().InternalValidate(); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 }
