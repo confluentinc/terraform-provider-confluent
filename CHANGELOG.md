@@ -1,3 +1,13 @@
+## 1.6.0 (September 28, 2022)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.5.0...v1.6.0)
+
+**New features:**
+* Updated `dedicated-privatelink-aws-kafka` and `dedicated-privatelink-azure-kafka` examples to make it possible to run them in a single `terraform apply` step.
+
+**Bug fixes:**
+* Updated docs.
+
 ## 1.5.0 (September 21, 2022)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.4.0...v1.5.0)
