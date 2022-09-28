@@ -14,14 +14,7 @@
 
     * Remove the `confluent_kafka_topic` resource. These resources are provisioned using the Kafka REST API, which is only accessible from the private network.
 
-3. Apply Terraform configuration in 2 steps:
-
-    ```
-    # Creates an environment and a network
-    terraform apply -target=confluent_network.private-link
-    ```
-
-    If you run into
+3. If you run into
 
     ```
     Error: Invalid function argument
@@ -49,13 +42,6 @@
       --vnet-name myVirtualNetwork
     ```
     For more information, see [Disable network policy](https://docs.microsoft.com/en-us/azure/private-link/disable-private-endpoint-network-policy).
-
-    In order to apply remaining changes run:
-
-    ```
-    # Creates others resources (except already created environment and network) declared in main.tf
-    terraform apply
-    ```
 
 4. One common deployment workflow for environments with private networking is as follows:
 

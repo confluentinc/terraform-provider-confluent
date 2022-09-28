@@ -29,8 +29,6 @@ resource "confluent_network" "private-link" {
   environment {
     id = confluent_environment.staging.id
   }
-
-  lifecycle { ignore_changes = [display_name, ] }
 }
 
 resource "confluent_private_link_access" "azure" {
@@ -316,7 +314,7 @@ resource "azurerm_private_dns_zone" "hz" {
 }
 
 resource "azurerm_private_endpoint" "endpoint" {
-  for_each = confluent_network.private-link.azure[0].private_link_service_aliases
+  for_each = var.subnet_name_by_zone
 
   name                = "confluent-${local.network_id}-${each.key}"
   location            = var.region
@@ -327,7 +325,7 @@ resource "azurerm_private_endpoint" "endpoint" {
   private_service_connection {
     name                              = "confluent-${local.network_id}-${each.key}"
     is_manual_connection              = true
-    private_connection_resource_alias = each.value
+    private_connection_resource_alias = lookup(confluent_network.private-link.azure[0].private_link_service_aliases, each.key, "\n\nerror: ${each.key} subnet is missing from CCN's Private Link service aliases")
     request_message                   = "PL"
   }
 }
@@ -350,7 +348,7 @@ resource "azurerm_private_dns_a_record" "rr" {
 }
 
 resource "azurerm_private_dns_a_record" "zonal" {
-  for_each = confluent_network.private-link.azure[0].private_link_service_aliases
+  for_each = var.subnet_name_by_zone
 
   name                = "*.az${each.key}"
   zone_name           = azurerm_private_dns_zone.hz.name
