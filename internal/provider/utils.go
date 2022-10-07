@@ -28,8 +28,10 @@ import (
 	mds "github.com/confluentinc/ccloud-sdk-go-v2/mds/v2"
 	net "github.com/confluentinc/ccloud-sdk-go-v2/networking/v1"
 	org "github.com/confluentinc/ccloud-sdk-go-v2/org/v2"
+	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/go-retryablehttp"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"io"
 	"net/http"
@@ -41,24 +43,25 @@ import (
 )
 
 const (
-	crnKafkaSuffix              = "/kafka="
-	kafkaAclLoggingKey          = "kafka_acl_id"
-	kafkaClusterLoggingKey      = "kafka_cluster_id"
-	kafkaTopicLoggingKey        = "kafka_topic_id"
-	serviceAccountLoggingKey    = "service_account_id"
-	userLoggingKey              = "user_id"
-	environmentLoggingKey       = "environment_id"
-	roleBindingLoggingKey       = "role_binding_id"
-	apiKeyLoggingKey            = "api_key_id"
-	networkLoggingKey           = "network_key_id"
-	connectorLoggingKey         = "connector_key_id"
-	privateLinkAccessLoggingKey = "private_link_access_id"
-	peeringLoggingKey           = "peering_id"
-	ksqlClusterLoggingKey       = "ksql_cluster_id"
-	identityProviderLoggingKey  = "identity_provider_id"
-	identityPoolLoggingKey      = "identity_pool_id"
-	clusterLinkLoggingKey       = "cluster_link_id"
-	kafkaMirrorTopicLoggingKey  = "kafka_mirror_topic_id"
+	crnKafkaSuffix               = "/kafka="
+	kafkaAclLoggingKey           = "kafka_acl_id"
+	kafkaClusterLoggingKey       = "kafka_cluster_id"
+	kafkaClusterConfigLoggingKey = "kafka_cluster_config_id"
+	kafkaTopicLoggingKey         = "kafka_topic_id"
+	serviceAccountLoggingKey     = "service_account_id"
+	userLoggingKey               = "user_id"
+	environmentLoggingKey        = "environment_id"
+	roleBindingLoggingKey        = "role_binding_id"
+	apiKeyLoggingKey             = "api_key_id"
+	networkLoggingKey            = "network_key_id"
+	connectorLoggingKey          = "connector_key_id"
+	privateLinkAccessLoggingKey  = "private_link_access_id"
+	peeringLoggingKey            = "peering_id"
+	ksqlClusterLoggingKey        = "ksql_cluster_id"
+	identityProviderLoggingKey   = "identity_provider_id"
+	identityPoolLoggingKey       = "identity_pool_id"
+	clusterLinkLoggingKey        = "cluster_link_id"
+	kafkaMirrorTopicLoggingKey   = "kafka_mirror_topic_id"
 )
 
 func (c *Client) apiKeysApiContext(ctx context.Context) context.Context {
@@ -502,4 +505,20 @@ func convertToStringSlice(items []interface{}) []string {
 		stringItems[i] = fmt.Sprint(item)
 	}
 	return stringItems
+}
+
+func clusterSettingsKeysValidate(v interface{}, path cty.Path) diag.Diagnostics {
+	clusterSettingsMap := v.(map[string]interface{})
+
+	if len(clusterSettingsMap) == 0 {
+		return diag.Errorf("error creating / updating Cluster Config: %q block should not be empty", paramConfigs)
+	}
+
+	for clusterSetting, _ := range clusterSettingsMap {
+		if !stringInSlice(clusterSetting, editableClusterSettings, false) {
+			return diag.Errorf("error creating / updating Cluster Config: %q cluster setting is read-only and cannot be updated. "+
+				"Read %s for more details.", clusterSetting, docsClusterConfigUrl)
+		}
+	}
+	return nil
 }

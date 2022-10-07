@@ -1,0 +1,75 @@
+{
+  "kind": "KafkaClusterConfigList",
+  "metadata": {
+    "self": "https://pkc-qy65d.us-east-1.aws.confluent.cloud/kafka/v3/clusters/lkc-190073/broker-configs",
+    "next": null
+  },
+  "data": [
+    {
+      "kind": "KafkaClusterConfig",
+      "metadata": {
+        "self": "https://pkc-qy65d.us-east-1.aws.confluent.cloud/kafka/v3/clusters/lkc-190073/broker-configs/auto.create.topics.enable",
+        "resource_name": "crn:///kafka=lkc-190073/broker-config=auto.create.topics.enable"
+      },
+      "cluster_id": "lkc-190073",
+      "name": "auto.create.topics.enable",
+      "value": "false",
+      "is_read_only": false,
+      "is_sensitive": false,
+      "source": "DYNAMIC_DEFAULT_BROKER_CONFIG",
+      "synonyms": [
+        {
+          "name": "auto.create.topics.enable",
+          "value": "false",
+          "source": "DYNAMIC_DEFAULT_BROKER_CONFIG"
+        }
+      ],
+      "config_type": "BROKER",
+      "is_default": false
+    },
+    {
+      "kind": "KafkaClusterConfig",
+      "metadata": {
+        "self": "https://pkc-qy65d.us-east-1.aws.confluent.cloud/kafka/v3/clusters/lkc-190073/broker-configs/num.partitions",
+        "resource_name": "crn:///kafka=lkc-190073/broker-config=num.partitions"
+      },
+      "cluster_id": "lkc-190073",
+      "name": "num.partitions",
+      "value": "6",
+      "is_read_only": false,
+      "is_sensitive": false,
+      "source": "DYNAMIC_DEFAULT_BROKER_CONFIG",
+      "synonyms": [
+        {
+          "name": "num.partitions",
+          "value": "6",
+          "source": "DYNAMIC_DEFAULT_BROKER_CONFIG"
+        }
+      ],
+      "config_type": "BROKER",
+      "is_default": false
+    },
+    {
+      "kind": "KafkaClusterConfig",
+      "metadata": {
+        "self": "https://pkc-qy65d.us-east-1.aws.confluent.cloud/kafka/v3/clusters/lkc-190073/broker-configs/ssl.cipher.suites",
+        "resource_name": "crn:///kafka=lkc-190073/broker-config=ssl.cipher.suites"
+      },
+      "cluster_id": "lkc-190073",
+      "name": "ssl.cipher.suites",
+      "value": "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+      "is_read_only": true,
+      "is_sensitive": false,
+      "source": "DYNAMIC_DEFAULT_BROKER_CONFIG",
+      "synonyms": [
+        {
+          "name": "listener.name.external.ssl.cipher.suites",
+          "value": "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+          "source": "DYNAMIC_DEFAULT_BROKER_CONFIG"
+        }
+      ],
+      "config_type": "BROKER",
+      "is_default": false
+    }
+  ]
+}

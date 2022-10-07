@@ -438,7 +438,7 @@ func kafkaTopicUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 		// Extract 'old' and 'new' (include changes in TF configuration) topic settings
 		// * 'old' topic settings -- all topic settings from TF configuration _before_ changes / updates (currently set on Confluent Cloud)
 		// * 'new' topic settings -- all topic settings from TF configuration _after_ changes
-		oldTopicSettingsMap, newTopicSettingsMap := extractOldAndNewTopicSettings(d)
+		oldTopicSettingsMap, newTopicSettingsMap := extractOldAndNewSettings(d)
 
 		// Verify that no topic settings were removed (reset to its default value) in TF configuration which is an unsupported operation at the moment
 		for oldTopicSettingName := range oldTopicSettingsMap {
@@ -571,7 +571,7 @@ func loadTopicConfigs(ctx context.Context, d *schema.ResourceData, c *KafkaRestC
 	return config, nil
 }
 
-func extractOldAndNewTopicSettings(d *schema.ResourceData) (map[string]string, map[string]string) {
+func extractOldAndNewSettings(d *schema.ResourceData) (map[string]string, map[string]string) {
 	oldConfigs, newConfigs := d.GetChange(paramConfigs)
 	return convertToStringStringMap(oldConfigs.(map[string]interface{})), convertToStringStringMap(newConfigs.(map[string]interface{}))
 }
