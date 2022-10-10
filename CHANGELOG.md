@@ -1,3 +1,13 @@
+## 1.7.0 (October 10, 2022)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.6.0...v1.7.0)
+
+**New features:**
+* Added new `confluent_kafka_cluster_config` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_cluster_config) in an [Open Preview lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy) ([#73](https://github.com/confluentinc/terraform-provider-confluent/issues/73)).
+
+**Bug fixes:**
+* Updated docs.
+
 ## 1.6.0 (September 28, 2022)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.5.0...v1.6.0)
