@@ -4,8 +4,8 @@
   "kind": "PrivateLinkAccess",
   "metadata": {
     "created_at": "2021-11-26T18:40:19.258051Z",
-    "resource_name": "crn://devel.cpdev.cloud/organization=foo/environment=env-5wyjmz/network=n-5p59z6/private-link-access=pla-3prjy6",
-    "self": "https://api.devel.cpdev.cloud/networking/v1/private-link-accesses/pla-3prjy6?environment=env-5wyjmz",
+    "resource_name": "crn://confluent.cloud/organization=foo/environment=env-5wyjmz/network=n-5p59z6/private-link-access=pla-3prjy6",
+    "self": "https://api.confluent.cloud/networking/v1/private-link-accesses/pla-3prjy6?environment=env-5wyjmz",
     "updated_at": "2021-11-26T20:17:29.168045Z"
   },
   "spec": {
@@ -18,15 +18,15 @@
       "api_version": "v2",
       "id": "env-5wyjmz",
       "kind": "Environment",
-      "related": "https://api.devel.cpdev.cloud/v2/environments/env-5wyjmz",
-      "resource_name": "crn://devel.cpdev.cloud/organization=foo/environment=env-5wyjmz"
+      "related": "https://api.confluent.cloud/v2/environments/env-5wyjmz",
+      "resource_name": "crn://confluent.cloud/organization=foo/environment=env-5wyjmz"
     },
     "network": {
       "api_version": "networking/v1",
       "id": "n-5p59z6",
       "kind": "Network",
-      "related": "https://api.devel.cpdev.cloud/networking/v1/networks/n-5p59z6?environment=env-5wyjmz",
-      "resource_name": "crn://devel.cpdev.cloud/organization=foo/environment=env-5wyjmz/network=n-5p59z6"
+      "related": "https://api.confluent.cloud/networking/v1/networks/n-5p59z6?environment=env-5wyjmz",
+      "resource_name": "crn://confluent.cloud/organization=foo/environment=env-5wyjmz/network=n-5p59z6"
     }
   },
   "status": {

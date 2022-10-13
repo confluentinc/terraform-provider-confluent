@@ -1,0 +1,45 @@
+{
+  "api_version": "kafka-quotas/v1",
+  "id": "cq-e857e",
+  "kind": "ClientQuota",
+  "metadata": {
+    "created_at": "2022-09-29T05:59:25.252104Z",
+    "resource_name": "crn://confluent.cloud/organization=foo/client-quota=cq-e857e",
+    "self": "https://api.confluent.cloud/kafka-quotas/v1/client-quotas/cq-e857e",
+    "updated_at": "2022-09-29T06:58:00.764126Z"
+  },
+  "spec": {
+    "cluster": {
+      "api_version": "cmk/v2",
+      "environment": "env-nyyz3d",
+      "id": "lkc-03roj2",
+      "kind": "KafkaCluster",
+      "related": "https://api.confluent.cloud/cmk/v2/clusters/lkc-03roj2",
+      "resource_name": "crn://confluent.cloud/organization=foo/environment=env-nyyz3d/cloud-cluster=lkc-03roj2/kafka=lkc-03roj2"
+    },
+    "description": "test-updated",
+    "display_name": "QuotaForSA1-updated",
+    "environment": {
+      "api_version": "org/v2",
+      "environment": "env-nyyz3d",
+      "id": "env-nyyz3d",
+      "kind": "Environment",
+      "related": "https://api.confluent.cloud/org/v2/environments/env-nyyz3d",
+      "resource_name": "crn://confluent.cloud/organization=foo/environment=env-nyyz3d"
+    },
+    "principals": [
+      {
+        "api_version": "iam/v2",
+        "environment": "env-nyyz3d",
+        "id": "sa-rv1vo7",
+        "kind": "ServiceAccount",
+        "related": "https://api.confluent.cloud/iam/v2/service-accounts/sa-rv1vo7",
+        "resource_name": "crn://confluent.cloud/organization=foo/service-account=sa-rv1vo7"
+      }
+    ],
+    "throughput": {
+      "egress_byte_rate": "12281",
+      "ingress_byte_rate": "12280"
+    }
+  }
+}

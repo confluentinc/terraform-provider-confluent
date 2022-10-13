@@ -23,6 +23,7 @@ import (
 	iamv1 "github.com/confluentinc/ccloud-sdk-go-v2/iam/v1"
 	iam "github.com/confluentinc/ccloud-sdk-go-v2/iam/v2"
 	oidc "github.com/confluentinc/ccloud-sdk-go-v2/identity-provider/v2"
+	quotas "github.com/confluentinc/ccloud-sdk-go-v2/kafka-quotas/v1"
 	kafkarestv3 "github.com/confluentinc/ccloud-sdk-go-v2/kafkarest/v3"
 	ksql "github.com/confluentinc/ccloud-sdk-go-v2/ksql/v2"
 	mds "github.com/confluentinc/ccloud-sdk-go-v2/mds/v2"
@@ -43,25 +44,26 @@ import (
 )
 
 const (
-	crnKafkaSuffix               = "/kafka="
-	kafkaAclLoggingKey           = "kafka_acl_id"
-	kafkaClusterLoggingKey       = "kafka_cluster_id"
+	crnKafkaSuffix              = "/kafka="
+	kafkaAclLoggingKey          = "kafka_acl_id"
+	kafkaClusterLoggingKey      = "kafka_cluster_id"
 	kafkaClusterConfigLoggingKey = "kafka_cluster_config_id"
-	kafkaTopicLoggingKey         = "kafka_topic_id"
-	serviceAccountLoggingKey     = "service_account_id"
-	userLoggingKey               = "user_id"
-	environmentLoggingKey        = "environment_id"
-	roleBindingLoggingKey        = "role_binding_id"
-	apiKeyLoggingKey             = "api_key_id"
-	networkLoggingKey            = "network_key_id"
-	connectorLoggingKey          = "connector_key_id"
-	privateLinkAccessLoggingKey  = "private_link_access_id"
-	peeringLoggingKey            = "peering_id"
-	ksqlClusterLoggingKey        = "ksql_cluster_id"
-	identityProviderLoggingKey   = "identity_provider_id"
-	identityPoolLoggingKey       = "identity_pool_id"
-	clusterLinkLoggingKey        = "cluster_link_id"
-	kafkaMirrorTopicLoggingKey   = "kafka_mirror_topic_id"
+	kafkaTopicLoggingKey        = "kafka_topic_id"
+	serviceAccountLoggingKey    = "service_account_id"
+	userLoggingKey              = "user_id"
+	environmentLoggingKey       = "environment_id"
+	roleBindingLoggingKey       = "role_binding_id"
+	apiKeyLoggingKey            = "api_key_id"
+	networkLoggingKey           = "network_key_id"
+	connectorLoggingKey         = "connector_key_id"
+	privateLinkAccessLoggingKey = "private_link_access_id"
+	peeringLoggingKey           = "peering_id"
+	ksqlClusterLoggingKey       = "ksql_cluster_id"
+	identityProviderLoggingKey  = "identity_provider_id"
+	identityPoolLoggingKey      = "identity_pool_id"
+	clusterLinkLoggingKey       = "cluster_link_id"
+	kafkaMirrorTopicLoggingKey  = "kafka_mirror_topic_id"
+	kafkaClientQuotaLoggingKey  = "kafka_client_quota_id"
 )
 
 func (c *Client) apiKeysApiContext(ctx context.Context) context.Context {
@@ -177,6 +179,17 @@ func (c *Client) ksqlApiContext(ctx context.Context) context.Context {
 func (c *Client) oidcApiContext(ctx context.Context) context.Context {
 	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
 		return context.WithValue(context.Background(), oidc.ContextBasicAuth, oidc.BasicAuth{
+			UserName: c.cloudApiKey,
+			Password: c.cloudApiSecret,
+		})
+	}
+	tflog.Warn(ctx, "Could not find Cloud API Key")
+	return ctx
+}
+
+func (c *Client) quotasApiContext(ctx context.Context) context.Context {
+	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
+		return context.WithValue(context.Background(), quotas.ContextBasicAuth, quotas.BasicAuth{
 			UserName: c.cloudApiKey,
 			Password: c.cloudApiSecret,
 		})

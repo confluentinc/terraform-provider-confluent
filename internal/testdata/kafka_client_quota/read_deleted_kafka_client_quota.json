@@ -1,0 +1,10 @@
+{
+  "errors": [
+    {
+      "id": "3e74d64b8191ba20f32bb4e2ef059e5e",
+      "status": "404",
+      "detail": "resource not found",
+      "source": {}
+    }
+  ]
+}

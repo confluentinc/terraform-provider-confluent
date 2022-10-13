@@ -399,6 +399,10 @@ func extractStringValueFromBlock(d *schema.ResourceData, blockName string, attri
 	return d.Get(fmt.Sprintf("%s.0.%s", blockName, attribute)).(string)
 }
 
+func extractListOfStringsValueFromBlock(d *schema.ResourceData, blockName string, attribute string) []string {
+	return d.Get(fmt.Sprintf("%s.0.%s", blockName, attribute)).([]string)
+}
+
 func extractStringValueFromNestedBlock(d *schema.ResourceData, outerBlockName string, innerBlockName string, attribute string) string {
 	// d.Get() will return "" if the key is not present
 	return d.Get(fmt.Sprintf("%s.0.%s.0.%s", outerBlockName, innerBlockName, attribute)).(string)
