@@ -1,3 +1,13 @@
+## 1.8.0 (October 13, 2022)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.7.0...v1.8.0)
+
+**New features:**
+* Added new `confluent_kafka_client_quota` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_client_quota) in an [Early Access lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
+
+**Bug fixes:**
+* Updated docs.
+
 ## 1.7.0 (October 10, 2022)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.6.0...v1.7.0)
