@@ -484,11 +484,10 @@ func clusterLinkKafkaClusterBlockSchema(blockName string) *schema.Schema {
 					ExactlyOneOf: oneOfEndpointsKeys,
 				},
 				paramBootStrapEndpoint: {
-					Type:         schema.TypeString,
-					Optional:     true,
-					ForceNew:     true,
-					Description:  "The bootstrap endpoint used by Kafka clients to connect to the Kafka cluster. (e.g., `SASL_SSL://pkc-00000.us-central1.gcp.confluent.cloud:9092`).",
-					ValidateFunc: validation.StringMatch(regexp.MustCompile("^SASL_SSL://"), "the bootstrap endpoint must start with 'SASL_SSL://'"),
+					Type:        schema.TypeString,
+					Optional:    true,
+					ForceNew:    true,
+					Description: "The bootstrap endpoint used by Kafka clients to connect to the Kafka cluster. (e.g., `SASL_SSL://pkc-00000.us-central1.gcp.confluent.cloud:9092` or pkc-00000.us-central1.gcp.confluent.cloud:9092`).",
 					// A user should provide a value for either "paramRestEndpoint" or "paramBootStrapEndpoint" attribute
 					ExactlyOneOf: oneOfEndpointsKeys,
 				},
