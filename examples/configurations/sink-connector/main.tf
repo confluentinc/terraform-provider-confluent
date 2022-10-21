@@ -373,11 +373,15 @@ resource "confluent_connector" "sink" {
     id = confluent_kafka_cluster.basic.id
   }
 
+  // Block for custom *sensitive* configuration properties that are labelled with "Type: password" under "Configuration Properties" section in the docs:
+  // https://docs.confluent.io/cloud/current/connectors/cc-s3-sink.html#configuration-properties
   config_sensitive = {
     "aws.access.key.id"     = "***REDACTED***"
     "aws.secret.access.key" = "***REDACTED***"
   }
 
+  // Block for custom *nonsensitive* configuration properties that are *not* labelled with "Type: password" under "Configuration Properties" section in the docs:
+  // https://docs.confluent.io/cloud/current/connectors/cc-s3-sink.html#configuration-properties
   config_nonsensitive = {
     "topics"                   = confluent_kafka_topic.orders.topic_name
     "input.data.format"        = "JSON"

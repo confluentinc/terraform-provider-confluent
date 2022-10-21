@@ -64,11 +64,15 @@ resource "confluent_connector" "sink" {
     id = confluent_kafka_cluster.basic.id
   }
 
+  // Block for custom *sensitive* configuration properties that are labelled with "Type: password" under "Configuration Properties" section in the docs:
+  // https://docs.confluent.io/cloud/current/connectors/cc-s3-sink.html#configuration-properties
   config_sensitive = {
     "aws.access.key.id"     = "***REDACTED***"
     "aws.secret.access.key" = "***REDACTED***"
   }
 
+  // Block for custom *nonsensitive* configuration properties that are *not* labelled with "Type: password" under "Configuration Properties" section in the docs:
+  // https://docs.confluent.io/cloud/current/connectors/cc-s3-sink.html#configuration-properties
   config_nonsensitive = {
     "topics"                   = confluent_kafka_topic.orders.topic_name
     "input.data.format"        = "JSON"
@@ -110,10 +114,10 @@ The following arguments are supported:
   - `id` - (Required String) The ID of the Environment that the connector belongs to, for example, `env-abc123`.
 - `kafka_cluster` (Optional Configuration Block) supports the following:
   - `id` - (Required String) The ID of the Kafka cluster that the connector belongs to, for example, `lkc-abc123`.
-- `config_nonsensitive` - (Required Map) The custom connector _nonsensitive_ configuration settings to set:
+- `config_nonsensitive` - (Required Map) Block for custom *nonsensitive* configuration properties that are *not* labelled with "Type: password" under "Configuration Properties" section in [the docs](https://docs.confluent.io/cloud/current/connectors/index.html):
   - `name` - (Required String) The configuration setting name, for example, `connector.class`.
   - `value` - (Required String) The configuration setting value, for example, `S3_SINK`.
-- `config_sensitive` - (Required Map) The custom connector _sensitive_ configuration settings to set:
+- `config_sensitive` - (Required Map) Block for custom *sensitive* configuration properties that are labelled with "Type: password" under "Configuration Properties" section in [the docs](https://docs.confluent.io/cloud/current/connectors/index.html):
   - `name` - (Required String) The configuration setting name, for example, `aws.secret.access.key`.
   - `value` - (Required String, Sensitive) The configuration setting value, for example, `***REDACTED***`.
 - `status` (Optional String) The status of the connector (one of `"NONE"`, `"PROVISIONING"`, `"RUNNING"`, `"DEGRADED"`, `"FAILED"`, `"PAUSED"`, `"DELETED"`). Pausing (`"RUNNING" -> "PAUSED"`) and resuming (`"PAUSED" -> "RUNNING"`) a connector is supported via an update operation.

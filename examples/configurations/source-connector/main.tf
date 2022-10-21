@@ -283,8 +283,12 @@ resource "confluent_connector" "source" {
     id = confluent_kafka_cluster.basic.id
   }
 
+  // Block for custom *sensitive* configuration properties that are labelled with "Type: password" under "Configuration Properties" section in the docs:
+  // https://docs.confluent.io/cloud/current/connectors/cc-datagen-source.html#configuration-properties
   config_sensitive = {}
 
+  // Block for custom *nonsensitive* configuration properties that are *not* labelled with "Type: password" under "Configuration Properties" section in the docs:
+  // https://docs.confluent.io/cloud/current/connectors/cc-datagen-source.html#configuration-properties
   config_nonsensitive = {
     "connector.class"          = "DatagenSource"
     "name"                     = "DatagenSourceConnector_0"
