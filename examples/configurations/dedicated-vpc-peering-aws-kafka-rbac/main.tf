@@ -239,7 +239,7 @@ resource "aws_vpc_peering_connection_accepter" "peer" {
 
 # Find the routing table
 data "aws_route_tables" "rts" {
-  vpc_id = confluent_peering.aws.aws[0].vpc
+  vpc_id = var.vpc_id
 }
 
 resource "aws_route" "r" {
@@ -247,8 +247,4 @@ resource "aws_route" "r" {
   route_table_id            = each.key
   destination_cidr_block    = confluent_network.peering.cidr
   vpc_peering_connection_id = data.aws_vpc_peering_connection.accepter.id
-
-  depends_on = [
-    aws_vpc_peering_connection_accepter.peer
-  ]
 }
