@@ -2,6 +2,7 @@
 # The region of your VPC that you want to connect to Confluent Cloud Cluster
 # Cross-region AWS PrivateLink connections are not supported yet.
 region = "us-east-1"
+
 # The region of the AWS peer VPC.
 customer_region = "us-east-1"
 

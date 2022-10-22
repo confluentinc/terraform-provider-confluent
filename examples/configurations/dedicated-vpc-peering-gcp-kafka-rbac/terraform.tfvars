@@ -1,6 +1,7 @@
 # Cross-region access to Confluent Cloud is not supported when VPC peering is enabled with Google Cloud. Your VPC subnets and Confluent Cloud must be in the same region.
 # The region of Confluent Cloud Network
 region = ""
+
 # The region of the GCP peer VPC network
 customer_region = ""
 
