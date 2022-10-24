@@ -1,3 +1,15 @@
+## 1.9.0 (October 24, 2022)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.8.0...v1.9.0)
+
+**New features:**
+* Fixed "Error: plugin crashed!" that could be observed when creating instances of `confluent_connector`resource ([#119](https://github.com/confluentinc/terraform-provider-confluent/issues/119)).
+* Fixed input validation error for `confluent_cluster_link` resource ([#118](https://github.com/confluentinc/terraform-provider-confluent/issues/118)).
+* Updated [dedicated-vpc-peering-aws-kafka-acls](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/dedicated-vpc-peering-aws-kafka-acls) and [dedicated-vpc-peering-aws-kafka-rbac](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/dedicated-vpc-peering-aws-kafka-rbac) examples to make it possible to run them in a single `terraform apply` step.
+
+**Bug fixes:**
+* Updated docs.
+
 ## 1.8.0 (October 13, 2022)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.7.0...v1.8.0)
