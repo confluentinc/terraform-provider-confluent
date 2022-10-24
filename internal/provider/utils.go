@@ -44,26 +44,26 @@ import (
 )
 
 const (
-	crnKafkaSuffix              = "/kafka="
-	kafkaAclLoggingKey          = "kafka_acl_id"
-	kafkaClusterLoggingKey      = "kafka_cluster_id"
+	crnKafkaSuffix               = "/kafka="
+	kafkaAclLoggingKey           = "kafka_acl_id"
+	kafkaClusterLoggingKey       = "kafka_cluster_id"
 	kafkaClusterConfigLoggingKey = "kafka_cluster_config_id"
-	kafkaTopicLoggingKey        = "kafka_topic_id"
-	serviceAccountLoggingKey    = "service_account_id"
-	userLoggingKey              = "user_id"
-	environmentLoggingKey       = "environment_id"
-	roleBindingLoggingKey       = "role_binding_id"
-	apiKeyLoggingKey            = "api_key_id"
-	networkLoggingKey           = "network_key_id"
-	connectorLoggingKey         = "connector_key_id"
-	privateLinkAccessLoggingKey = "private_link_access_id"
-	peeringLoggingKey           = "peering_id"
-	ksqlClusterLoggingKey       = "ksql_cluster_id"
-	identityProviderLoggingKey  = "identity_provider_id"
-	identityPoolLoggingKey      = "identity_pool_id"
-	clusterLinkLoggingKey       = "cluster_link_id"
-	kafkaMirrorTopicLoggingKey  = "kafka_mirror_topic_id"
-	kafkaClientQuotaLoggingKey  = "kafka_client_quota_id"
+	kafkaTopicLoggingKey         = "kafka_topic_id"
+	serviceAccountLoggingKey     = "service_account_id"
+	userLoggingKey               = "user_id"
+	environmentLoggingKey        = "environment_id"
+	roleBindingLoggingKey        = "role_binding_id"
+	apiKeyLoggingKey             = "api_key_id"
+	networkLoggingKey            = "network_key_id"
+	connectorLoggingKey          = "connector_key_id"
+	privateLinkAccessLoggingKey  = "private_link_access_id"
+	peeringLoggingKey            = "peering_id"
+	ksqlClusterLoggingKey        = "ksql_cluster_id"
+	identityProviderLoggingKey   = "identity_provider_id"
+	identityPoolLoggingKey       = "identity_pool_id"
+	clusterLinkLoggingKey        = "cluster_link_id"
+	kafkaMirrorTopicLoggingKey   = "kafka_mirror_topic_id"
+	kafkaClientQuotaLoggingKey   = "kafka_client_quota_id"
 )
 
 func (c *Client) apiKeysApiContext(ctx context.Context) context.Context {
@@ -336,18 +336,20 @@ func createDescriptiveError(err error) error {
 		reflectedFailureValue := reflect.Indirect(reflectedFailure)
 		if reflectedFailureValue.IsValid() {
 			errs := reflectedFailureValue.FieldByName("Errors")
-			kafkaRestErr := reflectedFailureValue.FieldByName("Message")
+			kafkaRestOrConnectErr := reflectedFailureValue.FieldByName("Message")
 			if errs.Kind() == reflect.Slice && errs.Len() > 0 {
 				nest := errs.Index(0)
 				detailPtr := nest.FieldByName("Detail")
 				if detailPtr.IsValid() {
 					errorMessage = fmt.Sprintf("%s: %s", errorMessage, reflect.Indirect(detailPtr))
 				}
-			} else if kafkaRestErr.IsValid() {
-				detailPtr := kafkaRestErr.FieldByName("value")
+			} else if kafkaRestOrConnectErr.IsValid() && kafkaRestOrConnectErr.Kind() == reflect.Struct {
+				detailPtr := kafkaRestOrConnectErr.FieldByName("value")
 				if detailPtr.IsValid() {
 					errorMessage = fmt.Sprintf("%s: %s", errorMessage, reflect.Indirect(detailPtr))
 				}
+			} else if kafkaRestOrConnectErr.IsValid() && kafkaRestOrConnectErr.Kind() == reflect.Pointer {
+				errorMessage = fmt.Sprintf("%s: %s", errorMessage, reflect.Indirect(kafkaRestOrConnectErr))
 			}
 		}
 	}
