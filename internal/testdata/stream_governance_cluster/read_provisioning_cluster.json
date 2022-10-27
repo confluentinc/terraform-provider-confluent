@@ -1,0 +1,33 @@
+{
+  "api_version": "stream-governance/v2",
+  "id": "lsrc-755ogo",
+  "kind": "Cluster",
+  "metadata": {
+    "created_at": "2022-10-08T05:35:37.271962Z",
+    "resource_name": "crn://confluent.cloud/organization=1111aaaa-11aa-11aa-11aa-111111aaaaaa/environment=env-6w8d78/schema-registry=lsrc-755ogo",
+    "self": "https://api.confluent.cloud/stream-governance/v2/clusters/lsrc-755ogo",
+    "updated_at": "2022-10-08T05:35:37.271962Z"
+  },
+  "spec": {
+    "display_name": "Stream Governance Package",
+    "environment": {
+      "api_version": "org/v2",
+      "id": "env-6w8d78",
+      "kind": "Environment",
+      "related": "https://api.confluent.cloud/org/v2/environments/env-6w8d78",
+      "resource_name": "crn://confluent.cloud/organization=1111aaaa-11aa-11aa-11aa-111111aaaaaa/environment=env-6w8d78"
+    },
+    "http_endpoint": "https://psrc-y1111.us-west-2.aws.confluent.cloud",
+    "package": "ESSENTIALS",
+    "region": {
+      "api_version": "stream-governance/v2",
+      "id": "sgreg-1",
+      "kind": "Region",
+      "related": "https://api.confluent.cloud/stream-governance/v2/regions/sgreg-1",
+      "resource_name": "crn://confluent.cloud/stream-governance-region=sgreg-1"
+    }
+  },
+  "status": {
+    "phase": "PROVISIONING"
+  }
+}
