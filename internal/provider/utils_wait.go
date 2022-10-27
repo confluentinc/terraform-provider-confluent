@@ -147,7 +147,7 @@ func waitForConnectorToProvision(ctx context.Context, c *Client, displayName, en
 		Target:       []string{stateRunning},
 		Refresh:      connectorProvisionStatus(c.connectApiContext(ctx), c, displayName, environmentId, clusterId),
 		Timeout:      connectAPICreateTimeout,
-		Delay:        1 * time.Minute,
+		Delay:        6 * time.Minute,
 		PollInterval: 1 * time.Minute,
 	}
 
