@@ -1,3 +1,14 @@
+## 1.10.0 (October 26, 2022)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.9.0...v1.10.0)
+
+**New features:**
+* Added new `confluent_stream_governance_cluster` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_stream_governance_cluster) and a corresponding [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_stream_governance_cluster) in an [Open Preview lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy) ([#5](https://github.com/confluentinc/terraform-provider-confluent/issues/5)).
+
+**Bug fixes:**
+* Increased initial delay when provisioning `confluent_connector` ([#43](https://github.com/confluentinc/terraform-provider-confluent/issues/43)).
+* Updated docs.
+
 ## 1.9.0 (October 24, 2022)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.8.0...v1.9.0)
