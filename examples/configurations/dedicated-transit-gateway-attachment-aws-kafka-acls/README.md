@@ -22,4 +22,4 @@
 
     * Note that RBAC role bindings can be provisioned in either the first or second step, as they are provisioned through the [Confluent Cloud API](https://docs.confluent.io/cloud/current/api.html), not the [Kafka REST API](https://docs.confluent.io/cloud/current/api.html#tag/Topic-(v3))
 
-4. See [VPC Peering on AWS](https://docs.confluent.io/cloud/current/networking/peering/aws-peering.html) for more details.
+4. See [Use AWS Transit Gateway](https://docs.confluent.io/cloud/current/networking/aws-transit-gateway.html) for more details.
