@@ -68,15 +68,16 @@ In addition to the preceding arguments, the following attributes are exported:
   On Azure, zones are Confluent-chosen names (for example, `1`, `2`, `3`) since Azure does not have universal zone identifiers.
 - `resource_name` - (Required String) The Confluent Resource Name of the Network.
 - `aws` - (Optional Configuration Block) The AWS-specific network details if available. It supports the following:
-  - `vpc` - (Required String) The AWS VPC ID for the network.
-  - `private_link_endpoint_service` - (Optional String) The AWS VPC endpoint service for the network (used for Private Link) if available.
+  - `vpc` - (Required String) The Confluent Cloud VPC ID.
+  - `account` - (Required String) The AWS account ID associated with the Confluent Cloud VPC.
+  - `private_link_endpoint_service` - (Optional String) The endpoint service of the Confluent Cloud VPC (used for PrivateLink) if available.
 - `azure` - (Optional Configuration Block) The Azure-specific network details if available. It supports the following:
   - `private_link_service_aliases` - (Optional Map) The mapping of zones to Private Link Service Aliases if available. Keys are zones and values are [Azure Private Link Service Aliases](https://docs.microsoft.com/en-us/azure/private-link/private-link-service-overview#share-your-service).
     - `zone` - (Required String) The zone name, for example, `1`.
     - `private_link_service_aliase` - (Required String) The Private Link Service Alias, for example, `s-aa11a-privatelink-1.1c12abc3-695c-1234-bc35-11fe6abb303a.centralus.azure.privatelinkservice`.
 - `gcp` - (Optional Configuration Block) The GCP-specific network details if available. It supports the following:
-  - `project` - (Required String) The GCP project ID.
-  - `vpc_network` - (Required String) The GCP VPC network name.
-  - `private_service_connect_service_attachments` - (Optional Map) The mapping of zones to Private Service Connect service attachments if available. Keys are zones and values are [GCP Private Service Connect service attachment](https://cloud.google.com/vpc/docs/configure-private-service-connect-producer#api_7).
+  - `project` - (Required String) The GCP Project ID associated with the Confluent Cloud VPC.
+  - `vpc_network` - (Required String) The network name of the Confluent Cloud VPC.
+  - `private_service_connect_service_attachments` - (Optional Map) The mapping of zones to Private Service Connect Service Attachments if available. Keys are zones and values are [GCP Private Service Connect service attachment](https://cloud.google.com/vpc/docs/configure-private-service-connect-producer#api_7).
 
 -> **Note:** Use the `aws[0]`, `azure[0]`, or `gcp[0]` prefix for referencing these attributes, for example, `data.confluent_network.private-link.azure[0].private_link_service_aliases`.

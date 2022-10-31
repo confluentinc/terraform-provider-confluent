@@ -1,0 +1,47 @@
+{
+  "api_version": "networking/v1",
+  "id": "tgwa-g09wyy",
+  "kind": "TransitGatewayAttachment",
+  "metadata": {
+    "created_at": "2022-10-21T02:05:15.1675Z",
+    "resource_name": "crn://confluent.cloud/organization=foo/environment=env-m25jqx/network=n-go8qvk/transit-gateway-attachment=tgwa-g09wyy",
+    "self": "https://api.confluent.cloud/networking/v1/transit-gateway-attachments/tgwa-g09wyy?environment=env-m25jqx",
+    "updated_at": "2022-10-21T02:05:15.1675Z"
+  },
+  "spec": {
+    "cloud": {
+      "enable_custom_routes": false,
+      "kind": "networking.v1.AwsTransitGatewayAttachment",
+      "ram_share_arn": "arn:aws:ram:us-east-1:012345678901:resource-share/c9babbb0-d697-4af7-a64a-ad96ec32141f",
+      "routes": [
+        "192.168.0.0/16",
+        "172.16.0.0/12",
+        "100.64.0.0/10",
+        "10.0.0.0/8"
+      ],
+      "transit_gateway_id": "tgw-0312f0fdeae1f6a08"
+    },
+    "display_name": "prod-tgw-use1",
+    "environment": {
+      "api_version": "org/v2",
+      "id": "env-m25jqx",
+      "kind": "Environment",
+      "related": "https://api.confluent.cloud/v2/environments/env-m25jqx",
+      "resource_name": "crn://confluent.cloud/organization=foo/environment=env-m25jqx"
+    },
+    "network": {
+      "api_version": "networking/v1",
+      "id": "n-go8qvk",
+      "kind": "Network",
+      "related": "https://api.confluent.cloud/networking/v1/networks/n-go8qvk?environment=env-m25jqx",
+      "resource_name": "crn://confluent.cloud/organization=foo/environment=env-m25jqx/network=n-go8qvk"
+    }
+  },
+  "status": {
+    "cloud": {
+      "kind": "networking.v1.AwsTransitGatewayAttachmentStatus",
+      "transit_gateway_attachment_id": ""
+    },
+    "phase": "PROVISIONING"
+  }
+}

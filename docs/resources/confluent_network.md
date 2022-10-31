@@ -113,14 +113,15 @@ In addition to the preceding arguments, the following attributes are exported:
 - `dns_domain` - (Optional String) The root DNS domain for the network, for example, `pr123a.us-east-2.aws.confluent.cloud` if applicable. Present on Networks that support Private Link.
 - `zonal_subdomains` - (Optional Map) The DNS subdomain for each zone. Present on networks that support Private Link. Keys are zone names, for example, `use2-az1` and values are DNS domains, for example, `use2-az1.pr123a.us-east-2.aws.confluent.cloud`.
 - `aws` - (Optional Configuration Block) The AWS-specific network details if available. It supports the following:
-    - `vpc` - (Required String) The AWS VPC ID for the network.
-    - `private_link_endpoint_service` - (Optional String) The AWS VPC endpoint service for the network (used for Private Link) if available.
+    - `vpc` - (Required String) The Confluent Cloud VPC ID.
+    - `account` - (Required String) The AWS account ID associated with the Confluent Cloud VPC.
+    - `private_link_endpoint_service` - (Optional String) The endpoint service of the Confluent Cloud VPC (used for PrivateLink) if available.
 - `azure` - (Optional Configuration Block) The Azure-specific network details if available. It supports the following:
     - `private_link_service_aliases` - (Optional Map) The mapping of zones to Private Link Service Aliases if available. Keys are zone names, for example, `1` and values are [Azure Private Link Service Aliases](https://docs.microsoft.com/en-us/azure/private-link/private-link-service-overview#share-your-service), for example, `s-nk99e-privatelink-1.8c43dcd0-695c-1234-bc35-11fe6abb303a.centralus.azure.privatelinkservice`.
 - `gcp` - (Optional Configuration Block) The GCP-specific network details if available. It supports the following:
-    - `project` - (Required String) The GCP project ID.
-    - `vpc_network` - (Required String) The GCP VPC network name.
-    - `private_service_connect_service_attachments` - (Optional Map) The mapping of zones to Private Service Connect service attachments if available. Keys are zones and values are [GCP Private Service Connect service attachment](https://cloud.google.com/vpc/docs/configure-private-service-connect-producer#api_7).
+    - `project` - (Required String) The GCP Project ID associated with the Confluent Cloud VPC.
+    - `vpc_network` - (Required String) The network name of the Confluent Cloud VPC.
+    - `private_service_connect_service_attachments` - (Optional Map) The mapping of zones to Private Service Connect Service Attachments if available. Keys are zones and values are [GCP Private Service Connect service attachment](https://cloud.google.com/vpc/docs/configure-private-service-connect-producer#api_7).
 
 -> **Note:** Use `aws[0]`, `azure[0]`, or `gcp[0]` prefix for referencing these attributes, for example, `confluent_network.private-link.azure[0].private_link_service_aliases`.
 
@@ -152,3 +153,5 @@ The following end-to-end examples might help to get started with `confluent_netw
   * [`dedicated-vpc-peering-aws-kafka-rbac`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/dedicated-vpc-peering-aws-kafka-rbac): _Dedicated_ Kafka cluster on AWS that is accessible via VPC Peering connections with authorization using RBAC
   * [`dedicated-vpc-peering-gcp-kafka-acls`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/dedicated-vpc-peering-gcp-kafka-acls): _Dedicated_ Kafka cluster on GCP that is accessible via VPC Peering connections with authorization using ACLs
   * [`dedicated-vpc-peering-gcp-kafka-rbac`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/dedicated-vpc-peering-gcp-kafka-rbac): _Dedicated_ Kafka cluster on GCP that is accessible via VPC Peering connections with authorization using RBAC
+  * [`dedicated-transit-gateway-attachment-aws-kafka-acls`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/dedicated-transit-gateway-attachment-aws-kafka-acls): _Dedicated_ Kafka cluster on AWS that is accessible via Transit Gateway Endpoint with authorization using ACLs
+  * [`dedicated-transit-gateway-attachment-aws-kafka-rbac`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/dedicated-transit-gateway-attachment-aws-kafka-rbac): _Dedicated_ Kafka cluster on AWS that is accessible via Transit Gateway Endpoint with authorization using RBAC

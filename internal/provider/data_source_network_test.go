@@ -103,6 +103,7 @@ func TestAccDataSourceNetwork(t *testing.T) {
 					resource.TestCheckResourceAttr(fullNetworkDataSourceLabel, fmt.Sprintf("%s.%s", paramZonalSubdomains, secondZoneAwsNetwork), secondZoneSubdomainAwsNetwork),
 					resource.TestCheckResourceAttr(fullNetworkDataSourceLabel, fmt.Sprintf("%s.%s", paramZonalSubdomains, thirdZoneAwsNetwork), thirdZoneSubdomainAwsNetwork),
 					resource.TestCheckResourceAttr(fullNetworkDataSourceLabel, fmt.Sprintf("%s.0.%s", paramAws, paramVpc), awsNetworkVpc),
+					resource.TestCheckResourceAttr(fullNetworkDataSourceLabel, fmt.Sprintf("%s.0.%s", paramAws, paramAccount), awsNetworkAccount),
 					resource.TestCheckResourceAttr(fullNetworkDataSourceLabel, fmt.Sprintf("%s.0.%s", paramAws, paramPrivateLinkEndpointService), awsNetworkPrivateLinkEndpointService),
 				),
 			},

@@ -143,6 +143,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_network":                   networkDataSource(),
 				"confluent_organization":              organizationDataSource(),
 				"confluent_peering":                   peeringDataSource(),
+				"confluent_transit_gateway_attachment": transitGatewayAttachmentDataSource(),
 				"confluent_private_link_access":       privateLinkAccessDataSource(),
 				"confluent_role_binding":              roleBindingDataSource(),
 				"confluent_service_account":           serviceAccountDataSource(),
@@ -169,6 +170,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_private_link_access":       privateLinkAccessResource(),
 				"confluent_role_binding":              roleBindingResource(),
 				"confluent_stream_governance_cluster": streamGovernanceClusterResource(),
+				"confluent_transit_gateway_attachment": transitGatewayAttachmentResource(),
 			},
 		}
 

@@ -39,6 +39,7 @@ const (
 	awsNetworkId                          = "n-pr1jy6"
 	awsDnsDomain                          = "pr1jy6.us-east-2.aws.confluent.cloud"
 	awsNetworkVpc                         = "vpc-03e78ba4db7bb1789"
+	awsNetworkAccount                     = "012345678901"
 	awsNetworkPrivateLinkEndpointService  = "com.amazonaws.vpce.us-east-2.vpce-svc-0089db43e25590123"
 	awsNetworkResourceName                = "crn://confluent.cloud/organization=foo/environment=env-gz903/network=n-pr1jy6"
 
@@ -162,6 +163,7 @@ func TestAccAwsNetwork(t *testing.T) {
 					resource.TestCheckResourceAttr(fullAwsNetworkResourceLabel, fmt.Sprintf("%s.%s", paramZonalSubdomains, secondZoneAwsNetwork), secondZoneSubdomainAwsNetwork),
 					resource.TestCheckResourceAttr(fullAwsNetworkResourceLabel, fmt.Sprintf("%s.%s", paramZonalSubdomains, thirdZoneAwsNetwork), thirdZoneSubdomainAwsNetwork),
 					resource.TestCheckResourceAttr(fullAwsNetworkResourceLabel, fmt.Sprintf("%s.0.%s", paramAws, paramVpc), awsNetworkVpc),
+					resource.TestCheckResourceAttr(fullAwsNetworkResourceLabel, fmt.Sprintf("%s.0.%s", paramAws, paramAccount), awsNetworkAccount),
 					resource.TestCheckResourceAttr(fullAwsNetworkResourceLabel, fmt.Sprintf("%s.0.%s", paramAws, paramPrivateLinkEndpointService), awsNetworkPrivateLinkEndpointService),
 				),
 			},
@@ -188,6 +190,7 @@ func TestAccAwsNetwork(t *testing.T) {
 					resource.TestCheckResourceAttr(fullAwsNetworkResourceLabel, fmt.Sprintf("%s.%s", paramZonalSubdomains, secondZoneAwsNetwork), secondZoneSubdomainAwsNetwork),
 					resource.TestCheckResourceAttr(fullAwsNetworkResourceLabel, fmt.Sprintf("%s.%s", paramZonalSubdomains, thirdZoneAwsNetwork), thirdZoneSubdomainAwsNetwork),
 					resource.TestCheckResourceAttr(fullAwsNetworkResourceLabel, fmt.Sprintf("%s.0.%s", paramAws, paramVpc), awsNetworkVpc),
+					resource.TestCheckResourceAttr(fullAwsNetworkResourceLabel, fmt.Sprintf("%s.0.%s", paramAws, paramAccount), awsNetworkAccount),
 					resource.TestCheckResourceAttr(fullAwsNetworkResourceLabel, fmt.Sprintf("%s.0.%s", paramAws, paramPrivateLinkEndpointService), awsNetworkPrivateLinkEndpointService),
 				),
 			},

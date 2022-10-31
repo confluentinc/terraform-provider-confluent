@@ -129,12 +129,17 @@ func awsNetworkSchema() *schema.Schema {
 				paramVpc: {
 					Type:        schema.TypeString,
 					Computed:    true,
-					Description: "The AWS VPC id for the network.",
+					Description: "The Confluent Cloud VPC ID.",
+				},
+				paramAccount: {
+					Type:        schema.TypeString,
+					Computed:    true,
+					Description: "The AWS account ID associated with the Confluent Cloud VPC.",
 				},
 				paramPrivateLinkEndpointService: {
 					Type:        schema.TypeString,
 					Computed:    true,
-					Description: "The AWS VPC endpoint service for the network (used for PrivateLink) if available.",
+					Description: "The endpoint service of the Confluent Cloud VPC (used for PrivateLink) if available.",
 				},
 			},
 		},
@@ -343,6 +348,7 @@ func setNetworkAttributes(d *schema.ResourceData, network net.NetworkingV1Networ
 	if strings.EqualFold(paramAws, network.Spec.GetCloud()) {
 		if err := d.Set(paramAws, []interface{}{map[string]interface{}{
 			paramVpc:                        network.Status.Cloud.NetworkingV1AwsNetwork.GetVpc(),
+			paramAccount:                    network.Status.Cloud.NetworkingV1AwsNetwork.GetAccount(),
 			paramPrivateLinkEndpointService: network.Status.Cloud.NetworkingV1AwsNetwork.GetPrivateLinkEndpointService()}}); err != nil {
 			return nil, err
 		}
