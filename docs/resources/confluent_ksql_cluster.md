@@ -14,6 +14,19 @@ resource "confluent_environment" "development" {
   display_name = "Development"
 }
 
+resource "confluent_stream_governance_cluster" "essentials" {
+  package = "ESSENTIALS"
+
+  environment {
+    id = confluent_environment.development.id
+  }
+
+  region {
+    # See https://docs.confluent.io/cloud/current/stream-governance/packages.html#stream-governance-regions
+    id = "sgreg-1"
+  }
+}
+
 resource "confluent_kafka_cluster" "basic" {
   display_name = "basic_kafka_cluster"
   availability = "SINGLE_ZONE"
@@ -50,7 +63,8 @@ resource "confluent_ksql_cluster" "example" {
     id = confluent_environment.staging.id
   }
   depends_on = [
-    confluent_role_binding.app-ksql-kafka-cluster-admin
+    confluent_role_binding.app-ksql-kafka-cluster-admin,
+    confluent_stream_governance_cluster.essentials
   ]
 }
 ```
