@@ -6,7 +6,7 @@ page_title: "Sample Project"
 
 ## Summary
 
-[![asciicast](https://asciinema.org/a/532324.svg)](https://asciinema.org/a/532324)
+[![asciicast](https://asciinema.org/a/533844.svg)](https://asciinema.org/a/533844)
 
 Use the Confluent Terraform provider to enable the lifecycle management of Confluent Cloud resources:
    * [Environments](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_environment)
@@ -16,10 +16,18 @@ Use the Confluent Terraform provider to enable the lifecycle management of Confl
    * [Networks](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_network)
    * [Private Link Accesses](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_private_link_access)
    * [Peerings](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_peering)
+   * [Transit Gateway Attachments](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_transit_gateway_attachment)
    * [Service Accounts](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_service_account)
    * [Cloud API Keys and Kafka API Keys](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_api_key)
    * [Access Control Lists (ACLs)](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_acl)
    * [Role Bindings](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_role_binding)
+   * [Cluster Links](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_cluster_link)
+   * [Identity Providers](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_identity_provider)
+   * [Identity Pool](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_identity_pool)
+   * [Kafka Client Quotas](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_client_quota)
+   * [Kafka Cluster Configs](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_cluster_config)
+   * [Kafka Mirror Topics](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_mirror_topic)
+   * [Stream Governance Clusters](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_stream_governance_cluster)
 
 In this guide, you will:
 
