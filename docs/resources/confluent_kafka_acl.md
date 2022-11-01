@@ -67,7 +67,7 @@ The following arguments are supported:
   - `id` - (Required String) The ID of the Kafka cluster, for example, `lkc-abc123`.
 - `resource_type` - (Required String) The type of the resource. Accepted values are: `UNKNOWN`, `ANY`, `TOPIC`, `GROUP`, `CLUSTER`, `TRANSACTIONAL_ID`, `DELEGATION_TOKEN`. See [Authorization using ACLs](https://docs.confluent.io/platform/current/kafka/authorization.html#operations) to find definitions of resource types and mappings of `(resource_type, operation)` to one or more Kafka APIs or request types.
 - `resource_name` - (Required String) The resource name for the ACL. Must be `kafka-cluster` if `resource_type` equals to `CLUSTER`.
-- `pattern_type` - (Required String) The pattern type for the ACL. Accepted values are: `UNKNOWN`, `MATCH`, `LITERAL`, and `PREFIXED`.
+- `pattern_type` - (Required String) The pattern type for the ACL. Accepted values are: `LITERAL` and `PREFIXED`.
 - `principal` - (Required String) The principal for the ACL.
 - `operation` - (Required String) The operation type for the ACL. Accepted values are: `UNKNOWN`, `ANY`, `ALL`, `READ`, `WRITE`, `CREATE`, `DELETE`, `ALTER`, `DESCRIBE`, `CLUSTER_ACTION`, `DESCRIBE_CONFIGS`, `ALTER_CONFIGS`, and `IDEMPOTENT_WRITE`.  See [Authorization using ACLs](https://docs.confluent.io/platform/current/kafka/authorization.html#operations) to find mappings of `(resource_type, operation)` to one or more Kafka APIs or request types.
 - `permission` - (Required String) The permission for the ACL. Accepted values are: `UNKNOWN`, `ANY`, `DENY`, and `ALLOW`.
