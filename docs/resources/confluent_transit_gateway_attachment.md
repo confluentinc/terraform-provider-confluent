@@ -48,6 +48,7 @@ resource "confluent_transit_gateway_attachment" "aws" {
     ram_resource_share_arn = "arn:aws:ram:us-east-2:000000000000:resource-share/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxx"
     transit_gateway_id     = "tgw-xxxxxxxxxxxxxxxxx"
     routes                 = ["192.168.0.0/16", "172.16.0.0/12", "100.64.0.0/10", "10.0.0.0/8"]
+    enable_custom_routes   = true
   }
   environment {
     id = confluent_environment.development.id
