@@ -1,0 +1,14 @@
+name: terraform-provider-confluent-internal
+lang: unknown
+lang_version: unknown
+git:
+  enable: true
+github:
+  enable: true
+  repo_name: confluentinc/terraform-provider-confluent-internal
+semaphore:
+  enable: true
+  pipeline_enable: false
+  branches:
+  - master
+  - /^v\d+\.\d+\.x$/
