@@ -62,4 +62,4 @@ In addition to the preceding arguments, the following attributes are exported:
     - `name` - (Required String) The setting name, for example, `cleanup.policy`.
     - `value` - (Required String) The setting value, for example, `compact`.
 
--> **Note:** For more information on the topic settings, see [Custom topic settings for all cluster types](https://docs.confluent.io/cloud/current/clusters/broker-config.html#custom-topic-settings-for-all-cluster-types) and [Schema Validation Configuration options on a topic](https://docs.confluent.io/cloud/current/sr/broker-side-schema-validation.html#sv-configuration-options-on-a-topic).
+-> **Note:** For more information on the topic settings, see [Custom topic settings for all cluster types supported by Kafka REST API and Terraform Provider](https://docs.confluent.io/cloud/current/clusters/broker-config.html#custom-topic-settings-for-all-cluster-types-supported-by-kafka-rest-api-and-terraform-provider) and [Schema Validation Configuration options on a topic](https://docs.confluent.io/cloud/current/sr/broker-side-schema-validation.html#sv-configuration-options-on-a-topic).
