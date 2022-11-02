@@ -28,8 +28,14 @@ resource "confluent_environment" "development" {
   }
 }
 
-resource "confluent_stream_governance_cluster" "essentials" {
+data "confluent_stream_governance_region" "example" {
+  cloud   = "AWS"
+  region  = "us-east-2"
   package = "ESSENTIALS"
+}
+
+resource "confluent_stream_governance_cluster" "essentials" {
+  package = data.confluent_stream_governance_region.example.package
 
   environment {
     id = confluent_environment.development.id
@@ -37,7 +43,7 @@ resource "confluent_stream_governance_cluster" "essentials" {
 
   region {
     # See https://docs.confluent.io/cloud/current/stream-governance/packages.html#stream-governance-regions
-    id = "sgreg-1"
+    id = data.confluent_stream_governance_region.example.id
   }
 
   lifecycle {

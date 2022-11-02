@@ -148,6 +148,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_role_binding":              roleBindingDataSource(),
 				"confluent_service_account":           serviceAccountDataSource(),
 				"confluent_stream_governance_cluster": streamGovernanceClusterDataSource(),
+				"confluent_stream_governance_region":  streamGovernanceRegionDataSource(),
 				"confluent_user":                      userDataSource(),
 			},
 			ResourcesMap: map[string]*schema.Resource{

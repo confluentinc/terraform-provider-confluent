@@ -91,8 +91,8 @@ func streamGovernanceClusterCreate(ctx context.Context, d *schema.ResourceData, 
 
 	spec := sg.NewStreamGovernanceV2ClusterSpec()
 	spec.SetPackage(billingPackage)
-	spec.SetRegion(sg.ObjectReference{Id: regionId})
-	spec.SetEnvironment(sg.ObjectReference{Id: environmentId})
+	spec.SetRegion(sg.GlobalObjectReference{Id: regionId})
+	spec.SetEnvironment(sg.GlobalObjectReference{Id: environmentId})
 
 	createStreamGovernanceClusterRequest := sg.StreamGovernanceV2Cluster{Spec: spec}
 	createStreamGovernanceClusterRequestJson, err := json.Marshal(createStreamGovernanceClusterRequest)
@@ -234,7 +234,7 @@ func streamGovernanceClusterUpdate(ctx context.Context, d *schema.ResourceData, 
 	updateStreamGovernanceClusterRequest := sg.NewStreamGovernanceV2ClusterUpdate()
 	updateSpec := sg.NewStreamGovernanceV2ClusterSpecUpdate()
 	updateSpec.SetPackage(updatedPackage)
-	updateSpec.SetEnvironment(sg.ObjectReference{Id: environmentId})
+	updateSpec.SetEnvironment(sg.GlobalObjectReference{Id: environmentId})
 	updateStreamGovernanceClusterRequest.SetSpec(*updateSpec)
 	updateStreamGovernanceClusterRequestJson, err := json.Marshal(updateStreamGovernanceClusterRequest)
 	if err != nil {

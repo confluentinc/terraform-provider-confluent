@@ -1,0 +1,30 @@
+{
+  "api_version": "stream-governance/v2",
+  "data": [
+    {
+      "api_version": "stream-governance/v2",
+      "id": "sgreg-1",
+      "kind": "Region",
+      "metadata": {
+        "created_at": "2022-08-25T18:09:23.171331Z",
+        "resource_name": "crn://confluent.cloud/stream-governance-region=sgreg-1",
+        "self": "https://api.confluent.cloud/stream-governance/v2/regions/sgreg-1",
+        "updated_at": "2022-08-25T18:09:23.171331Z"
+      },
+      "spec": {
+        "cloud": "AWS",
+        "display_name": "Ohio (us-east-2)",
+        "packages": [
+          "ESSENTIALS",
+          "ADVANCED"
+        ],
+        "region_name": "us-east-2"
+      }
+    }
+  ],
+  "kind": "RegionList",
+  "metadata": {
+    "first": "https://api.confluent.cloud/stream-governance/v2/regions",
+    "total_size": 1
+  }
+}
