@@ -16,6 +16,19 @@ resource "confluent_environment" "staging" {
   display_name = "Staging"
 }
 
+resource "confluent_stream_governance_cluster" "essentials" {
+  package = "ESSENTIALS"
+
+  environment {
+    id = confluent_environment.staging.id
+  }
+
+  region {
+    # See https://docs.confluent.io/cloud/current/stream-governance/packages.html#stream-governance-regions
+    id = "sgreg-1"
+  }
+}
+
 resource "confluent_service_account" "env-manager" {
   display_name = "env-manager"
   description  = "Service account to manage resources under 'Staging' environment"
