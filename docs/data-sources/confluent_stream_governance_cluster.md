@@ -60,7 +60,7 @@ In addition to the preceding arguments, the following attributes are exported:
 - `id` - (Required String) The ID of the Stream Governance cluster, for example, `lsrc-abc123`.
 - `package` - (Required String) The type of the billing package. Accepted values are: `ESSENTIALS` and `ADVANCED`.
 - `region` (Required Configuration Block) supports the following:
-  - `id` - (Required String) The ID of the Stream Governance region that the Stream Governance cluster belongs to, for example, `sgreg-1`. See [Stream Governance Regions](https://docs.confluent.io/cloud/current/stream-governance/packages.html#stream-governance-regions) to find a corresponding region ID based on desired cloud provider region and types of the billing package.
+  - `id` - (Required String) The ID of the Stream Governance region that the Stream Governance cluster belongs to, for example, `sgreg-1`. See [Stream Governance Regions](https://docs.confluent.io/cloud/current/stream-governance/packages.html#stream-governance-regions) to find a corresponding region ID based on desired cloud provider region and types of the billing package or use `confluent_stream_governance_region` [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_stream_governance_region).
 - `api_version` - (Required String) An API Version of the schema version of the Stream Governance cluster, for example, `stream-governance/v2`.
 - `kind` - (Required String) A kind of the Stream Governance cluster, for example, `Cluster`.
 - `http_endpoint` - (Required String) The HTTP endpoint of the Stream Governance cluster, for example, `https://psrc-00000.us-west-2.aws.confluent.cloud`.
