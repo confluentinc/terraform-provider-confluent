@@ -36,7 +36,7 @@ resource "confluent_stream_governance_cluster" "essentials" {
     # See https://docs.confluent.io/cloud/current/stream-governance/packages.html#stream-governance-regions
     # Stream Governance and Kafka clusters can be in different regions as well as different cloud providers,
     # but you should to place both in the same cloud and region to restrict the fault isolation boundary.
-    id = "sgreg-9"
+    id = "sgreg-7"
   }
 }
 
