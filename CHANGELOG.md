@@ -1,3 +1,10 @@
+## 1.13.0 (November 3, 2022)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.12.0...v1.13.0)
+
+**Bug fixes:**
+* Updated docs.
+
 ## 1.12.0 (November 2, 2022)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.11.0...v1.12.0)
