@@ -193,7 +193,7 @@ func awsTransitGatewayAttachmentDataSourceSchema() *schema.Schema {
 					Type:        schema.TypeList,
 					Computed:    true,
 					Elem:        &schema.Schema{Type: schema.TypeString},
-					Description: "List of destination routes.",
+					Description: "List of destination routes for traffic from Confluent VPC to customer VPC via Transit Gateway.",
 				},
 				paramTransitGatewayAttachmentId: {
 					Type:        schema.TypeString,

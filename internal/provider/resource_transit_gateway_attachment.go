@@ -319,7 +319,7 @@ func awsTransitGatewayAttachmentSchema() *schema.Schema {
 					Computed:    true,
 					MinItems:    1,
 					Elem:        &schema.Schema{Type: schema.TypeString},
-					Description: "List of destination routes.",
+					Description: "List of destination routes for traffic from Confluent VPC to customer VPC via Transit Gateway.",
 					// TODO: add validation func
 				},
 				paramTransitGatewayAttachmentId: {
