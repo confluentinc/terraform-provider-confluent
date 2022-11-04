@@ -34,6 +34,7 @@ const (
 	paramPrincipals      = "principals"
 
 	kafkaQuotasAPIWaitAfterCreate = 30 * time.Second
+	kafkaQuotasAPIWaitAfterUpdate = 15 * time.Second
 )
 
 var attributeIngressByteRate = fmt.Sprintf("%s.0.%s", paramThroughput, paramIngressByteRate)
@@ -115,6 +116,8 @@ func kafkaClientQuotaUpdate(ctx context.Context, d *schema.ResourceData, meta in
 	if err != nil {
 		return diag.Errorf("error updating Kafka Client Quota %q: %s", d.Id(), createDescriptiveError(err))
 	}
+
+	time.Sleep(kafkaQuotasAPIWaitAfterUpdate)
 
 	updatedClientQuotaJson, err := json.Marshal(updatedClientQuota)
 	if err != nil {
