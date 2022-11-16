@@ -413,8 +413,10 @@ func principalWithResourceIdToPrincipalWithIntegerId(c *Client, principalWithRes
 			return "", err
 		}
 		return fmt.Sprintf("%s%d", principalPrefix, integerId), nil
+	} else if strings.HasPrefix(principalWithResourceId, "User:pool-") {
+		return principalWithResourceId, nil
 	}
-	return "", fmt.Errorf("the principal must start with 'User:sa-' or 'User:u-'")
+	return "", fmt.Errorf("the principal must start with 'User:sa-' or 'User:u-' or 'User:pool-'")
 }
 
 // APIF-2043: TEMPORARY METHOD

@@ -98,7 +98,7 @@ func kafkaAclResource() *schema.Resource {
 				Required:     true,
 				ForceNew:     true,
 				Description:  "The principal for the ACL.",
-				ValidateFunc: validation.StringMatch(regexp.MustCompile("^User:(sa|u)-"), "the principal must start with 'User:sa-' or 'User:u-'."),
+				ValidateFunc: validation.StringMatch(regexp.MustCompile("^User:(sa|u|pool)-"), "the principal must start with 'User:sa-' or 'User:u-' or 'User:pool-'."),
 			},
 			paramHost: {
 				Type:        schema.TypeString,
@@ -267,7 +267,7 @@ func kafkaAclRead(ctx context.Context, d *schema.ResourceData, meta interface{})
 	// This hack is necessary since terraform plan will use the principal's value (integerId) from terraform.state
 	// instead of using the new provided resourceId from main.tf (the user will be forced to replace integerId with resourceId
 	// that we have an input validation for using "User:sa-" for principal attribute.
-	if !(strings.HasPrefix(acl.Principal, "User:sa-") || strings.HasPrefix(acl.Principal, "User:u-")) {
+	if !(strings.HasPrefix(acl.Principal, "User:sa-") || strings.HasPrefix(acl.Principal, "User:u-") || strings.HasPrefix(acl.Principal, "User:pool-")) {
 		d.SetId("")
 		return nil
 	}
