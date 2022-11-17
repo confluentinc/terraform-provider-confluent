@@ -90,7 +90,7 @@ The following arguments are supported:
 
 -> **Note:** For more information on the topic settings, see [Custom topic settings for all cluster types supported by Kafka REST API and Terraform Provider](https://docs.confluent.io/cloud/current/clusters/broker-config.html#custom-topic-settings-for-all-cluster-types-supported-by-kafka-rest-api-and-terraform-provider) and [Schema Validation Configuration options on a topic](https://docs.confluent.io/cloud/current/sr/broker-side-schema-validation.html#sv-configuration-options-on-a-topic).
 
--> **Note:** Updates for the following topic settings are supported: `delete.retention.ms`,
+-> **Note:** Updates for the following topic settings are supported: `cleanup.policy`, `delete.retention.ms`,
              `max.message.bytes`, `max.compaction.lag.ms`, `message.timestamp.difference.max.ms`, `message.timestamp.type`,
              `min.compaction.lag.ms`, `min.insync.replicas`, `retention.bytes`, `retention.ms`, `segment.bytes`, `segment.ms`,
              `confluent.key.schema.validation`, `confluent.value.schema.validation`, `confluent.key.subject.name.strategy`, `confluent.value.subject.name.strategy`.
