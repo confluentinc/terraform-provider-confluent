@@ -1,3 +1,14 @@
+## 1.14.0 (November 16, 2022)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.13.0...v1.14.0)
+
+**Bug fixes:**
+* Added `cleanup.policy` topic setting to list of updatable topic settings. 
+* Updated docs.
+
+**New updates for resources that are in [Early Access / Open Preview lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy):**
+* Updated `confluent_ksql_cluster`: The `http_endpoint` argument has been deprecated. Use the `rest_endpoint` argument instead.
+
 ## 1.13.0 (November 3, 2022)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.12.0...v1.13.0)
