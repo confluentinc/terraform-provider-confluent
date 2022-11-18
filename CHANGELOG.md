@@ -1,3 +1,17 @@
+## 1.15.0 (November 18, 2022)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.14.0...v1.15.0)
+
+**New features:**
+* Added new `confluent_kafka_cluster_config` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_cluster_config) in a [General Availability lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy) ([#73](https://github.com/confluentinc/terraform-provider-confluent/issues/73)).
+
+**Bug fixes:**
+* Fixed "no Kafka ACLs were matched" bug that a user could see when running `terraform plan` after deleting ACLs outside of Terraform ([#141](https://github.com/confluentinc/terraform-provider-confluent/issues/141)).
+* Updated docs.
+
+**New updates for resources that are in [Early Access / Open Preview lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy):**
+* Updated `confluent_ksql_cluster`: The `http_endpoint` argument has been removed. Use the `rest_endpoint` argument instead.
+
 ## 1.14.0 (November 16, 2022)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.13.0...v1.14.0)
