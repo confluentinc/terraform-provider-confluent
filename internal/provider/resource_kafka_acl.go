@@ -315,6 +315,12 @@ func readAclAndSetAttributes(ctx context.Context, d *schema.ResourceData, client
 		return nil, err
 	}
 	if len(remoteAcls.Data) == 0 {
+		// Essentially len(data) = 0 means 404, so we should duplicate the code from the previous if statement
+		if !d.IsNewResource() {
+			tflog.Warn(ctx, fmt.Sprintf("Removing Kafka ACLs %q in TF state because Kafka ACLs could not be found on the server", d.Id()), map[string]interface{}{kafkaAclLoggingKey: d.Id()})
+			d.SetId("")
+			return nil, nil
+		}
 		return nil, fmt.Errorf("error reading Kafka ACLs %q: no Kafka ACLs were matched", d.Id())
 	} else if len(remoteAcls.Data) > 1 {
 		// TODO: use remoteAcls.Data
