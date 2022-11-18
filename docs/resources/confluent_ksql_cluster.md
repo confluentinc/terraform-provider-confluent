@@ -94,7 +94,6 @@ In addition to the preceding arguments, the following attributes are exported:
 - `api_version` - (Required String) An API Version of the schema version of the ksqlDB cluster, for example, `ksqldbcm/v2`.
 - `kind` - (Required String) A kind of the ksqlDB cluster, for example, `Cluster`.
 - `topic_prefix` - (Required String) Topic name prefix used by this ksqlDB cluster. Used to assign ACLs for this ksqlDB cluster to use, for example, `pksqlc-00000`.
-- `http_endpoint` - (Required String, **Deprecated** use `rest_endpoint` instead) The API endpoint of the ksqlDB cluster, for example, `https://pksqlc-00000.us-central1.gcp.glb.confluent.cloud`.
 - `rest_endpoint` - (Required String) The API endpoint of the ksqlDB cluster, for example, `https://pksqlc-00000.us-central1.gcp.glb.confluent.cloud`.
 - `storage` - (Required Integer) The amount of storage (in GB) provisioned to the ksqlDB cluster.
 

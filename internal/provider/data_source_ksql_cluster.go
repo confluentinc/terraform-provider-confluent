@@ -51,11 +51,6 @@ func ksqlDataSource() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			paramHttpEndpoint: {
-				Type:        schema.TypeString,
-				Description: "The dataplane endpoint of the ksqlDB cluster.",
-				Computed:    true,
-			},
 			paramRestEndpoint: {
 				Type:        schema.TypeString,
 				Description: "The dataplane endpoint of the ksqlDB cluster.",

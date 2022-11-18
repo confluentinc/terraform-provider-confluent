@@ -53,7 +53,6 @@ In addition to the preceding arguments, the following attributes are exported:
 - `csu` - (Required Number) The number of CSUs (Confluent Streaming Units) in the ksqlDB cluster.
 - `use_detailed_processing_log` (Optional Boolean) Controls whether the row data should be included in the processing log topic.
 - `topic_prefix` - (Required String) Topic name prefix used by this ksqlDB cluster. Used to assign ACLs for this ksqlDB cluster to use, for example, `pksqlc-00000`.
-- `http_endpoint` - (Required String, **Deprecated** use `rest_endpoint` instead) The API endpoint of the ksqlDB cluster, for example, `https://pksqlc-00000.us-central1.gcp.glb.confluent.cloud`.
 - `rest_endpoint` - (Required String) The API endpoint of the ksqlDB cluster, for example, `https://pksqlc-00000.us-central1.gcp.glb.confluent.cloud`.
 - `kafka_cluster` (Optional Configuration Block) supports the following:
     - `id` - (Required String) The ID of the Kafka cluster that the ksqlDB cluster belongs to, for example, `lkc-abc123`.
