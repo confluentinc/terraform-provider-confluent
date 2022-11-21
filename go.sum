@@ -142,6 +142,8 @@ github.com/confluentinc/ccloud-sdk-go-v2/networking v0.4.0 h1:y9dsFQ6GATM+5r56Fk
 github.com/confluentinc/ccloud-sdk-go-v2/networking v0.4.0/go.mod h1:EcmHhRib8dDuO5ZsO+qS3scX9xEP5E/IXOVoItp5X2s=
 github.com/confluentinc/ccloud-sdk-go-v2/org v0.4.0 h1:WcJs6RbY8nU5HapaG0ZCH9ftFBtZyuKMIuNAkdVmc2o=
 github.com/confluentinc/ccloud-sdk-go-v2/org v0.4.0/go.mod h1:zREJ+OOZz0rEXCaPx0JbCVj2EfNnYs/c6qhPDfhldI0=
+github.com/confluentinc/ccloud-sdk-go-v2/srcm v0.2.0 h1:ezCzDCOOavjTPVKvdET0QjAXm1u9iRJjg2s5lkSMrps=
+github.com/confluentinc/ccloud-sdk-go-v2/srcm v0.2.0/go.mod h1:qY4Y/QCDKI0eR+HLVJWGFstsTAiI83+sowKOyoRFhF0=
 github.com/confluentinc/ccloud-sdk-go-v2/stream-governance v0.2.0 h1:wg+Nocg0LfsbgtyJ/xlkOFt7KBFnostVdjPNQuXO3Dk=
 github.com/confluentinc/ccloud-sdk-go-v2/stream-governance v0.2.0/go.mod h1:IitA7EBhH+W0WuecDiETuXApHTxAuiWzJEpotexhWjA=
 github.com/containerd/aufs v1.0.0/go.mod h1:kL5kd6KM5TzQjR79jljyi4olc1Vrx6XBlcyj3gNv2PU=

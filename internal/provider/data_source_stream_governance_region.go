@@ -57,6 +57,7 @@ func streamGovernanceRegionDataSource() *schema.Resource {
 				Required:     true,
 			},
 		},
+		DeprecationMessage: "confluent_stream_governance_region data source is deprecated and will be removed in the next version. Use confluent_schema_registry_region instead.",
 	}
 }
 

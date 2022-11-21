@@ -16,7 +16,7 @@ resource "confluent_environment" "staging" {
   display_name = "Staging"
 }
 
-resource "confluent_stream_governance_cluster" "essentials" {
+resource "confluent_schema_registry_cluster" "essentials" {
   package = "ESSENTIALS"
 
   environment {

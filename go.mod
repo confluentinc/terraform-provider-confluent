@@ -14,6 +14,7 @@ require (
 	github.com/confluentinc/ccloud-sdk-go-v2/mds v0.3.0
 	github.com/confluentinc/ccloud-sdk-go-v2/networking v0.4.0
 	github.com/confluentinc/ccloud-sdk-go-v2/org v0.4.0
+	github.com/confluentinc/ccloud-sdk-go-v2/srcm v0.2.0
 	github.com/confluentinc/ccloud-sdk-go-v2/stream-governance v0.2.0
 	github.com/docker/go-connections v0.4.0
 	github.com/hashicorp/go-cty v1.4.1-0.20200414143053-d3edf31b6320

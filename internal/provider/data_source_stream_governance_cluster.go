@@ -91,6 +91,7 @@ func streamGovernanceClusterDataSource() *schema.Resource {
 				Description: "The Confluent Resource Name of the Stream Governance Cluster.",
 			},
 		},
+		DeprecationMessage: "confluent_stream_governance_cluster data source is deprecated and will be removed in the next version. Use confluent_schema_registry_cluster instead.",
 	}
 }
 

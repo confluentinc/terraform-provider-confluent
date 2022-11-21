@@ -158,6 +158,24 @@ func waitForStreamGovernanceClusterToProvision(ctx context.Context, c *Client, e
 	return nil
 }
 
+func waitForSchemaRegistryClusterToProvision(ctx context.Context, c *Client, environmentId, clusterId string) error {
+	stateConf := &resource.StateChangeConf{
+		Pending: []string{stateProvisioning},
+		Target:  []string{stateProvisioned},
+		Refresh: schemaRegistryClusterProvisionStatus(c.srcmApiContext(ctx), c, environmentId, clusterId),
+		// https://docs.confluent.io/cloud/current/clusters/cluster-types.html#provisioning-time
+		Timeout:      1 * time.Hour,
+		Delay:        5 * time.Second,
+		PollInterval: 30 * time.Second,
+	}
+
+	tflog.Debug(ctx, fmt.Sprintf("Waiting for Schema Registry Cluster %q provisioning status to become %q", clusterId, stateProvisioned), map[string]interface{}{schemaRegistryClusterLoggingKey: clusterId})
+	if _, err := stateConf.WaitForStateContext(c.srcmApiContext(ctx)); err != nil {
+		return err
+	}
+	return nil
+}
+
 func waitForConnectorToProvision(ctx context.Context, c *Client, displayName, environmentId, clusterId string) error {
 	stateConf := &resource.StateChangeConf{
 		// Allow PROVISIONING -> DEGRADED -> RUNNING transition
@@ -505,6 +523,25 @@ func streamGovernanceClusterProvisionStatus(ctx context.Context, c *Client, envi
 		}
 		// SG Cluster is in an unexpected state
 		return nil, stateUnexpected, fmt.Errorf("stream Governance Cluster %q is an unexpected state %q", clusterId, cluster.Status.GetPhase())
+	}
+}
+
+func schemaRegistryClusterProvisionStatus(ctx context.Context, c *Client, environmentId string, clusterId string) resource.StateRefreshFunc {
+	return func() (result interface{}, s string, err error) {
+		cluster, _, err := executeSchemaRegistryClusterRead(c.srcmApiContext(ctx), c, environmentId, clusterId)
+		if err != nil {
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Schema Registry Cluster %q: %s", clusterId, createDescriptiveError(err)), map[string]interface{}{schemaRegistryClusterLoggingKey: clusterId})
+			return nil, stateUnknown, err
+		}
+
+		tflog.Debug(ctx, fmt.Sprintf("Waiting for Schema Registry Cluster %q provisioning status to become %q: current status is %q", clusterId, stateProvisioned, cluster.Status.GetPhase()), map[string]interface{}{schemaRegistryClusterLoggingKey: clusterId})
+		if cluster.Status.GetPhase() == stateProvisioning || cluster.Status.GetPhase() == stateProvisioned {
+			return cluster, cluster.Status.GetPhase(), nil
+		} else if cluster.Status.GetPhase() == stateFailed {
+			return nil, stateFailed, fmt.Errorf("schema Registry Cluster %q provisioning status is %q", clusterId, stateFailed)
+		}
+		// SR Cluster is in an unexpected state
+		return nil, stateUnexpected, fmt.Errorf("schema Registry Cluster %q is an unexpected state %q", clusterId, cluster.Status.GetPhase())
 	}
 }
 
