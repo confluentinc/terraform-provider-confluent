@@ -10,7 +10,7 @@ description: |-
 
 [![General Availability](https://img.shields.io/badge/Lifecycle%20Stage-General%20Availability-%2345c6e8)](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy)
 
-`confluent_private_link_access` provides a Private Link Access resource that enables creating and deleting access to PrivateLink endpoints by AWS account or Azure subscription.
+`confluent_private_link_access` provides a Private Link Access resource that enables creating and deleting access to PrivateLink endpoints by AWS account, Azure subscription, or GCP project ID.
 
 -> **Note:** It is recommended to set `lifecycle { prevent_destroy = true }` on production instances to prevent accidental Private Link Access deletion. This setting rejects plans that would destroy or recreate the Private Link Access, such as attempting to change uneditable attributes. Read more about it in the [Terraform docs](https://www.terraform.io/language/meta-arguments/lifecycle#prevent_destroy).
 
