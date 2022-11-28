@@ -8,6 +8,7 @@
 **New updates for resources that are in [Early Access / Open Preview lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy):**
 * Renamed `confluent_stream_governance_region`: The `confluent_stream_governance_region` [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_stream_governance_region) has been deprecated. Use the `confluent_schema_registry_region` [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_schema_registry_region) instead.
 * Renamed `confluent_stream_governance_cluster`: The `confluent_stream_governance_cluster` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_stream_governance_cluster) and [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_stream_governance_cluster) have been deprecated. Use the `confluent_schema_registry_cluster` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema_registry_cluster) and [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_schema_registry_cluster) instead.
+* Follow [Confluent Provider 1.16.0: Upgrade Guide](docs/upgrade-guide-1.16.0.md) to update your TF configuration files accordingly to the renaming changes listed above.
 
 ## 1.15.0 (November 18, 2022)
 
