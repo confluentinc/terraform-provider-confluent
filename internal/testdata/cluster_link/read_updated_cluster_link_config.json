@@ -1,0 +1,849 @@
+{
+  "kind": "KafkaLinkConfigDataList",
+  "metadata": {
+    "self": "https://pkc-3588w.us-east-1.aws.confluent.cloud/kafka/v3/clusters/lkc-81knqq/links/tf-link/configs",
+    "next": null
+  },
+  "data": [
+    {
+      "kind": "KafkaLinkConfigData",
+      "metadata": {
+        "self": "https://pkc-3588w.us-east-1.aws.confluent.cloud/kafka/v3/clusters/lkc-81knqq/links/tf-link/configs/acl.filters"
+      },
+      "cluster_id": "lkc-ymq1wk",
+      "name": "acl.filters",
+      "value": "",
+      "is_read_only": false,
+      "is_sensitive": false,
+      "source": "DEFAULT_CONFIG",
+      "synonyms": [],
+      "link_name": "tf-link",
+      "is_default": true
+    },
+    {
+      "kind": "KafkaLinkConfigData",
+      "metadata": {
+        "self": "https://pkc-3588w.us-east-1.aws.confluent.cloud/kafka/v3/clusters/lkc-81knqq/links/tf-link/configs/acl.sync.enable"
+      },
+      "cluster_id": "lkc-ymq1wk",
+      "name": "acl.sync.enable",
+      "value": "false",
+      "is_read_only": false,
+      "is_sensitive": false,
+      "source": "DEFAULT_CONFIG",
+      "synonyms": [],
+      "link_name": "tf-link",
+      "is_default": true
+    },
+    {
+      "kind": "KafkaLinkConfigData",
+      "metadata": {
+        "self": "https://pkc-3588w.us-east-1.aws.confluent.cloud/kafka/v3/clusters/lkc-81knqq/links/tf-link/configs/acl.sync.ms"
+      },
+      "cluster_id": "lkc-ymq1wk",
+      "name": "acl.sync.ms",
+      "value": "5101",
+      "is_read_only": false,
+      "is_sensitive": false,
+      "source": "DYNAMIC_CLUSTER_LINK_CONFIG",
+      "synonyms": [],
+      "link_name": "tf-link",
+      "is_default": false
+    },
+    {
+      "kind": "KafkaLinkConfigData",
+      "metadata": {
+        "self": "https://pkc-3588w.us-east-1.aws.confluent.cloud/kafka/v3/clusters/lkc-81knqq/links/tf-link/configs/auto.create.mirror.topics.enable"
+      },
+      "cluster_id": "lkc-ymq1wk",
+      "name": "auto.create.mirror.topics.enable",
+      "value": "false",
+      "is_read_only": false,
+      "is_sensitive": false,
+      "source": "DEFAULT_CONFIG",
+      "synonyms": [],
+      "link_name": "tf-link",
+      "is_default": true
+    },
+    {
+      "kind": "KafkaLinkConfigData",
+      "metadata": {
+        "self": "https://pkc-3588w.us-east-1.aws.confluent.cloud/kafka/v3/clusters/lkc-81knqq/links/tf-link/configs/auto.create.mirror.topics.filters"
+      },
+      "cluster_id": "lkc-ymq1wk",
+      "name": "auto.create.mirror.topics.filters",
+      "value": "",
+      "is_read_only": false,
+      "is_sensitive": false,
+      "source": "DEFAULT_CONFIG",
+      "synonyms": [],
+      "link_name": "tf-link",
+      "is_default": true
+    },
+    {
+      "kind": "KafkaLinkConfigData",
+      "metadata": {
+        "self": "https://pkc-3588w.us-east-1.aws.confluent.cloud/kafka/v3/clusters/lkc-81knqq/links/tf-link/configs/bootstrap.servers"
+      },
+      "cluster_id": "lkc-ymq1wk",
+      "name": "bootstrap.servers",
+      "value": "pkc-pgq85.us-west-2.aws.confluent.cloud:9092",
+      "is_read_only": false,
+      "is_sensitive": false,
+      "source": "DYNAMIC_CLUSTER_LINK_CONFIG",
+      "synonyms": [],
+      "link_name": "tf-link",
+      "is_default": false
+    },
+    {
+      "kind": "KafkaLinkConfigData",
+      "metadata": {
+        "self": "https://pkc-3588w.us-east-1.aws.confluent.cloud/kafka/v3/clusters/lkc-81knqq/links/tf-link/configs/client.dns.lookup"
+      },
+      "cluster_id": "lkc-ymq1wk",
+      "name": "client.dns.lookup",
+      "value": "use_all_dns_ips",
+      "is_read_only": false,
+      "is_sensitive": false,
+      "source": "DEFAULT_CONFIG",
+      "synonyms": [],
+      "link_name": "tf-link",
+      "is_default": true
+    },
+    {
+      "kind": "KafkaLinkConfigData",
+      "metadata": {
+        "self": "https://pkc-3588w.us-east-1.aws.confluent.cloud/kafka/v3/clusters/lkc-81knqq/links/tf-link/configs/cluster.link.prefix"
+      },
+      "cluster_id": "lkc-ymq1wk",
+      "name": "cluster.link.prefix",
+      "value": null,
+      "is_read_only": false,
+      "is_sensitive": false,
+      "source": "DEFAULT_CONFIG",
+      "synonyms": [],
+      "link_name": "tf-link",
+      "is_default": true
+    },
+    {
+      "kind": "KafkaLinkConfigData",
+      "metadata": {
+        "self": "https://pkc-3588w.us-east-1.aws.confluent.cloud/kafka/v3/clusters/lkc-81knqq/links/tf-link/configs/cluster.link.retry.timeout.ms"
+      },
+      "cluster_id": "lkc-ymq1wk",
+      "name": "cluster.link.retry.timeout.ms",
+      "value": "300000",
+      "is_read_only": true,
+      "is_sensitive": false,
+      "source": "DEFAULT_CONFIG",
+      "synonyms": [],
+      "link_name": "tf-link",
+      "is_default": true
+    },
+    {
+      "kind": "KafkaLinkConfigData",
+      "metadata": {
+        "self": "https://pkc-3588w.us-east-1.aws.confluent.cloud/kafka/v3/clusters/lkc-81knqq/links/tf-link/configs/connection.mode"
+      },
+      "cluster_id": "lkc-ymq1wk",
+      "name": "connection.mode",
+      "value": "OUTBOUND",
+      "is_read_only": false,
+      "is_sensitive": false,
+      "source": "DYNAMIC_CLUSTER_LINK_CONFIG",
+      "synonyms": [],
+      "link_name": "tf-link",
+      "is_default": false
+    },
+    {
+      "kind": "KafkaLinkConfigData",
+      "metadata": {
+        "self": "https://pkc-3588w.us-east-1.aws.confluent.cloud/kafka/v3/clusters/lkc-81knqq/links/tf-link/configs/connections.max.idle.ms"
+      },
+      "cluster_id": "lkc-ymq1wk",
+      "name": "connections.max.idle.ms",
+      "value": "600000",
+      "is_read_only": true,
+      "is_sensitive": false,
+      "source": "DEFAULT_CONFIG",
+      "synonyms": [],
+      "link_name": "tf-link",
+      "is_default": true
+    },
+    {
+      "kind": "KafkaLinkConfigData",
+      "metadata": {
+        "self": "https://pkc-3588w.us-east-1.aws.confluent.cloud/kafka/v3/clusters/lkc-81knqq/links/tf-link/configs/consumer.group.prefix.enable"
+      },
+      "cluster_id": "lkc-ymq1wk",
+      "name": "consumer.group.prefix.enable",
+      "value": "false",
+      "is_read_only": false,
+      "is_sensitive": false,
+      "source": "DEFAULT_CONFIG",
+      "synonyms": [],
+      "link_name": "tf-link",
+      "is_default": true
+    },
+    {
+      "kind": "KafkaLinkConfigData",
+      "metadata": {
+        "self": "https://pkc-3588w.us-east-1.aws.confluent.cloud/kafka/v3/clusters/lkc-81knqq/links/tf-link/configs/consumer.offset.group.filters"
+      },
+      "cluster_id": "lkc-ymq1wk",
+      "name": "consumer.offset.group.filters",
+      "value": "",
+      "is_read_only": false,
+      "is_sensitive": false,
+      "source": "DEFAULT_CONFIG",
+      "synonyms": [],
+      "link_name": "tf-link",
+      "is_default": true
+    },
+    {
+      "kind": "KafkaLinkConfigData",
+      "metadata": {
+        "self": "https://pkc-3588w.us-east-1.aws.confluent.cloud/kafka/v3/clusters/lkc-81knqq/links/tf-link/configs/consumer.offset.sync.enable"
+      },
+      "cluster_id": "lkc-ymq1wk",
+      "name": "consumer.offset.sync.enable",
+      "value": "false",
+      "is_read_only": false,
+      "is_sensitive": false,
+      "source": "DEFAULT_CONFIG",
+      "synonyms": [],
+      "link_name": "tf-link",
+      "is_default": true
+    },
+    {
+      "kind": "KafkaLinkConfigData",
+      "metadata": {
+        "self": "https://pkc-3588w.us-east-1.aws.confluent.cloud/kafka/v3/clusters/lkc-81knqq/links/tf-link/configs/consumer.offset.sync.ms"
+      },
+      "cluster_id": "lkc-ymq1wk",
+      "name": "consumer.offset.sync.ms",
+      "value": "30001",
+      "is_read_only": false,
+      "is_sensitive": false,
+      "source": "DYNAMIC_CLUSTER_LINK_CONFIG",
+      "synonyms": [],
+      "link_name": "tf-link",
+      "is_default": false
+    },
+    {
+      "kind": "KafkaLinkConfigData",
+      "metadata": {
+        "self": "https://pkc-3588w.us-east-1.aws.confluent.cloud/kafka/v3/clusters/lkc-81knqq/links/tf-link/configs/link.mode"
+      },
+      "cluster_id": "lkc-ymq1wk",
+      "name": "link.mode",
+      "value": "DESTINATION",
+      "is_read_only": false,
+      "is_sensitive": false,
+      "source": "DYNAMIC_CLUSTER_LINK_CONFIG",
+      "synonyms": [],
+      "link_name": "tf-link",
+      "is_default": false
+    },
+    {
+      "kind": "KafkaLinkConfigData",
+      "metadata": {
+        "self": "https://pkc-3588w.us-east-1.aws.confluent.cloud/kafka/v3/clusters/lkc-81knqq/links/tf-link/configs/local.sasl.jaas.config"
+      },
+      "cluster_id": "lkc-ymq1wk",
+      "name": "local.sasl.jaas.config",
+      "value": null,
+      "is_read_only": false,
+      "is_sensitive": true,
+      "source": "DEFAULT_CONFIG",
+      "synonyms": [],
+      "link_name": "tf-link",
+      "is_default": true
+    },
+    {
+      "kind": "KafkaLinkConfigData",
+      "metadata": {
+        "self": "https://pkc-3588w.us-east-1.aws.confluent.cloud/kafka/v3/clusters/lkc-81knqq/links/tf-link/configs/local.sasl.mechanism"
+      },
+      "cluster_id": "lkc-ymq1wk",
+      "name": "local.sasl.mechanism",
+      "value": "GSSAPI",
+      "is_read_only": false,
+      "is_sensitive": false,
+      "source": "DEFAULT_CONFIG",
+      "synonyms": [],
+      "link_name": "tf-link",
+      "is_default": true
+    },
+    {
+      "kind": "KafkaLinkConfigData",
+      "metadata": {
+        "self": "https://pkc-3588w.us-east-1.aws.confluent.cloud/kafka/v3/clusters/lkc-81knqq/links/tf-link/configs/local.security.protocol"
+      },
+      "cluster_id": "lkc-ymq1wk",
+      "name": "local.security.protocol",
+      "value": "PLAINTEXT",
+      "is_read_only": false,
+      "is_sensitive": false,
+      "source": "DEFAULT_CONFIG",
+      "synonyms": [],
+      "link_name": "tf-link",
+      "is_default": true
+    },
+    {
+      "kind": "KafkaLinkConfigData",
+      "metadata": {
+        "self": "https://pkc-3588w.us-east-1.aws.confluent.cloud/kafka/v3/clusters/lkc-81knqq/links/tf-link/configs/local.ssl.cipher.suites"
+      },
+      "cluster_id": "lkc-ymq1wk",
+      "name": "local.ssl.cipher.suites",
+      "value": null,
+      "is_read_only": false,
+      "is_sensitive": false,
+      "source": "DEFAULT_CONFIG",
+      "synonyms": [],
+      "link_name": "tf-link",
+      "is_default": true
+    },
+    {
+      "kind": "KafkaLinkConfigData",
+      "metadata": {
+        "self": "https://pkc-3588w.us-east-1.aws.confluent.cloud/kafka/v3/clusters/lkc-81knqq/links/tf-link/configs/local.ssl.enabled.protocols"
+      },
+      "cluster_id": "lkc-ymq1wk",
+      "name": "local.ssl.enabled.protocols",
+      "value": "TLSv1.2,TLSv1.3",
+      "is_read_only": false,
+      "is_sensitive": false,
+      "source": "DEFAULT_CONFIG",
+      "synonyms": [],
+      "link_name": "tf-link",
+      "is_default": true
+    },
+    {
+      "kind": "KafkaLinkConfigData",
+      "metadata": {
+        "self": "https://pkc-3588w.us-east-1.aws.confluent.cloud/kafka/v3/clusters/lkc-81knqq/links/tf-link/configs/local.ssl.endpoint.identification.algorithm"
+      },
+      "cluster_id": "lkc-ymq1wk",
+      "name": "local.ssl.endpoint.identification.algorithm",
+      "value": "https",
+      "is_read_only": false,
+      "is_sensitive": false,
+      "source": "DEFAULT_CONFIG",
+      "synonyms": [],
+      "link_name": "tf-link",
+      "is_default": true
+    },
+    {
+      "kind": "KafkaLinkConfigData",
+      "metadata": {
+        "self": "https://pkc-3588w.us-east-1.aws.confluent.cloud/kafka/v3/clusters/lkc-81knqq/links/tf-link/configs/local.ssl.key.password"
+      },
+      "cluster_id": "lkc-ymq1wk",
+      "name": "local.ssl.key.password",
+      "value": null,
+      "is_read_only": false,
+      "is_sensitive": true,
+      "source": "DEFAULT_CONFIG",
+      "synonyms": [],
+      "link_name": "tf-link",
+      "is_default": true
+    },
+    {
+      "kind": "KafkaLinkConfigData",
+      "metadata": {
+        "self": "https://pkc-3588w.us-east-1.aws.confluent.cloud/kafka/v3/clusters/lkc-81knqq/links/tf-link/configs/local.ssl.keystore.certificate.chain"
+      },
+      "cluster_id": "lkc-ymq1wk",
+      "name": "local.ssl.keystore.certificate.chain",
+      "value": null,
+      "is_read_only": false,
+      "is_sensitive": true,
+      "source": "DEFAULT_CONFIG",
+      "synonyms": [],
+      "link_name": "tf-link",
+      "is_default": true
+    },
+    {
+      "kind": "KafkaLinkConfigData",
+      "metadata": {
+        "self": "https://pkc-3588w.us-east-1.aws.confluent.cloud/kafka/v3/clusters/lkc-81knqq/links/tf-link/configs/local.ssl.keystore.key"
+      },
+      "cluster_id": "lkc-ymq1wk",
+      "name": "local.ssl.keystore.key",
+      "value": null,
+      "is_read_only": false,
+      "is_sensitive": true,
+      "source": "DEFAULT_CONFIG",
+      "synonyms": [],
+      "link_name": "tf-link",
+      "is_default": true
+    },
+    {
+      "kind": "KafkaLinkConfigData",
+      "metadata": {
+        "self": "https://pkc-3588w.us-east-1.aws.confluent.cloud/kafka/v3/clusters/lkc-81knqq/links/tf-link/configs/local.ssl.keystore.type"
+      },
+      "cluster_id": "lkc-ymq1wk",
+      "name": "local.ssl.keystore.type",
+      "value": "JKS",
+      "is_read_only": false,
+      "is_sensitive": false,
+      "source": "DEFAULT_CONFIG",
+      "synonyms": [],
+      "link_name": "tf-link",
+      "is_default": true
+    },
+    {
+      "kind": "KafkaLinkConfigData",
+      "metadata": {
+        "self": "https://pkc-3588w.us-east-1.aws.confluent.cloud/kafka/v3/clusters/lkc-81knqq/links/tf-link/configs/local.ssl.protocol"
+      },
+      "cluster_id": "lkc-ymq1wk",
+      "name": "local.ssl.protocol",
+      "value": "TLSv1.3",
+      "is_read_only": false,
+      "is_sensitive": false,
+      "source": "DEFAULT_CONFIG",
+      "synonyms": [],
+      "link_name": "tf-link",
+      "is_default": true
+    },
+    {
+      "kind": "KafkaLinkConfigData",
+      "metadata": {
+        "self": "https://pkc-3588w.us-east-1.aws.confluent.cloud/kafka/v3/clusters/lkc-81knqq/links/tf-link/configs/local.ssl.truststore.certificates"
+      },
+      "cluster_id": "lkc-ymq1wk",
+      "name": "local.ssl.truststore.certificates",
+      "value": null,
+      "is_read_only": false,
+      "is_sensitive": true,
+      "source": "DEFAULT_CONFIG",
+      "synonyms": [],
+      "link_name": "tf-link",
+      "is_default": true
+    },
+    {
+      "kind": "KafkaLinkConfigData",
+      "metadata": {
+        "self": "https://pkc-3588w.us-east-1.aws.confluent.cloud/kafka/v3/clusters/lkc-81knqq/links/tf-link/configs/local.ssl.truststore.type"
+      },
+      "cluster_id": "lkc-ymq1wk",
+      "name": "local.ssl.truststore.type",
+      "value": "JKS",
+      "is_read_only": false,
+      "is_sensitive": false,
+      "source": "DEFAULT_CONFIG",
+      "synonyms": [],
+      "link_name": "tf-link",
+      "is_default": true
+    },
+    {
+      "kind": "KafkaLinkConfigData",
+      "metadata": {
+        "self": "https://pkc-3588w.us-east-1.aws.confluent.cloud/kafka/v3/clusters/lkc-81knqq/links/tf-link/configs/metadata.max.age.ms"
+      },
+      "cluster_id": "lkc-ymq1wk",
+      "name": "metadata.max.age.ms",
+      "value": "300000",
+      "is_read_only": true,
+      "is_sensitive": false,
+      "source": "DEFAULT_CONFIG",
+      "synonyms": [],
+      "link_name": "tf-link",
+      "is_default": true
+    },
+    {
+      "kind": "KafkaLinkConfigData",
+      "metadata": {
+        "self": "https://pkc-3588w.us-east-1.aws.confluent.cloud/kafka/v3/clusters/lkc-81knqq/links/tf-link/configs/num.cluster.link.fetchers"
+      },
+      "cluster_id": "lkc-ymq1wk",
+      "name": "num.cluster.link.fetchers",
+      "value": "1",
+      "is_read_only": true,
+      "is_sensitive": false,
+      "source": "DEFAULT_CONFIG",
+      "synonyms": [],
+      "link_name": "tf-link",
+      "is_default": true
+    },
+    {
+      "kind": "KafkaLinkConfigData",
+      "metadata": {
+        "self": "https://pkc-3588w.us-east-1.aws.confluent.cloud/kafka/v3/clusters/lkc-81knqq/links/tf-link/configs/replica.fetch.backoff.ms"
+      },
+      "cluster_id": "lkc-ymq1wk",
+      "name": "replica.fetch.backoff.ms",
+      "value": "1000",
+      "is_read_only": true,
+      "is_sensitive": false,
+      "source": "DEFAULT_CONFIG",
+      "synonyms": [],
+      "link_name": "tf-link",
+      "is_default": true
+    },
+    {
+      "kind": "KafkaLinkConfigData",
+      "metadata": {
+        "self": "https://pkc-3588w.us-east-1.aws.confluent.cloud/kafka/v3/clusters/lkc-81knqq/links/tf-link/configs/replica.fetch.max.bytes"
+      },
+      "cluster_id": "lkc-ymq1wk",
+      "name": "replica.fetch.max.bytes",
+      "value": "5242880",
+      "is_read_only": true,
+      "is_sensitive": false,
+      "source": "DEFAULT_CONFIG",
+      "synonyms": [],
+      "link_name": "tf-link",
+      "is_default": true
+    },
+    {
+      "kind": "KafkaLinkConfigData",
+      "metadata": {
+        "self": "https://pkc-3588w.us-east-1.aws.confluent.cloud/kafka/v3/clusters/lkc-81knqq/links/tf-link/configs/replica.fetch.min.bytes"
+      },
+      "cluster_id": "lkc-ymq1wk",
+      "name": "replica.fetch.min.bytes",
+      "value": "1",
+      "is_read_only": true,
+      "is_sensitive": false,
+      "source": "DEFAULT_CONFIG",
+      "synonyms": [],
+      "link_name": "tf-link",
+      "is_default": true
+    },
+    {
+      "kind": "KafkaLinkConfigData",
+      "metadata": {
+        "self": "https://pkc-3588w.us-east-1.aws.confluent.cloud/kafka/v3/clusters/lkc-81knqq/links/tf-link/configs/replica.fetch.response.max.bytes"
+      },
+      "cluster_id": "lkc-ymq1wk",
+      "name": "replica.fetch.response.max.bytes",
+      "value": "10485760",
+      "is_read_only": true,
+      "is_sensitive": false,
+      "source": "DEFAULT_CONFIG",
+      "synonyms": [],
+      "link_name": "tf-link",
+      "is_default": true
+    },
+    {
+      "kind": "KafkaLinkConfigData",
+      "metadata": {
+        "self": "https://pkc-3588w.us-east-1.aws.confluent.cloud/kafka/v3/clusters/lkc-81knqq/links/tf-link/configs/replica.fetch.wait.max.ms"
+      },
+      "cluster_id": "lkc-ymq1wk",
+      "name": "replica.fetch.wait.max.ms",
+      "value": "500",
+      "is_read_only": true,
+      "is_sensitive": false,
+      "source": "DEFAULT_CONFIG",
+      "synonyms": [],
+      "link_name": "tf-link",
+      "is_default": true
+    },
+    {
+      "kind": "KafkaLinkConfigData",
+      "metadata": {
+        "self": "https://pkc-3588w.us-east-1.aws.confluent.cloud/kafka/v3/clusters/lkc-81knqq/links/tf-link/configs/replica.socket.receive.buffer.bytes"
+      },
+      "cluster_id": "lkc-ymq1wk",
+      "name": "replica.socket.receive.buffer.bytes",
+      "value": "-1",
+      "is_read_only": false,
+      "is_sensitive": false,
+      "source": "DEFAULT_CONFIG",
+      "synonyms": [],
+      "link_name": "tf-link",
+      "is_default": true
+    },
+    {
+      "kind": "KafkaLinkConfigData",
+      "metadata": {
+        "self": "https://pkc-3588w.us-east-1.aws.confluent.cloud/kafka/v3/clusters/lkc-81knqq/links/tf-link/configs/replica.socket.timeout.ms"
+      },
+      "cluster_id": "lkc-ymq1wk",
+      "name": "replica.socket.timeout.ms",
+      "value": "30000",
+      "is_read_only": true,
+      "is_sensitive": false,
+      "source": "DEFAULT_CONFIG",
+      "synonyms": [],
+      "link_name": "tf-link",
+      "is_default": true
+    },
+    {
+      "kind": "KafkaLinkConfigData",
+      "metadata": {
+        "self": "https://pkc-3588w.us-east-1.aws.confluent.cloud/kafka/v3/clusters/lkc-81knqq/links/tf-link/configs/request.timeout.ms"
+      },
+      "cluster_id": "lkc-ymq1wk",
+      "name": "request.timeout.ms",
+      "value": "30000",
+      "is_read_only": true,
+      "is_sensitive": false,
+      "source": "DEFAULT_CONFIG",
+      "synonyms": [],
+      "link_name": "tf-link",
+      "is_default": true
+    },
+    {
+      "kind": "KafkaLinkConfigData",
+      "metadata": {
+        "self": "https://pkc-3588w.us-east-1.aws.confluent.cloud/kafka/v3/clusters/lkc-81knqq/links/tf-link/configs/retry.backoff.ms"
+      },
+      "cluster_id": "lkc-ymq1wk",
+      "name": "retry.backoff.ms",
+      "value": "100",
+      "is_read_only": true,
+      "is_sensitive": false,
+      "source": "DEFAULT_CONFIG",
+      "synonyms": [],
+      "link_name": "tf-link",
+      "is_default": true
+    },
+    {
+      "kind": "KafkaLinkConfigData",
+      "metadata": {
+        "self": "https://pkc-3588w.us-east-1.aws.confluent.cloud/kafka/v3/clusters/lkc-81knqq/links/tf-link/configs/sasl.jaas.config"
+      },
+      "cluster_id": "lkc-ymq1wk",
+      "name": "sasl.jaas.config",
+      "value": null,
+      "is_read_only": false,
+      "is_sensitive": true,
+      "source": "DYNAMIC_CLUSTER_LINK_CONFIG",
+      "synonyms": [],
+      "link_name": "tf-link",
+      "is_default": false
+    },
+    {
+      "kind": "KafkaLinkConfigData",
+      "metadata": {
+        "self": "https://pkc-3588w.us-east-1.aws.confluent.cloud/kafka/v3/clusters/lkc-81knqq/links/tf-link/configs/sasl.mechanism"
+      },
+      "cluster_id": "lkc-ymq1wk",
+      "name": "sasl.mechanism",
+      "value": "PLAIN",
+      "is_read_only": false,
+      "is_sensitive": false,
+      "source": "DYNAMIC_CLUSTER_LINK_CONFIG",
+      "synonyms": [],
+      "link_name": "tf-link",
+      "is_default": false
+    },
+    {
+      "kind": "KafkaLinkConfigData",
+      "metadata": {
+        "self": "https://pkc-3588w.us-east-1.aws.confluent.cloud/kafka/v3/clusters/lkc-81knqq/links/tf-link/configs/security.protocol"
+      },
+      "cluster_id": "lkc-ymq1wk",
+      "name": "security.protocol",
+      "value": "SASL_SSL",
+      "is_read_only": false,
+      "is_sensitive": false,
+      "source": "DYNAMIC_CLUSTER_LINK_CONFIG",
+      "synonyms": [],
+      "link_name": "tf-link",
+      "is_default": false
+    },
+    {
+      "kind": "KafkaLinkConfigData",
+      "metadata": {
+        "self": "https://pkc-3588w.us-east-1.aws.confluent.cloud/kafka/v3/clusters/lkc-81knqq/links/tf-link/configs/socket.connection.setup.timeout.max.ms"
+      },
+      "cluster_id": "lkc-ymq1wk",
+      "name": "socket.connection.setup.timeout.max.ms",
+      "value": "30000",
+      "is_read_only": true,
+      "is_sensitive": false,
+      "source": "DEFAULT_CONFIG",
+      "synonyms": [],
+      "link_name": "tf-link",
+      "is_default": true
+    },
+    {
+      "kind": "KafkaLinkConfigData",
+      "metadata": {
+        "self": "https://pkc-3588w.us-east-1.aws.confluent.cloud/kafka/v3/clusters/lkc-81knqq/links/tf-link/configs/socket.connection.setup.timeout.ms"
+      },
+      "cluster_id": "lkc-ymq1wk",
+      "name": "socket.connection.setup.timeout.ms",
+      "value": "10000",
+      "is_read_only": true,
+      "is_sensitive": false,
+      "source": "DEFAULT_CONFIG",
+      "synonyms": [],
+      "link_name": "tf-link",
+      "is_default": true
+    },
+    {
+      "kind": "KafkaLinkConfigData",
+      "metadata": {
+        "self": "https://pkc-3588w.us-east-1.aws.confluent.cloud/kafka/v3/clusters/lkc-81knqq/links/tf-link/configs/ssl.cipher.suites"
+      },
+      "cluster_id": "lkc-ymq1wk",
+      "name": "ssl.cipher.suites",
+      "value": null,
+      "is_read_only": false,
+      "is_sensitive": false,
+      "source": "DEFAULT_CONFIG",
+      "synonyms": [],
+      "link_name": "tf-link",
+      "is_default": true
+    },
+    {
+      "kind": "KafkaLinkConfigData",
+      "metadata": {
+        "self": "https://pkc-3588w.us-east-1.aws.confluent.cloud/kafka/v3/clusters/lkc-81knqq/links/tf-link/configs/ssl.enabled.protocols"
+      },
+      "cluster_id": "lkc-ymq1wk",
+      "name": "ssl.enabled.protocols",
+      "value": "TLSv1.2,TLSv1.3",
+      "is_read_only": false,
+      "is_sensitive": false,
+      "source": "DEFAULT_CONFIG",
+      "synonyms": [],
+      "link_name": "tf-link",
+      "is_default": true
+    },
+    {
+      "kind": "KafkaLinkConfigData",
+      "metadata": {
+        "self": "https://pkc-3588w.us-east-1.aws.confluent.cloud/kafka/v3/clusters/lkc-81knqq/links/tf-link/configs/ssl.endpoint.identification.algorithm"
+      },
+      "cluster_id": "lkc-ymq1wk",
+      "name": "ssl.endpoint.identification.algorithm",
+      "value": "https",
+      "is_read_only": false,
+      "is_sensitive": false,
+      "source": "DEFAULT_CONFIG",
+      "synonyms": [],
+      "link_name": "tf-link",
+      "is_default": true
+    },
+    {
+      "kind": "KafkaLinkConfigData",
+      "metadata": {
+        "self": "https://pkc-3588w.us-east-1.aws.confluent.cloud/kafka/v3/clusters/lkc-81knqq/links/tf-link/configs/ssl.key.password"
+      },
+      "cluster_id": "lkc-ymq1wk",
+      "name": "ssl.key.password",
+      "value": null,
+      "is_read_only": false,
+      "is_sensitive": true,
+      "source": "DEFAULT_CONFIG",
+      "synonyms": [],
+      "link_name": "tf-link",
+      "is_default": true
+    },
+    {
+      "kind": "KafkaLinkConfigData",
+      "metadata": {
+        "self": "https://pkc-3588w.us-east-1.aws.confluent.cloud/kafka/v3/clusters/lkc-81knqq/links/tf-link/configs/ssl.keystore.certificate.chain"
+      },
+      "cluster_id": "lkc-ymq1wk",
+      "name": "ssl.keystore.certificate.chain",
+      "value": null,
+      "is_read_only": false,
+      "is_sensitive": true,
+      "source": "DEFAULT_CONFIG",
+      "synonyms": [],
+      "link_name": "tf-link",
+      "is_default": true
+    },
+    {
+      "kind": "KafkaLinkConfigData",
+      "metadata": {
+        "self": "https://pkc-3588w.us-east-1.aws.confluent.cloud/kafka/v3/clusters/lkc-81knqq/links/tf-link/configs/ssl.keystore.key"
+      },
+      "cluster_id": "lkc-ymq1wk",
+      "name": "ssl.keystore.key",
+      "value": null,
+      "is_read_only": false,
+      "is_sensitive": true,
+      "source": "DEFAULT_CONFIG",
+      "synonyms": [],
+      "link_name": "tf-link",
+      "is_default": true
+    },
+    {
+      "kind": "KafkaLinkConfigData",
+      "metadata": {
+        "self": "https://pkc-3588w.us-east-1.aws.confluent.cloud/kafka/v3/clusters/lkc-81knqq/links/tf-link/configs/ssl.keystore.type"
+      },
+      "cluster_id": "lkc-ymq1wk",
+      "name": "ssl.keystore.type",
+      "value": "JKS",
+      "is_read_only": false,
+      "is_sensitive": false,
+      "source": "DEFAULT_CONFIG",
+      "synonyms": [],
+      "link_name": "tf-link",
+      "is_default": true
+    },
+    {
+      "kind": "KafkaLinkConfigData",
+      "metadata": {
+        "self": "https://pkc-3588w.us-east-1.aws.confluent.cloud/kafka/v3/clusters/lkc-81knqq/links/tf-link/configs/ssl.protocol"
+      },
+      "cluster_id": "lkc-ymq1wk",
+      "name": "ssl.protocol",
+      "value": "TLSv1.3",
+      "is_read_only": false,
+      "is_sensitive": false,
+      "source": "DEFAULT_CONFIG",
+      "synonyms": [],
+      "link_name": "tf-link",
+      "is_default": true
+    },
+    {
+      "kind": "KafkaLinkConfigData",
+      "metadata": {
+        "self": "https://pkc-3588w.us-east-1.aws.confluent.cloud/kafka/v3/clusters/lkc-81knqq/links/tf-link/configs/ssl.truststore.certificates"
+      },
+      "cluster_id": "lkc-ymq1wk",
+      "name": "ssl.truststore.certificates",
+      "value": null,
+      "is_read_only": false,
+      "is_sensitive": true,
+      "source": "DEFAULT_CONFIG",
+      "synonyms": [],
+      "link_name": "tf-link",
+      "is_default": true
+    },
+    {
+      "kind": "KafkaLinkConfigData",
+      "metadata": {
+        "self": "https://pkc-3588w.us-east-1.aws.confluent.cloud/kafka/v3/clusters/lkc-81knqq/links/tf-link/configs/ssl.truststore.type"
+      },
+      "cluster_id": "lkc-ymq1wk",
+      "name": "ssl.truststore.type",
+      "value": "JKS",
+      "is_read_only": false,
+      "is_sensitive": false,
+      "source": "DEFAULT_CONFIG",
+      "synonyms": [],
+      "link_name": "tf-link",
+      "is_default": true
+    },
+    {
+      "kind": "KafkaLinkConfigData",
+      "metadata": {
+        "self": "https://pkc-3588w.us-east-1.aws.confluent.cloud/kafka/v3/clusters/lkc-81knqq/links/tf-link/configs/topic.config.sync.ms"
+      },
+      "cluster_id": "lkc-ymq1wk",
+      "name": "topic.config.sync.ms",
+      "value": "5000",
+      "is_read_only": false,
+      "is_sensitive": false,
+      "source": "DEFAULT_CONFIG",
+      "synonyms": [],
+      "link_name": "tf-link",
+      "is_default": true
+    }
+  ]
+}
