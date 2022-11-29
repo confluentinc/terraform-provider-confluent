@@ -32,7 +32,6 @@ import (
 	srcm "github.com/confluentinc/ccloud-sdk-go-v2/srcm/v2"
 	sg "github.com/confluentinc/ccloud-sdk-go-v2/stream-governance/v2"
 	"github.com/hashicorp/go-cty/cty"
-	"github.com/hashicorp/go-retryablehttp"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -302,43 +301,8 @@ func (c *KafkaRestClient) apiContext(ctx context.Context) context.Context {
 	return ctx
 }
 
-// Creates retryable HTTP client that performs automatic retries with exponential backoff for 429
-// and 5** (except 501) errors. Otherwise, the response is returned and left to the caller to interpret.
-func createRetryableHttpClientWithExponentialBackoff() *http.Client {
-	retryClient := retryablehttp.NewClient()
-
-	// Implicitly using default retry configuration
-	// under the assumption is it's OK to spend retrying a single HTTP call around 15 seconds in total: 1 + 2 + 4 + 8
-	// An exponential backoff equation: https://github.com/hashicorp/go-retryablehttp/blob/master/client.go#L493
-	// retryWaitMax = math.Pow(2, float64(attemptNum)) * float64(retryWaitMin)
-	// defaultRetryWaitMin = 1 * time.Second
-	// defaultRetryWaitMax = 30 * time.Second
-	// defaultRetryMax     = 4
-
-	return retryClient.StandardClient()
-}
-
-type KafkaRestClientFactory struct {
-	userAgent string
-}
-
 type GenericOpenAPIError interface {
 	Model() interface{}
-}
-
-func (f KafkaRestClientFactory) CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret string, isMetadataSetInProviderBlock bool) *KafkaRestClient {
-	config := kafkarestv3.NewConfiguration()
-	config.Servers[0].URL = restEndpoint
-	config.UserAgent = f.userAgent
-	config.HTTPClient = createRetryableHttpClientWithExponentialBackoff()
-	return &KafkaRestClient{
-		apiClient:                    kafkarestv3.NewAPIClient(config),
-		clusterId:                    clusterId,
-		clusterApiKey:                clusterApiKey,
-		clusterApiSecret:             clusterApiSecret,
-		restEndpoint:                 restEndpoint,
-		isMetadataSetInProviderBlock: isMetadataSetInProviderBlock,
-	}
 }
 
 func setStringAttributeInListBlockOfSizeOne(blockName, attributeName, attributeValue string, d *schema.ResourceData) error {
