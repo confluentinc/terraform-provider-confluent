@@ -29,7 +29,6 @@ import (
 
 var createClusterLinkSourceOutboundPath = fmt.Sprintf("/kafka/v3/clusters/%s/links", sourceClusterId)
 var readClusterLinkSourceOutboundPath = fmt.Sprintf("/kafka/v3/clusters/%s/links/%s", sourceClusterId, clusterLinkName)
-var readClusterLinkSourceOutboundConfigPath = fmt.Sprintf("/kafka/v3/clusters/%s/links/%s/configs", sourceClusterId, clusterLinkName)
 
 func TestAccClusterLinkSourceOutbound(t *testing.T) {
 	ctx := context.Background()
@@ -66,16 +65,6 @@ func TestAccClusterLinkSourceOutbound(t *testing.T) {
 		WhenScenarioStateIs(scenarioStateClusterLinkHasBeenCreated).
 		WillReturn(
 			string(readCreatedClusterLinkResponse),
-			contentTypeJSONHeader,
-			http.StatusOK,
-		))
-
-	readCreatedClusterLinkConfigResponse, _ := ioutil.ReadFile("../testdata/cluster_link/read_created_cluster_link_config.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readClusterLinkSourceOutboundConfigPath)).
-		InScenario(clusterLinkScenarioName).
-		WhenScenarioStateIs(scenarioStateClusterLinkHasBeenCreated).
-		WillReturn(
-			string(readCreatedClusterLinkConfigResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
 		))

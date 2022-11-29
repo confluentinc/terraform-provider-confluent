@@ -29,7 +29,6 @@ import (
 
 const (
 	scenarioStateClusterLinkHasBeenCreated = "A new cluster link has been just created"
-	scenarioStateClusterLinkHasBeenUpdated = "A new cluster link has been just updated"
 	scenarioStateClusterLinkHasBeenDeleted = "The cluster link has been deleted"
 	clusterLinkScenarioName                = "confluent_cluster_link Resource Lifecycle"
 	sourceClusterId                        = "lkc-nv0zqv"
@@ -47,22 +46,13 @@ const (
 	clusterLinkMode                       = "DESTINATION"
 	clusterLinkConnectionMode             = "OUTBOUND"
 	clusterLinkResourceLabel              = "test_cluster_link_resource_label"
-	numberOfClusterLinkResourceAttributes = "7"
-
-	firstClusterClusterLinkConfigName         = "acl.sync.ms"
-	firstClusterClusterLinkConfigValue        = "5100"
-	firstClusterClusterLinkConfigUpdatedValue = "5101"
-	secondClusterClusterLinkConfigName        = "consumer.offset.sync.ms"
-	secondClusterClusterLinkConfigValue       = "30001"
+	numberOfClusterLinkResourceAttributes = "6"
 )
 
 var fullClusterLinkResourceLabel = fmt.Sprintf("confluent_cluster_link.%s", clusterLinkResourceLabel)
 
 var createClusterLinkDestinationOutboundPath = fmt.Sprintf("/kafka/v3/clusters/%s/links", destinationClusterId)
 var readClusterLinkDestinationOutboundPath = fmt.Sprintf("/kafka/v3/clusters/%s/links/%s", destinationClusterId, clusterLinkName)
-
-var readClusterLinkConfigPath = fmt.Sprintf("/kafka/v3/clusters/%s/links/%s/configs", destinationClusterId, clusterLinkName)
-var updateClusterLinkConfigPath = fmt.Sprintf("/kafka/v3/clusters/%s/links/%s/configs:alter", destinationClusterId, clusterLinkName)
 
 //// TODO: APIF-1990
 var mockClusterLinkTestServerUrl = ""
@@ -106,46 +96,6 @@ func TestAccClusterLinkDestinationOutbound(t *testing.T) {
 			http.StatusOK,
 		))
 
-	readCreatedClusterLinkConfigResponse, _ := ioutil.ReadFile("../testdata/cluster_link/read_created_cluster_link_config.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readClusterLinkConfigPath)).
-		InScenario(clusterLinkScenarioName).
-		WhenScenarioStateIs(scenarioStateClusterLinkHasBeenCreated).
-		WillReturn(
-			string(readCreatedClusterLinkConfigResponse),
-			contentTypeJSONHeader,
-			http.StatusOK,
-		))
-
-	patchClusterLinkConfigStub := wiremock.Put(wiremock.URLPathEqualTo(updateClusterLinkConfigPath)).
-		InScenario(clusterLinkScenarioName).
-		WhenScenarioStateIs(scenarioStateClusterLinkHasBeenCreated).
-		WillSetStateTo(scenarioStateClusterLinkHasBeenUpdated).
-		WillReturn(
-			"",
-			contentTypeJSONHeader,
-			http.StatusOK,
-		)
-	_ = wiremockClient.StubFor(patchClusterLinkConfigStub)
-
-	readUpdatedClusterLinkConfigResponse, _ := ioutil.ReadFile("../testdata/cluster_link/read_updated_cluster_link_config.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readClusterLinkConfigPath)).
-		InScenario(clusterLinkScenarioName).
-		WhenScenarioStateIs(scenarioStateClusterLinkHasBeenUpdated).
-		WillReturn(
-			string(readUpdatedClusterLinkConfigResponse),
-			contentTypeJSONHeader,
-			http.StatusOK,
-		))
-
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readClusterLinkDestinationOutboundPath)).
-		InScenario(clusterLinkScenarioName).
-		WhenScenarioStateIs(scenarioStateClusterLinkHasBeenUpdated).
-		WillReturn(
-			string(readCreatedClusterLinkResponse),
-			contentTypeJSONHeader,
-			http.StatusOK,
-		))
-
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readClusterLinkDestinationOutboundPath)).
 		InScenario(clusterLinkScenarioName).
 		WhenScenarioStateIs(scenarioStateClusterLinkHasBeenDeleted).
@@ -157,7 +107,7 @@ func TestAccClusterLinkDestinationOutbound(t *testing.T) {
 
 	deleteClusterLinkStub := wiremock.Delete(wiremock.URLPathEqualTo(readClusterLinkDestinationOutboundPath)).
 		InScenario(clusterLinkScenarioName).
-		WhenScenarioStateIs(scenarioStateClusterLinkHasBeenUpdated).
+		WhenScenarioStateIs(scenarioStateClusterLinkHasBeenCreated).
 		WillSetStateTo(scenarioStateClusterLinkHasBeenDeleted).
 		WillReturn(
 			"",
@@ -215,40 +165,6 @@ func TestAccClusterLinkDestinationOutbound(t *testing.T) {
 					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, "destination_kafka_cluster.0.credentials.0.key", destinationClusterApiKey),
 					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, "destination_kafka_cluster.0.credentials.0.secret", destinationClusterApiSecret),
 					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, "id", fmt.Sprintf("%s/%s", destinationClusterId, clusterLinkName)),
-					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, "config.%", "1"),
-					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, fmt.Sprintf("config.%s", firstClusterClusterLinkConfigName), firstClusterClusterLinkConfigValue),
-					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, "%", numberOfClusterLinkResourceAttributes),
-				),
-			},
-			{
-				Config: testAccCheckClusterLinkDestinationOutboundConfigUpdated(confluentCloudBaseUrl, mockClusterLinkTestServerUrl),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckClusterLinkExists(fullClusterLinkResourceLabel),
-					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, "link_name", clusterLinkName),
-					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, "link_mode", clusterLinkMode),
-					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, "connection_mode", connectionModeOutbound),
-					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, "source_kafka_cluster.#", "1"),
-					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, "source_kafka_cluster.0.%", "4"),
-					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, "source_kafka_cluster.0.id", sourceClusterId),
-					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, "source_kafka_cluster.0.rest_endpoint", ""),
-					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, "source_kafka_cluster.0.bootstrap_endpoint", sourceClusterBootstrapEndpoint),
-					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, "source_kafka_cluster.0.credentials.#", "1"),
-					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, "source_kafka_cluster.0.credentials.0.%", "2"),
-					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, "source_kafka_cluster.0.credentials.0.key", sourceClusterApiKey),
-					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, "source_kafka_cluster.0.credentials.0.secret", sourceClusterApiSecret),
-					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, "destination_kafka_cluster.#", "1"),
-					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, "destination_kafka_cluster.0.%", "4"),
-					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, "destination_kafka_cluster.0.id", destinationClusterId),
-					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, "destination_kafka_cluster.0.rest_endpoint", mockClusterLinkTestServerUrl),
-					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, "destination_kafka_cluster.0.bootstrap_endpoint", ""),
-					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, "destination_kafka_cluster.0.credentials.#", "1"),
-					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, "destination_kafka_cluster.0.credentials.0.%", "2"),
-					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, "destination_kafka_cluster.0.credentials.0.key", destinationClusterApiKey),
-					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, "destination_kafka_cluster.0.credentials.0.secret", destinationClusterApiSecret),
-					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, "id", fmt.Sprintf("%s/%s", destinationClusterId, clusterLinkName)),
-					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, "config.%", "2"),
-					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, fmt.Sprintf("config.%s", firstClusterClusterLinkConfigName), firstClusterClusterLinkConfigUpdatedValue),
-					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, fmt.Sprintf("config.%s", secondClusterClusterLinkConfigName), secondClusterClusterLinkConfigValue),
 					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, "%", numberOfClusterLinkResourceAttributes),
 				),
 			},
@@ -300,54 +216,9 @@ func testAccCheckClusterLinkDestinationOutboundConfig(confluentCloudBaseUrl, moc
 		  secret = "%s"
 	    }
       }
-
-	  config = {
-		"%s" = "%s"
-	  }
 	}
 	`, confluentCloudBaseUrl, clusterLinkResourceLabel,
 		clusterLinkName, linkModeDestination, connectionModeOutbound,
 		sourceClusterId, sourceClusterBootstrapEndpoint, sourceClusterApiKey, sourceClusterApiSecret,
-		destinationClusterId, mockServerUrl, destinationClusterApiKey, destinationClusterApiSecret,
-		firstClusterClusterLinkConfigName, firstClusterClusterLinkConfigValue)
-}
-
-func testAccCheckClusterLinkDestinationOutboundConfigUpdated(confluentCloudBaseUrl, mockServerUrl string) string {
-	return fmt.Sprintf(`
-	provider "confluent" {
-	  endpoint = "%s"
-	}
-	resource "confluent_cluster_link" "%s" {
-	  link_name = "%s"
-      link_mode = "%s"
-      connection_mode = "%s"
-	  source_kafka_cluster {
-        id = "%s"
-        bootstrap_endpoint = "%s"
-        credentials {
-		  key = "%s"
-		  secret = "%s"
-	    }
-      }
-
-	  destination_kafka_cluster {
-        id = "%s"
-        rest_endpoint = "%s"
-        credentials {
-		  key = "%s"
-		  secret = "%s"
-	    }
-      }
-
-	  config = {
-		"%s" = "%s"
-		"%s" = "%s"
-	  }
-	}
-	`, confluentCloudBaseUrl, clusterLinkResourceLabel,
-		clusterLinkName, linkModeDestination, connectionModeOutbound,
-		sourceClusterId, sourceClusterBootstrapEndpoint, sourceClusterApiKey, sourceClusterApiSecret,
-		destinationClusterId, mockServerUrl, destinationClusterApiKey, destinationClusterApiSecret,
-		firstClusterClusterLinkConfigName, firstClusterClusterLinkConfigUpdatedValue,
-		secondClusterClusterLinkConfigName, secondClusterClusterLinkConfigValue)
+		destinationClusterId, mockServerUrl, destinationClusterApiKey, destinationClusterApiSecret)
 }
