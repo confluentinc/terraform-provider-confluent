@@ -34,7 +34,7 @@ const (
 	kafkaMirrorTopicScenarioName                = "confluent_cluster_link Resource Lifecycle"
 	kafkaMirrorTopicResourceLabel               = "test_kafka_mirror_topic_resource_label"
 	kafkaMirrorTopicName                        = "orders"
-	numberOfKafkaMirrorTopicResourceAttributes  = "7"
+	numberOfKafkaMirrorTopicResourceAttributes  = "6"
 )
 
 var fullKafkaMirrorTopicResourceLabel = fmt.Sprintf("confluent_kafka_mirror_topic.%s", kafkaMirrorTopicResourceLabel)
@@ -43,7 +43,6 @@ var createKafkaMirrorTopicPath = fmt.Sprintf("/kafka/v3/clusters/%s/links/%s/mir
 var readKafkaMirrorTopicPath = fmt.Sprintf("/kafka/v3/clusters/%s/links/%s/mirrors/%s", destinationClusterId, clusterLinkName, kafkaMirrorTopicName)
 var deleteKafkaMirrorTopicPath = fmt.Sprintf("/kafka/v3/clusters/%s/topics/%s", destinationClusterId, kafkaMirrorTopicName)
 var pauseKafkaMirrorTopicPath = fmt.Sprintf("/kafka/v3/clusters/%s/links/%s/mirrors:pause", destinationClusterId, clusterLinkName)
-var readKafkaMirrorTopicConfigPath = fmt.Sprintf("/kafka/v3/clusters/%s/topics/%s/configs", destinationClusterId, kafkaMirrorTopicName)
 
 //// TODO: APIF-1990
 var mockKafkaMirrorTestServerUrl = ""
@@ -87,16 +86,6 @@ func TestAccKafkaMirrorTopic(t *testing.T) {
 			http.StatusOK,
 		))
 
-	readCreatedMirrorTopicConfigResponse, _ := ioutil.ReadFile("../testdata/kafka_mirror_topic/regular/read_created_kafka_mirror_topic_config.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaMirrorTopicConfigPath)).
-		InScenario(kafkaMirrorTopicScenarioName).
-		WhenScenarioStateIs(scenarioStateKafkaMirrorTopicHasBeenCreated).
-		WillReturn(
-			string(readCreatedMirrorTopicConfigResponse),
-			contentTypeJSONHeader,
-			http.StatusOK,
-		))
-
 	updateTopicStub := wiremock.Post(wiremock.URLPathEqualTo(pauseKafkaMirrorTopicPath)).
 		InScenario(kafkaMirrorTopicScenarioName).
 		WhenScenarioStateIs(scenarioStateKafkaMirrorTopicHasBeenCreated).
@@ -114,16 +103,6 @@ func TestAccKafkaMirrorTopic(t *testing.T) {
 		WhenScenarioStateIs(scenarioStateKafkaMirrorTopicHasBeenPaused).
 		WillReturn(
 			string(readUpdatedTopicConfigResponse),
-			contentTypeJSONHeader,
-			http.StatusOK,
-		))
-
-	readUpdatedMirrorTopicConfigResponse, _ := ioutil.ReadFile("../testdata/kafka_mirror_topic/regular/read_created_kafka_mirror_topic_config.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaMirrorTopicConfigPath)).
-		InScenario(kafkaMirrorTopicScenarioName).
-		WhenScenarioStateIs(scenarioStateKafkaMirrorTopicHasBeenPaused).
-		WillReturn(
-			string(readUpdatedMirrorTopicConfigResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
 		))

@@ -35,7 +35,6 @@ var createKafkaMirrorTopicWithPrefixPath = fmt.Sprintf("/kafka/v3/clusters/%s/li
 var readKafkaMirrorTopicWithPrefixPath = fmt.Sprintf("/kafka/v3/clusters/%s/links/%s/mirrors/%s", destinationClusterId, clusterLinkName, kafkaMirrorTopicNameWithPrefix)
 var deleteKafkaMirrorTopicWithPrefixPath = fmt.Sprintf("/kafka/v3/clusters/%s/topics/%s", destinationClusterId, kafkaMirrorTopicNameWithPrefix)
 var stopKafkaMirrorTopicPath = fmt.Sprintf("/kafka/v3/clusters/%s/links/%s/mirrors:failover", destinationClusterId, clusterLinkName)
-var readKafkaMirrorTopicWithPrefixConfigPath = fmt.Sprintf("/kafka/v3/clusters/%s/topics/%s/configs", destinationClusterId, kafkaMirrorTopicNameWithPrefix)
 
 func TestAccKafkaMirrorTopicWithPrefix(t *testing.T) {
 	ctx := context.Background()
@@ -76,16 +75,6 @@ func TestAccKafkaMirrorTopicWithPrefix(t *testing.T) {
 			http.StatusOK,
 		))
 
-	readCreatedMirrorTopicConfigResponse, _ := ioutil.ReadFile("../testdata/kafka_mirror_topic/with_prefix/read_created_kafka_mirror_topic_config.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaMirrorTopicWithPrefixConfigPath)).
-		InScenario(kafkaMirrorTopicScenarioName).
-		WhenScenarioStateIs(scenarioStateKafkaMirrorTopicHasBeenCreated).
-		WillReturn(
-			string(readCreatedMirrorTopicConfigResponse),
-			contentTypeJSONHeader,
-			http.StatusOK,
-		))
-
 	updateTopicStub := wiremock.Post(wiremock.URLPathEqualTo(stopKafkaMirrorTopicPath)).
 		InScenario(kafkaMirrorTopicScenarioName).
 		WhenScenarioStateIs(scenarioStateKafkaMirrorTopicHasBeenCreated).
@@ -103,16 +92,6 @@ func TestAccKafkaMirrorTopicWithPrefix(t *testing.T) {
 		WhenScenarioStateIs(scenarioStateKafkaMirrorTopicHasBeenStopped).
 		WillReturn(
 			string(readUpdatedTopicConfigResponse),
-			contentTypeJSONHeader,
-			http.StatusOK,
-		))
-
-	readUpdatedMirrorTopicConfigResponse, _ := ioutil.ReadFile("../testdata/kafka_mirror_topic/with_prefix/read_created_kafka_mirror_topic_config.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaMirrorTopicWithPrefixConfigPath)).
-		InScenario(kafkaMirrorTopicScenarioName).
-		WhenScenarioStateIs(scenarioStateKafkaMirrorTopicHasBeenStopped).
-		WillReturn(
-			string(readUpdatedMirrorTopicConfigResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
 		))
