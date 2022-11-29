@@ -1,3 +1,16 @@
+## 1.17.0 (November 29, 2022)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.16.0...v1.17.0)
+
+**New features:**
+* Added `max_retries` optional attribute (defaults to `4`) for `provider` block to override maximum number of retries for an HTTP client.
+
+**Bug fixes:**
+* Updated docs.
+
+**New updates for resources that are in [Early Access / Open Preview lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy):**
+* Updated `confluent_cluster_link` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_cluster_link): added new `config` attribute.
+
 ## 1.16.0 (November 21, 2022)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.15.0...v1.16.0)
