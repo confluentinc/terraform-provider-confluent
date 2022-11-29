@@ -68,6 +68,11 @@ The following arguments are supported:
     - `secret` - (Required String, Sensitive) The Kafka API Secret.
 - `link_mode` (Optional String) The mode of the cluster link. The supported values are `"DESTINATION"` and `"SOURCE"`. Defaults to `"DESTINATION"`.
 - `connection_mode` (Optional String) The connection mode of the cluster link. The supported values are `"INBOUND"` and `"OUTBOUND"`. Defaults to `"OUTBOUND"`.
+- `config` - (Optional Map) The custom cluster link settings to set:
+  - `name` - (Required String) The setting name, for example, `acl.sync.ms`.
+  - `value` - (Required String) The setting value, for example, `12345`.
+
+-> **Note:** For more information on the cluster link settings, see [Cluster Linking Configuration on Confluent Cloud](https://docs.confluent.io/cloud/current/multi-cloud/cluster-linking/cluster-links-cc.html#configuring-cluster-link-behavior).
 
 -> **Note:** A Kafka API key consists of a key and a secret. Kafka API keys are required to interact with Kafka clusters in Confluent Cloud. Each Kafka API key is valid for one specific Kafka cluster.
 

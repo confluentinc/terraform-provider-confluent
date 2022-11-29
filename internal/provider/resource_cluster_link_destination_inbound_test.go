@@ -66,6 +66,16 @@ func TestAccClusterLinkDestinationInbound(t *testing.T) {
 			http.StatusOK,
 		))
 
+	readCreatedClusterLinkConfigResponse, _ := ioutil.ReadFile("../testdata/cluster_link/read_created_cluster_link_config.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readClusterLinkConfigPath)).
+		InScenario(clusterLinkScenarioName).
+		WhenScenarioStateIs(scenarioStateClusterLinkHasBeenCreated).
+		WillReturn(
+			string(readCreatedClusterLinkConfigResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readClusterLinkDestinationOutboundPath)).
 		InScenario(clusterLinkScenarioName).
 		WhenScenarioStateIs(scenarioStateClusterLinkHasBeenDeleted).

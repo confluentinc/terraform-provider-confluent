@@ -60,10 +60,28 @@ const (
 
 	paramSourceKafkaCredentials      = "source_kafka_cluster.0.credentials"
 	paramDestinationKafkaCredentials = "destination_kafka_cluster.0.credentials"
+
+	docsClusterLinkConfigUrl = "https://docs.confluent.io/cloud/current/multi-cloud/cluster-linking/cluster-links-cc.html#configuring-cluster-link-behavior"
+	dynamicClusterLinkConfig = "DYNAMIC_CLUSTER_LINK_CONFIG"
 )
 
 var sourceKafkaCredentialsBlockKey = fmt.Sprintf("%s.0.%s.#", paramSourceKafkaCluster, paramCredentials)
 var destinationKafkaCredentialsBlockKey = fmt.Sprintf("%s.0.%s.#", paramDestinationKafkaCluster, paramCredentials)
+
+// https://docs.confluent.io/cloud/current/multi-cloud/cluster-linking/cluster-links-cc.html#configuring-cluster-link-behavior
+var editableClusterLinkSettings = []string{
+	"acl.filters",
+	"acl.sync.enable",
+	"acl.sync.ms",
+	"auto.create.mirror.topics.enable",
+	"auto.create.mirror.topics.filters",
+	"cluster.link.prefix",
+	"consumer.group.prefix.enable",
+	"consumer.offset.group.filters",
+	"consumer.offset.sync.enable",
+	"consumer.offset.sync.ms",
+	"topic.config.sync.ms",
+}
 
 func clusterLinkResource() *schema.Resource {
 	return &schema.Resource{
@@ -98,6 +116,16 @@ func clusterLinkResource() *schema.Resource {
 				Default:      connectionModeOutbound,
 				ForceNew:     true,
 				ValidateFunc: validation.StringInSlice([]string{connectionModeInbound, connectionModeOutbound}, false),
+			},
+			paramConfigs: {
+				Type: schema.TypeMap,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+				Optional:         true,
+				Computed:         true,
+				Description:      "The custom cluster link settings to set (e.g., `\"acl.sync.ms\" = \"5100\"`).",
+				ValidateDiagFunc: clusterLinkSettingsKeysValidate,
 			},
 		},
 	}
@@ -196,7 +224,7 @@ func readClusterLinkAndSetAttributes(ctx context.Context, d *schema.ResourceData
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Cluster Link %q: %s", d.Id(), clusterLinkJson), map[string]interface{}{clusterLinkLoggingKey: d.Id()})
 
-	if _, err := setClusterLinkAttributes(d, c, clusterLink, linkMode, connectionMode, sourceClusterId, destinationClusterId, sourceRestEndpoint, destinationRestEndpoint, sourceBootstrapEndpoint, destinationBootstrapEndpoint, sourceClusterApiKey, sourceClusterApiSecret, destinationClusterApiKey, destinationClusterApiSecret); err != nil {
+	if _, err := setClusterLinkAttributes(ctx, d, c, clusterLink, linkMode, connectionMode, sourceClusterId, destinationClusterId, sourceRestEndpoint, destinationRestEndpoint, sourceBootstrapEndpoint, destinationBootstrapEndpoint, sourceClusterApiKey, sourceClusterApiSecret, destinationClusterApiKey, destinationClusterApiSecret); err != nil {
 		return nil, createDescriptiveError(err)
 	}
 
@@ -205,10 +233,10 @@ func readClusterLinkAndSetAttributes(ctx context.Context, d *schema.ResourceData
 	return []*schema.ResourceData{d}, nil
 }
 
-func setClusterLinkAttributes(d *schema.ResourceData, c *KafkaRestClient, clusterLink v3.ListLinksResponseData,
+func setClusterLinkAttributes(ctx context.Context, d *schema.ResourceData, c *KafkaRestClient, clusterLink v3.ListLinksResponseData,
 	linkMode, connectionMode, sourceClusterId, destinationClusterId, sourceRestEndpoint, destinationRestEndpoint, sourceBootstrapEndpoint, destinationBootstrapEndpoint,
 	sourceClusterApiKey, sourceClusterApiSecret, destinationClusterApiKey, destinationClusterApiSecret string) (*schema.ResourceData, error) {
-	if err := d.Set(paramLinkName, clusterLink.LinkName); err != nil {
+	if err := d.Set(paramLinkName, clusterLink.GetLinkName()); err != nil {
 		return nil, err
 	}
 	if err := d.Set(paramLinkMode, linkMode); err != nil {
@@ -251,13 +279,68 @@ func setClusterLinkAttributes(d *schema.ResourceData, c *KafkaRestClient, cluste
 		}
 	}
 
+	configs, err := loadClusterLinkConfigs(ctx, d, c, clusterLink.GetLinkName())
+	if err != nil {
+		return nil, err
+	}
+	if err := d.Set(paramConfigs, configs); err != nil {
+		return nil, err
+	}
+
 	d.SetId(createClusterLinkId(c.clusterId, clusterLink.LinkName))
 	return d, nil
 }
 
 func clusterLinkUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if d.HasChangesExcept(paramSourceKafkaCluster, paramSourceKafkaCredentials, paramDestinationKafkaCluster, paramDestinationKafkaCredentials) {
-		return diag.Errorf("error updating Cluster Link %q: only %q and %q attributes can be updated for Cluster Link", d.Id(), paramSourceKafkaCredentials, paramDestinationKafkaCredentials)
+	if d.HasChangesExcept(paramSourceKafkaCluster, paramSourceKafkaCredentials, paramDestinationKafkaCluster, paramDestinationKafkaCredentials, paramConfigs) {
+		return diag.Errorf("error updating Cluster Link %q: only %q, %q and %q attributes can be updated for Cluster Link", d.Id(), paramSourceKafkaCredentials, paramDestinationKafkaCredentials, paramConfigs)
+	}
+	if d.HasChange(paramConfigs) {
+		// TF Provider allows the following operations for editable cluster link settings under 'config' block:
+		// 1. Adding new key value pair, for example, "retention.ms" = "600000"
+		// 2. Update a value for existing key value pair, for example, "retention.ms" = "600000" -> "retention.ms" = "600001"
+		// You might find the list of editable cluster link settings and their limits at
+		// https://docs.confluent.io/cloud/current/multi-cloud/cluster-linking/cluster-links-cc.html#configuring-cluster-link-behavior
+
+		// Extract 'old' and 'new' (include changes in TF configuration) cluster link settings
+		// * 'old' cluster link settings -- all cluster link settings from TF configuration _before_ changes / updates (currently set on Confluent Cloud)
+		// * 'new' cluster link settings -- all cluster link settings from TF configuration _after_ changes
+		oldClusterSettingsMap, newClusterSettingsMap := extractOldAndNewSettings(d)
+
+		// Verify that no cluster link settings were removed (reset to its default value) in TF configuration which is an unsupported operation at the moment
+		for oldSettingName := range oldClusterSettingsMap {
+			if _, ok := newClusterSettingsMap[oldSettingName]; !ok {
+				return diag.Errorf("error updating Cluster Link %q: reset to cluster link setting's default value operation (in other words, removing cluster link settings from %q block) "+
+					"is not supported at the moment. "+
+					"Instead, find its default value at %s and set its current value to the default value.", d.Id(), paramConfigs, docsClusterLinkConfigUrl)
+			}
+		}
+
+		// Construct a request for Kafka REST API
+		_, newSettingsMapAny := d.GetChange(paramConfigs)
+		updateConfigRequest := v3.AlterConfigBatchRequestData{
+			Data: extractClusterLinkConfigsAlterConfigBatchRequestData(newSettingsMapAny.(map[string]interface{})),
+		}
+		kafkaRestClient, err := createKafkaRestClientForClusterLink(d, meta)
+		if err != nil {
+			return diag.Errorf("error updating Cluster Link: %s", createDescriptiveError(err))
+		}
+		linkName := d.Get(paramLinkName).(string)
+		updateConfigRequestJson, err := json.Marshal(updateConfigRequest)
+		if err != nil {
+			return diag.Errorf("error updating Cluster Link: error marshaling %#v to json: %s", updateConfigRequest, createDescriptiveError(err))
+		}
+		tflog.Debug(ctx, fmt.Sprintf("Updating Cluster Link %q: %s", d.Id(), updateConfigRequestJson), map[string]interface{}{clusterLinkLoggingKey: d.Id()})
+
+		// Send a request to Kafka REST API
+		_, err = executeClusterLinkConfigUpdate(ctx, kafkaRestClient, linkName, updateConfigRequest)
+		if err != nil {
+			// For example, Kafka REST API will return Bad Request if new cluster link setting value exceeds the max limit:
+			// 400 Bad Request: Config property 'delete.retention.ms' with value '63113904003' exceeded max limit of 60566400000.
+			return diag.Errorf("error updating Cluster Link Config: %s", createDescriptiveError(err))
+		}
+		time.Sleep(kafkaRestAPIWaitAfterCreate)
+		tflog.Debug(ctx, fmt.Sprintf("Finished updating Cluster Link %q", d.Id()), map[string]interface{}{clusterLinkLoggingKey: d.Id()})
 	}
 	return clusterLinkRead(ctx, d, meta)
 }
@@ -417,6 +500,7 @@ func createKafkaRestClientForClusterLink(d *schema.ResourceData, meta interface{
 func constructClusterLinkRequest(d *schema.ResourceData) (v3.CreateLinkRequestData, error) {
 	linkMode := d.Get(paramLinkMode).(string)
 	connectionMode := d.Get(paramConnectionMode).(string)
+	clusterLinkSettings := extractClusterLinkConfigsConfigData(d.Get(paramConfigs).(map[string]interface{}))
 
 	if linkMode == linkModeDestination {
 		if connectionMode == connectionModeOutbound {
@@ -425,6 +509,10 @@ func constructClusterLinkRequest(d *schema.ResourceData) (v3.CreateLinkRequestDa
 			sourceKafkaClusterApiKey := extractStringValueFromNestedBlock(d, paramSourceKafkaCluster, paramCredentials, paramKey)
 			sourceKafkaClusterApiSecret := extractStringValueFromNestedBlock(d, paramSourceKafkaCluster, paramCredentials, paramSecret)
 			configs := convertToConfigData(constructCloudConfigForDestinationOutboundMode(sourceKafkaClusterBootstrapEndpoint, sourceKafkaClusterApiKey, sourceKafkaClusterApiSecret))
+
+			// Add top level cluster link configs
+			configs = append(configs, clusterLinkSettings...)
+
 			return v3.CreateLinkRequestData{
 				SourceClusterId: &sourceKafkaClusterId,
 				Configs:         &configs,
@@ -434,6 +522,10 @@ func constructClusterLinkRequest(d *schema.ResourceData) (v3.CreateLinkRequestDa
 			sourceKafkaClusterId := extractStringValueFromBlock(d, paramSourceKafkaCluster, paramId)
 			sourceKafkaClusterBootstrapEndpoint := extractStringValueFromBlock(d, paramSourceKafkaCluster, paramBootStrapEndpoint)
 			configs := convertToConfigData(constructCloudConfigForDestinationInboundMode(sourceKafkaClusterBootstrapEndpoint))
+
+			// Add top level cluster link configs
+			configs = append(configs, clusterLinkSettings...)
+
 			return v3.CreateLinkRequestData{
 				SourceClusterId: &sourceKafkaClusterId,
 				Configs:         &configs,
@@ -448,6 +540,10 @@ func constructClusterLinkRequest(d *schema.ResourceData) (v3.CreateLinkRequestDa
 		destinationKafkaClusterApiKey := extractStringValueFromNestedBlock(d, paramDestinationKafkaCluster, paramCredentials, paramKey)
 		destinationKafkaClusterApiSecret := extractStringValueFromNestedBlock(d, paramDestinationKafkaCluster, paramCredentials, paramSecret)
 		configs := convertToConfigData(constructCloudConfigForSourceOutboundMode(sourceKafkaClusterApiKey, sourceKafkaClusterApiSecret, destinationKafkaClusterBootstrapEndpoint, destinationKafkaClusterApiKey, destinationKafkaClusterApiSecret))
+
+		// Add top level cluster link configs
+		configs = append(configs, clusterLinkSettings...)
+
 		return v3.CreateLinkRequestData{
 			DestinationClusterId: &destinationKafkaClusterId,
 			Configs:              &configs,
@@ -596,4 +692,62 @@ func validateClusterLinkInput(d *schema.ResourceData) error {
 		}
 	}
 	return nil
+}
+
+func loadClusterLinkConfigs(ctx context.Context, d *schema.ResourceData, c *KafkaRestClient, linkName string) (map[string]string, error) {
+	clusterLinkConfig, _, err := c.apiClient.ClusterLinkingV3Api.ListKafkaLinkConfigs(c.apiContext(ctx), c.clusterId, linkName).Execute()
+	if err != nil {
+		return nil, fmt.Errorf("error reading Cluster Link %q: could not load configs %s", linkName, createDescriptiveError(err))
+	}
+
+	config := make(map[string]string)
+	for _, remoteConfig := range clusterLinkConfig.GetData() {
+		// Extract configs that were set via overriden vs set by default
+		if stringInSlice(remoteConfig.GetName(), editableClusterLinkSettings, false) && remoteConfig.Source == dynamicClusterLinkConfig {
+			config[remoteConfig.GetName()] = remoteConfig.GetValue()
+		}
+	}
+	configJson, err := json.Marshal(config)
+	if err != nil {
+		return nil, fmt.Errorf("error reading Cluster Link: error marshaling %#v to json: %s", config, createDescriptiveError(err))
+	}
+	tflog.Debug(ctx, fmt.Sprintf("Fetched Cluster Link %q Settings: %s", d.Id(), configJson), map[string]interface{}{clusterLinkLoggingKey: d.Id()})
+
+	return config, nil
+}
+
+func extractClusterLinkConfigsAlterConfigBatchRequestData(configs map[string]interface{}) []v3.AlterConfigBatchRequestDataData {
+	configResult := make([]v3.AlterConfigBatchRequestDataData, len(configs))
+
+	i := 0
+	for name, value := range configs {
+		v := value.(string)
+		configResult[i] = v3.AlterConfigBatchRequestDataData{
+			Name:  name,
+			Value: *v3.NewNullableString(&v),
+		}
+		i += 1
+	}
+
+	return configResult
+}
+
+func extractClusterLinkConfigsConfigData(configs map[string]interface{}) []v3.ConfigData {
+	configResult := make([]v3.ConfigData, len(configs))
+
+	i := 0
+	for name, value := range configs {
+		v := value.(string)
+		configResult[i] = v3.ConfigData{
+			Name:  name,
+			Value: *v3.NewNullableString(&v),
+		}
+		i += 1
+	}
+
+	return configResult
+}
+
+func executeClusterLinkConfigUpdate(ctx context.Context, c *KafkaRestClient, linkName string, requestData v3.AlterConfigBatchRequestData) (*http.Response, error) {
+	return c.apiClient.ClusterLinkingV3Api.UpdateKafkaLinkConfigBatch(c.apiContext(ctx), c.clusterId, linkName).AlterConfigBatchRequestData(requestData).Execute()
 }
