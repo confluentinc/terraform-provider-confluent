@@ -87,6 +87,15 @@ func kafkaMirrorTopicResource() *schema.Resource {
 					return false
 				},
 			},
+			paramConfigs: {
+				Type: schema.TypeMap,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+				Optional:    true,
+				Computed:    true,
+				Description: "The custom topic settings to set (e.g., `\"cleanup.policy\" = \"compact\"`).",
+			},
 		},
 	}
 }
@@ -99,8 +108,9 @@ func kafkaMirrorTopicCreate(ctx context.Context, d *schema.ResourceData, meta in
 	linkName := extractStringValueFromBlock(d, paramClusterLink, paramLinkName)
 	sourceTopicName := extractStringValueFromBlock(d, paramSourceKafkaTopic, paramTopicName)
 	mirrorTopicName := d.Get(paramMirrorTopicName).(string)
+	configs := extractConfigsConfigData(d.Get(paramConfigs).(map[string]interface{}))
 
-	createKafkaMirrorTopicRequest, err := constructKafkaMirrorTopicRequest(sourceTopicName, mirrorTopicName)
+	createKafkaMirrorTopicRequest, err := constructKafkaMirrorTopicRequest(sourceTopicName, mirrorTopicName, configs)
 	if err != nil {
 		return diag.Errorf("error creating Kafka Mirror Topic: %s", createDescriptiveError(err))
 	}
@@ -171,7 +181,7 @@ func readKafkaMirrorTopicAndSetAttributes(ctx context.Context, d *schema.Resourc
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Kafka Mirror Topic %q: %s", d.Id(), kafkaMirrorTopicJson), map[string]interface{}{kafkaMirrorTopicLoggingKey: d.Id()})
 
-	if _, err := setKafkaMirrorTopicAttributes(d, c, kafkaMirrorTopic); err != nil {
+	if _, err := setKafkaMirrorTopicAttributes(ctx, d, c, kafkaMirrorTopic); err != nil {
 		return nil, createDescriptiveError(err)
 	}
 
@@ -180,7 +190,7 @@ func readKafkaMirrorTopicAndSetAttributes(ctx context.Context, d *schema.Resourc
 	return []*schema.ResourceData{d}, nil
 }
 
-func setKafkaMirrorTopicAttributes(d *schema.ResourceData, c *KafkaRestClient, kafkaMirrorTopic v3.ListMirrorTopicsResponseData) (*schema.ResourceData, error) {
+func setKafkaMirrorTopicAttributes(ctx context.Context, d *schema.ResourceData, c *KafkaRestClient, kafkaMirrorTopic v3.ListMirrorTopicsResponseData) (*schema.ResourceData, error) {
 	if err := d.Set(paramKafkaCluster, []interface{}{map[string]interface{}{
 		paramId:           c.clusterId,
 		paramRestEndpoint: c.restEndpoint,
@@ -204,6 +214,16 @@ func setKafkaMirrorTopicAttributes(d *schema.ResourceData, c *KafkaRestClient, k
 	if err := d.Set(paramStatus, kafkaMirrorTopic.GetMirrorStatus()); err != nil {
 		return nil, err
 	}
+
+	// https://docs.confluent.io/cloud/current/multi-cloud/cluster-linking/mirror-topics-cc.html#configurations
+	configs, err := loadTopicConfigs(ctx, d, c, kafkaMirrorTopic.GetMirrorTopicName())
+	if err != nil {
+		return nil, err
+	}
+	if err := d.Set(paramConfigs, configs); err != nil {
+		return nil, err
+	}
+
 	d.SetId(createKafkaMirrorTopicId(c.clusterId, kafkaMirrorTopic.GetLinkName(), kafkaMirrorTopic.GetMirrorTopicName()))
 	return d, nil
 }
@@ -406,11 +426,12 @@ func sourceKafkaTopicBlockSchema() *schema.Schema {
 	}
 }
 
-func constructKafkaMirrorTopicRequest(sourceTopicName, mirrorTopicName string) (v3.CreateMirrorTopicRequestData, error) {
+func constructKafkaMirrorTopicRequest(sourceTopicName, mirrorTopicName string, config []v3.ConfigData) (v3.CreateMirrorTopicRequestData, error) {
 	if mirrorTopicName == "" {
 		// Mirror topic name is the same as source topic name: "my-topic"
 		return v3.CreateMirrorTopicRequestData{
 			SourceTopicName: sourceTopicName,
+			Configs:         &config,
 			// Don't set ReplicationFactor since API returns the following on Cloud:
 			// {"error_code":40002,"message":"Topic replication factor must be 3"} when passing any other value but 3
 		}, nil
@@ -419,6 +440,7 @@ func constructKafkaMirrorTopicRequest(sourceTopicName, mirrorTopicName string) (
 		return v3.CreateMirrorTopicRequestData{
 			SourceTopicName: sourceTopicName,
 			MirrorTopicName: &mirrorTopicName,
+			Configs:         &config,
 			// Don't set ReplicationFactor since API returns the following on Cloud:
 			// {"error_code":40002,"message":"Topic replication factor must be 3"} when passing any other value but 3
 		}, nil
@@ -487,4 +509,20 @@ func mirrorTopicKafkaClusterBlockSchema() *schema.Schema {
 			},
 		},
 	}
+}
+
+func extractConfigsConfigData(configs map[string]interface{}) []v3.ConfigData {
+	configResult := make([]v3.ConfigData, len(configs))
+
+	i := 0
+	for name, value := range configs {
+		v := value.(string)
+		configResult[i] = v3.ConfigData{
+			Name:  name,
+			Value: *v3.NewNullableString(&v),
+		}
+		i += 1
+	}
+
+	return configResult
 }
