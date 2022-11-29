@@ -59,6 +59,11 @@ The following arguments are supported:
     - `topic_name` - (Required String) The name of the topic on the source cluster to be mirrored over the cluster link, for example, `orders`. A topic with the exact same name must exist on the source cluster, and no topic with this name should exist on the destination cluster.
 - `mirror_topic_name` - (Optional String) The name of the mirror topic. Only required when there is a prefix configured on the cluster link. For example, when `<prefix>` is configured for the cluster link, the mirror topic name has to be of the format `<prefix><source_topic_name>`.
 - `status` (Optional String) The status of the mirror topic. The supported values are `"ACTIVE"`, `"PAUSED"`, `"PROMOTED"`, `"FAILED_OVER"`. Pausing (`"ACTIVE" -> "PAUSED"`), resuming (`"PAUSED" -> "ACTIVE"`), promoting, and failing over a mirror topic is supported via an update operation. Defaults to `"ACTIVE"`.
+- `config` - (Optional Map) The custom mirror topic settings to set:
+    - `name` - (Required String) The setting name, for example, `cleanup.policy`.
+    - `value` - (Required String) The setting value, for example, `compact`.
+
+-> **Note:** For more information on the mirror topic settings, see [Mirror Topic Configurations for Confluent Cloud](https://docs.confluent.io/cloud/current/multi-cloud/cluster-linking/mirror-topics-cc.html#configurations).
 
 -> **Note:** A Kafka API key consists of a key and a secret. Kafka API keys are required to interact with Kafka clusters in Confluent Cloud. Each Kafka API key is valid for one specific Kafka cluster.
 
