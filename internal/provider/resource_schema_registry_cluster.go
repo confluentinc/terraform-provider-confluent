@@ -27,6 +27,14 @@ import (
 	"strings"
 )
 
+const (
+	paramPackage             = "package"
+	billingPackageEssentials = "ESSENTIALS"
+	billingPackageAdvanced   = "ADVANCED"
+)
+
+var acceptedBillingPackages = []string{billingPackageEssentials, billingPackageAdvanced}
+
 func schemaRegistryClusterResource() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: schemaRegistryClusterCreate,

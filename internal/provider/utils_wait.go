@@ -140,24 +140,6 @@ func waitForNetworkToProvision(ctx context.Context, c *Client, environmentId, ne
 	return nil
 }
 
-func waitForStreamGovernanceClusterToProvision(ctx context.Context, c *Client, environmentId, clusterId string) error {
-	stateConf := &resource.StateChangeConf{
-		Pending: []string{stateProvisioning},
-		Target:  []string{stateProvisioned},
-		Refresh: streamGovernanceClusterProvisionStatus(c.sgApiContext(ctx), c, environmentId, clusterId),
-		// https://docs.confluent.io/cloud/current/clusters/cluster-types.html#provisioning-time
-		Timeout:      1 * time.Hour,
-		Delay:        5 * time.Second,
-		PollInterval: 30 * time.Second,
-	}
-
-	tflog.Debug(ctx, fmt.Sprintf("Waiting for Stream Governance Cluster %q provisioning status to become %q", clusterId, stateProvisioned), map[string]interface{}{streamGovernanceClusterLoggingKey: clusterId})
-	if _, err := stateConf.WaitForStateContext(c.sgApiContext(ctx)); err != nil {
-		return err
-	}
-	return nil
-}
-
 func waitForSchemaRegistryClusterToProvision(ctx context.Context, c *Client, environmentId, clusterId string) error {
 	stateConf := &resource.StateChangeConf{
 		Pending: []string{stateProvisioning},
@@ -504,25 +486,6 @@ func ksqlClusterProvisionStatus(ctx context.Context, c *Client, environmentId, c
 		}
 		// ksqlDB Cluster is in an unexpected state
 		return nil, stateUnexpected, fmt.Errorf("ksqlDB Cluster %q is an unexpected state %q", clusterId, cluster.Status.GetPhase())
-	}
-}
-
-func streamGovernanceClusterProvisionStatus(ctx context.Context, c *Client, environmentId string, clusterId string) resource.StateRefreshFunc {
-	return func() (result interface{}, s string, err error) {
-		cluster, _, err := executeStreamGovernanceClusterRead(c.sgApiContext(ctx), c, environmentId, clusterId)
-		if err != nil {
-			tflog.Warn(ctx, fmt.Sprintf("Error reading Stream Governance Cluster %q: %s", clusterId, createDescriptiveError(err)), map[string]interface{}{streamGovernanceClusterLoggingKey: clusterId})
-			return nil, stateUnknown, err
-		}
-
-		tflog.Debug(ctx, fmt.Sprintf("Waiting for Stream Governance Cluster %q provisioning status to become %q: current status is %q", clusterId, stateProvisioned, cluster.Status.GetPhase()), map[string]interface{}{streamGovernanceClusterLoggingKey: clusterId})
-		if cluster.Status.GetPhase() == stateProvisioning || cluster.Status.GetPhase() == stateProvisioned {
-			return cluster, cluster.Status.GetPhase(), nil
-		} else if cluster.Status.GetPhase() == stateFailed {
-			return nil, stateFailed, fmt.Errorf("stream Governance Cluster %q provisioning status is %q", clusterId, stateFailed)
-		}
-		// SG Cluster is in an unexpected state
-		return nil, stateUnexpected, fmt.Errorf("stream Governance Cluster %q is an unexpected state %q", clusterId, cluster.Status.GetPhase())
 	}
 }
 

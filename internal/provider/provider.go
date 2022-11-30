@@ -29,7 +29,6 @@ import (
 	net "github.com/confluentinc/ccloud-sdk-go-v2/networking/v1"
 	org "github.com/confluentinc/ccloud-sdk-go-v2/org/v2"
 	srcm "github.com/confluentinc/ccloud-sdk-go-v2/srcm/v2"
-	sg "github.com/confluentinc/ccloud-sdk-go-v2/stream-governance/v2"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -66,7 +65,6 @@ type Client struct {
 	mdsClient              *mds.APIClient
 	oidcClient             *oidc.APIClient
 	quotasClient           *quotas.APIClient
-	sgClient               *sg.APIClient
 	srcmClient             *srcm.APIClient
 	userAgent              string
 	cloudApiKey            string
@@ -156,9 +154,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_private_link_access":        privateLinkAccessDataSource(),
 				"confluent_role_binding":               roleBindingDataSource(),
 				"confluent_service_account":            serviceAccountDataSource(),
-				"confluent_stream_governance_cluster":  streamGovernanceClusterDataSource(),
 				"confluent_schema_registry_cluster":    schemaRegistryClusterDataSource(),
-				"confluent_stream_governance_region":   streamGovernanceRegionDataSource(),
 				"confluent_schema_registry_region":     schemaRegistryRegionDataSource(),
 				"confluent_user":                       userDataSource(),
 			},
@@ -181,7 +177,6 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_peering":                    peeringResource(),
 				"confluent_private_link_access":        privateLinkAccessResource(),
 				"confluent_role_binding":               roleBindingResource(),
-				"confluent_stream_governance_cluster":  streamGovernanceClusterResource(),
 				"confluent_schema_registry_cluster":    schemaRegistryClusterResource(),
 				"confluent_transit_gateway_attachment": transitGatewayAttachmentResource(),
 			},
@@ -269,7 +264,6 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	netCfg := net.NewConfiguration()
 	oidcCfg := oidc.NewConfiguration()
 	orgCfg := org.NewConfiguration()
-	sgCfg := sg.NewConfiguration()
 	srcmCfg := srcm.NewConfiguration()
 	ksqlCfg := ksql.NewConfiguration()
 	quotasCfg := quotas.NewConfiguration()
@@ -283,7 +277,6 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	netCfg.Servers[0].URL = endpoint
 	oidcCfg.Servers[0].URL = endpoint
 	orgCfg.Servers[0].URL = endpoint
-	sgCfg.Servers[0].URL = endpoint
 	srcmCfg.Servers[0].URL = endpoint
 	ksqlCfg.Servers[0].URL = endpoint
 	quotasCfg.Servers[0].URL = endpoint
@@ -297,7 +290,6 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	netCfg.UserAgent = userAgent
 	oidcCfg.UserAgent = userAgent
 	orgCfg.UserAgent = userAgent
-	sgCfg.UserAgent = userAgent
 	srcmCfg.UserAgent = userAgent
 	ksqlCfg.UserAgent = userAgent
 	quotasCfg.UserAgent = userAgent
@@ -317,7 +309,6 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 		netCfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
 		oidcCfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
 		orgCfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
-		sgCfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
 		srcmCfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
 		ksqlCfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
 		quotasCfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
@@ -339,7 +330,6 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 		netCfg.HTTPClient = NewRetryableClientFactory().CreateRetryableClient()
 		oidcCfg.HTTPClient = NewRetryableClientFactory().CreateRetryableClient()
 		orgCfg.HTTPClient = NewRetryableClientFactory().CreateRetryableClient()
-		sgCfg.HTTPClient = NewRetryableClientFactory().CreateRetryableClient()
 		srcmCfg.HTTPClient = NewRetryableClientFactory().CreateRetryableClient()
 		ksqlCfg.HTTPClient = NewRetryableClientFactory().CreateRetryableClient()
 		quotasCfg.HTTPClient = NewRetryableClientFactory().CreateRetryableClient()
@@ -359,7 +349,6 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 		netClient:              net.NewAPIClient(netCfg),
 		oidcClient:             oidc.NewAPIClient(oidcCfg),
 		orgClient:              org.NewAPIClient(orgCfg),
-		sgClient:               sg.NewAPIClient(sgCfg),
 		srcmClient:             srcm.NewAPIClient(srcmCfg),
 		ksqlClient:             ksql.NewAPIClient(ksqlCfg),
 		kafkaRestClientFactory: kafkaRestClientFactory,

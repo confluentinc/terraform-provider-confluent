@@ -30,7 +30,6 @@ import (
 	net "github.com/confluentinc/ccloud-sdk-go-v2/networking/v1"
 	org "github.com/confluentinc/ccloud-sdk-go-v2/org/v2"
 	srcm "github.com/confluentinc/ccloud-sdk-go-v2/srcm/v2"
-	sg "github.com/confluentinc/ccloud-sdk-go-v2/stream-governance/v2"
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -49,7 +48,6 @@ const (
 	kafkaAclLoggingKey                 = "kafka_acl_id"
 	kafkaClusterLoggingKey             = "kafka_cluster_id"
 	kafkaClusterConfigLoggingKey       = "kafka_cluster_config_id"
-	streamGovernanceClusterLoggingKey  = "stream_governance_cluster_id"
 	schemaRegistryClusterLoggingKey    = "schema_registry_cluster_id"
 	kafkaTopicLoggingKey               = "kafka_topic_id"
 	serviceAccountLoggingKey           = "service_account_id"
@@ -139,17 +137,6 @@ func (c *Client) mdsApiContext(ctx context.Context) context.Context {
 func (c *Client) netApiContext(ctx context.Context) context.Context {
 	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
 		return context.WithValue(context.Background(), net.ContextBasicAuth, net.BasicAuth{
-			UserName: c.cloudApiKey,
-			Password: c.cloudApiSecret,
-		})
-	}
-	tflog.Warn(ctx, "Could not find Cloud API Key")
-	return ctx
-}
-
-func (c *Client) sgApiContext(ctx context.Context) context.Context {
-	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
-		return context.WithValue(context.Background(), sg.ContextBasicAuth, sg.BasicAuth{
 			UserName: c.cloudApiKey,
 			Password: c.cloudApiSecret,
 		})
