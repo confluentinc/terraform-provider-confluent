@@ -67,6 +67,10 @@ func ksqlDataSource() *schema.Resource {
 				Description: "Topic name prefix used by this ksqlDB cluster. Used to assign ACLs for this ksqlDB cluster to use.",
 				Computed:    true,
 			},
+			paramResourceName: {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 			paramKafkaCluster:       optionalDataSourceSchema(),
 			paramCredentialIdentity: optionalDataSourceSchema(),
 		},

@@ -59,6 +59,7 @@ var resourceCommonChecks = resource.ComposeTestCheckFunc(
 	resource.TestCheckResourceAttr(fullKsqlResourceLabel, paramTopicPrefix, "pksqlc-00000"),
 	resource.TestCheckResourceAttr(fullKsqlResourceLabel, paramDisplayName, ksqlDataSourceDisplayName),
 	resource.TestCheckResourceAttr(fullKsqlResourceLabel, paramRestEndpoint, "https://pksqlc-00000.us-central1.gcp.glb.confluent.cloud"),
+	resource.TestCheckResourceAttr(fullKsqlResourceLabel, paramResourceName, "crn://confluent.cloud/organization=1111aaaa-11aa-11aa-11aa-111111aaaaaa/environment=env-abc123/cloud-cluster=lkc-00000/ksql=ksqlDB_cluster_1"),
 	resource.TestCheckNoResourceAttr(fullKsqlResourceLabel, paramHttpEndpoint),
 	resource.TestCheckResourceAttr(fullKsqlResourceLabel, paramStorage, "125"),
 	resource.TestCheckResourceAttr(fullKsqlResourceLabel, "environment.0.id", kafkaEnvId),

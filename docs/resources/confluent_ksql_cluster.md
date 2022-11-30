@@ -96,6 +96,7 @@ In addition to the preceding arguments, the following attributes are exported:
 - `topic_prefix` - (Required String) Topic name prefix used by this ksqlDB cluster. Used to assign ACLs for this ksqlDB cluster to use, for example, `pksqlc-00000`.
 - `rest_endpoint` - (Required String) The API endpoint of the ksqlDB cluster, for example, `https://pksqlc-00000.us-central1.gcp.glb.confluent.cloud`.
 - `storage` - (Required Integer) The amount of storage (in GB) provisioned to the ksqlDB cluster.
+- `resource_name` - (Required String) The Confluent Resource Name of the ksqlDB cluster.
 
 ## Import
 

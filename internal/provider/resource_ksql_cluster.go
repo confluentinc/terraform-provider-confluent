@@ -79,6 +79,11 @@ func ksqlResource() *schema.Resource {
 			paramKafkaCluster:       kafkaClusterBlockSchema(),
 			paramCredentialIdentity: credentialIdentityBlockSchema(),
 			paramEnvironment:        environmentSchema(),
+			paramResourceName: {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The Confluent Resource Name of the ksqlDB cluster.",
+			},
 		},
 		Timeouts: &schema.ResourceTimeout{
 			Create: schema.DefaultTimeout(ksqlCreateTimeout),
@@ -274,6 +279,10 @@ func setKsqlAttributes(d *schema.ResourceData, cluster ksql.KsqldbcmV2Cluster) (
 		return nil, createDescriptiveError(err)
 	}
 	if err := d.Set(paramTopicPrefix, cluster.Status.GetTopicPrefix()); err != nil {
+		return nil, createDescriptiveError(err)
+	}
+
+	if err := d.Set(paramResourceName, cluster.Metadata.GetResourceName()); err != nil {
 		return nil, createDescriptiveError(err)
 	}
 

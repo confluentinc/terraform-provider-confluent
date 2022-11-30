@@ -59,3 +59,4 @@ In addition to the preceding arguments, the following attributes are exported:
 - `credential_identity` (Optional Configuration Block) supports the following:
     - `id` - (Required String) The ID of the service or user account that the ksqlDB cluster belongs to, for example, `sa-abc123`.
 - `storage` - (Required Integer) The amount of storage (in GB) provisioned to this cluster.
+- `resource_name` - (Required String) The Confluent Resource Name of the ksqlDB cluster.
