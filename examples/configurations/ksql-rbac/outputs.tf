@@ -3,7 +3,7 @@ output "resource-ids" {
   Environment ID:                       ${confluent_environment.staging.id}
   Kafka Cluster ID:                     ${confluent_kafka_cluster.basic.id}
   ksqlDB Cluster ID:                    ${confluent_ksql_cluster.main.id}
-  ksqlDB Cluster API Endpoint:          ${confluent_ksql_cluster.main.http_endpoint}
+  ksqlDB Cluster API Endpoint:          ${confluent_ksql_cluster.main.rest_endpoint}
   KSQL Service Account ID:              ${confluent_service_account.app-ksql.id}
 
   # 1. Log in to Confluent Cloud
@@ -17,7 +17,7 @@ output "resource-ids" {
   $ docker run --rm -it confluentinc/ksqldb-cli:0.27.1 ksql \
        -u $KSQL_API_KEY \
        -p $KSQL_API_SECRET \
-       "${confluent_ksql_cluster.main.http_endpoint}"
+       "${confluent_ksql_cluster.main.rest_endpoint}"
 
   # 4. Make sure you can see "Server Status: RUNNING", otherwise (for example, "Server Status: <unknown>") enter `exit` and repeat step #3 in a few minutes.
 
