@@ -1,3 +1,14 @@
+## 1.19.0 (December 1, 2022)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.18.0...v1.19.0)
+
+**New features:**
+* Added new `confluent_cluster_link` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_cluster_link) and `confluent_kafka_mirror_topic` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_mirror_topic) in a [Generally Available lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
+
+**Bug fixes:**
+* Added support for `zones` attribute for `confluent_network` of type `TRANSITGATEWAY`.
+* Updated docs ([#150](https://github.com/confluentinc/terraform-provider-confluent/issues/150)).
+
 ## 1.18.0 (November 30, 2022)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.17.0...v1.18.0)
