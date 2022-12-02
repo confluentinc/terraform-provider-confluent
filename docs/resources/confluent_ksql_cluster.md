@@ -59,7 +59,7 @@ resource "confluent_ksql_cluster" "example" {
     id = confluent_service_account.app-ksql.id
   }
   environment {
-    id = confluent_environment.staging.id
+    id = confluent_environment.development.id
   }
   depends_on = [
     confluent_role_binding.app-ksql-kafka-cluster-admin,
