@@ -48,11 +48,6 @@ resource "confluent_kafka_topic" "orders" {
   topic_name         = "orders"
   partitions_count   = 4
   rest_endpoint      = confluent_kafka_cluster.basic-cluster.rest_endpoint
-  config = {
-    "cleanup.policy"    = "compact"
-    "max.message.bytes" = "12345"
-    "retention.ms"      = "67890"
-  }
   credentials {
     key    = confluent_api_key.app-manager-kafka-api-key.id
     secret = confluent_api_key.app-manager-kafka-api-key.secret
