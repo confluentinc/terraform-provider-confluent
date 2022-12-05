@@ -311,6 +311,7 @@ func awsTransitGatewayAttachmentSchema() *schema.Schema {
 					ForceNew:    true,
 					Default:     false,
 					Description: "Enable custom destination routes in Confluent Cloud.",
+					Deprecated:  "'enable_custom_routes' attribute will be removed in the next release and 'routes' attribute will be made required.",
 				},
 				paramRoutes: {
 					Type:        schema.TypeList,

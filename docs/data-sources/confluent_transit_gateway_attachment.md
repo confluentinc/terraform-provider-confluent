@@ -64,7 +64,7 @@ In addition to the preceding arguments, the following attributes are exported:
   - `ram_resource_share_arn` - (Required String) The Amazon Resource Name (ARN) of the Resource Access Manager (RAM) Resource Share of the transit gateway your Confluent Cloud network attaches to.
   - `transit_gateway_id` - (Required String) The ID of the AWS Transit Gateway that you want Confluent CLoud to be attached to. Must start with `tgw-`.
   - `routes` - (Required List of String) List of destination routes for traffic from Confluent VPC to customer VPC via Transit Gateway.
-  - `enable_custom_routes` - (Required String) Enable custom destination routes in Confluent Cloud. Defaults to `false`.
+  - `enable_custom_routes` - (Required String, **Deprecated** `enable_custom_routes` attribute will be removed in the next release) Enable custom destination routes in Confluent Cloud. Defaults to `false`.
   - `transit_gateway_attachment_id` - (Required String) The ID of the AWS Transit Gateway VPC Attachment that attaches Confluent VPC to Transit Gateway.
 
 -> **Note:** Use the `aws[0]` prefix for referencing these attributes, for example, `data.confluent_transit_gateway_attachment.example_using_name.aws[0].routes`.
