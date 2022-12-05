@@ -1,0 +1,18 @@
+{
+  "type": "record",
+  "namespace": "io.confluent.developer.avro",
+  "name": "CustomerEvent",
+  "fields": [
+    {
+      "name": "action",
+      "type": [
+        "Purchase",
+        "PageView"
+      ]
+    },
+    {
+      "name": "id",
+      "type": "string"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package io.confluent.developer.proto;
+
+import "purchase.proto";
+import "page_view.proto";
+
+option java_outer_classname = "CustomerEventProto";
+
+message CustomerEvent {
+
+  oneof action {
+    Purchase purchase = 1;
+    PageView page_view = 2;
+  }
+  string id = 3;
+}

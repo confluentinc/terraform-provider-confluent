@@ -29,6 +29,7 @@ import (
 	mds "github.com/confluentinc/ccloud-sdk-go-v2/mds/v2"
 	net "github.com/confluentinc/ccloud-sdk-go-v2/networking/v1"
 	org "github.com/confluentinc/ccloud-sdk-go-v2/org/v2"
+	schemaregistry "github.com/confluentinc/ccloud-sdk-go-v2/schema-registry/v1"
 	srcm "github.com/confluentinc/ccloud-sdk-go-v2/srcm/v2"
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -39,6 +40,8 @@ import (
 	"net/url"
 	"os"
 	"reflect"
+	"regexp"
+	"sort"
 	"strings"
 	"time"
 )
@@ -66,6 +69,7 @@ const (
 	clusterLinkLoggingKey              = "cluster_link_id"
 	kafkaMirrorTopicLoggingKey         = "kafka_mirror_topic_id"
 	kafkaClientQuotaLoggingKey         = "kafka_client_quota_id"
+	schemaLoggingKey                   = "schema_id"
 )
 
 func (c *Client) apiKeysApiContext(ctx context.Context) context.Context {
@@ -277,6 +281,15 @@ type KafkaRestClient struct {
 	isMetadataSetInProviderBlock bool
 }
 
+type SchemaRegistryRestClient struct {
+	apiClient                    *schemaregistry.APIClient
+	clusterId                    string
+	clusterApiKey                string
+	clusterApiSecret             string
+	restEndpoint                 string
+	isMetadataSetInProviderBlock bool
+}
+
 func (c *KafkaRestClient) apiContext(ctx context.Context) context.Context {
 	if c.clusterApiKey != "" && c.clusterApiSecret != "" {
 		return context.WithValue(context.Background(), kafkarestv3.ContextBasicAuth, kafkarestv3.BasicAuth{
@@ -285,6 +298,17 @@ func (c *KafkaRestClient) apiContext(ctx context.Context) context.Context {
 		})
 	}
 	tflog.Warn(ctx, fmt.Sprintf("Could not find Kafka API Key for Kafka Cluster %q", c.clusterId), map[string]interface{}{kafkaClusterLoggingKey: c.clusterId})
+	return ctx
+}
+
+func (c *SchemaRegistryRestClient) apiContext(ctx context.Context) context.Context {
+	if c.clusterApiKey != "" && c.clusterApiSecret != "" {
+		return context.WithValue(context.Background(), schemaregistry.ContextBasicAuth, schemaregistry.BasicAuth{
+			UserName: c.clusterApiKey,
+			Password: c.clusterApiSecret,
+		})
+	}
+	tflog.Warn(ctx, fmt.Sprintf("Could not find Schema Registry API Key for Stream Governance Cluster %q", c.clusterId))
 	return ctx
 }
 
@@ -528,4 +552,46 @@ func clusterLinkSettingsKeysValidate(v interface{}, path cty.Path) diag.Diagnost
 		}
 	}
 	return nil
+}
+
+func compareTwoProtos(old, new interface{}) bool {
+	oldProtoLinesSlice := createProtoLinesSlice(protoToString(old))
+	newProtoLinesSlice := createProtoLinesSlice(protoToString(new))
+	sort.Strings(oldProtoLinesSlice)
+	sort.Strings(newProtoLinesSlice)
+	return reflect.DeepEqual(oldProtoLinesSlice, newProtoLinesSlice)
+}
+
+func createProtoLinesSlice(proto string) []string {
+	// Remove groups whitespaces with a single one
+	whitespaces := regexp.MustCompile(`\s+`)
+	proto = whitespaces.ReplaceAllString(proto, " ")
+	proto = strings.Replace(proto, " ;", ";", -1)
+
+	// Split by any of ;{}
+	proto = strings.Replace(proto, "}", "}\n", -1)
+	proto = strings.Replace(proto, "{", "{\n", -1)
+	proto = strings.Replace(proto, ";", ";\n", -1)
+
+	lines := strings.Split(proto, "\n")
+
+	filteredLines := make([]string, 0)
+	for _, line := range lines {
+		trimmedLine := strings.Trim(line, "\n\t ")
+		if trimmedLine == "" {
+			continue
+		}
+		filteredLines = append(filteredLines, trimmedLine)
+	}
+	return filteredLines
+}
+
+func protoToString(proto interface{}) string {
+	if proto == nil || proto.(string) == "" {
+		return ""
+	}
+
+	protoString := proto.(string)
+
+	return protoString
 }

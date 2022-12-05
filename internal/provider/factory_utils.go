@@ -4,7 +4,33 @@ import (
 	kafkarestv3 "github.com/confluentinc/ccloud-sdk-go-v2/kafkarest/v3"
 	"github.com/hashicorp/go-retryablehttp"
 	"net/http"
+
+	schemaregistry "github.com/confluentinc/ccloud-sdk-go-v2/schema-registry/v1"
 )
+
+type SchemaRegistryRestClientFactory struct {
+	userAgent  string
+	maxRetries *int
+}
+
+func (f SchemaRegistryRestClientFactory) CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret string, isMetadataSetInProviderBlock bool) *SchemaRegistryRestClient {
+	config := schemaregistry.NewConfiguration()
+	config.Servers[0].URL = restEndpoint
+	config.UserAgent = f.userAgent
+	if f.maxRetries != nil {
+		config.HTTPClient = NewRetryableClientFactory(WithMaxRetries(*f.maxRetries)).CreateRetryableClient()
+	} else {
+		config.HTTPClient = NewRetryableClientFactory().CreateRetryableClient()
+	}
+	return &SchemaRegistryRestClient{
+		apiClient:                    schemaregistry.NewAPIClient(config),
+		clusterId:                    clusterId,
+		clusterApiKey:                clusterApiKey,
+		clusterApiSecret:             clusterApiSecret,
+		restEndpoint:                 restEndpoint,
+		isMetadataSetInProviderBlock: isMetadataSetInProviderBlock,
+	}
+}
 
 type KafkaRestClientFactory struct {
 	userAgent  string

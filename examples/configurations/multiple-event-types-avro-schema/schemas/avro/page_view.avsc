@@ -1,0 +1,19 @@
+{
+  "type": "record",
+  "namespace": "io.confluent.developer.avro",
+  "name": "PageView",
+  "fields": [
+    {
+      "name": "url",
+      "type": "string"
+    },
+    {
+      "name": "is_special",
+      "type": "boolean"
+    },
+    {
+      "name": "customer_id",
+      "type": "string"
+    }
+  ]
+}
