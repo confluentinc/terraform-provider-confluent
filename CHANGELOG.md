@@ -1,3 +1,16 @@
+## 1.20.0 (December 5, 2022)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.19.0...v1.20.0)
+
+**New features:**
+* Added new `confluent_schema` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema) and a corresponding [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_schema) in in an [Open Preview lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
+
+**Bug fixes:**
+* Updated docs.
+
+**New updates for resources that are in [Early Access / Open Preview lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy):**
+* Updated `confluent_transit_gateway_attachment`: The `enable_custom_routes` attribute has been deprecated. The `enable_custom_routes` attribute will be removed in the next release and `routes` attribute will be made required.
+
 ## 1.19.0 (December 1, 2022)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.18.0...v1.19.0)
