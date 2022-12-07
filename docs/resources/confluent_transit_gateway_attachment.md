@@ -48,7 +48,6 @@ resource "confluent_transit_gateway_attachment" "aws" {
     ram_resource_share_arn = "arn:aws:ram:us-east-2:000000000000:resource-share/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxx"
     transit_gateway_id     = "tgw-xxxxxxxxxxxxxxxxx"
     routes                 = ["192.168.0.0/16", "172.16.0.0/12", "100.64.0.0/10", "10.0.0.0/8"]
-    enable_custom_routes   = true
   }
   environment {
     id = confluent_environment.development.id
@@ -76,8 +75,7 @@ The following arguments are supported:
 - `aws` - (Required Configuration Block) The AWS-specific Transit Gateway Attachment details. It supports the following:
     - `ram_resource_share_arn` - (Required String) The Amazon Resource Name (ARN) of the Resource Access Manager (RAM) Resource Share of the transit gateway your Confluent Cloud network attaches to.
     - `transit_gateway_id` - (Required String) The ID of the AWS Transit Gateway that you want Confluent CLoud to be attached to. Must start with `tgw-`.
-    - `routes` - (Optional List of String) List of destination routes for traffic from Confluent VPC to customer VPC via Transit Gateway.
-    - `enable_custom_routes` - (Optional String, **Deprecated** `enable_custom_routes` attribute will be removed in the next release and `routes` attribute will be made required) Enable custom destination routes in Confluent Cloud. Defaults to `false`.
+    - `routes` - (Required List of String) List of destination routes for traffic from Confluent VPC to customer VPC via Transit Gateway.
 
 -> **Note:** Learn more about Transit Gateway Attachment limitations on AWS [here](https://docs.confluent.io/cloud/current/networking/aws-transit-gateway.html#limitations).
 

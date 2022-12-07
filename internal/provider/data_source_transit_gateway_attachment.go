@@ -185,10 +185,6 @@ func awsTransitGatewayAttachmentDataSourceSchema() *schema.Schema {
 					Computed:    true,
 					Description: "The ID of the AWS Transit Gateway that your Confluent Cloud network attaches to.",
 				},
-				paramEnableCustomRoutes: {
-					Type:     schema.TypeBool,
-					Computed: true,
-				},
 				paramRoutes: {
 					Type:        schema.TypeList,
 					Computed:    true,
@@ -199,7 +195,6 @@ func awsTransitGatewayAttachmentDataSourceSchema() *schema.Schema {
 					Type:        schema.TypeString,
 					Computed:    true,
 					Description: "The ID of the AWS Transit Gateway VPC Attachment that attaches Confluent VPC to Transit Gateway.",
-					Deprecated:  "'enable_custom_routes' attribute will be removed in the next release.",
 				},
 			},
 		},

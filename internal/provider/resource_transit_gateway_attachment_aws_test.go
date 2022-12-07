@@ -37,7 +37,6 @@ const (
 	awsTransitGatewayAttachmentId                            = "tgwa-g09wyy"
 	awsTransitGatewayAttachmentRamResourceShareArn           = "arn:aws:ram:us-east-1:012345678901:resource-share/c9babbb0-d697-4af7-a64a-ad96ec32141f"
 	awsTransitGatewayAttachmentTransitGatewayId              = "tgw-0312f0fdeae1f6a08"
-	awsTransitGatewayAttachmentEnableCustomRoutes            = "false"
 	awsTransitGatewayAttachmentTgwaId                        = "tgw-attach-abc123"
 )
 
@@ -156,28 +155,6 @@ func TestAccAwsTransitGatewayAttachmentAccess(t *testing.T) {
 					resource.TestCheckResourceAttr(fullAwsTransitGatewayAttachmentResourceLabel, "aws.#", "1"),
 					resource.TestCheckResourceAttr(fullAwsTransitGatewayAttachmentResourceLabel, "aws.0.ram_resource_share_arn", awsTransitGatewayAttachmentRamResourceShareArn),
 					resource.TestCheckResourceAttr(fullAwsTransitGatewayAttachmentResourceLabel, "aws.0.transit_gateway_id", awsTransitGatewayAttachmentTransitGatewayId),
-					resource.TestCheckResourceAttr(fullAwsTransitGatewayAttachmentResourceLabel, "aws.0.enable_custom_routes", awsTransitGatewayAttachmentEnableCustomRoutes),
-					resource.TestCheckResourceAttr(fullAwsTransitGatewayAttachmentResourceLabel, "aws.0.routes.#", "4"),
-					resource.TestCheckResourceAttr(fullAwsTransitGatewayAttachmentResourceLabel, "aws.0.routes.0", awsTransitGatewayAttachmentRoutes[0]),
-					resource.TestCheckResourceAttr(fullAwsTransitGatewayAttachmentResourceLabel, "aws.0.routes.1", awsTransitGatewayAttachmentRoutes[1]),
-					resource.TestCheckResourceAttr(fullAwsTransitGatewayAttachmentResourceLabel, "aws.0.routes.2", awsTransitGatewayAttachmentRoutes[2]),
-					resource.TestCheckResourceAttr(fullAwsTransitGatewayAttachmentResourceLabel, "aws.0.routes.3", awsTransitGatewayAttachmentRoutes[3]),
-					resource.TestCheckResourceAttr(fullAwsTransitGatewayAttachmentResourceLabel, "aws.0.transit_gateway_attachment_id", awsTransitGatewayAttachmentTgwaId),
-					resource.TestCheckResourceAttr(fullAwsTransitGatewayAttachmentResourceLabel, "environment.#", "1"),
-					resource.TestCheckResourceAttr(fullAwsTransitGatewayAttachmentResourceLabel, "environment.0.id", awsTransitGatewayAttachmentEnvironmentId),
-					resource.TestCheckResourceAttr(fullAwsTransitGatewayAttachmentResourceLabel, "network.#", "1"),
-					resource.TestCheckResourceAttr(fullAwsTransitGatewayAttachmentResourceLabel, "network.0.id", awsTransitGatewayAttachmentNetworkId),
-				),
-			},
-			{
-				Config: testAccCheckAwsTransitGatewayAttachmentConfigWithoutOptionalsSet(mockServerUrl, awsTransitGatewayAttachmentResourceLabel),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckAwsTransitGatewayAttachmentExists(fullAwsTransitGatewayAttachmentResourceLabel),
-					resource.TestCheckResourceAttr(fullAwsTransitGatewayAttachmentResourceLabel, "display_name", transitGatewayAttachmentDataSourceDisplayName),
-					resource.TestCheckResourceAttr(fullAwsTransitGatewayAttachmentResourceLabel, "aws.#", "1"),
-					resource.TestCheckResourceAttr(fullAwsTransitGatewayAttachmentResourceLabel, "aws.0.ram_resource_share_arn", awsTransitGatewayAttachmentRamResourceShareArn),
-					resource.TestCheckResourceAttr(fullAwsTransitGatewayAttachmentResourceLabel, "aws.0.transit_gateway_id", awsTransitGatewayAttachmentTransitGatewayId),
-					resource.TestCheckResourceAttr(fullAwsTransitGatewayAttachmentResourceLabel, "aws.0.enable_custom_routes", awsTransitGatewayAttachmentEnableCustomRoutes),
 					resource.TestCheckResourceAttr(fullAwsTransitGatewayAttachmentResourceLabel, "aws.0.routes.#", "4"),
 					resource.TestCheckResourceAttr(fullAwsTransitGatewayAttachmentResourceLabel, "aws.0.routes.0", awsTransitGatewayAttachmentRoutes[0]),
 					resource.TestCheckResourceAttr(fullAwsTransitGatewayAttachmentResourceLabel, "aws.0.routes.1", awsTransitGatewayAttachmentRoutes[1]),
@@ -242,7 +219,6 @@ func testAccCheckAwsTransitGatewayAttachmentConfig(mockServerUrl, displayName, r
 		  ram_resource_share_arn = "%s"
           transit_gateway_id = "%s"
           routes = [%q, %q, %q, %q]
-          enable_custom_routes = %s
  		}
 		environment {
 		  id = "%s"
@@ -253,27 +229,6 @@ func testAccCheckAwsTransitGatewayAttachmentConfig(mockServerUrl, displayName, r
 	}
 	`, mockServerUrl, resourceLabel, displayName, awsTransitGatewayAttachmentRamResourceShareArn, awsTransitGatewayAttachmentTransitGatewayId,
 		awsTransitGatewayAttachmentRoutes[0], awsTransitGatewayAttachmentRoutes[1], awsTransitGatewayAttachmentRoutes[2], awsTransitGatewayAttachmentRoutes[3],
-		awsTransitGatewayAttachmentEnableCustomRoutes, awsTransitGatewayAttachmentEnvironmentId, awsTransitGatewayAttachmentNetworkId)
-}
-
-func testAccCheckAwsTransitGatewayAttachmentConfigWithoutOptionalsSet(mockServerUrl, resourceLabel string) string {
-	return fmt.Sprintf(`
-	provider "confluent" {
- 		endpoint = "%s"
-	}
-	resource "confluent_transit_gateway_attachment" "%s" {
-	    aws {
-		  ram_resource_share_arn = "%s"
-          transit_gateway_id = "%s"
- 		}
-		environment {
-		  id = "%s"
-	    }
-		network {
-		  id = "%s"
-	    }
-	}
-	`, mockServerUrl, resourceLabel, awsTransitGatewayAttachmentRamResourceShareArn, awsTransitGatewayAttachmentTransitGatewayId,
 		awsTransitGatewayAttachmentEnvironmentId, awsTransitGatewayAttachmentNetworkId)
 }
 

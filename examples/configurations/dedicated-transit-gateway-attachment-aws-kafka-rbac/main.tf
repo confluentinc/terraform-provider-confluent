@@ -58,6 +58,7 @@ resource "confluent_transit_gateway_attachment" "aws" {
   aws {
     ram_resource_share_arn = aws_ram_resource_share.confluent.arn
     transit_gateway_id     = data.aws_ec2_transit_gateway.input.id
+    routes                 = var.routes
   }
   environment {
     id = confluent_environment.staging.id
