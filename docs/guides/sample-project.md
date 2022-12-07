@@ -28,6 +28,8 @@ Use the Confluent Terraform provider to enable the lifecycle management of Confl
    * [Kafka Cluster Configs](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_cluster_config)
    * [Kafka Mirror Topics](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_mirror_topic)
    * [Schema Registry Clusters](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema_registry_cluster)
+   * [ksqlDB Clusters](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_ksql_cluster)
+   * [Schemas](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema)
 
 In this guide, you will:
 
