@@ -69,7 +69,7 @@ func kafkaClientQuotaResource() *schema.Resource {
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				MinItems:    1,
 				Required:    true,
-				Description: "A list of service accounts. Special name \"default\" can be used to represent the default quota for all users and service accounts.",
+				Description: "A list of service accounts and identity pools. Special name \"default\" can be used to represent the default quota for all users and service accounts.",
 			},
 			paramThroughput: throughputSchema(),
 		},

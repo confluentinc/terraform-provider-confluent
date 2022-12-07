@@ -70,7 +70,7 @@ func kafkaClientQuotaDataSource() *schema.Resource {
 				Type:        schema.TypeSet,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Computed:    true,
-				Description: "A list of service accounts. Special name \"default\" can be used to represent the default quota for all users and service accounts.",
+				Description: "A list of service accounts and identity pools. Special name \"default\" can be used to represent the default quota for all users and service accounts.",
 			},
 			paramThroughput: {
 				Type:        schema.TypeList,
