@@ -533,7 +533,7 @@ func clusterSettingsKeysValidate(v interface{}, path cty.Path) diag.Diagnostics 
 		return diag.Errorf("error creating / updating Cluster Config: %q block should not be empty", paramConfigs)
 	}
 
-	for clusterSetting, _ := range clusterSettingsMap {
+	for clusterSetting := range clusterSettingsMap {
 		if !stringInSlice(clusterSetting, editableClusterSettings, false) {
 			return diag.Errorf("error creating / updating Cluster Config: %q cluster setting is read-only and cannot be updated. "+
 				"Read %s for more details.", clusterSetting, docsClusterConfigUrl)
@@ -545,7 +545,7 @@ func clusterSettingsKeysValidate(v interface{}, path cty.Path) diag.Diagnostics 
 func clusterLinkSettingsKeysValidate(v interface{}, path cty.Path) diag.Diagnostics {
 	clusterSettingsMap := v.(map[string]interface{})
 
-	for clusterSetting, _ := range clusterSettingsMap {
+	for clusterSetting := range clusterSettingsMap {
 		if !stringInSlice(clusterSetting, editableClusterLinkSettings, false) {
 			return diag.Errorf("error creating / updating Cluster Link: %q cluster link setting is read-only and cannot be updated. "+
 				"Read %s for more details.", clusterSetting, docsClusterLinkConfigUrl)

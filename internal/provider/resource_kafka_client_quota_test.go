@@ -271,7 +271,7 @@ func testAccCheckKafkaClientQuotaExists(n string) resource.TestCheckFunc {
 // Converts ["foo", "bar"] into a string: "[\"foo\", \"bar\"]"
 func formatListOfStringsForHcl(items []string) string {
 	itemsHcl := make([]string, len(items))
-	for i, _ := range items {
+	for i := range items {
 		itemsHcl[i] = fmt.Sprintf("%q", items[i])
 	}
 	return fmt.Sprintf("[%s]", strings.Join(itemsHcl[:], ","))

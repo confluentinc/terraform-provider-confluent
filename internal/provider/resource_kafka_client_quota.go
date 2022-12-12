@@ -326,7 +326,7 @@ func convertToListOfIds(globalObjectReferences []quotas.GlobalObjectReference) [
 func convertSetToStringList(d *schema.ResourceData, attributeName string) []string {
 	setValues := d.Get(attributeName).(*schema.Set).List()
 	stringSetValues := make([]string, len(setValues))
-	for i, _ := range setValues {
+	for i := range setValues {
 		stringSetValues[i] = setValues[i].(string)
 	}
 	return stringSetValues
