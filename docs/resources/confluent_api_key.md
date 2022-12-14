@@ -103,7 +103,7 @@ resource "confluent_service_account" "env-manager" {
   description  = "Service account to manage resources under 'Staging' environment on Confluent Cloud"
 }
 
-resource "confluent_role_binding" "app-manager-env-admin" {
+resource "confluent_role_binding" "env-manager-environment-admin" {
   principal   = "User:${confluent_service_account.env-manager.id}"
   role_name   = "EnvironmentAdmin"
   crn_pattern = confluent_environment.staging.resource_name
@@ -118,11 +118,11 @@ resource "confluent_api_key" "env-manager-cloud-api-key" {
     kind        = confluent_service_account.env-manager.kind
   }
 
-  # The goal is to ensure that confluent_role_binding.app-manager-env-admin is created before
+  # The goal is to ensure that confluent_role_binding.env-manager-environment-admin is created before
   # confluent_api_key.env-manager-cloud-api-key is used.
 
   depends_on = [
-    confluent_role_binding.app-manager-env-admin
+    confluent_role_binding.env-manager-environment-admin
   ]
 
   lifecycle {
