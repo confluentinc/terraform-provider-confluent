@@ -115,18 +115,7 @@ resource "confluent_ksql_cluster" "main" {
 
   depends_on = [
     confluent_schema_registry_cluster.essentials,
-    confluent_kafka_acl.app-ksql-describe-on-cluster,
-    confluent_kafka_acl.app-ksql-describe-on-topic,
-    confluent_kafka_acl.app-ksql-describe-on-group,
-    confluent_kafka_acl.app-ksql-describe-configs-on-cluster,
-    confluent_kafka_acl.app-ksql-describe-configs-on-topic,
-    confluent_kafka_acl.app-ksql-describe-configs-on-group,
-    confluent_kafka_acl.app-ksql-describe-on-transactional-id,
-    confluent_kafka_acl.app-ksql-write-on-transactional-id,
-    confluent_kafka_acl.app-ksql-all-on-topic-prefix,
-    confluent_kafka_acl.app-ksql-all-on-topic-confluent,
-    confluent_kafka_acl.app-ksql-all-on-group-confluent,
-    confluent_kafka_acl.app-ksql-all-on-topic,
+    confluent_role_binding.app-ksql-schema-registry-resource-owner
   ]
 }
 
@@ -345,4 +334,10 @@ resource "confluent_kafka_acl" "app-ksql-all-on-topic" {
     key    = confluent_api_key.app-manager-kafka-api-key.id
     secret = confluent_api_key.app-manager-kafka-api-key.secret
   }
+}
+
+resource "confluent_role_binding" "app-ksql-schema-registry-resource-owner" {
+  principal   = "User:${confluent_service_account.app-ksql.id}"
+  role_name   = "ResourceOwner"
+  crn_pattern = format("%s/%s", confluent_schema_registry_cluster.essentials.resource_name, "subject=*")
 }
