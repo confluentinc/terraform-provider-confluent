@@ -1,3 +1,15 @@
+## 1.22.0 (December 15, 2022)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.21.0...v1.22.0)
+
+**New features:**
+* Added new `confluent_identity_provider` and `confluent_identity_pool` resources and data sources in a [Generally Available lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
+* Updated `confluent_api_key` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_api_key) to support Schema Registry API Keys.
+
+**Bug fixes:**
+* Updated docs.
+* Updated examples.
+
 ## 1.21.0 (December 8, 2022)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.20.0...v1.21.0)
