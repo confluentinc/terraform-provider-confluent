@@ -62,6 +62,12 @@ resource "confluent_role_binding" "app-manager-kafka-cluster-admin" {
   crn_pattern = confluent_kafka_cluster.basic.rbac_crn
 }
 
+resource "confluent_role_binding" "app-ksql-schema-registry-resource-owner" {
+  principal   = "User:${confluent_service_account.app-ksql.id}"
+  role_name   = "ResourceOwner"
+  crn_pattern = format("%s/%s", confluent_schema_registry_cluster.essentials.resource_name, "subject=*")
+}
+
 resource "confluent_ksql_cluster" "main" {
   display_name = "ksql_cluster_0"
   csu = 1
@@ -76,6 +82,7 @@ resource "confluent_ksql_cluster" "main" {
   }
   depends_on = [
     confluent_role_binding.app-manager-kafka-cluster-admin,
+    confluent_role_binding.app-ksql-schema-registry-resource-owner,
     confluent_schema_registry_cluster.essentials
   ]
 }
