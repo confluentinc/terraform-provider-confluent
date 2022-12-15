@@ -218,75 +218,97 @@ resource "confluent_kafka_acl" "app-consumer-read-on-group" {
   }
 }
 
-// 'app-schema-registry-cluster-manager' service account is required in this configuration
-// to manage schemas in Schema Registry cluster.
-// TODO: schema_registry_api_key should be owned by this account.
-resource "confluent_service_account" "schema-manager" {
-  display_name = "schema-manager"
-  description  = "Service account to manage schemas in Schema Registry cluster"
+resource "confluent_service_account" "env-manager" {
+  display_name = "env-manager"
+  description  = "Service account to manage 'Staging' environment"
 }
 
-// TODO: use ResourceOwner / CloudClusterAdmin role once RBAC is supported for Schema Registry clusters.
-resource "confluent_role_binding" "schema-manager-schema-registry-admin" {
-  principal   = "User:${confluent_service_account.app-manager.id}"
+resource "confluent_role_binding" "env-manager-environment-admin" {
+  principal   = "User:${confluent_service_account.env-manager.id}"
   role_name   = "EnvironmentAdmin"
   crn_pattern = confluent_environment.staging.resource_name
 }
 
-#locals {
-#  schema_registry_api_key = "..."
-#  schema_registry_api_secret = "..."
-#}
-#
-#resource "confluent_schema" "page-view-v1" {
-#  schema_registry_cluster {
-#    id = confluent_schema_registry_cluster.essentials.id
-#  }
-#  rest_endpoint = confluent_schema_registry_cluster.essentials.rest_endpoint
-#  subject_name = "page-view"
-#  format = "PROTOBUF"
-#  schema = file("./schemas/proto/page_view.proto")
-#  credentials {
-#    key    = local.schema_registry_api_key
-#    secret = local.schema_registry_api_secret
-#  }
-#}
-#
-#resource "confluent_schema" "purchase-v1" {
-#  schema_registry_cluster {
-#    id = confluent_schema_registry_cluster.essentials.id
-#  }
-#  rest_endpoint = confluent_schema_registry_cluster.essentials.rest_endpoint
-#  subject_name = "purchase"
-#  format = "PROTOBUF"
-#  schema = file("./schemas/proto/purchase.proto")
-#  credentials {
-#    key    = local.schema_registry_api_key
-#    secret = local.schema_registry_api_secret
-#  }
-#}
-#
-#resource "confluent_schema" "customer-event-v1" {
-#  schema_registry_cluster {
-#    id = confluent_schema_registry_cluster.essentials.id
-#  }
-#  rest_endpoint = confluent_schema_registry_cluster.essentials.rest_endpoint
-#  subject_name = "customer-event-value"
-#  format = "PROTOBUF"
-#  schema = file("./schemas/proto/customer_event.proto")
-#
-#  schema_reference {
-#    name         = "purchase.proto"
-#    subject_name = confluent_schema.purchase-v1.subject_name
-#    version      = confluent_schema.purchase-v1.version
-#  }
-#  schema_reference {
-#    name         = "page_view.proto"
-#    subject_name = confluent_schema.page-view-v1.subject_name
-#    version      = confluent_schema.page-view-v1.version
-#  }
-#  credentials {
-#    key    = local.schema_registry_api_key
-#    secret = local.schema_registry_api_secret
-#  }
-#}
+resource "confluent_api_key" "env-manager-schema-registry-api-key" {
+  display_name = "env-manager-schema-registry-api-key"
+  description  = "Schema Registry API Key that is owned by 'env-manager' service account"
+  owner {
+    id          = confluent_service_account.env-manager.id
+    api_version = confluent_service_account.env-manager.api_version
+    kind        = confluent_service_account.env-manager.kind
+  }
+
+  managed_resource {
+    id          = confluent_schema_registry_cluster.essentials.id
+    api_version = confluent_schema_registry_cluster.essentials.api_version
+    kind        = confluent_schema_registry_cluster.essentials.kind
+
+    environment {
+      id = confluent_environment.staging.id
+    }
+  }
+
+  # The goal is to ensure that confluent_role_binding.env-manager-environment-admin is created before
+  # confluent_api_key.env-manager-schema-registry-api-key is used to create instances of
+  # confluent_schema resources.
+
+  # 'depends_on' meta-argument is specified in confluent_api_key.env-manager-schema-registry-api-key to avoid having
+  # multiple copies of this definition in the configuration which would happen if we specify it in
+  # confluent_schema resources instead.
+  depends_on = [
+    confluent_role_binding.env-manager-environment-admin
+  ]
+}
+
+resource "confluent_schema" "page-view-v1" {
+  schema_registry_cluster {
+    id = confluent_schema_registry_cluster.essentials.id
+  }
+  rest_endpoint = confluent_schema_registry_cluster.essentials.rest_endpoint
+  subject_name = "page-view"
+  format = "PROTOBUF"
+  schema = file("./schemas/proto/page_view.proto")
+  credentials {
+    key    = confluent_api_key.env-manager-schema-registry-api-key.id
+    secret = confluent_api_key.env-manager-schema-registry-api-key.secret
+  }
+}
+
+resource "confluent_schema" "purchase-v1" {
+  schema_registry_cluster {
+    id = confluent_schema_registry_cluster.essentials.id
+  }
+  rest_endpoint = confluent_schema_registry_cluster.essentials.rest_endpoint
+  subject_name = "purchase"
+  format = "PROTOBUF"
+  schema = file("./schemas/proto/purchase.proto")
+  credentials {
+    key    = confluent_api_key.env-manager-schema-registry-api-key.id
+    secret = confluent_api_key.env-manager-schema-registry-api-key.secret
+  }
+}
+
+resource "confluent_schema" "customer-event-v1" {
+  schema_registry_cluster {
+    id = confluent_schema_registry_cluster.essentials.id
+  }
+  rest_endpoint = confluent_schema_registry_cluster.essentials.rest_endpoint
+  subject_name = "customer-event-value"
+  format = "PROTOBUF"
+  schema = file("./schemas/proto/customer_event.proto")
+
+  schema_reference {
+    name         = "purchase.proto"
+    subject_name = confluent_schema.purchase-v1.subject_name
+    version      = confluent_schema.purchase-v1.version
+  }
+  schema_reference {
+    name         = "page_view.proto"
+    subject_name = confluent_schema.page-view-v1.subject_name
+    version      = confluent_schema.page-view-v1.version
+  }
+  credentials {
+    key    = confluent_api_key.env-manager-schema-registry-api-key.id
+    secret = confluent_api_key.env-manager-schema-registry-api-key.secret
+  }
+}

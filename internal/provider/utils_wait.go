@@ -50,6 +50,26 @@ func waitForCreatedKafkaApiKeyToSync(ctx context.Context, c *KafkaRestClient) er
 	return nil
 }
 
+func waitForCreatedSchemaRegistryApiKeyToSync(ctx context.Context, c *SchemaRegistryRestClient) error {
+	stateConf := &resource.StateChangeConf{
+		Pending: []string{stateInProgress},
+		Target:  []string{stateDone},
+		Refresh: schemaRegistryApiKeySyncStatus(ctx, c),
+		// Default timeout for a resource
+		// https://www.terraform.io/plugin/sdkv2/resources/retries-and-customizable-timeouts
+		// Based on the tests, Schema Registry API Key takes about 30 seconds to sync
+		Timeout:      20 * time.Minute,
+		Delay:        30 * time.Second,
+		PollInterval: 30 * time.Second,
+	}
+
+	tflog.Debug(ctx, fmt.Sprintf("Waiting for Kafka API Key %q to sync", c.clusterApiKey), map[string]interface{}{apiKeyLoggingKey: c.clusterApiKey})
+	if _, err := stateConf.WaitForStateContext(ctx); err != nil {
+		return err
+	}
+	return nil
+}
+
 func waitForCreatedCloudApiKeyToSync(ctx context.Context, c *Client, cloudApiKey, cloudApiSecret string) error {
 	stateConf := &resource.StateChangeConf{
 		Pending: []string{stateInProgress},
@@ -723,6 +743,26 @@ func kafkaApiKeySyncStatus(ctx context.Context, c *KafkaRestClient) resource.Sta
 		} else {
 			tflog.Debug(ctx, fmt.Sprintf("Exiting Kafka API Key %q sync process: Received unexpected response when listing Kafka Topics: %#v", c.clusterApiKey, resp), map[string]interface{}{apiKeyLoggingKey: c.clusterApiKey})
 			return nil, stateUnexpected, fmt.Errorf("error listing Kafka Topics using Kafka API Key %q: received a response with unexpected %d status code", c.clusterApiKey, resp.StatusCode)
+		}
+	}
+}
+
+func schemaRegistryApiKeySyncStatus(ctx context.Context, c *SchemaRegistryRestClient) resource.StateRefreshFunc {
+	return func() (result interface{}, s string, err error) {
+		_, resp, err := c.apiClient.SubjectsV1Api.List(c.apiContext(ctx)).Execute()
+		if resp != nil && resp.StatusCode == http.StatusOK {
+			tflog.Debug(ctx, fmt.Sprintf("Finishing Schema Registry API Key %q sync process: Received %d status code when listing Subjects", c.clusterApiKey, resp.StatusCode), map[string]interface{}{apiKeyLoggingKey: c.clusterApiKey})
+			return 0, stateDone, nil
+			// Status codes for unsynced API Keys might change over time, so it's safer to rely on a timeout to fail
+		} else if resp != nil && (resp.StatusCode == http.StatusForbidden || resp.StatusCode == http.StatusUnauthorized) {
+			tflog.Debug(ctx, fmt.Sprintf("Performing Schema Registry API Key %q sync process: Received %d status code when listing Subjects", c.clusterApiKey, resp.StatusCode), map[string]interface{}{apiKeyLoggingKey: c.clusterApiKey})
+			return 0, stateInProgress, nil
+		} else if err != nil {
+			tflog.Debug(ctx, fmt.Sprintf("Exiting Schema Registry API Key %q sync process: Failed when listing Subjects: %s", c.clusterApiKey, createDescriptiveError(err)), map[string]interface{}{apiKeyLoggingKey: c.clusterApiKey})
+			return nil, stateFailed, fmt.Errorf("error listing Subjects using Schema Registry API Key %q: %s", c.clusterApiKey, err)
+		} else {
+			tflog.Debug(ctx, fmt.Sprintf("Exiting Schema Registry API Key %q sync process: Received unexpected response when listing Subjects: %#v", c.clusterApiKey, resp), map[string]interface{}{apiKeyLoggingKey: c.clusterApiKey})
+			return nil, stateUnexpected, fmt.Errorf("error listing Subjects using Schema Registry API Key %q: received a response with unexpected %d status code", c.clusterApiKey, resp.StatusCode)
 		}
 	}
 }
