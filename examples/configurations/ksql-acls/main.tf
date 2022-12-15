@@ -114,7 +114,19 @@ resource "confluent_ksql_cluster" "main" {
   }
 
   depends_on = [
-    confluent_schema_registry_cluster.essentials
+    confluent_schema_registry_cluster.essentials,
+    confluent_kafka_acl.app-ksql-describe-on-cluster,
+    confluent_kafka_acl.app-ksql-describe-on-topic,
+    confluent_kafka_acl.app-ksql-describe-on-group,
+    confluent_kafka_acl.app-ksql-describe-configs-on-cluster,
+    confluent_kafka_acl.app-ksql-describe-configs-on-topic,
+    confluent_kafka_acl.app-ksql-describe-configs-on-group,
+    confluent_kafka_acl.app-ksql-describe-on-transactional-id,
+    confluent_kafka_acl.app-ksql-write-on-transactional-id,
+    confluent_kafka_acl.app-ksql-all-on-topic-prefix,
+    confluent_kafka_acl.app-ksql-all-on-topic-confluent,
+    confluent_kafka_acl.app-ksql-all-on-group-confluent,
+    confluent_kafka_acl.app-ksql-all-on-topic,
   ]
 }
 
