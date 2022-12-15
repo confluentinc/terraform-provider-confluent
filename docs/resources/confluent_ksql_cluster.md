@@ -11,6 +11,10 @@
 ```terraform
 resource "confluent_environment" "development" {
   display_name = "Development"
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "confluent_schema_registry_cluster" "essentials" {
@@ -24,6 +28,10 @@ resource "confluent_schema_registry_cluster" "essentials" {
     # See https://docs.confluent.io/cloud/current/stream-governance/packages.html#stream-governance-regions
     id = "sgreg-1"
   }
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "confluent_kafka_cluster" "basic" {
@@ -36,17 +44,39 @@ resource "confluent_kafka_cluster" "basic" {
   environment {
     id = confluent_environment.development.id
   }
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "confluent_service_account" "app-ksql" {
   display_name = "app-ksql"
   description  = "Service account to manage 'example' ksqlDB cluster"
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "confluent_role_binding" "app-ksql-kafka-cluster-admin" {
   principal   = "User:${confluent_service_account.app-ksql.id}"
   role_name   = "CloudClusterAdmin"
   crn_pattern = confluent_kafka_cluster.basic.rbac_crn
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+resource "confluent_role_binding" "app-ksql-schema-registry-resource-owner" {
+  principal   = "User:${confluent_service_account.app-ksql.id}"
+  role_name   = "ResourceOwner"
+  crn_pattern = format("%s/%s", confluent_schema_registry_cluster.essentials.resource_name, "subject=*")
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "confluent_ksql_cluster" "example" {
@@ -62,9 +92,14 @@ resource "confluent_ksql_cluster" "example" {
     id = confluent_environment.development.id
   }
   depends_on = [
-    confluent_role_binding.app-ksql-kafka-cluster-admin,
+    confluent_role_binding.app-manager-kafka-cluster-admin,
+    confluent_role_binding.app-ksql-schema-registry-resource-owner,
     confluent_schema_registry_cluster.essentials
   ]
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 ```
 
@@ -81,7 +116,6 @@ The following arguments are supported:
     - `id` - (Required String) The ID of the associated Kafka cluster, for example, `lkc-abc123`.
 - `credential_identity` (Required Configuration Block) supports the following:
     - `id` - (Required String) The ID of the associated service or user account, for example, `sa-abc123`.
-  
 
 ## Attributes Reference
 
