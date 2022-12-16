@@ -341,3 +341,23 @@ resource "confluent_role_binding" "app-ksql-schema-registry-resource-owner" {
   role_name   = "ResourceOwner"
   crn_pattern = format("%s/%s", confluent_schema_registry_cluster.essentials.resource_name, "subject=*")
 }
+
+resource "confluent_api_key" "app-ksqldb-api-key" {
+  display_name = "app-ksqldb-api-key"
+  description  = "KsqlDB API Key that is owned by 'app-ksql' service account"
+  owner {
+    id          = confluent_service_account.app-ksql.id
+    api_version = confluent_service_account.app-ksql.api_version
+    kind        = confluent_service_account.app-ksql.kind
+  }
+
+  managed_resource {
+    id          = confluent_ksql_cluster.main.id
+    api_version = confluent_ksql_cluster.main.api_version
+    kind        = confluent_ksql_cluster.main.kind
+
+    environment {
+      id = confluent_environment.staging.id
+    }
+  }
+}

@@ -27,6 +27,7 @@ import (
 	"os"
 	"regexp"
 	"strings"
+	"time"
 )
 
 const (
@@ -38,18 +39,20 @@ const (
 	userKind             = "User"
 	clusterKind          = "Cluster"
 	schemaRegistryKind   = "SchemaRegistry"
+	ksqlDbKind           = "ksqlDB"
 	cloudKindInLowercase = "cloud"
 
-	iamApiVersion  = "iam/v2"
-	cmkApiVersion  = "cmk/v2"
-	srcmApiVersion = "srcm/v2"
+	iamApiVersion      = "iam/v2"
+	cmkApiVersion      = "cmk/v2"
+	srcmApiVersion     = "srcm/v2"
+	ksqldbcmApiVersion = "ksqldbcm/v2"
 )
 
 var acceptedOwnerKinds = []string{serviceAccountKind, userKind}
 var acceptedResourceKinds = []string{clusterKind}
 
 var acceptedOwnerApiVersions = []string{iamApiVersion}
-var acceptedResourceApiVersions = []string{cmkApiVersion, srcmApiVersion}
+var acceptedResourceApiVersions = []string{cmkApiVersion, srcmApiVersion, ksqldbcmApiVersion}
 
 func apiKeyResource() *schema.Resource {
 	return &schema.Resource{
@@ -297,8 +300,8 @@ func setOwner(apiKey apikeys.IamV2ApiKey, d *schema.ResourceData) error {
 func setManagedResource(apiKey apikeys.IamV2ApiKey, environmentId string, d *schema.ResourceData) error {
 	// Have to be careful here in case Schema Registry and ksqlDB don't use paramEnvironment
 	kind := apiKey.Spec.Resource.GetKind()
-	// Hack for SRCM API that temporarily returns schemaRegistryKind instead of clusterKind
-	if kind == schemaRegistryKind {
+	// Hack for API Key Mgmt API that temporarily returns schemaRegistryKind / ksqlDbKind instead of clusterKind
+	if kind == schemaRegistryKind || kind == ksqlDbKind {
 		kind = clusterKind
 	}
 	if environmentId != "" {
@@ -376,7 +379,7 @@ func apiKeyResourceSchema() *schema.Schema {
 					Required:     true,
 					ForceNew:     true,
 					Description:  "The unique identifier for the referred resource.",
-					ValidateFunc: validation.StringMatch(regexp.MustCompile("^(lkc-|lsrc-)"), "the resource ID must be of the form 'lkc-' or 'lsrc-'"),
+					ValidateFunc: validation.StringMatch(regexp.MustCompile("^(lkc-|lsrc-|lksqlc-)"), "the resource ID must be of the form 'lkc-' or 'lsrc-' or 'lksqlc-'"),
 				},
 				paramKind: {
 					Type:         schema.TypeString,
@@ -452,8 +455,13 @@ func isKafkaApiKey(apiKey apikeys.IamV2ApiKey) bool {
 }
 
 func isSchemaRegistryApiKey(apiKey apikeys.IamV2ApiKey) bool {
-	// At the moment, SRCM API temporarily returns schemaRegistryKind instead of clusterKind
+	// At the moment, API Key Mgmt API temporarily returns schemaRegistryKind instead of clusterKind
 	return (apiKey.Spec.Resource.GetKind() == clusterKind || apiKey.Spec.Resource.GetKind() == schemaRegistryKind) && apiKey.Spec.Resource.GetApiVersion() == srcmApiVersion
+}
+
+func isKsqlDbClusterApiKey(apiKey apikeys.IamV2ApiKey) bool {
+	// At the moment, API Key Mgmt API temporarily returns ksqlDbKind instead of clusterKind
+	return (apiKey.Spec.Resource.GetKind() == clusterKind || apiKey.Spec.Resource.GetKind() == ksqlDbKind) && apiKey.Spec.Resource.GetApiVersion() == ksqldbcmApiVersion
 }
 
 func waitForApiKeyToSync(ctx context.Context, c *Client, createdApiKey apikeys.IamV2ApiKey, isResourceSpecificApiKey bool, environmentId string) error {
@@ -481,6 +489,10 @@ func waitForApiKeyToSync(ctx context.Context, c *Client, createdApiKey apikeys.I
 			if err := waitForCreatedSchemaRegistryApiKeyToSync(ctx, schemaRegistryRestClient); err != nil {
 				return fmt.Errorf("error waiting for Schema Registry API Key %q to sync: %s", createdApiKey.GetId(), createDescriptiveError(err))
 			}
+		} else if isKsqlDbClusterApiKey(createdApiKey) {
+			// Currently, there are no data plane API for ksqlDB clusters so there is no endpoint we could leverage
+			// to check whether the Cluster API Key is synced which is why we're adding time.Sleep() here.
+			time.Sleep(5 * time.Minute)
 		} else {
 			resourceJson, err := json.Marshal(createdApiKey.Spec.GetResource())
 			if err != nil {

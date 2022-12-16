@@ -10,7 +10,7 @@ description: |-
 
 [![General Availability](https://img.shields.io/badge/Lifecycle%20Stage-General%20Availability-%2345c6e8)](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy)
 
-`confluent_api_key` provides an API Key resource that enables creating, editing, and deleting Cloud API Keys, Cluster API Keys (Kafka API Key, Schema Registry API Key) on Confluent Cloud.
+`confluent_api_key` provides an API Key resource that enables creating, editing, and deleting Cloud API Keys, Cluster API Keys (Kafka API Key, ksqlDB API Key, Schema Registry API Key) on Confluent Cloud.
 
 -> **Note:** It is recommended to set `lifecycle { prevent_destroy = true }` on production instances to prevent accidental API Key deletion. This setting rejects plans that would destroy or recreate the API Key, such as attempting to change uneditable attributes. Read more about it in the [Terraform docs](https://www.terraform.io/language/meta-arguments/lifecycle#prevent_destroy).
 
@@ -81,6 +81,33 @@ resource "confluent_api_key" "app-manager-kafka-api-key" {
   depends_on = [
     confluent_role_binding.app-manager-kafka-cluster-admin
   ]
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+```
+
+### Example ksqlDB API Key
+```terraform
+resource "confluent_api_key" "ksqldb-api-key" {
+  display_name = "ksqldb-api-key"
+  description  = "KsqlDB API Key that is owned by 'app-manager' service account"
+  owner {
+    id          = confluent_service_account.app-manager.id
+    api_version = confluent_service_account.app-manager.api_version
+    kind        = confluent_service_account.app-manager.kind
+  }
+
+  managed_resource {
+    id          = confluent_ksql_cluster.main.id
+    api_version = confluent_ksql_cluster.main.api_version
+    kind        = confluent_ksql_cluster.main.kind
+
+    environment {
+      id = confluent_environment.staging.id
+    }
+  }
 
   lifecycle {
     prevent_destroy = true
