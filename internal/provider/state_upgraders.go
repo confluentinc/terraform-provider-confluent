@@ -127,7 +127,7 @@ func kafkaAclResourceV1() *schema.Resource {
 				Required:     true,
 				ForceNew:     true,
 				Description:  "The principal for the ACL.",
-				ValidateFunc: validation.StringMatch(regexp.MustCompile("^User:(sa|u|pool)-"), "the principal must start with 'User:sa-' or 'User:u-' or 'User:pool-'."),
+				ValidateFunc: validation.StringMatch(regexp.MustCompile("^User:(\\*)$|^User:(sa|u|pool)-"), "the principal must start with 'User:sa-' or 'User:u-' or 'User:pool-' or be 'User:*'."),
 			},
 			paramHost: {
 				Type:        schema.TypeString,

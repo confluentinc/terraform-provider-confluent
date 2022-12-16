@@ -388,6 +388,10 @@ func isNonKafkaRestApiResourceNotFound(response *http.Response) bool {
 func principalWithResourceIdToPrincipalWithIntegerId(c *Client, principalWithResourceId string) (string, error) {
 	// There's input validation that principal attribute must start with "User:sa-" or "User:u-"
 	// User:sa-abc123 -> sa-abc123
+	if principalWithResourceId == "User:*" {
+		return principalWithResourceId, nil
+	}
+
 	resourceId := principalWithResourceId[5:]
 	if strings.HasPrefix(principalWithResourceId, "User:sa-") {
 		integerId, err := saResourceIdToSaIntegerId(c, resourceId)
@@ -404,7 +408,7 @@ func principalWithResourceIdToPrincipalWithIntegerId(c *Client, principalWithRes
 	} else if strings.HasPrefix(principalWithResourceId, "User:pool-") {
 		return principalWithResourceId, nil
 	}
-	return "", fmt.Errorf("the principal must start with 'User:sa-' or 'User:u-' or 'User:pool-'")
+	return "", fmt.Errorf("the principal must start with 'User:sa-' or 'User:u-' or 'User:pool-' or be 'User:*'")
 }
 
 // APIF-2043: TEMPORARY METHOD
