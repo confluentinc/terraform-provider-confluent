@@ -1,3 +1,14 @@
+## 1.23.0 (December 16, 2022)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.22.0...v1.23.0)
+
+**New features:**
+* Updated `confluent_api_key` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_api_key) to support ksqlDB API Keys.
+
+**Bug fixes:**
+* Updated docs.
+* Updated examples.
+
 ## 1.22.0 (December 15, 2022)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.21.0...v1.22.0)

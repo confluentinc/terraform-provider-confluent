@@ -8,9 +8,3 @@ variable "confluent_cloud_api_secret" {
   type        = string
   sensitive   = true
 }
-
-variable "topic" {
-  description = "Example topic needed for creating a stream"
-  type        = string
-  default     = "users"
-}

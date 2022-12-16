@@ -2,7 +2,7 @@ terraform {
   required_providers {
     confluent = {
       source  = "confluentinc/confluent"
-      version = "1.22.0"
+      version = "1.23.0"
     }
   }
 }
@@ -51,7 +51,7 @@ resource "confluent_kafka_cluster" "basic" {
 }
 
 // 'app-manager' service account is required in this configuration to grant ACLs
-// to 'app-ksql' service account
+// to 'app-ksql' service account and create 'users' topic
 resource "confluent_service_account" "app-manager" {
   display_name = "app-manager"
   description  = "Service account to manage 'inventory' Kafka cluster"
@@ -92,6 +92,18 @@ resource "confluent_api_key" "app-manager-kafka-api-key" {
   depends_on = [
     confluent_role_binding.app-manager-kafka-cluster-admin
   ]
+}
+
+resource "confluent_kafka_topic" "users" {
+  kafka_cluster {
+    id = confluent_kafka_cluster.basic.id
+  }
+  topic_name    = "users"
+  rest_endpoint = confluent_kafka_cluster.basic.rest_endpoint
+  credentials {
+    key    = confluent_api_key.app-manager-kafka-api-key.id
+    secret = confluent_api_key.app-manager-kafka-api-key.secret
+  }
 }
 
 // ksqlDB service account with only the necessary access
@@ -323,7 +335,7 @@ resource "confluent_kafka_acl" "app-ksql-all-on-topic" {
     id = confluent_kafka_cluster.basic.id
   }
   resource_type = "TOPIC"
-  resource_name = var.topic
+  resource_name = confluent_kafka_topic.users.topic_name
   pattern_type  = "PREFIXED"
   principal     = "User:${confluent_service_account.app-ksql.id}"
   host          = "*"

@@ -19,14 +19,14 @@ output "resource-ids" {
   # 3. Make sure you can see "Server Status: RUNNING", otherwise (for example, "Server Status: <unknown>") enter `exit` and repeat step #3 in a few minutes.
 
   # 4. Once you are connected, you can create a ksqlDB stream. A stream essentially associates a schema with an underlying Kafka topic.
-  CREATE STREAM ${var.topic}_stream (id INTEGER KEY, gender STRING, name STRING, age INTEGER) WITH (kafka_topic='${var.topic}', partitions=1, value_format='JSON');
+  CREATE STREAM ${confluent_kafka_topic.users.topic_name}_stream (id INTEGER KEY, gender STRING, name STRING, age INTEGER) WITH (kafka_topic='${confluent_kafka_topic.users.topic_name}', partitions=${confluent_kafka_topic.users.partitions_count}, value_format='JSON');
 
   # 5. Insert some data into the stream you just created.
-  INSERT INTO ${var.topic}_stream (id, gender, name, age) VALUES (0, 'female', 'sarah', 42);
-  INSERT INTO ${var.topic}_stream (id, gender, name, age) VALUES (1, 'male', 'john', 28);
+  INSERT INTO ${confluent_kafka_topic.users.topic_name}_stream (id, gender, name, age) VALUES (0, 'female', 'sarah', 42);
+  INSERT INTO ${confluent_kafka_topic.users.topic_name}_stream (id, gender, name, age) VALUES (1, 'male', 'john', 28);
 
   # 6. To confirm your insertion was successful, run a SELECT statement on your stream:
-  SELECT * FROM ${var.topic}_stream;
+  SELECT * FROM ${confluent_kafka_topic.users.topic_name}_stream;
 
   # When you are done, press 'Ctrl-C'.
   EOT
