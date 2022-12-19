@@ -18,7 +18,7 @@ description: |-
 ## Example Usage
 
 ```terraform
-resource "confluent_schema" "purchase-v1" {
+data "confluent_schema" "purchase-v1" {
   schema_registry_cluster {
     id = confluent_schema_registry_cluster.essentials.id
   }
@@ -32,7 +32,7 @@ resource "confluent_schema" "purchase-v1" {
 }
 
 output "schema" {
-  value = data.confluent_schema.proto-purchase-v1
+  value = data.confluent_schema.purchase-v1.schema
 }
 ```
 
