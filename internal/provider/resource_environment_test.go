@@ -32,6 +32,7 @@ const (
 	scenarioStateEnvHasBeenDeleted     = "The new environment has been deleted"
 	envScenarioName                    = "confluent_environment Resource Lifecycle"
 	expectedCountOne                   = int64(1)
+	expectedCountTwo                   = int64(2)
 )
 
 var contentTypeJSONHeader = map[string]string{"Content-Type": "application/json"}

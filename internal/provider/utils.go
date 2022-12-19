@@ -70,6 +70,7 @@ const (
 	kafkaMirrorTopicLoggingKey         = "kafka_mirror_topic_id"
 	kafkaClientQuotaLoggingKey         = "kafka_client_quota_id"
 	schemaLoggingKey                   = "schema_id"
+	subjectModeLoggingKey              = "subject_mode_id"
 )
 
 func (c *Client) apiKeysApiContext(ctx context.Context) context.Context {

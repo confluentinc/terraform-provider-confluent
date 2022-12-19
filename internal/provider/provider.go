@@ -183,6 +183,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_service_account":            serviceAccountDataSource(),
 				"confluent_schema_registry_cluster":    schemaRegistryClusterDataSource(),
 				"confluent_schema_registry_region":     schemaRegistryRegionDataSource(),
+				"confluent_subject_mode":               subjectModeDataSource(),
 				"confluent_user":                       userDataSource(),
 			},
 			ResourcesMap: map[string]*schema.Resource{
@@ -206,6 +207,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_role_binding":               roleBindingResource(),
 				"confluent_schema_registry_cluster":    schemaRegistryClusterResource(),
 				"confluent_schema":                     schemaResource(),
+				"confluent_subject_mode":               subjectModeResource(),
 				"confluent_transit_gateway_attachment": transitGatewayAttachmentResource(),
 			},
 		}
