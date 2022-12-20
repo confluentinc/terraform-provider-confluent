@@ -269,13 +269,6 @@ data "azurerm_subnet" "subnet" {
   resource_group_name  = data.azurerm_resource_group.rg.name
 }
 
-locals {
-  assert_no_network_policies_enabled = length([
-    for _, subnet in data.azurerm_subnet.subnet :
-    true if ! subnet.enforce_private_link_endpoint_network_policies
-  ]) > 0 ? file("\n\nerror: private link endpoint network policies must be disabled https://docs.microsoft.com/en-us/azure/private-link/disable-private-endpoint-network-policy") : ""
-}
-
 resource "azurerm_private_dns_zone" "hz" {
   resource_group_name = data.azurerm_resource_group.rg.name
 
