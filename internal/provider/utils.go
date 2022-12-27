@@ -72,6 +72,8 @@ const (
 	schemaLoggingKey                    = "schema_id"
 	subjectModeLoggingKey               = "subject_mode_id"
 	subjectCompatibilityLevelLoggingKey = "subject_compatibility_level_id"
+	schemaRegistryClusterModeLoggingKey               = "schema_registry_cluster_mode_id"
+	schemaRegistryClusterCompatibilityLevelLoggingKey = "schema_registry_cluster_compatibility_level_id"
 )
 
 func (c *Client) apiKeysApiContext(ctx context.Context) context.Context {

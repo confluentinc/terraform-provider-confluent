@@ -31,6 +31,7 @@ const (
 	scenarioStateEnvNameHasBeenUpdated = "The new environment's name has been just updated"
 	scenarioStateEnvHasBeenDeleted     = "The new environment has been deleted"
 	envScenarioName                    = "confluent_environment Resource Lifecycle"
+	expectedCountZero                  = int64(0)
 	expectedCountOne                   = int64(1)
 	expectedCountTwo                   = int64(2)
 )
