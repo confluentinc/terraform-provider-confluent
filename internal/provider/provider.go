@@ -186,7 +186,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_subject_mode":                                subjectModeDataSource(),
 				"confluent_subject_compatibility_level":                 subjectCompatibilityLevelDataSource(),
 				"confluent_schema_registry_cluster_compatibility_level": schemaRegistryClusterCompatibilityLevelDataSource(),
-				"confluent_schema_registry_cluster_mode": schemaRegistryClusterModeDataSource(),
+				"confluent_schema_registry_cluster_mode":                schemaRegistryClusterModeDataSource(),
 				"confluent_user":                                        userDataSource(),
 			},
 			ResourcesMap: map[string]*schema.Resource{
@@ -212,7 +212,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_schema":                                      schemaResource(),
 				"confluent_subject_mode":                                subjectModeResource(),
 				"confluent_subject_compatibility_level":                 subjectCompatibilityLevelResource(),
-				"confluent_schema_registry_cluster_mode": schemaRegistryClusterModeResource(),
+				"confluent_schema_registry_cluster_mode":                schemaRegistryClusterModeResource(),
 				"confluent_schema_registry_cluster_compatibility_level": schemaRegistryClusterCompatibilityLevelResource(),
 				"confluent_transit_gateway_attachment":                  transitGatewayAttachmentResource(),
 			},
@@ -350,8 +350,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 
 		apiKeysCfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
 		cmkCfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
-		// TODO: Uncomment once APIF-2660 is completed
-		// connectCfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
+		connectCfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
 		iamCfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
 		iamV1Cfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
 		mdsCfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
@@ -361,19 +360,13 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 		srcmCfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
 		ksqlCfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
 		quotasCfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
-
-		// TODO: Delete once APIF-2660 is completed
-		tempConnectClient := NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
-		tempConnectClient.Transport = &ItsActuallyJsonRoundTripper{tempConnectClient.Transport}
-		connectCfg.HTTPClient = tempConnectClient
 	} else {
 		kafkaRestClientFactory = &KafkaRestClientFactory{userAgent: userAgent}
 		schemaRegistryRestClientFactory = &SchemaRegistryRestClientFactory{userAgent: userAgent}
 
 		apiKeysCfg.HTTPClient = NewRetryableClientFactory().CreateRetryableClient()
 		cmkCfg.HTTPClient = NewRetryableClientFactory().CreateRetryableClient()
-		// TODO: Uncomment once APIF-2660 is completed
-		// connectCfg.HTTPClient = NewRetryableClientFactory().CreateRetryableClient()
+		connectCfg.HTTPClient = NewRetryableClientFactory().CreateRetryableClient()
 		iamCfg.HTTPClient = NewRetryableClientFactory().CreateRetryableClient()
 		iamV1Cfg.HTTPClient = NewRetryableClientFactory().CreateRetryableClient()
 		mdsCfg.HTTPClient = NewRetryableClientFactory().CreateRetryableClient()
@@ -383,11 +376,6 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 		srcmCfg.HTTPClient = NewRetryableClientFactory().CreateRetryableClient()
 		ksqlCfg.HTTPClient = NewRetryableClientFactory().CreateRetryableClient()
 		quotasCfg.HTTPClient = NewRetryableClientFactory().CreateRetryableClient()
-
-		// TODO: Delete once APIF-2660 is completed
-		tempConnectClient := NewRetryableClientFactory().CreateRetryableClient()
-		tempConnectClient.Transport = &ItsActuallyJsonRoundTripper{tempConnectClient.Transport}
-		connectCfg.HTTPClient = tempConnectClient
 	}
 
 	client := Client{
