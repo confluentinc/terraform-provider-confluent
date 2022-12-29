@@ -25,7 +25,7 @@ resource "confluent_schema_registry_cluster_compatibility_level" "example" {
     id = confluent_schema_registry_cluster.essentials.id
   }
   rest_endpoint       = confluent_schema_registry_cluster.essentials.rest_endpoint
-  compatibility_level = "READONLY"
+  compatibility_level = "FULL"
   credentials {
     key    = "<Schema Registry API Key for confluent_schema_registry_cluster.essentials>"
     secret = "<Schema Registry API Secret for confluent_schema_registry_cluster.essentials>"
