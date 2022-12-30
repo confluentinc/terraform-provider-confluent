@@ -81,7 +81,10 @@ func subjectModeCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 	if err != nil {
 		return diag.Errorf("error creating Subject Mode: %s", createDescriptiveError(err))
 	}
-	clusterId := extractStringValueFromBlock(d, paramSchemaRegistryCluster, paramId)
+	clusterId, err := extractSchemaRegistryClusterId(meta.(*Client), d, false)
+	if err != nil {
+		return diag.Errorf("error creating Subject Mode: %s", createDescriptiveError(err))
+	}
 	clusterApiKey, clusterApiSecret, err := extractSchemaRegistryClusterApiKeyAndApiSecret(meta.(*Client), d, false)
 	if err != nil {
 		return diag.Errorf("error creating Subject Mode: %s", createDescriptiveError(err))
@@ -124,7 +127,10 @@ func subjectModeDelete(ctx context.Context, d *schema.ResourceData, meta interfa
 	if err != nil {
 		return diag.Errorf("error deleting Subject Mode: %s", createDescriptiveError(err))
 	}
-	clusterId := extractStringValueFromBlock(d, paramSchemaRegistryCluster, paramId)
+	clusterId, err := extractSchemaRegistryClusterId(meta.(*Client), d, false)
+	if err != nil {
+		return diag.Errorf("error deleting Subject Mode: %s", createDescriptiveError(err))
+	}
 	clusterApiKey, clusterApiSecret, err := extractSchemaRegistryClusterApiKeyAndApiSecret(meta.(*Client), d, false)
 	if err != nil {
 		return diag.Errorf("error deleting Subject Mode: %s", createDescriptiveError(err))
@@ -153,7 +159,10 @@ func subjectModeRead(ctx context.Context, d *schema.ResourceData, meta interface
 	if err != nil {
 		return diag.Errorf("error reading Subject Mode: %s", createDescriptiveError(err))
 	}
-	clusterId := extractStringValueFromBlock(d, paramSchemaRegistryCluster, paramId)
+	clusterId, err := extractSchemaRegistryClusterId(meta.(*Client), d, false)
+	if err != nil {
+		return diag.Errorf("error reading Subject Mode: %s", createDescriptiveError(err))
+	}
 	clusterApiKey, clusterApiSecret, err := extractSchemaRegistryClusterApiKeyAndApiSecret(meta.(*Client), d, false)
 	if err != nil {
 		return diag.Errorf("error reading Subject Mode: %s", createDescriptiveError(err))
@@ -227,10 +236,6 @@ func readSubjectModeAndSetAttributes(ctx context.Context, d *schema.ResourceData
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Subject Mode %q: %s", d.Id(), subjectModeJson), map[string]interface{}{subjectModeLoggingKey: d.Id()})
 
-	if err := setStringAttributeInListBlockOfSizeOne(paramSchemaRegistryCluster, paramId, c.clusterId, d); err != nil {
-		return nil, err
-	}
-
 	if err := d.Set(paramSubjectName, subjectName); err != nil {
 		return nil, err
 	}
@@ -244,6 +249,9 @@ func readSubjectModeAndSetAttributes(ctx context.Context, d *schema.ResourceData
 			return nil, err
 		}
 		if err := d.Set(paramRestEndpoint, c.restEndpoint); err != nil {
+			return nil, err
+		}
+		if err := setStringAttributeInListBlockOfSizeOne(paramSchemaRegistryCluster, paramId, c.clusterId, d); err != nil {
 			return nil, err
 		}
 	}
@@ -265,7 +273,10 @@ func subjectModeUpdate(ctx context.Context, d *schema.ResourceData, meta interfa
 		if err != nil {
 			return diag.Errorf("error updating Subject Mode: %s", createDescriptiveError(err))
 		}
-		clusterId := extractStringValueFromBlock(d, paramSchemaRegistryCluster, paramId)
+		clusterId, err := extractSchemaRegistryClusterId(meta.(*Client), d, false)
+		if err != nil {
+			return diag.Errorf("error updating Subject Mode: %s", createDescriptiveError(err))
+		}
 		clusterApiKey, clusterApiSecret, err := extractSchemaRegistryClusterApiKeyAndApiSecret(meta.(*Client), d, false)
 		if err != nil {
 			return diag.Errorf("error updating Subject Mode: %s", createDescriptiveError(err))

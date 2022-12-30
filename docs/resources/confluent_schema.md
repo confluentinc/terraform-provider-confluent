@@ -209,7 +209,7 @@ The following arguments are supported:
     - `key` - (Required String) The Schema Registry API Key.
     - `secret` - (Required String, Sensitive) The Schema Registry API Secret.
 
--> **Note:** Omit the `rest_endpoint` attribute and `credentials` block if the `schema_registry_rest_endpoint`, `schema_registry_api_key`, and `schema_registry_api_secret` attributes are all set in a `provider` block (see [option #2](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs#example-usage)).
+-> **Note:** Omit the `rest_endpoint` attribute and the `credentials`, `schema_registry_cluster` blocks if the `schema_registry_id`, `schema_registry_rest_endpoint`, `schema_registry_api_key`, and `schema_registry_api_secret` attributes are all set in a `provider` block (see [option #2](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs#example-usage)).
 
 -> **Note:** A Schema Registry API key consists of a key and a secret. Schema Registry API keys are required to interact with Kafka clusters in Confluent Cloud. Each Schema Registry API key is valid for one specific Kafka cluster.
 

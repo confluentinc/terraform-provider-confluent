@@ -58,7 +58,10 @@ func subjectCompatibilityLevelDataSourceRead(ctx context.Context, d *schema.Reso
 	if err != nil {
 		return diag.Errorf("error reading Subject Compatibility Level: %s", createDescriptiveError(err))
 	}
-	clusterId := extractStringValueFromBlock(d, paramSchemaRegistryCluster, paramId)
+	clusterId, err := extractSchemaRegistryClusterId(meta.(*Client), d, false)
+	if err != nil {
+		return diag.Errorf("error reading Subject Compatibility Level: %s", createDescriptiveError(err))
+	}
 	clusterApiKey, clusterApiSecret, err := extractSchemaRegistryClusterApiKeyAndApiSecret(meta.(*Client), d, false)
 	if err != nil {
 		return diag.Errorf("error reading Subject Compatibility Level: %s", createDescriptiveError(err))

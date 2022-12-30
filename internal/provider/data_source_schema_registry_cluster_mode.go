@@ -52,7 +52,10 @@ func schemaRegistryClusterModeDataSourceRead(ctx context.Context, d *schema.Reso
 	if err != nil {
 		return diag.Errorf("error reading Schema Registry Cluster Mode: %s", createDescriptiveError(err))
 	}
-	clusterId := extractStringValueFromBlock(d, paramSchemaRegistryCluster, paramId)
+	clusterId, err := extractSchemaRegistryClusterId(meta.(*Client), d, false)
+	if err != nil {
+		return diag.Errorf("error reading Schema Registry Cluster Mode: %s", createDescriptiveError(err))
+	}
 	clusterApiKey, clusterApiSecret, err := extractSchemaRegistryClusterApiKeyAndApiSecret(meta.(*Client), d, false)
 	if err != nil {
 		return diag.Errorf("error reading Schema Registry Cluster Mode: %s", createDescriptiveError(err))

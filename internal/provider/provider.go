@@ -75,9 +75,11 @@ type Client struct {
 	kafkaApiSecret                  string
 	kafkaRestEndpoint               string
 	isKafkaMetadataSet              bool
+	schemaRegistryClusterId         string
 	schemaRegistryApiKey            string
 	schemaRegistryApiSecret         string
 	schemaRegistryRestEndpoint      string
+	isSchemaRegistryClusterIdSet    bool
 	isSchemaRegistryMetadataSet     bool
 }
 
@@ -131,6 +133,12 @@ func New(version, userAgent string) func() *schema.Provider {
 					Optional:    true,
 					DefaultFunc: schema.EnvDefaultFunc("KAFKA_REST_ENDPOINT", ""),
 					Description: "The Kafka Cluster REST Endpoint.",
+				},
+				"schema_registry_id": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					DefaultFunc: schema.EnvDefaultFunc("SCHEMA_REGISTRY_ID", ""),
+					Description: "The Schema Registry Cluster ID.",
 				},
 				"schema_registry_api_key": {
 					Type:        schema.TypeString,
@@ -275,6 +283,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	kafkaApiKey := d.Get("kafka_api_key").(string)
 	kafkaApiSecret := d.Get("kafka_api_secret").(string)
 	kafkaRestEndpoint := d.Get("kafka_rest_endpoint").(string)
+	schemaRegistryClusterId := d.Get("schema_registry_id").(string)
 	schemaRegistryApiKey := d.Get("schema_registry_api_key").(string)
 	schemaRegistryApiSecret := d.Get("schema_registry_api_secret").(string)
 	schemaRegistryRestEndpoint := d.Get("schema_registry_rest_endpoint").(string)
@@ -289,12 +298,12 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 		return nil, diag.Errorf("All 3 kafka_api_key, kafka_api_secret, kafka_rest_endpoint attributes should be set or not set in the provider block at the same time")
 	}
 
-	// All 3 attributes should be set or not set at the same time
-	allSchemaRegistryAttributesAreSet := (schemaRegistryApiKey != "") && (schemaRegistryApiSecret != "") && (schemaRegistryRestEndpoint != "")
-	allSchemaRegistryAttributesAreNotSet := (schemaRegistryApiKey == "") && (schemaRegistryApiSecret == "") && (schemaRegistryRestEndpoint == "")
-	justOneOrTwoSchemaRegistryAttributesAreSet := !(allSchemaRegistryAttributesAreSet || allSchemaRegistryAttributesAreNotSet)
-	if justOneOrTwoSchemaRegistryAttributesAreSet {
-		return nil, diag.Errorf("All 3 schema_registry_api_key, schema_registry_api_secret, schema_registry_rest_endpoint attributes should be set or not set in the provider block at the same time")
+	// All 4 attributes should be set or not set at the same time
+	allSchemaRegistryAttributesAreSet := (schemaRegistryApiKey != "") && (schemaRegistryApiSecret != "") && (schemaRegistryRestEndpoint != "") && (schemaRegistryClusterId != "")
+	allSchemaRegistryAttributesAreNotSet := (schemaRegistryApiKey == "") && (schemaRegistryApiSecret == "") && (schemaRegistryRestEndpoint == "") && (schemaRegistryClusterId == "")
+	justSubsetOfSchemaRegistryAttributesAreSet := !(allSchemaRegistryAttributesAreSet || allSchemaRegistryAttributesAreNotSet)
+	if justSubsetOfSchemaRegistryAttributesAreSet {
+		return nil, diag.Errorf("All 4 schema_registry_api_key, schema_registry_api_secret, schema_registry_rest_endpoint, schema_registry_id attributes should be set or not set in the provider block at the same time")
 	}
 
 	userAgent := p.UserAgent(terraformProviderUserAgent, fmt.Sprintf("%s (https://confluent.cloud; support@confluent.io)", providerVersion))
@@ -399,10 +408,11 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 		kafkaApiKey:                     kafkaApiKey,
 		kafkaApiSecret:                  kafkaApiSecret,
 		kafkaRestEndpoint:               kafkaRestEndpoint,
+		schemaRegistryClusterId:         schemaRegistryClusterId,
 		schemaRegistryApiKey:            schemaRegistryApiKey,
 		schemaRegistryApiSecret:         schemaRegistryApiSecret,
 		schemaRegistryRestEndpoint:      schemaRegistryRestEndpoint,
-		// For simplicity, treat all 3 variables as a "single" one
+		// For simplicity, treat all 3 (for Kafka) and 4 (for SR) variables as a "single" one
 		isKafkaMetadataSet:          allKafkaAttributesAreSet,
 		isSchemaRegistryMetadataSet: allSchemaRegistryAttributesAreSet,
 	}

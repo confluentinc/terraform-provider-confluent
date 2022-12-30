@@ -130,9 +130,8 @@ func TestAccSubjectModeWithEnhancedProviderBlock(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSubjectModeExists(fullSubjectModeResourceLabel),
 					resource.TestCheckResourceAttr(fullSubjectModeResourceLabel, "id", fmt.Sprintf("%s/%s", testStreamGovernanceClusterId, testSubjectName)),
-					resource.TestCheckResourceAttr(fullSubjectModeResourceLabel, "schema_registry_cluster.#", "1"),
-					resource.TestCheckResourceAttr(fullSubjectModeResourceLabel, "schema_registry_cluster.0.%", "1"),
-					resource.TestCheckResourceAttr(fullSubjectModeResourceLabel, "schema_registry_cluster.0.id", testStreamGovernanceClusterId),
+					resource.TestCheckResourceAttr(fullSubjectModeResourceLabel, "schema_registry_cluster.#", "0"),
+					resource.TestCheckNoResourceAttr(fullSubjectModeResourceLabel, "schema_registry_cluster.0.id"),
 					resource.TestCheckResourceAttr(fullSubjectModeResourceLabel, "subject_name", testSubjectName),
 					resource.TestCheckResourceAttr(fullSubjectModeResourceLabel, "mode", testSubjectMode),
 					resource.TestCheckResourceAttr(fullSubjectModeResourceLabel, "credentials.#", "0"),
@@ -153,9 +152,8 @@ func TestAccSubjectModeWithEnhancedProviderBlock(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSubjectModeExists(fullSubjectModeResourceLabel),
 					resource.TestCheckResourceAttr(fullSubjectModeResourceLabel, "id", fmt.Sprintf("%s/%s", testStreamGovernanceClusterId, testSubjectName)),
-					resource.TestCheckResourceAttr(fullSubjectModeResourceLabel, "schema_registry_cluster.#", "1"),
-					resource.TestCheckResourceAttr(fullSubjectModeResourceLabel, "schema_registry_cluster.0.%", "1"),
-					resource.TestCheckResourceAttr(fullSubjectModeResourceLabel, "schema_registry_cluster.0.id", testStreamGovernanceClusterId),
+					resource.TestCheckResourceAttr(fullSubjectModeResourceLabel, "schema_registry_cluster.#", "0"),
+					resource.TestCheckNoResourceAttr(fullSubjectModeResourceLabel, "schema_registry_cluster.0.id"),
 					resource.TestCheckResourceAttr(fullSubjectModeResourceLabel, "subject_name", testSubjectName),
 					resource.TestCheckResourceAttr(fullSubjectModeResourceLabel, "mode", testUpdatedSubjectMode),
 					resource.TestCheckResourceAttr(fullSubjectModeResourceLabel, "credentials.#", "0"),
@@ -185,16 +183,13 @@ func testAccCheckSubjectModeConfigWithEnhancedProviderBlock(confluentCloudBaseUr
 	  schema_registry_api_key = "%s"
 	  schema_registry_api_secret = "%s"
 	  schema_registry_rest_endpoint = "%s"
+	  schema_registry_id = "%s"
 	}
 	resource "confluent_subject_mode" "%s" {
-	  schema_registry_cluster {
-        id = "%s"
-      }
-	
 	  subject_name = "%s"
 	  mode = "%s"
 	}
-	`, confluentCloudBaseUrl, testSchemaRegistryKey, testSchemaRegistrySecret, mockServerUrl, testSubjectModeResourceLabel, testStreamGovernanceClusterId, testSubjectName, mode)
+	`, confluentCloudBaseUrl, testSchemaRegistryKey, testSchemaRegistrySecret, mockServerUrl, testStreamGovernanceClusterId, testSubjectModeResourceLabel, testSubjectName, mode)
 }
 
 func testAccCheckSubjectModeExists(n string) resource.TestCheckFunc {

@@ -65,9 +65,8 @@ func TestAccDataSchemaRegistryClusterCompatibilityLevelSchemaWithEnhancedProvide
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSchemaExists(fullSchemaRegistryClusterCompatibilityLevelDataSourceLabel),
 					resource.TestCheckResourceAttr(fullSchemaRegistryClusterCompatibilityLevelDataSourceLabel, "id", testStreamGovernanceClusterId),
-					resource.TestCheckResourceAttr(fullSchemaRegistryClusterCompatibilityLevelDataSourceLabel, "schema_registry_cluster.#", "1"),
-					resource.TestCheckResourceAttr(fullSchemaRegistryClusterCompatibilityLevelDataSourceLabel, "schema_registry_cluster.0.%", "1"),
-					resource.TestCheckResourceAttr(fullSchemaRegistryClusterCompatibilityLevelDataSourceLabel, "schema_registry_cluster.0.id", testStreamGovernanceClusterId),
+					resource.TestCheckResourceAttr(fullSchemaRegistryClusterCompatibilityLevelDataSourceLabel, "schema_registry_cluster.#", "0"),
+					resource.TestCheckNoResourceAttr(fullSchemaRegistryClusterCompatibilityLevelDataSourceLabel, "schema_registry_cluster.0.id"),
 					resource.TestCheckResourceAttr(fullSchemaRegistryClusterCompatibilityLevelDataSourceLabel, "compatibility_level", testSchemaRegistryClusterCompatibilityLevel),
 					resource.TestCheckResourceAttr(fullSchemaRegistryClusterCompatibilityLevelDataSourceLabel, "credentials.#", "0"),
 					resource.TestCheckNoResourceAttr(fullSchemaRegistryClusterCompatibilityLevelDataSourceLabel, "credentials.0.key"),
@@ -87,11 +86,9 @@ func testAccCheckSchemaRegistryClusterCompatibilityLevelDataSourceConfigWithEnha
       schema_registry_rest_endpoint = "%s"
       schema_registry_api_key = "%s"
       schema_registry_api_secret = "%s"
+      schema_registry_id = "%s"
     }
 	data "confluent_schema_registry_cluster_compatibility_level" "%s" {
-	  schema_registry_cluster {
-        id = "%s"
-      }
 	}
-	`, confluentCloudBaseUrl, mockServerUrl, testSchemaRegistryKey, testSchemaRegistrySecret, testSchemaResourceLabel, testStreamGovernanceClusterId)
+	`, confluentCloudBaseUrl, mockServerUrl, testSchemaRegistryKey, testSchemaRegistrySecret, testStreamGovernanceClusterId, testSchemaResourceLabel)
 }

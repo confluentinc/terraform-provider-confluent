@@ -62,7 +62,10 @@ func schemaRegistryClusterModeCreate(ctx context.Context, d *schema.ResourceData
 	if err != nil {
 		return diag.Errorf("error creating Schema Registry Cluster Mode: %s", createDescriptiveError(err))
 	}
-	clusterId := extractStringValueFromBlock(d, paramSchemaRegistryCluster, paramId)
+	clusterId, err := extractSchemaRegistryClusterId(meta.(*Client), d, false)
+	if err != nil {
+		return diag.Errorf("error creating Schema Registry Cluster Mode: %s", createDescriptiveError(err))
+	}
 	clusterApiKey, clusterApiSecret, err := extractSchemaRegistryClusterApiKeyAndApiSecret(meta.(*Client), d, false)
 	if err != nil {
 		return diag.Errorf("error creating Schema Registry Cluster Mode: %s", createDescriptiveError(err))
@@ -112,7 +115,10 @@ func schemaRegistryClusterModeRead(ctx context.Context, d *schema.ResourceData, 
 	if err != nil {
 		return diag.Errorf("error reading Schema Registry Cluster Mode: %s", createDescriptiveError(err))
 	}
-	clusterId := extractStringValueFromBlock(d, paramSchemaRegistryCluster, paramId)
+	clusterId, err := extractSchemaRegistryClusterId(meta.(*Client), d, false)
+	if err != nil {
+		return diag.Errorf("error reading Schema Registry Cluster Mode: %s", createDescriptiveError(err))
+	}
 	clusterApiKey, clusterApiSecret, err := extractSchemaRegistryClusterApiKeyAndApiSecret(meta.(*Client), d, false)
 	if err != nil {
 		return diag.Errorf("error reading Schema Registry Cluster Mode: %s", createDescriptiveError(err))
@@ -178,10 +184,6 @@ func readSchemaRegistryClusterModeAndSetAttributes(ctx context.Context, d *schem
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Schema Registry Cluster Mode %q: %s", d.Id(), schemaRegistryClusterModeJson), map[string]interface{}{schemaRegistryClusterModeLoggingKey: d.Id()})
 
-	if err := setStringAttributeInListBlockOfSizeOne(paramSchemaRegistryCluster, paramId, c.clusterId, d); err != nil {
-		return nil, err
-	}
-
 	if err := d.Set(paramMode, schemaRegistryClusterMode.GetMode()); err != nil {
 		return nil, err
 	}
@@ -191,6 +193,9 @@ func readSchemaRegistryClusterModeAndSetAttributes(ctx context.Context, d *schem
 			return nil, err
 		}
 		if err := d.Set(paramRestEndpoint, c.restEndpoint); err != nil {
+			return nil, err
+		}
+		if err := setStringAttributeInListBlockOfSizeOne(paramSchemaRegistryCluster, paramId, c.clusterId, d); err != nil {
 			return nil, err
 		}
 	}
@@ -212,7 +217,10 @@ func schemaRegistryClusterModeUpdate(ctx context.Context, d *schema.ResourceData
 		if err != nil {
 			return diag.Errorf("error updating Schema Registry Cluster Mode: %s", createDescriptiveError(err))
 		}
-		clusterId := extractStringValueFromBlock(d, paramSchemaRegistryCluster, paramId)
+		clusterId, err := extractSchemaRegistryClusterId(meta.(*Client), d, false)
+		if err != nil {
+			return diag.Errorf("error updating Schema Registry Cluster Mode: %s", createDescriptiveError(err))
+		}
 		clusterApiKey, clusterApiSecret, err := extractSchemaRegistryClusterApiKeyAndApiSecret(meta.(*Client), d, false)
 		if err != nil {
 			return diag.Errorf("error updating Schema Registry Cluster Mode: %s", createDescriptiveError(err))

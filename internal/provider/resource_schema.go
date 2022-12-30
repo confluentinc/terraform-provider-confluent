@@ -156,7 +156,10 @@ func schemaCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 	if err != nil {
 		return diag.Errorf("error creating Schema: %s", createDescriptiveError(err))
 	}
-	clusterId := extractStringValueFromBlock(d, paramSchemaRegistryCluster, paramId)
+	clusterId, err := extractSchemaRegistryClusterId(meta.(*Client), d, false)
+	if err != nil {
+		return diag.Errorf("error creating Schema: %s", createDescriptiveError(err))
+	}
 	clusterApiKey, clusterApiSecret, err := extractSchemaRegistryClusterApiKeyAndApiSecret(meta.(*Client), d, false)
 	if err != nil {
 		return diag.Errorf("error creating Schema: %s", createDescriptiveError(err))
@@ -212,7 +215,10 @@ func schemaDelete(ctx context.Context, d *schema.ResourceData, meta interface{})
 	if err != nil {
 		return diag.Errorf("error soft deleting Schema: %s", createDescriptiveError(err))
 	}
-	clusterId := extractStringValueFromBlock(d, paramSchemaRegistryCluster, paramId)
+	clusterId, err := extractSchemaRegistryClusterId(meta.(*Client), d, false)
+	if err != nil {
+		return diag.Errorf("error soft deleting Schema: %s", createDescriptiveError(err))
+	}
 	clusterApiKey, clusterApiSecret, err := extractSchemaRegistryClusterApiKeyAndApiSecret(meta.(*Client), d, false)
 	if err != nil {
 		return diag.Errorf("error soft deleting Schema: %s", createDescriptiveError(err))
@@ -241,7 +247,10 @@ func schemaRead(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 	if err != nil {
 		return diag.Errorf("error reading Schema: %s", createDescriptiveError(err))
 	}
-	clusterId := extractStringValueFromBlock(d, paramSchemaRegistryCluster, paramId)
+	clusterId, err := extractSchemaRegistryClusterId(meta.(*Client), d, false)
+	if err != nil {
+		return diag.Errorf("error reading Schema: %s", createDescriptiveError(err))
+	}
 	clusterApiKey, clusterApiSecret, err := extractSchemaRegistryClusterApiKeyAndApiSecret(meta.(*Client), d, false)
 	if err != nil {
 		return diag.Errorf("error reading Schema: %s", createDescriptiveError(err))
@@ -368,9 +377,6 @@ func readSchemaRegistryConfigAndSetAttributes(ctx context.Context, d *schema.Res
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Schema %q: %s", d.Id(), schemaJson), map[string]interface{}{schemaLoggingKey: d.Id()})
 
-	if err := setStringAttributeInListBlockOfSizeOne(paramSchemaRegistryCluster, paramId, c.clusterId, d); err != nil {
-		return nil, err
-	}
 	if err := d.Set(paramSubjectName, srSchema.GetSubject()); err != nil {
 		return nil, err
 	}
@@ -399,6 +405,9 @@ func readSchemaRegistryConfigAndSetAttributes(ctx context.Context, d *schema.Res
 			return nil, err
 		}
 		if err := d.Set(paramRestEndpoint, c.restEndpoint); err != nil {
+			return nil, err
+		}
+		if err := setStringAttributeInListBlockOfSizeOne(paramSchemaRegistryCluster, paramId, c.clusterId, d); err != nil {
 			return nil, err
 		}
 	}
@@ -474,7 +483,8 @@ func schemaRegistryClusterBlockSchema() *schema.Schema {
 				},
 			},
 		},
-		Required: true,
+		Optional: true,
+		ForceNew: true,
 		MinItems: 1,
 		MaxItems: 1,
 	}
@@ -519,8 +529,21 @@ func extractSchemaRegistryClusterApiKeyAndApiSecret(client *Client, d *schema.Re
 	return "", "", fmt.Errorf("one of (provider.schema_registry_api_key, provider.schema_registry_api_secret), (SCHEMA_REGISTRY_API_KEY, SCHEMA_REGISTRY_API_SECRET environment variables) or (resource.credentials.key, resource.credentials.secret) must be set")
 }
 
-func extractSchemaRegistryClusterApiKeyAndApiSecretFromCredentialsBlock(d *schema.ResourceData) (string, string) {
-	clusterApiKey := extractStringValueFromNestedBlock(d, paramSchemaRegistryCluster, paramCredentials, paramKey)
-	clusterApiSecret := extractStringValueFromNestedBlock(d, paramSchemaRegistryCluster, paramCredentials, paramSecret)
-	return clusterApiKey, clusterApiSecret
+func extractSchemaRegistryClusterId(client *Client, d *schema.ResourceData, isImportOperation bool) (string, error) {
+	if client.isSchemaRegistryMetadataSet {
+		return client.schemaRegistryClusterId, nil
+	}
+	if isImportOperation {
+		clusterId := getEnv("IMPORT_SCHEMA_REGISTRY_ID", "")
+		if clusterId != "" {
+			return clusterId, nil
+		} else {
+			return "", fmt.Errorf("one of provider.schema_registry_id (defaults to SCHEMA_REGISTRY_ID environment variable) or IMPORT_SCHEMA_REGISTRY_ID environment variable must be set")
+		}
+	}
+	clusterId := extractStringValueFromBlock(d, paramSchemaRegistryCluster, paramId)
+	if clusterId != "" {
+		return clusterId, nil
+	}
+	return "", fmt.Errorf("one of provider.schema_registry_id (defaults to SCHEMA_REGISTRY_ID environment variable) or resource.schema_registry_cluster.id must be set")
 }

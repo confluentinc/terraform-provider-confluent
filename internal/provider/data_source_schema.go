@@ -98,7 +98,10 @@ func schemaDataSourceRead(ctx context.Context, d *schema.ResourceData, meta inte
 	if err != nil {
 		return diag.Errorf("error reading Schema: %s", createDescriptiveError(err))
 	}
-	clusterId := extractStringValueFromBlock(d, paramSchemaRegistryCluster, paramId)
+	clusterId, err := extractSchemaRegistryClusterId(meta.(*Client), d, false)
+	if err != nil {
+		return diag.Errorf("error reading Schema: %s", createDescriptiveError(err))
+	}
 	clusterApiKey, clusterApiSecret, err := extractSchemaRegistryClusterApiKeyAndApiSecret(meta.(*Client), d, false)
 	if err != nil {
 		return diag.Errorf("error reading Schema: %s", createDescriptiveError(err))
@@ -132,7 +135,7 @@ func schemaRegistryClusterBlockDataSourceSchema() *schema.Schema {
 				},
 			},
 		},
-		Required: true,
+		Optional: true,
 		MinItems: 1,
 		MaxItems: 1,
 	}

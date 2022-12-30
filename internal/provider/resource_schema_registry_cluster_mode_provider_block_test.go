@@ -128,9 +128,8 @@ func TestAccSchemaRegistryClusterModeWithEnhancedProviderBlock(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSchemaRegistryClusterModeExists(fullSchemaRegistryClusterModeResourceLabel),
 					resource.TestCheckResourceAttr(fullSchemaRegistryClusterModeResourceLabel, "id", testStreamGovernanceClusterId),
-					resource.TestCheckResourceAttr(fullSchemaRegistryClusterModeResourceLabel, "schema_registry_cluster.#", "1"),
-					resource.TestCheckResourceAttr(fullSchemaRegistryClusterModeResourceLabel, "schema_registry_cluster.0.%", "1"),
-					resource.TestCheckResourceAttr(fullSchemaRegistryClusterModeResourceLabel, "schema_registry_cluster.0.id", testStreamGovernanceClusterId),
+					resource.TestCheckResourceAttr(fullSchemaRegistryClusterModeResourceLabel, "schema_registry_cluster.#", "0"),
+					resource.TestCheckNoResourceAttr(fullSchemaRegistryClusterModeResourceLabel, "schema_registry_cluster.0.id"),
 					resource.TestCheckResourceAttr(fullSchemaRegistryClusterModeResourceLabel, "mode", testSchemaRegistryClusterMode),
 					resource.TestCheckResourceAttr(fullSchemaRegistryClusterModeResourceLabel, "credentials.#", "0"),
 					resource.TestCheckNoResourceAttr(fullSchemaRegistryClusterModeResourceLabel, "credentials.0.key"),
@@ -150,9 +149,8 @@ func TestAccSchemaRegistryClusterModeWithEnhancedProviderBlock(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSchemaRegistryClusterModeExists(fullSchemaRegistryClusterModeResourceLabel),
 					resource.TestCheckResourceAttr(fullSchemaRegistryClusterModeResourceLabel, "id", testStreamGovernanceClusterId),
-					resource.TestCheckResourceAttr(fullSchemaRegistryClusterModeResourceLabel, "schema_registry_cluster.#", "1"),
-					resource.TestCheckResourceAttr(fullSchemaRegistryClusterModeResourceLabel, "schema_registry_cluster.0.%", "1"),
-					resource.TestCheckResourceAttr(fullSchemaRegistryClusterModeResourceLabel, "schema_registry_cluster.0.id", testStreamGovernanceClusterId),
+					resource.TestCheckResourceAttr(fullSchemaRegistryClusterModeResourceLabel, "schema_registry_cluster.#", "0"),
+					resource.TestCheckNoResourceAttr(fullSchemaRegistryClusterModeResourceLabel, "schema_registry_cluster.0.id"),
 					resource.TestCheckResourceAttr(fullSchemaRegistryClusterModeResourceLabel, "mode", testUpdatedSchemaRegistryClusterMode),
 					resource.TestCheckResourceAttr(fullSchemaRegistryClusterModeResourceLabel, "credentials.#", "0"),
 					resource.TestCheckNoResourceAttr(fullSchemaRegistryClusterModeResourceLabel, "credentials.0.key"),
@@ -181,15 +179,12 @@ func testAccCheckSchemaRegistryClusterModeConfigWithEnhancedProviderBlock(conflu
 	  schema_registry_api_key = "%s"
 	  schema_registry_api_secret = "%s"
 	  schema_registry_rest_endpoint = "%s"
+	  schema_registry_id = "%s"
 	}
 	resource "confluent_schema_registry_cluster_mode" "%s" {
-	  schema_registry_cluster {
-        id = "%s"
-      }
-	
 	  mode = "%s"
 	}
-	`, confluentCloudBaseUrl, testSchemaRegistryKey, testSchemaRegistrySecret, mockServerUrl, testSchemaRegistryClusterModeResourceLabel, testStreamGovernanceClusterId, mode)
+	`, confluentCloudBaseUrl, testSchemaRegistryKey, testSchemaRegistrySecret, mockServerUrl, testStreamGovernanceClusterId, testSchemaRegistryClusterModeResourceLabel, mode)
 }
 
 func testAccCheckSchemaRegistryClusterModeExists(n string) resource.TestCheckFunc {

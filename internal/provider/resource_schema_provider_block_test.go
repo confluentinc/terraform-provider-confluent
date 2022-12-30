@@ -131,9 +131,8 @@ func TestAccSchemaWithEnhancedProviderBlock(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSchemaExists(fullSchemaResourceLabel),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "id", fmt.Sprintf("%s/%s/%d", testStreamGovernanceClusterId, testSubjectName, testSchemaIdentifier)),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema_registry_cluster.#", "1"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema_registry_cluster.0.%", "1"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema_registry_cluster.0.id", testStreamGovernanceClusterId),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema_registry_cluster.#", "0"),
+					resource.TestCheckNoResourceAttr(fullSchemaResourceLabel, "schema_registry_cluster.0.id"),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "subject_name", testSubjectName),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "format", testFormat),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema", testSchemaContent),
@@ -175,12 +174,9 @@ func testAccCheckSchemaConfigWithEnhancedProviderBlock(confluentCloudBaseUrl, mo
 	  schema_registry_api_key = "%s"
 	  schema_registry_api_secret = "%s"
 	  schema_registry_rest_endpoint = "%s"
+	  schema_registry_id = "%s"
 	}
 	resource "confluent_schema" "%s" {
-	  schema_registry_cluster {
-        id = "%s"
-      }
-	
 	  subject_name = "%s"
 	  format = "%s"
       schema = "%s"
@@ -197,7 +193,7 @@ func testAccCheckSchemaConfigWithEnhancedProviderBlock(confluentCloudBaseUrl, mo
         version = %d
       }
 	}
-	`, confluentCloudBaseUrl, kafkaApiKey, kafkaApiSecret, mockServerUrl, testSchemaResourceLabel, testStreamGovernanceClusterId, testSubjectName, testFormat, testSchemaContent,
+	`, confluentCloudBaseUrl, kafkaApiKey, kafkaApiSecret, mockServerUrl, testStreamGovernanceClusterId, testSchemaResourceLabel, testSubjectName, testFormat, testSchemaContent,
 		testFirstSchemaReferenceDisplayName, testFirstSchemaReferenceSubject, testFirstSchemaReferenceVersion,
 		testSecondSchemaReferenceDisplayName, testSecondSchemaReferenceSubject, testSecondSchemaReferenceVersion)
 }

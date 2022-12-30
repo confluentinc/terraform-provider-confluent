@@ -286,12 +286,13 @@ type KafkaRestClient struct {
 }
 
 type SchemaRegistryRestClient struct {
-	apiClient                    *schemaregistry.APIClient
-	clusterId                    string
-	clusterApiKey                string
-	clusterApiSecret             string
-	restEndpoint                 string
-	isMetadataSetInProviderBlock bool
+	apiClient                     *schemaregistry.APIClient
+	clusterId                     string
+	clusterApiKey                 string
+	clusterApiSecret              string
+	restEndpoint                  string
+	isMetadataSetInProviderBlock  bool
+	isClusterIdSetInProviderBlock bool
 }
 
 func (c *KafkaRestClient) apiContext(ctx context.Context) context.Context {

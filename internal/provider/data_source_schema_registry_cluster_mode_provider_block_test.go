@@ -65,9 +65,8 @@ func TestAccDataSchemaRegistryClusterModeSchemaWithEnhancedProviderBlock(t *test
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSchemaExists(fullSchemaRegistryClusterModeDataSourceLabel),
 					resource.TestCheckResourceAttr(fullSchemaRegistryClusterModeDataSourceLabel, "id", testStreamGovernanceClusterId),
-					resource.TestCheckResourceAttr(fullSchemaRegistryClusterModeDataSourceLabel, "schema_registry_cluster.#", "1"),
-					resource.TestCheckResourceAttr(fullSchemaRegistryClusterModeDataSourceLabel, "schema_registry_cluster.0.%", "1"),
-					resource.TestCheckResourceAttr(fullSchemaRegistryClusterModeDataSourceLabel, "schema_registry_cluster.0.id", testStreamGovernanceClusterId),
+					resource.TestCheckResourceAttr(fullSchemaRegistryClusterModeDataSourceLabel, "schema_registry_cluster.#", "0"),
+					resource.TestCheckNoResourceAttr(fullSchemaRegistryClusterModeDataSourceLabel, "schema_registry_cluster.0.id"),
 					resource.TestCheckResourceAttr(fullSchemaRegistryClusterModeDataSourceLabel, "mode", testSchemaRegistryClusterMode),
 					resource.TestCheckResourceAttr(fullSchemaRegistryClusterModeDataSourceLabel, "credentials.#", "0"),
 					resource.TestCheckNoResourceAttr(fullSchemaRegistryClusterModeDataSourceLabel, "credentials.0.key"),
@@ -87,11 +86,9 @@ func testAccCheckSchemaRegistryClusterModeDataSourceConfigWithEnhancedProviderBl
       schema_registry_rest_endpoint = "%s"
       schema_registry_api_key = "%s"
       schema_registry_api_secret = "%s"
+      schema_registry_id = "%s"
     }
 	data "confluent_schema_registry_cluster_mode" "%s" {
-	  schema_registry_cluster {
-        id = "%s"
-      }
 	}
-	`, confluentCloudBaseUrl, mockServerUrl, testSchemaRegistryKey, testSchemaRegistrySecret, testSchemaResourceLabel, testStreamGovernanceClusterId)
+	`, confluentCloudBaseUrl, mockServerUrl, testSchemaRegistryKey, testSchemaRegistrySecret, testStreamGovernanceClusterId, testSchemaResourceLabel)
 }

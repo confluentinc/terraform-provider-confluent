@@ -62,7 +62,10 @@ func schemaRegistryClusterCompatibilityLevelCreate(ctx context.Context, d *schem
 	if err != nil {
 		return diag.Errorf("error creating Schema Registry Cluster Compatibility Level: %s", createDescriptiveError(err))
 	}
-	clusterId := extractStringValueFromBlock(d, paramSchemaRegistryCluster, paramId)
+	clusterId, err := extractSchemaRegistryClusterId(meta.(*Client), d, false)
+	if err != nil {
+		return diag.Errorf("error creating Schema Registry Cluster Compatibility Level: %s", createDescriptiveError(err))
+	}
 	clusterApiKey, clusterApiSecret, err := extractSchemaRegistryClusterApiKeyAndApiSecret(meta.(*Client), d, false)
 	if err != nil {
 		return diag.Errorf("error creating Schema Registry Cluster Compatibility Level: %s", createDescriptiveError(err))
@@ -112,7 +115,10 @@ func schemaRegistryClusterCompatibilityLevelRead(ctx context.Context, d *schema.
 	if err != nil {
 		return diag.Errorf("error reading Schema Registry Cluster Compatibility Level: %s", createDescriptiveError(err))
 	}
-	clusterId := extractStringValueFromBlock(d, paramSchemaRegistryCluster, paramId)
+	clusterId, err := extractSchemaRegistryClusterId(meta.(*Client), d, false)
+	if err != nil {
+		return diag.Errorf("error reading Schema Registry Cluster Compatibility Level: %s", createDescriptiveError(err))
+	}
 	clusterApiKey, clusterApiSecret, err := extractSchemaRegistryClusterApiKeyAndApiSecret(meta.(*Client), d, false)
 	if err != nil {
 		return diag.Errorf("error reading Schema Registry Cluster Compatibility Level: %s", createDescriptiveError(err))
@@ -178,10 +184,6 @@ func readSchemaRegistryClusterCompatibilityLevelAndSetAttributes(ctx context.Con
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Schema Registry Cluster Compatibility Level %q: %s", d.Id(), schemaRegistryClusterCompatibilityLevelJson), map[string]interface{}{schemaRegistryClusterCompatibilityLevelLoggingKey: d.Id()})
 
-	if err := setStringAttributeInListBlockOfSizeOne(paramSchemaRegistryCluster, paramId, c.clusterId, d); err != nil {
-		return nil, err
-	}
-
 	if err := d.Set(paramCompatibilityLevel, schemaRegistryClusterCompatibilityLevel.GetCompatibilityLevel()); err != nil {
 		return nil, err
 	}
@@ -191,6 +193,9 @@ func readSchemaRegistryClusterCompatibilityLevelAndSetAttributes(ctx context.Con
 			return nil, err
 		}
 		if err := d.Set(paramRestEndpoint, c.restEndpoint); err != nil {
+			return nil, err
+		}
+		if err := setStringAttributeInListBlockOfSizeOne(paramSchemaRegistryCluster, paramId, c.clusterId, d); err != nil {
 			return nil, err
 		}
 	}
@@ -212,7 +217,10 @@ func schemaRegistryClusterCompatibilityLevelUpdate(ctx context.Context, d *schem
 		if err != nil {
 			return diag.Errorf("error updating Schema Registry Cluster Compatibility Level: %s", createDescriptiveError(err))
 		}
-		clusterId := extractStringValueFromBlock(d, paramSchemaRegistryCluster, paramId)
+		clusterId, err := extractSchemaRegistryClusterId(meta.(*Client), d, false)
+		if err != nil {
+			return diag.Errorf("error updating Schema Registry Cluster Compatibility Level: %s", createDescriptiveError(err))
+		}
 		clusterApiKey, clusterApiSecret, err := extractSchemaRegistryClusterApiKeyAndApiSecret(meta.(*Client), d, false)
 		if err != nil {
 			return diag.Errorf("error updating Schema Registry Cluster Compatibility Level: %s", createDescriptiveError(err))
