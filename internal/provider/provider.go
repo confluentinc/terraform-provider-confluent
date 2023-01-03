@@ -79,7 +79,6 @@ type Client struct {
 	schemaRegistryApiKey            string
 	schemaRegistryApiSecret         string
 	schemaRegistryRestEndpoint      string
-	isSchemaRegistryClusterIdSet    bool
 	isSchemaRegistryMetadataSet     bool
 }
 
