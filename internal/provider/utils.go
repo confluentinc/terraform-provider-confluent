@@ -292,7 +292,6 @@ type SchemaRegistryRestClient struct {
 	clusterApiSecret              string
 	restEndpoint                  string
 	isMetadataSetInProviderBlock  bool
-	isClusterIdSetInProviderBlock bool
 }
 
 func (c *KafkaRestClient) apiContext(ctx context.Context) context.Context {
