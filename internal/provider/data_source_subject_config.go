@@ -24,9 +24,9 @@ import (
 	"regexp"
 )
 
-func schemaRegistryClusterCompatibilityLevelDataSource() *schema.Resource {
+func subjectConfigDataSource() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: schemaRegistryClusterCompatibilityLevelDataSourceRead,
+		ReadContext: subjectCompatibilityLevelDataSourceRead,
 		Schema: map[string]*schema.Schema{
 			paramSchemaRegistryCluster: schemaRegistryClusterBlockDataSourceSchema(),
 			paramRestEndpoint: {
@@ -37,6 +37,12 @@ func schemaRegistryClusterCompatibilityLevelDataSource() *schema.Resource {
 				ValidateFunc: validation.StringMatch(regexp.MustCompile("^http"), "the REST endpoint must start with 'https://'"),
 			},
 			paramCredentials: credentialsSchema(),
+			paramSubjectName: {
+				Type:         schema.TypeString,
+				Required:     true,
+				Description:  "The name of the Schema Registry Subject.",
+				ValidateFunc: validation.StringIsNotEmpty,
+			},
 			paramCompatibilityLevel: {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -45,31 +51,32 @@ func schemaRegistryClusterCompatibilityLevelDataSource() *schema.Resource {
 	}
 }
 
-func schemaRegistryClusterCompatibilityLevelDataSourceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	tflog.Debug(ctx, fmt.Sprintf("Reading Schema Registry Cluster Compatibility Level %q", d.Id()), map[string]interface{}{schemaRegistryClusterCompatibilityLevelLoggingKey: d.Id()})
+func subjectCompatibilityLevelDataSourceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	tflog.Debug(ctx, fmt.Sprintf("Reading Subject Compatibility Level %q", d.Id()), map[string]interface{}{subjectConfigLoggingKey: d.Id()})
 
 	restEndpoint, err := extractSchemaRegistryRestEndpoint(meta.(*Client), d, false)
 	if err != nil {
-		return diag.Errorf("error reading Schema Registry Cluster Compatibility Level: %s", createDescriptiveError(err))
+		return diag.Errorf("error reading Subject Compatibility Level: %s", createDescriptiveError(err))
 	}
 	clusterId, err := extractSchemaRegistryClusterId(meta.(*Client), d, false)
 	if err != nil {
-		return diag.Errorf("error reading Schema Registry Cluster Compatibility Level: %s", createDescriptiveError(err))
+		return diag.Errorf("error reading Subject Compatibility Level: %s", createDescriptiveError(err))
 	}
 	clusterApiKey, clusterApiSecret, err := extractSchemaRegistryClusterApiKeyAndApiSecret(meta.(*Client), d, false)
 	if err != nil {
-		return diag.Errorf("error reading Schema Registry Cluster Compatibility Level: %s", createDescriptiveError(err))
+		return diag.Errorf("error reading Subject Compatibility Level: %s", createDescriptiveError(err))
 	}
 	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+	subjectName := d.Get(paramSubjectName).(string)
 
 	// Mark resource as new to avoid d.Set("") when getting 404
 	d.MarkNewResource()
 
-	if _, err := readSchemaRegistryClusterCompatibilityLevelAndSetAttributes(ctx, d, schemaRegistryRestClient); err != nil {
-		return diag.Errorf("error reading Schema Registry Cluster Compatibility Level: %s", createDescriptiveError(err))
+	if _, err := readSubjectConfigAndSetAttributes(ctx, d, schemaRegistryRestClient, subjectName); err != nil {
+		return diag.Errorf("error reading Subject Compatibility Level: %s", createDescriptiveError(err))
 	}
 
-	tflog.Debug(ctx, fmt.Sprintf("Finished reading Schema Registry Cluster Compatibility Level %q", d.Id()), map[string]interface{}{schemaRegistryClusterCompatibilityLevelLoggingKey: d.Id()})
+	tflog.Debug(ctx, fmt.Sprintf("Finished reading Subject Compatibility Level %q", d.Id()), map[string]interface{}{subjectConfigLoggingKey: d.Id()})
 
 	return nil
 }

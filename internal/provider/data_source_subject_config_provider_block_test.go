@@ -89,7 +89,7 @@ func testAccCheckSubjectCompatibilityLevelDataSourceConfigWithEnhancedProviderBl
       schema_registry_api_secret = "%s"
       schema_registry_id = "%s"
     }
-	data "confluent_subject_compatibility_level" "%s" {
+	data "confluent_subject_config" "%s" {
 	  subject_name = "%s"
 	}
 	`, confluentCloudBaseUrl, mockServerUrl, testSchemaRegistryKey, testSchemaRegistrySecret, testStreamGovernanceClusterId, testSchemaResourceLabel, testSubjectName)

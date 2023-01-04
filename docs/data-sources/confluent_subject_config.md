@@ -13,7 +13,7 @@ description: |-
 -> **Note:** `confluent_subject_compatibility_level` data source is available in **Open Preview** for early adopters. Open Preview features are introduced to gather customer feedback. This feature should be used only for evaluation and non-production testing purposes or to provide feedback to Confluent, particularly as it becomes more widely available in follow-on editions.  
 **Open Preview** features are intended for evaluation use in development and testing environments only, and not for production use. The warranty, SLA, and Support Services provisions of your agreement with Confluent do not apply to Open Preview features. Open Preview features are considered to be a Proof of Concept as defined in the Confluent Cloud Terms of Service. Confluent may discontinue providing preview releases of the Open Preview features at any time in Confluent’s sole discretion.
 
-`confluent_subject_compatibility_level` describes a Subject Compatibility Level data source.
+`confluent_subject_compatibility_level` describes a Subject Config data source.
 
 ## Example Usage
 
@@ -52,5 +52,5 @@ The following arguments are supported:
 
 In addition to the preceding arguments, the following attributes are exported:
 
-- `id` - (Required String) The ID of the Subject Compatibility Level, in the format `<Schema Registry cluster ID>/<Subject name>`, for example, `lsrc-abc123/test-subject`.
+- `id` - (Required String) The ID of the Subject Config, in the format `<Schema Registry cluster ID>/<Subject name>`, for example, `lsrc-abc123/test-subject`.
 - `compatibility_level` - (Required String) The Compatibility Level of the specified subject. Accepted values are: `BACKWARD`, `BACKWARD_TRANSITIVE`, `FORWARD`, `FORWARD_TRANSITIVE`, `FULL`, `FULL_TRANSITIVE`, and `NONE`. See the [Compatibility Types](https://docs.confluent.io/platform/current/schema-registry/avro.html#compatibility-types) for more details.

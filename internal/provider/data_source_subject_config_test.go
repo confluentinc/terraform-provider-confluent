@@ -27,11 +27,11 @@ import (
 )
 
 const (
-	subjectCompatibilityLevelDataSourceScenarioName           = "confluent_subject_compatibility_level Data Source Lifecycle"
+	subjectCompatibilityLevelDataSourceScenarioName           = "confluent_subject_config Data Source Lifecycle"
 	testNumberOfSubjectCompatibilityLevelDataSourceAttributes = 6
 )
 
-var fullSubjectCompatibilityLevelDataSourceLabel = fmt.Sprintf("data.confluent_subject_compatibility_level.%s", testSchemaResourceLabel)
+var fullSubjectCompatibilityLevelDataSourceLabel = fmt.Sprintf("data.confluent_subject_config.%s", testSchemaResourceLabel)
 
 func TestAccDataSubjectCompatibilityLevelSchema(t *testing.T) {
 	ctx := context.Background()
@@ -94,7 +94,7 @@ func testAccCheckSubjectCompatibilityLevelDataSourceConfig(confluentCloudBaseUrl
 	provider "confluent" {
       endpoint = "%s"
     }
-	data "confluent_subject_compatibility_level" "%s" {
+	data "confluent_subject_config" "%s" {
 	  schema_registry_cluster {
         id = "%s"
       }

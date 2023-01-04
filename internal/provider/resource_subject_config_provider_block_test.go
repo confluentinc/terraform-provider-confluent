@@ -17,16 +17,35 @@ package provider
 import (
 	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
-	"os"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-func TestAccSubjectCompatibilityLevel(t *testing.T) {
+const (
+	scenarioStateSubjectCompatibilityLevelHasBeenCreated = "A new subject compatibility level has been just created"
+	scenarioStateSubjectCompatibilityLevelHasBeenUpdated = "The subject compatibility level has been updated"
+	scenarioStateSubjectCompatibilityLevelHasBeenDeleted = "The subject compatibility level has been deleted"
+	subjectCompatibilityLevelScenarioName                = "confluent_subject_config Resource Lifecycle"
+
+	testSubjectCompatibilityLevelResourceLabel = "test_subject_compatibility_level_resource_label"
+	testSubjectCompatibilityLevel              = "FULL"
+	testUpdatedSubjectCompatibilityLevel       = "BACKWARD_TRANSITIVE"
+
+	testNumberOfSubjectCompatibilityLevelResourceAttributes = "6"
+)
+
+// TODO: APIF-1990
+var mockSubjectCompatibilityLevelTestServerUrl = ""
+
+var fullSubjectCompatibilityLevelResourceLabel = fmt.Sprintf("confluent_subject_config.%s", testSubjectCompatibilityLevelResourceLabel)
+var updateSubjectCompatibilityLevelPath = fmt.Sprintf("/config/%s", testSubjectName)
+
+func TestAccSubjectCompatibilityLevelWithEnhancedProviderBlock(t *testing.T) {
 	ctx := context.Background()
 
 	wiremockContainer, err := setupWiremock(ctx)
@@ -99,16 +118,6 @@ func TestAccSubjectCompatibilityLevel(t *testing.T) {
 		)
 	_ = wiremockClient.StubFor(deleteSubjectCompatibilityLevelStub)
 
-	// Set fake values for secrets since those are required for importing
-	_ = os.Setenv("IMPORT_SCHEMA_REGISTRY_API_KEY", testSchemaRegistryUpdatedKey)
-	_ = os.Setenv("IMPORT_SCHEMA_REGISTRY_API_SECRET", testSchemaRegistryUpdatedSecret)
-	_ = os.Setenv("IMPORT_SCHEMA_REGISTRY_REST_ENDPOINT", mockSubjectCompatibilityLevelTestServerUrl)
-	defer func() {
-		_ = os.Unsetenv("IMPORT_SCHEMA_REGISTRY_API_KEY")
-		_ = os.Unsetenv("IMPORT_SCHEMA_REGISTRY_API_SECRET")
-		_ = os.Unsetenv("IMPORT_SCHEMA_REGISTRY_REST_ENDPOINT")
-	}()
-
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
@@ -117,38 +126,40 @@ func TestAccSubjectCompatibilityLevel(t *testing.T) {
 		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckSubjectCompatibilityLevelConfig(confluentCloudBaseUrl, mockSubjectCompatibilityLevelTestServerUrl, testSubjectCompatibilityLevel, testSchemaRegistryKey, testSchemaRegistrySecret),
+				Config: testAccCheckSubjectCompatibilityLevelConfigWithEnhancedProviderBlock(confluentCloudBaseUrl, mockSubjectCompatibilityLevelTestServerUrl, testSubjectCompatibilityLevel),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSubjectCompatibilityLevelExists(fullSubjectCompatibilityLevelResourceLabel),
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "id", fmt.Sprintf("%s/%s", testStreamGovernanceClusterId, testSubjectName)),
-					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "schema_registry_cluster.#", "1"),
-					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "schema_registry_cluster.0.%", "1"),
-					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "schema_registry_cluster.0.id", testStreamGovernanceClusterId),
+					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "schema_registry_cluster.#", "0"),
+					resource.TestCheckNoResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "schema_registry_cluster.0.id"),
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "subject_name", testSubjectName),
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "compatibility_level", testSubjectCompatibilityLevel),
-					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "rest_endpoint", mockSubjectCompatibilityLevelTestServerUrl),
-					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "credentials.#", "1"),
-					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "credentials.0.%", "2"),
-					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "credentials.0.key", testSchemaRegistryKey),
-					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "credentials.0.secret", testSchemaRegistrySecret),
+					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "credentials.#", "0"),
+					resource.TestCheckNoResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "credentials.0.key"),
+					resource.TestCheckNoResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "credentials.0.secret"),
+					resource.TestCheckNoResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "rest_endpoint"),
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "%", testNumberOfSubjectCompatibilityLevelResourceAttributes),
 				),
 			},
 			{
-				Config: testAccCheckSubjectCompatibilityLevelConfig(confluentCloudBaseUrl, mockSubjectCompatibilityLevelTestServerUrl, testUpdatedSubjectCompatibilityLevel, testSchemaRegistryUpdatedKey, testSchemaRegistryUpdatedSecret),
+				// https://www.terraform.io/docs/extend/resources/import.html
+				ResourceName:      fullSubjectCompatibilityLevelResourceLabel,
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+			{
+				Config: testAccCheckSubjectCompatibilityLevelConfigWithEnhancedProviderBlock(confluentCloudBaseUrl, mockSubjectCompatibilityLevelTestServerUrl, testUpdatedSubjectCompatibilityLevel),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSubjectCompatibilityLevelExists(fullSubjectCompatibilityLevelResourceLabel),
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "id", fmt.Sprintf("%s/%s", testStreamGovernanceClusterId, testSubjectName)),
-					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "schema_registry_cluster.#", "1"),
-					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "schema_registry_cluster.0.%", "1"),
-					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "schema_registry_cluster.0.id", testStreamGovernanceClusterId),
+					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "schema_registry_cluster.#", "0"),
+					resource.TestCheckNoResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "schema_registry_cluster.0.id"),
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "subject_name", testSubjectName),
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "compatibility_level", testUpdatedSubjectCompatibilityLevel),
-					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "rest_endpoint", mockSubjectCompatibilityLevelTestServerUrl),
-					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "credentials.#", "1"),
-					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "credentials.0.%", "2"),
-					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "credentials.0.key", testSchemaRegistryUpdatedKey),
-					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "credentials.0.secret", testSchemaRegistryUpdatedSecret),
+					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "credentials.#", "0"),
+					resource.TestCheckNoResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "credentials.0.key"),
+					resource.TestCheckNoResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "credentials.0.secret"),
+					resource.TestCheckNoResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "rest_endpoint"),
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "%", testNumberOfSubjectCompatibilityLevelResourceAttributes),
 				),
 			},
@@ -165,23 +176,38 @@ func TestAccSubjectCompatibilityLevel(t *testing.T) {
 	checkStubCount(t, wiremockClient, deleteSubjectCompatibilityLevelStub, fmt.Sprintf("DELETE %s", updateSubjectCompatibilityLevelPath), expectedCountOne)
 }
 
-func testAccCheckSubjectCompatibilityLevelConfig(confluentCloudBaseUrl, mockServerUrl, compatibilityLevel, schemaRegistryKey, schemaRegistrySecret string) string {
+func testAccCheckSubjectCompatibilityLevelConfigWithEnhancedProviderBlock(confluentCloudBaseUrl, mockServerUrl, compatibilityLevel string) string {
 	return fmt.Sprintf(`
 	provider "confluent" {
 	  endpoint = "%s"
+	  schema_registry_api_key = "%s"
+	  schema_registry_api_secret = "%s"
+	  schema_registry_rest_endpoint = "%s"
+	  schema_registry_id = "%s"
 	}
-	resource "confluent_subject_compatibility_level" "%s" {
-      credentials {	
-        key = "%s"	
-        secret = "%s"	
-	  }
-      rest_endpoint = "%s"
-	  schema_registry_cluster {
-        id = "%s"
-      }
-	
+	resource "confluent_subject_config" "%s" {
 	  subject_name = "%s"
 	  compatibility_level = "%s"
 	}
-	`, confluentCloudBaseUrl, testSubjectCompatibilityLevelResourceLabel, schemaRegistryKey, schemaRegistrySecret, mockServerUrl, testStreamGovernanceClusterId, testSubjectName, compatibilityLevel)
+	`, confluentCloudBaseUrl, testSchemaRegistryKey, testSchemaRegistrySecret, mockServerUrl, testStreamGovernanceClusterId, testSubjectCompatibilityLevelResourceLabel, testSubjectName, compatibilityLevel)
+}
+
+func testAccCheckSubjectCompatibilityLevelExists(n string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[n]
+
+		if !ok {
+			return fmt.Errorf("%s schema has not been found", n)
+		}
+
+		if rs.Primary.ID == "" {
+			return fmt.Errorf("ID has not been set for %s schema", n)
+		}
+
+		return nil
+	}
+}
+
+func testAccCheckSubjectCompatibilityLevelDestroy(s *terraform.State) error {
+	return nil
 }
