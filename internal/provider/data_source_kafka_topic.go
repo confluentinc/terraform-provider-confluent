@@ -26,7 +26,7 @@ func kafkaTopicDataSource() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: kafkaTopicDataSourceRead,
 		Schema: map[string]*schema.Schema{
-			paramKafkaCluster: kafkaClusterBlockDataSourceSchema(),
+			paramKafkaCluster: optionalKafkaClusterBlockDataSourceSchema(),
 			paramTopicName: {
 				Type:     schema.TypeString,
 				Required: true,
@@ -56,12 +56,15 @@ func kafkaTopicDataSourceRead(ctx context.Context, d *schema.ResourceData, meta 
 	if err != nil {
 		return diag.Errorf("error reading Kafka Topic: %s", createDescriptiveError(err))
 	}
-	clusterId := extractStringValueFromBlock(d, paramKafkaCluster, paramId)
+	clusterId, err := extractKafkaClusterId(meta.(*Client), d, false)
+	if err != nil {
+		return diag.Errorf("error reading Kafka Topic: %s", createDescriptiveError(err))
+	}
 	clusterApiKey, clusterApiSecret, err := extractClusterApiKeyAndApiSecret(meta.(*Client), d, false)
 	if err != nil {
 		return diag.Errorf("error reading Kafka Topic: %s", createDescriptiveError(err))
 	}
-	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isKafkaMetadataSet)
+	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isKafkaMetadataSet, meta.(*Client).isKafkaClusterIdSet)
 	topicName := d.Get(paramTopicName).(string)
 	tflog.Debug(ctx, fmt.Sprintf("Reading Kafka Topic %q", topicName))
 
@@ -77,7 +80,7 @@ func kafkaTopicDataSourceRead(ctx context.Context, d *schema.ResourceData, meta 
 	return nil
 }
 
-func kafkaClusterBlockDataSourceSchema() *schema.Schema {
+func optionalKafkaClusterBlockDataSourceSchema() *schema.Schema {
 	return &schema.Schema{
 		Type: schema.TypeList,
 		Elem: &schema.Resource{
@@ -88,7 +91,7 @@ func kafkaClusterBlockDataSourceSchema() *schema.Schema {
 				},
 			},
 		},
-		Required: true,
+		Optional: true,
 		MinItems: 1,
 		MaxItems: 1,
 	}

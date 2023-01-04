@@ -101,7 +101,7 @@ func kafkaStateUpgradeV0(ctx context.Context, rawState map[string]interface{}, m
 func kafkaAclResourceV1() *schema.Resource {
 	return &schema.Resource{
 		Schema: map[string]*schema.Schema{
-			paramKafkaCluster: kafkaClusterBlockSchema(),
+			paramKafkaCluster: requiredKafkaClusterBlockSchema(),
 			paramResourceType: {
 				Type:         schema.TypeString,
 				Required:     true,
@@ -164,7 +164,7 @@ func kafkaAclResourceV1() *schema.Resource {
 func kafkaTopicResourceV1() *schema.Resource {
 	return &schema.Resource{
 		Schema: map[string]*schema.Schema{
-			paramKafkaCluster: kafkaClusterBlockSchema(),
+			paramKafkaCluster: requiredKafkaClusterBlockSchema(),
 			paramTopicName: {
 				Type:         schema.TypeString,
 				Required:     true,

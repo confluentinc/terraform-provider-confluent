@@ -259,7 +259,7 @@ func kafkaMirrorTopicImport(ctx context.Context, d *schema.ResourceData, meta in
 	linkName := parts[1]
 	mirrorTopicName := parts[2]
 
-	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, false)
+	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, false, false)
 
 	// Mark resource as new to avoid d.Set("") when getting 404
 	d.MarkNewResource()
@@ -363,7 +363,7 @@ func createKafkaRestClientFromKafkaBlock(d *schema.ResourceData, meta interface{
 	kafkaClusterApiKey := extractStringValueFromNestedBlock(d, paramKafkaCluster, paramCredentials, paramKey)
 	kafkaClusterApiSecret := extractStringValueFromNestedBlock(d, paramKafkaCluster, paramCredentials, paramSecret)
 	// Set isMetadataSetInProviderBlock to 'false' to disable inferring rest_endpoint / Kafka API Key from 'providers' block for confluent_cluster_link resource
-	return meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(kafkaClusterRestEndpoint, kafkaClusterId, kafkaClusterApiKey, kafkaClusterApiSecret, false), nil
+	return meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(kafkaClusterRestEndpoint, kafkaClusterId, kafkaClusterApiKey, kafkaClusterApiSecret, false, false), nil
 }
 
 func clusterLinkBlockSchema() *schema.Schema {

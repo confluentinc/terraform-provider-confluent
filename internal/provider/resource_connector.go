@@ -71,7 +71,7 @@ func connectorResource() *schema.Resource {
 		},
 		Schema: map[string]*schema.Schema{
 			paramEnvironment:  environmentSchema(),
-			paramKafkaCluster: kafkaClusterBlockSchema(),
+			paramKafkaCluster: requiredKafkaClusterBlockSchema(),
 			paramStatus: {
 				Type:     schema.TypeString,
 				Optional: true,

@@ -37,7 +37,7 @@ type KafkaRestClientFactory struct {
 	maxRetries *int
 }
 
-func (f KafkaRestClientFactory) CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret string, isMetadataSetInProviderBlock bool) *KafkaRestClient {
+func (f KafkaRestClientFactory) CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret string, isMetadataSetInProviderBlock, isClusterIdSetInProviderBlock bool) *KafkaRestClient {
 	config := kafkarestv3.NewConfiguration()
 	config.Servers[0].URL = restEndpoint
 	config.UserAgent = f.userAgent
@@ -47,12 +47,13 @@ func (f KafkaRestClientFactory) CreateKafkaRestClient(restEndpoint, clusterId, c
 		config.HTTPClient = NewRetryableClientFactory().CreateRetryableClient()
 	}
 	return &KafkaRestClient{
-		apiClient:                    kafkarestv3.NewAPIClient(config),
-		clusterId:                    clusterId,
-		clusterApiKey:                clusterApiKey,
-		clusterApiSecret:             clusterApiSecret,
-		restEndpoint:                 restEndpoint,
-		isMetadataSetInProviderBlock: isMetadataSetInProviderBlock,
+		apiClient:                     kafkarestv3.NewAPIClient(config),
+		clusterId:                     clusterId,
+		clusterApiKey:                 clusterApiKey,
+		clusterApiSecret:              clusterApiSecret,
+		restEndpoint:                  restEndpoint,
+		isMetadataSetInProviderBlock:  isMetadataSetInProviderBlock,
+		isClusterIdSetInProviderBlock: isClusterIdSetInProviderBlock,
 	}
 }
 

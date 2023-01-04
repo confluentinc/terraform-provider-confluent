@@ -28,33 +28,9 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-const (
-	scenarioStateAclHasBeenCreated = "A new ACL has been just created"
-	scenarioStateAclHasBeenDeleted = "The ACL has been deleted"
-	aclScenarioName                = "confluent_kafka_acl Resource Lifecycle"
-	aclPatternType                 = "LITERAL"
-	aclResourceName                = "kafka-cluster"
-	aclPrincipalWithIntegerId      = "User:732363"
-	aclPrincipalWithResourceId     = "User:sa-abc123"
-	aclHost                        = "*"
-	aclOperation                   = "READ"
-	aclPermission                  = "ALLOW"
-	aclResourceType                = "CLUSTER"
-	aclResourceLabel               = "test_acl_resource_label"
-)
-
-var fullAclResourceLabel = fmt.Sprintf("confluent_kafka_acl.%s", aclResourceLabel)
-var createKafkaAclPath = fmt.Sprintf("/kafka/v3/clusters/%s/acls", clusterId)
-var readServiceAccountsPath = "/service_accounts"
-var readKafkaAclPath = fmt.Sprintf("/kafka/v3/clusters/%s/acls?host=%s&operation=%s&pattern_type=%s&permission=%s&principal=%s&resource_name=%s&resource_type=%s", clusterId, aclHost, aclOperation, aclPatternType, aclPermission, aclPrincipalWithIntegerId, aclResourceName, aclResourceType)
-
-// TODO: APIF-1990
-var mockAclTestServerUrl = ""
-
-func TestAccAcls(t *testing.T) {
+func TestAccAclsWithEnhancedProviderBlock2(t *testing.T) {
 	containerPort := "8080"
 	containerPortTcp := fmt.Sprintf("%s/tcp", containerPort)
 	ctx := context.Background()
@@ -180,11 +156,11 @@ func TestAccAcls(t *testing.T) {
 		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckAclConfig(confluentCloudBaseUrl, mockAclTestServerUrl),
+				Config: testAccCheckAclConfigWithEnhancedProviderBlock2(confluentCloudBaseUrl, mockAclTestServerUrl),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckAclExists(fullAclResourceLabel),
-					resource.TestCheckResourceAttr(fullAclResourceLabel, "kafka_cluster.#", "1"),
-					resource.TestCheckResourceAttr(fullAclResourceLabel, "kafka_cluster.0.id", clusterId),
+					resource.TestCheckResourceAttr(fullAclResourceLabel, "kafka_cluster.#", "0"),
+					resource.TestCheckNoResourceAttr(fullAclResourceLabel, "kafka_cluster.0.id"),
 					resource.TestCheckResourceAttr(fullAclResourceLabel, "id", fmt.Sprintf("%s/%s#%s#%s#%s#%s#%s#%s", clusterId, aclResourceType, aclResourceName, aclPatternType, aclPrincipalWithResourceId, aclHost, aclOperation, aclPermission)),
 					resource.TestCheckResourceAttr(fullAclResourceLabel, "resource_type", aclResourceType),
 					resource.TestCheckResourceAttr(fullAclResourceLabel, "resource_name", aclResourceName),
@@ -193,10 +169,10 @@ func TestAccAcls(t *testing.T) {
 					resource.TestCheckResourceAttr(fullAclResourceLabel, "host", aclHost),
 					resource.TestCheckResourceAttr(fullAclResourceLabel, "operation", aclOperation),
 					resource.TestCheckResourceAttr(fullAclResourceLabel, "permission", aclPermission),
-					resource.TestCheckResourceAttr(fullAclResourceLabel, "credentials.#", "1"),
-					resource.TestCheckResourceAttr(fullAclResourceLabel, "credentials.0.%", "2"),
-					resource.TestCheckResourceAttr(fullAclResourceLabel, "credentials.0.key", kafkaApiKey),
-					resource.TestCheckResourceAttr(fullAclResourceLabel, "credentials.0.secret", kafkaApiSecret),
+					resource.TestCheckNoResourceAttr(fullAclResourceLabel, "rest_endpoint"),
+					resource.TestCheckResourceAttr(fullAclResourceLabel, "credentials.#", "0"),
+					resource.TestCheckNoResourceAttr(fullAclResourceLabel, "credentials.0.key"),
+					resource.TestCheckNoResourceAttr(fullAclResourceLabel, "credentials.0.secret"),
 				),
 			},
 			{
@@ -212,38 +188,16 @@ func TestAccAcls(t *testing.T) {
 	checkStubCount(t, wiremockClient, deleteAclStub, fmt.Sprintf("DELETE %s", readKafkaAclPath), expectedCountOne)
 }
 
-func testAccCheckAclDestroy(s *terraform.State) error {
-	c := testAccProvider.Meta().(*Client).kafkaRestClientFactory.CreateKafkaRestClient(mockAclTestServerUrl, clusterId, kafkaApiKey, kafkaApiSecret, false, false)
-	// Loop through the resources in state, verifying each ACL is destroyed
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "confluent_kafka_acl" {
-			continue
-		}
-		deletedAclId := rs.Primary.ID
-		aclList, _, err := c.apiClient.ACLV3Api.GetKafkaAcls(c.apiContext(context.Background()), clusterId).ResourceType(aclResourceType).ResourceName(aclResourceName).PatternType(aclPatternType).Principal(aclPrincipalWithIntegerId).Host(aclHost).Operation(aclOperation).Permission(aclPermission).Execute()
-
-		if len(aclList.Data) == 0 {
-			return nil
-		} else if err == nil && deletedAclId != "" {
-			// Otherwise return the error
-			if deletedAclId == rs.Primary.ID {
-				return fmt.Errorf("ACL (%s) still exists", rs.Primary.ID)
-			}
-		}
-		return err
-	}
-	return nil
-}
-
-func testAccCheckAclConfig(confluentCloudBaseUrl, mockServerUrl string) string {
+func testAccCheckAclConfigWithEnhancedProviderBlock2(confluentCloudBaseUrl, mockServerUrl string) string {
 	return fmt.Sprintf(`
 	provider "confluent" {
-      endpoint = "%s"
+	  endpoint = "%s"
+	  kafka_api_key = "%s"
+	  kafka_api_secret = "%s"
+	  kafka_rest_endpoint = "%s"
+	  kafka_id = "%s"
     }
 	resource "confluent_kafka_acl" "%s" {
-	  kafka_cluster {
-        id = "%s"
-      }
 	  resource_type = "%s"
 	  resource_name = "%s"
 	  pattern_type = "%s"
@@ -251,30 +205,7 @@ func testAccCheckAclConfig(confluentCloudBaseUrl, mockServerUrl string) string {
 	  host = "*"
 	  operation = "%s"
 	  permission = "%s"
-
-	  rest_endpoint = "%s"
-
-	  credentials {
-		key = "%s"
-		secret = "%s"
-	  }
 	}
-	`, confluentCloudBaseUrl, aclResourceLabel, clusterId, aclResourceType, aclResourceName, aclPatternType, aclPrincipalWithResourceId,
-		aclOperation, aclPermission, mockServerUrl, kafkaApiKey, kafkaApiSecret)
-}
-
-func testAccCheckAclExists(n string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		rs, ok := s.RootModule().Resources[n]
-
-		if !ok {
-			return fmt.Errorf("%s ACL has not been found", n)
-		}
-
-		if rs.Primary.ID == "" {
-			return fmt.Errorf("ID has not been set for %s ACL", n)
-		}
-
-		return nil
-	}
+	`, confluentCloudBaseUrl, kafkaApiKey, kafkaApiSecret, mockServerUrl, clusterId, aclResourceLabel, aclResourceType, aclResourceName, aclPatternType, aclPrincipalWithResourceId,
+		aclOperation, aclPermission)
 }

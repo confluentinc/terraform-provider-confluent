@@ -407,9 +407,9 @@ func clusterLinkImport(ctx context.Context, d *schema.ResourceData, meta interfa
 
 	var kafkaRestClient *KafkaRestClient
 	if linkMode == linkModeDestination {
-		kafkaRestClient = meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(destinationRestEndpoint, destinationClusterId, destinationClusterApiKey, destinationClusterApiSecret, false)
+		kafkaRestClient = meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(destinationRestEndpoint, destinationClusterId, destinationClusterApiKey, destinationClusterApiSecret, false, false)
 	} else {
-		kafkaRestClient = meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(sourceRestEndpoint, sourceClusterId, sourceClusterApiKey, sourceClusterApiSecret, false)
+		kafkaRestClient = meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(sourceRestEndpoint, sourceClusterId, sourceClusterApiKey, sourceClusterApiSecret, false, false)
 	}
 
 	// Mark resource as new to avoid d.Set("") when getting 404
@@ -485,7 +485,7 @@ func createKafkaRestClientForClusterLink(d *schema.ResourceData, meta interface{
 		destinationKafkaClusterApiKey := extractStringValueFromNestedBlock(d, paramDestinationKafkaCluster, paramCredentials, paramKey)
 		destinationKafkaClusterApiSecret := extractStringValueFromNestedBlock(d, paramDestinationKafkaCluster, paramCredentials, paramSecret)
 		// Set isMetadataSetInProviderBlock to 'false' to disable inferring rest_endpoint / Kafka API Key from 'providers' block for confluent_cluster_link resource
-		return meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(destinationKafkaClusterRestEndpoint, destinationKafkaClusterId, destinationKafkaClusterApiKey, destinationKafkaClusterApiSecret, false), nil
+		return meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(destinationKafkaClusterRestEndpoint, destinationKafkaClusterId, destinationKafkaClusterApiKey, destinationKafkaClusterApiSecret, false, false), nil
 	} else {
 		// linkMode = linkModeSource
 		sourceKafkaClusterId := extractStringValueFromBlock(d, paramSourceKafkaCluster, paramId)
@@ -493,7 +493,7 @@ func createKafkaRestClientForClusterLink(d *schema.ResourceData, meta interface{
 		sourceKafkaClusterApiKey := extractStringValueFromNestedBlock(d, paramSourceKafkaCluster, paramCredentials, paramKey)
 		sourceKafkaClusterApiSecret := extractStringValueFromNestedBlock(d, paramSourceKafkaCluster, paramCredentials, paramSecret)
 		// Set isMetadataSetInProviderBlock to 'false' to disable inferring rest_endpoint / Kafka API Key from 'providers' block for confluent_cluster_link resource
-		return meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(sourceKafkaClusterRestEndpoint, sourceKafkaClusterId, sourceKafkaClusterApiKey, sourceKafkaClusterApiSecret, false), nil
+		return meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(sourceKafkaClusterRestEndpoint, sourceKafkaClusterId, sourceKafkaClusterApiKey, sourceKafkaClusterApiSecret, false, false), nil
 	}
 }
 

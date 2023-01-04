@@ -76,7 +76,7 @@ func ksqlResource() *schema.Resource {
 				Description: "Topic name prefix used by this ksqlDB cluster. Used to assign ACLs for this ksqlDB cluster to use.",
 				Computed:    true,
 			},
-			paramKafkaCluster:       kafkaClusterBlockSchema(),
+			paramKafkaCluster:       requiredKafkaClusterBlockSchema(),
 			paramCredentialIdentity: credentialIdentityBlockSchema(),
 			paramEnvironment:        environmentSchema(),
 			paramResourceName: {

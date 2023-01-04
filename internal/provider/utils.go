@@ -277,12 +277,13 @@ func getEnv(key, defaultValue string) string {
 }
 
 type KafkaRestClient struct {
-	apiClient                    *kafkarestv3.APIClient
-	clusterId                    string
-	clusterApiKey                string
-	clusterApiSecret             string
-	restEndpoint                 string
-	isMetadataSetInProviderBlock bool
+	apiClient                     *kafkarestv3.APIClient
+	clusterId                     string
+	clusterApiKey                 string
+	clusterApiSecret              string
+	restEndpoint                  string
+	isMetadataSetInProviderBlock  bool
+	isClusterIdSetInProviderBlock bool
 }
 
 type SchemaRegistryRestClient struct {

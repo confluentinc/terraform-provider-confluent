@@ -62,7 +62,7 @@ func kafkaClientQuotaResource() *schema.Resource {
 				Description:  "A description of the Kafka Client Quota.",
 				ValidateFunc: validation.StringIsNotEmpty,
 			},
-			paramKafkaCluster: kafkaClusterBlockSchema(),
+			paramKafkaCluster: requiredKafkaClusterBlockSchema(),
 			paramEnvironment:  environmentSchema(),
 			paramPrincipals: {
 				Type:        schema.TypeSet,

@@ -49,7 +49,7 @@ func kafkaConfigResource() *schema.Resource {
 			StateContext: kafkaConfigImport,
 		},
 		Schema: map[string]*schema.Schema{
-			paramKafkaCluster: kafkaClusterBlockSchema(),
+			paramKafkaCluster: optionalKafkaClusterBlockSchema(),
 			paramConfigs: {
 				Type: schema.TypeMap,
 				Elem: &schema.Schema{
@@ -76,12 +76,15 @@ func kafkaConfigCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 	if err != nil {
 		return diag.Errorf("error creating Kafka Config: %s", createDescriptiveError(err))
 	}
-	clusterId := extractStringValueFromBlock(d, paramKafkaCluster, paramId)
+	clusterId, err := extractKafkaClusterId(meta.(*Client), d, false)
+	if err != nil {
+		return diag.Errorf("error creating Kafka Config: %s", createDescriptiveError(err))
+	}
 	clusterApiKey, clusterApiSecret, err := extractClusterApiKeyAndApiSecret(meta.(*Client), d, false)
 	if err != nil {
 		return diag.Errorf("error creating Kafka Config: %s", createDescriptiveError(err))
 	}
-	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isKafkaMetadataSet)
+	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isKafkaMetadataSet, meta.(*Client).isKafkaClusterIdSet)
 	configs := extractClusterConfigs(d.Get(paramConfigs).(map[string]interface{}))
 
 	createConfigRequest := kafkarestv3.AlterConfigBatchRequestData{
@@ -131,12 +134,15 @@ func kafkaConfigRead(ctx context.Context, d *schema.ResourceData, meta interface
 	if err != nil {
 		return diag.Errorf("error reading Kafka Config: %s", createDescriptiveError(err))
 	}
-	clusterId := extractStringValueFromBlock(d, paramKafkaCluster, paramId)
+	clusterId, err := extractKafkaClusterId(meta.(*Client), d, false)
+	if err != nil {
+		return diag.Errorf("error reading Kafka Config: %s", createDescriptiveError(err))
+	}
 	clusterApiKey, clusterApiSecret, err := extractClusterApiKeyAndApiSecret(meta.(*Client), d, false)
 	if err != nil {
 		return diag.Errorf("error reading Kafka Config: %s", createDescriptiveError(err))
 	}
-	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isKafkaMetadataSet)
+	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isKafkaMetadataSet, meta.(*Client).isKafkaClusterIdSet)
 
 	_, err = readConfigAndSetAttributes(ctx, d, kafkaRestClient)
 	if err != nil {
@@ -166,7 +172,7 @@ func kafkaConfigImport(ctx context.Context, d *schema.ResourceData, meta interfa
 
 	clusterId := d.Id()
 
-	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isKafkaMetadataSet)
+	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isKafkaMetadataSet, meta.(*Client).isKafkaClusterIdSet)
 
 	// Mark resource as new to avoid d.Set("") when getting 404
 	d.MarkNewResource()
@@ -197,12 +203,14 @@ func readConfigAndSetAttributes(ctx context.Context, d *schema.ResourceData, c *
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Kafka Config %q: %s", d.Id(), kafkaConfigJson), map[string]interface{}{kafkaClusterLoggingKey: d.Id()})
 
-	if err := setStringAttributeInListBlockOfSizeOne(paramKafkaCluster, paramId, c.clusterId, d); err != nil {
+	if err := d.Set(paramConfigs, convertKafkaConfigToMap(kafkaConfig)); err != nil {
 		return nil, err
 	}
 
-	if err := d.Set(paramConfigs, convertKafkaConfigToMap(kafkaConfig)); err != nil {
-		return nil, err
+	if !c.isClusterIdSetInProviderBlock {
+		if err := setStringAttributeInListBlockOfSizeOne(paramKafkaCluster, paramId, c.clusterId, d); err != nil {
+			return nil, err
+		}
 	}
 
 	if !c.isMetadataSetInProviderBlock {
@@ -254,12 +262,15 @@ func kafkaConfigUpdate(ctx context.Context, d *schema.ResourceData, meta interfa
 		if err != nil {
 			return diag.Errorf("error updating Kafka Config: %s", createDescriptiveError(err))
 		}
-		clusterId := extractStringValueFromBlock(d, paramKafkaCluster, paramId)
+		clusterId, err := extractKafkaClusterId(meta.(*Client), d, false)
+		if err != nil {
+			return diag.Errorf("error updating Kafka Config: %s", createDescriptiveError(err))
+		}
 		clusterApiKey, clusterApiSecret, err := extractClusterApiKeyAndApiSecret(meta.(*Client), d, false)
 		if err != nil {
 			return diag.Errorf("error updating Kafka Config: %s", createDescriptiveError(err))
 		}
-		kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isKafkaMetadataSet)
+		kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isKafkaMetadataSet, meta.(*Client).isKafkaClusterIdSet)
 		updateConfigRequestJson, err := json.Marshal(updateConfigRequest)
 		if err != nil {
 			return diag.Errorf("error updating Kafka Config: error marshaling %#v to json: %s", updateConfigRequest, createDescriptiveError(err))

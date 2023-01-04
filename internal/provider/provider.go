@@ -71,9 +71,11 @@ type Client struct {
 	userAgent                       string
 	cloudApiKey                     string
 	cloudApiSecret                  string
+	kafkaClusterId                  string
 	kafkaApiKey                     string
 	kafkaApiSecret                  string
 	kafkaRestEndpoint               string
+	isKafkaClusterIdSet             bool
 	isKafkaMetadataSet              bool
 	schemaRegistryClusterId         string
 	schemaRegistryApiKey            string
@@ -112,6 +114,12 @@ func New(version, userAgent string) func() *schema.Provider {
 					Sensitive:   true,
 					DefaultFunc: schema.EnvDefaultFunc("CONFLUENT_CLOUD_API_SECRET", ""),
 					Description: "The Confluent Cloud API Secret.",
+				},
+				"kafka_id": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					DefaultFunc: schema.EnvDefaultFunc("KAFKA_ID", ""),
+					Description: "The Kafka Cluster ID.",
 				},
 				"kafka_api_key": {
 					Type:        schema.TypeString,
@@ -275,6 +283,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	endpoint := d.Get("endpoint").(string)
 	cloudApiKey := d.Get("cloud_api_key").(string)
 	cloudApiSecret := d.Get("cloud_api_secret").(string)
+	kafkaClusterId := d.Get("kafka_id").(string)
 	kafkaApiKey := d.Get("kafka_api_key").(string)
 	kafkaApiSecret := d.Get("kafka_api_secret").(string)
 	kafkaRestEndpoint := d.Get("kafka_rest_endpoint").(string)
@@ -285,12 +294,14 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	// If the max_retries doesn't exist in the configuration, then 0 will be returned.
 	maxRetries := d.Get("max_retries").(int)
 
-	// All 3 attributes should be set or not set at the same time
+	// 3 or 4 attributes should be set or not set at the same time
+	// Option #2: (kafka_api_key, kafka_api_secret, kafka_rest_endpoint)
+	// Option #3 (primary): (kafka_api_key, kafka_api_secret, kafka_rest_endpoint, kafka_id)
 	allKafkaAttributesAreSet := (kafkaApiKey != "") && (kafkaApiSecret != "") && (kafkaRestEndpoint != "")
 	allKafkaAttributesAreNotSet := (kafkaApiKey == "") && (kafkaApiSecret == "") && (kafkaRestEndpoint == "")
 	justOneOrTwoKafkaAttributesAreSet := !(allKafkaAttributesAreSet || allKafkaAttributesAreNotSet)
 	if justOneOrTwoKafkaAttributesAreSet {
-		return nil, diag.Errorf("All 3 kafka_api_key, kafka_api_secret, kafka_rest_endpoint attributes should be set or not set in the provider block at the same time")
+		return nil, diag.Errorf("(kafka_api_key, kafka_api_secret, kafka_rest_endpoint) or (kafka_api_key, kafka_api_secret, kafka_rest_endpoint, kafka_id) attributes should be set or not set in the provider block at the same time")
 	}
 
 	// All 4 attributes should be set or not set at the same time
@@ -400,6 +411,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 		userAgent:                       userAgent,
 		cloudApiKey:                     cloudApiKey,
 		cloudApiSecret:                  cloudApiSecret,
+		kafkaClusterId:                  kafkaClusterId,
 		kafkaApiKey:                     kafkaApiKey,
 		kafkaApiSecret:                  kafkaApiSecret,
 		kafkaRestEndpoint:               kafkaRestEndpoint,
@@ -407,8 +419,9 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 		schemaRegistryApiKey:            schemaRegistryApiKey,
 		schemaRegistryApiSecret:         schemaRegistryApiSecret,
 		schemaRegistryRestEndpoint:      schemaRegistryRestEndpoint,
-		// For simplicity, treat all 3 (for Kafka) and 4 (for SR) variables as a "single" one
+		// For simplicity, treat 3 (for Kafka) and 4 (for SR) variables as a "single" one
 		isKafkaMetadataSet:          allKafkaAttributesAreSet,
+		isKafkaClusterIdSet:         kafkaClusterId != "",
 		isSchemaRegistryMetadataSet: allSchemaRegistryAttributesAreSet,
 	}
 

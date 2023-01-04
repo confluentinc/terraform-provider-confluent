@@ -72,7 +72,7 @@ func kafkaAclResource() *schema.Resource {
 			StateContext: kafkaAclImport,
 		},
 		Schema: map[string]*schema.Schema{
-			paramKafkaCluster: kafkaClusterBlockSchema(),
+			paramKafkaCluster: optionalKafkaClusterBlockSchema(),
 			paramResourceType: {
 				Type:         schema.TypeString,
 				Required:     true,
@@ -150,12 +150,15 @@ func kafkaAclCreate(ctx context.Context, d *schema.ResourceData, meta interface{
 	if err != nil {
 		return diag.Errorf("error creating Kafka ACLs: %s", createDescriptiveError(err))
 	}
-	clusterId := extractStringValueFromBlock(d, paramKafkaCluster, paramId)
+	clusterId, err := extractKafkaClusterId(meta.(*Client), d, false)
+	if err != nil {
+		return diag.Errorf("error creating Kafka ACLs: %s", createDescriptiveError(err))
+	}
 	clusterApiKey, clusterApiSecret, err := extractClusterApiKeyAndApiSecret(meta.(*Client), d, false)
 	if err != nil {
 		return diag.Errorf("error creating Kafka ACLs: %s", createDescriptiveError(err))
 	}
-	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isKafkaMetadataSet)
+	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isKafkaMetadataSet, meta.(*Client).isKafkaClusterIdSet)
 	acl, err := extractAcl(d)
 	if err != nil {
 		return diag.FromErr(createDescriptiveError(err))
@@ -208,9 +211,12 @@ func kafkaAclDelete(ctx context.Context, d *schema.ResourceData, meta interface{
 	if err != nil {
 		return diag.Errorf("error deleting Kafka ACLs: %s", createDescriptiveError(err))
 	}
-	clusterId := extractStringValueFromBlock(d, paramKafkaCluster, paramId)
+	clusterId, err := extractKafkaClusterId(meta.(*Client), d, false)
+	if err != nil {
+		return diag.Errorf("error deleting Kafka ACLs: %s", createDescriptiveError(err))
+	}
 	clusterApiKey, clusterApiSecret, err := extractClusterApiKeyAndApiSecret(meta.(*Client), d, false)
-	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isKafkaMetadataSet)
+	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isKafkaMetadataSet, meta.(*Client).isKafkaClusterIdSet)
 
 	acl, err := extractAcl(d)
 	if err != nil {
@@ -250,13 +256,16 @@ func kafkaAclRead(ctx context.Context, d *schema.ResourceData, meta interface{})
 	if err != nil {
 		return diag.Errorf("error reading Kafka ACLs: %s", createDescriptiveError(err))
 	}
-	clusterId := extractStringValueFromBlock(d, paramKafkaCluster, paramId)
+	clusterId, err := extractKafkaClusterId(meta.(*Client), d, false)
+	if err != nil {
+		return diag.Errorf("error reading Kafka ACLs: %s", createDescriptiveError(err))
+	}
 	clusterApiKey, clusterApiSecret, err := extractClusterApiKeyAndApiSecret(meta.(*Client), d, false)
 	if err != nil {
 		return diag.Errorf("error reading Kafka ACLs: %s", createDescriptiveError(err))
 	}
 	client := meta.(*Client)
-	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isKafkaMetadataSet)
+	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isKafkaMetadataSet, meta.(*Client).isKafkaClusterIdSet)
 	acl, err := extractAcl(d)
 	if err != nil {
 		return diag.FromErr(createDescriptiveError(err))
@@ -333,9 +342,6 @@ func readAclAndSetAttributes(ctx context.Context, d *schema.ResourceData, client
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Kafka ACLs %q: %s", d.Id(), matchedAclJson), map[string]interface{}{kafkaAclLoggingKey: d.Id()})
 
-	if err := setStringAttributeInListBlockOfSizeOne(paramKafkaCluster, paramId, c.clusterId, d); err != nil {
-		return nil, err
-	}
 	if err := d.Set(paramResourceType, matchedAcl.ResourceType); err != nil {
 		return nil, err
 	}
@@ -357,6 +363,11 @@ func readAclAndSetAttributes(ctx context.Context, d *schema.ResourceData, client
 	}
 	if err := d.Set(paramPermission, matchedAcl.Permission); err != nil {
 		return nil, err
+	}
+	if !c.isClusterIdSetInProviderBlock {
+		if err := setStringAttributeInListBlockOfSizeOne(paramKafkaCluster, paramId, c.clusterId, d); err != nil {
+			return nil, err
+		}
 	}
 	if !c.isMetadataSetInProviderBlock {
 		if err := setKafkaCredentials(c.clusterApiKey, c.clusterApiSecret, d); err != nil {
@@ -400,7 +411,7 @@ func kafkaAclImport(ctx context.Context, d *schema.ResourceData, meta interface{
 	}
 
 	client := meta.(*Client)
-	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isKafkaMetadataSet)
+	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isKafkaMetadataSet, meta.(*Client).isKafkaClusterIdSet)
 
 	// Mark resource as new to avoid d.Set("") when getting 404
 	d.MarkNewResource()

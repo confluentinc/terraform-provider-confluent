@@ -81,7 +81,7 @@ func kafkaTopicResource() *schema.Resource {
 			StateContext: kafkaTopicImport,
 		},
 		Schema: map[string]*schema.Schema{
-			paramKafkaCluster: kafkaClusterBlockSchema(),
+			paramKafkaCluster: optionalKafkaClusterBlockSchema(),
 			paramTopicName: {
 				Type:         schema.TypeString,
 				Required:     true,
@@ -131,6 +131,25 @@ func kafkaTopicResource() *schema.Resource {
 	}
 }
 
+func extractKafkaClusterId(client *Client, d *schema.ResourceData, isImportOperation bool) (string, error) {
+	if client.isKafkaClusterIdSet {
+		return client.kafkaClusterId, nil
+	}
+	if isImportOperation {
+		clusterId := getEnv("IMPORT_KAFKA_ID", "")
+		if clusterId != "" {
+			return clusterId, nil
+		} else {
+			return "", fmt.Errorf("one of provider.kafka_id (defaults to KAFKA_ID environment variable) or IMPORT_KAFKA_ID environment variable must be set")
+		}
+	}
+	clusterId := extractStringValueFromBlock(d, paramKafkaCluster, paramId)
+	if clusterId != "" {
+		return clusterId, nil
+	}
+	return "", fmt.Errorf("one of provider.kafka_id (defaults to KAFKA_ID environment variable) or resource.kafka_cluster.id must be set")
+}
+
 func extractRestEndpoint(client *Client, d *schema.ResourceData, isImportOperation bool) (string, error) {
 	if client.isKafkaMetadataSet {
 		return client.kafkaRestEndpoint, nil
@@ -175,12 +194,15 @@ func kafkaTopicCreate(ctx context.Context, d *schema.ResourceData, meta interfac
 	if err != nil {
 		return diag.Errorf("error creating Kafka Topic: %s", createDescriptiveError(err))
 	}
-	clusterId := extractStringValueFromBlock(d, paramKafkaCluster, paramId)
+	clusterId, err := extractKafkaClusterId(meta.(*Client), d, false)
+	if err != nil {
+		return diag.Errorf("error creating Kafka Topic: %s", createDescriptiveError(err))
+	}
 	clusterApiKey, clusterApiSecret, err := extractClusterApiKeyAndApiSecret(meta.(*Client), d, false)
 	if err != nil {
 		return diag.Errorf("error creating Kafka Topic: %s", createDescriptiveError(err))
 	}
-	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isKafkaMetadataSet)
+	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isKafkaMetadataSet, meta.(*Client).isKafkaClusterIdSet)
 	topicName := d.Get(paramTopicName).(string)
 	partitionsCountInt32 := int32(d.Get(paramPartitionsCount).(int))
 	configs := extractConfigs(d.Get(paramConfigs).(map[string]interface{}))
@@ -228,12 +250,15 @@ func kafkaTopicDelete(ctx context.Context, d *schema.ResourceData, meta interfac
 	if err != nil {
 		return diag.Errorf("error deleting Kafka Topic: %s", createDescriptiveError(err))
 	}
-	clusterId := extractStringValueFromBlock(d, paramKafkaCluster, paramId)
+	clusterId, err := extractKafkaClusterId(meta.(*Client), d, false)
+	if err != nil {
+		return diag.Errorf("error deleting Kafka Topic: %s", createDescriptiveError(err))
+	}
 	clusterApiKey, clusterApiSecret, err := extractClusterApiKeyAndApiSecret(meta.(*Client), d, false)
 	if err != nil {
 		return diag.Errorf("error deleting Kafka Topic: %s", createDescriptiveError(err))
 	}
-	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isKafkaMetadataSet)
+	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isKafkaMetadataSet, meta.(*Client).isKafkaClusterIdSet)
 	topicName := d.Get(paramTopicName).(string)
 
 	_, err = kafkaRestClient.apiClient.TopicV3Api.DeleteKafkaTopic(kafkaRestClient.apiContext(ctx), kafkaRestClient.clusterId, topicName).Execute()
@@ -258,12 +283,15 @@ func kafkaTopicRead(ctx context.Context, d *schema.ResourceData, meta interface{
 	if err != nil {
 		return diag.Errorf("error reading Kafka Topic: %s", createDescriptiveError(err))
 	}
-	clusterId := extractStringValueFromBlock(d, paramKafkaCluster, paramId)
+	clusterId, err := extractKafkaClusterId(meta.(*Client), d, false)
+	if err != nil {
+		return diag.Errorf("error reading Kafka Topic: %s", createDescriptiveError(err))
+	}
 	clusterApiKey, clusterApiSecret, err := extractClusterApiKeyAndApiSecret(meta.(*Client), d, false)
 	if err != nil {
 		return diag.Errorf("error reading Kafka Topic: %s", createDescriptiveError(err))
 	}
-	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isKafkaMetadataSet)
+	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isKafkaMetadataSet, meta.(*Client).isKafkaClusterIdSet)
 	topicName := d.Get(paramTopicName).(string)
 
 	_, err = readTopicAndSetAttributes(ctx, d, kafkaRestClient, topicName)
@@ -309,7 +337,7 @@ func credentialsSchema() *schema.Schema {
 	}
 }
 
-func kafkaClusterBlockSchema() *schema.Schema {
+func requiredKafkaClusterBlockSchema() *schema.Schema {
 	return &schema.Schema{
 		Type: schema.TypeList,
 		Elem: &schema.Resource{
@@ -324,6 +352,27 @@ func kafkaClusterBlockSchema() *schema.Schema {
 			},
 		},
 		Required: true,
+		MinItems: 1,
+		MaxItems: 1,
+		ForceNew: true,
+	}
+}
+
+func optionalKafkaClusterBlockSchema() *schema.Schema {
+	return &schema.Schema{
+		Type: schema.TypeList,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramId: {
+					Type:         schema.TypeString,
+					Required:     true,
+					ForceNew:     true,
+					Description:  "The Kafka cluster ID (e.g., `lkc-12345`).",
+					ValidateFunc: validation.StringMatch(regexp.MustCompile("^lkc-"), "the Kafka cluster ID must be of the form 'lkc-'"),
+				},
+			},
+		},
+		Optional: true,
 		MinItems: 1,
 		MaxItems: 1,
 		ForceNew: true,
@@ -361,7 +410,7 @@ func kafkaTopicImport(ctx context.Context, d *schema.ResourceData, meta interfac
 	clusterId := parts[0]
 	topicName := parts[1]
 
-	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isKafkaMetadataSet)
+	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isKafkaMetadataSet, meta.(*Client).isKafkaClusterIdSet)
 
 	// Mark resource as new to avoid d.Set("") when getting 404
 	d.MarkNewResource()
@@ -392,9 +441,6 @@ func readTopicAndSetAttributes(ctx context.Context, d *schema.ResourceData, c *K
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Kafka Topic %q: %s", d.Id(), kafkaTopicJson), map[string]interface{}{kafkaTopicLoggingKey: d.Id()})
 
-	if err := setStringAttributeInListBlockOfSizeOne(paramKafkaCluster, paramId, c.clusterId, d); err != nil {
-		return nil, err
-	}
 	if err := d.Set(paramTopicName, kafkaTopic.TopicName); err != nil {
 		return nil, err
 	}
@@ -408,6 +454,12 @@ func readTopicAndSetAttributes(ctx context.Context, d *schema.ResourceData, c *K
 	}
 	if err := d.Set(paramConfigs, configs); err != nil {
 		return nil, err
+	}
+
+	if !c.isClusterIdSetInProviderBlock {
+		if err := setStringAttributeInListBlockOfSizeOne(paramKafkaCluster, paramId, c.clusterId, d); err != nil {
+			return nil, err
+		}
 	}
 
 	if !c.isMetadataSetInProviderBlock {
@@ -480,12 +532,15 @@ func kafkaTopicUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 		if err != nil {
 			return diag.Errorf("error updating Kafka Topic: %s", createDescriptiveError(err))
 		}
-		clusterId := extractStringValueFromBlock(d, paramKafkaCluster, paramId)
+		clusterId, err := extractKafkaClusterId(meta.(*Client), d, false)
+		if err != nil {
+			return diag.Errorf("error updating Kafka Topic: %s", createDescriptiveError(err))
+		}
 		clusterApiKey, clusterApiSecret, err := extractClusterApiKeyAndApiSecret(meta.(*Client), d, false)
 		if err != nil {
 			return diag.Errorf("error updating Kafka Topic: %s", createDescriptiveError(err))
 		}
-		kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isKafkaMetadataSet)
+		kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isKafkaMetadataSet, meta.(*Client).isKafkaClusterIdSet)
 		topicName := d.Get(paramTopicName).(string)
 		updateTopicRequestJson, err := json.Marshal(updateTopicRequest)
 		if err != nil {
