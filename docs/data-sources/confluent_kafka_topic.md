@@ -48,6 +48,8 @@ The following arguments are supported:
     - `key` - (Required String) The Kafka API Key.
     - `secret` - (Required String) The Kafka API Secret.
 
+-> **Note:** Omit the `rest_endpoint` attribute and the `credentials`, `kafka_cluster` blocks if the `kafka_id`, `kafka_rest_endpoint`, `kafka_api_key`, and `kafka_api_secret` attributes are all set in a `provider` block (see [option #2](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs#example-usage)).
+
 -> **Note:** A Kafka API key consists of a key and a secret. Kafka API keys are required to interact with Kafka clusters in Confluent Cloud. Each Kafka API key is valid for one specific Kafka cluster.
 
 !> **Warning:** Terraform doesn't encrypt the sensitive `credentials` value of the `confluent_kafka_topic` data source, so you must keep your state file secure to avoid exposing it. Refer to the [Terraform documentation](https://www.terraform.io/docs/language/state/sensitive-data.html) to learn more about securing your state file.

@@ -278,7 +278,7 @@ examples to use `zones` attribute of `confluent_network` [resource](https://regi
 * Added support for pausing / resuming a connector by adding `status` attribute for `confluent_connector` resource.
 
 **Bug fixes:**
-* Updated docs and added a new [managing-single-cluster](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/managing-single-cluster) example.
+* Updated docs and added a new [managing-single-kafka-cluster](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/managing-single-kafka-cluster) example.
 
 ## 0.12.0 (June 27, 2022)
 

@@ -48,6 +48,10 @@ The following arguments are supported:
   - `secret` - (Required String, Sensitive) The Schema Registry API Secret.
 - `subject_name` - (Required String) The name of the subject (in other words, the namespace), representing the subject under which the schema will be registered, for example, `test-subject`.
 
+-> **Note:** Omit the `rest_endpoint` attribute and the `credentials`, `schema_registry_cluster` blocks if the `schema_registry_id`, `schema_registry_rest_endpoint`, `schema_registry_api_key`, and `schema_registry_api_secret` attributes are all set in a `provider` block (see [option #2](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs#example-usage)).
+
+-> **Note:** A Schema Registry API key consists of a key and a secret. Schema Registry API keys are required to interact with Schema Registry clusters in Confluent Cloud. Each Schema Registry API key is valid for one specific Schema Registry cluster.
+
 ## Attributes Reference
 
 In addition to the preceding arguments, the following attributes are exported:

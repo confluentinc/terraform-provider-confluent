@@ -26,7 +26,7 @@ variable "kafka_rest_endpoint" {
   type        = string
 }
 
-variable "kafka_cluster_id" {
+variable "kafka_id" {
   description = "The ID the the Kafka cluster of the form 'lkc-'"
   type        = string
 }

@@ -34,17 +34,29 @@ provider "confluent" {
   cloud_api_secret = var.confluent_cloud_api_secret # optionally use CONFLUENT_CLOUD_API_SECRET env var
 }
 
-# Option #2 when managing a single cluster in the same Terraform workspace
-# See https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/managing-single-cluster for more details
+# Option #2: managing a single Kafka cluster in the same Terraform workspace
+# See https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/managing-single-kafka-cluster for more details
 provider "confluent" {
+  # Specifying Cloud API Keys is still necessary for now when managing confluent_kafka_acl
   cloud_api_key       = var.confluent_cloud_api_key    # optionally use CONFLUENT_CLOUD_API_KEY env var
   cloud_api_secret    = var.confluent_cloud_api_secret # optionally use CONFLUENT_CLOUD_API_SECRET env var
 
-  kafka_rest_endpoint = var.kafka_rest_endpoint        # optionally use KAFKA_REST_ENDPOINT env var 
+  kafka_id            = var.kafka_id                   # optionally use KAFKA_ID env var
+  kafka_rest_endpoint = var.kafka_rest_endpoint        # optionally use KAFKA_REST_ENDPOINT env var
   kafka_api_key       = var.kafka_api_key              # optionally use KAFKA_API_KEY env var
   kafka_api_secret    = var.kafka_api_secret           # optionally use KAFKA_API_SECRET env var
 }
-# Create the resources
+# Manage topics, ACLs, etc.
+
+# Option #2: managing a single Schema Registry cluster in the same Terraform workspace
+# See https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/managing-single-schema-registry-cluster for more details
+provider "confluent" {
+  schema_registry_id            = var.schema_registry_id            # optionally use SCHEMA_REGISTRY_ID env var
+  schema_registry_rest_endpoint = var.schema_registry_rest_endpoint # optionally use SCHEMA_REGISTRY_REST_ENDPOINT env var
+  schema_registry_api_key       = var.schema_registry_api_key       # optionally use SCHEMA_REGISTRY_API_KEY env var
+  schema_registry_api_secret    = var.schema_registry_api_secret    # optionally use SCHEMA_REGISTRY_API_SECRET env var
+}
+# Manage schemas, subjects, etc.
 ```
 
 ## Enable Confluent Cloud Access
@@ -64,13 +76,21 @@ Run the following commands to set the `CONFLUENT_CLOUD_API_KEY` and `CONFLUENT_C
 $ export CONFLUENT_CLOUD_API_KEY="<cloud_api_key>"
 $ export CONFLUENT_CLOUD_API_SECRET="<cloud_api_secret>"
 
-# Option #2 when managing a single cluster in the same Terraform workspace
-# See https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/managing-single-cluster for more details
+# Option #2: managing a single Kafka cluster in the same Terraform workspace
+# See https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/managing-single-kafka-cluster for more details
 $ export CONFLUENT_CLOUD_API_KEY="<cloud_api_key>"
 $ export CONFLUENT_CLOUD_API_SECRET="<cloud_api_secret>"
+$ export KAFKA_ID="<kafka_id>"
 $ export KAFKA_REST_ENDPOINT="<kafka_rest_endpoint>"
 $ export KAFKA_API_KEY="<kafka_api_key>"
 $ export KAFKA_API_SECRET="<kafka_api_secret>"
+
+# Option #2: managing a single Schema Registry cluster in the same Terraform workspace
+# See https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/managing-single-schema-registry-cluster for more details
+$ export SCHEMA_REGISTRY_ID="<schema_registry_id>"
+$ export SCHEMA_REGISTRY_REST_ENDPOINT="<schema_registry_rest_endpoint>"
+$ export SCHEMA_REGISTRY_API_KEY="<schema_registry_api_key>"
+$ export SCHEMA_REGISTRY_API_SECRET="<schema_registry_api_secret>"
 ```
 
 -> **Note:** Quotation marks are required around the API key and secret strings.
@@ -86,16 +106,29 @@ provider "confluent" {
   cloud_api_secret = var.confluent_cloud_api_secret # optionally use CONFLUENT_CLOUD_API_SECRET env var
 }
 
-# Option #2 when managing a single cluster in the same Terraform workspace
-# See https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/managing-single-cluster for more details
+# Option #2: managing a single Kafka cluster in the same Terraform workspace
+# See https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/managing-single-kafka-cluster for more details
 provider "confluent" {
+  # Specifying Cloud API Keys is still necessary for now when managing confluent_kafka_acl
   cloud_api_key       = var.confluent_cloud_api_key    # optionally use CONFLUENT_CLOUD_API_KEY env var
   cloud_api_secret    = var.confluent_cloud_api_secret # optionally use CONFLUENT_CLOUD_API_SECRET env var
 
-  kafka_rest_endpoint = var.kafka_rest_endpoint        # optionally use KAFKA_REST_ENDPOINT env var 
+  kafka_id            = var.kafka_id                   # optionally use KAFKA_ID env var
+  kafka_rest_endpoint = var.kafka_rest_endpoint        # optionally use KAFKA_REST_ENDPOINT env var
   kafka_api_key       = var.kafka_api_key              # optionally use KAFKA_API_KEY env var
   kafka_api_secret    = var.kafka_api_secret           # optionally use KAFKA_API_SECRET env var
 }
+# Manage topics, ACLs, etc.
+
+# Option #2: managing a single Schema Registry cluster in the same Terraform workspace
+# See https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/managing-single-schema-registry-cluster for more details
+provider "confluent" {
+  schema_registry_id            = var.schema_registry_id            # optionally use SCHEMA_REGISTRY_ID env var
+  schema_registry_rest_endpoint = var.schema_registry_rest_endpoint # optionally use SCHEMA_REGISTRY_REST_ENDPOINT env var
+  schema_registry_api_key       = var.schema_registry_api_key       # optionally use SCHEMA_REGISTRY_API_KEY env var
+  schema_registry_api_secret    = var.schema_registry_api_secret    # optionally use SCHEMA_REGISTRY_API_SECRET env var
+}
+# Manage schemas, subjects, etc.
 ```
 
 !> **Warning:** Hardcoding credentials into a Terraform configuration is not recommended. Hardcoded credentials increase the risk of accidentally publishing secrets to public repositories.
