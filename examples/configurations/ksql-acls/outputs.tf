@@ -1,7 +1,7 @@
 output "resource-ids" {
   value = <<-EOT
   Environment ID:                       ${confluent_environment.staging.id}
-  Kafka Cluster ID:                     ${confluent_kafka_cluster.basic.id}
+  Kafka Cluster ID:                     ${confluent_kafka_cluster.standard.id}
   ksqlDB Cluster ID:                    ${confluent_ksql_cluster.main.id}
   ksqlDB Cluster API Endpoint:          ${confluent_ksql_cluster.main.rest_endpoint}
   KSQL Service Account ID:              ${confluent_service_account.app-ksql.id}
