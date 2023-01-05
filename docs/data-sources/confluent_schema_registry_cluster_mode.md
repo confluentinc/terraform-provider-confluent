@@ -17,7 +17,14 @@ description: |-
 
 ## Example Usage
 
+### Option #1: Manage multiple Schema Registry clusters in the same Terraform workspace
+
 ```terraform
+provider "confluent" {
+  cloud_api_key    = var.confluent_cloud_api_key    # optionally use CONFLUENT_CLOUD_API_KEY env var
+  cloud_api_secret = var.confluent_cloud_api_secret # optionally use CONFLUENT_CLOUD_API_SECRET env var
+}
+
 data "confluent_schema_registry_cluster_mode" "example" {
   schema_registry_cluster {
     id = confluent_schema_registry_cluster.essentials.id
@@ -28,6 +35,23 @@ data "confluent_schema_registry_cluster_mode" "example" {
     secret = "<Schema Registry API Secret for confluent_schema_registry_cluster.essentials>"
   }
 }
+
+output "mode" {
+  value = data.confluent_schema_registry_cluster_mode.example.mode
+}
+```
+
+### Option #2: Manage a single Schema Registry cluster in the same Terraform workspace
+
+```terraform
+provider "confluent" {
+  schema_registry_id            = var.schema_registry_id            # optionally use SCHEMA_REGISTRY_ID env var
+  schema_registry_rest_endpoint = var.schema_registry_rest_endpoint # optionally use SCHEMA_REGISTRY_REST_ENDPOINT env var
+  schema_registry_api_key       = var.schema_registry_api_key       # optionally use SCHEMA_REGISTRY_API_KEY env var
+  schema_registry_api_secret    = var.schema_registry_api_secret    # optionally use SCHEMA_REGISTRY_API_SECRET env var
+}
+
+data "confluent_schema_registry_cluster_mode" "example" {}
 
 output "mode" {
   value = data.confluent_schema_registry_cluster_mode.example.mode
@@ -46,8 +70,6 @@ The following arguments are supported:
   - `key` - (Required String) The Schema Registry API Key.
   - `secret` - (Required String, Sensitive) The Schema Registry API Secret.
   
--> **Note:** Omit the `rest_endpoint` attribute and the `credentials`, `schema_registry_cluster` blocks if the `schema_registry_id`, `schema_registry_rest_endpoint`, `schema_registry_api_key`, and `schema_registry_api_secret` attributes are all set in a `provider` block (see [option #2](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs#example-usage)).
-
 -> **Note:** A Schema Registry API key consists of a key and a secret. Schema Registry API keys are required to interact with Schema Registry clusters in Confluent Cloud. Each Schema Registry API key is valid for one specific Schema Registry cluster.
 
 ## Attributes Reference

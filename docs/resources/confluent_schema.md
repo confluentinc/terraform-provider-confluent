@@ -19,29 +19,14 @@ description: |-
 
 ## Example Usage
 
-### Example Protocol Buffers (Protobuf) Schema Without References
-```terraform
-resource "confluent_schema" "proto-purchase-v1" {
-  schema_registry_cluster {
-    id = confluent_schema_registry_cluster.essentials.id
-  }
-  rest_endpoint = confluent_schema_registry_cluster.essentials.rest_endpoint
-  subject_name = "proto-purchase-value"
-  format = "PROTOBUF"
-  schema = file("./schemas/proto/purchase.proto")
-  credentials {
-    key    = "<Schema Registry API Key for confluent_schema_registry_cluster.essentials>"
-    secret = "<Schema Registry API Secret for confluent_schema_registry_cluster.essentials>"
-  }
+### Option #1: Manage multiple Schema Registry clusters in the same Terraform workspace
 
-  lifecycle {
-    prevent_destroy = true
-  }
+```terraform
+provider "confluent" {
+  cloud_api_key    = var.confluent_cloud_api_key    # optionally use CONFLUENT_CLOUD_API_KEY env var
+  cloud_api_secret = var.confluent_cloud_api_secret # optionally use CONFLUENT_CLOUD_API_SECRET env var
 }
-```
 
-### Example Avro Schema Without References
-```terraform
 resource "confluent_schema" "avro-purchase-v1" {
   schema_registry_cluster {
     id = confluent_schema_registry_cluster.essentials.id
@@ -61,135 +46,20 @@ resource "confluent_schema" "avro-purchase-v1" {
 }
 ```
 
-### Example Protocol Buffers (Protobuf) Schema With References
+### Option #2: Manage a single Schema Registry cluster in the same Terraform workspace
+
 ```terraform
-resource "confluent_schema" "proto-page-view-v1" {
-  schema_registry_cluster {
-    id = confluent_schema_registry_cluster.essentials.id
-  }
-  rest_endpoint = confluent_schema_registry_cluster.essentials.rest_endpoint
-  subject_name = "proto-page-view"
-  format = "PROTOBUF"
-  schema = file("./schemas/proto/page_view.proto")
-  credentials {
-    key    = "<Schema Registry API Key for confluent_schema_registry_cluster.essentials>"
-    secret = "<Schema Registry API Secret for confluent_schema_registry_cluster.essentials>"
-  }
-
-  lifecycle {
-    prevent_destroy = true
-  }
-}
-
-resource "confluent_schema" "proto-purchase-v1" {
-  schema_registry_cluster {
-    id = confluent_schema_registry_cluster.essentials.id
-  }
-  rest_endpoint = confluent_schema_registry_cluster.essentials.rest_endpoint
-  subject_name = "proto-purchase"
-  format = "PROTOBUF"
-  schema = file("./schemas/proto/purchase.proto")
-  credentials {
-    key    = "<Schema Registry API Key for confluent_schema_registry_cluster.essentials>"
-    secret = "<Schema Registry API Secret for confluent_schema_registry_cluster.essentials>"
-  }
-
-  lifecycle {
-    prevent_destroy = true
-  }
-}
-
-resource "confluent_schema" "proto-customer-event-v1" {
-  schema_registry_cluster {
-    id = confluent_schema_registry_cluster.essentials.id
-  }
-  rest_endpoint = confluent_schema_registry_cluster.essentials.rest_endpoint
-  subject_name = "proto-customer-event-value"
-  format = "PROTOBUF"
-  schema = file("./schemas/proto/customer_event.proto")
-
-  schema_reference {
-    name         = "purchase.proto"
-    subject_name = confluent_schema.proto-purchase-v1.subject_name
-    version      = confluent_schema.proto-purchase-v1.version
-  }
-  schema_reference {
-    name         = "page_view.proto"
-    subject_name = confluent_schema.proto-page-view-v1.subject_name
-    version      = confluent_schema.proto-page-view-v1.version
-  }
-  credentials {
-    key    = "<Schema Registry API Key for confluent_schema_registry_cluster.essentials>"
-    secret = "<Schema Registry API Secret for confluent_schema_registry_cluster.essentials>"
-  }
-
-  lifecycle {
-    prevent_destroy = true
-  }
-}
-```
-
-### Example Avro Schema With References
-```terraform
-resource "confluent_schema" "avro-page-view-v1" {
-  schema_registry_cluster {
-    id = confluent_schema_registry_cluster.essentials.id
-  }
-  rest_endpoint = confluent_schema_registry_cluster.essentials.rest_endpoint
-  subject_name = "avro-page-view"
-  format = "AVRO"
-  schema = file("./schemas/avro/page_view.avsc")
-  credentials {
-    key    = "<Schema Registry API Key for confluent_schema_registry_cluster.essentials>"
-    secret = "<Schema Registry API Secret for confluent_schema_registry_cluster.essentials>"
-  }
-
-  lifecycle {
-    prevent_destroy = true
-  }
+provider "confluent" {
+  schema_registry_id            = var.schema_registry_id            # optionally use SCHEMA_REGISTRY_ID env var
+  schema_registry_rest_endpoint = var.schema_registry_rest_endpoint # optionally use SCHEMA_REGISTRY_REST_ENDPOINT env var
+  schema_registry_api_key       = var.schema_registry_api_key       # optionally use SCHEMA_REGISTRY_API_KEY env var
+  schema_registry_api_secret    = var.schema_registry_api_secret    # optionally use SCHEMA_REGISTRY_API_SECRET env var
 }
 
 resource "confluent_schema" "avro-purchase-v1" {
-  schema_registry_cluster {
-    id = confluent_schema_registry_cluster.essentials.id
-  }
-  rest_endpoint = confluent_schema_registry_cluster.essentials.rest_endpoint
-  subject_name = "avro-purchase"
+  subject_name = "avro-purchase-value"
   format = "AVRO"
   schema = file("./schemas/avro/purchase.avsc")
-  credentials {
-    key    = "<Schema Registry API Key for confluent_schema_registry_cluster.essentials>"
-    secret = "<Schema Registry API Secret for confluent_schema_registry_cluster.essentials>"
-  }
-
-  lifecycle {
-    prevent_destroy = true
-  }
-}
-
-resource "confluent_schema" "avro-customer-event-v1" {
-  schema_registry_cluster {
-    id = confluent_schema_registry_cluster.essentials.id
-  }
-  rest_endpoint = confluent_schema_registry_cluster.essentials.rest_endpoint
-  subject_name = "avro-customer-event-value"
-  format = "AVRO"
-  schema = file("./schemas/avro/customer_event.avsc")
-
-  schema_reference {
-    name         = "Purchase"
-    subject_name = confluent_schema.avro-purchase-v1.subject_name
-    version      = confluent_schema.avro-purchase-v1.version
-  }
-  schema_reference {
-    name         = "PageView"
-    subject_name = confluent_schema.avro-page-view-v1.subject_name
-    version      = confluent_schema.avro-page-view-v1.version
-  }
-  credentials {
-    key    = "<Schema Registry API Key for confluent_schema_registry_cluster.essentials>"
-    secret = "<Schema Registry API Secret for confluent_schema_registry_cluster.essentials>"
-  }
 
   lifecycle {
     prevent_destroy = true
@@ -202,18 +72,18 @@ resource "confluent_schema" "avro-customer-event-v1" {
 
 The following arguments are supported:
 
-- `schema_registry_cluster` - (Required Configuration Block) supports the following:
+- `schema_registry_cluster` - (Optional Configuration Block) supports the following:
     - `id` - (Required String) The ID of the Schema Registry cluster, for example, `lsrc-abc123`.
 - `rest_endpoint` - (Optional String) The REST endpoint of the Schema Registry cluster, for example, `https://psrc-00000.us-central1.gcp.confluent.cloud:443`).
 - `credentials` (Optional Configuration Block) supports the following:
     - `key` - (Required String) The Schema Registry API Key.
     - `secret` - (Required String, Sensitive) The Schema Registry API Secret.
 
--> **Note:** Omit the `rest_endpoint` attribute and the `credentials`, `schema_registry_cluster` blocks if the `schema_registry_id`, `schema_registry_rest_endpoint`, `schema_registry_api_key`, and `schema_registry_api_secret` attributes are all set in a `provider` block (see [option #2](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs#example-usage)).
-
 -> **Note:** A Schema Registry API key consists of a key and a secret. Schema Registry API keys are required to interact with Kafka clusters in Confluent Cloud. Each Schema Registry API key is valid for one specific Kafka cluster.
 
--> **Note:** To rotate a Schema Registry API key, create a new Kafka API key, update `credentials` block in all configuration files to use the new Kafka API key, run `terraform apply -target="confluent_schema.orders"`, and remove the old Schema Registry API key. Alternatively, in case the old Schema Registry API Key was deleted already, you might need to run `terraform plan -refresh=false -target="confluent_schema.orders" -out=rotate-schema-registry-api-key` and `terraform apply rotate-schema-registry-api-key` instead.
+-> **Note:** Use Option #2 to simplify the key rotation process. When using Option #1, to rotate a Schema Registry API key, create a new Kafka API key, update the `credentials` block in all configuration files to use the new Kafka API key, run `terraform apply -target="confluent_schema.orders"`, and remove the old Schema Registry API key. Alternatively, in case the old Schema Registry API Key was deleted already, you might need to run `terraform plan -refresh=false -target="confluent_schema.orders" -out=rotate-schema-registry-api-key` and `terraform apply rotate-schema-registry-api-key` instead.
+
+!> **Warning:** Use Option #2 to avoid exposing sensitive `credentials` value in a state file. When using Option #1, Terraform doesn't encrypt the sensitive `credentials` value of the `confluent_schema` resource, so you must keep your state file secure to avoid exposing it. Refer to the [Terraform documentation](https://www.terraform.io/docs/language/state/sensitive-data.html) to learn more about securing your state file.
 
 - `subject_name` - (Required String) The name of the subject (in other words, the namespace), representing the subject under which the schema will be registered, for example, `test-subject`. Schemas evolve safely, following a compatibility mode defined, under a subject name.
 - `format` - (Required String) The format of the schema. Accepted values are: `AVRO`, `PROTOBUF`, and `JSON`.
@@ -222,8 +92,6 @@ The following arguments are supported:
     - `name` - (Required String) The name of the subject, representing the subject under which the referenced schema is registered.
     - `subject_name` - (Required String) The name for the reference. (For Avro Schema, the reference name is the fully qualified schema name, for JSON Schema it is a URL, and for Protobuf Schema, it is the name of another Protobuf file.)
     - `version` - (Required Integer) The version, representing the exact version of the schema under the registered subject.
-
-!> **Warning:** Terraform doesn't encrypt the sensitive `credentials` value of the `confluent_schema` resource, so you must keep your state file secure to avoid exposing it. Refer to the [Terraform documentation](https://www.terraform.io/docs/language/state/sensitive-data.html) to learn more about securing your state file.
 
 ## Attributes Reference
 
@@ -234,8 +102,6 @@ In addition to the preceding arguments, the following attributes are exported:
 - `version` - (Required Integer) The version of the Schema, for example, `4`.
 
 ## Import
-
--> **Note:** `IMPORT_SCHEMA_REGISTRY_API_KEY` (`credentials.key`), `IMPORT_SCHEMA_REGISTRY_API_SECRET` (`credentials.secret`), and `IMPORT_SCHEMA_REGISTRY_REST_ENDPOINT` (`rest_endpoint`) environment variables must be set before importing a Schema.
 
 You can import a Schema by using the Schema Registry cluster ID, Subject name, and unique identifier of the Schema in the format `<Schema Registry cluster ID>/<Subject name>/<Schema identifier>`, for example:
 

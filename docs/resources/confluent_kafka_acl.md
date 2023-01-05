@@ -14,29 +14,12 @@ description: |-
 
 ## Example Usage
 
+### Option #1: Manage multiple Kafka clusters in the same Terraform workspace
+
 ```terraform
-resource "confluent_environment" "development" {
-  display_name = "Development"
-
-  lifecycle {
-    prevent_destroy = true
-  }
-}
-
-resource "confluent_kafka_cluster" "basic-cluster" {
-  display_name = "basic_kafka_cluster"
-  availability = "SINGLE_ZONE"
-  cloud        = "GCP"
-  region       = "us-central1"
-  basic {}
-
-  environment {
-    id = confluent_environment.development.id
-  }
-
-  lifecycle {
-    prevent_destroy = true
-  }
+provider "confluent" {
+  cloud_api_key    = var.confluent_cloud_api_key    # optionally use CONFLUENT_CLOUD_API_KEY env var
+  cloud_api_secret = var.confluent_cloud_api_secret # optionally use CONFLUENT_CLOUD_API_SECRET env var
 }
 
 resource "confluent_kafka_acl" "describe-basic-cluster" {
@@ -55,6 +38,39 @@ resource "confluent_kafka_acl" "describe-basic-cluster" {
     key    = confluent_api_key.app-manager-kafka-api-key.id
     secret = confluent_api_key.app-manager-kafka-api-key.secret
   }
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+```
+
+### Option #2: Manage a single Kafka cluster in the same Terraform workspace
+
+```terraform
+provider "confluent" {
+  # Specifying Cloud API Keys is still necessary for now when managing confluent_kafka_acl
+  cloud_api_key       = var.confluent_cloud_api_key    # optionally use CONFLUENT_CLOUD_API_KEY env var
+  cloud_api_secret    = var.confluent_cloud_api_secret # optionally use CONFLUENT_CLOUD_API_SECRET env var
+
+  kafka_id            = var.kafka_id                   # optionally use KAFKA_ID env var
+  kafka_rest_endpoint = var.kafka_rest_endpoint        # optionally use KAFKA_REST_ENDPOINT env var
+  kafka_api_key       = var.kafka_api_key              # optionally use KAFKA_API_KEY env var
+  kafka_api_secret    = var.kafka_api_secret           # optionally use KAFKA_API_SECRET env var
+}
+
+resource "confluent_kafka_acl" "describe-basic-cluster" {
+  resource_type = "CLUSTER"
+  resource_name = "kafka-cluster"
+  pattern_type  = "LITERAL"
+  principal     = "User:sa-xyz123"
+  host          = "*"
+  operation     = "DESCRIBE"
+  permission    = "ALLOW"
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 ```
 
@@ -63,7 +79,7 @@ resource "confluent_kafka_acl" "describe-basic-cluster" {
 
 The following arguments are supported:
 
-- `kafka_cluster` - (Required Configuration Block) supports the following:
+- `kafka_cluster` - (Optional Configuration Block) supports the following:
   - `id` - (Required String) The ID of the Kafka cluster, for example, `lkc-abc123`.
 - `resource_type` - (Required String) The type of the resource. Accepted values are: `UNKNOWN`, `ANY`, `TOPIC`, `GROUP`, `CLUSTER`, `TRANSACTIONAL_ID`, `DELEGATION_TOKEN`. See [Authorization using ACLs](https://docs.confluent.io/platform/current/kafka/authorization.html#operations) to find definitions of resource types and mappings of `(resource_type, operation)` to one or more Kafka APIs or request types.
 - `resource_name` - (Required String) The resource name for the ACL. Must be `kafka-cluster` if `resource_type` equals to `CLUSTER`.
@@ -77,15 +93,13 @@ The following arguments are supported:
     - `secret` - (Required String, Sensitive) The Kafka API Secret.
 - `host` - (Required String) The host for the ACL. Should be set to `*` for Confluent Cloud.
 
--> **Note:** Omit the `rest_endpoint` attribute and the `credentials`, `kafka_cluster` blocks if the `kafka_id`, `kafka_rest_endpoint`, `kafka_api_key`, and `kafka_api_secret` attributes are all set in a `provider` block (see [option #2](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs#example-usage)).
-
 -> **Note:** A Kafka API key consists of a key and a secret. Kafka API keys are required to interact with Kafka clusters in Confluent Cloud. Each Kafka API key is valid for one specific Kafka cluster.
 
 -> **Note:** You must set the `cloud_api_key` and `cloud_api_secret` [provider arguments](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs#provider-authentication) temporarily when you interact with the `confluent_kafka_acl` resource, because of some implementation details, otherwise you will see `Error: 401 Unauthorized` error.
 
-!> **Warning:** Terraform doesn't encrypt the sensitive `credentials` value of the `confluent_kafka_acl` resource, so you must keep your state file secure to avoid exposing it. Refer to the [Terraform documentation](https://www.terraform.io/docs/language/state/sensitive-data.html) to learn more about securing your state file.
+-> **Note:** Use Option #2 to simplify the key rotation process. When using Option #1, to rotate a Kafka API key, create a new Kafka API key, update the `credentials` block in all configuration files to use the new Kafka API key, run `terraform apply -target="confluent_kafka_acl.describe-basic-cluster"`, and remove the old Kafka API key. Alternatively, in case the old Kafka API Key was deleted already, you might need to run `terraform plan -refresh=false -target="confluent_kafka_acl.describe-basic-cluster" -out=rotate-kafka-api-key` and `terraform apply rotate-kafka-api-key` instead.
 
--> **Note:** To rotate a Kafka API key, create a new Kafka API key, update `credentials` block in all configuration files to use the new Kafka API key, run `terraform apply -target="confluent_kafka_acl.describe-basic-cluster"`, and remove the old Kafka API key. Alternatively, in case the old Kafka API Key was deleted already, you might need to run `terraform plan -refresh=false -target="confluent_kafka_acl.describe-basic-cluster" -out=rotate-kafka-api-key` and `terraform apply rotate-kafka-api-key` instead.
+!> **Warning:** Use Option #2 to avoid exposing sensitive `credentials` value in a state file. When using Option #1, Terraform doesn't encrypt the sensitive `credentials` value of the `confluent_kafka_acl` resource, so you must keep your state file secure to avoid exposing it. Refer to the [Terraform documentation](https://www.terraform.io/docs/language/state/sensitive-data.html) to learn more about securing your state file.
 
 ## Attributes Reference
 
@@ -95,16 +109,20 @@ In addition to the preceding arguments, the following attributes are exported:
 
 ## Import
 
--> **Note:** `CONFLUENT_CLOUD_API_KEY`, `CONFLUENT_CLOUD_API_SECRET`, `IMPORT_KAFKA_API_KEY` (`credentials.key`), `IMPORT_KAFKA_API_SECRET` (`credentials.secret`), and `IMPORT_KAFKA_REST_ENDPOINT` (`rest_endpoint`) environment variables must be set before importing Kafka ACLs.
-
 You can import Kafka ACLs by using the Kafka cluster ID and attributes of `confluent_kafka_acl` resource in the format `<Kafka cluster ID>/<Kafka ACL resource type>#<Kafka ACL resource name>#<Kafka ACL pattern type>#<Kafka ACL principal>#<Kafka ACL host>#<Kafka ACL operation>#<Kafka ACL permission>`, for example:
 
 ```shell
+# Option #1: Manage multiple Kafka clusters in the same Terraform workspace
 $ export CONFLUENT_CLOUD_API_KEY="<cloud_api_key>"
 $ export CONFLUENT_CLOUD_API_SECRET="<cloud_api_secret>"
 $ export IMPORT_KAFKA_API_KEY="<kafka_api_key>"
 $ export IMPORT_KAFKA_API_SECRET="<kafka_api_secret>"
 $ export IMPORT_KAFKA_REST_ENDPOINT="<kafka_rest_endpoint>"
+$ terraform import confluent_kafka_acl.describe-cluster "lkc-12345/CLUSTER#kafka-cluster#LITERAL#User:sa-xyz123#*#DESCRIBE#ALLOW"
+
+# Option #2: Manage a single Kafka cluster in the same Terraform workspace
+$ export CONFLUENT_CLOUD_API_KEY="<cloud_api_key>"
+$ export CONFLUENT_CLOUD_API_SECRET="<cloud_api_secret>"
 $ terraform import confluent_kafka_acl.describe-cluster "lkc-12345/CLUSTER#kafka-cluster#LITERAL#User:sa-xyz123#*#DESCRIBE#ALLOW"
 ```
 

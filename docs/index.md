@@ -28,13 +28,13 @@ terraform {
   }
 }
 
-# Option #1 when managing multiple clusters in the same Terraform workspace
+# Option #1: Manage multiple clusters in the same Terraform workspace
 provider "confluent" {
   cloud_api_key    = var.confluent_cloud_api_key    # optionally use CONFLUENT_CLOUD_API_KEY env var
   cloud_api_secret = var.confluent_cloud_api_secret # optionally use CONFLUENT_CLOUD_API_SECRET env var
 }
 
-# Option #2: managing a single Kafka cluster in the same Terraform workspace
+# Option #2: Manage a single Kafka cluster in the same Terraform workspace
 # See https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/managing-single-kafka-cluster for more details
 provider "confluent" {
   # Specifying Cloud API Keys is still necessary for now when managing confluent_kafka_acl
@@ -48,7 +48,7 @@ provider "confluent" {
 }
 # Manage topics, ACLs, etc.
 
-# Option #2: managing a single Schema Registry cluster in the same Terraform workspace
+# Option #2: Manage a single Schema Registry cluster in the same Terraform workspace
 # See https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/managing-single-schema-registry-cluster for more details
 provider "confluent" {
   schema_registry_id            = var.schema_registry_id            # optionally use SCHEMA_REGISTRY_ID env var
@@ -72,11 +72,11 @@ Confluent Terraform provider allows authentication by using environment variable
 Run the following commands to set the `CONFLUENT_CLOUD_API_KEY` and `CONFLUENT_CLOUD_API_SECRET` environment variables:
 
 ```shell
-# Option #1 when managing multiple clusters in the same Terraform workspace
+# Option #1: Manage multiple clusters in the same Terraform workspace
 $ export CONFLUENT_CLOUD_API_KEY="<cloud_api_key>"
 $ export CONFLUENT_CLOUD_API_SECRET="<cloud_api_secret>"
 
-# Option #2: managing a single Kafka cluster in the same Terraform workspace
+# Option #2: Manage a single Kafka cluster in the same Terraform workspace
 # See https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/managing-single-kafka-cluster for more details
 $ export CONFLUENT_CLOUD_API_KEY="<cloud_api_key>"
 $ export CONFLUENT_CLOUD_API_SECRET="<cloud_api_secret>"
@@ -85,7 +85,7 @@ $ export KAFKA_REST_ENDPOINT="<kafka_rest_endpoint>"
 $ export KAFKA_API_KEY="<kafka_api_key>"
 $ export KAFKA_API_SECRET="<kafka_api_secret>"
 
-# Option #2: managing a single Schema Registry cluster in the same Terraform workspace
+# Option #2: Manage a single Schema Registry cluster in the same Terraform workspace
 # See https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/managing-single-schema-registry-cluster for more details
 $ export SCHEMA_REGISTRY_ID="<schema_registry_id>"
 $ export SCHEMA_REGISTRY_REST_ENDPOINT="<schema_registry_rest_endpoint>"
@@ -100,13 +100,13 @@ $ export SCHEMA_REGISTRY_API_SECRET="<schema_registry_api_secret>"
 You can also provide static credentials in-line directly, or by input variable (do not forget to declare the variables as [sensitive](https://learn.hashicorp.com/tutorials/terraform/sensitive-variables#refactor-database-credentials)):
 
 ```terraform
-# Option #1 when managing multiple clusters in the same Terraform workspace
+# Option #1: Manage multiple clusters in the same Terraform workspace
 provider "confluent" {
   cloud_api_key    = var.confluent_cloud_api_key    # optionally use CONFLUENT_CLOUD_API_KEY env var
   cloud_api_secret = var.confluent_cloud_api_secret # optionally use CONFLUENT_CLOUD_API_SECRET env var
 }
 
-# Option #2: managing a single Kafka cluster in the same Terraform workspace
+# Option #2: Manage a single Kafka cluster in the same Terraform workspace
 # See https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/managing-single-kafka-cluster for more details
 provider "confluent" {
   # Specifying Cloud API Keys is still necessary for now when managing confluent_kafka_acl
@@ -120,7 +120,7 @@ provider "confluent" {
 }
 # Manage topics, ACLs, etc.
 
-# Option #2: managing a single Schema Registry cluster in the same Terraform workspace
+# Option #2: Manage a single Schema Registry cluster in the same Terraform workspace
 # See https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/managing-single-schema-registry-cluster for more details
 provider "confluent" {
   schema_registry_id            = var.schema_registry_id            # optionally use SCHEMA_REGISTRY_ID env var
