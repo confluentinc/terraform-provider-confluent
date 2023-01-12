@@ -220,7 +220,7 @@ resource "confluent_kafka_acl" "app-consumer-read-on-group" {
 
 resource "confluent_service_account" "app-connector" {
   display_name = "app-connector"
-  description  = "Service account of S3 Sink Connector to consume from 'orders' topic of 'inventory' Kafka cluster"
+  description  = "Service account of dynamodb Sink Connector to consume from 'orders' topic of 'inventory' Kafka cluster"
 }
 
 
@@ -386,7 +386,7 @@ resource "confluent_kafka_acl" "app-connector-read-on-connect-lcc-group" {
   }
 }
 
-resource "confluent_connector" "sink" {
+resource "confluent_connector" "dynamo-db-sink" {
   environment {
     id = confluent_environment.staging.id
   }
@@ -395,25 +395,23 @@ resource "confluent_connector" "sink" {
   }
 
   // Block for custom *sensitive* configuration properties that are labelled with "Type: password" under "Configuration Properties" section in the docs:
-  // https://docs.confluent.io/cloud/current/connectors/cc-s3-sink.html#configuration-properties
+  // https://docs.confluent.io/cloud/current/connectors/cc-amazon-dynamo-db-sink.html#configuration-properties
   config_sensitive = {
     "aws.access.key.id"     = "***REDACTED***"
     "aws.secret.access.key" = "***REDACTED***"
   }
 
   // Block for custom *nonsensitive* configuration properties that are *not* labelled with "Type: password" under "Configuration Properties" section in the docs:
-  // https://docs.confluent.io/cloud/current/connectors/cc-s3-sink.html#configuration-properties
+  // https://docs.confluent.io/cloud/current/connectors/cc-amazon-dynamo-db-sink.html#configuration-properties
   config_nonsensitive = {
     "topics"                   = confluent_kafka_topic.orders.topic_name
     "input.data.format"        = "JSON"
-    "connector.class"          = "S3_SINK"
-    "name"                     = "S3_SINKConnector_0"
+    "connector.class"          = "DynamoDbSink"
+    "name"                     = "DynamoDbSinkConnector_0"
     "kafka.auth.mode"          = "SERVICE_ACCOUNT"
     "kafka.service.account.id" = confluent_service_account.app-connector.id
-    "s3.bucket.name"           = "<s3-bucket-name>"
-    "output.data.format"       = "JSON"
-    "time.interval"            = "DAILY"
-    "flush.size"               = "1000"
+    "aws.dynamodb.pk.hash"     = "value.userid",
+    "aws.dynamodb.pk.sort"     = "value.pageid",
     "tasks.max"                = "1"
   }
 
