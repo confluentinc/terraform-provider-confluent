@@ -81,9 +81,8 @@ func transitGatewayAttachmentCreate(ctx context.Context, d *schema.ResourceData,
 	if isAwsTransitGatewayAttachment {
 		ramResourceShareArn := d.Get(paramAwsRamResourceShareArn).(string)
 		transitGatewayId := d.Get(paramAwsTransitGatewayId).(string)
-		awsTransitGatewayAttachment := net.NewNetworkingV1AwsTransitGatewayAttachment(awsTransitGatewayAttachmentKind, ramResourceShareArn, transitGatewayId)
 		routes := convertToStringSlice(d.Get(paramAwsRoutes).([]interface{}))
-		awsTransitGatewayAttachment.SetRoutes(routes)
+		awsTransitGatewayAttachment := net.NewNetworkingV1AwsTransitGatewayAttachment(awsTransitGatewayAttachmentKind, ramResourceShareArn, transitGatewayId, routes)
 		spec.SetCloud(net.NetworkingV1TransitGatewayAttachmentSpecCloudOneOf{NetworkingV1AwsTransitGatewayAttachment: awsTransitGatewayAttachment})
 	} else {
 		return diag.Errorf("None of %q blocks was provided for confluent_transit_gateway_attachment resource", paramAws)
