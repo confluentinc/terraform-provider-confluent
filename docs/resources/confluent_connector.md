@@ -195,5 +195,6 @@ The following end-to-end examples might help to get started with `confluent_conn
 * [`source-connector`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/source-connector)
 * [`s3-sink-connector`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/s3-sink-connector)
 * [`dynamo-db-sink-connector`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/dynamo-db-sink-connector)
+* [`elasticsearch-sink-connector`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/elasticsearch-sink-connector)
 
 -> **Note:** Certain connectors require additional ACL entries. See [Additional ACL entries](https://docs.confluent.io/cloud/current/connectors/service-account.html#additional-acl-entries) for more details.
