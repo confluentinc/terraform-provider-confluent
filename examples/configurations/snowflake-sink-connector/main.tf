@@ -409,7 +409,7 @@ resource "confluent_connector" "snowflake-sink" {
     "name"                     = "SnowflakeSinkConnector_0"
     "kafka.auth.mode"          = "SERVICE_ACCOUNT"
     "kafka.service.account.id" = confluent_service_account.app-connector.id
-    "snowflake.url.name"       = "https://ay23123.us-east-2.aws.snowflakecomputing.com"
+    "snowflake.url.name"       = "https://myorg-account123.us-east-2.aws.snowflakecomputing.com"
     "snowflake.user.name"      = "confluent"
     "snowflake.database.name"  = "orders"
     "snowflake.schema.name"    = "core"
