@@ -15,6 +15,9 @@
       "PRIVATELINK"
     ],
     "display_name": "s-n9553",
+    "dns_config": {
+      "resolution": "CHASED_PRIVATE"
+    },
     "environment": {
       "api_version": "org/v2",
       "id": "env-gz903",

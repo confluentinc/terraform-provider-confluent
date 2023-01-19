@@ -65,7 +65,8 @@ func networkDataSource() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			paramZones: zonesDataSourceSchema(),
+			paramZones:     zonesDataSourceSchema(),
+			paramDnsConfig: optionalDnsConfigDataSourceSchema(),
 			paramResourceName: {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -213,5 +214,23 @@ func zonesDataSourceSchema() *schema.Schema {
 		Type:     schema.TypeList,
 		Computed: true,
 		Elem:     &schema.Schema{Type: schema.TypeString},
+	}
+}
+
+func optionalDnsConfigDataSourceSchema() *schema.Schema {
+	return &schema.Schema{
+		Type:        schema.TypeList,
+		Optional:    true,
+		Computed:    true,
+		Description: "Network DNS config. It applies only to the PRIVATELINK network connection type.",
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramResolution: {
+					Type:        schema.TypeString,
+					Computed:    true,
+					Description: "Network DNS resolution.",
+				},
+			},
+		},
 	}
 }

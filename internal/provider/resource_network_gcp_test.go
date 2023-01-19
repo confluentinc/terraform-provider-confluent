@@ -157,6 +157,8 @@ func TestAccGcpNetwork(t *testing.T) {
 					resource.TestCheckResourceAttr(fullGcpNetworkResourceLabel, fmt.Sprintf("%s.0", paramZones), firstZoneGcpNetwork),
 					resource.TestCheckResourceAttr(fullGcpNetworkResourceLabel, fmt.Sprintf("%s.1", paramZones), secondZoneGcpNetwork),
 					resource.TestCheckResourceAttr(fullGcpNetworkResourceLabel, fmt.Sprintf("%s.2", paramZones), thirdZoneGcpNetwork),
+					resource.TestCheckResourceAttr(fullGcpNetworkResourceLabel, fmt.Sprintf("%s.#", paramDnsConfig), "1"),
+					resource.TestCheckResourceAttr(fullGcpNetworkResourceLabel, fmt.Sprintf("%s.0.%s", paramDnsConfig, paramResolution), ""),
 					resource.TestCheckResourceAttr(fullGcpNetworkResourceLabel, paramResourceName, gcpNetworkResourceName),
 					resource.TestCheckResourceAttr(fullGcpNetworkResourceLabel, paramDnsDomain, gcpDnsDomain),
 					resource.TestCheckResourceAttr(fullGcpNetworkResourceLabel, "zonal_subdomains.%", "3"),

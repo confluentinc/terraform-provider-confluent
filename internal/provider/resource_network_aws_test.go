@@ -36,6 +36,7 @@ const (
 	awsNetworkRegion                      = "us-east-2"
 	awsNetworkConnectionType              = "PRIVATELINK"
 	awsNetworkEnvironmentId               = "env-gz903"
+	awsNetworkDefaultDnsResolution        = "CHASED_PRIVATE"
 	awsNetworkId                          = "n-pr1jy6"
 	awsDnsDomain                          = "pr1jy6.us-east-2.aws.confluent.cloud"
 	awsNetworkVpc                         = "vpc-03e78ba4db7bb1789"
@@ -156,6 +157,8 @@ func TestAccAwsNetwork(t *testing.T) {
 					resource.TestCheckResourceAttr(fullAwsNetworkResourceLabel, fmt.Sprintf("%s.0", paramZones), awsNetworkZones[0]),
 					resource.TestCheckResourceAttr(fullAwsNetworkResourceLabel, fmt.Sprintf("%s.1", paramZones), awsNetworkZones[1]),
 					resource.TestCheckResourceAttr(fullAwsNetworkResourceLabel, fmt.Sprintf("%s.2", paramZones), awsNetworkZones[2]),
+					resource.TestCheckResourceAttr(fullAwsNetworkResourceLabel, fmt.Sprintf("%s.#", paramDnsConfig), "1"),
+					resource.TestCheckResourceAttr(fullAwsNetworkResourceLabel, fmt.Sprintf("%s.0.%s", paramDnsConfig, paramResolution), awsNetworkDefaultDnsResolution),
 					resource.TestCheckResourceAttr(fullAwsNetworkResourceLabel, paramResourceName, awsNetworkResourceName),
 					resource.TestCheckResourceAttr(fullAwsNetworkResourceLabel, paramDnsDomain, awsDnsDomain),
 					resource.TestCheckResourceAttr(fullAwsNetworkResourceLabel, "zonal_subdomains.%", "3"),
@@ -168,7 +171,7 @@ func TestAccAwsNetwork(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckAwsNetworkConfigWithoutDisplayNameAndZonesSet(mockServerUrl, awsNetworkResourceLabel),
+				Config: testAccCheckAwsNetworkConfigWithoutDisplayNameAndZonesAndDnsConfigSet(mockServerUrl, awsNetworkResourceLabel),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckAwsNetworkExists(fullAwsNetworkResourceLabel),
 					resource.TestCheckResourceAttr(fullAwsNetworkResourceLabel, paramId, awsNetworkId),
@@ -183,6 +186,8 @@ func TestAccAwsNetwork(t *testing.T) {
 					resource.TestCheckResourceAttr(fullAwsNetworkResourceLabel, fmt.Sprintf("%s.0", paramZones), awsNetworkZones[0]),
 					resource.TestCheckResourceAttr(fullAwsNetworkResourceLabel, fmt.Sprintf("%s.1", paramZones), awsNetworkZones[1]),
 					resource.TestCheckResourceAttr(fullAwsNetworkResourceLabel, fmt.Sprintf("%s.2", paramZones), awsNetworkZones[2]),
+					resource.TestCheckResourceAttr(fullAwsNetworkResourceLabel, fmt.Sprintf("%s.#", paramDnsConfig), "1"),
+					resource.TestCheckResourceAttr(fullAwsNetworkResourceLabel, fmt.Sprintf("%s.0.%s", paramDnsConfig, paramResolution), awsNetworkDefaultDnsResolution),
 					resource.TestCheckResourceAttr(fullAwsNetworkResourceLabel, paramResourceName, awsNetworkResourceName),
 					resource.TestCheckResourceAttr(fullAwsNetworkResourceLabel, paramDnsDomain, awsDnsDomain),
 					resource.TestCheckResourceAttr(fullAwsNetworkResourceLabel, "zonal_subdomains.%", "3"),
@@ -249,12 +254,15 @@ func testAccCheckAwsNetworkConfig(mockServerUrl, networkDisplayName, resourceLab
 	    environment {
 		  id = "%s"
 	    }
+        dns_config {
+		  resolution = "%s"
+	    }
 	}
 	`, mockServerUrl, resourceLabel, networkDisplayName, awsNetworkCloud, awsNetworkRegion, awsNetworkZones[0],
-		awsNetworkZones[1], awsNetworkZones[2], awsNetworkConnectionType, awsNetworkEnvironmentId)
+		awsNetworkZones[1], awsNetworkZones[2], awsNetworkConnectionType, awsNetworkEnvironmentId, awsNetworkDefaultDnsResolution)
 }
 
-func testAccCheckAwsNetworkConfigWithoutDisplayNameAndZonesSet(mockServerUrl, resourceLabel string) string {
+func testAccCheckAwsNetworkConfigWithoutDisplayNameAndZonesAndDnsConfigSet(mockServerUrl, resourceLabel string) string {
 	return fmt.Sprintf(`
 	provider "confluent" {
  		endpoint = "%s"
