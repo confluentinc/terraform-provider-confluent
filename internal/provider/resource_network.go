@@ -494,10 +494,10 @@ func validateCidr(cidr, cloud string, connectionTypes []string) error {
 
 // zones can only be specified for AWS networks used with PrivateLink or TransitGateway or for GCP networks used with Private Service Connect
 func validateZones(zones []string, cloud string, connectionTypes []string) error {
-	isAwsPrivateLinkOrAwsTransitGateway := (cloud == strings.ToUpper(paramAws)) && (stringInSlice(connectionTypePrivateLink, connectionTypes, false) || stringInSlice(connectionTypeTransitGateway, connectionTypes, false))
-	gcpPrivateServiceConnect := (cloud == strings.ToUpper(paramGcp)) && stringInSlice(connectionTypePrivateLink, connectionTypes, false)
-	if len(zones) > 0 && !(isAwsPrivateLinkOrAwsTransitGateway || gcpPrivateServiceConnect) {
-		return fmt.Errorf("zones can only be specified for AWS networks used with PrivateLink or TransitGateway or for GCP networks used with Private Service Connect")
+	isAwsPrivateLinkOrAwsTransitGatewayOrAwsPeering := (cloud == strings.ToUpper(paramAws)) && (stringInSlice(connectionTypePrivateLink, connectionTypes, false) || stringInSlice(connectionTypeTransitGateway, connectionTypes, false) || stringInSlice(connectionTypePeering, connectionTypes, false))
+	gcpPrivateServiceConnectOrGcpPeering := (cloud == strings.ToUpper(paramGcp)) && (stringInSlice(connectionTypePrivateLink, connectionTypes, false) || stringInSlice(connectionTypePeering, connectionTypes, false))
+	if len(zones) > 0 && !(isAwsPrivateLinkOrAwsTransitGatewayOrAwsPeering || gcpPrivateServiceConnectOrGcpPeering) {
+		return fmt.Errorf("zones can only be specified for AWS networks used with PrivateLink or Peering or TransitGateway or for GCP networks used with Private Service Connect or Peering")
 	}
 	return nil
 }
