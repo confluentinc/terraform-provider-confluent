@@ -1,3 +1,21 @@
+## 1.25.0 (January 19, 2023)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.24.0...v1.25.0)
+
+**New features:**
+* Added new optional `dns_config` block to `confluent_network` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_network) and a corresponding [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_network) in an [Early Access lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
+* Added **7** new examples for `confluent_connector` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_connector):
+  * [s3-sink-connector](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/s3-sink-connector)
+  * [snowflake-sink-connector](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/snowflake-sink-connector)
+  * [elasticsearch-sink-connector](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/elasticsearch-sink-connector)
+  * [dynamo-db-sink-connector](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/dynamo-db-sink-connector)
+  * [mongo-db-source-connector](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/mongo-db-source-connector)
+  * [mongo-db-sink-connector](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/mongo-db-sink-connector)
+  * [dynamo-db-sink-connector](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/dynamo-db-sink-connector)
+
+**Bug fixes:**
+* Added support for `zones` attribute for `confluent_network` of type `PEERING`.
+
 ## 1.24.0 (January 5, 2023)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.23.0...v1.24.0)
