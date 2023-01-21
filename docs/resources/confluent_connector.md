@@ -192,14 +192,15 @@ $ terraform import confluent_connector.my_connector "env-abc123/lkc-abc123/S3_SI
 ## Getting Started
 
 The following end-to-end examples might help to get started with `confluent_connector` resource:
-* [`s3-sink-connector`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/s3-sink-connector)
-* [`snowflake-sink-connector`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/snowflake-sink-connector)
-* [`source-connector`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/source-connector)
-* [`elasticsearch-sink-connector`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/elasticsearch-sink-connector)
-* [`dynamo-db-sink-connector`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/dynamo-db-sink-connector)
-* [`mongo-db-source-connector`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/mongo-db-source-connector)
-* [`mongo-db-sink-connector`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/mongo-db-sink-connector)
-* [`dynamo-db-sink-connector`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/dynamo-db-sink-connector)
+* [`s3-sink-connector`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/connectors/s3-sink-connector)
+* [`snowflake-sink-connector`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/connectors/snowflake-sink-connector)
+* [`datagen-source-connector`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/connectors/datagen-source-connector)
+* [`elasticsearch-sink-connector`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/connectors/elasticsearch-sink-connector)
+* [`dynamo-db-sink-connector`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/connectors/dynamo-db-sink-connector)
+* [`mongo-db-source-connector`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/connectors/mongo-db-source-connector)
+* [`mongo-db-sink-connector`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/connectors/mongo-db-sink-connector)
+* [`sql-server-cdc-debezium-source-connector`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/connectors/sql-server-cdc-debezium-source-connector)
+* [`postgre-sql-cdc-debezium-source-connector`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/connectors/postgre-sql-cdc-debezium-source-connector)
 
 
 -> **Note:** Certain connectors require additional ACL entries. See [Additional ACL entries](https://docs.confluent.io/cloud/current/connectors/service-account.html#additional-acl-entries) for more details.
