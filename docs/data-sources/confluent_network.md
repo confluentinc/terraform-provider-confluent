@@ -72,7 +72,7 @@ In addition to the preceding arguments, the following attributes are exported:
     When resolution is `CHASED_PRIVATE`, clusters in this network require both public and private DNS to resolve cluster endpoints.
     When resolution is `PRIVATE`, clusters in this network only require private DNS to resolve cluster endpoints.
 
--> **Note:** The value `PRIVATE` is only available to AWS networks with PRIVATELINK connection type.
+-> **Note:** The `resolution` attribute is in an [Early Access lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy). The value `PRIVATE` is only available to AWS networks with PRIVATELINK connection type.
 
 - `resource_name` - (Required String) The Confluent Resource Name of the Network.
 - `aws` - (Optional Configuration Block) The AWS-specific network details if available. It supports the following:
