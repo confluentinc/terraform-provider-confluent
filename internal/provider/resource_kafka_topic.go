@@ -93,7 +93,6 @@ func kafkaTopicResource() *schema.Resource {
 				Type:         schema.TypeInt,
 				Optional:     true,
 				Default:      6,
-				ForceNew:     true,
 				Description:  "The number of partitions to create in the topic.",
 				ValidateFunc: validation.IntAtLeast(1),
 			},
@@ -477,8 +476,53 @@ func readTopicAndSetAttributes(ctx context.Context, d *schema.ResourceData, c *K
 }
 
 func kafkaTopicUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if d.HasChangesExcept(paramCredentials, paramConfigs) {
-		return diag.Errorf("error updating Kafka Topic %q: only %q and %q blocks can be updated for Kafka Topic", d.Id(), paramCredentials, paramConfigs)
+	if d.HasChangesExcept(paramCredentials, paramConfigs, paramPartitionsCount) {
+		return diag.Errorf("error updating Kafka Topic %q: only %q, %q and %q blocks can be updated for Kafka Topic", d.Id(), paramCredentials, paramConfigs, paramPartitionsCount)
+	}
+	if d.HasChange(paramPartitionsCount) {
+		oldPartitionsCount, newPartitionsCount := d.GetChange(paramPartitionsCount)
+		oldPartitionsCountInt32 := int32(oldPartitionsCount.(int))
+		newPartitionsCountInt32 := int32(newPartitionsCount.(int))
+		// Construct a request for Kafka REST API
+		updateTopicRequest := kafkarestv3.UpdatePartitionCountRequestData{
+			PartitionsCount: newPartitionsCountInt32,
+		}
+		restEndpoint, err := extractRestEndpoint(meta.(*Client), d, false)
+		if err != nil {
+			return diag.Errorf("error updating Kafka Topic: %s", createDescriptiveError(err))
+		}
+		clusterId, err := extractKafkaClusterId(meta.(*Client), d, false)
+		if err != nil {
+			return diag.Errorf("error updating Kafka Topic: %s", createDescriptiveError(err))
+		}
+		clusterApiKey, clusterApiSecret, err := extractClusterApiKeyAndApiSecret(meta.(*Client), d, false)
+		if err != nil {
+			return diag.Errorf("error updating Kafka Topic: %s", createDescriptiveError(err))
+		}
+		kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isKafkaMetadataSet, meta.(*Client).isKafkaClusterIdSet)
+		topicName := d.Get(paramTopicName).(string)
+		updateTopicRequestJson, err := json.Marshal(updateTopicRequest)
+		if err != nil {
+			return diag.Errorf("error updating Kafka Topic: error marshaling %#v to json: %s", updateTopicRequest, createDescriptiveError(err))
+		}
+		tflog.Debug(ctx, fmt.Sprintf("Updating Kafka Topic %q: %s", d.Id(), updateTopicRequestJson), map[string]interface{}{kafkaTopicLoggingKey: d.Id()})
+
+		// Send a request to Kafka REST API
+		_, _, err = executeKafkaTopicPartitionsCountUpdate(ctx, kafkaRestClient, topicName, updateTopicRequest)
+		if err != nil {
+			// For example, Kafka REST API will return Bad Request if new partitions count is not bigger than the current one:
+			// 400 Bad Request: Topic currently has 6 partitions, which is higher than the requested 2.
+
+			// At this point new partitions count is saved to TF file,
+			// so we need to revert it to the old value to avoid TF drift.
+			if err := d.Set(paramPartitionsCount, oldPartitionsCountInt32); err != nil {
+				return diag.FromErr(createDescriptiveError(err))
+			}
+			return diag.FromErr(createDescriptiveError(err))
+		}
+		// Give some time to Kafka REST API to apply an update of partitions count
+		time.Sleep(kafkaRestAPIWaitAfterCreate)
+		tflog.Debug(ctx, fmt.Sprintf("Finished updating Kafka Topic %q: topic settings update has been completed", d.Id()), map[string]interface{}{kafkaTopicLoggingKey: d.Id()})
 	}
 	if d.HasChange(paramConfigs) {
 		// TF Provider allows the following operations for editable topic settings under 'config' block:
@@ -595,6 +639,10 @@ func kafkaTopicUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 
 func executeKafkaTopicUpdate(ctx context.Context, c *KafkaRestClient, topicName string, requestData kafkarestv3.AlterConfigBatchRequestData) (*http.Response, error) {
 	return c.apiClient.ConfigsV3Api.UpdateKafkaTopicConfigBatch(c.apiContext(ctx), c.clusterId, topicName).AlterConfigBatchRequestData(requestData).Execute()
+}
+
+func executeKafkaTopicPartitionsCountUpdate(ctx context.Context, c *KafkaRestClient, topicName string, requestData kafkarestv3.UpdatePartitionCountRequestData) (kafkarestv3.TopicData, *http.Response, error) {
+	return c.apiClient.TopicV3Api.UpdatePartitionCountKafkaTopic(c.apiContext(ctx), c.clusterId, topicName).UpdatePartitionCountRequestData(requestData).Execute()
 }
 
 func setKafkaCredentials(kafkaApiKey, kafkaApiSecret string, d *schema.ResourceData) error {
