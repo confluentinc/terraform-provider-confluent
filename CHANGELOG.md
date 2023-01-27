@@ -1,3 +1,15 @@
+## 1.26.0 (January 27, 2023)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.25.0...v1.26.0)
+
+**New features:**
+* Added support for updating the `partitions_count` attribute for `confluent_kafka_topic` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_topic).
+* Added **1** new example for `confluent_connector` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_connector):
+  * [sql-server-cdc-debezium-source-connector](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/connectors/sql-server-cdc-debezium-source-connector)
+
+**Bug fixes:**
+* Fixed a typo in docs for `confluent_kafka_client_quota` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_client_quota): `"<default>"` (and not `"default"`) should be used represent the default quota.
+
 ## 1.25.0 (January 19, 2023)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.24.0...v1.25.0)
