@@ -88,6 +88,7 @@ The following arguments are supported:
 - `subject_name` - (Required String) The name of the subject (in other words, the namespace), representing the subject under which the schema will be registered, for example, `test-subject`. Schemas evolve safely, following a compatibility mode defined, under a subject name.
 - `format` - (Required String) The format of the schema. Accepted values are: `AVRO`, `PROTOBUF`, and `JSON`.
 - `schema` - (Required String) The schema string, for example, `file("./schema_version_1.avsc")`.
+- `hard_delete` - (Optional Boolean) An optional flag to control whether a schema should be soft or hard deleted. Set it to `true` if you want to hard delete a schema on destroy (see [Schema Deletion Guidelines](https://docs.confluent.io/platform/current/schema-registry/schema-deletion-guidelines.html#schema-deletion-guidelines) for more details). Must be unset when importing. Defaults to `false` (soft delete).
 - `schema_reference` - (Optional List) The list of referenced schemas (see [Schema References](https://docs.confluent.io/platform/current/schema-registry/serdes-develop/index.html#schema-references) for more details):
     - `name` - (Required String) The name of the subject, representing the subject under which the referenced schema is registered.
     - `subject_name` - (Required String) The name for the reference. (For Avro Schema, the reference name is the fully qualified schema name, for JSON Schema it is a URL, and for Protobuf Schema, it is the name of another Protobuf file.)

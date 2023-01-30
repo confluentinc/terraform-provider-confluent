@@ -40,10 +40,12 @@ const (
 	protobufFormat                           = "PROTOBUF"
 	paramVersion                             = "version"
 	// unique on a subject level
-	paramSchemaIdentifier = "schema_identifier"
-	paramSchema           = "schema"
-	paramSchemaReference  = "schema_reference"
-	paramSubjectName      = "subject_name"
+	paramSchemaIdentifier       = "schema_identifier"
+	paramSchema                 = "schema"
+	paramSchemaReference        = "schema_reference"
+	paramSubjectName            = "subject_name"
+	paramHardDelete             = "hard_delete"
+	paramHardDeleteDefaultValue = false
 )
 
 var acceptedSchemaFormats = []string{avroFormat, jsonFormat, protobufFormat}
@@ -147,6 +149,12 @@ func schemaResource() *schema.Resource {
 					},
 				},
 			},
+			paramHardDelete: {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     paramHardDeleteDefaultValue,
+				Description: "Controls whether a schema should be soft or hard deleted. Set it to `true` if you want to hard delete a schema on destroy. Defaults to `false` (soft delete).",
+			},
 		},
 	}
 }
@@ -209,33 +217,46 @@ func schemaCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 
 func schemaDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	// TODO: Remove subject when deleting the last schema
-	tflog.Debug(ctx, fmt.Sprintf("Soft deleting Schema %q", d.Id()), map[string]interface{}{schemaLoggingKey: d.Id()})
+	deletionType := "soft"
+	isHardDeleteEnabled := d.Get(paramHardDelete).(bool)
+	if isHardDeleteEnabled {
+		deletionType = "hard"
+	}
+
+	tflog.Debug(ctx, fmt.Sprintf("%s deleting Schema %q", deletionType, d.Id()), map[string]interface{}{schemaLoggingKey: d.Id()})
 
 	restEndpoint, err := extractSchemaRegistryRestEndpoint(meta.(*Client), d, false)
 	if err != nil {
-		return diag.Errorf("error soft deleting Schema: %s", createDescriptiveError(err))
+		return diag.Errorf("error %s deleting Schema: %s", deletionType, createDescriptiveError(err))
 	}
 	clusterId, err := extractSchemaRegistryClusterId(meta.(*Client), d, false)
 	if err != nil {
-		return diag.Errorf("error soft deleting Schema: %s", createDescriptiveError(err))
+		return diag.Errorf("error %s deleting Schema: %s", deletionType, createDescriptiveError(err))
 	}
 	clusterApiKey, clusterApiSecret, err := extractSchemaRegistryClusterApiKeyAndApiSecret(meta.(*Client), d, false)
 	if err != nil {
-		return diag.Errorf("error soft deleting Schema: %s", createDescriptiveError(err))
+		return diag.Errorf("error %s deleting Schema: %s", deletionType, createDescriptiveError(err))
 	}
 	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
 	subjectName := d.Get(paramSubjectName).(string)
 	schemaVersion := d.Get(paramVersion).(int)
 
-	_, _, err = schemaRegistryRestClient.apiClient.SubjectVersionsV1Api.DeleteSchemaVersion(schemaRegistryRestClient.apiContext(ctx), subjectName, strconv.Itoa(schemaVersion)).Execute()
+	// Both soft and hard delete requires a user to run a soft delete first
+	err = executeSchemaDelete(schemaRegistryRestClient.apiContext(ctx), schemaRegistryRestClient, subjectName, strconv.Itoa(schemaVersion), false)
 
 	if err != nil {
-		return diag.Errorf("error soft deleting Schema %q: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error %s deleting Schema %q: %s", deletionType, d.Id(), createDescriptiveError(err))
 	}
 
-	time.Sleep(schemaRegistryAPIWaitAfterCreateOrDelete)
+	if isHardDeleteEnabled {
+		err = executeSchemaDelete(schemaRegistryRestClient.apiContext(ctx), schemaRegistryRestClient, subjectName, strconv.Itoa(schemaVersion), true)
 
-	tflog.Debug(ctx, fmt.Sprintf("Finished soft deleting Schema %q", d.Id()), map[string]interface{}{schemaLoggingKey: d.Id()})
+		if err != nil {
+			return diag.Errorf("error %s deleting Schema %q: %s", deletionType, d.Id(), createDescriptiveError(err))
+		}
+	}
+
+	tflog.Debug(ctx, fmt.Sprintf("Finished %s deleting Schema %q", deletionType, d.Id()), map[string]interface{}{schemaLoggingKey: d.Id()})
 
 	return nil
 }
@@ -277,8 +298,8 @@ func schemaRead(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 }
 
 func schemaUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if d.HasChangesExcept(paramCredentials, paramConfigs) {
-		return diag.Errorf("error updating Schema %q: only %q and %q blocks can be updated for Schema", d.Id(), paramCredentials, paramConfigs)
+	if d.HasChangesExcept(paramCredentials, paramConfigs, paramHardDelete) {
+		return diag.Errorf("error updating Schema %q: only %q, %q and %q blocks can be updated for Schema", d.Id(), paramCredentials, paramConfigs, paramHardDelete)
 	}
 	return schemaRead(ctx, d, meta)
 }
@@ -412,6 +433,13 @@ func readSchemaRegistryConfigAndSetAttributes(ctx context.Context, d *schema.Res
 		}
 	}
 
+	// Explicitly set paramHardDelete to the default value if unset
+	if _, ok := d.GetOk(paramHardDelete); !ok {
+		if err := d.Set(paramHardDelete, paramHardDeleteDefaultValue); err != nil {
+			return nil, createDescriptiveError(err)
+		}
+	}
+
 	d.SetId(createSchemaId(c.clusterId, srSchema.GetSubject(), srSchema.GetId()))
 
 	return []*schema.ResourceData{d}, nil
@@ -433,6 +461,20 @@ func executeSchemaValidate(ctx context.Context, c *SchemaRegistryRestClient, req
 
 func executeSchemaCreate(ctx context.Context, c *SchemaRegistryRestClient, requestData *sr.RegisterSchemaRequest, subjectName string) (sr.RegisterSchemaResponse, *http.Response, error) {
 	return c.apiClient.SubjectVersionsV1Api.Register(c.apiContext(ctx), subjectName).RegisterSchemaRequest(*requestData).Execute()
+}
+
+func executeSchemaDelete(ctx context.Context, c *SchemaRegistryRestClient, subjectName, schemaVersion string, isHardDelete bool) error {
+	_, _, err := c.apiClient.SubjectVersionsV1Api.DeleteSchemaVersion(c.apiContext(ctx), subjectName, schemaVersion).Permanent(isHardDelete).Execute()
+	if err != nil {
+		if isHardDelete {
+			return fmt.Errorf("error hard deleting Schema: %s", createDescriptiveError(err))
+		} else {
+			return fmt.Errorf("error soft deleting Schema: %s", createDescriptiveError(err))
+		}
+	} else {
+		time.Sleep(schemaRegistryAPIWaitAfterCreateOrDelete)
+		return nil
+	}
 }
 
 func buildSchemaReferences(tfReferences []interface{}) []sr.SchemaReference {

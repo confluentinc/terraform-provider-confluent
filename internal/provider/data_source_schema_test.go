@@ -105,6 +105,7 @@ func TestAccDataSourceSchema(t *testing.T) {
 					resource.TestCheckResourceAttr(fullSchemaDataSourceLabel, "schema", testSchemaContent),
 					resource.TestCheckResourceAttr(fullSchemaDataSourceLabel, "version", strconv.Itoa(testSchemaVersion)),
 					resource.TestCheckResourceAttr(fullSchemaDataSourceLabel, "schema_identifier", strconv.Itoa(testSchemaIdentifier)),
+					resource.TestCheckResourceAttr(fullSchemaDataSourceLabel, "hard_delete", testHardDelete),
 					resource.TestCheckResourceAttr(fullSchemaDataSourceLabel, "schema_reference.#", "2"),
 					resource.TestCheckResourceAttr(fullSchemaDataSourceLabel, "schema_reference.0.%", "3"),
 					resource.TestCheckResourceAttr(fullSchemaDataSourceLabel, "schema_reference.0.name", testFirstSchemaReferenceDisplayName),

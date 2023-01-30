@@ -87,6 +87,11 @@ func schemaDataSource() *schema.Resource {
 					},
 				},
 			},
+			paramHardDelete: {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Controls whether a schema should be soft or hard deleted. Set it to `true` if you want to hard delete a schema on destroy. Defaults to `false` (soft delete).",
+			},
 		},
 	}
 }

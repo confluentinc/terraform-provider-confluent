@@ -54,12 +54,14 @@ const (
 	testSecondSchemaReferenceSubject     = "test3"
 	testSecondSchemaReferenceVersion     = 3
 
-	testNumberOfSchemaRegistrySchemaResourceAttributes = 10
+	testNumberOfSchemaRegistrySchemaResourceAttributes = 11
 
 	testSchemaRegistryKey           = "foo"
 	testSchemaRegistrySecret        = "bar"
 	testSchemaRegistryUpdatedKey    = "foo_new"
 	testSchemaRegistryUpdatedSecret = "bar_new"
+
+	testHardDelete = "false"
 )
 
 var fullSchemaResourceLabel = fmt.Sprintf("confluent_schema.%s", testSchemaResourceLabel)
@@ -195,6 +197,7 @@ func TestAccSchema(t *testing.T) {
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema", testSchemaContent),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "version", strconv.Itoa(testSchemaVersion)),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema_identifier", strconv.Itoa(testSchemaIdentifier)),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "hard_delete", testHardDelete),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema_reference.#", "2"),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema_reference.0.%", "3"),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema_reference.0.name", testFirstSchemaReferenceDisplayName),
@@ -225,6 +228,7 @@ func TestAccSchema(t *testing.T) {
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema", testSchemaContent),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "version", strconv.Itoa(testSchemaVersion)),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema_identifier", strconv.Itoa(testSchemaIdentifier)),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "hard_delete", testHardDelete),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema_reference.#", "2"),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema_reference.0.%", "3"),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema_reference.0.name", testFirstSchemaReferenceDisplayName),
@@ -292,6 +296,8 @@ func testAccCheckSchemaConfig(confluentCloudBaseUrl, mockServerUrl string) strin
 	  subject_name = "%s"
 	  format = "%s"
       schema = "%s"
+
+      hard_delete = "%s"
 	  
       schema_reference {
         name = "%s"
@@ -306,6 +312,7 @@ func testAccCheckSchemaConfig(confluentCloudBaseUrl, mockServerUrl string) strin
       }
 	}
 	`, confluentCloudBaseUrl, testSchemaResourceLabel, testStreamGovernanceClusterId, mockServerUrl, testSchemaRegistryKey, testSchemaRegistrySecret, testSubjectName, testFormat, testSchemaContent,
+		testHardDelete,
 		testFirstSchemaReferenceDisplayName, testFirstSchemaReferenceSubject, testFirstSchemaReferenceVersion,
 		testSecondSchemaReferenceDisplayName, testSecondSchemaReferenceSubject, testSecondSchemaReferenceVersion)
 }
@@ -327,6 +334,8 @@ func testAccCheckSchemaConfigWithUpdatedCredentials(confluentCloudBaseUrl, mockS
 	  subject_name = "%s"
 	  format = "%s"
       schema = "%s"
+
+      hard_delete = "%s"
 	  
       schema_reference {
         name = "%s"
@@ -341,7 +350,7 @@ func testAccCheckSchemaConfigWithUpdatedCredentials(confluentCloudBaseUrl, mockS
       }
 	}
 	`, confluentCloudBaseUrl, testSchemaResourceLabel, testStreamGovernanceClusterId, mockServerUrl, testSchemaRegistryUpdatedKey, testSchemaRegistryUpdatedSecret, testSubjectName, testFormat, testSchemaContent,
-		testFirstSchemaReferenceDisplayName, testFirstSchemaReferenceSubject, testFirstSchemaReferenceVersion,
+		testHardDelete, testFirstSchemaReferenceDisplayName, testFirstSchemaReferenceSubject, testFirstSchemaReferenceVersion,
 		testSecondSchemaReferenceDisplayName, testSecondSchemaReferenceSubject, testSecondSchemaReferenceVersion)
 }
 
