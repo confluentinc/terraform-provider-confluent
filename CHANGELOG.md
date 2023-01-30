@@ -1,3 +1,10 @@
+## 1.27.0 (January 30, 2023)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.26.0...v1.27.0)
+
+**New updates for resources that are in [Early Access / Open Preview lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy):**
+* **Breaking changes:** Updated `confluent_schema`: The `recreate_on_update` and `hard_delete` attributes were added. You should reimport your existing instances of `confluent_schema` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema) ([#176](https://github.com/confluentinc/terraform-provider-confluent/issues/176), [#179](https://github.com/confluentinc/terraform-provider-confluent/issues/179)).
+
 ## 1.26.0 (January 27, 2023)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.25.0...v1.26.0)
