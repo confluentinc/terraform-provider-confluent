@@ -165,6 +165,9 @@ The following arguments are supported:
 - `config_sensitive` - (Required Map) Block for custom *sensitive* configuration properties that are labelled with "Type: password" under "Configuration Properties" section in [the docs](https://docs.confluent.io/cloud/current/connectors/index.html):
   - `name` - (Required String) The configuration setting name, for example, `aws.secret.access.key`.
   - `value` - (Required String, Sensitive) The configuration setting value, for example, `***REDACTED***`.
+
+!> **Warning:** Terraform doesn't encrypt the sensitive value from the `config_sensitive` block of the `confluent_connector` resource, so you must keep your state file secure to avoid exposing it. Refer to the [Terraform documentation](https://www.terraform.io/docs/language/state/sensitive-data.html) to learn more about securing your state file.
+
 - `status` (Optional String) The status of the connector (one of `"NONE"`, `"PROVISIONING"`, `"RUNNING"`, `"DEGRADED"`, `"FAILED"`, `"PAUSED"`, `"DELETED"`). Pausing (`"RUNNING" -> "PAUSED"`) and resuming (`"PAUSED" -> "RUNNING"`) a connector is supported via an update operation.
 
 -> **Note:** If there are no _sensitive_ configuration settings for your connector, set `config_sensitive = {}` explicitly.
