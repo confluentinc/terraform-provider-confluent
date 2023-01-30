@@ -266,7 +266,7 @@ resource "confluent_api_key" "env-manager-schema-registry-api-key" {
   ]
 }
 
-resource "confluent_schema" "purchase-v1" {
+resource "confluent_schema" "purchase" {
   provider = confluent.schema-registry
 
   subject_name = "purchase-value"

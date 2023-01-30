@@ -26,7 +26,7 @@ output "resource-ids" {
 
   # 2. Produce key-value records to topic '${confluent_kafka_topic.customer-event.topic_name}' by using ${confluent_service_account.app-producer.display_name}'s Kafka API Key
   $ confluent kafka topic produce ${confluent_kafka_topic.customer-event.topic_name} \
-        --schema-id ${confluent_schema.customer-event-v1.schema_identifier} \
+        --schema-id ${confluent_schema.customer-event.schema_identifier} \
         --value-format avro \
         --sr-endpoint ${confluent_schema_registry_cluster.essentials.rest_endpoint} \
         --sr-api-key "${confluent_api_key.env-manager-schema-registry-api-key.id}" \

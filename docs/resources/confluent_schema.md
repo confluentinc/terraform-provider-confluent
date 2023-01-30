@@ -89,6 +89,7 @@ The following arguments are supported:
 - `format` - (Required String) The format of the schema. Accepted values are: `AVRO`, `PROTOBUF`, and `JSON`.
 - `schema` - (Required String) The schema string, for example, `file("./schema_version_1.avsc")`.
 - `hard_delete` - (Optional Boolean) An optional flag to control whether a schema should be soft or hard deleted. Set it to `true` if you want to hard delete a schema on destroy (see [Schema Deletion Guidelines](https://docs.confluent.io/platform/current/schema-registry/schema-deletion-guidelines.html#schema-deletion-guidelines) for more details). Must be unset when importing. Defaults to `false` (soft delete).
+- `recreate_on_update` - (Optional Boolean) An optional flag to control whether a schema should be recreated on an update. Set it to `true` if you want to manage different schema versions using different resource instances. Must be set to the target value when importing. Defaults to `false` (resource instance always points to the latest schema by supporting in-place updates).
 - `schema_reference` - (Optional List) The list of referenced schemas (see [Schema References](https://docs.confluent.io/platform/current/schema-registry/serdes-develop/index.html#schema-references) for more details):
     - `name` - (Required String) The name of the subject, representing the subject under which the referenced schema is registered.
     - `subject_name` - (Required String) The name for the reference. (For Avro Schema, the reference name is the fully qualified schema name, for JSON Schema it is a URL, and for Protobuf Schema, it is the name of another Protobuf file.)
@@ -104,9 +105,16 @@ In addition to the preceding arguments, the following attributes are exported:
 
 ## Import
 
-You can import a Schema by using the Schema Registry cluster ID, Subject name, and unique identifier of the Schema in the format `<Schema Registry cluster ID>/<Subject name>/<Schema identifier>`, for example:
+You can import a Schema by using the Schema Registry cluster ID, Subject name, and unique identifier (or `latest` when `recreate_on_update = false`) of the Schema in the format `<Schema Registry cluster ID>/<Subject name>/<Schema identifier>`, for example:
 
 ```shell
+# Option A: recreate_on_update = false (by default)
+$ export IMPORT_SCHEMA_REGISTRY_API_KEY="<schema_registry_api_key>"
+$ export IMPORT_SCHEMA_REGISTRY_API_SECRET="<schema_registry_api_secret>"
+$ export IMPORT_SCHEMA_REGISTRY_REST_ENDPOINT="<schema_registry_rest_endpoint>"
+$ terraform import confluent_schema.my_schema_1 lsrc-abc123/test-subject/latest
+
+# Option B: recreate_on_update = true
 $ export IMPORT_SCHEMA_REGISTRY_API_KEY="<schema_registry_api_key>"
 $ export IMPORT_SCHEMA_REGISTRY_API_SECRET="<schema_registry_api_secret>"
 $ export IMPORT_SCHEMA_REGISTRY_REST_ENDPOINT="<schema_registry_rest_endpoint>"

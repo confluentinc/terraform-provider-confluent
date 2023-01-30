@@ -260,7 +260,7 @@ resource "confluent_api_key" "env-manager-schema-registry-api-key" {
   ]
 }
 
-resource "confluent_schema" "page-view-v1" {
+resource "confluent_schema" "page-view" {
   schema_registry_cluster {
     id = confluent_schema_registry_cluster.essentials.id
   }
@@ -274,7 +274,20 @@ resource "confluent_schema" "page-view-v1" {
   }
 }
 
-resource "confluent_schema" "purchase-v1" {
+data "confluent_schema" "page-view" {
+  schema_registry_cluster {
+    id = confluent_schema_registry_cluster.essentials.id
+  }
+  rest_endpoint = confluent_schema_registry_cluster.essentials.rest_endpoint
+  subject_name      = confluent_schema.page-view.subject_name
+  schema_identifier = confluent_schema.page-view.schema_identifier
+  credentials {
+    key    = confluent_api_key.env-manager-schema-registry-api-key.id
+    secret = confluent_api_key.env-manager-schema-registry-api-key.secret
+  }
+}
+
+resource "confluent_schema" "purchase" {
   schema_registry_cluster {
     id = confluent_schema_registry_cluster.essentials.id
   }
@@ -288,7 +301,20 @@ resource "confluent_schema" "purchase-v1" {
   }
 }
 
-resource "confluent_schema" "customer-event-v1" {
+data "confluent_schema" "purchase" {
+  schema_registry_cluster {
+    id = confluent_schema_registry_cluster.essentials.id
+  }
+  rest_endpoint = confluent_schema_registry_cluster.essentials.rest_endpoint
+  subject_name      = confluent_schema.purchase.subject_name
+  schema_identifier = confluent_schema.purchase.schema_identifier
+  credentials {
+    key    = confluent_api_key.env-manager-schema-registry-api-key.id
+    secret = confluent_api_key.env-manager-schema-registry-api-key.secret
+  }
+}
+
+resource "confluent_schema" "customer-event" {
   schema_registry_cluster {
     id = confluent_schema_registry_cluster.essentials.id
   }
@@ -299,13 +325,13 @@ resource "confluent_schema" "customer-event-v1" {
 
   schema_reference {
     name         = "Purchase"
-    subject_name = confluent_schema.purchase-v1.subject_name
-    version      = confluent_schema.purchase-v1.version
+    subject_name = confluent_schema.purchase.subject_name
+    version      = data.confluent_schema.purchase.version
   }
   schema_reference {
     name         = "PageView"
-    subject_name = confluent_schema.page-view-v1.subject_name
-    version      = confluent_schema.page-view-v1.version
+    subject_name = confluent_schema.page-view.subject_name
+    version      = data.confluent_schema.page-view.version
   }
   credentials {
     key    = confluent_api_key.env-manager-schema-registry-api-key.id

@@ -22,6 +22,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"regexp"
+	"strconv"
 )
 
 func schemaDataSource() *schema.Resource {
@@ -92,6 +93,11 @@ func schemaDataSource() *schema.Resource {
 				Computed:    true,
 				Description: "Controls whether a schema should be soft or hard deleted. Set it to `true` if you want to hard delete a schema on destroy. Defaults to `false` (soft delete).",
 			},
+			paramRecreateOnUpdate: {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Controls whether a schema should be recreated on update.",
+			},
 		},
 	}
 }
@@ -118,7 +124,7 @@ func schemaDataSourceRead(ctx context.Context, d *schema.ResourceData, meta inte
 	// Mark resource as new to avoid d.Set("") when getting 404
 	d.MarkNewResource()
 
-	if _, err := readSchemaRegistryConfigAndSetAttributes(ctx, d, schemaRegistryRestClient, subjectName, int32(schemaIdentifier)); err != nil {
+	if _, err := readSchemaRegistryConfigAndSetAttributes(ctx, d, schemaRegistryRestClient, subjectName, strconv.Itoa(schemaIdentifier)); err != nil {
 		return diag.Errorf("error reading Schema: %s", createDescriptiveError(err))
 	}
 

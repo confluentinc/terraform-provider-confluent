@@ -30,7 +30,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-func TestAccSchemaWithEnhancedProviderBlock(t *testing.T) {
+func TestAccLatestSchemaWithEnhancedProviderBlock(t *testing.T) {
 	containerPort := "8080"
 	containerPortTcp := fmt.Sprintf("%s/tcp", containerPort)
 	ctx := context.Background()
@@ -98,6 +98,16 @@ func TestAccSchemaWithEnhancedProviderBlock(t *testing.T) {
 			http.StatusOK,
 		))
 
+	readLatestSchemaResponse, _ := ioutil.ReadFile("../testdata/schema_registry_schema/read_latest_schema.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readLatestSchemaPath)).
+		InScenario(schemaScenarioName).
+		WhenScenarioStateIs(scenarioStateSchemaHasBeenCreated).
+		WillReturn(
+			string(readLatestSchemaResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
 	deleteSchemaStub := wiremock.Delete(wiremock.URLPathEqualTo(deleteSchemaPath)).
 		InScenario(schemaScenarioName).
 		WhenScenarioStateIs(scenarioStateSchemaHasBeenCreated).
@@ -130,7 +140,7 @@ func TestAccSchemaWithEnhancedProviderBlock(t *testing.T) {
 				Config: testAccCheckSchemaConfigWithEnhancedProviderBlock(confluentCloudBaseUrl, mockSchemaTestServerUrl),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSchemaExists(fullSchemaResourceLabel),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "id", fmt.Sprintf("%s/%s/%d", testStreamGovernanceClusterId, testSubjectName, testSchemaIdentifier)),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "id", fmt.Sprintf("%s/%s/%s", testStreamGovernanceClusterId, testSubjectName, latestSchemaVersionAndPlaceholderForSchemaIdentifier)),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema_registry_cluster.#", "0"),
 					resource.TestCheckNoResourceAttr(fullSchemaResourceLabel, "schema_registry_cluster.0.id"),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "subject_name", testSubjectName),
@@ -138,6 +148,8 @@ func TestAccSchemaWithEnhancedProviderBlock(t *testing.T) {
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema", testSchemaContent),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "version", strconv.Itoa(testSchemaVersion)),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema_identifier", strconv.Itoa(testSchemaIdentifier)),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "hard_delete", testHardDelete),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "recreate_on_update", testRecreateOnUpdateFalse),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema_reference.#", "2"),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema_reference.0.%", "3"),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema_reference.0.name", testFirstSchemaReferenceDisplayName),
