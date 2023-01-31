@@ -133,7 +133,7 @@ The following arguments are supported:
     When resolution is `CHASED_PRIVATE`, clusters in this network require both public and private DNS to resolve cluster endpoints.
     When resolution is `PRIVATE`, clusters in this network only require private DNS to resolve cluster endpoints.
 
--> **Note:** The `resolution` attribute is in an [Early Access lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy). The value `PRIVATE` is only available to AWS networks with PRIVATELINK connection type.
+-> **Note:** The value `PRIVATE` is only available to AWS networks with PRIVATELINK connection type.
 
 - `environment` (Required Configuration Block) supports the following:
   - `id` - (Required String) The ID of the Environment that the Network belongs to, for example, `env-abc123`.
