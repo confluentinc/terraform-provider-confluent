@@ -25,6 +25,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/structure"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"net/http"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -213,6 +214,11 @@ func schemaCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 		return diag.Errorf("error creating Schema: %s", createDescriptiveError(err))
 	}
 
+	// Save the schema content
+	if err := d.Set(paramSchema, schemaContent); err != nil {
+		return diag.FromErr(createDescriptiveError(err))
+	}
+
 	schemaId := createSchemaId(schemaRegistryRestClient.clusterId, subjectName, registeredSchema.GetId(), d.Get(paramRecreateOnUpdate).(bool))
 	d.SetId(schemaId)
 
@@ -367,6 +373,11 @@ func extractSubjectNameFromTfId(terraformId string) (string, error) {
 func schemaImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	tflog.Debug(ctx, fmt.Sprintf("Importing Schema %q", d.Id()), map[string]interface{}{schemaLoggingKey: d.Id()})
 
+	schemaContent := os.Getenv("SCHEMA_CONTENT")
+	if schemaContent == "" {
+		return nil, fmt.Errorf("error importing Schema %q: SCHEMA_CONTENT environment variable is empty but it must be set", d.Id())
+	}
+
 	restEndpoint, err := extractSchemaRegistryRestEndpoint(meta.(*Client), d, true)
 	if err != nil {
 		return nil, fmt.Errorf("error importing Schema: %s", createDescriptiveError(err))
@@ -391,6 +402,9 @@ func schemaImport(ctx context.Context, d *schema.ResourceData, meta interface{})
 	d.MarkNewResource()
 	if _, err := readSchemaRegistryConfigAndSetAttributes(ctx, d, schemaRegistryRestClient, subjectName, schemaIdentifier); err != nil {
 		return nil, fmt.Errorf("error importing Schema %q: %s", d.Id(), createDescriptiveError(err))
+	}
+	if err := d.Set(paramSchema, schemaContent); err != nil {
+		return nil, createDescriptiveError(err)
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished importing Schema %q", d.Id()), map[string]interface{}{schemaLoggingKey: d.Id()})
 	return []*schema.ResourceData{d}, nil
