@@ -114,14 +114,14 @@ You can import a Schema by using the Schema Registry cluster ID, Subject name, a
 $ export IMPORT_SCHEMA_REGISTRY_API_KEY="<schema_registry_api_key>"
 $ export IMPORT_SCHEMA_REGISTRY_API_SECRET="<schema_registry_api_secret>"
 $ export IMPORT_SCHEMA_REGISTRY_REST_ENDPOINT="<schema_registry_rest_endpoint>"
-$ export SCHEMA_CONTENT="<schema_content>"
+$ export SCHEMA_CONTENT="<schema_content>" # for example, export SCHEMA_CONTENT=$(cat schemas/proto/purchase.proto)
 $ terraform import confluent_schema.my_schema_1 lsrc-abc123/test-subject/latest
 
 # Option B: recreate_on_update = true
 $ export IMPORT_SCHEMA_REGISTRY_API_KEY="<schema_registry_api_key>"
 $ export IMPORT_SCHEMA_REGISTRY_API_SECRET="<schema_registry_api_secret>"
 $ export IMPORT_SCHEMA_REGISTRY_REST_ENDPOINT="<schema_registry_rest_endpoint>"
-$ export SCHEMA_CONTENT="<schema_content>"
+$ export SCHEMA_CONTENT="<schema_content>" # for example, export SCHEMA_CONTENT=$(cat schemas/proto/purchase.proto)
 $ terraform import confluent_schema.my_schema_1 lsrc-abc123/test-subject/100003
 ```
 
