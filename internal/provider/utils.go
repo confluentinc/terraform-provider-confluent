@@ -40,8 +40,6 @@ import (
 	"net/url"
 	"os"
 	"reflect"
-	"regexp"
-	"sort"
 	"strings"
 	"time"
 )
@@ -562,46 +560,4 @@ func clusterLinkSettingsKeysValidate(v interface{}, path cty.Path) diag.Diagnost
 		}
 	}
 	return nil
-}
-
-func compareTwoProtos(old, new interface{}) bool {
-	oldProtoLinesSlice := createProtoLinesSlice(protoToString(old))
-	newProtoLinesSlice := createProtoLinesSlice(protoToString(new))
-	sort.Strings(oldProtoLinesSlice)
-	sort.Strings(newProtoLinesSlice)
-	return reflect.DeepEqual(oldProtoLinesSlice, newProtoLinesSlice)
-}
-
-func createProtoLinesSlice(proto string) []string {
-	// Remove groups whitespaces with a single one
-	whitespaces := regexp.MustCompile(`\s+`)
-	proto = whitespaces.ReplaceAllString(proto, " ")
-	proto = strings.Replace(proto, " ;", ";", -1)
-
-	// Split by any of ;{}
-	proto = strings.Replace(proto, "}", "}\n", -1)
-	proto = strings.Replace(proto, "{", "{\n", -1)
-	proto = strings.Replace(proto, ";", ";\n", -1)
-
-	lines := strings.Split(proto, "\n")
-
-	filteredLines := make([]string, 0)
-	for _, line := range lines {
-		trimmedLine := strings.Trim(line, "\n\t ")
-		if trimmedLine == "" {
-			continue
-		}
-		filteredLines = append(filteredLines, trimmedLine)
-	}
-	return filteredLines
-}
-
-func protoToString(proto interface{}) string {
-	if proto == nil || proto.(string) == "" {
-		return ""
-	}
-
-	protoString := proto.(string)
-
-	return protoString
 }

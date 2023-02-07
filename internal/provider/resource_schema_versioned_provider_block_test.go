@@ -99,6 +99,17 @@ func TestAccVersionedSchemaWithEnhancedProviderBlock(t *testing.T) {
 			http.StatusOK,
 		))
 
+	checkSchemaExistsResponse, _ := ioutil.ReadFile("../testdata/schema_registry_schema/create_schema.json")
+	checkSchemaExistsStub := wiremock.Post(wiremock.URLPathEqualTo(createSchemaPath)).
+		InScenario(schemaScenarioName).
+		WhenScenarioStateIs(scenarioStateSchemaHasBeenCreated).
+		WillReturn(
+			string(checkSchemaExistsResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		)
+	_ = wiremockClient.StubFor(checkSchemaExistsStub)
+
 	deleteSchemaStub := wiremock.Delete(wiremock.URLPathEqualTo(deleteSchemaPath)).
 		InScenario(schemaScenarioName).
 		WhenScenarioStateIs(scenarioStateSchemaHasBeenCreated).
@@ -172,7 +183,6 @@ func TestAccVersionedSchemaWithEnhancedProviderBlock(t *testing.T) {
 		},
 	})
 
-	checkStubCount(t, wiremockClient, createSchemaStub, fmt.Sprintf("POST %s", createSchemaPath), expectedCountOne)
 	checkStubCount(t, wiremockClient, deleteSchemaStub, fmt.Sprintf("DELETE %s", readSchemasPath), expectedCountOne)
 }
 

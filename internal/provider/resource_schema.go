@@ -21,8 +21,8 @@ import (
 	sr "github.com/confluentinc/ccloud-sdk-go-v2/schema-registry/v1"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/structure"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"net/http"
 	"os"
@@ -96,22 +96,10 @@ func schemaResource() *schema.Resource {
 			},
 			paramSchema: {
 				Type:         schema.TypeString,
-				Required:     true,
+				Computed:     true,
+				Optional:     true,
 				Description:  "The definition of the Schema.",
 				ValidateFunc: validation.StringIsNotEmpty,
-				DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
-					format := d.Get(paramFormat).(string)
-					if format == avroFormat || format == jsonFormat {
-						normalizedOldJson, _ := structure.NormalizeJsonString(old)
-						normalizedNewJson, _ := structure.NormalizeJsonString(new)
-						return normalizedOldJson == normalizedNewJson
-					} else if format == protobufFormat {
-						return compareTwoProtos(new, old)
-					}
-					// There's an input validation for schema attribute on a schema level already,
-					// so this line won't be run.
-					return false
-				},
 			},
 			paramVersion: {
 				Type:        schema.TypeInt,
@@ -166,7 +154,82 @@ func schemaResource() *schema.Resource {
 				Description: "Controls whether a schema should be recreated on update.",
 			},
 		},
+		CustomizeDiff: customdiff.Sequence(SetSchemaDiff),
 	}
+}
+
+func SetSchemaDiff(ctx context.Context, diff *schema.ResourceDiff, meta interface{}) error {
+	// Skip if the schema doesn't exist yet
+	if diff.Id() == "" {
+		return nil
+	}
+
+	if !diff.HasChange(paramSchema) {
+		return nil
+	}
+
+	oldObj, newObj := diff.GetChange(paramSchema)
+	oldSchema := oldObj.(string)
+	newSchema := newObj.(string)
+
+	client := meta.(*Client)
+
+	var restEndpoint, clusterId, clusterApiKey, clusterApiSecret string
+
+	// We could have used interfaces here to reuse code from schemaCreate()
+	// but it's probably a safer approach to duplicate code here since debug messages are different / no imports either.
+	if client.isSchemaRegistryMetadataSet {
+		restEndpoint = client.schemaRegistryRestEndpoint
+		clusterId = client.schemaRegistryClusterId
+		clusterApiKey = client.schemaRegistryApiKey
+		clusterApiSecret = client.schemaRegistryApiSecret
+	} else {
+		restEndpoint = diff.Get(paramRestEndpoint).(string)
+		clusterId = diff.Get(fmt.Sprintf("%s.0.%s", paramSchemaRegistryCluster, paramId)).(string)
+		clusterApiKey = diff.Get(fmt.Sprintf("%s.0.%s", paramCredentials, paramKey)).(string)
+		clusterApiSecret = diff.Get(fmt.Sprintf("%s.0.%s", paramCredentials, paramSecret)).(string)
+	}
+
+	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+
+	subjectName := diff.Get(paramSubjectName).(string)
+	format := diff.Get(paramFormat).(string)
+	schemaContent := newSchema
+	schemaReferences := buildSchemaReferences(diff.Get(paramSchemaReference).([]interface{}))
+
+	createSchemaRequest := sr.NewRegisterSchemaRequest()
+	createSchemaRequest.SetSchemaType(format)
+	createSchemaRequest.SetSchema(schemaContent)
+	createSchemaRequest.SetReferences(schemaReferences)
+	createSchemaRequestJson, err := json.Marshal(createSchemaRequest)
+	if err != nil {
+		return fmt.Errorf("error customizing diff Schema: error marshaling %#v to json: %s", createSchemaRequest, createDescriptiveError(err))
+	}
+
+	tflog.Debug(ctx, fmt.Sprintf("Customizing diff new Schema: %s", createSchemaRequestJson))
+
+	registeredSchema, resp, err := executeSchemaLookup(ctx, schemaRegistryRestClient, createSchemaRequest, subjectName)
+
+	if resp != nil && http.StatusNotFound == resp.StatusCode {
+		// Requested schema doesn't exist
+		return nil
+	}
+
+	if err != nil {
+		return fmt.Errorf("error customizing diff Schema: %s", createDescriptiveError(err))
+	}
+
+	schemaIdentifier := diff.Get(paramSchemaIdentifier).(int)
+	if int(registeredSchema.GetId()) == schemaIdentifier {
+		// Two schemas that are semantically equivalent
+		// https://docs.confluent.io/platform/current/schema-registry/serdes-develop/index.html#schema-normalization
+
+		// Set old value to paramSchema to avoid TF drift
+		if err := diff.SetNew(paramSchema, oldSchema); err != nil {
+			return fmt.Errorf("error customizing diff Schema: %s", createDescriptiveError(err))
+		}
+	}
+	return nil
 }
 
 func schemaCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -475,9 +538,6 @@ func readSchemaRegistryConfigAndSetAttributes(ctx context.Context, d *schema.Res
 	if err := d.Set(paramSubjectName, srSchema.GetSubject()); err != nil {
 		return nil, err
 	}
-	if err := d.Set(paramSchema, srSchema.GetSchema()); err != nil {
-		return nil, err
-	}
 	// The schema format: AVRO is the default (if no schema type is shown on the response, the type is AVRO), PROTOBUF, JSONSCHEMA
 	if srSchema.GetSchemaType() == "" {
 		srSchema.SetSchemaType(avroFormat)
@@ -538,6 +598,10 @@ func findSchemaById(schemas []sr.Schema, schemaIdentifier string, subjectName st
 
 func executeSchemaValidate(ctx context.Context, c *SchemaRegistryRestClient, requestData *sr.RegisterSchemaRequest, subjectName string) (sr.CompatibilityCheckResponse, *http.Response, error) {
 	return c.apiClient.CompatibilityV1Api.TestCompatibilityForSubject(c.apiContext(ctx), subjectName).RegisterSchemaRequest(*requestData).Verbose(true).Execute()
+}
+
+func executeSchemaLookup(ctx context.Context, c *SchemaRegistryRestClient, requestData *sr.RegisterSchemaRequest, subjectName string) (sr.Schema, *http.Response, error) {
+	return c.apiClient.SubjectsV1Api.LookUpSchemaUnderSubject(c.apiContext(ctx), subjectName).RegisterSchemaRequest(*requestData).Normalize(true).Execute()
 }
 
 func executeSchemaCreate(ctx context.Context, c *SchemaRegistryRestClient, requestData *sr.RegisterSchemaRequest, subjectName string) (sr.RegisterSchemaResponse, *http.Response, error) {
