@@ -120,21 +120,18 @@ func schemaResource() *schema.Resource {
 						paramSubjectName: {
 							Type:         schema.TypeString,
 							Required:     true,
-							ForceNew:     true,
 							Description:  "The name of the referenced Schema Registry Subject (for example, \"User\").",
 							ValidateFunc: validation.StringIsNotEmpty,
 						},
 						paramName: {
 							Type:         schema.TypeString,
 							Required:     true,
-							ForceNew:     true,
 							Description:  "The name of the Schema references (for example, \"io.confluent.kafka.example.User\"). For Avro, the reference name is the fully qualified schema name, for JSON Schema it is a URL, and for Protobuf, it is the name of another Protobuf file.",
 							ValidateFunc: validation.StringIsNotEmpty,
 						},
 						paramVersion: {
 							Type:        schema.TypeInt,
 							Required:    true,
-							ForceNew:    true,
 							Description: "The version of the referenced Schema.",
 						},
 					},
