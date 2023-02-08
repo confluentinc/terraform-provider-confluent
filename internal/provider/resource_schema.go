@@ -113,7 +113,7 @@ func schemaResource() *schema.Resource {
 			},
 			paramSchemaReference: {
 				Description: "The list of references to other Schemas.",
-				Type:        schema.TypeList,
+				Type:        schema.TypeSet,
 				Optional:    true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -249,7 +249,7 @@ func schemaCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 	subjectName := d.Get(paramSubjectName).(string)
 	format := d.Get(paramFormat).(string)
 	schemaContent := d.Get(paramSchema).(string)
-	schemaReferences := buildSchemaReferences(d.Get(paramSchemaReference).([]interface{}))
+	schemaReferences := buildSchemaReferences(d.Get(paramSchemaReference).(*schema.Set).List())
 
 	createSchemaRequest := sr.NewRegisterSchemaRequest()
 	createSchemaRequest.SetSchemaType(format)
