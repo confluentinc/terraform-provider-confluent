@@ -1,3 +1,10 @@
+## 1.29.0 (February 8, 2023)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.28.0...v1.29.0)
+
+**New updates for resources that are in [Early Access / Open Preview lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy):**
+* **Breaking changes:** Updated `confluent_schema`: Added checks for semantic (rather than syntactic) equivalence of schemas to avoid occasional Terraform drift during schema updates ([#181](https://github.com/confluentinc/terraform-provider-confluent/issues/181)). You should reimport your existing instances of `confluent_schema` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema).
+
 ## 1.28.0 (January 30, 2023)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.27.0...v1.28.0)

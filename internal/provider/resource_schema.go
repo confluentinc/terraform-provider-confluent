@@ -195,7 +195,7 @@ func SetSchemaDiff(ctx context.Context, diff *schema.ResourceDiff, meta interfac
 	subjectName := diff.Get(paramSubjectName).(string)
 	format := diff.Get(paramFormat).(string)
 	schemaContent := newSchema
-	schemaReferences := buildSchemaReferences(diff.Get(paramSchemaReference).([]interface{}))
+	schemaReferences := buildSchemaReferences(diff.Get(paramSchemaReference).(*schema.Set).List())
 
 	createSchemaRequest := sr.NewRegisterSchemaRequest()
 	createSchemaRequest.SetSchemaType(format)
