@@ -492,6 +492,7 @@ func waitForApiKeyToSync(ctx context.Context, c *Client, createdApiKey apikeys.I
 		} else if isKsqlDbClusterApiKey(createdApiKey) {
 			// Currently, there are no data plane API for ksqlDB clusters so there is no endpoint we could leverage
 			// to check whether the Cluster API Key is synced which is why we're adding time.Sleep() here.
+			// TODO: SVCF-3560
 			time.Sleep(5 * time.Minute)
 		} else {
 			resourceJson, err := json.Marshal(createdApiKey.Spec.GetResource())
