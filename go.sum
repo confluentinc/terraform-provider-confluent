@@ -138,8 +138,8 @@ github.com/confluentinc/ccloud-sdk-go-v2/ksql v0.1.0 h1:dtLqrG3nltpe2xucO8Bj17HP
 github.com/confluentinc/ccloud-sdk-go-v2/ksql v0.1.0/go.mod h1:0LAvd4VqlaRwKU4yvDEkVCtV43yNezt56+hBe9Lmg7Q=
 github.com/confluentinc/ccloud-sdk-go-v2/mds v0.3.0 h1:DaipFGVdZjAE8eSztUrA/4b74kj6k5lZ0EJmK1RqccU=
 github.com/confluentinc/ccloud-sdk-go-v2/mds v0.3.0/go.mod h1:ufn9In8kDsyJ7Nru2ygpAaWdGw7DSDTOTtDhQVSmZjs=
-github.com/confluentinc/ccloud-sdk-go-v2/networking v0.5.0 h1:u09Qix5FXjPUudT+dy5iJZQpBdMJ4i01Fujh48eyIVk=
-github.com/confluentinc/ccloud-sdk-go-v2/networking v0.5.0/go.mod h1:EcmHhRib8dDuO5ZsO+qS3scX9xEP5E/IXOVoItp5X2s=
+github.com/confluentinc/ccloud-sdk-go-v2/networking v0.6.0 h1:tR8iXAKjDz70G4lb0FXJvQj61k6R5tyOm7GZaLGWKew=
+github.com/confluentinc/ccloud-sdk-go-v2/networking v0.6.0/go.mod h1:EcmHhRib8dDuO5ZsO+qS3scX9xEP5E/IXOVoItp5X2s=
 github.com/confluentinc/ccloud-sdk-go-v2/org v0.4.0 h1:WcJs6RbY8nU5HapaG0ZCH9ftFBtZyuKMIuNAkdVmc2o=
 github.com/confluentinc/ccloud-sdk-go-v2/org v0.4.0/go.mod h1:zREJ+OOZz0rEXCaPx0JbCVj2EfNnYs/c6qhPDfhldI0=
 github.com/confluentinc/ccloud-sdk-go-v2/schema-registry v0.1.0 h1:X3snoY6twxQ0Z/vbysQrHhdRVkNdpFE/Os7JpMKfXWw=

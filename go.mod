@@ -12,7 +12,7 @@ require (
 	github.com/confluentinc/ccloud-sdk-go-v2/kafkarest v0.13.0
 	github.com/confluentinc/ccloud-sdk-go-v2/ksql v0.1.0
 	github.com/confluentinc/ccloud-sdk-go-v2/mds v0.3.0
-	github.com/confluentinc/ccloud-sdk-go-v2/networking v0.5.0
+	github.com/confluentinc/ccloud-sdk-go-v2/networking v0.6.0
 	github.com/confluentinc/ccloud-sdk-go-v2/org v0.4.0
 	github.com/confluentinc/ccloud-sdk-go-v2/schema-registry v0.1.0
 	github.com/confluentinc/ccloud-sdk-go-v2/srcm v0.2.0
