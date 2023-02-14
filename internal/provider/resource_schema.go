@@ -205,15 +205,12 @@ func SetSchemaDiff(ctx context.Context, diff *schema.ResourceDiff, meta interfac
 
 	tflog.Debug(ctx, fmt.Sprintf("Customizing diff new Schema: %s", createSchemaRequestJson))
 
-	registeredSchema, resp, err := executeSchemaLookup(ctx, schemaRegistryRestClient, createSchemaRequest, subjectName)
-
-	if resp != nil && http.StatusNotFound == resp.StatusCode {
-		// Requested schema doesn't exist
-		return nil
-	}
-
+	registeredSchema, schemaExists, err := schemaLookup(ctx, schemaRegistryRestClient, createSchemaRequest, subjectName)
 	if err != nil {
 		return fmt.Errorf("error customizing diff Schema: %s", createDescriptiveError(err))
+	}
+	if !schemaExists {
+		return nil
 	}
 
 	schemaIdentifier := diff.Get(paramSchemaIdentifier).(int)
@@ -227,6 +224,48 @@ func SetSchemaDiff(ctx context.Context, diff *schema.ResourceDiff, meta interfac
 		}
 	}
 	return nil
+}
+
+func schemaLookup(ctx context.Context, c *SchemaRegistryRestClient, createSchemaRequest *sr.RegisterSchemaRequest, subjectName string) (*sr.Schema, bool, error) {
+	// https://github.com/confluentinc/terraform-provider-confluent/issues/196#issuecomment-1426437871
+	// Try both normalize=false and normalize=true
+	nonNormalizedSchema, schemaExists, err := schemaLookupByNormalize(ctx, c, createSchemaRequest, subjectName, false)
+	if err != nil {
+		return nil, false, fmt.Errorf("error looking up Schema: %s", createDescriptiveError(err))
+	}
+	if schemaExists {
+		return nonNormalizedSchema, schemaExists, nil
+	}
+	normalizedSchema, schemaExists, err := schemaLookupByNormalize(ctx, c, createSchemaRequest, subjectName, true)
+	if err != nil {
+		return nil, false, fmt.Errorf("error looking up Schema: %s", createDescriptiveError(err))
+	}
+	if schemaExists {
+		return normalizedSchema, schemaExists, nil
+	}
+	// Requested schema doesn't exist
+	return nil, false, nil
+}
+
+func schemaLookupByNormalize(ctx context.Context, c *SchemaRegistryRestClient, createSchemaRequest *sr.RegisterSchemaRequest, subjectName string, shouldNormalize bool) (*sr.Schema, bool, error) {
+	srSchema, resp, err := executeSchemaLookup(ctx, c, createSchemaRequest, subjectName, shouldNormalize)
+
+	if resp != nil {
+		if http.StatusNotFound == resp.StatusCode {
+			// Requested schema doesn't exist
+			return nil, false, nil
+		} else if http.StatusUnprocessableEntity == resp.StatusCode && shouldNormalize {
+			// TF Provider shouldn't fail
+			tflog.Warn(ctx, fmt.Sprintf("Warning looking up Schema %#v: 422 Unprocessable Entity", createSchemaRequest))
+			return nil, false, nil
+		}
+	}
+
+	if err != nil {
+		return nil, false, createDescriptiveError(err)
+	}
+
+	return &srSchema, true, nil
 }
 
 func schemaCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -597,8 +636,8 @@ func executeSchemaValidate(ctx context.Context, c *SchemaRegistryRestClient, req
 	return c.apiClient.CompatibilityV1Api.TestCompatibilityForSubject(c.apiContext(ctx), subjectName).RegisterSchemaRequest(*requestData).Verbose(true).Execute()
 }
 
-func executeSchemaLookup(ctx context.Context, c *SchemaRegistryRestClient, requestData *sr.RegisterSchemaRequest, subjectName string) (sr.Schema, *http.Response, error) {
-	return c.apiClient.SubjectsV1Api.LookUpSchemaUnderSubject(c.apiContext(ctx), subjectName).RegisterSchemaRequest(*requestData).Normalize(true).Execute()
+func executeSchemaLookup(ctx context.Context, c *SchemaRegistryRestClient, requestData *sr.RegisterSchemaRequest, subjectName string, shouldNormalize bool) (sr.Schema, *http.Response, error) {
+	return c.apiClient.SubjectsV1Api.LookUpSchemaUnderSubject(c.apiContext(ctx), subjectName).RegisterSchemaRequest(*requestData).Normalize(shouldNormalize).Execute()
 }
 
 func executeSchemaCreate(ctx context.Context, c *SchemaRegistryRestClient, requestData *sr.RegisterSchemaRequest, subjectName string) (sr.RegisterSchemaResponse, *http.Response, error) {
