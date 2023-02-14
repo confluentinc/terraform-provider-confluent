@@ -60,6 +60,13 @@ In addition to the preceding arguments, the following attributes are exported:
 - `cloud` - (Required String) The cloud service provider in which the network exists. Accepted values are: `AWS`, `AZURE`, and `GCP`.
 - `region` - (Required String) The cloud provider region where the network exists.
 - `cidr` - (Required String) The IPv4 CIDR block to used for the network. Must be `/16`. Required for VPC peering and AWS TransitGateway.
+- `reserved_cidr` - (Required String) The reserved IPv4 CIDR block to be used for the network. Must be `/24`. If not specified, Confluent Cloud Network uses `172.20.255.0/24`.
+- `zone_info` (Required Configuration Blocks) Each item represents information related to a single zone. It supports the following:
+  - `zone_id` - (Required String) Cloud provider zone ID.
+  - `cidr` - (Required String) The IPv4 CIDR block to be used for the network. Must be `/27`. Required for VPC peering and AWS TransitGateway.
+
+-> **Note:** The `reserved_cidr` attribute and `zone_info` blocks are in [Early Access lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy) for AWS networks with `PRIVATELINK` connection type. It is in an [Early Access lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy) for GCP and Azure networks with `PRIVATELINK` connection type.
+- 
 - `connection_types` - (Required List of String) The list of connection types that may be used with the network. Accepted connection types are: `PEERING`, `TRANSITGATEWAY`, and `PRIVATELINK`.
 - `zones` - (Optional List of String) The 3 availability zones for this network. They can optionally be specified for AWS networks
   used with PrivateLink, for GCP networks used with Private Service Connect, and for AWS and GCP
@@ -72,7 +79,7 @@ In addition to the preceding arguments, the following attributes are exported:
     When resolution is `CHASED_PRIVATE`, clusters in this network require both public and private DNS to resolve cluster endpoints.
     When resolution is `PRIVATE`, clusters in this network only require private DNS to resolve cluster endpoints.
 
--> **Note:** The value `PRIVATE` is only available to AWS networks with PRIVATELINK connection type.
+-> **Note:** The value `PRIVATE` is in [Generally Available lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy) for AWS networks with `PRIVATELINK` connection type. It is in an [Early Access lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy) for GCP and Azure networks with `PRIVATELINK` connection type.
 
 - `resource_name` - (Required String) The Confluent Resource Name of the Network.
 - `aws` - (Optional Configuration Block) The AWS-specific network details if available. It supports the following:
