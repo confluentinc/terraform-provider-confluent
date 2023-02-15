@@ -254,7 +254,7 @@ func schemaLookupByNormalize(ctx context.Context, c *SchemaRegistryRestClient, c
 		if http.StatusNotFound == resp.StatusCode {
 			// Requested schema doesn't exist
 			return nil, false, nil
-		} else if http.StatusUnprocessableEntity == resp.StatusCode && shouldNormalize {
+		} else if http.StatusUnprocessableEntity == resp.StatusCode {
 			// TF Provider shouldn't fail
 			tflog.Warn(ctx, fmt.Sprintf("Warning looking up Schema %#v: 422 Unprocessable Entity", createSchemaRequest))
 			return nil, false, nil
