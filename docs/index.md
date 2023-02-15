@@ -11,7 +11,7 @@ Simplify Apache Kafka Terraform deployment with the Confluent Terraform Provider
 
 Use the Confluent provider to deploy and manage [Confluent Cloud](https://www.confluent.io/confluent-cloud/) infrastructure. You must provide appropriate credentials to use the provider. The navigation menu provides details about the resources that you can interact with (_Resources_), and a guide (_Guides_) for how you can get started.
 
-[![asciicast](https://asciinema.org/a/559821.svg)](https://asciinema.org/a/559821)
+[![asciicast](https://asciinema.org/a/560105.svg)](https://asciinema.org/a/560105)
 
 ## Example Usage
 

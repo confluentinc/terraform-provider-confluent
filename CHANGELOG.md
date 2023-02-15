@@ -1,3 +1,10 @@
+## 1.32.0 (February 15, 2023)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.31.0...v1.32.0)
+
+**New updates for resources that are in [Early Access / Open Preview lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy):**
+* **Breaking changes:** Updated `confluent_schema`: Fixed a follow-up issue for "Error customizing diff Schema: 422 Unprocessable Entity" bug ([#196](https://github.com/confluentinc/terraform-provider-confluent/issues/196)). You might have to reimport your existing instances of `confluent_schema` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema).
+
 ## 1.31.0 (February 14, 2023)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.30.0...v1.31.0)
