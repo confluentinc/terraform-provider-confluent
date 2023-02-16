@@ -105,10 +105,10 @@ resource "confluent_kafka_topic" "users" {
   }
 }
 
-// Service account that the ksqlDB cluster uses to talk to the Kakfa broker.
+// ksqlDB service account
 resource "confluent_service_account" "app-ksql" {
   display_name = "app-ksql"
-  description  = "Service account to manage 'inventory' ksqlDB cluster"
+  description  = "Service account for ksqlDB cluster"
 }
 
 resource "confluent_role_binding" "app-ksql-kafka-cluster-admin" {

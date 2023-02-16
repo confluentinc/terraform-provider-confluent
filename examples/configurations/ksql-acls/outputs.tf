@@ -11,7 +11,7 @@ output "resource-ids" {
 
   # 2. Start ksqlDB's interactive CLI and connect it to your ksqlDB cluster. You'll need the ksqlDB API credentials you created, as well as the ksqlDB endpoint.
   # Please note that the ksqlDB cluster might take a few minutes to accept connections.
-  $ docker run --rm -it confluentinc/ksqldb-cli:0.27.1 ksql \
+  $ docker run --rm -it confluentinc/ksqldb-cli:latest ksql \
        -u "${confluent_api_key.app-ksqldb-api-key.id}" \
        -p "${confluent_api_key.app-ksqldb-api-key.secret}" \
        "${confluent_ksql_cluster.main.rest_endpoint}"
