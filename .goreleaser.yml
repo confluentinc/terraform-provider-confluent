@@ -28,7 +28,8 @@ builds:
       - goos: darwin
         goarch: '386'
     env:
-      - CGO_ENABLED=0
+      - GOEXPERIMENT=boringcrypto
+      - GO_ENABLEDC=1
     # https://goreleaser.com/customization/build/#reproducible-builds
     mod_timestamp: '{{ .CommitTimestamp }}'
 

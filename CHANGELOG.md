@@ -1,3 +1,34 @@
+## 1.32.0 (February 15, 2023)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.31.0...v1.32.0)
+
+**New updates for resources that are in [Early Access / Open Preview lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy):**
+* **Breaking changes:** Updated `confluent_schema`: Fixed a follow-up issue for "Error customizing diff Schema: 422 Unprocessable Entity" bug ([#196](https://github.com/confluentinc/terraform-provider-confluent/issues/196)). You might have to reimport your existing instances of `confluent_schema` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema).
+
+## 1.31.0 (February 14, 2023)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.30.0...v1.31.0)
+
+**New features:**
+* Added support for new optional `dns_config` block of `confluent_network` on Azure and GCP [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_network) and a corresponding [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_network) in an [Early Access lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy). More specifically, The value `PRIVATE` for `dns_config.resolution` is in [Generally Available lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy) for AWS networks with `PRIVATELINK` connection type. It is in an [Early Access lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy) for GCP and Azure networks with `PRIVATELINK` connection type.
+
+**Bug fixes:**
+* Updated docs.
+
+**New updates for resources that are in [Early Access / Open Preview lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy):**
+* **Breaking changes:** Updated `confluent_schema`: Fixed "Error customizing diff Schema: 422 Unprocessable Entity" bug ([#196](https://github.com/confluentinc/terraform-provider-confluent/issues/196)). You might have to reimport your existing instances of `confluent_schema` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema).
+
+## 1.30.0 (February 13, 2023)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.29.0...v1.30.0)
+
+**New features:**
+* Added new optional `reserved_cidr` attribute and `zone_info` block to `confluent_network` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_network) and a corresponding [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_network) in an [Early Access lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
+
+**Bug fixes:**
+* Updated docs.
+* Fixed a bug to allow update references in `confluent_schema` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema).
+
 ## 1.29.0 (February 8, 2023)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.28.0...v1.29.0)
