@@ -269,6 +269,14 @@ func connectorUpdate(ctx context.Context, d *schema.ResourceData, meta interface
 		return diag.Errorf("error updating Connector %q: only %q attribute, %q and %q blocks can be updated for Connector", d.Id(), paramStatus, paramNonSensitiveConfig, paramSensitiveConfig)
 	}
 	c := meta.(*Client)
+	if d.HasChange(connectorConfigFullAttributeName) {
+		oldValue, _ := d.GetChange(connectorConfigFullAttributeName)
+		// Reset the name in TF state to avoid accidental creation during the next 'terraform plan' run
+		_, _, nonsensitiveUpdatedConfig := extractConnectorConfigs(d)
+		nonsensitiveUpdatedConfig[connectorConfigAttributeName] = oldValue.(string)
+		_ = d.Set(paramNonSensitiveConfig, nonsensitiveUpdatedConfig)
+		return diag.Errorf("error updating Connector %q: %q attribute cannot be updated", d.Id(), connectorConfigAttributeName)
+	}
 	displayName := d.Get(connectorConfigFullAttributeName).(string)
 	if displayName == "" {
 		return diag.Errorf("error updating Connector %q: %q attribute is missing in %q block", d.Id(), connectorConfigAttributeName, paramNonSensitiveConfig)
