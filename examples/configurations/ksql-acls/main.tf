@@ -359,7 +359,7 @@ resource "confluent_role_binding" "app-ksql-schema-registry-resource-owner" {
 resource "confluent_role_binding" "app-ksql-ksql-admin" {
   principal   = "User:${confluent_service_account.app-ksql.id}"
   role_name   = "KsqlAdmin"
-  crn_pattern = "${confluent_kafka_cluster.standard.rbac_crn}/ksql=${confluent_ksql_cluster.main.id}"
+  crn_pattern = confluent_ksql_cluster.main.resource_name
 }
 
 resource "confluent_api_key" "app-ksqldb-api-key" {
