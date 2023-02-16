@@ -17,6 +17,8 @@ package provider
 import (
 	"context"
 	"fmt"
+	"strings"
+
 	apikeys "github.com/confluentinc/ccloud-sdk-go-v2/apikeys/v2"
 	cmk "github.com/confluentinc/ccloud-sdk-go-v2/cmk/v2"
 	connect "github.com/confluentinc/ccloud-sdk-go-v2/connect/v1"
@@ -33,7 +35,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"strings"
 )
 
 const (
@@ -203,6 +204,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_schema_registry_cluster_config": schemaRegistryClusterConfigDataSource(),
 				"confluent_schema_registry_cluster_mode":   schemaRegistryClusterModeDataSource(),
 				"confluent_user":                           userDataSource(),
+				"confluent_users":                          usersDataSource(),
 			},
 			ResourcesMap: map[string]*schema.Resource{
 				"confluent_api_key":                        apiKeyResource(),
