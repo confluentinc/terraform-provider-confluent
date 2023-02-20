@@ -2,7 +2,7 @@ terraform {
   required_providers {
     confluent = {
       source  = "confluentinc/confluent"
-      version = "1.32.0"
+      version = "1.33.0"
     }
   }
 }
@@ -114,7 +114,7 @@ resource "confluent_api_key" "app-manager-kafka-api-key" {
 resource "confluent_kafka_topic" "orders" {
   provider = confluent.kafka
 
-  topic_name    = "orders"
+  topic_name = "orders"
 }
 
 resource "confluent_service_account" "app-consumer" {

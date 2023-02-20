@@ -2,7 +2,7 @@ terraform {
   required_providers {
     confluent = {
       source  = "confluentinc/confluent"
-      version = "1.32.0"
+      version = "1.33.0"
     }
   }
 }
@@ -265,9 +265,9 @@ resource "confluent_schema" "page-view" {
     id = confluent_schema_registry_cluster.essentials.id
   }
   rest_endpoint = confluent_schema_registry_cluster.essentials.rest_endpoint
-  subject_name = "page-view"
-  format = "PROTOBUF"
-  schema = file("./schemas/proto/page_view.proto")
+  subject_name  = "page-view"
+  format        = "PROTOBUF"
+  schema        = file("./schemas/proto/page_view.proto")
   credentials {
     key    = confluent_api_key.env-manager-schema-registry-api-key.id
     secret = confluent_api_key.env-manager-schema-registry-api-key.secret
@@ -278,7 +278,7 @@ data "confluent_schema" "page-view" {
   schema_registry_cluster {
     id = confluent_schema_registry_cluster.essentials.id
   }
-  rest_endpoint = confluent_schema_registry_cluster.essentials.rest_endpoint
+  rest_endpoint     = confluent_schema_registry_cluster.essentials.rest_endpoint
   subject_name      = confluent_schema.page-view.subject_name
   schema_identifier = confluent_schema.page-view.schema_identifier
   credentials {
@@ -292,9 +292,9 @@ resource "confluent_schema" "purchase" {
     id = confluent_schema_registry_cluster.essentials.id
   }
   rest_endpoint = confluent_schema_registry_cluster.essentials.rest_endpoint
-  subject_name = "purchase"
-  format = "PROTOBUF"
-  schema = file("./schemas/proto/purchase.proto")
+  subject_name  = "purchase"
+  format        = "PROTOBUF"
+  schema        = file("./schemas/proto/purchase.proto")
   credentials {
     key    = confluent_api_key.env-manager-schema-registry-api-key.id
     secret = confluent_api_key.env-manager-schema-registry-api-key.secret
@@ -305,7 +305,7 @@ data "confluent_schema" "purchase" {
   schema_registry_cluster {
     id = confluent_schema_registry_cluster.essentials.id
   }
-  rest_endpoint = confluent_schema_registry_cluster.essentials.rest_endpoint
+  rest_endpoint     = confluent_schema_registry_cluster.essentials.rest_endpoint
   subject_name      = confluent_schema.purchase.subject_name
   schema_identifier = confluent_schema.purchase.schema_identifier
   credentials {
@@ -319,9 +319,9 @@ resource "confluent_schema" "customer-event" {
     id = confluent_schema_registry_cluster.essentials.id
   }
   rest_endpoint = confluent_schema_registry_cluster.essentials.rest_endpoint
-  subject_name = "customer-event-value"
-  format = "PROTOBUF"
-  schema = file("./schemas/proto/customer_event.proto")
+  subject_name  = "customer-event-value"
+  format        = "PROTOBUF"
+  schema        = file("./schemas/proto/customer_event.proto")
 
   schema_reference {
     name         = "purchase.proto"

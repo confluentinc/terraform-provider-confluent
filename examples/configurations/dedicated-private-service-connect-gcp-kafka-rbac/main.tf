@@ -7,7 +7,7 @@ terraform {
     }
     confluent = {
       source  = "confluentinc/confluent"
-      version = "1.32.0"
+      version = "1.33.0"
     }
   }
 }
@@ -288,7 +288,7 @@ resource "google_dns_record_set" "psc_endpoint_rs" {
 
   managed_zone = google_dns_managed_zone.psc_endpoint_hz.name
   rrdatas = [
-  for zone, _ in var.subnet_name_by_zone : google_compute_address.psc_endpoint_ip[zone].address
+    for zone, _ in var.subnet_name_by_zone : google_compute_address.psc_endpoint_ip[zone].address
   ]
 }
 
