@@ -536,8 +536,8 @@ func loadSchema(ctx context.Context, d *schema.ResourceData, c *SchemaRegistryRe
 	// Sample Response (it doesn't include soft deleted schemas):
 	//  [{"subject": "test2", "version": 5, "id": 100004, "schema": "{\"type\":\"record\",...}]}"},
 	//   {"subject": "test2", "version": 6, "id": 100006, "schema": "{\"type\":\"record\",...}]}"}]
-	// TODO: filter by subject name
-	schemas, _, err := c.apiClient.SchemasV1Api.GetSchemas(c.apiContext(ctx)).Execute()
+	// Search for all subjects in all contexts
+	schemas, _, err := c.apiClient.SchemasV1Api.GetSchemas(c.apiContext(ctx)).SubjectPrefix(":*:").Execute()
 	if err != nil {
 		return nil, false, fmt.Errorf("error loading Schemas: %s", createDescriptiveError(err))
 	}
