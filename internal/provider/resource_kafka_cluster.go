@@ -42,6 +42,7 @@ const (
 	paramCku                  = "cku"
 	paramEncryptionKey        = "encryption_key"
 	paramRbacCrn              = "rbac_crn"
+	paramConfluentCustomerKey = "byok_key"
 
 	stateInProgress = "IN_PROGRESS"
 	stateDone       = "DONE"
@@ -131,7 +132,8 @@ func kafkaResource() *schema.Resource {
 				Description: "The Confluent Resource Name of the Kafka cluster suitable for " +
 					"confluent_role_binding's crn_pattern.",
 			},
-			paramEnvironment: environmentSchema(),
+			paramEnvironment:          environmentSchema(),
+			paramConfluentCustomerKey: byokSchema(),
 		},
 		Timeouts: &schema.ResourceTimeout{
 			// https://docs.confluent.io/cloud/current/clusters/cluster-types.html#provisioning-time
@@ -162,7 +164,7 @@ func kafkaUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 		updateClusterRequest := cmk.NewCmkV2ClusterUpdate()
 		updateSpec := cmk.NewCmkV2ClusterSpecUpdate()
 		updateSpec.SetDisplayName(displayName)
-		updateSpec.SetEnvironment(cmk.ObjectReference{Id: environmentId})
+		updateSpec.SetEnvironment(cmk.EnvScopedObjectReference{Id: environmentId})
 		updateClusterRequest.SetSpec(*updateSpec)
 		updateClusterRequestJson, err := json.Marshal(updateClusterRequest)
 		if err != nil {
@@ -194,7 +196,7 @@ func kafkaUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 		updateClusterRequest := cmk.NewCmkV2ClusterUpdate()
 		updateSpec := cmk.NewCmkV2ClusterSpecUpdate()
 		updateSpec.SetConfig(cmk.CmkV2StandardAsCmkV2ClusterSpecUpdateConfigOneOf(cmk.NewCmkV2Standard(kafkaClusterTypeStandard)))
-		updateSpec.SetEnvironment(cmk.ObjectReference{Id: environmentId})
+		updateSpec.SetEnvironment(cmk.EnvScopedObjectReference{Id: environmentId})
 		updateClusterRequest.SetSpec(*updateSpec)
 		updateClusterRequestJson, err := json.Marshal(updateClusterRequest)
 		if err != nil {
@@ -229,7 +231,7 @@ func kafkaUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 		updateClusterRequest := cmk.NewCmkV2ClusterUpdate()
 		updateSpec := cmk.NewCmkV2ClusterSpecUpdate()
 		updateSpec.SetConfig(cmk.CmkV2DedicatedAsCmkV2ClusterSpecUpdateConfigOneOf(cmk.NewCmkV2Dedicated(kafkaClusterTypeDedicated, cku)))
-		updateSpec.SetEnvironment(cmk.ObjectReference{Id: environmentId})
+		updateSpec.SetEnvironment(cmk.EnvScopedObjectReference{Id: environmentId})
 		updateClusterRequest.SetSpec(*updateSpec)
 		updateClusterRequestJson, err := json.Marshal(updateClusterRequest)
 		if err != nil {
@@ -273,6 +275,7 @@ func kafkaCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 	clusterType := extractClusterType(d)
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
 	networkId := extractStringValueFromBlock(d, paramNetwork, paramId)
+	byokId := extractStringValueFromBlock(d, paramConfluentCustomerKey, paramId)
 
 	spec := cmk.NewCmkV2ClusterSpec()
 	spec.SetDisplayName(displayName)
@@ -300,9 +303,12 @@ func kafkaCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 	} else {
 		return diag.Errorf("error creating Kafka Cluster: unknown Kafka Cluster type was provided: %q", clusterType)
 	}
-	spec.SetEnvironment(cmk.ObjectReference{Id: environmentId})
+	spec.SetEnvironment(cmk.EnvScopedObjectReference{Id: environmentId})
 	if networkId != "" {
-		spec.SetNetwork(cmk.ObjectReference{Id: networkId})
+		spec.SetNetwork(cmk.EnvScopedObjectReference{Id: networkId})
+	}
+	if byokId != "" {
+		spec.SetByok(cmk.GlobalObjectReference{Id: byokId})
 	}
 	createClusterRequest := cmk.CmkV2Cluster{Spec: spec}
 	createClusterRequestJson, err := json.Marshal(createClusterRequest)
@@ -494,6 +500,24 @@ func dedicatedClusterSchema() *schema.Schema {
 	}
 }
 
+func byokSchema() *schema.Schema {
+	return &schema.Schema{
+		Type:     schema.TypeList,
+		MinItems: 1,
+		MaxItems: 1,
+		Optional: true,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramId: {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "The ID of the Confluent key that is used to encrypt the data in the Kafka cluster.",
+				},
+			},
+		},
+	}
+}
+
 func ckuCheck(cku int32, availability string) error {
 	if cku < 1 && availability == singleZone {
 		return fmt.Errorf("single-zone dedicated clusters must have at least 1 CKU")
@@ -571,6 +595,9 @@ func setKafkaClusterAttributes(d *schema.ResourceData, cluster cmk.CmkV2Cluster)
 	if err := setStringAttributeInListBlockOfSizeOne(paramNetwork, paramId, cluster.Spec.Network.GetId(), d); err != nil {
 		return nil, err
 	}
+	if err := setStringAttributeInListBlockOfSizeOne(paramConfluentCustomerKey, paramId, cluster.Spec.Byok.GetId(), d); err != nil {
+		return nil, err
+	}
 	d.SetId(cluster.GetId())
 	return d, nil
 }
@@ -608,6 +635,22 @@ func optionalNetworkDataSourceSchema() *schema.Schema {
 					Type:        schema.TypeString,
 					Computed:    true,
 					Description: "The unique identifier for the network.",
+				},
+			},
+		},
+	}
+}
+
+func optionalByokDataSourceSchema() *schema.Schema {
+	return &schema.Schema{
+		Type:     schema.TypeList,
+		Computed: true,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramId: {
+					Type:        schema.TypeString,
+					Computed:    true,
+					Description: "The ID of the Confluent key that is used to encrypt the data in the Kafka cluster.",
 				},
 			},
 		},

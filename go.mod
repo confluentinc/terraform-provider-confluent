@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/confluentinc/ccloud-sdk-go-v2/apikeys v0.3.0
 	github.com/confluentinc/ccloud-sdk-go-v2/byok v0.0.1
-	github.com/confluentinc/ccloud-sdk-go-v2/cmk v0.6.0
+	github.com/confluentinc/ccloud-sdk-go-v2/cmk v0.7.0
 	github.com/confluentinc/ccloud-sdk-go-v2/connect v0.2.0
 	github.com/confluentinc/ccloud-sdk-go-v2/iam v0.7.0
 	github.com/confluentinc/ccloud-sdk-go-v2/identity-provider v0.2.0
