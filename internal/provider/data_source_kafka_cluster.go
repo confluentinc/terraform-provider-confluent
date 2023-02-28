@@ -44,9 +44,8 @@ func kafkaDataSource() *schema.Resource {
 				Description:  "The ID of the Kafka cluster, for example, `lkc-abc123`.",
 			},
 			// Similarly, paramEnvironment is required as well
-			paramEnvironment:          environmentDataSourceSchema(),
-			paramNetwork:              optionalNetworkDataSourceSchema(),
-			paramConfluentCustomerKey: optionalByokDataSourceSchema(),
+			paramEnvironment: environmentDataSourceSchema(),
+			paramNetwork:     optionalNetworkDataSourceSchema(),
 			paramApiVersion: {
 				Type:     schema.TypeString,
 				Computed: true,
