@@ -126,8 +126,6 @@ The following arguments are supported:
   - `zone_id` - (Required String) Cloud provider zone ID.
   - `cidr` - (Required String) The IPv4 CIDR block to be used for the network. Must be `/27`. Required for VPC peering and AWS TransitGateway.
 
--> **Note:** The `reserved_cidr` attribute and `zone_info` blocks are in [Early Access lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy) for AWS networks with `PRIVATELINK` connection type. It is in an [Early Access lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy) for GCP and Azure networks with `PRIVATELINK` connection type.
-
 - `connection_types` - (Required List of String) The list of connection types that may be used with the network. Accepted connection types are: `PEERING`, `TRANSITGATEWAY`, and `PRIVATELINK`.
 - `zones` - (Optional List of String) The 3 availability zones for this network. They can optionally be specified for AWS networks
   used with PrivateLink, for GCP networks used with Private Service Connect, and for AWS and GCP
@@ -139,8 +137,6 @@ The following arguments are supported:
   - `resolution` - (Required String) Network DNS resolution.
     When resolution is `CHASED_PRIVATE`, clusters in this network require both public and private DNS to resolve cluster endpoints.
     When resolution is `PRIVATE`, clusters in this network only require private DNS to resolve cluster endpoints.
-
--> **Note:** The value `PRIVATE` is in [Generally Available lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy) for AWS networks with `PRIVATELINK` connection type. It is in an [Early Access lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy) for GCP and Azure networks with `PRIVATELINK` connection type.
 
 - `environment` (Required Configuration Block) supports the following:
   - `id` - (Required String) The ID of the Environment that the Network belongs to, for example, `env-abc123`.

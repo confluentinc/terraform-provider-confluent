@@ -6,7 +6,7 @@ page_title: "Sample Project"
 
 ## Summary
 
-[![asciicast](https://asciinema.org/a/560105.svg)](https://asciinema.org/a/560105)
+[![asciicast](https://asciinema.org/a/563592.svg)](https://asciinema.org/a/563592)
 
 Use the Confluent Terraform provider to enable the lifecycle management of Confluent Cloud resources:
    * [Environments](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_environment)
@@ -28,6 +28,10 @@ Use the Confluent Terraform provider to enable the lifecycle management of Confl
    * [Kafka Cluster Configs](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_cluster_config)
    * [Kafka Mirror Topics](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_mirror_topic)
    * [Schema Registry Clusters](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema_registry_cluster)
+   * [Schema Registry Cluster Configs](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema_registry_cluster_config)
+   * [Schema Registry Cluster Modes](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema_registry_cluster_mode)
+   * [Subject Configs](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_subject_config)
+   * [Subject Modes](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_subject_mode)
    * [ksqlDB Clusters](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_ksql_cluster)
    * [Schemas](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema)
 
