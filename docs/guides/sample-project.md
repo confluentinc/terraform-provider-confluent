@@ -18,7 +18,7 @@ Use the Confluent Terraform provider to enable the lifecycle management of Confl
    * [Peerings](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_peering)
    * [Transit Gateway Attachments](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_transit_gateway_attachment)
    * [Service Accounts](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_service_account)
-   * [Cloud API Keys and Kafka API Keys](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_api_key)
+   * [Cloud API Keys and Cluster API Keys (Kafka API Keys, ksqlDB API Keys, Schema Registry API Keys)](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_api_key)
    * [Access Control Lists (ACLs)](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_acl)
    * [Role Bindings](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_role_binding)
    * [Cluster Links](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_cluster_link)
