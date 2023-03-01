@@ -242,6 +242,14 @@ func dedicatedClusterDataSourceSchema() *schema.Schema {
 					Computed:    true,
 					Description: "The ID of the encryption key that is used to encrypt the data in the Kafka cluster.",
 				},
+				paramZones: {
+					Type: schema.TypeList,
+					Elem: &schema.Schema{
+						Type: schema.TypeString,
+					},
+					Computed:    true,
+					Description: "The list of zones the cluster is in.",
+				},
 			},
 		},
 	}

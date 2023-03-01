@@ -488,6 +488,14 @@ func dedicatedClusterSchema() *schema.Schema {
 					Optional:    true,
 					Description: "The ID of the encryption key that is used to encrypt the data in the Kafka cluster.",
 				},
+				paramZones: {
+					Type: schema.TypeList,
+					Elem: &schema.Schema{
+						Type: schema.TypeString,
+					},
+					Computed:    true,
+					Description: "The list of zones the cluster is in.",
+				},
 			},
 		},
 		ExactlyOneOf: acceptedClusterTypes,
@@ -547,6 +555,7 @@ func setKafkaClusterAttributes(d *schema.ResourceData, cluster cmk.CmkV2Cluster)
 		if err := d.Set(paramDedicatedCluster, []interface{}{map[string]interface{}{
 			paramCku:           cluster.Status.GetCku(),
 			paramEncryptionKey: cluster.Spec.Config.CmkV2Dedicated.GetEncryptionKey(),
+			paramZones:         cluster.Spec.Config.CmkV2Dedicated.GetZones(),
 		}}); err != nil {
 			return nil, err
 		}
