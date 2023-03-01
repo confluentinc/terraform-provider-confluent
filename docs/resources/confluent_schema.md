@@ -211,7 +211,7 @@ resource "confluent_schema" "avro-purchase-v1" {
 resource "confluent_schema" "avro-purchase-v2" {
   subject_name = "avro-purchase-value"
   format = "AVRO"
-  schema = file("./schemas/avro/purchase.avsc")
+  schema = file("./schemas/avro/purchase_v2.avsc")
   recreate_on_update = true
 
   lifecycle {
