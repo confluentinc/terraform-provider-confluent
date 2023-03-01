@@ -6,7 +6,7 @@ page_title: "Sample Project"
 
 ## Summary
 
-[![asciicast](https://asciinema.org/a/563592.svg)](https://asciinema.org/a/563592)
+[![asciicast](https://asciinema.org/a/563963.svg)](https://asciinema.org/a/563963)
 
 Use the Confluent Terraform provider to enable the lifecycle management of Confluent Cloud resources:
    * [Environments](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_environment)

@@ -1,3 +1,13 @@
+## 1.34.0 (March 1, 2023)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.33.0...v1.34.0)
+
+**New features:**
+* Added support for new computed `zones` attribute of `confluent_kafka_cluster` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_cluster) and a corresponding [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_kafka_cluster) in a [Generally Available lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy) ([#132](https://github.com/confluentinc/terraform-provider-confluent/issues/132), [#213](https://github.com/confluentinc/terraform-provider-confluent/issues/213)).
+
+**Bug fixes:**
+* Updated docs.
+
 ## 1.33.0 (February 28, 2023)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.32.0...v1.33.0)
