@@ -1,3 +1,10 @@
+## 1.35.0 (March 7, 2023)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.34.0...v1.35.0)
+
+**New features:**
+* Added new `confluent_invitation` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_invitation) and a corresponding [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_invitation) in a [Preview lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
+
 ## 1.34.0 (March 1, 2023)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.33.0...v1.34.0)
