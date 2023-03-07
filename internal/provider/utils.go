@@ -72,6 +72,7 @@ const (
 	subjectConfigLoggingKey               = "subject_config_id"
 	schemaRegistryClusterModeLoggingKey   = "schema_registry_cluster_mode_id"
 	schemaRegistryClusterConfigLoggingKey = "schema_registry_cluster_config_id"
+	invitationloggingKey                  = "invitation_id"
 )
 
 func (c *Client) apiKeysApiContext(ctx context.Context) context.Context {

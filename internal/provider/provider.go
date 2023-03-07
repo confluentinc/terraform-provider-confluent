@@ -203,6 +203,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_schema_registry_cluster_config": schemaRegistryClusterConfigDataSource(),
 				"confluent_schema_registry_cluster_mode":   schemaRegistryClusterModeDataSource(),
 				"confluent_user":                           userDataSource(),
+				"confluent_invitation":                     invitationDataSource(),
 			},
 			ResourcesMap: map[string]*schema.Resource{
 				"confluent_api_key":                        apiKeyResource(),
@@ -230,6 +231,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_schema_registry_cluster_mode":   schemaRegistryClusterModeResource(),
 				"confluent_schema_registry_cluster_config": schemaRegistryClusterConfigResource(),
 				"confluent_transit_gateway_attachment":     transitGatewayAttachmentResource(),
+				"confluent_invitation":                     invitationResource(),
 			},
 		}
 
