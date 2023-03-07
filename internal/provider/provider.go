@@ -17,6 +17,8 @@ package provider
 import (
 	"context"
 	"fmt"
+	"strings"
+
 	apikeys "github.com/confluentinc/ccloud-sdk-go-v2/apikeys/v2"
 	cmk "github.com/confluentinc/ccloud-sdk-go-v2/cmk/v2"
 	connect "github.com/confluentinc/ccloud-sdk-go-v2/connect/v1"
@@ -33,7 +35,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"strings"
 )
 
 const (
@@ -195,6 +196,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_private_link_access":            privateLinkAccessDataSource(),
 				"confluent_role_binding":                   roleBindingDataSource(),
 				"confluent_schema":                         schemaDataSource(),
+				"confluent_schemas":                        schemasDataSource(),
 				"confluent_service_account":                serviceAccountDataSource(),
 				"confluent_schema_registry_cluster":        schemaRegistryClusterDataSource(),
 				"confluent_schema_registry_region":         schemaRegistryRegionDataSource(),
@@ -242,7 +244,7 @@ func New(version, userAgent string) func() *schema.Provider {
 }
 
 // https://github.com/hashicorp/terraform-plugin-sdk/issues/155#issuecomment-489699737
-////  alternative - https://github.com/hashicorp/terraform-plugin-sdk/issues/248#issuecomment-725013327
+// //  alternative - https://github.com/hashicorp/terraform-plugin-sdk/issues/248#issuecomment-725013327
 func environmentSchema() *schema.Schema {
 	return &schema.Schema{
 		Type: schema.TypeList,
@@ -265,7 +267,7 @@ func environmentSchema() *schema.Schema {
 }
 
 // https://github.com/hashicorp/terraform-plugin-sdk/issues/155#issuecomment-489699737
-////  alternative - https://github.com/hashicorp/terraform-plugin-sdk/issues/248#issuecomment-725013327
+// //  alternative - https://github.com/hashicorp/terraform-plugin-sdk/issues/248#issuecomment-725013327
 func environmentDataSourceSchema() *schema.Schema {
 	return &schema.Schema{
 		Type: schema.TypeList,

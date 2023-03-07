@@ -1,0 +1,18 @@
+[
+  {
+    "version": 1,
+    "id": 100001,
+    "references": [],
+    "subject": "some_record",
+    "schemaType": "PROTOBUF",
+    "schema": "syntax = \"proto3\";\npackage examples;\nmessage SomeRecord {\n\tstring value1 = 1;\n}\n"
+  },
+  {
+    "version": 2,
+    "id": 100002,
+    "references": [],
+    "subject": "some_record",
+    "schemaType": "PROTOBUF",
+    "schema": "syntax = \"proto3\";\npackage examples;\nmessage SomeRecord {\n  string value1 = 1;\n  string value2 = 2;\n}\n"
+  }
+]
