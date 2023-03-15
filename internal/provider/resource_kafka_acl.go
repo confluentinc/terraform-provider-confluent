@@ -271,16 +271,6 @@ func kafkaAclRead(ctx context.Context, d *schema.ResourceData, meta interface{})
 		return diag.FromErr(createDescriptiveError(err))
 	}
 
-	// APIF-2043: TEMPORARY CODE for v0.x.0 -> v0.4.0 migration
-	// Destroy the resource in terraform state if it uses integerId for a principal.
-	// This hack is necessary since terraform plan will use the principal's value (integerId) from terraform.state
-	// instead of using the new provided resourceId from main.tf (the user will be forced to replace integerId with resourceId
-	// that we have an input validation for using "User:sa-" for principal attribute.
-	if !(strings.HasPrefix(acl.Principal, "User:sa-") || strings.HasPrefix(acl.Principal, "User:u-") || strings.HasPrefix(acl.Principal, "User:pool-") || acl.Principal == "User:*") {
-		d.SetId("")
-		return nil
-	}
-
 	_, err = readAclAndSetAttributes(ctx, d, client, kafkaRestClient, acl)
 	if err != nil {
 		return diag.Errorf("error reading Kafka ACLs: %s", createDescriptiveError(err))
