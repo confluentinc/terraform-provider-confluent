@@ -20,6 +20,7 @@ cloud.google.com/go/bigquery v1.4.0/go.mod h1:S8dzgnTigyfTmLBfrtrhyYhwRxG72rYxvf
 cloud.google.com/go/bigquery v1.5.0/go.mod h1:snEHRnqQbz117VIFhE8bmtwIDY80NLUZUMb4Nv6dBIg=
 cloud.google.com/go/bigquery v1.7.0/go.mod h1://okPTzCYNXSlb24MZs83e2Do+h+VXtc4gLoIoXIAPc=
 cloud.google.com/go/bigquery v1.8.0/go.mod h1:J5hqkt3O0uAFnINi6JXValWIb1v0goeZM77hZzJN/fQ=
+cloud.google.com/go/compute/metadata v0.2.0/go.mod h1:zFmK7XCadkQkj6TtorcaGlCW1hT1fIilQDwofLpJ20k=
 cloud.google.com/go/datastore v1.0.0/go.mod h1:LXYbyblFSglQ5pkeyhO+Qmw7ukd3C+pD7TKLgZqpHYE=
 cloud.google.com/go/datastore v1.1.0/go.mod h1:umbIZjpQpHh4hmRpGhH4tLFup+FVzqBi1b3c64qFpCk=
 cloud.google.com/go/firestore v1.1.0/go.mod h1:ulACoGHTpvq5r8rxGJ4ddJZBZqakUQqClKRT5SZwBmk=
@@ -122,6 +123,8 @@ github.com/cockroachdb/errors v1.2.4/go.mod h1:rQD95gz6FARkaKkQXUksEje/d9a6wBJoC
 github.com/cockroachdb/logtags v0.0.0-20190617123548-eb05cc24525f/go.mod h1:i/u985jwjWRlyHXQbwatDASoW0RMlZ/3i9yJHE2xLkI=
 github.com/confluentinc/ccloud-sdk-go-v2/apikeys v0.3.0 h1:7AixGTQ3QRYRfmVEJRIs06e0kWuHtc3ObxUr4HZx3p0=
 github.com/confluentinc/ccloud-sdk-go-v2/apikeys v0.3.0/go.mod h1:wNa9Qg2e2v/+PQsUyKh+qB22hhLkPR6Ahy6rP+1jmGI=
+github.com/confluentinc/ccloud-sdk-go-v2/byok v0.0.1 h1:hk8Uc28S2dPd/few2yJKYY3FqTRuVO14qq4fhWrXwdw=
+github.com/confluentinc/ccloud-sdk-go-v2/byok v0.0.1/go.mod h1:XZksYS523oCggD4EAD8GmOFhPRe11kRqNHcAHzDQpgI=
 github.com/confluentinc/ccloud-sdk-go-v2/cmk v0.7.0 h1:8fkaIVTRdselz8Ja+OgEl0BxcHhDQcxfrkhR3QjnqZk=
 github.com/confluentinc/ccloud-sdk-go-v2/cmk v0.7.0/go.mod h1:357Zo3HvVAe5iQgUFxUbQPAKJasGm8vFMkOB+krVmR8=
 github.com/confluentinc/ccloud-sdk-go-v2/connect v0.2.0 h1:rEb3sxzKCZvZCnEZ10WyGqkVIdlqxJGbmP85/4C4YdE=

@@ -225,6 +225,10 @@ The following arguments are supported:
     - `id` - (Required String) The ID of the Environment that the Kafka cluster belongs to, for example, `env-abc123`.
 - `network` (Optional Configuration Block) supports the following:
     - `id` - (Required String) The ID of the Network that the Kafka cluster belongs to, for example, `n-abc123`.
+- `byok_key` (Optional Configuration Block) supports the following:
+    - `id` - (Required String) The ID of the Confluent key that is used to encrypt the data in the Kafka cluster, for example, `cck-lye5m`.
+
+-> **Note:** The `byok_key` attribute is in an [Preview lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
 
 ## Attributes Reference
 
