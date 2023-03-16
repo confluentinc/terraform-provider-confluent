@@ -72,10 +72,22 @@ resource "confluent_role_binding" "connector-example-rb" {
   crn_pattern = "${confluent_kafka_cluster.standard.rbac_crn}/connector=${local.connector_name}"
 }
 
-resource "confluent_role_binding" "subject-example-rb" {
+resource "confluent_role_binding" "all-subjects-example-rb" {
   principal   = "User:${confluent_service_account.test.id}"
   role_name   = "DeveloperRead"
   crn_pattern = "${confluent_schema_registry_cluster.example.resource_name}/subject=*"
+}
+
+resource "confluent_role_binding" "subject-foo-example-rb" {
+  principal   = "User:${confluent_service_account.test.id}"
+  role_name   = "DeveloperRead"
+  crn_pattern = "${confluent_schema_registry_cluster.example.resource_name}/subject=foo"
+}
+
+resource "confluent_role_binding" "subject-with-abc-prefix-example-rb" {
+  principal   = "User:${confluent_service_account.test.id}"
+  role_name   = "DeveloperRead"
+  crn_pattern = "${confluent_schema_registry_cluster.example.resource_name}/subject=abc*"
 }
 
 locals {
