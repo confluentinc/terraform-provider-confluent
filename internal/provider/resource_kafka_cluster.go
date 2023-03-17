@@ -514,11 +514,13 @@ func byokSchema() *schema.Schema {
 		MinItems: 1,
 		MaxItems: 1,
 		Optional: true,
+		Computed: true,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				paramId: {
 					Type:        schema.TypeString,
-					Optional:    true,
+					Required:    true,
+					ForceNew:    true,
 					Description: "The ID of the Confluent key that is used to encrypt the data in the Kafka cluster.",
 				},
 			},
