@@ -2,7 +2,7 @@ terraform {
   required_providers {
     confluent = {
       source  = "confluentinc/confluent"
-      version = "1.33.0"
+      version = "1.32.0"
     }
   }
 }
@@ -125,7 +125,7 @@ resource "confluent_role_binding" "app-ksql-schema-registry-resource-owner" {
 
 resource "confluent_ksql_cluster" "main" {
   display_name = "ksql_cluster_0"
-  csu          = 1
+  csu = 1
   kafka_cluster {
     id = confluent_kafka_cluster.basic.id
   }

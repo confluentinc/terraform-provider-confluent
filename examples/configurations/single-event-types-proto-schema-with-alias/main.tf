@@ -2,7 +2,7 @@ terraform {
   required_providers {
     confluent = {
       source  = "confluentinc/confluent"
-      version = "1.33.0"
+      version = "1.32.0"
     }
   }
 }
@@ -127,7 +127,7 @@ resource "confluent_api_key" "app-manager-kafka-api-key" {
 resource "confluent_kafka_topic" "purchase" {
   provider = confluent.kafka
 
-  topic_name = "purchase"
+  topic_name    = "purchase"
 }
 
 resource "confluent_service_account" "app-consumer" {
@@ -270,6 +270,6 @@ resource "confluent_schema" "purchase" {
   provider = confluent.schema-registry
 
   subject_name = "purchase-value"
-  format       = "PROTOBUF"
-  schema       = file("./schemas/proto/purchase.proto")
+  format = "PROTOBUF"
+  schema = file("./schemas/proto/purchase.proto")
 }

@@ -2,7 +2,7 @@ terraform {
   required_providers {
     confluent = {
       source  = "confluentinc/confluent"
-      version = "1.33.0"
+      version = "1.32.0"
     }
   }
 }
@@ -265,9 +265,9 @@ resource "confluent_schema" "purchase" {
     id = confluent_schema_registry_cluster.essentials.id
   }
   rest_endpoint = confluent_schema_registry_cluster.essentials.rest_endpoint
-  subject_name  = "purchase-value"
-  format        = "PROTOBUF"
-  schema        = file("./schemas/proto/purchase.proto")
+  subject_name = "purchase-value"
+  format = "PROTOBUF"
+  schema = file("./schemas/proto/purchase.proto")
   credentials {
     key    = confluent_api_key.env-manager-schema-registry-api-key.id
     secret = confluent_api_key.env-manager-schema-registry-api-key.secret

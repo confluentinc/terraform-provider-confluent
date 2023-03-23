@@ -2,7 +2,7 @@ terraform {
   required_providers {
     confluent = {
       source  = "confluentinc/confluent"
-      version = "1.33.0"
+      version = "1.32.0"
     }
   }
 }
@@ -185,7 +185,7 @@ resource "confluent_kafka_acl" "app-connector-create-on-prefix-topics" {
     id = confluent_kafka_cluster.basic.id
   }
   resource_type = "TOPIC"
-  resource_name = local.topic_prefix
+  resource_name = "${local.topic_prefix}"
   pattern_type  = "PREFIXED"
   principal     = "User:${confluent_service_account.app-connector.id}"
   host          = "*"
@@ -203,7 +203,7 @@ resource "confluent_kafka_acl" "app-connector-write-on-prefix-topics" {
     id = confluent_kafka_cluster.basic.id
   }
   resource_type = "TOPIC"
-  resource_name = local.topic_prefix
+  resource_name = "${local.topic_prefix}"
   pattern_type  = "PREFIXED"
   principal     = "User:${confluent_service_account.app-connector.id}"
   host          = "*"
@@ -269,20 +269,20 @@ resource "confluent_connector" "mongo-db-source" {
   // Block for custom *nonsensitive* configuration properties that are *not* labelled with "Type: password" under "Configuration Properties" section in the docs:
   // https://docs.confluent.io/cloud/current/connectors/cc-mongo-db-source.html#configuration-properties
   config_nonsensitive = {
-    "connector.class"          = "MongoDbAtlasSource"
-    "name"                     = "confluent-mongodb-source"
+    "connector.class" = "MongoDbAtlasSource"
+    "name" = "confluent-mongodb-source"
     "kafka.auth.mode"          = "SERVICE_ACCOUNT"
     "kafka.service.account.id" = confluent_service_account.app-connector.id
-    "connection.host"          = local.connection_host
-    "connection.user"          = local.connection_user
-    "topic.prefix"             = local.topic_prefix
-    "database"                 = local.database
-    "collection"               = local.collection
-    "poll.await.time.ms"       = "5000"
-    "poll.max.batch.size"      = "1000"
-    "copy.existing"            = "true"
-    "output.data.format"       = "JSON"
-    "tasks.max"                = "1"
+    "connection.host" = local.connection_host
+    "connection.user" = local.connection_user
+    "topic.prefix" = local.topic_prefix
+    "database" = local.database
+    "collection" = local.collection
+    "poll.await.time.ms" = "5000"
+    "poll.max.batch.size" = "1000"
+    "copy.existing" = "true"
+    "output.data.format" = "JSON"
+    "tasks.max" = "1"
   }
 
   depends_on = [
@@ -295,9 +295,9 @@ resource "confluent_connector" "mongo-db-source" {
 }
 
 locals {
-  topic_prefix    = "sample_topic_prefix"
-  database        = "sample_database"
-  collection      = "sample_collection"
+  topic_prefix = "sample_topic_prefix"
+  database = "sample_database"
+  collection = "sample_collection"
   connection_host = "cluster4-r5q3r7.gcp.mongodb.net"
   connection_user = "confluentuser"
 }

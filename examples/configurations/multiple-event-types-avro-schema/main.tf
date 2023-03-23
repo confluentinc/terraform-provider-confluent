@@ -2,7 +2,7 @@ terraform {
   required_providers {
     confluent = {
       source  = "confluentinc/confluent"
-      version = "1.33.0"
+      version = "1.32.0"
     }
   }
 }
@@ -265,9 +265,9 @@ resource "confluent_schema" "page-view" {
     id = confluent_schema_registry_cluster.essentials.id
   }
   rest_endpoint = confluent_schema_registry_cluster.essentials.rest_endpoint
-  subject_name  = "page-view"
-  format        = "AVRO"
-  schema        = file("./schemas/avro/page_view.avsc")
+  subject_name = "page-view"
+  format = "AVRO"
+  schema = file("./schemas/avro/page_view.avsc")
   credentials {
     key    = confluent_api_key.env-manager-schema-registry-api-key.id
     secret = confluent_api_key.env-manager-schema-registry-api-key.secret
@@ -278,7 +278,7 @@ data "confluent_schema" "page-view" {
   schema_registry_cluster {
     id = confluent_schema_registry_cluster.essentials.id
   }
-  rest_endpoint     = confluent_schema_registry_cluster.essentials.rest_endpoint
+  rest_endpoint = confluent_schema_registry_cluster.essentials.rest_endpoint
   subject_name      = confluent_schema.page-view.subject_name
   schema_identifier = confluent_schema.page-view.schema_identifier
   credentials {
@@ -292,9 +292,9 @@ resource "confluent_schema" "purchase" {
     id = confluent_schema_registry_cluster.essentials.id
   }
   rest_endpoint = confluent_schema_registry_cluster.essentials.rest_endpoint
-  subject_name  = "purchase"
-  format        = "AVRO"
-  schema        = file("./schemas/avro/purchase.avsc")
+  subject_name = "purchase"
+  format = "AVRO"
+  schema = file("./schemas/avro/purchase.avsc")
   credentials {
     key    = confluent_api_key.env-manager-schema-registry-api-key.id
     secret = confluent_api_key.env-manager-schema-registry-api-key.secret
@@ -305,7 +305,7 @@ data "confluent_schema" "purchase" {
   schema_registry_cluster {
     id = confluent_schema_registry_cluster.essentials.id
   }
-  rest_endpoint     = confluent_schema_registry_cluster.essentials.rest_endpoint
+  rest_endpoint = confluent_schema_registry_cluster.essentials.rest_endpoint
   subject_name      = confluent_schema.purchase.subject_name
   schema_identifier = confluent_schema.purchase.schema_identifier
   credentials {
@@ -319,9 +319,9 @@ resource "confluent_schema" "customer-event" {
     id = confluent_schema_registry_cluster.essentials.id
   }
   rest_endpoint = confluent_schema_registry_cluster.essentials.rest_endpoint
-  subject_name  = "customer-event-value"
-  format        = "AVRO"
-  schema        = file("./schemas/avro/customer_event.avsc")
+  subject_name = "customer-event-value"
+  format = "AVRO"
+  schema = file("./schemas/avro/customer_event.avsc")
 
   schema_reference {
     name         = "Purchase"

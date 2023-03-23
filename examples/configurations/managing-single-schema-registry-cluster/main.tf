@@ -2,7 +2,7 @@ terraform {
   required_providers {
     confluent = {
       source  = "confluentinc/confluent"
-      version = "1.33.0"
+      version = "1.32.0"
     }
   }
 }
@@ -16,6 +16,6 @@ provider "confluent" {
 
 resource "confluent_schema" "purchase-v1" {
   subject_name = "purchase-value"
-  format       = "PROTOBUF"
-  schema       = file("./schemas/proto/purchase.proto")
+  format = "PROTOBUF"
+  schema = file("./schemas/proto/purchase.proto")
 }

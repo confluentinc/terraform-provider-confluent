@@ -2,14 +2,14 @@ terraform {
   required_providers {
     confluent = {
       source  = "confluentinc/confluent"
-      version = "1.33.0"
+      version = "1.32.0"
     }
   }
 }
 
 provider "confluent" {
-  cloud_api_key    = var.confluent_cloud_api_key
-  cloud_api_secret = var.confluent_cloud_api_secret
+  cloud_api_key       = var.confluent_cloud_api_key
+  cloud_api_secret    = var.confluent_cloud_api_secret
 
   kafka_id            = var.kafka_id
   kafka_rest_endpoint = var.kafka_rest_endpoint
@@ -18,7 +18,7 @@ provider "confluent" {
 }
 
 resource "confluent_kafka_topic" "orders" {
-  topic_name = "orders"
+  topic_name    = "orders"
 }
 resource "confluent_kafka_acl" "app-producer-write-on-topic" {
   resource_type = "TOPIC"
