@@ -1,9 +1,60 @@
-## 1.33.0 (February 16, 2023)
+## 1.37.0 (March 23, 2023)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.36.0...v1.37.0)
+
+**New features:**
+* Added new `confluent_users` [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_users) in a [Generally Available lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
+
+## 1.36.0 (March 17, 2023)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.35.0...v1.36.0)
+
+**New features:**
+* Added new `confluent_schemas` [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_schemas) in a [Preview lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
+* Added new `confluent_byok_key` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_byok_key) and a corresponding [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_byok_key) in a [Preview lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
+* Added **2** new examples for `confluent_byok_key` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_byok_key):
+  * [dedicated-public-aws-byok-kafka-acls](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/dedicated-public-aws-byok-kafka-acls)
+  * [dedicated-public-azure-byok-kafka-acls](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/dedicated-public-azure-byok-kafka-acls)
+* Added support for new computed `byok_key` block of `confluent_kafka_cluster` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_cluster) and a corresponding [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_kafka_cluster) in a [Preview lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
+
+**Bug fixes:**
+* Updated docs.
+
+## 1.35.0 (March 7, 2023)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.34.0...v1.35.0)
+
+**New features:**
+* Added new `confluent_invitation` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_invitation) and a corresponding [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_invitation) in a [Preview lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
+
+## 1.34.0 (March 1, 2023)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.33.0...v1.34.0)
+
+**New features:**
+* Added support for new computed `zones` attribute of `confluent_kafka_cluster` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_cluster) and a corresponding [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_kafka_cluster) in a [Generally Available lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy) ([#132](https://github.com/confluentinc/terraform-provider-confluent/issues/132), [#213](https://github.com/confluentinc/terraform-provider-confluent/issues/213)).
+
+**Bug fixes:**
+* Updated docs.
+
+## 1.33.0 (February 28, 2023)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.32.0...v1.33.0)
 
 **New features:**
-* Added new `confluent_users` [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_users) in a [Generally Available lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
+* Added support for new optional `dns_config` block of `confluent_network` on Azure and GCP [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_network) and a corresponding [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_network) in a [Generally Available lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
+* Added new `confluent_schema` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema) and a corresponding [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_schema) in a [Generally Available lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
+* Added new `confluent_subject_mode` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_subject_mode) and a corresponding [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_subject_mode) in a [Generally Available lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy) ([#155](https://github.com/confluentinc/terraform-provider-confluent/issues/155)).
+* Added new `confluent_subject_config` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_subject_config) and a corresponding [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_subject_config) in a [Generally Available lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
+* Added new `confluent_schema_registry_cluster_mode` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema_registry_cluster_mode) and a corresponding [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_schema_registry_cluster_mode) in a [Generally Available lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy) ([#155](https://github.com/confluentinc/terraform-provider-confluent/issues/155)).
+* Added new `confluent_schema_registry_cluster_config` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema_registry_cluster_config) and a corresponding [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_schema_registry_cluster_config) in a [Generally Available lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
+
+**Bug fixes:**
+* Updated docs.
+* Updated [ksql-rbac](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/ksql-rbac) example to replace `CloudClusterAdmin` role with `ResourceOwner` and `KsqlAdmin` [roles](https://docs.confluent.io/cloud/current/access-management/access-control/cloud-rbac.html#ccloud-rbac-roles).
+* Fixed "KsqlAdmin role for ksqldb doesn't work" bug in [ksql-acls](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/ksql-acls) example ([#198](https://github.com/confluentinc/terraform-provider-confluent/issues/198)).
+* Fixed a bug to display a descriptive error message when updating name of `confluent_connector` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_connector) ([#171](https://github.com/confluentinc/terraform-provider-confluent/issues/171)).
+* Fixed a bug to load schemas from in all contexts and not just `default` one to create a unified experience with the Confluent Cloud Console.
 
 ## 1.32.0 (February 15, 2023)
 

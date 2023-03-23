@@ -1,0 +1,29 @@
+{
+  "api_version": "iam/v2",
+  "creator": {
+    "api_version": "iam/v2",
+    "id": "u-5m00y8",
+    "kind": "User",
+    "related": "https://api.confluent.cloud/iam/v2/users/u-5m00y8",
+    "resource_name": "crn://confluent.cloud/user=u-5m00y8"
+  },
+  "email": "zli00000000@confluent.io",
+  "expires_at": "2023-01-11T23:00:06.285721Z",
+  "id": "i-7od91",
+  "kind": "Invitation",
+  "auth_type": "AUTH_TYPE_LOCAL",
+  "metadata": {
+    "created_at": "2023-01-04T23:00:06.270751Z",
+    "resource_name": "crn://confluent.cloud/organization=1111aaaa-11aa-11aa-11aa-111111aaaaaa/invitation=i-7od91",
+    "self": "https://api.confluent.cloud/iam/v2/invitations/i-7od91",
+    "updated_at": "2023-01-04T23:00:06.285721Z"
+  },
+  "status": "INVITE_STATUS_SENT",
+  "user": {
+    "api_version": "iam/v2",
+    "id": "u-r0jy59",
+    "kind": "User",
+    "related": "https://api.confluent.cloud/iam/v2/users/u-r0jy59",
+    "resource_name": "crn://confluent.cloud/user=u-r0jy59"
+  }
+}

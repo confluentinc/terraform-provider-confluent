@@ -8,10 +8,7 @@ description: |-
 
 # confluent_schema Resource
 
-[![Open Preview](https://img.shields.io/badge/Lifecycle%20Stage-Open%20Preview-%2300afba)](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy)
-
--> **Note:** `confluent_schema` resource is available in **Open Preview** for early adopters. Open Preview features are introduced to gather customer feedback. This feature should be used only for evaluation and non-production testing purposes or to provide feedback to Confluent, particularly as it becomes more widely available in follow-on editions.  
-**Open Preview** features are intended for evaluation use in development and testing environments only, and not for production use. The warranty, SLA, and Support Services provisions of your agreement with Confluent do not apply to Open Preview features. Open Preview features are considered to be a Proof of Concept as defined in the Confluent Cloud Terms of Service. Confluent may discontinue providing preview releases of the Open Preview features at any time in Confluent’s sole discretion.
+[![General Availability](https://img.shields.io/badge/Lifecycle%20Stage-General%20Availability-%2345c6e8)](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy)
 
 `confluent_schema` provides a Schema resource that enables creating, evolving, and deleting Schemas on a Schema Registry cluster on Confluent Cloud.
 
@@ -27,7 +24,7 @@ provider "confluent" {
   cloud_api_secret = var.confluent_cloud_api_secret # optionally use CONFLUENT_CLOUD_API_SECRET env var
 }
 
-resource "confluent_schema" "avro-purchase-v1" {
+resource "confluent_schema" "avro-purchase" {
   schema_registry_cluster {
     id = confluent_schema_registry_cluster.essentials.id
   }
@@ -56,7 +53,7 @@ provider "confluent" {
   schema_registry_api_secret    = var.schema_registry_api_secret    # optionally use SCHEMA_REGISTRY_API_SECRET env var
 }
 
-resource "confluent_schema" "avro-purchase-v1" {
+resource "confluent_schema" "avro-purchase" {
   subject_name = "avro-purchase-value"
   format = "AVRO"
   schema = file("./schemas/avro/purchase.avsc")
@@ -134,3 +131,97 @@ The following end-to-end examples might help to get started with `confluent_sche
 * [`single-event-types-proto-schema-with-alias`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/single-event-types-proto-schema-with-alias)
 * [`multiple-event-types-avro-schema`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/multiple-event-types-avro-schema)
 * [`multiple-event-types-proto-schema`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/multiple-event-types-proto-schema)
+
+## Additional Examples
+
+### Default Option #1: Manage the latest schema version only. The resource instance always points to the latest schema version by supporting in-place updates
+
+```terraform
+# Step #1: Run 'terraform plan' and 'terraform apply' to create
+# v1 of avro-purchase schema.
+provider "confluent" {
+  schema_registry_id            = var.schema_registry_id            # optionally use SCHEMA_REGISTRY_ID env var
+  schema_registry_rest_endpoint = var.schema_registry_rest_endpoint # optionally use SCHEMA_REGISTRY_REST_ENDPOINT env var
+  schema_registry_api_key       = var.schema_registry_api_key       # optionally use SCHEMA_REGISTRY_API_KEY env var
+  schema_registry_api_secret    = var.schema_registry_api_secret    # optionally use SCHEMA_REGISTRY_API_SECRET env var
+}
+
+# confluent_schema.avro-purchase points to v1.
+resource "confluent_schema" "avro-purchase" {
+  subject_name = "avro-purchase-value"
+  format = "AVRO"
+  schema = file("./schemas/avro/purchase.avsc")
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+# Step #2: Evolve schema by updating schemas/avro/purchase.avsc.
+
+# Step #3: Run 'terraform plan' and 'terraform apply' to update
+# confluent_schema.avro-purchase in-place to evolve avro-purchase 
+# schema from v1 to v2.
+
+# confluent_schema.avro-purchase points to v2 after an in-place update. 
+resource "confluent_schema" "avro-purchase" {
+  subject_name = "avro-purchase-value"
+  format = "AVRO"
+  schema = file("./schemas/avro/purchase.avsc")
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+# Note: after running 'terraform destroy' just v2 (the latest version) will
+# be soft-deleted by default (set hard_delete=true for a hard deletion).
+```
+
+### Option #2: Manage different schema versions using different resource instances
+
+```terraform
+# Step #1: Run 'terraform plan' and 'terraform apply'
+# to create v1 of avro-purchase schema.
+provider "confluent" {
+  schema_registry_id            = var.schema_registry_id            # optionally use SCHEMA_REGISTRY_ID env var
+  schema_registry_rest_endpoint = var.schema_registry_rest_endpoint # optionally use SCHEMA_REGISTRY_REST_ENDPOINT env var
+  schema_registry_api_key       = var.schema_registry_api_key       # optionally use SCHEMA_REGISTRY_API_KEY env var
+  schema_registry_api_secret    = var.schema_registry_api_secret    # optionally use SCHEMA_REGISTRY_API_SECRET env var
+}
+
+# confluent_schema.avro-purchase-v1 manages v1.
+resource "confluent_schema" "avro-purchase-v1" {
+  subject_name = "avro-purchase-value"
+  format = "AVRO"
+  schema = file("./schemas/avro/purchase_v1.avsc")
+  recreate_on_update = true
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+# Step #2: Create schemas/avro/purchase_v2.avsc.
+
+# Step #3: Run 'terraform plan' and 'terraform apply'
+# to create confluent_schema.avro-purchase-v2.
+
+# confluent_schema.avro-purchase-v2 manages v2. 
+resource "confluent_schema" "avro-purchase-v2" {
+  subject_name = "avro-purchase-value"
+  format = "AVRO"
+  schema = file("./schemas/avro/purchase_v2.avsc")
+  recreate_on_update = true
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+# Note: after running 'terraform destroy' both v1 and v2 will
+# be soft deleted by default. Set hard_delete=true for a hard deletion.
+```
+
+-> **Note:** See [this discussion](https://github.com/confluentinc/terraform-provider-confluent/issues/124) for more details.
+
