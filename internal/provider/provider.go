@@ -199,6 +199,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_role_binding":                   roleBindingDataSource(),
 				"confluent_schema":                         schemaDataSource(),
 				"confluent_schemas":                        schemasDataSource(),
+				"confluent_users":                          usersDataSource(),
 				"confluent_service_account":                serviceAccountDataSource(),
 				"confluent_schema_registry_cluster":        schemaRegistryClusterDataSource(),
 				"confluent_schema_registry_region":         schemaRegistryRegionDataSource(),
