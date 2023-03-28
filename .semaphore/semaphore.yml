@@ -3,6 +3,8 @@ name: Terraform Provider for Confluent Cloud Pipeline
 agent:
   machine:
     type: s1-prod-ubuntu20-04-amd64-1
+execution_time_limit:
+  minutes: 90
 
 global_job_config:
   secrets:
