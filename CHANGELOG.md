@@ -1,3 +1,20 @@
+## 1.37.0 (March 28, 2023)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.36.0...v1.37.0)
+
+**New features:**
+* Added new `confluent_invitation` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_invitation) and a corresponding [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_invitation) in a [Generally Available lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy) ([#133](https://github.com/confluentinc/terraform-provider-confluent/issues/133)).
+* Added new `confluent_users` [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_schemas) in a [Preview lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy) ([#203](https://github.com/confluentinc/terraform-provider-confluent/issues/203)).
+* Added **4** new examples:
+  * [azure-key-vault](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/azure-key-vault)
+  * [hashicorp-vault](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/hashicorp-vault)
+  * [manage-topics-via-json](https://github.com/confluentinc/terraform-provider-confluent-internal/tree/master/examples/configurations/manage-topics-via-json)
+  * [topic-as-a-service](https://github.com/confluentinc/terraform-provider-confluent-internal/tree/master/examples/configurations/topic-as-a-service)
+
+**Bug fixes:**
+* Fixed a bug "422 Unprocessable Entity: Availability update is only supported on BASIC and STANDARD clusters" when updating `cku` attribute of `confluent_kafka_cluster` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_cluster).
+* Updated docs.
+
 ## 1.36.0 (March 17, 2023)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.35.0...v1.36.0)
