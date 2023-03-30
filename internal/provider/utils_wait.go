@@ -142,6 +142,24 @@ func waitForPrivateLinkAccessToProvision(ctx context.Context, c *Client, environ
 	return nil
 }
 
+func waitForNetworkLinkServiceToProvision(ctx context.Context, c *Client, environmentId, nlsId string) error {
+	stateConf := &resource.StateChangeConf{
+		Pending: []string{stateProvisioning},
+		Target:  []string{stateReady},
+		Refresh: nlsProvisionStatus(c.netApiContext(ctx), c, environmentId, nlsId),
+		Timeout: networkingAPICreateTimeout,
+		// TODO: increase delay
+		Delay:        5 * time.Second,
+		PollInterval: 1 * time.Minute,
+	}
+
+	tflog.Debug(ctx, fmt.Sprintf("Waiting for Network Link Service %q provisioning status to become %q", nlsId, stateReady), map[string]interface{}{networkLinkServiceLoggingKey: nlsId})
+	if _, err := stateConf.WaitForStateContext(c.netApiContext(ctx)); err != nil {
+		return err
+	}
+	return nil
+}
+
 func waitForNetworkToProvision(ctx context.Context, c *Client, environmentId, networkId string) error {
 	stateConf := &resource.StateChangeConf{
 		Pending: []string{stateProvisioning},
@@ -579,6 +597,25 @@ func privateLinkAccessProvisionStatus(ctx context.Context, c *Client, environmen
 		}
 		// Private Link Access is in an unexpected state
 		return nil, stateUnexpected, fmt.Errorf("private Link Access %q is an unexpected state %q: %s", privateLinkAccessId, privateLinkAccess.Status.GetPhase(), privateLinkAccess.Status.GetErrorMessage())
+	}
+}
+
+func nlsProvisionStatus(ctx context.Context, c *Client, environmentId string, nlsId string) resource.StateRefreshFunc {
+	return func() (result interface{}, s string, err error) {
+		nls, _, err := executeNLSRead(c.netApiContext(ctx), c, nlsId, environmentId)
+		if err != nil {
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Network Link Service %q: %s", nlsId, createDescriptiveError(err)), map[string]interface{}{networkLinkServiceLoggingKey: nlsId})
+			return nil, stateUnknown, err
+		}
+
+		tflog.Debug(ctx, fmt.Sprintf("Waiting for Network Link Service %q provisioning status to become %q: current status is %q", nlsId, stateReady, nls.Status.GetPhase()), map[string]interface{}{networkLinkServiceLoggingKey: nlsId})
+		if nls.Status.GetPhase() == stateProvisioning || nls.Status.GetPhase() == stateReady {
+			return nls, nls.Status.GetPhase(), nil
+		} else if nls.Status.GetPhase() == stateFailed {
+			return nil, stateFailed, fmt.Errorf("network link service %q provisioning status is %q: %s", nlsId, stateFailed, nls.Status.GetErrorMessage())
+		}
+		// Network is in an unexpected state
+		return nil, stateUnexpected, fmt.Errorf("network link service %q is an unexpected state %q: %s", nlsId, nls.Status.GetPhase(), nls.Status.GetErrorMessage())
 	}
 }
 
