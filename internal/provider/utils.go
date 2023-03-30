@@ -61,6 +61,7 @@ const (
 	networkLoggingKey                     = "network_key_id"
 	connectorLoggingKey                   = "connector_key_id"
 	privateLinkAccessLoggingKey           = "private_link_access_id"
+	networkLinkEndpointLoggingKey         = "network_link_endpoint_id"
 	peeringLoggingKey                     = "peering_id"
 	transitGatewayAttachmentLoggingKey    = "transit_gateway_attachment_id"
 	ksqlClusterLoggingKey                 = "ksql_cluster_id"

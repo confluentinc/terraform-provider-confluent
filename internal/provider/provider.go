@@ -210,6 +210,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_user":                           userDataSource(),
 				"confluent_invitation":                     invitationDataSource(),
 				"confluent_byok_key":                       byokDataSource(),
+				"confluent_network_link_endpoint":          networkLinkEndpointDataSource(),
 			},
 			ResourcesMap: map[string]*schema.Resource{
 				"confluent_api_key":                        apiKeyResource(),
@@ -239,6 +240,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_schema_registry_cluster_config": schemaRegistryClusterConfigResource(),
 				"confluent_transit_gateway_attachment":     transitGatewayAttachmentResource(),
 				"confluent_invitation":                     invitationResource(),
+				"confluent_network_link_endpoint":          networkLinkEndpointResource(),
 			},
 		}
 
