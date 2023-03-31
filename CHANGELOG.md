@@ -1,3 +1,14 @@
+## 1.38.0 (March 31, 2023)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.37.0...v1.38.0)
+
+**New features:**
+* Added new optional `reserved_cidr` attribute and `zone_info` block to `confluent_network` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_network) and a corresponding [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_network) in a [Limited Availability lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
+* Added new `confluent_network_link_service` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_network_link_service) and a corresponding [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_network_link_service) in an [Early Access lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
+* Added new `confluent_network_link_endpoint` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_network_link_endpoint) and a corresponding [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_network_link_endpoint) in an [Early Access lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
+* Added **1** new example:
+  * [cluster-link-over-aws-private-link-networks](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/cluster-link-over-aws-private-link-networks)
+
 ## 1.37.0 (March 28, 2023)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.36.0...v1.37.0)

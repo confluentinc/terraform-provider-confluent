@@ -6,15 +6,18 @@ page_title: "Sample Project"
 
 ## Summary
 
-[![asciicast](https://asciinema.org/a/571539.svg)](https://asciinema.org/a/571539)
+[![asciicast](https://asciinema.org/a/572530.svg)](https://asciinema.org/a/572530)
 
 Use the Confluent Terraform provider to enable the lifecycle management of Confluent Cloud resources:
    * [Environments](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_environment)
    * [Kafka Clusters](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_cluster)
+   * [BYOK Key](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_byok_key)
    * [Topics](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_topic)
    * [Connectors](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_connector)
    * [Networks](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_network)
    * [Private Link Accesses](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_private_link_access)
+   * [Network Link Service](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_network_link_service)
+   * [Network Link Endpoint](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_network_link_endpoint)
    * [Peerings](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_peering)
    * [Transit Gateway Attachments](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_transit_gateway_attachment)
    * [Service Accounts](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_service_account)
@@ -34,6 +37,7 @@ Use the Confluent Terraform provider to enable the lifecycle management of Confl
    * [Subject Modes](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_subject_mode)
    * [ksqlDB Clusters](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_ksql_cluster)
    * [Schemas](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema)
+   * [Invitation](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_invitation)
 
 In this guide, you will:
 
