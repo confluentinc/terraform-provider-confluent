@@ -97,5 +97,5 @@ $ terraform import confluent_network_link_service.my_nls env-abc123/nls-abc123
 !> **Warning:** Do not forget to delete terminal command history afterwards for security purposes.
 
 ## Getting Started
-The following end-to-end examples might help to get started with `confluent_peering` resource:
-* [`cluster-link-over-aws-private-link-networks`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/cluster-link-over-aws-private-link-networks): Cluster link over two dedicated clusters in separate aws PrivateLink networks
+The following end-to-end examples might help to get started with `confluent_network_link_service` resource:
+* [`cluster-link-over-aws-private-link-networks`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/cluster-link-over-aws-private-link-networks): Cluster link over two dedicated clusters in separate AWS PrivateLink networks
