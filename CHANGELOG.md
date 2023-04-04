@@ -1,3 +1,10 @@
+## 1.39.0 (April 4, 2023)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.38.0...v1.39.0)
+
+**New features:**
+* Added new [Experimental Resource Importer](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/guides/experimental-resource-importer) in a [Preview lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy) that enables importing your existing Confluent Cloud resources to Terraform Configuration (`main.tf`) and Terraform State (`terraform.tfstate`) files.
+
 ## 1.38.0 (March 31, 2023)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.37.0...v1.38.0)

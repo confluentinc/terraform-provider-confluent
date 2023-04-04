@@ -11,7 +11,7 @@ page_title: "Experimental Resource Importer"
 
 ## Summary
 
-[![asciicast](https://asciinema.org/a/573790.svg)](https://asciinema.org/a/573790)
+[![asciicast](https://asciinema.org/a/574292.svg)](https://asciinema.org/a/574292)
 
 -> **Note:** Running _Experimental Resource Importer for Confluent Terraform Provider_ is a read-only operation. It will not edit Confluent Cloud infrastructure.
 For additional safety, the _Experimental Resource Importer for Confluent Terraform Provider_ adds `lifecycle { prevent_destroy = true }` for every imported instance to prevent accidental instance deletion. This setting rejects plans that would destroy or recreate the instance, such as attempting to change uneditable attributes. For more information, see the [Terraform docs](https://www.terraform.io/language/meta-arguments/lifecycle#prevent_destroy).
