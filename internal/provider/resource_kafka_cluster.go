@@ -667,3 +667,36 @@ func optionalByokDataSourceSchema() *schema.Schema {
 		},
 	}
 }
+
+func kafkaClusterImporter() *Importer {
+	return &Importer{
+		LoadInstanceIds: loadAllKafkaClusters,
+	}
+}
+
+func loadAllKafkaClusters(ctx context.Context, client *Client) (InstanceIdsToNameMap, diag.Diagnostics) {
+	instances := make(InstanceIdsToNameMap)
+
+	environments, err := loadEnvironments(ctx, client)
+	if err != nil {
+		return instances, diag.FromErr(createDescriptiveError(err))
+	}
+	for _, environment := range environments {
+		kafkaClusters, err := loadKafkaClusters(ctx, client, environment.GetId())
+		if err != nil {
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Kafka Clusters in Environment %q: %s", environment.GetId(), createDescriptiveError(err)))
+			return instances, diag.FromErr(createDescriptiveError(err))
+		}
+		kafkaClustersJson, err := json.Marshal(kafkaClusters)
+		if err != nil {
+			return instances, diag.Errorf("error reading Kafka Clusters in Environment %q: error marshaling %#v to json: %s", environment.GetId(), kafkaClusters, createDescriptiveError(err))
+		}
+		tflog.Debug(ctx, fmt.Sprintf("Fetched Kafka Clusters in Environment %q: %s", environment.GetId(), kafkaClustersJson))
+
+		for _, kafkaCluster := range kafkaClusters {
+			instanceId := fmt.Sprintf("%s/%s", environment.GetId(), kafkaCluster.GetId())
+			instances[instanceId] = toValidTerraformResourceName(kafkaCluster.Spec.GetDisplayName())
+		}
+	}
+	return instances, nil
+}

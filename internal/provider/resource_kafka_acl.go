@@ -25,6 +25,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"net/http"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -439,4 +440,90 @@ func kafkaAclUpdate(ctx context.Context, d *schema.ResourceData, meta interface{
 		return diag.Errorf("error updating Kafka ACLs %q: only %q block can be updated for Kafka ACLs", d.Id(), paramCredentials)
 	}
 	return kafkaAclRead(ctx, d, meta)
+}
+
+func kafkaAclImporter() *Importer {
+	return &Importer{
+		LoadInstanceIds: loadAllKafkaAcls,
+	}
+}
+
+func loadAllKafkaAcls(ctx context.Context, client *Client) (InstanceIdsToNameMap, diag.Diagnostics) {
+	instances := make(InstanceIdsToNameMap)
+
+	kafkaRestClient := client.kafkaRestClientFactory.CreateKafkaRestClient(client.kafkaRestEndpoint, client.kafkaClusterId, client.kafkaApiKey, client.kafkaApiSecret, true, true)
+
+	acls, _, err := kafkaRestClient.apiClient.ACLV3Api.GetKafkaAcls(kafkaRestClient.apiContext(ctx), kafkaRestClient.clusterId).Execute()
+
+	if err != nil {
+		tflog.Warn(ctx, fmt.Sprintf("Error reading Kafka ACLs for Kafka Cluster %q: %s", kafkaRestClient.clusterId, createDescriptiveError(err)), map[string]interface{}{kafkaClusterLoggingKey: kafkaRestClient.clusterId})
+		return nil, diag.FromErr(createDescriptiveError(err))
+	}
+	kafkaAclsJson, err := json.Marshal(acls)
+	if err != nil {
+		return nil, diag.Errorf("error reading Kafka ACLs for Kafka Cluster %q: error marshaling %#v to json: %s", kafkaRestClient.clusterId, acls, createDescriptiveError(err))
+	}
+	tflog.Debug(ctx, fmt.Sprintf("Fetched Kafka ACLs for Kafka Cluster %q: %s", kafkaRestClient.clusterId, kafkaAclsJson))
+
+	// APIF-2038: Kafka REST API only accepts integer ID at the moment
+	serviceAccounts, _, err := client.iamV1Client.ServiceAccountsV1Api.ListV1ServiceAccounts(client.iamV1ApiContext(ctx)).Execute()
+	users, _, err := client.iamV1Client.UsersV1Api.ListV1Users(client.iamV1ApiContext(ctx)).Execute()
+
+	principalIdMap := make(map[int32]string)
+
+	for _, principal := range serviceAccounts.GetUsers() {
+		principalIdMap[principal.GetId()] = principal.GetResourceId()
+	}
+	for _, principal := range users.GetUsers() {
+		principalIdMap[principal.GetId()] = principal.GetResourceId()
+	}
+
+	for _, aclData := range acls.GetData() {
+		principalWithResourceId, err := principalWithIntegerIdToPrincipalWithResourceId(principalIdMap, aclData.GetPrincipal())
+		if err != nil {
+			tflog.Warn(ctx, fmt.Sprintf("%s", createDescriptiveError(err)), map[string]interface{}{kafkaClusterLoggingKey: kafkaRestClient.clusterId})
+			continue
+		}
+		acl := Acl{
+			ResourceType: aclData.GetResourceType(),
+			ResourceName: aclData.GetResourceName(),
+			PatternType:  aclData.GetPatternType(),
+			Principal:    principalWithResourceId,
+			Host:         aclData.GetHost(),
+			Operation:    aclData.GetOperation(),
+			Permission:   aclData.GetPermission(),
+		}
+		instanceId := createKafkaAclId(client.kafkaClusterId, acl)
+		instances[instanceId] = toValidTerraformResourceName(createAclInstanceName(acl))
+	}
+
+	return instances, nil
+}
+
+func createAclInstanceName(acl Acl) string {
+	return fmt.Sprintf("%s-%s-%s-%s-%s", acl.Permission, acl.Operation, acl.PatternType, acl.ResourceName, acl.ResourceType)
+}
+
+// APIF-2043: TEMPORARY METHOD
+// Converts principal with an integer ID (User:6789) to principal with a resourceID (User:sa-01234)
+func principalWithIntegerIdToPrincipalWithResourceId(principalIdMap map[int32]string, principalWithIntegerId string) (string, error) {
+	// There's input validation that principal attribute must start with "User:sa-" or "User:u-" or "User:pool-"  or "User:*"
+
+	if principalWithIntegerId == "User:*" || strings.HasPrefix(principalWithIntegerId, "User:sa-") || strings.HasPrefix(principalWithIntegerId, "User:u-") || strings.HasPrefix(principalWithIntegerId, "User:pool-") {
+		return principalWithIntegerId, nil
+	}
+
+	// User:12345 -> sa-12345
+	intIdStr := principalWithIntegerId[5:]
+	intId, err := strconv.Atoi(intIdStr)
+	if err != nil {
+		return "", fmt.Errorf("failed to convert int ID %s to int", intIdStr)
+	}
+	int32Id := int32(intId)
+
+	if principalResourceId, ok := principalIdMap[int32Id]; ok {
+		return fmt.Sprintf("User:%s", principalResourceId), nil
+	}
+
+	return "", fmt.Errorf("the matching resource ID for a principal with int ID=%d is nil", intId)
 }

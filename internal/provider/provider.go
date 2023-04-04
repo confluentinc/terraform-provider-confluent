@@ -243,6 +243,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_invitation":                     invitationResource(),
 				"confluent_network_link_endpoint":          networkLinkEndpointResource(),
 				"confluent_network_link_service":           networkLinkServiceResource(),
+				"confluent_tf_importer":                    tfImporterResource(),
 			},
 		}
 

@@ -56,6 +56,7 @@ const (
 	serviceAccountLoggingKey              = "service_account_id"
 	userLoggingKey                        = "user_id"
 	environmentLoggingKey                 = "environment_id"
+	tfImporterLoggingKey                  = "tf_importer_environment_id"
 	roleBindingLoggingKey                 = "role_binding_id"
 	apiKeyLoggingKey                      = "api_key_id"
 	networkLoggingKey                     = "network_key_id"
