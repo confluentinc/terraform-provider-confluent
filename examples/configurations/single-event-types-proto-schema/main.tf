@@ -265,7 +265,8 @@ resource "confluent_schema" "purchase" {
     id = confluent_schema_registry_cluster.essentials.id
   }
   rest_endpoint = confluent_schema_registry_cluster.essentials.rest_endpoint
-  subject_name = "purchase-value"
+  # https://developer.confluent.io/learn-kafka/schema-registry/schema-subjects/#topicnamestrategy
+  subject_name = "${confluent_kafka_topic.purchase.topic_name}-value"
   format = "PROTOBUF"
   schema = file("./schemas/proto/purchase.proto")
   credentials {

@@ -319,7 +319,8 @@ resource "confluent_schema" "customer-event" {
     id = confluent_schema_registry_cluster.essentials.id
   }
   rest_endpoint = confluent_schema_registry_cluster.essentials.rest_endpoint
-  subject_name = "customer-event-value"
+  # https://developer.confluent.io/learn-kafka/schema-registry/schema-subjects/#topicnamestrategy
+  subject_name = "${confluent_kafka_topic.customer-event.topic_name}-value"
   format = "AVRO"
   schema = file("./schemas/avro/customer_event.avsc")
 
