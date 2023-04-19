@@ -18,18 +18,19 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	sr "github.com/confluentinc/ccloud-sdk-go-v2/schema-registry/v1"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"net/http"
 	"os"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
+
+	sr "github.com/confluentinc/ccloud-sdk-go-v2/schema-registry/v1"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 const (
@@ -450,23 +451,38 @@ func createSchemaId(clusterId, subjectName string, identifier int32, shouldRecre
 }
 
 func extractSchemaIdentifierFromTfId(terraformId string) (string, error) {
-	parts := strings.Split(terraformId, "/")
+	_, _, identifier, err := extractSubjectInfoFromTfId(terraformId)
 
-	if len(parts) != 3 {
-		return "", fmt.Errorf("error extracting Schema Identifier from Resource ID: invalid format: expected '<Schema Registry cluster ID>/<subject name>/<schema identifier>'")
+	if err != nil {
+		return "", fmt.Errorf("error extracting Schema Identifier from Resource ID: %s", err.Error())
 	}
 
-	return parts[2], nil
+	return identifier, nil
 }
 
 func extractSubjectNameFromTfId(terraformId string) (string, error) {
-	parts := strings.Split(terraformId, "/")
+	_, name, _, err := extractSubjectInfoFromTfId(terraformId)
 
-	if len(parts) != 3 {
-		return "", fmt.Errorf("error extracting Subject Name from Resource ID: invalid format: expected '<Schema Registry cluster ID>/<subject name>/<schema identifier>'")
+	if err != nil {
+		return "", fmt.Errorf("error extracting Subject Name from Resource ID: %s", err.Error())
 	}
 
-	return parts[1], nil
+	return name, nil
+}
+
+func extractSubjectInfoFromTfId(terraformId string) (string, string, string, error) {
+	parts := strings.Split(terraformId, "/")
+	length := len(parts)
+
+	if length < 3 {
+		return "", "", "", fmt.Errorf("invalid format: expected '<Schema Registry cluster ID>/<subject name>/<schema identifier>'")
+	}
+
+	registry := parts[0]
+	identifier := parts[length-1]
+	name := strings.Join(parts[1:length-1], "/")
+
+	return registry, name, identifier, nil
 }
 
 func schemaImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
