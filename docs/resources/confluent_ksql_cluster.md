@@ -92,7 +92,7 @@ resource "confluent_ksql_cluster" "example" {
     id = confluent_environment.development.id
   }
   depends_on = [
-    confluent_role_binding.app-manager-kafka-cluster-admin,
+    confluent_role_binding.app-ksql-kafka-cluster-admin,
     confluent_role_binding.app-ksql-schema-registry-resource-owner,
     confluent_schema_registry_cluster.essentials
   ]
