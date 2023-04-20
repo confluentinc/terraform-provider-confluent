@@ -50,7 +50,7 @@ In addition to the preceding arguments, the following attributes are exported:
 
 -> **Note:** `CONFLUENT_CLOUD_API_KEY` and `CONFLUENT_CLOUD_API_SECRET` environment variables must be set before importing an Invitation.
 
-You can import a Role Binding by using Role Binding ID, for example:
+You can import an Invitation by using Invitation ID, for example:
 
 ```shell
 $ export CONFLUENT_CLOUD_API_KEY="<cloud_api_key>"
