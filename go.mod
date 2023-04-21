@@ -102,7 +102,8 @@ require (
 )
 
 replace (
-	github.com/docker/docker => github.com/moby/moby v20.10.20+incompatible
+	github.com/containerd/containerd => github.com/containerd/containerd v1.6.18
+	github.com/docker/docker => github.com/moby/moby v20.10.24+incompatible
 	github.com/opencontainers/image-spec => github.com/opencontainers/image-spec v1.0.2
 	github.com/opencontainers/runc => github.com/opencontainers/runc v1.1.6
 	github.com/satori/go.uuid v1.2.0 => github.com/satori/go.uuid v1.2.1-0.20181016170032-d91630c85102
