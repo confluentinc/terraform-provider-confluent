@@ -51,6 +51,12 @@ resource "confluent_role_binding" "topic-example-rb" {
   crn_pattern = "${confluent_kafka_cluster.standard.rbac_crn}/kafka=${confluent_kafka_cluster.standard.id}/topic=${confluent_kafka_topic.orders.topic_name}"
 }
 
+resource "confluent_role_binding" "topic-example-rb-2" {
+  principal   = "User:${confluent_identity_pool.test.id}"
+  role_name   = "DeveloperWrite"
+  crn_pattern = "${confluent_kafka_cluster.standard.rbac_crn}/kafka=${confluent_kafka_cluster.standard.id}/topic=${confluent_kafka_topic.orders.topic_name}"
+}
+
 resource "confluent_role_binding" "group-example-rb" {
   principal = "User:${confluent_service_account.test.id}"
   role_name = "DeveloperRead"
