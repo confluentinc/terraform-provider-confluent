@@ -36,7 +36,7 @@ resource "confluent_role_binding" "environment-example-rb-2" {
 resource "confluent_role_binding" "network-example-rb" {
   principal   = "User:${confluent_service_account.test.id}"
   role_name   = "NetworkAdmin"
-  crn_pattern = confluent_network.privatelink.resource_name
+  crn_pattern = data.confluent_organization.demo.resource_name
 }
 
 resource "confluent_role_binding" "cluster-example-rb" {
