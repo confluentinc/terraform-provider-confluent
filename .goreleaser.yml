@@ -27,8 +27,31 @@ builds:
     ignore:
       - goos: darwin
         goarch: '386'
+      - goos: linux
+        goarch: amd64
+      - goos: linux
+        goarch: arm64
     env:
       - CGO_ENABLED=0
+    # https://goreleaser.com/customization/build/#reproducible-builds
+    mod_timestamp: '{{ .CommitTimestamp }}'
+  - binary: '{{ .ProjectName }}_{{ .Version }}'
+    flags:
+      - -mod=readonly
+    ldflags:
+      - -s -w -X main.version={{ .Version }}
+    gcflags:
+      - all=-trimpath={{ .Env.GOPATH }}
+    asmflags:
+      - all=-trimpath={{ .Env.GOPATH }}
+    goos:
+      - linux
+    goarch:
+      - amd64
+      - arm64
+    env:
+      - CGO_ENABLED=1
+      - GOEXPERIMENT=boringcrypto
     # https://goreleaser.com/customization/build/#reproducible-builds
     mod_timestamp: '{{ .CommitTimestamp }}'
 
