@@ -21,6 +21,7 @@ import (
 	cmk "github.com/confluentinc/ccloud-sdk-go-v2/cmk/v2"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"net/http"
@@ -135,6 +136,7 @@ func kafkaResource() *schema.Resource {
 			paramEnvironment:          environmentSchema(),
 			paramConfluentCustomerKey: byokSchema(),
 		},
+		CustomizeDiff: customdiff.Sequence(resourceKafkaCustomizeDiff),
 		Timeouts: &schema.ResourceTimeout{
 			// https://docs.confluent.io/cloud/current/clusters/cluster-types.html#provisioning-time
 			Create: schema.DefaultTimeout(getTimeoutFor(kafkaClusterTypeDedicated)),
@@ -150,6 +152,25 @@ func kafkaResource() *schema.Resource {
 			},
 		},
 	}
+}
+
+func resourceKafkaCustomizeDiff(ctx context.Context, diff *schema.ResourceDiff, meta interface{}) error {
+	newClusterType := extractClusterTypeResourceDiff(diff)
+
+	// Display an error for forbidden cluster updates during `terraform plan`:
+	// More specifically, any update except Basic -> Standard is forbidden:
+	// * Standard -> Basic
+	// * Basic -> Dedicated
+	// * Standard -> Dedicated
+	// * etc.
+	isForbiddenStandardBasicUpdate := newClusterType == kafkaClusterTypeBasic && diff.HasChange(paramBasicCluster) && diff.HasChange(paramStandardCluster) && !diff.HasChange(paramDedicatedCluster)
+	isForbiddenDedicatedUpdate := diff.HasChange(paramDedicatedCluster) && (diff.HasChange(paramBasicCluster) || diff.HasChange(paramStandardCluster))
+
+	if isForbiddenStandardBasicUpdate || isForbiddenDedicatedUpdate {
+		return fmt.Errorf("error updating Kafka Cluster %q: clusters can only be upgraded from 'Basic' to 'Standard'", diff.Id())
+	}
+
+	return nil
 }
 
 func kafkaUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -337,6 +358,21 @@ func kafkaCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 }
 
 func extractClusterType(d *schema.ResourceData) string {
+	basicConfigBlock := d.Get(paramBasicCluster).([]interface{})
+	standardConfigBlock := d.Get(paramStandardCluster).([]interface{})
+	dedicatedConfigBlock := d.Get(paramDedicatedCluster).([]interface{})
+
+	if len(basicConfigBlock) == 1 {
+		return kafkaClusterTypeBasic
+	} else if len(standardConfigBlock) == 1 {
+		return kafkaClusterTypeStandard
+	} else if len(dedicatedConfigBlock) == 1 {
+		return kafkaClusterTypeDedicated
+	}
+	return ""
+}
+
+func extractClusterTypeResourceDiff(d *schema.ResourceDiff) string {
 	basicConfigBlock := d.Get(paramBasicCluster).([]interface{})
 	standardConfigBlock := d.Get(paramStandardCluster).([]interface{})
 	dedicatedConfigBlock := d.Get(paramDedicatedCluster).([]interface{})
