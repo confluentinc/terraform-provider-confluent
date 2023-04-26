@@ -36,6 +36,9 @@ blocks:
           - rm temp.txt
           # Clean up git state
           - git clean -fx
+          # Install deps for compiling for linux/arm64 from linux/amd64
+          - sudo apt update
+          - sudo apt install -y build-essential gcc-aarch64-linux-gnu
       jobs:
         - name: goreleaser
           commands:

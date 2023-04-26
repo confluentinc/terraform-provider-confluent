@@ -6,6 +6,7 @@ before:
 
 builds:
   - binary: '{{ .ProjectName }}_{{ .Version }}'
+    id: "default"
     flags:
       - -mod=readonly
     ldflags:
@@ -36,10 +37,12 @@ builds:
     # https://goreleaser.com/customization/build/#reproducible-builds
     mod_timestamp: '{{ .CommitTimestamp }}'
   - binary: '{{ .ProjectName }}_{{ .Version }}'
+    id: "linux-amd64-build"
     flags:
       - -mod=readonly
     ldflags:
       - -s -w -X main.version={{ .Version }}
+      - -linkmode 'external' -extldflags '-static'
     gcflags:
       - all=-trimpath={{ .Env.GOPATH }}
     asmflags:
@@ -48,10 +51,30 @@ builds:
       - linux
     goarch:
       - amd64
+    env:
+      - CGO_ENABLED=1
+      - GOEXPERIMENT=boringcrypto
+    # https://goreleaser.com/customization/build/#reproducible-builds
+    mod_timestamp: '{{ .CommitTimestamp }}'
+  - binary: '{{ .ProjectName }}_{{ .Version }}'
+    id: "linux-arm64-build"
+    flags:
+      - -mod=readonly
+    ldflags:
+      - -s -w -X main.version={{ .Version }}
+      - -linkmode 'external' -extldflags '-static'
+    gcflags:
+      - all=-trimpath={{ .Env.GOPATH }}
+    asmflags:
+      - all=-trimpath={{ .Env.GOPATH }}
+    goos:
+      - linux
+    goarch:
       - arm64
     env:
       - CGO_ENABLED=1
       - GOEXPERIMENT=boringcrypto
+      - CC=aarch64-linux-gnu-gcc
     # https://goreleaser.com/customization/build/#reproducible-builds
     mod_timestamp: '{{ .CommitTimestamp }}'
 

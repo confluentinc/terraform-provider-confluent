@@ -1,3 +1,16 @@
+## 1.40.0 (April 26, 2023)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.39.0...v1.40.0)
+
+**New features:**
+* Updated Go version to `1.20` and recompiled binaries for `linux/amd64` and `linux/arm64` to use BoringCrypto library.
+
+**Bug fixes:**
+* Resolved "confluent_kafka_cluster is not recreated when type is changed from standard to dedicated" issue ([#221](https://github.com/confluentinc/terraform-provider-confluent/issues/221)).
+* Resolved "Fix a minor error in the example to create a confluent_ksql_cluster resource" issue ([#239](https://github.com/confluentinc/terraform-provider-confluent/issues/239)).
+* Resolved "Setup Visual Studio Dev Containers to be more easy to develop the module" issue ([#107](https://github.com/confluentinc/terraform-provider-confluent/issues/107)).
+* Updated docs.
+
 ## 1.39.0 (April 4, 2023)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.38.0...v1.39.0)
