@@ -7,6 +7,7 @@ require (
 	github.com/confluentinc/ccloud-sdk-go-v2/byok v0.0.1
 	github.com/confluentinc/ccloud-sdk-go-v2/cmk v0.8.0
 	github.com/confluentinc/ccloud-sdk-go-v2/connect v0.2.0
+	github.com/confluentinc/ccloud-sdk-go-v2/data-catalog v0.1.0
 	github.com/confluentinc/ccloud-sdk-go-v2/iam v0.10.0
 	github.com/confluentinc/ccloud-sdk-go-v2/identity-provider v0.2.0
 	github.com/confluentinc/ccloud-sdk-go-v2/kafka-quotas v0.4.0

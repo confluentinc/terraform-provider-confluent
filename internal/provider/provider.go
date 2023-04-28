@@ -212,6 +212,8 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_byok_key":                       byokDataSource(),
 				"confluent_network_link_endpoint":          networkLinkEndpointDataSource(),
 				"confluent_network_link_service":           networkLinkServiceDataSource(),
+				"confluent_tag":                            tagDataSource(),
+				"confluent_tag_binding":                    tagBindingDataSource(),
 			},
 			ResourcesMap: map[string]*schema.Resource{
 				"confluent_api_key":                        apiKeyResource(),
@@ -244,6 +246,8 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_network_link_endpoint":          networkLinkEndpointResource(),
 				"confluent_network_link_service":           networkLinkServiceResource(),
 				"confluent_tf_importer":                    tfImporterResource(),
+				"confluent_tag":                            tagResource(),
+				"confluent_tag_binding":                    tagBindingResource(),
 			},
 		}
 

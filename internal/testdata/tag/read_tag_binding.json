@@ -1,0 +1,26 @@
+[
+  {
+    "typeName": "tag3",
+    "entityStatus": "ACTIVE",
+    "propagate": false,
+    "removePropagationsOnEntityDelete": false,
+    "entityType": "sr_schema",
+    "entityName": "lsrc-8wrx70:.:100001"
+  },
+  {
+    "typeName": "tag1",
+    "entityStatus": "ACTIVE",
+    "propagate": false,
+    "removePropagationsOnEntityDelete": false,
+    "entityType": "sr_schema",
+    "entityName": "lsrc-8wrx70:.:100001"
+  },
+  {
+    "typeName": "tag1234567",
+    "entityStatus": "ACTIVE",
+    "propagate": false,
+    "removePropagationsOnEntityDelete": false,
+    "entityType": "sr_schema",
+    "entityName": "lsrc-8wrx70:.:100001"
+  }
+]

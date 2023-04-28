@@ -21,6 +21,7 @@ import (
 	byok "github.com/confluentinc/ccloud-sdk-go-v2/byok/v1"
 	cmk "github.com/confluentinc/ccloud-sdk-go-v2/cmk/v2"
 	connect "github.com/confluentinc/ccloud-sdk-go-v2/connect/v1"
+	dc "github.com/confluentinc/ccloud-sdk-go-v2/data-catalog/v1"
 	iamv1 "github.com/confluentinc/ccloud-sdk-go-v2/iam/v1"
 	iam "github.com/confluentinc/ccloud-sdk-go-v2/iam/v2"
 	oidc "github.com/confluentinc/ccloud-sdk-go-v2/identity-provider/v2"
@@ -73,6 +74,8 @@ const (
 	kafkaMirrorTopicLoggingKey            = "kafka_mirror_topic_id"
 	kafkaClientQuotaLoggingKey            = "kafka_client_quota_id"
 	schemaLoggingKey                      = "schema_id"
+	tagLoggingKey                         = "tag_id"
+	tagBindingLoggingKey                  = "tag_binding_id"
 	subjectModeLoggingKey                 = "subject_mode_id"
 	subjectConfigLoggingKey               = "subject_config_id"
 	schemaRegistryClusterModeLoggingKey   = "schema_registry_cluster_mode_id"
@@ -303,6 +306,7 @@ type KafkaRestClient struct {
 
 type SchemaRegistryRestClient struct {
 	apiClient                    *schemaregistry.APIClient
+	dataCatalogApiClient         *dc.APIClient
 	clusterId                    string
 	clusterApiKey                string
 	clusterApiSecret             string
@@ -324,6 +328,17 @@ func (c *KafkaRestClient) apiContext(ctx context.Context) context.Context {
 func (c *SchemaRegistryRestClient) apiContext(ctx context.Context) context.Context {
 	if c.clusterApiKey != "" && c.clusterApiSecret != "" {
 		return context.WithValue(context.Background(), schemaregistry.ContextBasicAuth, schemaregistry.BasicAuth{
+			UserName: c.clusterApiKey,
+			Password: c.clusterApiSecret,
+		})
+	}
+	tflog.Warn(ctx, fmt.Sprintf("Could not find Schema Registry API Key for Stream Governance Cluster %q", c.clusterId))
+	return ctx
+}
+
+func (c *SchemaRegistryRestClient) dataCatalogApiContext(ctx context.Context) context.Context {
+	if c.clusterApiKey != "" && c.clusterApiSecret != "" {
+		return context.WithValue(context.Background(), dc.ContextBasicAuth, dc.BasicAuth{
 			UserName: c.clusterApiKey,
 			Password: c.clusterApiSecret,
 		})
