@@ -76,6 +76,8 @@ const (
 	schemaLoggingKey                      = "schema_id"
 	tagLoggingKey                         = "tag_id"
 	tagBindingLoggingKey                  = "tag_binding_id"
+	businessMetadataLoggingKey            = "business_metadata_id"
+	businessMetadataBindingLoggingKey     = "business_metadata_binding_id"
 	subjectModeLoggingKey                 = "subject_mode_id"
 	subjectConfigLoggingKey               = "subject_config_id"
 	schemaRegistryClusterModeLoggingKey   = "schema_registry_cluster_mode_id"

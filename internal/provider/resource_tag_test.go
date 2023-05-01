@@ -25,7 +25,7 @@ import (
 )
 
 const (
-	tagResourceScenarioName        = "confluent_tag Data Source Lifecycle"
+	tagResourceScenarioName        = "confluent_tag Resource Lifecycle"
 	scenarioStateTagHasBeenCreated = "A new tag has been just created"
 	scenarioStateTagHasBeenUpdated = "A new tag has been just updated"
 	createTagUrlPath               = "/catalog/v1/types/tagdefs"
