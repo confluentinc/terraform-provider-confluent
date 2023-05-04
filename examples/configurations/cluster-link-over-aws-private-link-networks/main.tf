@@ -28,7 +28,7 @@ resource "confluent_environment" "main" {
 resource "confluent_network" "source-network" {
   display_name     = "Network Link Service Network"
   cloud            = "AWS"
-  region           = "us-west-2"
+  region           = var.region
   connection_types = ["PRIVATELINK"]
   zones            = ["usw2-az1", "usw2-az2", "usw2-az3"]
   environment {
@@ -39,7 +39,7 @@ resource "confluent_network" "source-network" {
 resource "confluent_network" "destination-network" {
   display_name     = "Network Link Endpoint Network"
   cloud            = "AWS"
-  region           = "us-west-2"
+  region           = var.region
   connection_types = ["PRIVATELINK"]
   zones            = ["usw2-az1", "usw2-az2", "usw2-az3"]
   environment {
@@ -76,8 +76,8 @@ resource "confluent_private_link_access" "destination-access" {
 resource "confluent_kafka_cluster" "destination-cluster" {
   display_name = "inventory"
   availability = "SINGLE_ZONE"
-  cloud        = confluent_network.source-network.cloud
-  region       = confluent_network.source-network.region
+  cloud        = confluent_network.destination-network.cloud
+  region       = confluent_network.destination-network.region
   dedicated {
     cku = 1
   }
