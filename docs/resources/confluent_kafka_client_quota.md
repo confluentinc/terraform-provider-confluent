@@ -49,8 +49,8 @@ The following arguments are supported:
 - `display_name` - (Required String) The name of the Kafka Client Quota.
 - `description` - (Optional String) The description of the Kafka Client Quota.
 - `throughput` (Required Configuration Block) supports the following:
-  - `ingress_byte_rate` - (Optional String) The ingress throughput limit in bytes per second.
-  - `egress_byte_rate` - (Optional String) The egress throughput limit in bytes per second.
+  - `ingress_byte_rate` - (Required String) The ingress throughput limit in bytes per second.
+  - `egress_byte_rate` - (Required String) The egress throughput limit in bytes per second.
 - `principals` - (Required Set of Strings) The list of principals (i.e., service accounts or identity pools) to apply the Kafka Client Quota to. Use the special name, "<default>", to represent the default quota for all users and service accounts.
 - `kafka_cluster` (Required Configuration Block) supports the following:
   - `id` - (Required String) The ID of the Kafka Cluster where the Kafka Client Quota is applied, for example, `lkc-abc123`.
