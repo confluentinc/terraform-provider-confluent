@@ -113,3 +113,7 @@ $ terraform import confluent_tag_binding.main lsrc-8wrx70/PII/lsrc-8wrx70:.:1000
 ```
 
 !> **Warning:** Do not forget to delete terminal command history afterwards for security purposes.
+
+## Getting Started
+The following end-to-end example might help to get started with stream catalog:
+* [stream-catalog](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/stream-catalog): An example of using stream catalog in terraform.
