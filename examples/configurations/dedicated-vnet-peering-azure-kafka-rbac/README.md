@@ -20,7 +20,7 @@
 
     before applying the configuration.
 
-    Also make sure you service principal has got "Directory Readers" role assigned. Otherwise, you might receive the following error:
+    Also make sure you service principal has got "Directory Readers" [role assigned](https://learn.microsoft.com/en-us/azure/azure-sql/database/authentication-aad-directory-readers-role-tutorial?view=azuresql). Otherwise, you might receive the following error:
     
     ```bash
     Error: Listing service principals for filter "appId eq 'f0955e3a-9013-4cf4-a1ea-21587621c9cc'"
