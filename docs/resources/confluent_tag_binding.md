@@ -85,7 +85,7 @@ The following arguments are supported:
 - `credentials` (Optional Configuration Block) supports the following:
     - `key` - (Required String) The Schema Registry API Key.
     - `secret` - (Required String, Sensitive) The Schema Registry API Secret.
-- `tag_name` - (Required String) The name of the tag to be applied, for example, `PII`.
+- `tag_name` - (Required String) The name of the tag to be applied, for example, `PII`. The name must not be empty and consist of a letter followed by a sequence of letter, number, space, or _ characters.
 - `entity_name` - (Required String) The qualified name of the entity., for example, `lsrc-8wrx70:.:100001`.
 - `entity_type` - (Required String) The entity type, for example, `sr_schema`. Refer to the [Entity types](https://docs.confluent.io/cloud/current/stream-governance/stream-catalog-rest-apis.html#entity-types) to learn more about entity types.
 

@@ -40,7 +40,7 @@ func businessMetadataBindingDataSource() *schema.Resource {
 			paramBusinessMetadataName: {
 				Type:         schema.TypeString,
 				Required:     true,
-				ValidateFunc: validation.StringIsNotEmpty,
+				ValidateFunc: validation.StringMatch(regexp.MustCompile("^[a-zA-Z][a-zA-Z0-9_\\s]*$"), "The name must not be empty and consist of a letter followed by a sequence of letter, number, space, or _ characters"),
 				Description:  "The name of the business metadata.",
 			},
 			paramEntityName: {

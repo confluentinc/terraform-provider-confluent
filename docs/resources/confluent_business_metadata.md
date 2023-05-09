@@ -81,7 +81,7 @@ resource "confluent_business_metadata" "pii" {
 
 The following arguments are supported:
 
-- `name` - (Required String) The name of the Business Metadata, for example, `PII`.
+- `name` - (Required String) The name of the Business Metadata, for example, `PII`. The name must not be empty and consist of a letter followed by a sequence of letter, number, space, or _ characters.
 - `attribute_definition` - (Optional List) The list of attribute definitions (see [Business Metadata](https://docs.confluent.io/cloud/current/stream-governance/stream-catalog.html#business-metadata-for-schemas) for more details):
   - `name` - (Required String) The name of the attribute.
   - `is_optional` - (Optional Boolean) An optional flag to control whether the attribute should be optional or required. The default value is `false`.

@@ -65,7 +65,7 @@ The following arguments are supported:
 - `credentials` (Optional Configuration Block) supports the following:
     - `key` - (Required String) The Schema Registry API Key.
     - `secret` - (Required String, Sensitive) The Schema Registry API Secret.
-- `name` - (Required String) The name of the tag, for example, `PII`.
+- `name` - (Required String) The name of the tag, for example, `PII`. The name must not be empty and consist of a letter followed by a sequence of letter, number, space, or _ characters.
 
 -> **Note:** A Schema Registry API key consists of a key and a secret. Schema Registry API keys are required to interact with Schema Registry clusters in Confluent Cloud. Each Schema Registry API key is valid for one specific Schema Registry cluster.
 

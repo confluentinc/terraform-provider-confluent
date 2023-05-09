@@ -63,7 +63,7 @@ data "confluent_business_metadata_binding" "main" {
 
 The following arguments are supported:
 
-- `business_metadata_name` - (Required String) The name of the Business Metadata to be applied, for example, `PII`.
+- `business_metadata_name` - (Required String) The name of the Business Metadata to be applied, for example, `PII`. The name must not be empty and consist of a letter followed by a sequence of letter, number, space, or _ characters.
 - `entity_name` - (Required String) The qualified name of the entity., for example, `lsrc-8wrx70:.:100001`.
 - `entity_type` - (Required String) The entity type, for example, `sr_schema`.
 - `schema_registry_cluster` - (Optional Configuration Block) supports the following:
