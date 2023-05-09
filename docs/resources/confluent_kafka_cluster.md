@@ -227,8 +227,6 @@ The following arguments are supported:
 - `byok_key` (Optional Configuration Block) supports the following:
     - `id` - (Required String) The ID of the Confluent key that is used to encrypt the data in the Kafka cluster, for example, `cck-lye5m`.
 
--> **Note:** The `byok_key` attribute is in an [Preview lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
-
 ## Attributes Reference
 
 In addition to the preceding arguments, the following attributes are exported:
