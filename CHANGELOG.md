@@ -1,3 +1,17 @@
+## 1.42.0 (May 9, 2023)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.41.0...v1.42.0)
+
+**New features:**
+* Added new `confluent_byok_key` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_byok_key) and a corresponding [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_byok_key) in a [Generally Available lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
+* Added support for new computed `byok_key` block of `confluent_kafka_cluster` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_cluster) and a corresponding [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_kafka_cluster) in a [Generally Available lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
+* Resolved "Support confluent_connector in Experimental Resource Importer" issue ([#248](https://github.com/confluentinc/terraform-provider-confluent/issues/248)).
+
+**Bug fixes:**
+* Resolved "Check for correctness of the tag names during terraform plan" issue ([#249](https://github.com/confluentinc/terraform-provider-confluent/issues/249)).
+* Resolved "Unable register subject with name containing slashes" issue ([#236](https://github.com/confluentinc/terraform-provider-confluent/issues/236)).
+* Updated docs.
+
 ## 1.41.0 (May 1, 2023)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.40.0...v1.41.0)
