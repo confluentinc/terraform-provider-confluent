@@ -60,6 +60,7 @@ var ImportableResources = []string{
 	"confluent_service_account",
 	"confluent_kafka_cluster",
 	"confluent_environment",
+	"confluent_connector",
 
 	// Kafka
 	"confluent_kafka_topic",
@@ -202,6 +203,7 @@ func getResourceImporters(instancesToImport []string, mode ImporterMode) (map[st
 		"confluent_service_account": serviceAccountImporter(),
 		"confluent_environment":     environmentImporter(),
 		"confluent_kafka_cluster":   kafkaClusterImporter(),
+		"confluent_connector":       connectorImporter(),
 	}
 
 	kafkaSupportedImporters := map[string]*Importer{
