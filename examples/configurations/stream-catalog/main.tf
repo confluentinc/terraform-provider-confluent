@@ -223,7 +223,7 @@ resource "confluent_service_account" "env-manager" {
   description  = "Service account to manage 'Staging' environment"
 }
 
-resource "confluent_role_binding" "env-manager-environment-admin" {
+resource "confluent_role_binding" "env-manager-data-steward" {
   principal   = "User:${confluent_service_account.env-manager.id}"
   role_name   = "DataSteward"
   crn_pattern = confluent_environment.staging.resource_name
@@ -248,7 +248,7 @@ resource "confluent_api_key" "env-manager-schema-registry-api-key" {
     }
   }
 
-  # The goal is to ensure that confluent_role_binding.env-manager-environment-admin is created before
+  # The goal is to ensure that confluent_role_binding.env-manager-data-steward is created before
   # confluent_api_key.env-manager-schema-registry-api-key is used to create instances of
   # confluent_schema resources.
 
@@ -256,7 +256,7 @@ resource "confluent_api_key" "env-manager-schema-registry-api-key" {
   # multiple copies of this definition in the configuration which would happen if we specify it in
   # confluent_schema resources instead.
   depends_on = [
-    confluent_role_binding.env-manager-environment-admin
+    confluent_role_binding.env-manager-data-steward
   ]
 }
 

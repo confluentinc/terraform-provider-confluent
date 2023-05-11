@@ -106,5 +106,5 @@ $ terraform import confluent_tag.pii lsrc-8wrx70/PII
 !> **Warning:** Do not forget to delete terminal command history afterwards for security purposes.
 
 ## Getting Started
-The following end-to-end example might help to get started with stream catalog:
-* [stream-catalog](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/stream-catalog): An example of using stream catalog in terraform.
+The following end-to-end example might help to get started with [Stream Catalog](https://docs.confluent.io/cloud/current/stream-governance/stream-catalog.html):
+* [stream-catalog](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/stream-catalog)
