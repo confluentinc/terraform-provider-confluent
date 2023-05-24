@@ -31,6 +31,7 @@ resource "confluent_tf_importer" "example" {
 The following arguments are supported:
 
 - `resources` - (Optional List of Strings) A list of resources names to export. Defaults to all exportable resources.
+- `output_path` - (Optional Strings) An absolute path to a folder for outputting generated TF state and TF configuration files for your infrastructure. The folder is created if it doesn't exist. Defaults to `./imported_confluent_infrastructure`.
 
 These are the exportable resources:
    * [Service Accounts](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_service_account)

@@ -40,12 +40,12 @@ import (
 const (
 	tfConfigurationFileName = "main.tf"
 	tfStateFileName         = "terraform.tfstate"
+	tfLockFileName          = ".terraform.lock.hcl"
 	paramResources          = "resources"
+	paramOutputPath         = "output_path"
 	defaultTfStateFile      = "terraform.tfstate"
 	defaultVariablesTfFile  = "variables.tf"
-	// TODO: create a separate attribute to allow users to specify it
-	// Hardcoded output path to a folder where the Terraform configuration file (main.tf) and the Terraform state file (terraform.tfstate) should be saved.
-	defaultOutputPath = "./imported_confluent_infrastructure"
+	defaultOutputPath       = "./imported_confluent_infrastructure"
 )
 
 type ImporterMode int
@@ -86,12 +86,19 @@ func tfImporterResource() *schema.Resource {
 				Optional: true,
 				ForceNew: true,
 			},
+			paramOutputPath: {
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
+				Default:  defaultOutputPath,
+			},
 			// TODO: add paramFormat = HCL (default) | JSON?
 		},
 	}
 }
 
 func tfImporterCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	outputPath := d.Get(paramOutputPath).(string)
 	resourcesToImport := convertToStringSlice(d.Get(paramResources).([]interface{}))
 
 	importerMode := Cloud
@@ -103,9 +110,9 @@ func tfImporterCreate(ctx context.Context, d *schema.ResourceData, meta interfac
 
 	overrideUserAgent(client)
 
-	tflog.Debug(ctx, fmt.Sprintf("Creating TF Importer %q", defaultOutputPath), map[string]interface{}{tfImporterLoggingKey: defaultOutputPath})
+	tflog.Debug(ctx, fmt.Sprintf("Creating TF Importer %q", outputPath), map[string]interface{}{tfImporterLoggingKey: outputPath})
 
-	instances, err := loadAllInstances(ctx, resourcesToImport, importerMode, meta)
+	instances, err := loadAllInstances(ctx, resourcesToImport, outputPath, importerMode, meta)
 	if err != nil {
 		return err
 	}
@@ -132,7 +139,7 @@ func tfImporterCreate(ctx context.Context, d *schema.ResourceData, meta interfac
 		resourceHclBlocks = append(resourceHclBlocks, instanceStateToHclBlock(instance.ResourceName, instance.Name, jsonResult))
 	}
 
-	if err := setupOutputFolder(importerMode); err != nil {
+	if err := setupOutputFolder(importerMode, outputPath); err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -141,35 +148,35 @@ func tfImporterCreate(ctx context.Context, d *schema.ResourceData, meta interfac
 	// 3. Run terraform refresh to upgrade terraform state from v3 to v4.
 
 	// Follow https://github.com/hashicorp/terraform/issues/15608
-	if err := writeHclConfig(resourceHclBlocks, importerMode); err != nil {
+	if err := writeHclConfig(resourceHclBlocks, importerMode, outputPath); err != nil {
 		return err
 	}
 
 	// new resource.name_hash + resource.state or something
-	if err := writeTfState(ctx, instances); err != nil {
+	if err := writeTfState(ctx, instances, outputPath); err != nil {
 		return err
 	}
 
-	d.SetId(defaultOutputPath)
+	d.SetId(outputPath)
 
-	tflog.Debug(ctx, fmt.Sprintf("Finished creating TF Importer %q: %s", d.Id(), defaultOutputPath), map[string]interface{}{tfImporterLoggingKey: d.Id()})
+	tflog.Debug(ctx, fmt.Sprintf("Finished creating TF Importer %q: %s", d.Id(), outputPath), map[string]interface{}{tfImporterLoggingKey: d.Id()})
 
 	return nil
 }
 
-func setupOutputFolder(mode ImporterMode) error {
+func setupOutputFolder(mode ImporterMode, outputPath string) error {
 	// Create or recreate an output folder
-	if err := createOrRecreateDirectory(); err != nil {
+	if err := createOrRecreateDirectory(outputPath); err != nil {
 		return err
 	}
 
-	if err := ImportVariablesTf(mode); err != nil {
+	if err := ImportVariablesTf(mode, outputPath); err != nil {
 		return err
 	}
 	return nil
 }
 
-func loadAllInstances(ctx context.Context, resourcesToImport []string, mode ImporterMode, meta interface{}) ([]instanceData, diag.Diagnostics) {
+func loadAllInstances(ctx context.Context, resourcesToImport []string, outputPath string, mode ImporterMode, meta interface{}) ([]instanceData, diag.Diagnostics) {
 	importers, err := getResourceImporters(resourcesToImport, mode)
 	if err != nil {
 		return nil, diag.FromErr(err)
@@ -177,7 +184,7 @@ func loadAllInstances(ctx context.Context, resourcesToImport []string, mode Impo
 
 	client := meta.(*Client) // Client from the original provider with all the credentials set
 
-	if err := buildImporterInstanceIdMaps(ctx, importers, client); err != nil {
+	if err := buildImporterInstanceIdMaps(ctx, importers, client, outputPath); err != nil {
 		return nil, err
 	}
 
@@ -246,8 +253,8 @@ type instanceData struct {
 	CtyType                cty.Type
 }
 
-func writeTfState(ctx context.Context, resources []instanceData) diag.Diagnostics {
-	stateFilePath, err := getFilePath(defaultTfStateFile)
+func writeTfState(ctx context.Context, resources []instanceData, outputPath string) diag.Diagnostics {
+	stateFilePath, err := getFilePath(defaultTfStateFile, outputPath)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -276,7 +283,7 @@ func writeTfState(ctx context.Context, resources []instanceData) diag.Diagnostic
 	stateReplaceCommandStr := "terraform state replace-provider registry.terraform.io/-/confluent registry.terraform.io/confluentinc/confluent"
 	cmd, err := commandWithResolvedSymlink(ctx, "terraform")
 	if err != nil {
-		return diag.Errorf("failed to run terraform CLI command: %q. Please run it manually in %s.", stateReplaceCommandStr, defaultOutputPath)
+		return diag.Errorf("failed to run terraform CLI command: %q. Please run it manually in %s.", stateReplaceCommandStr, outputPath)
 	}
 
 	cmd.Args = append(cmd.Args, []string{
@@ -288,10 +295,10 @@ func writeTfState(ctx context.Context, resources []instanceData) diag.Diagnostic
 		"registry.terraform.io/confluentinc/confluent",
 	}...)
 
-	tflog.Info(ctx, fmt.Sprintf("Running %q in %s", stateReplaceCommandStr, defaultOutputPath))
+	tflog.Info(ctx, fmt.Sprintf("Running %q in %s", stateReplaceCommandStr, outputPath))
 
 	if err = cmd.Run(); err != nil {
-		return diag.Errorf("failed to run terraform CLI command: %q. Please run it manually in %s.", stateReplaceCommandStr, defaultOutputPath)
+		return diag.Errorf("failed to run terraform CLI command: %q. Please run it manually in %s.", stateReplaceCommandStr, outputPath)
 	}
 	return nil
 }
@@ -449,18 +456,18 @@ func (r *Importer) LoadInstances(ctx context.Context, client *Client) diag.Diagn
 	return nil
 }
 
-func buildImporterInstanceIdMaps(ctx context.Context, importers map[string]*Importer, client *Client) diag.Diagnostics {
+func buildImporterInstanceIdMaps(ctx context.Context, importers map[string]*Importer, client *Client, outputPath string) diag.Diagnostics {
 	for resourceName, importer := range importers {
 		if err := importer.LoadInstances(ctx, client); err != nil {
 			return nil
 		}
-		tflog.Info(ctx, fmt.Sprintf("Loaded %d instances of resource %s", len(importer.InstanceIdMap), resourceName), map[string]interface{}{tfImporterLoggingKey: defaultOutputPath})
+		tflog.Info(ctx, fmt.Sprintf("Loaded %d instances of resource %s", len(importer.InstanceIdMap), resourceName), map[string]interface{}{tfImporterLoggingKey: outputPath})
 	}
 	return nil
 }
 
-func ImportVariablesTf(mode ImporterMode) error {
-	variablesFilePath, err := getFilePath(defaultVariablesTfFile)
+func ImportVariablesTf(mode ImporterMode, outputPath string) error {
+	variablesFilePath, err := getFilePath(defaultVariablesTfFile, outputPath)
 	if err != nil {
 		return err
 	}
@@ -519,8 +526,8 @@ variable "kafka_id" {
 	return nil
 }
 
-func writeHclConfig(resourceNameHclBlocksSlice [][]byte, mode ImporterMode) diag.Diagnostics {
-	filePath, err := getFilePath(tfConfigurationFileName)
+func writeHclConfig(resourceNameHclBlocksSlice [][]byte, mode ImporterMode, outputPath string) diag.Diagnostics {
+	filePath, err := getFilePath(tfConfigurationFileName, outputPath)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -728,24 +735,52 @@ func createHclObject(v map[string]interface{}) zclCty.Value {
 	return zclCty.ObjectVal(obj)
 }
 
-func createOrRecreateDirectory() error {
-	path := defaultOutputPath
+func createOrRecreateDirectory(outputPath string) error {
+	path := outputPath
 	if _, err := os.Stat(path); err == nil {
-		if err := os.RemoveAll(path); err != nil {
-			return fmt.Errorf("failed to remove existing directory %s: %s", path, err)
+		if outputPath == defaultOutputPath {
+			if err := os.RemoveAll(path); err != nil {
+				return fmt.Errorf("failed to remove existing directory %s: %s", path, err)
+			}
+		} else {
+			if err := os.RemoveAll(filepath.Join(path, ".terraform")); err != nil && !os.IsNotExist(err) {
+				return fmt.Errorf("failed to remove subfolder '.terraform' in existing directory %s: %s", path, err)
+			}
+
+			if err := os.Remove(filepath.Join(path, tfConfigurationFileName)); err != nil && !os.IsNotExist(err) {
+				return fmt.Errorf("failed to remove %q file in existing directory %s: %s", tfConfigurationFileName, path, err)
+			}
+
+			if err := os.Remove(filepath.Join(path, tfStateFileName)); err != nil && !os.IsNotExist(err) {
+				return fmt.Errorf("failed to remove %q file in existing directory %s: %s", tfStateFileName, path, err)
+			}
+
+			if err := os.Remove(filepath.Join(path, defaultTfStateFile)); err != nil && !os.IsNotExist(err) {
+				return fmt.Errorf("failed to remove %q file in existing directory %s: %s", defaultTfStateFile, path, err)
+			}
+
+			if err := os.Remove(filepath.Join(path, defaultVariablesTfFile)); err != nil && !os.IsNotExist(err) {
+				return fmt.Errorf("failed to remove %q file in existing directory %s: %s", defaultVariablesTfFile, path, err)
+			}
+
+			if err := os.Remove(filepath.Join(path, tfLockFileName)); err != nil && !os.IsNotExist(err) {
+				return fmt.Errorf("failed to remove %q file in existing directory %s: %s", tfLockFileName, path, err)
+			}
 		}
 	}
-	if err := os.MkdirAll(path, os.ModePerm); err != nil {
-		return fmt.Errorf("failed to create a path with directory %s: %s", path, err)
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		if err := os.MkdirAll(path, os.ModePerm); err != nil {
+			return fmt.Errorf("failed to create a path with directory %s: %s", path, err)
+		}
 	}
 	return nil
 }
 
-func getFilePath(filename string) (string, error) {
-	path := filepath.Join(defaultOutputPath, filename)
+func getFilePath(filename, outputPath string) (string, error) {
+	path := filepath.Join(outputPath, filename)
 	// Ensure that the resulting path is different from the input directory.
-	if path == defaultOutputPath {
-		return "", fmt.Errorf("failed to create file path with directory %s", defaultOutputPath)
+	if path == outputPath {
+		return "", fmt.Errorf("failed to create file path with directory %s", outputPath)
 	}
 	return path, nil
 }
