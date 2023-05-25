@@ -299,3 +299,36 @@ func schemaRegistryRegionSchema() *schema.Schema {
 		ForceNew: true,
 	}
 }
+
+func schemaRegistryClusterImporter() *Importer {
+	return &Importer{
+		LoadInstanceIds: loadAllSchemaRegistryClusters,
+	}
+}
+
+func loadAllSchemaRegistryClusters(ctx context.Context, client *Client) (InstanceIdsToNameMap, diag.Diagnostics) {
+	instances := make(InstanceIdsToNameMap)
+
+	environments, err := loadEnvironments(ctx, client)
+	if err != nil {
+		return instances, diag.FromErr(createDescriptiveError(err))
+	}
+	for _, environment := range environments {
+		schemaRegistryClusters, err := loadSchemaRegistryClusters(ctx, client, environment.GetId())
+		if err != nil {
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Schema Registry Clusters in Environment %q: %s", environment.GetId(), createDescriptiveError(err)))
+			return instances, diag.FromErr(createDescriptiveError(err))
+		}
+		schemaRegistryClustersJson, err := json.Marshal(schemaRegistryClusters)
+		if err != nil {
+			return instances, diag.Errorf("error reading Schema Registry Clusters in Environment %q: error marshaling %#v to json: %s", environment.GetId(), schemaRegistryClusters, createDescriptiveError(err))
+		}
+		tflog.Debug(ctx, fmt.Sprintf("Fetched Schema Registry Clusters in Environment %q: %s", environment.GetId(), schemaRegistryClustersJson))
+
+		for _, schemaRegistryCluster := range schemaRegistryClusters {
+			instanceId := fmt.Sprintf("%s/%s", environment.GetId(), schemaRegistryCluster.GetId())
+			instances[instanceId] = toValidTerraformResourceName(fmt.Sprintf("%s-%s", schemaRegistryCluster.Spec.Environment.GetId(), schemaRegistryCluster.Spec.GetPackage()))
+		}
+	}
+	return instances, nil
+}
