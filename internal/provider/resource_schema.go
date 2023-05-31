@@ -304,6 +304,13 @@ func schemaCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 	}
 	// Validation has failed
 	if !validationResponse.GetIsCompatible() {
+		// Set old value to paramSchema to avoid TF drift
+		// It will be applicable if schemaCreate() is called from schemaUpdate()
+		// since d.SetId() is called in the end of schemaCreate()
+		oldObj, _ := d.GetChange(paramSchema)
+		oldSchema := oldObj.(string)
+		d.Set(paramSchema, oldSchema)
+
 		if len(validationResponse.GetMessages()) > 0 {
 			return diag.Errorf("error creating Schema: error validating a schema: %v", validationResponse.GetMessages())
 		}
