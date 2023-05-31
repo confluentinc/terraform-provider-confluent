@@ -183,6 +183,11 @@ func SetSchemaDiff(ctx context.Context, diff *schema.ResourceDiff, meta interfac
 		clusterApiSecret = diff.Get(fmt.Sprintf("%s.0.%s", paramCredentials, paramSecret)).(string)
 	}
 
+	if restEndpoint == "" || clusterId == "" || clusterApiKey == "" || clusterApiSecret == "" {
+		// Skip checks since these attributes reference other resources attributes that are unknown before "terraform apply"
+		return nil
+	}
+
 	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
 
 	subjectName := diff.Get(paramSubjectName).(string)
