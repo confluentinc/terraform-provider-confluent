@@ -157,11 +157,6 @@ func schemaResource() *schema.Resource {
 }
 
 func SetSchemaDiff(ctx context.Context, diff *schema.ResourceDiff, meta interface{}) error {
-	// Skip if the schema doesn't exist yet
-	if diff.Id() == "" {
-		return nil
-	}
-
 	if !diff.HasChange(paramSchema) {
 		return nil
 	}
@@ -199,6 +194,20 @@ func SetSchemaDiff(ctx context.Context, diff *schema.ResourceDiff, meta interfac
 	createSchemaRequest.SetSchemaType(format)
 	createSchemaRequest.SetSchema(schemaContent)
 	createSchemaRequest.SetReferences(schemaReferences)
+
+	err := schemaValidateCheck(ctx, schemaRegistryRestClient, createSchemaRequest, subjectName)
+	if err != nil {
+		return err
+	}
+
+	// Skip a schema lookup check if the schema doesn't exist yet
+	if diff.Id() == "" {
+		return nil
+	}
+	return schemaLookupCheck(ctx, diff, schemaRegistryRestClient, createSchemaRequest, subjectName, oldSchema)
+}
+
+func schemaLookupCheck(ctx context.Context, diff *schema.ResourceDiff, c *SchemaRegistryRestClient, createSchemaRequest *sr.RegisterSchemaRequest, subjectName, oldSchema string) error {
 	createSchemaRequestJson, err := json.Marshal(createSchemaRequest)
 	if err != nil {
 		return fmt.Errorf("error customizing diff Schema: error marshaling %#v to json: %s", createSchemaRequest, createDescriptiveError(err))
@@ -206,7 +215,7 @@ func SetSchemaDiff(ctx context.Context, diff *schema.ResourceDiff, meta interfac
 
 	tflog.Debug(ctx, fmt.Sprintf("Customizing diff new Schema: %s", createSchemaRequestJson))
 
-	registeredSchema, schemaExists, err := schemaLookup(ctx, schemaRegistryRestClient, createSchemaRequest, subjectName)
+	registeredSchema, schemaExists, err := schemaLookup(ctx, c, createSchemaRequest, subjectName)
 	if err != nil {
 		return fmt.Errorf("error customizing diff Schema: %s", createDescriptiveError(err))
 	}
@@ -223,6 +232,26 @@ func SetSchemaDiff(ctx context.Context, diff *schema.ResourceDiff, meta interfac
 		if err := diff.SetNew(paramSchema, oldSchema); err != nil {
 			return fmt.Errorf("error customizing diff Schema: %s", createDescriptiveError(err))
 		}
+	}
+	return nil
+}
+
+func schemaValidateCheck(ctx context.Context, c *SchemaRegistryRestClient, createSchemaRequest *sr.RegisterSchemaRequest, subjectName string) error {
+	createSchemaRequestJson, err := json.Marshal(createSchemaRequest)
+	if err != nil {
+		return fmt.Errorf("error validating Schema: error marshaling %#v to json: %s", createSchemaRequest, createDescriptiveError(err))
+	}
+	tflog.Debug(ctx, fmt.Sprintf("Validating new Schema: %s", createSchemaRequestJson))
+	validationResponse, _, err := executeSchemaValidate(ctx, c, createSchemaRequest, subjectName)
+	if err != nil {
+		return fmt.Errorf("error validating Schema: error sending validation request: %s", createDescriptiveError(err))
+	}
+	// Validation has failed
+	if !validationResponse.GetIsCompatible() {
+		if len(validationResponse.GetMessages()) > 0 {
+			return fmt.Errorf("error validating Schema: error validating a schema: %v", validationResponse.GetMessages())
+		}
+		return fmt.Errorf("error validating Schema: error validating a schema: %s", schemaNotCompatibleErrorMessage)
 	}
 	return nil
 }
