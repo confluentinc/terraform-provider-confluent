@@ -302,7 +302,11 @@ func schemaCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 	if err != nil {
 		return diag.Errorf("error creating Schema: error sending validation request: %s", createDescriptiveError(err))
 	}
+	// Validation has failed
 	if !validationResponse.GetIsCompatible() {
+		if len(validationResponse.GetMessages()) > 0 {
+			return diag.Errorf("error creating Schema: error validating a schema: %v", validationResponse.GetMessages())
+		}
 		return diag.Errorf("error creating Schema: error validating a schema: %s", schemaNotCompatibleErrorMessage)
 	}
 
