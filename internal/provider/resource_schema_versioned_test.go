@@ -33,10 +33,9 @@ import (
 )
 
 const (
-	scenarioStateSchemaHasBeenValidated = "A new schema has been just validated"
-	scenarioStateSchemaHasBeenCreated   = "A new schema has been just created"
-	scenarioStateSchemaHasBeenDeleted   = "The schema has been deleted"
-	schemaScenarioName                  = "confluent_schema Resource Lifecycle"
+	scenarioStateSchemaHasBeenCreated = "A new schema has been just created"
+	scenarioStateSchemaHasBeenDeleted = "The schema has been deleted"
+	schemaScenarioName                = "confluent_schema Resource Lifecycle"
 
 	testSubjectName               = "test2"
 	testSchemaIdentifier          = 100001
@@ -115,7 +114,6 @@ func TestAccVersionedSchema(t *testing.T) {
 	validateSchemaStub := wiremock.Post(wiremock.URLPathEqualTo(validateSchemaPath)).
 		InScenario(schemaScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
-		WillSetStateTo(scenarioStateSchemaHasBeenValidated).
 		WillReturn(
 			string(validateSchemaResponse),
 			contentTypeJSONHeader,
@@ -126,7 +124,7 @@ func TestAccVersionedSchema(t *testing.T) {
 	createSchemaResponse, _ := ioutil.ReadFile("../testdata/schema_registry_schema/create_schema.json")
 	createSchemaStub := wiremock.Post(wiremock.URLPathEqualTo(createSchemaPath)).
 		InScenario(schemaScenarioName).
-		WhenScenarioStateIs(scenarioStateSchemaHasBeenValidated).
+		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillSetStateTo(scenarioStateSchemaHasBeenCreated).
 		WillReturn(
 			string(createSchemaResponse),

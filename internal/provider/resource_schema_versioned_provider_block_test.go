@@ -69,7 +69,6 @@ func TestAccVersionedSchemaWithEnhancedProviderBlock(t *testing.T) {
 	validateSchemaStub := wiremock.Post(wiremock.URLPathEqualTo(validateSchemaPath)).
 		InScenario(schemaScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
-		WillSetStateTo(scenarioStateSchemaHasBeenValidated).
 		WillReturn(
 			string(validateSchemaResponse),
 			contentTypeJSONHeader,
@@ -80,7 +79,7 @@ func TestAccVersionedSchemaWithEnhancedProviderBlock(t *testing.T) {
 	createSchemaResponse, _ := ioutil.ReadFile("../testdata/schema_registry_schema/create_schema.json")
 	createSchemaStub := wiremock.Post(wiremock.URLPathEqualTo(createSchemaPath)).
 		InScenario(schemaScenarioName).
-		WhenScenarioStateIs(scenarioStateSchemaHasBeenValidated).
+		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillSetStateTo(scenarioStateSchemaHasBeenCreated).
 		WillReturn(
 			string(createSchemaResponse),
