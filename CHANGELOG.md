@@ -1,3 +1,18 @@
+## 1.43.0 (May 31, 2023)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.42.0...v1.43.0)
+
+**New features:**
+* Added support for `confluent_schema_registry_cluster` resource in [Experimental Resource Importer](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/guides/experimental-resource-importer).
+* Added support for descriptive validation error messages for `confluent_schema` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema).
+
+**Bug fixes:**
+* Resolved "Apply schema validation during terraform plan phase" issue ([#218](https://github.com/confluentinc/terraform-provider-confluent/issues/218)).
+* Resolved "Fix 'no changes' if terraform in-place update failed" issue ([#226](https://github.com/confluentinc/terraform-provider-confluent/issues/226)).
+* Resolved "TF Resource Importer: Make output path configurable" issue ([#260](https://github.com/confluentinc/terraform-provider-confluent/issues/260)).
+* Resolved "Additional checks in terraform plan" issue ([#224](https://github.com/confluentinc/terraform-provider-confluent/issues/224)) for `confluent_schema` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema).
+* Updated docs.
+
 ## 1.42.0 (May 9, 2023)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.41.0...v1.42.0)
