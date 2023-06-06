@@ -71,7 +71,6 @@ func businessMetadataResource() *schema.Resource {
 			paramDescription: {
 				Type:        schema.TypeString,
 				Optional:    true,
-				ForceNew:    true,
 				Description: "The description of the Business Metadata to be created.",
 			},
 			paramVersion: {
