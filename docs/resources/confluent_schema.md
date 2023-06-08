@@ -163,17 +163,6 @@ resource "confluent_schema" "avro-purchase" {
 # confluent_schema.avro-purchase in-place to evolve avro-purchase 
 # schema from v1 to v2.
 
-# confluent_schema.avro-purchase points to v2 after an in-place update. 
-resource "confluent_schema" "avro-purchase" {
-  subject_name = "avro-purchase-value"
-  format = "AVRO"
-  schema = file("./schemas/avro/purchase.avsc")
-
-  lifecycle {
-    prevent_destroy = true
-  }
-}
-
 # Note: after running 'terraform destroy' just v2 (the latest version) will
 # be soft-deleted by default (set hard_delete=true for a hard deletion).
 ```
@@ -181,6 +170,7 @@ resource "confluent_schema" "avro-purchase" {
 ### Option #2: Manage different schema versions using different resource instances
 
 ```terraform
+# Before
 # Step #1: Run 'terraform plan' and 'terraform apply'
 # to create v1 of avro-purchase schema.
 provider "confluent" {
@@ -202,10 +192,30 @@ resource "confluent_schema" "avro-purchase-v1" {
   }
 }
 
+# After
 # Step #2: Create schemas/avro/purchase_v2.avsc.
 
 # Step #3: Run 'terraform plan' and 'terraform apply'
 # to create confluent_schema.avro-purchase-v2.
+
+provider "confluent" {
+  schema_registry_id            = var.schema_registry_id            # optionally use SCHEMA_REGISTRY_ID env var
+  schema_registry_rest_endpoint = var.schema_registry_rest_endpoint # optionally use SCHEMA_REGISTRY_REST_ENDPOINT env var
+  schema_registry_api_key       = var.schema_registry_api_key       # optionally use SCHEMA_REGISTRY_API_KEY env var
+  schema_registry_api_secret    = var.schema_registry_api_secret    # optionally use SCHEMA_REGISTRY_API_SECRET env var
+}
+
+# confluent_schema.avro-purchase-v1 manages v1.
+resource "confluent_schema" "avro-purchase-v1" {
+  subject_name = "avro-purchase-value"
+  format = "AVRO"
+  schema = file("./schemas/avro/purchase_v1.avsc")
+  recreate_on_update = true
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
 
 # confluent_schema.avro-purchase-v2 manages v2. 
 resource "confluent_schema" "avro-purchase-v2" {
