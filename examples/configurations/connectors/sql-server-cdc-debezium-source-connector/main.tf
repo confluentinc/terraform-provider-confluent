@@ -216,6 +216,60 @@ resource "confluent_kafka_acl" "app-connector-create-on-prefix-topics" {
   }
 }
 
+resource "confluent_kafka_acl" "app-connector-write-on-dbhistory-prefix-topics" {
+  kafka_cluster {
+    id = confluent_kafka_cluster.basic.id
+  }
+  resource_type = "TOPIC"
+  resource_name = "dbhistory.${local.database_server_name}.lcc-"
+  pattern_type  = "PREFIXED"
+  principal     = "User:${confluent_service_account.app-connector.id}"
+  host          = "*"
+  operation     = "WRITE"
+  permission    = "ALLOW"
+  rest_endpoint = confluent_kafka_cluster.basic.rest_endpoint
+  credentials {
+    key    = confluent_api_key.app-manager-kafka-api-key.id
+    secret = confluent_api_key.app-manager-kafka-api-key.secret
+  }
+}
+
+resource "confluent_kafka_acl" "app-connector-create-on-dbhistory-prefix-topics" {
+  kafka_cluster {
+    id = confluent_kafka_cluster.basic.id
+  }
+  resource_type = "TOPIC"
+  resource_name = "dbhistory.${local.database_server_name}.lcc-"
+  pattern_type  = "PREFIXED"
+  principal     = "User:${confluent_service_account.app-connector.id}"
+  host          = "*"
+  operation     = "CREATE"
+  permission    = "ALLOW"
+  rest_endpoint = confluent_kafka_cluster.basic.rest_endpoint
+  credentials {
+    key    = confluent_api_key.app-manager-kafka-api-key.id
+    secret = confluent_api_key.app-manager-kafka-api-key.secret
+  }
+}
+
+resource "confluent_kafka_acl" "app-consumer-read-on-group" {
+  kafka_cluster {
+    id = confluent_kafka_cluster.basic.id
+  }
+  resource_type = "GROUP"
+  resource_name = "${local.database_server_name}-dbhistory"
+  pattern_type  = "LITERAL"
+  principal     = "User:${confluent_service_account.app-connector.id}"
+  host          = "*"
+  operation     = "READ"
+  permission    = "ALLOW"
+  rest_endpoint = confluent_kafka_cluster.basic.rest_endpoint
+  credentials {
+    key    = confluent_api_key.app-manager-kafka-api-key.id
+    secret = confluent_api_key.app-manager-kafka-api-key.secret
+  }
+}
+
 resource "confluent_connector" "sql-server-cdc-source" {
   environment {
     id = confluent_environment.staging.id
@@ -251,6 +305,9 @@ resource "confluent_connector" "sql-server-cdc-source" {
     confluent_kafka_acl.app-connector-describe-on-cluster,
     confluent_kafka_acl.app-connector-write-on-prefix-topics,
     confluent_kafka_acl.app-connector-create-on-prefix-topics,
+    confluent_kafka_acl.app-connector-write-on-dbhistory-prefix-topics,
+    confluent_kafka_acl.app-connector-create-on-dbhistory-prefix-topics,
+    confluent_kafka_acl.app-consumer-read-on-group,
   ]
 }
 
