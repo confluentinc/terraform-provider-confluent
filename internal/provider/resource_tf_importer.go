@@ -121,23 +121,23 @@ func tfImporterCreate(ctx context.Context, d *schema.ResourceData, meta interfac
 	// Generate JSON: {"confluent_service_account": {"test_12345": {state}}}
 	resourceJsonMaps := make(map[string]map[string]map[string]interface{})
 	resourceHclBlocks := make([][]byte, 0)
-	for _, instance := range instances {
-		if resourceJsonMaps[instance.ResourceName] == nil {
-			resourceJsonMaps[instance.ResourceName] = make(map[string]map[string]interface{})
+	for i := range instances {
+		if resourceJsonMaps[instances[i].ResourceName] == nil {
+			resourceJsonMaps[instances[i].ResourceName] = make(map[string]map[string]interface{})
 		}
 
-		if len(resourceJsonMaps[instance.ResourceName][instance.Name]) > 0 {
-			nextIndex := len(resourceJsonMaps[instance.ResourceName][instance.Name]) + 1
-			instance.Name = instance.Name + "_" + strconv.Itoa(nextIndex)
+		if len(resourceJsonMaps[instances[i].ResourceName][instances[i].Name]) > 0 {
+			nextIndex := len(resourceJsonMaps[instances[i].ResourceName][instances[i].Name]) + 1
+			instances[i].Name = instances[i].Name + "_" + strconv.Itoa(nextIndex)
 		}
 
-		jsonResult, err := instanceStateToJson(instance.State, instance.ComputedOnlyProperties, instance.CtyType)
+		jsonResult, err := instanceStateToJson(instances[i].State, instances[i].ComputedOnlyProperties, instances[i].CtyType)
 		if err != nil {
 			return err
 		}
-		resourceJsonMaps[instance.ResourceName][instance.Name] = jsonResult
+		resourceJsonMaps[instances[i].ResourceName][instances[i].Name] = jsonResult
 
-		resourceHclBlocks = append(resourceHclBlocks, instanceStateToHclBlock(instance.ResourceName, instance.Name, jsonResult))
+		resourceHclBlocks = append(resourceHclBlocks, instanceStateToHclBlock(instances[i].ResourceName, instances[i].Name, jsonResult))
 	}
 
 	if err := setupOutputFolder(importerMode, outputPath); err != nil {
