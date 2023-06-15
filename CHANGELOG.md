@@ -1,3 +1,17 @@
+## 1.44.0 (June 15, 2023)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.43.0...v1.44.0)
+
+**New features:**
+* Added support for `confluent_schema` resource in [Experimental Resource Importer](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/guides/experimental-resource-importer).
+
+**Bug fixes:**
+* Added missing ACLs in sql-server-cdc-debezium-source-connector example.
+* Fixed a bug in the Experimental Resource Importer that occurred when importing resources with the same display name.
+* Fixed a bug in the Experimental Resource Importer that occurred when using an API Key with insufficient privileges.
+* Fixed the bug that caused the data catalog resources to not be found right after the creation. ([#252](https://github.com/confluentinc/terraform-provider-confluent/issues/252), [#253](https://github.com/confluentinc/terraform-provider-confluent/issues/253))
+* Updated docs.
+
 ## 1.43.0 (May 31, 2023)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.42.0...v1.43.0)
