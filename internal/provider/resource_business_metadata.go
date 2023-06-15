@@ -25,6 +25,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"regexp"
 	"strings"
+	"time"
 )
 
 const (
@@ -170,6 +171,10 @@ func businessMetadataCreate(ctx context.Context, d *schema.ResourceData, meta in
 	}
 	d.SetId(businessMetadataId)
 
+	if err := waitForBusinessMetadataToProvision(schemaRegistryRestClient.dataCatalogApiContext(ctx), schemaRegistryRestClient, businessMetadataId, businessMetadataName); err != nil {
+		return diag.Errorf("error waiting for Business Metadata %q to provision: %s", businessMetadataId, createDescriptiveError(err))
+	}
+
 	createdBusinessMetadataJson, err := json.Marshal(createdBusinessMetadata)
 	if err != nil {
 		return diag.Errorf("error creating Business Metadata %q: error marshaling %#v to json: %s", businessMetadataId, createdBusinessMetadata, createDescriptiveError(err))
@@ -261,6 +266,8 @@ func businessMetadataDelete(ctx context.Context, d *schema.ResourceData, meta in
 	if serviceErr != nil {
 		return diag.Errorf("error deleting Business Metadata %q: %s", businessMetadataId, createDescriptiveError(serviceErr))
 	}
+
+	time.Sleep(time.Second)
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished deleting Business Metadata %q", businessMetadataId), map[string]interface{}{businessMetadataLoggingKey: businessMetadataId})
 

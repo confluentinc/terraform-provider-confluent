@@ -27,6 +27,7 @@ import (
 const (
 	tagBindingResourceScenarioName        = "confluent_tag_binding Resource Lifecycle"
 	scenarioStateTagBindingHasBeenCreated = "A new tag binding has been just created"
+	scenarioStateTagBindingHasBeenPending = "A new tag binding has been just pending"
 	createTagBindingUrlPath               = "/catalog/v1/entity/tags"
 	readCreatedTagBindingUrlPath          = "/catalog/v1/entity/type/sr_schema/name/lsrc-8wrx70:.:100001/tags"
 	deleteCreatedTagBindingUrlPath        = "/catalog/v1/entity/type/sr_schema/name/lsrc-8wrx70:.:100001/tags/tag1"
@@ -54,11 +55,21 @@ func TestAccTagBinding(t *testing.T) {
 	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(createTagBindingUrlPath)).
 		InScenario(tagBindingResourceScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
-		WillSetStateTo(scenarioStateTagBindingHasBeenCreated).
+		WillSetStateTo(scenarioStateTagBindingHasBeenPending).
 		WillReturn(
 			string(createTagBindingResponse),
 			contentTypeJSONHeader,
 			http.StatusCreated,
+		))
+
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readCreatedTagBindingUrlPath)).
+		InScenario(tagBindingResourceScenarioName).
+		WhenScenarioStateIs(scenarioStateTagBindingHasBeenPending).
+		WillSetStateTo(scenarioStateTagBindingHasBeenCreated).
+		WillReturn(
+			"",
+			contentTypeJSONHeader,
+			http.StatusNotFound,
 		))
 
 	readTagBindingResponse, _ := ioutil.ReadFile("../testdata/tag/read_tag_binding.json")

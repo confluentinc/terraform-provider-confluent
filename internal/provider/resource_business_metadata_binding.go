@@ -25,6 +25,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"regexp"
 	"strings"
+	"time"
 )
 
 const (
@@ -132,6 +133,10 @@ func businessMetadataBindingCreate(ctx context.Context, d *schema.ResourceData, 
 		return diag.Errorf("error creating Business Metadata Binding %q: %s", businessMetadataBindingId, createdBusinessMetadataBinding[0].Error.GetMessage())
 	}
 	d.SetId(businessMetadataBindingId)
+
+	if err := waitForBusinessMetadataBindingToProvision(schemaRegistryRestClient.dataCatalogApiContext(ctx), schemaRegistryRestClient, businessMetadataBindingId, businessMetadataName, entityName, entityType); err != nil {
+		return diag.Errorf("error waiting for Business Metadata Binding %q to provision: %s", businessMetadataBindingId, createDescriptiveError(err))
+	}
 
 	createdBusinessMetadataBindingJson, err := json.Marshal(createdBusinessMetadataBinding)
 	if err != nil {
@@ -248,6 +253,8 @@ func businessMetadataBindingDelete(ctx context.Context, d *schema.ResourceData, 
 	if serviceErr != nil {
 		return diag.Errorf("error deleting Business Metadata Binding %q: %s", businessMetadataBindingId, createDescriptiveError(serviceErr))
 	}
+
+	time.Sleep(time.Second)
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished deleting Business Metadata Binding %q", businessMetadataBindingId), map[string]interface{}{businessMetadataBindingLoggingKey: businessMetadataBindingId})
 

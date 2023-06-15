@@ -25,6 +25,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"regexp"
 	"strings"
+	"time"
 )
 
 const (
@@ -122,6 +123,10 @@ func tagBindingCreate(ctx context.Context, d *schema.ResourceData, meta interfac
 		return diag.Errorf("error creating Tag Binding %q: %s", tagBindingId, createdTagBinding[0].Error.GetMessage())
 	}
 	d.SetId(tagBindingId)
+
+	if err := waitForTagBindingToProvision(schemaRegistryRestClient.dataCatalogApiContext(ctx), schemaRegistryRestClient, tagBindingId, tagName, entityName, entityType); err != nil {
+		return diag.Errorf("error waiting for Tag Binding %q to provision: %s", tagBindingId, createDescriptiveError(err))
+	}
 
 	createdTagBindingJson, err := json.Marshal(createdTagBinding)
 	if err != nil {
@@ -238,6 +243,8 @@ func tagBindingDelete(ctx context.Context, d *schema.ResourceData, meta interfac
 	if serviceErr != nil {
 		return diag.Errorf("error deleting Tag Binding %q: %s", tagBindingId, createDescriptiveError(serviceErr))
 	}
+
+	time.Sleep(time.Second)
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished deleting Tag Binding %q", tagBindingId), map[string]interface{}{tagBindingLoggingKey: tagBindingId})
 

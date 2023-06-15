@@ -25,6 +25,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"regexp"
 	"strings"
+	"time"
+)
+
+const (
+	dataCatalogTimeout = time.Minute
 )
 
 var defaultEntityTypes = []string{"cf_entity"}
@@ -120,6 +125,10 @@ func tagCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 	}
 	d.SetId(tagId)
 
+	if err := waitForTagToProvision(schemaRegistryRestClient.dataCatalogApiContext(ctx), schemaRegistryRestClient, tagId, tagName); err != nil {
+		return diag.Errorf("error waiting for Tag %q to provision: %s", tagId, createDescriptiveError(err))
+	}
+
 	createdTagJson, err := json.Marshal(createdTag)
 	if err != nil {
 		return diag.Errorf("error creating Tag %q: error marshaling %#v to json: %s", tagId, createdTag, createDescriptiveError(err))
@@ -213,6 +222,8 @@ func tagDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 	if serviceErr != nil {
 		return diag.Errorf("error deleting Tag %q: %s", tagId, createDescriptiveError(serviceErr))
 	}
+
+	time.Sleep(time.Second)
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished deleting Tag %q", tagId), map[string]interface{}{tagLoggingKey: tagId})
 

@@ -28,6 +28,7 @@ const (
 	businessMetadataResourceScenarioName        = "confluent_business_metadata Data Source Lifecycle"
 	scenarioStateBusinessMetadataHasBeenCreated = "A new business metadata has been just created"
 	scenarioStateBusinessMetadataHasBeenUpdated = "A new business metadata has been just updated"
+	scenarioStateBusinessMetadataHasBeenPending = "A new business metadata has been just pending"
 	createBusinessMetadataUrlPath               = "/catalog/v1/types/businessmetadatadefs"
 	readCreatedBusinessMetadataUrlPath          = "/catalog/v1/types/businessmetadatadefs/bm"
 	businessMetadataLabel                       = "confluent_business_metadata.main"
@@ -54,11 +55,21 @@ func TestAccBusinessMetadata(t *testing.T) {
 	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(createBusinessMetadataUrlPath)).
 		InScenario(businessMetadataResourceScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
-		WillSetStateTo(scenarioStateBusinessMetadataHasBeenCreated).
+		WillSetStateTo(scenarioStateBusinessMetadataHasBeenPending).
 		WillReturn(
 			string(createBusinessMetadataResponse),
 			contentTypeJSONHeader,
 			http.StatusCreated,
+		))
+
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readCreatedBusinessMetadataUrlPath)).
+		InScenario(businessMetadataResourceScenarioName).
+		WhenScenarioStateIs(scenarioStateBusinessMetadataHasBeenPending).
+		WillSetStateTo(scenarioStateBusinessMetadataHasBeenCreated).
+		WillReturn(
+			"",
+			contentTypeJSONHeader,
+			http.StatusNotFound,
 		))
 
 	updateBusinessMetadataResponse, _ := ioutil.ReadFile("../testdata/business_metadata/update_business_metadata.json")

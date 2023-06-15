@@ -27,6 +27,7 @@ import (
 const (
 	businessMetadataBindingResourceScenarioName        = "confluent_business_metadata_binding Resource Lifecycle"
 	scenarioStateBusinessMetadataBindingHasBeenCreated = "A new business metadata binding has been just created"
+	scenarioStateBusinessMetadataBindingHasBeenPending = "A new business metadata binding has been just pending"
 	scenarioStateBusinessMetadataBindingHasBeenUpdated = "A new business metadata binding has been just updated"
 	createBusinessMetadataBindingUrlPath               = "/catalog/v1/entity/businessmetadata"
 	readCreatedBusinessMetadataBindingUrlPath          = "/catalog/v1/entity/type/kafka_topic/name/lsrc-8wrx70:lkc-m80307:topic_0/businessmetadata"
@@ -55,11 +56,21 @@ func TestAccBusinessMetadataBinding(t *testing.T) {
 	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(createBusinessMetadataBindingUrlPath)).
 		InScenario(businessMetadataBindingResourceScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
-		WillSetStateTo(scenarioStateBusinessMetadataBindingHasBeenCreated).
+		WillSetStateTo(scenarioStateBusinessMetadataBindingHasBeenPending).
 		WillReturn(
 			string(createBusinessMetadataBindingResponse),
 			contentTypeJSONHeader,
 			http.StatusCreated,
+		))
+
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readCreatedBusinessMetadataBindingUrlPath)).
+		InScenario(businessMetadataBindingResourceScenarioName).
+		WhenScenarioStateIs(scenarioStateBusinessMetadataBindingHasBeenPending).
+		WillSetStateTo(scenarioStateBusinessMetadataBindingHasBeenCreated).
+		WillReturn(
+			"",
+			contentTypeJSONHeader,
+			http.StatusOK,
 		))
 
 	readBusinessMetadataBindingResponse, _ := ioutil.ReadFile("../testdata/business_metadata/read_created_business_metadata_binding.json")

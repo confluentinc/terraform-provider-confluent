@@ -27,6 +27,7 @@ import (
 const (
 	tagResourceScenarioName        = "confluent_tag Resource Lifecycle"
 	scenarioStateTagHasBeenCreated = "A new tag has been just created"
+	scenarioStateTagHasBeenPending = "A new tag has been just pending"
 	scenarioStateTagHasBeenUpdated = "A new tag has been just updated"
 	createTagUrlPath               = "/catalog/v1/types/tagdefs"
 	readCreatedTagUrlPath          = "/catalog/v1/types/tagdefs/test1"
@@ -54,11 +55,21 @@ func TestAccTag(t *testing.T) {
 	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(createTagUrlPath)).
 		InScenario(tagResourceScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
-		WillSetStateTo(scenarioStateTagHasBeenCreated).
+		WillSetStateTo(scenarioStateTagHasBeenPending).
 		WillReturn(
 			string(createTagResponse),
 			contentTypeJSONHeader,
 			http.StatusCreated,
+		))
+
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readCreatedTagUrlPath)).
+		InScenario(tagResourceScenarioName).
+		WhenScenarioStateIs(scenarioStateTagHasBeenPending).
+		WillSetStateTo(scenarioStateTagHasBeenCreated).
+		WillReturn(
+			"",
+			contentTypeJSONHeader,
+			http.StatusNotFound,
 		))
 
 	updateTagResponse, _ := ioutil.ReadFile("../testdata/tag/update_tag.json")
