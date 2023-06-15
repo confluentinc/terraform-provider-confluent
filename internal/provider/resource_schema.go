@@ -533,11 +533,6 @@ func extractSubjectInfoFromTfId(terraformId string) (string, string, string, err
 func schemaImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	tflog.Debug(ctx, fmt.Sprintf("Importing Schema %q", d.Id()), map[string]interface{}{schemaLoggingKey: d.Id()})
 
-	schemaContent := os.Getenv("SCHEMA_CONTENT")
-	if schemaContent == "" {
-		return nil, fmt.Errorf("error importing Schema %q: SCHEMA_CONTENT environment variable is empty but it must be set", d.Id())
-	}
-
 	restEndpoint, err := extractSchemaRegistryRestEndpoint(meta.(*Client), d, true)
 	if err != nil {
 		return nil, fmt.Errorf("error importing Schema: %s", createDescriptiveError(err))
@@ -558,8 +553,13 @@ func schemaImport(ctx context.Context, d *schema.ResourceData, meta interface{})
 
 	// Mark resource as new to avoid d.Set("") when getting 404
 	d.MarkNewResource()
-	if _, err := readSchemaRegistryConfigAndSetAttributes(ctx, d, schemaRegistryRestClient, subjectName, schemaIdentifier); err != nil {
+	schemaSr, err := readSchemaRegistryConfigAndSetAttributes(ctx, d, schemaRegistryRestClient, subjectName, schemaIdentifier)
+	if err != nil {
 		return nil, fmt.Errorf("error importing Schema %q: %s", d.Id(), createDescriptiveError(err))
+	}
+	schemaContent := os.Getenv("SCHEMA_CONTENT")
+	if schemaContent == "" {
+		schemaContent = schemaSr.GetSchema()
 	}
 	if err := d.Set(paramSchema, schemaContent); err != nil {
 		return nil, createDescriptiveError(err)
@@ -609,7 +609,7 @@ func loadSchema(ctx context.Context, d *schema.ResourceData, c *SchemaRegistryRe
 	return &srSchema, exists, nil
 }
 
-func readSchemaRegistryConfigAndSetAttributes(ctx context.Context, d *schema.ResourceData, c *SchemaRegistryRestClient, subjectName string, schemaIdentifier string) ([]*schema.ResourceData, error) {
+func readSchemaRegistryConfigAndSetAttributes(ctx context.Context, d *schema.ResourceData, c *SchemaRegistryRestClient, subjectName string, schemaIdentifier string) (*sr.Schema, error) {
 	isLatestSchemaBool := isLatestSchema(schemaIdentifier)
 	srSchema, exists, err := loadSchema(ctx, d, c, subjectName, schemaIdentifier)
 	if err != nil {
@@ -678,7 +678,7 @@ func readSchemaRegistryConfigAndSetAttributes(ctx context.Context, d *schema.Res
 
 	d.SetId(createSchemaId(c.clusterId, srSchema.GetSubject(), srSchema.GetId(), d.Get(paramRecreateOnUpdate).(bool)))
 
-	return []*schema.ResourceData{d}, nil
+	return srSchema, nil
 }
 
 func findSchemaById(schemas []sr.Schema, schemaIdentifier string, subjectName string) (sr.Schema, bool) {
@@ -828,4 +828,46 @@ func extractSchemaRegistryClusterId(client *Client, d *schema.ResourceData, isIm
 		return clusterId, nil
 	}
 	return "", fmt.Errorf("one of provider.schema_registry_id (defaults to SCHEMA_REGISTRY_ID environment variable) or resource.schema_registry_cluster.id must be set")
+}
+
+func schemaImporter() *Importer {
+	return &Importer{
+		LoadInstanceIds: loadAllSchemas,
+	}
+}
+
+func loadAllSchemas(ctx context.Context, client *Client) (InstanceIdsToNameMap, diag.Diagnostics) {
+	instances := make(InstanceIdsToNameMap)
+
+	schemaRegistryRestClient := client.schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(client.schemaRegistryRestEndpoint, client.schemaRegistryClusterId, client.schemaRegistryApiKey, client.schemaRegistryApiSecret, true)
+
+	subjects, _, err := schemaRegistryRestClient.apiClient.SubjectsV1Api.List(schemaRegistryRestClient.apiContext(ctx)).Execute()
+	if err != nil {
+		tflog.Warn(ctx, fmt.Sprintf("Error reading Subjects for Schema Registry Cluster %q: %s", schemaRegistryRestClient.clusterId, createDescriptiveError(err)), map[string]interface{}{schemaRegistryClusterLoggingKey: schemaRegistryRestClient.clusterId})
+		return nil, diag.FromErr(createDescriptiveError(err))
+	}
+	subjectsJson, err := json.Marshal(subjects)
+	if err != nil {
+		return nil, diag.Errorf("error reading Subjects for Schema Registry Cluster %q: error marshaling %#v to json: %s", schemaRegistryRestClient.clusterId, subjects, createDescriptiveError(err))
+	}
+	tflog.Debug(ctx, fmt.Sprintf("Fetched Subjects for Schema Registry Cluster %q: %s", schemaRegistryRestClient.clusterId, subjectsJson), map[string]interface{}{schemaRegistryClusterLoggingKey: schemaRegistryRestClient.clusterId})
+
+	for _, subjectName := range subjects {
+		// using schemaSr as schema collides with the package name
+		schemaSr, _, err := loadSchema(schemaRegistryRestClient.apiContext(ctx), &schema.ResourceData{}, schemaRegistryRestClient, subjectName, latestSchemaVersionAndPlaceholderForSchemaIdentifier)
+		if err != nil {
+			tflog.Warn(ctx, fmt.Sprintf("Error reading the latest Schema for Subject %q: %s", schemaSr.GetSubject(), createDescriptiveError(err)), map[string]interface{}{schemaRegistryClusterLoggingKey: schemaRegistryRestClient.clusterId})
+			return nil, diag.FromErr(createDescriptiveError(err))
+		}
+		schemaJson, err := json.Marshal(schemaSr)
+		if err != nil {
+			return nil, diag.Errorf("error reading the latest Schema for Subject %q: error marshaling %#v to json: %s", schemaSr.GetSubject(), schemaSr, createDescriptiveError(err))
+		}
+		tflog.Debug(ctx, fmt.Sprintf("Fetched the latest Schema for Subject %q: %s", schemaSr.GetSubject(), schemaJson), map[string]interface{}{schemaRegistryClusterLoggingKey: schemaRegistryRestClient.clusterId})
+
+		instanceId := createSchemaId(schemaRegistryRestClient.clusterId, schemaSr.GetSubject(), schemaSr.GetId(), false)
+		instances[instanceId] = toValidTerraformResourceName(schemaSr.GetSubject())
+	}
+
+	return instances, nil
 }

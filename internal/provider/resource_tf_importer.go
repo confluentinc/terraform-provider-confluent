@@ -53,6 +53,7 @@ type ImporterMode int
 const (
 	Cloud ImporterMode = iota
 	Kafka
+	SchemaRegistry
 )
 
 var ImportableResources = []string{
@@ -66,6 +67,9 @@ var ImportableResources = []string{
 	// Kafka
 	"confluent_kafka_topic",
 	"confluent_kafka_acl",
+
+	// Schema Registry
+	"confluent_schema",
 }
 
 func tfImporterResource() *schema.Resource {
@@ -107,6 +111,8 @@ func tfImporterCreate(ctx context.Context, d *schema.ResourceData, meta interfac
 	client := meta.(*Client)
 	if client.isKafkaMetadataSet && client.isKafkaClusterIdSet {
 		importerMode = Kafka
+	} else if client.isSchemaRegistryMetadataSet {
+		importerMode = SchemaRegistry
 	}
 
 	overrideUserAgent(client)
@@ -220,11 +226,17 @@ func getResourceImporters(instancesToImport []string, mode ImporterMode) (map[st
 		"confluent_kafka_topic": kafkaTopicImporter(),
 	}
 
+	schemaRegistrySupportedImporters := map[string]*Importer{
+		"confluent_schema": schemaImporter(),
+	}
+
 	if len(instancesToImport) == 0 {
 		if mode == Kafka {
 			return kafkaSupportedImporters, nil
 		} else if mode == Cloud {
 			return cloudSupportedImporters, nil
+		} else if mode == SchemaRegistry {
+			return schemaRegistrySupportedImporters, nil
 		}
 	}
 
@@ -235,16 +247,19 @@ func getResourceImporters(instancesToImport []string, mode ImporterMode) (map[st
 			importers[instanceToImport] = importer
 		} else if importer, ok := cloudSupportedImporters[instanceToImport]; ok {
 			importers[instanceToImport] = importer
+		} else if importer, ok := schemaRegistrySupportedImporters[instanceToImport]; ok {
+			importers[instanceToImport] = importer
 		}
 	}
 
-	if len(overlapMaps(kafkaSupportedImporters, importers)) > 0 && len(overlapMaps(cloudSupportedImporters, importers)) > 0 {
-		return nil, fmt.Errorf("cloud and kafka resources can't be imported simultaneously. Remove %q attribute from "+
-			"'confluent_tf_importer' resource in your Terraform configuration to use the default set of resources for a given "+
-			"importer mode or specify just Cloud or just Kafka resources for %q attribute", paramResources, paramResources)
+	if mapContainsAllKeys(kafkaSupportedImporters, importers) ||
+		mapContainsAllKeys(cloudSupportedImporters, importers) ||
+		mapContainsAllKeys(schemaRegistrySupportedImporters, importers) {
+		return importers, nil
 	}
-
-	return importers, nil
+	return nil, fmt.Errorf("cloud, kafka, and schema registry resources can't be imported simultaneously. Remove %q attribute from "+
+		"'confluent_tf_importer' resource in your Terraform configuration to use the default set of resources for a given "+
+		"importer mode or specify just Cloud or just Kafka, or just Schema Registry resources for %q attribute", paramResources, paramResources)
 }
 
 type instanceData struct {
@@ -521,6 +536,30 @@ variable "kafka_id" {
   type        = string
 }
 `
+	} else if mode == SchemaRegistry {
+		variablesContent = `
+variable "schema_registry_api_key" {
+  description = "Schema Registry API Key"
+  type        = string
+  sensitive   = true
+}
+
+variable "schema_registry_api_secret" {
+  description = "Schema Registry API Secret"
+  type        = string
+  sensitive   = true
+}
+
+variable "schema_registry_rest_endpoint" {
+  description = "The REST Endpoint of the Schema Registry cluster"
+  type        = string
+}
+
+variable "schema_registry_id" {
+  description = "The ID the the Schema Registry cluster of the form 'lsrc-'"
+  type        = string
+}
+`
 	}
 	if err := ioutil.WriteFile(variablesFilePath, []byte(variablesContent), os.ModePerm); err != nil {
 		return fmt.Errorf("error writing to file %s: %s", variablesFilePath, err)
@@ -553,13 +592,20 @@ func createHclFileWithHeader(mode ImporterMode) *hclwrite.File {
 
 	providerBlock := body.AppendNewBlock("provider", []string{"confluent"})
 	providerBody := providerBlock.Body()
-	providerBody.SetAttributeRaw("cloud_api_key", hclwrite.Tokens{
-		{Bytes: []byte(" var.confluent_cloud_api_key")},
-	})
-	providerBody.SetAttributeRaw("cloud_api_secret", hclwrite.Tokens{
-		{Bytes: []byte(" var.confluent_cloud_api_secret")},
-	})
-	if mode == Kafka {
+	if mode == Cloud {
+		providerBody.SetAttributeRaw("cloud_api_key", hclwrite.Tokens{
+			{Bytes: []byte(" var.confluent_cloud_api_key")},
+		})
+		providerBody.SetAttributeRaw("cloud_api_secret", hclwrite.Tokens{
+			{Bytes: []byte(" var.confluent_cloud_api_secret")},
+		})
+	} else if mode == Kafka {
+		providerBody.SetAttributeRaw("cloud_api_key", hclwrite.Tokens{
+			{Bytes: []byte(" var.confluent_cloud_api_key")},
+		})
+		providerBody.SetAttributeRaw("cloud_api_secret", hclwrite.Tokens{
+			{Bytes: []byte(" var.confluent_cloud_api_secret")},
+		})
 		providerBody.SetAttributeRaw("kafka_id", hclwrite.Tokens{
 			{Bytes: []byte(" var.kafka_id")},
 		})
@@ -571,6 +617,19 @@ func createHclFileWithHeader(mode ImporterMode) *hclwrite.File {
 		})
 		providerBody.SetAttributeRaw("kafka_api_secret", hclwrite.Tokens{
 			{Bytes: []byte(" var.kafka_api_secret")},
+		})
+	} else if mode == SchemaRegistry {
+		providerBody.SetAttributeRaw("schema_registry_id", hclwrite.Tokens{
+			{Bytes: []byte(" var.schema_registry_id")},
+		})
+		providerBody.SetAttributeRaw("schema_registry_rest_endpoint", hclwrite.Tokens{
+			{Bytes: []byte(" var.schema_registry_rest_endpoint")},
+		})
+		providerBody.SetAttributeRaw("schema_registry_api_key", hclwrite.Tokens{
+			{Bytes: []byte(" var.schema_registry_api_key")},
+		})
+		providerBody.SetAttributeRaw("schema_registry_api_secret", hclwrite.Tokens{
+			{Bytes: []byte(" var.schema_registry_api_secret")},
 		})
 	}
 	return file
@@ -813,14 +872,13 @@ func toValidTerraformResourceName(input string) string {
 	return output
 }
 
-func overlapMaps(map1, map2 map[string]*Importer) map[string]*Importer {
-	overlapped := make(map[string]*Importer)
-	for key := range map1 {
-		if _, exists := map2[key]; exists {
-			overlapped[key] = map1[key]
+func mapContainsAllKeys(map1, map2 map[string]*Importer) bool {
+	for key := range map2 {
+		if _, ok := map1[key]; !ok {
+			return false
 		}
 	}
-	return overlapped
+	return true
 }
 
 func overrideUserAgent(client *Client) {

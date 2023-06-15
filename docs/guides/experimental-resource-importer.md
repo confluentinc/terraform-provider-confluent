@@ -29,6 +29,7 @@ These are the importable resources:
    * [Kafka Clusters](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_cluster)
    * [Access Control Lists (ACLs)](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_acl)
    * [Topics](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_topic)
+   * [Schemas](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema)
 
 -> **Note:** [File an issue](https://github.com/confluentinc/terraform-provider-confluent/issues) to request a support for other resources.
 
@@ -86,6 +87,7 @@ In this guide, you will:
 3. The `configurations` directory has a subdirectory for each of the following configurations:
     * [`cloud-importer`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/cloud-importer): Import _Cloud_ resources (for example, Service Accounts, Environments)
     * [`kafka-importer`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/kafka-importer): Import _Kafka_ resources (for example, ACLs, Topics)
+    * [`schema-registry-importer`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/schema-registry-importer): Import _Schema Registry_ resources (for example, Schemas)
 
 4. Select the target configuration and navigate into its directory:
     ```bash
