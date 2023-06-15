@@ -208,6 +208,9 @@ func loadAllInstances(ctx context.Context, resourcesToImport []string, outputPat
 		}
 		instances = append(instances, resourceInstances...)
 	}
+	if len(instances) == 0 {
+		return nil, diag.Errorf("0 resources were imported. Please verify that the provided API keys have sufficient read access to the target resources.")
+	}
 	return instances, nil
 }
 
