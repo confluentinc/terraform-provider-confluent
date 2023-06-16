@@ -40,7 +40,7 @@ builds:
     id: "linux-amd64-build"
     flags:
       - -mod=readonly
-      - -tags netgo
+      - -tags=netgo
     ldflags:
       - -s -w -X main.version={{ .Version }}
       - -linkmode 'external' -extldflags '-static'
@@ -61,7 +61,7 @@ builds:
     id: "linux-arm64-build"
     flags:
       - -mod=readonly
-      - -tags netgo
+      - -tags=netgo
     ldflags:
       - -s -w -X main.version={{ .Version }}
       - -linkmode 'external' -extldflags '-static'
