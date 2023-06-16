@@ -132,8 +132,8 @@ func tfImporterCreate(ctx context.Context, d *schema.ResourceData, meta interfac
 			resourceJsonMaps[instances[i].ResourceName] = make(map[string]map[string]interface{})
 		}
 
-		if len(resourceJsonMaps[instances[i].ResourceName][instances[i].Name]) > 0 {
-			nextIndex := len(resourceJsonMaps[instances[i].ResourceName][instances[i].Name]) + 1
+		if len(resourceJsonMaps[instances[i].ResourceName]) > 0 {
+			nextIndex := len(resourceJsonMaps[instances[i].ResourceName]) + 1
 			instances[i].Name = instances[i].Name + "_" + strconv.Itoa(nextIndex)
 		}
 
