@@ -1,3 +1,12 @@
+## 1.45.0 (June 16, 2023)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.44.0...v1.45.0)
+
+**Bug fixes:**
+* Fixed "Duplicate resource "confluent_kafka_acl" configuration" bug.
+* Fixed "Plugin did not respond" bug ([#258](https://github.com/confluentinc/terraform-provider-confluent/issues/258)).
+* Updated docs.
+
 ## 1.44.0 (June 15, 2023)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.43.0...v1.44.0)
