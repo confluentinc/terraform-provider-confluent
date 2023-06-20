@@ -209,6 +209,15 @@ func SetSchemaDiff(ctx context.Context, diff *schema.ResourceDiff, meta interfac
 	if diff.Id() == "" {
 		return nil
 	}
+
+	// Return an error for a schema update when recreate_on_update=true
+	// User wants to edit / evolve a schema. See https://docs.confluent.io/cloud/current/sr/schemas-manage.html#editing-schemas for more details.
+	// This is a fix for https://github.com/confluentinc/terraform-provider-confluent/issues/235
+	shouldRecreateOnUpdate := diff.Get(paramRecreateOnUpdate).(bool)
+	if shouldRecreateOnUpdate {
+		return fmt.Errorf("error updating Schema %q: reimport the current resource instance and set %s = false to evolve a schema using the same resource instance.\nIn this case, on an update resource instance will reference the updated (latest) schema by overriding %s, %s and %s attributes and the old schema will be orphaned.", diff.Id(), paramRecreateOnUpdate, paramSchemaIdentifier, paramSchema, paramVersion)
+	}
+
 	return schemaLookupCheck(ctx, diff, schemaRegistryRestClient, createSchemaRequest, subjectName, oldSchema)
 }
 
