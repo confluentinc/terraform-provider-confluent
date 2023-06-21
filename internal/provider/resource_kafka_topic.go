@@ -703,9 +703,26 @@ func loadAllKafkaTopics(ctx context.Context, client *Client) (InstanceIdsToNameM
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Kafka Topics for Kafka Cluster %q: %s", kafkaRestClient.clusterId, topicsJson), map[string]interface{}{kafkaClusterLoggingKey: kafkaRestClient.clusterId})
 
 	for _, topic := range topics.GetData() {
+		if shouldFilterOutTopic(topic.GetTopicName()) {
+			continue
+		}
 		instanceId := createKafkaTopicId(kafkaRestClient.clusterId, topic.GetTopicName())
 		instances[instanceId] = toValidTerraformResourceName(topic.GetTopicName())
 	}
 
 	return instances, nil
+}
+
+var additionalInternalTopics = []string{"_schemas", "__consumer_offsets", "confluent-audit-log-events"}
+var additionalInternalKsqlTopicPattern = regexp.MustCompile(`pksqlc-[a-zA-Z0-9]*-processing-log`)
+var additionalInternalConnectTopicPattern = regexp.MustCompile(`dlq-lcc-[a-zA-Z0-9]*`)
+
+func shouldFilterOutTopic(topicName string) bool {
+	if stringInSlice(topicName, additionalInternalTopics, false) {
+		return true
+	}
+	if additionalInternalKsqlTopicPattern.MatchString(topicName) || additionalInternalConnectTopicPattern.MatchString(topicName) {
+		return true
+	}
+	return false
 }
