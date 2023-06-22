@@ -38,6 +38,10 @@ Use the Confluent Terraform provider to enable the lifecycle management of Confl
    * [ksqlDB Clusters](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_ksql_cluster)
    * [Schemas](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema)
    * [Invitation](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_invitation)
+   * [Tag](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_tag)
+   * [Tag Binding](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_tag_binding)
+   * [Business Metadata](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_business_metadata)
+   * [Business Metadata Binding](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_business_metadata_binding)
 
 In this guide, you will:
 
