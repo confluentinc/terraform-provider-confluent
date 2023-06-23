@@ -145,7 +145,7 @@ func networkLinkServiceCreate(ctx context.Context, d *schema.ResourceData, meta 
 }
 
 func networkLinkServiceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	nlsId := d.Get(paramId).(string)
+	nlsId := d.Id()
 	if nlsId == "" {
 		return diag.Errorf("error reading Network Link Service: Network Link Service id is missing")
 	}
@@ -201,7 +201,7 @@ func executeNLSRead(ctx context.Context, c *Client, nlsId string, environmentId 
 }
 
 func networkLinkServiceDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	nlsId := d.Get(paramId).(string)
+	nlsId := d.Id()
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
 
 	tflog.Debug(ctx, fmt.Sprintf("deleting Network Link Service %q=%q", paramId, nlsId), map[string]interface{}{networkLinkServiceLoggingKey: nlsId})
@@ -225,7 +225,7 @@ func networkLinkServiceUpdate(ctx context.Context, d *schema.ResourceData, meta 
 
 	spec := net.NewNetworkingV1NetworkLinkServiceSpecUpdate()
 
-	nlsId := d.Get(paramId).(string)
+	nlsId := d.Id()
 	displayName := d.Get(paramDisplayName).(string)
 	description := d.Get(paramDescription).(string)
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)

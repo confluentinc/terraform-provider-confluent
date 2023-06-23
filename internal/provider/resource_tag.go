@@ -287,7 +287,7 @@ func tagUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 }
 
 func tagImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	tagId := d.Get(paramId).(string)
+	tagId := d.Id()
 	if tagId == "" {
 		return nil, fmt.Errorf("error importing Tag: Tag id is missing")
 	}

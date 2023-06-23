@@ -322,7 +322,7 @@ func businessMetadataBindingUpdate(ctx context.Context, d *schema.ResourceData, 
 }
 
 func businessMetadataBindingImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	businessMetadataBindingId := d.Get(paramId).(string)
+	businessMetadataBindingId := d.Id()
 	if businessMetadataBindingId == "" {
 		return nil, fmt.Errorf("error importing Business Metadata Binding: Business Metadata Binding id is missing")
 	}

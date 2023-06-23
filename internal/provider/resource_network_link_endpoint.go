@@ -138,7 +138,7 @@ func networkLinkEndpointCreate(ctx context.Context, d *schema.ResourceData, meta
 }
 
 func networkLinkEndpointRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	nleId := d.Get(paramId).(string)
+	nleId := d.Id()
 	if nleId == "" {
 		return diag.Errorf("error reading Network Link Endpoint: Network Link Endpoint id is missing")
 	}
@@ -194,7 +194,7 @@ func readNetworkLinkEndpointAndSetAttributes(ctx context.Context, d *schema.Reso
 }
 
 func networkLinkEndpointDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	nleId := d.Get(paramId).(string)
+	nleId := d.Id()
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
 
 	tflog.Debug(ctx, fmt.Sprintf("deleting Network Link Endpoint %q=%q", paramId, nleId), map[string]interface{}{networkLinkEndpointLoggingKey: nleId})
@@ -222,7 +222,7 @@ func networkLinkEndpointUpdate(ctx context.Context, d *schema.ResourceData, meta
 
 	spec := net.NewNetworkingV1NetworkLinkEndpointSpecUpdate()
 
-	nleId := d.Get(paramId).(string)
+	nleId := d.Id()
 	displayName := d.Get(paramDisplayName).(string)
 	description := d.Get(paramDescription).(string)
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)

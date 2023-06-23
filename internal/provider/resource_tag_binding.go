@@ -252,7 +252,7 @@ func tagBindingDelete(ctx context.Context, d *schema.ResourceData, meta interfac
 }
 
 func tagBindingImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	tagBindingId := d.Get(paramId).(string)
+	tagBindingId := d.Id()
 	if tagBindingId == "" {
 		return nil, fmt.Errorf("error importing Tag Binding: TagBinding id is missing")
 	}

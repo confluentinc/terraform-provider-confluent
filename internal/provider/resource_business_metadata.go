@@ -332,7 +332,7 @@ func businessMetadataUpdate(ctx context.Context, d *schema.ResourceData, meta in
 }
 
 func businessMetadataImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	businessMetadataId := d.Get(paramId).(string)
+	businessMetadataId := d.Id()
 	if businessMetadataId == "" {
 		return nil, fmt.Errorf("error importing Business Metadata: Business Metadata id is missing")
 	}
