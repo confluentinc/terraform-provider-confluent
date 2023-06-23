@@ -1,8 +1,8 @@
 ---
-page_title: "Experimental Resource Importer"
+page_title: "Resource Importer"
 ---
 
-# Experimental Resource Importer for Confluent Terraform Provider
+# Resource Importer for Confluent Terraform Provider
 
 [![General Availability](https://img.shields.io/badge/Lifecycle%20Stage-General%20Availability-%2345c6e8)](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy)
 
@@ -10,14 +10,14 @@ page_title: "Experimental Resource Importer"
 
 [![asciicast](https://asciinema.org/a/574292.svg)](https://asciinema.org/a/574292)
 
--> **Note:** Running _Experimental Resource Importer for Confluent Terraform Provider_ is a read-only operation. It will not edit Confluent Cloud infrastructure.
-For additional safety, the _Experimental Resource Importer for Confluent Terraform Provider_ adds `lifecycle { prevent_destroy = true }` for every imported instance to prevent accidental instance deletion. This setting rejects plans that would destroy or recreate the instance, such as attempting to change uneditable attributes. For more information, see the [Terraform docs](https://www.terraform.io/language/meta-arguments/lifecycle#prevent_destroy).
+-> **Note:** Running _Resource Importer for Confluent Terraform Provider_ is a read-only operation. It will not edit Confluent Cloud infrastructure.
+For additional safety, the _Resource Importer for Confluent Terraform Provider_ adds `lifecycle { prevent_destroy = true }` for every imported instance to prevent accidental instance deletion. This setting rejects plans that would destroy or recreate the instance, such as attempting to change uneditable attributes. For more information, see the [Terraform docs](https://www.terraform.io/language/meta-arguments/lifecycle#prevent_destroy).
 
--> **Note:** _Experimental Resource Importer for Confluent Terraform Provider_ is particularly useful when importing a lot of existing Confluent Cloud resources to Terraform when running `terraform import` for every resource is tedious.
+-> **Note:** _Resource Importer for Confluent Terraform Provider_ is particularly useful when importing a lot of existing Confluent Cloud resources to Terraform when running `terraform import` for every resource is tedious.
 For example, it's useful if you want to migrate to TF Provider for Confluent from other TF Providers for managing Confluent Cloud resources.
 It's also super convenient if you have been using the Confluent Cloud Console or Confluent CLI to manage your Confluent Cloud resources but now need to import 1000s of ACLs and 100s of Service Accounts into Terraform.
 
-_Experimental Resource Importer for Confluent Terraform Provider_ enables importing your existing Confluent Cloud resources to Terraform Configuration (`main.tf`) and Terraform State (`terraform.tfstate`) files to a local directory named `imported_confluent_infrastructure`.
+_Resource Importer for Confluent Terraform Provider_ enables importing your existing Confluent Cloud resources to Terraform Configuration (`main.tf`) and Terraform State (`terraform.tfstate`) files to a local directory named `imported_confluent_infrastructure`.
 
 These are the importable resources:
    * [Service Accounts](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_service_account)

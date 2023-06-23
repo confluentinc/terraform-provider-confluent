@@ -12,7 +12,7 @@ description: |-
 
 `confluent_tf_importer` resource provides an Importer resource that enables exporting of your existing Confluent Cloud resources to Terraform Configuration (`main.tf`) and Terraform State (`terraform.tfstate`) files to a local directory called `imported_confluent_infrastructure`.
 
-See [Experimental Resource Importer for Confluent Terraform Provider](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/guides/experimental-resource-importer) for step-by-step instructions on how to use the `confluent_tf_importer` resource.
+See [Resource Importer for Confluent Terraform Provider](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/guides/resource-importer) for step-by-step instructions on how to use the `confluent_tf_importer` resource.
 
 ## Example Usage
 

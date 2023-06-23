@@ -1,3 +1,20 @@
+## 1.46.0 (June 23, 2023)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.45.0...v1.46.0)
+**New features:**
+* Added new `confluent_network_link_service` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_network_link_service) and a corresponding [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_network_link_service) in a [General Availability lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
+* Added new `confluent_network_link_endpoint` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_network_link_endpoint) and a corresponding [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_network_link_endpoint) in a [General Availability lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
+* Renamed "Experimental Resource Importer" to ["Resource Importer"](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/guides/resource-importer) and released it in a [General Availability lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy) enabling import of existing Confluent Cloud resources to Terraform Configuration (`main.tf`) and Terraform State (`terraform.tfstate`) files.
+* Added new `confluent_tag` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_tag) and a corresponding [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_tag) in a [General Availability lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
+* Added new `confluent_tag_binding` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_tag_binding) and a corresponding [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_tag_binding) in a [General Availability lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
+* Added new `confluent_business_metadata` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_business_metadata) and a corresponding [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_business_metadata) in a [General Availability lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
+* Added new `confluent_business_metadata_binding` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_business_metadata_binding) and a corresponding [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_business_metadata_binding) in a [General Availability lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
+
+**Bug fixes:**
+* Fixed "TF Resource Importer: Filter out internal topics" issue ([#261](https://github.com/confluentinc/terraform-provider-confluent/issues/261)).
+* Fixed "Unexpected behavior for recreate_on_update attribute" issue ([#235](https://github.com/confluentinc/terraform-provider-confluent/issues/235)).
+* Updated docs.
+
 ## 1.45.0 (June 16, 2023)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.44.0...v1.45.0)
@@ -12,7 +29,7 @@
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.43.0...v1.44.0)
 
 **New features:**
-* Added support for `confluent_schema` resource in [Experimental Resource Importer](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/guides/experimental-resource-importer).
+* Added support for `confluent_schema` resource in [Experimental Resource Importer](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/guides/resource-importer).
 
 **Bug fixes:**
 * Added missing ACLs in sql-server-cdc-debezium-source-connector example.
@@ -26,7 +43,7 @@
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.42.0...v1.43.0)
 
 **New features:**
-* Added support for `confluent_schema_registry_cluster` resource in [Experimental Resource Importer](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/guides/experimental-resource-importer).
+* Added support for `confluent_schema_registry_cluster` resource in [Experimental Resource Importer](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/guides/resource-importer).
 * Added support for descriptive validation error messages for `confluent_schema` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema).
 
 **Bug fixes:**
@@ -83,7 +100,7 @@
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.38.0...v1.39.0)
 
 **New features:**
-* Added new [Experimental Resource Importer](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/guides/experimental-resource-importer) in a [Preview lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy) that enables importing your existing Confluent Cloud resources to Terraform Configuration (`main.tf`) and Terraform State (`terraform.tfstate`) files.
+* Added new [Experimental Resource Importer](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/guides/resource-importer) in a [Preview lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy) that enables importing your existing Confluent Cloud resources to Terraform Configuration (`main.tf`) and Terraform State (`terraform.tfstate`) files.
 
 ## 1.38.0 (March 31, 2023)
 
