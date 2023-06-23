@@ -42,6 +42,8 @@ Use the Confluent Terraform provider to enable the lifecycle management of Confl
    * [Tag Binding](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_tag_binding)
    * [Business Metadata](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_business_metadata)
    * [Business Metadata Binding](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_business_metadata_binding)
+   * [Network Link Service](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_network_link_service)
+   * [Network Link Endpoint](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_network_link_endpoint)
 
 In this guide, you will:
 
