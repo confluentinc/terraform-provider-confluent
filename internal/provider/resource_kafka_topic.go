@@ -678,3 +678,51 @@ func extractOldAndNewSettings(d *schema.ResourceData) (map[string]string, map[st
 	oldConfigs, newConfigs := d.GetChange(paramConfigs)
 	return convertToStringStringMap(oldConfigs.(map[string]interface{})), convertToStringStringMap(newConfigs.(map[string]interface{}))
 }
+
+// TODO: we might want to load all the resources instead
+func kafkaTopicImporter() *Importer {
+	return &Importer{
+		LoadInstanceIds: loadAllKafkaTopics,
+	}
+}
+
+func loadAllKafkaTopics(ctx context.Context, client *Client) (InstanceIdsToNameMap, diag.Diagnostics) {
+	instances := make(InstanceIdsToNameMap)
+
+	kafkaRestClient := client.kafkaRestClientFactory.CreateKafkaRestClient(client.kafkaRestEndpoint, client.kafkaClusterId, client.kafkaApiKey, client.kafkaApiSecret, true, true)
+
+	topics, _, err := kafkaRestClient.apiClient.TopicV3Api.ListKafkaTopics(kafkaRestClient.apiContext(ctx), kafkaRestClient.clusterId).Execute()
+	if err != nil {
+		tflog.Warn(ctx, fmt.Sprintf("Error reading Kafka Topics for Kafka Cluster %q: %s", kafkaRestClient.clusterId, createDescriptiveError(err)), map[string]interface{}{kafkaClusterLoggingKey: kafkaRestClient.clusterId})
+		return nil, diag.FromErr(createDescriptiveError(err))
+	}
+	topicsJson, err := json.Marshal(topics)
+	if err != nil {
+		return nil, diag.Errorf("error reading Kafka Topics for Kafka Cluster %q: error marshaling %#v to json: %s", kafkaRestClient.clusterId, topics, createDescriptiveError(err))
+	}
+	tflog.Debug(ctx, fmt.Sprintf("Fetched Kafka Topics for Kafka Cluster %q: %s", kafkaRestClient.clusterId, topicsJson), map[string]interface{}{kafkaClusterLoggingKey: kafkaRestClient.clusterId})
+
+	for _, topic := range topics.GetData() {
+		if shouldFilterOutTopic(topic.GetTopicName()) {
+			continue
+		}
+		instanceId := createKafkaTopicId(kafkaRestClient.clusterId, topic.GetTopicName())
+		instances[instanceId] = toValidTerraformResourceName(topic.GetTopicName())
+	}
+
+	return instances, nil
+}
+
+var additionalInternalTopics = []string{"_schemas", "__consumer_offsets", "confluent-audit-log-events"}
+var additionalInternalKsqlTopicPattern = regexp.MustCompile(`pksqlc-[a-zA-Z0-9]*-processing-log`)
+var additionalInternalConnectTopicPattern = regexp.MustCompile(`dlq-lcc-[a-zA-Z0-9]*`)
+
+func shouldFilterOutTopic(topicName string) bool {
+	if stringInSlice(topicName, additionalInternalTopics, false) {
+		return true
+	}
+	if additionalInternalKsqlTopicPattern.MatchString(topicName) || additionalInternalConnectTopicPattern.MatchString(topicName) {
+		return true
+	}
+	return false
+}

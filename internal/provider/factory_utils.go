@@ -1,6 +1,7 @@
 package provider
 
 import (
+	dc "github.com/confluentinc/ccloud-sdk-go-v2/data-catalog/v1"
 	kafkarestv3 "github.com/confluentinc/ccloud-sdk-go-v2/kafkarest/v3"
 	"github.com/hashicorp/go-retryablehttp"
 	"net/http"
@@ -24,6 +25,26 @@ func (f SchemaRegistryRestClientFactory) CreateSchemaRegistryRestClient(restEndp
 	}
 	return &SchemaRegistryRestClient{
 		apiClient:                    schemaregistry.NewAPIClient(config),
+		clusterId:                    clusterId,
+		clusterApiKey:                clusterApiKey,
+		clusterApiSecret:             clusterApiSecret,
+		restEndpoint:                 restEndpoint,
+		isMetadataSetInProviderBlock: isMetadataSetInProviderBlock,
+	}
+}
+
+func (f SchemaRegistryRestClientFactory) CreateDataCatalogClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret string, isMetadataSetInProviderBlock bool) *SchemaRegistryRestClient {
+	config := dc.NewConfiguration()
+	config.Servers[0].URL = restEndpoint
+	config.UserAgent = f.userAgent
+	if f.maxRetries != nil {
+		config.HTTPClient = NewRetryableClientFactory(WithMaxRetries(*f.maxRetries)).CreateRetryableClient()
+	} else {
+		config.HTTPClient = NewRetryableClientFactory().CreateRetryableClient()
+	}
+
+	return &SchemaRegistryRestClient{
+		dataCatalogApiClient:         dc.NewAPIClient(config),
 		clusterId:                    clusterId,
 		clusterApiKey:                clusterApiKey,
 		clusterApiSecret:             clusterApiSecret,

@@ -69,7 +69,6 @@ func TestAccLatestSchema(t *testing.T) {
 	validateSchemaStub := wiremock.Post(wiremock.URLPathEqualTo(validateSchemaPath)).
 		InScenario(schemaScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
-		WillSetStateTo(scenarioStateSchemaHasBeenValidated).
 		WillReturn(
 			string(validateSchemaResponse),
 			contentTypeJSONHeader,
@@ -80,7 +79,7 @@ func TestAccLatestSchema(t *testing.T) {
 	createSchemaResponse, _ := ioutil.ReadFile("../testdata/schema_registry_schema/create_schema.json")
 	createSchemaStub := wiremock.Post(wiremock.URLPathEqualTo(createSchemaPath)).
 		InScenario(schemaScenarioName).
-		WhenScenarioStateIs(scenarioStateSchemaHasBeenValidated).
+		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillSetStateTo(scenarioStateSchemaHasBeenCreated).
 		WillReturn(
 			string(createSchemaResponse),
@@ -109,6 +108,17 @@ func TestAccLatestSchema(t *testing.T) {
 			http.StatusOK,
 		))
 
+	checkSchemaExistsResponse, _ := ioutil.ReadFile("../testdata/schema_registry_schema/create_schema.json")
+	checkSchemaExistsStub := wiremock.Post(wiremock.URLPathEqualTo(createSchemaPath)).
+		InScenario(schemaScenarioName).
+		WhenScenarioStateIs(scenarioStateSchemaHasBeenCreated).
+		WillReturn(
+			string(checkSchemaExistsResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		)
+	_ = wiremockClient.StubFor(checkSchemaExistsStub)
+
 	deleteSchemaStub := wiremock.Delete(wiremock.URLPathEqualTo(deleteSchemaPath)).
 		InScenario(schemaScenarioName).
 		WhenScenarioStateIs(scenarioStateSchemaHasBeenCreated).
@@ -134,10 +144,12 @@ func TestAccLatestSchema(t *testing.T) {
 	_ = os.Setenv("IMPORT_SCHEMA_REGISTRY_API_KEY", testSchemaRegistryUpdatedKey)
 	_ = os.Setenv("IMPORT_SCHEMA_REGISTRY_API_SECRET", testSchemaRegistryUpdatedSecret)
 	_ = os.Setenv("IMPORT_SCHEMA_REGISTRY_REST_ENDPOINT", mockSchemaTestServerUrl)
+	_ = os.Setenv("SCHEMA_CONTENT", testSchemaContent)
 	defer func() {
 		_ = os.Unsetenv("IMPORT_SCHEMA_REGISTRY_API_KEY")
 		_ = os.Unsetenv("IMPORT_SCHEMA_REGISTRY_API_SECRET")
 		_ = os.Unsetenv("IMPORT_SCHEMA_REGISTRY_REST_ENDPOINT")
+		_ = os.Unsetenv("SCHEMA_CONTENT")
 	}()
 
 	resource.Test(t, resource.TestCase{
@@ -220,7 +232,6 @@ func TestAccLatestSchema(t *testing.T) {
 		},
 	})
 
-	checkStubCount(t, wiremockClient, createSchemaStub, fmt.Sprintf("POST %s", createSchemaPath), expectedCountOne)
 	checkStubCount(t, wiremockClient, deleteSchemaStub, fmt.Sprintf("DELETE %s", readSchemasPath), expectedCountOne)
 }
 

@@ -32,7 +32,10 @@ import (
 const (
 	paramConnectionTypes                         = "connection_types"
 	paramCidr                                    = "cidr"
+	paramReservedCidr                            = "reserved_cidr"
 	paramZones                                   = "zones"
+	paramZoneInfo                                = "zone_info"
+	paramZoneId                                  = "zone_id"
 	paramPrivateLinkEndpointService              = "private_link_endpoint_service"
 	paramPrivateLinkServiceAliases               = "private_link_service_aliases"
 	paramPrivateServiceConnectServiceAttachments = "private_service_connect_service_attachments"
@@ -90,7 +93,16 @@ func networkResource() *schema.Resource {
 				Computed:     true,
 				ForceNew:     true,
 			},
+			paramReservedCidr: {
+				Type:         schema.TypeString,
+				Description:  "The IPv4 CIDR block reserved for Confluent Cloud Network. Must be /24. If not specified, Confluent Cloud Network uses 172.20.255.0/24",
+				ValidateFunc: validation.StringMatch(regexp.MustCompile(`^\d+\.\d+\.\d+\.\d+/24$`), "The IPv4 CIDR block must be /24."),
+				Optional:     true,
+				Computed:     true,
+				ForceNew:     true,
+			},
 			paramZones:       zonesSchema(),
+			paramZoneInfo:    zonesInfoSchema(),
 			paramDnsConfig:   optionalDnsConfigSchema(),
 			paramEnvironment: environmentSchema(),
 			paramResourceName: {
@@ -211,10 +223,9 @@ func networkCreate(ctx context.Context, d *schema.ResourceData, meta interface{}
 		return diag.Errorf("input validation error reading Network's %q: %s", paramConnectionTypes, createDescriptiveError(err))
 	}
 
-	cidr, err := readCidr(d, cloud, connectionTypes)
-	if err != nil {
-		return diag.Errorf("input validation error reading Network's %q: %s", paramCidr, createDescriptiveError(err))
-	}
+	cidr := d.Get(paramCidr).(string)
+	reservedCidr := d.Get(paramReservedCidr).(string)
+	zonesInfo := buildZonesInfo(d.Get(paramZoneInfo).([]interface{}))
 
 	zones, err := readZones(d, cloud, connectionTypes)
 	if err != nil {
@@ -235,6 +246,12 @@ func networkCreate(ctx context.Context, d *schema.ResourceData, meta interface{}
 	})
 	if cidr != "" {
 		spec.SetCidr(cidr)
+	}
+	if reservedCidr != "" {
+		spec.SetReservedCidr(reservedCidr)
+	}
+	if len(zonesInfo.Items) > 0 {
+		spec.SetZonesInfo(zonesInfo)
 	}
 	if len(zones) > 0 {
 		spec.SetZones(zones)
@@ -340,6 +357,9 @@ func setNetworkAttributes(d *schema.ResourceData, network net.NetworkingV1Networ
 	if err := d.Set(paramCidr, network.Spec.GetCidr()); err != nil {
 		return nil, err
 	}
+	if err := d.Set(paramReservedCidr, network.Spec.GetReservedCidr()); err != nil {
+		return nil, err
+	}
 	if err := d.Set(paramZones, network.Spec.GetZones()); err != nil {
 		return nil, err
 	}
@@ -348,6 +368,10 @@ func setNetworkAttributes(d *schema.ResourceData, network net.NetworkingV1Networ
 		return nil, err
 	}
 	if err := d.Set(paramZonalSubdomains, network.Status.GetZonalSubdomains()); err != nil {
+		return nil, err
+	}
+
+	if err := d.Set(paramZoneInfo, buildTfZonesInfo(network.Spec.GetZonesInfo())); err != nil {
 		return nil, err
 	}
 
@@ -486,6 +510,32 @@ func zonesSchema() *schema.Schema {
 	}
 }
 
+func zonesInfoSchema() *schema.Schema {
+	return &schema.Schema{
+		Type:     schema.TypeList,
+		Optional: true,
+		Computed: true,
+		MinItems: 3,
+		MaxItems: 3,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramZoneId: {
+					Type:     schema.TypeString,
+					Optional: true,
+					Computed: true,
+				},
+				paramCidr: {
+					Type:     schema.TypeString,
+					Optional: true,
+					Computed: true,
+				},
+			},
+		},
+		ForceNew:    true,
+		Description: "Each item represents information related to a single zone.",
+	}
+}
+
 // cidr is required for VPC peering and AWS TransitGateway.
 // TODO: update error messages
 func validateCidr(cidr, cloud string, connectionTypes []string) error {
@@ -510,14 +560,6 @@ func validateZones(zones []string, cloud string, connectionTypes []string) error
 		return fmt.Errorf("zones can only be specified for AWS networks used with PrivateLink or Peering or TransitGateway or for GCP networks used with Private Service Connect or Peering")
 	}
 	return nil
-}
-
-func readCidr(d *schema.ResourceData, cloud string, connectionTypes []string) (string, error) {
-	cidr := d.Get(paramCidr).(string)
-	if err := validateCidr(cidr, cloud, connectionTypes); err != nil {
-		return "", err
-	}
-	return cidr, nil
 }
 
 func readZones(d *schema.ResourceData, cloud string, connectionTypes []string) ([]string, error) {
@@ -547,4 +589,37 @@ func optionalDnsConfigSchema() *schema.Schema {
 			},
 		},
 	}
+}
+
+func buildZonesInfo(tfZonesInfo []interface{}) net.NetworkingV1ZonesInfo {
+	zonesInfo := make([]net.NetworkingV1ZoneInfo, len(tfZonesInfo))
+	for index, tfZoneInfo := range tfZonesInfo {
+		zoneInfo := net.NewNetworkingV1ZoneInfo()
+		tfZoneInfoMap := tfZoneInfo.(map[string]interface{})
+		if zoneId, exists := tfZoneInfoMap[paramZoneId].(string); exists {
+			zoneInfo.SetZoneId(zoneId)
+		}
+		if cidr, exists := tfZoneInfoMap[paramCidr].(string); exists {
+			zoneInfo.SetCidr(cidr)
+		}
+		zonesInfo[index] = *zoneInfo
+	}
+	return net.NetworkingV1ZonesInfo{
+		Items: zonesInfo,
+	}
+}
+
+func buildTfZonesInfo(zonesInfo net.NetworkingV1ZonesInfo) *[]map[string]interface{} {
+	tfZonesInfo := make([]map[string]interface{}, len(zonesInfo.Items))
+	for i, zoneInfo := range zonesInfo.Items {
+		tfZonesInfo[i] = *buildTfZoneInfo(zoneInfo)
+	}
+	return &tfZonesInfo
+}
+
+func buildTfZoneInfo(zoneInfo net.NetworkingV1ZoneInfo) *map[string]interface{} {
+	tfZoneInfo := make(map[string]interface{})
+	tfZoneInfo[paramZoneId] = zoneInfo.GetZoneId()
+	tfZoneInfo[paramCidr] = zoneInfo.GetCidr()
+	return &tfZoneInfo
 }

@@ -1,0 +1,20 @@
+{
+  "api_version": "iam/v2",
+  "data": [
+    {
+      "api_version": "iam/v2",
+      "kind": "ServiceAccount",
+      "id": "sa-1jjv26",
+      "metadata": {
+        "self": "https://api.confluent.cloud/v2/service-accounts/sa-1jjv26",
+        "created_at": "2021-08-08T18:23:41.849685Z",
+        "updated_at": "2021-08-08T18:23:41.849685Z",
+        "resource_name": "crn://confluent.cloud/service-account=sa-1jjv26"
+      },
+      "description": "The initial description of service account",
+      "display_name": "test_service_account_display_name"
+    }
+  ],
+  "kind": "ServiceAccountList",
+  "metadata": {}
+}

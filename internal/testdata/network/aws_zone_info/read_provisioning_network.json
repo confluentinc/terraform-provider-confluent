@@ -1,0 +1,67 @@
+{
+  "api_version": "networking/v1",
+  "id": "n-pr1jy6",
+  "kind": "Network",
+  "metadata": {
+    "created_at": "2022-04-12T05:55:00.597337Z",
+    "resource_name": "crn://confluent.cloud/organization=foo/environment=env-gz903/network=n-pr1jy6",
+    "self": "https://api.confluent.cloud/networking/v1/networks/n-pr1jy6?environment=env-gz903",
+    "updated_at": "2022-04-12T05:55:01.104559Z"
+  },
+  "spec": {
+    "cidr": "255.254.0.0/16",
+    "cloud": "AWS",
+    "connection_types": [
+      "PEERING"
+    ],
+    "display_name": "s-n9553",
+    "environment": {
+      "api_version": "org/v2",
+      "id": "env-gz903",
+      "kind": "Environment",
+      "related": "https://api.confluent.cloud/v2/environments/env-gz903",
+      "resource_name": "crn://confluent.cloud/organization=foo/environment=env-gz903"
+    },
+    "region": "us-east-1",
+    "reserved_cidr": "172.20.255.0/24",
+    "zone_info": [
+      {
+        "cidr": "10.2.16.0/27",
+        "zone_id": "use1-az2"
+      },
+      {
+        "cidr": "10.2.16.32/27",
+        "zone_id": "use1-az5"
+      },
+      {
+        "cidr": "10.2.16.64/27",
+        "zone_id": "use1-az6"
+      }
+    ],
+    "zones": [
+      "use1-az2",
+      "use1-az5",
+      "use1-az6"
+    ]
+  },
+  "status": {
+    "active_connection_types": [],
+    "cloud": {
+      "account": "012345678901",
+      "kind": "networking.v1.AwsNetwork",
+      "private_link_endpoint_service": "",
+      "vpc": "vpc-03e78ba4db7bb1789"
+    },
+    "dns_domain": "pr1jy6.us-east-2.aws.confluent.cloud",
+    "phase": "READY",
+    "supported_connection_types": [
+      "PEERING",
+      "TRANSITGATEWAY"
+    ],
+    "zonal_subdomains": {
+      "use1-az2": "use1-az2.pr1jy6.us-east-1.aws.confluent.cloud",
+      "use1-az5": "use1-az5.pr1jy6.us-east-1.aws.confluent.cloud",
+      "use1-az6": "use1-az6.pr1jy6.us-east-1.aws.confluent.cloud"
+    }
+  }
+}

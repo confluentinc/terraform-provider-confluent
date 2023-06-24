@@ -142,6 +142,24 @@ func waitForPrivateLinkAccessToProvision(ctx context.Context, c *Client, environ
 	return nil
 }
 
+func waitForNetworkLinkServiceToProvision(ctx context.Context, c *Client, environmentId, nlsId string) error {
+	stateConf := &resource.StateChangeConf{
+		Pending: []string{stateProvisioning},
+		Target:  []string{stateReady},
+		Refresh: nlsProvisionStatus(c.netApiContext(ctx), c, environmentId, nlsId),
+		Timeout: networkingAPICreateTimeout,
+		// TODO: increase delay
+		Delay:        5 * time.Second,
+		PollInterval: 1 * time.Minute,
+	}
+
+	tflog.Debug(ctx, fmt.Sprintf("Waiting for Network Link Service %q provisioning status to become %q", nlsId, stateReady), map[string]interface{}{networkLinkServiceLoggingKey: nlsId})
+	if _, err := stateConf.WaitForStateContext(c.netApiContext(ctx)); err != nil {
+		return err
+	}
+	return nil
+}
+
 func waitForNetworkToProvision(ctx context.Context, c *Client, environmentId, networkId string) error {
 	stateConf := &resource.StateChangeConf{
 		Pending: []string{stateProvisioning},
@@ -154,6 +172,24 @@ func waitForNetworkToProvision(ctx context.Context, c *Client, environmentId, ne
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for Network %q provisioning status to become %q", networkId, stateReady), map[string]interface{}{networkLoggingKey: networkId})
+	if _, err := stateConf.WaitForStateContext(c.netApiContext(ctx)); err != nil {
+		return err
+	}
+	return nil
+}
+
+func waitForNetworkLinkEndpointToProvision(ctx context.Context, c *Client, environmentId, nleId string) error {
+	stateConf := &resource.StateChangeConf{
+		Pending: []string{stateProvisioning},
+		Target:  []string{stateReady, statePendingAccept, stateInactive},
+		Refresh: nleProvisionStatus(c.netApiContext(ctx), c, environmentId, nleId),
+		Timeout: networkingAPICreateTimeout,
+		// TODO: increase delay
+		Delay:        5 * time.Second,
+		PollInterval: 1 * time.Minute,
+	}
+
+	tflog.Debug(ctx, fmt.Sprintf("Waiting for Network Link Endpoint %q provisioning status to become %q", nleId, stateReady), map[string]interface{}{networkLinkEndpointLoggingKey: nleId})
 	if _, err := stateConf.WaitForStateContext(c.netApiContext(ctx)); err != nil {
 		return err
 	}
@@ -249,6 +285,70 @@ func waitForPeeringToProvision(ctx context.Context, c *Client, environmentId, pe
 	return nil
 }
 
+func waitForTagToProvision(ctx context.Context, c *SchemaRegistryRestClient, tagId, tagName string) error {
+	stateConf := &resource.StateChangeConf{
+		Pending:      []string{stateProvisioning},
+		Target:       []string{stateReady},
+		Refresh:      tagProvisionStatus(c.dataCatalogApiContext(ctx), c, tagId, tagName),
+		Timeout:      dataCatalogTimeout,
+		PollInterval: time.Second,
+	}
+
+	tflog.Debug(ctx, fmt.Sprintf("Waiting for Tag %q provisioning status to become %q", tagId, stateReady), map[string]interface{}{tagLoggingKey: tagId})
+	if _, err := stateConf.WaitForStateContext(c.dataCatalogApiContext(ctx)); err != nil {
+		return err
+	}
+	return nil
+}
+
+func waitForBusinessMetadataToProvision(ctx context.Context, c *SchemaRegistryRestClient, businessMetadataId, businessMetadataName string) error {
+	stateConf := &resource.StateChangeConf{
+		Pending:      []string{stateProvisioning},
+		Target:       []string{stateReady},
+		Refresh:      businessMetadataProvisionStatus(c.dataCatalogApiContext(ctx), c, businessMetadataId, businessMetadataName),
+		Timeout:      dataCatalogTimeout,
+		PollInterval: time.Second,
+	}
+
+	tflog.Debug(ctx, fmt.Sprintf("Waiting for Business Metadata %q provisioning status to become %q", businessMetadataId, stateReady), map[string]interface{}{businessMetadataLoggingKey: businessMetadataId})
+	if _, err := stateConf.WaitForStateContext(c.dataCatalogApiContext(ctx)); err != nil {
+		return err
+	}
+	return nil
+}
+
+func waitForTagBindingToProvision(ctx context.Context, c *SchemaRegistryRestClient, tagBindingId, tagName, entityName, entityType string) error {
+	stateConf := &resource.StateChangeConf{
+		Pending:      []string{stateProvisioning},
+		Target:       []string{stateReady},
+		Refresh:      tagBindingProvisionStatus(c.dataCatalogApiContext(ctx), c, tagBindingId, tagName, entityName, entityType),
+		Timeout:      dataCatalogTimeout,
+		PollInterval: time.Second,
+	}
+
+	tflog.Debug(ctx, fmt.Sprintf("Waiting for Tag Binding %q provisioning status to become %q", tagBindingId, stateReady), map[string]interface{}{tagBindingLoggingKey: tagBindingId})
+	if _, err := stateConf.WaitForStateContext(c.dataCatalogApiContext(ctx)); err != nil {
+		return err
+	}
+	return nil
+}
+
+func waitForBusinessMetadataBindingToProvision(ctx context.Context, c *SchemaRegistryRestClient, businessMetadataBindingId, businessMetadataName, entityName, entityType string) error {
+	stateConf := &resource.StateChangeConf{
+		Pending:      []string{stateProvisioning},
+		Target:       []string{stateReady},
+		Refresh:      businessMetadataBindingProvisionStatus(c.dataCatalogApiContext(ctx), c, businessMetadataBindingId, businessMetadataName, entityName, entityType),
+		Timeout:      dataCatalogTimeout,
+		PollInterval: time.Second,
+	}
+
+	tflog.Debug(ctx, fmt.Sprintf("Waiting for Business Metadata Binding %q provisioning status to become %q", businessMetadataBindingId, stateReady), map[string]interface{}{businessMetadataBindingLoggingKey: businessMetadataBindingId})
+	if _, err := stateConf.WaitForStateContext(c.dataCatalogApiContext(ctx)); err != nil {
+		return err
+	}
+	return nil
+}
+
 func waitForTransitGatewayAttachmentToProvision(ctx context.Context, c *Client, environmentId, transitGatewayAttachmentId string) error {
 	stateConf := &resource.StateChangeConf{
 		Pending: []string{stateProvisioning},
@@ -313,6 +413,23 @@ func waitForPeeringToBeDeleted(ctx context.Context, c *Client, environmentId, pe
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for Peering %q to be deleted", peeringId), map[string]interface{}{peeringLoggingKey: peeringId})
+	if _, err := stateConf.WaitForStateContext(c.netApiContext(ctx)); err != nil {
+		return err
+	}
+	return nil
+}
+
+func waitForNetworkLinkEndpointToBeDeleted(ctx context.Context, c *Client, environmentId, nleId string) error {
+	stateConf := &resource.StateChangeConf{
+		Pending:      []string{stateInProgress},
+		Target:       []string{stateDone},
+		Refresh:      nleDeleteStatus(c.netApiContext(ctx), c, environmentId, nleId),
+		Timeout:      networkingAPIDeleteTimeout,
+		Delay:        1 * time.Minute,
+		PollInterval: 1 * time.Minute,
+	}
+
+	tflog.Debug(ctx, fmt.Sprintf("Waiting for Network Link Endpoint %q to be deleted", nleId), map[string]interface{}{networkLinkEndpointLoggingKey: nleId})
 	if _, err := stateConf.WaitForStateContext(c.netApiContext(ctx)); err != nil {
 		return err
 	}
@@ -547,6 +664,25 @@ func privateLinkAccessProvisionStatus(ctx context.Context, c *Client, environmen
 	}
 }
 
+func nlsProvisionStatus(ctx context.Context, c *Client, environmentId string, nlsId string) resource.StateRefreshFunc {
+	return func() (result interface{}, s string, err error) {
+		nls, _, err := executeNLSRead(c.netApiContext(ctx), c, nlsId, environmentId)
+		if err != nil {
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Network Link Service %q: %s", nlsId, createDescriptiveError(err)), map[string]interface{}{networkLinkServiceLoggingKey: nlsId})
+			return nil, stateUnknown, err
+		}
+
+		tflog.Debug(ctx, fmt.Sprintf("Waiting for Network Link Service %q provisioning status to become %q: current status is %q", nlsId, stateReady, nls.Status.GetPhase()), map[string]interface{}{networkLinkServiceLoggingKey: nlsId})
+		if nls.Status.GetPhase() == stateProvisioning || nls.Status.GetPhase() == stateReady {
+			return nls, nls.Status.GetPhase(), nil
+		} else if nls.Status.GetPhase() == stateFailed {
+			return nil, stateFailed, fmt.Errorf("network link service %q provisioning status is %q: %s", nlsId, stateFailed, nls.Status.GetErrorMessage())
+		}
+		// Network is in an unexpected state
+		return nil, stateUnexpected, fmt.Errorf("network link service %q is an unexpected state %q: %s", nlsId, nls.Status.GetPhase(), nls.Status.GetErrorMessage())
+	}
+}
+
 func networkProvisionStatus(ctx context.Context, c *Client, environmentId string, networkId string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
 		network, _, err := executeNetworkRead(c.netApiContext(ctx), c, environmentId, networkId)
@@ -563,6 +699,25 @@ func networkProvisionStatus(ctx context.Context, c *Client, environmentId string
 		}
 		// Network is in an unexpected state
 		return nil, stateUnexpected, fmt.Errorf("network %q is an unexpected state %q: %s", networkId, network.Status.GetPhase(), network.Status.GetErrorMessage())
+	}
+}
+
+func nleProvisionStatus(ctx context.Context, c *Client, environmentId string, nleId string) resource.StateRefreshFunc {
+	return func() (result interface{}, s string, err error) {
+		nle, _, err := executeNLERead(c.netApiContext(ctx), c, nleId, environmentId)
+		if err != nil {
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Network Link Endpoint %q: %s", nleId, createDescriptiveError(err)), map[string]interface{}{networkLinkEndpointLoggingKey: nleId})
+			return nil, stateUnknown, err
+		}
+
+		tflog.Debug(ctx, fmt.Sprintf("Waiting for Network Link Endpoint %q provisioning status to become %q: current status is %q", nleId, stateReady, nle.Status.GetPhase()), map[string]interface{}{networkLinkEndpointLoggingKey: nleId})
+		if nle.Status.GetPhase() == stateProvisioning || nle.Status.GetPhase() == stateReady || nle.Status.GetPhase() == stateInactive || nle.Status.GetPhase() == statePendingAccept {
+			return nle, nle.Status.GetPhase(), nil
+		} else if nle.Status.GetPhase() == stateFailed {
+			return nil, stateFailed, fmt.Errorf("network link endpoint %q provisioning status is %q: %s", nleId, stateFailed, nle.Status.GetErrorMessage())
+		}
+		// Network is in an unexpected state
+		return nil, stateUnexpected, fmt.Errorf("network link endpoint %q is an unexpected state %q: %s", nleId, nle.Status.GetPhase(), nle.Status.GetErrorMessage())
 	}
 }
 
@@ -627,6 +782,84 @@ func peeringProvisionStatus(ctx context.Context, c *Client, environmentId string
 	}
 }
 
+func tagProvisionStatus(ctx context.Context, c *SchemaRegistryRestClient, tagId, tagName string) resource.StateRefreshFunc {
+	return func() (result interface{}, s string, err error) {
+		request := c.dataCatalogApiClient.TypesV1Api.GetTagDefByName(c.dataCatalogApiContext(ctx), tagName)
+		tag, resp, err := request.Execute()
+		if err != nil && resp.StatusCode == http.StatusNotFound {
+			return nil, stateProvisioning, nil
+		}
+
+		if err != nil {
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Tag %q: %s", tagId, createDescriptiveError(err)), map[string]interface{}{tagLoggingKey: tagId})
+			return nil, stateUnknown, err
+		}
+
+		return tag, stateReady, nil
+	}
+}
+
+func businessMetadataProvisionStatus(ctx context.Context, c *SchemaRegistryRestClient, businessMetadataId, businessMetadataName string) resource.StateRefreshFunc {
+	return func() (result interface{}, s string, err error) {
+		request := c.dataCatalogApiClient.TypesV1Api.GetBusinessMetadataDefByName(c.dataCatalogApiContext(ctx), businessMetadataName)
+		businessMetadata, resp, err := request.Execute()
+		if err != nil && resp.StatusCode == http.StatusNotFound {
+			return nil, stateProvisioning, nil
+		}
+
+		if err != nil {
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Business Metadata %q: %s", businessMetadataId, createDescriptiveError(err)), map[string]interface{}{businessMetadataLoggingKey: businessMetadataId})
+			return nil, stateUnknown, err
+		}
+
+		return businessMetadata, stateReady, nil
+	}
+}
+
+func tagBindingProvisionStatus(ctx context.Context, c *SchemaRegistryRestClient, tagBindingId, tagName, entityName, entityType string) resource.StateRefreshFunc {
+	return func() (result interface{}, s string, err error) {
+		request := c.dataCatalogApiClient.EntityV1Api.GetTags(c.dataCatalogApiContext(ctx), entityType, entityName)
+		tagBindings, resp, err := request.Execute()
+		if err != nil && resp.StatusCode == http.StatusNotFound {
+			return nil, stateProvisioning, nil
+		}
+
+		if err != nil {
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Tag Binding %q: %s", tagBindingId, createDescriptiveError(err)), map[string]interface{}{tagBindingLoggingKey: tagBindingId})
+			return nil, stateUnknown, err
+		}
+
+		tagBinding, err := findTagBindingByTagName(tagBindings, tagName)
+		if err != nil {
+			return nil, stateProvisioning, nil
+		}
+
+		return tagBinding, stateReady, nil
+	}
+}
+
+func businessMetadataBindingProvisionStatus(ctx context.Context, c *SchemaRegistryRestClient, businessMetadataBindingId, businessMetadataName, entityName, entityType string) resource.StateRefreshFunc {
+	return func() (result interface{}, s string, err error) {
+		request := c.dataCatalogApiClient.EntityV1Api.GetBusinessMetadata(c.dataCatalogApiContext(ctx), entityType, entityName)
+		businessMetadataBindings, resp, err := request.Execute()
+		if err != nil && resp.StatusCode == http.StatusNotFound {
+			return nil, stateProvisioning, nil
+		}
+
+		if err != nil {
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Business Metadata Binding %q: %s", businessMetadataBindingId, createDescriptiveError(err)), map[string]interface{}{businessMetadataBindingLoggingKey: businessMetadataBindingId})
+			return nil, stateUnknown, err
+		}
+
+		businessMetadataBinding, err := findBusinessMetadataBindingByBusinessMetadataName(businessMetadataBindings, businessMetadataName)
+		if err != nil {
+			return nil, stateProvisioning, nil
+		}
+
+		return businessMetadataBinding, stateReady, nil
+	}
+}
+
 func transitGatewayAttachmentProvisionStatus(ctx context.Context, c *Client, environmentId string, transitGatewayAttachmentId string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
 		transitGatewayAttachment, _, err := executeTransitGatewayAttachmentRead(c.netApiContext(ctx), c, environmentId, transitGatewayAttachmentId)
@@ -683,6 +916,26 @@ func peeringDeleteStatus(ctx context.Context, c *Client, environmentId, peeringI
 		}
 		tflog.Debug(ctx, fmt.Sprintf("Performing Peering %q deletion process: Peering %d's status is %q", peeringId, resp.StatusCode, peering.Status.GetPhase()), map[string]interface{}{peeringLoggingKey: peeringId})
 		return peering, stateInProgress, nil
+	}
+}
+
+func nleDeleteStatus(ctx context.Context, c *Client, environmentId, nleId string) resource.StateRefreshFunc {
+	return func() (result interface{}, s string, err error) {
+		nle, resp, err := executeNLERead(c.netApiContext(ctx), c, nleId, environmentId)
+		if err != nil {
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Network Link Endpoint %q: %s", nleId, createDescriptiveError(err)), map[string]interface{}{networkLinkEndpointLoggingKey: nleId})
+
+			isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
+			if isResourceNotFound {
+				tflog.Debug(ctx, fmt.Sprintf("Finishing Network Link Endpoint %q deletion process: Received %d status code when reading %q nle", nleId, resp.StatusCode, nleId), map[string]interface{}{networkLinkEndpointLoggingKey: nleId})
+				return 0, stateDone, nil
+			} else {
+				tflog.Debug(ctx, fmt.Sprintf("Exiting Network Link Endpoint %q deletion process: Failed when reading nle: %s: %s", nleId, createDescriptiveError(err), nle.Status.GetErrorMessage()), map[string]interface{}{networkLinkEndpointLoggingKey: nleId})
+				return nil, stateFailed, err
+			}
+		}
+		tflog.Debug(ctx, fmt.Sprintf("Performing Network Link Endpoint %q deletion process: Network Link Endpoint %d's status is %q", nleId, resp.StatusCode, nle.Status.GetPhase()), map[string]interface{}{networkLinkEndpointLoggingKey: nleId})
+		return nle, stateInProgress, nil
 	}
 }
 

@@ -1,0 +1,19 @@
+[
+  {
+    "category": "CLASSIFICATION",
+    "createdBy": "root",
+    "updatedBy": "root",
+    "createTime": 1675228115604,
+    "updateTime": 1675228166078,
+    "version": 2,
+    "name": "test1",
+    "description": "test1UpdatedDescription",
+    "typeVersion": "1.1",
+    "attributeDefs": [],
+    "superTypes": [],
+    "entityTypes": [
+      "cf_entity",
+      "kafka_topic"
+    ]
+  }
+]

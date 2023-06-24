@@ -1,0 +1,37 @@
+{
+  "api_version": "networking/v1",
+  "id": "nls-p2k0l1",
+  "kind": "NetworkLinkService",
+  "metadata": {
+    "created_at": "2023-02-09T22:06:43.888364Z",
+    "resource_name": "crn://confluent.cloud/organization=foo/environment=env-d1o8qo/network=n-6kqnx2/network-link-service=nls-p2k0l1",
+    "self": "https://api.confluent.cloud/networking/v1/network-link-services/nls-p2k0l1?environment=env-d1o8qo",
+    "updated_at": "2023-02-09T22:31:58.853749Z"
+  },
+  "spec": {
+    "accept": {
+      "environments": [
+        "env-nkv0pz"
+      ],
+      "networks": [
+        "n-6xr90w"
+      ]
+    },
+    "description": "Test NL service",
+    "display_name": "network-link-service-2",
+    "environment": {
+      "id": "env-d1o8qo",
+      "related": "https://api.confluent.cloud/v2/environments/env-d1o8qo",
+      "resource_name": "crn://confluent.cloud/organization=foo/environment=env-d1o8qo"
+    },
+    "network": {
+      "environment": "env-d1o8qo",
+      "id": "n-6kqnx2",
+      "related": "https://api.confluent.cloud/networking/v1/networks/n-6kqnx2?environment=env-d1o8qo",
+      "resource_name": "crn://confluent.cloud/organization=foo/environment=env-d1o8qo/network=n-6kqnx2"
+    }
+  },
+  "status": {
+    "phase": "READY"
+  }
+}

@@ -16,7 +16,6 @@ package provider
 
 import (
 	"context"
-	"github.com/stretchr/testify/assert"
 	"reflect"
 	"testing"
 )
@@ -47,46 +46,4 @@ func TestKafkaAclResourceStateUpgradeV0(t *testing.T) {
 	if !reflect.DeepEqual(expected, actual) {
 		t.Fatalf("\n\nexpected:\n\n%#v\n\ngot:\n\n%#v\n\n", expected, actual)
 	}
-}
-
-func TestCompareDifferentProtos(t *testing.T) {
-	requestProto := "syntax = \"proto3\";\npackage io.confluent.developer.proto;\n\noption java_outer_classname = \"PurchaseProto\";\n\nmessage Purchase {\n  string item = 1;\n  double amount = 2;\n  string customer_id = 3;\n}\n"
-	responseProto := "syntax = \"proto3\";\npackage io.confluent.developer.proto;\n\noption java_outer_classname = \"PurchaseProto\";\n\nmessage Purchase2 {\n  string item_2 = 1;\n  double amount = 2;\n  string customer_id = 3;\n}\n"
-
-	assert.False(t, compareTwoProtos(requestProto, responseProto), "The two protos should be different:", requestProto, responseProto)
-}
-
-func TestCompareSameProtos(t *testing.T) {
-	requestProto := "syntax = \"proto3\";\npackage io.confluent.developer.proto;\n\noption java_outer_classname = \"PurchaseProto\";\n\nmessage Purchase {\n  string item = 1;\n  double amount = 2;\n  string customer_id = 3;\n}\n"
-	responseProto := "syntax = \"proto3\";\npackage io.confluent.developer.proto;\n\noption java_outer_classname = \"PurchaseProto\";\n\nmessage Purchase {\n  string item = 1;\n  double amount = 2;\n  string customer_id = 3;\n}\n"
-
-	assert.True(t, compareTwoProtos(requestProto, responseProto), "The two protos should be the same:", requestProto, responseProto)
-}
-
-func TestCompareProtosWithExtraNewLinesAndWhitespaces(t *testing.T) {
-	requestProto := "syntax = \"proto3\";\n\n\npackage io.confluent.developer.proto;\n\noption java_outer_classname = \"PurchaseProto\";\n\nmessage Purchase {\n  string  item      = 1;\n  double      amount =  2        ;\n  string  customer_id = 3;\n}\n"
-	responseProto := "syntax = \"proto3\";\npackage io.confluent.developer.proto;\n\noption java_outer_classname = \"PurchaseProto\";\n\nmessage Purchase {\n  string item = 1;\n  double amount = 2;\n  string customer_id = 3;\n}\n"
-
-	assert.True(t, compareTwoProtos(requestProto, responseProto), "The two protos should be the same:", requestProto, responseProto)
-}
-
-func TestCompareProtosWithExtraNewLine(t *testing.T) {
-	requestProto := "syntax = \"proto3\";\n\npackage io.confluent.developer.proto;\noption java_outer_classname = \"PageViewProto\";\n\nmessage PageView {\n  string url = 1;\n  bool is_special = 2;\n  string id = 3;\n}\n"
-	responseProto := "syntax = \"proto3\";\npackage io.confluent.developer.proto;\n\noption java_outer_classname = \"PageViewProto\";\n\nmessage PageView {\n  string url = 1;\n  bool is_special = 2;\n  string id = 3;\n}\n"
-
-	assert.True(t, compareTwoProtos(requestProto, responseProto), "The two protos should be the same:", requestProto, responseProto)
-}
-
-func TestCompareProtosWithReorderedAttributes(t *testing.T) {
-	requestProto := "syntax = \"proto3\";\n\npackage io.confluent.developer.proto;\n\nimport \"purchase.proto\";\nimport \"page_view.proto\";\n\noption java_outer_classname = \"CustomerEventProto\";\n\nmessage CustomerEvent {\n\n  oneof action {\n    Purchase purchase = 1;\n    PageView page_view = 2;\n  }\n  string id = 3;\n}\n"
-	responseProto := "syntax = \"proto3\";\npackage io.confluent.developer.proto;\n\nimport \"purchase.proto\";\nimport \"page_view.proto\";\n\noption java_outer_classname = \"CustomerEventProto\";\n\nmessage CustomerEvent {\n  string id = 3;\n\n  oneof action {\n    Purchase purchase = 1;\n    PageView page_view = 2;\n  }\n}\n"
-
-	assert.True(t, compareTwoProtos(requestProto, responseProto), "The two protos should be the same:", requestProto, responseProto)
-}
-
-func TestCompareProtosWithRemovedNewLines(t *testing.T) {
-	requestProto := "syntax = \"proto3\"; package io.confluent.developer.proto;\noption java_outer_classname = \"PurchaseProto\";\nmessage Purchase {string item = 1;double amount = 2;string customer_id          = 3;}\n"
-	responseProto := "syntax = \"proto3\";\npackage io.confluent.developer.proto;\n\noption java_outer_classname = \"PurchaseProto\";\n\nmessage Purchase {\n  string item = 1;\n  double amount = 2;\n  string customer_id = 3;\n}\n"
-
-	assert.True(t, compareTwoProtos(requestProto, responseProto), "The two protos should be the same:", requestProto, responseProto)
 }

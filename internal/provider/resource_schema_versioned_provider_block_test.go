@@ -24,6 +24,7 @@ import (
 	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"strconv"
 	"testing"
 
@@ -68,7 +69,6 @@ func TestAccVersionedSchemaWithEnhancedProviderBlock(t *testing.T) {
 	validateSchemaStub := wiremock.Post(wiremock.URLPathEqualTo(validateSchemaPath)).
 		InScenario(schemaScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
-		WillSetStateTo(scenarioStateSchemaHasBeenValidated).
 		WillReturn(
 			string(validateSchemaResponse),
 			contentTypeJSONHeader,
@@ -79,7 +79,7 @@ func TestAccVersionedSchemaWithEnhancedProviderBlock(t *testing.T) {
 	createSchemaResponse, _ := ioutil.ReadFile("../testdata/schema_registry_schema/create_schema.json")
 	createSchemaStub := wiremock.Post(wiremock.URLPathEqualTo(createSchemaPath)).
 		InScenario(schemaScenarioName).
-		WhenScenarioStateIs(scenarioStateSchemaHasBeenValidated).
+		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillSetStateTo(scenarioStateSchemaHasBeenCreated).
 		WillReturn(
 			string(createSchemaResponse),
@@ -97,6 +97,17 @@ func TestAccVersionedSchemaWithEnhancedProviderBlock(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		))
+
+	checkSchemaExistsResponse, _ := ioutil.ReadFile("../testdata/schema_registry_schema/create_schema.json")
+	checkSchemaExistsStub := wiremock.Post(wiremock.URLPathEqualTo(createSchemaPath)).
+		InScenario(schemaScenarioName).
+		WhenScenarioStateIs(scenarioStateSchemaHasBeenCreated).
+		WillReturn(
+			string(checkSchemaExistsResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		)
+	_ = wiremockClient.StubFor(checkSchemaExistsStub)
 
 	deleteSchemaStub := wiremock.Delete(wiremock.URLPathEqualTo(deleteSchemaPath)).
 		InScenario(schemaScenarioName).
@@ -118,6 +129,12 @@ func TestAccVersionedSchemaWithEnhancedProviderBlock(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		))
+
+	// Set fake values for schema content since it's required for importing
+	_ = os.Setenv("SCHEMA_CONTENT", testSchemaContent)
+	defer func() {
+		_ = os.Unsetenv("SCHEMA_CONTENT")
+	}()
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -165,7 +182,6 @@ func TestAccVersionedSchemaWithEnhancedProviderBlock(t *testing.T) {
 		},
 	})
 
-	checkStubCount(t, wiremockClient, createSchemaStub, fmt.Sprintf("POST %s", createSchemaPath), expectedCountOne)
 	checkStubCount(t, wiremockClient, deleteSchemaStub, fmt.Sprintf("DELETE %s", readSchemasPath), expectedCountOne)
 }
 
