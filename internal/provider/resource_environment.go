@@ -175,3 +175,31 @@ func environmentImport(ctx context.Context, d *schema.ResourceData, meta interfa
 	tflog.Debug(ctx, fmt.Sprintf("Finished importing Environment %q", d.Id()), map[string]interface{}{environmentLoggingKey: d.Id()})
 	return []*schema.ResourceData{d}, nil
 }
+
+func environmentImporter() *Importer {
+	return &Importer{
+		LoadInstanceIds: loadAllEnvironments,
+	}
+}
+
+func loadAllEnvironments(ctx context.Context, client *Client) (InstanceIdsToNameMap, diag.Diagnostics) {
+	instances := make(InstanceIdsToNameMap)
+
+	environments, err := loadEnvironments(ctx, client)
+	if err != nil {
+		tflog.Warn(ctx, fmt.Sprintf("Error reading Environments: %s", createDescriptiveError(err)))
+		return instances, diag.FromErr(createDescriptiveError(err))
+	}
+	environmentsJson, err := json.Marshal(environments)
+	if err != nil {
+		return instances, diag.Errorf("error reading Environments: error marshaling %#v to json: %s", environments, createDescriptiveError(err))
+	}
+	tflog.Debug(ctx, fmt.Sprintf("Fetched Environments: %s", environmentsJson))
+
+	for _, environment := range environments {
+		instanceId := environment.GetId()
+		instances[instanceId] = toValidTerraformResourceName(environment.GetDisplayName())
+	}
+
+	return instances, nil
+}

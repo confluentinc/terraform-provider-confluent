@@ -44,8 +44,9 @@ func kafkaDataSource() *schema.Resource {
 				Description:  "The ID of the Kafka cluster, for example, `lkc-abc123`.",
 			},
 			// Similarly, paramEnvironment is required as well
-			paramEnvironment: environmentDataSourceSchema(),
-			paramNetwork:     optionalNetworkDataSourceSchema(),
+			paramEnvironment:          environmentDataSourceSchema(),
+			paramNetwork:              optionalNetworkDataSourceSchema(),
+			paramConfluentCustomerKey: optionalByokDataSourceSchema(),
 			paramApiVersion: {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -241,6 +242,14 @@ func dedicatedClusterDataSourceSchema() *schema.Schema {
 					Type:        schema.TypeString,
 					Computed:    true,
 					Description: "The ID of the encryption key that is used to encrypt the data in the Kafka cluster.",
+				},
+				paramZones: {
+					Type: schema.TypeList,
+					Elem: &schema.Schema{
+						Type: schema.TypeString,
+					},
+					Computed:    true,
+					Description: "The list of zones the cluster is in.",
 				},
 			},
 		},

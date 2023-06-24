@@ -17,7 +17,10 @@ package provider
 import (
 	"context"
 	"fmt"
+	"strings"
+
 	apikeys "github.com/confluentinc/ccloud-sdk-go-v2/apikeys/v2"
+	byok "github.com/confluentinc/ccloud-sdk-go-v2/byok/v1"
 	cmk "github.com/confluentinc/ccloud-sdk-go-v2/cmk/v2"
 	connect "github.com/confluentinc/ccloud-sdk-go-v2/connect/v1"
 	iamv1 "github.com/confluentinc/ccloud-sdk-go-v2/iam/v1"
@@ -33,7 +36,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"strings"
 )
 
 const (
@@ -55,6 +57,7 @@ const (
 
 type Client struct {
 	apiKeysClient                   *apikeys.APIClient
+	byokClient                      *byok.APIClient
 	iamClient                       *iam.APIClient
 	iamV1Client                     *iamv1.APIClient
 	cmkClient                       *cmk.APIClient
@@ -195,6 +198,8 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_private_link_access":            privateLinkAccessDataSource(),
 				"confluent_role_binding":                   roleBindingDataSource(),
 				"confluent_schema":                         schemaDataSource(),
+				"confluent_schemas":                        schemasDataSource(),
+				"confluent_users":                          usersDataSource(),
 				"confluent_service_account":                serviceAccountDataSource(),
 				"confluent_schema_registry_cluster":        schemaRegistryClusterDataSource(),
 				"confluent_schema_registry_region":         schemaRegistryRegionDataSource(),
@@ -203,9 +208,18 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_schema_registry_cluster_config": schemaRegistryClusterConfigDataSource(),
 				"confluent_schema_registry_cluster_mode":   schemaRegistryClusterModeDataSource(),
 				"confluent_user":                           userDataSource(),
+				"confluent_invitation":                     invitationDataSource(),
+				"confluent_byok_key":                       byokDataSource(),
+				"confluent_network_link_endpoint":          networkLinkEndpointDataSource(),
+				"confluent_network_link_service":           networkLinkServiceDataSource(),
+				"confluent_tag":                            tagDataSource(),
+				"confluent_tag_binding":                    tagBindingDataSource(),
+				"confluent_business_metadata":              businessMetadataDataSource(),
+				"confluent_business_metadata_binding":      businessMetadataBindingDataSource(),
 			},
 			ResourcesMap: map[string]*schema.Resource{
 				"confluent_api_key":                        apiKeyResource(),
+				"confluent_byok_key":                       byokResource(),
 				"confluent_cluster_link":                   clusterLinkResource(),
 				"confluent_kafka_cluster":                  kafkaResource(),
 				"confluent_kafka_cluster_config":           kafkaConfigResource(),
@@ -230,6 +244,14 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_schema_registry_cluster_mode":   schemaRegistryClusterModeResource(),
 				"confluent_schema_registry_cluster_config": schemaRegistryClusterConfigResource(),
 				"confluent_transit_gateway_attachment":     transitGatewayAttachmentResource(),
+				"confluent_invitation":                     invitationResource(),
+				"confluent_network_link_endpoint":          networkLinkEndpointResource(),
+				"confluent_network_link_service":           networkLinkServiceResource(),
+				"confluent_tf_importer":                    tfImporterResource(),
+				"confluent_tag":                            tagResource(),
+				"confluent_tag_binding":                    tagBindingResource(),
+				"confluent_business_metadata":              businessMetadataResource(),
+				"confluent_business_metadata_binding":      businessMetadataBindingResource(),
 			},
 		}
 
@@ -322,6 +344,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	}
 
 	apiKeysCfg := apikeys.NewConfiguration()
+	byokCfg := byok.NewConfiguration()
 	cmkCfg := cmk.NewConfiguration()
 	connectCfg := connect.NewConfiguration()
 	iamCfg := iam.NewConfiguration()
@@ -335,6 +358,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	quotasCfg := quotas.NewConfiguration()
 
 	apiKeysCfg.Servers[0].URL = endpoint
+	byokCfg.Servers[0].URL = endpoint
 	cmkCfg.Servers[0].URL = endpoint
 	connectCfg.Servers[0].URL = endpoint
 	iamCfg.Servers[0].URL = endpoint
@@ -348,6 +372,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	quotasCfg.Servers[0].URL = endpoint
 
 	apiKeysCfg.UserAgent = userAgent
+	byokCfg.UserAgent = userAgent
 	cmkCfg.UserAgent = userAgent
 	connectCfg.UserAgent = userAgent
 	iamCfg.UserAgent = userAgent
@@ -368,6 +393,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 		schemaRegistryRestClientFactory = &SchemaRegistryRestClientFactory{userAgent: userAgent, maxRetries: &maxRetries}
 
 		apiKeysCfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
+		byokCfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
 		cmkCfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
 		connectCfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
 		iamCfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
@@ -384,6 +410,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 		schemaRegistryRestClientFactory = &SchemaRegistryRestClientFactory{userAgent: userAgent}
 
 		apiKeysCfg.HTTPClient = NewRetryableClientFactory().CreateRetryableClient()
+		byokCfg.HTTPClient = NewRetryableClientFactory().CreateRetryableClient()
 		cmkCfg.HTTPClient = NewRetryableClientFactory().CreateRetryableClient()
 		connectCfg.HTTPClient = NewRetryableClientFactory().CreateRetryableClient()
 		iamCfg.HTTPClient = NewRetryableClientFactory().CreateRetryableClient()
@@ -399,6 +426,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 
 	client := Client{
 		apiKeysClient:                   apikeys.NewAPIClient(apiKeysCfg),
+		byokClient:                      byok.NewAPIClient(byokCfg),
 		cmkClient:                       cmk.NewAPIClient(cmkCfg),
 		connectClient:                   connect.NewAPIClient(connectCfg),
 		iamClient:                       iam.NewAPIClient(iamCfg),

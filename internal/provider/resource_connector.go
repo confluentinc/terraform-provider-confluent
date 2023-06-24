@@ -18,15 +18,18 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	connect "github.com/confluentinc/ccloud-sdk-go-v2/connect/v1"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/samber/lo"
+	"log"
 	"net/http"
 	"regexp"
 	"strings"
 	"time"
+
+	connect "github.com/confluentinc/ccloud-sdk-go-v2/connect/v1"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"github.com/samber/lo"
 )
 
 const (
@@ -43,9 +46,11 @@ const (
 
 	twoStarsOrMorePattern = "^[*]{2,}"
 
-	paramStatus   = "status"
-	statePaused   = "PAUSED"
-	stateDegraded = "DEGRADED"
+	paramStatus              = "status"
+	statePaused              = "PAUSED"
+	stateDegraded            = "DEGRADED"
+	paramTopicConfig         = "topic_lifecycle"
+	paramDeleteOnTermination = "delete_on_termination"
 )
 
 var connectorConfigFullAttributeName = fmt.Sprintf("%s.name", paramNonSensitiveConfig)
@@ -57,6 +62,7 @@ var ignoredConnectorConfigs = []string{
 	"kafka.dedicated",
 	"schema.registry.url",
 	"valid.kafka.api.key",
+	"topics",
 }
 var twoStarsOrMoreRegExp = regexp.MustCompile(twoStarsOrMorePattern)
 
@@ -77,6 +83,21 @@ func connectorResource() *schema.Resource {
 				Optional: true,
 				Computed: true,
 			},
+			paramTopicConfig: {
+				Type: schema.TypeList,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						paramDeleteOnTermination: {
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Default:     false,
+							Description: "Whether to delete topics created by the connector on termination.",
+						}},
+				},
+				Optional:    true,
+				Computed:    true,
+				Description: "The lifecycle  configuration settings of topics created by the connector.",
+			},
 			paramNonSensitiveConfig: {
 				Type: schema.TypeMap,
 				Elem: &schema.Schema{
@@ -96,6 +117,14 @@ func connectorResource() *schema.Resource {
 				ForceNew:    false,
 				Description: "The sensitive configuration settings to set (e.g., `\"gcs.credentials.config\" = \"**REDACTED***\"`). Should not be set for an import operation.",
 			},
+			paramRestEndpoint: {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ForceNew:     true,
+				Description:  "The REST endpoint of the Kafka cluster (e.g., `https://pkc-00000.us-central1.gcp.confluent.cloud:443`).",
+				ValidateFunc: validation.StringMatch(regexp.MustCompile("^http"), "the REST endpoint must start with 'https://'"),
+			},
+			paramCredentials: credentialsSchema(),
 		},
 		Timeouts: &schema.ResourceTimeout{
 			Create: schema.DefaultTimeout(connectAPICreateTimeout),
@@ -167,8 +196,10 @@ func connectorCreate(ctx context.Context, d *schema.ResourceData, meta interface
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating Connector %q", displayName))
-
-	return connectorRead(ctx, d, meta)
+	result := connectorRead(ctx, d, meta)
+	log.Println(d.Get("rest_endpoint").(string))
+	log.Println("190")
+	return result
 }
 
 func executeConnectorCreate(ctx context.Context, c *Client, environmentId, clusterId string, spec *connect.InlineObject) (connect.ConnectV1Connector, *http.Response, error) {
@@ -205,16 +236,28 @@ func connectorRead(ctx context.Context, d *schema.ResourceData, meta interface{}
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
 	clusterId := extractStringValueFromBlock(d, paramKafkaCluster, paramId)
 
+	restEndpoint, err := extractRestEndpoint(meta.(*Client), d, false)
+	if err != nil {
+		return diag.Errorf("error reading Connector: %s", createDescriptiveError(err))
+	}
+	clusterApiKey, clusterApiSecret, err := extractClusterApiKeyAndApiSecret(meta.(*Client), d, false)
+	if err != nil {
+		return diag.Errorf("error reading Connector: %s", createDescriptiveError(err))
+	}
+	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, false, false)
+	if err != nil {
+		return diag.Errorf("error reading Connector: %s", createDescriptiveError(err))
+	}
 	tflog.Debug(ctx, fmt.Sprintf("Reading Connector %q", displayName))
 
-	if _, err := readConnectorAndSetAttributes(ctx, d, meta, displayName, environmentId, clusterId); err != nil {
+	if _, err := readConnectorAndSetAttributes(ctx, d, kafkaRestClient, meta, displayName, environmentId, clusterId); err != nil {
 		return diag.FromErr(fmt.Errorf("error reading Connector %q: %s", displayName, createDescriptiveError(err)))
 	}
 
 	return nil
 }
 
-func readConnectorAndSetAttributes(ctx context.Context, d *schema.ResourceData, meta interface{}, displayName, environmentId, clusterId string) ([]*schema.ResourceData, error) {
+func readConnectorAndSetAttributes(ctx context.Context, d *schema.ResourceData, k *KafkaRestClient, meta interface{}, displayName, environmentId, clusterId string) ([]*schema.ResourceData, error) {
 	c := meta.(*Client)
 
 	connector, resp, err := executeConnectorRead(c.connectApiContext(ctx), c, displayName, environmentId, clusterId)
@@ -238,8 +281,12 @@ func readConnectorAndSetAttributes(ctx context.Context, d *schema.ResourceData, 
 	if _, err := setConnectorAttributes(d, connector, environmentId, clusterId); err != nil {
 		return nil, createDescriptiveError(err)
 	}
-
-	tflog.Debug(ctx, fmt.Sprintf("Finished reading Connector %q", d.Id()), map[string]interface{}{connectorLoggingKey: d.Id()})
+	if err := setKafkaCredentials(k.clusterApiKey, k.clusterApiSecret, d); err != nil {
+		return nil, err
+	}
+	if err := d.Set(paramRestEndpoint, k.restEndpoint); err != nil {
+		return nil, err
+	}
 
 	return []*schema.ResourceData{d}, nil
 }
@@ -265,16 +312,29 @@ func setConnectorAttributes(d *schema.ResourceData, connector connect.ConnectV1C
 }
 
 func connectorUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if d.HasChangesExcept(paramNonSensitiveConfig, paramSensitiveConfig, paramStatus) {
+	if d.HasChangesExcept(paramNonSensitiveConfig, paramSensitiveConfig, paramStatus, paramTopicConfig, paramKafkaMirrorTopicCredentials) {
 		return diag.Errorf("error updating Connector %q: only %q attribute, %q and %q blocks can be updated for Connector", d.Id(), paramStatus, paramNonSensitiveConfig, paramSensitiveConfig)
 	}
 	c := meta.(*Client)
+	if d.HasChange(connectorConfigFullAttributeName) {
+		oldValue, _ := d.GetChange(connectorConfigFullAttributeName)
+		// Reset the name in TF state to avoid accidental creation during the next 'terraform plan' run
+		_, _, nonsensitiveUpdatedConfig := extractConnectorConfigs(d)
+		nonsensitiveUpdatedConfig[connectorConfigAttributeName] = oldValue.(string)
+		_ = d.Set(paramNonSensitiveConfig, nonsensitiveUpdatedConfig)
+		return diag.Errorf("error updating Connector %q: %q attribute cannot be updated", d.Id(), connectorConfigAttributeName)
+	}
 	displayName := d.Get(connectorConfigFullAttributeName).(string)
 	if displayName == "" {
 		return diag.Errorf("error updating Connector %q: %q attribute is missing in %q block", d.Id(), connectorConfigAttributeName, paramNonSensitiveConfig)
 	}
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
 	clusterId := extractStringValueFromBlock(d, paramKafkaCluster, paramId)
+	if d.HasChange(paramTopicConfig) {
+		if d.Get(fmt.Sprintf("%s.0.%s", paramTopicConfig, paramDeleteOnTermination)).(bool) == true {
+			return diag.Errorf("error updating Connector %q: Updating topic attribute :%q from false to true is not allowed", d.Id(), paramDeleteOnTermination)
+		}
+	}
 	if d.HasChange(paramStatus) {
 		oldValue, newValue := d.GetChange(paramStatus)
 		oldStatus := oldValue.(string)
@@ -338,6 +398,48 @@ func connectorUpdate(ctx context.Context, d *schema.ResourceData, meta interface
 	return connectorRead(ctx, d, meta)
 }
 
+func deleteConnectorKafkaTopics(ctx context.Context, d *schema.ResourceData, meta interface{}) error {
+	displayName := d.Get(connectorConfigFullAttributeName).(string)
+	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
+	clusterId := extractStringValueFromBlock(d, paramKafkaCluster, paramId)
+	restEndpoint, err := extractRestEndpoint(meta.(*Client), d, false)
+	if err != nil {
+		return fmt.Errorf("error deleting Connector: %s", createDescriptiveError(err))
+	}
+	clusterApiKey, clusterApiSecret, err := extractClusterApiKeyAndApiSecret(meta.(*Client), d, false)
+	if err != nil {
+		return fmt.Errorf("error deleting Connector: %s", createDescriptiveError(err))
+	}
+	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, false, false)
+	if err != nil {
+		return fmt.Errorf("error deleting Connector: %s", createDescriptiveError(err))
+	}
+
+	c := meta.(*Client)
+	connector, _, err := executeConnectorRead(c.connectApiContext(ctx), c, displayName, environmentId, clusterId)
+	if err != nil {
+		tflog.Warn(ctx, fmt.Sprintf("Error reading Connector %q: %s", d.Id(), createDescriptiveError(err)))
+		return err
+	}
+	config := connector.Info.GetConfig()
+	if topicsString, exists := config["topics"]; exists {
+		topics := strings.Split(topicsString, ",")
+		for _, topic := range topics {
+			_, err = kafkaRestClient.apiClient.TopicV3Api.DeleteKafkaTopic(kafkaRestClient.apiContext(ctx), kafkaRestClient.clusterId, topic).Execute()
+
+			if err != nil {
+				return fmt.Errorf("error deleting Kafka Topic %q: %s", d.Id(), createDescriptiveError(err))
+			}
+		}
+
+	} else {
+		tflog.Warn(ctx, fmt.Sprintf("No Topics found in Connector %q, Skipping", d.Id()))
+		return nil
+	}
+	return nil
+
+}
+
 func connectorDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	tflog.Debug(ctx, fmt.Sprintf("Deleting Connector %q", d.Id()), map[string]interface{}{connectorLoggingKey: d.Id()})
 	displayName := d.Get(connectorConfigFullAttributeName).(string)
@@ -348,6 +450,12 @@ func connectorDelete(ctx context.Context, d *schema.ResourceData, meta interface
 	clusterId := extractStringValueFromBlock(d, paramKafkaCluster, paramId)
 	c := meta.(*Client)
 
+	if d.Get(fmt.Sprintf("%s.0.%s", paramTopicConfig, paramDeleteOnTermination)).(bool) == true {
+		err := deleteConnectorKafkaTopics(ctx, d, meta)
+		if err != nil {
+			return diag.Errorf("error deleting Connector %q: Failed to delete topics: %s", d.Id(), createDescriptiveError(err))
+		}
+	}
 	req := c.connectClient.ConnectorsV1Api.DeleteConnectv1Connector(c.connectApiContext(ctx), displayName, environmentId, clusterId)
 	deletionError, _, err := req.Execute()
 
@@ -376,11 +484,20 @@ func connectorImport(ctx context.Context, d *schema.ResourceData, meta interface
 	environmentId := parts[0]
 	clusterId := parts[1]
 	connectorName := parts[2]
+	restEndpoint, err := extractRestEndpoint(meta.(*Client), d, true)
+	if err != nil {
+		return nil, fmt.Errorf("error importing Connector:: %s", createDescriptiveError(err))
+	}
+	clusterApiKey, clusterApiSecret, err := extractClusterApiKeyAndApiSecret(meta.(*Client), d, true)
+	if err != nil {
+		return nil, fmt.Errorf("error importing Connector: %s", createDescriptiveError(err))
+	}
+	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isKafkaMetadataSet, meta.(*Client).isKafkaClusterIdSet)
 
 	// Mark resource as new to avoid d.Set("") when getting 404
 	d.MarkNewResource()
 
-	if _, err := readConnectorAndSetAttributes(ctx, d, meta, connectorName, environmentId, clusterId); err != nil {
+	if _, err := readConnectorAndSetAttributes(ctx, d, kafkaRestClient, meta, connectorName, environmentId, clusterId); err != nil {
 		return nil, fmt.Errorf("error importing Connector %q: %s", d.Id(), createDescriptiveError(err))
 	}
 	if err := d.Set(paramSensitiveConfig, make(map[string]string)); err != nil {
@@ -447,4 +564,53 @@ func extractConnectorConfigs(d *schema.ResourceData) (map[string]string, map[str
 	)
 
 	return config, sensitiveConfigs, nonsensitiveConfigs
+}
+
+func connectorImporter() *Importer {
+	return &Importer{
+		LoadInstanceIds: loadAllConnectors,
+	}
+}
+
+func loadAllConnectors(ctx context.Context, client *Client) (InstanceIdsToNameMap, diag.Diagnostics) {
+	instances := make(InstanceIdsToNameMap)
+
+	environments, err := loadEnvironments(ctx, client)
+	if err != nil {
+		return instances, diag.FromErr(createDescriptiveError(err))
+	}
+	for _, environment := range environments {
+		kafkaClusters, err := loadKafkaClusters(ctx, client, environment.GetId())
+		if err != nil {
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Kafka Clusters in Environment %q: %s", environment.GetId(), createDescriptiveError(err)))
+			return instances, diag.FromErr(createDescriptiveError(err))
+		}
+		for _, kafkaCluster := range kafkaClusters {
+			connectorNames, err := loadConnectorsByEnvironmentIdAndKafkaClusterId(ctx, client, environment.GetId(), kafkaCluster.GetId())
+			if err != nil {
+				tflog.Warn(ctx, fmt.Sprintf("Error reading Connectors in Environment %q and Kafka Cluster %q: %s", environment.GetId(), kafkaCluster.GetId(), createDescriptiveError(err)))
+				return instances, diag.FromErr(createDescriptiveError(err))
+			}
+			connectorNamesJson, err := json.Marshal(connectorNames)
+			if err != nil {
+				return instances, diag.Errorf("error reading Connectors in Environment %q and Kafka Cluster %q: error marshaling %#v to json: %s", environment.GetId(), kafkaCluster.GetId(), connectorNames, createDescriptiveError(err))
+			}
+			tflog.Debug(ctx, fmt.Sprintf("Fetched Connectors in Environment %q and Kafka Cluster %q: %s", environment.GetId(), kafkaCluster.GetId(), connectorNamesJson))
+
+			for _, connectorName := range connectorNames {
+				instanceId := fmt.Sprintf("%s/%s/%s", environment.GetId(), kafkaCluster.GetId(), connectorName)
+				instances[instanceId] = toValidTerraformResourceName(connectorName)
+			}
+		}
+	}
+	return instances, nil
+}
+
+func loadConnectorsByEnvironmentIdAndKafkaClusterId(ctx context.Context, c *Client, environmentId, kafkaClusterId string) ([]string, error) {
+	connectors, resp, err := c.connectClient.ConnectorsV1Api.ListConnectv1Connectors(c.connectApiContext(ctx), environmentId, kafkaClusterId).Execute()
+	// Somehow Connect SDK returns response.StatusCode == http.StatusForbidden but err is nil.
+	if ResponseHasExpectedStatusCode(resp, http.StatusForbidden) || err != nil {
+		return nil, createDescriptiveError(err)
+	}
+	return connectors, nil
 }

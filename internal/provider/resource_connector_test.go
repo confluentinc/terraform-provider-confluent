@@ -17,28 +17,30 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/walkerus/go-wiremock"
 )
 
 const (
-	scenarioStateConnectorHasBeenValidated   = "The new connector config has been just validated"
-	scenarioStateConnectorHasBeenCreating    = "The new connector has been creating"
-	scenarioStateConnectorFetchingId         = "The new connector is in provisioning state, list all connectors"
-	scenarioStateConnectorIsProvisioning     = "The new connector is in provisioning state"
-	scenarioStateConnectorIsRunning1         = "The new connector is in running state #1"
-	scenarioStateConnectorHasBeenCreated     = "The new connector has been just created"
-	scenarioStateConnectorNameHasBeenUpdated = "The new connector's name has been just updated"
-	scenarioStateConnectorHasBeenDeleted     = "The new connector has been deleted"
-	connectorScenarioName                    = "confluent_connector Resource Lifecycle"
-	sensitiveAttributeKey                    = "foo"
-	sensitiveAttributeValue                  = "bar"
-	sensitiveAttributeUpdatedValue           = "bar updated"
+	scenarioStateConnectorHasBeenValidated     = "The new connector config has been just validated"
+	scenarioStateConnectorHasBeenCreating      = "The new connector has been creating"
+	scenarioStateConnectorFetchingId           = "The new connector is in provisioning state, list all connectors"
+	scenarioStateConnectorIsProvisioning       = "The new connector is in provisioning state"
+	scenarioStateConnectorIsRunning1           = "The new connector is in running state #1"
+	scenarioStateConnectorHasBeenCreated       = "The new connector has been just created"
+	scenarioStateConnectorNameHasBeenUpdated   = "The new connector's name has been just updated"
+	scenarioStateConnectorTopicsHasBeenDeleted = "The new connector topics has been deleted"
+	scenarioStateConnectorHasBeenDeleted       = "The new connector has been deleted"
+	connectorScenarioName                      = "confluent_connector Resource Lifecycle"
+	sensitiveAttributeKey                      = "foo"
+	sensitiveAttributeValue                    = "bar"
+	sensitiveAttributeUpdatedValue             = "bar updated"
 )
 
 func TestAccConnector(t *testing.T) {
@@ -49,6 +51,8 @@ func TestAccConnector(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer wiremockContainer.Terminate(ctx)
+
+	mockConnectorTopicTestServerUrl := wiremockContainer.URI
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
@@ -162,10 +166,39 @@ func TestAccConnector(t *testing.T) {
 		)
 	_ = wiremockClient.StubFor(readUpdatedConnectorStub)
 
+	readCreatedConnectorStub3 := wiremock.Get(wiremock.URLPathEqualTo("/connect/v1/environments/env-1j3m9j/clusters/lkc-vnwdjz/connectors")).
+		WithQueryParam("expand", wiremock.EqualTo("info,status,id")).
+		InScenario(connectorScenarioName).
+		WhenScenarioStateIs(scenarioStateConnectorNameHasBeenUpdated).
+		WillReturn(
+			string(updatedConnectorResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		)
+	_ = wiremockClient.StubFor(readCreatedConnectorStub3)
+
+	deleteTopicStub := wiremock.Delete(wiremock.URLPathEqualTo("/kafka/v3/clusters/lkc-vnwdjz/topics/test_topic1")).
+		InScenario(connectorScenarioName).
+		WillReturn(
+			"",
+			contentTypeJSONHeader,
+			http.StatusNoContent,
+		)
+	_ = wiremockClient.StubFor(deleteTopicStub)
+	deleteTopicStub2 := wiremock.Delete(wiremock.URLPathEqualTo("/kafka/v3/clusters/lkc-vnwdjz/topics/test_topic2")).
+		InScenario(connectorScenarioName).
+		WillSetStateTo(scenarioStateConnectorTopicsHasBeenDeleted).
+		WillReturn(
+			"",
+			contentTypeJSONHeader,
+			http.StatusNoContent,
+		)
+	_ = wiremockClient.StubFor(deleteTopicStub2)
+
 	deleteConnectorResponse, _ := ioutil.ReadFile("../testdata/connector/delete_connector.json")
 	deleteConnectorStub := wiremock.Delete(wiremock.URLPathEqualTo("/connect/v1/environments/env-1j3m9j/clusters/lkc-vnwdjz/connectors/test_connector")).
 		InScenario(connectorScenarioName).
-		WhenScenarioStateIs(scenarioStateConnectorNameHasBeenUpdated).
+		WhenScenarioStateIs(scenarioStateConnectorTopicsHasBeenDeleted).
 		WillSetStateTo(scenarioStateConnectorHasBeenDeleted).
 		WillReturn(
 			string(deleteConnectorResponse),
@@ -188,6 +221,15 @@ func TestAccConnector(t *testing.T) {
 	fullConnectorResourceLabel := fmt.Sprintf("confluent_connector.%s", connectorResourceLabel)
 	connectorDisplayName := "test_connector"
 
+	// Set fake values for secrets since those are required for importing
+	_ = os.Setenv("IMPORT_KAFKA_API_KEY", destinationClusterApiKey)
+	_ = os.Setenv("IMPORT_KAFKA_API_SECRET", destinationClusterApiSecret)
+	_ = os.Setenv("IMPORT_KAFKA_REST_ENDPOINT", mockConnectorTopicTestServerUrl)
+	defer func() {
+		_ = os.Unsetenv("IMPORT_KAFKA_API_KEY")
+		_ = os.Unsetenv("IMPORT_KAFKA_API_SECRET")
+		_ = os.Unsetenv("IMPORT_KAFKA_REST_ENDPOINT")
+	}()
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
@@ -196,13 +238,18 @@ func TestAccConnector(t *testing.T) {
 		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckConnectorConfig(mockServerUrl, connectorResourceLabel, connectorDisplayName),
+				Config: testAccCheckConnectorConfig(mockServerUrl, mockConnectorTopicTestServerUrl, connectorResourceLabel, connectorDisplayName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckConnectorExists(fullConnectorResourceLabel),
 					resource.TestCheckResourceAttr(fullConnectorResourceLabel, paramId, "lcc-abc123"),
 					resource.TestCheckResourceAttr(fullConnectorResourceLabel, fmt.Sprintf("%s.#", paramEnvironment), "1"),
 					resource.TestCheckResourceAttr(fullConnectorResourceLabel, fmt.Sprintf("%s.0.%s", paramEnvironment, paramId), "env-1j3m9j"),
 					resource.TestCheckResourceAttr(fullConnectorResourceLabel, fmt.Sprintf("%s.#", paramKafkaCluster), "1"),
+					resource.TestCheckResourceAttr(fullConnectorResourceLabel, "rest_endpoint", mockConnectorTopicTestServerUrl),
+					resource.TestCheckResourceAttr(fullConnectorResourceLabel, "credentials.#", "1"),
+					resource.TestCheckResourceAttr(fullConnectorResourceLabel, "credentials.0.%", "2"),
+					resource.TestCheckResourceAttr(fullConnectorResourceLabel, "credentials.0.key", destinationClusterApiKey),
+					resource.TestCheckResourceAttr(fullConnectorResourceLabel, "credentials.0.secret", destinationClusterApiSecret),
 					resource.TestCheckResourceAttr(fullConnectorResourceLabel, fmt.Sprintf("%s.0.%s", paramKafkaCluster, paramId), "lkc-vnwdjz"),
 					resource.TestCheckResourceAttr(fullConnectorResourceLabel, paramStatus, "RUNNING"),
 					resource.TestCheckResourceAttr(fullConnectorResourceLabel, fmt.Sprintf("%s.%%", paramSensitiveConfig), "1"),
@@ -221,7 +268,7 @@ func TestAccConnector(t *testing.T) {
 				ResourceName:            fullConnectorResourceLabel,
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{paramSensitiveConfig},
+				ImportStateVerifyIgnore: []string{paramSensitiveConfig, paramTopicConfig},
 				ImportStateIdFunc: func(state *terraform.State) (string, error) {
 					resources := state.RootModule().Resources
 					environmentId := resources[fullConnectorResourceLabel].Primary.Attributes["environment.0.id"]
@@ -231,14 +278,21 @@ func TestAccConnector(t *testing.T) {
 				},
 			},
 			{
-				Config: testAccCheckUpdatedConnectorConfig(mockServerUrl, connectorResourceLabel, connectorDisplayName),
+				Config: testAccCheckUpdatedConnectorConfig(mockServerUrl, mockConnectorTopicTestServerUrl, connectorResourceLabel, connectorDisplayName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckConnectorExists(fullConnectorResourceLabel),
 					resource.TestCheckResourceAttr(fullConnectorResourceLabel, paramId, "lcc-abc123"),
 					resource.TestCheckResourceAttr(fullConnectorResourceLabel, fmt.Sprintf("%s.#", paramEnvironment), "1"),
 					resource.TestCheckResourceAttr(fullConnectorResourceLabel, fmt.Sprintf("%s.0.%s", paramEnvironment, paramId), "env-1j3m9j"),
 					resource.TestCheckResourceAttr(fullConnectorResourceLabel, fmt.Sprintf("%s.#", paramKafkaCluster), "1"),
+					resource.TestCheckResourceAttr(fullConnectorResourceLabel, "rest_endpoint", mockConnectorTopicTestServerUrl),
+					resource.TestCheckResourceAttr(fullConnectorResourceLabel, "credentials.#", "1"),
+					resource.TestCheckResourceAttr(fullConnectorResourceLabel, "credentials.0.%", "2"),
+					resource.TestCheckResourceAttr(fullConnectorResourceLabel, "credentials.0.key", destinationClusterApiKey),
+					resource.TestCheckResourceAttr(fullConnectorResourceLabel, "credentials.0.secret", destinationClusterApiSecret),
 					resource.TestCheckResourceAttr(fullConnectorResourceLabel, fmt.Sprintf("%s.0.%s", paramKafkaCluster, paramId), "lkc-vnwdjz"),
+					resource.TestCheckResourceAttr(fullConnectorResourceLabel, fmt.Sprintf("%s.#", paramTopicConfig), "1"),
+					resource.TestCheckResourceAttr(fullConnectorResourceLabel, fmt.Sprintf("%s.0.%s", paramTopicConfig, paramDeleteOnTermination), "true"),
 					resource.TestCheckResourceAttr(fullConnectorResourceLabel, paramStatus, "RUNNING"),
 					resource.TestCheckResourceAttr(fullConnectorResourceLabel, fmt.Sprintf("%s.%%", paramSensitiveConfig), "1"),
 					resource.TestCheckResourceAttr(fullConnectorResourceLabel, fmt.Sprintf("%s.%s", paramSensitiveConfig, sensitiveAttributeKey), sensitiveAttributeUpdatedValue),
@@ -257,7 +311,7 @@ func TestAccConnector(t *testing.T) {
 				ResourceName:            fullConnectorResourceLabel,
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{paramSensitiveConfig},
+				ImportStateVerifyIgnore: []string{paramSensitiveConfig, paramTopicConfig},
 				ImportStateIdFunc: func(state *terraform.State) (string, error) {
 					resources := state.RootModule().Resources
 					environmentId := resources[fullConnectorResourceLabel].Primary.Attributes["environment.0.id"]
@@ -290,7 +344,7 @@ func testAccCheckConnectorDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccCheckConnectorConfig(mockServerUrl, environmentConnectorLabel, connectorDisplayName string) string {
+func testAccCheckConnectorConfig(mockServerUrl, mockConnectorTopicServerUrl, environmentConnectorLabel, connectorDisplayName string) string {
 	return fmt.Sprintf(`
 	provider "confluent" {
  		endpoint = "%s"
@@ -301,6 +355,11 @@ func testAccCheckConnectorConfig(mockServerUrl, environmentConnectorLabel, conne
 		}
 		kafka_cluster {
 		  id = "lkc-vnwdjz"
+		}
+		rest_endpoint = "%s"
+		credentials {
+		  key = "%s"
+		  secret = "%s"
 		}
 		config_sensitive = {
 		  "%s"             = "%s"
@@ -313,11 +372,15 @@ func testAccCheckConnectorConfig(mockServerUrl, environmentConnectorLabel, conne
 		  "tasks.max" = "1"
 		  "quickstart" = "ORDERS"
 		}
+		topic_lifecycle {
+			delete_on_termination = true
+		}
 	}
-	`, mockServerUrl, environmentConnectorLabel, sensitiveAttributeKey, sensitiveAttributeValue, connectorDisplayName)
+	`, mockServerUrl, environmentConnectorLabel, mockConnectorTopicServerUrl, destinationClusterApiKey,
+		destinationClusterApiSecret, sensitiveAttributeKey, sensitiveAttributeValue, connectorDisplayName)
 }
 
-func testAccCheckUpdatedConnectorConfig(mockServerUrl, environmentConnectorLabel, connectorDisplayName string) string {
+func testAccCheckUpdatedConnectorConfig(mockServerUrl, mockConnectorTopicServerUrl, environmentConnectorLabel, connectorDisplayName string) string {
 	return fmt.Sprintf(`
 	provider "confluent" {
  		endpoint = "%s"
@@ -328,6 +391,11 @@ func testAccCheckUpdatedConnectorConfig(mockServerUrl, environmentConnectorLabel
 		}
 		kafka_cluster {
 		  id = "lkc-vnwdjz"
+		}
+		rest_endpoint = "%s"
+		credentials {
+		  key = "%s"
+		  secret = "%s"
 		}
 		config_sensitive = {
 		  "%s"             = "%s"
@@ -341,8 +409,12 @@ func testAccCheckUpdatedConnectorConfig(mockServerUrl, environmentConnectorLabel
 		  "tasks.max" = "1"
 		  "quickstart" = "ORDERS"
 		}
+		topic_lifecycle {
+			delete_on_termination = true
+		}
 	}
-	`, mockServerUrl, environmentConnectorLabel, sensitiveAttributeKey, sensitiveAttributeUpdatedValue, connectorDisplayName)
+	`, mockServerUrl, environmentConnectorLabel, mockConnectorTopicServerUrl, destinationClusterApiKey,
+		destinationClusterApiSecret, sensitiveAttributeKey, sensitiveAttributeUpdatedValue, connectorDisplayName)
 }
 
 func testAccCheckConnectorExists(n string) resource.TestCheckFunc {

@@ -29,6 +29,7 @@
         "kafka.endpoint": "SASL_SSL://pkc-abc456.us-east-1.aws.confluent.cloud:9092",
         "kafka.region": "us-east-1",
         "kafka.topic": "test_topic",
+        "topics": "test_topic1,test_topic2",
         "name": "test_connector",
         "output.data.format": "AVRO",
         "quickstart": "ORDERS",

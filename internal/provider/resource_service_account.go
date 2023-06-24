@@ -189,3 +189,31 @@ func serviceAccountImport(ctx context.Context, d *schema.ResourceData, meta inte
 	tflog.Debug(ctx, fmt.Sprintf("Finished importing Service Account %q", d.Id()), map[string]interface{}{serviceAccountLoggingKey: d.Id()})
 	return []*schema.ResourceData{d}, nil
 }
+
+func serviceAccountImporter() *Importer {
+	return &Importer{
+		LoadInstanceIds: loadAllServiceAccounts,
+	}
+}
+
+func loadAllServiceAccounts(ctx context.Context, client *Client) (InstanceIdsToNameMap, diag.Diagnostics) {
+	instances := make(InstanceIdsToNameMap)
+
+	serviceAccounts, err := loadServiceAccounts(ctx, client)
+	if err != nil {
+		tflog.Warn(ctx, fmt.Sprintf("Error reading Service Accounts: %s", createDescriptiveError(err)))
+		return instances, diag.FromErr(createDescriptiveError(err))
+	}
+	serviceAccountsJson, err := json.Marshal(serviceAccounts)
+	if err != nil {
+		return instances, diag.Errorf("error reading Service Accounts: error marshaling %#v to json: %s", serviceAccounts, createDescriptiveError(err))
+	}
+	tflog.Debug(ctx, fmt.Sprintf("Fetched Service Accounts: %s", serviceAccountsJson))
+
+	for _, serviceAccount := range serviceAccounts {
+		instanceId := serviceAccount.GetId()
+		instances[instanceId] = toValidTerraformResourceName(serviceAccount.GetDisplayName())
+	}
+
+	return instances, nil
+}

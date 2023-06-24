@@ -1,0 +1,35 @@
+{
+  "api_version": "networking/v1",
+  "id": "nle-6wvqx9",
+  "kind": "NetworkLinkEndpoint",
+  "metadata": {
+    "created_at": "2023-02-11T05:47:31.158Z",
+    "resource_name": "crn://confluent.cloud/organization=foo/environment=env-d1o8qo/network=n-6kqnx2/network-link-endpoint=nle-6wvqx9",
+    "self": "https://api.confluent.cloud/networking/v1/network-link-endpoints/nle-6wvqx9?environment=env-d1o8qo",
+    "updated_at": "2023-02-11T05:51:48.746463Z"
+  },
+  "spec": {
+    "description": "Test NL endpoint",
+    "display_name": "network-link-endpoint-1",
+    "environment": {
+      "id": "env-d1o8qo",
+      "related": "https://api.confluent.cloud/v2/environments/env-d1o8qo",
+      "resource_name": "crn://confluent.cloud/organization=foo/environment=env-d1o8qo"
+    },
+    "network": {
+      "environment": "env-d1o8qo",
+      "id": "n-6kqnx2",
+      "related": "https://api.confluent.cloud/networking/v1/networks/n-6kqnx2?environment=env-d1o8qo",
+      "resource_name": "crn://confluent.cloud/organization=foo/environment=env-d1o8qo/network=n-6kqnx2"
+    },
+    "network_link_service": {
+      "environment": "env-d1o8qo",
+      "id": "nls-6942jn",
+      "related": "https://api.confluent.cloud/networking/v1/network-link-services/nls-6942jn?environment=env-d1o8qo",
+      "resource_name": "crn://confluent.cloud/organization=foo/environment=env-d1o8qo/network-link-service=nls-6942jn"
+    }
+  },
+  "status": {
+    "phase": "READY"
+  }
+}

@@ -2,7 +2,7 @@
 
 1. See [Sample Project for Confluent Terraform Provider](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/guides/sample-project) that provides step-by-step instructions of running this example.
 
-2. This example assumes that Terraform is run from a host in the private network, where it will have connectivity to the [Kafka REST API](https://docs.confluent.io/cloud/current/api.html#tag/Topic-(v3)) in other words, to the [REST endpoint](https://docs.confluent.io/cloud/current/clusters/broker-config.html#access-cluster-settings-in-the-ccloud-console) on the provisioned Kafka cluster. If it is not, you must make these changes:
+2. This example assumes that Terraform is run from a host in the private network (you could also leverage the ["Agent" Execution Mode](https://developer.hashicorp.com/terraform/cloud-docs/agents) if you are using Terraform Enterprise), where it will have connectivity to the [Kafka REST API](https://docs.confluent.io/cloud/current/api.html#tag/Topic-(v3)) in other words, to the [REST endpoint](https://docs.confluent.io/cloud/current/clusters/broker-config.html#access-cluster-settings-in-the-ccloud-console) on the provisioned Kafka cluster. If it is not, you must make these changes:
 
     * Update the `confluent_api_key` resources by setting their `disable_wait_for_ready` flag to `true`. Otherwise, Terraform will attempt to validate API key creation by listing topics, which will fail without access to the Kafka REST API. Otherwise, you might see errors like:
 
@@ -22,7 +22,8 @@
 
     before applying the configuration.
 
-    Also make sure you service principal has got "Directory Readers" role assigned. Otherwise, you might receive the following error:
+    Also make sure you service principal has got "Directory Readers" [role assigned](https://learn.microsoft.com/en-us/azure/azure-sql/database/authentication-aad-directory-readers-role-tutorial?view=azuresql). Otherwise, you might receive the following error:
+
     ```bash
     Error: Listing service principals for filter "appId eq 'f0955e3a-9013-4cf4-a1ea-21587621c9cc'"
 

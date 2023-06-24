@@ -2,7 +2,7 @@ terraform {
   required_providers {
     confluent = {
       source  = "confluentinc/confluent"
-      version = "1.28.0"
+      version = "1.46.0"
     }
   }
 }
@@ -303,7 +303,11 @@ resource "confluent_connector" "source" {
   kafka_cluster {
     id = confluent_kafka_cluster.basic.id
   }
-
+  rest_endpoint = confluent_kafka_cluster.basic.rest_endpoint
+  credentials {
+    key    = confluent_api_key.app-manager-kafka-api-key.id
+    secret = confluent_api_key.app-manager-kafka-api-key.secret
+  }
   // Block for custom *sensitive* configuration properties that are labelled with "Type: password" under "Configuration Properties" section in the docs:
   // https://docs.confluent.io/cloud/current/connectors/cc-datagen-source.html#configuration-properties
   config_sensitive = {}
@@ -320,7 +324,9 @@ resource "confluent_connector" "source" {
     "quickstart"               = "ORDERS"
     "tasks.max"                = "1"
   }
-
+  topic_lifecycle {
+    delete_on_termination = false
+  }
   depends_on = [
     confluent_kafka_acl.app-connector-describe-on-cluster,
     confluent_kafka_acl.app-connector-write-on-target-topic,

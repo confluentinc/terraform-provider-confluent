@@ -1,0 +1,16 @@
+{
+  "category": "CLASSIFICATION",
+  "createdBy": "root",
+  "updatedBy": "root",
+  "createTime": 1675228115604,
+  "updateTime": 1675228115604,
+  "version": 1,
+  "name": "test1",
+  "description": "test1Description",
+  "typeVersion": "1.0",
+  "attributeDefs": [],
+  "superTypes": [],
+  "entityTypes": [
+    "cf_entity"
+  ]
+}

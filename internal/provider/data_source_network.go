@@ -65,7 +65,13 @@ func networkDataSource() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			paramReservedCidr: {
+				Type:        schema.TypeString,
+				Description: "The IPv4 CIDR block reserved for Confluent Cloud Network. Must be /24. If not specified, Confluent Cloud Network uses 172.20.255.0/24",
+				Computed:    true,
+			},
 			paramZones:     zonesDataSourceSchema(),
+			paramZoneInfo:  zonesInfoDataSourceSchema(),
 			paramDnsConfig: optionalDnsConfigDataSourceSchema(),
 			paramResourceName: {
 				Type:     schema.TypeString,
@@ -214,6 +220,26 @@ func zonesDataSourceSchema() *schema.Schema {
 		Type:     schema.TypeList,
 		Computed: true,
 		Elem:     &schema.Schema{Type: schema.TypeString},
+	}
+}
+
+func zonesInfoDataSourceSchema() *schema.Schema {
+	return &schema.Schema{
+		Type:     schema.TypeList,
+		Computed: true,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramZoneId: {
+					Type:     schema.TypeString,
+					Computed: true,
+				},
+				paramCidr: {
+					Type:     schema.TypeString,
+					Computed: true,
+				},
+			},
+		},
+		Description: "Each item represents information related to a single zone.",
 	}
 }
 

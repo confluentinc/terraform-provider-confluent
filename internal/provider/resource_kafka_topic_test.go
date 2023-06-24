@@ -17,16 +17,17 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/docker/go-connections/nat"
-	"github.com/stretchr/testify/require"
-	"github.com/testcontainers/testcontainers-go"
-	"github.com/testcontainers/testcontainers-go/wait"
-	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"strconv"
 	"testing"
+
+	"github.com/docker/go-connections/nat"
+	"github.com/stretchr/testify/require"
+	"github.com/testcontainers/testcontainers-go"
+	"github.com/testcontainers/testcontainers-go/wait"
+	"github.com/walkerus/go-wiremock"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -290,11 +291,11 @@ func testAccCheckTopicConfig(confluentCloudBaseUrl, mockServerUrl string) string
 	  kafka_cluster {
         id = "%s"
       }
-	
+
 	  topic_name = "%s"
 	  partitions_count = "%d"
 	  rest_endpoint = "%s"
-	
+
 	  config = {
 		"%s" = "%s"
 		"%s" = "%s"
@@ -317,11 +318,11 @@ func testAccCheckTopicUpdatedConfig(confluentCloudBaseUrl, mockServerUrl string)
 	  kafka_cluster {
         id = "%s"
       }
-	
+
 	  topic_name = "%s"
 	  partitions_count = "%d"
 	  rest_endpoint = "%s"
-	
+
 	  config = {
 		"%s" = "%s"
 		"%s" = "%s"

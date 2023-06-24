@@ -1,0 +1,11 @@
+[
+  {
+    "typeName": "bm",
+    "attributes": {
+      "attr2": "value2",
+      "attr1": "value1"
+    },
+    "entityType": "kafka_topic",
+    "entityName": "lsrc-8wrx70:lkc-m80307:topic_0"
+  }
+]

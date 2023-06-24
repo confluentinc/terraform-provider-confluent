@@ -3,7 +3,7 @@
 page_title: "confluent_connector Resource - terraform-provider-confluent"
 subcategory: ""
 description: |-
-  
+
 ---
 
 # confluent_connector Resource
@@ -27,7 +27,11 @@ resource "confluent_connector" "source" {
   kafka_cluster {
     id = confluent_kafka_cluster.basic.id
   }
-
+  rest_endpoint = confluent_kafka_cluster.basic.rest_endpoint
+  credentials {
+    key    = confluent_api_key.app-manager-kafka-api-key.id
+    secret = confluent_api_key.app-manager-kafka-api-key.secret
+  }
   config_sensitive = {}
 
   config_nonsensitive = {
@@ -48,6 +52,10 @@ resource "confluent_connector" "source" {
     confluent_kafka_acl.app-connector-write-on-data-preview-topics,
   ]
 
+  topic_lifecycle {
+    delete_on_termination = false
+  }
+
   lifecycle {
     prevent_destroy = true
   }
@@ -62,6 +70,12 @@ resource "confluent_connector" "sink" {
   }
   kafka_cluster {
     id = confluent_kafka_cluster.basic.id
+  }
+
+  rest_endpoint = confluent_kafka_cluster.basic.rest_endpoint
+  credentials {
+    key    = confluent_api_key.app-manager-kafka-api-key.id
+    secret = confluent_api_key.app-manager-kafka-api-key.secret
   }
 
   // Block for custom *sensitive* configuration properties that are labelled with "Type: password" under "Configuration Properties" section in the docs:
@@ -99,6 +113,9 @@ resource "confluent_connector" "sink" {
     confluent_kafka_acl.app-connector-read-on-connect-lcc-group,
   ]
 
+  topic_lifecycle {
+    delete_on_termination = false
+  }
   lifecycle {
     prevent_destroy = true
   }
@@ -113,6 +130,12 @@ resource "confluent_connector" "sink" {
   }
   kafka_cluster {
     id = confluent_kafka_cluster.basic.id
+  }
+
+  rest_endpoint = confluent_kafka_cluster.basic.rest_endpoint
+  credentials {
+    key    = confluent_api_key.app-manager-kafka-api-key.id
+    secret = confluent_api_key.app-manager-kafka-api-key.secret
   }
 
   // Block for custom *sensitive* configuration properties that are labelled with "Type: password" under "Configuration Properties" section in the docs:
@@ -165,7 +188,12 @@ The following arguments are supported:
 - `config_sensitive` - (Required Map) Block for custom *sensitive* configuration properties that are labelled with "Type: password" under "Configuration Properties" section in [the docs](https://docs.confluent.io/cloud/current/connectors/index.html):
   - `name` - (Required String) The configuration setting name, for example, `aws.secret.access.key`.
   - `value` - (Required String, Sensitive) The configuration setting value, for example, `***REDACTED***`.
-
+- `rest_endpoint` - (Optional String) The REST endpoint of the Kafka cluster, for example, `https://pkc-00000.us-central1.gcp.confluent.cloud:443`).
+- `credentials` (Optional Configuration Block) supports the following:
+    - `key` - (Required String) The Kafka API Key.
+    - `secret` - (Required String, Sensitive) The Kafka API Secret.
+- `topic_lifecycle` (Optional Configuration block) supports the following:
+    - `delete_on_termination` (Optional Bool) Whether to delete topics created by the connector on termination
 !> **Warning:** Terraform doesn't encrypt the sensitive configuration settings from the `config_sensitive` block of the `confluent_connector` resource, so you must keep your state file secure to avoid exposing it. Refer to the [Terraform documentation](https://www.terraform.io/docs/language/state/sensitive-data.html) to learn more about securing your state file.
 
 - `status` (Optional String) The status of the connector (one of `"NONE"`, `"PROVISIONING"`, `"RUNNING"`, `"DEGRADED"`, `"FAILED"`, `"PAUSED"`, `"DELETED"`). Pausing (`"RUNNING" -> "PAUSED"`) and resuming (`"PAUSED" -> "RUNNING"`) a connector is supported via an update operation.

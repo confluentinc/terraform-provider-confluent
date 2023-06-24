@@ -2,7 +2,7 @@ terraform {
   required_providers {
     confluent = {
       source  = "confluentinc/confluent"
-      version = "1.28.0"
+      version = "1.46.0"
     }
   }
 }
@@ -269,7 +269,8 @@ resource "confluent_api_key" "env-manager-schema-registry-api-key" {
 resource "confluent_schema" "purchase" {
   provider = confluent.schema-registry
 
-  subject_name = "purchase-value"
+  # https://developer.confluent.io/learn-kafka/schema-registry/schema-subjects/#topicnamestrategy
+  subject_name = "${confluent_kafka_topic.purchase.topic_name}-value"
   format = "PROTOBUF"
   schema = file("./schemas/proto/purchase.proto")
 }

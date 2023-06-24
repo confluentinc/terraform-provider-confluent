@@ -12,7 +12,7 @@ description: |-
 
 `confluent_kafka_topic` provides a Kafka Topic resource that enables creating and deleting Kafka Topics on a Kafka cluster on Confluent Cloud.
 
--> **Note:** It is recommended to set `lifecycle { prevent_destroy = true }` on production instances to prevent accidental topic deletion. This setting rejects plans that would destroy or recreate the topic, such as attempting to change uneditable attributes (for example, `partitions_count`). Read more about it in the [Terraform docs](https://www.terraform.io/language/meta-arguments/lifecycle#prevent_destroy).
+-> **Note:** It is recommended to set `lifecycle { prevent_destroy = true }` on production instances to prevent accidental topic deletion. This setting rejects plans that would destroy or recreate the topic, such as attempting to change uneditable attributes. Read more about it in the [Terraform docs](https://www.terraform.io/language/meta-arguments/lifecycle#prevent_destroy).
 
 ## Example Usage
 
@@ -92,6 +92,10 @@ The following arguments are supported:
              `max.message.bytes`, `max.compaction.lag.ms`, `message.timestamp.difference.max.ms`, `message.timestamp.type`,
              `min.compaction.lag.ms`, `min.insync.replicas`, `retention.bytes`, `retention.ms`, `segment.bytes`, `segment.ms`,
              `confluent.key.schema.validation`, `confluent.value.schema.validation`, `confluent.key.subject.name.strategy`, `confluent.value.subject.name.strategy`.
+
+-> **Note:** Schema Validation Configuration topic settings:
+             `confluent.key.schema.validation`, `confluent.value.schema.validation`, `confluent.key.subject.name.strategy`, `confluent.value.subject.name.strategy`
+             are only [available](https://docs.confluent.io/cloud/current/sr/broker-side-schema-validation.html#prerequisites) on [dedicated clusters](https://docs.confluent.io/cloud/current/clusters/cluster-types.html#dedicated-cluster).
 
 !> **Warning:** Use Option #2 to avoid exposing sensitive `credentials` value in a state file. When using Option #1, Terraform doesn't encrypt the sensitive `credentials` value of the `confluent_kafka_topic` resource, so you must keep your state file secure to avoid exposing it. Refer to the [Terraform documentation](https://www.terraform.io/docs/language/state/sensitive-data.html) to learn more about securing your state file.
 

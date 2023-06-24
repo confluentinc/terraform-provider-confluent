@@ -1,0 +1,21 @@
+{
+  "api_version": "byok/v1",
+  "id": "cck-abcde",
+  "key": {
+    "key_arn": "arn:aws:kms:us-west-2:111111111111:key/11111111-1111-1111-1111-111111111111",
+    "kind": "AwsKey",
+    "roles": [
+      "arn:aws:iam::111111111111:role/testRoleId1",
+      "arn:aws:iam::111111111111:role/testRoleId2",
+      "arn:aws:iam::111111111111:role/testRoleId3"
+    ]
+  },
+  "kind": "Key",
+  "metadata": {
+    "created_at": "2023-01-20T10:17:45.169836528Z",
+    "resource_name": "crn://confluent.cloud/organization=11111111-1111-1111-1111-111111111111/key=cck-abcde",
+    "self": "https://api.confluent.cloud/byok/v1/keys/cck-abcde"
+  },
+  "provider": "AWS",
+  "state": "AVAILABLE"
+}
