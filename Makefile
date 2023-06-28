@@ -93,14 +93,3 @@ lint-licenses: build
 	[ -t 0 ] && args="" || args="-plain" ; \
 	GITHUB_TOKEN=$(GITHUB_TOKEN) golicense $${args} .golicense.hcl ./bin/$(shell go env GOOS)-$(shell go env GOARCH)/terraform-provider-confluent ; \
 	echo ; \
-
-.PHONY: install-vault
-install-vault:
-ifneq ($(VAULT_VERSION),$(VAULT_INSTALLED_VERSION))
-	@echo "Installing Hashicorp Vault $(VAULT_VERSION) from $(VAULT_DL_LOC)"
-	@wget --timeout=20 --tries=15 --retry-connrefused -q -O /tmp/vault.zip $(VAULT_DL_LOC)
-	@echo "Unzipping received /tmp/vault.zip" && cd /tmp && unzip vault.zip
-	@mv -f /tmp/vault $(BIN_PATH)/vault
-	@chmod +x $(BIN_PATH)/vault
-	@echo "Placed vault in $(BIN_PATH)/vault"
-endif
