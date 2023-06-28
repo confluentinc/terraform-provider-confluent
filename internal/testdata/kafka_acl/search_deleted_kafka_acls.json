@@ -1,7 +1,7 @@
 {
   "kind": "KafkaAclList",
   "metadata": {
-    "self": "https://pkc-0wg55.us-central1.gcp.confluent.cloud/kafka/v3/clusters/lkc-190073/acls?resource_type=CLUSTER&resource_name=&pattern_type=ANY&principal=User%3A732363&host=&operation=ANY&permission=ANY",
+    "self": "https://pkc-0wg55.us-central1.gcp.confluent.cloud/kafka/v3/clusters/lkc-190073/acls?resource_type=CLUSTER&resource_name=&pattern_type=ANY&principal=User%3Asa-abc123&host=&operation=ANY&permission=ANY",
     "next": null
   },
   "data": [

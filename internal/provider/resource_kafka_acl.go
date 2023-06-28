@@ -164,17 +164,11 @@ func kafkaAclCreate(ctx context.Context, d *schema.ResourceData, meta interface{
 	if err != nil {
 		return diag.FromErr(createDescriptiveError(err))
 	}
-	// APIF-2038: Kafka REST API only accepts integer ID at the moment
-	c := meta.(*Client)
-	principalWithIntegerId, err := principalWithResourceIdToPrincipalWithIntegerId(c, acl.Principal)
-	if err != nil {
-		return diag.FromErr(createDescriptiveError(err))
-	}
 	createAclRequest := kafkarestv3.CreateAclRequestData{
 		ResourceType: acl.ResourceType,
 		ResourceName: acl.ResourceName,
 		PatternType:  acl.PatternType,
-		Principal:    principalWithIntegerId,
+		Principal:    acl.Principal,
 		Host:         acl.Host,
 		Operation:    acl.Operation,
 		Permission:   acl.Permission,
@@ -224,14 +218,7 @@ func kafkaAclDelete(ctx context.Context, d *schema.ResourceData, meta interface{
 		return diag.FromErr(createDescriptiveError(err))
 	}
 
-	// APIF-2038: Kafka REST API only accepts integer ID at the moment
-	client := meta.(*Client)
-	principalWithIntegerId, err := principalWithResourceIdToPrincipalWithIntegerId(client, acl.Principal)
-	if err != nil {
-		return diag.FromErr(createDescriptiveError(err))
-	}
-
-	_, _, err = executeKafkaAclDelete(kafkaRestClient.apiContext(ctx), kafkaRestClient, acl, principalWithIntegerId)
+	_, _, err = executeKafkaAclDelete(kafkaRestClient.apiContext(ctx), kafkaRestClient, acl)
 
 	if err != nil {
 		return diag.Errorf("error deleting Kafka ACLs %q: %s", d.Id(), createDescriptiveError(err))
@@ -242,12 +229,12 @@ func kafkaAclDelete(ctx context.Context, d *schema.ResourceData, meta interface{
 	return nil
 }
 
-func executeKafkaAclDelete(ctx context.Context, c *KafkaRestClient, acl Acl, principalWithIntegerId string) (kafkarestv3.InlineResponse200, *http.Response, error) {
-	return c.apiClient.ACLV3Api.DeleteKafkaAcls(c.apiContext(ctx), c.clusterId).ResourceType(acl.ResourceType).ResourceName(acl.ResourceName).PatternType(acl.PatternType).Principal(principalWithIntegerId).Host(acl.Host).Operation(acl.Operation).Permission(acl.Permission).Execute()
+func executeKafkaAclDelete(ctx context.Context, c *KafkaRestClient, acl Acl) (kafkarestv3.InlineResponse200, *http.Response, error) {
+	return c.apiClient.ACLV3Api.DeleteKafkaAcls(c.apiContext(ctx), c.clusterId).ResourceType(acl.ResourceType).ResourceName(acl.ResourceName).PatternType(acl.PatternType).Principal(acl.Principal).Host(acl.Host).Operation(acl.Operation).Permission(acl.Permission).Execute()
 }
 
-func executeKafkaAclRead(ctx context.Context, c *KafkaRestClient, acl Acl, principalWithIntegerId string) (kafkarestv3.AclDataList, *http.Response, error) {
-	return c.apiClient.ACLV3Api.GetKafkaAcls(c.apiContext(ctx), c.clusterId).ResourceType(acl.ResourceType).ResourceName(acl.ResourceName).PatternType(acl.PatternType).Principal(principalWithIntegerId).Host(acl.Host).Operation(acl.Operation).Permission(acl.Permission).Execute()
+func executeKafkaAclRead(ctx context.Context, c *KafkaRestClient, acl Acl) (kafkarestv3.AclDataList, *http.Response, error) {
+	return c.apiClient.ACLV3Api.GetKafkaAcls(c.apiContext(ctx), c.clusterId).ResourceType(acl.ResourceType).ResourceName(acl.ResourceName).PatternType(acl.PatternType).Principal(acl.Principal).Host(acl.Host).Operation(acl.Operation).Permission(acl.Permission).Execute()
 }
 
 func kafkaAclRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -295,13 +282,7 @@ func createKafkaAclId(clusterId string, acl Acl) string {
 }
 
 func readAclAndSetAttributes(ctx context.Context, d *schema.ResourceData, client *Client, c *KafkaRestClient, acl Acl) ([]*schema.ResourceData, error) {
-	// APIF-2038: Kafka REST API only accepts integer ID at the moment
-	principalWithIntegerId, err := principalWithResourceIdToPrincipalWithIntegerId(client, acl.Principal)
-	if err != nil {
-		return nil, err
-	}
-
-	remoteAcls, resp, err := executeKafkaAclRead(ctx, c, acl, principalWithIntegerId)
+	remoteAcls, resp, err := executeKafkaAclRead(ctx, c, acl)
 	if err != nil {
 		tflog.Warn(ctx, fmt.Sprintf("Error reading Kafka ACLs %q: %s", d.Id(), createDescriptiveError(err)), map[string]interface{}{kafkaAclLoggingKey: d.Id()})
 

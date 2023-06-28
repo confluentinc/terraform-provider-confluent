@@ -65,16 +65,6 @@ func TestAccAclsWithEnhancedProviderBlock(t *testing.T) {
 	// nolint:errcheck
 	defer wiremockClient.ResetAllScenarios()
 
-	readServiceAccountsResponse, _ := ioutil.ReadFile("../testdata/kafka_acl/read_service_accounts.json")
-	readServiceAccountsStub := wiremock.Get(wiremock.URLPathEqualTo(readServiceAccountsPath)).
-		InScenario(aclScenarioName).
-		WillReturn(
-			string(readServiceAccountsResponse),
-			contentTypeJSONHeader,
-			http.StatusOK,
-		)
-	_ = wiremockClient.StubFor(readServiceAccountsStub)
-
 	createAclStub := wiremock.Post(wiremock.URLPathEqualTo(createKafkaAclPath)).
 		InScenario(aclScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
@@ -91,7 +81,7 @@ func TestAccAclsWithEnhancedProviderBlock(t *testing.T) {
 		WithQueryParam("operation", wiremock.EqualTo(aclOperation)).
 		WithQueryParam("pattern_type", wiremock.EqualTo(aclPatternType)).
 		WithQueryParam("permission", wiremock.EqualTo(aclPermission)).
-		WithQueryParam("principal", wiremock.EqualTo(aclPrincipalWithIntegerId)).
+		WithQueryParam("principal", wiremock.EqualTo(aclPrincipalWithResourceId)).
 		WithQueryParam("resource_name", wiremock.EqualTo(aclResourceName)).
 		WithQueryParam("resource_type", wiremock.EqualTo(aclResourceType)).
 		InScenario(aclScenarioName).
@@ -108,7 +98,7 @@ func TestAccAclsWithEnhancedProviderBlock(t *testing.T) {
 		WithQueryParam("operation", wiremock.EqualTo(aclOperation)).
 		WithQueryParam("pattern_type", wiremock.EqualTo(aclPatternType)).
 		WithQueryParam("permission", wiremock.EqualTo(aclPermission)).
-		WithQueryParam("principal", wiremock.EqualTo(aclPrincipalWithIntegerId)).
+		WithQueryParam("principal", wiremock.EqualTo(aclPrincipalWithResourceId)).
 		WithQueryParam("resource_name", wiremock.EqualTo(aclResourceName)).
 		WithQueryParam("resource_type", wiremock.EqualTo(aclResourceType)).
 		InScenario(aclScenarioName).
@@ -125,7 +115,7 @@ func TestAccAclsWithEnhancedProviderBlock(t *testing.T) {
 		WithQueryParam("operation", wiremock.EqualTo(aclOperation)).
 		WithQueryParam("pattern_type", wiremock.EqualTo(aclPatternType)).
 		WithQueryParam("permission", wiremock.EqualTo(aclPermission)).
-		WithQueryParam("principal", wiremock.EqualTo(aclPrincipalWithIntegerId)).
+		WithQueryParam("principal", wiremock.EqualTo(aclPrincipalWithResourceId)).
 		WithQueryParam("resource_name", wiremock.EqualTo(aclResourceName)).
 		WithQueryParam("resource_type", wiremock.EqualTo(aclResourceType)).
 		InScenario(aclScenarioName).

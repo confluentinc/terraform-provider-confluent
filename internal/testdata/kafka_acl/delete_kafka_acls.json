@@ -3,13 +3,13 @@
     {
       "kind": "KafkaAcl",
       "metadata": {
-        "self": "https://pkc-0wg55.us-central1.gcp.confluent.cloud/kafka/v3/clusters/lkc-190073/acls?resource_type=CLUSTER&resource_name=kafka-cluster&pattern_type=LITERAL&principal=User%3A732363&host=*&operation=READ&permission=ALLOW"
+        "self": "https://pkc-0wg55.us-central1.gcp.confluent.cloud/kafka/v3/clusters/lkc-190073/acls?resource_type=CLUSTER&resource_name=kafka-cluster&pattern_type=LITERAL&principal=User%3Asa-abc123&host=*&operation=READ&permission=ALLOW"
       },
       "cluster_id": "lkc-190073",
       "resource_type": "CLUSTER",
       "resource_name": "kafka-cluster",
       "pattern_type": "LITERAL",
-      "principal": "User:732363",
+      "principal": "User:sa-abc123",
       "host": "*",
       "operation": "READ",
       "permission": "ALLOW"

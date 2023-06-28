@@ -37,7 +37,6 @@ const (
 	aclScenarioName                = "confluent_kafka_acl Resource Lifecycle"
 	aclPatternType                 = "LITERAL"
 	aclResourceName                = "kafka-cluster"
-	aclPrincipalWithIntegerId      = "User:732363"
 	aclPrincipalWithResourceId     = "User:sa-abc123"
 	aclHost                        = "*"
 	aclOperation                   = "READ"
@@ -49,7 +48,7 @@ const (
 var fullAclResourceLabel = fmt.Sprintf("confluent_kafka_acl.%s", aclResourceLabel)
 var createKafkaAclPath = fmt.Sprintf("/kafka/v3/clusters/%s/acls", clusterId)
 var readServiceAccountsPath = "/service_accounts"
-var readKafkaAclPath = fmt.Sprintf("/kafka/v3/clusters/%s/acls?host=%s&operation=%s&pattern_type=%s&permission=%s&principal=%s&resource_name=%s&resource_type=%s", clusterId, aclHost, aclOperation, aclPatternType, aclPermission, aclPrincipalWithIntegerId, aclResourceName, aclResourceType)
+var readKafkaAclPath = fmt.Sprintf("/kafka/v3/clusters/%s/acls?host=%s&operation=%s&pattern_type=%s&permission=%s&principal=%s&resource_name=%s&resource_type=%s", clusterId, aclHost, aclOperation, aclPatternType, aclPermission, aclPrincipalWithResourceId, aclResourceName, aclResourceType)
 
 // TODO: APIF-1990
 var mockAclTestServerUrl = ""
@@ -89,16 +88,6 @@ func TestAccAcls(t *testing.T) {
 	// nolint:errcheck
 	defer wiremockClient.ResetAllScenarios()
 
-	readServiceAccountsResponse, _ := ioutil.ReadFile("../testdata/kafka_acl/read_service_accounts.json")
-	readServiceAccountsStub := wiremock.Get(wiremock.URLPathEqualTo(readServiceAccountsPath)).
-		InScenario(aclScenarioName).
-		WillReturn(
-			string(readServiceAccountsResponse),
-			contentTypeJSONHeader,
-			http.StatusOK,
-		)
-	_ = wiremockClient.StubFor(readServiceAccountsStub)
-
 	createAclStub := wiremock.Post(wiremock.URLPathEqualTo(createKafkaAclPath)).
 		InScenario(aclScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
@@ -115,7 +104,7 @@ func TestAccAcls(t *testing.T) {
 		WithQueryParam("operation", wiremock.EqualTo(aclOperation)).
 		WithQueryParam("pattern_type", wiremock.EqualTo(aclPatternType)).
 		WithQueryParam("permission", wiremock.EqualTo(aclPermission)).
-		WithQueryParam("principal", wiremock.EqualTo(aclPrincipalWithIntegerId)).
+		WithQueryParam("principal", wiremock.EqualTo(aclPrincipalWithResourceId)).
 		WithQueryParam("resource_name", wiremock.EqualTo(aclResourceName)).
 		WithQueryParam("resource_type", wiremock.EqualTo(aclResourceType)).
 		InScenario(aclScenarioName).
@@ -132,7 +121,7 @@ func TestAccAcls(t *testing.T) {
 		WithQueryParam("operation", wiremock.EqualTo(aclOperation)).
 		WithQueryParam("pattern_type", wiremock.EqualTo(aclPatternType)).
 		WithQueryParam("permission", wiremock.EqualTo(aclPermission)).
-		WithQueryParam("principal", wiremock.EqualTo(aclPrincipalWithIntegerId)).
+		WithQueryParam("principal", wiremock.EqualTo(aclPrincipalWithResourceId)).
 		WithQueryParam("resource_name", wiremock.EqualTo(aclResourceName)).
 		WithQueryParam("resource_type", wiremock.EqualTo(aclResourceType)).
 		InScenario(aclScenarioName).
@@ -149,7 +138,7 @@ func TestAccAcls(t *testing.T) {
 		WithQueryParam("operation", wiremock.EqualTo(aclOperation)).
 		WithQueryParam("pattern_type", wiremock.EqualTo(aclPatternType)).
 		WithQueryParam("permission", wiremock.EqualTo(aclPermission)).
-		WithQueryParam("principal", wiremock.EqualTo(aclPrincipalWithIntegerId)).
+		WithQueryParam("principal", wiremock.EqualTo(aclPrincipalWithResourceId)).
 		WithQueryParam("resource_name", wiremock.EqualTo(aclResourceName)).
 		WithQueryParam("resource_type", wiremock.EqualTo(aclResourceType)).
 		InScenario(aclScenarioName).
@@ -220,7 +209,7 @@ func testAccCheckAclDestroy(s *terraform.State) error {
 			continue
 		}
 		deletedAclId := rs.Primary.ID
-		aclList, _, err := c.apiClient.ACLV3Api.GetKafkaAcls(c.apiContext(context.Background()), clusterId).ResourceType(aclResourceType).ResourceName(aclResourceName).PatternType(aclPatternType).Principal(aclPrincipalWithIntegerId).Host(aclHost).Operation(aclOperation).Permission(aclPermission).Execute()
+		aclList, _, err := c.apiClient.ACLV3Api.GetKafkaAcls(c.apiContext(context.Background()), clusterId).ResourceType(aclResourceType).ResourceName(aclResourceName).PatternType(aclPatternType).Principal(aclPrincipalWithResourceId).Host(aclHost).Operation(aclOperation).Permission(aclPermission).Execute()
 
 		if len(aclList.Data) == 0 {
 			return nil
