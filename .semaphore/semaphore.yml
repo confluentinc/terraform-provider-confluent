@@ -5,8 +5,6 @@ agent:
     type: s1-public-ubuntu20-04-amd64-1
 
 global_job_config:
-  secrets:
-    - name: vault_sem2_approle
   prologue:
     commands:
       - sem-version go 1.20
@@ -27,5 +25,3 @@ blocks:
           commands:
             # all: clean test testacc tools lint-licenses build
             - make all
-            # Run make-release CI if the current commit is not tagged
-            - if [[ -z $(git tag --points-at HEAD) ]]; then export MAKEFILE_NAME=make.includes && make -f make.includes release-ci; fi
