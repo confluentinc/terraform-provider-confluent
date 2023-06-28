@@ -5,6 +5,8 @@ agent:
     type: s1-prod-ubuntu20-04-amd64-1
 blocks:
   - name: "Draft a Release"
+    skip:
+      when: "pull_request =~ '.*'"
     task:
       prologue:
         commands:
