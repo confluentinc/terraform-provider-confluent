@@ -1,6 +1,14 @@
+## 1.47.0 (June 28, 2023)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.46.0...v1.47.0)
+
+**Bug fixes:**
+* Updated implementation of `confluent_kafka_acl` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_acl) to fix a rate limiting issue ([#148](https://github.com/confluentinc/terraform-provider-confluent/issues/148)).
+
 ## 1.46.0 (June 23, 2023)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.45.0...v1.46.0)
+
 **New features:**
 * Added new `confluent_network_link_service` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_network_link_service) and a corresponding [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_network_link_service) in a [General Availability lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
 * Added new `confluent_network_link_endpoint` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_network_link_endpoint) and a corresponding [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_network_link_endpoint) in a [General Availability lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
