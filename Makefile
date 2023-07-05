@@ -13,7 +13,7 @@ GOARCH        ?= $(shell go env GOARCH)
 GOFILES       ?= $(shell find . -type f -name '*.go' -not -path "./vendor/*")
 
 .PHONY: all
-all: clean deps test testacc tools lint-licenses build
+all: clean deps test testacc tools build
 
 
 .PHONY: checkfmt
@@ -77,10 +77,3 @@ tools: ## Install required tools
 
 log-%:
 	@ grep -h -E '^$*:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m==> %s\033[0m\n", $$2}'
-
-.PHONY: lint-licenses
-## Scan and validate third-party dependency licenses
-lint-licenses: build
-	[ -t 0 ] && args="" || args="-plain" ; \
-	GITHUB_TOKEN=$(GITHUB_TOKEN) golicense $${args} .golicense.hcl ./bin/$(shell go env GOOS)-$(shell go env GOARCH)/terraform-provider-confluent ; \
-	echo ; \
