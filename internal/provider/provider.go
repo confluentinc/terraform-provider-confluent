@@ -187,6 +187,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_kafka_cluster":                  kafkaDataSource(),
 				"confluent_kafka_topic":                    kafkaTopicDataSource(),
 				"confluent_environment":                    environmentDataSource(),
+				"confluent_environments":                   environmentsDataSource(),
 				"confluent_ksql_cluster":                   ksqlDataSource(),
 				"confluent_identity_pool":                  identityPoolDataSource(),
 				"confluent_identity_provider":              identityProviderDataSource(),
