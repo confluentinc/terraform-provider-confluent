@@ -1,14 +1,5 @@
 TEST?=./...
 
-# Vault setup
-VAULT_VERSION ?= v1.4.0
-VAULT_VERSION_NO_V := $(shell echo $(VAULT_VERSION) | sed -e 's/^v//')
-HOST_OS := linux
-BIN_PATH := vault-bin
-
-VAULT_INSTALLED_VERSION := $(shell $(BIN_PATH)/vault -version 2>/dev/null | head -n 1 | awk '{ print $$2 }')
-VAULT_DL_LOC := https://vault-zipfile-public-cache.s3-us-west-2.amazonaws.com/vault_$(VAULT_VERSION_NO_V)_$(HOST_OS)_amd64.zip
-
 # Project variables
 NAME        := terraform-provider-confluent
 # Build variables
@@ -93,14 +84,3 @@ lint-licenses: build
 	[ -t 0 ] && args="" || args="-plain" ; \
 	GITHUB_TOKEN=$(GITHUB_TOKEN) golicense $${args} .golicense.hcl ./bin/$(shell go env GOOS)-$(shell go env GOARCH)/terraform-provider-confluent ; \
 	echo ; \
-
-.PHONY: install-vault
-install-vault:
-ifneq ($(VAULT_VERSION),$(VAULT_INSTALLED_VERSION))
-	@echo "Installing Hashicorp Vault $(VAULT_VERSION) from $(VAULT_DL_LOC)"
-	@wget --timeout=20 --tries=15 --retry-connrefused -q -O /tmp/vault.zip $(VAULT_DL_LOC)
-	@echo "Unzipping received /tmp/vault.zip" && cd /tmp && unzip vault.zip
-	@mv -f /tmp/vault $(BIN_PATH)/vault
-	@chmod +x $(BIN_PATH)/vault
-	@echo "Placed vault in $(BIN_PATH)/vault"
-endif
