@@ -501,8 +501,6 @@ func zonesSchema() *schema.Schema {
 		Type:     schema.TypeList,
 		Optional: true,
 		Computed: true,
-		MinItems: 3,
-		MaxItems: 3,
 		Elem:     &schema.Schema{Type: schema.TypeString},
 		ForceNew: true,
 		Description: "The 3 availability zones for this network. They can optionally be specified for only AWS" +
@@ -515,8 +513,6 @@ func zonesInfoSchema() *schema.Schema {
 		Type:     schema.TypeList,
 		Optional: true,
 		Computed: true,
-		MinItems: 3,
-		MaxItems: 3,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				paramZoneId: {
