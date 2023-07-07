@@ -5,6 +5,8 @@ agent:
     type: s1-prod-ubuntu20-04-amd64-1
 
 global_job_config:
+  secrets:
+    - name: vault_sem2_approle
   prologue:
     commands:
       - sem-version go 1.20
@@ -16,9 +18,15 @@ global_job_config:
       - 'mkdir -vp "${SEMAPHORE_GIT_DIR}" "${GOPATH}/bin"'
       - export SEMAPHORE_CACHE_DIR=/home/semaphore
       - checkout
-      - vault-setup
+      - make install-vault
+      - . vault-bin/vault-setup
+      - . vault-sem-get-secret ssh_id_rsa
+      - . vault-sem-get-secret netrc
+      - . vault-sem-get-secret ssh_config
+      - . vault-sem-get-secret gitconfig
       # GitHub token is required for running make lint-licenses
       - . vault-sem-get-secret semaphore-secrets-global
+      - . vault-sem-get-secret eng_aws
       # Load other make files
       - git clone git@github.com:confluentinc/cc-mk-include.git mk-include
       # Don't skip CI since GoReleaser only runs for a tagged commit

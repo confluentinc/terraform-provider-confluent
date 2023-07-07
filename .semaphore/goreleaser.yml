@@ -5,9 +5,9 @@ agent:
     type: s1-prod-ubuntu20-04-amd64-1
 blocks:
   - name: "Draft a Release"
-    skip:
-      when: "pull_request =~ '.*'"
     task:
+      secrets:
+        - name: vault_sem2_approle
       prologue:
         commands:
           - sem-version go 1.20
@@ -19,9 +19,15 @@ blocks:
           - 'mkdir -vp "${SEMAPHORE_GIT_DIR}" "${GOPATH}/bin"'
           - export SEMAPHORE_CACHE_DIR=/home/semaphore
           - checkout
-          - vault-setup
+          - make install-vault
+          - . vault-bin/vault-setup
+          - . vault-sem-get-secret ssh_id_rsa
+          - . vault-sem-get-secret netrc
+          - . vault-sem-get-secret ssh_config
+          - . vault-sem-get-secret gitconfig
           # GitHub token is required for running GoReleaser
           - . vault-sem-get-secret semaphore-secrets-global
+          - . vault-sem-get-secret eng_aws
           - . vault-sem-get-secret v1/ci/kv/apif/signing_key
           # Import GPG private key
           - echo -e "${GPG_PRIVATE_KEY}" | gpg --import --batch --no-tty
@@ -32,7 +38,7 @@ blocks:
           - git clean -fx
           # Install deps for compiling for linux/arm64 from linux/amd64
           - sudo apt update
-          - sudo apt install -y gcc-aarch64-linux-gnu
+          - sudo apt install -y build-essential gcc-aarch64-linux-gnu
       jobs:
         - name: goreleaser
           commands:
