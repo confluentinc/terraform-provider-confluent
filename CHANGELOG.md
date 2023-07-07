@@ -1,3 +1,10 @@
+## 1.48.0 (July 7, 2023)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.47.0...v1.48.0)
+
+**New features:**
+* Added new `confluent_environments` [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_environments) in a [Preview lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy) ([#254](https://github.com/confluentinc/terraform-provider-confluent/issues/254)).
+
 ## 1.47.0 (June 28, 2023)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.46.0...v1.47.0)
