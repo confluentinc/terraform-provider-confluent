@@ -1,9 +1,0 @@
-# Bump the patch (<major>.<minor>.<patch>) by default
-DEFAULT_BUMP := patch
-UPDATE_MK_INCLUDE := false
-
-include ./mk-include/cc-begin.mk
-include ./mk-include/cc-semver.mk
-include ./mk-include/cc-semaphore.mk
-include ./mk-include/cc-go.mk
-include ./mk-include/cc-end.mk

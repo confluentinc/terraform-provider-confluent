@@ -14,16 +14,7 @@ global_job_config:
         "SEMAPHORE_GIT_DIR=${GOPATH}/src/github.com/confluentinc/${SEMAPHORE_PROJECT_NAME}"
       - 'export "PATH=${GOPATH}/bin:${PATH}"'
       - 'mkdir -vp "${SEMAPHORE_GIT_DIR}" "${GOPATH}/bin"'
-      - export SEMAPHORE_CACHE_DIR=/home/semaphore
       - checkout
-      - vault-setup
-      # GitHub token is required for running make lint-licenses
-      - . vault-sem-get-secret semaphore-secrets-global
-      # Load other make files
-      - git clone git@github.com:confluentinc/cc-mk-include.git mk-include
-      # Don't skip CI since GoReleaser only runs for a tagged commit
-      - export CI_SKIP=""
-      - make -f make.includes init-ci
 
 blocks:
   - name: Build & Test & Release
@@ -34,7 +25,7 @@ blocks:
             # all: clean test testacc tools build
             - make all
             # Run make-release CI if the current commit is not tagged
-            - if [[ -z $(git tag --points-at HEAD) ]]; then export MAKEFILE_NAME=make.includes && make -f make.includes release-ci; fi
+            - if [[ -z $(git tag --points-at HEAD) ]]; then make release-ci; fi
 
 promotions:
   - name: Draft a Release
