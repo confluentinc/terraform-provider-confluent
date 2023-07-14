@@ -578,7 +578,7 @@ func schemaImport(ctx context.Context, d *schema.ResourceData, meta interface{})
 }
 
 func loadIdForLatestSchema(ctx context.Context, d *schema.ResourceData, c *SchemaRegistryRestClient, subjectName string) (string, error) {
-	latestSchema, _, err := c.apiClient.SubjectVersionsV1Api.GetSchemaByVersion(c.apiContext(ctx), subjectName, latestSchemaVersionAndPlaceholderForSchemaIdentifier).Execute()
+	latestSchema, _, err := c.apiClient.SubjectsV1Api.GetSchemaByVersion(c.apiContext(ctx), subjectName, latestSchemaVersionAndPlaceholderForSchemaIdentifier).Execute()
 	if err != nil {
 		return "", fmt.Errorf("error loading the latest Schema: %s", createDescriptiveError(err))
 	}
@@ -709,11 +709,11 @@ func executeSchemaLookup(ctx context.Context, c *SchemaRegistryRestClient, reque
 }
 
 func executeSchemaCreate(ctx context.Context, c *SchemaRegistryRestClient, requestData *sr.RegisterSchemaRequest, subjectName string) (sr.RegisterSchemaResponse, *http.Response, error) {
-	return c.apiClient.SubjectVersionsV1Api.Register(c.apiContext(ctx), subjectName).RegisterSchemaRequest(*requestData).Execute()
+	return c.apiClient.SubjectsV1Api.Register(c.apiContext(ctx), subjectName).RegisterSchemaRequest(*requestData).Execute()
 }
 
 func executeSchemaDelete(ctx context.Context, c *SchemaRegistryRestClient, subjectName, schemaVersion string, isHardDelete bool) error {
-	_, _, err := c.apiClient.SubjectVersionsV1Api.DeleteSchemaVersion(c.apiContext(ctx), subjectName, schemaVersion).Permanent(isHardDelete).Execute()
+	_, _, err := c.apiClient.SubjectsV1Api.DeleteSchemaVersion(c.apiContext(ctx), subjectName, schemaVersion).Permanent(isHardDelete).Execute()
 	if err != nil {
 		if isHardDelete {
 			return fmt.Errorf("error hard deleting Schema: %s", createDescriptiveError(err))

@@ -153,6 +153,8 @@ github.com/confluentinc/ccloud-sdk-go-v2/org v0.4.0 h1:WcJs6RbY8nU5HapaG0ZCH9ftF
 github.com/confluentinc/ccloud-sdk-go-v2/org v0.4.0/go.mod h1:zREJ+OOZz0rEXCaPx0JbCVj2EfNnYs/c6qhPDfhldI0=
 github.com/confluentinc/ccloud-sdk-go-v2/schema-registry v0.1.0 h1:X3snoY6twxQ0Z/vbysQrHhdRVkNdpFE/Os7JpMKfXWw=
 github.com/confluentinc/ccloud-sdk-go-v2/schema-registry v0.1.0/go.mod h1:TiRHikjkVYJlhHI8TH2eKeXupQDGQWqkN+JUnv93NRA=
+github.com/confluentinc/ccloud-sdk-go-v2/schema-registry v0.2.0 h1:qR8cm4OmT/B2g3pINSBxt+dDMFep5wgVJGu6oHIrbdk=
+github.com/confluentinc/ccloud-sdk-go-v2/schema-registry v0.2.0/go.mod h1:uTE8K5/jg75ubJY1Flh6TfBIwVFVOchkLWqVsamwLYc=
 github.com/confluentinc/ccloud-sdk-go-v2/srcm v0.2.0 h1:ezCzDCOOavjTPVKvdET0QjAXm1u9iRJjg2s5lkSMrps=
 github.com/confluentinc/ccloud-sdk-go-v2/srcm v0.2.0/go.mod h1:qY4Y/QCDKI0eR+HLVJWGFstsTAiI83+sowKOyoRFhF0=
 github.com/containerd/aufs v1.0.0/go.mod h1:kL5kd6KM5TzQjR79jljyi4olc1Vrx6XBlcyj3gNv2PU=
