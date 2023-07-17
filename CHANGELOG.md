@@ -1,3 +1,15 @@
+## 1.49.0 (July 17, 2023)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.48.0...v1.49.0)
+
+**New features:**
+* Added new `confluent_schema_registry_clusters` [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_schema_registry_clusters) in a [Preview lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy) ([#254](https://github.com/confluentinc/terraform-provider-confluent/issues/254)).
+
+**Bug fixes:**
+* Fixed "Reordering zones shouldn't trigger network recreation" issue ([#288](https://github.com/confluentinc/terraform-provider-confluent/issues/288)).
+* Fixed "zones variable in confluent_network resource too restrictive in terms of min/max AZs" issue ([#270](https://github.com/confluentinc/terraform-provider-confluent/issues/270)).
+* Fixed "error creating Tag Binding / Business Metadata Binding 404" issue ([#282](https://github.com/confluentinc/terraform-provider-confluent/issues/282)).
+
 ## 1.48.0 (July 7, 2023)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.47.0...v1.48.0)
