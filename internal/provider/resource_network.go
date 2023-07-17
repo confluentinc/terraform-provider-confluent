@@ -21,8 +21,10 @@ import (
 	net "github.com/confluentinc/ccloud-sdk-go-v2/networking/v1"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"github.com/samber/lo"
 	"net/http"
 	"regexp"
 	"strings"
@@ -131,7 +133,30 @@ func networkResource() *schema.Resource {
 			Create: schema.DefaultTimeout(networkingAPICreateTimeout),
 			Delete: schema.DefaultTimeout(networkingAPIDeleteTimeout),
 		},
+		CustomizeDiff: customdiff.Sequence(setNetworkDiff),
 	}
+}
+
+func setNetworkDiff(ctx context.Context, diff *schema.ResourceDiff, meta interface{}) error {
+	if !diff.HasChange(paramZones) {
+		return nil
+	}
+	oldZonesInterface, newZonesInterfaces := diff.GetChange(paramZones)
+	oldZones := convertToStringSlice(oldZonesInterface.([]interface{}))
+	newZones := convertToStringSlice(newZonesInterfaces.([]interface{}))
+
+	// Check whether oldZones and newZones have the same set of elements
+	intersection := lo.Intersect(oldZones, newZones)
+	oldAndNewZonesHaveSameSetOfElements := len(oldZones) == len(newZones) && len(oldZones) == len(intersection)
+
+	if oldAndNewZonesHaveSameSetOfElements {
+		// Set old value to paramZones to avoid TF drift
+		if err := diff.SetNew(paramZones, oldZones); err != nil {
+			return fmt.Errorf("error customizing diff Network: %s", createDescriptiveError(err))
+		}
+	}
+
+	return nil
 }
 
 func awsNetworkSchema() *schema.Schema {
