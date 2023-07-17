@@ -128,6 +128,8 @@ func tagBindingCreate(ctx context.Context, d *schema.ResourceData, meta interfac
 		return diag.Errorf("error waiting for Tag Binding %q to provision: %s", tagBindingId, createDescriptiveError(err))
 	}
 
+	time.Sleep(5 * time.Second)
+
 	createdTagBindingJson, err := json.Marshal(createdTagBinding)
 	if err != nil {
 		return diag.Errorf("error creating Tag Binding %q: error marshaling %#v to json: %s", tagBindingId, createdTagBinding, createDescriptiveError(err))

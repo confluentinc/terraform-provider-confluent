@@ -138,6 +138,8 @@ func businessMetadataBindingCreate(ctx context.Context, d *schema.ResourceData, 
 		return diag.Errorf("error waiting for Business Metadata Binding %q to provision: %s", businessMetadataBindingId, createDescriptiveError(err))
 	}
 
+	time.Sleep(5 * time.Second)
+
 	createdBusinessMetadataBindingJson, err := json.Marshal(createdBusinessMetadataBinding)
 	if err != nil {
 		return diag.Errorf("error creating Business Metadata Binding %q: error marshaling %#v to json: %s", businessMetadataBindingId, createdBusinessMetadataBinding, createDescriptiveError(err))
