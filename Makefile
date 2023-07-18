@@ -19,6 +19,7 @@ MASTER_BRANCH := master
 # Auto bump by default
 BUMP ?= auto
 DEFAULT_BUMP ?= patch
+GIT_MESSAGES := $(shell git log --pretty='%s' v$(CLEAN_VERSION)...HEAD 2>/dev/null | tr '\n' ' ')
 
 # If auto bump enabled, search git messages for bump hash
 ifeq ($(BUMP),auto)
@@ -137,7 +138,7 @@ commit-release:
 .PHONY: get-release-image
 get-release-image:
 	echo '$(RELEASE_SVG)' > release.svg
-	echo git add release.svg
+	git add release.svg
 
 .PHONY: tag-release
 tag-release:
