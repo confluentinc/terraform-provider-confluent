@@ -179,7 +179,8 @@ func New(version, userAgent string) func() *schema.Provider {
 				"max_retries": {
 					Type:         schema.TypeInt,
 					Optional:     true,
-					ValidateFunc: validation.IntAtLeast(5),
+					DefaultFunc:  schema.EnvDefaultFunc("TF_PROVIDER_CONFLUENT_MAX_RETRIES", 4),
+					ValidateFunc: validation.IntAtLeast(4),
 					Description:  "Maximum number of retries of HTTP client. Defaults to 4.",
 				},
 			},
@@ -319,7 +320,6 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	schemaRegistryApiKey := d.Get("schema_registry_api_key").(string)
 	schemaRegistryApiSecret := d.Get("schema_registry_api_secret").(string)
 	schemaRegistryRestEndpoint := d.Get("schema_registry_rest_endpoint").(string)
-	// If the max_retries doesn't exist in the configuration, then 0 will be returned.
 	maxRetries := d.Get("max_retries").(int)
 
 	// 3 or 4 attributes should be set or not set at the same time
@@ -390,41 +390,22 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	var kafkaRestClientFactory *KafkaRestClientFactory
 	var schemaRegistryRestClientFactory *SchemaRegistryRestClientFactory
 
-	if maxRetries != 0 {
-		kafkaRestClientFactory = &KafkaRestClientFactory{userAgent: userAgent, maxRetries: &maxRetries}
-		schemaRegistryRestClientFactory = &SchemaRegistryRestClientFactory{userAgent: userAgent, maxRetries: &maxRetries}
+	kafkaRestClientFactory = &KafkaRestClientFactory{userAgent: userAgent, maxRetries: &maxRetries}
+	schemaRegistryRestClientFactory = &SchemaRegistryRestClientFactory{userAgent: userAgent, maxRetries: &maxRetries}
 
-		apiKeysCfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
-		byokCfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
-		cmkCfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
-		connectCfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
-		iamCfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
-		iamV1Cfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
-		mdsCfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
-		netCfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
-		oidcCfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
-		orgCfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
-		srcmCfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
-		ksqlCfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
-		quotasCfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
-	} else {
-		kafkaRestClientFactory = &KafkaRestClientFactory{userAgent: userAgent}
-		schemaRegistryRestClientFactory = &SchemaRegistryRestClientFactory{userAgent: userAgent}
-
-		apiKeysCfg.HTTPClient = NewRetryableClientFactory().CreateRetryableClient()
-		byokCfg.HTTPClient = NewRetryableClientFactory().CreateRetryableClient()
-		cmkCfg.HTTPClient = NewRetryableClientFactory().CreateRetryableClient()
-		connectCfg.HTTPClient = NewRetryableClientFactory().CreateRetryableClient()
-		iamCfg.HTTPClient = NewRetryableClientFactory().CreateRetryableClient()
-		iamV1Cfg.HTTPClient = NewRetryableClientFactory().CreateRetryableClient()
-		mdsCfg.HTTPClient = NewRetryableClientFactory().CreateRetryableClient()
-		netCfg.HTTPClient = NewRetryableClientFactory().CreateRetryableClient()
-		oidcCfg.HTTPClient = NewRetryableClientFactory().CreateRetryableClient()
-		orgCfg.HTTPClient = NewRetryableClientFactory().CreateRetryableClient()
-		srcmCfg.HTTPClient = NewRetryableClientFactory().CreateRetryableClient()
-		ksqlCfg.HTTPClient = NewRetryableClientFactory().CreateRetryableClient()
-		quotasCfg.HTTPClient = NewRetryableClientFactory().CreateRetryableClient()
-	}
+	apiKeysCfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
+	byokCfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
+	cmkCfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
+	connectCfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
+	iamCfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
+	iamV1Cfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
+	mdsCfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
+	netCfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
+	oidcCfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
+	orgCfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
+	srcmCfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
+	ksqlCfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
+	quotasCfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
 
 	client := Client{
 		apiKeysClient:                   apikeys.NewAPIClient(apiKeysCfg),
