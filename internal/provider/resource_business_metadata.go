@@ -175,7 +175,7 @@ func businessMetadataCreate(ctx context.Context, d *schema.ResourceData, meta in
 		return diag.Errorf("error waiting for Business Metadata %q to provision: %s", businessMetadataId, createDescriptiveError(err))
 	}
 
-	time.Sleep(5 * time.Second)
+	time.Sleep(10 * time.Second)
 
 	createdBusinessMetadataJson, err := json.Marshal(createdBusinessMetadata)
 	if err != nil {
