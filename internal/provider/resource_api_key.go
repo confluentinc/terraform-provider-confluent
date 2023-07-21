@@ -406,7 +406,11 @@ func apiKeyResourceSchema() *schema.Schema {
 // hence extractStringValueFromBlock() doesn't return errors (similar to d.Get())
 func extractStringValueFromBlock(d *schema.ResourceData, blockName string, attribute string) string {
 	// d.Get() will return "" if the key is not present
-	return d.Get(fmt.Sprintf("%s.0.%s", blockName, attribute)).(string)
+	value, ok := d.GetOk(fmt.Sprintf("%s.0.%s", blockName, attribute))
+	if !ok || value == nil {
+		return ""
+	}
+	return value.(string)
 }
 
 func extractStringValueFromNestedBlock(d *schema.ResourceData, outerBlockName string, innerBlockName string, attribute string) string {

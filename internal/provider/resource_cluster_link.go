@@ -33,6 +33,8 @@ const (
 	paramLinkName                = "link_name"
 	paramSourceKafkaCluster      = "source_kafka_cluster"
 	paramDestinationKafkaCluster = "destination_kafka_cluster"
+	paramLocalKafkaCluster       = "local_kafka_cluster"
+	paramRemoteKafkaCluster      = "remote_kafka_cluster"
 	paramLinkMode                = "link_mode"
 	paramConnectionMode          = "connection_mode"
 
@@ -47,19 +49,27 @@ const (
 	localSaslJaasConfigConfigKey   = "local.sasl.jaas.config"
 	connectionModeConfigKey        = "connection.mode"
 	linkModeConfigKey              = "link.mode"
-
-	linkModeDestination    = "DESTINATION"
-	linkModeSource         = "SOURCE"
-	connectionModeInbound  = "INBOUND"
-	connectionModeOutbound = "OUTBOUND"
+	remoteLinkConnectionMode       = "remote.link.connection.mode"
+	linkModeDestination            = "DESTINATION"
+	linkModeSource                 = "SOURCE"
+	linkModeBidirectional          = "BIDIRECTIONAL"
+	connectionModeInbound          = "INBOUND"
+	connectionModeOutbound         = "OUTBOUND"
 
 	importSourceKafkaRestEndpointEnvVar           = "IMPORT_SOURCE_KAFKA_REST_ENDPOINT"
 	importSourceKafkaBootstrapEndpointEnvVar      = "IMPORT_SOURCE_KAFKA_BOOTSTRAP_ENDPOINT"
 	importDestinationKafkaRestEndpointEnvVar      = "IMPORT_DESTINATION_KAFKA_REST_ENDPOINT"
 	importDestinationKafkaBootstrapEndpointEnvVar = "IMPORT_DESTINATION_KAFKA_BOOTSTRAP_ENDPOINT"
 
+	importLocalKafkaRestEndpointEnvVar       = "IMPORT_LOCAL_KAFKA_REST_ENDPOINT"
+	importLocalKafkaBootstrapEndpointEnvVar  = "IMPORT_LOCAL_KAFKA_BOOTSTRAP_ENDPOINT"
+	importRemoteKafkaRestEndpointEnvVar      = "IMPORT_REMOTE_KAFKA_REST_ENDPOINT"
+	importRemoteKafkaBootstrapEndpointEnvVar = "IMPORT_REMOTE_KAFKA_BOOTSTRAP_ENDPOINT"
+
 	paramSourceKafkaCredentials      = "source_kafka_cluster.0.credentials"
 	paramDestinationKafkaCredentials = "destination_kafka_cluster.0.credentials"
+	paramLocalKafkaCredentials       = "local_kafka_cluster.0.credentials"
+	paramRemoteKafkaCredentials      = "remote_kafka_cluster.0.credentials"
 
 	docsClusterLinkConfigUrl = "https://docs.confluent.io/cloud/current/multi-cloud/cluster-linking/cluster-links-cc.html#configuring-cluster-link-behavior"
 	dynamicClusterLinkConfig = "DYNAMIC_CLUSTER_LINK_CONFIG"
@@ -67,6 +77,8 @@ const (
 
 var sourceKafkaCredentialsBlockKey = fmt.Sprintf("%s.0.%s.#", paramSourceKafkaCluster, paramCredentials)
 var destinationKafkaCredentialsBlockKey = fmt.Sprintf("%s.0.%s.#", paramDestinationKafkaCluster, paramCredentials)
+var localKafkaCredentialsBlockKey = fmt.Sprintf("%s.0.%s.#", paramLocalKafkaCluster, paramCredentials)
+var remoteKafkaCredentialsBlockKey = fmt.Sprintf("%s.0.%s.#", paramRemoteKafkaCluster, paramCredentials)
 
 // https://docs.confluent.io/cloud/current/multi-cloud/cluster-linking/cluster-links-cc.html#configuring-cluster-link-behavior
 var editableClusterLinkSettings = []string{
@@ -101,13 +113,15 @@ func clusterLinkResource() *schema.Resource {
 			},
 			paramSourceKafkaCluster:      clusterLinkKafkaClusterBlockSchema(paramSourceKafkaCluster),
 			paramDestinationKafkaCluster: clusterLinkKafkaClusterBlockSchema(paramDestinationKafkaCluster),
+			paramLocalKafkaCluster:       clusterLinkKafkaClusterBlockSchema(paramLocalKafkaCluster),
+			paramRemoteKafkaCluster:      clusterLinkKafkaClusterBlockSchema(paramRemoteKafkaCluster),
 			paramLinkMode: {
 				Type:         schema.TypeString,
 				Description:  "The mode of the Cluster Link.",
 				Optional:     true,
 				Default:      linkModeDestination,
 				ForceNew:     true,
-				ValidateFunc: validation.StringInSlice([]string{linkModeDestination, linkModeSource}, false),
+				ValidateFunc: validation.StringInSlice([]string{linkModeDestination, linkModeSource, linkModeBidirectional}, false),
 			},
 			paramConnectionMode: {
 				Type:         schema.TypeString,
@@ -132,6 +146,7 @@ func clusterLinkResource() *schema.Resource {
 }
 
 func clusterLinkCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	// TODO: update validateClusterLinkInput to accept BIDIRECTIONAL link mode
 	err := validateClusterLinkInput(d)
 	if err != nil {
 		return diag.Errorf("error creating Cluster Link: %s", createDescriptiveError(err))
@@ -174,6 +189,29 @@ func executeClusterLinkCreate(ctx context.Context, c *KafkaRestClient, requestDa
 	return c.apiClient.ClusterLinkingV3Api.CreateKafkaLink(c.apiContext(ctx), c.clusterId).CreateLinkRequestData(requestData).LinkName(linkName).Execute()
 }
 
+type ClusterLinkMetadata struct {
+	sourceClusterId              string
+	destinationClusterId         string
+	localClusterId               string
+	remoteClusterId              string
+	sourceRestEndpoint           string
+	destinationRestEndpoint      string
+	localRestEndpoint            string
+	remoteRestEndpoint           string
+	sourceBootstrapEndpoint      string
+	destinationBootstrapEndpoint string
+	localBootstrapEndpoint       string
+	remoteBootstrapEndpoint      string
+	sourceClusterApiKey          string
+	sourceClusterApiSecret       string
+	destinationClusterApiKey     string
+	destinationClusterApiSecret  string
+	localClusterApiKey           string
+	localClusterApiSecret        string
+	remoteClusterApiKey          string
+	remoteClusterApiSecret       string
+}
+
 func clusterLinkRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	tflog.Debug(ctx, fmt.Sprintf("Reading Cluster Link %q", d.Id()), map[string]interface{}{clusterLinkLoggingKey: d.Id()})
 
@@ -184,18 +222,35 @@ func clusterLinkRead(ctx context.Context, d *schema.ResourceData, meta interface
 	linkName := d.Get(paramLinkName).(string)
 	linkMode := d.Get(paramLinkMode).(string)
 	connectionMode := d.Get(paramConnectionMode).(string)
-	sourceClusterId := extractStringValueFromBlock(d, paramSourceKafkaCluster, paramId)
-	destinationClusterId := extractStringValueFromBlock(d, paramDestinationKafkaCluster, paramId)
-	sourceRestEndpoint := extractStringValueFromBlock(d, paramSourceKafkaCluster, paramRestEndpoint)
-	destinationRestEndpoint := extractStringValueFromBlock(d, paramDestinationKafkaCluster, paramRestEndpoint)
-	sourceBootstrapEndpoint := extractStringValueFromBlock(d, paramSourceKafkaCluster, paramBootStrapEndpoint)
-	destinationBootstrapEndpoint := extractStringValueFromBlock(d, paramDestinationKafkaCluster, paramBootStrapEndpoint)
-	sourceClusterApiKey := extractStringValueFromNestedBlock(d, paramSourceKafkaCluster, paramCredentials, paramKey)
-	sourceClusterApiSecret := extractStringValueFromNestedBlock(d, paramSourceKafkaCluster, paramCredentials, paramSecret)
-	destinationClusterApiKey := extractStringValueFromNestedBlock(d, paramDestinationKafkaCluster, paramCredentials, paramKey)
-	destinationClusterApiSecret := extractStringValueFromNestedBlock(d, paramDestinationKafkaCluster, paramCredentials, paramSecret)
 
-	_, err = readClusterLinkAndSetAttributes(ctx, d, kafkaRestClient, linkName, linkMode, connectionMode, sourceClusterId, destinationClusterId, sourceRestEndpoint, destinationRestEndpoint, sourceBootstrapEndpoint, destinationBootstrapEndpoint, sourceClusterApiKey, sourceClusterApiSecret, destinationClusterApiKey, destinationClusterApiSecret)
+	clusterLinkMetadata := &ClusterLinkMetadata{
+		sourceClusterId:      extractStringValueFromBlock(d, paramSourceKafkaCluster, paramId),
+		destinationClusterId: extractStringValueFromBlock(d, paramDestinationKafkaCluster, paramId),
+		localClusterId:       extractStringValueFromBlock(d, paramLocalKafkaCluster, paramId),
+		remoteClusterId:      extractStringValueFromBlock(d, paramRemoteKafkaCluster, paramId),
+
+		sourceRestEndpoint:      extractStringValueFromBlock(d, paramSourceKafkaCluster, paramRestEndpoint),
+		destinationRestEndpoint: extractStringValueFromBlock(d, paramDestinationKafkaCluster, paramRestEndpoint),
+		localRestEndpoint:       extractStringValueFromBlock(d, paramLocalKafkaCluster, paramRestEndpoint),
+		remoteRestEndpoint:      extractStringValueFromBlock(d, paramRemoteKafkaCluster, paramRestEndpoint),
+
+		sourceBootstrapEndpoint:      extractStringValueFromBlock(d, paramSourceKafkaCluster, paramBootStrapEndpoint),
+		destinationBootstrapEndpoint: extractStringValueFromBlock(d, paramDestinationKafkaCluster, paramBootStrapEndpoint),
+		localBootstrapEndpoint:       extractStringValueFromBlock(d, paramLocalKafkaCluster, paramBootStrapEndpoint),
+		remoteBootstrapEndpoint:      extractStringValueFromBlock(d, paramRemoteKafkaCluster, paramBootStrapEndpoint),
+
+		sourceClusterApiKey:         extractStringValueFromNestedBlock(d, paramSourceKafkaCluster, paramCredentials, paramKey),
+		sourceClusterApiSecret:      extractStringValueFromNestedBlock(d, paramSourceKafkaCluster, paramCredentials, paramSecret),
+		destinationClusterApiKey:    extractStringValueFromNestedBlock(d, paramDestinationKafkaCluster, paramCredentials, paramKey),
+		destinationClusterApiSecret: extractStringValueFromNestedBlock(d, paramDestinationKafkaCluster, paramCredentials, paramSecret),
+
+		localClusterApiKey:     extractStringValueFromNestedBlock(d, paramLocalKafkaCluster, paramCredentials, paramKey),
+		localClusterApiSecret:  extractStringValueFromNestedBlock(d, paramLocalKafkaCluster, paramCredentials, paramSecret),
+		remoteClusterApiKey:    extractStringValueFromNestedBlock(d, paramRemoteKafkaCluster, paramCredentials, paramKey),
+		remoteClusterApiSecret: extractStringValueFromNestedBlock(d, paramRemoteKafkaCluster, paramCredentials, paramSecret),
+	}
+
+	_, err = readClusterLinkAndSetAttributes(ctx, d, kafkaRestClient, linkName, linkMode, connectionMode, clusterLinkMetadata)
 	if err != nil {
 		return diag.Errorf("error reading Cluster Link: %s", createDescriptiveError(err))
 	}
@@ -203,8 +258,7 @@ func clusterLinkRead(ctx context.Context, d *schema.ResourceData, meta interface
 	return nil
 }
 
-func readClusterLinkAndSetAttributes(ctx context.Context, d *schema.ResourceData, c *KafkaRestClient, linkName, linkMode, connectionMode, sourceClusterId, destinationClusterId, sourceRestEndpoint, destinationRestEndpoint,
-	sourceBootstrapEndpoint, destinationBootstrapEndpoint, sourceClusterApiKey, sourceClusterApiSecret, destinationClusterApiKey, destinationClusterApiSecret string) ([]*schema.ResourceData, error) {
+func readClusterLinkAndSetAttributes(ctx context.Context, d *schema.ResourceData, c *KafkaRestClient, linkName, linkMode, connectionMode string, clusterLinkMetadata *ClusterLinkMetadata) ([]*schema.ResourceData, error) {
 	clusterLink, resp, err := c.apiClient.ClusterLinkingV3Api.GetKafkaLink(c.apiContext(ctx), c.clusterId, linkName).Execute()
 	if err != nil {
 		tflog.Warn(ctx, fmt.Sprintf("Error reading Cluster Link %q: %s", d.Id(), createDescriptiveError(err)), map[string]interface{}{clusterLinkLoggingKey: d.Id()})
@@ -224,7 +278,7 @@ func readClusterLinkAndSetAttributes(ctx context.Context, d *schema.ResourceData
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Cluster Link %q: %s", d.Id(), clusterLinkJson), map[string]interface{}{clusterLinkLoggingKey: d.Id()})
 
-	if _, err := setClusterLinkAttributes(ctx, d, c, clusterLink, linkMode, connectionMode, sourceClusterId, destinationClusterId, sourceRestEndpoint, destinationRestEndpoint, sourceBootstrapEndpoint, destinationBootstrapEndpoint, sourceClusterApiKey, sourceClusterApiSecret, destinationClusterApiKey, destinationClusterApiSecret); err != nil {
+	if _, err := setClusterLinkAttributes(ctx, d, c, clusterLink, linkMode, connectionMode, clusterLinkMetadata); err != nil {
 		return nil, createDescriptiveError(err)
 	}
 
@@ -234,8 +288,7 @@ func readClusterLinkAndSetAttributes(ctx context.Context, d *schema.ResourceData
 }
 
 func setClusterLinkAttributes(ctx context.Context, d *schema.ResourceData, c *KafkaRestClient, clusterLink v3.ListLinksResponseData,
-	linkMode, connectionMode, sourceClusterId, destinationClusterId, sourceRestEndpoint, destinationRestEndpoint, sourceBootstrapEndpoint, destinationBootstrapEndpoint,
-	sourceClusterApiKey, sourceClusterApiSecret, destinationClusterApiKey, destinationClusterApiSecret string) (*schema.ResourceData, error) {
+	linkMode, connectionMode string, clusterLinkMetadata *ClusterLinkMetadata) (*schema.ResourceData, error) {
 	if err := d.Set(paramLinkName, clusterLink.GetLinkName()); err != nil {
 		return nil, err
 	}
@@ -246,36 +299,71 @@ func setClusterLinkAttributes(ctx context.Context, d *schema.ResourceData, c *Ka
 		return nil, err
 	}
 
-	if err := d.Set(paramDestinationKafkaCluster, []interface{}{map[string]interface{}{
-		paramId:                destinationClusterId,
-		paramRestEndpoint:      destinationRestEndpoint,
-		paramBootStrapEndpoint: destinationBootstrapEndpoint,
-		paramCredentials: []interface{}{map[string]interface{}{
-			paramKey:    destinationClusterApiKey,
-			paramSecret: destinationClusterApiSecret,
-		}},
-	}}); err != nil {
-		return nil, err
-	}
-	if linkMode == linkModeDestination && connectionMode == connectionModeInbound {
-		if err := d.Set(paramSourceKafkaCluster, []interface{}{map[string]interface{}{
-			paramId:                sourceClusterId,
-			paramRestEndpoint:      sourceRestEndpoint,
-			paramBootStrapEndpoint: sourceBootstrapEndpoint,
-		}}); err != nil {
-			return nil, err
-		}
-	} else {
-		if err := d.Set(paramSourceKafkaCluster, []interface{}{map[string]interface{}{
-			paramId:                sourceClusterId,
-			paramRestEndpoint:      sourceRestEndpoint,
-			paramBootStrapEndpoint: sourceBootstrapEndpoint,
+	if linkMode == linkModeBidirectional {
+		if err := d.Set(paramLocalKafkaCluster, []interface{}{map[string]interface{}{
+			paramId:                clusterLinkMetadata.localClusterId,
+			paramRestEndpoint:      clusterLinkMetadata.localRestEndpoint,
+			paramBootStrapEndpoint: clusterLinkMetadata.localBootstrapEndpoint,
 			paramCredentials: []interface{}{map[string]interface{}{
-				paramKey:    sourceClusterApiKey,
-				paramSecret: sourceClusterApiSecret,
+				paramKey:    clusterLinkMetadata.localClusterApiKey,
+				paramSecret: clusterLinkMetadata.localClusterApiSecret,
 			}},
 		}}); err != nil {
 			return nil, err
+		}
+		if connectionMode == connectionModeInbound {
+			if err := d.Set(paramRemoteKafkaCluster, []interface{}{map[string]interface{}{
+				paramId:                clusterLinkMetadata.remoteClusterId,
+				paramRestEndpoint:      clusterLinkMetadata.remoteRestEndpoint,
+				paramBootStrapEndpoint: clusterLinkMetadata.remoteBootstrapEndpoint,
+			}}); err != nil {
+				return nil, err
+			}
+		} else {
+			if err := d.Set(paramRemoteKafkaCluster, []interface{}{map[string]interface{}{
+				paramId:                clusterLinkMetadata.remoteClusterId,
+				paramRestEndpoint:      clusterLinkMetadata.remoteRestEndpoint,
+				paramBootStrapEndpoint: clusterLinkMetadata.remoteBootstrapEndpoint,
+				paramCredentials: []interface{}{map[string]interface{}{
+					paramKey:    clusterLinkMetadata.remoteClusterApiKey,
+					paramSecret: clusterLinkMetadata.remoteClusterApiSecret,
+				}},
+			}}); err != nil {
+				return nil, err
+			}
+		}
+	} else {
+		if err := d.Set(paramDestinationKafkaCluster, []interface{}{map[string]interface{}{
+			paramId:                clusterLinkMetadata.destinationClusterId,
+			paramRestEndpoint:      clusterLinkMetadata.destinationRestEndpoint,
+			paramBootStrapEndpoint: clusterLinkMetadata.destinationBootstrapEndpoint,
+			paramCredentials: []interface{}{map[string]interface{}{
+				paramKey:    clusterLinkMetadata.destinationClusterApiKey,
+				paramSecret: clusterLinkMetadata.destinationClusterApiSecret,
+			}},
+		}}); err != nil {
+			return nil, err
+		}
+		if linkMode == linkModeDestination && connectionMode == connectionModeInbound {
+			if err := d.Set(paramSourceKafkaCluster, []interface{}{map[string]interface{}{
+				paramId:                clusterLinkMetadata.sourceClusterId,
+				paramRestEndpoint:      clusterLinkMetadata.sourceRestEndpoint,
+				paramBootStrapEndpoint: clusterLinkMetadata.sourceBootstrapEndpoint,
+			}}); err != nil {
+				return nil, err
+			}
+		} else {
+			if err := d.Set(paramSourceKafkaCluster, []interface{}{map[string]interface{}{
+				paramId:                clusterLinkMetadata.sourceClusterId,
+				paramRestEndpoint:      clusterLinkMetadata.sourceRestEndpoint,
+				paramBootStrapEndpoint: clusterLinkMetadata.sourceBootstrapEndpoint,
+				paramCredentials: []interface{}{map[string]interface{}{
+					paramKey:    clusterLinkMetadata.sourceClusterApiKey,
+					paramSecret: clusterLinkMetadata.sourceClusterApiSecret,
+				}},
+			}}); err != nil {
+				return nil, err
+			}
 		}
 	}
 
@@ -292,8 +380,8 @@ func setClusterLinkAttributes(ctx context.Context, d *schema.ResourceData, c *Ka
 }
 
 func clusterLinkUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if d.HasChangesExcept(paramSourceKafkaCluster, paramSourceKafkaCredentials, paramDestinationKafkaCluster, paramDestinationKafkaCredentials, paramConfigs) {
-		return diag.Errorf("error updating Cluster Link %q: only %q, %q and %q attributes can be updated for Cluster Link", d.Id(), paramSourceKafkaCredentials, paramDestinationKafkaCredentials, paramConfigs)
+	if d.HasChangesExcept(paramSourceKafkaCluster, paramSourceKafkaCredentials, paramDestinationKafkaCluster, paramDestinationKafkaCredentials, paramLocalKafkaCluster, paramLocalKafkaCredentials, paramRemoteKafkaCluster, paramRemoteKafkaCredentials, paramConfigs) {
+		return diag.Errorf("error updating Cluster Link %q: only %q, %q, %q, %q and %q attributes can be updated for Cluster Link", d.Id(), paramSourceKafkaCredentials, paramDestinationKafkaCredentials, paramLocalKafkaCredentials, paramRemoteKafkaCredentials, paramConfigs)
 	}
 	if d.HasChange(paramConfigs) {
 		// TF Provider allows the following operations for editable cluster link settings under 'config' block:
@@ -372,31 +460,27 @@ func clusterLinkDelete(ctx context.Context, d *schema.ResourceData, meta interfa
 func clusterLinkImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	tflog.Debug(ctx, fmt.Sprintf("Importing Cluster Link %q", d.Id()), map[string]interface{}{clusterLinkLoggingKey: d.Id()})
 
-	sourceRestEndpoint, sourceBootstrapEndpoint, err := extractKafkaClusterRestAndBootstrapEndpoints(importSourceKafkaRestEndpointEnvVar, importSourceKafkaBootstrapEndpointEnvVar)
-	if err != nil {
-		return nil, fmt.Errorf("error importing Cluster Link: %s", createDescriptiveError(err))
-	}
+	sourceRestEndpoint, sourceBootstrapEndpoint := extractKafkaClusterRestAndBootstrapEndpoints(importSourceKafkaRestEndpointEnvVar, importSourceKafkaBootstrapEndpointEnvVar)
 
-	destinationRestEndpoint, destinationBootstrapEndpoint, err := extractKafkaClusterRestAndBootstrapEndpoints(importDestinationKafkaRestEndpointEnvVar, importDestinationKafkaBootstrapEndpointEnvVar)
-	if err != nil {
-		return nil, fmt.Errorf("error importing Cluster Link: %s", createDescriptiveError(err))
-	}
+	destinationRestEndpoint, destinationBootstrapEndpoint := extractKafkaClusterRestAndBootstrapEndpoints(importDestinationKafkaRestEndpointEnvVar, importDestinationKafkaBootstrapEndpointEnvVar)
 
-	sourceClusterApiKey, sourceClusterApiSecret, err := extractSourceClusterApiKeyAndApiSecret()
-	if err != nil {
-		return nil, fmt.Errorf("error importing Cluster Link: %s", createDescriptiveError(err))
-	}
+	localRestEndpoint, localBootstrapEndpoint := extractKafkaClusterRestAndBootstrapEndpoints(importLocalKafkaRestEndpointEnvVar, importLocalKafkaBootstrapEndpointEnvVar)
 
-	destinationClusterApiKey, destinationClusterApiSecret, err := extractDestinationClusterApiKeyAndApiSecret()
-	if err != nil {
-		return nil, fmt.Errorf("error importing Cluster Link: %s", createDescriptiveError(err))
-	}
+	remoteRestEndpoint, remoteBootstrapEndpoint := extractKafkaClusterRestAndBootstrapEndpoints(importRemoteKafkaRestEndpointEnvVar, importRemoteKafkaBootstrapEndpointEnvVar)
+
+	sourceClusterApiKey, sourceClusterApiSecret := extractSourceClusterApiKeyAndApiSecret()
+
+	destinationClusterApiKey, destinationClusterApiSecret := extractDestinationClusterApiKeyAndApiSecret()
+
+	localClusterApiKey, localClusterApiSecret := extractLocalClusterApiKeyAndApiSecret()
+
+	remoteClusterApiKey, remoteClusterApiSecret := extractRemoteClusterApiKeyAndApiSecret()
 
 	linkNameAndLinkModeAndConnectionModeAndSourceClusterIdAndDestinationClusterId := d.Id()
 	parts := strings.Split(linkNameAndLinkModeAndConnectionModeAndSourceClusterIdAndDestinationClusterId, "/")
 
 	if len(parts) != 5 {
-		return nil, fmt.Errorf("error importing Cluster Link: invalid format: expected '<cluster link name>/<cluster link mode>/<cluster connection mode>/<Source Kafka cluster ID>/<Destination Kafka cluster ID>'")
+		return nil, fmt.Errorf("error importing Cluster Link: invalid format: expected '<cluster link name>/<cluster link mode>/<cluster connection mode>/<Source (or Local) Kafka cluster ID>/<Destination (or Remote) Kafka cluster ID>'")
 	}
 
 	linkName := parts[0]
@@ -404,9 +488,46 @@ func clusterLinkImport(ctx context.Context, d *schema.ResourceData, meta interfa
 	connectionMode := parts[2]
 	sourceClusterId := parts[3]
 	destinationClusterId := parts[4]
+	localClusterId := ""
+	remoteClusterId := ""
+	if linkMode == linkModeBidirectional {
+		sourceClusterId = ""
+		destinationClusterId = ""
+		localClusterId = parts[3]
+		remoteClusterId = parts[4]
+	}
+
+	clusterLinkMetadata := &ClusterLinkMetadata{
+		sourceClusterId:      sourceClusterId,
+		destinationClusterId: destinationClusterId,
+		localClusterId:       localClusterId,
+		remoteClusterId:      remoteClusterId,
+
+		sourceRestEndpoint:      sourceRestEndpoint,
+		destinationRestEndpoint: destinationRestEndpoint,
+		localRestEndpoint:       localRestEndpoint,
+		remoteRestEndpoint:      remoteRestEndpoint,
+
+		sourceBootstrapEndpoint:      sourceBootstrapEndpoint,
+		destinationBootstrapEndpoint: destinationBootstrapEndpoint,
+		localBootstrapEndpoint:       localBootstrapEndpoint,
+		remoteBootstrapEndpoint:      remoteBootstrapEndpoint,
+
+		sourceClusterApiKey:         sourceClusterApiKey,
+		sourceClusterApiSecret:      sourceClusterApiSecret,
+		destinationClusterApiKey:    destinationClusterApiKey,
+		destinationClusterApiSecret: destinationClusterApiSecret,
+
+		localClusterApiKey:     localClusterApiKey,
+		localClusterApiSecret:  localClusterApiSecret,
+		remoteClusterApiKey:    remoteClusterApiKey,
+		remoteClusterApiSecret: remoteClusterApiSecret,
+	}
 
 	var kafkaRestClient *KafkaRestClient
-	if linkMode == linkModeDestination {
+	if linkMode == linkModeBidirectional {
+		kafkaRestClient = meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(localRestEndpoint, localClusterId, localClusterApiKey, localClusterApiSecret, false, false)
+	} else if linkMode == linkModeDestination {
 		kafkaRestClient = meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(destinationRestEndpoint, destinationClusterId, destinationClusterApiKey, destinationClusterApiSecret, false, false)
 	} else {
 		kafkaRestClient = meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(sourceRestEndpoint, sourceClusterId, sourceClusterApiKey, sourceClusterApiSecret, false, false)
@@ -414,7 +535,7 @@ func clusterLinkImport(ctx context.Context, d *schema.ResourceData, meta interfa
 
 	// Mark resource as new to avoid d.Set("") when getting 404
 	d.MarkNewResource()
-	if _, err := readClusterLinkAndSetAttributes(ctx, d, kafkaRestClient, linkName, linkMode, connectionMode, sourceClusterId, destinationClusterId, sourceRestEndpoint, destinationRestEndpoint, sourceBootstrapEndpoint, destinationBootstrapEndpoint, sourceClusterApiKey, sourceClusterApiSecret, destinationClusterApiKey, destinationClusterApiSecret); err != nil {
+	if _, err := readClusterLinkAndSetAttributes(ctx, d, kafkaRestClient, linkName, linkMode, connectionMode, clusterLinkMetadata); err != nil {
 		return nil, fmt.Errorf("error importing Cluster Link %q: %s", d.Id(), createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished importing Cluster Link %q", d.Id()), map[string]interface{}{clusterLinkLoggingKey: d.Id()})
@@ -434,6 +555,33 @@ func convertToConfigData(configs map[string]interface{}) []v3.ConfigData {
 		i += 1
 	}
 	return configResult
+}
+
+func constructCloudConfigForBidirectionalOutboundMode(localApiKey, localKafkaApiSecret,
+	remoteKafkaBootstrapEndpoint, remoteKafkaApiKey, remoteKafkaApiSecret string) map[string]interface{} {
+	config := make(map[string]interface{})
+	config[connectionModeConfigKey] = connectionModeOutbound
+	config[remoteLinkConnectionMode] = connectionModeInbound
+	config[linkModeConfigKey] = linkModeBidirectional
+	config[localSecurityProtocolConfigKey] = "SASL_SSL"
+	config[localSaslMechanismConfigKey] = "PLAIN"
+	config[localSaslJaasConfigConfigKey] = fmt.Sprintf("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"%s\" password=\"%s\";", localApiKey, localKafkaApiSecret)
+
+	// TODO: use constructCloudConfigForDestinationOutboundMode and merge 2 configs
+	config[bootstrapServersConfigKey] = remoteKafkaBootstrapEndpoint
+	config[securityProtocolConfigKey] = "SASL_SSL"
+	config[saslMechanismConfigKey] = "PLAIN"
+	config[saslJaasConfigConfigKey] = fmt.Sprintf("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"%s\" password=\"%s\";", remoteKafkaApiKey, remoteKafkaApiSecret)
+
+	return config
+}
+
+func constructCloudConfigForBidirectionalInboundMode(bootstrapEndpoint string) map[string]interface{} {
+	config := make(map[string]interface{})
+	config[connectionModeConfigKey] = connectionModeInbound
+	config[linkModeConfigKey] = linkModeBidirectional
+	config[bootstrapServersConfigKey] = bootstrapEndpoint
+	return config
 }
 
 func constructCloudConfigForDestinationOutboundMode(bootstrapEndpoint, kafkaApiKey, kafkaApiSecret string) map[string]interface{} {
@@ -479,7 +627,14 @@ func createClusterLinkId(clusterId, linkName string) string {
 
 func createKafkaRestClientForClusterLink(d *schema.ResourceData, meta interface{}) (*KafkaRestClient, error) {
 	linkMode := d.Get(paramLinkMode).(string)
-	if linkMode == linkModeDestination {
+	if linkMode == linkModeBidirectional {
+		localKafkaClusterId := extractStringValueFromBlock(d, paramLocalKafkaCluster, paramId)
+		localKafkaClusterRestEndpoint := extractStringValueFromBlock(d, paramLocalKafkaCluster, paramRestEndpoint)
+		localKafkaClusterApiKey := extractStringValueFromNestedBlock(d, paramLocalKafkaCluster, paramCredentials, paramKey)
+		localKafkaClusterApiSecret := extractStringValueFromNestedBlock(d, paramLocalKafkaCluster, paramCredentials, paramSecret)
+		// Set isMetadataSetInProviderBlock to 'false' to disable inferring rest_endpoint / Kafka API Key from 'providers' block for confluent_cluster_link resource
+		return meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(localKafkaClusterRestEndpoint, localKafkaClusterId, localKafkaClusterApiKey, localKafkaClusterApiSecret, false, false), nil
+	} else if linkMode == linkModeDestination {
 		destinationKafkaClusterId := extractStringValueFromBlock(d, paramDestinationKafkaCluster, paramId)
 		destinationKafkaClusterRestEndpoint := extractStringValueFromBlock(d, paramDestinationKafkaCluster, paramRestEndpoint)
 		destinationKafkaClusterApiKey := extractStringValueFromNestedBlock(d, paramDestinationKafkaCluster, paramCredentials, paramKey)
@@ -502,7 +657,38 @@ func constructClusterLinkRequest(d *schema.ResourceData) (v3.CreateLinkRequestDa
 	connectionMode := d.Get(paramConnectionMode).(string)
 	clusterLinkSettings := extractClusterLinkConfigsConfigData(d.Get(paramConfigs).(map[string]interface{}))
 
-	if linkMode == linkModeDestination {
+	if linkMode == linkModeBidirectional {
+		if connectionMode == connectionModeOutbound {
+			localKafkaClusterApiKey := extractStringValueFromNestedBlock(d, paramLocalKafkaCluster, paramCredentials, paramKey)
+			localKafkaClusterApiSecret := extractStringValueFromNestedBlock(d, paramLocalKafkaCluster, paramCredentials, paramSecret)
+			remoteKafkaClusterId := extractStringValueFromBlock(d, paramRemoteKafkaCluster, paramId)
+			remoteKafkaClusterApiKey := extractStringValueFromNestedBlock(d, paramRemoteKafkaCluster, paramCredentials, paramKey)
+			remoteKafkaClusterApiSecret := extractStringValueFromNestedBlock(d, paramRemoteKafkaCluster, paramCredentials, paramSecret)
+			remoteKafkaClusterBootstrapEndpoint := extractStringValueFromBlock(d, paramRemoteKafkaCluster, paramBootStrapEndpoint)
+			configs := convertToConfigData(constructCloudConfigForBidirectionalOutboundMode(localKafkaClusterApiKey, localKafkaClusterApiSecret, remoteKafkaClusterBootstrapEndpoint, remoteKafkaClusterApiKey, remoteKafkaClusterApiSecret))
+
+			// Add top level cluster link configs
+			configs = append(configs, clusterLinkSettings...)
+
+			return v3.CreateLinkRequestData{
+				RemoteClusterId: &remoteKafkaClusterId,
+				Configs:         &configs,
+			}, nil
+		} else {
+			// connectionMode == connectionModeInbound
+			remoteKafkaClusterId := extractStringValueFromBlock(d, paramRemoteKafkaCluster, paramId)
+			remoteKafkaClusterBootstrapEndpoint := extractStringValueFromBlock(d, paramRemoteKafkaCluster, paramBootStrapEndpoint)
+			configs := convertToConfigData(constructCloudConfigForBidirectionalInboundMode(remoteKafkaClusterBootstrapEndpoint))
+
+			// Add top level cluster link configs
+			configs = append(configs, clusterLinkSettings...)
+
+			return v3.CreateLinkRequestData{
+				RemoteClusterId: &remoteKafkaClusterId,
+				Configs:         &configs,
+			}, nil
+		}
+	} else if linkMode == linkModeDestination {
 		if connectionMode == connectionModeOutbound {
 			sourceKafkaClusterId := extractStringValueFromBlock(d, paramSourceKafkaCluster, paramId)
 			sourceKafkaClusterBootstrapEndpoint := extractStringValueFromBlock(d, paramSourceKafkaCluster, paramBootStrapEndpoint)
@@ -561,7 +747,7 @@ func clusterLinkKafkaClusterBlockSchema(blockName string) *schema.Schema {
 		Type:     schema.TypeList,
 		MinItems: 1,
 		MaxItems: 1,
-		Required: true,
+		Optional: true,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				paramId: {
@@ -618,39 +804,54 @@ func clusterLinkKafkaClusterBlockSchema(blockName string) *schema.Schema {
 	}
 }
 
-func extractKafkaClusterRestAndBootstrapEndpoints(restEndpointEnvVar, bootstrapEndpointEnvVar string) (string, string, error) {
+func extractKafkaClusterRestAndBootstrapEndpoints(restEndpointEnvVar, bootstrapEndpointEnvVar string) (string, string) {
 	restEndpoint := getEnv(restEndpointEnvVar, "")
 	bootstrapEndpoint := getEnv(bootstrapEndpointEnvVar, "")
 
-	if (restEndpoint == "" && bootstrapEndpoint == "") ||
-		(restEndpoint != "" && bootstrapEndpoint != "") {
-		return "", "", fmt.Errorf("error importing Cluster Link: exactly one from the %q and %q environment variables must be specified", restEndpointEnvVar, bootstrapEndpointEnvVar)
-	}
-
-	return restEndpoint, bootstrapEndpoint, nil
+	return restEndpoint, bootstrapEndpoint
 }
 
-func extractSourceClusterApiKeyAndApiSecret() (string, string, error) {
+func extractSourceClusterApiKeyAndApiSecret() (string, string) {
 	clusterApiKey := getEnv("IMPORT_SOURCE_KAFKA_API_KEY", "")
 	clusterApiSecret := getEnv("IMPORT_SOURCE_KAFKA_API_SECRET", "")
-	if clusterApiKey != "" && clusterApiSecret != "" {
-		return clusterApiKey, clusterApiSecret, nil
-	}
-	return "", "", fmt.Errorf("IMPORT_SOURCE_KAFKA_API_KEY, IMPORT_SOURCE_KAFKA_API_SECRET environment variables")
+	return clusterApiKey, clusterApiSecret
 }
 
-func extractDestinationClusterApiKeyAndApiSecret() (string, string, error) {
+func extractDestinationClusterApiKeyAndApiSecret() (string, string) {
 	clusterApiKey := getEnv("IMPORT_DESTINATION_KAFKA_API_KEY", "")
 	clusterApiSecret := getEnv("IMPORT_DESTINATION_KAFKA_API_SECRET", "")
-	if clusterApiKey != "" && clusterApiSecret != "" {
-		return clusterApiKey, clusterApiSecret, nil
-	}
-	return "", "", fmt.Errorf("IMPORT_DESTINATION_KAFKA_API_KEY, IMPORT_DESTINATION_KAFKA_API_SECRET environment variables")
+	return clusterApiKey, clusterApiSecret
 }
 
-func validateClusterLinkInput(d *schema.ResourceData) error {
-	linkMode := d.Get(paramLinkMode).(string)
-	connectionMode := d.Get(paramConnectionMode).(string)
+func extractLocalClusterApiKeyAndApiSecret() (string, string) {
+	clusterApiKey := getEnv("IMPORT_LOCAL_KAFKA_API_KEY", "")
+	clusterApiSecret := getEnv("IMPORT_LOCAL_KAFKA_API_SECRET", "")
+	return clusterApiKey, clusterApiSecret
+}
+
+func extractRemoteClusterApiKeyAndApiSecret() (string, string) {
+	clusterApiKey := getEnv("IMPORT_REMOTE_KAFKA_API_KEY", "")
+	clusterApiSecret := getEnv("IMPORT_REMOTE_KAFKA_API_SECRET", "")
+	return clusterApiKey, clusterApiSecret
+}
+
+func validateClusterLinkInputByLinkModeAndConnectionMode(d *schema.ResourceData, linkMode, connectionMode string) error {
+	if linkMode == linkModeBidirectional {
+		if d.Get(localKafkaCredentialsBlockKey).(int) == 0 {
+			return fmt.Errorf("%q must be specified for %q", paramCredentials, paramLocalKafkaCluster)
+		}
+		// Expect
+		// * bootstrap_endpoint to be specified for a remote cluster
+		// * rest_endpoint to be specified for a local cluster
+		if d.Get(fmt.Sprintf("%s.0.%s", paramRemoteKafkaCluster, paramBootStrapEndpoint)).(string) == "" {
+			return fmt.Errorf("%q must be specified for %q", paramBootStrapEndpoint, paramRemoteKafkaCluster)
+		}
+		if d.Get(fmt.Sprintf("%s.0.%s", paramLocalKafkaCluster, paramRestEndpoint)).(string) == "" {
+			return fmt.Errorf("%q must be specified for %q", paramRestEndpoint, paramLocalKafkaCluster)
+		}
+		return nil
+	}
+
 	if d.Get(destinationKafkaCredentialsBlockKey).(int) == 0 {
 		return fmt.Errorf("%q must be specified for %q", paramCredentials, paramDestinationKafkaCluster)
 	}
@@ -692,6 +893,12 @@ func validateClusterLinkInput(d *schema.ResourceData) error {
 		}
 	}
 	return nil
+}
+
+func validateClusterLinkInput(d *schema.ResourceData) error {
+	linkMode := d.Get(paramLinkMode).(string)
+	connectionMode := d.Get(paramConnectionMode).(string)
+	return validateClusterLinkInputByLinkModeAndConnectionMode(d, linkMode, connectionMode)
 }
 
 func loadClusterLinkConfigs(ctx context.Context, d *schema.ResourceData, c *KafkaRestClient, linkName string) (map[string]string, error) {

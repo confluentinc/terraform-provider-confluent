@@ -296,7 +296,7 @@ func kafkaMirrorTopicUpdate(ctx context.Context, d *schema.ResourceData, meta in
 			tflog.Debug(ctx, fmt.Sprintf("Pausing Kafka Mirror Topic %q", d.Id()), map[string]interface{}{kafkaMirrorTopicLoggingKey: d.Id()})
 
 			requestData := v3.AlterMirrorsRequestData{
-				MirrorTopicNames: []string{mirrorTopicName},
+				MirrorTopicNames: &[]string{mirrorTopicName},
 			}
 			_, _, err := kafkaRestClient.apiClient.ClusterLinkingV3Api.UpdateKafkaMirrorTopicsPause(kafkaRestClient.apiContext(ctx), kafkaRestClient.clusterId, linkName).AlterMirrorsRequestData(requestData).Execute()
 			if err != nil {
@@ -309,7 +309,7 @@ func kafkaMirrorTopicUpdate(ctx context.Context, d *schema.ResourceData, meta in
 			tflog.Debug(ctx, fmt.Sprintf("Resuming Kafka Mirror Topic %q", d.Id()), map[string]interface{}{kafkaMirrorTopicLoggingKey: d.Id()})
 
 			requestData := v3.AlterMirrorsRequestData{
-				MirrorTopicNames: []string{mirrorTopicName},
+				MirrorTopicNames: &[]string{mirrorTopicName},
 			}
 			_, _, err := kafkaRestClient.apiClient.ClusterLinkingV3Api.UpdateKafkaMirrorTopicsResume(kafkaRestClient.apiContext(ctx), kafkaRestClient.clusterId, linkName).AlterMirrorsRequestData(requestData).Execute()
 			if err != nil {
@@ -322,7 +322,7 @@ func kafkaMirrorTopicUpdate(ctx context.Context, d *schema.ResourceData, meta in
 			tflog.Debug(ctx, fmt.Sprintf("Running a failover of Kafka Mirror Topic %q", d.Id()), map[string]interface{}{kafkaMirrorTopicLoggingKey: d.Id()})
 
 			requestData := v3.AlterMirrorsRequestData{
-				MirrorTopicNames: []string{mirrorTopicName},
+				MirrorTopicNames: &[]string{mirrorTopicName},
 			}
 			_, _, err := kafkaRestClient.apiClient.ClusterLinkingV3Api.UpdateKafkaMirrorTopicsFailover(kafkaRestClient.apiContext(ctx), kafkaRestClient.clusterId, linkName).AlterMirrorsRequestData(requestData).Execute()
 			if err != nil {
@@ -335,7 +335,7 @@ func kafkaMirrorTopicUpdate(ctx context.Context, d *schema.ResourceData, meta in
 			tflog.Debug(ctx, fmt.Sprintf("Running a promote of Kafka Mirror Topic %q", d.Id()), map[string]interface{}{kafkaMirrorTopicLoggingKey: d.Id()})
 
 			requestData := v3.AlterMirrorsRequestData{
-				MirrorTopicNames: []string{mirrorTopicName},
+				MirrorTopicNames: &[]string{mirrorTopicName},
 			}
 			_, _, err := kafkaRestClient.apiClient.ClusterLinkingV3Api.UpdateKafkaMirrorTopicsPromote(kafkaRestClient.apiContext(ctx), kafkaRestClient.clusterId, linkName).AlterMirrorsRequestData(requestData).Execute()
 			if err != nil {

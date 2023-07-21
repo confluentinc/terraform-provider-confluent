@@ -17,23 +17,51 @@ description: |-
 ## Example Usage
 
 ```terraform
-resource "confluent_cluster_link" "destination-outbound" {
-  link_name = "destination-initiated-cluster-link"
-  source_kafka_cluster {
-    id                 = data.confluent_kafka_cluster.source.id
-    bootstrap_endpoint = data.confluent_kafka_cluster.source.bootstrap_endpoint
+// https://docs.confluent.io/cloud/current/multi-cloud/cluster-linking/cluster-links-cc.html#create-a-cluster-link-in-bidirectional-mode
+resource "confluent_cluster_link" "east-to-west" {
+  link_name = "bidirectional-link"
+  link_mode = "BIDIRECTIONAL"
+  local_kafka_cluster {
+    id            = data.confluent_kafka_cluster.east.id
+    rest_endpoint = data.confluent_kafka_cluster.east.rest_endpoint
     credentials {
-      key    = confluent_api_key.app-manager-source-cluster-api-key.id
-      secret = confluent_api_key.app-manager-source-cluster-api-key.secret
+      key    = confluent_api_key.app-manager-east-cluster-api-key.id
+      secret = confluent_api_key.app-manager-east-cluster-api-key.secret
     }
   }
 
-  destination_kafka_cluster {
-    id            = data.confluent_kafka_cluster.destination.id
-    rest_endpoint = data.confluent_kafka_cluster.destination.rest_endpoint
+  remote_kafka_cluster {
+    id                 = data.confluent_kafka_cluster.west.id
+    bootstrap_endpoint = data.confluent_kafka_cluster.west.bootstrap_endpoint
     credentials {
-      key    = confluent_api_key.app-manager-destination-cluster-api-key.id
-      secret = confluent_api_key.app-manager-destination-cluster-api-key.secret
+      key    = confluent_api_key.app-manager-west-cluster-api-key.id
+      secret = confluent_api_key.app-manager-west-cluster-api-key.secret
+    }
+  }
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+resource "confluent_cluster_link" "west-to-east" {
+  link_name = "bidirectional-link"
+  link_mode = "BIDIRECTIONAL"
+  local_kafka_cluster {
+    id            = data.confluent_kafka_cluster.west.id
+    rest_endpoint = data.confluent_kafka_cluster.west.rest_endpoint
+    credentials {
+      key    = confluent_api_key.app-manager-west-cluster-api-key.id
+      secret = confluent_api_key.app-manager-west-cluster-api-key.secret
+    }
+  }
+
+  remote_kafka_cluster {
+    id                 = data.confluent_kafka_cluster.east.id
+    bootstrap_endpoint = data.confluent_kafka_cluster.east.bootstrap_endpoint
+    credentials {
+      key    = confluent_api_key.app-manager-east-cluster-api-key.id
+      secret = confluent_api_key.app-manager-east-cluster-api-key.secret
     }
   }
 
@@ -49,25 +77,41 @@ resource "confluent_cluster_link" "destination-outbound" {
 The following arguments are supported:
 
 - `link_name` - (Required String) The name of the cluster link, for example, `my-cluster-link`.
-- `source_kafka_cluster` - (Required Configuration Block) supports the following:
+- `source_kafka_cluster` - (Optional Configuration Block) supports the following:
   - `id` - (Required String) The ID of the source Kafka cluster, for example, `lkc-abc123`.
   - `rest_endpoint` - (Optional String) The REST endpoint of the source Kafka cluster, for example, `https://pkc-00000.us-central1.gcp.confluent.cloud:443`).
   - `bootstrap_endpoint` - (Optional String) The bootstrap endpoint of the source Kafka cluster, for example, `SASL_SSL://pkc-00000.us-central1.gcp.confluent.cloud:9092` or `pkc-00000.us-central1.gcp.confluent.cloud:9092`).
   - `credentials` (Optional Configuration Block) supports the following:
     - `key` - (Required String) The Kafka API Key.
     - `secret` - (Required String, Sensitive) The Kafka API Secret.
-- `destination_kafka_cluster` - (Required Configuration Block) supports the following:
+- `destination_kafka_cluster` - (Optional Configuration Block) supports the following:
   - `id` - (Required String) The ID of the destination Kafka cluster, for example, `lkc-abc123`.
   - `rest_endpoint` - (Optional String) The REST endpoint of the destination Kafka cluster, for example, `https://pkc-00000.us-central1.gcp.confluent.cloud:443`).
   - `bootstrap_endpoint` - (Optional String) The bootstrap endpoint of the destination Kafka cluster, for example, `SASL_SSL://pkc-00000.us-central1.gcp.confluent.cloud:9092` or `pkc-00000.us-central1.gcp.confluent.cloud:9092`).
   - `credentials` (Required Configuration Block) supports the following:
     - `key` - (Required String) The Kafka API Key.
     - `secret` - (Required String, Sensitive) The Kafka API Secret.
-- `link_mode` (Optional String) The mode of the cluster link. The supported values are `"DESTINATION"` and `"SOURCE"`. Defaults to `"DESTINATION"`.
+- `local_kafka_cluster` - (Optional Configuration Block) supports the following:
+  - `id` - (Required String) The ID of the local Kafka cluster, for example, `lkc-abc123`.
+  - `rest_endpoint` - (Optional String) The REST endpoint of the local Kafka cluster, for example, `https://pkc-00000.us-central1.gcp.confluent.cloud:443`).
+  - `bootstrap_endpoint` - (Optional String) The bootstrap endpoint of the local Kafka cluster, for example, `SASL_SSL://pkc-00000.us-central1.gcp.confluent.cloud:9092` or `pkc-00000.us-central1.gcp.confluent.cloud:9092`).
+  - `credentials` (Optional Configuration Block) supports the following:
+    - `key` - (Required String) The Kafka API Key.
+    - `secret` - (Required String, Sensitive) The Kafka API Secret.
+- `remote_kafka_cluster` - (Optional Configuration Block) supports the following:
+  - `id` - (Required String) The ID of the remote Kafka cluster, for example, `lkc-abc123`.
+  - `rest_endpoint` - (Optional String) The REST endpoint of the remote Kafka cluster, for example, `https://pkc-00000.us-central1.gcp.confluent.cloud:443`).
+  - `bootstrap_endpoint` - (Optional String) The bootstrap endpoint of the remote Kafka cluster, for example, `SASL_SSL://pkc-00000.us-central1.gcp.confluent.cloud:9092` or `pkc-00000.us-central1.gcp.confluent.cloud:9092`).
+  - `credentials` (Required Configuration Block) supports the following:
+    - `key` - (Required String) The Kafka API Key.
+    - `secret` - (Required String, Sensitive) The Kafka API Secret.
+- `link_mode` (Optional String) The mode of the cluster link. The supported values are `"DESTINATION"`, `"SOURCE"`, and `"BIDIRECTIONAL"`. Defaults to `"DESTINATION"`.
 - `connection_mode` (Optional String) The connection mode of the cluster link. The supported values are `"INBOUND"` and `"OUTBOUND"`. Defaults to `"OUTBOUND"`.
 - `config` - (Optional Map) The custom cluster link settings to set:
   - `name` - (Required String) The setting name, for example, `acl.sync.ms`.
   - `value` - (Required String) The setting value, for example, `12345`.
+
+-> **Note:** Use the `local_kafka_cluster` and `remote_kafka_cluster` blocks for [bidirectional links](https://docs.confluent.io/cloud/current/multi-cloud/cluster-linking/cluster-links-cc.html#bidirectional-mode). Use `source_kafka_cluster` and `destination_kafka_cluster` for source-initiated and destination-initiated cluster links.
 
 -> **Note:** For more information on the cluster link settings, see [Cluster Linking Configuration on Confluent Cloud](https://docs.confluent.io/cloud/current/multi-cloud/cluster-linking/cluster-links-cc.html#configuring-cluster-link-behavior).
 
@@ -92,9 +136,10 @@ In addition to the preceding arguments, the following attributes are exported:
 ## Import
 
 You can import a Kafka mirror topic by using the cluster link name, cluster link mode, cluster link connection mode,
-source Kafka cluster ID, and destination Kafka cluster ID, in the format `<Cluster link name>/<Cluster link mode>/<Cluster connection mode>/<Source Kafka cluster ID>/<Destination Kafka cluster ID>`, for example:
+source (or local for bidirectional cluster links) Kafka cluster ID, and destination (or remote  for bidirectional cluster links) Kafka cluster ID, in the format `<Cluster link name>/<Cluster link mode>/<Cluster connection mode>/<Source (Local) Kafka cluster ID>/<Destination (Remote) Kafka cluster ID>`, for example:
 
 ```shell
+# Option #1 when using source-initiated or destination-initiated cluster links
 $ export IMPORT_SOURCE_KAFKA_BOOTSTRAP_ENDPOINT="<source_kafka_bootstrap_endpoint>"
 $ export IMPORT_SOURCE_KAFKA_API_KEY="<source_kafka_api_key>"
 $ export IMPORT_SOURCE_KAFKA_API_SECRET="<source_kafka_api_secret>"
@@ -104,11 +149,24 @@ $ export IMPORT_DESTINATION_KAFKA_API_SECRET="<destination_kafka_api_secret>"
 $ terraform import confluent_cluster_link.my_cluster_link my-cluster-link/DESTINATION/OUTBOUND/lkc-abc123/lkc-xyz456
 ```
 
+```shell
+# Option #2 when using bidirectional cluster links
+$ export IMPORT_LOCAL_KAFKA_BOOTSTRAP_ENDPOINT="<local_kafka_bootstrap_endpoint>"
+$ export IMPORT_LOCAL_KAFKA_API_KEY="<local_kafka_api_key>"
+$ export IMPORT_LOCAL_KAFKA_API_SECRET="<local_kafka_api_secret>"
+$ export IMPORT_REMOTE_KAFKA_REST_ENDPOINT="<remote_kafka_rest_endpoint>"
+$ export IMPORT_REMOTE_KAFKA_API_KEY="<remote_kafka_api_key>"
+$ export IMPORT_REMOTE_KAFKA_API_SECRET="<remote_kafka_api_secret>"
+$ terraform import confluent_cluster_link.my_cluster_link my-cluster-link/BIDIRECTIONAL/OUTBOUND/lkc-abc123/lkc-xyz456
+```
+
 !> **Warning:** Do not forget to delete terminal command history afterwards for security purposes.
 
 ## Getting Started
 The following end-to-end examples might help to get started with `confluent_cluster_link` resource:
   * [`destination-initiated-cluster-link-rbac`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/destination-initiated-cluster-link-rbac): An example of setting up a _destination_ initiated cluster link with a mirror topic
   * [`source-initiated-cluster-link-rbac`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/source-initiated-cluster-link-rbac): An example of setting up a _source_ initiated cluster link with a mirror topic
+  * [`regular-bidirectional-cluster-link-rbac`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/regular-bidirectional-cluster-link-rbac): An example of setting up a bidirectional cluster link with a mirror topic
+  * [`advanced-bidirectional-cluster-link-rbac`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/regular-bidirectional-cluster-link-rbac): An example of setting up a bidirectional cluster link with a mirror topic ([advanced option](https://docs.confluent.io/cloud/current/multi-cloud/cluster-linking/cluster-links-cc.html#create-a-cluster-link-in-bidirectional-mode))
 
 See [Cluster Linking on Confluent Cloud](https://docs.confluent.io/cloud/current/multi-cloud/cluster-linking/index.html) to learn more about Cluster Linking on Confluent Cloud.

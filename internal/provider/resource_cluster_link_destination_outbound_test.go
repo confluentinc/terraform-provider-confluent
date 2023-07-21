@@ -47,7 +47,7 @@ const (
 	clusterLinkMode                       = "DESTINATION"
 	clusterLinkConnectionMode             = "OUTBOUND"
 	clusterLinkResourceLabel              = "test_cluster_link_resource_label"
-	numberOfClusterLinkResourceAttributes = "7"
+	numberOfClusterLinkResourceAttributes = "9"
 
 	firstClusterClusterLinkConfigName         = "acl.sync.ms"
 	firstClusterClusterLinkConfigValue        = "5100"

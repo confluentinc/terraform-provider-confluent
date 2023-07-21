@@ -141,8 +141,8 @@ github.com/confluentinc/ccloud-sdk-go-v2/identity-provider v0.2.0 h1:9TT8UCFRc5z
 github.com/confluentinc/ccloud-sdk-go-v2/identity-provider v0.2.0/go.mod h1:JLmrXfnT2PzcuXHD8a6c2cW1c9LKK7aMsdZjjqxYPEk=
 github.com/confluentinc/ccloud-sdk-go-v2/kafka-quotas v0.4.0 h1:T9e7lNj/VjxE89+tcpX2RS2NE4rWNWbJjxcO2yehEqM=
 github.com/confluentinc/ccloud-sdk-go-v2/kafka-quotas v0.4.0/go.mod h1:7gqwWFIyj2MAGpL/kf6SGXm/pi2Z6qpMJIjKlgEEhhg=
-github.com/confluentinc/ccloud-sdk-go-v2/kafkarest v0.13.0 h1:T+o8qhde3p4sc5Sm1i26VDhZYWINvR8Y0BzimDcTU0k=
-github.com/confluentinc/ccloud-sdk-go-v2/kafkarest v0.13.0/go.mod h1:UZB+e0EXNFKNT8yPIHcQMDy0QvNvJzL55VOEnM9bMoY=
+github.com/confluentinc/ccloud-sdk-go-v2/kafkarest v0.14.0 h1:PBtG7eLIbaYngsPe42nO8bFbYdG9Q41RctCap/PkiLg=
+github.com/confluentinc/ccloud-sdk-go-v2/kafkarest v0.14.0/go.mod h1:1hTwJlTy/3WPjA6I4tFf3X8RjXRHe0RQhRYfR+gHaqc=
 github.com/confluentinc/ccloud-sdk-go-v2/ksql v0.1.0 h1:dtLqrG3nltpe2xucO8Bj17HPw+mTJG5zYxJksQ7+Yhw=
 github.com/confluentinc/ccloud-sdk-go-v2/ksql v0.1.0/go.mod h1:0LAvd4VqlaRwKU4yvDEkVCtV43yNezt56+hBe9Lmg7Q=
 github.com/confluentinc/ccloud-sdk-go-v2/mds v0.3.0 h1:DaipFGVdZjAE8eSztUrA/4b74kj6k5lZ0EJmK1RqccU=
@@ -151,8 +151,6 @@ github.com/confluentinc/ccloud-sdk-go-v2/networking v0.7.0 h1:24t0s2shV6NN1LcTBZ
 github.com/confluentinc/ccloud-sdk-go-v2/networking v0.7.0/go.mod h1:EcmHhRib8dDuO5ZsO+qS3scX9xEP5E/IXOVoItp5X2s=
 github.com/confluentinc/ccloud-sdk-go-v2/org v0.4.0 h1:WcJs6RbY8nU5HapaG0ZCH9ftFBtZyuKMIuNAkdVmc2o=
 github.com/confluentinc/ccloud-sdk-go-v2/org v0.4.0/go.mod h1:zREJ+OOZz0rEXCaPx0JbCVj2EfNnYs/c6qhPDfhldI0=
-github.com/confluentinc/ccloud-sdk-go-v2/schema-registry v0.1.0 h1:X3snoY6twxQ0Z/vbysQrHhdRVkNdpFE/Os7JpMKfXWw=
-github.com/confluentinc/ccloud-sdk-go-v2/schema-registry v0.1.0/go.mod h1:TiRHikjkVYJlhHI8TH2eKeXupQDGQWqkN+JUnv93NRA=
 github.com/confluentinc/ccloud-sdk-go-v2/schema-registry v0.2.0 h1:qR8cm4OmT/B2g3pINSBxt+dDMFep5wgVJGu6oHIrbdk=
 github.com/confluentinc/ccloud-sdk-go-v2/schema-registry v0.2.0/go.mod h1:uTE8K5/jg75ubJY1Flh6TfBIwVFVOchkLWqVsamwLYc=
 github.com/confluentinc/ccloud-sdk-go-v2/srcm v0.2.0 h1:ezCzDCOOavjTPVKvdET0QjAXm1u9iRJjg2s5lkSMrps=
