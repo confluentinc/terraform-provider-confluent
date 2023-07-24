@@ -4,8 +4,8 @@
 
 **New features:**
 * Added support for new _bidirectional_ mode for `confluent_cluster_link` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_cluster_link) in a [Preview lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy) with **2** new examples:
-  * [`regular-bidirectional-cluster-link-rbac`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/regular-bidirectional-cluster-link-rbac): An example of setting up a bidirectional cluster link with a mirror topic
-  * [`advanced-bidirectional-cluster-link-rbac`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/regular-bidirectional-cluster-link-rbac): An example of setting up a bidirectional cluster link with a mirror topic ([advanced option](https://docs.confluent.io/cloud/current/multi-cloud/cluster-linking/cluster-links-cc.html#create-a-cluster-link-in-bidirectional-mode))
+  * [`regular-bidirectional-cluster-link-rbac`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/regular-bidirectional-cluster-link-rbac): An example of setting up a bidirectional cluster link with 2 mirror topics
+  * [`advanced-bidirectional-cluster-link-rbac`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/regular-bidirectional-cluster-link-rbac): An example of setting up a bidirectional cluster link with 2 mirror topics ([advanced option](https://docs.confluent.io/cloud/current/multi-cloud/cluster-linking/cluster-links-cc.html#create-a-cluster-link-in-bidirectional-mode))
 
 **Bug fixes:**
 * Fixed "Export max_retries as an environment variable" issue ([#290](https://github.com/confluentinc/terraform-provider-confluent/issues/290)).
