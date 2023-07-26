@@ -17,7 +17,6 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/stretchr/testify/require"
 	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
@@ -53,17 +52,21 @@ var datasourceCommonChecks = resource.ComposeTestCheckFunc(
 )
 
 func TestAccDataSourceWithIdKsql(t *testing.T) {
-
 	ctx := context.Background()
-	containerPort := "8080"
 
-	wiremockContainer, err := createWiremockContainer(ctx, containerPort)
-	require.NoError(t, err)
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
 
-	wiremockClient, mockServerUrl, err := createWiremockClient(ctx, wiremockContainer, containerPort)
-	require.NoError(t, err)
+	mockServerUrl := wiremockContainer.URI
+	wiremockClient := wiremock.NewClient(mockServerUrl)
+	// nolint:errcheck
+	defer wiremockClient.Reset()
 
-	defer cleanUp(ctx, wiremockContainer, wiremockClient)
+	// nolint:errcheck
+	defer wiremockClient.ResetAllScenarios()
 
 	provisioningKsqlCluster, _ := ioutil.ReadFile("../testdata/ksql/PROVISIONED_ksql_4_csu.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("/ksqldbcm/v2/clusters/%s", ksqlId))).
@@ -100,17 +103,21 @@ func TestAccDataSourceWithIdKsql(t *testing.T) {
 }
 
 func TestAccDataSourceListKsql(t *testing.T) {
-
 	ctx := context.Background()
-	containerPort := "8080"
 
-	wiremockContainer, err := createWiremockContainer(ctx, containerPort)
-	require.NoError(t, err)
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
 
-	wiremockClient, mockServerUrl, err := createWiremockClient(ctx, wiremockContainer, containerPort)
-	require.NoError(t, err)
+	mockServerUrl := wiremockContainer.URI
+	wiremockClient := wiremock.NewClient(mockServerUrl)
+	// nolint:errcheck
+	defer wiremockClient.Reset()
 
-	defer cleanUp(ctx, wiremockContainer, wiremockClient)
+	// nolint:errcheck
+	defer wiremockClient.ResetAllScenarios()
 
 	provisionedKsqlCluster, _ := ioutil.ReadFile("../testdata/ksql/ksql_clusters.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/ksqldbcm/v2/clusters")).
@@ -135,17 +142,21 @@ func TestAccDataSourceListKsql(t *testing.T) {
 }
 
 func TestAccDataSourceKsqlApi5xxError(t *testing.T) {
-
 	ctx := context.Background()
-	containerPort := "8080"
 
-	wiremockContainer, err := createWiremockContainer(ctx, containerPort)
-	require.NoError(t, err)
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
 
-	wiremockClient, mockServerUrl, err := createWiremockClient(ctx, wiremockContainer, containerPort)
-	require.NoError(t, err)
+	mockServerUrl := wiremockContainer.URI
+	wiremockClient := wiremock.NewClient(mockServerUrl)
+	// nolint:errcheck
+	defer wiremockClient.Reset()
 
-	defer cleanUp(ctx, wiremockContainer, wiremockClient)
+	// nolint:errcheck
+	defer wiremockClient.ResetAllScenarios()
 
 	errorResponse, _ := ioutil.ReadFile("../testdata/ksql/501_internal_server_error.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("/ksqldbcm/v2/clusters/%s", ksqlId))).
@@ -172,17 +183,21 @@ func TestAccDataSourceKsqlApi5xxError(t *testing.T) {
 }
 
 func TestAccDataSourceKsqlApi4xxError(t *testing.T) {
-
 	ctx := context.Background()
-	containerPort := "8080"
 
-	wiremockContainer, err := createWiremockContainer(ctx, containerPort)
-	require.NoError(t, err)
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
 
-	wiremockClient, mockServerUrl, err := createWiremockClient(ctx, wiremockContainer, containerPort)
-	require.NoError(t, err)
+	mockServerUrl := wiremockContainer.URI
+	wiremockClient := wiremock.NewClient(mockServerUrl)
+	// nolint:errcheck
+	defer wiremockClient.Reset()
 
-	defer cleanUp(ctx, wiremockContainer, wiremockClient)
+	// nolint:errcheck
+	defer wiremockClient.ResetAllScenarios()
 
 	errorResponse, _ := ioutil.ReadFile("../testdata/ksql/401_Unathorized.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("/ksqldbcm/v2/clusters/%s", ksqlId))).

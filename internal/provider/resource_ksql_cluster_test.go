@@ -19,7 +19,6 @@ import (
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"github.com/stretchr/testify/require"
 	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
@@ -70,13 +69,16 @@ func TestAccCreateKsqlClusterError(t *testing.T) {
 
 	ctx := context.Background()
 
-	wiremockContainer, err := createWiremockContainer(ctx, containerPort)
-	require.NoError(t, err)
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
 
-	wiremockClient, mockServerUrl, err := createWiremockClient(ctx, wiremockContainer, containerPort)
-	require.NoError(t, err)
-
-	defer cleanUp(ctx, wiremockContainer, wiremockClient)
+	mockServerUrl := wiremockContainer.URI
+	wiremockClient := wiremock.NewClient(mockServerUrl)
+	// nolint:errcheck
+	defer wiremockClient.Reset()
 
 	// nolint:errcheck
 	defer wiremockClient.ResetAllScenarios()
@@ -108,16 +110,18 @@ func TestAccCreateKsqlClusterError(t *testing.T) {
 }
 
 func TestAccImportKsqlCluster(t *testing.T) {
-
 	ctx := context.Background()
 
-	wiremockContainer, err := createWiremockContainer(ctx, containerPort)
-	require.NoError(t, err)
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
 
-	wiremockClient, mockServerUrl, err := createWiremockClient(ctx, wiremockContainer, containerPort)
-	require.NoError(t, err)
-
-	defer cleanUp(ctx, wiremockContainer, wiremockClient)
+	mockServerUrl := wiremockContainer.URI
+	wiremockClient := wiremock.NewClient(mockServerUrl)
+	// nolint:errcheck
+	defer wiremockClient.Reset()
 
 	// nolint:errcheck
 	defer wiremockClient.ResetAllScenarios()
@@ -179,16 +183,18 @@ func TestAccImportKsqlCluster(t *testing.T) {
 }
 
 func TestAccReadKsqlClusterError(t *testing.T) {
-
 	ctx := context.Background()
 
-	wiremockContainer, err := createWiremockContainer(ctx, containerPort)
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
 
-	require.NoError(t, err)
-	wiremockClient, mockServerUrl, err := createWiremockClient(ctx, wiremockContainer, containerPort)
-	require.NoError(t, err)
-
-	defer cleanUp(ctx, wiremockContainer, wiremockClient)
+	mockServerUrl := wiremockContainer.URI
+	wiremockClient := wiremock.NewClient(mockServerUrl)
+	// nolint:errcheck
+	defer wiremockClient.Reset()
 
 	// nolint:errcheck
 	defer wiremockClient.ResetAllScenarios()
@@ -233,16 +239,18 @@ func TestAccReadKsqlClusterError(t *testing.T) {
 }
 
 func TestAccKsqlCluster(t *testing.T) {
-
 	ctx := context.Background()
 
-	wiremockContainer, err := createWiremockContainer(ctx, containerPort)
-	require.NoError(t, err)
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
 
-	wiremockClient, mockServerUrl, err := createWiremockClient(ctx, wiremockContainer, containerPort)
-	require.NoError(t, err)
-
-	defer cleanUp(ctx, wiremockContainer, wiremockClient)
+	mockServerUrl := wiremockContainer.URI
+	wiremockClient := wiremock.NewClient(mockServerUrl)
+	// nolint:errcheck
+	defer wiremockClient.Reset()
 
 	// nolint:errcheck
 	defer wiremockClient.ResetAllScenarios()
