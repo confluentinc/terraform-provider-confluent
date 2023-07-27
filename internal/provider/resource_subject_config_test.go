@@ -35,7 +35,7 @@ func TestAccSubjectCompatibilityLevel(t *testing.T) {
 	}
 	defer wiremockContainer.Terminate(ctx)
 
-	mockSubjectCompatibilityLevelTestServerUrl = wiremockContainer.URI
+	mockSubjectCompatibilityLevelTestServerUrl := wiremockContainer.URI
 	confluentCloudBaseUrl := ""
 	wiremockClient := wiremock.NewClient(mockSubjectCompatibilityLevelTestServerUrl)
 	// nolint:errcheck

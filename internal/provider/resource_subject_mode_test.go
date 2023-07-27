@@ -35,7 +35,7 @@ func TestAccSubjectMode(t *testing.T) {
 	}
 	defer wiremockContainer.Terminate(ctx)
 
-	mockSubjectModeTestServerUrl = wiremockContainer.URI
+	mockSubjectModeTestServerUrl := wiremockContainer.URI
 	confluentCloudBaseUrl := ""
 	wiremockClient := wiremock.NewClient(mockSubjectModeTestServerUrl)
 	// nolint:errcheck

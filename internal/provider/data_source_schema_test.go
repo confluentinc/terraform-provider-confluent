@@ -41,7 +41,7 @@ func TestAccDataSourceSchema(t *testing.T) {
 	}
 	defer wiremockContainer.Terminate(ctx)
 
-	mockSchemaTestServerUrl = wiremockContainer.URI
+	mockSchemaTestServerUrl := wiremockContainer.URI
 	confluentCloudBaseUrl := ""
 	wiremockClient := wiremock.NewClient(mockSchemaTestServerUrl)
 	// nolint:errcheck

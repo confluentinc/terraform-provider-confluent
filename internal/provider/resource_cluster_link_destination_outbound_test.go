@@ -64,9 +64,6 @@ var readClusterLinkDestinationOutboundPath = fmt.Sprintf("/kafka/v3/clusters/%s/
 var readClusterLinkConfigPath = fmt.Sprintf("/kafka/v3/clusters/%s/links/%s/configs", destinationClusterId, clusterLinkName)
 var updateClusterLinkConfigPath = fmt.Sprintf("/kafka/v3/clusters/%s/links/%s/configs:alter", destinationClusterId, clusterLinkName)
 
-//// TODO: APIF-1990
-var mockClusterLinkTestServerUrl = ""
-
 func TestAccClusterLinkDestinationOutbound(t *testing.T) {
 	ctx := context.Background()
 
@@ -76,7 +73,7 @@ func TestAccClusterLinkDestinationOutbound(t *testing.T) {
 	}
 	defer wiremockContainer.Terminate(ctx)
 
-	mockClusterLinkTestServerUrl = wiremockContainer.URI
+	mockClusterLinkTestServerUrl := wiremockContainer.URI
 	confluentCloudBaseUrl := ""
 	wiremockClient := wiremock.NewClient(mockClusterLinkTestServerUrl)
 	// nolint:errcheck
@@ -185,7 +182,9 @@ func TestAccClusterLinkDestinationOutbound(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
-		CheckDestroy:      testAccCheckClusterLinkDestinationDestroy,
+		CheckDestroy: func(s *terraform.State) error {
+			return testAccCheckClusterLinkDestinationDestroy(s, mockClusterLinkTestServerUrl)
+		},
 		// https://www.terraform.io/docs/extend/testing/acceptance-tests/teststep.html
 		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
 		Steps: []resource.TestStep{

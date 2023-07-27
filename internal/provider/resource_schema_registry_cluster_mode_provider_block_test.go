@@ -39,9 +39,6 @@ const (
 	testNumberOfSchemaRegistryClusterModeResourceAttributes = "5"
 )
 
-// TODO: APIF-1990
-var mockSchemaRegistryClusterModeTestServerUrl = ""
-
 var fullSchemaRegistryClusterModeResourceLabel = fmt.Sprintf("confluent_schema_registry_cluster_mode.%s", testSchemaRegistryClusterModeResourceLabel)
 var updateSchemaRegistryClusterModePath = fmt.Sprintf("/mode")
 
@@ -54,7 +51,7 @@ func TestAccSchemaRegistryClusterModeWithEnhancedProviderBlock(t *testing.T) {
 	}
 	defer wiremockContainer.Terminate(ctx)
 
-	mockSchemaRegistryClusterModeTestServerUrl = wiremockContainer.URI
+	mockSchemaRegistryClusterModeTestServerUrl := wiremockContainer.URI
 	confluentCloudBaseUrl := ""
 	wiremockClient := wiremock.NewClient(mockSchemaRegistryClusterModeTestServerUrl)
 	// nolint:errcheck

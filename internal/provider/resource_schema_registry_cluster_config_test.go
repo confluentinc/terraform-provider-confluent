@@ -35,7 +35,7 @@ func TestAccSchemaRegistryClusterCompatibilityLevel(t *testing.T) {
 	}
 	defer wiremockContainer.Terminate(ctx)
 
-	mockSchemaRegistryClusterCompatibilityLevelTestServerUrl = wiremockContainer.URI
+	mockSchemaRegistryClusterCompatibilityLevelTestServerUrl := wiremockContainer.URI
 	confluentCloudBaseUrl := ""
 	wiremockClient := wiremock.NewClient(mockSchemaRegistryClusterCompatibilityLevelTestServerUrl)
 	// nolint:errcheck

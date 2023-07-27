@@ -17,6 +17,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
@@ -45,7 +46,7 @@ func TestAccKafkaMirrorTopicWithPrefix(t *testing.T) {
 	}
 	defer wiremockContainer.Terminate(ctx)
 
-	mockKafkaMirrorTestServerUrl = wiremockContainer.URI
+	mockKafkaMirrorTestServerUrl := wiremockContainer.URI
 	confluentCloudBaseUrl := ""
 	wiremockClient := wiremock.NewClient(mockKafkaMirrorTestServerUrl)
 	// nolint:errcheck
@@ -129,7 +130,9 @@ func TestAccKafkaMirrorTopicWithPrefix(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
-		CheckDestroy:      testAccCheckKafkaMirrorTopicDestroy,
+		CheckDestroy: func(s *terraform.State) error {
+			return testAccCheckKafkaMirrorTopicDestroy(s, mockKafkaMirrorTestServerUrl)
+		},
 		// https://www.terraform.io/docs/extend/testing/acceptance-tests/teststep.html
 		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
 		Steps: []resource.TestStep{

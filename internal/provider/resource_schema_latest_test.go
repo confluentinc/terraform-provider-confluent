@@ -17,6 +17,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
@@ -36,7 +37,7 @@ func TestAccLatestSchema(t *testing.T) {
 	}
 	defer wiremockContainer.Terminate(ctx)
 
-	mockSchemaTestServerUrl = wiremockContainer.URI
+	mockSchemaTestServerUrl := wiremockContainer.URI
 	confluentCloudBaseUrl := ""
 	wiremockClient := wiremock.NewClient(mockSchemaTestServerUrl)
 	// nolint:errcheck
@@ -134,7 +135,9 @@ func TestAccLatestSchema(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
-		CheckDestroy:      testAccCheckSchemaDestroy,
+		CheckDestroy: func(s *terraform.State) error {
+			return testAccCheckSchemaDestroy(s, mockSchemaTestServerUrl)
+		},
 		// https://www.terraform.io/docs/extend/testing/acceptance-tests/teststep.html
 		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
 		Steps: []resource.TestStep{

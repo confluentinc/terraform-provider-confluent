@@ -43,11 +43,7 @@ const (
 
 var fullAclResourceLabel = fmt.Sprintf("confluent_kafka_acl.%s", aclResourceLabel)
 var createKafkaAclPath = fmt.Sprintf("/kafka/v3/clusters/%s/acls", clusterId)
-var readServiceAccountsPath = "/service_accounts"
 var readKafkaAclPath = fmt.Sprintf("/kafka/v3/clusters/%s/acls?host=%s&operation=%s&pattern_type=%s&permission=%s&principal=%s&resource_name=%s&resource_type=%s", clusterId, aclHost, aclOperation, aclPatternType, aclPermission, aclPrincipalWithResourceId, aclResourceName, aclResourceType)
-
-// TODO: APIF-1990
-var mockAclTestServerUrl = ""
 
 func TestAccAcls(t *testing.T) {
 	ctx := context.Background()
@@ -58,7 +54,7 @@ func TestAccAcls(t *testing.T) {
 	}
 	defer wiremockContainer.Terminate(ctx)
 
-	mockAclTestServerUrl = wiremockContainer.URI
+	mockAclTestServerUrl := wiremockContainer.URI
 	confluentCloudBaseUrl := ""
 	wiremockClient := wiremock.NewClient(mockAclTestServerUrl)
 	// nolint:errcheck
@@ -143,7 +139,9 @@ func TestAccAcls(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
-		CheckDestroy:      testAccCheckAclDestroy,
+		CheckDestroy: func(s *terraform.State) error {
+			return testAccCheckAclDestroy(s, mockAclTestServerUrl)
+		},
 		// https://www.terraform.io/docs/extend/testing/acceptance-tests/teststep.html
 		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
 		Steps: []resource.TestStep{
@@ -180,8 +178,8 @@ func TestAccAcls(t *testing.T) {
 	checkStubCount(t, wiremockClient, deleteAclStub, fmt.Sprintf("DELETE %s", readKafkaAclPath), expectedCountOne)
 }
 
-func testAccCheckAclDestroy(s *terraform.State) error {
-	c := testAccProvider.Meta().(*Client).kafkaRestClientFactory.CreateKafkaRestClient(mockAclTestServerUrl, clusterId, kafkaApiKey, kafkaApiSecret, false, false)
+func testAccCheckAclDestroy(s *terraform.State, url string) error {
+	c := testAccProvider.Meta().(*Client).kafkaRestClientFactory.CreateKafkaRestClient(url, clusterId, kafkaApiKey, kafkaApiSecret, false, false)
 	// Loop through the resources in state, verifying each ACL is destroyed
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "confluent_kafka_acl" {

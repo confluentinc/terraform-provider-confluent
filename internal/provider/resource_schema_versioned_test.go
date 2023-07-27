@@ -69,9 +69,6 @@ var readSchemasPath = fmt.Sprintf("/schemas")
 var readLatestSchemaPath = fmt.Sprintf("/subjects/%s/versions/latest", testSubjectName)
 var deleteSchemaPath = fmt.Sprintf("/subjects/%s/versions/%s", testSubjectName, strconv.Itoa(testSchemaVersion))
 
-// TODO: APIF-1990
-var mockSchemaTestServerUrl = ""
-
 func TestAccVersionedSchema(t *testing.T) {
 	ctx := context.Background()
 
@@ -81,7 +78,7 @@ func TestAccVersionedSchema(t *testing.T) {
 	}
 	defer wiremockContainer.Terminate(ctx)
 
-	mockSchemaTestServerUrl = wiremockContainer.URI
+	mockSchemaTestServerUrl := wiremockContainer.URI
 	confluentCloudBaseUrl := ""
 	wiremockClient := wiremock.NewClient(mockSchemaTestServerUrl)
 	// nolint:errcheck
@@ -169,7 +166,9 @@ func TestAccVersionedSchema(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
-		CheckDestroy:      testAccCheckSchemaDestroy,
+		CheckDestroy: func(s *terraform.State) error {
+			return testAccCheckSchemaDestroy(s, mockSchemaTestServerUrl)
+		},
 		// https://www.terraform.io/docs/extend/testing/acceptance-tests/teststep.html
 		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
 		Steps: []resource.TestStep{
@@ -249,8 +248,8 @@ func TestAccVersionedSchema(t *testing.T) {
 	checkStubCount(t, wiremockClient, deleteSchemaStub, fmt.Sprintf("DELETE %s", readSchemasPath), expectedCountOne)
 }
 
-func testAccCheckSchemaDestroy(s *terraform.State) error {
-	c := testAccProvider.Meta().(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(mockSchemaTestServerUrl, clusterId, testSchemaRegistryKey, testSchemaRegistrySecret, false)
+func testAccCheckSchemaDestroy(s *terraform.State, url string) error {
+	c := testAccProvider.Meta().(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(url, clusterId, testSchemaRegistryKey, testSchemaRegistrySecret, false)
 	// Loop through the resources in state, verifying each Schema is destroyed
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "confluent_schema" {

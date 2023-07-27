@@ -57,9 +57,6 @@ var readKafkaTopicPath = fmt.Sprintf("/kafka/v3/clusters/%s/topics/%s", clusterI
 var readKafkaTopicConfigPath = fmt.Sprintf("/kafka/v3/clusters/%s/topics/%s/configs", clusterId, topicName)
 var updateKafkaTopicConfigPath = fmt.Sprintf("/kafka/v3/clusters/%s/topics/%s/configs:alter", clusterId, topicName)
 
-// TODO: APIF-1990
-var mockTopicTestServerUrl = ""
-
 func TestAccTopic(t *testing.T) {
 	ctx := context.Background()
 
@@ -69,7 +66,7 @@ func TestAccTopic(t *testing.T) {
 	}
 	defer wiremockContainer.Terminate(ctx)
 
-	mockTopicTestServerUrl = wiremockContainer.URI
+	mockTopicTestServerUrl := wiremockContainer.URI
 	confluentCloudBaseUrl := ""
 	wiremockClient := wiremock.NewClient(mockTopicTestServerUrl)
 	// nolint:errcheck
@@ -179,7 +176,9 @@ func TestAccTopic(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
-		CheckDestroy:      testAccCheckTopicDestroy,
+		CheckDestroy: func(s *terraform.State) error {
+			return testAccCheckTopicDestroy(s, mockTopicTestServerUrl)
+		},
 		// https://www.terraform.io/docs/extend/testing/acceptance-tests/teststep.html
 		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
 		Steps: []resource.TestStep{
@@ -238,8 +237,8 @@ func TestAccTopic(t *testing.T) {
 	checkStubCount(t, wiremockClient, deleteTopicStub, fmt.Sprintf("DELETE %s", readKafkaTopicPath), expectedCountOne)
 }
 
-func testAccCheckTopicDestroy(s *terraform.State) error {
-	c := testAccProvider.Meta().(*Client).kafkaRestClientFactory.CreateKafkaRestClient(mockTopicTestServerUrl, clusterId, kafkaApiKey, kafkaApiSecret, false, false)
+func testAccCheckTopicDestroy(s *terraform.State, url string) error {
+	c := testAccProvider.Meta().(*Client).kafkaRestClientFactory.CreateKafkaRestClient(url, clusterId, kafkaApiKey, kafkaApiSecret, false, false)
 	// Loop through the resources in state, verifying each Kafka topic is destroyed
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "confluent_kafka_topic" {

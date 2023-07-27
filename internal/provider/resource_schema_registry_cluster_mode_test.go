@@ -35,7 +35,7 @@ func TestAccSchemaRegistryClusterMode(t *testing.T) {
 	}
 	defer wiremockContainer.Terminate(ctx)
 
-	mockSchemaRegistryClusterModeTestServerUrl = wiremockContainer.URI
+	mockSchemaRegistryClusterModeTestServerUrl := wiremockContainer.URI
 	confluentCloudBaseUrl := ""
 	wiremockClient := wiremock.NewClient(mockSchemaRegistryClusterModeTestServerUrl)
 	// nolint:errcheck

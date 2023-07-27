@@ -50,9 +50,6 @@ var fullConfigResourceLabel = fmt.Sprintf("confluent_kafka_cluster_config.%s", c
 var readKafkaConfigPath = fmt.Sprintf("/kafka/v3/clusters/%s/broker-configs", clusterId)
 var updateKafkaConfigPath = fmt.Sprintf("/kafka/v3/clusters/%s/broker-configs:alter", clusterId)
 
-// TODO: APIF-1990
-var mockConfigTestServerUrl = ""
-
 func TestAccClusterConfig(t *testing.T) {
 	ctx := context.Background()
 
@@ -62,7 +59,7 @@ func TestAccClusterConfig(t *testing.T) {
 	}
 	defer wiremockContainer.Terminate(ctx)
 
-	mockConfigTestServerUrl = wiremockContainer.URI
+	mockConfigTestServerUrl := wiremockContainer.URI
 	confluentCloudBaseUrl := ""
 	wiremockClient := wiremock.NewClient(mockConfigTestServerUrl)
 	// nolint:errcheck

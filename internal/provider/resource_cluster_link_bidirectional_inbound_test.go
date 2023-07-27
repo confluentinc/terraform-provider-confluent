@@ -36,7 +36,7 @@ func TestAccClusterLinkBidirectionalInbound(t *testing.T) {
 	}
 	defer wiremockContainer.Terminate(ctx)
 
-	mockClusterLinkTestServerUrl = wiremockContainer.URI
+	mockClusterLinkTestServerUrl := wiremockContainer.URI
 	confluentCloudBaseUrl := ""
 	wiremockClient := wiremock.NewClient(mockClusterLinkTestServerUrl)
 	// nolint:errcheck
@@ -115,7 +115,9 @@ func TestAccClusterLinkBidirectionalInbound(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
-		CheckDestroy:      testAccCheckClusterLinkSourceDestroy,
+		CheckDestroy: func(s *terraform.State) error {
+			return testAccCheckClusterLinkSourceDestroy(s, mockClusterLinkTestServerUrl)
+		},
 		// https://www.terraform.io/docs/extend/testing/acceptance-tests/teststep.html
 		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
 		Steps: []resource.TestStep{

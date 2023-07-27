@@ -39,9 +39,6 @@ const (
 	testNumberOfSubjectCompatibilityLevelResourceAttributes = "6"
 )
 
-// TODO: APIF-1990
-var mockSubjectCompatibilityLevelTestServerUrl = ""
-
 var fullSubjectCompatibilityLevelResourceLabel = fmt.Sprintf("confluent_subject_config.%s", testSubjectCompatibilityLevelResourceLabel)
 var updateSubjectCompatibilityLevelPath = fmt.Sprintf("/config/%s", testSubjectName)
 
@@ -54,7 +51,7 @@ func TestAccSubjectCompatibilityLevelWithEnhancedProviderBlock(t *testing.T) {
 	}
 	defer wiremockContainer.Terminate(ctx)
 
-	mockSubjectCompatibilityLevelTestServerUrl = wiremockContainer.URI
+	mockSubjectCompatibilityLevelTestServerUrl := wiremockContainer.URI
 	confluentCloudBaseUrl := ""
 	wiremockClient := wiremock.NewClient(mockSubjectCompatibilityLevelTestServerUrl)
 	// nolint:errcheck

@@ -39,9 +39,6 @@ const (
 	testNumberOfSchemaRegistryClusterCompatibilityLevelResourceAttributes = "5"
 )
 
-// TODO: APIF-1990
-var mockSchemaRegistryClusterCompatibilityLevelTestServerUrl = ""
-
 var fullSchemaRegistryClusterCompatibilityLevelResourceLabel = fmt.Sprintf("confluent_schema_registry_cluster_config.%s", testSchemaRegistryClusterCompatibilityLevelResourceLabel)
 var updateSchemaRegistryClusterCompatibilityLevelPath = fmt.Sprintf("/config")
 
@@ -54,7 +51,7 @@ func TestAccSchemaRegistryClusterCompatibilityLevelWithEnhancedProviderBlock(t *
 	}
 	defer wiremockContainer.Terminate(ctx)
 
-	mockSchemaRegistryClusterCompatibilityLevelTestServerUrl = wiremockContainer.URI
+	mockSchemaRegistryClusterCompatibilityLevelTestServerUrl := wiremockContainer.URI
 	confluentCloudBaseUrl := ""
 	wiremockClient := wiremock.NewClient(mockSchemaRegistryClusterCompatibilityLevelTestServerUrl)
 	// nolint:errcheck

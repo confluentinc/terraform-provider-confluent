@@ -34,7 +34,7 @@ func TestAccClusterConfigWithEnhancedProviderBlock(t *testing.T) {
 	}
 	defer wiremockContainer.Terminate(ctx)
 
-	mockConfigTestServerUrl = wiremockContainer.URI
+	mockConfigTestServerUrl := wiremockContainer.URI
 	confluentCloudBaseUrl := ""
 	wiremockClient := wiremock.NewClient(mockConfigTestServerUrl)
 	// nolint:errcheck

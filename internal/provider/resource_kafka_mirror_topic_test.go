@@ -44,9 +44,6 @@ var readKafkaMirrorTopicPath = fmt.Sprintf("/kafka/v3/clusters/%s/links/%s/mirro
 var deleteKafkaMirrorTopicPath = fmt.Sprintf("/kafka/v3/clusters/%s/topics/%s", destinationClusterId, kafkaMirrorTopicName)
 var pauseKafkaMirrorTopicPath = fmt.Sprintf("/kafka/v3/clusters/%s/links/%s/mirrors:pause", destinationClusterId, clusterLinkName)
 
-//// TODO: APIF-1990
-var mockKafkaMirrorTestServerUrl = ""
-
 func TestAccKafkaMirrorTopic(t *testing.T) {
 	ctx := context.Background()
 
@@ -56,7 +53,7 @@ func TestAccKafkaMirrorTopic(t *testing.T) {
 	}
 	defer wiremockContainer.Terminate(ctx)
 
-	mockKafkaMirrorTestServerUrl = wiremockContainer.URI
+	mockKafkaMirrorTestServerUrl := wiremockContainer.URI
 	confluentCloudBaseUrl := ""
 	wiremockClient := wiremock.NewClient(mockKafkaMirrorTestServerUrl)
 	// nolint:errcheck
@@ -140,7 +137,9 @@ func TestAccKafkaMirrorTopic(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
-		CheckDestroy:      testAccCheckKafkaMirrorTopicDestroy,
+		CheckDestroy: func(s *terraform.State) error {
+			return testAccCheckKafkaMirrorTopicDestroy(s, mockKafkaMirrorTestServerUrl)
+		},
 		// https://www.terraform.io/docs/extend/testing/acceptance-tests/teststep.html
 		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
 		Steps: []resource.TestStep{
@@ -260,8 +259,8 @@ func testAccCheckUpdatedKafkaMirrorTopicConfig(confluentCloudBaseUrl, mockServer
 		destinationClusterId, mockServerUrl, destinationClusterApiKey, destinationClusterApiSecret)
 }
 
-func testAccCheckKafkaMirrorTopicDestroy(s *terraform.State) error {
-	c := testAccProvider.Meta().(*Client).kafkaRestClientFactory.CreateKafkaRestClient(mockKafkaMirrorTestServerUrl, destinationClusterId, destinationClusterApiKey, destinationClusterApiSecret, false, false)
+func testAccCheckKafkaMirrorTopicDestroy(s *terraform.State, url string) error {
+	c := testAccProvider.Meta().(*Client).kafkaRestClientFactory.CreateKafkaRestClient(url, destinationClusterId, destinationClusterApiKey, destinationClusterApiSecret, false, false)
 	// Loop through the resources in state, verifying each Cluster Link is destroyed
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "confluent_kafka_mirror_topic" {

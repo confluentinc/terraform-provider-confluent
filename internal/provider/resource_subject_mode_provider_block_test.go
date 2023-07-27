@@ -39,9 +39,6 @@ const (
 	testNumberOfSubjectModeResourceAttributes = "6"
 )
 
-// TODO: APIF-1990
-var mockSubjectModeTestServerUrl = ""
-
 var fullSubjectModeResourceLabel = fmt.Sprintf("confluent_subject_mode.%s", testSubjectModeResourceLabel)
 var updateSubjectModePath = fmt.Sprintf("/mode/%s", testSubjectName)
 
@@ -54,7 +51,7 @@ func TestAccSubjectModeWithEnhancedProviderBlock(t *testing.T) {
 	}
 	defer wiremockContainer.Terminate(ctx)
 
-	mockSubjectModeTestServerUrl = wiremockContainer.URI
+	mockSubjectModeTestServerUrl := wiremockContainer.URI
 	confluentCloudBaseUrl := ""
 	wiremockClient := wiremock.NewClient(mockSubjectModeTestServerUrl)
 	// nolint:errcheck

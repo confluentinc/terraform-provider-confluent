@@ -36,7 +36,7 @@ func TestAccClusterLinkDestinationInbound(t *testing.T) {
 	}
 	defer wiremockContainer.Terminate(ctx)
 
-	mockClusterLinkTestServerUrl = wiremockContainer.URI
+	mockClusterLinkTestServerUrl := wiremockContainer.URI
 	confluentCloudBaseUrl := ""
 	wiremockClient := wiremock.NewClient(mockClusterLinkTestServerUrl)
 	// nolint:errcheck
@@ -115,7 +115,9 @@ func TestAccClusterLinkDestinationInbound(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
-		CheckDestroy:      testAccCheckClusterLinkDestinationDestroy,
+		CheckDestroy: func(s *terraform.State) error {
+			return testAccCheckClusterLinkDestinationDestroy(s, mockClusterLinkTestServerUrl)
+		},
 		// https://www.terraform.io/docs/extend/testing/acceptance-tests/teststep.html
 		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
 		Steps: []resource.TestStep{
@@ -167,8 +169,8 @@ func TestAccClusterLinkDestinationInbound(t *testing.T) {
 	checkStubCount(t, wiremockClient, deleteClusterLinkStub, fmt.Sprintf("DELETE %s", readClusterLinkDestinationOutboundPath), expectedCountOne)
 }
 
-func testAccCheckClusterLinkDestinationDestroy(s *terraform.State) error {
-	c := testAccProvider.Meta().(*Client).kafkaRestClientFactory.CreateKafkaRestClient(mockClusterLinkTestServerUrl, destinationClusterId, destinationClusterApiKey, destinationClusterApiSecret, false, false)
+func testAccCheckClusterLinkDestinationDestroy(s *terraform.State, url string) error {
+	c := testAccProvider.Meta().(*Client).kafkaRestClientFactory.CreateKafkaRestClient(url, destinationClusterId, destinationClusterApiKey, destinationClusterApiSecret, false, false)
 	// Loop through the resources in state, verifying each Cluster Link is destroyed
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "confluent_cluster_link" {
