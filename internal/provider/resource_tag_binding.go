@@ -103,6 +103,9 @@ func tagBindingCreate(ctx context.Context, d *schema.ResourceData, meta interfac
 	tagBindingRequest.SetEntityType(entityType)
 	tagBindingRequest.SetTypeName(tagName)
 
+	// sleep 5 seconds to wait for entity (resource) to sync to SR
+	time.Sleep(5 * time.Second)
+
 	request := schemaRegistryRestClient.dataCatalogApiClient.EntityV1Api.CreateTags(schemaRegistryRestClient.dataCatalogApiContext(ctx))
 	request = request.Tag([]dc.Tag{tagBindingRequest})
 
@@ -127,8 +130,6 @@ func tagBindingCreate(ctx context.Context, d *schema.ResourceData, meta interfac
 	if err := waitForTagBindingToProvision(schemaRegistryRestClient.dataCatalogApiContext(ctx), schemaRegistryRestClient, tagBindingId, tagName, entityName, entityType); err != nil {
 		return diag.Errorf("error waiting for Tag Binding %q to provision: %s", tagBindingId, createDescriptiveError(err))
 	}
-
-	time.Sleep(10 * time.Second)
 
 	createdTagBindingJson, err := json.Marshal(createdTagBinding)
 	if err != nil {

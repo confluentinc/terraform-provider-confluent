@@ -67,7 +67,7 @@ The following arguments are supported:
     - `key` - (Required String) The Schema Registry API Key.
     - `secret` - (Required String, Sensitive) The Schema Registry API Secret.
 - `tag_name` - (Required String) The name of the tag to be applied, for example, `PII`. The name must not be empty and consist of a letter followed by a sequence of letter, number, space, or _ characters.
-- `entity_name` - (Required String) The qualified name of the entity., for example, `lsrc-8wrx70:.:100001`.
+- `entity_name` - (Required String) The qualified name of the entity., for example, `${confluent_schema_registry_cluster.main.id}:.:${confluent_schema.purchase.schema_identifier}`, `${confluent_schema_registry_cluster.main.id}:${confluent_kafka_cluster.basic.id}:${confluent_kafka_topic.purchase.topic_name}`.
 - `entity_type` - (Required String) The entity type, for example, `sr_schema`.
 
 -> **Note:** A Schema Registry API key consists of a key and a secret. Schema Registry API keys are required to interact with Schema Registry clusters in Confluent Cloud. Each Schema Registry API key is valid for one specific Schema Registry cluster.

@@ -113,6 +113,9 @@ func businessMetadataBindingCreate(ctx context.Context, d *schema.ResourceData, 
 	businessMetadataBindingRequest.SetTypeName(businessMetadataName)
 	businessMetadataBindingRequest.SetAttributes(attributes)
 
+	// sleep 5 seconds to wait for entity (resource) to sync to SR
+	time.Sleep(5 * time.Second)
+
 	request := schemaRegistryRestClient.dataCatalogApiClient.EntityV1Api.CreateBusinessMetadata(schemaRegistryRestClient.dataCatalogApiContext(ctx))
 	request = request.BusinessMetadata([]dc.BusinessMetadata{businessMetadataBindingRequest})
 
@@ -137,8 +140,6 @@ func businessMetadataBindingCreate(ctx context.Context, d *schema.ResourceData, 
 	if err := waitForBusinessMetadataBindingToProvision(schemaRegistryRestClient.dataCatalogApiContext(ctx), schemaRegistryRestClient, businessMetadataBindingId, businessMetadataName, entityName, entityType); err != nil {
 		return diag.Errorf("error waiting for Business Metadata Binding %q to provision: %s", businessMetadataBindingId, createDescriptiveError(err))
 	}
-
-	time.Sleep(10 * time.Second)
 
 	createdBusinessMetadataBindingJson, err := json.Marshal(createdBusinessMetadataBinding)
 	if err != nil {

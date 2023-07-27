@@ -129,8 +129,6 @@ func tagCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 		return diag.Errorf("error waiting for Tag %q to provision: %s", tagId, createDescriptiveError(err))
 	}
 
-	time.Sleep(10 * time.Second)
-
 	createdTagJson, err := json.Marshal(createdTag)
 	if err != nil {
 		return diag.Errorf("error creating Tag %q: error marshaling %#v to json: %s", tagId, createdTag, createDescriptiveError(err))
