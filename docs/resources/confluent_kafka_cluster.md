@@ -209,16 +209,20 @@ The following arguments are supported:
 - `region` - (Required String) The cloud service provider region where the Kafka cluster is running, for example, `us-west-2`. See [Cloud Providers and Regions](https://docs.confluent.io/cloud/current/clusters/regions.html#cloud-providers-and-regions) for a full list of options for AWS, Azure, and GCP.
 - `basic` - (Optional Configuration Block) The configuration of the Basic Kafka cluster.
 - `standard` - (Optional Configuration Block) The configuration of the Standard Kafka cluster.
+- `enterprise` - (Optional Configuration Block) The configuration of the Enterprise Kafka cluster.
 - `dedicated` - (Optional Configuration Block) The configuration of the Dedicated Kafka cluster. It supports the following:
     - `cku` - (Required Number) The number of Confluent Kafka Units (CKUs) for Dedicated cluster types. The minimum number of CKUs for `SINGLE_ZONE` dedicated clusters is `1` whereas `MULTI_ZONE` dedicated clusters must have more than `2` CKUs.
 
 !> **Warning:** At the moment, using `encryption_key` for creating Kafka clusters is not available. See [this comment](https://github.com/confluentinc/terraform-provider-confluent/issues/65#issuecomment-1179194889) for more details.
 
--> **Note:** Exactly one from the `basic`, `standard`, and `dedicated` configuration blocks must be specified.
+-> **Note:** Exactly one from the `basic`, `standard`, `dedicated`, and `enterprise` configuration blocks must be specified.
 
 !> **Warning:** You can only upgrade clusters from `basic` to `standard`.
 
 -> **Note:** Currently, provisioning of a Dedicated Kafka cluster takes around 25 minutes on average but might take up to 24 hours. If you can't wait for the `terraform apply` step to finish, you can exit it and import the cluster by using the `terraform import` command once it has been provisioned. When the cluster is provisioned, you will receive an email notification, and you can also follow updates on the Target Environment web page of the Confluent Cloud website.
+
+-> **Note:** The `enterprise` block is in a [Limited Availability lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
+
 
 - `environment` (Required Configuration Block) supports the following:
     - `id` - (Required String) The ID of the Environment that the Kafka cluster belongs to, for example, `env-abc123`.

@@ -74,9 +74,10 @@ func kafkaDataSource() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			paramBasicCluster:     basicClusterDataSourceSchema(),
-			paramStandardCluster:  standardClusterDataSourceSchema(),
-			paramDedicatedCluster: dedicatedClusterDataSourceSchema(),
+			paramBasicCluster:      basicClusterDataSourceSchema(),
+			paramStandardCluster:   standardClusterDataSourceSchema(),
+			paramDedicatedCluster:  dedicatedClusterDataSourceSchema(),
+			paramEnterpriseCluster: enterpriseClusterDataSourceSchema(),
 			paramBootStrapEndpoint: {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -252,6 +253,17 @@ func dedicatedClusterDataSourceSchema() *schema.Schema {
 					Description: "The list of zones the cluster is in.",
 				},
 			},
+		},
+	}
+}
+
+func enterpriseClusterDataSourceSchema() *schema.Schema {
+	return &schema.Schema{
+		Type:     schema.TypeList,
+		Optional: true,
+		MaxItems: 0,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{},
 		},
 	}
 }

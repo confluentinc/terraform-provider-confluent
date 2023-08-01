@@ -30,20 +30,22 @@ import (
 )
 
 const (
-	kafkaClusterTypeBasic     = "Basic"
-	kafkaClusterTypeStandard  = "Standard"
-	kafkaClusterTypeDedicated = "Dedicated"
-	paramBasicCluster         = "basic"
-	paramStandardCluster      = "standard"
-	paramDedicatedCluster     = "dedicated"
-	paramAvailability         = "availability"
-	paramBootStrapEndpoint    = "bootstrap_endpoint"
-	paramRestEndpoint         = "rest_endpoint"
-	paramHttpEndpoint         = "http_endpoint"
-	paramCku                  = "cku"
-	paramEncryptionKey        = "encryption_key"
-	paramRbacCrn              = "rbac_crn"
-	paramConfluentCustomerKey = "byok_key"
+	kafkaClusterTypeBasic      = "Basic"
+	kafkaClusterTypeStandard   = "Standard"
+	kafkaClusterTypeDedicated  = "Dedicated"
+	kafkaClusterTypeEnterprise = "Enterprise"
+	paramBasicCluster          = "basic"
+	paramStandardCluster       = "standard"
+	paramDedicatedCluster      = "dedicated"
+	paramEnterpriseCluster     = "enterprise"
+	paramAvailability          = "availability"
+	paramBootStrapEndpoint     = "bootstrap_endpoint"
+	paramRestEndpoint          = "rest_endpoint"
+	paramHttpEndpoint          = "http_endpoint"
+	paramCku                   = "cku"
+	paramEncryptionKey         = "encryption_key"
+	paramRbacCrn               = "rbac_crn"
+	paramConfluentCustomerKey  = "byok_key"
 
 	stateInProgress = "IN_PROGRESS"
 	stateDone       = "DONE"
@@ -63,7 +65,7 @@ const (
 
 var acceptedAvailabilityZones = []string{singleZone, multiZone}
 var acceptedCloudProviders = []string{"AWS", "AZURE", "GCP"}
-var acceptedClusterTypes = []string{paramBasicCluster, paramStandardCluster, paramDedicatedCluster}
+var acceptedClusterTypes = []string{paramBasicCluster, paramStandardCluster, paramDedicatedCluster, paramEnterpriseCluster}
 var paramDedicatedCku = fmt.Sprintf("%s.0.%s", paramDedicatedCluster, paramCku)
 var paramDedicatedEncryptionKey = fmt.Sprintf("%s.0.%s", paramDedicatedCluster, paramEncryptionKey)
 
@@ -113,10 +115,11 @@ func kafkaResource() *schema.Resource {
 				ForceNew:    true,
 				Description: "The cloud service provider region where the Kafka cluster is running.",
 			},
-			paramNetwork:          optionalNetworkSchema(),
-			paramBasicCluster:     basicClusterSchema(),
-			paramStandardCluster:  standardClusterSchema(),
-			paramDedicatedCluster: dedicatedClusterSchema(),
+			paramNetwork:           optionalNetworkSchema(),
+			paramBasicCluster:      basicClusterSchema(),
+			paramStandardCluster:   standardClusterSchema(),
+			paramDedicatedCluster:  dedicatedClusterSchema(),
+			paramEnterpriseCluster: enterpriseClusterSchema(),
 			paramBootStrapEndpoint: {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -321,6 +324,8 @@ func kafkaCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 		}
 
 		spec.SetConfig(cmk.CmkV2DedicatedAsCmkV2ClusterSpecConfigOneOf(config))
+	} else if clusterType == kafkaClusterTypeEnterprise {
+		spec.SetConfig(cmk.CmkV2EnterpriseAsCmkV2ClusterSpecConfigOneOf(cmk.NewCmkV2Enterprise(kafkaClusterTypeEnterprise)))
 	} else {
 		return diag.Errorf("error creating Kafka Cluster: unknown Kafka Cluster type was provided: %q", clusterType)
 	}
@@ -361,6 +366,7 @@ func extractClusterType(d *schema.ResourceData) string {
 	basicConfigBlock := d.Get(paramBasicCluster).([]interface{})
 	standardConfigBlock := d.Get(paramStandardCluster).([]interface{})
 	dedicatedConfigBlock := d.Get(paramDedicatedCluster).([]interface{})
+	enterpriseConfigBlock := d.Get(paramEnterpriseCluster).([]interface{})
 
 	if len(basicConfigBlock) == 1 {
 		return kafkaClusterTypeBasic
@@ -368,6 +374,8 @@ func extractClusterType(d *schema.ResourceData) string {
 		return kafkaClusterTypeStandard
 	} else if len(dedicatedConfigBlock) == 1 {
 		return kafkaClusterTypeDedicated
+	} else if len(enterpriseConfigBlock) == 1 {
+		return kafkaClusterTypeEnterprise
 	}
 	return ""
 }
@@ -376,6 +384,7 @@ func extractClusterTypeResourceDiff(d *schema.ResourceDiff) string {
 	basicConfigBlock := d.Get(paramBasicCluster).([]interface{})
 	standardConfigBlock := d.Get(paramStandardCluster).([]interface{})
 	dedicatedConfigBlock := d.Get(paramDedicatedCluster).([]interface{})
+	enterpriseConfigBlock := d.Get(paramEnterpriseCluster).([]interface{})
 
 	if len(basicConfigBlock) == 1 {
 		return kafkaClusterTypeBasic
@@ -383,6 +392,8 @@ func extractClusterTypeResourceDiff(d *schema.ResourceDiff) string {
 		return kafkaClusterTypeStandard
 	} else if len(dedicatedConfigBlock) == 1 {
 		return kafkaClusterTypeDedicated
+	} else if len(enterpriseConfigBlock) == 1 {
+		return kafkaClusterTypeEnterprise
 	}
 	return ""
 }
@@ -544,6 +555,18 @@ func dedicatedClusterSchema() *schema.Schema {
 	}
 }
 
+func enterpriseClusterSchema() *schema.Schema {
+	return &schema.Schema{
+		Type:     schema.TypeList,
+		Optional: true,
+		MaxItems: 0,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{},
+		},
+		ExactlyOneOf: acceptedClusterTypes,
+	}
+}
+
 func byokSchema() *schema.Schema {
 	return &schema.Schema{
 		Type:     schema.TypeList,
@@ -603,6 +626,9 @@ func setKafkaClusterAttributes(d *schema.ResourceData, cluster cmk.CmkV2Cluster)
 	if err := d.Set(paramDedicatedCluster, []interface{}{}); err != nil {
 		return nil, err
 	}
+	if err := d.Set(paramEnterpriseCluster, []interface{}{}); err != nil {
+		return nil, err
+	}
 
 	// Set a specific cluster type
 	if cluster.Spec.Config.CmkV2Basic != nil {
@@ -619,6 +645,10 @@ func setKafkaClusterAttributes(d *schema.ResourceData, cluster cmk.CmkV2Cluster)
 			paramEncryptionKey: cluster.Spec.Config.CmkV2Dedicated.GetEncryptionKey(),
 			paramZones:         cluster.Spec.Config.CmkV2Dedicated.GetZones(),
 		}}); err != nil {
+			return nil, err
+		}
+	} else if cluster.Spec.Config.CmkV2Enterprise != nil {
+		if err := d.Set(paramEnterpriseCluster, []interface{}{make(map[string]string)}); err != nil {
 			return nil, err
 		}
 	}
