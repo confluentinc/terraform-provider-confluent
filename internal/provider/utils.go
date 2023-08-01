@@ -29,6 +29,7 @@ import (
 	kafkarestv3 "github.com/confluentinc/ccloud-sdk-go-v2/kafkarest/v3"
 	ksql "github.com/confluentinc/ccloud-sdk-go-v2/ksql/v2"
 	mds "github.com/confluentinc/ccloud-sdk-go-v2/mds/v2"
+	netpl "github.com/confluentinc/ccloud-sdk-go-v2/networking-privatelink/v1"
 	net "github.com/confluentinc/ccloud-sdk-go-v2/networking/v1"
 	org "github.com/confluentinc/ccloud-sdk-go-v2/org/v2"
 	schemaregistry "github.com/confluentinc/ccloud-sdk-go-v2/schema-registry/v1"
@@ -47,42 +48,44 @@ import (
 )
 
 const (
-	byokKeyLoggingKey                     = "byok_key_id"
-	crnKafkaSuffix                        = "/kafka="
-	kafkaAclLoggingKey                    = "kafka_acl_id"
-	kafkaClusterLoggingKey                = "kafka_cluster_id"
-	kafkaClusterConfigLoggingKey          = "kafka_cluster_config_id"
-	schemaRegistryClusterLoggingKey       = "schema_registry_cluster_id"
-	kafkaTopicLoggingKey                  = "kafka_topic_id"
-	serviceAccountLoggingKey              = "service_account_id"
-	userLoggingKey                        = "user_id"
-	environmentLoggingKey                 = "environment_id"
-	tfImporterLoggingKey                  = "tf_importer_environment_id"
-	roleBindingLoggingKey                 = "role_binding_id"
-	apiKeyLoggingKey                      = "api_key_id"
-	networkLoggingKey                     = "network_key_id"
-	connectorLoggingKey                   = "connector_key_id"
-	privateLinkAccessLoggingKey           = "private_link_access_id"
-	networkLinkEndpointLoggingKey         = "network_link_endpoint_id"
-	networkLinkServiceLoggingKey          = "network_link_service_id"
-	peeringLoggingKey                     = "peering_id"
-	transitGatewayAttachmentLoggingKey    = "transit_gateway_attachment_id"
-	ksqlClusterLoggingKey                 = "ksql_cluster_id"
-	identityProviderLoggingKey            = "identity_provider_id"
-	identityPoolLoggingKey                = "identity_pool_id"
-	clusterLinkLoggingKey                 = "cluster_link_id"
-	kafkaMirrorTopicLoggingKey            = "kafka_mirror_topic_id"
-	kafkaClientQuotaLoggingKey            = "kafka_client_quota_id"
-	schemaLoggingKey                      = "schema_id"
-	tagLoggingKey                         = "tag_id"
-	tagBindingLoggingKey                  = "tag_binding_id"
-	businessMetadataLoggingKey            = "business_metadata_id"
-	businessMetadataBindingLoggingKey     = "business_metadata_binding_id"
-	subjectModeLoggingKey                 = "subject_mode_id"
-	subjectConfigLoggingKey               = "subject_config_id"
-	schemaRegistryClusterModeLoggingKey   = "schema_registry_cluster_mode_id"
-	schemaRegistryClusterConfigLoggingKey = "schema_registry_cluster_config_id"
-	invitationloggingKey                  = "invitation_id"
+	byokKeyLoggingKey                         = "byok_key_id"
+	crnKafkaSuffix                            = "/kafka="
+	kafkaAclLoggingKey                        = "kafka_acl_id"
+	kafkaClusterLoggingKey                    = "kafka_cluster_id"
+	kafkaClusterConfigLoggingKey              = "kafka_cluster_config_id"
+	schemaRegistryClusterLoggingKey           = "schema_registry_cluster_id"
+	kafkaTopicLoggingKey                      = "kafka_topic_id"
+	serviceAccountLoggingKey                  = "service_account_id"
+	userLoggingKey                            = "user_id"
+	environmentLoggingKey                     = "environment_id"
+	tfImporterLoggingKey                      = "tf_importer_environment_id"
+	roleBindingLoggingKey                     = "role_binding_id"
+	apiKeyLoggingKey                          = "api_key_id"
+	networkLoggingKey                         = "network_key_id"
+	connectorLoggingKey                       = "connector_key_id"
+	privateLinkAccessLoggingKey               = "private_link_access_id"
+	privateLinkAttachmentLoggingKey           = "private_link_attachment_id"
+	privateLinkAttachmentConnectionLoggingKey = "private_link_attachment_connection_id"
+	networkLinkEndpointLoggingKey             = "network_link_endpoint_id"
+	networkLinkServiceLoggingKey              = "network_link_service_id"
+	peeringLoggingKey                         = "peering_id"
+	transitGatewayAttachmentLoggingKey        = "transit_gateway_attachment_id"
+	ksqlClusterLoggingKey                     = "ksql_cluster_id"
+	identityProviderLoggingKey                = "identity_provider_id"
+	identityPoolLoggingKey                    = "identity_pool_id"
+	clusterLinkLoggingKey                     = "cluster_link_id"
+	kafkaMirrorTopicLoggingKey                = "kafka_mirror_topic_id"
+	kafkaClientQuotaLoggingKey                = "kafka_client_quota_id"
+	schemaLoggingKey                          = "schema_id"
+	tagLoggingKey                             = "tag_id"
+	tagBindingLoggingKey                      = "tag_binding_id"
+	businessMetadataLoggingKey                = "business_metadata_id"
+	businessMetadataBindingLoggingKey         = "business_metadata_binding_id"
+	subjectModeLoggingKey                     = "subject_mode_id"
+	subjectConfigLoggingKey                   = "subject_config_id"
+	schemaRegistryClusterModeLoggingKey       = "schema_registry_cluster_mode_id"
+	schemaRegistryClusterConfigLoggingKey     = "schema_registry_cluster_config_id"
+	invitationloggingKey                      = "invitation_id"
 )
 
 func (c *Client) apiKeysApiContext(ctx context.Context) context.Context {
@@ -165,6 +168,17 @@ func (c *Client) mdsApiContext(ctx context.Context) context.Context {
 func (c *Client) netApiContext(ctx context.Context) context.Context {
 	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
 		return context.WithValue(context.Background(), net.ContextBasicAuth, net.BasicAuth{
+			UserName: c.cloudApiKey,
+			Password: c.cloudApiSecret,
+		})
+	}
+	tflog.Warn(ctx, "Could not find Cloud API Key")
+	return ctx
+}
+
+func (c *Client) netPLApiContext(ctx context.Context) context.Context {
+	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
+		return context.WithValue(context.Background(), netpl.ContextBasicAuth, netpl.BasicAuth{
 			UserName: c.cloudApiKey,
 			Password: c.cloudApiSecret,
 		})

@@ -1,0 +1,42 @@
+{
+  "api_version": "networking/v1",
+  "id": "plattc-gz20xy",
+  "kind": "PrivateLinkAttachmentConnection",
+  "metadata": {
+    "created_at": "2023-03-14T02:13:22.03597Z",
+    "resource_name": "crn://confluent.cloud/organization=1111aaaa-11aa-11aa-11aa-111111aaaaaa/environment=env-8gv0v5/private-link-attachment=platt-plyvyl/private-link-attachment-connection=plattc-gz20xy",
+    "self": "https://api.confluent.cloud/networking/v1/private-link-attachment-connections/plattc-gz20xy?environment=env-8gv0v5",
+    "updated_at": "2023-03-14T02:13:22.03597Z"
+  },
+  "spec": {
+    "cloud": {
+      "kind": "networking.v1.AwsPrivateLinkAttachmentConnection",
+      "vpc_endpoint_id": "vpce-0ed4d51f5d6ef9b6d"
+    },
+    "display_name": "my_vpc",
+    "environment": {
+      "api_version": "org/v2",
+      "environment": "env-8gv0v5",
+      "id": "env-8gv0v5",
+      "kind": "Environment",
+      "related": "https://api.confluent.cloud/v2/environments/env-8gv0v5",
+      "resource_name": "crn://confluent.cloud/organization=1111aaaa-11aa-11aa-11aa-111111aaaaaa/environment=env-8gv0v5"
+    },
+    "private_link_attachment": {
+      "api_version": "networking/v1",
+      "environment": "env-8gv0v5",
+      "id": "platt-plyvyl",
+      "kind": "PrivateLinkAttachment",
+      "related": "https://api.confluent.cloud/networking/v1/private-link-attachments/platt-plyvyl?environment=env-8gv0v5",
+      "resource_name": "crn://confluent.cloud/organization=1111aaaa-11aa-11aa-11aa-111111aaaaaa/environment=env-8gv0v5/private-link-attachment=platt-plyvyl"
+    }
+  },
+  "status": {
+    "cloud": {
+      "kind": "networking.v1.AwsPrivateLinkAttachmentConnectionStatus",
+      "vpc_endpoint_id": "vpce-0ed4d51f5d6ef9b6d",
+      "vpc_endpoint_service_name": ""
+    },
+    "phase": "PROVISIONING"
+  }
+}
