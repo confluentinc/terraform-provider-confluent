@@ -49,10 +49,6 @@ resource "confluent_kafka_acl" "describe-basic-cluster" {
 
 ```terraform
 provider "confluent" {
-  # Specifying Cloud API Keys is still necessary for now when managing confluent_kafka_acl
-  cloud_api_key       = var.confluent_cloud_api_key    # optionally use CONFLUENT_CLOUD_API_KEY env var
-  cloud_api_secret    = var.confluent_cloud_api_secret # optionally use CONFLUENT_CLOUD_API_SECRET env var
-
   kafka_id            = var.kafka_id                   # optionally use KAFKA_ID env var
   kafka_rest_endpoint = var.kafka_rest_endpoint        # optionally use KAFKA_REST_ENDPOINT env var
   kafka_api_key       = var.kafka_api_key              # optionally use KAFKA_API_KEY env var
@@ -113,8 +109,6 @@ You can import Kafka ACLs by using the Kafka cluster ID and attributes of `confl
 
 ```shell
 # Option #1: Manage multiple Kafka clusters in the same Terraform workspace
-$ export CONFLUENT_CLOUD_API_KEY="<cloud_api_key>"
-$ export CONFLUENT_CLOUD_API_SECRET="<cloud_api_secret>"
 $ export IMPORT_KAFKA_API_KEY="<kafka_api_key>"
 $ export IMPORT_KAFKA_API_SECRET="<kafka_api_secret>"
 $ export IMPORT_KAFKA_REST_ENDPOINT="<kafka_rest_endpoint>"
