@@ -79,8 +79,8 @@ github.com/confluentinc/ccloud-sdk-go-v2/cmk v0.10.0 h1:YQEcSvhX5ODllg0mhxLivckK
 github.com/confluentinc/ccloud-sdk-go-v2/cmk v0.10.0/go.mod h1:357Zo3HvVAe5iQgUFxUbQPAKJasGm8vFMkOB+krVmR8=
 github.com/confluentinc/ccloud-sdk-go-v2/connect v0.2.0 h1:rEb3sxzKCZvZCnEZ10WyGqkVIdlqxJGbmP85/4C4YdE=
 github.com/confluentinc/ccloud-sdk-go-v2/connect v0.2.0/go.mod h1:lF4AfDtxoL0V7ZIMOULWiAycPwlfyt9UG659adRNdOM=
-github.com/confluentinc/ccloud-sdk-go-v2/data-catalog v0.1.0 h1:HuU7SAId+hUi/SWbIXXXu6khDyGW/RANsNQxEwMNWmE=
-github.com/confluentinc/ccloud-sdk-go-v2/data-catalog v0.1.0/go.mod h1:27GwI+j82LDFydahgmKVroqw6oFxzbvIj+ZOnksaKGw=
+github.com/confluentinc/ccloud-sdk-go-v2/data-catalog v0.2.0 h1:ySx0jYNGK0XLcSkgPz+hxcH05v1LI5GVb3Rg+TCqBqk=
+github.com/confluentinc/ccloud-sdk-go-v2/data-catalog v0.2.0/go.mod h1:27GwI+j82LDFydahgmKVroqw6oFxzbvIj+ZOnksaKGw=
 github.com/confluentinc/ccloud-sdk-go-v2/iam v0.10.0 h1:AV0bGk01bGfKzNq5IVqRi2iEc6YTeBbl//IYvQ/j8ag=
 github.com/confluentinc/ccloud-sdk-go-v2/iam v0.10.0/go.mod h1:2Lm82ly9Yh5LLhp8OTnUGqjz4JdIXAZ5a0/u9T+rGGU=
 github.com/confluentinc/ccloud-sdk-go-v2/identity-provider v0.2.0 h1:9TT8UCFRc5zUdsE7UgMz7hqN+2KYnIkBcAKCaiZJrXw=
@@ -376,7 +376,6 @@ github.com/stretchr/testify v1.4.0/go.mod h1:j7eGeouHqKxXV5pUuKE4zz7dFj8WfuZ+81P
 github.com/stretchr/testify v1.5.1/go.mod h1:5W2xD1RspED5o8YsWQXVCued0rvSQ+mT+I5cxcmMvtA=
 github.com/stretchr/testify v1.7.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
 github.com/stretchr/testify v1.8.4 h1:CcVxjf3Q8PM0mHUKJCdn+eZZtm5yQwehR5yeSVQQcUk=
-github.com/stretchr/testify v1.8.4/go.mod h1:sz/lmYIOXD/1dqDmKjjqLyZ2RngseejIcXlSw2iwfAo=
 github.com/syndtr/gocapability v0.0.0-20200815063812-42c35b437635/go.mod h1:hkRG7XYTFWNJGYcbNJQlaLq0fg1yr4J4t/NcTQtrfww=
 github.com/testcontainers/testcontainers-go v0.21.0 h1:syePAxdeTzfkap+RrJaQZpJQ/s/fsUgn11xIvHrOE9U=
 github.com/testcontainers/testcontainers-go v0.21.0/go.mod h1:c1ez3WVRHq7T/Aj+X3TIipFBwkBaNT5iNCY8+1b83Ng=

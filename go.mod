@@ -7,7 +7,7 @@ require (
 	github.com/confluentinc/ccloud-sdk-go-v2/byok v0.0.1
 	github.com/confluentinc/ccloud-sdk-go-v2/cmk v0.10.0
 	github.com/confluentinc/ccloud-sdk-go-v2/connect v0.2.0
-	github.com/confluentinc/ccloud-sdk-go-v2/data-catalog v0.1.0
+	github.com/confluentinc/ccloud-sdk-go-v2/data-catalog v0.2.0
 	github.com/confluentinc/ccloud-sdk-go-v2/iam v0.10.0
 	github.com/confluentinc/ccloud-sdk-go-v2/identity-provider v0.2.0
 	github.com/confluentinc/ccloud-sdk-go-v2/kafka-quotas v0.4.0
@@ -25,7 +25,6 @@ require (
 	github.com/hashicorp/terraform-plugin-log v0.4.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.16.0
 	github.com/samber/lo v1.20.0
-	github.com/stretchr/testify v1.8.4
 	github.com/testcontainers/testcontainers-go v0.21.0
 	github.com/walkerus/go-wiremock v1.2.0
 )
@@ -86,7 +85,6 @@ require (
 	github.com/opencontainers/image-spec v1.1.0-rc2 // indirect
 	github.com/opencontainers/runc v1.1.5 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
-	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/sirupsen/logrus v1.9.0 // indirect
 	github.com/vmihailenco/msgpack v4.0.4+incompatible // indirect
 	github.com/vmihailenco/msgpack/v4 v4.3.12 // indirect
@@ -102,5 +100,4 @@ require (
 	google.golang.org/genproto v0.0.0-20220617124728-180714bec0ad // indirect
 	google.golang.org/grpc v1.47.0 // indirect
 	google.golang.org/protobuf v1.28.0 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
