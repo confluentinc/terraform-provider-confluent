@@ -45,6 +45,9 @@ resource "confluent_network" "private-service-connect" {
   environment {
     id = confluent_environment.staging.id
   }
+  dns_config {
+    resolution = "PRIVATE"
+  }
 }
 
 resource "confluent_private_link_access" "gcp" {

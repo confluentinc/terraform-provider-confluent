@@ -80,6 +80,10 @@ resource "confluent_network" "gcp-private-service-connect" {
     id = confluent_environment.development.id
   }
 
+  dns_config {
+    resolution = "PRIVATE"
+  }
+
   lifecycle {
     prevent_destroy = true
   }
@@ -135,7 +139,7 @@ The following arguments are supported:
   On AWS, zones are AWS [AZ IDs](https://docs.aws.amazon.com/ram/latest/userguide/working-with-az-ids.html), for example, `use1-az3`.
   On GCP, zones are GCP [zones](https://cloud.google.com/compute/docs/regions-zones), for example, `us-central1-c`.
   On Azure, zones are Confluent-chosen names (for example, `1`, `2`, `3`) since Azure does not have universal zone identifiers.
-- `dns_config` (Optional Configuration Block) Network DNS config. It applies only to the PRIVATELINK network connection type. It supports the following:
+- `dns_config` (Optional Configuration Block) Network DNS config. It applies only to the PRIVATELINK network connection type. When omitted, `resolution` defaults to `CHASED_PRIVATE`. It supports the following:
   - `resolution` - (Required String) Network DNS resolution.
     When resolution is `CHASED_PRIVATE`, clusters in this network require both public and private DNS to resolve cluster endpoints.
     When resolution is `PRIVATE`, clusters in this network only require private DNS to resolve cluster endpoints.

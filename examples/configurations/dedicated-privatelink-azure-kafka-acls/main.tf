@@ -44,6 +44,9 @@ resource "confluent_network" "private-link" {
   environment {
     id = confluent_environment.staging.id
   }
+  dns_config {
+    resolution = "PRIVATE"
+  }
 }
 
 resource "confluent_private_link_access" "azure" {
