@@ -12,6 +12,8 @@ description: |-
 
 `confluent_role_binding` provides a Role Binding resource that enables creating, reading, and deleting role bindings on Confluent Cloud.
 
+-> **Note:** For more information on the Role Bindings, see [Predefined RBAC roles in Confluent Cloud](https://docs.confluent.io/cloud/current/access-management/access-control/rbac/predefined-rbac-roles.html).
+
 ## Example Usage
 
 ```terraform

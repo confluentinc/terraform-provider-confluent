@@ -12,6 +12,8 @@ description: |-
 
 `confluent_role_binding` describes a Role Binding.
 
+-> **Note:** For more information on the Role Bindings, see [Predefined RBAC roles in Confluent Cloud](https://docs.confluent.io/cloud/current/access-management/access-control/rbac/predefined-rbac-roles.html).
+
 ## Example Usage
 
 ```terraform
