@@ -13,18 +13,3 @@ variable "environment_id" {
   description = "The ID of the managed environment"
   type        = string
 }
-
-variable "env_manager_id" {
-  description = "The ID of the env-manager service account"
-  type        = string
-}
-
-variable "app_producer_id" {
-  description = "The ID of the app-producer service account"
-  type        = string
-}
-
-variable "app_consumer_id" {
-  description = "The ID of the app-consumer service account"
-  type        = string
-}

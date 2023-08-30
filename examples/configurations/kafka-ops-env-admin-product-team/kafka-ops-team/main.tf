@@ -12,21 +12,10 @@ provider "confluent" {
   cloud_api_secret = var.confluent_cloud_api_secret
 }
 
+data "confluent_organization" "this" {}
+
 resource "confluent_environment" "staging" {
   display_name = "Staging"
-}
-
-resource "confluent_schema_registry_cluster" "essentials" {
-  package = "ESSENTIALS"
-
-  environment {
-    id = confluent_environment.staging.id
-  }
-
-  region {
-    # See https://docs.confluent.io/cloud/current/stream-governance/packages.html#stream-governance-regions
-    id = "sgreg-1"
-  }
 }
 
 resource "confluent_service_account" "env-manager" {
@@ -40,6 +29,12 @@ resource "confluent_role_binding" "env-manager-env-admin" {
   crn_pattern = confluent_environment.staging.resource_name
 }
 
+resource "confluent_role_binding" "env-manager-account-admin" {
+  principal   = "User:${confluent_service_account.env-manager.id}"
+  role_name   = "AccountAdmin"
+  crn_pattern = data.confluent_organization.this.resource_name
+}
+
 resource "confluent_api_key" "env-manager-cloud-api-key" {
   display_name = "env-manager-cloud-api-key"
   description  = "Cloud API Key to be shared with Product team to manage resources under 'Staging' environment"
@@ -50,17 +45,7 @@ resource "confluent_api_key" "env-manager-cloud-api-key" {
   }
 
   depends_on = [
-    confluent_role_binding.env-manager-env-admin
+    confluent_role_binding.env-manager-env-admin,
+    confluent_role_binding.env-manager-account-admin
   ]
-}
-
-# Kafka Ops team creates all service accounts for now until CIAM-1882 is resolved since OrganizationAdmin role is required for SA creation
-resource "confluent_service_account" "app-consumer" {
-  display_name = "app-consumer"
-  description  = "Service account to consume from 'orders' topic of 'inventory' Kafka cluster"
-}
-
-resource "confluent_service_account" "app-producer" {
-  display_name = "app-producer"
-  description  = "Service account to produce to 'orders' topic of 'inventory' Kafka cluster"
 }

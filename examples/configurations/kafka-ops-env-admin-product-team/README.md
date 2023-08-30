@@ -7,7 +7,7 @@ This example displays how TF config can be split between Kafka Ops team and Prod
 ➜  kafka-ops-team git:(master) ✗ export TF_VAR_confluent_cloud_api_secret="***REDACTED***"
 ➜  kafka-ops-team git:(master) ✗ terraform apply --auto-approve
 ...
-Apply complete! Resources: 6 added, 0 changed, 0 destroyed.
+Apply complete! Resources: 4 added, 0 changed, 0 destroyed.
 
 Outputs:
 
@@ -16,25 +16,18 @@ resource-ids = <sensitive>
 <<EOT
 Environment ID:   env-gqq321
 
-Service Accounts and their Cloud API Keys (API Keys inherit the permissions granted to the owner):
+Service Account with EnvironmentAdmin and AccountAdmin roles and its Cloud API Key (API Keys inherit the permissions granted to the owner):
 env-manager:                     sa-v7gnk5
 env-manager's Cloud API Key:     "HUBPX5LV6CVWPPOL"
 env-manager's Cloud API Secret:  "I8367Bs2VXTVKe+nvc54NlmWDOdyYAiuoAX0ioG3pz1f/o394viYwVaWFYnDHaEv"
-
-Service Accounts with no roles assigned:
-app-consumer:                    sa-gq6w51
-app-producer:                    sa-pgy965
 
 EOT
 ➜  env-admin-product-team git:(master) ✗ export TF_VAR_environment_id="env-gqq321"
 ➜  env-admin-product-team git:(master) ✗ export TF_VAR_confluent_cloud_api_key="HUBPX5LV6CVWPPOL" # created by Kafka Ops team
 ➜  env-admin-product-team git:(master) ✗ export TF_VAR_confluent_cloud_api_secret="I8367Bs2VXTVKe+nvc54NlmWDOdyYAiuoAX0ioG3pz1f/o394viYwVaWFYnDHaEv"
-➜  env-admin-product-team git:(master) ✗ export TF_VAR_env_manager_id="sa-v7gnk5"
-➜  env-admin-product-team git:(master) ✗ export TF_VAR_app_consumer_id="sa-pgy965"
-➜  env-admin-product-team git:(master) ✗ export TF_VAR_app_producer_id="sa-gq6w51"
 ➜  env-admin-product-team git:(master) ✗ terraform apply --auto-approve
 ...
-Apply complete! Resources: 8 added, 0 changed, 0 destroyed.
+Apply complete! Resources: 13 added, 0 changed, 0 destroyed.
 
 Outputs:
 
