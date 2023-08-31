@@ -109,37 +109,39 @@ func byokCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 	_, isAwsKey := d.GetOk(paramAws)
 	_, isAzureKey := d.GetOk(paramAzure)
 
+	var key string
+
 	switch {
 	case isAwsKey:
-		keyArn := extractStringValueFromBlock(d, paramAws, paramAwsKeyArn)
-		byokKeyOneOf := byok.ByokV1AwsKeyAsByokV1KeyKeyOneOf(byok.NewByokV1AwsKey(keyArn, kindAws))
+		key = extractStringValueFromBlock(d, paramAws, paramAwsKeyArn)
+		byokKeyOneOf := byok.ByokV1AwsKeyAsByokV1KeyKeyOneOf(byok.NewByokV1AwsKey(key, kindAws))
 		createByokKeyRequest.SetKey(byokKeyOneOf)
 
 	case isAzureKey:
-		keyId := extractStringValueFromBlock(d, paramAzure, paramAzureKeyId)
+		key = extractStringValueFromBlock(d, paramAzure, paramAzureKeyId)
 		keyVaultId := extractStringValueFromBlock(d, paramAzure, paramAzureKeyVaultId)
 		tenantId := extractStringValueFromBlock(d, paramAzure, paramAzureTenantId)
-		byokKeyOneOf := byok.ByokV1AzureKeyAsByokV1KeyKeyOneOf(byok.NewByokV1AzureKey(keyId, keyVaultId, kindAzure, tenantId))
+		byokKeyOneOf := byok.ByokV1AzureKeyAsByokV1KeyKeyOneOf(byok.NewByokV1AzureKey(key, keyVaultId, kindAzure, tenantId))
 		createByokKeyRequest.SetKey(byokKeyOneOf)
 	default:
-		return diag.Errorf("error creating BYOK BYOK Key: expected one of %s, %s params", paramAws, paramAzure)
+		return diag.Errorf("error creating BYOK Key: expected one of %s, %s params", paramAws, paramAzure)
 	}
 
 	createByokKeyRequestJson, err := json.Marshal(createByokKeyRequest)
 	if err != nil {
-		return diag.Errorf("error creating BYOK BYOK Key: error marshaling %#v to json: %s", createByokKeyRequest, createDescriptiveError(err))
+		return diag.Errorf("error creating BYOK Key: error marshaling %#v to json: %s", createByokKeyRequest, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new BYOK Key: %s", createByokKeyRequestJson))
 
 	createdKey, _, err := executeKeyCreate(ctx, c, *createByokKeyRequest)
 	if err != nil {
-		return diag.Errorf("error creating BYOK BYOK Key %q: %s", createdKey.GetId(), createDescriptiveError(err))
+		return diag.Errorf("error creating BYOK Key %q: %s", key, createDescriptiveError(err))
 	}
 	d.SetId(createdKey.GetId())
 
 	createdKeyJson, err := json.Marshal(createdKey)
 	if err != nil {
-		return diag.Errorf("error creating BYOK BYOK Key %q: error marshaling %#v to json: %s", d.Id(), createdKey, createDescriptiveError(err))
+		return diag.Errorf("error creating BYOK Key %q: error marshaling %#v to json: %s", d.Id(), createdKey, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating BYOK BYOK Key %q: %s", d.Id(), createdKeyJson), map[string]interface{}{byokKeyLoggingKey: d.Id()})
 
