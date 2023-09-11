@@ -77,6 +77,7 @@ const (
 	kafkaMirrorTopicLoggingKey                = "kafka_mirror_topic_id"
 	kafkaClientQuotaLoggingKey                = "kafka_client_quota_id"
 	schemaLoggingKey                          = "schema_id"
+	schemaExporterLoggingKey                  = "schema_exporter_id"
 	tagLoggingKey                             = "tag_id"
 	tagBindingLoggingKey                      = "tag_binding_id"
 	businessMetadataLoggingKey                = "business_metadata_id"

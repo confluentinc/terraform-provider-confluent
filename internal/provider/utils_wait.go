@@ -383,6 +383,22 @@ func waitForBusinessMetadataBindingToProvision(ctx context.Context, c *SchemaReg
 	return nil
 }
 
+func waitForSchemaExporterToProvision(ctx context.Context, c *SchemaRegistryRestClient, id, name string) error {
+	stateConf := &resource.StateChangeConf{
+		Pending:      []string{stateProvisioning},
+		Target:       []string{stateReady},
+		Refresh:      schemaExporterProvisionStatus(c.apiContext(ctx), c, id, name),
+		Timeout:      dataCatalogTimeout,
+		PollInterval: time.Second,
+	}
+
+	tflog.Debug(ctx, fmt.Sprintf("Waiting for Schema Exporter %q provisioning status to become %q", id, stateReady), map[string]interface{}{schemaExporterLoggingKey: id})
+	if _, err := stateConf.WaitForStateContext(c.apiContext(ctx)); err != nil {
+		return err
+	}
+	return nil
+}
+
 func waitForTransitGatewayAttachmentToProvision(ctx context.Context, c *Client, environmentId, transitGatewayAttachmentId string) error {
 	stateConf := &resource.StateChangeConf{
 		Pending: []string{stateProvisioning},
@@ -966,6 +982,29 @@ func businessMetadataBindingProvisionStatus(ctx context.Context, c *SchemaRegist
 		}
 
 		return businessMetadataBinding, stateReady, nil
+	}
+}
+
+func schemaExporterProvisionStatus(ctx context.Context, c *SchemaRegistryRestClient, id, name string) resource.StateRefreshFunc {
+	return func() (result interface{}, s string, err error) {
+		request := c.apiClient.ExportersV1Api.GetExporterStatusByName(c.apiContext(ctx), name)
+		status, resp, err := request.Execute()
+		if err != nil && resp.StatusCode == http.StatusNotFound {
+			return nil, stateProvisioning, nil
+		}
+		if err != nil {
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Schema Exporter status %q: %s", id, createDescriptiveError(err)), map[string]interface{}{schemaExporterLoggingKey: id})
+			return nil, stateUnknown, err
+		}
+
+		if status.GetState() == "STARTING" {
+			return nil, stateProvisioning, nil
+		}
+		if status.GetState() == "RUNNING" || status.GetState() == "PAUSED" {
+			return status, stateReady, nil
+		}
+
+		return nil, stateUnknown, nil
 	}
 }
 

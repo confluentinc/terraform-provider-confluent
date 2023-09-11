@@ -1,0 +1,13 @@
+{
+  "name": "exporter1",
+  "subjects": [
+    "foo3"
+  ],
+  "contextType": "CUSTOM",
+  "context": "tc-3",
+  "config": {
+    "schema.registry.url": "https://psrc-5xgzx.us-east-2.aws.confluent.cloud",
+    "basic.auth.user.info": "[hidden]",
+    "basic.auth.credentials.source": "USER_INFO"
+  }
+}
