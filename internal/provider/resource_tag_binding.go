@@ -103,8 +103,8 @@ func tagBindingCreate(ctx context.Context, d *schema.ResourceData, meta interfac
 	tagBindingRequest.SetEntityType(entityType)
 	tagBindingRequest.SetTypeName(tagName)
 
-	// sleep 5 seconds to wait for entity (resource) to sync to SR
-	time.Sleep(5 * time.Second)
+	// sleep 60 seconds to wait for entity (resource) to sync to SR
+	time.Sleep(60 * time.Second)
 
 	request := schemaRegistryRestClient.dataCatalogApiClient.EntityV1Api.CreateTags(schemaRegistryRestClient.dataCatalogApiContext(ctx))
 	request = request.Tag([]dc.Tag{tagBindingRequest})

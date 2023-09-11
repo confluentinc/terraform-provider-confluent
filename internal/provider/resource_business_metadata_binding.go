@@ -113,8 +113,8 @@ func businessMetadataBindingCreate(ctx context.Context, d *schema.ResourceData, 
 	businessMetadataBindingRequest.SetTypeName(businessMetadataName)
 	businessMetadataBindingRequest.SetAttributes(attributes)
 
-	// sleep 5 seconds to wait for entity (resource) to sync to SR
-	time.Sleep(5 * time.Second)
+	// sleep 60 seconds to wait for entity (resource) to sync to SR
+	time.Sleep(60 * time.Second)
 
 	request := schemaRegistryRestClient.dataCatalogApiClient.EntityV1Api.CreateBusinessMetadata(schemaRegistryRestClient.dataCatalogApiContext(ctx))
 	request = request.BusinessMetadata([]dc.BusinessMetadata{businessMetadataBindingRequest})
