@@ -16,8 +16,13 @@ global_job_config:
       - 'mkdir -vp "${SEMAPHORE_GIT_DIR}" "${GOPATH}/bin"'
       - checkout
 
+execution_time_limit:
+  hours: 2
+
 blocks:
   - name: Build & Test & Release
+    execution_time_limit:
+      hours: 2
     task:
       jobs:
         - name: "Build & Test & Release"
