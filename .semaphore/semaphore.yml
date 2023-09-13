@@ -21,11 +21,11 @@ execution_time_limit:
 
 blocks:
   - name: Build & Test & Release
-    execution_time_limit:
-      hours: 2
     task:
       jobs:
         - name: "Build & Test & Release"
+          execution_time_limit:
+            hours: 2
           commands:
             # all: clean test testacc tools build
             - make all
