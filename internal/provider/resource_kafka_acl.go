@@ -99,7 +99,7 @@ func kafkaAclResource() *schema.Resource {
 				Required:     true,
 				ForceNew:     true,
 				Description:  "The principal for the ACL.",
-				ValidateFunc: validation.StringMatch(regexp.MustCompile("^User:(\\*)$|^User:(sa|u|pool)-"), "the principal must start with 'User:sa-' or 'User:u-' or 'User:pool-' or 'User:*'."),
+				ValidateFunc: validation.StringMatch(regexp.MustCompile("^User:(\\*)$|^User:(sa|u|pool|group)-"), "the principal must start with 'User:sa-' or 'User:u-' or 'User:pool-' or 'User:group-' or 'User:*'."),
 			},
 			paramHost: {
 				Type:        schema.TypeString,
@@ -488,9 +488,9 @@ func createAclInstanceName(acl Acl) string {
 // APIF-2043: TEMPORARY METHOD
 // Converts principal with an integer ID (User:6789) to principal with a resourceID (User:sa-01234)
 func principalWithIntegerIdToPrincipalWithResourceId(principalIdMap map[int32]string, principalWithIntegerId string) (string, error) {
-	// There's input validation that principal attribute must start with "User:sa-" or "User:u-" or "User:pool-"  or "User:*"
+	// There's input validation that principal attribute must start with "User:sa-" or "User:u-" or "User:pool-" or "User:group-" or "User:*"
 
-	if principalWithIntegerId == "User:*" || strings.HasPrefix(principalWithIntegerId, "User:sa-") || strings.HasPrefix(principalWithIntegerId, "User:u-") || strings.HasPrefix(principalWithIntegerId, "User:pool-") {
+	if principalWithIntegerId == "User:*" || strings.HasPrefix(principalWithIntegerId, "User:sa-") || strings.HasPrefix(principalWithIntegerId, "User:u-") || strings.HasPrefix(principalWithIntegerId, "User:pool-" || strings.HasPrefix(principalWithIntegerId, "User:group-") {
 		return principalWithIntegerId, nil
 	}
 
