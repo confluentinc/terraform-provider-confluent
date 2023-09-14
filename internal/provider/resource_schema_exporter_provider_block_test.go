@@ -24,21 +24,7 @@ import (
 	"testing"
 )
 
-const (
-	schemaExporterResourceScenarioName        = "confluent_schema_exporter Resource Lifecycle"
-	scenarioStateSchemaExporterHasBeenCreated = "A new schema exporter has been just created"
-	scenarioStateSchemaExporterHasBeenUpdated = "A new schema exporter has been just updated"
-	createSchemaExporterUrlPath               = "/exporters"
-	readCreatedSchemaExporterUrlPath          = "/exporters/exporter1"
-	readCreatedSchemaExporterStatusUrlPath    = "/exporters/exporter1/status"
-	schemaExporterLabel                       = "confluent_schema_exporter.main"
-
-	testDestinationSchemaRegistryRestEndpoint = "https://psrc-5xgzx.us-east-2.aws.confluent.cloud"
-	testDestinationSchemaRegistryKey          = "foo2"
-	testDestinationSchemaRegistrySecret       = "bar2"
-)
-
-func TestAccSchemaExporter(t *testing.T) {
+func TestAccSchemaExporterWithEnhancedProviderBlock(t *testing.T) {
 	ctx := context.Background()
 
 	wiremockContainer, err := setupWiremock(ctx)
@@ -154,16 +140,8 @@ func TestAccSchemaExporter(t *testing.T) {
 		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
 		Steps: []resource.TestStep{
 			{
-				Config: schemaExporterResourceConfig(mockServerUrl),
+				Config: schemaExporterResourceConfigWithEnhancedProviderBlock(mockServerUrl),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(schemaExporterLabel, "schema_registry_cluster.#", "1"),
-					resource.TestCheckResourceAttr(schemaExporterLabel, "schema_registry_cluster.0.%", "1"),
-					resource.TestCheckResourceAttr(schemaExporterLabel, "schema_registry_cluster.0.id", testStreamGovernanceClusterId),
-					resource.TestCheckResourceAttr(schemaExporterLabel, "rest_endpoint", mockServerUrl),
-					resource.TestCheckResourceAttr(schemaExporterLabel, "credentials.#", "1"),
-					resource.TestCheckResourceAttr(schemaExporterLabel, "credentials.0.%", "2"),
-					resource.TestCheckResourceAttr(schemaExporterLabel, "credentials.0.key", testSchemaRegistryKey),
-					resource.TestCheckResourceAttr(schemaExporterLabel, "credentials.0.secret", testSchemaRegistrySecret),
 					resource.TestCheckResourceAttr(schemaExporterLabel, "name", "exporter1"),
 					resource.TestCheckResourceAttr(schemaExporterLabel, "context", "tc"),
 					resource.TestCheckResourceAttr(schemaExporterLabel, "context_type", "CUSTOM"),
@@ -179,16 +157,8 @@ func TestAccSchemaExporter(t *testing.T) {
 				),
 			},
 			{
-				Config: schemaExporterResourceUpdatedConfig(mockServerUrl),
+				Config: schemaExporterResourceUpdatedConfigWithEnhancedProviderBlock(mockServerUrl),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(schemaExporterLabel, "schema_registry_cluster.#", "1"),
-					resource.TestCheckResourceAttr(schemaExporterLabel, "schema_registry_cluster.0.%", "1"),
-					resource.TestCheckResourceAttr(schemaExporterLabel, "schema_registry_cluster.0.id", testStreamGovernanceClusterId),
-					resource.TestCheckResourceAttr(schemaExporterLabel, "rest_endpoint", mockServerUrl),
-					resource.TestCheckResourceAttr(schemaExporterLabel, "credentials.#", "1"),
-					resource.TestCheckResourceAttr(schemaExporterLabel, "credentials.0.%", "2"),
-					resource.TestCheckResourceAttr(schemaExporterLabel, "credentials.0.key", testSchemaRegistryKey),
-					resource.TestCheckResourceAttr(schemaExporterLabel, "credentials.0.secret", testSchemaRegistrySecret),
 					resource.TestCheckResourceAttr(schemaExporterLabel, "name", "exporter1"),
 					resource.TestCheckResourceAttr(schemaExporterLabel, "context", "tc-3"),
 					resource.TestCheckResourceAttr(schemaExporterLabel, "context_type", "CUSTOM"),
@@ -207,18 +177,15 @@ func TestAccSchemaExporter(t *testing.T) {
 	})
 }
 
-func schemaExporterResourceConfig(mockServerUrl string) string {
+func schemaExporterResourceConfigWithEnhancedProviderBlock(mockServerUrl string) string {
 	return fmt.Sprintf(`
- 	provider "confluent" {}
+ 	provider "confluent" {
+ 	    schema_registry_id = "%s"
+	    schema_registry_rest_endpoint = "%s" # optionally use SCHEMA_REGISTRY_REST_ENDPOINT env var
+	    schema_registry_api_key       = "%s"       # optionally use SCHEMA_REGISTRY_API_KEY env var
+	    schema_registry_api_secret = "%s"
+ 	}
  	resource "confluent_schema_exporter" "main" {
-        schema_registry_cluster {
-		  id = "%s"
-		}
-		rest_endpoint = "%s"
-		credentials {
-		  key    = "%s"
-		  secret = "%s"
-        }
 		name = "exporter1"
 		context = "tc"
 		context_type = "CUSTOM"    
@@ -237,18 +204,15 @@ func schemaExporterResourceConfig(mockServerUrl string) string {
 		testDestinationSchemaRegistryRestEndpoint, testDestinationSchemaRegistryKey, testDestinationSchemaRegistrySecret)
 }
 
-func schemaExporterResourceUpdatedConfig(mockServerUrl string) string {
+func schemaExporterResourceUpdatedConfigWithEnhancedProviderBlock(mockServerUrl string) string {
 	return fmt.Sprintf(`
- 	provider "confluent" {}
+ 	provider "confluent" {
+ 	    schema_registry_id = "%s"
+	    schema_registry_rest_endpoint = "%s" # optionally use SCHEMA_REGISTRY_REST_ENDPOINT env var
+	    schema_registry_api_key       = "%s"       # optionally use SCHEMA_REGISTRY_API_KEY env var
+	    schema_registry_api_secret = "%s"
+ 	}
  	resource "confluent_schema_exporter" "main" {
-        schema_registry_cluster {
-		  id = "%s"
-		}
-		rest_endpoint = "%s"
-		credentials {
-		  key    = "%s"
-		  secret = "%s"
-        }
 	    name = "exporter1"
 		context = "tc-3"
 		context_type = "CUSTOM"    

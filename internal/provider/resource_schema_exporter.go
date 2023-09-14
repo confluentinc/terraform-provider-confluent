@@ -38,6 +38,7 @@ const (
 	paramResetOnUpdate                    = "reset_on_update"
 	paramResetOnUpdateDefaultValue        = false
 	paramBasicAuthCredentialsSource       = "basic_auth_credentials_source"
+	paramBasicAuthCredentialsSourceValue  = "USER_INFO"
 	paramDestinationSchemaRegistryCluster = "destination_schema_registry_cluster"
 	basicAuthCredentialsSourceConfig      = "basic.auth.credentials.source"
 	schemaRegistryUrlConfig               = "schema.registry.url"
@@ -127,10 +128,6 @@ func destinationSchemaRegistryClusterBlockSchema() *schema.Schema {
 					Type:     schema.TypeString,
 					Required: true,
 				},
-				paramBasicAuthCredentialsSource: {
-					Type:     schema.TypeString,
-					Required: true,
-				},
 				paramCredentials: {
 					Type:      schema.TypeList,
 					Required:  true,
@@ -161,7 +158,7 @@ func destinationSchemaRegistryClusterBlockSchema() *schema.Schema {
 
 func constructDestinationSRClusterRequest(d *schema.ResourceData) map[string]string {
 	configs := convertToStringStringMap(d.Get(paramConfigs).(map[string]interface{}))
-	configs[basicAuthCredentialsSourceConfig] = extractStringValueFromBlock(d, paramDestinationSchemaRegistryCluster, paramBasicAuthCredentialsSource)
+	configs[basicAuthCredentialsSourceConfig] = paramBasicAuthCredentialsSourceValue
 	configs[schemaRegistryUrlConfig] = extractStringValueFromBlock(d, paramDestinationSchemaRegistryCluster, paramRestEndpoint)
 	destinationSRClusterApiKey := extractStringValueFromNestedBlock(d, paramDestinationSchemaRegistryCluster, paramCredentials, paramKey)
 	destinationSRClusterApiSecret := extractStringValueFromNestedBlock(d, paramDestinationSchemaRegistryCluster, paramCredentials, paramSecret)
@@ -330,14 +327,14 @@ func schemaExporterUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 	if d.HasChanges(paramContextType, paramContext, paramSubjectRenameFormat, paramSubjects, paramConfigs, paramDestinationSchemaRegistryCluster) {
 		subjects := convertToStringSlice(d.Get(paramSubjects).(*schema.Set).List())
 
-		re := sr.NewExporterUpdateRequest()
-		re.SetContext(d.Get(paramContext).(string))
-		re.SetContextType(d.Get(paramContextType).(string))
-		re.SetSubjectRenameFormat(d.Get(paramSubjectRenameFormat).(string))
-		re.SetSubjects(subjects)
-		re.SetConfig(constructDestinationSRClusterRequest(d))
+		req := sr.NewExporterUpdateRequest()
+		req.SetContext(d.Get(paramContext).(string))
+		req.SetContextType(d.Get(paramContextType).(string))
+		req.SetSubjectRenameFormat(d.Get(paramSubjectRenameFormat).(string))
+		req.SetSubjects(subjects)
+		req.SetConfig(constructDestinationSRClusterRequest(d))
 
-		request := c.apiClient.ExportersV1Api.UpdateExporterInfo(c.apiContext(ctx), name).ExporterUpdateRequest(*re)
+		request := c.apiClient.ExportersV1Api.UpdateExporterInfo(c.apiContext(ctx), name).ExporterUpdateRequest(*req)
 		requestJson, err := json.Marshal(request)
 		if err != nil {
 			return diag.Errorf("error updating Schema Exporter: error marshaling %#v to json: %s", request, createDescriptiveError(err))
@@ -418,9 +415,9 @@ func schemaExporterDelete(ctx context.Context, d *schema.ResourceData, meta inte
 	}
 
 	request := c.apiClient.ExportersV1Api.DeleteExporter(c.apiContext(ctx), name)
-	_, serviceErr := request.Execute()
-	if serviceErr != nil {
-		return diag.Errorf("error deleting Schema Exporter %q: %s", id, createDescriptiveError(serviceErr))
+	_, err = request.Execute()
+	if err != nil {
+		return diag.Errorf("error deleting Schema Exporter %q: %s", id, createDescriptiveError(err))
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished deleting Schema Exporter %q", id), map[string]interface{}{schemaExporterLoggingKey: id})
@@ -472,8 +469,7 @@ func setSchemaExporterAttributes(d *schema.ResourceData, clusterId string, expor
 	destinationSRClusterApiKey := extractStringValueFromNestedBlock(d, paramDestinationSchemaRegistryCluster, paramCredentials, paramKey)
 	destinationSRClusterApiSecret := extractStringValueFromNestedBlock(d, paramDestinationSchemaRegistryCluster, paramCredentials, paramSecret)
 	if err := d.Set(paramDestinationSchemaRegistryCluster, []interface{}{map[string]interface{}{
-		paramRestEndpoint:               configs[schemaRegistryUrlConfig],
-		paramBasicAuthCredentialsSource: configs[basicAuthCredentialsSourceConfig],
+		paramRestEndpoint: configs[schemaRegistryUrlConfig],
 		paramCredentials: []interface{}{map[string]interface{}{
 			paramKey:    destinationSRClusterApiKey,
 			paramSecret: destinationSRClusterApiSecret,

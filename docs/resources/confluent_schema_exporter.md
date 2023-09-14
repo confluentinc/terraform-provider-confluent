@@ -37,20 +37,15 @@ resource "confluent_schema_exporter" "main" {
   }
   
   name = "test-exporter"
-  context = "test-context"
-  context_type = "CUSTOM"
   subjects = ["foo"]
   
   destination_schema_registry_cluster {
-      rest_endpoint = "<destination sr url>"
-      basic_auth_credentials_source = "USER_INFO"
+      rest_endpoint = confluent_schema_registry_cluster.destination.rest_endpoint
       credentials {
-          key    = "<destination sr api key>"
-          secret = "<destination sr api secret>"
+          key    = "<Schema Registry API Key for confluent_schema_registry_cluster.destination>"
+          secret = "<Schema Registry API Secret for confluent_schema_registry_cluster.destination>"
       }
   }
-
-  reset_on_update = true
 }
 ```
 
@@ -66,20 +61,15 @@ provider "confluent" {
 
 resource "confluent_schema_exporter" "main" {
   name = "test-exporter"
-  context = "test-context"
-  context_type = "CUSTOM"
   subjects = ["foo"]
 
   destination_schema_registry_cluster {
-      rest_endpoint = "<destination sr url>"
-      basic_auth_credentials_source = "USER_INFO"
-      credentials {
-          key    = "<destination sr api key>"
-          secret = "<destination sr api secret>"
-      }
+    rest_endpoint = confluent_schema_registry_cluster.destination.rest_endpoint
+    credentials {
+      key    = "<Schema Registry API Key for confluent_schema_registry_cluster.destination>"
+      secret = "<Schema Registry API Secret for confluent_schema_registry_cluster.destination>"
+    }
   }
-
-  reset_on_update = true
 }
 ```
 
@@ -95,21 +85,20 @@ The following arguments are supported:
     - `key` - (Required String) The Schema Registry API Key.
     - `secret` - (Required String, Sensitive) The Schema Registry API Secret.
 - `name` - (Required String) Name of the Schema Exporter.
-- `context_type` - (Optional String) Context type of the exporter. One of `CUSTOM`, `NONE` or `AUTO` (default).
-- `context` - (Optional String) Customized context of the exporter if contextType equals `CUSTOM`.
-- `subjectRenameFormat` - (Optional String) Format string for the subject name in the destination cluster, which may contain ${subject} as a placeholder for the originating subject name. For example, dc_${subject} for the subject orders will map to the destination subject name dc_orders.
+- `context_type` - (Optional String) Context type of the exporter. Accepted values are: `CUSTOM`, `NONE` or `AUTO`. Defaults to `AUTO`.
+- `context` - (Optional String) Customized context of the exporter if `context_type` is set to `CUSTOM`.
+- `subject_rename_format` - (Optional String) Format string for the subject name in the destination cluster, which may contain `${subject}` as a placeholder for the originating subject name. For example, `dc_${subject}` for the subject orders will map to the destination subject name `dc_orders`.
 - `subjects` - (Optional List of Strings) Name of each exporter subject.
 - `destination_schema_registry_cluster` - (Required Configuration Block) supports the following:
   - `rest_endpoint` - (Required String) The REST endpoint of the destination Schema Registry cluster, for example, `https://pkc-00000.us-central1.gcp.confluent.cloud:443`).
-  - `basic_auth_credentials_source` - (Required String) Typically `USER_INFO`.
   - `credentials` (Required Configuration Block) supports the following:
     - `key` - (Required String) The Schema Registry API Key.
     - `secret` - (Required String, Sensitive) The Schema Registry API Secret.
 - `config` - (Optional Map) Block for custom *nonsensitive* configuration properties:
-  - `name` - (Required String) The configuration setting name, for example, `basic.auth.credentials.source`.
+  - `name` - (Required String) The configuration setting name.
   - `value` - (Required String) The configuration setting value.
-- `status` - (Optional String) The status of the schema exporter (one of `"RUNNING"`, `"PAUSED"`).
-- `reset_on_update` - (Optional Boolean) The flag to control whether to reset the exporter when updating configs. The default value is `False`
+- `status` - (Optional String) The status of the schema exporter. Accepted values are: `RUNNING` and `PAUSED`.
+- `reset_on_update` - (Optional Boolean) The flag to control whether to reset the exporter when updating configs. Defaults to `false`.
 
 ## Attributes Reference
 
@@ -129,7 +118,7 @@ You can import a Schema Exporter by using the Schema Registry cluster ID, Schema
 $ export IMPORT_SCHEMA_REGISTRY_API_KEY="<schema_registry_api_key>"
 $ export IMPORT_SCHEMA_REGISTRY_API_SECRET="<schema_registry_api_secret>"
 $ export IMPORT_SCHEMA_REGISTRY_REST_ENDPOINT="<schema_registry_rest_endpoint>"
-$ terraform import confluent_schema_exporter.main lsrc-8wrx70/exporter1
+$ terraform import confluent_schema_exporter.main lsrc-8wrx70/test-exporter
 ```
 
 !> **Warning:** Do not forget to delete terminal command history afterwards for security purposes.

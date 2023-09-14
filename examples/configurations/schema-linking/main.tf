@@ -346,7 +346,6 @@ resource "confluent_schema_exporter" "main" {
 
     destination_schema_registry_cluster {
       rest_endpoint = confluent_schema_registry_cluster.destination.rest_endpoint
-      basic_auth_credentials_source = "USER_INFO"
       credentials {
         key    = confluent_api_key.destination-schema-registry-api-key.id
         secret = confluent_api_key.destination-schema-registry-api-key.secret
