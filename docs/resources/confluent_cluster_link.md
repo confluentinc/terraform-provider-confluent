@@ -105,9 +105,6 @@ The following arguments are supported:
   - `credentials` (Required Configuration Block) supports the following:
     - `key` - (Required String) The Kafka API Key.
     - `secret` - (Required String, Sensitive) The Kafka API Secret.
-
--> **Note:** The `local_kafka_cluster`, `remote_kafka_cluster` configuration block and `link_mode = BIDIRECTIONAL` are in a [Preview lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
-
 - `link_mode` (Optional String) The mode of the cluster link. The supported values are `"DESTINATION"`, `"SOURCE"`, and `"BIDIRECTIONAL"`. Defaults to `"DESTINATION"`.
 - `connection_mode` (Optional String) The connection mode of the cluster link. The supported values are `"INBOUND"` and `"OUTBOUND"`. Defaults to `"OUTBOUND"`.
 - `config` - (Optional Map) The custom cluster link settings to set:
