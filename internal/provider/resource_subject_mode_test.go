@@ -15,7 +15,6 @@
 package provider
 
 import (
-	"context"
 	"fmt"
 	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
@@ -27,15 +26,7 @@ import (
 )
 
 func TestAccSubjectMode(t *testing.T) {
-	ctx := context.Background()
-
-	wiremockContainer, err := setupWiremock(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer wiremockContainer.Terminate(ctx)
-
-	mockSubjectModeTestServerUrl := wiremockContainer.URI
+	mockSubjectModeTestServerUrl := tc.wiremockUrl
 	confluentCloudBaseUrl := ""
 	wiremockClient := wiremock.NewClient(mockSubjectModeTestServerUrl)
 	// nolint:errcheck

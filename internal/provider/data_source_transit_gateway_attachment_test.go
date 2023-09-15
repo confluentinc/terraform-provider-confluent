@@ -15,7 +15,6 @@
 package provider
 
 import (
-	"context"
 	"fmt"
 	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
@@ -34,15 +33,7 @@ const (
 var fullTransitGatewayAttachmentDataSourceLabel = fmt.Sprintf("data.confluent_transit_gateway_attachment.%s", transitGatewayAttachmentDataSourceLabel)
 
 func TestAccDataSourceTransitGatewayAttachment(t *testing.T) {
-	ctx := context.Background()
-
-	wiremockContainer, err := setupWiremock(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer wiremockContainer.Terminate(ctx)
-
-	mockServerUrl := wiremockContainer.URI
+	mockServerUrl := tc.wiremockUrl
 	wiremockClient := wiremock.NewClient(mockServerUrl)
 	// nolint:errcheck
 	defer wiremockClient.Reset()

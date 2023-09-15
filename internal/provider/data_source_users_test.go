@@ -15,7 +15,6 @@
 package provider
 
 import (
-	"context"
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/walkerus/go-wiremock"
@@ -34,15 +33,7 @@ const (
 var userIds = []string{"u-1jjv21", "u-1jjv22", "u-1jjv23"}
 
 func TestAccDataSourceUsers(t *testing.T) {
-	ctx := context.Background()
-
-	wiremockContainer, err := setupWiremock(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer wiremockContainer.Terminate(ctx)
-
-	mockServerUrl := wiremockContainer.URI
+	mockServerUrl := tc.wiremockUrl
 	wiremockClient := wiremock.NewClient(mockServerUrl)
 	// nolint:errcheck
 	defer wiremockClient.Reset()

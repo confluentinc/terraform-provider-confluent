@@ -15,7 +15,6 @@
 package provider
 
 import (
-	"context"
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/walkerus/go-wiremock"
@@ -43,15 +42,7 @@ var fullSchemaRegistryClusterCompatibilityLevelResourceLabel = fmt.Sprintf("conf
 var updateSchemaRegistryClusterCompatibilityLevelPath = fmt.Sprintf("/config")
 
 func TestAccSchemaRegistryClusterCompatibilityLevelWithEnhancedProviderBlock(t *testing.T) {
-	ctx := context.Background()
-
-	wiremockContainer, err := setupWiremock(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer wiremockContainer.Terminate(ctx)
-
-	mockSchemaRegistryClusterCompatibilityLevelTestServerUrl := wiremockContainer.URI
+	mockSchemaRegistryClusterCompatibilityLevelTestServerUrl := tc.wiremockUrl
 	confluentCloudBaseUrl := ""
 	wiremockClient := wiremock.NewClient(mockSchemaRegistryClusterCompatibilityLevelTestServerUrl)
 	// nolint:errcheck

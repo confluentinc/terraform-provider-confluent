@@ -15,7 +15,6 @@
 package provider
 
 import (
-	"context"
 	"fmt"
 	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
@@ -58,15 +57,7 @@ var readKafkaTopicConfigPath = fmt.Sprintf("/kafka/v3/clusters/%s/topics/%s/conf
 var updateKafkaTopicConfigPath = fmt.Sprintf("/kafka/v3/clusters/%s/topics/%s/configs:alter", clusterId, topicName)
 
 func TestAccTopic(t *testing.T) {
-	ctx := context.Background()
-
-	wiremockContainer, err := setupWiremock(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer wiremockContainer.Terminate(ctx)
-
-	mockTopicTestServerUrl := wiremockContainer.URI
+	mockTopicTestServerUrl := tc.wiremockUrl
 	confluentCloudBaseUrl := ""
 	wiremockClient := wiremock.NewClient(mockTopicTestServerUrl)
 	// nolint:errcheck
@@ -245,7 +236,7 @@ func testAccCheckTopicDestroy(s *terraform.State, url string) error {
 			continue
 		}
 		deletedTopicId := rs.Primary.ID
-		_, response, err := c.apiClient.TopicV3Api.GetKafkaTopic(c.apiContext(context.Background()), clusterId, topicName).Execute()
+		_, response, err := c.apiClient.TopicV3Api.GetKafkaTopic(c.apiContext(tc.ctx), clusterId, topicName).Execute()
 		if response != nil && (response.StatusCode == http.StatusForbidden || response.StatusCode == http.StatusNotFound) {
 			return nil
 		} else if err == nil && deletedTopicId != "" {

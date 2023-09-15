@@ -15,7 +15,6 @@
 package provider
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/walkerus/go-wiremock"
@@ -44,15 +43,7 @@ const (
 )
 
 func TestAccKafkaApiKey(t *testing.T) {
-	ctx := context.Background()
-
-	wiremockContainer, err := setupWiremock(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer wiremockContainer.Terminate(ctx)
-
-	mockServerUrl := wiremockContainer.URI
+	mockServerUrl := tc.wiremockUrl
 	wiremockClient := wiremock.NewClient(mockServerUrl)
 	// nolint:errcheck
 	defer wiremockClient.Reset()
@@ -281,15 +272,7 @@ func TestAccKafkaApiKey(t *testing.T) {
 }
 
 func TestAccCloudApiKey(t *testing.T) {
-	ctx := context.Background()
-
-	wiremockContainer, err := setupWiremock(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer wiremockContainer.Terminate(ctx)
-
-	mockServerUrl := wiremockContainer.URI
+	mockServerUrl := tc.wiremockUrl
 	wiremockClient := wiremock.NewClient(mockServerUrl)
 	// nolint:errcheck
 	defer wiremockClient.Reset()
@@ -466,7 +449,7 @@ func testAccCheckApiKeyDestroy(s *terraform.State) error {
 			continue
 		}
 		deletedApiKeyId := rs.Primary.ID
-		req := c.apiKeysClient.APIKeysIamV2Api.GetIamV2ApiKey(c.apiKeysApiContext(context.Background()), deletedApiKeyId)
+		req := c.apiKeysClient.APIKeysIamV2Api.GetIamV2ApiKey(c.apiKeysApiContext(tc.ctx), deletedApiKeyId)
 		deletedApiKey, response, err := req.Execute()
 		if response != nil && (response.StatusCode == http.StatusNotFound) {
 			return nil

@@ -15,7 +15,6 @@
 package provider
 
 import (
-	"context"
 	"fmt"
 	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
@@ -42,15 +41,7 @@ const (
 )
 
 func TestAccConnector(t *testing.T) {
-	ctx := context.Background()
-
-	wiremockContainer, err := setupWiremock(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer wiremockContainer.Terminate(ctx)
-
-	mockServerUrl := wiremockContainer.URI
+	mockServerUrl := tc.wiremockUrl
 	wiremockClient := wiremock.NewClient(mockServerUrl)
 	// nolint:errcheck
 	defer wiremockClient.Reset()
@@ -280,7 +271,7 @@ func testAccCheckConnectorDestroy(s *terraform.State) error {
 		deletedConnectorName := rs.Primary.Attributes["config_nonsensitive.name"]
 		deletedConnectorEnvId := rs.Primary.Attributes["environment.0.id"]
 		deletedConnectorKafkaClusterId := rs.Primary.Attributes["kafka_cluster.0.id"]
-		req := c.connectClient.ConnectorsV1Api.ReadConnectv1Connector(c.connectApiContext(context.Background()), deletedConnectorName, deletedConnectorEnvId, deletedConnectorKafkaClusterId)
+		req := c.connectClient.ConnectorsV1Api.ReadConnectv1Connector(c.connectApiContext(tc.ctx), deletedConnectorName, deletedConnectorEnvId, deletedConnectorKafkaClusterId)
 		_, response, _ := req.Execute()
 		if isNonKafkaRestApiResourceNotFound(response) {
 			return nil

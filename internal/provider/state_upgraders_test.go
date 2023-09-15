@@ -15,7 +15,6 @@
 package provider
 
 import (
-	"context"
 	"reflect"
 	"testing"
 )
@@ -54,7 +53,7 @@ func testKafkaStateDataV1Empty() map[string]interface{} {
 
 func TestResourceExampleInstanceStateUpgradeV010(t *testing.T) {
 	expected := testKafkaStateDataV1()
-	actual, err := kafkaStateUpgradeV0(context.Background(), testKafkaStateDataV010(), nil)
+	actual, err := kafkaStateUpgradeV0(tc.ctx, testKafkaStateDataV010(), nil)
 	if err != nil {
 		t.Fatalf("error migrating state: %s", err)
 	}
@@ -66,7 +65,7 @@ func TestResourceExampleInstanceStateUpgradeV010(t *testing.T) {
 
 func TestResourceExampleInstanceStateUpgradeV011(t *testing.T) {
 	expected := testKafkaStateDataV1()
-	actual, err := kafkaStateUpgradeV0(context.Background(), testKafkaStateDataV011(), nil)
+	actual, err := kafkaStateUpgradeV0(tc.ctx, testKafkaStateDataV011(), nil)
 	if err != nil {
 		t.Fatalf("error migrating state: %s", err)
 	}
@@ -78,7 +77,7 @@ func TestResourceExampleInstanceStateUpgradeV011(t *testing.T) {
 
 func TestResourceExampleInstanceStateUpgradeV010Empty(t *testing.T) {
 	expected := testKafkaStateDataV1Empty()
-	actual, err := kafkaStateUpgradeV0(context.Background(), testKafkaStateDataV010Empty(), nil)
+	actual, err := kafkaStateUpgradeV0(tc.ctx, testKafkaStateDataV010Empty(), nil)
 	if err != nil {
 		t.Fatalf("error migrating state: %s", err)
 	}

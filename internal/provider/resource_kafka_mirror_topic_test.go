@@ -15,7 +15,6 @@
 package provider
 
 import (
-	"context"
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/walkerus/go-wiremock"
@@ -45,15 +44,7 @@ var deleteKafkaMirrorTopicPath = fmt.Sprintf("/kafka/v3/clusters/%s/topics/%s", 
 var pauseKafkaMirrorTopicPath = fmt.Sprintf("/kafka/v3/clusters/%s/links/%s/mirrors:pause", destinationClusterId, clusterLinkName)
 
 func TestAccKafkaMirrorTopic(t *testing.T) {
-	ctx := context.Background()
-
-	wiremockContainer, err := setupWiremock(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer wiremockContainer.Terminate(ctx)
-
-	mockKafkaMirrorTestServerUrl := wiremockContainer.URI
+	mockKafkaMirrorTestServerUrl := tc.wiremockUrl
 	confluentCloudBaseUrl := ""
 	wiremockClient := wiremock.NewClient(mockKafkaMirrorTestServerUrl)
 	// nolint:errcheck
@@ -267,7 +258,7 @@ func testAccCheckKafkaMirrorTopicDestroy(s *terraform.State, url string) error {
 			continue
 		}
 		deletedKafkaMirrorTopicId := rs.Primary.ID
-		_, response, err := c.apiClient.ClusterLinkingV3Api.ReadKafkaMirrorTopic(c.apiContext(context.Background()), destinationClusterId, clusterLinkName, kafkaMirrorTopicName).Execute()
+		_, response, err := c.apiClient.ClusterLinkingV3Api.ReadKafkaMirrorTopic(c.apiContext(tc.ctx), destinationClusterId, clusterLinkName, kafkaMirrorTopicName).Execute()
 		if response != nil && (response.StatusCode == http.StatusForbidden || response.StatusCode == http.StatusNotFound) {
 			return nil
 		} else if err == nil && deletedKafkaMirrorTopicId != "" {

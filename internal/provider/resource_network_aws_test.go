@@ -15,7 +15,6 @@
 package provider
 
 import (
-	"context"
 	"fmt"
 	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
@@ -57,15 +56,7 @@ var awsNetworkZones = []string{"use2-az1", "use2-az2", "use2-az3"}
 var awsNetworkUrlPath = fmt.Sprintf("/networking/v1/networks/%s", awsNetworkId)
 
 func TestAccAwsNetwork(t *testing.T) {
-	ctx := context.Background()
-
-	wiremockContainer, err := setupWiremock(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer wiremockContainer.Terminate(ctx)
-
-	mockServerUrl := wiremockContainer.URI
+	mockServerUrl := tc.wiremockUrl
 	wiremockClient := wiremock.NewClient(mockServerUrl)
 	// nolint:errcheck
 	defer wiremockClient.Reset()
@@ -229,7 +220,7 @@ func testAccCheckAwsNetworkDestroy(s *terraform.State) error {
 			continue
 		}
 		deletedAwsNetworkId := rs.Primary.ID
-		req := c.netClient.NetworksNetworkingV1Api.GetNetworkingV1Network(c.netApiContext(context.Background()), deletedAwsNetworkId).Environment(awsNetworkEnvironmentId)
+		req := c.netClient.NetworksNetworkingV1Api.GetNetworkingV1Network(c.netApiContext(tc.ctx), deletedAwsNetworkId).Environment(awsNetworkEnvironmentId)
 		deletedAwsNetwork, response, err := req.Execute()
 		if response != nil && response.StatusCode == http.StatusNotFound {
 			return nil

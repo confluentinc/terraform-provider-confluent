@@ -15,7 +15,6 @@
 package provider
 
 import (
-	"context"
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/walkerus/go-wiremock"
@@ -38,15 +37,7 @@ var deleteKafkaMirrorTopicWithPrefixPath = fmt.Sprintf("/kafka/v3/clusters/%s/to
 var stopKafkaMirrorTopicPath = fmt.Sprintf("/kafka/v3/clusters/%s/links/%s/mirrors:failover", destinationClusterId, clusterLinkName)
 
 func TestAccKafkaMirrorTopicWithPrefix(t *testing.T) {
-	ctx := context.Background()
-
-	wiremockContainer, err := setupWiremock(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer wiremockContainer.Terminate(ctx)
-
-	mockKafkaMirrorTestServerUrl := wiremockContainer.URI
+	mockKafkaMirrorTestServerUrl := tc.wiremockUrl
 	confluentCloudBaseUrl := ""
 	wiremockClient := wiremock.NewClient(mockKafkaMirrorTestServerUrl)
 	// nolint:errcheck

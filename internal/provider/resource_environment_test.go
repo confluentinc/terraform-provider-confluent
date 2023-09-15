@@ -15,7 +15,6 @@
 package provider
 
 import (
-	"context"
 	"fmt"
 	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
@@ -39,15 +38,7 @@ const (
 var contentTypeJSONHeader = map[string]string{"Content-Type": "application/json"}
 
 func TestAccEnvironment(t *testing.T) {
-	ctx := context.Background()
-
-	wiremockContainer, err := setupWiremock(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer wiremockContainer.Terminate(ctx)
-
-	mockServerUrl := wiremockContainer.URI
+	mockServerUrl := tc.wiremockUrl
 	wiremockClient := wiremock.NewClient(mockServerUrl)
 	// nolint:errcheck
 	defer wiremockClient.Reset()
@@ -174,7 +165,7 @@ func testAccCheckEnvironmentDestroy(s *terraform.State) error {
 			continue
 		}
 		deletedEnvironmentId := rs.Primary.ID
-		req := c.orgClient.EnvironmentsOrgV2Api.GetOrgV2Environment(c.orgApiContext(context.Background()), deletedEnvironmentId)
+		req := c.orgClient.EnvironmentsOrgV2Api.GetOrgV2Environment(c.orgApiContext(tc.ctx), deletedEnvironmentId)
 		deletedEnvironment, response, err := req.Execute()
 		if response != nil && (response.StatusCode == http.StatusForbidden || response.StatusCode == http.StatusNotFound) {
 			// v2/environments/{nonExistentEnvId/deletedEnvID} returns http.StatusForbidden instead of http.StatusNotFound

@@ -15,7 +15,6 @@
 package provider
 
 import (
-	"context"
 	"fmt"
 	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
@@ -33,15 +32,7 @@ const (
 var fullTopicDataSourceLabel = fmt.Sprintf("data.confluent_kafka_topic.%s", topicResourceLabel)
 
 func TestAccDataSourceTopic(t *testing.T) {
-	ctx := context.Background()
-
-	wiremockContainer, err := setupWiremock(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer wiremockContainer.Terminate(ctx)
-
-	mockTopicTestServerUrl := wiremockContainer.URI
+	mockTopicTestServerUrl := tc.wiremockUrl
 	confluentCloudBaseUrl := ""
 	wiremockClient := wiremock.NewClient(mockTopicTestServerUrl)
 	// nolint:errcheck

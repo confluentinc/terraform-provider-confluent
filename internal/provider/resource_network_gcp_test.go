@@ -15,7 +15,6 @@
 package provider
 
 import (
-	"context"
 	"fmt"
 	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
@@ -57,15 +56,7 @@ const (
 var gcpNetworkUrlPath = fmt.Sprintf("/networking/v1/networks/%s", gcpNetworkId)
 
 func TestAccGcpNetwork(t *testing.T) {
-	ctx := context.Background()
-
-	wiremockContainer, err := setupWiremock(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer wiremockContainer.Terminate(ctx)
-
-	mockServerUrl := wiremockContainer.URI
+	mockServerUrl := tc.wiremockUrl
 	wiremockClient := wiremock.NewClient(mockServerUrl)
 	// nolint:errcheck
 	defer wiremockClient.Reset()
@@ -225,7 +216,7 @@ func testAccCheckGcpNetworkDestroy(s *terraform.State) error {
 			continue
 		}
 		deletedGcpNetworkId := rs.Primary.ID
-		req := c.netClient.NetworksNetworkingV1Api.GetNetworkingV1Network(c.netApiContext(context.Background()), deletedGcpNetworkId).Environment(gcpNetworkEnvironmentId)
+		req := c.netClient.NetworksNetworkingV1Api.GetNetworkingV1Network(c.netApiContext(tc.ctx), deletedGcpNetworkId).Environment(gcpNetworkEnvironmentId)
 		deletedGcpNetwork, response, err := req.Execute()
 		if response != nil && response.StatusCode == http.StatusNotFound {
 			return nil
