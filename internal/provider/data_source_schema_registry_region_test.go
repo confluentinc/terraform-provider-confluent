@@ -15,6 +15,7 @@
 package provider
 
 import (
+	"context"
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/walkerus/go-wiremock"
@@ -37,7 +38,15 @@ const (
 var fullSchemaRegistryRegionDataSourceLabel = fmt.Sprintf("data.confluent_schema_registry_region.%s", schemaRegistryRegionResourceLabel)
 
 func TestAccDataSourceSchemaRegistryRegion(t *testing.T) {
-	mockServerUrl := tc.wiremockUrl
+	ctx := context.Background()
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
+
+	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
 	// nolint:errcheck
 	defer wiremockClient.Reset()

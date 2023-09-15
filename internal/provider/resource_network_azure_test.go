@@ -15,6 +15,7 @@
 package provider
 
 import (
+	"context"
 	"fmt"
 	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
@@ -56,7 +57,15 @@ const (
 var azureNetworkUrlPath = fmt.Sprintf("/networking/v1/networks/%s", azureNetworkId)
 
 func TestAccAzureNetwork(t *testing.T) {
-	mockServerUrl := tc.wiremockUrl
+	ctx := context.Background()
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
+
+	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
 	// nolint:errcheck
 	defer wiremockClient.Reset()
@@ -218,7 +227,7 @@ func testAccCheckAzureNetworkDestroy(s *terraform.State) error {
 			continue
 		}
 		deletedAzureNetworkId := rs.Primary.ID
-		req := c.netClient.NetworksNetworkingV1Api.GetNetworkingV1Network(c.netApiContext(tc.ctx), deletedAzureNetworkId).Environment(azureNetworkEnvironmentId)
+		req := c.netClient.NetworksNetworkingV1Api.GetNetworkingV1Network(c.netApiContext(context.Background()), deletedAzureNetworkId).Environment(azureNetworkEnvironmentId)
 		deletedAzureNetwork, response, err := req.Execute()
 		if response != nil && response.StatusCode == http.StatusNotFound {
 			return nil

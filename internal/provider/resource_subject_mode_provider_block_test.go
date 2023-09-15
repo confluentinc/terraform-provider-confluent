@@ -15,6 +15,7 @@
 package provider
 
 import (
+	"context"
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/walkerus/go-wiremock"
@@ -42,7 +43,15 @@ var fullSubjectModeResourceLabel = fmt.Sprintf("confluent_subject_mode.%s", test
 var updateSubjectModePath = fmt.Sprintf("/mode/%s", testSubjectName)
 
 func TestAccSubjectModeWithEnhancedProviderBlock(t *testing.T) {
-	mockSubjectModeTestServerUrl := tc.wiremockUrl
+	ctx := context.Background()
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
+
+	mockSubjectModeTestServerUrl := wiremockContainer.URI
 	confluentCloudBaseUrl := ""
 	wiremockClient := wiremock.NewClient(mockSubjectModeTestServerUrl)
 	// nolint:errcheck

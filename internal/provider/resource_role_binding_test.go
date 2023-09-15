@@ -15,6 +15,7 @@
 package provider
 
 import (
+	"context"
 	"fmt"
 	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
@@ -39,7 +40,15 @@ const (
 )
 
 func TestAccRoleBinding(t *testing.T) {
-	mockServerUrl := tc.wiremockUrl
+	ctx := context.Background()
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
+
+	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
 	// nolint:errcheck
 	defer wiremockClient.Reset()
@@ -129,7 +138,7 @@ func testAccCheckRoleBindingDestroy(s *terraform.State) error {
 			continue
 		}
 		deletedRoleBindingId := rs.Primary.ID
-		req := c.mdsClient.RoleBindingsIamV2Api.GetIamV2RoleBinding(c.mdsApiContext(tc.ctx), deletedRoleBindingId)
+		req := c.mdsClient.RoleBindingsIamV2Api.GetIamV2RoleBinding(c.mdsApiContext(context.Background()), deletedRoleBindingId)
 		deletedRoleBinding, response, err := req.Execute()
 		if response != nil && (response.StatusCode == http.StatusForbidden || response.StatusCode == http.StatusNotFound) {
 			return nil

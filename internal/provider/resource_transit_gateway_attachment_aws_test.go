@@ -15,6 +15,7 @@
 package provider
 
 import (
+	"context"
 	"fmt"
 	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
@@ -49,7 +50,15 @@ var awsTransitGatewayAttachmentRoutes = []string{
 var awsTransitGatewayAttachmentUrlPath = fmt.Sprintf("/networking/v1/transit-gateway-attachments/%s", awsTransitGatewayAttachmentId)
 
 func TestAccAwsTransitGatewayAttachmentAccess(t *testing.T) {
-	mockServerUrl := tc.wiremockUrl
+	ctx := context.Background()
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
+
+	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
 	// nolint:errcheck
 	defer wiremockClient.Reset()
@@ -184,7 +193,7 @@ func testAccCheckAwsTransitGatewayAttachmentDestroy(s *terraform.State) error {
 			continue
 		}
 		deletedTransitGatewayAttachmentId := rs.Primary.ID
-		req := c.netClient.TransitGatewayAttachmentsNetworkingV1Api.GetNetworkingV1TransitGatewayAttachment(c.netApiContext(tc.ctx), deletedTransitGatewayAttachmentId).Environment(awsTransitGatewayAttachmentEnvironmentId)
+		req := c.netClient.TransitGatewayAttachmentsNetworkingV1Api.GetNetworkingV1TransitGatewayAttachment(c.netApiContext(context.Background()), deletedTransitGatewayAttachmentId).Environment(awsTransitGatewayAttachmentEnvironmentId)
 		deletedTransitGatewayAttachment, response, err := req.Execute()
 		if response != nil && response.StatusCode == http.StatusNotFound {
 			return nil

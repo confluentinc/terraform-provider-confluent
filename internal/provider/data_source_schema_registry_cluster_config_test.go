@@ -15,6 +15,7 @@
 package provider
 
 import (
+	"context"
 	"fmt"
 	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
@@ -33,7 +34,15 @@ const (
 var fullSchemaRegistryClusterCompatibilityLevelDataSourceLabel = fmt.Sprintf("data.confluent_schema_registry_cluster_config.%s", testSchemaResourceLabel)
 
 func TestAccDataSchemaRegistryClusterCompatibilityLevelSchema(t *testing.T) {
-	mockSchemaTestServerUrl := tc.wiremockUrl
+	ctx := context.Background()
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
+
+	mockSchemaTestServerUrl := wiremockContainer.URI
 	confluentCloudBaseUrl := ""
 	wiremockClient := wiremock.NewClient(mockSchemaTestServerUrl)
 	// nolint:errcheck

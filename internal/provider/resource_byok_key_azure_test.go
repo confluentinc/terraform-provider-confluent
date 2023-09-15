@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -23,7 +24,15 @@ const (
 )
 
 func TestAccAzureBYOKKey(t *testing.T) {
-	mockServerUrl := tc.wiremockUrl
+	ctx := context.Background()
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
+
+	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
 	// nolint:errcheck
 	defer wiremockClient.Reset()
@@ -103,7 +112,7 @@ func testAccCheckByokKeyDestroy(s *terraform.State) error {
 			continue
 		}
 		deletedKeyId := rs.Primary.ID
-		req := c.byokClient.KeysByokV1Api.GetByokV1Key(c.byokApiContext(tc.ctx), deletedKeyId)
+		req := c.byokClient.KeysByokV1Api.GetByokV1Key(c.byokApiContext(context.Background()), deletedKeyId)
 		deletedKey, response, err := req.Execute()
 		if response != nil && response.StatusCode == http.StatusNotFound {
 			return nil

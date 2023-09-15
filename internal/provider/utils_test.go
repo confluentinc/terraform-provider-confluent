@@ -15,6 +15,7 @@
 package provider
 
 import (
+	"context"
 	"reflect"
 	"testing"
 )
@@ -37,7 +38,7 @@ func testKafkaClusterBlockStateDataV1() map[string]interface{} {
 
 func TestKafkaAclResourceStateUpgradeV0(t *testing.T) {
 	expected := testKafkaClusterBlockStateDataV1()
-	actual, err := kafkaClusterBlockStateUpgradeV0(tc.ctx, testKafkaClusterBlockStateDataV0(), nil)
+	actual, err := kafkaClusterBlockStateUpgradeV0(context.Background(), testKafkaClusterBlockStateDataV0(), nil)
 	if err != nil {
 		t.Fatalf("error migrating state: %s", err)
 	}

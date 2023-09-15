@@ -15,6 +15,7 @@
 package provider
 
 import (
+	"context"
 	"fmt"
 	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
@@ -38,7 +39,15 @@ const (
 )
 
 func TestAccIdentityProvider(t *testing.T) {
-	mockServerUrl := tc.wiremockUrl
+	ctx := context.Background()
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
+
+	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
 	// nolint:errcheck
 	defer wiremockClient.Reset()
@@ -171,7 +180,7 @@ func testAccCheckIdentityProviderDestroy(s *terraform.State) error {
 			continue
 		}
 		deletedIdentityProviderId := rs.Primary.ID
-		req := c.oidcClient.IdentityProvidersIamV2Api.GetIamV2IdentityProvider(c.oidcApiContext(tc.ctx), deletedIdentityProviderId)
+		req := c.oidcClient.IdentityProvidersIamV2Api.GetIamV2IdentityProvider(c.oidcApiContext(context.Background()), deletedIdentityProviderId)
 		deletedIdentityProvider, response, err := req.Execute()
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(response)
 		if isResourceNotFound {

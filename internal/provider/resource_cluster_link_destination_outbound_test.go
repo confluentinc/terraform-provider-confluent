@@ -15,6 +15,7 @@
 package provider
 
 import (
+	"context"
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/walkerus/go-wiremock"
@@ -64,7 +65,15 @@ var readClusterLinkConfigPath = fmt.Sprintf("/kafka/v3/clusters/%s/links/%s/conf
 var updateClusterLinkConfigPath = fmt.Sprintf("/kafka/v3/clusters/%s/links/%s/configs:alter", destinationClusterId, clusterLinkName)
 
 func TestAccClusterLinkDestinationOutbound(t *testing.T) {
-	mockClusterLinkTestServerUrl := tc.wiremockUrl
+	ctx := context.Background()
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
+
+	mockClusterLinkTestServerUrl := wiremockContainer.URI
 	confluentCloudBaseUrl := ""
 	wiremockClient := wiremock.NewClient(mockClusterLinkTestServerUrl)
 	// nolint:errcheck

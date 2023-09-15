@@ -15,6 +15,7 @@
 package provider
 
 import (
+	"context"
 	"fmt"
 	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
@@ -46,7 +47,15 @@ var awsPeeringRoutes = []string{
 var awsPeeringUrlPath = fmt.Sprintf("/networking/v1/peerings/%s", awsPeeringId)
 
 func TestAccAwsPeeringAccess(t *testing.T) {
-	mockServerUrl := tc.wiremockUrl
+	ctx := context.Background()
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
+
+	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
 	// nolint:errcheck
 	defer wiremockClient.Reset()
@@ -200,7 +209,7 @@ func testAccCheckAwsPeeringDestroy(s *terraform.State) error {
 			continue
 		}
 		deletedPeeringId := rs.Primary.ID
-		req := c.netClient.PeeringsNetworkingV1Api.GetNetworkingV1Peering(c.netApiContext(tc.ctx), deletedPeeringId).Environment(awsPeeringEnvironmentId)
+		req := c.netClient.PeeringsNetworkingV1Api.GetNetworkingV1Peering(c.netApiContext(context.Background()), deletedPeeringId).Environment(awsPeeringEnvironmentId)
 		deletedPeering, response, err := req.Execute()
 		if response != nil && response.StatusCode == http.StatusNotFound {
 			return nil

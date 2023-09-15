@@ -15,6 +15,7 @@
 package provider
 
 import (
+	"context"
 	"fmt"
 	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
@@ -41,7 +42,15 @@ const (
 var awsPlaUrlPath = fmt.Sprintf("/networking/v1/private-link-accesses/%s", awsPlaId)
 
 func TestAccAwsPrivateLinkAccess(t *testing.T) {
-	mockServerUrl := tc.wiremockUrl
+	ctx := context.Background()
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
+
+	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
 	// nolint:errcheck
 	defer wiremockClient.Reset()
@@ -187,7 +196,7 @@ func testAccCheckAwsPlaDestroy(s *terraform.State) error {
 			continue
 		}
 		deletedPrivateLinkAccessId := rs.Primary.ID
-		req := c.netClient.PrivateLinkAccessesNetworkingV1Api.GetNetworkingV1PrivateLinkAccess(c.netApiContext(tc.ctx), deletedPrivateLinkAccessId).Environment(awsPlaEnvironmentId)
+		req := c.netClient.PrivateLinkAccessesNetworkingV1Api.GetNetworkingV1PrivateLinkAccess(c.netApiContext(context.Background()), deletedPrivateLinkAccessId).Environment(awsPlaEnvironmentId)
 		deletedPrivateLinkAccess, response, err := req.Execute()
 		if response != nil && response.StatusCode == http.StatusNotFound {
 			return nil

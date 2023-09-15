@@ -15,6 +15,7 @@
 package provider
 
 import (
+	"context"
 	"fmt"
 	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
@@ -44,7 +45,15 @@ const (
 var schemaRegistryClusterUrlPath = fmt.Sprintf("/srcm/v2/clusters/%s", schemaRegistryClusterId)
 
 func TestAccSchemaRegistryCluster(t *testing.T) {
-	mockServerUrl := tc.wiremockUrl
+	ctx := context.Background()
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
+
+	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
 	// nolint:errcheck
 	defer wiremockClient.Reset()
@@ -162,7 +171,7 @@ func testAccCheckSchemaRegistryClusterDestroy(s *terraform.State) error {
 			continue
 		}
 		deletedSchemaRegistryClusterId := rs.Primary.ID
-		req := c.srcmClient.ClustersSrcmV2Api.GetSrcmV2Cluster(c.srcmApiContext(tc.ctx), deletedSchemaRegistryClusterId).Environment(schemaRegistryClusterEnvironmentId)
+		req := c.srcmClient.ClustersSrcmV2Api.GetSrcmV2Cluster(c.srcmApiContext(context.Background()), deletedSchemaRegistryClusterId).Environment(schemaRegistryClusterEnvironmentId)
 		deletedSchemaRegistryCluster, response, err := req.Execute()
 		if response != nil && response.StatusCode == http.StatusForbidden {
 			return nil

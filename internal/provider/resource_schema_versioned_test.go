@@ -15,6 +15,7 @@
 package provider
 
 import (
+	"context"
 	"fmt"
 	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
@@ -69,7 +70,15 @@ var readLatestSchemaPath = fmt.Sprintf("/subjects/%s/versions/latest", testSubje
 var deleteSchemaPath = fmt.Sprintf("/subjects/%s/versions/%s", testSubjectName, strconv.Itoa(testSchemaVersion))
 
 func TestAccVersionedSchema(t *testing.T) {
-	mockSchemaTestServerUrl := tc.wiremockUrl
+	ctx := context.Background()
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
+
+	mockSchemaTestServerUrl := wiremockContainer.URI
 	confluentCloudBaseUrl := ""
 	wiremockClient := wiremock.NewClient(mockSchemaTestServerUrl)
 	// nolint:errcheck
@@ -247,7 +256,7 @@ func testAccCheckSchemaDestroy(s *terraform.State, url string) error {
 			continue
 		}
 		deletedSchemaId := rs.Primary.ID
-		schemaRegistrySchemas, _, err := c.apiClient.SchemasV1Api.GetSchemas(c.apiContext(tc.ctx)).Execute()
+		schemaRegistrySchemas, _, err := c.apiClient.SchemasV1Api.GetSchemas(c.apiContext(context.Background())).Execute()
 		_, exists := findSchemaById(schemaRegistrySchemas, strconv.Itoa(testSchemaIdentifier), testSubjectName)
 		if err == nil {
 			if exists {

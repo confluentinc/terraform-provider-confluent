@@ -15,6 +15,7 @@
 package provider
 
 import (
+	"context"
 	"fmt"
 	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
@@ -45,7 +46,15 @@ var createKafkaAclPath = fmt.Sprintf("/kafka/v3/clusters/%s/acls", clusterId)
 var readKafkaAclPath = fmt.Sprintf("/kafka/v3/clusters/%s/acls?host=%s&operation=%s&pattern_type=%s&permission=%s&principal=%s&resource_name=%s&resource_type=%s", clusterId, aclHost, aclOperation, aclPatternType, aclPermission, aclPrincipalWithResourceId, aclResourceName, aclResourceType)
 
 func TestAccAcls(t *testing.T) {
-	mockAclTestServerUrl := tc.wiremockUrl
+	ctx := context.Background()
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
+
+	mockAclTestServerUrl := wiremockContainer.URI
 	confluentCloudBaseUrl := ""
 	wiremockClient := wiremock.NewClient(mockAclTestServerUrl)
 	// nolint:errcheck
@@ -177,7 +186,7 @@ func testAccCheckAclDestroy(s *terraform.State, url string) error {
 			continue
 		}
 		deletedAclId := rs.Primary.ID
-		aclList, _, err := c.apiClient.ACLV3Api.GetKafkaAcls(c.apiContext(tc.ctx), clusterId).ResourceType(aclResourceType).ResourceName(aclResourceName).PatternType(aclPatternType).Principal(aclPrincipalWithResourceId).Host(aclHost).Operation(aclOperation).Permission(aclPermission).Execute()
+		aclList, _, err := c.apiClient.ACLV3Api.GetKafkaAcls(c.apiContext(context.Background()), clusterId).ResourceType(aclResourceType).ResourceName(aclResourceName).PatternType(aclPatternType).Principal(aclPrincipalWithResourceId).Host(aclHost).Operation(aclOperation).Permission(aclPermission).Execute()
 
 		if len(aclList.Data) == 0 {
 			return nil

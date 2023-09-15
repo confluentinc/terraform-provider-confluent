@@ -15,6 +15,7 @@
 package provider
 
 import (
+	"context"
 	"fmt"
 	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
@@ -49,7 +50,15 @@ const (
 var kafkaClientQuotaPrincipals = []string{"sa-rv1vo7", "sa-jzgzgq"}
 
 func TestAccKafkaClientQuota(t *testing.T) {
-	mockServerUrl := tc.wiremockUrl
+	ctx := context.Background()
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
+
+	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
 	// nolint:errcheck
 	defer wiremockClient.Reset()
@@ -201,7 +210,7 @@ func testAccCheckKafkaClientQuotaDestroy(s *terraform.State) error {
 			continue
 		}
 		deletedKafkaClientQuotaId := rs.Primary.ID
-		req := c.quotasClient.ClientQuotasKafkaQuotasV1Api.GetKafkaQuotasV1ClientQuota(c.quotasApiContext(tc.ctx), deletedKafkaClientQuotaId)
+		req := c.quotasClient.ClientQuotasKafkaQuotasV1Api.GetKafkaQuotasV1ClientQuota(c.quotasApiContext(context.Background()), deletedKafkaClientQuotaId)
 		deletedKafkaClientQuota, response, err := req.Execute()
 		if response != nil && (response.StatusCode == http.StatusForbidden || response.StatusCode == http.StatusNotFound) {
 			// v2/service-accounts/{nonExistentKafkaClientQuotaId/deletedKafkaClientQuotaID} returns http.StatusForbidden instead of http.StatusNotFound

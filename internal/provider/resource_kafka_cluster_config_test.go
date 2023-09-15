@@ -15,6 +15,7 @@
 package provider
 
 import (
+	"context"
 	"fmt"
 	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
@@ -50,7 +51,15 @@ var readKafkaConfigPath = fmt.Sprintf("/kafka/v3/clusters/%s/broker-configs", cl
 var updateKafkaConfigPath = fmt.Sprintf("/kafka/v3/clusters/%s/broker-configs:alter", clusterId)
 
 func TestAccClusterConfig(t *testing.T) {
-	mockConfigTestServerUrl := tc.wiremockUrl
+	ctx := context.Background()
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
+
+	mockConfigTestServerUrl := wiremockContainer.URI
 	confluentCloudBaseUrl := ""
 	wiremockClient := wiremock.NewClient(mockConfigTestServerUrl)
 	// nolint:errcheck

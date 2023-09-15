@@ -15,6 +15,7 @@
 package provider
 
 import (
+	"context"
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/walkerus/go-wiremock"
@@ -42,7 +43,15 @@ var fullSubjectCompatibilityLevelResourceLabel = fmt.Sprintf("confluent_subject_
 var updateSubjectCompatibilityLevelPath = fmt.Sprintf("/config/%s", testSubjectName)
 
 func TestAccSubjectCompatibilityLevelWithEnhancedProviderBlock(t *testing.T) {
-	mockSubjectCompatibilityLevelTestServerUrl := tc.wiremockUrl
+	ctx := context.Background()
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
+
+	mockSubjectCompatibilityLevelTestServerUrl := wiremockContainer.URI
 	confluentCloudBaseUrl := ""
 	wiremockClient := wiremock.NewClient(mockSubjectCompatibilityLevelTestServerUrl)
 	// nolint:errcheck

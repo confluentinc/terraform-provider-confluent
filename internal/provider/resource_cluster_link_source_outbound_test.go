@@ -15,6 +15,7 @@
 package provider
 
 import (
+	"context"
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/walkerus/go-wiremock"
@@ -31,7 +32,15 @@ var readClusterLinkSourceOutboundPath = fmt.Sprintf("/kafka/v3/clusters/%s/links
 var readClusterLinkSourceOutboundConfigPath = fmt.Sprintf("/kafka/v3/clusters/%s/links/%s/configs", sourceClusterId, clusterLinkName)
 
 func TestAccClusterLinkSourceOutbound(t *testing.T) {
-	mockClusterLinkTestServerUrl := tc.wiremockUrl
+	ctx := context.Background()
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
+
+	mockClusterLinkTestServerUrl := wiremockContainer.URI
 	confluentCloudBaseUrl := ""
 	wiremockClient := wiremock.NewClient(mockClusterLinkTestServerUrl)
 	// nolint:errcheck
@@ -208,7 +217,7 @@ func testAccCheckClusterLinkSourceDestroy(s *terraform.State, url string) error 
 			continue
 		}
 		deletedClusterLinkId := rs.Primary.ID
-		_, response, err := c.apiClient.ClusterLinkingV3Api.GetKafkaLink(c.apiContext(tc.ctx), sourceClusterId, clusterLinkName).Execute()
+		_, response, err := c.apiClient.ClusterLinkingV3Api.GetKafkaLink(c.apiContext(context.Background()), sourceClusterId, clusterLinkName).Execute()
 		if response != nil && (response.StatusCode == http.StatusForbidden || response.StatusCode == http.StatusNotFound) {
 			return nil
 		} else if err == nil && deletedClusterLinkId != "" {
