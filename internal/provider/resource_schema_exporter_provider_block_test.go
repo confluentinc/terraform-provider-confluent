@@ -150,7 +150,7 @@ func TestAccSchemaExporterWithEnhancedProviderBlock(t *testing.T) {
 					resource.TestCheckResourceAttr(schemaExporterLabel, "subjects.0", "foo"),
 					resource.TestCheckResourceAttr(schemaExporterLabel, fmt.Sprintf("%s.%%", paramConfigs), "0"),
 					resource.TestCheckResourceAttr(schemaExporterLabel, "destination_schema_registry_cluster.#", "1"),
-					resource.TestCheckResourceAttr(schemaExporterLabel, "destination_schema_registry_cluster.0.rest_endpoint", testDestinationSchemaRegistryRestEndpoint),
+					resource.TestCheckResourceAttr(schemaExporterLabel, "destination_schema_registry_cluster.0.rest_endpoint", testOriginalDestinationSchemaRegistryRestEndpoint),
 					resource.TestCheckResourceAttr(schemaExporterLabel, "destination_schema_registry_cluster.0.credentials.#", "1"),
 					resource.TestCheckResourceAttr(schemaExporterLabel, "destination_schema_registry_cluster.0.credentials.0.key", testDestinationSchemaRegistryKey),
 					resource.TestCheckResourceAttr(schemaExporterLabel, "destination_schema_registry_cluster.0.credentials.0.secret", testDestinationSchemaRegistrySecret),
@@ -201,7 +201,7 @@ func schemaExporterResourceConfigWithEnhancedProviderBlock(mockServerUrl string)
 	}
 
  	`, testStreamGovernanceClusterId, mockServerUrl, testSchemaRegistryKey, testSchemaRegistrySecret,
-		testDestinationSchemaRegistryRestEndpoint, testDestinationSchemaRegistryKey, testDestinationSchemaRegistrySecret)
+		testOriginalDestinationSchemaRegistryRestEndpoint, testDestinationSchemaRegistryKey, testDestinationSchemaRegistrySecret)
 }
 
 func schemaExporterResourceUpdatedConfigWithEnhancedProviderBlock(mockServerUrl string) string {

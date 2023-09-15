@@ -33,9 +33,10 @@ const (
 	readCreatedSchemaExporterStatusUrlPath    = "/exporters/exporter1/status"
 	schemaExporterLabel                       = "confluent_schema_exporter.main"
 
-	testDestinationSchemaRegistryRestEndpoint = "https://psrc-5xgzx.us-east-2.aws.confluent.cloud"
-	testDestinationSchemaRegistryKey          = "foo2"
-	testDestinationSchemaRegistrySecret       = "bar2"
+	testOriginalDestinationSchemaRegistryRestEndpoint = "https://psrc-4xgzx.us-east-2.aws.confluent.cloud"
+	testDestinationSchemaRegistryRestEndpoint         = "https://psrc-5xgzx.us-east-2.aws.confluent.cloud"
+	testDestinationSchemaRegistryKey                  = "foo2"
+	testDestinationSchemaRegistrySecret               = "bar2"
 )
 
 func TestAccSchemaExporter(t *testing.T) {
@@ -172,7 +173,7 @@ func TestAccSchemaExporter(t *testing.T) {
 					resource.TestCheckResourceAttr(schemaExporterLabel, "subjects.0", "foo"),
 					resource.TestCheckResourceAttr(schemaExporterLabel, fmt.Sprintf("%s.%%", paramConfigs), "0"),
 					resource.TestCheckResourceAttr(schemaExporterLabel, "destination_schema_registry_cluster.#", "1"),
-					resource.TestCheckResourceAttr(schemaExporterLabel, "destination_schema_registry_cluster.0.rest_endpoint", testDestinationSchemaRegistryRestEndpoint),
+					resource.TestCheckResourceAttr(schemaExporterLabel, "destination_schema_registry_cluster.0.rest_endpoint", testOriginalDestinationSchemaRegistryRestEndpoint),
 					resource.TestCheckResourceAttr(schemaExporterLabel, "destination_schema_registry_cluster.0.credentials.#", "1"),
 					resource.TestCheckResourceAttr(schemaExporterLabel, "destination_schema_registry_cluster.0.credentials.0.key", testDestinationSchemaRegistryKey),
 					resource.TestCheckResourceAttr(schemaExporterLabel, "destination_schema_registry_cluster.0.credentials.0.secret", testDestinationSchemaRegistrySecret),
@@ -197,7 +198,7 @@ func TestAccSchemaExporter(t *testing.T) {
 					resource.TestCheckResourceAttr(schemaExporterLabel, "subjects.0", "foo3"),
 					resource.TestCheckResourceAttr(schemaExporterLabel, fmt.Sprintf("%s.%%", paramConfigs), "0"),
 					resource.TestCheckResourceAttr(schemaExporterLabel, "destination_schema_registry_cluster.#", "1"),
-					resource.TestCheckResourceAttr(schemaExporterLabel, "destination_schema_registry_cluster.0.rest_endpoint", testDestinationSchemaRegistryRestEndpoint),
+					resource.TestCheckResourceAttr(schemaExporterLabel, "destination_schema_registry_cluster.0.rest_endpoint", "https://psrc-4xgzx.us-east-2.aws.confluent.cloud"),
 					resource.TestCheckResourceAttr(schemaExporterLabel, "destination_schema_registry_cluster.0.credentials.#", "1"),
 					resource.TestCheckResourceAttr(schemaExporterLabel, "destination_schema_registry_cluster.0.credentials.0.key", testDestinationSchemaRegistryKey),
 					resource.TestCheckResourceAttr(schemaExporterLabel, "destination_schema_registry_cluster.0.credentials.0.secret", testDestinationSchemaRegistrySecret),
@@ -234,7 +235,7 @@ func schemaExporterResourceConfig(mockServerUrl string) string {
 	}
 
  	`, testStreamGovernanceClusterId, mockServerUrl, testSchemaRegistryKey, testSchemaRegistrySecret,
-		testDestinationSchemaRegistryRestEndpoint, testDestinationSchemaRegistryKey, testDestinationSchemaRegistrySecret)
+		testOriginalDestinationSchemaRegistryRestEndpoint, testDestinationSchemaRegistryKey, testDestinationSchemaRegistrySecret)
 }
 
 func schemaExporterResourceUpdatedConfig(mockServerUrl string) string {
