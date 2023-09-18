@@ -40,6 +40,3 @@ output "resource-ids" {
   sensitive = true
 }
 
-output "route_zone_cidrs" {
-  value = local.route_zone_cidrs
-}
