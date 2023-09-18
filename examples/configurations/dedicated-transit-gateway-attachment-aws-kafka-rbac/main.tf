@@ -7,7 +7,7 @@ terraform {
     }
     aws = {
       source  = "hashicorp/aws"
-      version = "= 2.32.0"
+      version = ">= 5.17.0"
     }
   }
 }
@@ -274,20 +274,23 @@ resource "aws_ec2_transit_gateway_vpc_attachment_accepter" "accepter" {
   transit_gateway_attachment_id = data.aws_ec2_transit_gateway_vpc_attachment.accepter.id
 }
 
-data "aws_subnet_ids" "input" {
-  vpc_id = var.vpc_id
+data "aws_subnets" "input" {
+  filter {
+    name = "vpc-id"
+    values = [var.vpc_id]
+  }
 }
 
 # Create Transit Gateway Attachment for the user's VPC
 resource "aws_ec2_transit_gateway_vpc_attachment" "attachment" {
-  subnet_ids         = data.aws_subnet_ids.input.ids
+  subnet_ids         = data.aws_subnets.input.ids
   transit_gateway_id = data.aws_ec2_transit_gateway.input.id
-  vpc_id             = data.aws_subnet_ids.input.vpc_id
+  vpc_id             = var.vpc_id
 }
 
 # Find the routing table
 data "aws_route_tables" "rts" {
-  vpc_id = data.aws_subnet_ids.input.vpc_id
+  vpc_id = var.vpc_id
 }
 
 resource "aws_route" "r" {
