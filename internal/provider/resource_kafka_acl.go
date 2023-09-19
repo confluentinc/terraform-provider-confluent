@@ -490,7 +490,7 @@ func createAclInstanceName(acl Acl) string {
 func principalWithIntegerIdToPrincipalWithResourceId(principalIdMap map[int32]string, principalWithIntegerId string) (string, error) {
 	// There's input validation that principal attribute must start with "User:sa-" or "User:u-" or "User:pool-" or "User:group-" or "User:*"
 
-	if principalWithIntegerId == "User:*" || strings.HasPrefix(principalWithIntegerId, "User:sa-") || strings.HasPrefix(principalWithIntegerId, "User:u-") || strings.HasPrefix(principalWithIntegerId, "User:pool-") || strings.HasPrefix(principalWithIntegerId, "User:group--") {
+	if principalWithIntegerId == "User:*" || strings.HasPrefix(principalWithIntegerId, "User:sa-") || strings.HasPrefix(principalWithIntegerId, "User:u-") || strings.HasPrefix(principalWithIntegerId, "User:pool-") || strings.HasPrefix(principalWithIntegerId, "User:group-") {
 		return principalWithIntegerId, nil
 	}
 
