@@ -230,6 +230,24 @@ func waitForNetworkLinkEndpointToProvision(ctx context.Context, c *Client, envir
 	return nil
 }
 
+func waitForComputePoolToProvision(ctx context.Context, c *Client, environmentId, computePoolId string) error {
+	stateConf := &resource.StateChangeConf{
+		Pending: []string{stateProvisioning},
+		Target:  []string{stateProvisioned},
+		Refresh: computePoolProvisionStatus(c.fcpmApiContext(ctx), c, environmentId, computePoolId),
+		Timeout: fcpmAPICreateTimeout,
+		// TODO: increase delay
+		Delay:        5 * time.Second,
+		PollInterval: 1 * time.Minute,
+	}
+
+	tflog.Debug(ctx, fmt.Sprintf("Waiting for Flink Compute Pool %q provisioning status to become %q", computePoolId, stateProvisioned), map[string]interface{}{computePoolLoggingKey: computePoolId})
+	if _, err := stateConf.WaitForStateContext(c.fcpmApiContext(ctx)); err != nil {
+		return err
+	}
+	return nil
+}
+
 func waitForSchemaRegistryClusterToProvision(ctx context.Context, c *Client, environmentId, clusterId string) error {
 	stateConf := &resource.StateChangeConf{
 		Pending: []string{stateProvisioning},
@@ -824,6 +842,25 @@ func networkProvisionStatus(ctx context.Context, c *Client, environmentId string
 		}
 		// Network is in an unexpected state
 		return nil, stateUnexpected, fmt.Errorf("network %q is an unexpected state %q: %s", networkId, network.Status.GetPhase(), network.Status.GetErrorMessage())
+	}
+}
+
+func computePoolProvisionStatus(ctx context.Context, c *Client, environmentId string, computePoolId string) resource.StateRefreshFunc {
+	return func() (result interface{}, s string, err error) {
+		computePool, _, err := executeComputePoolRead(c.fcpmApiContext(ctx), c, environmentId, computePoolId)
+		if err != nil {
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Flink Compute Pool %q: %s", computePoolId, createDescriptiveError(err)), map[string]interface{}{computePoolLoggingKey: computePoolId})
+			return nil, stateUnknown, err
+		}
+
+		tflog.Debug(ctx, fmt.Sprintf("Waiting for Flink Compute Pool %q provisioning status to become %q: current status is %q", computePoolId, stateProvisioned, computePool.Status.GetPhase()), map[string]interface{}{computePoolLoggingKey: computePoolId})
+		if computePool.Status.GetPhase() == stateProvisioning || computePool.Status.GetPhase() == stateProvisioned {
+			return computePool, computePool.Status.GetPhase(), nil
+		} else if computePool.Status.GetPhase() == stateFailed {
+			return nil, stateFailed, fmt.Errorf("flink Compute Pool %q provisioning status is %q", computePoolId, stateFailed)
+		}
+		// Compute Pool is in an unexpected state
+		return nil, stateUnexpected, fmt.Errorf("flink Compute Pool %q is an unexpected state %q", computePoolId, computePool.Status.GetPhase())
 	}
 }
 

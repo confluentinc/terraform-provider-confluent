@@ -22,6 +22,7 @@ import (
 	cmk "github.com/confluentinc/ccloud-sdk-go-v2/cmk/v2"
 	connect "github.com/confluentinc/ccloud-sdk-go-v2/connect/v1"
 	dc "github.com/confluentinc/ccloud-sdk-go-v2/data-catalog/v1"
+	fcpm "github.com/confluentinc/ccloud-sdk-go-v2/flink/v2"
 	iamv1 "github.com/confluentinc/ccloud-sdk-go-v2/iam/v1"
 	iam "github.com/confluentinc/ccloud-sdk-go-v2/iam/v2"
 	oidc "github.com/confluentinc/ccloud-sdk-go-v2/identity-provider/v2"
@@ -61,6 +62,7 @@ const (
 	tfImporterLoggingKey                      = "tf_importer_environment_id"
 	roleBindingLoggingKey                     = "role_binding_id"
 	apiKeyLoggingKey                          = "api_key_id"
+	computePoolLoggingKey                     = "compute_pool_id"
 	networkLoggingKey                         = "network_key_id"
 	connectorLoggingKey                       = "connector_key_id"
 	privateLinkAccessLoggingKey               = "private_link_access_id"
@@ -169,6 +171,17 @@ func (c *Client) mdsApiContext(ctx context.Context) context.Context {
 func (c *Client) netApiContext(ctx context.Context) context.Context {
 	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
 		return context.WithValue(context.Background(), net.ContextBasicAuth, net.BasicAuth{
+			UserName: c.cloudApiKey,
+			Password: c.cloudApiSecret,
+		})
+	}
+	tflog.Warn(ctx, "Could not find Cloud API Key")
+	return ctx
+}
+
+func (c *Client) fcpmApiContext(ctx context.Context) context.Context {
+	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
+		return context.WithValue(context.Background(), fcpm.ContextBasicAuth, fcpm.BasicAuth{
 			UserName: c.cloudApiKey,
 			Password: c.cloudApiSecret,
 		})

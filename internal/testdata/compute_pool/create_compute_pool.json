@@ -1,0 +1,30 @@
+{
+  "api_version": "fcpm/v2",
+  "id": "lfcp-abc123",
+  "kind": "ComputePool",
+  "metadata": {
+    "created_at": "2023-09-08T19:12:09.048165Z",
+    "resource_name": "crn://confluent.cloud/organization=foo/environment=env-gz903/flink-region=aws.us-east-2/compute-pool=lfcp-abc123",
+    "self": "http://api.confluent.cloud/fcpm/v2/compute-pools/lfcp-abc123",
+    "updated_at": "2023-09-08T19:12:09.048165Z"
+  },
+  "spec": {
+    "cloud": "AWS",
+    "config": {
+      "kind": "Standard"
+    },
+    "display_name": "flink_compute_pool_0",
+    "environment": {
+      "id": "env-gz903",
+      "related": "http://api.confluent.cloud/fcpm/v2/compute-pools/lfcp-abc123",
+      "resource_name": "crn://confluent.cloud/organization=foo/environment=env-gz903"
+    },
+    "http_endpoint": "https://flink.us-east-2.aws.confluent.cloud/sql/v1alpha1/environments/env-gz903",
+    "max_cfu": 5,
+    "region": "us-east-2"
+  },
+  "status": {
+    "current_cfu": 0,
+    "phase": "PROVISIONING"
+  }
+}

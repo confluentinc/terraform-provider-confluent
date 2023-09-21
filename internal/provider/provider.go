@@ -23,6 +23,7 @@ import (
 	byok "github.com/confluentinc/ccloud-sdk-go-v2/byok/v1"
 	cmk "github.com/confluentinc/ccloud-sdk-go-v2/cmk/v2"
 	connect "github.com/confluentinc/ccloud-sdk-go-v2/connect/v1"
+	fcpm "github.com/confluentinc/ccloud-sdk-go-v2/flink/v2"
 	iamv1 "github.com/confluentinc/ccloud-sdk-go-v2/iam/v1"
 	iam "github.com/confluentinc/ccloud-sdk-go-v2/iam/v2"
 	oidc "github.com/confluentinc/ccloud-sdk-go-v2/identity-provider/v2"
@@ -63,6 +64,7 @@ type Client struct {
 	iamV1Client                     *iamv1.APIClient
 	cmkClient                       *cmk.APIClient
 	connectClient                   *connect.APIClient
+	fcpmClient                      *fcpm.APIClient
 	netClient                       *net.APIClient
 	netPLClient                     *netpl.APIClient
 	orgClient                       *org.APIClient
@@ -192,6 +194,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_environment":                        environmentDataSource(),
 				"confluent_environments":                       environmentsDataSource(),
 				"confluent_ksql_cluster":                       ksqlDataSource(),
+				"confluent_flink_compute_pool":             computePoolDataSource(),
 				"confluent_identity_pool":                      identityPoolDataSource(),
 				"confluent_identity_provider":                  identityProviderDataSource(),
 				"confluent_kafka_client_quota":                 kafkaClientQuotaDataSource(),
@@ -235,6 +238,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_identity_provider":                  identityProviderResource(),
 				"confluent_kafka_client_quota":                 kafkaClientQuotaResource(),
 				"confluent_ksql_cluster":                       ksqlResource(),
+				"confluent_flink_compute_pool":             computePoolResource(),
 				"confluent_connector":                          connectorResource(),
 				"confluent_service_account":                    serviceAccountResource(),
 				"confluent_kafka_topic":                        kafkaTopicResource(),
@@ -356,6 +360,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	byokCfg := byok.NewConfiguration()
 	cmkCfg := cmk.NewConfiguration()
 	connectCfg := connect.NewConfiguration()
+	fcpmCfg := fcpm.NewConfiguration()
 	iamCfg := iam.NewConfiguration()
 	iamV1Cfg := iamv1.NewConfiguration()
 	mdsCfg := mds.NewConfiguration()
@@ -371,6 +376,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	byokCfg.Servers[0].URL = endpoint
 	cmkCfg.Servers[0].URL = endpoint
 	connectCfg.Servers[0].URL = endpoint
+	fcpmCfg.Servers[0].URL = endpoint
 	iamCfg.Servers[0].URL = endpoint
 	iamV1Cfg.Servers[0].URL = endpoint
 	mdsCfg.Servers[0].URL = endpoint
@@ -386,6 +392,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	byokCfg.UserAgent = userAgent
 	cmkCfg.UserAgent = userAgent
 	connectCfg.UserAgent = userAgent
+	fcpmCfg.UserAgent = userAgent
 	iamCfg.UserAgent = userAgent
 	iamV1Cfg.UserAgent = userAgent
 	mdsCfg.UserAgent = userAgent
@@ -407,6 +414,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	byokCfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
 	cmkCfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
 	connectCfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
+	fcpmCfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
 	iamCfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
 	iamV1Cfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
 	mdsCfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
@@ -423,6 +431,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 		byokClient:                      byok.NewAPIClient(byokCfg),
 		cmkClient:                       cmk.NewAPIClient(cmkCfg),
 		connectClient:                   connect.NewAPIClient(connectCfg),
+		fcpmClient:                      fcpm.NewAPIClient(fcpmCfg),
 		iamClient:                       iam.NewAPIClient(iamCfg),
 		iamV1Client:                     iamv1.NewAPIClient(iamV1Cfg),
 		netClient:                       net.NewAPIClient(netCfg),
