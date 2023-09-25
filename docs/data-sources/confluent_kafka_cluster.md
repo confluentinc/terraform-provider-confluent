@@ -79,8 +79,6 @@ In addition to the preceding arguments, the following attributes are exported:
 
 -> **Note:** At least one from the `basic`, `standard`, `dedicated` and `enterprise` configuration blocks should be specified.
 
--> **Note:** The `enterprise` block is in a [Limited Availability lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
-
 - `network` (Optional Configuration Block) supports the following:
     - `id` - (Required String) The ID of the Network that the Kafka cluster belongs to, for example, `n-abc123`.
 - `byok_key` (Optional Configuration Block) supports the following:
