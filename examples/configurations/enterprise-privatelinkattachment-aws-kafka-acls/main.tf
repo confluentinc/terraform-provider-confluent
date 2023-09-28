@@ -22,50 +22,50 @@ provider "aws" {
 }
 
 
-resource "confluent_environment" "main" {
+resource "confluent_environment" "staging" {
   display_name = "Staging"
 }
 
-resource "confluent_kafka_cluster" "main" {
+resource "confluent_kafka_cluster" "enterprise" {
   display_name = "inventory"
   availability = "MULTI_ZONE"
   cloud        = "AWS"
   region       = var.region
   enterprise {}
   environment {
-    id = confluent_environment.main.id
+    id = confluent_environment.staging.id
   }
 }
 
-resource "confluent_private_link_attachment" "main" {
+resource "confluent_private_link_attachment" "pla" {
   cloud = "AWS"
   region = var.region
   display_name = "staging-aws-platt"
   environment {
-    id = confluent_environment.main.id
+    id = confluent_environment.staging.id
   }
 }
 
 module "privatelink" {
   source                   = "./aws-privatelink-endpoint"
   vpc_id                   = var.vpc_id
-  privatelink_service_name = confluent_private_link_attachment.main.aws[0].vpc_endpoint_service_name
-  bootstrap                = confluent_kafka_cluster.main.bootstrap_endpoint
+  privatelink_service_name = confluent_private_link_attachment.pla.aws[0].vpc_endpoint_service_name
+  bootstrap                = confluent_kafka_cluster.enterprise.bootstrap_endpoint
   subnets_to_privatelink   = var.subnets_to_privatelink
-  dns_domain_name = confluent_private_link_attachment.main.dns_domain
+  dns_domain_name = confluent_private_link_attachment.pla.dns_domain
 }
 
-resource "confluent_private_link_attachment_connection" "main" {
+resource "confluent_private_link_attachment_connection" "plac" {
   display_name = "staging-aws-plattc"
   environment {
-    id = confluent_environment.main.id
+    id = confluent_environment.staging.id
   }
   aws {
     vpc_endpoint_id = module.privatelink.vpc_endpoint_id
   }
 
   private_link_attachment {
-    id = confluent_private_link_attachment.main.id
+    id = confluent_private_link_attachment.pla.id
   }
 }
 
@@ -77,7 +77,7 @@ resource "confluent_service_account" "app-manager" {
 resource "confluent_role_binding" "app-manager-kafka-cluster-admin" {
   principal   = "User:${confluent_service_account.app-manager.id}"
   role_name   = "CloudClusterAdmin"
-  crn_pattern = confluent_kafka_cluster.main.rbac_crn
+  crn_pattern = confluent_kafka_cluster.enterprise.rbac_crn
 }
 
 resource "confluent_api_key" "app-manager-kafka-api-key" {
@@ -90,12 +90,12 @@ resource "confluent_api_key" "app-manager-kafka-api-key" {
   }
 
   managed_resource {
-    id          = confluent_kafka_cluster.main.id
-    api_version = confluent_kafka_cluster.main.api_version
-    kind        = confluent_kafka_cluster.main.kind
+    id          = confluent_kafka_cluster.enterprise.id
+    api_version = confluent_kafka_cluster.enterprise.api_version
+    kind        = confluent_kafka_cluster.enterprise.kind
 
     environment {
-      id = confluent_environment.main.id
+      id = confluent_environment.staging.id
     }
   }
 
@@ -108,16 +108,16 @@ resource "confluent_api_key" "app-manager-kafka-api-key" {
   # confluent_kafka_topic, confluent_kafka_acl resources instead.
   depends_on = [
     confluent_role_binding.app-manager-kafka-cluster-admin,
-    confluent_private_link_attachment_connection.main
+    confluent_private_link_attachment_connection.plac
   ]
 }
 
 resource "confluent_kafka_topic" "orders" {
   kafka_cluster {
-    id = confluent_kafka_cluster.main.id
+    id = confluent_kafka_cluster.enterprise.id
   }
   topic_name    = "orders"
-  rest_endpoint = confluent_kafka_cluster.main.rest_endpoint
+  rest_endpoint = confluent_kafka_cluster.enterprise.rest_endpoint
   credentials {
     key    = confluent_api_key.app-manager-kafka-api-key.id
     secret = confluent_api_key.app-manager-kafka-api-key.secret
@@ -139,23 +139,23 @@ resource "confluent_api_key" "app-consumer-kafka-api-key" {
   }
 
   managed_resource {
-    id          = confluent_kafka_cluster.main.id
-    api_version = confluent_kafka_cluster.main.api_version
-    kind        = confluent_kafka_cluster.main.kind
+    id          = confluent_kafka_cluster.enterprise.id
+    api_version = confluent_kafka_cluster.enterprise.api_version
+    kind        = confluent_kafka_cluster.enterprise.kind
 
     environment {
-      id = confluent_environment.main.id
+      id = confluent_environment.staging.id
     }
   }
 
   depends_on = [
-    confluent_private_link_attachment_connection.main
+    confluent_private_link_attachment_connection.plac
   ]
 }
 
 resource "confluent_kafka_acl" "app-producer-write-on-topic" {
   kafka_cluster {
-    id = confluent_kafka_cluster.main.id
+    id = confluent_kafka_cluster.enterprise.id
   }
   resource_type = "TOPIC"
   resource_name = confluent_kafka_topic.orders.topic_name
@@ -164,7 +164,7 @@ resource "confluent_kafka_acl" "app-producer-write-on-topic" {
   host          = "*"
   operation     = "WRITE"
   permission    = "ALLOW"
-  rest_endpoint = confluent_kafka_cluster.main.rest_endpoint
+  rest_endpoint = confluent_kafka_cluster.enterprise.rest_endpoint
   credentials {
     key    = confluent_api_key.app-manager-kafka-api-key.id
     secret = confluent_api_key.app-manager-kafka-api-key.secret
@@ -186,17 +186,17 @@ resource "confluent_api_key" "app-producer-kafka-api-key" {
   }
 
   managed_resource {
-    id          = confluent_kafka_cluster.main.id
-    api_version = confluent_kafka_cluster.main.api_version
-    kind        = confluent_kafka_cluster.main.kind
+    id          = confluent_kafka_cluster.enterprise.id
+    api_version = confluent_kafka_cluster.enterprise.api_version
+    kind        = confluent_kafka_cluster.enterprise.kind
 
     environment {
-      id = confluent_environment.main.id
+      id = confluent_environment.staging.id
     }
   }
 
   depends_on = [
-    confluent_private_link_attachment_connection.main
+    confluent_private_link_attachment_connection.plac
   ]
 }
 
@@ -206,7 +206,7 @@ resource "confluent_api_key" "app-producer-kafka-api-key" {
 // https://docs.confluent.io/platform/current/kafka/authorization.html#using-acls
 resource "confluent_kafka_acl" "app-consumer-read-on-topic" {
   kafka_cluster {
-    id = confluent_kafka_cluster.main.id
+    id = confluent_kafka_cluster.enterprise.id
   }
   resource_type = "TOPIC"
   resource_name = confluent_kafka_topic.orders.topic_name
@@ -215,7 +215,7 @@ resource "confluent_kafka_acl" "app-consumer-read-on-topic" {
   host          = "*"
   operation     = "READ"
   permission    = "ALLOW"
-  rest_endpoint = confluent_kafka_cluster.main.rest_endpoint
+  rest_endpoint = confluent_kafka_cluster.enterprise.rest_endpoint
   credentials {
     key    = confluent_api_key.app-manager-kafka-api-key.id
     secret = confluent_api_key.app-manager-kafka-api-key.secret
@@ -224,7 +224,7 @@ resource "confluent_kafka_acl" "app-consumer-read-on-topic" {
 
 resource "confluent_kafka_acl" "app-consumer-read-on-group" {
   kafka_cluster {
-    id = confluent_kafka_cluster.main.id
+    id = confluent_kafka_cluster.enterprise.id
   }
   resource_type = "GROUP"
   // The existing values of resource_name, pattern_type attributes are set up to match Confluent CLI's default consumer group ID ("confluent_cli_consumer_<uuid>").
@@ -237,7 +237,7 @@ resource "confluent_kafka_acl" "app-consumer-read-on-group" {
   host          = "*"
   operation     = "READ"
   permission    = "ALLOW"
-  rest_endpoint = confluent_kafka_cluster.main.rest_endpoint
+  rest_endpoint = confluent_kafka_cluster.enterprise.rest_endpoint
   credentials {
     key    = confluent_api_key.app-manager-kafka-api-key.id
     secret = confluent_api_key.app-manager-kafka-api-key.secret
