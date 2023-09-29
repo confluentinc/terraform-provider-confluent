@@ -107,20 +107,6 @@ func computePoolResource() *schema.Resource {
 	}
 }
 
-func standardComputePoolSchema() *schema.Schema {
-	return &schema.Schema{
-		Type:     schema.TypeList,
-		Optional: true,
-		// Remove once other compute pool types are supported
-		ForceNew: true,
-		MaxItems: 0,
-		Elem: &schema.Resource{
-			Schema: map[string]*schema.Schema{},
-		},
-		ExactlyOneOf: acceptedComputePoolTypes,
-	}
-}
-
 func computePoolCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	c := meta.(*Client)
 
