@@ -30,6 +30,7 @@ import (
 	kafkarestv3 "github.com/confluentinc/ccloud-sdk-go-v2/kafkarest/v3"
 	ksql "github.com/confluentinc/ccloud-sdk-go-v2/ksql/v2"
 	mds "github.com/confluentinc/ccloud-sdk-go-v2/mds/v2"
+	netip "github.com/confluentinc/ccloud-sdk-go-v2/networking-ip/v1"
 	netpl "github.com/confluentinc/ccloud-sdk-go-v2/networking-privatelink/v1"
 	net "github.com/confluentinc/ccloud-sdk-go-v2/networking/v1"
 	org "github.com/confluentinc/ccloud-sdk-go-v2/org/v2"
@@ -182,6 +183,17 @@ func (c *Client) netApiContext(ctx context.Context) context.Context {
 func (c *Client) fcpmApiContext(ctx context.Context) context.Context {
 	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
 		return context.WithValue(context.Background(), fcpm.ContextBasicAuth, fcpm.BasicAuth{
+			UserName: c.cloudApiKey,
+			Password: c.cloudApiSecret,
+		})
+	}
+	tflog.Warn(ctx, "Could not find Cloud API Key")
+	return ctx
+}
+
+func (c *Client) netIPApiContext(ctx context.Context) context.Context {
+	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
+		return context.WithValue(context.Background(), netip.ContextBasicAuth, netip.BasicAuth{
 			UserName: c.cloudApiKey,
 			Password: c.cloudApiSecret,
 		})

@@ -17,6 +17,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	netip "github.com/confluentinc/ccloud-sdk-go-v2/networking-ip/v1"
 	"strings"
 
 	apikeys "github.com/confluentinc/ccloud-sdk-go-v2/apikeys/v2"
@@ -66,6 +67,7 @@ type Client struct {
 	connectClient                   *connect.APIClient
 	fcpmClient                      *fcpm.APIClient
 	netClient                       *net.APIClient
+	netIpClient                     *netip.APIClient
 	netPLClient                     *netpl.APIClient
 	orgClient                       *org.APIClient
 	ksqlClient                      *ksql.APIClient
@@ -194,9 +196,10 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_environment":                        environmentDataSource(),
 				"confluent_environments":                       environmentsDataSource(),
 				"confluent_ksql_cluster":                       ksqlDataSource(),
-				"confluent_flink_compute_pool":             computePoolDataSource(),
+				"confluent_flink_compute_pool":                 computePoolDataSource(),
 				"confluent_identity_pool":                      identityPoolDataSource(),
 				"confluent_identity_provider":                  identityProviderDataSource(),
+				"confluent_ip_addresses":                       ipAddressesDataSource(),
 				"confluent_kafka_client_quota":                 kafkaClientQuotaDataSource(),
 				"confluent_network":                            networkDataSource(),
 				"confluent_organization":                       organizationDataSource(),
@@ -238,7 +241,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_identity_provider":                  identityProviderResource(),
 				"confluent_kafka_client_quota":                 kafkaClientQuotaResource(),
 				"confluent_ksql_cluster":                       ksqlResource(),
-				"confluent_flink_compute_pool":             computePoolResource(),
+				"confluent_flink_compute_pool":                 computePoolResource(),
 				"confluent_connector":                          connectorResource(),
 				"confluent_service_account":                    serviceAccountResource(),
 				"confluent_kafka_topic":                        kafkaTopicResource(),
@@ -365,6 +368,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	iamV1Cfg := iamv1.NewConfiguration()
 	mdsCfg := mds.NewConfiguration()
 	netCfg := net.NewConfiguration()
+	netIpCfg := netip.NewConfiguration()
 	netPLCfg := netpl.NewConfiguration()
 	oidcCfg := oidc.NewConfiguration()
 	orgCfg := org.NewConfiguration()
@@ -381,6 +385,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	iamV1Cfg.Servers[0].URL = endpoint
 	mdsCfg.Servers[0].URL = endpoint
 	netCfg.Servers[0].URL = endpoint
+	netIpCfg.Servers[0].URL = endpoint
 	netPLCfg.Servers[0].URL = endpoint
 	oidcCfg.Servers[0].URL = endpoint
 	orgCfg.Servers[0].URL = endpoint
@@ -397,6 +402,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	iamV1Cfg.UserAgent = userAgent
 	mdsCfg.UserAgent = userAgent
 	netCfg.UserAgent = userAgent
+	netIpCfg.UserAgent = userAgent
 	netPLCfg.UserAgent = userAgent
 	oidcCfg.UserAgent = userAgent
 	orgCfg.UserAgent = userAgent
@@ -419,6 +425,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	iamV1Cfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
 	mdsCfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
 	netCfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
+	netIpCfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
 	netPLCfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
 	oidcCfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
 	orgCfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
@@ -435,6 +442,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 		iamClient:                       iam.NewAPIClient(iamCfg),
 		iamV1Client:                     iamv1.NewAPIClient(iamV1Cfg),
 		netClient:                       net.NewAPIClient(netCfg),
+		netIpClient:                     netip.NewAPIClient(netIpCfg),
 		netPLClient:                     netpl.NewAPIClient(netPLCfg),
 		oidcClient:                      oidc.NewAPIClient(oidcCfg),
 		orgClient:                       org.NewAPIClient(orgCfg),

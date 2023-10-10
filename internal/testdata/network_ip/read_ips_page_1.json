@@ -1,0 +1,31 @@
+{
+  "api_version": "networking/v1",
+  "data": [
+    {
+      "api_version": "networking/v1",
+      "kind": "IpAddress",
+      "ip_prefix": "10.200.0.0/28",
+      "cloud": "AWS",
+      "region": "us-east-1",
+      "services": [
+        "CONNECT"
+      ],
+      "address_type": "EGRESS"
+    },
+    {
+      "api_version": "networking/v1",
+      "kind": "IpAddress",
+      "ip_prefix": "10.200.0.0/24",
+      "cloud": "AWS",
+      "region": "us-east-2",
+      "services": [
+        "CONNECT"
+      ],
+      "address_type": "EGRESS"
+    }
+  ],
+  "kind": "IpAddressList",
+  "metadata": {
+    "next": "https://api.confluent.cloud/networking/v1/ip-addresses?page_token=dyJpZCI6InNhLTd5OXbybq"
+  }
+}

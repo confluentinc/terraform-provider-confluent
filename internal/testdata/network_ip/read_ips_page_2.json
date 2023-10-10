@@ -1,0 +1,18 @@
+{
+  "api_version": "networking/v1",
+  "data": [
+    {
+      "api_version": "networking/v1",
+      "kind": "IpAddress",
+      "ip_prefix": "10.200.0.0/20",
+      "cloud": "AWS",
+      "region": "us-east-2",
+      "services": [
+        "KAFKA"
+      ],
+      "address_type": "EGRESS"
+    }
+  ],
+  "kind": "IpAddressList",
+  "metadata": {}
+}
