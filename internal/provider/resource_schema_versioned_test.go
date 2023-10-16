@@ -17,12 +17,13 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"strconv"
 	"testing"
+
+	"github.com/walkerus/go-wiremock"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -155,12 +156,10 @@ func TestAccVersionedSchema(t *testing.T) {
 	_ = os.Setenv("IMPORT_SCHEMA_REGISTRY_API_KEY", testSchemaRegistryUpdatedKey)
 	_ = os.Setenv("IMPORT_SCHEMA_REGISTRY_API_SECRET", testSchemaRegistryUpdatedSecret)
 	_ = os.Setenv("IMPORT_SCHEMA_REGISTRY_REST_ENDPOINT", mockSchemaTestServerUrl)
-	_ = os.Setenv("SCHEMA_CONTENT", testSchemaContent)
 	defer func() {
 		_ = os.Unsetenv("IMPORT_SCHEMA_REGISTRY_API_KEY")
 		_ = os.Unsetenv("IMPORT_SCHEMA_REGISTRY_API_SECRET")
 		_ = os.Unsetenv("IMPORT_SCHEMA_REGISTRY_REST_ENDPOINT")
-		_ = os.Unsetenv("SCHEMA_CONTENT")
 	}()
 
 	resource.Test(t, resource.TestCase{

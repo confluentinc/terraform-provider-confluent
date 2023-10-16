@@ -19,7 +19,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -562,17 +561,11 @@ func schemaImport(ctx context.Context, d *schema.ResourceData, meta interface{})
 
 	// Mark resource as new to avoid d.Set("") when getting 404
 	d.MarkNewResource()
-	schemaSr, err := readSchemaRegistryConfigAndSetAttributes(ctx, d, schemaRegistryRestClient, subjectName, schemaIdentifier)
+	_, err = readSchemaRegistryConfigAndSetAttributes(ctx, d, schemaRegistryRestClient, subjectName, schemaIdentifier)
 	if err != nil {
 		return nil, fmt.Errorf("error importing Schema %q: %s", d.Id(), createDescriptiveError(err))
 	}
-	schemaContent := os.Getenv("SCHEMA_CONTENT")
-	if schemaContent == "" {
-		schemaContent = schemaSr.GetSchema()
-	}
-	if err := d.Set(paramSchema, schemaContent); err != nil {
-		return nil, createDescriptiveError(err)
-	}
+
 	tflog.Debug(ctx, fmt.Sprintf("Finished importing Schema %q", d.Id()), map[string]interface{}{schemaLoggingKey: d.Id()})
 	return []*schema.ResourceData{d}, nil
 }
@@ -656,6 +649,9 @@ func readSchemaRegistryConfigAndSetAttributes(ctx context.Context, d *schema.Res
 		return nil, err
 	}
 	if err := d.Set(paramSchemaReference, buildTfSchemaReferences(srSchema.GetReferences())); err != nil {
+		return nil, err
+	}
+	if err := d.Set(paramSchema, srSchema.GetSchema()); err != nil {
 		return nil, err
 	}
 
