@@ -60,6 +60,14 @@ func computePoolResource() *schema.Resource {
 				ValidateFunc: validation.StringInSlice(acceptedCloudProviders, false),
 				Required:     true,
 				ForceNew:     true,
+				// Suppress the diff shown if the value of "cloud" attribute are equal when both compared in lower case.
+				// For example, AWS == aws
+				DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+					if strings.ToLower(old) == strings.ToLower(new) {
+						return true
+					}
+					return false
+				},
 			},
 			paramRegion: {
 				Type:         schema.TypeString,
