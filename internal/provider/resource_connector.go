@@ -36,8 +36,12 @@ const (
 	paramSensitiveConfig    = "config_sensitive"
 	paramNonSensitiveConfig = "config_nonsensitive"
 
-	connectorConfigAttributeName  = "name"
-	connectorConfigAttributeClass = "connector.class"
+	connectorConfigAttributeName   = "name"
+	connectorConfigAttributeClass  = "connector.class"
+	connectorConfigAttributeType   = "confluent.connector.type"
+	connectorConfigAttributePlugin = "confluent.custom.plugin.id"
+	connectorTypeManaged           = "MANAGED"
+	connectorTypeCustom            = "CUSTOM"
 
 	connectorConfigInternalAttributePrefix = "config.internal."
 
@@ -124,20 +128,9 @@ func connectorCreate(ctx context.Context, d *schema.ResourceData, meta interface
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Connector: %s", nonsensitiveConfigJson))
 
-	if _, ok := mergedConfig[connectorConfigAttributeClass]; !ok {
-		return diag.Errorf("error creating Connector: %q attribute is missing in %q block", connectorConfigAttributeClass, paramNonSensitiveConfig)
-	}
-	pluginName, err := extractRequiredStringValueFromMap(mergedConfig, connectorConfigAttributeClass, paramNonSensitiveConfig)
+	err = validateConnectorConfig(c.connectApiContext(ctx), c, mergedConfig, environmentId, clusterId)
 	if err != nil {
-		return diag.Errorf("error creating Connector %q: %s", displayName, createDescriptiveError(err))
-	}
-	tflog.Debug(ctx, fmt.Sprintf("Validating new Connector's config: %s", nonsensitiveConfigJson))
-	validationResponse, _, err := c.connectClient.PluginsV1Api.ValidateConnectv1ConnectorPlugin(c.connectApiContext(ctx), pluginName, environmentId, clusterId).RequestBody(mergedConfig).Execute()
-	if err != nil {
-		return diag.Errorf("error creating Connector %q: error sending validation request: %s", displayName, createDescriptiveError(err))
-	}
-	if validationResponse.GetErrorCount() > 0 {
-		return diag.Errorf("error creating Connector %q: error validating config: %s", displayName, createDescriptiveError(createConfigValidationError(validationResponse)))
+		return diag.Errorf("error creating Connector: %s", createDescriptiveError(err))
 	}
 
 	createdConnector, _, err := executeConnectorCreate(c.connectApiContext(ctx), c, environmentId, clusterId, createConnectorRequest)
@@ -148,7 +141,7 @@ func connectorCreate(ctx context.Context, d *schema.ResourceData, meta interface
 	time.Sleep(connectAPIWaitAfterCreate)
 	createdConnectorWithId, _, err := executeConnectorRead(c.connectApiContext(ctx), c, displayName, environmentId, clusterId)
 	if err != nil {
-		return diag.Errorf("error creating Connector %q: error reading created Connector: %s", displayName, createDescriptiveError(createConfigValidationError(validationResponse)))
+		return diag.Errorf("error creating Connector %q: error reading created Connector: %s", displayName, createDescriptiveError(err))
 	}
 	d.SetId(createdConnectorWithId.Id.GetId())
 
@@ -169,6 +162,35 @@ func connectorCreate(ctx context.Context, d *schema.ResourceData, meta interface
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating Connector %q", displayName))
 
 	return connectorRead(ctx, d, meta)
+}
+
+func validateConnectorConfig(ctx context.Context, c *Client, config map[string]string, environmentId, clusterId string) error {
+	// defaults to MANAGED
+	connectorType := config[connectorConfigAttributeType]
+
+	if connectorType == "" || connectorType == connectorTypeManaged {
+		// connectorConfigAttributeClass is required for managed connectors
+		connectorClass := config[connectorConfigAttributeClass]
+		if connectorClass == "" {
+			return fmt.Errorf("error validating Connector config: %q attribute is missing in %q block", connectorConfigAttributeClass, paramNonSensitiveConfig)
+		}
+		tflog.Debug(ctx, fmt.Sprintf("Validating new Connector's config"))
+		validationResponse, _, err := c.connectClient.PluginsV1Api.ValidateConnectv1ConnectorPlugin(c.connectApiContext(ctx), connectorClass, environmentId, clusterId).RequestBody(config).Execute()
+		if err != nil {
+			return fmt.Errorf("error creating Connector: error sending validation request: %s", createDescriptiveError(err))
+		}
+		if validationResponse.GetErrorCount() > 0 {
+			return fmt.Errorf("error creating Connector %q: error validating config: %s", connectorClass, createDescriptiveError(createConfigValidationError(validationResponse)))
+		}
+	} else if connectorType == connectorTypeCustom {
+		// connectorConfigAttributePlugin is required for custom connectors
+		if _, ok := config[connectorConfigAttributePlugin]; !ok {
+			return fmt.Errorf("error validating Connector config: %q attribute is missing in %q block", connectorConfigAttributePlugin, paramNonSensitiveConfig)
+		}
+	} else {
+		return fmt.Errorf("error validating Connector config: unexpected value for %s: %s", connectorConfigAttributeType, connectorType)
+	}
+	return nil
 }
 
 func executeConnectorCreate(ctx context.Context, c *Client, environmentId, clusterId string, spec *connect.InlineObject) (connect.ConnectV1Connector, *http.Response, error) {

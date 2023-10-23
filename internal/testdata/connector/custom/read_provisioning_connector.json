@@ -1,0 +1,13 @@
+{
+  "name": "datagen-plugin-name_2",
+  "connector": {
+    "state": "PROVISIONING",
+    "worker_id": "datagen-plugin-name_2",
+    "trace": ""
+  },
+  "tasks": [],
+  "type": "source",
+  "errors_from_trace": [],
+  "validation_errors": [],
+  "override_message": ""
+}

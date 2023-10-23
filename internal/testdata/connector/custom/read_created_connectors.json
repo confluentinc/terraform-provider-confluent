@@ -1,0 +1,58 @@
+{
+  "datagen-plugin-name_2": {
+    "status": {
+      "name": "datagen-plugin-name_2",
+      "connector": {
+        "state": "RUNNING",
+        "worker_id": "datagen-plugin-name_2",
+        "trace": ""
+      },
+      "tasks": [
+        {
+          "id": 0,
+          "state": "RUNNING",
+          "worker_id": "datagen-plugin-name_2",
+          "msg": ""
+        }
+      ],
+      "type": "source",
+      "errors_from_trace": [],
+      "validation_errors": [],
+      "override_message": ""
+    },
+    "info": {
+      "name": "datagen-plugin-name_2",
+      "type": "source",
+      "config": {
+        "cloud.environment": "prod",
+        "cloud.provider": "aws",
+        "confluent.connector.type": "CUSTOM",
+        "confluent.custom.plugin.id": "ccp-l57dmn",
+        "connector.class": "io.confluent.kafka.connect.datagen.DatagenConnector",
+        "kafka.api.key": "****************",
+        "kafka.api.secret": "****************",
+        "kafka.auth.mode": "KAFKA_API_KEY",
+        "kafka.endpoint": "SASL_SSL://pkc-ymrq7.us-east-2.aws.confluent.cloud:9092",
+        "kafka.region": "us-east-2",
+        "kafka.topic": "topic_0",
+        "max.interval": "2000",
+        "min.interval": "1000",
+        "name": "datagen-plugin-name_2",
+        "output.data.format": "JSON",
+        "quickstart": "ORDERS",
+        "tasks.max": "1"
+      },
+      "tasks": [
+        {
+          "connector": "datagen-plugin-name_2",
+          "task": 0
+        }
+      ]
+    },
+    "id": {
+      "id": "clcc-gkzo3r",
+      "id_type": "ID"
+    },
+    "extensions": {}
+  }
+}

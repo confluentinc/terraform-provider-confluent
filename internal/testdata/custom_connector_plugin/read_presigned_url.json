@@ -1,0 +1,17 @@
+{
+  "api_version": "connect/v1",
+  "content_format": "ZIP",
+  "kind": "PresignedUrl",
+  "upload_form_data": {
+    "bucket": "foo",
+    "key": "bar",
+    "policy": "aar",
+    "x-amz-algorithm": "bar",
+    "x-amz-credential": "car",
+    "x-amz-date": "dar",
+    "x-amz-security-token": "ear",
+    "x-amz-signature": "far"
+  },
+  "upload_id": "d7fa641f-7b17-4eb8-b326-6731b02aad11",
+  "upload_url": "TF_TEST_URL"
+}

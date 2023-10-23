@@ -27,21 +27,21 @@ import (
 )
 
 const (
-	scenarioStateConnectorHasBeenValidated   = "The new connector config has been just validated"
-	scenarioStateConnectorHasBeenCreating    = "The new connector has been creating"
-	scenarioStateConnectorFetchingId         = "The new connector is in provisioning state, list all connectors"
-	scenarioStateConnectorIsProvisioning     = "The new connector is in provisioning state"
-	scenarioStateConnectorIsRunning1         = "The new connector is in running state #1"
-	scenarioStateConnectorHasBeenCreated     = "The new connector has been just created"
-	scenarioStateConnectorNameHasBeenUpdated = "The new connector's name has been just updated"
-	scenarioStateConnectorHasBeenDeleted     = "The new connector has been deleted"
-	connectorScenarioName                    = "confluent_connector Resource Lifecycle"
-	sensitiveAttributeKey                    = "foo"
-	sensitiveAttributeValue                  = "bar"
-	sensitiveAttributeUpdatedValue           = "bar updated"
+	scenarioStateManagedConnectorHasBeenValidated   = "The new managed connector config has been just validated"
+	scenarioStateManagedConnectorHasBeenCreating    = "The new managed connector has been creating"
+	scenarioStateManagedConnectorFetchingId         = "The new managed connector is in provisioning state, list all connectors"
+	scenarioStateManagedConnectorIsProvisioning     = "The new managed connector is in provisioning state"
+	scenarioStateManagedConnectorIsRunning1         = "The new managed connector is in running state #1"
+	scenarioStateManagedConnectorHasBeenCreated     = "The new managed connector has been just created"
+	scenarioStateManagedConnectorNameHasBeenUpdated = "The new managed connector's name has been just updated"
+	scenarioStateManagedConnectorHasBeenDeleted     = "The new managed connector has been deleted"
+	connectorScenarioName                           = "confluent_connector Resource Lifecycle"
+	sensitiveAttributeKey                           = "foo"
+	sensitiveAttributeValue                         = "bar"
+	sensitiveAttributeUpdatedValue                  = "bar updated"
 )
 
-func TestAccConnector(t *testing.T) {
+func TestAccManagedConnector(t *testing.T) {
 	ctx := context.Background()
 
 	wiremockContainer, err := setupWiremock(ctx)
@@ -56,11 +56,11 @@ func TestAccConnector(t *testing.T) {
 	defer wiremockClient.Reset()
 	// nolint:errcheck
 	defer wiremockClient.ResetAllScenarios()
-	validateConnectorResponse, _ := ioutil.ReadFile("../testdata/connector/validate.json")
+	validateConnectorResponse, _ := ioutil.ReadFile("../testdata/connector/managed/validate.json")
 	validateEnvStub := wiremock.Put(wiremock.URLPathEqualTo("/connect/v1/environments/env-1j3m9j/clusters/lkc-vnwdjz/connector-plugins/DatagenSourceInternal/config/validate")).
 		InScenario(connectorScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
-		WillSetStateTo(scenarioStateConnectorHasBeenValidated).
+		WillSetStateTo(scenarioStateManagedConnectorHasBeenValidated).
 		WillReturn(
 			string(validateConnectorResponse),
 			contentTypeJSONHeader,
@@ -70,8 +70,8 @@ func TestAccConnector(t *testing.T) {
 
 	createConnectorStub := wiremock.Post(wiremock.URLPathEqualTo("/connect/v1/environments/env-1j3m9j/clusters/lkc-vnwdjz/connectors")).
 		InScenario(connectorScenarioName).
-		WhenScenarioStateIs(scenarioStateConnectorHasBeenValidated).
-		WillSetStateTo(scenarioStateConnectorHasBeenCreating).
+		WhenScenarioStateIs(scenarioStateManagedConnectorHasBeenValidated).
+		WillSetStateTo(scenarioStateManagedConnectorHasBeenCreating).
 		WillReturn(
 			"",
 			contentTypeJSONHeader,
@@ -79,12 +79,12 @@ func TestAccConnector(t *testing.T) {
 		)
 	_ = wiremockClient.StubFor(createConnectorStub)
 
-	createdConnectorResponse, _ := ioutil.ReadFile("../testdata/connector/read_created_connectors.json")
+	createdConnectorResponse, _ := ioutil.ReadFile("../testdata/connector/managed/read_created_connectors.json")
 	readCreatedConnectorsStub := wiremock.Get(wiremock.URLPathEqualTo("/connect/v1/environments/env-1j3m9j/clusters/lkc-vnwdjz/connectors")).
 		WithQueryParam("expand", wiremock.EqualTo("info,status,id")).
 		InScenario(connectorScenarioName).
-		WhenScenarioStateIs(scenarioStateConnectorHasBeenCreating).
-		WillSetStateTo(scenarioStateConnectorFetchingId).
+		WhenScenarioStateIs(scenarioStateManagedConnectorHasBeenCreating).
+		WillSetStateTo(scenarioStateManagedConnectorFetchingId).
 		WillReturn(
 			string(createdConnectorResponse),
 			contentTypeJSONHeader,
@@ -92,11 +92,11 @@ func TestAccConnector(t *testing.T) {
 		)
 	_ = wiremockClient.StubFor(readCreatedConnectorsStub)
 
-	provisioningConnectorResponse, _ := ioutil.ReadFile("../testdata/connector/read_provisioning_connector.json")
+	provisioningConnectorResponse, _ := ioutil.ReadFile("../testdata/connector/managed/read_provisioning_connector.json")
 	readProvisioningConnectorStub := wiremock.Get(wiremock.URLPathEqualTo("/connect/v1/environments/env-1j3m9j/clusters/lkc-vnwdjz/connectors/test_connector/status")).
 		InScenario(connectorScenarioName).
-		WhenScenarioStateIs(scenarioStateConnectorFetchingId).
-		WillSetStateTo(scenarioStateConnectorIsProvisioning).
+		WhenScenarioStateIs(scenarioStateManagedConnectorFetchingId).
+		WillSetStateTo(scenarioStateManagedConnectorIsProvisioning).
 		WillReturn(
 			string(provisioningConnectorResponse),
 			contentTypeJSONHeader,
@@ -104,11 +104,11 @@ func TestAccConnector(t *testing.T) {
 		)
 	_ = wiremockClient.StubFor(readProvisioningConnectorStub)
 
-	runningConnectorResponse, _ := ioutil.ReadFile("../testdata/connector/read_running_connector.json")
+	runningConnectorResponse, _ := ioutil.ReadFile("../testdata/connector/managed/read_running_connector.json")
 	readRunningConnectorStub1 := wiremock.Get(wiremock.URLPathEqualTo("/connect/v1/environments/env-1j3m9j/clusters/lkc-vnwdjz/connectors/test_connector/status")).
 		InScenario(connectorScenarioName).
-		WhenScenarioStateIs(scenarioStateConnectorIsProvisioning).
-		WillSetStateTo(scenarioStateConnectorIsRunning1).
+		WhenScenarioStateIs(scenarioStateManagedConnectorIsProvisioning).
+		WillSetStateTo(scenarioStateManagedConnectorIsRunning1).
 		WillReturn(
 			string(runningConnectorResponse),
 			contentTypeJSONHeader,
@@ -119,8 +119,8 @@ func TestAccConnector(t *testing.T) {
 	readCreatedConnectorStub := wiremock.Get(wiremock.URLPathEqualTo("/connect/v1/environments/env-1j3m9j/clusters/lkc-vnwdjz/connectors")).
 		WithQueryParam("expand", wiremock.EqualTo("info,status,id")).
 		InScenario(connectorScenarioName).
-		WhenScenarioStateIs(scenarioStateConnectorIsRunning1).
-		WillSetStateTo(scenarioStateConnectorHasBeenCreated).
+		WhenScenarioStateIs(scenarioStateManagedConnectorIsRunning1).
+		WillSetStateTo(scenarioStateManagedConnectorHasBeenCreated).
 		WillReturn(
 			string(createdConnectorResponse),
 			contentTypeJSONHeader,
@@ -131,7 +131,7 @@ func TestAccConnector(t *testing.T) {
 	readCreatedConnectorStub2 := wiremock.Get(wiremock.URLPathEqualTo("/connect/v1/environments/env-1j3m9j/clusters/lkc-vnwdjz/connectors")).
 		WithQueryParam("expand", wiremock.EqualTo("info,status,id")).
 		InScenario(connectorScenarioName).
-		WhenScenarioStateIs(scenarioStateConnectorHasBeenCreated).
+		WhenScenarioStateIs(scenarioStateManagedConnectorHasBeenCreated).
 		WillReturn(
 			string(createdConnectorResponse),
 			contentTypeJSONHeader,
@@ -141,8 +141,8 @@ func TestAccConnector(t *testing.T) {
 
 	updateConnectorStub := wiremock.Put(wiremock.URLPathEqualTo("/connect/v1/environments/env-1j3m9j/clusters/lkc-vnwdjz/connectors/test_connector/config")).
 		InScenario(connectorScenarioName).
-		WhenScenarioStateIs(scenarioStateConnectorHasBeenCreated).
-		WillSetStateTo(scenarioStateConnectorNameHasBeenUpdated).
+		WhenScenarioStateIs(scenarioStateManagedConnectorHasBeenCreated).
+		WillSetStateTo(scenarioStateManagedConnectorNameHasBeenUpdated).
 		WillReturn(
 			"",
 			contentTypeJSONHeader,
@@ -150,11 +150,11 @@ func TestAccConnector(t *testing.T) {
 		)
 	_ = wiremockClient.StubFor(updateConnectorStub)
 
-	updatedConnectorResponse, _ := ioutil.ReadFile("../testdata/connector/read_updated_connectors.json")
+	updatedConnectorResponse, _ := ioutil.ReadFile("../testdata/connector/managed/read_updated_connectors.json")
 	readUpdatedConnectorStub := wiremock.Get(wiremock.URLPathEqualTo("/connect/v1/environments/env-1j3m9j/clusters/lkc-vnwdjz/connectors")).
 		WithQueryParam("expand", wiremock.EqualTo("info,status,id")).
 		InScenario(connectorScenarioName).
-		WhenScenarioStateIs(scenarioStateConnectorNameHasBeenUpdated).
+		WhenScenarioStateIs(scenarioStateManagedConnectorNameHasBeenUpdated).
 		WillReturn(
 			string(updatedConnectorResponse),
 			contentTypeJSONHeader,
@@ -162,11 +162,11 @@ func TestAccConnector(t *testing.T) {
 		)
 	_ = wiremockClient.StubFor(readUpdatedConnectorStub)
 
-	deleteConnectorResponse, _ := ioutil.ReadFile("../testdata/connector/delete_connector.json")
+	deleteConnectorResponse, _ := ioutil.ReadFile("../testdata/connector/managed/delete_connector.json")
 	deleteConnectorStub := wiremock.Delete(wiremock.URLPathEqualTo("/connect/v1/environments/env-1j3m9j/clusters/lkc-vnwdjz/connectors/test_connector")).
 		InScenario(connectorScenarioName).
-		WhenScenarioStateIs(scenarioStateConnectorNameHasBeenUpdated).
-		WillSetStateTo(scenarioStateConnectorHasBeenDeleted).
+		WhenScenarioStateIs(scenarioStateManagedConnectorNameHasBeenUpdated).
+		WillSetStateTo(scenarioStateManagedConnectorHasBeenDeleted).
 		WillReturn(
 			string(deleteConnectorResponse),
 			contentTypeJSONHeader,
@@ -174,10 +174,10 @@ func TestAccConnector(t *testing.T) {
 		)
 	_ = wiremockClient.StubFor(deleteConnectorStub)
 
-	readDeletedConnectorResponse, _ := ioutil.ReadFile("../testdata/connector/read_deleted_connector.json")
+	readDeletedConnectorResponse, _ := ioutil.ReadFile("../testdata/connector/managed/read_deleted_connector.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/connect/v1/environments/env-1j3m9j/clusters/lkc-vnwdjz/connectors/test_connector")).
 		InScenario(connectorScenarioName).
-		WhenScenarioStateIs(scenarioStateConnectorHasBeenDeleted).
+		WhenScenarioStateIs(scenarioStateManagedConnectorHasBeenDeleted).
 		WillReturn(
 			string(readDeletedConnectorResponse),
 			contentTypeJSONHeader,
@@ -196,7 +196,7 @@ func TestAccConnector(t *testing.T) {
 		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckConnectorConfig(mockServerUrl, connectorResourceLabel, connectorDisplayName),
+				Config: testAccCheckManagedConnectorConfig(mockServerUrl, connectorResourceLabel, connectorDisplayName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckConnectorExists(fullConnectorResourceLabel),
 					resource.TestCheckResourceAttr(fullConnectorResourceLabel, paramId, "lcc-abc123"),
@@ -231,7 +231,7 @@ func TestAccConnector(t *testing.T) {
 				},
 			},
 			{
-				Config: testAccCheckUpdatedConnectorConfig(mockServerUrl, connectorResourceLabel, connectorDisplayName),
+				Config: testAccCheckUpdatedManagedConnectorConfig(mockServerUrl, connectorResourceLabel, connectorDisplayName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckConnectorExists(fullConnectorResourceLabel),
 					resource.TestCheckResourceAttr(fullConnectorResourceLabel, paramId, "lcc-abc123"),
@@ -290,7 +290,7 @@ func testAccCheckConnectorDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccCheckConnectorConfig(mockServerUrl, environmentConnectorLabel, connectorDisplayName string) string {
+func testAccCheckManagedConnectorConfig(mockServerUrl, environmentConnectorLabel, connectorDisplayName string) string {
 	return fmt.Sprintf(`
 	provider "confluent" {
  		endpoint = "%s"
@@ -317,7 +317,7 @@ func testAccCheckConnectorConfig(mockServerUrl, environmentConnectorLabel, conne
 	`, mockServerUrl, environmentConnectorLabel, sensitiveAttributeKey, sensitiveAttributeValue, connectorDisplayName)
 }
 
-func testAccCheckUpdatedConnectorConfig(mockServerUrl, environmentConnectorLabel, connectorDisplayName string) string {
+func testAccCheckUpdatedManagedConnectorConfig(mockServerUrl, environmentConnectorLabel, connectorDisplayName string) string {
 	return fmt.Sprintf(`
 	provider "confluent" {
  		endpoint = "%s"

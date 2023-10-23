@@ -17,6 +17,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	ccp "github.com/confluentinc/ccloud-sdk-go-v2/connect-custom-plugin/v1"
 	netip "github.com/confluentinc/ccloud-sdk-go-v2/networking-ip/v1"
 	"strings"
 
@@ -63,6 +64,7 @@ type Client struct {
 	byokClient                      *byok.APIClient
 	iamClient                       *iam.APIClient
 	iamV1Client                     *iamv1.APIClient
+	ccpClient                       *ccp.APIClient
 	cmkClient                       *cmk.APIClient
 	connectClient                   *connect.APIClient
 	fcpmClient                      *fcpm.APIClient
@@ -243,6 +245,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_ksql_cluster":                       ksqlResource(),
 				"confluent_flink_compute_pool":                 computePoolResource(),
 				"confluent_connector":                          connectorResource(),
+				"confluent_custom_connector_plugin":            customConnectorPluginResource(),
 				"confluent_service_account":                    serviceAccountResource(),
 				"confluent_kafka_topic":                        kafkaTopicResource(),
 				"confluent_kafka_mirror_topic":                 kafkaMirrorTopicResource(),
@@ -361,6 +364,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 
 	apiKeysCfg := apikeys.NewConfiguration()
 	byokCfg := byok.NewConfiguration()
+	ccpCfg := ccp.NewConfiguration()
 	cmkCfg := cmk.NewConfiguration()
 	connectCfg := connect.NewConfiguration()
 	fcpmCfg := fcpm.NewConfiguration()
@@ -378,6 +382,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 
 	apiKeysCfg.Servers[0].URL = endpoint
 	byokCfg.Servers[0].URL = endpoint
+	ccpCfg.Servers[0].URL = endpoint
 	cmkCfg.Servers[0].URL = endpoint
 	connectCfg.Servers[0].URL = endpoint
 	fcpmCfg.Servers[0].URL = endpoint
@@ -395,6 +400,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 
 	apiKeysCfg.UserAgent = userAgent
 	byokCfg.UserAgent = userAgent
+	ccpCfg.UserAgent = userAgent
 	cmkCfg.UserAgent = userAgent
 	connectCfg.UserAgent = userAgent
 	fcpmCfg.UserAgent = userAgent
@@ -418,6 +424,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 
 	apiKeysCfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
 	byokCfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
+	ccpCfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
 	cmkCfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
 	connectCfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
 	fcpmCfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
@@ -436,6 +443,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	client := Client{
 		apiKeysClient:                   apikeys.NewAPIClient(apiKeysCfg),
 		byokClient:                      byok.NewAPIClient(byokCfg),
+		ccpClient:                       ccp.NewAPIClient(ccpCfg),
 		cmkClient:                       cmk.NewAPIClient(cmkCfg),
 		connectClient:                   connect.NewAPIClient(connectCfg),
 		fcpmClient:                      fcpm.NewAPIClient(fcpmCfg),

@@ -15,11 +15,13 @@
 package provider
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	apikeys "github.com/confluentinc/ccloud-sdk-go-v2/apikeys/v2"
 	byok "github.com/confluentinc/ccloud-sdk-go-v2/byok/v1"
 	cmk "github.com/confluentinc/ccloud-sdk-go-v2/cmk/v2"
+	ccp "github.com/confluentinc/ccloud-sdk-go-v2/connect-custom-plugin/v1"
 	connect "github.com/confluentinc/ccloud-sdk-go-v2/connect/v1"
 	dc "github.com/confluentinc/ccloud-sdk-go-v2/data-catalog/v1"
 	fcpm "github.com/confluentinc/ccloud-sdk-go-v2/flink/v2"
@@ -36,14 +38,17 @@ import (
 	org "github.com/confluentinc/ccloud-sdk-go-v2/org/v2"
 	schemaregistry "github.com/confluentinc/ccloud-sdk-go-v2/schema-registry/v1"
 	srcm "github.com/confluentinc/ccloud-sdk-go-v2/srcm/v2"
+	"github.com/dghubble/sling"
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"io"
+	"mime/multipart"
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 	"reflect"
 	"strings"
 	"time"
@@ -65,6 +70,7 @@ const (
 	apiKeyLoggingKey                          = "api_key_id"
 	computePoolLoggingKey                     = "compute_pool_id"
 	networkLoggingKey                         = "network_key_id"
+	customConnectorPluginLoggingKey           = "custom_connector_plugin_key_id"
 	connectorLoggingKey                       = "connector_key_id"
 	privateLinkAccessLoggingKey               = "private_link_access_id"
 	privateLinkAttachmentLoggingKey           = "private_link_attachment_id"
@@ -90,6 +96,7 @@ const (
 	schemaRegistryClusterModeLoggingKey       = "schema_registry_cluster_mode_id"
 	schemaRegistryClusterConfigLoggingKey     = "schema_registry_cluster_config_id"
 	invitationloggingKey                      = "invitation_id"
+	tfCustomConnectorPluginTestUrl            = "TF_TEST_URL"
 )
 
 func (c *Client) apiKeysApiContext(ctx context.Context) context.Context {
@@ -122,6 +129,17 @@ func kafkaRestApiContextWithClusterApiKey(ctx context.Context, kafkaApiKey strin
 		})
 	}
 	tflog.Warn(ctx, "Could not find Kafka API Key")
+	return ctx
+}
+
+func (c *Client) ccpApiContext(ctx context.Context) context.Context {
+	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
+		return context.WithValue(context.Background(), ccp.ContextBasicAuth, ccp.BasicAuth{
+			UserName: c.cloudApiKey,
+			Password: c.cloudApiSecret,
+		})
+	}
+	tflog.Warn(ctx, "Could not find Cloud API Key")
 	return ctx
 }
 
@@ -633,5 +651,49 @@ func clusterLinkSettingsKeysValidate(v interface{}, path cty.Path) diag.Diagnost
 				"Read %s for more details.", clusterSetting, docsClusterLinkConfigUrl)
 		}
 	}
+	return nil
+}
+
+// https://github.com/confluentinc/cli/blob/main/internal/connect/utils.go#L88C1-L125C2
+func uploadFile(url, filePath string, formFields map[string]any) error {
+	// TODO: figure out a way to mock this function and delete this hack
+	if url == tfCustomConnectorPluginTestUrl {
+		return nil
+	}
+	var buffer bytes.Buffer
+	writer := multipart.NewWriter(&buffer)
+
+	for key, value := range formFields {
+		if strValue, ok := value.(string); ok {
+			_ = writer.WriteField(key, strValue)
+		}
+	}
+
+	file, err := os.Open(filePath)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	part, err := writer.CreateFormFile("file", filepath.Base(filePath))
+	if err != nil {
+		return err
+	}
+	if _, err := io.Copy(part, file); err != nil {
+		return err
+	}
+
+	if err := writer.Close(); err != nil {
+		return err
+	}
+
+	client := &http.Client{
+		Timeout: 20 * time.Minute,
+	}
+	_, err = sling.New().Client(client).Base(url).Set("Content-Type", writer.FormDataContentType()).Post("").Body(&buffer).ReceiveSuccess(nil)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
