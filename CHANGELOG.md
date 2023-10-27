@@ -3,10 +3,10 @@
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.54.0...v1.55.0)
 
 **New features:**
-* Added support for [custom connectors](https://docs.confluent.io/cloud/current/connectors/bring-your-connector/custom-connector-qs.html) to `confluent_conector` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_conector) in [Preview lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy) ([#243](https://github.com/confluentinc/terraform-provider-confluent/issues/243)).
+* Added support for [custom connectors](https://docs.confluent.io/cloud/current/connectors/bring-your-connector/custom-connector-qs.html) to `confluent_connector` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_connector) in [Preview lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy) ([#243](https://github.com/confluentinc/terraform-provider-confluent/issues/243)).
 * Added **1** new example:
   * [custom-datagen-source-connector](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/connectors/custom-datagen-source-connector)
-* Added new `confluent_ip_address` [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_ip_address) in a [Preview lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy) ([#300](https://github.com/confluentinc/terraform-provider-confluent/issues/300)).
+* Added new `confluent_ip_addresses` [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_ip_addresses) in a [Preview lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy) ([#300](https://github.com/confluentinc/terraform-provider-confluent/issues/300)).
 
 **Bug fixes:**
 * Added a client side fix for "Flink compute pool recreation" issue ([#324](https://github.com/confluentinc/terraform-provider-confluent/issues/324)).
