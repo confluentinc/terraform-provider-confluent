@@ -187,9 +187,15 @@ func schemaExporterCreate(ctx context.Context, d *schema.ResourceData, meta inte
 
 	er := sr.NewExporterReference()
 	er.SetName(name)
-	er.SetContext(d.Get(paramContext).(string))
-	er.SetContextType(d.Get(paramContextType).(string))
-	er.SetSubjectRenameFormat(d.Get(paramSubjectRenameFormat).(string))
+	if v := d.Get(paramContext).(string); v != "" {
+		er.SetContext(v)
+	}
+	if v := d.Get(paramContextType).(string); v != "" {
+		er.SetContextType(v)
+	}
+	if v := d.Get(paramSubjectRenameFormat).(string); v != "" {
+		er.SetSubjectRenameFormat(v)
+	}
 	er.SetSubjects(subjects)
 	er.SetConfig(constructDestinationSRClusterRequest(d))
 
@@ -328,9 +334,15 @@ func schemaExporterUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 		subjects := convertToStringSlice(d.Get(paramSubjects).(*schema.Set).List())
 
 		req := sr.NewExporterUpdateRequest()
-		req.SetContext(d.Get(paramContext).(string))
-		req.SetContextType(d.Get(paramContextType).(string))
-		req.SetSubjectRenameFormat(d.Get(paramSubjectRenameFormat).(string))
+		if v := d.Get(paramContext).(string); v != "" {
+			req.SetContext(v)
+		}
+		if v := d.Get(paramContextType).(string); v != "" {
+			req.SetContextType(v)
+		}
+		if v := d.Get(paramSubjectRenameFormat).(string); v != "" {
+			req.SetSubjectRenameFormat(v)
+		}
 		req.SetSubjects(subjects)
 		req.SetConfig(constructDestinationSRClusterRequest(d))
 
