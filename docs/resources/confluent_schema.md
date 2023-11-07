@@ -102,7 +102,7 @@ In addition to the preceding arguments, the following attributes are exported:
 
 ## Import
 
--> **Note:** You must set the `SCHEMA_CONTENT` (`schema`) environment variable before importing a Schema.
+-> **Note:** You can set the `SCHEMA_CONTENT` (`schema`) environment variable to the specified schema content, which overrides the schema content that would otherwise be taken from Confluent Cloud.
 
 You can import a Schema by using the Schema Registry cluster ID, Subject name, and unique identifier (or `latest` when `recreate_on_update = false`) of the Schema in the format `<Schema Registry cluster ID>/<Subject name>/<Schema identifier>`, for example:
 
