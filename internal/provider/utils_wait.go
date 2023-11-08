@@ -302,8 +302,12 @@ func waitForConnectorToChangeStatus(ctx context.Context, c *Client, displayName,
 }
 
 func waitForKafkaMirrorTopicToChangeStatus(ctx context.Context, c *KafkaRestClient, clusterId, linkName, mirrorTopicName, currentStatus, targetStatus string) error {
+	pendingStatuses := []string{currentStatus}
+	if targetStatus == stateStopped {
+		pendingStatuses = append(pendingStatuses, statePendingStopped)
+	}
 	stateConf := &resource.StateChangeConf{
-		Pending:      []string{currentStatus},
+		Pending:      pendingStatuses,
 		Target:       []string{targetStatus},
 		Refresh:      kafkaMirrorTopicUpdateStatus(c.apiContext(ctx), c, clusterId, linkName, mirrorTopicName),
 		Timeout:      5 * time.Minute,

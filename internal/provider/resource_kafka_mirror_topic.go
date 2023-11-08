@@ -35,6 +35,7 @@ const (
 	paramSourceKafkaTopic            = "source_kafka_topic"
 	stateActive                      = "ACTIVE"
 	stateStopped                     = "STOPPED"
+	statePendingStopped              = "PENDING_STOPPED"
 	stateFailedOver                  = "FAILED_OVER"
 	statePromoted                    = "PROMOTED"
 	paramKafkaMirrorTopicCredentials = "kafka_cluster.0.credentials"
