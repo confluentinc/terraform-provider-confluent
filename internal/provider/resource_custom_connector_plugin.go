@@ -77,7 +77,7 @@ func customConnectorPluginResource() *schema.Resource {
 				ValidateFunc: validation.StringInSlice([]string{"SOURCE", "SINK"}, false),
 			},
 			paramSensitiveConfigProperties: {
-				Type: schema.TypeList,
+				Type: schema.TypeSet,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
@@ -144,7 +144,7 @@ func customConnectorPluginCreate(ctx context.Context, d *schema.ResourceData, me
 	documentationLink := d.Get(paramDocumentationLink).(string)
 	connectorClass := d.Get(paramConnectorClass).(string)
 	connectorType := d.Get(paramConnectorType).(string)
-	sensitiveConfigProperties := convertToStringSlice(d.Get(paramSensitiveConfigProperties).([]interface{}))
+	sensitiveConfigProperties := convertToStringSlice(d.Get(paramSensitiveConfigProperties).(*schema.Set).List())
 	filename := d.Get(paramFilename).(string)
 
 	// Part 1: Get Upload ID
