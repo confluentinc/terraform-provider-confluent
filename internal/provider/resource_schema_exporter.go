@@ -331,6 +331,13 @@ func schemaExporterUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 	}
 
 	if d.HasChanges(paramContextType, paramContext, paramSubjectRenameFormat, paramSubjects, paramConfigs, paramDestinationSchemaRegistryCluster) {
+		// pause the exporter whenever there's an update on configs
+		// https://github.com/confluentinc/terraform-provider-confluent/issues/321
+		_, _, err = c.apiClient.ExportersV1Api.PauseExporterByName(c.apiContext(ctx), name).Execute()
+		if err != nil {
+			return diag.Errorf("error pausing Schema Exporter (Failed to pause the exporter): %s", createDescriptiveError(err))
+		}
+
 		subjects := convertToStringSlice(d.Get(paramSubjects).(*schema.Set).List())
 
 		req := sr.NewExporterUpdateRequest()
@@ -370,33 +377,46 @@ func schemaExporterUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 				return diag.Errorf("error updating Schema Exporter (Failed to reset the exporter): %s", createDescriptiveError(err))
 			}
 		}
+
+		error := resumeExporter(ctx, d, c, name, id)
+		if error != nil {
+			return error
+		}
 	}
 
 	if d.HasChange(paramStatus) {
-		isRunning := d.Get(paramStatus).(string) == stateRunning
-		if isRunning {
-			// resume the exporter last after making any changes
-			_, resp, err := c.apiClient.ExportersV1Api.ResumeExporterByName(c.apiContext(ctx), name).Execute()
-			if err != nil && resp.StatusCode != http.StatusConflict {
-				return diag.Errorf("error resuming Schema Exporter (Failed to resume the exporter): %s", createDescriptiveError(err))
-			}
-
-			if err := waitForSchemaExporterToProvision(c.apiContext(ctx), c, id, name); err != nil {
-				return diag.Errorf("error waiting for Schema Exporter %q to updating: %s", id, createDescriptiveError(err))
-			}
-			status, _, err := c.apiClient.ExportersV1Api.GetExporterStatusByName(c.apiContext(ctx), name).Execute()
-			if err != nil {
-				return diag.Errorf("error resuming Schema Exporter (Failed to read status): %s", createDescriptiveError(err))
-			}
-			if status.GetTrace() != "" {
-				return diag.Errorf("error resuming Schema Exporter %q: %s", id, status.GetTrace())
-			}
+		error := resumeExporter(ctx, d, c, name, id)
+		if error != nil {
+			return error
 		}
 	}
 
 	d.SetId(id)
 	tflog.Debug(ctx, fmt.Sprintf("Finished updating Schema Exporter %q", id), map[string]interface{}{schemaExporterLoggingKey: id})
 	return schemaExporterRead(ctx, d, meta)
+}
+
+func resumeExporter(ctx context.Context, d *schema.ResourceData, c *SchemaRegistryRestClient, name string, id string) diag.Diagnostics {
+	isRunning := d.Get(paramStatus).(string) == stateRunning
+	if isRunning {
+		// resume the exporter last after making any changes
+		_, resp, err := c.apiClient.ExportersV1Api.ResumeExporterByName(c.apiContext(ctx), name).Execute()
+		if err != nil && resp.StatusCode != http.StatusConflict {
+			return diag.Errorf("error resuming Schema Exporter (Failed to resume the exporter): %s", createDescriptiveError(err))
+		}
+
+		if err := waitForSchemaExporterToProvision(c.apiContext(ctx), c, id, name); err != nil {
+			return diag.Errorf("error waiting for Schema Exporter %q to updating: %s", id, createDescriptiveError(err))
+		}
+		status, _, err := c.apiClient.ExportersV1Api.GetExporterStatusByName(c.apiContext(ctx), name).Execute()
+		if err != nil {
+			return diag.Errorf("error resuming Schema Exporter (Failed to read status): %s", createDescriptiveError(err))
+		}
+		if status.GetTrace() != "" {
+			return diag.Errorf("error resuming Schema Exporter %q: %s", id, status.GetTrace())
+		}
+	}
+	return nil
 }
 
 func schemaExporterDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
