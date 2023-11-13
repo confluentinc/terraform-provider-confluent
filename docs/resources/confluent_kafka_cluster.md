@@ -213,8 +213,6 @@ The following arguments are supported:
 - `dedicated` - (Optional Configuration Block) The configuration of the Dedicated Kafka cluster. It supports the following:
     - `cku` - (Required Number) The number of Confluent Kafka Units (CKUs) for Dedicated cluster types. The minimum number of CKUs for `SINGLE_ZONE` dedicated clusters is `1` whereas `MULTI_ZONE` dedicated clusters must have more than `2` CKUs.
 
-!> **Warning:** At the moment, using `encryption_key` for creating Kafka clusters is not available. See [this comment](https://github.com/confluentinc/terraform-provider-confluent/issues/65#issuecomment-1179194889) for more details.
-
 -> **Note:** Exactly one from the `basic`, `standard`, `dedicated`, and `enterprise` configuration blocks must be specified.
 
 !> **Warning:** You can only upgrade clusters from `basic` to `standard`.
