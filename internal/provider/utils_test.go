@@ -16,6 +16,7 @@ package provider
 
 import (
 	"context"
+	"fmt"
 	"reflect"
 	"testing"
 )
@@ -45,5 +46,51 @@ func TestKafkaAclResourceStateUpgradeV0(t *testing.T) {
 
 	if !reflect.DeepEqual(expected, actual) {
 		t.Fatalf("\n\nexpected:\n\n%#v\n\ngot:\n\n%#v\n\n", expected, actual)
+	}
+}
+
+func TestExtractOrgIdFromResourceName(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+		err      error
+	}{
+		{
+			input:    "crn://confluent.cloud/organization=1111aaaa-11aa-11aa-11aa-111111aaaaaa",
+			expected: "1111aaaa-11aa-11aa-11aa-111111aaaaaa",
+			err:      nil,
+		},
+		{
+			input:    "crn://confluent.cloud/organization=1111aaaa/environment=env-abc123",
+			expected: "1111aaaa",
+			err:      nil,
+		},
+		{
+			input:    "crn://confluent.cloud/environment=env-abc123",
+			expected: "",
+			err:      fmt.Errorf("could not find organization ID in resource_name: crn://confluent.cloud/environment=env-abc123"),
+		},
+		{
+			input:    "crn://api.confluent.cloud/organization=foo/service-account=sa-12mgdv",
+			expected: "foo",
+			err:      nil,
+		},
+		{
+			input:    "crn://api.confluent.cloud/organization=foo/environment=env-3732nw/flink-region=aws.us-east-1",
+			expected: "foo",
+			err:      nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			result, err := extractOrgIdFromResourceName(tt.input)
+			if !reflect.DeepEqual(err, tt.err) {
+				t.Fatalf("Unexpected error: expected %v, got %v", tt.err, err)
+			}
+			if !reflect.DeepEqual(result, tt.expected) {
+				t.Fatalf("Unexpected result: expected %v, got %v", tt.expected, result)
+			}
+		})
 	}
 }

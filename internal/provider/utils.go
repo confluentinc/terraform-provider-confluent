@@ -50,6 +50,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -696,4 +697,15 @@ func uploadFile(url, filePath string, formFields map[string]any) error {
 	}
 
 	return nil
+}
+
+func extractOrgIdFromResourceName(resourceName string) (string, error) {
+	// Match any string of non-slash characters after organization= until the next slash or the end of the string.
+	re := regexp.MustCompile(`/organization=([^/]+)(/|$)`)
+	match := re.FindStringSubmatch(resourceName)
+	if len(match) > 1 {
+		return match[1], nil
+	} else {
+		return "", fmt.Errorf("could not find organization ID in %v: %s", paramResourceName, resourceName)
+	}
 }

@@ -64,7 +64,7 @@ func organizationDataSourceRead(ctx context.Context, d *schema.ResourceData, met
 	if err != nil {
 		return diag.FromErr(createDescriptiveError(err))
 	}
-	organizationId, err := extractOrgIdFromOrgResourceName(organizationResourceName)
+	organizationId, err := extractOrgIdFromResourceName(organizationResourceName)
 	if err != nil {
 		return diag.FromErr(createDescriptiveError(err))
 	}
@@ -88,15 +88,4 @@ func extractOrgResourceName(environmentResourceName string) (string, error) {
 		return "", fmt.Errorf("could not find %s in %s", crnEnvironmentSuffix, environmentResourceName)
 	}
 	return environmentResourceName[:lastIndex], nil
-}
-
-// Extracts 1111aaaa-11aa-11aa-11aa-111111aaaaaa
-// from
-// crn://confluent.cloud/organization=1111aaaa-11aa-11aa-11aa-111111aaaaaa
-func extractOrgIdFromOrgResourceName(orgResourceName string) (string, error) {
-	lastIndex := strings.LastIndex(orgResourceName, crnOrgSuffix)
-	if lastIndex == -1 {
-		return "", fmt.Errorf("could not find %s in %s", crnOrgSuffix, orgResourceName)
-	}
-	return orgResourceName[lastIndex+len(crnOrgSuffix):], nil
 }
