@@ -6,8 +6,34 @@ import (
 	"github.com/hashicorp/go-retryablehttp"
 	"net/http"
 
+	fgb "github.com/confluentinc/ccloud-sdk-go-v2/flink-gateway/v1beta1"
 	schemaregistry "github.com/confluentinc/ccloud-sdk-go-v2/schema-registry/v1"
 )
+
+type FlinkRestClientFactory struct {
+	userAgent  string
+	maxRetries *int
+}
+
+func (f FlinkRestClientFactory) CreateFlinkRestClient(restEndpoint, environmentId, flinkRegionId, flinkApiKey, flinkApiSecret string, isMetadataSetInProviderBlock bool) *FlinkRestClient {
+	config := fgb.NewConfiguration()
+	config.Servers[0].URL = restEndpoint
+	config.UserAgent = f.userAgent
+	if f.maxRetries != nil {
+		config.HTTPClient = NewRetryableClientFactory(WithMaxRetries(*f.maxRetries)).CreateRetryableClient()
+	} else {
+		config.HTTPClient = NewRetryableClientFactory().CreateRetryableClient()
+	}
+	return &FlinkRestClient{
+		apiClient:                    fgb.NewAPIClient(config),
+		environmentId:                environmentId,
+		flinkRegionId:                flinkRegionId,
+		flinkApiKey:                  flinkApiKey,
+		flinkApiSecret:               flinkApiSecret,
+		restEndpoint:                 restEndpoint,
+		isMetadataSetInProviderBlock: isMetadataSetInProviderBlock,
+	}
+}
 
 type SchemaRegistryRestClientFactory struct {
 	userAgent  string

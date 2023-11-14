@@ -36,6 +36,13 @@ const (
 	scenarioStateKafkaApiKeyHasBeenDeleted                = "The new kafka api key has been deleted"
 	kafkaApiKeyScenarioName                               = "confluent_api_key (Kafka API Key) Resource Lifecycle"
 
+	scenarioStateFlinkApiKeyHasBeenCreated                = "The new flink api key has been just created"
+	scenarioStateFlinkApiKeyHasBeenSyncedFirstRead        = "The new flink api key has been just synced (read #1)"
+	scenarioStateFlinkApiKeyHasBeenSyncedConfirmationRead = "The new flink api key has been just synced (final read)"
+	scenarioStateFlinkApiKeyHasBeenUpdated                = "The new flink api key's description and display_name have been just updated"
+	scenarioStateFlinkApiKeyHasBeenDeleted                = "The new flink api key has been deleted"
+	flinkApiKeyScenarioName                               = "confluent_api_key (Flink API Key) Resource Lifecycle"
+
 	scenarioStateCloudApiKeyHasBeenCreated = "The new cloud api key has been just created"
 	scenarioStateCloudApiKeyHasBeenSynced  = "The new cloud api key has been just synced"
 	scenarioStateCloudApiKeyHasBeenUpdated = "The new cloud api key's description and display_name have been just updated"
@@ -280,6 +287,244 @@ func TestAccKafkaApiKey(t *testing.T) {
 	checkStubCount(t, wiremockClient, createCmkApiStub, "GET /cmk/v2/clusters/lkc-zmmq63", expectedCountOne)
 }
 
+func TestAccFlinkApiKey(t *testing.T) {
+	ctx := context.Background()
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
+
+	mockServerUrl := wiremockContainer.URI
+	wiremockClient := wiremock.NewClient(mockServerUrl)
+	// nolint:errcheck
+	defer wiremockClient.Reset()
+
+	// nolint:errcheck
+	defer wiremockClient.ResetAllScenarios()
+	createFlinkApiKeyResponse, _ := ioutil.ReadFile("../testdata/apikey/create_flink_api_key.json")
+	createFlinkApiKeyStub := wiremock.Post(wiremock.URLPathEqualTo("/iam/v2/api-keys")).
+		InScenario(flinkApiKeyScenarioName).
+		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
+		WillReturn(
+			string(createFlinkApiKeyResponse),
+			contentTypeJSONHeader,
+			http.StatusCreated,
+		)
+	_ = wiremockClient.StubFor(createFlinkApiKeyStub)
+
+	createFlinkFcpmApiResponse, _ := ioutil.ReadFile("../testdata/apikey/read_list_regions.json")
+	var createFlinkFcpmApiResponseMap map[string]interface{}
+	_ = json.Unmarshal(createFlinkFcpmApiResponse, &createFlinkFcpmApiResponseMap)
+	// Override http endpoint to mock Flink REST API responses
+	createFlinkFcpmApiResponseMap["data"].([]interface{})[0].(map[string]interface{})["http_endpoint"] = mockServerUrl
+	createFlinkFcpmApiResponseWithUpdatedHttpEndpoint, _ := json.Marshal(createFlinkFcpmApiResponseMap)
+	createFcpmApiStub := wiremock.Get(wiremock.URLPathEqualTo("/fcpm/v2/regions")).
+		InScenario(flinkApiKeyScenarioName).
+		WithQueryParam("cloud", wiremock.EqualTo("aws")).
+		WithQueryParam("region_name", wiremock.EqualTo("us-east-1")).
+		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
+		WillReturn(
+			string(createFlinkFcpmApiResponseWithUpdatedHttpEndpoint),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		)
+	_ = wiremockClient.StubFor(createFcpmApiStub)
+
+	flinkRestApi404Response, _ := ioutil.ReadFile("../testdata/apikey/read_list_statements_error.json")
+	listStatementsFlinkRestApi401Stub := wiremock.Get(wiremock.URLPathEqualTo("/sql/v1beta1/organizations/foo/environments/env-3732nw/statements")).
+		InScenario(flinkApiKeyScenarioName).
+		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
+		WillSetStateTo(scenarioStateFlinkApiKeyHasBeenSyncedFirstRead).
+		WillReturn(
+			string(flinkRestApi404Response),
+			contentTypeJSONHeader,
+			http.StatusNotFound,
+		)
+	_ = wiremockClient.StubFor(listStatementsFlinkRestApi401Stub)
+
+	flinkRestApiOkResponse, _ := ioutil.ReadFile("../testdata/apikey/read_list_statements_ok.json")
+	listStatementsFlinkRestApi200Stub := wiremock.Get(wiremock.URLPathEqualTo("/sql/v1beta1/organizations/foo/environments/env-3732nw/statements")).
+		InScenario(flinkApiKeyScenarioName).
+		WhenScenarioStateIs(scenarioStateFlinkApiKeyHasBeenSyncedFirstRead).
+		WillSetStateTo(scenarioStateFlinkApiKeyHasBeenSyncedConfirmationRead).
+		WillReturn(
+			string(flinkRestApiOkResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		)
+	_ = wiremockClient.StubFor(listStatementsFlinkRestApi200Stub)
+
+	readCreatedFlinkApiKeyResponse, _ := ioutil.ReadFile("../testdata/apikey/read_created_flink_api_key.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/api-keys/AK4NBR7MUYHVJMHW")).
+		InScenario(flinkApiKeyScenarioName).
+		WhenScenarioStateIs(scenarioStateFlinkApiKeyHasBeenSyncedConfirmationRead).
+		WillSetStateTo(scenarioStateFlinkApiKeyHasBeenCreated).
+		WillReturn(
+			string(readCreatedFlinkApiKeyResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	readImportedFlinkApiKeyResponse, _ := ioutil.ReadFile("../testdata/apikey/read_created_flink_api_key.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/api-keys/AK4NBR7MUYHVJMHW")).
+		InScenario(flinkApiKeyScenarioName).
+		WhenScenarioStateIs(scenarioStateFlinkApiKeyHasBeenCreated).
+		WillReturn(
+			string(readImportedFlinkApiKeyResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	readUpdatedFlinkApiKeyResponse, _ := ioutil.ReadFile("../testdata/apikey/read_updated_flink_api_key.json")
+	patchFlinkApiKeyStub := wiremock.Patch(wiremock.URLPathEqualTo("/iam/v2/api-keys/AK4NBR7MUYHVJMHW")).
+		InScenario(flinkApiKeyScenarioName).
+		WhenScenarioStateIs(scenarioStateFlinkApiKeyHasBeenCreated).
+		WillSetStateTo(scenarioStateFlinkApiKeyHasBeenUpdated).
+		WillReturn(
+			string(readUpdatedFlinkApiKeyResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		)
+	_ = wiremockClient.StubFor(patchFlinkApiKeyStub)
+
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/api-keys/AK4NBR7MUYHVJMHW")).
+		InScenario(flinkApiKeyScenarioName).
+		WhenScenarioStateIs(scenarioStateFlinkApiKeyHasBeenUpdated).
+		WillReturn(
+			string(readUpdatedFlinkApiKeyResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	readDeletedFlinkApiKeyResponse, _ := ioutil.ReadFile("../testdata/apikey/read_deleted_flink_api_key.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/api-keys/AK4NBR7MUYHVJMHW")).
+		InScenario(flinkApiKeyScenarioName).
+		WhenScenarioStateIs(scenarioStateFlinkApiKeyHasBeenDeleted).
+		WillReturn(
+			string(readDeletedFlinkApiKeyResponse),
+			contentTypeJSONHeader,
+			http.StatusNotFound,
+		))
+	deleteFlinkApiKeyStub := wiremock.Delete(wiremock.URLPathEqualTo("/iam/v2/api-keys/AK4NBR7MUYHVJMHW")).
+		InScenario(flinkApiKeyScenarioName).
+		WhenScenarioStateIs(scenarioStateFlinkApiKeyHasBeenUpdated).
+		WillSetStateTo(scenarioStateFlinkApiKeyHasBeenDeleted).
+		WillReturn(
+			"",
+			contentTypeJSONHeader,
+			http.StatusNoContent,
+		)
+	_ = wiremockClient.StubFor(deleteFlinkApiKeyStub)
+
+	flinkApiKeyDisplayName := "CI Flink API Key"
+	flinkApiKeyDescription := "test description"
+	// in order to test tf update (step #3)
+	flinkApiKeyUpdatedDisplayName := "CI Flink API Key updated"
+	flinkApiKeyUpdatedDescription := "test description updated"
+	flinkApiKeyResourceLabel := "test_cluster_api_key_resource_label"
+	fullFlinkApiKeyResourceLabel := fmt.Sprintf("confluent_api_key.%s", flinkApiKeyResourceLabel)
+	ownerId := "sa-12mgdv"
+	ownerApiVersion := "iam/v2"
+	ownerKind := "ServiceAccount"
+	resourceId := "aws.us-east-1"
+	resourceApiVersion := "fcpm/v2"
+	resourceKind := "Region"
+	environmentId := "env-3732nw"
+
+	// Set fake values for secrets since those are required for importing
+	os.Setenv("API_KEY_SECRET", "wtxA2jNlEtBIb0Qb+FE+a/JQMe9xvjt9ijG9j4jwTpy4SzUQ8pPocSFC43loOWBn")
+	defer func() {
+		os.Unsetenv("API_KEY_SECRET")
+	}()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckApiKeyDestroy,
+		// https://www.terraform.io/docs/extend/testing/acceptance-tests/teststep.html
+		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckFlinkApiKeyConfig(mockServerUrl, flinkApiKeyResourceLabel, flinkApiKeyDisplayName, flinkApiKeyDescription, ownerId, ownerApiVersion, ownerKind, resourceId, resourceApiVersion, resourceKind, environmentId),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckApiKeyExists(fullFlinkApiKeyResourceLabel),
+					resource.TestCheckResourceAttr(fullFlinkApiKeyResourceLabel, "id", "AK4NBR7MUYHVJMHW"),
+					resource.TestCheckResourceAttr(fullFlinkApiKeyResourceLabel, "display_name", flinkApiKeyDisplayName),
+					resource.TestCheckResourceAttr(fullFlinkApiKeyResourceLabel, "description", flinkApiKeyDescription),
+					resource.TestCheckResourceAttr(fullFlinkApiKeyResourceLabel, "owner.#", "1"),
+					resource.TestCheckResourceAttr(fullFlinkApiKeyResourceLabel, "owner.0.%", "3"),
+					resource.TestCheckResourceAttr(fullFlinkApiKeyResourceLabel, "owner.0.api_version", "iam/v2"),
+					resource.TestCheckResourceAttr(fullFlinkApiKeyResourceLabel, "owner.0.id", "sa-12mgdv"),
+					resource.TestCheckResourceAttr(fullFlinkApiKeyResourceLabel, "owner.0.kind", "ServiceAccount"),
+					resource.TestCheckResourceAttr(fullFlinkApiKeyResourceLabel, "managed_resource.#", "1"),
+					resource.TestCheckResourceAttr(fullFlinkApiKeyResourceLabel, "managed_resource.0.%", "4"),
+					resource.TestCheckResourceAttr(fullFlinkApiKeyResourceLabel, "managed_resource.0.api_version", "fcpm/v2"),
+					resource.TestCheckResourceAttr(fullFlinkApiKeyResourceLabel, "managed_resource.0.id", "aws.us-east-1"),
+					resource.TestCheckResourceAttr(fullFlinkApiKeyResourceLabel, "managed_resource.0.kind", "Region"),
+					resource.TestCheckResourceAttr(fullFlinkApiKeyResourceLabel, "managed_resource.0.environment.#", "1"),
+					resource.TestCheckResourceAttr(fullFlinkApiKeyResourceLabel, "managed_resource.0.environment.0.%", "1"),
+					resource.TestCheckResourceAttr(fullFlinkApiKeyResourceLabel, "managed_resource.0.environment.0.id", "env-3732nw"),
+					resource.TestCheckResourceAttr(fullFlinkApiKeyResourceLabel, "secret", "wtxA2jNlEtBIb0Qb+FE+a/JQMe9xvjt9ijG9j4jwTpy4SzUQ8pPocSFC43loOWBn"),
+				),
+			},
+			{
+				// https://www.terraform.io/docs/extend/resources/import.html
+				ResourceName:      fullFlinkApiKeyResourceLabel,
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateIdFunc: func(state *terraform.State) (string, error) {
+					resources := state.RootModule().Resources
+					flinkApiKeyId := resources[fullFlinkApiKeyResourceLabel].Primary.ID
+					environmentId := resources[fullFlinkApiKeyResourceLabel].Primary.Attributes["managed_resource.0.environment.0.id"]
+					return environmentId + "/" + flinkApiKeyId, nil
+				},
+			},
+			{
+				Config: testAccCheckFlinkApiKeyConfig(mockServerUrl, flinkApiKeyResourceLabel, flinkApiKeyUpdatedDisplayName, flinkApiKeyUpdatedDescription, ownerId, ownerApiVersion, ownerKind, resourceId, resourceApiVersion, resourceKind, environmentId),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckApiKeyExists(fullFlinkApiKeyResourceLabel),
+					resource.TestCheckResourceAttr(fullFlinkApiKeyResourceLabel, "id", "AK4NBR7MUYHVJMHW"),
+					resource.TestCheckResourceAttr(fullFlinkApiKeyResourceLabel, "display_name", flinkApiKeyUpdatedDisplayName),
+					resource.TestCheckResourceAttr(fullFlinkApiKeyResourceLabel, "description", flinkApiKeyUpdatedDescription),
+					resource.TestCheckResourceAttr(fullFlinkApiKeyResourceLabel, "disable_wait_for_ready", "false"),
+					resource.TestCheckResourceAttr(fullFlinkApiKeyResourceLabel, "owner.#", "1"),
+					resource.TestCheckResourceAttr(fullFlinkApiKeyResourceLabel, "owner.0.%", "3"),
+					resource.TestCheckResourceAttr(fullFlinkApiKeyResourceLabel, "owner.0.api_version", "iam/v2"),
+					resource.TestCheckResourceAttr(fullFlinkApiKeyResourceLabel, "owner.0.id", "sa-12mgdv"),
+					resource.TestCheckResourceAttr(fullFlinkApiKeyResourceLabel, "owner.0.kind", "ServiceAccount"),
+					resource.TestCheckResourceAttr(fullFlinkApiKeyResourceLabel, "managed_resource.#", "1"),
+					resource.TestCheckResourceAttr(fullFlinkApiKeyResourceLabel, "managed_resource.0.%", "4"),
+					resource.TestCheckResourceAttr(fullFlinkApiKeyResourceLabel, "managed_resource.0.api_version", "fcpm/v2"),
+					resource.TestCheckResourceAttr(fullFlinkApiKeyResourceLabel, "managed_resource.0.id", "aws.us-east-1"),
+					resource.TestCheckResourceAttr(fullFlinkApiKeyResourceLabel, "managed_resource.0.kind", "Region"),
+					resource.TestCheckResourceAttr(fullFlinkApiKeyResourceLabel, "managed_resource.0.environment.#", "1"),
+					resource.TestCheckResourceAttr(fullFlinkApiKeyResourceLabel, "managed_resource.0.environment.0.%", "1"),
+					resource.TestCheckResourceAttr(fullFlinkApiKeyResourceLabel, "managed_resource.0.environment.0.id", "env-3732nw"),
+					resource.TestCheckResourceAttr(fullFlinkApiKeyResourceLabel, "secret", "wtxA2jNlEtBIb0Qb+FE+a/JQMe9xvjt9ijG9j4jwTpy4SzUQ8pPocSFC43loOWBn"),
+				),
+			},
+			{
+				// https://www.terraform.io/docs/extend/resources/import.html
+				ResourceName:      fullFlinkApiKeyResourceLabel,
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateIdFunc: func(state *terraform.State) (string, error) {
+					resources := state.RootModule().Resources
+					flinkApiKeyId := resources[fullFlinkApiKeyResourceLabel].Primary.ID
+					environmentId := resources[fullFlinkApiKeyResourceLabel].Primary.Attributes["managed_resource.0.environment.0.id"]
+					return environmentId + "/" + flinkApiKeyId, nil
+				},
+			},
+		},
+	})
+
+	checkStubCount(t, wiremockClient, createFlinkApiKeyStub, "POST /iam/v2/api-keys", expectedCountOne)
+	//checkStubCount(t, wiremockClient, patchFlinkApiKeyStub, "PATCH /iam/v2/api-keys/AK4NBR7MUYHVJMHW", expectedCountOne)
+	checkStubCount(t, wiremockClient, createFcpmApiStub, "GET /fcpm/v2/regions", expectedCountOne)
+}
+
 func TestAccCloudApiKey(t *testing.T) {
 	ctx := context.Background()
 
@@ -504,6 +749,33 @@ func testAccCheckKafkaApiKeyConfig(mockServerUrl, kafkaApiKeyResourceLabel, kafk
 		}
 	}
 	`, mockServerUrl, kafkaApiKeyResourceLabel, kafkaApiKeyDisplayName, kafkaApiKeyDescription, ownerId, ownerApiVersion, ownerKind, resourceId, resourceApiVersion, resourceKind, environmentId)
+}
+
+func testAccCheckFlinkApiKeyConfig(mockServerUrl, flinkApiKeyResourceLabel, flinkApiKeyDisplayName,
+	flinkApiKeyDescription, ownerId, ownerApiVersion, ownerKind, resourceId, resourceApiVersion,
+	resourceKind, environmentId string) string {
+	return fmt.Sprintf(`
+	provider "confluent" {
+		endpoint = "%s"
+	}
+	resource "confluent_api_key" "%s" {
+		display_name = "%s"
+		description = "%s"
+		owner {
+			id = "%s"
+			api_version = "%s"
+			kind = "%s"
+		}
+		managed_resource {
+			id = "%s"
+			api_version = "%s"
+			kind = "%s"
+			environment {
+				id = "%s"
+			}
+		}
+	}
+	`, mockServerUrl, flinkApiKeyResourceLabel, flinkApiKeyDisplayName, flinkApiKeyDescription, ownerId, ownerApiVersion, ownerKind, resourceId, resourceApiVersion, resourceKind, environmentId)
 }
 
 func testAccCheckCloudApiKeyConfig(mockServerUrl, cloudApiKeyResourceLabel, cloudApiKeyDisplayName, cloudApiKeyDescription, ownerId, ownerApiVersion, ownerKind string) string {

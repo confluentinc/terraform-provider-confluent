@@ -73,6 +73,7 @@ type Client struct {
 	netPLClient                     *netpl.APIClient
 	orgClient                       *org.APIClient
 	ksqlClient                      *ksql.APIClient
+	flinkRestClientFactory          *FlinkRestClientFactory
 	kafkaRestClientFactory          *KafkaRestClientFactory
 	schemaRegistryRestClientFactory *SchemaRegistryRestClientFactory
 	mdsClient                       *mds.APIClient
@@ -417,9 +418,11 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	ksqlCfg.UserAgent = userAgent
 	quotasCfg.UserAgent = userAgent
 
+	var flinkRestClientFactory *FlinkRestClientFactory
 	var kafkaRestClientFactory *KafkaRestClientFactory
 	var schemaRegistryRestClientFactory *SchemaRegistryRestClientFactory
 
+	flinkRestClientFactory = &FlinkRestClientFactory{userAgent: userAgent, maxRetries: &maxRetries}
 	kafkaRestClientFactory = &KafkaRestClientFactory{userAgent: userAgent, maxRetries: &maxRetries}
 	schemaRegistryRestClientFactory = &SchemaRegistryRestClientFactory{userAgent: userAgent, maxRetries: &maxRetries}
 
@@ -457,6 +460,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 		orgClient:                       org.NewAPIClient(orgCfg),
 		srcmClient:                      srcm.NewAPIClient(srcmCfg),
 		ksqlClient:                      ksql.NewAPIClient(ksqlCfg),
+		flinkRestClientFactory:          flinkRestClientFactory,
 		kafkaRestClientFactory:          kafkaRestClientFactory,
 		schemaRegistryRestClientFactory: schemaRegistryRestClientFactory,
 		mdsClient:                       mds.NewAPIClient(mdsCfg),

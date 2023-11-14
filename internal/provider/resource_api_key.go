@@ -38,6 +38,7 @@ const (
 	serviceAccountKind   = "ServiceAccount"
 	userKind             = "User"
 	clusterKind          = "Cluster"
+	regionKind           = "Region"
 	schemaRegistryKind   = "SchemaRegistry"
 	ksqlDbKind           = "ksqlDB"
 	cloudKindInLowercase = "cloud"
@@ -46,13 +47,14 @@ const (
 	cmkApiVersion      = "cmk/v2"
 	srcmApiVersion     = "srcm/v2"
 	ksqldbcmApiVersion = "ksqldbcm/v2"
+	fcpmApiVersion     = "fcpm/v2"
 )
 
 var acceptedOwnerKinds = []string{serviceAccountKind, userKind}
-var acceptedResourceKinds = []string{clusterKind}
+var acceptedResourceKinds = []string{clusterKind, regionKind}
 
 var acceptedOwnerApiVersions = []string{iamApiVersion}
-var acceptedResourceApiVersions = []string{cmkApiVersion, srcmApiVersion, ksqldbcmApiVersion}
+var acceptedResourceApiVersions = []string{cmkApiVersion, srcmApiVersion, ksqldbcmApiVersion, fcpmApiVersion}
 
 func apiKeyResource() *schema.Resource {
 	return &schema.Resource{
@@ -110,7 +112,7 @@ func apiKeyCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 	spec.SetDescription(description)
 	spec.SetOwner(apikeys.ObjectReference{Id: ownerId, Kind: &ownerKind})
 
-	// If paramResource block is present, then the API Key is a resource-specific API key (Kafka, Schema Registry, and ksqlDB).
+	// If paramResource block is present, then the API Key is a resource-specific API key (Kafka, Schema Registry, Flink, and ksqlDB).
 	// https://docs.confluent.io/cloud/current/access-management/authenticate/api-keys/api-keys.html#resource-specific-api-keys
 	// Otherwise, it's Cloud API Key.
 	isResourceSpecificApiKey := len(d.Get(paramResource).([]interface{})) > 0
@@ -120,7 +122,16 @@ func apiKeyCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 	if isResourceSpecificApiKey {
 		resourceId := extractStringValueFromBlock(d, paramResource, paramId)
 		resourceKind := extractStringValueFromBlock(d, paramResource, paramKind)
+		apiVersion := extractStringValueFromBlock(d, paramResource, paramApiVersion)
 		spec.SetResource(apikeys.ObjectReference{Id: resourceId, Kind: &resourceKind})
+
+		// Client needs to specify api_version only when creating Flink API Key
+		if apiVersion == fcpmApiVersion {
+			spec.Resource.SetApiVersion(fcpmApiVersion)
+		}
+		if isFlinkApiKey(apikeys.IamV2ApiKey{Spec: spec}) {
+			spec.Resource.SetId(fmt.Sprintf("%s.%s", environmentId, resourceId))
+		}
 	}
 
 	createApiKeyRequest := apikeys.IamV2ApiKey{Spec: spec}
@@ -302,12 +313,20 @@ func setManagedResource(apiKey apikeys.IamV2ApiKey, environmentId string, d *sch
 	kind := apiKey.Spec.Resource.GetKind()
 	// Hack for API Key Mgmt API that temporarily returns schemaRegistryKind / ksqlDbKind instead of clusterKind
 	if kind == schemaRegistryKind || kind == ksqlDbKind {
-		kind = clusterKind
+		apiKey.Spec.Resource.SetKind(clusterKind)
+	}
+	if isFlinkApiKey(apiKey) {
+		// Override Flink API Key's resource ID to be "<cloud>.<region>" and not "<envID>.<cloud>.<region>"
+		cloud, regionName, err := extractCloudAndRegionName(apiKey.Spec.Resource.GetId())
+		if err != nil {
+			return fmt.Errorf("error parsing Flink API Key %q attribute in %q block: %s", paramId, paramResource, createDescriptiveError(err))
+		}
+		apiKey.Spec.Resource.SetId(fmt.Sprintf("%s.%s", cloud, regionName))
 	}
 	if environmentId != "" {
 		return d.Set(paramResource, []interface{}{map[string]interface{}{
 			paramId:         apiKey.Spec.Resource.GetId(),
-			paramKind:       kind,
+			paramKind:       apiKey.Spec.Resource.GetKind(),
 			paramApiVersion: apiKey.Spec.Resource.GetApiVersion(),
 			paramEnvironment: []interface{}{map[string]interface{}{
 				paramId: environmentId,
@@ -316,7 +335,7 @@ func setManagedResource(apiKey apikeys.IamV2ApiKey, environmentId string, d *sch
 	} else {
 		return d.Set(paramResource, []interface{}{map[string]interface{}{
 			paramId:         apiKey.Spec.Resource.GetId(),
-			paramKind:       kind,
+			paramKind:       apiKey.Spec.Resource.GetKind(),
 			paramApiVersion: apiKey.Spec.Resource.GetApiVersion(),
 		}})
 	}
@@ -375,11 +394,10 @@ func apiKeyResourceSchema() *schema.Schema {
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				paramId: {
-					Type:         schema.TypeString,
-					Required:     true,
-					ForceNew:     true,
-					Description:  "The unique identifier for the referred resource.",
-					ValidateFunc: validation.StringMatch(regexp.MustCompile("^(lkc-|lsrc-|lksqlc-)"), "the resource ID must be of the form 'lkc-' or 'lsrc-' or 'lksqlc-'"),
+					Type:        schema.TypeString,
+					Required:    true,
+					ForceNew:    true,
+					Description: "The unique identifier for the referred resource.",
 				},
 				paramKind: {
 					Type:         schema.TypeString,
@@ -454,6 +472,26 @@ func fetchHttpEndpointOfSchemaRegistryCluster(ctx context.Context, c *Client, en
 	}
 }
 
+// Send a GetRegions request to FCPM API to find out rest_endpoint for a given (environmentId, flinkRegionId) pair
+func fetchHttpEndpointOfFlinkRegion(ctx context.Context, c *Client, flinkRegionId string) (string, error) {
+	cloud, regionName, err := extractCloudAndRegionName(flinkRegionId)
+	if err != nil {
+		return "", fmt.Errorf("error parsing Flink API Key %q attribute in %q block: %s", paramId, paramResource, createDescriptiveError(err))
+	}
+	regions, _, err := executeFlinkRegionRead(c.srcmApiContext(ctx), c, cloud, regionName)
+	if err != nil {
+		return "", fmt.Errorf("error reading Flink Region %q: %s", flinkRegionId, createDescriptiveError(err))
+	}
+	if len(regions.GetData()) == 0 {
+		return "", fmt.Errorf("error reading Flink Region %q: there are no regions available", flinkRegionId)
+	}
+	if restEndpoint := regions.GetData()[0].GetHttpEndpoint(); len(restEndpoint) > 0 {
+		return restEndpoint, nil
+	} else {
+		return "", fmt.Errorf("rest_endpoint is nil or empty for Flink Region %q", flinkRegionId)
+	}
+}
+
 func isKafkaApiKey(apiKey apikeys.IamV2ApiKey) bool {
 	return apiKey.Spec.Resource.GetKind() == clusterKind && apiKey.Spec.Resource.GetApiVersion() == cmkApiVersion
 }
@@ -461,6 +499,10 @@ func isKafkaApiKey(apiKey apikeys.IamV2ApiKey) bool {
 func isSchemaRegistryApiKey(apiKey apikeys.IamV2ApiKey) bool {
 	// At the moment, API Key Mgmt API temporarily returns schemaRegistryKind instead of clusterKind
 	return (apiKey.Spec.Resource.GetKind() == clusterKind || apiKey.Spec.Resource.GetKind() == schemaRegistryKind) && apiKey.Spec.Resource.GetApiVersion() == srcmApiVersion
+}
+
+func isFlinkApiKey(apiKey apikeys.IamV2ApiKey) bool {
+	return apiKey.Spec.Resource.GetKind() == regionKind && apiKey.Spec.Resource.GetApiVersion() == fcpmApiVersion
 }
 
 func isKsqlDbClusterApiKey(apiKey apikeys.IamV2ApiKey) bool {
@@ -471,6 +513,7 @@ func isKsqlDbClusterApiKey(apiKey apikeys.IamV2ApiKey) bool {
 func waitForApiKeyToSync(ctx context.Context, c *Client, createdApiKey apikeys.IamV2ApiKey, isResourceSpecificApiKey bool, environmentId string) error {
 	// For Kafka API Key use Kafka REST API's List Topics request and wait for http.StatusOK
 	// For Cloud API Key use Org API's List Environments request and wait for http.StatusOK
+	// For Flink API Key use Statements API's List of Statements request and wait for http.StatusOK
 
 	if isResourceSpecificApiKey {
 		if isKafkaApiKey(createdApiKey) {
@@ -492,6 +535,21 @@ func waitForApiKeyToSync(ctx context.Context, c *Client, createdApiKey apikeys.I
 			schemaRegistryRestClient := c.schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, createdApiKey.GetId(), createdApiKey.Spec.GetSecret(), false)
 			if err := waitForCreatedSchemaRegistryApiKeyToSync(ctx, schemaRegistryRestClient); err != nil {
 				return fmt.Errorf("error waiting for Schema Registry API Key %q to sync: %s", createdApiKey.GetId(), createDescriptiveError(err))
+			}
+		} else if isFlinkApiKey(createdApiKey) {
+			// For example, flinkRegionId = "aws.us-west-2"
+			flinkRegionId := createdApiKey.Spec.Resource.GetId()
+			restEndpoint, err := fetchHttpEndpointOfFlinkRegion(ctx, c, flinkRegionId)
+			if err != nil {
+				return fmt.Errorf("error fetching Flink Region %q attribute: %s", paramRestEndpoint, createDescriptiveError(err))
+			}
+			flinkRestClient := c.flinkRestClientFactory.CreateFlinkRestClient(restEndpoint, environmentId, flinkRegionId, createdApiKey.GetId(), createdApiKey.Spec.GetSecret(), false)
+			organizationId, err := extractOrgIdFromResourceName(createdApiKey.Metadata.GetResourceName())
+			if err != nil {
+				return err
+			}
+			if err := waitForCreatedFlinkApiKeyToSync(ctx, flinkRestClient, organizationId); err != nil {
+				return fmt.Errorf("error waiting for Flink API Key %q to sync: %s", createdApiKey.GetId(), createDescriptiveError(err))
 			}
 		} else if isKsqlDbClusterApiKey(createdApiKey) {
 			// Currently, there are no data plane API for ksqlDB clusters so there is no endpoint we could leverage

@@ -18,6 +18,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	fcpm "github.com/confluentinc/ccloud-sdk-go-v2/flink/v2"
 	sg "github.com/confluentinc/ccloud-sdk-go-v2/srcm/v2"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -127,6 +128,11 @@ func executeSchemaRegistryClusterCreate(ctx context.Context, c *Client, schemaRe
 
 func executeSchemaRegistryClusterRead(ctx context.Context, c *Client, environmentId string, schemaRegistryClusterId string) (sg.SrcmV2Cluster, *http.Response, error) {
 	req := c.srcmClient.ClustersSrcmV2Api.GetSrcmV2Cluster(c.srcmApiContext(ctx), schemaRegistryClusterId).Environment(environmentId)
+	return req.Execute()
+}
+
+func executeFlinkRegionRead(ctx context.Context, c *Client, cloud, regionName string) (fcpm.FcpmV2RegionList, *http.Response, error) {
+	req := c.fcpmClient.RegionsFcpmV2Api.ListFcpmV2Regions(c.fcpmApiContext(ctx)).Cloud(cloud).RegionName(regionName)
 	return req.Execute()
 }
 

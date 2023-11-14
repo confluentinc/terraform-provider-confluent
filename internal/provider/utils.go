@@ -24,6 +24,7 @@ import (
 	ccp "github.com/confluentinc/ccloud-sdk-go-v2/connect-custom-plugin/v1"
 	connect "github.com/confluentinc/ccloud-sdk-go-v2/connect/v1"
 	dc "github.com/confluentinc/ccloud-sdk-go-v2/data-catalog/v1"
+	fgb "github.com/confluentinc/ccloud-sdk-go-v2/flink-gateway/v1beta1"
 	fcpm "github.com/confluentinc/ccloud-sdk-go-v2/flink/v2"
 	iamv1 "github.com/confluentinc/ccloud-sdk-go-v2/iam/v1"
 	iam "github.com/confluentinc/ccloud-sdk-go-v2/iam/v2"
@@ -375,6 +376,16 @@ type SchemaRegistryRestClient struct {
 	isMetadataSetInProviderBlock bool
 }
 
+type FlinkRestClient struct {
+	apiClient                    *fgb.APIClient
+	environmentId                string
+	flinkRegionId                string
+	flinkApiKey                  string
+	flinkApiSecret               string
+	restEndpoint                 string
+	isMetadataSetInProviderBlock bool
+}
+
 func (c *KafkaRestClient) apiContext(ctx context.Context) context.Context {
 	if c.clusterApiKey != "" && c.clusterApiSecret != "" {
 		return context.WithValue(context.Background(), kafkarestv3.ContextBasicAuth, kafkarestv3.BasicAuth{
@@ -405,6 +416,17 @@ func (c *SchemaRegistryRestClient) dataCatalogApiContext(ctx context.Context) co
 		})
 	}
 	tflog.Warn(ctx, fmt.Sprintf("Could not find Schema Registry API Key for Stream Governance Cluster %q", c.clusterId))
+	return ctx
+}
+
+func (c *FlinkRestClient) apiContext(ctx context.Context) context.Context {
+	if c.flinkApiKey != "" && c.flinkApiSecret != "" {
+		return context.WithValue(context.Background(), fgb.ContextBasicAuth, fgb.BasicAuth{
+			UserName: c.flinkApiKey,
+			Password: c.flinkApiSecret,
+		})
+	}
+	tflog.Warn(ctx, fmt.Sprintf("Could not find Flink API Key for Flink Region %q", c.flinkRegionId))
 	return ctx
 }
 
@@ -697,6 +719,16 @@ func uploadFile(url, filePath string, formFields map[string]any) error {
 	}
 
 	return nil
+}
+
+func extractCloudAndRegionName(resourceId string) (string, string, error) {
+	parts := strings.Split(resourceId, ".")
+	if len(parts) != 3 {
+		return "", "", fmt.Errorf("error extracting cloud and region name: invalid format: expected '<environment>.<cloud>.<region name>'")
+	}
+	cloud := parts[1]
+	regionName := parts[2]
+	return cloud, regionName, nil
 }
 
 func extractOrgIdFromResourceName(resourceName string) (string, error) {

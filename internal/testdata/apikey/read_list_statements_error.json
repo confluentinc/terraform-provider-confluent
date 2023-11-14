@@ -1,0 +1,10 @@
+{
+  "errors": [
+    {
+      "status": "404",
+      "code": "resource_not_found",
+      "detail": "Resource Not Found",
+      "source": {}
+    }
+  ]
+}

@@ -10,7 +10,10 @@ description: |-
 
 [![General Availability](https://img.shields.io/badge/Lifecycle%20Stage-General%20Availability-%2345c6e8)](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy)
 
-`confluent_api_key` provides an API Key resource that enables creating, editing, and deleting Cloud API Keys, Cluster API Keys (Kafka API Key, ksqlDB API Key, Schema Registry API Key) on Confluent Cloud.
+`confluent_api_key` provides an API Key resource that enables creating, editing, and deleting Cloud API Keys, Cluster API Keys (Kafka API Key, ksqlDB API Key, Schema Registry API Key, Flink API Key) on Confluent Cloud.
+
+-> **Note:** Flink API Keys are available in **Preview** for early adopters. Preview features are introduced to gather customer feedback. This feature should be used only for evaluation and non-production testing purposes or to provide feedback to Confluent, particularly as it becomes more widely available in follow-on editions.  
+**Preview** features are intended for evaluation use in development and testing environments only, and not for production use. The warranty, SLA, and Support Services provisions of your agreement with Confluent do not apply to Preview features. Preview features are considered to be a Proof of Concept as defined in the Confluent Cloud Terms of Service. Confluent may discontinue providing preview releases of the Preview features at any time in Confluent’s sole discretion.
 
 -> **Note:** It is recommended to set `lifecycle { prevent_destroy = true }` on production instances to prevent accidental API Key deletion. This setting rejects plans that would destroy or recreate the API Key, such as attempting to change uneditable attributes. Read more about it in the [Terraform docs](https://www.terraform.io/language/meta-arguments/lifecycle#prevent_destroy).
 
@@ -85,6 +88,33 @@ resource "confluent_api_key" "env-manager-schema-registry-api-key" {
     id          = confluent_schema_registry_cluster.essentials.id
     api_version = confluent_schema_registry_cluster.essentials.api_version
     kind        = confluent_schema_registry_cluster.essentials.kind
+
+    environment {
+      id = confluent_environment.staging.id
+    }
+  }
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+```
+
+### Example Flink API Key
+```terraform
+resource "confluent_api_key" "env-manager-flink-api-key" {
+  display_name = "env-manager-flink-api-key"
+  description  = "Flink API Key that is owned by 'env-manager' service account"
+  owner {
+    id          = confluent_service_account.env-manager.id
+    api_version = confluent_service_account.env-manager.api_version
+    kind        = confluent_service_account.env-manager.kind
+  }
+
+  managed_resource {
+    id          = data.confluent_flink_region.example.id
+    api_version = data.confluent_flink_region.example.api_version
+    kind        = data.confluent_flink_region.example.kind
 
     environment {
       id = confluent_environment.staging.id
