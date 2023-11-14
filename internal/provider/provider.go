@@ -199,6 +199,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_environments":                       environmentsDataSource(),
 				"confluent_ksql_cluster":                       ksqlDataSource(),
 				"confluent_flink_compute_pool":                 computePoolDataSource(),
+				"confluent_flink_region":                       flinkRegionDataSource(),
 				"confluent_identity_pool":                      identityPoolDataSource(),
 				"confluent_identity_provider":                  identityProviderDataSource(),
 				"confluent_ip_addresses":                       ipAddressesDataSource(),

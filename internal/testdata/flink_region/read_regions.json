@@ -1,0 +1,23 @@
+{
+  "api_version": "fcpm/v2",
+  "data": [
+    {
+      "api_version": "fcpm/v2",
+      "cloud": "aws",
+      "display_name": "N. Virginia (us-east-1)",
+      "http_endpoint": "https://flink.us-east-1.aws.confluent.cloud",
+      "id": "aws.us-east-1",
+      "kind": "Region",
+      "metadata": {
+        "self": ""
+      },
+      "region_name": "us-east-1"
+    }
+  ],
+  "kind": "RegionList",
+  "metadata": {
+    "first": "",
+    "next": "",
+    "total_size": 4
+  }
+}
