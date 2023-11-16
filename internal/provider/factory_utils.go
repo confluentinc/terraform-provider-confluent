@@ -15,7 +15,7 @@ type FlinkRestClientFactory struct {
 	maxRetries *int
 }
 
-func (f FlinkRestClientFactory) CreateFlinkRestClient(restEndpoint, environmentId, flinkRegionId, flinkApiKey, flinkApiSecret string, isMetadataSetInProviderBlock bool) *FlinkRestClient {
+func (f FlinkRestClientFactory) CreateFlinkRestClient(restEndpoint, organizationId, environmentId, computePoolId, principalId, flinkApiKey, flinkApiSecret string, isMetadataSetInProviderBlock bool) *FlinkRestClient {
 	config := fgb.NewConfiguration()
 	config.Servers[0].URL = restEndpoint
 	config.UserAgent = f.userAgent
@@ -26,8 +26,10 @@ func (f FlinkRestClientFactory) CreateFlinkRestClient(restEndpoint, environmentI
 	}
 	return &FlinkRestClient{
 		apiClient:                    fgb.NewAPIClient(config),
+		organizationId:               organizationId,
 		environmentId:                environmentId,
-		flinkRegionId:                flinkRegionId,
+		computePoolId:                computePoolId,
+		principalId:                  principalId,
 		flinkApiKey:                  flinkApiKey,
 		flinkApiSecret:               flinkApiSecret,
 		restEndpoint:                 restEndpoint,

@@ -94,3 +94,85 @@ func TestExtractOrgIdFromResourceName(t *testing.T) {
 		})
 	}
 }
+
+func TestExtractFlinkAttributes(t *testing.T) {
+	invalidUrlHttpScheme := "http://flink.us-east-1.aws.confluent.cloud/sql/v1beta1/organizations/1111aaaa-11aa-11aa-11aa-111111aaaaaa/environments/env-abc123"
+	invalidUrlEmptyEnvironment := "https://flink.us-east-1.aws.confluent.cloud/sql/v1beta1/organizations/1111aaaa-11aa-11aa-11aa-111111aaaaaa/environments/"
+	invalidUrlNoEnvironmentPathParam := "https://flink.us-east-1.aws.confluent.cloud/sql/v1beta1/organizations/1111aaaa-11aa-11aa-11aa-111111aaaaaa"
+	invalidUrlExtraValue := "https://flink.us-east-1.aws.confluent.cloud/sql/v1beta1/organizations/1111aaaa-11aa-11aa-11aa-111111aaaaaa/environments/env-abc123/foo"
+	tests := []struct {
+		input                  string
+		expectedRestEndpoint   string
+		expectedOrganizationId string
+		expectedEnvironmentId  string
+		err                    error
+	}{
+		{
+			input:                  "http://localhost",
+			expectedRestEndpoint:   "http://localhost",
+			expectedOrganizationId: flinkOrganizationIdTest,
+			expectedEnvironmentId:  flinkEnvironmentIdTest,
+			err:                    nil,
+		},
+		{
+			input:                  "https://flink.us-east-1.aws.confluent.cloud/sql/v1beta1/organizations/1111aaaa-11aa-11aa-11aa-111111aaaaaa/environments/env-abc123",
+			expectedRestEndpoint:   "https://flink.us-east-1.aws.confluent.cloud",
+			expectedOrganizationId: flinkOrganizationIdTest,
+			expectedEnvironmentId:  flinkEnvironmentIdTest,
+			err:                    nil,
+		},
+		{
+			input:                  "",
+			expectedRestEndpoint:   "",
+			expectedOrganizationId: "",
+			expectedEnvironmentId:  "",
+			err:                    fmt.Errorf("failed to parse URL: URL is empty"),
+		},
+		{
+			input:                  invalidUrlHttpScheme,
+			expectedRestEndpoint:   "",
+			expectedOrganizationId: "",
+			expectedEnvironmentId:  "",
+			err:                    fmt.Errorf("failed to parse URL=%s: scheme must be https, expected format for the URL is %s", invalidUrlHttpScheme, exampleFlinkRestEndpoint),
+		},
+		{
+			input:                  invalidUrlEmptyEnvironment,
+			expectedRestEndpoint:   "",
+			expectedOrganizationId: "",
+			expectedEnvironmentId:  "",
+			err:                    fmt.Errorf("failed to parse URL=%s: expected format for the URL is %s", invalidUrlEmptyEnvironment, exampleFlinkRestEndpoint),
+		},
+		{
+			input:                  invalidUrlNoEnvironmentPathParam,
+			expectedRestEndpoint:   "",
+			expectedOrganizationId: "",
+			expectedEnvironmentId:  "",
+			err:                    fmt.Errorf("failed to parse URL=%s: expected format for the URL is %s", invalidUrlNoEnvironmentPathParam, exampleFlinkRestEndpoint),
+		},
+		{
+			input:                  invalidUrlExtraValue,
+			expectedRestEndpoint:   "",
+			expectedOrganizationId: "",
+			expectedEnvironmentId:  "",
+			err:                    fmt.Errorf("failed to parse URL=%s: expected format for the URL is %s", invalidUrlExtraValue, exampleFlinkRestEndpoint),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			actualRestEndpoint, actualOrganizationId, actualEnvironmentId, err := extractFlinkAttributes(tt.input)
+			if !reflect.DeepEqual(err, tt.err) {
+				t.Fatalf("Unexpected error: expected %v, got %v", tt.err, err)
+			}
+			if !reflect.DeepEqual(actualRestEndpoint, tt.expectedRestEndpoint) {
+				t.Fatalf("Unexpected REST endpoint: expected %v, got %v", tt.expectedRestEndpoint, actualRestEndpoint)
+			}
+			if !reflect.DeepEqual(actualOrganizationId, tt.expectedOrganizationId) {
+				t.Fatalf("Unexpected Organization ID: expected %v, got %v", tt.expectedOrganizationId, actualOrganizationId)
+			}
+			if !reflect.DeepEqual(actualEnvironmentId, tt.expectedEnvironmentId) {
+				t.Fatalf("Unexpected Environment ID: expected %v, got %v", tt.expectedEnvironmentId, actualEnvironmentId)
+			}
+		})
+	}
+}

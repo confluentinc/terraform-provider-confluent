@@ -232,6 +232,24 @@ func waitForNetworkToProvision(ctx context.Context, c *Client, environmentId, ne
 	return nil
 }
 
+func waitForFlinkStatementToProvision(ctx context.Context, c *FlinkRestClient, statementName string) error {
+	stateConf := &resource.StateChangeConf{
+		Pending: []string{statePending},
+		Target:  []string{stateRunning, stateCompleted},
+		Refresh: flinkStatementProvisionStatus(c.apiContext(ctx), c, statementName),
+		// Default timeout
+		Timeout:      20 * time.Minute,
+		Delay:        5 * time.Second,
+		PollInterval: 10 * time.Second,
+	}
+
+	tflog.Debug(ctx, fmt.Sprintf("Waiting for Flink Statement %q provisioning status to become %q", statementName, stateReady), map[string]interface{}{flinkStatementLoggingKey: statementName})
+	if _, err := stateConf.WaitForStateContext(c.apiContext(ctx)); err != nil {
+		return err
+	}
+	return nil
+}
+
 func waitForNetworkLinkEndpointToProvision(ctx context.Context, c *Client, environmentId, nleId string) error {
 	stateConf := &resource.StateChangeConf{
 		Pending: []string{stateProvisioning},
@@ -580,6 +598,43 @@ func waitForKafkaTopicToBeDeleted(ctx context.Context, c *KafkaRestClient, topic
 	return nil
 }
 
+func waitForFlinkStatementToBeDeleted(ctx context.Context, c *FlinkRestClient, statementName string) error {
+	stateConf := &resource.StateChangeConf{
+		Pending: []string{stateInProgress},
+		Target:  []string{stateDone},
+		Refresh: flinkStatementDeleteStatus(c.apiContext(ctx), c, statementName),
+		// Default timeout
+		Timeout:      20 * time.Minute,
+		Delay:        10 * time.Second,
+		PollInterval: 10 * time.Second,
+	}
+
+	statementId := createFlinkStatementId(c.environmentId, c.computePoolId, statementName)
+	tflog.Debug(ctx, fmt.Sprintf("Waiting for Flink Statement %q to be deleted", statementId), map[string]interface{}{flinkStatementLoggingKey: statementId})
+	if _, err := stateConf.WaitForStateContext(c.apiContext(ctx)); err != nil {
+		return err
+	}
+	return nil
+}
+
+func waitForFlinkStatementToBeStopped(ctx context.Context, c *FlinkRestClient, statementName string) error {
+	stateConf := &resource.StateChangeConf{
+		Pending: []string{statePending, stateRunning, stateCompleted},
+		Target:  []string{stateStopped},
+		Refresh: flinkStatementStoppingStatus(c.apiContext(ctx), c, statementName),
+		// Default timeout
+		Timeout:      20 * time.Minute,
+		Delay:        5 * time.Second,
+		PollInterval: 10 * time.Second,
+	}
+
+	tflog.Debug(ctx, fmt.Sprintf("Waiting for Flink Statement %q stopping status to become %q", statementName, stateStopped), map[string]interface{}{flinkStatementLoggingKey: statementName})
+	if _, err := stateConf.WaitForStateContext(c.apiContext(ctx)); err != nil {
+		return err
+	}
+	return nil
+}
+
 func waitForKafkaMirrorTopicToBeDeleted(ctx context.Context, c *KafkaRestClient, linkName, mirrorTopicName string) error {
 	stateConf := &resource.StateChangeConf{
 		Pending:      []string{stateInProgress},
@@ -596,6 +651,27 @@ func waitForKafkaMirrorTopicToBeDeleted(ctx context.Context, c *KafkaRestClient,
 		return err
 	}
 	return nil
+}
+
+func flinkStatementDeleteStatus(ctx context.Context, c *FlinkRestClient, statementName string) resource.StateRefreshFunc {
+	return func() (result interface{}, s string, err error) {
+		statement, resp, err := executeFlinkStatementRead(c.apiContext(ctx), c, statementName)
+		statementId := createFlinkStatementId(c.environmentId, c.computePoolId, statementName)
+		if err != nil {
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Flink Statement %q: %s", statementName, createDescriptiveError(err)), map[string]interface{}{flinkStatementLoggingKey: statementId})
+
+			isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
+			if isResourceNotFound {
+				tflog.Debug(ctx, fmt.Sprintf("Finishing Flink Statement %q deletion process: Received %d status code when reading %q Flink Statement", statementName, resp.StatusCode, statementName), map[string]interface{}{flinkStatementLoggingKey: statementId})
+				return 0, stateDone, nil
+			} else {
+				tflog.Debug(ctx, fmt.Sprintf("Exiting Flink Statement %q deletion process: Failed when reading Flink Statement: %s", statementName, createDescriptiveError(err)), map[string]interface{}{flinkStatementLoggingKey: statementId})
+				return nil, stateFailed, err
+			}
+		}
+		tflog.Debug(ctx, fmt.Sprintf("Performing Flink Statement %q deletion process: Flink Statement %d's status is %q", statementName, resp.StatusCode, statement.Status.GetPhase()), map[string]interface{}{flinkStatementLoggingKey: statementId})
+		return statement, stateInProgress, nil
+	}
 }
 
 func kafkaTopicDeleteStatus(ctx context.Context, c *KafkaRestClient, topicName string) resource.StateRefreshFunc {
@@ -866,6 +942,44 @@ func networkProvisionStatus(ctx context.Context, c *Client, environmentId string
 		}
 		// Network is in an unexpected state
 		return nil, stateUnexpected, fmt.Errorf("network %q is an unexpected state %q: %s", networkId, network.Status.GetPhase(), network.Status.GetErrorMessage())
+	}
+}
+
+func flinkStatementProvisionStatus(ctx context.Context, c *FlinkRestClient, statementName string) resource.StateRefreshFunc {
+	return func() (result interface{}, s string, err error) {
+		statement, _, err := executeFlinkStatementRead(c.apiContext(ctx), c, statementName)
+		if err != nil {
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Flink Statement %q: %s", statementName, createDescriptiveError(err)), map[string]interface{}{flinkStatementLoggingKey: statementName})
+			return nil, stateUnknown, err
+		}
+
+		tflog.Debug(ctx, fmt.Sprintf("Waiting for Flink Statement %q provisioning status to become %q: current status is %q", statementName, stateRunning, statement.Status.GetPhase()), map[string]interface{}{flinkStatementLoggingKey: statementName})
+		if statement.Status.GetPhase() == statePending || statement.Status.GetPhase() == stateRunning || statement.Status.GetPhase() == stateCompleted {
+			return statement, statement.Status.GetPhase(), nil
+		} else if statement.Status.GetPhase() == stateFailed || statement.Status.GetPhase() == stateFailing {
+			return nil, stateFailed, fmt.Errorf("flink Statement %q provisioning status is %q: %s", statementName, statement.Status.GetPhase(), statement.Status.GetDetail())
+		}
+		// Flink Statement is in an unexpected state
+		return nil, stateUnexpected, fmt.Errorf("flink Statement %q is an unexpected state %q", statementName, statement.Status.GetPhase())
+	}
+}
+
+func flinkStatementStoppingStatus(ctx context.Context, c *FlinkRestClient, statementName string) resource.StateRefreshFunc {
+	return func() (result interface{}, s string, err error) {
+		statement, _, err := executeFlinkStatementRead(c.apiContext(ctx), c, statementName)
+		if err != nil {
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Flink Statement %q: %s", statementName, createDescriptiveError(err)), map[string]interface{}{flinkStatementLoggingKey: statementName})
+			return nil, stateUnknown, err
+		}
+
+		tflog.Debug(ctx, fmt.Sprintf("Waiting for Flink Statement %q provisioning status to become %q: current status is %q", statementName, stateStopped, statement.Status.GetPhase()), map[string]interface{}{flinkStatementLoggingKey: statementName})
+		if statement.Status.GetPhase() == statePending || statement.Status.GetPhase() == stateRunning || statement.Status.GetPhase() == stateCompleted || statement.Status.GetPhase() == stateStopped {
+			return statement, statement.Status.GetPhase(), nil
+		} else if statement.Status.GetPhase() == stateFailed || statement.Status.GetPhase() == stateFailing {
+			return nil, stateFailed, fmt.Errorf("flink Statement %q provisioning status is %q", statementName, statement.Status.GetPhase())
+		}
+		// Flink Statement is in an unexpected state
+		return nil, stateUnexpected, fmt.Errorf("flink Statement %q is an unexpected state %q", statementName, statement.Status.GetPhase())
 	}
 }
 

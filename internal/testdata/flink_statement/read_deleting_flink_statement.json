@@ -1,0 +1,39 @@
+{
+  "api_version": "sql/v1beta1",
+  "environment_id": "env-abc123",
+  "kind": "Statement",
+  "metadata": {
+    "created_at": "2023-11-15T08:34:12Z",
+    "resource_version": "1",
+    "self": "https://flink.us-east-1.aws.confluent.cloud/sql/v1beta1/organizations/1111aaaa-11aa-11aa-11aa-111111aaaaaa/environments/env-abc123/statements/workspace-2023-11-15-030109-0408d52d-eaff-4d50-a246-f822a29f2eb9",
+    "uid": "8b9c49bb-7351-416d-98d5-d5f29f6de980",
+    "updated_at": "2023-11-15T08:35:20Z"
+  },
+  "name": "workspace-2023-11-15-030109-0408d52d-eaff-4d50-a246-f822a29f2eb9",
+  "organization_id": "1111aaaa-11aa-11aa-11aa-111111aaaaaa",
+  "spec": {
+    "compute_pool_id": "lfcp-x7rgx1",
+    "principal": "u-yo9j87",
+    "properties": {
+      "sql.local-time-zone": "GMT-08:00"
+    },
+    "statement": "SELECT CURRENT_TIMESTAMP;",
+    "stopped": false
+  },
+  "status": {
+    "detail": "",
+    "phase": "DELETING",
+    "result_schema": {
+      "columns": [
+        {
+          "name": "CURRENT_TIMESTAMP",
+          "type": {
+            "nullable": false,
+            "precision": 3,
+            "type": "TIMESTAMP_WITH_LOCAL_TIME_ZONE"
+          }
+        }
+      ]
+    }
+  }
+}

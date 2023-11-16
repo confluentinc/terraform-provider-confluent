@@ -40,6 +40,7 @@ import (
 	schemaregistry "github.com/confluentinc/ccloud-sdk-go-v2/schema-registry/v1"
 	srcm "github.com/confluentinc/ccloud-sdk-go-v2/srcm/v2"
 	"github.com/dghubble/sling"
+	"github.com/google/uuid"
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -71,6 +72,7 @@ const (
 	roleBindingLoggingKey                     = "role_binding_id"
 	apiKeyLoggingKey                          = "api_key_id"
 	computePoolLoggingKey                     = "compute_pool_id"
+	flinkStatementLoggingKey                  = "flink_statement_key_id"
 	networkLoggingKey                         = "network_key_id"
 	customConnectorPluginLoggingKey           = "custom_connector_plugin_key_id"
 	connectorLoggingKey                       = "connector_key_id"
@@ -99,6 +101,8 @@ const (
 	schemaRegistryClusterConfigLoggingKey     = "schema_registry_cluster_config_id"
 	invitationloggingKey                      = "invitation_id"
 	tfCustomConnectorPluginTestUrl            = "TF_TEST_URL"
+	flinkOrganizationIdTest                   = "1111aaaa-11aa-11aa-11aa-111111aaaaaa"
+	flinkEnvironmentIdTest                    = "env-abc123"
 )
 
 func (c *Client) apiKeysApiContext(ctx context.Context) context.Context {
@@ -378,8 +382,10 @@ type SchemaRegistryRestClient struct {
 
 type FlinkRestClient struct {
 	apiClient                    *fgb.APIClient
+	organizationId               string
 	environmentId                string
-	flinkRegionId                string
+	computePoolId                string
+	principalId                  string
 	flinkApiKey                  string
 	flinkApiSecret               string
 	restEndpoint                 string
@@ -426,7 +432,7 @@ func (c *FlinkRestClient) apiContext(ctx context.Context) context.Context {
 			Password: c.flinkApiSecret,
 		})
 	}
-	tflog.Warn(ctx, fmt.Sprintf("Could not find Flink API Key for Flink Region %q", c.flinkRegionId))
+	tflog.Warn(ctx, fmt.Sprintf("Could not find Flink API Key for Flink %q", c.restEndpoint))
 	return ctx
 }
 
@@ -740,4 +746,64 @@ func extractOrgIdFromResourceName(resourceName string) (string, error) {
 	} else {
 		return "", fmt.Errorf("could not find organization ID in %v: %s", paramResourceName, resourceName)
 	}
+}
+
+func isTestHost(urlStr string) bool {
+	return strings.HasPrefix(urlStr, "http://localhost")
+}
+
+func extractFlinkAttributes(urlStr string) (string, string, string, error) {
+	if isTestHost(urlStr) {
+		return urlStr, flinkOrganizationIdTest, flinkEnvironmentIdTest, nil
+	}
+
+	if urlStr == "" {
+		return "", "", "", fmt.Errorf("failed to parse URL: URL is empty")
+	}
+
+	parsedURL, err := url.Parse(urlStr)
+	if err != nil {
+		return "", "", "", fmt.Errorf("failed to parse URL=%s: expected format for the URL is %s, error: %s", urlStr, exampleFlinkRestEndpoint, err)
+	}
+
+	if parsedURL.Scheme != "https" {
+		return "", "", "", fmt.Errorf("failed to parse URL=%s: scheme must be https, expected format for the URL is %s", urlStr, exampleFlinkRestEndpoint)
+	}
+
+	pathParts := strings.Split(parsedURL.Path, "/")
+	defaultError := fmt.Errorf("failed to parse URL=%s: expected format for the URL is %s", urlStr, exampleFlinkRestEndpoint)
+	if len(pathParts) != 7 {
+		return "", "", "", defaultError
+	}
+	if len(pathParts[6]) == 0 {
+		return "", "", "", defaultError
+	}
+
+	organizationId := pathParts[4]
+	environmentId := pathParts[6]
+
+	return fmt.Sprintf("%s://%s", parsedURL.Scheme, parsedURL.Host), organizationId, environmentId, nil
+}
+
+func constructComputePoolRestEndpoint(regionRestEndpoint, organizationId, environmentId string) string {
+	if isTestHost(regionRestEndpoint) {
+		return regionRestEndpoint
+	}
+	return fmt.Sprintf("%s/sql/v1beta1/organizations/%s/environments/%s", regionRestEndpoint, organizationId, environmentId)
+}
+
+func generateFlinkStatementName() string {
+	clientName := "tf"
+	date := time.Now().Format("2006-01-02")
+	localTime := time.Now().Format("150405")
+	id := uuid.New().String()
+	return fmt.Sprintf("%s-%s-%s-%s", clientName, date, localTime, id)
+}
+
+func parseStatementName(id string) (string, error) {
+	parts := strings.Split(id, "/")
+	if len(parts) != 3 {
+		return "", fmt.Errorf("invalid ID format: expected '<Environment ID>/Compute Pool ID>/<Statement name>'")
+	}
+	return parts[2], nil
 }
