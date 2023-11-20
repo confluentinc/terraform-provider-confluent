@@ -20,7 +20,6 @@ blocks:
           - checkout
           - . vault-setup
           # GitHub token is required for running GoReleaser
-          - . vault-sem-get-secret semaphore-secrets-global
           - . vault-sem-get-secret v1/ci/kv/apif/signing_key
           # Import GPG private key
           - echo -e "${GPG_PRIVATE_KEY}" | gpg --import --batch --no-tty
