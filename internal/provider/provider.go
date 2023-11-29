@@ -17,9 +17,15 @@ package provider
 import (
 	"context"
 	"fmt"
+	"strings"
+
 	ccp "github.com/confluentinc/ccloud-sdk-go-v2/connect-custom-plugin/v1"
 	netip "github.com/confluentinc/ccloud-sdk-go-v2/networking-ip/v1"
-	"strings"
+
+	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
 	apikeys "github.com/confluentinc/ccloud-sdk-go-v2/apikeys/v2"
 	byok "github.com/confluentinc/ccloud-sdk-go-v2/byok/v1"
@@ -36,10 +42,6 @@ import (
 	net "github.com/confluentinc/ccloud-sdk-go-v2/networking/v1"
 	org "github.com/confluentinc/ccloud-sdk-go-v2/org/v2"
 	srcm "github.com/confluentinc/ccloud-sdk-go-v2/srcm/v2"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 const (
@@ -284,7 +286,7 @@ func New(version, userAgent string) func() *schema.Provider {
 }
 
 // https://github.com/hashicorp/terraform-plugin-sdk/issues/155#issuecomment-489699737
-////  alternative - https://github.com/hashicorp/terraform-plugin-sdk/issues/248#issuecomment-725013327
+// //  alternative - https://github.com/hashicorp/terraform-plugin-sdk/issues/248#issuecomment-725013327
 func environmentSchema() *schema.Schema {
 	return &schema.Schema{
 		Type: schema.TypeList,
@@ -307,7 +309,7 @@ func environmentSchema() *schema.Schema {
 }
 
 // https://github.com/hashicorp/terraform-plugin-sdk/issues/155#issuecomment-489699737
-////  alternative - https://github.com/hashicorp/terraform-plugin-sdk/issues/248#issuecomment-725013327
+// //  alternative - https://github.com/hashicorp/terraform-plugin-sdk/issues/248#issuecomment-725013327
 func environmentDataSourceSchema() *schema.Schema {
 	return &schema.Schema{
 		Type: schema.TypeList,
