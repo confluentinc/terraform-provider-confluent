@@ -85,7 +85,6 @@ func TestConsumer(t *testing.T) {
 							// TODO: some cluster types require additional fields; add separate tests for those
 							"kind": m.Regex("Basic", "^(Basic|Standard|Dedicated|Enterprise)$"),
 						},
-						// TODO: smart matching here
 						"kafka_bootstrap_endpoint": m.S(fmt.Sprintf("%v.%v.gcp.glb.confluent.cloud:9092", kafkaClusterId, region)),
 						"http_endpoint":            m.Regex("https://lkc-00000-00000.us-central1.gcp.glb.confluent.cloud", `^(http|https)://.+`),
 						"api_endpoint":             m.Regex("https://pkac-00000.us-west-2.aws.confluent.cloud", `^(http|https)://.+`),
