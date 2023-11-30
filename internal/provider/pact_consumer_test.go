@@ -44,7 +44,6 @@ func TestConsumer(t *testing.T) {
 				// Header("Accepts", m.Equality("application/json")).
 				// Header("Authorization", m.S("TODO: token")).
 				Query("environment", m.S(environmentId))
-			// BodyMatch(m.S(""))
 		}).
 		// TODO: ideally a single consumer should only care about fields it actually consumes.
 		// So the contract != spec. Trim down this contract to only the fields we actually use.
