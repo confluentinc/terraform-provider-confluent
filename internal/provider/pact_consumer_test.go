@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/pact-foundation/pact-go/v2/consumer"
 	pactlog "github.com/pact-foundation/pact-go/v2/log"
 	m "github.com/pact-foundation/pact-go/v2/matchers"
@@ -67,7 +66,7 @@ func TestConsumer(t *testing.T) {
 						"self": m.Regex(fmt.Sprintf("http://127.0.0.1/cmk/v2/clusters/%v", kafkaClusterId), `^(http|https)://.+`),
 						// utils.go::clusterCrnToRbacClusterCrn cares about /kafka=xxx suffix
 						"resource_name": m.Regex(
-							fmt.Sprintf("crn://confluent.cloud/organization=9bb441c4-edef-46ac-8a41-c49e44a3fd9a/environment=%v/cloud-cluster=%v", environmentId, kafkaClusterId),
+							fmt.Sprintf("crn://confluent.cloud/organization=9bb441c4-edef-46ac-8a41-c49e44a3fd9a/environment=%v/cloud-cluster=%v/kafka=%v", environmentId, kafkaClusterId, kafkaClusterId),
 							`^crn://.+/kafka=.+`,
 						),
 						// TODO: ensure timestamp is in correct format - web example has "2006-01-02T15:04:05-07:00"
@@ -126,7 +125,7 @@ func TestConsumer(t *testing.T) {
 			cmkCfg.HTTPClient = &http.Client{}
 			cmkCfg.Servers[0].URL = fmt.Sprintf("http://%v:%v", config.Host, config.Port)
 
-			data := &schema.ResourceData{}
+			data := kafkaDataSource().Data(nil)
 			client := Client{
 				cmkClient: cmk.NewAPIClient(cmkCfg),
 			}
