@@ -34,6 +34,7 @@ func byokDataSource() *schema.Resource {
 			},
 			paramAws:   awsKeyDataSourceSchema(),
 			paramAzure: azureKeyDataSourceSchema(),
+			paramGcp:   gcpKeyDataSourceSchema(),
 		},
 	}
 }
@@ -50,6 +51,25 @@ func awsKeyDataSourceSchema() *schema.Schema {
 				paramAwsRoles: {
 					Type:     schema.TypeSet,
 					Elem:     &schema.Schema{Type: schema.TypeString},
+					Computed: true,
+				},
+			},
+		},
+		Computed: true,
+	}
+}
+
+func gcpKeyDataSourceSchema() *schema.Schema {
+	return &schema.Schema{
+		Type: schema.TypeList,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramGcpKeyId: {
+					Type:     schema.TypeString,
+					Computed: true,
+				},
+				paramGcpSecurityGroup: {
+					Type:     schema.TypeString,
 					Computed: true,
 				},
 			},

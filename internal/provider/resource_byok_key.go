@@ -18,12 +18,15 @@ const (
 	paramAzureKeyVaultId    = "key_vault_id"
 	paramAzureTenantId      = "tenant_id"
 	paramAzureApplicationId = "application_id"
+	paramGcpSecurityGroup   = "security_group"
 
 	paramAwsKeyArn = "key_arn"
+	paramGcpKeyId  = "key_id"
 	paramAwsRoles  = "roles"
 
 	kindAws   = "AwsKey"
 	kindAzure = "AzureKey"
+	kindGcp   = "GcpKey"
 )
 
 var ()
@@ -39,6 +42,7 @@ func byokResource() *schema.Resource {
 		Schema: map[string]*schema.Schema{
 			paramAws:   awsKeySchema(),
 			paramAzure: azureKeySchema(),
+			paramGcp:   gcpKeySchema(),
 		},
 	}
 }
@@ -56,6 +60,30 @@ func awsKeySchema() *schema.Schema {
 				paramAwsRoles: {
 					Type:     schema.TypeSet,
 					Elem:     &schema.Schema{Type: schema.TypeString},
+					Computed: true,
+				},
+			},
+		},
+		ForceNew: true,
+		Optional: true,
+		Computed: true,
+		MinItems: 1,
+		MaxItems: 1,
+	}
+}
+
+func gcpKeySchema() *schema.Schema {
+	return &schema.Schema{
+		Type: schema.TypeList,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramGcpKeyId: {
+					Type:     schema.TypeString,
+					Required: true,
+					ForceNew: true,
+				},
+				paramGcpSecurityGroup: {
+					Type:     schema.TypeString,
 					Computed: true,
 				},
 			},
@@ -108,6 +136,7 @@ func byokCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 	createByokKeyRequest := byok.NewByokV1Key()
 	_, isAwsKey := d.GetOk(paramAws)
 	_, isAzureKey := d.GetOk(paramAzure)
+	_, isGcpKey := d.GetOk(paramGcp)
 
 	var key string
 
@@ -123,8 +152,13 @@ func byokCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 		tenantId := extractStringValueFromBlock(d, paramAzure, paramAzureTenantId)
 		byokKeyOneOf := byok.ByokV1AzureKeyAsByokV1KeyKeyOneOf(byok.NewByokV1AzureKey(key, keyVaultId, kindAzure, tenantId))
 		createByokKeyRequest.SetKey(byokKeyOneOf)
+
+	case isGcpKey:
+		key = extractStringValueFromBlock(d, paramGcp, paramGcpKeyId)
+		byokKeyOneOf := byok.ByokV1GcpKeyAsByokV1KeyKeyOneOf(byok.NewByokV1GcpKey(key, kindGcp))
+		createByokKeyRequest.SetKey(byokKeyOneOf)
 	default:
-		return diag.Errorf("error creating BYOK Key: expected one of %s, %s params", paramAws, paramAzure)
+		return diag.Errorf("error creating BYOK Key: expected one of %s, %s, %s params", paramAws, paramAzure, paramGcp)
 	}
 
 	createByokKeyRequestJson, err := json.Marshal(createByokKeyRequest)
@@ -231,7 +265,15 @@ func setKeyAttributes(d *schema.ResourceData, byokKey byok.ByokV1Key) (*schema.R
 		}}); err != nil {
 			return nil, err
 		}
+	case oneOfKeys.ByokV1GcpKey != nil:
+		if err := d.Set(paramGcp, []interface{}{map[string]interface{}{
+			paramGcpKeyId:         oneOfKeys.ByokV1GcpKey.GetKeyId(),
+			paramGcpSecurityGroup: oneOfKeys.ByokV1GcpKey.GetSecurityGroup(),
+		}}); err != nil {
+			return nil, err
+		}
 	}
+
 	d.SetId(byokKey.GetId())
 	return d, nil
 }

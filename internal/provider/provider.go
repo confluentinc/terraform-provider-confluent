@@ -326,7 +326,7 @@ func New(version, userAgent string) func() *schema.Provider {
 }
 
 // https://github.com/hashicorp/terraform-plugin-sdk/issues/155#issuecomment-489699737
-////  alternative - https://github.com/hashicorp/terraform-plugin-sdk/issues/248#issuecomment-725013327
+// //  alternative - https://github.com/hashicorp/terraform-plugin-sdk/issues/248#issuecomment-725013327
 func environmentSchema() *schema.Schema {
 	return &schema.Schema{
 		Type: schema.TypeList,
@@ -349,7 +349,7 @@ func environmentSchema() *schema.Schema {
 }
 
 // https://github.com/hashicorp/terraform-plugin-sdk/issues/155#issuecomment-489699737
-////  alternative - https://github.com/hashicorp/terraform-plugin-sdk/issues/248#issuecomment-725013327
+// //  alternative - https://github.com/hashicorp/terraform-plugin-sdk/issues/248#issuecomment-725013327
 func environmentDataSourceSchema() *schema.Schema {
 	return &schema.Schema{
 		Type: schema.TypeList,

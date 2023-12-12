@@ -49,3 +49,6 @@ In addition to the preceding arguments, the following attributes are exported:
     - `key_vault_id` - (Required String) Key Vault ID containing the key.
     - `tenant_id` - (Required String) Tenant ID (uuid) hosting the Key Vault containing the key.
     - `application_id` - (Optional String) The Application ID created for this key-environment combination.
+- `gcp` (Optional Configuration Block) supports the following:
+    - `key_id` - (Required String) The Google Cloud Platform key ID.
+    - `security_group` - (Optional String) The Google security group created for this key.
