@@ -1,0 +1,24 @@
+{
+  "kind": "GroupMappingList",
+  "metadata": {
+    "self": "https://confluent.cloud/api/iam/v2/sso/group-mappings"
+  },
+  "data": [
+    {
+      "api_version": "iam/v2",
+      "kind": "GroupMapping",
+      "metadata": {
+        "self": "https://confluent.cloud/api/iam/v2/sso/group-mappings/group-w4vP",
+        "resource_name": "crn://confluent.cloud/organization=foo/group-mapping=group-w4vP",
+        "created_at": "2023-12-10T08:09:46.464541Z",
+        "updated_at": "2023-12-10T08:09:46.464541Z"
+      },
+      "id": "group-w4vP",
+      "display_name": "Default",
+      "description": "Permission for all users in everyone group",
+      "filter": "\"engineering\" in groups",
+      "principal": "group-w4vP",
+      "state": "ENABLED"
+    }
+  ]
+}

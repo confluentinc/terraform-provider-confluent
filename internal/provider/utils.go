@@ -39,6 +39,7 @@ import (
 	org "github.com/confluentinc/ccloud-sdk-go-v2/org/v2"
 	schemaregistry "github.com/confluentinc/ccloud-sdk-go-v2/schema-registry/v1"
 	srcm "github.com/confluentinc/ccloud-sdk-go-v2/srcm/v2"
+	"github.com/confluentinc/ccloud-sdk-go-v2/sso/v2"
 	"github.com/dghubble/sling"
 	"github.com/google/uuid"
 	"github.com/hashicorp/go-cty/cty"
@@ -76,6 +77,7 @@ const (
 	networkLoggingKey                         = "network_key_id"
 	customConnectorPluginLoggingKey           = "custom_connector_plugin_key_id"
 	connectorLoggingKey                       = "connector_key_id"
+	groupMappingLoggingKey                    = "group_mapping_id"
 	privateLinkAccessLoggingKey               = "private_link_access_id"
 	privateLinkAttachmentLoggingKey           = "private_link_attachment_id"
 	privateLinkAttachmentConnectionLoggingKey = "private_link_attachment_connection_id"
@@ -163,6 +165,17 @@ func (c *Client) cmkApiContext(ctx context.Context) context.Context {
 func (c *Client) iamApiContext(ctx context.Context) context.Context {
 	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
 		return context.WithValue(context.Background(), iam.ContextBasicAuth, iam.BasicAuth{
+			UserName: c.cloudApiKey,
+			Password: c.cloudApiSecret,
+		})
+	}
+	tflog.Warn(ctx, "Could not find Cloud API Key")
+	return ctx
+}
+
+func (c *Client) ssoApiContext(ctx context.Context) context.Context {
+	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
+		return context.WithValue(context.Background(), sso.ContextBasicAuth, sso.BasicAuth{
 			UserName: c.cloudApiKey,
 			Password: c.cloudApiSecret,
 		})

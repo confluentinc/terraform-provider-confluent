@@ -19,6 +19,7 @@ import (
 	"fmt"
 	ccp "github.com/confluentinc/ccloud-sdk-go-v2/connect-custom-plugin/v1"
 	netip "github.com/confluentinc/ccloud-sdk-go-v2/networking-ip/v1"
+	"github.com/confluentinc/ccloud-sdk-go-v2/sso/v2"
 	"strings"
 
 	apikeys "github.com/confluentinc/ccloud-sdk-go-v2/apikeys/v2"
@@ -80,6 +81,7 @@ type Client struct {
 	oidcClient                      *oidc.APIClient
 	quotasClient                    *quotas.APIClient
 	srcmClient                      *srcm.APIClient
+	ssoClient                       *sso.APIClient
 	userAgent                       string
 	cloudApiKey                     string
 	cloudApiSecret                  string
@@ -237,6 +239,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_kafka_topic":                        kafkaTopicDataSource(),
 				"confluent_environment":                        environmentDataSource(),
 				"confluent_environments":                       environmentsDataSource(),
+				"confluent_group_mapping":                      groupMappingDataSource(),
 				"confluent_ksql_cluster":                       ksqlDataSource(),
 				"confluent_flink_compute_pool":                 computePoolDataSource(),
 				"confluent_flink_region":                       flinkRegionDataSource(),
@@ -282,6 +285,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_environment":                        environmentResource(),
 				"confluent_identity_pool":                      identityPoolResource(),
 				"confluent_identity_provider":                  identityProviderResource(),
+				"confluent_group_mapping":                      groupMappingResource(),
 				"confluent_kafka_client_quota":                 kafkaClientQuotaResource(),
 				"confluent_ksql_cluster":                       ksqlResource(),
 				"confluent_flink_compute_pool":                 computePoolResource(),
@@ -434,6 +438,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	srcmCfg := srcm.NewConfiguration()
 	ksqlCfg := ksql.NewConfiguration()
 	quotasCfg := quotas.NewConfiguration()
+	ssoCfg := sso.NewConfiguration()
 
 	apiKeysCfg.Servers[0].URL = endpoint
 	byokCfg.Servers[0].URL = endpoint
@@ -452,6 +457,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	srcmCfg.Servers[0].URL = endpoint
 	ksqlCfg.Servers[0].URL = endpoint
 	quotasCfg.Servers[0].URL = endpoint
+	ssoCfg.Servers[0].URL = endpoint
 
 	apiKeysCfg.UserAgent = userAgent
 	byokCfg.UserAgent = userAgent
@@ -470,6 +476,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	srcmCfg.UserAgent = userAgent
 	ksqlCfg.UserAgent = userAgent
 	quotasCfg.UserAgent = userAgent
+	ssoCfg.UserAgent = userAgent
 
 	var flinkRestClientFactory *FlinkRestClientFactory
 	var kafkaRestClientFactory *KafkaRestClientFactory
@@ -496,6 +503,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	srcmCfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
 	ksqlCfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
 	quotasCfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
+	ssoCfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
 
 	client := Client{
 		apiKeysClient:                   apikeys.NewAPIClient(apiKeysCfg),
@@ -518,6 +526,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 		schemaRegistryRestClientFactory: schemaRegistryRestClientFactory,
 		mdsClient:                       mds.NewAPIClient(mdsCfg),
 		quotasClient:                    quotas.NewAPIClient(quotasCfg),
+		ssoClient:                       sso.NewAPIClient(ssoCfg),
 		userAgent:                       userAgent,
 		cloudApiKey:                     cloudApiKey,
 		cloudApiSecret:                  cloudApiSecret,

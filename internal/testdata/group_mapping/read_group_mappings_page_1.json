@@ -1,0 +1,25 @@
+{
+  "kind": "GroupMappingList",
+  "metadata": {
+    "self": "https://confluent.cloud/api/iam/v2/sso/group-mappings",
+    "next": "https://confluent.cloud/api/iam/v2/sso/group-mappings?page_token=eyJjcmVhdGVkVGltZSI6WzIwM"
+  },
+  "data": [
+    {
+      "api_version": "iam/v2",
+      "kind": "GroupMapping",
+      "metadata": {
+        "self": "https://confluent.cloud/api/iam/v2/sso/group-mappings/group-6qYQ",
+        "resource_name": "crn://confluent.cloud/organization=foo/group-mapping=group-6qYQ",
+        "created_at": "2023-12-10T08:22:53.643318Z",
+        "updated_at": "2023-12-10T08:22:53.643318Z"
+      },
+      "id": "group-6qYQ",
+      "display_name": "Default test 2",
+      "description": "Permission for all users in everyone group test 2",
+      "filter": "\"7526fd27-f620-4f36-8f38-b8689313b937\" in groups",
+      "principal": "group-6qYQ",
+      "state": "ENABLED"
+    }
+  ]
+}
