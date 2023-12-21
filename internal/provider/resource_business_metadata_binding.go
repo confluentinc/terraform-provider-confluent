@@ -141,6 +141,9 @@ func businessMetadataBindingCreate(ctx context.Context, d *schema.ResourceData, 
 		return diag.Errorf("error waiting for Business Metadata Binding %q to provision: %s", businessMetadataBindingId, createDescriptiveError(err))
 	}
 
+	// https://github.com/confluentinc/terraform-provider-confluent/issues/282
+	time.Sleep(dataCatalogAPIWaitAfterCreate)
+
 	createdBusinessMetadataBindingJson, err := json.Marshal(createdBusinessMetadataBinding)
 	if err != nil {
 		return diag.Errorf("error creating Business Metadata Binding %q: error marshaling %#v to json: %s", businessMetadataBindingId, createdBusinessMetadataBinding, createDescriptiveError(err))

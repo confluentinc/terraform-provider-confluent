@@ -29,7 +29,8 @@ import (
 )
 
 const (
-	dataCatalogTimeout = time.Minute
+	dataCatalogTimeout            = time.Minute
+	dataCatalogAPIWaitAfterCreate = 30 * time.Second
 )
 
 var defaultEntityTypes = []string{"cf_entity"}
@@ -128,6 +129,9 @@ func tagCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 	if err := waitForTagToProvision(schemaRegistryRestClient.dataCatalogApiContext(ctx), schemaRegistryRestClient, tagId, tagName); err != nil {
 		return diag.Errorf("error waiting for Tag %q to provision: %s", tagId, createDescriptiveError(err))
 	}
+
+	// https://github.com/confluentinc/terraform-provider-confluent/issues/282
+	time.Sleep(dataCatalogAPIWaitAfterCreate)
 
 	createdTagJson, err := json.Marshal(createdTag)
 	if err != nil {
