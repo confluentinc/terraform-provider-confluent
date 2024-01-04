@@ -1,3 +1,13 @@
+## 1.57.0 (January 4, 2023)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.56.0...v1.57.0)
+
+**Bug fixes:**
+* Added a client side fix for "Add support for new topic configuration fields" issue ([#341](https://github.com/confluentinc/terraform-provider-confluent/issues/341)).
+* Added a client side fix for "error creating Tag Binding / Business Metadata Binding 404" issue ([#282](https://github.com/confluentinc/terraform-provider-confluent/issues/282)).
+* Resolved 3 Dependabot alerts.
+* Updated docs.
+
 ## 1.56.0 (December 12, 2023)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.55.0...v1.56.0)
