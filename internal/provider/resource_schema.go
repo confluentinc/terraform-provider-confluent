@@ -605,7 +605,7 @@ func loadSchema(ctx context.Context, d *schema.ResourceData, c *SchemaRegistryRe
 	//  [{"subject": "test2", "version": 5, "id": 100004, "schema": "{\"type\":\"record\",...}]}"},
 	//   {"subject": "test2", "version": 6, "id": 100006, "schema": "{\"type\":\"record\",...}]}"}]
 	// Search for all subjects in all contexts
-	schemas, _, err := c.apiClient.SchemasV1Api.GetSchemas(c.apiContext(ctx)).SubjectPrefix(":*:").Execute()
+	schemas, _, err := c.apiClient.SchemasV1Api.GetSchemas(c.apiContext(ctx)).SubjectPrefix(d.Id()).Execute()
 	if err != nil {
 		return nil, false, fmt.Errorf("error loading Schemas: %s", createDescriptiveError(err))
 	}
