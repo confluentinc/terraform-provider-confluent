@@ -42,10 +42,11 @@ const (
 	dynamicTopicConfig          = "DYNAMIC_TOPIC_CONFIG"
 )
 
-// https://docs.confluent.io/cloud/current/clusters/broker-config.html#custom-topic-settings-for-all-cluster-types-supported-by-kafka-rest-api-and-terraform-provider
+// https://docs.confluent.io/cloud/current/client-apps/topics/manage.html#ak-topic-configurations-for-all-ccloud-cluster-types
 // https://docs.confluent.io/cloud/current/sr/broker-side-schema-validation.html#sv-configuration-options-on-a-topic
 var editableTopicSettings = []string{"cleanup.policy", "delete.retention.ms", "max.message.bytes", "max.compaction.lag.ms",
-	"message.timestamp.difference.max.ms", "message.timestamp.type", "min.compaction.lag.ms", "min.insync.replicas",
+	"message.timestamp.difference.max.ms", "message.timestamp.before.max.ms", "message.timestamp.after.max.ms",
+	"message.timestamp.type", "min.compaction.lag.ms", "min.insync.replicas",
 	"retention.bytes", "retention.ms", "segment.bytes", "segment.ms", "confluent.key.schema.validation", "confluent.value.schema.validation",
 	"confluent.key.subject.name.strategy", "confluent.value.subject.name.strategy"}
 
