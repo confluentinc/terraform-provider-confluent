@@ -77,11 +77,10 @@ func computePoolResource() *schema.Resource {
 				ForceNew:     true,
 			},
 			paramMaxCfu: {
-				Type:         schema.TypeInt,
-				Description:  "Maximum number of Confluent Flink Units (CFUs) that the Flink compute pool should auto-scale to.",
-				Optional:     true,
-				Computed:     true,
-				ValidateFunc: validation.IntInSlice([]int{5, 10}),
+				Type:        schema.TypeInt,
+				Description: "Maximum number of Confluent Flink Units (CFUs) that the Flink compute pool should auto-scale to.",
+				Optional:    true,
+				Computed:    true,
 			},
 			paramEnvironment: environmentSchema(),
 			paramRestEndpoint: {
