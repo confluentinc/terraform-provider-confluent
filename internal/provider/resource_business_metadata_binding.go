@@ -268,62 +268,64 @@ func businessMetadataBindingDelete(ctx context.Context, d *schema.ResourceData, 
 }
 
 func businessMetadataBindingUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if d.HasChangeExcept(paramAttributes) {
-		return diag.Errorf("error updating Business Metadata Binding %q: only %q attribute can be updated for Business Metadata Binding", d.Id(), paramAttributes)
+	if d.HasChangesExcept(paramCredentials, paramAttributes) {
+		return diag.Errorf("error updating Business Metadata Binding %q: only %q, %q attributes can be updated for Business Metadata Binding", d.Id(), paramCredentials, paramAttributes)
 	}
 
-	restEndpoint, err := extractSchemaRegistryRestEndpoint(meta.(*Client), d, false)
-	if err != nil {
-		return diag.Errorf("error updating Business Metadata Binding: %s", createDescriptiveError(err))
-	}
-	clusterId, err := extractSchemaRegistryClusterId(meta.(*Client), d, false)
-	if err != nil {
-		return diag.Errorf("error updating Business Metadata Binding: %s", createDescriptiveError(err))
-	}
-	clusterApiKey, clusterApiSecret, err := extractSchemaRegistryClusterApiKeyAndApiSecret(meta.(*Client), d, false)
-	if err != nil {
-		return diag.Errorf("error updating Business Metadata Binding: %s", createDescriptiveError(err))
-	}
+	if d.HasChange(paramAttributes) {
+		restEndpoint, err := extractSchemaRegistryRestEndpoint(meta.(*Client), d, false)
+		if err != nil {
+			return diag.Errorf("error updating Business Metadata Binding: %s", createDescriptiveError(err))
+		}
+		clusterId, err := extractSchemaRegistryClusterId(meta.(*Client), d, false)
+		if err != nil {
+			return diag.Errorf("error updating Business Metadata Binding: %s", createDescriptiveError(err))
+		}
+		clusterApiKey, clusterApiSecret, err := extractSchemaRegistryClusterApiKeyAndApiSecret(meta.(*Client), d, false)
+		if err != nil {
+			return diag.Errorf("error updating Business Metadata Binding: %s", createDescriptiveError(err))
+		}
 
-	businessMetadataName := d.Get(paramBusinessMetadataName).(string)
-	entityName := d.Get(paramEntityName).(string)
-	entityType := d.Get(paramEntityType).(string)
-	attributes := d.Get(paramAttributes).(map[string]interface{})
-	businessMetadataBindingId := createBusinessMetadataBindingId(clusterId, businessMetadataName, entityName, entityType)
+		businessMetadataName := d.Get(paramBusinessMetadataName).(string)
+		entityName := d.Get(paramEntityName).(string)
+		entityType := d.Get(paramEntityType).(string)
+		attributes := d.Get(paramAttributes).(map[string]interface{})
+		businessMetadataBindingId := createBusinessMetadataBindingId(clusterId, businessMetadataName, entityName, entityType)
 
-	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateDataCatalogClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
-	businessMetadataBindingRequest := dc.BusinessMetadata{}
-	businessMetadataBindingRequest.SetEntityName(entityName)
-	businessMetadataBindingRequest.SetEntityType(entityType)
-	businessMetadataBindingRequest.SetTypeName(businessMetadataName)
-	businessMetadataBindingRequest.SetAttributes(attributes)
+		schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateDataCatalogClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+		businessMetadataBindingRequest := dc.BusinessMetadata{}
+		businessMetadataBindingRequest.SetEntityName(entityName)
+		businessMetadataBindingRequest.SetEntityType(entityType)
+		businessMetadataBindingRequest.SetTypeName(businessMetadataName)
+		businessMetadataBindingRequest.SetAttributes(attributes)
 
-	request := schemaRegistryRestClient.dataCatalogApiClient.EntityV1Api.UpdateBusinessMetadata(schemaRegistryRestClient.dataCatalogApiContext(ctx))
-	request = request.BusinessMetadata([]dc.BusinessMetadata{businessMetadataBindingRequest})
+		request := schemaRegistryRestClient.dataCatalogApiClient.EntityV1Api.UpdateBusinessMetadata(schemaRegistryRestClient.dataCatalogApiContext(ctx))
+		request = request.BusinessMetadata([]dc.BusinessMetadata{businessMetadataBindingRequest})
 
-	updateBusinessMetadataBindingRequestJson, err := json.Marshal(request)
-	if err != nil {
-		return diag.Errorf("error updating Business Metadata Binding: error marshaling %#v to json: %s", request, createDescriptiveError(err))
-	}
-	tflog.Debug(ctx, fmt.Sprintf("Updating new Business Metadata Binding: %s", updateBusinessMetadataBindingRequestJson))
+		updateBusinessMetadataBindingRequestJson, err := json.Marshal(request)
+		if err != nil {
+			return diag.Errorf("error updating Business Metadata Binding: error marshaling %#v to json: %s", request, createDescriptiveError(err))
+		}
+		tflog.Debug(ctx, fmt.Sprintf("Updating new Business Metadata Binding: %s", updateBusinessMetadataBindingRequestJson))
 
-	updatedBusinessMetadataBinding, _, err := request.Execute()
-	if err != nil {
-		return diag.Errorf("error updating Business Metadata Binding %s", createDescriptiveError(err))
-	}
-	if len(updatedBusinessMetadataBinding) == 0 {
-		return diag.Errorf("error updating Business Metadata Binding %q: empty response", businessMetadataBindingId)
-	}
-	if updatedBusinessMetadataBinding[0].Error != nil {
-		return diag.Errorf("error updating Business Metadata Binding %q: %s", businessMetadataBindingId, updatedBusinessMetadataBinding[0].Error.GetMessage())
-	}
-	d.SetId(businessMetadataBindingId)
+		updatedBusinessMetadataBinding, _, err := request.Execute()
+		if err != nil {
+			return diag.Errorf("error updating Business Metadata Binding %s", createDescriptiveError(err))
+		}
+		if len(updatedBusinessMetadataBinding) == 0 {
+			return diag.Errorf("error updating Business Metadata Binding %q: empty response", businessMetadataBindingId)
+		}
+		if updatedBusinessMetadataBinding[0].Error != nil {
+			return diag.Errorf("error updating Business Metadata Binding %q: %s", businessMetadataBindingId, updatedBusinessMetadataBinding[0].Error.GetMessage())
+		}
+		d.SetId(businessMetadataBindingId)
 
-	updatedBusinessMetadataBindingJson, err := json.Marshal(updatedBusinessMetadataBinding)
-	if err != nil {
-		return diag.Errorf("error updating Business Metadata Binding %q: error marshaling %#v to json: %s", businessMetadataBindingId, updatedBusinessMetadataBinding, createDescriptiveError(err))
+		updatedBusinessMetadataBindingJson, err := json.Marshal(updatedBusinessMetadataBinding)
+		if err != nil {
+			return diag.Errorf("error updating Business Metadata Binding %q: error marshaling %#v to json: %s", businessMetadataBindingId, updatedBusinessMetadataBinding, createDescriptiveError(err))
+		}
+		tflog.Debug(ctx, fmt.Sprintf("Finished updating Business Metadata Binding %q: %s", businessMetadataBindingId, updatedBusinessMetadataBindingJson), map[string]interface{}{businessMetadataBindingLoggingKey: businessMetadataBindingId})
 	}
-	tflog.Debug(ctx, fmt.Sprintf("Finished updating Business Metadata Binding %q: %s", businessMetadataBindingId, updatedBusinessMetadataBindingJson), map[string]interface{}{businessMetadataBindingLoggingKey: businessMetadataBindingId})
 	return businessMetadataBindingRead(ctx, d, meta)
 }
 

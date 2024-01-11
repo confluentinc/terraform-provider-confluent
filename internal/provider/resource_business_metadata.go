@@ -278,59 +278,61 @@ func businessMetadataDelete(ctx context.Context, d *schema.ResourceData, meta in
 }
 
 func businessMetadataUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if d.HasChangesExcept(paramDescription, paramAttributeDef) {
-		return diag.Errorf("error updating Business Metadata %q: only %q, %q attributes can be updated for Business Metadata", d.Id(), paramDescription, paramAttributeDef)
+	if d.HasChangesExcept(paramCredentials, paramDescription, paramAttributeDef) {
+		return diag.Errorf("error updating Business Metadata %q: only %q, %q, %q attributes can be updated for Business Metadata", d.Id(), paramCredentials, paramDescription, paramAttributeDef)
 	}
 
-	restEndpoint, err := extractSchemaRegistryRestEndpoint(meta.(*Client), d, false)
-	if err != nil {
-		return diag.Errorf("error updating Business Metadata: %s", createDescriptiveError(err))
-	}
-	clusterId, err := extractSchemaRegistryClusterId(meta.(*Client), d, false)
-	if err != nil {
-		return diag.Errorf("error updating Business Metadata: %s", createDescriptiveError(err))
-	}
-	clusterApiKey, clusterApiSecret, err := extractSchemaRegistryClusterApiKeyAndApiSecret(meta.(*Client), d, false)
-	if err != nil {
-		return diag.Errorf("error updating Business Metadata: %s", createDescriptiveError(err))
-	}
-	businessMetadataName := d.Get(paramName).(string)
-	businessMetadataId := createBusinessMetadataId(clusterId, businessMetadataName)
+	if d.HasChanges(paramDescription, paramAttributeDef) {
+		restEndpoint, err := extractSchemaRegistryRestEndpoint(meta.(*Client), d, false)
+		if err != nil {
+			return diag.Errorf("error updating Business Metadata: %s", createDescriptiveError(err))
+		}
+		clusterId, err := extractSchemaRegistryClusterId(meta.(*Client), d, false)
+		if err != nil {
+			return diag.Errorf("error updating Business Metadata: %s", createDescriptiveError(err))
+		}
+		clusterApiKey, clusterApiSecret, err := extractSchemaRegistryClusterApiKeyAndApiSecret(meta.(*Client), d, false)
+		if err != nil {
+			return diag.Errorf("error updating Business Metadata: %s", createDescriptiveError(err))
+		}
+		businessMetadataName := d.Get(paramName).(string)
+		businessMetadataId := createBusinessMetadataId(clusterId, businessMetadataName)
 
-	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateDataCatalogClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
-	businessMetadataRequest := dc.BusinessMetadataDef{}
-	businessMetadataRequest.SetName(businessMetadataName)
-	description := d.Get(paramDescription).(string)
-	businessMetadataRequest.SetDescription(description)
-	attributeDefs := buildAttributeDefs(d.Get(paramAttributeDef).(*schema.Set).List())
-	businessMetadataRequest.SetAttributeDefs(attributeDefs)
+		schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateDataCatalogClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+		businessMetadataRequest := dc.BusinessMetadataDef{}
+		businessMetadataRequest.SetName(businessMetadataName)
+		description := d.Get(paramDescription).(string)
+		businessMetadataRequest.SetDescription(description)
+		attributeDefs := buildAttributeDefs(d.Get(paramAttributeDef).(*schema.Set).List())
+		businessMetadataRequest.SetAttributeDefs(attributeDefs)
 
-	request := schemaRegistryRestClient.dataCatalogApiClient.TypesV1Api.UpdateBusinessMetadataDefs(schemaRegistryRestClient.dataCatalogApiContext(ctx))
-	request = request.BusinessMetadataDef([]dc.BusinessMetadataDef{businessMetadataRequest})
+		request := schemaRegistryRestClient.dataCatalogApiClient.TypesV1Api.UpdateBusinessMetadataDefs(schemaRegistryRestClient.dataCatalogApiContext(ctx))
+		request = request.BusinessMetadataDef([]dc.BusinessMetadataDef{businessMetadataRequest})
 
-	updateBusinessMetadataRequestJson, err := json.Marshal(request)
-	if err != nil {
-		return diag.Errorf("error updating Business Metadata: error marshaling %#v to json: %s", request, createDescriptiveError(err))
-	}
-	tflog.Debug(ctx, fmt.Sprintf("Updating new businessMetadata: %s", updateBusinessMetadataRequestJson))
+		updateBusinessMetadataRequestJson, err := json.Marshal(request)
+		if err != nil {
+			return diag.Errorf("error updating Business Metadata: error marshaling %#v to json: %s", request, createDescriptiveError(err))
+		}
+		tflog.Debug(ctx, fmt.Sprintf("Updating new businessMetadata: %s", updateBusinessMetadataRequestJson))
 
-	updatedBusinessMetadata, _, err := request.Execute()
-	if err != nil {
-		return diag.Errorf("error updating Business Metadata %s", createDescriptiveError(err))
-	}
-	if len(updatedBusinessMetadata) == 0 {
-		return diag.Errorf("error updating Business Metadata %q: empty response", businessMetadataId)
-	}
-	if updatedBusinessMetadata[0].Error != nil {
-		return diag.Errorf("error updating Business Metadata %q: %s", businessMetadataId, updatedBusinessMetadata[0].Error.GetMessage())
-	}
-	d.SetId(businessMetadataId)
+		updatedBusinessMetadata, _, err := request.Execute()
+		if err != nil {
+			return diag.Errorf("error updating Business Metadata %s", createDescriptiveError(err))
+		}
+		if len(updatedBusinessMetadata) == 0 {
+			return diag.Errorf("error updating Business Metadata %q: empty response", businessMetadataId)
+		}
+		if updatedBusinessMetadata[0].Error != nil {
+			return diag.Errorf("error updating Business Metadata %q: %s", businessMetadataId, updatedBusinessMetadata[0].Error.GetMessage())
+		}
+		d.SetId(businessMetadataId)
 
-	updatedBusinessMetadataJson, err := json.Marshal(updatedBusinessMetadata)
-	if err != nil {
-		return diag.Errorf("error updating Business Metadata %q: error marshaling %#v to json: %s", businessMetadataId, updatedBusinessMetadata, createDescriptiveError(err))
+		updatedBusinessMetadataJson, err := json.Marshal(updatedBusinessMetadata)
+		if err != nil {
+			return diag.Errorf("error updating Business Metadata %q: error marshaling %#v to json: %s", businessMetadataId, updatedBusinessMetadata, createDescriptiveError(err))
+		}
+		tflog.Debug(ctx, fmt.Sprintf("Finished updating Business Metadata %q: %s", businessMetadataId, updatedBusinessMetadataJson), map[string]interface{}{businessMetadataLoggingKey: businessMetadataId})
 	}
-	tflog.Debug(ctx, fmt.Sprintf("Finished updating Business Metadata %q: %s", businessMetadataId, updatedBusinessMetadataJson), map[string]interface{}{businessMetadataLoggingKey: businessMetadataId})
 	return businessMetadataRead(ctx, d, meta)
 }
 
