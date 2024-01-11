@@ -104,6 +104,7 @@ func tagBindingCreate(ctx context.Context, d *schema.ResourceData, meta interfac
 	tagBindingRequest.SetTypeName(tagName)
 
 	// sleep 60 seconds to wait for entity (resource) to sync to SR
+	// https://github.com/confluentinc/terraform-provider-confluent/issues/282 to resolve "error creating Tag Binding 404 Not Found"
 	time.Sleep(60 * time.Second)
 
 	request := schemaRegistryRestClient.dataCatalogApiClient.EntityV1Api.CreateTags(schemaRegistryRestClient.dataCatalogApiContext(ctx))
@@ -131,8 +132,8 @@ func tagBindingCreate(ctx context.Context, d *schema.ResourceData, meta interfac
 		return diag.Errorf("error waiting for Tag Binding %q to provision: %s", tagBindingId, createDescriptiveError(err))
 	}
 
-	// https://github.com/confluentinc/terraform-provider-confluent/issues/282
-	time.Sleep(dataCatalogAPIWaitAfterCreate)
+	// https://github.com/confluentinc/terraform-provider-confluent/issues/282 to resolve "Root object was present, but now absent."
+	time.Sleep(2 * dataCatalogAPIWaitAfterCreate)
 
 	createdTagBindingJson, err := json.Marshal(createdTagBinding)
 	if err != nil {
