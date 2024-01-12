@@ -1,6 +1,13 @@
+## 1.59.0 (January 12, 2023)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.58.0...v1.59.0)
+
+**Bug fixes:**
+* Updated a client side fix for "error creating Tag Binding / Business Metadata Binding 404" issue ([#282](https://github.com/confluentinc/terraform-provider-confluent/issues/282)).
+
 ## 1.58.0 (January 11, 2023)
 
-[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.56.0...v1.57.0)
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.57.0...v1.58.0)
 
 **Bug fixes:**
 * Added support for updating credentials for `confluent_business_metadata` and `confluent_business_metadata_binding` resources.
