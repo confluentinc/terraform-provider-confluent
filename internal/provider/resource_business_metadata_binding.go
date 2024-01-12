@@ -114,6 +114,7 @@ func businessMetadataBindingCreate(ctx context.Context, d *schema.ResourceData, 
 	businessMetadataBindingRequest.SetAttributes(attributes)
 
 	// sleep 60 seconds to wait for entity (resource) to sync to SR
+	// https://github.com/confluentinc/terraform-provider-confluent/issues/282 to resolve "error creating Business Metadata Binding 404 Not Found"
 	time.Sleep(60 * time.Second)
 
 	request := schemaRegistryRestClient.dataCatalogApiClient.EntityV1Api.CreateBusinessMetadata(schemaRegistryRestClient.dataCatalogApiContext(ctx))
@@ -141,8 +142,8 @@ func businessMetadataBindingCreate(ctx context.Context, d *schema.ResourceData, 
 		return diag.Errorf("error waiting for Business Metadata Binding %q to provision: %s", businessMetadataBindingId, createDescriptiveError(err))
 	}
 
-	// https://github.com/confluentinc/terraform-provider-confluent/issues/282
-	time.Sleep(dataCatalogAPIWaitAfterCreate)
+	// https://github.com/confluentinc/terraform-provider-confluent/issues/282 to resolve "Root object was present, but now absent."
+	time.Sleep(2 * dataCatalogAPIWaitAfterCreate)
 
 	createdBusinessMetadataBindingJson, err := json.Marshal(createdBusinessMetadataBinding)
 	if err != nil {
