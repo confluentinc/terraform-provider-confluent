@@ -282,56 +282,9 @@ func tagBindingImport(ctx context.Context, d *schema.ResourceData, meta interfac
 }
 
 func tagBindingUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	restEndpoint, err := extractSchemaRegistryRestEndpoint(meta.(*Client), d, false)
-	if err != nil {
-		return diag.Errorf("error updating Tag Binding: %s", createDescriptiveError(err))
+	if d.HasChangesExcept(paramCredentials) {
+		return diag.Errorf("error updating Tag Binding %q: only %q block can be updated for Tag Bindings", d.Id(), paramCredentials)
 	}
-	clusterId, err := extractSchemaRegistryClusterId(meta.(*Client), d, false)
-	if err != nil {
-		return diag.Errorf("error updating Tag Binding: %s", createDescriptiveError(err))
-	}
-	clusterApiKey, clusterApiSecret, err := extractSchemaRegistryClusterApiKeyAndApiSecret(meta.(*Client), d, false)
-	if err != nil {
-		return diag.Errorf("error updating Tag Binding: %s", createDescriptiveError(err))
-	}
-
-	tagName := d.Get(paramTagName).(string)
-	entityName := d.Get(paramEntityName).(string)
-	entityType := d.Get(paramEntityType).(string)
-	tagBindingId := createTagBindingId(clusterId, tagName, entityName, entityType)
-
-	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateDataCatalogClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
-	tagBindingRequest := dc.Tag{}
-	tagBindingRequest.SetEntityName(entityName)
-	tagBindingRequest.SetEntityType(entityType)
-	tagBindingRequest.SetTypeName(tagName)
-
-	request := schemaRegistryRestClient.dataCatalogApiClient.EntityV1Api.UpdateTags(schemaRegistryRestClient.dataCatalogApiContext(ctx))
-	request = request.Tag([]dc.Tag{tagBindingRequest})
-
-	updateTagBindingRequestJson, err := json.Marshal(request)
-	if err != nil {
-		return diag.Errorf("error updating Tag Binding: error marshaling %#v to json: %s", request, createDescriptiveError(err))
-	}
-	tflog.Debug(ctx, fmt.Sprintf("Updating new Tag Binding: %s", updateTagBindingRequestJson))
-
-	updatedTagBinding, _, err := request.Execute()
-	if err != nil {
-		return diag.Errorf("error updating Tag Binding %s", createDescriptiveError(err))
-	}
-	if len(updatedTagBinding) == 0 {
-		return diag.Errorf("error updating Tag Binding %q: empty response", tagBindingId)
-	}
-	if updatedTagBinding[0].Error != nil {
-		return diag.Errorf("error updating Tag Binding %q: %s", tagBindingId, updatedTagBinding[0].Error.GetMessage())
-	}
-	d.SetId(tagBindingId)
-
-	updatedTagBindingJson, err := json.Marshal(updatedTagBinding)
-	if err != nil {
-		return diag.Errorf("error updating Tag Binding %q: error marshaling %#v to json: %s", tagBindingId, updatedTagBinding, createDescriptiveError(err))
-	}
-	tflog.Debug(ctx, fmt.Sprintf("Finished updating Tag Binding %q: %s", tagBindingId, updatedTagBindingJson), map[string]interface{}{tagBindingLoggingKey: tagBindingId})
 	return tagBindingRead(ctx, d, meta)
 }
 
