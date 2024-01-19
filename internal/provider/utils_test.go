@@ -176,3 +176,46 @@ func TestExtractFlinkAttributes(t *testing.T) {
 		})
 	}
 }
+
+func TestIsEntityNameSchemaIdAllowedUpdate(t *testing.T) {
+	tests := []struct {
+		entityType    string
+		oldEntityName string
+		newEntityName string
+		expected      bool
+	}{
+		{
+			entityType:    schemaEntityType,
+			oldEntityName: "lsrc-foobar:.:100002",
+			newEntityName: "lsrc-foobar:.:100003",
+			expected:      true,
+		},
+		{
+			entityType:    schemaEntityType,
+			oldEntityName: "lsrc-foobar:.:100002",
+			newEntityName: "lsrc-foobar:.:100002",
+			expected:      false,
+		},
+		{
+			entityType:    schemaEntityType,
+			oldEntityName: "lsrc-foobar:.:100003",
+			newEntityName: "lsrc-foobar:.:100002",
+			expected:      false,
+		},
+		{
+			entityType:    "different_type",
+			oldEntityName: "lsrc-foobar:.:100002",
+			newEntityName: "lsrc-foobar:.:100003",
+			expected:      false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.entityType+" "+tt.oldEntityName+" to "+tt.newEntityName, func(t *testing.T) {
+			result := isEntityNameSchemaIdAllowedUpdate(tt.entityType, tt.oldEntityName, tt.newEntityName)
+			if result != tt.expected {
+				t.Errorf("isEntityNameSchemaIdAllowedUpdate(%s, %s, %s) = %v; want %v", tt.entityType, tt.oldEntityName, tt.newEntityName, result, tt.expected)
+			}
+		})
+	}
+}
