@@ -1,3 +1,11 @@
+## 1.60.0 (January 22, 2023)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.59.0...v1.60.0)
+
+**Bug fixes:**
+* Fixed "instance lsrc-abc123:.:100002 already is associated with classification dynamic" issue when updating `confluent_tag_binding` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_tag_binding).
+* Fixed "Schema not found when importing a schema in a 20000+ schemas in Schema Registry" issue ([#342](https://github.com/confluentinc/terraform-provider-confluent/issues/342)).
+
 ## 1.59.0 (January 12, 2023)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.58.0...v1.59.0)
