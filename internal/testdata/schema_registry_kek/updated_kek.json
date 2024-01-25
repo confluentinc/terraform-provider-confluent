@@ -1,0 +1,9 @@
+{
+  "name": "testkek",
+  "kmsType": "aws-kms",
+  "kmsKeyId": "kmsKeyId",
+  "kmsProps": {},
+  "shared": false,
+  "ts": 1705047107616,
+  "doc": "new description"
+}
