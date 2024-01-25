@@ -54,6 +54,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -821,4 +822,52 @@ func parseStatementName(id string) (string, error) {
 		return "", fmt.Errorf("invalid ID format: expected '<Environment ID>/Compute Pool ID>/<Statement name>'")
 	}
 	return parts[2], nil
+}
+
+func canUpdateSchemaEntityType(oldEntityName, newEntityName string) bool {
+	oldParts := strings.Split(oldEntityName, ":")
+	newParts := strings.Split(newEntityName, ":")
+	if 3 != len(oldParts) || 3 != len(newParts) {
+		return false
+	}
+	if oldParts[0] != newParts[0] || oldParts[1] != newParts[1] {
+		return false
+	}
+	return isNewSchemaIdGreaterThanOld(oldParts, newParts)
+}
+
+func canUpdateFieldOrRecordEntityType(oldEntityName, newEntityName string) bool {
+	oldParts := strings.Split(oldEntityName, ":")
+	newParts := strings.Split(newEntityName, ":")
+	if 4 != len(oldParts) || 4 != len(newParts) {
+		return false
+	}
+	if oldParts[0] != newParts[0] || oldParts[1] != newParts[1] || oldParts[3] != newParts[3] {
+		return false
+	}
+	return isNewSchemaIdGreaterThanOld(oldParts, newParts)
+}
+
+func isNewSchemaIdGreaterThanOld(oldParts, newParts []string) bool {
+	oldSchemaId, err := strconv.Atoi(oldParts[2])
+	if err != nil {
+		return false
+	}
+	newSchemaId, err := strconv.Atoi(newParts[2])
+	if err != nil {
+		return false
+	}
+	// Tags are propagated for new versions
+	return newSchemaId > oldSchemaId
+}
+
+func canUpdateEntityName(entityType, oldEntityName, newEntityName string) bool {
+	switch entityType {
+	case schemaEntityType:
+		return canUpdateSchemaEntityType(oldEntityName, newEntityName)
+	case fieldEntityType, recordEntityType:
+		return canUpdateFieldOrRecordEntityType(oldEntityName, newEntityName)
+	default:
+		return false
+	}
 }

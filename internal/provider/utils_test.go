@@ -177,7 +177,7 @@ func TestExtractFlinkAttributes(t *testing.T) {
 	}
 }
 
-func TestIsEntityNameSchemaIdAllowedUpdate(t *testing.T) {
+func TestCanUpdateEntityName(t *testing.T) {
 	tests := []struct {
 		entityType    string
 		oldEntityName string
@@ -203,6 +203,30 @@ func TestIsEntityNameSchemaIdAllowedUpdate(t *testing.T) {
 			expected:      false,
 		},
 		{
+			entityType:    recordEntityType,
+			oldEntityName: "lsrc-foobar:.:100004:org.apache.flink.avro.generated.record",
+			newEntityName: "lsrc-foobar:.:100005:org.apache.flink.avro.generated.record",
+			expected:      true,
+		},
+		{
+			entityType:    recordEntityType,
+			oldEntityName: "lsrc-foobar:.:",
+			newEntityName: "lsrc-foobar:.:",
+			expected:      false,
+		},
+		{
+			entityType:    fieldEntityType,
+			oldEntityName: "lsrc-foobar:.:100006:org.apache.flink.avro.generated.record.random_value",
+			newEntityName: "lsrc-foobar:.:100007:org.apache.flink.avro.generated.record.random_value",
+			expected:      true,
+		},
+		{
+			entityType:    fieldEntityType,
+			oldEntityName: "flink.avro.generated.record.random_value",
+			newEntityName: "flink.avro.generated.record.random_value",
+			expected:      false,
+		},
+		{
 			entityType:    "different_type",
 			oldEntityName: "lsrc-foobar:.:100002",
 			newEntityName: "lsrc-foobar:.:100003",
@@ -212,9 +236,9 @@ func TestIsEntityNameSchemaIdAllowedUpdate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.entityType+" "+tt.oldEntityName+" to "+tt.newEntityName, func(t *testing.T) {
-			result := isEntityNameSchemaIdAllowedUpdate(tt.entityType, tt.oldEntityName, tt.newEntityName)
+			result := canUpdateEntityName(tt.entityType, tt.oldEntityName, tt.newEntityName)
 			if result != tt.expected {
-				t.Errorf("isEntityNameSchemaIdAllowedUpdate(%s, %s, %s) = %v; want %v", tt.entityType, tt.oldEntityName, tt.newEntityName, result, tt.expected)
+				t.Errorf("canUpdateEntityName(%s, %s, %s) = %v; want %v", tt.entityType, tt.oldEntityName, tt.newEntityName, result, tt.expected)
 			}
 		})
 	}

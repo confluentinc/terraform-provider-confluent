@@ -24,7 +24,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"regexp"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -34,6 +33,8 @@ const (
 	paramEntityName  = "entity_name"
 	paramEntityType  = "entity_type"
 	schemaEntityType = "sr_schema"
+	fieldEntityType  = "sr_field"
+	recordEntityType = "sr_record"
 )
 
 func tagBindingResource() *schema.Resource {
@@ -282,31 +283,6 @@ func tagBindingImport(ctx context.Context, d *schema.ResourceData, meta interfac
 	return []*schema.ResourceData{d}, nil
 }
 
-func isEntityNameSchemaIdAllowedUpdate(entityType, oldEntityName, newEntityName string) bool {
-	if entityType != schemaEntityType {
-		return false
-	}
-	oldParts := strings.Split(oldEntityName, ":")
-	newParts := strings.Split(newEntityName, ":")
-	if 3 != len(oldParts) || 3 != len(newParts) {
-		return false
-	}
-	if oldParts[0] != newParts[0] || oldParts[1] != newParts[1] {
-		return false
-	}
-
-	oldSchemaId, err := strconv.Atoi(oldParts[2])
-	if err != nil {
-		return false
-	}
-	newSchemaId, err := strconv.Atoi(newParts[2])
-	if err != nil {
-		return false
-	}
-	// Tags are propagated for new versions
-	return newSchemaId > oldSchemaId
-}
-
 func tagBindingUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	if d.HasChangesExcept(paramCredentials, paramEntityName) {
 		return diag.Errorf("error updating Tag Binding %q: only %q, %q blocks can be updated for Tag Bindings", d.Id(), paramCredentials, paramEntityName)
@@ -316,8 +292,8 @@ func tagBindingUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 		oldEntityNameObject, newEntityNameObject := d.GetChange(paramEntityName)
 		oldEntityName := oldEntityNameObject.(string)
 		newEntityName := newEntityNameObject.(string)
-		if !isEntityNameSchemaIdAllowedUpdate(entityType, oldEntityName, newEntityName) {
-			return diag.Errorf("error updating Tag Binding %q: schema_identifier in %q block can only be updated for Tag Bindings if entity name is %q", d.Id(), paramEntityName, schemaEntityType)
+		if !canUpdateEntityName(entityType, oldEntityName, newEntityName) {
+			return diag.Errorf("error updating Tag Binding %q: schema_identifier in %q block can only be updated for Tag Bindings if entity name is %q, %q or %q", d.Id(), paramEntityName, schemaEntityType, recordEntityType, fieldEntityType)
 		}
 		// entity_name will be silently updated
 	}
