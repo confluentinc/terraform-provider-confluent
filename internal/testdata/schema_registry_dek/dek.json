@@ -1,0 +1,8 @@
+{
+  "kekName": "testkek",
+  "subject": "ts",
+  "version": 1,
+  "algorithm": "AES256_GCM",
+  "encryptedKeyMaterial": "tm",
+  "ts": 1705542715343
+}

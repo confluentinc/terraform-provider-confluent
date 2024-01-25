@@ -276,6 +276,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_business_metadata":                  businessMetadataDataSource(),
 				"confluent_business_metadata_binding":          businessMetadataBindingDataSource(),
 				"confluent_schema_registry_kek":                schemaRegistryKekDataSource(),
+				"confluent_schema_registry_dek":                schemaRegistryDekDataSource(),
 			},
 			ResourcesMap: map[string]*schema.Resource{
 				"confluent_api_key":                            apiKeyResource(),
@@ -320,6 +321,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_business_metadata":                  businessMetadataResource(),
 				"confluent_business_metadata_binding":          businessMetadataBindingResource(),
 				"confluent_schema_registry_kek":                schemaRegistryKekResource(),
+				"confluent_schema_registry_dek":                schemaRegistryDekResource(),
 			},
 		}
 

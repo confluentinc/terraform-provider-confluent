@@ -106,6 +106,7 @@ const (
 	flinkOrganizationIdTest                   = "1111aaaa-11aa-11aa-11aa-111111aaaaaa"
 	flinkEnvironmentIdTest                    = "env-abc123"
 	schemaRegistryKekKey                      = "kek_id"
+	schemaRegistryDekKey                      = "dek_id"
 )
 
 func (c *Client) apiKeysApiContext(ctx context.Context) context.Context {
