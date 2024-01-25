@@ -112,7 +112,7 @@ func TestAccKek(t *testing.T) {
 					resource.TestCheckResourceAttr(kekLabel, "kms_key_id", "kmsKeyId"),
 					resource.TestCheckResourceAttr(kekLabel, "shared", "false"),
 					resource.TestCheckResourceAttr(kekLabel, "hard_delete", "false"),
-					resource.TestCheckResourceAttr(kekLabel, "description", ""),
+					resource.TestCheckResourceAttr(kekLabel, "doc", ""),
 				),
 			},
 			{
@@ -124,7 +124,7 @@ func TestAccKek(t *testing.T) {
 					resource.TestCheckResourceAttr(kekLabel, "kms_key_id", "kmsKeyId"),
 					resource.TestCheckResourceAttr(kekLabel, "shared", "false"),
 					resource.TestCheckResourceAttr(kekLabel, "hard_delete", "false"),
-					resource.TestCheckResourceAttr(kekLabel, "description", "new description"),
+					resource.TestCheckResourceAttr(kekLabel, "doc", "new description"),
 				),
 			},
 		},
@@ -161,7 +161,7 @@ func kekResourceUpdatedConfig(mockServerUrl string) string {
 	  name = "testkek"
 	  kms_type = "aws-kms"
 	  kms_key_id = "kmsKeyId"
-	  description = "new description"
+	  doc = "new description"
 	  shared = false
 	}
  	`, mockServerUrl)

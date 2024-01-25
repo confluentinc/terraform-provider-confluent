@@ -56,7 +56,7 @@ func schemaRegistryKekDataSource() *schema.Resource {
 				},
 				Computed: true,
 			},
-			paramDescription: {
+			paramDoc: {
 				Type:     schema.TypeString,
 				Computed: true,
 			},

@@ -79,6 +79,6 @@ In addition to the preceding arguments, the following attributes are exported:
 - `properties` - (Optional Map) The custom properties to set:
   - `name` - (Required String) The setting name.
   - `value` - (Required String) The setting value.
-- `description` - (Optional String) An optional user-friendly description for the KEK.
+- `doc` - (Optional String) An optional user-friendly description for the KEK.
 - `shared` - (Optional Boolean) An optional flag to control whether the DEK Registry has shared access to the KMS.
 - `hard_delete` - (Optional Boolean) An optional flag to control whether a kek should be soft or hard deleted.

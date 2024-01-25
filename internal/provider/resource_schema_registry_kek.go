@@ -31,6 +31,7 @@ const (
 	paramKmsType                   = "kms_type"
 	paramKmsKeyId                  = "kms_key_id"
 	paramShared                    = "shared"
+	paramDoc                       = "doc"
 	paramHardDeleteKekDefaultValue = false
 )
 
@@ -79,7 +80,7 @@ func schemaRegistryKekResource() *schema.Resource {
 				Optional: true,
 				Computed: true,
 			},
-			paramDescription: {
+			paramDoc: {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
@@ -121,7 +122,7 @@ func schemaRegistryKekCreate(ctx context.Context, d *schema.ResourceData, meta i
 	kekRequest.SetName(kekName)
 	kekRequest.SetKmsType(d.Get(paramKmsType).(string))
 	kekRequest.SetKmsKeyId(d.Get(paramKmsKeyId).(string))
-	kekRequest.SetDoc(d.Get(paramDescription).(string))
+	kekRequest.SetDoc(d.Get(paramDoc).(string))
 
 	properties := convertToStringStringMap(d.Get(paramProperties).(map[string]interface{}))
 	kekRequest.SetKmsProps(properties)
@@ -258,8 +259,8 @@ func schemaRegistryKekDelete(ctx context.Context, d *schema.ResourceData, meta i
 }
 
 func schemaRegistryKekUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if d.HasChangesExcept(paramCredentials, paramProperties, paramDescription, paramShared, paramHardDelete) {
-		return diag.Errorf("error updating Schema Registry Kek %q: only %q, %q, %q, %q, %q attributes can be updated for Schema Registry Kek", d.Id(), paramCredentials, paramProperties, paramDescription, paramShared, paramHardDelete)
+	if d.HasChangesExcept(paramCredentials, paramProperties, paramDoc, paramShared, paramHardDelete) {
+		return diag.Errorf("error updating Schema Registry Kek %q: only %q, %q, %q, %q, %q attributes can be updated for Schema Registry Kek", d.Id(), paramCredentials, paramProperties, paramDoc, paramShared, paramHardDelete)
 	}
 
 	restEndpoint, err := extractSchemaRegistryRestEndpoint(meta.(*Client), d, false)
@@ -280,7 +281,7 @@ func schemaRegistryKekUpdate(ctx context.Context, d *schema.ResourceData, meta i
 
 	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
 	kekRequest := sr.UpdateKekRequest{}
-	kekRequest.SetDoc(d.Get(paramDescription).(string))
+	kekRequest.SetDoc(d.Get(paramDoc).(string))
 
 	properties := convertToStringStringMap(d.Get(paramProperties).(map[string]interface{}))
 	kekRequest.SetKmsProps(properties)
@@ -346,7 +347,7 @@ func setKekAttributes(d *schema.ResourceData, clusterId string, kek sr.Kek) (*sc
 	if err := d.Set(paramProperties, kek.GetKmsProps()); err != nil {
 		return nil, err
 	}
-	if err := d.Set(paramDescription, kek.GetDoc()); err != nil {
+	if err := d.Set(paramDoc, kek.GetDoc()); err != nil {
 		return nil, err
 	}
 	if err := d.Set(paramShared, kek.GetShared()); err != nil {
