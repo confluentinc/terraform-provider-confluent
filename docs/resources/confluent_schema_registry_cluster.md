@@ -8,9 +8,11 @@ description: |-
 
 # confluent_schema_registry_cluster Resource
 
-[![General Availability](https://img.shields.io/badge/Lifecycle%20Stage-General%20Availability-%2345c6e8)](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy)
+[![Deprecated](https://img.shields.io/badge/Lifecycle%20Stage-Deprecated-yellow)](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy)
 
 `confluent_schema_registry_cluster` provides a Schema Registry cluster resource that enables creating, editing, and deleting Schema Registry clusters on Confluent Cloud.
+
+!> **WARNING:** The `confluent_schema_registry_cluster` resource has been deprecated and will be removed in a future version. Any existing resources can be removed from [Terraform state](https://www.terraform.io/language/state) using the [`terraform state rm`](https://www.terraform.io/cli/commands/state/rm#command-state-rm) command. A Schema Registry cluster will be enabled by default in each Confluent Cloud environment.
 
 -> **Note:** It is recommended to set `lifecycle { prevent_destroy = true }` on production instances to prevent accidental cluster deletion. This setting rejects plans that would destroy or recreate the cluster, such as attempting to change uneditable attributes. Read more about it in the [Terraform docs](https://www.terraform.io/language/meta-arguments/lifecycle#prevent_destroy).
 

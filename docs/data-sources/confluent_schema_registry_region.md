@@ -8,9 +8,11 @@ description: |-
 
 # confluent_schema_registry_region Data Source
 
-[![General Availability](https://img.shields.io/badge/Lifecycle%20Stage-General%20Availability-%2345c6e8)](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy)
+[![Deprecated](https://img.shields.io/badge/Lifecycle%20Stage-Deprecated-yellow)](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy)
 
 `confluent_schema_registry_region` describes a Schema Registry cluster data source.
+
+!> **WARNING:** The `confluent_schema_registry_region` data source has been deprecated and will be removed in a future version. A Schema Registry cluster will be enabled by default in the same region as the first Kafka cluster of each Confluent Cloud environment.
 
 ## Example Usage
 

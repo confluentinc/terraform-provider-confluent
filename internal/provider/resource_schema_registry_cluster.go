@@ -38,10 +38,11 @@ var acceptedBillingPackages = []string{billingPackageEssentials, billingPackageA
 
 func schemaRegistryClusterResource() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: schemaRegistryClusterCreate,
-		ReadContext:   schemaRegistryClusterRead,
-		UpdateContext: schemaRegistryClusterUpdate,
-		DeleteContext: schemaRegistryClusterDelete,
+		DeprecationMessage: "A Schema Registry cluster will be enabled by default in each Confluent Cloud environment",
+		CreateContext:      schemaRegistryClusterCreate,
+		ReadContext:        schemaRegistryClusterRead,
+		UpdateContext:      schemaRegistryClusterUpdate,
+		DeleteContext:      schemaRegistryClusterDelete,
 		Importer: &schema.ResourceImporter{
 			StateContext: schemaRegistryClusterImport,
 		},

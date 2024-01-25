@@ -34,7 +34,8 @@ const (
 
 func schemaRegistryRegionDataSource() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: schemaRegistryRegionDataSourceRead,
+		DeprecationMessage: "A Schema Registry cluster will be enabled by default in the same region as the first Kafka cluster of each Confluent Cloud environment",
+		ReadContext:        schemaRegistryRegionDataSourceRead,
 		Schema: map[string]*schema.Schema{
 			paramId: {
 				Type:        schema.TypeString,
