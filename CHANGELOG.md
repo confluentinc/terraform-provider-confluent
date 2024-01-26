@@ -1,4 +1,16 @@
-## 1.60.0 (January 22, 2023)
+## 1.61.0 (January 25, 2024)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.60.0...v1.61.0)
+
+**New features:**
+* Added new `confluent_users` [data_source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_users) in a [General Availability lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
+* Added new `confluent_schema_registry_clusters` [data_source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_schema_registry_clusters) in a [General Availability lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
+* Added new `confluent_environments` [data_source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_environments) in a [General Availability lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
+
+**Bug fixes:**
+* Fixed "confluent_tag_binding resource should support entity_name updates for sr_record and sr_field" issue ([#348](https://github.com/confluentinc/terraform-provider-confluent/issues/342)).
+
+## 1.60.0 (January 22, 2024)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.59.0...v1.60.0)
 
@@ -6,14 +18,14 @@
 * Fixed "instance lsrc-abc123:.:100002 already is associated with classification dynamic" issue when updating `confluent_tag_binding` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_tag_binding).
 * Fixed "Schema not found when importing a schema in a 20000+ schemas in Schema Registry" issue ([#342](https://github.com/confluentinc/terraform-provider-confluent/issues/342)).
 
-## 1.59.0 (January 12, 2023)
+## 1.59.0 (January 12, 2024)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.58.0...v1.59.0)
 
 **Bug fixes:**
 * Updated a client side fix for "error creating Tag Binding / Business Metadata Binding 404" issue ([#282](https://github.com/confluentinc/terraform-provider-confluent/issues/282)).
 
-## 1.58.0 (January 11, 2023)
+## 1.58.0 (January 11, 2024)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.57.0...v1.58.0)
 
@@ -23,7 +35,7 @@
 * Added a client side fix for "error creating Tag Binding / Business Metadata Binding 404" issue ([#282](https://github.com/confluentinc/terraform-provider-confluent/issues/282)).
 * Updated docs.
 
-## 1.57.0 (January 4, 2023)
+## 1.57.0 (January 4, 2024)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.56.0...v1.57.0)
 
