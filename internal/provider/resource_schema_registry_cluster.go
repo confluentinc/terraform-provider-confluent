@@ -38,7 +38,7 @@ var acceptedBillingPackages = []string{billingPackageEssentials, billingPackageA
 
 func schemaRegistryClusterResource() *schema.Resource {
 	return &schema.Resource{
-		DeprecationMessage: "A Schema Registry cluster will be enabled by default in each Confluent Cloud environment",
+		DeprecationMessage: fmt.Sprintf(deprecationMessageMajorRelease2, "schema_registry_cluster", "resource"),
 		CreateContext:      schemaRegistryClusterCreate,
 		ReadContext:        schemaRegistryClusterRead,
 		UpdateContext:      schemaRegistryClusterUpdate,

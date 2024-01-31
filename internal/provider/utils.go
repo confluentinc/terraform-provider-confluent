@@ -108,6 +108,9 @@ const (
 	flinkEnvironmentIdTest                    = "env-abc123"
 	schemaRegistryKekKey                      = "kek_id"
 	schemaRegistryDekKey                      = "dek_id"
+
+	deprecationMessageMajorRelease2 = "The %q %s has been deprecated and will be removed in the next major release (2.0.0). " +
+		"Refer to the Upgrade Guide at https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/guides/version-2-upgrade for more details."
 )
 
 func (c *Client) apiKeysApiContext(ctx context.Context) context.Context {
