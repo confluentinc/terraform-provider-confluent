@@ -49,9 +49,6 @@ const (
 	paramOnSuccess                           = "on_success"
 	paramOnFailure                           = "on_failure"
 	paramRuleset                             = "ruleset"
-	paramSensitive                           = "sensitive"
-	paramMetadata                            = "metadata"
-	paramValue                               = "value"
 	// unique on a subject level
 	paramSchemaIdentifier             = "schema_identifier"
 	paramSchema                       = "schema"
@@ -149,8 +146,7 @@ func schemaResource() *schema.Resource {
 					},
 				},
 			},
-			paramRuleset:  rulesetSchema(),
-			paramMetadata: metadataSchema(),
+			paramRuleset: rulesetSchema(),
 			paramHardDelete: {
 				Type:        schema.TypeBool,
 				Optional:    true,
@@ -247,53 +243,6 @@ func ruleSchema() *schema.Schema {
 				},
 			},
 		},
-	}
-}
-
-func metadataSchema() *schema.Schema {
-	return &schema.Schema{
-		Type: schema.TypeList,
-		Elem: &schema.Resource{
-			Schema: map[string]*schema.Schema{
-				paramTags: {
-					Type: schema.TypeList,
-					Elem: &schema.Resource{
-						Schema: map[string]*schema.Schema{
-							paramKey: {
-								Type:     schema.TypeString,
-								Optional: true,
-								Computed: true,
-							},
-							paramValue: {
-								Type:     schema.TypeSet,
-								Computed: true,
-								Optional: true,
-								Elem:     &schema.Schema{Type: schema.TypeString},
-							},
-						},
-					},
-					Optional: true,
-					Computed: true,
-				},
-				paramProperties: {
-					Type: schema.TypeMap,
-					Elem: &schema.Schema{
-						Type: schema.TypeString,
-					},
-					Optional: true,
-					Computed: true,
-				},
-				paramSensitive: {
-					Type:     schema.TypeSet,
-					Computed: true,
-					Optional: true,
-					Elem:     &schema.Schema{Type: schema.TypeString},
-				},
-			},
-		},
-		MaxItems: 1,
-		Computed: true,
-		Optional: true,
 	}
 }
 
@@ -483,20 +432,6 @@ func schemaCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 			ruleset.SetDomainRules(buildRules(tfRulesetMap[paramDomainRules].(*schema.Set).List()))
 		}
 		createSchemaRequest.SetRuleSet(*ruleset)
-	}
-	if tfMetadata := d.Get(paramMetadata).([]interface{}); len(tfMetadata) == 1 {
-		metadata := sr.NewMetadata()
-		tfMetadataMap := tfMetadata[0].(map[string]interface{})
-		if tfMetadataMap[paramTags] != nil {
-			metadata.SetTags(convertToStringStringListMap(tfMetadataMap[paramTags].([]interface{})))
-		}
-		if tfMetadataMap[paramProperties] != nil {
-			metadata.SetProperties(convertToStringStringMap(tfMetadataMap[paramProperties].(map[string]interface{})))
-		}
-		if tfMetadataMap[paramSensitive] != nil {
-			metadata.SetSensitive(convertToStringSlice(tfMetadataMap[paramSensitive].(*schema.Set).List()))
-		}
-		createSchemaRequest.SetMetadata(*metadata)
 	}
 	createSchemaRequestJson, err := json.Marshal(createSchemaRequest)
 	if err != nil {
@@ -842,28 +777,6 @@ func readSchemaRegistryConfigAndSetAttributes(ctx context.Context, d *schema.Res
 		}
 	}
 
-	if metadata, ok := srSchema.GetMetadataOk(); ok {
-		tfMetadataMap := make(map[string]interface{})
-
-		if tags, ok := metadata.GetTagsOk(); ok {
-			tfMetadataMap[paramTags] = buildTfTags(*tags)
-		}
-
-		if _, ok := metadata.GetPropertiesOk(); ok {
-			tfMetadataMap[paramProperties] = metadata.GetProperties()
-		}
-
-		if _, ok := metadata.GetSensitiveOk(); ok {
-			tfMetadataMap[paramSensitive] = metadata.GetSensitive()
-		}
-
-		tfMetadata := make([]map[string]interface{}, 1)
-		tfMetadata[0] = tfMetadataMap
-		if err := d.Set(paramMetadata, tfMetadata); err != nil {
-			return nil, err
-		}
-	}
-
 	// Explicitly set paramHardDelete to the default value if unset
 	if _, ok := d.GetOk(paramHardDelete); !ok {
 		if err := d.Set(paramHardDelete, paramHardDeleteDefaultValue); err != nil {
@@ -1136,17 +1049,4 @@ func buildTfRules(rules []sr.Rule) *[]map[string]interface{} {
 	tfRuleSet := make([]map[string]interface{}, 1)
 	tfRuleSet[0] = tfDomainRules
 	return &tfRuleSet
-}
-
-func buildTfTags(tags map[string][]string) *[]interface{} {
-	tfTags := make([]interface{}, len(tags))
-	index := 0
-	for key, value := range tags {
-		tfTagMap := make(map[string]interface{}, 2)
-		tfTagMap[paramKey] = key
-		tfTagMap[paramValue] = value
-		tfTags[index] = tfTagMap
-		index++
-	}
-	return &tfTags
 }

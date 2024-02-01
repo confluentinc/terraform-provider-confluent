@@ -91,14 +91,6 @@ The following arguments are supported:
     - `name` - (Required String) The name of the subject, representing the subject under which the referenced schema is registered.
     - `subject_name` - (Required String) The name for the reference. (For Avro Schema, the reference name is the fully qualified schema name, for JSON Schema it is a URL, and for Protobuf Schema, it is the name of another Protobuf file.)
     - `version` - (Required Integer) The version, representing the exact version of the schema under the registered subject.
-- `metadata` - (Optional Block) See [here](https://docs.confluent.io/platform/7.5/schema-registry/fundamentals/data-contracts.html) for more details. Supports the following:
-    - `properties` - (Optional Map) The custom properties to set:
-      - `name` - (Required String) The setting name.
-      - `value` - (Required String) The setting value.
-    - `tags` - (Optional List of Blocks) supports the following:
-      - `key` - (Required String) The setting name.
-      - `value` - (Required List of Strings) The list of tags.
-    - `sensitive` - (Optional List of Strings) A list of metadata properties to be encrypted.
 - `ruleset` - (Optional Block) See [here](https://docs.confluent.io/platform/7.5/schema-registry/fundamentals/data-contracts.html#rules) for more details.
   - `domain_rules` - (Optional Block) supports the following:
       - `name` - (Optional String) A user-defined name that can be used to reference the rule.
@@ -114,7 +106,7 @@ The following arguments are supported:
 
 -> **Note:** Schema rules (`ruleset`) are only available with the Stream Governance "Advanced" package.
 
--> **Note:** `ruleset` and `metadata` attributes are available in **Preview** for early adopters. Preview features are introduced to gather customer feedback. This feature should be used only for evaluation and non-production testing purposes or to provide feedback to Confluent, particularly as it becomes more widely available in follow-on editions.  
+-> **Note:** `ruleset` attribute is available in **Preview** for early adopters. Preview features are introduced to gather customer feedback. This feature should be used only for evaluation and non-production testing purposes or to provide feedback to Confluent, particularly as it becomes more widely available in follow-on editions.  
 **Preview** features are intended for evaluation use in development and testing environments only, and not for production use. The warranty, SLA, and Support Services provisions of your agreement with Confluent do not apply to Preview features. Preview features are considered to be a Proof of Concept as defined in the Confluent Cloud Terms of Service. Confluent may discontinue providing preview releases of the Preview features at any time in Confluent’s sole discretion.
 
 ## Attributes Reference
@@ -176,23 +168,6 @@ resource "confluent_schema" "avro-purchase" {
   subject_name = "avro-purchase-value"
   format = "AVRO"
   schema = file("./schemas/avro/purchase.avsc")
-  
-  // additional metadata
-  metadata {
-    properties = {
-      "owner": "Bob Jones",
-      "email": "bob@acme.com"
-    }
-    sensitive = ["s1", "s2"]
-    tags {
-      key = "tag1"
-      value = ["PII"]
-    }
-    tags {
-      key = "tag2"
-      value = ["PIIIII"]
-    }
-  }
   
   // additional rules:
   ruleset {

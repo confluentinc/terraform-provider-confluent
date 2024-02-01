@@ -88,8 +88,7 @@ func schemaDataSource() *schema.Resource {
 					},
 				},
 			},
-			paramRuleset:  rulesetSchema(),
-			paramMetadata: metadataSchema(),
+			paramRuleset: rulesetSchema(),
 			paramHardDelete: {
 				Type:        schema.TypeBool,
 				Computed:    true,

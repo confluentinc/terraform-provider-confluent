@@ -49,7 +49,7 @@ const (
 	testSecondSchemaReferenceSubject     = "test3"
 	testSecondSchemaReferenceVersion     = 3
 
-	testNumberOfSchemaRegistrySchemaResourceAttributes = 14
+	testNumberOfSchemaRegistrySchemaResourceAttributes = 13
 
 	testSchemaRegistryKey           = "foo"
 	testSchemaRegistrySecret        = "bar"
