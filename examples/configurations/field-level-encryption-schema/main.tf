@@ -145,16 +145,6 @@ resource "confluent_schema" "purchase" {
       }
     }
   }
-  metadata {
-    properties = {
-      "owner": "Bob Jones",
-      "email": "bob@acme.com"
-    }
-    tags {
-      key = "tag1"
-      value = ["PII"]
-    }
-  }
   hard_delete = true
   credentials {
     key    = confluent_api_key.env-manager-schema-registry-api-key.id
