@@ -91,7 +91,7 @@ The following arguments are supported:
     - `name` - (Required String) The name of the subject, representing the subject under which the referenced schema is registered.
     - `subject_name` - (Required String) The name for the reference. (For Avro Schema, the reference name is the fully qualified schema name, for JSON Schema it is a URL, and for Protobuf Schema, it is the name of another Protobuf file.)
     - `version` - (Required Integer) The version, representing the exact version of the schema under the registered subject.
-- `ruleset` - (Optional Block) See [here](https://docs.confluent.io/platform/7.5/schema-registry/fundamentals/data-contracts.html#rules) for more details.
+- `ruleset` - (Optional Block) The list of schema rules. See [Data Contracts for Schema Registry](https://docs.confluent.io/platform/7.5/schema-registry/fundamentals/data-contracts.html#rules) for more details. For example, these rules can enforce that a field that contains sensitive information must be encrypted, or that a message containing an invalid age must be sent to a dead letter queue.
   - `domain_rules` - (Optional Block) supports the following:
       - `name` - (Optional String) A user-defined name that can be used to reference the rule.
       - `doc` - (Optional String) An optional description.
