@@ -192,6 +192,23 @@ func TestAccLatestSchemaWithEnhancedProviderBlock(t *testing.T) {
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.1.tags.#", "1"),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.1.tags.0", "PII"),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.1.type", "ENCRYPT"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "metadata.#", "1"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "metadata.0.%", "3"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "metadata.0.properties.%", "2"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "metadata.0.properties.email", "bob@acme.com"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "metadata.0.properties.owner", "Bob Jones"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "metadata.0.sensitive.#", "2"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "metadata.0.sensitive.0", "s1"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "metadata.0.sensitive.1", "s2"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "metadata.0.tags.#", "2"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "metadata.0.tags.0.%", "2"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "metadata.0.tags.0.key", "tag1"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "metadata.0.tags.0.value.#", "1"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "metadata.0.tags.0.value.0", "PII"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "metadata.0.tags.1.%", "2"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "metadata.0.tags.1.key", "tag2"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "metadata.0.tags.1.value.#", "1"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "metadata.0.tags.1.value.0", "PIIIII"),
 				),
 			},
 			{
@@ -231,6 +248,22 @@ func testAccCheckSchemaConfigWithEnhancedProviderBlock(confluentCloudBaseUrl, mo
         subject_name = "%s"
         version = %d
       }
+
+	  metadata {
+		properties = {
+		  "owner": "Bob Jones",
+		  "email": "bob@acme.com"
+		}
+		sensitive = ["s1", "s2"]
+		tags {
+		  key = "tag1"
+		  value = ["PII"]
+		}
+		tags {
+		  key = "tag2"
+		  value = ["PIIIII"]
+		}
+	  }
 
 	  ruleset {
 		domain_rules {

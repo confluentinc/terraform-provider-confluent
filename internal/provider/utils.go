@@ -615,6 +615,17 @@ func convertToStringStringMap(data map[string]interface{}) map[string]string {
 	return stringMap
 }
 
+func convertToStringStringListMap(data []interface{}) map[string][]string {
+	stringListMap := make(map[string][]string)
+	for _, item := range data {
+		kv := item.(map[string]interface{})
+		key := kv[paramKey].(string)
+		value := convertToStringSlice(kv[paramValue].(*schema.Set).List())
+		stringListMap[key] = value
+	}
+	return stringListMap
+}
+
 func ptr(s string) *string {
 	return &s
 }
