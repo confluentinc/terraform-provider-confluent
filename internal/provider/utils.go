@@ -33,6 +33,7 @@ import (
 	kafkarestv3 "github.com/confluentinc/ccloud-sdk-go-v2/kafkarest/v3"
 	ksql "github.com/confluentinc/ccloud-sdk-go-v2/ksql/v2"
 	mds "github.com/confluentinc/ccloud-sdk-go-v2/mds/v2"
+	dns "github.com/confluentinc/ccloud-sdk-go-v2/networking-dnsforwarder/v1"
 	netip "github.com/confluentinc/ccloud-sdk-go-v2/networking-ip/v1"
 	netpl "github.com/confluentinc/ccloud-sdk-go-v2/networking-privatelink/v1"
 	net "github.com/confluentinc/ccloud-sdk-go-v2/networking/v1"
@@ -85,6 +86,7 @@ const (
 	networkLinkEndpointLoggingKey             = "network_link_endpoint_id"
 	networkLinkServiceLoggingKey              = "network_link_service_id"
 	peeringLoggingKey                         = "peering_id"
+	dnsForwarderKey                           = "dns_forwarder_id"
 	transitGatewayAttachmentLoggingKey        = "transit_gateway_attachment_id"
 	ksqlClusterLoggingKey                     = "ksql_cluster_id"
 	identityProviderLoggingKey                = "identity_provider_id"
@@ -248,6 +250,17 @@ func (c *Client) netIPApiContext(ctx context.Context) context.Context {
 func (c *Client) netPLApiContext(ctx context.Context) context.Context {
 	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
 		return context.WithValue(context.Background(), netpl.ContextBasicAuth, netpl.BasicAuth{
+			UserName: c.cloudApiKey,
+			Password: c.cloudApiSecret,
+		})
+	}
+	tflog.Warn(ctx, "Could not find Cloud API Key")
+	return ctx
+}
+
+func (c *Client) netDnsApiContext(ctx context.Context) context.Context {
+	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
+		return context.WithValue(context.Background(), dns.ContextBasicAuth, dns.BasicAuth{
 			UserName: c.cloudApiKey,
 			Password: c.cloudApiSecret,
 		})
