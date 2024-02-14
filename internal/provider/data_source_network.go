@@ -73,6 +73,7 @@ func networkDataSource() *schema.Resource {
 			paramZones:     zonesDataSourceSchema(),
 			paramZoneInfo:  zonesInfoDataSourceSchema(),
 			paramDnsConfig: optionalDnsConfigDataSourceSchema(),
+			paramGateway:   computedGatewaySchema(),
 			paramResourceName: {
 				Type:     schema.TypeString,
 				Computed: true,

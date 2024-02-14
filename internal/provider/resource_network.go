@@ -106,6 +106,7 @@ func networkResource() *schema.Resource {
 			paramZones:       zonesSchema(),
 			paramZoneInfo:    zonesInfoSchema(),
 			paramDnsConfig:   optionalDnsConfigSchema(),
+			paramGateway:     computedGatewaySchema(),
 			paramEnvironment: environmentSchema(),
 			paramResourceName: {
 				Type:        schema.TypeString,
@@ -425,6 +426,9 @@ func setNetworkAttributes(d *schema.ResourceData, network net.NetworkingV1Networ
 	if err := setStringAttributeInListBlockOfSizeOne(paramEnvironment, paramId, network.Spec.Environment.GetId(), d); err != nil {
 		return nil, err
 	}
+	if err := setStringAttributeInListBlockOfSizeOne(paramGateway, paramId, getGatewayID(network), d); err != nil {
+		return nil, err
+	}
 	if err := d.Set(paramResourceName, network.Metadata.GetResourceName()); err != nil {
 		return nil, createDescriptiveError(err)
 	}
@@ -612,6 +616,21 @@ func optionalDnsConfigSchema() *schema.Schema {
 	}
 }
 
+func computedGatewaySchema() *schema.Schema {
+	return &schema.Schema{
+		Type:     schema.TypeList,
+		Computed: true,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramId: {
+					Type:     schema.TypeString,
+					Computed: true,
+				},
+			},
+		},
+	}
+}
+
 func buildZonesInfo(tfZonesInfo []interface{}) net.NetworkingV1ZonesInfo {
 	zonesInfo := make([]net.NetworkingV1ZoneInfo, len(tfZonesInfo))
 	for index, tfZoneInfo := range tfZonesInfo {
@@ -643,4 +662,9 @@ func buildTfZoneInfo(zoneInfo net.NetworkingV1ZoneInfo) *map[string]interface{} 
 	tfZoneInfo[paramZoneId] = zoneInfo.GetZoneId()
 	tfZoneInfo[paramCidr] = zoneInfo.GetCidr()
 	return &tfZoneInfo
+}
+
+func getGatewayID(network net.NetworkingV1Network) string {
+	gateway := network.Spec.GetGateway()
+	return gateway.GetId()
 }

@@ -36,6 +36,8 @@ const (
 
 	awsPeeringNetworkCidr         = "255.254.0.0/16"
 	awsPeeringNetworkReservedCidr = "172.20.255.0/24"
+
+	gatewayIDAwsNetwork = "gw-c6lw4wo"
 )
 
 var awsPeeringNetworkZones = []string{"use1-az2",
@@ -170,6 +172,9 @@ func TestAccAwsZoneInfoNetwork(t *testing.T) {
 					resource.TestCheckResourceAttr(fullAwsNetworkResourceLabel, fmt.Sprintf("%s.0.%s", paramAws, paramVpc), awsNetworkVpc),
 					resource.TestCheckResourceAttr(fullAwsNetworkResourceLabel, fmt.Sprintf("%s.0.%s", paramAws, paramAccount), awsNetworkAccount),
 					resource.TestCheckResourceAttr(fullAwsNetworkResourceLabel, fmt.Sprintf("%s.0.%s", paramAws, paramPrivateLinkEndpointService), ""),
+					resource.TestCheckResourceAttr(fullAwsNetworkResourceLabel, "gateway.#", "1"),
+					resource.TestCheckResourceAttr(fullAwsNetworkResourceLabel, "gateway.0.%", "1"),
+					resource.TestCheckResourceAttr(fullAwsNetworkResourceLabel, "gateway.0.id", gatewayIDAwsNetwork),
 				),
 			},
 			{
@@ -208,6 +213,9 @@ func TestAccAwsZoneInfoNetwork(t *testing.T) {
 					resource.TestCheckResourceAttr(fullAwsNetworkResourceLabel, fmt.Sprintf("%s.0.%s", paramAws, paramVpc), awsNetworkVpc),
 					resource.TestCheckResourceAttr(fullAwsNetworkResourceLabel, fmt.Sprintf("%s.0.%s", paramAws, paramAccount), awsNetworkAccount),
 					resource.TestCheckResourceAttr(fullAwsNetworkResourceLabel, fmt.Sprintf("%s.0.%s", paramAws, paramPrivateLinkEndpointService), ""),
+					resource.TestCheckResourceAttr(fullAwsNetworkResourceLabel, "gateway.#", "1"),
+					resource.TestCheckResourceAttr(fullAwsNetworkResourceLabel, "gateway.0.%", "1"),
+					resource.TestCheckResourceAttr(fullAwsNetworkResourceLabel, "gateway.0.id", gatewayIDAwsNetwork),
 				),
 			},
 			{
