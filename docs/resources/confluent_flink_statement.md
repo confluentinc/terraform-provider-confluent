@@ -110,7 +110,7 @@ In addition to the preceding arguments, the following attributes are exported:
 
 ## Import
 
-You can import a Flink topic by using the Flink Statement name, for example:
+You can import a Flink statement by using the Flink Statement name, for example:
 
 ```shell
 # Option #1: Manage multiple Flink Compute Pools in the same Terraform workspace
