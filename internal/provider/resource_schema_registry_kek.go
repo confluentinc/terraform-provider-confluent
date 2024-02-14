@@ -287,10 +287,7 @@ func schemaRegistryKekUpdate(ctx context.Context, d *schema.ResourceData, meta i
 
 	properties := convertToStringStringMap(d.Get(paramProperties).(map[string]interface{}))
 	kekRequest.SetKmsProps(properties)
-
-	if shared, ok := d.GetOk(paramShared); ok {
-		kekRequest.SetShared(shared.(bool))
-	}
+	kekRequest.SetShared(d.Get(paramShared).(bool))
 
 	request := schemaRegistryRestClient.apiClient.KeyEncryptionKeysV1Api.PutKek(schemaRegistryRestClient.apiContext(ctx), kekName)
 	request = request.UpdateKekRequest(kekRequest)

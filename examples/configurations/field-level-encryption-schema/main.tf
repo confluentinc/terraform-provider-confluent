@@ -103,26 +103,12 @@ resource "confluent_schema_registry_kek" "aws_kek" {
     secret = confluent_api_key.env-manager-schema-registry-api-key.secret
   }
 
-  name = "aws_kek"
+  name = "kek"
   kms_type = "aws-kms"
   kms_key_id = var.aws_kms_key_id
   shared = false
 }
 
-resource "confluent_schema_registry_dek" "aws_dek" {
-  schema_registry_cluster {
-    id = confluent_schema_registry_cluster.essentials.id
-  }
-  rest_endpoint = confluent_schema_registry_cluster.essentials.rest_endpoint
-  credentials {
-    key    = confluent_api_key.env-manager-schema-registry-api-key.id
-    secret = confluent_api_key.env-manager-schema-registry-api-key.secret
-  }
-
-  kek_name = confluent_schema_registry_kek.aws_kek.name
-  subject_name = confluent_schema.purchase.subject_name
-  encrypted_key_material = "tm"
-}
 
 resource "confluent_schema" "purchase" {
   schema_registry_cluster {
@@ -131,8 +117,9 @@ resource "confluent_schema" "purchase" {
   rest_endpoint = confluent_schema_registry_cluster.essentials.rest_endpoint
   # https://developer.confluent.io/learn-kafka/schema-registry/schema-subjects/#topicnamestrategy
   subject_name = "purchase-value"
-  format = "PROTOBUF"
-  schema = file("./schemas/proto/purchase.proto")
+  format = "AVRO"
+  schema = file("./schemas/avro/purchase.avsc")
+
   ruleset {
     domain_rules {
       name = "encrypt"
@@ -143,6 +130,7 @@ resource "confluent_schema" "purchase" {
       params = {
           "encrypt.kek.name" = confluent_schema_registry_kek.aws_kek.name
       }
+      on_failure = "ERROR,NONE"
     }
   }
   hard_delete = true
