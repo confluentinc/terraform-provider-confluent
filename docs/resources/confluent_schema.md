@@ -91,31 +91,6 @@ The following arguments are supported:
     - `name` - (Required String) The name of the subject, representing the subject under which the referenced schema is registered.
     - `subject_name` - (Required String) The name for the reference. (For Avro Schema, the reference name is the fully qualified schema name, for JSON Schema it is a URL, and for Protobuf Schema, it is the name of another Protobuf file.)
     - `version` - (Required Integer) The version, representing the exact version of the schema under the registered subject.
-- `metadata` - (Optional Block) See [here](https://docs.confluent.io/platform/7.5/schema-registry/fundamentals/data-contracts.html) for more details. Supports the following:
-    - `properties` - (Optional Map) The custom properties to set:
-      - `name` - (Required String) The setting name.
-      - `value` - (Required String) The setting value.
-    - `tags` - (Optional List of Blocks) supports the following:
-      - `key` - (Required String) The setting name.
-      - `value` - (Required List of Strings) The list of tags.
-    - `sensitive` - (Optional List of Strings) A list of metadata properties to be encrypted.
-- `ruleset` - (Optional Block) The list of schema rules. See [Data Contracts for Schema Registry](https://docs.confluent.io/platform/7.5/schema-registry/fundamentals/data-contracts.html#rules) for more details. For example, these rules can enforce that a field that contains sensitive information must be encrypted, or that a message containing an invalid age must be sent to a dead letter queue.
-  - `domain_rules` - (Optional Block) supports the following:
-      - `name` - (Optional String) A user-defined name that can be used to reference the rule.
-      - `doc` - (Optional String) An optional description.
-      - `kind` - (Optional String) Either `CONDITION` or `TRANSFORM`.
-      - `mode` - (Optional String) The mode of the rule.
-      - `type` - (Optional String) The type of rule, which invokes a specific rule executor, such as Google Common Expression Language (CEL) or JSONata.
-      - `expr` - (Optional String) The body of the rule, which is optional.
-      - `on_success` - (Optional String) An optional action to execute if the rule succeeds, otherwise the built-in action type NONE is used. For UPDOWN and WRITEREAD rules, one can specify two actions separated by commas, such as “NONE,ERROR” for a WRITEREAD rule. In this case NONE applies to WRITE and ERROR applies to READ.
-      - `on_failure` - (Optional String) An optional action to execute if the rule fails, otherwise the built-in action type ERROR is used. For UPDOWN and WRITEREAD rules, one can specify two actions separated by commas, as mentioned above.
-      - `tags` - (Optional String List) The tags to which the rule applies, if any.
-      - `params` - (Optional Configuration Block) A set of static parameters for the rule, which is optional. These are key-value pairs that are passed to the rule.
-
--> **Note:** Schema rules (`ruleset`) are only available with the Stream Governance "Advanced" package.
-
--> **Note:** `ruleset` and `metadata` attributes are available in **Preview** for early adopters. Preview features are introduced to gather customer feedback. This feature should be used only for evaluation and non-production testing purposes or to provide feedback to Confluent, particularly as it becomes more widely available in follow-on editions.  
-**Preview** features are intended for evaluation use in development and testing environments only, and not for production use. The warranty, SLA, and Support Services provisions of your agreement with Confluent do not apply to Preview features. Preview features are considered to be a Proof of Concept as defined in the Confluent Cloud Terms of Service. Confluent may discontinue providing preview releases of the Preview features at any time in Confluent’s sole discretion.
 
 ## Attributes Reference
 
@@ -176,47 +151,6 @@ resource "confluent_schema" "avro-purchase" {
   subject_name = "avro-purchase-value"
   format = "AVRO"
   schema = file("./schemas/avro/purchase.avsc")
-  
-  // additional metadata
-  metadata {
-    properties = {
-      "owner": "Bob Jones",
-      "email": "bob@acme.com"
-    }
-    sensitive = ["s1", "s2"]
-    tags {
-      key = "tag1"
-      value = ["PII"]
-    }
-    tags {
-      key = "tag2"
-      value = ["PIIIII"]
-    }
-  }
-  
-  // additional rules:
-  ruleset {
-    domain_rules {
-      name = "encryptPII"
-      kind = "TRANSFORM"
-      type = "ENCRYPT"
-      mode = "WRITEREAD"
-      tags = ["PII"]
-      params = {
-          "encrypt.kek.name" = "testkek2"
-      }
-    }
-    domain_rules  {
-      name = "encrypt"
-      kind = "TRANSFORM"
-      type = "ENCRYPT"
-      mode = "WRITEREAD"
-      tags = ["PIIIII"]
-      params = {
-          "encrypt.kek.name" = "testkek2"
-      }
-    }
-  }
 
   lifecycle {
     prevent_destroy = true

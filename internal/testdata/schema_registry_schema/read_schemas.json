@@ -15,54 +15,6 @@
         "subject": "test3",
         "version":  3
       }
-    ],
-    "metadata": {
-      "tags": {
-        "tag1": [
-          "PII"
-        ],
-        "tag2": [
-          "PIIIII"
-        ]
-      },
-      "properties": {
-        "email": "bob@acme.com",
-        "owner": "Bob Jones"
-      },
-      "sensitive": [
-        "s1",
-        "s2"
-      ]
-    },
-    "ruleSet": {
-      "domainRules": [
-        {
-          "name": "encryptPII",
-          "kind": "TRANSFORM",
-          "mode": "WRITEREAD",
-          "type": "ENCRYPT",
-          "tags": [
-            "PII"
-          ],
-          "params": {
-            "encrypt.kek.name": "testkek2"
-          },
-          "disabled": false
-        },
-        {
-          "name": "encrypt",
-          "kind": "TRANSFORM",
-          "mode": "WRITEREAD",
-          "type": "ENCRYPT",
-          "tags": [
-            "PIIIII"
-          ],
-          "params": {
-            "encrypt.kek.name": "testkek2"
-          },
-          "disabled": false
-        }
-      ]
-    }
+    ]
   }
 ]

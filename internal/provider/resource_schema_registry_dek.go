@@ -23,7 +23,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"io"
 	"regexp"
 	"strconv"
 	"strings"
@@ -139,10 +138,9 @@ func schemaRegistryDekCreate(ctx context.Context, d *schema.ResourceData, meta i
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Schema Registry Dek: %s", createDekRequestJson))
 
-	createdDek, resp, err := request.Execute()
+	createdDek, _, err := request.Execute()
 	if err != nil {
-		b, err := io.ReadAll(resp.Body)
-		return diag.Errorf("error creating Schema Registry Dek %s, error msg: %s", createDescriptiveError(err), string(b))
+		return diag.Errorf("error creating Schema Registry Dek %s", createDescriptiveError(err))
 	}
 	d.SetId(dekId)
 

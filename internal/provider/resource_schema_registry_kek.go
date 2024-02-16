@@ -23,7 +23,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"io"
 	"regexp"
 	"strings"
 )
@@ -141,10 +140,9 @@ func schemaRegistryKekCreate(ctx context.Context, d *schema.ResourceData, meta i
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Schema Registry Kek: %s", createKekRequestJson))
 
-	createdKek, resp, err := request.Execute()
+	createdKek, _, err := request.Execute()
 	if err != nil {
-		b, err := io.ReadAll(resp.Body)
-		return diag.Errorf("error creating Schema Registry Kek %s, error message: %s", createDescriptiveError(err), string(b))
+		return diag.Errorf("error creating Schema Registry Kek %s", createDescriptiveError(err))
 	}
 	d.SetId(kekId)
 
@@ -287,7 +285,10 @@ func schemaRegistryKekUpdate(ctx context.Context, d *schema.ResourceData, meta i
 
 	properties := convertToStringStringMap(d.Get(paramProperties).(map[string]interface{}))
 	kekRequest.SetKmsProps(properties)
-	kekRequest.SetShared(d.Get(paramShared).(bool))
+
+	if shared, ok := d.GetOk(paramShared); ok {
+		kekRequest.SetShared(shared.(bool))
+	}
 
 	request := schemaRegistryRestClient.apiClient.KeyEncryptionKeysV1Api.PutKek(schemaRegistryRestClient.apiContext(ctx), kekName)
 	request = request.UpdateKekRequest(kekRequest)
@@ -298,10 +299,9 @@ func schemaRegistryKekUpdate(ctx context.Context, d *schema.ResourceData, meta i
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Updating new Schema Registry Kek: %s", updateKekRequestJson))
 
-	updatedKek, resp, err := request.Execute()
+	updatedKek, _, err := request.Execute()
 	if err != nil {
-		b, err := io.ReadAll(resp.Body)
-		return diag.Errorf("error updating Schema Registry Kek %s, error message: %s", createDescriptiveError(err), string(b))
+		return diag.Errorf("error updating Schema Registry Kek %s", createDescriptiveError(err))
 	}
 
 	updatedKekJson, err := json.Marshal(updatedKek)
