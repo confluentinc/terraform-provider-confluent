@@ -96,6 +96,9 @@ func computePoolResource() *schema.Resource {
 				Type:        schema.TypeInt,
 				Description: "The number of Confluent Flink Units (CFUs) currently allocated to this Flink compute pool.",
 				Computed:    true,
+				Deprecated: "`confluent_flink_compute_pool` resource's `current_cfu` attribute has been " +
+					"deprecated and will be removed in a future minor version (as `confluent_flink_compute_pool` " +
+					"resource is still in a Preview lifecycle stage).",
 			},
 			paramApiVersion: {
 				Type:     schema.TypeString,

@@ -63,6 +63,9 @@ func computePoolDataSource() *schema.Resource {
 			paramCurrentCfu: {
 				Type:     schema.TypeInt,
 				Computed: true,
+				Deprecated: "`confluent_flink_compute_pool` data source's `current_cfu` attribute has been " +
+					"deprecated and will be removed in a future minor version (as `confluent_flink_compute_pool` " +
+					"data source is still in a Preview lifecycle stage).",
 			},
 			paramMaxCfu: {
 				Type:     schema.TypeInt,
