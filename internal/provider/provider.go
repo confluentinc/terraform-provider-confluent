@@ -49,16 +49,17 @@ const (
 )
 
 const (
-	paramApiVersion  = "api_version"
-	paramCloud       = "cloud"
-	paramRegion      = "region"
-	paramEnvironment = "environment"
-	paramId          = "id"
-	paramDisplayName = "display_name"
-	paramName        = "name"
-	paramDescription = "description"
-	paramKind        = "kind"
-	paramCsu         = "csu"
+	paramApiVersion   = "api_version"
+	paramCloud        = "cloud"
+	paramRegion       = "region"
+	paramOrganization = "organization"
+	paramEnvironment  = "environment"
+	paramId           = "id"
+	paramDisplayName  = "display_name"
+	paramName         = "name"
+	paramDescription  = "description"
+	paramKind         = "kind"
+	paramCsu          = "csu"
 )
 
 type Client struct {
@@ -99,6 +100,8 @@ type Client struct {
 	schemaRegistryRestEndpoint      string
 	isSchemaRegistryMetadataSet     bool
 	flinkPrincipalId                string
+	flinkOrganizationId             string
+	flinkEnvironmentId              string
 	flinkComputePoolId              string
 	flinkApiKey                     string
 	flinkApiSecret                  string
@@ -194,6 +197,18 @@ func New(version, userAgent string) func() *schema.Provider {
 					Optional:    true,
 					DefaultFunc: schema.EnvDefaultFunc("FLINK_PRINCIPAL_ID", ""),
 					Description: "The Flink Principal ID.",
+				},
+				"organization_id": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					DefaultFunc: schema.EnvDefaultFunc("ORGANIZATION_ID", ""),
+					Description: "The Flink Organization ID.",
+				},
+				"environment_id": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					DefaultFunc: schema.EnvDefaultFunc("ENVIRONMENT_ID", ""),
+					Description: "The Flink Environment ID.",
 				},
 				"flink_compute_pool_id": {
 					Type:        schema.TypeString,
@@ -391,6 +406,8 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	schemaRegistryApiSecret := d.Get("schema_registry_api_secret").(string)
 	schemaRegistryRestEndpoint := d.Get("schema_registry_rest_endpoint").(string)
 	flinkPrincipalId := d.Get("flink_principal_id").(string)
+	flinkOrganizationId := d.Get("organization_id").(string)
+	flinkEnvironmentId := d.Get("environment_id").(string)
 	flinkComputePoolId := d.Get("flink_compute_pool_id").(string)
 	flinkApiKey := d.Get("flink_api_key").(string)
 	flinkApiSecret := d.Get("flink_api_secret").(string)
@@ -415,12 +432,12 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 		return nil, diag.Errorf("All 4 schema_registry_api_key, schema_registry_api_secret, schema_registry_rest_endpoint, schema_registry_id attributes should be set or not set in the provider block at the same time")
 	}
 
-	// All 5 attributes should be set or not set at the same time
-	allFlinkAttributesAreSet := (flinkApiKey != "") && (flinkApiSecret != "") && (flinkRestEndpoint != "") && (flinkComputePoolId != "") && (flinkPrincipalId != "")
-	allFlinkAttributesAreNotSet := (flinkApiKey == "") && (flinkApiSecret == "") && (flinkRestEndpoint == "") && (flinkComputePoolId == "") && (flinkPrincipalId == "")
+	// All 7 attributes should be set or not set at the same time
+	allFlinkAttributesAreSet := (flinkApiKey != "") && (flinkApiSecret != "") && (flinkRestEndpoint != "") && (flinkOrganizationId != "") && (flinkEnvironmentId != "") && (flinkComputePoolId != "") && (flinkPrincipalId != "")
+	allFlinkAttributesAreNotSet := (flinkApiKey == "") && (flinkApiSecret == "") && (flinkRestEndpoint == "") && (flinkOrganizationId == "") && (flinkEnvironmentId == "") && (flinkComputePoolId == "") && (flinkPrincipalId == "")
 	justSubsetOfFlinkAttributesAreSet := !(allFlinkAttributesAreSet || allFlinkAttributesAreNotSet)
 	if justSubsetOfFlinkAttributesAreSet {
-		return nil, diag.Errorf("All 5 flink_api_key, flink_api_secret, flink_rest_endpoint, flink_compute_pool_id, flink_principal_id attributes should be set or not set in the provider block at the same time")
+		return nil, diag.Errorf("All 7 flink_api_key, flink_api_secret, flink_rest_endpoint, organization_id, environment_id, flink_compute_pool_id, flink_principal_id attributes should be set or not set in the provider block at the same time")
 	}
 
 	userAgent := p.UserAgent(terraformProviderUserAgent, fmt.Sprintf("%s (https://confluent.cloud; support@confluent.io)", providerVersion))
@@ -551,11 +568,13 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 		schemaRegistryApiSecret:         schemaRegistryApiSecret,
 		schemaRegistryRestEndpoint:      schemaRegistryRestEndpoint,
 		flinkPrincipalId:                flinkPrincipalId,
+		flinkOrganizationId:             flinkOrganizationId,
+		flinkEnvironmentId:              flinkEnvironmentId,
 		flinkComputePoolId:              flinkComputePoolId,
 		flinkApiKey:                     flinkApiKey,
 		flinkApiSecret:                  flinkApiSecret,
 		flinkRestEndpoint:               flinkRestEndpoint,
-		// For simplicity, treat 3 (for Kafka), 4 (for SR), and 5 (for Flink) variables as a "single" one
+		// For simplicity, treat 3 (for Kafka), 4 (for SR), and 7 (for Flink) variables as a "single" one
 		isKafkaMetadataSet:          allKafkaAttributesAreSet,
 		isKafkaClusterIdSet:         kafkaClusterId != "",
 		isSchemaRegistryMetadataSet: allSchemaRegistryAttributesAreSet,

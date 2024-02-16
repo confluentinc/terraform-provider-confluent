@@ -12,11 +12,14 @@ provider "confluent" {
   cloud_api_secret = var.confluent_cloud_api_secret
 }
 
+data "confluent_organization" "main" {}
+
 data "confluent_environment" "staging" {
   id = var.environment_id
 }
 
 locals {
+  cloud  = "AWS"
   region = "us-east-2"
   table_name = "random_int_table"
 }
@@ -27,7 +30,7 @@ locals {
 resource "confluent_kafka_cluster" "standard" {
   display_name = "inventory"
   availability = "SINGLE_ZONE"
-  cloud        = "AWS"
+  cloud        = local.cloud
   region       = local.region
   standard {}
   environment {
@@ -39,7 +42,7 @@ resource "confluent_service_account" "statements-runner" {
   display_name = "statements-runner"
   description  = "Service account for running Flink Statements in 'inventory' Kafka cluster"
 }
-data "confluent_organization" "main" {}
+
 resource "confluent_role_binding" "statements-runner-environment-admin" {
   principal   = "User:${confluent_service_account.statements-runner.id}"
   role_name   = "EnvironmentAdmin"
@@ -63,8 +66,8 @@ resource "confluent_role_binding" "app-manager-assigner" {
   role_name   = "Assigner"
   crn_pattern = "${data.confluent_organization.main.resource_name}/service-account=${confluent_service_account.statements-runner.id}"
 }
-data "confluent_flink_region" "us-east-1" {
-  cloud  = "AWS"
+data "confluent_flink_region" "us-east-2" {
+  cloud  = local.cloud
   region = local.region
 }
 resource "confluent_api_key" "app-manager-flink-api-key" {
@@ -76,16 +79,16 @@ resource "confluent_api_key" "app-manager-flink-api-key" {
     kind        = confluent_service_account.app-manager.kind
   }
   managed_resource {
-    id          = data.confluent_flink_region.us-east-1.id
-    api_version = data.confluent_flink_region.us-east-1.api_version
-    kind        = data.confluent_flink_region.us-east-1.kind
+    id          = data.confluent_flink_region.us-east-2.id
+    api_version = data.confluent_flink_region.us-east-2.api_version
+    kind        = data.confluent_flink_region.us-east-2.kind
     environment {
       id = var.environment_id
     }
   }
 }
 data "confluent_schema_registry_region" "essentials" {
-  cloud   = "AWS"
+  cloud   = local.cloud
   region  = local.region
   package = "ESSENTIALS"
 }
@@ -99,10 +102,15 @@ resource "confluent_schema_registry_cluster" "essentials" {
     id = data.confluent_schema_registry_region.essentials.id
   }
 }
+data "confluent_flink_region" "main" {
+  cloud        = local.cloud
+  region       = local.region
+}
+
 # https://docs.confluent.io/cloud/current/flink/get-started/quick-start-cloud-console.html#step-1-create-a-af-compute-pool
 resource "confluent_flink_compute_pool" "main" {
   display_name = "my-compute-pool"
-  cloud        = "AWS"
+  cloud        = local.cloud
   region       = local.region
   max_cfu      = 10
   environment {
@@ -116,6 +124,12 @@ resource "confluent_flink_compute_pool" "main" {
   ]
 }
 resource "confluent_flink_statement" "select-current-timestamp" {
+  organization {
+    id = data.confluent_organization.main.id
+  }
+  environment {
+    id = data.confluent_environment.staging.id
+  }
   compute_pool {
     id = confluent_flink_compute_pool.main.id
   }
@@ -123,13 +137,19 @@ resource "confluent_flink_statement" "select-current-timestamp" {
     id = confluent_service_account.statements-runner.id
   }
   statement     = "SELECT CURRENT_TIMESTAMP;"
-  rest_endpoint = confluent_flink_compute_pool.main.rest_endpoint
+  rest_endpoint = data.confluent_flink_region.main.rest_endpoint
   credentials {
     key    = confluent_api_key.app-manager-flink-api-key.id
     secret = confluent_api_key.app-manager-flink-api-key.secret
   }
 }
 resource "confluent_flink_statement" "create-table" {
+  organization {
+    id = data.confluent_organization.main.id
+  }
+  environment {
+    id = data.confluent_environment.staging.id
+  }
   compute_pool {
     id = confluent_flink_compute_pool.main.id
   }
@@ -141,7 +161,7 @@ resource "confluent_flink_statement" "create-table" {
     "sql.current-catalog"  = data.confluent_environment.staging.display_name
     "sql.current-database" = confluent_kafka_cluster.standard.display_name
   }
-  rest_endpoint = confluent_flink_compute_pool.main.rest_endpoint
+  rest_endpoint = data.confluent_flink_region.main.rest_endpoint
   credentials {
     key    = confluent_api_key.app-manager-flink-api-key.id
     secret = confluent_api_key.app-manager-flink-api-key.secret
@@ -151,6 +171,12 @@ resource "confluent_flink_statement" "create-table" {
   ]
 }
 resource "confluent_flink_statement" "insert-into-table" {
+  organization {
+    id = data.confluent_organization.main.id
+  }
+  environment {
+    id = data.confluent_environment.staging.id
+  }
   compute_pool {
     id = confluent_flink_compute_pool.main.id
   }
@@ -162,7 +188,7 @@ resource "confluent_flink_statement" "insert-into-table" {
     "sql.current-catalog"  = data.confluent_environment.staging.display_name
     "sql.current-database" = confluent_kafka_cluster.standard.display_name
   }
-  rest_endpoint = confluent_flink_compute_pool.main.rest_endpoint
+  rest_endpoint = data.confluent_flink_region.main.rest_endpoint
   credentials {
     key    = confluent_api_key.app-manager-flink-api-key.id
     secret = confluent_api_key.app-manager-flink-api-key.secret
@@ -172,6 +198,12 @@ resource "confluent_flink_statement" "insert-into-table" {
   ]
 }
 resource "confluent_flink_statement" "select-from-table" {
+  organization {
+    id = data.confluent_organization.main.id
+  }
+  environment {
+    id = data.confluent_environment.staging.id
+  }
   compute_pool {
     id = confluent_flink_compute_pool.main.id
   }
@@ -183,7 +215,7 @@ resource "confluent_flink_statement" "select-from-table" {
     "sql.current-catalog"  = data.confluent_environment.staging.display_name
     "sql.current-database" = confluent_kafka_cluster.standard.display_name
   }
-  rest_endpoint = confluent_flink_compute_pool.main.rest_endpoint
+  rest_endpoint = data.confluent_flink_region.main.rest_endpoint
   credentials {
     key    = confluent_api_key.app-manager-flink-api-key.id
     secret = confluent_api_key.app-manager-flink-api-key.secret

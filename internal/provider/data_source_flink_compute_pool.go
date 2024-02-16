@@ -71,6 +71,10 @@ func computePoolDataSource() *schema.Resource {
 			paramRestEndpoint: {
 				Type:     schema.TypeString,
 				Computed: true,
+				Deprecated: "`confluent_flink_compute_pool` data source's `rest_endpoint` attribute has been " +
+					"deprecated and will be removed in a future minor version (as `confluent_flink_compute_pool` " +
+					"data source is still in a Preview lifecycle stage). Use `confluent_flink_region` data source's " +
+					"`rest_endpoint` attribute instead.",
 			},
 			paramApiVersion: {
 				Type:     schema.TypeString,

@@ -56,7 +56,7 @@ In addition to the preceding arguments, the following attributes are exported:
 - `kind` - (Required String) The kind of the Flink Compute Pool, for example, `ComputePool`.
 - `resource_name` - (Required String) The Confluent Resource Name of the Flink Compute Pool.
 - `current_cfu` - (Required Integer) The number of Confluent Flink Units (CFUs) currently allocated to this Flink compute pool.
-- `rest_endpoint` - (Required String) The API endpoint of the Flink Compute Pool.
+- `rest_endpoint` - (Required String, **Deprecated** use `confluent_flink_region` [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_flink_region)'s `rest_endpoint` attribute instead) The API endpoint of the Flink Compute Pool.
 
 ## Import
 

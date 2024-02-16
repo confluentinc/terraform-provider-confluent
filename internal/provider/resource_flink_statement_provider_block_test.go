@@ -244,6 +244,8 @@ func testAccCheckFlinkStatementWithEnhancedProviderBlock(confluentCloudBaseUrl, 
       flink_api_secret = "%s"
       flink_rest_endpoint = "%s"
       flink_principal_id = "%s"
+      organization_id = "%s"
+      environment_id = "%s"
       flink_compute_pool_id = "%s"
     }
 	resource "confluent_flink_statement" "%s" {
@@ -254,7 +256,8 @@ func testAccCheckFlinkStatementWithEnhancedProviderBlock(confluentCloudBaseUrl, 
 		"%s" = "%s"
 	  }
 	}
-	`, confluentCloudBaseUrl, kafkaApiKey, kafkaApiSecret, mockServerUrl, flinkPrincipalIdTest, flinkComputePoolIdTest,
+	`, confluentCloudBaseUrl, kafkaApiKey, kafkaApiSecret, mockServerUrl, flinkPrincipalIdTest,
+		flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkComputePoolIdTest,
 		flinkStatementResourceLabel, flinkStatementNameTest, flinkStatementTest, flinkFirstPropertyKeyTest, flinkFirstPropertyValueTest)
 }
 
@@ -266,6 +269,8 @@ func testAccCheckFlinkStatementUpdatedWithEnhancedProviderBlock(confluentCloudBa
      flink_api_secret = "%s"
      flink_rest_endpoint = "%s"
      flink_principal_id = "%s"
+     organization_id = "%s"
+     environment_id = "%s"
      flink_compute_pool_id = "%s"
    }
 	resource "confluent_flink_statement" "%s" {
@@ -277,20 +282,20 @@ func testAccCheckFlinkStatementUpdatedWithEnhancedProviderBlock(confluentCloudBa
 		"%s" = "%s"
 	  }
 	}
-	`, confluentCloudBaseUrl, kafkaApiKey, kafkaApiSecret, mockServerUrl, flinkPrincipalIdTest, flinkComputePoolIdTest,
+	`, confluentCloudBaseUrl, kafkaApiKey, kafkaApiSecret, mockServerUrl, flinkPrincipalIdTest,
+		flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkComputePoolIdTest,
 		flinkStatementResourceLabel, flinkStatementNameTest, flinkStatementTest, flinkFirstPropertyKeyTest, flinkFirstPropertyValueTest)
 }
 
 func testAccCheckFlinkStatementDestroy(s *terraform.State, url string) error {
-	restEndpoint, organizationId, environmentId, _ := extractFlinkAttributes(url)
-	c := testAccProvider.Meta().(*Client).flinkRestClientFactory.CreateFlinkRestClient(restEndpoint, organizationId, environmentId, flinkComputePoolIdTest, flinkPrincipalIdTest, kafkaApiKey, kafkaApiSecret, false)
+	c := testAccProvider.Meta().(*Client).flinkRestClientFactory.CreateFlinkRestClient(url, flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkComputePoolIdTest, flinkPrincipalIdTest, kafkaApiKey, kafkaApiSecret, false)
 	// Loop through the resources in state, verifying each Kafka topic is destroyed
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "confluent_flink_statement" {
 			continue
 		}
 		deletedTopicId := rs.Primary.ID
-		_, response, err := c.apiClient.StatementsSqlV1beta1Api.GetSqlv1beta1Statement(c.apiContext(context.Background()), organizationId, environmentId, flinkStatementNameTest).Execute()
+		_, response, err := c.apiClient.StatementsSqlV1beta1Api.GetSqlv1beta1Statement(c.apiContext(context.Background()), flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkStatementNameTest).Execute()
 		if response != nil && (response.StatusCode == http.StatusForbidden || response.StatusCode == http.StatusNotFound) {
 			return nil
 		} else if err == nil && deletedTopicId != "" {

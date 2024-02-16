@@ -791,50 +791,6 @@ func extractOrgIdFromResourceName(resourceName string) (string, error) {
 	}
 }
 
-func isTestHost(urlStr string) bool {
-	return strings.HasPrefix(urlStr, "http://localhost")
-}
-
-func extractFlinkAttributes(urlStr string) (string, string, string, error) {
-	if isTestHost(urlStr) {
-		return urlStr, flinkOrganizationIdTest, flinkEnvironmentIdTest, nil
-	}
-
-	if urlStr == "" {
-		return "", "", "", fmt.Errorf("failed to parse URL: URL is empty")
-	}
-
-	parsedURL, err := url.Parse(urlStr)
-	if err != nil {
-		return "", "", "", fmt.Errorf("failed to parse URL=%s: expected format for the URL is %s, error: %s", urlStr, exampleFlinkRestEndpoint, err)
-	}
-
-	if parsedURL.Scheme != "https" {
-		return "", "", "", fmt.Errorf("failed to parse URL=%s: scheme must be https, expected format for the URL is %s", urlStr, exampleFlinkRestEndpoint)
-	}
-
-	pathParts := strings.Split(parsedURL.Path, "/")
-	defaultError := fmt.Errorf("failed to parse URL=%s: expected format for the URL is %s", urlStr, exampleFlinkRestEndpoint)
-	if len(pathParts) != 7 {
-		return "", "", "", defaultError
-	}
-	if len(pathParts[6]) == 0 {
-		return "", "", "", defaultError
-	}
-
-	organizationId := pathParts[4]
-	environmentId := pathParts[6]
-
-	return fmt.Sprintf("%s://%s", parsedURL.Scheme, parsedURL.Host), organizationId, environmentId, nil
-}
-
-func constructComputePoolRestEndpoint(regionRestEndpoint, organizationId, environmentId string) string {
-	if isTestHost(regionRestEndpoint) {
-		return regionRestEndpoint
-	}
-	return fmt.Sprintf("%s/sql/v1beta1/organizations/%s/environments/%s", regionRestEndpoint, organizationId, environmentId)
-}
-
 func generateFlinkStatementName() string {
 	clientName := "tf"
 	date := time.Now().Format("2006-01-02")

@@ -145,12 +145,16 @@ func TestAccFlinkStatement(t *testing.T) {
 	_ = os.Setenv("IMPORT_FLINK_API_SECRET", kafkaApiSecret)
 	_ = os.Setenv("IMPORT_FLINK_REST_ENDPOINT", mockFlinkStatementTestServerUrl)
 	_ = os.Setenv("IMPORT_FLINK_PRINCIPAL_ID", flinkPrincipalIdTest)
+	_ = os.Setenv("IMPORT_ORGANIZATION_ID", flinkOrganizationIdTest)
+	_ = os.Setenv("IMPORT_ENVIRONMENT_ID", flinkEnvironmentIdTest)
 	_ = os.Setenv("IMPORT_FLINK_COMPUTE_POOL_ID", flinkComputePoolIdTest)
 	defer func() {
 		_ = os.Unsetenv("IMPORT_FLINK_API_KEY")
 		_ = os.Unsetenv("IMPORT_FLINK_API_SECRET")
 		_ = os.Unsetenv("IMPORT_FLINK_REST_ENDPOINT")
 		_ = os.Unsetenv("IMPORT_FLINK_PRINCIPAL_ID")
+		_ = os.Unsetenv("IMPORT_ORGANIZATION_ID")
+		_ = os.Unsetenv("IMPORT_ENVIRONMENT_ID")
 		_ = os.Unsetenv("IMPORT_FLINK_COMPUTE_POOL_ID")
 	}()
 
@@ -168,6 +172,12 @@ func TestAccFlinkStatement(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckFlinkStatementExists(fullFlinkStatementResourceLabel),
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "id", fmt.Sprintf("%s/%s/%s", flinkEnvironmentIdTest, flinkComputePoolIdTest, flinkStatementNameTest)),
+					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "organization.#", "1"),
+					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "organization.0.%", "1"),
+					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "organization.0.id", flinkOrganizationIdTest),
+					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "environment.#", "1"),
+					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "environment.0.%", "1"),
+					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "environment.0.id", flinkEnvironmentIdTest),
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "compute_pool.#", "1"),
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "compute_pool.0.%", "1"),
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "compute_pool.0.id", flinkComputePoolIdTest),
@@ -192,6 +202,12 @@ func TestAccFlinkStatement(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckFlinkStatementExists(fullFlinkStatementResourceLabel),
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "id", fmt.Sprintf("%s/%s/%s", flinkEnvironmentIdTest, flinkComputePoolIdTest, flinkStatementNameTest)),
+					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "organization.#", "1"),
+					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "organization.0.%", "1"),
+					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "organization.0.id", flinkOrganizationIdTest),
+					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "environment.#", "1"),
+					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "environment.0.%", "1"),
+					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "environment.0.id", flinkEnvironmentIdTest),
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "compute_pool.#", "1"),
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "compute_pool.0.%", "1"),
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "compute_pool.0.id", flinkComputePoolIdTest),
@@ -245,6 +261,12 @@ func testAccCheckFlinkStatement(confluentCloudBaseUrl, mockServerUrl string) str
       principal {
          id = "%s"
       }
+      organization {
+         id = "%s"
+      }
+      environment {
+         id = "%s"
+      }
       compute_pool {
          id = "%s"
       }
@@ -256,7 +278,8 @@ func testAccCheckFlinkStatement(confluentCloudBaseUrl, mockServerUrl string) str
 		"%s" = "%s"
 	  }
 	}
-	`, confluentCloudBaseUrl, flinkStatementResourceLabel, kafkaApiKey, kafkaApiSecret, mockServerUrl, flinkPrincipalIdTest, flinkComputePoolIdTest,
+	`, confluentCloudBaseUrl, flinkStatementResourceLabel, kafkaApiKey, kafkaApiSecret, mockServerUrl, flinkPrincipalIdTest,
+		flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkComputePoolIdTest,
 		flinkStatementNameTest, flinkStatementTest, flinkFirstPropertyKeyTest, flinkFirstPropertyValueTest)
 }
 
@@ -275,6 +298,12 @@ func testAccCheckFlinkStatementUpdated(confluentCloudBaseUrl, mockServerUrl stri
       principal {
          id = "%s"
       }
+      organization {
+         id = "%s"
+      }
+      environment {
+         id = "%s"
+      }
       compute_pool {
          id = "%s"
       }
@@ -287,6 +316,7 @@ func testAccCheckFlinkStatementUpdated(confluentCloudBaseUrl, mockServerUrl stri
 		"%s" = "%s"
 	  }
 	}
-	`, confluentCloudBaseUrl, flinkStatementResourceLabel, kafkaApiKey, kafkaApiSecret, mockServerUrl, flinkPrincipalIdTest, flinkComputePoolIdTest,
+	`, confluentCloudBaseUrl, flinkStatementResourceLabel, kafkaApiKey, kafkaApiSecret, mockServerUrl, flinkPrincipalIdTest,
+		flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkComputePoolIdTest,
 		flinkStatementNameTest, flinkStatementTest, flinkFirstPropertyKeyTest, flinkFirstPropertyValueTest)
 }

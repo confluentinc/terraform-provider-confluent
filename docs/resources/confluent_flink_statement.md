@@ -26,6 +26,12 @@ provider "confluent" {
 }
 
 resource "confluent_flink_statement" "random_int_table" {
+  organization {
+    id = data.confluent_organization.main.id
+  }
+  environment {
+    id = data.confluent_environment.staging.id
+  }
   compute_pool {
     id = confluent_flink_compute_pool.example.id
   }
@@ -53,6 +59,8 @@ resource "confluent_flink_statement" "random_int_table" {
 
 ```terraform
 provider "confluent" {
+  organization_id       = var.organization_id            # optionally use ORGANIZATION_ID env var
+  environment_id        = var.environment_id             # optionally use ENVIRONMENT_ID env var
   flink_compute_pool_id = var.flink_compute_pool_id      # optionally use FLINK_COMPUTE_POOL_ID env var
   flink_rest_endpoint   = var.flink_rest_endpoint        # optionally use FLINK_REST_ENDPOINT env var
   flink_api_key         = var.flink_api_key              # optionally use FLINK_API_KEY env var
@@ -78,13 +86,17 @@ resource "confluent_flink_statement" "example" {
 
 The following arguments are supported:
 
+- `organization` (Optional Configuration Block) supports the following:
+    - `id` - (Required String) The ID of the Organization, for example, `1111aaaa-11aa-11aa-11aa-111111aaaaaa`.
+- `environment` (Optional Configuration Block) supports the following:
+    - `id` - (Required String) The ID of the Environment, for example, `env-abc123`. 
 - `compute_pool` - (Optional Configuration Block) supports the following:
     - `id` - (Required String) The ID of the Flink Compute Pool, for example, `lfcp-abc123`.
 - `principal` - (Optional Configuration Block) supports the following:
     - `id` - (Required String) The ID of the Principal the Flink Statement runs as, for example, `sa-abc123`.
 - `statement` - (Required String) The raw SQL text statement, for example, `SELECT CURRENT_TIMESTAMP;`.
 - `statement_name` - (Optional String) The ID of the Flink Statement, for example, `cfeab4fe-b62c-49bd-9e99-51cc98c77a67`.
-- `rest_endpoint` - (Optional String) The REST endpoint of the Flink Compute Pool, for example, `https://flink.us-east-1.aws.stag.cpdev.cloud/sql/v1beta1/organizations/1111aaaa-11aa-11aa-11aa-111111aaaaaa/environments/env-abc123`).
+- `rest_endpoint` - (Optional String) The REST endpoint of the Flink Compute Pool, for example, `https://flink.us-east-1.aws.confluent.cloud`).
 - `credentials` (Optional Configuration Block) supports the following:
     - `key` - (Required String) The Flink API Key.
     - `secret` - (Required String, Sensitive) The Flink API Secret.
@@ -114,6 +126,8 @@ You can import a Flink statement by using the Flink Statement name, for example:
 
 ```shell
 # Option #1: Manage multiple Flink Compute Pools in the same Terraform workspace
+$ export IMPORT_ORGANIZATION_ID="<organization_id>"
+$ export IMPORT_ENVIRONMENT_ID="<environment_id>"
 $ export IMPORT_FLINK_COMPUTE_POOL_ID="<flink_compute_pool_id>"
 $ export IMPORT_FLINK_API_KEY="<flink_api_key>"
 $ export IMPORT_FLINK_API_SECRET="<flink_api_secret>"

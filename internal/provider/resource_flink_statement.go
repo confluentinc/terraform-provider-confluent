@@ -40,7 +40,8 @@ const (
 
 	paramResourceVersion = "resource_version"
 
-	exampleFlinkRestEndpoint = "https://flink.us-east-1.aws.confluent.cloud/sql/v1beta1/organizations/1111aaaa-11aa-11aa-11aa-111111aaaaaa/environments/env-abc123"
+	// exampleFlinkRestEndpoint = "https://flink.us-east-1.aws.confluent.cloud/sql/v1beta1/organizations/1111aaaa-11aa-11aa-11aa-111111aaaaaa/environments/env-abc123"
+	exampleFlinkRestEndpoint = "https://flink.us-east-1.aws.confluent.cloud"
 )
 
 func flinkStatementResource() *schema.Resource {
@@ -53,8 +54,10 @@ func flinkStatementResource() *schema.Resource {
 			StateContext: flinkStatementImport,
 		},
 		Schema: map[string]*schema.Schema{
-			paramComputePool: optionalIdBlockSchema(),
-			paramPrincipal:   optionalIdBlockSchema(),
+			paramOrganization: optionalIdBlockSchema(),
+			paramEnvironment:  optionalIdBlockSchema(),
+			paramComputePool:  optionalIdBlockSchema(),
+			paramPrincipal:    optionalIdBlockSchema(),
 			paramStatementName: {
 				Type:        schema.TypeString,
 				Description: "The unique identifier of the Statement.",
@@ -100,8 +103,15 @@ func flinkStatementResource() *schema.Resource {
 }
 
 func flinkStatementCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	computePoolRestEndpoint, err := extractFlinkRestEndpoint(meta.(*Client), d, false)
-	flinkRegionRestEndpoint, organizationId, environmentId, err := extractFlinkAttributes(computePoolRestEndpoint)
+	restEndpoint, err := extractFlinkRestEndpoint(meta.(*Client), d, false)
+	if err != nil {
+		return diag.Errorf("error creating Flink Statement: %s", createDescriptiveError(err))
+	}
+	organizationId, err := extractFlinkOrganizationId(meta.(*Client), d, false)
+	if err != nil {
+		return diag.Errorf("error creating Flink Statement: %s", createDescriptiveError(err))
+	}
+	environmentId, err := extractFlinkEnvironmentId(meta.(*Client), d, false)
 	if err != nil {
 		return diag.Errorf("error creating Flink Statement: %s", createDescriptiveError(err))
 	}
@@ -117,7 +127,7 @@ func flinkStatementCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	if err != nil {
 		return diag.Errorf("error creating Flink Statement: %s", createDescriptiveError(err))
 	}
-	flinkRestClient := meta.(*Client).flinkRestClientFactory.CreateFlinkRestClient(flinkRegionRestEndpoint, organizationId, environmentId, computePoolId, principalId, flinkApiKey, flinkApiSecret, meta.(*Client).isFlinkMetadataSet)
+	flinkRestClient := meta.(*Client).flinkRestClientFactory.CreateFlinkRestClient(restEndpoint, organizationId, environmentId, computePoolId, principalId, flinkApiKey, flinkApiSecret, meta.(*Client).isFlinkMetadataSet)
 
 	statementName := d.Get(paramStatementName).(string)
 	if len(statementName) == 0 {
@@ -175,8 +185,15 @@ func executeFlinkStatementRead(ctx context.Context, c *FlinkRestClient, statemen
 func flinkStatementRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	tflog.Debug(ctx, fmt.Sprintf("Reading Flink Statement %q", d.Id()), map[string]interface{}{flinkStatementLoggingKey: d.Id()})
 
-	computePoolRestEndpoint, err := extractFlinkRestEndpoint(meta.(*Client), d, false)
-	flinkRegionRestEndpoint, organizationId, environmentId, err := extractFlinkAttributes(computePoolRestEndpoint)
+	restEndpoint, err := extractFlinkRestEndpoint(meta.(*Client), d, false)
+	if err != nil {
+		return diag.Errorf("error reading Flink Statement: %s", createDescriptiveError(err))
+	}
+	organizationId, err := extractFlinkOrganizationId(meta.(*Client), d, false)
+	if err != nil {
+		return diag.Errorf("error reading Flink Statement: %s", createDescriptiveError(err))
+	}
+	environmentId, err := extractFlinkEnvironmentId(meta.(*Client), d, false)
 	if err != nil {
 		return diag.Errorf("error reading Flink Statement: %s", createDescriptiveError(err))
 	}
@@ -188,7 +205,7 @@ func flinkStatementRead(ctx context.Context, d *schema.ResourceData, meta interf
 	if err != nil {
 		return diag.Errorf("error reading Flink Statement: %s", createDescriptiveError(err))
 	}
-	flinkRestClient := meta.(*Client).flinkRestClientFactory.CreateFlinkRestClient(flinkRegionRestEndpoint, organizationId, environmentId, computePoolId, "", flinkApiKey, flinkApiSecret, meta.(*Client).isFlinkMetadataSet)
+	flinkRestClient := meta.(*Client).flinkRestClientFactory.CreateFlinkRestClient(restEndpoint, organizationId, environmentId, computePoolId, "", flinkApiKey, flinkApiSecret, meta.(*Client).isFlinkMetadataSet)
 	statementName, err := parseStatementName(d.Id())
 	if err != nil {
 		return diag.Errorf("error reading Flink Statement: %s", createDescriptiveError(err))
@@ -205,20 +222,27 @@ func flinkStatementUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 	if d.HasChangeExcept(paramStopped) {
 		return diag.Errorf("error updating Flink Statement %q: only %q attribute can be updated for Flink Statement", d.Id(), paramStopped)
 	}
-	computePoolRestEndpoint, err := extractFlinkRestEndpoint(meta.(*Client), d, false)
-	flinkRegionRestEndpoint, organizationId, environmentId, err := extractFlinkAttributes(computePoolRestEndpoint)
+	restEndpoint, err := extractFlinkRestEndpoint(meta.(*Client), d, false)
+	if err != nil {
+		return diag.Errorf("error updating Flink Statement: %s", createDescriptiveError(err))
+	}
+	organizationId, err := extractFlinkOrganizationId(meta.(*Client), d, false)
+	if err != nil {
+		return diag.Errorf("error updating Flink Statement: %s", createDescriptiveError(err))
+	}
+	environmentId, err := extractFlinkEnvironmentId(meta.(*Client), d, false)
 	if err != nil {
 		return diag.Errorf("error updating Flink Statement: %s", createDescriptiveError(err))
 	}
 	computePoolId, err := extractFlinkComputePoolId(meta.(*Client), d, false)
 	if err != nil {
-		return diag.Errorf("error updating Flink Statement: %s", createDescriptiveError(err))
+		return diag.Errorf("error reading Flink Statement: %s", createDescriptiveError(err))
 	}
 	flinkApiKey, flinkApiSecret, err := extractFlinkApiKeyAndApiSecret(meta.(*Client), d, false)
 	if err != nil {
 		return diag.Errorf("error updating Flink Statement: %s", createDescriptiveError(err))
 	}
-	flinkRestClient := meta.(*Client).flinkRestClientFactory.CreateFlinkRestClient(flinkRegionRestEndpoint, organizationId, environmentId, "", computePoolId, flinkApiKey, flinkApiSecret, meta.(*Client).isFlinkMetadataSet)
+	flinkRestClient := meta.(*Client).flinkRestClientFactory.CreateFlinkRestClient(restEndpoint, organizationId, environmentId, "", computePoolId, flinkApiKey, flinkApiSecret, meta.(*Client).isFlinkMetadataSet)
 	updatedStopped := d.Get(paramStopped).(bool)
 	statementName := d.Get(paramStatementName).(string)
 	resourceVersion := d.Get(paramResourceVersion).(string)
@@ -299,7 +323,13 @@ func setFlinkStatementAttributes(d *schema.ResourceData, c *FlinkRestClient, sta
 		if err := setKafkaCredentials(c.flinkApiKey, c.flinkApiSecret, d); err != nil {
 			return nil, err
 		}
-		if err := d.Set(paramRestEndpoint, constructComputePoolRestEndpoint(c.restEndpoint, c.organizationId, c.environmentId)); err != nil {
+		if err := d.Set(paramRestEndpoint, c.restEndpoint); err != nil {
+			return nil, err
+		}
+		if err := setStringAttributeInListBlockOfSizeOne(paramOrganization, paramId, statement.GetOrganizationId(), d); err != nil {
+			return nil, err
+		}
+		if err := setStringAttributeInListBlockOfSizeOne(paramEnvironment, paramId, statement.GetEnvironmentId(), d); err != nil {
 			return nil, err
 		}
 		if err := setStringAttributeInListBlockOfSizeOne(paramComputePool, paramId, statement.Spec.GetComputePoolId(), d); err != nil {
@@ -316,20 +346,27 @@ func setFlinkStatementAttributes(d *schema.ResourceData, c *FlinkRestClient, sta
 func flinkStatementDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	tflog.Debug(ctx, fmt.Sprintf("Deleting Flink Statement %q", d.Id()), map[string]interface{}{flinkStatementLoggingKey: d.Id()})
 
-	computePoolRestEndpoint, err := extractFlinkRestEndpoint(meta.(*Client), d, false)
-	flinkRegionRestEndpoint, organizationId, environmentId, err := extractFlinkAttributes(computePoolRestEndpoint)
+	restEndpoint, err := extractFlinkRestEndpoint(meta.(*Client), d, false)
 	if err != nil {
-		return diag.Errorf("error creating Flink Statement: %s", createDescriptiveError(err))
+		return diag.Errorf("error deleting Flink Statement: %s", createDescriptiveError(err))
+	}
+	organizationId, err := extractFlinkOrganizationId(meta.(*Client), d, false)
+	if err != nil {
+		return diag.Errorf("error deleting Flink Statement: %s", createDescriptiveError(err))
+	}
+	environmentId, err := extractFlinkEnvironmentId(meta.(*Client), d, false)
+	if err != nil {
+		return diag.Errorf("error deleting Flink Statement: %s", createDescriptiveError(err))
 	}
 	computePoolId, err := extractFlinkComputePoolId(meta.(*Client), d, false)
 	if err != nil {
-		return diag.Errorf("error creating Flink Statement: %s", createDescriptiveError(err))
+		return diag.Errorf("error deleting Flink Statement: %s", createDescriptiveError(err))
 	}
 	flinkApiKey, flinkApiSecret, err := extractFlinkApiKeyAndApiSecret(meta.(*Client), d, false)
 	if err != nil {
-		return diag.Errorf("error creating Flink Statement: %s", createDescriptiveError(err))
+		return diag.Errorf("error deleting Flink Statement: %s", createDescriptiveError(err))
 	}
-	flinkRestClient := meta.(*Client).flinkRestClientFactory.CreateFlinkRestClient(flinkRegionRestEndpoint, organizationId, environmentId, computePoolId, "", flinkApiKey, flinkApiSecret, meta.(*Client).isFlinkMetadataSet)
+	flinkRestClient := meta.(*Client).flinkRestClientFactory.CreateFlinkRestClient(restEndpoint, organizationId, environmentId, computePoolId, "", flinkApiKey, flinkApiSecret, meta.(*Client).isFlinkMetadataSet)
 	statementName := d.Get(paramStatementName).(string)
 
 	req := flinkRestClient.apiClient.StatementsSqlV1beta1Api.DeleteSqlv1beta1Statement(flinkRestClient.apiContext(ctx), organizationId, environmentId, statementName)
@@ -351,8 +388,15 @@ func flinkStatementDelete(ctx context.Context, d *schema.ResourceData, meta inte
 func flinkStatementImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	tflog.Debug(ctx, fmt.Sprintf("Importing Flink Statement %q", d.Id()), map[string]interface{}{flinkStatementLoggingKey: d.Id()})
 
-	computePoolRestEndpoint, err := extractFlinkRestEndpoint(meta.(*Client), d, true)
-	flinkRegionRestEndpoint, organizationId, environmentId, err := extractFlinkAttributes(computePoolRestEndpoint)
+	restEndpoint, err := extractFlinkRestEndpoint(meta.(*Client), d, true)
+	if err != nil {
+		return nil, fmt.Errorf("error importing Flink Statement: %s", createDescriptiveError(err))
+	}
+	organizationId, err := extractFlinkOrganizationId(meta.(*Client), d, true)
+	if err != nil {
+		return nil, fmt.Errorf("error importing Flink Statement: %s", createDescriptiveError(err))
+	}
+	environmentId, err := extractFlinkEnvironmentId(meta.(*Client), d, true)
 	if err != nil {
 		return nil, fmt.Errorf("error importing Flink Statement: %s", createDescriptiveError(err))
 	}
@@ -362,13 +406,13 @@ func flinkStatementImport(ctx context.Context, d *schema.ResourceData, meta inte
 	}
 	principalId, err := extractFlinkPrincipalId(meta.(*Client), d, true)
 	if err != nil {
-		return nil, fmt.Errorf("error creating Flink Statement: %s", createDescriptiveError(err))
+		return nil, fmt.Errorf("error importing Flink Statement: %s", createDescriptiveError(err))
 	}
 	flinkApiKey, flinkApiSecret, err := extractFlinkApiKeyAndApiSecret(meta.(*Client), d, true)
 	if err != nil {
 		return nil, fmt.Errorf("error importing Flink Statement: %s", createDescriptiveError(err))
 	}
-	flinkRestClient := meta.(*Client).flinkRestClientFactory.CreateFlinkRestClient(flinkRegionRestEndpoint, organizationId, environmentId, computePoolId, principalId, flinkApiKey, flinkApiSecret, meta.(*Client).isFlinkMetadataSet)
+	flinkRestClient := meta.(*Client).flinkRestClientFactory.CreateFlinkRestClient(restEndpoint, organizationId, environmentId, computePoolId, principalId, flinkApiKey, flinkApiSecret, meta.(*Client).isFlinkMetadataSet)
 
 	statementName := d.Id()
 	d.SetId(createFlinkStatementId(environmentId, computePoolId, statementName))
@@ -438,6 +482,44 @@ func extractFlinkApiKeyAndApiSecret(client *Client, d *schema.ResourceData, isIm
 		return clusterApiKey, clusterApiSecret, nil
 	}
 	return "", "", fmt.Errorf("one of (provider.flink_api_key, provider.flink_api_secret), (FLINK_API_KEY, FLINK_API_SECRET environment variables) or (resource.credentials.key, resource.credentials.secret) must be set")
+}
+
+func extractFlinkOrganizationId(client *Client, d *schema.ResourceData, isImportOperation bool) (string, error) {
+	if client.isFlinkMetadataSet {
+		return client.flinkOrganizationId, nil
+	}
+	if isImportOperation {
+		organizationId := getEnv("IMPORT_ORGANIZATION_ID", "")
+		if organizationId != "" {
+			return organizationId, nil
+		} else {
+			return "", fmt.Errorf("one of provider.organization_id (defaults to ORGANIZATION_ID environment variable) or IMPORT_ORGANIZATION_ID environment variable must be set")
+		}
+	}
+	organizationId := extractStringValueFromBlock(d, paramOrganization, paramId)
+	if organizationId != "" {
+		return organizationId, nil
+	}
+	return "", fmt.Errorf("one of provider.organization_id (defaults to ORGANIZATION_ID environment variable) or resource.organization.id must be set")
+}
+
+func extractFlinkEnvironmentId(client *Client, d *schema.ResourceData, isImportOperation bool) (string, error) {
+	if client.isFlinkMetadataSet {
+		return client.flinkEnvironmentId, nil
+	}
+	if isImportOperation {
+		environmentId := getEnv("IMPORT_ENVIRONMENT_ID", "")
+		if environmentId != "" {
+			return environmentId, nil
+		} else {
+			return "", fmt.Errorf("one of provider.environment_id (defaults to ENVIRONMENT_ID environment variable) or IMPORT_ENVIRONMENT_ID environment variable must be set")
+		}
+	}
+	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
+	if environmentId != "" {
+		return environmentId, nil
+	}
+	return "", fmt.Errorf("one of provider.environment_id (defaults to ENVIRONMENT_ID environment variable) or resource.environment.id must be set")
 }
 
 func extractFlinkComputePoolId(client *Client, d *schema.ResourceData, isImportOperation bool) (string, error) {
