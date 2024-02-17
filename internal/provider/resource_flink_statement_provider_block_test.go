@@ -37,7 +37,6 @@ const (
 
 	flinkPrincipalIdTest        = "u-yo9j87"
 	flinkComputePoolIdTest      = "lfcp-x7rgx1"
-	flinkResourceVersionTest    = "1"
 	flinkStatementTest          = "SELECT CURRENT_TIMESTAMP;"
 	flinkStatementNameTest      = "workspace-2023-11-15-030109-0408d52d-eaff-4d50-a246-f822a29f2eb9"
 	flinkFirstPropertyKeyTest   = "sql.local-time-zone"
@@ -182,7 +181,6 @@ func TestAccFlinkStatementWithEnhancedProviderBlock(t *testing.T) {
 					resource.TestCheckNoResourceAttr(fullFlinkStatementResourceLabel, "principal.0.id"),
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "statement_name", flinkStatementNameTest),
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "statement", flinkStatementTest),
-					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "resource_version", flinkResourceVersionTest),
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "stopped", "false"),
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "properties.%", "1"),
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, fmt.Sprintf("properties.%s", flinkFirstPropertyKeyTest), flinkFirstPropertyValueTest),
@@ -207,7 +205,6 @@ func TestAccFlinkStatementWithEnhancedProviderBlock(t *testing.T) {
 					resource.TestCheckNoResourceAttr(fullFlinkStatementResourceLabel, "environment.0.id"),
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "statement_name", flinkStatementNameTest),
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "statement", flinkStatementTest),
-					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "resource_version", flinkResourceVersionTest),
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "stopped", "true"),
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "properties.%", "1"),
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, fmt.Sprintf("properties.%s", flinkFirstPropertyKeyTest), flinkFirstPropertyValueTest),

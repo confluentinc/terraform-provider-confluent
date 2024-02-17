@@ -109,7 +109,7 @@ The following arguments are supported:
     - `name` - (Required String) The setting name, for example, `sql.local-time-zone`.
     - `value` - (Required String) The setting value, for example, `GMT-08:00`.
 
-- `stopped` - (Optional Boolean) The boolean flag to control whether the running Flink Statement should be stopped. Defaults to `false`.
+- `stopped` - (Optional Boolean) The boolean flag to control whether the running Flink Statement should be stopped. Defaults to `false`. Update it to `true` to stop the statement.
 
 !> **Warning:** Use Option #2 to avoid exposing sensitive `credentials` value in a state file. When using Option #1, Terraform doesn't encrypt the sensitive `credentials` value of the `confluent_flink_statement` resource, so you must keep your state file secure to avoid exposing it. Refer to the [Terraform documentation](https://www.terraform.io/docs/language/state/sensitive-data.html) to learn more about securing your state file.
 
@@ -118,7 +118,6 @@ The following arguments are supported:
 In addition to the preceding arguments, the following attributes are exported:
 
 - `id` - (Required String) The ID of the Flink statement, in the format `<Environment ID>/<Flink Compute Pool ID>/<Flink Statement name>`, for example, `env-abc123/lfcp-xyz123/cfeab4fe-b62c-49bd-9e99-51cc98c77a67`.
-- `resource_version` - (Required String) The ID of the Flink statement's version, for example, `2`.
 
 ## Import
 

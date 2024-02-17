@@ -38,8 +38,6 @@ const (
 	statePending   = "PENDING"
 	stateFailing   = "FAILING"
 
-	paramResourceVersion = "resource_version"
-
 	// exampleFlinkRestEndpoint = "https://flink.us-east-1.aws.confluent.cloud/sql/v1beta1/organizations/1111aaaa-11aa-11aa-11aa-111111aaaaaa/environments/env-abc123"
 	exampleFlinkRestEndpoint = "https://flink.us-east-1.aws.confluent.cloud"
 )
@@ -91,11 +89,6 @@ func flinkStatementResource() *schema.Resource {
 				ForceNew:     true,
 				Description:  "The REST endpoint of the Flink Compute Pool cluster, for example, `https://flink.us-east-1.aws.confluent.cloud/sql/v1beta1/organizations/1111aaaa-11aa-11aa-11aa-111111aaaaaa/environments/env-abc123`).",
 				ValidateFunc: validation.StringMatch(regexp.MustCompile("^http"), "the REST endpoint must start with 'https://'"),
-			},
-			paramResourceVersion: {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "A system generated string that uniquely identifies the version of this resource.",
 			},
 			paramCredentials: credentialsSchema(),
 		},
@@ -222,6 +215,12 @@ func flinkStatementUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 	if d.HasChangeExcept(paramStopped) {
 		return diag.Errorf("error updating Flink Statement %q: only %q attribute can be updated for Flink Statement", d.Id(), paramStopped)
 	}
+	updatedStopped := d.Get(paramStopped).(bool)
+	if updatedStopped == false {
+		return diag.Errorf("error updating Flink Statement %q: Flink Statement cannot be resumed. Only "+
+			"%s=false -> %s=true updates are supported.", d.Id(), paramStopped, paramStopped)
+	}
+
 	restEndpoint, err := extractFlinkRestEndpoint(meta.(*Client), d, false)
 	if err != nil {
 		return diag.Errorf("error updating Flink Statement: %s", createDescriptiveError(err))
@@ -236,40 +235,47 @@ func flinkStatementUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 	}
 	computePoolId, err := extractFlinkComputePoolId(meta.(*Client), d, false)
 	if err != nil {
-		return diag.Errorf("error reading Flink Statement: %s", createDescriptiveError(err))
+		return diag.Errorf("error updating Flink Statement: %s", createDescriptiveError(err))
+	}
+	principalId, err := extractFlinkPrincipalId(meta.(*Client), d, false)
+	if err != nil {
+		return diag.Errorf("error updating Flink Statement: %s", createDescriptiveError(err))
 	}
 	flinkApiKey, flinkApiSecret, err := extractFlinkApiKeyAndApiSecret(meta.(*Client), d, false)
 	if err != nil {
 		return diag.Errorf("error updating Flink Statement: %s", createDescriptiveError(err))
 	}
-	flinkRestClient := meta.(*Client).flinkRestClientFactory.CreateFlinkRestClient(restEndpoint, organizationId, environmentId, "", computePoolId, flinkApiKey, flinkApiSecret, meta.(*Client).isFlinkMetadataSet)
-	updatedStopped := d.Get(paramStopped).(bool)
+	flinkRestClient := meta.(*Client).flinkRestClientFactory.CreateFlinkRestClient(restEndpoint, organizationId, environmentId, computePoolId, principalId, flinkApiKey, flinkApiSecret, meta.(*Client).isFlinkMetadataSet)
+
 	statementName := d.Get(paramStatementName).(string)
-	resourceVersion := d.Get(paramResourceVersion).(string)
-	updatedSpec := fgb.NewSqlV1beta1StatementSpec()
-	updatedSpec.SetStatement(statementName)
-	updatedSpec.SetComputePoolId(flinkRestClient.computePoolId)
-	updatedSpec.SetPrincipal(flinkRestClient.principalId)
-	updatedSpec.SetStopped(updatedStopped)
-	updateFlinkStatementRequest := fgb.NewSqlV1beta1Statement()
-	updateFlinkStatementRequest.SetName(statementName)
-	updatedMetadata := fgb.NewObjectMetaWithDefaults()
-	updatedMetadata.SetResourceVersion(resourceVersion)
-	updateFlinkStatementRequest.SetMetadata(*updatedMetadata)
-	updateFlinkStatementRequest.SetSpec(*updatedSpec)
-	updateFlinkStatementRequestJson, err := json.Marshal(updateFlinkStatementRequest)
+
+	req := flinkRestClient.apiClient.StatementsSqlV1beta1Api.GetSqlv1beta1Statement(flinkRestClient.apiContext(ctx), flinkRestClient.organizationId, flinkRestClient.environmentId, statementName)
+	statement, _, err := req.Execute()
+
 	if err != nil {
-		return diag.Errorf("error updating Flink Statement %q: error marshaling %#v to json: %s", statementName, updateFlinkStatementRequest, createDescriptiveError(err))
+		return diag.Errorf("error updating Flink Statement: error fetching Flink Statement: %s", createDescriptiveError(err))
 	}
-	tflog.Debug(ctx, fmt.Sprintf("Updating Flink Statement %q: %s", statementName, updateFlinkStatementRequestJson), map[string]interface{}{flinkStatementLoggingKey: d.Id()})
-	req := flinkRestClient.apiClient.StatementsSqlV1beta1Api.UpdateSqlv1beta1Statement(flinkRestClient.apiContext(ctx), organizationId, environmentId, statementName).SqlV1beta1Statement(*updateFlinkStatementRequest)
-	_, err = req.Execute()
-	if err != nil {
-		return diag.Errorf("error updating Flink Statement %q: %s", statementName, createDescriptiveError(err))
+
+	// The statement could be automatically stopped if no client has consumed the results for 5 minutes or more.
+	// Therefore, we need to double-check whether the backend has already stopped the statement.
+	shouldSendUpdateRequest := !statement.Spec.GetStopped()
+	if shouldSendUpdateRequest {
+		statement.Spec.SetStopped(true)
+		updateFlinkStatementRequestJson, err := json.Marshal(statement)
+		if err != nil {
+			return diag.Errorf("error updating Flink Statement %q: error marshaling %#v to json: %s", statementName, statement, createDescriptiveError(err))
+		}
+		tflog.Debug(ctx, fmt.Sprintf("Updating Flink Statement %q: %s", statementName, updateFlinkStatementRequestJson), map[string]interface{}{flinkStatementLoggingKey: d.Id()})
+		req := flinkRestClient.apiClient.StatementsSqlV1beta1Api.UpdateSqlv1beta1Statement(flinkRestClient.apiContext(ctx), organizationId, environmentId, statementName).SqlV1beta1Statement(statement)
+		_, err = req.Execute()
+		if err != nil {
+			return diag.Errorf("error updating Flink Statement 123 %q: %s", statementName, createDescriptiveError(err))
+		}
+		if err := waitForFlinkStatementToBeStopped(flinkRestClient.apiContext(ctx), flinkRestClient, statementName); err != nil {
+			return diag.Errorf("error waiting for Flink Statement %q to be stopped: %s", statementName, createDescriptiveError(err))
+		}
 	}
-	if err := waitForFlinkStatementToBeStopped(flinkRestClient.apiContext(ctx), flinkRestClient, statementName); err != nil {
-		return diag.Errorf("error waiting for Flink Statement %q to be stopped: %s", statementName, createDescriptiveError(err))
-	}
+
 	tflog.Debug(ctx, fmt.Sprintf("Finished updating Flink Statement %q", statementName), map[string]interface{}{flinkStatementLoggingKey: d.Id()})
 	return flinkStatementRead(ctx, d, meta)
 }
@@ -313,9 +319,6 @@ func setFlinkStatementAttributes(d *schema.ResourceData, c *FlinkRestClient, sta
 		return nil, err
 	}
 	if err := d.Set(paramStopped, statement.Spec.GetStopped()); err != nil {
-		return nil, err
-	}
-	if err := d.Set(paramResourceVersion, statement.Metadata.GetResourceVersion()); err != nil {
 		return nil, err
 	}
 
