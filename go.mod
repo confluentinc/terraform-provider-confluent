@@ -120,4 +120,5 @@ require (
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/grpc v1.58.3 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect
+	github.com/go-git/go-git/v5 v5.11.0 // indirect
 )
