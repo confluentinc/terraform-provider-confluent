@@ -1,3 +1,18 @@
+## 1.62.0 (February 20, 2024)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.61.0...v1.62.0)
+
+**New features:**
+* Added new `confluent_dns_forwarder` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_users) in a [Preview lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
+* Added new `gateway` computed block to `confluent_network` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_network).
+
+**New updates for resources that are in [Early Access / Preview lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy):**
+* **Breaking changes:** Updated `confluent_flink_statement`: The `organization` and `environment` required blocks were added, the `resource_version` computed attribute was removed. See updated [flink-quickstart](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/flink-quickstart) example for more details.
+* Updated `confluent_flink_compute_pool`: The `rest_endpont` and `current_cfu` attributes were deprecated.
+
+**Bug fixes:**
+* Resolved 1 Dependabot alert.
+
 ## 1.61.0 (January 25, 2024)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.60.0...v1.61.0)
