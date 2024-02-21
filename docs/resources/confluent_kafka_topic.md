@@ -85,7 +85,8 @@ The following arguments are supported:
 -> **Note:** For more information on the topic settings, see [Custom topic settings for all cluster types supported by Kafka REST API and Terraform Provider](https://docs.confluent.io/cloud/current/client-apps/topics/manage.html#ak-topic-configurations-for-all-ccloud-cluster-types) and [Schema Validation Configuration options on a topic](https://docs.confluent.io/cloud/current/sr/broker-side-schema-validation.html#sv-configuration-options-on-a-topic).
 
 -> **Note:** Updates for the following topic settings are supported: `cleanup.policy`, `delete.retention.ms`,
-             `max.message.bytes`, `max.compaction.lag.ms`, `message.timestamp.difference.max.ms`, `message.timestamp.type`,
+             `max.message.bytes`, `max.compaction.lag.ms`, `message.timestamp.difference.max.ms`,
+             `message.timestamp.before.max.ms`, `message.timestamp.after.max.ms`, `message.timestamp.type`,
              `min.compaction.lag.ms`, `min.insync.replicas`, `retention.bytes`, `retention.ms`, `segment.bytes`, `segment.ms`,
              `confluent.key.schema.validation`, `confluent.value.schema.validation`, `confluent.key.subject.name.strategy`, `confluent.value.subject.name.strategy`.
 
@@ -131,6 +132,8 @@ resource "confluent_kafka_topic" "orders" {
     "delete.retention.ms"                 = "86400000"
     "max.compaction.lag.ms"               = "9223372036854775807"
     "max.message.bytes"                   = "2097164"
+    "message.timestamp.after.max.ms"      = "9223372036854775807"
+    "message.timestamp.before.max.ms"     = "9223372036854775807"      
     "message.timestamp.difference.max.ms" = "9223372036854775807"
     "message.timestamp.type"              = "CreateTime"
     "min.compaction.lag.ms"               = "0"
