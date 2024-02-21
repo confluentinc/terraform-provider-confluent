@@ -787,6 +787,10 @@ func extractSchemaRegistryRestEndpoint(client *Client, d *schema.ResourceData, i
 	}
 	if isImportOperation {
 		restEndpoint := getEnv("IMPORT_SCHEMA_REGISTRY_REST_ENDPOINT", "")
+
+		// Trim outer quotes from the retrieved values.
+		restEndpoint = strings.Trim(restEndpoint, "\"")
+
 		if restEndpoint != "" {
 			return restEndpoint, nil
 		} else {
@@ -807,6 +811,11 @@ func extractSchemaRegistryClusterApiKeyAndApiSecret(client *Client, d *schema.Re
 	if isImportOperation {
 		clusterApiKey := getEnv("IMPORT_SCHEMA_REGISTRY_API_KEY", "")
 		clusterApiSecret := getEnv("IMPORT_SCHEMA_REGISTRY_API_SECRET", "")
+
+		// Trim outer quotes from the retrieved values.
+		clusterApiKey = strings.Trim(clusterApiKey, "\"")
+		clusterApiSecret = strings.Trim(clusterApiSecret, "\"")
+
 		if clusterApiKey != "" && clusterApiSecret != "" {
 			return clusterApiKey, clusterApiSecret, nil
 		} else {

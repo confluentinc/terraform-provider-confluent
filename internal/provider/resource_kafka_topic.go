@@ -156,6 +156,10 @@ func extractRestEndpoint(client *Client, d *schema.ResourceData, isImportOperati
 	}
 	if isImportOperation {
 		restEndpoint := getEnv("IMPORT_KAFKA_REST_ENDPOINT", "")
+
+		// Trim outer quotes from the retrieved values.
+		restEndpoint = strings.Trim(restEndpoint, "\"")
+
 		if restEndpoint != "" {
 			return restEndpoint, nil
 		} else {
@@ -176,6 +180,11 @@ func extractClusterApiKeyAndApiSecret(client *Client, d *schema.ResourceData, is
 	if isImportOperation {
 		clusterApiKey := getEnv("IMPORT_KAFKA_API_KEY", "")
 		clusterApiSecret := getEnv("IMPORT_KAFKA_API_SECRET", "")
+
+		// Trim outer quotes from the retrieved values.
+		clusterApiKey = strings.Trim(clusterApiKey, "\"")
+		clusterApiSecret = strings.Trim(clusterApiSecret, "\"")
+
 		if clusterApiKey != "" && clusterApiSecret != "" {
 			return clusterApiKey, clusterApiSecret, nil
 		} else {

@@ -580,6 +580,9 @@ func apiKeyImport(ctx context.Context, d *schema.ResourceData, meta interface{})
 		return nil, fmt.Errorf("error importing API Key %q: API_KEY_SECRET environment variable is empty but it must be set", d.Id())
 	}
 
+	// Trim outer quotes from the retrieved value.
+	apiKeySecret = strings.Trim(apiKeySecret, "\"")
+
 	envIdAndClusterAPIKeyId := d.Id()
 	parts := strings.Split(envIdAndClusterAPIKeyId, "/")
 	if len(parts) == 1 {

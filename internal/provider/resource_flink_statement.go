@@ -25,6 +25,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"net/http"
 	"regexp"
+	"strings"
 )
 
 const (
@@ -407,6 +408,10 @@ func extractFlinkRestEndpoint(client *Client, d *schema.ResourceData, isImportOp
 	}
 	if isImportOperation {
 		restEndpoint := getEnv("IMPORT_FLINK_REST_ENDPOINT", "")
+
+		// Trim outer quotes from the retrieved values.
+		restEndpoint = strings.Trim(restEndpoint, "\"")
+
 		if restEndpoint != "" {
 			return restEndpoint, nil
 		} else {
@@ -427,6 +432,11 @@ func extractFlinkApiKeyAndApiSecret(client *Client, d *schema.ResourceData, isIm
 	if isImportOperation {
 		clusterApiKey := getEnv("IMPORT_FLINK_API_KEY", "")
 		clusterApiSecret := getEnv("IMPORT_FLINK_API_SECRET", "")
+
+		// Trim outer quotes from the retrieved values.
+		clusterApiKey = strings.Trim(clusterApiKey, "\"")
+		clusterApiSecret = strings.Trim(clusterApiSecret, "\"")
+
 		if clusterApiKey != "" && clusterApiSecret != "" {
 			return clusterApiKey, clusterApiSecret, nil
 		} else {
