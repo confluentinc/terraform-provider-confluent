@@ -155,6 +155,8 @@ In addition to the preceding arguments, the following attributes are exported:
 - `resource_name` - (Required String) The Confluent Resource Name of the Network.
 - `dns_domain` - (Optional String) The root DNS domain for the network, for example, `pr123a.us-east-2.aws.confluent.cloud` if applicable. Present on Networks that support Private Link.
 - `zonal_subdomains` - (Optional Map) The DNS subdomain for each zone. Present on networks that support Private Link. Keys are zone names, for example, `use2-az1` and values are DNS domains, for example, `use2-az1.pr123a.us-east-2.aws.confluent.cloud`.
+- `gateway` (Optional Configuration Block) supports the following:
+  - `id` - (Optional String) The ID of the Gateway, for example, `gw-abc123`.
 - `aws` - (Optional Configuration Block) The AWS-specific network details if available. It supports the following:
     - `vpc` - (Required String) The Confluent Cloud VPC ID.
     - `account` - (Required String) The AWS account ID associated with the Confluent Cloud VPC.

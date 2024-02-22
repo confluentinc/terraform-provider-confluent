@@ -86,6 +86,8 @@ In addition to the preceding arguments, the following attributes are exported:
     When resolution is `PRIVATE`, clusters in this network only require private DNS to resolve cluster endpoints.
 
 - `resource_name` - (Required String) The Confluent Resource Name of the Network.
+- `gateway` (Optional Configuration Block) supports the following:
+  - `id` - (Optional String) The ID of the Gateway, for example, `gw-abc123`.
 - `aws` - (Optional Configuration Block) The AWS-specific network details if available. It supports the following:
   - `vpc` - (Required String) The Confluent Cloud VPC ID.
   - `account` - (Required String) The AWS account ID associated with the Confluent Cloud VPC.
