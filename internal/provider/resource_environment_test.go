@@ -103,7 +103,7 @@ func TestAccEnvironment(t *testing.T) {
 		WillReturn(
 			string(readDeletedEnvResponse),
 			contentTypeJSONHeader,
-			http.StatusForbidden,
+			http.StatusNotFound,
 		))
 
 	deleteEnvStub := wiremock.Delete(wiremock.URLPathEqualTo("/org/v2/environments/env-q2opmd")).
@@ -177,7 +177,7 @@ func testAccCheckEnvironmentDestroy(s *terraform.State) error {
 		req := c.orgClient.EnvironmentsOrgV2Api.GetOrgV2Environment(c.orgApiContext(context.Background()), deletedEnvironmentId)
 		deletedEnvironment, response, err := req.Execute()
 		if response != nil && (response.StatusCode == http.StatusForbidden || response.StatusCode == http.StatusNotFound) {
-			// v2/environments/{nonExistentEnvId/deletedEnvID} returns http.StatusForbidden instead of http.StatusNotFound
+			// v2/environments/{nonExistentEnvId/deletedEnvID} returns http.StatusNotFound
 			// If the error is equivalent to http.StatusNotFound, the environment is destroyed.
 			return nil
 		} else if err == nil && deletedEnvironment.Id != nil {
