@@ -38,10 +38,11 @@ var acceptedBillingPackages = []string{billingPackageEssentials, billingPackageA
 
 func schemaRegistryClusterResource() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: schemaRegistryClusterCreate,
-		ReadContext:   schemaRegistryClusterRead,
-		UpdateContext: schemaRegistryClusterUpdate,
-		DeleteContext: schemaRegistryClusterDelete,
+		DeprecationMessage: fmt.Sprintf(deprecationMessageMajorRelease2, "schema_registry_cluster", "resource"),
+		CreateContext:      schemaRegistryClusterCreate,
+		ReadContext:        schemaRegistryClusterRead,
+		UpdateContext:      schemaRegistryClusterUpdate,
+		DeleteContext:      schemaRegistryClusterDelete,
 		Importer: &schema.ResourceImporter{
 			StateContext: schemaRegistryClusterImport,
 		},

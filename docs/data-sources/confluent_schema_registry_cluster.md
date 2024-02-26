@@ -8,9 +8,13 @@ description: |-
 
 # confluent_schema_registry_cluster Data Source
 
-[![General Availability](https://img.shields.io/badge/Lifecycle%20Stage-General%20Availability-%2345c6e8)](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy)
+[![Deprecated](https://img.shields.io/badge/Lifecycle%20Stage-Deprecated-yellow)](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy)
 
 `confluent_schema_registry_cluster` describes a Schema Registry cluster data source.
+
+!> **Warning:** The `confluent_schema_registry_cluster` resource has been deprecated and will be removed in the next major version of the provider (2.0.0).
+Refer to the [Upgrade Guide](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/guides/version-2-upgrade) for more details.
+The guide will be published once version 2.0.0 is released.
 
 ## Example Usage
 

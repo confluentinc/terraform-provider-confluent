@@ -34,7 +34,8 @@ const (
 
 func schemaRegistryRegionDataSource() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: schemaRegistryRegionDataSourceRead,
+		DeprecationMessage: fmt.Sprintf(deprecationMessageMajorRelease2, "schema_registry_region", "data source"),
+		ReadContext:        schemaRegistryRegionDataSourceRead,
 		Schema: map[string]*schema.Schema{
 			paramId: {
 				Type:        schema.TypeString,
