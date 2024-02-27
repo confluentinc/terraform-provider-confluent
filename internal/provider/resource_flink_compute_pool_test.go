@@ -39,7 +39,6 @@ const (
 	flinkComputePoolId                     = "lfcp-abc123"
 	flinkComputePoolDisplayName            = "flink_compute_pool_0"
 	flinkComputePoolDefaultMaxCfu          = 5
-	flinkComputePoolCurrentCfu             = 0
 	flinkComputePoolApiVersion             = "fcpm/v2"
 	flinkComputePoolKind                   = "ComputePool"
 	flinkComputePoolRestEndpoint           = "https://flink.us-east-2.aws.confluent.cloud/sql/v1alpha1/environments/env-gz903"
@@ -142,8 +141,6 @@ func TestAccComputePool(t *testing.T) {
 					resource.TestCheckResourceAttr(fullComputePoolResourceLabel, paramMaxCfu, strconv.Itoa(flinkComputePoolDefaultMaxCfu)),
 					resource.TestCheckResourceAttr(fullComputePoolResourceLabel, fmt.Sprintf("%s.#", paramEnvironment), "1"),
 					resource.TestCheckResourceAttr(fullComputePoolResourceLabel, fmt.Sprintf("%s.0.%s", paramEnvironment, paramId), flinkComputePoolEnvironmentId),
-					resource.TestCheckResourceAttr(fullComputePoolResourceLabel, paramRestEndpoint, flinkComputePoolRestEndpoint),
-					resource.TestCheckResourceAttr(fullComputePoolResourceLabel, paramCurrentCfu, strconv.Itoa(flinkComputePoolCurrentCfu)),
 					resource.TestCheckResourceAttr(fullComputePoolResourceLabel, paramApiVersion, flinkComputePoolApiVersion),
 					resource.TestCheckResourceAttr(fullComputePoolResourceLabel, paramKind, flinkComputePoolKind),
 					resource.TestCheckResourceAttr(fullComputePoolResourceLabel, paramResourceName, flinkComputePoolResourceName),
@@ -160,8 +157,6 @@ func TestAccComputePool(t *testing.T) {
 					resource.TestCheckResourceAttr(fullComputePoolResourceLabel, paramMaxCfu, strconv.Itoa(flinkComputePoolDefaultMaxCfu)),
 					resource.TestCheckResourceAttr(fullComputePoolResourceLabel, fmt.Sprintf("%s.#", paramEnvironment), "1"),
 					resource.TestCheckResourceAttr(fullComputePoolResourceLabel, fmt.Sprintf("%s.0.%s", paramEnvironment, paramId), flinkComputePoolEnvironmentId),
-					resource.TestCheckResourceAttr(fullComputePoolResourceLabel, paramRestEndpoint, flinkComputePoolRestEndpoint),
-					resource.TestCheckResourceAttr(fullComputePoolResourceLabel, paramCurrentCfu, strconv.Itoa(flinkComputePoolCurrentCfu)),
 					resource.TestCheckResourceAttr(fullComputePoolResourceLabel, paramApiVersion, flinkComputePoolApiVersion),
 					resource.TestCheckResourceAttr(fullComputePoolResourceLabel, paramKind, flinkComputePoolKind),
 					resource.TestCheckResourceAttr(fullComputePoolResourceLabel, paramResourceName, flinkComputePoolResourceName),

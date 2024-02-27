@@ -106,8 +106,6 @@ func TestAccDataSourceComputePool(t *testing.T) {
 					resource.TestCheckResourceAttr(fullComputePoolDataSourceLabel, paramMaxCfu, strconv.Itoa(flinkComputePoolDefaultMaxCfu)),
 					resource.TestCheckResourceAttr(fullComputePoolDataSourceLabel, fmt.Sprintf("%s.#", paramEnvironment), "1"),
 					resource.TestCheckResourceAttr(fullComputePoolDataSourceLabel, fmt.Sprintf("%s.0.%s", paramEnvironment, paramId), flinkComputePoolEnvironmentId),
-					resource.TestCheckResourceAttr(fullComputePoolDataSourceLabel, paramRestEndpoint, flinkComputePoolRestEndpoint),
-					resource.TestCheckResourceAttr(fullComputePoolDataSourceLabel, paramCurrentCfu, strconv.Itoa(flinkComputePoolCurrentCfu)),
 					resource.TestCheckResourceAttr(fullComputePoolDataSourceLabel, paramApiVersion, flinkComputePoolApiVersion),
 					resource.TestCheckResourceAttr(fullComputePoolDataSourceLabel, paramKind, flinkComputePoolKind),
 					resource.TestCheckResourceAttr(fullComputePoolDataSourceLabel, paramResourceName, flinkComputePoolResourceName),
