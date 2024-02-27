@@ -1,3 +1,13 @@
+## 1.64.0 (TBD)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.63.0...v1.64.0)
+
+**New features:**
+* Deprecated `confluent_schema_registry_region` [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_schema_registry_region) 
+and `confluent_schema_registry_cluster` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema_registry_cluster). They will be 
+removed in the next major version of the provider (2.0.0). Refer to the [Upgrade Guide](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/guides/version-2-upgrade) for more details. 
+  * Note: The [guide]((https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/guides/version-2-upgrade)) will be published once version 2.0.0 is released.
+
 ## 1.63.0 (February 26, 2024)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.62.0...v1.63.0)
