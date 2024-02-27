@@ -120,7 +120,7 @@ func kafkaMirrorTopicCreate(ctx context.Context, d *schema.ResourceData, meta in
 	kafkaMirrorTopicId := createKafkaMirrorTopicId(kafkaRestClient.clusterId, linkName, mirrorTopicName)
 	d.SetId(kafkaMirrorTopicId)
 
-	// https://github.com/confluentinc/terraform-provider-confluent/issues/40#issuecomment-1048782379
+	// https://github.com/confluentinc/terraform-provider-confluentcloud/issues/40#issuecomment-1048782379
 	time.Sleep(kafkaRestAPIWaitAfterCreate)
 
 	// Don't log created Kafka Mirror Topic since API returns an empty 201 response.

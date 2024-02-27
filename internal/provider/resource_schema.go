@@ -376,7 +376,7 @@ func schemaCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 	schemaId := createSchemaId(schemaRegistryRestClient.clusterId, subjectName, registeredSchema.GetId(), d.Get(paramRecreateOnUpdate).(bool))
 	d.SetId(schemaId)
 
-	// https://github.com/confluentinc/terraform-provider-confluent/issues/40#issuecomment-1048782379
+	// https://github.com/confluentinc/terraform-provider-confluentcloud/issues/40#issuecomment-1048782379
 	time.Sleep(schemaRegistryAPIWaitAfterCreateOrDelete)
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating Schema %q", d.Id()), map[string]interface{}{schemaLoggingKey: d.Id()})

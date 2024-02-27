@@ -176,7 +176,7 @@ func clusterLinkCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 	clusterLinkId := createClusterLinkId(kafkaRestClient.clusterId, linkName)
 	d.SetId(clusterLinkId)
 
-	// https://github.com/confluentinc/terraform-provider-confluent/issues/40#issuecomment-1048782379
+	// https://github.com/confluentinc/terraform-provider-confluentcloud/issues/40#issuecomment-1048782379
 	time.Sleep(kafkaRestAPIWaitAfterCreate)
 
 	// Don't log created cluster link since API returns an empty 201 response.

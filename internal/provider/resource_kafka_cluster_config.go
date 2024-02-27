@@ -105,7 +105,7 @@ func kafkaConfigCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 	kafkaConfigId := createKafkaConfigId(kafkaRestClient.clusterId)
 	d.SetId(kafkaConfigId)
 
-	// https://github.com/confluentinc/terraform-provider-confluent/issues/40#issuecomment-1048782379
+	// https://github.com/confluentinc/terraform-provider-confluentcloud/issues/40#issuecomment-1048782379
 	time.Sleep(kafkaRestAPIWaitAfterCreate)
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating Kafka Config %q", d.Id()), map[string]interface{}{kafkaClusterLoggingKey: d.Id()})
