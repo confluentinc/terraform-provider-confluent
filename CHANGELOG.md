@@ -1,4 +1,4 @@
-## 1.64.0 (TBD)
+## 1.64.0 (February 29, 2024)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.63.0...v1.64.0)
 
@@ -7,6 +7,9 @@
 and `confluent_schema_registry_cluster` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema_registry_cluster). They will be 
 removed in the next major version of the provider (2.0.0). Refer to the [Upgrade Guide](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/guides/version-2-upgrade) for more details. 
   * Note: The [guide]((https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/guides/version-2-upgrade)) will be published once version 2.0.0 is released.
+
+**New updates for resources that are in [Early Access / Preview lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy):**
+* **Breaking changes:** Updated `confluent_flink_compute_pool`: The `rest_endpoint` and `current_cfu` deprecated attributes were removed.
 
 ## 1.63.0 (February 26, 2024)
 
@@ -29,7 +32,7 @@ removed in the next major version of the provider (2.0.0). Refer to the [Upgrade
 
 **New updates for resources that are in [Early Access / Preview lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy):**
 * **Breaking changes:** Updated `confluent_flink_statement`: The `organization` and `environment` required blocks were added, the `resource_version` computed attribute was removed. See updated [flink-quickstart](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/flink-quickstart) example for more details.
-* Updated `confluent_flink_compute_pool`: The `rest_endpont` and `current_cfu` attributes were deprecated.
+* Updated `confluent_flink_compute_pool`: The `rest_endpoint` and `current_cfu` attributes were deprecated.
 
 **Bug fixes:**
 * Resolved 1 Dependabot alert.
