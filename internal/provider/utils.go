@@ -762,11 +762,21 @@ func uploadFile(url, filePath string, formFields map[string]any) error {
 
 func extractCloudAndRegionName(resourceId string) (string, string, error) {
 	parts := strings.Split(resourceId, ".")
-	if len(parts) != 3 {
-		return "", "", fmt.Errorf("error extracting cloud and region name: invalid format: expected '<environment>.<cloud>.<region name>'")
+	cloud := ""
+	regionName := ""
+	if len(parts) == 3 {
+		// old version of API Key Mgmt API
+		cloud = parts[1]
+		regionName = parts[2]
+	} else if len(parts) == 2 {
+		// new version of API Key Mgmt API
+		cloud = parts[0]
+		regionName = parts[1]
+	} else {
+		return "", "", fmt.Errorf("error extracting cloud and region name: invalid format: expected " +
+			"'<cloud>.<region name>' or '<environment>.<cloud>.<region name>'")
 	}
-	cloud := parts[1]
-	regionName := parts[2]
+
 	return cloud, regionName, nil
 }
 

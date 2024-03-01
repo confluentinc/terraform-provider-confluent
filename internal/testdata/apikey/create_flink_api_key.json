@@ -20,7 +20,8 @@
     },
     "resource": {
       "api_version": "fcpm/v2",
-      "id": "env-3732nw.aws.us-east-1",
+      "id": "aws.us-east-1",
+      "environment": "env-3732nw",
       "kind": "Region",
       "related": "https://api.confluent.cloud/fcpm/v2/regions?cloud=aws",
       "resource_name": "crn://api.confluent.cloud/organization=foo/environment=env-3732nw/flink-region=aws.us-east-1"

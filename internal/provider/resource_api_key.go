@@ -130,7 +130,8 @@ func apiKeyCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 			spec.Resource.SetApiVersion(fcpmApiVersion)
 		}
 		if isFlinkApiKey(apikeys.IamV2ApiKey{Spec: spec}) {
-			spec.Resource.SetId(fmt.Sprintf("%s.%s", environmentId, resourceId))
+			spec.Resource.SetId(resourceId)
+			spec.Resource.SetEnvironment(environmentId)
 		}
 	}
 
