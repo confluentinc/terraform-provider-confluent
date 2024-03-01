@@ -26,6 +26,10 @@ import (
 	"net/http"
 )
 
+const (
+	paramStreamGovernance = "stream_governance"
+)
+
 func environmentResource() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: environmentCreate,
@@ -42,6 +46,7 @@ func environmentResource() *schema.Resource {
 				ValidateFunc: validation.StringIsNotEmpty,
 				Required:     true,
 			},
+			paramStreamGovernance: streamGovernanceConfigSchema(),
 			paramResourceName: {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -52,13 +57,21 @@ func environmentResource() *schema.Resource {
 }
 
 func environmentUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if d.HasChangeExcept(paramDisplayName) {
-		return diag.Errorf("error updating Environment %q: only %q attribute can be updated for Environment", d.Id(), paramDisplayName)
+	if d.HasChangesExcept(paramDisplayName, paramStreamGovernance) {
+		return diag.Errorf("error updating Environment %q: only %q or %q attributes can be updated for Environment", d.Id(), paramDisplayName, paramStreamGovernance)
 	}
 
 	updateEnvironmentRequest := org.NewOrgV2Environment()
-	updatedDisplayName := d.Get(paramDisplayName).(string)
-	updateEnvironmentRequest.SetDisplayName(updatedDisplayName)
+	if d.HasChange(paramDisplayName) {
+		updatedDisplayName := d.Get(paramDisplayName).(string)
+		updateEnvironmentRequest.SetDisplayName(updatedDisplayName)
+	}
+	if d.HasChange(getNestedStreamGovernancePackageKey()) {
+		updatedPackage := extractStringValueFromBlock(d, paramStreamGovernance, paramPackage)
+		updateEnvironmentRequest.SetStreamGovernanceConfig(org.OrgV2StreamGovernanceConfig{
+			Package: updatedPackage,
+		})
+	}
 	updateEnvironmentRequestJson, err := json.Marshal(updateEnvironmentRequest)
 	if err != nil {
 		return diag.Errorf("error updating Environment %q: error marshaling %#v to json: %s", d.Id(), updateEnvironmentRequest, createDescriptiveError(err))
@@ -87,6 +100,10 @@ func environmentCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 	displayName := d.Get(paramDisplayName).(string)
 	createEnvironmentRequest := org.NewOrgV2Environment()
 	createEnvironmentRequest.SetDisplayName(displayName)
+	if d.HasChange(getNestedStreamGovernancePackageKey()) {
+		createEnvironmentRequest.SetStreamGovernanceConfig(org.OrgV2StreamGovernanceConfig{
+			Package: extractStringValueFromBlock(d, paramStreamGovernance, paramPackage)})
+	}
 	createEnvironmentRequestJson, err := json.Marshal(createEnvironmentRequest)
 	if err != nil {
 		return diag.Errorf("error creating Environment %q: error marshaling %#v to json: %s", displayName, createEnvironmentRequest, createDescriptiveError(err))
@@ -202,4 +219,29 @@ func loadAllEnvironments(ctx context.Context, client *Client) (InstanceIdsToName
 	}
 
 	return instances, nil
+}
+
+func getNestedStreamGovernancePackageKey() string {
+	return fmt.Sprintf("%s.0.%s", paramStreamGovernance, paramPackage)
+}
+
+func streamGovernanceConfigSchema() *schema.Schema {
+	return &schema.Schema{
+		Type: schema.TypeList,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramPackage: {
+					Type:         schema.TypeString,
+					Description:  "Stream Governance Package. 'ESSENTIALS' or 'ADVANCED'",
+					ValidateFunc: validation.StringInSlice(acceptedBillingPackages, false),
+					Required:     true,
+				},
+			},
+		},
+		Description: "Stream Governance configurations for the environment",
+		Optional:    true,
+		Computed:    true,
+		MinItems:    1,
+		MaxItems:    1,
+	}
 }

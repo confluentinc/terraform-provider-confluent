@@ -50,6 +50,7 @@ func environmentDataSource() *schema.Resource {
 				Optional:     true,
 				ExactlyOneOf: []string{paramId, paramDisplayName},
 			},
+			paramStreamGovernance: streamGovernanceConfigSchema(),
 			paramResourceName: {
 				Type:        schema.TypeString,
 				Description: "The Confluent Resource Name of the Environment.",
@@ -163,6 +164,9 @@ func setEnvironmentAttributes(d *schema.ResourceData, environment v2.OrgV2Enviro
 		return nil, createDescriptiveError(err)
 	}
 	if err := d.Set(paramResourceName, environment.Metadata.GetResourceName()); err != nil {
+		return nil, createDescriptiveError(err)
+	}
+	if err := setStringAttributeInListBlockOfSizeOne(paramStreamGovernance, paramPackage, environment.StreamGovernanceConfig.GetPackage(), d); err != nil {
 		return nil, createDescriptiveError(err)
 	}
 	d.SetId(environment.GetId())

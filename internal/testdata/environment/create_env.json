@@ -8,5 +8,8 @@
     "updated_at": "2021-08-08T18:23:41.849685Z",
     "resource_name": "crn://confluent.cloud/organization=foo/environment=env-q2opmd"
   },
-  "display_name": "test_env_name"
+  "display_name": "test_env_display_name",
+  "stream_governance_config": {
+    "package": "ESSENTIALS"
+  }
 }

@@ -81,6 +81,7 @@ func TestAccDataSourceEnvironment(t *testing.T) {
 					testAccCheckEnvironmentExists(fmt.Sprintf("data.confluent_environment.%s", environmentDataSourceLabel)),
 					resource.TestCheckResourceAttr(fmt.Sprintf("data.confluent_environment.%s", environmentDataSourceLabel), paramId, environmentId),
 					resource.TestCheckResourceAttr(fmt.Sprintf("data.confluent_environment.%s", environmentDataSourceLabel), paramDisplayName, environmentDataSourceDisplayName),
+					resource.TestCheckResourceAttr(fmt.Sprintf("data.confluent_environment.%s", environmentDataSourceLabel), getNestedStreamGovernancePackageKey(), "ESSENTIALS"),
 				),
 			},
 			{
@@ -90,6 +91,7 @@ func TestAccDataSourceEnvironment(t *testing.T) {
 					resource.TestCheckResourceAttr(fmt.Sprintf("data.confluent_environment.%s", environmentDataSourceLabel), paramId, environmentId),
 					resource.TestCheckResourceAttr(fmt.Sprintf("data.confluent_environment.%s", environmentDataSourceLabel), paramDisplayName, environmentDataSourceDisplayName),
 					resource.TestCheckResourceAttr(fmt.Sprintf("data.confluent_environment.%s", environmentDataSourceLabel), paramResourceName, environmentDataSourceEndpoint),
+					resource.TestCheckResourceAttr(fmt.Sprintf("data.confluent_environment.%s", environmentDataSourceLabel), getNestedStreamGovernancePackageKey(), ""),
 				),
 			},
 		},

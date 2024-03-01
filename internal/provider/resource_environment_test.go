@@ -31,6 +31,7 @@ const (
 	scenarioStateEnvNameHasBeenUpdated = "The new environment's name has been just updated"
 	scenarioStateEnvHasBeenDeleted     = "The new environment has been deleted"
 	envScenarioName                    = "confluent_environment Resource Lifecycle"
+	envScenarioNoSgName                = "confluent_environment Resource Lifecycle Without Stream Governance"
 	expectedCountZero                  = int64(0)
 	expectedCountOne                   = int64(1)
 	expectedCountTwo                   = int64(2)
@@ -120,6 +121,7 @@ func TestAccEnvironment(t *testing.T) {
 	environmentDisplayName := "test_env_display_name"
 	// in order to test tf update (step #3)
 	environmentDisplayUpdatedName := "test_env_display_updated_name"
+	environmentUpdatedPackage := "ADVANCED"
 	environmentResourceLabel := "test_env_resource_label"
 	environmentResourceEndpoint := "crn://confluent.cloud/organization=foo/environment=env-q2opmd"
 
@@ -131,11 +133,12 @@ func TestAccEnvironment(t *testing.T) {
 		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckEnvironmentConfig(mockServerUrl, environmentResourceLabel, environmentDisplayName),
+				Config: testAccCheckEnvironmentConfig(mockServerUrl, environmentResourceLabel, environmentDisplayName, "ESSENTIALS"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckEnvironmentExists(fmt.Sprintf("confluent_environment.%s", environmentResourceLabel)),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_environment.%s", environmentResourceLabel), "id", "env-q2opmd"),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_environment.%s", environmentResourceLabel), "display_name", environmentDisplayName),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_environment.%s", environmentResourceLabel), getNestedStreamGovernancePackageKey(), "ESSENTIALS"),
 				),
 			},
 			{
@@ -145,11 +148,12 @@ func TestAccEnvironment(t *testing.T) {
 				ImportStateVerify: true,
 			},
 			{
-				Config: testAccCheckEnvironmentConfig(mockServerUrl, environmentResourceLabel, environmentDisplayUpdatedName),
+				Config: testAccCheckEnvironmentConfig(mockServerUrl, environmentResourceLabel, environmentDisplayUpdatedName, environmentUpdatedPackage),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckEnvironmentExists(fmt.Sprintf("confluent_environment.%s", environmentResourceLabel)),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_environment.%s", environmentResourceLabel), "id", "env-q2opmd"),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_environment.%s", environmentResourceLabel), "display_name", environmentDisplayUpdatedName),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_environment.%s", environmentResourceLabel), getNestedStreamGovernancePackageKey(), environmentUpdatedPackage),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_environment.%s", environmentResourceLabel), "resource_name", environmentResourceEndpoint),
 				),
 			},
@@ -164,6 +168,85 @@ func TestAccEnvironment(t *testing.T) {
 	checkStubCount(t, wiremockClient, createEnvStub, "POST /org/v2/environments", expectedCountOne)
 	checkStubCount(t, wiremockClient, patchEnvStub, "PATCH /org/v2/environments/env-q2opmd", expectedCountOne)
 	checkStubCount(t, wiremockClient, deleteEnvStub, "DELETE /org/v2/environments/env-q2opmd", expectedCountOne)
+}
+
+func TestAccEnvironmentWithoutSg(t *testing.T) {
+	ctx := context.Background()
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
+
+	mockServerUrl := wiremockContainer.URI
+	wiremockClient := wiremock.NewClient(mockServerUrl)
+	// nolint:errcheck
+	defer wiremockClient.Reset()
+	// nolint:errcheck
+	defer wiremockClient.ResetAllScenarios()
+	createEnvResponse, _ := ioutil.ReadFile("../testdata/environment/create_env_without_sg.json")
+	createEnvStub := wiremock.Post(wiremock.URLPathEqualTo("/org/v2/environments")).
+		InScenario(envScenarioNoSgName).
+		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
+		WillSetStateTo(scenarioStateEnvHasBeenCreated).
+		WillReturn(
+			string(createEnvResponse),
+			contentTypeJSONHeader,
+			http.StatusCreated,
+		)
+	_ = wiremockClient.StubFor(createEnvStub)
+
+	readCreatedEnvResponse, _ := ioutil.ReadFile("../testdata/environment/read_created_env_without_sg.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/org/v2/environments/env-xyz")).
+		InScenario(envScenarioNoSgName).
+		WhenScenarioStateIs(scenarioStateEnvHasBeenCreated).
+		WillReturn(
+			string(readCreatedEnvResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	deleteEnvStub := wiremock.Delete(wiremock.URLPathEqualTo("/org/v2/environments/env-xyz")).
+		InScenario(envScenarioNoSgName).
+		WhenScenarioStateIs(scenarioStateEnvHasBeenCreated).
+		WillSetStateTo(scenarioStateEnvHasBeenDeleted).
+		WillReturn(
+			"",
+			contentTypeJSONHeader,
+			http.StatusNoContent,
+		)
+	_ = wiremockClient.StubFor(deleteEnvStub)
+
+	environmentResourceLabel := "env_resource_label"
+	environmentWithoutSgDisplayName := "env_without_sg"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckEnvironmentDestroy,
+		// https://www.terraform.io/docs/extend/testing/acceptance-tests/teststep.html
+		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckEnvironmentWithoutSgConfig(mockServerUrl, environmentResourceLabel, environmentWithoutSgDisplayName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckEnvironmentExists(fmt.Sprintf("confluent_environment.%s", environmentResourceLabel)),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_environment.%s", environmentResourceLabel), "id", "env-xyz"),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_environment.%s", environmentResourceLabel), "display_name", environmentWithoutSgDisplayName),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_environment.%s", environmentResourceLabel), getNestedStreamGovernancePackageKey(), ""),
+				),
+			},
+			{
+				// https://www.terraform.io/docs/extend/resources/import.html
+				ResourceName:      fmt.Sprintf("confluent_environment.%s", environmentResourceLabel),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+
+	checkStubCount(t, wiremockClient, createEnvStub, "POST /org/v2/environments", expectedCountOne)
 }
 
 func testAccCheckEnvironmentDestroy(s *terraform.State) error {
@@ -191,7 +274,21 @@ func testAccCheckEnvironmentDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccCheckEnvironmentConfig(mockServerUrl, environmentResourceLabel, environmentDisplayName string) string {
+func testAccCheckEnvironmentConfig(mockServerUrl, environmentResourceLabel, environmentDisplayName, environmentSgPackage string) string {
+	return fmt.Sprintf(`
+	provider "confluent" {
+ 		endpoint = "%s"
+	}
+	resource "confluent_environment" "%s" {
+		display_name = "%s"
+		stream_governance {
+			package = "%s"
+		}
+	}
+	`, mockServerUrl, environmentResourceLabel, environmentDisplayName, environmentSgPackage)
+}
+
+func testAccCheckEnvironmentWithoutSgConfig(mockServerUrl, environmentResourceLabel, environmentDisplayName string) string {
 	return fmt.Sprintf(`
 	provider "confluent" {
  		endpoint = "%s"
