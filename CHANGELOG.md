@@ -1,3 +1,13 @@
+## 1.65.0 (March 4, 2024)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.64.0...v1.65.0)
+
+**New updates for resources that are in [Early Access / Preview lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy):**
+* **Breaking changes:** [Flink API Key Management API](https://docs.confluent.io/cloud/current/api.html) has been updated to utilize a new request format. Ensure you to update to version `1.65.0` to create Flink API Keys using the `confluent_api_key` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_api_key#example-flink-api-key).
+
+**Bug fixes:**
+* Released an updated fix for `CVE-2023-49569`.
+
 ## 1.64.0 (February 29, 2024)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.63.0...v1.64.0)

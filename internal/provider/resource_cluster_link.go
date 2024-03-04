@@ -92,6 +92,7 @@ var editableClusterLinkSettings = []string{
 	"consumer.offset.group.filters",
 	"consumer.offset.sync.enable",
 	"consumer.offset.sync.ms",
+	"mirror.start.offset.spec",
 	"topic.config.sync.ms",
 }
 

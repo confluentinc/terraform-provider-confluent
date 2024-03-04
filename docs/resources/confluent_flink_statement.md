@@ -43,7 +43,7 @@ resource "confluent_flink_statement" "random_int_table" {
     "sql.current-catalog"  = data.confluent_environment.example.display_name
     "sql.current-database" = data.confluent_kafka_cluster.example.display_name
   }
-  rest_endpoint   = data.confluent_flink_compute_pool.example.rest_endpoint
+  rest_endpoint = data.confluent_flink_region.main.rest_endpoint
   credentials {
     key    = confluent_api_key.env-admin-flink-api-key.id
     secret = confluent_api_key.env-admin-flink-api-key.secret
@@ -96,7 +96,7 @@ The following arguments are supported:
     - `id` - (Required String) The ID of the Principal the Flink Statement runs as, for example, `sa-abc123`.
 - `statement` - (Required String) The raw SQL text statement, for example, `SELECT CURRENT_TIMESTAMP;`.
 - `statement_name` - (Optional String) The ID of the Flink Statement, for example, `cfeab4fe-b62c-49bd-9e99-51cc98c77a67`.
-- `rest_endpoint` - (Optional String) The REST endpoint of the Flink Compute Pool, for example, `https://flink.us-east-1.aws.confluent.cloud`).
+- `rest_endpoint` - (Optional String) The REST endpoint of the Flink region, for example, `https://flink.us-east-1.aws.confluent.cloud`).
 - `credentials` (Optional Configuration Block) supports the following:
     - `key` - (Required String) The Flink API Key.
     - `secret` - (Required String, Sensitive) The Flink API Secret.
