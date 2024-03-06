@@ -234,7 +234,7 @@ func New(version, userAgent string) func() *schema.Provider {
 					Type:        schema.TypeString,
 					Optional:    true,
 					DefaultFunc: schema.EnvDefaultFunc("FLINK_REST_ENDPOINT", ""),
-					// Example: "https://flink.us-east-1.aws.confluent.cloud/sql/v1beta1/organizations/1111aaaa-11aa-11aa-11aa-111111aaaaaa/environments/env-abc123"
+					// Example: "https://flink.us-east-1.aws.confluent.cloud"
 					Description: "The Flink REST Endpoint.",
 				},
 				"endpoint": {
