@@ -201,13 +201,13 @@ func New(version, userAgent string) func() *schema.Provider {
 				"organization_id": {
 					Type:        schema.TypeString,
 					Optional:    true,
-					DefaultFunc: schema.EnvDefaultFunc("ORGANIZATION_ID", ""),
+					DefaultFunc: schema.EnvDefaultFunc("CONFLUENT_ORGANIZATION_ID", ""),
 					Description: "The Flink Organization ID.",
 				},
 				"environment_id": {
 					Type:        schema.TypeString,
 					Optional:    true,
-					DefaultFunc: schema.EnvDefaultFunc("ENVIRONMENT_ID", ""),
+					DefaultFunc: schema.EnvDefaultFunc("CONFLUENT_ENVIRONMENT_ID", ""),
 					Description: "The Flink Environment ID.",
 				},
 				"flink_compute_pool_id": {

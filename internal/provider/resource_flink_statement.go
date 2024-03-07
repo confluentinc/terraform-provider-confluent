@@ -492,18 +492,18 @@ func extractFlinkOrganizationId(client *Client, d *schema.ResourceData, isImport
 		return client.flinkOrganizationId, nil
 	}
 	if isImportOperation {
-		organizationId := getEnv("IMPORT_ORGANIZATION_ID", "")
+		organizationId := getEnv("IMPORT_CONFLUENT_ORGANIZATION_ID", "")
 		if organizationId != "" {
 			return organizationId, nil
 		} else {
-			return "", fmt.Errorf("one of provider.organization_id (defaults to ORGANIZATION_ID environment variable) or IMPORT_ORGANIZATION_ID environment variable must be set")
+			return "", fmt.Errorf("one of provider.organization_id (defaults to CONFLUENT_ORGANIZATION_ID environment variable) or IMPORT_CONFLUENT_ORGANIZATION_ID environment variable must be set")
 		}
 	}
 	organizationId := extractStringValueFromBlock(d, paramOrganization, paramId)
 	if organizationId != "" {
 		return organizationId, nil
 	}
-	return "", fmt.Errorf("one of provider.organization_id (defaults to ORGANIZATION_ID environment variable) or resource.organization.id must be set")
+	return "", fmt.Errorf("one of provider.organization_id (defaults to CONFLUENT_ORGANIZATION_ID environment variable) or resource.organization.id must be set")
 }
 
 func extractFlinkEnvironmentId(client *Client, d *schema.ResourceData, isImportOperation bool) (string, error) {
@@ -511,18 +511,18 @@ func extractFlinkEnvironmentId(client *Client, d *schema.ResourceData, isImportO
 		return client.flinkEnvironmentId, nil
 	}
 	if isImportOperation {
-		environmentId := getEnv("IMPORT_ENVIRONMENT_ID", "")
+		environmentId := getEnv("IMPORT_CONFLUENT_ENVIRONMENT_ID", "")
 		if environmentId != "" {
 			return environmentId, nil
 		} else {
-			return "", fmt.Errorf("one of provider.environment_id (defaults to ENVIRONMENT_ID environment variable) or IMPORT_ENVIRONMENT_ID environment variable must be set")
+			return "", fmt.Errorf("one of provider.environment_id (defaults to CONFLUENT_ENVIRONMENT_ID environment variable) or IMPORT_CONFLUENT_ENVIRONMENT_ID environment variable must be set")
 		}
 	}
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
 	if environmentId != "" {
 		return environmentId, nil
 	}
-	return "", fmt.Errorf("one of provider.environment_id (defaults to ENVIRONMENT_ID environment variable) or resource.environment.id must be set")
+	return "", fmt.Errorf("one of provider.environment_id (defaults to CONFLUENT_ENVIRONMENT_ID environment variable) or resource.environment.id must be set")
 }
 
 func extractFlinkComputePoolId(client *Client, d *schema.ResourceData, isImportOperation bool) (string, error) {

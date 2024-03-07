@@ -59,8 +59,8 @@ resource "confluent_flink_statement" "random_int_table" {
 
 ```terraform
 provider "confluent" {
-  organization_id       = var.organization_id            # optionally use ORGANIZATION_ID env var
-  environment_id        = var.environment_id             # optionally use ENVIRONMENT_ID env var
+  organization_id       = var.organization_id            # optionally use CONFLUENT_ORGANIZATION_ID env var
+  environment_id        = var.environment_id             # optionally use CONFLUENT_ENVIRONMENT_ID env var
   flink_compute_pool_id = var.flink_compute_pool_id      # optionally use FLINK_COMPUTE_POOL_ID env var
   flink_rest_endpoint   = var.flink_rest_endpoint        # optionally use FLINK_REST_ENDPOINT env var
   flink_api_key         = var.flink_api_key              # optionally use FLINK_API_KEY env var
@@ -125,8 +125,8 @@ You can import a Flink statement by using the Flink Statement name, for example:
 
 ```shell
 # Option #1: Manage multiple Flink Compute Pools in the same Terraform workspace
-$ export IMPORT_ORGANIZATION_ID="<organization_id>"
-$ export IMPORT_ENVIRONMENT_ID="<environment_id>"
+$ export IMPORT_CONFLUENT_ORGANIZATION_ID="<organization_id>"
+$ export IMPORT_CONFLUENT_ENVIRONMENT_ID="<environment_id>"
 $ export IMPORT_FLINK_COMPUTE_POOL_ID="<flink_compute_pool_id>"
 $ export IMPORT_FLINK_API_KEY="<flink_api_key>"
 $ export IMPORT_FLINK_API_SECRET="<flink_api_secret>"
