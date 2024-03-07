@@ -35,6 +35,12 @@ resource "confluent_role_binding" "environment-example-rb-2" {
   crn_pattern = confluent_environment.stag.resource_name
 }
 
+resource "confluent_role_binding" "data-discovery-example-rb" {
+  principal   = "User:${confluent_service_account.test.id}"
+  role_name   = "DataDiscovery"
+  crn_pattern = confluent_environment.stag.resource_name
+}
+
 resource "confluent_role_binding" "network-example-rb" {
   principal   = "User:${confluent_service_account.test.id}"
   role_name   = "NetworkAdmin"
