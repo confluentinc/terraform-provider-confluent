@@ -79,15 +79,15 @@ func schemaRegistryDekDataSource() *schema.Resource {
 func schemaRegistryDekDataSourceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	restEndpoint, err := extractSchemaRegistryRestEndpoint(meta.(*Client), d, false)
 	if err != nil {
-		return diag.Errorf("error reading Schema Registry Dek: %s", createDescriptiveError(err))
+		return diag.Errorf("error reading Schema Registry DEK: %s", createDescriptiveError(err))
 	}
 	clusterId, err := extractSchemaRegistryClusterId(meta.(*Client), d, false)
 	if err != nil {
-		return diag.Errorf("error reading Schema Registry Dek: %s", createDescriptiveError(err))
+		return diag.Errorf("error reading Schema Registry DEK: %s", createDescriptiveError(err))
 	}
 	clusterApiKey, clusterApiSecret, err := extractSchemaRegistryClusterApiKeyAndApiSecret(meta.(*Client), d, false)
 	if err != nil {
-		return diag.Errorf("error reading Schema Registry Dek: %s", createDescriptiveError(err))
+		return diag.Errorf("error reading Schema Registry DEK: %s", createDescriptiveError(err))
 	}
 	kekName := d.Get(paramKekName).(string)
 	subject := d.Get(paramSubjectName).(string)
@@ -95,7 +95,7 @@ func schemaRegistryDekDataSourceRead(ctx context.Context, d *schema.ResourceData
 	algorithm := d.Get(paramAlgorithm).(string)
 	dekId := createDekId(clusterId, kekName, subject, algorithm, int32(version))
 
-	tflog.Debug(ctx, fmt.Sprintf("Reading Schema Registry Dek %q", dekId), map[string]interface{}{schemaRegistryDekKey: dekId})
+	tflog.Debug(ctx, fmt.Sprintf("Reading Schema Registry DEK %q", dekId), map[string]interface{}{schemaRegistryDekKey: dekId})
 
 	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
 	request := schemaRegistryRestClient.apiClient.DataEncryptionKeysV1Api.GetDekByVersion(schemaRegistryRestClient.apiContext(ctx), kekName, subject, strconv.Itoa(version))
@@ -103,13 +103,13 @@ func schemaRegistryDekDataSourceRead(ctx context.Context, d *schema.ResourceData
 	dek, _, err := request.Execute()
 
 	if err != nil {
-		return diag.Errorf("error reading Schema Registry Dek %q: %s", dekId, createDescriptiveError(err))
+		return diag.Errorf("error reading Schema Registry DEK %q: %s", dekId, createDescriptiveError(err))
 	}
 	dekJson, err := json.Marshal(dek)
 	if err != nil {
-		return diag.Errorf("error reading Schema Registry Dek %q: error marshaling %#v to json: %s", dekId, dek, createDescriptiveError(err))
+		return diag.Errorf("error reading Schema Registry DEK %q: error marshaling %#v to json: %s", dekId, dek, createDescriptiveError(err))
 	}
-	tflog.Debug(ctx, fmt.Sprintf("Fetched Schema Registry Dek %q: %s", dekId, dekJson), map[string]interface{}{schemaRegistryDekKey: dekId})
+	tflog.Debug(ctx, fmt.Sprintf("Fetched Schema Registry DEK %q: %s", dekId, dekJson), map[string]interface{}{schemaRegistryDekKey: dekId})
 
 	if _, err := setDekAttributes(d, clusterId, dek); err != nil {
 		return diag.FromErr(createDescriptiveError(err))

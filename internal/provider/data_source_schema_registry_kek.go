@@ -76,19 +76,19 @@ func schemaRegistryKekDataSource() *schema.Resource {
 func schemaRegistryKekDataSourceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	restEndpoint, err := extractSchemaRegistryRestEndpoint(meta.(*Client), d, false)
 	if err != nil {
-		return diag.Errorf("error reading Schema Registry Kek: %s", createDescriptiveError(err))
+		return diag.Errorf("error reading Schema Registry KEK: %s", createDescriptiveError(err))
 	}
 	clusterId, err := extractSchemaRegistryClusterId(meta.(*Client), d, false)
 	if err != nil {
-		return diag.Errorf("error reading Schema Registry Kek: %s", createDescriptiveError(err))
+		return diag.Errorf("error reading Schema Registry KEK: %s", createDescriptiveError(err))
 	}
 	clusterApiKey, clusterApiSecret, err := extractSchemaRegistryClusterApiKeyAndApiSecret(meta.(*Client), d, false)
 	if err != nil {
-		return diag.Errorf("error reading Schema Registry Kek: %s", createDescriptiveError(err))
+		return diag.Errorf("error reading Schema Registry KEK: %s", createDescriptiveError(err))
 	}
 	kekName := d.Get(paramName).(string)
 
-	tflog.Debug(ctx, fmt.Sprintf("Reading Schema Registry Kek %q", kekName), map[string]interface{}{schemaRegistryKekKey: createKekId(clusterId, kekName)})
+	tflog.Debug(ctx, fmt.Sprintf("Reading Schema Registry KEK %q", kekName), map[string]interface{}{schemaRegistryKekKey: createKekId(clusterId, kekName)})
 
 	return schemaRegistryKekDataSourceReadUsingKekName(ctx, d, meta, restEndpoint, clusterId, clusterApiKey, clusterApiSecret, kekName)
 }
@@ -100,13 +100,13 @@ func schemaRegistryKekDataSourceReadUsingKekName(ctx context.Context, d *schema.
 	kekId := createKekId(clusterId, kekName)
 
 	if err != nil {
-		return diag.Errorf("error reading Schema Registry Kek %q: %s", kekId, createDescriptiveError(err))
+		return diag.Errorf("error reading Schema Registry KEK %q: %s", kekId, createDescriptiveError(err))
 	}
 	kekJson, err := json.Marshal(kek)
 	if err != nil {
-		return diag.Errorf("error reading Schema Registry Kek %q: error marshaling %#v to json: %s", kekId, kek, createDescriptiveError(err))
+		return diag.Errorf("error reading Schema Registry KEK %q: error marshaling %#v to json: %s", kekId, kek, createDescriptiveError(err))
 	}
-	tflog.Debug(ctx, fmt.Sprintf("Fetched Schema Registry Kek %q: %s", kekId, kekJson), map[string]interface{}{schemaRegistryKekKey: kekId})
+	tflog.Debug(ctx, fmt.Sprintf("Fetched Schema Registry KEK %q: %s", kekId, kekJson), map[string]interface{}{schemaRegistryKekKey: kekId})
 
 	if _, err := setKekAttributes(d, clusterId, kek); err != nil {
 		return diag.FromErr(createDescriptiveError(err))

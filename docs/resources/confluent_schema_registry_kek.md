@@ -13,7 +13,7 @@ description: |-
 -> **Note:** `confluent_schema_registry_kek` resource is available in **Preview** for early adopters. Preview features are introduced to gather customer feedback. This feature should be used only for evaluation and non-production testing purposes or to provide feedback to Confluent, particularly as it becomes more widely available in follow-on editions.  
 **Preview** features are intended for evaluation use in development and testing environments only, and not for production use. The warranty, SLA, and Support Services provisions of your agreement with Confluent do not apply to Preview features. Preview features are considered to be a Proof of Concept as defined in the Confluent Cloud Terms of Service. Confluent may discontinue providing Preview releases of the Preview features at any time in Confluent’s sole discretion.
 
-`confluent_schema_registry_kek` provides a Schema Registry Key Encryption Key resource that enables creating, editing, and deleting  Schema Registry Key Encryption Keys on Confluent Cloud.
+`confluent_schema_registry_kek` provides a Schema Registry Key Encryption Key (KEK) resource that enables creating, editing, and deleting Schema Registry Key Encryption Keys on Confluent Cloud.
 
 ## Example Usage
 
@@ -83,15 +83,15 @@ The following arguments are supported:
 - `credentials` (Optional Configuration Block) supports the following:
     - `key` - (Required String) The Schema Registry API Key.
     - `secret` - (Required String, Sensitive) The Schema Registry API Secret.
-- `name` - (Required String) A user-friendly name for the KEK. This name will be used when referring to the KEK elsewhere, such as in RBAC.
-- `kms_type` - (Required String) The type of KMS (Key Management Service), typically one of `"aws-kms"`, `"azure-kms"`, and `"gcp-kms"`.
-- `kms_key_id` - (Required String) The key ID for the KEK. When using the AWS KMS, this is an ARN, for example, `arn:aws:kms:us-east-1:xxxx:key/xxxx`.
-- `properties` - (Optional Map) The custom properties to set:
-  - `name` - (Required String) The setting name.
-  - `value` - (Required String) The setting value.
-- `doc` - (Optional String) An optional user-friendly description for the KEK.
-- `shared` - (Optional Boolean) An optional flag to control whether the DEK Registry has shared access to the KMS.
-- `hard_delete` - (Optional Boolean) An optional flag to control whether a kek should be soft or hard deleted. The default value is `false`.
+- `name` - (Required String) The name for the KEK.
+- `kms_type` - (Required String) The type of Key Management Service (KMS). The supported values are `"aws-kms"`, `"azure-kms"`, and `"gcp-kms"`.
+- `kms_key_id` - (Required String) The key ID of the KMS. When using the AWS KMS, this is an ARN, for example, `arn:aws:kms:us-east-1:xxxx:key/xxxx`.
+- `properties` - (Optional Map) The custom properties to set (for example, `"KeyUsage=ENCRYPT_DECRYPT"`, `"KeyState=Enabled"`):
+  - `name` - (Required String) The custom property name (for example, `"KeyUsage"`).
+  - `value` - (Required String) The custom property value (for example, `"ENCRYPT_DECRYPT"`).
+- `doc` - (Optional String) The optional description for the KEK.
+- `shared` - (Optional Boolean) The optional flag to control whether the DEK Registry has shared access to the KMS. Defaults to `false`.
+- `hard_delete` - (Optional Boolean) The optional flag to control whether a kek should be soft or hard deleted. Defaults to `false`.
 
 -> **Note:** A Schema Registry API key consists of a key and a secret. Schema Registry API keys are required to interact with Schema Registry clusters in Confluent Cloud. Each Schema Registry API key is valid for one specific Schema Registry cluster.
 
