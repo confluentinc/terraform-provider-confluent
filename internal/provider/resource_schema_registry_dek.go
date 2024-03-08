@@ -30,11 +30,10 @@ import (
 )
 
 const (
-	paramKekName                   = "kek_name"
-	paramAlgorithm                 = "algorithm"
-	paramEncryptedKeyMaterial      = "encrypted_key_material"
-	paramKeyMaterial               = "key_material"
-	paramHardDeleteDekDefaultValue = true
+	paramKekName              = "kek_name"
+	paramAlgorithm            = "algorithm"
+	paramEncryptedKeyMaterial = "encrypted_key_material"
+	paramKeyMaterial          = "key_material"
 )
 
 var acceptedDekAlgorithm = []string{"AES128_GCM", "AES256_GCM", "AES256_SIV"}
@@ -93,7 +92,7 @@ func schemaRegistryDekResource() *schema.Resource {
 			paramHardDelete: {
 				Type:        schema.TypeBool,
 				Optional:    true,
-				Default:     paramHardDeleteDekDefaultValue,
+				Default:     paramHardDeleteDefaultValue,
 				Description: "Controls whether a dek should be soft or hard deleted. Set it to `true` if you want to hard delete a schema registry dek on destroy. Defaults to `false` (soft delete).",
 			},
 		},
@@ -324,7 +323,7 @@ func setDekAttributes(d *schema.ResourceData, clusterId string, dek sr.Dek) (*sc
 
 	// Explicitly set paramHardDelete to the default value if unset
 	if _, ok := d.GetOk(paramHardDelete); !ok {
-		if err := d.Set(paramHardDelete, paramHardDeleteDekDefaultValue); err != nil {
+		if err := d.Set(paramHardDelete, paramHardDeleteDefaultValue); err != nil {
 			return nil, createDescriptiveError(err)
 		}
 	}

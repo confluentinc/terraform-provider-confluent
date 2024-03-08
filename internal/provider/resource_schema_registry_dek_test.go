@@ -111,6 +111,7 @@ func dekResourceConfig(mockServerUrl string) string {
 	  kek_name = "testkek"
 	  subject_name = "ts"
 	  encrypted_key_material = "tm"
+      hard_delete = true
 	}
 
  	`, mockServerUrl)

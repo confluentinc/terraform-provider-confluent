@@ -70,7 +70,7 @@ func TestAccDataSourceSchemaRegistryDek(t *testing.T) {
 					resource.TestCheckResourceAttr(dekDataSourceLabel, "algorithm", "AES256_GCM"),
 					resource.TestCheckResourceAttr(dekDataSourceLabel, "encrypted_key_material", "tm"),
 					resource.TestCheckResourceAttr(dekDataSourceLabel, "subject_name", "ts"),
-					resource.TestCheckResourceAttr(dekDataSourceLabel, "hard_delete", "true"),
+					resource.TestCheckResourceAttr(dekDataSourceLabel, "hard_delete", "false"),
 					resource.TestCheckResourceAttr(dekDataSourceLabel, "key_material", ""),
 				),
 			},

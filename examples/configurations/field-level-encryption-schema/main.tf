@@ -107,8 +107,8 @@ resource "confluent_schema_registry_kek" "aws_kek" {
   kms_type = "aws-kms"
   kms_key_id = var.aws_kms_key_id
   shared = false
+  hard_delete = true
 }
-
 
 resource "confluent_schema" "purchase" {
   schema_registry_cluster {

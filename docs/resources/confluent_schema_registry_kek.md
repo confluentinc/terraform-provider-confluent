@@ -40,6 +40,7 @@ resource "confluent_schema_registry_kek" "aws_key" {
   kms_key_id = "key_id"
   doc = "test key"
   shared = false
+  hard_delete = true
 
   lifecycle {
     prevent_destroy = true
@@ -63,6 +64,7 @@ resource "confluent_schema_registry_kek" "pii" {
   kms_key_id = "key_id"
   doc = "test key"
   shared = false
+  hard_delete = true
 
   lifecycle {
     prevent_destroy = true

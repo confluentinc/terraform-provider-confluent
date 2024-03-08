@@ -256,7 +256,7 @@ func metadataSchema() *schema.Schema {
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				paramTags: {
-					Type: schema.TypeList,
+					Type: schema.TypeSet,
 					Elem: &schema.Resource{
 						Schema: map[string]*schema.Schema{
 							paramKey: {
@@ -488,7 +488,7 @@ func schemaCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 		metadata := sr.NewMetadata()
 		tfMetadataMap := tfMetadata[0].(map[string]interface{})
 		if tfMetadataMap[paramTags] != nil {
-			metadata.SetTags(convertToStringStringListMap(tfMetadataMap[paramTags].([]interface{})))
+			metadata.SetTags(convertToStringStringListMap(tfMetadataMap[paramTags].(*schema.Set).List()))
 		}
 		if tfMetadataMap[paramProperties] != nil {
 			metadata.SetProperties(convertToStringStringMap(tfMetadataMap[paramProperties].(map[string]interface{})))
@@ -843,23 +843,11 @@ func readSchemaRegistryConfigAndSetAttributes(ctx context.Context, d *schema.Res
 	}
 
 	if metadata, ok := srSchema.GetMetadataOk(); ok {
-		tfMetadataMap := make(map[string]interface{})
-
-		if tags, ok := metadata.GetTagsOk(); ok {
-			tfMetadataMap[paramTags] = buildTfTags(*tags)
-		}
-
-		if _, ok := metadata.GetPropertiesOk(); ok {
-			tfMetadataMap[paramProperties] = metadata.GetProperties()
-		}
-
-		if _, ok := metadata.GetSensitiveOk(); ok {
-			tfMetadataMap[paramSensitive] = metadata.GetSensitive()
-		}
-
-		tfMetadata := make([]map[string]interface{}, 1)
-		tfMetadata[0] = tfMetadataMap
-		if err := d.Set(paramMetadata, tfMetadata); err != nil {
+		if err := d.Set(paramMetadata, []interface{}{map[string]interface{}{
+			paramTags:       buildTfTags(metadata.GetTags()),
+			paramProperties: metadata.GetProperties(),
+			paramSensitive:  metadata.GetSensitive(),
+		}}); err != nil {
 			return nil, err
 		}
 	}
@@ -1138,7 +1126,7 @@ func buildTfRules(rules []sr.Rule) *[]map[string]interface{} {
 	return &tfRuleSet
 }
 
-func buildTfTags(tags map[string][]string) *[]interface{} {
+func buildTfTags(tags map[string][]string) []interface{} {
 	tfTags := make([]interface{}, len(tags))
 	index := 0
 	for key, value := range tags {
@@ -1148,5 +1136,5 @@ func buildTfTags(tags map[string][]string) *[]interface{} {
 		tfTags[index] = tfTagMap
 		index++
 	}
-	return &tfTags
+	return tfTags
 }

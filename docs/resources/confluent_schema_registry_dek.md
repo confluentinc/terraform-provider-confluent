@@ -37,6 +37,7 @@ resource "confluent_schema_registry_dek" "my_dek" {
   
   kek_name = "my_kek"
   subject_name = "my_subject"
+  hard_delete = true
 
   lifecycle {
     prevent_destroy = true
@@ -57,6 +58,7 @@ provider "confluent" {
 resource "confluent_schema_registry_dek" "my_dek" {
   kek_name = "my_kek"
   subject_name = "my_subject"
+  hard_delete = true
 
   lifecycle {
     prevent_destroy = true

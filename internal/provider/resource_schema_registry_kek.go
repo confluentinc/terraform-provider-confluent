@@ -29,11 +29,10 @@ import (
 )
 
 const (
-	paramKmsType                   = "kms_type"
-	paramKmsKeyId                  = "kms_key_id"
-	paramShared                    = "shared"
-	paramDoc                       = "doc"
-	paramHardDeleteKekDefaultValue = false
+	paramKmsType  = "kms_type"
+	paramKmsKeyId = "kms_key_id"
+	paramShared   = "shared"
+	paramDoc      = "doc"
 )
 
 func schemaRegistryKekResource() *schema.Resource {
@@ -94,7 +93,7 @@ func schemaRegistryKekResource() *schema.Resource {
 			paramHardDelete: {
 				Type:        schema.TypeBool,
 				Optional:    true,
-				Default:     paramHardDeleteKekDefaultValue,
+				Default:     paramHardDeleteDefaultValue,
 				Description: "Controls whether a kek should be soft or hard deleted. Set it to `true` if you want to hard delete a schema registry kek on destroy. Defaults to `false` (soft delete).",
 			},
 		},
@@ -356,7 +355,7 @@ func setKekAttributes(d *schema.ResourceData, clusterId string, kek sr.Kek) (*sc
 
 	// Explicitly set paramHardDelete to the default value if unset
 	if _, ok := d.GetOk(paramHardDelete); !ok {
-		if err := d.Set(paramHardDelete, paramHardDeleteKekDefaultValue); err != nil {
+		if err := d.Set(paramHardDelete, paramHardDeleteDefaultValue); err != nil {
 			return nil, createDescriptiveError(err)
 		}
 	}
