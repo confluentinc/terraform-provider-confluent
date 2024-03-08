@@ -63,10 +63,9 @@ func schemaRegistryKekResource() *schema.Resource {
 				ValidateFunc: validation.StringIsNotEmpty,
 			},
 			paramKmsType: {
-				Type:         schema.TypeString,
-				ForceNew:     true,
-				Required:     true,
-				ValidateFunc: validation.StringInSlice([]string{"aws-kms", "azure-kms", "gcp-kms"}, false),
+				Type:     schema.TypeString,
+				ForceNew: true,
+				Required: true,
 			},
 			paramKmsKeyId: {
 				Type:         schema.TypeString,

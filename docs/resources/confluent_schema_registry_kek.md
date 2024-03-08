@@ -84,7 +84,7 @@ The following arguments are supported:
     - `key` - (Required String) The Schema Registry API Key.
     - `secret` - (Required String, Sensitive) The Schema Registry API Secret.
 - `name` - (Required String) The name for the KEK.
-- `kms_type` - (Required String) The type of Key Management Service (KMS). The supported values are `"aws-kms"`, `"azure-kms"`, and `"gcp-kms"`.
+- `kms_type` - (Required String) The type of Key Management Service (KMS). The supported values include `"aws-kms"`, `"azure-kms"`, and `"gcp-kms"`. Additionally, custom KMS types are supported as well.
 - `kms_key_id` - (Required String) The key ID of the KMS. When using the AWS KMS, this is an ARN, for example, `arn:aws:kms:us-east-1:xxxx:key/xxxx`.
 - `properties` - (Optional Map) The custom properties to set (for example, `"KeyUsage=ENCRYPT_DECRYPT"`, `"KeyState=Enabled"`):
   - `name` - (Required String) The custom property name (for example, `"KeyUsage"`).
