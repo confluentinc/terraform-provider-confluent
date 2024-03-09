@@ -225,6 +225,12 @@ func schemaRegistryDekUpdate(ctx context.Context, d *schema.ResourceData, meta i
 	return schemaRegistryDekRead(ctx, d, meta)
 }
 
+func deleteDekExecute(ctx context.Context, client *SchemaRegistryRestClient, kekName, subject, version, algorithm string, hardDelete bool) error {
+	request := client.apiClient.DataEncryptionKeysV1Api.DeleteDekVersion(client.apiContext(ctx), kekName, subject, version).Permanent(hardDelete).Algorithm(algorithm)
+	_, err := request.Execute()
+	return err
+}
+
 func schemaRegistryDekDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	restEndpoint, err := extractSchemaRegistryRestEndpoint(meta.(*Client), d, false)
 	if err != nil {
@@ -250,23 +256,16 @@ func schemaRegistryDekDelete(ctx context.Context, d *schema.ResourceData, meta i
 	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
 	isHardDeleteEnabled := d.Get(paramHardDelete).(bool)
 
-	if isHardDeleteEnabled {
-		// first soft delete the key
-		request := schemaRegistryRestClient.apiClient.DataEncryptionKeysV1Api.DeleteDekVersion(schemaRegistryRestClient.apiContext(ctx), kekName, subject, strconv.Itoa(version))
-		request = request.Algorithm(algorithm)
-		request = request.Permanent(false)
-		_, serviceErr := request.Execute()
-		if serviceErr != nil {
-			return diag.Errorf("error soft deleting Schema Registry DEK %q: %s", dekId, createDescriptiveError(serviceErr))
-		}
+	err = deleteDekExecute(ctx, schemaRegistryRestClient, kekName, subject, strconv.Itoa(version), algorithm, false)
+	if err != nil {
+		return diag.Errorf("error soft-deleting Schema Registry DEK %q: %s", dekId, createDescriptiveError(err))
 	}
 
-	request := schemaRegistryRestClient.apiClient.DataEncryptionKeysV1Api.DeleteDekVersion(schemaRegistryRestClient.apiContext(ctx), kekName, subject, strconv.Itoa(version))
-	request = request.Algorithm(algorithm)
-	request = request.Permanent(isHardDeleteEnabled)
-	_, serviceErr := request.Execute()
-	if serviceErr != nil {
-		return diag.Errorf("error deleting Schema Registry DEK %q: %s", dekId, createDescriptiveError(serviceErr))
+	if isHardDeleteEnabled {
+		err = deleteDekExecute(ctx, schemaRegistryRestClient, kekName, subject, strconv.Itoa(version), algorithm, true)
+		if err != nil {
+			return diag.Errorf("error hard-deleting Schema Registry DEK %q: %s", dekId, createDescriptiveError(err))
+		}
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished deleting Schema Registry DEK %q", dekId), map[string]interface{}{schemaRegistryDekKey: dekId})

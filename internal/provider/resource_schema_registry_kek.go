@@ -216,6 +216,12 @@ func readSchemaRegistryKekAndSetAttributes(ctx context.Context, d *schema.Resour
 	return []*schema.ResourceData{d}, nil
 }
 
+func deleteKekExecute(ctx context.Context, client *SchemaRegistryRestClient, kekName string, hardDelete bool) error {
+	request := client.apiClient.KeyEncryptionKeysV1Api.DeleteKek(client.apiContext(ctx), kekName).Permanent(hardDelete)
+	_, err := request.Execute()
+	return err
+}
+
 func schemaRegistryKekDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	restEndpoint, err := extractSchemaRegistryRestEndpoint(meta.(*Client), d, false)
 	if err != nil {
@@ -238,21 +244,16 @@ func schemaRegistryKekDelete(ctx context.Context, d *schema.ResourceData, meta i
 	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
 	isHardDeleteEnabled := d.Get(paramHardDelete).(bool)
 
-	if isHardDeleteEnabled {
-		// first soft delete the key
-		request := schemaRegistryRestClient.apiClient.KeyEncryptionKeysV1Api.DeleteKek(schemaRegistryRestClient.apiContext(ctx), kekName)
-		request = request.Permanent(false)
-		_, serviceErr := request.Execute()
-		if serviceErr != nil {
-			return diag.Errorf("error soft deleting Schema Registry KEK %q: %s", kekId, createDescriptiveError(serviceErr))
-		}
+	err = deleteKekExecute(ctx, schemaRegistryRestClient, kekName, false)
+	if err != nil {
+		return diag.Errorf("error soft-deleting Schema Registry KEK %q: %s", kekId, createDescriptiveError(err))
 	}
 
-	request := schemaRegistryRestClient.apiClient.KeyEncryptionKeysV1Api.DeleteKek(schemaRegistryRestClient.apiContext(ctx), kekName)
-	request = request.Permanent(isHardDeleteEnabled)
-	_, serviceErr := request.Execute()
-	if serviceErr != nil {
-		return diag.Errorf("error deleting Schema Registry KEK %q: %s", kekId, createDescriptiveError(serviceErr))
+	if isHardDeleteEnabled {
+		err = deleteKekExecute(ctx, schemaRegistryRestClient, kekName, true)
+		if err != nil {
+			return diag.Errorf("error hard-deleting Schema Registry KEK %q: %s", kekId, createDescriptiveError(err))
+		}
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished deleting Schema Registry KEK %q", kekId), map[string]interface{}{schemaRegistryKekKey: kekId})
