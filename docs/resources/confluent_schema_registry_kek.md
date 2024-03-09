@@ -84,11 +84,14 @@ The following arguments are supported:
     - `key` - (Required String) The Schema Registry API Key.
     - `secret` - (Required String, Sensitive) The Schema Registry API Secret.
 - `name` - (Required String) The name for the KEK.
-- `kms_type` - (Required String) The type of Key Management Service (KMS). The supported values include `"aws-kms"`, `"azure-kms"`, and `"gcp-kms"`. Additionally, custom KMS types are supported as well.
-- `kms_key_id` - (Required String) The key ID of the KMS. When using the AWS KMS, this is an ARN, for example, `arn:aws:kms:us-east-1:xxxx:key/xxxx`.
-- `properties` - (Optional Map) The custom properties to set (for example, `"KeyUsage=ENCRYPT_DECRYPT"`, `"KeyState=Enabled"`):
-  - `name` - (Required String) The custom property name (for example, `"KeyUsage"`).
-  - `value` - (Required String) The custom property value (for example, `"ENCRYPT_DECRYPT"`).
+- `kms_type` - (Required String) The type of Key Management Service (KMS). The supported values include `aws-kms`, `azure-kms`, and `gcp-kms`. Additionally, custom KMS types are supported as well.
+- `kms_key_id` - (Required String) The ID of the key from KMS. 
+  - When using the AWS KMS, this is an ARN, for example, `arn:aws:kms:us-east-1:123456789012:key/12345678-1234-1234-1234-123456789abc`.
+  - When using the Azure Key Vault, this is a Key Identifier (URI), for example, `https://test-keyvault1.vault.azure.net/keys/test-key1/1234567890abcdef1234567890abcdef`.
+  - When using the GCP KMS, this is a resource name, for example, `projects/test-project1/locations/us-central1/keyRings/test-keyRing1/cryptoKeys/test-key1`.
+- `properties` - (Optional Map) The custom properties to set (for example, `KeyUsage=ENCRYPT_DECRYPT`, `KeyState=Enabled`):
+  - `name` - (Required String) The custom property name (for example, `KeyUsage`).
+  - `value` - (Required String) The custom property value (for example, `ENCRYPT_DECRYPT`).
 - `doc` - (Optional String) The optional description for the KEK.
 - `shared` - (Optional Boolean) The optional flag to control whether the DEK Registry has shared access to the KMS. Defaults to `false`.
 - `hard_delete` - (Optional Boolean) The optional flag to control whether a kek should be soft or hard deleted. Defaults to `false`.
