@@ -53,10 +53,10 @@ resource "confluent_service_account" "app-manager" {
   display_name = "app-manager"
   description  = "Service account that has got full access to Flink resources in an environment"
 }
-// https://docs.confluent.io/cloud/current/access-management/access-control/rbac/predefined-rbac-roles.html#flinkdeveloper
+// https://docs.confluent.io/cloud/current/access-management/access-control/rbac/predefined-rbac-roles.html#flinkadmin
 resource "confluent_role_binding" "app-manager-flink-developer" {
   principal   = "User:${confluent_service_account.app-manager.id}"
-  role_name   = "FlinkDeveloper"
+  role_name   = "FlinkAdmin"
   crn_pattern = data.confluent_environment.staging.resource_name
 }
 // https://docs.confluent.io/cloud/current/access-management/access-control/rbac/predefined-rbac-roles.html#assigner
