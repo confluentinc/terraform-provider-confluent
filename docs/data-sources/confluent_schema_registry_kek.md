@@ -13,7 +13,7 @@ description: |-
 -> **Note:** `confluent_schema_registry_kek` data source is available in **Preview** for early adopters. Preview features are introduced to gather customer feedback. This feature should be used only for evaluation and non-production testing purposes or to provide feedback to Confluent, particularly as it becomes more widely available in follow-on editions.  
 **Preview** features are intended for evaluation use in development and testing environments only, and not for production use. The warranty, SLA, and Support Services provisions of your agreement with Confluent do not apply to Preview features. Preview features are considered to be a Proof of Concept as defined in the Confluent Cloud Terms of Service. Confluent may discontinue providing preview releases of the Preview features at any time in Confluent’s sole discretion.
 
-`confluent_schema_registry_kek` describes a Schema Registry Key Encryption Key data source.
+`confluent_schema_registry_kek` describes a Schema Registry Key Encryption Key (KEK) data source.
 
 ## Example Usage
 
@@ -65,7 +65,7 @@ The following arguments are supported:
 - `credentials` (Optional Configuration Block) supports the following:
     - `key` - (Required String) The Schema Registry API Key.
     - `secret` - (Required String, Sensitive) The Schema Registry API Secret.
-- `name` - (Required String) A user-friendly name for the KEK. This name will be used when referring to the KEK elsewhere, such as in RBAC.
+- `name` - (Required String) The name for the KEK.
 
 -> **Note:** A Schema Registry API key consists of a key and a secret. Schema Registry API keys are required to interact with Schema Registry clusters in Confluent Cloud. Each Schema Registry API key is valid for one specific Schema Registry cluster.
 
@@ -74,11 +74,14 @@ The following arguments are supported:
 In addition to the preceding arguments, the following attributes are exported:
 
 - `id` - (Required String) The ID of the Schema Registry Key, in the format `<Schema Registry cluster ID>/<Kek name>`, for example, `lsrc-8wrx70/aws_key`.
-- `kms_type` - (Optional String) The type of KMS (Key Management Service), typically one of `"aws-kms"`, `"azure-kms"`, and `"gcp-kms"`.
-- `kms_key_id` - (Optional String) The key ID for the KEK. When using the AWS KMS, this is an ARN, this is an ARN, for example, `arn:aws:kms:us-east-1:xxxx:key/xxxx`.
-- `properties` - (Optional Map) The custom properties to set:
-  - `name` - (Required String) The setting name.
-  - `value` - (Required String) The setting value.
-- `doc` - (Optional String) An optional user-friendly description for the KEK.
-- `shared` - (Optional Boolean) An optional flag to control whether the DEK Registry has shared access to the KMS.
-- `hard_delete` - (Optional Boolean) An optional flag to control whether a kek should be soft or hard deleted.
+- `kms_type` - (Required String) The type of Key Management Service (KMS). The supported values include `aws-kms`, `azure-kms`, and `gcp-kms`. Additionally, custom KMS types are supported as well.
+- `kms_key_id` - (Required String) The ID of the key from KMS.
+  - When using the AWS KMS, this is an ARN, for example, `arn:aws:kms:us-east-1:123456789012:key/12345678-1234-1234-1234-123456789abc`.
+  - When using the Azure Key Vault, this is a Key Identifier (URI), for example, `https://test-keyvault1.vault.azure.net/keys/test-key1/1234567890abcdef1234567890abcdef`.
+  - When using the GCP KMS, this is a resource name, for example, `projects/test-project1/locations/us-central1/keyRings/test-keyRing1/cryptoKeys/test-key1`.
+- `properties` - (Optional Map) The custom properties to set (for example, `KeyUsage=ENCRYPT_DECRYPT`, `KeyState=Enabled`):
+  - `name` - (Required String) The custom property name (for example, `KeyUsage`).
+  - `value` - (Required String) The custom property value (for example, `ENCRYPT_DECRYPT`).
+- `doc` - (Optional String) The optional description for the KEK.
+- `shared` - (Optional Boolean) The optional flag to control whether the DEK Registry has shared access to the KMS. Defaults to `false`.
+- `hard_delete` - (Optional Boolean) The optional flag to control whether a kek should be soft or hard deleted. Defaults to `false`.

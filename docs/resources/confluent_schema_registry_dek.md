@@ -56,9 +56,9 @@ provider "confluent" {
 }
 
 resource "confluent_schema_registry_dek" "my_dek" {
-  kek_name = "my_kek"
+  kek_name     = "my_kek"
   subject_name = "my_subject"
-  hard_delete = true
+  hard_delete  = true
 
   lifecycle {
     prevent_destroy = true
@@ -109,3 +109,7 @@ $ terraform import confluent_schema_registry_dek.my_dek lsrc-8wrx70/testkek/ts/1
 ```
 
 !> **Warning:** Do not forget to delete terminal command history afterwards for security purposes.
+
+## Getting Started
+The following end-to-end example might help to get started with field-level encryption:
+  * [field-level-encryption-schema](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/field-level-encryption-schema)

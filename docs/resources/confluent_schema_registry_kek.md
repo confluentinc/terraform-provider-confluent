@@ -59,11 +59,11 @@ provider "confluent" {
 }
 
 resource "confluent_schema_registry_kek" "pii" {
-  name = "my_key"
-  kms_type = "aws-kms"
-  kms_key_id = "key_id"
-  doc = "test key"
-  shared = false
+  name        = "my_key"
+  kms_type    = "aws-kms"
+  kms_key_id  = "key_id"
+  doc         = "test key"
+  shared      = false
   hard_delete = true
 
   lifecycle {
@@ -120,3 +120,7 @@ $ terraform import confluent_schema_registry_kek.aws_key lsrc-8wrx70/aws_key
 ```
 
 !> **Warning:** Do not forget to delete terminal command history afterwards for security purposes.
+
+## Getting Started
+The following end-to-end example might help to get started with field-level encryption:
+  * [field-level-encryption-schema](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/field-level-encryption-schema)

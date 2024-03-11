@@ -13,7 +13,7 @@ description: |-
 -> **Note:** `confluent_schema_registry_dek` data source is available in **Preview** for early adopters. Preview features are introduced to gather customer feedback. This feature should be used only for evaluation and non-production testing purposes or to provide feedback to Confluent, particularly as it becomes more widely available in follow-on editions.  
 **Preview** features are intended for evaluation use in development and testing environments only, and not for production use. The warranty, SLA, and Support Services provisions of your agreement with Confluent do not apply to Preview features. Preview features are considered to be a Proof of Concept as defined in the Confluent Cloud Terms of Service. Confluent may discontinue providing preview releases of the Preview features at any time in Confluent’s sole discretion.
 
-`confluent_schema_registry_dek` describes a Schema Registry Data Encryption Key data source.
+`confluent_schema_registry_dek` describes a Schema Registry Data Encryption Key (DEK) data source.
 
 ## Example Usage
 
@@ -35,7 +35,7 @@ data "confluent_schema_registry_dek" "my_key" {
     secret = "<Schema Registry API Secret for confluent_schema_registry_cluster.essentials>"
   }
   
-  kek_name = "my_kek"
+  kek_name     = "my_kek"
   subject_name = "my_subject"
 }
 ```
@@ -51,7 +51,7 @@ provider "confluent" {
 }
 
 data "confluent_schema_registry_dek" "my_key" {
-  kek_name = "my_kek"
+  kek_name     = "my_kek"
   subject_name = "my_subject"
 }
 ```
@@ -69,8 +69,8 @@ The following arguments are supported:
   - `secret` - (Required String, Sensitive) The Schema Registry API Secret.
 - `kek_name` - (Required String) The name of the KEK used to encrypt this DEK.
 - `subject_name` - (Required String) The subject for this DEK.
-- `version` - (Optional Integer) The version of this DEK.
-- `algorithm` - (Optional String) One of `"AES128_GCM"`, `"AES256_GCM"` (the default), and `"AES256_SIV"`.
+- `version` - (Optional Integer) The version of this DEK. Defaults to `1`.
+- `algorithm` - (Optional String) Accepted values are: `AES128_GCM`, `AES256_GCM`, and `AES256_SIV`. Defaults to `AES256_GCM`.
 
 -> **Note:** A Schema Registry API key consists of a key and a secret. Schema Registry API keys are required to interact with Schema Registry clusters in Confluent Cloud. Each Schema Registry API key is valid for one specific Schema Registry cluster.
 
@@ -80,5 +80,5 @@ In addition to the preceding arguments, the following attributes are exported:
 
 - `id` - (Required String) The ID of the Schema Registry Dek, in the format `<Schema Registry Cluster Id>/<Schema Registry Kek Name>/<Subject>/<Version>/<Algorithm>`, for example, `lsrc-8wrx70/testkek/ts/1/AES256_GCM`.
 - `encrypted_key_material` - (Optional String) The encrypted key material for the DEK.
-- `key_material` - (Optional String) The decrypted version of encrypted_key_material.
+- `key_material` - (Optional String) The decrypted version of encrypted key material.
 - `hard_delete` - (Optional Boolean) An optional flag to control whether a dek should be soft or hard deleted.
