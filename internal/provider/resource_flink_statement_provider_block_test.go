@@ -292,7 +292,7 @@ func testAccCheckFlinkStatementDestroy(s *terraform.State, url string) error {
 			continue
 		}
 		deletedTopicId := rs.Primary.ID
-		_, response, err := c.apiClient.StatementsSqlV1beta1Api.GetSqlv1beta1Statement(c.apiContext(context.Background()), flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkStatementNameTest).Execute()
+		_, response, err := c.apiClient.StatementsSqlV1Api.GetSqlv1Statement(c.apiContext(context.Background()), flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkStatementNameTest).Execute()
 		if response != nil && (response.StatusCode == http.StatusForbidden || response.StatusCode == http.StatusNotFound) {
 			return nil
 		} else if err == nil && deletedTopicId != "" {

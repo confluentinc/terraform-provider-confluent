@@ -1345,7 +1345,7 @@ func schemaRegistryApiKeySyncStatus(ctx context.Context, c *SchemaRegistryRestCl
 
 func flinkApiKeySyncStatus(ctx context.Context, c *FlinkRestClient, organizationID string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		_, resp, err := c.apiClient.StatementsSqlV1beta1Api.ListSqlv1beta1Statements(c.apiContext(ctx), organizationID, c.environmentId).Execute()
+		_, resp, err := c.apiClient.StatementsSqlV1Api.ListSqlv1Statements(c.apiContext(ctx), organizationID, c.environmentId).Execute()
 		if resp != nil && resp.StatusCode == http.StatusOK {
 			tflog.Debug(ctx, fmt.Sprintf("Finishing Flink API Key %q sync process: Received %d status code when listing Statements", c.flinkApiKey, resp.StatusCode), map[string]interface{}{apiKeyLoggingKey: c.flinkApiKey})
 			return 0, stateDone, nil

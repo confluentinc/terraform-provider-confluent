@@ -6,7 +6,7 @@ import (
 	"github.com/hashicorp/go-retryablehttp"
 	"net/http"
 
-	fgb "github.com/confluentinc/ccloud-sdk-go-v2/flink-gateway/v1beta1"
+	fgb "github.com/confluentinc/ccloud-sdk-go-v2/flink-gateway/v1"
 	schemaregistry "github.com/confluentinc/ccloud-sdk-go-v2/schema-registry/v1"
 )
 

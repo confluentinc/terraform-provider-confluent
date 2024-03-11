@@ -24,7 +24,7 @@ import (
 	ccp "github.com/confluentinc/ccloud-sdk-go-v2/connect-custom-plugin/v1"
 	connect "github.com/confluentinc/ccloud-sdk-go-v2/connect/v1"
 	dc "github.com/confluentinc/ccloud-sdk-go-v2/data-catalog/v1"
-	fgb "github.com/confluentinc/ccloud-sdk-go-v2/flink-gateway/v1beta1"
+	fgb "github.com/confluentinc/ccloud-sdk-go-v2/flink-gateway/v1"
 	fcpm "github.com/confluentinc/ccloud-sdk-go-v2/flink/v2"
 	iamv1 "github.com/confluentinc/ccloud-sdk-go-v2/iam/v1"
 	iam "github.com/confluentinc/ccloud-sdk-go-v2/iam/v2"

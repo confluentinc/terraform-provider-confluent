@@ -18,7 +18,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	fgb "github.com/confluentinc/ccloud-sdk-go-v2/flink-gateway/v1beta1"
+	fgb "github.com/confluentinc/ccloud-sdk-go-v2/flink-gateway/v1"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -130,13 +130,13 @@ func flinkStatementCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	statement := d.Get(paramStatement).(string)
 	properties := convertToStringStringMap(d.Get(paramProperties).(map[string]interface{}))
 
-	spec := fgb.NewSqlV1beta1StatementSpec()
+	spec := fgb.NewSqlV1StatementSpec()
 	spec.SetStatement(statement)
 	spec.SetProperties(properties)
 	spec.SetComputePoolId(computePoolId)
 	spec.SetPrincipal(principalId)
 
-	createFlinkStatementRequest := fgb.NewSqlV1beta1Statement()
+	createFlinkStatementRequest := fgb.NewSqlV1Statement()
 	createFlinkStatementRequest.SetName(statementName)
 	createFlinkStatementRequest.SetSpec(*spec)
 
@@ -165,13 +165,13 @@ func flinkStatementCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	return flinkStatementRead(ctx, d, meta)
 }
 
-func executeFlinkStatementCreate(ctx context.Context, c *FlinkRestClient, requestData *fgb.SqlV1beta1Statement) (fgb.SqlV1beta1Statement, *http.Response, error) {
-	req := c.apiClient.StatementsSqlV1beta1Api.CreateSqlv1beta1Statement(c.apiContext(ctx), c.organizationId, c.environmentId).SqlV1beta1Statement(*requestData)
+func executeFlinkStatementCreate(ctx context.Context, c *FlinkRestClient, requestData *fgb.SqlV1Statement) (fgb.SqlV1Statement, *http.Response, error) {
+	req := c.apiClient.StatementsSqlV1Api.CreateSqlv1Statement(c.apiContext(ctx), c.organizationId, c.environmentId).SqlV1Statement(*requestData)
 	return req.Execute()
 }
 
-func executeFlinkStatementRead(ctx context.Context, c *FlinkRestClient, statementName string) (fgb.SqlV1beta1Statement, *http.Response, error) {
-	req := c.apiClient.StatementsSqlV1beta1Api.GetSqlv1beta1Statement(c.apiContext(ctx), c.organizationId, c.environmentId, statementName)
+func executeFlinkStatementRead(ctx context.Context, c *FlinkRestClient, statementName string) (fgb.SqlV1Statement, *http.Response, error) {
+	req := c.apiClient.StatementsSqlV1Api.GetSqlv1Statement(c.apiContext(ctx), c.organizationId, c.environmentId, statementName)
 	return req.Execute()
 }
 
@@ -249,7 +249,7 @@ func flinkStatementUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 
 	statementName := d.Get(paramStatementName).(string)
 
-	req := flinkRestClient.apiClient.StatementsSqlV1beta1Api.GetSqlv1beta1Statement(flinkRestClient.apiContext(ctx), flinkRestClient.organizationId, flinkRestClient.environmentId, statementName)
+	req := flinkRestClient.apiClient.StatementsSqlV1Api.GetSqlv1Statement(flinkRestClient.apiContext(ctx), flinkRestClient.organizationId, flinkRestClient.environmentId, statementName)
 	statement, _, err := req.Execute()
 
 	if err != nil {
@@ -266,7 +266,7 @@ func flinkStatementUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 			return diag.Errorf("error updating Flink Statement %q: error marshaling %#v to json: %s", statementName, statement, createDescriptiveError(err))
 		}
 		tflog.Debug(ctx, fmt.Sprintf("Updating Flink Statement %q: %s", statementName, updateFlinkStatementRequestJson), map[string]interface{}{flinkStatementLoggingKey: d.Id()})
-		req := flinkRestClient.apiClient.StatementsSqlV1beta1Api.UpdateSqlv1beta1Statement(flinkRestClient.apiContext(ctx), organizationId, environmentId, statementName).SqlV1beta1Statement(statement)
+		req := flinkRestClient.apiClient.StatementsSqlV1Api.UpdateSqlv1Statement(flinkRestClient.apiContext(ctx), organizationId, environmentId, statementName).SqlV1Statement(statement)
 		_, err = req.Execute()
 		if err != nil {
 			return diag.Errorf("error updating Flink Statement 123 %q: %s", statementName, createDescriptiveError(err))
@@ -308,7 +308,7 @@ func readFlinkStatementAndSetAttributes(ctx context.Context, d *schema.ResourceD
 	return []*schema.ResourceData{d}, nil
 }
 
-func setFlinkStatementAttributes(d *schema.ResourceData, c *FlinkRestClient, statement fgb.SqlV1beta1Statement) (*schema.ResourceData, error) {
+func setFlinkStatementAttributes(d *schema.ResourceData, c *FlinkRestClient, statement fgb.SqlV1Statement) (*schema.ResourceData, error) {
 	if err := d.Set(paramStatementName, statement.GetName()); err != nil {
 		return nil, err
 	}
@@ -372,7 +372,7 @@ func flinkStatementDelete(ctx context.Context, d *schema.ResourceData, meta inte
 	flinkRestClient := meta.(*Client).flinkRestClientFactory.CreateFlinkRestClient(restEndpoint, organizationId, environmentId, computePoolId, "", flinkApiKey, flinkApiSecret, meta.(*Client).isFlinkMetadataSet)
 	statementName := d.Get(paramStatementName).(string)
 
-	req := flinkRestClient.apiClient.StatementsSqlV1beta1Api.DeleteSqlv1beta1Statement(flinkRestClient.apiContext(ctx), organizationId, environmentId, statementName)
+	req := flinkRestClient.apiClient.StatementsSqlV1Api.DeleteSqlv1Statement(flinkRestClient.apiContext(ctx), organizationId, environmentId, statementName)
 	_, err = req.Execute()
 
 	if err != nil {
