@@ -1,11 +1,11 @@
 {
-  "api_version": "sql/v1beta1",
+  "api_version": "sql/v1",
   "environment_id": "env-abc123",
   "kind": "Statement",
   "metadata": {
     "created_at": "2023-11-15T08:34:12Z",
     "resource_version": "1",
-    "self": "https://flink.us-east-1.aws.confluent.cloud/sql/v1beta1/organizations/1111aaaa-11aa-11aa-11aa-111111aaaaaa/environments/env-abc123/statements/workspace-2023-11-15-030109-0408d52d-eaff-4d50-a246-f822a29f2eb9",
+    "self": "https://flink.us-east-1.aws.confluent.cloud/sql/v1/organizations/1111aaaa-11aa-11aa-11aa-111111aaaaaa/environments/env-abc123/statements/workspace-2023-11-15-030109-0408d52d-eaff-4d50-a246-f822a29f2eb9",
     "uid": "8b9c49bb-7351-416d-98d5-d5f29f6de980",
     "updated_at": "2023-11-15T08:35:20Z"
   },

@@ -333,7 +333,7 @@ func TestAccFlinkApiKey(t *testing.T) {
 	_ = wiremockClient.StubFor(createFcpmApiStub)
 
 	flinkRestApi404Response, _ := ioutil.ReadFile("../testdata/apikey/read_list_statements_error.json")
-	listStatementsFlinkRestApi401Stub := wiremock.Get(wiremock.URLPathEqualTo("/sql/v1beta1/organizations/foo/environments/env-3732nw/statements")).
+	listStatementsFlinkRestApi401Stub := wiremock.Get(wiremock.URLPathEqualTo("/sql/v1/organizations/foo/environments/env-3732nw/statements")).
 		InScenario(flinkApiKeyScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillSetStateTo(scenarioStateFlinkApiKeyHasBeenSyncedFirstRead).
@@ -345,7 +345,7 @@ func TestAccFlinkApiKey(t *testing.T) {
 	_ = wiremockClient.StubFor(listStatementsFlinkRestApi401Stub)
 
 	flinkRestApiOkResponse, _ := ioutil.ReadFile("../testdata/apikey/read_list_statements_ok.json")
-	listStatementsFlinkRestApi200Stub := wiremock.Get(wiremock.URLPathEqualTo("/sql/v1beta1/organizations/foo/environments/env-3732nw/statements")).
+	listStatementsFlinkRestApi200Stub := wiremock.Get(wiremock.URLPathEqualTo("/sql/v1/organizations/foo/environments/env-3732nw/statements")).
 		InScenario(flinkApiKeyScenarioName).
 		WhenScenarioStateIs(scenarioStateFlinkApiKeyHasBeenSyncedFirstRead).
 		WillSetStateTo(scenarioStateFlinkApiKeyHasBeenSyncedConfirmationRead).

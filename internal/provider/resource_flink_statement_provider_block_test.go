@@ -45,8 +45,8 @@ const (
 )
 
 var fullFlinkStatementResourceLabel = fmt.Sprintf("confluent_flink_statement.%s", flinkStatementResourceLabel)
-var createFlinkStatementPath = fmt.Sprintf("/sql/v1beta1/organizations/%s/environments/%s/statements", flinkOrganizationIdTest, flinkEnvironmentIdTest)
-var readFlinkStatementPath = fmt.Sprintf("/sql/v1beta1/organizations/%s/environments/%s/statements/%s", flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkStatementNameTest)
+var createFlinkStatementPath = fmt.Sprintf("/sql/v1/organizations/%s/environments/%s/statements", flinkOrganizationIdTest, flinkEnvironmentIdTest)
+var readFlinkStatementPath = fmt.Sprintf("/sql/v1/organizations/%s/environments/%s/statements/%s", flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkStatementNameTest)
 
 func TestAccFlinkStatementWithEnhancedProviderBlock(t *testing.T) {
 	ctx := context.Background()
