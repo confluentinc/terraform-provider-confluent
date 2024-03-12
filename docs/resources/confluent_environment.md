@@ -20,6 +20,10 @@ description: |-
 resource "confluent_environment" "prod" {
   display_name = "Production"
 
+  stream_governance {
+    package = "ESSENTIALS"
+  }
+
   lifecycle {
     prevent_destroy = true
   }
@@ -32,6 +36,8 @@ resource "confluent_environment" "prod" {
 The following arguments are supported:
 
 - `display_name` - (Required String) A human-readable name for the Environment. Start and end the name with alphanumeric characters, for example, "Development". The name can contain hyphens and underscores.
+- `stream_governance` - (Optional Block) The stream governance configuration for the Environment. The block supports the following arguments:
+  - `package` - (Required String) The [stream governance package](https://docs.confluent.io/cloud/current/stream-governance/packages.html#packages) for the Environment. Accepted values are: `ESSENTIALS` and `ADVANCED`.
 
 ## Attributes Reference
 
