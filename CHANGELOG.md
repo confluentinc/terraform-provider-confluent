@@ -1,3 +1,22 @@
+## 1.66.0 (March 11, 2024)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.65.0...v1.66.0)
+
+**New features:**
+* Added new `confluent_schema_registry_dek` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema_registry_dek), `confluent_schema_registry_kek` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema_registry_kek) and corresponding data sources in an [Early Access lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
+* Added new optional `ruleset` and `metadata` blocks to `confluent_schema` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema) in a [Preview lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
+
+**New updates for resources that are in [Early Access / Preview lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy):**
+* **Breaking changes:** The environment variables for the provider block's `organization_id` and `environment_id` attributes have been renamed from `ORGANIZATION_ID` to `CONFLUENT_ORGANIZATION_ID` and from `ENVIRONMENT_ID` to `CONFLUENT_ENVIRONMENT_ID`, respectively.
+
+**Bug fixes:**
+* Updated [flink-quickstart](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/flink-quickstart) to use `FlinkAdmin` [role](https://docs.confluent.io/cloud/current/access-management/access-control/rbac/predefined-rbac-roles.html#flinkadmin) instead of `FlinkDeveloper` [role](https://docs.confluent.io/cloud/current/access-management/access-control/rbac/predefined-rbac-roles.html#flinkdeveloper) to be able to delete statements.
+* Resolved "Azure Devops Collision with ENVIRONMENT_ID" issue ([#369](https://github.com/confluentinc/terraform-provider-confluent/issues/369)).
+* Updated docs.
+
+* Added **1** new example:
+  * [field-level-encryption-schema](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/field-level-encryption-schema)
+
 ## 1.65.0 (March 4, 2024)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.64.0...v1.65.0)
