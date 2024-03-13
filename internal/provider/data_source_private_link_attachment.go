@@ -90,15 +90,10 @@ func awsVpcEndpointServiceSchema() *schema.Schema {
 
 func azurePrivateLinkServicesSchema() *schema.Schema {
 	return &schema.Schema{
-		Type:     schema.TypeSet,
+		Type:     schema.TypeList,
 		Computed: true,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
-				paramZone: {
-					Type:        schema.TypeString,
-					Computed:    true,
-					Description: "Availability zone associated with the Azure PrivateLink service.",
-				},
 				paramPrivateLinkServiceAlias: {
 					Type:        schema.TypeString,
 					Computed:    true,

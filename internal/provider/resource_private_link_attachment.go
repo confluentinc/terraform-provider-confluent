@@ -288,7 +288,7 @@ func setPrivateLinkAttachmentAttributes(d *schema.ResourceData, platt netpl.Netw
 			return nil, err
 		}
 	} else if platt.Status.GetCloud().NetworkingV1AzurePrivateLinkAttachmentStatus != nil {
-		if err := setAzurePrivateLinkServices(d, platt.Status.GetCloud().NetworkingV1AzurePrivateLinkAttachmentStatus.GetPrivateLinkServices()); err != nil {
+		if err := setAzurePrivateLinkService(d, platt.Status.GetCloud().NetworkingV1AzurePrivateLinkAttachmentStatus.GetPrivateLinkService()); err != nil {
 			return nil, err
 		}
 	} else if platt.Status.GetCloud().NetworkingV1GcpPrivateLinkAttachmentStatus != nil {
@@ -301,16 +301,11 @@ func setPrivateLinkAttachmentAttributes(d *schema.ResourceData, platt netpl.Netw
 	return d, nil
 }
 
-func setAzurePrivateLinkServices(d *schema.ResourceData, privateLinkServices []netpl.NetworkingV1AzurePrivateLinkService) error {
-	result := make([]interface{}, len(privateLinkServices))
-	for i, t := range privateLinkServices {
-		result[i] = map[string]interface{}{
-			paramZone:                         t.GetZone(),
-			paramPrivateLinkServiceAlias:      t.GetPrivateLinkServiceAlias(),
-			paramPrivateLinkServiceResourceId: t.GetPrivateLinkServiceResourceId(),
-		}
-	}
-	return d.Set(paramAzure, result)
+func setAzurePrivateLinkService(d *schema.ResourceData, privateLinkService netpl.NetworkingV1AzurePrivateLinkService) error {
+	return d.Set(paramAzure, []interface{}{map[string]interface{}{
+		paramPrivateLinkServiceAlias:      privateLinkService.GetPrivateLinkServiceAlias(),
+		paramPrivateLinkServiceResourceId: privateLinkService.GetPrivateLinkServiceResourceId(),
+	}})
 }
 
 func setGcpServiceAttachments(d *schema.ResourceData, serviceAttachments []netpl.NetworkingV1GcpPscServiceAttachment) error {

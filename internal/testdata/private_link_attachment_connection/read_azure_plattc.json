@@ -1,0 +1,41 @@
+{
+  "api_version": "networking/v1",
+  "kind": "PrivateLinkAttachmentConnection",
+  "id": "plattc-xyzuvw1",
+  "metadata": {
+    "self": "https://api.confluent.cloud/networking/v1/private-link-attachment-connections/plattc-xyzuvw1",
+    "resource_name": "crn://confluent.cloud/organization=1111aaaa-11aa-11aa-11aa-111111aaaaaa/private-link-attachment-connection=plattc-xyzuvw1",
+    "created_at": "2006-01-02T15:04:05-07:00",
+    "updated_at": "2006-01-02T15:04:05-07:00",
+    "deleted_at": "2006-01-02T15:04:05-07:00"
+  },
+  "spec": {
+    "display_name": "prod-azure-central-us-az1-connection",
+    "cloud": {
+      "kind": "AzurePrivateLinkAttachmentConnection",
+      "private_endpoint_resource_id": "/subscriptions/123aaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/resourceGroups/testvpc/providers/Microsoft.Network/privateEndpoints/pe-platt-abcdef-az1"
+    },
+    "environment": {
+      "id": "env-12345",
+      "related": "https://api.confluent.cloud/v2/environments/env-12345",
+      "resource_name": "https://api.confluent.cloud/organization=1111aaaa-11aa-11aa-11aa-111111aaaaaa/environment=env-12345"
+    },
+    "private_link_attachment": {
+      "id": "platt-abcdef",
+      "related": "https://api.confluent.cloud/networking/v1/private-link-attachments/platt-abcdef",
+      "resource_name": "https://api.confluent.cloud/organization=1111aaaa-11aa-11aa-11aa-111111aaaaaa/private-link-attachment=platt-abcdef"
+    }
+  },
+  "status": {
+    "phase": "READY",
+    "error_code": "",
+    "error_message": "",
+    "cloud": {
+      "kind": "AzurePrivateLinkAttachmentConnectionStatus",
+      "zone": "1",
+      "private_link_service_alias": "pls-plt-abcdef-az1.f5aedb5a-5830-4ca6-9285-e5c81ffca2cb.centralus.azure.privatelinkservice",
+      "private_link_service_resource_id": "/subscriptions/12345678-9012-3456-7890-123456789012/resourceGroups/rg-abcdef/providers/Microsoft.Network/privateLinkServices/pls-plt-abcdef-az1",
+      "private_endpoint_resource_id": "/subscriptions/123aaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/resourceGroups/testvpc/providers/Microsoft.Network/privateEndpoints/pe-platt-abcdef-az1"
+    }
+  }
+}
