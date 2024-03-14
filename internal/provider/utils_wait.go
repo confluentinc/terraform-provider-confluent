@@ -448,8 +448,8 @@ func waitForSchemaExporterToProvision(ctx context.Context, c *SchemaRegistryRest
 		Pending:      []string{stateProvisioning},
 		Target:       []string{stateReady},
 		Refresh:      schemaExporterProvisionStatus(c.apiContext(ctx), c, id, name),
-		Timeout:      dataCatalogTimeout,
-		PollInterval: time.Second,
+		Timeout:      dataCatalogExporterTimeout,
+		PollInterval: 30 * time.Second,
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for Schema Exporter %q provisioning status to become %q", id, stateReady), map[string]interface{}{schemaExporterLoggingKey: id})

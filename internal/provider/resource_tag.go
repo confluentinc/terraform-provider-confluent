@@ -30,6 +30,7 @@ import (
 
 const (
 	dataCatalogTimeout            = time.Minute
+	dataCatalogExporterTimeout    = 10 * time.Minute
 	dataCatalogAPIWaitAfterCreate = 30 * time.Second
 )
 
