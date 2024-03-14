@@ -124,3 +124,5 @@ require (
 )
 
 replace github.com/go-git/go-git/v5 => github.com/go-git/go-git/v5 v5.11.0
+
+replace google.golang.org/protobuf => google.golang.org/protobuf v1.33.0
