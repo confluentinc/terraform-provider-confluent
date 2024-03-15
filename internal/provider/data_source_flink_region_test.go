@@ -82,7 +82,7 @@ func TestAccDataSourceFlinkRegion(t *testing.T) {
 					resource.TestCheckResourceAttr(fullFlinkRegionDataSourceLabel, paramId,
 						strings.ToLower(fmt.Sprintf("%s.%s", flinkRegionCloudProvider, flinkRegionCloudProviderRegion))),
 					resource.TestCheckResourceAttr(fullFlinkRegionDataSourceLabel, paramCloud,
-						strings.ToLower(flinkRegionCloudProvider)),
+						flinkRegionCloudProvider),
 					resource.TestCheckResourceAttr(fullFlinkRegionDataSourceLabel, paramRegion,
 						flinkRegionCloudProviderRegion),
 					resource.TestCheckResourceAttr(fullFlinkRegionDataSourceLabel, paramRestEndpoint, flinkRegionRestEndpoint),
