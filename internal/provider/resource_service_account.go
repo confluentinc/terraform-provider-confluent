@@ -57,6 +57,10 @@ func serviceAccountResource() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "A free-form description of the Service Account.",
+				ValidateFunc: validation.All(
+					validation.StringIsNotEmpty,
+					validation.StringLenBetween(0, 128)
+				),
 			},
 		},
 	}
