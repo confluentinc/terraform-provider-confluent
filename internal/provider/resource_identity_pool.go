@@ -48,13 +48,19 @@ func identityPoolResource() *schema.Resource {
 				Type:         schema.TypeString,
 				Required:     true,
 				Description:  "A name for the Identity Pool.",
-				ValidateFunc: validation.StringIsNotEmpty,
+				ValidateFunc: validation.All(
+					validation.StringIsNotEmpty,
+					validation.StringLenBetween(0, 64)
+				),
 			},
 			paramDescription: {
 				Type:         schema.TypeString,
 				Required:     true,
 				Description:  "A description of the Identity Pool.",
-				ValidateFunc: validation.StringIsNotEmpty,
+				ValidateFunc: validation.All(
+					validation.StringIsNotEmpty,
+					validation.StringLenBetween(0, 128)
+				),
 			},
 			paramIdentityClaim: {
 				Type:         schema.TypeString,
@@ -66,7 +72,10 @@ func identityPoolResource() *schema.Resource {
 				Type:         schema.TypeString,
 				Required:     true,
 				Description:  "A filter expression that must be evaluated to be true to use this identity pool.",
-				ValidateFunc: validation.StringIsNotEmpty,
+				ValidateFunc: validation.All(
+					validation.StringIsNotEmpty,
+					validation.StringLenBetween(0, 300)
+				),
 			},
 		},
 	}
