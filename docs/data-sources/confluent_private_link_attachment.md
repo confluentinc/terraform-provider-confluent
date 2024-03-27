@@ -47,6 +47,9 @@ In addition to the preceding arguments, the following attributes are exported:
 - `dns_domain` - (Required String) The root DNS domain for the Private Link Attachment, for example, `pr123a.us-east-2.aws.confluent.
 - `aws` (Optional Configuration Block) supports the following:
     - `vpc_endpoint_service_name` - (Required String) AWS VPC Endpoint Service that can be used to establish connections for all zones, for example `com.amazonaws.vpce.us-west-2.vpce-svc-0d3be37e21708ecd3`.
+- `azure` (Optional Configuration Block) supports the following:
+    - `private_link_service_alias ` - (Required String) Azure Private Link service alias for the availability zone.
+    - `private_link_service_resource_id` - (Required String) Azure Private Link service resource id for the availability zone.
 
 ## Getting Started
 The following end-to-end examples might help to get started with `confluent_private_link_attachment` data source:

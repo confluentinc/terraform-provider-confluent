@@ -46,6 +46,8 @@ In addition to the preceding arguments, the following attributes are exported:
   - `id` - (Required String) The unique identifier for the private link attachment.
 - `aws` - (Optional Configuration Block) supports the following:
   - `vpc_endpoint_id` - (Required String) Id of a VPC Endpoint that is connected to the VPC Endpoint service.
+- `azure` (Optional Configuration Blocks) supports the following:
+  - `private_endpoint_resource_id` - (Required String) Resource ID of the Private Endpoint that is connected to the Private Link service.
 
 ## Getting Started
 The following end-to-end examples might help to get started with `confluent_private_link_attachment_connection` data source:

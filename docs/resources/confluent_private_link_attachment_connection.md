@@ -15,7 +15,7 @@ description: |-
 ## Example Usage
 
 ```terraform
-resource "confluent_private_link_attachment_connection" "main" {
+resource "confluent_private_link_attachment_connection" "aws" {
   display_name = "my_endpoint"
   environment {
     id = "env-8gv0v5"
@@ -28,8 +28,21 @@ resource "confluent_private_link_attachment_connection" "main" {
   }
 }
 
+resource confluent_private_link_attachment_connection "azure" {
+  display_name = "prod-azure-central-us-az1-connection"
+  environment {
+    id = "env-12345"
+  }
+  azure {
+    private_endpoint_resource_id = "/subscriptions/123aaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/resourceGroups/testvpc/providers/Microsoft.Network/privateEndpoints/pe-platt-abcdef-az1"
+  }
+  private_link_attachment {
+    id = "platt-abcdef"
+  }
+}
+
 output "private_link_attachment_connection" {
-  value = confluent_private_link_attachment_connection.main
+  value = confluent_private_link_attachment_connection.aws
 }
 ```
 
@@ -45,6 +58,10 @@ The following arguments are supported:
   - `id` - (Required String) The unique identifier for the private link attachment.
 - `aws` - (Optional Configuration Block) supports the following:
   - `vpc_endpoint_id` - (Required String) Id of a VPC Endpoint that is connected to the VPC Endpoint service.
+- `azure` (Optional Configuration Blocks) supports the following:
+  - `private_endpoint_resource_id` - (Required String) Resource ID of the Private Endpoint that is connected to the Private Link service.
+
+-> **Note:** The `azure` configuration block is in a [Preview lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
 
 ## Attributes Reference
 
