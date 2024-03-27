@@ -47,3 +47,7 @@ In addition to the preceding arguments, the following attributes are exported:
 - `dns_domain` - (Required String) The root DNS domain for the Private Link Attachment, for example, `pr123a.us-east-2.aws.confluent.
 - `aws` (Optional Configuration Block) supports the following:
     - `vpc_endpoint_service_name` - (Required String) AWS VPC Endpoint Service that can be used to establish connections for all zones, for example `com.amazonaws.vpce.us-west-2.vpce-svc-0d3be37e21708ecd3`.
+
+## Getting Started
+The following end-to-end examples might help to get started with `confluent_private_link_attachment` data source:
+* [enterprise-privatelinkattachment-aws-kafka-acls](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/enterprise-privatelinkattachment-aws-kafka-acls)

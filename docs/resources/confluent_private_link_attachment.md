@@ -63,3 +63,7 @@ $ terraform import confluent_private_link_attachment.main env-abc123/platt-abc12
 ```
 
 !> **Warning:** Do not forget to delete terminal command history afterwards for security purposes.
+
+## Getting Started
+The following end-to-end examples might help to get started with `confluent_private_link_attachment` resource:
+* [enterprise-privatelinkattachment-aws-kafka-acls](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/enterprise-privatelinkattachment-aws-kafka-acls)

@@ -46,3 +46,7 @@ In addition to the preceding arguments, the following attributes are exported:
   - `id` - (Required String) The unique identifier for the private link attachment.
 - `aws` - (Optional Configuration Block) supports the following:
   - `vpc_endpoint_id` - (Required String) Id of a VPC Endpoint that is connected to the VPC Endpoint service.
+
+## Getting Started
+The following end-to-end examples might help to get started with `confluent_private_link_attachment_connection` data source:
+* [enterprise-privatelinkattachment-aws-kafka-acls](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/enterprise-privatelinkattachment-aws-kafka-acls)
