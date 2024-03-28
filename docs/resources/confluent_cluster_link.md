@@ -119,8 +119,6 @@ The following arguments are supported:
 
 -> **Note:** To rotate a Kafka API key, create a new Kafka API key, update the `credentials` block in all configuration files to use the new Kafka API key, run `terraform apply -target="confluent_cluster_link.example"`, and remove the old Kafka API key. Alternatively, in case the old Kafka API Key was deleted already, you might need to run `terraform plan -refresh=false -target="confluent_cluster_link.example" -out=rotate-kafka-api-key` and `terraform apply rotate-kafka-api-key` instead.
 
--> **Note:** Setting or updating cluster link settings is currently not supported. 
-
 !> **Warning:** Terraform doesn't encrypt the sensitive `credentials` value of the `confluent_cluster_link` resource, so you must keep your state file secure to avoid exposing it. Refer to the [Terraform documentation](https://www.terraform.io/docs/language/state/sensitive-data.html) to learn more about securing your state file.
 
 -> **Note:** See [Supported Cluster Types](https://docs.confluent.io/cloud/current/multi-cloud/cluster-linking/index.html#supported-cluster-types) to determine supported options for source and destination clusters.
