@@ -34,6 +34,7 @@ import (
 	quotas "github.com/confluentinc/ccloud-sdk-go-v2/kafka-quotas/v1"
 	ksql "github.com/confluentinc/ccloud-sdk-go-v2/ksql/v2"
 	mds "github.com/confluentinc/ccloud-sdk-go-v2/mds/v2"
+	netap "github.com/confluentinc/ccloud-sdk-go-v2/networking-access-point/v1"
 	netpl "github.com/confluentinc/ccloud-sdk-go-v2/networking-privatelink/v1"
 	net "github.com/confluentinc/ccloud-sdk-go-v2/networking/v1"
 	org "github.com/confluentinc/ccloud-sdk-go-v2/org/v2"
@@ -72,6 +73,7 @@ type Client struct {
 	connectClient                   *connect.APIClient
 	fcpmClient                      *fcpm.APIClient
 	netClient                       *net.APIClient
+	netAccessPointClient            *netap.APIClient
 	netIpClient                     *netip.APIClient
 	netPLClient                     *netpl.APIClient
 	netDnsClient                    *dns.APIClient
@@ -265,6 +267,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_ip_addresses":                       ipAddressesDataSource(),
 				"confluent_kafka_client_quota":                 kafkaClientQuotaDataSource(),
 				"confluent_network":                            networkDataSource(),
+				"confluent_dns_record":                         dnsRecordDataSource(),
 				"confluent_gateway":                            gatewayDataSource(),
 				"confluent_organization":                       organizationDataSource(),
 				"confluent_peering":                            peeringDataSource(),
@@ -318,6 +321,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_kafka_acl":                          kafkaAclResource(),
 				"confluent_network":                            networkResource(),
 				"confluent_dns_forwarder":                      dnsForwarderResource(),
+				"confluent_dns_record":                         dnsRecordResource(),
 				"confluent_peering":                            peeringResource(),
 				"confluent_private_link_access":                privateLinkAccessResource(),
 				"confluent_private_link_attachment":            privateLinkAttachmentResource(),
@@ -456,6 +460,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	iamV1Cfg := iamv1.NewConfiguration()
 	mdsCfg := mds.NewConfiguration()
 	netCfg := net.NewConfiguration()
+	netAccessPointCfg := netap.NewConfiguration()
 	netIpCfg := netip.NewConfiguration()
 	netPLCfg := netpl.NewConfiguration()
 	netDnsCfg := dns.NewConfiguration()
@@ -478,6 +483,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	netCfg.Servers[0].URL = endpoint
 	netIpCfg.Servers[0].URL = endpoint
 	netPLCfg.Servers[0].URL = endpoint
+	netAccessPointCfg.Servers[0].URL = endpoint
 	netDnsCfg.Servers[0].URL = endpoint
 	oidcCfg.Servers[0].URL = endpoint
 	orgCfg.Servers[0].URL = endpoint
@@ -496,6 +502,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	iamV1Cfg.UserAgent = userAgent
 	mdsCfg.UserAgent = userAgent
 	netCfg.UserAgent = userAgent
+	netAccessPointCfg.UserAgent = userAgent
 	netIpCfg.UserAgent = userAgent
 	netDnsCfg.UserAgent = userAgent
 	netPLCfg.UserAgent = userAgent
@@ -524,6 +531,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	iamV1Cfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
 	mdsCfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
 	netCfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
+	netAccessPointCfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
 	netIpCfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
 	netPLCfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
 	netDnsCfg.HTTPClient = NewRetryableClientFactory(WithMaxRetries(maxRetries)).CreateRetryableClient()
@@ -544,6 +552,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 		iamClient:                       iam.NewAPIClient(iamCfg),
 		iamV1Client:                     iamv1.NewAPIClient(iamV1Cfg),
 		netClient:                       net.NewAPIClient(netCfg),
+		netAccessPointClient:            netap.NewAPIClient(netAccessPointCfg),
 		netIpClient:                     netip.NewAPIClient(netIpCfg),
 		netPLClient:                     netpl.NewAPIClient(netPLCfg),
 		netDnsClient:                    dns.NewAPIClient(netDnsCfg),

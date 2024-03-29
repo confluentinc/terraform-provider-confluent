@@ -24,7 +24,8 @@ import (
 )
 
 const (
-	stateUp = "UP"
+	stateUp      = "UP"
+	stateCreated = "CREATED"
 )
 
 func waitForCreatedKafkaApiKeyToSync(ctx context.Context, c *KafkaRestClient) error {
@@ -268,6 +269,24 @@ func waitForNetworkLinkEndpointToProvision(ctx context.Context, c *Client, envir
 	return nil
 }
 
+func waitForDnsRecordToProvision(ctx context.Context, c *Client, environmentId, dnsRecordId string) error {
+	stateConf := &resource.StateChangeConf{
+		Pending: []string{stateProvisioning},
+		Target:  []string{stateReady, stateCreated},
+		Refresh: dnsRecordProvisionStatus(c.netAPApiContext(ctx), c, environmentId, dnsRecordId),
+		Timeout: networkingAPICreateTimeout,
+		// TODO: increase delay
+		Delay:        5 * time.Second,
+		PollInterval: 1 * time.Minute,
+	}
+
+	tflog.Debug(ctx, fmt.Sprintf("Waiting for DNS Record %q provisioning status to become %q", dnsRecordId, stateCreated), map[string]interface{}{dnsRecordKey: dnsRecordId})
+	if _, err := stateConf.WaitForStateContext(c.netAPApiContext(ctx)); err != nil {
+		return err
+	}
+	return nil
+}
+
 func waitForComputePoolToProvision(ctx context.Context, c *Client, environmentId, computePoolId string) error {
 	stateConf := &resource.StateChangeConf{
 		Pending: []string{stateProvisioning},
@@ -490,6 +509,23 @@ func waitForKafkaClusterCkuUpdateToComplete(ctx context.Context, c *Client, envi
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for Kafka Cluster %q CKU update", clusterId), map[string]interface{}{kafkaClusterLoggingKey: clusterId})
 	if _, err := stateConf.WaitForStateContext(c.cmkApiContext(ctx)); err != nil {
+		return err
+	}
+	return nil
+}
+
+func waitForDnsRecordToBeDeleted(ctx context.Context, c *Client, environmentId, dnsRecordId string) error {
+	stateConf := &resource.StateChangeConf{
+		Pending:      []string{stateInProgress},
+		Target:       []string{stateDone},
+		Refresh:      dnsRecordDeleteStatus(c.netAPApiContext(ctx), c, environmentId, dnsRecordId),
+		Timeout:      networkingAPIDeleteTimeout,
+		Delay:        1 * time.Minute,
+		PollInterval: 1 * time.Minute,
+	}
+
+	tflog.Debug(ctx, fmt.Sprintf("Waiting for DNS Record %q to be deleted", dnsRecordId), map[string]interface{}{dnsRecordKey: dnsRecordId})
+	if _, err := stateConf.WaitForStateContext(c.netAPApiContext(ctx)); err != nil {
 		return err
 	}
 	return nil
@@ -945,6 +981,25 @@ func networkProvisionStatus(ctx context.Context, c *Client, environmentId string
 	}
 }
 
+func dnsRecordProvisionStatus(ctx context.Context, c *Client, environmentId string, dnsRecordId string) resource.StateRefreshFunc {
+	return func() (result interface{}, s string, err error) {
+		dnsRecord, _, err := executeDnsRecordRead(c.netAPApiContext(ctx), c, environmentId, dnsRecordId)
+		if err != nil {
+			tflog.Warn(ctx, fmt.Sprintf("Error reading DNS Record %q: %s", dnsRecordId, createDescriptiveError(err)), map[string]interface{}{dnsRecordKey: dnsRecordId})
+			return nil, stateUnknown, err
+		}
+
+		tflog.Debug(ctx, fmt.Sprintf("Waiting for DNS Record %q provisioning status to become %q or %q: current status is %q", dnsRecordId, stateReady, stateCreated, dnsRecord.Status.GetPhase()), map[string]interface{}{dnsRecordKey: dnsRecordId})
+		if dnsRecord.Status.GetPhase() == stateProvisioning || dnsRecord.Status.GetPhase() == stateReady || dnsRecord.Status.GetPhase() == stateCreated {
+			return dnsRecord, dnsRecord.Status.GetPhase(), nil
+		} else if dnsRecord.Status.GetPhase() == stateFailed {
+			return nil, stateFailed, fmt.Errorf("dns record %q provisioning status is %q: %s", dnsRecordId, stateFailed, dnsRecord.Status.GetErrorMessage())
+		}
+		// DNS Record is in an unexpected state
+		return nil, stateUnexpected, fmt.Errorf("dns record %q is an unexpected state %q: %s", dnsRecordId, dnsRecord.Status.GetPhase(), dnsRecord.Status.GetErrorMessage())
+	}
+}
+
 func flinkStatementProvisionStatus(ctx context.Context, c *FlinkRestClient, statementName string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
 		statement, _, err := executeFlinkStatementRead(c.apiContext(ctx), c, statementName)
@@ -1199,6 +1254,26 @@ func transitGatewayAttachmentProvisionStatus(ctx context.Context, c *Client, env
 		}
 		// Peering is in an unexpected state
 		return nil, stateUnexpected, fmt.Errorf("transit Gateway Attachment %q is an unexpected state %q: %s", transitGatewayAttachmentId, transitGatewayAttachment.Status.GetPhase(), transitGatewayAttachment.Status.GetErrorMessage())
+	}
+}
+
+func dnsRecordDeleteStatus(ctx context.Context, c *Client, environmentId, dnsRecordId string) resource.StateRefreshFunc {
+	return func() (result interface{}, s string, err error) {
+		dnsRecord, resp, err := executeDnsRecordRead(c.netAPApiContext(ctx), c, environmentId, dnsRecordId)
+		if err != nil {
+			tflog.Warn(ctx, fmt.Sprintf("Error reading DNS Record %q: %s", dnsRecordId, createDescriptiveError(err)), map[string]interface{}{dnsRecordKey: dnsRecordId})
+
+			isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
+			if isResourceNotFound {
+				tflog.Debug(ctx, fmt.Sprintf("Finishing DNS Record %q deletion process: Received %d status code when reading %q DNS Record", dnsRecordId, resp.StatusCode, dnsRecordId), map[string]interface{}{dnsRecordKey: dnsRecordId})
+				return 0, stateDone, nil
+			} else {
+				tflog.Debug(ctx, fmt.Sprintf("Exiting DNS Record %q deletion process: Failed when reading DNS Record: %s: %s", dnsRecordId, createDescriptiveError(err), dnsRecord.Status.GetErrorMessage()), map[string]interface{}{dnsRecordKey: dnsRecordId})
+				return nil, stateFailed, err
+			}
+		}
+		tflog.Debug(ctx, fmt.Sprintf("Performing DNS Record %q deletion process: DNS Record %d's status is %q", dnsRecordId, resp.StatusCode, dnsRecord.Status.GetPhase()), map[string]interface{}{dnsRecordKey: dnsRecordId})
+		return dnsRecord, stateInProgress, nil
 	}
 }
 
