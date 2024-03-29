@@ -21,7 +21,6 @@ data "confluent_environment" "staging" {
 locals {
   cloud  = "AWS"
   region = "us-east-2"
-  table_name = "random_int_table"
 }
 
 // In Confluent Cloud, an environment is mapped to a Flink catalog, and a Kafka cluster is mapped to a Flink database.
@@ -41,6 +40,80 @@ resource "confluent_kafka_cluster" "standard" {
 resource "confluent_service_account" "statements-runner" {
   display_name = "statements-runner"
   description  = "Service account for running Flink Statements in 'inventory' Kafka cluster"
+}
+
+// Service account to set up initial infrastructure, such as creating a schema and a Kafka topic (Flink table)
+resource "confluent_service_account" "infrastructure-manager" {
+  display_name = "infrastructure-manager"
+  description  = "Service account for setting up schemas and Kafka topics (Flink tables)"
+}
+
+resource "confluent_role_binding" "infrastructure-manager-environment-admin" {
+  principal   = "User:${confluent_service_account.infrastructure-manager.id}"
+  role_name   = "EnvironmentAdmin"
+  crn_pattern = data.confluent_environment.staging.resource_name
+}
+
+resource "confluent_api_key" "infrastructure-manager-kafka-api-key" {
+  display_name = "infrastructure-manager-kafka-api-key"
+  description  = "Kafka API Key that is owned by 'infrastructure-manager' service account"
+  owner {
+    id          = confluent_service_account.infrastructure-manager.id
+    api_version = confluent_service_account.infrastructure-manager.api_version
+    kind        = confluent_service_account.infrastructure-manager.kind
+  }
+
+  managed_resource {
+    id          = confluent_kafka_cluster.standard.id
+    api_version = confluent_kafka_cluster.standard.api_version
+    kind        = confluent_kafka_cluster.standard.kind
+
+    environment {
+      id = data.confluent_environment.staging.id
+    }
+  }
+
+  # The goal is to ensure that confluent_role_binding.infrastructure-manager-environment-admin is created before
+  # confluent_api_key.infrastructure-manager-kafka-api-key is used to create instances of
+  # confluent_kafka_topic resources.
+
+  # 'depends_on' meta-argument is specified in confluent_api_key.infrastructure-manager-kafka-api-key to avoid having
+  # multiple copies of this definition in the configuration which would happen if we specify it in
+  # confluent_kafka_topic resources instead.
+  depends_on = [
+    confluent_role_binding.infrastructure-manager-environment-admin
+  ]
+}
+
+resource "confluent_api_key" "infrastructure-manager-schema-registry-api-key" {
+  display_name = "infrastructure-manager-schema-registry-api-key"
+  description  = "Schema Registry API Key that is owned by 'infrastructure-manager' service account"
+  owner {
+    id          = confluent_service_account.infrastructure-manager.id
+    api_version = confluent_service_account.infrastructure-manager.api_version
+    kind        = confluent_service_account.infrastructure-manager.kind
+  }
+
+  managed_resource {
+    id          = confluent_schema_registry_cluster.essentials.id
+    api_version = confluent_schema_registry_cluster.essentials.api_version
+    kind        = confluent_schema_registry_cluster.essentials.kind
+
+    environment {
+      id = data.confluent_environment.staging.id
+    }
+  }
+
+  # The goal is to ensure that confluent_role_binding.infrastructure-manager-environment-admin is created before
+  # confluent_api_key.infrastructure-manager-schema-registry-api-key is used to create instances of
+  # confluent_schema resources.
+
+  # 'depends_on' meta-argument is specified in confluent_api_key.infrastructure-manager-schema-registry-api-key to
+  # avoid having multiple copies of this definition in the configuration which would happen if we specify it in
+  # confluent_schema resources instead.
+  depends_on = [
+    confluent_role_binding.infrastructure-manager-environment-admin
+  ]
 }
 
 resource "confluent_role_binding" "statements-runner-environment-admin" {
@@ -123,27 +196,35 @@ resource "confluent_flink_compute_pool" "main" {
     confluent_api_key.app-manager-flink-api-key,
   ]
 }
-resource "confluent_flink_statement" "select-current-timestamp" {
-  organization {
-    id = data.confluent_organization.main.id
+
+resource "confluent_kafka_topic" "orders" {
+  kafka_cluster {
+    id = confluent_kafka_cluster.standard.id
   }
-  environment {
-    id = data.confluent_environment.staging.id
-  }
-  compute_pool {
-    id = confluent_flink_compute_pool.main.id
-  }
-  principal {
-    id = confluent_service_account.statements-runner.id
-  }
-  statement     = "SELECT CURRENT_TIMESTAMP;"
-  rest_endpoint = data.confluent_flink_region.main.rest_endpoint
+  topic_name    = "orders_source"
+  rest_endpoint = confluent_kafka_cluster.standard.rest_endpoint
   credentials {
-    key    = confluent_api_key.app-manager-flink-api-key.id
-    secret = confluent_api_key.app-manager-flink-api-key.secret
+    key    = confluent_api_key.infrastructure-manager-kafka-api-key.id
+    secret = confluent_api_key.infrastructure-manager-kafka-api-key.secret
   }
 }
-resource "confluent_flink_statement" "create-table" {
+
+resource "confluent_schema" "order" {
+  schema_registry_cluster {
+    id = confluent_schema_registry_cluster.essentials.id
+  }
+  rest_endpoint = confluent_schema_registry_cluster.essentials.rest_endpoint
+  # https://developer.confluent.io/learn-kafka/schema-registry/schema-subjects/#topicnamestrategy
+  subject_name  = "${confluent_kafka_topic.orders.topic_name}-value"
+  format        = "AVRO"
+  schema        = file("./schemas/avro/order.avsc")
+  credentials {
+    key    = confluent_api_key.infrastructure-manager-schema-registry-api-key.id
+    secret = confluent_api_key.infrastructure-manager-schema-registry-api-key.secret
+  }
+}
+
+resource "confluent_flink_statement" "populate-orders-source-table" {
   organization {
     id = data.confluent_organization.main.id
   }
@@ -156,7 +237,8 @@ resource "confluent_flink_statement" "create-table" {
   principal {
     id = confluent_service_account.statements-runner.id
   }
-  statement  = "CREATE TABLE ${local.table_name}(ts TIMESTAMP_LTZ(3), random_value INT);"
+  # https://docs.confluent.io/cloud/current/flink/reference/example-data.html#marketplace-database
+  statement  = file("./statements/populate-orders-source-table.sql")
   properties = {
     "sql.current-catalog"  = data.confluent_environment.staging.display_name
     "sql.current-database" = confluent_kafka_cluster.standard.display_name
@@ -166,61 +248,8 @@ resource "confluent_flink_statement" "create-table" {
     key    = confluent_api_key.app-manager-flink-api-key.id
     secret = confluent_api_key.app-manager-flink-api-key.secret
   }
+
   depends_on = [
-    confluent_flink_statement.select-current-timestamp,
-  ]
-}
-resource "confluent_flink_statement" "insert-into-table" {
-  organization {
-    id = data.confluent_organization.main.id
-  }
-  environment {
-    id = data.confluent_environment.staging.id
-  }
-  compute_pool {
-    id = confluent_flink_compute_pool.main.id
-  }
-  principal {
-    id = confluent_service_account.statements-runner.id
-  }
-  statement  = "INSERT INTO ${local.table_name} VALUES (CURRENT_TIMESTAMP, RAND_INTEGER(100)), (CURRENT_TIMESTAMP, RAND_INTEGER(1000));"
-  properties = {
-    "sql.current-catalog"  = data.confluent_environment.staging.display_name
-    "sql.current-database" = confluent_kafka_cluster.standard.display_name
-  }
-  rest_endpoint = data.confluent_flink_region.main.rest_endpoint
-  credentials {
-    key    = confluent_api_key.app-manager-flink-api-key.id
-    secret = confluent_api_key.app-manager-flink-api-key.secret
-  }
-  depends_on = [
-    confluent_flink_statement.create-table,
-  ]
-}
-resource "confluent_flink_statement" "select-from-table" {
-  organization {
-    id = data.confluent_organization.main.id
-  }
-  environment {
-    id = data.confluent_environment.staging.id
-  }
-  compute_pool {
-    id = confluent_flink_compute_pool.main.id
-  }
-  principal {
-    id = confluent_service_account.statements-runner.id
-  }
-  statement  = "SELECT * FROM ${local.table_name};"
-  properties = {
-    "sql.current-catalog"  = data.confluent_environment.staging.display_name
-    "sql.current-database" = confluent_kafka_cluster.standard.display_name
-  }
-  rest_endpoint = data.confluent_flink_region.main.rest_endpoint
-  credentials {
-    key    = confluent_api_key.app-manager-flink-api-key.id
-    secret = confluent_api_key.app-manager-flink-api-key.secret
-  }
-  depends_on = [
-    confluent_flink_statement.insert-into-table,
+    confluent_schema.order
   ]
 }
