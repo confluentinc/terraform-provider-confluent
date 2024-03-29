@@ -17,7 +17,8 @@ require (
 	github.com/confluentinc/ccloud-sdk-go-v2/kafkarest v0.14.0
 	github.com/confluentinc/ccloud-sdk-go-v2/ksql v0.1.0
 	github.com/confluentinc/ccloud-sdk-go-v2/mds v0.3.0
-	github.com/confluentinc/ccloud-sdk-go-v2/networking v0.10.0
+	github.com/confluentinc/ccloud-sdk-go-v2/networking v0.11.0
+	github.com/confluentinc/ccloud-sdk-go-v2/networking-access-point v0.1.0
 	github.com/confluentinc/ccloud-sdk-go-v2/networking-dnsforwarder v0.2.0
 	github.com/confluentinc/ccloud-sdk-go-v2/networking-ip v0.2.0
 	github.com/confluentinc/ccloud-sdk-go-v2/networking-privatelink v0.2.0
@@ -126,3 +127,8 @@ require (
 replace github.com/go-git/go-git/v5 => github.com/go-git/go-git/v5 v5.11.0
 
 replace google.golang.org/protobuf => google.golang.org/protobuf v1.33.0
+
+replace (
+	github.com/confluentinc/ccloud-sdk-go-v2/networking => github.com/confluentinc/ccloud-sdk-go-v2-internal/networking v0.0.34
+	github.com/confluentinc/ccloud-sdk-go-v2/networking-access-point => github.com/confluentinc/ccloud-sdk-go-v2-internal/networking-access-point v0.0.3
+)

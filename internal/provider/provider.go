@@ -265,6 +265,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_ip_addresses":                       ipAddressesDataSource(),
 				"confluent_kafka_client_quota":                 kafkaClientQuotaDataSource(),
 				"confluent_network":                            networkDataSource(),
+				"confluent_gateway":                            gatewayDataSource(),
 				"confluent_organization":                       organizationDataSource(),
 				"confluent_peering":                            peeringDataSource(),
 				"confluent_transit_gateway_attachment":         transitGatewayAttachmentDataSource(),

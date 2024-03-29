@@ -87,6 +87,7 @@ const (
 	networkLinkServiceLoggingKey              = "network_link_service_id"
 	peeringLoggingKey                         = "peering_id"
 	dnsForwarderKey                           = "dns_forwarder_id"
+	gatewayKey                                = "gateway_id"
 	transitGatewayAttachmentLoggingKey        = "transit_gateway_attachment_id"
 	ksqlClusterLoggingKey                     = "ksql_cluster_id"
 	identityProviderLoggingKey                = "identity_provider_id"
