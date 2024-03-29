@@ -267,6 +267,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_ip_addresses":                       ipAddressesDataSource(),
 				"confluent_kafka_client_quota":                 kafkaClientQuotaDataSource(),
 				"confluent_network":                            networkDataSource(),
+				"confluent_access_point":                       accessPointDataSource(),
 				"confluent_dns_record":                         dnsRecordDataSource(),
 				"confluent_gateway":                            gatewayDataSource(),
 				"confluent_organization":                       organizationDataSource(),
@@ -320,6 +321,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_kafka_mirror_topic":                 kafkaMirrorTopicResource(),
 				"confluent_kafka_acl":                          kafkaAclResource(),
 				"confluent_network":                            networkResource(),
+				"confluent_access_point":                       accessPointResource(),
 				"confluent_dns_forwarder":                      dnsForwarderResource(),
 				"confluent_dns_record":                         dnsRecordResource(),
 				"confluent_peering":                            peeringResource(),
@@ -459,8 +461,8 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	iamCfg := iam.NewConfiguration()
 	iamV1Cfg := iamv1.NewConfiguration()
 	mdsCfg := mds.NewConfiguration()
-	netCfg := net.NewConfiguration()
 	netAccessPointCfg := netap.NewConfiguration()
+	netCfg := net.NewConfiguration()
 	netIpCfg := netip.NewConfiguration()
 	netPLCfg := netpl.NewConfiguration()
 	netDnsCfg := dns.NewConfiguration()

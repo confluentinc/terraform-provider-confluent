@@ -287,6 +287,24 @@ func waitForDnsRecordToProvision(ctx context.Context, c *Client, environmentId, 
 	return nil
 }
 
+func waitForAccessPointToProvision(ctx context.Context, c *Client, environmentId, accessPointId string) error {
+	stateConf := &resource.StateChangeConf{
+		Pending: []string{stateProvisioning},
+		Target:  []string{stateReady, statePendingAccept},
+		Refresh: accessPointProvisionStatus(c.netAPApiContext(ctx), c, environmentId, accessPointId),
+		Timeout: networkingAPICreateTimeout,
+		// TODO: increase delay
+		Delay:        5 * time.Second,
+		PollInterval: 1 * time.Minute,
+	}
+
+	tflog.Debug(ctx, fmt.Sprintf("Waiting for Access Point %q provisioning status to become %q", accessPointId, stateReady), map[string]interface{}{accessPointKey: accessPointId})
+	if _, err := stateConf.WaitForStateContext(c.netAPApiContext(ctx)); err != nil {
+		return err
+	}
+	return nil
+}
+
 func waitForComputePoolToProvision(ctx context.Context, c *Client, environmentId, computePoolId string) error {
 	stateConf := &resource.StateChangeConf{
 		Pending: []string{stateProvisioning},
@@ -997,6 +1015,25 @@ func dnsRecordProvisionStatus(ctx context.Context, c *Client, environmentId stri
 		}
 		// DNS Record is in an unexpected state
 		return nil, stateUnexpected, fmt.Errorf("dns record %q is an unexpected state %q: %s", dnsRecordId, dnsRecord.Status.GetPhase(), dnsRecord.Status.GetErrorMessage())
+	}
+}
+
+func accessPointProvisionStatus(ctx context.Context, c *Client, environmentId string, accessPointId string) resource.StateRefreshFunc {
+	return func() (result interface{}, s string, err error) {
+		accessPoint, _, err := executeAccessPointRead(c.netAPApiContext(ctx), c, environmentId, accessPointId)
+		if err != nil {
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Access Point %q: %s", accessPointId, createDescriptiveError(err)), map[string]interface{}{accessPointKey: accessPointId})
+			return nil, stateUnknown, err
+		}
+
+		tflog.Debug(ctx, fmt.Sprintf("Waiting for Access Point %q provisioning status to become %q: current status is %q", accessPointId, stateReady, accessPoint.Status.GetPhase()), map[string]interface{}{accessPointKey: accessPointId})
+		if accessPoint.Status.GetPhase() == stateProvisioning || accessPoint.Status.GetPhase() == stateReady || accessPoint.Status.GetPhase() == statePendingAccept {
+			return accessPoint, accessPoint.Status.GetPhase(), nil
+		} else if accessPoint.Status.GetPhase() == stateFailed {
+			return nil, stateFailed, fmt.Errorf("access point %q provisioning status is %q: %s", accessPointId, stateFailed, accessPoint.Status.GetErrorMessage())
+		}
+		// Access Point is in an unexpected state
+		return nil, stateUnexpected, fmt.Errorf("access point %q is an unexpected state %q: %s", accessPointId, accessPoint.Status.GetPhase(), accessPoint.Status.GetErrorMessage())
 	}
 }
 

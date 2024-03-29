@@ -89,6 +89,7 @@ const (
 	peeringLoggingKey                         = "peering_id"
 	dnsForwarderKey                           = "dns_forwarder_id"
 	dnsRecordKey                              = "dns_record_id"
+	accessPointKey                            = "access_point_id"
 	gatewayKey                                = "gateway_id"
 	transitGatewayAttachmentLoggingKey        = "transit_gateway_attachment_id"
 	ksqlClusterLoggingKey                     = "ksql_cluster_id"

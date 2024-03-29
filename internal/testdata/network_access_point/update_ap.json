@@ -1,0 +1,41 @@
+{
+  "api_version": "networking/v1",
+  "id": "ap-abc123",
+  "kind": "AccessPoint",
+  "metadata": {
+    "created_at": "2024-02-01T22:25:50.415274Z",
+    "resource_name": "crn://confluent.cloud/organization=abc123/environment=env-abc123/gateway=gw-abc123/access-point=ap-abc123",
+    "self": "https://api.confluent.cloud/networking/v1/access-points/ap-abc123?environment=env-abc123",
+    "updated_at": "2024-02-01T22:25:50.415274Z"
+  },
+  "spec": {
+    "config": {
+      "kind": "AwsEgressPrivateLinkEndpoint",
+      "vpc_endpoint_service_name": "com.amazonaws.vpce.us-west-2.vpce-svc-00000000000000000",
+      "enable_high_availability": false
+    },
+    "display_name": "prod-ap-2",
+    "environment": {
+      "api_version": "org/v2",
+      "id": "env-abc123",
+      "kind": "Environment",
+      "related": "https://api.confluent.cloud/v2/environments/env-abc123",
+      "resource_name": "crn://confluent.cloud/organization=abc123/environment=env-abc123"
+    },
+    "gateway": {
+      "api_version": "networking/v1",
+      "id": "gw-abc123",
+      "kind": "Gateway",
+      "related": "https://api.confluent.cloud/v2/gateways/gw-abc123?environment=env-abc123",
+      "resource_name": "crn://confluent.cloud/organization=abc123/environment=env-abc123/gateway=gw-abc123"
+    }
+  },
+  "status": {
+    "phase": "READY",
+    "config": {
+      "kind": "AwsEgressPrivateLinkEndpointStatus",
+      "vpc_endpoint_dns_name": "*.vpce-00000000000000000-abcd1234.s3.us-west-2.vpce.amazonaws.com",
+      "vpc_endpoint_id": "vpce-00000000000000000"
+    }
+  }
+}
