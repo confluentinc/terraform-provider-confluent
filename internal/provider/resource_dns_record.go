@@ -207,8 +207,8 @@ func dnsRecordDelete(ctx context.Context, d *schema.ResourceData, meta interface
 }
 
 func dnsRecordUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if d.HasChangesExcept(paramDisplayName) {
-		return diag.Errorf("error updating DNS Record %q: only %q attribute can be updated for DNS Record", d.Id(), paramDisplayName)
+	if d.HasChangesExcept(paramDisplayName, paramPrivateLinkAccessPoint) {
+		return diag.Errorf("error updating DNS Record %q: only %q, %q attribute can be updated for DNS Record", d.Id(), paramDisplayName, paramPrivateLinkAccessPoint)
 	}
 
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
@@ -219,6 +219,14 @@ func dnsRecordUpdate(ctx context.Context, d *schema.ResourceData, meta interface
 	updateDnsRecordSpec.SetEnvironment(netap.ObjectReference{Id: environmentId})
 	if d.HasChange(paramDisplayName) {
 		updateDnsRecordSpec.SetDisplayName(d.Get(paramDisplayName).(string))
+	}
+	if d.HasChange(paramPrivateLinkAccessPoint) {
+		updateDnsRecordSpec.SetConfig(netap.NetworkingV1DnsRecordSpecUpdateConfigOneOf{
+			NetworkingV1PrivateLinkAccessPoint: &netap.NetworkingV1PrivateLinkAccessPoint{
+				Kind:       privateLinkAccessPoint,
+				ResourceId: extractStringValueFromBlock(d, paramPrivateLinkAccessPoint, paramId),
+			},
+		})
 	}
 
 	updateDnsRecord.SetSpec(*updateDnsRecordSpec)

@@ -127,8 +127,3 @@ require (
 replace github.com/go-git/go-git/v5 => github.com/go-git/go-git/v5 v5.11.0
 
 replace google.golang.org/protobuf => google.golang.org/protobuf v1.33.0
-
-replace (
-	github.com/confluentinc/ccloud-sdk-go-v2/networking => github.com/confluentinc/ccloud-sdk-go-v2-internal/networking v0.0.34
-	github.com/confluentinc/ccloud-sdk-go-v2/networking-access-point => github.com/confluentinc/ccloud-sdk-go-v2-internal/networking-access-point v0.0.3
-)

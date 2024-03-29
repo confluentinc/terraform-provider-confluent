@@ -111,10 +111,11 @@ func accessPointCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 
 	config := netap.NetworkingV1AccessPointSpecConfigOneOf{}
 	if isAwsEgressPrivateLinkEndpoint {
+		enableHighAvailability := d.Get(fmt.Sprintf("%s.0.%s", paramAwsEgressPrivateLinkEndpoint, paramEnableHighAvailability)).(bool)
 		config.NetworkingV1AwsEgressPrivateLinkEndpoint = &netap.NetworkingV1AwsEgressPrivateLinkEndpoint{
 			Kind:                   awsEgressPrivateLinkEndpoint,
 			VpcEndpointServiceName: extractStringValueFromBlock(d, paramAwsEgressPrivateLinkEndpoint, paramVpcEndpointServiceName),
-			EnableHighAvailability: netap.PtrBool(extractBoolValueFromBlock(d, paramAwsEgressPrivateLinkEndpoint, paramEnableHighAvailability)),
+			EnableHighAvailability: netap.PtrBool(enableHighAvailability),
 		}
 		spec.SetConfig(config)
 	} else {
@@ -298,16 +299,4 @@ func setAccessPointAttributes(d *schema.ResourceData, accessPoint netap.Networki
 	}
 	d.SetId(accessPoint.GetId())
 	return d, nil
-}
-
-// extractBoolValueFromBlock() returns the bool for the given key, or false if the key doesn't exist in the configuration.
-// Schema definition's required:true property guarantees that all required resource attributes are set
-// hence extractBoolValueFromBlock() doesn't return errors (similar to d.Get())
-func extractBoolValueFromBlock(d *schema.ResourceData, blockName string, attribute string) bool {
-	// d.Get() will return "" if the key is not present
-	value, ok := d.GetOk(fmt.Sprintf("%s.0.%s", blockName, attribute))
-	if !ok || value == nil {
-		return false
-	}
-	return value.(bool)
 }
