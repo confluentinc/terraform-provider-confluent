@@ -34,4 +34,10 @@ blocks:
       jobs:
         - name: goreleaser
           commands:
-            - curl -sL https://git.io/goreleaser | bash
+            # install pact CLIs
+            - make pact-cli-install
+            # check if our dependencies are compatible
+            - make pact-can-i-deploy
+            - curl -sL https://git.io/goreleaser | bash -s -- --snapshot
+            # record this version as released
+            - make pact-release

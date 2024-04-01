@@ -30,3 +30,7 @@ bin/
 # to change depending on the environment.
 #
 *.tfvars
+
+# Pact
+/pact
+/internal/provider/pacts
