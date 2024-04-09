@@ -1,0 +1,38 @@
+[
+  {
+    "subject": "test2",
+    "version": 8,
+    "id": 100001,
+    "schema": "foobar",
+    "references": [
+      {
+        "name": "sampleRecord",
+        "subject": "test2",
+        "version": 9
+      },
+      {
+        "name": "sampleRecord2",
+        "subject": "test3",
+        "version": 3
+      }
+    ]
+  },
+  {
+    "subject": "test2",
+    "version": 9,
+    "id": 100002,
+    "schema": "foobar2",
+    "references": [
+      {
+        "name": "sampleRecord",
+        "subject": "test2",
+        "version": 9
+      },
+      {
+        "name": "sampleRecord2",
+        "subject": "test3",
+        "version": 3
+      }
+    ]
+  }
+]

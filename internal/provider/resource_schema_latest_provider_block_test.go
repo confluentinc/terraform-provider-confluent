@@ -21,7 +21,6 @@ import (
 	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
-	"os"
 	"strconv"
 	"testing"
 
@@ -119,12 +118,6 @@ func TestAccLatestSchemaWithEnhancedProviderBlock(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		))
-
-	// Set fake values for schema content since it's required for importing
-	_ = os.Setenv("SCHEMA_CONTENT", testSchemaContent)
-	defer func() {
-		_ = os.Unsetenv("SCHEMA_CONTENT")
-	}()
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },

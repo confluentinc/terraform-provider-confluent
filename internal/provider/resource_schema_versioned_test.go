@@ -39,6 +39,7 @@ const (
 	testFormat                    = "AVRO"
 	testStreamGovernanceClusterId = "lsrc-abc123"
 	testSchemaContent             = "foobar"
+	testSchemaContentUpdated      = "foobar2"
 	testSchemaResourceLabel       = "test_schema_resource_label"
 
 	testFirstSchemaReferenceDisplayName = "sampleRecord"
@@ -68,6 +69,7 @@ var createSchemaPath = fmt.Sprintf("/subjects/%s/versions", testSubjectName)
 var readSchemasPath = fmt.Sprintf("/schemas")
 var readLatestSchemaPath = fmt.Sprintf("/subjects/%s/versions/latest", testSubjectName)
 var deleteSchemaPath = fmt.Sprintf("/subjects/%s/versions/%s", testSubjectName, strconv.Itoa(testSchemaVersion))
+var deleteSchemaPathUpdated = fmt.Sprintf("/subjects/%s/versions/%s", testSubjectName, strconv.Itoa(testSchemaVersion+1))
 
 func TestAccVersionedSchema(t *testing.T) {
 	ctx := context.Background()

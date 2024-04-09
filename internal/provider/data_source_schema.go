@@ -129,13 +129,6 @@ func schemaDataSourceRead(ctx context.Context, d *schema.ResourceData, meta inte
 	if _, err := readSchemaRegistryConfigAndSetAttributes(ctx, d, schemaRegistryRestClient, subjectName, strconv.Itoa(schemaIdentifier)); err != nil {
 		return diag.Errorf("error reading Schema: %s", createDescriptiveError(err))
 	}
-	srSchema, _, err := loadSchema(ctx, d, schemaRegistryRestClient, subjectName, strconv.Itoa(schemaIdentifier))
-	if err != nil {
-		return diag.Errorf("error reading Schema: %s", createDescriptiveError(err))
-	}
-	if err := d.Set(paramSchema, srSchema.GetSchema()); err != nil {
-		return diag.Errorf("error reading Schema: %s", createDescriptiveError(err))
-	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished reading Schema %q", d.Id()), map[string]interface{}{schemaLoggingKey: d.Id()})
 
 	return nil
