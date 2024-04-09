@@ -1,6 +1,15 @@
+## 1.69.0 (April 9, 2024)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.68.0...v1.69.0)
+
+**Bug fixes:**
+* Resolved "schema content is not updated in state file during refresh" issue ([#318](https://github.com/confluentinc/terraform-provider-confluent/issues/318)). Thanks to @Noel-Jones for contributing the fix!
+* Resolved "confluent_schema Resource import should not require SCHEMA_CONTENT" issue ([#293](https://github.com/confluentinc/terraform-provider-confluent/issues/293)). Thanks to @Noel-Jones for contributing the fix!
+* Updated docs.
+
 ## 1.68.0 (March 29, 2024)
 
-[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.66.0...v1.67.0)
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.67.0...v1.68.0)
 
 **New features:**
 * Added new `confluent_access_point` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_access_point), `confluent_dns_record` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_dns_record) and corresponding data sources in a [General Availability lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
