@@ -38,6 +38,6 @@ blocks:
             - make pact-cli-install
             # check if our dependencies are compatible
             - make pact-can-i-deploy
-            - curl -sL https://git.io/goreleaser | bash -s -- --snapshot
+            - curl -sL https://git.io/goreleaser | bash
             # record this version as released
             - make pact-release

@@ -1,6 +1,6 @@
-## 1.69.0 (April 9, 2024)
+## 1.70.0 (April 9, 2024)
 
-[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.68.0...v1.69.0)
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.68.0...v1.70.0)
 
 **Bug fixes:**
 * Resolved "schema content is not updated in state file during refresh" issue ([#318](https://github.com/confluentinc/terraform-provider-confluent/issues/318)). Thanks to @Noel-Jones for contributing the fix!
