@@ -53,8 +53,6 @@ In addition to the preceding arguments, the following attributes are exported:
   - `private_link_service_alias ` - (Required String) Azure Private Link service alias for the availability zone.
   - `private_link_service_resource_id` - (Required String) Azure Private Link service resource id for the availability zone.
 
--> **Note:** The `azure` configuration block is in a [Preview lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
-
 ## Import
 
 -> **Note:** `CONFLUENT_CLOUD_API_KEY` and `CONFLUENT_CLOUD_API_SECRET` environment variables must be set before importing a Private Link Attachment.
@@ -71,4 +69,5 @@ $ terraform import confluent_private_link_attachment.main env-abc123/platt-abc12
 
 ## Getting Started
 The following end-to-end examples might help to get started with `confluent_private_link_attachment` resource:
-* [enterprise-privatelinkattachment-aws-kafka-acls](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/enterprise-privatelinkattachment-aws-kafka-acls)
+* [`enterprise-privatelinkattachment-aws-kafka-acls`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/enterprise-privatelinkattachment-aws-kafka-acls): _Enterprise_ Kafka cluster on AWS that is accessible via PrivateLink connections with authorization using ACLs
+* [`enterprise-privatelinkattachment-azure-kafka-acls`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/enterprise-privatelinkattachment-azure-kafka-acls): _Enterprise_ Kafka cluster on Azure that is accessible via PrivateLink connections with authorization using ACLs

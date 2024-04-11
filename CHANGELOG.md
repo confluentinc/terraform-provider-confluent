@@ -1,3 +1,13 @@
+## 1.71.0 (April 11, 2024)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.70.0...v1.71.0)
+
+**New features:**
+* Added support for new optional `azure` block of `confluent_private_link_attachment`, `confluent_private_link_attachment_connection` resources and corresponding data sources in a [General Availability lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
+* Added **1** new example:
+  * [enterprise-privatelinkattachment-azure-kafka-acls](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/enterprise-privatelinkattachment-azure-kafka-acls)
+
+
 ## 1.70.0 (April 9, 2024)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.68.0...v1.70.0)
