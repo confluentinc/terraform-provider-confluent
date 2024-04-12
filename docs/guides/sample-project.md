@@ -64,7 +64,7 @@ In this guide, you will:
 
    * Initialize and apply the selected Terraform configuration
 3. [[Optional] Run a quick test](#optional-run-a-quick-test)
-   * Use the [Confluent CLI v2](https://docs.confluent.io/confluent-cli/current/migrate.html#directly-install-confluent-cli-v2-x) to 
+   * Use the [Confluent CLI](https://docs.confluent.io/confluent-cli/current/install.html#install-confluent-cli) to 
       * Produce messages to the `orders` topic using the `app_producer` service account's Kafka API Key
       * Consume messages from the `orders` topic using the `app_consumer` service account's Kafka API Key
 4. [[Optional] Destroy created resources on Confluent Cloud](#optional-teardown-confluent-cloud-resources)
@@ -170,11 +170,11 @@ In this guide, you will:
 
    !> **Warning:** Before running `terraform apply`, please take a look at the corresponding [README file](https://github.com/confluentinc/terraform-provider-confluent/blob/master/examples/configurations/basic-kafka-acls/README.md) for other instructions.
 
-10. You have now created infrastructure using Terraform! Visit the [Confluent Cloud Console](https://confluent.cloud/environments) or use the [Confluent CLI v2](https://docs.confluent.io/confluent-cli/current/migrate.html#directly-install-confluent-cli-v2-x) to see the resources you provisioned.
+10. You have now created infrastructure using Terraform! Visit the [Confluent Cloud Console](https://confluent.cloud/environments) or use the [Confluent CLI](https://docs.confluent.io/confluent-cli/current/install.html#install-confluent-cli) to see the resources you provisioned.
 
 ## [Optional] Run a Quick Test
 
-1.  Ensure you're using the acceptable version of the [Confluent CLI v2](https://docs.confluent.io/confluent-cli/current/migrate.html#directly-install-confluent-cli-v2-x) by running the following command:
+1.  Ensure you're using the acceptable version of the [Confluent CLI](https://docs.confluent.io/confluent-cli/current/install.html#install-confluent-cli) by running the following command:
 
     ```bash
     confluent version
@@ -186,7 +186,7 @@ In this guide, you will:
     Version:     v2.5.1 # any version >= v2.0 is OK
     ...
     ```
-2.  Run the following command to print out generated Confluent CLI v2 commands with the correct resource IDs injected:  
+2.  Run the following command to print out generated Confluent CLI commands with the correct resource IDs injected:  
 
     ```bash
     # Alternatively, you could also run terraform output -json resource-ids
