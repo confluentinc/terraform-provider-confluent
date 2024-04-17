@@ -111,6 +111,23 @@ func TestAccDataSourceSchemaRegistryCluster(t *testing.T) {
 					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramRestEndpoint, schemaRegistryClusterHttpEndpoint),
 				),
 			},
+			{
+				Config: testAccCheckDataSourceSchemaRegistryClusterConfigWithJustEnvironmentSet(mockServerUrl),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckClusterExists(fullSchemaRegistryDataSourceLabel),
+					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramId, schemaRegistryClusterId),
+					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramPackage, schemaRegistryClusterPackage),
+					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, fmt.Sprintf("%s.#", paramEnvironment), "1"),
+					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, fmt.Sprintf("%s.0.%s", paramEnvironment, paramId), schemaRegistryClusterEnvironmentId),
+					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, fmt.Sprintf("%s.#", paramRegion), "1"),
+					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, fmt.Sprintf("%s.0.%s", paramRegion, paramId), schemaRegistryClusterRegionId),
+					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramDisplayName, schemaRegistryClusterDisplayName),
+					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramApiVersion, schemaRegistryClusterApiVersion),
+					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramKind, schemaRegistryClusterKind),
+					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramResourceName, schemaRegistryClusterResourceName),
+					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramRestEndpoint, schemaRegistryClusterHttpEndpoint),
+				),
+			},
 		},
 	})
 }
@@ -141,4 +158,17 @@ func testAccCheckDataSourceSchemaRegistryClusterConfigWithDisplayNameSet(mockSer
 	  	}
 	}
 	`, mockServerUrl, schemaRegistryClusterDisplayName, schemaRegistryClusterEnvironmentId)
+}
+
+func testAccCheckDataSourceSchemaRegistryClusterConfigWithJustEnvironmentSet(mockServerUrl string) string {
+	return fmt.Sprintf(`
+	provider "confluent" {
+ 		endpoint = "%s"
+	}
+	data "confluent_schema_registry_cluster" "essentials" {
+	  	environment {
+			id = "%s"
+	  	}
+	}
+	`, mockServerUrl, schemaRegistryClusterEnvironmentId)
 }

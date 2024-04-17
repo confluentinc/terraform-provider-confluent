@@ -36,12 +36,10 @@ func schemaRegistryClusterDataSource() *schema.Resource {
 		ReadContext: schemaRegistryDataSourceRead,
 		Schema: map[string]*schema.Schema{
 			paramId: {
-				Type:     schema.TypeString,
-				Computed: true,
-				Optional: true,
-				// A user should provide a value for either "id" or "display_name" attribute, not both
-				ExactlyOneOf: []string{paramId, paramDisplayName},
-				Description:  "The ID of the Schema Registry cluster, for example, `lsrc-755ogo`.",
+				Type:        schema.TypeString,
+				Computed:    true,
+				Optional:    true,
+				Description: "The ID of the Schema Registry cluster, for example, `lsrc-755ogo`.",
 			},
 			// Similarly, paramEnvironment is required as well
 			paramEnvironment: environmentDataSourceSchema(),
@@ -49,8 +47,6 @@ func schemaRegistryClusterDataSource() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 				Optional: true,
-				// A user should provide a value for either "id" or "display_name" attribute, not both
-				ExactlyOneOf: []string{paramId, paramDisplayName},
 			},
 			paramRegion: {
 				Type: schema.TypeList,
@@ -95,8 +91,6 @@ func schemaRegistryClusterDataSource() *schema.Resource {
 }
 
 func schemaRegistryDataSourceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	// ExactlyOneOf specified in the schema ensures one of paramId or paramDisplayName is specified.
-	// The next step is to figure out which one exactly is set.
 	clusterId := d.Get(paramId).(string)
 	displayName := d.Get(paramDisplayName).(string)
 
@@ -107,7 +101,21 @@ func schemaRegistryDataSourceRead(ctx context.Context, d *schema.ResourceData, m
 	} else if displayName != "" {
 		return schemaRegistryDataSourceReadUsingDisplayName(ctx, d, meta, environmentId, displayName)
 	} else {
-		return diag.Errorf("error reading Schema Registry Cluster: exactly one of %q or %q must be specified but they're both empty", paramId, paramDisplayName)
+		// There is at most 1 SR cluster per Environment
+		c := meta.(*Client)
+		schemaRegistryClusters, err := loadSchemaRegistryClusters(ctx, c, environmentId)
+		if err != nil {
+			return diag.Errorf("error reading Schema Registry Clusters: %s", createDescriptiveError(err))
+		}
+		if len(schemaRegistryClusters) == 0 {
+			return diag.Errorf("error reading Schema Registry Clusters: there are no SR clusters in %q environment", environmentId)
+		}
+		if len(schemaRegistryClusters) != 1 {
+			return diag.Errorf("error reading Schema Registry Clusters: there are multiple SR clusters in %q environment. "+
+				"Please specify %q or %q", environmentId, paramId, paramDisplayName)
+		}
+		clusterId = schemaRegistryClusters[0].GetId()
+		return schemaRegistryDataSourceReadUsingId(ctx, d, meta, environmentId, clusterId)
 	}
 }
 

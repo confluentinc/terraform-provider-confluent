@@ -20,6 +20,17 @@ provider "confluent" {
   cloud_api_secret = var.confluent_cloud_api_secret # optionally use CONFLUENT_CLOUD_API_SECRET env var
 }
 
+# Loads the only Schema Registry cluster in the target environment
+data "confluent_schema_registry_cluster" "example_using_env_id" {
+  environment {
+    id = "env-xyz456"
+  }
+}
+
+output "example_using_env_id" {
+  value = data.confluent_schema_registry_cluster.example_using_env_id
+}
+
 data "confluent_schema_registry_cluster" "example_using_id" {
   id = "lsrc-abc123"
   environment {
@@ -52,8 +63,6 @@ The following arguments are supported:
 - `display_name` - (Optional String) The name for the Schema Registry cluster.
 - `environment` (Required Configuration Block) supports the following:
     - `id` - (Required String) The ID of the Environment that the Schema Registry cluster belongs to, for example, `env-xyz456`.
-
--> **Note:** Exactly one from the `id` and `display_name` attributes must be specified.
 
 ## Attributes Reference
 
