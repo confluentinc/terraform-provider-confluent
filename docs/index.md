@@ -23,7 +23,7 @@ terraform {
   required_providers {
     confluent = {
       source  = "confluentinc/confluent"
-      version = "1.70.0"
+      version = "1.72.0"
     }
   }
 }
@@ -130,6 +130,8 @@ provider "confluent" {
 * [Report Bugs](https://github.com/confluentinc/terraform-provider-confluent/issues)
 
 * [Request Features](mailto:cflt-tf-access@confluent.io?subject=Feature%20Request)
+
+!> **Warning:** Terraform version `1.6.0` is not supported. See [this issue](https://github.com/confluentinc/terraform-provider-confluent/issues/315) for more details.
 
 -> **Note:** If you are running into issues when trying to write a reusable module using this provider, please look at [this message](https://github.com/confluentinc/terraform-provider-confluentcloud/issues/20#issuecomment-1011833161) to resolve the problem.
 

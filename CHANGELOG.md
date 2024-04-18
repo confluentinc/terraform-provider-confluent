@@ -1,3 +1,11 @@
+## 1.72.0 (April 18, 2024)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.70.0...v1.71.0)
+
+**Bug fixes:**
+* Resolved "Deprecated schema_registry_region without an alternative" issue ([#373](https://github.com/confluentinc/terraform-provider-confluent/issues/373)).
+* Updated docs.
+
 ## 1.71.0 (April 11, 2024)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.70.0...v1.71.0)

@@ -71,6 +71,8 @@ In this guide, you will:
 
 ## Prerequisites
 
+!> **Warning:** Terraform version `1.6.0` is not supported. See [this issue](https://github.com/confluentinc/terraform-provider-confluent/issues/315) for more details.
+
 1.  A Confluent Cloud account. If you do not have a Confluent Cloud account, [create one now](https://www.confluent.io/confluent-cloud/tryfree/). 
 2.  Terraform (0.14+) installed:
     * Install Terraform version manager [tfutils/tfenv](https://github.com/tfutils/tfenv)

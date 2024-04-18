@@ -35,7 +35,7 @@ Terraform has compared your real infrastructure against your configuration and f
 │   20: data "confluent_schema_registry_region" "essentials" {
 │ 
 │ The schema_registry_region data source has been deprecated and will be removed in the next major release (2.0.0). 
-│ Refer to the Upgrade Guide at https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/guides/upgrade-guide-2.0.0 for more details.
+│ Refer to the Upgrade Guide at https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/guides/version-2-upgrade for more details.
 │ 
 │ (and 2 more similar warnings elsewhere)
 ```
