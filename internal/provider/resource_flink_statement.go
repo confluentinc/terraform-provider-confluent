@@ -80,7 +80,7 @@ func flinkStatementResource() *schema.Resource {
 			paramStopped: {
 				Type:        schema.TypeBool,
 				Optional:    true,
-				Default:     false,
+				Computed:    true,
 				Description: "Indicates whether the statement should be stopped.",
 			},
 			paramRestEndpoint: {
