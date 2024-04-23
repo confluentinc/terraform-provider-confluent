@@ -3,7 +3,7 @@ terraform {
   required_providers {
     confluent = {
       source  = "confluentinc/confluent"
-      version = "1.72.0"
+      version = "1.73.0"
     }
     azurerm = {
       source  = "hashicorp/azurerm"

@@ -1,6 +1,15 @@
+## 1.73.0 (April 23, 2024)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.72.0...v1.73.0)
+
+**Bug fixes:**
+* Updated `confluent_flink_statement` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_flink_statement) to prevent errors during `terraform apply` if the statement was stopped with a different client.
+* Resolved 1 Dependabot alert.
+* Updated docs.
+
 ## 1.72.0 (April 18, 2024)
 
-[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.70.0...v1.71.0)
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.71.0...v1.72.0)
 
 **Bug fixes:**
 * Resolved "Deprecated schema_registry_region without an alternative" issue ([#373](https://github.com/confluentinc/terraform-provider-confluent/issues/373)).
