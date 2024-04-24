@@ -251,8 +251,8 @@ github.com/confluentinc/ccloud-sdk-go-v2/cmk v0.10.0 h1:YQEcSvhX5ODllg0mhxLivckK
 github.com/confluentinc/ccloud-sdk-go-v2/cmk v0.10.0/go.mod h1:357Zo3HvVAe5iQgUFxUbQPAKJasGm8vFMkOB+krVmR8=
 github.com/confluentinc/ccloud-sdk-go-v2/connect v0.2.0 h1:rEb3sxzKCZvZCnEZ10WyGqkVIdlqxJGbmP85/4C4YdE=
 github.com/confluentinc/ccloud-sdk-go-v2/connect v0.2.0/go.mod h1:lF4AfDtxoL0V7ZIMOULWiAycPwlfyt9UG659adRNdOM=
-github.com/confluentinc/ccloud-sdk-go-v2/connect-custom-plugin v0.0.1 h1:cEp0C29HMCq0eR9Zv8RGARUGJjjElpzNUmQp66qKHkA=
-github.com/confluentinc/ccloud-sdk-go-v2/connect-custom-plugin v0.0.1/go.mod h1:AaF39Acy3LFnHSHExaUtqNmbs7kL5/AL54CXX61+Il8=
+github.com/confluentinc/ccloud-sdk-go-v2/connect-custom-plugin v0.0.2 h1:NSiuOYjZOKxHTRGYI7X9wFvf57ZNzWpZaChmWv7/UQw=
+github.com/confluentinc/ccloud-sdk-go-v2/connect-custom-plugin v0.0.2/go.mod h1:AaF39Acy3LFnHSHExaUtqNmbs7kL5/AL54CXX61+Il8=
 github.com/confluentinc/ccloud-sdk-go-v2/data-catalog v0.2.0 h1:ySx0jYNGK0XLcSkgPz+hxcH05v1LI5GVb3Rg+TCqBqk=
 github.com/confluentinc/ccloud-sdk-go-v2/data-catalog v0.2.0/go.mod h1:27GwI+j82LDFydahgmKVroqw6oFxzbvIj+ZOnksaKGw=
 github.com/confluentinc/ccloud-sdk-go-v2/flink v0.5.0 h1:5lh7TY2aUlZA0wUL0wAebZeGPp8uEnEhZawjYhnRUxo=

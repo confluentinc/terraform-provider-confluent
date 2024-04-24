@@ -17,5 +17,6 @@
   "sensitive_config_properties": [
     "keys",
     "passwords"
-  ]
+  ],
+  "cloud": "AWS"
 }

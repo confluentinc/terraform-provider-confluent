@@ -90,6 +90,13 @@ func customConnectorPluginResource() *schema.Resource {
 				ForceNew:    true,
 				Description: "The path to the file that will be created.",
 			},
+			paramCloud: {
+				Type:         schema.TypeString,
+				ValidateFunc: validation.StringInSlice(acceptedCloudProviders, false),
+				Optional:     true,
+				Computed:     true,
+				ForceNew:     true,
+			},
 		},
 	}
 }
@@ -146,15 +153,21 @@ func customConnectorPluginCreate(ctx context.Context, d *schema.ResourceData, me
 	connectorType := d.Get(paramConnectorType).(string)
 	sensitiveConfigProperties := convertToStringSlice(d.Get(paramSensitiveConfigProperties).(*schema.Set).List())
 	filename := d.Get(paramFilename).(string)
+	cloud := d.Get(paramCloud).(string)
 
 	// Part 1: Get Upload ID
-	uploadID, err := uploadCustomConnectorPlugin(c.ccpApiContext(ctx), c, filename)
+	uploadID, err := uploadCustomConnectorPlugin(c.ccpApiContext(ctx), c, filename, cloud)
 	if err != nil {
 		return diag.Errorf("error creating Custom Connector Plugin: %s", createDescriptiveError(err))
 	}
 
 	// Part 2: Creating Custom Connector Plugin
 	createCustomConnectorPluginRequest := ccp.NewConnectV1CustomConnectorPlugin()
+
+	if cloud != "" {
+		createCustomConnectorPluginRequest.SetCloud(cloud)
+	}
+
 	createCustomConnectorPluginRequest.SetDisplayName(displayName)
 	createCustomConnectorPluginRequest.SetDescription(description)
 	createCustomConnectorPluginRequest.SetDocumentationLink(documentationLink)
@@ -187,7 +200,7 @@ func customConnectorPluginCreate(ctx context.Context, d *schema.ResourceData, me
 }
 
 // https://github.com/confluentinc/cli/blob/main/internal/connect/command_custom_plugin_create.go#L78
-func uploadCustomConnectorPlugin(ctx context.Context, c *Client, filename string) (string, error) {
+func uploadCustomConnectorPlugin(ctx context.Context, c *Client, filename, cloud string) (string, error) {
 	extension := strings.ToLower(strings.TrimPrefix(filepath.Ext(filename), "."))
 	if extension != "zip" && extension != "jar" {
 		return "", fmt.Errorf(`error uploading Custom Connector Plugin: only file extensions ".jar" and ".zip" are allowed`)
@@ -195,6 +208,9 @@ func uploadCustomConnectorPlugin(ctx context.Context, c *Client, filename string
 
 	createPresignedUrlRequest := *ccp.NewConnectV1PresignedUrlRequest()
 	createPresignedUrlRequest.SetContentFormat(extension)
+	if cloud != "" {
+		createPresignedUrlRequest.SetCloud(cloud)
+	}
 
 	createdPresignedUrl, _, err := c.ccpClient.PresignedUrlsConnectV1Api.PresignedUploadUrlConnectV1PresignedUrl(c.ccpApiContext(ctx)).ConnectV1PresignedUrlRequest(createPresignedUrlRequest).Execute()
 	if err != nil {
@@ -280,6 +296,9 @@ func setCustomConnectorPluginAttributes(d *schema.ResourceData, customConnectorP
 		return nil, createDescriptiveError(err)
 	}
 	if err := d.Set(paramDescription, customConnectorPlugin.GetDescription()); err != nil {
+		return nil, createDescriptiveError(err)
+	}
+	if err := d.Set(paramCloud, customConnectorPlugin.GetCloud()); err != nil {
 		return nil, createDescriptiveError(err)
 	}
 	if err := d.Set(paramDocumentationLink, customConnectorPlugin.GetDocumentationLink()); err != nil {

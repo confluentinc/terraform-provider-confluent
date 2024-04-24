@@ -155,6 +155,7 @@ func TestAccCustomConnectorPlugin(t *testing.T) {
 					resource.TestCheckResourceAttr(fullCustomConnectorPluginResourceLabel, "id", "ccp-4rrw00"),
 					resource.TestCheckResourceAttr(fullCustomConnectorPluginResourceLabel, "display_name", customConnectorPluginDisplayName),
 					resource.TestCheckResourceAttr(fullCustomConnectorPluginResourceLabel, "description", customConnectorPluginDescription),
+					resource.TestCheckResourceAttr(fullCustomConnectorPluginResourceLabel, "cloud", "AWS"),
 				),
 			},
 			{
@@ -170,6 +171,7 @@ func TestAccCustomConnectorPlugin(t *testing.T) {
 					resource.TestCheckResourceAttr(fullCustomConnectorPluginResourceLabel, "id", "ccp-4rrw00"),
 					resource.TestCheckResourceAttr(fullCustomConnectorPluginResourceLabel, "display_name", customConnectorPluginUpdatedDisplayName),
 					resource.TestCheckResourceAttr(fullCustomConnectorPluginResourceLabel, "description", customConnectorPluginUpdatedDescription),
+					resource.TestCheckResourceAttr(fullCustomConnectorPluginResourceLabel, "cloud", "AWS"),
 				),
 			},
 			{

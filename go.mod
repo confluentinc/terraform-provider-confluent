@@ -7,7 +7,7 @@ require (
 	github.com/confluentinc/ccloud-sdk-go-v2/byok v0.0.2
 	github.com/confluentinc/ccloud-sdk-go-v2/cmk v0.10.0
 	github.com/confluentinc/ccloud-sdk-go-v2/connect v0.2.0
-	github.com/confluentinc/ccloud-sdk-go-v2/connect-custom-plugin v0.0.1
+	github.com/confluentinc/ccloud-sdk-go-v2/connect-custom-plugin v0.0.2
 	github.com/confluentinc/ccloud-sdk-go-v2/data-catalog v0.2.0
 	github.com/confluentinc/ccloud-sdk-go-v2/flink v0.5.0
 	github.com/confluentinc/ccloud-sdk-go-v2/flink-gateway v0.10.0
