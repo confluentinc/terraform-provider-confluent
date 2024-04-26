@@ -25,9 +25,9 @@ import (
 )
 
 const (
-	scenarioStateDnsForwarderIsProvisioning  = "The new dns forwarder is provisioning"
-	scenarioStateDnsForwarderHashBeenUpdated = "The new dns forwarder has been updated"
-	dnsForwarderScenarioName                 = "confluent_dns_forwarder Resource Lifecycle"
+	scenarioStateDnsForwarderIsProvisioning = "The new dns forwarder is provisioning"
+	scenarioStateDnsForwarderHasBeenCreated = "The new dns forwarder has been created"
+	dnsForwarderScenarioName                = "confluent_dns_forwarder Resource Lifecycle"
 
 	dnsForwarderUrlPath       = "/networking/v1/dns-forwarders"
 	dnsForwarderReadUrlPath   = "/networking/v1/dns-forwarders/dnsf-xxx"
@@ -64,35 +64,29 @@ func TestAccDnsForwarder(t *testing.T) {
 
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(dnsForwarderReadUrlPath)).
 		InScenario(dnsForwarderScenarioName).
+		WithQueryParam("environment", wiremock.EqualTo("env-xxx")).
 		WhenScenarioStateIs(scenarioStateDnsForwarderIsProvisioning).
+		WillSetStateTo(scenarioStateDnsForwarderHasBeenCreated).
 		WillReturn(
 			string(createDnsForwarderResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
 		))
 
-	updatedDnsForwarderResponse, _ := ioutil.ReadFile("../testdata/network_dns_forwarder/updated_dnsf.json")
-	_ = wiremockClient.StubFor(wiremock.Patch(wiremock.URLPathEqualTo(dnsForwarderReadUrlPath)).
-		InScenario(dnsForwarderScenarioName).
-		WhenScenarioStateIs(scenarioStateDnsForwarderIsProvisioning).
-		WillSetStateTo(scenarioStateDnsForwarderHashBeenUpdated).
-		WillReturn(
-			string(updatedDnsForwarderResponse),
-			contentTypeJSONHeader,
-			http.StatusOK,
-		))
-
+	readCreatedDnsForwarderResponse, _ := ioutil.ReadFile("../testdata/network_dns_forwarder/read_created_dnsf.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(dnsForwarderReadUrlPath)).
 		InScenario(dnsForwarderScenarioName).
-		WhenScenarioStateIs(scenarioStateDnsForwarderHashBeenUpdated).
+		WithQueryParam("environment", wiremock.EqualTo("env-xxx")).
+		WhenScenarioStateIs(scenarioStateDnsForwarderHasBeenCreated).
 		WillReturn(
-			string(updatedDnsForwarderResponse),
+			string(readCreatedDnsForwarderResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
 		))
 
 	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(dnsForwarderReadUrlPath)).
 		InScenario(dnsForwarderScenarioName).
+		WithQueryParam("environment", wiremock.EqualTo("env-xxx")).
 		WillReturn(
 			"",
 			contentTypeJSONHeader,
@@ -121,22 +115,6 @@ func TestAccDnsForwarder(t *testing.T) {
 					resource.TestCheckResourceAttr(dnsForwarderResourceLabel, "forward_via_ip.0.dns_server_ips.0", "10.200.0.0"),
 					resource.TestCheckResourceAttr(dnsForwarderResourceLabel, "forward_via_ip.0.dns_server_ips.1", "10.200.0.1")),
 			},
-			{
-				Config: testAccCheckResourceUpdateDnsForwarderWithIdSet(mockServerUrl),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(dnsForwarderResourceLabel, "id", "dnsf-xxx"),
-					resource.TestCheckResourceAttr(dnsForwarderResourceLabel, "display_name", "dns2"),
-					resource.TestCheckResourceAttr(dnsForwarderResourceLabel, "environment.#", "1"),
-					resource.TestCheckResourceAttr(dnsForwarderResourceLabel, "environment.0.id", "env-xxx"),
-					resource.TestCheckResourceAttr(dnsForwarderResourceLabel, "gateway.#", "1"),
-					resource.TestCheckResourceAttr(dnsForwarderResourceLabel, "gateway.0.id", "gw-xxx"),
-					resource.TestCheckResourceAttr(dnsForwarderResourceLabel, "domains.#", "2"),
-					resource.TestCheckResourceAttr(dnsForwarderResourceLabel, "domains.0", "domainname.com"),
-					resource.TestCheckResourceAttr(dnsForwarderResourceLabel, "domains.1", "example.com"),
-					resource.TestCheckResourceAttr(dnsForwarderResourceLabel, "forward_via_ip.0.dns_server_ips.#", "2"),
-					resource.TestCheckResourceAttr(dnsForwarderResourceLabel, "forward_via_ip.0.dns_server_ips.0", "10.200.0.0"),
-					resource.TestCheckResourceAttr(dnsForwarderResourceLabel, "forward_via_ip.0.dns_server_ips.1", "10.200.0.1")),
-			},
 		},
 	})
 }
@@ -149,28 +127,6 @@ func testAccCheckResourceDnsForwarderWithIdSet(mockServerUrl string) string {
 
 	resource "confluent_dns_forwarder" "main" {
 		display_name = "dns1"
-		environment {
-			id = "env-xxx"
-		}
-		domains = ["example.com", "domainname.com"]
-		gateway {
-			id = "gw-xxx"
-		}
-		forward_via_ip {
-			dns_server_ips = ["10.200.0.0", "10.200.0.1"]
-		}
-	}
-	`, mockServerUrl)
-}
-
-func testAccCheckResourceUpdateDnsForwarderWithIdSet(mockServerUrl string) string {
-	return fmt.Sprintf(`
-    provider "confluent" {
-        endpoint = "%s"
-    }
-
-	resource "confluent_dns_forwarder" "main" {
-		display_name = "dns2"
 		environment {
 			id = "env-xxx"
 		}

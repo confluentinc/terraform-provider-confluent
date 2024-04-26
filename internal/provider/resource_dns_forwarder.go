@@ -21,6 +21,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"net/http"
 	"strings"
 
 	dns "github.com/confluentinc/ccloud-sdk-go-v2/networking-dnsforwarder/v1"
@@ -147,6 +148,10 @@ func dnsForwarderCreate(ctx context.Context, d *schema.ResourceData, meta interf
 	}
 	d.SetId(createdDnsForwarder.GetId())
 
+	if err := waitForDnsForwarderToProvision(c.netDnsApiContext(ctx), c, environmentId, d.Id()); err != nil {
+		return diag.Errorf("error waiting for DNS Forwarder %q to provision: %s", d.Id(), createDescriptiveError(err))
+	}
+
 	createdDnsForwarderJson, err := json.Marshal(createdDnsForwarder)
 	if err != nil {
 		return diag.Errorf("error creating DNS Forwarder %q: error marshaling %#v to json: %s", d.Id(), createdDnsForwarder, createDescriptiveError(err))
@@ -154,6 +159,11 @@ func dnsForwarderCreate(ctx context.Context, d *schema.ResourceData, meta interf
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating DNS Forwarder %q: %s", d.Id(), createdDnsForwarderJson), map[string]interface{}{dnsForwarderKey: d.Id()})
 
 	return dnsForwarderRead(ctx, d, meta)
+}
+
+func executeDnsForwarderRead(ctx context.Context, c *Client, environmentId string, dnsForwarderId string) (dns.NetworkingV1DnsForwarder, *http.Response, error) {
+	req := c.netDnsClient.DNSForwardersNetworkingV1Api.GetNetworkingV1DnsForwarder(c.netDnsApiContext(ctx), dnsForwarderId).Environment(environmentId)
+	return req.Execute()
 }
 
 func dnsForwarderRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

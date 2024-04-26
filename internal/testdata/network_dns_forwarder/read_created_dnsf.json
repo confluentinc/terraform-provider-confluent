@@ -16,7 +16,7 @@
       ],
       "kind": "networking.v1.ForwardViaIp"
     },
-    "display_name": "dns2",
+    "display_name": "dns1",
     "domains": [
       "domainname.com",
       "example.com"
@@ -37,6 +37,6 @@
     }
   },
   "status": {
-    "phase": "PROVISIONING"
+    "phase": "READY"
   }
 }
