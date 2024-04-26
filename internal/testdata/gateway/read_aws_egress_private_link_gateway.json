@@ -5,7 +5,7 @@
   "metadata": {
     "created_at": "2024-02-01T22:25:50.415274Z",
     "resource_name": "crn://confluent.cloud/organization=1111aaaa/environment=env-abc123/gateway=gw-def456",
-    "self": "https://api.confluent.cloud/networking/v1/gateways/gw-def456?environment=env-abc123",
+    "self": "https://api.confluent.cloud/networking/v1/gateways/gw-abc123?environment=env-abc123",
     "updated_at": "2024-02-01T22:25:50.415274Z"
   },
   "spec": {
