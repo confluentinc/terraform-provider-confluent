@@ -96,7 +96,7 @@ func dnsRecordCreate(ctx context.Context, d *schema.ResourceData, meta interface
 		spec.SetDisplayName(displayName)
 	}
 	spec.SetDomain(domain)
-	spec.SetGateway(netap.EnvScopedObjectReference{Id: gatewayId})
+	spec.SetGateway(netap.TypedEnvScopedObjectReference{Id: gatewayId})
 	spec.SetEnvironment(netap.ObjectReference{Id: environmentId})
 
 	config := netap.NetworkingV1DnsRecordSpecConfigOneOf{}

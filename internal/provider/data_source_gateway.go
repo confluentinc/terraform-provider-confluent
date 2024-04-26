@@ -26,9 +26,11 @@ import (
 )
 
 const (
-	paramAwsPeeringGateway           = "aws_peering_gateway"
-	paramAwsEgressPrivateLinkGateway = "aws_egress_private_link_gateway"
-	paramPrincipalArn                = "principal_arn"
+	paramAwsPeeringGateway             = "aws_peering_gateway"
+	paramAwsEgressPrivateLinkGateway   = "aws_egress_private_link_gateway"
+	paramAzureEgressPrivateLinkGateway = "azure_egress_private_link_gateway"
+	paramAzurePeeringGateway           = "azure_peering_gateway"
+	paramPrincipalArn                  = "principal_arn"
 )
 
 func gatewayDataSource() *schema.Resource {
@@ -45,8 +47,10 @@ func gatewayDataSource() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			paramAwsEgressPrivateLinkGateway: awsEgressPrivateLinkGatewayDataSourceSchema(),
-			paramAwsPeeringGateway:           awsPeeringGatewaySpecDataSourceSchema(),
+			paramAwsEgressPrivateLinkGateway:   awsEgressPrivateLinkGatewayDataSourceSchema(),
+			paramAwsPeeringGateway:             awsPeeringGatewaySpecDataSourceSchema(),
+			paramAzureEgressPrivateLinkGateway: azureEgressPrivateLinkGatewayDataSourceSchema(),
+			paramAzurePeeringGateway:           azurePeeringGatewaySpecDataSourceSchema(),
 		},
 	}
 }
@@ -76,6 +80,40 @@ func awsEgressPrivateLinkGatewayDataSourceSchema() *schema.Schema {
 					Computed: true,
 				},
 				paramPrincipalArn: {
+					Type:     schema.TypeString,
+					Computed: true,
+				},
+			},
+		},
+		Computed: true,
+	}
+}
+
+func azurePeeringGatewaySpecDataSourceSchema() *schema.Schema {
+	return &schema.Schema{
+		Type: schema.TypeList,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramRegion: {
+					Type:     schema.TypeString,
+					Computed: true,
+				},
+			},
+		},
+		Computed: true,
+	}
+}
+
+func azureEgressPrivateLinkGatewayDataSourceSchema() *schema.Schema {
+	return &schema.Schema{
+		Type: schema.TypeList,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramRegion: {
+					Type:     schema.TypeString,
+					Computed: true,
+				},
+				paramSubscription: {
 					Type:     schema.TypeString,
 					Computed: true,
 				},
@@ -124,6 +162,19 @@ func setGatewayAttributes(d *schema.ResourceData, gateway net.NetworkingV1Gatewa
 	} else if gateway.Spec.Config.NetworkingV1AwsPeeringGatewaySpec != nil {
 		if err := d.Set(paramAwsPeeringGateway, []interface{}{map[string]interface{}{
 			paramRegion: gateway.Spec.Config.NetworkingV1AwsPeeringGatewaySpec.GetRegion(),
+		}}); err != nil {
+			return nil, err
+		}
+	} else if gateway.Spec.Config.NetworkingV1AzureEgressPrivateLinkGatewaySpec != nil && gateway.Status.CloudGateway.NetworkingV1AzureEgressPrivateLinkGatewayStatus != nil {
+		if err := d.Set(paramAzureEgressPrivateLinkGateway, []interface{}{map[string]interface{}{
+			paramRegion:       gateway.Spec.Config.NetworkingV1AzureEgressPrivateLinkGatewaySpec.GetRegion(),
+			paramSubscription: gateway.Status.CloudGateway.NetworkingV1AzureEgressPrivateLinkGatewayStatus.GetSubscription(),
+		}}); err != nil {
+			return nil, err
+		}
+	} else if gateway.Spec.Config.NetworkingV1AzurePeeringGatewaySpec != nil {
+		if err := d.Set(paramAzurePeeringGateway, []interface{}{map[string]interface{}{
+			paramRegion: gateway.Spec.Config.NetworkingV1AzurePeeringGatewaySpec.GetRegion(),
 		}}); err != nil {
 			return nil, err
 		}

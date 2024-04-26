@@ -48,6 +48,11 @@ In addition to the preceding arguments, the following attributes are exported:
 - `display_name` - (Required String) A human-readable name for the Gateway.
 - `aws_egress_private_link_gateway` (Optional Configuration Block) supports the following:
   - `region` - (Required String) AWS region of the Egress Private Link Gateway.
+  - `principal_arn` - (Required String) The principal ARN used by the AWS Egress Private Link Gateway.
 - `aws_peering_gateway` (Optional Configuration Block) supports the following:
   - `region` - (Required String) AWS region of the Peering Gateway.
-  - `principal_arn` - (Required String) The principal ARN used by the AWS Egress Private Link Gateway.
+- `azure_egress_private_link_gateway` (Optional Configuration Block) supports the following:
+  - `region` - (Required String) Azure region of the Egress Private Link Gateway.
+  - `subscription` - (Required String) The Azure Subscription ID associated with the Confluent Cloud VPC.
+- `azure_peering_gateway` (Optional Configuration Block) supports the following:
+  - `region` - (Required String) Azure region of the Peering Gateway.
