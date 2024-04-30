@@ -1,3 +1,14 @@
+## 1.74.0 (April 29, 2024)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.73.0...v1.74.0)
+
+**New features:**
+* Support new cloud attribute for resource_custom_connector_plugin resource
+
+**Bug fixes:**
+* Remove principal validation for ACL resource
+* Add waiting method when provisioning DNS Forwarder
+
 ## 1.73.0 (April 23, 2024)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.72.0...v1.73.0)
