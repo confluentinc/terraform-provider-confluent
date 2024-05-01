@@ -46,8 +46,8 @@ The following arguments are supported:
 
 - `kafka_cluster` - (Required Configuration Block) supports the following:
     - `id` - (Required String) The ID of the destination Kafka cluster, for example, `lkc-abc123`.
-    - `rest_endpoint` - (Optional String) The REST endpoint of the destination Kafka cluster, for example, `https://pkc-00000.us-central1.gcp.confluent.cloud:443`).
-    - `credentials` (Optional Configuration Block) supports the following:
+    - `rest_endpoint` - (Required String) The REST endpoint of the destination Kafka cluster, for example, `https://pkc-00000.us-central1.gcp.confluent.cloud:443`).
+    - `credentials` (Required Configuration Block) supports the following:
         - `key` - (Required String) The Kafka API Key.
         - `secret` - (Required String, Sensitive) The Kafka API Secret.
 - `cluster_link` - (Required Configuration Block) supports the following:
