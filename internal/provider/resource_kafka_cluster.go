@@ -59,11 +59,13 @@ const (
 	stateProvisioning  = "PROVISIONING"
 	statePendingAccept = "PENDING_ACCEPT"
 
-	singleZone = "SINGLE_ZONE"
-	multiZone  = "MULTI_ZONE"
+	singleZone       = "SINGLE_ZONE"
+	multiZone        = "MULTI_ZONE"
+	lowAvailability  = "LOW"
+	highAvailability = "HIGH"
 )
 
-var acceptedAvailabilityZones = []string{singleZone, multiZone}
+var acceptedAvailabilityZones = []string{singleZone, multiZone, lowAvailability, highAvailability}
 var acceptedCloudProviders = []string{"AWS", "AZURE", "GCP"}
 var acceptedClusterTypes = []string{paramBasicCluster, paramStandardCluster, paramDedicatedCluster, paramEnterpriseCluster}
 var paramDedicatedCku = fmt.Sprintf("%s.0.%s", paramDedicatedCluster, paramCku)
