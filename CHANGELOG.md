@@ -1,13 +1,25 @@
+## 1.75.0 (May 8, 2024)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.74.0...v1.75.0)
+
+**New features:**
+* Added new `confluent_catalog_entity_attributes` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_catalog_entity_attributes) in a [Preview lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
+
+**Bug fixes:**
+* Support new `LOW`, `HIGH` values for the `availability` attribute of the `confluent_kafka_cluster` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_cluster).
+* Resolved 1 Dependabot alert.
+* Updated docs.
+
 ## 1.74.0 (April 29, 2024)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.73.0...v1.74.0)
 
 **New features:**
-* Support new cloud attribute for resource_custom_connector_plugin resource
+* Support new `cloud` attribute for the `confluent_custom_connector_plugin` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_custom_connector_plugin).
 
 **Bug fixes:**
-* Remove principal validation for ACL resource
-* Add waiting method when provisioning DNS Forwarder
+* Remove principal validation for the `confluent_kafka_acl` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_acl).
+* Add waiting method when provisioning the `confluent_dns_forwarder` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_dns_forwarder).
 
 ## 1.73.0 (April 23, 2024)
 
