@@ -48,8 +48,14 @@ In addition to the preceding arguments, the following attributes are exported:
 - `display_name` - (Required String) A human-readable name for the Access Point.
 - `gateway` (Required Configuration Block) supports the following:
   - `id` - (Required String) The ID of the gateway to which the Access Point belongs, for example, `gw-abc123`.
-- `aws_egress_private_link_endpoint` (Required Configuration Block) supports the following:
+- `aws_egress_private_link_endpoint` (Optional Configuration Block) supports the following:
   - `vpc_endpoint_service_name` - (Required String) AWS VPC Endpoint Service that can be used to establish connections for all zones, for example `com.amazonaws.vpce.us-west-2.vpce-svc-0d3be37e21708ecd3`.
   - `enable_high_availability` - (Required Boolean) Whether a resource should be provisioned with high availability. Endpoints deployed with high availability have network interfaces deployed in multiple AZs. Defaults to `false`.
   - `vpc_endpoint_id` - (Required String) The ID of a VPC Endpoint (if any) that is connected to the VPC Endpoint service, for example, `vpce-00000000000000000`.
   - `vpc_endpoint_dns_name` - (Required String) The DNS name of a VPC Endpoint (if any) that is connected to the VPC Endpoint service, for example, `*.vpce-00000000000000000-abcd1234.s3.us-west-2.vpce.amazonaws.com`.
+- `azure_egress_private_link_endpoint` (Optional Configuration Block) supports the following:
+  - `private_link_service_resource_id` - (Required String) Resource ID of the Azure Private Link service.
+  - `private_link_subresource_name` - (Required String) Name of the subresource for the Private Endpoint to connect to.
+  - `private_endpoint_resource_id` (Required String) Resource ID of the Private Endpoint (if any) that is connected to the Private Link service.
+  - `private_endpoint_domain` (Required String) Domain of the Private Endpoint (if any) that is connected to the Private Link service.
+  - `private_endpoint_ip_address` (Required String) IP address of the Private Endpoint (if any) that is connected to the Private Link service.

@@ -19,7 +19,7 @@ resource "confluent_environment" "development" {
   display_name = "Development"
 }
 
-resource "confluent_access_point" "main" {
+resource "confluent_access_point" "aws" {
   display_name = "access_point"
   environment {
     id = confluent_environment.development.id
@@ -29,6 +29,20 @@ resource "confluent_access_point" "main" {
   }
   aws_egress_private_link_endpoint {
     vpc_endpoint_service_name = "com.amazonaws.vpce.us-west-2.vpce-svc-00000000000000000"
+  }
+}
+
+resource "confluent_access_point" "azure" {
+  display_name = "access_point"
+  environment {
+    id = confluent_environment.development.id
+  }
+  gateway {
+    id = confluent_network.main.gateway[0].id
+  }
+  azure_egress_private_link_endpoint {
+    private_link_service_resource_id = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/s-abcde/providers/Microsoft.Network/privateLinkServices/pls-plt-abcdef-az3"
+    private_link_subresource_name = "sqlServer"
   }
 }
 ```
@@ -43,9 +57,12 @@ The following arguments are supported:
   - `id` - (Required String) The ID of the Environment that the Access Point belongs to, for example, `env-abc123`.
 - `gateway` (Required Configuration Block) supports the following:
   - `id` - (Required String) The ID of the gateway to which the Access Point belongs, for example, `gw-abc123`.
-- `aws_egress_private_link_endpoint` (Required Configuration Block) supports the following:
+- `aws_egress_private_link_endpoint` (Optional Configuration Block) supports the following:
   - `vpc_endpoint_service_name` - (Required String) AWS VPC Endpoint Service that can be used to establish connections for all zones, for example `com.amazonaws.vpce.us-west-2.vpce-svc-0d3be37e21708ecd3`.
   - `enable_high_availability` - (Optional Boolean) Whether a resource should be provisioned with high availability. Endpoints deployed with high availability have network interfaces deployed in multiple AZs. Defaults to `false`.
+- `azure_egress_private_link_endpoint` (Optional Configuration Block) supports the following:
+  - `private_link_service_resource_id` - (Required String) Resource ID of the Azure Private Link service.
+  - `private_link_subresource_name` - (Optional String) Name of the subresource for the Private Endpoint to connect to.
 
 
 ## Attributes Reference
@@ -53,8 +70,13 @@ The following arguments are supported:
 In addition to the preceding arguments, the following attributes are exported:
 
 - `id` - (Required String) The ID of the Access Point, for example, `dnsrec-abc123`.
-- `vpc_endpoint_id` - (Required String) The ID of a VPC Endpoint (if any) that is connected to the VPC Endpoint service, for example, `vpce-00000000000000000`.
-- `vpc_endpoint_dns_name` - (Required String) The DNS name of a VPC Endpoint (if any) that is connected to the VPC Endpoint service, for example, `*.vpce-00000000000000000-abcd1234.s3.us-west-2.vpce.amazonaws.com`.
+- `aws_egress_private_link_endpoint` (Optional Configuration Block) supports the following:
+  - `vpc_endpoint_id` - (Required String) The ID of a VPC Endpoint (if any) that is connected to the VPC Endpoint service, for example, `vpce-00000000000000000`.
+  - `vpc_endpoint_dns_name` - (Required String) The DNS name of a VPC Endpoint (if any) that is connected to the VPC Endpoint service, for example, `*.vpce-00000000000000000-abcd1234.s3.us-west-2.vpce.amazonaws.com`.
+- `azure_egress_private_link_endpoint` (Optional Configuration Block) supports the following:
+  - `private_endpoint_resource_id` (Required String) Resource ID of the Private Endpoint (if any) that is connected to the Private Link service.
+  - `private_endpoint_domain` (Required String) Domain of the Private Endpoint (if any) that is connected to the Private Link service.
+  - `private_endpoint_ip_address` (Required String) IP address of the Private Endpoint (if any) that is connected to the Private Link service.
 
 ## Import
 

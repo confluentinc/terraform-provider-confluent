@@ -29,13 +29,18 @@ import (
 )
 
 const (
-	paramAwsEgressPrivateLinkEndpoint = "aws_egress_private_link_endpoint"
-	paramEnableHighAvailability       = "enable_high_availability"
-	paramVpcEndpointDnsName           = "vpc_endpoint_dns_name"
-	awsEgressPrivateLinkEndpoint      = "AwsEgressPrivateLinkEndpoint"
+	paramAwsEgressPrivateLinkEndpoint   = "aws_egress_private_link_endpoint"
+	paramAzureEgressPrivateLinkEndpoint = "azure_egress_private_link_endpoint"
+	paramEnableHighAvailability         = "enable_high_availability"
+	paramVpcEndpointDnsName             = "vpc_endpoint_dns_name"
+	paramPrivateLinkSubresourceName     = "private_link_subresource_name"
+	paramPrivateEndpointDomain          = "private_endpoint_domain"
+	paramPrivateEndpointIpAddress       = "private_endpoint_ip_address"
+	awsEgressPrivateLinkEndpoint        = "AwsEgressPrivateLinkEndpoint"
+	azureEgressPrivateLinkEndpoint      = "AzureEgressPrivateLinkEndpoint"
 )
 
-var acceptedEndpointConfig = []string{paramAwsEgressPrivateLinkEndpoint}
+var acceptedEndpointConfig = []string{paramAwsEgressPrivateLinkEndpoint, paramAzureEgressPrivateLinkEndpoint}
 
 func accessPointResource() *schema.Resource {
 	return &schema.Resource{
@@ -52,9 +57,10 @@ func accessPointResource() *schema.Resource {
 				Optional: true,
 				Computed: true,
 			},
-			paramGateway:                      requiredGateway(),
-			paramEnvironment:                  environmentSchema(),
-			paramAwsEgressPrivateLinkEndpoint: paramAwsEgressPrivateLinkEndpointSchema(),
+			paramGateway:                        requiredGateway(),
+			paramEnvironment:                    environmentSchema(),
+			paramAwsEgressPrivateLinkEndpoint:   paramAwsEgressPrivateLinkEndpointSchema(),
+			paramAzureEgressPrivateLinkEndpoint: paramAzureEgressPrivateLinkEndpointSchema(),
 		},
 	}
 }
@@ -93,6 +99,43 @@ func paramAwsEgressPrivateLinkEndpointSchema() *schema.Schema {
 	}
 }
 
+func paramAzureEgressPrivateLinkEndpointSchema() *schema.Schema {
+	return &schema.Schema{
+		Type:     schema.TypeList,
+		Optional: true,
+		ForceNew: true,
+		MinItems: 1,
+		MaxItems: 1,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramPrivateLinkServiceResourceId: {
+					Type:     schema.TypeString,
+					Required: true,
+					ForceNew: true,
+				},
+				paramPrivateLinkSubresourceName: {
+					Type:     schema.TypeString,
+					Optional: true,
+					ForceNew: true,
+				},
+				paramPrivateEndpointResourceId: {
+					Type:     schema.TypeString,
+					Computed: true,
+				},
+				paramPrivateEndpointDomain: {
+					Type:     schema.TypeString,
+					Computed: true,
+				},
+				paramPrivateEndpointIpAddress: {
+					Type:     schema.TypeString,
+					Computed: true,
+				},
+			},
+		},
+		ExactlyOneOf: acceptedEndpointConfig,
+	}
+}
+
 func accessPointCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	c := meta.(*Client)
 
@@ -101,6 +144,7 @@ func accessPointCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
 
 	isAwsEgressPrivateLinkEndpoint := len(d.Get(paramAwsEgressPrivateLinkEndpoint).([]interface{})) > 0
+	isAzureEgressPrivateLinkEndpoint := len(d.Get(paramAzureEgressPrivateLinkEndpoint).([]interface{})) > 0
 
 	spec := netap.NewNetworkingV1AccessPointSpec()
 	if displayName != "" {
@@ -118,8 +162,19 @@ func accessPointCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 			EnableHighAvailability: netap.PtrBool(enableHighAvailability),
 		}
 		spec.SetConfig(config)
+	} else if isAzureEgressPrivateLinkEndpoint {
+		config.NetworkingV1AzureEgressPrivateLinkEndpoint = &netap.NetworkingV1AzureEgressPrivateLinkEndpoint{
+			Kind:                         azureEgressPrivateLinkEndpoint,
+			PrivateLinkServiceResourceId: extractStringValueFromBlock(d, paramAzureEgressPrivateLinkEndpoint, paramPrivateLinkServiceResourceId),
+		}
+
+		privateLinkSubresourceName := extractStringValueFromBlock(d, paramAzureEgressPrivateLinkEndpoint, paramPrivateLinkSubresourceName)
+		if privateLinkSubresourceName != "" {
+			config.NetworkingV1AzureEgressPrivateLinkEndpoint.SetPrivateLinkSubresourceName(privateLinkSubresourceName)
+		}
+		spec.SetConfig(config)
 	} else {
-		return diag.Errorf("None of %q blocks was provided for confluent_access_point resource", paramAwsEgressPrivateLinkEndpoint)
+		return diag.Errorf("None of %q, %q, blocks was provided for confluent_access_point resource", paramAwsEgressPrivateLinkEndpoint, paramAzureEgressPrivateLinkEndpoint)
 	}
 
 	createAccessPointRequest := netap.NetworkingV1AccessPoint{Spec: spec}
@@ -286,6 +341,16 @@ func setAccessPointAttributes(d *schema.ResourceData, accessPoint netap.Networki
 			paramVpcEndpointId:          accessPoint.Status.Config.NetworkingV1AwsEgressPrivateLinkEndpointStatus.GetVpcEndpointId(),
 			paramVpcEndpointDnsName:     accessPoint.Status.Config.NetworkingV1AwsEgressPrivateLinkEndpointStatus.GetVpcEndpointDnsName(),
 			paramEnableHighAvailability: accessPoint.Spec.Config.NetworkingV1AwsEgressPrivateLinkEndpoint.GetEnableHighAvailability(),
+		}}); err != nil {
+			return nil, err
+		}
+	} else if accessPoint.Spec.Config.NetworkingV1AzureEgressPrivateLinkEndpoint != nil && accessPoint.Status.Config.NetworkingV1AzureEgressPrivateLinkEndpointStatus != nil {
+		if err := d.Set(paramAzureEgressPrivateLinkEndpoint, []interface{}{map[string]interface{}{
+			paramPrivateLinkServiceResourceId: accessPoint.Spec.Config.NetworkingV1AzureEgressPrivateLinkEndpoint.GetPrivateLinkServiceResourceId(),
+			paramPrivateLinkSubresourceName:   accessPoint.Spec.Config.NetworkingV1AzureEgressPrivateLinkEndpoint.GetPrivateLinkSubresourceName(),
+			paramPrivateEndpointResourceId:    accessPoint.Status.Config.NetworkingV1AzureEgressPrivateLinkEndpointStatus.GetPrivateEndpointResourceId(),
+			paramPrivateEndpointDomain:        accessPoint.Status.Config.NetworkingV1AzureEgressPrivateLinkEndpointStatus.GetPrivateEndpointDomain(),
+			paramPrivateEndpointIpAddress:     accessPoint.Status.Config.NetworkingV1AzureEgressPrivateLinkEndpointStatus.GetPrivateEndpointIpAddress(),
 		}}); err != nil {
 			return nil, err
 		}

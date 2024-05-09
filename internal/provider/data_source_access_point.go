@@ -38,8 +38,9 @@ func accessPointDataSource() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			paramGateway:                      gatewayDataSourceSchema(),
-			paramAwsEgressPrivateLinkEndpoint: awsEgressPrivateLinkEndpointDataSourceSchema(),
+			paramGateway:                        gatewayDataSourceSchema(),
+			paramAwsEgressPrivateLinkEndpoint:   awsEgressPrivateLinkEndpointDataSourceSchema(),
+			paramAzureEgressPrivateLinkEndpoint: azureEgressPrivateLinkEndpointDataSourceSchema(),
 		},
 	}
 }
@@ -63,6 +64,37 @@ func awsEgressPrivateLinkEndpointDataSourceSchema() *schema.Schema {
 				},
 				paramEnableHighAvailability: {
 					Type:     schema.TypeBool,
+					Computed: true,
+				},
+			},
+		},
+		Computed: true,
+	}
+}
+
+func azureEgressPrivateLinkEndpointDataSourceSchema() *schema.Schema {
+	return &schema.Schema{
+		Type: schema.TypeList,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramPrivateLinkServiceResourceId: {
+					Type:     schema.TypeString,
+					Computed: true,
+				},
+				paramPrivateLinkSubresourceName: {
+					Type:     schema.TypeString,
+					Computed: true,
+				},
+				paramPrivateEndpointResourceId: {
+					Type:     schema.TypeString,
+					Computed: true,
+				},
+				paramPrivateEndpointDomain: {
+					Type:     schema.TypeString,
+					Computed: true,
+				},
+				paramPrivateEndpointIpAddress: {
+					Type:     schema.TypeString,
 					Computed: true,
 				},
 			},
