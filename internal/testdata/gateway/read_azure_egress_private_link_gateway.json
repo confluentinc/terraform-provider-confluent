@@ -1,17 +1,17 @@
 {
   "api_version": "networking/v1",
-  "id": "gw-def456",
+  "id": "gw-abc456",
   "kind": "Gateway",
   "metadata": {
     "created_at": "2024-02-01T22:25:50.415274Z",
-    "resource_name": "crn://confluent.cloud/organization=1111aaaa/environment=env-abc123/gateway=gw-def456",
-    "self": "https://api.confluent.cloud/networking/v1/gateways/gw-def456?environment=env-abc123",
+    "resource_name": "crn://confluent.cloud/organization=1111aaaa/environment=env-abc123/gateway=gw-abc456",
+    "self": "https://api.confluent.cloud/networking/v1/gateways/gw-abc456?environment=env-abc123",
     "updated_at": "2024-02-01T22:25:50.415274Z"
   },
   "spec": {
     "config": {
-      "kind": "AwsEgressPrivateLinkGatewaySpec",
-      "region": "us-east-2"
+      "kind": "AzureEgressPrivateLinkGatewaySpec",
+      "region": "eastus"
     },
     "display_name": "prod-gateway",
     "environment": {
@@ -25,8 +25,8 @@
   "status": {
     "phase": "READY",
     "cloud_gateway": {
-      "kind": "AwsEgressPrivateLinkGatewayStatus",
-      "principal_arn": "arn:aws:iam::123456789012:role"
+      "kind": "AzureEgressPrivateLinkGatewayStatus",
+      "subscription": "aa000000-a000-0a00-00aa-0000aaa0a0a0"
     }
   }
 }
