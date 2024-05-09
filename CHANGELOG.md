@@ -1,3 +1,11 @@
+## 1.76.0 (May 9, 2024)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.75.0...v1.76.0)
+
+**New features:**
+* Added support for new optional `azure_egress_private_link_endpoint` block of `confluent_access_point` resource and corresponding data source in a [General Availability lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
+* Added support for new optional `azure_egress_private_link_gateway` block of `confluent_gateway` data source in a [General Availability lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
+
 ## 1.75.0 (May 8, 2024)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.74.0...v1.75.0)
