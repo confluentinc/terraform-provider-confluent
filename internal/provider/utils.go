@@ -881,3 +881,15 @@ func canUpdateEntityName(entityType, oldEntityName, newEntityName string) bool {
 		return false
 	}
 }
+
+func canUpdateEntityNameBusinessMetadata(entityType, oldEntityName, newEntityName string) bool {
+	if oldEntityName == newEntityName {
+		return true
+	}
+	switch entityType {
+	case schemaEntityType:
+		return canUpdateSchemaEntityType(oldEntityName, newEntityName)
+	default:
+		return false
+	}
+}

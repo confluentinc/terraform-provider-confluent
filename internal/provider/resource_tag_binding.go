@@ -293,7 +293,7 @@ func tagBindingUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 		oldEntityName := oldEntityNameObject.(string)
 		newEntityName := newEntityNameObject.(string)
 		if !canUpdateEntityName(entityType, oldEntityName, newEntityName) {
-			return diag.Errorf("error updating Tag Binding %q: schema_identifier in %q block can only be updated for Tag Bindings if entity name is %q, %q or %q", d.Id(), paramEntityName, schemaEntityType, recordEntityType, fieldEntityType)
+			return diag.Errorf("error updating Tag Binding %q: schema_identifier in %q block can only be updated for Tag Bindings if entity type is %q, %q or %q", d.Id(), paramEntityName, schemaEntityType, recordEntityType, fieldEntityType)
 		}
 		// entity_name will be silently updated
 	}

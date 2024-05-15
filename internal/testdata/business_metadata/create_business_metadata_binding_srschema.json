@@ -1,0 +1,11 @@
+[
+  {
+    "typeName": "bm",
+    "attributes": {
+      "attr2": "value2",
+      "attr1": "value1"
+    },
+    "entityType": "sr_schema",
+    "entityName": "lsrc-nrndwv:.:100001"
+  }
+]

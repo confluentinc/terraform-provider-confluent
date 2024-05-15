@@ -64,7 +64,6 @@ func businessMetadataBindingResource() *schema.Resource {
 				Required:     true,
 				ValidateFunc: validation.StringIsNotEmpty,
 				Description:  "The qualified name of the entity.",
-				ForceNew:     true,
 			},
 			paramEntityType: {
 				Type:         schema.TypeString,
@@ -269,11 +268,18 @@ func businessMetadataBindingDelete(ctx context.Context, d *schema.ResourceData, 
 }
 
 func businessMetadataBindingUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if d.HasChangesExcept(paramCredentials, paramAttributes) {
-		return diag.Errorf("error updating Business Metadata Binding %q: only %q, %q attributes can be updated for Business Metadata Binding", d.Id(), paramCredentials, paramAttributes)
+	if d.HasChangesExcept(paramCredentials, paramAttributes, paramEntityName) {
+		return diag.Errorf("error updating Business Metadata Binding %q: only %q, %q, %q attributes can be updated for Business Metadata Binding", d.Id(), paramCredentials, paramAttributes, paramEntityName)
 	}
 
-	if d.HasChange(paramAttributes) {
+	if d.HasChange(paramAttributes) || d.HasChange(paramEntityName) {
+		oldEntityNameObject, newEntityNameObject := d.GetChange(paramEntityName)
+		oldEntityName := oldEntityNameObject.(string)
+		newEntityName := newEntityNameObject.(string)
+		entityType := d.Get(paramEntityType).(string)
+		if !canUpdateEntityNameBusinessMetadata(entityType, oldEntityName, newEntityName) {
+			return diag.Errorf("error updating business metadata Binding %q: schema_identifier in %q block can only be updated for business metadata Bindings if entity type is %q. The entity_name must be incremental and the cluster id must remain the same", d.Id(), paramEntityName, schemaEntityType)
+		}
 		restEndpoint, err := extractSchemaRegistryRestEndpoint(meta.(*Client), d, false)
 		if err != nil {
 			return diag.Errorf("error updating Business Metadata Binding: %s", createDescriptiveError(err))
@@ -289,7 +295,6 @@ func businessMetadataBindingUpdate(ctx context.Context, d *schema.ResourceData, 
 
 		businessMetadataName := d.Get(paramBusinessMetadataName).(string)
 		entityName := d.Get(paramEntityName).(string)
-		entityType := d.Get(paramEntityType).(string)
 		attributes := d.Get(paramAttributes).(map[string]interface{})
 		businessMetadataBindingId := createBusinessMetadataBindingId(clusterId, businessMetadataName, entityName, entityType)
 
