@@ -57,6 +57,7 @@ var ignoredConnectorConfigs = []string{
 	"cloud.environment",
 	"cloud.provider",
 	"kafka.endpoint",
+	"kafka.max.partition.validation.disable",
 	"kafka.region",
 	"kafka.dedicated",
 	"schema.registry.url",
