@@ -10,7 +10,7 @@ blocks:
     task:
       prologue:
         commands:
-          - sem-version go 1.20
+          - sem-version go 1.21.10
           - export "GOPATH=$(go env GOPATH)"
           - >-
             export

@@ -7,7 +7,7 @@ agent:
 global_job_config:
   prologue:
     commands:
-      - sem-version go 1.21
+      - sem-version go 1.21.10
       - export "GOPATH=$(go env GOPATH)"
       - >-
         export
