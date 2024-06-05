@@ -214,6 +214,15 @@ func TestAccManagedConnector(t *testing.T) {
 					resource.TestCheckResourceAttr(fullConnectorResourceLabel, fmt.Sprintf("%s.%s", paramNonSensitiveConfig, "output.data.format"), "JSON"),
 					resource.TestCheckResourceAttr(fullConnectorResourceLabel, fmt.Sprintf("%s.%s", paramNonSensitiveConfig, "quickstart"), "ORDERS"),
 					resource.TestCheckResourceAttr(fullConnectorResourceLabel, fmt.Sprintf("%s.%s", paramNonSensitiveConfig, "tasks.max"), "1"),
+					// Ensure these attributes (from ignoredConnectorConfigs) are not visible in the output
+					resource.TestCheckNoResourceAttr(fullConnectorResourceLabel, "cloud.environment"),
+					resource.TestCheckNoResourceAttr(fullConnectorResourceLabel, "cloud.provider"),
+					resource.TestCheckNoResourceAttr(fullConnectorResourceLabel, "kafka.endpoint"),
+					resource.TestCheckNoResourceAttr(fullConnectorResourceLabel, "kafka.max.partition.validation.disable"),
+					resource.TestCheckNoResourceAttr(fullConnectorResourceLabel, "kafka.region"),
+					resource.TestCheckNoResourceAttr(fullConnectorResourceLabel, "kafka.dedicated"),
+					resource.TestCheckNoResourceAttr(fullConnectorResourceLabel, "schema.registry.url"),
+					resource.TestCheckNoResourceAttr(fullConnectorResourceLabel, "valid.kafka.api.key"),
 				),
 			},
 			{
@@ -250,6 +259,15 @@ func TestAccManagedConnector(t *testing.T) {
 					resource.TestCheckResourceAttr(fullConnectorResourceLabel, fmt.Sprintf("%s.%s", paramNonSensitiveConfig, "quickstart"), "ORDERS"),
 					resource.TestCheckResourceAttr(fullConnectorResourceLabel, fmt.Sprintf("%s.%s", paramNonSensitiveConfig, "tasks.max"), "1"),
 					resource.TestCheckResourceAttr(fullConnectorResourceLabel, fmt.Sprintf("%s.%s", paramNonSensitiveConfig, "max.interval"), "123"),
+					// Ensure these attributes (from ignoredConnectorConfigs) are not visible in the output
+					resource.TestCheckNoResourceAttr(fullConnectorResourceLabel, "cloud.environment"),
+					resource.TestCheckNoResourceAttr(fullConnectorResourceLabel, "cloud.provider"),
+					resource.TestCheckNoResourceAttr(fullConnectorResourceLabel, "kafka.endpoint"),
+					resource.TestCheckNoResourceAttr(fullConnectorResourceLabel, "kafka.max.partition.validation.disable"),
+					resource.TestCheckNoResourceAttr(fullConnectorResourceLabel, "kafka.region"),
+					resource.TestCheckNoResourceAttr(fullConnectorResourceLabel, "kafka.dedicated"),
+					resource.TestCheckNoResourceAttr(fullConnectorResourceLabel, "schema.registry.url"),
+					resource.TestCheckNoResourceAttr(fullConnectorResourceLabel, "valid.kafka.api.key"),
 				),
 			},
 			{
