@@ -51,7 +51,7 @@ func TestAccDataSourceTopic(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	readCreatedTopicResponse, _ := ioutil.ReadFile("../testdata/kafka_topic/read_created_kafka_topic.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaTopicPath)).
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(kafkaTopicPath)).
 		InScenario(topicDataSourceScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillReturn(

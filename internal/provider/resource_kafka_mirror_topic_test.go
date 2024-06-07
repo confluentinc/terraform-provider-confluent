@@ -104,7 +104,7 @@ func TestAccKafkaMirrorTopic(t *testing.T) {
 			http.StatusOK,
 		))
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaTopicPath)).
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(kafkaTopicPath)).
 		InScenario(kafkaMirrorTopicScenarioName).
 		WhenScenarioStateIs(scenarioStateKafkaMirrorTopicHasBeenDeleted).
 		WillReturn(

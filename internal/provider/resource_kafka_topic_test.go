@@ -29,31 +29,35 @@ import (
 )
 
 const (
-	scenarioStateTopicHasBeenCreated = "A new topic has been just created"
-	scenarioStateTopicHasBeenUpdated = "A new topic has been just updated"
-	scenarioStateTopicHasBeenDeleted = "The topic has been deleted"
-	topicScenarioName                = "confluent_kafka_topic Resource Lifecycle"
-	clusterId                        = "lkc-190073"
-	partitionCount                   = 4
-	firstConfigName                  = "max.message.bytes"
-	firstConfigValue                 = "12345"
-	secondConfigName                 = "retention.ms"
-	secondConfigValue                = "6789"
-	secondConfigUpdatedValue         = "67890"
-	thirdConfigName                  = "segment.bytes"
-	thirdConfigAddedValue            = "104857600"
-	fourthConfigName                 = "max.compaction.lag.ms"
-	fourthConfigAddedValue           = "604800000"
-	topicName                        = "test_topic_name"
-	topicResourceLabel               = "test_topic_resource_label"
-	kafkaApiKey                      = "test_key"
-	kafkaApiSecret                   = "test_secret"
-	numberOfResourceAttributes       = "7"
+	scenarioStateTopicHasBeenCreated       = "A new topic has been just created"
+	scenarioStateTopicHasBeenUpdated       = "A new topic has been just updated"
+	scenarioStateTopicHasBeenDeleted       = "The topic has been deleted"
+	scenarioStateTopicHasBeenUpdateCreated = "The topic has been update created"
+	scenarioStateTopicHasBeenDeletedUpdate = "The topic has been update deleted"
+	topicScenarioName                      = "confluent_kafka_topic Resource Lifecycle"
+	clusterId                              = "lkc-190073"
+	partitionCount                         = 4
+	partitionCountUpdated                  = 6
+	partitionCountUpdated2                 = 2
+	firstConfigName                        = "max.message.bytes"
+	firstConfigValue                       = "12345"
+	secondConfigName                       = "retention.ms"
+	secondConfigValue                      = "6789"
+	secondConfigUpdatedValue               = "67890"
+	thirdConfigName                        = "segment.bytes"
+	thirdConfigAddedValue                  = "104857600"
+	fourthConfigName                       = "max.compaction.lag.ms"
+	fourthConfigAddedValue                 = "604800000"
+	topicName                              = "test_topic_name"
+	topicResourceLabel                     = "test_topic_resource_label"
+	kafkaApiKey                            = "test_key"
+	kafkaApiSecret                         = "test_secret"
+	numberOfResourceAttributes             = "7"
 )
 
 var fullTopicResourceLabel = fmt.Sprintf("confluent_kafka_topic.%s", topicResourceLabel)
 var createKafkaTopicPath = fmt.Sprintf("/kafka/v3/clusters/%s/topics", clusterId)
-var readKafkaTopicPath = fmt.Sprintf("/kafka/v3/clusters/%s/topics/%s", clusterId, topicName)
+var kafkaTopicPath = fmt.Sprintf("/kafka/v3/clusters/%s/topics/%s", clusterId, topicName)
 var readKafkaTopicConfigPath = fmt.Sprintf("/kafka/v3/clusters/%s/topics/%s/configs", clusterId, topicName)
 var updateKafkaTopicConfigPath = fmt.Sprintf("/kafka/v3/clusters/%s/topics/%s/configs:alter", clusterId, topicName)
 
@@ -87,7 +91,7 @@ func TestAccTopic(t *testing.T) {
 	_ = wiremockClient.StubFor(createTopicStub)
 
 	readCreatedTopicResponse, _ := ioutil.ReadFile("../testdata/kafka_topic/read_created_kafka_topic.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaTopicPath)).
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(kafkaTopicPath)).
 		InScenario(topicScenarioName).
 		WhenScenarioStateIs(scenarioStateTopicHasBeenCreated).
 		WillReturn(
@@ -95,7 +99,7 @@ func TestAccTopic(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		))
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaTopicPath)).
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(kafkaTopicPath)).
 		InScenario(topicScenarioName).
 		WhenScenarioStateIs(scenarioStateTopicHasBeenUpdated).
 		WillReturn(
@@ -122,7 +126,7 @@ func TestAccTopic(t *testing.T) {
 			http.StatusOK,
 		))
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaTopicPath)).
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(kafkaTopicPath)).
 		InScenario(topicScenarioName).
 		WhenScenarioStateIs(scenarioStateTopicHasBeenDeleted).
 		WillReturn(
@@ -152,7 +156,7 @@ func TestAccTopic(t *testing.T) {
 			http.StatusOK,
 		))
 
-	deleteTopicStub := wiremock.Delete(wiremock.URLPathEqualTo(readKafkaTopicPath)).
+	deleteTopicStub := wiremock.Delete(wiremock.URLPathEqualTo(kafkaTopicPath)).
 		InScenario(topicScenarioName).
 		WhenScenarioStateIs(scenarioStateTopicHasBeenUpdated).
 		WillSetStateTo(scenarioStateTopicHasBeenDeleted).
@@ -234,7 +238,266 @@ func TestAccTopic(t *testing.T) {
 	})
 
 	checkStubCount(t, wiremockClient, createTopicStub, fmt.Sprintf("POST %s", createKafkaTopicPath), expectedCountOne)
-	checkStubCount(t, wiremockClient, deleteTopicStub, fmt.Sprintf("DELETE %s", readKafkaTopicPath), expectedCountOne)
+	checkStubCount(t, wiremockClient, deleteTopicStub, fmt.Sprintf("DELETE %s", kafkaTopicPath), expectedCountOne)
+}
+
+func TestAccTopicPartition(t *testing.T) {
+	ctx := context.Background()
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
+
+	mockTopicTestServerUrl := wiremockContainer.URI
+	confluentCloudBaseUrl := ""
+	wiremockClient := wiremock.NewClient(mockTopicTestServerUrl)
+	// nolint:errcheck
+	defer wiremockClient.Reset()
+
+	// nolint:errcheck
+	defer wiremockClient.ResetAllScenarios()
+	createTopicResponse, _ := ioutil.ReadFile("../testdata/kafka_topic/create_kafka_topic.json")
+	createTopicStub := wiremock.Post(wiremock.URLPathEqualTo(createKafkaTopicPath)).
+		InScenario(topicScenarioName).
+		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
+		WillSetStateTo(scenarioStateTopicHasBeenCreated).
+		WillReturn(
+			string(createTopicResponse),
+			contentTypeJSONHeader,
+			http.StatusCreated,
+		)
+	_ = wiremockClient.StubFor(createTopicStub)
+
+	readCreatedTopicResponse, _ := ioutil.ReadFile("../testdata/kafka_topic/read_created_kafka_topic.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(kafkaTopicPath)).
+		InScenario(topicScenarioName).
+		WhenScenarioStateIs(scenarioStateTopicHasBeenCreated).
+		WillReturn(
+			string(readCreatedTopicResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	readCreatedTopicConfigResponse, _ := ioutil.ReadFile("../testdata/kafka_topic/read_created_kafka_topic_config.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaTopicConfigPath)).
+		InScenario(topicScenarioName).
+		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
+		WillReturn(
+			string(readCreatedTopicConfigResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaTopicConfigPath)).
+		InScenario(topicScenarioName).
+		WhenScenarioStateIs(scenarioStateTopicHasBeenCreated).
+		WillReturn(
+			string(readCreatedTopicConfigResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	updateTopicStub := wiremock.Patch(wiremock.URLPathEqualTo(kafkaTopicPath)).
+		InScenario(topicScenarioName).
+		WhenScenarioStateIs(scenarioStateTopicHasBeenCreated).
+		WillSetStateTo(scenarioStateTopicHasBeenUpdated).
+		WillReturn(
+			"",
+			contentTypeJSONHeader,
+			http.StatusNoContent,
+		)
+	_ = wiremockClient.StubFor(updateTopicStub)
+
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaTopicConfigPath)).
+		InScenario(topicScenarioName).
+		WhenScenarioStateIs(scenarioStateTopicHasBeenUpdated).
+		WillReturn(
+			string(readCreatedTopicConfigResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	readUpdatedTopicResponse, _ := ioutil.ReadFile("../testdata/kafka_topic/read_updated_kafka_topic.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(kafkaTopicPath)).
+		InScenario(topicScenarioName).
+		WhenScenarioStateIs(scenarioStateTopicHasBeenUpdated).
+		WillReturn(
+			string(readUpdatedTopicResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	deleteTopicStubUpdate := wiremock.Delete(wiremock.URLPathEqualTo(kafkaTopicPath)).
+		InScenario(topicScenarioName).
+		WhenScenarioStateIs(scenarioStateTopicHasBeenUpdated).
+		WillSetStateTo(scenarioStateTopicHasBeenDeletedUpdate).
+		WillReturn(
+			"",
+			contentTypeJSONHeader,
+			http.StatusNoContent,
+		)
+	_ = wiremockClient.StubFor(deleteTopicStubUpdate)
+
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(kafkaTopicPath)).
+		InScenario(topicScenarioName).
+		WhenScenarioStateIs(scenarioStateTopicHasBeenDeletedUpdate).
+		WillReturn(
+			"",
+			contentTypeJSONHeader,
+			http.StatusNotFound,
+		))
+
+	createTopicUpdateResponse, _ := ioutil.ReadFile("../testdata/kafka_topic/create_kafka_topic.json")
+	createTopicUpdateStub := wiremock.Post(wiremock.URLPathEqualTo(createKafkaTopicPath)).
+		InScenario(topicScenarioName).
+		WhenScenarioStateIs(scenarioStateTopicHasBeenDeletedUpdate).
+		WillSetStateTo(scenarioStateTopicHasBeenUpdateCreated).
+		WillReturn(
+			string(createTopicUpdateResponse),
+			contentTypeJSONHeader,
+			http.StatusCreated,
+		)
+	_ = wiremockClient.StubFor(createTopicUpdateStub)
+
+	readCreatedTopicUpdateResponse, _ := ioutil.ReadFile("../testdata/kafka_topic/read_create_updated_kafka_topic.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(kafkaTopicPath)).
+		InScenario(topicScenarioName).
+		WhenScenarioStateIs(scenarioStateTopicHasBeenUpdateCreated).
+		WillReturn(
+			string(readCreatedTopicUpdateResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	readCreatedUpdatedTopicConfigResponse, _ := ioutil.ReadFile("../testdata/kafka_topic/read_created_kafka_topic_config.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaTopicConfigPath)).
+		InScenario(topicScenarioName).
+		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
+		WillReturn(
+			string(readCreatedUpdatedTopicConfigResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaTopicConfigPath)).
+		InScenario(topicScenarioName).
+		WhenScenarioStateIs(scenarioStateTopicHasBeenUpdateCreated).
+		WillReturn(
+			string(readCreatedUpdatedTopicConfigResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	deleteTopicStub := wiremock.Delete(wiremock.URLPathEqualTo(kafkaTopicPath)).
+		InScenario(topicScenarioName).
+		WhenScenarioStateIs(scenarioStateTopicHasBeenUpdateCreated).
+		WillSetStateTo(scenarioStateTopicHasBeenDeleted).
+		WillReturn(
+			"",
+			contentTypeJSONHeader,
+			http.StatusNoContent,
+		)
+	_ = wiremockClient.StubFor(deleteTopicStub)
+
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(kafkaTopicPath)).
+		InScenario(topicScenarioName).
+		WhenScenarioStateIs(scenarioStateTopicHasBeenDeleted).
+		WillReturn(
+			"",
+			contentTypeJSONHeader,
+			http.StatusNotFound,
+		))
+
+	// Set fake values for secrets since those are required for importing
+	_ = os.Setenv("IMPORT_KAFKA_API_KEY", kafkaApiKey)
+	_ = os.Setenv("IMPORT_KAFKA_API_SECRET", kafkaApiSecret)
+	_ = os.Setenv("IMPORT_KAFKA_REST_ENDPOINT", mockTopicTestServerUrl)
+	defer func() {
+		_ = os.Unsetenv("IMPORT_KAFKA_API_KEY")
+		_ = os.Unsetenv("IMPORT_KAFKA_API_SECRET")
+		_ = os.Unsetenv("IMPORT_KAFKA_REST_ENDPOINT")
+	}()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy: func(s *terraform.State) error {
+			return testAccCheckTopicDestroy(s, mockTopicTestServerUrl)
+		},
+		// https://www.terraform.io/docs/extend/testing/acceptance-tests/teststep.html
+		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckTopicConfig(confluentCloudBaseUrl, mockTopicTestServerUrl),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckTopicExists(fullTopicResourceLabel),
+					resource.TestCheckResourceAttr(fullTopicResourceLabel, "kafka_cluster.#", "1"),
+					resource.TestCheckResourceAttr(fullTopicResourceLabel, "kafka_cluster.0.id", clusterId),
+					resource.TestCheckResourceAttr(fullTopicResourceLabel, "id", fmt.Sprintf("%s/%s", clusterId, topicName)),
+					resource.TestCheckResourceAttr(fullTopicResourceLabel, "%", numberOfResourceAttributes),
+					resource.TestCheckResourceAttr(fullTopicResourceLabel, "topic_name", topicName),
+					resource.TestCheckResourceAttr(fullTopicResourceLabel, "partitions_count", strconv.Itoa(partitionCount)),
+					resource.TestCheckResourceAttr(fullTopicResourceLabel, "rest_endpoint", mockTopicTestServerUrl),
+					resource.TestCheckResourceAttr(fullTopicResourceLabel, "config.%", "2"),
+					resource.TestCheckResourceAttr(fullTopicResourceLabel, "config.max.message.bytes", "12345"),
+					resource.TestCheckResourceAttr(fullTopicResourceLabel, "config.retention.ms", "6789"),
+					resource.TestCheckResourceAttr(fullTopicResourceLabel, "credentials.#", "1"),
+					resource.TestCheckResourceAttr(fullTopicResourceLabel, "credentials.0.%", "2"),
+					resource.TestCheckResourceAttr(fullTopicResourceLabel, "credentials.0.key", kafkaApiKey),
+					resource.TestCheckResourceAttr(fullTopicResourceLabel, "credentials.0.secret", kafkaApiSecret),
+				),
+			},
+			{
+				Config: testAccCheckTopicPartition(confluentCloudBaseUrl, mockTopicTestServerUrl, partitionCountUpdated),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckTopicExists(fullTopicResourceLabel),
+					resource.TestCheckResourceAttr(fullTopicResourceLabel, "kafka_cluster.#", "1"),
+					resource.TestCheckResourceAttr(fullTopicResourceLabel, "kafka_cluster.0.id", clusterId),
+					resource.TestCheckResourceAttr(fullTopicResourceLabel, "id", fmt.Sprintf("%s/%s", clusterId, topicName)),
+					resource.TestCheckResourceAttr(fullTopicResourceLabel, "%", numberOfResourceAttributes),
+					resource.TestCheckResourceAttr(fullTopicResourceLabel, "topic_name", topicName),
+					resource.TestCheckResourceAttr(fullTopicResourceLabel, "partitions_count", strconv.Itoa(partitionCountUpdated)),
+					resource.TestCheckResourceAttr(fullTopicResourceLabel, "rest_endpoint", mockTopicTestServerUrl),
+					resource.TestCheckResourceAttr(fullTopicResourceLabel, "config.%", "2"),
+					resource.TestCheckResourceAttr(fullTopicResourceLabel, "config.max.message.bytes", "12345"),
+					resource.TestCheckResourceAttr(fullTopicResourceLabel, "config.retention.ms", "6789"),
+					resource.TestCheckResourceAttr(fullTopicResourceLabel, "credentials.#", "1"),
+					resource.TestCheckResourceAttr(fullTopicResourceLabel, "credentials.0.%", "2"),
+					resource.TestCheckResourceAttr(fullTopicResourceLabel, "credentials.0.key", kafkaApiKey),
+					resource.TestCheckResourceAttr(fullTopicResourceLabel, "credentials.0.secret", kafkaApiSecret),
+				),
+			},
+			{
+				Config: testAccCheckTopicPartition(confluentCloudBaseUrl, mockTopicTestServerUrl, partitionCountUpdated2),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckTopicExists(fullTopicResourceLabel),
+					resource.TestCheckResourceAttr(fullTopicResourceLabel, "kafka_cluster.#", "1"),
+					resource.TestCheckResourceAttr(fullTopicResourceLabel, "kafka_cluster.0.id", clusterId),
+					resource.TestCheckResourceAttr(fullTopicResourceLabel, "id", fmt.Sprintf("%s/%s", clusterId, topicName)),
+					resource.TestCheckResourceAttr(fullTopicResourceLabel, "%", numberOfResourceAttributes),
+					resource.TestCheckResourceAttr(fullTopicResourceLabel, "topic_name", topicName),
+					resource.TestCheckResourceAttr(fullTopicResourceLabel, "partitions_count", strconv.Itoa(partitionCountUpdated2)),
+					resource.TestCheckResourceAttr(fullTopicResourceLabel, "rest_endpoint", mockTopicTestServerUrl),
+					resource.TestCheckResourceAttr(fullTopicResourceLabel, "config.%", "2"),
+					resource.TestCheckResourceAttr(fullTopicResourceLabel, "config.max.message.bytes", "12345"),
+					resource.TestCheckResourceAttr(fullTopicResourceLabel, "config.retention.ms", "6789"),
+					resource.TestCheckResourceAttr(fullTopicResourceLabel, "credentials.#", "1"),
+					resource.TestCheckResourceAttr(fullTopicResourceLabel, "credentials.0.%", "2"),
+					resource.TestCheckResourceAttr(fullTopicResourceLabel, "credentials.0.key", kafkaApiKey),
+					resource.TestCheckResourceAttr(fullTopicResourceLabel, "credentials.0.secret", kafkaApiSecret),
+				),
+			},
+			{
+				// https://www.terraform.io/docs/extend/resources/import.html
+				ResourceName:      fullTopicResourceLabel,
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+
+	checkStubCount(t, wiremockClient, createTopicStub, fmt.Sprintf("POST %s", createKafkaTopicPath), expectedCountTwo)
+	checkStubCount(t, wiremockClient, deleteTopicStub, fmt.Sprintf("DELETE %s", kafkaTopicPath), expectedCountTwo)
 }
 
 func testAccCheckTopicDestroy(s *terraform.State, url string) error {
@@ -313,6 +576,33 @@ func testAccCheckTopicUpdatedConfig(confluentCloudBaseUrl, mockServerUrl string)
 	  }
 	}
 	`, confluentCloudBaseUrl, topicResourceLabel, clusterId, topicName, partitionCount, mockServerUrl, firstConfigName, firstConfigValue, secondConfigName, secondConfigUpdatedValue, thirdConfigName, thirdConfigAddedValue, fourthConfigName, fourthConfigAddedValue, kafkaApiKey, kafkaApiSecret)
+}
+
+func testAccCheckTopicPartition(confluentCloudBaseUrl, mockServerUrl string, partitionCount int) string {
+	return fmt.Sprintf(`
+	provider "confluent" {
+      endpoint = "%s"
+    }
+	resource "confluent_kafka_topic" "%s" {
+	  kafka_cluster {
+        id = "%s"
+      }
+	
+	  topic_name = "%s"
+	  partitions_count = "%d"
+	  rest_endpoint = "%s"
+	
+	  config = {
+		"%s" = "%s"
+		"%s" = "%s"
+	  }
+
+	  credentials {
+		key = "%s"
+		secret = "%s"
+	  }
+	}
+	`, confluentCloudBaseUrl, topicResourceLabel, clusterId, topicName, partitionCount, mockServerUrl, firstConfigName, firstConfigValue, secondConfigName, secondConfigValue, kafkaApiKey, kafkaApiSecret)
 }
 
 func testAccCheckTopicExists(n string) resource.TestCheckFunc {

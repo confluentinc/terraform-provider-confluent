@@ -57,7 +57,7 @@ func TestAccTopicWithEnhancedProviderBlock(t *testing.T) {
 	_ = wiremockClient.StubFor(createTopicStub)
 
 	readCreatedTopicResponse, _ := ioutil.ReadFile("../testdata/kafka_topic/read_created_kafka_topic.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaTopicPath)).
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(kafkaTopicPath)).
 		InScenario(topicScenarioName).
 		WhenScenarioStateIs(scenarioStateTopicHasBeenCreated).
 		WillReturn(
@@ -65,7 +65,7 @@ func TestAccTopicWithEnhancedProviderBlock(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		))
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaTopicPath)).
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(kafkaTopicPath)).
 		InScenario(topicScenarioName).
 		WhenScenarioStateIs(scenarioStateTopicHasBeenUpdated).
 		WillReturn(
@@ -92,7 +92,7 @@ func TestAccTopicWithEnhancedProviderBlock(t *testing.T) {
 			http.StatusOK,
 		))
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaTopicPath)).
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(kafkaTopicPath)).
 		InScenario(topicScenarioName).
 		WhenScenarioStateIs(scenarioStateTopicHasBeenDeleted).
 		WillReturn(
@@ -122,7 +122,7 @@ func TestAccTopicWithEnhancedProviderBlock(t *testing.T) {
 			http.StatusOK,
 		))
 
-	deleteTopicStub := wiremock.Delete(wiremock.URLPathEqualTo(readKafkaTopicPath)).
+	deleteTopicStub := wiremock.Delete(wiremock.URLPathEqualTo(kafkaTopicPath)).
 		InScenario(topicScenarioName).
 		WhenScenarioStateIs(scenarioStateTopicHasBeenUpdated).
 		WillSetStateTo(scenarioStateTopicHasBeenDeleted).
@@ -192,7 +192,7 @@ func TestAccTopicWithEnhancedProviderBlock(t *testing.T) {
 	})
 
 	checkStubCount(t, wiremockClient, createTopicStub, fmt.Sprintf("POST %s", createKafkaTopicPath), expectedCountOne)
-	checkStubCount(t, wiremockClient, deleteTopicStub, fmt.Sprintf("DELETE %s", readKafkaTopicPath), expectedCountOne)
+	checkStubCount(t, wiremockClient, deleteTopicStub, fmt.Sprintf("DELETE %s", kafkaTopicPath), expectedCountOne)
 }
 
 func testAccCheckTopicConfigWithEnhancedProviderBlock(confluentCloudBaseUrl, mockServerUrl string) string {

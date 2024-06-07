@@ -21,6 +21,7 @@ import (
 	kafkarestv3 "github.com/confluentinc/ccloud-sdk-go-v2/kafkarest/v3"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"net/http"
@@ -128,6 +129,13 @@ func kafkaTopicResource() *schema.Resource {
 				Version: 1,
 			},
 		},
+		CustomizeDiff: customdiff.All(
+			customdiff.ForceNewIfChange(paramPartitionsCount, func(ctx context.Context, old, new, meta interface{}) bool {
+				// "partition" can only increase in-place, so we must create a new resource
+				// if it is decreased.
+				return new.(int) < old.(int)
+			}),
+		),
 	}
 }
 

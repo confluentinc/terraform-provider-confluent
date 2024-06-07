@@ -1,0 +1,21 @@
+{
+  "kind": "KafkaTopic",
+  "metadata": {
+    "self": "https://pkc-0wg55.us-central1.gcp.confluent.cloud/kafka/v3/clusters/lkc-190073/topics/test_topic_name",
+    "resource_name": "crn:///kafka=lkc-190073/topic=test_topic_name"
+  },
+  "cluster_id": "lkc-190073",
+  "topic_name": "test_topic_name",
+  "is_internal": false,
+  "replication_factor": 3,
+  "partitions_count": 6,
+  "partitions": {
+    "related": "https://pkc-0wg55.us-central1.gcp.confluent.cloud/kafka/v3/clusters/lkc-190073/topics/test_topic_name/partitions"
+  },
+  "configs": {
+    "related": "https://pkc-0wg55.us-central1.gcp.confluent.cloud/kafka/v3/clusters/lkc-190073/topics/test_topic_name/configs"
+  },
+  "partition_reassignments": {
+    "related": "https://pkc-0wg55.us-central1.gcp.confluent.cloud/kafka/v3/clusters/lkc-190073/topics/test_topic_name/partitions/-/reassignment"
+  }
+}
