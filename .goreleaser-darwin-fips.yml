@@ -1,0 +1,22 @@
+env:
+  - CGO_ENABLED=1
+  - GOEXPERIMENT=boringcrypto
+
+builds:
+  - binary: '{{ .ProjectName }}-fips_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
+    id: "darwin-fips"
+    flags:
+      - -mod=readonly
+    ldflags:
+      - -s -w -X main.version={{ .Version }}
+    gcflags:
+      - all=-trimpath={{ .Env.GOPATH }}
+    asmflags:
+      - all=-trimpath={{ .Env.GOPATH }}
+    goos:
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    # https://goreleaser.com/customization/build/#reproducible-builds
+    mod_timestamp: '{{ .CommitTimestamp }}'
