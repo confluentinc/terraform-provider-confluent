@@ -37,16 +37,6 @@ builds:
     # https://goreleaser.com/customization/build/#reproducible-builds
     mod_timestamp: '{{ .CommitTimestamp }}'
   - binary: '{{ .ProjectName }}_{{ .Version }}'
-    id: "darwin-fips"
-    builder: prebuilt
-    goos:
-      - darwin
-    goarch:
-      - amd64
-      - arm64
-    prebuilt:
-      path: "prebuilt/{{ .ProjectName }}-fips_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
-  - binary: '{{ .ProjectName }}_{{ .Version }}'
     id: "linux-amd64-build"
     flags:
       - -mod=readonly
@@ -91,22 +81,8 @@ builds:
     mod_timestamp: '{{ .CommitTimestamp }}'
 
 archives:
-  - id: archive
-    name_template: '{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
+  - name_template: '{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
     format: zip
-    builds:
-      - default
-      - linux-amd64-build
-      - linux-arm64-build
-    files:
-      - README.md
-      - LICENSE
-      - legal/**/*
-  - id: archive-fips
-    name_template: '{{ .ProjectName }}-fips_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
-    format: zip
-    builds:
-      - darwin-fips
     files:
       - README.md
       - LICENSE
