@@ -1,3 +1,15 @@
+## 1.77.0 (June 10, 2024)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.76.0...v1.77.0)
+
+**New features:**
+* Added support for the new `freight` Kafka cluster type in the `confluent_kafka_cluster` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_cluster) in an [Early Access lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
+
+**Bug fixes:**
+* Fixed an issue with creating the `confluent_business_metadata_binding` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_business_metadata_binding) ([#362](https://github.com/confluentinc/terraform-provider-confluent/issues/362)).
+* Fixed an issue where certain internal configs for the connector were accidentally displayed ([#389](https://github.com/confluentinc/terraform-provider-confluent/issues/389)).
+* Fixed an issue where lowering Kafka topic partition count used to cause failure, now it forces topic recreation instead([#383](https://github.com/confluentinc/terraform-provider-confluent/issues/383)).
+
 ## 1.76.0 (May 9, 2024)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.75.0...v1.76.0)
