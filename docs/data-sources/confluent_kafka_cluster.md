@@ -70,14 +70,21 @@ In addition to the preceding arguments, the following attributes are exported:
 - `basic` - (Optional Configuration Block) The configuration of the Basic Kafka cluster.
 - `standard` - (Optional Configuration Block) The configuration of the Standard Kafka cluster.
 - `enterprise` - (Optional Configuration Block) The configuration of the Enterprise Kafka cluster.
+- `freight` - (Optional Configuration Block) The configuration of the Freight Kafka cluster.
+  - `zones` - (Required List of String) The list of zones the cluster is in.
+      - On AWS, zones are AWS [AZ IDs](https://docs.aws.amazon.com/ram/latest/userguide/working-with-az-ids.html), for example, `use1-az3`.
 - `dedicated` - (Optional Configuration Block) The configuration of the Dedicated Kafka cluster. It supports the following:
     - `cku` - (Required Number) The number of Confluent Kafka Units (CKUs) for Dedicated cluster types. The minimum number of CKUs for `SINGLE_ZONE` dedicated clusters is `1` whereas `MULTI_ZONE` dedicated clusters must have `2` CKUs or more.
     - `zones` - (Required List of String) The list of zones the cluster is in.
-      On AWS, zones are AWS [AZ IDs](https://docs.aws.amazon.com/ram/latest/userguide/working-with-az-ids.html), for example, `use1-az3`.
-      On GCP, zones are GCP [zones](https://cloud.google.com/compute/docs/regions-zones), for example, `us-central1-c`.
-      On Azure, zones are Confluent-chosen names (for example, `1`, `2`, `3`) since Azure does not have universal zone identifiers.
+      - On AWS, zones are AWS [AZ IDs](https://docs.aws.amazon.com/ram/latest/userguide/working-with-az-ids.html), for example, `use1-az3`.
+      - On GCP, zones are GCP [zones](https://cloud.google.com/compute/docs/regions-zones), for example, `us-central1-c`.
+      - On Azure, zones are Confluent-chosen names (for example, `1`, `2`, `3`) since Azure does not have universal zone identifiers.
 
--> **Note:** At least one from the `basic`, `standard`, `dedicated` and `enterprise` configuration blocks should be specified.
+-> **Note:** At least one from the `basic`, `standard`, `dedicated`, `enterprise` or `freight` configuration blocks should be specified.
+
+-> **Note:** The `freight` block is in a [Early Access lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
+
+-> **Note:** The `freight` Kafka cluster type is only available in AWS currently.
 
 - `network` (Optional Configuration Block) supports the following:
     - `id` - (Required String) The ID of the Network that the Kafka cluster belongs to, for example, `n-abc123`.

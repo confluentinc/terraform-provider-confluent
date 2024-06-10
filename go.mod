@@ -5,7 +5,7 @@ go 1.21
 require (
 	github.com/confluentinc/ccloud-sdk-go-v2/apikeys v0.3.0
 	github.com/confluentinc/ccloud-sdk-go-v2/byok v0.0.2
-	github.com/confluentinc/ccloud-sdk-go-v2/cmk v0.10.0
+	github.com/confluentinc/ccloud-sdk-go-v2/cmk v0.21.0
 	github.com/confluentinc/ccloud-sdk-go-v2/connect v0.2.0
 	github.com/confluentinc/ccloud-sdk-go-v2/connect-custom-plugin v0.0.2
 	github.com/confluentinc/ccloud-sdk-go-v2/data-catalog v0.2.0

@@ -34,10 +34,12 @@ const (
 	kafkaClusterTypeStandard   = "Standard"
 	kafkaClusterTypeDedicated  = "Dedicated"
 	kafkaClusterTypeEnterprise = "Enterprise"
+	kafkaClusterTypeFreight    = "Freight"
 	paramBasicCluster          = "basic"
 	paramStandardCluster       = "standard"
 	paramDedicatedCluster      = "dedicated"
 	paramEnterpriseCluster     = "enterprise"
+	paramFreightCluster        = "freight"
 	paramAvailability          = "availability"
 	paramBootStrapEndpoint     = "bootstrap_endpoint"
 	paramRestEndpoint          = "rest_endpoint"
@@ -67,7 +69,7 @@ const (
 
 var acceptedAvailabilityZones = []string{singleZone, multiZone, lowAvailability, highAvailability}
 var acceptedCloudProviders = []string{"AWS", "AZURE", "GCP"}
-var acceptedClusterTypes = []string{paramBasicCluster, paramStandardCluster, paramDedicatedCluster, paramEnterpriseCluster}
+var acceptedClusterTypes = []string{paramBasicCluster, paramStandardCluster, paramDedicatedCluster, paramEnterpriseCluster, paramFreightCluster}
 var paramDedicatedCku = fmt.Sprintf("%s.0.%s", paramDedicatedCluster, paramCku)
 var paramDedicatedEncryptionKey = fmt.Sprintf("%s.0.%s", paramDedicatedCluster, paramEncryptionKey)
 
@@ -122,6 +124,7 @@ func kafkaResource() *schema.Resource {
 			paramStandardCluster:   standardClusterSchema(),
 			paramDedicatedCluster:  dedicatedClusterSchema(),
 			paramEnterpriseCluster: enterpriseClusterSchema(),
+			paramFreightCluster:    freightClusterSchema(),
 			paramBootStrapEndpoint: {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -328,6 +331,8 @@ func kafkaCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 		spec.SetConfig(cmk.CmkV2DedicatedAsCmkV2ClusterSpecConfigOneOf(config))
 	} else if clusterType == kafkaClusterTypeEnterprise {
 		spec.SetConfig(cmk.CmkV2EnterpriseAsCmkV2ClusterSpecConfigOneOf(cmk.NewCmkV2Enterprise(kafkaClusterTypeEnterprise)))
+	} else if clusterType == kafkaClusterTypeFreight {
+		spec.SetConfig(cmk.CmkV2FreightAsCmkV2ClusterSpecConfigOneOf(cmk.NewCmkV2Freight(kafkaClusterTypeFreight)))
 	} else {
 		return diag.Errorf("error creating Kafka Cluster: unknown Kafka Cluster type was provided: %q", clusterType)
 	}
@@ -369,6 +374,7 @@ func extractClusterType(d *schema.ResourceData) string {
 	standardConfigBlock := d.Get(paramStandardCluster).([]interface{})
 	dedicatedConfigBlock := d.Get(paramDedicatedCluster).([]interface{})
 	enterpriseConfigBlock := d.Get(paramEnterpriseCluster).([]interface{})
+	freightConfigBlock := d.Get(paramFreightCluster).([]interface{})
 
 	if len(basicConfigBlock) == 1 {
 		return kafkaClusterTypeBasic
@@ -378,6 +384,8 @@ func extractClusterType(d *schema.ResourceData) string {
 		return kafkaClusterTypeDedicated
 	} else if len(enterpriseConfigBlock) == 1 {
 		return kafkaClusterTypeEnterprise
+	} else if len(freightConfigBlock) == 1 {
+		return kafkaClusterTypeFreight
 	}
 	return ""
 }
@@ -387,6 +395,7 @@ func extractClusterTypeResourceDiff(d *schema.ResourceDiff) string {
 	standardConfigBlock := d.Get(paramStandardCluster).([]interface{})
 	dedicatedConfigBlock := d.Get(paramDedicatedCluster).([]interface{})
 	enterpriseConfigBlock := d.Get(paramEnterpriseCluster).([]interface{})
+	freightConfigBlock := d.Get(paramFreightCluster).([]interface{})
 
 	if len(basicConfigBlock) == 1 {
 		return kafkaClusterTypeBasic
@@ -396,6 +405,8 @@ func extractClusterTypeResourceDiff(d *schema.ResourceDiff) string {
 		return kafkaClusterTypeDedicated
 	} else if len(enterpriseConfigBlock) == 1 {
 		return kafkaClusterTypeEnterprise
+	} else if len(freightConfigBlock) == 1 {
+		return kafkaClusterTypeFreight
 	}
 	return ""
 }
@@ -569,6 +580,27 @@ func enterpriseClusterSchema() *schema.Schema {
 	}
 }
 
+func freightClusterSchema() *schema.Schema {
+	return &schema.Schema{
+		Type:     schema.TypeList,
+		Optional: true,
+		MaxItems: 0,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramZones: {
+					Type: schema.TypeList,
+					Elem: &schema.Schema{
+						Type: schema.TypeString,
+					},
+					Computed:    true,
+					Description: "The list of zones the cluster is in.",
+				},
+			},
+		},
+		ExactlyOneOf: acceptedClusterTypes,
+	}
+}
+
 func byokSchema() *schema.Schema {
 	return &schema.Schema{
 		Type:     schema.TypeList,
@@ -618,7 +650,7 @@ func setKafkaClusterAttributes(d *schema.ResourceData, cluster cmk.CmkV2Cluster)
 		return nil, err
 	}
 
-	// Reset all 3 cluster types since only one of these 3 should be set
+	// Reset all 5 cluster types since only one of these 5 should be set
 	if err := d.Set(paramBasicCluster, []interface{}{}); err != nil {
 		return nil, err
 	}
@@ -629,6 +661,9 @@ func setKafkaClusterAttributes(d *schema.ResourceData, cluster cmk.CmkV2Cluster)
 		return nil, err
 	}
 	if err := d.Set(paramEnterpriseCluster, []interface{}{}); err != nil {
+		return nil, err
+	}
+	if err := d.Set(paramFreightCluster, []interface{}{}); err != nil {
 		return nil, err
 	}
 
@@ -651,6 +686,12 @@ func setKafkaClusterAttributes(d *schema.ResourceData, cluster cmk.CmkV2Cluster)
 		}
 	} else if cluster.Spec.Config.CmkV2Enterprise != nil {
 		if err := d.Set(paramEnterpriseCluster, []interface{}{make(map[string]string)}); err != nil {
+			return nil, err
+		}
+	} else if cluster.Spec.Config.CmkV2Freight != nil {
+		if err := d.Set(paramFreightCluster, []interface{}{map[string]interface{}{
+			paramZones: cluster.Spec.Config.CmkV2Freight.GetZones(),
+		}}); err != nil {
 			return nil, err
 		}
 	}

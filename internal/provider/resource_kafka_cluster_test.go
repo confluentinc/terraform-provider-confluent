@@ -176,6 +176,7 @@ func TestAccCluster(t *testing.T) {
 					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "cloud", kafkaCloud),
 					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "basic.#", "0"),
 					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "enterprise.#", "0"),
+					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "freight.#", "0"),
 					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "standard.0.%", "0"),
 					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "standard.#", "1"),
 					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "display_name", kafkaDisplayName),

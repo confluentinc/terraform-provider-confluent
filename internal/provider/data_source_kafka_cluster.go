@@ -78,6 +78,7 @@ func kafkaDataSource() *schema.Resource {
 			paramStandardCluster:   standardClusterDataSourceSchema(),
 			paramDedicatedCluster:  dedicatedClusterDataSourceSchema(),
 			paramEnterpriseCluster: enterpriseClusterDataSourceSchema(),
+			paramFreightCluster:    freightClusterDataSourceSchema(),
 			paramBootStrapEndpoint: {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -264,6 +265,26 @@ func enterpriseClusterDataSourceSchema() *schema.Schema {
 		MaxItems: 0,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{},
+		},
+	}
+}
+
+func freightClusterDataSourceSchema() *schema.Schema {
+	return &schema.Schema{
+		Type:     schema.TypeList,
+		Optional: true,
+		MaxItems: 0,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramZones: {
+					Type: schema.TypeList,
+					Elem: &schema.Schema{
+						Type: schema.TypeString,
+					},
+					Computed:    true,
+					Description: "The list of zones the cluster is in.",
+				},
+			},
 		},
 	}
 }
