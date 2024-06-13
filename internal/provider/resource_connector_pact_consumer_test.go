@@ -46,7 +46,8 @@ func TestReadConnector(t *testing.T) {
 		UponReceiving("A request to read all connectors").
 		WithRequest("GET", url, func(b *consumer.V4RequestBuilder) {
 			b.
-				Query("expand", m.Equality("info,status,id"))
+				Query("expand", m.Equality("info,status,id")).
+				Header("X-Principal", m.Like("User 12345"))
 		}).
 		WillRespondWith(200, func(b *consumer.V4ResponseBuilder) {
 			b.
@@ -79,6 +80,7 @@ func TestReadConnector(t *testing.T) {
 			connectCfg := connect.NewConfiguration()
 			connectCfg.HTTPClient = &http.Client{}
 			connectCfg.Servers[0].URL = fmt.Sprintf("http://%v:%v", config.Host, config.Port)
+			connectCfg.AddDefaultHeader("X-Principal", "User 12345")
 			client := &Client{
 				connectClient: connect.NewAPIClient(connectCfg),
 			}
