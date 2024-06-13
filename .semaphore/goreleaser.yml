@@ -32,12 +32,42 @@ blocks:
           - sudo apt update
           - sudo apt install -y gcc-aarch64-linux-gnu
       jobs:
+        - name: goreleaser-darwin-fips
+          task:
+            agent:
+              machine:
+                type: s1-prod-macos-13-5-arm64
+          commands:
+            - cd ..
+            - wget "https://go.dev/dl/go$(cat .go-version).src.tar.gz"
+            - tar -xf go$(cat .go-version).src.tar.gz
+            - git clone --branch go$(cat .go-version)-1-openssl-fips --depth 1 https://github.com/golang-fips/go.git go-openssl
+            - cd go
+            - brew install gpatch
+            - cat ../go-openssl/patches/*.patch | patch -p1
+            - sed -i '' 's/linux/darwin/' src/crypto/internal/backend/nobackend.go
+            - sed -i '' 's/linux/darwin/' src/crypto/internal/backend/openssl.go
+            - sed -i '' 's/"libcrypto.so.%s"/"libcrypto.%s.dylib"/' src/crypto/internal/backend/openssl.go
+            - cd src/
+            - ./make.bash -v
+            - cd ../../
+            - export PATH=$(pwd)/go/bin:$PATH
+            - export GOROOT=$(pwd)/go
+            - cd terraform-provider-confluent*
+            - curl -sL https://goreleaser.com/static/run | VERSION=v1.25.1 bash -s -- build --config .goreleaser-darwin-fips.yml
+            - artifact push workflow dist/terraform-provider-confluent-fips_darwin_amd64_v1
+            - artifact push workflow dist/terraform-provider-confluent-fips_darwin_arm64
         - name: goreleaser
           commands:
             # install pact CLIs
             - make pact-cli-install
             # check if our dependencies are compatible
             - make pact-can-i-deploy
-            - curl -sL https://git.io/goreleaser | bash
+            - mkdir prebuilt
+            - cd prebuilt
+            - artifact pull workflow terraform-provider-confluent-fips_darwin_amd64_v1 && \
+            - artifact pull workflow terraform-provider-confluent-fips_darwin_arm64 && \
+            - cd ..
+            - curl -sL https://goreleaser.com/static/run | VERSION=v1.25.1-pro bash -- release --config .goreleaser.yml --key $$(vault kv get -field goreleaser_key v1/ci/kv/cli/release)
             # record this version as released
             - make pact-release
