@@ -1,3 +1,10 @@
+## 1.78.0 (June 13, 2024)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.77.0...v1.78.0)
+
+**New features:**
+* Release an additional macOS binary with FIPS-140 support.
+
 ## 1.77.0 (June 10, 2024)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.76.0...v1.77.0)
@@ -136,9 +143,9 @@
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.63.0...v1.64.0)
 
 **New features:**
-* Deprecated `confluent_schema_registry_region` [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_schema_registry_region) 
-and `confluent_schema_registry_cluster` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema_registry_cluster). They will be 
-removed in the next major version of the provider (2.0.0). Refer to the [Upgrade Guide](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/guides/version-2-upgrade) for more details. 
+* Deprecated `confluent_schema_registry_region` [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_schema_registry_region)
+and `confluent_schema_registry_cluster` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema_registry_cluster). They will be
+removed in the next major version of the provider (2.0.0). Refer to the [Upgrade Guide](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/guides/version-2-upgrade) for more details.
   * Note: The [guide]((https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/guides/version-2-upgrade)) will be published once version 2.0.0 is released.
 
 **New updates for resources that are in [Early Access / Preview lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy):**
@@ -744,7 +751,7 @@ removed in the next major version of the provider (2.0.0). Refer to the [Upgrade
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.13.0...v1.14.0)
 
 **Bug fixes:**
-* Added `cleanup.policy` topic setting to list of updatable topic settings. 
+* Added `cleanup.policy` topic setting to list of updatable topic settings.
 * Updated docs.
 
 **New updates for resources that are in [Early Access / Open Preview lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy):**
@@ -878,7 +885,7 @@ removed in the next major version of the provider (2.0.0). Refer to the [Upgrade
 
 **Bug fixes:**
 * Fixed a connector provisioning bug where it was impossible to delete `confluent_connector` via TF if provisioning failed.
-* Updated [dedicated-privatelink-aws-kafka-acls](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/dedicated-privatelink-aws-kafka-acls) and [dedicated-privatelink-aws-kafka-rbac](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/dedicated-privatelink-aws-kafka-rbac) 
+* Updated [dedicated-privatelink-aws-kafka-acls](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/dedicated-privatelink-aws-kafka-acls) and [dedicated-privatelink-aws-kafka-rbac](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/dedicated-privatelink-aws-kafka-rbac)
 examples to use `zones` attribute of `confluent_network` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_network) such that created network / Kafka cluster's zones match user VPC's zones ([#80](https://github.com/confluentinc/terraform-provider-confluent/issues/80), [#81](https://github.com/confluentinc/terraform-provider-confluent/issues/81)).
 * Updated docs.
 
