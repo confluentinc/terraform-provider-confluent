@@ -4,44 +4,22 @@ agent:
   machine:
     type: s1-prod-ubuntu20-04-amd64-1
 blocks:
-  - name: "Draft a Release"
-    skip:
-      when: "pull_request =~ '.*'"
+  - name: "Draft a Release (Part 1)"
+    dependencies: []
+    # skip:
+    #   when: "pull_request =~ '.*'"
     task:
-      prologue:
-        commands:
-          - sem-version go 1.21.10
-          - export "GOPATH=$(go env GOPATH)"
-          - >-
-            export
-            "SEMAPHORE_GIT_DIR=${GOPATH}/src/github.com/confluentinc/${SEMAPHORE_PROJECT_NAME}"
-          - 'export "PATH=${GOPATH}/bin:${PATH}"'
-          - 'mkdir -vp "${SEMAPHORE_GIT_DIR}" "${GOPATH}/bin"'
-          - checkout
-          - . vault-setup
-          # GitHub token is required for running GoReleaser
-          - . vault-sem-get-secret v1/ci/kv/apif/signing_key
-          # Import GPG private key
-          - echo -e "${GPG_PRIVATE_KEY}" | gpg --import --batch --no-tty
-          - echo "foo" > temp.txt
-          - gpg --detach-sig --yes -v --output=/dev/null --pinentry-mode loopback --passphrase "${PASSPHRASE}" temp.txt
-          - rm temp.txt
-          # Clean up git state
-          - git clean -fx
-          # Install deps for compiling for linux/arm64 from linux/amd64
-          - sudo apt update
-          - sudo apt install -y gcc-aarch64-linux-gnu
+      agent:
+        machine:
+          type: s1-prod-macos-13-5-arm64
       jobs:
         - name: goreleaser-darwin-fips
-          task:
-            agent:
-              machine:
-                type: s1-prod-macos-13-5-arm64
           commands:
+            - checkout
             - cd ..
-            - wget "https://go.dev/dl/go$(cat .go-version).src.tar.gz"
-            - tar -xf go$(cat .go-version).src.tar.gz
-            - git clone --branch go$(cat .go-version)-1-openssl-fips --depth 1 https://github.com/golang-fips/go.git go-openssl
+            - wget "https://go.dev/dl/go$(cat terraform-provider-confluent*/.go-version).src.tar.gz"
+            - tar -xf go$(cat terraform-provider-confluent*/.go-version).src.tar.gz
+            - git clone --branch go$(cat terraform-provider-confluent*/.go-version)-1-openssl-fips --depth 1 https://github.com/golang-fips/go.git go-openssl
             - cd go
             - brew install gpatch
             - cat ../go-openssl/patches/*.patch | patch -p1
@@ -54,20 +32,45 @@ blocks:
             - export PATH=$(pwd)/go/bin:$PATH
             - export GOROOT=$(pwd)/go
             - cd terraform-provider-confluent*
-            - curl -sL https://goreleaser.com/static/run | VERSION=v1.25.1 bash -s -- build --config .goreleaser-darwin-fips.yml
-            - artifact push workflow dist/terraform-provider-confluent-fips_darwin_amd64_v1
-            - artifact push workflow dist/terraform-provider-confluent-fips_darwin_arm64
+            - git tag v0.0.0
+            - curl https://goreleaser.com/static/run | VERSION=v1.25.1 bash -s -- build --config .goreleaser-darwin-fips.yml
+            - artifact push workflow dist/darwin-fips_darwin_amd64_v1
+            - artifact push workflow dist/darwin-fips_darwin_arm64
+  - name: "Draft a Release (Part 2)"
+    dependencies: ["Draft a Release (Part 1)"]
+    task:
+      jobs:
         - name: goreleaser
           commands:
+            - sem-version go 1.22.1
+            - export "GOPATH=$(go env GOPATH)"
+            - >-
+              export
+              "SEMAPHORE_GIT_DIR=${GOPATH}/src/github.com/confluentinc/${SEMAPHORE_PROJECT_NAME}"
+            - 'export "PATH=${GOPATH}/bin:${PATH}"'
+            - 'mkdir -vp "${SEMAPHORE_GIT_DIR}" "${GOPATH}/bin"'
+            - checkout
+            - . vault-setup
+            # GitHub token is required for running GoReleaser
+            - . vault-sem-get-secret v1/ci/kv/apif/signing_key
+            # Import GPG private key
+            - echo -e "${GPG_PRIVATE_KEY}" | gpg --import --batch --no-tty
+            - echo "foo" > temp.txt
+            - gpg --detach-sig --yes -v --output=/dev/null --pinentry-mode loopback --passphrase "${PASSPHRASE}" temp.txt
+            - rm temp.txt
+            # Clean up git state
+            - git clean -fx
+            # Install deps for compiling for linux/arm64 from linux/amd64
+            - sudo apt update
+            - sudo apt install -y gcc-aarch64-linux-gnu
             # install pact CLIs
             - make pact-cli-install
             # check if our dependencies are compatible
             - make pact-can-i-deploy
-            - mkdir prebuilt
-            - cd prebuilt
-            - artifact pull workflow terraform-provider-confluent-fips_darwin_amd64_v1 && \
-            - artifact pull workflow terraform-provider-confluent-fips_darwin_arm64 && \
+            - mkdir prebuilt && cd prebuilt
+            - artifact pull workflow darwin-fips_darwin_amd64_v1
+            - artifact pull workflow darwin-fips_darwin_arm64
             - cd ..
-            - curl -sL https://goreleaser.com/static/run | VERSION=v1.25.1-pro bash -- release --config .goreleaser.yml --key $$(vault kv get -field goreleaser_key v1/ci/kv/cli/release)
+            - curl https://goreleaser.com/static/run | VERSION=v1.25.1-pro bash -s -- release --config .goreleaser.yml --key $$(vault kv get -field goreleaser_key v1/ci/kv/cli/release)
             # record this version as released
             - make pact-release

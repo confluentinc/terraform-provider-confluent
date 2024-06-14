@@ -3,8 +3,8 @@ env:
   - GOEXPERIMENT=boringcrypto
 
 builds:
-  - binary: '{{ .ProjectName }}-fips_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
-    id: "darwin-fips"
+  - id: darwin-fips
+    binary: "{{ .ProjectName }}_{{ .Version }}"
     flags:
       - -mod=readonly
     ldflags:

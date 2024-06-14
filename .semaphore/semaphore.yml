@@ -4,10 +4,14 @@ agent:
   machine:
     type: s1-prod-ubuntu20-04-amd64-1
 
+auto_cancel:
+  running:
+    when: "branch != 'master'"
+
 global_job_config:
   prologue:
     commands:
-      - sem-version go 1.21.10
+      - sem-version go 1.22.1
       - export "GOPATH=$(go env GOPATH)"
       - >-
         export
