@@ -201,21 +201,21 @@ show-version:
 	@echo bumped version: $(BUMPED_VERSION)
 	@echo bumped clean version: $(BUMPED_CLEAN_VERSION)
 
-# Clone the latest contents from repository and change the directory
-# Fetch the latest tag from internal repo and save the version tag
+# Fetch the latest tag from internal repo and save the tag version
 # Add the public repo as the remote repo with alias as "public"
 # Finally publish the latest tag version to the public repo
-PUBLIC_TAG_VERSION := $(shell \
-	git clone https://github.com/confluentinc/terraform-provider-confluent-internal.git && \
-	cd terraform-provider-confluent-internal && \
-	git log --tags --simplify-by-decoration --pretty='format:%d' | grep -o 'tag: v[0-9]*\.[0-9]*\.[0-9]*[-a-zA-Z0-9]*' | head -n 1 | sed 's/tag: //')
+PUBLIC_REPO_TAG_VERSION := $(shell git log --tags --simplify-by-decoration --pretty='format:%d' | \
+		grep -o 'tag: v[0-9]*\.[0-9]*\.[0-9]*[-a-zA-Z0-9]*' | \
+		grep -v '.*deleted' | \
+		head -n 1 | \
+		sed 's/tag: //')
 
 .PHONY: release-to-public-repo
 release-to-public-repo:
-	@echo Latest tag version to release is: $(PUBLIC_TAG_VERSION)
+	@echo Latest tag version to release is: $(PUBLIC_REPO_TAG_VERSION)
 	-@git remote add public https://github.com/confluentinc/terraform-provider-confluent.git
 	@echo Preparing to publish the latest commits and the most recent tag to the public repository...
-	@git push --atomic public master $(PUBLIC_TAG_VERSION)
+	git push --atomic public master $(PUBLIC_REPO_TAG_VERSION)
 
 # Pact targets
 .PHONY: show-pact
