@@ -4,7 +4,7 @@ TEST?=./...
 NAME        := terraform-provider-confluent
 # Build variables
 BUILD_DIR   := bin
-VERSION     ?= $(shell git describe --tags --exact-match 2>/dev/null || git describe --tags 2>/dev/null || echo "v0.0.0-$(COMMIT_HASH)")
+VERSION     ?= $(shell git tag --sort=-creatordate | grep -v ".*deleted" | head -n 1)
 # Go variables
 GOCMD         := GO111MODULE=on go
 GOBUILD       ?= CGO_ENABLED=0 $(GOCMD) build -mod=vendor
