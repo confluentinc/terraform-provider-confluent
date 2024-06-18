@@ -25,7 +25,7 @@ GIT_MESSAGES := $(shell git log --pretty='%s' v$(CLEAN_VERSION)...HEAD 2>/dev/nu
 export PACT_DO_NOT_TRACK ?= true
 # This variable is controlled by the CI environment
 # Leaving the name here for documentation purposes
-# export PACT_BROKER_URL ?= 
+# export PACT_BROKER_URL ?=
 # pact cli hardcodes the path where the binaries are installed as ${CURDIR}/pact
 # so let's install the rest of the tooling there too
 PACT_BIN_PATH ?= $(CURDIR)/pact/bin
@@ -92,10 +92,10 @@ BUMPED_VERSION := v$(BUMPED_CLEAN_VERSION)
 RELEASE_SVG := <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="94" height="20"><linearGradient id="b" x2="0" y2="100%"><stop offset="0" stop-color="\#bbb" stop-opacity=".1"/><stop offset="1" stop-opacity=".1"/></linearGradient><clipPath id="a"><rect width="94" height="20" rx="3" fill="\#fff"/></clipPath><g clip-path="url(\#a)"><path fill="\#555" d="M0 0h49v20H0z"/><path fill="\#007ec6" d="M49 0h45v20H49z"/><path fill="url(\#b)" d="M0 0h94v20H0z"/></g><g fill="\#fff" text-anchor="middle" font-family="DejaVu Sans,Verdana,Geneva,sans-serif" font-size="110"><text x="255" y="150" fill="\#010101" fill-opacity=".3" transform="scale(.1)" textLength="390">release</text><text x="255" y="140" transform="scale(.1)" textLength="390">release</text><text x="705" y="150" fill="\#010101" fill-opacity=".3" transform="scale(.1)" textLength="350">$(BUMPED_VERSION)</text><text x="705" y="140" transform="scale(.1)" textLength="350">$(BUMPED_VERSION)</text></g> </svg>
 
 # which version to publish pacts as.
-# since publishing happens in CI in the same job that does the version bump and git tag, 
+# since publishing happens in CI in the same job that does the version bump and git tag,
 # BUMPED_VERSION points to the actual resulting tag from the CI job.
 PACT_PUBLISH_VERSION := $(BUMPED_VERSION)
-# which version to use when recording a release in the pact broker. 
+# which version to use when recording a release in the pact broker.
 # since release happens in a follow up job, the version has already been bumped by the time we get here,
 # so VERSION corresponds to the actual tag being released.
 PACT_RELEASE_VERSION := $(VERSION)
@@ -163,11 +163,11 @@ install: build
 
 .PHONY: gox
 gox:
-	GO111MODULE=off go get -u github.com/mitchellh/gox
+	go install github.com/mitchellh/gox@latest
 
 .PHONY: goimports
 goimports:
-	GO111MODULE=off go get -u golang.org/x/tools/cmd/goimports
+	go install golang.org/x/tools/cmd/goimports@latest
 
 .PHONY: tools
 tools: ## Install required tools
@@ -297,7 +297,7 @@ pact-require-version:
 	fi
 
 .PHONY: pact-release
-## Record release of a $(PACTICIPANT_NAME) to $(PACT_RELEASE_ENVIRONMENT). 
+## Record release of a $(PACTICIPANT_NAME) to $(PACT_RELEASE_ENVIRONMENT).
 ## Requires $(PACT_RELEASE_ENVIRONMENT) and $(PACT_RELEASE_VERSION) to be set.
 # See also: https://docs.pact.io/pact_broker/recording_deployments_and_releases
 # Release is different from deploy.
@@ -323,10 +323,10 @@ endif
 
 # can-i-deploy applies for both deploy and release.
 .PHONY: pact-can-i-deploy
-## Check if you can deploy a $(PACTICIPANT_NAME) to $(PACT_RELEASE_ENVIRONMENT). 
+## Check if you can deploy a $(PACTICIPANT_NAME) to $(PACT_RELEASE_ENVIRONMENT).
 ## Requires $(PACT_RELEASE_ENVIRONMENT) and $(PACT_RELEASE_VERSION) to be set.
 # Will retry 30 times with 30 seconds intervals if verification results are not yet available.
-# Will allow deployment if the given version does not exist in the broker. 
+# Will allow deployment if the given version does not exist in the broker.
 # This is to allow rollbacks to older service versions.
 pact-can-i-deploy: pact-require-environment pact-require-version
 	@PACT_BIN_PATH=$(PACT_BIN_PATH) PACTICIPANT_NAME=$(PACTICIPANT_NAME) PACT_DEPLOY_VERSION=$(PACT_RELEASE_VERSION) \
