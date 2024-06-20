@@ -30,7 +30,6 @@ blocks:
             - export PATH=$(pwd)/go/bin:$PATH
             - export GOROOT=$(pwd)/go
             - cd terraform-provider-confluent*
-            - git tag v0.0.0
             - curl https://goreleaser.com/static/run | VERSION=v1.25.1 bash -s -- build --config .goreleaser-darwin-fips.yml
             - artifact push workflow dist/darwin-fips_darwin_amd64_v1
             - artifact push workflow dist/darwin-fips_darwin_arm64
