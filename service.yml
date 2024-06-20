@@ -1,6 +1,6 @@
 name: terraform-provider-confluent-internal
 lang: go
-lang_version: "1.22.4"
+lang_version: "1.22.2"
 git:
   enable: true
 github:
@@ -9,5 +9,5 @@ semaphore:
   enable: true
   pipeline_enable: false
   branches:
-  - master
-  - /^v\d+\.\d+\.x$/
+    - master
+    - /^v\d+\.\d+\.x$/
