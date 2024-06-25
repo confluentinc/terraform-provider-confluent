@@ -553,6 +553,7 @@ func dedicatedClusterSchema() *schema.Schema {
 					Type:        schema.TypeString,
 					Optional:    true,
 					Description: "The ID of the encryption key that is used to encrypt the data in the Kafka cluster.",
+					Deprecated:  fmt.Sprintf(deprecationMessageMajorRelease2, "encryption_key", "attribute"),
 				},
 				paramZones: {
 					Type: schema.TypeList,

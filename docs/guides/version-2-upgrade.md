@@ -141,4 +141,9 @@ without any `Warning: Deprecated Resource` messages.
 
 !> **Warning:** Ensure that you **do not** delete / destroy the Schema Registry cluster from Confluent Cloud (`confluent_schema_registry_cluster` resource) when going through this guide, as opposed to only removing it from the TF state.
 
+### Changes to `confluent_kafka_cluster` resource and `confluent_kafka_cluster` data source
+
+The deprecated `dedicated[0].encryption_key` attribute will be removed since it no 
+longer exists in the [Confluent Cloud API](https://docs.confluent.io/cloud/current/api.html#tag/Clusters-(cmkv2)). You should use `byok_key[0].id` attribute instead.
+
 If you run into any problems, [report an issue](https://github.com/confluentinc/terraform-provider-confluent/issues) to Confluent.
