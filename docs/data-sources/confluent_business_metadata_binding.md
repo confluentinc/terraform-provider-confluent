@@ -24,12 +24,12 @@ provider "confluent" {
 
 data "confluent_business_metadata_binding" "main" {
   schema_registry_cluster {
-    id = confluent_schema_registry_cluster.essentials.id
+    id = data.confluent_schema_registry_cluster.essentials.id
   }
-  rest_endpoint = confluent_schema_registry_cluster.essentials.rest_endpoint
+  rest_endpoint = data.confluent_schema_registry_cluster.essentials.rest_endpoint
   credentials {
-    key    = "<Schema Registry API Key for confluent_schema_registry_cluster.essentials>"
-    secret = "<Schema Registry API Secret for confluent_schema_registry_cluster.essentials>"
+    key    = "<Schema Registry API Key for data.confluent_schema_registry_cluster.essentials>"
+    secret = "<Schema Registry API Secret for data.confluent_schema_registry_cluster.essentials>"
   }
   
   business_metadata_name = data.confluent_business_metadata.pii.name
@@ -61,7 +61,7 @@ data "confluent_business_metadata_binding" "main" {
 The following arguments are supported:
 
 - `business_metadata_name` - (Required String) The name of the Business Metadata to be applied, for example, `PII`. The name must not be empty and consist of a letter followed by a sequence of letter, number, space, or _ characters.
-- `entity_name` - (Required String) The qualified name of the entity., for example, `${confluent_schema_registry_cluster.main.id}:.:${confluent_schema.purchase.schema_identifier}`, `${confluent_schema_registry_cluster.main.id}:${confluent_kafka_cluster.basic.id}:${confluent_kafka_topic.purchase.topic_name}`.
+- `entity_name` - (Required String) The qualified name of the entity., for example, `${data.confluent_schema_registry_cluster.main.id}:.:${confluent_schema.purchase.schema_identifier}`, `${data.confluent_schema_registry_cluster.main.id}:${confluent_kafka_cluster.basic.id}:${confluent_kafka_topic.purchase.topic_name}`.
 - `entity_type` - (Required String) The entity type, for example, `sr_schema`.
 - `schema_registry_cluster` - (Optional Configuration Block) supports the following:
     - `id` - (Required String) The ID of the Schema Registry cluster, for example, `lsrc-abc123`.

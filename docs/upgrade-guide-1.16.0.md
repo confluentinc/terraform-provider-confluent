@@ -145,8 +145,8 @@ Terraform has compared your real infrastructure against your configuration and f
     
     # Copy definition and rename resource name from
     # confluent_stream_governance_cluster to
-    # confluent_schema_registry_cluster
-    resource "confluent_schema_registry_cluster" "essentials" {
+    # data.confluent_schema_registry_cluster
+    resource "data.confluent_schema_registry_cluster" "essentials" {
       # ...
     }
     ```
@@ -200,15 +200,15 @@ The next step is to import a Schema Registry cluster.
 ```bash
 $ export CONFLUENT_CLOUD_API_KEY="<cloud_api_key>"
 $ export CONFLUENT_CLOUD_API_SECRET="<cloud_api_secret>"
-$ terraform import confluent_schema_registry_cluster.essentials env-aap2wg/lsrc-abc123
+$ terraform import data.confluent_schema_registry_cluster.essentials env-aap2wg/lsrc-abc123
 ```
 
 Your output should resemble:
 ```
-confluent_schema_registry_cluster.essentials: Importing from ID "env-aap2wg/lsrc-abc123"...
-confluent_schema_registry_cluster.essentials: Import prepared!
-  Prepared confluent_schema_registry_cluster for import
-confluent_schema_registry_cluster.essentials: Refreshing state... [id=lsrc-abc123]
+data.confluent_schema_registry_cluster.essentials: Importing from ID "env-aap2wg/lsrc-abc123"...
+data.confluent_schema_registry_cluster.essentials: Import prepared!
+  Prepared data.confluent_schema_registry_cluster for import
+data.confluent_schema_registry_cluster.essentials: Refreshing state... [id=lsrc-abc123]
 
 Import successful!
 
@@ -254,7 +254,7 @@ To remove `confluent_stream_governance_cluster.essentials` from TF configuration
 
 #### After
     ```hcl
-    data "confluent_schema_registry_cluster" "essentials" {
+    data "data.confluent_schema_registry_cluster" "essentials" {
       # ...
     }
     ```
@@ -285,7 +285,7 @@ The command should output 0 matches.
 If you see matches, make sure you replaced all references:
 
 * `confluent_stream_governance_region` -> `confluent_schema_registry_region`
-* `confluent_stream_governance_cluster` -> `confluent_schema_registry_cluster`
+* `confluent_stream_governance_cluster` -> `data.confluent_schema_registry_cluster`
 
 ##### Sanity Check
 
@@ -300,7 +300,7 @@ Your output should resemble:
 confluent_service_account.test-sa: Refreshing state... [id=sa-xyz123]
 confluent_environment.test-env: Refreshing state... [id=env-dge456]
 confluent_kafka_cluster.basic: Refreshing state... [id=lkc-vrp3op]
-confluent_schema_registry_cluster.essentials: Refreshing state... [id=lsrc-abc123]
+data.confluent_schema_registry_cluster.essentials: Refreshing state... [id=lsrc-abc123]
 confluent_kafka_acl.describe-test-basic-cluster: Refreshing state... [id=lkc-abc123/CLUSTER#kafka-cluster#LITERAL#User:sa-xyz123#*#DESCRIBE#ALLOW]
 confluent_kafka_topic.orders: Refreshing state... [id=lkc-abc123/orders]
 confluent_kafka_acl.describe-orders: Refreshing state... [id=lkc-abc123/TOPIC#orders#LITERAL#User:sa-xyz123#*#DESCRIBE#ALLOW]

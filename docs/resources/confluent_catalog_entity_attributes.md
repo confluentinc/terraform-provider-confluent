@@ -25,12 +25,12 @@ provider "confluent" {
 
 resource "confluent_catalog_entity_attributes" "main" {
   schema_registry_cluster {
-    id = confluent_schema_registry_cluster.essentials.id
+    id = data.confluent_schema_registry_cluster.essentials.id
   }
-  rest_endpoint = confluent_schema_registry_cluster.essentials.rest_endpoint
+  rest_endpoint = data.confluent_schema_registry_cluster.essentials.rest_endpoint
   credentials {
-    key    = "<Schema Registry API Key for confluent_schema_registry_cluster.essentials>"
-    secret = "<Schema Registry API Secret for confluent_schema_registry_cluster.essentials>"
+    key    = "<Schema Registry API Key for data.confluent_schema_registry_cluster.essentials>"
+    secret = "<Schema Registry API Secret for data.confluent_schema_registry_cluster.essentials>"
   }
   
   entity_name = "lkc-15xq83:topic_0"
@@ -83,7 +83,7 @@ The following arguments are supported:
 - `credentials` (Optional Configuration Block) supports the following:
     - `key` - (Required String) The Schema Registry API Key.
     - `secret` - (Required String, Sensitive) The Schema Registry API Secret.
-- `entity_name` - (Required String) The qualified name of the entity, for example, `${confluent_schema_registry_cluster.main.id}:.:${confluent_schema.purchase.schema_identifier}`, `${confluent_schema_registry_cluster.main.id}:${confluent_kafka_cluster.basic.id}:${confluent_kafka_topic.purchase.topic_name}`.
+- `entity_name` - (Required String) The qualified name of the entity, for example, `${data.confluent_schema_registry_cluster.main.id}:.:${confluent_schema.purchase.schema_identifier}`, `${data.confluent_schema_registry_cluster.main.id}:${confluent_kafka_cluster.basic.id}:${confluent_kafka_topic.purchase.topic_name}`.
 - `entity_type` - (Required String) The entity type, for example, `sr_schema`, `kafka_topic`. Refer to the [Entity types](https://docs.confluent.io/cloud/current/stream-governance/stream-catalog-rest-apis.html#entity-types) to learn more about entity types.
 - `attributes` - (Optional Map) The block of key-value pair attributes. Refer to the [add-a-topic-owner-and-email](https://docs.confluent.io/cloud/current/stream-governance/stream-catalog-rest-apis.html#add-a-topic-owner-and-email) for more details.
 

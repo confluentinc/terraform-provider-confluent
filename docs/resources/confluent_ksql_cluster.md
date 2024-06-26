@@ -2,7 +2,7 @@
 
 [![General Availability](https://img.shields.io/badge/Lifecycle%20Stage-General%20Availability-%2345c6e8)](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy)
 
-!> **Warning:**  It is strongly recommended that you provision a `confluent_schema_registry_cluster` resource before you provision a `confluent_ksql_cluster` resource in a given environment. If you're provisioning the `confluent_schema_registry_cluster` and the `confluent_ksql_cluster` resource in the same Terraform apply command, reference the `confluent_schema_registry_cluster` from the `depends_on` argument inside the `confluent_ksql_cluster` resource. This ensures that the `confluent_schema_registry_cluster` resource is created before the `confluent_ksql_cluster` resource. If you provision a `confluent_ksql_cluster` resource without a `confluent_schema_registry_cluster` resource, and later, you want to add a `confluent_schema_registry_cluster` resource, you must destroy and re-create your `confluent_ksql_cluster` resource after provisioning a `confluent_schema_registry_cluster` resource.
+!> **Warning:**  It is strongly recommended that you provision a `data.confluent_schema_registry_cluster` resource before you provision a `confluent_ksql_cluster` resource in a given environment. If you're provisioning the `data.confluent_schema_registry_cluster` and the `confluent_ksql_cluster` resource in the same Terraform apply command, reference the `data.confluent_schema_registry_cluster` from the `depends_on` argument inside the `confluent_ksql_cluster` resource. This ensures that the `data.confluent_schema_registry_cluster` resource is created before the `confluent_ksql_cluster` resource. If you provision a `confluent_ksql_cluster` resource without a `data.confluent_schema_registry_cluster` resource, and later, you want to add a `data.confluent_schema_registry_cluster` resource, you must destroy and re-create your `confluent_ksql_cluster` resource after provisioning a `data.confluent_schema_registry_cluster` resource.
 
 `confluent_ksql_cluster` provides a ksqlDB cluster resource that enables creating, editing, and deleting ksqlDB clusters on Confluent Cloud.
 
@@ -17,7 +17,7 @@ resource "confluent_environment" "development" {
   }
 }
 
-resource "confluent_schema_registry_cluster" "essentials" {
+resource "data.confluent_schema_registry_cluster" "essentials" {
   package = "ESSENTIALS"
 
   environment {
@@ -72,7 +72,7 @@ resource "confluent_role_binding" "app-ksql-kafka-cluster-admin" {
 resource "confluent_role_binding" "app-ksql-schema-registry-resource-owner" {
   principal   = "User:${confluent_service_account.app-ksql.id}"
   role_name   = "ResourceOwner"
-  crn_pattern = format("%s/%s", confluent_schema_registry_cluster.essentials.resource_name, "subject=*")
+  crn_pattern = format("%s/%s", data.confluent_schema_registry_cluster.essentials.resource_name, "subject=*")
 
   lifecycle {
     prevent_destroy = true
@@ -94,7 +94,7 @@ resource "confluent_ksql_cluster" "example" {
   depends_on = [
     confluent_role_binding.app-ksql-kafka-cluster-admin,
     confluent_role_binding.app-ksql-schema-registry-resource-owner,
-    confluent_schema_registry_cluster.essentials
+    data.confluent_schema_registry_cluster.essentials
   ]
 
   lifecycle {

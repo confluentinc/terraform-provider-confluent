@@ -24,14 +24,14 @@ provider "confluent" {
 
 data "confluent_schema" "purchase-v1" {
   schema_registry_cluster {
-    id = confluent_schema_registry_cluster.essentials.id
+    id = data.confluent_schema_registry_cluster.essentials.id
   }
-  rest_endpoint = confluent_schema_registry_cluster.essentials.rest_endpoint
+  rest_endpoint = data.confluent_schema_registry_cluster.essentials.rest_endpoint
   subject_name = "proto-purchase-value"
   schema_identifier = 10001
   credentials {
-    key    = "<Schema Registry API Key for confluent_schema_registry_cluster.essentials>"
-    secret = "<Schema Registry API Secret for confluent_schema_registry_cluster.essentials>"
+    key    = "<Schema Registry API Key for data.confluent_schema_registry_cluster.essentials>"
+    secret = "<Schema Registry API Secret for data.confluent_schema_registry_cluster.essentials>"
   }
 }
 

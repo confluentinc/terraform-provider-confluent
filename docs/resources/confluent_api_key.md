@@ -82,9 +82,9 @@ resource "confluent_api_key" "env-manager-schema-registry-api-key" {
   }
 
   managed_resource {
-    id          = confluent_schema_registry_cluster.essentials.id
-    api_version = confluent_schema_registry_cluster.essentials.api_version
-    kind        = confluent_schema_registry_cluster.essentials.kind
+    id          = data.confluent_schema_registry_cluster.essentials.id
+    api_version = data.confluent_schema_registry_cluster.essentials.api_version
+    kind        = data.confluent_schema_registry_cluster.essentials.kind
 
     environment {
       id = confluent_environment.staging.id

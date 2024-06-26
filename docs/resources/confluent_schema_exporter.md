@@ -24,22 +24,22 @@ provider "confluent" {
 
 resource "confluent_schema_exporter" "main" {
   schema_registry_cluster {
-    id = confluent_schema_registry_cluster.essentials.id
+    id = data.confluent_schema_registry_cluster.essentials.id
   }
-  rest_endpoint = confluent_schema_registry_cluster.essentials.rest_endpoint
+  rest_endpoint = data.confluent_schema_registry_cluster.essentials.rest_endpoint
   credentials {
-    key    = "<Schema Registry API Key for confluent_schema_registry_cluster.essentials>"
-    secret = "<Schema Registry API Secret for confluent_schema_registry_cluster.essentials>"
+    key    = "<Schema Registry API Key for data.confluent_schema_registry_cluster.essentials>"
+    secret = "<Schema Registry API Secret for data.confluent_schema_registry_cluster.essentials>"
   }
   
   name = "test-exporter"
   subjects = ["foo"]
   
   destination_schema_registry_cluster {
-      rest_endpoint = confluent_schema_registry_cluster.destination.rest_endpoint
+      rest_endpoint = data.confluent_schema_registry_cluster.destination.rest_endpoint
       credentials {
-          key    = "<Schema Registry API Key for confluent_schema_registry_cluster.destination>"
-          secret = "<Schema Registry API Secret for confluent_schema_registry_cluster.destination>"
+          key    = "<Schema Registry API Key for data.confluent_schema_registry_cluster.destination>"
+          secret = "<Schema Registry API Secret for data.confluent_schema_registry_cluster.destination>"
       }
   }
 }
@@ -60,10 +60,10 @@ resource "confluent_schema_exporter" "main" {
   subjects = ["foo"]
 
   destination_schema_registry_cluster {
-    rest_endpoint = confluent_schema_registry_cluster.destination.rest_endpoint
+    rest_endpoint = data.confluent_schema_registry_cluster.destination.rest_endpoint
     credentials {
-      key    = "<Schema Registry API Key for confluent_schema_registry_cluster.destination>"
-      secret = "<Schema Registry API Secret for confluent_schema_registry_cluster.destination>"
+      key    = "<Schema Registry API Key for data.confluent_schema_registry_cluster.destination>"
+      secret = "<Schema Registry API Secret for data.confluent_schema_registry_cluster.destination>"
     }
   }
 }
