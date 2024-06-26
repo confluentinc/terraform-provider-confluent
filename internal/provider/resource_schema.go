@@ -52,14 +52,16 @@ const (
 	paramMetadata                            = "metadata"
 	paramValue                               = "value"
 	// unique on a subject level
-	paramSchemaIdentifier             = "schema_identifier"
-	paramSchema                       = "schema"
-	paramSchemaReference              = "schema_reference"
-	paramSubjectName                  = "subject_name"
-	paramHardDelete                   = "hard_delete"
-	paramHardDeleteDefaultValue       = false
-	paramRecreateOnUpdate             = "recreate_on_update"
-	paramRecreateOnUpdateDefaultValue = false
+	paramSchemaIdentifier                   = "schema_identifier"
+	paramSchema                             = "schema"
+	paramSchemaReference                    = "schema_reference"
+	paramSubjectName                        = "subject_name"
+	paramHardDelete                         = "hard_delete"
+	paramHardDeleteDefaultValue             = false
+	paramRecreateOnUpdate                   = "recreate_on_update"
+	paramRecreateOnUpdateDefaultValue       = false
+	paramSkipValidateDuringPlan             = "skip_validate_during_plan"
+	paramSkipValidateDuringPlanDefaultValue = false
 
 	latestSchemaVersionAndPlaceholderForSchemaIdentifier = "latest"
 )
@@ -162,6 +164,12 @@ func schemaResource() *schema.Resource {
 				ForceNew:    true,
 				Default:     paramRecreateOnUpdateDefaultValue,
 				Description: "Controls whether a schema should be recreated on update.",
+			},
+			paramSkipValidateDuringPlan: {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     paramSkipValidateDuringPlanDefaultValue,
+				Description: "Controls whether a schema validation should be skipped during terraform plan.",
 			},
 		},
 		CustomizeDiff: customdiff.Sequence(SetSchemaDiff),
@@ -340,9 +348,17 @@ func SetSchemaDiff(ctx context.Context, diff *schema.ResourceDiff, meta interfac
 	createSchemaRequest.SetSchema(schemaContent)
 	createSchemaRequest.SetReferences(schemaReferences)
 
-	err := schemaValidateCheck(ctx, schemaRegistryRestClient, createSchemaRequest, subjectName)
-	if err != nil {
-		return err
+	// SetSchemaDiff() function is invoked during terraform plan
+	// Having schema validation check during plan empowers customers to review schema changes before applying
+	// paramSkipValidateDuringPlan = true -> skipping schema validation during 'terraform plan'
+	// Regardless of paramSkipValidateDuringPlan 'true' or 'false',
+	// schema validation check still takes place during 'terraform apply'
+	skipSchemaValidateDuringPlan := diff.Get(paramSkipValidateDuringPlan).(bool)
+	if !skipSchemaValidateDuringPlan {
+		err := schemaValidateCheck(ctx, schemaRegistryRestClient, createSchemaRequest, subjectName)
+		if err != nil {
+			return err
+		}
 	}
 
 	// Skip a schema lookup check if the schema doesn't exist yet
@@ -629,8 +645,8 @@ func schemaRead(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 }
 
 func schemaUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if d.HasChangesExcept(paramCredentials, paramConfigs, paramHardDelete, paramSchema, paramSchemaReference) {
-		return diag.Errorf("error updating Schema %q: only %q, %q, %q, %q and %q blocks can be updated for Schema", d.Id(), paramCredentials, paramConfigs, paramHardDelete, paramSchema, paramSchemaReference)
+	if d.HasChangesExcept(paramCredentials, paramConfigs, paramHardDelete, paramSchema, paramSchemaReference, paramSkipValidateDuringPlan) {
+		return diag.Errorf("error updating Schema %q: only %q, %q, %q, %q, %q and %q blocks can be updated for Schema", d.Id(), paramCredentials, paramConfigs, paramHardDelete, paramSchema, paramSchemaReference, paramSkipValidateDuringPlan)
 	}
 
 	if d.HasChanges(paramSchema, paramSchemaReference) {
@@ -861,8 +877,14 @@ func readSchemaRegistryConfigAndSetAttributes(ctx context.Context, d *schema.Res
 		}
 	}
 
-	d.SetId(createSchemaId(c.clusterId, srSchema.GetSubject(), srSchema.GetId(), d.Get(paramRecreateOnUpdate).(bool)))
+	// Explicitly set paramSkipValidateDuringPlan to the default value if unset
+	if _, ok := d.GetOk(paramSkipValidateDuringPlan); !ok {
+		if err := d.Set(paramSkipValidateDuringPlan, paramSkipValidateDuringPlanDefaultValue); err != nil {
+			return nil, createDescriptiveError(err)
+		}
+	}
 
+	d.SetId(createSchemaId(c.clusterId, srSchema.GetSubject(), srSchema.GetId(), d.Get(paramRecreateOnUpdate).(bool)))
 	return srSchema, nil
 }
 

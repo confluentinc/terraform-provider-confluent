@@ -100,6 +100,11 @@ func schemaDataSource() *schema.Resource {
 				Computed:    true,
 				Description: "Controls whether a schema should be recreated on update.",
 			},
+			paramSkipValidateDuringPlan: {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Controls whether a schema validation should be skipped during terraform plan.",
+			},
 		},
 	}
 }

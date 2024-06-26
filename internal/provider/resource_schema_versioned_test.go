@@ -50,7 +50,7 @@ const (
 	testSecondSchemaReferenceSubject     = "test3"
 	testSecondSchemaReferenceVersion     = 3
 
-	testNumberOfSchemaRegistrySchemaResourceAttributes = 14
+	testNumberOfSchemaRegistrySchemaResourceAttributes = 15
 
 	testSchemaRegistryKey           = "foo"
 	testSchemaRegistrySecret        = "bar"
@@ -61,6 +61,9 @@ const (
 
 	testRecreateOnUpdateTrue  = "true"
 	testRecreateOnUpdateFalse = "false"
+
+	testSkipSchemaValidateDuringPlanFalse = "false"
+	testSkipSchemaValidateDuringPlanTrue  = "true"
 )
 
 var fullSchemaResourceLabel = fmt.Sprintf("confluent_schema.%s", testSchemaResourceLabel)
@@ -194,6 +197,7 @@ func TestAccVersionedSchema(t *testing.T) {
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema_identifier", strconv.Itoa(testSchemaIdentifier)),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "hard_delete", testHardDelete),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "recreate_on_update", testRecreateOnUpdateTrue),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "skip_validate_during_plan", testSkipSchemaValidateDuringPlanTrue),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema_reference.#", "2"),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema_reference.0.%", "3"),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema_reference.0.name", testFirstSchemaReferenceDisplayName),
@@ -226,6 +230,7 @@ func TestAccVersionedSchema(t *testing.T) {
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema_identifier", strconv.Itoa(testSchemaIdentifier)),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "hard_delete", testHardDelete),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "recreate_on_update", testRecreateOnUpdateTrue),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "skip_validate_during_plan", testSkipSchemaValidateDuringPlanFalse),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema_reference.#", "2"),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema_reference.0.%", "3"),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema_reference.0.name", testFirstSchemaReferenceDisplayName),
@@ -295,6 +300,7 @@ func testAccCheckSchemaConfig(confluentCloudBaseUrl, mockServerUrl string) strin
 
       hard_delete = "%s"
       recreate_on_update = "%s"
+      skip_validate_during_plan = "%s"
 	  
       schema_reference {
         name = "%s"
@@ -309,7 +315,7 @@ func testAccCheckSchemaConfig(confluentCloudBaseUrl, mockServerUrl string) strin
       }
 	}
 	`, confluentCloudBaseUrl, testSchemaResourceLabel, testStreamGovernanceClusterId, mockServerUrl, testSchemaRegistryKey, testSchemaRegistrySecret, testSubjectName, testFormat, testSchemaContent,
-		testHardDelete, testRecreateOnUpdateTrue,
+		testHardDelete, testRecreateOnUpdateTrue, testSkipSchemaValidateDuringPlanTrue,
 		testFirstSchemaReferenceDisplayName, testFirstSchemaReferenceSubject, testFirstSchemaReferenceVersion,
 		testSecondSchemaReferenceDisplayName, testSecondSchemaReferenceSubject, testSecondSchemaReferenceVersion)
 }
@@ -334,6 +340,7 @@ func testAccCheckSchemaConfigWithUpdatedCredentials(confluentCloudBaseUrl, mockS
 
       hard_delete = "%s"
       recreate_on_update = "%s"
+      skip_validate_during_plan = "%s"
 	  
       schema_reference {
         name = "%s"
@@ -348,7 +355,8 @@ func testAccCheckSchemaConfigWithUpdatedCredentials(confluentCloudBaseUrl, mockS
       }
 	}
 	`, confluentCloudBaseUrl, testSchemaResourceLabel, testStreamGovernanceClusterId, mockServerUrl, testSchemaRegistryUpdatedKey, testSchemaRegistryUpdatedSecret, testSubjectName, testFormat, testSchemaContent,
-		testHardDelete, testRecreateOnUpdateTrue, testFirstSchemaReferenceDisplayName, testFirstSchemaReferenceSubject, testFirstSchemaReferenceVersion,
+		testHardDelete, testRecreateOnUpdateTrue, testSkipSchemaValidateDuringPlanFalse,
+		testFirstSchemaReferenceDisplayName, testFirstSchemaReferenceSubject, testFirstSchemaReferenceVersion,
 		testSecondSchemaReferenceDisplayName, testSecondSchemaReferenceSubject, testSecondSchemaReferenceVersion)
 }
 

@@ -159,6 +159,7 @@ func TestAccLatestSchema(t *testing.T) {
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema_identifier", strconv.Itoa(testSchemaIdentifier)),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "hard_delete", testHardDelete),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "recreate_on_update", testRecreateOnUpdateFalse),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "skip_validate_during_plan", testSkipSchemaValidateDuringPlanTrue),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema_reference.#", "2"),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema_reference.0.%", "3"),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema_reference.0.name", testFirstSchemaReferenceDisplayName),
@@ -191,6 +192,7 @@ func TestAccLatestSchema(t *testing.T) {
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema_identifier", strconv.Itoa(testSchemaIdentifier)),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "hard_delete", testHardDelete),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "recreate_on_update", testRecreateOnUpdateFalse),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "skip_validate_during_plan", testSkipSchemaValidateDuringPlanFalse),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema_reference.#", "2"),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema_reference.0.%", "3"),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema_reference.0.name", testFirstSchemaReferenceDisplayName),
@@ -235,6 +237,7 @@ func testAccCheckLatestSchemaConfig(confluentCloudBaseUrl, mockServerUrl string)
       schema = "%s"
 
       hard_delete = "%s"
+      skip_validate_during_plan = "%s" 
 	  
       schema_reference {
         name = "%s"
@@ -249,7 +252,7 @@ func testAccCheckLatestSchemaConfig(confluentCloudBaseUrl, mockServerUrl string)
       }
 	}
 	`, confluentCloudBaseUrl, testSchemaResourceLabel, testStreamGovernanceClusterId, mockServerUrl, testSchemaRegistryKey, testSchemaRegistrySecret, testSubjectName, testFormat, testSchemaContent,
-		testHardDelete,
+		testHardDelete, testSkipSchemaValidateDuringPlanTrue,
 		testFirstSchemaReferenceDisplayName, testFirstSchemaReferenceSubject, testFirstSchemaReferenceVersion,
 		testSecondSchemaReferenceDisplayName, testSecondSchemaReferenceSubject, testSecondSchemaReferenceVersion)
 }
