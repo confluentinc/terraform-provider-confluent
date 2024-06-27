@@ -52,16 +52,16 @@ const (
 	paramMetadata                            = "metadata"
 	paramValue                               = "value"
 	// unique on a subject level
-	paramSchemaIdentifier                   = "schema_identifier"
-	paramSchema                             = "schema"
-	paramSchemaReference                    = "schema_reference"
-	paramSubjectName                        = "subject_name"
-	paramHardDelete                         = "hard_delete"
-	paramHardDeleteDefaultValue             = false
-	paramRecreateOnUpdate                   = "recreate_on_update"
-	paramRecreateOnUpdateDefaultValue       = false
-	paramSkipValidateDuringPlan             = "skip_validate_during_plan"
-	paramSkipValidateDuringPlanDefaultValue = false
+	paramSchemaIdentifier                     = "schema_identifier"
+	paramSchema                               = "schema"
+	paramSchemaReference                      = "schema_reference"
+	paramSubjectName                          = "subject_name"
+	paramHardDelete                           = "hard_delete"
+	paramHardDeleteDefaultValue               = false
+	paramRecreateOnUpdate                     = "recreate_on_update"
+	paramRecreateOnUpdateDefaultValue         = false
+	paramSkipValidationDuringPlan             = "skip_validation_during_plan"
+	paramSkipValidationDuringPlanDefaultValue = false
 
 	latestSchemaVersionAndPlaceholderForSchemaIdentifier = "latest"
 )
@@ -165,10 +165,10 @@ func schemaResource() *schema.Resource {
 				Default:     paramRecreateOnUpdateDefaultValue,
 				Description: "Controls whether a schema should be recreated on update.",
 			},
-			paramSkipValidateDuringPlan: {
+			paramSkipValidationDuringPlan: {
 				Type:        schema.TypeBool,
 				Optional:    true,
-				Default:     paramSkipValidateDuringPlanDefaultValue,
+				Default:     paramSkipValidationDuringPlanDefaultValue,
 				Description: "Controls whether a schema validation should be skipped during terraform plan.",
 			},
 		},
@@ -350,10 +350,10 @@ func SetSchemaDiff(ctx context.Context, diff *schema.ResourceDiff, meta interfac
 
 	// SetSchemaDiff() function is invoked during terraform plan
 	// Having schema validation check during plan empowers customers to review schema changes before applying
-	// paramSkipValidateDuringPlan = true -> skipping schema validation during 'terraform plan'
-	// Regardless of paramSkipValidateDuringPlan 'true' or 'false',
+	// paramSkipValidationDuringPlan = true -> skipping schema validation during 'terraform plan'
+	// Regardless of paramSkipValidationDuringPlan 'true' or 'false',
 	// schema validation check still takes place during 'terraform apply'
-	skipSchemaValidateDuringPlan := diff.Get(paramSkipValidateDuringPlan).(bool)
+	skipSchemaValidateDuringPlan := diff.Get(paramSkipValidationDuringPlan).(bool)
 	if !skipSchemaValidateDuringPlan {
 		err := schemaValidateCheck(ctx, schemaRegistryRestClient, createSchemaRequest, subjectName)
 		if err != nil {
@@ -645,8 +645,8 @@ func schemaRead(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 }
 
 func schemaUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if d.HasChangesExcept(paramCredentials, paramConfigs, paramHardDelete, paramSchema, paramSchemaReference, paramSkipValidateDuringPlan) {
-		return diag.Errorf("error updating Schema %q: only %q, %q, %q, %q, %q and %q blocks can be updated for Schema", d.Id(), paramCredentials, paramConfigs, paramHardDelete, paramSchema, paramSchemaReference, paramSkipValidateDuringPlan)
+	if d.HasChangesExcept(paramCredentials, paramConfigs, paramHardDelete, paramSchema, paramSchemaReference, paramSkipValidationDuringPlan) {
+		return diag.Errorf("error updating Schema %q: only %q, %q, %q, %q, %q and %q blocks can be updated for Schema", d.Id(), paramCredentials, paramConfigs, paramHardDelete, paramSchema, paramSchemaReference, paramSkipValidationDuringPlan)
 	}
 
 	if d.HasChanges(paramSchema, paramSchemaReference) {
@@ -877,9 +877,9 @@ func readSchemaRegistryConfigAndSetAttributes(ctx context.Context, d *schema.Res
 		}
 	}
 
-	// Explicitly set paramSkipValidateDuringPlan to the default value if unset
-	if _, ok := d.GetOk(paramSkipValidateDuringPlan); !ok {
-		if err := d.Set(paramSkipValidateDuringPlan, paramSkipValidateDuringPlanDefaultValue); err != nil {
+	// Explicitly set paramSkipValidationDuringPlan to the default value if unset
+	if _, ok := d.GetOk(paramSkipValidationDuringPlan); !ok {
+		if err := d.Set(paramSkipValidationDuringPlan, paramSkipValidationDuringPlanDefaultValue); err != nil {
 			return nil, createDescriptiveError(err)
 		}
 	}

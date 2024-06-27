@@ -142,7 +142,7 @@ func TestAccLatestSchemaWithEnhancedProviderBlock(t *testing.T) {
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema_identifier", strconv.Itoa(testSchemaIdentifier)),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "hard_delete", testHardDelete),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "recreate_on_update", testRecreateOnUpdateFalse),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "skip_validate_during_plan", testSkipSchemaValidateDuringPlanFalse),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "skip_validation_during_plan", testSkipSchemaValidationDuringPlanFalse),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema_reference.#", "2"),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema_reference.0.%", "3"),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema_reference.0.name", testFirstSchemaReferenceDisplayName),
