@@ -11,7 +11,7 @@ variable "confluent_cloud_api_secret" {
 
 variable "custom_connector_plugin_filename" {
   description = "Path to .zip / .jar for Datagen Source Connector"
-  type = string
+  type        = string
   # See "Getting a connector" section at
   # https://docs.confluent.io/cloud/current/connectors/bring-your-connector/custom-connector-qs.html#getting-a-connector
   default = "confluentinc-kafka-connect-datagen-0.6.2.zip"

@@ -14,27 +14,21 @@ provider "confluent" {
 
 resource "confluent_environment" "staging" {
   display_name = "Staging"
+
+  stream_governance {
+    package = "ESSENTIALS"
+  }
 }
 
-# Stream Governance and Kafka clusters can be in different regions as well as different cloud providers,
-# but you should to place both in the same cloud and region to restrict the fault isolation boundary.
-data "confluent_schema_registry_region" "essentials" {
-  cloud   = "AWS"
-  region  = "us-east-2"
-  package = "ESSENTIALS"
-}
-
-resource "confluent_schema_registry_cluster" "essentials" {
-  package = data.confluent_schema_registry_region.essentials.package
+data "confluent_schema_registry_cluster" "essentials" {
 
   environment {
     id = confluent_environment.staging.id
   }
 
-  region {
-    # See https://docs.confluent.io/cloud/current/stream-governance/packages.html#stream-governance-regions
-    id = data.confluent_schema_registry_region.essentials.id
-  }
+  depends_on = [
+    confluent_kafka_cluster.basic
+  ]
 }
 
 # Update the config to use a cloud provider and region of your choice.
@@ -224,12 +218,12 @@ resource "confluent_service_account" "app-connector" {
 }
 
 resource "confluent_custom_connector_plugin" "source" {
-  display_name = "Datagen Source Connector Plugin"
-  documentation_link = "https://www.confluent.io/hub/confluentinc/kafka-connect-datagen"
-  connector_class = "io.confluent.kafka.connect.datagen.DatagenConnector"
-  connector_type = "SOURCE"
+  display_name                = "Datagen Source Connector Plugin"
+  documentation_link          = "https://www.confluent.io/hub/confluentinc/kafka-connect-datagen"
+  connector_class             = "io.confluent.kafka.connect.datagen.DatagenConnector"
+  connector_type              = "SOURCE"
   sensitive_config_properties = []
-  filename = var.custom_connector_plugin_filename
+  filename                    = var.custom_connector_plugin_filename
 }
 
 resource "confluent_connector" "source" {
@@ -243,8 +237,8 @@ resource "confluent_connector" "source" {
   // Block for custom *sensitive* configuration properties that are labelled with "Type: password" under "Configuration Properties" section in the docs:
   // https://docs.confluent.io/platform/current/connect/userguide.html#connect-installing-plugins
   config_sensitive = {
-    "kafka.api.key"     = confluent_api_key.app-manager-kafka-api-key.id
-    "kafka.api.secret"  = confluent_api_key.app-manager-kafka-api-key.secret
+    "kafka.api.key"    = confluent_api_key.app-manager-kafka-api-key.id
+    "kafka.api.secret" = confluent_api_key.app-manager-kafka-api-key.secret
   }
 
   // Block for custom *nonsensitive* configuration properties that are *not* labelled with "Type: password" under "Configuration Properties" section in the docs:

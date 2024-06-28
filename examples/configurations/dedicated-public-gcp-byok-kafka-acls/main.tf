@@ -16,7 +16,7 @@ terraform {
 # for Google TF Provider to work: https://registry.terraform.io/providers/hashicorp/google/latest/docs/guides/getting_started#adding-credentials
 provider "google" {
   project = var.customer_project_id
-  region = var.gcp_region
+  region  = var.gcp_region
 }
 
 provider "confluent" {
@@ -26,6 +26,10 @@ provider "confluent" {
 
 resource "confluent_environment" "main" {
   display_name = "Staging"
+
+  stream_governance {
+    package = "ESSENTIALS"
+  }
 }
 
 # Stream Governance and Kafka clusters can be in different regions as well as different cloud providers,

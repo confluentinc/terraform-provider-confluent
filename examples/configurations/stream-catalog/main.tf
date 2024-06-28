@@ -14,27 +14,20 @@ provider "confluent" {
 
 resource "confluent_environment" "staging" {
   display_name = "Staging"
+
+  stream_governance {
+    package = "ESSENTIALS"
+  }
 }
 
-# Stream Governance and Kafka clusters can be in different regions as well as different cloud providers,
-# but you should to place both in the same cloud and region to restrict the fault isolation boundary.
-data "confluent_schema_registry_region" "main" {
-  cloud   = "AWS"
-  region  = "us-east-2"
-  package = "ADVANCED"
-}
-
-resource "confluent_schema_registry_cluster" "main" {
-  package = data.confluent_schema_registry_region.main.package
-
+data "confluent_schema_registry_cluster" "main" {
   environment {
     id = confluent_environment.staging.id
   }
 
-  region {
-    # See https://docs.confluent.io/cloud/current/stream-governance/packages.html#stream-governance-regions
-    id = data.confluent_schema_registry_region.main.id
-  }
+  depends_on = [
+    confluent_kafka_cluster.basic
+  ]
 }
 
 # Update the config to use a cloud provider and region of your choice.
@@ -239,9 +232,9 @@ resource "confluent_api_key" "env-manager-schema-registry-api-key" {
   }
 
   managed_resource {
-    id          = confluent_schema_registry_cluster.main.id
-    api_version = confluent_schema_registry_cluster.main.api_version
-    kind        = confluent_schema_registry_cluster.main.kind
+    id          = data.confluent_schema_registry_cluster.main.id
+    api_version = data.confluent_schema_registry_cluster.main.api_version
+    kind        = data.confluent_schema_registry_cluster.main.kind
 
     environment {
       id = confluent_environment.staging.id
@@ -262,13 +255,13 @@ resource "confluent_api_key" "env-manager-schema-registry-api-key" {
 
 resource "confluent_schema" "purchase" {
   schema_registry_cluster {
-    id = confluent_schema_registry_cluster.main.id
+    id = data.confluent_schema_registry_cluster.main.id
   }
-  rest_endpoint = confluent_schema_registry_cluster.main.rest_endpoint
+  rest_endpoint = data.confluent_schema_registry_cluster.main.rest_endpoint
   # https://developer.confluent.io/learn-kafka/schema-registry/schema-subjects/#topicnamestrategy
   subject_name = "${confluent_kafka_topic.purchase.topic_name}-value"
-  format = "AVRO"
-  schema = file("./schemas/avro/purchase.avsc")
+  format       = "AVRO"
+  schema       = file("./schemas/avro/purchase.avsc")
   credentials {
     key    = confluent_api_key.env-manager-schema-registry-api-key.id
     secret = confluent_api_key.env-manager-schema-registry-api-key.secret
@@ -277,57 +270,57 @@ resource "confluent_schema" "purchase" {
 
 resource "confluent_tag" "pii" {
   schema_registry_cluster {
-    id = confluent_schema_registry_cluster.main.id
+    id = data.confluent_schema_registry_cluster.main.id
   }
-  rest_endpoint = confluent_schema_registry_cluster.main.rest_endpoint
+  rest_endpoint = data.confluent_schema_registry_cluster.main.rest_endpoint
   credentials {
     key    = confluent_api_key.env-manager-schema-registry-api-key.id
     secret = confluent_api_key.env-manager-schema-registry-api-key.secret
   }
 
-  name = "PII"
+  name        = "PII"
   description = "Personally identifiable information"
 }
 
 resource "confluent_tag" "sensitive" {
   schema_registry_cluster {
-    id = confluent_schema_registry_cluster.main.id
+    id = data.confluent_schema_registry_cluster.main.id
   }
-  rest_endpoint = confluent_schema_registry_cluster.main.rest_endpoint
+  rest_endpoint = data.confluent_schema_registry_cluster.main.rest_endpoint
   credentials {
     key    = confluent_api_key.env-manager-schema-registry-api-key.id
     secret = confluent_api_key.env-manager-schema-registry-api-key.secret
   }
 
-  name = "Sensitive"
+  name        = "Sensitive"
   description = "Sensitive tag description"
 }
 
 resource "confluent_tag" "private" {
   schema_registry_cluster {
-    id = confluent_schema_registry_cluster.main.id
+    id = data.confluent_schema_registry_cluster.main.id
   }
-  rest_endpoint = confluent_schema_registry_cluster.main.rest_endpoint
+  rest_endpoint = data.confluent_schema_registry_cluster.main.rest_endpoint
   credentials {
     key    = confluent_api_key.env-manager-schema-registry-api-key.id
     secret = confluent_api_key.env-manager-schema-registry-api-key.secret
   }
 
-  name = "Private"
+  name        = "Private"
   description = "Private tag description"
 }
 
 resource "confluent_business_metadata" "main" {
   schema_registry_cluster {
-    id = confluent_schema_registry_cluster.main.id
+    id = data.confluent_schema_registry_cluster.main.id
   }
-  rest_endpoint = confluent_schema_registry_cluster.main.rest_endpoint
+  rest_endpoint = data.confluent_schema_registry_cluster.main.rest_endpoint
   credentials {
     key    = confluent_api_key.env-manager-schema-registry-api-key.id
     secret = confluent_api_key.env-manager-schema-registry-api-key.secret
   }
 
-  name = "Domain"
+  name        = "Domain"
   description = "These are events that describe the domain of activity."
   attribute_definition {
     name = "Team_owner"
@@ -340,64 +333,64 @@ resource "confluent_business_metadata" "main" {
 # Apply the Tag/BusinessMetadata on a topic
 resource "confluent_tag_binding" "pii-topic-tagging" {
   schema_registry_cluster {
-    id = confluent_schema_registry_cluster.main.id
+    id = data.confluent_schema_registry_cluster.main.id
   }
-  rest_endpoint = confluent_schema_registry_cluster.main.rest_endpoint
+  rest_endpoint = data.confluent_schema_registry_cluster.main.rest_endpoint
   credentials {
     key    = confluent_api_key.env-manager-schema-registry-api-key.id
     secret = confluent_api_key.env-manager-schema-registry-api-key.secret
   }
 
-  tag_name = confluent_tag.pii.name
-  entity_name = "${confluent_schema_registry_cluster.main.id}:${confluent_kafka_cluster.basic.id}:${confluent_kafka_topic.purchase.topic_name}"
+  tag_name    = confluent_tag.pii.name
+  entity_name = "${data.confluent_schema_registry_cluster.main.id}:${confluent_kafka_cluster.basic.id}:${confluent_kafka_topic.purchase.topic_name}"
   entity_type = local.topic_entity_type
 }
 
 resource "confluent_tag_binding" "sensitive-topic-tagging" {
   schema_registry_cluster {
-    id = confluent_schema_registry_cluster.main.id
+    id = data.confluent_schema_registry_cluster.main.id
   }
-  rest_endpoint = confluent_schema_registry_cluster.main.rest_endpoint
+  rest_endpoint = data.confluent_schema_registry_cluster.main.rest_endpoint
   credentials {
     key    = confluent_api_key.env-manager-schema-registry-api-key.id
     secret = confluent_api_key.env-manager-schema-registry-api-key.secret
   }
 
-  tag_name = confluent_tag.sensitive.name
-  entity_name = "${confluent_schema_registry_cluster.main.id}:${confluent_kafka_cluster.basic.id}:${confluent_kafka_topic.purchase.topic_name}"
+  tag_name    = confluent_tag.sensitive.name
+  entity_name = "${data.confluent_schema_registry_cluster.main.id}:${confluent_kafka_cluster.basic.id}:${confluent_kafka_topic.purchase.topic_name}"
   entity_type = local.topic_entity_type
 }
 
 resource "confluent_tag_binding" "private-topic-tagging" {
   schema_registry_cluster {
-    id = confluent_schema_registry_cluster.main.id
+    id = data.confluent_schema_registry_cluster.main.id
   }
-  rest_endpoint = confluent_schema_registry_cluster.main.rest_endpoint
+  rest_endpoint = data.confluent_schema_registry_cluster.main.rest_endpoint
   credentials {
     key    = confluent_api_key.env-manager-schema-registry-api-key.id
     secret = confluent_api_key.env-manager-schema-registry-api-key.secret
   }
 
-  tag_name = confluent_tag.private.name
-  entity_name = "${confluent_schema_registry_cluster.main.id}:${confluent_kafka_cluster.basic.id}:${confluent_kafka_topic.purchase.topic_name}"
+  tag_name    = confluent_tag.private.name
+  entity_name = "${data.confluent_schema_registry_cluster.main.id}:${confluent_kafka_cluster.basic.id}:${confluent_kafka_topic.purchase.topic_name}"
   entity_type = local.topic_entity_type
 }
 
 resource "confluent_business_metadata_binding" "main" {
   schema_registry_cluster {
-    id = confluent_schema_registry_cluster.main.id
+    id = data.confluent_schema_registry_cluster.main.id
   }
-  rest_endpoint = confluent_schema_registry_cluster.main.rest_endpoint
+  rest_endpoint = data.confluent_schema_registry_cluster.main.rest_endpoint
   credentials {
     key    = confluent_api_key.env-manager-schema-registry-api-key.id
     secret = confluent_api_key.env-manager-schema-registry-api-key.secret
   }
 
   business_metadata_name = confluent_business_metadata.main.name
-  entity_name = "${confluent_schema_registry_cluster.main.id}:${confluent_kafka_cluster.basic.id}:${confluent_kafka_topic.purchase.topic_name}"
-  entity_type = local.topic_entity_type
+  entity_name            = "${data.confluent_schema_registry_cluster.main.id}:${confluent_kafka_cluster.basic.id}:${confluent_kafka_topic.purchase.topic_name}"
+  entity_type            = local.topic_entity_type
   attributes = {
-    "Team_owner" = "Sam"
+    "Team_owner"    = "Sam"
     "Slack_contact" = "@sam"
   }
 }
@@ -405,64 +398,64 @@ resource "confluent_business_metadata_binding" "main" {
 # Apply the Tag/BusinessMetadata on a schema
 resource "confluent_tag_binding" "pii-schema-tagging" {
   schema_registry_cluster {
-    id = confluent_schema_registry_cluster.main.id
+    id = data.confluent_schema_registry_cluster.main.id
   }
-  rest_endpoint = confluent_schema_registry_cluster.main.rest_endpoint
+  rest_endpoint = data.confluent_schema_registry_cluster.main.rest_endpoint
   credentials {
     key    = confluent_api_key.env-manager-schema-registry-api-key.id
     secret = confluent_api_key.env-manager-schema-registry-api-key.secret
   }
 
-  tag_name = confluent_tag.pii.name
-  entity_name = "${confluent_schema_registry_cluster.main.id}:.:${confluent_schema.purchase.schema_identifier}"
+  tag_name    = confluent_tag.pii.name
+  entity_name = "${data.confluent_schema_registry_cluster.main.id}:.:${confluent_schema.purchase.schema_identifier}"
   entity_type = local.schema_entity_type
 }
 
 resource "confluent_tag_binding" "sensitive-schema-tagging" {
   schema_registry_cluster {
-    id = confluent_schema_registry_cluster.main.id
+    id = data.confluent_schema_registry_cluster.main.id
   }
-  rest_endpoint = confluent_schema_registry_cluster.main.rest_endpoint
+  rest_endpoint = data.confluent_schema_registry_cluster.main.rest_endpoint
   credentials {
     key    = confluent_api_key.env-manager-schema-registry-api-key.id
     secret = confluent_api_key.env-manager-schema-registry-api-key.secret
   }
 
-  tag_name = confluent_tag.sensitive.name
-  entity_name = "${confluent_schema_registry_cluster.main.id}:.:${confluent_schema.purchase.schema_identifier}"
+  tag_name    = confluent_tag.sensitive.name
+  entity_name = "${data.confluent_schema_registry_cluster.main.id}:.:${confluent_schema.purchase.schema_identifier}"
   entity_type = local.schema_entity_type
 }
 
 resource "confluent_tag_binding" "private-schema-tagging" {
   schema_registry_cluster {
-    id = confluent_schema_registry_cluster.main.id
+    id = data.confluent_schema_registry_cluster.main.id
   }
-  rest_endpoint = confluent_schema_registry_cluster.main.rest_endpoint
+  rest_endpoint = data.confluent_schema_registry_cluster.main.rest_endpoint
   credentials {
     key    = confluent_api_key.env-manager-schema-registry-api-key.id
     secret = confluent_api_key.env-manager-schema-registry-api-key.secret
   }
 
-  tag_name = confluent_tag.private.name
-  entity_name = "${confluent_schema_registry_cluster.main.id}:.:${confluent_schema.purchase.schema_identifier}"
+  tag_name    = confluent_tag.private.name
+  entity_name = "${data.confluent_schema_registry_cluster.main.id}:.:${confluent_schema.purchase.schema_identifier}"
   entity_type = local.schema_entity_type
 }
 
 resource "confluent_business_metadata_binding" "schema-bm-binding" {
   schema_registry_cluster {
-    id = confluent_schema_registry_cluster.main.id
+    id = data.confluent_schema_registry_cluster.main.id
   }
-  rest_endpoint = confluent_schema_registry_cluster.main.rest_endpoint
+  rest_endpoint = data.confluent_schema_registry_cluster.main.rest_endpoint
   credentials {
     key    = confluent_api_key.env-manager-schema-registry-api-key.id
     secret = confluent_api_key.env-manager-schema-registry-api-key.secret
   }
 
   business_metadata_name = confluent_business_metadata.main.name
-  entity_name = "${confluent_schema_registry_cluster.main.id}:.:${confluent_schema.purchase.schema_identifier}"
-  entity_type = local.schema_entity_type
+  entity_name            = "${data.confluent_schema_registry_cluster.main.id}:.:${confluent_schema.purchase.schema_identifier}"
+  entity_type            = local.schema_entity_type
   attributes = {
-    "Team_owner" = "Sam"
+    "Team_owner"    = "Sam"
     "Slack_contact" = "@sam"
   }
 }
@@ -470,21 +463,21 @@ resource "confluent_business_metadata_binding" "schema-bm-binding" {
 # Apply the Tag on a record
 resource "confluent_tag_binding" "pii-record-tagging" {
   schema_registry_cluster {
-    id = confluent_schema_registry_cluster.main.id
+    id = data.confluent_schema_registry_cluster.main.id
   }
-  rest_endpoint = confluent_schema_registry_cluster.main.rest_endpoint
+  rest_endpoint = data.confluent_schema_registry_cluster.main.rest_endpoint
   credentials {
     key    = confluent_api_key.env-manager-schema-registry-api-key.id
     secret = confluent_api_key.env-manager-schema-registry-api-key.secret
   }
 
-  tag_name = confluent_tag.pii.name
-  entity_name = "${confluent_schema_registry_cluster.main.id}:.:${confluent_schema.purchase.schema_identifier}:${var.schema_namespace}.${var.record_name}"
+  tag_name    = confluent_tag.pii.name
+  entity_name = "${data.confluent_schema_registry_cluster.main.id}:.:${confluent_schema.purchase.schema_identifier}:${var.schema_namespace}.${var.record_name}"
   entity_type = local.record_entity_type
 }
 
 locals {
-  topic_entity_type = "kafka_topic"
+  topic_entity_type  = "kafka_topic"
   schema_entity_type = "sr_schema"
   record_entity_type = "sr_record"
 }

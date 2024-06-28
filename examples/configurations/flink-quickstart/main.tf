@@ -95,9 +95,9 @@ resource "confluent_api_key" "infrastructure-manager-schema-registry-api-key" {
   }
 
   managed_resource {
-    id          = confluent_schema_registry_cluster.essentials.id
-    api_version = confluent_schema_registry_cluster.essentials.api_version
-    kind        = confluent_schema_registry_cluster.essentials.kind
+    id          = data.confluent_schema_registry_cluster.essentials.id
+    api_version = data.confluent_schema_registry_cluster.essentials.api_version
+    kind        = data.confluent_schema_registry_cluster.essentials.kind
 
     environment {
       id = data.confluent_environment.staging.id
@@ -160,24 +160,19 @@ resource "confluent_api_key" "app-manager-flink-api-key" {
     }
   }
 }
-data "confluent_schema_registry_region" "essentials" {
-  cloud   = local.cloud
-  region  = local.region
-  package = "ESSENTIALS"
-}
-resource "confluent_schema_registry_cluster" "essentials" {
-  package = data.confluent_schema_registry_region.essentials.package
+
+data "confluent_schema_registry_cluster" "essentials" {
   environment {
     id = var.environment_id
   }
-  region {
-    # See https://docs.confluent.io/cloud/current/stream-governance/packages.html#stream-governance-regions
-    id = data.confluent_schema_registry_region.essentials.id
-  }
+
+  depends_on = [
+    confluent_kafka_cluster.standard
+  ]
 }
 data "confluent_flink_region" "main" {
-  cloud        = local.cloud
-  region       = local.region
+  cloud  = local.cloud
+  region = local.region
 }
 
 # https://docs.confluent.io/cloud/current/flink/get-started/quick-start-cloud-console.html#step-1-create-a-af-compute-pool
@@ -211,13 +206,13 @@ resource "confluent_kafka_topic" "orders" {
 
 resource "confluent_schema" "order" {
   schema_registry_cluster {
-    id = confluent_schema_registry_cluster.essentials.id
+    id = data.confluent_schema_registry_cluster.essentials.id
   }
-  rest_endpoint = confluent_schema_registry_cluster.essentials.rest_endpoint
+  rest_endpoint = data.confluent_schema_registry_cluster.essentials.rest_endpoint
   # https://developer.confluent.io/learn-kafka/schema-registry/schema-subjects/#topicnamestrategy
-  subject_name  = "${confluent_kafka_topic.orders.topic_name}-value"
-  format        = "AVRO"
-  schema        = file("./schemas/avro/order.avsc")
+  subject_name = "${confluent_kafka_topic.orders.topic_name}-value"
+  format       = "AVRO"
+  schema       = file("./schemas/avro/order.avsc")
   credentials {
     key    = confluent_api_key.infrastructure-manager-schema-registry-api-key.id
     secret = confluent_api_key.infrastructure-manager-schema-registry-api-key.secret
@@ -238,7 +233,7 @@ resource "confluent_flink_statement" "populate-orders-source-table" {
     id = confluent_service_account.statements-runner.id
   }
   # https://docs.confluent.io/cloud/current/flink/reference/example-data.html#marketplace-database
-  statement  = file("./statements/populate-orders-source-table.sql")
+  statement = file("./statements/populate-orders-source-table.sql")
   properties = {
     "sql.current-catalog"  = data.confluent_environment.staging.display_name
     "sql.current-database" = confluent_kafka_cluster.standard.display_name

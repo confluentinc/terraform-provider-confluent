@@ -28,7 +28,7 @@ output "resource-ids" {
   $ confluent kafka topic produce ${confluent_kafka_topic.purchase.topic_name} \
         --schema-id ${confluent_schema.purchase.schema_identifier} \
         --value-format protobuf \
-        --sr-endpoint ${confluent_schema_registry_cluster.essentials.rest_endpoint} \
+        --sr-endpoint ${data.confluent_schema_registry_cluster.essentials.rest_endpoint} \
         --sr-api-key "${confluent_api_key.env-manager-schema-registry-api-key.id}" \
         --sr-api-secret "${confluent_api_key.env-manager-schema-registry-api-key.secret}" \
         --cluster ${confluent_kafka_cluster.basic.id} \
@@ -45,7 +45,7 @@ output "resource-ids" {
   $ confluent kafka topic consume purchase \
         --from-beginning \
         --value-format protobuf \
-        --sr-endpoint ${confluent_schema_registry_cluster.essentials.rest_endpoint} \
+        --sr-endpoint ${data.confluent_schema_registry_cluster.essentials.rest_endpoint} \
         --sr-api-key "${confluent_api_key.env-manager-schema-registry-api-key.id}" \
         --sr-api-secret "${confluent_api_key.env-manager-schema-registry-api-key.secret}" \
         --cluster ${confluent_kafka_cluster.basic.id} \

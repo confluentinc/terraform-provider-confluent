@@ -23,9 +23,13 @@ provider "confluent" {
 
 resource "confluent_environment" "staging" {
   display_name = "Staging"
+
+  stream_governance {
+    package = "ESSENTIALS"
+  }
 }
 
-resource "confluent_schema_registry_cluster" "essentials" {
+data "confluent_schema_registry_cluster" "essentials" {
   package = "ESSENTIALS"
 
   environment {
@@ -38,6 +42,10 @@ resource "confluent_schema_registry_cluster" "essentials" {
     # but you should to place both in the same cloud and region to restrict the fault isolation boundary.
     id = "sgreg-7"
   }
+
+  depends_on = [
+    confluent_kafka_cluster.dedicated
+  ]
 }
 
 resource "confluent_network" "peering" {

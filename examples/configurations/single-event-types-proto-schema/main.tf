@@ -14,27 +14,20 @@ provider "confluent" {
 
 resource "confluent_environment" "staging" {
   display_name = "Staging"
+
+  stream_governance {
+    package = "ESSENTIALS"
+  }
 }
 
-# Stream Governance and Kafka clusters can be in different regions as well as different cloud providers,
-# but you should to place both in the same cloud and region to restrict the fault isolation boundary.
-data "confluent_schema_registry_region" "essentials" {
-  cloud   = "AWS"
-  region  = "us-east-2"
-  package = "ESSENTIALS"
-}
-
-resource "confluent_schema_registry_cluster" "essentials" {
-  package = data.confluent_schema_registry_region.essentials.package
-
+data "confluent_schema_registry_cluster" "essentials" {
   environment {
     id = confluent_environment.staging.id
   }
 
-  region {
-    # See https://docs.confluent.io/cloud/current/stream-governance/packages.html#stream-governance-regions
-    id = data.confluent_schema_registry_region.essentials.id
-  }
+  depends_on = [
+    confluent_kafka_cluster.basic
+  ]
 }
 
 # Update the config to use a cloud provider and region of your choice.
@@ -239,9 +232,9 @@ resource "confluent_api_key" "env-manager-schema-registry-api-key" {
   }
 
   managed_resource {
-    id          = confluent_schema_registry_cluster.essentials.id
-    api_version = confluent_schema_registry_cluster.essentials.api_version
-    kind        = confluent_schema_registry_cluster.essentials.kind
+    id          = data.confluent_schema_registry_cluster.essentials.id
+    api_version = data.confluent_schema_registry_cluster.essentials.api_version
+    kind        = data.confluent_schema_registry_cluster.essentials.kind
 
     environment {
       id = confluent_environment.staging.id
@@ -262,13 +255,13 @@ resource "confluent_api_key" "env-manager-schema-registry-api-key" {
 
 resource "confluent_schema" "purchase" {
   schema_registry_cluster {
-    id = confluent_schema_registry_cluster.essentials.id
+    id = data.confluent_schema_registry_cluster.essentials.id
   }
-  rest_endpoint = confluent_schema_registry_cluster.essentials.rest_endpoint
+  rest_endpoint = data.confluent_schema_registry_cluster.essentials.rest_endpoint
   # https://developer.confluent.io/learn-kafka/schema-registry/schema-subjects/#topicnamestrategy
   subject_name = "${confluent_kafka_topic.purchase.topic_name}-value"
-  format = "PROTOBUF"
-  schema = file("./schemas/proto/purchase.proto")
+  format       = "PROTOBUF"
+  schema       = file("./schemas/proto/purchase.proto")
   credentials {
     key    = confluent_api_key.env-manager-schema-registry-api-key.id
     secret = confluent_api_key.env-manager-schema-registry-api-key.secret

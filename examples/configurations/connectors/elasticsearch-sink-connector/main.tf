@@ -14,27 +14,20 @@ provider "confluent" {
 
 resource "confluent_environment" "staging" {
   display_name = "Staging"
+
+  stream_governance {
+            package = "ESSENTIALS"
+          }
 }
 
-# Stream Governance and Kafka clusters can be in different regions as well as different cloud providers,
-# but you should to place both in the same cloud and region to restrict the fault isolation boundary.
-data "confluent_schema_registry_region" "essentials" {
-  cloud   = "AWS"
-  region  = "us-east-2"
-  package = "ESSENTIALS"
-}
-
-resource "confluent_schema_registry_cluster" "essentials" {
-  package = data.confluent_schema_registry_region.essentials.package
-
-  environment {
+data "confluent_schema_registry_cluster" "essentials" {
+   environment {
     id = confluent_environment.staging.id
   }
 
-  region {
-    # See https://docs.confluent.io/cloud/current/stream-governance/packages.html#stream-governance-regions
-    id = data.confluent_schema_registry_region.essentials.id
-  }
+  depends_on = [
+            confluent_kafka_cluster.basic
+          ]
 }
 
 # Update the config to use a cloud provider and region of your choice.

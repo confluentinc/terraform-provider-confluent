@@ -14,44 +14,34 @@ provider "confluent" {
 
 resource "confluent_environment" "source" {
   display_name = "Source"
+
+  stream_governance {
+    package = "ESSENTIALS"
+  }
 }
 
 resource "confluent_environment" "destination" {
   display_name = "Destination"
+
+  stream_governance {
+    package = "ESSENTIALS"
+  }
 }
 
-# Stream Governance and Kafka clusters can be in different regions as well as different cloud providers,
-# but you should to place both in the same cloud and region to restrict the fault isolation boundary.
-data "confluent_schema_registry_region" "essentials" {
-  cloud   = "AWS"
-  region  = "us-east-2"
-  package = "ESSENTIALS"
-}
-
-resource "confluent_schema_registry_cluster" "source" {
-  package = data.confluent_schema_registry_region.essentials.package
-
+data "confluent_schema_registry_cluster" "source" {
   environment {
     id = confluent_environment.source.id
   }
-
-  region {
-    # See https://docs.confluent.io/cloud/current/stream-governance/packages.html#stream-governance-regions
-    id = data.confluent_schema_registry_region.essentials.id
-  }
 }
 
-resource "confluent_schema_registry_cluster" "destination" {
-  package = data.confluent_schema_registry_region.essentials.package
-
+data "confluent_schema_registry_cluster" "destination" {
   environment {
     id = confluent_environment.destination.id
   }
 
-  region {
-    # See https://docs.confluent.io/cloud/current/stream-governance/packages.html#stream-governance-regions
-    id = data.confluent_schema_registry_region.essentials.id
-  }
+  depends_on = [
+    confluent_kafka_cluster.basic
+  ]
 }
 
 # Update the config to use a cloud provider and region of your choice.
@@ -262,9 +252,9 @@ resource "confluent_api_key" "env-manager-schema-registry-api-key" {
   }
 
   managed_resource {
-    id          = confluent_schema_registry_cluster.source.id
-    api_version = confluent_schema_registry_cluster.source.api_version
-    kind        = confluent_schema_registry_cluster.source.kind
+    id          = data.confluent_schema_registry_cluster.source.id
+    api_version = data.confluent_schema_registry_cluster.source.api_version
+    kind        = data.confluent_schema_registry_cluster.source.kind
 
     environment {
       id = confluent_environment.source.id
@@ -293,9 +283,9 @@ resource "confluent_api_key" "destination-schema-registry-api-key" {
   }
 
   managed_resource {
-    id          = confluent_schema_registry_cluster.destination.id
-    api_version = confluent_schema_registry_cluster.destination.api_version
-    kind        = confluent_schema_registry_cluster.destination.kind
+    id          = data.confluent_schema_registry_cluster.destination.id
+    api_version = data.confluent_schema_registry_cluster.destination.api_version
+    kind        = data.confluent_schema_registry_cluster.destination.kind
 
     environment {
       id = confluent_environment.destination.id
@@ -316,13 +306,13 @@ resource "confluent_api_key" "destination-schema-registry-api-key" {
 
 resource "confluent_schema" "purchase" {
   schema_registry_cluster {
-    id = confluent_schema_registry_cluster.source.id
+    id = data.confluent_schema_registry_cluster.source.id
   }
-  rest_endpoint = confluent_schema_registry_cluster.source.rest_endpoint
+  rest_endpoint = data.confluent_schema_registry_cluster.source.rest_endpoint
   # https://developer.confluent.io/learn-kafka/schema-registry/schema-subjects/#topicnamestrategy
   subject_name = "${confluent_kafka_topic.purchase.topic_name}-value"
-  format = "PROTOBUF"
-  schema = file("./schemas/proto/purchase.proto")
+  format       = "PROTOBUF"
+  schema       = file("./schemas/proto/purchase.proto")
   credentials {
     key    = confluent_api_key.env-manager-schema-registry-api-key.id
     secret = confluent_api_key.env-manager-schema-registry-api-key.secret
@@ -330,27 +320,27 @@ resource "confluent_schema" "purchase" {
 }
 
 resource "confluent_schema_exporter" "main" {
-    schema_registry_cluster {
-      id = confluent_schema_registry_cluster.source.id
-    }
-    rest_endpoint = confluent_schema_registry_cluster.source.rest_endpoint
+  schema_registry_cluster {
+    id = data.confluent_schema_registry_cluster.source.id
+  }
+  rest_endpoint = data.confluent_schema_registry_cluster.source.rest_endpoint
+  credentials {
+    key    = confluent_api_key.env-manager-schema-registry-api-key.id
+    secret = confluent_api_key.env-manager-schema-registry-api-key.secret
+  }
+
+  name         = "my_exporter"
+  context      = "schema_context"
+  context_type = "CUSTOM"
+  subjects     = [confluent_schema.purchase.subject_name]
+
+  destination_schema_registry_cluster {
+    rest_endpoint = data.confluent_schema_registry_cluster.destination.rest_endpoint
     credentials {
-      key    = confluent_api_key.env-manager-schema-registry-api-key.id
-      secret = confluent_api_key.env-manager-schema-registry-api-key.secret
+      key    = confluent_api_key.destination-schema-registry-api-key.id
+      secret = confluent_api_key.destination-schema-registry-api-key.secret
     }
+  }
 
-    name = "my_exporter"
-    context = "schema_context"
-    context_type = "CUSTOM"
-    subjects = [confluent_schema.purchase.subject_name]
-
-    destination_schema_registry_cluster {
-      rest_endpoint = confluent_schema_registry_cluster.destination.rest_endpoint
-      credentials {
-        key    = confluent_api_key.destination-schema-registry-api-key.id
-        secret = confluent_api_key.destination-schema-registry-api-key.secret
-      }
-    }
-
-    reset_on_update = true
+  reset_on_update = true
 }
