@@ -48,6 +48,9 @@ const (
 
 var createKafkaPath = "/cmk/v2/clusters"
 var readKafkaPath = fmt.Sprintf("/cmk/v2/clusters/%s", kafkaClusterId)
+var readEnvPath = fmt.Sprintf("/org/v2/environments/%s", kafkaEnvId)
+var readSchemaRegistryClusterUrlPath = fmt.Sprintf("/srcm/v2/clusters/%s", schemaRegistryClusterId)
+var listSchemaRegistryClusterUrlPath = fmt.Sprintf("/srcm/v2/clusters")
 var fullKafkaResourceLabel = fmt.Sprintf("confluent_kafka_cluster.%s", kafkaResourceLabel)
 
 func TestAccCluster(t *testing.T) {
@@ -66,6 +69,7 @@ func TestAccCluster(t *testing.T) {
 
 	// nolint:errcheck
 	defer wiremockClient.ResetAllScenarios()
+
 	createClusterResponse, _ := ioutil.ReadFile("../testdata/kafka/create_kafka.json")
 	createClusterStub := wiremock.Post(wiremock.URLPathEqualTo(createKafkaPath)).
 		InScenario(kafkaScenarioName).
@@ -85,6 +89,38 @@ func TestAccCluster(t *testing.T) {
 		WhenScenarioStateIs(scenarioStateKafkaHasBeenCreated).
 		WillReturn(
 			string(readCreatedClusterResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	readEnvironmentResponse, _ := ioutil.ReadFile("../testdata/kafka/read_environment.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readEnvPath)).
+		InScenario(kafkaScenarioName).
+		WhenScenarioStateIs(scenarioStateKafkaHasBeenCreated).
+		WillReturn(
+			string(readEnvironmentResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	listProvisioningSchemaRegistryClusterResponse, _ := ioutil.ReadFile("../testdata/kafka/list_schema_registry_cluster.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(listSchemaRegistryClusterUrlPath)).
+		InScenario(kafkaScenarioName).
+		WithQueryParam("environment", wiremock.EqualTo(kafkaEnvId)).
+		WhenScenarioStateIs(scenarioStateKafkaHasBeenCreated).
+		WillReturn(
+			string(listProvisioningSchemaRegistryClusterResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	readCreatedSchemaRegistryClusterResponse, _ := ioutil.ReadFile("../testdata/kafka/read_provisioned_cluster.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readSchemaRegistryClusterUrlPath)).
+		InScenario(kafkaScenarioName).
+		WithQueryParam("environment", wiremock.EqualTo(kafkaEnvId)).
+		WhenScenarioStateIs(scenarioStateKafkaHasBeenCreated).
+		WillReturn(
+			string(readCreatedSchemaRegistryClusterResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
 		))

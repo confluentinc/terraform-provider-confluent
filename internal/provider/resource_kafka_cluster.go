@@ -360,6 +360,20 @@ func kafkaCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 		return diag.Errorf("error waiting for Kafka Cluster %q to provision: %s", d.Id(), createDescriptiveError(err))
 	}
 
+	environment, _, err := executeEnvironmentRead(c.orgApiContext(ctx), c, environmentId)
+	if err != nil {
+		return diag.Errorf("error reading Environment %q: %s", environmentId, createDescriptiveError(err))
+	}
+	if environment.StreamGovernanceConfig != nil {
+		schemaRegistryClusters, err := loadSchemaRegistryClusters(c.srcmApiContext(ctx), c, environmentId)
+		if err != nil {
+			return diag.Errorf("Error reading Schema Registry Clusters in Environment %q: %s", environmentId, createDescriptiveError(err))
+		}
+		if err := waitForSchemaRegistryClusterToProvision(c.srcmApiContext(ctx), c, environmentId, schemaRegistryClusters[0].GetId()); err != nil {
+			return diag.Errorf("error waiting for Schema Registry Cluster %q to provision: %s", schemaRegistryClusters[0].GetId(), createDescriptiveError(err))
+		}
+	}
+
 	createdKafkaClusterJson, err := json.Marshal(createdKafkaCluster)
 	if err != nil {
 		return diag.Errorf("error creating Kafka Cluster %q: error marshaling %#v to json: %s", d.Id(), createdKafkaCluster, createDescriptiveError(err))
