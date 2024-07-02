@@ -6,7 +6,7 @@ description: |-
   
 ---
 
-# data.confluent_schema_registry_cluster Data Source
+# confluent_schema_registry_cluster Data Source
 
 [![General Availability](https://img.shields.io/badge/Lifecycle%20Stage-General%20Availability-%2345c6e8)](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy)
 

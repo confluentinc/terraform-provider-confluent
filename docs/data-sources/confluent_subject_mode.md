@@ -24,7 +24,7 @@ provider "confluent" {
 
 data "confluent_subject_mode" "purchase-v1" {
   schema_registry_cluster {
-    id = data..essentials.id
+    id = data.confluent_schema_registry_cluster.essentials.id
   }
   rest_endpoint = data.confluent_schema_registry_cluster.essentials.rest_endpoint
   subject_name = "proto-purchase-value"
