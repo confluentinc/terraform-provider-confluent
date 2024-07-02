@@ -27,10 +27,9 @@ import (
 
 const (
 	envScenarioDataSourceName        = "confluent_environment Data Source Lifecycle"
-	environmentId                    = "env-q2opmd"
 	environmentDataSourceDisplayName = "test_env_display_name"
 	environmentDataSourceLabel       = "test_env_data_source_label"
-	environmentDataSourceEndpoint    = "crn://confluent.cloud/organization=foo/environment=env-q2opmd"
+	environmentDataSourceEndpoint    = "crn://confluent.cloud/organization=foo/environment=env-1jrymj"
 )
 
 func TestAccDataSourceEnvironment(t *testing.T) {
@@ -50,7 +49,7 @@ func TestAccDataSourceEnvironment(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	readCreatedEnvResponse, _ := ioutil.ReadFile("../testdata/environment/read_created_env.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("/org/v2/environments/%s", environmentId))).
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("/org/v2/environments/%s", testEnvironmentId))).
 		InScenario(envScenarioDataSourceName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillReturn(
@@ -76,10 +75,10 @@ func TestAccDataSourceEnvironment(t *testing.T) {
 		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckDataSourceEnvironmentConfigWithIdSet(mockServerUrl, environmentDataSourceLabel, environmentId),
+				Config: testAccCheckDataSourceEnvironmentConfigWithIdSet(mockServerUrl, environmentDataSourceLabel, testEnvironmentId),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckEnvironmentExists(fmt.Sprintf("data.confluent_environment.%s", environmentDataSourceLabel)),
-					resource.TestCheckResourceAttr(fmt.Sprintf("data.confluent_environment.%s", environmentDataSourceLabel), paramId, environmentId),
+					resource.TestCheckResourceAttr(fmt.Sprintf("data.confluent_environment.%s", environmentDataSourceLabel), paramId, testEnvironmentId),
 					resource.TestCheckResourceAttr(fmt.Sprintf("data.confluent_environment.%s", environmentDataSourceLabel), paramDisplayName, environmentDataSourceDisplayName),
 					resource.TestCheckResourceAttr(fmt.Sprintf("data.confluent_environment.%s", environmentDataSourceLabel), getNestedStreamGovernancePackageKey(), "ESSENTIALS"),
 				),
@@ -88,7 +87,7 @@ func TestAccDataSourceEnvironment(t *testing.T) {
 				Config: testAccCheckDataSourceEnvironmentConfigWithDisplayNameSet(mockServerUrl, environmentDataSourceLabel, environmentDataSourceDisplayName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckEnvironmentExists(fmt.Sprintf("data.confluent_environment.%s", environmentDataSourceLabel)),
-					resource.TestCheckResourceAttr(fmt.Sprintf("data.confluent_environment.%s", environmentDataSourceLabel), paramId, environmentId),
+					resource.TestCheckResourceAttr(fmt.Sprintf("data.confluent_environment.%s", environmentDataSourceLabel), paramId, testEnvironmentId),
 					resource.TestCheckResourceAttr(fmt.Sprintf("data.confluent_environment.%s", environmentDataSourceLabel), paramDisplayName, environmentDataSourceDisplayName),
 					resource.TestCheckResourceAttr(fmt.Sprintf("data.confluent_environment.%s", environmentDataSourceLabel), paramResourceName, environmentDataSourceEndpoint),
 					resource.TestCheckResourceAttr(fmt.Sprintf("data.confluent_environment.%s", environmentDataSourceLabel), getNestedStreamGovernancePackageKey(), ""),
@@ -98,7 +97,7 @@ func TestAccDataSourceEnvironment(t *testing.T) {
 	})
 }
 
-func testAccCheckDataSourceEnvironmentConfigWithIdSet(mockServerUrl, environmentDataSourceLabel, environmentId string) string {
+func testAccCheckDataSourceEnvironmentConfigWithIdSet(mockServerUrl, environmentDataSourceLabel, testEnvironmentId string) string {
 	return fmt.Sprintf(`
 	provider "confluent" {
  		endpoint = "%s"
@@ -106,7 +105,7 @@ func testAccCheckDataSourceEnvironmentConfigWithIdSet(mockServerUrl, environment
 	data "confluent_environment" "%s" {
 		id = "%s"
 	}
-	`, mockServerUrl, environmentDataSourceLabel, environmentId)
+	`, mockServerUrl, environmentDataSourceLabel, testEnvironmentId)
 }
 
 func testAccCheckDataSourceEnvironmentConfigWithDisplayNameSet(mockServerUrl, environmentDataSourceLabel, displayName string) string {

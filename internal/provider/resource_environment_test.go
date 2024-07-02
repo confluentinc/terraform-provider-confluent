@@ -67,7 +67,7 @@ func TestAccEnvironment(t *testing.T) {
 	_ = wiremockClient.StubFor(createEnvStub)
 
 	readCreatedEnvResponse, _ := ioutil.ReadFile("../testdata/environment/read_created_env.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/org/v2/environments/env-q2opmd")).
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/org/v2/environments/env-1jrymj")).
 		InScenario(envScenarioName).
 		WhenScenarioStateIs(scenarioStateEnvHasBeenCreated).
 		WillReturn(
@@ -77,7 +77,7 @@ func TestAccEnvironment(t *testing.T) {
 		))
 
 	readUpdatedEnvResponse, _ := ioutil.ReadFile("../testdata/environment/read_updated_env.json")
-	patchEnvStub := wiremock.Patch(wiremock.URLPathEqualTo("/org/v2/environments/env-q2opmd")).
+	patchEnvStub := wiremock.Patch(wiremock.URLPathEqualTo("/org/v2/environments/env-1jrymj")).
 		InScenario(envScenarioName).
 		WhenScenarioStateIs(scenarioStateEnvHasBeenCreated).
 		WillSetStateTo(scenarioStateEnvNameHasBeenUpdated).
@@ -88,7 +88,7 @@ func TestAccEnvironment(t *testing.T) {
 		)
 	_ = wiremockClient.StubFor(patchEnvStub)
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/org/v2/environments/env-q2opmd")).
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/org/v2/environments/env-1jrymj")).
 		InScenario(envScenarioName).
 		WhenScenarioStateIs(scenarioStateEnvNameHasBeenUpdated).
 		WillReturn(
@@ -98,7 +98,7 @@ func TestAccEnvironment(t *testing.T) {
 		))
 
 	readDeletedEnvResponse, _ := ioutil.ReadFile("../testdata/environment/read_deleted_env.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/org/v2/environments/env-q2opmd")).
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/org/v2/environments/env-1jrymj")).
 		InScenario(envScenarioName).
 		WhenScenarioStateIs(scenarioStateEnvHasBeenDeleted).
 		WillReturn(
@@ -107,7 +107,7 @@ func TestAccEnvironment(t *testing.T) {
 			http.StatusNotFound,
 		))
 
-	deleteEnvStub := wiremock.Delete(wiremock.URLPathEqualTo("/org/v2/environments/env-q2opmd")).
+	deleteEnvStub := wiremock.Delete(wiremock.URLPathEqualTo("/org/v2/environments/env-1jrymj")).
 		InScenario(envScenarioName).
 		WhenScenarioStateIs(scenarioStateEnvNameHasBeenUpdated).
 		WillSetStateTo(scenarioStateEnvHasBeenDeleted).
@@ -123,7 +123,7 @@ func TestAccEnvironment(t *testing.T) {
 	environmentDisplayUpdatedName := "test_env_display_updated_name"
 	environmentUpdatedPackage := "ADVANCED"
 	environmentResourceLabel := "test_env_resource_label"
-	environmentResourceEndpoint := "crn://confluent.cloud/organization=foo/environment=env-q2opmd"
+	environmentResourceEndpoint := "crn://confluent.cloud/organization=foo/environment=env-1jrymj"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -136,7 +136,7 @@ func TestAccEnvironment(t *testing.T) {
 				Config: testAccCheckEnvironmentConfig(mockServerUrl, environmentResourceLabel, environmentDisplayName, "ESSENTIALS"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckEnvironmentExists(fmt.Sprintf("confluent_environment.%s", environmentResourceLabel)),
-					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_environment.%s", environmentResourceLabel), "id", "env-q2opmd"),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_environment.%s", environmentResourceLabel), "id", testEnvironmentId),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_environment.%s", environmentResourceLabel), "display_name", environmentDisplayName),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_environment.%s", environmentResourceLabel), getNestedStreamGovernancePackageKey(), "ESSENTIALS"),
 				),
@@ -151,7 +151,7 @@ func TestAccEnvironment(t *testing.T) {
 				Config: testAccCheckEnvironmentConfig(mockServerUrl, environmentResourceLabel, environmentDisplayUpdatedName, environmentUpdatedPackage),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckEnvironmentExists(fmt.Sprintf("confluent_environment.%s", environmentResourceLabel)),
-					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_environment.%s", environmentResourceLabel), "id", "env-q2opmd"),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_environment.%s", environmentResourceLabel), "id", testEnvironmentId),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_environment.%s", environmentResourceLabel), "display_name", environmentDisplayUpdatedName),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_environment.%s", environmentResourceLabel), getNestedStreamGovernancePackageKey(), environmentUpdatedPackage),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_environment.%s", environmentResourceLabel), "resource_name", environmentResourceEndpoint),
@@ -166,8 +166,8 @@ func TestAccEnvironment(t *testing.T) {
 	})
 
 	checkStubCount(t, wiremockClient, createEnvStub, "POST /org/v2/environments", expectedCountOne)
-	checkStubCount(t, wiremockClient, patchEnvStub, "PATCH /org/v2/environments/env-q2opmd", expectedCountOne)
-	checkStubCount(t, wiremockClient, deleteEnvStub, "DELETE /org/v2/environments/env-q2opmd", expectedCountOne)
+	checkStubCount(t, wiremockClient, patchEnvStub, "PATCH /org/v2/environments/env-1jrymj", expectedCountOne)
+	checkStubCount(t, wiremockClient, deleteEnvStub, "DELETE /org/v2/environments/env-1jrymj", expectedCountOne)
 }
 
 func TestAccEnvironmentWithoutSg(t *testing.T) {

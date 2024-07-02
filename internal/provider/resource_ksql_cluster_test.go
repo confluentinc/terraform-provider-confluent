@@ -61,7 +61,7 @@ var resourceCommonChecks = resource.ComposeTestCheckFunc(
 	resource.TestCheckResourceAttr(fullKsqlResourceLabel, paramResourceName, "crn://confluent.cloud/organization=1111aaaa-11aa-11aa-11aa-111111aaaaaa/environment=env-abc123/cloud-cluster=lkc-00000/ksql=ksqlDB_cluster_1"),
 	resource.TestCheckNoResourceAttr(fullKsqlResourceLabel, paramHttpEndpoint),
 	resource.TestCheckResourceAttr(fullKsqlResourceLabel, paramStorage, "125"),
-	resource.TestCheckResourceAttr(fullKsqlResourceLabel, "environment.0.id", kafkaEnvId),
+	resource.TestCheckResourceAttr(fullKsqlResourceLabel, "environment.0.id", testEnvironmentId),
 	resource.TestCheckResourceAttr(fullKsqlResourceLabel, "kafka_cluster.0.id", kafkaClusterId),
 	resource.TestCheckResourceAttr(fullKsqlResourceLabel, "credential_identity.0.id", ksqlCredentialIdentity))
 
@@ -141,7 +141,7 @@ func TestAccImportKsqlCluster(t *testing.T) {
 	readCreatedClusterResponse, _ := ioutil.ReadFile("../testdata/ksql/PROVISIONED_ksql_4_csu.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKsqlPath)).
 		InScenario(ksqlScenarioName).
-		WithQueryParam("environment", wiremock.EqualTo(kafkaEnvId)).
+		WithQueryParam("environment", wiremock.EqualTo(testEnvironmentId)).
 		WillReturn(
 			string(readCreatedClusterResponse),
 			contentTypeJSONHeader,
@@ -150,7 +150,7 @@ func TestAccImportKsqlCluster(t *testing.T) {
 
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKsqlPath)).
 		InScenario(ksqlScenarioName).
-		WithQueryParam("environment", wiremock.EqualTo(kafkaEnvId)).
+		WithQueryParam("environment", wiremock.EqualTo(testEnvironmentId)).
 		WillReturn(
 			string(readCreatedClusterResponse),
 			contentTypeJSONHeader,
@@ -214,7 +214,7 @@ func TestAccReadKsqlClusterError(t *testing.T) {
 	readCreatedClusterResponse, _ := ioutil.ReadFile("../testdata/ksql/501_internal_server_error.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKsqlPath)).
 		InScenario(ksqlScenarioName).
-		WithQueryParam("environment", wiremock.EqualTo(kafkaEnvId)).
+		WithQueryParam("environment", wiremock.EqualTo(testEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateKsqlHasBeenCreated).
 		WillReturn(
 			string(readCreatedClusterResponse),
@@ -269,7 +269,7 @@ func TestAccKsqlCluster(t *testing.T) {
 	readCreatedClusterResponse, _ := ioutil.ReadFile("../testdata/ksql/PROVISIONED_ksql_4_csu.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKsqlPath)).
 		InScenario(ksqlScenarioName).
-		WithQueryParam("environment", wiremock.EqualTo(kafkaEnvId)).
+		WithQueryParam("environment", wiremock.EqualTo(testEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateKsqlHasBeenCreated).
 		WillReturn(
 			string(readCreatedClusterResponse),
@@ -279,7 +279,7 @@ func TestAccKsqlCluster(t *testing.T) {
 
 	deleteClusterStubGeneral := wiremock.Delete(wiremock.URLPathEqualTo(readKsqlPath)).
 		InScenario(ksqlScenarioName).
-		WithQueryParam("environment", wiremock.EqualTo(kafkaEnvId)).
+		WithQueryParam("environment", wiremock.EqualTo(testEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateKsqlHasBeenCreated).
 		WillSetStateTo(scenarioStateKsqlHasBeenDeleted).
 		WillReturn(
@@ -314,7 +314,7 @@ func TestAccKsqlCluster(t *testing.T) {
 
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKsqlPath)).
 		InScenario(ksqlScenarioName).
-		WithQueryParam("environment", wiremock.EqualTo(kafkaEnvId)).
+		WithQueryParam("environment", wiremock.EqualTo(testEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateKsqlHasBeenUpdated).
 		WillReturn(
 			string(readUpdatedClusterResponse),
@@ -324,7 +324,7 @@ func TestAccKsqlCluster(t *testing.T) {
 
 	deleteClusterStub := wiremock.Delete(wiremock.URLPathEqualTo(readKsqlPath)).
 		InScenario(ksqlScenarioName).
-		WithQueryParam("environment", wiremock.EqualTo(kafkaEnvId)).
+		WithQueryParam("environment", wiremock.EqualTo(testEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateKsqlHasBeenUpdated).
 		WillSetStateTo(scenarioStateKsqlHasBeenDeleted).
 		WillReturn(
@@ -338,7 +338,7 @@ func TestAccKsqlCluster(t *testing.T) {
 
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKsqlPath)).
 		InScenario(ksqlScenarioName).
-		WithQueryParam("environment", wiremock.EqualTo(kafkaEnvId)).
+		WithQueryParam("environment", wiremock.EqualTo(testEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateKsqlHasBeenDeleted).
 		WillReturn(
 			string(readDeletedEnvResponse),
@@ -386,7 +386,7 @@ func testAccCheckKsqlClusterDestroy(s *terraform.State) error {
 			continue
 		}
 		deletedClusterId := rs.Primary.ID
-		req := c.ksqlClient.ClustersKsqldbcmV2Api.GetKsqldbcmV2Cluster(c.ksqlApiContext(context.Background()), deletedClusterId).Environment(kafkaEnvId)
+		req := c.ksqlClient.ClustersKsqldbcmV2Api.GetKsqldbcmV2Cluster(c.ksqlApiContext(context.Background()), deletedClusterId).Environment(testEnvironmentId)
 		deletedCluster, response, err := req.Execute()
 		if response != nil && (response.StatusCode == http.StatusForbidden || response.StatusCode == http.StatusNotFound) {
 			// /ksqldbcm/v2/clusters/{nonExistentClusterId/deletedClusterID} returns http.StatusForbidden instead of http.StatusNotFound
@@ -406,7 +406,7 @@ func testAccCheckKsqlClusterDestroy(s *terraform.State) error {
 // simple delete stub for when no scenario or change of state is needed
 func createDefaultDeleteStub(client *wiremock.Client) error {
 	err := client.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(readKsqlPath)).
-		WithQueryParam("environment", wiremock.EqualTo(kafkaEnvId)).
+		WithQueryParam("environment", wiremock.EqualTo(testEnvironmentId)).
 		WillReturn("", contentTypeJSONHeader, http.StatusNoContent))
 	if err != nil {
 		return err
@@ -433,7 +433,7 @@ func ksqlResourceConfig(mockServerUrl, csu, useDetailedProcessingLog string) str
 			id = "%s"
 	  	}
 	}
-	`, mockServerUrl, ksqlResourceLabel, ksqlDisplayName, useDetailedProcessingLog, csu, kafkaClusterId, ksqlCredentialIdentity, kafkaEnvId)
+	`, mockServerUrl, ksqlResourceLabel, ksqlDisplayName, useDetailedProcessingLog, csu, kafkaClusterId, ksqlCredentialIdentity, testEnvironmentId)
 }
 
 func testAccCheckKsqlClusterExists(n string) resource.TestCheckFunc {

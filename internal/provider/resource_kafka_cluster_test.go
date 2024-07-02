@@ -32,7 +32,7 @@ const (
 	scenarioStateKafkaHasBeenDeleted = "The new Kafka cluster has been deleted"
 	kafkaScenarioName                = "confluent_kafka Resource Lifecycle"
 	kafkaClusterId                   = "lkc-19ynpv"
-	kafkaEnvId                       = "env-1jrymj"
+	testEnvironmentId                = "env-1jrymj"
 	kafkaNetworkId                   = "n-123abc"
 	kafkaDisplayName                 = "TestCluster"
 	kafkaApiVersion                  = "cmk/v2"
@@ -48,7 +48,7 @@ const (
 
 var createKafkaPath = "/cmk/v2/clusters"
 var readKafkaPath = fmt.Sprintf("/cmk/v2/clusters/%s", kafkaClusterId)
-var readEnvPath = fmt.Sprintf("/org/v2/environments/%s", kafkaEnvId)
+var readEnvPath = fmt.Sprintf("/org/v2/environments/%s", testEnvironmentId)
 var readSchemaRegistryClusterUrlPath = fmt.Sprintf("/srcm/v2/clusters/%s", schemaRegistryClusterId)
 var listSchemaRegistryClusterUrlPath = fmt.Sprintf("/srcm/v2/clusters")
 var fullKafkaResourceLabel = fmt.Sprintf("confluent_kafka_cluster.%s", kafkaResourceLabel)
@@ -85,7 +85,7 @@ func TestAccCluster(t *testing.T) {
 	readCreatedClusterResponse, _ := ioutil.ReadFile("../testdata/kafka/read_created_kafka.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaPath)).
 		InScenario(kafkaScenarioName).
-		WithQueryParam("environment", wiremock.EqualTo(kafkaEnvId)).
+		WithQueryParam("environment", wiremock.EqualTo(testEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateKafkaHasBeenCreated).
 		WillReturn(
 			string(readCreatedClusterResponse),
@@ -103,10 +103,10 @@ func TestAccCluster(t *testing.T) {
 			http.StatusOK,
 		))
 
-	listProvisioningSchemaRegistryClusterResponse, _ := ioutil.ReadFile("../testdata/kafka/list_schema_registry_cluster.json")
+	listProvisioningSchemaRegistryClusterResponse, _ := ioutil.ReadFile("../testdata/schema_registry_cluster/read_provisioning_clusters.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(listSchemaRegistryClusterUrlPath)).
 		InScenario(kafkaScenarioName).
-		WithQueryParam("environment", wiremock.EqualTo(kafkaEnvId)).
+		WithQueryParam("environment", wiremock.EqualTo(testEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateKafkaHasBeenCreated).
 		WillReturn(
 			string(listProvisioningSchemaRegistryClusterResponse),
@@ -114,10 +114,10 @@ func TestAccCluster(t *testing.T) {
 			http.StatusOK,
 		))
 
-	readCreatedSchemaRegistryClusterResponse, _ := ioutil.ReadFile("../testdata/kafka/read_provisioned_cluster.json")
+	readCreatedSchemaRegistryClusterResponse, _ := ioutil.ReadFile("../testdata/schema_registry_cluster/read_provisioned_cluster.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readSchemaRegistryClusterUrlPath)).
 		InScenario(kafkaScenarioName).
-		WithQueryParam("environment", wiremock.EqualTo(kafkaEnvId)).
+		WithQueryParam("environment", wiremock.EqualTo(testEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateKafkaHasBeenCreated).
 		WillReturn(
 			string(readCreatedSchemaRegistryClusterResponse),
@@ -139,7 +139,7 @@ func TestAccCluster(t *testing.T) {
 
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaPath)).
 		InScenario(kafkaScenarioName).
-		WithQueryParam("environment", wiremock.EqualTo(kafkaEnvId)).
+		WithQueryParam("environment", wiremock.EqualTo(testEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateKafkaHasBeenUpdated).
 		WillReturn(
 			string(readUpdatedClusterResponse),
@@ -151,7 +151,7 @@ func TestAccCluster(t *testing.T) {
 
 	deleteClusterStub := wiremock.Delete(wiremock.URLPathEqualTo(readKafkaPath)).
 		InScenario(kafkaScenarioName).
-		WithQueryParam("environment", wiremock.EqualTo(kafkaEnvId)).
+		WithQueryParam("environment", wiremock.EqualTo(testEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateKafkaHasBeenUpdated).
 		WillSetStateTo(scenarioStateKafkaHasBeenDeleted).
 		WillReturn(
@@ -163,7 +163,7 @@ func TestAccCluster(t *testing.T) {
 
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaPath)).
 		InScenario(kafkaScenarioName).
-		WithQueryParam("environment", wiremock.EqualTo(kafkaEnvId)).
+		WithQueryParam("environment", wiremock.EqualTo(testEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateKafkaHasBeenDeleted).
 		WillReturn(
 			string(readDeletedEnvResponse),
@@ -193,7 +193,7 @@ func TestAccCluster(t *testing.T) {
 					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "basic.0.%", "0"),
 					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "standard.#", "0"),
 					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "environment.#", "1"),
-					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "environment.0.id", kafkaEnvId),
+					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "environment.0.id", testEnvironmentId),
 					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "network.#", "1"),
 					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "network.0.id", kafkaNetworkId),
 					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "rest_endpoint", kafkaHttpEndpoint),
@@ -217,7 +217,7 @@ func TestAccCluster(t *testing.T) {
 					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "standard.#", "1"),
 					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "display_name", kafkaDisplayName),
 					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "environment.#", "1"),
-					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "environment.0.id", kafkaEnvId),
+					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "environment.0.id", testEnvironmentId),
 					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "network.#", "1"),
 					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "network.0.id", kafkaNetworkId),
 					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "rest_endpoint", kafkaHttpEndpoint),
@@ -252,7 +252,7 @@ func testAccCheckClusterDestroy(s *terraform.State) error {
 			continue
 		}
 		deletedClusterId := rs.Primary.ID
-		req := c.cmkClient.ClustersCmkV2Api.GetCmkV2Cluster(c.cmkApiContext(context.Background()), deletedClusterId).Environment(kafkaEnvId)
+		req := c.cmkClient.ClustersCmkV2Api.GetCmkV2Cluster(c.cmkApiContext(context.Background()), deletedClusterId).Environment(testEnvironmentId)
 		deletedCluster, response, err := req.Execute()
 		if response != nil && (response.StatusCode == http.StatusForbidden || response.StatusCode == http.StatusNotFound) {
 			// cmk/v2/clusters/{nonExistentClusterId/deletedClusterID} returns http.StatusForbidden instead of http.StatusNotFound
@@ -285,7 +285,7 @@ func testAccCheckClusterConfig(mockServerUrl, clusterType string) string {
 			id = "%s"
 	  	}
 	}
-	`, mockServerUrl, kafkaDisplayName, kafkaAvailability, kafkaCloud, kafkaRegion, clusterType, kafkaEnvId)
+	`, mockServerUrl, kafkaDisplayName, kafkaAvailability, kafkaCloud, kafkaRegion, clusterType, testEnvironmentId)
 }
 
 func testAccCheckClusterExists(n string) resource.TestCheckFunc {

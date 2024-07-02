@@ -33,9 +33,8 @@ const (
 	schemaRegistryClusterScenarioName                = "confluent_schema_registry_cluster gcp Resource Lifecycle"
 	schemaRegistryClusterHttpEndpoint                = "https://psrc-y1111.us-west-2.aws.confluent.cloud"
 	schemaRegistryClusterRegionId                    = "sgreg-1"
-	schemaRegistryClusterEnvironmentId               = "env-6w8d78"
 	schemaRegistryClusterId                          = "lsrc-755ogo"
-	schemaRegistryClusterResourceName                = "crn://confluent.cloud/organization=1111aaaa-11aa-11aa-11aa-111111aaaaaa/environment=env-6w8d78/schema-registry=lsrc-755ogo"
+	schemaRegistryClusterResourceName                = "crn://confluent.cloud/organization=1111aaaa-11aa-11aa-11aa-111111aaaaaa/environment=env-1jrymj/schema-registry=lsrc-755ogo"
 	schemaRegistryClusterApiVersion                  = "srcm/v2"
 	schemaRegistryClusterKind                        = "Cluster"
 	schemaRegistryClusterPackage                     = "ESSENTIALS"
@@ -75,7 +74,7 @@ func TestAccSchemaRegistryCluster(t *testing.T) {
 	readProvisioningSchemaRegistryClusterResponse, _ := ioutil.ReadFile("../testdata/schema_registry_cluster/read_provisioning_cluster.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(schemaRegistryClusterUrlPath)).
 		InScenario(schemaRegistryClusterScenarioName).
-		WithQueryParam("environment", wiremock.EqualTo(schemaRegistryClusterEnvironmentId)).
+		WithQueryParam("environment", wiremock.EqualTo(testEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateSchemaRegistryClusterIsProvisioning).
 		WillSetStateTo(scenarioStateSchemaRegistryClusterHasBeenCreated).
 		WillReturn(
@@ -87,7 +86,7 @@ func TestAccSchemaRegistryCluster(t *testing.T) {
 	readCreatedSchemaRegistryClusterResponse, _ := ioutil.ReadFile("../testdata/schema_registry_cluster/read_provisioned_cluster.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(schemaRegistryClusterUrlPath)).
 		InScenario(schemaRegistryClusterScenarioName).
-		WithQueryParam("environment", wiremock.EqualTo(schemaRegistryClusterEnvironmentId)).
+		WithQueryParam("environment", wiremock.EqualTo(testEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateSchemaRegistryClusterHasBeenCreated).
 		WillReturn(
 			string(readCreatedSchemaRegistryClusterResponse),
@@ -97,7 +96,7 @@ func TestAccSchemaRegistryCluster(t *testing.T) {
 
 	deleteSchemaRegistryClusterStub := wiremock.Delete(wiremock.URLPathEqualTo(schemaRegistryClusterUrlPath)).
 		InScenario(schemaRegistryClusterScenarioName).
-		WithQueryParam("environment", wiremock.EqualTo(schemaRegistryClusterEnvironmentId)).
+		WithQueryParam("environment", wiremock.EqualTo(testEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateSchemaRegistryClusterHasBeenCreated).
 		WillSetStateTo(scenarioStateSchemaRegistryClusterHasBeenDeleted).
 		WillReturn(
@@ -110,7 +109,7 @@ func TestAccSchemaRegistryCluster(t *testing.T) {
 	readDeletedSchemaRegistryClusterResponse, _ := ioutil.ReadFile("../testdata/schema_registry_cluster/read_deleted_cluster.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(schemaRegistryClusterUrlPath)).
 		InScenario(schemaRegistryClusterScenarioName).
-		WithQueryParam("environment", wiremock.EqualTo(schemaRegistryClusterEnvironmentId)).
+		WithQueryParam("environment", wiremock.EqualTo(testEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateSchemaRegistryClusterHasBeenDeleted).
 		WillReturn(
 			string(readDeletedSchemaRegistryClusterResponse),
@@ -135,7 +134,7 @@ func TestAccSchemaRegistryCluster(t *testing.T) {
 					resource.TestCheckResourceAttr(fullSchemaRegistryClusterResourceLabel, paramId, schemaRegistryClusterId),
 					resource.TestCheckResourceAttr(fullSchemaRegistryClusterResourceLabel, paramPackage, schemaRegistryClusterPackage),
 					resource.TestCheckResourceAttr(fullSchemaRegistryClusterResourceLabel, fmt.Sprintf("%s.#", paramEnvironment), "1"),
-					resource.TestCheckResourceAttr(fullSchemaRegistryClusterResourceLabel, fmt.Sprintf("%s.0.%s", paramEnvironment, paramId), schemaRegistryClusterEnvironmentId),
+					resource.TestCheckResourceAttr(fullSchemaRegistryClusterResourceLabel, fmt.Sprintf("%s.0.%s", paramEnvironment, paramId), testEnvironmentId),
 					resource.TestCheckResourceAttr(fullSchemaRegistryClusterResourceLabel, fmt.Sprintf("%s.#", paramRegion), "1"),
 					resource.TestCheckResourceAttr(fullSchemaRegistryClusterResourceLabel, fmt.Sprintf("%s.0.%s", paramRegion, paramId), schemaRegistryClusterRegionId),
 					resource.TestCheckResourceAttr(fullSchemaRegistryClusterResourceLabel, paramDisplayName, schemaRegistryClusterDisplayName),
@@ -160,7 +159,7 @@ func TestAccSchemaRegistryCluster(t *testing.T) {
 	})
 
 	checkStubCount(t, wiremockClient, createSchemaRegistryClusterStub, fmt.Sprintf("POST %s", schemaRegistryClusterUrlPath), expectedCountOne)
-	checkStubCount(t, wiremockClient, deleteSchemaRegistryClusterStub, fmt.Sprintf("DELETE %s?environment=%s", schemaRegistryClusterUrlPath, schemaRegistryClusterEnvironmentId), expectedCountOne)
+	checkStubCount(t, wiremockClient, deleteSchemaRegistryClusterStub, fmt.Sprintf("DELETE %s?environment=%s", schemaRegistryClusterUrlPath, testEnvironmentId), expectedCountOne)
 }
 
 func testAccCheckSchemaRegistryClusterDestroy(s *terraform.State) error {
@@ -171,7 +170,7 @@ func testAccCheckSchemaRegistryClusterDestroy(s *terraform.State) error {
 			continue
 		}
 		deletedSchemaRegistryClusterId := rs.Primary.ID
-		req := c.srcmClient.ClustersSrcmV2Api.GetSrcmV2Cluster(c.srcmApiContext(context.Background()), deletedSchemaRegistryClusterId).Environment(schemaRegistryClusterEnvironmentId)
+		req := c.srcmClient.ClustersSrcmV2Api.GetSrcmV2Cluster(c.srcmApiContext(context.Background()), deletedSchemaRegistryClusterId).Environment(testEnvironmentId)
 		deletedSchemaRegistryCluster, response, err := req.Execute()
 		if response != nil && response.StatusCode == http.StatusForbidden {
 			return nil
@@ -200,7 +199,7 @@ func testAccCheckSchemaRegistryClusterConfig(mockServerUrl, resourceLabel string
 		  id = "%s"
 	    }
 	}
-	`, mockServerUrl, resourceLabel, schemaRegistryClusterPackage, schemaRegistryClusterEnvironmentId, schemaRegistryClusterRegionId)
+	`, mockServerUrl, resourceLabel, schemaRegistryClusterPackage, testEnvironmentId, schemaRegistryClusterRegionId)
 }
 
 func testAccCheckSchemaRegistryClusterExists(n string) resource.TestCheckFunc {

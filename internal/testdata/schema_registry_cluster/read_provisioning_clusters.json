@@ -1,4 +1,5 @@
 {
+  "api_version": "srcm/v2",
   "data": [
     {
       "api_version": "srcm/v2",
@@ -30,8 +31,13 @@
         }
       },
       "status": {
-        "phase": "PROVISIONED"
+        "phase": "PROVISIONING"
       }
     }
-  ]
+  ],
+  "kind": "ClusterList",
+  "metadata": {
+    "first": "https://api.confluent.cloud/srcm/v2/clusters",
+    "total_size": 1
+  }
 }

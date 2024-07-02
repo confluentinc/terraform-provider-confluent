@@ -51,7 +51,7 @@ func TestAccDataSourceCluster(t *testing.T) {
 	readCreatedClusterResponse, _ := ioutil.ReadFile("../testdata/kafka/read_created_kafka.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaPath)).
 		InScenario(dataSourceKafkaScenarioName).
-		WithQueryParam("environment", wiremock.EqualTo(kafkaEnvId)).
+		WithQueryParam("environment", wiremock.EqualTo(testEnvironmentId)).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillReturn(
 			string(readCreatedClusterResponse),
@@ -62,7 +62,7 @@ func TestAccDataSourceCluster(t *testing.T) {
 	readClustersResponse, _ := ioutil.ReadFile("../testdata/kafka/read_kafkas.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/cmk/v2/clusters")).
 		InScenario(dataSourceKafkaScenarioName).
-		WithQueryParam("environment", wiremock.EqualTo(kafkaEnvId)).
+		WithQueryParam("environment", wiremock.EqualTo(testEnvironmentId)).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillReturn(
 			string(readClustersResponse),
@@ -91,7 +91,7 @@ func TestAccDataSourceCluster(t *testing.T) {
 					resource.TestCheckResourceAttr(fullKafkaDataSourceLabel, "basic.0.%", "0"),
 					resource.TestCheckResourceAttr(fullKafkaDataSourceLabel, "standard.#", "0"),
 					resource.TestCheckResourceAttr(fullKafkaDataSourceLabel, "environment.#", "1"),
-					resource.TestCheckResourceAttr(fullKafkaDataSourceLabel, "environment.0.id", kafkaEnvId),
+					resource.TestCheckResourceAttr(fullKafkaDataSourceLabel, "environment.0.id", testEnvironmentId),
 					resource.TestCheckResourceAttr(fullKafkaDataSourceLabel, "network.#", "1"),
 					resource.TestCheckResourceAttr(fullKafkaDataSourceLabel, "network.0.id", kafkaNetworkId),
 					resource.TestCheckResourceAttr(fullKafkaDataSourceLabel, "rest_endpoint", kafkaHttpEndpoint),
@@ -113,7 +113,7 @@ func TestAccDataSourceCluster(t *testing.T) {
 					resource.TestCheckResourceAttr(fullKafkaDataSourceLabel, "basic.0.%", "0"),
 					resource.TestCheckResourceAttr(fullKafkaDataSourceLabel, "standard.#", "0"),
 					resource.TestCheckResourceAttr(fullKafkaDataSourceLabel, "environment.#", "1"),
-					resource.TestCheckResourceAttr(fullKafkaDataSourceLabel, "environment.0.id", kafkaEnvId),
+					resource.TestCheckResourceAttr(fullKafkaDataSourceLabel, "environment.0.id", testEnvironmentId),
 					resource.TestCheckResourceAttr(fullKafkaDataSourceLabel, "rest_endpoint", kafkaHttpEndpoint),
 					resource.TestCheckResourceAttr(fullKafkaDataSourceLabel, "rbac_crn", kafkaRbacCrn),
 				),
@@ -133,7 +133,7 @@ func testAccCheckDataSourceClusterConfigWithIdSet(mockServerUrl string) string {
 			id = "%s"
 	  	}
 	}
-	`, mockServerUrl, kafkaClusterId, kafkaEnvId)
+	`, mockServerUrl, kafkaClusterId, testEnvironmentId)
 }
 
 func testAccCheckDataSourceClusterConfigWithDisplayNameSet(mockServerUrl string) string {
@@ -147,5 +147,5 @@ func testAccCheckDataSourceClusterConfigWithDisplayNameSet(mockServerUrl string)
 			id = "%s"
 	  	}
 	}
-	`, mockServerUrl, kafkaDisplayName, kafkaEnvId)
+	`, mockServerUrl, kafkaDisplayName, testEnvironmentId)
 }

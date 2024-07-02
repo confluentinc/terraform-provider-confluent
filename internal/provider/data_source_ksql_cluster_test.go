@@ -46,7 +46,7 @@ var datasourceCommonChecks = resource.ComposeTestCheckFunc(
 	resource.TestCheckResourceAttr(fullKsqlDataSourceLabel, paramRestEndpoint, "https://pksqlc-00000.us-central1.gcp.glb.confluent.cloud"),
 	resource.TestCheckResourceAttr(fullKsqlDataSourceLabel, paramResourceName, "crn://confluent.cloud/organization=1111aaaa-11aa-11aa-11aa-111111aaaaaa/environment=env-abc123/cloud-cluster=lkc-00000/ksql=ksqlDB_cluster_1"),
 	resource.TestCheckNoResourceAttr(fullKsqlDataSourceLabel, paramHttpEndpoint),
-	resource.TestCheckResourceAttr(fullKsqlDataSourceLabel, "environment.0.id", kafkaEnvId),
+	resource.TestCheckResourceAttr(fullKsqlDataSourceLabel, "environment.0.id", testEnvironmentId),
 	resource.TestCheckResourceAttr(fullKsqlDataSourceLabel, "kafka_cluster.0.id", kafkaClusterId),
 	resource.TestCheckResourceAttr(fullKsqlDataSourceLabel, "credential_identity.0.id", ksqlCredentialIdentity),
 )
@@ -71,7 +71,7 @@ func TestAccDataSourceWithIdKsql(t *testing.T) {
 	provisioningKsqlCluster, _ := ioutil.ReadFile("../testdata/ksql/PROVISIONED_ksql_4_csu.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("/ksqldbcm/v2/clusters/%s", ksqlId))).
 		InScenario(ksqlScenarioDataSourceName).
-		WithQueryParam("environment", wiremock.EqualTo(kafkaEnvId)).
+		WithQueryParam("environment", wiremock.EqualTo(testEnvironmentId)).
 		WillReturn(
 			string(provisioningKsqlCluster),
 			contentTypeJSONHeader,
@@ -81,7 +81,7 @@ func TestAccDataSourceWithIdKsql(t *testing.T) {
 	provisionedKsqlCluster, _ := ioutil.ReadFile("../testdata/ksql/ksql_clusters.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/ksqldbcm/v2/clusters")).
 		InScenario(ksqlScenarioDataSourceName).
-		WithQueryParam("environment", wiremock.EqualTo(kafkaEnvId)).
+		WithQueryParam("environment", wiremock.EqualTo(testEnvironmentId)).
 		WillReturn(
 			string(provisionedKsqlCluster),
 			contentTypeJSONHeader,
@@ -122,7 +122,7 @@ func TestAccDataSourceListKsql(t *testing.T) {
 	provisionedKsqlCluster, _ := ioutil.ReadFile("../testdata/ksql/ksql_clusters.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/ksqldbcm/v2/clusters")).
 		InScenario(ksqlScenarioDataSourceName).
-		WithQueryParam("environment", wiremock.EqualTo(kafkaEnvId)).
+		WithQueryParam("environment", wiremock.EqualTo(testEnvironmentId)).
 		WillReturn(
 			string(provisionedKsqlCluster),
 			contentTypeJSONHeader,
@@ -162,7 +162,7 @@ func TestAccDataSourceKsqlApi5xxError(t *testing.T) {
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("/ksqldbcm/v2/clusters/%s", ksqlId))).
 		InScenario(ksqlScenarioDataSourceName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
-		WithQueryParam("environment", wiremock.EqualTo(kafkaEnvId)).
+		WithQueryParam("environment", wiremock.EqualTo(testEnvironmentId)).
 		WillReturn(
 			string(errorResponse),
 			contentTypeJSONHeader,
@@ -203,7 +203,7 @@ func TestAccDataSourceKsqlApi4xxError(t *testing.T) {
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("/ksqldbcm/v2/clusters/%s", ksqlId))).
 		InScenario(ksqlScenarioDataSourceName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
-		WithQueryParam("environment", wiremock.EqualTo(kafkaEnvId)).
+		WithQueryParam("environment", wiremock.EqualTo(testEnvironmentId)).
 		WillReturn(
 			string(errorResponse),
 			contentTypeJSONHeader,
@@ -233,7 +233,7 @@ func datasourceConfigId(mockServerUrl string) string {
 			id = "%s"
 	  	}
 	}
-	`, mockServerUrl, ksqlDataSourceLabel, ksqlId, kafkaEnvId)
+	`, mockServerUrl, ksqlDataSourceLabel, ksqlId, testEnvironmentId)
 }
 
 func datasourceConfigDisplayName(mockServerUrl string) string {
@@ -247,5 +247,5 @@ func datasourceConfigDisplayName(mockServerUrl string) string {
 			id = "%s"
 	  	}
 	}
-	`, mockServerUrl, ksqlDataSourceLabel, ksqlDisplayName, kafkaEnvId)
+	`, mockServerUrl, ksqlDataSourceLabel, ksqlDisplayName, testEnvironmentId)
 }

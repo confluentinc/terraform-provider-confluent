@@ -52,7 +52,7 @@ func TestAccDataSourceSchemaRegistryCluster(t *testing.T) {
 	readCreatedClusterResponse, _ := ioutil.ReadFile("../testdata/schema_registry_cluster/read_provisioned_cluster.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(schemaRegistryClusterUrlPath)).
 		InScenario(dataSourceSchemaRegistryScenarioName).
-		WithQueryParam("environment", wiremock.EqualTo(schemaRegistryClusterEnvironmentId)).
+		WithQueryParam("environment", wiremock.EqualTo(testEnvironmentId)).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillReturn(
 			string(readCreatedClusterResponse),
@@ -63,7 +63,7 @@ func TestAccDataSourceSchemaRegistryCluster(t *testing.T) {
 	readClustersResponse, _ := ioutil.ReadFile("../testdata/schema_registry_cluster/read_clusters.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/srcm/v2/clusters")).
 		InScenario(dataSourceSchemaRegistryScenarioName).
-		WithQueryParam("environment", wiremock.EqualTo(schemaRegistryClusterEnvironmentId)).
+		WithQueryParam("environment", wiremock.EqualTo(testEnvironmentId)).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillReturn(
 			string(readClustersResponse),
@@ -84,7 +84,7 @@ func TestAccDataSourceSchemaRegistryCluster(t *testing.T) {
 					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramId, schemaRegistryClusterId),
 					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramPackage, schemaRegistryClusterPackage),
 					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, fmt.Sprintf("%s.#", paramEnvironment), "1"),
-					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, fmt.Sprintf("%s.0.%s", paramEnvironment, paramId), schemaRegistryClusterEnvironmentId),
+					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, fmt.Sprintf("%s.0.%s", paramEnvironment, paramId), testEnvironmentId),
 					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, fmt.Sprintf("%s.#", paramRegion), "1"),
 					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, fmt.Sprintf("%s.0.%s", paramRegion, paramId), schemaRegistryClusterRegionId),
 					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramDisplayName, schemaRegistryClusterDisplayName),
@@ -101,7 +101,7 @@ func TestAccDataSourceSchemaRegistryCluster(t *testing.T) {
 					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramId, schemaRegistryClusterId),
 					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramPackage, schemaRegistryClusterPackage),
 					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, fmt.Sprintf("%s.#", paramEnvironment), "1"),
-					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, fmt.Sprintf("%s.0.%s", paramEnvironment, paramId), schemaRegistryClusterEnvironmentId),
+					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, fmt.Sprintf("%s.0.%s", paramEnvironment, paramId), testEnvironmentId),
 					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, fmt.Sprintf("%s.#", paramRegion), "1"),
 					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, fmt.Sprintf("%s.0.%s", paramRegion, paramId), schemaRegistryClusterRegionId),
 					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramDisplayName, schemaRegistryClusterDisplayName),
@@ -118,7 +118,7 @@ func TestAccDataSourceSchemaRegistryCluster(t *testing.T) {
 					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramId, schemaRegistryClusterId),
 					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramPackage, schemaRegistryClusterPackage),
 					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, fmt.Sprintf("%s.#", paramEnvironment), "1"),
-					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, fmt.Sprintf("%s.0.%s", paramEnvironment, paramId), schemaRegistryClusterEnvironmentId),
+					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, fmt.Sprintf("%s.0.%s", paramEnvironment, paramId), testEnvironmentId),
 					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, fmt.Sprintf("%s.#", paramRegion), "1"),
 					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, fmt.Sprintf("%s.0.%s", paramRegion, paramId), schemaRegistryClusterRegionId),
 					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramDisplayName, schemaRegistryClusterDisplayName),
@@ -143,7 +143,7 @@ func testAccCheckDataSourceSchemaRegistryClusterConfigWithIdSet(mockServerUrl st
 			id = "%s"
 	  	}
 	}
-	`, mockServerUrl, schemaRegistryClusterId, schemaRegistryClusterEnvironmentId)
+	`, mockServerUrl, schemaRegistryClusterId, testEnvironmentId)
 }
 
 func testAccCheckDataSourceSchemaRegistryClusterConfigWithDisplayNameSet(mockServerUrl string) string {
@@ -157,7 +157,7 @@ func testAccCheckDataSourceSchemaRegistryClusterConfigWithDisplayNameSet(mockSer
 			id = "%s"
 	  	}
 	}
-	`, mockServerUrl, schemaRegistryClusterDisplayName, schemaRegistryClusterEnvironmentId)
+	`, mockServerUrl, schemaRegistryClusterDisplayName, testEnvironmentId)
 }
 
 func testAccCheckDataSourceSchemaRegistryClusterConfigWithJustEnvironmentSet(mockServerUrl string) string {
@@ -170,5 +170,5 @@ func testAccCheckDataSourceSchemaRegistryClusterConfigWithJustEnvironmentSet(moc
 			id = "%s"
 	  	}
 	}
-	`, mockServerUrl, schemaRegistryClusterEnvironmentId)
+	`, mockServerUrl, testEnvironmentId)
 }
