@@ -359,6 +359,26 @@ func waitForSchemaRegistryClusterToProvision(ctx context.Context, c *Client, env
 	return nil
 }
 
+func waitForAnySchemaRegistryClusterToProvision(ctx context.Context, c *Client, environmentId string) error {
+	stateConf := &resource.StateChangeConf{
+		// stateProvisioning applies when the Schema Registry Cluster is either in the 'provisioning' status or has not yet been created.
+		Pending: []string{stateProvisioning},
+		Target:  []string{stateProvisioned},
+		Refresh: anySchemaRegistryClusterProvisionStatus(c.srcmApiContext(ctx), c, environmentId),
+		// https://docs.confluent.io/cloud/current/clusters/cluster-types.html#provisioning-time
+		Timeout:      10 * time.Minute,
+		Delay:        5 * time.Second,
+		PollInterval: 5 * time.Second,
+	}
+
+	tflog.Debug(ctx, fmt.Sprintf("Waiting for the start of Schema Registry Cluster provisioning, followed by a status update to %q", stateProvisioned))
+
+	if _, err := stateConf.WaitForStateContext(c.srcmApiContext(ctx)); err != nil {
+		return err
+	}
+	return nil
+}
+
 func waitForConnectorToProvision(ctx context.Context, c *Client, displayName, environmentId, clusterId string) error {
 	stateConf := &resource.StateChangeConf{
 		// Allow PROVISIONING -> DEGRADED -> RUNNING transition
@@ -900,6 +920,28 @@ func ksqlClusterProvisionStatus(ctx context.Context, c *Client, environmentId, c
 		}
 		// ksqlDB Cluster is in an unexpected state
 		return nil, stateUnexpected, fmt.Errorf("ksqlDB Cluster %q is an unexpected state %q", clusterId, cluster.Status.GetPhase())
+	}
+}
+
+func anySchemaRegistryClusterProvisionStatus(ctx context.Context, c *Client, environmentId string) resource.StateRefreshFunc {
+	return func() (result interface{}, s string, err error) {
+		clusters, err := loadSchemaRegistryClusters(c.srcmApiContext(ctx), c, environmentId)
+		if err != nil {
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Schema Registry Clusters in environment %q: %s", environmentId, createDescriptiveError(err)))
+			return nil, stateUnknown, err
+		}
+		if len(clusters) == 0 {
+			return clusters, stateProvisioning, nil
+		}
+		cluster := clusters[0]
+		clusterId := cluster.GetId()
+		if cluster.Status.GetPhase() == stateProvisioning || cluster.Status.GetPhase() == stateProvisioned {
+			return cluster, cluster.Status.GetPhase(), nil
+		} else if cluster.Status.GetPhase() == stateFailed {
+			return nil, stateFailed, fmt.Errorf("schema Registry Cluster %q provisioning status is %q", clusterId, stateFailed)
+		}
+		// SR Cluster is in an unexpected state
+		return nil, stateUnexpected, fmt.Errorf("schema Registry Cluster %q is an unexpected state %q", clusterId, cluster.Status.GetPhase())
 	}
 }
 

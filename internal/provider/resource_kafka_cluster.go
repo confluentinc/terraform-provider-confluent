@@ -27,7 +27,6 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
-	"time"
 )
 
 const (
@@ -366,18 +365,8 @@ func kafkaCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 		return diag.Errorf("error reading Environment %q: %s", environmentId, createDescriptiveError(err))
 	}
 	if environment.StreamGovernanceConfig != nil {
-		// TODO: If we encounter any issues, we could replace it with a separate waitFor() that accepts only the environment ID.
-		// Introduce a brief delay to ensure the backend starts provisioning a Schema Registry cluster.
-		time.Sleep(10 * time.Second)
-		schemaRegistryClusters, err := loadSchemaRegistryClusters(c.srcmApiContext(ctx), c, environmentId)
-		if err != nil {
-			return diag.Errorf("error reading Schema Registry Clusters in environment %q: %s", environmentId, createDescriptiveError(err))
-		}
-		if len(schemaRegistryClusters) == 0 {
-			return diag.Errorf("error reading Schema Registry Clusters: there are no SR clusters in environment %q", environmentId)
-		}
-		if err := waitForSchemaRegistryClusterToProvision(c.srcmApiContext(ctx), c, environmentId, schemaRegistryClusters[0].GetId()); err != nil {
-			return diag.Errorf("error waiting for Schema Registry Cluster %q to provision: %s", schemaRegistryClusters[0].GetId(), createDescriptiveError(err))
+		if err := waitForAnySchemaRegistryClusterToProvision(c.srcmApiContext(ctx), c, environmentId); err != nil {
+			return diag.Errorf("error waiting for Schema Registry Cluster to provision: %s", createDescriptiveError(err))
 		}
 	}
 

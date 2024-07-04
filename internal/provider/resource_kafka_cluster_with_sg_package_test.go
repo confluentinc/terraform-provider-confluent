@@ -27,33 +27,36 @@ import (
 )
 
 const (
-	scenarioStateKafkaHasBeenCreated = "A new Kafka Basic cluster has been just created"
-	scenarioStateKafkaHasBeenUpdated = "The new Kafka cluster's kind has been just updated to Standard"
-	scenarioStateKafkaHasBeenDeleted = "The new Kafka cluster has been deleted"
-	kafkaScenarioName                = "confluent_kafka Resource Lifecycle"
-	kafkaClusterId                   = "lkc-19ynpv"
-	testEnvironmentId                = "env-1jrymj"
-	kafkaNetworkId                   = "n-123abc"
-	kafkaDisplayName                 = "TestCluster"
-	kafkaApiVersion                  = "cmk/v2"
-	kafkaKind                        = "Cluster"
-	kafkaAvailability                = "SINGLE_ZONE"
-	kafkaCloud                       = "GCP"
-	kafkaRegion                      = "us-central1"
-	kafkaResourceLabel               = "basic-cluster"
-	kafkaHttpEndpoint                = "https://pkc-0wg55.us-central1.gcp.confluent.cloud:443"
-	kafkaBootstrapEndpoint           = "SASL_SSL://pkc-0wg55.us-central1.gcp.confluent.cloud:9092"
-	kafkaRbacCrn                     = "crn://confluent.cloud/organization=1111aaaa-11aa-11aa-11aa-111111aaaaaa/environment=env-1jrymj/cloud-cluster=lkc-19ynpv"
+	scenarioStateKafkaHasBeenCreated                           = "A new Kafka Basic cluster has been just created"
+	scenarioStateKafkaHasBeenCreatedButZeroSRClusters          = "A new Kafka Basic cluster has been just created: waiting for SR cluster to appear"
+	scenarioStateKafkaHasBeenCreatedButSRClusterIsProvisioning = "A new Kafka Basic cluster has been just created: SR cluster is provisioning"
+	scenarioStateKafkaHasBeenCreatedAndSRClusterIsProvisioned  = "A new Kafka Basic cluster has been just created: SR cluster is provisioned"
+	scenarioStateKafkaHasBeenCreatedAndSyncIsComplete          = "A new Kafka Basic cluster has been just created: sync is complete"
+	scenarioStateKafkaHasBeenUpdated                           = "The new Kafka cluster's kind has been just updated to Standard"
+	scenarioStateKafkaHasBeenDeleted                           = "The new Kafka cluster has been deleted"
+	kafkaScenarioName                                          = "confluent_kafka Resource Lifecycle"
+	kafkaClusterId                                             = "lkc-19ynpv"
+	testEnvironmentId                                          = "env-1jrymj"
+	kafkaNetworkId                                             = "n-123abc"
+	kafkaDisplayName                                           = "TestCluster"
+	kafkaApiVersion                                            = "cmk/v2"
+	kafkaKind                                                  = "Cluster"
+	kafkaAvailability                                          = "SINGLE_ZONE"
+	kafkaCloud                                                 = "GCP"
+	kafkaRegion                                                = "us-central1"
+	kafkaResourceLabel                                         = "basic-cluster"
+	kafkaHttpEndpoint                                          = "https://pkc-0wg55.us-central1.gcp.confluent.cloud:443"
+	kafkaBootstrapEndpoint                                     = "SASL_SSL://pkc-0wg55.us-central1.gcp.confluent.cloud:9092"
+	kafkaRbacCrn                                               = "crn://confluent.cloud/organization=1111aaaa-11aa-11aa-11aa-111111aaaaaa/environment=env-1jrymj/cloud-cluster=lkc-19ynpv"
 )
 
 var createKafkaPath = "/cmk/v2/clusters"
 var readKafkaPath = fmt.Sprintf("/cmk/v2/clusters/%s", kafkaClusterId)
 var readEnvPath = fmt.Sprintf("/org/v2/environments/%s", testEnvironmentId)
-var readSchemaRegistryClusterUrlPath = fmt.Sprintf("/srcm/v2/clusters/%s", schemaRegistryClusterId)
 var listSchemaRegistryClusterUrlPath = fmt.Sprintf("/srcm/v2/clusters")
 var fullKafkaResourceLabel = fmt.Sprintf("confluent_kafka_cluster.%s", kafkaResourceLabel)
 
-func TestAccCluster(t *testing.T) {
+func TestAccClusterWithSGPackage(t *testing.T) {
 	ctx := context.Background()
 
 	wiremockContainer, err := setupWiremock(ctx)
@@ -93,12 +96,25 @@ func TestAccCluster(t *testing.T) {
 			http.StatusOK,
 		))
 
-	readEnvironmentResponse, _ := ioutil.ReadFile("../testdata/kafka/read_environment.json")
+	readEnvironmentResponse, _ := ioutil.ReadFile("../testdata/environment/read_created_env.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readEnvPath)).
 		InScenario(kafkaScenarioName).
 		WhenScenarioStateIs(scenarioStateKafkaHasBeenCreated).
+		WillSetStateTo(scenarioStateKafkaHasBeenCreatedButZeroSRClusters).
 		WillReturn(
 			string(readEnvironmentResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	listZeroSchemaRegistryClusterResponse, _ := ioutil.ReadFile("../testdata/schema_registry_cluster/read_zero_clusters.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(listSchemaRegistryClusterUrlPath)).
+		InScenario(kafkaScenarioName).
+		WithQueryParam("environment", wiremock.EqualTo(testEnvironmentId)).
+		WhenScenarioStateIs(scenarioStateKafkaHasBeenCreatedButZeroSRClusters).
+		WillSetStateTo(scenarioStateKafkaHasBeenCreatedButSRClusterIsProvisioning).
+		WillReturn(
+			string(listZeroSchemaRegistryClusterResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
 		))
@@ -107,20 +123,33 @@ func TestAccCluster(t *testing.T) {
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(listSchemaRegistryClusterUrlPath)).
 		InScenario(kafkaScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(testEnvironmentId)).
-		WhenScenarioStateIs(scenarioStateKafkaHasBeenCreated).
+		WhenScenarioStateIs(scenarioStateKafkaHasBeenCreatedButSRClusterIsProvisioning).
+		WillSetStateTo(scenarioStateKafkaHasBeenCreatedAndSRClusterIsProvisioned).
 		WillReturn(
 			string(listProvisioningSchemaRegistryClusterResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
 		))
 
-	readCreatedSchemaRegistryClusterResponse, _ := ioutil.ReadFile("../testdata/schema_registry_cluster/read_provisioned_cluster.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readSchemaRegistryClusterUrlPath)).
+	readCreatedSchemaRegistryClustersResponse, _ := ioutil.ReadFile("../testdata/schema_registry_cluster/read_provisioned_clusters.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(listSchemaRegistryClusterUrlPath)).
 		InScenario(kafkaScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(testEnvironmentId)).
-		WhenScenarioStateIs(scenarioStateKafkaHasBeenCreated).
+		WhenScenarioStateIs(scenarioStateKafkaHasBeenCreatedAndSRClusterIsProvisioned).
+		WillSetStateTo(scenarioStateKafkaHasBeenCreatedAndSyncIsComplete).
 		WillReturn(
-			string(readCreatedSchemaRegistryClusterResponse),
+			string(readCreatedSchemaRegistryClustersResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	readCreatedClusterResponse, _ = ioutil.ReadFile("../testdata/kafka/read_created_kafka.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaPath)).
+		InScenario(kafkaScenarioName).
+		WithQueryParam("environment", wiremock.EqualTo(testEnvironmentId)).
+		WhenScenarioStateIs(scenarioStateKafkaHasBeenCreatedAndSyncIsComplete).
+		WillReturn(
+			string(readCreatedClusterResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
 		))
@@ -128,7 +157,7 @@ func TestAccCluster(t *testing.T) {
 	readUpdatedClusterResponse, _ := ioutil.ReadFile("../testdata/kafka/read_updated_kafka.json")
 	updateClusterStub := wiremock.Patch(wiremock.URLPathEqualTo(readKafkaPath)).
 		InScenario(kafkaScenarioName).
-		WhenScenarioStateIs(scenarioStateKafkaHasBeenCreated).
+		WhenScenarioStateIs(scenarioStateKafkaHasBeenCreatedAndSyncIsComplete).
 		WillSetStateTo(scenarioStateKafkaHasBeenUpdated).
 		WillReturn(
 			string(readUpdatedClusterResponse),
