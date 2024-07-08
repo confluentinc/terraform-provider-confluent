@@ -202,9 +202,12 @@ func readBusinessMetadataBindingAndSetAttributes(ctx context.Context, d *schema.
 
 	businessMetadataBinding, err := findBusinessMetadataBindingByBusinessMetadataName(businessMetadataBindings, businessMetadataName)
 	if err != nil {
-		tflog.Warn(ctx, fmt.Sprintf("Removing Business Metadata Binding %q in TF state because Business Metadata Binding could not be found on the server", businessMetadataBindingId), map[string]interface{}{businessMetadataBindingLoggingKey: businessMetadataBindingId})
-		d.SetId("")
-		return nil, nil
+		if !d.IsNewResource() {
+			tflog.Warn(ctx, fmt.Sprintf("Removing Business Metadata Binding %q in TF state because Business Metadata Binding could not be found on the server", businessMetadataBindingId), map[string]interface{}{businessMetadataBindingLoggingKey: businessMetadataBindingId})
+			d.SetId("")
+			return nil, nil
+		}
+		return nil, err
 	}
 
 	businessMetadataBindingJson, err := json.Marshal(businessMetadataBinding)
@@ -229,7 +232,7 @@ func findBusinessMetadataBindingByBusinessMetadataName(businessMetadataBindings 
 		}
 	}
 
-	return dc.BusinessMetadataResponse{}, fmt.Errorf("error reading Business Metadata Binding: couldn't find the Business Metadata binding")
+	return dc.BusinessMetadataResponse{}, fmt.Errorf(fmt.Sprintf("error reading Business Metadata Binding: couldn't find the Business Metadata binding: %s", businessMetadataName))
 }
 
 func businessMetadataBindingDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

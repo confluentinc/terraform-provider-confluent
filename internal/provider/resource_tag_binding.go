@@ -195,9 +195,12 @@ func readTagBindingAndSetAttributes(ctx context.Context, d *schema.ResourceData,
 
 	tagBinding, err := findTagBindingByTagName(tagBindings, tagName)
 	if err != nil {
-		tflog.Warn(ctx, fmt.Sprintf("Removing Tag Binding %q in TF state because Tag Binding could not be found on the server", tagBindingId), map[string]interface{}{tagBindingLoggingKey: tagBindingId})
-		d.SetId("")
-		return nil, nil
+		if !d.IsNewResource() {
+			tflog.Warn(ctx, fmt.Sprintf("Removing Tag Binding %q in TF state because Tag Binding could not be found on the server", tagBindingId), map[string]interface{}{tagBindingLoggingKey: tagBindingId})
+			d.SetId("")
+			return nil, nil
+		}
+		return nil, err
 	}
 
 	tagBindingJson, err := json.Marshal(tagBinding)
@@ -222,7 +225,7 @@ func findTagBindingByTagName(tagBindings []dc.TagResponse, tagName string) (dc.T
 		}
 	}
 
-	return dc.TagResponse{}, fmt.Errorf("error reading Tag Binding: couldn't find the tag binding")
+	return dc.TagResponse{}, fmt.Errorf(fmt.Sprintf("error reading Tag Binding: couldn't find the tag binding: %s", tagName))
 }
 
 func tagBindingDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
