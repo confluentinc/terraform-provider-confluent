@@ -43,7 +43,7 @@ resource "confluent_environment" "test-env" {
 The following arguments are supported:
 
 - `id` - (Optional String) The ID of the Service Account (e.g., `sa-abc123`).
-- `display_name` - (Optional String) A human-readable name for the Service Account.
+- `display_name` - (Optional String) A human-readable name for the Service Account. Limited to 64 characters in length.
 
 -> **Note:** Exactly one from the `id` and `display_name` attributes must be specified.
 
@@ -54,5 +54,5 @@ The following attributes are exported:
 - `id` - (Required String) The ID of the Service Account (e.g., `sa-abc123`).
 - `api_version` - (Required String) An API Version of the schema version of the Service Account.
 - `kind` - (Required String) A kind of the Service Account.
-- `display_name` - (Required String) A human-readable name for the Service Account.
+- `display_name` - (Required String) A human-readable name for the Service Account. Limited to 64 characters in length.
 - `description` - (Required String) A free-form description of the Service Account.
