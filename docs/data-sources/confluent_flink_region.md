@@ -46,3 +46,4 @@ In addition to the preceding arguments, the following attributes are exported:
 - `api_version` - (Required String) An API Version of the Flink region, for example, `fcpm/v2`.
 - `kind` - (Required String) A kind of the Flink region, for example, `Region`.
 - `rest_endpoint` - (Required String) The HTTP endpoint of the Flink region, for example, `https://flink.us-east-1.aws.confluent.cloud`.
+- `private_rest_endpoint` - (Required String) The private HTTP endpoint of the Flink region, for example, `https://flink.us-east-1.aws.private.confluent.cloud`.

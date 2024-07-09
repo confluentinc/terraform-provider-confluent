@@ -6,6 +6,7 @@
       "cloud": "AWS",
       "display_name": "N. Virginia (us-east-1)",
       "http_endpoint": "https://flink.us-east-1.aws.confluent.cloud",
+      "private_http_endpoint": "https://flink.us-east-1.aws.private.confluent.cloud",
       "id": "aws.us-east-1",
       "kind": "Region",
       "metadata": {

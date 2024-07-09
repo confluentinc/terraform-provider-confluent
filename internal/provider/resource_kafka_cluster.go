@@ -44,6 +44,7 @@ const (
 	paramBootStrapEndpoint     = "bootstrap_endpoint"
 	paramRestEndpoint          = "rest_endpoint"
 	paramHttpEndpoint          = "http_endpoint"
+	paramRestEndpointPrivate   = "private_rest_endpoint"
 	paramCku                   = "cku"
 	paramEncryptionKey         = "encryption_key"
 	paramRbacCrn               = "rbac_crn"

@@ -40,6 +40,8 @@ resource "confluent_flink_statement" "random_int_table" {
     "sql.current-catalog"  = data.confluent_environment.example.display_name
     "sql.current-database" = data.confluent_kafka_cluster.example.display_name
   }
+  # Use data.confluent_flink_region.main.rest_endpoint for Basic, Standard, public Dedicated Kafka clusters
+  # and data.confluent_flink_region.main.private_rest_endpoint for Kafka clusters with private networking
   rest_endpoint = data.confluent_flink_region.main.rest_endpoint
   credentials {
     key    = confluent_api_key.env-admin-flink-api-key.id

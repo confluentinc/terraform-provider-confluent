@@ -35,6 +35,7 @@ const (
 	flinkRegionCloudProviderRegion    = "us-east-1"
 	flinkRegionKind                   = "Region"
 	flinkRegionRestEndpoint           = "https://flink.us-east-1.aws.confluent.cloud"
+	flinkRegionRestEndpointPrivate    = "https://flink.us-east-1.aws.private.confluent.cloud"
 )
 
 var fullFlinkRegionDataSourceLabel = fmt.Sprintf("data.confluent_flink_region.%s", flinkRegionResourceLabel)
@@ -86,6 +87,7 @@ func TestAccDataSourceFlinkRegion(t *testing.T) {
 					resource.TestCheckResourceAttr(fullFlinkRegionDataSourceLabel, paramRegion,
 						flinkRegionCloudProviderRegion),
 					resource.TestCheckResourceAttr(fullFlinkRegionDataSourceLabel, paramRestEndpoint, flinkRegionRestEndpoint),
+					resource.TestCheckResourceAttr(fullFlinkRegionDataSourceLabel, paramRestEndpointPrivate, flinkRegionRestEndpointPrivate),
 					resource.TestCheckResourceAttr(fullFlinkRegionDataSourceLabel, paramApiVersion, flinkComputePoolApiVersion),
 					resource.TestCheckResourceAttr(fullFlinkRegionDataSourceLabel, paramKind, flinkRegionKind),
 				),

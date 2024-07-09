@@ -63,6 +63,10 @@ func flinkRegionDataSource() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			paramRestEndpointPrivate: {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 			paramApiVersion: {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -129,6 +133,10 @@ func setFlinkRegionAttributes(d *schema.ResourceData, flinkRegion v2.FcpmV2Regio
 	if err := d.Set(paramRestEndpoint, flinkRegion.GetHttpEndpoint()); err != nil {
 		return nil, createDescriptiveError(err)
 	}
+	if err := d.Set(paramRestEndpointPrivate, flinkRegion.GetPrivateHttpEndpoint()); err != nil {
+		return nil, createDescriptiveError(err)
+	}
+
 	d.SetId(flinkRegion.GetId())
 	return d, nil
 }
