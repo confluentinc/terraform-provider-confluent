@@ -1,10 +1,23 @@
+## 1.80.0 (July 8, 2024)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.79.0...v1.80.0)
+
+**New features:**
+* Support new `private_rest_endpoint` attribute for the `confluent_flink_region` [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_flink_region).
+
+**Bug fixes:**
+* Updated the code of the `confluent_kafka_cluster` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_cluster) to make it wait for SR cluster provisioning, 
+when the Stream Governance package is selected for the `confluent_environment` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_environment).
+* Updated examples to use `confluent_schema_registry_cluster` [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_schema_registry_cluster) instead of deprecated [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema_registry_cluster).
+* Updated docs.
+
 ## 1.79.0 (June 26, 2024)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.78.0...v1.79.0)
 
 **Bug fixes:**
-* Deprecated the `encryption_key` attribute in the `confluent_kafka_cluster`[resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_cluster). It will be removed in the next major version of the provider (2.0.0). Refer to the [Upgrade Guide](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/guides/version-2-upgrade) for more details.
-* Update Terraform docs to use `confluent_schema_registry_cluster`[data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_schema_registry_cluster) instead of deprecated [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema_registry_cluster).
+* Deprecated the `encryption_key` attribute in the `confluent_kafka_cluster` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_cluster). It will be removed in the next major version of the provider (2.0.0). Refer to the [Upgrade Guide](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/guides/version-2-upgrade) for more details.
+* Update Terraform docs to use `confluent_schema_registry_cluster` [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_schema_registry_cluster) instead of deprecated [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema_registry_cluster).
 * Fixed the "(schema-registry): Invalid Version Exception: 0" issue [#286](https://github.com/confluentinc/terraform-provider-confluent/issues/286) by adding the `skip_validation_during_plan` attribute, which allows users to skip schema validation in the `confluent_schema` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema).
 * Updated the macOS binary's name (with FIPS-140 support) to resolve the "assert does not match provider 'confluent'" error on the HashiCorp Terraform Registry.
 
