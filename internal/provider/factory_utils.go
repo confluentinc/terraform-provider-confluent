@@ -1,9 +1,14 @@
 package provider
 
 import (
+	"context"
+	"fmt"
+
 	dc "github.com/confluentinc/ccloud-sdk-go-v2/data-catalog/v1"
 	kafkarestv3 "github.com/confluentinc/ccloud-sdk-go-v2/kafkarest/v3"
 	"github.com/hashicorp/go-retryablehttp"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
+
 	"net/http"
 
 	fgb "github.com/confluentinc/ccloud-sdk-go-v2/flink-gateway/v1"
@@ -11,19 +16,23 @@ import (
 )
 
 type FlinkRestClientFactory struct {
+	ctx        context.Context
 	userAgent  string
 	maxRetries *int
 }
 
 func (f FlinkRestClientFactory) CreateFlinkRestClient(restEndpoint, organizationId, environmentId, computePoolId, principalId, flinkApiKey, flinkApiSecret string, isMetadataSetInProviderBlock bool) *FlinkRestClient {
+	var opts []RetryableClientFactoryOption = []RetryableClientFactoryOption{}
 	config := fgb.NewConfiguration()
-	config.Servers[0].URL = restEndpoint
-	config.UserAgent = f.userAgent
+
 	if f.maxRetries != nil {
-		config.HTTPClient = NewRetryableClientFactory(WithMaxRetries(*f.maxRetries)).CreateRetryableClient()
-	} else {
-		config.HTTPClient = NewRetryableClientFactory().CreateRetryableClient()
+		opts = append(opts, WithMaxRetries(*f.maxRetries))
 	}
+
+	config.UserAgent = f.userAgent
+	config.Servers[0].URL = restEndpoint
+	config.HTTPClient = NewRetryableClientFactory(f.ctx, opts...).CreateRetryableClient()
+
 	return &FlinkRestClient{
 		apiClient:                    fgb.NewAPIClient(config),
 		organizationId:               organizationId,
@@ -38,19 +47,22 @@ func (f FlinkRestClientFactory) CreateFlinkRestClient(restEndpoint, organization
 }
 
 type SchemaRegistryRestClientFactory struct {
+	ctx        context.Context
 	userAgent  string
 	maxRetries *int
 }
 
 func (f SchemaRegistryRestClientFactory) CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret string, isMetadataSetInProviderBlock bool) *SchemaRegistryRestClient {
+	var opts []RetryableClientFactoryOption = []RetryableClientFactoryOption{}
 	config := schemaregistry.NewConfiguration()
-	config.Servers[0].URL = restEndpoint
-	config.UserAgent = f.userAgent
 	if f.maxRetries != nil {
-		config.HTTPClient = NewRetryableClientFactory(WithMaxRetries(*f.maxRetries)).CreateRetryableClient()
-	} else {
-		config.HTTPClient = NewRetryableClientFactory().CreateRetryableClient()
+		opts = append(opts, WithMaxRetries(*f.maxRetries))
 	}
+
+	config.UserAgent = f.userAgent
+	config.Servers[0].URL = restEndpoint
+	config.HTTPClient = NewRetryableClientFactory(f.ctx, opts...).CreateRetryableClient()
+
 	return &SchemaRegistryRestClient{
 		apiClient:                    schemaregistry.NewAPIClient(config),
 		clusterId:                    clusterId,
@@ -62,14 +74,17 @@ func (f SchemaRegistryRestClientFactory) CreateSchemaRegistryRestClient(restEndp
 }
 
 func (f SchemaRegistryRestClientFactory) CreateDataCatalogClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret string, isMetadataSetInProviderBlock bool) *SchemaRegistryRestClient {
+	var opts []RetryableClientFactoryOption = []RetryableClientFactoryOption{}
 	config := dc.NewConfiguration()
 	config.Servers[0].URL = restEndpoint
 	config.UserAgent = f.userAgent
 	if f.maxRetries != nil {
-		config.HTTPClient = NewRetryableClientFactory(WithMaxRetries(*f.maxRetries)).CreateRetryableClient()
-	} else {
-		config.HTTPClient = NewRetryableClientFactory().CreateRetryableClient()
+		opts = append(opts, WithMaxRetries(*f.maxRetries))
 	}
+
+	config.UserAgent = f.userAgent
+	config.Servers[0].URL = restEndpoint
+	config.HTTPClient = NewRetryableClientFactory(f.ctx, opts...).CreateRetryableClient()
 
 	return &SchemaRegistryRestClient{
 		dataCatalogApiClient:         dc.NewAPIClient(config),
@@ -82,19 +97,23 @@ func (f SchemaRegistryRestClientFactory) CreateDataCatalogClient(restEndpoint, c
 }
 
 type KafkaRestClientFactory struct {
+	ctx        context.Context
 	userAgent  string
 	maxRetries *int
 }
 
 func (f KafkaRestClientFactory) CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret string, isMetadataSetInProviderBlock, isClusterIdSetInProviderBlock bool) *KafkaRestClient {
+	var opts []RetryableClientFactoryOption = []RetryableClientFactoryOption{}
 	config := kafkarestv3.NewConfiguration()
-	config.Servers[0].URL = restEndpoint
-	config.UserAgent = f.userAgent
+
 	if f.maxRetries != nil {
-		config.HTTPClient = NewRetryableClientFactory(WithMaxRetries(*f.maxRetries)).CreateRetryableClient()
-	} else {
-		config.HTTPClient = NewRetryableClientFactory().CreateRetryableClient()
+		opts = append(opts, WithMaxRetries(*f.maxRetries))
 	}
+
+	config.UserAgent = f.userAgent
+	config.Servers[0].URL = restEndpoint
+	config.HTTPClient = NewRetryableClientFactory(f.ctx, opts...).CreateRetryableClient()
+
 	return &KafkaRestClient{
 		apiClient:                     kafkarestv3.NewAPIClient(config),
 		clusterId:                     clusterId,
@@ -109,6 +128,7 @@ func (f KafkaRestClientFactory) CreateKafkaRestClient(restEndpoint, clusterId, c
 type RetryableClientFactoryOption = func(c *RetryableClientFactory)
 
 type RetryableClientFactory struct {
+	ctx        context.Context
 	maxRetries *int
 }
 
@@ -118,8 +138,10 @@ func WithMaxRetries(maxRetries int) RetryableClientFactoryOption {
 	}
 }
 
-func NewRetryableClientFactory(opts ...RetryableClientFactoryOption) *RetryableClientFactory {
-	c := &RetryableClientFactory{}
+func NewRetryableClientFactory(ctx context.Context, opts ...RetryableClientFactoryOption) *RetryableClientFactory {
+	c := &RetryableClientFactory{
+		ctx: ctx,
+	}
 	for _, opt := range opts {
 		opt(c)
 	}
@@ -138,10 +160,46 @@ func (f RetryableClientFactory) CreateRetryableClient() *http.Client {
 	// defaultRetryMax     = 4
 
 	retryClient := retryablehttp.NewClient()
+	logger := retryClientLogger{f.ctx}
 
 	if f.maxRetries != nil {
 		retryClient.RetryMax = *f.maxRetries
 	}
 
+	// Create a logger for retryablehttp
+	// This logger will be used to send retryablehttp's internal logs to tflog
+	retryClient.Logger = logger
+
 	return retryClient.StandardClient()
+}
+
+// Logger is used to log messages from retryablehttp.Client to tflog.
+type retryClientLogger struct {
+	ctx context.Context
+}
+
+func (l retryClientLogger) Error(msg string, keysAndValues ...interface{}) {
+	tflog.Error(l.ctx, msg, l.additionalFields(keysAndValues))
+}
+
+func (l retryClientLogger) Info(msg string, keysAndValues ...interface{}) {
+	tflog.Info(l.ctx, msg, l.additionalFields(keysAndValues))
+}
+
+func (l retryClientLogger) Debug(msg string, keysAndValues ...interface{}) {
+	tflog.Debug(l.ctx, msg, l.additionalFields(keysAndValues))
+}
+
+func (l retryClientLogger) Warn(msg string, keysAndValues ...interface{}) {
+	tflog.Warn(l.ctx, msg, l.additionalFields(keysAndValues))
+}
+
+func (l retryClientLogger) additionalFields(keysAndValues []interface{}) map[string]interface{} {
+	additionalFields := make(map[string]interface{}, len(keysAndValues))
+
+	for i := 0; i+1 < len(keysAndValues); i += 2 {
+		additionalFields[fmt.Sprint(keysAndValues[i])] = keysAndValues[i+1]
+	}
+
+	return additionalFields
 }
