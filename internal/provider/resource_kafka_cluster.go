@@ -530,7 +530,8 @@ func basicClusterSchema() *schema.Schema {
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{},
 		},
-		ExactlyOneOf: acceptedClusterTypes,
+		ExactlyOneOf:  acceptedClusterTypes,
+		ConflictsWith: []string{paramConfluentCustomerKey},
 	}
 }
 
@@ -542,7 +543,8 @@ func standardClusterSchema() *schema.Schema {
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{},
 		},
-		ExactlyOneOf: acceptedClusterTypes,
+		ExactlyOneOf:  acceptedClusterTypes,
+		ConflictsWith: []string{paramConfluentCustomerKey},
 	}
 }
 
@@ -588,7 +590,8 @@ func enterpriseClusterSchema() *schema.Schema {
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{},
 		},
-		ExactlyOneOf: acceptedClusterTypes,
+		ExactlyOneOf:  acceptedClusterTypes,
+		ConflictsWith: []string{paramConfluentCustomerKey},
 	}
 }
 
@@ -609,7 +612,8 @@ func freightClusterSchema() *schema.Schema {
 				},
 			},
 		},
-		ExactlyOneOf: acceptedClusterTypes,
+		ExactlyOneOf:  acceptedClusterTypes,
+		ConflictsWith: []string{paramConfluentCustomerKey},
 	}
 }
 
@@ -630,6 +634,7 @@ func byokSchema() *schema.Schema {
 				},
 			},
 		},
+		ConflictsWith: []string{paramBasicCluster, paramStandardCluster, paramEnterpriseCluster, paramFreightCluster},
 	}
 }
 
