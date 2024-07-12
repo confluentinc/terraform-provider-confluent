@@ -229,23 +229,23 @@ func schemaExporterCreate(ctx context.Context, d *schema.ResourceData, meta inte
 func schemaExporterRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	name := d.Get(paramName).(string)
 	tflog.Debug(ctx, fmt.Sprintf("Reading Schema Exporter %q", name))
-	if _, err := readSchemaExporterAndSetAttributes(ctx, d, meta); err != nil {
+	if _, err := readSchemaExporterAndSetAttributes(ctx, d, meta, false); err != nil {
 		return diag.FromErr(fmt.Errorf("error reading Schema Exporter %q: %s", name, createDescriptiveError(err)))
 	}
 
 	return nil
 }
 
-func readSchemaExporterAndSetAttributes(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	restEndpoint, err := extractSchemaRegistryRestEndpoint(meta.(*Client), d, false)
+func readSchemaExporterAndSetAttributes(ctx context.Context, d *schema.ResourceData, meta interface{}, isImportOperation bool) ([]*schema.ResourceData, error) {
+	restEndpoint, err := extractSchemaRegistryRestEndpoint(meta.(*Client), d, isImportOperation)
 	if err != nil {
 		return nil, fmt.Errorf("error reading Schema Exporter: %s", createDescriptiveError(err))
 	}
-	clusterId, err := extractSchemaRegistryClusterId(meta.(*Client), d, false)
+	clusterId, err := extractSchemaRegistryClusterId(meta.(*Client), d, isImportOperation)
 	if err != nil {
 		return nil, fmt.Errorf("error reading Schema Exporter: %s", createDescriptiveError(err))
 	}
-	clusterApiKey, clusterApiSecret, err := extractSchemaRegistryClusterApiKeyAndApiSecret(meta.(*Client), d, false)
+	clusterApiKey, clusterApiSecret, err := extractSchemaRegistryClusterApiKeyAndApiSecret(meta.(*Client), d, isImportOperation)
 	if err != nil {
 		return nil, fmt.Errorf("error reading Schema Exporter: %s", createDescriptiveError(err))
 	}
@@ -292,7 +292,7 @@ func readSchemaExporterAndSetAttributes(ctx context.Context, d *schema.ResourceD
 		}
 	}
 
-	if _, err := setSchemaExporterAttributes(d, clusterId, exporter); err != nil {
+	if _, err := setSchemaExporterAttributes(d, clusterId, exporter, c); err != nil {
 		return nil, createDescriptiveError(err)
 	}
 
@@ -473,14 +473,26 @@ func schemaExporterImport(ctx context.Context, d *schema.ResourceData, meta inte
 
 	tflog.Debug(ctx, fmt.Sprintf("Imporing Schema Exporter %q=%q", paramId, id), map[string]interface{}{schemaExporterLoggingKey: id})
 	d.MarkNewResource()
-	if _, err := readSchemaExporterAndSetAttributes(ctx, d, meta); err != nil {
+	if _, err := readSchemaExporterAndSetAttributes(ctx, d, meta, true); err != nil {
 		return nil, fmt.Errorf("error importing Schema Exporter %q: %s", id, createDescriptiveError(err))
 	}
 
 	return []*schema.ResourceData{d}, nil
 }
 
-func setSchemaExporterAttributes(d *schema.ResourceData, clusterId string, exporter sr.ExporterReference) (*schema.ResourceData, error) {
+func setSchemaExporterAttributes(d *schema.ResourceData, clusterId string, exporter sr.ExporterReference, c *SchemaRegistryRestClient) (*schema.ResourceData, error) {
+	if !c.isMetadataSetInProviderBlock {
+		if err := setKafkaCredentials(c.clusterApiKey, c.clusterApiSecret, d); err != nil {
+			return nil, err
+		}
+		if err := d.Set(paramRestEndpoint, c.restEndpoint); err != nil {
+			return nil, err
+		}
+		if err := setStringAttributeInListBlockOfSizeOne(paramSchemaRegistryCluster, paramId, c.clusterId, d); err != nil {
+			return nil, err
+		}
+	}
+
 	if err := d.Set(paramName, exporter.GetName()); err != nil {
 		return nil, err
 	}
