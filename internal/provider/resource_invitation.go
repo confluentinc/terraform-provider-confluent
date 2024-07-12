@@ -29,6 +29,7 @@ func invitationResource() *schema.Resource {
 	return &schema.Resource{
 		ReadContext:   invitationRead,
 		CreateContext: invitationCreate,
+		UpdateContext: invitationUpdate,
 		DeleteContext: invitationDelete,
 		Importer: &schema.ResourceImporter{
 			StateContext: invitationImport,
@@ -58,6 +59,11 @@ func invitationResource() *schema.Resource {
 			},
 			paramUser:    userSchema(),
 			paramCreator: userSchema(),
+			paramAllowDeletion: {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  false,
+			},
 		},
 	}
 }
@@ -165,6 +171,12 @@ func invitationCreate(ctx context.Context, d *schema.ResourceData, meta interfac
 
 	return invitationRead(ctx, d, meta)
 }
+func invitationUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	if d.HasChangesExcept(paramAllowDeletion) {
+		return diag.Errorf("error updating Invitation %q: only %q attribute can be updated for Invitation", d.Id(), paramAllowDeletion)
+	}
+	return invitationRead(ctx, d, meta)
+}
 
 func invitationDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	tflog.Debug(ctx, fmt.Sprintf("Deleting invitation %q", d.Id()), map[string]interface{}{invitationloggingKey: d.Id()})
@@ -176,6 +188,11 @@ func invitationDelete(ctx context.Context, d *schema.ResourceData, meta interfac
 	}
 
 	c := meta.(*Client)
+
+	if d.Get(paramAllowDeletion).(bool) == true && d.Get(paramStatus).(string) == statusAccepted {
+		tflog.Debug(ctx, fmt.Sprintf("Deleted accepted Invitation %q from TF state since allow_deletion is set to true", invitationId), map[string]interface{}{invitationloggingKey: invitationId})
+		return nil
+	}
 
 	req := c.iamClient.InvitationsIamV2Api.DeleteIamV2Invitation(c.iamApiContext(ctx), invitationId)
 	_, err := req.Execute()

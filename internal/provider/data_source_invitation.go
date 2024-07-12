@@ -24,11 +24,13 @@ import (
 )
 
 const (
-	paramAcceptedAt = "accepted_at"
-	paramExpiresAt  = "expires_at"
-	paramAuthType   = "auth_type"
-	paramUser       = "user"
-	paramCreator    = "creator"
+	paramAcceptedAt    = "accepted_at"
+	paramExpiresAt     = "expires_at"
+	paramAuthType      = "auth_type"
+	paramUser          = "user"
+	paramCreator       = "creator"
+	paramAllowDeletion = "allow_deletion"
+	statusAccepted     = "INVITE_STATUS_ACCEPTED"
 )
 
 func invitationDataSource() *schema.Resource {
