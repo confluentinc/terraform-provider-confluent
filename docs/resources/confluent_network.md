@@ -143,6 +143,7 @@ The following arguments are supported:
   - `resolution` - (Required String) Network DNS resolution.
     When resolution is `CHASED_PRIVATE`, clusters in this network require both public and private DNS to resolve cluster endpoints.
     When resolution is `PRIVATE`, clusters in this network only require private DNS to resolve cluster endpoints.
+    The Confluent Cloud Console uses `resolution = PRIVATE`.
 
 - `environment` (Required Configuration Block) supports the following:
   - `id` - (Required String) The ID of the Environment that the Network belongs to, for example, `env-abc123`.
