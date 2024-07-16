@@ -366,15 +366,26 @@ func SetSchemaDiff(ctx context.Context, diff *schema.ResourceDiff, meta interfac
 		return nil
 	}
 
+	// Perform the schema look up check first to see if we can find a semantically equivalent schema from SR
+	// This is to rule out to avoid the unexpected terraform plan drift error caused by newline characters described in
+	// https://github.com/confluentinc/terraform-provider-confluent/issues/378
+	// Similarly, for schema delta with only the tab characters, schema ordering differences etc. won't be considered
+	// a real different schema, and hasSemanticSchemaUpdate should be false in above cases.
+	if err := schemaLookupCheck(ctx, diff, schemaRegistryRestClient, createSchemaRequest, subjectName, oldSchema); err != nil {
+		return err
+	}
+
 	// Return an error for a schema update when recreate_on_update=true
 	// User wants to edit / evolve a schema. See https://docs.confluent.io/cloud/current/sr/schemas-manage.html#editing-schemas for more details.
 	// This is a fix for https://github.com/confluentinc/terraform-provider-confluent/issues/235
 	shouldRecreateOnUpdate := diff.Get(paramRecreateOnUpdate).(bool)
-	if shouldRecreateOnUpdate {
+	hasSemanticSchemaUpdate := diff.HasChange(paramSchema)
+
+	if shouldRecreateOnUpdate && hasSemanticSchemaUpdate {
 		return fmt.Errorf("error updating Schema %q: reimport the current resource instance and set %s = false to evolve a schema using the same resource instance.\nIn this case, on an update resource instance will reference the updated (latest) schema by overriding %s, %s and %s attributes and the old schema will be orphaned.", diff.Id(), paramRecreateOnUpdate, paramSchemaIdentifier, paramSchema, paramVersion)
 	}
 
-	return schemaLookupCheck(ctx, diff, schemaRegistryRestClient, createSchemaRequest, subjectName, oldSchema)
+	return nil
 }
 
 func schemaLookupCheck(ctx context.Context, diff *schema.ResourceDiff, c *SchemaRegistryRestClient, createSchemaRequest *sr.RegisterSchemaRequest, subjectName, oldSchema string) error {
