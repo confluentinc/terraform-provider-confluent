@@ -154,8 +154,8 @@ test:
 
 .PHONY: testacc
 testacc:
-	TF_LOG=debug TF_ACC=1 $(GOCMD) test $(TEST) -v $(TESTARGS) -timeout 120m
-	@echo "skipping testacc"
+	TF_LOG=debug TF_ACC=1 $(GOCMD) test $(TEST) -v $(TESTARGS) -timeout 120m -failfast
+	@echo "finished testacc"
 
 install: build
 	mkdir -p ~/.terraform.d/plugins/darwin_amd64
