@@ -29,15 +29,16 @@ import (
 )
 
 const (
-	paramAwsEgressPrivateLinkEndpoint   = "aws_egress_private_link_endpoint"
-	paramAzureEgressPrivateLinkEndpoint = "azure_egress_private_link_endpoint"
-	paramEnableHighAvailability         = "enable_high_availability"
-	paramVpcEndpointDnsName             = "vpc_endpoint_dns_name"
-	paramPrivateLinkSubresourceName     = "private_link_subresource_name"
-	paramPrivateEndpointDomain          = "private_endpoint_domain"
-	paramPrivateEndpointIpAddress       = "private_endpoint_ip_address"
-	awsEgressPrivateLinkEndpoint        = "AwsEgressPrivateLinkEndpoint"
-	azureEgressPrivateLinkEndpoint      = "AzureEgressPrivateLinkEndpoint"
+	paramAwsEgressPrivateLinkEndpoint          = "aws_egress_private_link_endpoint"
+	paramAzureEgressPrivateLinkEndpoint        = "azure_egress_private_link_endpoint"
+	paramEnableHighAvailability                = "enable_high_availability"
+	paramVpcEndpointDnsName                    = "vpc_endpoint_dns_name"
+	paramPrivateLinkSubresourceName            = "private_link_subresource_name"
+	paramPrivateEndpointDomain                 = "private_endpoint_domain"
+	paramPrivateEndpointIpAddress              = "private_endpoint_ip_address"
+	paramPrivateEndpointCustomDnsConfigDomains = "private_endpoint_custom_dns_config_domains"
+	awsEgressPrivateLinkEndpoint               = "AwsEgressPrivateLinkEndpoint"
+	azureEgressPrivateLinkEndpoint             = "AzureEgressPrivateLinkEndpoint"
 )
 
 var acceptedEndpointConfig = []string{paramAwsEgressPrivateLinkEndpoint, paramAzureEgressPrivateLinkEndpoint}
@@ -129,6 +130,11 @@ func paramAzureEgressPrivateLinkEndpointSchema() *schema.Schema {
 				paramPrivateEndpointIpAddress: {
 					Type:     schema.TypeString,
 					Computed: true,
+				},
+				paramPrivateEndpointCustomDnsConfigDomains: {
+					Type:     schema.TypeList,
+					Computed: true,
+					Elem:     &schema.Schema{Type: schema.TypeString},
 				},
 			},
 		},
@@ -346,11 +352,12 @@ func setAccessPointAttributes(d *schema.ResourceData, accessPoint netap.Networki
 		}
 	} else if accessPoint.Spec.Config.NetworkingV1AzureEgressPrivateLinkEndpoint != nil && accessPoint.Status.Config.NetworkingV1AzureEgressPrivateLinkEndpointStatus != nil {
 		if err := d.Set(paramAzureEgressPrivateLinkEndpoint, []interface{}{map[string]interface{}{
-			paramPrivateLinkServiceResourceId: accessPoint.Spec.Config.NetworkingV1AzureEgressPrivateLinkEndpoint.GetPrivateLinkServiceResourceId(),
-			paramPrivateLinkSubresourceName:   accessPoint.Spec.Config.NetworkingV1AzureEgressPrivateLinkEndpoint.GetPrivateLinkSubresourceName(),
-			paramPrivateEndpointResourceId:    accessPoint.Status.Config.NetworkingV1AzureEgressPrivateLinkEndpointStatus.GetPrivateEndpointResourceId(),
-			paramPrivateEndpointDomain:        accessPoint.Status.Config.NetworkingV1AzureEgressPrivateLinkEndpointStatus.GetPrivateEndpointDomain(),
-			paramPrivateEndpointIpAddress:     accessPoint.Status.Config.NetworkingV1AzureEgressPrivateLinkEndpointStatus.GetPrivateEndpointIpAddress(),
+			paramPrivateLinkServiceResourceId:          accessPoint.Spec.Config.NetworkingV1AzureEgressPrivateLinkEndpoint.GetPrivateLinkServiceResourceId(),
+			paramPrivateLinkSubresourceName:            accessPoint.Spec.Config.NetworkingV1AzureEgressPrivateLinkEndpoint.GetPrivateLinkSubresourceName(),
+			paramPrivateEndpointResourceId:             accessPoint.Status.Config.NetworkingV1AzureEgressPrivateLinkEndpointStatus.GetPrivateEndpointResourceId(),
+			paramPrivateEndpointDomain:                 accessPoint.Status.Config.NetworkingV1AzureEgressPrivateLinkEndpointStatus.GetPrivateEndpointDomain(),
+			paramPrivateEndpointIpAddress:              accessPoint.Status.Config.NetworkingV1AzureEgressPrivateLinkEndpointStatus.GetPrivateEndpointIpAddress(),
+			paramPrivateEndpointCustomDnsConfigDomains: accessPoint.Status.Config.NetworkingV1AzureEgressPrivateLinkEndpointStatus.GetPrivateEndpointCustomDnsConfigDomains(),
 		}}); err != nil {
 			return nil, err
 		}
