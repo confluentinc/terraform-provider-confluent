@@ -111,6 +111,7 @@ In addition to the preceding arguments, the following attributes are exported:
 You can import a Schema Exporter by using the Schema Registry cluster ID, Schema Exporter name in the format `<Schema Registry cluster ID>/<Schema Exporter name>`, for example:
 
 ```shell
+$ export IMPORT_SCHEMA_REGISTRY_ID="<schema_registry_cluster_id>"
 $ export IMPORT_SCHEMA_REGISTRY_API_KEY="<schema_registry_api_key>"
 $ export IMPORT_SCHEMA_REGISTRY_API_SECRET="<schema_registry_api_secret>"
 $ export IMPORT_SCHEMA_REGISTRY_REST_ENDPOINT="<schema_registry_rest_endpoint>"
