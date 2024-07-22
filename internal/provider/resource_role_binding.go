@@ -96,7 +96,7 @@ func roleBindingCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 		return diag.Errorf("error creating Role Binding: %q: error marshaling %#v to json: %s", createdRoleBinding.GetId(), createdRoleBinding, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating Role Binding %q: %s", d.Id(), createdRoleBindingJson), map[string]interface{}{roleBindingLoggingKey: d.Id()})
-	time.Sleep(rbacWaitAfterCreateToSync)
+	SleepIfNotTestMode(rbacWaitAfterCreateToSync, meta.(*Client).isAcceptanceTestMode)
 	return roleBindingRead(ctx, d, meta)
 }
 

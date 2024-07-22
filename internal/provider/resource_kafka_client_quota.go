@@ -117,7 +117,7 @@ func kafkaClientQuotaUpdate(ctx context.Context, d *schema.ResourceData, meta in
 		return diag.Errorf("error updating Kafka Client Quota %q: %s", d.Id(), createDescriptiveError(err))
 	}
 
-	time.Sleep(kafkaQuotasAPIWaitAfterUpdate)
+	SleepIfNotTestMode(kafkaQuotasAPIWaitAfterUpdate, meta.(*Client).isAcceptanceTestMode)
 
 	updatedClientQuotaJson, err := json.Marshal(updatedClientQuota)
 	if err != nil {
@@ -161,7 +161,7 @@ func kafkaClientQuotaCreate(ctx context.Context, d *schema.ResourceData, meta in
 	}
 	d.SetId(createdKafkaClientQuota.GetId())
 
-	time.Sleep(kafkaQuotasAPIWaitAfterCreate)
+	SleepIfNotTestMode(kafkaQuotasAPIWaitAfterCreate, meta.(*Client).isAcceptanceTestMode)
 
 	createdClientQuotaJson, err := json.Marshal(createdKafkaClientQuota)
 	if err != nil {
@@ -282,7 +282,7 @@ func kafkaClientQuotaImport(ctx context.Context, d *schema.ResourceData, meta in
 }
 
 // https://github.com/hashicorp/terraform-plugin-sdk/issues/155#issuecomment-489699737
-////  alternative - https://github.com/hashicorp/terraform-plugin-sdk/issues/248#issuecomment-725013327
+// //  alternative - https://github.com/hashicorp/terraform-plugin-sdk/issues/248#issuecomment-725013327
 func throughputSchema() *schema.Schema {
 	return &schema.Schema{
 		Type:        schema.TypeList,

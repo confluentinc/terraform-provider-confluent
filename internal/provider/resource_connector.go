@@ -139,7 +139,7 @@ func connectorCreate(ctx context.Context, d *schema.ResourceData, meta interface
 		return diag.Errorf("error creating Connector %q: %s", displayName, createDescriptiveError(err))
 	}
 	// There's no ID attribute in createdConnector, so we have to send another request to a different endpoint to get a connector object with ID attribute
-	time.Sleep(connectAPIWaitAfterCreate)
+	SleepIfNotTestMode(connectAPIWaitAfterCreate, meta.(*Client).isAcceptanceTestMode)
 	createdConnectorWithId, _, err := executeConnectorRead(c.connectApiContext(ctx), c, displayName, environmentId, clusterId)
 	if err != nil {
 		return diag.Errorf("error creating Connector %q: error reading created Connector: %s", displayName, createDescriptiveError(err))

@@ -152,7 +152,7 @@ func flinkStatementCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	}
 	d.SetId(createFlinkStatementId(flinkRestClient.environmentId, createdFlinkStatement.Spec.GetComputePoolId(), createdFlinkStatement.GetName()))
 
-	if err := waitForFlinkStatementToProvision(flinkRestClient.apiContext(ctx), flinkRestClient, createdFlinkStatement.GetName()); err != nil {
+	if err := waitForFlinkStatementToProvision(flinkRestClient.apiContext(ctx), flinkRestClient, createdFlinkStatement.GetName(), meta.(*Client).isAcceptanceTestMode); err != nil {
 		return diag.Errorf("error waiting for Flink Statement %q to provision: %s", createdFlinkStatement.GetName(), createDescriptiveError(err))
 	}
 
@@ -271,7 +271,7 @@ func flinkStatementUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 		if err != nil {
 			return diag.Errorf("error updating Flink Statement 123 %q: %s", statementName, createDescriptiveError(err))
 		}
-		if err := waitForFlinkStatementToBeStopped(flinkRestClient.apiContext(ctx), flinkRestClient, statementName); err != nil {
+		if err := waitForFlinkStatementToBeStopped(flinkRestClient.apiContext(ctx), flinkRestClient, statementName, meta.(*Client).isAcceptanceTestMode); err != nil {
 			return diag.Errorf("error waiting for Flink Statement %q to be stopped: %s", statementName, createDescriptiveError(err))
 		}
 	}
@@ -379,7 +379,7 @@ func flinkStatementDelete(ctx context.Context, d *schema.ResourceData, meta inte
 		return diag.Errorf("error deleting Flink Statement %q: %s", statementName, createDescriptiveError(err))
 	}
 
-	if err := waitForFlinkStatementToBeDeleted(flinkRestClient.apiContext(ctx), flinkRestClient, statementName); err != nil {
+	if err := waitForFlinkStatementToBeDeleted(flinkRestClient.apiContext(ctx), flinkRestClient, statementName, meta.(*Client).isAcceptanceTestMode); err != nil {
 		return diag.Errorf("error waiting for Flink Statement %q to be deleted: %s", statementName, createDescriptiveError(err))
 	}
 

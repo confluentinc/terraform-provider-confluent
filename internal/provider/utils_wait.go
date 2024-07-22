@@ -24,11 +24,14 @@ import (
 )
 
 const (
-	stateUp      = "UP"
-	stateCreated = "CREATED"
+	stateUp                        = "UP"
+	stateCreated                   = "CREATED"
+	acceptanceTestModeWaitTime     = 1 * time.Second
+	acceptanceTestModePollInterval = 1 * time.Second
 )
 
-func waitForCreatedKafkaApiKeyToSync(ctx context.Context, c *KafkaRestClient) error {
+func waitForCreatedKafkaApiKeyToSync(ctx context.Context, c *KafkaRestClient, isAcceptanceTestMode bool) error {
+	delay, pollInterval := getDelayAndPollInterval(1*time.Minute, 1*time.Minute, isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
 		Pending: []string{stateInProgress},
 		Target:  []string{stateDone},
@@ -37,8 +40,8 @@ func waitForCreatedKafkaApiKeyToSync(ctx context.Context, c *KafkaRestClient) er
 		// https://www.terraform.io/plugin/sdkv2/resources/retries-and-customizable-timeouts
 		// Based on the tests, Kafka API Key takes about 2 minutes to sync
 		Timeout:      20 * time.Minute,
-		Delay:        1 * time.Minute,
-		PollInterval: 1 * time.Minute,
+		Delay:        delay,
+		PollInterval: pollInterval,
 		// Expects 2x http.StatusOK before exiting which adds PollInterval to the total time it takes to sync an API Key
 		// but helps to ensure the API Key is synced across all brokers.
 		ContinuousTargetOccurence: 2,
@@ -51,7 +54,8 @@ func waitForCreatedKafkaApiKeyToSync(ctx context.Context, c *KafkaRestClient) er
 	return nil
 }
 
-func waitForCreatedSchemaRegistryApiKeyToSync(ctx context.Context, c *SchemaRegistryRestClient) error {
+func waitForCreatedSchemaRegistryApiKeyToSync(ctx context.Context, c *SchemaRegistryRestClient, isAcceptanceTestMode bool) error {
+	delay, pollInterval := getDelayAndPollInterval(30*time.Second, 30*time.Second, isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
 		Pending: []string{stateInProgress},
 		Target:  []string{stateDone},
@@ -60,8 +64,8 @@ func waitForCreatedSchemaRegistryApiKeyToSync(ctx context.Context, c *SchemaRegi
 		// https://www.terraform.io/plugin/sdkv2/resources/retries-and-customizable-timeouts
 		// Based on the tests, Schema Registry API Key takes about 30 seconds to sync
 		Timeout:      20 * time.Minute,
-		Delay:        30 * time.Second,
-		PollInterval: 30 * time.Second,
+		Delay:        delay,
+		PollInterval: pollInterval,
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for Kafka API Key %q to sync", c.clusterApiKey), map[string]interface{}{apiKeyLoggingKey: c.clusterApiKey})
@@ -71,7 +75,8 @@ func waitForCreatedSchemaRegistryApiKeyToSync(ctx context.Context, c *SchemaRegi
 	return nil
 }
 
-func waitForCreatedFlinkApiKeyToSync(ctx context.Context, c *FlinkRestClient, organizationID string) error {
+func waitForCreatedFlinkApiKeyToSync(ctx context.Context, c *FlinkRestClient, organizationID string, isAcceptanceTestMode bool) error {
+	delay, pollInterval := getDelayAndPollInterval(10*time.Second, 30*time.Second, isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
 		Pending: []string{stateInProgress},
 		Target:  []string{stateDone},
@@ -80,8 +85,8 @@ func waitForCreatedFlinkApiKeyToSync(ctx context.Context, c *FlinkRestClient, or
 		// https://www.terraform.io/plugin/sdkv2/resources/retries-and-customizable-timeouts
 		// Based on the tests, Flink API Key takes about 10 seconds to sync
 		Timeout:      20 * time.Minute,
-		Delay:        10 * time.Second,
-		PollInterval: 30 * time.Second,
+		Delay:        delay,
+		PollInterval: pollInterval,
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for Flink API Key %q to sync", c.flinkApiKey), map[string]interface{}{apiKeyLoggingKey: c.flinkApiKey})
@@ -92,6 +97,7 @@ func waitForCreatedFlinkApiKeyToSync(ctx context.Context, c *FlinkRestClient, or
 }
 
 func waitForCreatedCloudApiKeyToSync(ctx context.Context, c *Client, cloudApiKey, cloudApiSecret string) error {
+	delay, pollInterval := getDelayAndPollInterval(15*time.Second, 1*time.Minute, c.isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
 		Pending: []string{stateInProgress},
 		Target:  []string{stateDone},
@@ -100,8 +106,8 @@ func waitForCreatedCloudApiKeyToSync(ctx context.Context, c *Client, cloudApiKey
 		// https://www.terraform.io/plugin/sdkv2/resources/retries-and-customizable-timeouts
 		// Based on the tests, Cloud API Key takes about 10 seconds to sync (or even faster)
 		Timeout:      20 * time.Minute,
-		Delay:        15 * time.Second,
-		PollInterval: 1 * time.Minute,
+		Delay:        delay,
+		PollInterval: pollInterval,
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for Cloud API Key %q to sync", cloudApiKey), map[string]interface{}{apiKeyLoggingKey: cloudApiKey})
@@ -112,14 +118,15 @@ func waitForCreatedCloudApiKeyToSync(ctx context.Context, c *Client, cloudApiKey
 }
 
 func waitForKafkaClusterToProvision(ctx context.Context, c *Client, environmentId, clusterId, clusterType string) error {
+	delay, pollInterval := getDelayAndPollInterval(5*time.Second, 1*time.Minute, c.isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
 		Pending: []string{stateProvisioning},
 		Target:  []string{stateProvisioned},
 		Refresh: kafkaClusterProvisionStatus(c.cmkApiContext(ctx), c, environmentId, clusterId),
 		// https://docs.confluent.io/cloud/current/clusters/cluster-types.html#provisioning-time
 		Timeout:      getTimeoutFor(clusterType),
-		Delay:        5 * time.Second,
-		PollInterval: 1 * time.Minute,
+		Delay:        delay,
+		PollInterval: pollInterval,
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for Kafka Cluster %q provisioning status to become %q", clusterId, stateProvisioned), map[string]interface{}{kafkaClusterLoggingKey: clusterId})
@@ -130,13 +137,14 @@ func waitForKafkaClusterToProvision(ctx context.Context, c *Client, environmentI
 }
 
 func waitForKsqlClusterToProvision(ctx context.Context, c *Client, environmentId, clusterId string) error {
+	delay, pollInterval := getDelayAndPollInterval(5*time.Second, 1*time.Minute, c.isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
 		Pending:      []string{stateProvisioning},
 		Target:       []string{stateProvisioned},
 		Refresh:      ksqlClusterProvisionStatus(c.ksqlApiContext(ctx), c, environmentId, clusterId),
 		Timeout:      ksqlCreateTimeout,
-		Delay:        5 * time.Second,
-		PollInterval: 1 * time.Minute,
+		Delay:        delay,
+		PollInterval: pollInterval,
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for ksqlDB Cluster %q provisioning status to become %v", clusterId, []string{stateUp, stateProvisioned}), map[string]interface{}{ksqlClusterLoggingKey: clusterId})
@@ -147,13 +155,14 @@ func waitForKsqlClusterToProvision(ctx context.Context, c *Client, environmentId
 }
 
 func waitForPrivateLinkAccessToProvision(ctx context.Context, c *Client, environmentId, privateLinkAccessId string) error {
+	delay, pollInterval := getDelayAndPollInterval(5*time.Second, 1*time.Minute, c.isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
 		Pending:      []string{stateProvisioning},
 		Target:       []string{stateReady},
 		Refresh:      privateLinkAccessProvisionStatus(c.netApiContext(ctx), c, environmentId, privateLinkAccessId),
 		Timeout:      networkingAPICreateTimeout,
-		Delay:        5 * time.Second,
-		PollInterval: 1 * time.Minute,
+		Delay:        delay,
+		PollInterval: pollInterval,
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for Private Link Access %q provisioning status to become %q", privateLinkAccessId, stateReady), map[string]interface{}{privateLinkAccessLoggingKey: privateLinkAccessId})
@@ -164,13 +173,14 @@ func waitForPrivateLinkAccessToProvision(ctx context.Context, c *Client, environ
 }
 
 func waitForPrivateLinkAttachmentToProvision(ctx context.Context, c *Client, environmentId, privateLinkAttachmentId string) error {
+	delay, pollInterval := getDelayAndPollInterval(5*time.Second, 1*time.Minute, c.isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
 		Pending:      []string{stateProvisioning},
 		Target:       []string{stateReady, stateWaitingForConnections},
 		Refresh:      privateLinkAttachmentProvisionStatus(c.netPLApiContext(ctx), c, environmentId, privateLinkAttachmentId),
 		Timeout:      networkingAPICreateTimeout,
-		Delay:        5 * time.Second,
-		PollInterval: 1 * time.Minute,
+		Delay:        delay,
+		PollInterval: pollInterval,
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for Private Link Attachment %q provisioning status to become %q", privateLinkAttachmentId, stateWaitingForConnections), map[string]interface{}{privateLinkAttachmentLoggingKey: privateLinkAttachmentId})
@@ -181,13 +191,14 @@ func waitForPrivateLinkAttachmentToProvision(ctx context.Context, c *Client, env
 }
 
 func waitForPrivateLinkAttachmentConnectionToProvision(ctx context.Context, c *Client, environmentId, privateLinkAttachmentConnectionId string) error {
+	delay, pollInterval := getDelayAndPollInterval(5*time.Second, 1*time.Minute, c.isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
 		Pending:      []string{stateProvisioning},
 		Target:       []string{stateReady},
 		Refresh:      privateLinkAttachmentConnectionProvisionStatus(c.netPLApiContext(ctx), c, environmentId, privateLinkAttachmentConnectionId),
 		Timeout:      networkingAPICreateTimeout,
-		Delay:        5 * time.Second,
-		PollInterval: 1 * time.Minute,
+		Delay:        delay,
+		PollInterval: pollInterval,
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for Private Link Attachment Connection %q provisioning status to become %q", privateLinkAttachmentConnectionId, stateReady), map[string]interface{}{privateLinkAttachmentConnectionLoggingKey: privateLinkAttachmentConnectionId})
@@ -198,14 +209,15 @@ func waitForPrivateLinkAttachmentConnectionToProvision(ctx context.Context, c *C
 }
 
 func waitForNetworkLinkServiceToProvision(ctx context.Context, c *Client, environmentId, nlsId string) error {
+	delay, pollInterval := getDelayAndPollInterval(5*time.Second, 1*time.Minute, c.isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
 		Pending: []string{stateProvisioning},
 		Target:  []string{stateReady},
 		Refresh: nlsProvisionStatus(c.netApiContext(ctx), c, environmentId, nlsId),
 		Timeout: networkingAPICreateTimeout,
 		// TODO: increase delay
-		Delay:        5 * time.Second,
-		PollInterval: 1 * time.Minute,
+		Delay:        delay,
+		PollInterval: pollInterval,
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for Network Link Service %q provisioning status to become %q", nlsId, stateReady), map[string]interface{}{networkLinkServiceLoggingKey: nlsId})
@@ -216,14 +228,15 @@ func waitForNetworkLinkServiceToProvision(ctx context.Context, c *Client, enviro
 }
 
 func waitForNetworkToProvision(ctx context.Context, c *Client, environmentId, networkId string) error {
+	delay, pollInterval := getDelayAndPollInterval(5*time.Second, 1*time.Minute, c.isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
 		Pending: []string{stateProvisioning},
 		Target:  []string{stateReady},
 		Refresh: networkProvisionStatus(c.netApiContext(ctx), c, environmentId, networkId),
 		Timeout: networkingAPICreateTimeout,
 		// TODO: increase delay
-		Delay:        5 * time.Second,
-		PollInterval: 1 * time.Minute,
+		Delay:        delay,
+		PollInterval: pollInterval,
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for Network %q provisioning status to become %q", networkId, stateReady), map[string]interface{}{networkLoggingKey: networkId})
@@ -233,15 +246,16 @@ func waitForNetworkToProvision(ctx context.Context, c *Client, environmentId, ne
 	return nil
 }
 
-func waitForFlinkStatementToProvision(ctx context.Context, c *FlinkRestClient, statementName string) error {
+func waitForFlinkStatementToProvision(ctx context.Context, c *FlinkRestClient, statementName string, isAcceptanceTestMode bool) error {
+	delay, pollInterval := getDelayAndPollInterval(5*time.Second, 10*time.Second, isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
 		Pending: []string{statePending},
 		Target:  []string{stateRunning, stateCompleted},
 		Refresh: flinkStatementProvisionStatus(c.apiContext(ctx), c, statementName),
 		// Default timeout
 		Timeout:      20 * time.Minute,
-		Delay:        5 * time.Second,
-		PollInterval: 10 * time.Second,
+		Delay:        delay,
+		PollInterval: pollInterval,
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for Flink Statement %q provisioning status to become %q", statementName, stateReady), map[string]interface{}{flinkStatementLoggingKey: statementName})
@@ -252,14 +266,15 @@ func waitForFlinkStatementToProvision(ctx context.Context, c *FlinkRestClient, s
 }
 
 func waitForNetworkLinkEndpointToProvision(ctx context.Context, c *Client, environmentId, nleId string) error {
+	delay, pollInterval := getDelayAndPollInterval(5*time.Second, 1*time.Minute, c.isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
 		Pending: []string{stateProvisioning},
 		Target:  []string{stateReady, statePendingAccept, stateInactive},
 		Refresh: nleProvisionStatus(c.netApiContext(ctx), c, environmentId, nleId),
 		Timeout: networkingAPICreateTimeout,
 		// TODO: increase delay
-		Delay:        5 * time.Second,
-		PollInterval: 1 * time.Minute,
+		Delay:        delay,
+		PollInterval: pollInterval,
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for Network Link Endpoint %q provisioning status to become %q", nleId, stateReady), map[string]interface{}{networkLinkEndpointLoggingKey: nleId})
@@ -270,14 +285,15 @@ func waitForNetworkLinkEndpointToProvision(ctx context.Context, c *Client, envir
 }
 
 func waitForDnsRecordToProvision(ctx context.Context, c *Client, environmentId, dnsRecordId string) error {
+	delay, pollInterval := getDelayAndPollInterval(5*time.Second, 1*time.Minute, c.isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
 		Pending: []string{stateProvisioning},
 		Target:  []string{stateReady, stateCreated},
 		Refresh: dnsRecordProvisionStatus(c.netAPApiContext(ctx), c, environmentId, dnsRecordId),
 		Timeout: networkingAPICreateTimeout,
 		// TODO: increase delay
-		Delay:        5 * time.Second,
-		PollInterval: 1 * time.Minute,
+		Delay:        delay,
+		PollInterval: pollInterval,
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for DNS Record %q provisioning status to become %q", dnsRecordId, stateCreated), map[string]interface{}{dnsRecordKey: dnsRecordId})
@@ -288,14 +304,15 @@ func waitForDnsRecordToProvision(ctx context.Context, c *Client, environmentId, 
 }
 
 func waitForDnsForwarderToProvision(ctx context.Context, c *Client, environmentId, dnsForwarderId string) error {
+	delay, pollInterval := getDelayAndPollInterval(5*time.Second, 1*time.Minute, c.isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
 		Pending: []string{stateProvisioning},
 		Target:  []string{stateReady, stateCreated},
 		Refresh: dnsForwarderProvisionStatus(c.netDnsApiContext(ctx), c, environmentId, dnsForwarderId),
 		Timeout: networkingAPICreateTimeout,
 		// TODO: increase delay
-		Delay:        5 * time.Second,
-		PollInterval: 1 * time.Minute,
+		Delay:        delay,
+		PollInterval: pollInterval,
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for DNS Forwarder %q provisioning status to become %q", dnsForwarderId, stateReady), map[string]interface{}{accessPointKey: dnsForwarderId})
@@ -306,14 +323,15 @@ func waitForDnsForwarderToProvision(ctx context.Context, c *Client, environmentI
 }
 
 func waitForAccessPointToProvision(ctx context.Context, c *Client, environmentId, accessPointId string) error {
+	delay, pollInterval := getDelayAndPollInterval(5*time.Second, 1*time.Minute, c.isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
 		Pending: []string{stateProvisioning},
 		Target:  []string{stateReady, statePendingAccept},
 		Refresh: accessPointProvisionStatus(c.netAPApiContext(ctx), c, environmentId, accessPointId),
 		Timeout: networkingAPICreateTimeout,
 		// TODO: increase delay
-		Delay:        5 * time.Second,
-		PollInterval: 1 * time.Minute,
+		Delay:        delay,
+		PollInterval: pollInterval,
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for Access Point %q provisioning status to become %q", accessPointId, stateReady), map[string]interface{}{accessPointKey: accessPointId})
@@ -324,14 +342,15 @@ func waitForAccessPointToProvision(ctx context.Context, c *Client, environmentId
 }
 
 func waitForComputePoolToProvision(ctx context.Context, c *Client, environmentId, computePoolId string) error {
+	delay, pollInterval := getDelayAndPollInterval(5*time.Second, 1*time.Minute, c.isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
 		Pending: []string{stateProvisioning},
 		Target:  []string{stateProvisioned},
 		Refresh: computePoolProvisionStatus(c.fcpmApiContext(ctx), c, environmentId, computePoolId),
 		Timeout: fcpmAPICreateTimeout,
 		// TODO: increase delay
-		Delay:        5 * time.Second,
-		PollInterval: 1 * time.Minute,
+		Delay:        delay,
+		PollInterval: pollInterval,
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for Flink Compute Pool %q provisioning status to become %q", computePoolId, stateProvisioned), map[string]interface{}{computePoolLoggingKey: computePoolId})
@@ -342,14 +361,15 @@ func waitForComputePoolToProvision(ctx context.Context, c *Client, environmentId
 }
 
 func waitForSchemaRegistryClusterToProvision(ctx context.Context, c *Client, environmentId, clusterId string) error {
+	delay, pollInterval := getDelayAndPollInterval(5*time.Second, 30*time.Second, c.isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
 		Pending: []string{stateProvisioning},
 		Target:  []string{stateProvisioned},
 		Refresh: schemaRegistryClusterProvisionStatus(c.srcmApiContext(ctx), c, environmentId, clusterId),
 		// https://docs.confluent.io/cloud/current/clusters/cluster-types.html#provisioning-time
 		Timeout:      1 * time.Hour,
-		Delay:        5 * time.Second,
-		PollInterval: 30 * time.Second,
+		Delay:        delay,
+		PollInterval: pollInterval,
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for Schema Registry Cluster %q provisioning status to become %q", clusterId, stateProvisioned), map[string]interface{}{schemaRegistryClusterLoggingKey: clusterId})
@@ -360,6 +380,7 @@ func waitForSchemaRegistryClusterToProvision(ctx context.Context, c *Client, env
 }
 
 func waitForAnySchemaRegistryClusterToProvision(ctx context.Context, c *Client, environmentId string) error {
+	delay, pollInterval := getDelayAndPollInterval(5*time.Second, 5*time.Second, c.isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
 		// stateProvisioning applies when the Schema Registry Cluster is either in the 'provisioning' status or has not yet been created.
 		Pending: []string{stateProvisioning},
@@ -367,8 +388,8 @@ func waitForAnySchemaRegistryClusterToProvision(ctx context.Context, c *Client, 
 		Refresh: anySchemaRegistryClusterProvisionStatus(c.srcmApiContext(ctx), c, environmentId),
 		// https://docs.confluent.io/cloud/current/clusters/cluster-types.html#provisioning-time
 		Timeout:      10 * time.Minute,
-		Delay:        5 * time.Second,
-		PollInterval: 5 * time.Second,
+		Delay:        delay,
+		PollInterval: pollInterval,
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for the start of Schema Registry Cluster provisioning, followed by a status update to %q", stateProvisioned))
@@ -380,14 +401,15 @@ func waitForAnySchemaRegistryClusterToProvision(ctx context.Context, c *Client, 
 }
 
 func waitForConnectorToProvision(ctx context.Context, c *Client, displayName, environmentId, clusterId string) error {
+	delay, pollInterval := getDelayAndPollInterval(6*time.Minute, 1*time.Minute, c.isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
 		// Allow PROVISIONING -> DEGRADED -> RUNNING transition
 		Pending:      []string{stateProvisioning, stateDegraded},
 		Target:       []string{stateRunning},
 		Refresh:      connectorProvisionStatus(c.connectApiContext(ctx), c, displayName, environmentId, clusterId),
 		Timeout:      connectAPICreateTimeout,
-		Delay:        6 * time.Minute,
-		PollInterval: 1 * time.Minute,
+		Delay:        delay,
+		PollInterval: pollInterval,
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for Connector %q=%q provisioning status to become %q", paramDisplayName, displayName, stateRunning))
@@ -398,13 +420,14 @@ func waitForConnectorToProvision(ctx context.Context, c *Client, displayName, en
 }
 
 func waitForConnectorToChangeStatus(ctx context.Context, c *Client, displayName, environmentId, clusterId, currentStatus, targetStatus string) error {
+	delay, pollInterval := getDelayAndPollInterval(30*time.Second, 1*time.Minute, c.isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
 		Pending:      []string{currentStatus},
 		Target:       []string{targetStatus},
 		Refresh:      connectorUpdateStatus(c.connectApiContext(ctx), c, displayName, environmentId, clusterId),
 		Timeout:      1 * time.Hour,
-		Delay:        30 * time.Second,
-		PollInterval: 1 * time.Minute,
+		Delay:        delay,
+		PollInterval: pollInterval,
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for Connector %q=%q status to become %q", paramDisplayName, displayName, targetStatus))
@@ -414,7 +437,8 @@ func waitForConnectorToChangeStatus(ctx context.Context, c *Client, displayName,
 	return nil
 }
 
-func waitForKafkaMirrorTopicToChangeStatus(ctx context.Context, c *KafkaRestClient, clusterId, linkName, mirrorTopicName, currentStatus, targetStatus string) error {
+func waitForKafkaMirrorTopicToChangeStatus(ctx context.Context, c *KafkaRestClient, clusterId, linkName, mirrorTopicName, currentStatus, targetStatus string, isAcceptanceTestMode bool) error {
+	delay, pollInterval := getDelayAndPollInterval(2*time.Second, 1*time.Minute, isAcceptanceTestMode)
 	pendingStatuses := []string{currentStatus}
 	if targetStatus == stateStopped {
 		pendingStatuses = append(pendingStatuses, statePendingStopped)
@@ -424,8 +448,8 @@ func waitForKafkaMirrorTopicToChangeStatus(ctx context.Context, c *KafkaRestClie
 		Target:       []string{targetStatus},
 		Refresh:      kafkaMirrorTopicUpdateStatus(c.apiContext(ctx), c, clusterId, linkName, mirrorTopicName),
 		Timeout:      5 * time.Minute,
-		Delay:        2 * time.Second,
-		PollInterval: 1 * time.Minute,
+		Delay:        delay,
+		PollInterval: pollInterval,
 	}
 
 	kafkaMirrorTopicId := createKafkaMirrorTopicId(clusterId, linkName, mirrorTopicName)
@@ -437,14 +461,15 @@ func waitForKafkaMirrorTopicToChangeStatus(ctx context.Context, c *KafkaRestClie
 }
 
 func waitForPeeringToProvision(ctx context.Context, c *Client, environmentId, peeringId string) error {
+	delay, pollInterval := getDelayAndPollInterval(5*time.Second, 1*time.Minute, c.isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
 		Pending: []string{stateProvisioning},
 		Target:  []string{stateReady, statePendingAccept},
 		Refresh: peeringProvisionStatus(c.netApiContext(ctx), c, environmentId, peeringId),
 		Timeout: networkingAPICreateTimeout,
 		// TODO: increase delay
-		Delay:        5 * time.Second,
-		PollInterval: 1 * time.Minute,
+		Delay:        delay,
+		PollInterval: pollInterval,
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for Peering %q provisioning status to become %q", peeringId, statePendingAccept), map[string]interface{}{networkLoggingKey: peeringId})
@@ -535,14 +560,15 @@ func waitForSchemaExporterToProvision(ctx context.Context, c *SchemaRegistryRest
 }
 
 func waitForTransitGatewayAttachmentToProvision(ctx context.Context, c *Client, environmentId, transitGatewayAttachmentId string) error {
+	delay, pollInterval := getDelayAndPollInterval(5*time.Second, 1*time.Minute, c.isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
 		Pending: []string{stateProvisioning},
 		Target:  []string{stateReady, statePendingAccept},
 		Refresh: transitGatewayAttachmentProvisionStatus(c.netApiContext(ctx), c, environmentId, transitGatewayAttachmentId),
 		Timeout: networkingAPICreateTimeout,
 		// TODO: increase delay
-		Delay:        5 * time.Second,
-		PollInterval: 1 * time.Minute,
+		Delay:        delay,
+		PollInterval: pollInterval,
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for Transit Gateway Attachment %q provisioning status to become %q", transitGatewayAttachmentId, statePendingAccept), map[string]interface{}{transitGatewayAttachmentLoggingKey: transitGatewayAttachmentId})
@@ -553,14 +579,15 @@ func waitForTransitGatewayAttachmentToProvision(ctx context.Context, c *Client, 
 }
 
 func waitForKafkaClusterCkuUpdateToComplete(ctx context.Context, c *Client, environmentId, clusterId string, cku int32) error {
+	delay, pollInterval := getDelayAndPollInterval(5*time.Second, 1*time.Minute, c.isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
 		Pending: []string{stateInProgress},
 		Target:  []string{stateDone},
 		Refresh: kafkaClusterCkuUpdateStatus(c.cmkApiContext(ctx), c, environmentId, clusterId, cku),
 		// https://docs.confluent.io/cloud/current/clusters/cluster-types.html#resizing-time
 		Timeout:      getTimeoutFor(kafkaClusterTypeDedicated),
-		Delay:        5 * time.Second,
-		PollInterval: 1 * time.Minute,
+		Delay:        delay,
+		PollInterval: pollInterval,
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for Kafka Cluster %q CKU update", clusterId), map[string]interface{}{kafkaClusterLoggingKey: clusterId})
@@ -571,13 +598,14 @@ func waitForKafkaClusterCkuUpdateToComplete(ctx context.Context, c *Client, envi
 }
 
 func waitForDnsRecordToBeDeleted(ctx context.Context, c *Client, environmentId, dnsRecordId string) error {
+	delay, pollInterval := getDelayAndPollInterval(1*time.Minute, 1*time.Minute, c.isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
 		Pending:      []string{stateInProgress},
 		Target:       []string{stateDone},
 		Refresh:      dnsRecordDeleteStatus(c.netAPApiContext(ctx), c, environmentId, dnsRecordId),
 		Timeout:      networkingAPIDeleteTimeout,
-		Delay:        1 * time.Minute,
-		PollInterval: 1 * time.Minute,
+		Delay:        delay,
+		PollInterval: pollInterval,
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for DNS Record %q to be deleted", dnsRecordId), map[string]interface{}{dnsRecordKey: dnsRecordId})
@@ -587,14 +615,15 @@ func waitForDnsRecordToBeDeleted(ctx context.Context, c *Client, environmentId, 
 	return nil
 }
 
-func waitForPrivateLinkAccessToBeDeleted(ctx context.Context, c *Client, environmentId, privateLinkAccessId string) error {
+func waitForPrivateLinkAccessToBeDeleted(ctx context.Context, c *Client, environmentId, privateLinkAccessId string, isAcceptanceTestMode bool) error {
+	delay, pollInterval := getDelayAndPollInterval(1*time.Minute, 1*time.Minute, isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
 		Pending:      []string{stateInProgress},
 		Target:       []string{stateDone},
 		Refresh:      privateLinkAccessDeleteStatus(c.netApiContext(ctx), c, environmentId, privateLinkAccessId),
 		Timeout:      networkingAPIDeleteTimeout,
-		Delay:        1 * time.Minute,
-		PollInterval: 1 * time.Minute,
+		Delay:        delay,
+		PollInterval: pollInterval,
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for Private Link Access %q to be deleted", privateLinkAccessId), map[string]interface{}{privateLinkAccessLoggingKey: privateLinkAccessId})
@@ -605,13 +634,14 @@ func waitForPrivateLinkAccessToBeDeleted(ctx context.Context, c *Client, environ
 }
 
 func waitForPrivateLinkAttachmentConnectionToBeDeleted(ctx context.Context, c *Client, environmentId, plattcId string) error {
+	delay, pollInterval := getDelayAndPollInterval(1*time.Minute, 1*time.Minute, c.isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
 		Pending:      []string{stateInProgress},
 		Target:       []string{stateDone},
 		Refresh:      plattcDeleteStatus(c.netPLApiContext(ctx), c, environmentId, plattcId),
 		Timeout:      networkingAPIDeleteTimeout,
-		Delay:        1 * time.Minute,
-		PollInterval: 1 * time.Minute,
+		Delay:        delay,
+		PollInterval: pollInterval,
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for private link attachment connection %q to be deleted", plattcId), map[string]interface{}{privateLinkAttachmentConnectionLoggingKey: plattcId})
@@ -622,13 +652,14 @@ func waitForPrivateLinkAttachmentConnectionToBeDeleted(ctx context.Context, c *C
 }
 
 func waitForPeeringToBeDeleted(ctx context.Context, c *Client, environmentId, peeringId string) error {
+	delay, pollInterval := getDelayAndPollInterval(1*time.Minute, 1*time.Minute, c.isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
 		Pending:      []string{stateInProgress},
 		Target:       []string{stateDone},
 		Refresh:      peeringDeleteStatus(c.netApiContext(ctx), c, environmentId, peeringId),
 		Timeout:      networkingAPIDeleteTimeout,
-		Delay:        1 * time.Minute,
-		PollInterval: 1 * time.Minute,
+		Delay:        delay,
+		PollInterval: pollInterval,
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for Peering %q to be deleted", peeringId), map[string]interface{}{peeringLoggingKey: peeringId})
@@ -639,13 +670,14 @@ func waitForPeeringToBeDeleted(ctx context.Context, c *Client, environmentId, pe
 }
 
 func waitForNetworkLinkEndpointToBeDeleted(ctx context.Context, c *Client, environmentId, nleId string) error {
+	delay, pollInterval := getDelayAndPollInterval(1*time.Minute, 1*time.Minute, c.isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
 		Pending:      []string{stateInProgress},
 		Target:       []string{stateDone},
 		Refresh:      nleDeleteStatus(c.netApiContext(ctx), c, environmentId, nleId),
 		Timeout:      networkingAPIDeleteTimeout,
-		Delay:        1 * time.Minute,
-		PollInterval: 1 * time.Minute,
+		Delay:        delay,
+		PollInterval: pollInterval,
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for Network Link Endpoint %q to be deleted", nleId), map[string]interface{}{networkLinkEndpointLoggingKey: nleId})
@@ -656,13 +688,14 @@ func waitForNetworkLinkEndpointToBeDeleted(ctx context.Context, c *Client, envir
 }
 
 func waitForTransitGatewayAttachmentToBeDeleted(ctx context.Context, c *Client, environmentId, transitGatewayAttachmentId string) error {
+	delay, pollInterval := getDelayAndPollInterval(1*time.Minute, 1*time.Minute, c.isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
 		Pending:      []string{stateInProgress},
 		Target:       []string{stateDone},
 		Refresh:      transitGatewayAttachmentDeleteStatus(c.netApiContext(ctx), c, environmentId, transitGatewayAttachmentId),
 		Timeout:      networkingAPIDeleteTimeout,
-		Delay:        1 * time.Minute,
-		PollInterval: 1 * time.Minute,
+		Delay:        delay,
+		PollInterval: pollInterval,
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for Transit Gateway Attachment %q to be deleted", transitGatewayAttachmentId), map[string]interface{}{transitGatewayAttachmentLoggingKey: transitGatewayAttachmentId})
@@ -672,14 +705,15 @@ func waitForTransitGatewayAttachmentToBeDeleted(ctx context.Context, c *Client, 
 	return nil
 }
 
-func waitForKafkaTopicToBeDeleted(ctx context.Context, c *KafkaRestClient, topicName string) error {
+func waitForKafkaTopicToBeDeleted(ctx context.Context, c *KafkaRestClient, topicName string, isAcceptanceTestMode bool) error {
+	delay, pollInterval := getDelayAndPollInterval(10*time.Second, 1*time.Minute, isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
 		Pending:      []string{stateInProgress},
 		Target:       []string{stateDone},
 		Refresh:      kafkaTopicDeleteStatus(c.apiContext(ctx), c, topicName),
 		Timeout:      1 * time.Hour,
-		Delay:        10 * time.Second,
-		PollInterval: 1 * time.Minute,
+		Delay:        delay,
+		PollInterval: pollInterval,
 	}
 
 	topicId := createKafkaTopicId(c.clusterId, topicName)
@@ -690,15 +724,16 @@ func waitForKafkaTopicToBeDeleted(ctx context.Context, c *KafkaRestClient, topic
 	return nil
 }
 
-func waitForFlinkStatementToBeDeleted(ctx context.Context, c *FlinkRestClient, statementName string) error {
+func waitForFlinkStatementToBeDeleted(ctx context.Context, c *FlinkRestClient, statementName string, isAcceptanceTestMode bool) error {
+	delay, pollInterval := getDelayAndPollInterval(10*time.Second, 10*time.Second, isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
 		Pending: []string{stateInProgress},
 		Target:  []string{stateDone},
 		Refresh: flinkStatementDeleteStatus(c.apiContext(ctx), c, statementName),
 		// Default timeout
 		Timeout:      20 * time.Minute,
-		Delay:        10 * time.Second,
-		PollInterval: 10 * time.Second,
+		Delay:        delay,
+		PollInterval: pollInterval,
 	}
 
 	statementId := createFlinkStatementId(c.environmentId, c.computePoolId, statementName)
@@ -709,15 +744,16 @@ func waitForFlinkStatementToBeDeleted(ctx context.Context, c *FlinkRestClient, s
 	return nil
 }
 
-func waitForFlinkStatementToBeStopped(ctx context.Context, c *FlinkRestClient, statementName string) error {
+func waitForFlinkStatementToBeStopped(ctx context.Context, c *FlinkRestClient, statementName string, isAcceptanceTestMode bool) error {
+	delay, pollInterval := getDelayAndPollInterval(5*time.Second, 10*time.Second, isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
 		Pending: []string{statePending, stateRunning, stateCompleted},
 		Target:  []string{stateStopped},
 		Refresh: flinkStatementStoppingStatus(c.apiContext(ctx), c, statementName),
 		// Default timeout
 		Timeout:      20 * time.Minute,
-		Delay:        5 * time.Second,
-		PollInterval: 10 * time.Second,
+		Delay:        delay,
+		PollInterval: pollInterval,
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for Flink Statement %q stopping status to become %q", statementName, stateStopped), map[string]interface{}{flinkStatementLoggingKey: statementName})
@@ -727,14 +763,15 @@ func waitForFlinkStatementToBeStopped(ctx context.Context, c *FlinkRestClient, s
 	return nil
 }
 
-func waitForKafkaMirrorTopicToBeDeleted(ctx context.Context, c *KafkaRestClient, linkName, mirrorTopicName string) error {
+func waitForKafkaMirrorTopicToBeDeleted(ctx context.Context, c *KafkaRestClient, linkName, mirrorTopicName string, isAcceptanceTestMode bool) error {
+	delay, pollInterval := getDelayAndPollInterval(10*time.Second, 1*time.Minute, isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
 		Pending:      []string{stateInProgress},
 		Target:       []string{stateDone},
 		Refresh:      kafkaMirrorTopicDeleteStatus(c.apiContext(ctx), c, linkName, mirrorTopicName),
 		Timeout:      1 * time.Hour,
-		Delay:        10 * time.Second,
-		PollInterval: 1 * time.Minute,
+		Delay:        delay,
+		PollInterval: pollInterval,
 	}
 
 	kafkaMirrorTopicId := createKafkaMirrorTopicId(c.clusterId, linkName, mirrorTopicName)
@@ -826,14 +863,15 @@ func plattcDeleteStatus(ctx context.Context, c *Client, environmentId, plattcId 
 	}
 }
 
-func waitForClusterLinkToBeDeleted(ctx context.Context, c *KafkaRestClient, linkName string) error {
+func waitForClusterLinkToBeDeleted(ctx context.Context, c *KafkaRestClient, linkName string, isAcceptanceTestMode bool) error {
+	delay, pollInterval := getDelayAndPollInterval(10*time.Second, 1*time.Minute, isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
 		Pending:      []string{stateInProgress},
 		Target:       []string{stateDone},
 		Refresh:      clusterLinkDeleteStatus(c.apiContext(ctx), c, linkName),
 		Timeout:      1 * time.Hour,
-		Delay:        10 * time.Second,
-		PollInterval: 1 * time.Minute,
+		Delay:        delay,
+		PollInterval: pollInterval,
 	}
 
 	topicId := createClusterLinkId(c.clusterId, linkName)
@@ -1552,4 +1590,13 @@ func flinkApiKeySyncStatus(ctx context.Context, c *FlinkRestClient, organization
 			return nil, stateUnexpected, fmt.Errorf("error listing Statements using Flink API Key %q: received a response with unexpected %d status code", c.flinkApiKey, resp.StatusCode)
 		}
 	}
+}
+
+// If `isAcceptanceTestMode` is true, default wait time and poll interval are returned
+// If `isAcceptanceTestMode` is false, customized wait time and poll interval are returned
+func getDelayAndPollInterval(delayNormal, pollIntervalNormal time.Duration, isAcceptanceTestMode bool) (time.Duration, time.Duration) {
+	if isAcceptanceTestMode {
+		return acceptanceTestModeWaitTime, acceptanceTestModePollInterval
+	}
+	return delayNormal, pollIntervalNormal
 }

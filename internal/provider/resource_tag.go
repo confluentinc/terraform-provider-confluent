@@ -132,7 +132,7 @@ func tagCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 	}
 
 	// https://github.com/confluentinc/terraform-provider-confluent/issues/282
-	time.Sleep(dataCatalogAPIWaitAfterCreate)
+	SleepIfNotTestMode(dataCatalogAPIWaitAfterCreate, meta.(*Client).isAcceptanceTestMode)
 
 	createdTagJson, err := json.Marshal(createdTag)
 	if err != nil {
@@ -228,8 +228,7 @@ func tagDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 		return diag.Errorf("error deleting Tag %q: %s", tagId, createDescriptiveError(serviceErr))
 	}
 
-	time.Sleep(time.Second)
-
+	SleepIfNotTestMode(time.Second, meta.(*Client).isAcceptanceTestMode)
 	tflog.Debug(ctx, fmt.Sprintf("Finished deleting Tag %q", tagId), map[string]interface{}{tagLoggingKey: tagId})
 
 	return nil

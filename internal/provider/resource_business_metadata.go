@@ -176,7 +176,7 @@ func businessMetadataCreate(ctx context.Context, d *schema.ResourceData, meta in
 	}
 
 	// https://github.com/confluentinc/terraform-provider-confluent/issues/282
-	time.Sleep(dataCatalogAPIWaitAfterCreate)
+	SleepIfNotTestMode(dataCatalogAPIWaitAfterCreate, meta.(*Client).isAcceptanceTestMode)
 
 	createdBusinessMetadataJson, err := json.Marshal(createdBusinessMetadata)
 	if err != nil {
@@ -270,8 +270,7 @@ func businessMetadataDelete(ctx context.Context, d *schema.ResourceData, meta in
 		return diag.Errorf("error deleting Business Metadata %q: %s", businessMetadataId, createDescriptiveError(serviceErr))
 	}
 
-	time.Sleep(time.Second)
-
+	SleepIfNotTestMode(time.Second, meta.(*Client).isAcceptanceTestMode)
 	tflog.Debug(ctx, fmt.Sprintf("Finished deleting Business Metadata %q", businessMetadataId), map[string]interface{}{businessMetadataLoggingKey: businessMetadataId})
 
 	return nil

@@ -17,6 +17,7 @@ package provider
 import (
 	"os"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -58,4 +59,26 @@ func testAccPreCheck(t *testing.T) {
 	if !canUseApiKeyAndSecret {
 		t.Fatal("Both CONFLUENT_CLOUD_API_KEY and CONFLUENT_CLOUD_API_SECRET must be set for acceptance tests (having them set to fake values is fine)")
 	}
+}
+
+func TestSleepIfNotTestMode(t *testing.T) {
+	t.Run("should not sleep in acceptance test mode", func(t *testing.T) {
+		start := time.Now()
+		SleepIfNotTestMode(time.Second, true)
+		duration := time.Since(start)
+
+		if duration >= time.Second {
+			t.Errorf("expected no sleep, but slept for %v\n", duration)
+		}
+	})
+
+	t.Run("should sleep in normal mode", func(t *testing.T) {
+		start := time.Now()
+		SleepIfNotTestMode(time.Second, false)
+		duration := time.Since(start)
+
+		if duration < time.Second {
+			t.Errorf("expected to sleep, but slept for %v\n", duration)
+		}
+	})
 }

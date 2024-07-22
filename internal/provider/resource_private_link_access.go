@@ -245,7 +245,7 @@ func privateLinkAccessDelete(ctx context.Context, d *schema.ResourceData, meta i
 		return diag.Errorf("error deleting Private Link Access %q: %s", d.Id(), createDescriptiveError(err))
 	}
 
-	if err := waitForPrivateLinkAccessToBeDeleted(c.netApiContext(ctx), c, environmentId, d.Id()); err != nil {
+	if err := waitForPrivateLinkAccessToBeDeleted(c.netApiContext(ctx), c, environmentId, d.Id(), c.isAcceptanceTestMode); err != nil {
 		return diag.Errorf("error waiting for Private Link Access %q to be deleted: %s", d.Id(), createDescriptiveError(err))
 	}
 
@@ -355,7 +355,7 @@ func gcpSchema() *schema.Schema {
 }
 
 // https://github.com/hashicorp/terraform-plugin-sdk/issues/155#issuecomment-489699737
-////  alternative - https://github.com/hashicorp/terraform-plugin-sdk/issues/248#issuecomment-725013327
+// //  alternative - https://github.com/hashicorp/terraform-plugin-sdk/issues/248#issuecomment-725013327
 func requiredNetworkSchema() *schema.Schema {
 	return &schema.Schema{
 		Type:        schema.TypeList,

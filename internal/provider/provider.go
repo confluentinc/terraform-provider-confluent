@@ -21,7 +21,9 @@ import (
 	dns "github.com/confluentinc/ccloud-sdk-go-v2/networking-dnsforwarder/v1"
 	netip "github.com/confluentinc/ccloud-sdk-go-v2/networking-ip/v1"
 	"github.com/confluentinc/ccloud-sdk-go-v2/sso/v2"
+	"os"
 	"strings"
+	"time"
 
 	apikeys "github.com/confluentinc/ccloud-sdk-go-v2/apikeys/v2"
 	byok "github.com/confluentinc/ccloud-sdk-go-v2/byok/v1"
@@ -109,6 +111,7 @@ type Client struct {
 	flinkApiSecret                  string
 	flinkRestEndpoint               string
 	isFlinkMetadataSet              bool
+	isAcceptanceTestMode            bool
 }
 
 // Customize configs for terraform-plugin-docs
@@ -453,6 +456,12 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 		userAgent = fmt.Sprintf("%s %s", additionalUserAgent, userAgent)
 	}
 
+	acceptanceTestMode := false
+	if os.Getenv("TF_ACC") == "1" {
+		acceptanceTestMode = true
+	}
+	tflog.Info(ctx, fmt.Sprintf("Provider: acceptance test mode is %t\n", acceptanceTestMode))
+
 	apiKeysCfg := apikeys.NewConfiguration()
 	byokCfg := byok.NewConfiguration()
 	ccpCfg := ccp.NewConfiguration()
@@ -591,7 +600,16 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 		isKafkaClusterIdSet:         kafkaClusterId != "",
 		isSchemaRegistryMetadataSet: allSchemaRegistryAttributesAreSet,
 		isFlinkMetadataSet:          allFlinkAttributesAreSet,
+		isAcceptanceTestMode:        acceptanceTestMode,
 	}
 
 	return &client, nil
+}
+
+func SleepIfNotTestMode(d time.Duration, isAcceptanceTestMode bool) {
+	if isAcceptanceTestMode {
+		time.Sleep(500 * time.Millisecond)
+		return
+	}
+	time.Sleep(d)
 }

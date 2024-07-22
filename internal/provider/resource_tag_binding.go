@@ -107,7 +107,7 @@ func tagBindingCreate(ctx context.Context, d *schema.ResourceData, meta interfac
 
 	// sleep 60 seconds to wait for entity (resource) to sync to SR
 	// https://github.com/confluentinc/terraform-provider-confluent/issues/282 to resolve "error creating Tag Binding 404 Not Found"
-	time.Sleep(60 * time.Second)
+	SleepIfNotTestMode(60*time.Second, meta.(*Client).isAcceptanceTestMode)
 
 	request := schemaRegistryRestClient.dataCatalogApiClient.EntityV1Api.CreateTags(schemaRegistryRestClient.dataCatalogApiContext(ctx))
 	request = request.Tag([]dc.Tag{tagBindingRequest})
@@ -135,7 +135,7 @@ func tagBindingCreate(ctx context.Context, d *schema.ResourceData, meta interfac
 	}
 
 	// https://github.com/confluentinc/terraform-provider-confluent/issues/282 to resolve "Root object was present, but now absent."
-	time.Sleep(2 * dataCatalogAPIWaitAfterCreate)
+	SleepIfNotTestMode(2*dataCatalogAPIWaitAfterCreate, meta.(*Client).isAcceptanceTestMode)
 
 	createdTagBindingJson, err := json.Marshal(createdTagBinding)
 	if err != nil {
@@ -256,8 +256,7 @@ func tagBindingDelete(ctx context.Context, d *schema.ResourceData, meta interfac
 		return diag.Errorf("error deleting Tag Binding %q: %s", tagBindingId, createDescriptiveError(serviceErr))
 	}
 
-	time.Sleep(time.Second)
-
+	SleepIfNotTestMode(time.Second, meta.(*Client).isAcceptanceTestMode)
 	tflog.Debug(ctx, fmt.Sprintf("Finished deleting Tag Binding %q", tagBindingId), map[string]interface{}{tagBindingLoggingKey: tagBindingId})
 
 	return nil

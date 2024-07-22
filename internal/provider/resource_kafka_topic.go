@@ -236,7 +236,7 @@ func kafkaTopicCreate(ctx context.Context, d *schema.ResourceData, meta interfac
 	d.SetId(kafkaTopicId)
 
 	// https://github.com/confluentinc/terraform-provider-confluentcloud/issues/40#issuecomment-1048782379
-	time.Sleep(kafkaRestAPIWaitAfterCreate)
+	SleepIfNotTestMode(kafkaRestAPIWaitAfterCreate, meta.(*Client).isAcceptanceTestMode)
 
 	createdKafkaTopicJson, err := json.Marshal(createdKafkaTopic)
 	if err != nil {
@@ -275,7 +275,7 @@ func kafkaTopicDelete(ctx context.Context, d *schema.ResourceData, meta interfac
 		return diag.Errorf("error deleting Kafka Topic %q: %s", d.Id(), createDescriptiveError(err))
 	}
 
-	if err := waitForKafkaTopicToBeDeleted(kafkaRestClient.apiContext(ctx), kafkaRestClient, topicName); err != nil {
+	if err := waitForKafkaTopicToBeDeleted(kafkaRestClient.apiContext(ctx), kafkaRestClient, topicName, meta.(*Client).isAcceptanceTestMode); err != nil {
 		return diag.Errorf("error waiting for Kafka Topic %q to be deleted: %s", d.Id(), createDescriptiveError(err))
 	}
 
@@ -530,7 +530,7 @@ func kafkaTopicUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 			return diag.FromErr(createDescriptiveError(err))
 		}
 		// Give some time to Kafka REST API to apply an update of partitions count
-		time.Sleep(kafkaRestAPIWaitAfterCreate)
+		SleepIfNotTestMode(kafkaRestAPIWaitAfterCreate, meta.(*Client).isAcceptanceTestMode)
 		tflog.Debug(ctx, fmt.Sprintf("Finished updating Kafka Topic %q: topic settings update has been completed", d.Id()), map[string]interface{}{kafkaTopicLoggingKey: d.Id()})
 	}
 	if d.HasChange(paramConfigs) {
@@ -609,7 +609,7 @@ func kafkaTopicUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 			return diag.FromErr(createDescriptiveError(err))
 		}
 		// Give some time to Kafka REST API to apply an update of topic settings
-		time.Sleep(kafkaRestAPIWaitAfterCreate)
+		SleepIfNotTestMode(kafkaRestAPIWaitAfterCreate, meta.(*Client).isAcceptanceTestMode)
 
 		// Check that topic configs update was successfully executed
 		// In other words, remote topic setting values returned by Kafka REST API match topic setting values from updated TF configuration

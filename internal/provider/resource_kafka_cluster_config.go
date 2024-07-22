@@ -25,7 +25,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"net/http"
 	"regexp"
-	"time"
 )
 
 // https://docs.confluent.io/cloud/current/clusters/broker-config.html#change-cluster-settings-for-dedicated-clusters
@@ -106,7 +105,7 @@ func kafkaConfigCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 	d.SetId(kafkaConfigId)
 
 	// https://github.com/confluentinc/terraform-provider-confluentcloud/issues/40#issuecomment-1048782379
-	time.Sleep(kafkaRestAPIWaitAfterCreate)
+	SleepIfNotTestMode(kafkaRestAPIWaitAfterCreate, meta.(*Client).isAcceptanceTestMode)
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating Kafka Config %q", d.Id()), map[string]interface{}{kafkaClusterLoggingKey: d.Id()})
 
@@ -284,7 +283,7 @@ func kafkaConfigUpdate(ctx context.Context, d *schema.ResourceData, meta interfa
 			// 400 Bad Request: Config property 'delete.retention.ms' with value '63113904003' exceeded max limit of 60566400000.
 			return diag.Errorf("error updating Kafka Config: %s", createDescriptiveError(err))
 		}
-		time.Sleep(kafkaRestAPIWaitAfterCreate)
+		SleepIfNotTestMode(kafkaRestAPIWaitAfterCreate, meta.(*Client).isAcceptanceTestMode)
 		tflog.Debug(ctx, fmt.Sprintf("Finished updating Kafka Config %q", d.Id()), map[string]interface{}{kafkaClusterConfigLoggingKey: d.Id()})
 	}
 	return kafkaConfigRead(ctx, d, meta)

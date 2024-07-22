@@ -25,7 +25,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"net/http"
 	"regexp"
-	"time"
 )
 
 func schemaRegistryClusterConfigResource() *schema.Resource {
@@ -89,7 +88,7 @@ func schemaRegistryClusterConfigCreate(ctx context.Context, d *schema.ResourceDa
 			return diag.Errorf("error creating Schema Registry Cluster Config: %s", createDescriptiveError(err))
 		}
 
-		time.Sleep(schemaRegistryAPIWaitAfterCreateOrDelete)
+		SleepIfNotTestMode(schemaRegistryAPIWaitAfterCreateOrDelete, meta.(*Client).isAcceptanceTestMode)
 	}
 
 	schemaRegistryClusterConfigId := createSchemaRegistryClusterConfigId(schemaRegistryRestClient.clusterId)
@@ -236,7 +235,7 @@ func schemaRegistryClusterConfigUpdate(ctx context.Context, d *schema.ResourceDa
 		if err != nil {
 			return diag.Errorf("error updating Schema Registry Cluster Config: %s", createDescriptiveError(err))
 		}
-		time.Sleep(kafkaRestAPIWaitAfterCreate)
+		SleepIfNotTestMode(kafkaRestAPIWaitAfterCreate, meta.(*Client).isAcceptanceTestMode)
 		tflog.Debug(ctx, fmt.Sprintf("Finished updating Schema Registry Cluster Config %q", d.Id()), map[string]interface{}{kafkaClusterConfigLoggingKey: d.Id()})
 	}
 	return schemaRegistryClusterConfigRead(ctx, d, meta)

@@ -524,7 +524,7 @@ func waitForApiKeyToSync(ctx context.Context, c *Client, createdApiKey apikeys.I
 				return fmt.Errorf("error fetching Kafka Cluster %q's %q attribute: %s", clusterId, paramRestEndpoint, createDescriptiveError(err))
 			}
 			kafkaRestClient := c.kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, createdApiKey.GetId(), createdApiKey.Spec.GetSecret(), false, false)
-			if err := waitForCreatedKafkaApiKeyToSync(ctx, kafkaRestClient); err != nil {
+			if err := waitForCreatedKafkaApiKeyToSync(ctx, kafkaRestClient, c.isAcceptanceTestMode); err != nil {
 				return fmt.Errorf("error waiting for Kafka API Key %q to sync: %s", createdApiKey.GetId(), createDescriptiveError(err))
 			}
 		} else if isSchemaRegistryApiKey(createdApiKey) {
@@ -534,7 +534,7 @@ func waitForApiKeyToSync(ctx context.Context, c *Client, createdApiKey apikeys.I
 				return fmt.Errorf("error fetching Schema Registry Cluster %q's %q attribute: %s", clusterId, paramRestEndpoint, createDescriptiveError(err))
 			}
 			schemaRegistryRestClient := c.schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, createdApiKey.GetId(), createdApiKey.Spec.GetSecret(), false)
-			if err := waitForCreatedSchemaRegistryApiKeyToSync(ctx, schemaRegistryRestClient); err != nil {
+			if err := waitForCreatedSchemaRegistryApiKeyToSync(ctx, schemaRegistryRestClient, c.isAcceptanceTestMode); err != nil {
 				return fmt.Errorf("error waiting for Schema Registry API Key %q to sync: %s", createdApiKey.GetId(), createDescriptiveError(err))
 			}
 		} else if isFlinkApiKey(createdApiKey) {
@@ -549,14 +549,14 @@ func waitForApiKeyToSync(ctx context.Context, c *Client, createdApiKey apikeys.I
 			if err != nil {
 				return err
 			}
-			if err := waitForCreatedFlinkApiKeyToSync(ctx, flinkRestClient, organizationId); err != nil {
+			if err := waitForCreatedFlinkApiKeyToSync(ctx, flinkRestClient, organizationId, c.isAcceptanceTestMode); err != nil {
 				return fmt.Errorf("error waiting for Flink API Key %q to sync: %s", createdApiKey.GetId(), createDescriptiveError(err))
 			}
 		} else if isKsqlDbClusterApiKey(createdApiKey) {
 			// Currently, there are no data plane API for ksqlDB clusters so there is no endpoint we could leverage
-			// to check whether the Cluster API Key is synced which is why we're adding time.Sleep() here.
+			// to check whether the Cluster API Key is synced which is why we're adding SleepIfNotTestMode() here.
 			// TODO: SVCF-3560
-			time.Sleep(5 * time.Minute)
+			SleepIfNotTestMode(5*time.Minute, c.isAcceptanceTestMode)
 		} else {
 			resourceJson, err := json.Marshal(createdApiKey.Spec.GetResource())
 			if err != nil {

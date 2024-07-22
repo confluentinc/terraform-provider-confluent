@@ -26,7 +26,6 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
-	"time"
 )
 
 const (
@@ -178,7 +177,7 @@ func clusterLinkCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 	d.SetId(clusterLinkId)
 
 	// https://github.com/confluentinc/terraform-provider-confluentcloud/issues/40#issuecomment-1048782379
-	time.Sleep(kafkaRestAPIWaitAfterCreate)
+	SleepIfNotTestMode(kafkaRestAPIWaitAfterCreate, meta.(*Client).isAcceptanceTestMode)
 
 	// Don't log created cluster link since API returns an empty 201 response.
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating Cluster Link %q", d.Id()), map[string]interface{}{clusterLinkLoggingKey: d.Id()})
@@ -428,7 +427,7 @@ func clusterLinkUpdate(ctx context.Context, d *schema.ResourceData, meta interfa
 			// 400 Bad Request: Config property 'delete.retention.ms' with value '63113904003' exceeded max limit of 60566400000.
 			return diag.Errorf("error updating Cluster Link Config: %s", createDescriptiveError(err))
 		}
-		time.Sleep(kafkaRestAPIWaitAfterCreate)
+		SleepIfNotTestMode(kafkaRestAPIWaitAfterCreate, meta.(*Client).isAcceptanceTestMode)
 		tflog.Debug(ctx, fmt.Sprintf("Finished updating Cluster Link %q", d.Id()), map[string]interface{}{clusterLinkLoggingKey: d.Id()})
 	}
 	return clusterLinkRead(ctx, d, meta)
@@ -449,7 +448,7 @@ func clusterLinkDelete(ctx context.Context, d *schema.ResourceData, meta interfa
 		return diag.Errorf("error deleting Cluster Link %q: %s", d.Id(), createDescriptiveError(err))
 	}
 
-	if err := waitForClusterLinkToBeDeleted(kafkaRestClient.apiContext(ctx), kafkaRestClient, linkName); err != nil {
+	if err := waitForClusterLinkToBeDeleted(kafkaRestClient.apiContext(ctx), kafkaRestClient, linkName, meta.(*Client).isAcceptanceTestMode); err != nil {
 		return diag.Errorf("error waiting for Cluster Link %q to be deleted: %s", d.Id(), createDescriptiveError(err))
 	}
 
