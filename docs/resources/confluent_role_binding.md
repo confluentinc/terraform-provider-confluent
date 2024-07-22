@@ -74,6 +74,12 @@ resource "confluent_role_binding" "group-example-rb" {
   crn_pattern = "${confluent_kafka_cluster.basic.rbac_crn}/kafka=${confluent_kafka_cluster.standard.id}/group=confluent_cli_consumer_*"
 }
 
+resource "confluent_role_binding" "group-mapping-example-rb" {
+  principal   = "User:${confluent_group_mapping.application-developers.id}"
+  role_name   = "EnvironmentAdmin"
+  crn_pattern = confluent_environment.stag.resource_name
+}
+
 resource "confluent_role_binding" "transaction-example-rb" {
   principal = "User:${confluent_service_account.test.id}"
   role_name = "DeveloperRead"
