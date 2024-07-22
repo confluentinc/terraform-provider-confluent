@@ -143,8 +143,9 @@ without any `Warning: Deprecated Resource` messages.
 
 ### Changes to `confluent_kafka_cluster` resource and `confluent_kafka_cluster` data source
 
-The deprecated `dedicated[0].encryption_key` attribute will be removed since it no 
-longer exists in the [Confluent Cloud API](https://docs.confluent.io/cloud/current/api.html#tag/Clusters-(cmkv2)). 
-When creating new Kafka clusters, you should use `byok_key[0].id` attribute instead. For existing instances of the `confluent_kafka_cluster` resource, simply remove the `encryption_key` attribute from your TF configuration file.
+When creating **new** Kafka clusters, you should use `byok_key[0].id` attribute instead of `dedicated[0].encryption_key` attribute 
+since the latter is no longer supported in the [Confluent Cloud API](https://docs.confluent.io/cloud/current/api.html#tag/Clusters-(cmkv2))'s `POST cmk/v2/clusters` request.
+
+However, for existing instances of the `confluent_kafka_cluster` resource, `dedicated[0].encryption_key` is still supported as a read-only attribute.
 
 If you run into any problems, [report an issue](https://github.com/confluentinc/terraform-provider-confluent/issues) to Confluent.

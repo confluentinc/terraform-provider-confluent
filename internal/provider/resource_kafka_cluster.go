@@ -563,10 +563,10 @@ func dedicatedClusterSchema() *schema.Schema {
 					ValidateFunc: validation.IntAtLeast(1),
 				},
 				paramEncryptionKey: {
-					Type:        schema.TypeString,
-					Optional:    true,
+					Type:     schema.TypeString,
+					Optional: true,
+					// TODO: add Computed: true in v2
 					Description: "The ID of the encryption key that is used to encrypt the data in the Kafka cluster.",
-					Deprecated:  fmt.Sprintf(deprecationMessageMajorRelease2, "encryption_key", "attribute"),
 				},
 				paramZones: {
 					Type: schema.TypeList,

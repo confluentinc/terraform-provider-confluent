@@ -1,3 +1,10 @@
+## 1.82.0 (July TBD, 2024)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.81.0...v1.82.0)
+
+**Bug fixes:**
+* Removed the deprecation message for the `encryption_key` attribute in the `confluent_kafka_cluster` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_cluster). It will still exist as a read-only attribute in the next major version of the provider (2.0.0). Refer to the [Upgrade Guide](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/guides/version-2-upgrade) for more details.
+
 ## 1.81.0 (July 17, 2024)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.80.0...v1.81.0)
