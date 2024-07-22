@@ -50,9 +50,8 @@ module "privatelink" {
   source                   = "./aws-privatelink-endpoint"
   vpc_id                   = var.vpc_id
   privatelink_service_name = confluent_private_link_attachment.pla.aws[0].vpc_endpoint_service_name
-  bootstrap                = confluent_kafka_cluster.enterprise.bootstrap_endpoint
+  dns_domain               = confluent_private_link_attachment.pla.dns_domain
   subnets_to_privatelink   = var.subnets_to_privatelink
-  dns_domain_name = confluent_private_link_attachment.pla.dns_domain
 }
 
 resource "confluent_private_link_attachment_connection" "plac" {

@@ -296,8 +296,8 @@ provider "azurerm" {
 }
 
 locals {
-  hosted_zone = length(regexall(".glb", confluent_kafka_cluster.dedicated.bootstrap_endpoint)) > 0 ? replace(regex("^[^.]+-([0-9a-zA-Z]+[.].*):[0-9]+$", confluent_kafka_cluster.dedicated.rest_endpoint)[0], "glb.", "") : regex("[.]([0-9a-zA-Z]+[.].*):[0-9]+$", confluent_kafka_cluster.dedicated.bootstrap_endpoint)[0]
-  network_id  = regex("^([^.]+)[.].*", local.hosted_zone)[0]
+  dns_domain = confluent_network.private-link.dns_domain
+  network_id = split(".", local.dns_domain)[0]
 }
 
 data "azurerm_resource_group" "rg" {
@@ -320,7 +320,7 @@ data "azurerm_subnet" "subnet" {
 resource "azurerm_private_dns_zone" "hz" {
   resource_group_name = data.azurerm_resource_group.rg.name
 
-  name = local.hosted_zone
+  name = local.dns_domain
 }
 
 resource "azurerm_private_endpoint" "endpoint" {

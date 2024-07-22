@@ -56,10 +56,9 @@ module "privatelink" {
   resource_group             = var.resource_group
   vnet_region                = confluent_private_link_attachment.main.region
   vnet_name                  = var.vnet_name
-  bootstrap                  = confluent_kafka_cluster.enterprise.bootstrap_endpoint
+  dns_domain                 = confluent_private_link_attachment.main.dns_domain
   private_link_service_alias = confluent_private_link_attachment.main.azure[0].private_link_service_alias
   subnet_name_by_zone        = var.subnet_name_by_zone
-  dns_domain_name            = confluent_private_link_attachment.main.dns_domain
 }
 
 

@@ -294,7 +294,7 @@ provider "aws" {
 }
 
 locals {
-  hosted_zone = length(regexall(".glb", confluent_kafka_cluster.dedicated.bootstrap_endpoint)) > 0 ? replace(regex("^[^.]+-([0-9a-zA-Z]+[.].*):[0-9]+$", confluent_kafka_cluster.dedicated.bootstrap_endpoint)[0], "glb.", "") : regex("[.]([0-9a-zA-Z]+[.].*):[0-9]+$", confluent_kafka_cluster.dedicated.bootstrap_endpoint)[0]
+  dns_domain = confluent_network.private-link.dns_domain
 }
 
 data "aws_vpc" "privatelink" {
@@ -361,7 +361,7 @@ resource "aws_vpc_endpoint" "privatelink" {
 }
 
 resource "aws_route53_zone" "privatelink" {
-  name = local.hosted_zone
+  name = local.dns_domain
 
   vpc {
     vpc_id = data.aws_vpc.privatelink.id

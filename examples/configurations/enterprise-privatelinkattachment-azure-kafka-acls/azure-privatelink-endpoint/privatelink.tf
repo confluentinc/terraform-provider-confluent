@@ -1,6 +1,6 @@
 locals {
-  hosted_zone = length(regexall(".glb", var.bootstrap)) > 0 ? replace(regex("^[^.]+-([0-9a-zA-Z]+[.].*):[0-9]+$", var.bootstrap)[0], "glb.", "") : regex("[.]([0-9a-zA-Z]+[.].*):[0-9]+$", var.bootstrap)[0]
-  network_id  = regex("^([^.]+)[.].*", local.hosted_zone)[0]
+  dns_domain = var.dns_domain
+  network_id = split(".", var.dns_domain)[0]
 }
 
 
@@ -24,7 +24,7 @@ data "azurerm_subnet" "subnet" {
 resource "azurerm_private_dns_zone" "hz" {
   resource_group_name = data.azurerm_resource_group.rg.name
 
-  name = local.hosted_zone
+  name = local.dns_domain
 }
 
 resource "azurerm_private_endpoint" "endpoint" {

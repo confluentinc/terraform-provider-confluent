@@ -13,8 +13,8 @@ variable "vnet_name" {
   type        = string
 }
 
-variable "bootstrap" {
-  description = "The bootstrap server (for example, `lkc-abcde-vwxyz.centralus.azure.glb.confluent.cloud:9092`)"
+variable "dns_domain" {
+  description = "The root DNS domain for the Private Link Attachment, for example, `pr123a.us-east-2.aws.confluent.cloud`"
   type        = string
 }
 
@@ -26,9 +26,4 @@ variable "private_link_service_alias" {
 variable "subnet_name_by_zone" {
   description = "A map of Zone to Subnet Name"
   type        = map(string)
-}
-
-variable "dns_domain_name" {
-  description = "The DNS domain name"
-  type        = string
 }

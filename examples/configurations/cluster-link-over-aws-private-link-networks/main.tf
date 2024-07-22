@@ -150,7 +150,7 @@ module "destination-vpce" {
   source                   = "./aws-privatelink-endpoint"
   vpc_id                   = var.vpc_id
   privatelink_service_name = confluent_network.destination-network.aws[0].private_link_endpoint_service
-  bootstrap                = confluent_kafka_cluster.destination-cluster.bootstrap_endpoint
+  dns_domain               = confluent_network.destination-network.dns_domain
   subnets_to_privatelink   = var.subnets_to_privatelink
 
   depends_on = [
@@ -162,7 +162,7 @@ module "source-vpce" {
   source                   = "./aws-privatelink-endpoint"
   vpc_id                   = var.vpc_id
   privatelink_service_name = confluent_network.source-network.aws[0].private_link_endpoint_service
-  bootstrap                = confluent_kafka_cluster.source-cluster.bootstrap_endpoint
+  dns_domain               = confluent_network.source-network.dns_domain
   subnets_to_privatelink   = var.subnets_to_privatelink
   depends_on = [
     confluent_private_link_access.source-access,

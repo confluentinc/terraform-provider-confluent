@@ -237,8 +237,8 @@ provider "google" {
 }
 
 locals {
-  hosted_zone = length(regexall(".glb", confluent_kafka_cluster.dedicated.bootstrap_endpoint)) > 0 ? replace(regex("^[^.]+-([0-9a-zA-Z]+[.].*):[0-9]+$", confluent_kafka_cluster.dedicated.bootstrap_endpoint)[0], "glb.", "") : regex("[.]([0-9a-zA-Z]+[.].*):[0-9]+$", confluent_kafka_cluster.dedicated.bootstrap_endpoint)[0]
-  network_id  = regex("^([^.]+)[.].*", local.hosted_zone)[0]
+  dns_domain = confluent_network.private-service-connect.dns_domain
+  network_id  = split(".", local.dns_domain)[0]
 }
 
 data "google_compute_network" "psc_endpoint_network" {
@@ -272,7 +272,7 @@ resource "google_compute_forwarding_rule" "psc_endpoint_ilb" {
 # Private hosted zone for Private Service Connect endpoints
 resource "google_dns_managed_zone" "psc_endpoint_hz" {
   name     = "ccloud-endpoint-zone-${local.network_id}"
-  dns_name = "${local.hosted_zone}."
+  dns_name = "${local.dns_domain}."
 
   visibility = "private"
 

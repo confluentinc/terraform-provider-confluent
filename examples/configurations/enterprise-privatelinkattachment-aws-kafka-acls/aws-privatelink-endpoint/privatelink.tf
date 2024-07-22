@@ -8,13 +8,13 @@ data "aws_availability_zone" "privatelink" {
 }
 
 locals {
-  bootstrap_prefix = split(".", var.bootstrap)[0]
+  network_id = split(".", var.dns_domain)[0]
 }
 
 resource "aws_security_group" "privatelink" {
   # Ensure that SG is unique, so that this module can be used multiple times within a single VPC
-  name = "ccloud-privatelink_${local.bootstrap_prefix}_${var.vpc_id}"
-  description = "Confluent Cloud Private Link minimal security group for ${var.bootstrap} in ${var.vpc_id}"
+  name = "ccloud-privatelink_${local.network_id}_${var.vpc_id}"
+  description = "Confluent Cloud Private Link minimal security group for ${var.dns_domain} in ${var.vpc_id}"
   vpc_id = data.aws_vpc.privatelink.id
 
   ingress {
@@ -58,7 +58,7 @@ resource "aws_vpc_endpoint" "privatelink" {
 }
 
 resource "aws_route53_zone" "privatelink" {
-  name = var.dns_domain_name
+  name = var.dns_domain
 
   vpc {
     vpc_id = data.aws_vpc.privatelink.id

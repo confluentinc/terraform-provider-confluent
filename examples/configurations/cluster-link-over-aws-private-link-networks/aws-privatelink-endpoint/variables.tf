@@ -8,8 +8,8 @@ variable "privatelink_service_name" {
   type = string
 }
 
-variable "bootstrap" {
-  description = "The bootstrap server (ie: lkc-abcde-vwxyz.us-east-1.aws.glb.confluent.cloud:9092)"
+variable "dns_domain" {
+  description = "The root DNS domain for the network, for example, pr123a.us-east-2.aws.confluent.cloud if applicable."
   type = string
 }
 
