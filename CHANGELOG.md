@@ -1,23 +1,27 @@
-## 1.82.0 (July TBD, 2024)
+## 1.82.0 (July 23, 2024)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.81.0...v1.82.0)
 
-**Bug fixes:**
-* Removed the deprecation message for the `encryption_key` attribute in the `confluent_kafka_cluster` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_cluster). It will still exist as a read-only attribute in the next major version of the provider (2.0.0). Refer to the [Upgrade Guide](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/guides/version-2-upgrade) for more details.
+* Updated the deprecation message for the `encryption_key` attribute in the `confluent_kafka_cluster` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_cluster). It will continue to exist as a read-only attribute in the next major version of the provider (2.0.0). For more details, refer to the [Upgrade Guide](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/guides/version-2-upgrade).
+* Updated the `flink-quickstart` example to resolve the "Number of columns must match number of query columns" error.
+* Fixed the "Value for unconfigurable attribute" error in some examples.
+* Refactored examples to eliminate the use of `local.hosted_zone`.
+* Updated the documentation to include an example of creating a role binding for group mapping.
+* Updated the documentation to include an updated import command for the `confluent_schema_exporter` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema_exporter).
 
 ## 1.81.0 (July 17, 2024)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.80.0...v1.81.0)
 
 **New features:**
-* Added additional validation for `confluent_kafka_cluster` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_cluster) ([#292](https://github.com/confluentinc/terraform-provider-confluent/issues/279))
-* Enable removing accepted invitations from TF State for `confluent_invitation` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_invitation)([#263](https://github.com/confluentinc/terraform-provider-confluent/issues/263))
-* Use FlinkDeveloper in `flink-quickstart` example
+* Added additional validation for `confluent_kafka_cluster` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_cluster) ([#292](https://github.com/confluentinc/terraform-provider-confluent/issues/279)).
+* Enabled removing accepted invitations from TF State for `confluent_invitation` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_invitation)([#263](https://github.com/confluentinc/terraform-provider-confluent/issues/263)).
+* Used FlinkDeveloper in `flink-quickstart` example.
 
 **Bug fixes:**
-* Fixed an issue with flooding the TF logs with debug level messages from the SDK ([#372](https://github.com/confluentinc/terraform-provider-confluent/issues/372))
-* Fixed import issues for `confluent_schema_exporter` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema_exporter)
-* Fixed "schema validation error starting from version 1.70.0" issue ([#378](https://github.com/confluentinc/terraform-provider-confluent/issues/378))
+* Fixed an issue with flooding the TF logs with debug level messages from the SDK ([#372](https://github.com/confluentinc/terraform-provider-confluent/issues/372)).
+* Fixed import issues for `confluent_schema_exporter` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema_exporter).
+* Fixed "schema validation error starting from version 1.70.0" issue ([#378](https://github.com/confluentinc/terraform-provider-confluent/issues/378)).
 
 ## 1.80.0 (July 8, 2024)
 
