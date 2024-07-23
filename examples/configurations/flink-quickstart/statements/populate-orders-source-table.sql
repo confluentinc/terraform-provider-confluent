@@ -1,7 +1,2 @@
-INSERT INTO orders_source(
-    order_id,
-    customer_id,
-    product_id,
-    price
-)
+INSERT INTO orders_source
 SELECT * FROM examples.marketplace.orders;
