@@ -215,7 +215,7 @@ release-to-public-repo:
 	@echo Latest tag version to release is: $(PUBLIC_REPO_TAG_VERSION)
 	-@git remote add public https://github.com/confluentinc/terraform-provider-confluent.git
 	@echo Preparing to publish the latest commits and the most recent tag to the public repository...
-	git push --atomic public master $(PUBLIC_REPO_TAG_VERSION)
+	@echo Doing nothing, publish code to public repo has been replaced by Airlock...
 
 # Pact targets
 .PHONY: show-pact
