@@ -808,30 +808,54 @@ func extractKafkaClusterRestAndBootstrapEndpoints(restEndpointEnvVar, bootstrapE
 	restEndpoint := getEnv(restEndpointEnvVar, "")
 	bootstrapEndpoint := getEnv(bootstrapEndpointEnvVar, "")
 
+	// Trim outer quotes from the retrieved values.
+	restEndpoint = strings.Trim(restEndpoint, "\"")
+	bootstrapEndpoint = strings.Trim(bootstrapEndpoint, "\"")
+
 	return restEndpoint, bootstrapEndpoint
 }
 
 func extractSourceClusterApiKeyAndApiSecret() (string, string) {
 	clusterApiKey := getEnv("IMPORT_SOURCE_KAFKA_API_KEY", "")
 	clusterApiSecret := getEnv("IMPORT_SOURCE_KAFKA_API_SECRET", "")
+
+	// Trim outer quotes from the retrieved values.
+	clusterApiKey = strings.Trim(clusterApiKey, "\"")
+	clusterApiSecret = strings.Trim(clusterApiSecret, "\"")
+
 	return clusterApiKey, clusterApiSecret
 }
 
 func extractDestinationClusterApiKeyAndApiSecret() (string, string) {
 	clusterApiKey := getEnv("IMPORT_DESTINATION_KAFKA_API_KEY", "")
 	clusterApiSecret := getEnv("IMPORT_DESTINATION_KAFKA_API_SECRET", "")
+
+	// Trim outer quotes from the retrieved values.
+	clusterApiKey = strings.Trim(clusterApiKey, "\"")
+	clusterApiSecret = strings.Trim(clusterApiSecret, "\"")
+
 	return clusterApiKey, clusterApiSecret
 }
 
 func extractLocalClusterApiKeyAndApiSecret() (string, string) {
 	clusterApiKey := getEnv("IMPORT_LOCAL_KAFKA_API_KEY", "")
 	clusterApiSecret := getEnv("IMPORT_LOCAL_KAFKA_API_SECRET", "")
+
+	// Trim outer quotes from the retrieved values.
+	clusterApiKey = strings.Trim(clusterApiKey, "\"")
+	clusterApiSecret = strings.Trim(clusterApiSecret, "\"")
+
 	return clusterApiKey, clusterApiSecret
 }
 
 func extractRemoteClusterApiKeyAndApiSecret() (string, string) {
 	clusterApiKey := getEnv("IMPORT_REMOTE_KAFKA_API_KEY", "")
 	clusterApiSecret := getEnv("IMPORT_REMOTE_KAFKA_API_SECRET", "")
+
+	// Trim outer quotes from the retrieved values.
+	clusterApiKey = strings.Trim(clusterApiKey, "\"")
+	clusterApiSecret = strings.Trim(clusterApiSecret, "\"")
+
 	return clusterApiKey, clusterApiSecret
 }
 
