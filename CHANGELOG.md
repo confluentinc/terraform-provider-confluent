@@ -1,3 +1,13 @@
+## 1.83.0 (August 7th, 2024)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.82.0...v1.83.0)
+
+**Bug fixes:**
+* Resolved the Dependabot [alert#47](https://github.com/confluentinc/terraform-provider-confluent/security/dependabot/47).
+* Updated [Confluent schema resource document](docs/resources/confluent_schema.md) docs.
+* Updated [Confluent Kafka ACL](docs/resources/confluent_kafka_acl.md) docs.
+* Added an end-to-end [example](examples/configurations/private-flink-quickstart/main.tf) for Flink with private networking.
+
 ## 1.82.0 (July 23, 2024)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.81.0...v1.82.0)
