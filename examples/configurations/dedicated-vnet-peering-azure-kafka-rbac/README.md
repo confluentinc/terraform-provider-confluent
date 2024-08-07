@@ -12,13 +12,13 @@
 
     * Remove the `confluent_kafka_topic` resource. These resources are provisioned using the Kafka REST API, which is only accessible from the private network.
 
-3. Go to the following URL using your AD tenant ID (`<tenant-id>`) and approve:
+3. Before applying the configuration:
+
+* Go to the following URL using your AD tenant ID (`<tenant-id>`) and approve:
 
     ```
     https://login.microsoftonline.com/<tenant-id>/oauth2/authorize?client_id=f0955e3a-9013-4cf4-a1ea-21587621c9cc&response_type=code
     ```
-
-    before applying the configuration.
 
     Also make sure you service principal has got "Directory Readers" [role assigned](https://learn.microsoft.com/en-us/azure/azure-sql/database/authentication-aad-directory-readers-role-tutorial?view=azuresql). Otherwise, you might receive the following error:
     
@@ -32,6 +32,12 @@
     error: Authorization_RequestDenied: Insufficient privileges to complete the
     operation.
     ```
+
+* In your Azure AD tenant, add tag to the VNet you want to peer with Confluent Cloud network. For the steps, see [Apply tags with Azure portal](https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/tag-resources-portal)
+   * Tag key (name) should be `ConfluentEnvIDs`.
+   * Tag value should be the Confluent Cloud environment ID where the Confluent Cloud networks you’d like your VNet to be peered with reside.
+   * To peer your VNet with multiple Confluent Cloud networks that belong to different Confluent Cloud environments, specify a comma-separated list of the environment IDs. For example:
+      * `ConfluentEnvIDs: <CCloud-env-id-1>, <CCloud-env-id-2>`
 
 4. One common deployment workflow for environments with private networking is as follows:
 
