@@ -138,3 +138,19 @@ The following end-to-end examples might help to get started with `confluent_kafk
   * [`dedicated-transit-gateway-attachment-aws-kafka-acls`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/dedicated-transit-gateway-attachment-aws-kafka-acls): _Dedicated_ Kafka cluster on AWS that is accessible via Transit Gateway Endpoint with authorization using ACLs
   * [`dedicated-transit-gateway-attachment-aws-kafka-rbac`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/dedicated-transit-gateway-attachment-aws-kafka-rbac): _Dedicated_ Kafka cluster on AWS that is accessible via Transit Gateway Endpoint with authorization using RBAC
   * [`enterprise-privatelinkattachment-aws-kafka-acls`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/enterprise-privatelinkattachment-aws-kafka-acls): _Enterprise_ Kafka cluster on AWS that is accessible via PrivateLink connections with authorization using ACLs
+
+## Other Example Usages
+```
+# https://github.com/confluentinc/terraform-provider-confluent/issues/241
+resource "confluent_kafka_acl" "app-producer-write-on-topic" {
+  provider = confluent.kafka
+
+  resource_type = "TOPIC"
+  resource_name = confluent_kafka_topic.orders.topic_name
+  pattern_type  = "LITERAL"
+  principal     = "User:${confluent_identity_pool.this.id}"
+  host          = "*"
+  operation     = "WRITE"
+  permission    = "ALLOW"
+}
+```

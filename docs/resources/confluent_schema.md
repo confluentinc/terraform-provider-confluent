@@ -153,6 +153,7 @@ The following end-to-end examples might help to get started with `confluent_sche
 * [`single-event-types-proto-schema-with-alias`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/single-event-types-proto-schema-with-alias)
 * [`multiple-event-types-avro-schema`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/multiple-event-types-avro-schema)
 * [`multiple-event-types-proto-schema`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/multiple-event-types-proto-schema)
+* [`field-level-encryption-schema`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/field-level-encryption-schema)
 
 ## Additional Examples
 
