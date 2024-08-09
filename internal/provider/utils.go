@@ -40,7 +40,7 @@ import (
 	net "github.com/confluentinc/ccloud-sdk-go-v2/networking/v1"
 	org "github.com/confluentinc/ccloud-sdk-go-v2/org/v2"
 	schemaregistry "github.com/confluentinc/ccloud-sdk-go-v2/schema-registry/v1"
-	srcm "github.com/confluentinc/ccloud-sdk-go-v2/srcm/v2"
+	srcm "github.com/confluentinc/ccloud-sdk-go-v2/srcm/v3"
 	"github.com/confluentinc/ccloud-sdk-go-v2/sso/v2"
 	"github.com/dghubble/sling"
 	"github.com/google/uuid"

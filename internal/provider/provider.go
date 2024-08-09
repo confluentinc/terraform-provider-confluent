@@ -40,7 +40,7 @@ import (
 	netpl "github.com/confluentinc/ccloud-sdk-go-v2/networking-privatelink/v1"
 	net "github.com/confluentinc/ccloud-sdk-go-v2/networking/v1"
 	org "github.com/confluentinc/ccloud-sdk-go-v2/org/v2"
-	srcm "github.com/confluentinc/ccloud-sdk-go-v2/srcm/v2"
+	srcm "github.com/confluentinc/ccloud-sdk-go-v2/srcm/v3"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -286,7 +286,6 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_service_account":                    serviceAccountDataSource(),
 				"confluent_schema_registry_cluster":            schemaRegistryClusterDataSource(),
 				"confluent_schema_registry_clusters":           schemaRegistryClustersDataSource(),
-				"confluent_schema_registry_region":             schemaRegistryRegionDataSource(),
 				"confluent_subject_mode":                       subjectModeDataSource(),
 				"confluent_subject_config":                     subjectConfigDataSource(),
 				"confluent_schema_registry_cluster_config":     schemaRegistryClusterConfigDataSource(),
@@ -332,7 +331,6 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_private_link_attachment":            privateLinkAttachmentResource(),
 				"confluent_private_link_attachment_connection": privateLinkAttachmentConnectionResource(),
 				"confluent_role_binding":                       roleBindingResource(),
-				"confluent_schema_registry_cluster":            schemaRegistryClusterResource(),
 				"confluent_schema":                             schemaResource(),
 				"confluent_schema_exporter":                    schemaExporterResource(),
 				"confluent_subject_mode":                       subjectModeResource(),

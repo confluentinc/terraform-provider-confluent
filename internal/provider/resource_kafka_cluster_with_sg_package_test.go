@@ -53,7 +53,7 @@ const (
 var createKafkaPath = "/cmk/v2/clusters"
 var readKafkaPath = fmt.Sprintf("/cmk/v2/clusters/%s", kafkaClusterId)
 var readEnvPath = fmt.Sprintf("/org/v2/environments/%s", testEnvironmentId)
-var listSchemaRegistryClusterUrlPath = fmt.Sprintf("/srcm/v2/clusters")
+var listSchemaRegistryClusterUrlPath = fmt.Sprintf("/srcm/v3/clusters")
 var fullKafkaResourceLabel = fmt.Sprintf("confluent_kafka_cluster.%s", kafkaResourceLabel)
 
 func TestAccClusterWithSGPackage(t *testing.T) {

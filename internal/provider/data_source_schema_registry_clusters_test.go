@@ -33,7 +33,7 @@ const (
 
 var environments = []string{"env-1jnw8z", "env-7n1r31"}
 
-func TestAccDataSourceSchemeRegistryClusters(t *testing.T) {
+func TestAccDataSourceSchemaRegistryClusters(t *testing.T) {
 	ctx := context.Background()
 
 	wiremockContainer, err := setupWiremock(ctx)
@@ -62,7 +62,7 @@ func TestAccDataSourceSchemeRegistryClusters(t *testing.T) {
 		))
 
 	readClustersResponseOne, _ := ioutil.ReadFile("../testdata/schema_registry_cluster/read_clusters_1jnw8z.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/srcm/v2/clusters")).
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/srcm/v3/clusters")).
 		InScenario(SRClustersDataSourceScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo("env-1jnw8z")).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
@@ -73,7 +73,7 @@ func TestAccDataSourceSchemeRegistryClusters(t *testing.T) {
 		))
 
 	readClustersResponseTwo, _ := ioutil.ReadFile("../testdata/schema_registry_cluster/read_clusters_7n1r31.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/srcm/v2/clusters")).
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/srcm/v3/clusters")).
 		InScenario(SRClustersDataSourceScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo("env-7n1r31")).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
@@ -102,14 +102,16 @@ func TestAccDataSourceSchemeRegistryClusters(t *testing.T) {
 					resource.TestCheckResourceAttr(fullSRClustersDataSourceLabel, fmt.Sprintf("%s.0.display_name", paramClusters), "Stream Governance Package"),
 					resource.TestCheckResourceAttr(fullSRClustersDataSourceLabel, fmt.Sprintf("%s.0.rest_endpoint", paramClusters), "https://psrc-y1111.us-west-2.aws.confluent.cloud"),
 					resource.TestCheckResourceAttr(fullSRClustersDataSourceLabel, fmt.Sprintf("%s.0.package", paramClusters), "ESSENTIALS"),
-					resource.TestCheckResourceAttr(fullSRClustersDataSourceLabel, fmt.Sprintf("%s.0.region.0.id", paramClusters), "sgreg-1"),
+					resource.TestCheckResourceAttr(fullSRClustersDataSourceLabel, fmt.Sprintf("%s.0.region", paramClusters), "us-east4"),
+					resource.TestCheckResourceAttr(fullSRClustersDataSourceLabel, fmt.Sprintf("%s.0.cloud", paramClusters), "AWS"),
 					resource.TestCheckResourceAttr(fullSRClustersDataSourceLabel, fmt.Sprintf("%s.1.id", paramClusters), "lsrc-756ogo"),
 					resource.TestCheckResourceAttr(fullSRClustersDataSourceLabel, fmt.Sprintf("%s.1.environment.0.id", paramClusters), "env-7n1r31"),
 					resource.TestCheckResourceAttr(fullSRClustersDataSourceLabel, fmt.Sprintf("%s.1.resource_name", paramClusters), "crn://confluent.cloud/organization=1111aaaa-11aa-11aa-11aa-111111aaaaaa/environment=env-7n1r31/schema-registry=lsrc-756ogo"),
 					resource.TestCheckResourceAttr(fullSRClustersDataSourceLabel, fmt.Sprintf("%s.1.display_name", paramClusters), "Stream Governance Package"),
 					resource.TestCheckResourceAttr(fullSRClustersDataSourceLabel, fmt.Sprintf("%s.1.rest_endpoint", paramClusters), "https://psrc-y1111.us-west-2.aws.confluent.cloud"),
 					resource.TestCheckResourceAttr(fullSRClustersDataSourceLabel, fmt.Sprintf("%s.1.package", paramClusters), "ESSENTIALS"),
-					resource.TestCheckResourceAttr(fullSRClustersDataSourceLabel, fmt.Sprintf("%s.1.region.0.id", paramClusters), "sgreg-1"),
+					resource.TestCheckResourceAttr(fullSRClustersDataSourceLabel, fmt.Sprintf("%s.1.region", paramClusters), "us-east4"),
+					resource.TestCheckResourceAttr(fullSRClustersDataSourceLabel, fmt.Sprintf("%s.1.cloud", paramClusters), "AWS"),
 				),
 			},
 		},
