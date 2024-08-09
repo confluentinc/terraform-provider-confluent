@@ -140,3 +140,8 @@ func setFlinkRegionAttributes(d *schema.ResourceData, flinkRegion v2.FcpmV2Regio
 	d.SetId(flinkRegion.GetId())
 	return d, nil
 }
+
+func executeFlinkRegionRead(ctx context.Context, c *Client, cloud, regionName string) (v2.FcpmV2RegionList, *http.Response, error) {
+	req := c.fcpmClient.RegionsFcpmV2Api.ListFcpmV2Regions(c.fcpmApiContext(ctx)).Cloud(cloud).RegionName(regionName)
+	return req.Execute()
+}

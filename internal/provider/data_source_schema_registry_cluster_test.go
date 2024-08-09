@@ -17,6 +17,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
@@ -27,10 +28,24 @@ import (
 
 const (
 	dataSourceSchemaRegistryScenarioName = "confluent_schema_registry Data Source Lifecycle"
-	schemaRegistryResourceLabel          = "essentials"
+	dataSourceSchemaRegistryLabel        = "essentials"
 )
 
-var fullSchemaRegistryDataSourceLabel = fmt.Sprintf("data.confluent_schema_registry_cluster.%s", schemaRegistryResourceLabel)
+const (
+	schemaRegistryClusterHttpEndpoint = "https://psrc-y1111.us-west-2.aws.confluent.cloud"
+	schemaRegistryClusterRegionId     = "us-east4"
+	schemaRegistryClusterId           = "lsrc-755ogo"
+	schemaRegistryClusterResourceName = "crn://confluent.cloud/organization=1111aaaa-11aa-11aa-11aa-111111aaaaaa/environment=env-1jrymj/schema-registry=lsrc-755ogo"
+	schemaRegistryClusterApiVersion   = "srcm/v3"
+	schemaRegistryClusterKind         = "Cluster"
+	schemaRegistryClusterPackage      = "ESSENTIALS"
+	schemaRegistryClusterDisplayName  = "Stream Governance Package"
+	schemaRegistryClusterCloudType    = "AWS"
+)
+
+var schemaRegistryClusterUrlPath = fmt.Sprintf("/srcm/v3/clusters/%s", schemaRegistryClusterId)
+
+var fullSchemaRegistryDataSourceLabel = fmt.Sprintf("data.confluent_schema_registry_cluster.%s", dataSourceSchemaRegistryLabel)
 
 func TestAccDataSourceSchemaRegistryCluster(t *testing.T) {
 	ctx := context.Background()
@@ -61,7 +76,7 @@ func TestAccDataSourceSchemaRegistryCluster(t *testing.T) {
 		))
 
 	readClustersResponse, _ := ioutil.ReadFile("../testdata/schema_registry_cluster/read_clusters.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/srcm/v2/clusters")).
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/srcm/v3/clusters")).
 		InScenario(dataSourceSchemaRegistryScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(testEnvironmentId)).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
@@ -85,13 +100,13 @@ func TestAccDataSourceSchemaRegistryCluster(t *testing.T) {
 					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramPackage, schemaRegistryClusterPackage),
 					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, fmt.Sprintf("%s.#", paramEnvironment), "1"),
 					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, fmt.Sprintf("%s.0.%s", paramEnvironment, paramId), testEnvironmentId),
-					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, fmt.Sprintf("%s.#", paramRegion), "1"),
-					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, fmt.Sprintf("%s.0.%s", paramRegion, paramId), schemaRegistryClusterRegionId),
+					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramRegion, schemaRegistryClusterRegionId),
 					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramDisplayName, schemaRegistryClusterDisplayName),
 					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramApiVersion, schemaRegistryClusterApiVersion),
 					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramKind, schemaRegistryClusterKind),
 					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramResourceName, schemaRegistryClusterResourceName),
 					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramRestEndpoint, schemaRegistryClusterHttpEndpoint),
+					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramCloud, schemaRegistryClusterCloudType),
 				),
 			},
 			{
@@ -102,13 +117,13 @@ func TestAccDataSourceSchemaRegistryCluster(t *testing.T) {
 					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramPackage, schemaRegistryClusterPackage),
 					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, fmt.Sprintf("%s.#", paramEnvironment), "1"),
 					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, fmt.Sprintf("%s.0.%s", paramEnvironment, paramId), testEnvironmentId),
-					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, fmt.Sprintf("%s.#", paramRegion), "1"),
-					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, fmt.Sprintf("%s.0.%s", paramRegion, paramId), schemaRegistryClusterRegionId),
+					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramRegion, schemaRegistryClusterRegionId),
 					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramDisplayName, schemaRegistryClusterDisplayName),
 					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramApiVersion, schemaRegistryClusterApiVersion),
 					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramKind, schemaRegistryClusterKind),
 					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramResourceName, schemaRegistryClusterResourceName),
 					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramRestEndpoint, schemaRegistryClusterHttpEndpoint),
+					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramCloud, schemaRegistryClusterCloudType),
 				),
 			},
 			{
@@ -119,13 +134,13 @@ func TestAccDataSourceSchemaRegistryCluster(t *testing.T) {
 					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramPackage, schemaRegistryClusterPackage),
 					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, fmt.Sprintf("%s.#", paramEnvironment), "1"),
 					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, fmt.Sprintf("%s.0.%s", paramEnvironment, paramId), testEnvironmentId),
-					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, fmt.Sprintf("%s.#", paramRegion), "1"),
-					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, fmt.Sprintf("%s.0.%s", paramRegion, paramId), schemaRegistryClusterRegionId),
+					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramRegion, schemaRegistryClusterRegionId),
 					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramDisplayName, schemaRegistryClusterDisplayName),
 					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramApiVersion, schemaRegistryClusterApiVersion),
 					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramKind, schemaRegistryClusterKind),
 					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramResourceName, schemaRegistryClusterResourceName),
 					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramRestEndpoint, schemaRegistryClusterHttpEndpoint),
+					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramCloud, schemaRegistryClusterCloudType),
 				),
 			},
 		},
@@ -171,4 +186,20 @@ func testAccCheckDataSourceSchemaRegistryClusterConfigWithJustEnvironmentSet(moc
 	  	}
 	}
 	`, mockServerUrl, testEnvironmentId)
+}
+
+func testAccCheckSchemaRegistryClusterExists(n string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[n]
+
+		if !ok {
+			return fmt.Errorf("%s Schema Registry Cluster has not been found", n)
+		}
+
+		if rs.Primary.ID == "" {
+			return fmt.Errorf("ID has not been set for %s Schema Registry Cluster", n)
+		}
+
+		return nil
+	}
 }
