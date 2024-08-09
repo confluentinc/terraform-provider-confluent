@@ -1,14 +1,14 @@
 {
-  "api_version": "srcm/v2",
+  "api_version": "srcm/v3",
   "data": [
     {
-      "api_version": "srcm/v2",
+      "api_version": "srcm/v3",
       "id": "lsrc-755ogo",
       "kind": "Cluster",
       "metadata": {
         "created_at": "2022-10-08T05:35:37.271962Z",
         "resource_name": "crn://confluent.cloud/organization=1111aaaa-11aa-11aa-11aa-111111aaaaaa/environment=env-1jnw8z/schema-registry=lsrc-755ogo",
-        "self": "https://api.confluent.cloud/srcm/v2/clusters/lsrc-755ogo",
+        "self": "https://api.confluent.cloud/srcm/v3/clusters/lsrc-755ogo",
         "updated_at": "2022-10-08T05:35:37.271962Z"
       },
       "spec": {
@@ -22,13 +22,8 @@
         },
         "http_endpoint": "https://psrc-y1111.us-west-2.aws.confluent.cloud",
         "package": "ESSENTIALS",
-        "region": {
-          "api_version": "srcm/v2",
-          "id": "sgreg-1",
-          "kind": "Region",
-          "related": "https://api.confluent.cloud/srcm/v2/regions/sgreg-1",
-          "resource_name": "crn://confluent.cloud/schema-registry-region=sgreg-1"
-        }
+        "region": "us-east4",
+        "cloud": "AWS"
       },
       "status": {
         "phase": "PROVISIONED"
@@ -37,7 +32,7 @@
   ],
   "kind": "ClusterList",
   "metadata": {
-    "first": "https://api.confluent.cloud/srcm/v2/clusters",
+    "first": "https://api.confluent.cloud/srcm/v3/clusters",
     "total_size": 1
   }
 }

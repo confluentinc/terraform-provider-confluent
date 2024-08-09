@@ -167,7 +167,7 @@ func TestAccKafkaApiKey(t *testing.T) {
 		WillReturn(
 			string(readDeletedKafkaApiKeyResponse),
 			contentTypeJSONHeader,
-			http.StatusNotFound,
+			http.StatusForbidden,
 		))
 	deleteKafkaApiKeyStub := wiremock.Delete(wiremock.URLPathEqualTo("/iam/v2/api-keys/7FJIYKQ4SGQDQ72H")).
 		InScenario(kafkaApiKeyScenarioName).
@@ -405,7 +405,7 @@ func TestAccFlinkApiKey(t *testing.T) {
 		WillReturn(
 			string(readDeletedFlinkApiKeyResponse),
 			contentTypeJSONHeader,
-			http.StatusNotFound,
+			http.StatusForbidden,
 		))
 	deleteFlinkApiKeyStub := wiremock.Delete(wiremock.URLPathEqualTo("/iam/v2/api-keys/AK4NBR7MUYHVJMHW")).
 		InScenario(flinkApiKeyScenarioName).
@@ -614,7 +614,7 @@ func TestAccCloudApiKey(t *testing.T) {
 		WillReturn(
 			string(readDeletedCloudApiKeyResponse),
 			contentTypeJSONHeader,
-			http.StatusNotFound,
+			http.StatusForbidden,
 		))
 	deleteCloudApiKeyStub := wiremock.Delete(wiremock.URLPathEqualTo("/iam/v2/api-keys/HRVR6K4VMXYD2LDZ")).
 		InScenario(cloudApiKeyScenarioName).
@@ -713,7 +713,7 @@ func testAccCheckApiKeyDestroy(s *terraform.State) error {
 		deletedApiKeyId := rs.Primary.ID
 		req := c.apiKeysClient.APIKeysIamV2Api.GetIamV2ApiKey(c.apiKeysApiContext(context.Background()), deletedApiKeyId)
 		deletedApiKey, response, err := req.Execute()
-		if response != nil && (response.StatusCode == http.StatusNotFound) {
+		if response != nil && (response.StatusCode == http.StatusForbidden) {
 			return nil
 		} else if err == nil && deletedApiKey.Id != nil {
 			// Otherwise return the error

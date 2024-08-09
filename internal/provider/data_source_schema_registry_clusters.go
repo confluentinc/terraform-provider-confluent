@@ -18,7 +18,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	v2 "github.com/confluentinc/ccloud-sdk-go-v2/srcm/v2"
+	v2 "github.com/confluentinc/ccloud-sdk-go-v2/org/v2"
+	v3 "github.com/confluentinc/ccloud-sdk-go-v2/srcm/v3"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -34,7 +35,8 @@ func schemaRegistryClustersDataSource() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: schemaRegistryClustersDataSourceRead,
 		Schema: map[string]*schema.Schema{
-			paramClusters: schemaRegistryClustersSchema(),
+			paramEnvironment: environmentParameterSchema(),
+			paramClusters:    schemaRegistryClustersSchema(),
 		},
 	}
 }
@@ -56,17 +58,9 @@ func schemaRegistryClustersSchema() *schema.Schema {
 					Optional: true,
 				},
 				paramRegion: {
-					Type: schema.TypeList,
-					Elem: &schema.Resource{
-						Schema: map[string]*schema.Schema{
-							paramId: {
-								Type:        schema.TypeString,
-								Description: "The unique identifier for the Schema Registry Region.",
-								Computed:    true,
-							},
-						},
-					},
-					Computed: true,
+					Type:        schema.TypeString,
+					Description: "The cloud service provider region where the cluster is running.",
+					Computed:    true,
 				},
 				paramPackage: {
 					Type:        schema.TypeString,
@@ -93,8 +87,31 @@ func schemaRegistryClustersSchema() *schema.Schema {
 					Computed:    true,
 					Description: "The Confluent Resource Name of the Schema Registry Cluster.",
 				},
+				paramCloud: {
+					Type:        schema.TypeString,
+					Description: "The cloud service provider in which the cluster is running.",
+					Computed:    true,
+				},
 			},
 		},
+	}
+}
+
+// Customer can optionally specify the environmentId to query the SR clusters under it
+func environmentParameterSchema() *schema.Schema {
+	return &schema.Schema{
+		Type: schema.TypeList,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramId: {
+					Type:     schema.TypeString,
+					Required: true,
+				},
+			},
+		},
+		Optional: true,
+		Computed: true,
+		MaxItems: 1,
 	}
 }
 
@@ -102,7 +119,8 @@ func schemaRegistryClustersDataSourceRead(ctx context.Context, d *schema.Resourc
 
 	tflog.Debug(ctx, "Reading Schema Registry Clusters")
 
-	clusters, err := loadAllSRClusters(ctx, meta)
+	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
+	clusters, err := loadAllSRClusters(ctx, environmentId, meta)
 	if err != nil {
 		return err
 	}
@@ -112,7 +130,7 @@ func schemaRegistryClustersDataSourceRead(ctx context.Context, d *schema.Resourc
 	}
 	result := make([]interface{}, len(clusters))
 	for i, cluster := range clusters {
-		result[i] = createSRCluster(cluster)
+		result[i] = populateSRClusterResult(cluster)
 	}
 
 	if err := d.Set(paramClusters, result); err != nil {
@@ -124,14 +142,21 @@ func schemaRegistryClustersDataSourceRead(ctx context.Context, d *schema.Resourc
 	return nil
 }
 
-func loadAllSRClusters(ctx context.Context, meta interface{}) ([]v2.SrcmV2Cluster, diag.Diagnostics) {
-	var clusters []v2.SrcmV2Cluster
-
+func loadAllSRClusters(ctx context.Context, environmentId string, meta interface{}) ([]v3.SrcmV3Cluster, diag.Diagnostics) {
+	var clusters []v3.SrcmV3Cluster
+	var environments []v2.OrgV2Environment
 	client := meta.(*Client)
-	environments, err := loadEnvironments(ctx, client)
-	if err != nil {
-		return nil, diag.FromErr(createDescriptiveError(err))
+
+	if environmentId != "" {
+		environments = []v2.OrgV2Environment{{Id: ptr(environmentId)}}
+	} else {
+		var err error
+		environments, err = loadEnvironments(ctx, client)
+		if err != nil {
+			return nil, diag.FromErr(createDescriptiveError(err))
+		}
 	}
+
 	for _, environment := range environments {
 		schemaRegistryClusters, err := loadSchemaRegistryClusters(ctx, client, environment.GetId())
 		if err != nil {
@@ -152,21 +177,19 @@ func loadAllSRClusters(ctx context.Context, meta interface{}) ([]v2.SrcmV2Cluste
 	return clusters, nil
 }
 
-func createSRCluster(schemaRegistryCluster v2.SrcmV2Cluster) map[string]interface{} {
+func populateSRClusterResult(schemaRegistryCluster v3.SrcmV3Cluster) map[string]interface{} {
 	env := make([]interface{}, 1)
 	env[0] = map[string]interface{}{
 		paramId: schemaRegistryCluster.Spec.Environment.GetId(),
 	}
-	region := make([]interface{}, 1)
-	region[0] = map[string]interface{}{
-		paramId: schemaRegistryCluster.Spec.Region.GetId(),
-	}
+
 	return map[string]interface{}{
 		paramId:           schemaRegistryCluster.GetId(),
 		paramDisplayName:  schemaRegistryCluster.Spec.GetDisplayName(),
 		paramEnvironment:  env,
 		paramPackage:      schemaRegistryCluster.Spec.GetPackage(),
-		paramRegion:       region,
+		paramRegion:       schemaRegistryCluster.Spec.GetRegion(),
+		paramCloud:        schemaRegistryCluster.Spec.GetCloud(),
 		paramKind:         schemaRegistryCluster.GetKind(),
 		paramApiVersion:   schemaRegistryCluster.GetApiVersion(),
 		paramRestEndpoint: schemaRegistryCluster.Spec.GetHttpEndpoint(),

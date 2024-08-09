@@ -61,7 +61,6 @@ var ImportableResources = []string{
 	// Cloud
 	"confluent_service_account",
 	"confluent_kafka_cluster",
-	"confluent_schema_registry_cluster",
 	"confluent_environment",
 	"confluent_connector",
 
@@ -218,11 +217,10 @@ func loadAllInstances(ctx context.Context, resourcesToImport []string, outputPat
 func getResourceImporters(instancesToImport []string, mode ImporterMode) (map[string]*Importer, error) {
 	cloudSupportedImporters := map[string]*Importer{
 		// TODO: add more resources
-		"confluent_service_account":         serviceAccountImporter(),
-		"confluent_environment":             environmentImporter(),
-		"confluent_kafka_cluster":           kafkaClusterImporter(),
-		"confluent_schema_registry_cluster": schemaRegistryClusterImporter(),
-		"confluent_connector":               connectorImporter(),
+		"confluent_service_account": serviceAccountImporter(),
+		"confluent_environment":     environmentImporter(),
+		"confluent_kafka_cluster":   kafkaClusterImporter(),
+		"confluent_connector":       connectorImporter(),
 	}
 
 	kafkaSupportedImporters := map[string]*Importer{

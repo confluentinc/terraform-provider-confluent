@@ -360,25 +360,6 @@ func waitForComputePoolToProvision(ctx context.Context, c *Client, environmentId
 	return nil
 }
 
-func waitForSchemaRegistryClusterToProvision(ctx context.Context, c *Client, environmentId, clusterId string) error {
-	delay, pollInterval := getDelayAndPollInterval(5*time.Second, 30*time.Second, c.isAcceptanceTestMode)
-	stateConf := &resource.StateChangeConf{
-		Pending: []string{stateProvisioning},
-		Target:  []string{stateProvisioned},
-		Refresh: schemaRegistryClusterProvisionStatus(c.srcmApiContext(ctx), c, environmentId, clusterId),
-		// https://docs.confluent.io/cloud/current/clusters/cluster-types.html#provisioning-time
-		Timeout:      1 * time.Hour,
-		Delay:        delay,
-		PollInterval: pollInterval,
-	}
-
-	tflog.Debug(ctx, fmt.Sprintf("Waiting for Schema Registry Cluster %q provisioning status to become %q", clusterId, stateProvisioned), map[string]interface{}{schemaRegistryClusterLoggingKey: clusterId})
-	if _, err := stateConf.WaitForStateContext(c.srcmApiContext(ctx)); err != nil {
-		return err
-	}
-	return nil
-}
-
 func waitForAnySchemaRegistryClusterToProvision(ctx context.Context, c *Client, environmentId string) error {
 	delay, pollInterval := getDelayAndPollInterval(5*time.Second, 5*time.Second, c.isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{

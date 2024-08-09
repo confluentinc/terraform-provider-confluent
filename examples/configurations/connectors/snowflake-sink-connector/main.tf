@@ -20,7 +20,7 @@ resource "confluent_environment" "staging" {
   }
 }
 
-resource "confluent_schema_registry_cluster" "essentials" {
+data "confluent_schema_registry_cluster" "essentials" {
   environment {
     id = confluent_environment.staging.id
   }

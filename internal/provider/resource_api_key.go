@@ -45,7 +45,8 @@ const (
 
 	iamApiVersion      = "iam/v2"
 	cmkApiVersion      = "cmk/v2"
-	srcmApiVersion     = "srcm/v2"
+	srcmV2ApiVersion   = "srcm/v2"
+	srcmV3ApiVersion   = "srcm/v3"
 	ksqldbcmApiVersion = "ksqldbcm/v2"
 	fcpmApiVersion     = "fcpm/v2"
 )
@@ -54,7 +55,7 @@ var acceptedOwnerKinds = []string{serviceAccountKind, userKind}
 var acceptedResourceKinds = []string{clusterKind, regionKind}
 
 var acceptedOwnerApiVersions = []string{iamApiVersion}
-var acceptedResourceApiVersions = []string{cmkApiVersion, srcmApiVersion, ksqldbcmApiVersion, fcpmApiVersion}
+var acceptedResourceApiVersions = []string{cmkApiVersion, srcmV2ApiVersion, srcmV3ApiVersion, ksqldbcmApiVersion, fcpmApiVersion}
 
 func apiKeyResource() *schema.Resource {
 	return &schema.Resource{
@@ -391,7 +392,7 @@ func apiKeyResourceSchema() *schema.Schema {
 		// If the resource is not specified, then Cloud API Key gets created
 		Optional:    true,
 		ForceNew:    true,
-		Description: "The resource associated with this object. The only resource that is supported is 'cmk.v2.Cluster', 'srcm.v2.Cluster'.",
+		Description: "The resource associated with this object. The only resource that is supported is 'cmk.v2.Cluster', 'srcm.v2.Cluster', 'srcm.v3.Cluster'.",
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				paramId: {
@@ -413,6 +414,13 @@ func apiKeyResourceSchema() *schema.Schema {
 					ForceNew:     true,
 					Description:  "The API version of the referred owner.",
 					ValidateFunc: validation.StringInSlice(acceptedResourceApiVersions, false),
+					DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+						// suppress diff if the API group name is the same
+						// i.e. srcm/v2 -> srcm/v3 is OK but srcm/v2 -> cmk/v2 should trigger a drift
+						olds := strings.Split(old, "/")
+						news := strings.Split(new, "/")
+						return olds[0] == news[0] && stringInSlice(new, acceptedResourceApiVersions, false)
+					},
 				},
 				paramEnvironment: environmentSchema(),
 			},
@@ -499,7 +507,7 @@ func isKafkaApiKey(apiKey apikeys.IamV2ApiKey) bool {
 
 func isSchemaRegistryApiKey(apiKey apikeys.IamV2ApiKey) bool {
 	// At the moment, API Key Mgmt API temporarily returns schemaRegistryKind instead of clusterKind
-	return (apiKey.Spec.Resource.GetKind() == clusterKind || apiKey.Spec.Resource.GetKind() == schemaRegistryKind) && apiKey.Spec.Resource.GetApiVersion() == srcmApiVersion
+	return (apiKey.Spec.Resource.GetKind() == clusterKind || apiKey.Spec.Resource.GetKind() == schemaRegistryKind) && apiKey.Spec.Resource.GetApiVersion() == srcmV3ApiVersion
 }
 
 func isFlinkApiKey(apiKey apikeys.IamV2ApiKey) bool {

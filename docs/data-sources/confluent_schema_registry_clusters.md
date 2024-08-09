@@ -20,27 +20,33 @@ provider "confluent" {
   cloud_api_secret = var.confluent_cloud_api_secret # optionally use CONFLUENT_CLOUD_API_SECRET env var
 }
 
-data "confluent_schema_registry_clusters" "main" {}
+data "confluent_schema_registry_clusters" "main" {
+  environment {
+    id = "env-xyz456"
+  }
+}
 
 ```
 
 ## Argument Reference
 
 The following arguments are supported:
+- `environment` (Optional Configuration Block) supports the following:
+  - `id` - (Required String) The ID of the Environment that the Schema Registry cluster belongs to, for example, `env-xyz456`.
+  - If no environment id is specified, clusters from all environments will be displayed.
 
 ## Attributes Reference
 
 In addition to the preceding arguments, the following attributes are exported:
 - `clusters` - (Required List of Object) List of Schema Registry clusters. Each Schema Registry cluster object exports the following attributes:
-  - `id` - (Required String) The id of the Scheme Registry cluster.
+  - `id` - (Required String) The id of the Schema Registry cluster.
   - `environment` - (Required Object) exports the following attributes:
       - `id` - (Required String) The id of the environment.
   - `package` - (Required String) The type of the billing package. Accepted values are: `ESSENTIALS` and `ADVANCED`.
-  - `region` (Required Configuration Block) supports the following:
-      - `id` - (Required String) The ID of the Schema Registry region that the Schema Registry cluster belongs to, for example, `sgreg-1`. See [Schema Registry Regions](https://docs.confluent.io/cloud/current/stream-governance/packages.html#stream-governance-regions) to find a corresponding region ID based on desired cloud provider region and types of the billing package or use `confluent_schema_registry_region` [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_schema_registry_region).
+  - `region` - (Required String) The ID of the Schema Registry region that the Schema Registry cluster belongs to, for example, `us-east4`.
   - `api_version` - (Required String) An API Version of the schema version of the Schema Registry cluster, for example, `stream-governance/v2`.
   - `kind` - (Required String) A kind of the Schema Registry cluster, for example, `Cluster`.
   - `rest_endpoint` - (Required String) The HTTP endpoint of the Schema Registry cluster, for example, `https://psrc-00000.us-west-2.aws.confluent.cloud`.
   - `display_name` - (Required String) The name of the Schema Registry cluster, for example, `Stream Governance Package`.
   - `resource_name` - (Required String) The Confluent Resource Name of the Schema Registry cluster, for example, `crn://confluent.cloud/organization=1111aaaa-11aa-11aa-11aa-111111aaaaaa/environment=env-abc123/schema-registry=lsrc-abc123`.
-
+  - `cloud` - (Required String) The cloud service provider that that the Schema Registry cluster belongs to, for example, `AWS`.
