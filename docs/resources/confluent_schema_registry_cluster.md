@@ -6,13 +6,13 @@ description: |-
   
 ---
 
-# data.confluent_schema_registry_cluster Resource
+# confluent_schema_registry_cluster Resource
 
 [![Deprecated](https://img.shields.io/badge/Lifecycle%20Stage-Deprecated-yellow)](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy)
 
-`data.confluent_schema_registry_cluster` provides a Schema Registry cluster resource that enables creating, editing, and deleting Schema Registry clusters on Confluent Cloud.
+`confluent_schema_registry_cluster` provides a Schema Registry cluster resource that enables creating, editing, and deleting Schema Registry clusters on Confluent Cloud.
 
-!> **Warning:** The `data.confluent_schema_registry_cluster` resource has been deprecated and will be removed in the next major version of the provider (2.0.0).
+!> **Warning:** The `confluent_schema_registry_cluster` resource has been deprecated and will be removed in the next major version of the provider (2.0.0).
 Refer to the [Upgrade Guide](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/guides/version-2-upgrade) for more details.
 The guide will be published once version 2.0.0 is released.
 
@@ -35,7 +35,7 @@ data "confluent_schema_registry_region" "example" {
   package = "ESSENTIALS"
 }
 
-resource "data.confluent_schema_registry_cluster" "essentials" {
+resource "confluent_schema_registry_cluster" "essentials" {
   package = data.confluent_schema_registry_region.example.package
 
   environment {
@@ -88,7 +88,7 @@ You can import a Schema Registry cluster by using Environment ID and Schema Regi
 ```shell
 $ export CONFLUENT_CLOUD_API_KEY="<cloud_api_key>"
 $ export CONFLUENT_CLOUD_API_SECRET="<cloud_api_secret>"
-$ terraform import data.confluent_schema_registry_cluster.example env-abc123/lsrc-abc123
+$ terraform import confluent_schema_registry_cluster.example env-abc123/lsrc-abc123
 ```
 
 !> **Warning:** Do not forget to delete terminal command history afterwards for security purposes.
