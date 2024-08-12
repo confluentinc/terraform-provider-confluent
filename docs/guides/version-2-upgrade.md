@@ -3,12 +3,12 @@ page_title: "Confluent Provider 2.0.0: Upgrade Guide"
 ---
 # Confluent Provider 2.0.0: Upgrade Guide
 
-!> **Warning:** Version `2.0.0` of Confluent Provider hasn't been released yet and this guide describes how to resolve `Warning: Deprecated Resource` for deprecated `confluent_schema_registry_cluster` [resource](https://registry.terraform.io/providers/confluentinc/confluent/1.65.0/docs/resources/confluent_schema_registry_cluster) and
-deprecated `confluent_schema_registry_region` [data source](https://registry.terraform.io/providers/confluentinc/confluent/1.65.0/docs/data-sources/confluent_schema_registry_region) as the warning message references this guide.
+!> **Warning:** Version `2.0.0` of Confluent Provider hasn't been released yet and this guide describes how to resolve `Warning: Deprecated Resource` for deprecated `confluent_schema_registry_cluster` [resource](https://registry.terraform.io/providers/confluentinc/confluent/1.83.0/docs/resources/confluent_schema_registry_cluster) and
+deprecated `confluent_schema_registry_region` [data source](https://registry.terraform.io/providers/confluentinc/confluent/1.83.0/docs/data-sources/confluent_schema_registry_region) as the warning message references this guide.
 
 ## Provider Version Configuration
 
--> **Note:** This guide uses the [basic-kafka-acls](https://github.com/confluentinc/terraform-provider-confluent/tree/v1.65.0/examples/configurations/basic-kafka-acls) Terraform configuration as an example of a Terraform configuration that has a Kafka cluster and a Schema Registry cluster.
+-> **Note:** This guide uses the [basic-kafka-acls](https://github.com/confluentinc/terraform-provider-confluent/tree/v1.83.0/examples/configurations/basic-kafka-acls) Terraform configuration as an example of a Terraform configuration that has a Kafka cluster and a Schema Registry cluster.
 
 Before reading further, ensure that your environment
 successfully runs [`terraform plan`](https://www.terraform.io/docs/commands/plan.html)
@@ -17,7 +17,7 @@ without unexpected changes. Run the following command:
 terraform plan
 ```
 Your output should resemble:
-```
+```bash
 confluent_service_account.test-sa: Refreshing state... [id=sa-xyz123]
 confluent_environment.test-env: Refreshing state... [id=env-dge456]
 confluent_kafka_cluster.basic: Refreshing state... [id=lkc-vrp3op]
@@ -45,37 +45,39 @@ Terraform has compared your real infrastructure against your configuration and f
 ### Changes to `confluent_schema_registry_cluster` resource
 
 Deprecated `confluent_schema_registry_cluster`
-[resource](https://registry.terraform.io/providers/confluentinc/confluent/1.65.0/docs/resources/confluent_schema_registry_cluster) will be removed in version `2.0.0`.
+[resource](https://registry.terraform.io/providers/confluentinc/confluent/1.83.0/docs/resources/confluent_schema_registry_cluster) will be removed in version `2.0.0`.
 
 Use the `confluent_schema_registry_cluster` data source instead to avoid `Warning: Deprecated Resource` messages.
 
-!> **Warning:** Ensure that you **do not** delete / destroy the Schema Registry cluster from Confluent Cloud (`confluent_schema_registry_cluster` resource) when going through this guide, as opposed to only removing it from the TF state.
+!> **Warning:** Ensure that you **do not** delete / destroy the Schema Registry cluster on Confluent Cloud (`confluent_schema_registry_cluster` [resource](https://registry.terraform.io/providers/confluentinc/confluent/1.83.0/docs/resources/confluent_schema_registry_cluster)) when going through this guide, as opposed to only removing it from the TF state.
 
 The next step is to upgrade your TF configuration:
 
 #### Before
-    ```hcl
-    resource "confluent_schema_registry_cluster" "essentials" {
-      # ...
-      environment {
-        id = confluent_environment.staging.id
-      }
-    }
-    ```
+```
+resource "confluent_schema_registry_cluster" "essentials" {
+  # ...
+  environment {
+    id = confluent_environment.staging.id
+  }
+}
+```
 
 #### After
-    ```hcl
-    data "confluent_schema_registry_cluster" "essentials" {
-      environment {
-        id = confluent_environment.staging.id
-      }
-    }
+```
+data "confluent_schema_registry_cluster" "essentials" {
+  environment {
+    id = confluent_environment.staging.id
+  }
+}
 
-    # Also make sure to replace all resource references confluent_schema_registry_cluster.essentials with
-    # data.confluent_schema_registry_cluster.essentials
-    ```
+# Also, ensure to replace all resource references 
+# (e.g., confluent_schema_registry_cluster.essentials)
+# with data source references 
+# (e.g., data.confluent_schema_registry_cluster.essentials).
+```
 
-Next, remove the `confluent_schema_registry_cluster` resource from TF state (again, just from TF state and not from Confluent Cloud).
+Next, remove the `confluent_schema_registry_cluster` [resource](https://registry.terraform.io/providers/confluentinc/confluent/1.83.0/docs/resources/confluent_schema_registry_cluster) from TF state (again, just from TF state and not on Confluent Cloud).
 
 ```bash
 $ terraform state list | grep confluent_schema_registry_cluster 
@@ -83,7 +85,7 @@ $ terraform state rm confluent_schema_registry_cluster.essentials
 ```
 
 Your output should resemble:
-```
+```bash
 $ terraform state list | grep confluent_schema_registry_cluster 
 confluent_schema_registry_cluster.essentials
 $ terraform state rm confluent_schema_registry_cluster.essentials
@@ -96,25 +98,26 @@ Successfully removed 1 resource instance(s).
 ### Changes to `confluent_schema_registry_region` data source
 
 Deprecated `confluent_schema_registry_region`
-[data source](https://registry.terraform.io/providers/confluentinc/confluent/1.65.0/docs/data-sources/confluent_schema_registry_region) will be removed in version `2.0.0`.
+[data source](https://registry.terraform.io/providers/confluentinc/confluent/1.83.0/docs/data-sources/confluent_schema_registry_region) will be removed in version `2.0.0`.
 
-
-Remove the `confluent_schema_registry_cluster` data source only from TF configuration (as data sources are not stored in the TF state) instead
+Remove the `confluent_schema_registry_region`
+[data source](https://registry.terraform.io/providers/confluentinc/confluent/1.83.0/docs/data-sources/confluent_schema_registry_region) only from TF configuration (as data sources are not stored in the TF state) instead
 to avoid `Warning: Deprecated Resource` messages.
 
-To remove `confluent_schema_registry_cluster` data source from TF configuration, you can just remove its definition:
+To remove `confluent_schema_registry_region`
+[data source](https://registry.terraform.io/providers/confluentinc/confluent/1.83.0/docs/data-sources/confluent_schema_registry_region) from TF configuration, you can just remove its definition:
 
 #### Before
-    ```hcl
-    data "confluent_stream_governance_region" "essentials" {
-      # ...
-    }
-    ```
+```
+data "confluent_schema_registry_region" "essentials" {
+  # ...
+}
+```
 
 #### After
-    ```hcl
-    # empty
-    ```
+```
+# empty
+```
 
 ##### Sanity Check
 
@@ -125,7 +128,7 @@ without unexpected changes. Run the following command:
 terraform plan
 ```
 Your output should resemble:
-```
+```bash
 confluent_service_account.test-sa: Refreshing state... [id=sa-xyz123]
 confluent_environment.test-env: Refreshing state... [id=env-dge456]
 confluent_kafka_cluster.basic: Refreshing state... [id=lkc-vrp3op]
@@ -139,13 +142,13 @@ No changes. Infrastructure is up-to-date.
 
 without any `Warning: Deprecated Resource` messages.
 
-!> **Warning:** Ensure that you **do not** delete / destroy the Schema Registry cluster from Confluent Cloud (`confluent_schema_registry_cluster` resource) when going through this guide, as opposed to only removing it from the TF state.
+!> **Warning:** Ensure that you **do not** delete / destroy the Schema Registry cluster on Confluent Cloud (`confluent_schema_registry_cluster` resource) when going through this guide, as opposed to only removing it from the TF state.
 
 ### Changes to `confluent_kafka_cluster` resource and `confluent_kafka_cluster` data source
 
 When creating **new** Kafka clusters, you should use `byok_key[0].id` attribute instead of `dedicated[0].encryption_key` attribute 
 since the latter is no longer supported in the [Confluent Cloud API](https://docs.confluent.io/cloud/current/api.html#tag/Clusters-(cmkv2))'s `POST cmk/v2/clusters` request.
 
-However, for existing instances of the `confluent_kafka_cluster` resource, `dedicated[0].encryption_key` is still supported as a read-only attribute.
+However, for existing instances of the `confluent_kafka_cluster` [resource](https://registry.terraform.io/providers/confluentinc/confluent/1.83.0/docs/resources/confluent_kafka_cluster), `dedicated[0].encryption_key` is still supported as a read-only attribute.
 
 If you run into any problems, [report an issue](https://github.com/confluentinc/terraform-provider-confluent/issues) to Confluent.
