@@ -3,8 +3,8 @@ page_title: "Confluent Provider 2.0.0: Upgrade Guide"
 ---
 # Confluent Provider 2.0.0: Upgrade Guide
 
-!> **Warning:** Version `2.0.0` of Confluent Provider hasn't been released yet and this guide describes how to resolve `Warning: Deprecated Resource` for deprecated `confluent_schema_registry_cluster` [resource](https://registry.terraform.io/providers/confluentinc/confluent/1.83.0/docs/resources/confluent_schema_registry_cluster) and
-deprecated `confluent_schema_registry_region` [data source](https://registry.terraform.io/providers/confluentinc/confluent/1.83.0/docs/data-sources/confluent_schema_registry_region) as the warning message references this guide.
+!> **Warning:** Version `2.0.0` of Confluent Provider has been released and this guide describes how to resolve `Warning: Deprecated Resource` for deprecated `confluent_schema_registry_cluster` [resource](https://registry.terraform.io/providers/confluentinc/confluent/1.83.0/docs/resources/confluent_schema_registry_cluster)  and
+deprecated `confluent_schema_registry_region` [data source](https://registry.terraform.io/providers/confluentinc/confluent/1.83.0/docs/data-sources/confluent_schema_registry_region) as the warning message references this guide, please resolve these warnings before upgrading to major version `2.0.0`.
 
 ## Provider Version Configuration
 
@@ -45,7 +45,7 @@ Terraform has compared your real infrastructure against your configuration and f
 ### Changes to `confluent_schema_registry_cluster` resource
 
 Deprecated `confluent_schema_registry_cluster`
-[resource](https://registry.terraform.io/providers/confluentinc/confluent/1.83.0/docs/resources/confluent_schema_registry_cluster) will be removed in version `2.0.0`.
+[resource](https://registry.terraform.io/providers/confluentinc/confluent/1.83.0/docs/resources/confluent_schema_registry_cluster) has been removed in version `2.0.0`.
 
 Use the `confluent_schema_registry_cluster` data source instead to avoid `Warning: Deprecated Resource` messages.
 
@@ -98,7 +98,7 @@ Successfully removed 1 resource instance(s).
 ### Changes to `confluent_schema_registry_region` data source
 
 Deprecated `confluent_schema_registry_region`
-[data source](https://registry.terraform.io/providers/confluentinc/confluent/1.83.0/docs/data-sources/confluent_schema_registry_region) will be removed in version `2.0.0`.
+[data source](https://registry.terraform.io/providers/confluentinc/confluent/1.83.0/docs/data-sources/confluent_schema_registry_region) has been removed in version `2.0.0`.
 
 Remove the `confluent_schema_registry_region`
 [data source](https://registry.terraform.io/providers/confluentinc/confluent/1.83.0/docs/data-sources/confluent_schema_registry_region) only from TF configuration (as data sources are not stored in the TF state) instead

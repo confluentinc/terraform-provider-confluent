@@ -1,3 +1,15 @@
+## 2.0.0 (August 14th, 2024)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.83.0...v2.0.0)
+
+**New features:**
+* Removed deprecated `confluent_schema_registry_region` [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_schema_registry_region)
+and `confluent_schema_registry_cluster` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema_registry_cluster). Refer to the [Upgrade Guide](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/guides/version-2-upgrade) for more details.
+
+**Bug fixes:**
+* Update Terraform configuration examples note for [dedicated-vnet-peering-azure-kafka-acls](examples/configurations/dedicated-vnet-peering-azure-kafka-acls/README.md).
+* Update Terraform configuration examples note for [dedicated-vnet-peering-azure-kafka-rbac](examples/configurations/dedicated-vnet-peering-azure-kafka-rbac/README.md).
+
 ## 1.83.0 (August 7th, 2024)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.82.0...v1.83.0)
