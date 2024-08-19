@@ -79,7 +79,7 @@ resource "confluent_catalog_entity_attributes" "kafka-cluster" {
     secret = "<Schema Registry API Secret for data.confluent_schema_registry_cluster.essentials>"
   }
 
-  # example: entity_name = "lkc-zn9kgd"
+  # example: entity_name = "lkc-15xq83"
   entity_name = "${data.confluent_kafka_cluster.basic.id}"
   entity_type = "kafka_logical_cluster"
   attributes = {
@@ -131,7 +131,7 @@ resource "confluent_catalog_entity_attributes" "schema" {
 }
 
 resource "confluent_catalog_entity_attributes" "kafka-cluster" {
-  # example: entity_name = "lkc-zn9kgd"
+  # example: entity_name = "lkc-15xq83"
   entity_name = var.kafka_cluster_id
   entity_type = "kafka_logical_cluster"
   attributes = {
