@@ -23,7 +23,7 @@ provider "confluent" {
   cloud_api_secret = var.confluent_cloud_api_secret # optionally use CONFLUENT_CLOUD_API_SECRET env var
 }
 
-resource "confluent_catalog_entity_attributes" "main" {
+resource "confluent_catalog_entity_attributes" "topic" {
   schema_registry_cluster {
     id = data.confluent_schema_registry_cluster.essentials.id
   }
@@ -33,12 +33,35 @@ resource "confluent_catalog_entity_attributes" "main" {
     secret = "<Schema Registry API Secret for data.confluent_schema_registry_cluster.essentials>"
   }
   
-  entity_name = "lkc-15xq83:topic_0"
+  # example: entity_name = "lkc-15xq83:topic_0"
+  entity_name = "${data.confluent_kafka_cluster.basic.id}:${confluent_kafka_topic.purchase.topic_name}"
   entity_type = "kafka_topic"
   attributes = {
     "owner"       = "dev"
     "description" = "Kafka topic for orders"
     "ownerEmail"  = "dev@gmail.com"
+  }
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+resource "confluent_catalog_entity_attributes" "schema" {
+  schema_registry_cluster {
+    id = data.confluent_schema_registry_cluster.essentials.id
+  }
+  rest_endpoint = data.confluent_schema_registry_cluster.essentials.rest_endpoint
+  credentials {
+    key    = "<Schema Registry API Key for data.confluent_schema_registry_cluster.essentials>"
+    secret = "<Schema Registry API Secret for data.confluent_schema_registry_cluster.essentials>"
+  }
+
+  # example: entity_name = "lsrc-1w9075:.:100008"
+  entity_name = "${data.confluent_schema_registry_cluster.main.id}:.:${confluent_schema.purchase.schema_identifier}"
+  entity_type = "sr_schema"
+  attributes = {
+    "description" = "Schema description"
   }
 
   lifecycle {
@@ -57,13 +80,27 @@ provider "confluent" {
   schema_registry_api_secret    = var.schema_registry_api_secret    # optionally use SCHEMA_REGISTRY_API_SECRET env var
 }
 
-resource "confluent_catalog_entity_attributes" "main" {
-  entity_name = "lkc-15xq83:topic_0"
+resource "confluent_catalog_entity_attributes" "topic" {
+  # example: entity_name = "lkc-15xq83:topic_0"
+  entity_name = "${var.kafka_cluster_id}:${var.kafka_topic_name}"
   entity_type = "kafka_topic"
   attributes = {
     "owner"       = "dev"
     "description" = "Kafka topic for orders"
     "ownerEmail"  = "dev@gmail.com"
+  }
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+resource "confluent_catalog_entity_attributes" "schema" {
+  # example: entity_name = "lsrc-1w9075:.:100008"
+  entity_name = "${var.schema_registry_cluster_id}:.:${confluent_schema.purchase.schema_identifier}"
+  entity_type = "sr_schema"
+  attributes = {
+    "description" = "Schema description"
   }
 
   lifecycle {
