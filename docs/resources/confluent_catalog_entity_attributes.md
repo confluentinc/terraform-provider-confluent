@@ -80,7 +80,7 @@ resource "confluent_catalog_entity_attributes" "kafka-cluster" {
   }
 
   # example: entity_name = "lkc-15xq83"
-  entity_name = "${data.confluent_kafka_cluster.basic.id}"
+  entity_name = data.confluent_kafka_cluster.basic.id
   entity_type = "kafka_logical_cluster"
   attributes = {
     "description" = "Kafka Cluster description"
