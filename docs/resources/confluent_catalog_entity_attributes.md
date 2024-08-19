@@ -58,7 +58,7 @@ resource "confluent_catalog_entity_attributes" "schema" {
   }
 
   # example: entity_name = "lsrc-1w9075:.:100008"
-  entity_name = "${data.confluent_schema_registry_cluster.main.id}:.:${confluent_schema.purchase.schema_identifier}"
+  entity_name = "${data.confluent_schema_registry_cluster.essentials.id}:.:${confluent_schema.purchase.schema_identifier}"
   entity_type = "sr_schema"
   attributes = {
     "description" = "Schema description"
