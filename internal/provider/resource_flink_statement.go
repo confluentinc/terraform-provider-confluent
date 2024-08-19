@@ -25,6 +25,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"net/http"
 	"regexp"
+	"time"
 )
 
 const (
@@ -38,8 +39,7 @@ const (
 	statePending   = "PENDING"
 	stateFailing   = "FAILING"
 
-	// exampleFlinkRestEndpoint = "https://flink.us-east-1.aws.confluent.cloud/sql/v1/organizations/1111aaaa-11aa-11aa-11aa-111111aaaaaa/environments/env-abc123"
-	exampleFlinkRestEndpoint = "https://flink.us-east-1.aws.confluent.cloud"
+	statementsAPICreateTimeout = 24 * time.Hour
 )
 
 func flinkStatementResource() *schema.Resource {
@@ -91,6 +91,9 @@ func flinkStatementResource() *schema.Resource {
 				ValidateFunc: validation.StringMatch(regexp.MustCompile("^http"), "the REST endpoint must start with 'https://'"),
 			},
 			paramCredentials: credentialsSchema(),
+		},
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(statementsAPICreateTimeout),
 		},
 	}
 }
