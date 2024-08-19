@@ -39,7 +39,7 @@ const (
 	statePending   = "PENDING"
 	stateFailing   = "FAILING"
 
-	statementsAPICreateTimeout = 24 * time.Hour
+	statementsAPICreateTimeout = 6 * time.Hour
 )
 
 func flinkStatementResource() *schema.Resource {
