@@ -249,11 +249,10 @@ func waitForNetworkToProvision(ctx context.Context, c *Client, environmentId, ne
 func waitForFlinkStatementToProvision(ctx context.Context, c *FlinkRestClient, statementName string, isAcceptanceTestMode bool) error {
 	delay, pollInterval := getDelayAndPollInterval(5*time.Second, 10*time.Second, isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
-		Pending: []string{statePending},
-		Target:  []string{stateRunning, stateCompleted},
-		Refresh: flinkStatementProvisionStatus(c.apiContext(ctx), c, statementName),
-		// Default timeout
-		Timeout:      20 * time.Minute,
+		Pending:      []string{statePending},
+		Target:       []string{stateRunning, stateCompleted},
+		Refresh:      flinkStatementProvisionStatus(c.apiContext(ctx), c, statementName),
+		Timeout:      statementsAPICreateTimeout,
 		Delay:        delay,
 		PollInterval: pollInterval,
 	}
