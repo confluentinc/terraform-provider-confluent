@@ -507,7 +507,9 @@ func isKafkaApiKey(apiKey apikeys.IamV2ApiKey) bool {
 
 func isSchemaRegistryApiKey(apiKey apikeys.IamV2ApiKey) bool {
 	// At the moment, API Key Mgmt API temporarily returns schemaRegistryKind instead of clusterKind
-	return (apiKey.Spec.Resource.GetKind() == clusterKind || apiKey.Spec.Resource.GetKind() == schemaRegistryKind) && apiKey.Spec.Resource.GetApiVersion() == srcmV3ApiVersion
+	// and api_version="srcm/v2"
+	return (apiKey.Spec.Resource.GetKind() == clusterKind || apiKey.Spec.Resource.GetKind() == schemaRegistryKind) &&
+		(apiKey.Spec.Resource.GetApiVersion() == srcmV3ApiVersion || apiKey.Spec.Resource.GetApiVersion() == srcmV2ApiVersion)
 }
 
 func isFlinkApiKey(apiKey apikeys.IamV2ApiKey) bool {
