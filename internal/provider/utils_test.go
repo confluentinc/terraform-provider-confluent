@@ -17,6 +17,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	apikeys "github.com/confluentinc/ccloud-sdk-go-v2/apikeys/v2"
 	"reflect"
 	"testing"
 )
@@ -157,6 +158,71 @@ func TestCanUpdateEntityName(t *testing.T) {
 			result := canUpdateEntityName(tt.entityType, tt.oldEntityName, tt.newEntityName)
 			if result != tt.expected {
 				t.Errorf("canUpdateEntityName(%s, %s, %s) = %v; want %v", tt.entityType, tt.oldEntityName, tt.newEntityName, result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestIsSchemaRegistryApiKey(t *testing.T) {
+	tests := []struct {
+		name     string
+		apiKey   apikeys.IamV2ApiKey
+		expected bool
+	}{
+		{
+			name: "SR API Key with api_version=srcm/v3",
+			apiKey: apikeys.IamV2ApiKey{
+				Spec: &apikeys.IamV2ApiKeySpec{
+					Resource: &apikeys.ObjectReference{
+						Kind:       apikeys.PtrString(schemaRegistryKind),
+						ApiVersion: apikeys.PtrString(srcmV3ApiVersion),
+					},
+				},
+			},
+			expected: true,
+		},
+		{
+			name: "SR API Key with api_version=srcm/v2",
+			apiKey: apikeys.IamV2ApiKey{
+				Spec: &apikeys.IamV2ApiKeySpec{
+					Resource: &apikeys.ObjectReference{
+						Kind:       apikeys.PtrString(schemaRegistryKind),
+						ApiVersion: apikeys.PtrString(srcmV2ApiVersion),
+					},
+				},
+			},
+			expected: true,
+		},
+		{
+			name: "Kafka API Key",
+			apiKey: apikeys.IamV2ApiKey{
+				Spec: &apikeys.IamV2ApiKeySpec{
+					Resource: &apikeys.ObjectReference{
+						Kind:       apikeys.PtrString(schemaRegistryKind),
+						ApiVersion: apikeys.PtrString(cmkApiVersion),
+					},
+				},
+			},
+			expected: false,
+		},
+		{
+			name: "Cloud API Key",
+			apiKey: apikeys.IamV2ApiKey{
+				Spec: &apikeys.IamV2ApiKeySpec{
+					Resource: &apikeys.ObjectReference{
+						Kind:       apikeys.PtrString("Cloud"),
+						ApiVersion: apikeys.PtrString(iamApiVersion),
+					},
+				},
+			},
+			expected: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := isSchemaRegistryApiKey(tt.apiKey)
+			if result != tt.expected {
+				t.Errorf("%s: isSchemaRegistryApiKey() = %v; want %v", tt.name, result, tt.expected)
 			}
 		})
 	}
