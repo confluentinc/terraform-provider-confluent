@@ -17,9 +17,10 @@ package provider
 import (
 	"context"
 	"fmt"
-	apikeys "github.com/confluentinc/ccloud-sdk-go-v2/apikeys/v2"
 	"reflect"
 	"testing"
+
+	apikeys "github.com/confluentinc/ccloud-sdk-go-v2/apikeys/v2"
 )
 
 func testKafkaClusterBlockStateDataV0() map[string]interface{} {
