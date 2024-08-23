@@ -59,4 +59,4 @@ In addition to the preceding arguments, the following attributes are exported:
   - `private_endpoint_resource_id` (Required String) Resource ID of the Private Endpoint (if any) that is connected to the Private Link service.
   - `private_endpoint_domain` (Required String) Domain of the Private Endpoint (if any) that is connected to the Private Link service.
   - `private_endpoint_ip_address` (Required String) IP address of the Private Endpoint (if any) that is connected to the Private Link service.
-  - `private_endpoint_custom_dns_config_domains` (Required String) Domains of the Private Endpoint (if any) based off FQDNs in Azure custom DNS configs, which are required in your private DNS setup.
+  - `private_endpoint_custom_dns_config_domains` (Required List of Strings) Domains of the Private Endpoint (if any) based off FQDNs in Azure custom DNS configs, which are required in your private DNS setup.
