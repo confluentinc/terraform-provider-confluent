@@ -109,6 +109,8 @@ func TestAccDataSourceSchemaRegistryClusters(t *testing.T) {
 					resource.TestCheckResourceAttr(fullSRClustersDataSourceLabel, fmt.Sprintf("%s.1.resource_name", paramClusters), "crn://confluent.cloud/organization=1111aaaa-11aa-11aa-11aa-111111aaaaaa/environment=env-7n1r31/schema-registry=lsrc-756ogo"),
 					resource.TestCheckResourceAttr(fullSRClustersDataSourceLabel, fmt.Sprintf("%s.1.display_name", paramClusters), "Stream Governance Package"),
 					resource.TestCheckResourceAttr(fullSRClustersDataSourceLabel, fmt.Sprintf("%s.1.rest_endpoint", paramClusters), "https://psrc-y1111.us-west-2.aws.confluent.cloud"),
+					resource.TestCheckResourceAttr(fullSRClustersDataSourceLabel, fmt.Sprintf("%s.1.private_rest_endpoint", paramClusters), "https://psrc-y1112.us-west-2.aws.confluent.cloud"),
+					resource.TestCheckResourceAttr(fullSRClustersDataSourceLabel, fmt.Sprintf("%s.1.catalog_endpoint", paramClusters), "https://psrc-y1113.us-west-2.aws.confluent.cloud"),
 					resource.TestCheckResourceAttr(fullSRClustersDataSourceLabel, fmt.Sprintf("%s.1.package", paramClusters), "ESSENTIALS"),
 					resource.TestCheckResourceAttr(fullSRClustersDataSourceLabel, fmt.Sprintf("%s.1.region", paramClusters), "us-east4"),
 					resource.TestCheckResourceAttr(fullSRClustersDataSourceLabel, fmt.Sprintf("%s.1.cloud", paramClusters), "AWS"),
