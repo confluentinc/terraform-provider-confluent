@@ -18,7 +18,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	v3 "github.com/confluentinc/ccloud-sdk-go-v2/srcm/v3"
+	v3 "github.com/confluentinc/ccloud-sdk-go-v2-internal/srcm/v3"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -69,6 +69,16 @@ func schemaRegistryClusterDataSource() *schema.Resource {
 			paramRestEndpoint: {
 				Type:        schema.TypeString,
 				Description: "The API endpoint of the Schema Registry Cluster.",
+				Computed:    true,
+			},
+			paramRestEndpointPrivate: {
+				Type:        schema.TypeString,
+				Description: "The private API endpoint of the Schema Registry Cluster.",
+				Computed:    true,
+			},
+			paramCatalogEndpoint: {
+				Type:        schema.TypeString,
+				Description: "The catalog endpoint of the Schema Registry Cluster.",
 				Computed:    true,
 			},
 			paramApiVersion: {
@@ -163,6 +173,12 @@ func setSchemaRegistryClusterAttributes(d *schema.ResourceData, schemaRegistryCl
 		return nil, createDescriptiveError(err)
 	}
 	if err := d.Set(paramRestEndpoint, schemaRegistryCluster.Spec.GetHttpEndpoint()); err != nil {
+		return nil, createDescriptiveError(err)
+	}
+	if err := d.Set(paramRestEndpointPrivate, schemaRegistryCluster.Spec.GetPrivateHttpEndpoint()); err != nil {
+		return nil, createDescriptiveError(err)
+	}
+	if err := d.Set(paramCatalogEndpoint, schemaRegistryCluster.Spec.GetCatalogHttpEndpoint()); err != nil {
 		return nil, createDescriptiveError(err)
 	}
 	if err := d.Set(paramApiVersion, schemaRegistryCluster.GetApiVersion()); err != nil {

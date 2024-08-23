@@ -32,22 +32,24 @@ const (
 )
 
 const (
-	schemaRegistryClusterHttpEndpoint = "https://psrc-y1111.us-west-2.aws.confluent.cloud"
-	schemaRegistryClusterRegionId     = "us-east4"
-	schemaRegistryClusterId           = "lsrc-755ogo"
-	schemaRegistryClusterResourceName = "crn://confluent.cloud/organization=1111aaaa-11aa-11aa-11aa-111111aaaaaa/environment=env-1jrymj/schema-registry=lsrc-755ogo"
-	schemaRegistryClusterApiVersion   = "srcm/v3"
-	schemaRegistryClusterKind         = "Cluster"
-	schemaRegistryClusterPackage      = "ESSENTIALS"
-	schemaRegistryClusterDisplayName  = "Stream Governance Package"
-	schemaRegistryClusterCloudType    = "AWS"
+	schemaRegistryClusterHttpEndpoint    = "https://psrc-y1111.us-west-2.aws.confluent.cloud"
+	schemaRegistryClusterPrivateEndpoint = "https://psrc-y1112.us-west-2.aws.confluent.cloud"
+	schemaRegistryClusterCatalogEndpoint = "https://psrc-y1113.us-west-2.aws.confluent.cloud"
+	schemaRegistryClusterRegionId        = "us-east4"
+	schemaRegistryClusterId              = "lsrc-755ogo"
+	schemaRegistryClusterResourceName    = "crn://confluent.cloud/organization=1111aaaa-11aa-11aa-11aa-111111aaaaaa/environment=env-1jrymj/schema-registry=lsrc-755ogo"
+	schemaRegistryClusterApiVersion      = "srcm/v3"
+	schemaRegistryClusterKind            = "Cluster"
+	schemaRegistryClusterPackage         = "ESSENTIALS"
+	schemaRegistryClusterDisplayName     = "Stream Governance Package"
+	schemaRegistryClusterCloudType       = "AWS"
 )
 
 var schemaRegistryClusterUrlPath = fmt.Sprintf("/srcm/v3/clusters/%s", schemaRegistryClusterId)
 
 var fullSchemaRegistryDataSourceLabel = fmt.Sprintf("data.confluent_schema_registry_cluster.%s", dataSourceSchemaRegistryLabel)
 
-func TestAccDataSourceSchemaRegistryCluster(t *testing.T) {
+func TestAccDataSourceSchemaRegistryCluster1(t *testing.T) {
 	ctx := context.Background()
 
 	wiremockContainer, err := setupWiremock(ctx)
@@ -106,6 +108,8 @@ func TestAccDataSourceSchemaRegistryCluster(t *testing.T) {
 					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramKind, schemaRegistryClusterKind),
 					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramResourceName, schemaRegistryClusterResourceName),
 					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramRestEndpoint, schemaRegistryClusterHttpEndpoint),
+					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramRestEndpointPrivate, schemaRegistryClusterPrivateEndpoint),
+					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramCatalogEndpoint, schemaRegistryClusterCatalogEndpoint),
 					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramCloud, schemaRegistryClusterCloudType),
 				),
 			},
@@ -123,6 +127,8 @@ func TestAccDataSourceSchemaRegistryCluster(t *testing.T) {
 					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramKind, schemaRegistryClusterKind),
 					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramResourceName, schemaRegistryClusterResourceName),
 					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramRestEndpoint, schemaRegistryClusterHttpEndpoint),
+					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramRestEndpointPrivate, schemaRegistryClusterPrivateEndpoint),
+					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramCatalogEndpoint, schemaRegistryClusterCatalogEndpoint),
 					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramCloud, schemaRegistryClusterCloudType),
 				),
 			},
@@ -140,6 +146,8 @@ func TestAccDataSourceSchemaRegistryCluster(t *testing.T) {
 					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramKind, schemaRegistryClusterKind),
 					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramResourceName, schemaRegistryClusterResourceName),
 					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramRestEndpoint, schemaRegistryClusterHttpEndpoint),
+					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramRestEndpointPrivate, schemaRegistryClusterPrivateEndpoint),
+					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramCatalogEndpoint, schemaRegistryClusterCatalogEndpoint),
 					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramCloud, schemaRegistryClusterCloudType),
 				),
 			},
