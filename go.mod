@@ -18,7 +18,7 @@ require (
 	github.com/confluentinc/ccloud-sdk-go-v2/ksql v0.1.0
 	github.com/confluentinc/ccloud-sdk-go-v2/mds v0.3.0
 	github.com/confluentinc/ccloud-sdk-go-v2/networking v0.12.0
-	github.com/confluentinc/ccloud-sdk-go-v2/networking-access-point v0.2.0
+	github.com/confluentinc/ccloud-sdk-go-v2/networking-access-point v0.3.0
 	github.com/confluentinc/ccloud-sdk-go-v2/networking-dnsforwarder v0.2.0
 	github.com/confluentinc/ccloud-sdk-go-v2/networking-ip v0.2.0
 	github.com/confluentinc/ccloud-sdk-go-v2/networking-privatelink v0.2.0
@@ -166,5 +166,3 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
-
-replace github.com/confluentinc/ccloud-sdk-go-v2/networking-access-point => github.com/confluentinc/ccloud-sdk-go-v2-internal/networking-access-point v0.0.9
