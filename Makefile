@@ -210,13 +210,6 @@ PUBLIC_REPO_TAG_VERSION := $(shell git log --tags --simplify-by-decoration --pre
 		head -n 1 | \
 		sed 's/tag: //')
 
-.PHONY: release-to-public-repo
-release-to-public-repo:
-	@echo Latest tag version to release is: $(PUBLIC_REPO_TAG_VERSION)
-	-@git remote add public https://github.com/confluentinc/terraform-provider-confluent.git
-	@echo Preparing to publish the latest commits and the most recent tag to the public repository...
-	@echo Doing nothing, publish code to public repo has been replaced by Airlock...
-
 # Pact targets
 .PHONY: show-pact
 show-pact:
