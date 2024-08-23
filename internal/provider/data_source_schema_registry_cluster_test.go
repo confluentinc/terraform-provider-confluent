@@ -49,7 +49,7 @@ var schemaRegistryClusterUrlPath = fmt.Sprintf("/srcm/v3/clusters/%s", schemaReg
 
 var fullSchemaRegistryDataSourceLabel = fmt.Sprintf("data.confluent_schema_registry_cluster.%s", dataSourceSchemaRegistryLabel)
 
-func TestAccDataSourceSchemaRegistryCluster1(t *testing.T) {
+func TestAccDataSourceSchemaRegistryCluster(t *testing.T) {
 	ctx := context.Background()
 
 	wiremockContainer, err := setupWiremock(ctx)
