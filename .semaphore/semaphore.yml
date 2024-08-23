@@ -39,5 +39,3 @@ blocks:
 promotions:
   - name: Draft a Release
     pipeline_file: goreleaser.yml
-  - name: Publish to public repository
-    pipeline_file: release-to-public-repo.yml
