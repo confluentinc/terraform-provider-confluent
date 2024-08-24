@@ -3,8 +3,6 @@ module github.com/confluentinc/terraform-provider-confluent
 go 1.22
 
 require (
-	github.com/confluentinc/ccloud-sdk-go-v2-internal/srcm v0.2.0
-	github.com/confluentinc/ccloud-sdk-go-v2-internal/srcmv3 v0.1.0
 	github.com/confluentinc/ccloud-sdk-go-v2/apikeys v0.3.0
 	github.com/confluentinc/ccloud-sdk-go-v2/byok v0.0.2
 	github.com/confluentinc/ccloud-sdk-go-v2/cmk v0.21.0
@@ -26,7 +24,7 @@ require (
 	github.com/confluentinc/ccloud-sdk-go-v2/networking-privatelink v0.2.0
 	github.com/confluentinc/ccloud-sdk-go-v2/org v0.9.0
 	github.com/confluentinc/ccloud-sdk-go-v2/schema-registry v0.4.0
-	github.com/confluentinc/ccloud-sdk-go-v2/srcm v0.6.0
+	github.com/confluentinc/ccloud-sdk-go-v2/srcm v0.7.0
 	github.com/confluentinc/ccloud-sdk-go-v2/sso v0.0.1
 	github.com/dghubble/sling v1.4.1
 	github.com/docker/go-connections v0.5.0
