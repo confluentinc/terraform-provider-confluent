@@ -36,7 +36,11 @@
       "kind": "AzureEgressPrivateLinkEndpointStatus",
       "private_endpoint_resource_id": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/testvpc/providers/Microsoft.Network/privateEndpoints/pe-plt-abcdef-az3",
       "private_endpoint_domain": "dbname.database.windows.net",
-      "private_endpoint_ip_address": "10.2.0.68"
+      "private_endpoint_ip_address": "10.2.0.68",
+      "private_endpoint_custom_dns_config_domains": [
+        "dbname.database.windows.net",
+        "dbname-region.database.windows.net"
+      ]
     }
   }
 }
