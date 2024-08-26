@@ -1,3 +1,15 @@
+## 2.1.0 (August 26th, 2024)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.0.0...v2.1.0)
+
+**New features:**
+* Add `private_endpoint_custom_dns_config_domains` to `network_access_point` [resource](docs/resources/confluent_access_point.md) and [data-source](docs/data-sources/confluent_access_point.md).
+
+**Bug fixes:**
+* Update [confluent_catalog_entity_attributes](docs/resources/confluent_catalog_entity_attributes.md) resource docs.
+* Update the timeout for `confluent_flink_statement` resource to resolve timeout issues.
+* Fix the `confluent_api_key` creation failure ([#418](https://github.com/confluentinc/terraform-provider-confluent/issues/418)).
+
 ## 2.0.0 (August 14th, 2024)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v1.83.0...v2.0.0)
