@@ -189,6 +189,8 @@ func TestAccFlinkStatement(t *testing.T) {
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "stopped", "false"),
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "properties.%", "1"),
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, fmt.Sprintf("properties.%s", flinkFirstPropertyKeyTest), flinkFirstPropertyValueTest),
+					//resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "properties_sensitive.%", "1"),
+					//resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, fmt.Sprintf("properties_sensitive.%s", flinkFirstSensitivePropertyKeyTest), flinkFirstSensitivePropertyValueTest),
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "credentials.#", "1"),
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "credentials.0.%", "2"),
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "credentials.0.key", kafkaApiKey),
@@ -218,6 +220,8 @@ func TestAccFlinkStatement(t *testing.T) {
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "stopped", "true"),
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "properties.%", "1"),
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, fmt.Sprintf("properties.%s", flinkFirstPropertyKeyTest), flinkFirstPropertyValueTest),
+					//resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "properties_sensitive.%", "1"),
+					//resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, fmt.Sprintf("properties_sensitive.%s", flinkFirstSensitivePropertyKeyTest), flinkFirstSensitivePropertyValueTest),
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "credentials.#", "1"),
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "credentials.0.%", "2"),
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "credentials.0.key", kafkaApiKey),
@@ -275,6 +279,7 @@ func testAccCheckFlinkStatement(confluentCloudBaseUrl, mockServerUrl string) str
 	  properties = {
 		"%s" = "%s"
 	  }
+
 	}
 	`, confluentCloudBaseUrl, flinkStatementResourceLabel, kafkaApiKey, kafkaApiSecret, mockServerUrl, flinkPrincipalIdTest,
 		flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkComputePoolIdTest,
@@ -313,7 +318,7 @@ func testAccCheckFlinkStatementUpdated(confluentCloudBaseUrl, mockServerUrl stri
 	  properties = {
 		"%s" = "%s"
 	  }
-	}
+    }
 	`, confluentCloudBaseUrl, flinkStatementResourceLabel, kafkaApiKey, kafkaApiSecret, mockServerUrl, flinkPrincipalIdTest,
 		flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkComputePoolIdTest,
 		flinkStatementNameTest, flinkStatementTest, flinkFirstPropertyKeyTest, flinkFirstPropertyValueTest)

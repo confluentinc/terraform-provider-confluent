@@ -17,6 +17,9 @@
     "properties": {
       "sql.local-time-zone": "GMT-08:00"
     },
+    "properties_sensitive": {
+      "sql.secrets.openaikey": "s123"
+    },
     "statement": "SELECT CURRENT_TIMESTAMP;",
     "stopped": true
   },
