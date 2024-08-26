@@ -115,10 +115,6 @@ const (
 	schemaRegistryKekKey                      = "kek_id"
 	schemaRegistryDekKey                      = "dek_id"
 	entityAttributesLoggingKey                = "entity_attributes_id"
-
-	deprecationMessageMajorRelease2 = "The %q %s has been deprecated and will be removed in the next major version of the provider (2.0.0). " +
-		"Refer to the Upgrade Guide at https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/guides/version-2-upgrade for more details. " +
-		"The guide will be published once version 2.0.0 is released."
 )
 
 func (c *Client) apiKeysApiContext(ctx context.Context) context.Context {
