@@ -80,18 +80,8 @@ resource "confluent_flink_statement" "example" {
 }
 ```
 
-### Option #3: Manage a Flink Compute Pool in the same Terraform workspace using openaisecret
-
-```terraform
-provider "confluent" {
-  organization_id       = var.organization_id            # optionally use CONFLUENT_ORGANIZATION_ID env var
-  environment_id        = var.environment_id             # optionally use CONFLUENT_ENVIRONMENT_ID env var
-  flink_compute_pool_id = var.flink_compute_pool_id      # optionally use FLINK_COMPUTE_POOL_ID env var
-  flink_rest_endpoint   = var.flink_rest_endpoint        # optionally use FLINK_REST_ENDPOINT env var
-  flink_api_key         = var.flink_api_key              # optionally use FLINK_API_KEY env var
-  flink_api_secret      = var.flink_api_secret           # optionally use FLINK_API_SECRET env var
-  flink_principal_id    = var.flink_principal_id         # optionally use FLINK_PRINCIPAL_ID env var
-}
+Another example of `confluent_flink_statement`:
+```
 resource "confluent_flink_statement" "example" {
   statement  = "CREATE MODEL `vector_encoding` INPUT (input STRING) OUTPUT (vector ARRAY<FLOAT>) WITH( 'TASK' = 'classification','PROVIDER' = 'OPENAI','OPENAI.ENDPOINT' = 'https://api.openai.com/v1/embeddings','OPENAI.API_KEY' = '{{sessionconfig/sql.secrets.openaikey}}');"  
   properties = {
