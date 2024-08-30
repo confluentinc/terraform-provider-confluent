@@ -108,7 +108,6 @@ func TestAccDataSourceSchemaRegistryCluster(t *testing.T) {
 					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramKind, schemaRegistryClusterKind),
 					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramResourceName, schemaRegistryClusterResourceName),
 					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramRestEndpoint, schemaRegistryClusterHttpEndpoint),
-					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramRestEndpointPrivate, schemaRegistryClusterPrivateEndpoint),
 					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramCatalogEndpoint, schemaRegistryClusterCatalogEndpoint),
 					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramCloud, schemaRegistryClusterCloudType),
 				),
@@ -127,7 +126,6 @@ func TestAccDataSourceSchemaRegistryCluster(t *testing.T) {
 					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramKind, schemaRegistryClusterKind),
 					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramResourceName, schemaRegistryClusterResourceName),
 					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramRestEndpoint, schemaRegistryClusterHttpEndpoint),
-					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramRestEndpointPrivate, schemaRegistryClusterPrivateEndpoint),
 					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramCatalogEndpoint, schemaRegistryClusterCatalogEndpoint),
 					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramCloud, schemaRegistryClusterCloudType),
 				),
@@ -146,6 +144,108 @@ func TestAccDataSourceSchemaRegistryCluster(t *testing.T) {
 					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramKind, schemaRegistryClusterKind),
 					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramResourceName, schemaRegistryClusterResourceName),
 					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramRestEndpoint, schemaRegistryClusterHttpEndpoint),
+					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramCatalogEndpoint, schemaRegistryClusterCatalogEndpoint),
+					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramCloud, schemaRegistryClusterCloudType),
+				),
+			},
+		},
+	})
+}
+
+func TestAccDataSourceSchemaRegistryClusterPrivate(t *testing.T) {
+	ctx := context.Background()
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
+
+	mockServerUrl := wiremockContainer.URI
+	wiremockClient := wiremock.NewClient(mockServerUrl)
+	// nolint:errcheck
+	defer wiremockClient.Reset()
+
+	// nolint:errcheck
+	defer wiremockClient.ResetAllScenarios()
+
+	readCreatedClusterResponse, _ := ioutil.ReadFile("../testdata/schema_registry_cluster/read_provisioned_cluster_private.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(schemaRegistryClusterUrlPath)).
+		InScenario(dataSourceSchemaRegistryScenarioName).
+		WithQueryParam("environment", wiremock.EqualTo(testEnvironmentId)).
+		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
+		WillReturn(
+			string(readCreatedClusterResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	readClustersResponse, _ := ioutil.ReadFile("../testdata/schema_registry_cluster/read_clusters_private.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/srcm/v3/clusters")).
+		InScenario(dataSourceSchemaRegistryScenarioName).
+		WithQueryParam("environment", wiremock.EqualTo(testEnvironmentId)).
+		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
+		WillReturn(
+			string(readClustersResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		// https://www.terraform.io/docs/extend/testing/acceptance-tests/teststep.html
+		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckDataSourceSchemaRegistryClusterConfigWithIdSet(mockServerUrl),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckSchemaRegistryClusterExists(fullSchemaRegistryDataSourceLabel),
+					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramId, schemaRegistryClusterId),
+					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramPackage, schemaRegistryClusterPackage),
+					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, fmt.Sprintf("%s.#", paramEnvironment), "1"),
+					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, fmt.Sprintf("%s.0.%s", paramEnvironment, paramId), testEnvironmentId),
+					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramRegion, schemaRegistryClusterRegionId),
+					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramDisplayName, schemaRegistryClusterDisplayName),
+					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramApiVersion, schemaRegistryClusterApiVersion),
+					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramKind, schemaRegistryClusterKind),
+					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramResourceName, schemaRegistryClusterResourceName),
+					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramRestEndpointPrivate, schemaRegistryClusterPrivateEndpoint),
+					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramCatalogEndpoint, schemaRegistryClusterCatalogEndpoint),
+					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramCloud, schemaRegistryClusterCloudType),
+				),
+			},
+			{
+				Config: testAccCheckDataSourceSchemaRegistryClusterConfigWithDisplayNameSet(mockServerUrl),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckClusterExists(fullSchemaRegistryDataSourceLabel),
+					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramId, schemaRegistryClusterId),
+					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramPackage, schemaRegistryClusterPackage),
+					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, fmt.Sprintf("%s.#", paramEnvironment), "1"),
+					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, fmt.Sprintf("%s.0.%s", paramEnvironment, paramId), testEnvironmentId),
+					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramRegion, schemaRegistryClusterRegionId),
+					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramDisplayName, schemaRegistryClusterDisplayName),
+					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramApiVersion, schemaRegistryClusterApiVersion),
+					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramKind, schemaRegistryClusterKind),
+					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramResourceName, schemaRegistryClusterResourceName),
+					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramRestEndpointPrivate, schemaRegistryClusterPrivateEndpoint),
+					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramCatalogEndpoint, schemaRegistryClusterCatalogEndpoint),
+					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramCloud, schemaRegistryClusterCloudType),
+				),
+			},
+			{
+				Config: testAccCheckDataSourceSchemaRegistryClusterConfigWithJustEnvironmentSet(mockServerUrl),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckClusterExists(fullSchemaRegistryDataSourceLabel),
+					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramId, schemaRegistryClusterId),
+					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramPackage, schemaRegistryClusterPackage),
+					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, fmt.Sprintf("%s.#", paramEnvironment), "1"),
+					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, fmt.Sprintf("%s.0.%s", paramEnvironment, paramId), testEnvironmentId),
+					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramRegion, schemaRegistryClusterRegionId),
+					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramDisplayName, schemaRegistryClusterDisplayName),
+					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramApiVersion, schemaRegistryClusterApiVersion),
+					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramKind, schemaRegistryClusterKind),
+					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramResourceName, schemaRegistryClusterResourceName),
 					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramRestEndpointPrivate, schemaRegistryClusterPrivateEndpoint),
 					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramCatalogEndpoint, schemaRegistryClusterCatalogEndpoint),
 					resource.TestCheckResourceAttr(fullSchemaRegistryDataSourceLabel, paramCloud, schemaRegistryClusterCloudType),
