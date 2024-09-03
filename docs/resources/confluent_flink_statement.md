@@ -124,7 +124,7 @@ The following arguments are supported:
 - `properties` - (Optional Map) The custom topic settings to set:
     - `name` - (Required String) The setting name, for example, `sql.local-time-zone`.
     - `value` - (Required String) The setting value, for example, `GMT-08:00`.
-- `properties_sensitive` - (Optional Map) The custom topic settings to set which contain sensitive values not to be displayed in TF state :
+- `properties_sensitive` - (Optional Map) Block for sensitive statement properties:
   - `name` - (Required String) The setting name, for example, `sql.secrets.openaikey`.
   - `value` - (Required String) The setting value, for example, `s1234`.
 
