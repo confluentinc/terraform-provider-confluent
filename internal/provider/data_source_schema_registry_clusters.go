@@ -192,33 +192,25 @@ func populateSRClusterResult(schemaRegistryCluster v3.SrcmV3Cluster) map[string]
 	env[0] = map[string]interface{}{
 		paramId: schemaRegistryCluster.Spec.Environment.GetId(),
 	}
-	if schemaRegistryCluster.Spec.GetHttpEndpoint() != "" {
-		return map[string]interface{}{
-			paramId:              schemaRegistryCluster.GetId(),
-			paramDisplayName:     schemaRegistryCluster.Spec.GetDisplayName(),
-			paramEnvironment:     env,
-			paramPackage:         schemaRegistryCluster.Spec.GetPackage(),
-			paramRegion:          schemaRegistryCluster.Spec.GetRegion(),
-			paramCloud:           schemaRegistryCluster.Spec.GetCloud(),
-			paramKind:            schemaRegistryCluster.GetKind(),
-			paramApiVersion:      schemaRegistryCluster.GetApiVersion(),
-			paramRestEndpoint:    schemaRegistryCluster.Spec.GetHttpEndpoint(),
-			paramCatalogEndpoint: schemaRegistryCluster.Spec.GetCatalogHttpEndpoint(),
-			paramResourceName:    schemaRegistryCluster.Metadata.GetResourceName(),
-		}
-	} else {
-		return map[string]interface{}{
-			paramId:                  schemaRegistryCluster.GetId(),
-			paramDisplayName:         schemaRegistryCluster.Spec.GetDisplayName(),
-			paramEnvironment:         env,
-			paramPackage:             schemaRegistryCluster.Spec.GetPackage(),
-			paramRegion:              schemaRegistryCluster.Spec.GetRegion(),
-			paramCloud:               schemaRegistryCluster.Spec.GetCloud(),
-			paramKind:                schemaRegistryCluster.GetKind(),
-			paramApiVersion:          schemaRegistryCluster.GetApiVersion(),
-			paramRestEndpointPrivate: schemaRegistryCluster.Spec.GetPrivateHttpEndpoint(),
-			paramCatalogEndpoint:     schemaRegistryCluster.Spec.GetCatalogHttpEndpoint(),
-			paramResourceName:        schemaRegistryCluster.Metadata.GetResourceName(),
-		}
+
+	result := map[string]interface{}{
+		paramId:              schemaRegistryCluster.GetId(),
+		paramDisplayName:     schemaRegistryCluster.Spec.GetDisplayName(),
+		paramEnvironment:     env,
+		paramPackage:         schemaRegistryCluster.Spec.GetPackage(),
+		paramRegion:          schemaRegistryCluster.Spec.GetRegion(),
+		paramCloud:           schemaRegistryCluster.Spec.GetCloud(),
+		paramKind:            schemaRegistryCluster.GetKind(),
+		paramApiVersion:      schemaRegistryCluster.GetApiVersion(),
+		paramCatalogEndpoint: schemaRegistryCluster.Spec.GetCatalogHttpEndpoint(),
+		paramResourceName:    schemaRegistryCluster.Metadata.GetResourceName(),
 	}
+
+	if schemaRegistryCluster.Spec.GetHttpEndpoint() != "" {
+		result[paramRestEndpoint] = schemaRegistryCluster.Spec.GetHttpEndpoint()
+	} else {
+		result[paramRestEndpointPrivate] = schemaRegistryCluster.Spec.GetPrivateHttpEndpoint()
+	}
+
+	return result
 }
