@@ -80,7 +80,7 @@ resource "confluent_flink_statement" "example" {
 }
 ```
 
-Another example of `confluent_flink_statement`:
+Example of `confluent_flink_statement` that creates a model:
 ```
 resource "confluent_flink_statement" "example" {
   statement  = "CREATE MODEL `vector_encoding` INPUT (input STRING) OUTPUT (vector ARRAY<FLOAT>) WITH( 'TASK' = 'classification','PROVIDER' = 'OPENAI','OPENAI.ENDPOINT' = 'https://api.openai.com/v1/embeddings','OPENAI.API_KEY' = '{{sessionconfig/sql.secrets.openaikey}}');"  
@@ -89,7 +89,7 @@ resource "confluent_flink_statement" "example" {
     "sql.current-database" = var.confluent_kafka_cluster_display_name
   }
   properties_sensitive = {
-      "sql.secrets.openaikey" : "..."
+      "sql.secrets.openaikey" : "***REDACTED***"
   }
   lifecycle {
     prevent_destroy = true
@@ -124,6 +124,9 @@ The following arguments are supported:
 - `properties` - (Optional Map) The custom topic settings to set:
     - `name` - (Required String) The setting name, for example, `sql.local-time-zone`.
     - `value` - (Required String) The setting value, for example, `GMT-08:00`.
+- `properties_sensitive` - (Optional Map) The custom topic settings to set which contain sensitive values not to be displayed in TF state :
+  - `name` - (Required String) The setting name, for example, `sql.secrets.openaikey`.
+  - `value` - (Required String) The setting value, for example, `s1234`.
 
 - `stopped` - (Optional Boolean) The boolean flag to control whether the running Flink Statement should be stopped. Defaults to `false`. Update it to `true` to stop the statement.
 
