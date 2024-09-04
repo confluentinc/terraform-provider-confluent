@@ -1,10 +1,10 @@
 terraform {
   required_providers {
 
-   aws = {
-          source  = "hashicorp/aws"
-          version = ">= 5.17.0"
-          }
+    aws = {
+      source  = "hashicorp/aws"
+      version = ">= 5.17.0"
+    }
     confluent = {
       source  = "confluentinc/confluent"
       version = "1.81.0"
@@ -15,7 +15,6 @@ terraform {
 provider "confluent" {
   cloud_api_key    = var.confluent_cloud_api_key
   cloud_api_secret = var.confluent_cloud_api_secret
-  endpoint = "https://api.stag.cpdev.cloud"
 }
 
 provider "aws" {
@@ -45,8 +44,8 @@ resource "confluent_kafka_cluster" "enterprise" {
 }
 
 resource "confluent_private_link_attachment" "pla" {
-  cloud = "AWS"
-  region = local.region
+  cloud        = "AWS"
+  region       = local.region
   display_name = "staging-aws-platt"
   environment {
     id = data.confluent_environment.staging.id
@@ -204,8 +203,8 @@ resource "confluent_schema_registry_cluster" "essentials" {
   }
 }
 data "confluent_flink_region" "main" {
-  cloud        = local.cloud
-  region       = local.region
+  cloud  = local.cloud
+  region = local.region
 }
 # https://docs.confluent.io/cloud/current/flink/get-started/quick-start-cloud-console.html#step-1-create-a-af-compute-pool
 resource "confluent_flink_compute_pool" "main" {
@@ -242,9 +241,9 @@ resource "confluent_schema" "order" {
   private_rest_endpoint = confluent_schema_registry_cluster.essentials.private_rest_endpoint
 
   # https://developer.confluent.io/learn-kafka/schema-registry/schema-subjects/#topicnamestrategy
-  subject_name  = "${confluent_kafka_topic.orders.topic_name}-value"
-  format        = "AVRO"
-  schema        = file("./schemas/avro/order.avsc")
+  subject_name = "${confluent_kafka_topic.orders.topic_name}-value"
+  format       = "AVRO"
+  schema       = file("./schemas/avro/order.avsc")
   credentials {
     key    = confluent_api_key.infrastructure-manager-schema-registry-api-key.id
     secret = confluent_api_key.infrastructure-manager-schema-registry-api-key.secret

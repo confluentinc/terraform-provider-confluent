@@ -21,7 +21,7 @@
           "resource_name": "crn://confluent.cloud/organization=1111aaaa-11aa-11aa-11aa-111111aaaaaa/environment=env-1jrymj"
         },
         "http_endpoint": "",
-        "private_http_endpoint": "https://psrc-y1112.us-west-2.aws.confluent.cloud",
+        "private_http_endpoint": "https://lsrc.us-west-2.aws.private.stag.cpdev.cloud",
         "catalog_http_endpoint": "https://psrc-y1113.us-west-2.aws.confluent.cloud",
         "package": "ESSENTIALS",
         "region": "us-east4",
