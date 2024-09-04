@@ -172,16 +172,12 @@ func setSchemaRegistryClusterAttributes(d *schema.ResourceData, schemaRegistryCl
 	if err := d.Set(paramDisplayName, schemaRegistryCluster.Spec.GetDisplayName()); err != nil {
 		return nil, createDescriptiveError(err)
 	}
-	if schemaRegistryCluster.Spec.GetHttpEndpoint() != "" {
-		if err := d.Set(paramRestEndpoint, schemaRegistryCluster.Spec.GetHttpEndpoint()); err != nil {
-			return nil, createDescriptiveError(err)
-		}
-	} else {
-		if err := d.Set(paramRestEndpointPrivate, schemaRegistryCluster.Spec.GetPrivateHttpEndpoint()); err != nil {
-			return nil, createDescriptiveError(err)
-		}
+	if err := d.Set(paramRestEndpoint, schemaRegistryCluster.Spec.GetHttpEndpoint()); err != nil {
+		return nil, createDescriptiveError(err)
 	}
-
+	if err := d.Set(paramRestEndpointPrivate, schemaRegistryCluster.Spec.GetPrivateHttpEndpoint()); err != nil {
+		return nil, createDescriptiveError(err)
+	}
 	if err := d.Set(paramCatalogEndpoint, schemaRegistryCluster.Spec.GetCatalogHttpEndpoint()); err != nil {
 		return nil, createDescriptiveError(err)
 	}
