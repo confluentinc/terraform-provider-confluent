@@ -72,6 +72,16 @@ func schemaRegistryClustersSchema() *schema.Schema {
 					Description: "The API endpoint of the Schema Registry Cluster.",
 					Computed:    true,
 				},
+				paramRestEndpointPrivate: {
+					Type:        schema.TypeString,
+					Description: "The private API endpoint of the Schema Registry Cluster.",
+					Computed:    true,
+				},
+				paramCatalogEndpoint: {
+					Type:        schema.TypeString,
+					Description: "The catalog endpoint of the Schema Registry Cluster.",
+					Computed:    true,
+				},
 				paramApiVersion: {
 					Type:        schema.TypeString,
 					Computed:    true,
@@ -184,15 +194,17 @@ func populateSRClusterResult(schemaRegistryCluster v3.SrcmV3Cluster) map[string]
 	}
 
 	return map[string]interface{}{
-		paramId:           schemaRegistryCluster.GetId(),
-		paramDisplayName:  schemaRegistryCluster.Spec.GetDisplayName(),
-		paramEnvironment:  env,
-		paramPackage:      schemaRegistryCluster.Spec.GetPackage(),
-		paramRegion:       schemaRegistryCluster.Spec.GetRegion(),
-		paramCloud:        schemaRegistryCluster.Spec.GetCloud(),
-		paramKind:         schemaRegistryCluster.GetKind(),
-		paramApiVersion:   schemaRegistryCluster.GetApiVersion(),
-		paramRestEndpoint: schemaRegistryCluster.Spec.GetHttpEndpoint(),
-		paramResourceName: schemaRegistryCluster.Metadata.GetResourceName(),
+		paramId:                  schemaRegistryCluster.GetId(),
+		paramDisplayName:         schemaRegistryCluster.Spec.GetDisplayName(),
+		paramEnvironment:         env,
+		paramPackage:             schemaRegistryCluster.Spec.GetPackage(),
+		paramRegion:              schemaRegistryCluster.Spec.GetRegion(),
+		paramCloud:               schemaRegistryCluster.Spec.GetCloud(),
+		paramKind:                schemaRegistryCluster.GetKind(),
+		paramApiVersion:          schemaRegistryCluster.GetApiVersion(),
+		paramRestEndpoint:        schemaRegistryCluster.Spec.GetHttpEndpoint(),
+		paramRestEndpointPrivate: schemaRegistryCluster.Spec.GetPrivateHttpEndpoint(),
+		paramCatalogEndpoint:     schemaRegistryCluster.Spec.GetCatalogHttpEndpoint(),
+		paramResourceName:        schemaRegistryCluster.Metadata.GetResourceName(),
 	}
 }
