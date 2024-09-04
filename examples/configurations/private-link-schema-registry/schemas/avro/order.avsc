@@ -1,0 +1,23 @@
+{
+  "type": "record",
+  "namespace": "io.confluent.examples.flink",
+  "name": "orders",
+  "fields": [
+    {
+      "name": "order_id",
+      "type": "string"
+    },
+    {
+      "name": "customer_id",
+      "type": "int"
+    },
+    {
+      "name": "product_id",
+      "type": "string"
+    },
+    {
+      "name": "price",
+      "type": "double"
+    }
+  ]
+}
