@@ -6,7 +6,7 @@
 * Support Private Link for Schema Registry Cluster [data-source](docs/data-sources/confluent_access_point.md).
 
 **Bug fixes:**
-* Update docs for [private_link_attachment](docs/resources/confluent_private_link_attachment.md) / [private_link_attachment_connection](docs/resources/confluent_private_link_attachment_connection.md) to indicate that display_name is required.
+* Update docs for [private_link_attachment](docs/resources/confluent_private_link_attachment.md) / [private_link_attachment_connection](docs/resources/confluent_private_link_attachment_connection.md) to indicate that `display_name` is required.
 
 ## 2.1.0 (August 26th, 2024)
 
