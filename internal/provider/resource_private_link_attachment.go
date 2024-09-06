@@ -43,7 +43,6 @@ func privateLinkAttachmentResource() *schema.Resource {
 				Required:     true,
 				ForceNew:     true,
 				ValidateFunc: validation.StringIsNotEmpty,
-				Computed:     true,
 			},
 			paramCloud: {
 				Type:         schema.TypeString,
