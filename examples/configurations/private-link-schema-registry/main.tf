@@ -187,21 +187,17 @@ resource "confluent_api_key" "app-manager-flink-api-key" {
     }
   }
 }
-data "confluent_schema_registry_region" "essentials" {
-  cloud   = local.cloud
-  region  = local.region
-  package = "ESSENTIALS"
-}
-resource "confluent_schema_registry_cluster" "essentials" {
-  package = data.confluent_schema_registry_region.essentials.package
+
+data "confluent_schema_registry_cluster" "essentials" {
   environment {
     id = var.environment_id
   }
-  region {
-    # See https://docs.confluent.io/cloud/current/stream-governance/packages.html#stream-governance-regions
-    id = data.confluent_schema_registry_region.essentials.id
-  }
+
+  depends_on = [
+    confluent_kafka_cluster.enterprise
+  ]
 }
+
 data "confluent_flink_region" "main" {
   cloud  = local.cloud
   region = local.region
