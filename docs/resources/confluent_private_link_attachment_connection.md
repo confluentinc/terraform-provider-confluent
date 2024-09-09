@@ -51,7 +51,7 @@ output "private_link_attachment_connection" {
 
 The following arguments are supported:
 
-- `display_name` - (Optional String) The name of the Private Link Attachment Connection.
+- `display_name` - (Required String) The name of the Private Link Attachment Connection.
 - `environment` (Required Configuration Block) supports the following:
   - `id` - (Required String) The ID of the Environment that the Private Link Attachment Connection belongs to, for example `env-xyz456`.
 - `private_link_attachment` (Required Configuration Block) supports the following:

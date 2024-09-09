@@ -38,10 +38,10 @@ func privateLinkAttachmentResource() *schema.Resource {
 		},
 		Schema: map[string]*schema.Schema{
 			paramDisplayName: {
-				Type:        schema.TypeString,
-				Description: "The name of the Private Link Attachment.",
-				Optional:    true,
-				Computed:    true,
+				Type:         schema.TypeString,
+				Description:  "The name of the Private Link Attachment.",
+				Required:     true,
+				ValidateFunc: validation.StringIsNotEmpty,
 			},
 			paramCloud: {
 				Type:         schema.TypeString,

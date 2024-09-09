@@ -34,7 +34,7 @@ output "private_link_attachment" {
 
 The following arguments are supported:
 
-- `display_name` - (Optional String) The name of the Private Link Attachment.
+- `display_name` - (Required String) The name of the Private Link Attachment.
 - `environment` (Required Configuration Block) supports the following:
   - `id` - (Required String) The ID of the Environment that the Private Link Attachment belongs to, for example `env-xyz456`.
 - `cloud` - (Required String) The cloud service provider that hosts the resources to access with the Private Link Attachment.
