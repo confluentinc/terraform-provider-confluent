@@ -53,7 +53,6 @@ func privateLinkAttachmentConnectionResource() *schema.Resource {
 				Type:         schema.TypeString,
 				Description:  "The name of the Private Link Attachment Connection.",
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringIsNotEmpty,
 			},
 			paramResourceName: {

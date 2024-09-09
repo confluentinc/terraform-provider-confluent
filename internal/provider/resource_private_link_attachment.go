@@ -41,7 +41,6 @@ func privateLinkAttachmentResource() *schema.Resource {
 				Type:         schema.TypeString,
 				Description:  "The name of the Private Link Attachment.",
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringIsNotEmpty,
 			},
 			paramCloud: {
