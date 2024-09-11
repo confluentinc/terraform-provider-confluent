@@ -1,0 +1,20 @@
+{
+  "api_version": "iam/v2",
+  "id": "op-abc123",
+  "kind": "CertificateAuthority",
+  "metadata": {
+    "created_at": "2024-02-01T22:25:50.415274Z",
+    "resource_name": "crn://confluent.cloud/organization=abc123/certificate-authority=op-abc123",
+    "self": "https://api.confluent.cloud/iam/v2/certificate-authorities/op-abc123",
+    "updated_at": "2024-02-01T22:25:50.415274Z"
+  },
+  "display_name": "my-ca",
+  "description": "example-description",
+  "fingerprints": [
+    "B1BC968BD4f49D622AA89A81F2150152A41D829C"
+  ],
+  "serial_numbers": [
+    "219C542DE8f6EC7177FA4EE8C3705797"
+  ],
+  "certificate_chain_filename": "certificate.pem"
+}

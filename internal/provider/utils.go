@@ -20,6 +20,7 @@ import (
 	"fmt"
 	apikeys "github.com/confluentinc/ccloud-sdk-go-v2/apikeys/v2"
 	byok "github.com/confluentinc/ccloud-sdk-go-v2/byok/v1"
+	ca "github.com/confluentinc/ccloud-sdk-go-v2/certificate-authority/v2"
 	cmk "github.com/confluentinc/ccloud-sdk-go-v2/cmk/v2"
 	ccp "github.com/confluentinc/ccloud-sdk-go-v2/connect-custom-plugin/v1"
 	connect "github.com/confluentinc/ccloud-sdk-go-v2/connect/v1"
@@ -63,6 +64,7 @@ import (
 
 const (
 	byokKeyLoggingKey                         = "byok_key_id"
+	certificateAuthorityKey                   = "certificate_authority_id"
 	crnKafkaSuffix                            = "/kafka="
 	kafkaAclLoggingKey                        = "kafka_acl_id"
 	kafkaClusterLoggingKey                    = "kafka_cluster_id"
@@ -175,6 +177,17 @@ func (c *Client) cmkApiContext(ctx context.Context) context.Context {
 func (c *Client) iamApiContext(ctx context.Context) context.Context {
 	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
 		return context.WithValue(context.Background(), iam.ContextBasicAuth, iam.BasicAuth{
+			UserName: c.cloudApiKey,
+			Password: c.cloudApiSecret,
+		})
+	}
+	tflog.Warn(ctx, "Could not find Cloud API Key")
+	return ctx
+}
+
+func (c *Client) caApiContext(ctx context.Context) context.Context {
+	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
+		return context.WithValue(context.Background(), ca.ContextBasicAuth, ca.BasicAuth{
 			UserName: c.cloudApiKey,
 			Password: c.cloudApiSecret,
 		})
