@@ -61,7 +61,7 @@ func certificateAuthorityResource() *schema.Resource {
 			},
 			paramCertificateChain: {
 				Type:         schema.TypeString,
-				Required:     true,
+				Optional:     true,
 				Sensitive:    true,
 				Description:  "A base64 encoded string containing the signing certificate chain.",
 				ValidateFunc: validation.StringIsNotEmpty,
@@ -157,7 +157,7 @@ func certificateAuthorityRead(ctx context.Context, d *schema.ResourceData, meta 
 func readCertificateAuthorityAndSetAttributes(ctx context.Context, d *schema.ResourceData, meta interface{}, certificateAuthorityId string) ([]*schema.ResourceData, error) {
 	c := meta.(*Client)
 
-	certificateAuthority, resp, err := executecertificateAuthorityRead(c.netAPApiContext(ctx), c, certificateAuthorityId)
+	certificateAuthority, resp, err := executecertificateAuthorityRead(c.caApiContext(ctx), c, certificateAuthorityId)
 	if err != nil {
 		tflog.Warn(ctx, fmt.Sprintf("Error reading Certificate Authority %q: %s", certificateAuthorityId, createDescriptiveError(err)), map[string]interface{}{certificateAuthorityKey: d.Id()})
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
@@ -215,7 +215,7 @@ func certificateAuthorityDelete(ctx context.Context, d *schema.ResourceData, met
 	tflog.Debug(ctx, fmt.Sprintf("Deleting Certificate Authority %q", d.Id()), map[string]interface{}{certificateAuthorityKey: d.Id()})
 	c := meta.(*Client)
 
-	req := c.caClient.CertificateAuthoritiesIamV2Api.DeleteIamV2CertificateAuthority(c.netAPApiContext(ctx), d.Id())
+	req := c.caClient.CertificateAuthoritiesIamV2Api.DeleteIamV2CertificateAuthority(c.caApiContext(ctx), d.Id())
 	_, _, err := req.Execute()
 
 	if err != nil {
@@ -248,7 +248,7 @@ func certificateAuthorityUpdate(ctx context.Context, d *schema.ResourceData, met
 	tflog.Debug(ctx, fmt.Sprintf("Updating Certificate Authority %q: %s", d.Id(), updateCertificateAuthorityJson), map[string]interface{}{certificateAuthorityKey: d.Id()})
 
 	c := meta.(*Client)
-	req := c.caClient.CertificateAuthoritiesIamV2Api.UpdateIamV2CertificateAuthority(c.netAPApiContext(ctx), d.Id()).IamV2UpdateCertRequest(*updateCertificateAuthority)
+	req := c.caClient.CertificateAuthoritiesIamV2Api.UpdateIamV2CertificateAuthority(c.caApiContext(ctx), d.Id()).IamV2UpdateCertRequest(*updateCertificateAuthority)
 	updatedCertificateAuthority, _, err := req.Execute()
 
 	if err != nil {
