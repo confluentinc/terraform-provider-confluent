@@ -125,7 +125,7 @@ func certificatePoolRead(ctx context.Context, d *schema.ResourceData, meta inter
 func readCertificatePoolAndSetAttributes(ctx context.Context, d *schema.ResourceData, meta interface{}, identityProviderId, certificatePoolId string) ([]*schema.ResourceData, error) {
 	c := meta.(*Client)
 
-	certificatePool, resp, err := executecertificatePoolRead(c.netAPApiContext(ctx), c, identityProviderId, certificatePoolId)
+	certificatePool, resp, err := executecertificatePoolRead(c.caApiContext(ctx), c, identityProviderId, certificatePoolId)
 	if err != nil {
 		tflog.Warn(ctx, fmt.Sprintf("Error reading Certificate Pool %q: %s", certificatePoolId, createDescriptiveError(err)), map[string]interface{}{certificatePoolKey: d.Id()})
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
@@ -178,7 +178,7 @@ func certificatePoolDelete(ctx context.Context, d *schema.ResourceData, meta int
 	identityProviderId := extractStringValueFromBlock(d, paramIdentityProvider, paramId)
 	c := meta.(*Client)
 
-	req := c.caClient.CertificateIdentityPoolsIamV2Api.DeleteIamV2CertificateIdentityPool(c.netAPApiContext(ctx), identityProviderId, d.Id())
+	req := c.caClient.CertificateIdentityPoolsIamV2Api.DeleteIamV2CertificateIdentityPool(c.caApiContext(ctx), identityProviderId, d.Id())
 	_, _, err := req.Execute()
 
 	if err != nil {
@@ -210,7 +210,7 @@ func certificatePoolUpdate(ctx context.Context, d *schema.ResourceData, meta int
 
 	c := meta.(*Client)
 	identityProviderId := extractStringValueFromBlock(d, paramIdentityProvider, paramId)
-	req := c.caClient.CertificateIdentityPoolsIamV2Api.UpdateIamV2CertificateIdentityPool(c.netAPApiContext(ctx), identityProviderId, d.Id()).IamV2CertificateIdentityPool(*updateCertificatePool)
+	req := c.caClient.CertificateIdentityPoolsIamV2Api.UpdateIamV2CertificateIdentityPool(c.caApiContext(ctx), identityProviderId, d.Id()).IamV2CertificateIdentityPool(*updateCertificatePool)
 	updatedCertificatePool, _, err := req.Execute()
 
 	if err != nil {
