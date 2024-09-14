@@ -49,7 +49,7 @@ var editableTopicSettings = []string{"cleanup.policy", "delete.retention.ms", "m
 	"message.timestamp.difference.max.ms", "message.timestamp.before.max.ms", "message.timestamp.after.max.ms",
 	"message.timestamp.type", "min.compaction.lag.ms", "min.insync.replicas",
 	"retention.bytes", "retention.ms", "segment.bytes", "segment.ms", "confluent.key.schema.validation", "confluent.value.schema.validation",
-	"confluent.key.subject.name.strategy", "confluent.value.subject.name.strategy"}
+	"confluent.key.subject.name.strategy", "confluent.value.subject.name.strategy", "confluent.topic.type"}
 
 func extractConfigs(configs map[string]interface{}) []kafkarestv3.CreateTopicRequestDataConfigs {
 	configResult := make([]kafkarestv3.CreateTopicRequestDataConfigs, len(configs))
