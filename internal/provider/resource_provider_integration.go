@@ -60,6 +60,7 @@ func providerIntegrationResource() *schema.Resource {
 			paramDisplayName: {
 				Type:         schema.TypeString,
 				Required:     true,
+				ForceNew:     true,
 				Description:  "The display name of provider integration.",
 				ValidateFunc: validation.StringIsNotEmpty,
 			},
