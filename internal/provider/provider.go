@@ -20,6 +20,7 @@ import (
 	ccp "github.com/confluentinc/ccloud-sdk-go-v2/connect-custom-plugin/v1"
 	dns "github.com/confluentinc/ccloud-sdk-go-v2/networking-dnsforwarder/v1"
 	netip "github.com/confluentinc/ccloud-sdk-go-v2/networking-ip/v1"
+	pi "github.com/confluentinc/ccloud-sdk-go-v2/provider-integration/v1"
 	"github.com/confluentinc/ccloud-sdk-go-v2/sso/v2"
 	"os"
 	"strings"
@@ -89,6 +90,7 @@ type Client struct {
 	quotasClient                    *quotas.APIClient
 	srcmClient                      *srcm.APIClient
 	ssoClient                       *sso.APIClient
+	piClient                        *pi.APIClient
 	userAgent                       string
 	cloudApiKey                     string
 	cloudApiSecret                  string
@@ -279,6 +281,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_private_link_access":                privateLinkAccessDataSource(),
 				"confluent_private_link_attachment":            privateLinkAttachmentDataSource(),
 				"confluent_private_link_attachment_connection": privateLinkAttachmentConnectionDataSource(),
+				"confluent_provider_integration":               providerIntegrationDataSource(),
 				"confluent_role_binding":                       roleBindingDataSource(),
 				"confluent_schema":                             schemaDataSource(),
 				"confluent_schemas":                            schemasDataSource(),
@@ -330,6 +333,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_private_link_access":                privateLinkAccessResource(),
 				"confluent_private_link_attachment":            privateLinkAttachmentResource(),
 				"confluent_private_link_attachment_connection": privateLinkAttachmentConnectionResource(),
+				"confluent_provider_integration":               providerIntegrationResource(),
 				"confluent_role_binding":                       roleBindingResource(),
 				"confluent_schema":                             schemaResource(),
 				"confluent_schema_exporter":                    schemaExporterResource(),
@@ -468,6 +472,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	fcpmCfg := fcpm.NewConfiguration()
 	iamCfg := iam.NewConfiguration()
 	iamV1Cfg := iamv1.NewConfiguration()
+	ksqlCfg := ksql.NewConfiguration()
 	mdsCfg := mds.NewConfiguration()
 	netAccessPointCfg := netap.NewConfiguration()
 	netCfg := net.NewConfiguration()
@@ -476,9 +481,9 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	netDnsCfg := dns.NewConfiguration()
 	oidcCfg := oidc.NewConfiguration()
 	orgCfg := org.NewConfiguration()
-	srcmCfg := srcm.NewConfiguration()
-	ksqlCfg := ksql.NewConfiguration()
+	piCfg := pi.NewConfiguration()
 	quotasCfg := quotas.NewConfiguration()
+	srcmCfg := srcm.NewConfiguration()
 	ssoCfg := sso.NewConfiguration()
 
 	apiKeysCfg.Servers[0].URL = endpoint
@@ -489,6 +494,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	fcpmCfg.Servers[0].URL = endpoint
 	iamCfg.Servers[0].URL = endpoint
 	iamV1Cfg.Servers[0].URL = endpoint
+	ksqlCfg.Servers[0].URL = endpoint
 	mdsCfg.Servers[0].URL = endpoint
 	netCfg.Servers[0].URL = endpoint
 	netIpCfg.Servers[0].URL = endpoint
@@ -497,9 +503,9 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	netDnsCfg.Servers[0].URL = endpoint
 	oidcCfg.Servers[0].URL = endpoint
 	orgCfg.Servers[0].URL = endpoint
-	srcmCfg.Servers[0].URL = endpoint
-	ksqlCfg.Servers[0].URL = endpoint
+	piCfg.Servers[0].URL = endpoint
 	quotasCfg.Servers[0].URL = endpoint
+	srcmCfg.Servers[0].URL = endpoint
 	ssoCfg.Servers[0].URL = endpoint
 
 	apiKeysCfg.UserAgent = userAgent
@@ -510,6 +516,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	fcpmCfg.UserAgent = userAgent
 	iamCfg.UserAgent = userAgent
 	iamV1Cfg.UserAgent = userAgent
+	ksqlCfg.UserAgent = userAgent
 	mdsCfg.UserAgent = userAgent
 	netCfg.UserAgent = userAgent
 	netAccessPointCfg.UserAgent = userAgent
@@ -518,9 +525,9 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	netPLCfg.UserAgent = userAgent
 	oidcCfg.UserAgent = userAgent
 	orgCfg.UserAgent = userAgent
-	srcmCfg.UserAgent = userAgent
-	ksqlCfg.UserAgent = userAgent
+	piCfg.UserAgent = userAgent
 	quotasCfg.UserAgent = userAgent
+	srcmCfg.UserAgent = userAgent
 	ssoCfg.UserAgent = userAgent
 
 	var flinkRestClientFactory *FlinkRestClientFactory
@@ -539,6 +546,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	fcpmCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	iamCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	iamV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
+	ksqlCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	mdsCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	netCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	netIpCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
@@ -546,9 +554,9 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	netDnsCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	oidcCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	orgCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
-	srcmCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
-	ksqlCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
+	piCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	quotasCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
+	srcmCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	ssoCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 
 	client := Client{
@@ -560,6 +568,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 		fcpmClient:                      fcpm.NewAPIClient(fcpmCfg),
 		iamClient:                       iam.NewAPIClient(iamCfg),
 		iamV1Client:                     iamv1.NewAPIClient(iamV1Cfg),
+		ksqlClient:                      ksql.NewAPIClient(ksqlCfg),
 		netClient:                       net.NewAPIClient(netCfg),
 		netAccessPointClient:            netap.NewAPIClient(netAccessPointCfg),
 		netIpClient:                     netip.NewAPIClient(netIpCfg),
@@ -567,8 +576,8 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 		netDnsClient:                    dns.NewAPIClient(netDnsCfg),
 		oidcClient:                      oidc.NewAPIClient(oidcCfg),
 		orgClient:                       org.NewAPIClient(orgCfg),
+		piClient:                        pi.NewAPIClient(piCfg),
 		srcmClient:                      srcm.NewAPIClient(srcmCfg),
-		ksqlClient:                      ksql.NewAPIClient(ksqlCfg),
 		flinkRestClientFactory:          flinkRestClientFactory,
 		kafkaRestClientFactory:          kafkaRestClientFactory,
 		schemaRegistryRestClientFactory: schemaRegistryRestClientFactory,
