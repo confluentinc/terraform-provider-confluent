@@ -57,15 +57,17 @@ func TestAccDataSourceCertificateAuthority(t *testing.T) {
 					resource.TestCheckResourceAttr(CertificateAuthorityResourceName, "certificate_chain_filename", "certificate.pem"),
 					resource.TestCheckResourceAttr(CertificateAuthorityResourceName, "fingerprints.#", "1"),
 					resource.TestCheckTypeSetElemAttr(CertificateAuthorityResourceName, "fingerprints.*", "B1BC968BD4f49D622AA89A81F2150152A41D829C"),
+					resource.TestCheckResourceAttr(CertificateAuthorityResourceName, "expiration_dates.#", "1"),
+					resource.TestCheckTypeSetElemAttr(CertificateAuthorityResourceName, "expiration_dates.*", "2017-07-21 17:32:28 +0000 UTC"),
 					resource.TestCheckResourceAttr(CertificateAuthorityResourceName, "serial_numbers.#", "1"),
 					resource.TestCheckTypeSetElemAttr(CertificateAuthorityResourceName, "serial_numbers.*", "219C542DE8f6EC7177FA4EE8C3705797"),
 					resource.TestCheckResourceAttr(CertificateAuthorityResourceName, "crl_url", "example.url"),
 					resource.TestCheckResourceAttr(CertificateAuthorityResourceName, "crl_source", "URL"),
+					resource.TestCheckResourceAttr(CertificateAuthorityResourceName, "crl_updated_at", "2017-07-21 17:32:28 +0000 UTC"),
 				),
 			},
 		},
 	})
-
 }
 
 func testAccCheckDataSourceCertificateAuthority(mockServerUrl, resourceId string) string {

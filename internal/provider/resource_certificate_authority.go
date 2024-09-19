@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	ca "github.com/confluentinc/ccloud-sdk-go-v2/certificate-authority/v2"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -33,7 +34,9 @@ const (
 	paramCrlSource                = "crl_source"
 	paramCrlUrl                   = "crl_url"
 	paramCrlChain                 = "crl_chain"
+	paramCrlUpdatedAt             = "crl_updated_at"
 	paramFingerprints             = "fingerprints"
+	paramExpirationDates          = "expiration_dates"
 	paramSerialNumbers            = "serial_numbers"
 )
 
@@ -78,6 +81,12 @@ func certificateAuthorityResource() *schema.Resource {
 				Computed:    true,
 				Description: "The fingerprints for each certificate in the certificate chain.",
 			},
+			paramExpirationDates: {
+				Type:        schema.TypeSet,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Computed:    true,
+				Description: "The expiration dates of certificates in the chain.",
+			},
 			paramSerialNumbers: {
 				Type:        schema.TypeSet,
 				Elem:        &schema.Schema{Type: schema.TypeString},
@@ -92,6 +101,11 @@ func certificateAuthorityResource() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "The url from which to fetch the CRL for the certificate authority.",
+			},
+			paramCrlUpdatedAt: {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The timestamp for when CRL was last updated.",
 			},
 			paramCrlChain: {
 				Type:         schema.TypeString,
@@ -197,6 +211,9 @@ func setCertificateAuthorityAttributes(d *schema.ResourceData, certificateAuthor
 	if err := d.Set(paramFingerprints, certificateAuthority.GetFingerprints()); err != nil {
 		return nil, err
 	}
+	if err := d.Set(paramExpirationDates, convertTimeToStringSlice(certificateAuthority.GetExpirationDates())); err != nil {
+		return nil, err
+	}
 	if err := d.Set(paramSerialNumbers, certificateAuthority.GetSerialNumbers()); err != nil {
 		return nil, err
 	}
@@ -204,6 +221,9 @@ func setCertificateAuthorityAttributes(d *schema.ResourceData, certificateAuthor
 		return nil, err
 	}
 	if err := d.Set(paramCrlUrl, certificateAuthority.GetCrlUrl()); err != nil {
+		return nil, err
+	}
+	if err := d.Set(paramCrlUpdatedAt, fmt.Sprint(certificateAuthority.GetCrlUpdatedAt())); err != nil {
 		return nil, err
 	}
 
@@ -273,4 +293,12 @@ func certificateAuthorityImport(ctx context.Context, d *schema.ResourceData, met
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished importing Certificate Authority %q", d.Id()), map[string]interface{}{certificateAuthorityKey: d.Id()})
 	return []*schema.ResourceData{d}, nil
+}
+
+func convertTimeToStringSlice(timeValues []time.Time) []string {
+	s := make([]string, len(timeValues))
+	for i, timeValue := range timeValues {
+		s[i] = fmt.Sprint(timeValue)
+	}
+	return s
 }

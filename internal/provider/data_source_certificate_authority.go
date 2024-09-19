@@ -54,6 +54,12 @@ func certificateAuthorityDataSource() *schema.Resource {
 				Computed:    true,
 				Description: "The fingerprints for each certificate in the certificate chain.",
 			},
+			paramExpirationDates: {
+				Type:        schema.TypeSet,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Computed:    true,
+				Description: "The expiration dates of certificates in the chain.",
+			},
 			paramSerialNumbers: {
 				Type:        schema.TypeSet,
 				Elem:        &schema.Schema{Type: schema.TypeString},
@@ -70,6 +76,12 @@ func certificateAuthorityDataSource() *schema.Resource {
 				Optional:    true,
 				Computed:    true,
 				Description: "The url from which to fetch the CRL for the certificate authority if crl_source is URL.",
+			},
+			paramCrlUpdatedAt: {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				Description: "The timestamp for when CRL was last updated.",
 			},
 		},
 	}
