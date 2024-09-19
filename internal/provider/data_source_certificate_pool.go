@@ -33,7 +33,7 @@ func certificatePoolDataSource() *schema.Resource {
 				Required:    true,
 				Description: "The ID of the Certificate Pool, for example, `op-abc123`.",
 			},
-			paramIdentityProvider: identityProviderDataSourceSchema(),
+			paramCertificateAuthority: certificateAuthorityDataSourceSchema(),
 			paramDisplayName: {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -64,8 +64,8 @@ func certificatePoolDataSourceRead(ctx context.Context, d *schema.ResourceData, 
 	tflog.Debug(ctx, fmt.Sprintf("Reading Certificate Pool %q=%q", paramId, certificatePoolId), map[string]interface{}{certificatePoolKey: certificatePoolId})
 
 	c := meta.(*Client)
-	identityProviderId := extractStringValueFromBlock(d, paramIdentityProvider, paramId)
-	request := c.caClient.CertificateIdentityPoolsIamV2Api.GetIamV2CertificateIdentityPool(c.caApiContext(ctx), identityProviderId, certificatePoolId)
+	CertificateAuthorityId := extractStringValueFromBlock(d, paramCertificateAuthority, paramId)
+	request := c.caClient.CertificateIdentityPoolsIamV2Api.GetIamV2CertificateIdentityPool(c.caApiContext(ctx), CertificateAuthorityId, certificatePoolId)
 	certificatePool, _, err := c.caClient.CertificateIdentityPoolsIamV2Api.GetIamV2CertificateIdentityPoolExecute(request)
 	if err != nil {
 		return diag.Errorf("error reading Certificate Pool %q: %s", certificatePoolId, createDescriptiveError(err))
@@ -76,8 +76,24 @@ func certificatePoolDataSourceRead(ctx context.Context, d *schema.ResourceData, 
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Certificate Pool %q: %s", certificatePoolId, certificatePoolJson), map[string]interface{}{certificatePoolKey: certificatePoolId})
 
-	if _, err := setCertificatePoolAttributes(d, certificatePool, identityProviderId); err != nil {
+	if _, err := setCertificatePoolAttributes(d, certificatePool, CertificateAuthorityId); err != nil {
 		return diag.FromErr(createDescriptiveError(err))
 	}
 	return nil
+}
+
+func certificateAuthorityDataSourceSchema() *schema.Schema {
+	return &schema.Schema{
+		Type: schema.TypeList,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramId: {
+					Type:     schema.TypeString,
+					Required: true,
+				},
+			},
+		},
+		Required: true,
+		MaxItems: 1,
+	}
 }

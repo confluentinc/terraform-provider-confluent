@@ -71,7 +71,7 @@ func testAccCheckDataSourceCertificatePool(mockServerUrl, resourceId string) str
 
 	data "confluent_certificate_pool" "main" {
 	    id = "%s"
-		identity_provider {
+		certificate_authority {
 		    id = "op-abc123"
 		}
 	}

@@ -31,6 +31,8 @@ resource "confluent_certificate_pool" "main" {
 
 The following arguments are supported:
 
+- `certificate_authority` (Required Configuration Block) supports the following:
+    - `id` - (Required String) The ID of the Certificate Authority for this Certificate Pool, for example, `op-123abc`.
 - `display_name` - (Required String) The name of the Certificate Pool.
 - `description` - (Required String) A description of the Certificate Pool.
 - `external_identifier` - (Required String) The certificate field that will be used to represent the pool's external identity for audit logging.

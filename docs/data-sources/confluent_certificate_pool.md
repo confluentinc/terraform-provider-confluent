@@ -22,7 +22,7 @@ provider "confluent" {
 
 data "confluent_certificate_pool" "main" {
   id = "pool-def456"
-  environment {
+  certificate_authority {
     id = "op-abc123"
   }
 }
@@ -38,7 +38,7 @@ output "certificate_pool" {
 The following arguments are supported:
 
 - `id` - (Required String) The ID of the Certificate Pool, for example, `pool-abc123`.
-- `identity_provider` (Required Configuration Block) supports the following:
+- `certificate_authority` (Required Configuration Block) supports the following:
     - `id` - (Required String) The ID of the Certificate Authority for this Certificate Pool, for example, `op-123abc`.
 
 ## Attributes Reference

@@ -137,7 +137,7 @@ func testAccCheckResourceCertificatePoolConfig(mockServerUrl, description, filte
     }
 
 	resource "confluent_certificate_pool" "main" {
-		identity_provider {
+		certificate_authority {
 		    id = "op-abc123"
 		}
 		display_name = "my-certificate-pool"
