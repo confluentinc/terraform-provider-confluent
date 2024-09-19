@@ -44,6 +44,8 @@ In addition to the preceding arguments, the following attributes are exported:
 - `description` - (Required String) A description for the Certificate Authority.
 - `certificate_chain_filename` - (Required String) The name of the certificate file.
 - `fingerprints` (Required List of Strings) The fingerprints for each certificate in the certificate chain.
+- `expiration_dates` (Required List of Strings) The expiration dates of certificates in the chain.
 - `serial_numbers` (Required List of Strings) The serial numbers for each certificate in the certificate chain.
 - `crl_source` - (Optional String) The source specifies whether the Certificate Revocation List (CRL) is updated from either local file uploaded (LOCAL) or from url of CRL (URL).
 - `crl_url` - (Optional String) The url from which to fetch the CRL for the certificate authority if crl_source is URL.
+- `crl_updated_at` - (Optional String) The timestamp for when CRL was last updated.

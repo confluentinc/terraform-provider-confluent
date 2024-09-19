@@ -44,7 +44,10 @@ The following arguments are supported:
 In addition to the preceding arguments, the following attributes are exported:
 
 - `fingerprints` (Required List of Strings) The fingerprints for each certificate in the certificate chain.
+- `expiration_dates` (Required List of Strings) The expiration dates of certificates in the chain.
 - `serial_numbers` (Required List of Strings) The serial numbers for each certificate in the certificate chain.
+- `crl_source` - (Optional String) The source specifies whether the Certificate Revocation List (CRL) is updated from either local file uploaded (LOCAL) or from url of CRL (URL).
+- `crl_updated_at` - (Optional String) The timestamp for when CRL was last updated.
 
 ## Import
 
