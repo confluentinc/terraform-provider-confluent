@@ -1,3 +1,13 @@
+## 2.3.0 (September 20th, 2024)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.2.0...v2.3.0)
+
+**New features:**
+* Added support for `confluent_provider_integration` [resource](docs/resources/confluent_provider_integration.md) and [data-sources](docs/data-sources/confluent_provider_integration.md)
+
+**Bug fixes:**
+* Fixed one incorrect docs link in `CHANGELOG.md` for v2.2.0 release.
+
 ## 2.2.0 (September 6th, 2024)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.1.0...v2.2.0)
