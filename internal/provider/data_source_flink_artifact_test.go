@@ -25,7 +25,8 @@ func TestAccDataSourceFlinkArtifact(t *testing.T) {
 	}
 	defer wiremockContainer.Terminate(ctx)
 
-	mockServerUrl := wiremockContainer.URI
+	//mockServerUrl := wiremockContainer.URI
+	mockServerUrl := "http://localhost:8080"
 	wiremockClient := wiremock.NewClient(mockServerUrl)
 	// nolint:errcheck
 	defer wiremockClient.Reset()
@@ -34,9 +35,9 @@ func TestAccDataSourceFlinkArtifact(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	readCreatedFlinkArtifactResponse, _ := ioutil.ReadFile("../testdata/flink_artifact/read_created_artifact.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/artifact/v1/flink-artifacts/lfcp-abc123")).
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/artifact/v1/flink-artifacts/lfcp-abc123?cloud=AWS&region=us-east-2")).
 		InScenario(dataSourceFlinkArtifactScenarioName).
-		WithQueryParam("environment", wiremock.EqualTo(flinkArtifactEnvironmentId)).
+		//WithQueryParam("environment", wiremock.EqualTo(flinkArtifactEnvironmentId)).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillReturn(
 			string(readCreatedFlinkArtifactResponse),

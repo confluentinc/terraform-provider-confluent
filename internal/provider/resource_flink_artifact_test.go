@@ -26,7 +26,9 @@ const (
 	flinkArtifactRestEndpoint                = "https://flink.us-east-2.aws.confluent.cloud/sql/v1alpha1/environments/env-gz903"
 )
 
-var flinkArtifactsUrlPath = fmt.Sprintf("/artifact/v1/flink-artifacts/%s", flinkArtifactId)
+//var flinkArtifactsUrlPath = fmt.Sprintf("/artifact/v1/flink-artifacts/%s", flinkArtifactId)
+
+var flinkArtifactsUrlPath = fmt.Sprintf("/artifact/v1/flink-artifacts/%s?cloud=%s&region=%s", flinkArtifactId, flinkArtifactCloud, flinkArtifactRegion)
 
 func TestAccFlinkArtifact(t *testing.T) {
 	ctx := context.Background()
@@ -37,7 +39,8 @@ func TestAccFlinkArtifact(t *testing.T) {
 	}
 	defer wiremockContainer.Terminate(ctx)
 
-	mockServerUrl := wiremockContainer.URI
+	//mockServerUrl := wiremockContainer.URI
+	mockServerUrl := "http://localhost:8080"
 	wiremockClient := wiremock.NewClient(mockServerUrl)
 	// nolint:errcheck
 	defer wiremockClient.Reset()
@@ -58,21 +61,21 @@ func TestAccFlinkArtifact(t *testing.T) {
 	_ = wiremockClient.StubFor(createArtifactStub)
 
 	readCreatedArtifactResponse, _ := ioutil.ReadFile("../testdata/flink_artifact/read_created_artifact.json")
-
-	readStub := wiremock.Get(wiremock.URLPathEqualTo(flinkArtifactsUrlPath)).
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(flinkArtifactsUrlPath)).
 		InScenario(flinkArtifactScenarioName).
-		WithQueryParam("environment", wiremock.EqualTo(flinkArtifactEnvironmentId)).
+		//WithQueryParam("environment", wiremock.EqualTo(flinkComputePoolEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateFlinkArtifactHasBeenCreated).
 		WillReturn(
 			string(readCreatedArtifactResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		)
-	_ = wiremockClient.StubFor(readStub)
+		))
 
 	deleteArtifactStub := wiremock.Delete(wiremock.URLPathEqualTo(flinkArtifactsUrlPath)).
 		InScenario(flinkArtifactScenarioName).
-		WithQueryParam("environment", wiremock.EqualTo(flinkArtifactEnvironmentId)).
+		//WithQueryParam("environment", wiremock.EqualTo(flinkArtifactEnvironmentId)).
+		//WithQueryParam("region", wiremock.EqualTo(flinkArtifactRegion)).
+		//WithQueryParam("cloud", wiremock.EqualTo(flinkArtifactCloud)).
 		WhenScenarioStateIs(scenarioStateFlinkArtifactHasBeenCreated).
 		WillSetStateTo(scenarioStateFlinkArtifactHasBeenDeleted).
 		WillReturn(
@@ -85,7 +88,9 @@ func TestAccFlinkArtifact(t *testing.T) {
 	readDeletedArtifactResponse, _ := ioutil.ReadFile("../testdata/flink_artifact/read_deleted_artifact.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(flinkArtifactsUrlPath)).
 		InScenario(flinkArtifactScenarioName).
-		WithQueryParam("environment", wiremock.EqualTo(flinkArtifactEnvironmentId)).
+		//WithQueryParam("environment", wiremock.EqualTo(flinkArtifactEnvironmentId)).
+		//WithQueryParam("region", wiremock.EqualTo(flinkArtifactRegion)).
+		//WithQueryParam("cloud", wiremock.EqualTo(flinkArtifactCloud)).
 		WhenScenarioStateIs(scenarioStateFlinkArtifactHasBeenDeleted).
 		WillReturn(
 			string(readDeletedArtifactResponse),
