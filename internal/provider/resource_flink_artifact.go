@@ -212,7 +212,7 @@ func artifactUpdate(ctx context.Context, d *schema.ResourceData, meta interface{
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Updating Flink Artifact %q: %s", d.Id(), updateArtifactRequestJson), map[string]interface{}{flinkArtifactLoggingKey: d.Id()})
 
-	req := c.faClient.FlinkArtifactsArtifactV1Api.UpdateArtifactV1FlinkArtifact(c.faApiContext(ctx), d.Id()).ArtifactV1FlinkArtifactUpdate(*updateArtifactRequest)
+	req := c.faClient.FlinkArtifactsArtifactV1Api.UpdateArtifactV1FlinkArtifact(c.faApiContext(ctx), d.Id()).ArtifactV1FlinkArtifactUpdate(*updateArtifactRequest).Region(d.Get(paramRegion).(string)).Cloud(d.Get(paramCloud).(string))
 	updatedArtifact, _, err := req.Execute()
 
 	if err != nil {
