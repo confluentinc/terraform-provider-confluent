@@ -25,8 +25,7 @@ func TestAccDataSourceFlinkArtifact(t *testing.T) {
 	}
 	defer wiremockContainer.Terminate(ctx)
 
-	//mockServerUrl := wiremockContainer.URI
-	mockServerUrl := "http://localhost:8080"
+	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
 	// nolint:errcheck
 	defer wiremockClient.Reset()
@@ -35,9 +34,10 @@ func TestAccDataSourceFlinkArtifact(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	readCreatedFlinkArtifactResponse, _ := ioutil.ReadFile("../testdata/flink_artifact/read_created_artifact.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/artifact/v1/flink-artifacts/lfcp-abc123?cloud=AWS&region=us-east-2")).
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/artifact/v1/flink-artifacts/lfcp-abc123")).
 		InScenario(dataSourceFlinkArtifactScenarioName).
-		//WithQueryParam("environment", wiremock.EqualTo(flinkArtifactEnvironmentId)).
+		WithQueryParam("cloud", wiremock.EqualTo("AWS")).
+		WithQueryParam("region", wiremock.EqualTo("us-east-2")).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillReturn(
 			string(readCreatedFlinkArtifactResponse),
@@ -45,16 +45,18 @@ func TestAccDataSourceFlinkArtifact(t *testing.T) {
 			http.StatusOK,
 		))
 
-	//readArtifactsResponse, _ := ioutil.ReadFile("../testdata/flink_artifact/read_artifact.json")
-	//_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/artifact/v1/flink-artifacts")).
-	//	InScenario(dataSourceFlinkArtifactScenarioName).
-	//	WithQueryParam("environment", wiremock.EqualTo(flinkArtifactEnvironmentId)).
-	//	WhenScenarioStateIs(wiremock.ScenarioStateStarted).
-	//	WillReturn(
-	//		string(readArtifactsResponse),
-	//		contentTypeJSONHeader,
-	//		http.StatusOK,
-	//	))
+	readArtifactsResponse, _ := ioutil.ReadFile("../testdata/flink_artifact/read_artifact.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/artifact/v1/flink-artifacts")).
+		InScenario(dataSourceFlinkArtifactScenarioName).
+		WithQueryParam("environment", wiremock.EqualTo(flinkArtifactEnvironmentId)).
+		WithQueryParam("cloud", wiremock.EqualTo("AWS")).
+		WithQueryParam("region", wiremock.EqualTo("us-east-2")).
+		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
+		WillReturn(
+			string(readArtifactsResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },

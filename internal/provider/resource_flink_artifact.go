@@ -89,7 +89,6 @@ func artifactCreate(ctx context.Context, d *schema.ResourceData, meta interface{
 	createArtifactRequest.SetCloud(cloud)
 	createArtifactRequest.SetRegion(region)
 	createArtifactRequest.SetContentFormat(contentFormat)
-	//extractStringValueFromBlock(d, paramEnvironment, paramId)
 	createArtifactRequest.SetEnvironment(environmentId)
 
 	createArtifactRequestJson, err := json.Marshal(createArtifactRequest)
@@ -99,7 +98,6 @@ func artifactCreate(ctx context.Context, d *schema.ResourceData, meta interface{
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Flink Artifact: %s", createArtifactRequestJson))
 
 	createdArtifact, _, err := executeArtifactCreate(c.faApiContext(ctx), c, createArtifactRequest)
-	fmt.Println("CREATED ARTIFACT:", createdArtifact.GetRegion())
 	if err != nil {
 		return diag.Errorf("error creating Flink Artifact %q: %s", createdArtifact.GetId(), createDescriptiveError(err))
 	}
@@ -116,18 +114,12 @@ func artifactCreate(ctx context.Context, d *schema.ResourceData, meta interface{
 }
 
 func executeArtifactCreate(ctx context.Context, c *Client, artifact fa.ArtifactV1FlinkArtifact) (fa.ArtifactV1FlinkArtifact, *http.Response, error) {
-	fmt.Println("REGION CREATE:", artifact.GetRegion())
-	fmt.Println("CLOUD CREATE:", artifact.GetCloud())
 	req := c.faClient.FlinkArtifactsArtifactV1Api.CreateArtifactV1FlinkArtifact(c.faApiContext(ctx)).Region(artifact.GetRegion()).Cloud(artifact.GetCloud())
 	return req.Execute()
 }
 
 func executeArtifactRead(ctx context.Context, c *Client, region, cloud, artifactID string) (fa.ArtifactV1FlinkArtifact, *http.Response, error) {
-	fmt.Println("REGION:", region)
-	fmt.Println("CLOUD:", cloud)
-
 	req := c.faClient.FlinkArtifactsArtifactV1Api.GetArtifactV1FlinkArtifact(c.faApiContext(ctx), artifactID).Region(region).Cloud(cloud)
-	fmt.Println("REQ:", req)
 	return req.Execute()
 }
 
@@ -136,17 +128,17 @@ func artifactRead(ctx context.Context, d *schema.ResourceData, meta interface{})
 
 	artifactId := d.Id()
 
-	if _, err := readArtifactAndSetAttributes(ctx, d, meta, artifactId); err != nil {
+	if _, err := readArtifactAndSetAttributes(ctx, d, meta, d.Get(paramRegion).(string), d.Get(paramCloud).(string), artifactId); err != nil {
 		return diag.FromErr(fmt.Errorf("error reading Flink Artifact %q: %s", d.Id(), createDescriptiveError(err)))
 	}
 
 	return nil
 }
 
-func readArtifactAndSetAttributes(ctx context.Context, d *schema.ResourceData, meta interface{}, artifactId string) ([]*schema.ResourceData, error) {
+func readArtifactAndSetAttributes(ctx context.Context, d *schema.ResourceData, meta interface{}, region, cloud, artifactId string) ([]*schema.ResourceData, error) {
 	c := meta.(*Client)
 
-	artifact, resp, err := executeArtifactRead(c.faApiContext(ctx), c, d.Get(paramRegion).(string), d.Get(paramCloud).(string), artifactId)
+	artifact, resp, err := executeArtifactRead(c.faApiContext(ctx), c, region, cloud, artifactId)
 	if err != nil {
 		tflog.Warn(ctx, fmt.Sprintf("Error reading Flink Artifact %q: %s", d.Id(), createDescriptiveError(err)), map[string]interface{}{flinkArtifactLoggingKey: d.Id()})
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
@@ -190,10 +182,9 @@ func setArtifactAttributes(d *schema.ResourceData, artifact fa.ArtifactV1FlinkAr
 		return nil, err
 	}
 
-	if err := d.Set(paramEnvironment, artifact.GetEnvironment()); err != nil {
+	if err := setStringAttributeInListBlockOfSizeOne(paramEnvironment, paramId, artifact.GetEnvironment(), d); err != nil {
 		return nil, err
 	}
-
 	if err := d.Set(paramContentFormat, artifact.GetContentFormat()); err != nil {
 		return nil, err
 	}
@@ -254,19 +245,20 @@ func artifactDelete(ctx context.Context, d *schema.ResourceData, meta interface{
 func artifactImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	tflog.Debug(ctx, fmt.Sprintf("Importing Flink artifact %q", d.Id()), map[string]interface{}{flinkArtifactLoggingKey: d.Id()})
 
-	envIDAndArtifactId := d.Id()
-	parts := strings.Split(envIDAndArtifactId, "/")
-
-	if len(parts) != 2 {
-		return nil, fmt.Errorf("error importing Flink Artifact: invalid format: expected '<env ID>/<Flink Artifact ID>'")
+	regionCloudAndArtifactId := d.Id()
+	parts := strings.Split(regionCloudAndArtifactId, "/")
+	if len(parts) != 3 {
+		return nil, fmt.Errorf("error importing Flink Artifact: invalid format: expected '<region>/<cloud>/<Flink Artifact ID>'")
 	}
 
-	artifactId := parts[1]
+	artifactId := parts[2]
+	region := parts[0]
+	cloud := parts[1]
 	d.SetId(artifactId)
 
 	// Mark resource as new to avoid d.Set("") when getting 404
 	d.MarkNewResource()
-	if _, err := readArtifactAndSetAttributes(ctx, d, meta, artifactId); err != nil {
+	if _, err := readArtifactAndSetAttributes(ctx, d, meta, region, cloud, artifactId); err != nil {
 		return nil, fmt.Errorf("error importing Flink Artifact %q: %s", d.Id(), err)
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished importing Flink Artifact %q", d.Id()), map[string]interface{}{flinkArtifactLoggingKey: d.Id()})
