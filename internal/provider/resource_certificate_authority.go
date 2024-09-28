@@ -64,7 +64,7 @@ func certificateAuthorityResource() *schema.Resource {
 			},
 			paramCertificateChain: {
 				Type:         schema.TypeString,
-				Optional:     true,
+				Required:     true,
 				Sensitive:    true,
 				Description:  "A base64 encoded string containing the signing certificate chain.",
 				ValidateFunc: validation.StringIsNotEmpty,
