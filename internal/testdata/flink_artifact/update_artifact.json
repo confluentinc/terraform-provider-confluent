@@ -1,0 +1,43 @@
+{
+  "api_version": "artifact/v1",
+  "kind": "FlinkArtifact",
+  "id": "lfcp-abc123",
+  "metadata": {
+    "self": "https://api.confluent.cloud/artifact/v1/flink-artifacts/fa-12345",
+    "resource_name": "crn://confluent.cloud/organization=9bb441c4-edef-46ac-8a41-c49e44a3fd9a/flink-artifact=fa-12345",
+    "created_at": "2006-01-02T15:04:05-07:00",
+    "updated_at": "2006-01-02T15:04:05-07:00",
+    "deleted_at": "2006-01-02T15:04:05-07:00"
+  },
+  "cloud": "AWS",
+  "region": "us-east-2",
+  "environment": "env-gz903",
+  "display_name": "updated_flink_artifact_0",
+  "class": "io.confluent.example.SumScalarFunction",
+  "content_format": "JAR",
+  "description": "string",
+  "documentation_link": "^$|^(http://|https://).",
+  "runtime_language": "JAVA",
+  "versions": [
+    {
+      "version": "cfa-ver-001",
+      "release_notes": "string",
+      "is_beta": true,
+      "artifact_id": {},
+      "upload_source": {
+        "api_version": "artifact.v1/UploadSource",
+        "kind": "PresignedUrl",
+        "id": "dlz-f3a90de",
+        "metadata": {
+          "self": "https://api.confluent.cloud/artifact.v1/UploadSource/presigned-urls/pu-12345",
+          "resource_name": "crn://confluent.cloud/organization=9bb441c4-edef-46ac-8a41-c49e44a3fd9a/presigned-url=pu-12345",
+          "created_at": "2006-01-02T15:04:05-07:00",
+          "updated_at": "2006-01-02T15:04:05-07:00",
+          "deleted_at": "2006-01-02T15:04:05-07:00"
+        },
+        "location": "PRESIGNED_URL_LOCATION",
+        "upload_id": "e53bb2e8-8de3-49fa-9fb1-4e3fd9a16b66"
+      }
+    }
+  ]
+}
