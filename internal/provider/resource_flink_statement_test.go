@@ -77,40 +77,55 @@ func TestAccFlinkStatement(t *testing.T) {
 			http.StatusOK,
 		))
 
-	updateFlinkStatementResponse := wiremock.Put(wiremock.URLPathEqualTo(readFlinkStatementPath)).
+	// Update the Flink statement stopped status false -> true to trigger a stop
+	stopFlinkStatementResponse, _ := ioutil.ReadFile("../testdata/flink_statement/read_stopped_flink_statement.json")
+	stopFlinkStatementStub := wiremock.Put(wiremock.URLPathEqualTo(readFlinkStatementPath)).
 		InScenario(statementScenarioName).
 		WhenScenarioStateIs(scenarioStateStatementHasBeenCreated).
-		WillSetStateTo(scenarioStateStatementIsUpdating).
+		WillSetStateTo(scenarioStateStatementHasBeenStopped).
 		WillReturn(
-			"",
+			string(stopFlinkStatementResponse),
 			contentTypeJSONHeader,
-			http.StatusNoContent,
+			http.StatusOK,
 		)
-	_ = wiremockClient.StubFor(updateFlinkStatementResponse)
+	_ = wiremockClient.StubFor(stopFlinkStatementStub)
 
+	readStoppedFlinkStatementResponse, _ := ioutil.ReadFile("../testdata/flink_statement/read_stopped_flink_statement.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readFlinkStatementPath)).
 		InScenario(statementScenarioName).
-		WhenScenarioStateIs(scenarioStateStatementIsUpdating).
-		WillSetStateTo(scenarioStateStatementHasBeenUpdated).
+		WhenScenarioStateIs(scenarioStateStatementHasBeenStopped).
 		WillReturn(
-			string(readCreatedFlinkStatementResponse),
+			string(readStoppedFlinkStatementResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
 		))
 
-	readUpdatedFlinkStatementResponse, _ := ioutil.ReadFile("../testdata/flink_statement/read_stopped_flink_statement.json")
+	// Update the Flink statement stopped status true -> false to trigger a resume
+	resumeFlinkStatementResponse, _ := ioutil.ReadFile("../testdata/flink_statement/read_resumed_flink_statement.json")
+	resumeFlinkStatementStub := wiremock.Put(wiremock.URLPathEqualTo(readFlinkStatementPath)).
+		InScenario(statementScenarioName).
+		WhenScenarioStateIs(scenarioStateStatementHasBeenStopped).
+		WillSetStateTo(scenarioStateStatementHasBeenResumed).
+		WillReturn(
+			string(resumeFlinkStatementResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		)
+	_ = wiremockClient.StubFor(resumeFlinkStatementStub)
+
+	readResumedFlinkStatementResponse, _ := ioutil.ReadFile("../testdata/flink_statement/read_resumed_flink_statement.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readFlinkStatementPath)).
 		InScenario(statementScenarioName).
-		WhenScenarioStateIs(scenarioStateStatementHasBeenUpdated).
+		WhenScenarioStateIs(scenarioStateStatementHasBeenResumed).
 		WillReturn(
-			string(readUpdatedFlinkStatementResponse),
+			string(readResumedFlinkStatementResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
 		))
 
 	deleteFlinkStatementStub := wiremock.Delete(wiremock.URLPathEqualTo(readFlinkStatementPath)).
 		InScenario(statementScenarioName).
-		WhenScenarioStateIs(scenarioStateStatementHasBeenUpdated).
+		WhenScenarioStateIs(scenarioStateStatementHasBeenResumed).
 		WillSetStateTo(scenarioStateStatementIsDeleting).
 		WillReturn(
 			"",
@@ -119,7 +134,7 @@ func TestAccFlinkStatement(t *testing.T) {
 		)
 	_ = wiremockClient.StubFor(deleteFlinkStatementStub)
 
-	readDeletingFlinkStatementStub := wiremock.Delete(wiremock.URLPathEqualTo(readFlinkStatementPath)).
+	readDeletingFlinkStatementStub := wiremock.Get(wiremock.URLPathEqualTo(readFlinkStatementPath)).
 		InScenario(statementScenarioName).
 		WhenScenarioStateIs(scenarioStateStatementIsDeleting).
 		WillSetStateTo(scenarioStateStatementHasBeenDeleted).
@@ -197,7 +212,7 @@ func TestAccFlinkStatement(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckFlinkStatementUpdated(confluentCloudBaseUrl, mockFlinkStatementTestServerUrl),
+				Config: testAccCheckFlinkStatementStopped(confluentCloudBaseUrl, mockFlinkStatementTestServerUrl),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckFlinkStatementExists(fullFlinkStatementResourceLabel),
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "id", fmt.Sprintf("%s/%s/%s", flinkEnvironmentIdTest, flinkComputePoolIdTest, flinkStatementNameTest)),
@@ -226,6 +241,35 @@ func TestAccFlinkStatement(t *testing.T) {
 				),
 			},
 			{
+				Config: testAccCheckFlinkStatementResumed(confluentCloudBaseUrl, mockFlinkStatementTestServerUrl),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckFlinkStatementExists(fullFlinkStatementResourceLabel),
+					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "id", fmt.Sprintf("%s/%s/%s", flinkEnvironmentIdTest, flinkComputePoolIdTest, flinkStatementNameTest)),
+					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "organization.#", "1"),
+					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "organization.0.%", "1"),
+					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "organization.0.id", flinkOrganizationIdTest),
+					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "environment.#", "1"),
+					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "environment.0.%", "1"),
+					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "environment.0.id", flinkEnvironmentIdTest),
+					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "compute_pool.#", "1"),
+					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "compute_pool.0.%", "1"),
+					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "compute_pool.0.id", flinkComputePoolIdTest),
+					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "principal.#", "1"),
+					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "principal.0.%", "1"),
+					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "principal.0.id", flinkPrincipalIdTest),
+					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "statement_name", flinkStatementNameTest),
+					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "statement", flinkStatementTest),
+					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "stopped", "false"),
+					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "properties.%", "1"),
+					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, fmt.Sprintf("properties.%s", flinkFirstPropertyKeyTest), flinkFirstPropertyValueTest),
+					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "credentials.#", "1"),
+					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "credentials.0.%", "2"),
+					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "credentials.0.key", kafkaApiKey),
+					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "credentials.0.secret", kafkaApiSecret),
+					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "rest_endpoint", mockFlinkStatementTestServerUrl),
+				),
+			},
+			{
 				// https://www.terraform.io/docs/extend/resources/import.html
 				ResourceName:      fullFlinkStatementResourceLabel,
 				ImportState:       true,
@@ -241,6 +285,7 @@ func TestAccFlinkStatement(t *testing.T) {
 	})
 
 	checkStubCount(t, wiremockClient, createFlinkStatementStub, fmt.Sprintf("POST %s", createFlinkStatementPath), expectedCountOne)
+	checkStubCount(t, wiremockClient, stopFlinkStatementStub, fmt.Sprintf("PUT %s", readFlinkStatementPath), expectedCountTwo)
 	checkStubCount(t, wiremockClient, deleteFlinkStatementStub, fmt.Sprintf("DELETE %s", readFlinkStatementPath), expectedCountOne)
 }
 
@@ -281,7 +326,7 @@ func testAccCheckFlinkStatement(confluentCloudBaseUrl, mockServerUrl string) str
 		flinkStatementNameTest, flinkStatementTest, flinkFirstPropertyKeyTest, flinkFirstPropertyValueTest)
 }
 
-func testAccCheckFlinkStatementUpdated(confluentCloudBaseUrl, mockServerUrl string) string {
+func testAccCheckFlinkStatementStopped(confluentCloudBaseUrl, mockServerUrl string) string {
 	return fmt.Sprintf(`
 	provider "confluent" {
       endpoint = "%s"
@@ -309,6 +354,44 @@ func testAccCheckFlinkStatementUpdated(confluentCloudBaseUrl, mockServerUrl stri
 	  statement_name = "%s"
 	  statement = "%s"
 	  stopped = true
+
+	  properties = {
+		"%s" = "%s"
+	  }
+	}
+	`, confluentCloudBaseUrl, flinkStatementResourceLabel, kafkaApiKey, kafkaApiSecret, mockServerUrl, flinkPrincipalIdTest,
+		flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkComputePoolIdTest,
+		flinkStatementNameTest, flinkStatementTest, flinkFirstPropertyKeyTest, flinkFirstPropertyValueTest)
+}
+
+func testAccCheckFlinkStatementResumed(confluentCloudBaseUrl, mockServerUrl string) string {
+	return fmt.Sprintf(`
+	provider "confluent" {
+      endpoint = "%s"
+    }
+	resource "confluent_flink_statement" "%s" {
+      credentials {
+        key = "%s"
+        secret = "%s"
+      }
+ 
+      rest_endpoint = "%s"
+      principal {
+         id = "%s"
+      }
+      organization {
+         id = "%s"
+      }
+      environment {
+         id = "%s"
+      }
+      compute_pool {
+         id = "%s"
+      }
+
+	  statement_name = "%s"
+	  statement = "%s"
+	  stopped = false
 
 	  properties = {
 		"%s" = "%s"
