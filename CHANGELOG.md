@@ -1,3 +1,13 @@
+## 2.4.0 (October 1st, 2024)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.3.0...v2.4.0)
+
+**New features:**
+* Added support for `confluent_flink_statement` [resource](docs/resources/confluent_flink_statement.md) resume feature.
+
+**Bug fixes:**
+* Updated docs for `confluent_kafka_client_quota` [resource](docs/resources/confluent_kafka_client_quota.md) and [data-source](docs/data-sources/confluent_kafka_client_quota.md).
+
 ## 2.3.0 (September 20th, 2024)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.2.0...v2.3.0)
