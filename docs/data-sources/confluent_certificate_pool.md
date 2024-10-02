@@ -6,7 +6,7 @@ description: |-
    
 ---
 
-# confluent_certificate_pool Data Source
+# confluent_certificate_identity_pool Data Source
 
 [![Early Access](https://img.shields.io/badge/Lifecycle%20Stage-Early%20Access-%2300afba)](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy)
 
