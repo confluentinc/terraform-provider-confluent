@@ -42,10 +42,10 @@ In addition to the preceding arguments, the following attributes are exported:
 
 - `display_name` - (Required String) A human-readable name for the Certificate Authority.
 - `description` - (Required String) A description for the Certificate Authority.
-- `certificate_chain_filename` - (Required String) The name of the certificate file.
-- `fingerprints` (Required List of Strings) The fingerprints for each certificate in the certificate chain.
-- `expiration_dates` (Required List of Strings) The expiration dates of certificates in the chain.
+- `certificate_chain_filename` - (Required String) The name of the certificate file, for example, `certificate.pem`.
+- `fingerprints` (Required List of Strings) The fingerprints for each certificate in the certificate chain, for example, `["B1BC968BD4f49D622AA89A81F2150152A41D829C"]`.
+- `expiration_dates` (Required List of Strings) The expiration dates of certificates in the chain, for example, `["2017-07-21T17:32:28Z"]`.
 - `serial_numbers` (Required List of Strings) The serial numbers for each certificate in the certificate chain.
-- `crl_source` - (Optional String) The source specifies whether the Certificate Revocation List (CRL) is updated from either local file uploaded (LOCAL) or from url of CRL (URL).
+- `crl_source` - (Optional String) The source specifies whether the Certificate Revocation List (CRL) is updated from either local file uploaded (LOCAL) or from url of CRL (URL). Accepted values are `LOCAL` and `URL`.
 - `crl_url` - (Optional String) The url from which to fetch the CRL for the certificate authority if crl_source is URL.
-- `crl_updated_at` - (Optional String) The timestamp for when CRL was last updated.
+- `crl_updated_at` - (Optional String) The timestamp for when CRL was last updated, for example, `2017-07-21T17:32:28Z`.
