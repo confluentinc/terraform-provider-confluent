@@ -16,7 +16,7 @@ description: |-
 
 ```terraform
 resource "confluent_certificate_pool" "main" {
-  identity_provider {
+  certificate_authority {
     id = confluent_certificate_authority.main.id
   }
   display_name = "my-certificate-pool"
