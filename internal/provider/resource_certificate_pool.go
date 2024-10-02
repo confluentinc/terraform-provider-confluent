@@ -65,7 +65,7 @@ func certificatePoolResource() *schema.Resource {
 			paramFilter: {
 				Type:         schema.TypeString,
 				Required:     true,
-				Description:  "A filter expression in Supported Common Expression Language (CEL) that specifies which identities can authenticate using your certificate identity pool.",
+				Description:  "A filter expression in Supported Common Expression Language (CEL) that specifies which identities can authenticate using your certificate pool.",
 				ValidateFunc: validation.StringLenBetween(1, 300),
 			},
 		},

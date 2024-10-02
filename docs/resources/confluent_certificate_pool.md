@@ -36,7 +36,7 @@ The following arguments are supported:
 - `display_name` - (Required String) The name of the Certificate Pool.
 - `description` - (Required String) A description of the Certificate Pool.
 - `external_identifier` - (Required String) The certificate field that will be used to represent the pool's external identity for audit logging.
-- `filter` - (Required String) A filter expression in Supported Common Expression Language (CEL) that specifies which identities can authenticate using your certificate identity pool.
+- `filter` - (Required String) A filter expression in [Supported Common Expression Language (CEL)](https://docs.confluent.io/cloud/current/access-management/authenticate/mtls/cel-filters.html) that specifies which identities can authenticate using your certificate pool.
 
 ## Import
 
