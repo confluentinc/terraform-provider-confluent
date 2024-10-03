@@ -38,6 +38,8 @@ const (
 	stateCompleted = "COMPLETED"
 	statePending   = "PENDING"
 	stateFailing   = "FAILING"
+	stateResuming  = "RESUMING"
+	stateStopping  = "STOPPING"
 
 	statementsAPICreateTimeout = 6 * time.Hour
 )
@@ -215,38 +217,51 @@ func flinkStatementRead(ctx context.Context, d *schema.ResourceData, meta interf
 }
 
 func flinkStatementUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	// Make sure we only have a paramStopped update,
+	// Updating anything else is not supported at this moment
+	// stopped: false -> true to trigger flinkStatementStop
+	// stopped: true -> false to trigger flinkStatementResume
 	if d.HasChangeExcept(paramStopped) {
-		return diag.Errorf("error updating Flink Statement %q: only %q attribute can be updated for Flink Statement", d.Id(), paramStopped)
-	}
-	updatedStopped := d.Get(paramStopped).(bool)
-	if updatedStopped == false {
-		return diag.Errorf("error updating Flink Statement %q: Flink Statement cannot be resumed. Only "+
-			"%s=false -> %s=true updates are supported.", d.Id(), paramStopped, paramStopped)
+		return diag.Errorf(`error updating Flink Statement %q: only %q attribute can be updated for Flink Statement, "true" -> "false" to trigger resuming, "false" -> "true" to trigger stopping`, d.Id(), paramStopped)
 	}
 
+	if d.Get(paramStopped).(bool) == false {
+		return flinkStatementUpdateWithFlag(ctx, d, meta, false)
+	}
+
+	return flinkStatementUpdateWithFlag(ctx, d, meta, true)
+}
+
+// On entering this function, it's guaranteed that `stopped` has a change
+// boolean flag `toStop` = true indicates a stop, false indicates a resume
+func flinkStatementUpdateWithFlag(ctx context.Context, d *schema.ResourceData, meta interface{}, toStop bool) diag.Diagnostics {
+	message := "stopping"
+	if toStop == false {
+		message = "resuming"
+	}
 	restEndpoint, err := extractFlinkRestEndpoint(meta.(*Client), d, false)
 	if err != nil {
-		return diag.Errorf("error updating Flink Statement: %s", createDescriptiveError(err))
+		return diag.Errorf("error %s Flink Statement: %s", message, createDescriptiveError(err))
 	}
 	organizationId, err := extractFlinkOrganizationId(meta.(*Client), d, false)
 	if err != nil {
-		return diag.Errorf("error updating Flink Statement: %s", createDescriptiveError(err))
+		return diag.Errorf("error %s Flink Statement: %s", message, createDescriptiveError(err))
 	}
 	environmentId, err := extractFlinkEnvironmentId(meta.(*Client), d, false)
 	if err != nil {
-		return diag.Errorf("error updating Flink Statement: %s", createDescriptiveError(err))
+		return diag.Errorf("error %s Flink Statement: %s", message, createDescriptiveError(err))
 	}
 	computePoolId, err := extractFlinkComputePoolId(meta.(*Client), d, false)
 	if err != nil {
-		return diag.Errorf("error updating Flink Statement: %s", createDescriptiveError(err))
+		return diag.Errorf("error %s Flink Statement: %s", message, createDescriptiveError(err))
 	}
 	principalId, err := extractFlinkPrincipalId(meta.(*Client), d, false)
 	if err != nil {
-		return diag.Errorf("error updating Flink Statement: %s", createDescriptiveError(err))
+		return diag.Errorf("error %s Flink Statement: %s", message, createDescriptiveError(err))
 	}
 	flinkApiKey, flinkApiSecret, err := extractFlinkApiKeyAndApiSecret(meta.(*Client), d, false)
 	if err != nil {
-		return diag.Errorf("error updating Flink Statement: %s", createDescriptiveError(err))
+		return diag.Errorf("error %s Flink Statement: %s", message, createDescriptiveError(err))
 	}
 	flinkRestClient := meta.(*Client).flinkRestClientFactory.CreateFlinkRestClient(restEndpoint, organizationId, environmentId, computePoolId, principalId, flinkApiKey, flinkApiSecret, meta.(*Client).isFlinkMetadataSet)
 
@@ -256,30 +271,38 @@ func flinkStatementUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 	statement, _, err := req.Execute()
 
 	if err != nil {
-		return diag.Errorf("error updating Flink Statement: error fetching Flink Statement: %s", createDescriptiveError(err))
+		return diag.Errorf("error %s Flink Statement: error fetching Flink Statement: %s", message, createDescriptiveError(err))
 	}
 
 	// The statement could be automatically stopped if no client has consumed the results for 5 minutes or more.
-	// Therefore, we need to double-check whether the backend has already stopped the statement.
-	shouldSendUpdateRequest := !statement.Spec.GetStopped()
+	// Therefore, we need to double-check whether the backend has already stopped/resumed the statement.
+	var shouldSendUpdateRequest bool
+	if toStop {
+		// When trying to stop the statement, current statement `stopped` status should be false
+		shouldSendUpdateRequest = !statement.Spec.GetStopped()
+	} else {
+		// When trying to resume the statement, current statement `stopped` status should be true
+		shouldSendUpdateRequest = statement.Spec.GetStopped()
+	}
+
 	if shouldSendUpdateRequest {
-		statement.Spec.SetStopped(true)
+		statement.Spec.SetStopped(toStop)
 		updateFlinkStatementRequestJson, err := json.Marshal(statement)
 		if err != nil {
-			return diag.Errorf("error updating Flink Statement %q: error marshaling %#v to json: %s", statementName, statement, createDescriptiveError(err))
+			return diag.Errorf("error %s Flink Statement %q: error marshaling %#v to json: %s", message, statementName, statement, createDescriptiveError(err))
 		}
-		tflog.Debug(ctx, fmt.Sprintf("Updating Flink Statement %q: %s", statementName, updateFlinkStatementRequestJson), map[string]interface{}{flinkStatementLoggingKey: d.Id()})
+		tflog.Debug(ctx, fmt.Sprintf("%s Flink Statement %q: %s", message, statementName, updateFlinkStatementRequestJson), map[string]interface{}{flinkStatementLoggingKey: d.Id()})
 		req := flinkRestClient.apiClient.StatementsSqlV1Api.UpdateSqlv1Statement(flinkRestClient.apiContext(ctx), organizationId, environmentId, statementName).SqlV1Statement(statement)
 		_, err = req.Execute()
 		if err != nil {
-			return diag.Errorf("error updating Flink Statement 123 %q: %s", statementName, createDescriptiveError(err))
+			return diag.Errorf("error %s Flink Statement 123 %q: %s", message, statementName, createDescriptiveError(err))
 		}
-		if err := waitForFlinkStatementToBeStopped(flinkRestClient.apiContext(ctx), flinkRestClient, statementName, meta.(*Client).isAcceptanceTestMode); err != nil {
-			return diag.Errorf("error waiting for Flink Statement %q to be stopped: %s", statementName, createDescriptiveError(err))
+		if err := waitForFlinkStatementToBeUpdated(flinkRestClient.apiContext(ctx), flinkRestClient, statementName, meta.(*Client).isAcceptanceTestMode, toStop); err != nil {
+			return diag.Errorf("error waiting for Flink Statement %q to update: %s", statementName, createDescriptiveError(err))
 		}
 	}
 
-	tflog.Debug(ctx, fmt.Sprintf("Finished updating Flink Statement %q", statementName), map[string]interface{}{flinkStatementLoggingKey: d.Id()})
+	tflog.Debug(ctx, fmt.Sprintf("Finished %s Flink Statement %q", message, statementName), map[string]interface{}{flinkStatementLoggingKey: d.Id()})
 	return flinkStatementRead(ctx, d, meta)
 }
 
