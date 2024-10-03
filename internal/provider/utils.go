@@ -65,6 +65,7 @@ import (
 
 const (
 	byokKeyLoggingKey                         = "byok_key_id"
+	certificateAuthorityKey                   = "certificate_authority_id"
 	certificatePoolKey                        = "certificate_pool_id"
 	crnKafkaSuffix                            = "/kafka="
 	kafkaAclLoggingKey                        = "kafka_acl_id"
