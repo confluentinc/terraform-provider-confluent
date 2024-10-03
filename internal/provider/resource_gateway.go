@@ -253,7 +253,9 @@ func gatewayDelete(ctx context.Context, d *schema.ResourceData, meta interface{}
 	tflog.Debug(ctx, fmt.Sprintf("Deleting Gateway %q", d.Id()), map[string]interface{}{gatewayKey: d.Id()})
 	c := meta.(*Client)
 
-	req := c.netGatewayClient.GatewaysNetworkingV1Api.DeleteNetworkingV1Gateway(c.netGWApiContext(ctx), d.Id())
+	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
+
+	req := c.netGatewayClient.GatewaysNetworkingV1Api.DeleteNetworkingV1Gateway(c.netGWApiContext(ctx), d.Id()).Environment(environmentId)
 	_, err := req.Execute()
 
 	if err != nil {
@@ -270,10 +272,15 @@ func gatewayUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}
 		return diag.Errorf("error updating Gateway %q: only %q attribute can be updated for Gateway", d.Id(), paramDisplayName)
 	}
 
+	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
+
 	updateGateway := netgw.NewNetworkingV1GatewayUpdate()
 	updateGateway.Spec = netgw.NewNetworkingV1GatewaySpecUpdate()
 
 	updateGateway.Spec.SetDisplayName(d.Get(paramDisplayName).(string))
+	updateGateway.Spec.SetEnvironment(netgw.ObjectReference{
+		Id: environmentId,
+	})
 
 	updateGatewayJson, err := json.Marshal(updateGateway)
 	if err != nil {
