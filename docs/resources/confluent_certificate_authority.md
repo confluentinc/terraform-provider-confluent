@@ -8,7 +8,7 @@ description: |-
 
 # confluent_certificate_authority Resource
 
-[![Early Access](https://img.shields.io/badge/Lifecycle%20Stage-Early%20Access-%2300afba)](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy)
+[![Limited Availability](https://img.shields.io/badge/Lifecycle%20Stage-Limited%20Availability-%2345c6e8)](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy)
 
 `confluent_certificate_authority` provides a Certificate Authority resource that enables creating, editing, and deleting Certificate Authorities on Confluent Cloud.
 
