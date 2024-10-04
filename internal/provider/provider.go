@@ -53,19 +53,21 @@ const (
 )
 
 const (
-	paramApiVersion    = "api_version"
-	paramCloud         = "cloud"
-	paramRegion        = "region"
-	paramOrganization  = "organization"
-	paramEnvironment   = "environment"
-	paramId            = "id"
-	paramDisplayName   = "display_name"
-	paramName          = "name"
-	paramDescription   = "description"
-	paramKind          = "kind"
-	paramCsu           = "csu"
-	paramClass         = "class"
-	paramContentFormat = "content_format"
+	paramApiVersion      = "api_version"
+	paramCloud           = "cloud"
+	paramRegion          = "region"
+	paramOrganization    = "organization"
+	paramEnvironment     = "environment"
+	paramId              = "id"
+	paramDisplayName     = "display_name"
+	paramName            = "name"
+	paramDescription     = "description"
+	paramKind            = "kind"
+	paramCsu             = "csu"
+	paramClass           = "class"
+	paramContentFormat   = "content_format"
+	paramRuntimeLanguage = "runtime_language"
+	paramArtifactFile    = "artifact_file"
 )
 
 type Client struct {

@@ -13,18 +13,19 @@ import (
 )
 
 const (
-	scenarioStateFlinkArtifactHasBeenCreated = "The new flink artifact has been just created"
-	scenarioStateFlinkArtifactHasBeenDeleted = "The new flink artifact has been deleted"
-	scenarioStateArtifactHasBeenUpdated      = "The flink artifact has been updated"
-	flinkArtifactScenarioName                = "confluent_flink_artifact Resource Lifecycle"
-	flinkArtifactClass                       = "io.confluent.example.SumScalarFunction"
-	flinkArtifactCloud                       = "AWS"
-	flinkArtifactRegion                      = "us-east-2"
-	flinkArtifactEnvironmentId               = "env-gz903"
-	flinkArtifactContentFormat               = "JAR"
-	flinkArtifactId                          = "lfcp-abc123"
-	flinkArtifactDisplayName                 = "flink_artifact_0"
-	flinkArtifactDisplayNameUpdated          = "updated_flink_artifact_0"
+	scenarioArtifactPresignedUrlHasBeenCreated = "The new flink artifact predesign URL has been just created"
+	scenarioStateFlinkArtifactHasBeenCreated   = "The new flink artifact has been just created"
+	scenarioStateFlinkArtifactHasBeenDeleted   = "The new flink artifact has been deleted"
+	scenarioStateArtifactHasBeenUpdated        = "The flink artifact has been updated"
+	flinkArtifactScenarioName                  = "confluent_flink_artifact Resource Lifecycle"
+	flinkArtifactClass                         = "io.confluent.example.SumScalarFunction"
+	flinkArtifactCloud                         = "AWS"
+	flinkArtifactRegion                        = "us-east-2"
+	flinkArtifactEnvironmentId                 = "env-gz903"
+	flinkArtifactContentFormat                 = "JAR"
+	flinkArtifactId                            = "lfcp-abc123"
+	flinkArtifactDisplayName                   = "flink_artifact_0"
+	flinkArtifactDisplayNameUpdated            = "updated_flink_artifact_0"
 )
 
 var flinkArtifactsUrlPath = fmt.Sprintf("/artifact/v1/flink-artifacts/%s", flinkArtifactId)
@@ -45,10 +46,23 @@ func TestAccFlinkArtifact(t *testing.T) {
 
 	// nolint:errcheck
 	defer wiremockClient.ResetAllScenarios()
+
+	createArtifactPresignedUrlResponse, _ := ioutil.ReadFile("../testdata/flink_artifact/read_presigned_url.json")
+	createArtifactPresignedUrlStub := wiremock.Post(wiremock.URLPathEqualTo("/artifact/v1/presigned-upload-url")).
+		InScenario(flinkArtifactScenarioName).
+		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
+		WillSetStateTo(scenarioArtifactPresignedUrlHasBeenCreated).
+		WillReturn(
+			string(createArtifactPresignedUrlResponse),
+			contentTypeJSONHeader,
+			http.StatusCreated,
+		)
+	_ = wiremockClient.StubFor(createArtifactPresignedUrlStub)
+
 	createArtifactResponse, _ := ioutil.ReadFile("../testdata/flink_artifact/create_artifact.json")
 	createArtifactStub := wiremock.Post(wiremock.URLPathEqualTo("/artifact/v1/flink-artifacts")).
 		InScenario(flinkArtifactScenarioName).
-		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
+		WhenScenarioStateIs(scenarioArtifactPresignedUrlHasBeenCreated).
 		WillSetStateTo(scenarioStateFlinkArtifactHasBeenCreated).
 		WillReturn(
 			string(createArtifactResponse),

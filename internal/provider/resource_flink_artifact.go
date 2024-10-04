@@ -13,6 +13,8 @@ import (
 	"strings"
 )
 
+var acceptedRuntimeLanguage = []string{"python", "java"}
+
 func artifactResource() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: artifactCreate,
@@ -65,7 +67,24 @@ func artifactResource() *schema.Resource {
 			paramContentFormat: {
 				Type:        schema.TypeString,
 				Computed:    true,
+				Optional:    true,
 				Description: "The content format for flink artifact",
+			},
+			paramArtifactFile: {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "The artifact file for flink artifact",
+			},
+			paramRuntimeLanguage: {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: validation.StringInSlice(acceptedRuntimeLanguage, true),
+				Description:  "The runtime language for flink artifact",
+			},
+			paramDescription: {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "A free-form description of the artifact.",
 			},
 		},
 	}
@@ -73,23 +92,46 @@ func artifactResource() *schema.Resource {
 
 func artifactCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	c := meta.(*Client)
-	id := d.Get(paramId).(string)
 	name := d.Get(paramDisplayName).(string)
 	class := d.Get(paramClass).(string)
 	cloud := d.Get(paramCloud).(string)
 	region := d.Get(paramRegion).(string)
 	contentFormat := d.Get(paramContentFormat).(string)
+	artifactFile := d.Get(paramArtifactFile).(string)
+	runtimeLanguage := d.Get(paramRuntimeLanguage).(string)
+	description := d.Get(paramDescription).(string)
 
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
 
-	createArtifactRequest := fa.ArtifactV1FlinkArtifact{}
-	createArtifactRequest.SetId(id)
-	createArtifactRequest.SetDisplayName(name)
-	createArtifactRequest.SetClass(class)
-	createArtifactRequest.SetCloud(cloud)
-	createArtifactRequest.SetRegion(region)
-	createArtifactRequest.SetContentFormat(contentFormat)
-	createArtifactRequest.SetEnvironment(environmentId)
+	request := fa.ArtifactV1PresignedUrlRequest{
+		ContentFormat: fa.PtrString(contentFormat),
+		Cloud:         fa.PtrString(cloud),
+		Region:        fa.PtrString(region),
+	}
+	resp, _, err := getFlinkPresignedUrl(c.faApiContext(ctx), c, request)
+	if err != nil {
+		return diag.Errorf("error creating Flink Artifact: %s", createDescriptiveError(err))
+	}
+
+	if err := uploadFile(resp.GetUploadUrl(), artifactFile, resp.GetUploadFormData()); err != nil {
+		return diag.Errorf("error uploading Flink Artifact: %s", createDescriptiveError(err))
+	}
+
+	createArtifactRequest := fa.InlineObject{
+		DisplayName: name,
+		Cloud:       cloud,
+		Region:      region,
+		Environment: environmentId,
+		Class:       class,
+		Description: fa.PtrString(description),
+		UploadSource: fa.InlineObjectUploadSourceOneOf{
+			ArtifactV1UploadSourcePresignedUrl: &fa.ArtifactV1UploadSourcePresignedUrl{
+				Location: fa.PtrString("PRESIGNED_URL_LOCATION"),
+				UploadId: fa.PtrString(resp.GetUploadId()),
+			},
+		},
+		RuntimeLanguage: fa.PtrString(runtimeLanguage),
+	}
 
 	createArtifactRequestJson, err := json.Marshal(createArtifactRequest)
 	if err != nil {
@@ -113,7 +155,12 @@ func artifactCreate(ctx context.Context, d *schema.ResourceData, meta interface{
 	return artifactRead(ctx, d, meta)
 }
 
-func executeArtifactCreate(ctx context.Context, c *Client, artifact fa.ArtifactV1FlinkArtifact) (fa.ArtifactV1FlinkArtifact, *http.Response, error) {
+func getFlinkPresignedUrl(ctx context.Context, c *Client, request fa.ArtifactV1PresignedUrlRequest) (fa.ArtifactV1PresignedUrl, *http.Response, error) {
+	resp := c.faClient.PresignedUrlsArtifactV1Api.PresignedUploadUrlArtifactV1PresignedUrl(c.faApiContext(ctx)).ArtifactV1PresignedUrlRequest(request)
+	return resp.Execute()
+}
+
+func executeArtifactCreate(ctx context.Context, c *Client, artifact fa.InlineObject) (fa.ArtifactV1FlinkArtifact, *http.Response, error) {
 	req := c.faClient.FlinkArtifactsArtifactV1Api.CreateArtifactV1FlinkArtifact(c.faApiContext(ctx)).Region(artifact.GetRegion()).Cloud(artifact.GetCloud())
 	return req.Execute()
 }
