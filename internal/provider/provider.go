@@ -17,14 +17,15 @@ package provider
 import (
 	"context"
 	"fmt"
+	"os"
+	"strings"
+	"time"
+
 	ccp "github.com/confluentinc/ccloud-sdk-go-v2/connect-custom-plugin/v1"
 	dns "github.com/confluentinc/ccloud-sdk-go-v2/networking-dnsforwarder/v1"
 	netip "github.com/confluentinc/ccloud-sdk-go-v2/networking-ip/v1"
 	pi "github.com/confluentinc/ccloud-sdk-go-v2/provider-integration/v1"
 	"github.com/confluentinc/ccloud-sdk-go-v2/sso/v2"
-	"os"
-	"strings"
-	"time"
 
 	apikeys "github.com/confluentinc/ccloud-sdk-go-v2/apikeys/v2"
 	byok "github.com/confluentinc/ccloud-sdk-go-v2/byok/v1"
@@ -261,6 +262,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				},
 			},
 			DataSourcesMap: map[string]*schema.Resource{
+				"confluent_certificate_authority":              certificateAuthorityDataSource(),
 				"confluent_certificate_pool":                   certificatePoolDataSource(),
 				"confluent_kafka_cluster":                      kafkaDataSource(),
 				"confluent_kafka_topic":                        kafkaTopicDataSource(),
@@ -311,6 +313,7 @@ func New(version, userAgent string) func() *schema.Provider {
 			ResourcesMap: map[string]*schema.Resource{
 				"confluent_api_key":                            apiKeyResource(),
 				"confluent_byok_key":                           byokResource(),
+				"confluent_certificate_authority":              certificateAuthorityResource(),
 				"confluent_certificate_pool":                   certificatePoolResource(),
 				"confluent_cluster_link":                       clusterLinkResource(),
 				"confluent_kafka_cluster":                      kafkaResource(),
