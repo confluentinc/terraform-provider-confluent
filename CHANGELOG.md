@@ -1,3 +1,11 @@
+## 2.5.0 (October 4th, 2024)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.4.0...v2.5.0)
+
+**New features:**
+* Added support for `confluent_certificate_authority` [resource](docs/resources/confluent_certificate_authority.md) and [data-source](docs/data-sources/confluent_certificate_authority.md) in a [Limited Availability lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
+* Added support for `confluent_certificate_pool` [resource](docs/resources/confluent_certificate_pool.md) and [data-source](docs/data-sources/confluent_certificate_pool.md) in a [Limited Availability lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
+
 ## 2.4.0 (October 1st, 2024)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.3.0...v2.4.0)
