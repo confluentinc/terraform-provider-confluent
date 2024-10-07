@@ -42,7 +42,7 @@ func flinkArtifactDataSource() *schema.Resource {
 				Optional: true,
 				// A user should provide a value for either "id" or "display_name" attribute, not both
 				ExactlyOneOf: []string{paramId, paramDisplayName},
-				Description:  "The ID for flink artifact.",
+				Description:  "The ID for Flink artifact.",
 			},
 			paramDisplayName: {
 				Type:     schema.TypeString,
@@ -50,19 +50,19 @@ func flinkArtifactDataSource() *schema.Resource {
 				Optional: true,
 				// A user should provide a value for either "id" or "display_name" attribute, not both
 				ExactlyOneOf: []string{paramId, paramDisplayName},
-				Description:  "The display name of flink artifact.",
+				Description:  "The display name of Flink artifact.",
 			},
 			paramClass: {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "The class for flink artifact",
+				Description: "The class for Flink artifact",
 			},
 			paramCloud: {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
 				ValidateFunc: validation.StringInSlice(acceptedCloudProviders, false),
-				Description:  "The public cloud flink artifact name",
+				Description:  "The public cloud Flink artifact name",
 				// Suppress the diff shown if the value of "cloud" attribute are equal when both compared in lower case.
 				// For example, AWS == aws
 				DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
@@ -83,7 +83,7 @@ func flinkArtifactDataSource() *schema.Resource {
 			paramContentFormat: {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "The class for flink artifact",
+				Description: "The content format for Flink artifact",
 			},
 		},
 	}

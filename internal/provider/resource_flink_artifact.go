@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"net/http"
+	"path/filepath"
 	"strings"
 )
 
@@ -28,25 +29,25 @@ func artifactResource() *schema.Resource {
 			paramId: {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "The ID for flink artifact",
+				Description: "The ID for Flink artifact",
 			},
 			paramDisplayName: {
 				Type:         schema.TypeString,
 				Required:     true,
-				Description:  "The display name of flink artifact",
+				Description:  "The display name of Flink artifact",
 				ValidateFunc: validation.StringIsNotEmpty,
 			},
 			paramClass: {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "The class for flink artifact",
+				Description: "The class for Flink artifact",
 			},
 			paramCloud: {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
 				ValidateFunc: validation.StringInSlice(acceptedCloudProviders, false),
-				Description:  "The public cloud flink artifact name",
+				Description:  "The public cloud Flink artifact name",
 				// Suppress the diff shown if the value of "cloud" attribute are equal when both compared in lower case.
 				// For example, AWS == aws
 				DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
@@ -68,23 +69,23 @@ func artifactResource() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Optional:    true,
-				Description: "The content format for flink artifact",
+				Description: "The content format for Flink artifact",
 			},
 			paramArtifactFile: {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "The artifact file for flink artifact",
+				Description: "The artifact file for Flink artifact",
 			},
 			paramRuntimeLanguage: {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ValidateFunc: validation.StringInSlice(acceptedRuntimeLanguage, true),
-				Description:  "The runtime language for flink artifact",
+				Description:  "The runtime language for Flink artifact",
 			},
 			paramDescription: {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "A free-form description of the artifact.",
+				Description: "A free-form description of the Flink artifact.",
 			},
 		},
 	}
@@ -108,9 +109,15 @@ func artifactCreate(ctx context.Context, d *schema.ResourceData, meta interface{
 		Cloud:         fa.PtrString(cloud),
 		Region:        fa.PtrString(region),
 	}
+
+	extension := strings.ToLower(strings.TrimPrefix(filepath.Ext(artifactFile), "."))
+	if extension != "" && extension != "zip" && extension != "jar" {
+		return diag.Errorf(`error uploading artifact file: only file extensions ".jar" and ".zip" are allowed`)
+	}
+
 	resp, _, err := getFlinkPresignedUrl(c.faApiContext(ctx), c, request)
 	if err != nil {
-		return diag.Errorf("error creating Flink Artifact: %s", createDescriptiveError(err))
+		return diag.Errorf("error uploading flink artifact: error fetching presigned upload URL %s", createDescriptiveError(err))
 	}
 
 	if err := uploadFile(resp.GetUploadUrl(), artifactFile, resp.GetUploadFormData()); err != nil {
@@ -161,7 +168,7 @@ func getFlinkPresignedUrl(ctx context.Context, c *Client, request fa.ArtifactV1P
 }
 
 func executeArtifactCreate(ctx context.Context, c *Client, artifact fa.InlineObject) (fa.ArtifactV1FlinkArtifact, *http.Response, error) {
-	req := c.faClient.FlinkArtifactsArtifactV1Api.CreateArtifactV1FlinkArtifact(c.faApiContext(ctx)).Region(artifact.GetRegion()).Cloud(artifact.GetCloud())
+	req := c.faClient.FlinkArtifactsArtifactV1Api.CreateArtifactV1FlinkArtifact(c.faApiContext(ctx)).Region(artifact.GetRegion()).Cloud(artifact.GetCloud()).InlineObject(artifact)
 	return req.Execute()
 }
 
