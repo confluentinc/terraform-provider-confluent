@@ -106,6 +106,7 @@ In addition to the preceding arguments, the following attributes are exported:
       - `expr` - (Optional String) The body of the rule, which is optional.
       - `on_success` - (Optional String) An optional action to execute if the rule succeeds, otherwise the built-in action type NONE is used. For UPDOWN and WRITEREAD rules, one can specify two actions separated by commas, such as “NONE,ERROR” for a WRITEREAD rule. In this case NONE applies to WRITE and ERROR applies to READ.
       - `on_failure` - (Optional String) An optional action to execute if the rule fails, otherwise the built-in action type ERROR is used. For UPDOWN and WRITEREAD rules, one can specify two actions separated by commas, as mentioned above.
+      - `disabled` - (Optional Boolean)  TODO.
       - `tags` - (Optional String List) The tags to which the rule applies, if any.
       - `params` - (Optional Configuration Block) A set of static parameters for the rule, which is optional. These are key-value pairs that are passed to the rule.
 

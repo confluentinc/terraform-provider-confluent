@@ -51,6 +51,7 @@ const (
 	paramSensitive                           = "sensitive"
 	paramMetadata                            = "metadata"
 	paramValue                               = "value"
+	paramDisabled                            = "disabled"
 	// unique on a subject level
 	paramSchemaIdentifier                     = "schema_identifier"
 	paramSchema                               = "schema"
@@ -249,6 +250,11 @@ func ruleSchema() *schema.Schema {
 					Elem: &schema.Schema{
 						Type: schema.TypeString,
 					},
+					Optional: true,
+					Computed: true,
+				},
+				paramDisabled: {
+					Type:     schema.TypeString,
 					Optional: true,
 					Computed: true,
 				},
@@ -1118,6 +1124,9 @@ func buildRules(tfRules []interface{}) []sr.Rule {
 		}
 		if onFailure, exists := tfRuleMap[paramOnFailure].(string); exists {
 			rule.SetOnFailure(onFailure)
+		}
+		if disabled, exists := tfRuleMap[paramDisabled].(bool); exists {
+			rule.SetDisabled(disabled)
 		}
 		if tags, exists := tfRuleMap[paramTags]; exists {
 			rule.SetTags(convertToStringSlice(tags.(*schema.Set).List()))
