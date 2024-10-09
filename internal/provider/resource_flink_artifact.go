@@ -35,7 +35,7 @@ func artifactResource() *schema.Resource {
 				Type:         schema.TypeString,
 				Required:     true,
 				Description:  "The display name of Flink artifact",
-				ValidateFunc: validation.StringIsNotEmpty,
+				ValidateFunc: validation.StringLenBetween(1, 60),
 			},
 			paramClass: {
 				Type:        schema.TypeString,
@@ -47,15 +47,7 @@ func artifactResource() *schema.Resource {
 				Required:     true,
 				ForceNew:     true,
 				ValidateFunc: validation.StringInSlice(acceptedCloudProviders, false),
-				Description:  "The public cloud Flink artifact name",
-				// Suppress the diff shown if the value of "cloud" attribute are equal when both compared in lower case.
-				// For example, AWS == aws
-				DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
-					if strings.ToLower(old) == strings.ToLower(new) {
-						return true
-					}
-					return false
-				},
+				Description:  "The public cloud Flink provider name",
 			},
 			paramRegion: {
 				Type:         schema.TypeString,
@@ -80,7 +72,7 @@ func artifactResource() *schema.Resource {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ValidateFunc: validation.StringInSlice(acceptedRuntimeLanguage, true),
-				Description:  "The runtime language for Flink artifact",
+				Description:  "The runtime language for Flink artifact. The default runtime language is Java.",
 			},
 			paramDescription: {
 				Type:        schema.TypeString,
@@ -105,19 +97,20 @@ func artifactCreate(ctx context.Context, d *schema.ResourceData, meta interface{
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
 
 	request := fa.ArtifactV1PresignedUrlRequest{
-		ContentFormat: fa.PtrString(contentFormat),
-		Cloud:         fa.PtrString(cloud),
-		Region:        fa.PtrString(region),
+		Cloud:  fa.PtrString(cloud),
+		Region: fa.PtrString(region),
 	}
-
+	if contentFormat != "" {
+		request.SetContentFormat(contentFormat)
+	}
 	extension := strings.ToLower(strings.TrimPrefix(filepath.Ext(artifactFile), "."))
 	if extension != "" && extension != "zip" && extension != "jar" {
-		return diag.Errorf(`error uploading artifact file: only file extensions ".jar" and ".zip" are allowed`)
+		return diag.Errorf(`error uploading Flink Artifact file: only file extensions ".jar" and ".zip" are allowed`)
 	}
 
 	resp, _, err := getFlinkPresignedUrl(c.faApiContext(ctx), c, request)
 	if err != nil {
-		return diag.Errorf("error uploading flink artifact: error fetching presigned upload URL %s", createDescriptiveError(err))
+		return diag.Errorf("error uploading Flink Artifact: error fetching presigned upload URL %s", createDescriptiveError(err))
 	}
 
 	if err := uploadFile(resp.GetUploadUrl(), artifactFile, resp.GetUploadFormData()); err != nil {
@@ -129,15 +122,21 @@ func artifactCreate(ctx context.Context, d *schema.ResourceData, meta interface{
 		Cloud:       cloud,
 		Region:      region,
 		Environment: environmentId,
-		Class:       class,
-		Description: fa.PtrString(description),
 		UploadSource: fa.InlineObjectUploadSourceOneOf{
 			ArtifactV1UploadSourcePresignedUrl: &fa.ArtifactV1UploadSourcePresignedUrl{
 				Location: fa.PtrString("PRESIGNED_URL_LOCATION"),
 				UploadId: fa.PtrString(resp.GetUploadId()),
 			},
 		},
-		RuntimeLanguage: fa.PtrString(runtimeLanguage),
+	}
+	if description != "" {
+		createArtifactRequest.SetDescription(description)
+	}
+	if runtimeLanguage != "" {
+		createArtifactRequest.SetRuntimeLanguage(runtimeLanguage)
+	}
+	if class != "" {
+		createArtifactRequest.SetClass(class)
 	}
 
 	createArtifactRequestJson, err := json.Marshal(createArtifactRequest)
@@ -242,7 +241,14 @@ func setArtifactAttributes(d *schema.ResourceData, artifact fa.ArtifactV1FlinkAr
 	if err := d.Set(paramContentFormat, artifact.GetContentFormat()); err != nil {
 		return nil, err
 	}
+	if err := d.Set(paramDescription, artifact.GetDescription()); err != nil {
+		return nil, err
+	}
+	if err := d.Set(paramRuntimeLanguage, artifact.GetRuntimeLanguage()); err != nil {
+		return nil, err
+	}
 	d.SetId(artifact.GetId())
+
 	return d, nil
 }
 

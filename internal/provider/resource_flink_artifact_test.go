@@ -23,6 +23,8 @@ const (
 	flinkArtifactRegion                        = "us-east-2"
 	flinkArtifactEnvironmentId                 = "env-gz903"
 	flinkArtifactContentFormat                 = "JAR"
+	flinkArtifactRuntimeLanguage               = "JAVA"
+	flinkArtifactDescription                   = "string"
 	flinkArtifactId                            = "lfcp-abc123"
 	flinkArtifactDisplayName                   = "flink_artifact_0"
 	flinkArtifactDisplayNameUpdated            = "updated_flink_artifact_0"
@@ -155,6 +157,8 @@ func TestAccFlinkArtifact(t *testing.T) {
 					resource.TestCheckResourceAttr(fullFlinkArtifactResourceLabel, fmt.Sprintf("%s.#", paramEnvironment), "1"),
 					resource.TestCheckResourceAttr(fullFlinkArtifactResourceLabel, fmt.Sprintf("%s.0.%s", paramEnvironment, paramId), flinkArtifactEnvironmentId),
 					resource.TestCheckResourceAttr(fullFlinkArtifactResourceLabel, paramContentFormat, flinkArtifactContentFormat),
+					resource.TestCheckResourceAttr(fullFlinkArtifactResourceLabel, paramRuntimeLanguage, flinkArtifactRuntimeLanguage),
+					resource.TestCheckResourceAttr(fullFlinkArtifactResourceLabel, paramDescription, flinkArtifactDescription),
 				),
 			},
 			{
@@ -181,6 +185,8 @@ func TestAccFlinkArtifact(t *testing.T) {
 					resource.TestCheckResourceAttr(fullFlinkArtifactResourceLabel, fmt.Sprintf("%s.#", paramEnvironment), "1"),
 					resource.TestCheckResourceAttr(fullFlinkArtifactResourceLabel, fmt.Sprintf("%s.0.%s", paramEnvironment, paramId), flinkArtifactEnvironmentId),
 					resource.TestCheckResourceAttr(fullFlinkArtifactResourceLabel, paramContentFormat, flinkArtifactContentFormat),
+					resource.TestCheckResourceAttr(fullFlinkArtifactResourceLabel, paramRuntimeLanguage, flinkArtifactRuntimeLanguage),
+					resource.TestCheckResourceAttr(fullFlinkArtifactResourceLabel, paramDescription, flinkArtifactDescription),
 				),
 			},
 			{
@@ -236,11 +242,13 @@ func testAccCheckArtifactConfig(mockServerUrl, resourceLabel string) string {
         cloud            = "%s"
 	    region           = "%s"
 		class = "%s"
+		description = "%s"
+		runtime_language = "%s"
 	    environment {
 		  id = "%s"
 	    }
 	}
-	`, mockServerUrl, resourceLabel, flinkArtifactDisplayName, flinkArtifactCloud, flinkArtifactRegion, flinkArtifactClass, flinkArtifactEnvironmentId)
+	`, mockServerUrl, resourceLabel, flinkArtifactDisplayName, flinkArtifactCloud, flinkArtifactRegion, flinkArtifactClass, flinkArtifactDescription, flinkArtifactRuntimeLanguage, flinkArtifactEnvironmentId)
 }
 
 func testAccCheckArtifactUpdatedConfig(mockServerUrl, resourceLabel string) string {
@@ -253,11 +261,13 @@ func testAccCheckArtifactUpdatedConfig(mockServerUrl, resourceLabel string) stri
         cloud            = "%s"
 	    region           = "%s"
 		class = "%s"
+		description = "%s"
+		runtime_language = "%s"
 	    environment {
 		  id = "%s"
 	    }
 	}
-	`, mockServerUrl, resourceLabel, flinkArtifactDisplayNameUpdated, flinkArtifactCloud, flinkArtifactRegion, flinkArtifactClass, flinkArtifactEnvironmentId)
+	`, mockServerUrl, resourceLabel, flinkArtifactDisplayNameUpdated, flinkArtifactCloud, flinkArtifactRegion, flinkArtifactClass, flinkArtifactDescription, flinkArtifactRuntimeLanguage, flinkArtifactEnvironmentId)
 }
 
 func testAccCheckArtifactExists(n string) resource.TestCheckFunc {

@@ -1,8 +1,8 @@
-  terraform {
+terraform {
   required_providers {
     confluent = {
-     source  = "confluentinc/confluent"
-     version = "2.2.0"
+      source  = "confluentinc/confluent"
+      version = "2.2.0"
     }
   }
 }
@@ -25,10 +25,10 @@ resource "confluent_flink_artifact" "main" {
   environment {
     id = confluent_environment.staging.id
   }
-  class = "class1"
-  region = "us-west-2"
-  cloud = "AWS"
-  display_name = "flink_artifact_main_3"
+  class          = "class1"
+  region         = "us-west-2"
+  cloud          = "AWS"
+  display_name   = "flink_artifact_main_3"
   content_format = "JAR"
-  artifact_file = var.artifact_file
+  artifact_file  = var.artifact_file
 }

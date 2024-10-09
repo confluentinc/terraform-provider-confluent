@@ -54,7 +54,7 @@ func flinkArtifactDataSource() *schema.Resource {
 			},
 			paramClass: {
 				Type:        schema.TypeString,
-				Computed:    true,
+				Optional:    true,
 				Description: "The class for Flink artifact",
 			},
 			paramCloud: {
@@ -84,6 +84,17 @@ func flinkArtifactDataSource() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "The content format for Flink artifact",
+			},
+			paramRuntimeLanguage: {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: validation.StringInSlice(acceptedRuntimeLanguage, true),
+				Description:  "The runtime language for Flink artifact. The default runtime language is Java.",
+			},
+			paramDescription: {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "A free-form description of the Flink artifact.",
 			},
 		},
 	}
@@ -140,7 +151,7 @@ func flinkArtifactDataSourceReadUsingDisplayName(ctx context.Context, d *schema.
 			if err != nil {
 				return diag.Errorf("error reading flink artifact using display name %q: error marshaling %#v to json: %s", displayName, flinkArtifact, createDescriptiveError(err))
 			}
-			if orgHasMultipleProviderIntegrationsWithTargetDisplayName(flinkArtifacts, displayName) {
+			if orgHasMultipleFlinkArtifactsWithTargetDisplayName(flinkArtifacts, displayName) {
 				return diag.Errorf("error reading flink artifacts: there are multiple flink artifacts with %q=%q", paramDisplayName, displayName)
 			}
 			if _, err := setArtifactAttributes(d, flinkArtifact); err != nil {
@@ -193,7 +204,7 @@ func executeListFlinkArtifacts(ctx context.Context, c *Client, environmentId, cl
 	}
 }
 
-func orgHasMultipleProviderIntegrationsWithTargetDisplayName(flinkArtifacts []fa.ArtifactV1FlinkArtifact, displayName string) bool {
+func orgHasMultipleFlinkArtifactsWithTargetDisplayName(flinkArtifacts []fa.ArtifactV1FlinkArtifact, displayName string) bool {
 	var counter = 0
 	for _, flinkArtifact := range flinkArtifacts {
 		if flinkArtifact.GetDisplayName() == displayName {
