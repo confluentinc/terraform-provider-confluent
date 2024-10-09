@@ -39,7 +39,7 @@ func artifactResource() *schema.Resource {
 			},
 			paramClass: {
 				Type:        schema.TypeString,
-				Computed:    true,
+				Optional:    true,
 				Description: "The class for Flink artifact",
 			},
 			paramCloud: {

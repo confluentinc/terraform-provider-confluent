@@ -235,11 +235,12 @@ func testAccCheckArtifactConfig(mockServerUrl, resourceLabel string) string {
         display_name     = "%s"
         cloud            = "%s"
 	    region           = "%s"
+		class = "%s"
 	    environment {
 		  id = "%s"
 	    }
 	}
-	`, mockServerUrl, resourceLabel, flinkArtifactDisplayName, flinkArtifactCloud, flinkArtifactRegion, flinkArtifactEnvironmentId)
+	`, mockServerUrl, resourceLabel, flinkArtifactDisplayName, flinkArtifactCloud, flinkArtifactRegion, flinkArtifactClass, flinkArtifactEnvironmentId)
 }
 
 func testAccCheckArtifactUpdatedConfig(mockServerUrl, resourceLabel string) string {
@@ -251,11 +252,12 @@ func testAccCheckArtifactUpdatedConfig(mockServerUrl, resourceLabel string) stri
         display_name     = "%s"
         cloud            = "%s"
 	    region           = "%s"
+		class = "%s"
 	    environment {
 		  id = "%s"
 	    }
 	}
-	`, mockServerUrl, resourceLabel, flinkArtifactDisplayNameUpdated, flinkArtifactCloud, flinkArtifactRegion, flinkArtifactEnvironmentId)
+	`, mockServerUrl, resourceLabel, flinkArtifactDisplayNameUpdated, flinkArtifactCloud, flinkArtifactRegion, flinkArtifactClass, flinkArtifactEnvironmentId)
 }
 
 func testAccCheckArtifactExists(n string) resource.TestCheckFunc {
