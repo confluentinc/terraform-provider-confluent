@@ -201,43 +201,39 @@ func ruleSchema() *schema.Schema {
 			Schema: map[string]*schema.Schema{
 				paramName: {
 					Type:     schema.TypeString,
-					Optional: true,
-					Computed: true,
+					Required: true,
+				},
+				paramKind: {
+					Type:     schema.TypeString,
+					Required: true,
+				},
+				paramMode: {
+					Type:     schema.TypeString,
+					Required: true,
+				},
+				paramType: {
+					Type:     schema.TypeString,
+					Required: true,
 				},
 				paramDoc: {
 					Type:     schema.TypeString,
 					Optional: true,
-					Computed: true,
-				},
-				paramKind: {
-					Type:     schema.TypeString,
-					Optional: true,
-					Computed: true,
-				},
-				paramMode: {
-					Type:     schema.TypeString,
-					Optional: true,
-					Computed: true,
-				},
-				paramType: {
-					Type:     schema.TypeString,
-					Optional: true,
-					Computed: true,
+					Default:  "",
 				},
 				paramExpr: {
 					Type:     schema.TypeString,
 					Optional: true,
-					Computed: true,
+					Default:  "",
 				},
 				paramOnSuccess: {
 					Type:     schema.TypeString,
 					Optional: true,
-					Computed: true,
+					Default:  "NONE,NONE",
 				},
 				paramOnFailure: {
 					Type:     schema.TypeString,
 					Optional: true,
-					Computed: true,
+					Default:  "ERROR,ERROR",
 				},
 				paramTags: {
 					Type:     schema.TypeSet,
@@ -254,9 +250,9 @@ func ruleSchema() *schema.Schema {
 					Computed: true,
 				},
 				paramDisabled: {
-					Type:     schema.TypeString,
+					Type:     schema.TypeBool,
 					Optional: true,
-					Computed: true,
+					Default:  false,
 				},
 			},
 		},
@@ -354,6 +350,32 @@ func SetSchemaDiff(ctx context.Context, diff *schema.ResourceDiff, meta interfac
 	createSchemaRequest.SetSchema(schemaContent)
 	createSchemaRequest.SetReferences(schemaReferences)
 
+	if tfRuleset := diff.Get(paramRuleset).([]interface{}); len(tfRuleset) == 1 {
+		ruleset := sr.NewRuleSet()
+		tfRulesetMap := tfRuleset[0].(map[string]interface{})
+		if tfRulesetMap[paramDomainRules] != nil {
+			ruleset.SetDomainRules(buildRules(tfRulesetMap[paramDomainRules].(*schema.Set).List()))
+		}
+		createSchemaRequest.SetRuleSet(*ruleset)
+	}
+	if tfMetadata := diff.Get(paramMetadata).([]interface{}); len(tfMetadata) == 1 {
+		metadata := sr.NewMetadata()
+		tfMetadataMap := tfMetadata[0].(map[string]interface{})
+		if tfMetadataMap[paramTags] != nil {
+			metadata.SetTags(convertToStringStringListMap(tfMetadataMap[paramTags].(*schema.Set).List()))
+		}
+		if tfMetadataMap[paramProperties] != nil {
+			metadata.SetProperties(convertToStringStringMap(tfMetadataMap[paramProperties].(map[string]interface{})))
+		}
+		if tfMetadataMap[paramSensitive] != nil {
+			metadata.SetSensitive(convertToStringSlice(tfMetadataMap[paramSensitive].(*schema.Set).List()))
+		}
+		createSchemaRequest.SetMetadata(*metadata)
+	}
+
+	//createSchemaRequestJson, _ := json.Marshal(createSchemaRequest)
+	//panic(fmt.Sprintf("%s", createSchemaRequestJson))
+
 	// SetSchemaDiff() function is invoked during terraform plan
 	// Having schema validation check during plan empowers customers to review schema changes before applying
 	// paramSkipValidationDuringPlan = true -> skipping schema validation during 'terraform plan'
@@ -390,7 +412,6 @@ func SetSchemaDiff(ctx context.Context, diff *schema.ResourceDiff, meta interfac
 	if shouldRecreateOnUpdate && hasSemanticSchemaUpdate {
 		return fmt.Errorf("error updating Schema %q: reimport the current resource instance and set %s = false to evolve a schema using the same resource instance.\nIn this case, on an update resource instance will reference the updated (latest) schema by overriding %s, %s and %s attributes and the old schema will be orphaned.", diff.Id(), paramRecreateOnUpdate, paramSchemaIdentifier, paramSchema, paramVersion)
 	}
-
 	return nil
 }
 
@@ -414,7 +435,6 @@ func schemaLookupCheck(ctx context.Context, diff *schema.ResourceDiff, c *Schema
 	if int(registeredSchema.GetId()) == schemaIdentifier {
 		// Two schemas that are semantically equivalent
 		// https://docs.confluent.io/platform/current/schema-registry/serdes-develop/index.html#schema-normalization
-
 		// Set old value to paramSchema to avoid TF drift
 		if err := diff.SetNew(paramSchema, oldSchema); err != nil {
 			return fmt.Errorf("error customizing diff Schema: %s", createDescriptiveError(err))
