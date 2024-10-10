@@ -689,7 +689,7 @@ func schemaUpdate(ctx context.Context, d *schema.ResourceData, meta interface{})
 	if d.HasChanges(paramSchema, paramSchemaReference) {
 		oldSchema, _ := d.GetChange(paramSchema)
 		oldSchemaReference, _ := d.GetChange(paramSchemaReference)
-
+		// TODO: handle ruleset updates
 		// User wants to edit / evolve a schema. See https://docs.confluent.io/cloud/current/sr/schemas-manage.html#editing-schemas for more details.
 		shouldRecreateOnUpdate := d.Get(paramRecreateOnUpdate).(bool)
 		if shouldRecreateOnUpdate {
