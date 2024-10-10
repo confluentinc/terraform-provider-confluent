@@ -67,8 +67,15 @@ func artifactResource() *schema.Resource {
 				Description: "The content format for Flink artifact",
 			},
 			paramArtifactFile: {
-				Type:        schema.TypeString,
-				Optional:    true,
+				Type:     schema.TypeString,
+				Optional: true,
+				ValidateFunc: func(val interface{}, key string) (warns []string, errs []error) {
+					extension := strings.ToLower(strings.TrimPrefix(filepath.Ext(val.(string)), "."))
+					if extension != "zip" && extension != "jar" {
+						errs = append(errs, fmt.Errorf("%q must be have extension .jar or .zip", key))
+					}
+					return
+				},
 				Description: "The artifact file for Flink artifact",
 			},
 			paramRuntimeLanguage: {
@@ -105,10 +112,6 @@ func artifactCreate(ctx context.Context, d *schema.ResourceData, meta interface{
 	}
 	if contentFormat != "" {
 		request.SetContentFormat(contentFormat)
-	}
-	extension := strings.ToLower(strings.TrimPrefix(filepath.Ext(artifactFile), "."))
-	if extension != "" && extension != "zip" && extension != "jar" {
-		return diag.Errorf(`error uploading Flink Artifact file: only file extensions ".jar" and ".zip" are allowed`)
 	}
 
 	resp, _, err := getFlinkPresignedUrl(c.faApiContext(ctx), c, request)
@@ -182,14 +185,14 @@ func artifactRead(ctx context.Context, d *schema.ResourceData, meta interface{})
 
 	artifactId := d.Id()
 
-	if _, err := readArtifactAndSetAttributes(ctx, d, meta, d.Get(paramRegion).(string), d.Get(paramCloud).(string), artifactId); err != nil {
+	if _, err := readArtifactAndSetAttributes(ctx, d, meta, d.Get(paramRegion).(string), d.Get(paramCloud).(string), artifactId, d.Get(paramArtifactFile).(string)); err != nil {
 		return diag.FromErr(fmt.Errorf("error reading Flink Artifact %q: %s", d.Id(), createDescriptiveError(err)))
 	}
 
 	return nil
 }
 
-func readArtifactAndSetAttributes(ctx context.Context, d *schema.ResourceData, meta interface{}, region, cloud, artifactId string) ([]*schema.ResourceData, error) {
+func readArtifactAndSetAttributes(ctx context.Context, d *schema.ResourceData, meta interface{}, region, cloud, artifactId, artifactFile string) ([]*schema.ResourceData, error) {
 	c := meta.(*Client)
 
 	artifact, resp, err := executeArtifactRead(c.faApiContext(ctx), c, region, cloud, artifactId)
@@ -210,7 +213,7 @@ func readArtifactAndSetAttributes(ctx context.Context, d *schema.ResourceData, m
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Flink Artifact %q: %s", d.Id(), artifactJson), map[string]interface{}{flinkArtifactLoggingKey: d.Id()})
 
-	if _, err := setArtifactAttributes(d, artifact); err != nil {
+	if _, err := setArtifactAttributes(d, artifact, artifactFile); err != nil {
 		return nil, createDescriptiveError(err)
 	}
 
@@ -219,7 +222,7 @@ func readArtifactAndSetAttributes(ctx context.Context, d *schema.ResourceData, m
 	return []*schema.ResourceData{d}, nil
 }
 
-func setArtifactAttributes(d *schema.ResourceData, artifact fa.ArtifactV1FlinkArtifact) (*schema.ResourceData, error) {
+func setArtifactAttributes(d *schema.ResourceData, artifact fa.ArtifactV1FlinkArtifact, artifactFile string) (*schema.ResourceData, error) {
 	if err := d.Set(paramId, artifact.GetId()); err != nil {
 		return nil, err
 	}
@@ -247,6 +250,11 @@ func setArtifactAttributes(d *schema.ResourceData, artifact fa.ArtifactV1FlinkAr
 	}
 	if err := d.Set(paramRuntimeLanguage, artifact.GetRuntimeLanguage()); err != nil {
 		return nil, err
+	}
+	if artifactFile != "" {
+		if err := d.Set(paramArtifactFile, artifactFile); err != nil {
+			return nil, err
+		}
 	}
 	d.SetId(artifact.GetId())
 
@@ -308,18 +316,19 @@ func artifactImport(ctx context.Context, d *schema.ResourceData, meta interface{
 
 	regionCloudAndArtifactId := d.Id()
 	parts := strings.Split(regionCloudAndArtifactId, "/")
-	if len(parts) != 3 {
-		return nil, fmt.Errorf("error importing Flink Artifact: invalid format: expected '<region>/<cloud>/<Flink Artifact ID>'")
+	if len(parts) != 4 {
+		return nil, fmt.Errorf("error importing Flink Artifact: invalid format: expected '<region>/<cloud>/<Flink Artifact ID>/<artifact file>'")
 	}
 
 	artifactId := parts[2]
 	region := parts[0]
 	cloud := parts[1]
+	artifactFile := parts[3]
 	d.SetId(artifactId)
 
 	// Mark resource as new to avoid d.Set("") when getting 404
 	d.MarkNewResource()
-	if _, err := readArtifactAndSetAttributes(ctx, d, meta, region, cloud, artifactId); err != nil {
+	if _, err := readArtifactAndSetAttributes(ctx, d, meta, region, cloud, artifactId, artifactFile); err != nil {
 		return nil, fmt.Errorf("error importing Flink Artifact %q: %s", d.Id(), err)
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished importing Flink Artifact %q", d.Id()), map[string]interface{}{flinkArtifactLoggingKey: d.Id()})

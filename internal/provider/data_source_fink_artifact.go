@@ -130,7 +130,7 @@ func flinkArtifactDataSourceReadUsingId(ctx context.Context, d *schema.ResourceD
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched flink artifact %q: %s", artifactId, famJson), map[string]interface{}{flinkArtifactLoggingKey: artifactId})
 
-	if _, err := setArtifactAttributes(d, fam); err != nil {
+	if _, err := setArtifactAttributes(d, fam, ""); err != nil {
 		return diag.FromErr(createDescriptiveError(err))
 	}
 
@@ -156,7 +156,7 @@ func flinkArtifactDataSourceReadUsingDisplayName(ctx context.Context, d *schema.
 			if orgHasMultipleFlinkArtifactsWithTargetDisplayName(flinkArtifacts, displayName) {
 				return diag.Errorf("error reading flink artifacts: there are multiple flink artifacts with %q=%q", paramDisplayName, displayName)
 			}
-			if _, err := setArtifactAttributes(d, flinkArtifact); err != nil {
+			if _, err := setArtifactAttributes(d, flinkArtifact, ""); err != nil {
 				tflog.Debug(ctx, fmt.Sprintf("Fetched flink artifact using display name %q: %s", displayName, famJson))
 				return diag.FromErr(createDescriptiveError(err))
 			}

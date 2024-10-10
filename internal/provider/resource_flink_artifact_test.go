@@ -156,6 +156,7 @@ func TestAccFlinkArtifact(t *testing.T) {
 					resource.TestCheckResourceAttr(fullFlinkArtifactResourceLabel, paramRegion, flinkArtifactRegion),
 					resource.TestCheckResourceAttr(fullFlinkArtifactResourceLabel, fmt.Sprintf("%s.#", paramEnvironment), "1"),
 					resource.TestCheckResourceAttr(fullFlinkArtifactResourceLabel, fmt.Sprintf("%s.0.%s", paramEnvironment, paramId), flinkArtifactEnvironmentId),
+					resource.TestCheckResourceAttr(fullFlinkArtifactResourceLabel, paramArtifactFile, "abc.jar"),
 					resource.TestCheckResourceAttr(fullFlinkArtifactResourceLabel, paramContentFormat, flinkArtifactContentFormat),
 					resource.TestCheckResourceAttr(fullFlinkArtifactResourceLabel, paramRuntimeLanguage, flinkArtifactRuntimeLanguage),
 					resource.TestCheckResourceAttr(fullFlinkArtifactResourceLabel, paramDescription, flinkArtifactDescription),
@@ -169,8 +170,9 @@ func TestAccFlinkArtifact(t *testing.T) {
 					resources := state.RootModule().Resources
 					flinkArtifactId := resources[fullFlinkArtifactResourceLabel].Primary.ID
 					region := resources[fullFlinkArtifactResourceLabel].Primary.Attributes["region"]
+					file := resources[fullFlinkArtifactResourceLabel].Primary.Attributes["artifact_file"]
 					cloud := resources[fullFlinkArtifactResourceLabel].Primary.Attributes["cloud"]
-					return region + "/" + cloud + "/" + flinkArtifactId, nil
+					return region + "/" + cloud + "/" + flinkArtifactId + "/" + file, nil
 				},
 			},
 			{
@@ -184,6 +186,7 @@ func TestAccFlinkArtifact(t *testing.T) {
 					resource.TestCheckResourceAttr(fullFlinkArtifactResourceLabel, paramRegion, flinkArtifactRegion),
 					resource.TestCheckResourceAttr(fullFlinkArtifactResourceLabel, fmt.Sprintf("%s.#", paramEnvironment), "1"),
 					resource.TestCheckResourceAttr(fullFlinkArtifactResourceLabel, fmt.Sprintf("%s.0.%s", paramEnvironment, paramId), flinkArtifactEnvironmentId),
+					resource.TestCheckResourceAttr(fullFlinkArtifactResourceLabel, paramArtifactFile, "abc.jar"),
 					resource.TestCheckResourceAttr(fullFlinkArtifactResourceLabel, paramContentFormat, flinkArtifactContentFormat),
 					resource.TestCheckResourceAttr(fullFlinkArtifactResourceLabel, paramRuntimeLanguage, flinkArtifactRuntimeLanguage),
 					resource.TestCheckResourceAttr(fullFlinkArtifactResourceLabel, paramDescription, flinkArtifactDescription),
@@ -197,8 +200,9 @@ func TestAccFlinkArtifact(t *testing.T) {
 					resources := state.RootModule().Resources
 					flinkArtifactId := resources[fullFlinkArtifactResourceLabel].Primary.ID
 					region := resources[fullFlinkArtifactResourceLabel].Primary.Attributes["region"]
+					file := resources[fullFlinkArtifactResourceLabel].Primary.Attributes["artifact_file"]
 					cloud := resources[fullFlinkArtifactResourceLabel].Primary.Attributes["cloud"]
-					return region + "/" + cloud + "/" + flinkArtifactId, nil
+					return region + "/" + cloud + "/" + flinkArtifactId + "/" + file, nil
 				},
 			},
 		},
@@ -238,6 +242,7 @@ func testAccCheckArtifactConfig(mockServerUrl, resourceLabel string) string {
  		endpoint = "%s"
 	}
 	resource "confluent_flink_artifact" "%s" {
+		artifact_file    = "abc.jar"
         display_name     = "%s"
         cloud            = "%s"
 	    region           = "%s"
@@ -257,6 +262,7 @@ func testAccCheckArtifactUpdatedConfig(mockServerUrl, resourceLabel string) stri
  		endpoint = "%s"
 	}
 	resource "confluent_flink_artifact" "%s" {
+		artifact_file    = "abc.jar"
         display_name     = "%s"
         cloud            = "%s"
 	    region           = "%s"
