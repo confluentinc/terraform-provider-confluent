@@ -23,6 +23,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"net/http"
+	"regexp"
 	"strings"
 
 	fa "github.com/confluentinc/ccloud-sdk-go-v2/flink-artifact/v1"
@@ -53,9 +54,10 @@ func flinkArtifactDataSource() *schema.Resource {
 				Description:  "The display name of Flink artifact.",
 			},
 			paramClass: {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "The class for Flink artifact",
+				Type:         schema.TypeString,
+				Required:     true,
+				Description:  "The class for Flink artifact",
+				ValidateFunc: validation.StringMatch(regexp.MustCompile(pattern), "The class must be in the required format"),
 			},
 			paramCloud: {
 				Type:         schema.TypeString,

@@ -25,7 +25,7 @@ resource "confluent_flink_artifact" "main" {
   environment {
     id = confluent_environment.staging.id
   }
-  class          = "class1"
+  class          = "io.confluent.example.SumScalarFunction"
   region         = "us-west-2"
   cloud          = "AWS"
   display_name   = "flink_artifact_main_3"

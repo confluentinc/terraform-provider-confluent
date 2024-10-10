@@ -11,10 +11,12 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"net/http"
 	"path/filepath"
+	"regexp"
 	"strings"
 )
 
 var acceptedRuntimeLanguage = []string{"python", "java"}
+var pattern = "^(([a-zA-Z][a-zA-Z_$0-9]*(\\.[a-zA-Z][a-zA-Z_$0-9]*)*)\\.)?([a-zA-Z][a-zA-Z_$0-9]*)$"
 
 func artifactResource() *schema.Resource {
 	return &schema.Resource{
@@ -38,9 +40,10 @@ func artifactResource() *schema.Resource {
 				ValidateFunc: validation.StringLenBetween(1, 60),
 			},
 			paramClass: {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "The class for Flink artifact",
+				Type:         schema.TypeString,
+				Required:     true,
+				Description:  "The class for Flink artifact",
+				ValidateFunc: validation.StringMatch(regexp.MustCompile(pattern), "The class must be in the required format"),
 			},
 			paramCloud: {
 				Type:         schema.TypeString,
@@ -121,6 +124,7 @@ func artifactCreate(ctx context.Context, d *schema.ResourceData, meta interface{
 		DisplayName: name,
 		Cloud:       cloud,
 		Region:      region,
+		Class:       class,
 		Environment: environmentId,
 		UploadSource: fa.InlineObjectUploadSourceOneOf{
 			ArtifactV1UploadSourcePresignedUrl: &fa.ArtifactV1UploadSourcePresignedUrl{
@@ -134,9 +138,6 @@ func artifactCreate(ctx context.Context, d *schema.ResourceData, meta interface{
 	}
 	if runtimeLanguage != "" {
 		createArtifactRequest.SetRuntimeLanguage(runtimeLanguage)
-	}
-	if class != "" {
-		createArtifactRequest.SetClass(class)
 	}
 
 	createArtifactRequestJson, err := json.Marshal(createArtifactRequest)
