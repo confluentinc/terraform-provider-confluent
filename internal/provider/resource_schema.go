@@ -682,14 +682,14 @@ func schemaRead(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 }
 
 func schemaUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if d.HasChangesExcept(paramCredentials, paramConfigs, paramHardDelete, paramSchema, paramSchemaReference, paramSkipValidationDuringPlan) {
-		return diag.Errorf("error updating Schema %q: only %q, %q, %q, %q, %q and %q blocks can be updated for Schema", d.Id(), paramCredentials, paramConfigs, paramHardDelete, paramSchema, paramSchemaReference, paramSkipValidationDuringPlan)
+	if d.HasChangesExcept(paramCredentials, paramConfigs, paramHardDelete, paramSchema, paramSchemaReference, paramSkipValidationDuringPlan, paramRuleset) {
+		return diag.Errorf("error updating Schema %q: only %q, %q, %q, %q, %q and %q blocks can be updated for Schema", d.Id(), paramCredentials, paramConfigs, paramHardDelete, paramSchema, paramSchemaReference, paramSkipValidationDuringPlan, paramRuleset)
 	}
 
-	if d.HasChanges(paramSchema, paramSchemaReference) {
+	if d.HasChanges(paramSchema, paramSchemaReference, paramRuleset) {
 		oldSchema, _ := d.GetChange(paramSchema)
 		oldSchemaReference, _ := d.GetChange(paramSchemaReference)
-		// TODO: handle ruleset updates
+		oldRuleset, _ := d.GetChange(paramRuleset)
 		// User wants to edit / evolve a schema. See https://docs.confluent.io/cloud/current/sr/schemas-manage.html#editing-schemas for more details.
 		shouldRecreateOnUpdate := d.Get(paramRecreateOnUpdate).(bool)
 		if shouldRecreateOnUpdate {
@@ -699,6 +699,9 @@ func schemaUpdate(ctx context.Context, d *schema.ResourceData, meta interface{})
 				return diag.FromErr(createDescriptiveError(err))
 			}
 			if err := d.Set(paramSchemaReference, oldSchemaReference); err != nil {
+				return diag.FromErr(createDescriptiveError(err))
+			}
+			if err := d.Set(paramRuleset, oldRuleset); err != nil {
 				return diag.FromErr(createDescriptiveError(err))
 			}
 			return diag.Errorf("error updating Schema %q: reimport the current resource instance and set %s = false to evolve a schema using the same resource instance.\nIn this case, on an update resource instance will reference the updated (latest) schema by overriding %s, %s and %s attributes and the old schema will be orphaned.", d.Id(), paramRecreateOnUpdate, paramSchemaIdentifier, paramSchema, paramVersion)
