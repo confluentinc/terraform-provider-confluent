@@ -57,7 +57,8 @@
       --property basic.auth.credentials.source=USER_INFO  \
       --property basic.auth.user.info=${SR_API_KEY}:${SR_API_SECRET} \
       --bootstrap-server ${KAFKA_BOOTSTRAP_SERVER} \
-      --consumer.config config.properties
+      --consumer.config config.properties \
+      --from-beginning
     ```
     Your output should resemble the following:
     ```bash
