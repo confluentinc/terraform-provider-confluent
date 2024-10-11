@@ -1175,9 +1175,9 @@ func buildTfRules(rules []sr.Rule) *[]map[string]interface{} {
 		tfRule[paramExpr] = rule.GetExpr()
 		tfRule[paramOnSuccess] = rule.GetOnSuccess()
 		tfRule[paramOnFailure] = rule.GetOnFailure()
+		tfRule[paramDisabled] = rule.GetDisabled()
 		tfRule[paramTags] = rule.GetTags()
 		tfRule[paramParams] = rule.GetParams()
-		tfRule[paramDisabled] = rule.GetDisabled()
 		tfRules[i] = tfRule
 	}
 	tfDomainRules := make(map[string]interface{})
