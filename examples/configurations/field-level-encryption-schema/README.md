@@ -84,7 +84,7 @@
     {"item":"item3","amount":15.0,"customer_id":"id14"}
     ```
 7. See the following docs for more details:
-   * [Client-Side Field Level Encryption (CSFLE) with AWS KMS](https://github.com/pneff93/csfle/blob/main/aws/README.md).
+    * [Client-Side Field Level Encryption (CSFLE) with AWS KMS](https://github.com/pneff93/csfle/blob/main/aws/README.md).
 
     * [Hands On: Configure, Build and Register Protobuf and Avro Schemas](https://developer.confluent.io/learn-kafka/schema-registry/configure-schemas-hands-on/).
 
