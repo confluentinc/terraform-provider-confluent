@@ -28,7 +28,7 @@ resource "confluent_flink_artifact" "main" {
   class          = "io.confluent.example.SumScalarFunction"
   region         = "us-west-2"
   cloud          = "AWS"
-  display_name   = "flink_artifact_main_3"
+  display_name   = "flink_sumscalar_artifact"
   content_format = "JAR"
   artifact_file  = var.artifact_file
 }
