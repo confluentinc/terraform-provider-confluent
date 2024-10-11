@@ -1,10 +1,10 @@
 ### Notes
 
 1. Make sure to use Stream Governance [Advanced package](https://docs.confluent.io/cloud/current/stream-governance/packages.html#packages) and create a Kafka topic called "purchase" before running this example.
-2. Apply this Terraform configuration by following [Sample Project for Confluent Terraform Provider](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/guides/sample-project).
-3. Download [Confluent Platform archive package](https://docs.confluent.io/platform/current/installation/installing_cp/zip-tar.html) that contains `confluent-7.7.1/bin/kafka-avro-console-producer` and `confluent-7.7.1/bin/kafka-avro-console-consumer` binaries.
-4. Update the `field-level-encryption-schema/config.properties` file to include the relevant Kafka cluster details (bootstrap server, Kafka API key, and Kafka API secret) and copy it to `confluent-7.7.1` folder.
-5. Open `confluent-7.7.1` directory and run the following command to produce encrypted events to Kafka topic called "purchase":
+2. Apply this Terraform configuration by following the [Sample Project for Confluent Terraform Provider](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/guides/sample-project).
+3. Download the [Confluent Platform archive package](https://docs.confluent.io/platform/current/installation/installing_cp/zip-tar.html) that contains `confluent-7.7.1/bin/kafka-avro-console-producer` and `confluent-7.7.1/bin/kafka-avro-console-consumer` binaries.
+4. Update the `field-level-encryption-schema/config.properties` file to include the relevant Kafka cluster details (bootstrap server, Kafka API key, and Kafka API secret) and copy it to the `confluent-7.7.1` folder.
+5. Open the `confluent-7.7.1` directory and run the following command to produce encrypted events to the Kafka topic called "purchase":
     ```bash
     # /Users/alex/work/confluent-7.7.1
     $ ./bin/kafka-avro-console-producer \
@@ -39,7 +39,7 @@
     {"item": "item2", "amount": 5.0, "customer_id": "id13"}
     {"item": "item3", "amount": 15.0, "customer_id": "id14"}
     ```
-6. Run the following command to consume encrypted events from Kafka topic called "purchase":
+6. Run the following command to consume encrypted events from the Kafka topic called "purchase":
     ```bash
     # /Users/alex/work/confluent-7.7.1
     $ export AWS_ACCESS_KEY_ID=<REDACTED>
