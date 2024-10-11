@@ -42,7 +42,7 @@
    
     And we check the encrypted field messages in the CC UI
 
-    ![](images/cc_ui_consume.jpg)
+    ![](images/cc_ui_consume.png)
 
 6. Run the following command to consume encrypted events from the Kafka topic called "purchase":
     ```bash
