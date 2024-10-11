@@ -62,7 +62,8 @@
     ```
 
    SCHEMA_ID is the value of the `confluent_schema.purchase.schema_identifier` attribute (for example, 100004), which can be obtained from either the Terraform state file or the Confluent Cloud Console/CLI.
-   See [How do you find schema IDs?](https://docs.confluent.io/cloud/current/sr/faqs-cc.html#faq-print-schemas-ids) for details.
+   See [How do you find schema IDs?](https://docs.confluent.io/cloud/current/sr/faqs-cc.html#faq-print-schemas-ids) for more details.
+
    Your output should resemble the following:
     ```bash
     # /Users/alex/work/confluent-7.7.1
