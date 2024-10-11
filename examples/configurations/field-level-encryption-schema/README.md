@@ -40,7 +40,7 @@
     {"item": "item3", "amount": 15.0, "customer_id": "id14"}
     ```
    
-    And we check the encrypted field messages on the Confluent Cloud Console:
+    And you can also check the encrypted field messages on the Confluent Cloud Console:
 
     ![](images/cc_ui_consume.png)
 
