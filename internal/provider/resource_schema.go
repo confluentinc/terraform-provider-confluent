@@ -373,9 +373,6 @@ func SetSchemaDiff(ctx context.Context, diff *schema.ResourceDiff, meta interfac
 		createSchemaRequest.SetMetadata(*metadata)
 	}
 
-	//createSchemaRequestJson, _ := json.Marshal(createSchemaRequest)
-	//panic(fmt.Sprintf("%s", createSchemaRequestJson))
-
 	// SetSchemaDiff() function is invoked during terraform plan
 	// Having schema validation check during plan empowers customers to review schema changes before applying
 	// paramSkipValidationDuringPlan = true -> skipping schema validation during 'terraform plan'
