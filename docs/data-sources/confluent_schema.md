@@ -104,9 +104,9 @@ In addition to the preceding arguments, the following attributes are exported:
       - `mode` - (Optional String) The mode of the rule.
       - `type` - (Optional String) The type of rule, which invokes a specific rule executor, such as Google Common Expression Language (CEL) or JSONata.
       - `expr` - (Optional String) The body of the rule, which is optional.
-      - `on_success` - (Optional String) An optional action to execute if the rule succeeds, otherwise the built-in action type NONE is used. For UPDOWN and WRITEREAD rules, one can specify two actions separated by commas, such as “NONE,ERROR” for a WRITEREAD rule. In this case NONE applies to WRITE and ERROR applies to READ.
-      - `on_failure` - (Optional String) An optional action to execute if the rule fails, otherwise the built-in action type ERROR is used. For UPDOWN and WRITEREAD rules, one can specify two actions separated by commas, as mentioned above.
-      - `disabled` - (Optional Boolean)  TODO.
+      - `on_success` - (Optional String) An optional action to execute if the rule succeeds, otherwise the built-in action type NONE is used. For UPDOWN and WRITEREAD rules, one can specify two actions separated by commas, such as “NONE,ERROR” for a WRITEREAD rule. In this case NONE applies to WRITE and ERROR applies to READ. Defaults to `NONE,NONE`.
+      - `on_failure` - (Optional String) An optional action to execute if the rule fails, otherwise the built-in action type ERROR is used. For UPDOWN and WRITEREAD rules, one can specify two actions separated by commas, as mentioned above. Defaults to `ERROR,ERROR`.
+      - `disabled` - (Optional Boolean) The boolean flag to control whether the rule should be disabled. Defaults to `false`.
       - `tags` - (Optional String List) The tags to which the rule applies, if any.
       - `params` - (Optional Configuration Block) A set of static parameters for the rule, which is optional. These are key-value pairs that are passed to the rule.
 
