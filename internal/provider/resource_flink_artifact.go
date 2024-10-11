@@ -22,7 +22,6 @@ func artifactResource() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: artifactCreate,
 		ReadContext:   artifactRead,
-		UpdateContext: artifactUpdate,
 		DeleteContext: artifactDelete,
 		Importer: &schema.ResourceImporter{
 			StateContext: artifactImport,
@@ -36,12 +35,14 @@ func artifactResource() *schema.Resource {
 			paramDisplayName: {
 				Type:         schema.TypeString,
 				Required:     true,
+				ForceNew:     true,
 				Description:  "The display name of Flink artifact",
 				ValidateFunc: validation.StringLenBetween(1, 60),
 			},
 			paramClass: {
 				Type:         schema.TypeString,
 				Required:     true,
+				ForceNew:     true,
 				Description:  "Java class or alias for the artifact as provided by developer.",
 				ValidateFunc: validation.StringMatch(regexp.MustCompile(pattern), "The class must be in the required format"),
 			},
@@ -69,6 +70,7 @@ func artifactResource() *schema.Resource {
 			paramArtifactFile: {
 				Type:     schema.TypeString,
 				Optional: true,
+				ForceNew: true,
 				ValidateFunc: func(val interface{}, key string) (warns []string, errs []error) {
 					extension := strings.ToLower(strings.TrimPrefix(filepath.Ext(val.(string)), "."))
 					if extension != "zip" && extension != "jar" {
@@ -81,6 +83,7 @@ func artifactResource() *schema.Resource {
 			paramRuntimeLanguage: {
 				Type:         schema.TypeString,
 				Optional:     true,
+				ForceNew:     true,
 				ValidateFunc: validation.StringInSlice(acceptedRuntimeLanguage, true),
 				Default:      "JAVA",
 				Description:  "Runtime language of the Flink Artifact. The default runtime language is Java.",
@@ -88,6 +91,7 @@ func artifactResource() *schema.Resource {
 			paramDescription: {
 				Type:        schema.TypeString,
 				Optional:    true,
+				ForceNew:    true,
 				Description: "Description of the Flink Artifact.",
 			},
 			paramApiVersion: {
@@ -276,41 +280,6 @@ func setArtifactAttributes(d *schema.ResourceData, artifact fa.ArtifactV1FlinkAr
 	d.SetId(artifact.GetId())
 
 	return d, nil
-}
-
-func artifactUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if d.HasChangesExcept(paramDisplayName) {
-		return diag.Errorf("error updating Flink Artifact %q: only %q attribute can be updated for Flink Artifact", d.Id(), paramDisplayName)
-	}
-
-	c := meta.(*Client)
-	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
-	updateArtifactRequest := fa.NewArtifactV1FlinkArtifactUpdate()
-	updateArtifactRequest.SetEnvironment(environmentId)
-
-	if d.HasChange(paramDisplayName) {
-		updateArtifactRequest.SetDisplayName(d.Get(paramDisplayName).(string))
-	}
-
-	updateArtifactRequestJson, err := json.Marshal(updateArtifactRequest)
-	if err != nil {
-		return diag.Errorf("error updating Flink Artifact %q: error marshaling %#v to json: %s", d.Id(), updateArtifactRequestJson, createDescriptiveError(err))
-	}
-	tflog.Debug(ctx, fmt.Sprintf("Updating Flink Artifact %q: %s", d.Id(), updateArtifactRequestJson), map[string]interface{}{flinkArtifactLoggingKey: d.Id()})
-
-	req := c.faClient.FlinkArtifactsArtifactV1Api.UpdateArtifactV1FlinkArtifact(c.faApiContext(ctx), d.Id()).ArtifactV1FlinkArtifactUpdate(*updateArtifactRequest).Region(d.Get(paramRegion).(string)).Cloud(d.Get(paramCloud).(string))
-	updatedArtifact, _, err := req.Execute()
-
-	if err != nil {
-		return diag.Errorf("error updating Flink Artifact %q: %s", d.Id(), createDescriptiveError(err))
-	}
-
-	updatedArtifactJson, err := json.Marshal(updatedArtifact)
-	if err != nil {
-		return diag.Errorf("error updating Flink Artifact %q: error marshaling %#v to json: %s", d.Id(), updatedArtifact, createDescriptiveError(err))
-	}
-	tflog.Debug(ctx, fmt.Sprintf("Finished updating Flink Artifact %q: %s", d.Id(), updatedArtifactJson), map[string]interface{}{flinkArtifactLoggingKey: d.Id()})
-	return artifactRead(ctx, d, meta)
 }
 
 func artifactDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
