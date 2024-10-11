@@ -683,7 +683,7 @@ func schemaRead(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 
 func schemaUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	if d.HasChangesExcept(paramCredentials, paramConfigs, paramHardDelete, paramSchema, paramSchemaReference, paramSkipValidationDuringPlan, paramRuleset) {
-		return diag.Errorf("error updating Schema %q: only %q, %q, %q, %q, %q and %q blocks can be updated for Schema", d.Id(), paramCredentials, paramConfigs, paramHardDelete, paramSchema, paramSchemaReference, paramSkipValidationDuringPlan, paramRuleset)
+		return diag.Errorf("error updating Schema %q: only %q, %q, %q, %q, %q, %q and %q blocks can be updated for Schema", d.Id(), paramCredentials, paramConfigs, paramHardDelete, paramSchema, paramSchemaReference, paramSkipValidationDuringPlan, paramRuleset, paramMetadata)
 	}
 
 	if d.HasChanges(paramSchema, paramSchemaReference, paramRuleset) {
