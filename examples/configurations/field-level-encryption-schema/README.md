@@ -6,6 +6,7 @@
 4. Update the `field-level-encryption-schema/config.properties` file to include the relevant Kafka cluster details (bootstrap server, Kafka API key, and Kafka API secret) and copy it to `confluent-7.7.1` folder.
 5. Open `confluent-7.7.1` directory and run the following command to produce encrypted events to Kafka topic called "purchase":
     ```bash
+    # /Users/alex/work/confluent-7.7.1
     $ ./bin/kafka-avro-console-producer \
       --topic purchase \
       --property schema.registry.url=${SR_REST_ENDPOINT} \
@@ -17,6 +18,7 @@
     ```
     Your output should resemble the following:
     ```bash
+    # /Users/alex/work/confluent-7.7.1
     ➜  confluent-7.7.1 ./bin/kafka-avro-console-producer \
       --topic purchase \
       --property schema.registry.url=${SR_REST_ENDPOINT} \
@@ -39,6 +41,7 @@
     ```
 6. Run the following command to consume encrypted events from Kafka topic called "purchase":
     ```bash
+    # /Users/alex/work/confluent-7.7.1
     $ export AWS_ACCESS_KEY_ID=<REDACTED>
     $ export AWS_SECRET_ACCESS_KEY=<REDACTED>
     
@@ -53,6 +56,7 @@
     ```
     Your output should resemble the following:
     ```bash
+    # /Users/alex/work/confluent-7.7.1
     ➜  confluent-7.7.1 ./bin/kafka-avro-console-consumer \
       --topic purchase \
       --property schema.registry.url=${SR_REST_ENDPOINT} \
