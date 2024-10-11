@@ -31,7 +31,7 @@
         auto.register.schemas = true
         avro.reflection.allow.null = false
         avro.remove.java.properties = false
-    ...
+        ...
         value.subject.name.strategy = class io.confluent.kafka.serializers.subject.TopicNameStrategy
      (io.confluent.kafka.serializers.KafkaAvroSerializerConfig:375)
     {"item": "item1", "amount": 5.0, "customer_id": "id12"}
@@ -68,7 +68,9 @@
       --from-beginning
     [2024-10-10 11:02:23,135] INFO KafkaAvroDeserializerConfig values:
         auto.register.schemas = true
-    ...
+        avro.reflection.allow.null = false
+        avro.use.logical.type.converters = false
+        ...
         value.subject.name.strategy = class io.confluent.kafka.serializers.subject.TopicNameStrategy
      (io.confluent.kafka.serializers.KafkaAvroDeserializerConfig:375)
     {"item":"item1","amount":5.0,"customer_id":"id12"}
