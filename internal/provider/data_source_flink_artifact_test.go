@@ -109,12 +109,11 @@ func testAccCheckDataSourceFlinkArtifactConfigWithDisplayNameSet(mockServerUrl s
 		display_name = "%s"
 		cloud = "%s"
 		region = "%s"
-		class = "%s"
 	  	environment {
 			id = "%s"
 	  	}
 	}
-	`, mockServerUrl, networkDataSourceLabel, flinkArtifactDisplayName, flinkArtifactCloud, flinkArtifactRegion, flinkArtifactClass,
+	`, mockServerUrl, networkDataSourceLabel, flinkArtifactDisplayName, flinkArtifactCloud, flinkArtifactRegion,
 		flinkArtifactEnvironmentId)
 }
 
@@ -127,10 +126,9 @@ func testAccCheckDataSourceFlinkArtifactConfigWithIdSet(mockServerUrl string) st
 	    id = "%s"
 		cloud = "%s"
 		region = "%s"
-		class = "%s"
 	    environment {
 		  id = "%s"
 	    }
 	}
-	`, mockServerUrl, networkDataSourceLabel, flinkArtifactId, flinkArtifactCloud, flinkArtifactRegion, flinkArtifactClass, flinkArtifactEnvironmentId)
+	`, mockServerUrl, networkDataSourceLabel, flinkArtifactId, flinkArtifactCloud, flinkArtifactRegion, flinkArtifactEnvironmentId)
 }

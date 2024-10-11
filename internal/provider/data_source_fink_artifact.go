@@ -23,7 +23,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"net/http"
-	"regexp"
 	"strings"
 
 	fa "github.com/confluentinc/ccloud-sdk-go-v2/flink-artifact/v1"
@@ -54,10 +53,9 @@ func flinkArtifactDataSource() *schema.Resource {
 				Description:  "The display name of Flink artifact.",
 			},
 			paramClass: {
-				Type:         schema.TypeString,
-				Required:     true,
-				Description:  "The class for Flink artifact",
-				ValidateFunc: validation.StringMatch(regexp.MustCompile(pattern), "The class must be in the required format"),
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The class for Flink artifact",
 			},
 			paramCloud: {
 				Type:         schema.TypeString,
@@ -89,12 +87,14 @@ func flinkArtifactDataSource() *schema.Resource {
 			},
 			paramRuntimeLanguage: {
 				Type:         schema.TypeString,
+				Computed:     true,
 				Optional:     true,
 				ValidateFunc: validation.StringInSlice(acceptedRuntimeLanguage, true),
 				Description:  "The runtime language for Flink artifact. The default runtime language is Java.",
 			},
 			paramDescription: {
 				Type:        schema.TypeString,
+				Computed:    true,
 				Optional:    true,
 				Description: "A free-form description of the Flink artifact.",
 			},
