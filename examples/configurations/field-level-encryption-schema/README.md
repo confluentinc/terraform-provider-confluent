@@ -35,7 +35,7 @@
         value.subject.name.strategy = class io.confluent.kafka.serializers.subject.TopicNameStrategy
      (io.confluent.kafka.serializers.KafkaAvroSerializerConfig:375)
     {"item": "item1", "amount": 5.0, "customer_id": "id12"}
-    [2024-10-10 10:50:41,702] INFO Registered dek for kek kek, subject purchase-value (io.confluent.kafka.schemaregistry.encryption.FieldEncryptionExecutor:463)
+    [2024-10-10 10:50:41,702] INFO Registered dek for kek kek-name, subject purchase-value (io.confluent.kafka.schemaregistry.encryption.FieldEncryptionExecutor:463)
     {"item": "item2", "amount": 5.0, "customer_id": "id13"}
     {"item": "item3", "amount": 15.0, "customer_id": "id14"}
     ```
