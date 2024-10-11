@@ -42,7 +42,7 @@ func artifactResource() *schema.Resource {
 			paramClass: {
 				Type:         schema.TypeString,
 				Required:     true,
-				Description:  "The class for Flink artifact",
+				Description:  "Java class or alias for the artifact as provided by developer.",
 				ValidateFunc: validation.StringMatch(regexp.MustCompile(pattern), "The class must be in the required format"),
 			},
 			paramCloud: {
@@ -50,11 +50,11 @@ func artifactResource() *schema.Resource {
 				Required:     true,
 				ForceNew:     true,
 				ValidateFunc: validation.StringInSlice(acceptedCloudProviders, false),
-				Description:  "The public cloud Flink provider name",
+				Description:  "Cloud provider where the Flink Artifact archive is uploaded.",
 			},
 			paramRegion: {
 				Type:         schema.TypeString,
-				Description:  "The cloud service provider region that hosts the Flink artifact.",
+				Description:  "The Cloud provider region the Flink Artifact archive is uploaded.",
 				ValidateFunc: validation.StringIsNotEmpty,
 				Required:     true,
 				ForceNew:     true,
@@ -64,7 +64,7 @@ func artifactResource() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Optional:    true,
-				Description: "The content format for Flink artifact",
+				Description: "Archive format of the Flink Artifact.",
 			},
 			paramArtifactFile: {
 				Type:     schema.TypeString,
@@ -76,18 +76,29 @@ func artifactResource() *schema.Resource {
 					}
 					return
 				},
-				Description: "The artifact file for Flink artifact",
+				Description: "The artifact file for Flink artifact.",
 			},
 			paramRuntimeLanguage: {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ValidateFunc: validation.StringInSlice(acceptedRuntimeLanguage, true),
-				Description:  "The runtime language for Flink artifact. The default runtime language is Java.",
+				Default:      "JAVA",
+				Description:  "Runtime language of the Flink Artifact. The default runtime language is Java.",
 			},
 			paramDescription: {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "A free-form description of the Flink artifact.",
+				Description: "Description of the Flink Artifact.",
+			},
+			paramApiVersion: {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The schema version of this representation of a resource.",
+			},
+			paramKind: {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The object this REST resource represents.",
 			},
 		},
 	}
@@ -255,6 +266,12 @@ func setArtifactAttributes(d *schema.ResourceData, artifact fa.ArtifactV1FlinkAr
 		if err := d.Set(paramArtifactFile, artifactFile); err != nil {
 			return nil, err
 		}
+	}
+	if err := d.Set(paramApiVersion, artifact.GetApiVersion()); err != nil {
+		return nil, createDescriptiveError(err)
+	}
+	if err := d.Set(paramKind, artifact.GetKind()); err != nil {
+		return nil, createDescriptiveError(err)
 	}
 	d.SetId(artifact.GetId())
 

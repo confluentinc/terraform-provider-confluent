@@ -18,14 +18,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	fa "github.com/confluentinc/ccloud-sdk-go-v2/flink-artifact/v1"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"net/http"
-	"strings"
-
-	fa "github.com/confluentinc/ccloud-sdk-go-v2/flink-artifact/v1"
 )
 
 const (
@@ -42,7 +40,7 @@ func flinkArtifactDataSource() *schema.Resource {
 				Optional: true,
 				// A user should provide a value for either "id" or "display_name" attribute, not both
 				ExactlyOneOf: []string{paramId, paramDisplayName},
-				Description:  "The ID for Flink artifact.",
+				Description:  "The ID of the Flink artifact.",
 			},
 			paramDisplayName: {
 				Type:     schema.TypeString,
@@ -50,32 +48,24 @@ func flinkArtifactDataSource() *schema.Resource {
 				Optional: true,
 				// A user should provide a value for either "id" or "display_name" attribute, not both
 				ExactlyOneOf: []string{paramId, paramDisplayName},
-				Description:  "The display name of Flink artifact.",
+				Description:  "Display name of the Flink Artifact.",
 			},
 			paramClass: {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "The class for Flink artifact",
+				Description: "Java class or alias for the artifact as provided by developer.",
 			},
 			paramCloud: {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
 				ValidateFunc: validation.StringInSlice(acceptedCloudProviders, false),
-				Description:  "The public cloud Flink artifact name",
-				// Suppress the diff shown if the value of "cloud" attribute are equal when both compared in lower case.
-				// For example, AWS == aws
-				DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
-					if strings.ToLower(old) == strings.ToLower(new) {
-						return true
-					}
-					return false
-				},
+				Description:  "Cloud provider where the Flink Artifact archive is uploaded.",
 			},
 			paramRegion: {
 				Type:         schema.TypeString,
-				Description:  "The cloud service provider region that hosts the Flink artifact.",
-				ValidateFunc: validation.StringIsNotEmpty,
+				Description:  "The Cloud provider region the Flink Artifact archive is uploaded.",
+				ValidateFunc: validation.StringLenBetween(1, 60),
 				Required:     true,
 				ForceNew:     true,
 			},
@@ -83,20 +73,29 @@ func flinkArtifactDataSource() *schema.Resource {
 			paramContentFormat: {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "The content format for Flink artifact",
+				Description: "Archive format of the Flink Artifact.",
 			},
 			paramRuntimeLanguage: {
-				Type:         schema.TypeString,
-				Computed:     true,
-				Optional:     true,
-				ValidateFunc: validation.StringInSlice(acceptedRuntimeLanguage, true),
-				Description:  "The runtime language for Flink artifact. The default runtime language is Java.",
+				Type:        schema.TypeString,
+				Computed:    true,
+				Optional:    true,
+				Description: "Runtime language of the Flink Artifact. The default runtime language is JAVA.",
 			},
 			paramDescription: {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Optional:    true,
-				Description: "A free-form description of the Flink artifact.",
+				Description: "Description of the Flink Artifact.",
+			},
+			paramApiVersion: {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The schema version of this representation of a resource.",
+			},
+			paramKind: {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The object this REST resource represents.",
 			},
 		},
 	}

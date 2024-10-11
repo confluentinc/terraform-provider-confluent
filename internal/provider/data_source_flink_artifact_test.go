@@ -78,6 +78,8 @@ func TestAccDataSourceFlinkArtifact(t *testing.T) {
 					resource.TestCheckResourceAttr(fullArtifactDataSourceLabel, paramContentFormat, flinkArtifactContentFormat),
 					resource.TestCheckResourceAttr(fullArtifactDataSourceLabel, paramRuntimeLanguage, flinkArtifactRuntimeLanguage),
 					resource.TestCheckResourceAttr(fullArtifactDataSourceLabel, paramDescription, flinkArtifactDescription),
+					resource.TestCheckResourceAttr(fullArtifactDataSourceLabel, paramApiVersion, flinkArtifactApiVersion),
+					resource.TestCheckResourceAttr(fullArtifactDataSourceLabel, paramKind, flinkArtifactKind),
 				),
 			},
 			{
@@ -94,6 +96,8 @@ func TestAccDataSourceFlinkArtifact(t *testing.T) {
 					resource.TestCheckResourceAttr(fullArtifactDataSourceLabel, paramContentFormat, flinkArtifactContentFormat),
 					resource.TestCheckResourceAttr(fullArtifactDataSourceLabel, paramRuntimeLanguage, flinkArtifactRuntimeLanguage),
 					resource.TestCheckResourceAttr(fullArtifactDataSourceLabel, paramDescription, flinkArtifactDescription),
+					resource.TestCheckResourceAttr(fullArtifactDataSourceLabel, paramApiVersion, flinkArtifactApiVersion),
+					resource.TestCheckResourceAttr(fullArtifactDataSourceLabel, paramKind, flinkArtifactKind),
 				),
 			},
 		},
