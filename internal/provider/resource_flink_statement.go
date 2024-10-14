@@ -29,11 +29,13 @@ import (
 )
 
 const (
-	paramStatementName = "statement_name"
-	paramStatement     = "statement"
-	paramComputePool   = "compute_pool"
-	paramProperties    = "properties"
-	paramStopped       = "stopped"
+	paramStatementName          = "statement_name"
+	paramStatement              = "statement"
+	paramComputePool            = "compute_pool"
+	paramProperties             = "properties"
+	paramStopped                = "stopped"
+	paramLatestOffsets          = "latest_offsets"
+	paramLatestOffsetsTimestamp = "latest_offsets_timestamp"
 
 	stateCompleted = "COMPLETED"
 	statePending   = "PENDING"
@@ -84,6 +86,22 @@ func flinkStatementResource() *schema.Resource {
 				Optional:    true,
 				Computed:    true,
 				Description: "Indicates whether the statement should be stopped.",
+			},
+			paramLatestOffsets: {
+				Type: schema.TypeMap,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+				Computed: true,
+				Description: "The last Kafka offsets that a statement has processed. " +
+					"Represented by a mapping from Kafka topic to a string representation " +
+					"of partitions mapped to offsets.",
+			},
+			paramLatestOffsetsTimestamp: {
+				Type:     schema.TypeString,
+				Computed: true,
+				Description: "The date and time at which the Kafka topic offsets were added to the statement status. " +
+					"It is represented in RFC3339 format and is in UTC.",
 			},
 			paramRestEndpoint: {
 				Type:         schema.TypeString,
