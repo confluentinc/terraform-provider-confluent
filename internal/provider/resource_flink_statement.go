@@ -368,7 +368,7 @@ func setFlinkStatementAttributes(d *schema.ResourceData, c *FlinkRestClient, sta
 	if err := d.Set(paramLatestOffsetsTimestamp, fmt.Sprint(statement.Status.GetLatestOffsetsTimestamp())); err != nil {
 		return nil, err
 	}
-	if err := d.Set(paramLatestOffsets, fmt.Sprint(statement.Status.GetLatestOffsets())); err != nil {
+	if err := d.Set(paramLatestOffsets, statement.Status.GetLatestOffsets()); err != nil {
 		return nil, err
 	}
 
