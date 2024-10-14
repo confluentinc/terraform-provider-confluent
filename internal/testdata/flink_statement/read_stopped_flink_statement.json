@@ -22,6 +22,10 @@
   },
   "status": {
     "detail": "",
+    "latest_offsets": {
+      "customers_source_2": "partition:0,offset:9223372036854775808;partition:4,offset:9223372036854775808;partition:3,offset:9223372036854775808;partition:2,offset:9223372036854775808;partition:1,offset:9223372036854775808;partition:5,offset:9223372036854775808"
+    },
+    "latest_offsets_timestamp": "2024-10-14T21:26:07Z",
     "phase": "STOPPED",
     "result_schema": {
       "columns": [
