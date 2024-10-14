@@ -365,6 +365,12 @@ func setFlinkStatementAttributes(d *schema.ResourceData, c *FlinkRestClient, sta
 	if err := d.Set(paramStopped, statement.Spec.GetStopped()); err != nil {
 		return nil, err
 	}
+	if err := d.Set(paramLatestOffsetsTimestamp, fmt.Sprint(statement.Status.GetLatestOffsetsTimestamp())); err != nil {
+		return nil, err
+	}
+	if err := d.Set(paramLatestOffsets, fmt.Sprint(statement.Status.GetLatestOffsets())); err != nil {
+		return nil, err
+	}
 
 	if !c.isMetadataSetInProviderBlock {
 		if err := setKafkaCredentials(c.flinkApiKey, c.flinkApiSecret, d); err != nil {
