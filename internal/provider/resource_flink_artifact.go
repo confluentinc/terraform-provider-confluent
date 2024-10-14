@@ -30,20 +30,20 @@ func artifactResource() *schema.Resource {
 			paramId: {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "The ID for Flink artifact",
+				Description: "The ID for Flink Artifact",
 			},
 			paramDisplayName: {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				Description:  "The display name of Flink artifact",
+				Description:  "The display name of Flink Artifact",
 				ValidateFunc: validation.StringLenBetween(1, 60),
 			},
 			paramClass: {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				Description:  "Java class or alias for the artifact as provided by developer.",
+				Description:  "Java class or alias for the Flink Artifact as provided by developer.",
 				ValidateFunc: validation.StringMatch(regexp.MustCompile(pattern), "The class must be in the required format"),
 			},
 			paramCloud: {
@@ -78,7 +78,7 @@ func artifactResource() *schema.Resource {
 					}
 					return
 				},
-				Description: "The artifact file for Flink artifact.",
+				Description: "The artifact file for Flink Artifact.",
 			},
 			paramRuntimeLanguage: {
 				Type:         schema.TypeString,
