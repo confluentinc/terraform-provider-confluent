@@ -114,7 +114,7 @@ func flinkArtifactDataSourceRead(ctx context.Context, d *schema.ResourceData, me
 }
 
 func flinkArtifactDataSourceReadUsingId(ctx context.Context, d *schema.ResourceData, meta interface{}, artifactId string) diag.Diagnostics {
-	tflog.Debug(ctx, fmt.Sprintf("Reading flink artifact data source using Id %q", artifactId), map[string]interface{}{flinkArtifactLoggingKey: d.Id()})
+	tflog.Debug(ctx, fmt.Sprintf("Reading Flink Artifact data source using Id %q", artifactId), map[string]interface{}{flinkArtifactLoggingKey: d.Id()})
 	c := meta.(*Client)
 	fam, _, err := executeArtifactRead(c.faApiContext(ctx), c, d.Get(paramRegion).(string), d.Get(paramCloud).(string), artifactId)
 
@@ -125,13 +125,13 @@ func flinkArtifactDataSourceReadUsingId(ctx context.Context, d *schema.ResourceD
 	if err != nil {
 		return diag.Errorf("error reading flink artifact %q: error marshaling %#v to json: %s", artifactId, fam, createDescriptiveError(err))
 	}
-	tflog.Debug(ctx, fmt.Sprintf("Fetched flink artifact %q: %s", artifactId, famJson), map[string]interface{}{flinkArtifactLoggingKey: artifactId})
+	tflog.Debug(ctx, fmt.Sprintf("Fetched Flink Artifact %q: %s", artifactId, famJson), map[string]interface{}{flinkArtifactLoggingKey: artifactId})
 
 	if _, err := setArtifactAttributes(d, fam, ""); err != nil {
 		return diag.FromErr(createDescriptiveError(err))
 	}
 
-	tflog.Debug(ctx, fmt.Sprintf("Finished reading flink artifact %q", artifactId), map[string]interface{}{flinkArtifactLoggingKey: artifactId})
+	tflog.Debug(ctx, fmt.Sprintf("Finished reading Flink Artifact %q", artifactId), map[string]interface{}{flinkArtifactLoggingKey: artifactId})
 	return nil
 }
 
@@ -154,7 +154,7 @@ func flinkArtifactDataSourceReadUsingDisplayName(ctx context.Context, d *schema.
 				return diag.Errorf("error reading flink artifacts: there are multiple flink artifacts with %q=%q", paramDisplayName, displayName)
 			}
 			if _, err := setArtifactAttributes(d, flinkArtifact, ""); err != nil {
-				tflog.Debug(ctx, fmt.Sprintf("Fetched flink artifact using display name %q: %s", displayName, famJson))
+				tflog.Debug(ctx, fmt.Sprintf("Fetched Flink Artifact using display name %q: %s", displayName, famJson))
 				return diag.FromErr(createDescriptiveError(err))
 			}
 			return nil
