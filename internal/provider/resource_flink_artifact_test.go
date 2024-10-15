@@ -17,7 +17,6 @@ const (
 	scenarioArtifactPresignedUrlHasBeenCreated = "The new flink artifact predesign URL has been just created"
 	scenarioStateFlinkArtifactHasBeenCreated   = "The new flink artifact has been just created"
 	scenarioStateFlinkArtifactHasBeenDeleted   = "The new flink artifact has been deleted"
-	scenarioStateArtifactHasBeenUpdated        = "The flink artifact has been updated"
 	flinkArtifactScenarioName                  = "confluent_flink_artifact Resource Lifecycle"
 	flinkArtifactClass                         = "io.confluent.example.SumScalarFunction"
 	flinkArtifactCloud                         = "AWS"
@@ -28,7 +27,6 @@ const (
 	flinkArtifactDescription                   = "string"
 	flinkArtifactId                            = "lfcp-abc123"
 	flinkArtifactDisplayName                   = "flink_artifact_0"
-	flinkArtifactDisplayNameUpdated            = "updated_flink_artifact_0"
 	flinkArtifactApiVersion                    = "artifact/v1"
 	flinkArtifactKind                          = "FlinkArtifact"
 )

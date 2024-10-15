@@ -27,11 +27,6 @@ func artifactResource() *schema.Resource {
 			StateContext: artifactImport,
 		},
 		Schema: map[string]*schema.Schema{
-			paramId: {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "The ID for Flink Artifact",
-			},
 			paramDisplayName: {
 				Type:         schema.TypeString,
 				Required:     true,
@@ -238,9 +233,6 @@ func readArtifactAndSetAttributes(ctx context.Context, d *schema.ResourceData, m
 }
 
 func setArtifactAttributes(d *schema.ResourceData, artifact fa.ArtifactV1FlinkArtifact, artifactFile string) (*schema.ResourceData, error) {
-	if err := d.Set(paramId, artifact.GetId()); err != nil {
-		return nil, err
-	}
 	if err := d.Set(paramDisplayName, artifact.GetDisplayName()); err != nil {
 		return nil, err
 	}

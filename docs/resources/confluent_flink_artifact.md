@@ -59,6 +59,8 @@ In addition to the preceding arguments, the following attributes are exported:
 
 ## Import
 
+-> **Note:** Set `artifact_file = ""` or use `IMPORT_ARTIFACT_FILENAME` environment variables before importing a Flink Artifact.
+
 -> **Note:** `CONFLUENT_CLOUD_API_KEY` and `CONFLUENT_CLOUD_API_SECRET` environment variables must be set before importing a Flink Artifact.
 
 You can import a Flink Artifact by using cloud, region, Flink Artifact ID and artifact file, in the format `<region>/<cloud>/<Flink Artifact ID>`. The following example shows how to import a Flink Artifact:

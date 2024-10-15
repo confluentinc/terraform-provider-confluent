@@ -58,7 +58,6 @@ func flinkArtifactDataSource() *schema.Resource {
 			paramCloud: {
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringInSlice(acceptedCloudProviders, false),
 				Description:  "Cloud provider where the Flink Artifact archive is uploaded.",
 			},
@@ -67,7 +66,6 @@ func flinkArtifactDataSource() *schema.Resource {
 				Description:  "The Cloud provider region the Flink Artifact archive is uploaded.",
 				ValidateFunc: validation.StringLenBetween(1, 60),
 				Required:     true,
-				ForceNew:     true,
 			},
 			paramEnvironment: environmentDataSourceSchema(),
 			paramContentFormat: {
