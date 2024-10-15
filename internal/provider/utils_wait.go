@@ -1175,7 +1175,7 @@ func flinkStatementUpdatingStatus(ctx context.Context, c *FlinkRestClient, state
 		}
 
 		tflog.Debug(ctx, fmt.Sprintf("Waiting for Flink Statement %q provisioning status to become %q: current status is %q", statementName, targetStatusMessage, statement.Status.GetPhase()), map[string]interface{}{flinkStatementLoggingKey: statementName})
-		if statement.Status.GetPhase() == statePending || statement.Status.GetPhase() == stateRunning || statement.Status.GetPhase() == stateCompleted || statement.Status.GetPhase() == stateStopped {
+		if statement.Status.GetPhase() == statePending || statement.Status.GetPhase() == stateRunning || statement.Status.GetPhase() == stateCompleted || statement.Status.GetPhase() == stateStopped || statement.Status.GetPhase() == stateStopping {
 			return statement, statement.Status.GetPhase(), nil
 		} else if statement.Status.GetPhase() == stateFailed || statement.Status.GetPhase() == stateFailing {
 			return nil, stateFailed, fmt.Errorf("flink Statement %q provisioning status is %q", statementName, statement.Status.GetPhase())
