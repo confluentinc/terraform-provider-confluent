@@ -12,4 +12,5 @@ variable "confluent_cloud_api_secret" {
 variable "artifact_file" {
   description = "Path to .zip / .jar for Flink Artifact"
   type        = string
+  default = "flink_artifact.jar"
 }
