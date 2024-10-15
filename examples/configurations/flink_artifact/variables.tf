@@ -12,5 +12,7 @@ variable "confluent_cloud_api_secret" {
 variable "artifact_file" {
   description = "Path to .zip / .jar for Flink Artifact"
   type        = string
-  default = "flink_artifact.jar"
+   # See "Create a User Defined Function for Flink SQL" here for more details
+   # https://docs.confluent.io/cloud/current/flink/how-to-guides/create-udf.html#flink-sql-create-udf-upload-jar
+  default     = "flink_artifact.jar"
 }
