@@ -6,6 +6,7 @@ import (
 	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -115,6 +116,11 @@ func TestAccFlinkArtifact(t *testing.T) {
 	flinkArtifactResourceLabel := "test"
 	fullFlinkArtifactResourceLabel := fmt.Sprintf("confluent_flink_artifact.%s", flinkArtifactResourceLabel)
 
+	_ = os.Setenv("IMPORT_ARTIFACT_FILENAME", "abc.jar")
+	defer func() {
+		_ = os.Unsetenv("IMPORT_ARTIFACT_FILENAME")
+	}()
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
@@ -149,9 +155,8 @@ func TestAccFlinkArtifact(t *testing.T) {
 					resources := state.RootModule().Resources
 					flinkArtifactId := resources[fullFlinkArtifactResourceLabel].Primary.ID
 					region := resources[fullFlinkArtifactResourceLabel].Primary.Attributes["region"]
-					file := resources[fullFlinkArtifactResourceLabel].Primary.Attributes["artifact_file"]
 					cloud := resources[fullFlinkArtifactResourceLabel].Primary.Attributes["cloud"]
-					return region + "/" + cloud + "/" + flinkArtifactId + "/" + file, nil
+					return region + "/" + cloud + "/" + flinkArtifactId, nil
 				},
 			},
 		},

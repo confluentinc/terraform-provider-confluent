@@ -302,14 +302,14 @@ func artifactImport(ctx context.Context, d *schema.ResourceData, meta interface{
 
 	regionCloudAndArtifactId := d.Id()
 	parts := strings.Split(regionCloudAndArtifactId, "/")
-	if len(parts) != 4 {
-		return nil, fmt.Errorf("error importing flink artifact: invalid format: expected '<region>/<cloud>/<Flink Artifact ID>/<artifact file>'")
+	if len(parts) != 3 {
+		return nil, fmt.Errorf("error importing flink artifact: invalid format: expected '<region>/<cloud>/<Flink Artifact ID>'")
 	}
 
 	artifactId := parts[2]
 	region := parts[0]
 	cloud := parts[1]
-	artifactFile := parts[3]
+	artifactFile := getEnv("IMPORT_ARTIFACT_FILENAME", "")
 	d.SetId(artifactId)
 
 	// Mark resource as new to avoid d.Set("") when getting 404
