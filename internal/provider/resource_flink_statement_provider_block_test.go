@@ -42,6 +42,9 @@ const (
 	flinkFirstPropertyKeyTest   = "sql.local-time-zone"
 	flinkFirstPropertyValueTest = "GMT-08:00"
 	flinkStatementResourceLabel = "example"
+
+	latestOffsetsTimestampEmptyValue   = "0001-01-01 00:00:00 +0000 UTC"
+	latestOffsetsTimestampStoppedValue = "2024-10-14 21:26:07 +0000 UTC"
 )
 
 var fullFlinkStatementResourceLabel = fmt.Sprintf("confluent_flink_statement.%s", flinkStatementResourceLabel)
@@ -198,7 +201,7 @@ func TestAccFlinkStatementWithEnhancedProviderBlock(t *testing.T) {
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "statement", flinkStatementTest),
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "stopped", "false"),
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "latest_offsets.%", "0"),
-					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "latest_offsets_timestamp", ""),
+					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "latest_offsets_timestamp", latestOffsetsTimestampEmptyValue),
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "properties.%", "1"),
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, fmt.Sprintf("properties.%s", flinkFirstPropertyKeyTest), flinkFirstPropertyValueTest),
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "credentials.#", "0"),
@@ -222,9 +225,10 @@ func TestAccFlinkStatementWithEnhancedProviderBlock(t *testing.T) {
 					resource.TestCheckNoResourceAttr(fullFlinkStatementResourceLabel, "environment.0.id"),
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "statement_name", flinkStatementNameTest),
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "statement", flinkStatementTest),
-					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "latest_offsets.%", "0"),
-					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "latest_offsets_timestamp", ""),
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "stopped", "true"),
+					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "latest_offsets.%", "1"),
+					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "latest_offsets.customers_source_2", "partition:0,offset:9223372036854775808;partition:4,offset:9223372036854775808;partition:3,offset:9223372036854775808;partition:2,offset:9223372036854775808;partition:1,offset:9223372036854775808;partition:5,offset:9223372036854775808"),
+					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "latest_offsets_timestamp", latestOffsetsTimestampStoppedValue),
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "properties.%", "1"),
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, fmt.Sprintf("properties.%s", flinkFirstPropertyKeyTest), flinkFirstPropertyValueTest),
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "credentials.#", "0"),
@@ -249,6 +253,8 @@ func TestAccFlinkStatementWithEnhancedProviderBlock(t *testing.T) {
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "statement_name", flinkStatementNameTest),
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "statement", flinkStatementTest),
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "stopped", "false"),
+					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "latest_offsets.%", "0"),
+					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "latest_offsets_timestamp", latestOffsetsTimestampEmptyValue),
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "properties.%", "1"),
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, fmt.Sprintf("properties.%s", flinkFirstPropertyKeyTest), flinkFirstPropertyValueTest),
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "credentials.#", "0"),
