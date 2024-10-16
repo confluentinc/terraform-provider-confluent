@@ -365,7 +365,8 @@ func setFlinkStatementAttributes(d *schema.ResourceData, c *FlinkRestClient, sta
 	if err := d.Set(paramStopped, statement.Spec.GetStopped()); err != nil {
 		return nil, err
 	}
-	if err := d.Set(paramLatestOffsetsTimestamp, fmt.Sprint(statement.Status.GetLatestOffsetsTimestamp())); err != nil {
+	// Use time.RFC3339 to match the API response format
+	if err := d.Set(paramLatestOffsetsTimestamp, fmt.Sprint(statement.Status.GetLatestOffsetsTimestamp().Format(time.RFC3339))); err != nil {
 		return nil, err
 	}
 	if err := d.Set(paramLatestOffsets, statement.Status.GetLatestOffsets()); err != nil {
