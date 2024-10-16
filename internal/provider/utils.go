@@ -24,6 +24,7 @@ import (
 	ccp "github.com/confluentinc/ccloud-sdk-go-v2/connect-custom-plugin/v1"
 	connect "github.com/confluentinc/ccloud-sdk-go-v2/connect/v1"
 	dc "github.com/confluentinc/ccloud-sdk-go-v2/data-catalog/v1"
+	fa "github.com/confluentinc/ccloud-sdk-go-v2/flink-artifact/v1"
 	fgb "github.com/confluentinc/ccloud-sdk-go-v2/flink-gateway/v1"
 	fcpm "github.com/confluentinc/ccloud-sdk-go-v2/flink/v2"
 	iamv1 "github.com/confluentinc/ccloud-sdk-go-v2/iam/v1"
@@ -76,6 +77,7 @@ const (
 	roleBindingLoggingKey                     = "role_binding_id"
 	apiKeyLoggingKey                          = "api_key_id"
 	computePoolLoggingKey                     = "compute_pool_id"
+	flinkArtifactLoggingKey                   = "flink_artifact_id"
 	flinkStatementLoggingKey                  = "flink_statement_key_id"
 	networkLoggingKey                         = "network_key_id"
 	customConnectorPluginLoggingKey           = "custom_connector_plugin_key_id"
@@ -219,6 +221,17 @@ func (c *Client) mdsApiContext(ctx context.Context) context.Context {
 func (c *Client) netApiContext(ctx context.Context) context.Context {
 	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
 		return context.WithValue(context.Background(), net.ContextBasicAuth, net.BasicAuth{
+			UserName: c.cloudApiKey,
+			Password: c.cloudApiSecret,
+		})
+	}
+	tflog.Warn(ctx, "Could not find Cloud API Key")
+	return ctx
+}
+
+func (c *Client) faApiContext(ctx context.Context) context.Context {
+	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
+		return context.WithValue(context.Background(), fa.ContextBasicAuth, fa.BasicAuth{
 			UserName: c.cloudApiKey,
 			Password: c.cloudApiSecret,
 		})
