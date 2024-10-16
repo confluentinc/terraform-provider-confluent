@@ -32,6 +32,7 @@ import (
 	ca "github.com/confluentinc/ccloud-sdk-go-v2/certificate-authority/v2"
 	cmk "github.com/confluentinc/ccloud-sdk-go-v2/cmk/v2"
 	connect "github.com/confluentinc/ccloud-sdk-go-v2/connect/v1"
+	fa "github.com/confluentinc/ccloud-sdk-go-v2/flink-artifact/v1"
 	fcpm "github.com/confluentinc/ccloud-sdk-go-v2/flink/v2"
 	iamv1 "github.com/confluentinc/ccloud-sdk-go-v2/iam/v1"
 	iam "github.com/confluentinc/ccloud-sdk-go-v2/iam/v2"
@@ -55,17 +56,21 @@ const (
 )
 
 const (
-	paramApiVersion   = "api_version"
-	paramCloud        = "cloud"
-	paramRegion       = "region"
-	paramOrganization = "organization"
-	paramEnvironment  = "environment"
-	paramId           = "id"
-	paramDisplayName  = "display_name"
-	paramName         = "name"
-	paramDescription  = "description"
-	paramKind         = "kind"
-	paramCsu          = "csu"
+	paramApiVersion      = "api_version"
+	paramCloud           = "cloud"
+	paramRegion          = "region"
+	paramOrganization    = "organization"
+	paramEnvironment     = "environment"
+	paramId              = "id"
+	paramDisplayName     = "display_name"
+	paramName            = "name"
+	paramDescription     = "description"
+	paramKind            = "kind"
+	paramCsu             = "csu"
+	paramClass           = "class"
+	paramContentFormat   = "content_format"
+	paramRuntimeLanguage = "runtime_language"
+	paramArtifactFile    = "artifact_file"
 )
 
 type Client struct {
@@ -78,6 +83,7 @@ type Client struct {
 	cmkClient                       *cmk.APIClient
 	connectClient                   *connect.APIClient
 	fcpmClient                      *fcpm.APIClient
+	faClient                        *fa.APIClient
 	netClient                       *net.APIClient
 	netAccessPointClient            *netap.APIClient
 	netIpClient                     *netip.APIClient
@@ -270,6 +276,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_environments":                       environmentsDataSource(),
 				"confluent_group_mapping":                      groupMappingDataSource(),
 				"confluent_ksql_cluster":                       ksqlDataSource(),
+				"confluent_flink_artifact":                     flinkArtifactDataSource(),
 				"confluent_flink_compute_pool":                 computePoolDataSource(),
 				"confluent_flink_region":                       flinkRegionDataSource(),
 				"confluent_identity_pool":                      identityPoolDataSource(),
@@ -324,6 +331,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_group_mapping":                      groupMappingResource(),
 				"confluent_kafka_client_quota":                 kafkaClientQuotaResource(),
 				"confluent_ksql_cluster":                       ksqlResource(),
+				"confluent_flink_artifact":                     artifactResource(),
 				"confluent_flink_compute_pool":                 computePoolResource(),
 				"confluent_flink_statement":                    flinkStatementResource(),
 				"confluent_connector":                          connectorResource(),
@@ -477,6 +485,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	ccpCfg := ccp.NewConfiguration()
 	cmkCfg := cmk.NewConfiguration()
 	connectCfg := connect.NewConfiguration()
+	faCfg := fa.NewConfiguration()
 	fcpmCfg := fcpm.NewConfiguration()
 	iamCfg := iam.NewConfiguration()
 	iamV1Cfg := iamv1.NewConfiguration()
@@ -500,6 +509,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	ccpCfg.Servers[0].URL = endpoint
 	cmkCfg.Servers[0].URL = endpoint
 	connectCfg.Servers[0].URL = endpoint
+	faCfg.Servers[0].URL = endpoint
 	fcpmCfg.Servers[0].URL = endpoint
 	iamCfg.Servers[0].URL = endpoint
 	iamV1Cfg.Servers[0].URL = endpoint
@@ -523,6 +533,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	ccpCfg.UserAgent = userAgent
 	cmkCfg.UserAgent = userAgent
 	connectCfg.UserAgent = userAgent
+	faCfg.UserAgent = userAgent
 	fcpmCfg.UserAgent = userAgent
 	iamCfg.UserAgent = userAgent
 	iamV1Cfg.UserAgent = userAgent
@@ -554,6 +565,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	ccpCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	cmkCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	connectCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
+	faCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	fcpmCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	iamCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	iamV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
@@ -577,6 +589,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 		ccpClient:                       ccp.NewAPIClient(ccpCfg),
 		cmkClient:                       cmk.NewAPIClient(cmkCfg),
 		connectClient:                   connect.NewAPIClient(connectCfg),
+		faClient:                        fa.NewAPIClient(faCfg),
 		fcpmClient:                      fcpm.NewAPIClient(fcpmCfg),
 		iamClient:                       iam.NewAPIClient(iamCfg),
 		iamV1Client:                     iamv1.NewAPIClient(iamV1Cfg),
