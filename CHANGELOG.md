@@ -8,7 +8,7 @@
 * Added optional `ruleset` and `metadata` blocks, `disabled` attribute to `confluent_schema` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema) in a [General Availability lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
 
 * Added **1** example:
-  * [flink-artifact](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/flink-artifact)
+  * [flink-artifact](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/flink_artifact)
 * Updated **1** example with more detailed instructions for clarity:
   * [field-level-encryption-schema](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/field-level-encryption-schema)
 
