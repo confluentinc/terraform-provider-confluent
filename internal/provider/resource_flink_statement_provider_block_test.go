@@ -47,7 +47,7 @@ const (
 	latestOffsetsTimestampStoppedValueTest = "2024-10-14T21:26:07Z"
 
 	latestOffsetFirstValueTest = "partition:0,offset:9223372036854775808;partition:4,offset:9223372036854775808;partition:3,offset:9223372036854775808;partition:2,offset:9223372036854775808;partition:1,offset:9223372036854775808;partition:5,offset:9223372036854775808"
-	latestOffsetFirstKeyTest   = "customers_source_2"
+	latestOffsetFirstKeyTest   = "customers_source"
 )
 
 var fullFlinkStatementResourceLabel = fmt.Sprintf("confluent_flink_statement.%s", flinkStatementResourceLabel)
