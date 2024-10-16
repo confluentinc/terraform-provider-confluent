@@ -45,7 +45,7 @@ output "resource-ids" {
   $ confluent kafka topic consume customer-event \
         --from-beginning \
         --value-format avro \
-        --sr-endpoint ${data._cluster.essentials.rest_endpoint} \
+        --sr-endpoint ${data.confluent_schema_registry_cluster.essentials.rest_endpoint} \
         --sr-api-key "${confluent_api_key.env-manager-schema-registry-api-key.id}" \
         --sr-api-secret "${confluent_api_key.env-manager-schema-registry-api-key.secret}" \
         --cluster ${confluent_kafka_cluster.basic.id} \
