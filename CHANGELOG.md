@@ -7,6 +7,7 @@
 * Added `confluent_schema_registry_dek` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema_registry_dek), `confluent_schema_registry_kek` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema_registry_kek) and corresponding data sources in a [General Availability lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
 * Added optional `ruleset` and `metadata` blocks, `disabled` attribute to `confluent_schema` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema) in a [General Availability lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
 
+**Examples:**
 * Added **1** example:
   * [flink-artifact](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/flink_artifact)
 * Updated **1** example with more detailed instructions for clarity:
