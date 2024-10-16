@@ -1,6 +1,6 @@
 ## 2.6.0 (October 16th, 2024)
 
-[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.4.0...v2.5.0)
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.5.0...v2.6.0)
 
 **New features:**
 * Added support for `confluent_flink_artifact` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_flink_artifact) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_flink_artifact) in a [General Availability lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
