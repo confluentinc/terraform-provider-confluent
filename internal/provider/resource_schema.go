@@ -432,6 +432,7 @@ func schemaLookupCheck(ctx context.Context, diff *schema.ResourceDiff, c *Schema
 	if int(registeredSchema.GetId()) == schemaIdentifier {
 		// Two schemas that are semantically equivalent
 		// https://docs.confluent.io/platform/current/schema-registry/serdes-develop/index.html#schema-normalization
+
 		// Set old value to paramSchema to avoid TF drift
 		if err := diff.SetNew(paramSchema, oldSchema); err != nil {
 			return fmt.Errorf("error customizing diff Schema: %s", createDescriptiveError(err))
