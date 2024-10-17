@@ -18,11 +18,17 @@ provider "confluent" {
 }
 
 resource "confluent_flink_statement" "old" {
-  statement  = "INSERT INTO customers_sink_6(customer_id, name, address, postcode, city, email) SELECT customer_id, name, address, postcode, city, email FROM customers_source_5;"
+  statement = <<-EOT
+    INSERT INTO customers_sink_6(customer_id, name, address, postcode, city, email)
+    SELECT customer_id, name, address, postcode, city, email
+    FROM customers_source_5;
+  EOT
+
   properties = {
     "sql.current-catalog"  = var.current_catalog
     "sql.current-database" = var.current_database
   }
+
   stopped = false
 }
 
