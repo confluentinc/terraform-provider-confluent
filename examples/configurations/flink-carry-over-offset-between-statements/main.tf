@@ -31,21 +31,24 @@ resource "confluent_flink_statement" "old" {
   }
 
   stopped = false
+  # Step #1: Stop confluent_flink_statement.old
+  # stopped = true
 }
 
-resource "confluent_flink_statement" "new" {
-  statement = <<-EOT
-    INSERT INTO customers_sink (customer_id, name, address, postcode, city, email)
-    SELECT customer_id, name, address, postcode, city, email
-    FROM customers_source
-    /*+ OPTIONS(
-        'scan.startup.mode' = 'specific-offsets',
-        'scan.startup.specific-offsets' = '${confluent_flink_statement.old.latest_offsets["customers_source"]}'
-    ) */;
-  EOT
-
-  properties = {
-    "sql.current-catalog"  = var.current_catalog
-    "sql.current-database" = var.current_database
-  }
-}
+# Step #2: Create confluent_flink_statement.new
+#resource "confluent_flink_statement" "new" {
+#  statement = <<-EOT
+#    INSERT INTO customers_sink (customer_id, name, address, postcode, city, email)
+#    SELECT customer_id, name, address, postcode, city, email
+#    FROM customers_source
+#    /*+ OPTIONS(
+#        'scan.startup.mode' = 'specific-offsets',
+#        'scan.startup.specific-offsets' = '${confluent_flink_statement.old.latest_offsets["customers_source"]}'
+#    ) */;
+#  EOT
+#
+#  properties = {
+#    "sql.current-catalog"  = var.current_catalog
+#    "sql.current-database" = var.current_database
+#  }
+#}
