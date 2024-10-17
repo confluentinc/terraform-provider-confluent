@@ -31,7 +31,10 @@ resource "confluent_flink_statement" "new" {
     INSERT INTO customers_sink_6(customer_id, name, address, postcode, city, email)
     SELECT customer_id, name, address, postcode, city, email
     FROM customers_source_5
-    /*+ OPTIONS('scan.startup.mode' = 'specific-offsets', 'scan.startup.specific-offsets'='${confluent_flink_statement.insert-into-table.latest_offsets["customers_source_5"]}') */;
+    /*+ OPTIONS(
+        'scan.startup.mode' = 'specific-offsets',
+        'scan.startup.specific-offsets' = '${confluent_flink_statement.old.latest_offsets["customers_source_5"]}'
+    ) */;
   EOT
 
   properties = {
@@ -39,4 +42,3 @@ resource "confluent_flink_statement" "new" {
     "sql.current-database" = var.current_database
   }
 }
-
