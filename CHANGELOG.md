@@ -1,3 +1,10 @@
+## 2.7.0 (October 17th, 2024)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.6.0...v2.7.0)
+
+**Bug fixes:**
+* Implemented a follow-up to our previous fix for the SR exporter to further prevent provisioning issues.
+
 ## 2.6.0 (October 16th, 2024)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.5.0...v2.6.0)
