@@ -130,7 +130,7 @@ In addition to the preceding arguments, the following attributes are exported:
 ```
 - `latest_offsets_timestamp` - (Optional String) The date and time at which the Kafka topic offsets were added to the statement status. It is represented in RFC3339 format and is in UTC. For example, `2023-03-31T00:00:00-00:00`.
 
-!> **Note:** The values for the `latest_offsets` and `latest_offsets_timestamp` attributes are only available for stopped statements.
+!> **Note:** The values for the `latest_offsets` and `latest_offsets_timestamp` attributes are populated only for stopped statements.
 
 
 ## Import
