@@ -1,8 +1,9 @@
 terraform {
   required_providers {
     confluent = {
-      source  = "confluentinc/confluent"
-      version = "2.7.0"
+      #      source  = "confluentinc/confluent"
+      #      version = "2.5.0"
+      source = "terraform.confluent.io/confluentinc/confluent"
     }
   }
 }
@@ -19,9 +20,9 @@ provider "confluent" {
 
 resource "confluent_flink_statement" "old" {
   statement = <<-EOT
-    INSERT INTO customers_sink_6(customer_id, name, address, postcode, city, email)
+    INSERT INTO customers_sink (customer_id, name, address, postcode, city, email)
     SELECT customer_id, name, address, postcode, city, email
-    FROM customers_source_5;
+    FROM customers_source;
   EOT
 
   properties = {
@@ -34,12 +35,12 @@ resource "confluent_flink_statement" "old" {
 
 resource "confluent_flink_statement" "new" {
   statement = <<-EOT
-    INSERT INTO customers_sink_6(customer_id, name, address, postcode, city, email)
+    INSERT INTO customers_sink (customer_id, name, address, postcode, city, email)
     SELECT customer_id, name, address, postcode, city, email
-    FROM customers_source_5
+    FROM customers_source
     /*+ OPTIONS(
         'scan.startup.mode' = 'specific-offsets',
-        'scan.startup.specific-offsets' = '${confluent_flink_statement.old.latest_offsets["customers_source_5"]}'
+        'scan.startup.specific-offsets' = '${confluent_flink_statement.old.latest_offsets["customers_source"]}'
     ) */;
   EOT
 
