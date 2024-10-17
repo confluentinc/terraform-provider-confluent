@@ -51,3 +51,11 @@ resource "confluent_flink_statement" "old" {
 #    "sql.current-database" = var.current_database
 #  }
 #}
+
+# Note: for a statement with multiple topics, use OPTIONS for each table
+# SELECT *
+# FROM table1 /*+ OPTIONS('scan.startup.mode'='earliest-offset') */ t1
+# JOIN table2 /*+ OPTIONS('scan.startup.mode'='earliest-offset') */ t2
+# ON t1.id = t2.id;
+# For more details, refer to the official Confluent documentation:
+# https://docs.confluent.io/cloud/current/flink/reference/statements/hints.html#examples
