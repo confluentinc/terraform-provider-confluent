@@ -121,6 +121,14 @@ The following arguments are supported:
 In addition to the preceding arguments, the following attributes are exported:
 
 - `id` - (Required String) The ID of the Flink statement, in the format `<Environment ID>/<Flink Compute Pool ID>/<Flink Statement name>`, for example, `env-abc123/lfcp-xyz123/cfeab4fe-b62c-49bd-9e99-51cc98c77a67`.
+- `latest_offsets` - (Required String) The last Kafka offsets that a statement has processed. Represented by a mapping from Kafka topic to a string representation of partitions mapped to offsets. For example,
+```bash
+"latest_offsets": {
+  "topic-1": "partition:0,offset:100;partition:1,offset:200",
+  "topic-2": "partition:0,offset:50"
+}
+```
+- `latest_offsets_timestamp` - (Required String) The date and time at which the Kafka topic offsets were added to the statement status. It is represented in RFC3339 format and is in UTC. For example, `2023-03-31T00:00:00-00:00`.
 
 ## Import
 
