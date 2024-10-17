@@ -26,6 +26,7 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
+	"time"
 )
 
 var acceptedSchemaExporterStatus = []string{stateRunning, statePaused}
@@ -43,6 +44,8 @@ const (
 	basicAuthCredentialsSourceConfig      = "basic.auth.credentials.source"
 	schemaRegistryUrlConfig               = "schema.registry.url"
 	basicAuthUserInfoConfig               = "basic.auth.user.info"
+
+	schemaExporterAPICreateTimeout = 4 * time.Hour
 )
 
 var standardConfigs = []string{basicAuthUserInfoConfig, schemaRegistryUrlConfig, basicAuthCredentialsSourceConfig}
@@ -112,6 +115,9 @@ func schemaExporterResource() *schema.Resource {
 				Computed:     true,
 				ValidateFunc: validation.StringInSlice(acceptedSchemaExporterStatus, false),
 			},
+		},
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(schemaExporterAPICreateTimeout),
 		},
 	}
 }

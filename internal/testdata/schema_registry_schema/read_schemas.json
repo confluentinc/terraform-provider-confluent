@@ -47,6 +47,8 @@
           "params": {
             "encrypt.kek.name": "testkek2"
           },
+          "onSuccess": "NONE,NONE",
+          "onFailure": "ERROR,ERROR",
           "disabled": false
         },
         {
@@ -60,6 +62,8 @@
           "params": {
             "encrypt.kek.name": "testkek2"
           },
+          "onSuccess": "NONE,NONE",
+          "onFailure": "ERROR,ERROR",
           "disabled": false
         }
       ]

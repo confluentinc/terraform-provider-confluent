@@ -20,7 +20,7 @@ resource "confluent_tag" "pii" {
 }
 
 resource "confluent_schema_registry_kek" "aws_kek" {
-  name        = "kek"
+  name        = "kek-name"
   kms_type    = "aws-kms"
   kms_key_id  = var.aws_kms_key_arn
   shared      = false
@@ -36,7 +36,7 @@ resource "confluent_schema" "purchase" {
 
   ruleset {
     domain_rules {
-      name   = "encrypt"
+      name   = "encryptPII"
       kind   = "TRANSFORM"
       type   = "ENCRYPT"
       mode   = "WRITEREAD"
