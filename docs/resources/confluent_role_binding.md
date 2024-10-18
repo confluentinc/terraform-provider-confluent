@@ -110,6 +110,12 @@ resource "confluent_role_binding" "subject-with-abc-prefix-example-rb" {
   crn_pattern = "${data.confluent_schema_registry_cluster.example.resource_name}/subject=abc*"
 }
 
+resource "confluent_role_binding" "kek-example-rb" {
+  principal   = "User:${confluent_service_account.test.id}"
+  role_name   = "DeveloperRead"
+  crn_pattern = "${data.confluent_schema_registry_cluster.example.resource_name}/kek=kek-name"
+}
+
 locals {
   connector_name = lookup(confluent_connector.test.config_nonsensitive, "name", "\"name\" attribute is missing")
 }
