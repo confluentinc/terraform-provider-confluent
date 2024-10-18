@@ -243,8 +243,8 @@ github.com/cncf/xds/go v0.0.0-20211001041855-01bcc9b48dfe/go.mod h1:eXthEFrGJvWH
 github.com/cncf/xds/go v0.0.0-20211011173535-cb28da3451f1/go.mod h1:eXthEFrGJvWHgFFCl3hGmgk+/aYT6PnTQLykKQRLhEs=
 github.com/cncf/xds/go v0.0.0-20231128003011-0fa0005c9caa h1:jQCWAUqqlij9Pgj2i/PB79y4KOPYVyFYdROxgaCwdTQ=
 github.com/cncf/xds/go v0.0.0-20231128003011-0fa0005c9caa/go.mod h1:x/1Gn8zydmfq8dk6e9PdstVsDgu9RuyIIJqAaF//0IM=
-github.com/confluentinc/ccloud-sdk-go-v2-internal/networking-gateway v0.5.0 h1:9WRKi5mI9Mqt7UuH/GD4lHDNrvt+B2uwdWnAmgYxV6A=
-github.com/confluentinc/ccloud-sdk-go-v2-internal/networking-gateway v0.5.0/go.mod h1:+dUOaS9zUAhumMx01OCuqmhLeFOxkoSyJ/Hj2RC+vVs=
+github.com/confluentinc/ccloud-sdk-go-v2-internal/networking-gateway v0.9.0 h1:/boW09IKTNnV5EnaNb8nL3SMGkwx9/irC1pk1/MdYU4=
+github.com/confluentinc/ccloud-sdk-go-v2-internal/networking-gateway v0.9.0/go.mod h1:Nq00w3h+2vpEi+8w1f+lgmNu5m3mHogOzpw8/JzUL6k=
 github.com/confluentinc/ccloud-sdk-go-v2/apikeys v0.3.0 h1:7AixGTQ3QRYRfmVEJRIs06e0kWuHtc3ObxUr4HZx3p0=
 github.com/confluentinc/ccloud-sdk-go-v2/apikeys v0.3.0/go.mod h1:wNa9Qg2e2v/+PQsUyKh+qB22hhLkPR6Ahy6rP+1jmGI=
 github.com/confluentinc/ccloud-sdk-go-v2/byok v0.0.2 h1:BV/dPTFVovJPylrcr9lcSmukCVxBxyUeHBr6hp7zUNk=

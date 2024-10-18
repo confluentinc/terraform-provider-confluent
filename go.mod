@@ -169,4 +169,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/confluentinc/ccloud-sdk-go-v2/networking-gateway => github.com/confluentinc/ccloud-sdk-go-v2-internal/networking-gateway v0.5.0
+replace github.com/confluentinc/ccloud-sdk-go-v2/networking-gateway => github.com/confluentinc/ccloud-sdk-go-v2-internal/networking-gateway v0.9.0
