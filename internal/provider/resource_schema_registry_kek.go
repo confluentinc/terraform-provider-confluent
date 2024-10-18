@@ -97,11 +97,6 @@ func schemaRegistryKekResource() *schema.Resource {
 				Default:     paramHardDeleteDefaultValue,
 				Description: "Controls whether a kek should be soft or hard deleted. Set it to `true` if you want to hard delete a schema registry kek on destroy. Defaults to `false` (soft delete).",
 			},
-			paramResourceName: {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "The Confluent Resource Name of the Kek.",
-			},
 		},
 	}
 }
