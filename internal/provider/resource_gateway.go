@@ -128,7 +128,7 @@ func gatewayCreate(ctx context.Context, d *schema.ResourceData, meta interface{}
 			region,
 		)))
 	} else if isAzureEgressPrivateLink {
-		region := extractStringValueFromBlock(d, azureEgressPrivateLinkGatewaySpecKind, paramRegion)
+		region := extractStringValueFromBlock(d, paramAzureEgressPrivateLinkGateway, paramRegion)
 		createGatewayRequest.Spec.SetConfig(netgw.NetworkingV1AzureEgressPrivateLinkGatewaySpecAsNetworkingV1GatewaySpecConfigOneOf(netgw.NewNetworkingV1AzureEgressPrivateLinkGatewaySpec(
 			azureEgressPrivateLinkGatewaySpecKind,
 			region,
