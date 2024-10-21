@@ -83,6 +83,14 @@ func flinkArtifactDataSource() *schema.Resource {
 				Computed:    true,
 				Description: "Description of the Flink Artifact.",
 			},
+			paramVersions: {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "List of versions for this Flink Artifact.",
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
 			paramApiVersion: {
 				Type:        schema.TypeString,
 				Computed:    true,
