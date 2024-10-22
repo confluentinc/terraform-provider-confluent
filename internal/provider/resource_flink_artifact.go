@@ -89,6 +89,20 @@ func artifactResource() *schema.Resource {
 				ForceNew:    true,
 				Description: "Description of the Flink Artifact.",
 			},
+			paramVersions: {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "List of versions for this Flink Artifact.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						paramVersion: {
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "The version of this Flink Artifact.",
+						},
+					},
+				},
+			},
 			paramApiVersion: {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -231,7 +245,14 @@ func readArtifactAndSetAttributes(ctx context.Context, d *schema.ResourceData, m
 
 	return []*schema.ResourceData{d}, nil
 }
-
+func getVersions(versionsStruct []fa.ArtifactV1FlinkArtifactVersion) []map[string]string {
+	versions := []map[string]string{}
+	for i := 0; i < len(versionsStruct); i++ {
+		versions = append(versions, make(map[string]string))
+		versions[i][paramVersion] = versionsStruct[i].GetVersion()
+	}
+	return versions
+}
 func setArtifactAttributes(d *schema.ResourceData, artifact fa.ArtifactV1FlinkArtifact, artifactFile string) (*schema.ResourceData, error) {
 	if err := d.Set(paramDisplayName, artifact.GetDisplayName()); err != nil {
 		return nil, err
@@ -243,6 +264,10 @@ func setArtifactAttributes(d *schema.ResourceData, artifact fa.ArtifactV1FlinkAr
 		return nil, err
 	}
 	if err := d.Set(paramRegion, artifact.GetRegion()); err != nil {
+		return nil, err
+	}
+
+	if err := d.Set(paramVersions, getVersions(artifact.GetVersions())); err != nil {
 		return nil, err
 	}
 

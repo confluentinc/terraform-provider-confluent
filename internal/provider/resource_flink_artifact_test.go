@@ -29,6 +29,7 @@ const (
 	flinkArtifactDisplayName                   = "flink_artifact_0"
 	flinkArtifactApiVersion                    = "artifact/v1"
 	flinkArtifactKind                          = "FlinkArtifact"
+	flinkVersions                              = "cfa-ver-001"
 )
 
 var flinkArtifactsUrlPath = fmt.Sprintf("/artifact/v1/flink-artifacts/%s", flinkArtifactId)
@@ -143,6 +144,8 @@ func TestAccFlinkArtifact(t *testing.T) {
 					resource.TestCheckResourceAttr(fullFlinkArtifactResourceLabel, paramDescription, flinkArtifactDescription),
 					resource.TestCheckResourceAttr(fullFlinkArtifactResourceLabel, paramApiVersion, flinkArtifactApiVersion),
 					resource.TestCheckResourceAttr(fullFlinkArtifactResourceLabel, paramKind, flinkArtifactKind),
+					resource.TestCheckResourceAttr(fullFlinkArtifactResourceLabel, "versions.#", "1"),
+					resource.TestCheckResourceAttr(fullFlinkArtifactResourceLabel, "versions.0.version", flinkVersions),
 				),
 			},
 			{
