@@ -145,7 +145,7 @@ func TestAccFlinkArtifact(t *testing.T) {
 					resource.TestCheckResourceAttr(fullFlinkArtifactResourceLabel, paramApiVersion, flinkArtifactApiVersion),
 					resource.TestCheckResourceAttr(fullFlinkArtifactResourceLabel, paramKind, flinkArtifactKind),
 					resource.TestCheckResourceAttr(fullFlinkArtifactResourceLabel, "versions.#", "1"),
-					resource.TestCheckResourceAttr(fullFlinkArtifactResourceLabel, "versions.0", flinkVersions),
+					resource.TestCheckResourceAttr(fullFlinkArtifactResourceLabel, "versions.0.version", flinkVersions),
 				),
 			},
 			{

@@ -93,8 +93,14 @@ func artifactResource() *schema.Resource {
 				Type:        schema.TypeList,
 				Computed:    true,
 				Description: "List of versions for this Flink Artifact.",
-				Elem: &schema.Schema{
-					Type: schema.TypeString,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						paramVersion: {
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "The version of this Flink Artifact.",
+						},
+					},
 				},
 			},
 			paramApiVersion: {
@@ -262,7 +268,10 @@ func setArtifactAttributes(d *schema.ResourceData, artifact fa.ArtifactV1FlinkAr
 	}
 
 	versions := getVersions(artifact.GetVersions())
-	if err := d.Set(paramVersions, versions); err != nil {
+
+	if err := d.Set(paramVersions, []interface{}{map[string]interface{}{
+		paramVersion: versions[0],
+	}}); err != nil {
 		return nil, err
 	}
 
