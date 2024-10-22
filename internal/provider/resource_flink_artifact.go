@@ -245,13 +245,6 @@ func readArtifactAndSetAttributes(ctx context.Context, d *schema.ResourceData, m
 
 	return []*schema.ResourceData{d}, nil
 }
-func getVersions(versionsStruct []fa.ArtifactV1FlinkArtifactVersion) []string {
-	versions := []string{}
-	for i := 0; i < len(versionsStruct); i++ {
-		versions = append(versions, versionsStruct[i].Version)
-	}
-	return versions
-}
 
 func setArtifactAttributes(d *schema.ResourceData, artifact fa.ArtifactV1FlinkArtifact, artifactFile string) (*schema.ResourceData, error) {
 	if err := d.Set(paramDisplayName, artifact.GetDisplayName()); err != nil {
@@ -267,10 +260,8 @@ func setArtifactAttributes(d *schema.ResourceData, artifact fa.ArtifactV1FlinkAr
 		return nil, err
 	}
 
-	versions := getVersions(artifact.GetVersions())
-
 	if err := d.Set(paramVersions, []interface{}{map[string]interface{}{
-		paramVersion: versions[0],
+		paramVersion: artifact.GetVersions()[0].Version,
 	}}); err != nil {
 		return nil, err
 	}
