@@ -249,7 +249,7 @@ func getVersions(versionsStruct []fa.ArtifactV1FlinkArtifactVersion) []map[strin
 	versions := []map[string]string{}
 	for i := 0; i < len(versionsStruct); i++ {
 		versions = append(versions, make(map[string]string))
-		versions[i][paramVersion] = versionsStruct[i].Version
+		versions[i][paramVersion] = versionsStruct[i].GetVersion()
 	}
 	return versions
 }
