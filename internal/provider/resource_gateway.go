@@ -214,27 +214,27 @@ func setGatewayAttributes(d *schema.ResourceData, gateway netgw.NetworkingV1Gate
 		return nil, err
 	}
 
-	if gateway.Spec.Config.NetworkingV1AwsEgressPrivateLinkGatewaySpec != nil && gateway.Status.CloudGateway.NetworkingV1AwsEgressPrivateLinkGatewayStatus != nil {
+	if gateway.Spec.GetConfig().NetworkingV1AwsEgressPrivateLinkGatewaySpec != nil && gateway.Status.GetCloudGateway().NetworkingV1AwsEgressPrivateLinkGatewayStatus != nil {
 		if err := d.Set(paramAwsEgressPrivateLinkGateway, []interface{}{map[string]interface{}{
 			paramRegion:       gateway.Spec.Config.NetworkingV1AwsEgressPrivateLinkGatewaySpec.GetRegion(),
 			paramPrincipalArn: gateway.Status.CloudGateway.NetworkingV1AwsEgressPrivateLinkGatewayStatus.GetPrincipalArn(),
 		}}); err != nil {
 			return nil, err
 		}
-	} else if gateway.Spec.Config.NetworkingV1AwsPeeringGatewaySpec != nil {
+	} else if gateway.Spec.GetConfig().NetworkingV1AwsPeeringGatewaySpec != nil {
 		if err := d.Set(paramAwsPeeringGateway, []interface{}{map[string]interface{}{
 			paramRegion: gateway.Spec.Config.NetworkingV1AwsPeeringGatewaySpec.GetRegion(),
 		}}); err != nil {
 			return nil, err
 		}
-	} else if gateway.Spec.Config.NetworkingV1AzureEgressPrivateLinkGatewaySpec != nil && gateway.Status.CloudGateway.NetworkingV1AzureEgressPrivateLinkGatewayStatus != nil {
+	} else if gateway.Spec.GetConfig().NetworkingV1AzureEgressPrivateLinkGatewaySpec != nil && gateway.Status.GetCloudGateway().NetworkingV1AzureEgressPrivateLinkGatewayStatus != nil {
 		if err := d.Set(paramAzureEgressPrivateLinkGateway, []interface{}{map[string]interface{}{
 			paramRegion:       gateway.Spec.Config.NetworkingV1AzureEgressPrivateLinkGatewaySpec.GetRegion(),
 			paramSubscription: gateway.Status.CloudGateway.NetworkingV1AzureEgressPrivateLinkGatewayStatus.GetSubscription(),
 		}}); err != nil {
 			return nil, err
 		}
-	} else if gateway.Spec.Config.NetworkingV1AzurePeeringGatewaySpec != nil {
+	} else if gateway.Spec.GetConfig().NetworkingV1AzurePeeringGatewaySpec != nil {
 		if err := d.Set(paramAzurePeeringGateway, []interface{}{map[string]interface{}{
 			paramRegion: gateway.Spec.Config.NetworkingV1AzurePeeringGatewaySpec.GetRegion(),
 		}}); err != nil {
