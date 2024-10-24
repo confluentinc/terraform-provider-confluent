@@ -31,15 +31,6 @@ resource "confluent_flink_artifact" "main" {
   artifact_file  = var.artifact_file
 }
 
-data "confluent_flink_artifact" "data-readfromid" {
-  environment {
-    id = var.environment_id
-  }
-  id     = resource.confluent_flink_artifact.main.id
-  cloud  = "AWS"
-  region = "us-west-2"
-}
-
 locals {
   plugin_id  = confluent_flink_artifact.main.id
   version_id = confluent_flink_artifact.main.versions[0].version
