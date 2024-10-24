@@ -51,6 +51,7 @@ const (
 	paramSensitive                           = "sensitive"
 	paramMetadata                            = "metadata"
 	paramValue                               = "value"
+	paramDisabled                            = "disabled"
 	// unique on a subject level
 	paramSchemaIdentifier                     = "schema_identifier"
 	paramSchema                               = "schema"
@@ -200,43 +201,39 @@ func ruleSchema() *schema.Schema {
 			Schema: map[string]*schema.Schema{
 				paramName: {
 					Type:     schema.TypeString,
-					Optional: true,
-					Computed: true,
+					Required: true,
+				},
+				paramKind: {
+					Type:     schema.TypeString,
+					Required: true,
+				},
+				paramMode: {
+					Type:     schema.TypeString,
+					Required: true,
+				},
+				paramType: {
+					Type:     schema.TypeString,
+					Required: true,
 				},
 				paramDoc: {
 					Type:     schema.TypeString,
 					Optional: true,
-					Computed: true,
-				},
-				paramKind: {
-					Type:     schema.TypeString,
-					Optional: true,
-					Computed: true,
-				},
-				paramMode: {
-					Type:     schema.TypeString,
-					Optional: true,
-					Computed: true,
-				},
-				paramType: {
-					Type:     schema.TypeString,
-					Optional: true,
-					Computed: true,
+					Default:  "",
 				},
 				paramExpr: {
 					Type:     schema.TypeString,
 					Optional: true,
-					Computed: true,
+					Default:  "",
 				},
 				paramOnSuccess: {
 					Type:     schema.TypeString,
 					Optional: true,
-					Computed: true,
+					Default:  "NONE,NONE",
 				},
 				paramOnFailure: {
 					Type:     schema.TypeString,
 					Optional: true,
-					Computed: true,
+					Default:  "ERROR,ERROR",
 				},
 				paramTags: {
 					Type:     schema.TypeSet,
@@ -251,6 +248,11 @@ func ruleSchema() *schema.Schema {
 					},
 					Optional: true,
 					Computed: true,
+				},
+				paramDisabled: {
+					Type:     schema.TypeBool,
+					Optional: true,
+					Default:  false,
 				},
 			},
 		},
@@ -348,6 +350,29 @@ func SetSchemaDiff(ctx context.Context, diff *schema.ResourceDiff, meta interfac
 	createSchemaRequest.SetSchema(schemaContent)
 	createSchemaRequest.SetReferences(schemaReferences)
 
+	if tfRuleset := diff.Get(paramRuleset).([]interface{}); len(tfRuleset) == 1 {
+		ruleset := sr.NewRuleSet()
+		tfRulesetMap := tfRuleset[0].(map[string]interface{})
+		if tfRulesetMap[paramDomainRules] != nil {
+			ruleset.SetDomainRules(buildRules(tfRulesetMap[paramDomainRules].(*schema.Set).List()))
+		}
+		createSchemaRequest.SetRuleSet(*ruleset)
+	}
+	if tfMetadata := diff.Get(paramMetadata).([]interface{}); len(tfMetadata) == 1 {
+		metadata := sr.NewMetadata()
+		tfMetadataMap := tfMetadata[0].(map[string]interface{})
+		if tfMetadataMap[paramTags] != nil {
+			metadata.SetTags(convertToStringStringListMap(tfMetadataMap[paramTags].(*schema.Set).List()))
+		}
+		if tfMetadataMap[paramProperties] != nil {
+			metadata.SetProperties(convertToStringStringMap(tfMetadataMap[paramProperties].(map[string]interface{})))
+		}
+		if tfMetadataMap[paramSensitive] != nil {
+			metadata.SetSensitive(convertToStringSlice(tfMetadataMap[paramSensitive].(*schema.Set).List()))
+		}
+		createSchemaRequest.SetMetadata(*metadata)
+	}
+
 	// SetSchemaDiff() function is invoked during terraform plan
 	// Having schema validation check during plan empowers customers to review schema changes before applying
 	// paramSkipValidationDuringPlan = true -> skipping schema validation during 'terraform plan'
@@ -384,7 +409,6 @@ func SetSchemaDiff(ctx context.Context, diff *schema.ResourceDiff, meta interfac
 	if shouldRecreateOnUpdate && hasSemanticSchemaUpdate {
 		return fmt.Errorf("error updating Schema %q: reimport the current resource instance and set %s = false to evolve a schema using the same resource instance.\nIn this case, on an update resource instance will reference the updated (latest) schema by overriding %s, %s and %s attributes and the old schema will be orphaned.", diff.Id(), paramRecreateOnUpdate, paramSchemaIdentifier, paramSchema, paramVersion)
 	}
-
 	return nil
 }
 
@@ -656,14 +680,15 @@ func schemaRead(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 }
 
 func schemaUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if d.HasChangesExcept(paramCredentials, paramConfigs, paramHardDelete, paramSchema, paramSchemaReference, paramSkipValidationDuringPlan) {
-		return diag.Errorf("error updating Schema %q: only %q, %q, %q, %q, %q and %q blocks can be updated for Schema", d.Id(), paramCredentials, paramConfigs, paramHardDelete, paramSchema, paramSchemaReference, paramSkipValidationDuringPlan)
+	if d.HasChangesExcept(paramCredentials, paramConfigs, paramHardDelete, paramSchema, paramSchemaReference, paramSkipValidationDuringPlan, paramRuleset, paramMetadata) {
+		return diag.Errorf("error updating Schema %q: only %q, %q, %q, %q, %q, %q, %q and %q blocks can be updated for Schema", d.Id(), paramCredentials, paramConfigs, paramHardDelete, paramSchema, paramSchemaReference, paramSkipValidationDuringPlan, paramRuleset, paramMetadata)
 	}
 
-	if d.HasChanges(paramSchema, paramSchemaReference) {
+	if d.HasChanges(paramSchema, paramSchemaReference, paramRuleset) {
 		oldSchema, _ := d.GetChange(paramSchema)
 		oldSchemaReference, _ := d.GetChange(paramSchemaReference)
-
+		oldMetadata, _ := d.GetChange(paramMetadata)
+		oldRuleset, _ := d.GetChange(paramRuleset)
 		// User wants to edit / evolve a schema. See https://docs.confluent.io/cloud/current/sr/schemas-manage.html#editing-schemas for more details.
 		shouldRecreateOnUpdate := d.Get(paramRecreateOnUpdate).(bool)
 		if shouldRecreateOnUpdate {
@@ -673,6 +698,12 @@ func schemaUpdate(ctx context.Context, d *schema.ResourceData, meta interface{})
 				return diag.FromErr(createDescriptiveError(err))
 			}
 			if err := d.Set(paramSchemaReference, oldSchemaReference); err != nil {
+				return diag.FromErr(createDescriptiveError(err))
+			}
+			if err := d.Set(paramMetadata, oldMetadata); err != nil {
+				return diag.FromErr(createDescriptiveError(err))
+			}
+			if err := d.Set(paramRuleset, oldRuleset); err != nil {
 				return diag.FromErr(createDescriptiveError(err))
 			}
 			return diag.Errorf("error updating Schema %q: reimport the current resource instance and set %s = false to evolve a schema using the same resource instance.\nIn this case, on an update resource instance will reference the updated (latest) schema by overriding %s, %s and %s attributes and the old schema will be orphaned.", d.Id(), paramRecreateOnUpdate, paramSchemaIdentifier, paramSchema, paramVersion)
@@ -1119,6 +1150,9 @@ func buildRules(tfRules []interface{}) []sr.Rule {
 		if onFailure, exists := tfRuleMap[paramOnFailure].(string); exists {
 			rule.SetOnFailure(onFailure)
 		}
+		if disabled, exists := tfRuleMap[paramDisabled].(bool); exists {
+			rule.SetDisabled(disabled)
+		}
 		if tags, exists := tfRuleMap[paramTags]; exists {
 			rule.SetTags(convertToStringSlice(tags.(*schema.Set).List()))
 		}
@@ -1142,6 +1176,7 @@ func buildTfRules(rules []sr.Rule) *[]map[string]interface{} {
 		tfRule[paramExpr] = rule.GetExpr()
 		tfRule[paramOnSuccess] = rule.GetOnSuccess()
 		tfRule[paramOnFailure] = rule.GetOnFailure()
+		tfRule[paramDisabled] = rule.GetDisabled()
 		tfRule[paramTags] = rule.GetTags()
 		tfRule[paramParams] = rule.GetParams()
 		tfRules[i] = tfRule
