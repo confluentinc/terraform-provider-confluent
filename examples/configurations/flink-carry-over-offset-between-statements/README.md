@@ -1,6 +1,6 @@
 ### Notes
 
-1. Make sure to use to create a Flink table called `customers_source` before running this example.
+1. Make sure to create a Flink table called `customers_source` before running this example.
     ```bash
     CREATE TABLE customers_source (
         customer_id INT,
