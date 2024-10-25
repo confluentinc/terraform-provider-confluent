@@ -231,22 +231,6 @@ resource "confluent_kafka_cluster" "standard" {
   }
 }
 
-resource "confluent_kafka_cluster" "enterprise" {
-  display_name = "enterprise_kafka_cluster"
-  availability = "HIGH"
-  cloud        = "GCP"
-  region       = "us-central1"
-  enterprise {}
-
-  environment {
-    id = confluent_environment.development.id
-  }
-
-  lifecycle {
-    prevent_destroy = true
-  }
-}
-
 resource "confluent_kafka_cluster" "dedicated" {
   display_name = "dedicated_kafka_cluster"
   availability = "MULTI_ZONE"
