@@ -206,6 +206,7 @@ func TestAccFlinkStatement(t *testing.T) {
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "latest_offsets_timestamp", latestOffsetsTimestampEmptyValueTest),
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "properties.%", "1"),
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, fmt.Sprintf("properties.%s", flinkFirstPropertyKeyTest), flinkFirstPropertyValueTest),
+					resource.TestCheckNoResourceAttr(fullFlinkStatementResourceLabel, "sql.secrets.openaikey"),
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "credentials.#", "1"),
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "credentials.0.%", "2"),
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "credentials.0.key", kafkaApiKey),
@@ -269,6 +270,7 @@ func TestAccFlinkStatement(t *testing.T) {
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "latest_offsets_timestamp", latestOffsetsTimestampStoppedValueTest),
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "properties.%", "1"),
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, fmt.Sprintf("properties.%s", flinkFirstPropertyKeyTest), flinkFirstPropertyValueTest),
+					resource.TestCheckNoResourceAttr(fullFlinkStatementResourceLabel, "sql.secrets.openaikey"),
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "credentials.#", "1"),
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "credentials.0.%", "2"),
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "credentials.0.key", kafkaApiKey),
@@ -327,6 +329,7 @@ func testAccCheckFlinkStatement(confluentCloudBaseUrl, mockServerUrl string) str
 	  properties = {
 		"%s" = "%s"
 	  }
+
 	}
 	`, confluentCloudBaseUrl, flinkStatementResourceLabel, kafkaApiKey, kafkaApiSecret, mockServerUrl, flinkPrincipalIdTest,
 		flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkComputePoolIdTest,
