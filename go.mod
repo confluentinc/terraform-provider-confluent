@@ -12,7 +12,7 @@ require (
 	github.com/confluentinc/ccloud-sdk-go-v2/data-catalog v0.2.0
 	github.com/confluentinc/ccloud-sdk-go-v2/flink v0.9.0
 	github.com/confluentinc/ccloud-sdk-go-v2/flink-artifact v0.1.0
-	github.com/confluentinc/ccloud-sdk-go-v2/flink-gateway v0.12.0
+	github.com/confluentinc/ccloud-sdk-go-v2/flink-gateway v0.17.0
 	github.com/confluentinc/ccloud-sdk-go-v2/iam v0.10.0
 	github.com/confluentinc/ccloud-sdk-go-v2/identity-provider v0.2.0
 	github.com/confluentinc/ccloud-sdk-go-v2/kafka-quotas v0.4.0
