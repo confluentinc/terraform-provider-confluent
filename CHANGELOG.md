@@ -1,3 +1,20 @@
+## 2.8.0 (October 25th, 2024)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.7.0...v2.8.0)
+
+**New features:**
+* Added support for the new `latest_offsets` and `latest_offsets_timestamp` attributes of `confluent_flink_statement` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_flink_statement) in a [General Availability lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
+* Added support for the new `versions` block of `confluent_flink_artifact` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_flink_artifact) and [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_flink_artifact) in a [General Availability lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
+
+**Examples:**
+* Added **1** example:
+  * [flink-carry-over-offset-between-statements](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/flink-carry-over-offset-between-statements)
+* Updated **1** example with more detailed instructions for clarity:
+  * [flink-artifact](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/flink_artifact)
+
+**Bug fixes:**
+* Updated docs.
+
 ## 2.7.0 (October 17th, 2024)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.6.0...v2.7.0)
