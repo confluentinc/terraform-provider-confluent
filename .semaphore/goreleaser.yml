@@ -20,7 +20,7 @@ blocks:
             - git clone --branch go$(cat terraform-provider-confluent*/.go-version)-1-openssl-fips --depth 1 https://github.com/golang-fips/go.git go-openssl
             - cd go
             - brew install gpatch
-            - cat ../go-openssl/patches/*.patch | patch -p1
+            - cat ../go-openssl/patches/*.patch | gpatch -p1
             - sed -i '' 's/linux/darwin/' src/crypto/internal/backend/nobackend.go
             - sed -i '' 's/linux/darwin/' src/crypto/internal/backend/openssl.go
             - sed -i '' 's/"libcrypto.so.%s"/"libcrypto.%s.dylib"/' src/crypto/internal/backend/openssl.go
