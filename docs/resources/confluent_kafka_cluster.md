@@ -59,6 +59,22 @@ resource "confluent_kafka_cluster" "standard" {
   }
 }
 
+resource "confluent_kafka_cluster" "enterprise" {
+  display_name = "enterprise_kafka_cluster"
+  availability = "HIGH"
+  cloud        = "AWS"
+  region       = "us-east-2"
+  enterprise {}
+
+  environment {
+    id = confluent_environment.development.id
+  }
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
 resource "confluent_kafka_cluster" "dedicated" {
   display_name = "dedicated_kafka_cluster"
   availability = "MULTI_ZONE"
@@ -131,6 +147,22 @@ resource "confluent_kafka_cluster" "standard" {
   cloud        = "AZURE"
   region       = "centralus"
   standard {}
+
+  environment {
+    id = confluent_environment.development.id
+  }
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+resource "confluent_kafka_cluster" "enterprise" {
+  display_name = "enterprise_kafka_cluster"
+  availability = "HIGH"
+  cloud        = "AZURE"
+  region       = "centralus"
+  enterprise {}
 
   environment {
     id = confluent_environment.development.id
@@ -238,7 +270,9 @@ The following arguments are supported:
 
 -> **Note:** The `freight` block is in an [Early Access lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
 
--> **Note:** The `freight` Kafka cluster type is only available in AWS currently.
+-> **Note:** The `freight` Kafka cluster type is currently available only on AWS.
+
+-> **Note:** The `enterprise` Kafka cluster type is currently available only on AWS and Azure.
 
 !> **Warning:** You can only upgrade clusters from `basic` to `standard`.
 
