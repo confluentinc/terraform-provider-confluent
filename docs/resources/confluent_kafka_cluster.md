@@ -59,6 +59,17 @@ resource "confluent_kafka_cluster" "standard" {
   }
 }
 
+resource "confluent_kafka_cluster" "enterprise" {
+  display_name = "enterprise_kafka_cluster"
+  availability = "HIGH"
+  cloud        = "AWS"
+  region       = "us-east-2"
+  enterprise {}
+  environment {
+    id = confluent_environment.development.id
+  }
+}
+
 resource "confluent_kafka_cluster" "dedicated" {
   display_name = "dedicated_kafka_cluster"
   availability = "MULTI_ZONE"
