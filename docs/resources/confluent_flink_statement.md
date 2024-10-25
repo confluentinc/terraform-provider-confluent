@@ -132,6 +132,7 @@ In addition to the preceding arguments, the following attributes are exported:
 
 !> **Note:** The values for the `latest_offsets` and `latest_offsets_timestamp` attributes are populated only for stopped statements.
 
+-> **Note:** To start a statement from the last offset of a previous statement, you can inject `latest_offsets` as a SQL hint as documented in the [flink-carry-over-offset-between-statements](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/basic-kafka-acls) example.
 
 ## Import
 
@@ -157,3 +158,4 @@ $ terraform import confluent_flink_statement.example cfeab4fe-b62c-49bd-9e99-51c
 ## Getting Started
 The following end-to-end example might help to get started with [Flink Statements](https://docs.confluent.io/cloud/current/flink/get-started/overview.html):
   * [flink-quickstart](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/flink-quickstart)
+  * [flink-carry-over-offset-between-statements](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/flink-carry-over-offset-between-statements)
