@@ -270,7 +270,9 @@ The following arguments are supported:
 
 -> **Note:** The `freight` block is in an [Early Access lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
 
--> **Note:** The `freight` Kafka cluster type is only available in AWS currently.
+-> **Note:** The `freight` Kafka cluster type is currently available only on AWS.
+
+-> **Note:** The `enterprise` Kafka cluster type is currently available only on AWS and Azure.
 
 !> **Warning:** You can only upgrade clusters from `basic` to `standard`.
 
