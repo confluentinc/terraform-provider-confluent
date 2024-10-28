@@ -411,6 +411,8 @@ resource "confluent_kafka_acl" "app-connector-read-on-connect-lcc-group" {
 #    "time.interval"            = "DAILY"
 #    "flush.size"               = "1000"
 #    "tasks.max"                = "1"
+#    "authentication.method"    = "IAM Roles"
+#    "provider.integration.id"  = confluent_provider_integration.main.id
 #  }
 #
 #  depends_on = [
