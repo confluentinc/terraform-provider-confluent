@@ -425,6 +425,7 @@ resource "confluent_kafka_acl" "app-connector-read-on-connect-lcc-group" {
 #    confluent_kafka_acl.app-connector-create-on-error-lcc-topics,
 #    confluent_kafka_acl.app-connector-write-on-error-lcc-topics,
 #    confluent_kafka_acl.app-connector-read-on-connect-lcc-group,
+#    aws_iam_role.s3_access_role,
 #    confluent_provider_integration.main,
 #  ]
 #}
@@ -487,7 +488,7 @@ resource "aws_iam_role" "s3_access_role" {
     ]
   })
 
-  # Step #2
+  # Step #2: update assume_role_policy to the following:
 #  assume_role_policy = jsonencode({
 #    Version = "2012-10-17"
 #    Statement = [
