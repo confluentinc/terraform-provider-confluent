@@ -379,51 +379,53 @@ resource "confluent_kafka_acl" "app-connector-read-on-connect-lcc-group" {
   }
 }
 
-resource "confluent_connector" "s3-sink" {
-  environment {
-    id = confluent_environment.staging.id
-  }
-  kafka_cluster {
-    id = confluent_kafka_cluster.basic.id
-  }
-
-  // Block for custom *sensitive* configuration properties that are labelled with "Type: password" under "Configuration Properties" section in the docs:
-  // https://docs.confluent.io/cloud/current/connectors/cc-s3-sink.html#configuration-properties
-  config_sensitive = {
-    # TODO: use IAM roles + provider integration name
-    # https://docs.confluent.io/cloud/current/connectors/provider-integration/index.html
-    "aws.access.key.id"     = "***REDACTED***"
-    "aws.secret.access.key" = "***REDACTED***"
-  }
-
-  // Block for custom *nonsensitive* configuration properties that are *not* labelled with "Type: password" under "Configuration Properties" section in the docs:
-  // https://docs.confluent.io/cloud/current/connectors/cc-s3-sink.html#configuration-properties
-  config_nonsensitive = {
-    "topics"                   = confluent_kafka_topic.orders.topic_name
-    "input.data.format"        = "JSON"
-    "connector.class"          = "S3_SINK"
-    "name"                     = "S3_SINKConnector_0"
-    "kafka.auth.mode"          = "SERVICE_ACCOUNT"
-    "kafka.service.account.id" = confluent_service_account.app-connector.id
-    "s3.bucket.name"           = var.s3_bucket_name
-    "output.data.format"       = "JSON"
-    "time.interval"            = "DAILY"
-    "flush.size"               = "1000"
-    "tasks.max"                = "1"
-  }
-
-  depends_on = [
-    confluent_kafka_acl.app-connector-describe-on-cluster,
-    confluent_kafka_acl.app-connector-read-on-target-topic,
-    confluent_kafka_acl.app-connector-create-on-dlq-lcc-topics,
-    confluent_kafka_acl.app-connector-write-on-dlq-lcc-topics,
-    confluent_kafka_acl.app-connector-create-on-success-lcc-topics,
-    confluent_kafka_acl.app-connector-write-on-success-lcc-topics,
-    confluent_kafka_acl.app-connector-create-on-error-lcc-topics,
-    confluent_kafka_acl.app-connector-write-on-error-lcc-topics,
-    confluent_kafka_acl.app-connector-read-on-connect-lcc-group,
-  ]
-}
+# Step #2
+#resource "confluent_connector" "s3-sink" {
+#  environment {
+#    id = confluent_environment.staging.id
+#  }
+#  kafka_cluster {
+#    id = confluent_kafka_cluster.basic.id
+#  }
+#
+#  // Block for custom *sensitive* configuration properties that are labelled with "Type: password" under "Configuration Properties" section in the docs:
+#  // https://docs.confluent.io/cloud/current/connectors/cc-s3-sink.html#configuration-properties
+#  config_sensitive = {
+#    # TODO: use IAM roles + provider integration name
+#    # https://docs.confluent.io/cloud/current/connectors/provider-integration/index.html
+#    "aws.access.key.id"     = "***REDACTED***"
+#    "aws.secret.access.key" = "***REDACTED***"
+#  }
+#
+#  // Block for custom *nonsensitive* configuration properties that are *not* labelled with "Type: password" under "Configuration Properties" section in the docs:
+#  // https://docs.confluent.io/cloud/current/connectors/cc-s3-sink.html#configuration-properties
+#  config_nonsensitive = {
+#    "topics"                   = confluent_kafka_topic.orders.topic_name
+#    "input.data.format"        = "JSON"
+#    "connector.class"          = "S3_SINK"
+#    "name"                     = "S3_SINKConnector_0"
+#    "kafka.auth.mode"          = "SERVICE_ACCOUNT"
+#    "kafka.service.account.id" = confluent_service_account.app-connector.id
+#    "s3.bucket.name"           = var.s3_bucket_name
+#    "output.data.format"       = "JSON"
+#    "time.interval"            = "DAILY"
+#    "flush.size"               = "1000"
+#    "tasks.max"                = "1"
+#  }
+#
+#  depends_on = [
+#    confluent_kafka_acl.app-connector-describe-on-cluster,
+#    confluent_kafka_acl.app-connector-read-on-target-topic,
+#    confluent_kafka_acl.app-connector-create-on-dlq-lcc-topics,
+#    confluent_kafka_acl.app-connector-write-on-dlq-lcc-topics,
+#    confluent_kafka_acl.app-connector-create-on-success-lcc-topics,
+#    confluent_kafka_acl.app-connector-write-on-success-lcc-topics,
+#    confluent_kafka_acl.app-connector-create-on-error-lcc-topics,
+#    confluent_kafka_acl.app-connector-write-on-error-lcc-topics,
+#    confluent_kafka_acl.app-connector-read-on-connect-lcc-group,
+#    confluent_provider_integration.main,
+#  ]
+#}
 
 # https://docs.confluent.io/cloud/current/connectors/cc-s3-sink/cc-s3-sink.html#user-account-iam-policy
 resource "aws_iam_policy" "s3_access_policy" {
