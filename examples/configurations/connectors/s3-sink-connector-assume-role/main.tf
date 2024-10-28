@@ -3,7 +3,7 @@ terraform {
     aws = {
       source  = "hashicorp/aws"
       version = ">= 5.17.0"
-    },
+    }
     confluent = {
       source  = "confluentinc/confluent"
       version = "2.8.0"
