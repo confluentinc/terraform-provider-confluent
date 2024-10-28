@@ -431,18 +431,18 @@ resource "aws_iam_policy" "s3_access_policy" {
   description = "IAM policy for accessing the S3 bucket for Amazon S3 Sink Connector"
 
   policy = jsonencode({
-    Version = "2012-10-17"
+    Version   = "2012-10-17"
     Statement = [
       {
-        Effect   = "Allow"
-        Action   = [
+        Effect = "Allow"
+        Action = [
           "s3:ListAllMyBuckets"
         ]
         Resource = "arn:aws:s3:::*"
       },
       {
-        Effect   = "Allow"
-        Action   = [
+        Effect = "Allow"
+        Action = [
           "s3:ListBucket",
           "s3:GetBucketLocation",
           "s3:ListBucketMultipartUploads"
@@ -450,8 +450,8 @@ resource "aws_iam_policy" "s3_access_policy" {
         Resource = "arn:aws:s3:::${var.s3_bucket_name}"
       },
       {
-        Effect   = "Allow"
-        Action   = [
+        Effect = "Allow"
+        Action = [
           "s3:PutObject",
           "s3:PutObjectTagging",
           "s3:GetObject",
@@ -462,4 +462,38 @@ resource "aws_iam_policy" "s3_access_policy" {
       }
     ]
   })
+}
+
+# https://docs.confluent.io/cloud/current/connectors/provider-integration/index.html#cloud-pi-qs-step1
+resource "aws_iam_role" "s3_access_role" {
+  name        = "S3AccessRole"
+  description = "IAM role for accessing S3 with a custom trust policy"
+
+  assume_role_policy = jsonencode({
+    Version   = "2012-10-17"
+    Statement = [
+      {
+        Effect    = "Deny"
+        Principal = {
+          AWS = "*"
+        }
+        Action = "sts:AssumeRole"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "s3_policy_attachment" {
+  role       = aws_iam_role.s3_access_role.name
+  policy_arn = aws_iam_policy.s3_access_policy.arn
+}
+
+resource "confluent_provider_integration" "main" {
+  display_name = "s3_sink_connector_integration"
+  environment {
+    id = confluent_environment.staging.id
+  }
+  aws {
+    customer_role_arn = aws_iam_role.s3_access_role.arn
+  }
 }
