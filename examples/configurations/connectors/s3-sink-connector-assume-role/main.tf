@@ -469,6 +469,7 @@ resource "aws_iam_role" "s3_access_role" {
   name        = "S3AccessRole"
   description = "IAM role for accessing S3 with a custom trust policy"
 
+  # Step #1
   assume_role_policy = jsonencode({
     Version   = "2012-10-17"
     Statement = [
@@ -481,6 +482,25 @@ resource "aws_iam_role" "s3_access_role" {
       }
     ]
   })
+
+  # Step #2
+#  assume_role_policy = jsonencode({
+#    Version = "2012-10-17"
+#    Statement = [
+#      {
+#        Effect = "Allow"
+#        Principal = {
+#          AWS = confluent_provider_integration.main.aws[0].iam_role_arn
+#        }
+#        Action = "sts:AssumeRole"
+#        Condition = {
+#          StringEquals = {
+#            "sts:ExternalId" = confluent_provider_integration.main.aws[0].external_id
+#          }
+#        }
+#      }
+#    ]
+#  })
 }
 
 resource "aws_iam_role_policy_attachment" "s3_policy_attachment" {
