@@ -1,5 +1,9 @@
 terraform {
   required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = ">= 5.17.0"
+    },
     confluent = {
       source  = "confluentinc/confluent"
       version = "2.8.0"
@@ -10,6 +14,10 @@ terraform {
 provider "confluent" {
   cloud_api_key    = var.confluent_cloud_api_key
   cloud_api_secret = var.confluent_cloud_api_secret
+}
+
+provider "aws" {
+  region = var.aws_region
 }
 
 resource "confluent_environment" "staging" {
