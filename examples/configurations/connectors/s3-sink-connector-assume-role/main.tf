@@ -403,7 +403,7 @@ resource "confluent_connector" "s3-sink" {
     "name"                     = "S3_SINKConnector_0"
     "kafka.auth.mode"          = "SERVICE_ACCOUNT"
     "kafka.service.account.id" = confluent_service_account.app-connector.id
-    "s3.bucket.name"           = "<s3-bucket-name>"
+    "s3.bucket.name"           = var.s3_bucket_name
     "output.data.format"       = "JSON"
     "time.interval"            = "DAILY"
     "flush.size"               = "1000"
