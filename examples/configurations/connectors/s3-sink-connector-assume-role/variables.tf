@@ -8,3 +8,8 @@ variable "confluent_cloud_api_secret" {
   type        = string
   sensitive   = true
 }
+
+variable "s3_bucket_name" {
+  description = "The name of the S3 bucket"
+  type        = string
+}
