@@ -390,6 +390,8 @@ resource "confluent_connector" "s3-sink" {
   // Block for custom *sensitive* configuration properties that are labelled with "Type: password" under "Configuration Properties" section in the docs:
   // https://docs.confluent.io/cloud/current/connectors/cc-s3-sink.html#configuration-properties
   config_sensitive = {
+    # TODO: use IAM roles + provider integration name
+    # https://docs.confluent.io/cloud/current/connectors/provider-integration/index.html
     "aws.access.key.id"     = "***REDACTED***"
     "aws.secret.access.key" = "***REDACTED***"
   }
