@@ -19,7 +19,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	net "github.com/confluentinc/ccloud-sdk-go-v2/networking/v1"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -130,8 +129,8 @@ func gatewayDataSourceRead(ctx context.Context, d *schema.ResourceData, meta int
 	tflog.Debug(ctx, fmt.Sprintf("Reading Gateway %q=%q", paramId, gatewayId), map[string]interface{}{gatewayKey: gatewayId})
 
 	c := meta.(*Client)
-	request := c.netClient.GatewaysNetworkingV1Api.GetNetworkingV1Gateway(c.netApiContext(ctx), gatewayId).Environment(environmentId)
-	gateway, _, err := c.netClient.GatewaysNetworkingV1Api.GetNetworkingV1GatewayExecute(request)
+	request := c.netGatewayClient.GatewaysNetworkingV1Api.GetNetworkingV1Gateway(c.netGWApiContext(ctx), gatewayId).Environment(environmentId)
+	gateway, _, err := c.netGatewayClient.GatewaysNetworkingV1Api.GetNetworkingV1GatewayExecute(request)
 	if err != nil {
 		return diag.Errorf("error reading Gateway %q: %s", gatewayId, createDescriptiveError(err))
 	}
@@ -145,44 +144,4 @@ func gatewayDataSourceRead(ctx context.Context, d *schema.ResourceData, meta int
 		return diag.FromErr(createDescriptiveError(err))
 	}
 	return nil
-}
-
-func setGatewayAttributes(d *schema.ResourceData, gateway net.NetworkingV1Gateway) (*schema.ResourceData, error) {
-	if err := d.Set(paramDisplayName, gateway.Spec.GetDisplayName()); err != nil {
-		return nil, err
-	}
-
-	if gateway.Spec.Config.NetworkingV1AwsEgressPrivateLinkGatewaySpec != nil && gateway.Status.CloudGateway.NetworkingV1AwsEgressPrivateLinkGatewayStatus != nil {
-		if err := d.Set(paramAwsEgressPrivateLinkGateway, []interface{}{map[string]interface{}{
-			paramRegion:       gateway.Spec.Config.NetworkingV1AwsEgressPrivateLinkGatewaySpec.GetRegion(),
-			paramPrincipalArn: gateway.Status.CloudGateway.NetworkingV1AwsEgressPrivateLinkGatewayStatus.GetPrincipalArn(),
-		}}); err != nil {
-			return nil, err
-		}
-	} else if gateway.Spec.Config.NetworkingV1AwsPeeringGatewaySpec != nil {
-		if err := d.Set(paramAwsPeeringGateway, []interface{}{map[string]interface{}{
-			paramRegion: gateway.Spec.Config.NetworkingV1AwsPeeringGatewaySpec.GetRegion(),
-		}}); err != nil {
-			return nil, err
-		}
-	} else if gateway.Spec.Config.NetworkingV1AzureEgressPrivateLinkGatewaySpec != nil && gateway.Status.CloudGateway.NetworkingV1AzureEgressPrivateLinkGatewayStatus != nil {
-		if err := d.Set(paramAzureEgressPrivateLinkGateway, []interface{}{map[string]interface{}{
-			paramRegion:       gateway.Spec.Config.NetworkingV1AzureEgressPrivateLinkGatewaySpec.GetRegion(),
-			paramSubscription: gateway.Status.CloudGateway.NetworkingV1AzureEgressPrivateLinkGatewayStatus.GetSubscription(),
-		}}); err != nil {
-			return nil, err
-		}
-	} else if gateway.Spec.Config.NetworkingV1AzurePeeringGatewaySpec != nil {
-		if err := d.Set(paramAzurePeeringGateway, []interface{}{map[string]interface{}{
-			paramRegion: gateway.Spec.Config.NetworkingV1AzurePeeringGatewaySpec.GetRegion(),
-		}}); err != nil {
-			return nil, err
-		}
-	}
-
-	if err := setStringAttributeInListBlockOfSizeOne(paramEnvironment, paramId, gateway.Spec.Environment.GetId(), d); err != nil {
-		return nil, err
-	}
-	d.SetId(gateway.GetId())
-	return d, nil
 }

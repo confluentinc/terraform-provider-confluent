@@ -41,6 +41,7 @@ import (
 	ksql "github.com/confluentinc/ccloud-sdk-go-v2/ksql/v2"
 	mds "github.com/confluentinc/ccloud-sdk-go-v2/mds/v2"
 	netap "github.com/confluentinc/ccloud-sdk-go-v2/networking-access-point/v1"
+	netgw "github.com/confluentinc/ccloud-sdk-go-v2/networking-gateway/v1"
 	netpl "github.com/confluentinc/ccloud-sdk-go-v2/networking-privatelink/v1"
 	net "github.com/confluentinc/ccloud-sdk-go-v2/networking/v1"
 	org "github.com/confluentinc/ccloud-sdk-go-v2/org/v2"
@@ -87,6 +88,7 @@ type Client struct {
 	faClient                        *fa.APIClient
 	netClient                       *net.APIClient
 	netAccessPointClient            *netap.APIClient
+	netGatewayClient                *netgw.APIClient
 	netIpClient                     *netip.APIClient
 	netPLClient                     *netpl.APIClient
 	netDnsClient                    *dns.APIClient
@@ -345,6 +347,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_access_point":                       accessPointResource(),
 				"confluent_dns_forwarder":                      dnsForwarderResource(),
 				"confluent_dns_record":                         dnsRecordResource(),
+				"confluent_gateway":                            gatewayResource(),
 				"confluent_peering":                            peeringResource(),
 				"confluent_private_link_access":                privateLinkAccessResource(),
 				"confluent_private_link_attachment":            privateLinkAttachmentResource(),
@@ -493,6 +496,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	ksqlCfg := ksql.NewConfiguration()
 	mdsCfg := mds.NewConfiguration()
 	netAccessPointCfg := netap.NewConfiguration()
+	netGatewayCfg := netgw.NewConfiguration()
 	netCfg := net.NewConfiguration()
 	netIpCfg := netip.NewConfiguration()
 	netPLCfg := netpl.NewConfiguration()
@@ -520,6 +524,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	netIpCfg.Servers[0].URL = endpoint
 	netPLCfg.Servers[0].URL = endpoint
 	netAccessPointCfg.Servers[0].URL = endpoint
+	netGatewayCfg.Servers[0].URL = endpoint
 	netDnsCfg.Servers[0].URL = endpoint
 	oidcCfg.Servers[0].URL = endpoint
 	orgCfg.Servers[0].URL = endpoint
@@ -542,6 +547,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	mdsCfg.UserAgent = userAgent
 	netCfg.UserAgent = userAgent
 	netAccessPointCfg.UserAgent = userAgent
+	netGatewayCfg.UserAgent = userAgent
 	netIpCfg.UserAgent = userAgent
 	netDnsCfg.UserAgent = userAgent
 	netPLCfg.UserAgent = userAgent
@@ -573,6 +579,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	ksqlCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	mdsCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	netCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
+	netGatewayCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	netIpCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	netPLCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	netDnsCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
@@ -597,6 +604,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 		ksqlClient:                      ksql.NewAPIClient(ksqlCfg),
 		netClient:                       net.NewAPIClient(netCfg),
 		netAccessPointClient:            netap.NewAPIClient(netAccessPointCfg),
+		netGatewayClient:                netgw.NewAPIClient(netGatewayCfg),
 		netIpClient:                     netip.NewAPIClient(netIpCfg),
 		netPLClient:                     netpl.NewAPIClient(netPLCfg),
 		netDnsClient:                    dns.NewAPIClient(netDnsCfg),
