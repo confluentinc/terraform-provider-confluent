@@ -2,7 +2,7 @@ terraform {
   required_providers {
     confluent = {
       source  = "confluentinc/confluent"
-      version = "2.2.0"
+      version = "2.8.0"
     }
 
     azurerm = {
@@ -42,7 +42,7 @@ resource "confluent_private_link_attachment" "main" {
 
 resource "confluent_kafka_cluster" "enterprise" {
   display_name = "inventory"
-  availability = "MULTI_ZONE"
+  availability = "HIGH"
   cloud        = confluent_private_link_attachment.main.cloud
   region       = confluent_private_link_attachment.main.region
   enterprise {}

@@ -548,7 +548,7 @@ func waitForSchemaExporterToProvision(ctx context.Context, c *SchemaRegistryRest
 		Pending:      []string{stateProvisioning},
 		Target:       []string{stateReady},
 		Refresh:      schemaExporterProvisionStatus(c.apiContext(ctx), c, id, name),
-		Timeout:      dataCatalogExporterTimeout,
+		Timeout:      schemaExporterAPICreateTimeout,
 		PollInterval: 30 * time.Second,
 	}
 
@@ -744,19 +744,32 @@ func waitForFlinkStatementToBeDeleted(ctx context.Context, c *FlinkRestClient, s
 	return nil
 }
 
-func waitForFlinkStatementToBeStopped(ctx context.Context, c *FlinkRestClient, statementName string, isAcceptanceTestMode bool) error {
+func waitForFlinkStatementToBeUpdated(ctx context.Context, c *FlinkRestClient, statementName string, isAcceptanceTestMode bool, toStop bool) error {
 	delay, pollInterval := getDelayAndPollInterval(5*time.Second, 10*time.Second, isAcceptanceTestMode)
+	var pendingStates, targetStates []string
+	var targetStatusMessage string
+
+	if toStop {
+		pendingStates = []string{statePending, stateRunning, stateCompleted, stateStopping}
+		targetStates = []string{stateStopped}
+		targetStatusMessage = stateStopped
+	} else {
+		pendingStates = []string{stateStopped, stateResuming}
+		targetStates = []string{statePending, stateRunning, stateCompleted}
+		targetStatusMessage = fmt.Sprintf("%s, %s or %s", statePending, stateRunning, stateCompleted)
+	}
+
 	stateConf := &resource.StateChangeConf{
-		Pending: []string{statePending, stateRunning, stateCompleted},
-		Target:  []string{stateStopped},
-		Refresh: flinkStatementStoppingStatus(c.apiContext(ctx), c, statementName),
+		Pending: pendingStates,
+		Target:  targetStates,
+		Refresh: flinkStatementUpdatingStatus(c.apiContext(ctx), c, statementName, targetStatusMessage),
 		// Default timeout
 		Timeout:      20 * time.Minute,
 		Delay:        delay,
 		PollInterval: pollInterval,
 	}
 
-	tflog.Debug(ctx, fmt.Sprintf("Waiting for Flink Statement %q stopping status to become %q", statementName, stateStopped), map[string]interface{}{flinkStatementLoggingKey: statementName})
+	tflog.Debug(ctx, fmt.Sprintf("Waiting for Flink Statement %q stopped status to become %q", statementName, targetStatusMessage), map[string]interface{}{flinkStatementLoggingKey: statementName})
 	if _, err := stateConf.WaitForStateContext(c.apiContext(ctx)); err != nil {
 		return err
 	}
@@ -1192,7 +1205,7 @@ func flinkStatementProvisionStatus(ctx context.Context, c *FlinkRestClient, stat
 	}
 }
 
-func flinkStatementStoppingStatus(ctx context.Context, c *FlinkRestClient, statementName string) resource.StateRefreshFunc {
+func flinkStatementUpdatingStatus(ctx context.Context, c *FlinkRestClient, statementName, targetStatusMessage string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
 		statement, _, err := executeFlinkStatementRead(c.apiContext(ctx), c, statementName)
 		if err != nil {
@@ -1200,8 +1213,8 @@ func flinkStatementStoppingStatus(ctx context.Context, c *FlinkRestClient, state
 			return nil, stateUnknown, err
 		}
 
-		tflog.Debug(ctx, fmt.Sprintf("Waiting for Flink Statement %q provisioning status to become %q: current status is %q", statementName, stateStopped, statement.Status.GetPhase()), map[string]interface{}{flinkStatementLoggingKey: statementName})
-		if statement.Status.GetPhase() == statePending || statement.Status.GetPhase() == stateRunning || statement.Status.GetPhase() == stateCompleted || statement.Status.GetPhase() == stateStopped {
+		tflog.Debug(ctx, fmt.Sprintf("Waiting for Flink Statement %q provisioning status to become %q: current status is %q", statementName, targetStatusMessage, statement.Status.GetPhase()), map[string]interface{}{flinkStatementLoggingKey: statementName})
+		if statement.Status.GetPhase() == statePending || statement.Status.GetPhase() == stateRunning || statement.Status.GetPhase() == stateCompleted || statement.Status.GetPhase() == stateStopped || statement.Status.GetPhase() == stateStopping {
 			return statement, statement.Status.GetPhase(), nil
 		} else if statement.Status.GetPhase() == stateFailed || statement.Status.GetPhase() == stateFailing {
 			return nil, stateFailed, fmt.Errorf("flink Statement %q provisioning status is %q", statementName, statement.Status.GetPhase())

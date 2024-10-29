@@ -1,0 +1,17 @@
+{
+  "api_version": "artifact/v1",
+  "content_format": "JAR",
+  "kind": "PresignedUrl",
+  "upload_form_data": {
+    "bucket": "foo",
+    "key": "bar",
+    "policy": "aar",
+    "x-amz-algorithm": "bar",
+    "x-amz-credential": "car",
+    "x-amz-date": "dar",
+    "x-amz-security-token": "ear",
+    "x-amz-signature": "far"
+  },
+  "upload_id": "e53bb2e8-8de3-49fa-9fb1-4e3fd9a16b66",
+  "upload_url": "TF_TEST_URL"
+}

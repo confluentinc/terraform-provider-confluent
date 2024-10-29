@@ -22,6 +22,8 @@
   },
   "status": {
     "detail": "",
+    "latest_offsets": {},
+    "latest_offsets_timestamp": "0001-01-01T00:00:00Z",
     "phase": "RUNNING",
     "result_schema": {
       "columns": [
