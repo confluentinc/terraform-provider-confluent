@@ -21,7 +21,7 @@ provider "aws" {
 }
 
 resource "confluent_environment" "staging" {
-  display_name = "Staging"
+  display_name = "Staging111"
 
   stream_governance {
     package = "ESSENTIALS"
@@ -54,7 +54,7 @@ resource "confluent_kafka_cluster" "basic" {
 // 'app-manager' service account is required in this configuration to create 'orders' topic and grant ACLs
 // to 'app-producer' and 'app-consumer' service accounts.
 resource "confluent_service_account" "app-manager" {
-  display_name = "app-manager"
+  display_name = "app-manager12321321"
   description  = "Service account to manage 'inventory' Kafka cluster"
 }
 
@@ -65,7 +65,7 @@ resource "confluent_role_binding" "app-manager-kafka-cluster-admin" {
 }
 
 resource "confluent_api_key" "app-manager-kafka-api-key" {
-  display_name = "app-manager-kafka-api-key"
+  display_name = "app-manager-kafka-api-key1"
   description  = "Kafka API Key that is owned by 'app-manager' service account"
   owner {
     id          = confluent_service_account.app-manager.id
@@ -108,7 +108,7 @@ resource "confluent_kafka_topic" "orders" {
 }
 
 resource "confluent_service_account" "app-consumer" {
-  display_name = "app-consumer"
+  display_name = "app-consumer12321321"
   description  = "Service account to consume from 'orders' topic of 'inventory' Kafka cluster"
 }
 
@@ -151,7 +151,7 @@ resource "confluent_kafka_acl" "app-producer-write-on-topic" {
 }
 
 resource "confluent_service_account" "app-producer" {
-  display_name = "app-producer"
+  display_name = "app-producer123123213"
   description  = "Service account to produce to 'orders' topic of 'inventory' Kafka cluster"
 }
 
@@ -398,12 +398,12 @@ resource "confluent_kafka_acl" "app-connector-read-on-connect-lcc-group" {
 #
 #  // Block for custom *sensitive* configuration properties that are labelled with "Type: password" under "Configuration Properties" section in the docs:
 #  // https://docs.confluent.io/cloud/current/connectors/cc-s3-sink.html#configuration-properties
-#  config_sensitive = {
-#    # TODO: use IAM roles + provider integration name
+##  config_sensitive = {
+##    # TODO: use IAM roles + provider integration name
 #    # https://docs.confluent.io/cloud/current/connectors/provider-integration/index.html
-#    "aws.access.key.id"     = "***REDACTED***"
-#    "aws.secret.access.key" = "***REDACTED***"
-#  }
+##    "aws.access.key.id"     = "***REDACTED***"
+##    "aws.secret.access.key" = "***REDACTED***"
+##  }
 #
 #  // Block for custom *nonsensitive* configuration properties that are *not* labelled with "Type: password" under "Configuration Properties" section in the docs:
 #  // https://docs.confluent.io/cloud/current/connectors/cc-s3-sink.html#configuration-properties
@@ -433,92 +433,39 @@ resource "confluent_kafka_acl" "app-connector-read-on-connect-lcc-group" {
 #    confluent_kafka_acl.app-connector-create-on-error-lcc-topics,
 #    confluent_kafka_acl.app-connector-write-on-error-lcc-topics,
 #    confluent_kafka_acl.app-connector-read-on-connect-lcc-group,
-#    aws_iam_role.s3_access_role,
+#    aws_iam_role.s3_access_role_update,
 #    confluent_provider_integration.main,
 #  ]
 #}
 
-# https://docs.confluent.io/cloud/current/connectors/cc-s3-sink/cc-s3-sink.html#user-account-iam-policy
-resource "aws_iam_policy" "s3_access_policy" {
-  name        = "S3AccessPolicy"
-  description = "IAM policy for accessing the S3 bucket for Amazon S3 Sink Connector"
-
-  policy = jsonencode({
-    Version   = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "s3:ListAllMyBuckets"
-        ]
-        Resource = "arn:aws:s3:::*"
-      },
-      {
-        Effect = "Allow"
-        Action = [
-          "s3:ListBucket",
-          "s3:GetBucketLocation",
-          "s3:ListBucketMultipartUploads"
-        ]
-        Resource = "arn:aws:s3:::${var.s3_bucket_name}"
-      },
-      {
-        Effect = "Allow"
-        Action = [
-          "s3:PutObject",
-          "s3:PutObjectTagging",
-          "s3:GetObject",
-          "s3:AbortMultipartUpload",
-          "s3:ListMultipartUploadParts"
-        ]
-        Resource = "arn:aws:s3:::${var.s3_bucket_name}/*"
-      }
-    ]
-  })
-}
-
 # https://docs.confluent.io/cloud/current/connectors/provider-integration/index.html#cloud-pi-qs-step1
-resource "aws_iam_role" "s3_access_role" {
+resource "aws_iam_role" "s3_access_role_update" {
   name        = "S3AccessRole"
-  description = "IAM role for accessing S3 with a custom trust policy"
+  description = "IAM role for Confluent to assume for accessing S3"
 
-  # Step #1
   assume_role_policy = jsonencode({
-    Version   = "2012-10-17"
+    Version = "2012-10-17"
     Statement = [
       {
-        Effect    = "Deny"
+        Effect = "Allow"
         Principal = {
-          AWS = "*"
+          AWS = confluent_provider_integration.main.aws[0].iam_role_arn
         }
         Action = "sts:AssumeRole"
+        Condition = {
+          StringEquals = {
+            "sts:ExternalId" = confluent_provider_integration.main.aws[0].external_id
+          }
+        }
       }
     ]
   })
 
-  # Step #2: update assume_role_policy to the following:
-#  assume_role_policy = jsonencode({
-#    Version = "2012-10-17"
-#    Statement = [
-#      {
-#        Effect = "Allow"
-#        Principal = {
-#          AWS = confluent_provider_integration.main.aws[0].iam_role_arn
-#        }
-#        Action = "sts:AssumeRole"
-#        Condition = {
-#          StringEquals = {
-#            "sts:ExternalId" = confluent_provider_integration.main.aws[0].external_id
-#          }
-#        }
-#      }
-#    ]
-#  })
-}
-
-resource "aws_iam_role_policy_attachment" "s3_policy_attachment" {
-  role       = aws_iam_role.s3_access_role.name
-  policy_arn = aws_iam_policy.s3_access_policy.arn
+  lifecycle {
+    ignore_changes = [
+      assume_role_policy
+    ]
+  }
 }
 
 resource "confluent_provider_integration" "main" {
@@ -527,6 +474,15 @@ resource "confluent_provider_integration" "main" {
     id = confluent_environment.staging.id
   }
   aws {
-    customer_role_arn = aws_iam_role.s3_access_role.arn
+    customer_role_arn = module.s3_access_role.s3_access_role_arn
   }
+}
+
+module "s3_access_role" {
+  source = "./iam_role_module"  # Path to your module folder
+  s3_bucket_name = var.s3_bucket_name
+}
+
+output "s3_access_role_arn" {
+  value = module.s3_access_role.s3_access_role_arn
 }
