@@ -29,11 +29,12 @@ import (
 )
 
 const (
-	awsEgressPrivateLinkGatewaySpecKind   = "AwsEgressPrivateLinkGatewaySpec"
-	azureEgressPrivateLinkGatewaySpecKind = "AzureEgressPrivateLinkGatewaySpec"
+	awsEgressPrivateLinkGatewaySpecKind       = "AwsEgressPrivateLinkGatewaySpec"
+	awsPrivateNetworkInterfaceGatewaySpecKind = "AwsPrivateNetworkInterfaceGatewaySpec"
+	azureEgressPrivateLinkGatewaySpecKind     = "AzureEgressPrivateLinkGatewaySpec"
 )
 
-var acceptedGatewayTypes = []string{paramAwsEgressPrivateLinkGateway, paramAzureEgressPrivateLinkGateway}
+var acceptedGatewayTypes = []string{paramAwsEgressPrivateLinkGateway, paramAwsPrivateNetworkInterfaceGateway, paramAzureEgressPrivateLinkGateway}
 
 func gatewayResource() *schema.Resource {
 	return &schema.Resource{
@@ -51,9 +52,10 @@ func gatewayResource() *schema.Resource {
 				Description:  "A name for the Gateway.",
 				ValidateFunc: validation.StringIsNotEmpty,
 			},
-			paramEnvironment:                   environmentSchema(),
-			paramAwsEgressPrivateLinkGateway:   awsEgressPrivateLinkGatewaySchema(),
-			paramAzureEgressPrivateLinkGateway: azureEgressPrivateLinkGatewaySchema(),
+			paramEnvironment:                       environmentSchema(),
+			paramAwsEgressPrivateLinkGateway:       awsEgressPrivateLinkGatewaySchema(),
+			paramAwsPrivateNetworkInterfaceGateway: awsPrivateNetworkInterfaceGatewaySchema(),
+			paramAzureEgressPrivateLinkGateway:     azureEgressPrivateLinkGatewaySchema(),
 		},
 	}
 }
@@ -108,6 +110,37 @@ func azureEgressPrivateLinkGatewaySchema() *schema.Schema {
 	}
 }
 
+func awsPrivateNetworkInterfaceGatewaySchema() *schema.Schema {
+	return &schema.Schema{
+		Type:     schema.TypeList,
+		ForceNew: true,
+		Computed: true,
+		Optional: true,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramRegion: {
+					Type:     schema.TypeString,
+					Required: true,
+					ForceNew: true,
+				},
+				paramZones: {
+					Type:     schema.TypeList,
+					Required: true,
+					ForceNew: true,
+					Elem:     &schema.Schema{Type: schema.TypeString},
+				},
+				paramAccount: {
+					Type:     schema.TypeString,
+					Computed: true,
+				},
+			},
+		},
+		MinItems:     1,
+		MaxItems:     1,
+		ExactlyOneOf: acceptedGatewayTypes,
+	}
+}
+
 func gatewayCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	c := meta.(*Client)
 
@@ -119,6 +152,7 @@ func gatewayCreate(ctx context.Context, d *schema.ResourceData, meta interface{}
 	createGatewayRequest.Spec.SetDisplayName(d.Get(paramDisplayName).(string))
 
 	isAwsEgressPrivateLink := len(d.Get(paramAwsEgressPrivateLinkGateway).([]interface{})) > 0
+	isAwsPrivateNetworkInterface := len(d.Get(paramAwsPrivateNetworkInterfaceGateway).([]interface{})) > 0
 	isAzureEgressPrivateLink := len(d.Get(paramAzureEgressPrivateLinkGateway).([]interface{})) > 0
 
 	if isAwsEgressPrivateLink {
@@ -126,6 +160,14 @@ func gatewayCreate(ctx context.Context, d *schema.ResourceData, meta interface{}
 		createGatewayRequest.Spec.SetConfig(netgw.NetworkingV1AwsEgressPrivateLinkGatewaySpecAsNetworkingV1GatewaySpecConfigOneOf(netgw.NewNetworkingV1AwsEgressPrivateLinkGatewaySpec(
 			awsEgressPrivateLinkGatewaySpecKind,
 			region,
+		)))
+	} else if isAwsPrivateNetworkInterface {
+		region := extractStringValueFromBlock(d, paramAwsPrivateNetworkInterfaceGateway, paramRegion)
+		zones := extractStringSliceValueFromBlock(d, paramAwsPrivateNetworkInterfaceGateway, paramZones)
+		createGatewayRequest.Spec.SetConfig(netgw.NetworkingV1AwsPrivateNetworkInterfaceGatewaySpecAsNetworkingV1GatewaySpecConfigOneOf(netgw.NewNetworkingV1AwsPrivateNetworkInterfaceGatewaySpec(
+			awsPrivateNetworkInterfaceGatewaySpecKind,
+			region,
+			zones,
 		)))
 	} else if isAzureEgressPrivateLink {
 		region := extractStringValueFromBlock(d, paramAzureEgressPrivateLinkGateway, paramRegion)
@@ -224,6 +266,14 @@ func setGatewayAttributes(d *schema.ResourceData, gateway netgw.NetworkingV1Gate
 	} else if gateway.Spec.GetConfig().NetworkingV1AwsPeeringGatewaySpec != nil {
 		if err := d.Set(paramAwsPeeringGateway, []interface{}{map[string]interface{}{
 			paramRegion: gateway.Spec.Config.NetworkingV1AwsPeeringGatewaySpec.GetRegion(),
+		}}); err != nil {
+			return nil, err
+		}
+	} else if gateway.Spec.GetConfig().NetworkingV1AwsPrivateNetworkInterfaceGatewaySpec != nil {
+		if err := d.Set(paramAwsPrivateNetworkInterfaceGateway, []interface{}{map[string]interface{}{
+			paramRegion:  gateway.Spec.Config.NetworkingV1AwsPrivateNetworkInterfaceGatewaySpec.GetRegion(),
+			paramZones:   gateway.Spec.Config.NetworkingV1AwsPrivateNetworkInterfaceGatewaySpec.GetZones(),
+			paramAccount: gateway.Status.CloudGateway.NetworkingV1AwsPrivateNetworkInterfaceGatewayStatus.GetAccount(),
 		}}); err != nil {
 			return nil, err
 		}

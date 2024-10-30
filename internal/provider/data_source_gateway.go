@@ -25,11 +25,12 @@ import (
 )
 
 const (
-	paramAwsPeeringGateway             = "aws_peering_gateway"
-	paramAwsEgressPrivateLinkGateway   = "aws_egress_private_link_gateway"
-	paramAzureEgressPrivateLinkGateway = "azure_egress_private_link_gateway"
-	paramAzurePeeringGateway           = "azure_peering_gateway"
-	paramPrincipalArn                  = "principal_arn"
+	paramAwsPeeringGateway                 = "aws_peering_gateway"
+	paramAwsEgressPrivateLinkGateway       = "aws_egress_private_link_gateway"
+	paramAwsPrivateNetworkInterfaceGateway = "aws_private_network_interface_gateway"
+	paramAzureEgressPrivateLinkGateway     = "azure_egress_private_link_gateway"
+	paramAzurePeeringGateway               = "azure_peering_gateway"
+	paramPrincipalArn                      = "principal_arn"
 )
 
 func gatewayDataSource() *schema.Resource {
@@ -46,10 +47,11 @@ func gatewayDataSource() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			paramAwsEgressPrivateLinkGateway:   awsEgressPrivateLinkGatewayDataSourceSchema(),
-			paramAwsPeeringGateway:             awsPeeringGatewaySpecDataSourceSchema(),
-			paramAzureEgressPrivateLinkGateway: azureEgressPrivateLinkGatewayDataSourceSchema(),
-			paramAzurePeeringGateway:           azurePeeringGatewaySpecDataSourceSchema(),
+			paramAwsEgressPrivateLinkGateway:       awsEgressPrivateLinkGatewayDataSourceSchema(),
+			paramAwsPeeringGateway:                 awsPeeringGatewaySpecDataSourceSchema(),
+			paramAwsPrivateNetworkInterfaceGateway: awsPrivateNetworkInterfaceGatewayDataSourceSchema(),
+			paramAzureEgressPrivateLinkGateway:     azureEgressPrivateLinkGatewayDataSourceSchema(),
+			paramAzurePeeringGateway:               azurePeeringGatewaySpecDataSourceSchema(),
 		},
 	}
 }
@@ -79,6 +81,30 @@ func awsEgressPrivateLinkGatewayDataSourceSchema() *schema.Schema {
 					Computed: true,
 				},
 				paramPrincipalArn: {
+					Type:     schema.TypeString,
+					Computed: true,
+				},
+			},
+		},
+		Computed: true,
+	}
+}
+
+func awsPrivateNetworkInterfaceGatewayDataSourceSchema() *schema.Schema {
+	return &schema.Schema{
+		Type: schema.TypeList,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramRegion: {
+					Type:     schema.TypeString,
+					Computed: true,
+				},
+				paramZones: {
+					Type:     schema.TypeList,
+					Computed: true,
+					Elem:     &schema.Schema{Type: schema.TypeString},
+				},
+				paramAccount: {
 					Type:     schema.TypeString,
 					Computed: true,
 				},
