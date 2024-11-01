@@ -26,11 +26,12 @@ import (
 )
 
 const (
-	scenarioStateAccessPointIsProvisioning = "The new access point is provisioning"
-	scenarioStateAccessPointHasBeenCreated = "The new access point has been just created"
-	scenarioStateAccessPointHasBeenUpdated = "The new access point has been updated"
-	awsEgressAccessPointScenarioName       = "confluent_access_point Aws Egress Private Link Endpoint Resource Lifecycle"
-	azureEgressAccessPointScenarioName     = "confluent_access_point Azure Egress Private Link Endpoint Resource Lifecycle"
+	scenarioStateAccessPointIsProvisioning            = "The new access point is provisioning"
+	scenarioStateAccessPointHasBeenCreated            = "The new access point has been just created"
+	scenarioStateAccessPointHasBeenUpdated            = "The new access point has been updated"
+	awsEgressAccessPointScenarioName                  = "confluent_access_point Aws Egress Private Link Endpoint Resource Lifecycle"
+	awsPrivateNetworkInterfaceAccessPointScenarioName = "confluent_access_point Aws Private Network Interface Endpoint Resource Lifecycle"
+	azureEgressAccessPointScenarioName                = "confluent_access_point Azure Egress Private Link Endpoint Resource Lifecycle"
 
 	accessPointUrlPath       = "/networking/v1/access-points"
 	accessPointResourceLabel = "confluent_access_point.main"
@@ -121,7 +122,7 @@ func TestAccAccessPointAwsEgressPrivateLinkEndpoint(t *testing.T) {
 		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckResourceAccessPointAwsEgressWithIdSet(mockServerUrl),
+				Config: testAccCheckResourceAccessPointAwsEgressWithIdSet(mockServerUrl, "prod-ap-1"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "id", "ap-abc123"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "display_name", "prod-ap-1"),
@@ -130,6 +131,7 @@ func TestAccAccessPointAwsEgressPrivateLinkEndpoint(t *testing.T) {
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "gateway.#", "1"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "gateway.0.id", "gw-abc123"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_egress_private_link_endpoint.#", "1"),
+					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_private_network_interface.#", "0"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "azure_egress_private_link_endpoint.#", "0"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_egress_private_link_endpoint.0.vpc_endpoint_service_name", "com.amazonaws.vpce.us-west-2.vpce-svc-00000000000000000"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_egress_private_link_endpoint.0.vpc_endpoint_id", "vpce-00000000000000000"),
@@ -137,7 +139,7 @@ func TestAccAccessPointAwsEgressPrivateLinkEndpoint(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckResourceUpdateAccessPointAwsEgressWithIdSet(mockServerUrl),
+				Config: testAccCheckResourceAccessPointAwsEgressWithIdSet(mockServerUrl, "prod-ap-2"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "id", "ap-abc123"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "display_name", "prod-ap-2"),
@@ -146,10 +148,135 @@ func TestAccAccessPointAwsEgressPrivateLinkEndpoint(t *testing.T) {
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "gateway.#", "1"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "gateway.0.id", "gw-abc123"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_egress_private_link_endpoint.#", "1"),
+					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_private_network_interface.#", "0"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "azure_egress_private_link_endpoint.#", "0"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_egress_private_link_endpoint.0.vpc_endpoint_service_name", "com.amazonaws.vpce.us-west-2.vpce-svc-00000000000000000"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_egress_private_link_endpoint.0.vpc_endpoint_id", "vpce-00000000000000000"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_egress_private_link_endpoint.0.vpc_endpoint_dns_name", "*.vpce-00000000000000000-abcd1234.s3.us-west-2.vpce.amazonaws.com"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccAccessPointAwsPrivateNetworkInterface(t *testing.T) {
+	ctx := context.Background()
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
+
+	mockServerUrl := wiremockContainer.URI
+	wiremockClient := wiremock.NewClient(mockServerUrl)
+	// nolint:errcheck
+	defer wiremockClient.Reset()
+
+	// nolint:errcheck
+	defer wiremockClient.ResetAllScenarios()
+
+	createAccessPointResponse, _ := os.ReadFile("../testdata/network_access_point/read_created_aws_private_network_interface_ap.json") // private network interface has no status, so we can use the same json file for create and read
+	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(accessPointUrlPath)).
+		InScenario(awsPrivateNetworkInterfaceAccessPointScenarioName).
+		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
+		WillSetStateTo(scenarioStateAccessPointIsProvisioning).
+		WillReturn(
+			string(createAccessPointResponse),
+			contentTypeJSONHeader,
+			http.StatusCreated,
+		))
+
+	accessPointReadUrlPath := fmt.Sprintf("%s/ap-abc456", accessPointUrlPath)
+
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(accessPointReadUrlPath)).
+		InScenario(awsPrivateNetworkInterfaceAccessPointScenarioName).
+		WhenScenarioStateIs(scenarioStateAccessPointIsProvisioning).
+		WillSetStateTo(scenarioStateAccessPointHasBeenCreated).
+		WillReturn(
+			string(createAccessPointResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	readCreatedAccessPointResponse, _ := os.ReadFile("../testdata/network_access_point/read_created_aws_private_network_interface_ap.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(accessPointReadUrlPath)).
+		InScenario(awsPrivateNetworkInterfaceAccessPointScenarioName).
+		WhenScenarioStateIs(scenarioStateAccessPointHasBeenCreated).
+		WillReturn(
+			string(readCreatedAccessPointResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	updatedAccessPointResponse, _ := os.ReadFile("../testdata/network_access_point/update_aws_private_network_interface_ap.json")
+	_ = wiremockClient.StubFor(wiremock.Patch(wiremock.URLPathEqualTo(accessPointReadUrlPath)).
+		InScenario(awsPrivateNetworkInterfaceAccessPointScenarioName).
+		WhenScenarioStateIs(scenarioStateAccessPointHasBeenCreated).
+		WillSetStateTo(scenarioStateAccessPointHasBeenUpdated).
+		WillReturn(
+			string(updatedAccessPointResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(accessPointReadUrlPath)).
+		InScenario(awsPrivateNetworkInterfaceAccessPointScenarioName).
+		WhenScenarioStateIs(scenarioStateAccessPointHasBeenUpdated).
+		WillReturn(
+			string(updatedAccessPointResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(accessPointReadUrlPath)).
+		InScenario(awsPrivateNetworkInterfaceAccessPointScenarioName).
+		WillReturn(
+			"",
+			contentTypeJSONHeader,
+			http.StatusNoContent,
+		))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		// https://www.terraform.io/docs/extend/testing/acceptance-tests/teststep.html
+		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckResourceAccessPointAwsPrivateNetworkInterfaceWithIdSet(mockServerUrl, "prod-ap-1"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(accessPointResourceLabel, "id", "ap-abc456"),
+					resource.TestCheckResourceAttr(accessPointResourceLabel, "display_name", "prod-ap-1"),
+					resource.TestCheckResourceAttr(accessPointResourceLabel, "environment.#", "1"),
+					resource.TestCheckResourceAttr(accessPointResourceLabel, "environment.0.id", "env-abc123"),
+					resource.TestCheckResourceAttr(accessPointResourceLabel, "gateway.#", "1"),
+					resource.TestCheckResourceAttr(accessPointResourceLabel, "gateway.0.id", "gw-abc123"),
+					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_private_network_interface.#", "1"),
+					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_egress_private_link_endpoint.#", "0"),
+					resource.TestCheckResourceAttr(accessPointResourceLabel, "azure_egress_private_link_endpoint.#", "0"),
+					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_private_network_interface.0.network_interfaces.#", "2"),
+					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_private_network_interface.0.network_interfaces.0", "eni-00000000000000000"),
+					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_private_network_interface.0.network_interfaces.1", "eni-00000000000000001"),
+					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_private_network_interface.0.account", "000000000000"),
+				),
+			},
+			{
+				Config: testAccCheckResourceAccessPointAwsPrivateNetworkInterfaceWithIdSet(mockServerUrl, "prod-ap-2"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(accessPointResourceLabel, "id", "ap-abc456"),
+					resource.TestCheckResourceAttr(accessPointResourceLabel, "display_name", "prod-ap-2"),
+					resource.TestCheckResourceAttr(accessPointResourceLabel, "environment.#", "1"),
+					resource.TestCheckResourceAttr(accessPointResourceLabel, "environment.0.id", "env-abc123"),
+					resource.TestCheckResourceAttr(accessPointResourceLabel, "gateway.#", "1"),
+					resource.TestCheckResourceAttr(accessPointResourceLabel, "gateway.0.id", "gw-abc123"),
+					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_private_network_interface.#", "1"),
+					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_egress_private_link_endpoint.#", "0"),
+					resource.TestCheckResourceAttr(accessPointResourceLabel, "azure_egress_private_link_endpoint.#", "0"),
+					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_private_network_interface.0.network_interfaces.#", "2"),
+					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_private_network_interface.0.network_interfaces.0", "eni-00000000000000000"),
+					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_private_network_interface.0.network_interfaces.1", "eni-00000000000000001"),
+					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_private_network_interface.0.account", "000000000000"),
 				),
 			},
 		},
@@ -241,7 +368,7 @@ func TestAccAccessPointAzureEgressPrivateLinkEndpoint(t *testing.T) {
 		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckResourceAccessPointAzureEgressWithIdSet(mockServerUrl),
+				Config: testAccCheckResourceAccessPointAzureEgressWithIdSet(mockServerUrl, "prod-ap-1"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "id", "ap-def456"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "display_name", "prod-ap-1"),
@@ -251,6 +378,7 @@ func TestAccAccessPointAzureEgressPrivateLinkEndpoint(t *testing.T) {
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "gateway.0.id", "gw-abc123"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "azure_egress_private_link_endpoint.#", "1"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_egress_private_link_endpoint.#", "0"),
+					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_private_network_interface.#", "0"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "azure_egress_private_link_endpoint.0.private_link_service_resource_id", "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/s-abcde/providers/Microsoft.Network/privateLinkServices/pls-plt-abcdef-az3"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "azure_egress_private_link_endpoint.0.private_link_subresource_name", "sqlServer"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "azure_egress_private_link_endpoint.0.private_endpoint_resource_id", "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/testvpc/providers/Microsoft.Network/privateEndpoints/pe-plt-abcdef-az3"),
@@ -262,7 +390,7 @@ func TestAccAccessPointAzureEgressPrivateLinkEndpoint(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckResourceUpdateAccessPointAzureEgressWithIdSet(mockServerUrl),
+				Config: testAccCheckResourceAccessPointAzureEgressWithIdSet(mockServerUrl, "prod-ap-2"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "id", "ap-def456"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "display_name", "prod-ap-2"),
@@ -272,6 +400,7 @@ func TestAccAccessPointAzureEgressPrivateLinkEndpoint(t *testing.T) {
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "gateway.0.id", "gw-abc123"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "azure_egress_private_link_endpoint.#", "1"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_egress_private_link_endpoint.#", "0"),
+					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_private_network_interface.#", "0"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "azure_egress_private_link_endpoint.0.private_link_service_resource_id", "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/s-abcde/providers/Microsoft.Network/privateLinkServices/pls-plt-abcdef-az3"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "azure_egress_private_link_endpoint.0.private_link_subresource_name", "sqlServer"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "azure_egress_private_link_endpoint.0.private_endpoint_resource_id", "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/testvpc/providers/Microsoft.Network/privateEndpoints/pe-plt-abcdef-az3"),
@@ -286,14 +415,14 @@ func TestAccAccessPointAzureEgressPrivateLinkEndpoint(t *testing.T) {
 	})
 }
 
-func testAccCheckResourceAccessPointAwsEgressWithIdSet(mockServerUrl string) string {
+func testAccCheckResourceAccessPointAwsEgressWithIdSet(mockServerUrl, name string) string {
 	return fmt.Sprintf(`
     provider "confluent" {
         endpoint = "%s"
     }
 
 	resource "confluent_access_point" "main" {
-		display_name = "prod-ap-1"
+		display_name = "%s"
 		environment {
 			id = "env-abc123"
 		}
@@ -304,38 +433,39 @@ func testAccCheckResourceAccessPointAwsEgressWithIdSet(mockServerUrl string) str
 			vpc_endpoint_service_name = "com.amazonaws.vpce.us-west-2.vpce-svc-00000000000000000"
 		}
 	}
-	`, mockServerUrl)
+	`, mockServerUrl, name)
 }
 
-func testAccCheckResourceUpdateAccessPointAwsEgressWithIdSet(mockServerUrl string) string {
+func testAccCheckResourceAccessPointAwsPrivateNetworkInterfaceWithIdSet(mockServerUrl, name string) string {
 	return fmt.Sprintf(`
     provider "confluent" {
         endpoint = "%s"
     }
 
 	resource "confluent_access_point" "main" {
-		display_name = "prod-ap-2"
+		display_name = "%s"
 		environment {
 			id = "env-abc123"
 		}
 		gateway {
 			id = "gw-abc123"
 		}
-		aws_egress_private_link_endpoint {
-			vpc_endpoint_service_name = "com.amazonaws.vpce.us-west-2.vpce-svc-00000000000000000"
+		aws_private_network_interface {
+			account = "000000000000"
+			network_interfaces = ["eni-00000000000000000", "eni-00000000000000001"]
 		}
 	}
-	`, mockServerUrl)
+	`, mockServerUrl, name)
 }
 
-func testAccCheckResourceAccessPointAzureEgressWithIdSet(mockServerUrl string) string {
+func testAccCheckResourceAccessPointAzureEgressWithIdSet(mockServerUrl, name string) string {
 	return fmt.Sprintf(`
     provider "confluent" {
         endpoint = "%s"
     }
 
 	resource "confluent_access_point" "main" {
-		display_name = "prod-ap-1"
+		display_name = "%s"
 		environment {
 			id = "env-abc123"
 		}
@@ -347,27 +477,5 @@ func testAccCheckResourceAccessPointAzureEgressWithIdSet(mockServerUrl string) s
 			private_link_subresource_name = "sqlServer"
 		}
 	}
-	`, mockServerUrl)
-}
-
-func testAccCheckResourceUpdateAccessPointAzureEgressWithIdSet(mockServerUrl string) string {
-	return fmt.Sprintf(`
-    provider "confluent" {
-        endpoint = "%s"
-    }
-
-	resource "confluent_access_point" "main" {
-		display_name = "prod-ap-2"
-		environment {
-			id = "env-abc123"
-		}
-		gateway {
-			id = "gw-abc123"
-		}
-		azure_egress_private_link_endpoint {
-			private_link_service_resource_id = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/s-abcde/providers/Microsoft.Network/privateLinkServices/pls-plt-abcdef-az3"
-			private_link_subresource_name = "sqlServer"
-		}
-	}
-	`, mockServerUrl)
+	`, mockServerUrl, name)
 }

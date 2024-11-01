@@ -233,8 +233,10 @@ func accessPointCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 	}
 	d.SetId(createdAccessPoint.GetId())
 
-	if err := waitForAccessPointToProvision(c.netAPApiContext(ctx), c, environmentId, d.Id()); err != nil {
-		return diag.Errorf("error waiting for Access Point %q to provision: %s", d.Id(), createDescriptiveError(err))
+	if !isAwsPrivateNetworkInterface { // Private Network Interface access points do not have a status field
+		if err := waitForAccessPointToProvision(c.netAPApiContext(ctx), c, environmentId, d.Id()); err != nil {
+			return diag.Errorf("error waiting for Access Point %q to provision: %s", d.Id(), createDescriptiveError(err))
+		}
 	}
 
 	createdAccessPointJson, err := json.Marshal(createdAccessPoint)
