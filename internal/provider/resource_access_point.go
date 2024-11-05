@@ -215,8 +215,9 @@ func accessPointCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 			NetworkInterfaces: &networkInterfaces,
 			Account:           netap.PtrString(extractStringValueFromBlock(d, paramAwsPrivateNetworkInterface, paramAccount)),
 		}
+		spec.SetConfig(config)
 	} else {
-		return diag.Errorf("None of %q, %q, blocks was provided for confluent_access_point resource", paramAwsEgressPrivateLinkEndpoint, paramAzureEgressPrivateLinkEndpoint)
+		return diag.Errorf("None of %q, %q, %q blocks was provided for confluent_access_point resource", paramAwsEgressPrivateLinkEndpoint, paramAzureEgressPrivateLinkEndpoint, paramAwsPrivateNetworkInterface)
 	}
 
 	createAccessPointRequest := netap.NetworkingV1AccessPoint{Spec: spec}
@@ -233,10 +234,8 @@ func accessPointCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 	}
 	d.SetId(createdAccessPoint.GetId())
 
-	if !isAwsPrivateNetworkInterface { // Private Network Interface access points do not have a status field
-		if err := waitForAccessPointToProvision(c.netAPApiContext(ctx), c, environmentId, d.Id()); err != nil {
-			return diag.Errorf("error waiting for Access Point %q to provision: %s", d.Id(), createDescriptiveError(err))
-		}
+	if err := waitForAccessPointToProvision(c.netAPApiContext(ctx), c, environmentId, d.Id()); err != nil {
+		return diag.Errorf("error waiting for Access Point %q to provision: %s", d.Id(), createDescriptiveError(err))
 	}
 
 	createdAccessPointJson, err := json.Marshal(createdAccessPoint)
