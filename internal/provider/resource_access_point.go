@@ -150,7 +150,6 @@ func paramAwsPrivateNetworkInterfaceSchema() *schema.Schema {
 	return &schema.Schema{
 		Type:     schema.TypeList,
 		Optional: true,
-		ForceNew: true,
 		MinItems: 1,
 		MaxItems: 1,
 		Elem: &schema.Resource{
@@ -163,6 +162,7 @@ func paramAwsPrivateNetworkInterfaceSchema() *schema.Schema {
 				paramAccount: {
 					Type:     schema.TypeString,
 					Required: true,
+					ForceNew: true,
 				},
 			},
 		},
@@ -234,8 +234,10 @@ func accessPointCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 	}
 	d.SetId(createdAccessPoint.GetId())
 
-	if err := waitForAccessPointToProvision(c.netAPApiContext(ctx), c, environmentId, d.Id()); err != nil {
-		return diag.Errorf("error waiting for Access Point %q to provision: %s", d.Id(), createDescriptiveError(err))
+	if !isAwsPrivateNetworkInterface { // EA only restriction
+		if err := waitForAccessPointToProvision(c.netAPApiContext(ctx), c, environmentId, d.Id()); err != nil {
+			return diag.Errorf("error waiting for Access Point %q to provision: %s", d.Id(), createDescriptiveError(err))
+		}
 	}
 
 	createdAccessPointJson, err := json.Marshal(createdAccessPoint)
@@ -313,8 +315,8 @@ func accessPointDelete(ctx context.Context, d *schema.ResourceData, meta interfa
 }
 
 func accessPointUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if d.HasChangeExcept(paramDisplayName) {
-		return diag.Errorf("error updating Access Point %q: only %q attribute can be updated for Access Point", d.Id(), paramDisplayName)
+	if d.HasChangesExcept(paramDisplayName, paramAwsPrivateNetworkInterface) {
+		return diag.Errorf("error updating Access Point %q: only %q, %q attributes can be updated for Access Point", d.Id(), paramDisplayName, paramNetworkInterfaces)
 	}
 
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
@@ -325,6 +327,14 @@ func accessPointUpdate(ctx context.Context, d *schema.ResourceData, meta interfa
 	updateAccessPointSpec.SetEnvironment(netap.ObjectReference{Id: environmentId})
 	if d.HasChange(paramDisplayName) {
 		updateAccessPointSpec.SetDisplayName(d.Get(paramDisplayName).(string))
+	}
+
+	if d.HasChange(paramAwsPrivateNetworkInterface) && d.HasChange(fmt.Sprintf("%s.0.%s", paramAwsPrivateNetworkInterface, paramNetworkInterfaces)) {
+		networkInterfaces := extractStringSliceValueFromBlock(d, paramAwsPrivateNetworkInterface, paramNetworkInterfaces)
+		updateAccessPointSpec.SetConfig(netap.NetworkingV1AwsPrivateNetworkInterfaceAsNetworkingV1AccessPointSpecUpdateConfigOneOf(&netap.NetworkingV1AwsPrivateNetworkInterface{
+			Kind:              paramAwsPrivateNetworkInterface,
+			NetworkInterfaces: &networkInterfaces,
+		}))
 	}
 
 	updateAccessPoint.SetSpec(*updateAccessPointSpec)
