@@ -30,11 +30,6 @@ import (
 	"github.com/samber/lo"
 )
 
-type Offsets struct {
-	Partition map[string]string
-	Offset    map[string]string
-}
-
 const (
 	connectAPICreateTimeout   = 24 * time.Hour
 	connectAPIWaitAfterCreate = 5 * time.Second

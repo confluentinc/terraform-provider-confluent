@@ -190,6 +190,83 @@ resource "confluent_connector" "source" {
 }
 ```
 
+### Example Managed [MySQLDB Sink Connector](https://docs.confluent.io/cloud/current/connectors/cc-mysql-sink.html) that uses a API Key to communicate with your Kafka cluster
+
+```terraform
+resource "confluent_connector" "sink" {
+  environment {
+    id = data.confluent_environment.env.id
+  }
+  
+  kafka_cluster {
+    id = data.confluent_kafka_cluster.test_cluster.id
+  }
+
+  config_sensitive = {
+    "kafka.auth.mode"            = "KAFKA_API_KEY"
+    "kafka.api.key"              = var.cc_cluster_api_key
+    "kafka.api.secret"           = var.cc_cluster_api_secret
+    "connection.user"            = var.db_user
+    "connection.password"        = var.db_password
+    "connection.host"            = var.db_host
+    "connection.port"            = var.db_port
+    "ssl.mode"                   = "prefer"
+  }
+
+  config_nonsensitive = {
+    "connector.class"            = "MySqlSink"
+    "name"                       = var.connector_name
+    "topics"                     = var.topic_name
+    "input.data.format"         = "AVRO"
+    "tasks.max"                  = "1"
+    "db.name"                    = "test"
+    "insert.mode"                = "INSERT"
+    "auto.create"                = "true"
+    "auto.evolve"                = "true"
+  }
+  
+  offsets {
+    partition = {
+      "kafka_partition" = 0,
+      "kafka_topic" = var.topic_name
+    }
+    offset = {
+      "kafka_offset" = 75000
+    }
+  }
+  offsets {
+    partition = {
+      "kafka_partition" = 1,
+      "kafka_topic" = var.topic_name
+    }
+    offset = {
+      "kafka_offset" = 75000
+    }
+  }
+  offsets {
+    partition = {
+      "kafka_partition" = 5,
+      "kafka_topic" = var.topic_name
+    }
+    offset = {
+      "kafka_offset" = 75000
+    }
+  }
+
+  depends_on = [
+    confluent_kafka_acl.app-connector-describe-on-cluster,
+    confluent_kafka_acl.app-connector-read-on-target-topic,
+    confluent_kafka_acl.app-connector-create-on-dlq-lcc-topics,
+    confluent_kafka_acl.app-connector-write-on-dlq-lcc-topics,
+    confluent_kafka_acl.app-connector-create-on-success-lcc-topics,
+    confluent_kafka_acl.app-connector-write-on-success-lcc-topics,
+    confluent_kafka_acl.app-connector-create-on-error-lcc-topics,
+    confluent_kafka_acl.app-connector-write-on-error-lcc-topics,
+    confluent_kafka_acl.app-connector-read-on-connect-lcc-group,
+  ]
+}
+```
+
 -> **Note:** Custom connectors are available in **Preview** for early adopters. Preview features are introduced to gather customer feedback. This feature should be used only for evaluation and non-production testing purposes or to provide feedback to Confluent, particularly as it becomes more widely available in follow-on editions.  
 **Preview** features are intended for evaluation use in development and testing environments only, and not for production use. The warranty, SLA, and Support Services provisions of your agreement with Confluent do not apply to Preview features. Preview features are considered to be a Proof of Concept as defined in the Confluent Cloud Terms of Service. Confluent may discontinue providing preview releases of the Preview features at any time in Confluent’s sole discretion.
 
@@ -208,6 +285,13 @@ The following arguments are supported:
 - `config_sensitive` - (Required Map) Block for custom *sensitive* configuration properties that are labelled with "Type: password" under "Configuration Properties" section in [the docs](https://docs.confluent.io/cloud/current/connectors/index.html):
   - `name` - (Required String) The configuration setting name, for example, `aws.secret.access.key`.
   - `value` - (Required String, Sensitive) The configuration setting value, for example, `***REDACTED***`.
+- `offsets` - (Optional List of Configuration Block) supports the following:
+  - `partition` - (Required Map) Block with partition information
+    - Sink connectors have `kafka_partition` and `kafka_topic` entries
+    - Source connectors have connector specific configuration entries
+  - `offset` - (Required Map) Block with offset information
+    - Sink connectors have `kafka_offset` entry
+    - Source connectors have connector specific configuration entries
 
 !> **Warning:** Terraform doesn't encrypt the sensitive configuration settings from the `config_sensitive` block of the `confluent_connector` resource, so you must keep your state file secure to avoid exposing it. Refer to the [Terraform documentation](https://www.terraform.io/docs/language/state/sensitive-data.html) to learn more about securing your state file.
 
