@@ -41,7 +41,10 @@ require (
 	github.com/walkerus/go-wiremock v1.2.0
 )
 
-require github.com/containerd/errdefs v0.1.0 // indirect
+require (
+	github.com/confluentinc/ccloud-sdk-go-v2-internal/networking-dnsforwarder v0.0.5 // indirect
+	github.com/containerd/errdefs v0.1.0 // indirect
+)
 
 require (
 	dario.cat/mergo v1.0.0 // indirect
