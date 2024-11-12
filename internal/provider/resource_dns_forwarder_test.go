@@ -29,20 +29,13 @@ const (
 	scenarioStateDnsForwarderHasBeenCreated = "The new dns forwarder has been created"
 	dnsForwarderScenarioName                = "confluent_dns_forwarder Resource Lifecycle"
 
-	dnsForwarderUrlPath       = "/networking/v1/dns-forwarders"
-	dnsForwarderReadUrlPath   = "/networking/v1/dns-forwarders/dnsf-xxx"
-	dnsForwarderResourceLabel = "confluent_dns_forwarder.main"
-
-	scenarioStateDnsForwarderIsProvisioningGcp = "The new dns forwarder gcp is provisioning using GCP"
-	scenarioStateDnsForwarderHasBeenCreatedGcp = "The new dns forwarder gcp has been created using GCP"
-	dnsForwarderScenarioNameGcp                = "confluent_dns_forwarder gcp Resource Lifecycle"
-
-	dnsForwarderUrlPathGcp       = "/networking/v1/dns-forwarders"
-	dnsForwarderReadUrlPathGcp   = "/networking/v1/dns-forwarders/dnsf-gcp"
-	dnsForwarderResourceLabelGcp = "confluent_dns_forwarder.main2"
+	dnsForwarderUrlPath        = "/networking/v1/dns-forwarders"
+	dnsForwarderReadUrlPath    = "/networking/v1/dns-forwarders/dnsf-xxx"
+	dnsForwarderResourceLabel  = "confluent_dns_forwarder.main"
+	dnsForwarderReadUrlPathGcp = "/networking/v1/dns-forwarders/dnsf-gcp"
 )
 
-func TestAccDnsForwarder1(t *testing.T) {
+func TestAccDnsForwarder(t *testing.T) {
 	ctx := context.Background()
 
 	wiremockContainer, err := setupWiremock(ctx)
@@ -52,7 +45,6 @@ func TestAccDnsForwarder1(t *testing.T) {
 	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
-	//mockServerUrl := "http://localhost:8080"
 	wiremockClient := wiremock.NewClient(mockServerUrl)
 	// nolint:errcheck
 	defer wiremockClient.Reset()
@@ -137,8 +129,7 @@ func TestAccDnsForwarderGcp(t *testing.T) {
 	}
 	defer wiremockContainer.Terminate(ctx)
 
-	//mockServerUrl := wiremockContainer.URI
-	mockServerUrl := "http://localhost:8080"
+	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
 	// nolint:errcheck
 	defer wiremockClient.Reset()
@@ -147,10 +138,10 @@ func TestAccDnsForwarderGcp(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	createDnsForwarderResponse, _ := ioutil.ReadFile("../testdata/network_dns_forwarder/create_dnsf_gcp.json")
-	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(dnsForwarderUrlPathGcp)).
-		InScenario(dnsForwarderScenarioNameGcp).
+	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(dnsForwarderUrlPath)).
+		InScenario(dnsForwarderScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
-		WillSetStateTo(scenarioStateDnsForwarderIsProvisioningGcp).
+		WillSetStateTo(scenarioStateDnsForwarderIsProvisioning).
 		WillReturn(
 			string(createDnsForwarderResponse),
 			contentTypeJSONHeader,
@@ -158,10 +149,10 @@ func TestAccDnsForwarderGcp(t *testing.T) {
 		))
 
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(dnsForwarderReadUrlPathGcp)).
-		InScenario(dnsForwarderScenarioNameGcp).
+		InScenario(dnsForwarderScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo("env-xxxx")).
-		WhenScenarioStateIs(scenarioStateDnsForwarderIsProvisioningGcp).
-		WillSetStateTo(scenarioStateDnsForwarderHasBeenCreatedGcp).
+		WhenScenarioStateIs(scenarioStateDnsForwarderIsProvisioning).
+		WillSetStateTo(scenarioStateDnsForwarderHasBeenCreated).
 		WillReturn(
 			string(createDnsForwarderResponse),
 			contentTypeJSONHeader,
@@ -170,9 +161,9 @@ func TestAccDnsForwarderGcp(t *testing.T) {
 
 	readCreatedDnsForwarderResponse, _ := ioutil.ReadFile("../testdata/network_dns_forwarder/read_created_dnsf_gcp.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(dnsForwarderReadUrlPathGcp)).
-		InScenario(dnsForwarderScenarioNameGcp).
+		InScenario(dnsForwarderScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo("env-xxxx")).
-		WhenScenarioStateIs(scenarioStateDnsForwarderHasBeenCreatedGcp).
+		WhenScenarioStateIs(scenarioStateDnsForwarderHasBeenCreated).
 		WillReturn(
 			string(readCreatedDnsForwarderResponse),
 			contentTypeJSONHeader,
@@ -180,7 +171,7 @@ func TestAccDnsForwarderGcp(t *testing.T) {
 		))
 
 	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(dnsForwarderReadUrlPathGcp)).
-		InScenario(dnsForwarderScenarioNameGcp).
+		InScenario(dnsForwarderScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo("env-xxxx")).
 		WillReturn(
 			"",
@@ -197,18 +188,17 @@ func TestAccDnsForwarderGcp(t *testing.T) {
 			{
 				Config: testAccCheckResourceDnsForwarderGcpWithIdSet(mockServerUrl),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(dnsForwarderResourceLabelGcp, "id", "dnsf-gcp"),
-					resource.TestCheckResourceAttr(dnsForwarderResourceLabelGcp, "display_name", "dns2"),
-					resource.TestCheckResourceAttr(dnsForwarderResourceLabelGcp, "environment.#", "1"),
-					resource.TestCheckResourceAttr(dnsForwarderResourceLabelGcp, "environment.0.id", "env-xxxx"),
-					resource.TestCheckResourceAttr(dnsForwarderResourceLabelGcp, "gateway.#", "1"),
-					resource.TestCheckResourceAttr(dnsForwarderResourceLabelGcp, "gateway.0.id", "gw-xxx"),
-					resource.TestCheckResourceAttr(dnsForwarderResourceLabelGcp, "domains.#", "2"),
-					resource.TestCheckResourceAttr(dnsForwarderResourceLabelGcp, "domains.0", "domainname.com"),
-					resource.TestCheckResourceAttr(dnsForwarderResourceLabelGcp, "domains.1", "example.com")),
-				//resource.TestCheckResourceAttr(dnsForwarderResourceLabel, "forward_via_ip.0.dns_server_ips.#", "2"),
-				//resource.TestCheckResourceAttr(dnsForwarderResourceLabel, "forward_via_ip.0.dns_server_ips.0", "10.200.0.0"),
-				//resource.TestCheckResourceAttr(dnsForwarderResourceLabel, "forward_via_ip.0.dns_server_ips.1", "10.200.0.1")),
+					resource.TestCheckResourceAttr(dnsForwarderResourceLabel, "id", "dnsf-gcp"),
+					resource.TestCheckResourceAttr(dnsForwarderResourceLabel, "display_name", "dns2"),
+					resource.TestCheckResourceAttr(dnsForwarderResourceLabel, "environment.#", "1"),
+					resource.TestCheckResourceAttr(dnsForwarderResourceLabel, "environment.0.id", "env-xxxx"),
+					resource.TestCheckResourceAttr(dnsForwarderResourceLabel, "gateway.#", "1"),
+					resource.TestCheckResourceAttr(dnsForwarderResourceLabel, "gateway.0.id", "gw-xxx"),
+					resource.TestCheckResourceAttr(dnsForwarderResourceLabel, "domains.#", "2"),
+					resource.TestCheckResourceAttr(dnsForwarderResourceLabel, "domains.0", "domainname.com"),
+					resource.TestCheckResourceAttr(dnsForwarderResourceLabel, "domains.1", "example.com"),
+					resource.TestCheckResourceAttr(dnsForwarderResourceLabel, "forward_via_gcp_dns_zones.0.domain_mappings.example.com", "zone-1,project-123"),
+					resource.TestCheckResourceAttr(dnsForwarderResourceLabel, "forward_via_gcp_dns_zones.0.domain_mappings.test.com", "zone-2,project-456")),
 			},
 		},
 	})
@@ -242,7 +232,7 @@ func testAccCheckResourceDnsForwarderGcpWithIdSet(mockServerUrl string) string {
         endpoint = "%s"
     }
 
-	resource "confluent_dns_forwarder" "main2" {
+	resource "confluent_dns_forwarder" "main" {
 		display_name = "dns2"
 		environment {
 			id = "env-xxxx"
@@ -253,7 +243,8 @@ func testAccCheckResourceDnsForwarderGcpWithIdSet(mockServerUrl string) string {
 		}
 		forward_via_gcp_dns_zones {
 			domain_mappings = {
-					"example.com" = "zone-1,project1"
+					"example.com" = "zone-1,project-123"
+ 					"test.com"    = "zone-2,project-456"
 			}
 		}
 	}
