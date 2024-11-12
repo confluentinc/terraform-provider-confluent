@@ -17,18 +17,22 @@ package provider
 import (
 	"context"
 	"fmt"
-	ccp "github.com/confluentinc/ccloud-sdk-go-v2/connect-custom-plugin/v1"
-	dns "github.com/confluentinc/ccloud-sdk-go-v2/networking-dnsforwarder/v1"
-	netip "github.com/confluentinc/ccloud-sdk-go-v2/networking-ip/v1"
-	"github.com/confluentinc/ccloud-sdk-go-v2/sso/v2"
 	"os"
 	"strings"
 	"time"
 
+	ccp "github.com/confluentinc/ccloud-sdk-go-v2/connect-custom-plugin/v1"
+	dns "github.com/confluentinc/ccloud-sdk-go-v2/networking-dnsforwarder/v1"
+	netip "github.com/confluentinc/ccloud-sdk-go-v2/networking-ip/v1"
+	pi "github.com/confluentinc/ccloud-sdk-go-v2/provider-integration/v1"
+	"github.com/confluentinc/ccloud-sdk-go-v2/sso/v2"
+
 	apikeys "github.com/confluentinc/ccloud-sdk-go-v2/apikeys/v2"
 	byok "github.com/confluentinc/ccloud-sdk-go-v2/byok/v1"
+	ca "github.com/confluentinc/ccloud-sdk-go-v2/certificate-authority/v2"
 	cmk "github.com/confluentinc/ccloud-sdk-go-v2/cmk/v2"
 	connect "github.com/confluentinc/ccloud-sdk-go-v2/connect/v1"
+	fa "github.com/confluentinc/ccloud-sdk-go-v2/flink-artifact/v1"
 	fcpm "github.com/confluentinc/ccloud-sdk-go-v2/flink/v2"
 	iamv1 "github.com/confluentinc/ccloud-sdk-go-v2/iam/v1"
 	iam "github.com/confluentinc/ccloud-sdk-go-v2/iam/v2"
@@ -37,6 +41,7 @@ import (
 	ksql "github.com/confluentinc/ccloud-sdk-go-v2/ksql/v2"
 	mds "github.com/confluentinc/ccloud-sdk-go-v2/mds/v2"
 	netap "github.com/confluentinc/ccloud-sdk-go-v2/networking-access-point/v1"
+	netgw "github.com/confluentinc/ccloud-sdk-go-v2/networking-gateway/v1"
 	netpl "github.com/confluentinc/ccloud-sdk-go-v2/networking-privatelink/v1"
 	net "github.com/confluentinc/ccloud-sdk-go-v2/networking/v1"
 	org "github.com/confluentinc/ccloud-sdk-go-v2/org/v2"
@@ -52,17 +57,22 @@ const (
 )
 
 const (
-	paramApiVersion   = "api_version"
-	paramCloud        = "cloud"
-	paramRegion       = "region"
-	paramOrganization = "organization"
-	paramEnvironment  = "environment"
-	paramId           = "id"
-	paramDisplayName  = "display_name"
-	paramName         = "name"
-	paramDescription  = "description"
-	paramKind         = "kind"
-	paramCsu          = "csu"
+	paramApiVersion      = "api_version"
+	paramCloud           = "cloud"
+	paramRegion          = "region"
+	paramOrganization    = "organization"
+	paramEnvironment     = "environment"
+	paramId              = "id"
+	paramDisplayName     = "display_name"
+	paramName            = "name"
+	paramDescription     = "description"
+	paramKind            = "kind"
+	paramCsu             = "csu"
+	paramClass           = "class"
+	paramContentFormat   = "content_format"
+	paramRuntimeLanguage = "runtime_language"
+	paramArtifactFile    = "artifact_file"
+	paramVersions        = "versions"
 )
 
 type Client struct {
@@ -70,12 +80,15 @@ type Client struct {
 	byokClient                      *byok.APIClient
 	iamClient                       *iam.APIClient
 	iamV1Client                     *iamv1.APIClient
+	caClient                        *ca.APIClient
 	ccpClient                       *ccp.APIClient
 	cmkClient                       *cmk.APIClient
 	connectClient                   *connect.APIClient
 	fcpmClient                      *fcpm.APIClient
+	faClient                        *fa.APIClient
 	netClient                       *net.APIClient
 	netAccessPointClient            *netap.APIClient
+	netGatewayClient                *netgw.APIClient
 	netIpClient                     *netip.APIClient
 	netPLClient                     *netpl.APIClient
 	netDnsClient                    *dns.APIClient
@@ -89,6 +102,7 @@ type Client struct {
 	quotasClient                    *quotas.APIClient
 	srcmClient                      *srcm.APIClient
 	ssoClient                       *sso.APIClient
+	piClient                        *pi.APIClient
 	userAgent                       string
 	cloudApiKey                     string
 	cloudApiSecret                  string
@@ -257,12 +271,15 @@ func New(version, userAgent string) func() *schema.Provider {
 				},
 			},
 			DataSourcesMap: map[string]*schema.Resource{
+				"confluent_certificate_authority":              certificateAuthorityDataSource(),
+				"confluent_certificate_pool":                   certificatePoolDataSource(),
 				"confluent_kafka_cluster":                      kafkaDataSource(),
 				"confluent_kafka_topic":                        kafkaTopicDataSource(),
 				"confluent_environment":                        environmentDataSource(),
 				"confluent_environments":                       environmentsDataSource(),
 				"confluent_group_mapping":                      groupMappingDataSource(),
 				"confluent_ksql_cluster":                       ksqlDataSource(),
+				"confluent_flink_artifact":                     flinkArtifactDataSource(),
 				"confluent_flink_compute_pool":                 computePoolDataSource(),
 				"confluent_flink_region":                       flinkRegionDataSource(),
 				"confluent_identity_pool":                      identityPoolDataSource(),
@@ -279,6 +296,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_private_link_access":                privateLinkAccessDataSource(),
 				"confluent_private_link_attachment":            privateLinkAttachmentDataSource(),
 				"confluent_private_link_attachment_connection": privateLinkAttachmentConnectionDataSource(),
+				"confluent_provider_integration":               providerIntegrationDataSource(),
 				"confluent_role_binding":                       roleBindingDataSource(),
 				"confluent_schema":                             schemaDataSource(),
 				"confluent_schemas":                            schemasDataSource(),
@@ -305,6 +323,8 @@ func New(version, userAgent string) func() *schema.Provider {
 			ResourcesMap: map[string]*schema.Resource{
 				"confluent_api_key":                            apiKeyResource(),
 				"confluent_byok_key":                           byokResource(),
+				"confluent_certificate_authority":              certificateAuthorityResource(),
+				"confluent_certificate_pool":                   certificatePoolResource(),
 				"confluent_cluster_link":                       clusterLinkResource(),
 				"confluent_kafka_cluster":                      kafkaResource(),
 				"confluent_kafka_cluster_config":               kafkaConfigResource(),
@@ -314,6 +334,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_group_mapping":                      groupMappingResource(),
 				"confluent_kafka_client_quota":                 kafkaClientQuotaResource(),
 				"confluent_ksql_cluster":                       ksqlResource(),
+				"confluent_flink_artifact":                     artifactResource(),
 				"confluent_flink_compute_pool":                 computePoolResource(),
 				"confluent_flink_statement":                    flinkStatementResource(),
 				"confluent_connector":                          connectorResource(),
@@ -326,10 +347,12 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_access_point":                       accessPointResource(),
 				"confluent_dns_forwarder":                      dnsForwarderResource(),
 				"confluent_dns_record":                         dnsRecordResource(),
+				"confluent_gateway":                            gatewayResource(),
 				"confluent_peering":                            peeringResource(),
 				"confluent_private_link_access":                privateLinkAccessResource(),
 				"confluent_private_link_attachment":            privateLinkAttachmentResource(),
 				"confluent_private_link_attachment_connection": privateLinkAttachmentConnectionResource(),
+				"confluent_provider_integration":               providerIntegrationResource(),
 				"confluent_role_binding":                       roleBindingResource(),
 				"confluent_schema":                             schemaResource(),
 				"confluent_schema_exporter":                    schemaExporterResource(),
@@ -462,65 +485,77 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 
 	apiKeysCfg := apikeys.NewConfiguration()
 	byokCfg := byok.NewConfiguration()
+	caCfg := ca.NewConfiguration()
 	ccpCfg := ccp.NewConfiguration()
 	cmkCfg := cmk.NewConfiguration()
 	connectCfg := connect.NewConfiguration()
+	faCfg := fa.NewConfiguration()
 	fcpmCfg := fcpm.NewConfiguration()
 	iamCfg := iam.NewConfiguration()
 	iamV1Cfg := iamv1.NewConfiguration()
+	ksqlCfg := ksql.NewConfiguration()
 	mdsCfg := mds.NewConfiguration()
 	netAccessPointCfg := netap.NewConfiguration()
+	netGatewayCfg := netgw.NewConfiguration()
 	netCfg := net.NewConfiguration()
 	netIpCfg := netip.NewConfiguration()
 	netPLCfg := netpl.NewConfiguration()
 	netDnsCfg := dns.NewConfiguration()
 	oidcCfg := oidc.NewConfiguration()
 	orgCfg := org.NewConfiguration()
-	srcmCfg := srcm.NewConfiguration()
-	ksqlCfg := ksql.NewConfiguration()
+	piCfg := pi.NewConfiguration()
 	quotasCfg := quotas.NewConfiguration()
+	srcmCfg := srcm.NewConfiguration()
 	ssoCfg := sso.NewConfiguration()
 
 	apiKeysCfg.Servers[0].URL = endpoint
 	byokCfg.Servers[0].URL = endpoint
+	caCfg.Servers[0].URL = endpoint
 	ccpCfg.Servers[0].URL = endpoint
 	cmkCfg.Servers[0].URL = endpoint
 	connectCfg.Servers[0].URL = endpoint
+	faCfg.Servers[0].URL = endpoint
 	fcpmCfg.Servers[0].URL = endpoint
 	iamCfg.Servers[0].URL = endpoint
 	iamV1Cfg.Servers[0].URL = endpoint
+	ksqlCfg.Servers[0].URL = endpoint
 	mdsCfg.Servers[0].URL = endpoint
 	netCfg.Servers[0].URL = endpoint
 	netIpCfg.Servers[0].URL = endpoint
 	netPLCfg.Servers[0].URL = endpoint
 	netAccessPointCfg.Servers[0].URL = endpoint
+	netGatewayCfg.Servers[0].URL = endpoint
 	netDnsCfg.Servers[0].URL = endpoint
 	oidcCfg.Servers[0].URL = endpoint
 	orgCfg.Servers[0].URL = endpoint
-	srcmCfg.Servers[0].URL = endpoint
-	ksqlCfg.Servers[0].URL = endpoint
+	piCfg.Servers[0].URL = endpoint
 	quotasCfg.Servers[0].URL = endpoint
+	srcmCfg.Servers[0].URL = endpoint
 	ssoCfg.Servers[0].URL = endpoint
 
 	apiKeysCfg.UserAgent = userAgent
 	byokCfg.UserAgent = userAgent
+	caCfg.UserAgent = userAgent
 	ccpCfg.UserAgent = userAgent
 	cmkCfg.UserAgent = userAgent
 	connectCfg.UserAgent = userAgent
+	faCfg.UserAgent = userAgent
 	fcpmCfg.UserAgent = userAgent
 	iamCfg.UserAgent = userAgent
 	iamV1Cfg.UserAgent = userAgent
+	ksqlCfg.UserAgent = userAgent
 	mdsCfg.UserAgent = userAgent
 	netCfg.UserAgent = userAgent
 	netAccessPointCfg.UserAgent = userAgent
+	netGatewayCfg.UserAgent = userAgent
 	netIpCfg.UserAgent = userAgent
 	netDnsCfg.UserAgent = userAgent
 	netPLCfg.UserAgent = userAgent
 	oidcCfg.UserAgent = userAgent
 	orgCfg.UserAgent = userAgent
-	srcmCfg.UserAgent = userAgent
-	ksqlCfg.UserAgent = userAgent
+	piCfg.UserAgent = userAgent
 	quotasCfg.UserAgent = userAgent
+	srcmCfg.UserAgent = userAgent
 	ssoCfg.UserAgent = userAgent
 
 	var flinkRestClientFactory *FlinkRestClientFactory
@@ -533,42 +568,50 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 
 	apiKeysCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	byokCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
+	caCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	ccpCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	cmkCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	connectCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
+	faCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	fcpmCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	iamCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	iamV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
+	ksqlCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	mdsCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	netCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
+	netGatewayCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	netIpCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	netPLCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	netDnsCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	oidcCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	orgCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
-	srcmCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
-	ksqlCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
+	piCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	quotasCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
+	srcmCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	ssoCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 
 	client := Client{
 		apiKeysClient:                   apikeys.NewAPIClient(apiKeysCfg),
 		byokClient:                      byok.NewAPIClient(byokCfg),
+		caClient:                        ca.NewAPIClient(caCfg),
 		ccpClient:                       ccp.NewAPIClient(ccpCfg),
 		cmkClient:                       cmk.NewAPIClient(cmkCfg),
 		connectClient:                   connect.NewAPIClient(connectCfg),
+		faClient:                        fa.NewAPIClient(faCfg),
 		fcpmClient:                      fcpm.NewAPIClient(fcpmCfg),
 		iamClient:                       iam.NewAPIClient(iamCfg),
 		iamV1Client:                     iamv1.NewAPIClient(iamV1Cfg),
+		ksqlClient:                      ksql.NewAPIClient(ksqlCfg),
 		netClient:                       net.NewAPIClient(netCfg),
 		netAccessPointClient:            netap.NewAPIClient(netAccessPointCfg),
+		netGatewayClient:                netgw.NewAPIClient(netGatewayCfg),
 		netIpClient:                     netip.NewAPIClient(netIpCfg),
 		netPLClient:                     netpl.NewAPIClient(netPLCfg),
 		netDnsClient:                    dns.NewAPIClient(netDnsCfg),
 		oidcClient:                      oidc.NewAPIClient(oidcCfg),
 		orgClient:                       org.NewAPIClient(orgCfg),
+		piClient:                        pi.NewAPIClient(piCfg),
 		srcmClient:                      srcm.NewAPIClient(srcmCfg),
-		ksqlClient:                      ksql.NewAPIClient(ksqlCfg),
 		flinkRestClientFactory:          flinkRestClientFactory,
 		kafkaRestClientFactory:          kafkaRestClientFactory,
 		schemaRegistryRestClientFactory: schemaRegistryRestClientFactory,

@@ -18,36 +18,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	apikeys "github.com/confluentinc/ccloud-sdk-go-v2/apikeys/v2"
-	byok "github.com/confluentinc/ccloud-sdk-go-v2/byok/v1"
-	cmk "github.com/confluentinc/ccloud-sdk-go-v2/cmk/v2"
-	ccp "github.com/confluentinc/ccloud-sdk-go-v2/connect-custom-plugin/v1"
-	connect "github.com/confluentinc/ccloud-sdk-go-v2/connect/v1"
-	dc "github.com/confluentinc/ccloud-sdk-go-v2/data-catalog/v1"
-	fgb "github.com/confluentinc/ccloud-sdk-go-v2/flink-gateway/v1"
-	fcpm "github.com/confluentinc/ccloud-sdk-go-v2/flink/v2"
-	iamv1 "github.com/confluentinc/ccloud-sdk-go-v2/iam/v1"
-	iam "github.com/confluentinc/ccloud-sdk-go-v2/iam/v2"
-	oidc "github.com/confluentinc/ccloud-sdk-go-v2/identity-provider/v2"
-	quotas "github.com/confluentinc/ccloud-sdk-go-v2/kafka-quotas/v1"
-	kafkarestv3 "github.com/confluentinc/ccloud-sdk-go-v2/kafkarest/v3"
-	ksql "github.com/confluentinc/ccloud-sdk-go-v2/ksql/v2"
-	mds "github.com/confluentinc/ccloud-sdk-go-v2/mds/v2"
-	netap "github.com/confluentinc/ccloud-sdk-go-v2/networking-access-point/v1"
-	dns "github.com/confluentinc/ccloud-sdk-go-v2/networking-dnsforwarder/v1"
-	netip "github.com/confluentinc/ccloud-sdk-go-v2/networking-ip/v1"
-	netpl "github.com/confluentinc/ccloud-sdk-go-v2/networking-privatelink/v1"
-	net "github.com/confluentinc/ccloud-sdk-go-v2/networking/v1"
-	org "github.com/confluentinc/ccloud-sdk-go-v2/org/v2"
-	schemaregistry "github.com/confluentinc/ccloud-sdk-go-v2/schema-registry/v1"
-	srcm "github.com/confluentinc/ccloud-sdk-go-v2/srcm/v3"
-	"github.com/confluentinc/ccloud-sdk-go-v2/sso/v2"
-	"github.com/dghubble/sling"
-	"github.com/google/uuid"
-	"github.com/hashicorp/go-cty/cty"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -59,10 +29,47 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	apikeys "github.com/confluentinc/ccloud-sdk-go-v2/apikeys/v2"
+	byok "github.com/confluentinc/ccloud-sdk-go-v2/byok/v1"
+	ca "github.com/confluentinc/ccloud-sdk-go-v2/certificate-authority/v2"
+	cmk "github.com/confluentinc/ccloud-sdk-go-v2/cmk/v2"
+	ccp "github.com/confluentinc/ccloud-sdk-go-v2/connect-custom-plugin/v1"
+	connect "github.com/confluentinc/ccloud-sdk-go-v2/connect/v1"
+	dc "github.com/confluentinc/ccloud-sdk-go-v2/data-catalog/v1"
+	fa "github.com/confluentinc/ccloud-sdk-go-v2/flink-artifact/v1"
+	fgb "github.com/confluentinc/ccloud-sdk-go-v2/flink-gateway/v1"
+	fcpm "github.com/confluentinc/ccloud-sdk-go-v2/flink/v2"
+	iamv1 "github.com/confluentinc/ccloud-sdk-go-v2/iam/v1"
+	iam "github.com/confluentinc/ccloud-sdk-go-v2/iam/v2"
+	oidc "github.com/confluentinc/ccloud-sdk-go-v2/identity-provider/v2"
+	quotas "github.com/confluentinc/ccloud-sdk-go-v2/kafka-quotas/v1"
+	kafkarestv3 "github.com/confluentinc/ccloud-sdk-go-v2/kafkarest/v3"
+	ksql "github.com/confluentinc/ccloud-sdk-go-v2/ksql/v2"
+	mds "github.com/confluentinc/ccloud-sdk-go-v2/mds/v2"
+	netap "github.com/confluentinc/ccloud-sdk-go-v2/networking-access-point/v1"
+	dns "github.com/confluentinc/ccloud-sdk-go-v2/networking-dnsforwarder/v1"
+	netgw "github.com/confluentinc/ccloud-sdk-go-v2/networking-gateway/v1"
+	netip "github.com/confluentinc/ccloud-sdk-go-v2/networking-ip/v1"
+	netpl "github.com/confluentinc/ccloud-sdk-go-v2/networking-privatelink/v1"
+	net "github.com/confluentinc/ccloud-sdk-go-v2/networking/v1"
+	org "github.com/confluentinc/ccloud-sdk-go-v2/org/v2"
+	pi "github.com/confluentinc/ccloud-sdk-go-v2/provider-integration/v1"
+	schemaregistry "github.com/confluentinc/ccloud-sdk-go-v2/schema-registry/v1"
+	srcm "github.com/confluentinc/ccloud-sdk-go-v2/srcm/v3"
+	"github.com/confluentinc/ccloud-sdk-go-v2/sso/v2"
+	"github.com/dghubble/sling"
+	"github.com/google/uuid"
+	"github.com/hashicorp/go-cty/cty"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 const (
 	byokKeyLoggingKey                         = "byok_key_id"
+	certificateAuthorityKey                   = "certificate_authority_id"
+	certificatePoolKey                        = "certificate_pool_id"
 	crnKafkaSuffix                            = "/kafka="
 	kafkaAclLoggingKey                        = "kafka_acl_id"
 	kafkaClusterLoggingKey                    = "kafka_cluster_id"
@@ -76,6 +83,7 @@ const (
 	roleBindingLoggingKey                     = "role_binding_id"
 	apiKeyLoggingKey                          = "api_key_id"
 	computePoolLoggingKey                     = "compute_pool_id"
+	flinkArtifactLoggingKey                   = "flink_artifact_id"
 	flinkStatementLoggingKey                  = "flink_statement_key_id"
 	networkLoggingKey                         = "network_key_id"
 	customConnectorPluginLoggingKey           = "custom_connector_plugin_key_id"
@@ -115,6 +123,7 @@ const (
 	schemaRegistryKekKey                      = "kek_id"
 	schemaRegistryDekKey                      = "dek_id"
 	entityAttributesLoggingKey                = "entity_attributes_id"
+	providerIntegrationLoggingKey             = "provider_integration_id"
 )
 
 func (c *Client) apiKeysApiContext(ctx context.Context) context.Context {
@@ -183,9 +192,31 @@ func (c *Client) iamApiContext(ctx context.Context) context.Context {
 	return ctx
 }
 
+func (c *Client) caApiContext(ctx context.Context) context.Context {
+	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
+		return context.WithValue(context.Background(), ca.ContextBasicAuth, ca.BasicAuth{
+			UserName: c.cloudApiKey,
+			Password: c.cloudApiSecret,
+		})
+	}
+	tflog.Warn(ctx, "Could not find Cloud API Key")
+	return ctx
+}
+
 func (c *Client) ssoApiContext(ctx context.Context) context.Context {
 	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
 		return context.WithValue(context.Background(), sso.ContextBasicAuth, sso.BasicAuth{
+			UserName: c.cloudApiKey,
+			Password: c.cloudApiSecret,
+		})
+	}
+	tflog.Warn(ctx, "Could not find Cloud API Key")
+	return ctx
+}
+
+func (c *Client) piApiContext(ctx context.Context) context.Context {
+	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
+		return context.WithValue(context.Background(), pi.ContextBasicAuth, pi.BasicAuth{
 			UserName: c.cloudApiKey,
 			Password: c.cloudApiSecret,
 		})
@@ -227,6 +258,17 @@ func (c *Client) netApiContext(ctx context.Context) context.Context {
 	return ctx
 }
 
+func (c *Client) faApiContext(ctx context.Context) context.Context {
+	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
+		return context.WithValue(context.Background(), fa.ContextBasicAuth, fa.BasicAuth{
+			UserName: c.cloudApiKey,
+			Password: c.cloudApiSecret,
+		})
+	}
+	tflog.Warn(ctx, "Could not find Cloud API Key")
+	return ctx
+}
+
 func (c *Client) fcpmApiContext(ctx context.Context) context.Context {
 	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
 		return context.WithValue(context.Background(), fcpm.ContextBasicAuth, fcpm.BasicAuth{
@@ -241,6 +283,17 @@ func (c *Client) fcpmApiContext(ctx context.Context) context.Context {
 func (c *Client) netAPApiContext(ctx context.Context) context.Context {
 	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
 		return context.WithValue(context.Background(), netap.ContextBasicAuth, netap.BasicAuth{
+			UserName: c.cloudApiKey,
+			Password: c.cloudApiSecret,
+		})
+	}
+	tflog.Warn(ctx, "Could not find Cloud API Key")
+	return ctx
+}
+
+func (c *Client) netGWApiContext(ctx context.Context) context.Context {
+	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
+		return context.WithValue(context.Background(), netgw.ContextBasicAuth, netgw.BasicAuth{
 			UserName: c.cloudApiKey,
 			Password: c.cloudApiSecret,
 		})

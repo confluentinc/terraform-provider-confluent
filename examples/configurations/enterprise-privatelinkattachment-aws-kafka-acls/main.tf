@@ -7,7 +7,7 @@ terraform {
     }
     confluent = {
       source  = "confluentinc/confluent"
-      version = "2.2.0"
+      version = "2.9.0"
     }
   }
 }
@@ -28,7 +28,7 @@ resource "confluent_environment" "staging" {
 
 resource "confluent_kafka_cluster" "enterprise" {
   display_name = "inventory"
-  availability = "MULTI_ZONE"
+  availability = "HIGH"
   cloud        = "AWS"
   region       = var.region
   enterprise {}

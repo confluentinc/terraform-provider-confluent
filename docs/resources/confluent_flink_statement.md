@@ -108,7 +108,11 @@ The following arguments are supported:
     - `name` - (Required String) The setting name, for example, `sql.local-time-zone`.
     - `value` - (Required String) The setting value, for example, `GMT-08:00`.
 
-- `stopped` - (Optional Boolean) The boolean flag to control whether the running Flink Statement should be stopped. Defaults to `false`. Update it to `true` to stop the statement.
+- `stopped` - (Optional Boolean) The boolean flag to control whether the running Flink Statement should be stopped. Defaults to `false`. Update it to `true` to stop the statement. Subsequently, update it to `false` to resume the statement.
+
+!> **Note:** To stop a running statement or resume a stopped statement, no other argument can be updated except `stopped`.
+
+!> **Note:** Currently, only 3 Flink statements support the resuming feature, namely: `CREATE TABLE AS`, `INSERT INTO`, and `EXECUTE STATEMENT SET`.
 
 !> **Warning:** Use Option #2 to avoid exposing sensitive `credentials` value in a state file. When using Option #1, Terraform doesn't encrypt the sensitive `credentials` value of the `confluent_flink_statement` resource, so you must keep your state file secure to avoid exposing it. Refer to the [Terraform documentation](https://www.terraform.io/docs/language/state/sensitive-data.html) to learn more about securing your state file.
 
@@ -117,6 +121,18 @@ The following arguments are supported:
 In addition to the preceding arguments, the following attributes are exported:
 
 - `id` - (Required String) The ID of the Flink statement, in the format `<Environment ID>/<Flink Compute Pool ID>/<Flink Statement name>`, for example, `env-abc123/lfcp-xyz123/cfeab4fe-b62c-49bd-9e99-51cc98c77a67`.
+- `latest_offsets` - (Optional String) The last Kafka offsets that a statement has processed. Represented by a mapping from Kafka topic to a string representation of partitions mapped to offsets. For example,
+```bash
+"latest_offsets": {
+  "topic-1": "partition:0,offset:100;partition:1,offset:200",
+  "topic-2": "partition:0,offset:50"
+}
+```
+- `latest_offsets_timestamp` - (Optional String) The date and time at which the Kafka topic offsets were added to the statement status. It is represented in RFC3339 format and is in UTC. For example, `2023-03-31T00:00:00-00:00`.
+
+!> **Note:** The values for the `latest_offsets` and `latest_offsets_timestamp` attributes are populated only for stopped statements.
+
+-> **Note:** To start a statement from the last offset of a previous statement, you can inject `latest_offsets` as a SQL hint as documented in the [flink-carry-over-offset-between-statements](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/flink-carry-over-offset-between-statements) example.
 
 ## Import
 
@@ -142,3 +158,4 @@ $ terraform import confluent_flink_statement.example cfeab4fe-b62c-49bd-9e99-51c
 ## Getting Started
 The following end-to-end example might help to get started with [Flink Statements](https://docs.confluent.io/cloud/current/flink/get-started/overview.html):
   * [flink-quickstart](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/flink-quickstart)
+  * [flink-carry-over-offset-between-statements](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/flink-carry-over-offset-between-statements)

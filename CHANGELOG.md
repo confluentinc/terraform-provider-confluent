@@ -1,9 +1,87 @@
+## 2.9.0 (October 29th, 2024)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.8.0...v2.9.0)
+
+**New features:**
+* Added new `confluent_gateway` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_gateway) in a [General Availability lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
+
+## 2.8.0 (October 25th, 2024)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.7.0...v2.8.0)
+
+**New features:**
+* Added support for the new `latest_offsets` and `latest_offsets_timestamp` attributes of `confluent_flink_statement` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_flink_statement) in a [General Availability lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
+* Added support for the new `versions` block of `confluent_flink_artifact` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_flink_artifact) and [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_flink_artifact) in a [General Availability lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
+
+**Examples:**
+* Added **1** example:
+  * [flink-carry-over-offset-between-statements](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/flink-carry-over-offset-between-statements)
+* Updated **1** example with more detailed instructions for clarity:
+  * [flink-artifact](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/flink_artifact)
+
+**Bug fixes:**
+* Updated docs.
+
+## 2.7.0 (October 17th, 2024)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.6.0...v2.7.0)
+
+**Bug fixes:**
+* Implemented a follow-up to our previous fix for the SR exporter to further prevent provisioning issues.
+
+## 2.6.0 (October 16th, 2024)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.5.0...v2.6.0)
+
+**New features:**
+* Added `confluent_flink_artifact` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_flink_artifact) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_flink_artifact) in a [General Availability lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
+* Added `confluent_schema_registry_dek` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema_registry_dek), `confluent_schema_registry_kek` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema_registry_kek) and corresponding data sources in a [General Availability lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
+* Added optional `ruleset` and `metadata` blocks, and the `disabled` attribute to the `confluent_schema` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema) in a [General Availability lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
+
+**Examples:**
+* Added **1** example:
+  * [flink-artifact](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/flink_artifact)
+* Updated **1** example with more detailed instructions for clarity:
+  * [field-level-encryption-schema](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/field-level-encryption-schema)
+
+**Bug fixes:**
+* Fixed an issue with stopping Flink statements.
+* Extended the default creation timeout for SR exporters to prevent provisioning issues.
+
+## 2.5.0 (October 4th, 2024)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.4.0...v2.5.0)
+
+**New features:**
+* Added support for `confluent_certificate_authority` [resource](docs/resources/confluent_certificate_authority.md) and [data-source](docs/data-sources/confluent_certificate_authority.md) in a [Limited Availability lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
+* Added support for `confluent_certificate_pool` [resource](docs/resources/confluent_certificate_pool.md) and [data-source](docs/data-sources/confluent_certificate_pool.md) in a [Limited Availability lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
+
+## 2.4.0 (October 1st, 2024)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.3.0...v2.4.0)
+
+**New features:**
+* Added support for `confluent_flink_statement` [resource](docs/resources/confluent_flink_statement.md) resume feature.
+
+**Bug fixes:**
+* Updated docs for `confluent_kafka_client_quota` [resource](docs/resources/confluent_kafka_client_quota.md) and [data-source](docs/data-sources/confluent_kafka_client_quota.md).
+
+## 2.3.0 (September 20th, 2024)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.2.0...v2.3.0)
+
+**New features:**
+* Added support for `confluent_provider_integration` [resource](docs/resources/confluent_provider_integration.md) and [data-sources](docs/data-sources/confluent_provider_integration.md)
+
+**Bug fixes:**
+* Fixed one incorrect docs link in `CHANGELOG.md` for v2.2.0 release.
+
 ## 2.2.0 (September 6th, 2024)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.1.0...v2.2.0)
 
 **New features:**
-* Support Private Link for Schema Registry Cluster [data-source](docs/data-sources/confluent_access_point.md).
+* Support Private Link for Schema Registry Cluster [data-source](docs/data-sources/confluent_schema_registry_cluster.md).
 
 **Bug fixes:**
 * Update docs for [private_link_attachment](docs/resources/confluent_private_link_attachment.md) / [private_link_attachment_connection](docs/resources/confluent_private_link_attachment_connection.md) to indicate that `display_name` is required.
