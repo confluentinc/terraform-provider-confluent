@@ -42,9 +42,10 @@ require (
 )
 
 require (
+	github.com/confluentinc/ccloud-sdk-go-v2-internal/networking-dnsforwarder v0.0.5 // indirect
 	github.com/containerd/errdefs v0.1.0 // indirect
 	github.com/sergi/go-diff v1.3.2-0.20230802210424-5b0b94c5c0d3 // indirect
-	github.com/stretchr/testify v1.10.0 // indirect
+    github.com/stretchr/testify v1.10.0 // indirect
 )
 
 require (
