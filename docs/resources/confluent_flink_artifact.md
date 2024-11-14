@@ -63,12 +63,12 @@ In addition to the preceding arguments, the following attributes are exported:
 
 -> **Note:** `CONFLUENT_CLOUD_API_KEY` and `CONFLUENT_CLOUD_API_SECRET` environment variables must be set before importing a Flink Artifact.
 
-You can import a Flink Artifact by using cloud, region, Flink Artifact ID and artifact file, in the format `<envId>/<region>/<cloud>/<Flink Artifact ID>`. The following example shows how to import a Flink Artifact:
+You can import a Flink Artifact by using cloud, region, Flink Artifact ID and artifact file, in the format `<Environment ID>/<region>/<cloud>/<Flink Artifact ID>`. The following example shows how to import a Flink Artifact:
 
 ```shell
 $ export CONFLUENT_CLOUD_API_KEY="<cloud_api_key>"
 $ export CONFLUENT_CLOUD_API_SECRET="<cloud_api_secret>"
-$ terraform import confluent_flink_artifact.main stagenv-123/us-east-1/aws/fa-123
+$ terraform import confluent_flink_artifact.main env-abc123/us-east-1/aws/fa-123
 ```
 
 !> **Warning:** Do not forget to delete terminal command history afterwards for security purposes.

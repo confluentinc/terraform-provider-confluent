@@ -320,7 +320,7 @@ func artifactImport(ctx context.Context, d *schema.ResourceData, meta interface{
 	regionCloudAndArtifactId := d.Id()
 	parts := strings.Split(regionCloudAndArtifactId, "/")
 	if len(parts) != 4 {
-		return nil, fmt.Errorf("error importing flink artifact: invalid format: expected '<envId>/<region>/<cloud>/<Flink Artifact ID>'")
+		return nil, fmt.Errorf("error importing flink artifact: invalid format: expected '<Environment ID>/<region>/<cloud>/<Flink Artifact ID>'")
 	}
 
 	artifactId := parts[3]
