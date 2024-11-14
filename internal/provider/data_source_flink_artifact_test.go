@@ -38,6 +38,7 @@ func TestAccDataSourceFlinkArtifact(t *testing.T) {
 		InScenario(dataSourceFlinkArtifactScenarioName).
 		WithQueryParam("cloud", wiremock.EqualTo("AWS")).
 		WithQueryParam("region", wiremock.EqualTo("us-east-2")).
+		WithQueryParam("environment", wiremock.EqualTo(flinkArtifactEnvironmentId)).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillReturn(
 			string(readCreatedFlinkArtifactResponse),

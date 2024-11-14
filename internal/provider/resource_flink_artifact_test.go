@@ -80,6 +80,7 @@ func TestAccFlinkArtifact(t *testing.T) {
 		InScenario(flinkArtifactScenarioName).
 		WithQueryParam("region", wiremock.EqualTo(flinkArtifactRegion)).
 		WithQueryParam("cloud", wiremock.EqualTo(flinkArtifactCloud)).
+		WithQueryParam("environment", wiremock.EqualTo(flinkArtifactEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateFlinkArtifactHasBeenCreated).
 		WillReturn(
 			string(readCreatedArtifactResponse),
@@ -91,6 +92,7 @@ func TestAccFlinkArtifact(t *testing.T) {
 		InScenario(flinkArtifactScenarioName).
 		WithQueryParam("region", wiremock.EqualTo(flinkArtifactRegion)).
 		WithQueryParam("cloud", wiremock.EqualTo(flinkArtifactCloud)).
+		WithQueryParam("environment", wiremock.EqualTo(flinkArtifactEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateFlinkArtifactHasBeenCreated).
 		WillSetStateTo(scenarioStateFlinkArtifactHasBeenDeleted).
 		WillReturn(
@@ -105,6 +107,7 @@ func TestAccFlinkArtifact(t *testing.T) {
 		InScenario(flinkArtifactScenarioName).
 		WithQueryParam("region", wiremock.EqualTo(flinkArtifactRegion)).
 		WithQueryParam("cloud", wiremock.EqualTo(flinkArtifactCloud)).
+		WithQueryParam("environment", wiremock.EqualTo(flinkArtifactEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateFlinkArtifactHasBeenDeleted).
 		WillReturn(
 			string(readDeletedArtifactResponse),
@@ -157,7 +160,8 @@ func TestAccFlinkArtifact(t *testing.T) {
 					flinkArtifactId := resources[fullFlinkArtifactResourceLabel].Primary.ID
 					region := resources[fullFlinkArtifactResourceLabel].Primary.Attributes["region"]
 					cloud := resources[fullFlinkArtifactResourceLabel].Primary.Attributes["cloud"]
-					return region + "/" + cloud + "/" + flinkArtifactId, nil
+					environment := resources[fullFlinkArtifactResourceLabel].Primary.Attributes["environment.0.id"]
+					return environment + "/" + region + "/" + cloud + "/" + flinkArtifactId, nil
 				},
 			},
 		},
@@ -175,7 +179,7 @@ func testAccCheckArtifactDestroy(s *terraform.State) error {
 			continue
 		}
 		deletedArtifactId := rs.Primary.ID
-		req := c.faClient.FlinkArtifactsArtifactV1Api.GetArtifactV1FlinkArtifact(c.faApiContext(context.Background()), deletedArtifactId).Cloud(flinkArtifactCloud).Region(flinkArtifactRegion)
+		req := c.faClient.FlinkArtifactsArtifactV1Api.GetArtifactV1FlinkArtifact(c.faApiContext(context.Background()), deletedArtifactId).Cloud(flinkArtifactCloud).Region(flinkArtifactRegion).Environment(flinkArtifactEnvironmentId)
 		deletedArtifact, response, err := req.Execute()
 		if response != nil && response.StatusCode == http.StatusNotFound {
 			return nil
