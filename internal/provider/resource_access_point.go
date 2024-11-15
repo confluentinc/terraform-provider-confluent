@@ -155,14 +155,17 @@ func paramAwsPrivateNetworkInterfaceSchema() *schema.Schema {
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				paramNetworkInterfaces: {
-					Type:     schema.TypeList,
-					Required: true,
-					Elem:     &schema.Schema{Type: schema.TypeString},
+					Type:        schema.TypeList,
+					Required:    true,
+					MinItems:    6,
+					Elem:        &schema.Schema{Type: schema.TypeString},
+					Description: "List of the IDs of the Elastic Network Interfaces.",
 				},
 				paramAccount: {
-					Type:     schema.TypeString,
-					Required: true,
-					ForceNew: true,
+					Type:        schema.TypeString,
+					Required:    true,
+					ForceNew:    true,
+					Description: "The AWS account ID associated with the ENIs you are using for the Confluent Private Network Interface.",
 				},
 			},
 		},

@@ -255,7 +255,7 @@ func TestAccAccessPointAwsPrivateNetworkInterface(t *testing.T) {
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_private_network_interface.#", "1"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_egress_private_link_endpoint.#", "0"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "azure_egress_private_link_endpoint.#", "0"),
-					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_private_network_interface.0.network_interfaces.#", "2"),
+					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_private_network_interface.0.network_interfaces.#", "6"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_private_network_interface.0.network_interfaces.0", "eni-00000000000000000"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_private_network_interface.0.network_interfaces.1", "eni-00000000000000001"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_private_network_interface.0.account", "000000000000"),
@@ -273,7 +273,7 @@ func TestAccAccessPointAwsPrivateNetworkInterface(t *testing.T) {
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_private_network_interface.#", "1"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_egress_private_link_endpoint.#", "0"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "azure_egress_private_link_endpoint.#", "0"),
-					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_private_network_interface.0.network_interfaces.#", "2"),
+					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_private_network_interface.0.network_interfaces.#", "6"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_private_network_interface.0.network_interfaces.0", "eni-00000000000000000"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_private_network_interface.0.network_interfaces.1", "eni-00000000000000001"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_private_network_interface.0.account", "000000000000"),
@@ -452,7 +452,7 @@ func testAccCheckResourceAccessPointAwsPrivateNetworkInterfaceWithIdSet(mockServ
 		}
 		aws_private_network_interface {
 			account = "000000000000"
-			network_interfaces = ["eni-00000000000000000", "eni-00000000000000001"]
+			network_interfaces = ["eni-00000000000000000", "eni-00000000000000001", "eni-00000000000000002", "eni-00000000000000003", "eni-00000000000000004", "eni-00000000000000005"]
 		}
 	}
 	`, mockServerUrl, name)

@@ -119,19 +119,22 @@ func awsPrivateNetworkInterfaceGatewaySchema() *schema.Schema {
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				paramRegion: {
-					Type:     schema.TypeString,
-					Required: true,
-					ForceNew: true,
+					Type:        schema.TypeString,
+					Required:    true,
+					ForceNew:    true,
+					Description: "AWS region of the Private Network Interface Gateway.",
 				},
 				paramZones: {
-					Type:     schema.TypeList,
-					Required: true,
-					ForceNew: true,
-					Elem:     &schema.Schema{Type: schema.TypeString},
+					Type:        schema.TypeList,
+					Required:    true,
+					ForceNew:    true,
+					Elem:        &schema.Schema{Type: schema.TypeString},
+					Description: "AWS availability zone ids of the Private Network Interface Gateway.",
 				},
 				paramAccount: {
-					Type:     schema.TypeString,
-					Computed: true,
+					Type:        schema.TypeString,
+					Computed:    true,
+					Description: "The AWS account ID associated with the Private Network Interface Gateway.",
 				},
 			},
 		},
