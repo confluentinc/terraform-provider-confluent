@@ -31,7 +31,7 @@ resource "confluent_subject_config" "example" {
   rest_endpoint       = data.confluent_schema_registry_cluster.essentials.rest_endpoint
   subject_name        = "proto-purchase-value"
   compatibility_level = "BACKWARD"
-  compatibility_group = "eeh.cg.version"
+  compatibility_group = "abc.cg.version"
 
   credentials {
     key    = "<Schema Registry API Key for data.confluent_schema_registry_cluster.essentials>"
@@ -57,7 +57,7 @@ provider "confluent" {
 resource "confluent_subject_config" "example" {
   subject_name        = "proto-purchase-value"
   compatibility_level = "BACKWARD"
-  compatibility_group = "eeh.cg.version"
+  compatibility_group = "abc.cg.version"
 
   lifecycle {
     prevent_destroy = true
