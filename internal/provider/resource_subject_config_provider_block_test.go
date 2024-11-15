@@ -34,7 +34,7 @@ const (
 
 	testSubjectCompatibilityLevelResourceLabel = "test_subject_compatibility_level_resource_label"
 	testSubjectCompatibilityLevel              = "FULL"
-	testSubjectCompatibilityGroup              = "string"
+	testSubjectCompatibilityGroup              = "abc.cg.version"
 	testUpdatedSubjectCompatibilityLevel       = "BACKWARD_TRANSITIVE"
 
 	testNumberOfSubjectCompatibilityLevelResourceAttributes = "7"
