@@ -34,9 +34,10 @@ const (
 
 	testSubjectCompatibilityLevelResourceLabel = "test_subject_compatibility_level_resource_label"
 	testSubjectCompatibilityLevel              = "FULL"
+	testSubjectCompatibilityGroup              = "string"
 	testUpdatedSubjectCompatibilityLevel       = "BACKWARD_TRANSITIVE"
 
-	testNumberOfSubjectCompatibilityLevelResourceAttributes = "6"
+	testNumberOfSubjectCompatibilityLevelResourceAttributes = "7"
 )
 
 var fullSubjectCompatibilityLevelResourceLabel = fmt.Sprintf("confluent_subject_config.%s", testSubjectCompatibilityLevelResourceLabel)
@@ -131,6 +132,7 @@ func TestAccSubjectCompatibilityLevelWithEnhancedProviderBlock(t *testing.T) {
 					resource.TestCheckNoResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "schema_registry_cluster.0.id"),
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "subject_name", testSubjectName),
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "compatibility_level", testSubjectCompatibilityLevel),
+					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "compatibility_group", testSubjectCompatibilityGroup),
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "credentials.#", "0"),
 					resource.TestCheckNoResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "credentials.0.key"),
 					resource.TestCheckNoResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "credentials.0.secret"),
@@ -153,6 +155,7 @@ func TestAccSubjectCompatibilityLevelWithEnhancedProviderBlock(t *testing.T) {
 					resource.TestCheckNoResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "schema_registry_cluster.0.id"),
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "subject_name", testSubjectName),
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "compatibility_level", testUpdatedSubjectCompatibilityLevel),
+					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "compatibility_group", testSubjectCompatibilityGroup),
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "credentials.#", "0"),
 					resource.TestCheckNoResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "credentials.0.key"),
 					resource.TestCheckNoResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "credentials.0.secret"),
@@ -185,8 +188,9 @@ func testAccCheckSubjectCompatibilityLevelConfigWithEnhancedProviderBlock(conflu
 	resource "confluent_subject_config" "%s" {
 	  subject_name = "%s"
 	  compatibility_level = "%s"
+	  compatibility_group = "%s"
 	}
-	`, confluentCloudBaseUrl, testSchemaRegistryKey, testSchemaRegistrySecret, mockServerUrl, testStreamGovernanceClusterId, testSubjectCompatibilityLevelResourceLabel, testSubjectName, compatibilityLevel)
+	`, confluentCloudBaseUrl, testSchemaRegistryKey, testSchemaRegistrySecret, mockServerUrl, testStreamGovernanceClusterId, testSubjectCompatibilityLevelResourceLabel, testSubjectName, compatibilityLevel, testSubjectCompatibilityGroup)
 }
 
 func testAccCheckSubjectCompatibilityLevelExists(n string) resource.TestCheckFunc {

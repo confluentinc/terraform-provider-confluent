@@ -1,1 +1,4 @@
-{"compatibilityLevel":"BACKWARD_TRANSITIVE"}
+{
+  "compatibilityLevel": "BACKWARD_TRANSITIVE",
+  "compatibilityGroup": "string"
+}
