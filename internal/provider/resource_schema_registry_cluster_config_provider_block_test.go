@@ -34,9 +34,10 @@ const (
 
 	testSchemaRegistryClusterCompatibilityLevelResourceLabel = "test_subject_compatibility_level_resource_label"
 	testSchemaRegistryClusterCompatibilityLevel              = "FULL"
+	testSchemaRegistryClusterCompatibilityGroup              = "abc.cg.version"
 	testUpdatedSchemaRegistryClusterCompatibilityLevel       = "BACKWARD_TRANSITIVE"
 
-	testNumberOfSchemaRegistryClusterCompatibilityLevelResourceAttributes = "5"
+	testNumberOfSchemaRegistryClusterCompatibilityLevelResourceAttributes = "6"
 )
 
 var fullSchemaRegistryClusterCompatibilityLevelResourceLabel = fmt.Sprintf("confluent_schema_registry_cluster_config.%s", testSchemaRegistryClusterCompatibilityLevelResourceLabel)
@@ -121,13 +122,14 @@ func TestAccSchemaRegistryClusterCompatibilityLevelWithEnhancedProviderBlock(t *
 		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckSchemaRegistryClusterCompatibilityLevelConfigWithEnhancedProviderBlock(confluentCloudBaseUrl, mockSchemaRegistryClusterCompatibilityLevelTestServerUrl, testSchemaRegistryClusterCompatibilityLevel),
+				Config: testAccCheckSchemaRegistryClusterCompatibilityLevelConfigWithEnhancedProviderBlock(confluentCloudBaseUrl, mockSchemaRegistryClusterCompatibilityLevelTestServerUrl, testSchemaRegistryClusterCompatibilityLevel, testSchemaRegistryClusterCompatibilityGroup),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSchemaRegistryClusterCompatibilityLevelExists(fullSchemaRegistryClusterCompatibilityLevelResourceLabel),
 					resource.TestCheckResourceAttr(fullSchemaRegistryClusterCompatibilityLevelResourceLabel, "id", testStreamGovernanceClusterId),
 					resource.TestCheckResourceAttr(fullSchemaRegistryClusterCompatibilityLevelResourceLabel, "schema_registry_cluster.#", "0"),
 					resource.TestCheckNoResourceAttr(fullSchemaRegistryClusterCompatibilityLevelResourceLabel, "schema_registry_cluster.0.id"),
 					resource.TestCheckResourceAttr(fullSchemaRegistryClusterCompatibilityLevelResourceLabel, "compatibility_level", testSchemaRegistryClusterCompatibilityLevel),
+					resource.TestCheckResourceAttr(fullSchemaRegistryClusterCompatibilityLevelResourceLabel, "compatibility_group", testSchemaRegistryClusterCompatibilityGroup),
 					resource.TestCheckResourceAttr(fullSchemaRegistryClusterCompatibilityLevelResourceLabel, "credentials.#", "0"),
 					resource.TestCheckNoResourceAttr(fullSchemaRegistryClusterCompatibilityLevelResourceLabel, "credentials.0.key"),
 					resource.TestCheckNoResourceAttr(fullSchemaRegistryClusterCompatibilityLevelResourceLabel, "credentials.0.secret"),
@@ -142,13 +144,14 @@ func TestAccSchemaRegistryClusterCompatibilityLevelWithEnhancedProviderBlock(t *
 				ImportStateVerify: true,
 			},
 			{
-				Config: testAccCheckSchemaRegistryClusterCompatibilityLevelConfigWithEnhancedProviderBlock(confluentCloudBaseUrl, mockSchemaRegistryClusterCompatibilityLevelTestServerUrl, testUpdatedSchemaRegistryClusterCompatibilityLevel),
+				Config: testAccCheckSchemaRegistryClusterCompatibilityLevelConfigWithEnhancedProviderBlock(confluentCloudBaseUrl, mockSchemaRegistryClusterCompatibilityLevelTestServerUrl, testUpdatedSchemaRegistryClusterCompatibilityLevel, testSchemaRegistryClusterCompatibilityGroup),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSchemaRegistryClusterCompatibilityLevelExists(fullSchemaRegistryClusterCompatibilityLevelResourceLabel),
 					resource.TestCheckResourceAttr(fullSchemaRegistryClusterCompatibilityLevelResourceLabel, "id", testStreamGovernanceClusterId),
 					resource.TestCheckResourceAttr(fullSchemaRegistryClusterCompatibilityLevelResourceLabel, "schema_registry_cluster.#", "0"),
 					resource.TestCheckNoResourceAttr(fullSchemaRegistryClusterCompatibilityLevelResourceLabel, "schema_registry_cluster.0.id"),
 					resource.TestCheckResourceAttr(fullSchemaRegistryClusterCompatibilityLevelResourceLabel, "compatibility_level", testUpdatedSchemaRegistryClusterCompatibilityLevel),
+					resource.TestCheckResourceAttr(fullSchemaRegistryClusterCompatibilityLevelResourceLabel, "compatibility_group", testSchemaRegistryClusterCompatibilityGroup),
 					resource.TestCheckResourceAttr(fullSchemaRegistryClusterCompatibilityLevelResourceLabel, "credentials.#", "0"),
 					resource.TestCheckNoResourceAttr(fullSchemaRegistryClusterCompatibilityLevelResourceLabel, "credentials.0.key"),
 					resource.TestCheckNoResourceAttr(fullSchemaRegistryClusterCompatibilityLevelResourceLabel, "credentials.0.secret"),
@@ -169,7 +172,7 @@ func TestAccSchemaRegistryClusterCompatibilityLevelWithEnhancedProviderBlock(t *
 	checkStubCount(t, wiremockClient, deleteSchemaRegistryClusterCompatibilityLevelStub, fmt.Sprintf("DELETE %s", updateSchemaRegistryClusterCompatibilityLevelPath), expectedCountZero)
 }
 
-func testAccCheckSchemaRegistryClusterCompatibilityLevelConfigWithEnhancedProviderBlock(confluentCloudBaseUrl, mockServerUrl, compatibilityLevel string) string {
+func testAccCheckSchemaRegistryClusterCompatibilityLevelConfigWithEnhancedProviderBlock(confluentCloudBaseUrl, mockServerUrl, compatibilityLevel, compatibilityGroup string) string {
 	return fmt.Sprintf(`
 	provider "confluent" {
 	  endpoint = "%s"
@@ -180,8 +183,9 @@ func testAccCheckSchemaRegistryClusterCompatibilityLevelConfigWithEnhancedProvid
 	}
 	resource "confluent_schema_registry_cluster_config" "%s" {
 	  compatibility_level = "%s"
+      compatibility_group = "%s"
 	}
-	`, confluentCloudBaseUrl, testSchemaRegistryKey, testSchemaRegistrySecret, mockServerUrl, testStreamGovernanceClusterId, testSchemaRegistryClusterCompatibilityLevelResourceLabel, compatibilityLevel)
+	`, confluentCloudBaseUrl, testSchemaRegistryKey, testSchemaRegistrySecret, mockServerUrl, testStreamGovernanceClusterId, testSchemaRegistryClusterCompatibilityLevelResourceLabel, compatibilityLevel, compatibilityGroup)
 }
 
 func testAccCheckSchemaRegistryClusterCompatibilityLevelExists(n string) resource.TestCheckFunc {
