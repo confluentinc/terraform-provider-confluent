@@ -60,3 +60,6 @@ In addition to the preceding arguments, the following attributes are exported:
   - `private_endpoint_domain` (Required String) Domain of the Private Endpoint (if any) that is connected to the Private Link service.
   - `private_endpoint_ip_address` (Required String) IP address of the Private Endpoint (if any) that is connected to the Private Link service.
   - `private_endpoint_custom_dns_config_domains` (Required List of Strings) Domains of the Private Endpoint (if any) based off FQDNs in Azure custom DNS configs, which are required in your private DNS setup, for example: `["dbname.database.windows.net", "dbname-region.database.windows.net"]`.
+- `aws_private_network_interface` (Optional Configuration Block) Supports the following:
+  - `network_interfaces` - (Required List of Strings) List of the IDs of the Elastic Network Interfaces, for example: `["eni-00000000000000000", "eni-00000000000000001", "eni-00000000000000002", "eni-00000000000000003", "eni-00000000000000004", "eni-00000000000000005"]`
+  - `account` - (Required String) The AWS account ID associated with the ENIs you are using for the Confluent Private Network Interface, for example: `000000000000`.
