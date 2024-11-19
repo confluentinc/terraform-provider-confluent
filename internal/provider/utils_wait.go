@@ -754,9 +754,9 @@ func waitForFlinkStatementToBeUpdated(ctx context.Context, c *FlinkRestClient, s
 		targetStates = []string{stateStopped}
 		targetStatusMessage = stateStopped
 	} else {
-		pendingStates = []string{stateStopped, stateResuming}
-		targetStates = []string{statePending, stateRunning, stateCompleted}
-		targetStatusMessage = fmt.Sprintf("%s, %s or %s", statePending, stateRunning, stateCompleted)
+		pendingStates = []string{statePending, stateStopped, stateFailed}
+		targetStates = []string{stateRunning, stateCompleted}
+		targetStatusMessage = fmt.Sprintf("%s or %s", stateRunning, stateCompleted)
 	}
 
 	stateConf := &resource.StateChangeConf{

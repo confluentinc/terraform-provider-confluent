@@ -248,7 +248,7 @@ func TestAccFlinkStatement(t *testing.T) {
 				Config: testAccCheckFlinkStatementResumed(confluentCloudBaseUrl, mockFlinkStatementTestServerUrl),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckFlinkStatementExists(fullFlinkStatementResourceLabel),
-					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "id", fmt.Sprintf("%s/%s/%s", flinkEnvironmentIdTest, flinkComputePoolIdTest, flinkStatementNameTest)),
+					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "id", fmt.Sprintf("%s/%s/%s", flinkEnvironmentIdTest, flinkComputePoolUpdatedIdTest, flinkStatementNameTest)),
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "organization.#", "1"),
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "organization.0.%", "1"),
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "organization.0.id", flinkOrganizationIdTest),
@@ -257,10 +257,10 @@ func TestAccFlinkStatement(t *testing.T) {
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "environment.0.id", flinkEnvironmentIdTest),
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "compute_pool.#", "1"),
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "compute_pool.0.%", "1"),
-					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "compute_pool.0.id", flinkComputePoolIdTest),
+					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "compute_pool.0.id", flinkComputePoolUpdatedIdTest),
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "principal.#", "1"),
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "principal.0.%", "1"),
-					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "principal.0.id", flinkPrincipalIdTest),
+					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "principal.0.id", flinkPrincipalUpdatedIdTest),
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "statement_name", flinkStatementNameTest),
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "statement", flinkStatementTest),
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "stopped", "false"),
@@ -404,7 +404,7 @@ func testAccCheckFlinkStatementResumed(confluentCloudBaseUrl, mockServerUrl stri
 		"%s" = "%s"
 	  }
 	}
-	`, confluentCloudBaseUrl, flinkStatementResourceLabel, kafkaApiKey, kafkaApiSecret, mockServerUrl, flinkPrincipalIdTest,
-		flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkComputePoolIdTest,
+	`, confluentCloudBaseUrl, flinkStatementResourceLabel, kafkaApiKey, kafkaApiSecret, mockServerUrl, flinkPrincipalUpdatedIdTest,
+		flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkComputePoolUpdatedIdTest,
 		flinkStatementNameTest, flinkStatementTest, flinkFirstPropertyKeyTest, flinkFirstPropertyValueTest)
 }
