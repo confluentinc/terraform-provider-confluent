@@ -397,7 +397,7 @@ resource "confluent_connector" "s3-sink" {
 
   // Block for custom *sensitive* configuration properties that are labelled with "Type: password" under "Configuration Properties" section in the docs:
   // https://docs.confluent.io/cloud/current/connectors/cc-s3-sink.html#configuration-properties
-#  config_sensitive = {}
+  #  config_sensitive = {}
 
   // Block for custom *nonsensitive* configuration properties that are *not* labelled with "Type: password" under "Configuration Properties" section in the docs:
   // https://docs.confluent.io/cloud/current/connectors/cc-s3-sink.html#configuration-properties
@@ -427,39 +427,9 @@ resource "confluent_connector" "s3-sink" {
     confluent_kafka_acl.app-connector-create-on-error-lcc-topics,
     confluent_kafka_acl.app-connector-write-on-error-lcc-topics,
     confluent_kafka_acl.app-connector-read-on-connect-lcc-group,
-    aws_iam_role.s3_access_role_update,
     confluent_provider_integration.main,
+    module.s3_access_role,
   ]
-}
-
-# https://docs.confluent.io/cloud/current/connectors/provider-integration/index.html#cloud-pi-qs-step1
-resource "aws_iam_role" "s3_access_role_update" {
-  name        = "S3AccessRole"
-  description = "IAM role for Confluent to assume for accessing S3"
-
-  assume_role_policy = jsonencode({
-    Version   = "2012-10-17"
-    Statement = [
-      {
-        Effect    = "Allow"
-        Principal = {
-          AWS = confluent_provider_integration.main.aws[0].iam_role_arn
-        }
-        Action    = "sts:AssumeRole"
-        Condition = {
-          StringEquals = {
-            "sts:ExternalId" = confluent_provider_integration.main.aws[0].external_id
-          }
-        }
-      }
-    ]
-  })
-
-  lifecycle {
-    ignore_changes = [
-      assume_role_policy
-    ]
-  }
 }
 
 data "aws_caller_identity" "current" {}
@@ -484,9 +454,9 @@ resource "confluent_provider_integration" "main" {
 }
 
 module "s3_access_role" {
-  source         = "./iam_role_module"
-  s3_bucket_name = var.s3_bucket_name
-  role_arn       = local.s3_access_role_arn
-  role_name      = local.s3_access_role_name
+  source                           = "./iam_role_module"
+  s3_bucket_name                   = var.s3_bucket_name
+  role_arn                         = local.s3_access_role_arn
+  role_name                        = local.s3_access_role_name
   provider_integration_external_id = confluent_provider_integration.main.aws[0].customer_role_arn
 }
