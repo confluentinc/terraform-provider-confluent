@@ -122,7 +122,7 @@ func TestAccDataSourceAccessPointAwsPrivateNetworkInterface(t *testing.T) {
 					resource.TestCheckResourceAttr(fullAccessPointResourceName, "aws_private_network_interface.#", "1"),
 					resource.TestCheckResourceAttr(fullAccessPointResourceName, "aws_egress_private_link_endpoint.#", "0"),
 					resource.TestCheckResourceAttr(fullAccessPointResourceName, "azure_egress_private_link_endpoint.#", "0"),
-					resource.TestCheckResourceAttr(fullAccessPointResourceName, "aws_private_network_interface.0.network_interfaces.#", "2"),
+					resource.TestCheckResourceAttr(fullAccessPointResourceName, "aws_private_network_interface.0.network_interfaces.#", "6"),
 					resource.TestCheckResourceAttr(fullAccessPointResourceName, "aws_private_network_interface.0.network_interfaces.0", "eni-00000000000000000"),
 					resource.TestCheckResourceAttr(fullAccessPointResourceName, "aws_private_network_interface.0.network_interfaces.1", "eni-00000000000000001"),
 					resource.TestCheckResourceAttr(fullAccessPointResourceName, "aws_private_network_interface.0.account", "000000000000"),
