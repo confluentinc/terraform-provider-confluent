@@ -13,7 +13,7 @@
   * [s3-sink-connector-assume-role](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/connectors/s3-sink-connector-assume-role).
 
 **Bug fixes:**
-* Fix link in flink statement docs.
+* Fix link in Flink statement docs.
 
 ## 2.9.0 (October 29th, 2024)
 
