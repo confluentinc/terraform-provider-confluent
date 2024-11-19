@@ -18,14 +18,17 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	fgb "github.com/confluentinc/ccloud-sdk-go-v2/flink-gateway/v1"
+	"net/http"
+	"regexp"
+	"time"
+
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"net/http"
-	"regexp"
-	"time"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
+
+	fgb "github.com/confluentinc/ccloud-sdk-go-v2/flink-gateway/v1"
 )
 
 const (
@@ -60,8 +63,8 @@ func flinkStatementResource() *schema.Resource {
 		Schema: map[string]*schema.Schema{
 			paramOrganization: optionalIdBlockSchema(),
 			paramEnvironment:  optionalIdBlockSchema(),
-			paramComputePool:  optionalIdBlockSchema(),
-			paramPrincipal:    optionalIdBlockSchema(),
+			paramComputePool:  optionalIdBlockSchemaUpdatable(),
+			paramPrincipal:    optionalIdBlockSchemaUpdatable(),
 			paramStatementName: {
 				Type:        schema.TypeString,
 				Description: "The unique identifier of the Statement.",
@@ -117,6 +120,7 @@ func flinkStatementResource() *schema.Resource {
 		Timeouts: &schema.ResourceTimeout{
 			Create: schema.DefaultTimeout(statementsAPICreateTimeout),
 		},
+		CustomizeDiff: customdiff.Sequence(resourceFlinkStatementDiff),
 	}
 }
 
@@ -363,7 +367,11 @@ func flinkStatementResume(ctx context.Context, d *schema.ResourceData, meta inte
 		return diag.Errorf("error resuming Flink Statement: error fetching Flink Statement: %s", createDescriptiveError(err))
 	}
 
+	// Update the Flink statement updatable fields
 	statement.Spec.SetStopped(false)
+	statement.Spec.SetPrincipal(principalId)
+	statement.Spec.SetComputePoolId(computePoolId)
+
 	updateFlinkStatementRequestJson, err := json.Marshal(statement)
 	if err != nil {
 		return diag.Errorf("error resuming Flink Statement %q: error marshaling %#v to json: %s", statementName, statement, createDescriptiveError(err))
@@ -557,6 +565,24 @@ func optionalIdBlockSchema() *schema.Schema {
 	}
 }
 
+func optionalIdBlockSchemaUpdatable() *schema.Schema {
+	return &schema.Schema{
+		Type:     schema.TypeList,
+		MinItems: 1,
+		MaxItems: 1,
+		Optional: true,
+		Computed: true,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramId: {
+					Type:     schema.TypeString,
+					Required: true,
+				},
+			},
+		},
+	}
+}
+
 func extractFlinkRestEndpoint(client *Client, d *schema.ResourceData, isImportOperation bool) (string, error) {
 	if client.isFlinkMetadataSet {
 		return client.flinkRestEndpoint, nil
@@ -674,4 +700,24 @@ func extractFlinkPrincipalId(client *Client, d *schema.ResourceData, isImportOpe
 
 func createFlinkStatementId(environmentId, computePoolId, statementName string) string {
 	return fmt.Sprintf("%s/%s/%s", environmentId, computePoolId, statementName)
+}
+
+func resourceFlinkStatementDiff(_ context.Context, diff *schema.ResourceDiff, _ interface{}) error {
+	oldStopped, newStopped := diff.GetChange(paramStopped)
+	// RUNNING -> STOPPED transition, none of `paramPrincipal` and `paramComputePool` can be updated
+	if oldStopped == false && newStopped == true {
+		if diff.HasChanges(paramPrincipal, paramComputePool) {
+			return fmt.Errorf("error updating Flink Statement %q: 'principal' or 'compute_pool' parameters can't be updated in place in a `stopped` false -> true status change", diff.Id())
+		}
+	}
+
+	// In case of no statement status transition, none of `paramPrincipal` and `paramComputePool` can be updated
+	if oldStopped == newStopped {
+		if diff.HasChanges(paramPrincipal, paramComputePool) {
+			return fmt.Errorf("error updating Flink Statement %q: 'principal' or 'compute_pool' parameters can't be updated in place without `stopped` status change", diff.Id())
+		}
+	}
+
+	// RUNNING -> STOPPED transition, both `paramPrincipal` and `paramComputePool` can be updated in place, so no restriction here
+	return nil
 }
