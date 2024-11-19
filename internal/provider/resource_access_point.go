@@ -155,7 +155,7 @@ func paramAwsPrivateNetworkInterfaceSchema() *schema.Schema {
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				paramNetworkInterfaces: {
-					Type:        schema.TypeList,
+					Type:        schema.TypeSet,
 					Required:    true,
 					MinItems:    6,
 					Elem:        &schema.Schema{Type: schema.TypeString},
@@ -212,7 +212,7 @@ func accessPointCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 		}
 		spec.SetConfig(config)
 	} else if isAwsPrivateNetworkInterface {
-		networkInterfaces := extractStringSliceValueFromBlock(d, paramAwsPrivateNetworkInterface, paramNetworkInterfaces)
+		networkInterfaces := convertToStringSlice(d.Get(fmt.Sprintf("%s.0.%s", paramAwsPrivateNetworkInterface, paramNetworkInterfaces)).(*schema.Set).List())
 		config.NetworkingV1AwsPrivateNetworkInterface = &netap.NetworkingV1AwsPrivateNetworkInterface{
 			Kind:              awsPrivateNetworkInterface,
 			NetworkInterfaces: &networkInterfaces,
@@ -333,7 +333,7 @@ func accessPointUpdate(ctx context.Context, d *schema.ResourceData, meta interfa
 	}
 
 	if d.HasChange(paramAwsPrivateNetworkInterface) && d.HasChange(fmt.Sprintf("%s.0.%s", paramAwsPrivateNetworkInterface, paramNetworkInterfaces)) {
-		networkInterfaces := extractStringSliceValueFromBlock(d, paramAwsPrivateNetworkInterface, paramNetworkInterfaces)
+		networkInterfaces := convertToStringSlice(d.Get(fmt.Sprintf("%s.0.%s", paramAwsPrivateNetworkInterface, paramNetworkInterfaces)).(*schema.Set).List())
 		updateAccessPointSpec.SetConfig(netap.NetworkingV1AwsPrivateNetworkInterfaceAsNetworkingV1AccessPointSpecUpdateConfigOneOf(&netap.NetworkingV1AwsPrivateNetworkInterface{
 			Kind:              paramAwsPrivateNetworkInterface,
 			NetworkInterfaces: &networkInterfaces,
@@ -428,20 +428,4 @@ func setAccessPointAttributes(d *schema.ResourceData, accessPoint netap.Networki
 	}
 	d.SetId(accessPoint.GetId())
 	return d, nil
-}
-
-func extractStringSliceValueFromBlock(d *schema.ResourceData, blockName string, attribute string) []string {
-	// d.Get() will return "" if the key is not present
-	values, ok := d.GetOk(fmt.Sprintf("%s.0.%s", blockName, attribute))
-	if !ok || values == nil {
-		return nil
-	}
-	valuesSlice := values.([]interface{})
-	stringSlice := make([]string, len(valuesSlice))
-
-	for i, value := range valuesSlice {
-		stringSlice[i] = value.(string)
-	}
-
-	return stringSlice
 }

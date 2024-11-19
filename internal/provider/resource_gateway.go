@@ -125,7 +125,7 @@ func awsPrivateNetworkInterfaceGatewaySchema() *schema.Schema {
 					Description: "AWS region of the Private Network Interface Gateway.",
 				},
 				paramZones: {
-					Type:        schema.TypeList,
+					Type:        schema.TypeSet,
 					Required:    true,
 					ForceNew:    true,
 					Elem:        &schema.Schema{Type: schema.TypeString},
@@ -166,7 +166,7 @@ func gatewayCreate(ctx context.Context, d *schema.ResourceData, meta interface{}
 		)))
 	} else if isAwsPrivateNetworkInterface {
 		region := extractStringValueFromBlock(d, paramAwsPrivateNetworkInterfaceGateway, paramRegion)
-		zones := extractStringSliceValueFromBlock(d, paramAwsPrivateNetworkInterfaceGateway, paramZones)
+		zones := convertToStringSlice(d.Get(fmt.Sprintf("%s.0.%s", paramAwsPrivateNetworkInterfaceGateway, paramZones)).(*schema.Set).List())
 		createGatewayRequest.Spec.SetConfig(netgw.NetworkingV1AwsPrivateNetworkInterfaceGatewaySpecAsNetworkingV1GatewaySpecConfigOneOf(netgw.NewNetworkingV1AwsPrivateNetworkInterfaceGatewaySpec(
 			awsPrivateNetworkInterfaceGatewaySpecKind,
 			region,
