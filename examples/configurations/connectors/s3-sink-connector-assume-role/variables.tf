@@ -12,7 +12,7 @@ variable "confluent_cloud_api_secret" {
 variable "s3_bucket_name" {
   description = "The name of the S3 bucket"
   type        = string
-  default     = "kostyatests3"
+  default     = "kostyatests4"
 }
 
 variable "aws_region" {

@@ -9,13 +9,12 @@ variable "provider_integration_external_id" {
   type        = string
 }
 
-variable "role_arn" {
-  description = "The ARN of the IAM role that Confluent Cloud will assume in your AWS account. This role must have the necessary permissions to access the specified S3 bucket and must include the trust policy for the Confluent external ID."
+variable "provider_integration_role_arn" {
+  description = "The IAM role ARN used in Confluent Cloud internally, bundled with customer_role_arn."
   type        = string
 }
 
-variable "role_name" {
-  description = "The name of the IAM role that Confluent Cloud will assume in your AWS account. This role must have the necessary permissions to access the specified S3 bucket and must include the trust policy for the Confluent external ID."
+variable "customer_role_name" {
+  description = "The name of the IAM role for accessing S3 with a trust policy for Confluent"
   type        = string
-  default     = "ConfluentS3AccessRole"
 }

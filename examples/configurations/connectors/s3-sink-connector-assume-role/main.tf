@@ -435,8 +435,8 @@ resource "confluent_connector" "s3-sink" {
 data "aws_caller_identity" "current" {}
 
 locals {
-  s3_access_role_name = "ConfluentS3AccessRole"
-  s3_access_role_arn  = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/${local.s3_access_role_name}"
+  customer_s3_access_role_name = "ConfluentS3AccessRole"
+  customer_s3_access_role_arn  = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/${local.customer_s3_access_role_name}"
 }
 
 resource "confluent_provider_integration" "main" {
@@ -449,14 +449,14 @@ resource "confluent_provider_integration" "main" {
     # The role will be created after confluent_provider_integration.main is provisioned
     # by the s3_access_role module using the specified target name.
     # Note: This is a workaround to avoid updating an existing role or creating a circular dependency.
-    customer_role_arn = local.s3_access_role_arn
+    customer_role_arn = local.customer_s3_access_role_arn
   }
 }
 
 module "s3_access_role" {
-  source                           = "./iam_role_module"
-  s3_bucket_name                   = var.s3_bucket_name
-  role_arn                         = local.s3_access_role_arn
-  role_name                        = local.s3_access_role_name
-  provider_integration_external_id = confluent_provider_integration.main.aws[0].customer_role_arn
+  source                                  = "./iam_role_module"
+  s3_bucket_name                          = var.s3_bucket_name
+  provider_integration_role_arn = confluent_provider_integration.main.aws[0].iam_role_arn
+  provider_integration_external_id        = confluent_provider_integration.main.aws[0].external_id
+  customer_role_name                      = local.customer_s3_access_role_name
 }
