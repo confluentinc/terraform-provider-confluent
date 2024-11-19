@@ -454,9 +454,9 @@ resource "confluent_provider_integration" "main" {
 }
 
 module "s3_access_role" {
-  source                                  = "./iam_role_module"
-  s3_bucket_name                          = var.s3_bucket_name
-  provider_integration_role_arn = confluent_provider_integration.main.aws[0].iam_role_arn
-  provider_integration_external_id        = confluent_provider_integration.main.aws[0].external_id
-  customer_role_name                      = local.customer_s3_access_role_name
+  source                           = "./iam_role_module"
+  s3_bucket_name                   = var.s3_bucket_name
+  provider_integration_role_arn    = confluent_provider_integration.main.aws[0].iam_role_arn
+  provider_integration_external_id = confluent_provider_integration.main.aws[0].external_id
+  customer_role_name               = local.customer_s3_access_role_name
 }
