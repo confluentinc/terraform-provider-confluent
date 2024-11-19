@@ -44,7 +44,7 @@ resource "confluent_kafka_cluster" "basic" {
   display_name = "inventory"
   availability = "SINGLE_ZONE"
   cloud        = "AWS"
-  region       = "us-east-2"
+  region       = var.aws_region
   basic {}
   environment {
     id = confluent_environment.staging.id
