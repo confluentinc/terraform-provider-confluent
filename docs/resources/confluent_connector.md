@@ -20,6 +20,7 @@ description: |-
 
 ### Example Managed [Datagen Source Connector](https://docs.confluent.io/cloud/current/connectors/cc-datagen-source.html) that uses a service account to communicate with your Kafka cluster
 ```terraform
+# https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/connectors/managed-datagen-source-connector
 resource "confluent_connector" "source" {
   environment {
     id = confluent_environment.staging.id
@@ -56,6 +57,7 @@ resource "confluent_connector" "source" {
 
 ### Example Managed [Amazon S3 Sink Connector](https://docs.confluent.io/cloud/current/connectors/cc-s3-sink.html) that uses a service account to communicate with your Kafka cluster
 ```terraform
+# https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/connectors/s3-sink-connector
 resource "confluent_connector" "sink" {
   environment {
     id = confluent_environment.staging.id
@@ -105,8 +107,62 @@ resource "confluent_connector" "sink" {
 }
 ```
 
+### Example Managed [Amazon S3 Sink Connector](https://docs.confluent.io/cloud/current/connectors/cc-s3-sink.html) that uses a service account to communicate with your Kafka cluster and IAM Roles for AWS authentication
+```terraform
+# https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/connectors/s3-sink-connector-assume-role
+resource "confluent_connector" "sink" {
+  environment {
+    id = confluent_environment.staging.id
+  }
+  kafka_cluster {
+    id = confluent_kafka_cluster.basic.id
+  }
+
+  // Block for custom *sensitive* configuration properties that are labelled with "Type: password" under "Configuration Properties" section in the docs:
+  // https://docs.confluent.io/cloud/current/connectors/cc-s3-sink.html#configuration-properties
+  config_sensitive = {}
+
+  // Block for custom *nonsensitive* configuration properties that are *not* labelled with "Type: password" under "Configuration Properties" section in the docs:
+  // https://docs.confluent.io/cloud/current/connectors/cc-s3-sink.html#configuration-properties
+  config_nonsensitive = {
+    "topics"                   = confluent_kafka_topic.orders.topic_name
+    "input.data.format"        = "JSON"
+    "connector.class"          = "S3_SINK"
+    "name"                     = "S3_SINKConnector_0"
+    "kafka.auth.mode"          = "SERVICE_ACCOUNT"
+    "kafka.service.account.id" = confluent_service_account.app-connector.id
+    "s3.bucket.name"           = "<s3-bucket-name>"
+    "output.data.format"       = "JSON"
+    "time.interval"            = "DAILY"
+    "flush.size"               = "1000"
+    "tasks.max"                = "1"
+    "authentication.method"    = "IAM Roles"
+    "provider.integration.id"  = confluent_provider_integration.main.id
+  }
+
+  depends_on = [
+    confluent_kafka_acl.app-connector-describe-on-cluster,
+    confluent_kafka_acl.app-connector-read-on-target-topic,
+    confluent_kafka_acl.app-connector-create-on-dlq-lcc-topics,
+    confluent_kafka_acl.app-connector-write-on-dlq-lcc-topics,
+    confluent_kafka_acl.app-connector-create-on-success-lcc-topics,
+    confluent_kafka_acl.app-connector-write-on-success-lcc-topics,
+    confluent_kafka_acl.app-connector-create-on-error-lcc-topics,
+    confluent_kafka_acl.app-connector-write-on-error-lcc-topics,
+    confluent_kafka_acl.app-connector-read-on-connect-lcc-group,
+    confluent_provider_integration.main,
+    module.s3_access_role,
+  ]
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+```
+
 ### Example Managed [Amazon DynamoDB Connector](https://docs.confluent.io/cloud/current/connectors/cc-amazon-dynamo-db-sink.html) that uses a service account to communicate with your Kafka cluster
 ```terraform
+# https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/connectors/dynamo-db-sink-connector
 resource "confluent_connector" "sink" {
   environment {
     id = confluent_environment.staging.id
@@ -151,8 +207,8 @@ resource "confluent_connector" "sink" {
 ```
 
 ### Example Custom [Datagen Source Connector](https://www.confluent.io/hub/confluentinc/kafka-connect-datagen) that uses a Kafka API Key to communicate with your Kafka cluster
-
 ```terraform
+# https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/connectors/custom-datagen-source-connector
 resource "confluent_connector" "source" {
   environment {
     id = confluent_environment.staging.id
@@ -189,9 +245,6 @@ resource "confluent_connector" "source" {
   ]
 }
 ```
-
--> **Note:** Custom connectors are available in **Preview** for early adopters. Preview features are introduced to gather customer feedback. This feature should be used only for evaluation and non-production testing purposes or to provide feedback to Confluent, particularly as it becomes more widely available in follow-on editions.  
-**Preview** features are intended for evaluation use in development and testing environments only, and not for production use. The warranty, SLA, and Support Services provisions of your agreement with Confluent do not apply to Preview features. Preview features are considered to be a Proof of Concept as defined in the Confluent Cloud Terms of Service. Confluent may discontinue providing preview releases of the Preview features at any time in Confluent’s sole discretion.
 
 <!-- schema generated by tfplugindocs -->
 ## Argument Reference
@@ -239,6 +292,7 @@ $ terraform import confluent_connector.my_connector "env-abc123/lkc-abc123/S3_SI
 
 The following end-to-end examples might help to get started with `confluent_connector` resource:
 * [`s3-sink-connector`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/connectors/s3-sink-connector)
+* [`s3-sink-connector-assume-role`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/connectors/s3-sink-connector-assume-role)
 * [`snowflake-sink-connector`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/connectors/snowflake-sink-connector)
 * [`managed-datagen-source-connector`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/connectors/managed-datagen-source-connector)
 * [`elasticsearch-sink-connector`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/connectors/elasticsearch-sink-connector)
@@ -248,6 +302,5 @@ The following end-to-end examples might help to get started with `confluent_conn
 * [`sql-server-cdc-debezium-source-connector`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/connectors/sql-server-cdc-debezium-source-connector)
 * [`postgre-sql-cdc-debezium-source-connector`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/connectors/postgre-sql-cdc-debezium-source-connector)
 * [`custom-datagen-source-connector`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/connectors/custom-datagen-source-connector)
-
 
 -> **Note:** Certain connectors require additional ACL entries. See [Additional ACL entries](https://docs.confluent.io/cloud/current/connectors/service-account.html#additional-acl-entries) for more details.
