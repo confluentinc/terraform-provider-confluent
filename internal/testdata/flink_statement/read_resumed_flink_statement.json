@@ -12,8 +12,8 @@
   "name": "workspace-2023-11-15-030109-0408d52d-eaff-4d50-a246-f822a29f2eb9",
   "organization_id": "1111aaaa-11aa-11aa-11aa-111111aaaaaa",
   "spec": {
-    "compute_pool_id": "lfcp-x7rgx1",
-    "principal": "u-yo9j87",
+    "compute_pool_id": "lfcp-x7rgx2",
+    "principal": "sa-yo9j87",
     "properties": {
       "sql.local-time-zone": "GMT-08:00"
     },
@@ -26,7 +26,7 @@
       "customers_source": "partition:0,offset:9223372036854775808;partition:4,offset:9223372036854775808;partition:3,offset:9223372036854775808;partition:2,offset:9223372036854775808;partition:1,offset:9223372036854775808;partition:5,offset:9223372036854775808"
     },
     "latest_offsets_timestamp": "2024-10-14T21:26:07Z",
-    "phase": "PENDING",
+    "phase": "RUNNING",
     "result_schema": {
       "columns": [
         {

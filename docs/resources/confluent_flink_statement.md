@@ -108,11 +108,13 @@ The following arguments are supported:
     - `name` - (Required String) The setting name, for example, `sql.local-time-zone`.
     - `value` - (Required String) The setting value, for example, `GMT-08:00`.
 
-- `stopped` - (Optional Boolean) The boolean flag to control whether the running Flink Statement should be stopped. Defaults to `false`. Update it to `true` to stop the statement. Subsequently, update it to `false` to resume the statement.
+- `stopped` - (Optional Boolean) The boolean flag to indicate statement running status and control whether the Flink Statement should be stopped or resumed. Defaults to `false`. Update it to `true` to stop the statement. Subsequently update it to `false` to resume the statement.
 
-!> **Note:** To stop a running statement or resume a stopped statement, no other argument can be updated except `stopped`.
+!> **Note:** To stop a running statement, no other argument can be updated except `stopped`.
 
-!> **Note:** Currently, only 3 Flink statements support the resuming feature, namely: `CREATE TABLE AS`, `INSERT INTO`, and `EXECUTE STATEMENT SET`.
+!> **Note:** To resume a stopped statement, `principal.id` and/or `compute_pool.id` can be updated in additional to `stopped` to resume the original statement under different principal (must have proper role assignment) and/or Flink compute pool (must use the same Flink region as original).
+
+!> **Note:** Currently, only 3 Flink statements support the resume feature, namely: `CREATE TABLE AS`, `INSERT INTO`, and `EXECUTE STATEMENT SET`.
 
 !> **Warning:** Use Option #2 to avoid exposing sensitive `credentials` value in a state file. When using Option #1, Terraform doesn't encrypt the sensitive `credentials` value of the `confluent_flink_statement` resource, so you must keep your state file secure to avoid exposing it. Refer to the [Terraform documentation](https://www.terraform.io/docs/language/state/sensitive-data.html) to learn more about securing your state file.
 
