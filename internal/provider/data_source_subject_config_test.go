@@ -28,7 +28,7 @@ import (
 
 const (
 	subjectCompatibilityLevelDataSourceScenarioName           = "confluent_subject_config Data Source Lifecycle"
-	testNumberOfSubjectCompatibilityLevelDataSourceAttributes = 6
+	testNumberOfSubjectCompatibilityLevelDataSourceAttributes = 7
 )
 
 var fullSubjectCompatibilityLevelDataSourceLabel = fmt.Sprintf("data.confluent_subject_config.%s", testSchemaResourceLabel)
@@ -82,6 +82,7 @@ func TestAccDataSubjectCompatibilityLevelSchema(t *testing.T) {
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelDataSourceLabel, "credentials.0.secret", testSchemaRegistrySecret),
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelDataSourceLabel, "subject_name", testSubjectName),
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelDataSourceLabel, "compatibility_level", testSubjectCompatibilityLevel),
+					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelDataSourceLabel, "compatibility_group", testSubjectCompatibilityGroup),
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelDataSourceLabel, "%", strconv.Itoa(testNumberOfSubjectCompatibilityLevelDataSourceAttributes)),
 				),
 			},

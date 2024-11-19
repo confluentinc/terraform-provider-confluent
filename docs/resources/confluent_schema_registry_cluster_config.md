@@ -53,6 +53,7 @@ provider "confluent" {
 
 resource "confluent_schema_registry_cluster_config" "example" {
   compatibility_level = "FULL"
+  compatibility_group = "abc.cg.version"
 
   lifecycle {
     prevent_destroy = true
@@ -79,6 +80,7 @@ The following arguments are supported:
 !> **Warning:** Use Option #2 to avoid exposing sensitive `credentials` value in a state file. When using Option #1, Terraform doesn't encrypt the sensitive `credentials` value of the `confluent_schema_registry_cluster_config` resource, so you must keep your state file secure to avoid exposing it. Refer to the [Terraform documentation](https://www.terraform.io/docs/language/state/sensitive-data.html) to learn more about securing your state file.
 
 - `compatibility_level` - (Optional String) The global Schema Registry compatibility level. Accepted values are: `BACKWARD`, `BACKWARD_TRANSITIVE`, `FORWARD`, `FORWARD_TRANSITIVE`, `FULL`, `FULL_TRANSITIVE`, and `NONE`. See the [Compatibility Types](https://docs.confluent.io/platform/current/schema-registry/avro.html#compatibility-types) for more details.
+- `compatibility_group` - (Optional String) The global Schema Registry compatibility group.
 
 ## Attributes Reference
 
