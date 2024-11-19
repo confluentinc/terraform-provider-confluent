@@ -73,6 +73,9 @@ In addition to the preceding arguments, the following attributes are exported:
 - `aws_egress_private_link_endpoint` (Optional Configuration Block) supports the following:
   - `vpc_endpoint_id` - (Required String) The ID of a VPC Endpoint (if any) that is connected to the VPC Endpoint service, for example, `vpce-00000000000000000`.
   - `vpc_endpoint_dns_name` - (Required String) The DNS name of a VPC Endpoint (if any) that is connected to the VPC Endpoint service, for example, `*.vpce-00000000000000000-abcd1234.s3.us-west-2.vpce.amazonaws.com`.
+- `aws_private_network_interface` (Optional Configuration Block) supports the following:
+  - `network_interfaces` - (Required List of Strings) List of the IDs of the Elastic Network Interfaces, for example: `["eni-00000000000000000", "eni-00000000000000001", "eni-00000000000000002", "eni-00000000000000003", "eni-00000000000000004", "eni-00000000000000005"]`
+  - `account` - (Required String) The AWS account ID associated with the ENIs you are using for the Confluent Private Network Interface, for example: `000000000000`.
 - `azure_egress_private_link_endpoint` (Optional Configuration Block) supports the following:
   - `private_endpoint_resource_id` (Required String) Resource ID of the Private Endpoint (if any) that is connected to the Private Link service.
   - `private_endpoint_domain` (Required String) Domain of the Private Endpoint (if any) that is connected to the Private Link service.
