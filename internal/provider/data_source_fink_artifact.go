@@ -117,7 +117,7 @@ func flinkArtifactDataSourceRead(ctx context.Context, d *schema.ResourceData, me
 	name := d.Get(paramDisplayName).(string)
 
 	if faId != "" {
-		return flinkArtifactDataSourceReadUsingId(ctx, d, meta, faId)
+		return flinkArtifactDataSourceReadUsingId(ctx, d, meta, faId, environmentId)
 	} else if name != "" {
 		return flinkArtifactDataSourceReadUsingDisplayName(ctx, d, meta, environmentId, name)
 	} else {
@@ -125,10 +125,10 @@ func flinkArtifactDataSourceRead(ctx context.Context, d *schema.ResourceData, me
 	}
 }
 
-func flinkArtifactDataSourceReadUsingId(ctx context.Context, d *schema.ResourceData, meta interface{}, artifactId string) diag.Diagnostics {
+func flinkArtifactDataSourceReadUsingId(ctx context.Context, d *schema.ResourceData, meta interface{}, artifactId, envId string) diag.Diagnostics {
 	tflog.Debug(ctx, fmt.Sprintf("Reading Flink Artifact data source using Id %q", artifactId), map[string]interface{}{flinkArtifactLoggingKey: d.Id()})
 	c := meta.(*Client)
-	fam, _, err := executeArtifactRead(c.faApiContext(ctx), c, d.Get(paramRegion).(string), d.Get(paramCloud).(string), artifactId)
+	fam, _, err := executeArtifactRead(c.faApiContext(ctx), c, d.Get(paramRegion).(string), d.Get(paramCloud).(string), artifactId, envId)
 
 	if err != nil {
 		return diag.Errorf("error reading flink artifact data source using Id %q: %s", artifactId, createDescriptiveError(err))

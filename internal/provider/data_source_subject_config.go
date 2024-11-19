@@ -47,6 +47,10 @@ func subjectConfigDataSource() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			paramCompatibilityGroup: {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 		},
 	}
 }

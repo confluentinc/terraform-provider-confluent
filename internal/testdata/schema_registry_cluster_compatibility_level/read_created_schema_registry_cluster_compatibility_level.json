@@ -1,1 +1,4 @@
-{"compatibilityLevel":"FULL"}
+{
+  "compatibilityLevel": "FULL",
+  "compatibilityGroup": "abc.cg.version"
+}
