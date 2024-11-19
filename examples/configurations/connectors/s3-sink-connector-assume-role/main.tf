@@ -387,56 +387,50 @@ resource "confluent_kafka_acl" "app-connector-read-on-connect-lcc-group" {
   }
 }
 
-# Step #2
-#resource "confluent_connector" "s3-sink" {
-#  environment {
-#    id = confluent_environment.staging.id
-#  }
-#  kafka_cluster {
-#    id = confluent_kafka_cluster.basic.id
-#  }
-#
-#  // Block for custom *sensitive* configuration properties that are labelled with "Type: password" under "Configuration Properties" section in the docs:
-#  // https://docs.confluent.io/cloud/current/connectors/cc-s3-sink.html#configuration-properties
-##  config_sensitive = {
-##    # TODO: use IAM roles + provider integration name
-#    # https://docs.confluent.io/cloud/current/connectors/provider-integration/index.html
-##    "aws.access.key.id"     = "***REDACTED***"
-##    "aws.secret.access.key" = "***REDACTED***"
-##  }
-#
-#  // Block for custom *nonsensitive* configuration properties that are *not* labelled with "Type: password" under "Configuration Properties" section in the docs:
-#  // https://docs.confluent.io/cloud/current/connectors/cc-s3-sink.html#configuration-properties
-#  config_nonsensitive = {
-#    "topics"                   = confluent_kafka_topic.orders.topic_name
-#    "input.data.format"        = "JSON"
-#    "connector.class"          = "S3_SINK"
-#    "name"                     = "S3_SINKConnector_0"
-#    "kafka.auth.mode"          = "SERVICE_ACCOUNT"
-#    "kafka.service.account.id" = confluent_service_account.app-connector.id
-#    "s3.bucket.name"           = var.s3_bucket_name
-#    "output.data.format"       = "JSON"
-#    "time.interval"            = "DAILY"
-#    "flush.size"               = "1000"
-#    "tasks.max"                = "1"
-#    "authentication.method"    = "IAM Roles"
-#    "provider.integration.id"  = confluent_provider_integration.main.id
-#  }
-#
-#  depends_on = [
-#    confluent_kafka_acl.app-connector-describe-on-cluster,
-#    confluent_kafka_acl.app-connector-read-on-target-topic,
-#    confluent_kafka_acl.app-connector-create-on-dlq-lcc-topics,
-#    confluent_kafka_acl.app-connector-write-on-dlq-lcc-topics,
-#    confluent_kafka_acl.app-connector-create-on-success-lcc-topics,
-#    confluent_kafka_acl.app-connector-write-on-success-lcc-topics,
-#    confluent_kafka_acl.app-connector-create-on-error-lcc-topics,
-#    confluent_kafka_acl.app-connector-write-on-error-lcc-topics,
-#    confluent_kafka_acl.app-connector-read-on-connect-lcc-group,
-#    aws_iam_role.s3_access_role_update,
-#    confluent_provider_integration.main,
-#  ]
-#}
+resource "confluent_connector" "s3-sink" {
+  environment {
+    id = confluent_environment.staging.id
+  }
+  kafka_cluster {
+    id = confluent_kafka_cluster.basic.id
+  }
+
+  // Block for custom *sensitive* configuration properties that are labelled with "Type: password" under "Configuration Properties" section in the docs:
+  // https://docs.confluent.io/cloud/current/connectors/cc-s3-sink.html#configuration-properties
+#  config_sensitive = {}
+
+  // Block for custom *nonsensitive* configuration properties that are *not* labelled with "Type: password" under "Configuration Properties" section in the docs:
+  // https://docs.confluent.io/cloud/current/connectors/cc-s3-sink.html#configuration-properties
+  config_nonsensitive = {
+    "topics"                   = confluent_kafka_topic.orders.topic_name
+    "input.data.format"        = "JSON"
+    "connector.class"          = "S3_SINK"
+    "name"                     = "S3_SINKConnector_0"
+    "kafka.auth.mode"          = "SERVICE_ACCOUNT"
+    "kafka.service.account.id" = confluent_service_account.app-connector.id
+    "s3.bucket.name"           = var.s3_bucket_name
+    "output.data.format"       = "JSON"
+    "time.interval"            = "DAILY"
+    "flush.size"               = "1000"
+    "tasks.max"                = "1"
+    "authentication.method"    = "IAM Roles"
+    "provider.integration.id"  = confluent_provider_integration.main.id
+  }
+
+  depends_on = [
+    confluent_kafka_acl.app-connector-describe-on-cluster,
+    confluent_kafka_acl.app-connector-read-on-target-topic,
+    confluent_kafka_acl.app-connector-create-on-dlq-lcc-topics,
+    confluent_kafka_acl.app-connector-write-on-dlq-lcc-topics,
+    confluent_kafka_acl.app-connector-create-on-success-lcc-topics,
+    confluent_kafka_acl.app-connector-write-on-success-lcc-topics,
+    confluent_kafka_acl.app-connector-create-on-error-lcc-topics,
+    confluent_kafka_acl.app-connector-write-on-error-lcc-topics,
+    confluent_kafka_acl.app-connector-read-on-connect-lcc-group,
+    aws_iam_role.s3_access_role_update,
+    confluent_provider_integration.main,
+  ]
+}
 
 # https://docs.confluent.io/cloud/current/connectors/provider-integration/index.html#cloud-pi-qs-step1
 resource "aws_iam_role" "s3_access_role_update" {
@@ -444,14 +438,14 @@ resource "aws_iam_role" "s3_access_role_update" {
   description = "IAM role for Confluent to assume for accessing S3"
 
   assume_role_policy = jsonencode({
-    Version = "2012-10-17"
+    Version   = "2012-10-17"
     Statement = [
       {
-        Effect = "Allow"
+        Effect    = "Allow"
         Principal = {
           AWS = confluent_provider_integration.main.aws[0].iam_role_arn
         }
-        Action = "sts:AssumeRole"
+        Action    = "sts:AssumeRole"
         Condition = {
           StringEquals = {
             "sts:ExternalId" = confluent_provider_integration.main.aws[0].external_id
@@ -468,21 +462,31 @@ resource "aws_iam_role" "s3_access_role_update" {
   }
 }
 
+data "aws_caller_identity" "current" {}
+
+locals {
+  s3_access_role_name = "ConfluentS3AccessRole"
+  s3_access_role_arn  = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/${local.s3_access_role_name}"
+}
+
 resource "confluent_provider_integration" "main" {
   display_name = "s3_sink_connector_integration"
   environment {
     id = confluent_environment.staging.id
   }
   aws {
-    customer_role_arn = module.s3_access_role.s3_access_role_arn
+    # During the creation of confluent_provider_integration.main, the S3 role does not yet exist.
+    # The role will be created after confluent_provider_integration.main is provisioned
+    # by the s3_access_role module using the specified target name.
+    # Note: This is a workaround to avoid updating an existing role or creating a circular dependency.
+    customer_role_arn = s3_access_role_arn
   }
 }
 
 module "s3_access_role" {
-  source = "./iam_role_module"  # Path to your module folder
+  source         = "./iam_role_module"
   s3_bucket_name = var.s3_bucket_name
-}
-
-output "s3_access_role_arn" {
-  value = module.s3_access_role.s3_access_role_arn
+  role_arn       = local.s3_access_role_arn
+  role_name      = local.s3_access_role_name
+  provider_integration_external_id = confluent_provider_integration.main.aws[0].customer_role_arn
 }

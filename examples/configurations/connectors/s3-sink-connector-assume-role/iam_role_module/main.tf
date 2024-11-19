@@ -1,16 +1,22 @@
+# https://docs.confluent.io/cloud/current/connectors/provider-integration/index.html
 resource "aws_iam_role" "s3_access_role" {
-  name        = "S3AccessRole"
-  description = "IAM role for accessing S3 with a placeholder trust policy"
+  name        = var.role_name
+  description = "IAM role for accessing S3 with a trust policy for Confluent"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
-        Effect    = "Deny"
+        Effect = "Allow"
         Principal = {
-          AWS = "*"
+          AWS = var.role_arn
         }
         Action = "sts:AssumeRole"
+        Condition = {
+          StringEquals = {
+            "sts:ExternalId" = var.provider_integration_external_id
+          }
+        }
       }
     ]
   })
