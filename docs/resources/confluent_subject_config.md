@@ -31,6 +31,8 @@ resource "confluent_subject_config" "example" {
   rest_endpoint       = data.confluent_schema_registry_cluster.essentials.rest_endpoint
   subject_name        = "proto-purchase-value"
   compatibility_level = "BACKWARD"
+  compatibility_group = "abc.cg.version"
+
   credentials {
     key    = "<Schema Registry API Key for data.confluent_schema_registry_cluster.essentials>"
     secret = "<Schema Registry API Secret for data.confluent_schema_registry_cluster.essentials>"
@@ -55,6 +57,7 @@ provider "confluent" {
 resource "confluent_subject_config" "example" {
   subject_name        = "proto-purchase-value"
   compatibility_level = "BACKWARD"
+  compatibility_group = "abc.cg.version"
 
   lifecycle {
     prevent_destroy = true
@@ -82,6 +85,7 @@ The following arguments are supported:
 
 - `subject_name` - (Required String) The name of the subject (in other words, the namespace), representing the subject under which the schema will be registered, for example, `test-subject`.
 - `compatibility_level` - (Optional String) The Compatibility Level of the specified subject. Accepted values are: `BACKWARD`, `BACKWARD_TRANSITIVE`, `FORWARD`, `FORWARD_TRANSITIVE`, `FULL`, `FULL_TRANSITIVE`, and `NONE`. See the [Compatibility Types](https://docs.confluent.io/platform/current/schema-registry/avro.html#compatibility-types) for more details.
+- `compatibility_group` - (Optional String) The Compatibility Group of the specified subject.
 
 ## Attributes Reference
 
