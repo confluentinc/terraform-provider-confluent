@@ -21,7 +21,7 @@ provider "aws" {
 }
 
 resource "confluent_environment" "staging" {
-  display_name = "Staging111"
+  display_name = "Staging1112"
 
   stream_governance {
     package = "ESSENTIALS"
@@ -449,7 +449,7 @@ resource "confluent_provider_integration" "main" {
     # The role will be created after confluent_provider_integration.main is provisioned
     # by the s3_access_role module using the specified target name.
     # Note: This is a workaround to avoid updating an existing role or creating a circular dependency.
-    customer_role_arn = s3_access_role_arn
+    customer_role_arn = local.s3_access_role_arn
   }
 }
 
