@@ -68,6 +68,7 @@ func TestAccDataSchemaRegistryClusterCompatibilityLevelSchemaWithEnhancedProvide
 					resource.TestCheckResourceAttr(fullSchemaRegistryClusterCompatibilityLevelDataSourceLabel, "schema_registry_cluster.#", "0"),
 					resource.TestCheckNoResourceAttr(fullSchemaRegistryClusterCompatibilityLevelDataSourceLabel, "schema_registry_cluster.0.id"),
 					resource.TestCheckResourceAttr(fullSchemaRegistryClusterCompatibilityLevelDataSourceLabel, "compatibility_level", testSchemaRegistryClusterCompatibilityLevel),
+					resource.TestCheckResourceAttr(fullSchemaRegistryClusterCompatibilityLevelDataSourceLabel, "compatibility_group", testSchemaRegistryClusterCompatibilityGroup),
 					resource.TestCheckResourceAttr(fullSchemaRegistryClusterCompatibilityLevelDataSourceLabel, "credentials.#", "0"),
 					resource.TestCheckNoResourceAttr(fullSchemaRegistryClusterCompatibilityLevelDataSourceLabel, "credentials.0.key"),
 					resource.TestCheckNoResourceAttr(fullSchemaRegistryClusterCompatibilityLevelDataSourceLabel, "credentials.0.secret"),

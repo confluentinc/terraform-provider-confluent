@@ -30,6 +30,7 @@ import (
 
 const (
 	paramCompatibilityLevel = "compatibility_level"
+	paramCompatibilityGroup = "compatibility_group"
 
 	compatibilityLevelBackward           = "BACKWARD"
 	compatibilityLevelBackwardTransitive = "BACKWARD_TRANSITIVE"
@@ -76,6 +77,11 @@ func subjectConfigResource() *schema.Resource {
 				Computed:     true,
 				ValidateFunc: validation.StringInSlice(acceptedCompatibilityLevels, false),
 			},
+			paramCompatibilityGroup: {
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+			},
 		},
 	}
 }
@@ -98,9 +104,11 @@ func subjectConfigCreate(ctx context.Context, d *schema.ResourceData, meta inter
 
 	if _, ok := d.GetOk(paramCompatibilityLevel); ok {
 		compatibilityLevel := d.Get(paramCompatibilityLevel).(string)
+		compatibilityGroup := d.Get(paramCompatibilityGroup).(string)
 
 		createConfigRequest := sr.NewConfigUpdateRequest()
 		createConfigRequest.SetCompatibility(compatibilityLevel)
+		createConfigRequest.SetCompatibilityGroup(compatibilityGroup)
 		createConfigRequestJson, err := json.Marshal(createConfigRequest)
 		if err != nil {
 			return diag.Errorf("error creating Subject Config: error marshaling %#v to json: %s", createConfigRequest, createDescriptiveError(err))
@@ -247,6 +255,10 @@ func readSubjectConfigAndSetAttributes(ctx context.Context, d *schema.ResourceDa
 		return nil, err
 	}
 
+	if err := d.Set(paramCompatibilityGroup, subjectConfig.GetCompatibilityGroup()); err != nil {
+		return nil, err
+	}
+
 	if !c.isMetadataSetInProviderBlock {
 		if err := setKafkaCredentials(c.clusterApiKey, c.clusterApiSecret, d); err != nil {
 			return nil, err
@@ -265,13 +277,15 @@ func readSubjectConfigAndSetAttributes(ctx context.Context, d *schema.ResourceDa
 }
 
 func subjectConfigUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if d.HasChangesExcept(paramCredentials, paramCompatibilityLevel) {
-		return diag.Errorf("error updating Subject Config %q: only %q and %q blocks can be updated for Subject Config", d.Id(), paramCredentials, paramCompatibilityLevel)
+	if d.HasChangesExcept(paramCredentials, paramCompatibilityLevel, paramCompatibilityGroup) {
+		return diag.Errorf("error updating Subject Config %q: only %q, %q and %q blocks can be updated for Subject Config", d.Id(), paramCredentials, paramCompatibilityLevel, paramCompatibilityGroup)
 	}
-	if d.HasChange(paramCompatibilityLevel) {
+	if d.HasChange(paramCompatibilityLevel) || d.HasChanges(paramCompatibilityGroup) {
 		updatedCompatibilityLevel := d.Get(paramCompatibilityLevel).(string)
+		updatedCompatibilityGroup := d.Get(paramCompatibilityGroup).(string)
 		updateConfigRequest := sr.NewConfigUpdateRequest()
 		updateConfigRequest.SetCompatibility(updatedCompatibilityLevel)
+		updateConfigRequest.SetCompatibilityGroup(updatedCompatibilityGroup)
 		restEndpoint, err := extractSchemaRegistryRestEndpoint(meta.(*Client), d, false)
 		if err != nil {
 			return diag.Errorf("error updating Schema: %s", createDescriptiveError(err))

@@ -52,6 +52,11 @@ func schemaRegistryClusterConfigResource() *schema.Resource {
 				Computed:     true,
 				ValidateFunc: validation.StringInSlice(acceptedCompatibilityLevels, false),
 			},
+			paramCompatibilityGroup: {
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+			},
 		},
 	}
 }
@@ -73,9 +78,11 @@ func schemaRegistryClusterConfigCreate(ctx context.Context, d *schema.ResourceDa
 
 	if _, ok := d.GetOk(paramCompatibilityLevel); ok {
 		compatibilityLevel := d.Get(paramCompatibilityLevel).(string)
+		compatibilityGroup := d.Get(paramCompatibilityGroup).(string)
 
 		createConfigRequest := sr.NewConfigUpdateRequest()
 		createConfigRequest.SetCompatibility(compatibilityLevel)
+		createConfigRequest.SetCompatibilityGroup(compatibilityGroup)
 		createModeRequestJson, err := json.Marshal(createConfigRequest)
 		if err != nil {
 			return diag.Errorf("error creating Schema Registry Cluster Config: error marshaling %#v to json: %s", createConfigRequest, createDescriptiveError(err))
@@ -187,6 +194,10 @@ func readSchemaRegistryClusterConfigAndSetAttributes(ctx context.Context, d *sch
 		return nil, err
 	}
 
+	if err := d.Set(paramCompatibilityGroup, schemaRegistryClusterConfig.GetCompatibilityGroup()); err != nil {
+		return nil, err
+	}
+
 	if !c.isMetadataSetInProviderBlock {
 		if err := setKafkaCredentials(c.clusterApiKey, c.clusterApiSecret, d); err != nil {
 			return nil, err
@@ -205,13 +216,15 @@ func readSchemaRegistryClusterConfigAndSetAttributes(ctx context.Context, d *sch
 }
 
 func schemaRegistryClusterConfigUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if d.HasChangesExcept(paramCredentials, paramCompatibilityLevel) {
-		return diag.Errorf("error updating Schema Registry Cluster Config %q: only %q and %q blocks can be updated for Schema Registry Cluster Config", d.Id(), paramCredentials, paramCompatibilityLevel)
+	if d.HasChangesExcept(paramCredentials, paramCompatibilityLevel, paramCompatibilityGroup) {
+		return diag.Errorf("error updating Schema Registry Cluster Config %q: only %q, %q and %q blocks can be updated for Schema Registry Cluster Config", d.Id(), paramCredentials, paramCompatibilityLevel, paramCompatibilityGroup)
 	}
-	if d.HasChange(paramCompatibilityLevel) {
+	if d.HasChange(paramCompatibilityLevel) || d.HasChanges(paramCompatibilityGroup) {
 		updatedCompatibilityLevel := d.Get(paramCompatibilityLevel).(string)
+		updatedCompatibilityGroup := d.Get(paramCompatibilityGroup).(string)
 		updateConfigRequest := sr.NewConfigUpdateRequest()
 		updateConfigRequest.SetCompatibility(updatedCompatibilityLevel)
+		updateConfigRequest.SetCompatibilityGroup(updatedCompatibilityGroup)
 		restEndpoint, err := extractSchemaRegistryRestEndpoint(meta.(*Client), d, false)
 		if err != nil {
 			return diag.Errorf("error updating Schema Registry Cluster Config: %s", createDescriptiveError(err))

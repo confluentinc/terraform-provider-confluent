@@ -117,7 +117,7 @@ func TestAccSubjectCompatibilityLevel(t *testing.T) {
 		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckSubjectCompatibilityLevelConfig(confluentCloudBaseUrl, mockSubjectCompatibilityLevelTestServerUrl, testSubjectCompatibilityLevel, testSchemaRegistryKey, testSchemaRegistrySecret),
+				Config: testAccCheckSubjectCompatibilityLevelConfig(confluentCloudBaseUrl, mockSubjectCompatibilityLevelTestServerUrl, testSubjectCompatibilityLevel, testSubjectCompatibilityGroup, testSchemaRegistryKey, testSchemaRegistrySecret),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSubjectCompatibilityLevelExists(fullSubjectCompatibilityLevelResourceLabel),
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "id", fmt.Sprintf("%s/%s", testStreamGovernanceClusterId, testSubjectName)),
@@ -126,6 +126,7 @@ func TestAccSubjectCompatibilityLevel(t *testing.T) {
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "schema_registry_cluster.0.id", testStreamGovernanceClusterId),
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "subject_name", testSubjectName),
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "compatibility_level", testSubjectCompatibilityLevel),
+					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "compatibility_group", testSubjectCompatibilityGroup),
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "rest_endpoint", mockSubjectCompatibilityLevelTestServerUrl),
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "credentials.#", "1"),
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "credentials.0.%", "2"),
@@ -135,7 +136,7 @@ func TestAccSubjectCompatibilityLevel(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckSubjectCompatibilityLevelConfig(confluentCloudBaseUrl, mockSubjectCompatibilityLevelTestServerUrl, testUpdatedSubjectCompatibilityLevel, testSchemaRegistryUpdatedKey, testSchemaRegistryUpdatedSecret),
+				Config: testAccCheckSubjectCompatibilityLevelConfig(confluentCloudBaseUrl, mockSubjectCompatibilityLevelTestServerUrl, testUpdatedSubjectCompatibilityLevel, testSubjectCompatibilityGroup, testSchemaRegistryUpdatedKey, testSchemaRegistryUpdatedSecret),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSubjectCompatibilityLevelExists(fullSubjectCompatibilityLevelResourceLabel),
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "id", fmt.Sprintf("%s/%s", testStreamGovernanceClusterId, testSubjectName)),
@@ -144,6 +145,7 @@ func TestAccSubjectCompatibilityLevel(t *testing.T) {
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "schema_registry_cluster.0.id", testStreamGovernanceClusterId),
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "subject_name", testSubjectName),
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "compatibility_level", testUpdatedSubjectCompatibilityLevel),
+					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "compatibility_group", testSubjectCompatibilityGroup),
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "rest_endpoint", mockSubjectCompatibilityLevelTestServerUrl),
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "credentials.#", "1"),
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelResourceLabel, "credentials.0.%", "2"),
@@ -165,7 +167,7 @@ func TestAccSubjectCompatibilityLevel(t *testing.T) {
 	checkStubCount(t, wiremockClient, deleteSubjectCompatibilityLevelStub, fmt.Sprintf("DELETE %s", updateSubjectCompatibilityLevelPath), expectedCountOne)
 }
 
-func testAccCheckSubjectCompatibilityLevelConfig(confluentCloudBaseUrl, mockServerUrl, compatibilityLevel, schemaRegistryKey, schemaRegistrySecret string) string {
+func testAccCheckSubjectCompatibilityLevelConfig(confluentCloudBaseUrl, mockServerUrl, compatibilityLevel, compatibilityGroup, schemaRegistryKey, schemaRegistrySecret string) string {
 	return fmt.Sprintf(`
 	provider "confluent" {
 	  endpoint = "%s"
@@ -182,6 +184,7 @@ func testAccCheckSubjectCompatibilityLevelConfig(confluentCloudBaseUrl, mockServ
 	
 	  subject_name = "%s"
 	  compatibility_level = "%s"
+	  compatibility_group = "%s"
 	}
-	`, confluentCloudBaseUrl, testSubjectCompatibilityLevelResourceLabel, schemaRegistryKey, schemaRegistrySecret, mockServerUrl, testStreamGovernanceClusterId, testSubjectName, compatibilityLevel)
+	`, confluentCloudBaseUrl, testSubjectCompatibilityLevelResourceLabel, schemaRegistryKey, schemaRegistrySecret, mockServerUrl, testStreamGovernanceClusterId, testSubjectName, compatibilityLevel, compatibilityGroup)
 }
