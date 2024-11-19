@@ -21,7 +21,7 @@ provider "aws" {
 }
 
 resource "confluent_environment" "staging" {
-  display_name = "Staging1112"
+  display_name = "Staging"
 
   stream_governance {
     package = "ESSENTIALS"
