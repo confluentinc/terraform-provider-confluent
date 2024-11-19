@@ -77,3 +77,4 @@ In addition to the preceding arguments, the following attributes are exported:
 
 - `id` - (Required String) The ID of the Subject Config, in the format `<Schema Registry cluster ID>/<Subject name>`, for example, `lsrc-abc123/test-subject`.
 - `compatibility_level` - (Required String) The Compatibility Level of the specified subject. Accepted values are: `BACKWARD`, `BACKWARD_TRANSITIVE`, `FORWARD`, `FORWARD_TRANSITIVE`, `FULL`, `FULL_TRANSITIVE`, and `NONE`. See the [Compatibility Types](https://docs.confluent.io/platform/current/schema-registry/avro.html#compatibility-types) for more details.
+- `compatibility_group` - (Required String) The Compatibility Group of the specified subject. 

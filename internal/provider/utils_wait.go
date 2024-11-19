@@ -17,10 +17,11 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"net/http"
 	"time"
+
+	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
 const (
@@ -335,6 +336,25 @@ func waitForAccessPointToProvision(ctx context.Context, c *Client, environmentId
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for Access Point %q provisioning status to become %q", accessPointId, stateReady), map[string]interface{}{accessPointKey: accessPointId})
 	if _, err := stateConf.WaitForStateContext(c.netAPApiContext(ctx)); err != nil {
+		return err
+	}
+	return nil
+}
+
+func waitForGatewayToProvision(ctx context.Context, c *Client, environmentId, gatewayId string) error {
+	delay, pollInterval := getDelayAndPollInterval(5*time.Second, 1*time.Minute, c.isAcceptanceTestMode)
+	stateConf := &resource.StateChangeConf{
+		Pending: []string{stateProvisioning},
+		Target:  []string{stateReady, stateCreated},
+		Refresh: gatewayProvisionStatus(c.netGWApiContext(ctx), c, environmentId, gatewayId),
+		Timeout: networkingAPICreateTimeout,
+		// TODO: increase delay
+		Delay:        delay,
+		PollInterval: pollInterval,
+	}
+
+	tflog.Debug(ctx, fmt.Sprintf("Waiting for Gateway %q provisioning status to become %q", gatewayId, stateReady), map[string]interface{}{gatewayKey: gatewayId})
+	if _, err := stateConf.WaitForStateContext(c.netGWApiContext(ctx)); err != nil {
 		return err
 	}
 	return nil
@@ -1144,6 +1164,25 @@ func accessPointProvisionStatus(ctx context.Context, c *Client, environmentId st
 		}
 		// Access Point is in an unexpected state
 		return nil, stateUnexpected, fmt.Errorf("access point %q is an unexpected state %q: %s", accessPointId, accessPoint.Status.GetPhase(), accessPoint.Status.GetErrorMessage())
+	}
+}
+
+func gatewayProvisionStatus(ctx context.Context, c *Client, environmentId string, gatewayId string) resource.StateRefreshFunc {
+	return func() (result interface{}, s string, err error) {
+		gateway, _, err := executeGatewayRead(c.netAPApiContext(ctx), c, environmentId, gatewayId)
+		if err != nil {
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Gateway %q: %s", gatewayId, createDescriptiveError(err)), map[string]interface{}{gatewayKey: gatewayId})
+			return nil, stateUnknown, err
+		}
+
+		tflog.Debug(ctx, fmt.Sprintf("Waiting for Gateway %q provisioning status to become %q: current status is %q", gatewayId, stateReady, gateway.Status.GetPhase()), map[string]interface{}{gatewayKey: gatewayId})
+		if gateway.Status.GetPhase() == stateProvisioning || gateway.Status.GetPhase() == stateReady || gateway.Status.GetPhase() == stateCreated {
+			return gateway, gateway.Status.GetPhase(), nil
+		} else if gateway.Status.GetPhase() == stateFailed {
+			return nil, stateFailed, fmt.Errorf("access point %q provisioning status is %q: %s", gatewayId, stateFailed, gateway.Status.GetErrorMessage())
+		}
+		// Access Point is in an unexpected state
+		return nil, stateUnexpected, fmt.Errorf("access point %q is an unexpected state %q: %s", gatewayId, gateway.Status.GetPhase(), gateway.Status.GetErrorMessage())
 	}
 }
 

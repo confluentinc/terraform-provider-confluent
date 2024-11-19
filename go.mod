@@ -11,7 +11,7 @@ require (
 	github.com/confluentinc/ccloud-sdk-go-v2/connect-custom-plugin v0.0.2
 	github.com/confluentinc/ccloud-sdk-go-v2/data-catalog v0.2.0
 	github.com/confluentinc/ccloud-sdk-go-v2/flink v0.9.0
-	github.com/confluentinc/ccloud-sdk-go-v2/flink-artifact v0.1.0
+	github.com/confluentinc/ccloud-sdk-go-v2/flink-artifact v0.4.0
 	github.com/confluentinc/ccloud-sdk-go-v2/flink-gateway v0.17.0
 	github.com/confluentinc/ccloud-sdk-go-v2/iam v0.10.0
 	github.com/confluentinc/ccloud-sdk-go-v2/identity-provider v0.2.0
@@ -22,6 +22,7 @@ require (
 	github.com/confluentinc/ccloud-sdk-go-v2/networking v0.12.0
 	github.com/confluentinc/ccloud-sdk-go-v2/networking-access-point v0.3.0
 	github.com/confluentinc/ccloud-sdk-go-v2/networking-dnsforwarder v0.2.0
+	github.com/confluentinc/ccloud-sdk-go-v2/networking-gateway v0.2.0
 	github.com/confluentinc/ccloud-sdk-go-v2/networking-ip v0.2.0
 	github.com/confluentinc/ccloud-sdk-go-v2/networking-privatelink v0.2.0
 	github.com/confluentinc/ccloud-sdk-go-v2/org v0.9.0
