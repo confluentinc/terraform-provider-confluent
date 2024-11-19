@@ -397,7 +397,7 @@ resource "confluent_connector" "s3-sink" {
 
   // Block for custom *sensitive* configuration properties that are labelled with "Type: password" under "Configuration Properties" section in the docs:
   // https://docs.confluent.io/cloud/current/connectors/cc-s3-sink.html#configuration-properties
-  #  config_sensitive = {}
+  config_sensitive = {}
 
   // Block for custom *nonsensitive* configuration properties that are *not* labelled with "Type: password" under "Configuration Properties" section in the docs:
   // https://docs.confluent.io/cloud/current/connectors/cc-s3-sink.html#configuration-properties
