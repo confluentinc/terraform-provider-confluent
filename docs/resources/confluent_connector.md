@@ -20,6 +20,7 @@ description: |-
 
 ### Example Managed [Datagen Source Connector](https://docs.confluent.io/cloud/current/connectors/cc-datagen-source.html) that uses a service account to communicate with your Kafka cluster
 ```terraform
+# https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/connectors/managed-datagen-source-connector
 resource "confluent_connector" "source" {
   environment {
     id = confluent_environment.staging.id
@@ -56,6 +57,7 @@ resource "confluent_connector" "source" {
 
 ### Example Managed [Amazon S3 Sink Connector](https://docs.confluent.io/cloud/current/connectors/cc-s3-sink.html) that uses a service account to communicate with your Kafka cluster
 ```terraform
+# https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/connectors/s3-sink-connector
 resource "confluent_connector" "sink" {
   environment {
     id = confluent_environment.staging.id
@@ -107,7 +109,7 @@ resource "confluent_connector" "sink" {
 
 ### Example Managed [Amazon S3 Sink Connector](https://docs.confluent.io/cloud/current/connectors/cc-s3-sink.html) that uses a service account to communicate with your Kafka cluster and IAM Roles for AWS authentication
 ```terraform
-# https://docs.confluent.io/cloud/current/connectors/provider-integration/index.html
+# https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/connectors/s3-sink-connector-assume-role
 resource "confluent_connector" "sink" {
   environment {
     id = confluent_environment.staging.id
@@ -160,6 +162,7 @@ resource "confluent_connector" "sink" {
 
 ### Example Managed [Amazon DynamoDB Connector](https://docs.confluent.io/cloud/current/connectors/cc-amazon-dynamo-db-sink.html) that uses a service account to communicate with your Kafka cluster
 ```terraform
+# https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/connectors/dynamo-db-sink-connector
 resource "confluent_connector" "sink" {
   environment {
     id = confluent_environment.staging.id
@@ -204,8 +207,8 @@ resource "confluent_connector" "sink" {
 ```
 
 ### Example Custom [Datagen Source Connector](https://www.confluent.io/hub/confluentinc/kafka-connect-datagen) that uses a Kafka API Key to communicate with your Kafka cluster
-
 ```terraform
+# https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/connectors/custom-datagen-source-connector
 resource "confluent_connector" "source" {
   environment {
     id = confluent_environment.staging.id
