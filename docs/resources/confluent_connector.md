@@ -105,7 +105,7 @@ resource "confluent_connector" "sink" {
 }
 ```
 
-### Example Managed [Amazon S3 Sink Connector](https://docs.confluent.io/cloud/current/connectors/cc-s3-sink.html) that uses a service account to communicate with your Kafka cluster and IAM Roles to communicate with AWS
+### Example Managed [Amazon S3 Sink Connector](https://docs.confluent.io/cloud/current/connectors/cc-s3-sink.html) that uses a service account to communicate with your Kafka cluster and IAM Roles for AWS authentication
 ```terraform
 # https://docs.confluent.io/cloud/current/connectors/provider-integration/index.html
 resource "confluent_connector" "sink" {
