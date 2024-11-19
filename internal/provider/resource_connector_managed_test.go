@@ -17,13 +17,13 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/walkerus/go-wiremock"
-	"io/ioutil"
 	"net/http"
+	"os"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/walkerus/go-wiremock"
 )
 
 const (
@@ -56,7 +56,8 @@ func TestAccManagedConnector(t *testing.T) {
 	defer wiremockClient.Reset()
 	// nolint:errcheck
 	defer wiremockClient.ResetAllScenarios()
-	validateConnectorResponse, _ := ioutil.ReadFile("../testdata/connector/managed/validate.json")
+
+	validateConnectorResponse, _ := os.ReadFile("../testdata/connector/managed/validate.json")
 	validateEnvStub := wiremock.Put(wiremock.URLPathEqualTo("/connect/v1/environments/env-1j3m9j/clusters/lkc-vnwdjz/connector-plugins/DatagenSourceInternal/config/validate")).
 		InScenario(connectorScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
@@ -79,7 +80,7 @@ func TestAccManagedConnector(t *testing.T) {
 		)
 	_ = wiremockClient.StubFor(createConnectorStub)
 
-	createdConnectorResponse, _ := ioutil.ReadFile("../testdata/connector/managed/read_created_connectors.json")
+	createdConnectorResponse, _ := os.ReadFile("../testdata/connector/managed/read_created_connectors.json")
 	readCreatedConnectorsStub := wiremock.Get(wiremock.URLPathEqualTo("/connect/v1/environments/env-1j3m9j/clusters/lkc-vnwdjz/connectors")).
 		WithQueryParam("expand", wiremock.EqualTo("info,status,id")).
 		InScenario(connectorScenarioName).
@@ -92,7 +93,7 @@ func TestAccManagedConnector(t *testing.T) {
 		)
 	_ = wiremockClient.StubFor(readCreatedConnectorsStub)
 
-	provisioningConnectorResponse, _ := ioutil.ReadFile("../testdata/connector/managed/read_provisioning_connector.json")
+	provisioningConnectorResponse, _ := os.ReadFile("../testdata/connector/managed/read_provisioning_connector.json")
 	readProvisioningConnectorStub := wiremock.Get(wiremock.URLPathEqualTo("/connect/v1/environments/env-1j3m9j/clusters/lkc-vnwdjz/connectors/test_connector/status")).
 		InScenario(connectorScenarioName).
 		WhenScenarioStateIs(scenarioStateManagedConnectorFetchingId).
@@ -104,7 +105,7 @@ func TestAccManagedConnector(t *testing.T) {
 		)
 	_ = wiremockClient.StubFor(readProvisioningConnectorStub)
 
-	runningConnectorResponse, _ := ioutil.ReadFile("../testdata/connector/managed/read_running_connector.json")
+	runningConnectorResponse, _ := os.ReadFile("../testdata/connector/managed/read_running_connector.json")
 	readRunningConnectorStub1 := wiremock.Get(wiremock.URLPathEqualTo("/connect/v1/environments/env-1j3m9j/clusters/lkc-vnwdjz/connectors/test_connector/status")).
 		InScenario(connectorScenarioName).
 		WhenScenarioStateIs(scenarioStateManagedConnectorIsProvisioning).
@@ -150,7 +151,7 @@ func TestAccManagedConnector(t *testing.T) {
 		)
 	_ = wiremockClient.StubFor(updateConnectorStub)
 
-	updatedConnectorResponse, _ := ioutil.ReadFile("../testdata/connector/managed/read_updated_connectors.json")
+	updatedConnectorResponse, _ := os.ReadFile("../testdata/connector/managed/read_updated_connectors.json")
 	readUpdatedConnectorStub := wiremock.Get(wiremock.URLPathEqualTo("/connect/v1/environments/env-1j3m9j/clusters/lkc-vnwdjz/connectors")).
 		WithQueryParam("expand", wiremock.EqualTo("info,status,id")).
 		InScenario(connectorScenarioName).
@@ -162,7 +163,7 @@ func TestAccManagedConnector(t *testing.T) {
 		)
 	_ = wiremockClient.StubFor(readUpdatedConnectorStub)
 
-	deleteConnectorResponse, _ := ioutil.ReadFile("../testdata/connector/managed/delete_connector.json")
+	deleteConnectorResponse, _ := os.ReadFile("../testdata/connector/managed/delete_connector.json")
 	deleteConnectorStub := wiremock.Delete(wiremock.URLPathEqualTo("/connect/v1/environments/env-1j3m9j/clusters/lkc-vnwdjz/connectors/test_connector")).
 		InScenario(connectorScenarioName).
 		WhenScenarioStateIs(scenarioStateManagedConnectorNameHasBeenUpdated).
@@ -174,7 +175,7 @@ func TestAccManagedConnector(t *testing.T) {
 		)
 	_ = wiremockClient.StubFor(deleteConnectorStub)
 
-	readDeletedConnectorResponse, _ := ioutil.ReadFile("../testdata/connector/managed/read_deleted_connector.json")
+	readDeletedConnectorResponse, _ := os.ReadFile("../testdata/connector/managed/read_deleted_connector.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/connect/v1/environments/env-1j3m9j/clusters/lkc-vnwdjz/connectors/test_connector")).
 		InScenario(connectorScenarioName).
 		WhenScenarioStateIs(scenarioStateManagedConnectorHasBeenDeleted).
@@ -230,7 +231,7 @@ func TestAccManagedConnector(t *testing.T) {
 				ResourceName:            fullConnectorResourceLabel,
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{paramSensitiveConfig},
+				ImportStateVerifyIgnore: []string{paramSensitiveConfig, paramOffsetsConfig},
 				ImportStateIdFunc: func(state *terraform.State) (string, error) {
 					resources := state.RootModule().Resources
 					environmentId := resources[fullConnectorResourceLabel].Primary.Attributes["environment.0.id"]
@@ -275,7 +276,7 @@ func TestAccManagedConnector(t *testing.T) {
 				ResourceName:            fullConnectorResourceLabel,
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{paramSensitiveConfig},
+				ImportStateVerifyIgnore: []string{paramSensitiveConfig, paramOffsetsConfig},
 				ImportStateIdFunc: func(state *terraform.State) (string, error) {
 					resources := state.RootModule().Resources
 					environmentId := resources[fullConnectorResourceLabel].Primary.Attributes["environment.0.id"]
@@ -298,7 +299,7 @@ func testAccCheckConnectorDestroy(s *terraform.State) error {
 		deletedConnectorName := rs.Primary.Attributes["config_nonsensitive.name"]
 		deletedConnectorEnvId := rs.Primary.Attributes["environment.0.id"]
 		deletedConnectorKafkaClusterId := rs.Primary.Attributes["kafka_cluster.0.id"]
-		req := c.connectClient.ConnectorsV1Api.ReadConnectv1Connector(c.connectApiContext(context.Background()), deletedConnectorName, deletedConnectorEnvId, deletedConnectorKafkaClusterId)
+		req := c.connectClient.ConnectorsConnectV1Api.ReadConnectv1Connector(c.connectApiContext(context.Background()), deletedConnectorName, deletedConnectorEnvId, deletedConnectorKafkaClusterId)
 		_, response, _ := req.Execute()
 		if isNonKafkaRestApiResourceNotFound(response) {
 			return nil
@@ -331,6 +332,7 @@ func testAccCheckManagedConnectorConfig(mockServerUrl, environmentConnectorLabel
 		  "tasks.max" = "1"
 		  "quickstart" = "ORDERS"
 		}
+		offsets = []
 	}
 	`, mockServerUrl, environmentConnectorLabel, sensitiveAttributeKey, sensitiveAttributeValue, connectorDisplayName)
 }
