@@ -56,13 +56,13 @@ var connectorConfigFullAttributeName = fmt.Sprintf("%s.name", paramNonSensitiveC
 var ignoredConnectorConfigs = []string{
 	"cloud.environment",
 	"cloud.provider",
+	"connector.crn",
 	"kafka.endpoint",
 	"kafka.max.partition.validation.disable",
 	"kafka.region",
 	"kafka.dedicated",
 	"schema.registry.url",
 	"valid.kafka.api.key",
-	"connector.crn",
 }
 var twoStarsOrMoreRegExp = regexp.MustCompile(twoStarsOrMorePattern)
 
