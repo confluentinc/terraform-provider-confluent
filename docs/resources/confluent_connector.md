@@ -239,6 +239,7 @@ $ terraform import confluent_connector.my_connector "env-abc123/lkc-abc123/S3_SI
 
 The following end-to-end examples might help to get started with `confluent_connector` resource:
 * [`s3-sink-connector`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/connectors/s3-sink-connector)
+* [`s3-sink-connector-assume-role`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/connectors/s3-sink-connector-assume-role)
 * [`snowflake-sink-connector`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/connectors/snowflake-sink-connector)
 * [`managed-datagen-source-connector`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/connectors/managed-datagen-source-connector)
 * [`elasticsearch-sink-connector`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/connectors/elasticsearch-sink-connector)
@@ -248,6 +249,5 @@ The following end-to-end examples might help to get started with `confluent_conn
 * [`sql-server-cdc-debezium-source-connector`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/connectors/sql-server-cdc-debezium-source-connector)
 * [`postgre-sql-cdc-debezium-source-connector`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/connectors/postgre-sql-cdc-debezium-source-connector)
 * [`custom-datagen-source-connector`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/connectors/custom-datagen-source-connector)
-* [`custom-datagen-source-connector`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/connectors/s3-sink-connector-assume-role)
 
 -> **Note:** Certain connectors require additional ACL entries. See [Additional ACL entries](https://docs.confluent.io/cloud/current/connectors/service-account.html#additional-acl-entries) for more details.
