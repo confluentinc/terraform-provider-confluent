@@ -62,6 +62,7 @@ var ignoredConnectorConfigs = []string{
 	"kafka.dedicated",
 	"schema.registry.url",
 	"valid.kafka.api.key",
+	"connector.crn",
 }
 var twoStarsOrMoreRegExp = regexp.MustCompile(twoStarsOrMorePattern)
 
