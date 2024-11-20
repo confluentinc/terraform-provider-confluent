@@ -30,18 +30,21 @@ const (
 	scenarioStateStatementHasBeenCreated = "A new statement has been just created"
 	scenarioStateStatementIsPending      = "A new statement is pending"
 	scenarioStateStatementIsDeleting     = "The statement is being deleted"
+	scenarioStateStatementIsResuming     = "The statement is being resumed"
 	scenarioStateStatementHasBeenDeleted = "The statement has been deleted"
 	scenarioStateStatementHasBeenStopped = "The statement has been stopped"
 	scenarioStateStatementHasBeenResumed = "The statement has been resumed"
 	statementScenarioName                = "confluent_flink_statement Resource Lifecycle"
 
-	flinkPrincipalIdTest        = "u-yo9j87"
-	flinkComputePoolIdTest      = "lfcp-x7rgx1"
-	flinkStatementTest          = "SELECT CURRENT_TIMESTAMP;"
-	flinkStatementNameTest      = "workspace-2023-11-15-030109-0408d52d-eaff-4d50-a246-f822a29f2eb9"
-	flinkFirstPropertyKeyTest   = "sql.local-time-zone"
-	flinkFirstPropertyValueTest = "GMT-08:00"
-	flinkStatementResourceLabel = "example"
+	flinkPrincipalIdTest          = "u-yo9j87"
+	flinkPrincipalUpdatedIdTest   = "sa-yo9j87"
+	flinkComputePoolIdTest        = "lfcp-x7rgx1"
+	flinkComputePoolUpdatedIdTest = "lfcp-x7rgx2"
+	flinkStatementTest            = "SELECT CURRENT_TIMESTAMP;"
+	flinkStatementNameTest        = "workspace-2023-11-15-030109-0408d52d-eaff-4d50-a246-f822a29f2eb9"
+	flinkFirstPropertyKeyTest     = "sql.local-time-zone"
+	flinkFirstPropertyValueTest   = "GMT-08:00"
+	flinkStatementResourceLabel   = "example"
 
 	latestOffsetsTimestampEmptyValueTest   = "0001-01-01T00:00:00Z"
 	latestOffsetsTimestampStoppedValueTest = "2024-10-14T21:26:07Z"
@@ -127,25 +130,36 @@ func TestAccFlinkStatementWithEnhancedProviderBlock(t *testing.T) {
 			http.StatusOK,
 		))
 
-	// Update the Flink statement stopped status true -> false to trigger a resume
-	resumeFlinkStatementResponse, _ := ioutil.ReadFile("../testdata/flink_statement/read_resumed_flink_statement.json")
-	resumeFlinkStatementStub := wiremock.Put(wiremock.URLPathEqualTo(readFlinkStatementPath)).
+	// Update the Flink statement stopped status true -> false to trigger a resume with different `principal` and `compute_pool`
+	resumingFlinkStatementResponse, _ := ioutil.ReadFile("../testdata/flink_statement/read_resuming_flink_statement.json")
+	resumingFlinkStatementStub := wiremock.Put(wiremock.URLPathEqualTo(readFlinkStatementPath)).
 		InScenario(statementScenarioName).
 		WhenScenarioStateIs(scenarioStateStatementHasBeenStopped).
-		WillSetStateTo(scenarioStateStatementHasBeenResumed).
+		WillSetStateTo(scenarioStateStatementIsResuming).
 		WillReturn(
-			string(resumeFlinkStatementResponse),
+			string(resumingFlinkStatementResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)
-	_ = wiremockClient.StubFor(resumeFlinkStatementStub)
+	_ = wiremockClient.StubFor(resumingFlinkStatementStub)
 
 	readResumedFlinkStatementResponse, _ := ioutil.ReadFile("../testdata/flink_statement/read_resumed_flink_statement.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readFlinkStatementPath)).
 		InScenario(statementScenarioName).
-		WhenScenarioStateIs(scenarioStateStatementHasBeenResumed).
+		WhenScenarioStateIs(scenarioStateStatementIsResuming).
+		WillSetStateTo(scenarioStateStatementHasBeenResumed).
 		WillReturn(
 			string(readResumedFlinkStatementResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	readPostResumeFlinkStatementResponse, _ := ioutil.ReadFile("../testdata/flink_statement/read_resumed_flink_statement.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readFlinkStatementPath)).
+		InScenario(statementScenarioName).
+		WhenScenarioStateIs(scenarioStateStatementHasBeenResumed).
+		WillReturn(
+			string(readPostResumeFlinkStatementResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
 		))
@@ -244,7 +258,7 @@ func TestAccFlinkStatementWithEnhancedProviderBlock(t *testing.T) {
 				Config: testAccCheckFlinkStatementResumedWithEnhancedProviderBlock(confluentCloudBaseUrl, mockFlinkStatementTestServerUrl),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckFlinkStatementExists(fullFlinkStatementResourceLabel),
-					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "id", fmt.Sprintf("%s/%s/%s", flinkEnvironmentIdTest, flinkComputePoolIdTest, flinkStatementNameTest)),
+					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "id", fmt.Sprintf("%s/%s/%s", flinkEnvironmentIdTest, flinkComputePoolUpdatedIdTest, flinkStatementNameTest)),
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "compute_pool.#", "0"),
 					resource.TestCheckNoResourceAttr(fullFlinkStatementResourceLabel, "compute_pool.0.id"),
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "principal.#", "0"),
@@ -359,8 +373,8 @@ func testAccCheckFlinkStatementResumedWithEnhancedProviderBlock(confluentCloudBa
 		"%s" = "%s"
 	  }
 	}
-	`, confluentCloudBaseUrl, kafkaApiKey, kafkaApiSecret, mockServerUrl, flinkPrincipalIdTest,
-		flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkComputePoolIdTest,
+	`, confluentCloudBaseUrl, kafkaApiKey, kafkaApiSecret, mockServerUrl, flinkPrincipalUpdatedIdTest,
+		flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkComputePoolUpdatedIdTest,
 		flinkStatementResourceLabel, flinkStatementNameTest, flinkStatementTest, flinkFirstPropertyKeyTest, flinkFirstPropertyValueTest)
 }
 
