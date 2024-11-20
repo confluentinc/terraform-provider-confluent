@@ -108,11 +108,11 @@ The following arguments are supported:
     - `name` - (Required String) The setting name, for example, `sql.local-time-zone`.
     - `value` - (Required String) The setting value, for example, `GMT-08:00`.
 
-- `stopped` - (Optional Boolean) The boolean flag to indicate statement running status and control whether the Flink Statement should be stopped or resumed. Defaults to `false`. Update it to `true` to stop the statement. Subsequently update it to `false` to resume the statement.
+- `stopped` - (Optional Boolean) The boolean flag is used to indicate the statement's running status and to control whether the Flink Statement should be stopped or resumed. Defaults to `false`. Update it to `true` to stop the statement. Subsequently update it to `false` to resume the statement.
 
 !> **Note:** To stop a running statement, no other argument can be updated except `stopped`.
 
-!> **Note:** To resume a stopped statement, `principal.id` and/or `compute_pool.id` can be updated in additional to `stopped` to resume the original statement under different principal (must have proper role assignment) and/or Flink compute pool (must use the same Flink region as original).
+!> **Note:** When resuming a stopped statement, you can update `principal.id` and/or `compute_pool.id` in addition to `stopped` attribute. This enables the statement to run under a different principal (with the appropriate role assignment) or a different Flink compute pool (as long as it is in the same Flink region as the original).
 
 !> **Note:** Currently, only 3 Flink statements support the resume feature, namely: `CREATE TABLE AS`, `INSERT INTO`, and `EXECUTE STATEMENT SET`.
 
