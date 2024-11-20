@@ -100,25 +100,36 @@ func TestAccFlinkStatement(t *testing.T) {
 			http.StatusOK,
 		))
 
-	// Update the Flink statement stopped status true -> false to trigger a resume
-	resumeFlinkStatementResponse, _ := ioutil.ReadFile("../testdata/flink_statement/read_resumed_flink_statement.json")
-	resumeFlinkStatementStub := wiremock.Put(wiremock.URLPathEqualTo(readFlinkStatementPath)).
+	// Update the Flink statement stopped status true -> false to trigger a resume with different `principal` and `compute_pool`
+	resumingFlinkStatementResponse, _ := ioutil.ReadFile("../testdata/flink_statement/read_resuming_flink_statement.json")
+	resumingFlinkStatementStub := wiremock.Put(wiremock.URLPathEqualTo(readFlinkStatementPath)).
 		InScenario(statementScenarioName).
 		WhenScenarioStateIs(scenarioStateStatementHasBeenStopped).
-		WillSetStateTo(scenarioStateStatementHasBeenResumed).
+		WillSetStateTo(scenarioStateStatementIsResuming).
 		WillReturn(
-			string(resumeFlinkStatementResponse),
+			string(resumingFlinkStatementResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)
-	_ = wiremockClient.StubFor(resumeFlinkStatementStub)
+	_ = wiremockClient.StubFor(resumingFlinkStatementStub)
 
 	readResumedFlinkStatementResponse, _ := ioutil.ReadFile("../testdata/flink_statement/read_resumed_flink_statement.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readFlinkStatementPath)).
 		InScenario(statementScenarioName).
-		WhenScenarioStateIs(scenarioStateStatementHasBeenResumed).
+		WhenScenarioStateIs(scenarioStateStatementIsResuming).
+		WillSetStateTo(scenarioStateStatementHasBeenResumed).
 		WillReturn(
 			string(readResumedFlinkStatementResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	readPostResumeFlinkStatementResponse, _ := ioutil.ReadFile("../testdata/flink_statement/read_resumed_flink_statement.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readFlinkStatementPath)).
+		InScenario(statementScenarioName).
+		WhenScenarioStateIs(scenarioStateStatementHasBeenResumed).
+		WillReturn(
+			string(readPostResumeFlinkStatementResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
 		))
