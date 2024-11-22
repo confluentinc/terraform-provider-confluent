@@ -1,3 +1,14 @@
+## 2.11.0 (November 22nd, 2024)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.10.0...v2.11.0)
+
+**New features:**
+* Added support to resume `confluent_flink_statement` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_flink_statement) using different `principal` and/or under a different `compute_pool`.
+
+**Examples:**
+* Updated **1** example to explicitly select fields for Flink insert statement from query schema to sink schema to avoid field mismatch:
+  * [populated-orders-source-table](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/flink-quickstart/statements/populate-orders-source-table.sql).
+
 ## 2.10.0 (November 19th, 2024)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.9.0...v2.10.0)
