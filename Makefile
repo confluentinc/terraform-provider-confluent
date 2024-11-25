@@ -158,8 +158,8 @@ testacc:
 	@echo "finished testacc"
 
 install: build
-	mkdir -p ~/.terraform.d/plugins/darwin_amd64
-	cp ./bin/darwin-amd64/terraform-provider-confluent ~/.terraform.d/plugins/darwin_amd64/
+	mkdir -p ~/.terraform.d/plugins/$(GOOS)-$(GOARCH)
+	cp ./$(BUILD_DIR)/$(GOOS)-$(GOARCH)/$(NAME) ~/.terraform.d/plugins/$(GOOS)-$(GOARCH)/
 
 .PHONY: gox
 gox:

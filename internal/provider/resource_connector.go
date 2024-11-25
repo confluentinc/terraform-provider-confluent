@@ -18,15 +18,16 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"regexp"
+	"strings"
+	"time"
+
 	connect "github.com/confluentinc/ccloud-sdk-go-v2/connect/v1"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/samber/lo"
-	"net/http"
-	"regexp"
-	"strings"
-	"time"
 )
 
 const (
@@ -35,6 +36,9 @@ const (
 
 	paramSensitiveConfig    = "config_sensitive"
 	paramNonSensitiveConfig = "config_nonsensitive"
+	paramOffsetsConfig      = "offsets"
+	paramPartition          = "partition"
+	paramOffset             = "offset"
 
 	connectorConfigAttributeName   = "name"
 	connectorConfigAttributeClass  = "connector.class"
@@ -102,10 +106,43 @@ func connectorResource() *schema.Resource {
 				ForceNew:    false,
 				Description: "The sensitive configuration settings to set (e.g., `\"gcs.credentials.config\" = \"**REDACTED***\"`). Should not be set for an import operation.",
 			},
+			paramOffsetsConfig: offsetsSchema(),
 		},
 		Timeouts: &schema.ResourceTimeout{
 			Create: schema.DefaultTimeout(connectAPICreateTimeout),
 		},
+	}
+}
+
+func offsetsSchema() *schema.Schema {
+	return &schema.Schema{
+		Type:     schema.TypeList,
+		Optional: true,
+		Computed: true,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramPartition: {
+					Type: schema.TypeMap,
+					Elem: &schema.Schema{
+						Type: schema.TypeString,
+					},
+					Optional:    true,
+					Computed:    true,
+					Description: "Map of Connector partitions info",
+				},
+				paramOffset: {
+					Type: schema.TypeMap,
+					Elem: &schema.Schema{
+						Type: schema.TypeString,
+					},
+					Optional:    true,
+					Computed:    true,
+					Description: "Map of offsets for the partition",
+				},
+			},
+		},
+		ForceNew:    false,
+		Description: "List of partitions with offsets",
 	}
 }
 
@@ -116,6 +153,7 @@ func connectorCreate(ctx context.Context, d *schema.ResourceData, meta interface
 	clusterId := extractStringValueFromBlock(d, paramKafkaCluster, paramId)
 
 	mergedConfig, sensitiveConfig, nonsensitiveConfig := extractConnectorConfigs(d)
+	offsets := extractConnectorOffsets(d)
 	displayName := d.Get(connectorConfigFullAttributeName).(string)
 	if displayName == "" {
 		return diag.Errorf("error creating Connector: %q attribute is missing in %q block", connectorConfigAttributeName, paramNonSensitiveConfig)
@@ -123,14 +161,24 @@ func connectorCreate(ctx context.Context, d *schema.ResourceData, meta interface
 	createConnectorRequest := connect.NewInlineObject()
 	createConnectorRequest.SetName(displayName)
 	createConnectorRequest.SetConfig(mergedConfig)
+	if offsets != nil {
+		createConnectorRequest.SetOffsets(offsets)
+	}
 
 	nonsensitiveConfigJson, err := json.Marshal(nonsensitiveConfig)
 	if err != nil {
-		return diag.Errorf("error creating Connector: error marshaling %#v to json: %s", nonsensitiveConfig, createDescriptiveError(err))
+		return diag.Errorf("error creating Connector: error marshaling config %#v to json: %s", nonsensitiveConfig, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Connector: %s", nonsensitiveConfigJson))
+	if offsets != nil {
+		offsetsJson, err := json.Marshal(offsets)
+		if err != nil {
+			return diag.Errorf("error creating Connector: error marshaling offset %#v to json: %s", offsets, createDescriptiveError(err))
+		}
+		tflog.Debug(ctx, fmt.Sprintf("Creating new Connector: %s %s", nonsensitiveConfigJson, offsetsJson))
+	}
 
-	err = validateConnectorConfig(c.connectApiContext(ctx), c, mergedConfig, environmentId, clusterId)
+	err = validateConnectorConfig(c.connectApiContext(ctx), c, mergedConfig, offsets, environmentId, clusterId)
 	if err != nil {
 		return diag.Errorf("error creating Connector: %s", createDescriptiveError(err))
 	}
@@ -156,6 +204,7 @@ func connectorCreate(ctx context.Context, d *schema.ResourceData, meta interface
 		return diag.Errorf("error creating Connector %q: error marshaling %#v to json: %s", d.Id(), createdConnector, createDescriptiveError(err))
 	}
 
+	// Offsets are not saved
 	// Save sensitive configs
 	if err := d.Set(paramSensitiveConfig, sensitiveConfig); err != nil {
 		return diag.FromErr(createDescriptiveError(err))
@@ -166,7 +215,10 @@ func connectorCreate(ctx context.Context, d *schema.ResourceData, meta interface
 	return connectorRead(ctx, d, meta)
 }
 
-func validateConnectorConfig(ctx context.Context, c *Client, config map[string]string, environmentId, clusterId string) error {
+func validateConnectorConfig(ctx context.Context, c *Client, config map[string]string, offsets []map[string]interface{}, environmentId, clusterId string) error {
+	if offsets == nil {
+		tflog.Debug(ctx, "No offsets block provided")
+	}
 	// defaults to MANAGED
 	connectorType := config[connectorConfigAttributeType]
 
@@ -176,8 +228,8 @@ func validateConnectorConfig(ctx context.Context, c *Client, config map[string]s
 		if connectorClass == "" {
 			return fmt.Errorf("error validating Connector config: %q attribute is missing in %q block", connectorConfigAttributeClass, paramNonSensitiveConfig)
 		}
-		tflog.Debug(ctx, fmt.Sprintf("Validating new Connector's config"))
-		validationResponse, _, err := c.connectClient.PluginsV1Api.ValidateConnectv1ConnectorPlugin(c.connectApiContext(ctx), connectorClass, environmentId, clusterId).RequestBody(config).Execute()
+		tflog.Debug(ctx, "Validating new Connector's config")
+		validationResponse, _, err := c.connectClient.ManagedConnectorPluginsConnectV1Api.ValidateConnectv1ConnectorPlugin(c.connectApiContext(ctx), connectorClass, environmentId, clusterId).RequestBody(config).Execute()
 		if err != nil {
 			return fmt.Errorf("error creating Connector: error sending validation request: %s", createDescriptiveError(err))
 		}
@@ -195,18 +247,18 @@ func validateConnectorConfig(ctx context.Context, c *Client, config map[string]s
 	return nil
 }
 
-func executeConnectorCreate(ctx context.Context, c *Client, environmentId, clusterId string, spec *connect.InlineObject) (connect.ConnectV1Connector, *http.Response, error) {
-	req := c.connectClient.ConnectorsV1Api.CreateConnectv1Connector(c.connectApiContext(ctx), environmentId, clusterId).InlineObject(*spec)
+func executeConnectorCreate(ctx context.Context, c *Client, environmentId, clusterId string, spec *connect.InlineObject) (connect.ConnectV1ConnectorWithOffsets, *http.Response, error) {
+	req := c.connectClient.ConnectorsConnectV1Api.CreateConnectv1Connector(c.connectApiContext(ctx), environmentId, clusterId).InlineObject(*spec)
 	return req.Execute()
 }
 
 func executeConnectorStatusCreate(ctx context.Context, c *Client, displayName, environmentId, clusterId string) (connect.InlineResponse2001, *http.Response, error) {
-	req := c.connectClient.StatusV1Api.ReadConnectv1ConnectorStatus(c.connectApiContext(ctx), displayName, environmentId, clusterId)
+	req := c.connectClient.StatusConnectV1Api.ReadConnectv1ConnectorStatus(c.connectApiContext(ctx), displayName, environmentId, clusterId)
 	return req.Execute()
 }
 
 func executeConnectorRead(ctx context.Context, c *Client, displayName, environmentId, clusterId string) (connect.ConnectV1ConnectorExpansion, *http.Response, error) {
-	connectors, resp, err := c.connectClient.ConnectorsV1Api.ListConnectv1ConnectorsWithExpansions(c.connectApiContext(ctx), environmentId, clusterId).Execute()
+	connectors, resp, err := c.connectClient.ConnectorsConnectV1Api.ListConnectv1ConnectorsWithExpansions(c.connectApiContext(ctx), environmentId, clusterId).Execute()
 	if ResponseHasExpectedStatusCode(resp, http.StatusForbidden) {
 		return *connect.NewConnectV1ConnectorExpansionWithDefaults(), resp, err
 	}
@@ -289,8 +341,8 @@ func setConnectorAttributes(d *schema.ResourceData, connector connect.ConnectV1C
 }
 
 func connectorUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if d.HasChangesExcept(paramNonSensitiveConfig, paramSensitiveConfig, paramStatus) {
-		return diag.Errorf("error updating Connector %q: only %q attribute, %q and %q blocks can be updated for Connector", d.Id(), paramStatus, paramNonSensitiveConfig, paramSensitiveConfig)
+	if d.HasChangesExcept(paramNonSensitiveConfig, paramSensitiveConfig, paramOffsetsConfig, paramStatus) {
+		return diag.Errorf("error updating Connector %q: only %q attribute, %q, %q and %q blocks can be updated for Connector", d.Id(), paramStatus, paramOffsetsConfig, paramNonSensitiveConfig, paramSensitiveConfig)
 	}
 	c := meta.(*Client)
 	if d.HasChange(connectorConfigFullAttributeName) {
@@ -316,7 +368,7 @@ func connectorUpdate(ctx context.Context, d *schema.ResourceData, meta interface
 		if shouldPauseConnector {
 			tflog.Debug(ctx, fmt.Sprintf("Pausing Connector %q", d.Id()), map[string]interface{}{connectorLoggingKey: d.Id()})
 
-			req := c.connectClient.LifecycleV1Api.PauseConnectv1Connector(c.connectApiContext(ctx), displayName, environmentId, clusterId)
+			req := c.connectClient.LifecycleConnectV1Api.PauseConnectv1Connector(c.connectApiContext(ctx), displayName, environmentId, clusterId)
 			_, err := req.Execute()
 			if err != nil {
 				return diag.Errorf("error updating Connector %q: %s", d.Id(), createDescriptiveError(err))
@@ -327,7 +379,7 @@ func connectorUpdate(ctx context.Context, d *schema.ResourceData, meta interface
 		} else if shouldResumeConnector {
 			tflog.Debug(ctx, fmt.Sprintf("Resuming Connector %q", d.Id()), map[string]interface{}{connectorLoggingKey: d.Id()})
 
-			req := c.connectClient.LifecycleV1Api.ResumeConnectv1Connector(c.connectApiContext(ctx), displayName, environmentId, clusterId)
+			req := c.connectClient.LifecycleConnectV1Api.ResumeConnectv1Connector(c.connectApiContext(ctx), displayName, environmentId, clusterId)
 			_, err := req.Execute()
 			if err != nil {
 				return diag.Errorf("error updating Connector %q: %s", d.Id(), createDescriptiveError(err))
@@ -346,11 +398,11 @@ func connectorUpdate(ctx context.Context, d *schema.ResourceData, meta interface
 
 		debugUpdatedConfigJson, err := json.Marshal(nonsensitiveUpdatedConfig)
 		if err != nil {
-			return diag.Errorf("error updating Connector: error marshaling %#v to json: %s", nonsensitiveUpdatedConfig, createDescriptiveError(err))
+			return diag.Errorf("error updating Connector: error marshaling config %#v to json: %s", nonsensitiveUpdatedConfig, createDescriptiveError(err))
 		}
 		tflog.Debug(ctx, fmt.Sprintf("Updating Connector: %s", debugUpdatedConfigJson))
 
-		req := c.connectClient.ConnectorsV1Api.CreateOrUpdateConnectv1ConnectorConfig(c.connectApiContext(ctx), displayName, environmentId, clusterId).RequestBody(updatedConfig)
+		req := c.connectClient.ConnectorsConnectV1Api.CreateOrUpdateConnectv1ConnectorConfig(c.connectApiContext(ctx), displayName, environmentId, clusterId).RequestBody(updatedConfig)
 		updatedConnector, resp, err := req.Execute()
 
 		// Delete once APIF-2634 is resolved
@@ -367,7 +419,67 @@ func connectorUpdate(ctx context.Context, d *schema.ResourceData, meta interface
 		}
 		tflog.Debug(ctx, fmt.Sprintf("Finished updating Connector %q: %s", d.Id(), updatedConnectorJson), map[string]interface{}{connectorLoggingKey: d.Id()})
 	}
+	if d.HasChanges(paramOffsetsConfig) {
+		var connectV1AlterOffsetRequest connect.ConnectV1AlterOffsetRequest
+		connectV1AlterOffsetRequest.SetType(connect.PATCH)
+		updatedOffsets := extractConnectorOffsets(d)
+		if updatedOffsets == nil {
+			return diag.Errorf("error updating Connector with offsets: unable to extract offsets %#v", d)
+		}
+		connectV1AlterOffsetRequest.SetOffsets(updatedOffsets)
+
+		debugUpdatedOffsetsJson, err := json.Marshal(updatedOffsets)
+		if err != nil {
+			return diag.Errorf("error updating Connector with offsets: error marshaling offsets %#v to json: %s", updatedOffsets, createDescriptiveError(err))
+		}
+		tflog.Debug(ctx, fmt.Sprintf("Updating Connector with offsets: %s", debugUpdatedOffsetsJson))
+
+		req := c.connectClient.OffsetsConnectV1Api.AlterConnectv1ConnectorOffsetsRequest(c.connectApiContext(ctx), displayName, environmentId, clusterId).ConnectV1AlterOffsetRequest(connectV1AlterOffsetRequest)
+		connectAlterRequestInfo, resp, err := req.Execute()
+
+		// Delete once APIF-2634 is resolved
+		if resp != nil && resp.StatusCode != http.StatusAccepted {
+			return diag.Errorf("error updating Connector with offsets %q: %s", d.Id(), resp.Status)
+		}
+		if err != nil {
+			return diag.Errorf("error updating Connector with offsets %q: %s", d.Id(), createDescriptiveError(err))
+		}
+
+		connectAlterRequestJson, err := json.Marshal(connectAlterRequestInfo)
+		if err != nil {
+			return diag.Errorf("error updating Connector with offsets %q: error marshaling %#v to json: %s", d.Id(), connectAlterRequestInfo, createDescriptiveError(err))
+		}
+		tflog.Debug(ctx, fmt.Sprintf("Finished updating Connector with offsets %q: %s", d.Id(), connectAlterRequestJson), map[string]interface{}{connectorLoggingKey: d.Id()})
+	}
+
 	return connectorRead(ctx, d, meta)
+}
+
+func connectorOffsetDelete(ctx context.Context, d *schema.ResourceData, c *Client, displayName string, environmentId string, clusterId string) diag.Diagnostics {
+	var connectV1AlterOffsetRequest connect.ConnectV1AlterOffsetRequest
+	connectV1AlterOffsetRequest.SetType(connect.DELETE)
+
+	req := c.connectClient.OffsetsConnectV1Api.AlterConnectv1ConnectorOffsetsRequest(c.connectApiContext(ctx), displayName, environmentId, clusterId).ConnectV1AlterOffsetRequest(connectV1AlterOffsetRequest)
+	connectAlterRequestInfo, resp, err := req.Execute()
+
+	if resp != nil && resp.StatusCode != http.StatusAccepted {
+		if resp.StatusCode == http.StatusNotFound {
+			tflog.Debug(ctx, fmt.Sprintf("No Connector offset to delete %q", d.Id()), map[string]interface{}{connectorLoggingKey: d.Id()})
+			return nil
+		}
+		return diag.Errorf("error deleting Connector offsets %q: %s", d.Id(), resp.Status)
+	}
+	if err != nil {
+		return diag.Errorf("error deleting Connector offsets %q: %s", d.Id(), createDescriptiveError(err))
+	}
+
+	connectAlterRequestJson, err := json.Marshal(connectAlterRequestInfo)
+	if err != nil {
+		return diag.Errorf("error deleting Connector offsets %q: error marshaling %#v to json: %s", d.Id(), connectAlterRequestInfo, createDescriptiveError(err))
+	}
+	tflog.Debug(ctx, fmt.Sprintf("Finished deleting Connector offsets %q: %s", d.Id(), connectAlterRequestJson), map[string]interface{}{connectorLoggingKey: d.Id()})
+
+	return nil
 }
 
 func connectorDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -380,7 +492,12 @@ func connectorDelete(ctx context.Context, d *schema.ResourceData, meta interface
 	clusterId := extractStringValueFromBlock(d, paramKafkaCluster, paramId)
 	c := meta.(*Client)
 
-	req := c.connectClient.ConnectorsV1Api.DeleteConnectv1Connector(c.connectApiContext(ctx), displayName, environmentId, clusterId)
+	diagnostics := connectorOffsetDelete(ctx, d, c, displayName, environmentId, clusterId)
+	if diagnostics != nil {
+		return diagnostics
+	}
+
+	req := c.connectClient.ConnectorsConnectV1Api.DeleteConnectv1Connector(c.connectApiContext(ctx), displayName, environmentId, clusterId)
 	deletionError, _, err := req.Execute()
 
 	if err != nil {
@@ -396,6 +513,7 @@ func connectorDelete(ctx context.Context, d *schema.ResourceData, meta interface
 }
 
 func connectorImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	// Offsets are not importable
 	tflog.Debug(ctx, fmt.Sprintf("Importing Connector %q", d.Id()))
 
 	envIDAndClusterIDAndConnectorName := d.Id()
@@ -481,6 +599,21 @@ func extractConnectorConfigs(d *schema.ResourceData) (map[string]string, map[str
 	return config, sensitiveConfigs, nonsensitiveConfigs
 }
 
+// extractConnectorOffsets returns an array of map with Offsets and Partitions
+func extractConnectorOffsets(d *schema.ResourceData) []map[string]interface{} {
+	if d.Get(paramOffsetsConfig) != nil && len(d.Get(paramOffsetsConfig).([]interface{})) > 0 {
+		var result []map[string]interface{}
+		for _, value := range d.Get(paramOffsetsConfig).([]interface{}) {
+			valueMap := make(map[string]interface{})
+			valueMap[paramPartition] = value.(map[string]interface{})[paramPartition]
+			valueMap[paramOffset] = value.(map[string]interface{})[paramOffset]
+			result = append(result, valueMap)
+		}
+		return result
+	}
+	return nil
+}
+
 func connectorImporter() *Importer {
 	return &Importer{
 		LoadInstanceIds: loadAllConnectors,
@@ -522,7 +655,7 @@ func loadAllConnectors(ctx context.Context, client *Client) (InstanceIdsToNameMa
 }
 
 func loadConnectorsByEnvironmentIdAndKafkaClusterId(ctx context.Context, c *Client, environmentId, kafkaClusterId string) ([]string, error) {
-	connectors, resp, err := c.connectClient.ConnectorsV1Api.ListConnectv1Connectors(c.connectApiContext(ctx), environmentId, kafkaClusterId).Execute()
+	connectors, resp, err := c.connectClient.ConnectorsConnectV1Api.ListConnectv1Connectors(c.connectApiContext(ctx), environmentId, kafkaClusterId).Execute()
 	// Somehow Connect SDK returns response.StatusCode == http.StatusForbidden but err is nil.
 	if ResponseHasExpectedStatusCode(resp, http.StatusForbidden) || err != nil {
 		return nil, createDescriptiveError(err)
