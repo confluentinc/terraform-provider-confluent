@@ -118,7 +118,7 @@ func offsetsSchema() *schema.Schema {
 	return &schema.Schema{
 		Type:     schema.TypeList,
 		Optional: true,
-		Computed: true,
+		Computed: false,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				paramPartition: {
@@ -126,8 +126,8 @@ func offsetsSchema() *schema.Schema {
 					Elem: &schema.Schema{
 						Type: schema.TypeString,
 					},
-					Optional:    true,
-					Computed:    true,
+					Required:    true,
+					Computed:    false,
 					Description: "Map of connector partitions information.",
 				},
 				paramOffset: {
@@ -135,9 +135,9 @@ func offsetsSchema() *schema.Schema {
 					Elem: &schema.Schema{
 						Type: schema.TypeString,
 					},
-					Optional:    true,
-					Computed:    true,
-					Description: "Map of offsets for the partition",
+					Required:    true,
+					Computed:    false,
+					Description: "Map of offsets for the partition.",
 				},
 			},
 		},
@@ -423,33 +423,30 @@ func connectorUpdate(ctx context.Context, d *schema.ResourceData, meta interface
 		var connectV1AlterOffsetRequest connect.ConnectV1AlterOffsetRequest
 		connectV1AlterOffsetRequest.SetType(connect.PATCH)
 		updatedOffsets := extractConnectorOffsets(d)
-		if updatedOffsets == nil {
-			return diag.Errorf("error updating Connector with offsets: unable to extract offsets %#v", d)
-		}
-		connectV1AlterOffsetRequest.SetOffsets(updatedOffsets)
+		if updatedOffsets != nil {
+			connectV1AlterOffsetRequest.SetOffsets(updatedOffsets)
 
-		debugUpdatedOffsetsJson, err := json.Marshal(updatedOffsets)
-		if err != nil {
-			return diag.Errorf("error updating Connector with offsets: error marshaling offsets %#v to json: %s", updatedOffsets, createDescriptiveError(err))
-		}
-		tflog.Debug(ctx, fmt.Sprintf("Updating Connector with offsets: %s", debugUpdatedOffsetsJson))
+			debugUpdatedOffsetsJson, err := json.Marshal(updatedOffsets)
+			if err != nil {
+				return diag.Errorf("error updating Connector with offsets: error marshaling offsets %#v to json: %s", updatedOffsets, createDescriptiveError(err))
+			}
+			tflog.Debug(ctx, fmt.Sprintf("Updating Connector with offsets: %s", debugUpdatedOffsetsJson))
 
-		req := c.connectClient.OffsetsConnectV1Api.AlterConnectv1ConnectorOffsetsRequest(c.connectApiContext(ctx), displayName, environmentId, clusterId).ConnectV1AlterOffsetRequest(connectV1AlterOffsetRequest)
-		connectAlterRequestInfo, resp, err := req.Execute()
+			req := c.connectClient.OffsetsConnectV1Api.AlterConnectv1ConnectorOffsetsRequest(c.connectApiContext(ctx), displayName, environmentId, clusterId).ConnectV1AlterOffsetRequest(connectV1AlterOffsetRequest)
+			connectAlterRequestInfo, resp, err := req.Execute()
 
-		// Delete once APIF-2634 is resolved
-		if resp != nil && resp.StatusCode != http.StatusAccepted {
-			return diag.Errorf("error updating Connector with offsets %q: %s", d.Id(), resp.Status)
-		}
-		if err != nil {
-			return diag.Errorf("error updating Connector with offsets %q: %s", d.Id(), createDescriptiveError(err))
-		}
+			if err != nil {
+				return diag.Errorf("error updating Connector with offsets %q: StatusCode: %d, %s", d.Id(), resp.StatusCode, createDescriptiveError(err))
+			}
 
-		connectAlterRequestJson, err := json.Marshal(connectAlterRequestInfo)
-		if err != nil {
-			return diag.Errorf("error updating Connector with offsets %q: error marshaling %#v to json: %s", d.Id(), connectAlterRequestInfo, createDescriptiveError(err))
+			connectAlterRequestJson, err := json.Marshal(connectAlterRequestInfo)
+			if err != nil {
+				return diag.Errorf("error updating Connector with offsets %q: error marshaling %#v to json: %s", d.Id(), connectAlterRequestInfo, createDescriptiveError(err))
+			}
+			tflog.Debug(ctx, fmt.Sprintf("Finished updating Connector with offsets %q: %s", d.Id(), connectAlterRequestJson), map[string]interface{}{connectorLoggingKey: d.Id()})
+		} else {
+			tflog.Debug(ctx, fmt.Sprintf("No Offset set for Connector %q", d.Id()), map[string]interface{}{connectorLoggingKey: d.Id()})
 		}
-		tflog.Debug(ctx, fmt.Sprintf("Finished updating Connector with offsets %q: %s", d.Id(), connectAlterRequestJson), map[string]interface{}{connectorLoggingKey: d.Id()})
 	}
 
 	return connectorRead(ctx, d, meta)
@@ -464,7 +461,7 @@ func connectorOffsetDelete(ctx context.Context, d *schema.ResourceData, c *Clien
 
 	if resp != nil && resp.StatusCode != http.StatusAccepted {
 		if resp.StatusCode == http.StatusNotFound {
-			tflog.Debug(ctx, fmt.Sprintf("No Connector offset to delete %q", d.Id()), map[string]interface{}{connectorLoggingKey: d.Id()})
+			tflog.Debug(ctx, fmt.Sprintf("No Connector offset to delete for connector id %q", d.Id()), map[string]interface{}{connectorLoggingKey: d.Id()})
 			return nil
 		}
 		return diag.Errorf("error deleting Connector offsets %q: %s", d.Id(), resp.Status)
