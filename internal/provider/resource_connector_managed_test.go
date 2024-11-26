@@ -17,11 +17,10 @@ package provider
 import (
 	"context"
 	"fmt"
-	"net/http"
-	"os"
-	"testing"
-
 	"github.com/walkerus/go-wiremock"
+	"os"
+	"net/http"
+	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
