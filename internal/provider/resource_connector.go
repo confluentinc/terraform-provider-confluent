@@ -128,7 +128,7 @@ func offsetsSchema() *schema.Schema {
 					},
 					Optional:    true,
 					Computed:    true,
-					Description: "Map of Connector partitions info",
+					Description: "Map of connector partitions information.",
 				},
 				paramOffset: {
 					Type: schema.TypeMap,
