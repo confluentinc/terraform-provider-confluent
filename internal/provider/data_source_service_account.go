@@ -23,6 +23,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"net/http"
+	"strings"
 )
 
 const (
@@ -90,24 +91,29 @@ func serviceAccountDataSourceRead(ctx context.Context, d *schema.ResourceData, m
 func serviceAccountDataSourceReadUsingDisplayName(ctx context.Context, d *schema.ResourceData, meta interface{}, displayName string) diag.Diagnostics {
 	tflog.Debug(ctx, fmt.Sprintf("Reading Service Account %q=%q", paramDisplayName, displayName))
 
-	client := meta.(*Client)
-	serviceAccounts, err := loadServiceAccounts(ctx, client)
+	c := meta.(*Client)
+	serviceAccountList, _, err := c.iamClient.ServiceAccountsIamV2Api.ListIamV2ServiceAccounts(c.iamApiContext(ctx)).DisplayName(strings.Fields(displayName)).Execute()
 	if err != nil {
 		return diag.Errorf("error reading Service Account %q: %s", displayName, createDescriptiveError(err))
+	}
+	serviceAccounts := serviceAccountList.GetData()
+	if len(serviceAccounts) == 0 {
+		return diag.Errorf("error reading Service Account: Service Account with %q=%q was not found", paramDisplayName, displayName)
 	}
 	if orgHasMultipleSAsWithTargetDisplayName(serviceAccounts, displayName) {
 		return diag.Errorf("error reading Service Account: there are multiple Service Accounts with %q=%q", paramDisplayName, displayName)
 	}
-	for _, serviceAccount := range serviceAccounts {
-		if serviceAccount.GetDisplayName() == displayName {
-			if _, err := setServiceAccountAttributes(d, serviceAccount); err != nil {
-				return diag.FromErr(createDescriptiveError(err))
-			}
-			return nil
-		}
+	serviceAccount := serviceAccounts[0]
+	serviceAccountJson, err := json.Marshal(serviceAccount)
+	if err != nil {
+		return diag.Errorf("error reading Service Account %q: error marshaling %#v to json: %s", displayName, serviceAccount, createDescriptiveError(err))
 	}
+	tflog.Debug(ctx, fmt.Sprintf("Fetched Service Account %q: %s", serviceAccount.GetId(), serviceAccountJson), map[string]interface{}{serviceAccountLoggingKey: serviceAccount.GetId()})
 
-	return diag.Errorf("error reading Service Account: Service Account with %q=%q was not found", paramDisplayName, displayName)
+	if _, err := setServiceAccountAttributes(d, serviceAccount); err != nil {
+		return diag.FromErr(createDescriptiveError(err))
+	}
+	return nil
 }
 
 func loadServiceAccounts(ctx context.Context, c *Client) ([]v2.IamV2ServiceAccount, error) {
