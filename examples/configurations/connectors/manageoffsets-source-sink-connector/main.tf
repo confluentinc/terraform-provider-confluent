@@ -2,6 +2,7 @@ terraform {
   required_providers {
     confluent = {
       source  = "confluentinc/confluent"
+      version = "2.12.0"
     }
   }
 }
@@ -177,7 +178,7 @@ resource "confluent_kafka_acl" "app-connector-create-on-prefix-topics" {
     id = confluent_kafka_cluster.basic.id
   }
   resource_type = "TOPIC"
-  resource_name = local.mongodb_topic_prefix
+  resource_name = var.mongodb_topic_prefix
   pattern_type  = "PREFIXED"
   principal     = "User:${confluent_service_account.app-connector.id}"
   host          = "*"
@@ -195,7 +196,7 @@ resource "confluent_kafka_acl" "app-connector-write-on-prefix-topics" {
     id = confluent_kafka_cluster.basic.id
   }
   resource_type = "TOPIC"
-  resource_name = local.mongodb_topic_prefix
+  resource_name = var.mongodb_topic_prefix
   pattern_type  = "PREFIXED"
   principal     = "User:${confluent_service_account.app-connector.id}"
   host          = "*"
@@ -213,7 +214,7 @@ resource "confluent_kafka_acl" "app-connector-create-on-data-preview-topics" {
     id = confluent_kafka_cluster.basic.id
   }
   resource_type = "TOPIC"
-  resource_name = "data-preview.${local.mongodb_database}.${local.mongodb_collection}"
+  resource_name = "data-preview.${var.mongodb_database}.${var.mongodb_collection}"
   pattern_type  = "LITERAL"
   principal     = "User:${confluent_service_account.app-connector.id}"
   host          = "*"
@@ -231,7 +232,7 @@ resource "confluent_kafka_acl" "app-connector-write-on-data-preview-topics" {
     id = confluent_kafka_cluster.basic.id
   }
   resource_type = "TOPIC"
-  resource_name = "data-preview.${local.mongodb_database}.${local.mongodb_collection}"
+  resource_name = "data-preview.${var.mongodb_database}.${var.mongodb_collection}"
   pattern_type  = "LITERAL"
   principal     = "User:${confluent_service_account.app-connector.id}"
   host          = "*"
@@ -400,20 +401,20 @@ resource "confluent_connector" "mysql-db-sink" {
   config_sensitive = {
     "kafka.auth.mode"          = "SERVICE_ACCOUNT"
     "kafka.service.account.id" = confluent_service_account.app-connector.id
-    "connection.user"            = local.mysqldb_user
-    "connection.password"        = local.mysqldb_password
-    "connection.host"            = local.mysqldb_host
-    "connection.port"            = local.mysqldb_port
+    "connection.user"            = var.mysqldb_user
+    "connection.password"        = var.mysqldb_password
+    "connection.host"            = var.mysqldb_host
+    "connection.port"            = var.mysqldb_port
     "ssl.mode"                   = "prefer"
   }
 
   config_nonsensitive = {
     "connector.class"            = "MySqlSink"
     "name"                       = "MySQLSinkConnector_0"
-    "topics"                     = local.mysqldb_topic_name
+    "topics"                     = var.mysqldb_topic_name
     "input.data.format"         = "AVRO"
     "tasks.max"                  = "1"
-    "db.name"                    = local.mysqldb_name
+    "db.name"                    = var.mysqldb_name
     "insert.mode"                = "INSERT"
     "auto.create"                = "true"
     "auto.evolve"                = "true"
@@ -422,7 +423,7 @@ resource "confluent_connector" "mysql-db-sink" {
   offsets {
     partition = {
       "kafka_partition" = 0,
-      "kafka_topic" = local.mysqldb_topic_name
+      "kafka_topic" = var.mysqldb_topic_name
     }
     offset = {
       "kafka_offset" = 20
@@ -431,7 +432,7 @@ resource "confluent_connector" "mysql-db-sink" {
   offsets {
     partition = {
       "kafka_partition" = 1,
-      "kafka_topic" = local.mysqldb_topic_name
+      "kafka_topic" = var.mysqldb_topic_name
     }
     offset = {
       "kafka_offset" = 20
@@ -463,9 +464,9 @@ resource "confluent_connector" "mongo-db-source" {
   // Block for custom *sensitive* configuration properties that are labelled with "Type: password" under "Configuration Properties" section in the docs:
   // https://docs.confluent.io/cloud/current/connectors/cc-mongo-db-source.html#configuration-properties
   config_sensitive = {
-    "connection.password"      = local.mongodb_password
-    "connection.host"          = local.mongodb_connection_host
-    "connection.user"          = local.mongodb_connection_user
+    "connection.password"      = var.mongodb_password
+    "connection.host"          = var.mongodb_connection_host
+    "connection.user"          = var.mongodb_connection_user
   }
 
   // Block for custom *nonsensitive* configuration properties that are *not* labelled with "Type: password" under "Configuration Properties" section in the docs:
@@ -475,9 +476,9 @@ resource "confluent_connector" "mongo-db-source" {
     "name"                     = "MongoDbAtlasSourceConnector"
     "kafka.auth.mode"          = "SERVICE_ACCOUNT"
     "kafka.service.account.id" = confluent_service_account.app-connector.id
-    "topic.prefix"             = local.mongodb_topic_prefix
-    "database"                 = local.mongodb_database
-    "collection"               = local.mongodb_collection
+    "topic.prefix"             = var.mongodb_topic_prefix
+    "database"                 = var.mongodb_database
+    "collection"               = var.mongodb_collection
     "poll.await.time.ms"       = "5000"
     "poll.max.batch.size"      = "1000"
     "copy.existing"            = "true"
@@ -502,20 +503,4 @@ resource "confluent_connector" "mongo-db-source" {
     confluent_kafka_acl.app-connector-create-on-data-preview-topics,
     confluent_kafka_acl.app-connector-write-on-data-preview-topics,
   ]
-}
-
-locals {
-  mongodb_topic_prefix    = "tf"
-  mongodb_database        = "sample_mflix"
-  mongodb_collection      = "movies"
-  mongodb_connection_host = "testcluster.wy6ey.mongodb.net" // TODO REMOVE THIS
-  mongodb_connection_user = "vnarayanan"
-  mongodb_password        = "JbblTkBunBtt8wcc" // TODO REMOVE THIS
-
-  mysqldb_user            = "admin"
-  mysqldb_password        = "Anirudhismyboy1!" // TODO REMOVE THIS
-  mysqldb_host            = "venky-test.c3mfaybrmizk.us-east-2.rds.amazonaws.com"  // TODO REMOVE THIS
-  mysqldb_port            = "3306"
-  mysqldb_topic_name      = "orders"
-  mysqldb_name            = "test"
 }

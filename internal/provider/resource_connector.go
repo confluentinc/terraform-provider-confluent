@@ -213,12 +213,6 @@ func connectorCreate(ctx context.Context, d *schema.ResourceData, meta interface
 }
 
 func validateConnectorConfig(ctx context.Context, c *Client, config map[string]string, offsets []map[string]interface{}, environmentId, clusterId string) error {
-	if offsets == nil {
-		tflog.Debug(ctx, "No offsets block provided")
-	} else {
-		tflog.Debug(ctx, "Offsets block provided. Offsets block Validation is not supported.")
-	}
-
 	// defaults to MANAGED
 	connectorType := config[connectorConfigAttributeType]
 
