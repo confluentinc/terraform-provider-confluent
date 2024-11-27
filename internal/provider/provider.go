@@ -27,6 +27,8 @@ import (
 	pi "github.com/confluentinc/ccloud-sdk-go-v2/provider-integration/v1"
 	"github.com/confluentinc/ccloud-sdk-go-v2/sso/v2"
 
+	iamv1 "github.com/confluentinc/ccloud-sdk-go-v2-internal/iam/v1"
+	iam "github.com/confluentinc/ccloud-sdk-go-v2-internal/iam/v2"
 	apikeys "github.com/confluentinc/ccloud-sdk-go-v2/apikeys/v2"
 	byok "github.com/confluentinc/ccloud-sdk-go-v2/byok/v1"
 	ca "github.com/confluentinc/ccloud-sdk-go-v2/certificate-authority/v2"
@@ -34,8 +36,6 @@ import (
 	connect "github.com/confluentinc/ccloud-sdk-go-v2/connect/v1"
 	fa "github.com/confluentinc/ccloud-sdk-go-v2/flink-artifact/v1"
 	fcpm "github.com/confluentinc/ccloud-sdk-go-v2/flink/v2"
-	iamv1 "github.com/confluentinc/ccloud-sdk-go-v2/iam/v1"
-	iam "github.com/confluentinc/ccloud-sdk-go-v2/iam/v2"
 	oidc "github.com/confluentinc/ccloud-sdk-go-v2/identity-provider/v2"
 	quotas "github.com/confluentinc/ccloud-sdk-go-v2/kafka-quotas/v1"
 	ksql "github.com/confluentinc/ccloud-sdk-go-v2/ksql/v2"
