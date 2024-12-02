@@ -100,7 +100,7 @@ func serviceAccountDataSourceReadUsingDisplayName(ctx context.Context, d *schema
 	if len(serviceAccounts) == 0 {
 		return diag.Errorf("error reading Service Account: Service Account with %q=%q was not found", paramDisplayName, displayName)
 	}
-	if orgHasMultipleSAsWithTargetDisplayName(serviceAccounts, displayName) {
+	if len(serviceAccounts) > 1 {
 		return diag.Errorf("error reading Service Account: there are multiple Service Accounts with %q=%q", paramDisplayName, displayName)
 	}
 	serviceAccount := serviceAccounts[0]
@@ -191,14 +191,4 @@ func setServiceAccountAttributes(d *schema.ResourceData, serviceAccount v2.IamV2
 	}
 	d.SetId(serviceAccount.GetId())
 	return d, nil
-}
-
-func orgHasMultipleSAsWithTargetDisplayName(serviceAccounts []v2.IamV2ServiceAccount, displayName string) bool {
-	var numberOfServiceAccountsWithTargetDisplayName = 0
-	for _, serviceAccount := range serviceAccounts {
-		if serviceAccount.GetDisplayName() == displayName {
-			numberOfServiceAccountsWithTargetDisplayName += 1
-		}
-	}
-	return numberOfServiceAccountsWithTargetDisplayName > 1
 }
