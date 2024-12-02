@@ -39,7 +39,7 @@ blocks:
       jobs:
         - name: goreleaser
           commands:
-            - sem-version go 1.22.2
+            - sem-version go 1.22.7
             - export "GOPATH=$(go env GOPATH)"
             - >-
               export
