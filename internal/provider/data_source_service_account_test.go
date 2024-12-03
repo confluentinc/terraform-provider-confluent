@@ -20,7 +20,6 @@ import (
 	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
-	"strconv"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -34,7 +33,6 @@ const (
 	saDescription            = "The initial description of service account"
 	saKind                   = "ServiceAccount"
 	saResourceLabel          = "test_sa_resource_label"
-	saLastPagePageToken      = "dyJpZCI6InNhLTd5OXbyby"
 )
 
 func TestAccDataSourceServiceAccount(t *testing.T) {
@@ -64,24 +62,12 @@ func TestAccDataSourceServiceAccount(t *testing.T) {
 			http.StatusOK,
 		))
 
-	readServiceAccountsPageOneResponse, _ := ioutil.ReadFile("../testdata/service_account/read_sas_page_1.json")
+	readServiceAccountsPageOneResponse, _ := ioutil.ReadFile("../testdata/service_account/read_sas.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/service-accounts")).
-		WithQueryParam("page_size", wiremock.EqualTo(strconv.Itoa(listServiceAccountsPageSize))).
+		WithQueryParam("display_name", wiremock.EqualTo(saDisplayName)).
 		InScenario(saDataSourceScenarioName).
 		WillReturn(
 			string(readServiceAccountsPageOneResponse),
-			contentTypeJSONHeader,
-			http.StatusOK,
-		))
-
-	readServiceAccountsPageTwoResponse, _ := ioutil.ReadFile("../testdata/service_account/read_sas_page_2.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/service-accounts")).
-		WithQueryParam("page_size", wiremock.EqualTo(strconv.Itoa(listServiceAccountsPageSize))).
-		WithQueryParam("page_token", wiremock.EqualTo(saLastPagePageToken)).
-		InScenario(saDataSourceScenarioName).
-		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
-		WillReturn(
-			string(readServiceAccountsPageTwoResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
 		))
