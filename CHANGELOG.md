@@ -1,3 +1,10 @@
+## 2.12.0 (December 3rd, 2024)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.11.0...v2.12.0)
+
+**Bug fixes:**
+* Optimized fetching mechanism for `confluent_service_account` [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_service_account).
+
 ## 2.11.0 (November 22nd, 2024)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.10.0...v2.11.0)
