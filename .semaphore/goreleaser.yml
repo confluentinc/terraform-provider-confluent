@@ -60,14 +60,8 @@ blocks:
             # Install deps for compiling for linux/arm64 from linux/amd64
             - sudo apt update
             - sudo apt install -y gcc-aarch64-linux-gnu
-            # install pact CLIs
-            - make pact-cli-install
-            # check if our dependencies are compatible
-            - make pact-can-i-deploy
             - mkdir prebuilt && cd prebuilt
             - artifact pull workflow darwin-fips_darwin_amd64_v1
             - artifact pull workflow darwin-fips_darwin_arm64
             - cd ..
             - curl https://goreleaser.com/static/run | VERSION=v1.25.1-pro bash -s -- release --config .goreleaser.yml --key $(vault kv get -field goreleaser_key v1/ci/kv/cli/release)
-            # record this version as released
-            - make pact-release

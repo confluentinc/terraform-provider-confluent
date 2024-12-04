@@ -33,7 +33,6 @@ blocks:
           commands:
             - make all
             # Run make-release CI if the current commit is not tagged
-            # release will also publish pacts to the pact broker if needed
             - if [[ -z $(git tag --points-at HEAD) ]]; then make release-ci; fi
 
 promotions:
