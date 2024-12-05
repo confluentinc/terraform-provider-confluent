@@ -834,11 +834,13 @@ func loadSchema(ctx context.Context, d *schema.ResourceData, c *SchemaRegistryRe
 func readSchemaRegistryConfigAndSetAttributes(ctx context.Context, d *schema.ResourceData, c *SchemaRegistryRestClient, subjectName string, schemaIdentifier string) (*sr.Schema, error) {
 	isLatestSchemaBool := isLatestSchema(schemaIdentifier)
 	srSchema, exists, err := loadSchema(ctx, d, c, subjectName, schemaIdentifier)
-	if err != nil {
+	if !exists && err != nil {
 		return nil, fmt.Errorf("error reading Schema %q: %s", d.Id(), createDescriptiveError(err))
 	}
+	_, resp, err := c.apiClient.SchemasV1Api.GetSchemas(c.apiContext(ctx)).SubjectPrefix(subjectName).Execute()
 	if !exists {
-		if !d.IsNewResource() {
+		isResource404 := isNonKafkaRestApiResourceNotFound(resp)
+		if isResource404 && !d.IsNewResource() {
 			tflog.Warn(ctx, fmt.Sprintf("Removing Schema %q in TF state because Schema could not be found on the server", d.Id()), map[string]interface{}{schemaLoggingKey: d.Id()})
 			d.SetId("")
 			return nil, nil
