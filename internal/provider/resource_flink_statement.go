@@ -173,8 +173,6 @@ func flinkStatementCreate(ctx context.Context, d *schema.ResourceData, meta inte
 
 	mergedProperties, sensitiveProperties, _ := extractFlinkProperties(d)
 
-	tflog.Debug(ctx, fmt.Sprintf("SENSITIVE VALUES: %s", sensitiveProperties))
-
 	spec := fgb.NewSqlV1StatementSpec()
 	spec.SetStatement(statement)
 	spec.SetProperties(mergedProperties)
