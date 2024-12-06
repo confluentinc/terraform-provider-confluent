@@ -805,8 +805,8 @@ func isLatestSchema(schemaIdentifier string) bool {
 func loadSchema(ctx context.Context, d *schema.ResourceData, c *SchemaRegistryRestClient, subjectName string, schemaIdentifier string) (*sr.Schema, bool, error) {
 	// Option #1: find the schema identifier of the latest schema
 	var err error
-	var isResourceNotFound bool
 	if isLatestSchema(schemaIdentifier) {
+		var isResourceNotFound bool
 		schemaIdentifier, isResourceNotFound, err = loadIdForLatestSchema(ctx, d, c, subjectName)
 		if err != nil {
 			return nil, isResourceNotFound, fmt.Errorf("error loading the latest Schema: %s", createDescriptiveError(err))
