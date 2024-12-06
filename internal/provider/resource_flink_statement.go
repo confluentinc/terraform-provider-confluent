@@ -18,15 +18,17 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/samber/lo"
 	"net/http"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 
 	fgb "github.com/confluentinc/ccloud-sdk-go-v2/flink-gateway/v1"
 )
@@ -36,6 +38,7 @@ const (
 	paramStatement              = "statement"
 	paramComputePool            = "compute_pool"
 	paramProperties             = "properties"
+	paramPropertiesSensitive    = "properties_sensitive"
 	paramStopped                = "stopped"
 	paramLatestOffsets          = "latest_offsets"
 	paramLatestOffsetsTimestamp = "latest_offsets_timestamp"
@@ -85,6 +88,16 @@ func flinkStatementResource() *schema.Resource {
 				},
 				Optional: true,
 				Computed: true,
+			},
+			paramPropertiesSensitive: {
+				Type: schema.TypeMap,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+				Sensitive: true,
+				Optional:  true,
+				Computed:  true,
+				ForceNew:  false,
 			},
 			paramStopped: {
 				Type:        schema.TypeBool,
@@ -157,11 +170,12 @@ func flinkStatementCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	}
 
 	statement := d.Get(paramStatement).(string)
-	properties := convertToStringStringMap(d.Get(paramProperties).(map[string]interface{}))
+
+	mergedProperties, sensitiveProperties, _ := extractFlinkProperties(d)
 
 	spec := fgb.NewSqlV1StatementSpec()
 	spec.SetStatement(statement)
-	spec.SetProperties(properties)
+	spec.SetProperties(mergedProperties)
 	spec.SetComputePoolId(computePoolId)
 	spec.SetPrincipal(principalId)
 
@@ -173,6 +187,11 @@ func flinkStatementCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	if err != nil {
 		return diag.Errorf("error creating Flink Statement: error marshaling %#v to json: %s", createFlinkStatementRequest, createDescriptiveError(err))
 	}
+
+	if err := d.Set(paramPropertiesSensitive, sensitiveProperties); err != nil {
+		return diag.FromErr(createDescriptiveError(err))
+	}
+
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Flink Statement: %s", createFlinkStatementRequestJson))
 
 	createdFlinkStatement, _, err := executeFlinkStatementCreate(flinkRestClient.apiContext(ctx), flinkRestClient, createFlinkStatementRequest)
@@ -425,7 +444,7 @@ func setFlinkStatementAttributes(d *schema.ResourceData, c *FlinkRestClient, sta
 	if err := d.Set(paramStatement, statement.Spec.GetStatement()); err != nil {
 		return nil, err
 	}
-	if err := d.Set(paramProperties, statement.Spec.GetProperties()); err != nil {
+	if err := d.Set(paramProperties, extractNonsensitiveProperties(statement.Spec.GetProperties())); err != nil {
 		return nil, err
 	}
 	if err := d.Set(paramStopped, statement.Spec.GetStopped()); err != nil {
@@ -461,6 +480,21 @@ func setFlinkStatementAttributes(d *schema.ResourceData, c *FlinkRestClient, sta
 	}
 	d.SetId(createFlinkStatementId(statement.GetEnvironmentId(), statement.Spec.GetComputePoolId(), statement.GetName()))
 	return d, nil
+}
+
+func extractNonsensitiveProperties(properties map[string]string) map[string]string {
+	nonsensitiveProperties := make(map[string]string)
+
+	for propertiesSettingName, propertiesSettingValue := range properties {
+		// Skip all sensitive config settings since we don't want to store them in TF state
+		isSensitiveSetting := strings.HasPrefix(propertiesSettingName, "sql.secrets")
+		if isSensitiveSetting {
+			continue
+		}
+		nonsensitiveProperties[propertiesSettingName] = propertiesSettingValue
+	}
+
+	return nonsensitiveProperties
 }
 
 func flinkStatementDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -700,6 +734,19 @@ func extractFlinkPrincipalId(client *Client, d *schema.ResourceData, isImportOpe
 
 func createFlinkStatementId(environmentId, computePoolId, statementName string) string {
 	return fmt.Sprintf("%s/%s/%s", environmentId, computePoolId, statementName)
+}
+
+func extractFlinkProperties(d *schema.ResourceData) (map[string]string, map[string]string, map[string]string) {
+	sensitiveProperties := convertToStringStringMap(d.Get(paramPropertiesSensitive).(map[string]interface{}))
+	nonsensitiveProperties := convertToStringStringMap(d.Get(paramProperties).(map[string]interface{}))
+
+	// Merge both configs
+	properties := lo.Assign(
+		nonsensitiveProperties,
+		sensitiveProperties,
+	)
+
+	return properties, sensitiveProperties, nonsensitiveProperties
 }
 
 func resourceFlinkStatementDiff(_ context.Context, diff *schema.ResourceDiff, _ interface{}) error {
