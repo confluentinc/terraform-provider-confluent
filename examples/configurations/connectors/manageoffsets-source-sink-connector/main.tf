@@ -426,7 +426,7 @@ resource "confluent_connector" "mysql-db-sink" {
       "kafka_topic" = var.mysqldb_topic_name
     }
     offset = {
-      "kafka_offset" = 20
+      "kafka_offset" = 10
     }
   }
   offsets {
@@ -435,7 +435,16 @@ resource "confluent_connector" "mysql-db-sink" {
       "kafka_topic" = var.mysqldb_topic_name
     }
     offset = {
-      "kafka_offset" = 20
+      "kafka_offset" = 10
+    }
+  }
+  offsets {
+    partition = {
+      "kafka_partition" = 2,
+      "kafka_topic" = var.mysqldb_topic_name
+    }
+    offset = {
+      "kafka_offset" = 15
     }
   }
 
@@ -491,7 +500,7 @@ resource "confluent_connector" "mongo-db-source" {
       "ns" = "mongodb+srv://testcluster.wy6ey.mongodb.net/sample_mflix.movies"
     }
     offset = {
-      "_id" = "{\"_id\": {\"$oid\": \"573a1390f29313caabcd42e8\"}, \"copyingData\": true}"
+      "_id" = "{\"_id\": {\"$oid\": \"573a1392f29313caabcd9cce\"}, \"copyingData\": true}"
       "copy" = "true"
     }
   }
