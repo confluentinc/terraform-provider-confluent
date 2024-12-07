@@ -132,7 +132,6 @@ resource "confluent_peering" "gcp" {
   gcp {
     project = "temp-gear-123456"
     vpc_network = "customer-test-vpc-network"
-    customer_region = "us-west4"
   }
   environment {
     id = confluent_environment.development.id
