@@ -260,10 +260,15 @@ func flinkStatementRead(ctx context.Context, d *schema.ResourceData, meta interf
 }
 
 func flinkStatementUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	if d.HasChangesExcept(paramStopped, paramSensitiveConfigProperties) {
+		return diag.Errorf("error updating Flink Statement %q: only %q, %q, attributes can be updated for Flink Statement", d.Id(), paramStopped, paramSensitiveConfigProperties)
+	}
+
 	// Make sure we must have a paramStopped update
 	// stopped: false -> true to trigger flink statement stopping
 	// stopped: true -> false to trigger flink statement resuming
-	if !d.HasChange(paramStopped) {
+	sensitiveProperties := convertToStringSlice(d.Get(paramSensitiveConfigProperties).(*schema.Set).List())
+	if !d.HasChange(paramStopped) && len(sensitiveProperties) != 0 {
 		return diag.Errorf(`error updating Flink Statement %q: %q attribute must be updated for Flink Statement, "true" -> "false" to trigger resuming, "false" -> "true" to trigger stopping`, d.Id(), paramStopped)
 	}
 
