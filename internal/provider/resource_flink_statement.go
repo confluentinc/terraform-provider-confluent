@@ -260,10 +260,12 @@ func flinkStatementRead(ctx context.Context, d *schema.ResourceData, meta interf
 }
 
 func flinkStatementUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+
 	// Make sure we must have a paramStopped update
 	// stopped: false -> true to trigger flink statement stopping
 	// stopped: true -> false to trigger flink statement resuming
-	if !d.HasChange(paramStopped) {
+	sensitiveProperties := convertToStringStringMap(d.Get(paramPropertiesSensitive).(map[string]interface{}))
+	if !d.HasChange(paramStopped) && len(sensitiveProperties) != 0 {
 		return diag.Errorf(`error updating Flink Statement %q: %q attribute must be updated for Flink Statement, "true" -> "false" to trigger resuming, "false" -> "true" to trigger stopping`, d.Id(), paramStopped)
 	}
 
@@ -272,6 +274,10 @@ func flinkStatementUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 	// The resuming case: principalId, computePoolId can be optionally updated
 	if oldStopped.(bool) == true && newStopped.(bool) == false {
 		return flinkStatementResume(ctx, d, meta)
+	}
+	_, sensitive, _ := extractFlinkProperties(d)
+	if err := d.Set(paramPropertiesSensitive, sensitive); err != nil {
+		return diag.Errorf("Error setting %q", paramPropertiesSensitive)
 	}
 
 	// The stopping case: nothing else except the `stopped` can be updated
