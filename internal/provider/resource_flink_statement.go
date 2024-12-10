@@ -275,6 +275,10 @@ func flinkStatementUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 	if oldStopped.(bool) == true && newStopped.(bool) == false {
 		return flinkStatementResume(ctx, d, meta)
 	}
+	_, sensitive, _ := extractFlinkProperties(d)
+	if err := d.Set(paramPropertiesSensitive, sensitive); err != nil {
+		return diag.Errorf("Error setting %q", paramPropertiesSensitive)
+	}
 
 	// The stopping case: nothing else except the `stopped` can be updated
 	return flinkStatementStop(ctx, d, meta)
