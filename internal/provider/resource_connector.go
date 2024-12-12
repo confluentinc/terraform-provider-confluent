@@ -438,8 +438,6 @@ func connectorUpdate(ctx context.Context, d *schema.ResourceData, meta interface
 				return diag.Errorf("error updating Connector %q: error marshaling %#v to json: %s", d.Id(), connectAlterRequestInfo, createDescriptiveError(err))
 			}
 			tflog.Debug(ctx, fmt.Sprintf("Finished updating Connector with offsets %q: %s", d.Id(), connectAlterRequestJson), map[string]interface{}{connectorLoggingKey: d.Id()})
-		} else {
-			tflog.Debug(ctx, fmt.Sprintf("No Offset set for Connector %q", d.Id()), map[string]interface{}{connectorLoggingKey: d.Id()})
 		}
 	}
 

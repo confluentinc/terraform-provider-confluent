@@ -219,20 +219,19 @@ resource "confluent_connector" "sink" {
     id = data.confluent_kafka_cluster.test_cluster.id
   }
   config_sensitive = {
-    "kafka.auth.mode"            = "KAFKA_API_KEY"
-    "kafka.api.key"              = var.cc_cluster_api_key
-    "kafka.api.secret"           = var.cc_cluster_api_secret
-    "connection.user"            = var.db_user
-    "connection.password"        = var.db_password
-    "connection.host"            = var.db_host
-    "connection.port"            = var.db_port
-    "ssl.mode"                   = "prefer"
+    "connection.user"            = "***REDACTED***"
+    "connection.password"        = "***REDACTED***"
+    "connection.host"            = "***REDACTED***"
+    "connection.port"            = "***REDACTED***"
   }
   config_nonsensitive = {
+    "kafka.auth.mode"          = "SERVICE_ACCOUNT"
+    "kafka.service.account.id" = confluent_service_account.app-connector.id
+    "ssl.mode"                   = "prefer"
     "connector.class"            = "MySqlSink"
-    "name"                       = var.connector_name
-    "topics"                     = var.topic_name
-    "input.data.format"         = "AVRO"
+    "name"                       = "MySqlSinkConnector_0"
+    "topics"                     = confluent_kafka_topic.orders.topic_name
+    "input.data.format"         = "JSON"
     "tasks.max"                  = "1"
     "db.name"                    = "test"
     "insert.mode"                = "INSERT"
@@ -243,7 +242,7 @@ resource "confluent_connector" "sink" {
   offsets {
     partition = {
       "kafka_partition" = 0,
-      "kafka_topic" = var.topic_name
+      "kafka_topic" = confluent_kafka_topic.orders.topic_name
     }
     offset = {
       "kafka_offset" = 75000
@@ -252,7 +251,7 @@ resource "confluent_connector" "sink" {
   offsets {
     partition = {
       "kafka_partition" = 1,
-      "kafka_topic" = var.topic_name
+      "kafka_topic" = confluent_kafka_topic.orders.topic_name
     }
     offset = {
       "kafka_offset" = 75000
@@ -261,7 +260,7 @@ resource "confluent_connector" "sink" {
   offsets {
     partition = {
       "kafka_partition" = 5,
-      "kafka_topic" = var.topic_name
+      "kafka_topic" = confluent_kafka_topic.orders.topic_name
     }
     offset = {
       "kafka_offset" = 75000
@@ -338,11 +337,10 @@ The following arguments are supported:
   - `value` - (Required String, Sensitive) The configuration setting value, for example, `***REDACTED***`.
 - `offsets` - (Optional List of Configuration Blocks) supports the following:
   - `partition` - (Required Map) Block with partition information.
-    - Sink connectors have `kafka_partition` entry.
-    - Sink connectors have `kafka_topic` entry.
+    - `kafka_partition` - (Required String) The Kafka partition of the Sink connector.
     - Source connectors have connector specific configuration entries.
   - `offset` - (Required Map) Block with offset information.
-    - Sink connectors have `kafka_offset` entry.
+    - `kafka_offset` - (Required String) The Kafka offset of the Sink connector.
     - Source connectors have connector specific configuration entries.
 !> **Warning:** Terraform doesn't encrypt the sensitive configuration settings from the `config_sensitive` block of the `confluent_connector` resource, so you must keep your state file secure to avoid exposing it. Refer to the [Terraform documentation](https://www.terraform.io/docs/language/state/sensitive-data.html) to learn more about securing your state file.
 
