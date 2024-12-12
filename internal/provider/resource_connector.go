@@ -455,10 +455,6 @@ func connectorOffsetDelete(ctx context.Context, d *schema.ResourceData, c *Clien
 		return diag.Errorf("error deleting Connector offsets %q: %s", d.Id(), createDescriptiveError(err))
 	}
 	if resp != nil && resp.StatusCode != http.StatusAccepted {
-		if resp.StatusCode == http.StatusNotFound {
-			tflog.Debug(ctx, fmt.Sprintf("No Connector offset to delete for connector id %q", d.Id()), map[string]interface{}{connectorLoggingKey: d.Id()})
-			return nil
-		}
 		return diag.Errorf("error deleting Connector offsets %q: %s", d.Id(), resp.Status)
 	}
 
