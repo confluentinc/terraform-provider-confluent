@@ -126,7 +126,7 @@ func offsetsSchema() *schema.Schema {
 						Type: schema.TypeString,
 					},
 					Required:    true,
-					Description: "Map of connector partitions information.",
+					Description: "Connector partitions information.",
 				},
 				paramOffset: {
 					Type: schema.TypeMap,
@@ -134,12 +134,12 @@ func offsetsSchema() *schema.Schema {
 						Type: schema.TypeString,
 					},
 					Required:    true,
-					Description: "Map of offsets for the partition.",
+					Description: "Connector offsets information for the partition.",
 				},
 			},
 		},
 		ForceNew:    false,
-		Description: "List of partitions with offsets",
+		Description: "Connector partitions with offsets",
 	}
 }
 

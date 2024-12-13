@@ -393,7 +393,7 @@ resource "confluent_connector" "mysql-db-sink" {
   environment {
     id = confluent_environment.staging.id
   }
-  
+
   kafka_cluster {
     id = confluent_kafka_cluster.basic.id
   }
@@ -401,29 +401,29 @@ resource "confluent_connector" "mysql-db-sink" {
   config_sensitive = {
     "kafka.auth.mode"          = "SERVICE_ACCOUNT"
     "kafka.service.account.id" = confluent_service_account.app-connector.id
-    "connection.user"            = var.mysqldb_user
-    "connection.password"        = var.mysqldb_password
-    "connection.host"            = var.mysqldb_host
-    "connection.port"            = var.mysqldb_port
-    "ssl.mode"                   = "prefer"
+    "connection.user"          = var.mysqldb_user
+    "connection.password"      = var.mysqldb_password
+    "connection.host"          = var.mysqldb_host
+    "connection.port"          = var.mysqldb_port
+    "ssl.mode"                 = "prefer"
   }
 
   config_nonsensitive = {
-    "connector.class"            = "MySqlSink"
-    "name"                       = "MySQLSinkConnector_0"
-    "topics"                     = var.mysqldb_topic_name
-    "input.data.format"         = "AVRO"
-    "tasks.max"                  = "1"
-    "db.name"                    = var.mysqldb_name
-    "insert.mode"                = "INSERT"
-    "auto.create"                = "true"
-    "auto.evolve"                = "true"
+    "connector.class"   = "MySqlSink"
+    "name"              = "MySQLSinkConnector_0"
+    "topics"            = var.mysqldb_topic_name
+    "input.data.format" = "AVRO"
+    "tasks.max"         = "1"
+    "db.name"           = var.mysqldb_name
+    "insert.mode"       = "INSERT"
+    "auto.create"       = "true"
+    "auto.evolve"       = "true"
   }
-  
+
   offsets {
     partition = {
       "kafka_partition" = 0,
-      "kafka_topic" = var.mysqldb_topic_name
+      "kafka_topic"     = var.mysqldb_topic_name
     }
     offset = {
       "kafka_offset" = 10
@@ -432,7 +432,7 @@ resource "confluent_connector" "mysql-db-sink" {
   offsets {
     partition = {
       "kafka_partition" = 1,
-      "kafka_topic" = var.mysqldb_topic_name
+      "kafka_topic"     = var.mysqldb_topic_name
     }
     offset = {
       "kafka_offset" = 10
@@ -441,7 +441,7 @@ resource "confluent_connector" "mysql-db-sink" {
   offsets {
     partition = {
       "kafka_partition" = 2,
-      "kafka_topic" = var.mysqldb_topic_name
+      "kafka_topic"     = var.mysqldb_topic_name
     }
     offset = {
       "kafka_offset" = 15
@@ -465,7 +465,7 @@ resource "confluent_connector" "mongo-db-source" {
   environment {
     id = confluent_environment.staging.id
   }
-  
+
   kafka_cluster {
     id = confluent_kafka_cluster.basic.id
   }
@@ -473,9 +473,9 @@ resource "confluent_connector" "mongo-db-source" {
   // Block for custom *sensitive* configuration properties that are labelled with "Type: password" under "Configuration Properties" section in the docs:
   // https://docs.confluent.io/cloud/current/connectors/cc-mongo-db-source.html#configuration-properties
   config_sensitive = {
-    "connection.password"      = var.mongodb_password
-    "connection.host"          = var.mongodb_connection_host
-    "connection.user"          = var.mongodb_connection_user
+    "connection.password" = var.mongodb_password
+    "connection.host"     = var.mongodb_connection_host
+    "connection.user"     = var.mongodb_connection_user
   }
 
   // Block for custom *nonsensitive* configuration properties that are *not* labelled with "Type: password" under "Configuration Properties" section in the docs:
@@ -500,7 +500,7 @@ resource "confluent_connector" "mongo-db-source" {
       "ns" = "mongodb+srv://testcluster.wy6ey.mongodb.net/sample_mflix.movies"
     }
     offset = {
-      "_id" = "{\"_id\": {\"$oid\": \"573a1392f29313caabcd9cce\"}, \"copyingData\": true}"
+      "_id"  = "{\"_id\": {\"$oid\": \"573a1392f29313caabcd9cce\"}, \"copyingData\": true}"
       "copy" = "true"
     }
   }

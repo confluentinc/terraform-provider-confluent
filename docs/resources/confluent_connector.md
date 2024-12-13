@@ -225,13 +225,13 @@ resource "confluent_connector" "sink" {
     "connection.port"            = "***REDACTED***"
   }
   config_nonsensitive = {
-    "kafka.auth.mode"          = "SERVICE_ACCOUNT"
-    "kafka.service.account.id" = confluent_service_account.app-connector.id
+    "kafka.auth.mode"            = "SERVICE_ACCOUNT"
+    "kafka.service.account.id"   = confluent_service_account.app-connector.id
     "ssl.mode"                   = "prefer"
     "connector.class"            = "MySqlSink"
     "name"                       = "MySqlSinkConnector_0"
     "topics"                     = confluent_kafka_topic.orders.topic_name
-    "input.data.format"         = "JSON"
+    "input.data.format"          = "JSON"
     "tasks.max"                  = "1"
     "db.name"                    = "test"
     "insert.mode"                = "INSERT"
@@ -242,7 +242,7 @@ resource "confluent_connector" "sink" {
   offsets {
     partition = {
       "kafka_partition" = 0,
-      "kafka_topic" = confluent_kafka_topic.orders.topic_name
+      "kafka_topic"     = confluent_kafka_topic.orders.topic_name
     }
     offset = {
       "kafka_offset" = 75000
@@ -251,7 +251,7 @@ resource "confluent_connector" "sink" {
   offsets {
     partition = {
       "kafka_partition" = 1,
-      "kafka_topic" = confluent_kafka_topic.orders.topic_name
+      "kafka_topic"     = confluent_kafka_topic.orders.topic_name
     }
     offset = {
       "kafka_offset" = 75000
@@ -260,7 +260,7 @@ resource "confluent_connector" "sink" {
   offsets {
     partition = {
       "kafka_partition" = 5,
-      "kafka_topic" = confluent_kafka_topic.orders.topic_name
+      "kafka_topic"     = confluent_kafka_topic.orders.topic_name
     }
     offset = {
       "kafka_offset" = 75000
@@ -338,13 +338,13 @@ The following arguments are supported:
 - `offsets` - (Optional List of Configuration Blocks) supports the following:
   - `partition` - (Required Map) Block with partition information.
     - `kafka_partition` - (Required String) The Kafka partition of the Sink connector.
-    - Source connectors have connector specific configuration entries.
   - `offset` - (Required Map) Block with offset information.
     - `kafka_offset` - (Required String) The Kafka offset of the Sink connector.
-    - Source connectors have connector specific configuration entries.
 !> **Warning:** Terraform doesn't encrypt the sensitive configuration settings from the `config_sensitive` block of the `confluent_connector` resource, so you must keep your state file secure to avoid exposing it. Refer to the [Terraform documentation](https://www.terraform.io/docs/language/state/sensitive-data.html) to learn more about securing your state file.
 
 - `status` (Optional String) The status of the connector (one of `"NONE"`, `"PROVISIONING"`, `"RUNNING"`, `"DEGRADED"`, `"FAILED"`, `"PAUSED"`, `"DELETED"`). Pausing (`"RUNNING" -> "PAUSED"`) and resuming (`"PAUSED" -> "RUNNING"`) a connector is supported via an update operation.
+
+-> **Note:** Source connectors have connector specific configuration entries for `offsets.partition` and `offsets.offset`. Refer [Manage Custom Offsets](https://docs.confluent.io/cloud/current/connectors/cc-mongo-db-source.html#manage-custom-offsets) for supported source connectors and their configuration entries.
 
 -> **Note:** If there are no _sensitive_ configuration settings for your connector, set `config_sensitive = {}` explicitly.
 
