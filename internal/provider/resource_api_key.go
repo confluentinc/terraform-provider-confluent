@@ -391,9 +391,7 @@ func apiKeyResourceSchema() *schema.Schema {
 		Type:     schema.TypeList,
 		MinItems: 1,
 		MaxItems: 1,
-		// If the resource is not specified, then Cloud API Key gets created
-		//TODO: Add logic to determine whether Cloud/Tableflow API Key should be created
-		// actually we may not need to change anything in this func
+		// If the resource is not specified, then Cloud or Tableflow API Key gets created, depending on the kind of referred resource
 		Optional:    true,
 		ForceNew:    true,
 		Description: "The resource associated with this object. The only resource that is supported is 'cmk.v2.Cluster', 'srcm.v2.Cluster', 'srcm.v3.Cluster'.",
@@ -529,7 +527,6 @@ func waitForApiKeyToSync(ctx context.Context, c *Client, createdApiKey apikeys.I
 	// For Kafka API Key use Kafka REST API's List Topics request and wait for http.StatusOK
 	// For Cloud API Key use Org API's List Environments request and wait for http.StatusOK
 	// For Flink API Key use Statements API's List of Statements request and wait for http.StatusOK
-	////TODO:
 	// For Tableflow API Key use Org API's List Environments request and wait for http.StatusOK (need to double check)
 
 	if isResourceSpecificApiKey {
@@ -585,7 +582,6 @@ func waitForApiKeyToSync(ctx context.Context, c *Client, createdApiKey apikeys.I
 		if err := waitForCreatedCloudApiKeyToSync(ctx, c, createdApiKey.GetId(), createdApiKey.Spec.GetSecret()); err != nil {
 			return fmt.Errorf("error waiting for Cloud API Key %q to sync: %s", createdApiKey.GetId(), createDescriptiveError(err))
 		}
-		//// TODO: Add logics for Tableflow API Key
 		// Tableflow API Key
 		if err := waitForCreatedTableflowApiKeyToSync(ctx, c, createdApiKey.GetId(), createdApiKey.Spec.GetSecret()); err != nil {
 			return fmt.Errorf("error waiting for Tableflow API Key %q to sync: %s", createdApiKey.GetId(), createDescriptiveError(err))
@@ -605,8 +601,7 @@ func apiKeyImport(ctx context.Context, d *schema.ResourceData, meta interface{})
 	envIdAndClusterAPIKeyId := d.Id()
 	parts := strings.Split(envIdAndClusterAPIKeyId, "/")
 	if len(parts) == 1 {
-		tflog.Debug(ctx, fmt.Sprintf("Importing Cloud API Key %q", d.Id()), map[string]interface{}{apiKeyLoggingKey: d.Id()})
-		//// TODO: Add debug message & logic for Tableflow API Key
+		tflog.Debug(ctx, fmt.Sprintf("Importing Cloud or Tableflow API Key %q", d.Id()), map[string]interface{}{apiKeyLoggingKey: d.Id()})
 	} else if len(parts) == 2 {
 		environmentId := parts[0]
 		clusterApiKeyId := parts[1]
