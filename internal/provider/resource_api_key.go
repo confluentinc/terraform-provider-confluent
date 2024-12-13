@@ -393,6 +393,7 @@ func apiKeyResourceSchema() *schema.Schema {
 		MaxItems: 1,
 		// If the resource is not specified, then Cloud API Key gets created
 		//TODO: Add logic to determine whether Cloud/Tableflow API Key should be created
+		// actually we may not need to change anything in this func
 		Optional:    true,
 		ForceNew:    true,
 		Description: "The resource associated with this object. The only resource that is supported is 'cmk.v2.Cluster', 'srcm.v2.Cluster', 'srcm.v3.Cluster'.",
@@ -585,6 +586,10 @@ func waitForApiKeyToSync(ctx context.Context, c *Client, createdApiKey apikeys.I
 			return fmt.Errorf("error waiting for Cloud API Key %q to sync: %s", createdApiKey.GetId(), createDescriptiveError(err))
 		}
 		//// TODO: Add logics for Tableflow API Key
+		// Tableflow API Key
+		if err := waitForCreatedTableflowApiKeyToSync(ctx, c, createdApiKey.GetId(), createdApiKey.Spec.GetSecret()); err != nil {
+			return fmt.Errorf("error waiting for Tableflow API Key %q to sync: %s", createdApiKey.GetId(), createDescriptiveError(err))
+		}
 	}
 	return nil
 }

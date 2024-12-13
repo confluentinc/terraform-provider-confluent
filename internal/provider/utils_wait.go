@@ -118,6 +118,28 @@ func waitForCreatedCloudApiKeyToSync(ctx context.Context, c *Client, cloudApiKey
 	return nil
 }
 
+func waitForCreatedTableflowApiKeyToSync(ctx context.Context, c *Client, tableflowApiKey, tableflowApiSecret string) error {
+	delay, pollInterval := getDelayAndPollInterval(15*time.Second, 1*time.Minute, c.isAcceptanceTestMode)
+	stateConf := &resource.StateChangeConf{
+		Pending: []string{stateInProgress},
+		Target:  []string{stateDone},
+		Refresh: tableflowApiKeySyncStatus(ctx, c, tableflowApiKey, tableflowApiSecret),
+		////TODO: Need to research/explore on what value of resource timeout should be set for tableflow
+		// Default timeout for a resource
+		// https://www.terraform.io/plugin/sdkv2/resources/retries-and-customizable-timeouts
+		// Based on the tests, Cloud API Key takes about 10 seconds to sync (or even faster)
+		Timeout:      20 * time.Minute,
+		Delay:        delay,
+		PollInterval: pollInterval,
+	}
+
+	tflog.Debug(ctx, fmt.Sprintf("Waiting for Tableflow API Key %q to sync", tableflowApiKey), map[string]interface{}{apiKeyLoggingKey: tableflowApiKey})
+	if _, err := stateConf.WaitForStateContext(c.orgApiContext(ctx)); err != nil {
+		return err
+	}
+	return nil
+}
+
 func waitForKafkaClusterToProvision(ctx context.Context, c *Client, environmentId, clusterId, clusterType string) error {
 	delay, pollInterval := getDelayAndPollInterval(5*time.Second, 1*time.Minute, c.isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
@@ -1544,6 +1566,27 @@ func transitGatewayAttachmentDeleteStatus(ctx context.Context, c *Client, enviro
 }
 
 func cloudApiKeySyncStatus(ctx context.Context, c *Client, cloudApiKey, cloudApiSecret string) resource.StateRefreshFunc {
+	return func() (result interface{}, s string, err error) {
+		_, resp, err := c.orgClient.EnvironmentsOrgV2Api.ListOrgV2Environments(orgApiContext(ctx, cloudApiKey, cloudApiSecret)).Execute()
+		if resp != nil && resp.StatusCode == http.StatusOK {
+			tflog.Debug(ctx, fmt.Sprintf("Finishing Cloud API Key %q sync process: Received %d status code when listing environments", cloudApiKey, resp.StatusCode), map[string]interface{}{apiKeyLoggingKey: cloudApiKey})
+			return 0, stateDone, nil
+			// Status codes for unsynced API Keys might change over time, so it's safer to rely on a timeout to fail
+		} else if resp != nil && (resp.StatusCode == http.StatusForbidden || resp.StatusCode == http.StatusUnauthorized) {
+			tflog.Debug(ctx, fmt.Sprintf("Performing Cloud API Key %q sync process: Received %d status code when listing environments", cloudApiKey, resp.StatusCode), map[string]interface{}{apiKeyLoggingKey: cloudApiKey})
+			return 0, stateInProgress, nil
+		} else if err != nil {
+			tflog.Debug(ctx, fmt.Sprintf("Exiting Cloud API Key %q sync process: Failed when listing Environments: %s", cloudApiKey, createDescriptiveError(err)), map[string]interface{}{apiKeyLoggingKey: cloudApiKey})
+			return nil, stateFailed, fmt.Errorf("error listing Environments using Cloud API Key %q: %s", cloudApiKey, createDescriptiveError(err))
+		} else {
+			tflog.Debug(ctx, fmt.Sprintf("Exiting Cloud API Key %q sync process: Received unexpected response when listing Environments: %#v", cloudApiKey, resp), map[string]interface{}{apiKeyLoggingKey: cloudApiKey})
+			return nil, stateUnexpected, fmt.Errorf("error listing Environments using Kafka API Key %q: received a response with unexpected %d status code", cloudApiKey, resp.StatusCode)
+		}
+	}
+}
+
+// //TODO: Update this func to match tableflow requirement
+func tableflowApiKeySyncStatus(ctx context.Context, c *Client, cloudApiKey, cloudApiSecret string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
 		_, resp, err := c.orgClient.EnvironmentsOrgV2Api.ListOrgV2Environments(orgApiContext(ctx, cloudApiKey, cloudApiSecret)).Execute()
 		if resp != nil && resp.StatusCode == http.StatusOK {
