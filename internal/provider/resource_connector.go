@@ -115,9 +115,7 @@ func connectorResource() *schema.Resource {
 
 func offsetsSchema() *schema.Schema {
 	return &schema.Schema{
-		Type:     schema.TypeList,
-		Optional: true,
-		Computed: false,
+		Type: schema.TypeList,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				paramPartition: {
@@ -138,6 +136,8 @@ func offsetsSchema() *schema.Schema {
 				},
 			},
 		},
+		Optional:    true,
+		Computed:    false,
 		ForceNew:    false,
 		Description: "Connector partitions with offsets",
 	}
@@ -444,29 +444,6 @@ func connectorUpdate(ctx context.Context, d *schema.ResourceData, meta interface
 	return connectorRead(ctx, d, meta)
 }
 
-func connectorOffsetDelete(ctx context.Context, d *schema.ResourceData, c *Client, displayName string, environmentId string, clusterId string) diag.Diagnostics {
-	var connectV1AlterOffsetRequest connect.ConnectV1AlterOffsetRequest
-	connectV1AlterOffsetRequest.SetType(connect.DELETE)
-
-	req := c.connectClient.OffsetsConnectV1Api.AlterConnectv1ConnectorOffsetsRequest(c.connectApiContext(ctx), displayName, environmentId, clusterId).ConnectV1AlterOffsetRequest(connectV1AlterOffsetRequest)
-	connectAlterRequestInfo, resp, err := req.Execute()
-
-	if err != nil {
-		return diag.Errorf("error deleting Connector offsets %q: %s", d.Id(), createDescriptiveError(err))
-	}
-	if resp != nil && resp.StatusCode != http.StatusAccepted {
-		return diag.Errorf("error deleting Connector offsets %q: %s", d.Id(), resp.Status)
-	}
-
-	connectAlterRequestJson, err := json.Marshal(connectAlterRequestInfo)
-	if err != nil {
-		return diag.Errorf("error deleting Connector offsets %q: error marshaling %#v to json: %s", d.Id(), connectAlterRequestInfo, createDescriptiveError(err))
-	}
-	tflog.Debug(ctx, fmt.Sprintf("Finished deleting Connector offsets %q: %s", d.Id(), connectAlterRequestJson), map[string]interface{}{connectorLoggingKey: d.Id()})
-
-	return nil
-}
-
 func connectorDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	tflog.Debug(ctx, fmt.Sprintf("Deleting Connector %q", d.Id()), map[string]interface{}{connectorLoggingKey: d.Id()})
 	displayName := d.Get(connectorConfigFullAttributeName).(string)
@@ -476,11 +453,6 @@ func connectorDelete(ctx context.Context, d *schema.ResourceData, meta interface
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
 	clusterId := extractStringValueFromBlock(d, paramKafkaCluster, paramId)
 	c := meta.(*Client)
-
-	diagnostics := connectorOffsetDelete(ctx, d, c, displayName, environmentId, clusterId)
-	if diagnostics != nil {
-		return diagnostics
-	}
 
 	req := c.connectClient.ConnectorsConnectV1Api.DeleteConnectv1Connector(c.connectApiContext(ctx), displayName, environmentId, clusterId)
 	deletionError, _, err := req.Execute()
