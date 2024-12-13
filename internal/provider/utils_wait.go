@@ -1585,7 +1585,6 @@ func cloudApiKeySyncStatus(ctx context.Context, c *Client, cloudApiKey, cloudApi
 	}
 }
 
-// //TODO: Update this func to match tableflow requirement
 func tableflowApiKeySyncStatus(ctx context.Context, c *Client, tableflowApiKey, tableflowApiSecret string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
 		_, resp, err := c.orgClient.EnvironmentsOrgV2Api.ListOrgV2Environments(orgApiContext(ctx, tableflowApiKey, tableflowApiSecret)).Execute()
