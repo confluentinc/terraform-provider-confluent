@@ -113,6 +113,7 @@ func (f KafkaRestClientFactory) CreateKafkaRestClient(restEndpoint, clusterId, c
 	config.UserAgent = f.userAgent
 	config.Servers[0].URL = restEndpoint
 	config.HTTPClient = NewRetryableClientFactory(f.ctx, opts...).CreateRetryableClient()
+	config.Debug = true
 
 	return &KafkaRestClient{
 		apiClient:                     kafkarestv3.NewAPIClient(config),
