@@ -25,13 +25,11 @@ import (
 )
 
 const (
-	paramAwsPeeringGateway                     = "aws_peering_gateway"
-	paramAwsEgressPrivateLinkGateway           = "aws_egress_private_link_gateway"
-	paramAzureEgressPrivateLinkGateway         = "azure_egress_private_link_gateway"
-	paramAzurePeeringGateway                   = "azure_peering_gateway"
-	paramGcpEgressPrivateServiceConnectGateway = "gcp_egress_private_service_connect_gateway"
-	paramGcpPeeringGateway                     = "gcp_peering_gateway"
-	paramPrincipalArn                          = "principal_arn"
+	paramAwsPeeringGateway             = "aws_peering_gateway"
+	paramAwsEgressPrivateLinkGateway   = "aws_egress_private_link_gateway"
+	paramAzureEgressPrivateLinkGateway = "azure_egress_private_link_gateway"
+	paramAzurePeeringGateway           = "azure_peering_gateway"
+	paramPrincipalArn                  = "principal_arn"
 )
 
 func gatewayDataSource() *schema.Resource {
@@ -48,12 +46,10 @@ func gatewayDataSource() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			paramAwsEgressPrivateLinkGateway:           awsEgressPrivateLinkGatewayDataSourceSchema(),
-			paramAwsPeeringGateway:                     awsPeeringGatewaySpecDataSourceSchema(),
-			paramAzureEgressPrivateLinkGateway:         azureEgressPrivateLinkGatewayDataSourceSchema(),
-			paramAzurePeeringGateway:                   azurePeeringGatewaySpecDataSourceSchema(),
-			paramGcpEgressPrivateServiceConnectGateway: gcpEgressPrivateLinkGatewayDataSourceSchema(),
-			paramGcpPeeringGateway:                     gcpPeeringGatewaySpecDataSourceSchema(),
+			paramAwsEgressPrivateLinkGateway:   awsEgressPrivateLinkGatewayDataSourceSchema(),
+			paramAwsPeeringGateway:             awsPeeringGatewaySpecDataSourceSchema(),
+			paramAzureEgressPrivateLinkGateway: azureEgressPrivateLinkGatewayDataSourceSchema(),
+			paramAzurePeeringGateway:           azurePeeringGatewaySpecDataSourceSchema(),
 		},
 	}
 }
@@ -117,40 +113,6 @@ func azureEgressPrivateLinkGatewayDataSourceSchema() *schema.Schema {
 					Computed: true,
 				},
 				paramSubscription: {
-					Type:     schema.TypeString,
-					Computed: true,
-				},
-			},
-		},
-		Computed: true,
-	}
-}
-
-func gcpPeeringGatewaySpecDataSourceSchema() *schema.Schema {
-	return &schema.Schema{
-		Type: schema.TypeList,
-		Elem: &schema.Resource{
-			Schema: map[string]*schema.Schema{
-				paramRegion: {
-					Type:     schema.TypeString,
-					Computed: true,
-				},
-			},
-		},
-		Computed: true,
-	}
-}
-
-func gcpEgressPrivateLinkGatewayDataSourceSchema() *schema.Schema {
-	return &schema.Schema{
-		Type: schema.TypeList,
-		Elem: &schema.Resource{
-			Schema: map[string]*schema.Schema{
-				paramRegion: {
-					Type:     schema.TypeString,
-					Computed: true,
-				},
-				paramProject: {
 					Type:     schema.TypeString,
 					Computed: true,
 				},
