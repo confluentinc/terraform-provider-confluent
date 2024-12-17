@@ -95,6 +95,12 @@ func apiKeyResource() *schema.Resource {
 				Default:  false,
 				ForceNew: true,
 			},
+			paramNonResourceSpecificKind: {
+				Type:         schema.TypeString,
+				Optional:     true,
+				Default:      "cloud", // Default to current behavior
+				ValidateFunc: validation.StringInSlice([]string{"cloud", "tableflow"}, false),
+			},
 		},
 	}
 }
@@ -105,6 +111,7 @@ func apiKeyCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 	displayName := d.Get(paramDisplayName).(string)
 	description := d.Get(paramDescription).(string)
 	skipSync := d.Get(paramDisableWaitForReady).(bool)
+	nonResourceSpecificKind := d.Get(paramNonResourceSpecificKind).(string)
 
 	ownerId := extractStringValueFromBlock(d, paramOwner, paramId)
 	ownerKind := extractStringValueFromBlock(d, paramOwner, paramKind)
@@ -135,6 +142,9 @@ func apiKeyCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 			spec.Resource.SetId(resourceId)
 			spec.Resource.SetEnvironment(environmentId)
 		}
+	} else { // api key is not resource specific (ex. cloud, tableflow)
+		resourceKind := nonResourceSpecificKind
+		spec.SetResource(apikeys.ObjectReference{Kind: &resourceKind})
 	}
 
 	createApiKeyRequest := apikeys.IamV2ApiKey{Spec: spec}
@@ -601,6 +611,7 @@ func apiKeyImport(ctx context.Context, d *schema.ResourceData, meta interface{})
 	envIdAndClusterAPIKeyId := d.Id()
 	parts := strings.Split(envIdAndClusterAPIKeyId, "/")
 	if len(parts) == 1 {
+		// might need to filter out cloud/tableflow API key to have two debug messages
 		tflog.Debug(ctx, fmt.Sprintf("Importing Cloud or Tableflow API Key %q", d.Id()), map[string]interface{}{apiKeyLoggingKey: d.Id()})
 	} else if len(parts) == 2 {
 		environmentId := parts[0]
