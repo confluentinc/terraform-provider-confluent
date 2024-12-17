@@ -13,12 +13,10 @@ import (
 )
 
 const (
-	awsPeeringGatewayScenarioName                     = "confluent_gateway AWS Peering Gateway Spec Data Source Lifecycle"
-	awsEgressPrivateLinkGatewayScenarioName           = "confluent_gateway AWS Egress Private Link Gateway Spec Data Source Lifecycle"
-	azurePeeringGatewayScenarioName                   = "confluent_gateway Azure Peering Gateway Spec Data Source Lifecycle"
-	azureEgressPrivateLinkGatewayScenarioName         = "confluent_gateway Azure Egress Private Link Gateway Spec Data Source Lifecycle"
-	gcpPeeringGatewayScenarioName                     = "confluent_gateway Azure Peering Gateway Spec Data Source Lifecycle"
-	gcpEgressPrivateServiceConnectGatewayScenarioName = "confluent_gateway Azure Egress Private Link Gateway Spec Data Source Lifecycle"
+	awsPeeringGatewayScenarioName             = "confluent_gateway AWS Peering Gateway Spec Data Source Lifecycle"
+	awsEgressPrivateLinkGatewayScenarioName   = "confluent_gateway AWS Egress Private Link Gateway Spec Data Source Lifecycle"
+	azurePeeringGatewayScenarioName           = "confluent_gateway Azure Peering Gateway Spec Data Source Lifecycle"
+	azureEgressPrivateLinkGatewayScenarioName = "confluent_gateway Azure Egress Private Link Gateway Spec Data Source Lifecycle"
 )
 
 func TestAccDataSourceGatewayAwsPeeringGatewaySpec(t *testing.T) {
