@@ -1,17 +1,17 @@
 terraform {
-    required_version = ">= 0.14.0"
-    required_providers {
-        confluent = {
-            source = "confluentinc/confluent"
-            version = "2.9.0"
-        }
+  required_version = ">= 0.14.0"
+  required_providers {
+    confluent = {
+      source  = "confluentinc/confluent"
+      version = "2.9.0"
     }
+  }
 }
 
 provider "confluent" {
   cloud_api_key    = var.confluent_cloud_api_key
   cloud_api_secret = var.confluent_cloud_api_secret
-  endpoint = "https://api.stag.cpdev.cloud"
+  endpoint         = "https://api.stag.cpdev.cloud"
 }
 
 resource "confluent_dns_forwarder" "main" {
@@ -26,7 +26,7 @@ resource "confluent_dns_forwarder" "main" {
 
   forward_via_gcp_dns_zones {
     domain_mappings = {
-        "example.com" = "us-central1-a,cc-stag"
+      "example.com" = "us-central1-a,cc-stag"
     }
   }
 }
