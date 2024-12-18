@@ -35,7 +35,7 @@ const (
 	paramDnsServerIps   = "dns_server_ips"
 	paramDomainMappings = "domain_mappings"
 	forwardViaIp        = "ForwardViaIp"
-	forwardViaGcp       = "ForwardViaGcp"
+	forwardViaGcp       = "ForwardViaGcpDnsZones"
 )
 
 var acceptedDnsForwarderConfig = []string{paramForwardViaIp, paramForwardViaGcp}
