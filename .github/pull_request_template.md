@@ -14,7 +14,8 @@ Examples
 Checklist
 ---------
 <!-- 
-Check each item in the checklist to ensure high-quality Terraform development practices are followed. PR approval won't be granted until the checklist is carefully reviewed. Use common sense when checking items: for example, skip items 1–4 if the PR includes documentation updates only. 
+Check each item in the checklist to ensure high-quality Terraform development practices are followed. PR approval won't be granted until the checklist is carefully reviewed.
+For instructions, please refer to this Confluence page: https://confluentinc.atlassian.net/wiki/spaces/AEGI/pages/3938058831/
 -->
 - [ ] I can successfully build and use a custom Terraform provider binary for Confluent.
 - [ ] I have verified my PR with real Confluent Cloud resources in a production environment.
