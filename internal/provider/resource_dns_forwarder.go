@@ -40,8 +40,6 @@ const (
 
 var acceptedDnsForwarderConfig = []string{paramForwardViaIp, paramForwardViaGcp}
 
-//var acceptedDnsForwarderConfig = []string{paramForwardViaIp}
-
 func dnsForwarderResource() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: dnsForwarderCreate,
@@ -188,7 +186,7 @@ func dnsForwarderCreate(ctx context.Context, d *schema.ResourceData, meta interf
 	}
 	d.SetId(createdDnsForwarder.GetId())
 	if err := waitForDnsForwarderToProvision(c.netDnsApiContext(ctx), c, environmentId, d.Id()); err != nil {
-		return diag.Errorf("error waitng for DNS Forwarder %q to provision: %s", d.Id(), (err))
+		return diag.Errorf("error waiting for DNS Forwarder %q to provision: %s", d.Id(), (err))
 	}
 
 	createdDnsForwarderJson, err := json.Marshal(createdDnsForwarder)
