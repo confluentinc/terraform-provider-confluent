@@ -2,7 +2,11 @@ terraform {
   required_providers {
     confluent = {
       source  = "confluentinc/confluent"
-      version = "2.12.0"
+      version = "2.13.0"
+    }
+    time = {
+      source  = "hashicorp/time"
+      version = "0.12.1"
     }
   }
 }
@@ -49,6 +53,12 @@ resource "confluent_api_key" "app-manager-kafka-api-key" {
     environment {
       id = var.environment_id
     }
+
+    # BEWARE: this will rotate your api key, make sure to update your configuration accordingly and
+    # restart your clients, if needed.
+    keepers = {
+      rotation_time = time_rotating.mykey_rotation.rotation_rfc3339
+    }
   }
 
   # The goal is to ensure that confluent_role_binding.app-manager-kafka-cluster-admin is created before
@@ -61,6 +71,11 @@ resource "confluent_api_key" "app-manager-kafka-api-key" {
   depends_on = [
     confluent_role_binding.app-manager-kafka-cluster-admin
   ]
+}
+
+# note this requires the terraform to be run regularly
+resource "time_rotating" "mykey_rotation" {
+  rotation_days = 30
 }
 
 resource "confluent_service_account" "app-consumer" {
