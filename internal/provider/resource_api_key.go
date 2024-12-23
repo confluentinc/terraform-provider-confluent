@@ -142,7 +142,7 @@ func apiKeyCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 			spec.Resource.SetId(resourceId)
 			spec.Resource.SetEnvironment(environmentId)
 		}
-	} else { // api key is not resource specific (ex. cloud, tableflow)
+	} else { // api key is not resource specific (ex. cloud, tableflow), nonResourceSpecificKind default value is "cloud"
 		resourceKind := nonResourceSpecificKind
 		spec.SetResource(apikeys.ObjectReference{Kind: &resourceKind})
 	}
