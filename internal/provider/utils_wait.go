@@ -115,6 +115,7 @@ func waitForCreatedCloudApiKeyToSync(ctx context.Context, c *Client, cloudApiKey
 	if _, err := stateConf.WaitForStateContext(c.orgApiContext(ctx)); err != nil {
 		return err
 	}
+	tflog.Debug(ctx, fmt.Sprintf("DONE waiting for Cloud API Key %q to sync", cloudApiKey), map[string]interface{}{apiKeyLoggingKey: cloudApiKey})
 	return nil
 }
 
@@ -1588,6 +1589,7 @@ func cloudApiKeySyncStatus(ctx context.Context, c *Client, cloudApiKey, cloudApi
 func tableflowApiKeySyncStatus(ctx context.Context, c *Client, tableflowApiKey, tableflowApiSecret string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
 		_, resp, err := c.orgClient.EnvironmentsOrgV2Api.ListOrgV2Environments(orgApiContext(ctx, tableflowApiKey, tableflowApiSecret)).Execute()
+		tflog.Debug(ctx, fmt.Sprintf("###DEBUG MESSAGE### tableflow sync status response code: %d", resp.StatusCode), map[string]interface{}{apiKeyLoggingKey: tableflowApiKey})
 		if resp != nil && resp.StatusCode == http.StatusOK {
 			tflog.Debug(ctx, fmt.Sprintf("Finishing Tableflow API Key %q sync process: Received %d status code when listing environments", tableflowApiKey, resp.StatusCode), map[string]interface{}{apiKeyLoggingKey: tableflowApiKey})
 			return 0, stateDone, nil

@@ -399,7 +399,7 @@ func environmentSchema() *schema.Schema {
 				},
 			},
 		},
-		Required:    true,
+		Optional:    true, // set to be optional for tableflow resource, will add ValidateFunc later
 		MinItems:    1,
 		MaxItems:    1,
 		ForceNew:    true,
