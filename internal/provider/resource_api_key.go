@@ -302,10 +302,6 @@ func setApiKeyAttributes(d *schema.ResourceData, apiKey apikeys.IamV2ApiKey) (*s
 			return nil, createDescriptiveError(err)
 		}
 	}
-	//err := d.Set(paramNonResourceSpecificKind, resourceKind)
-	//if err != nil {
-	//	return nil, err
-	//}
 	// Explicitly set paramDisableWaitForReady to the default value if unset
 	if _, ok := d.GetOk(paramDisableWaitForReady); !ok {
 		if err := d.Set(paramDisableWaitForReady, d.Get(paramDisableWaitForReady)); err != nil {
