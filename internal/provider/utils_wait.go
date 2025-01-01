@@ -115,6 +115,29 @@ func waitForCreatedCloudApiKeyToSync(ctx context.Context, c *Client, cloudApiKey
 	if _, err := stateConf.WaitForStateContext(c.orgApiContext(ctx)); err != nil {
 		return err
 	}
+	tflog.Debug(ctx, fmt.Sprintf("DONE waiting for Cloud API Key %q to sync", cloudApiKey), map[string]interface{}{apiKeyLoggingKey: cloudApiKey})
+	return nil
+}
+
+func waitForCreatedTableflowApiKeyToSync(ctx context.Context, c *Client, tableflowApiKey, tableflowApiSecret string) error {
+	delay, pollInterval := getDelayAndPollInterval(15*time.Second, 1*time.Minute, c.isAcceptanceTestMode)
+	stateConf := &resource.StateChangeConf{
+		Pending: []string{stateInProgress},
+		Target:  []string{stateDone},
+		Refresh: tableflowApiKeySyncStatus(ctx, c, tableflowApiKey, tableflowApiSecret),
+		////TODO: Set to the same as Cloud API for now, might need to double check on the value
+		// Default timeout for a resource
+		// https://www.terraform.io/plugin/sdkv2/resources/retries-and-customizable-timeouts
+		// Based on the tests, Cloud API Key takes about 10 seconds to sync (or even faster)
+		Timeout:      20 * time.Minute,
+		Delay:        delay,
+		PollInterval: pollInterval,
+	}
+
+	tflog.Debug(ctx, fmt.Sprintf("Waiting for Tableflow API Key %q to sync", tableflowApiKey), map[string]interface{}{apiKeyLoggingKey: tableflowApiKey})
+	if _, err := stateConf.WaitForStateContext(c.orgApiContext(ctx)); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -1559,6 +1582,27 @@ func cloudApiKeySyncStatus(ctx context.Context, c *Client, cloudApiKey, cloudApi
 		} else {
 			tflog.Debug(ctx, fmt.Sprintf("Exiting Cloud API Key %q sync process: Received unexpected response when listing Environments: %#v", cloudApiKey, resp), map[string]interface{}{apiKeyLoggingKey: cloudApiKey})
 			return nil, stateUnexpected, fmt.Errorf("error listing Environments using Kafka API Key %q: received a response with unexpected %d status code", cloudApiKey, resp.StatusCode)
+		}
+	}
+}
+
+func tableflowApiKeySyncStatus(ctx context.Context, c *Client, tableflowApiKey, tableflowApiSecret string) resource.StateRefreshFunc {
+	return func() (result interface{}, s string, err error) {
+		_, resp, err := c.orgClient.EnvironmentsOrgV2Api.ListOrgV2Environments(orgApiContext(ctx, tableflowApiKey, tableflowApiSecret)).Execute()
+		tflog.Debug(ctx, fmt.Sprintf("###DEBUG MESSAGE### tableflow sync status response code: %d", resp.StatusCode), map[string]interface{}{apiKeyLoggingKey: tableflowApiKey})
+		if resp != nil && resp.StatusCode == http.StatusOK {
+			tflog.Debug(ctx, fmt.Sprintf("Finishing Tableflow API Key %q sync process: Received %d status code when listing environments", tableflowApiKey, resp.StatusCode), map[string]interface{}{apiKeyLoggingKey: tableflowApiKey})
+			return 0, stateDone, nil
+			// Status codes for unsynced API Keys might change over time, so it's safer to rely on a timeout to fail
+		} else if resp != nil && (resp.StatusCode == http.StatusForbidden || resp.StatusCode == http.StatusUnauthorized) {
+			tflog.Debug(ctx, fmt.Sprintf("Performing Tableflow API Key %q sync process: Received %d status code when listing environments", tableflowApiKey, resp.StatusCode), map[string]interface{}{apiKeyLoggingKey: tableflowApiKey})
+			return 0, stateInProgress, nil
+		} else if err != nil {
+			tflog.Debug(ctx, fmt.Sprintf("Exiting Tableflow API Key %q sync process: Failed when listing Environments: %s", tableflowApiKey, createDescriptiveError(err)), map[string]interface{}{apiKeyLoggingKey: tableflowApiKey})
+			return nil, stateFailed, fmt.Errorf("error listing Environments using Cloud API Key %q: %s", tableflowApiKey, createDescriptiveError(err))
+		} else {
+			tflog.Debug(ctx, fmt.Sprintf("Exiting Tableflow API Key %q sync process: Received unexpected response when listing Environments: %#v", tableflowApiKey, resp), map[string]interface{}{apiKeyLoggingKey: tableflowApiKey})
+			return nil, stateUnexpected, fmt.Errorf("error listing Environments using Kafka API Key %q: received a response with unexpected %d status code", tableflowApiKey, resp.StatusCode)
 		}
 	}
 }

@@ -57,22 +57,23 @@ const (
 )
 
 const (
-	paramApiVersion      = "api_version"
-	paramCloud           = "cloud"
-	paramRegion          = "region"
-	paramOrganization    = "organization"
-	paramEnvironment     = "environment"
-	paramId              = "id"
-	paramDisplayName     = "display_name"
-	paramName            = "name"
-	paramDescription     = "description"
-	paramKind            = "kind"
-	paramCsu             = "csu"
-	paramClass           = "class"
-	paramContentFormat   = "content_format"
-	paramRuntimeLanguage = "runtime_language"
-	paramArtifactFile    = "artifact_file"
-	paramVersions        = "versions"
+	paramApiVersion              = "api_version"
+	paramCloud                   = "cloud"
+	paramRegion                  = "region"
+	paramOrganization            = "organization"
+	paramEnvironment             = "environment"
+	paramNonResourceSpecificKind = "api_key_type_non_resource_specific"
+	paramId                      = "id"
+	paramDisplayName             = "display_name"
+	paramName                    = "name"
+	paramDescription             = "description"
+	paramKind                    = "kind"
+	paramCsu                     = "csu"
+	paramClass                   = "class"
+	paramContentFormat           = "content_format"
+	paramRuntimeLanguage         = "runtime_language"
+	paramArtifactFile            = "artifact_file"
+	paramVersions                = "versions"
 )
 
 type Client struct {
@@ -398,7 +399,7 @@ func environmentSchema() *schema.Schema {
 				},
 			},
 		},
-		Required:    true,
+		Optional:    true, // set to be optional for tableflow resource, will add ValidateFunc later
 		MinItems:    1,
 		MaxItems:    1,
 		ForceNew:    true,
