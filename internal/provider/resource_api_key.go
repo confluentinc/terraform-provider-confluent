@@ -437,7 +437,7 @@ func apiKeyResourceSchema() *schema.Schema {
 				},
 				paramKind: {
 					Type:         schema.TypeString,
-					Optional:     true,
+					Required:     true,
 					ForceNew:     true,
 					Description:  "The kind of the referred resource.",
 					ValidateFunc: validation.StringInSlice(acceptedResourceKinds, false),
