@@ -182,22 +182,16 @@ func apiKeyCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating API Key %q: %s", d.Id(), createdApiKeyJson), map[string]interface{}{apiKeyLoggingKey: d.Id()})
 
-	apiKey, _, _ := executeApiKeysRead(c.apiKeysApiContext(ctx), c, d.Id()) // for debug only
-	tflog.Debug(ctx, fmt.Sprintf("##### Fetched ApiVersion [4]: %s, Id: %s, Kind: %s", apiKey.Spec.Resource.GetApiVersion(), apiKey.Spec.Resource.GetId(), apiKey.Spec.Resource.GetKind()), map[string]interface{}{apiKeyLoggingKey: d.Id()})
-
 	return apiKeyRead(ctx, d, meta)
 }
 
 func executeApiKeysCreate(ctx context.Context, c *Client, apiKey *apikeys.IamV2ApiKey) (apikeys.IamV2ApiKey, *http.Response, error) {
 	req := c.apiKeysClient.APIKeysIamV2Api.CreateIamV2ApiKey(c.apiKeysApiContext(ctx)).IamV2ApiKey(*apiKey)
-	tflog.Debug(ctx, fmt.Sprintf("##### Fetched ApiVersion [6]: %s, Id: %s, Kind: %s", apiKey.Spec.Resource.GetApiVersion(), apiKey.Spec.Resource.GetId(), apiKey.Spec.Resource.GetKind()))
 	return req.Execute()
 }
 
 func apiKeyUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	tflog.Debug(ctx, fmt.Sprintf("##### apiKeyUpdated"))
 	isUpdateAllowed := d.HasChange(paramDisplayName) || d.HasChange(paramDescription)
-	tflog.Debug(ctx, fmt.Sprintf("##### apiKeyUpdate called"))
 	if isUpdateAllowed {
 		c := meta.(*Client)
 		displayName := d.Get(paramDisplayName).(string)
@@ -236,10 +230,6 @@ func apiKeyUpdate(ctx context.Context, d *schema.ResourceData, meta interface{})
 		return diag.Errorf("only %s, %s attributes can be updated for an API Key", paramDisplayName, paramDescription)
 	}
 
-	c := meta.(*Client)
-	apiKey, _, _ := executeApiKeysRead(c.apiKeysApiContext(ctx), c, d.Id()) // for debug only
-	tflog.Debug(ctx, fmt.Sprintf("##### Fetched ApiVersion [5]: %s, Id: %s, Kind: %s", apiKey.Spec.Resource.GetApiVersion(), apiKey.Spec.Resource.GetId(), apiKey.Spec.Resource.GetKind()), map[string]interface{}{apiKeyLoggingKey: d.Id()})
-
 	return apiKeyRead(ctx, d, meta)
 }
 
@@ -247,18 +237,13 @@ func apiKeyDelete(ctx context.Context, d *schema.ResourceData, meta interface{})
 	tflog.Debug(ctx, fmt.Sprintf("Deleting API Key %q", d.Id()), map[string]interface{}{apiKeyLoggingKey: d.Id()})
 	c := meta.(*Client)
 
-	apiKey, _, _ := executeApiKeysRead(c.apiKeysApiContext(ctx), c, d.Id()) // for debug only
-	tflog.Debug(ctx, fmt.Sprintf("##### Fetched ApiVersion [7]: %s, Id: %s, Kind: %s", apiKey.Spec.Resource.GetApiVersion(), apiKey.Spec.Resource.GetId(), apiKey.Spec.Resource.GetKind()), map[string]interface{}{apiKeyLoggingKey: d.Id()})
-
 	req := c.apiKeysClient.APIKeysIamV2Api.DeleteIamV2ApiKey(c.apiKeysApiContext(ctx), d.Id())
 	_, err := req.Execute()
 
 	if err != nil {
 		return diag.Errorf("error deleting API Key %q: %s", d.Id(), createDescriptiveError(err))
-		//// stuck here, req.Execute() has error. Error: error deleting API Key "HRVR6K4VMXYD2LDZ": undefined response type
 	}
 
-	tflog.Debug(ctx, fmt.Sprintf("##### Fetched ApiVersion [8]: %s, Id: %s, Kind: %s", apiKey.Spec.Resource.GetApiVersion(), apiKey.Spec.Resource.GetId(), apiKey.Spec.Resource.GetKind()), map[string]interface{}{apiKeyLoggingKey: d.Id()})
 	tflog.Debug(ctx, fmt.Sprintf("Finished deleting API Key %q", d.Id()), map[string]interface{}{apiKeyLoggingKey: d.Id()})
 
 	return nil
@@ -285,13 +270,10 @@ func apiKeyRead(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 		return diag.Errorf("error reading API Key %q: error marshaling %#v to json: %s", d.Id(), apiKey, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched API Key %q: %s", d.Id(), apiKeyJson), map[string]interface{}{apiKeyLoggingKey: d.Id()})
-	tflog.Debug(ctx, fmt.Sprintf("##### Fetched ApiVersion [1]: %s, Id: %s, Kind: %s", apiKey.Spec.Resource.GetApiVersion(), apiKey.Spec.Resource.GetId(), apiKey.Spec.Resource.GetKind()), map[string]interface{}{apiKeyLoggingKey: d.Id()})
 
 	if _, err := setApiKeyAttributes(d, apiKey); err != nil {
 		return diag.FromErr(createDescriptiveError(err))
 	}
-
-	tflog.Debug(ctx, fmt.Sprintf("##### Fetched ApiVersion [2]: %s, Id: %s, Kind: %s", apiKey.Spec.Resource.GetApiVersion(), apiKey.Spec.Resource.GetId(), apiKey.Spec.Resource.GetKind()), map[string]interface{}{apiKeyLoggingKey: d.Id()})
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished reading API Key %q", d.Id()), map[string]interface{}{apiKeyLoggingKey: d.Id()})
 
@@ -354,7 +336,6 @@ func setManagedResource(apiKey apikeys.IamV2ApiKey, environmentId string, d *sch
 		}
 		apiKey.Spec.Resource.SetId(fmt.Sprintf("%s.%s", cloud, regionName))
 	}
-	fmt.Sprintf("##### paramId: %s, paramKind: %s, paramApiVersion: %s", apiKey.Spec.Resource.GetId(), apiKey.Spec.Resource.GetKind(), apiKey.Spec.Resource.GetApiVersion())
 	if environmentId != "" {
 		return d.Set(paramResource, []interface{}{map[string]interface{}{
 			paramId:         apiKey.Spec.Resource.GetId(),
@@ -565,8 +546,6 @@ func waitForApiKeyToSync(ctx context.Context, c *Client, createdApiKey apikeys.I
 	// For Flink API Key use Statements API's List of Statements request and wait for http.StatusOK
 	// For Tableflow API Key use Org API's List Environments request and wait for http.StatusOK
 
-	tflog.Debug(ctx, fmt.Sprintf("##### Fetched ApiVersion [9]: %s, Id: %s, Kind: %s", createdApiKey.Spec.Resource.GetApiVersion(), createdApiKey.Spec.Resource.GetId(), createdApiKey.Spec.Resource.GetKind()))
-
 	if isResourceSpecificApiKey {
 		if isKafkaApiKey(createdApiKey) {
 			clusterId := createdApiKey.Spec.Resource.GetId()
@@ -609,11 +588,8 @@ func waitForApiKeyToSync(ctx context.Context, c *Client, createdApiKey apikeys.I
 			// TODO: SVCF-3560
 			SleepIfNotTestMode(5*time.Minute, c.isAcceptanceTestMode)
 		} else if isTableflowApiKey(createdApiKey) {
-			tflog.Debug(ctx, fmt.Sprintf("###DEBUG MESSAGE### waiting for tableflow api key to sync"))
-			tflog.Debug(ctx, fmt.Sprintf("##### Fetched ApiVersion [10]: %s, Id: %s, Kind: %s", createdApiKey.Spec.Resource.GetApiVersion(), createdApiKey.Spec.Resource.GetId(), createdApiKey.Spec.Resource.GetKind()))
 			if err := waitForCreatedTableflowApiKeyToSync(ctx, c, createdApiKey.GetId(), createdApiKey.Spec.GetSecret()); err != nil {
 				// TODO: add implementation once backend of EnvironmentsOrgV2Api for tableflow secret/key verification is ready
-				tflog.Debug(ctx, fmt.Sprintf("###DEBUG MESSAGE### ERROR ERROR ERROR waiting for tableflow api key to sync"))
 				//return fmt.Errorf("error waiting for Tableflow API Key %q to sync: %s", createdApiKey.GetId(), createDescriptiveError(err))
 				return nil
 			}
@@ -625,14 +601,11 @@ func waitForApiKeyToSync(ctx context.Context, c *Client, createdApiKey apikeys.I
 			return fmt.Errorf("unexpected API Key %q's resource: %s", createdApiKey.GetId(), resourceJson)
 		}
 	} else {
-		tflog.Debug(ctx, fmt.Sprintf("###DEBUG MESSAGE### waiting for cloud to sync"))
 		// Cloud API Key
 		if err := waitForCreatedCloudApiKeyToSync(ctx, c, createdApiKey.GetId(), createdApiKey.Spec.GetSecret()); err != nil {
-			tflog.Debug(ctx, fmt.Sprintf("###DEBUG MESSAGE###: waitForCreatedCloudApiKeyToSync returns nil? : %s", err))
 			return fmt.Errorf("error waiting for Cloud API Key %q to sync: %s", createdApiKey.GetId(), createDescriptiveError(err))
 		}
 	}
-	tflog.Debug(ctx, fmt.Sprintf("##### Fetched ApiVersion [11]: %s, Id: %s, Kind: %s", createdApiKey.Spec.Resource.GetApiVersion(), createdApiKey.Spec.Resource.GetId(), createdApiKey.Spec.Resource.GetKind()))
 
 	return nil
 }
