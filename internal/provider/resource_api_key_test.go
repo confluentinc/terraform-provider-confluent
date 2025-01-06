@@ -645,7 +645,9 @@ func TestAccTableflowApiKey(t *testing.T) {
 	ownerId := "sa-12mgdv"
 	ownerApiVersion := "iam/v2"
 	ownerKind := "ServiceAccount"
+	resourceId := "tableflow"
 	resourceKind := "Tableflow"
+	environmentId := ""
 
 	// Set fake values for secrets since those are required for importing
 	os.Setenv("API_KEY_SECRET", "p07o8EyjQvink5NmErBffigyynQXrTsYGKBzIgr3M10Mg+JOgnObYjlqCC1Q1id1")
@@ -661,7 +663,7 @@ func TestAccTableflowApiKey(t *testing.T) {
 		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckTableflowApiKeyConfig(mockServerUrl, tableflowApiKeyResourceLabel, tableflowApiKeyDisplayName, tableflowApiKeyDescription, ownerId, ownerApiVersion, ownerKind, resourceKind),
+				Config: testAccCheckTableflowApiKeyConfig(mockServerUrl, tableflowApiKeyResourceLabel, tableflowApiKeyDisplayName, tableflowApiKeyDescription, ownerId, ownerApiVersion, ownerKind, resourceId, resourceKind, environmentId),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckApiKeyExists(fullTableflowApiKeyResourceLabel),
 					resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "id", "HRVR6K4VMXYD2LDZ"),
@@ -673,6 +675,7 @@ func TestAccTableflowApiKey(t *testing.T) {
 					resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "owner.0.id", "sa-12mgdv"),
 					resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "owner.0.kind", "ServiceAccount"),
 					resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "managed_resource.0.kind", "Tableflow"),
+					resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "managed_resource.0.id", "tableflow"),
 					resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "secret", "p07o8EyjQvink5NmErBffigyynQXrTsYGKBzIgr3M10Mg+JOgnObYjlqCC1Q1id1"),
 				),
 			},
@@ -683,7 +686,7 @@ func TestAccTableflowApiKey(t *testing.T) {
 				ImportStateVerify: true,
 			},
 			{
-				Config: testAccCheckTableflowApiKeyConfig(mockServerUrl, tableflowApiKeyResourceLabel, tableflowApiKeyUpdatedDisplayName, tableflowApiKeyUpdatedDescription, ownerId, ownerApiVersion, ownerKind, resourceKind),
+				Config: testAccCheckTableflowApiKeyConfig(mockServerUrl, tableflowApiKeyResourceLabel, tableflowApiKeyUpdatedDisplayName, tableflowApiKeyUpdatedDescription, ownerId, ownerApiVersion, ownerKind, resourceId, resourceKind, environmentId),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckApiKeyExists(fullTableflowApiKeyResourceLabel),
 					resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "id", "HRVR6K4VMXYD2LDZ"),
@@ -696,6 +699,7 @@ func TestAccTableflowApiKey(t *testing.T) {
 					resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "owner.0.id", "sa-12mgdv"),
 					resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "owner.0.kind", "ServiceAccount"),
 					resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "managed_resource.0.kind", "Tableflow"),
+					resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "managed_resource.0.id", "tableflow"),
 					resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "secret", "p07o8EyjQvink5NmErBffigyynQXrTsYGKBzIgr3M10Mg+JOgnObYjlqCC1Q1id1"),
 				),
 			},
@@ -984,7 +988,7 @@ func testAccCheckCloudApiKeyConfig(mockServerUrl, cloudApiKeyResourceLabel, clou
 	`, mockServerUrl, cloudApiKeyResourceLabel, cloudApiKeyDisplayName, cloudApiKeyDescription, ownerId, ownerApiVersion, ownerKind)
 }
 
-func testAccCheckTableflowApiKeyConfig(mockServerUrl, tableflowApiKeyResourceLabel, tableflowApiKeyDisplayName, tableflowApiKeyDescription, ownerId, ownerApiVersion, ownerKind, resourceKind string) string {
+func testAccCheckTableflowApiKeyConfig(mockServerUrl, tableflowApiKeyResourceLabel, tableflowApiKeyDisplayName, tableflowApiKeyDescription, ownerId, ownerApiVersion, ownerKind, resourceId, resourceKind, environmentId string) string {
 	return fmt.Sprintf(`
 	provider "confluent" {
 		endpoint = "%s"
@@ -998,10 +1002,14 @@ func testAccCheckTableflowApiKeyConfig(mockServerUrl, tableflowApiKeyResourceLab
 			kind = "%s"
 		}
 		managed_resource {
+			id = "%s"
 			kind = "%s"
+			environment {
+				id = "%s"
+			}
 		}
 	}
-	`, mockServerUrl, tableflowApiKeyResourceLabel, tableflowApiKeyDisplayName, tableflowApiKeyDescription, ownerId, ownerApiVersion, ownerKind, resourceKind)
+	`, mockServerUrl, tableflowApiKeyResourceLabel, tableflowApiKeyDisplayName, tableflowApiKeyDescription, ownerId, ownerApiVersion, ownerKind, resourceId, resourceKind, environmentId)
 }
 
 func testAccCheckApiKeyExists(n string) resource.TestCheckFunc {

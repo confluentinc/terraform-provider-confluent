@@ -82,7 +82,7 @@ func apiKeyResource() *schema.Resource {
 				ValidateFunc: validation.StringIsNotEmpty,
 			},
 			paramOwner: apiKeyOwnerSchema(),
-			// The API Key resource represents Cloud API Key or Tableflow API Key if paramResource is not set
+			// The API Key resource represents Cloud API Key if paramResource is not set
 			paramResource: apiKeyResourceSchema(),
 			paramSecret: {
 				Type:        schema.TypeString,
@@ -137,10 +137,11 @@ func apiKeyCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 			spec.Resource.SetEnvironment(environmentId)
 		}
 
-		// Client doesn't need to specify resource_id and api_version when creating Tableflow API Key
-		if resourceKind == tableflowKind {
-			spec.Resource.SetId(tableflowKindInLowercase)
-			spec.Resource.SetKind(tableflowKind)
+		// Client need to specify resourceId and resourceKind when creating Tableflow API Key
+		if isTableflowApiKey(apikeys.IamV2ApiKey{Spec: spec}) {
+			spec.Resource.SetId(resourceId)
+			spec.Resource.SetKind(resourceKind)
+			//spec.Resource.SetApiVersion(cmkApiVersion)
 		}
 	}
 
@@ -345,9 +346,14 @@ func setManagedResource(apiKey apikeys.IamV2ApiKey, environmentId string, d *sch
 				paramId: environmentId,
 			}},
 		}})
-	} else if apiKey.Spec.Resource.GetKind() == tableflowKind {
+	} else if isTableflowApiKey(apiKey) {
 		return d.Set(paramResource, []interface{}{map[string]interface{}{
+			paramId:   apiKey.Spec.Resource.GetId(),
 			paramKind: apiKey.Spec.Resource.GetKind(),
+			//paramApiVersion: cmkApiVersion,
+			paramEnvironment: []interface{}{map[string]interface{}{
+				paramId: environmentId,
+			}},
 		}})
 	} else {
 		return d.Set(paramResource, []interface{}{map[string]interface{}{
@@ -412,7 +418,7 @@ func apiKeyResourceSchema() *schema.Schema {
 			Schema: map[string]*schema.Schema{
 				paramId: {
 					Type:        schema.TypeString,
-					Optional:    true, // set to be optional for tableflow resource, will add ValidateFunc later
+					Required:    true,
 					ForceNew:    true,
 					Description: "The unique identifier for the referred resource.",
 				},
@@ -425,7 +431,7 @@ func apiKeyResourceSchema() *schema.Schema {
 				},
 				paramApiVersion: {
 					Type:         schema.TypeString,
-					Optional:     true, // set to be optional for tableflow resource, will add ValidateFunc later
+					Optional:     true,
 					ForceNew:     true,
 					Description:  "The API version of the referred owner.",
 					ValidateFunc: validation.StringInSlice(acceptedResourceApiVersions, false),
@@ -537,7 +543,7 @@ func isKsqlDbClusterApiKey(apiKey apikeys.IamV2ApiKey) bool {
 }
 
 func isTableflowApiKey(apiKey apikeys.IamV2ApiKey) bool {
-	return apiKey.Spec.Resource.GetKind() == tableflowKind
+	return apiKey.Spec.Resource.GetKind() == tableflowKind && apiKey.Spec.Resource.GetId() == tableflowKindInLowercase
 }
 
 func waitForApiKeyToSync(ctx context.Context, c *Client, createdApiKey apikeys.IamV2ApiKey, isResourceSpecificApiKey bool, environmentId string) error {
