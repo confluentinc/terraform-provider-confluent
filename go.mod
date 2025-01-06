@@ -1,6 +1,6 @@
 module github.com/confluentinc/terraform-provider-confluent
 
-go 1.22.7
+go 1.22.10
 
 require (
 	github.com/confluentinc/ccloud-sdk-go-v2/apikeys v0.3.0
@@ -21,7 +21,7 @@ require (
 	github.com/confluentinc/ccloud-sdk-go-v2/mds v0.3.0
 	github.com/confluentinc/ccloud-sdk-go-v2/networking v0.12.0
 	github.com/confluentinc/ccloud-sdk-go-v2/networking-access-point v0.5.0
-	github.com/confluentinc/ccloud-sdk-go-v2/networking-dnsforwarder v0.2.0
+	github.com/confluentinc/ccloud-sdk-go-v2/networking-dnsforwarder v0.3.0
 	github.com/confluentinc/ccloud-sdk-go-v2/networking-gateway v0.2.0
 	github.com/confluentinc/ccloud-sdk-go-v2/networking-ip v0.2.0
 	github.com/confluentinc/ccloud-sdk-go-v2/networking-privatelink v0.2.0
@@ -41,10 +41,7 @@ require (
 	github.com/walkerus/go-wiremock v1.2.0
 )
 
-require (
-	github.com/confluentinc/ccloud-sdk-go-v2-internal/networking-dnsforwarder v0.0.5 // indirect
-	github.com/containerd/errdefs v0.1.0 // indirect
-)
+require github.com/containerd/errdefs v0.1.0 // indirect
 
 require (
 	dario.cat/mergo v1.0.0 // indirect

@@ -21,8 +21,8 @@ import (
 	"strings"
 	"time"
 
-	dns "github.com/confluentinc/ccloud-sdk-go-v2-internal/networking-dnsforwarder/v1"
 	ccp "github.com/confluentinc/ccloud-sdk-go-v2/connect-custom-plugin/v1"
+	dns "github.com/confluentinc/ccloud-sdk-go-v2/networking-dnsforwarder/v1"
 	netip "github.com/confluentinc/ccloud-sdk-go-v2/networking-ip/v1"
 	pi "github.com/confluentinc/ccloud-sdk-go-v2/provider-integration/v1"
 	"github.com/confluentinc/ccloud-sdk-go-v2/sso/v2"

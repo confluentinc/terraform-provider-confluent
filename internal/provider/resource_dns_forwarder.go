@@ -24,7 +24,7 @@ import (
 	"net/http"
 	"strings"
 
-	dns "github.com/confluentinc/ccloud-sdk-go-v2-internal/networking-dnsforwarder/v1"
+	dns "github.com/confluentinc/ccloud-sdk-go-v2/networking-dnsforwarder/v1"
 )
 
 const (
