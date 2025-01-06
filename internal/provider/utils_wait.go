@@ -316,7 +316,7 @@ func waitForDnsForwarderToProvision(ctx context.Context, c *Client, environmentI
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for DNS Forwarder %q provisioning status to become %q", dnsForwarderId, stateReady), map[string]interface{}{accessPointKey: dnsForwarderId})
-	if _, err := stateConf.WaitForStateContext(c.netAPApiContext(ctx)); err != nil {
+	if _, err := stateConf.WaitForStateContext(c.netDnsApiContext(ctx)); err != nil {
 		return err
 	}
 	return nil
