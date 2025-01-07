@@ -50,7 +50,6 @@ const (
 	cloudApiKeyScenarioName                = "confluent_api_key (Cloud API Key) Resource Lifecycle"
 
 	scenarioStateTableflowApiKeyHasBeenCreated = "The new tableflow api key has been just created"
-	scenarioStateTableflowApiKeyHasBeenSynced  = "The new tableflow api key has been just synced"
 	scenarioStateTableflowApiKeyHasBeenUpdated = "The new tableflow api key's description and display_name have been just updated"
 	scenarioStateTableflowApiKeyHasBeenDeleted = "The new tableflow api key has been deleted"
 	tableflowApiKeyScenarioName                = "confluent_api_key (Tableflow API Key) Resource Lifecycle"
@@ -559,32 +558,6 @@ func TestAccTableflowApiKey(t *testing.T) {
 		)
 	_ = wiremockClient.StubFor(createTableflowApiKeyStub)
 
-	//listEnvs401Response, _ := ioutil.ReadFile("../testdata/apikey/read_list_envs_401.json")
-	//listEnvsOrgApi401Stub := wiremock.Get(wiremock.URLPathEqualTo("/org/v2/environments")).
-	//	InScenario(tableflowApiKeyScenarioName).
-	//	WhenScenarioStateIs(wiremock.ScenarioStateStarted).
-	//	WillSetStateTo(scenarioStateTableflowApiKeyHasBeenSynced).
-	//	WillReturn(
-	//		string(listEnvs401Response),
-	//		contentTypeJSONHeader,
-	//		http.StatusUnauthorized,
-	//	)
-	//_ = wiremockClient.StubFor(listEnvsOrgApi401Stub)
-
-	//listEnvs200Response, _ := ioutil.ReadFile("../testdata/apikey/read_list_envs_200.json")
-	//listEnvsOrgApi200Stub := wiremock.Get(wiremock.URLPathEqualTo("/org/v2/environments")).
-	//	InScenario(tableflowApiKeyScenarioName).
-	//	WhenScenarioStateIs(scenarioStateTableflowApiKeyHasBeenSynced).
-	//	WillSetStateTo(scenarioStateTableflowApiKeyHasBeenCreated).
-	//	WillReturn(
-	//		string(listEnvs200Response),
-	//		contentTypeJSONHeader,
-	//		http.StatusOK,
-	//	)
-	//_ = wiremockClient.StubFor(listEnvsOrgApi200Stub)
-
-	// TODO: add listEnvsOrgApi200Stub test logic once the EnvsOrgApi backend is ready
-
 	readCreatedTableflowApiKeyResponse, _ := ioutil.ReadFile("../testdata/apikey/read_created_tableflow_api_key.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/api-keys/HRVR6K4VMXYD2LDZ")).
 		InScenario(tableflowApiKeyScenarioName).
@@ -715,8 +688,6 @@ func TestAccTableflowApiKey(t *testing.T) {
 
 	checkStubCount(t, wiremockClient, createTableflowApiKeyStub, "POST /iam/v2/api-keys", expectedCountOne)
 	checkStubCount(t, wiremockClient, patchTableflowApiKeyStub, "PATCH /iam/v2/api-keys/HRVR6K4VMXYD2LDZ", expectedCountOne)
-	// Combine both stubs into a single check since it doesn't differentiate between states
-	// checkStubCount(t, wiremockClient, listEnvsOrgApi401Stub, "GET /org/v2/environments", 2)
 }
 
 func TestAccCloudApiKey(t *testing.T) {

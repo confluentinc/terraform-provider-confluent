@@ -98,6 +98,7 @@ func apiKeyResource() *schema.Resource {
 				ForceNew: true,
 			},
 		},
+		CustomizeDiff: customdiff.Sequence(resourceApiKeyManagedResourceDiff),
 	}
 }
 
@@ -136,13 +137,6 @@ func apiKeyCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 		if isFlinkApiKey(apikeys.IamV2ApiKey{Spec: spec}) {
 			spec.Resource.SetId(resourceId)
 			spec.Resource.SetEnvironment(environmentId)
-		}
-
-		// Client need to specify resourceId and resourceKind when creating Tableflow API Key
-		if isTableflowApiKey(apikeys.IamV2ApiKey{Spec: spec}) {
-			spec.Resource.SetId(resourceId)
-			spec.Resource.SetKind(resourceKind)
-			spec.Resource.SetApiVersion(iamApiVersion)
 		}
 	}
 
@@ -328,9 +322,6 @@ func setManagedResource(apiKey apikeys.IamV2ApiKey, environmentId string, d *sch
 	if kind == schemaRegistryKind || kind == ksqlDbKind {
 		apiKey.Spec.Resource.SetKind(clusterKind)
 	}
-	
-	apiKeyStr, _ := json.Marshal(apiKey)
-	fmt.Printf("The apiKey in line 332 is %s\n", apiKeyStr)
 
 	if isFlinkApiKey(apiKey) {
 		// Override Flink API Key's resource ID to be "<cloud>.<region>" and not "<envID>.<cloud>.<region>"
@@ -417,10 +408,11 @@ func apiKeyResourceSchema() *schema.Schema {
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				paramId: {
-					Type:        schema.TypeString,
-					Required:    true,
-					ForceNew:    true,
-					Description: "The unique identifier for the referred resource.",
+					Type:         schema.TypeString,
+					Required:     true,
+					ForceNew:     true,
+					Description:  "The unique identifier for the referred resource.",
+					ValidateFunc: validation.StringIsNotEmpty,
 				},
 				paramKind: {
 					Type:         schema.TypeString,
@@ -445,7 +437,6 @@ func apiKeyResourceSchema() *schema.Schema {
 				},
 				paramEnvironment: optionalApiKeyEnvironmentIdBlockSchema(),
 			},
-			CustomizeDiff: customdiff.Sequence(resourceApiKeyManagedResourceDiff),
 		},
 	}
 }
@@ -665,29 +656,35 @@ func optionalApiKeyEnvironmentIdBlockSchema() *schema.Schema {
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				paramId: {
-					Type:     schema.TypeString,
-					Required: true,
-					ForceNew: true,
+					Type:         schema.TypeString,
+					Required:     true,
+					ForceNew:     true,
+					ValidateFunc: validation.StringIsNotEmpty,
 				},
 			},
 		},
-		MinItems: 1,
-		MaxItems: 1,
 		Optional: true,
 	}
 }
 
-func resourceApiKeyManagedResourceDiff(_ context.Context, diff *schema.ResourceDiff, _ interface{}) error {
-	paramIdValue := diff.Get(paramId).(string)
+func resourceApiKeyManagedResourceDiff(ctx context.Context, diff *schema.ResourceDiff, _ interface{}) error {
+	// Check if the `managed_resource` block exists
+	if diff.Get("managed_resource.#").(int) > 0 {
+		// Get `managed_resource.id` from the nested block
+		resourceId := diff.Get("managed_resource.0.id").(string)
 
-	// If paramIdValue is "tableflow", ensure environment block is NOT set
-	if paramIdValue == tableflowKindInLowercase && diff.Get(paramEnvironment) != nil {
-		return fmt.Errorf("'paramEnvironment' block should not be set for 'tableflow' type api-key")
-	}
+		// Check if the environment block exists
+		_, environmentExists := diff.GetOk("managed_resource.0.environment.0.id")
 
-	// If paramIdValue is anything other than "tableflow", ensure environment block is set
-	if paramIdValue != tableflowKindInLowercase && diff.Get(paramEnvironment) == nil {
-		return fmt.Errorf("'paramEnvironment' block should not be set for 'tableflow' type api-key")
+		// If managed_resource.id is not "tableflow", ensure environment block exists
+		if resourceId != "tableflow" && !environmentExists {
+			return fmt.Errorf("'environment.id' is required when 'managed_resource.id' is %s\n", resourceId)
+		}
+
+		// If managed_resource.id is "tableflow", ensure environment block is NOT set
+		if resourceId == "tableflow" && environmentExists {
+			return fmt.Errorf("'environment' block can't be present when 'managed_resource.id' is 'tableflow'")
+		}
 	}
 
 	return nil
