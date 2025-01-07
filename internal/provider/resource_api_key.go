@@ -21,6 +21,7 @@ import (
 	apikeys "github.com/confluentinc/ccloud-sdk-go-v2/apikeys/v2"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"net/http"
@@ -57,7 +58,7 @@ var acceptedOwnerKinds = []string{serviceAccountKind, userKind}
 var acceptedResourceKinds = []string{clusterKind, regionKind, tableflowKind}
 
 var acceptedOwnerApiVersions = []string{iamApiVersion}
-var acceptedResourceApiVersions = []string{cmkApiVersion, srcmV2ApiVersion, srcmV3ApiVersion, ksqldbcmApiVersion, fcpmApiVersion}
+var acceptedResourceApiVersions = []string{cmkApiVersion, srcmV2ApiVersion, srcmV3ApiVersion, ksqldbcmApiVersion, fcpmApiVersion, iamApiVersion}
 
 func apiKeyResource() *schema.Resource {
 	return &schema.Resource{
@@ -141,7 +142,7 @@ func apiKeyCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 		if isTableflowApiKey(apikeys.IamV2ApiKey{Spec: spec}) {
 			spec.Resource.SetId(resourceId)
 			spec.Resource.SetKind(resourceKind)
-			//spec.Resource.SetApiVersion(cmkApiVersion)
+			spec.Resource.SetApiVersion(iamApiVersion)
 		}
 	}
 
@@ -326,9 +327,11 @@ func setManagedResource(apiKey apikeys.IamV2ApiKey, environmentId string, d *sch
 	// Hack for API Key Mgmt API that temporarily returns schemaRegistryKind / ksqlDbKind instead of clusterKind
 	if kind == schemaRegistryKind || kind == ksqlDbKind {
 		apiKey.Spec.Resource.SetKind(clusterKind)
-	} else if kind == tableflowKind {
-		apiKey.Spec.Resource.SetKind(tableflowKind)
 	}
+	
+	apiKeyStr, _ := json.Marshal(apiKey)
+	fmt.Printf("The apiKey in line 332 is %s\n", apiKeyStr)
+
 	if isFlinkApiKey(apiKey) {
 		// Override Flink API Key's resource ID to be "<cloud>.<region>" and not "<envID>.<cloud>.<region>"
 		cloud, regionName, err := extractCloudAndRegionName(apiKey.Spec.Resource.GetId())
@@ -348,12 +351,9 @@ func setManagedResource(apiKey apikeys.IamV2ApiKey, environmentId string, d *sch
 		}})
 	} else if isTableflowApiKey(apiKey) {
 		return d.Set(paramResource, []interface{}{map[string]interface{}{
-			paramId:   apiKey.Spec.Resource.GetId(),
-			paramKind: apiKey.Spec.Resource.GetKind(),
-			//paramApiVersion: cmkApiVersion,
-			paramEnvironment: []interface{}{map[string]interface{}{
-				paramId: environmentId,
-			}},
+			paramId:         apiKey.Spec.Resource.GetId(),
+			paramKind:       apiKey.Spec.Resource.GetKind(),
+			paramApiVersion: iamApiVersion,
 		}})
 	} else {
 		return d.Set(paramResource, []interface{}{map[string]interface{}{
@@ -431,7 +431,7 @@ func apiKeyResourceSchema() *schema.Schema {
 				},
 				paramApiVersion: {
 					Type:         schema.TypeString,
-					Optional:     true,
+					Required:     true,
 					ForceNew:     true,
 					Description:  "The API version of the referred owner.",
 					ValidateFunc: validation.StringInSlice(acceptedResourceApiVersions, false),
@@ -443,8 +443,9 @@ func apiKeyResourceSchema() *schema.Schema {
 						return olds[0] == news[0] && stringInSlice(new, acceptedResourceApiVersions, false)
 					},
 				},
-				paramEnvironment: environmentSchema(),
+				paramEnvironment: optionalApiKeyEnvironmentIdBlockSchema(),
 			},
+			CustomizeDiff: customdiff.Sequence(resourceApiKeyManagedResourceDiff),
 		},
 	}
 }
@@ -594,11 +595,8 @@ func waitForApiKeyToSync(ctx context.Context, c *Client, createdApiKey apikeys.I
 			// TODO: SVCF-3560
 			SleepIfNotTestMode(5*time.Minute, c.isAcceptanceTestMode)
 		} else if isTableflowApiKey(createdApiKey) {
-			if err := waitForCreatedTableflowApiKeyToSync(ctx, c, createdApiKey.GetId(), createdApiKey.Spec.GetSecret()); err != nil {
-				// TODO: add implementation once backend of EnvironmentsOrgV2Api for tableflow secret/key verification is ready
-				//return fmt.Errorf("error waiting for Tableflow API Key %q to sync: %s", createdApiKey.GetId(), createDescriptiveError(err))
-				return nil
-			}
+			// TODO: add sync implementation once backend support for tableflow secret/key verification is ready
+			return nil
 		} else {
 			resourceJson, err := json.Marshal(createdApiKey.Spec.GetResource())
 			if err != nil {
@@ -659,4 +657,38 @@ func apiKeyImport(ctx context.Context, d *schema.ResourceData, meta interface{})
 	tflog.Debug(ctx, fmt.Sprintf("Finished importing API Key %q", d.Id()), map[string]interface{}{apiKeyLoggingKey: d.Id()})
 
 	return []*schema.ResourceData{d}, nil
+}
+
+func optionalApiKeyEnvironmentIdBlockSchema() *schema.Schema {
+	return &schema.Schema{
+		Type: schema.TypeList,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramId: {
+					Type:     schema.TypeString,
+					Required: true,
+					ForceNew: true,
+				},
+			},
+		},
+		MinItems: 1,
+		MaxItems: 1,
+		Optional: true,
+	}
+}
+
+func resourceApiKeyManagedResourceDiff(_ context.Context, diff *schema.ResourceDiff, _ interface{}) error {
+	paramIdValue := diff.Get(paramId).(string)
+
+	// If paramIdValue is "tableflow", ensure environment block is NOT set
+	if paramIdValue == tableflowKindInLowercase && diff.Get(paramEnvironment) != nil {
+		return fmt.Errorf("'paramEnvironment' block should not be set for 'tableflow' type api-key")
+	}
+
+	// If paramIdValue is anything other than "tableflow", ensure environment block is set
+	if paramIdValue != tableflowKindInLowercase && diff.Get(paramEnvironment) == nil {
+		return fmt.Errorf("'paramEnvironment' block should not be set for 'tableflow' type api-key")
+	}
+
+	return nil
 }
