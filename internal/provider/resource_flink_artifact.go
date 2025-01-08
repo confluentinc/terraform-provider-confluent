@@ -131,8 +131,9 @@ func artifactCreate(ctx context.Context, d *schema.ResourceData, meta interface{
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
 
 	request := fa.ArtifactV1PresignedUrlRequest{
-		Cloud:  fa.PtrString(cloud),
-		Region: fa.PtrString(region),
+		Cloud:       fa.PtrString(cloud),
+		Region:      fa.PtrString(region),
+		Environment: fa.PtrString(environmentId),
 	}
 	if contentFormat != "" {
 		request.SetContentFormat(contentFormat)
