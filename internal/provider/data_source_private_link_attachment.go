@@ -24,8 +24,7 @@ import (
 )
 
 const (
-	paramVpcEndpointServiceName = "vpc_endpoint_service_name"
-
+	paramVpcEndpointServiceName                 = "vpc_endpoint_service_name"
 	stateWaitingForConnections                  = "WAITING_FOR_CONNECTIONS"
 	paramZone                                   = "zone"
 	paramPrivateLinkServiceAlias                = "private_link_service_alias"
