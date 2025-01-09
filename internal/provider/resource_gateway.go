@@ -36,6 +36,8 @@ const (
 
 var acceptedGatewayTypes = []string{paramAwsEgressPrivateLinkGateway, paramAwsPrivateNetworkInterfaceGateway, paramAzureEgressPrivateLinkGateway}
 
+//var acceptedGatewayTypes = []string{paramAwsEgressPrivateLinkGateway, paramAwsPrivateNetworkInterfaceGateway, paramAzureEgressPrivateLinkGateway, paramGcpPeeringGateway}
+
 func gatewayResource() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: gatewayCreate,
@@ -56,6 +58,7 @@ func gatewayResource() *schema.Resource {
 			paramAwsEgressPrivateLinkGateway:       awsEgressPrivateLinkGatewaySchema(),
 			paramAwsPrivateNetworkInterfaceGateway: awsPrivateNetworkInterfaceGatewaySchema(),
 			paramAzureEgressPrivateLinkGateway:     azureEgressPrivateLinkGatewaySchema(),
+			//paramGcpPeeringGateway:                 gcpPeeringGatewaySchema(),
 		},
 	}
 }
@@ -143,6 +146,31 @@ func awsPrivateNetworkInterfaceGatewaySchema() *schema.Schema {
 		ExactlyOneOf: acceptedGatewayTypes,
 	}
 }
+
+//func gcpPeeringGatewaySchema() *schema.Schema {
+//	return &schema.Schema{
+//		Type:     schema.TypeList,
+//		ForceNew: true,
+//		Computed: true,
+//		Optional: true,
+//		Elem: &schema.Resource{
+//			Schema: map[string]*schema.Schema{
+//				paramRegion: {
+//					Type:     schema.TypeString,
+//					Required: true,
+//					ForceNew: true,
+//				},
+//				paramIAMPrincipal: {
+//					Type:     schema.TypeString,
+//					Computed: true,
+//				},
+//			},
+//		},
+//		MinItems:     1,
+//		MaxItems:     1,
+//		ExactlyOneOf: acceptedGatewayTypes,
+//	}
+//}
 
 func gatewayCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	c := meta.(*Client)
@@ -290,6 +318,13 @@ func setGatewayAttributes(d *schema.ResourceData, gateway netgw.NetworkingV1Gate
 	} else if gateway.Spec.GetConfig().NetworkingV1AzurePeeringGatewaySpec != nil {
 		if err := d.Set(paramAzurePeeringGateway, []interface{}{map[string]interface{}{
 			paramRegion: gateway.Spec.Config.NetworkingV1AzurePeeringGatewaySpec.GetRegion(),
+		}}); err != nil {
+			return nil, err
+		}
+	} else if gateway.Spec.GetConfig().NetworkingV1GcpPeeringGatewaySpec != nil {
+		if err := d.Set(paramGcpPeeringGateway, []interface{}{map[string]interface{}{
+			paramRegion:       gateway.Spec.Config.NetworkingV1GcpPeeringGatewaySpec.GetRegion(),
+			paramIAMPrincipal: gateway.Status.CloudGateway.NetworkingV1GcpPeeringGatewayStatus.GetIamPrincipal(),
 		}}); err != nil {
 			return nil, err
 		}
