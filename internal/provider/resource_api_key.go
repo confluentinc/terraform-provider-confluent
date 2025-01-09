@@ -46,12 +46,13 @@ const (
 	tableflowKind            = "Tableflow"
 	tableflowKindInLowercase = "tableflow"
 
-	iamApiVersion      = "iam/v2"
-	cmkApiVersion      = "cmk/v2"
-	srcmV2ApiVersion   = "srcm/v2"
-	srcmV3ApiVersion   = "srcm/v3"
-	ksqldbcmApiVersion = "ksqldbcm/v2"
-	fcpmApiVersion     = "fcpm/v2"
+	iamApiVersion       = "iam/v2"
+	cmkApiVersion       = "cmk/v2"
+	srcmV2ApiVersion    = "srcm/v2"
+	srcmV3ApiVersion    = "srcm/v3"
+	ksqldbcmApiVersion  = "ksqldbcm/v2"
+	fcpmApiVersion      = "fcpm/v2"
+	tableflowApiVersion = "tableflow/v1"
 )
 
 var acceptedOwnerKinds = []string{serviceAccountKind, userKind}
@@ -134,6 +135,10 @@ func apiKeyCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 		if apiVersion == fcpmApiVersion {
 			spec.Resource.SetApiVersion(fcpmApiVersion)
 		}
+		if apiVersion == tableflowApiVersion {
+			spec.Resource.SetApiVersion(tableflowApiVersion)
+		}
+
 		if isFlinkApiKey(apikeys.IamV2ApiKey{Spec: spec}) {
 			spec.Resource.SetId(resourceId)
 			spec.Resource.SetEnvironment(environmentId)
@@ -339,12 +344,6 @@ func setManagedResource(apiKey apikeys.IamV2ApiKey, environmentId string, d *sch
 			paramEnvironment: []interface{}{map[string]interface{}{
 				paramId: environmentId,
 			}},
-		}})
-	} else if isTableflowApiKey(apiKey) {
-		return d.Set(paramResource, []interface{}{map[string]interface{}{
-			paramId:         apiKey.Spec.Resource.GetId(),
-			paramKind:       apiKey.Spec.Resource.GetKind(),
-			paramApiVersion: iamApiVersion,
 		}})
 	} else {
 		return d.Set(paramResource, []interface{}{map[string]interface{}{
