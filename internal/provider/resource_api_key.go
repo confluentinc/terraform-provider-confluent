@@ -59,7 +59,7 @@ var acceptedOwnerKinds = []string{serviceAccountKind, userKind}
 var acceptedResourceKinds = []string{clusterKind, regionKind, tableflowKind}
 
 var acceptedOwnerApiVersions = []string{iamApiVersion}
-var acceptedResourceApiVersions = []string{cmkApiVersion, srcmV2ApiVersion, srcmV3ApiVersion, ksqldbcmApiVersion, fcpmApiVersion, iamApiVersion}
+var acceptedResourceApiVersions = []string{cmkApiVersion, srcmV2ApiVersion, srcmV3ApiVersion, ksqldbcmApiVersion, fcpmApiVersion, tableflowApiVersion}
 
 func apiKeyResource() *schema.Resource {
 	return &schema.Resource{

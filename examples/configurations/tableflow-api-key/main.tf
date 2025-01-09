@@ -30,7 +30,23 @@ resource "confluent_api_key" "tableflow-api-key" {
 
   managed_resource {
     id          = "tableflow"
-    api_version = "iam/v2"
+    api_version = "tableflow/v1"
+    kind        = "Tableflow"
+  }
+}
+
+resource "confluent_api_key" "tableflow-api-key2" {
+  display_name = "tableflow-api-key2"
+  description  = "Tableflow API Key that is owned by 'tableflow-sa' service account lalala"
+  owner {
+    id          = confluent_service_account.tableflow-sa.id
+    api_version = confluent_service_account.tableflow-sa.api_version
+    kind        = confluent_service_account.tableflow-sa.kind
+  }
+
+  managed_resource {
+    id          = "tableflow"
+    api_version = "tableflow/v1"
     kind        = "Tableflow"
   }
 }
