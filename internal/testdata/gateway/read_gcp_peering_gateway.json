@@ -23,6 +23,10 @@
     }
   },
   "status": {
-    "phase": "READY"
+    "phase": "READY",
+    "cloud_gateway": {
+      "kind": "GcpPeeringGatewayStatus",
+      "iam_principal": "arn:aws:iam::123456789012:role"
+    }
   }
 }

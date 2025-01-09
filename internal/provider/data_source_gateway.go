@@ -32,7 +32,7 @@ const (
 	paramAzurePeeringGateway               = "azure_peering_gateway"
 	paramGcpPeeringGateway                 = "gcp_peering_gateway"
 	paramPrincipalArn                      = "principal_arn"
-	paramIAMPrincipal                      = "gcp_iam_principal"
+	paramIAMPrincipal                      = "iam_principal"
 )
 
 func gatewayDataSource() *schema.Resource {
