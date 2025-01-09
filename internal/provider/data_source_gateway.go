@@ -30,7 +30,9 @@ const (
 	paramAwsPrivateNetworkInterfaceGateway = "aws_private_network_interface_gateway"
 	paramAzureEgressPrivateLinkGateway     = "azure_egress_private_link_gateway"
 	paramAzurePeeringGateway               = "azure_peering_gateway"
+	paramGcpPeeringGateway                 = "gcp_peering_gateway"
 	paramPrincipalArn                      = "principal_arn"
+	paramIAMPrincipal                      = "gcp_iam_principal"
 )
 
 func gatewayDataSource() *schema.Resource {
@@ -52,6 +54,7 @@ func gatewayDataSource() *schema.Resource {
 			paramAwsPrivateNetworkInterfaceGateway: awsPrivateNetworkInterfaceGatewayDataSourceSchema(),
 			paramAzureEgressPrivateLinkGateway:     azureEgressPrivateLinkGatewayDataSourceSchema(),
 			paramAzurePeeringGateway:               azurePeeringGatewaySpecDataSourceSchema(),
+			paramGcpPeeringGateway:                 gcpPeeringGatewaySpecDataSourceSchema(),
 		},
 	}
 }
@@ -139,6 +142,25 @@ func azureEgressPrivateLinkGatewayDataSourceSchema() *schema.Schema {
 					Computed: true,
 				},
 				paramSubscription: {
+					Type:     schema.TypeString,
+					Computed: true,
+				},
+			},
+		},
+		Computed: true,
+	}
+}
+
+func gcpPeeringGatewaySpecDataSourceSchema() *schema.Schema {
+	return &schema.Schema{
+		Type: schema.TypeList,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramRegion: {
+					Type:     schema.TypeString,
+					Computed: true,
+				},
+				paramIAMPrincipal: {
 					Type:     schema.TypeString,
 					Computed: true,
 				},
