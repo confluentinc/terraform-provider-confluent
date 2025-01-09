@@ -33,7 +33,7 @@ const (
 	paramGcpEgressPrivateServiceConnectGateway = "gcp_egress_private_service_connect_gateway"
 	paramGcpPeeringGateway                     = "gcp_peering_gateway"
 	paramPrincipalArn                          = "principal_arn"
-	paramIAMPrincipal                          = "gcp_iam_principal"
+	paramIAMPrincipal                          = "iam_principal"
 )
 
 func gatewayDataSource() *schema.Resource {
