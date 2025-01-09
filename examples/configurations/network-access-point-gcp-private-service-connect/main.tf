@@ -1,8 +1,9 @@
 terraform {
   required_providers {
     confluent = {
-      source  = "confluentinc/confluent"
-      version = "2.12.0"
+      source = "terraform.confluent.io/confluentinc/confluent"
+      # source  = "confluentinc/confluent"
+      # version = "2.12.0"
     }
   }
 }
@@ -10,7 +11,7 @@ terraform {
 provider "confluent" {
   cloud_api_key    = var.confluent_cloud_api_key
   cloud_api_secret = var.confluent_cloud_api_secret
-  endpoint = "stag.cpdev.cloud"
+  endpoint         = "https://api.stag.cpdev.cloud"
 }
 
 resource "confluent_environment" "development" {
@@ -54,7 +55,4 @@ resource "confluent_access_point" "gcp-private-access-point" {
   depends_on = [
     confluent_network.gcp-private-service-connect
   ]
-  lifecycle {
-    prevent_destroy = true
-  }
 }

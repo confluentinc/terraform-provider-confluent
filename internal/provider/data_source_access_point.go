@@ -121,12 +121,12 @@ func paramGcpEgressPrivateLinkEndpointDataSourceSchema() *schema.Schema {
 					Computed:    true,
 					Description: `URI of the service attachment for the published service that the Private Service Connect Endpoint connects to, or "ALL_GOOGLE_APIS" for global Google APIs`,
 				},
-				paramPrivateServiceConnectEndpointConnectId: {
+				paramPrivateServiceConnectEndpointConnectionId: {
 					Type:        schema.TypeString,
 					Computed:    true,
 					Description: "Connection ID of the Private Service Connect Endpoint (if any) that is connected to the endpoint target.",
 				},
-				paramPrivateServiceConnectEndpointConnectIpAddress: {
+				paramPrivateServiceConnectEndpointIpAddress: {
 					Type:        schema.TypeString,
 					Computed:    true,
 					Description: "Name of the Private Service Connect Endpoint (if any) that is connected to the endpoint target.",

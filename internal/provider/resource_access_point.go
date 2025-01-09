@@ -29,25 +29,25 @@ import (
 )
 
 const (
-	paramAwsEgressPrivateLinkEndpoint                  = "aws_egress_private_link_endpoint"
-	paramAzureEgressPrivateLinkEndpoint                = "azure_egress_private_link_endpoint"
-	paramGcpEgressPrivateLinkEndpoint                  = "gcp_egress_private_link_endpoint"
-	paramAwsPrivateNetworkInterface                    = "aws_private_network_interface"
-	paramEnableHighAvailability                        = "enable_high_availability"
-	paramVpcEndpointDnsName                            = "vpc_endpoint_dns_name"
-	paramPrivateLinkSubresourceName                    = "private_link_subresource_name"
-	paramPrivateEndpointDomain                         = "private_endpoint_domain"
-	paramPrivateEndpointIpAddress                      = "private_endpoint_ip_address"
-	paramPrivateEndpointCustomDnsConfigDomains         = "private_endpoint_custom_dns_config_domains"
-	paramPrivateServiceConnectEndpointTarget           = "private_service_connect_endpoint_target"
-	paramPrivateServiceConnectEndpointConnectId        = "private_service_connect_endpoint_connect_id"
-	paramPrivateServiceConnectEndpointConnectIpAddress = "private_service_connect_endpoint_connect_ip_address"
-	paramPrivateServiceConnectEndpointName             = "private_service_connect_endpoint_name"
-	paramNetworkInterfaces                             = "network_interfaces"
-	awsEgressPrivateLinkEndpoint                       = "AwsEgressPrivateLinkEndpoint"
-	azureEgressPrivateLinkEndpoint                     = "AzureEgressPrivateLinkEndpoint"
-	gcpEgressPrivateServiceConnectEndpoint             = "GcpEgressPrivateServiceConnectEndpoint"
-	awsPrivateNetworkInterface                         = "AwsPrivateNetworkInterface"
+	paramAwsEgressPrivateLinkEndpoint              = "aws_egress_private_link_endpoint"
+	paramAzureEgressPrivateLinkEndpoint            = "azure_egress_private_link_endpoint"
+	paramGcpEgressPrivateLinkEndpoint              = "gcp_egress_private_link_endpoint"
+	paramAwsPrivateNetworkInterface                = "aws_private_network_interface"
+	paramEnableHighAvailability                    = "enable_high_availability"
+	paramVpcEndpointDnsName                        = "vpc_endpoint_dns_name"
+	paramPrivateLinkSubresourceName                = "private_link_subresource_name"
+	paramPrivateEndpointDomain                     = "private_endpoint_domain"
+	paramPrivateEndpointIpAddress                  = "private_endpoint_ip_address"
+	paramPrivateEndpointCustomDnsConfigDomains     = "private_endpoint_custom_dns_config_domains"
+	paramPrivateServiceConnectEndpointTarget       = "private_service_connect_endpoint_target"
+	paramPrivateServiceConnectEndpointConnectionId = "private_service_connect_endpoint_connection_id"
+	paramPrivateServiceConnectEndpointIpAddress    = "private_service_connect_endpoint_ip_address"
+	paramPrivateServiceConnectEndpointName         = "private_service_connect_endpoint_name"
+	paramNetworkInterfaces                         = "network_interfaces"
+	awsEgressPrivateLinkEndpoint                   = "AwsEgressPrivateLinkEndpoint"
+	azureEgressPrivateLinkEndpoint                 = "AzureEgressPrivateLinkEndpoint"
+	gcpEgressPrivateServiceConnectEndpoint         = "GcpEgressPrivateServiceConnectEndpoint"
+	awsPrivateNetworkInterface                     = "AwsPrivateNetworkInterface"
 )
 
 var acceptedEndpointConfig = []string{paramAwsEgressPrivateLinkEndpoint, paramAzureEgressPrivateLinkEndpoint, paramGcpEgressPrivateLinkEndpoint, paramAwsPrivateNetworkInterface}
@@ -168,12 +168,12 @@ func paramGcpEgressPrivateLinkEndpointSchema() *schema.Schema {
 					ForceNew:    true,
 					Description: `URI of the service attachment for the published service that the Private Service Connect Endpoint connects to, or "ALL_GOOGLE_APIS" for global Google APIs`,
 				},
-				paramPrivateServiceConnectEndpointConnectId: {
+				paramPrivateServiceConnectEndpointConnectionId: {
 					Type:        schema.TypeString,
 					Computed:    true,
 					Description: "Connection ID of the Private Service Connect Endpoint (if any) that is connected to the endpoint target.",
 				},
-				paramPrivateServiceConnectEndpointConnectIpAddress: {
+				paramPrivateServiceConnectEndpointIpAddress: {
 					Type:        schema.TypeString,
 					Computed:    true,
 					Description: "Name of the Private Service Connect Endpoint (if any) that is connected to the endpoint target.",
@@ -463,10 +463,10 @@ func setAccessPointAttributes(d *schema.ResourceData, accessPoint netap.Networki
 		}
 	} else if accessPoint.Spec.Config.NetworkingV1GcpEgressPrivateServiceConnectEndpoint != nil && accessPoint.Status.Config.NetworkingV1GcpEgressPrivateServiceConnectEndpointStatus != nil {
 		if err := d.Set(paramGcpEgressPrivateLinkEndpoint, []interface{}{map[string]interface{}{
-			paramPrivateServiceConnectEndpointTarget:           accessPoint.Spec.Config.NetworkingV1GcpEgressPrivateServiceConnectEndpoint.GetPrivateServiceConnectEndpointTarget(),
-			paramPrivateServiceConnectEndpointName:             accessPoint.Status.Config.NetworkingV1GcpEgressPrivateServiceConnectEndpointStatus.GetPrivateServiceConnectEndpointName(),
-			paramPrivateServiceConnectEndpointConnectId:        accessPoint.Status.Config.NetworkingV1GcpEgressPrivateServiceConnectEndpointStatus.GetPrivateServiceConnectEndpointConnectionId(),
-			paramPrivateServiceConnectEndpointConnectIpAddress: accessPoint.Status.Config.NetworkingV1GcpEgressPrivateServiceConnectEndpointStatus.GetPrivateServiceConnectEndpointIpAddress(),
+			paramPrivateServiceConnectEndpointTarget:       accessPoint.Spec.Config.NetworkingV1GcpEgressPrivateServiceConnectEndpoint.GetPrivateServiceConnectEndpointTarget(),
+			paramPrivateServiceConnectEndpointName:         accessPoint.Status.Config.NetworkingV1GcpEgressPrivateServiceConnectEndpointStatus.GetPrivateServiceConnectEndpointName(),
+			paramPrivateServiceConnectEndpointConnectionId: accessPoint.Status.Config.NetworkingV1GcpEgressPrivateServiceConnectEndpointStatus.GetPrivateServiceConnectEndpointConnectionId(),
+			paramPrivateServiceConnectEndpointIpAddress:    accessPoint.Status.Config.NetworkingV1GcpEgressPrivateServiceConnectEndpointStatus.GetPrivateServiceConnectEndpointIpAddress(),
 		}}); err != nil {
 			return nil, err
 		}
