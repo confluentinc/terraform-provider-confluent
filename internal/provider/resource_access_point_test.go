@@ -134,7 +134,7 @@ func TestAccAccessPointAwsEgressPrivateLinkEndpoint(t *testing.T) {
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_egress_private_link_endpoint.#", "1"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_private_network_interface.#", "0"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "azure_egress_private_link_endpoint.#", "0"),
-					resource.TestCheckResourceAttr(accessPointResourceLabel, "gcp_egress_private_link_endpoint.#", "0"),
+					resource.TestCheckResourceAttr(accessPointResourceLabel, "gcp_egress_private_service_connect_endpoint.#", "0"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_egress_private_link_endpoint.0.vpc_endpoint_service_name", "com.amazonaws.vpce.us-west-2.vpce-svc-00000000000000000"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_egress_private_link_endpoint.0.vpc_endpoint_id", "vpce-00000000000000000"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_egress_private_link_endpoint.0.vpc_endpoint_dns_name", "*.vpce-00000000000000000-abcd1234.s3.us-west-2.vpce.amazonaws.com"),
@@ -152,7 +152,7 @@ func TestAccAccessPointAwsEgressPrivateLinkEndpoint(t *testing.T) {
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_egress_private_link_endpoint.#", "1"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_private_network_interface.#", "0"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "azure_egress_private_link_endpoint.#", "0"),
-					resource.TestCheckResourceAttr(accessPointResourceLabel, "gcp_egress_private_link_endpoint.#", "0"),
+					resource.TestCheckResourceAttr(accessPointResourceLabel, "gcp_egress_private_service_connect_endpoint.#", "0"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_egress_private_link_endpoint.0.vpc_endpoint_service_name", "com.amazonaws.vpce.us-west-2.vpce-svc-00000000000000000"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_egress_private_link_endpoint.0.vpc_endpoint_id", "vpce-00000000000000000"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_egress_private_link_endpoint.0.vpc_endpoint_dns_name", "*.vpce-00000000000000000-abcd1234.s3.us-west-2.vpce.amazonaws.com"),
@@ -258,7 +258,7 @@ func TestAccAccessPointAwsPrivateNetworkInterface(t *testing.T) {
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_private_network_interface.#", "1"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_egress_private_link_endpoint.#", "0"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "azure_egress_private_link_endpoint.#", "0"),
-					resource.TestCheckResourceAttr(accessPointResourceLabel, "gcp_egress_private_link_endpoint.#", "0"),
+					resource.TestCheckResourceAttr(accessPointResourceLabel, "gcp_egress_private_service_connect_endpoint.#", "0"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_private_network_interface.0.network_interfaces.#", "6"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_private_network_interface.0.network_interfaces.0", "eni-00000000000000000"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_private_network_interface.0.network_interfaces.1", "eni-00000000000000001"),
@@ -277,7 +277,7 @@ func TestAccAccessPointAwsPrivateNetworkInterface(t *testing.T) {
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_private_network_interface.#", "1"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_egress_private_link_endpoint.#", "0"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "azure_egress_private_link_endpoint.#", "0"),
-					resource.TestCheckResourceAttr(accessPointResourceLabel, "gcp_egress_private_link_endpoint.#", "0"),
+					resource.TestCheckResourceAttr(accessPointResourceLabel, "gcp_egress_private_service_connect_endpoint.#", "0"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_private_network_interface.0.network_interfaces.#", "6"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_private_network_interface.0.network_interfaces.0", "eni-00000000000000000"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_private_network_interface.0.network_interfaces.1", "eni-00000000000000001"),
@@ -384,7 +384,7 @@ func TestAccAccessPointAzureEgressPrivateLinkEndpoint(t *testing.T) {
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "azure_egress_private_link_endpoint.#", "1"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_egress_private_link_endpoint.#", "0"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_private_network_interface.#", "0"),
-					resource.TestCheckResourceAttr(accessPointResourceLabel, "gcp_egress_private_link_endpoint.#", "0"),
+					resource.TestCheckResourceAttr(accessPointResourceLabel, "gcp_egress_private_service_connect_endpoint.#", "0"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "azure_egress_private_link_endpoint.0.private_link_service_resource_id", "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/s-abcde/providers/Microsoft.Network/privateLinkServices/pls-plt-abcdef-az3"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "azure_egress_private_link_endpoint.0.private_link_subresource_name", "sqlServer"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "azure_egress_private_link_endpoint.0.private_endpoint_resource_id", "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/testvpc/providers/Microsoft.Network/privateEndpoints/pe-plt-abcdef-az3"),
@@ -407,7 +407,7 @@ func TestAccAccessPointAzureEgressPrivateLinkEndpoint(t *testing.T) {
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "azure_egress_private_link_endpoint.#", "1"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_egress_private_link_endpoint.#", "0"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_private_network_interface.#", "0"),
-					resource.TestCheckResourceAttr(accessPointResourceLabel, "gcp_egress_private_link_endpoint.#", "0"),
+					resource.TestCheckResourceAttr(accessPointResourceLabel, "gcp_egress_private_service_connect_endpoint.#", "0"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "azure_egress_private_link_endpoint.0.private_link_service_resource_id", "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/s-abcde/providers/Microsoft.Network/privateLinkServices/pls-plt-abcdef-az3"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "azure_egress_private_link_endpoint.0.private_link_subresource_name", "sqlServer"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "azure_egress_private_link_endpoint.0.private_endpoint_resource_id", "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/testvpc/providers/Microsoft.Network/privateEndpoints/pe-plt-abcdef-az3"),
@@ -518,10 +518,10 @@ func TestAccAccessPointGcpEgressPrivateLinkEndpoint(t *testing.T) {
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_egress_private_link_endpoint.#", "0"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_private_network_interface.#", "0"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "azure_egress_private_link_endpoint.#", "0"),
-					resource.TestCheckResourceAttr(accessPointResourceLabel, "gcp_egress_private_link_endpoint.#", "1"),
-					resource.TestCheckResourceAttr(accessPointResourceLabel, "gcp_egress_private_link_endpoint.0.private_service_connect_endpoint_connection_id", "1234567890987654321"),
-					resource.TestCheckResourceAttr(accessPointResourceLabel, "gcp_egress_private_link_endpoint.0.private_service_connect_endpoint_ip_address", "10.2.255.255"),
-					resource.TestCheckResourceAttr(accessPointResourceLabel, "gcp_egress_private_link_endpoint.0.private_service_connect_endpoint_name", "plapstgc493ll4"),
+					resource.TestCheckResourceAttr(accessPointResourceLabel, "gcp_egress_private_service_connect_endpoint.#", "1"),
+					resource.TestCheckResourceAttr(accessPointResourceLabel, "gcp_egress_private_service_connect_endpoint.0.private_service_connect_endpoint_connection_id", "1234567890987654321"),
+					resource.TestCheckResourceAttr(accessPointResourceLabel, "gcp_egress_private_service_connect_endpoint.0.private_service_connect_endpoint_ip_address", "10.2.255.255"),
+					resource.TestCheckResourceAttr(accessPointResourceLabel, "gcp_egress_private_service_connect_endpoint.0.private_service_connect_endpoint_name", "plapstgc493ll4"),
 				),
 			},
 			{
@@ -536,10 +536,10 @@ func TestAccAccessPointGcpEgressPrivateLinkEndpoint(t *testing.T) {
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_egress_private_link_endpoint.#", "0"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_private_network_interface.#", "0"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "azure_egress_private_link_endpoint.#", "0"),
-					resource.TestCheckResourceAttr(accessPointResourceLabel, "gcp_egress_private_link_endpoint.#", "1"),
-					resource.TestCheckResourceAttr(accessPointResourceLabel, "gcp_egress_private_link_endpoint.0.private_service_connect_endpoint_connection_id", "1234567890987654321"),
-					resource.TestCheckResourceAttr(accessPointResourceLabel, "gcp_egress_private_link_endpoint.0.private_service_connect_endpoint_ip_address", "10.2.255.255"),
-					resource.TestCheckResourceAttr(accessPointResourceLabel, "gcp_egress_private_link_endpoint.0.private_service_connect_endpoint_name", "plapstgc493ll4"),
+					resource.TestCheckResourceAttr(accessPointResourceLabel, "gcp_egress_private_service_connect_endpoint.#", "1"),
+					resource.TestCheckResourceAttr(accessPointResourceLabel, "gcp_egress_private_service_connect_endpoint.0.private_service_connect_endpoint_connection_id", "1234567890987654321"),
+					resource.TestCheckResourceAttr(accessPointResourceLabel, "gcp_egress_private_service_connect_endpoint.0.private_service_connect_endpoint_ip_address", "10.2.255.255"),
+					resource.TestCheckResourceAttr(accessPointResourceLabel, "gcp_egress_private_service_connect_endpoint.0.private_service_connect_endpoint_name", "plapstgc493ll4"),
 				),
 			},
 		},
@@ -625,7 +625,7 @@ func testAccCheckResourceAccessPointGcpEgressWithIdSet(mockServerUrl, name strin
 		gateway {
 			id = "gw-abc123"
 		}
-		gcp_egress_private_link_endpoint {
+		gcp_egress_private_service_connect_endpoint {
     		private_service_connect_endpoint_target = "all-google-apis"
   		}
 	}

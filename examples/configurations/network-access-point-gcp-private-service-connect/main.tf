@@ -49,7 +49,7 @@ resource "confluent_access_point" "gcp-private-access-point" {
   gateway {
     id = confluent_network.gcp-private-service-connect.gateway[0].id
   }
-  gcp_egress_private_link_endpoint {
+  gcp_egress_private_service_connect_endpoint {
     private_service_connect_endpoint_target = "all-google-apis"
   }
   depends_on = [
