@@ -18,17 +18,16 @@ Check each item in the checklist to ensure high-quality Terraform development pr
 For instructions, please refer to this Confluence page: https://confluentinc.atlassian.net/wiki/spaces/AEGI/pages/3938058831/
 -->
 - [ ] I can successfully build and use a custom Terraform provider binary for Confluent.
-- [ ] I have verified my PR with real Confluent Cloud resources in a pre-prod/production environment, or both.
+- [ ] I have verified my PR with real Confluent Cloud resources in a pre-prod or production environment, or both.
 - [ ] I have attached manual Terraform verification results or screenshots in the `Test & Review` section below.
 - [ ] I have included appropriate Terraform acceptance or unit tests for any new resource, data source, or functionality.
 - [ ] I confirm that this PR introduces no breaking changes or backward compatibility issues.
 - [ ] I have updated the corresponding documentation and include relevant examples for this PR.
-- [ ] I have indicated the potential customer(s) impact if something goes wrong in the `Blast Radius` section below.
-- [ ] I have put checkmark below about the feature associated with this PR is enabled in:
+- [ ] I have indicated the potential customer impact if something goes wrong in the `Blast Radius` section below.
+- [ ] I have put checkmarks below confirming that the feature associated with this PR is enabled in:
   - [ ] Confluent Cloud prod
   - [ ] Confluent Cloud stag
-  - [ ] Confluent Cloud devel
-  - [ ] Check this box if the feature flag is enabled for certain organization only
+  - [ ] Check this box if the feature is enabled for certain organizations only
 
 What
 ----
