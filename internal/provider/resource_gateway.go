@@ -56,6 +56,7 @@ func gatewayResource() *schema.Resource {
 			paramAwsEgressPrivateLinkGateway:       awsEgressPrivateLinkGatewaySchema(),
 			paramAwsPrivateNetworkInterfaceGateway: awsPrivateNetworkInterfaceGatewaySchema(),
 			paramAzureEgressPrivateLinkGateway:     azureEgressPrivateLinkGatewaySchema(),
+			paramGcpPeeringGateway:                 gcpPeeringGatewaySpecDataSourceSchema(),
 		},
 	}
 }

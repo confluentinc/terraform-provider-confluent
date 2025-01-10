@@ -17,6 +17,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	dns "github.com/confluentinc/ccloud-sdk-go-v2/networking-dnsforwarder/v1"
 	"reflect"
 	"testing"
 
@@ -227,4 +228,33 @@ func TestIsSchemaRegistryApiKey(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestConvertToTypeMapString(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		map1 := map[string]string{
+			"example": "zone1,project1",
+		}
+		map1Expected := map[string]dns.NetworkingV1ForwardViaGcpDnsZonesDomainMappings{
+			"example": {Zone: dns.PtrString("zone1"), Project: dns.PtrString("project1")},
+		}
+		actual := convertToStringObjectMap(map1)
+
+		if !reflect.DeepEqual(actual, map1Expected) {
+			t.Fatalf("Unexpected error: expected %v, got %v", map1Expected, actual)
+		}
+	})
+	t.Run("fail", func(t *testing.T) {
+		map1 := map[string]string{
+			"example": "zone1,project1xyz",
+		}
+		map1Expected := map[string]dns.NetworkingV1ForwardViaGcpDnsZonesDomainMappings{
+			"example": {Zone: dns.PtrString("zone1"), Project: dns.PtrString("project1")},
+		}
+		actual := convertToStringObjectMap(map1)
+
+		if reflect.DeepEqual(actual, map1Expected) {
+			t.Fatalf("Unexpected error: expected %v, got %v", map1Expected, actual)
+		}
+	})
 }

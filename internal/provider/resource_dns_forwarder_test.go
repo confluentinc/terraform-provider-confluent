@@ -198,7 +198,8 @@ func TestAccDnsForwarderGcp(t *testing.T) {
 					resource.TestCheckResourceAttr(dnsForwarderResourceLabel, "domains.0", "domainname.com"),
 					resource.TestCheckResourceAttr(dnsForwarderResourceLabel, "domains.1", "example.com"),
 					resource.TestCheckResourceAttr(dnsForwarderResourceLabel, "forward_via_gcp_dns_zones.0.domain_mappings.example.com", "zone-1,project-123"),
-					resource.TestCheckResourceAttr(dnsForwarderResourceLabel, "forward_via_gcp_dns_zones.0.domain_mappings.test.com", "zone-2,project-456")),
+					resource.TestCheckResourceAttr(dnsForwarderResourceLabel, "forward_via_gcp_dns_zones.0.domain_mappings.test.com", "zone-2,project-456"),
+					resource.TestCheckResourceAttr(dnsForwarderResourceLabel, "forward_via_ip.0.dns_server_ips.#", "0")),
 			},
 		},
 	})
