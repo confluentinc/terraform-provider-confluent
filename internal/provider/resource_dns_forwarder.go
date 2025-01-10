@@ -21,7 +21,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"net/http"
+	"regexp"
 	"strings"
 
 	dns "github.com/confluentinc/ccloud-sdk-go-v2/networking-dnsforwarder/v1"
@@ -103,7 +105,8 @@ func forwardViaGcpSchema() *schema.Schema {
 					Computed: true,
 					Optional: true,
 					Elem: &schema.Schema{
-						Type: schema.TypeString,
+						Type:         schema.TypeString,
+						ValidateFunc: validation.StringMatch(regexp.MustCompile("^[^,]+,[^,]+$"), "Exactly 2 strings separated by a comma"),
 					},
 				},
 			},
@@ -162,9 +165,8 @@ func dnsForwarderCreate(ctx context.Context, d *schema.ResourceData, meta interf
 		domainMappings := convertToStringObjectMap(domainMappingString)
 		config.NetworkingV1ForwardViaGcpDnsZones = &dns.NetworkingV1ForwardViaGcpDnsZones{DomainMappings: domainMappings, Kind: forwardViaGcp}
 		spec.SetConfig(config)
-
 	} else {
-		return diag.Errorf("None of %q or %q blocks was provided for confluent_dns_forwarder resource", paramDnsServerIps, paramDomainMappings)
+		return diag.Errorf("None of %q or %q blocks was provided for confluent_dns_forwarder resource", paramForwardViaIp, paramForwardViaGcp)
 	}
 
 	spec.SetGateway(dns.ObjectReference{Id: gatewayId})
@@ -202,6 +204,8 @@ func convertToStringObjectMap(data map[string]string) map[string]dns.NetworkingV
 
 	for key, value := range data {
 		s := strings.SplitN(value, ",", 2)
+		s[0] = strings.TrimSpace(s[0])
+		s[1] = strings.TrimSpace(s[1])
 		zone := s[0]
 		project := s[1]
 		stringMap[key] = dns.NetworkingV1ForwardViaGcpDnsZonesDomainMappings{Zone: dns.PtrString(zone), Project: dns.PtrString(project)}
@@ -353,7 +357,11 @@ func setDnsForwarderAttributes(d *schema.ResourceData, dnsForwarder dns.Networki
 		domainMapping := dnsForwarder.Spec.Config.NetworkingV1ForwardViaGcpDnsZones.GetDomainMappings()
 		stringMap := make(map[string]string)
 		for key, value := range domainMapping {
-			stringMap[key] = *value.Zone + "," + *value.Project
+			zone, zoneOk := value.GetZoneOk()
+			project, projectOk := value.GetProjectOk()
+			if zoneOk && projectOk {
+				stringMap[key] = *zone + "," + *project
+			}
 		}
 		if err := d.Set(paramForwardViaGcp, []interface{}{map[string]interface{}{
 			paramDomainMappings: stringMap,
