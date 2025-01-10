@@ -56,6 +56,7 @@ func gatewayResource() *schema.Resource {
 			paramAwsEgressPrivateLinkGateway:       awsEgressPrivateLinkGatewaySchema(),
 			paramAwsPrivateNetworkInterfaceGateway: awsPrivateNetworkInterfaceGatewaySchema(),
 			paramAzureEgressPrivateLinkGateway:     azureEgressPrivateLinkGatewaySchema(),
+			paramGcpPeeringGateway:                 gcpPeeringGatewaySpecDataSourceSchema(),
 		},
 	}
 }
@@ -290,6 +291,13 @@ func setGatewayAttributes(d *schema.ResourceData, gateway netgw.NetworkingV1Gate
 	} else if gateway.Spec.GetConfig().NetworkingV1AzurePeeringGatewaySpec != nil {
 		if err := d.Set(paramAzurePeeringGateway, []interface{}{map[string]interface{}{
 			paramRegion: gateway.Spec.Config.NetworkingV1AzurePeeringGatewaySpec.GetRegion(),
+		}}); err != nil {
+			return nil, err
+		}
+	} else if gateway.Spec.GetConfig().NetworkingV1GcpPeeringGatewaySpec != nil {
+		if err := d.Set(paramGcpPeeringGateway, []interface{}{map[string]interface{}{
+			paramRegion:       gateway.Spec.Config.NetworkingV1GcpPeeringGatewaySpec.GetRegion(),
+			paramIAMPrincipal: gateway.Status.CloudGateway.NetworkingV1GcpPeeringGatewayStatus.GetIamPrincipal(),
 		}}); err != nil {
 			return nil, err
 		}
