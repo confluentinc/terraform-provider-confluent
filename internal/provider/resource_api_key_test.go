@@ -551,6 +551,7 @@ func TestAccTableflowApiKey(t *testing.T) {
 	createTableflowApiKeyStub := wiremock.Post(wiremock.URLPathEqualTo("/iam/v2/api-keys")).
 		InScenario(tableflowApiKeyScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
+		WillSetStateTo(scenarioStateTableflowApiKeyHasBeenCreated).
 		WillReturn(
 			string(createTableflowApiKeyResponse),
 			contentTypeJSONHeader,
@@ -558,29 +559,29 @@ func TestAccTableflowApiKey(t *testing.T) {
 		)
 	_ = wiremockClient.StubFor(createTableflowApiKeyStub)
 
-	listEnvs401Response, _ := ioutil.ReadFile("../testdata/apikey/read_list_envs_401.json")
-	listEnvsOrgApi401Stub := wiremock.Get(wiremock.URLPathEqualTo("/org/v2/environments")).
-		InScenario(tableflowApiKeyScenarioName).
-		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
-		WillSetStateTo(scenarioStateTableflowApiKeyHasBeenSynced).
-		WillReturn(
-			string(listEnvs401Response),
-			contentTypeJSONHeader,
-			http.StatusUnauthorized,
-		)
-	_ = wiremockClient.StubFor(listEnvsOrgApi401Stub)
-
-	listEnvs200Response, _ := ioutil.ReadFile("../testdata/apikey/read_list_envs_200.json")
-	listEnvsOrgApi200Stub := wiremock.Get(wiremock.URLPathEqualTo("/org/v2/environments")).
-		InScenario(tableflowApiKeyScenarioName).
-		WhenScenarioStateIs(scenarioStateTableflowApiKeyHasBeenSynced).
-		WillSetStateTo(scenarioStateTableflowApiKeyHasBeenCreated).
-		WillReturn(
-			string(listEnvs200Response),
-			contentTypeJSONHeader,
-			http.StatusOK,
-		)
-	_ = wiremockClient.StubFor(listEnvsOrgApi200Stub)
+	//listEnvs401Response, _ := ioutil.ReadFile("../testdata/apikey/read_list_envs_401.json")
+	//listEnvsOrgApi401Stub := wiremock.Get(wiremock.URLPathEqualTo("/org/v2/environments")).
+	//	InScenario(tableflowApiKeyScenarioName).
+	//	WhenScenarioStateIs(wiremock.ScenarioStateStarted).
+	//	WillSetStateTo(scenarioStateTableflowApiKeyHasBeenSynced).
+	//	WillReturn(
+	//		string(listEnvs401Response),
+	//		contentTypeJSONHeader,
+	//		http.StatusUnauthorized,
+	//	)
+	//_ = wiremockClient.StubFor(listEnvsOrgApi401Stub)
+	//
+	//listEnvs200Response, _ := ioutil.ReadFile("../testdata/apikey/read_list_envs_200.json")
+	//listEnvsOrgApi200Stub := wiremock.Get(wiremock.URLPathEqualTo("/org/v2/environments")).
+	//	InScenario(tableflowApiKeyScenarioName).
+	//	WhenScenarioStateIs(scenarioStateTableflowApiKeyHasBeenSynced).
+	//	WillSetStateTo(scenarioStateTableflowApiKeyHasBeenCreated).
+	//	WillReturn(
+	//		string(listEnvs200Response),
+	//		contentTypeJSONHeader,
+	//		http.StatusOK,
+	//	)
+	//_ = wiremockClient.StubFor(listEnvsOrgApi200Stub)
 
 	// TODO: add listEnvsOrgApi200Stub test logic once the EnvsOrgApi backend is ready
 
@@ -615,15 +616,6 @@ func TestAccTableflowApiKey(t *testing.T) {
 			http.StatusOK,
 		))
 
-	readDeletedTableflowApiKeyResponse, _ := ioutil.ReadFile("../testdata/apikey/read_deleted_tableflow_api_key.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/api-keys/HRVR6K4VMXYD2LDZ")).
-		InScenario(tableflowApiKeyScenarioName).
-		WhenScenarioStateIs(scenarioStateTableflowApiKeyHasBeenDeleted).
-		WillReturn(
-			string(readDeletedTableflowApiKeyResponse),
-			contentTypeJSONHeader,
-			http.StatusForbidden,
-		))
 	deleteTableflowApiKeyStub := wiremock.Delete(wiremock.URLPathEqualTo("/iam/v2/api-keys/HRVR6K4VMXYD2LDZ")).
 		InScenario(tableflowApiKeyScenarioName).
 		WhenScenarioStateIs(scenarioStateTableflowApiKeyHasBeenUpdated).
@@ -634,6 +626,16 @@ func TestAccTableflowApiKey(t *testing.T) {
 			http.StatusNoContent,
 		)
 	_ = wiremockClient.StubFor(deleteTableflowApiKeyStub)
+
+	readDeletedTableflowApiKeyResponse, _ := ioutil.ReadFile("../testdata/apikey/read_deleted_tableflow_api_key.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/api-keys/HRVR6K4VMXYD2LDZ")).
+		InScenario(tableflowApiKeyScenarioName).
+		WhenScenarioStateIs(scenarioStateTableflowApiKeyHasBeenDeleted).
+		WillReturn(
+			string(readDeletedTableflowApiKeyResponse),
+			contentTypeJSONHeader,
+			http.StatusForbidden,
+		))
 
 	tableflowApiKeyDisplayName := "CI Tableflow API Key"
 	tableflowApiKeyDescription := "temp description"
@@ -647,7 +649,6 @@ func TestAccTableflowApiKey(t *testing.T) {
 	ownerKind := "ServiceAccount"
 	resourceId := "tableflow"
 	resourceKind := "Tableflow"
-	environmentId := ""
 
 	// Set fake values for secrets since those are required for importing
 	os.Setenv("API_KEY_SECRET", "p07o8EyjQvink5NmErBffigyynQXrTsYGKBzIgr3M10Mg+JOgnObYjlqCC1Q1id1")
@@ -663,7 +664,7 @@ func TestAccTableflowApiKey(t *testing.T) {
 		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckTableflowApiKeyConfig(mockServerUrl, tableflowApiKeyResourceLabel, tableflowApiKeyDisplayName, tableflowApiKeyDescription, ownerId, ownerApiVersion, ownerKind, resourceId, resourceKind, environmentId),
+				Config: testAccCheckTableflowApiKeyConfig(mockServerUrl, tableflowApiKeyResourceLabel, tableflowApiKeyDisplayName, tableflowApiKeyDescription, ownerId, ownerApiVersion, ownerKind, resourceId, resourceKind),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckApiKeyExists(fullTableflowApiKeyResourceLabel),
 					resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "id", "HRVR6K4VMXYD2LDZ"),
@@ -686,7 +687,7 @@ func TestAccTableflowApiKey(t *testing.T) {
 				ImportStateVerify: true,
 			},
 			{
-				Config: testAccCheckTableflowApiKeyConfig(mockServerUrl, tableflowApiKeyResourceLabel, tableflowApiKeyUpdatedDisplayName, tableflowApiKeyUpdatedDescription, ownerId, ownerApiVersion, ownerKind, resourceId, resourceKind, environmentId),
+				Config: testAccCheckTableflowApiKeyConfig(mockServerUrl, tableflowApiKeyResourceLabel, tableflowApiKeyUpdatedDisplayName, tableflowApiKeyUpdatedDescription, ownerId, ownerApiVersion, ownerKind, resourceId, resourceKind),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckApiKeyExists(fullTableflowApiKeyResourceLabel),
 					resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "id", "HRVR6K4VMXYD2LDZ"),
@@ -715,7 +716,7 @@ func TestAccTableflowApiKey(t *testing.T) {
 	checkStubCount(t, wiremockClient, createTableflowApiKeyStub, "POST /iam/v2/api-keys", expectedCountOne)
 	checkStubCount(t, wiremockClient, patchTableflowApiKeyStub, "PATCH /iam/v2/api-keys/HRVR6K4VMXYD2LDZ", expectedCountOne)
 	// Combine both stubs into a single check since it doesn't differentiate between states
-	checkStubCount(t, wiremockClient, listEnvsOrgApi401Stub, "GET /org/v2/environments", 2)
+	//checkStubCount(t, wiremockClient, listEnvsOrgApi401Stub, "GET /org/v2/environments", 2)
 }
 
 func TestAccCloudApiKey(t *testing.T) {
@@ -988,7 +989,7 @@ func testAccCheckCloudApiKeyConfig(mockServerUrl, cloudApiKeyResourceLabel, clou
 	`, mockServerUrl, cloudApiKeyResourceLabel, cloudApiKeyDisplayName, cloudApiKeyDescription, ownerId, ownerApiVersion, ownerKind)
 }
 
-func testAccCheckTableflowApiKeyConfig(mockServerUrl, tableflowApiKeyResourceLabel, tableflowApiKeyDisplayName, tableflowApiKeyDescription, ownerId, ownerApiVersion, ownerKind, resourceId, resourceKind, environmentId string) string {
+func testAccCheckTableflowApiKeyConfig(mockServerUrl, tableflowApiKeyResourceLabel, tableflowApiKeyDisplayName, tableflowApiKeyDescription, ownerId, ownerApiVersion, ownerKind, resourceId, resourceKind string) string {
 	return fmt.Sprintf(`
 	provider "confluent" {
 		endpoint = "%s"
@@ -1004,12 +1005,10 @@ func testAccCheckTableflowApiKeyConfig(mockServerUrl, tableflowApiKeyResourceLab
 		managed_resource {
 			id = "%s"
 			kind = "%s"
-			environment {
-				id = "%s"
-			}
+			api_version = "iam/v2"
 		}
 	}
-	`, mockServerUrl, tableflowApiKeyResourceLabel, tableflowApiKeyDisplayName, tableflowApiKeyDescription, ownerId, ownerApiVersion, ownerKind, resourceId, resourceKind, environmentId)
+	`, mockServerUrl, tableflowApiKeyResourceLabel, tableflowApiKeyDisplayName, tableflowApiKeyDescription, ownerId, ownerApiVersion, ownerKind, resourceId, resourceKind)
 }
 
 func testAccCheckApiKeyExists(n string) resource.TestCheckFunc {
