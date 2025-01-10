@@ -34,7 +34,7 @@ const (
 	azureEgressPrivateLinkGatewaySpecKind     = "AzureEgressPrivateLinkGatewaySpec"
 )
 
-var acceptedGatewayTypes = []string{paramAwsEgressPrivateLinkGateway, paramAwsPrivateNetworkInterfaceGateway, paramAzureEgressPrivateLinkGateway}
+var acceptedGatewayTypes = []string{paramAwsEgressPrivateLinkGateway, paramAwsPrivateNetworkInterfaceGateway, paramAzureEgressPrivateLinkGateway, paramGcpPeeringGateway}
 
 func gatewayResource() *schema.Resource {
 	return &schema.Resource{
@@ -56,7 +56,7 @@ func gatewayResource() *schema.Resource {
 			paramAwsEgressPrivateLinkGateway:       awsEgressPrivateLinkGatewaySchema(),
 			paramAwsPrivateNetworkInterfaceGateway: awsPrivateNetworkInterfaceGatewaySchema(),
 			paramAzureEgressPrivateLinkGateway:     azureEgressPrivateLinkGatewaySchema(),
-			paramGcpPeeringGateway:                 gcpPeeringGatewaySpecDataSourceSchema(),
+			paramGcpPeeringGateway:                 gcpPeeringGatewaySpecSchema(),
 		},
 	}
 }
@@ -100,6 +100,31 @@ func azureEgressPrivateLinkGatewaySchema() *schema.Schema {
 					ForceNew: true,
 				},
 				paramSubscription: {
+					Type:     schema.TypeString,
+					Computed: true,
+				},
+			},
+		},
+		MinItems:     1,
+		MaxItems:     1,
+		ExactlyOneOf: acceptedGatewayTypes,
+	}
+}
+
+func gcpPeeringGatewaySpecSchema() *schema.Schema {
+	return &schema.Schema{
+		Type:     schema.TypeList,
+		ForceNew: true,
+		Computed: true,
+		Optional: true,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramRegion: {
+					Type:     schema.TypeString,
+					Required: true,
+					ForceNew: true,
+				},
+				paramIAMPrincipal: {
 					Type:     schema.TypeString,
 					Computed: true,
 				},
