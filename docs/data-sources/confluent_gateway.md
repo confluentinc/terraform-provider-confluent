@@ -60,3 +60,6 @@ In addition to the preceding arguments, the following attributes are exported:
   - `subscription` - (Required String) The Azure Subscription ID associated with the Confluent Cloud VPC.
 - `azure_peering_gateway` (Optional Configuration Block) supports the following:
   - `region` - (Required String) Azure region of the Peering Gateway.
+- `gcp_peering_gateway` (Optional Configuration Block) supports the following:
+  - `region` - (Required String) GCP region of the Peering Gateway.
+  - `iam_principal` - (Required String) The IAM principal used by the GCP Peering Gateway.
