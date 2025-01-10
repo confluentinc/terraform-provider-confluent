@@ -164,7 +164,7 @@ func dnsForwarderCreate(ctx context.Context, d *schema.ResourceData, meta interf
 		spec.SetConfig(config)
 
 	} else {
-		return diag.Errorf("None of %q pr %q blocks was provided for confluent_dns_forwarder resource", paramDnsServerIps, paramDomainMappings)
+		return diag.Errorf("None of %q or %q blocks was provided for confluent_dns_forwarder resource", paramDnsServerIps, paramDomainMappings)
 	}
 
 	spec.SetGateway(dns.ObjectReference{Id: gatewayId})
