@@ -18,11 +18,16 @@ Check each item in the checklist to ensure high-quality Terraform development pr
 For instructions, please refer to this Confluence page: https://confluentinc.atlassian.net/wiki/spaces/AEGI/pages/3938058831/
 -->
 - [ ] I can successfully build and use a custom Terraform provider binary for Confluent.
-- [ ] I have verified my PR with real Confluent Cloud resources in a production environment.
-- [ ] I have attached manual Terraform verification results or screenshots in the "Test & Review" section below.
-- [ ] I have included appropriate Terraform acceptance tests for any new resources, data sources, or functionality.
-- [ ] I confirm there will be no Terraform drift or backward compatibility issues caused by this PR.
+- [ ] I have verified my PR with real Confluent Cloud resources in a pre-prod or production environment, or both.
+- [ ] I have attached manual Terraform verification results or screenshots in the `Test & Review` section below.
+- [ ] I have included appropriate Terraform acceptance or unit tests for any new resource, data source, or functionality.
+- [ ] I confirm that this PR introduces no breaking changes or backward compatibility issues.
 - [ ] I have updated the corresponding documentation and include relevant examples for this PR.
+- [ ] I have indicated the potential customer impact if something goes wrong in the `Blast Radius` section below.
+- [ ] I have put checkmarks below confirming that the feature associated with this PR is enabled in:
+  - [ ] Confluent Cloud prod
+  - [ ] Confluent Cloud stag
+  - [ ] Check this box if the feature is enabled for certain organizations only
 
 What
 ----
@@ -32,6 +37,16 @@ Optionally include:
 - The problem being solved or the feature being added. 
 - The implementation strategy or approach taken. 
 - Key technical details, design decisions, or any additional context reviewers should be aware of.
+-->
+
+Blast Radius
+----
+<!--
+The Blast Radius section should include information on what will be the customer(s) impact if something goes wrong or unexpectedly, 
+adding this section will trigger the PR author to think about the impact from product perspective, examples can be:
+- Confluent Cloud customers who are using `confluent_kafka_cluster` resource/data-source will be blocked.
+- Confluent Cloud customers who are using `confluent_schema` resource for schema validation will be blocked.
+- All customers who are using `terraform import` function for resources will be impacted.
 -->
 
 References
