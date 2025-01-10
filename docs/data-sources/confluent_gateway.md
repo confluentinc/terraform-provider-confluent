@@ -63,3 +63,6 @@ In addition to the preceding arguments, the following attributes are exported:
 - `gcp_egress_private_service_connect_gateway` (Optional Configuration Block) supports the following:
   - `region` - (Required String) GCP region of the Egress Private Service Connect Gateway.
   - `project` - (Required String) The GCP project used by the GCP Private Service Connect Gateway.
+- `gcp_peering_gateway` (Optional Configuration Block) supports the following:
+  - `region` - (Required String) GCP region of the Peering Gateway.
+  - `iam_principal` - (Required String) The IAM principal used by the GCP Peering Gateway.
