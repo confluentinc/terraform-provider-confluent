@@ -38,10 +38,11 @@ func accessPointDataSource() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			paramGateway:                        gatewayDataSourceSchema(),
-			paramAwsEgressPrivateLinkEndpoint:   awsEgressPrivateLinkEndpointDataSourceSchema(),
-			paramAzureEgressPrivateLinkEndpoint: azureEgressPrivateLinkEndpointDataSourceSchema(),
-			paramAwsPrivateNetworkInterface:     awsPrivateNetworkInterfaceDataSourceSchema(),
+			paramGateway:                                gatewayDataSourceSchema(),
+			paramAwsEgressPrivateLinkEndpoint:           awsEgressPrivateLinkEndpointDataSourceSchema(),
+			paramAzureEgressPrivateLinkEndpoint:         azureEgressPrivateLinkEndpointDataSourceSchema(),
+			paramGcpEgressPrivateServiceConnectEndpoint: gcpEgressPrivateServiceConnectEndpointDataSourceSchema(),
+			paramAwsPrivateNetworkInterface:             awsPrivateNetworkInterfaceDataSourceSchema(),
 		},
 	}
 }
@@ -106,6 +107,37 @@ func azureEgressPrivateLinkEndpointDataSourceSchema() *schema.Schema {
 			},
 		},
 		Computed: true,
+	}
+}
+
+func gcpEgressPrivateServiceConnectEndpointDataSourceSchema() *schema.Schema {
+	return &schema.Schema{
+		Type:     schema.TypeList,
+		Optional: true,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramPrivateServiceConnectEndpointTarget: {
+					Type:        schema.TypeString,
+					Computed:    true,
+					Description: `URI of the service attachment for the published service that the Private Service Connect Endpoint connects to, or "ALL_GOOGLE_APIS" for global Google APIs`,
+				},
+				paramPrivateServiceConnectEndpointConnectionId: {
+					Type:        schema.TypeString,
+					Computed:    true,
+					Description: "Connection ID of the Private Service Connect Endpoint that is connected to the endpoint target.",
+				},
+				paramPrivateServiceConnectEndpointIpAddress: {
+					Type:        schema.TypeString,
+					Computed:    true,
+					Description: "IP address of the Private Service Connect Endpoint that is connected to the endpoint target.",
+				},
+				paramPrivateServiceConnectEndpointName: {
+					Type:        schema.TypeString,
+					Computed:    true,
+					Description: "Name of the Private Service Connect Endpoint that is connected to the endpoint target.",
+				},
+			},
+		},
 	}
 }
 
