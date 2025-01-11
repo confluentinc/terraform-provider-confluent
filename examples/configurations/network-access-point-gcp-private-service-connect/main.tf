@@ -42,7 +42,7 @@ resource "confluent_network" "gcp-private-service-connect" {
 }
 
 resource "confluent_access_point" "gcp-private-access-point" {
-  display_name = "gcp_access_point"
+  display_name = "another_gcp_access_point"
   environment {
     id = confluent_environment.development.id
   }
@@ -55,4 +55,26 @@ resource "confluent_access_point" "gcp-private-access-point" {
   depends_on = [
     confluent_network.gcp-private-service-connect
   ]
+}
+
+data "confluent_gateway" "gcp-psc-gateway" {
+  id = confluent_network.gcp-private-service-connect.gateway[0].id
+  environment {
+    id = confluent_environment.development.id
+  }
+}
+
+output "gateway" {
+  value = data.confluent_gateway.gcp-psc-gateway
+}
+
+data "confluent_access_point" "gcp-ap-datasource" {
+  id = confluent_access_point.gcp-private-access-point.id
+  environment {
+    id = confluent_environment.development.id
+  }
+}
+
+output "network-ap" {
+  value = data.confluent_access_point.gcp-ap-datasource
 }
