@@ -350,7 +350,7 @@ func TestAccDataSourceGatewayGcpEgressPrivateServiceConnectGatewaySpec(t *testin
 					resource.TestCheckResourceAttr(fullGatewayResourceName, "azure_egress_private_link_gateway.#", "0"),
 					resource.TestCheckResourceAttr(fullGatewayResourceName, "gcp_egress_private_service_connect_gateway.#", "1"),
 					resource.TestCheckResourceAttr(fullGatewayResourceName, "gcp_egress_private_service_connect_gateway.0.region", "us-central1"),
-					resource.TestCheckResourceAttr(fullGatewayResourceName, "gcp_egress_private_service_connect_gateway.0.project", "raffic-dmz-env-abc123"),
+					resource.TestCheckResourceAttr(fullGatewayResourceName, "gcp_egress_private_service_connect_gateway.0.project", "traffic-dmz-env-abc123"),
 				),
 			},
 		},

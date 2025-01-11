@@ -1,6 +1,6 @@
 {
   "api_version": "networking/v1",
-  "id": "gw-abc456",
+  "id": "gw-def456",
   "kind": "Gateway",
   "metadata": {
     "created_at": "2024-02-01T22:25:50.415274Z",
