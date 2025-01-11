@@ -13,10 +13,11 @@ import (
 )
 
 const (
-	awsPeeringGatewayScenarioName             = "confluent_gateway AWS Peering Gateway Spec Data Source Lifecycle"
-	awsEgressPrivateLinkGatewayScenarioName   = "confluent_gateway AWS Egress Private Link Gateway Spec Data Source Lifecycle"
-	azurePeeringGatewayScenarioName           = "confluent_gateway Azure Peering Gateway Spec Data Source Lifecycle"
-	azureEgressPrivateLinkGatewayScenarioName = "confluent_gateway Azure Egress Private Link Gateway Spec Data Source Lifecycle"
+	awsPeeringGatewayScenarioName                     = "confluent_gateway AWS Peering Gateway Spec Data Source Lifecycle"
+	awsEgressPrivateLinkGatewayScenarioName           = "confluent_gateway AWS Egress Private Link Gateway Spec Data Source Lifecycle"
+	azurePeeringGatewayScenarioName                   = "confluent_gateway Azure Peering Gateway Spec Data Source Lifecycle"
+	azureEgressPrivateLinkGatewayScenarioName         = "confluent_gateway Azure Egress Private Link Gateway Spec Data Source Lifecycle"
+	gcpEgressPrivateServiceConnectGatewayScenarioName = "confluent_gateway GCP Egress Private Service Connect Gateway Spec Data Source Lifecycle"
 )
 
 func TestAccDataSourceGatewayAwsPeeringGatewaySpec(t *testing.T) {
@@ -65,6 +66,7 @@ func TestAccDataSourceGatewayAwsPeeringGatewaySpec(t *testing.T) {
 					resource.TestCheckResourceAttr(fullGatewayResourceName, "aws_egress_private_link_gateway.#", "0"),
 					resource.TestCheckResourceAttr(fullGatewayResourceName, "aws_private_network_interface_gateway.#", "0"),
 					resource.TestCheckResourceAttr(fullGatewayResourceName, "azure_peering_gateway.#", "0"),
+					resource.TestCheckResourceAttr(fullGatewayResourceName, "gcp_egress_private_service_connect_gateway.#", "0"),
 					resource.TestCheckResourceAttr(fullGatewayResourceName, "azure_egress_private_link_gateway.#", "0"),
 					resource.TestCheckResourceAttr(fullGatewayResourceName, "aws_peering_gateway.0.region", "us-east-2"),
 				),
@@ -120,6 +122,7 @@ func TestAccDataSourceGatewayAwsEgressPrivateLinkGatewaySpec(t *testing.T) {
 					resource.TestCheckResourceAttr(fullGatewayResourceName, "aws_private_network_interface_gateway.#", "0"),
 					resource.TestCheckResourceAttr(fullGatewayResourceName, "azure_peering_gateway.#", "0"),
 					resource.TestCheckResourceAttr(fullGatewayResourceName, "azure_egress_private_link_gateway.#", "0"),
+					resource.TestCheckResourceAttr(fullGatewayResourceName, "gcp_egress_private_service_connect_gateway.#", "0"),
 					resource.TestCheckResourceAttr(fullGatewayResourceName, "aws_egress_private_link_gateway.0.region", "us-east-2"),
 					resource.TestCheckResourceAttr(fullGatewayResourceName, "aws_egress_private_link_gateway.0.principal_arn", "arn:aws:iam::123456789012:role"),
 				),
@@ -175,6 +178,7 @@ func TestAccDataSourceGatewayAwsPrivateNetworkInterfaceGatewaySpec(t *testing.T)
 					resource.TestCheckResourceAttr(fullGatewayResourceName, "aws_peering_gateway.#", "0"),
 					resource.TestCheckResourceAttr(fullGatewayResourceName, "azure_peering_gateway.#", "0"),
 					resource.TestCheckResourceAttr(fullGatewayResourceName, "azure_egress_private_link_gateway.#", "0"),
+					resource.TestCheckResourceAttr(fullGatewayResourceName, "gcp_egress_private_service_connect_gateway.#", "0"),
 					resource.TestCheckResourceAttr(fullGatewayResourceName, "aws_private_network_interface_gateway.0.region", "us-east-2"),
 					resource.TestCheckResourceAttr(fullGatewayResourceName, "aws_private_network_interface_gateway.0.zones.#", "2"),
 					resource.TestCheckResourceAttr(fullGatewayResourceName, "aws_private_network_interface_gateway.0.zones.0", "us-east-2a"),
@@ -233,6 +237,7 @@ func TestAccDataSourceGatewayAzurePeeringGatewaySpec(t *testing.T) {
 					resource.TestCheckResourceAttr(fullGatewayResourceName, "aws_peering_gateway.#", "0"),
 					resource.TestCheckResourceAttr(fullGatewayResourceName, "aws_egress_private_link_gateway.#", "0"),
 					resource.TestCheckResourceAttr(fullGatewayResourceName, "aws_private_network_interface_gateway.#", "0"),
+					resource.TestCheckResourceAttr(fullGatewayResourceName, "gcp_egress_private_service_connect_gateway.#", "0"),
 					resource.TestCheckResourceAttr(fullGatewayResourceName, "azure_peering_gateway.0.region", "eastus2"),
 				),
 			},
@@ -287,8 +292,65 @@ func TestAccDataSourceGatewayAzureEgressPrivateLinkGatewaySpec(t *testing.T) {
 					resource.TestCheckResourceAttr(fullGatewayResourceName, "aws_peering_gateway.#", "0"),
 					resource.TestCheckResourceAttr(fullGatewayResourceName, "aws_egress_private_link_gateway.#", "0"),
 					resource.TestCheckResourceAttr(fullGatewayResourceName, "aws_private_network_interface_gateway.#", "0"),
+					resource.TestCheckResourceAttr(fullGatewayResourceName, "gcp_egress_private_service_connect_gateway.#", "0"),
 					resource.TestCheckResourceAttr(fullGatewayResourceName, "azure_egress_private_link_gateway.0.region", "eastus"),
 					resource.TestCheckResourceAttr(fullGatewayResourceName, "azure_egress_private_link_gateway.0.subscription", "aa000000-a000-0a00-00aa-0000aaa0a0a0"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccDataSourceGatewayGcpEgressPrivateServiceConnectGatewaySpec(t *testing.T) {
+	ctx := context.Background()
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
+
+	mockServerUrl := wiremockContainer.URI
+	wiremockClient := wiremock.NewClient(mockServerUrl)
+	// nolint:errcheck
+	defer wiremockClient.Reset()
+
+	// nolint:errcheck
+	defer wiremockClient.ResetAllScenarios()
+
+	readGcpEgressPrivateServiceConnectGatewayResponse, _ := os.ReadFile("../testdata/gateway/read_gcp_egress_private_service_connect_gateway.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/networking/v1/gateways/gw-def456")).
+		InScenario(gcpEgressPrivateServiceConnectGatewayScenarioName).
+		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
+		WillReturn(
+			string(readGcpEgressPrivateServiceConnectGatewayResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	gatewayResourceName := "gcp_egress_private_service_connect_gateway"
+	fullGatewayResourceName := fmt.Sprintf("data.confluent_gateway.%s", gatewayResourceName)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckDataSourceGateway(mockServerUrl, "gw-def456", gatewayResourceName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckGatewayExists(fullGatewayResourceName),
+					resource.TestCheckResourceAttr(fullGatewayResourceName, "id", "gw-def456"),
+					resource.TestCheckResourceAttr(fullGatewayResourceName, "display_name", "prod-gateway"),
+					resource.TestCheckResourceAttr(fullGatewayResourceName, "environment.#", "1"),
+					resource.TestCheckResourceAttr(fullGatewayResourceName, "environment.0.id", "env-abc123"),
+					resource.TestCheckResourceAttr(fullGatewayResourceName, "aws_egress_private_link_gateway.#", "0"),
+					resource.TestCheckResourceAttr(fullGatewayResourceName, "aws_peering_gateway.#", "0"),
+					resource.TestCheckResourceAttr(fullGatewayResourceName, "aws_private_network_interface_gateway.#", "0"),
+					resource.TestCheckResourceAttr(fullGatewayResourceName, "azure_peering_gateway.#", "0"),
+					resource.TestCheckResourceAttr(fullGatewayResourceName, "azure_egress_private_link_gateway.#", "0"),
+					resource.TestCheckResourceAttr(fullGatewayResourceName, "gcp_egress_private_service_connect_gateway.#", "1"),
+					resource.TestCheckResourceAttr(fullGatewayResourceName, "gcp_egress_private_service_connect_gateway.0.region", "us-central1"),
+					resource.TestCheckResourceAttr(fullGatewayResourceName, "gcp_egress_private_service_connect_gateway.0.project", "raffic-dmz-env-abc123"),
 				),
 			},
 		},
