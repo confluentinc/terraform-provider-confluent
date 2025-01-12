@@ -195,7 +195,7 @@ func readTagAndSetAttributes(ctx context.Context, d *schema.ResourceData, c *Sch
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Tag %q: %s", tagId, tagJson), map[string]interface{}{tagLoggingKey: tagId})
 
-	if _, err := setTagAttributes(d, c.clusterId, tag); err != nil {
+	if _, err := setTagAttributes(d, c, c.clusterId, tag); err != nil {
 		return nil, createDescriptiveError(err)
 	}
 
@@ -333,7 +333,7 @@ func createTagId(clusterId, tagName string) string {
 	return fmt.Sprintf("%s/%s", clusterId, tagName)
 }
 
-func setTagAttributes(d *schema.ResourceData, clusterId string, tag dc.TagDef) (*schema.ResourceData, error) {
+func setTagAttributes(d *schema.ResourceData, c *SchemaRegistryRestClient, clusterId string, tag dc.TagDef) (*schema.ResourceData, error) {
 	if err := d.Set(paramName, tag.GetName()); err != nil {
 		return nil, err
 	}
@@ -346,6 +346,19 @@ func setTagAttributes(d *schema.ResourceData, clusterId string, tag dc.TagDef) (
 	if err := d.Set(paramVersion, tag.GetVersion()); err != nil {
 		return nil, err
 	}
+
+	if !c.isMetadataSetInProviderBlock {
+		if err := setKafkaCredentials(c.clusterApiKey, c.clusterApiSecret, d); err != nil {
+			return nil, err
+		}
+		if err := d.Set(paramRestEndpoint, c.restEndpoint); err != nil {
+			return nil, err
+		}
+		if err := setStringAttributeInListBlockOfSizeOne(paramSchemaRegistryCluster, paramId, c.clusterId, d); err != nil {
+			return nil, err
+		}
+	}
+
 	d.SetId(createTagId(clusterId, tag.GetName()))
 	return d, nil
 }
