@@ -99,7 +99,7 @@ func tagCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 	tagName := d.Get(paramName).(string)
 	tagId := createTagId(clusterId, tagName)
 
-	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateDataCatalogClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
 	tagRequest := dc.TagDef{}
 	tagRequest.SetName(tagName)
 	description := d.Get(paramDescription).(string)
@@ -223,7 +223,7 @@ func tagDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 
 	tflog.Debug(ctx, fmt.Sprintf("Deleting Tag %q=%q", paramId, tagId), map[string]interface{}{tagLoggingKey: tagId})
 
-	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateDataCatalogClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
 	request := schemaRegistryRestClient.dataCatalogApiClient.TypesV1Api.DeleteTagDef(schemaRegistryRestClient.dataCatalogApiContext(ctx), tagName)
 	_, serviceErr := request.Execute()
 	if serviceErr != nil {
@@ -257,7 +257,7 @@ func tagUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 	tagName := d.Get(paramName).(string)
 	tagId := createTagId(clusterId, tagName)
 
-	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateDataCatalogClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
 	tagRequest := dc.TagDef{}
 	tagRequest.SetName(tagName)
 	description := d.Get(paramDescription).(string)

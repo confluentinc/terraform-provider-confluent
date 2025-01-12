@@ -86,29 +86,6 @@ func (f SchemaRegistryRestClientFactory) CreateSchemaRegistryRestClient(restEndp
 	}
 }
 
-func (f SchemaRegistryRestClientFactory) CreateDataCatalogClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret string, isMetadataSetInProviderBlock bool) *SchemaRegistryRestClient {
-	var opts []RetryableClientFactoryOption = []RetryableClientFactoryOption{}
-	config := dc.NewConfiguration()
-	config.Servers[0].URL = restEndpoint
-	config.UserAgent = f.userAgent
-	if f.maxRetries != nil {
-		opts = append(opts, WithMaxRetries(*f.maxRetries))
-	}
-
-	config.UserAgent = f.userAgent
-	config.Servers[0].URL = restEndpoint
-	config.HTTPClient = NewRetryableClientFactory(f.ctx, opts...).CreateRetryableClient()
-
-	return &SchemaRegistryRestClient{
-		dataCatalogApiClient:         dc.NewAPIClient(config),
-		clusterId:                    clusterId,
-		clusterApiKey:                clusterApiKey,
-		clusterApiSecret:             clusterApiSecret,
-		restEndpoint:                 restEndpoint,
-		isMetadataSetInProviderBlock: isMetadataSetInProviderBlock,
-	}
-}
-
 type KafkaRestClientFactory struct {
 	ctx        context.Context
 	userAgent  string
