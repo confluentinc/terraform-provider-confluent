@@ -54,6 +54,8 @@ type SchemaRegistryRestClientFactory struct {
 
 func (f SchemaRegistryRestClientFactory) CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret string, isMetadataSetInProviderBlock bool) *SchemaRegistryRestClient {
 	var opts []RetryableClientFactoryOption = []RetryableClientFactoryOption{}
+
+	// Setup SR API Client
 	config := schemaregistry.NewConfiguration()
 	if f.maxRetries != nil {
 		opts = append(opts, WithMaxRetries(*f.maxRetries))
@@ -63,8 +65,19 @@ func (f SchemaRegistryRestClientFactory) CreateSchemaRegistryRestClient(restEndp
 	config.Servers[0].URL = restEndpoint
 	config.HTTPClient = NewRetryableClientFactory(f.ctx, opts...).CreateRetryableClient()
 
+	// Setup DC API Client
+	dataCatalogConfig := dc.NewConfiguration()
+	if f.maxRetries != nil {
+		opts = append(opts, WithMaxRetries(*f.maxRetries))
+	}
+
+	dataCatalogConfig.UserAgent = f.userAgent
+	dataCatalogConfig.Servers[0].URL = restEndpoint
+	dataCatalogConfig.HTTPClient = NewRetryableClientFactory(f.ctx, opts...).CreateRetryableClient()
+
 	return &SchemaRegistryRestClient{
 		apiClient:                    schemaregistry.NewAPIClient(config),
+		dataCatalogApiClient:         dc.NewAPIClient(dataCatalogConfig),
 		clusterId:                    clusterId,
 		clusterApiKey:                clusterApiKey,
 		clusterApiSecret:             clusterApiSecret,
