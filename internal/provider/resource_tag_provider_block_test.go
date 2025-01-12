@@ -34,7 +34,7 @@ const (
 	tagLabel                       = "confluent_tag.mytag"
 )
 
-func TestAccTag(t *testing.T) {
+func TestAccTagWithEnhancedProviderBlock(t *testing.T) {
 	ctx := context.Background()
 
 	wiremockContainer, err := setupWiremock(ctx)
