@@ -153,7 +153,7 @@ func tagRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag
 	if err != nil {
 		return diag.Errorf("error reading Tag: %s", createDescriptiveError(err))
 	}
-	clusterApiKey, clusterApiSecret, err := extractClusterApiKeyAndApiSecret(meta.(*Client), d, false)
+	clusterApiKey, clusterApiSecret, err := extractSchemaRegistryClusterApiKeyAndApiSecret(meta.(*Client), d, false)
 	if err != nil {
 		return diag.Errorf("error reading Tag: %s", createDescriptiveError(err))
 	}
