@@ -54,6 +54,8 @@ type SchemaRegistryRestClientFactory struct {
 
 func (f SchemaRegistryRestClientFactory) CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret string, isMetadataSetInProviderBlock bool) *SchemaRegistryRestClient {
 	var opts []RetryableClientFactoryOption = []RetryableClientFactoryOption{}
+
+	// Setup SR API Client
 	config := schemaregistry.NewConfiguration()
 	if f.maxRetries != nil {
 		opts = append(opts, WithMaxRetries(*f.maxRetries))
@@ -63,31 +65,19 @@ func (f SchemaRegistryRestClientFactory) CreateSchemaRegistryRestClient(restEndp
 	config.Servers[0].URL = restEndpoint
 	config.HTTPClient = NewRetryableClientFactory(f.ctx, opts...).CreateRetryableClient()
 
-	return &SchemaRegistryRestClient{
-		apiClient:                    schemaregistry.NewAPIClient(config),
-		clusterId:                    clusterId,
-		clusterApiKey:                clusterApiKey,
-		clusterApiSecret:             clusterApiSecret,
-		restEndpoint:                 restEndpoint,
-		isMetadataSetInProviderBlock: isMetadataSetInProviderBlock,
-	}
-}
-
-func (f SchemaRegistryRestClientFactory) CreateDataCatalogClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret string, isMetadataSetInProviderBlock bool) *SchemaRegistryRestClient {
-	var opts []RetryableClientFactoryOption = []RetryableClientFactoryOption{}
-	config := dc.NewConfiguration()
-	config.Servers[0].URL = restEndpoint
-	config.UserAgent = f.userAgent
+	// Setup DC API Client
+	dataCatalogConfig := dc.NewConfiguration()
 	if f.maxRetries != nil {
 		opts = append(opts, WithMaxRetries(*f.maxRetries))
 	}
 
-	config.UserAgent = f.userAgent
-	config.Servers[0].URL = restEndpoint
-	config.HTTPClient = NewRetryableClientFactory(f.ctx, opts...).CreateRetryableClient()
+	dataCatalogConfig.UserAgent = f.userAgent
+	dataCatalogConfig.Servers[0].URL = restEndpoint
+	dataCatalogConfig.HTTPClient = NewRetryableClientFactory(f.ctx, opts...).CreateRetryableClient()
 
 	return &SchemaRegistryRestClient{
-		dataCatalogApiClient:         dc.NewAPIClient(config),
+		apiClient:                    schemaregistry.NewAPIClient(config),
+		dataCatalogApiClient:         dc.NewAPIClient(dataCatalogConfig),
 		clusterId:                    clusterId,
 		clusterApiKey:                clusterApiKey,
 		clusterApiSecret:             clusterApiSecret,
