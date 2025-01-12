@@ -145,7 +145,7 @@ func tagCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 func tagRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	tflog.Debug(ctx, fmt.Sprintf("Reading Tag %q", d.Id()), map[string]interface{}{tagLoggingKey: d.Id()})
 
-	restEndpoint, err := extractRestEndpoint(meta.(*Client), d, false)
+	restEndpoint, err := extractSchemaRegistryRestEndpoint(meta.(*Client), d, false)
 	if err != nil {
 		return diag.Errorf("error reading Tag: %s", createDescriptiveError(err))
 	}
