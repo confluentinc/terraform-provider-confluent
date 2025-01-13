@@ -114,7 +114,8 @@ func TestAccDnsForwarder(t *testing.T) {
 					resource.TestCheckResourceAttr(dnsForwarderResourceLabel, "domains.1", "example.com"),
 					resource.TestCheckResourceAttr(dnsForwarderResourceLabel, "forward_via_ip.0.dns_server_ips.#", "2"),
 					resource.TestCheckResourceAttr(dnsForwarderResourceLabel, "forward_via_ip.0.dns_server_ips.0", "10.200.0.0"),
-					resource.TestCheckResourceAttr(dnsForwarderResourceLabel, "forward_via_ip.0.dns_server_ips.1", "10.200.0.1")),
+					resource.TestCheckResourceAttr(dnsForwarderResourceLabel, "forward_via_ip.0.dns_server_ips.1", "10.200.0.1"),
+					resource.TestCheckResourceAttr(dnsForwarderResourceLabel, "forward_via_ip.0.domain_mappings.#", "0")),
 			},
 		},
 	})
