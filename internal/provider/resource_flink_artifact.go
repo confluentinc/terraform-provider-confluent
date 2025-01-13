@@ -18,6 +18,8 @@ import (
 var acceptedRuntimeLanguage = []string{"python", "java"}
 var pattern = "^(([a-zA-Z][a-zA-Z_$0-9]*(\\.[a-zA-Z][a-zA-Z_$0-9]*)*)\\.)?([a-zA-Z][a-zA-Z_$0-9]*)$"
 
+const classDeprecationMsg = "The deprecated `class` attribute will eventually be removed from the [Confluent Cloud API](https://docs.confluent.io/cloud/current/api.html#tag/Flink-Artifacts-(artifactv1)/The-Flink-Artifacts-Model)"
+
 func artifactResource() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: artifactCreate,
@@ -31,15 +33,20 @@ func artifactResource() *schema.Resource {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				Description:  "The display name of Flink Artifact",
+				Description:  "The unique name of the Flink Artifact per cloud, region, environment scope.",
 				ValidateFunc: validation.StringLenBetween(1, 60),
 			},
 			paramClass: {
 				Type:         schema.TypeString,
-				Required:     true,
+				Optional:     true,
 				ForceNew:     true,
 				Description:  "Java class or alias for the Flink Artifact as provided by developer.",
 				ValidateFunc: validation.StringMatch(regexp.MustCompile(pattern), "The class must be in the required format"),
+				Deprecated:   classDeprecationMsg,
+				// Make sure "default" and "" are equivalent, so TF does not treat them as configuration changes
+				DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+					return (strings.ToLower(old) == "default" && new == "") || (old == "" && strings.ToLower(new) == "default")
+				},
 			},
 			paramCloud: {
 				Type:         schema.TypeString,
@@ -60,7 +67,7 @@ func artifactResource() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Optional:    true,
-				Description: "Archive format of the Flink Artifact.",
+				Description: "Archive format of the Flink Artifact (JAR or ZIP).",
 			},
 			paramArtifactFile: {
 				Type:     schema.TypeString,
@@ -73,7 +80,7 @@ func artifactResource() *schema.Resource {
 					}
 					return
 				},
-				Description: "The artifact file for Flink Artifact.",
+				Description: "The artifact file for Flink Artifact in JAR or ZIP format.",
 			},
 			paramRuntimeLanguage: {
 				Type:         schema.TypeString,
@@ -81,13 +88,19 @@ func artifactResource() *schema.Resource {
 				ForceNew:     true,
 				ValidateFunc: validation.StringInSlice(acceptedRuntimeLanguage, true),
 				Default:      "JAVA",
-				Description:  "Runtime language of the Flink Artifact. The default runtime language is Java.",
+				Description:  "Runtime language of the Flink Artifact as Python or JAVA. The default runtime language is JAVA.",
 			},
 			paramDescription: {
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    true,
 				Description: "Description of the Flink Artifact.",
+			},
+			paramDocumentationLink: {
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
+				Description: "Documentation link of the Flink Artifact.",
 			},
 			paramVersions: {
 				Type:        schema.TypeList,
@@ -127,6 +140,7 @@ func artifactCreate(ctx context.Context, d *schema.ResourceData, meta interface{
 	artifactFile := d.Get(paramArtifactFile).(string)
 	runtimeLanguage := d.Get(paramRuntimeLanguage).(string)
 	description := d.Get(paramDescription).(string)
+	documentationLink := d.Get(paramDocumentationLink).(string)
 
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
 
@@ -163,6 +177,9 @@ func artifactCreate(ctx context.Context, d *schema.ResourceData, meta interface{
 	}
 	if description != "" {
 		createArtifactRequest.SetDescription(description)
+	}
+	if documentationLink != "" {
+		createArtifactRequest.SetDocumentationLink(documentationLink)
 	}
 	if runtimeLanguage != "" {
 		createArtifactRequest.SetRuntimeLanguage(runtimeLanguage)
@@ -279,6 +296,9 @@ func setArtifactAttributes(d *schema.ResourceData, artifact fa.ArtifactV1FlinkAr
 		return nil, err
 	}
 	if err := d.Set(paramDescription, artifact.GetDescription()); err != nil {
+		return nil, err
+	}
+	if err := d.Set(paramDocumentationLink, artifact.GetDocumentationLink()); err != nil {
 		return nil, err
 	}
 	if err := d.Set(paramRuntimeLanguage, artifact.GetRuntimeLanguage()); err != nil {
