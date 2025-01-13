@@ -18,10 +18,10 @@
       "region": "us-east-2",
       "environment": "env-gz903",
       "display_name": "flink_artifact_0",
-      "class": "io.confluent.example.SumScalarFunction",
+      "class": "",
       "content_format": "JAR",
       "description": "string",
-      "documentation_link": "^$|^(http://|https://).",
+      "documentation_link": "https://docs.confluent.io/cloud/current/api.html",
       "runtime_language": "JAVA",
       "versions": [
         {

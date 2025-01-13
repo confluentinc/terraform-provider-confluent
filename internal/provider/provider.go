@@ -68,7 +68,6 @@ const (
 	paramDescription     = "description"
 	paramKind            = "kind"
 	paramCsu             = "csu"
-	paramClass           = "class"
 	paramContentFormat   = "content_format"
 	paramRuntimeLanguage = "runtime_language"
 	paramArtifactFile    = "artifact_file"
