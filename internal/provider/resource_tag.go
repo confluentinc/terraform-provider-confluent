@@ -170,20 +170,20 @@ func tagRead(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnos
 	return nil
 }
 
-func readTagAndSetAttributes(ctx context.Context, d *schema.ResourceData, c *SchemaRegistryRestClient, tagName string) ([]*schema.ResourceData, error) {
-	tagId := createTagId(c.clusterId, tagName)
+func readTagAndSetAttributes(ctx context.Context, resourceData *schema.ResourceData, client *SchemaRegistryRestClient, tagName string) ([]*schema.ResourceData, error) {
+	tagId := createTagId(client.clusterId, tagName)
 
 	tflog.Debug(ctx, fmt.Sprintf("Reading Tag %q=%q", paramId, tagId), map[string]any{tagLoggingKey: tagId})
 
-	request := c.dataCatalogApiClient.TypesV1Api.GetTagDefByName(c.dataCatalogApiContext(ctx), tagName)
+	request := client.dataCatalogApiClient.TypesV1Api.GetTagDefByName(client.dataCatalogApiContext(ctx), tagName)
 	tag, resp, err := request.Execute()
 	if err != nil {
 		tflog.Warn(ctx, fmt.Sprintf("Error reading Tag %q: %s", tagId, createDescriptiveError(err)), map[string]any{tagLoggingKey: tagId})
 
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
-		if isResourceNotFound && !d.IsNewResource() {
+		if isResourceNotFound && !resourceData.IsNewResource() {
 			tflog.Warn(ctx, fmt.Sprintf("Removing Tag %q in TF state because Tag could not be found on the server", tagId), map[string]any{tagLoggingKey: tagId})
-			d.SetId("")
+			resourceData.SetId("")
 			return nil, nil
 		}
 
@@ -195,13 +195,13 @@ func readTagAndSetAttributes(ctx context.Context, d *schema.ResourceData, c *Sch
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Tag %q: %s", tagId, tagJson), map[string]any{tagLoggingKey: tagId})
 
-	if _, err := setTagAttributes(d, c, c.clusterId, tag); err != nil {
+	if _, err := setTagAttributes(resourceData, client, client.clusterId, tag); err != nil {
 		return nil, createDescriptiveError(err)
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished reading Tag %q", tagId), map[string]any{tagLoggingKey: tagId})
 
-	return []*schema.ResourceData{d}, nil
+	return []*schema.ResourceData{resourceData}, nil
 }
 
 func tagDelete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
