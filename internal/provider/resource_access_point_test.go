@@ -422,7 +422,7 @@ func TestAccAccessPointAzureEgressPrivateLinkEndpoint(t *testing.T) {
 	})
 }
 
-func TestAccAccessPointGcpEgressPrivateLinkEndpoint(t *testing.T) {
+func TestAccAccessPointGcpEgressPrivateServiceConnectEndpoint(t *testing.T) {
 	ctx := context.Background()
 
 	wiremockContainer, err := setupWiremock(ctx)

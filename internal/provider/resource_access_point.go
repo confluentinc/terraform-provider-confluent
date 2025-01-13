@@ -226,7 +226,7 @@ func accessPointCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 	isAwsEgressPrivateLinkEndpoint := len(d.Get(paramAwsEgressPrivateLinkEndpoint).([]interface{})) > 0
 	isAzureEgressPrivateLinkEndpoint := len(d.Get(paramAzureEgressPrivateLinkEndpoint).([]interface{})) > 0
 	isAwsPrivateNetworkInterface := len(d.Get(paramAwsPrivateNetworkInterface).([]interface{})) > 0
-	isGcpEgressPrivateLinkEndpoint := len(d.Get(paramGcpEgressPrivateServiceConnectEndpoint).([]interface{})) > 0
+	isGcpEgressPrivateServiceConnectEndpoint := len(d.Get(paramGcpEgressPrivateServiceConnectEndpoint).([]interface{})) > 0
 
 	spec := netap.NewNetworkingV1AccessPointSpec()
 	if displayName != "" {
@@ -263,7 +263,7 @@ func accessPointCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 			Account:           netap.PtrString(extractStringValueFromBlock(d, paramAwsPrivateNetworkInterface, paramAccount)),
 		}
 		spec.SetConfig(config)
-	} else if isGcpEgressPrivateLinkEndpoint {
+	} else if isGcpEgressPrivateServiceConnectEndpoint {
 		config.NetworkingV1GcpEgressPrivateServiceConnectEndpoint = &netap.NetworkingV1GcpEgressPrivateServiceConnectEndpoint{
 			Kind:                                gcpEgressPrivateServiceConnectEndpoint,
 			PrivateServiceConnectEndpointTarget: extractStringValueFromBlock(d, paramGcpEgressPrivateServiceConnectEndpoint, paramPrivateServiceConnectEndpointTarget),
