@@ -21,11 +21,20 @@ import (
 	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
-	"os"
 	"testing"
 )
 
-func TestAccTag(t *testing.T) {
+const (
+	tagResourceScenarioName        = "confluent_tag Resource Lifecycle"
+	scenarioStateTagHasBeenCreated = "A new tag has been just created"
+	scenarioStateTagHasBeenPending = "A new tag has been just pending"
+	scenarioStateTagHasBeenUpdated = "A new tag has been just updated"
+	createTagUrlPath               = "/catalog/v1/types/tagdefs"
+	readCreatedTagUrlPath          = "/catalog/v1/types/tagdefs/test1"
+	tagLabel                       = "confluent_tag.mytag"
+)
+
+func TestAccTagWithEnhancedProviderBlock(t *testing.T) {
 	ctx := context.Background()
 
 	wiremockContainer, err := setupWiremock(ctx)
@@ -102,17 +111,6 @@ func TestAccTag(t *testing.T) {
 			http.StatusNoContent,
 		))
 
-	// Set fake values for secrets since those are required for importing
-	_ = os.Setenv("IMPORT_SCHEMA_REGISTRY_API_KEY", testSchemaRegistryUpdatedKey)
-	_ = os.Setenv("IMPORT_SCHEMA_REGISTRY_API_SECRET", testSchemaRegistryUpdatedSecret)
-	_ = os.Setenv("IMPORT_SCHEMA_REGISTRY_REST_ENDPOINT", mockServerUrl)
-
-	defer func() {
-		_ = os.Unsetenv("IMPORT_SCHEMA_REGISTRY_API_KEY")
-		_ = os.Unsetenv("IMPORT_SCHEMA_REGISTRY_API_SECRET")
-		_ = os.Unsetenv("IMPORT_SCHEMA_REGISTRY_REST_ENDPOINT")
-	}()
-
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
@@ -120,87 +118,70 @@ func TestAccTag(t *testing.T) {
 		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
 		Steps: []resource.TestStep{
 			{
-				Config: tagResourceConfig(mockServerUrl),
+				Config: tagResourceConfigWithEnhancedProviderBlock(mockServerUrl),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(tagLabel, "id", fmt.Sprintf("%s/test1", testStreamGovernanceClusterId)),
-					resource.TestCheckResourceAttr(tagLabel, "schema_registry_cluster.#", "1"),
-					resource.TestCheckResourceAttr(tagLabel, "schema_registry_cluster.0.%", "1"),
-					resource.TestCheckResourceAttr(tagLabel, "schema_registry_cluster.0.id", testStreamGovernanceClusterId),
-					resource.TestCheckResourceAttr(tagLabel, "rest_endpoint", mockServerUrl),
-					resource.TestCheckResourceAttr(tagLabel, "credentials.#", "1"),
-					resource.TestCheckResourceAttr(tagLabel, "credentials.0.%", "2"),
-					resource.TestCheckResourceAttr(tagLabel, "credentials.0.key", testSchemaRegistryKey),
-					resource.TestCheckResourceAttr(tagLabel, "credentials.0.secret", testSchemaRegistrySecret),
+					resource.TestCheckResourceAttr(tagLabel, "schema_registry_cluster.#", "0"),
+					resource.TestCheckNoResourceAttr(tagLabel, "schema_registry_cluster.0.id"),
 					resource.TestCheckResourceAttr(tagLabel, "name", "test1"),
 					resource.TestCheckResourceAttr(tagLabel, "description", "test1Description"),
 					resource.TestCheckResourceAttr(tagLabel, "version", "1"),
 					resource.TestCheckResourceAttr(tagLabel, "entity_types.#", "1"),
 					resource.TestCheckResourceAttr(tagLabel, "entity_types.0", "cf_entity"),
+					resource.TestCheckResourceAttr(tagLabel, "credentials.#", "0"),
+					resource.TestCheckNoResourceAttr(tagLabel, "credentials.0.key"),
+					resource.TestCheckNoResourceAttr(tagLabel, "credentials.0.secret"),
+					resource.TestCheckNoResourceAttr(tagLabel, "rest_endpoint"),
 				),
 			},
 			{
-				Config: tagResourceUpdatedConfig(mockServerUrl),
+				Config: tagResourceUpdatedConfigWithEnhancedProviderBlock(mockServerUrl),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(tagLabel, "id", fmt.Sprintf("%s/test1", testStreamGovernanceClusterId)),
-					resource.TestCheckResourceAttr(tagLabel, "schema_registry_cluster.#", "1"),
-					resource.TestCheckResourceAttr(tagLabel, "schema_registry_cluster.0.%", "1"),
-					resource.TestCheckResourceAttr(tagLabel, "schema_registry_cluster.0.id", testStreamGovernanceClusterId),
-					resource.TestCheckResourceAttr(tagLabel, "rest_endpoint", mockServerUrl),
-					resource.TestCheckResourceAttr(tagLabel, "credentials.#", "1"),
-					resource.TestCheckResourceAttr(tagLabel, "credentials.0.%", "2"),
-					resource.TestCheckResourceAttr(tagLabel, "credentials.0.key", testSchemaRegistryKey),
-					resource.TestCheckResourceAttr(tagLabel, "credentials.0.secret", testSchemaRegistrySecret),
+					resource.TestCheckResourceAttr(tagLabel, "schema_registry_cluster.#", "0"),
+					resource.TestCheckNoResourceAttr(tagLabel, "schema_registry_cluster.0.id"),
 					resource.TestCheckResourceAttr(tagLabel, "name", "test1"),
 					resource.TestCheckResourceAttr(tagLabel, "description", "test1UpdatedDescription"),
 					resource.TestCheckResourceAttr(tagLabel, "version", "2"),
 					resource.TestCheckResourceAttr(tagLabel, "entity_types.#", "1"),
 					resource.TestCheckResourceAttr(tagLabel, "entity_types.0", "cf_entity"),
+					resource.TestCheckResourceAttr(tagLabel, "credentials.#", "0"),
+					resource.TestCheckNoResourceAttr(tagLabel, "credentials.0.key"),
+					resource.TestCheckNoResourceAttr(tagLabel, "credentials.0.secret"),
+					resource.TestCheckNoResourceAttr(tagLabel, "rest_endpoint"),
 				),
 			},
 		},
 	})
 }
 
-func tagResourceConfig(mockServerUrl string) string {
+func tagResourceConfigWithEnhancedProviderBlock(mockServerUrl string) string {
 	return fmt.Sprintf(`
  	provider "confluent" {
+ 	  schema_registry_id = "%s"
+	  schema_registry_rest_endpoint = "%s" # optionally use SCHEMA_REGISTRY_REST_ENDPOINT env var
+	  schema_registry_api_key       = "%s"       # optionally use SCHEMA_REGISTRY_API_KEY env var
+	  schema_registry_api_secret = "%s"
  	}
  	resource "confluent_tag" "mytag" {
-      name        = "test1"
-      description = "test1Description"
+	  name = "test1"
+	  description = "test1Description"
+	}
 
-      schema_registry_cluster {
-        id = "%s"
-      }
-
-      rest_endpoint = "%s"
-
-      credentials {
-        key    = "%s"
-        secret = "%s"
-      }
-   }
  	`, testStreamGovernanceClusterId, mockServerUrl, testSchemaRegistryKey, testSchemaRegistrySecret)
 }
 
-func tagResourceUpdatedConfig(mockServerUrl string) string {
+func tagResourceUpdatedConfigWithEnhancedProviderBlock(mockServerUrl string) string {
 	return fmt.Sprintf(`
  	provider "confluent" {
+ 	  schema_registry_id = "%s"
+	  schema_registry_rest_endpoint = "%s" # optionally use SCHEMA_REGISTRY_REST_ENDPOINT env var
+	  schema_registry_api_key       = "%s"       # optionally use SCHEMA_REGISTRY_API_KEY env var
+	  schema_registry_api_secret = "%s"
  	}
  	resource "confluent_tag" "mytag" {
-      name        = "test1"
-      description = "test1UpdatedDescription"
-
-      schema_registry_cluster {
-        id = "%s"
-      }
-
-      rest_endpoint = "%s"
-
-      credentials {
-        key    = "%s"
-        secret = "%s"
-      }
-   }
+	  name = "test1"
+	  description = "test1UpdatedDescription"
+	}
  	`, testStreamGovernanceClusterId, mockServerUrl, testSchemaRegistryKey, testSchemaRegistrySecret)
 }
