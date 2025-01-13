@@ -77,7 +77,7 @@ The following arguments are supported:
   - `private_link_service_resource_id` - (Required String) Resource ID of the Azure Private Link service.
   - `private_link_subresource_name` - (Optional String) Name of the subresource for the Private Endpoint to connect to.
 - `gcp_egress_private_service_connect_endpoint` (Optional Configuration Block) supports the following:
-  - `private_service_connect_endpoint_target` - (Required String) URI of the service attachment for the published service that the Private Service Connect Endpoint connects to, or "ALL_GOOGLE_APIS"/"all-google-apis" for global Google APIs.
+  - `private_service_connect_endpoint_target` - (Required String) URI of the service attachment for the published service that the Private Service Connect Endpoint connects to, or "ALL_GOOGLE_APIS" or "all-google-apis" for global Google APIs.
 
 ## Attributes Reference
 

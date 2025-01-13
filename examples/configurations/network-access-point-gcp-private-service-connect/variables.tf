@@ -8,3 +8,13 @@ variable "confluent_cloud_api_secret" {
   type        = string
   sensitive   = true
 }
+
+variable "region" {
+  description = "The region of Confluent Cloud Network"
+  type        = string
+}
+
+variable "zones" {
+  description = "The 3 availability GCP zones for this Confluent Cloud Network"
+  type = list(string)
+}

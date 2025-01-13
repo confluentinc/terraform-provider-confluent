@@ -1,9 +1,8 @@
 terraform {
   required_providers {
     confluent = {
-      source = "terraform.confluent.io/confluentinc/confluent"
-      # source  = "confluentinc/confluent"
-      # version = "2.12.0"
+      source  = "confluentinc/confluent"
+      version = "2.12.0"
     }
   }
 }
@@ -11,25 +10,24 @@ terraform {
 provider "confluent" {
   cloud_api_key    = var.confluent_cloud_api_key
   cloud_api_secret = var.confluent_cloud_api_secret
-  endpoint         = "https://api.stag.cpdev.cloud"
 }
 
-resource "confluent_environment" "development" {
-  display_name = "Stag_GCP_OPT_Test"
+resource "confluent_environment" "staging" {
+  display_name = "Staging"
 
-  lifecycle {
-    prevent_destroy = true
+  stream_governance {
+    package = "ESSENTIALS"
   }
 }
 
 resource "confluent_network" "gcp-private-service-connect" {
   display_name     = "GCP Private Service Connect Network"
   cloud            = "GCP"
-  region           = "us-central1"
+  region           = var.region
   connection_types = ["PRIVATELINK"]
-  zones            = ["us-central1-a", "us-central1-b", "us-central1-c"]
+  zones            = var.zones
   environment {
-    id = confluent_environment.development.id
+    id = confluent_environment.staging.id
   }
 
   dns_config {
@@ -41,40 +39,29 @@ resource "confluent_network" "gcp-private-service-connect" {
   }
 }
 
-resource "confluent_access_point" "gcp-private-access-point" {
-  display_name = "another_gcp_access_point"
+data "confluent_gateway" "main" {
+  id = confluent_network.gcp-private-service-connect.gateway[0].id
   environment {
-    id = confluent_environment.development.id
-  }
-  gateway {
-    id = confluent_network.gcp-private-service-connect.gateway[0].id
-  }
-  gcp_egress_private_service_connect_endpoint {
-    private_service_connect_endpoint_target = "all-google-apis"
+    id = confluent_environment.staging.id
   }
   depends_on = [
     confluent_network.gcp-private-service-connect
   ]
 }
 
-data "confluent_gateway" "gcp-psc-gateway" {
-  id = confluent_network.gcp-private-service-connect.gateway[0].id
+resource "confluent_access_point" "private-service-connect" {
+  display_name = "GCP Private Service Connect Access Point"
   environment {
-    id = confluent_environment.development.id
+    id = confluent_environment.staging.id
   }
-}
-
-output "gateway" {
-  value = data.confluent_gateway.gcp-psc-gateway
-}
-
-data "confluent_access_point" "gcp-ap-datasource" {
-  id = confluent_access_point.gcp-private-access-point.id
-  environment {
-    id = confluent_environment.development.id
+  gateway {
+    id = data.confluent_gateway.main.id
   }
-}
-
-output "network-ap" {
-  value = data.confluent_access_point.gcp-ap-datasource
+  gcp_egress_private_service_connect_endpoint {
+    private_service_connect_endpoint_target = "ALL_GOOGLE_APIS"
+  }
+  depends_on = [
+    confluent_network.gcp-private-service-connect,
+    data.confluent_gateway
+  ]
 }

@@ -152,8 +152,7 @@ func azureEgressPrivateLinkGatewayDataSourceSchema() *schema.Schema {
 
 func gcpEgressPrivateServiceConnectGatewayDataSourceSchema() *schema.Schema {
 	return &schema.Schema{
-		Type:     schema.TypeList,
-		Computed: true,
+		Type: schema.TypeList,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				paramRegion: {
@@ -166,6 +165,7 @@ func gcpEgressPrivateServiceConnectGatewayDataSourceSchema() *schema.Schema {
 				},
 			},
 		},
+		Computed: true,
 	}
 }
 
