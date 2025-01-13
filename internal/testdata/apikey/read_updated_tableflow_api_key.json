@@ -19,7 +19,7 @@
       "resource_name": "crn://api.confluent.cloud/organization=foo/service-account=sa-12mgdv"
     },
     "resource": {
-      "api_version": "iam/v2",
+      "api_version": "tableflow/v1",
       "id": "tableflow",
       "kind": "Tableflow",
       "related": "tableflow",
