@@ -541,7 +541,7 @@ func waitForApiKeyToSync(ctx context.Context, c *Client, createdApiKey apikeys.I
 	// For Kafka API Key use Kafka REST API's List Topics request and wait for http.StatusOK
 	// For Cloud API Key use Org API's List Environments request and wait for http.StatusOK
 	// For Flink API Key use Statements API's List of Statements request and wait for http.StatusOK
-	// For Tableflow API Key use Org API's List Environments request and wait for http.StatusOK
+	// For Tableflow API Key skipped the waitForCreatedTableflowApiKeyToSync function for now, until backend support for tableflow secret/key verification is ready
 
 	if isResourceSpecificApiKey {
 		if isKafkaApiKey(createdApiKey) {

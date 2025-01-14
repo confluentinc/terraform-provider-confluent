@@ -115,29 +115,12 @@ func waitForCreatedCloudApiKeyToSync(ctx context.Context, c *Client, cloudApiKey
 	if _, err := stateConf.WaitForStateContext(c.orgApiContext(ctx)); err != nil {
 		return err
 	}
-	tflog.Debug(ctx, fmt.Sprintf("DONE waiting for Cloud API Key %q to sync", cloudApiKey), map[string]interface{}{apiKeyLoggingKey: cloudApiKey})
 	return nil
 }
 
 func waitForCreatedTableflowApiKeyToSync(ctx context.Context, c *Client, tableflowApiKey, tableflowApiSecret string) error {
-	delay, pollInterval := getDelayAndPollInterval(15*time.Second, 1*time.Minute, c.isAcceptanceTestMode)
-	stateConf := &resource.StateChangeConf{
-		Pending: []string{stateInProgress},
-		Target:  []string{stateDone},
-		Refresh: tableflowApiKeySyncStatus(ctx, c, tableflowApiKey, tableflowApiSecret),
-		////TODO: Set to the same as Cloud API for now, might need to double check on the value
-		// Default timeout for a resource
-		// https://www.terraform.io/plugin/sdkv2/resources/retries-and-customizable-timeouts
-		// Based on the tests, Cloud API Key takes about 10 seconds to sync (or even faster)
-		Timeout:      20 * time.Minute,
-		Delay:        delay,
-		PollInterval: pollInterval,
-	}
+	//TODO: implement the waitForSync function once EnvironmentsOrgV2Api have its backend support ready for Tableflow
 
-	tflog.Debug(ctx, fmt.Sprintf("Waiting for Tableflow API Key %q to sync", tableflowApiKey), map[string]interface{}{apiKeyLoggingKey: tableflowApiKey})
-	if _, err := stateConf.WaitForStateContext(c.orgApiContext(ctx)); err != nil {
-		return err
-	}
 	return nil
 }
 
