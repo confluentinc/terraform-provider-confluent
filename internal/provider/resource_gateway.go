@@ -293,6 +293,13 @@ func setGatewayAttributes(d *schema.ResourceData, gateway netgw.NetworkingV1Gate
 		}}); err != nil {
 			return nil, err
 		}
+	} else if gateway.Spec.GetConfig().NetworkingV1GcpEgressPrivateServiceConnectGatewaySpec != nil {
+		if err := d.Set(paramGcpEgressPrivateServiceConnectGateway, []interface{}{map[string]interface{}{
+			paramRegion:  gateway.Spec.Config.NetworkingV1GcpEgressPrivateServiceConnectGatewaySpec.GetRegion(),
+			paramProject: gateway.Status.CloudGateway.NetworkingV1GcpEgressPrivateServiceConnectGatewayStatus.GetProject(),
+		}}); err != nil {
+			return nil, err
+		}
 	}
 
 	if err := setStringAttributeInListBlockOfSizeOne(paramEnvironment, paramId, gateway.Spec.Environment.GetId(), d); err != nil {
