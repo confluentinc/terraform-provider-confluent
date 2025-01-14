@@ -162,7 +162,10 @@ func dnsForwarderCreate(ctx context.Context, d *schema.ResourceData, meta interf
 		spec.SetConfig(config)
 	} else if isForwardViaGcp {
 		domainMappingString := convertToStringStringMap(d.Get(fmt.Sprintf("%s.0.%s", paramForwardViaGcp, paramDomainMappings)).(map[string]interface{}))
-		domainMappings := convertToStringObjectMap(domainMappingString)
+		domainMappings, err := convertToStringObjectMap(domainMappingString)
+		if err != nil {
+			return diag.Errorf("error creating DNS Forwarder: %s", err)
+		}
 		config.NetworkingV1ForwardViaGcpDnsZones = &dns.NetworkingV1ForwardViaGcpDnsZones{DomainMappings: domainMappings, Kind: forwardViaGcp}
 		spec.SetConfig(config)
 	} else {
@@ -184,7 +187,7 @@ func dnsForwarderCreate(ctx context.Context, d *schema.ResourceData, meta interf
 	req := c.netDnsClient.DNSForwardersNetworkingV1Api.CreateNetworkingV1DnsForwarder(c.netDnsApiContext(ctx)).NetworkingV1DnsForwarder(createDnsForwarderRequest)
 	createdDnsForwarder, _, err := req.Execute()
 	if err != nil {
-		return diag.Errorf("error creating DNS Forwarder %q: %s", createdDnsForwarder.GetId(), createDescriptiveError(err))
+		return diag.Errorf("error creating DNS Forwarder %q: %s", createdDnsForwarder.GetId(), err)
 	}
 	d.SetId(createdDnsForwarder.GetId())
 	if err := waitForDnsForwarderToProvision(c.netDnsApiContext(ctx), c, environmentId, d.Id()); err != nil {
@@ -199,10 +202,13 @@ func dnsForwarderCreate(ctx context.Context, d *schema.ResourceData, meta interf
 	return dnsForwarderRead(ctx, d, meta)
 }
 
-func convertToStringObjectMap(data map[string]string) map[string]dns.NetworkingV1ForwardViaGcpDnsZonesDomainMappings {
+func convertToStringObjectMap(data map[string]string) (map[string]dns.NetworkingV1ForwardViaGcpDnsZonesDomainMappings, error) {
 	stringMap := make(map[string]dns.NetworkingV1ForwardViaGcpDnsZonesDomainMappings)
 
 	for key, value := range data {
+		if len(strings.Split(value, ",")) != 2 {
+			return nil, fmt.Errorf(" The format of one of the entered mappings is incorrect. The correct format should be domainName=zoneName,projectName")
+		}
 		s := strings.SplitN(value, ",", 2)
 		s[0] = strings.TrimSpace(s[0])
 		s[1] = strings.TrimSpace(s[1])
@@ -211,7 +217,7 @@ func convertToStringObjectMap(data map[string]string) map[string]dns.NetworkingV
 		stringMap[key] = dns.NetworkingV1ForwardViaGcpDnsZonesDomainMappings{Zone: dns.PtrString(zone), Project: dns.PtrString(project)}
 	}
 
-	return stringMap
+	return stringMap, nil
 }
 
 func executeDnsForwarderRead(ctx context.Context, c *Client, environmentId string, dnsForwarderId string) (dns.NetworkingV1DnsForwarder, *http.Response, error) {

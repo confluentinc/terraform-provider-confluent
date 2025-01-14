@@ -12,11 +12,11 @@
     "config": {
       "kind": "networking.v1.ForwardViaGcpDnsZones",
       "domain_mappings": {
-        "example.com": {
+        "test.com": {
           "zone": "zone-1",
           "project": "project-123"
         },
-        "test.com": {
+        "example.com": {
           "zone": "zone-2",
           "project": "project-456"
         }
@@ -24,7 +24,7 @@
     },
     "display_name": "dns2",
     "domains": [
-      "domainname.com",
+      "test.com",
       "example.com"
     ],
     "environment": {

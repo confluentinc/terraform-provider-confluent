@@ -230,7 +230,7 @@ func TestIsSchemaRegistryApiKey(t *testing.T) {
 	}
 }
 
-func TestConvertToTypeMapString(t *testing.T) {
+func TestConvertToStringObjectMap(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		map1 := map[string]string{
 			"example": "zone1,project1",
@@ -238,12 +238,27 @@ func TestConvertToTypeMapString(t *testing.T) {
 		map1Expected := map[string]dns.NetworkingV1ForwardViaGcpDnsZonesDomainMappings{
 			"example": {Zone: dns.PtrString("zone1"), Project: dns.PtrString("project1")},
 		}
-		actual := convertToStringObjectMap(map1)
+		actual, _ := convertToStringObjectMap(map1)
 
 		if !reflect.DeepEqual(actual, map1Expected) {
 			t.Fatalf("Unexpected error: expected %v, got %v", map1Expected, actual)
 		}
 	})
+
+	t.Run("success, extra spaces", func(t *testing.T) {
+		map1 := map[string]string{
+			"example": " zone1,  project1",
+		}
+		map1Expected := map[string]dns.NetworkingV1ForwardViaGcpDnsZonesDomainMappings{
+			"example": {Zone: dns.PtrString("zone1"), Project: dns.PtrString("project1")},
+		}
+		actual, _ := convertToStringObjectMap(map1)
+
+		if !reflect.DeepEqual(actual, map1Expected) {
+			t.Fatalf("Unexpected error: expected %v, got %v", map1Expected, actual)
+		}
+	})
+
 	t.Run("fail", func(t *testing.T) {
 		map1 := map[string]string{
 			"example": "zone1,project1xyz",
@@ -251,7 +266,7 @@ func TestConvertToTypeMapString(t *testing.T) {
 		map1Expected := map[string]dns.NetworkingV1ForwardViaGcpDnsZonesDomainMappings{
 			"example": {Zone: dns.PtrString("zone1"), Project: dns.PtrString("project1")},
 		}
-		actual := convertToStringObjectMap(map1)
+		actual, _ := convertToStringObjectMap(map1)
 
 		if reflect.DeepEqual(actual, map1Expected) {
 			t.Fatalf("Unexpected error: expected %v, got %v", map1Expected, actual)

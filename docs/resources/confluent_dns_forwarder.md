@@ -74,10 +74,11 @@ The following arguments are supported:
 - `forward_via_ip` (Optional Configuration Block) supports the following:
   - `dns_server_ips` (Required String List) List of IP addresses of the DNS server.
 - `forward_via_gcp_zones` (Optional Configuration Block) supports the following:
-  - `domain_mappings` (Required Map List) List of Maps which contains the domain to project and zone mapping.
+  - `domain_mappings` (Required Map List) List of Maps which contains the domain to zone and project mapping.
   
 -> **Note:** The `forward_via_gcp_zones` and `forward_via_ip` blocks are mutually exclusive, and one of them must be provided.
 
+-> **Note:** The order of the zone and project is important and must be in order for the domain mapping.
 
 ## Attributes Reference
 
