@@ -272,4 +272,18 @@ func TestConvertToStringObjectMap(t *testing.T) {
 			t.Fatalf("Unexpected error: expected %v, got %v", map1Expected, actual)
 		}
 	})
+
+	t.Run("fail, missing comma", func(t *testing.T) {
+		map1 := map[string]string{
+			"example": "zone1 project1",
+		}
+		map1Expected := map[string]dns.NetworkingV1ForwardViaGcpDnsZonesDomainMappings{
+			"example": {Zone: dns.PtrString("zone1"), Project: dns.PtrString("project1")},
+		}
+		actual, _ := convertToStringObjectMap(map1)
+
+		if reflect.DeepEqual(actual, map1Expected) {
+			t.Fatalf("Unexpected error: expected %v, got %v", map1Expected, actual)
+		}
+	})
 }

@@ -78,7 +78,7 @@ The following arguments are supported:
   
 -> **Note:** The `forward_via_gcp_zones` and `forward_via_ip` blocks are mutually exclusive, and one of them must be provided.
 
--> **Note:** The order of the zone and project is important and must be in order for the domain mapping.
+-> **Note:** The zone and project must be specified in the correct order, separated by a comma, to ensure accurate `domain_mappings`.
 
 ## Attributes Reference
 

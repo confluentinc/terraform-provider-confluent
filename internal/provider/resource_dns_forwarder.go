@@ -187,7 +187,7 @@ func dnsForwarderCreate(ctx context.Context, d *schema.ResourceData, meta interf
 	req := c.netDnsClient.DNSForwardersNetworkingV1Api.CreateNetworkingV1DnsForwarder(c.netDnsApiContext(ctx)).NetworkingV1DnsForwarder(createDnsForwarderRequest)
 	createdDnsForwarder, _, err := req.Execute()
 	if err != nil {
-		return diag.Errorf("error creating DNS Forwarder %q: %s", createdDnsForwarder.GetId(), err)
+		return diag.Errorf("error creating DNS Forwarder %q: %s", createdDnsForwarder.GetId(), createDescriptiveError(err))
 	}
 	d.SetId(createdDnsForwarder.GetId())
 	if err := waitForDnsForwarderToProvision(c.netDnsApiContext(ctx), c, environmentId, d.Id()); err != nil {
@@ -207,7 +207,7 @@ func convertToStringObjectMap(data map[string]string) (map[string]dns.Networking
 
 	for key, value := range data {
 		if len(strings.Split(value, ",")) != 2 {
-			return nil, fmt.Errorf(" The format of one of the entered mappings is incorrect. The correct format should be domainName=zoneName,projectName")
+			return nil, fmt.Errorf("the mapping format of \" %s \" is incorrect. The correct format should be domainName=zoneName,projectName", value)
 		}
 		s := strings.SplitN(value, ",", 2)
 		s[0] = strings.TrimSpace(s[0])
