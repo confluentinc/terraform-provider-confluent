@@ -21,6 +21,7 @@ import (
 	apikeys "github.com/confluentinc/ccloud-sdk-go-v2/apikeys/v2"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"net/http"
@@ -35,27 +36,30 @@ const (
 	paramResource            = "managed_resource"
 	paramDisableWaitForReady = "disable_wait_for_ready"
 
-	serviceAccountKind   = "ServiceAccount"
-	userKind             = "User"
-	clusterKind          = "Cluster"
-	regionKind           = "Region"
-	schemaRegistryKind   = "SchemaRegistry"
-	ksqlDbKind           = "ksqlDB"
-	cloudKindInLowercase = "cloud"
+	serviceAccountKind       = "ServiceAccount"
+	userKind                 = "User"
+	clusterKind              = "Cluster"
+	regionKind               = "Region"
+	schemaRegistryKind       = "SchemaRegistry"
+	ksqlDbKind               = "ksqlDB"
+	cloudKindInLowercase     = "cloud"
+	tableflowKind            = "Tableflow"
+	tableflowKindInLowercase = "tableflow"
 
-	iamApiVersion      = "iam/v2"
-	cmkApiVersion      = "cmk/v2"
-	srcmV2ApiVersion   = "srcm/v2"
-	srcmV3ApiVersion   = "srcm/v3"
-	ksqldbcmApiVersion = "ksqldbcm/v2"
-	fcpmApiVersion     = "fcpm/v2"
+	iamApiVersion       = "iam/v2"
+	cmkApiVersion       = "cmk/v2"
+	srcmV2ApiVersion    = "srcm/v2"
+	srcmV3ApiVersion    = "srcm/v3"
+	ksqldbcmApiVersion  = "ksqldbcm/v2"
+	fcpmApiVersion      = "fcpm/v2"
+	tableflowApiVersion = "tableflow/v1"
 )
 
 var acceptedOwnerKinds = []string{serviceAccountKind, userKind}
-var acceptedResourceKinds = []string{clusterKind, regionKind}
+var acceptedResourceKinds = []string{clusterKind, regionKind, tableflowKind}
 
 var acceptedOwnerApiVersions = []string{iamApiVersion}
-var acceptedResourceApiVersions = []string{cmkApiVersion, srcmV2ApiVersion, srcmV3ApiVersion, ksqldbcmApiVersion, fcpmApiVersion}
+var acceptedResourceApiVersions = []string{cmkApiVersion, srcmV2ApiVersion, srcmV3ApiVersion, ksqldbcmApiVersion, fcpmApiVersion, tableflowApiVersion}
 
 func apiKeyResource() *schema.Resource {
 	return &schema.Resource{
@@ -95,6 +99,7 @@ func apiKeyResource() *schema.Resource {
 				ForceNew: true,
 			},
 		},
+		CustomizeDiff: customdiff.Sequence(resourceApiKeyManagedResourceDiff),
 	}
 }
 
@@ -113,7 +118,7 @@ func apiKeyCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 	spec.SetDescription(description)
 	spec.SetOwner(apikeys.ObjectReference{Id: ownerId, Kind: &ownerKind})
 
-	// If paramResource block is present, then the API Key is a resource-specific API key (Kafka, Schema Registry, Flink, and ksqlDB).
+	// If paramResource block is present, then the API Key is a resource-specific API key (Kafka, Schema Registry, Flink, ksqlDB, and Tableflow).
 	// https://docs.confluent.io/cloud/current/access-management/authenticate/api-keys/api-keys.html#resource-specific-api-keys
 	// Otherwise, it's Cloud API Key.
 	isResourceSpecificApiKey := len(d.Get(paramResource).([]interface{})) > 0
@@ -130,6 +135,10 @@ func apiKeyCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 		if apiVersion == fcpmApiVersion {
 			spec.Resource.SetApiVersion(fcpmApiVersion)
 		}
+		if apiVersion == tableflowApiVersion {
+			spec.Resource.SetApiVersion(tableflowApiVersion)
+		}
+
 		if isFlinkApiKey(apikeys.IamV2ApiKey{Spec: spec}) {
 			spec.Resource.SetId(resourceId)
 			spec.Resource.SetEnvironment(environmentId)
@@ -282,10 +291,11 @@ func setApiKeyAttributes(d *schema.ResourceData, apiKey apikeys.IamV2ApiKey) (*s
 	if err := setOwner(apiKey, d); err != nil {
 		return nil, createDescriptiveError(err)
 	}
-	// Check whether the API Key is a resource-specific API key (Kafka, Schema Registry, and ksqlDB).
+	// Check whether the API Key is a resource-specific API key (Kafka, Schema Registry, ksqlDB, and Tableflow).
 	// https://docs.confluent.io/cloud/current/access-management/authenticate/api-keys/api-keys.html#resource-specific-api-keys
 	// Otherwise, it's Cloud API Key.
-	isResourceSpecificApiKey := strings.ToLower(apiKey.Spec.Resource.GetKind()) != cloudKindInLowercase
+	resourceKind := strings.ToLower(apiKey.Spec.Resource.GetKind())
+	isResourceSpecificApiKey := resourceKind != cloudKindInLowercase
 	if isResourceSpecificApiKey {
 		environmentId := extractStringValueFromNestedBlock(d, paramResource, paramEnvironment, paramId)
 		if err := setManagedResource(apiKey, environmentId, d); err != nil {
@@ -317,6 +327,7 @@ func setManagedResource(apiKey apikeys.IamV2ApiKey, environmentId string, d *sch
 	if kind == schemaRegistryKind || kind == ksqlDbKind {
 		apiKey.Spec.Resource.SetKind(clusterKind)
 	}
+
 	if isFlinkApiKey(apiKey) {
 		// Override Flink API Key's resource ID to be "<cloud>.<region>" and not "<envID>.<cloud>.<region>"
 		cloud, regionName, err := extractCloudAndRegionName(apiKey.Spec.Resource.GetId())
@@ -396,10 +407,11 @@ func apiKeyResourceSchema() *schema.Schema {
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				paramId: {
-					Type:        schema.TypeString,
-					Required:    true,
-					ForceNew:    true,
-					Description: "The unique identifier for the referred resource.",
+					Type:         schema.TypeString,
+					Required:     true,
+					ForceNew:     true,
+					Description:  "The unique identifier for the referred resource.",
+					ValidateFunc: validation.StringIsNotEmpty,
 				},
 				paramKind: {
 					Type:         schema.TypeString,
@@ -422,7 +434,7 @@ func apiKeyResourceSchema() *schema.Schema {
 						return olds[0] == news[0] && stringInSlice(new, acceptedResourceApiVersions, false)
 					},
 				},
-				paramEnvironment: environmentSchema(),
+				paramEnvironment: optionalApiKeyEnvironmentIdBlockSchema(),
 			},
 		},
 	}
@@ -521,10 +533,15 @@ func isKsqlDbClusterApiKey(apiKey apikeys.IamV2ApiKey) bool {
 	return (apiKey.Spec.Resource.GetKind() == clusterKind || apiKey.Spec.Resource.GetKind() == ksqlDbKind) && apiKey.Spec.Resource.GetApiVersion() == ksqldbcmApiVersion
 }
 
+func isTableflowApiKey(apiKey apikeys.IamV2ApiKey) bool {
+	return apiKey.Spec.Resource.GetKind() == tableflowKind && apiKey.Spec.Resource.GetId() == tableflowKindInLowercase
+}
+
 func waitForApiKeyToSync(ctx context.Context, c *Client, createdApiKey apikeys.IamV2ApiKey, isResourceSpecificApiKey bool, environmentId string) error {
 	// For Kafka API Key use Kafka REST API's List Topics request and wait for http.StatusOK
 	// For Cloud API Key use Org API's List Environments request and wait for http.StatusOK
 	// For Flink API Key use Statements API's List of Statements request and wait for http.StatusOK
+	// For Tableflow API Key use Org API's List Environments request and wait for http.StatusOK
 
 	if isResourceSpecificApiKey {
 		if isKafkaApiKey(createdApiKey) {
@@ -567,6 +584,9 @@ func waitForApiKeyToSync(ctx context.Context, c *Client, createdApiKey apikeys.I
 			// to check whether the Cluster API Key is synced which is why we're adding SleepIfNotTestMode() here.
 			// TODO: SVCF-3560
 			SleepIfNotTestMode(5*time.Minute, c.isAcceptanceTestMode)
+		} else if isTableflowApiKey(createdApiKey) {
+			// TODO: add sync implementation once backend support for tableflow secret/key verification is ready
+			return nil
 		} else {
 			resourceJson, err := json.Marshal(createdApiKey.Spec.GetResource())
 			if err != nil {
@@ -580,6 +600,7 @@ func waitForApiKeyToSync(ctx context.Context, c *Client, createdApiKey apikeys.I
 			return fmt.Errorf("error waiting for Cloud API Key %q to sync: %s", createdApiKey.GetId(), createDescriptiveError(err))
 		}
 	}
+
 	return nil
 }
 
@@ -594,7 +615,8 @@ func apiKeyImport(ctx context.Context, d *schema.ResourceData, meta interface{})
 	envIdAndClusterAPIKeyId := d.Id()
 	parts := strings.Split(envIdAndClusterAPIKeyId, "/")
 	if len(parts) == 1 {
-		tflog.Debug(ctx, fmt.Sprintf("Importing Cloud API Key %q", d.Id()), map[string]interface{}{apiKeyLoggingKey: d.Id()})
+		tflog.Debug(ctx, fmt.Sprintf("Importing Cloud or Tableflow API Key %q", d.Id()), map[string]interface{}{apiKeyLoggingKey: d.Id()})
+
 	} else if len(parts) == 2 {
 		environmentId := parts[0]
 		clusterApiKeyId := parts[1]
@@ -611,7 +633,7 @@ func apiKeyImport(ctx context.Context, d *schema.ResourceData, meta interface{})
 
 		tflog.Debug(ctx, fmt.Sprintf("Importing Cluster API Key %q", d.Id()), map[string]interface{}{apiKeyLoggingKey: d.Id()})
 	} else {
-		return nil, fmt.Errorf("error importing API Key: invalid format: expected '<API Key ID> for Cloud API Key or <env ID>/API Key ID>' for Cluster API Key")
+		return nil, fmt.Errorf("error importing API Key: invalid format: expected '<env ID>/API Key ID>' for Cluster API Key, or '<API Key ID> for Cloud or Tableflow API Key")
 	}
 
 	// Mark resource as new to avoid d.Set("") when getting 404
@@ -623,5 +645,46 @@ func apiKeyImport(ctx context.Context, d *schema.ResourceData, meta interface{})
 		return nil, createDescriptiveError(err)
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished importing API Key %q", d.Id()), map[string]interface{}{apiKeyLoggingKey: d.Id()})
+
 	return []*schema.ResourceData{d}, nil
+}
+
+func optionalApiKeyEnvironmentIdBlockSchema() *schema.Schema {
+	return &schema.Schema{
+		Type: schema.TypeList,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramId: {
+					Type:         schema.TypeString,
+					Required:     true,
+					ForceNew:     true,
+					ValidateFunc: validation.StringIsNotEmpty,
+				},
+			},
+		},
+		Optional: true,
+	}
+}
+
+func resourceApiKeyManagedResourceDiff(ctx context.Context, diff *schema.ResourceDiff, _ interface{}) error {
+	// Check if the `managed_resource` block exists
+	if diff.Get("managed_resource.#").(int) > 0 {
+		// Get `managed_resource.id` from the nested block
+		resourceId := diff.Get("managed_resource.0.id").(string)
+
+		// Check if the environment block exists
+		_, environmentExists := diff.GetOk("managed_resource.0.environment.0.id")
+
+		// If managed_resource.id is not "tableflow", ensure environment block exists
+		if resourceId != "tableflow" && !environmentExists {
+			return fmt.Errorf("'environment.id' is required when 'managed_resource.id' is %s\n", resourceId)
+		}
+
+		// If managed_resource.id is "tableflow", ensure environment block is NOT set
+		if resourceId == "tableflow" && environmentExists {
+			return fmt.Errorf("'environment' block can't be present when 'managed_resource.id' is 'tableflow'")
+		}
+	}
+
+	return nil
 }
