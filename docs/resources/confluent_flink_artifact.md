@@ -22,10 +22,9 @@ resource "confluent_environment" "development" {
 }
 
 resource "confluent_flink_artifact" "main" {
-  class          = "io.confluent.example.SumScalarFunction"
-  region         = "us-west-2"
   cloud          = "AWS"
-  display_name   = "flink_sumscalar_artifact"
+  region         = "us-west-2"
+  display_name   = "my_flink_sumscalar_artifact"
   content_format = "JAR"
   environment {
     id = confluent_environment.development.id
@@ -38,10 +37,9 @@ resource "confluent_flink_artifact" "main" {
 
 The following arguments are supported:
 
-- `display_name` - (Required String) The display name of Flink Artifact.
+- `display_name` - (Required String) The unique name of the Flink Artifact per cloud, region, environment scope.
 - `cloud` - (Required String) The cloud service provider that runs the Flink Artifact.
 - `region` - (Required String) The cloud service provider region that hosts the Flink Artifact.
-- `class` - (Required String) Java class or alias for the Flink Artifact as provided by developer.
 - `artifact_file` - (Required String) The artifact file for Flink Artifact.
 - `environment` (Required Configuration Block) supports the following:
     - `id` - (Required String) The ID of the Environment that the Flink Artifact Pool belongs to, for example, `env-abc123`.
@@ -51,9 +49,10 @@ The following arguments are supported:
 In addition to the preceding arguments, the following attributes are exported:
 
 - `id` - (Required String) The ID of the Flink Artifact, for example, `lfa-abc123`.
-- `content_format` - (Optional String) Archive format of the Flink Artifact.
-- `runtime_language` - (Optional String) Runtime language of the Flink Artifact. The default runtime language is Java.
+- `content_format` - (Optional String) Archive format of the Flink Artifact (JAR or ZIP).
+- `runtime_language` - (Optional String) Runtime language of the Flink Artifact as Python or Java. The default runtime language is Java.
 - `description` - (Optional String) Description of the Flink Artifact.
+- `documentation_link` - (Optional String) Documentation link of the Flink Artifact.
 - `api_version` - (Required String) The API Version of the schema version of the Flink Artifact Pool, for example, `fa/v2`.
 - `kind` - (Required String) The kind of the Flink Artifact Pool, for example, `FlinkArtifact`.
 
