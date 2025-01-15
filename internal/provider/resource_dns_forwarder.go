@@ -21,21 +21,26 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"net/http"
+	"regexp"
 	"strings"
 
 	dns "github.com/confluentinc/ccloud-sdk-go-v2/networking-dnsforwarder/v1"
 )
 
 const (
-	paramGateway      = "gateway"
-	paramForwardViaIp = "forward_via_ip"
-	paramDomains      = "domains"
-	paramDnsServerIps = "dns_server_ips"
-	forwardViaIp      = "ForwardViaIp"
+	paramGateway        = "gateway"
+	paramForwardViaIp   = "forward_via_ip"
+	paramForwardViaGcp  = "forward_via_gcp_dns_zones"
+	paramDomains        = "domains"
+	paramDnsServerIps   = "dns_server_ips"
+	paramDomainMappings = "domain_mappings"
+	forwardViaIp        = "ForwardViaIp"
+	forwardViaGcp       = "ForwardViaGcpDnsZones"
 )
 
-var acceptedDnsForwarderConfig = []string{paramForwardViaIp}
+var acceptedDnsForwarderConfig = []string{paramForwardViaIp, paramForwardViaGcp}
 
 func dnsForwarderResource() *schema.Resource {
 	return &schema.Resource{
@@ -57,9 +62,10 @@ func dnsForwarderResource() *schema.Resource {
 				Required: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
-			paramForwardViaIp: forwardViaIpSchema(),
-			paramGateway:      requiredGateway(),
-			paramEnvironment:  environmentSchema(),
+			paramForwardViaIp:  forwardViaIpSchema(),
+			paramForwardViaGcp: forwardViaGcpSchema(),
+			paramGateway:       requiredGateway(),
+			paramEnvironment:   environmentSchema(),
 		},
 	}
 }
@@ -78,6 +84,30 @@ func forwardViaIpSchema() *schema.Schema {
 					Computed: true,
 					Optional: true,
 					Elem:     &schema.Schema{Type: schema.TypeString},
+				},
+			},
+		},
+		ExactlyOneOf: acceptedDnsForwarderConfig,
+	}
+}
+
+func forwardViaGcpSchema() *schema.Schema {
+	return &schema.Schema{
+		Type:     schema.TypeList,
+		Optional: true,
+		ForceNew: true,
+		MinItems: 1,
+		MaxItems: 1,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramDomainMappings: {
+					Type:     schema.TypeMap,
+					Computed: true,
+					Optional: true,
+					Elem: &schema.Schema{
+						Type:         schema.TypeString,
+						ValidateFunc: validation.StringMatch(regexp.MustCompile("^[^,]+,[^,]+$"), "Exactly 2 strings separated by a comma"),
+					},
 				},
 			},
 		},
@@ -115,6 +145,8 @@ func dnsForwarderCreate(ctx context.Context, d *schema.ResourceData, meta interf
 
 	isForwardViaIp := len(d.Get(paramForwardViaIp).([]interface{})) > 0
 
+	isForwardViaGcp := len(d.Get(paramForwardViaGcp).([]interface{})) > 0
+
 	spec := dns.NewNetworkingV1DnsForwarderSpec()
 	if displayName != "" {
 		spec.SetDisplayName(displayName)
@@ -128,14 +160,25 @@ func dnsForwarderCreate(ctx context.Context, d *schema.ResourceData, meta interf
 		dnsServerIps := convertToStringSlice(d.Get(fmt.Sprintf("%s.0.%s", paramForwardViaIp, paramDnsServerIps)).(*schema.Set).List())
 		config.NetworkingV1ForwardViaIp = &dns.NetworkingV1ForwardViaIp{DnsServerIps: dnsServerIps, Kind: forwardViaIp}
 		spec.SetConfig(config)
+	} else if isForwardViaGcp {
+		domainMappingString := convertToStringStringMap(d.Get(fmt.Sprintf("%s.0.%s", paramForwardViaGcp, paramDomainMappings)).(map[string]interface{}))
+		domainMappings, err := convertToStringObjectMap(domainMappingString)
+		if err != nil {
+			return diag.Errorf("error creating DNS Forwarder: %s", err)
+		}
+		config.NetworkingV1ForwardViaGcpDnsZones = &dns.NetworkingV1ForwardViaGcpDnsZones{DomainMappings: domainMappings, Kind: forwardViaGcp}
+		spec.SetConfig(config)
 	} else {
-		return diag.Errorf("None of %q blocks was provided for confluent_dns_forwarder resource", paramDnsServerIps)
+		return diag.Errorf("None of %q or %q blocks was provided for confluent_dns_forwarder resource", paramForwardViaIp, paramForwardViaGcp)
 	}
+
 	spec.SetGateway(dns.ObjectReference{Id: gatewayId})
 	spec.SetEnvironment(dns.ObjectReference{Id: environmentId})
 
 	createDnsForwarderRequest := dns.NetworkingV1DnsForwarder{Spec: spec}
+
 	createDnsForwarderRequestJson, err := json.Marshal(createDnsForwarderRequest)
+
 	if err != nil {
 		return diag.Errorf("error creating DNS Forwarder: error marshaling %#v to json: %s", createDnsForwarderRequest, createDescriptiveError(err))
 	}
@@ -147,9 +190,8 @@ func dnsForwarderCreate(ctx context.Context, d *schema.ResourceData, meta interf
 		return diag.Errorf("error creating DNS Forwarder %q: %s", createdDnsForwarder.GetId(), createDescriptiveError(err))
 	}
 	d.SetId(createdDnsForwarder.GetId())
-
 	if err := waitForDnsForwarderToProvision(c.netDnsApiContext(ctx), c, environmentId, d.Id()); err != nil {
-		return diag.Errorf("error waiting for DNS Forwarder %q to provision: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error waiting for DNS Forwarder %q to provision: %s", d.Id(), (err))
 	}
 
 	createdDnsForwarderJson, err := json.Marshal(createdDnsForwarder)
@@ -157,8 +199,25 @@ func dnsForwarderCreate(ctx context.Context, d *schema.ResourceData, meta interf
 		return diag.Errorf("error creating DNS Forwarder %q: error marshaling %#v to json: %s", d.Id(), createdDnsForwarder, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating DNS Forwarder %q: %s", d.Id(), createdDnsForwarderJson), map[string]interface{}{dnsForwarderKey: d.Id()})
-
 	return dnsForwarderRead(ctx, d, meta)
+}
+
+func convertToStringObjectMap(data map[string]string) (map[string]dns.NetworkingV1ForwardViaGcpDnsZonesDomainMappings, error) {
+	stringMap := make(map[string]dns.NetworkingV1ForwardViaGcpDnsZonesDomainMappings)
+
+	for key, value := range data {
+		if len(strings.Split(value, ",")) != 2 {
+			return nil, fmt.Errorf(`the mapping format of "%s" is incorrect. The correct format should be domainName=zoneName,projectName`, value)
+		}
+		s := strings.SplitN(value, ",", 2)
+		s[0] = strings.TrimSpace(s[0])
+		s[1] = strings.TrimSpace(s[1])
+		zone := s[0]
+		project := s[1]
+		stringMap[key] = dns.NetworkingV1ForwardViaGcpDnsZonesDomainMappings{Zone: dns.PtrString(zone), Project: dns.PtrString(project)}
+	}
+
+	return stringMap, nil
 }
 
 func executeDnsForwarderRead(ctx context.Context, c *Client, environmentId string, dnsForwarderId string) (dns.NetworkingV1DnsForwarder, *http.Response, error) {
@@ -295,6 +354,23 @@ func setDnsForwarderAttributes(d *schema.ResourceData, dnsForwarder dns.Networki
 	if dnsForwarder.Spec.Config.NetworkingV1ForwardViaIp != nil {
 		if err := d.Set(paramForwardViaIp, []interface{}{map[string]interface{}{
 			paramDnsServerIps: dnsForwarder.Spec.Config.NetworkingV1ForwardViaIp.GetDnsServerIps(),
+		}}); err != nil {
+			return nil, err
+		}
+	}
+
+	if dnsForwarder.Spec.Config.NetworkingV1ForwardViaGcpDnsZones != nil {
+		domainMapping := dnsForwarder.Spec.Config.NetworkingV1ForwardViaGcpDnsZones.GetDomainMappings()
+		stringMap := make(map[string]string)
+		for key, value := range domainMapping {
+			zone, zoneOk := value.GetZoneOk()
+			project, projectOk := value.GetProjectOk()
+			if zoneOk && projectOk {
+				stringMap[key] = *zone + "," + *project
+			}
+		}
+		if err := d.Set(paramForwardViaGcp, []interface{}{map[string]interface{}{
+			paramDomainMappings: stringMap,
 		}}); err != nil {
 			return nil, err
 		}
