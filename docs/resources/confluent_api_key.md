@@ -10,7 +10,7 @@ description: |-
 
 [![General Availability](https://img.shields.io/badge/Lifecycle%20Stage-General%20Availability-%2345c6e8)](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy)
 
-`confluent_api_key` provides an API Key resource that enables creating, editing, and deleting Cloud API Keys, Cluster API Keys (Kafka API Key, ksqlDB API Key, Schema Registry API Key, Flink API Key) on Confluent Cloud.
+`confluent_api_key` provides an API Key resource that enables creating, editing, and deleting Cloud API Keys, Cluster API Keys (Kafka API Key, ksqlDB API Key, Schema Registry API Key, Flink API Key, Tableflow API Key) on Confluent Cloud.
 
 -> **Note:** It is recommended to set `lifecycle { prevent_destroy = true }` on production instances to prevent accidental API Key deletion. This setting rejects plans that would destroy or recreate the API Key, such as attempting to change uneditable attributes. Read more about it in the [Terraform docs](https://www.terraform.io/language/meta-arguments/lifecycle#prevent_destroy).
 
@@ -124,6 +124,29 @@ resource "confluent_api_key" "env-manager-flink-api-key" {
 }
 ```
 
+### Example Tableflow API Key
+```terraform
+resource "confluent_api_key" "env-manager-tableflow-api-key" {
+  display_name = "env-manager-tableflow-api-key"
+  description  = "Tableflow API Key that is owned by 'env-manager' service account"
+  owner {
+    id          = confluent_service_account.env-manager.id
+    api_version = confluent_service_account.env-manager.api_version
+    kind        = confluent_service_account.env-manager.kind
+  }
+
+  managed_resource {
+    id          = "tableflow"
+    api_version = "tableflow/v1"
+    kind        = "Tableflow"
+  }
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+```
+
 ### Example Cloud API Key
 ```terraform
 resource "confluent_api_key" "env-manager-cloud-api-key" {
@@ -173,25 +196,25 @@ In addition to the preceding arguments, the following attributes are exported:
 
 -> **Note:** You must set the `API_KEY_SECRET` (`secret`) environment variable before importing an API Key.
 
-You can import a Cluster API Key by using the Environment ID and Cluster API Key ID in the format `<Environment ID>/<Cluster API Key ID>`, for example:
+You can import a Cluster API Key (excluding Tableflow API Key) by using the Environment ID and Cluster API Key ID in the format `<Environment ID>/<Cluster API Key ID>`, for example:
 
 ```shell
 $ export CONFLUENT_CLOUD_API_KEY="<cloud_api_key>"
 $ export CONFLUENT_CLOUD_API_SECRET="<cloud_api_secret>"
 $ export API_KEY_SECRET="<api_key_secret>"
 
-# Option #1: Cluster API Key
+# Option #1: Cluster API Key (excluding Tableflow API Key)
 $ terraform import confluent_api_key.example_kafka_api_key "env-abc123/UTT6WDRXX7FHD2GV"
 ```
 
-You can import a Cloud API Key by using Cloud API Key ID, for example:
+You can import a Cloud or Tableflow API Key by using Cloud or Tableflow API Key ID, for example:
 
 ```shell
 $ export CONFLUENT_CLOUD_API_KEY="<cloud_api_key>"
 $ export CONFLUENT_CLOUD_API_SECRET="<cloud_api_secret>"
 $ export API_KEY_SECRET="<api_key_secret>"
 
-# Option #2: Cloud API Key
+# Option #2: Cloud or Tableflow API Key
 $ terraform import confluent_api_key.example_cloud_api_key "4UEXOMMWIBE5KZQG"
 ```
 
