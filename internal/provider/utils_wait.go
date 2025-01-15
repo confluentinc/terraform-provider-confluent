@@ -119,7 +119,7 @@ func waitForCreatedCloudApiKeyToSync(ctx context.Context, c *Client, cloudApiKey
 }
 
 func waitForCreatedTableflowApiKeyToSync(ctx context.Context, c *Client, tableflowApiKey, tableflowApiSecret string) error {
-	//TODO: implement the waitForSync function once EnvironmentsOrgV2Api have its backend support ready for Tableflow
+	//TODO: implement the waitForSync function once corresponding Tableflow APIs have its backend support ready
 
 	return nil
 }
