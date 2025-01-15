@@ -586,6 +586,7 @@ func waitForApiKeyToSync(ctx context.Context, c *Client, createdApiKey apikeys.I
 			SleepIfNotTestMode(5*time.Minute, c.isAcceptanceTestMode)
 		} else if isTableflowApiKey(createdApiKey) {
 			// TODO: add sync implementation once backend support for tableflow secret/key verification is ready
+			// 		 tracked with JIRA Ticket APIT-2764
 			return nil
 		} else {
 			resourceJson, err := json.Marshal(createdApiKey.Spec.GetResource())
