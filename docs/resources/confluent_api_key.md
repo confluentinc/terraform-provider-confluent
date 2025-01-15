@@ -196,14 +196,14 @@ In addition to the preceding arguments, the following attributes are exported:
 
 -> **Note:** You must set the `API_KEY_SECRET` (`secret`) environment variable before importing an API Key.
 
-You can import a Cluster API Key (excluding Tableflow API Key) by using the Environment ID and Cluster API Key ID in the format `<Environment ID>/<Cluster API Key ID>`, for example:
+You can import a Cluster API Key by using the Environment ID and Cluster API Key ID in the format `<Environment ID>/<Cluster API Key ID>`, for example:
 
 ```shell
 $ export CONFLUENT_CLOUD_API_KEY="<cloud_api_key>"
 $ export CONFLUENT_CLOUD_API_SECRET="<cloud_api_secret>"
 $ export API_KEY_SECRET="<api_key_secret>"
 
-# Option #1: Cluster API Key (excluding Tableflow API Key)
+# Option #1: Cluster API Key 
 $ terraform import confluent_api_key.example_kafka_api_key "env-abc123/UTT6WDRXX7FHD2GV"
 ```
 
