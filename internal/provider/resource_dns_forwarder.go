@@ -207,7 +207,7 @@ func convertToStringObjectMap(data map[string]string) (map[string]dns.Networking
 
 	for key, value := range data {
 		if len(strings.Split(value, ",")) != 2 {
-			return nil, fmt.Errorf("the mapping format of \" %s \" is incorrect. The correct format should be domainName=zoneName,projectName", value)
+			return nil, fmt.Errorf(`the mapping format of "%s" is incorrect. The correct format should be domainName=zoneName,projectName`, value)
 		}
 		s := strings.SplitN(value, ",", 2)
 		s[0] = strings.TrimSpace(s[0])
