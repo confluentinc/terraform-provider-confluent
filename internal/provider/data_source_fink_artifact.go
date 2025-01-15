@@ -48,12 +48,13 @@ func flinkArtifactDataSource() *schema.Resource {
 				Optional: true,
 				// A user should provide a value for either "id" or "display_name" attribute, not both
 				ExactlyOneOf: []string{paramId, paramDisplayName},
-				Description:  "Display name of the Flink Artifact.",
+				Description:  "The Unique name of the Flink Artifact per cloud, region, environment scope.",
 			},
 			paramClass: {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Java class or alias for the Flink Artifact as provided by developer.",
+				Deprecated:  "No longer required.",
 			},
 			paramCloud: {
 				Type:         schema.TypeString,
@@ -71,17 +72,22 @@ func flinkArtifactDataSource() *schema.Resource {
 			paramContentFormat: {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Archive format of the Flink Artifact.",
+				Description: "Archive format of the Flink Artifact (JAR or ZIP).",
 			},
 			paramRuntimeLanguage: {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Runtime language of the Flink Artifact. The default runtime language is JAVA.",
+				Description: "Runtime language of the Flink Artifact as Python or Java. The default runtime language is JAVA.",
 			},
 			paramDescription: {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Description of the Flink Artifact.",
+			},
+			paramDocumentationLink: {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Documentation link of the Flink Artifact.",
 			},
 			paramVersions: {
 				Type:        schema.TypeList,

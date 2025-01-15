@@ -31,7 +31,7 @@ func artifactResource() *schema.Resource {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				Description:  "The display name of Flink Artifact",
+				Description:  "The Unique name of the Flink Artifact per cloud, region, environment scope.",
 				ValidateFunc: validation.StringLenBetween(1, 60),
 			},
 			paramClass: {
@@ -40,6 +40,7 @@ func artifactResource() *schema.Resource {
 				ForceNew:     true,
 				Description:  "Java class or alias for the Flink Artifact as provided by developer.",
 				ValidateFunc: validation.StringMatch(regexp.MustCompile(pattern), "The class must be in the required format"),
+				Deprecated:   "No longer required.",
 			},
 			paramCloud: {
 				Type:         schema.TypeString,
@@ -60,7 +61,7 @@ func artifactResource() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Optional:    true,
-				Description: "Archive format of the Flink Artifact.",
+				Description: "Archive format of the Flink Artifact (JAR or ZIP).",
 			},
 			paramArtifactFile: {
 				Type:     schema.TypeString,
@@ -73,7 +74,7 @@ func artifactResource() *schema.Resource {
 					}
 					return
 				},
-				Description: "The artifact file for Flink Artifact.",
+				Description: "The artifact file for Flink Artifact in JAR or ZIP format.",
 			},
 			paramRuntimeLanguage: {
 				Type:         schema.TypeString,
@@ -81,13 +82,19 @@ func artifactResource() *schema.Resource {
 				ForceNew:     true,
 				ValidateFunc: validation.StringInSlice(acceptedRuntimeLanguage, true),
 				Default:      "JAVA",
-				Description:  "Runtime language of the Flink Artifact. The default runtime language is Java.",
+				Description:  "Runtime language of the Flink Artifact as Python or Java. The default runtime language is Java.",
 			},
 			paramDescription: {
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    true,
 				Description: "Description of the Flink Artifact.",
+			},
+			paramDocumentationLink: {
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
+				Description: "Documentation link of the Flink Artifact.",
 			},
 			paramVersions: {
 				Type:        schema.TypeList,
@@ -120,13 +127,13 @@ func artifactResource() *schema.Resource {
 func artifactCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	c := meta.(*Client)
 	name := d.Get(paramDisplayName).(string)
-	class := d.Get(paramClass).(string)
 	cloud := d.Get(paramCloud).(string)
 	region := d.Get(paramRegion).(string)
 	contentFormat := d.Get(paramContentFormat).(string)
 	artifactFile := d.Get(paramArtifactFile).(string)
 	runtimeLanguage := d.Get(paramRuntimeLanguage).(string)
 	description := d.Get(paramDescription).(string)
+	documentationLink := d.Get(paramDocumentationLink).(string)
 
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
 
@@ -152,7 +159,6 @@ func artifactCreate(ctx context.Context, d *schema.ResourceData, meta interface{
 		DisplayName: name,
 		Cloud:       cloud,
 		Region:      region,
-		Class:       &class,
 		Environment: environmentId,
 		UploadSource: fa.InlineObjectUploadSourceOneOf{
 			ArtifactV1UploadSourcePresignedUrl: &fa.ArtifactV1UploadSourcePresignedUrl{
@@ -163,6 +169,9 @@ func artifactCreate(ctx context.Context, d *schema.ResourceData, meta interface{
 	}
 	if description != "" {
 		createArtifactRequest.SetDescription(description)
+	}
+	if documentationLink != "" {
+		createArtifactRequest.SetDocumentationLink(documentationLink)
 	}
 	if runtimeLanguage != "" {
 		createArtifactRequest.SetRuntimeLanguage(runtimeLanguage)
@@ -258,9 +267,6 @@ func setArtifactAttributes(d *schema.ResourceData, artifact fa.ArtifactV1FlinkAr
 	if err := d.Set(paramDisplayName, artifact.GetDisplayName()); err != nil {
 		return nil, err
 	}
-	if err := d.Set(paramClass, artifact.GetClass()); err != nil {
-		return nil, err
-	}
 	if err := d.Set(paramCloud, artifact.GetCloud()); err != nil {
 		return nil, err
 	}
@@ -279,6 +285,9 @@ func setArtifactAttributes(d *schema.ResourceData, artifact fa.ArtifactV1FlinkAr
 		return nil, err
 	}
 	if err := d.Set(paramDescription, artifact.GetDescription()); err != nil {
+		return nil, err
+	}
+	if err := d.Set(paramDocumentationLink, artifact.GetDocumentationLink()); err != nil {
 		return nil, err
 	}
 	if err := d.Set(paramRuntimeLanguage, artifact.GetRuntimeLanguage()); err != nil {
