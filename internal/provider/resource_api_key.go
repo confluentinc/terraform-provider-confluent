@@ -35,6 +35,7 @@ const (
 	paramOwner               = "owner"
 	paramResource            = "managed_resource"
 	paramDisableWaitForReady = "disable_wait_for_ready"
+	paramKeepers             = "keepers"
 
 	serviceAccountKind       = "ServiceAccount"
 	userKind                 = "User"
@@ -97,6 +98,12 @@ func apiKeyResource() *schema.Resource {
 				Optional: true,
 				Default:  false,
 				ForceNew: true,
+			},
+			paramKeepers: {
+				Type:        schema.TypeMap,
+				Optional:    true,
+				ForceNew:    true,
+				Description: "Arbitrary map of values that, when changed, will trigger recreation of resource.",
 			},
 		},
 		CustomizeDiff: customdiff.Sequence(resourceApiKeyManagedResourceDiff),
