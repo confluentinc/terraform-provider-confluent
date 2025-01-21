@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/walkerus/go-wiremock"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"testing"
@@ -25,8 +24,9 @@ const (
 	flinkArtifactContentFormat                 = "JAR"
 	flinkArtifactRuntimeLanguage               = "JAVA"
 	flinkArtifactDescription                   = "string"
+	flinkArtifactDocumentationLink             = "https://docs.confluent.io/cloud/current/api.html"
 	flinkArtifactId                            = "lfcp-abc123"
-	flinkArtifactDisplayName                   = "flink_artifact_0"
+	flinkArtifactUniqueName                    = "flink_artifact_0"
 	flinkArtifactApiVersion                    = "artifact/v1"
 	flinkArtifactKind                          = "FlinkArtifact"
 	flinkVersions                              = "cfa-ver-001"
@@ -51,7 +51,7 @@ func TestAccFlinkArtifact(t *testing.T) {
 	// nolint:errcheck
 	defer wiremockClient.ResetAllScenarios()
 
-	createArtifactPresignedUrlResponse, _ := ioutil.ReadFile("../testdata/flink_artifact/read_presigned_url.json")
+	createArtifactPresignedUrlResponse, _ := os.ReadFile("../testdata/flink_artifact/read_presigned_url.json")
 	createArtifactPresignedUrlStub := wiremock.Post(wiremock.URLPathEqualTo("/artifact/v1/presigned-upload-url")).
 		InScenario(flinkArtifactScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
@@ -63,7 +63,7 @@ func TestAccFlinkArtifact(t *testing.T) {
 		)
 	_ = wiremockClient.StubFor(createArtifactPresignedUrlStub)
 
-	createArtifactResponse, _ := ioutil.ReadFile("../testdata/flink_artifact/create_artifact.json")
+	createArtifactResponse, _ := os.ReadFile("../testdata/flink_artifact/create_artifact.json")
 	createArtifactStub := wiremock.Post(wiremock.URLPathEqualTo("/artifact/v1/flink-artifacts")).
 		InScenario(flinkArtifactScenarioName).
 		WhenScenarioStateIs(scenarioArtifactPresignedUrlHasBeenCreated).
@@ -75,7 +75,7 @@ func TestAccFlinkArtifact(t *testing.T) {
 		)
 	_ = wiremockClient.StubFor(createArtifactStub)
 
-	readCreatedArtifactResponse, _ := ioutil.ReadFile("../testdata/flink_artifact/read_created_artifact.json")
+	readCreatedArtifactResponse, _ := os.ReadFile("../testdata/flink_artifact/read_created_artifact.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(flinkArtifactsUrlPath)).
 		InScenario(flinkArtifactScenarioName).
 		WithQueryParam("region", wiremock.EqualTo(flinkArtifactRegion)).
@@ -102,7 +102,7 @@ func TestAccFlinkArtifact(t *testing.T) {
 		)
 	_ = wiremockClient.StubFor(deleteArtifactStub)
 
-	readDeletedArtifactResponse, _ := ioutil.ReadFile("../testdata/flink_artifact/read_deleted_artifact.json")
+	readDeletedArtifactResponse, _ := os.ReadFile("../testdata/flink_artifact/read_deleted_artifact.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(flinkArtifactsUrlPath)).
 		InScenario(flinkArtifactScenarioName).
 		WithQueryParam("region", wiremock.EqualTo(flinkArtifactRegion)).
@@ -135,7 +135,7 @@ func TestAccFlinkArtifact(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckArtifactExists(fullFlinkArtifactResourceLabel),
 					resource.TestCheckResourceAttr(fullFlinkArtifactResourceLabel, paramId, flinkArtifactId),
-					resource.TestCheckResourceAttr(fullFlinkArtifactResourceLabel, paramDisplayName, flinkArtifactDisplayName),
+					resource.TestCheckResourceAttr(fullFlinkArtifactResourceLabel, paramDisplayName, flinkArtifactUniqueName),
 					resource.TestCheckResourceAttr(fullFlinkArtifactResourceLabel, paramClass, flinkArtifactClass),
 					resource.TestCheckResourceAttr(fullFlinkArtifactResourceLabel, paramCloud, flinkArtifactCloud),
 					resource.TestCheckResourceAttr(fullFlinkArtifactResourceLabel, paramRegion, flinkArtifactRegion),
@@ -145,6 +145,7 @@ func TestAccFlinkArtifact(t *testing.T) {
 					resource.TestCheckResourceAttr(fullFlinkArtifactResourceLabel, paramContentFormat, flinkArtifactContentFormat),
 					resource.TestCheckResourceAttr(fullFlinkArtifactResourceLabel, paramRuntimeLanguage, flinkArtifactRuntimeLanguage),
 					resource.TestCheckResourceAttr(fullFlinkArtifactResourceLabel, paramDescription, flinkArtifactDescription),
+					resource.TestCheckResourceAttr(fullFlinkArtifactResourceLabel, paramDocumentationLink, flinkArtifactDocumentationLink),
 					resource.TestCheckResourceAttr(fullFlinkArtifactResourceLabel, paramApiVersion, flinkArtifactApiVersion),
 					resource.TestCheckResourceAttr(fullFlinkArtifactResourceLabel, paramKind, flinkArtifactKind),
 					resource.TestCheckResourceAttr(fullFlinkArtifactResourceLabel, "versions.#", "1"),
@@ -206,12 +207,13 @@ func testAccCheckArtifactConfig(mockServerUrl, resourceLabel string) string {
 	    region           = "%s"
 		class = "%s"
 		description = "%s"
+	    documentation_link = "%s"
 		runtime_language = "%s"
 	    environment {
 		  id = "%s"
 	    }
 	}
-	`, mockServerUrl, resourceLabel, flinkArtifactDisplayName, flinkArtifactCloud, flinkArtifactRegion, flinkArtifactClass, flinkArtifactDescription, flinkArtifactRuntimeLanguage, flinkArtifactEnvironmentId)
+	`, mockServerUrl, resourceLabel, flinkArtifactUniqueName, flinkArtifactCloud, flinkArtifactRegion, flinkArtifactClass, flinkArtifactDescription, flinkArtifactDocumentationLink, flinkArtifactRuntimeLanguage, flinkArtifactEnvironmentId)
 }
 
 func testAccCheckArtifactExists(n string) resource.TestCheckFunc {
