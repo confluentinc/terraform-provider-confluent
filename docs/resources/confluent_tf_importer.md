@@ -14,6 +14,8 @@ description: |-
 
 See [Resource Importer for Confluent Terraform Provider](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/guides/resource-importer) for step-by-step instructions on how to use the `confluent_tf_importer` resource.
 
+-> **Note:**  If the import process is taking longer than expected, you can improve the speed by increasing the [parallelism flag](https://developer.hashicorp.com/terraform/cli/commands/apply#parallelism-n). For example, you can set it to 100 like this: `terraform apply -parallelism=100`. Increasing parallelism can help speed up the import process, especially when dealing with a large number of resources.
+
 ## Example Usage
 
 ```terraform
@@ -45,3 +47,4 @@ These are the exportable resources:
 The following end-to-end examples might help to get started with the `confluent_tf_importer` resource:
   * [`cloud-importer`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/cloud-importer): Export _Cloud_ resources (for example, Service Accounts, Environments)
   * [`kafka-importer`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/kafka-importer): Export _Kafka_ resources (for example, ACLs, Topics)
+  * [`schema-registry-importer`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/schema-registry-importer): Export _Schema Registry_ resources (for example, Schemas)
