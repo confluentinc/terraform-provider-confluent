@@ -113,6 +113,8 @@ In this guide, you will:
     terraform apply
     ```
 
+    -> **Note:**  If the import process is taking longer than expected, you can improve the speed by increasing the parallelism flag. For example, you can set it to 100 like this: `terraform apply -parallelism=100`. Increasing parallelism can help speed up the import process, especially when dealing with a large number of resources.
+
 9. You have now imported Confluent Cloud infrastructure using Terraform under `cloud-importer/imported_confluent_infrastructure`! The `terraform apply` command created a new folder called `cloud-importer/imported_confluent_infrastructure` that contains 2 files: Terraform Configuration (`main.tf`) and Terraform State (`terraform.tfstate`) files.
 
 10. Navigate into its directory:
@@ -164,5 +166,6 @@ In this guide, you will:
     Terraform has compared your real infrastructure against your configuration and found no differences, so no changes are needed.
     ```
 
+    -> **Note:**  If the import process is taking longer than expected, you can improve the speed by increasing the parallelism flag. For example, you can set it to 100 like this: `terraform plan -parallelism=100`. Increasing parallelism can help speed up the import process, especially when dealing with a large number of resources.
 
 You've successfully imported your Confluent Cloud infrastructure to Terraform. Terraform also compared your real infrastructure against your imported configuration and found no differences, so no changes are needed.
