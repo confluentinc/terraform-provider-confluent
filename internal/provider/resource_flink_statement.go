@@ -263,9 +263,8 @@ func flinkStatementUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 	// Make sure we must have a paramStopped update, or a paramPropertiesSensitive update for version change
 	// stopped: false -> true to trigger flink statement stopping
 	// stopped: true -> false to trigger flink statement resuming
-	if d.HasChangesExcept(paramStopped, paramPropertiesSensitive) {
+	if d.HasChangesExcept(paramStopped, paramPropertiesSensitive, paramPrincipal, paramComputePool) {
 		return diag.Errorf(`error updating Flink Statement %q: %q or %q attribute must be updated for Flink Statement, "true" -> "false" to trigger resuming, "false" -> "true" to trigger stopping`, d.Id(), paramStopped, paramPropertiesSensitive)
-
 	}
 	if d.HasChange(paramStopped) {
 		oldStopped, newStopped := d.GetChange(paramStopped)
