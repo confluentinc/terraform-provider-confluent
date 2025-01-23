@@ -1,3 +1,19 @@
+## 2.13.0 (Jnauary 24th, 2024)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.12.0...v2.13.0)
+
+**New features:**
+* Updated `confluent_api_key` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_api_key) to support Tableflow API Keys.
+* Added support for resolving private DNS names from a DNS resolver within your own Google Cloud VPC via DNS forwarding. This feature enables fully-managed connectors to access endpoints using private DNS zones. For details, see [DNS forwarding for Google Cloud Peering](https://docs.confluent.io/cloud/current/networking/peering/gcp-peering.html#dns-forwarding-gcp-peering).
+* Added support for outbound Google Cloud Private Service Connect connections using Egress Private Service Connect Endpoints. Egress Private Service Connect Endpoints enable fully-managed Confluent connectors to access services from GCP Private Link Service providers such as Google, MongoDB, Snowflake, and others. 
+With this capability, Confluent Cloud now supports private outbound connections for Dedicated clusters across all three cloud providers, AWS, Azure, and Google Cloud. For details, see [Google Cloud Egress Private Service Connect Endpoints for Dedicated Clusters](https://docs.confluent.io/cloud/current/networking/gcp-egress-psc.html#cloud-networking-gcp-psc-egress).
+
+**Bug fixes:**
+* Resolved an issue with `confluent_flink_artifact` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_flink_artifact) during the creation of the Presigned URL phase.
+* Fixed the "404 error in re-deploying schemas" issue ([#296](https://github.com/confluentinc/terraform-provider-confluent/issues/296)).
+* Updated docs ([#506](https://github.com/confluentinc/terraform-provider-confluent/issues/506)).
+* Resolved 1 Dependabot alert.
+
 ## 2.12.0 (December 3rd, 2024)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.11.0...v2.12.0)
