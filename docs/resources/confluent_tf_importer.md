@@ -14,7 +14,7 @@ description: |-
 
 See [Resource Importer for Confluent Terraform Provider](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/guides/resource-importer) for step-by-step instructions on how to use the `confluent_tf_importer` resource.
 
--> **Note:**  If the import process is taking longer than expected, you can improve the speed by increasing the parallelism flag. For example, you can set it to 100 like this: `terraform apply -parallelism=100`. Increasing parallelism can help speed up the import process, especially when dealing with a large number of resources.
+-> **Note:**  If the import process is taking longer than expected, you can improve the speed by increasing the [parallelism flag](https://developer.hashicorp.com/terraform/cli/commands/apply#parallelism-n). For example, you can set it to 100 like this: `terraform apply -parallelism=100`. Increasing parallelism can help speed up the import process, especially when dealing with a large number of resources.
 
 ## Example Usage
 
