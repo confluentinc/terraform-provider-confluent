@@ -5,7 +5,7 @@
 **New features:**
 * Updated `confluent_api_key` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_api_key) to support Tableflow API Keys.
 * Added support for resolving private DNS names from a DNS resolver within your own Google Cloud VPC via DNS forwarding. This feature enables fully-managed connectors to access endpoints using private DNS zones. For details, see [DNS forwarding for Google Cloud Peering](https://docs.confluent.io/cloud/current/networking/peering/gcp-peering.html#dns-forwarding-gcp-peering).
-* Added support for outbound Google Cloud Private Service Connect connections using Egress Private Service Connect Endpoints. Egress Private Service Connect Endpoints enable fully-managed Confluent connectors to access services from Azure Private Link Service providers such as Microsoft, MongoDB, Snowflake, and others. 
+* Added support for outbound Google Cloud Private Service Connect connections using Egress Private Service Connect Endpoints. Egress Private Service Connect Endpoints enable fully-managed Confluent connectors to access services from GCP Private Link Service providers such as Google, MongoDB, Snowflake, and others. 
 With this capability, Confluent Cloud now supports private outbound connections for Dedicated clusters across all three cloud providers, AWS, Azure, and Google Cloud. For details, see [Google Cloud Egress Private Service Connect Endpoints for Dedicated Clusters](https://docs.confluent.io/cloud/current/networking/gcp-egress-psc.html#cloud-networking-gcp-psc-egress).
 
 * **Bug fixes:**
