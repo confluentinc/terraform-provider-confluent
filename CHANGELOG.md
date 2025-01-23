@@ -8,7 +8,7 @@
 * Added support for outbound Google Cloud Private Service Connect connections using Egress Private Service Connect Endpoints. Egress Private Service Connect Endpoints enable fully-managed Confluent connectors to access services from GCP Private Link Service providers such as Google, MongoDB, Snowflake, and others. 
 With this capability, Confluent Cloud now supports private outbound connections for Dedicated clusters across all three cloud providers, AWS, Azure, and Google Cloud. For details, see [Google Cloud Egress Private Service Connect Endpoints for Dedicated Clusters](https://docs.confluent.io/cloud/current/networking/gcp-egress-psc.html#cloud-networking-gcp-psc-egress).
 
-* **Bug fixes:**
+**Bug fixes:**
 * Resolved an issue with `confluent_flink_artifact` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_flink_artifact) during the creation of the Presigned URL phase.
 * Fixed the "404 error in re-deploying schemas" issue ([#296](https://github.com/confluentinc/terraform-provider-confluent/issues/296)).
 * Updated docs ([#506](https://github.com/confluentinc/terraform-provider-confluent/issues/506)).
