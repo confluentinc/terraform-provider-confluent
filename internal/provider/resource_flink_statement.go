@@ -263,27 +263,25 @@ func flinkStatementUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 	// Make sure we must have a paramStopped update, or a paramPropertiesSensitive update for version change
 	// stopped: false -> true to trigger flink statement stopping
 	// stopped: true -> false to trigger flink statement resuming
+	if d.HasChangesExcept(paramStopped, paramPropertiesSensitive) {
+		return diag.Errorf(`error updating Flink Statement %q: %q or %q attribute must be updated for Flink Statement, "true" -> "false" to trigger resuming, "false" -> "true" to trigger stopping`, d.Id(), paramStopped, paramPropertiesSensitive)
 
-	sensitiveProperties := convertToStringStringMap(d.Get(paramPropertiesSensitive).(map[string]interface{}))
-	if !d.HasChange(paramStopped) && len(sensitiveProperties) != 0 {
-		return diag.Errorf(`error updating Flink Statement %q: %q attribute must be updated for Flink Statement, "true" -> "false" to trigger resuming, "false" -> "true" to trigger stopping`, d.Id(), paramStopped)
 	}
+	if d.HasChange(paramStopped) {
+		oldStopped, newStopped := d.GetChange(paramStopped)
 
-	oldStopped, newStopped := d.GetChange(paramStopped)
-
-	// The resuming case: principalId, computePoolId can be optionally updated
-	if oldStopped.(bool) == true && newStopped.(bool) == false {
-		return flinkStatementResume(ctx, d, meta)
+		// The resuming case: principalId, computePoolId can be optionally updated
+		if oldStopped.(bool) == true && newStopped.(bool) == false {
+			return flinkStatementResume(ctx, d, meta)
+		}
+		// The stopping case: nothing else except the `stopped` can be updated
+		return flinkStatementStop(ctx, d, meta)
 	}
 	_, sensitive, _ := extractFlinkProperties(d)
 	if err := d.Set(paramPropertiesSensitive, sensitive); err != nil {
 		return diag.Errorf("Error setting %q", paramPropertiesSensitive)
 	}
 
-	// The stopping case: nothing else except the `stopped` can be updated
-	if d.HasChanges(paramStopped) {
-		return flinkStatementStop(ctx, d, meta)
-	}
 	return flinkStatementRead(ctx, d, meta)
 }
 
