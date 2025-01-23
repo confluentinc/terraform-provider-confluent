@@ -266,7 +266,7 @@ func flinkStatementUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 	if d.HasChangesExcept(paramStopped, paramPropertiesSensitive, paramPrincipal, paramComputePool) {
 		return diag.Errorf(`error updating Flink Statement %q: %q or %q attribute must be updated for Flink Statement, "true" -> "false" to trigger resuming, "false" -> "true" to trigger stopping`, d.Id(), paramStopped, paramPropertiesSensitive)
 	}
-	if d.HasChange(paramStopped) {
+	if d.HasChanges(paramStopped, paramPrincipal, paramComputePool) {
 		oldStopped, newStopped := d.GetChange(paramStopped)
 
 		// The resuming case: principalId, computePoolId can be optionally updated
@@ -275,19 +275,19 @@ func flinkStatementUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 		}
 		// The stopping case: nothing else except the `stopped` can be updated
 		return flinkStatementStop(ctx, d, meta)
+	} else {
+		_, sensitive, _ := extractFlinkProperties(d)
+		if err := d.Set(paramPropertiesSensitive, sensitive); err != nil {
+			return diag.Errorf("Error setting %q", paramPropertiesSensitive)
+		}
+		return flinkStatementRead(ctx, d, meta)
 	}
-	_, sensitive, _ := extractFlinkProperties(d)
-	if err := d.Set(paramPropertiesSensitive, sensitive); err != nil {
-		return diag.Errorf("Error setting %q", paramPropertiesSensitive)
-	}
-
-	return flinkStatementRead(ctx, d, meta)
 }
 
 func flinkStatementStop(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	// Only the `stopped` field can be updated for Flink statement stop
-	if d.HasChangeExcept(paramStopped) {
-		return diag.Errorf(`error stopping Flink Statement %q: only %q attribute can be updated for Flink Statement`, d.Id(), paramStopped)
+	if d.HasChangesExcept(paramStopped, paramPropertiesSensitive) {
+		return diag.Errorf(`error stopping Flink Statement %q: only %q or %q attribute can be updated for Flink Statement`, d.Id(), paramStopped, paramPropertiesSensitive)
 	}
 
 	restEndpoint, err := extractFlinkRestEndpoint(meta.(*Client), d, false)
@@ -451,6 +451,10 @@ func setFlinkStatementAttributes(d *schema.ResourceData, c *FlinkRestClient, sta
 		return nil, err
 	}
 	if err := d.Set(paramProperties, extractNonsensitiveProperties(statement.Spec.GetProperties())); err != nil {
+		return nil, err
+	}
+	_, sensitive, _ := extractFlinkProperties(d)
+	if err := d.Set(paramPropertiesSensitive, sensitive); err != nil {
 		return nil, err
 	}
 	if err := d.Set(paramStopped, statement.Spec.GetStopped()); err != nil {
