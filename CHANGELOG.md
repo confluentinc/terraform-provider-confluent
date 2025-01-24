@@ -1,4 +1,4 @@
-## 2.13.0 (Jnauary 24th, 2024)
+## 2.13.0 (January 23th, 2024)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.12.0...v2.13.0)
 
