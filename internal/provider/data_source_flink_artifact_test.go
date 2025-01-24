@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/walkerus/go-wiremock"
-	"io/ioutil"
 	"net/http"
+	"os"
 	"testing"
 )
 
@@ -33,7 +33,7 @@ func TestAccDataSourceFlinkArtifact(t *testing.T) {
 	// nolint:errcheck
 	defer wiremockClient.ResetAllScenarios()
 
-	readCreatedFlinkArtifactResponse, _ := ioutil.ReadFile("../testdata/flink_artifact/read_created_artifact.json")
+	readCreatedFlinkArtifactResponse, _ := os.ReadFile("../testdata/flink_artifact/read_created_artifact.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/artifact/v1/flink-artifacts/lfcp-abc123")).
 		InScenario(dataSourceFlinkArtifactScenarioName).
 		WithQueryParam("cloud", wiremock.EqualTo("AWS")).
@@ -46,7 +46,7 @@ func TestAccDataSourceFlinkArtifact(t *testing.T) {
 			http.StatusOK,
 		))
 
-	readArtifactsResponse, _ := ioutil.ReadFile("../testdata/flink_artifact/read_artifact.json")
+	readArtifactsResponse, _ := os.ReadFile("../testdata/flink_artifact/read_artifact.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/artifact/v1/flink-artifacts")).
 		InScenario(dataSourceFlinkArtifactScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(flinkArtifactEnvironmentId)).
@@ -70,7 +70,7 @@ func TestAccDataSourceFlinkArtifact(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckArtifactExists(fullArtifactDataSourceLabel),
 					resource.TestCheckResourceAttr(fullArtifactDataSourceLabel, paramId, flinkArtifactId),
-					resource.TestCheckResourceAttr(fullArtifactDataSourceLabel, paramDisplayName, flinkArtifactDisplayName),
+					resource.TestCheckResourceAttr(fullArtifactDataSourceLabel, paramDisplayName, flinkArtifactUniqueName),
 					resource.TestCheckResourceAttr(fullArtifactDataSourceLabel, paramClass, flinkArtifactClass),
 					resource.TestCheckResourceAttr(fullArtifactDataSourceLabel, paramCloud, flinkArtifactCloud),
 					resource.TestCheckResourceAttr(fullArtifactDataSourceLabel, paramRegion, flinkArtifactRegion),
@@ -79,6 +79,7 @@ func TestAccDataSourceFlinkArtifact(t *testing.T) {
 					resource.TestCheckResourceAttr(fullArtifactDataSourceLabel, paramContentFormat, flinkArtifactContentFormat),
 					resource.TestCheckResourceAttr(fullArtifactDataSourceLabel, paramRuntimeLanguage, flinkArtifactRuntimeLanguage),
 					resource.TestCheckResourceAttr(fullArtifactDataSourceLabel, paramDescription, flinkArtifactDescription),
+					resource.TestCheckResourceAttr(fullArtifactDataSourceLabel, paramDocumentationLink, flinkArtifactDocumentationLink),
 					resource.TestCheckResourceAttr(fullArtifactDataSourceLabel, "versions.#", "1"),
 					resource.TestCheckResourceAttr(fullArtifactDataSourceLabel, "versions.0.version", flinkVersions),
 					resource.TestCheckResourceAttr(fullArtifactDataSourceLabel, paramApiVersion, flinkArtifactApiVersion),
@@ -90,7 +91,7 @@ func TestAccDataSourceFlinkArtifact(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckArtifactExists(fullArtifactDataSourceLabel),
 					resource.TestCheckResourceAttr(fullArtifactDataSourceLabel, paramId, flinkArtifactId),
-					resource.TestCheckResourceAttr(fullArtifactDataSourceLabel, paramDisplayName, flinkArtifactDisplayName),
+					resource.TestCheckResourceAttr(fullArtifactDataSourceLabel, paramDisplayName, flinkArtifactUniqueName),
 					resource.TestCheckResourceAttr(fullArtifactDataSourceLabel, paramClass, flinkArtifactClass),
 					resource.TestCheckResourceAttr(fullArtifactDataSourceLabel, paramCloud, flinkArtifactCloud),
 					resource.TestCheckResourceAttr(fullArtifactDataSourceLabel, paramRegion, flinkArtifactRegion),
@@ -99,6 +100,7 @@ func TestAccDataSourceFlinkArtifact(t *testing.T) {
 					resource.TestCheckResourceAttr(fullArtifactDataSourceLabel, paramContentFormat, flinkArtifactContentFormat),
 					resource.TestCheckResourceAttr(fullArtifactDataSourceLabel, paramRuntimeLanguage, flinkArtifactRuntimeLanguage),
 					resource.TestCheckResourceAttr(fullArtifactDataSourceLabel, paramDescription, flinkArtifactDescription),
+					resource.TestCheckResourceAttr(fullArtifactDataSourceLabel, paramDocumentationLink, flinkArtifactDocumentationLink),
 					resource.TestCheckResourceAttr(fullArtifactDataSourceLabel, "versions.#", "1"),
 					resource.TestCheckResourceAttr(fullArtifactDataSourceLabel, "versions.0.version", flinkVersions),
 					resource.TestCheckResourceAttr(fullArtifactDataSourceLabel, paramApiVersion, flinkArtifactApiVersion),
@@ -122,7 +124,7 @@ func testAccCheckDataSourceFlinkArtifactConfigWithDisplayNameSet(mockServerUrl s
 			id = "%s"
 	  	}
 	}
-	`, mockServerUrl, networkDataSourceLabel, flinkArtifactDisplayName, flinkArtifactCloud, flinkArtifactRegion,
+	`, mockServerUrl, networkDataSourceLabel, flinkArtifactUniqueName, flinkArtifactCloud, flinkArtifactRegion,
 		flinkArtifactEnvironmentId)
 }
 
