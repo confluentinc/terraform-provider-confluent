@@ -28,6 +28,7 @@ blocks:
             - ./make.bash -v
             - cd ../../
             - export PATH=$(pwd)/go/bin:$PATH
+            - export "GITHUB_TOKEN=$(gh auth token)"
             - export GOROOT=$(pwd)/go
             - cd terraform-provider-confluent*
             - curl https://goreleaser.com/static/run | VERSION=v1.25.1 bash -s -- build --config .goreleaser-darwin-fips.yml
