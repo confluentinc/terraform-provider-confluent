@@ -14,5 +14,39 @@
       "subject": "test3",
       "version": 3
     }
-  ]
+  ],
+  "ruleSet": {
+    "domainRules": [
+      {
+        "name": "encryptPII",
+        "kind": "TRANSFORM",
+        "mode": "WRITEREAD",
+        "type": "ENCRYPT",
+        "tags": [
+          "PII"
+        ],
+        "params": {
+          "encrypt.kek.name": "testkek2"
+        },
+        "onSuccess": "NONE,NONE",
+        "onFailure": "ERROR,ERROR",
+        "disabled": false
+      },
+      {
+        "name": "encrypt",
+        "kind": "TRANSFORM",
+        "mode": "WRITEREAD",
+        "type": "ENCRYPT",
+        "tags": [
+          "PIIIII"
+        ],
+        "params": {
+          "encrypt.kek.name": "testkek2"
+        },
+        "onSuccess": "NONE,NONE",
+        "onFailure": "ERROR,ERROR",
+        "disabled": false
+      }
+    ]
+  }
 }
