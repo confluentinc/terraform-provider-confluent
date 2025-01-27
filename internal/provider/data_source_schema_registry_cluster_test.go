@@ -34,8 +34,8 @@ const (
 const (
 	schemaRegistryClusterHttpEndpoint                 = "https://psrc-y1111.us-west-2.aws.confluent.cloud"
 	schemaRegistryClusterPrivateEndpoint              = "https://lsrc.us-west-2.aws.private.stag.cpdev.cloud"
-	schemaRegistryClusterPrivateEndpointRegionalKey   = "key1"
-	schemaRegistryClusterPrivateEndpointRegionalValue = "value1"
+	schemaRegistryClusterPrivateEndpointRegionalKey   = "us-east-1"
+	schemaRegistryClusterPrivateEndpointRegionalValue = "https://lsrc-stk1d.us-east-1.aws.private.stag.cpdev.cloud"
 	schemaRegistryClusterCatalogEndpoint              = "https://psrc-y1113.us-west-2.aws.confluent.cloud"
 	schemaRegistryClusterRegionId                     = "us-east4"
 	schemaRegistryClusterId                           = "lsrc-755ogo"
