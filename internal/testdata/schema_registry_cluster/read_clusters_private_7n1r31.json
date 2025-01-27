@@ -22,6 +22,9 @@
         },
         "http_endpoint": "",
         "private_http_endpoint": "https://lsrc.us-west-2.aws.private.stag.cpdev.cloud",
+        "private_http_regional_endpoints": {
+          "key1": "value1"
+        },
         "catalog_http_endpoint": "https://psrc-y1113.us-west-2.aws.confluent.cloud",
         "package": "ESSENTIALS",
         "region": "us-east4",
