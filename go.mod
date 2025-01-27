@@ -28,7 +28,7 @@ require (
 	github.com/confluentinc/ccloud-sdk-go-v2/org v0.9.0
 	github.com/confluentinc/ccloud-sdk-go-v2/provider-integration v0.1.0
 	github.com/confluentinc/ccloud-sdk-go-v2/schema-registry v0.4.0
-	github.com/confluentinc/ccloud-sdk-go-v2/srcm v0.7.0
+	github.com/confluentinc/ccloud-sdk-go-v2/srcm v0.7.1-0.20250123224054-9f5582d9a847
 	github.com/confluentinc/ccloud-sdk-go-v2/sso v0.0.1
 	github.com/dghubble/sling v1.4.1
 	github.com/docker/go-connections v0.5.0
