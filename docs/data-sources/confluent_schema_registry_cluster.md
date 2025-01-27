@@ -82,5 +82,3 @@ In addition to the preceding arguments, the following attributes are exported:
 - `cloud` - (Required String) The cloud service provider that the Schema Registry cluster belongs to, for example, `AWS`.
 
 -> **Note:** Use the `environment[0]` prefix for referencing these attributes, for example, `data.confluent_schema_registry_cluster.example_using_name.environment[0].id`.
-
--> **Note:** Only one of `rest_endpoint` and `private_rest_endpoint` will contain a non-empty value at one time.
