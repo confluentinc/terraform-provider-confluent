@@ -52,8 +52,7 @@ In addition to the preceding arguments, the following attributes are exported:
   - `catalog_endpoint` - (Required String) The Catalog endpoint of the Schema Registry cluster, for example, `https://psrc-y1113.us-west-2.aws.confluent.cloud`.
   - `display_name` - (Required String) The name of the Schema Registry cluster, for example, `Stream Governance Package`.
   - `resource_name` - (Required String) The Confluent Resource Name of the Schema Registry cluster, for example, `crn://confluent.cloud/organization=1111aaaa-11aa-11aa-11aa-111111aaaaaa/environment=env-abc123/schema-registry=lsrc-abc123`.
+  - `cloud` - (Required String) The cloud service provider that that the Schema Registry cluster belongs to, for example, `AWS`.
   - `cloud` - (Required String) The cloud service provider that the Schema Registry cluster belongs to, for example, `AWS`.
 
 -> **Note:** Use the `environment[0]` prefix for referencing these attributes, for example, `data.confluent_schema_registry_clusters.main.clusters[0].environment[0].id`.
-
--> **Note:** Only one of `rest_endpoint` and `private_rest_endpoint` will contain a non-empty value at one time.
