@@ -98,7 +98,10 @@ func apiKeyResource() *schema.Resource {
 				ForceNew: true,
 			},
 		},
-		//CustomizeDiff: customdiff.Sequence(resourceApiKeyManagedResourceDiff),
+		// TODO: APIT-2820
+		// Temporarily disabling this as a stopgap solution. For more details, see:
+		// https://github.com/confluentinc/terraform-provider-confluent/pull/538
+		// CustomizeDiff: customdiff.Sequence(resourceApiKeyManagedResourceDiff),
 	}
 }
 
