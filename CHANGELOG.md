@@ -1,4 +1,15 @@
-## 2.13.0 (January 23th, 2025)
+## 2.14.0 (January 28th, 2025)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.13.0...v2.14.0)
+
+**New features:**
+* Updated `confluent_flink_artifact` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_flink_artifact) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_flink_artifact) to deprecate the `class` attribute and add the `documentation_link` attribute.
+The `class` attribute be removed in the next major version of the provider (3.0.0). Refer to the [Upgrade Guide](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/guides/version-3-upgrade) for more details.
+
+**Bug fixes:**
+* Fixed "Unable to create API key with managed_resource block" issue ([#538](https://github.com/confluentinc/terraform-provider-confluent/issues/538)).
+
+## 2.13.0 (January 23rd, 2025)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.12.0...v2.13.0)
 
