@@ -177,7 +177,7 @@ func validateConnectorConfig(ctx context.Context, c *Client, config map[string]s
 			return fmt.Errorf("error validating Connector config: %q attribute is missing in %q block", connectorConfigAttributeClass, paramNonSensitiveConfig)
 		}
 		tflog.Debug(ctx, fmt.Sprintf("Validating new Connector's config"))
-		validationResponse, _, err := c.connectClient.PluginsV1Api.ValidateConnectv1ConnectorPlugin(c.connectApiContext(ctx), connectorClass, environmentId, clusterId).RequestBody(config).Execute()
+		validationResponse, _, err := c.connectClient.ManagedConnectorPluginsConnectV1Api.ValidateConnectv1ConnectorPlugin(c.connectApiContext(ctx), connectorClass, environmentId, clusterId).RequestBody(config).Execute()
 		if err != nil {
 			return fmt.Errorf("error creating Connector: error sending validation request: %s", createDescriptiveError(err))
 		}
@@ -195,18 +195,18 @@ func validateConnectorConfig(ctx context.Context, c *Client, config map[string]s
 	return nil
 }
 
-func executeConnectorCreate(ctx context.Context, c *Client, environmentId, clusterId string, spec *connect.InlineObject) (connect.ConnectV1Connector, *http.Response, error) {
-	req := c.connectClient.ConnectorsV1Api.CreateConnectv1Connector(c.connectApiContext(ctx), environmentId, clusterId).InlineObject(*spec)
+func executeConnectorCreate(ctx context.Context, c *Client, environmentId, clusterId string, spec *connect.InlineObject) (connect.ConnectV1ConnectorWithOffsets, *http.Response, error) {
+	req := c.connectClient.ConnectorsConnectV1Api.CreateConnectv1Connector(c.connectApiContext(ctx), environmentId, clusterId).InlineObject(*spec)
 	return req.Execute()
 }
 
 func executeConnectorStatusCreate(ctx context.Context, c *Client, displayName, environmentId, clusterId string) (connect.InlineResponse2001, *http.Response, error) {
-	req := c.connectClient.StatusV1Api.ReadConnectv1ConnectorStatus(c.connectApiContext(ctx), displayName, environmentId, clusterId)
+	req := c.connectClient.StatusConnectV1Api.ReadConnectv1ConnectorStatus(c.connectApiContext(ctx), displayName, environmentId, clusterId)
 	return req.Execute()
 }
 
 func executeConnectorRead(ctx context.Context, c *Client, displayName, environmentId, clusterId string) (connect.ConnectV1ConnectorExpansion, *http.Response, error) {
-	connectors, resp, err := c.connectClient.ConnectorsV1Api.ListConnectv1ConnectorsWithExpansions(c.connectApiContext(ctx), environmentId, clusterId).Execute()
+	connectors, resp, err := c.connectClient.ConnectorsConnectV1Api.ListConnectv1ConnectorsWithExpansions(c.connectApiContext(ctx), environmentId, clusterId).Execute()
 	if ResponseHasExpectedStatusCode(resp, http.StatusForbidden) {
 		return *connect.NewConnectV1ConnectorExpansionWithDefaults(), resp, err
 	}
@@ -316,7 +316,7 @@ func connectorUpdate(ctx context.Context, d *schema.ResourceData, meta interface
 		if shouldPauseConnector {
 			tflog.Debug(ctx, fmt.Sprintf("Pausing Connector %q", d.Id()), map[string]interface{}{connectorLoggingKey: d.Id()})
 
-			req := c.connectClient.LifecycleV1Api.PauseConnectv1Connector(c.connectApiContext(ctx), displayName, environmentId, clusterId)
+			req := c.connectClient.LifecycleConnectV1Api.PauseConnectv1Connector(c.connectApiContext(ctx), displayName, environmentId, clusterId)
 			_, err := req.Execute()
 			if err != nil {
 				return diag.Errorf("error updating Connector %q: %s", d.Id(), createDescriptiveError(err))
@@ -327,7 +327,7 @@ func connectorUpdate(ctx context.Context, d *schema.ResourceData, meta interface
 		} else if shouldResumeConnector {
 			tflog.Debug(ctx, fmt.Sprintf("Resuming Connector %q", d.Id()), map[string]interface{}{connectorLoggingKey: d.Id()})
 
-			req := c.connectClient.LifecycleV1Api.ResumeConnectv1Connector(c.connectApiContext(ctx), displayName, environmentId, clusterId)
+			req := c.connectClient.LifecycleConnectV1Api.ResumeConnectv1Connector(c.connectApiContext(ctx), displayName, environmentId, clusterId)
 			_, err := req.Execute()
 			if err != nil {
 				return diag.Errorf("error updating Connector %q: %s", d.Id(), createDescriptiveError(err))
@@ -350,7 +350,7 @@ func connectorUpdate(ctx context.Context, d *schema.ResourceData, meta interface
 		}
 		tflog.Debug(ctx, fmt.Sprintf("Updating Connector: %s", debugUpdatedConfigJson))
 
-		req := c.connectClient.ConnectorsV1Api.CreateOrUpdateConnectv1ConnectorConfig(c.connectApiContext(ctx), displayName, environmentId, clusterId).RequestBody(updatedConfig)
+		req := c.connectClient.ConnectorsConnectV1Api.CreateOrUpdateConnectv1ConnectorConfig(c.connectApiContext(ctx), displayName, environmentId, clusterId).RequestBody(updatedConfig)
 		updatedConnector, resp, err := req.Execute()
 
 		// Delete once APIF-2634 is resolved
@@ -380,7 +380,7 @@ func connectorDelete(ctx context.Context, d *schema.ResourceData, meta interface
 	clusterId := extractStringValueFromBlock(d, paramKafkaCluster, paramId)
 	c := meta.(*Client)
 
-	req := c.connectClient.ConnectorsV1Api.DeleteConnectv1Connector(c.connectApiContext(ctx), displayName, environmentId, clusterId)
+	req := c.connectClient.ConnectorsConnectV1Api.DeleteConnectv1Connector(c.connectApiContext(ctx), displayName, environmentId, clusterId)
 	deletionError, _, err := req.Execute()
 
 	if err != nil {
@@ -522,7 +522,7 @@ func loadAllConnectors(ctx context.Context, client *Client) (InstanceIdsToNameMa
 }
 
 func loadConnectorsByEnvironmentIdAndKafkaClusterId(ctx context.Context, c *Client, environmentId, kafkaClusterId string) ([]string, error) {
-	connectors, resp, err := c.connectClient.ConnectorsV1Api.ListConnectv1Connectors(c.connectApiContext(ctx), environmentId, kafkaClusterId).Execute()
+	connectors, resp, err := c.connectClient.ConnectorsConnectV1Api.ListConnectv1Connectors(c.connectApiContext(ctx), environmentId, kafkaClusterId).Execute()
 	// Somehow Connect SDK returns response.StatusCode == http.StatusForbidden but err is nil.
 	if ResponseHasExpectedStatusCode(resp, http.StatusForbidden) || err != nil {
 		return nil, createDescriptiveError(err)
