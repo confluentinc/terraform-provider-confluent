@@ -298,7 +298,7 @@ func testAccCheckConnectorDestroy(s *terraform.State) error {
 		deletedConnectorName := rs.Primary.Attributes["config_nonsensitive.name"]
 		deletedConnectorEnvId := rs.Primary.Attributes["environment.0.id"]
 		deletedConnectorKafkaClusterId := rs.Primary.Attributes["kafka_cluster.0.id"]
-		req := c.connectClient.ConnectorsV1Api.ReadConnectv1Connector(c.connectApiContext(context.Background()), deletedConnectorName, deletedConnectorEnvId, deletedConnectorKafkaClusterId)
+		req := c.connectClient.ConnectorsConnectV1Api.ReadConnectv1Connector(c.connectApiContext(context.Background()), deletedConnectorName, deletedConnectorEnvId, deletedConnectorKafkaClusterId)
 		_, response, _ := req.Execute()
 		if isNonKafkaRestApiResourceNotFound(response) {
 			return nil
