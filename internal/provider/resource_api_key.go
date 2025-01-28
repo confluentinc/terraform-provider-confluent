@@ -21,7 +21,6 @@ import (
 	apikeys "github.com/confluentinc/ccloud-sdk-go-v2/apikeys/v2"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"net/http"
@@ -99,7 +98,10 @@ func apiKeyResource() *schema.Resource {
 				ForceNew: true,
 			},
 		},
-		CustomizeDiff: customdiff.Sequence(resourceApiKeyManagedResourceDiff),
+		// TODO: APIT-2820
+		// Temporarily disabling this as a stopgap solution. For more details, see:
+		// https://github.com/confluentinc/terraform-provider-confluent/pull/538
+		// CustomizeDiff: customdiff.Sequence(resourceApiKeyManagedResourceDiff),
 	}
 }
 
