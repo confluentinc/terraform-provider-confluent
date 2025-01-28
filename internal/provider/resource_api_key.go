@@ -21,7 +21,6 @@ import (
 	apikeys "github.com/confluentinc/ccloud-sdk-go-v2/apikeys/v2"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"net/http"
@@ -99,7 +98,10 @@ func apiKeyResource() *schema.Resource {
 				ForceNew: true,
 			},
 		},
-		CustomizeDiff: customdiff.Sequence(resourceApiKeyManagedResourceDiff),
+		// TODO: APIT-2820
+		// Temporarily disabling this as a stopgap solution. For more details, see:
+		// https://github.com/confluentinc/terraform-provider-confluent/pull/538
+		// CustomizeDiff: customdiff.Sequence(resourceApiKeyManagedResourceDiff),
 	}
 }
 
@@ -665,27 +667,4 @@ func optionalApiKeyEnvironmentIdBlockSchema() *schema.Schema {
 		},
 		Optional: true,
 	}
-}
-
-func resourceApiKeyManagedResourceDiff(ctx context.Context, diff *schema.ResourceDiff, _ interface{}) error {
-	// Check if the `managed_resource` block exists
-	if diff.Get("managed_resource.#").(int) > 0 {
-		// Get `managed_resource.id` from the nested block
-		resourceId := diff.Get("managed_resource.0.id").(string)
-
-		// Check if the environment block exists
-		_, environmentExists := diff.GetOk("managed_resource.0.environment.0.id")
-
-		// If managed_resource.id is not "tableflow", ensure environment block exists
-		if resourceId != "tableflow" && !environmentExists {
-			return fmt.Errorf("'environment.id' is required when 'managed_resource.id' is %s\n", resourceId)
-		}
-
-		// If managed_resource.id is "tableflow", ensure environment block is NOT set
-		if resourceId == "tableflow" && environmentExists {
-			return fmt.Errorf("'environment' block can't be present when 'managed_resource.id' is 'tableflow'")
-		}
-	}
-
-	return nil
 }
