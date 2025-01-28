@@ -77,8 +77,8 @@ github.com/confluentinc/ccloud-sdk-go-v2/certificate-authority v0.0.0-2024092100
 github.com/confluentinc/ccloud-sdk-go-v2/certificate-authority v0.0.0-20240921001517-750d06dd7c27/go.mod h1:xqB2YHUtcYF5cbwctSDzXoYw0YXaawj13d0lzcvphEA=
 github.com/confluentinc/ccloud-sdk-go-v2/cmk v0.21.0 h1:ioG3TsP8FwskPtwitfGfvBgTdprYKutHB0oxG5F4Dj8=
 github.com/confluentinc/ccloud-sdk-go-v2/cmk v0.21.0/go.mod h1:WndyhYUqeH7usVOfh+3g9CpVPqHWxIkJqopSISD0pGg=
-github.com/confluentinc/ccloud-sdk-go-v2/connect v0.2.0 h1:rEb3sxzKCZvZCnEZ10WyGqkVIdlqxJGbmP85/4C4YdE=
-github.com/confluentinc/ccloud-sdk-go-v2/connect v0.2.0/go.mod h1:lF4AfDtxoL0V7ZIMOULWiAycPwlfyt9UG659adRNdOM=
+github.com/confluentinc/ccloud-sdk-go-v2/connect v0.7.0 h1:ISrVOX9qJ2Sxiu/fGBqqHeaA0SRJQujc8yP7qAZRL3Y=
+github.com/confluentinc/ccloud-sdk-go-v2/connect v0.7.0/go.mod h1:zHG/3DzsnoHC81B1AY9K/8bMX3mxbIp5/nHHdypa//w=
 github.com/confluentinc/ccloud-sdk-go-v2/connect-custom-plugin v0.0.2 h1:NSiuOYjZOKxHTRGYI7X9wFvf57ZNzWpZaChmWv7/UQw=
 github.com/confluentinc/ccloud-sdk-go-v2/connect-custom-plugin v0.0.2/go.mod h1:AaF39Acy3LFnHSHExaUtqNmbs7kL5/AL54CXX61+Il8=
 github.com/confluentinc/ccloud-sdk-go-v2/data-catalog v0.2.0 h1:ySx0jYNGK0XLcSkgPz+hxcH05v1LI5GVb3Rg+TCqBqk=
