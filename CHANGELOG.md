@@ -9,7 +9,7 @@ The `class` attribute be removed in the next major version of the provider (3.0.
 **Bug fixes:**
 * Fixed "Unable to create API key with managed_resource block" issue ([#538](https://github.com/confluentinc/terraform-provider-confluent/issues/538)).
 
-## 2.13.0 (January 23th, 2025)
+## 2.13.0 (January 23rd, 2025)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.12.0...v2.13.0)
 
