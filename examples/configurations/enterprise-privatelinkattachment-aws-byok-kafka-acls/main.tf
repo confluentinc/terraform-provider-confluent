@@ -21,9 +21,68 @@ provider "aws" {
   region = var.region
 }
 
+data "aws_caller_identity" "current" {}
 
 resource "confluent_environment" "staging" {
   display_name = "Staging"
+}
+
+resource "aws_kms_key" "main" {
+  description = "byok-key"
+}
+
+resource "confluent_byok_key" "main" {
+  aws {
+    key_arn = aws_kms_key.main.arn
+  }
+}
+
+data "aws_iam_policy_document" "main" {
+  statement {
+    sid    = "Allow KMS Use"
+    effect = "Allow"
+    actions = [
+      "kms:Encrypt",
+      "kms:Decrypt",
+      "kms:ReEncrypt*",
+      "kms:GenerateDataKey*",
+      "kms:DescribeKey",
+      "kms:CreateGrant",
+      "kms:ListGrants",
+      "kms:RevokeGrant"
+
+    ]
+    principals {
+      identifiers = confluent_byok_key.main.aws[0].roles
+      type        = "AWS"
+    }
+
+    resources = [
+      "*"
+    ]
+  }
+
+  statement {
+    sid    = "Enable IAM User Permissions"
+    effect = "Allow"
+    actions = [
+      "*"
+    ]
+    resources = [
+      "*"
+    ]
+    principals {
+      identifiers = [
+        "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root",
+      ]
+      type = "AWS"
+    }
+  }
+}
+
+resource "aws_kms_key_policy" "main" {
+  key_id = aws_kms_key.main.id
+  policy = data.aws_iam_policy_document.main.json
 }
 
 resource "confluent_kafka_cluster" "enterprise" {
@@ -35,6 +94,14 @@ resource "confluent_kafka_cluster" "enterprise" {
   environment {
     id = confluent_environment.staging.id
   }
+
+  byok_key {
+    id = confluent_byok_key.main.id
+  }
+
+  depends_on = [
+    aws_kms_key_policy.main
+  ]
 }
 
 resource "confluent_private_link_attachment" "pla" {
