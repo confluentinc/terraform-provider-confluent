@@ -325,6 +325,10 @@ func TestAccManagedConnector(t *testing.T) {
 					resource.TestCheckResourceAttr(fullConnectorResourceLabel, fmt.Sprintf("%s.%s", paramNonSensitiveConfig, "output.data.format"), "AVRO"),
 					resource.TestCheckResourceAttr(fullConnectorResourceLabel, fmt.Sprintf("%s.%s", paramNonSensitiveConfig, "quickstart"), "ORDERS"),
 					resource.TestCheckResourceAttr(fullConnectorResourceLabel, fmt.Sprintf("%s.%s", paramNonSensitiveConfig, "tasks.max"), "1"),
+					resource.TestCheckResourceAttr(fullConnectorResourceLabel, fmt.Sprintf("%s.#", paramOffsetsConfig), "1"),
+					resource.TestCheckResourceAttr(fullConnectorResourceLabel, fmt.Sprintf("%s.0.%s.%s", paramOffsetsConfig, paramPartition, "kafka_partition"), "0"),
+					resource.TestCheckResourceAttr(fullConnectorResourceLabel, fmt.Sprintf("%s.0.%s.%s", paramOffsetsConfig, paramPartition, "kafka_topic"), "test_topic"),
+					resource.TestCheckResourceAttr(fullConnectorResourceLabel, fmt.Sprintf("%s.0.%s.%s", paramOffsetsConfig, paramOffset, "kafka_offset"), "500"),
 					// Ensure these attributes (from ignoredConnectorConfigs) are not visible in the output
 					resource.TestCheckNoResourceAttr(fullConnectorResourceLabel, "cloud.environment"),
 					resource.TestCheckNoResourceAttr(fullConnectorResourceLabel, "cloud.provider"),

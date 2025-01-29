@@ -175,7 +175,7 @@ func connectorCreate(ctx context.Context, d *schema.ResourceData, meta interface
 		tflog.Debug(ctx, fmt.Sprintf("Creating new Connector: %s %s", nonsensitiveConfigJson, offsetsJson))
 	}
 
-	err = validateConnectorConfig(c.connectApiContext(ctx), c, mergedConfig, offsets, environmentId, clusterId)
+	err = validateConnectorConfig(c.connectApiContext(ctx), c, mergedConfig, environmentId, clusterId)
 	if err != nil {
 		return diag.Errorf("error creating Connector: %s", createDescriptiveError(err))
 	}
@@ -212,7 +212,7 @@ func connectorCreate(ctx context.Context, d *schema.ResourceData, meta interface
 	return connectorRead(ctx, d, meta)
 }
 
-func validateConnectorConfig(ctx context.Context, c *Client, config map[string]string, offsets []map[string]interface{}, environmentId, clusterId string) error {
+func validateConnectorConfig(ctx context.Context, c *Client, config map[string]string, environmentId, clusterId string) error {
 	// defaults to MANAGED
 	connectorType := config[connectorConfigAttributeType]
 
