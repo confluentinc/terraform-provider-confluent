@@ -125,8 +125,8 @@ The following arguments are supported:
     - `name` - (Required String) The setting name, for example, `sql.local-time-zone`.
     - `value` - (Required String) The setting value, for example, `GMT-08:00`.
 - `properties_sensitive` - (Optional Map) Block for sensitive statement properties:
-  - `name` - (Required String) The setting name, for example, `sql.secrets.openaikey`.
-  - `value` - (Required String) The setting value, for example, `s1234`.
+    - `name` - (Required String) The setting name, for example, `sql.secrets.openaikey`.
+    - `value` - (Required String) The setting value, for example, `s1234`.
 
 - `stopped` - (Optional Boolean) The boolean flag is used to indicate the statement's running status and to control whether the Flink Statement should be stopped or resumed. Defaults to `false`. Update it to `true` to stop the statement. Subsequently update it to `false` to resume the statement.
 
