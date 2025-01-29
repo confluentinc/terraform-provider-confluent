@@ -11,7 +11,6 @@ For details, see [Encryption of data at rest on Kafka clusters](https://docs.con
 * Fixed "Unable to import confluent_tag using Option #2" issue ([#512](https://github.com/confluentinc/terraform-provider-confluent/issues/512)).
 * Fixed "Unable to remove ruleset in confluent_schema" issue.
 
-
 ## 2.14.0 (January 28th, 2025)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.13.0...v2.14.0)
