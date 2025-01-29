@@ -635,7 +635,7 @@ func byokSchema() *schema.Schema {
 				},
 			},
 		},
-		ConflictsWith: []string{paramBasicCluster, paramStandardCluster, paramEnterpriseCluster, paramFreightCluster},
+		ConflictsWith: []string{paramBasicCluster, paramStandardCluster, paramFreightCluster},
 	}
 }
 
