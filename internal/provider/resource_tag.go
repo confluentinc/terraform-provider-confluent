@@ -82,7 +82,7 @@ func tagResource() *schema.Resource {
 	}
 }
 
-func tagCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func tagCreate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	restEndpoint, err := extractSchemaRegistryRestEndpoint(meta.(*Client), d, false)
 	if err != nil {
 		return diag.Errorf("error creating Tag: %s", createDescriptiveError(err))
@@ -99,7 +99,7 @@ func tagCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 	tagName := d.Get(paramName).(string)
 	tagId := createTagId(clusterId, tagName)
 
-	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateDataCatalogClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
 	tagRequest := dc.TagDef{}
 	tagRequest.SetName(tagName)
 	description := d.Get(paramDescription).(string)
@@ -138,50 +138,52 @@ func tagCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 	if err != nil {
 		return diag.Errorf("error creating Tag %q: error marshaling %#v to json: %s", tagId, createdTag, createDescriptiveError(err))
 	}
-	tflog.Debug(ctx, fmt.Sprintf("Finished creating Tag %q: %s", tagId, createdTagJson), map[string]interface{}{tagLoggingKey: tagId})
+	tflog.Debug(ctx, fmt.Sprintf("Finished creating Tag %q: %s", tagId, createdTagJson), map[string]any{tagLoggingKey: tagId})
 	return tagRead(ctx, d, meta)
 }
 
-func tagRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	tagId := d.Id()
+func tagRead(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
+	tflog.Debug(ctx, fmt.Sprintf("Reading Tag %q", d.Id()), map[string]any{tagLoggingKey: d.Id()})
 
-	tflog.Debug(ctx, fmt.Sprintf("Reading Tag %q=%q", paramId, tagId), map[string]interface{}{tagLoggingKey: tagId})
-	if _, err := readTagAndSetAttributes(ctx, d, meta); err != nil {
-		return diag.FromErr(fmt.Errorf("error reading Tag %q: %s", tagId, createDescriptiveError(err)))
+	restEndpoint, err := extractSchemaRegistryRestEndpoint(meta.(*Client), d, false)
+	if err != nil {
+		return diag.Errorf("error reading Tag: %s", createDescriptiveError(err))
 	}
+	clusterId, err := extractSchemaRegistryClusterId(meta.(*Client), d, false)
+	if err != nil {
+		return diag.Errorf("error reading Tag: %s", createDescriptiveError(err))
+	}
+	clusterApiKey, clusterApiSecret, err := extractSchemaRegistryClusterApiKeyAndApiSecret(meta.(*Client), d, false)
+	if err != nil {
+		return diag.Errorf("error reading Tag: %s", createDescriptiveError(err))
+	}
+	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+	tagName := d.Get(paramName).(string)
+
+	_, err = readTagAndSetAttributes(ctx, d, schemaRegistryRestClient, tagName)
+	if err != nil {
+		return diag.Errorf("error reading Tag: %s", createDescriptiveError(err))
+	}
+
+	tflog.Debug(ctx, fmt.Sprintf("Finished reading Tag %q", d.Id()), map[string]any{tagLoggingKey: d.Id()})
 
 	return nil
 }
 
-func readTagAndSetAttributes(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	restEndpoint, err := extractSchemaRegistryRestEndpoint(meta.(*Client), d, false)
-	if err != nil {
-		return nil, fmt.Errorf("error reading Tag: %s", createDescriptiveError(err))
-	}
-	clusterId, err := extractSchemaRegistryClusterId(meta.(*Client), d, false)
-	if err != nil {
-		return nil, fmt.Errorf("error reading Tag: %s", createDescriptiveError(err))
-	}
-	clusterApiKey, clusterApiSecret, err := extractSchemaRegistryClusterApiKeyAndApiSecret(meta.(*Client), d, false)
-	if err != nil {
-		return nil, fmt.Errorf("error reading Tag: %s", createDescriptiveError(err))
-	}
+func readTagAndSetAttributes(ctx context.Context, resourceData *schema.ResourceData, client *SchemaRegistryRestClient, tagName string) ([]*schema.ResourceData, error) {
+	tagId := createTagId(client.clusterId, tagName)
 
-	tagName := d.Get(paramName).(string)
-	tagId := createTagId(clusterId, tagName)
+	tflog.Debug(ctx, fmt.Sprintf("Reading Tag %q=%q", paramId, tagId), map[string]any{tagLoggingKey: tagId})
 
-	tflog.Debug(ctx, fmt.Sprintf("Reading Tag %q=%q", paramId, tagId), map[string]interface{}{tagLoggingKey: tagId})
-
-	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateDataCatalogClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
-	request := schemaRegistryRestClient.dataCatalogApiClient.TypesV1Api.GetTagDefByName(schemaRegistryRestClient.dataCatalogApiContext(ctx), tagName)
+	request := client.dataCatalogApiClient.TypesV1Api.GetTagDefByName(client.dataCatalogApiContext(ctx), tagName)
 	tag, resp, err := request.Execute()
 	if err != nil {
-		tflog.Warn(ctx, fmt.Sprintf("Error reading Tag %q: %s", tagId, createDescriptiveError(err)), map[string]interface{}{tagLoggingKey: tagId})
+		tflog.Warn(ctx, fmt.Sprintf("Error reading Tag %q: %s", tagId, createDescriptiveError(err)), map[string]any{tagLoggingKey: tagId})
 
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
-		if isResourceNotFound && !d.IsNewResource() {
-			tflog.Warn(ctx, fmt.Sprintf("Removing Tag %q in TF state because Tag could not be found on the server", tagId), map[string]interface{}{tagLoggingKey: tagId})
-			d.SetId("")
+		if isResourceNotFound && !resourceData.IsNewResource() {
+			tflog.Warn(ctx, fmt.Sprintf("Removing Tag %q in TF state because Tag could not be found on the server", tagId), map[string]any{tagLoggingKey: tagId})
+			resourceData.SetId("")
 			return nil, nil
 		}
 
@@ -191,18 +193,18 @@ func readTagAndSetAttributes(ctx context.Context, d *schema.ResourceData, meta i
 	if err != nil {
 		return nil, fmt.Errorf("error reading Tag %q: error marshaling %#v to json: %s", tagId, tagJson, createDescriptiveError(err))
 	}
-	tflog.Debug(ctx, fmt.Sprintf("Fetched Tag %q: %s", tagId, tagJson), map[string]interface{}{tagLoggingKey: tagId})
+	tflog.Debug(ctx, fmt.Sprintf("Fetched Tag %q: %s", tagId, tagJson), map[string]any{tagLoggingKey: tagId})
 
-	if _, err := setTagAttributes(d, clusterId, tag); err != nil {
+	if _, err := setTagAttributes(resourceData, client, client.clusterId, tag); err != nil {
 		return nil, createDescriptiveError(err)
 	}
 
-	tflog.Debug(ctx, fmt.Sprintf("Finished reading Tag %q", tagId), map[string]interface{}{tagLoggingKey: tagId})
+	tflog.Debug(ctx, fmt.Sprintf("Finished reading Tag %q", tagId), map[string]any{tagLoggingKey: tagId})
 
-	return []*schema.ResourceData{d}, nil
+	return []*schema.ResourceData{resourceData}, nil
 }
 
-func tagDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func tagDelete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	restEndpoint, err := extractSchemaRegistryRestEndpoint(meta.(*Client), d, false)
 	if err != nil {
 		return diag.Errorf("error deleting Tag: %s", createDescriptiveError(err))
@@ -219,9 +221,9 @@ func tagDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 	tagName := d.Get(paramName).(string)
 	tagId := createTagId(clusterId, tagName)
 
-	tflog.Debug(ctx, fmt.Sprintf("Deleting Tag %q=%q", paramId, tagId), map[string]interface{}{tagLoggingKey: tagId})
+	tflog.Debug(ctx, fmt.Sprintf("Deleting Tag %q=%q", paramId, tagId), map[string]any{tagLoggingKey: tagId})
 
-	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateDataCatalogClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
 	request := schemaRegistryRestClient.dataCatalogApiClient.TypesV1Api.DeleteTagDef(schemaRegistryRestClient.dataCatalogApiContext(ctx), tagName)
 	_, serviceErr := request.Execute()
 	if serviceErr != nil {
@@ -229,12 +231,12 @@ func tagDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 	}
 
 	SleepIfNotTestMode(time.Second, meta.(*Client).isAcceptanceTestMode)
-	tflog.Debug(ctx, fmt.Sprintf("Finished deleting Tag %q", tagId), map[string]interface{}{tagLoggingKey: tagId})
+	tflog.Debug(ctx, fmt.Sprintf("Finished deleting Tag %q", tagId), map[string]any{tagLoggingKey: tagId})
 
 	return nil
 }
 
-func tagUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func tagUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	if d.HasChangeExcept(paramDescription) {
 		return diag.Errorf("error updating Tag %q: only %q attribute can be updated for Tag", d.Id(), paramDescription)
 	}
@@ -255,7 +257,7 @@ func tagUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 	tagName := d.Get(paramName).(string)
 	tagId := createTagId(clusterId, tagName)
 
-	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateDataCatalogClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
 	tagRequest := dc.TagDef{}
 	tagRequest.SetName(tagName)
 	description := d.Get(paramDescription).(string)
@@ -286,28 +288,44 @@ func tagUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 	if err != nil {
 		return diag.Errorf("error updating Tag %q: error marshaling %#v to json: %s", tagId, updatedTag, createDescriptiveError(err))
 	}
-	tflog.Debug(ctx, fmt.Sprintf("Finished updating Tag %q: %s", tagId, updatedTagJson), map[string]interface{}{tagLoggingKey: tagId})
+	tflog.Debug(ctx, fmt.Sprintf("Finished updating Tag %q: %s", tagId, updatedTagJson), map[string]any{tagLoggingKey: tagId})
 	return tagRead(ctx, d, meta)
 }
 
-func tagImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func tagImport(ctx context.Context, d *schema.ResourceData, meta any) ([]*schema.ResourceData, error) {
+	tflog.Debug(ctx, fmt.Sprintf("Importing Tag %q", d.Id()), map[string]any{tagLoggingKey: d.Id()})
+
+	restEndpoint, err := extractSchemaRegistryRestEndpoint(meta.(*Client), d, true)
+	if err != nil {
+		return nil, fmt.Errorf("error importing Tag: %s", createDescriptiveError(err))
+	}
+	clusterApiKey, clusterApiSecret, err := extractSchemaRegistryClusterApiKeyAndApiSecret(meta.(*Client), d, true)
+	if err != nil {
+		return nil, fmt.Errorf("error importing Tag: %s", createDescriptiveError(err))
+	}
+
 	tagId := d.Id()
 	if tagId == "" {
-		return nil, fmt.Errorf("error importing Tag: Tag id is missing")
+		return nil, fmt.Errorf("error importing Tag: invalid format: Tag import ID is missing")
 	}
 
 	parts := strings.Split(tagId, "/")
 	if len(parts) != 2 {
 		return nil, fmt.Errorf("error importing Tag: invalid format: expected '<Schema Registry Cluster Id>/<Tag Name>'")
 	}
-	d.Set(paramName, parts[1])
 
-	tflog.Debug(ctx, fmt.Sprintf("Imporing Tag %q=%q", paramId, tagId), map[string]interface{}{tagLoggingKey: tagId})
+	clusterId := parts[0]
+	tagName := parts[1]
+
+	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+
+	// Mark resource as new to avoid d.Set("") when getting 404
 	d.MarkNewResource()
-	if _, err := readTagAndSetAttributes(ctx, d, meta); err != nil {
-		return nil, fmt.Errorf("error importing Tag %q: %s", tagId, createDescriptiveError(err))
+	_, err = readTagAndSetAttributes(ctx, d, schemaRegistryRestClient, tagName)
+	if err != nil {
+		return nil, fmt.Errorf("error importing Tag %q: %s", d.Id(), createDescriptiveError(err))
 	}
-
+	tflog.Debug(ctx, fmt.Sprintf("Finished importing Tag %q", d.Id()), map[string]any{tagLoggingKey: d.Id()})
 	return []*schema.ResourceData{d}, nil
 }
 
@@ -315,7 +333,7 @@ func createTagId(clusterId, tagName string) string {
 	return fmt.Sprintf("%s/%s", clusterId, tagName)
 }
 
-func setTagAttributes(d *schema.ResourceData, clusterId string, tag dc.TagDef) (*schema.ResourceData, error) {
+func setTagAttributes(d *schema.ResourceData, c *SchemaRegistryRestClient, clusterId string, tag dc.TagDef) (*schema.ResourceData, error) {
 	if err := d.Set(paramName, tag.GetName()); err != nil {
 		return nil, err
 	}
@@ -328,6 +346,19 @@ func setTagAttributes(d *schema.ResourceData, clusterId string, tag dc.TagDef) (
 	if err := d.Set(paramVersion, tag.GetVersion()); err != nil {
 		return nil, err
 	}
+
+	if !c.isMetadataSetInProviderBlock {
+		if err := setKafkaCredentials(c.clusterApiKey, c.clusterApiSecret, d); err != nil {
+			return nil, err
+		}
+		if err := d.Set(paramRestEndpoint, c.restEndpoint); err != nil {
+			return nil, err
+		}
+		if err := setStringAttributeInListBlockOfSizeOne(paramSchemaRegistryCluster, paramId, c.clusterId, d); err != nil {
+			return nil, err
+		}
+	}
+
 	d.SetId(createTagId(clusterId, tag.GetName()))
 	return d, nil
 }
