@@ -152,17 +152,6 @@ func TestAccManagedConnector(t *testing.T) {
 		)
 	_ = wiremockClient.StubFor(updateConnectorStub)
 
-	updateConnectorStub2 := wiremock.Put(wiremock.URLPathEqualTo("/connect/v1/environments/env-1j3m9j/clusters/lkc-vnwdjz/connectors/test_connector/config")).
-		InScenario(connectorScenarioName).
-		WhenScenarioStateIs(scenarioStateManagedConnectorNameHasBeenUpdated).
-		WillSetStateTo(scenarioStateManagedConnectorNameHasBeenUpdated).
-		WillReturn(
-			"",
-			contentTypeJSONHeader,
-			http.StatusOK,
-		)
-	_ = wiremockClient.StubFor(updateConnectorStub2)
-
 	updateConnectorOffsetStub := wiremock.Post(wiremock.URLPathEqualTo("/connect/v1/environments/env-1j3m9j/clusters/lkc-vnwdjz/connectors/test_connector/offsets/request")).
 		WhenScenarioStateIs(scenarioStateManagedConnectorNameHasBeenUpdated).
 		WillSetStateTo(scenarioStateManagedConnectorOffsetHasBeenUpdated).
@@ -467,7 +456,7 @@ func testAccCheckManagedConnectorOffsetsConfig(mockServerUrl, environmentConnect
 			}
 		}
 	}
-	`, mockServerUrl, environmentConnectorLabel, sensitiveAttributeKey, sensitiveAttributeValue, connectorDisplayName)
+	`, mockServerUrl, environmentConnectorLabel, sensitiveAttributeKey, sensitiveAttributeUpdatedValue, connectorDisplayName)
 }
 
 func testAccCheckConnectorExists(n string) resource.TestCheckFunc {
