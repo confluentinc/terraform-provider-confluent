@@ -2,7 +2,7 @@ terraform {
   required_providers {
     confluent = {
       source  = "confluentinc/confluent"
-      version = "2.11.0"
+      version = "2.14.0"
     }
   }
 }
@@ -23,11 +23,11 @@ resource "confluent_flink_artifact" "main" {
   environment {
     id = var.environment_id
   }
-  class          = "io.confluent.example.SumScalarFunction"
   region         = "us-west-2"
   cloud          = "AWS"
   display_name   = "flink_sumscalar_artifact"
   content_format = "JAR"
+  documentation_link = "https://github.com/confluentinc/flink-udf-java-examples"
   artifact_file  = var.artifact_file
 }
 

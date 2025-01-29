@@ -249,6 +249,37 @@ func TestAccLatestSchema(t *testing.T) {
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema_reference.1.%", "3"),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema_reference.1.name", testSecondSchemaReferenceDisplayName),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema_reference.1.subject_name", testSecondSchemaReferenceSubject),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.#", "1"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.%", "2"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.#", "2"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.0.%", "11"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.0.doc", ""),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.0.expr", ""),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.0.kind", "TRANSFORM"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.0.mode", "WRITEREAD"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.0.name", "encrypt"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.0.on_failure", "ERROR,ERROR"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.0.on_success", "NONE,NONE"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.0.params.%", "1"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.0.params.encrypt.kek.name", "testkek2"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.0.tags.#", "1"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.0.tags.0", "PIIIII"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.0.type", "ENCRYPT"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.0.disabled", "false"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.1.%", "11"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.1.doc", ""),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.1.expr", ""),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.1.kind", "TRANSFORM"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.1.mode", "WRITEREAD"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.1.name", "encryptPII"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.1.on_failure", "ERROR,ERROR"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.1.on_success", "NONE,NONE"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.1.params.%", "1"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.1.params.encrypt.kek.name", "testkek2"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.1.tags.#", "1"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.1.tags.0", "PII"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.1.type", "ENCRYPT"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.1.disabled", "false"),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema_reference.1.version", strconv.Itoa(testSecondSchemaReferenceVersion)),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "%", strconv.Itoa(testNumberOfSchemaRegistrySchemaResourceAttributes)),
 				),
@@ -298,6 +329,28 @@ func testAccCheckLatestSchemaConfig(confluentCloudBaseUrl, mockServerUrl string)
         subject_name = "%s"
         version = %d
       }
+      ruleset {
+		domain_rules {
+		  name = "encryptPII"
+		  kind = "TRANSFORM"
+		  type = "ENCRYPT"
+		  mode = "WRITEREAD"
+		  tags = ["PII"]
+		  params = {
+			  "encrypt.kek.name" = "testkek2"
+		  }
+		}
+		domain_rules  {
+		  name = "encrypt"
+		  kind = "TRANSFORM"
+		  type = "ENCRYPT"
+		  mode = "WRITEREAD"
+		  tags = ["PIIIII"]
+		  params = {
+			  "encrypt.kek.name" = "testkek2"
+		  }
+		}
+	  }
 	}
 	`, confluentCloudBaseUrl, testSchemaResourceLabel, testStreamGovernanceClusterId, mockServerUrl, testSchemaRegistryKey, testSchemaRegistrySecret, testSubjectName, testFormat, testSchemaContent,
 		testHardDelete, testSkipSchemaValidationDuringPlanTrue,
@@ -337,6 +390,28 @@ func testAccCheckLatestSchemaConfigWithUpdatedCredentials(confluentCloudBaseUrl,
         subject_name = "%s"
         version = %d
       }
+      ruleset {
+		domain_rules {
+		  name = "encryptPII"
+		  kind = "TRANSFORM"
+		  type = "ENCRYPT"
+		  mode = "WRITEREAD"
+		  tags = ["PII"]
+		  params = {
+			  "encrypt.kek.name" = "testkek2"
+		  }
+		}
+		domain_rules  {
+		  name = "encrypt"
+		  kind = "TRANSFORM"
+		  type = "ENCRYPT"
+		  mode = "WRITEREAD"
+		  tags = ["PIIIII"]
+		  params = {
+			  "encrypt.kek.name" = "testkek2"
+		  }
+		}
+	  }
 	}
 	`, confluentCloudBaseUrl, testSchemaResourceLabel, testStreamGovernanceClusterId, mockServerUrl, testSchemaRegistryUpdatedKey, testSchemaRegistryUpdatedSecret, testSubjectName, testFormat, testSchemaContent,
 		testHardDelete, testRecreateOnUpdateFalse, testFirstSchemaReferenceDisplayName, testFirstSchemaReferenceSubject, testFirstSchemaReferenceVersion,

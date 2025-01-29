@@ -187,7 +187,7 @@ func rulesetSchema() *schema.Schema {
 			},
 		},
 		MaxItems: 1,
-		Computed: true,
+		Computed: false,
 		Optional: true,
 	}
 }
@@ -356,6 +356,10 @@ func SetSchemaDiff(ctx context.Context, diff *schema.ResourceDiff, meta interfac
 		if tfRulesetMap[paramDomainRules] != nil {
 			ruleset.SetDomainRules(buildRules(tfRulesetMap[paramDomainRules].(*schema.Set).List()))
 		}
+		createSchemaRequest.SetRuleSet(*ruleset)
+	} else {
+		ruleset := sr.NewRuleSet()
+		ruleset.SetDomainRules([]sr.Rule{})
 		createSchemaRequest.SetRuleSet(*ruleset)
 	}
 	if tfMetadata := diff.Get(paramMetadata).([]interface{}); len(tfMetadata) == 1 {
@@ -532,6 +536,10 @@ func schemaCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 		if tfRulesetMap[paramDomainRules] != nil {
 			ruleset.SetDomainRules(buildRules(tfRulesetMap[paramDomainRules].(*schema.Set).List()))
 		}
+		createSchemaRequest.SetRuleSet(*ruleset)
+	} else {
+		ruleset := sr.NewRuleSet()
+		ruleset.SetDomainRules([]sr.Rule{})
 		createSchemaRequest.SetRuleSet(*ruleset)
 	}
 	if tfMetadata := d.Get(paramMetadata).([]interface{}); len(tfMetadata) == 1 {
@@ -790,12 +798,12 @@ func schemaImport(ctx context.Context, d *schema.ResourceData, meta interface{})
 	return []*schema.ResourceData{d}, nil
 }
 
-func loadIdForLatestSchema(ctx context.Context, d *schema.ResourceData, c *SchemaRegistryRestClient, subjectName string) (string, error) {
-	latestSchema, _, err := c.apiClient.SubjectsV1Api.GetSchemaByVersion(c.apiContext(ctx), subjectName, latestSchemaVersionAndPlaceholderForSchemaIdentifier).Execute()
+func loadIdForLatestSchema(ctx context.Context, d *schema.ResourceData, c *SchemaRegistryRestClient, subjectName string) (string, bool, error) {
+	latestSchema, resp, err := c.apiClient.SubjectsV1Api.GetSchemaByVersion(c.apiContext(ctx), subjectName, latestSchemaVersionAndPlaceholderForSchemaIdentifier).Execute()
 	if err != nil {
-		return "", fmt.Errorf("error loading the latest Schema: %s", createDescriptiveError(err))
+		return "", ResponseHasExpectedStatusCode(resp, http.StatusNotFound), fmt.Errorf("error loading the latest Schema: %s", createDescriptiveError(err))
 	}
-	return strconv.Itoa(int(latestSchema.GetId())), nil
+	return strconv.Itoa(int(latestSchema.GetId())), false, nil
 }
 
 func isLatestSchema(schemaIdentifier string) bool {
@@ -806,9 +814,10 @@ func loadSchema(ctx context.Context, d *schema.ResourceData, c *SchemaRegistryRe
 	// Option #1: find the schema identifier of the latest schema
 	var err error
 	if isLatestSchema(schemaIdentifier) {
-		schemaIdentifier, err = loadIdForLatestSchema(ctx, d, c, subjectName)
+		var isResourceNotFound bool
+		schemaIdentifier, isResourceNotFound, err = loadIdForLatestSchema(ctx, d, c, subjectName)
 		if err != nil {
-			return nil, false, fmt.Errorf("error loading the latest Schema: %s", createDescriptiveError(err))
+			return nil, isResourceNotFound, fmt.Errorf("error loading the latest Schema: %s", createDescriptiveError(err))
 		}
 	}
 
@@ -828,23 +837,19 @@ func loadSchema(ctx context.Context, d *schema.ResourceData, c *SchemaRegistryRe
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Schemas %q: %s", d.Id(), schemasJson), map[string]interface{}{schemaLoggingKey: d.Id()})
 	srSchema, exists := findSchemaById(schemas, schemaIdentifier, subjectName)
-	return &srSchema, exists, nil
+	return &srSchema, !exists, nil
 }
 
 func readSchemaRegistryConfigAndSetAttributes(ctx context.Context, d *schema.ResourceData, c *SchemaRegistryRestClient, subjectName string, schemaIdentifier string) (*sr.Schema, error) {
 	isLatestSchemaBool := isLatestSchema(schemaIdentifier)
-	srSchema, exists, err := loadSchema(ctx, d, c, subjectName, schemaIdentifier)
+	srSchema, isResourceNotFound, err := loadSchema(ctx, d, c, subjectName, schemaIdentifier)
+	if isResourceNotFound && !d.IsNewResource() {
+		tflog.Warn(ctx, fmt.Sprintf("Removing Schema %q in TF state because Schema could not be found on the server", d.Id()), map[string]interface{}{schemaLoggingKey: d.Id()})
+		d.SetId("")
+		return nil, nil
+	}
 	if err != nil {
 		return nil, fmt.Errorf("error reading Schema %q: %s", d.Id(), createDescriptiveError(err))
-	}
-	if !exists {
-		if !d.IsNewResource() {
-			tflog.Warn(ctx, fmt.Sprintf("Removing Schema %q in TF state because Schema could not be found on the server", d.Id()), map[string]interface{}{schemaLoggingKey: d.Id()})
-			d.SetId("")
-			return nil, nil
-		} else {
-			return nil, fmt.Errorf("error reading Schema %q: Schema could not be found on the server", d.Id())
-		}
 	}
 	schemaJson, err := json.Marshal(srSchema)
 	if err != nil {
@@ -890,6 +895,12 @@ func readSchemaRegistryConfigAndSetAttributes(ctx context.Context, d *schema.Res
 	if ruleSet, ok := srSchema.GetRuleSetOk(); ok {
 		if len(ruleSet.GetDomainRules()) > 0 {
 			if err := d.Set(paramRuleset, buildTfRules(ruleSet.GetDomainRules())); err != nil {
+				return nil, err
+			}
+		} else {
+			ruleset := sr.NewRuleSet()
+			ruleset.SetDomainRules([]sr.Rule{})
+			if err := d.Set(paramRuleset, make([]string, 0)); err != nil {
 				return nil, err
 			}
 		}
