@@ -18,15 +18,16 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"regexp"
+	"strings"
+
 	cmk "github.com/confluentinc/ccloud-sdk-go-v2/cmk/v2"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"net/http"
-	"regexp"
-	"strings"
 )
 
 const (
@@ -591,8 +592,7 @@ func enterpriseClusterSchema() *schema.Schema {
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{},
 		},
-		ExactlyOneOf:  acceptedClusterTypes,
-		ConflictsWith: []string{paramConfluentCustomerKey},
+		ExactlyOneOf: acceptedClusterTypes,
 	}
 }
 
