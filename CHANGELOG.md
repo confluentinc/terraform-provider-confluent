@@ -1,4 +1,4 @@
-## 2.16.0 (January 31th, 2025)
+## 2.16.0 (January 31st, 2025)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.15.0...v2.16.0)
 
