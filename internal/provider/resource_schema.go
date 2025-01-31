@@ -187,7 +187,7 @@ func rulesetSchema() *schema.Schema {
 			},
 		},
 		MaxItems: 1,
-		Computed: false,
+		Computed: true,
 		Optional: true,
 	}
 }
@@ -356,10 +356,6 @@ func SetSchemaDiff(ctx context.Context, diff *schema.ResourceDiff, meta interfac
 		if tfRulesetMap[paramDomainRules] != nil {
 			ruleset.SetDomainRules(buildRules(tfRulesetMap[paramDomainRules].(*schema.Set).List()))
 		}
-		createSchemaRequest.SetRuleSet(*ruleset)
-	} else {
-		ruleset := sr.NewRuleSet()
-		ruleset.SetDomainRules([]sr.Rule{})
 		createSchemaRequest.SetRuleSet(*ruleset)
 	}
 	if tfMetadata := diff.Get(paramMetadata).([]interface{}); len(tfMetadata) == 1 {
@@ -536,10 +532,6 @@ func schemaCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 		if tfRulesetMap[paramDomainRules] != nil {
 			ruleset.SetDomainRules(buildRules(tfRulesetMap[paramDomainRules].(*schema.Set).List()))
 		}
-		createSchemaRequest.SetRuleSet(*ruleset)
-	} else {
-		ruleset := sr.NewRuleSet()
-		ruleset.SetDomainRules([]sr.Rule{})
 		createSchemaRequest.SetRuleSet(*ruleset)
 	}
 	if tfMetadata := d.Get(paramMetadata).([]interface{}); len(tfMetadata) == 1 {
@@ -895,12 +887,6 @@ func readSchemaRegistryConfigAndSetAttributes(ctx context.Context, d *schema.Res
 	if ruleSet, ok := srSchema.GetRuleSetOk(); ok {
 		if len(ruleSet.GetDomainRules()) > 0 {
 			if err := d.Set(paramRuleset, buildTfRules(ruleSet.GetDomainRules())); err != nil {
-				return nil, err
-			}
-		} else {
-			ruleset := sr.NewRuleSet()
-			ruleset.SetDomainRules([]sr.Rule{})
-			if err := d.Set(paramRuleset, make([]string, 0)); err != nil {
 				return nil, err
 			}
 		}

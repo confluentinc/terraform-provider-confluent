@@ -313,28 +313,6 @@ func testAccCheckSchemaConfig(confluentCloudBaseUrl, mockServerUrl string) strin
         subject_name = "%s"
         version = %d
       }
-ruleset {
-		domain_rules {
-		  name = "encryptPII"
-		  kind = "TRANSFORM"
-		  type = "ENCRYPT"
-		  mode = "WRITEREAD"
-		  tags = ["PII"]
-		  params = {
-			  "encrypt.kek.name" = "testkek2"
-		  }
-		}
-		domain_rules  {
-		  name = "encrypt"
-		  kind = "TRANSFORM"
-		  type = "ENCRYPT"
-		  mode = "WRITEREAD"
-		  tags = ["PIIIII"]
-		  params = {
-			  "encrypt.kek.name" = "testkek2"
-		  }
-		}
-	  }
 	}
 	`, confluentCloudBaseUrl, testSchemaResourceLabel, testStreamGovernanceClusterId, mockServerUrl, testSchemaRegistryKey, testSchemaRegistrySecret, testSubjectName, testFormat, testSchemaContent,
 		testHardDelete, testRecreateOnUpdateTrue, testSkipSchemaValidationDuringPlanTrue,
@@ -375,28 +353,6 @@ func testAccCheckSchemaConfigWithUpdatedCredentials(confluentCloudBaseUrl, mockS
         subject_name = "%s"
         version = %d
       }
-ruleset {
-		domain_rules {
-		  name = "encryptPII"
-		  kind = "TRANSFORM"
-		  type = "ENCRYPT"
-		  mode = "WRITEREAD"
-		  tags = ["PII"]
-		  params = {
-			  "encrypt.kek.name" = "testkek2"
-		  }
-		}
-		domain_rules  {
-		  name = "encrypt"
-		  kind = "TRANSFORM"
-		  type = "ENCRYPT"
-		  mode = "WRITEREAD"
-		  tags = ["PIIIII"]
-		  params = {
-			  "encrypt.kek.name" = "testkek2"
-		  }
-		}
-	  }
 	}
 	`, confluentCloudBaseUrl, testSchemaResourceLabel, testStreamGovernanceClusterId, mockServerUrl, testSchemaRegistryUpdatedKey, testSchemaRegistryUpdatedSecret, testSubjectName, testFormat, testSchemaContent,
 		testHardDelete, testRecreateOnUpdateTrue, testSkipSchemaValidationDuringPlanFalse,

@@ -261,28 +261,6 @@ func testAccCheckSchemaConfigWithEnhancedProviderBlock(confluentCloudBaseUrl, mo
 		}
 	  }
 
-	  ruleset {
-		domain_rules {
-		  name = "encryptPII"
-		  kind = "TRANSFORM"
-		  type = "ENCRYPT"
-		  mode = "WRITEREAD"
-		  tags = ["PII"]
-		  params = {
-			  "encrypt.kek.name" = "testkek2"
-		  }
-		}
-		domain_rules  {
-		  name = "encrypt"
-		  kind = "TRANSFORM"
-		  type = "ENCRYPT"
-		  mode = "WRITEREAD"
-		  tags = ["PIIIII"]
-		  params = {
-			  "encrypt.kek.name" = "testkek2"
-		  }
-		}
-	  }
 	}
 	`, confluentCloudBaseUrl, kafkaApiKey, kafkaApiSecret, mockServerUrl, testStreamGovernanceClusterId, testSchemaResourceLabel, testSubjectName, testFormat, testSchemaContent,
 		testFirstSchemaReferenceDisplayName, testFirstSchemaReferenceSubject, testFirstSchemaReferenceVersion,
