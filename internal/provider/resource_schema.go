@@ -890,11 +890,6 @@ func readSchemaRegistryConfigAndSetAttributes(ctx context.Context, d *schema.Res
 				return nil, err
 			}
 		}
-		// TODO: else len == 0: figure out whether we need to add d.Set(paramRuleset, make([]string, 0)) here
-	} else {
-		if err := d.Set(paramRuleset, nil); err != nil {
-			return nil, err
-		}
 	}
 
 	if metadata, ok := srSchema.GetMetadataOk(); ok {
@@ -903,11 +898,6 @@ func readSchemaRegistryConfigAndSetAttributes(ctx context.Context, d *schema.Res
 			paramProperties: metadata.GetProperties(),
 			paramSensitive:  metadata.GetSensitive(),
 		}}); err != nil {
-			return nil, err
-		}
-		// TODO: else len == 0: figure out whether we need to add d.Set(paramMetadata, make([]string, 0)) here
-	} else {
-		if err := d.Set(paramMetadata, nil); err != nil {
 			return nil, err
 		}
 	}
