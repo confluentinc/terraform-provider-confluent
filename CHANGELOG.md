@@ -1,3 +1,10 @@
+## 2.16.0 (January 31th, 2025)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.15.0...v2.16.0)
+
+**Bug fixes:**
+* Fixed "error creating Schema: 403 Forbidden: Upgrade to Stream Governance Advanced package to use schema rules" issue ([#543](https://github.com/confluentinc/terraform-provider-confluent/issues/543)).
+
 ## 2.15.0 (January 29th, 2025)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.14.0...v2.15.0)
