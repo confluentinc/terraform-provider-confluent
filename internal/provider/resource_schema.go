@@ -187,7 +187,7 @@ func rulesetSchema() *schema.Schema {
 			},
 		},
 		MaxItems: 1,
-		Computed: false,
+		Computed: true,
 		Optional: true,
 	}
 }
@@ -356,10 +356,6 @@ func SetSchemaDiff(ctx context.Context, diff *schema.ResourceDiff, meta interfac
 		if tfRulesetMap[paramDomainRules] != nil {
 			ruleset.SetDomainRules(buildRules(tfRulesetMap[paramDomainRules].(*schema.Set).List()))
 		}
-		createSchemaRequest.SetRuleSet(*ruleset)
-	} else {
-		ruleset := sr.NewRuleSet()
-		ruleset.SetDomainRules([]sr.Rule{})
 		createSchemaRequest.SetRuleSet(*ruleset)
 	}
 	if tfMetadata := diff.Get(paramMetadata).([]interface{}); len(tfMetadata) == 1 {
@@ -536,10 +532,6 @@ func schemaCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 		if tfRulesetMap[paramDomainRules] != nil {
 			ruleset.SetDomainRules(buildRules(tfRulesetMap[paramDomainRules].(*schema.Set).List()))
 		}
-		createSchemaRequest.SetRuleSet(*ruleset)
-	} else {
-		ruleset := sr.NewRuleSet()
-		ruleset.SetDomainRules([]sr.Rule{})
 		createSchemaRequest.SetRuleSet(*ruleset)
 	}
 	if tfMetadata := d.Get(paramMetadata).([]interface{}); len(tfMetadata) == 1 {
@@ -897,12 +889,11 @@ func readSchemaRegistryConfigAndSetAttributes(ctx context.Context, d *schema.Res
 			if err := d.Set(paramRuleset, buildTfRules(ruleSet.GetDomainRules())); err != nil {
 				return nil, err
 			}
-		} else {
-			ruleset := sr.NewRuleSet()
-			ruleset.SetDomainRules([]sr.Rule{})
-			if err := d.Set(paramRuleset, make([]string, 0)); err != nil {
-				return nil, err
-			}
+		}
+		// TODO: else len == 0: figure out whether we need to add d.Set(paramRuleset, make([]string, 0)) here
+	} else {
+		if err := d.Set(paramRuleset, nil); err != nil {
+			return nil, err
 		}
 	}
 
@@ -912,6 +903,11 @@ func readSchemaRegistryConfigAndSetAttributes(ctx context.Context, d *schema.Res
 			paramProperties: metadata.GetProperties(),
 			paramSensitive:  metadata.GetSensitive(),
 		}}); err != nil {
+			return nil, err
+		}
+		// TODO: else len == 0: figure out whether we need to add d.Set(paramMetadata, make([]string, 0)) here
+	} else {
+		if err := d.Set(paramMetadata, nil); err != nil {
 			return nil, err
 		}
 	}
