@@ -187,7 +187,7 @@ func rulesetSchema() *schema.Schema {
 			},
 		},
 		MaxItems: 1,
-		Computed: false,
+		Computed: true,
 		Optional: true,
 	}
 }
