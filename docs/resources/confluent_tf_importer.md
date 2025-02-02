@@ -45,3 +45,4 @@ These are the exportable resources:
 The following end-to-end examples might help to get started with the `confluent_tf_importer` resource:
   * [`cloud-importer`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/cloud-importer): Export _Cloud_ resources (for example, Service Accounts, Environments)
   * [`kafka-importer`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/kafka-importer): Export _Kafka_ resources (for example, ACLs, Topics)
+  * [`schema-registry-importer`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/schema-registry-importer): Export _Schema Registry_ resources (for example, Schemas)

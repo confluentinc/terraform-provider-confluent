@@ -302,7 +302,9 @@ func writeTfState(ctx context.Context, resources []instanceData, outputPath stri
 	stateReplaceCommandStr := "terraform state replace-provider registry.terraform.io/-/confluent registry.terraform.io/confluentinc/confluent"
 	cmd, err := commandWithResolvedSymlink(ctx, "terraform")
 	if err != nil {
-		return diag.Errorf("failed to run terraform CLI command: %q. Please run it manually in %s.", stateReplaceCommandStr, outputPath)
+		return diag.Errorf("The process was successfully completed, but there's one more manual step you'll "+
+			"need to take. Please run the following terraform CLI command: %q in %s folder.", stateReplaceCommandStr,
+			outputPath)
 	}
 
 	cmd.Args = append(cmd.Args, []string{
@@ -317,7 +319,9 @@ func writeTfState(ctx context.Context, resources []instanceData, outputPath stri
 	tflog.Info(ctx, fmt.Sprintf("Running %q in %s", stateReplaceCommandStr, outputPath))
 
 	if err = cmd.Run(); err != nil {
-		return diag.Errorf("failed to run terraform CLI command: %q. Please run it manually in %s.", stateReplaceCommandStr, outputPath)
+		return diag.Errorf("The process was successfully completed, but there's one more manual step you'll "+
+			"need to take. Please run the following terraform CLI command: %q in %s folder.", stateReplaceCommandStr,
+			outputPath)
 	}
 	return nil
 }
