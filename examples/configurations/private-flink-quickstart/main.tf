@@ -1,13 +1,12 @@
 terraform {
   required_providers {
-
-   aws = {
-          source  = "hashicorp/aws"
-          version = ">= 5.17.0"
-          }
+    aws = {
+      source  = "hashicorp/aws"
+      version = ">= 5.17.0"
+    }
     confluent = {
       source  = "confluentinc/confluent"
-      version = "1.81.0"
+      version = "2.16.0"
     }
   }
 }
@@ -22,13 +21,26 @@ provider "aws" {
 }
 
 data "confluent_organization" "main" {}
+
 data "confluent_environment" "staging" {
   id = var.environment_id
 }
+
 locals {
   cloud  = "AWS"
   region = "us-east-2"
 }
+
+data "confluent_schema_registry_cluster" "essentials" {
+  environment {
+    id = data.confluent_environment.staging.id
+  }
+
+  depends_on = [
+    confluent_kafka_cluster.enterprise
+  ]
+}
+
 // In Confluent Cloud, an environment is mapped to a Flink catalog, and a Kafka cluster is mapped to a Flink database.
 # Update the config to use a cloud provider and region of your choice.
 # https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_cluster
@@ -44,8 +56,8 @@ resource "confluent_kafka_cluster" "enterprise" {
 }
 
 resource "confluent_private_link_attachment" "pla" {
-  cloud = "AWS"
-  region = local.region
+  cloud        = "AWS"
+  region       = local.region
   display_name = "staging-aws-platt"
   environment {
     id = data.confluent_environment.staging.id
@@ -79,16 +91,19 @@ resource "confluent_service_account" "statements-runner" {
   display_name = "statements-runner"
   description  = "Service account for running Flink Statements in 'inventory' Kafka cluster"
 }
+
 // Service account to set up initial infrastructure, such as creating a schema and a Kafka topic (Flink table)
 resource "confluent_service_account" "infrastructure-manager" {
   display_name = "infrastructure-manager"
   description  = "Service account for setting up schemas and Kafka topics (Flink tables)"
 }
+
 resource "confluent_role_binding" "infrastructure-manager-environment-admin" {
   principal   = "User:${confluent_service_account.infrastructure-manager.id}"
   role_name   = "EnvironmentAdmin"
   crn_pattern = data.confluent_environment.staging.resource_name
 }
+
 resource "confluent_api_key" "infrastructure-manager-kafka-api-key" {
   display_name = "infrastructure-manager-kafka-api-key"
   description  = "Kafka API Key that is owned by 'infrastructure-manager' service account"
@@ -117,6 +132,7 @@ resource "confluent_api_key" "infrastructure-manager-kafka-api-key" {
     confluent_role_binding.infrastructure-manager-environment-admin
   ]
 }
+
 resource "confluent_api_key" "infrastructure-manager-schema-registry-api-key" {
   display_name = "infrastructure-manager-schema-registry-api-key"
   description  = "Schema Registry API Key that is owned by 'infrastructure-manager' service account"
@@ -126,9 +142,9 @@ resource "confluent_api_key" "infrastructure-manager-schema-registry-api-key" {
     kind        = confluent_service_account.infrastructure-manager.kind
   }
   managed_resource {
-    id          = confluent_schema_registry_cluster.essentials.id
-    api_version = confluent_schema_registry_cluster.essentials.api_version
-    kind        = confluent_schema_registry_cluster.essentials.kind
+    id          = data.confluent_schema_registry_cluster.essentials.id
+    api_version = data.confluent_schema_registry_cluster.essentials.api_version
+    kind        = data.confluent_schema_registry_cluster.essentials.kind
     environment {
       id = data.confluent_environment.staging.id
     }
@@ -143,22 +159,26 @@ resource "confluent_api_key" "infrastructure-manager-schema-registry-api-key" {
     confluent_role_binding.infrastructure-manager-environment-admin
   ]
 }
+
 resource "confluent_role_binding" "statements-runner-environment-admin" {
   principal   = "User:${confluent_service_account.statements-runner.id}"
   role_name   = "EnvironmentAdmin"
   crn_pattern = data.confluent_environment.staging.resource_name
 }
+
 // Service account that owns Flink API Key
 resource "confluent_service_account" "app-manager" {
   display_name = "app-manager"
   description  = "Service account that has got full access to Flink resources in an environment"
 }
+
 // https://docs.confluent.io/cloud/current/access-management/access-control/rbac/predefined-rbac-roles.html#flinkadmin
 resource "confluent_role_binding" "app-manager-flink-developer" {
   principal   = "User:${confluent_service_account.app-manager.id}"
   role_name   = "FlinkAdmin"
   crn_pattern = data.confluent_environment.staging.resource_name
 }
+
 // https://docs.confluent.io/cloud/current/access-management/access-control/rbac/predefined-rbac-roles.html#assigner
 // https://docs.confluent.io/cloud/current/flink/operate-and-deploy/flink-rbac.html#submit-long-running-statements
 resource "confluent_role_binding" "app-manager-assigner" {
@@ -166,10 +186,12 @@ resource "confluent_role_binding" "app-manager-assigner" {
   role_name   = "Assigner"
   crn_pattern = "${data.confluent_organization.main.resource_name}/service-account=${confluent_service_account.statements-runner.id}"
 }
+
 data "confluent_flink_region" "us-east-2" {
   cloud  = local.cloud
   region = local.region
 }
+
 resource "confluent_api_key" "app-manager-flink-api-key" {
   display_name = "app-manager-flink-api-key"
   description  = "Flink API Key that is owned by 'app-manager' service account"
@@ -187,25 +209,12 @@ resource "confluent_api_key" "app-manager-flink-api-key" {
     }
   }
 }
-data "confluent_schema_registry_region" "essentials" {
-  cloud   = local.cloud
-  region  = local.region
-  package = "ESSENTIALS"
-}
-resource "confluent_schema_registry_cluster" "essentials" {
-  package = data.confluent_schema_registry_region.essentials.package
-  environment {
-    id = var.environment_id
-  }
-  region {
-    # See https://docs.confluent.io/cloud/current/stream-governance/packages.html#stream-governance-regions
-    id = data.confluent_schema_registry_region.essentials.id
-  }
-}
+
 data "confluent_flink_region" "main" {
-  cloud        = local.cloud
-  region       = local.region
+  cloud  = local.cloud
+  region = local.region
 }
+
 # https://docs.confluent.io/cloud/current/flink/get-started/quick-start-cloud-console.html#step-1-create-a-af-compute-pool
 resource "confluent_flink_compute_pool" "main" {
   display_name = "my-compute-pool"
@@ -229,27 +238,28 @@ resource "confluent_kafka_topic" "orders" {
   }
   topic_name    = "orders_source"
   rest_endpoint = confluent_kafka_cluster.enterprise.rest_endpoint //enterprise
-#   private_rest_endpoint = confluent_kafka_cluster.standard.private_rest_endpoint
   credentials {
     key    = confluent_api_key.infrastructure-manager-kafka-api-key.id
     secret = confluent_api_key.infrastructure-manager-kafka-api-key.secret
   }
 }
+
 resource "confluent_schema" "order" {
   schema_registry_cluster {
-    id = confluent_schema_registry_cluster.essentials.id
+    id = data.confluent_schema_registry_cluster.essentials.id
   }
-  rest_endpoint = confluent_schema_registry_cluster.essentials.rest_endpoint
-#   private_rest_endpoint = confluent_schema_registry_cluster.essentials.private_rest_endpoint
+  rest_endpoint = data.confluent_schema_registry_cluster.essentials.rest_endpoint
+  #   private_rest_endpoint = confluent_schema_registry_cluster.essentials.private_rest_endpoint
   # https://developer.confluent.io/learn-kafka/schema-registry/schema-subjects/#topicnamestrategy
-  subject_name  = "${confluent_kafka_topic.orders.topic_name}-value"
-  format        = "AVRO"
-  schema        = file("./schemas/avro/order.avsc")
+  subject_name = "${confluent_kafka_topic.orders.topic_name}-value"
+  format       = "AVRO"
+  schema       = file("./schemas/avro/order.avsc")
   credentials {
     key    = confluent_api_key.infrastructure-manager-schema-registry-api-key.id
     secret = confluent_api_key.infrastructure-manager-schema-registry-api-key.secret
   }
 }
+
 resource "confluent_flink_statement" "populate-orders-source-table" {
   organization {
     id = data.confluent_organization.main.id
@@ -264,13 +274,12 @@ resource "confluent_flink_statement" "populate-orders-source-table" {
     id = confluent_service_account.statements-runner.id
   }
   # https://docs.confluent.io/cloud/current/flink/reference/example-data.html#marketplace-database
-  statement  = file("./statements/populate-orders-source-table.sql")
+  statement = file("./statements/populate-orders-source-table.sql")
   properties = {
     "sql.current-catalog"  = data.confluent_environment.staging.display_name
     "sql.current-database" = confluent_kafka_cluster.enterprise.display_name
   }
   rest_endpoint = data.confluent_flink_region.main.private_rest_endpoint
-#   private_rest_endpoint = data.confluent_flink_region.main.private_rest_endpoint
   credentials {
     key    = confluent_api_key.app-manager-flink-api-key.id
     secret = confluent_api_key.app-manager-flink-api-key.secret
