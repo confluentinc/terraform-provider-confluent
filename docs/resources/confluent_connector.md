@@ -219,10 +219,8 @@ resource "confluent_connector" "sink" {
     id = data.confluent_kafka_cluster.test_cluster.id
   }
   config_sensitive = {
-    "connection.user"            = "***REDACTED***"
-    "connection.password"        = "***REDACTED***"
-    "connection.host"            = "***REDACTED***"
-    "connection.port"            = "***REDACTED***"
+    "connection.password" = "***REDACTED***"
+
   }
   config_nonsensitive = {
     "kafka.auth.mode"            = "SERVICE_ACCOUNT"
@@ -237,6 +235,9 @@ resource "confluent_connector" "sink" {
     "insert.mode"                = "INSERT"
     "auto.create"                = "true"
     "auto.evolve"                = "true"
+    "connection.host"            = "confluent-test.mycluster.mongodb.net"
+    "connection.port"            = "27017"
+    "connection.user"            = "mongo-test-user"
   }
   
   offsets {
@@ -336,10 +337,11 @@ The following arguments are supported:
   - `name` - (Required String) The configuration setting name, for example, `aws.secret.access.key`.
   - `value` - (Required String, Sensitive) The configuration setting value, for example, `***REDACTED***`.
 - `offsets` - (Optional List of Configuration Blocks) supports the following:
-  - `partition` - (Required Map) Block with partition information.
-    - `kafka_partition` - (Required String) The Kafka partition of the Sink connector.
-  - `offset` - (Required Map) Block with offset information.
-    - `kafka_offset` - (Required String) The Kafka offset of the Sink connector.
+  - `partition` - (Required Map) Block with partition information. Arguments for source connectors can be found under "Manage custom offsets" section in [the docs](https://docs.confluent.io/cloud/current/connectors/index.html).
+    - `kafka_partition` - (Optional String) The partition number of the topic (for sink connectors).
+    - `kafka_topic` - (Optional String) The name of the Kafka topic (for sink connectors).
+  - `offset` - (Required Map) Block with offset information. Arguments for source connectors can be found under "Manage custom offsets" section in [the docs](https://docs.confluent.io/cloud/current/connectors/index.html).
+    - `kafka_offset` - (Optional String) The Kafka offset (for sink connectors).
 !> **Warning:** Terraform doesn't encrypt the sensitive configuration settings from the `config_sensitive` block of the `confluent_connector` resource, so you must keep your state file secure to avoid exposing it. Refer to the [Terraform documentation](https://www.terraform.io/docs/language/state/sensitive-data.html) to learn more about securing your state file.
 
 - `status` (Optional String) The status of the connector (one of `"NONE"`, `"PROVISIONING"`, `"RUNNING"`, `"DEGRADED"`, `"FAILED"`, `"PAUSED"`, `"DELETED"`). Pausing (`"RUNNING" -> "PAUSED"`) and resuming (`"PAUSED" -> "RUNNING"`) a connector is supported via an update operation.

@@ -399,25 +399,25 @@ resource "confluent_connector" "mysql-db-sink" {
   }
 
   config_sensitive = {
-    "kafka.auth.mode"          = "SERVICE_ACCOUNT"
-    "kafka.service.account.id" = confluent_service_account.app-connector.id
-    "connection.user"          = var.mysqldb_user
-    "connection.password"      = var.mysqldb_password
-    "connection.host"          = var.mysqldb_host
-    "connection.port"          = var.mysqldb_port
-    "ssl.mode"                 = "prefer"
+    "connection.password" = var.mysqldb_password
   }
 
   config_nonsensitive = {
-    "connector.class"   = "MySqlSink"
-    "name"              = "MySQLSinkConnector_0"
-    "topics"            = var.mysqldb_topic_name
-    "input.data.format" = "AVRO"
-    "tasks.max"         = "1"
-    "db.name"           = var.mysqldb_name
-    "insert.mode"       = "INSERT"
-    "auto.create"       = "true"
-    "auto.evolve"       = "true"
+    "connector.class"          = "MySqlSink"
+    "name"                     = "MySQLSinkConnector_0"
+    "topics"                   = var.mysqldb_topic_name
+    "input.data.format"        = "AVRO"
+    "tasks.max"                = "1"
+    "db.name"                  = var.mysqldb_name
+    "insert.mode"              = "INSERT"
+    "auto.create"              = "true"
+    "auto.evolve"              = "true"
+    "kafka.auth.mode"          = "SERVICE_ACCOUNT"
+    "kafka.service.account.id" = confluent_service_account.app-connector.id
+    "connection.user"          = var.mysqldb_user
+    "connection.host"          = var.mysqldb_host
+    "connection.port"          = var.mysqldb_port
+    "ssl.mode"                 = "prefer"
   }
 
   offsets {
@@ -474,8 +474,6 @@ resource "confluent_connector" "mongo-db-source" {
   // https://docs.confluent.io/cloud/current/connectors/cc-mongo-db-source.html#configuration-properties
   config_sensitive = {
     "connection.password" = var.mongodb_password
-    "connection.host"     = var.mongodb_connection_host
-    "connection.user"     = var.mongodb_connection_user
   }
 
   // Block for custom *nonsensitive* configuration properties that are *not* labelled with "Type: password" under "Configuration Properties" section in the docs:
@@ -493,6 +491,8 @@ resource "confluent_connector" "mongo-db-source" {
     "copy.existing"            = "true"
     "output.data.format"       = "JSON"
     "tasks.max"                = "1"
+    "connection.host"          = var.mongodb_connection_host
+    "connection.user"          = var.mongodb_connection_user
   }
 
   offsets {
