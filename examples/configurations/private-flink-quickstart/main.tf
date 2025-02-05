@@ -32,6 +32,16 @@ locals {
   region = "us-east-2"
 }
 
+data "confluent_schema_registry_cluster" "essentials" {
+  environment {
+    id = data.confluent_environment.staging.id
+  }
+
+  depends_on = [
+    confluent_kafka_cluster.enterprise
+  ]
+}
+
 // In Confluent Cloud, an environment is mapped to a Flink catalog, and a Kafka cluster is mapped to a Flink database.
 # Update the config to use a cloud provider and region of your choice.
 # https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_cluster
@@ -133,9 +143,9 @@ resource "confluent_api_key" "infrastructure-manager-schema-registry-api-key" {
     kind        = confluent_service_account.infrastructure-manager.kind
   }
   managed_resource {
-    id          = confluent_schema_registry_cluster.essentials.id
-    api_version = confluent_schema_registry_cluster.essentials.api_version
-    kind        = confluent_schema_registry_cluster.essentials.kind
+    id          = data.confluent_schema_registry_cluster.essentials.id
+    api_version = data.confluent_schema_registry_cluster.essentials.api_version
+    kind        = data.confluent_schema_registry_cluster.essentials.kind
     environment {
       id = data.confluent_environment.staging.id
     }
@@ -201,23 +211,6 @@ resource "confluent_api_key" "app-manager-flink-api-key" {
   }
 }
 
-data "confluent_schema_registry_region" "essentials" {
-  cloud   = local.cloud
-  region  = local.region
-  package = "ESSENTIALS"
-}
-
-resource "confluent_schema_registry_cluster" "essentials" {
-  package = data.confluent_schema_registry_region.essentials.package
-  environment {
-    id = var.environment_id
-  }
-  region {
-    # See https://docs.confluent.io/cloud/current/stream-governance/packages.html#stream-governance-regions
-    id = data.confluent_schema_registry_region.essentials.id
-  }
-}
-
 data "confluent_flink_region" "main" {
   cloud  = local.cloud
   region = local.region
@@ -255,9 +248,9 @@ resource "confluent_kafka_topic" "orders" {
 
 resource "confluent_schema" "order" {
   schema_registry_cluster {
-    id = confluent_schema_registry_cluster.essentials.id
+    id = data.confluent_schema_registry_cluster.essentials.id
   }
-  rest_endpoint = confluent_schema_registry_cluster.essentials.rest_endpoint
+  rest_endpoint = data.confluent_schema_registry_cluster.essentials.rest_endpoint
   #   private_rest_endpoint = confluent_schema_registry_cluster.essentials.private_rest_endpoint
   # https://developer.confluent.io/learn-kafka/schema-registry/schema-subjects/#topicnamestrategy
   subject_name = "${confluent_kafka_topic.orders.topic_name}-value"
