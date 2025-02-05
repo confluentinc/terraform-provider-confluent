@@ -238,7 +238,6 @@ resource "confluent_kafka_topic" "orders" {
   }
   topic_name    = "orders_source"
   rest_endpoint = confluent_kafka_cluster.enterprise.rest_endpoint //enterprise
-  #   private_rest_endpoint = confluent_kafka_cluster.standard.private_rest_endpoint
   credentials {
     key    = confluent_api_key.infrastructure-manager-kafka-api-key.id
     secret = confluent_api_key.infrastructure-manager-kafka-api-key.secret
