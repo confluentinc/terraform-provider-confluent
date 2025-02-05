@@ -249,7 +249,6 @@ resource "confluent_schema" "order" {
     id = data.confluent_schema_registry_cluster.essentials.id
   }
   rest_endpoint = data.confluent_schema_registry_cluster.essentials.rest_endpoint
-  #   private_rest_endpoint = confluent_schema_registry_cluster.essentials.private_rest_endpoint
   # https://developer.confluent.io/learn-kafka/schema-registry/schema-subjects/#topicnamestrategy
   subject_name = "${confluent_kafka_topic.orders.topic_name}-value"
   format       = "AVRO"
