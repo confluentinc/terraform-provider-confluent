@@ -206,7 +206,7 @@ resource "confluent_connector" "sink" {
 }
 ```
 
-### Example Managed [MySQLDB Sink Connector](https://docs.confluent.io/cloud/current/connectors/cc-mysql-sink.html) that uses a API Key to communicate with your Kafka cluster
+### Example Managed [MySQL Sink Connector](https://docs.confluent.io/cloud/current/connectors/cc-mysql-sink.html) that uses a API Key to communicate with your Kafka cluster
 
 ```terraform
 # https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/connectors/manageoffsets-source-sink-connector
