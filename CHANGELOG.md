@@ -1,3 +1,23 @@
+## 2.16.0 (January 31st, 2025)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.15.0...v2.16.0)
+
+**Bug fixes:**
+* Fixed "error creating Schema: 403 Forbidden: Upgrade to Stream Governance Advanced package to use schema rules" issue ([#543](https://github.com/confluentinc/terraform-provider-confluent/issues/543)).
+
+## 2.15.0 (January 29th, 2025)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.14.0...v2.15.0)
+
+**New features:**
+* Updated `confluent_kafka_cluster` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_cluster) to support [self-managed encryption keys](https://docs.confluent.io/cloud/current/release-notes/index.html#january-29-2025).
+For details, see [Encryption of data at rest on Kafka clusters](https://docs.confluent.io/cloud/current/security/encrypt/byok/overview.html#encryption-data-at-rest-clusters) and [Use Self-managed Encryption Keys in Confluent Cloud on AWS](https://docs.confluent.io/cloud/current/security/encrypt/byok/byok-aws.html#byok-encrypted-clusters-aws).
+
+**Bug fixes:**
+* Fixed "Terraform provider does not work well when deploying a Flink Model/Statement that uses sql.secrets.*" issue ([#397](https://github.com/confluentinc/terraform-provider-confluent/issues/397)).
+* Fixed "Unable to import confluent_tag using Option #2" issue ([#512](https://github.com/confluentinc/terraform-provider-confluent/issues/512)).
+* Fixed "Unable to remove ruleset in confluent_schema" issue.
+
 ## 2.14.0 (January 28th, 2025)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.13.0...v2.14.0)
