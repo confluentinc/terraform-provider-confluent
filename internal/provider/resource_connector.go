@@ -310,6 +310,7 @@ func readConnectorAndSetAttributes(ctx context.Context, d *schema.ResourceData, 
 	if err != nil {
 		// For some source and custom connectors, the API may return
 		// {"error":{"code":403,"message":"Offset operations are not permitted"}}.
+		// {"error":{"code":404,"message":"Connector not found"}}
 		// This is fine because offsets != nil, and we will use len(offsets.GetOffsets()) > 0 later.
 		tflog.Debug(ctx, fmt.Sprintf("Failed to fetch Connector %q offsets: %s", displayName, connectorJson))
 	}
