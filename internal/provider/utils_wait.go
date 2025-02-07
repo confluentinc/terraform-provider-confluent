@@ -407,7 +407,7 @@ func waitForAnySchemaRegistryClusterToProvision(ctx context.Context, c *Client, 
 }
 
 func waitForConnectorToProvision(ctx context.Context, c *Client, displayName, environmentId, clusterId string) error {
-	delay, pollInterval := getDelayAndPollInterval(3*time.Minute, 1*time.Minute, c.isAcceptanceTestMode)
+	delay, pollInterval := getDelayAndPollInterval(6*time.Minute, 1*time.Minute, c.isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
 		// Allow PROVISIONING -> DEGRADED -> RUNNING transition
 		Pending:      []string{stateProvisioning, stateDegraded},
