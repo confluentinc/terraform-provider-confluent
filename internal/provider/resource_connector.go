@@ -173,7 +173,7 @@ func connectorCreate(ctx context.Context, d *schema.ResourceData, meta interface
 		if err != nil {
 			return diag.Errorf("error creating Connector: error marshaling offset %#v to json: %s", offsets, createDescriptiveError(err))
 		}
-		tflog.Debug(ctx, fmt.Sprintf("Creating new Connector: %s %s", nonsensitiveConfigJson, offsetsJson))
+		tflog.Debug(ctx, fmt.Sprintf("Creating new Connector with custom offsets: %s %s", nonsensitiveConfigJson, offsetsJson))
 	}
 
 	err = validateConnectorConfig(c.connectApiContext(ctx), c, mergedConfig, environmentId, clusterId)
