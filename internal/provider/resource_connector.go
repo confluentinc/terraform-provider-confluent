@@ -454,7 +454,7 @@ func connectorUpdate(ctx context.Context, d *schema.ResourceData, meta interface
 			return diag.Errorf("error updating Connector %q offsets: %s", d.Id(), createDescriptiveError(err))
 		}
 		if status.Status.GetPhase() == stateFailed {
-			return diag.Errorf("error updating Connector %q offsets: %s", d.Id(), status.Status.GetMessage())
+			return diag.Errorf("error updating Connector %q offsets: status is %s: %s", d.Id(), status.Status.GetPhase(), status.Status.GetMessage())
 		}
 
 		updatedConnectorOffsetsJson, err := json.Marshal(updatedConnectorOffsets)
