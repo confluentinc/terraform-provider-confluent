@@ -139,7 +139,6 @@ func offsetsSchema() *schema.Schema {
 		},
 		Optional:    true,
 		Computed:    false,
-		ForceNew:    false,
 		Description: "Connector partitions with offsets",
 	}
 }
