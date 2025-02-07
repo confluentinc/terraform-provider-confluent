@@ -116,7 +116,7 @@ func connectorResource() *schema.Resource {
 
 func offsetsSchema() *schema.Schema {
 	return &schema.Schema{
-		Type: schema.TypeList,
+		Type: schema.TypeSet,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				paramPartition: {
@@ -159,7 +159,7 @@ func connectorCreate(ctx context.Context, d *schema.ResourceData, meta interface
 	createConnectorRequest := connect.NewInlineObject()
 	createConnectorRequest.SetName(displayName)
 	createConnectorRequest.SetConfig(mergedConfig)
-	if offsets != nil {
+	if len(offsets) > 0 {
 		createConnectorRequest.SetOffsets(offsets)
 	}
 
@@ -305,7 +305,13 @@ func readConnectorAndSetAttributes(ctx context.Context, d *schema.ResourceData, 
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Connector %q: %s", displayName, connectorJson))
 
-	if _, err := setConnectorAttributes(d, connector, environmentId, clusterId); err != nil {
+	offsets, resp, err := c.connectClient.OffsetsConnectV1Api.GetConnectv1ConnectorOffsets(c.connectApiContext(ctx), connector.Info.GetName(), environmentId, clusterId).Execute()
+	if err != nil {
+		// {"error":{"code":403,"message":"Offset operations are not permitted"}}
+		return nil, fmt.Errorf("error reading Connector offsets %q: error marshaling %#v to json: %s %#v", displayName, connector, createDescriptiveError(err), offsets)
+	}
+
+	if _, err := setConnectorAttributes(d, connector, environmentId, clusterId, offsets); err != nil {
 		return nil, createDescriptiveError(err)
 	}
 
@@ -314,7 +320,7 @@ func readConnectorAndSetAttributes(ctx context.Context, d *schema.ResourceData, 
 	return []*schema.ResourceData{d}, nil
 }
 
-func setConnectorAttributes(d *schema.ResourceData, connector connect.ConnectV1ConnectorExpansion, environmentId, clusterId string) (*schema.ResourceData, error) {
+func setConnectorAttributes(d *schema.ResourceData, connector connect.ConnectV1ConnectorExpansion, environmentId, clusterId string, offsets connect.ConnectV1ConnectorOffsets) (*schema.ResourceData, error) {
 	// paramSensitiveConfig is set in connectorCreate()
 	config := connector.Info.GetConfig()
 	status := connector.Status.GetConnector()
@@ -329,6 +335,13 @@ func setConnectorAttributes(d *schema.ResourceData, connector connect.ConnectV1C
 	}
 	if err := d.Set(paramStatus, status.GetState()); err != nil {
 		return nil, err
+	}
+	if offsets.HasOffsets() {
+		// Convert offsets to match the schema’s exact shape (string map)
+		flattened := flattenConnectorOffsets(offsets.GetOffsets())
+		if err := d.Set(paramOffsetsConfig, flattened); err != nil {
+			return nil, err
+		}
 	}
 	d.SetId(connector.Id.GetId())
 	return d, nil
@@ -415,30 +428,36 @@ func connectorUpdate(ctx context.Context, d *schema.ResourceData, meta interface
 	}
 	if d.HasChanges(paramOffsetsConfig) {
 		var connectV1AlterOffsetRequest connect.ConnectV1AlterOffsetRequest
-		connectV1AlterOffsetRequest.SetType(connect.PATCH)
 		updatedOffsets := extractConnectorOffsets(d)
-		if updatedOffsets != nil {
-			connectV1AlterOffsetRequest.SetOffsets(updatedOffsets)
-
-			debugUpdatedOffsetsJson, err := json.Marshal(updatedOffsets)
-			if err != nil {
-				return diag.Errorf("error updating Connector %q: error marshaling offsets %#v to json: %s", d.Id(), updatedOffsets, createDescriptiveError(err))
-			}
-			tflog.Debug(ctx, fmt.Sprintf("Updating Connector using offsets: %s", debugUpdatedOffsetsJson))
-
-			req := c.connectClient.OffsetsConnectV1Api.AlterConnectv1ConnectorOffsetsRequest(c.connectApiContext(ctx), displayName, environmentId, clusterId).ConnectV1AlterOffsetRequest(connectV1AlterOffsetRequest)
-			connectAlterRequestInfo, resp, err := req.Execute()
-
-			if err != nil {
-				return diag.Errorf("error updating Connector %q: StatusCode: %d, %s", d.Id(), resp.StatusCode, createDescriptiveError(err))
-			}
-
-			connectAlterRequestJson, err := json.Marshal(connectAlterRequestInfo)
-			if err != nil {
-				return diag.Errorf("error updating Connector %q: error marshaling %#v to json: %s", d.Id(), connectAlterRequestInfo, createDescriptiveError(err))
-			}
-			tflog.Debug(ctx, fmt.Sprintf("Finished updating Connector with offsets %q: %s", d.Id(), connectAlterRequestJson), map[string]interface{}{connectorLoggingKey: d.Id()})
+		connectV1AlterOffsetRequest.SetType(connect.PATCH)
+		connectV1AlterOffsetRequest.SetOffsets(updatedOffsets)
+		debugUpdatedOffsetsJson, err := json.Marshal(updatedOffsets)
+		if err != nil {
+			return diag.Errorf("error updating Connector %q: error marshaling offsets %#v to json: %s", d.Id(), updatedOffsets, createDescriptiveError(err))
 		}
+		tflog.Debug(ctx, fmt.Sprintf("Updating Connector %q offsets: %s", d.Id(), debugUpdatedOffsetsJson))
+
+		req := c.connectClient.OffsetsConnectV1Api.AlterConnectv1ConnectorOffsetsRequest(c.connectApiContext(ctx), displayName, environmentId, clusterId).ConnectV1AlterOffsetRequest(connectV1AlterOffsetRequest)
+		updatedConnectorOffsets, _, err := req.Execute()
+		if err != nil {
+			return diag.Errorf("error updating Connector %q offsets: %s", d.Id(), createDescriptiveError(err))
+		}
+		// TODO: replace with waiting function
+		SleepIfNotTestMode(30*time.Second, c.isAcceptanceTestMode)
+
+		status, _, err := c.connectClient.OffsetsConnectV1Api.GetConnectv1ConnectorOffsetsRequestStatus(c.connectApiContext(ctx), displayName, environmentId, clusterId).Execute()
+		if err != nil {
+			return diag.Errorf("error updating Connector %q offsets: %s", d.Id(), createDescriptiveError(err))
+		}
+		if status.Status.GetPhase() == stateFailed {
+			return diag.Errorf("error updating Connector %q offsets: %s", d.Id(), status.Status.GetMessage())
+		}
+
+		updatedConnectorOffsetsJson, err := json.Marshal(updatedConnectorOffsets)
+		if err != nil {
+			return diag.Errorf("error updating Connector %q offsets: error marshaling %#v to json: %s", d.Id(), updatedConnectorOffsets, createDescriptiveError(err))
+		}
+		tflog.Debug(ctx, fmt.Sprintf("Finished updating Connector %q offsets : %s", d.Id(), updatedConnectorOffsetsJson), map[string]interface{}{connectorLoggingKey: d.Id()})
 	}
 
 	return connectorRead(ctx, d, meta)
@@ -557,20 +576,32 @@ func extractConnectorConfigs(d *schema.ResourceData) (map[string]string, map[str
 
 // extractConnectorOffsets returns an array of map with Offsets and Partitions
 func extractConnectorOffsets(d *schema.ResourceData) []map[string]interface{} {
-	offsets := d.Get(paramOffsetsConfig)
-	if offsets != nil && len(offsets.([]interface{})) > 0 {
-		var result []map[string]interface{}
-		for _, value := range offsets.([]interface{}) {
-			if valueMap, ok := value.(map[string]interface{}); ok {
-				result = append(result, map[string]interface{}{
-					paramPartition: valueMap[paramPartition],
-					paramOffset:    valueMap[paramOffset],
-				})
-			}
+	offsets := d.Get(paramOffsetsConfig).(*schema.Set).List()
+	result := make([]map[string]interface{}, 0, len(offsets))
+
+	for _, v := range offsets {
+		valueMap, ok := v.(map[string]interface{})
+		if !ok {
+			continue
 		}
-		return result
+
+		partitionRaw := valueMap[paramPartition]
+		offsetRaw := valueMap[paramOffset]
+
+		partitionMap, _ := partitionRaw.(map[string]interface{})
+		offsetMap, _ := offsetRaw.(map[string]interface{})
+
+		// Somehow an empty map entry shows up during update()
+		if len(partitionMap) == 0 && len(offsetMap) == 0 {
+			continue
+		}
+
+		result = append(result, map[string]interface{}{
+			paramPartition: partitionMap,
+			paramOffset:    offsetMap,
+		})
 	}
-	return nil
+	return result
 }
 
 func connectorImporter() *Importer {
@@ -620,4 +651,40 @@ func loadConnectorsByEnvironmentIdAndKafkaClusterId(ctx context.Context, c *Clie
 		return nil, createDescriptiveError(err)
 	}
 	return connectors, nil
+}
+
+func flattenConnectorOffsets(in []map[string]interface{}) []map[string]interface{} {
+	if len(in) == 0 {
+		// This will not happen
+		return []map[string]interface{}{}
+	}
+
+	result := make([]map[string]interface{}, len(in))
+	for i, offsetsObj := range in {
+		newObj := make(map[string]interface{}, len(offsetsObj))
+
+		// Convert 'paramPartition' if it exists; paramPartition is required schema attribute
+		if partitionRaw, ok := offsetsObj[paramPartition]; ok && partitionRaw != nil {
+			partitionMap, _ := partitionRaw.(map[string]interface{})
+			newObj[paramPartition] = convertMapValuesToStrings(partitionMap)
+		}
+
+		// Convert 'paramOffset' if it exists; paramOffset is required schema attribute
+		if offsetRaw, ok := offsetsObj[paramOffset]; ok && offsetRaw != nil {
+			offsetMap, _ := offsetRaw.(map[string]interface{})
+			newObj[paramOffset] = convertMapValuesToStrings(offsetMap)
+		}
+
+		result[i] = newObj
+	}
+	return result
+}
+
+func convertMapValuesToStrings(in map[string]interface{}) map[string]string {
+	out := make(map[string]string, len(in))
+	for k, v := range in {
+		// Convert anything to a string by printing it
+		out[k] = fmt.Sprintf("%v", v)
+	}
+	return out
 }
