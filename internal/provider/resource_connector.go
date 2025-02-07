@@ -309,7 +309,7 @@ func readConnectorAndSetAttributes(ctx context.Context, d *schema.ResourceData, 
 	if err != nil {
 		// For some source and custom connectors, the API may return
 		// {"error":{"code":403,"message":"Offset operations are not permitted"}}.
-		// This is fine because offsets != nil, and we will use offsets.HasOffsets() later.
+		// This is fine because offsets != nil, and we will use len(offsets.GetOffsets()) > 0 later.
 		tflog.Debug(ctx, fmt.Sprintf("Failed to fetch Connector %q offsets: %s", displayName, connectorJson))
 	}
 
@@ -338,7 +338,7 @@ func setConnectorAttributes(d *schema.ResourceData, connector connect.ConnectV1C
 	if err := d.Set(paramStatus, status.GetState()); err != nil {
 		return nil, err
 	}
-	if offsets.HasOffsets() {
+	if len(offsets.GetOffsets()) > 0 {
 		// Convert offsets to match the schema’s exact shape (string map)
 		flattened := flattenConnectorOffsets(offsets.GetOffsets())
 		if err := d.Set(paramOffsetsConfig, flattened); err != nil {
