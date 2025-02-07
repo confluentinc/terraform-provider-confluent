@@ -242,7 +242,7 @@ resource "confluent_connector" "sink" {
   
   offsets {
     partition = {
-      "kafka_partition" = 0,
+      "kafka_partition" = 0
       "kafka_topic"     = confluent_kafka_topic.orders.topic_name
     }
     offset = {
