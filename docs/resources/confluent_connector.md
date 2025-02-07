@@ -212,7 +212,7 @@ resource "confluent_connector" "sink" {
 # https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/connectors/manage-offsets-source-sink-connector
 resource "confluent_connector" "sink" {
   environment {
-    id = data.confluent_environment.env.id
+    id = data.confluent_environment.staging.id
   }
   
   kafka_cluster {
