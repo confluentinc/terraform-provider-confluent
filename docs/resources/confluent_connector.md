@@ -346,7 +346,7 @@ The following arguments are supported:
 
 - `status` (Optional String) The status of the connector (one of `"NONE"`, `"PROVISIONING"`, `"RUNNING"`, `"DEGRADED"`, `"FAILED"`, `"PAUSED"`, `"DELETED"`). Pausing (`"RUNNING" -> "PAUSED"`) and resuming (`"PAUSED" -> "RUNNING"`) a connector is supported via an update operation.
 
--> **Note:** Source connectors have connector specific configuration entries for `offsets.partition` and `offsets.offset`. Refer [Manage Custom Offsets](https://docs.confluent.io/cloud/current/connectors/cc-mongo-db-source.html#manage-custom-offsets) for supported source connectors and their configuration entries.
+For more information on connector offset management, see [Manage Offsets for Fully-Managed Connectors in Confluent Cloud](https://docs.confluent.io/cloud/current/connectors/offsets.html).
 
 -> **Note:** If there are no _sensitive_ configuration settings for your connector, set `config_sensitive = {}` explicitly.
 
