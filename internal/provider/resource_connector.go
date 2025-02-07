@@ -443,7 +443,7 @@ func connectorUpdate(ctx context.Context, d *schema.ResourceData, meta interface
 		req := c.connectClient.OffsetsConnectV1Api.AlterConnectv1ConnectorOffsetsRequest(c.connectApiContext(ctx), displayName, environmentId, clusterId).ConnectV1AlterOffsetRequest(connectV1AlterOffsetRequest)
 		updatedConnectorOffsets, resp, err := req.Execute()
 		if err != nil {
-			body, err := io.ReadAll(resp.Body)
+			body, _ := io.ReadAll(resp.Body)
 			return diag.Errorf("error updating Connector %q offsets: %s: %s", d.Id(), createDescriptiveError(err), string(body))
 		}
 		// TODO: replace with waiting function
