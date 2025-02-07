@@ -209,7 +209,7 @@ resource "confluent_connector" "sink" {
 ### Example Managed [MySQL Sink Connector](https://docs.confluent.io/cloud/current/connectors/cc-mysql-sink.html) that uses a service account to communicate with your Kafka cluster
 
 ```terraform
-# https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/connectors/manageoffsets-source-sink-connector
+# https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/connectors/manage-offsets-source-sink-connector
 resource "confluent_connector" "sink" {
   environment {
     id = data.confluent_environment.env.id
