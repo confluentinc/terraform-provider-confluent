@@ -203,7 +203,6 @@ func connectorCreate(ctx context.Context, d *schema.ResourceData, meta interface
 	}
 
 	// Save sensitive configs
-	// Offsets are not saved
 	if err := d.Set(paramSensitiveConfig, sensitiveConfig); err != nil {
 		return diag.FromErr(createDescriptiveError(err))
 	}
