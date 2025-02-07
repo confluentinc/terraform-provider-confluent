@@ -562,10 +562,12 @@ func extractConnectorOffsets(d *schema.ResourceData) []map[string]interface{} {
 	if offsets != nil && len(offsets.([]interface{})) > 0 {
 		var result []map[string]interface{}
 		for _, value := range offsets.([]interface{}) {
-			valueMap := make(map[string]interface{})
-			valueMap[paramPartition] = value.(map[string]interface{})[paramPartition]
-			valueMap[paramOffset] = value.(map[string]interface{})[paramOffset]
-			result = append(result, valueMap)
+			if valueMap, ok := value.(map[string]interface{}); ok {
+				result = append(result, map[string]interface{}{
+					paramPartition: valueMap[paramPartition],
+					paramOffset:    valueMap[paramOffset],
+				})
+			}
 		}
 		return result
 	}
