@@ -307,8 +307,9 @@ func readConnectorAndSetAttributes(ctx context.Context, d *schema.ResourceData, 
 
 	offsets, resp, err := c.connectClient.OffsetsConnectV1Api.GetConnectv1ConnectorOffsets(c.connectApiContext(ctx), connector.Info.GetName(), environmentId, clusterId).Execute()
 	if err != nil {
-		// {"error":{"code":403,"message":"Offset operations are not permitted"}}
-		return nil, fmt.Errorf("error reading Connector offsets %q: error marshaling %#v to json: %s %#v", displayName, connector, createDescriptiveError(err), offsets)
+		// The API returns {"error":{"code":403,"message":"Offset operations are not permitted"}}
+		// for source and custom connectors and it's OK
+		tflog.Debug(ctx, fmt.Sprintf("Failed to fetch Connector %q offsets: %s", displayName, connectorJson))
 	}
 
 	if _, err := setConnectorAttributes(d, connector, environmentId, clusterId, offsets); err != nil {
