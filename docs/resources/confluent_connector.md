@@ -338,7 +338,7 @@ The following arguments are supported:
   - `value` - (Required String, Sensitive) The configuration setting value, for example, `***REDACTED***`.
 - `offsets` - (Optional List of Configuration Blocks) supports the following:
   - `partition` - (Required Map) Block with partition information that supports different keys depending on the connector type. For sink connectors, use `kafka_partition` and `kafka_topic`. For source connectors, the applicable keys differ by kind—refer to the [Source connectors page](https://docs.confluent.io/cloud/current/connectors/offsets.html#source-connectors) for the full list of supported keys.
-    - `kafka_partition` - (Optional String) The partition number of the topic (for sink connectors).
+    - `kafka_partition` - (Optional String) The partition number of the topic (applicable only for sink connectors).
     - `kafka_topic` - (Optional String) The name of the Kafka topic (applicable only for sink connectors).
   - `offset` - (Required Map) Block with offset information that supports different keys depending on the connector type. For sink connectors, use `kafka_offset`. For source connectors, the applicable keys differ by kind—refer to the [Source connectors page](https://docs.confluent.io/cloud/current/connectors/offsets.html#source-connectors) for the full list of supported keys.
     - `kafka_offset` - (Optional String) The offset of the Kafka topic (applicable only for sink connectors).
