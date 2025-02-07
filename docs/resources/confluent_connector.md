@@ -341,7 +341,7 @@ The following arguments are supported:
     - `kafka_partition` - (Optional String) The partition number of the topic (for sink connectors).
     - `kafka_topic` - (Optional String) The name of the Kafka topic (for sink connectors).
   - `offset` - (Required Map) Block with offset information. Arguments for source connectors can be found under "Manage custom offsets" section in [the docs](https://docs.confluent.io/cloud/current/connectors/index.html).
-    - `kafka_offset` - (Optional String) The Kafka offset (for sink connectors).
+    - `kafka_offset` - (Optional String) The offset of the Kafka topic (applicable only for sink connectors).
 !> **Warning:** Terraform doesn't encrypt the sensitive configuration settings from the `config_sensitive` block of the `confluent_connector` resource, so you must keep your state file secure to avoid exposing it. Refer to the [Terraform documentation](https://www.terraform.io/docs/language/state/sensitive-data.html) to learn more about securing your state file.
 
 - `status` (Optional String) The status of the connector (one of `"NONE"`, `"PROVISIONING"`, `"RUNNING"`, `"DEGRADED"`, `"FAILED"`, `"PAUSED"`, `"DELETED"`). Pausing (`"RUNNING" -> "PAUSED"`) and resuming (`"PAUSED" -> "RUNNING"`) a connector is supported via an update operation.
