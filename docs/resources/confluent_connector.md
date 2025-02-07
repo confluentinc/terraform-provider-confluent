@@ -216,7 +216,7 @@ resource "confluent_connector" "sink" {
   }
   
   kafka_cluster {
-    id = data.confluent_kafka_cluster.test_cluster.id
+    id = data.confluent_kafka_cluster.basic.id
   }
   config_sensitive = {
     "connection.password" = "***REDACTED***"
