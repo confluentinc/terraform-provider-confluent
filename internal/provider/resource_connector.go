@@ -18,6 +18,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"regexp"
 	"strings"
@@ -440,9 +441,10 @@ func connectorUpdate(ctx context.Context, d *schema.ResourceData, meta interface
 		tflog.Debug(ctx, fmt.Sprintf("Updating Connector %q offsets: %s", d.Id(), debugUpdatedOffsetsJson))
 
 		req := c.connectClient.OffsetsConnectV1Api.AlterConnectv1ConnectorOffsetsRequest(c.connectApiContext(ctx), displayName, environmentId, clusterId).ConnectV1AlterOffsetRequest(connectV1AlterOffsetRequest)
-		updatedConnectorOffsets, _, err := req.Execute()
+		updatedConnectorOffsets, resp, err := req.Execute()
 		if err != nil {
-			return diag.Errorf("error updating Connector %q offsets: %s", d.Id(), createDescriptiveError(err))
+			body, err := io.ReadAll(resp.Body)
+			return diag.Errorf("error updating Connector %q offsets: %s: %s", d.Id(), createDescriptiveError(err), string(body))
 		}
 		// TODO: replace with waiting function
 		SleepIfNotTestMode(30*time.Second, c.isAcceptanceTestMode)
