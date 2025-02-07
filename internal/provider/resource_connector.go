@@ -139,7 +139,7 @@ func offsetsSchema() *schema.Schema {
 			},
 		},
 		Optional:    true,
-		Computed:    false,
+		Computed:    true,
 		ForceNew:    false,
 		Description: "Connector partitions with offsets",
 	}
@@ -595,7 +595,8 @@ func extractConnectorOffsets(d *schema.ResourceData) []map[string]interface{} {
 		partitionMap, _ := partitionRaw.(map[string]interface{})
 		offsetMap, _ := offsetRaw.(map[string]interface{})
 
-		// Somehow an empty map entry shows up during update()
+		// https://github.com/hashicorp/terraform-plugin-sdk/pull/1042
+		// https://discuss.hashicorp.com/t/using-typeset-in-provider-always-adds-an-empty-element-on-update/18566/6
 		if len(partitionMap) == 0 && len(offsetMap) == 0 {
 			continue
 		}
