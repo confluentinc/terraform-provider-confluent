@@ -242,7 +242,16 @@ resource "confluent_connector" "sink" {
   
   offsets {
     partition = {
-      "kafka_partition" = 0
+      "kafka_partition" = "0"
+      "kafka_topic"     = confluent_kafka_topic.orders.topic_name
+    }
+    offset = {
+      "kafka_offset" = "75000"
+    }
+  }
+  offsets {
+    partition = {
+      "kafka_partition" = "1"
       "kafka_topic"     = confluent_kafka_topic.orders.topic_name
     }
     offset = {
@@ -251,20 +260,11 @@ resource "confluent_connector" "sink" {
   }
   offsets {
     partition = {
-      "kafka_partition" = 1,
+      "kafka_partition" = "5"
       "kafka_topic"     = confluent_kafka_topic.orders.topic_name
     }
     offset = {
-      "kafka_offset" = 75000
-    }
-  }
-  offsets {
-    partition = {
-      "kafka_partition" = 5,
-      "kafka_topic"     = confluent_kafka_topic.orders.topic_name
-    }
-    offset = {
-      "kafka_offset" = 75000
+      "kafka_offset" = "75000"
     }
   }
   depends_on = [
