@@ -649,39 +649,3 @@ func loadConnectorsByEnvironmentIdAndKafkaClusterId(ctx context.Context, c *Clie
 	}
 	return connectors, nil
 }
-
-func flattenConnectorOffsets(in []map[string]interface{}) []map[string]interface{} {
-	if len(in) == 0 {
-		// This will not happen
-		return []map[string]interface{}{}
-	}
-
-	result := make([]map[string]interface{}, len(in))
-	for i, offsetsObj := range in {
-		newObj := make(map[string]interface{}, len(offsetsObj))
-
-		// Convert 'paramPartition' if it exists; paramPartition is required schema attribute
-		if partitionRaw, ok := offsetsObj[paramPartition]; ok && partitionRaw != nil {
-			partitionMap, _ := partitionRaw.(map[string]interface{})
-			newObj[paramPartition] = convertMapValuesToStrings(partitionMap)
-		}
-
-		// Convert 'paramOffset' if it exists; paramOffset is required schema attribute
-		if offsetRaw, ok := offsetsObj[paramOffset]; ok && offsetRaw != nil {
-			offsetMap, _ := offsetRaw.(map[string]interface{})
-			newObj[paramOffset] = convertMapValuesToStrings(offsetMap)
-		}
-
-		result[i] = newObj
-	}
-	return result
-}
-
-func convertMapValuesToStrings(in map[string]interface{}) map[string]string {
-	out := make(map[string]string, len(in))
-	for k, v := range in {
-		// Convert anything to a string by printing it
-		out[k] = fmt.Sprintf("%v", v)
-	}
-	return out
-}
