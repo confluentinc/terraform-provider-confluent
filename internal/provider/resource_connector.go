@@ -139,8 +139,7 @@ func offsetsSchema() *schema.Schema {
 			},
 		},
 		Optional:    true,
-		Computed:    true,
-		ForceNew:    false,
+		Computed:    false,
 		Description: "Connector partitions with offsets",
 	}
 }
@@ -152,7 +151,7 @@ func connectorCreate(ctx context.Context, d *schema.ResourceData, meta interface
 	clusterId := extractStringValueFromBlock(d, paramKafkaCluster, paramId)
 
 	mergedConfig, sensitiveConfig, nonsensitiveConfig := extractConnectorConfigs(d)
-	offsets := extractConnectorOffsets(d)
+	offsets := extractConnectorOffsets(d.Get(paramOffsetsConfig))
 	displayName := d.Get(connectorConfigFullAttributeName).(string)
 	if displayName == "" {
 		return diag.Errorf("error creating Connector: %q attribute is missing in %q block", connectorConfigAttributeName, paramNonSensitiveConfig)
@@ -169,7 +168,7 @@ func connectorCreate(ctx context.Context, d *schema.ResourceData, meta interface
 		return diag.Errorf("error creating Connector: error marshaling config %#v to json: %s", nonsensitiveConfig, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Connector: %s", nonsensitiveConfigJson))
-	if offsets != nil {
+	if len(offsets) > 0 {
 		offsetsJson, err := json.Marshal(offsets)
 		if err != nil {
 			return diag.Errorf("error creating Connector: error marshaling offset %#v to json: %s", offsets, createDescriptiveError(err))
@@ -306,16 +305,7 @@ func readConnectorAndSetAttributes(ctx context.Context, d *schema.ResourceData, 
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Connector %q: %s", displayName, connectorJson))
 
-	offsets, resp, err := c.connectClient.OffsetsConnectV1Api.GetConnectv1ConnectorOffsets(c.connectApiContext(ctx), connector.Info.GetName(), environmentId, clusterId).Execute()
-	if err != nil {
-		// For some source and custom connectors, the API may return
-		// {"error":{"code":403,"message":"Offset operations are not permitted"}}.
-		// {"error":{"code":404,"message":"Connector not found"}}
-		// This is fine because offsets != nil, and we will use len(offsets.GetOffsets()) > 0 later.
-		tflog.Debug(ctx, fmt.Sprintf("Failed to fetch Connector %q offsets: %s", displayName, connectorJson))
-	}
-
-	if _, err := setConnectorAttributes(d, connector, environmentId, clusterId, offsets); err != nil {
+	if _, err := setConnectorAttributes(d, connector, environmentId, clusterId); err != nil {
 		return nil, createDescriptiveError(err)
 	}
 
@@ -324,7 +314,7 @@ func readConnectorAndSetAttributes(ctx context.Context, d *schema.ResourceData, 
 	return []*schema.ResourceData{d}, nil
 }
 
-func setConnectorAttributes(d *schema.ResourceData, connector connect.ConnectV1ConnectorExpansion, environmentId, clusterId string, offsets connect.ConnectV1ConnectorOffsets) (*schema.ResourceData, error) {
+func setConnectorAttributes(d *schema.ResourceData, connector connect.ConnectV1ConnectorExpansion, environmentId, clusterId string) (*schema.ResourceData, error) {
 	// paramSensitiveConfig is set in connectorCreate()
 	config := connector.Info.GetConfig()
 	status := connector.Status.GetConnector()
@@ -340,13 +330,13 @@ func setConnectorAttributes(d *schema.ResourceData, connector connect.ConnectV1C
 	if err := d.Set(paramStatus, status.GetState()); err != nil {
 		return nil, err
 	}
-	if len(offsets.GetOffsets()) > 0 {
-		// Convert offsets to match the schema’s exact shape (string map)
-		flattened := flattenConnectorOffsets(offsets.GetOffsets())
-		if err := d.Set(paramOffsetsConfig, flattened); err != nil {
-			return nil, err
-		}
-	}
+	//if len(offsets.GetOffsets()) > 0 {
+	//	// Convert offsets to match the schema’s exact shape (string map)
+	//	flattened := flattenConnectorOffsets(offsets.GetOffsets())
+	//	if err := d.Set(paramOffsetsConfig, flattened); err != nil {
+	//		return nil, err
+	//	}
+	//}
 	d.SetId(connector.Id.GetId())
 	return d, nil
 }
@@ -431,19 +421,25 @@ func connectorUpdate(ctx context.Context, d *schema.ResourceData, meta interface
 		tflog.Debug(ctx, fmt.Sprintf("Finished updating Connector %q: %s", d.Id(), updatedConnectorJson), map[string]interface{}{connectorLoggingKey: d.Id()})
 	}
 	if d.HasChanges(paramOffsetsConfig) {
+		oldValue, newValue := d.GetChange(paramOffsetsConfig)
+		// Extract the "old" offsets
+		oldOffsets := extractConnectorOffsets(oldValue)
+		// Extract the "new" offsets
+		newOffsets := extractConnectorOffsets(newValue)
+
 		var connectV1AlterOffsetRequest connect.ConnectV1AlterOffsetRequest
-		updatedOffsets := extractConnectorOffsets(d)
 		connectV1AlterOffsetRequest.SetType(connect.PATCH)
-		connectV1AlterOffsetRequest.SetOffsets(updatedOffsets)
-		debugUpdatedOffsetsJson, err := json.Marshal(updatedOffsets)
+		connectV1AlterOffsetRequest.SetOffsets(newOffsets)
+		debugUpdatedOffsetsJson, err := json.Marshal(newOffsets)
 		if err != nil {
-			return diag.Errorf("error updating Connector %q: error marshaling offsets %#v to json: %s", d.Id(), updatedOffsets, createDescriptiveError(err))
+			return diag.Errorf("error updating Connector %q: error marshaling offsets %#v to json: %s", d.Id(), newOffsets, createDescriptiveError(err))
 		}
 		tflog.Debug(ctx, fmt.Sprintf("Updating Connector %q offsets: %s", d.Id(), debugUpdatedOffsetsJson))
 
 		req := c.connectClient.OffsetsConnectV1Api.AlterConnectv1ConnectorOffsetsRequest(c.connectApiContext(ctx), displayName, environmentId, clusterId).ConnectV1AlterOffsetRequest(connectV1AlterOffsetRequest)
 		updatedConnectorOffsets, resp, err := req.Execute()
 		if err != nil {
+			d.Set(paramOffsetsConfig, oldOffsets)
 			body, _ := io.ReadAll(resp.Body)
 			return diag.Errorf("error updating Connector %q offsets: %s: %s", d.Id(), createDescriptiveError(err), string(body))
 		}
@@ -452,9 +448,11 @@ func connectorUpdate(ctx context.Context, d *schema.ResourceData, meta interface
 
 		status, _, err := c.connectClient.OffsetsConnectV1Api.GetConnectv1ConnectorOffsetsRequestStatus(c.connectApiContext(ctx), displayName, environmentId, clusterId).Execute()
 		if err != nil {
+			d.Set(paramOffsetsConfig, oldOffsets)
 			return diag.Errorf("error updating Connector %q offsets: %s", d.Id(), createDescriptiveError(err))
 		}
 		if status.Status.GetPhase() == stateFailed {
+			d.Set(paramOffsetsConfig, oldOffsets)
 			return diag.Errorf("error updating Connector %q offsets: status is %s: %s", d.Id(), status.Status.GetPhase(), status.Status.GetMessage())
 		}
 
@@ -579,12 +577,19 @@ func extractConnectorConfigs(d *schema.ResourceData) (map[string]string, map[str
 	return config, sensitiveConfigs, nonsensitiveConfigs
 }
 
-// extractConnectorOffsets returns an array of map with Offsets and Partitions
-func extractConnectorOffsets(d *schema.ResourceData) []map[string]interface{} {
-	offsets := d.Get(paramOffsetsConfig).(*schema.Set).List()
-	result := make([]map[string]interface{}, 0, len(offsets))
+// extractConnectorOffsets converts the raw interface{} (typically from schema.Set)
+// into a slice of maps containing "partition" and "offset" keys.
+func extractConnectorOffsets(raw interface{}) []map[string]interface{} {
+	setVal, ok := raw.(*schema.Set)
+	if !ok {
+		// If it's not a *schema.Set, return an empty slice.
+		return []map[string]interface{}{}
+	}
 
-	for _, v := range offsets {
+	list := setVal.List()
+	result := make([]map[string]interface{}, 0, len(list))
+
+	for _, v := range list {
 		valueMap, ok := v.(map[string]interface{})
 		if !ok {
 			continue
@@ -593,11 +598,12 @@ func extractConnectorOffsets(d *schema.ResourceData) []map[string]interface{} {
 		partitionRaw := valueMap[paramPartition]
 		offsetRaw := valueMap[paramOffset]
 
+		// https://github.com/hashicorp/terraform-plugin-sdk/pull/1042
+		// https://discuss.hashicorp.com/t/using-typeset-in-provider-always-adds-an-empty-element-on-update/18566/6
 		partitionMap, _ := partitionRaw.(map[string]interface{})
 		offsetMap, _ := offsetRaw.(map[string]interface{})
 
-		// https://github.com/hashicorp/terraform-plugin-sdk/pull/1042
-		// https://discuss.hashicorp.com/t/using-typeset-in-provider-always-adds-an-empty-element-on-update/18566/6
+		// Skip empty partition/offset maps.
 		if len(partitionMap) == 0 && len(offsetMap) == 0 {
 			continue
 		}
@@ -607,6 +613,7 @@ func extractConnectorOffsets(d *schema.ResourceData) []map[string]interface{} {
 			paramOffset:    offsetMap,
 		})
 	}
+
 	return result
 }
 
