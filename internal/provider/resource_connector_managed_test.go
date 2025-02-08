@@ -52,8 +52,7 @@ func TestAccManagedConnector(t *testing.T) {
 	}
 	defer wiremockContainer.Terminate(ctx)
 
-	//mockServerUrl := wiremockContainer.URI
-	mockServerUrl := "http://localhost:8080"
+	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
 	// nolint:errcheck
 	defer wiremockClient.Reset()
