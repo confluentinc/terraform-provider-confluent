@@ -179,9 +179,10 @@ func connectorCreate(ctx context.Context, d *schema.ResourceData, meta interface
 		return diag.Errorf("error creating Connector: %s", createDescriptiveError(err))
 	}
 
-	createdConnector, _, err := executeConnectorCreate(c.connectApiContext(ctx), c, environmentId, clusterId, createConnectorRequest)
+	createdConnector, resp, err := executeConnectorCreate(c.connectApiContext(ctx), c, environmentId, clusterId, createConnectorRequest)
 	if err != nil {
-		return diag.Errorf("error creating Connector %q: %s", displayName, createDescriptiveError(err))
+		descriptiveError, _ := io.ReadAll(resp.Body)
+		return diag.Errorf("error creating Connector %q: %s: %s", displayName, createDescriptiveError(err), string(descriptiveError))
 	}
 	// There's no ID attribute in createdConnector, so we have to send another request to a different endpoint to get a connector object with ID attribute
 	SleepIfNotTestMode(connectAPIWaitAfterCreate, meta.(*Client).isAcceptanceTestMode)
