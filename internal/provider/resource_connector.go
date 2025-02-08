@@ -140,6 +140,7 @@ func offsetsSchema() *schema.Schema {
 		},
 		Optional:    true,
 		Computed:    false,
+		ForceNew:    false,
 		Description: "Connector partitions with offsets",
 	}
 }
@@ -151,7 +152,7 @@ func connectorCreate(ctx context.Context, d *schema.ResourceData, meta interface
 	clusterId := extractStringValueFromBlock(d, paramKafkaCluster, paramId)
 
 	mergedConfig, sensitiveConfig, nonsensitiveConfig := extractConnectorConfigs(d)
-	offsets := extractConnectorOffsets(d.Get(paramOffsetsConfig))
+	offsets := extractConnectorOffsets(d)
 	displayName := d.Get(connectorConfigFullAttributeName).(string)
 	if displayName == "" {
 		return diag.Errorf("error creating Connector: %q attribute is missing in %q block", connectorConfigAttributeName, paramNonSensitiveConfig)
@@ -209,6 +210,9 @@ func connectorCreate(ctx context.Context, d *schema.ResourceData, meta interface
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating Connector %q", displayName))
 
+	// We don't save offsets in connectorRead because the backend can arbitrarily change them.
+	// You can create a connector without offsets—initially, initially the backend returns "offsets": [],
+	// but after some time, it may return a non-empty list of offsets.
 	return connectorRead(ctx, d, meta)
 }
 
@@ -330,13 +334,6 @@ func setConnectorAttributes(d *schema.ResourceData, connector connect.ConnectV1C
 	if err := d.Set(paramStatus, status.GetState()); err != nil {
 		return nil, err
 	}
-	//if len(offsets.GetOffsets()) > 0 {
-	//	// Convert offsets to match the schema’s exact shape (string map)
-	//	flattened := flattenConnectorOffsets(offsets.GetOffsets())
-	//	if err := d.Set(paramOffsetsConfig, flattened); err != nil {
-	//		return nil, err
-	//	}
-	//}
 	d.SetId(connector.Id.GetId())
 	return d, nil
 }
@@ -422,11 +419,8 @@ func connectorUpdate(ctx context.Context, d *schema.ResourceData, meta interface
 	}
 	if d.HasChanges(paramOffsetsConfig) {
 		oldValue, newValue := d.GetChange(paramOffsetsConfig)
-		// Extract the "old" offsets
-		oldOffsets := extractConnectorOffsets(oldValue)
-		// Extract the "new" offsets
-		newOffsets := extractConnectorOffsets(newValue)
-
+		tflog.Debug(ctx, fmt.Sprintf("Updating Connector %q offsets from %#v to %#v", d.Id(), oldValue, newValue))
+		newOffsets := extractConnectorOffsets(d)
 		var connectV1AlterOffsetRequest connect.ConnectV1AlterOffsetRequest
 		connectV1AlterOffsetRequest.SetType(connect.PATCH)
 		connectV1AlterOffsetRequest.SetOffsets(newOffsets)
@@ -434,25 +428,24 @@ func connectorUpdate(ctx context.Context, d *schema.ResourceData, meta interface
 		if err != nil {
 			return diag.Errorf("error updating Connector %q: error marshaling offsets %#v to json: %s", d.Id(), newOffsets, createDescriptiveError(err))
 		}
+
 		tflog.Debug(ctx, fmt.Sprintf("Updating Connector %q offsets: %s", d.Id(), debugUpdatedOffsetsJson))
 
 		req := c.connectClient.OffsetsConnectV1Api.AlterConnectv1ConnectorOffsetsRequest(c.connectApiContext(ctx), displayName, environmentId, clusterId).ConnectV1AlterOffsetRequest(connectV1AlterOffsetRequest)
 		updatedConnectorOffsets, resp, err := req.Execute()
 		if err != nil {
-			d.Set(paramOffsetsConfig, oldOffsets)
 			body, _ := io.ReadAll(resp.Body)
 			return diag.Errorf("error updating Connector %q offsets: %s: %s", d.Id(), createDescriptiveError(err), string(body))
 		}
 		// TODO: replace with waiting function
-		SleepIfNotTestMode(30*time.Second, c.isAcceptanceTestMode)
+		SleepIfNotTestMode(60*time.Second, c.isAcceptanceTestMode)
 
 		status, _, err := c.connectClient.OffsetsConnectV1Api.GetConnectv1ConnectorOffsetsRequestStatus(c.connectApiContext(ctx), displayName, environmentId, clusterId).Execute()
 		if err != nil {
-			d.Set(paramOffsetsConfig, oldOffsets)
 			return diag.Errorf("error updating Connector %q offsets: %s", d.Id(), createDescriptiveError(err))
 		}
+		tflog.Debug(ctx, fmt.Sprintf("Updating Connector %q offsets, status is %s: %s", d.Id(), status.Status.GetPhase(), debugUpdatedOffsetsJson))
 		if status.Status.GetPhase() == stateFailed {
-			d.Set(paramOffsetsConfig, oldOffsets)
 			return diag.Errorf("error updating Connector %q offsets: status is %s: %s", d.Id(), status.Status.GetPhase(), status.Status.GetMessage())
 		}
 
@@ -577,19 +570,12 @@ func extractConnectorConfigs(d *schema.ResourceData) (map[string]string, map[str
 	return config, sensitiveConfigs, nonsensitiveConfigs
 }
 
-// extractConnectorOffsets converts the raw interface{} (typically from schema.Set)
-// into a slice of maps containing "partition" and "offset" keys.
-func extractConnectorOffsets(raw interface{}) []map[string]interface{} {
-	setVal, ok := raw.(*schema.Set)
-	if !ok {
-		// If it's not a *schema.Set, return an empty slice.
-		return []map[string]interface{}{}
-	}
+// extractConnectorOffsets returns an array of map with Offsets and Partitions
+func extractConnectorOffsets(d *schema.ResourceData) []map[string]interface{} {
+	offsets := d.Get(paramOffsetsConfig).(*schema.Set).List()
+	result := make([]map[string]interface{}, 0, len(offsets))
 
-	list := setVal.List()
-	result := make([]map[string]interface{}, 0, len(list))
-
-	for _, v := range list {
+	for _, v := range offsets {
 		valueMap, ok := v.(map[string]interface{})
 		if !ok {
 			continue
@@ -598,12 +584,11 @@ func extractConnectorOffsets(raw interface{}) []map[string]interface{} {
 		partitionRaw := valueMap[paramPartition]
 		offsetRaw := valueMap[paramOffset]
 
-		// https://github.com/hashicorp/terraform-plugin-sdk/pull/1042
-		// https://discuss.hashicorp.com/t/using-typeset-in-provider-always-adds-an-empty-element-on-update/18566/6
 		partitionMap, _ := partitionRaw.(map[string]interface{})
 		offsetMap, _ := offsetRaw.(map[string]interface{})
 
-		// Skip empty partition/offset maps.
+		// https://github.com/hashicorp/terraform-plugin-sdk/pull/1042
+		// https://discuss.hashicorp.com/t/using-typeset-in-provider-always-adds-an-empty-element-on-update/18566/6
 		if len(partitionMap) == 0 && len(offsetMap) == 0 {
 			continue
 		}
@@ -613,7 +598,6 @@ func extractConnectorOffsets(raw interface{}) []map[string]interface{} {
 			paramOffset:    offsetMap,
 		})
 	}
-
 	return result
 }
 
