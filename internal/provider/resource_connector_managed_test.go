@@ -52,7 +52,8 @@ func TestAccManagedConnector(t *testing.T) {
 	}
 	defer wiremockContainer.Terminate(ctx)
 
-	mockServerUrl := wiremockContainer.URI
+	//mockServerUrl := wiremockContainer.URI
+	mockServerUrl := "http://localhost:8080"
 	wiremockClient := wiremock.NewClient(mockServerUrl)
 	// nolint:errcheck
 	defer wiremockClient.Reset()
@@ -154,13 +155,23 @@ func TestAccManagedConnector(t *testing.T) {
 
 	updateConnectorOffsetStub := wiremock.Post(wiremock.URLPathEqualTo("/connect/v1/environments/env-1j3m9j/clusters/lkc-vnwdjz/connectors/test_connector/offsets/request")).
 		WhenScenarioStateIs(scenarioStateManagedConnectorNameHasBeenUpdated).
-		WillSetStateTo(scenarioStateManagedConnectorOffsetHasBeenUpdated).
 		WillReturn(
 			"",
 			contentTypeJSONHeader,
 			http.StatusAccepted,
 		)
 	_ = wiremockClient.StubFor(updateConnectorOffsetStub)
+
+	updatedConnectorOffsetsResponse, _ := os.ReadFile("../testdata/connector/managed/read_updated_connector_offset_status.json")
+	updatedConnectorOffsetStatusStub := wiremock.Get(wiremock.URLPathEqualTo("/connect/v1/environments/env-1j3m9j/clusters/lkc-vnwdjz/connectors/test_connector/offsets/request/status")).
+		WhenScenarioStateIs(scenarioStateManagedConnectorNameHasBeenUpdated).
+		WillSetStateTo(scenarioStateManagedConnectorOffsetHasBeenUpdated).
+		WillReturn(
+			string(updatedConnectorOffsetsResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		)
+	_ = wiremockClient.StubFor(updatedConnectorOffsetStatusStub)
 
 	updatedConnectorResponse, _ := os.ReadFile("../testdata/connector/managed/read_updated_connectors.json")
 	readUpdatedConnectorStub := wiremock.Get(wiremock.URLPathEqualTo("/connect/v1/environments/env-1j3m9j/clusters/lkc-vnwdjz/connectors")).
