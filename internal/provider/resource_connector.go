@@ -162,6 +162,11 @@ func connectorCreate(ctx context.Context, d *schema.ResourceData, meta interface
 	createConnectorRequest.SetConfig(mergedConfig)
 	if len(offsets) > 0 {
 		createConnectorRequest.SetOffsets(offsets)
+		offsetsJson, err := json.Marshal(offsets)
+		if err != nil {
+			return diag.Errorf("error creating Connector: error marshaling offset %#v to json: %s", offsets, createDescriptiveError(err))
+		}
+		tflog.Debug(ctx, fmt.Sprintf("Creating new Connector with custom offsets: %s", offsetsJson))
 	}
 
 	nonsensitiveConfigJson, err := json.Marshal(nonsensitiveConfig)
@@ -169,14 +174,6 @@ func connectorCreate(ctx context.Context, d *schema.ResourceData, meta interface
 		return diag.Errorf("error creating Connector: error marshaling config %#v to json: %s", nonsensitiveConfig, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Connector: %s", nonsensitiveConfigJson))
-	if len(offsets) > 0 {
-		offsetsJson, err := json.Marshal(offsets)
-		if err != nil {
-			return diag.Errorf("error creating Connector: error marshaling offset %#v to json: %s", offsets, createDescriptiveError(err))
-		}
-		tflog.Debug(ctx, fmt.Sprintf("Creating new Connector with custom offsets: %s %s", nonsensitiveConfigJson, offsetsJson))
-	}
-
 	err = validateConnectorConfig(c.connectApiContext(ctx), c, mergedConfig, environmentId, clusterId)
 	if err != nil {
 		return diag.Errorf("error creating Connector: %s", createDescriptiveError(err))
