@@ -223,21 +223,20 @@ resource "confluent_connector" "sink" {
 
   }
   config_nonsensitive = {
-    "kafka.auth.mode"            = "SERVICE_ACCOUNT"
-    "kafka.service.account.id"   = confluent_service_account.app-connector.id
-    "ssl.mode"                   = "prefer"
-    "connector.class"            = "MySqlSink"
-    "name"                       = "MySqlSinkConnector_0"
-    "topics"                     = confluent_kafka_topic.orders.topic_name
-    "input.data.format"          = "JSON"
-    "tasks.max"                  = "1"
-    "db.name"                    = "test"
-    "insert.mode"                = "INSERT"
-    "auto.create"                = "true"
-    "auto.evolve"                = "true"
-    "connection.host"            = "confluent-test.mycluster.mongodb.net"
-    "connection.port"            = "27017"
-    "connection.user"            = "mongo-test-user"
+    "connector.class"          = "MySqlSink"
+    "name"                     = "MySQLSinkConnector_0"
+    "topics"                   = confluent_kafka_topic.orders.topic_name
+    "input.data.format"        = "AVRO"
+    "kafka.auth.mode"          = "SERVICE_ACCOUNT"
+    "kafka.service.account.id" = confluent_service_account.app-connector.id
+    "db.name"                  = "test_database"
+    "connection.user"          = "confluent_user"
+    "connection.host"          = "dev-testing-temp.abcdefghijk.us-west-7.rds.amazonaws.com"
+    "connection.port"          = "3306"
+    "insert.mode"              = "INSERT"
+    "auto.create"              = "true"
+    "auto.evolve"              = "true"
+    "tasks.max"                = "1"
   }
   
   offsets {
@@ -246,7 +245,7 @@ resource "confluent_connector" "sink" {
       "kafka_topic"     = confluent_kafka_topic.orders.topic_name
     }
     offset = {
-      "kafka_offset" = "75000"
+      "kafka_offset" = "100"
     }
   }
   offsets {
@@ -255,16 +254,16 @@ resource "confluent_connector" "sink" {
       "kafka_topic"     = confluent_kafka_topic.orders.topic_name
     }
     offset = {
-      "kafka_offset" = 75000
+      "kafka_offset" = "200"
     }
   }
   offsets {
     partition = {
-      "kafka_partition" = "5"
+      "kafka_partition" = "2"
       "kafka_topic"     = confluent_kafka_topic.orders.topic_name
     }
     offset = {
-      "kafka_offset" = "75000"
+      "kafka_offset" = "300"
     }
   }
   depends_on = [
@@ -386,5 +385,8 @@ The following end-to-end examples might help to get started with `confluent_conn
 * [`sql-server-cdc-debezium-source-connector`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/connectors/sql-server-cdc-debezium-source-connector)
 * [`postgre-sql-cdc-debezium-source-connector`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/connectors/postgre-sql-cdc-debezium-source-connector)
 * [`custom-datagen-source-connector`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/connectors/custom-datagen-source-connector)
+* [`manage-offsets-github-source-connector`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/connectors/manage-offsets-github-source-connector)
+* [`manage-offsets-mongo-db-source-connector`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/connectors/manage-offsets-mongo-db-source-connector)
+* [`manage-offsets-mysql-sink-connector`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/connectors/manage-offsets-mysql-sink-connector)
 
 -> **Note:** Certain connectors require additional ACL entries. See [Additional ACL entries](https://docs.confluent.io/cloud/current/connectors/service-account.html#additional-acl-entries) for more details.
