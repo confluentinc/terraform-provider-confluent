@@ -179,6 +179,24 @@ func waitForPrivateLinkAccessToProvision(ctx context.Context, c *Client, environ
 	return nil
 }
 
+func waitForConnectorOffsetsUpdateToComplete(ctx context.Context, c *Client, environmentId, clusterId, displayName string) error {
+	delay, pollInterval := getDelayAndPollInterval(30*time.Second, 15*time.Second, c.isAcceptanceTestMode)
+	stateConf := &resource.StateChangeConf{
+		Pending:      []string{statePending},
+		Target:       []string{stateApplied},
+		Refresh:      connectorOffsetUpdateStatus(c.connectApiContext(ctx), c, environmentId, clusterId, displayName),
+		Timeout:      connectOffsetsAPIUpdateTimeout,
+		Delay:        delay,
+		PollInterval: pollInterval,
+	}
+
+	tflog.Debug(ctx, fmt.Sprintf("Waiting for Connector %q offsets update status to become %q", displayName, stateApplied), map[string]interface{}{connectorLoggingKey: displayName})
+	if _, err := stateConf.WaitForStateContext(c.connectApiContext(ctx)); err != nil {
+		return err
+	}
+	return nil
+}
+
 func waitForPrivateLinkAttachmentToProvision(ctx context.Context, c *Client, environmentId, privateLinkAttachmentId string) error {
 	delay, pollInterval := getDelayAndPollInterval(5*time.Second, 1*time.Minute, c.isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
@@ -407,7 +425,7 @@ func waitForAnySchemaRegistryClusterToProvision(ctx context.Context, c *Client, 
 }
 
 func waitForConnectorToProvision(ctx context.Context, c *Client, displayName, environmentId, clusterId string) error {
-	delay, pollInterval := getDelayAndPollInterval(6*time.Minute, 1*time.Minute, c.isAcceptanceTestMode)
+	delay, pollInterval := getDelayAndPollInterval(3*time.Minute, 1*time.Minute, c.isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
 		// Allow PROVISIONING -> DEGRADED -> RUNNING transition
 		Pending:      []string{stateProvisioning, stateDegraded},
@@ -1037,6 +1055,25 @@ func privateLinkAccessProvisionStatus(ctx context.Context, c *Client, environmen
 		}
 		// Private Link Access is in an unexpected state
 		return nil, stateUnexpected, fmt.Errorf("private Link Access %q is an unexpected state %q: %s", privateLinkAccessId, privateLinkAccess.Status.GetPhase(), privateLinkAccess.Status.GetErrorMessage())
+	}
+}
+
+func connectorOffsetUpdateStatus(ctx context.Context, c *Client, environmentId, clusterId, displayName string) resource.StateRefreshFunc {
+	return func() (result interface{}, s string, err error) {
+		status, _, err := c.connectClient.OffsetsConnectV1Api.GetConnectv1ConnectorOffsetsRequestStatus(c.connectApiContext(ctx), displayName, environmentId, clusterId).Execute()
+		if err != nil {
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Connector %q offsets update status: %s", displayName, createDescriptiveError(err)), map[string]interface{}{connectorLoggingKey: displayName})
+			return nil, stateUnknown, err
+		}
+
+		tflog.Debug(ctx, fmt.Sprintf("Waiting for Connector %q offsets update status to become %q: current status is %q", displayName, stateApplied, status.Status.GetPhase()), map[string]interface{}{connectorLoggingKey: displayName})
+		if status.Status.GetPhase() == statePending || status.Status.GetPhase() == stateApplied {
+			return status, status.Status.GetPhase(), nil
+		} else if status.Status.GetPhase() == stateFailed {
+			return nil, stateFailed, fmt.Errorf("connector %q offsets update status is %q: %s", displayName, stateFailed, status.Status.GetMessage())
+		}
+		// Connector offsets update is in an unexpected state
+		return nil, stateUnexpected, fmt.Errorf("connector %q offsets update status is an unexpected state %q: %s", displayName, status.Status.GetPhase(), status.Status.GetMessage())
 	}
 }
 

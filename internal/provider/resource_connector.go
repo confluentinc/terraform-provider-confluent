@@ -32,8 +32,9 @@ import (
 )
 
 const (
-	connectAPICreateTimeout   = 24 * time.Hour
-	connectAPIWaitAfterCreate = 5 * time.Second
+	connectAPICreateTimeout        = 24 * time.Hour
+	connectOffsetsAPIUpdateTimeout = 1 * time.Hour
+	connectAPIWaitAfterCreate      = 5 * time.Second
 
 	paramSensitiveConfig    = "config_sensitive"
 	paramNonSensitiveConfig = "config_nonsensitive"
@@ -441,16 +442,8 @@ func connectorUpdate(ctx context.Context, d *schema.ResourceData, meta interface
 			body, _ := io.ReadAll(resp.Body)
 			return diag.Errorf("error updating Connector %q offsets: %s: %s", d.Id(), createDescriptiveError(err), string(body))
 		}
-		// TODO: replace with waiting function
-		SleepIfNotTestMode(60*time.Second, c.isAcceptanceTestMode)
-
-		status, _, err := c.connectClient.OffsetsConnectV1Api.GetConnectv1ConnectorOffsetsRequestStatus(c.connectApiContext(ctx), displayName, environmentId, clusterId).Execute()
-		if err != nil {
-			return diag.Errorf("error updating Connector %q offsets: %s", d.Id(), createDescriptiveError(err))
-		}
-		tflog.Debug(ctx, fmt.Sprintf("Updating Connector %q offsets, status is %s", d.Id(), status.Status.GetPhase()))
-		if status.Status.GetPhase() == stateFailed {
-			return diag.Errorf("error updating Connector %q offsets: status is %s: %s", d.Id(), status.Status.GetPhase(), status.Status.GetMessage())
+		if err := waitForConnectorOffsetsUpdateToComplete(c.connectApiContext(ctx), c, environmentId, clusterId, displayName); err != nil {
+			return diag.Errorf("error waiting for Connector %q offsets update to complete: %s", d.Id(), createDescriptiveError(err))
 		}
 
 		updatedConnectorOffsetsJson, err := json.Marshal(updatedConnectorOffsets)
