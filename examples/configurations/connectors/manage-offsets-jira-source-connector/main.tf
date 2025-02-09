@@ -183,12 +183,12 @@ resource "confluent_kafka_acl" "app-connector-describe-on-cluster" {
   }
 }
 
-resource "confluent_kafka_acl" "app-connector-create-on-data-preview-topics" {
+resource "confluent_kafka_acl" "app-connector-create-on-commits-topics" {
   kafka_cluster {
     id = confluent_kafka_cluster.basic.id
   }
   resource_type = "TOPIC"
-  resource_name = "data-preview"
+  resource_name = local.topic_commits_name
   pattern_type  = "PREFIXED"
   principal     = "User:${confluent_service_account.app-connector.id}"
   host          = "*"
@@ -201,12 +201,12 @@ resource "confluent_kafka_acl" "app-connector-create-on-data-preview-topics" {
   }
 }
 
-resource "confluent_kafka_acl" "app-connector-write-on-data-preview-topics" {
+resource "confluent_kafka_acl" "app-connector-write-on-commits-topics" {
   kafka_cluster {
     id = confluent_kafka_cluster.basic.id
   }
   resource_type = "TOPIC"
-  resource_name = "data-preview"
+  resource_name = local.topic_commits_name
   pattern_type  = "PREFIXED"
   principal     = "User:${confluent_service_account.app-connector.id}"
   host          = "*"
@@ -258,8 +258,8 @@ resource "confluent_connector" "source" {
 
   depends_on = [
     confluent_kafka_acl.app-connector-describe-on-cluster,
-    confluent_kafka_acl.app-connector-create-on-data-preview-topics,
-    confluent_kafka_acl.app-connector-write-on-data-preview-topics,
+    confluent_kafka_acl.app-connector-create-on-commits-topics,
+    confluent_kafka_acl.app-connector-write-on-commits-topics,
   ]
 }
 
