@@ -55,6 +55,8 @@ const (
 	paramStatus   = "status"
 	statePaused   = "PAUSED"
 	stateDegraded = "DEGRADED"
+
+	stateApplied = "APPLIED"
 )
 
 var connectorConfigFullAttributeName = fmt.Sprintf("%s.name", paramNonSensitiveConfig)
@@ -420,14 +422,18 @@ func connectorUpdate(ctx context.Context, d *schema.ResourceData, meta interface
 		tflog.Debug(ctx, fmt.Sprintf("Updating Connector %q offsets from %#v to %#v", d.Id(), oldValue, newValue))
 		newOffsets := extractConnectorOffsets(d)
 		var connectV1AlterOffsetRequest connect.ConnectV1AlterOffsetRequest
-		connectV1AlterOffsetRequest.SetType(connect.PATCH)
-		connectV1AlterOffsetRequest.SetOffsets(newOffsets)
-		debugUpdatedOffsetsJson, err := json.Marshal(newOffsets)
-		if err != nil {
-			return diag.Errorf("error updating Connector %q: error marshaling offsets %#v to json: %s", d.Id(), newOffsets, createDescriptiveError(err))
+		if len(newOffsets) == 0 {
+			tflog.Debug(ctx, fmt.Sprintf("Resetting offsets for Connector %q", d.Id()))
+			connectV1AlterOffsetRequest.SetType(connect.DELETE)
+		} else {
+			connectV1AlterOffsetRequest.SetType(connect.PATCH)
+			connectV1AlterOffsetRequest.SetOffsets(newOffsets)
+			debugUpdatedOffsetsJson, err := json.Marshal(newOffsets)
+			if err != nil {
+				return diag.Errorf("error updating Connector %q: error marshaling offsets %#v to json: %s", d.Id(), newOffsets, createDescriptiveError(err))
+			}
+			tflog.Debug(ctx, fmt.Sprintf("Updating Connector %q offsets: %s", d.Id(), debugUpdatedOffsetsJson))
 		}
-
-		tflog.Debug(ctx, fmt.Sprintf("Updating Connector %q offsets: %s", d.Id(), debugUpdatedOffsetsJson))
 
 		req := c.connectClient.OffsetsConnectV1Api.AlterConnectv1ConnectorOffsetsRequest(c.connectApiContext(ctx), displayName, environmentId, clusterId).ConnectV1AlterOffsetRequest(connectV1AlterOffsetRequest)
 		updatedConnectorOffsets, resp, err := req.Execute()
@@ -442,7 +448,7 @@ func connectorUpdate(ctx context.Context, d *schema.ResourceData, meta interface
 		if err != nil {
 			return diag.Errorf("error updating Connector %q offsets: %s", d.Id(), createDescriptiveError(err))
 		}
-		tflog.Debug(ctx, fmt.Sprintf("Updating Connector %q offsets, status is %s: %s", d.Id(), status.Status.GetPhase(), debugUpdatedOffsetsJson))
+		tflog.Debug(ctx, fmt.Sprintf("Updating Connector %q offsets, status is %s", d.Id(), status.Status.GetPhase()))
 		if status.Status.GetPhase() == stateFailed {
 			return diag.Errorf("error updating Connector %q offsets: status is %s: %s", d.Id(), status.Status.GetPhase(), status.Status.GetMessage())
 		}
