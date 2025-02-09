@@ -360,7 +360,7 @@ In addition to the preceding arguments, the following attributes are exported:
 
 ## Import
 
--> **Note:** Set `config_sensitive = {}` before importing a connector.
+-> **Note:** Set `config_sensitive = {}` and do not specify `offsets` block before importing a connector.
 
 You can import a connector by using Environment ID, Kafka cluster ID, and connector's name, in the format `<Environment ID>/<Kafka cluster ID>/<Connector name>`, for example:
 
