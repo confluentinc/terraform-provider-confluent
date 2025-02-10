@@ -6,7 +6,7 @@ terraform {
     }
     confluent = {
       source  = "confluentinc/confluent"
-      version = "2.16.0"
+      version = "2.17.0"
     }
   }
 }

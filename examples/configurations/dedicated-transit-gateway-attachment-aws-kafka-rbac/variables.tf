@@ -42,6 +42,6 @@ variable "customer_region" {
 variable "routes" {
   description = "The AWS VPC CIDR blocks or subsets. List of destination routes for traffic from Confluent VPC to your VPC via Transit Gateway."
   type        = list(string)
-  default     = ["100.64.0.0/10", "10.0.0.0/8", "192.168.0.0/16", "172.16.0.0/12"]
+  default     = ["100.64.0.0/10", "10.0.0.0/8", "192.168.0.0/16", "172.17.0.0/12"]
 }
 
