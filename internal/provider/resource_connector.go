@@ -18,23 +18,29 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
+	"regexp"
+	"strings"
+	"time"
+
 	connect "github.com/confluentinc/ccloud-sdk-go-v2/connect/v1"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/samber/lo"
-	"net/http"
-	"regexp"
-	"strings"
-	"time"
 )
 
 const (
-	connectAPICreateTimeout   = 24 * time.Hour
-	connectAPIWaitAfterCreate = 5 * time.Second
+	connectAPICreateTimeout        = 24 * time.Hour
+	connectOffsetsAPIUpdateTimeout = 1 * time.Hour
+	connectAPIWaitAfterCreate      = 5 * time.Second
 
 	paramSensitiveConfig    = "config_sensitive"
 	paramNonSensitiveConfig = "config_nonsensitive"
+	paramOffsetsConfig      = "offsets"
+	paramPartition          = "partition"
+	paramOffset             = "offset"
 
 	connectorConfigAttributeName   = "name"
 	connectorConfigAttributeClass  = "connector.class"
@@ -50,6 +56,8 @@ const (
 	paramStatus   = "status"
 	statePaused   = "PAUSED"
 	stateDegraded = "DEGRADED"
+
+	stateApplied = "APPLIED"
 )
 
 var connectorConfigFullAttributeName = fmt.Sprintf("%s.name", paramNonSensitiveConfig)
@@ -102,10 +110,41 @@ func connectorResource() *schema.Resource {
 				ForceNew:    false,
 				Description: "The sensitive configuration settings to set (e.g., `\"gcs.credentials.config\" = \"**REDACTED***\"`). Should not be set for an import operation.",
 			},
+			paramOffsetsConfig: offsetsSchema(),
 		},
 		Timeouts: &schema.ResourceTimeout{
 			Create: schema.DefaultTimeout(connectAPICreateTimeout),
 		},
+	}
+}
+
+func offsetsSchema() *schema.Schema {
+	return &schema.Schema{
+		Type: schema.TypeSet,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramPartition: {
+					Type: schema.TypeMap,
+					Elem: &schema.Schema{
+						Type: schema.TypeString,
+					},
+					Required:    true,
+					Description: "Connector partitions information.",
+				},
+				paramOffset: {
+					Type: schema.TypeMap,
+					Elem: &schema.Schema{
+						Type: schema.TypeString,
+					},
+					Required:    true,
+					Description: "Connector offsets information for the partition.",
+				},
+			},
+		},
+		Optional:    true,
+		Computed:    false,
+		ForceNew:    false,
+		Description: "Connector partitions with offsets",
 	}
 }
 
@@ -116,6 +155,7 @@ func connectorCreate(ctx context.Context, d *schema.ResourceData, meta interface
 	clusterId := extractStringValueFromBlock(d, paramKafkaCluster, paramId)
 
 	mergedConfig, sensitiveConfig, nonsensitiveConfig := extractConnectorConfigs(d)
+	offsets := extractConnectorOffsets(d)
 	displayName := d.Get(connectorConfigFullAttributeName).(string)
 	if displayName == "" {
 		return diag.Errorf("error creating Connector: %q attribute is missing in %q block", connectorConfigAttributeName, paramNonSensitiveConfig)
@@ -123,21 +163,29 @@ func connectorCreate(ctx context.Context, d *schema.ResourceData, meta interface
 	createConnectorRequest := connect.NewInlineObject()
 	createConnectorRequest.SetName(displayName)
 	createConnectorRequest.SetConfig(mergedConfig)
+	if len(offsets) > 0 {
+		createConnectorRequest.SetOffsets(offsets)
+		offsetsJson, err := json.Marshal(offsets)
+		if err != nil {
+			return diag.Errorf("error creating Connector: error marshaling offset %#v to json: %s", offsets, createDescriptiveError(err))
+		}
+		tflog.Debug(ctx, fmt.Sprintf("Creating new Connector with custom offsets: %s", offsetsJson))
+	}
 
 	nonsensitiveConfigJson, err := json.Marshal(nonsensitiveConfig)
 	if err != nil {
-		return diag.Errorf("error creating Connector: error marshaling %#v to json: %s", nonsensitiveConfig, createDescriptiveError(err))
+		return diag.Errorf("error creating Connector: error marshaling config %#v to json: %s", nonsensitiveConfig, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Connector: %s", nonsensitiveConfigJson))
-
 	err = validateConnectorConfig(c.connectApiContext(ctx), c, mergedConfig, environmentId, clusterId)
 	if err != nil {
 		return diag.Errorf("error creating Connector: %s", createDescriptiveError(err))
 	}
 
-	createdConnector, _, err := executeConnectorCreate(c.connectApiContext(ctx), c, environmentId, clusterId, createConnectorRequest)
+	createdConnector, resp, err := executeConnectorCreate(c.connectApiContext(ctx), c, environmentId, clusterId, createConnectorRequest)
 	if err != nil {
-		return diag.Errorf("error creating Connector %q: %s", displayName, createDescriptiveError(err))
+		descriptiveError, _ := io.ReadAll(resp.Body)
+		return diag.Errorf("error creating Connector %q: %s: %s", displayName, createDescriptiveError(err), string(descriptiveError))
 	}
 	// There's no ID attribute in createdConnector, so we have to send another request to a different endpoint to get a connector object with ID attribute
 	SleepIfNotTestMode(connectAPIWaitAfterCreate, meta.(*Client).isAcceptanceTestMode)
@@ -163,6 +211,9 @@ func connectorCreate(ctx context.Context, d *schema.ResourceData, meta interface
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating Connector %q", displayName))
 
+	// We don't save offsets in connectorRead because the backend can arbitrarily change them.
+	// You can create a connector without offsets—initially, initially the backend returns "offsets": [],
+	// but after some time, it may return a non-empty list of offsets.
 	return connectorRead(ctx, d, meta)
 }
 
@@ -176,7 +227,7 @@ func validateConnectorConfig(ctx context.Context, c *Client, config map[string]s
 		if connectorClass == "" {
 			return fmt.Errorf("error validating Connector config: %q attribute is missing in %q block", connectorConfigAttributeClass, paramNonSensitiveConfig)
 		}
-		tflog.Debug(ctx, fmt.Sprintf("Validating new Connector's config"))
+		tflog.Debug(ctx, "Validating new Connector's config")
 		validationResponse, _, err := c.connectClient.ManagedConnectorPluginsConnectV1Api.ValidateConnectv1ConnectorPlugin(c.connectApiContext(ctx), connectorClass, environmentId, clusterId).RequestBody(config).Execute()
 		if err != nil {
 			return fmt.Errorf("error creating Connector: error sending validation request: %s", createDescriptiveError(err))
@@ -289,8 +340,8 @@ func setConnectorAttributes(d *schema.ResourceData, connector connect.ConnectV1C
 }
 
 func connectorUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if d.HasChangesExcept(paramNonSensitiveConfig, paramSensitiveConfig, paramStatus) {
-		return diag.Errorf("error updating Connector %q: only %q attribute, %q and %q blocks can be updated for Connector", d.Id(), paramStatus, paramNonSensitiveConfig, paramSensitiveConfig)
+	if d.HasChangesExcept(paramNonSensitiveConfig, paramSensitiveConfig, paramOffsetsConfig, paramStatus) {
+		return diag.Errorf("error updating Connector %q: only %q attribute, %q, %q and %q blocks can be updated for Connector", d.Id(), paramStatus, paramOffsetsConfig, paramNonSensitiveConfig, paramSensitiveConfig)
 	}
 	c := meta.(*Client)
 	if d.HasChange(connectorConfigFullAttributeName) {
@@ -346,7 +397,7 @@ func connectorUpdate(ctx context.Context, d *schema.ResourceData, meta interface
 
 		debugUpdatedConfigJson, err := json.Marshal(nonsensitiveUpdatedConfig)
 		if err != nil {
-			return diag.Errorf("error updating Connector: error marshaling %#v to json: %s", nonsensitiveUpdatedConfig, createDescriptiveError(err))
+			return diag.Errorf("error updating Connector: error marshaling config %#v to json: %s", nonsensitiveUpdatedConfig, createDescriptiveError(err))
 		}
 		tflog.Debug(ctx, fmt.Sprintf("Updating Connector: %s", debugUpdatedConfigJson))
 
@@ -367,6 +418,41 @@ func connectorUpdate(ctx context.Context, d *schema.ResourceData, meta interface
 		}
 		tflog.Debug(ctx, fmt.Sprintf("Finished updating Connector %q: %s", d.Id(), updatedConnectorJson), map[string]interface{}{connectorLoggingKey: d.Id()})
 	}
+	if d.HasChanges(paramOffsetsConfig) {
+		oldValue, newValue := d.GetChange(paramOffsetsConfig)
+		tflog.Debug(ctx, fmt.Sprintf("Updating Connector %q offsets from %#v to %#v", d.Id(), oldValue, newValue))
+		newOffsets := extractConnectorOffsets(d)
+		var connectV1AlterOffsetRequest connect.ConnectV1AlterOffsetRequest
+		if len(newOffsets) == 0 {
+			tflog.Debug(ctx, fmt.Sprintf("Resetting offsets for Connector %q", d.Id()))
+			connectV1AlterOffsetRequest.SetType(connect.DELETE)
+		} else {
+			connectV1AlterOffsetRequest.SetType(connect.PATCH)
+			connectV1AlterOffsetRequest.SetOffsets(newOffsets)
+			debugUpdatedOffsetsJson, err := json.Marshal(newOffsets)
+			if err != nil {
+				return diag.Errorf("error updating Connector %q: error marshaling offsets %#v to json: %s", d.Id(), newOffsets, createDescriptiveError(err))
+			}
+			tflog.Debug(ctx, fmt.Sprintf("Updating Connector %q offsets: %s", d.Id(), debugUpdatedOffsetsJson))
+		}
+
+		req := c.connectClient.OffsetsConnectV1Api.AlterConnectv1ConnectorOffsetsRequest(c.connectApiContext(ctx), displayName, environmentId, clusterId).ConnectV1AlterOffsetRequest(connectV1AlterOffsetRequest)
+		updatedConnectorOffsets, resp, err := req.Execute()
+		if err != nil {
+			body, _ := io.ReadAll(resp.Body)
+			return diag.Errorf("error updating Connector %q offsets: %s: %s", d.Id(), createDescriptiveError(err), string(body))
+		}
+		if err := waitForConnectorOffsetsUpdateToComplete(c.connectApiContext(ctx), c, environmentId, clusterId, displayName); err != nil {
+			return diag.Errorf("error waiting for Connector %q offsets update to complete: %s", d.Id(), createDescriptiveError(err))
+		}
+
+		updatedConnectorOffsetsJson, err := json.Marshal(updatedConnectorOffsets)
+		if err != nil {
+			return diag.Errorf("error updating Connector %q offsets: error marshaling %#v to json: %s", d.Id(), updatedConnectorOffsets, createDescriptiveError(err))
+		}
+		tflog.Debug(ctx, fmt.Sprintf("Finished updating Connector %q offsets : %s", d.Id(), updatedConnectorOffsetsJson), map[string]interface{}{connectorLoggingKey: d.Id()})
+	}
+
 	return connectorRead(ctx, d, meta)
 }
 
@@ -479,6 +565,37 @@ func extractConnectorConfigs(d *schema.ResourceData) (map[string]string, map[str
 	)
 
 	return config, sensitiveConfigs, nonsensitiveConfigs
+}
+
+// extractConnectorOffsets returns an array of map with Offsets and Partitions
+func extractConnectorOffsets(d *schema.ResourceData) []map[string]interface{} {
+	offsets := d.Get(paramOffsetsConfig).(*schema.Set).List()
+	result := make([]map[string]interface{}, 0, len(offsets))
+
+	for _, v := range offsets {
+		valueMap, ok := v.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		partitionRaw := valueMap[paramPartition]
+		offsetRaw := valueMap[paramOffset]
+
+		partitionMap, _ := partitionRaw.(map[string]interface{})
+		offsetMap, _ := offsetRaw.(map[string]interface{})
+
+		// https://github.com/hashicorp/terraform-plugin-sdk/pull/1042
+		// https://discuss.hashicorp.com/t/using-typeset-in-provider-always-adds-an-empty-element-on-update/18566/6
+		if len(partitionMap) == 0 && len(offsetMap) == 0 {
+			continue
+		}
+
+		result = append(result, map[string]interface{}{
+			paramPartition: partitionMap,
+			paramOffset:    offsetMap,
+		})
+	}
+	return result
 }
 
 func connectorImporter() *Importer {
