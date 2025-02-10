@@ -8,3 +8,9 @@ variable "confluent_cloud_api_secret" {
   type        = string
   sensitive   = true
 }
+
+variable "mongo_db_connection_password" {
+  description = "MongoDB Connection Password."
+  type        = string
+  sensitive   = true
+}

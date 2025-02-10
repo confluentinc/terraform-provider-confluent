@@ -182,7 +182,7 @@ resource "confluent_connector" "mongo-db-source" {
   // Block for custom *sensitive* configuration properties that are labelled with "Type: password" under "Configuration Properties" section in the docs:
   // https://docs.confluent.io/cloud/current/connectors/cc-mongo-db-source.html#configuration-properties
   config_sensitive = {
-    "connection.password" = "***REDACTED***",
+    "connection.password" = var.mongo_db_connection_password
   }
 
   // Block for custom *nonsensitive* configuration properties that are *not* labelled with "Type: password" under "Configuration Properties" section in the docs:
