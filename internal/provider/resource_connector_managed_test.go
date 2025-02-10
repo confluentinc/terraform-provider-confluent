@@ -17,28 +17,30 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/walkerus/go-wiremock"
-	"io/ioutil"
 	"net/http"
+	"os"
 	"testing"
+
+	"github.com/walkerus/go-wiremock"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 const (
-	scenarioStateManagedConnectorHasBeenValidated   = "The new managed connector config has been just validated"
-	scenarioStateManagedConnectorHasBeenCreating    = "The new managed connector has been creating"
-	scenarioStateManagedConnectorFetchingId         = "The new managed connector is in provisioning state, list all connectors"
-	scenarioStateManagedConnectorIsProvisioning     = "The new managed connector is in provisioning state"
-	scenarioStateManagedConnectorIsRunning1         = "The new managed connector is in running state #1"
-	scenarioStateManagedConnectorHasBeenCreated     = "The new managed connector has been just created"
-	scenarioStateManagedConnectorNameHasBeenUpdated = "The new managed connector's name has been just updated"
-	scenarioStateManagedConnectorHasBeenDeleted     = "The new managed connector has been deleted"
-	connectorScenarioName                           = "confluent_connector Resource Lifecycle"
-	sensitiveAttributeKey                           = "foo"
-	sensitiveAttributeValue                         = "bar"
-	sensitiveAttributeUpdatedValue                  = "bar updated"
+	scenarioStateManagedConnectorHasBeenValidated     = "The new managed connector config has been just validated"
+	scenarioStateManagedConnectorHasBeenCreating      = "The new managed connector has been creating"
+	scenarioStateManagedConnectorFetchingId           = "The new managed connector is in provisioning state, list all connectors"
+	scenarioStateManagedConnectorIsProvisioning       = "The new managed connector is in provisioning state"
+	scenarioStateManagedConnectorIsRunning1           = "The new managed connector is in running state #1"
+	scenarioStateManagedConnectorHasBeenCreated       = "The new managed connector has been just created"
+	scenarioStateManagedConnectorNameHasBeenUpdated   = "The new managed connector's name has been just updated"
+	scenarioStateManagedConnectorHasBeenDeleted       = "The new managed connector has been deleted"
+	scenarioStateManagedConnectorOffsetHasBeenUpdated = "The managed connector offset has been updated"
+	connectorScenarioName                             = "confluent_connector Resource Lifecycle"
+	sensitiveAttributeKey                             = "foo"
+	sensitiveAttributeValue                           = "bar"
+	sensitiveAttributeUpdatedValue                    = "bar updated"
 )
 
 func TestAccManagedConnector(t *testing.T) {
@@ -56,7 +58,7 @@ func TestAccManagedConnector(t *testing.T) {
 	defer wiremockClient.Reset()
 	// nolint:errcheck
 	defer wiremockClient.ResetAllScenarios()
-	validateConnectorResponse, _ := ioutil.ReadFile("../testdata/connector/managed/validate.json")
+	validateConnectorResponse, _ := os.ReadFile("../testdata/connector/managed/validate.json")
 	validateEnvStub := wiremock.Put(wiremock.URLPathEqualTo("/connect/v1/environments/env-1j3m9j/clusters/lkc-vnwdjz/connector-plugins/DatagenSourceInternal/config/validate")).
 		InScenario(connectorScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
@@ -79,7 +81,7 @@ func TestAccManagedConnector(t *testing.T) {
 		)
 	_ = wiremockClient.StubFor(createConnectorStub)
 
-	createdConnectorResponse, _ := ioutil.ReadFile("../testdata/connector/managed/read_created_connectors.json")
+	createdConnectorResponse, _ := os.ReadFile("../testdata/connector/managed/read_created_connectors.json")
 	readCreatedConnectorsStub := wiremock.Get(wiremock.URLPathEqualTo("/connect/v1/environments/env-1j3m9j/clusters/lkc-vnwdjz/connectors")).
 		WithQueryParam("expand", wiremock.EqualTo("info,status,id")).
 		InScenario(connectorScenarioName).
@@ -92,7 +94,7 @@ func TestAccManagedConnector(t *testing.T) {
 		)
 	_ = wiremockClient.StubFor(readCreatedConnectorsStub)
 
-	provisioningConnectorResponse, _ := ioutil.ReadFile("../testdata/connector/managed/read_provisioning_connector.json")
+	provisioningConnectorResponse, _ := os.ReadFile("../testdata/connector/managed/read_provisioning_connector.json")
 	readProvisioningConnectorStub := wiremock.Get(wiremock.URLPathEqualTo("/connect/v1/environments/env-1j3m9j/clusters/lkc-vnwdjz/connectors/test_connector/status")).
 		InScenario(connectorScenarioName).
 		WhenScenarioStateIs(scenarioStateManagedConnectorFetchingId).
@@ -104,7 +106,7 @@ func TestAccManagedConnector(t *testing.T) {
 		)
 	_ = wiremockClient.StubFor(readProvisioningConnectorStub)
 
-	runningConnectorResponse, _ := ioutil.ReadFile("../testdata/connector/managed/read_running_connector.json")
+	runningConnectorResponse, _ := os.ReadFile("../testdata/connector/managed/read_running_connector.json")
 	readRunningConnectorStub1 := wiremock.Get(wiremock.URLPathEqualTo("/connect/v1/environments/env-1j3m9j/clusters/lkc-vnwdjz/connectors/test_connector/status")).
 		InScenario(connectorScenarioName).
 		WhenScenarioStateIs(scenarioStateManagedConnectorIsProvisioning).
@@ -150,7 +152,27 @@ func TestAccManagedConnector(t *testing.T) {
 		)
 	_ = wiremockClient.StubFor(updateConnectorStub)
 
-	updatedConnectorResponse, _ := ioutil.ReadFile("../testdata/connector/managed/read_updated_connectors.json")
+	updateConnectorOffsetStub := wiremock.Post(wiremock.URLPathEqualTo("/connect/v1/environments/env-1j3m9j/clusters/lkc-vnwdjz/connectors/test_connector/offsets/request")).
+		WhenScenarioStateIs(scenarioStateManagedConnectorNameHasBeenUpdated).
+		WillReturn(
+			"",
+			contentTypeJSONHeader,
+			http.StatusAccepted,
+		)
+	_ = wiremockClient.StubFor(updateConnectorOffsetStub)
+
+	updatedConnectorOffsetsResponse, _ := os.ReadFile("../testdata/connector/managed/read_updated_connector_offset_status.json")
+	updatedConnectorOffsetStatusStub := wiremock.Get(wiremock.URLPathEqualTo("/connect/v1/environments/env-1j3m9j/clusters/lkc-vnwdjz/connectors/test_connector/offsets/request/status")).
+		WhenScenarioStateIs(scenarioStateManagedConnectorNameHasBeenUpdated).
+		WillSetStateTo(scenarioStateManagedConnectorOffsetHasBeenUpdated).
+		WillReturn(
+			string(updatedConnectorOffsetsResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		)
+	_ = wiremockClient.StubFor(updatedConnectorOffsetStatusStub)
+
+	updatedConnectorResponse, _ := os.ReadFile("../testdata/connector/managed/read_updated_connectors.json")
 	readUpdatedConnectorStub := wiremock.Get(wiremock.URLPathEqualTo("/connect/v1/environments/env-1j3m9j/clusters/lkc-vnwdjz/connectors")).
 		WithQueryParam("expand", wiremock.EqualTo("info,status,id")).
 		InScenario(connectorScenarioName).
@@ -162,7 +184,7 @@ func TestAccManagedConnector(t *testing.T) {
 		)
 	_ = wiremockClient.StubFor(readUpdatedConnectorStub)
 
-	deleteConnectorResponse, _ := ioutil.ReadFile("../testdata/connector/managed/delete_connector.json")
+	deleteConnectorResponse, _ := os.ReadFile("../testdata/connector/managed/delete_connector.json")
 	deleteConnectorStub := wiremock.Delete(wiremock.URLPathEqualTo("/connect/v1/environments/env-1j3m9j/clusters/lkc-vnwdjz/connectors/test_connector")).
 		InScenario(connectorScenarioName).
 		WhenScenarioStateIs(scenarioStateManagedConnectorNameHasBeenUpdated).
@@ -174,7 +196,7 @@ func TestAccManagedConnector(t *testing.T) {
 		)
 	_ = wiremockClient.StubFor(deleteConnectorStub)
 
-	readDeletedConnectorResponse, _ := ioutil.ReadFile("../testdata/connector/managed/read_deleted_connector.json")
+	readDeletedConnectorResponse, _ := os.ReadFile("../testdata/connector/managed/read_deleted_connector.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/connect/v1/environments/env-1j3m9j/clusters/lkc-vnwdjz/connectors/test_connector")).
 		InScenario(connectorScenarioName).
 		WhenScenarioStateIs(scenarioStateManagedConnectorHasBeenDeleted).
@@ -230,7 +252,7 @@ func TestAccManagedConnector(t *testing.T) {
 				ResourceName:            fullConnectorResourceLabel,
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{paramSensitiveConfig},
+				ImportStateVerifyIgnore: []string{paramSensitiveConfig, paramOffsetsConfig},
 				ImportStateIdFunc: func(state *terraform.State) (string, error) {
 					resources := state.RootModule().Resources
 					environmentId := resources[fullConnectorResourceLabel].Primary.Attributes["environment.0.id"]
@@ -275,7 +297,54 @@ func TestAccManagedConnector(t *testing.T) {
 				ResourceName:            fullConnectorResourceLabel,
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{paramSensitiveConfig},
+				ImportStateVerifyIgnore: []string{paramSensitiveConfig, paramOffsetsConfig},
+				ImportStateIdFunc: func(state *terraform.State) (string, error) {
+					resources := state.RootModule().Resources
+					environmentId := resources[fullConnectorResourceLabel].Primary.Attributes["environment.0.id"]
+					clusterId := resources[fullConnectorResourceLabel].Primary.Attributes["kafka_cluster.0.id"]
+					name := resources[fullConnectorResourceLabel].Primary.Attributes[fmt.Sprintf("%s.%s", paramNonSensitiveConfig, connectorConfigAttributeName)]
+					return environmentId + "/" + clusterId + "/" + name, nil
+				},
+			},
+			{
+				Config: testAccCheckManagedConnectorOffsetsConfig(mockServerUrl, connectorResourceLabel, connectorDisplayName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckConnectorExists(fullConnectorResourceLabel),
+					resource.TestCheckResourceAttr(fullConnectorResourceLabel, paramId, "lcc-abc123"),
+					resource.TestCheckResourceAttr(fullConnectorResourceLabel, fmt.Sprintf("%s.#", paramEnvironment), "1"),
+					resource.TestCheckResourceAttr(fullConnectorResourceLabel, fmt.Sprintf("%s.0.%s", paramEnvironment, paramId), "env-1j3m9j"),
+					resource.TestCheckResourceAttr(fullConnectorResourceLabel, fmt.Sprintf("%s.#", paramKafkaCluster), "1"),
+					resource.TestCheckResourceAttr(fullConnectorResourceLabel, fmt.Sprintf("%s.0.%s", paramKafkaCluster, paramId), "lkc-vnwdjz"),
+					resource.TestCheckResourceAttr(fullConnectorResourceLabel, paramStatus, "RUNNING"),
+					resource.TestCheckResourceAttr(fullConnectorResourceLabel, fmt.Sprintf("%s.%%", paramSensitiveConfig), "1"),
+					resource.TestCheckResourceAttr(fullConnectorResourceLabel, fmt.Sprintf("%s.%%", paramNonSensitiveConfig), "7"),
+					resource.TestCheckResourceAttr(fullConnectorResourceLabel, fmt.Sprintf("%s.%s", paramNonSensitiveConfig, connectorConfigAttributeClass), "DatagenSourceInternal"),
+					resource.TestCheckResourceAttr(fullConnectorResourceLabel, fmt.Sprintf("%s.%s", paramNonSensitiveConfig, "kafka.topic"), "test_topic"),
+					resource.TestCheckResourceAttr(fullConnectorResourceLabel, fmt.Sprintf("%s.%s", paramNonSensitiveConfig, connectorConfigAttributeName), "test_connector"),
+					resource.TestCheckResourceAttr(fullConnectorResourceLabel, fmt.Sprintf("%s.%s", paramNonSensitiveConfig, "output.data.format"), "AVRO"),
+					resource.TestCheckResourceAttr(fullConnectorResourceLabel, fmt.Sprintf("%s.%s", paramNonSensitiveConfig, "quickstart"), "ORDERS"),
+					resource.TestCheckResourceAttr(fullConnectorResourceLabel, fmt.Sprintf("%s.%s", paramNonSensitiveConfig, "tasks.max"), "1"),
+					resource.TestCheckResourceAttr(fullConnectorResourceLabel, fmt.Sprintf("%s.#", paramOffsetsConfig), "1"),
+					resource.TestCheckResourceAttr(fullConnectorResourceLabel, fmt.Sprintf("%s.0.%s.%s", paramOffsetsConfig, paramPartition, "kafka_partition"), "0"),
+					resource.TestCheckResourceAttr(fullConnectorResourceLabel, fmt.Sprintf("%s.0.%s.%s", paramOffsetsConfig, paramPartition, "kafka_topic"), "test_topic"),
+					resource.TestCheckResourceAttr(fullConnectorResourceLabel, fmt.Sprintf("%s.0.%s.%s", paramOffsetsConfig, paramOffset, "kafka_offset"), "500"),
+					// Ensure these attributes (from ignoredConnectorConfigs) are not visible in the output
+					resource.TestCheckNoResourceAttr(fullConnectorResourceLabel, "cloud.environment"),
+					resource.TestCheckNoResourceAttr(fullConnectorResourceLabel, "cloud.provider"),
+					resource.TestCheckNoResourceAttr(fullConnectorResourceLabel, "kafka.endpoint"),
+					resource.TestCheckNoResourceAttr(fullConnectorResourceLabel, "kafka.max.partition.validation.disable"),
+					resource.TestCheckNoResourceAttr(fullConnectorResourceLabel, "kafka.region"),
+					resource.TestCheckNoResourceAttr(fullConnectorResourceLabel, "kafka.dedicated"),
+					resource.TestCheckNoResourceAttr(fullConnectorResourceLabel, "schema.registry.url"),
+					resource.TestCheckNoResourceAttr(fullConnectorResourceLabel, "valid.kafka.api.key"),
+				),
+			},
+			{
+				// https://www.terraform.io/docs/extend/resources/import.html
+				ResourceName:            fullConnectorResourceLabel,
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{paramSensitiveConfig, paramOffsetsConfig},
 				ImportStateIdFunc: func(state *terraform.State) (string, error) {
 					resources := state.RootModule().Resources
 					environmentId := resources[fullConnectorResourceLabel].Primary.Attributes["environment.0.id"]
@@ -355,9 +424,46 @@ func testAccCheckUpdatedManagedConnectorConfig(mockServerUrl, environmentConnect
 		  "connector.class" = "DatagenSourceInternal"
 		  "kafka.topic" = "test_topic"
 		  "output.data.format" = "AVRO"
-		  "max.interval" = "123",
+		  "max.interval" = "123"
 		  "tasks.max" = "1"
 		  "quickstart" = "ORDERS"
+		}
+	}
+	`, mockServerUrl, environmentConnectorLabel, sensitiveAttributeKey, sensitiveAttributeUpdatedValue, connectorDisplayName)
+}
+
+func testAccCheckManagedConnectorOffsetsConfig(mockServerUrl, environmentConnectorLabel, connectorDisplayName string) string {
+	return fmt.Sprintf(`
+	provider "confluent" {
+ 		endpoint = "%s"
+	}
+	resource "confluent_connector" "%s" {
+		environment {
+		  id = "env-1j3m9j"
+		}
+		kafka_cluster {
+		  id = "lkc-vnwdjz"
+		}
+		config_sensitive = {
+		  "%s"             = "%s"
+		}
+		config_nonsensitive = {
+		  "name"            = "%s"
+		  "connector.class" = "DatagenSourceInternal"
+		  "kafka.topic" = "test_topic"
+		  "output.data.format" = "AVRO"
+		  "max.interval" = "123"
+		  "tasks.max" = "1"
+		  "quickstart" = "ORDERS"
+		}
+		offsets {
+			partition = {
+				"kafka_partition" = 0,
+				"kafka_topic" = "test_topic"
+			}
+			offset = {
+				"kafka_offset" = 500
+			}
 		}
 	}
 	`, mockServerUrl, environmentConnectorLabel, sensitiveAttributeKey, sensitiveAttributeUpdatedValue, connectorDisplayName)
