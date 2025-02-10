@@ -8,3 +8,9 @@ variable "confluent_cloud_api_secret" {
   type        = string
   sensitive   = true
 }
+
+variable "github_access_token" {
+  description = "GitHub Access Token."
+  type        = string
+  sensitive   = true
+}
