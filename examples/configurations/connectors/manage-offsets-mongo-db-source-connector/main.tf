@@ -197,9 +197,6 @@ resource "confluent_connector" "mongo-db-source" {
     "topic.prefix"             = local.topic_prefix
     "database"                 = local.database
     "collection"               = local.collection
-    "poll.await.time.ms"       = "5000"
-    "poll.max.batch.size"      = "1000"
-    "startup.mode"             = "copy_existing"
     "output.data.format"       = "JSON"
     "tasks.max"                = "1"
   }
@@ -209,8 +206,7 @@ resource "confluent_connector" "mongo-db-source" {
       "ns" = "mongodb+srv://${local.connection_host}/${local.database}.${local.collection}"
     }
     offset = {
-      "_id"  = "{\"_id\": {\"$oid\": \"573a1392f29313caabcd9cce\"}, \"copyingData\": true}"
-      "copy" = "true"
+      "_id" : "{\"_data\": \"8267A9A1DB0000000D2B042C0100296E5A10047B189DD5FB144141A63931466A298B3F463C6F7065726174696F6E54797065003C696E736572740046646F63756D656E744B65790046645F6964006467A9A1D83E2177030910104F000004\"}"
     }
   }
 
