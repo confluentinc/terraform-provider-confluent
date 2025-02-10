@@ -1,3 +1,16 @@
+## 2.17.0 (February 10th, 2025)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.16.0...v2.17.0)
+
+**New features:**
+* Updated `confluent_connector` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_connector) to support [custom offsets](https://docs.confluent.io/cloud/current/connectors/offsets.html).
+
+**Examples:**
+* Added **3** examples:
+  * [manage-offsets-github-source-connector](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/manage-offsets-github-source-connector)
+  * [manage-offsets-mongo-db-source-connector](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/manage-offsets-mongo-db-source-connector)
+  * [manage-offsets-mysql-sink-connector](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/manage-offsets-mysql-sink-connector)
+
 ## 2.16.0 (January 31st, 2025)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.15.0...v2.16.0)
