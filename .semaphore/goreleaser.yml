@@ -32,6 +32,7 @@ blocks:
             - export GOROOT=$(pwd)/go
             - cd terraform-provider-confluent*
             - curl https://goreleaser.com/static/run | VERSION=v1.25.1 bash -s -- build --config .goreleaser-darwin-fips.yml
+            # Use the --force flag to avoid the "Error pushing artifact: '...' already exists in the remote storage" error during CI reruns.
             - artifact push workflow dist/darwin-fips_darwin_amd64_v1
             - artifact push workflow dist/darwin-fips_darwin_arm64
   - name: "Draft a Release (Part 2)"
