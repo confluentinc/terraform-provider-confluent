@@ -1,3 +1,21 @@
+## 2.17.0 (February 10th, 2025)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.16.0...v2.17.0)
+
+**New features:**
+* Updated `confluent_connector` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_connector) to support [custom offsets](https://docs.confluent.io/cloud/current/connectors/offsets.html).
+
+**Examples:**
+* Added **3** examples:
+  * [manage-offsets-github-source-connector](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/manage-offsets-github-source-connector)
+  * [manage-offsets-mongo-db-source-connector](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/manage-offsets-mongo-db-source-connector)
+  * [manage-offsets-mysql-sink-connector](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/manage-offsets-mysql-sink-connector)
+
+* Updated **3** examples from version 1.x to version 2.x of the TF Provider:
+  * [field-level-encryption-schema](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/field-level-encryption-schema)
+  * [private-flink-quickstart](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/private-flink-quickstart)
+  * [private-link-schema-registry](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/private-link-schema-registry)
+
 ## 2.16.0 (January 31st, 2025)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.15.0...v2.16.0)
