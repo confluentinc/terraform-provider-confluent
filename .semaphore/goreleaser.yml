@@ -67,4 +67,4 @@ blocks:
             - artifact pull workflow darwin-fips_darwin_amd64_v1
             - artifact pull workflow darwin-fips_darwin_arm64
             - cd ..
-            - curl https://goreleaser.com/static/run | VERSION=v1.25.1-pro bash -s -- release --config .goreleaser.yml --key $(vault kv get -field goreleaser_key v1/ci/kv/cli/release)
+            - DISTRIBUTION=pro curl https://goreleaser.com/static/run | VERSION=v1.25.1-pro bash -s -- release --config .goreleaser.yml --key $(vault kv get -field goreleaser_key v1/ci/kv/cli/release)
