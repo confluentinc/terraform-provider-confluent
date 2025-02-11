@@ -139,6 +139,13 @@ resource "confluent_cluster_link" "east-to-west" {
       secret = confluent_api_key.app-manager-west-cluster-api-key.secret
     }
   }
+
+  // Make sure confluent_cluster_link.west-to-east is created first to avoid a race condition in the backend
+  // if confluent_cluster_link.west-to-east and confluent_cluster_link.east-to-west are created simultaneously,
+  // which can cause the cluster link IDs to differ.
+  depends_on = [
+    confluent_cluster_link.west-to-east
+  ]
 }
 
 resource "confluent_kafka_mirror_topic" "from-east" {
@@ -183,6 +190,13 @@ resource "confluent_cluster_link" "west-to-east" {
       secret = confluent_api_key.app-manager-east-cluster-api-key.secret
     }
   }
+
+  // Make sure confluent_cluster_link.east-to-west is created first to avoid a race condition in the backend
+  // if confluent_cluster_link.west-to-east and confluent_cluster_link.east-to-west are created simultaneously,
+  // which can cause the cluster link IDs to differ.
+  depends_on = [
+    confluent_cluster_link.east-to-west
+  ]
 }
 
 resource "confluent_kafka_mirror_topic" "from-west" {
