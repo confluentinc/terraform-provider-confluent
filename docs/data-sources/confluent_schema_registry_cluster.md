@@ -59,7 +59,7 @@ output "example_using_name" {
 
 The following arguments are supported:
 
-- `id` - (Required String) The ID of the Schema Registry cluster (for example, `lsrc-abc123`).
+- `id` - (Optional String) The ID of the Schema Registry cluster (for example, `lsrc-abc123`).
 - `display_name` - (Optional String) The name for the Schema Registry cluster.
 - `environment` (Required Configuration Block) supports the following:
     - `id` - (Required String) The ID of the Environment that the Schema Registry cluster belongs to, for example, `env-xyz456`.
