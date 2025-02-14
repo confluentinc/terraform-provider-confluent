@@ -103,11 +103,7 @@ resource "confluent_kafka_cluster" "freight" {
   environment {
     id = confluent_environment.staging.id
   }
-  
-  network {
-    id = confluent_network.peering.id
-  }
-  
+
   lifecycle {
     prevent_destroy = true
   }
