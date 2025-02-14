@@ -21,6 +21,8 @@ import (
 	"strings"
 	"time"
 
+	"golang.org/x/oauth2"
+
 	ccp "github.com/confluentinc/ccloud-sdk-go-v2/connect-custom-plugin/v1"
 	dns "github.com/confluentinc/ccloud-sdk-go-v2/networking-dnsforwarder/v1"
 	netip "github.com/confluentinc/ccloud-sdk-go-v2/networking-ip/v1"
@@ -103,6 +105,7 @@ type Client struct {
 	srcmClient                      *srcm.APIClient
 	ssoClient                       *sso.APIClient
 	piClient                        *pi.APIClient
+	oauthClientConfig               *OAuthClientConfig
 	userAgent                       string
 	cloudApiKey                     string
 	cloudApiSecret                  string
@@ -124,6 +127,7 @@ type Client struct {
 	flinkApiKey                     string
 	flinkApiSecret                  string
 	flinkRestEndpoint               string
+	oauthToken                      string
 	isFlinkMetadataSet              bool
 	isAcceptanceTestMode            bool
 }
@@ -269,6 +273,7 @@ func New(version, userAgent string) func() *schema.Provider {
 					ValidateFunc: validation.IntAtLeast(4),
 					Description:  "Maximum number of retries of HTTP client. Defaults to 4.",
 				},
+				"oauth": providerOAuthSchema(),
 			},
 			DataSourcesMap: map[string]*schema.Resource{
 				"confluent_certificate_authority":              certificateAuthorityDataSource(),
@@ -445,6 +450,11 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	flinkApiSecret := d.Get("flink_api_secret").(string)
 	flinkRestEndpoint := d.Get("flink_rest_endpoint").(string)
 	maxRetries := d.Get("max_retries").(int)
+
+	oauthClientConfig, err := retrieveOAuthSetting(ctx, d)
+	if err != nil {
+		tflog.Warn(ctx, "unexpected response when creating OAuth setting")
+	}
 
 	// 3 or 4 attributes should be set or not set at the same time
 	// Option #2: (kafka_api_key, kafka_api_secret, kafka_rest_endpoint)
@@ -642,9 +652,124 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 		isSchemaRegistryMetadataSet: allSchemaRegistryAttributesAreSet,
 		isFlinkMetadataSet:          allFlinkAttributesAreSet,
 		isAcceptanceTestMode:        acceptanceTestMode,
+		oauthClientConfig:           oauthClientConfig,
 	}
 
 	return &client, nil
+}
+
+func retrieveOAuthSetting(ctx context.Context, d *schema.ResourceData) (*OAuthClientConfig, diag.Diagnostics) {
+	clientId := extractStringValueFromBlock(d, paramOAuthBlockName, paramOAuthClientId)
+	clientSecret := extractStringValueFromBlock(d, paramOAuthBlockName, paramOAuthClientSecret)
+	externalTokenURL := extractStringValueFromBlock(d, paramOAuthBlockName, paramOAuthTokenURL)
+
+	// 1. Create the external OAuth config
+	externalOAuthConfig := &oauth2.Config{
+		ClientID:     clientId,
+		ClientSecret: clientSecret,
+		Endpoint: oauth2.Endpoint{
+			TokenURL: externalTokenURL,
+		},
+	}
+
+	// 2. Fetch the initial external token
+	externalToken, err := externalOAuthConfig.PasswordCredentialsToken(ctx, clientId, clientSecret)
+	if err != nil {
+		return nil, diag.FromErr(err)
+	}
+
+	// (Optional) Store refresh token in state
+	err = d.Set(paramOAuthRefreshToken, externalToken.RefreshToken)
+	if err != nil {
+		return nil, diag.FromErr(err)
+	}
+
+	// 3. Create an auto-refreshing external OAuth TokenSource
+	externalTokenSource := externalOAuthConfig.TokenSource(ctx, externalToken)
+
+	// 4. Create an HTTP client for external OAuth requests
+	externalHTTPClient := oauth2.NewClient(ctx, externalTokenSource)
+
+	// 5. Create a custom STS Token Source that exchanges the external OAuth token
+	identityPoolId := extractStringValueFromBlock(d, "oauth", paramOAuthIdentityPoolId)
+	stsTokenSource := &STSExchange{
+		OAuthTokenSource: externalTokenSource, // we reuse the external token
+		IdentityPoolID:   identityPoolId,
+		STSURL:           "https://api.confluent.cloud/sts/v1/oauth2/token",
+	}
+
+	// 6. Create an HTTP client that uses the STS token
+	stsHTTPClient := oauth2.NewClient(ctx, stsTokenSource)
+
+	// 7. Build our final config object with both token sources
+	oauthConfig := &OAuthClientConfig{
+		ExternalTokenSource: externalTokenSource,
+		STSTokenSource:      stsTokenSource,
+		ExternalHTTPClient:  externalHTTPClient,
+		STSHTTPClient:       stsHTTPClient,
+	}
+
+	return oauthConfig, nil
+}
+
+func providerOAuthSchema() *schema.Schema {
+	return &schema.Schema{
+		Type: schema.TypeList,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramOAuthTokenURL: {
+					Type:        schema.TypeString,
+					Required:    true,
+					Description: "OAuth token URL to fetch access token from external IDP",
+				},
+				paramOAuthClientId: {
+					Type:         schema.TypeString,
+					Required:     true,
+					Description:  "OAuth client id",
+					ValidateFunc: validation.StringIsNotEmpty,
+				},
+				paramOAuthClientSecret: {
+					Type:        schema.TypeString,
+					Required:    true,
+					Sensitive:   true,
+					Description: "OAuth client secret",
+				},
+				paramOAuthAccessToken: {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Computed:    true,
+					Sensitive:   true,
+					Description: "OAuth access token",
+				},
+				paramOAuthRefreshToken: {
+					Type:        schema.TypeString,
+					Computed:    true,
+					Sensitive:   true,
+					Description: "OAuth refresh token",
+				},
+				paramOAuthSTSToken: {
+					Type:        schema.TypeString,
+					Computed:    true,
+					Sensitive:   true,
+					Description: "OAuth STS access token from CCloud",
+				},
+				paramOAuthScope: {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "OAuth access token scope",
+				},
+				paramOAuthIdentityPoolId: {
+					Type:        schema.TypeString,
+					Required:    true,
+					Description: "OAuth identity pool id",
+				},
+			},
+		},
+		Description: "OAuth config settings",
+		Optional:    true,
+		MinItems:    1,
+		MaxItems:    1,
+	}
 }
 
 func SleepIfNotTestMode(d time.Duration, isAcceptanceTestMode bool) {
