@@ -79,7 +79,7 @@ func invitationDataSourceRead(ctx context.Context, d *schema.ResourceData, meta 
 }
 
 func invitationDataSourceReadUsingId(ctx context.Context, d *schema.ResourceData, meta interface{}, invitationId string) diag.Diagnostics {
-	tflog.Debug(ctx, fmt.Sprintf("Reading invitation %q=%q", paramId, invitationId), map[string]interface{}{invitationloggingKey: invitationId})
+	tflog.Debug(ctx, fmt.Sprintf("Reading invitation %q=%q", paramId, invitationId), map[string]interface{}{invitationLoggingKey: invitationId})
 
 	c := meta.(*Client)
 	invitation, _, err := executeInvitationRead(c.iamApiContext(ctx), c, invitationId)
@@ -90,7 +90,7 @@ func invitationDataSourceReadUsingId(ctx context.Context, d *schema.ResourceData
 	if err != nil {
 		return diag.Errorf("error reading invitation %q: error marshaling %#v to json: %s", invitationId, invitation, createDescriptiveError(err))
 	}
-	tflog.Debug(ctx, fmt.Sprintf("Fetched invitation %q: %s", invitationId, invitationJson), map[string]interface{}{invitationloggingKey: invitationId})
+	tflog.Debug(ctx, fmt.Sprintf("Fetched invitation %q: %s", invitationId, invitationJson), map[string]interface{}{invitationLoggingKey: invitationId})
 
 	if _, err := setInvitationAttributes(d, invitation); err != nil {
 		return diag.FromErr(createDescriptiveError(err))
