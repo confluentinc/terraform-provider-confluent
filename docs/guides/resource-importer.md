@@ -164,5 +164,6 @@ In this guide, you will:
     Terraform has compared your real infrastructure against your configuration and found no differences, so no changes are needed.
     ```
 
+    -> **Note:**  If the import process is taking longer than expected, you can improve the speed by increasing the [parallelism flag](https://developer.hashicorp.com/terraform/cli/commands/apply#parallelism-n). For example, you can set it to 100 like this: `terraform plan -parallelism=100`. Increasing parallelism can help speed up the import process, especially when dealing with a large number of resources.
 
 You've successfully imported your Confluent Cloud infrastructure to Terraform. Terraform also compared your real infrastructure against your imported configuration and found no differences, so no changes are needed.
