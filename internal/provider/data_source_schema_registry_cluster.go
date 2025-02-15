@@ -186,7 +186,7 @@ func setSchemaRegistryClusterAttributes(d *schema.ResourceData, schemaRegistryCl
 	if err := d.Set(paramRestEndpointPrivate, schemaRegistryCluster.Spec.GetPrivateHttpEndpoint()); err != nil {
 		return nil, createDescriptiveError(err)
 	}
-	if err := d.Set(paramRestEndpointPrivateRegional, schemaRegistryCluster.Spec.GetPrivateHttpRegionalEndpoints()); err != nil {
+	if err := d.Set(paramRestEndpointPrivateRegional, schemaRegistryCluster.Spec.PrivateNetworkingConfig.GetRegionalEndpoints()); err != nil {
 		return nil, createDescriptiveError(err)
 	}
 	if err := d.Set(paramCatalogEndpoint, schemaRegistryCluster.Spec.GetCatalogHttpEndpoint()); err != nil {
