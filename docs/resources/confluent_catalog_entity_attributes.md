@@ -195,7 +195,7 @@ The following arguments are supported:
 - `entity_type` - (Required String) The entity type, for example, `cf_environment`, `kafka_logical_cluster`, `kafka_topic`, `sr_schema`, etc. Refer to the [Entity types](https://docs.confluent.io/cloud/current/stream-governance/stream-catalog-rest-apis.html#entity-types) to learn more about entity types.
 - `attributes` - (Optional Map) The block of key-value pair attributes. Refer to the [add-a-topic-owner-and-email](https://docs.confluent.io/cloud/current/stream-governance/stream-catalog-rest-apis.html#add-a-topic-owner-and-email) for more details.
 
--> **Note:** To see a full list of supported `entity_name` and `entity_type` along with their example values, see the [Stream Catalog REST API Usage and Examples on Confluent Cloud](https://docs.confluent.io/cloud/current/stream-governance/stream-catalog-rest-apis.html#examples-of-qualified-names).
+-> **Note:** To see a full list of supported values for `entity_name` and `entity_type` attributes, along with their example values, see the [Stream Catalog REST API Usage and Examples on Confluent Cloud](https://docs.confluent.io/cloud/current/stream-governance/stream-catalog-rest-apis.html#examples-of-qualified-names).
 
 -> **Note:** You have to set the attribute value to an empty string if you plan to delete an attribute.
 
