@@ -64,7 +64,7 @@ In addition to the preceding arguments, the following attributes are exported:
   - `network_interfaces` - (Required List of Strings) List of the IDs of the Elastic Network Interfaces, for example: `["eni-00000000000000000", "eni-00000000000000001", "eni-00000000000000002", "eni-00000000000000003", "eni-00000000000000004", "eni-00000000000000005"]`
   - `account` - (Required String) The AWS account ID associated with the ENIs you are using for the Confluent Private Network Interface, for example: `000000000000`.
 - `gcp_egress_private_service_connect_endpoint` (Optional Configuration Block) supports the following:
-  - `private_service_connect_endpoint_target` - (Required String) URI of the service attachment for the published service that the Private Service Connect Endpoint connects to, or "ALL_GOOGLE_APIS" or "all-google-apis" for global Google APIs.
+  - `private_service_connect_endpoint_target` - (Required String) URI of the service attachment for the published service that the Private Service Connect Endpoint connects to, or "all-google-apis" for global Google APIs.
   - `private_service_connect_endpoint_ip_address` - (Required String) IP address of the Private Service Connect Endpoint that is connected to the endpoint target.
   - `private_service_connect_endpoint_connection_id` - (Required String) Connection ID of the Private Service Connect Endpoint that is connected to the endpoint target.
   - `private_service_connect_endpoint_name` - (Required String) Name of the Private Service Connect Endpoint that is connected to the endpoint target.

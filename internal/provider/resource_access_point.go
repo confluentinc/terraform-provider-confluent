@@ -166,7 +166,7 @@ func paramGcpEgressPrivateServiceConnectEndpointSchema() *schema.Schema {
 					Type:        schema.TypeString,
 					Required:    true,
 					ForceNew:    true,
-					Description: `URI of the service attachment for the published service that the Private Service Connect Endpoint connects to, or "ALL_GOOGLE_APIS" or "all-google-apis" for global Google APIs`,
+					Description: `URI of the service attachment for the published service that the Private Service Connect Endpoint connects to, or "all-google-apis" for global Google APIs`,
 				},
 				paramPrivateServiceConnectEndpointConnectionId: {
 					Type:        schema.TypeString,
