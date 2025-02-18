@@ -71,6 +71,9 @@ var ignoredConnectorConfigs = []string{
 	"kafka.dedicated",
 	"schema.registry.url",
 	"valid.kafka.api.key",
+	"confluent.custom.plugin.type",
+	"confluent.custom.plugin.version.id",
+	"confluent.resource.connector.tier",
 }
 var twoStarsOrMoreRegExp = regexp.MustCompile(twoStarsOrMorePattern)
 
