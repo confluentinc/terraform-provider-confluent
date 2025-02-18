@@ -195,8 +195,6 @@ The following arguments are supported:
 - `entity_type` - (Required String) The entity type, for example, `cf_environment`, `kafka_logical_cluster`, `kafka_topic`, `sr_schema`, etc. Refer to the [Stream Catalog REST API Usage and Examples on Confluent Cloud](https://docs.confluent.io/cloud/current/stream-governance/stream-catalog-rest-apis.html#examples-of-qualified-names) to see the full list of supported values for the `entity_type` attribute.
 - `attributes` - (Optional Map) The block of key-value pair attributes. Refer to the [add-a-topic-owner-and-email](https://docs.confluent.io/cloud/current/stream-governance/stream-catalog-rest-apis.html#add-a-topic-owner-and-email) for more details.
 
--> **Note:** To see a full list of supported values for `entity_name` and `entity_type` attributes, along with their example values, see the [Stream Catalog REST API Usage and Examples on Confluent Cloud](https://docs.confluent.io/cloud/current/stream-governance/stream-catalog-rest-apis.html#examples-of-qualified-names).
-
 -> **Note:** You have to set the attribute value to an empty string if you plan to delete an attribute.
 
 -> **Note:** A Schema Registry API key consists of a key and a secret. Schema Registry API keys are required to interact with Schema Registry clusters in Confluent Cloud. Each Schema Registry API key is valid for one specific Schema Registry cluster.
