@@ -67,4 +67,4 @@ In addition to the preceding arguments, the following attributes are exported:
   - `private_service_connect_endpoint_target` - (Required String) URI of the service attachment for the published service that the Private Service Connect Endpoint connects to, or "all-google-apis" for global Google APIs.
   - `private_service_connect_endpoint_ip_address` - (Required String) IP address of the Private Service Connect Endpoint that is connected to the endpoint target.
   - `private_service_connect_endpoint_connection_id` - (Required String) Connection ID of the Private Service Connect Endpoint that is connected to the endpoint target.
-  - `private_service_connect_endpoint_name` - (Required String) Name of the Private Servic Connect Endpoint that is connected to the endpoint target.
+  - `private_service_connect_endpoint_name` - (Required String) Name of the Private Service Connect Endpoint that is connected to the endpoint target.
