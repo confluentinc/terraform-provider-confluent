@@ -131,7 +131,7 @@ func TestAccTagWithEnhancedProviderBlock(t *testing.T) {
 					resource.TestCheckResourceAttr(tagLabel, "credentials.#", "0"),
 					resource.TestCheckNoResourceAttr(tagLabel, "credentials.0.key"),
 					resource.TestCheckNoResourceAttr(tagLabel, "credentials.0.secret"),
-					resource.TestCheckNoResourceAttr(tagLabel, "catalog_endpoint"),
+					resource.TestCheckNoResourceAttr(tagLabel, "rest_endpoint"),
 				),
 			},
 			{
@@ -148,7 +148,7 @@ func TestAccTagWithEnhancedProviderBlock(t *testing.T) {
 					resource.TestCheckResourceAttr(tagLabel, "credentials.#", "0"),
 					resource.TestCheckNoResourceAttr(tagLabel, "credentials.0.key"),
 					resource.TestCheckNoResourceAttr(tagLabel, "credentials.0.secret"),
-					resource.TestCheckNoResourceAttr(tagLabel, "catalog_endpoint"),
+					resource.TestCheckNoResourceAttr(tagLabel, "rest_endpoint"),
 				),
 			},
 		},

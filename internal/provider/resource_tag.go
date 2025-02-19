@@ -47,11 +47,11 @@ func tagResource() *schema.Resource {
 		},
 		Schema: map[string]*schema.Schema{
 			paramSchemaRegistryCluster: schemaRegistryClusterBlockSchema(),
-			paramCatalogEndpoint: {
+			paramRestEndpoint: {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ForceNew:     true,
-				Description:  "The Catalog endpoint of the Schema Registry cluster, for example, `https://psrc-00000.us-central1.gcp.confluent.cloud:443`).",
+				Description:  "The REST endpoint of the Schema Registry cluster, for example, `https://psrc-00000.us-central1.gcp.confluent.cloud:443`).",
 				ValidateFunc: validation.StringMatch(regexp.MustCompile("^http"), "the REST endpoint must start with 'https://'"),
 			},
 			paramCredentials: credentialsSchema(),
@@ -351,7 +351,7 @@ func setTagAttributes(d *schema.ResourceData, c *CatalogRestClient, clusterId st
 		if err := setKafkaCredentials(c.clusterApiKey, c.clusterApiSecret, d); err != nil {
 			return nil, err
 		}
-		if err := d.Set(paramCatalogEndpoint, c.restEndpoint); err != nil {
+		if err := d.Set(paramRestEndpoint, c.restEndpoint); err != nil {
 			return nil, err
 		}
 		if err := setStringAttributeInListBlockOfSizeOne(paramSchemaRegistryCluster, paramId, c.clusterId, d); err != nil {
@@ -365,17 +365,24 @@ func setTagAttributes(d *schema.ResourceData, c *CatalogRestClient, clusterId st
 
 func extractCatalogRestEndpoint(client *Client, d *schema.ResourceData, isImportOperation bool) (string, error) {
 	if client.isSchemaRegistryMetadataSet {
-		return client.catalogRestEndpoint, nil
+		if client.catalogRestEndpoint != "" {
+			return client.catalogRestEndpoint, nil
+		} else {
+			return client.schemaRegistryRestEndpoint, nil
+		}
 	}
 	if isImportOperation {
 		restEndpoint := getEnv("CATALOG_REST_ENDPOINT", "")
+		restEndpointOld := getEnv("SCHEMA_REGISTRY_REST_ENDPOINT", "")
 		if restEndpoint != "" {
 			return restEndpoint, nil
+		} else if restEndpointOld != "" {
+			return restEndpointOld, nil
 		} else {
 			return "", fmt.Errorf("one of provider.catalog_rest_endpoint (defaults to CATALOG_REST_ENDPOINT environment variable) or IMPORT_CATALOG_REST_ENDPOINT environment variable must be set")
 		}
 	}
-	restEndpoint := d.Get(paramCatalogEndpoint).(string)
+	restEndpoint := d.Get(paramRestEndpoint).(string)
 	if restEndpoint != "" {
 		return restEndpoint, nil
 	}

@@ -126,7 +126,7 @@ func TestAccTag(t *testing.T) {
 					resource.TestCheckResourceAttr(tagLabel, "schema_registry_cluster.#", "1"),
 					resource.TestCheckResourceAttr(tagLabel, "schema_registry_cluster.0.%", "1"),
 					resource.TestCheckResourceAttr(tagLabel, "schema_registry_cluster.0.id", testStreamGovernanceClusterId),
-					resource.TestCheckResourceAttr(tagLabel, "catalog_endpoint", mockServerUrl),
+					resource.TestCheckResourceAttr(tagLabel, "rest_endpoint", mockServerUrl),
 					resource.TestCheckResourceAttr(tagLabel, "credentials.#", "1"),
 					resource.TestCheckResourceAttr(tagLabel, "credentials.0.%", "2"),
 					resource.TestCheckResourceAttr(tagLabel, "credentials.0.key", testSchemaRegistryKey),
@@ -145,7 +145,7 @@ func TestAccTag(t *testing.T) {
 					resource.TestCheckResourceAttr(tagLabel, "schema_registry_cluster.#", "1"),
 					resource.TestCheckResourceAttr(tagLabel, "schema_registry_cluster.0.%", "1"),
 					resource.TestCheckResourceAttr(tagLabel, "schema_registry_cluster.0.id", testStreamGovernanceClusterId),
-					resource.TestCheckResourceAttr(tagLabel, "catalog_endpoint", mockServerUrl),
+					resource.TestCheckResourceAttr(tagLabel, "rest_endpoint", mockServerUrl),
 					resource.TestCheckResourceAttr(tagLabel, "credentials.#", "1"),
 					resource.TestCheckResourceAttr(tagLabel, "credentials.0.%", "2"),
 					resource.TestCheckResourceAttr(tagLabel, "credentials.0.key", testSchemaRegistryKey),
@@ -173,7 +173,7 @@ func tagResourceConfig(mockServerUrl string) string {
         id = "%s"
       }
 
-      catalog_endpoint = "%s"
+      rest_endpoint = "%s"
 
       credentials {
         key    = "%s"
@@ -195,7 +195,7 @@ func tagResourceUpdatedConfig(mockServerUrl string) string {
         id = "%s"
       }
 
-      catalog_endpoint = "%s"
+      rest_endpoint = "%s"
 
       credentials {
         key    = "%s"
