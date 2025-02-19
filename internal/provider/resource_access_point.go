@@ -167,6 +167,18 @@ func paramGcpEgressPrivateServiceConnectEndpointSchema() *schema.Schema {
 					Required:    true,
 					ForceNew:    true,
 					Description: `URI of the service attachment for the published service that the Private Service Connect Endpoint connects to, or "all-google-apis" for global Google APIs`,
+
+					// Suppress the diff shown if the values are equivalent forms of "ALL_GOOGLE_APIS" and "all-google-apis"
+					DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+						const allGoogleApisNormalized = "all-google-apis"
+
+						normalizedOld := strings.ReplaceAll(strings.ToLower(old), "_", "-")
+						normalizedNew := strings.ReplaceAll(strings.ToLower(new), "_", "-")
+						if normalizedOld == allGoogleApisNormalized && normalizedNew == allGoogleApisNormalized {
+							return true
+						}
+						return false
+					},
 				},
 				paramPrivateServiceConnectEndpointConnectionId: {
 					Type:        schema.TypeString,
