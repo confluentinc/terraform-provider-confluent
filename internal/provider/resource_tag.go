@@ -47,11 +47,11 @@ func tagResource() *schema.Resource {
 		},
 		Schema: map[string]*schema.Schema{
 			paramSchemaRegistryCluster: schemaRegistryClusterBlockSchema(),
-			paramRestEndpoint: {
+			paramCatalogEndpoint: {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ForceNew:     true,
-				Description:  "The REST endpoint of the Schema Registry cluster, for example, `https://psrc-00000.us-central1.gcp.confluent.cloud:443`).",
+				Description:  "The Catalog endpoint of the Schema Registry cluster, for example, `https://psrc-00000.us-central1.gcp.confluent.cloud:443`).",
 				ValidateFunc: validation.StringMatch(regexp.MustCompile("^http"), "the REST endpoint must start with 'https://'"),
 			},
 			paramCredentials: credentialsSchema(),
@@ -83,7 +83,7 @@ func tagResource() *schema.Resource {
 }
 
 func tagCreate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
-	restEndpoint, err := extractSchemaRegistryRestEndpoint(meta.(*Client), d, false)
+	restEndpoint, err := extractCatalogRestEndpoint(meta.(*Client), d, false)
 	if err != nil {
 		return diag.Errorf("error creating Tag: %s", createDescriptiveError(err))
 	}
@@ -99,14 +99,14 @@ func tagCreate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagn
 	tagName := d.Get(paramName).(string)
 	tagId := createTagId(clusterId, tagName)
 
-	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+	catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
 	tagRequest := dc.TagDef{}
 	tagRequest.SetName(tagName)
 	description := d.Get(paramDescription).(string)
 	tagRequest.SetDescription(description)
 	tagRequest.SetEntityTypes(defaultEntityTypes)
 
-	request := schemaRegistryRestClient.dataCatalogApiClient.TypesV1Api.CreateTagDefs(schemaRegistryRestClient.dataCatalogApiContext(ctx))
+	request := catalogRestClient.dataCatalogApiClient.TypesV1Api.CreateTagDefs(catalogRestClient.dataCatalogApiContext(ctx))
 	request = request.TagDef([]dc.TagDef{tagRequest})
 
 	createTagRequestJson, err := json.Marshal(request)
@@ -127,7 +127,7 @@ func tagCreate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagn
 	}
 	d.SetId(tagId)
 
-	if err := waitForTagToProvision(schemaRegistryRestClient.dataCatalogApiContext(ctx), schemaRegistryRestClient, tagId, tagName); err != nil {
+	if err := waitForTagToProvision(catalogRestClient.dataCatalogApiContext(ctx), catalogRestClient, tagId, tagName); err != nil {
 		return diag.Errorf("error waiting for Tag %q to provision: %s", tagId, createDescriptiveError(err))
 	}
 
@@ -145,7 +145,7 @@ func tagCreate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagn
 func tagRead(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	tflog.Debug(ctx, fmt.Sprintf("Reading Tag %q", d.Id()), map[string]any{tagLoggingKey: d.Id()})
 
-	restEndpoint, err := extractSchemaRegistryRestEndpoint(meta.(*Client), d, false)
+	restEndpoint, err := extractCatalogRestEndpoint(meta.(*Client), d, false)
 	if err != nil {
 		return diag.Errorf("error reading Tag: %s", createDescriptiveError(err))
 	}
@@ -157,10 +157,10 @@ func tagRead(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnos
 	if err != nil {
 		return diag.Errorf("error reading Tag: %s", createDescriptiveError(err))
 	}
-	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+	catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
 	tagName := d.Get(paramName).(string)
 
-	_, err = readTagAndSetAttributes(ctx, d, schemaRegistryRestClient, tagName)
+	_, err = readTagAndSetAttributes(ctx, d, catalogRestClient, tagName)
 	if err != nil {
 		return diag.Errorf("error reading Tag: %s", createDescriptiveError(err))
 	}
@@ -170,7 +170,7 @@ func tagRead(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnos
 	return nil
 }
 
-func readTagAndSetAttributes(ctx context.Context, resourceData *schema.ResourceData, client *SchemaRegistryRestClient, tagName string) ([]*schema.ResourceData, error) {
+func readTagAndSetAttributes(ctx context.Context, resourceData *schema.ResourceData, client *CatalogRestClient, tagName string) ([]*schema.ResourceData, error) {
 	tagId := createTagId(client.clusterId, tagName)
 
 	tflog.Debug(ctx, fmt.Sprintf("Reading Tag %q=%q", paramId, tagId), map[string]any{tagLoggingKey: tagId})
@@ -205,7 +205,7 @@ func readTagAndSetAttributes(ctx context.Context, resourceData *schema.ResourceD
 }
 
 func tagDelete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
-	restEndpoint, err := extractSchemaRegistryRestEndpoint(meta.(*Client), d, false)
+	restEndpoint, err := extractCatalogRestEndpoint(meta.(*Client), d, false)
 	if err != nil {
 		return diag.Errorf("error deleting Tag: %s", createDescriptiveError(err))
 	}
@@ -223,8 +223,8 @@ func tagDelete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagn
 
 	tflog.Debug(ctx, fmt.Sprintf("Deleting Tag %q=%q", paramId, tagId), map[string]any{tagLoggingKey: tagId})
 
-	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
-	request := schemaRegistryRestClient.dataCatalogApiClient.TypesV1Api.DeleteTagDef(schemaRegistryRestClient.dataCatalogApiContext(ctx), tagName)
+	catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+	request := catalogRestClient.dataCatalogApiClient.TypesV1Api.DeleteTagDef(catalogRestClient.dataCatalogApiContext(ctx), tagName)
 	_, serviceErr := request.Execute()
 	if serviceErr != nil {
 		return diag.Errorf("error deleting Tag %q: %s", tagId, createDescriptiveError(serviceErr))
@@ -241,7 +241,7 @@ func tagUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagn
 		return diag.Errorf("error updating Tag %q: only %q attribute can be updated for Tag", d.Id(), paramDescription)
 	}
 
-	restEndpoint, err := extractSchemaRegistryRestEndpoint(meta.(*Client), d, false)
+	restEndpoint, err := extractCatalogRestEndpoint(meta.(*Client), d, false)
 	if err != nil {
 		return diag.Errorf("error updating Tag: %s", createDescriptiveError(err))
 	}
@@ -257,13 +257,13 @@ func tagUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagn
 	tagName := d.Get(paramName).(string)
 	tagId := createTagId(clusterId, tagName)
 
-	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+	catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
 	tagRequest := dc.TagDef{}
 	tagRequest.SetName(tagName)
 	description := d.Get(paramDescription).(string)
 	tagRequest.SetDescription(description)
 
-	request := schemaRegistryRestClient.dataCatalogApiClient.TypesV1Api.UpdateTagDefs(schemaRegistryRestClient.dataCatalogApiContext(ctx))
+	request := catalogRestClient.dataCatalogApiClient.TypesV1Api.UpdateTagDefs(catalogRestClient.dataCatalogApiContext(ctx))
 	request = request.TagDef([]dc.TagDef{tagRequest})
 
 	updateTagRequestJson, err := json.Marshal(request)
@@ -295,7 +295,7 @@ func tagUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagn
 func tagImport(ctx context.Context, d *schema.ResourceData, meta any) ([]*schema.ResourceData, error) {
 	tflog.Debug(ctx, fmt.Sprintf("Importing Tag %q", d.Id()), map[string]any{tagLoggingKey: d.Id()})
 
-	restEndpoint, err := extractSchemaRegistryRestEndpoint(meta.(*Client), d, true)
+	restEndpoint, err := extractCatalogRestEndpoint(meta.(*Client), d, true)
 	if err != nil {
 		return nil, fmt.Errorf("error importing Tag: %s", createDescriptiveError(err))
 	}
@@ -317,11 +317,11 @@ func tagImport(ctx context.Context, d *schema.ResourceData, meta any) ([]*schema
 	clusterId := parts[0]
 	tagName := parts[1]
 
-	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+	catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
 
 	// Mark resource as new to avoid d.Set("") when getting 404
 	d.MarkNewResource()
-	_, err = readTagAndSetAttributes(ctx, d, schemaRegistryRestClient, tagName)
+	_, err = readTagAndSetAttributes(ctx, d, catalogRestClient, tagName)
 	if err != nil {
 		return nil, fmt.Errorf("error importing Tag %q: %s", d.Id(), createDescriptiveError(err))
 	}
@@ -333,7 +333,7 @@ func createTagId(clusterId, tagName string) string {
 	return fmt.Sprintf("%s/%s", clusterId, tagName)
 }
 
-func setTagAttributes(d *schema.ResourceData, c *SchemaRegistryRestClient, clusterId string, tag dc.TagDef) (*schema.ResourceData, error) {
+func setTagAttributes(d *schema.ResourceData, c *CatalogRestClient, clusterId string, tag dc.TagDef) (*schema.ResourceData, error) {
 	if err := d.Set(paramName, tag.GetName()); err != nil {
 		return nil, err
 	}
@@ -351,7 +351,7 @@ func setTagAttributes(d *schema.ResourceData, c *SchemaRegistryRestClient, clust
 		if err := setKafkaCredentials(c.clusterApiKey, c.clusterApiSecret, d); err != nil {
 			return nil, err
 		}
-		if err := d.Set(paramRestEndpoint, c.restEndpoint); err != nil {
+		if err := d.Set(paramCatalogEndpoint, c.restEndpoint); err != nil {
 			return nil, err
 		}
 		if err := setStringAttributeInListBlockOfSizeOne(paramSchemaRegistryCluster, paramId, c.clusterId, d); err != nil {
@@ -361,4 +361,23 @@ func setTagAttributes(d *schema.ResourceData, c *SchemaRegistryRestClient, clust
 
 	d.SetId(createTagId(clusterId, tag.GetName()))
 	return d, nil
+}
+
+func extractCatalogRestEndpoint(client *Client, d *schema.ResourceData, isImportOperation bool) (string, error) {
+	if client.isSchemaRegistryMetadataSet {
+		return client.catalogRestEndpoint, nil
+	}
+	if isImportOperation {
+		restEndpoint := getEnv("CATALOG_REST_ENDPOINT", "")
+		if restEndpoint != "" {
+			return restEndpoint, nil
+		} else {
+			return "", fmt.Errorf("one of provider.catalog_rest_endpoint (defaults to CATALOG_REST_ENDPOINT environment variable) or IMPORT_CATALOG_REST_ENDPOINT environment variable must be set")
+		}
+	}
+	restEndpoint := d.Get(paramCatalogEndpoint).(string)
+	if restEndpoint != "" {
+		return restEndpoint, nil
+	}
+	return "", fmt.Errorf("one of provider.schema_registry_rest_endpoint (defaults to SCHEMA_REGISTRY_REST_ENDPOINT environment variable) or resource.rest_endpoint must be set")
 }
