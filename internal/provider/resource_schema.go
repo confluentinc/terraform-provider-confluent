@@ -447,9 +447,9 @@ func schemaValidateCheck(ctx context.Context, c *SchemaRegistryRestClient, creat
 		return fmt.Errorf("error validating Schema: error marshaling %#v to json: %s", createSchemaRequest, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Validating new Schema: %s", createSchemaRequestJson))
-	validationResponse, _, err := executeSchemaValidate(ctx, c, createSchemaRequest, subjectName)
+	validationResponse, resp, err := executeSchemaValidate(ctx, c, createSchemaRequest, subjectName)
 	if err != nil {
-		return fmt.Errorf("error validating Schema: error sending validation request: %s", createDescriptiveError(err))
+		return fmt.Errorf("error validating Schema: error sending validation request: %s", createDescriptiveError(err, resp))
 	}
 	// Validation has failed
 	if !validationResponse.GetIsCompatible() {
@@ -554,9 +554,9 @@ func schemaCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Validating new Schema: %s", createSchemaRequestJson))
-	validationResponse, _, err := executeSchemaValidate(ctx, schemaRegistryRestClient, createSchemaRequest, subjectName)
+	validationResponse, resp, err := executeSchemaValidate(ctx, schemaRegistryRestClient, createSchemaRequest, subjectName)
 	if err != nil {
-		return diag.Errorf("error creating Schema: error sending validation request: %s", createDescriptiveError(err))
+		return diag.Errorf("error creating Schema: error sending validation request: %s", createDescriptiveError(err, resp))
 	}
 	// Validation has failed
 	if !validationResponse.GetIsCompatible() {
