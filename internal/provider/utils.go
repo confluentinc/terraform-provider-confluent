@@ -551,7 +551,7 @@ func setStringAttributeInListBlockOfSizeOne(blockName, attributeName, attributeV
 // createDescriptiveError will convert GenericOpenAPIError error into an error with a more descriptive error message.
 // diag.FromErr(createDescriptiveError(err)) should be used instead of diag.FromErr(err) in this project
 // since GenericOpenAPIError.Error() returns just HTTP status code and its generic name (i.e., "400 Bad Request")
-func createDescriptiveError(err error) error {
+func createDescriptiveError(err error, resp ...*http.Response) error {
 	if err == nil {
 		return nil
 	}
@@ -581,6 +581,23 @@ func createDescriptiveError(err error) error {
 			}
 		}
 	}
+
+	// If a *http.Response was provided, and we could not parse Error object,
+	// read its *http.Response body to provide a more descriptive error message to avoid
+	// https://github.com/confluentinc/terraform-provider-confluent/issues/53
+	if errorMessage == err.Error() && len(resp) > 0 && resp[0] != nil {
+		defer resp[0].Body.Close()
+
+		bodyBytes, readErr := io.ReadAll(resp[0].Body)
+		if readErr == nil {
+			errorMessage = fmt.Sprintf(
+				"%s; could not parse error details; raw response body: %#v",
+				errorMessage,
+				string(bodyBytes),
+			)
+		}
+	}
+
 	return fmt.Errorf(errorMessage)
 }
 

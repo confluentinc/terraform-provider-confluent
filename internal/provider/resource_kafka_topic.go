@@ -226,10 +226,10 @@ func kafkaTopicCreate(ctx context.Context, d *schema.ResourceData, meta interfac
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Kafka Topic: %s", createTopicRequestJson))
 
-	createdKafkaTopic, _, err := executeKafkaTopicCreate(ctx, kafkaRestClient, createTopicRequest)
+	createdKafkaTopic, resp, err := executeKafkaTopicCreate(ctx, kafkaRestClient, createTopicRequest)
 
 	if err != nil {
-		return diag.Errorf("error creating Kafka Topic: %s", createDescriptiveError(err))
+		return diag.Errorf("error creating Kafka Topic: %s", createDescriptiveError(err, resp))
 	}
 
 	kafkaTopicId := createKafkaTopicId(kafkaRestClient.clusterId, topicName)
@@ -269,10 +269,10 @@ func kafkaTopicDelete(ctx context.Context, d *schema.ResourceData, meta interfac
 	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isKafkaMetadataSet, meta.(*Client).isKafkaClusterIdSet)
 	topicName := d.Get(paramTopicName).(string)
 
-	_, err = kafkaRestClient.apiClient.TopicV3Api.DeleteKafkaTopic(kafkaRestClient.apiContext(ctx), kafkaRestClient.clusterId, topicName).Execute()
+	resp, err := kafkaRestClient.apiClient.TopicV3Api.DeleteKafkaTopic(kafkaRestClient.apiContext(ctx), kafkaRestClient.clusterId, topicName).Execute()
 
 	if err != nil {
-		return diag.Errorf("error deleting Kafka Topic %q: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error deleting Kafka Topic %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	if err := waitForKafkaTopicToBeDeleted(kafkaRestClient.apiContext(ctx), kafkaRestClient, topicName, meta.(*Client).isAcceptanceTestMode); err != nil {
@@ -432,7 +432,7 @@ func kafkaTopicImport(ctx context.Context, d *schema.ResourceData, meta interfac
 func readTopicAndSetAttributes(ctx context.Context, d *schema.ResourceData, c *KafkaRestClient, topicName string) ([]*schema.ResourceData, error) {
 	kafkaTopic, resp, err := c.apiClient.TopicV3Api.GetKafkaTopic(c.apiContext(ctx), c.clusterId, topicName).Execute()
 	if err != nil {
-		tflog.Warn(ctx, fmt.Sprintf("Error reading Kafka Topic %q: %s", d.Id(), createDescriptiveError(err)), map[string]interface{}{kafkaTopicLoggingKey: d.Id()})
+		tflog.Warn(ctx, fmt.Sprintf("Error reading Kafka Topic %q: %s", d.Id(), createDescriptiveError(err, resp)), map[string]interface{}{kafkaTopicLoggingKey: d.Id()})
 
 		isResourceNotFound := ResponseHasExpectedStatusCode(resp, http.StatusNotFound)
 		if isResourceNotFound && !d.IsNewResource() {
@@ -517,17 +517,17 @@ func kafkaTopicUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 		tflog.Debug(ctx, fmt.Sprintf("Updating Kafka Topic %q: %s", d.Id(), updateTopicRequestJson), map[string]interface{}{kafkaTopicLoggingKey: d.Id()})
 
 		// Send a request to Kafka REST API
-		_, _, err = executeKafkaTopicPartitionsCountUpdate(ctx, kafkaRestClient, topicName, updateTopicRequest)
+		_, resp, err := executeKafkaTopicPartitionsCountUpdate(ctx, kafkaRestClient, topicName, updateTopicRequest)
 		if err != nil {
 			// For example, Kafka REST API will return Bad Request if new partitions count is not bigger than the current one:
 			// 400 Bad Request: Topic currently has 6 partitions, which is higher than the requested 2.
 
 			// At this point new partitions count is saved to TF file,
 			// so we need to revert it to the old value to avoid TF drift.
-			if err := d.Set(paramPartitionsCount, oldPartitionsCountInt32); err != nil {
-				return diag.FromErr(createDescriptiveError(err))
+			if resourceErr := d.Set(paramPartitionsCount, oldPartitionsCountInt32); resourceErr != nil {
+				return diag.FromErr(createDescriptiveError(resourceErr))
 			}
-			return diag.FromErr(createDescriptiveError(err))
+			return diag.FromErr(createDescriptiveError(err, resp))
 		}
 		// Give some time to Kafka REST API to apply an update of partitions count
 		SleepIfNotTestMode(kafkaRestAPIWaitAfterCreate, meta.(*Client).isAcceptanceTestMode)
@@ -602,11 +602,11 @@ func kafkaTopicUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 		tflog.Debug(ctx, fmt.Sprintf("Updating Kafka Topic %q: %s", d.Id(), updateTopicRequestJson), map[string]interface{}{kafkaTopicLoggingKey: d.Id()})
 
 		// Send a request to Kafka REST API
-		_, err = executeKafkaTopicUpdate(ctx, kafkaRestClient, topicName, updateTopicRequest)
+		resp, err := executeKafkaTopicUpdate(ctx, kafkaRestClient, topicName, updateTopicRequest)
 		if err != nil {
 			// For example, Kafka REST API will return Bad Request if new topic setting value exceeds the max limit:
 			// 400 Bad Request: Config property 'delete.retention.ms' with value '63113904003' exceeded max limit of 60566400000.
-			return diag.FromErr(createDescriptiveError(err))
+			return diag.FromErr(createDescriptiveError(err, resp))
 		}
 		// Give some time to Kafka REST API to apply an update of topic settings
 		SleepIfNotTestMode(kafkaRestAPIWaitAfterCreate, meta.(*Client).isAcceptanceTestMode)
@@ -662,9 +662,9 @@ func setKafkaCredentials(kafkaApiKey, kafkaApiSecret string, d *schema.ResourceD
 }
 
 func loadTopicConfigs(ctx context.Context, d *schema.ResourceData, c *KafkaRestClient, topicName string) (map[string]string, error) {
-	topicConfigList, _, err := c.apiClient.ConfigsV3Api.ListKafkaTopicConfigs(c.apiContext(ctx), c.clusterId, topicName).Execute()
+	topicConfigList, resp, err := c.apiClient.ConfigsV3Api.ListKafkaTopicConfigs(c.apiContext(ctx), c.clusterId, topicName).Execute()
 	if err != nil {
-		return nil, fmt.Errorf("error reading Kafka Topic %q: could not load configs %s", topicName, createDescriptiveError(err))
+		return nil, fmt.Errorf("error reading Kafka Topic %q: could not load configs %s", topicName, createDescriptiveError(err, resp))
 	}
 
 	config := make(map[string]string)
@@ -700,10 +700,10 @@ func loadAllKafkaTopics(ctx context.Context, client *Client) (InstanceIdsToNameM
 
 	kafkaRestClient := client.kafkaRestClientFactory.CreateKafkaRestClient(client.kafkaRestEndpoint, client.kafkaClusterId, client.kafkaApiKey, client.kafkaApiSecret, true, true)
 
-	topics, _, err := kafkaRestClient.apiClient.TopicV3Api.ListKafkaTopics(kafkaRestClient.apiContext(ctx), kafkaRestClient.clusterId).Execute()
+	topics, resp, err := kafkaRestClient.apiClient.TopicV3Api.ListKafkaTopics(kafkaRestClient.apiContext(ctx), kafkaRestClient.clusterId).Execute()
 	if err != nil {
-		tflog.Warn(ctx, fmt.Sprintf("Error reading Kafka Topics for Kafka Cluster %q: %s", kafkaRestClient.clusterId, createDescriptiveError(err)), map[string]interface{}{kafkaClusterLoggingKey: kafkaRestClient.clusterId})
-		return nil, diag.FromErr(createDescriptiveError(err))
+		tflog.Warn(ctx, fmt.Sprintf("Error reading Kafka Topics for Kafka Cluster %q: %s", kafkaRestClient.clusterId, createDescriptiveError(err, resp)), map[string]interface{}{kafkaClusterLoggingKey: kafkaRestClient.clusterId})
+		return nil, diag.FromErr(createDescriptiveError(err, resp))
 	}
 	topicsJson, err := json.Marshal(topics)
 	if err != nil {
