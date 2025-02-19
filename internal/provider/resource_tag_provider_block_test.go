@@ -159,7 +159,7 @@ func tagResourceConfigWithEnhancedProviderBlock(mockServerUrl string) string {
 	return fmt.Sprintf(`
  	provider "confluent" {
  	  schema_registry_id = "%s"
-	  schema_registry_rest_endpoint = "%s" # optionally use SCHEMA_REGISTRY_REST_ENDPOINT env var
+	  catalog_rest_endpoint = "%s" # optionally use SCHEMA_REGISTRY_REST_ENDPOINT env var
 	  schema_registry_api_key       = "%s"       # optionally use SCHEMA_REGISTRY_API_KEY env var
 	  schema_registry_api_secret = "%s"
  	}
@@ -175,7 +175,7 @@ func tagResourceUpdatedConfigWithEnhancedProviderBlock(mockServerUrl string) str
 	return fmt.Sprintf(`
  	provider "confluent" {
  	  schema_registry_id = "%s"
-	  schema_registry_rest_endpoint = "%s" # optionally use SCHEMA_REGISTRY_REST_ENDPOINT env var
+	  catalog_rest_endpoint = "%s" # optionally use SCHEMA_REGISTRY_REST_ENDPOINT env var
 	  schema_registry_api_key       = "%s"       # optionally use SCHEMA_REGISTRY_API_KEY env var
 	  schema_registry_api_secret = "%s"
  	}
