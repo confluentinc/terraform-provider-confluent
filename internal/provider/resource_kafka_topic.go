@@ -524,7 +524,7 @@ func kafkaTopicUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 
 			// At this point new partitions count is saved to TF file,
 			// so we need to revert it to the old value to avoid TF drift.
-			if resourceErr := d.Set(paramPartitionsCount, oldPartitionsCountInt32); err != nil {
+			if resourceErr := d.Set(paramPartitionsCount, oldPartitionsCountInt32); resourceErr != nil {
 				return diag.FromErr(createDescriptiveError(resourceErr))
 			}
 			return diag.FromErr(createDescriptiveError(err, resp))
