@@ -149,11 +149,11 @@ func New(version, userAgent string) func() *schema.Provider {
 	return func() *schema.Provider {
 		provider := &schema.Provider{
 			Schema: map[string]*schema.Schema{
-				"schema_registry_rest_endpoint": {
+				"catalog_rest_endpoint": {
 					Type:        schema.TypeString,
 					Optional:    true,
-					DefaultFunc: schema.EnvDefaultFunc("SCHEMA_REGISTRY_REST_ENDPOINT", ""),
-					Description: "The Schema Registry Cluster REST Endpoint.",
+					DefaultFunc: schema.EnvDefaultFunc("CATALOG_REST_ENDPOINT", ""),
+					Description: "The Schema Registry Cluster Catalog REST Endpoint.",
 				},
 				"cloud_api_key": {
 					Type:        schema.TypeString,
@@ -215,11 +215,11 @@ func New(version, userAgent string) func() *schema.Provider {
 					DefaultFunc: schema.EnvDefaultFunc("SCHEMA_REGISTRY_API_SECRET", ""),
 					Description: "The Schema Registry Cluster API Secret.",
 				},
-				"catalog_rest_endpoint": {
+				"schema_registry_rest_endpoint": {
 					Type:        schema.TypeString,
 					Optional:    true,
-					DefaultFunc: schema.EnvDefaultFunc("CATALOG_REST_ENDPOINT", ""),
-					Description: "The Schema Registry Cluster Catalog REST Endpoint.",
+					DefaultFunc: schema.EnvDefaultFunc("SCHEMA_REGISTRY_REST_ENDPOINT", ""),
+					Description: "The Schema Registry Cluster REST Endpoint.",
 				},
 				"flink_principal_id": {
 					Type:        schema.TypeString,
