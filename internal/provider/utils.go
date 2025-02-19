@@ -565,19 +565,21 @@ func createDescriptiveError(err error, resp ...*http.Response) error {
 		if reflectedFailureValue.IsValid() {
 			errs := reflectedFailureValue.FieldByName("Errors")
 			kafkaRestOrConnectErr := reflectedFailureValue.FieldByName("Message")
-			if errs.Kind() == reflect.Slice && errs.Len() > 0 {
+			if errs.IsValid() && errs.Kind() == reflect.Slice && errs.Len() > 0 {
 				nest := errs.Index(0)
 				detailPtr := nest.FieldByName("Detail")
-				if detailPtr.IsValid() {
+				if detailPtr.IsValid() && detailPtr.Kind() == reflect.Pointer && !detailPtr.IsNil() {
 					errorMessage = fmt.Sprintf("%s: %s", errorMessage, reflect.Indirect(detailPtr))
 				}
 			} else if kafkaRestOrConnectErr.IsValid() && kafkaRestOrConnectErr.Kind() == reflect.Struct {
 				detailPtr := kafkaRestOrConnectErr.FieldByName("value")
-				if detailPtr.IsValid() {
+				if detailPtr.IsValid() && detailPtr.Kind() == reflect.Pointer && !detailPtr.IsNil() {
 					errorMessage = fmt.Sprintf("%s: %s", errorMessage, reflect.Indirect(detailPtr))
 				}
 			} else if kafkaRestOrConnectErr.IsValid() && kafkaRestOrConnectErr.Kind() == reflect.Pointer {
-				errorMessage = fmt.Sprintf("%s: %s", errorMessage, reflect.Indirect(kafkaRestOrConnectErr))
+				if !kafkaRestOrConnectErr.IsNil() {
+					errorMessage = fmt.Sprintf("%s: %s", errorMessage, reflect.Indirect(kafkaRestOrConnectErr))
+				}
 			}
 		}
 	}
