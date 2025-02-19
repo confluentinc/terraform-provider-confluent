@@ -32,6 +32,7 @@ import (
 	ca "github.com/confluentinc/ccloud-sdk-go-v2/certificate-authority/v2"
 	cmk "github.com/confluentinc/ccloud-sdk-go-v2/cmk/v2"
 	connect "github.com/confluentinc/ccloud-sdk-go-v2/connect/v1"
+	dc "github.com/confluentinc/ccloud-sdk-go-v2/data-catalog/v1"
 	fa "github.com/confluentinc/ccloud-sdk-go-v2/flink-artifact/v1"
 	fcpm "github.com/confluentinc/ccloud-sdk-go-v2/flink/v2"
 	iamv1 "github.com/confluentinc/ccloud-sdk-go-v2/iam/v1"
@@ -84,6 +85,8 @@ type Client struct {
 	ccpClient                       *ccp.APIClient
 	cmkClient                       *cmk.APIClient
 	connectClient                   *connect.APIClient
+	catalogClient                   *dc.APIClient
+	catalogRestClientFactory        *CatalogRestClientFactory
 	fcpmClient                      *fcpm.APIClient
 	faClient                        *fa.APIClient
 	netClient                       *net.APIClient
@@ -104,6 +107,7 @@ type Client struct {
 	ssoClient                       *sso.APIClient
 	piClient                        *pi.APIClient
 	userAgent                       string
+	catalogRestEndpoint             string
 	cloudApiKey                     string
 	cloudApiSecret                  string
 	kafkaClusterId                  string
@@ -145,6 +149,12 @@ func New(version, userAgent string) func() *schema.Provider {
 	return func() *schema.Provider {
 		provider := &schema.Provider{
 			Schema: map[string]*schema.Schema{
+				"schema_registry_rest_endpoint": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					DefaultFunc: schema.EnvDefaultFunc("SCHEMA_REGISTRY_REST_ENDPOINT", ""),
+					Description: "The Schema Registry Cluster REST Endpoint.",
+				},
 				"cloud_api_key": {
 					Type:        schema.TypeString,
 					Optional:    true,
@@ -205,11 +215,11 @@ func New(version, userAgent string) func() *schema.Provider {
 					DefaultFunc: schema.EnvDefaultFunc("SCHEMA_REGISTRY_API_SECRET", ""),
 					Description: "The Schema Registry Cluster API Secret.",
 				},
-				"schema_registry_rest_endpoint": {
+				"catalog_rest_endpoint": {
 					Type:        schema.TypeString,
 					Optional:    true,
-					DefaultFunc: schema.EnvDefaultFunc("SCHEMA_REGISTRY_REST_ENDPOINT", ""),
-					Description: "The Schema Registry Cluster REST Endpoint.",
+					DefaultFunc: schema.EnvDefaultFunc("CATALOG_REST_ENDPOINT", ""),
+					Description: "The Schema Registry Cluster Catalog REST Endpoint.",
 				},
 				"flink_principal_id": {
 					Type:        schema.TypeString,
@@ -427,6 +437,7 @@ func environmentDataSourceSchema() *schema.Schema {
 func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Provider, providerVersion, additionalUserAgent string) (interface{}, diag.Diagnostics) {
 	tflog.Info(ctx, "Initializing Terraform Provider for Confluent Cloud")
 	endpoint := d.Get("endpoint").(string)
+	catalogRestEndpoint := d.Get("catalog_rest_endpoint").(string)
 	cloudApiKey := d.Get("cloud_api_key").(string)
 	cloudApiSecret := d.Get("cloud_api_secret").(string)
 	kafkaClusterId := d.Get("kafka_id").(string)
@@ -457,8 +468,8 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	}
 
 	// All 4 attributes should be set or not set at the same time
-	allSchemaRegistryAttributesAreSet := (schemaRegistryApiKey != "") && (schemaRegistryApiSecret != "") && (schemaRegistryRestEndpoint != "") && (schemaRegistryClusterId != "")
-	allSchemaRegistryAttributesAreNotSet := (schemaRegistryApiKey == "") && (schemaRegistryApiSecret == "") && (schemaRegistryRestEndpoint == "") && (schemaRegistryClusterId == "")
+	allSchemaRegistryAttributesAreSet := (schemaRegistryApiKey != "") && (schemaRegistryApiSecret != "") && (schemaRegistryRestEndpoint != "" || catalogRestEndpoint != "") && (schemaRegistryClusterId != "")
+	allSchemaRegistryAttributesAreNotSet := (schemaRegistryApiKey == "") && (schemaRegistryApiSecret == "") && (schemaRegistryRestEndpoint == "" || catalogRestEndpoint == "") && (schemaRegistryClusterId == "")
 	justSubsetOfSchemaRegistryAttributesAreSet := !(allSchemaRegistryAttributesAreSet || allSchemaRegistryAttributesAreNotSet)
 	if justSubsetOfSchemaRegistryAttributesAreSet {
 		return nil, diag.Errorf("All 4 schema_registry_api_key, schema_registry_api_secret, schema_registry_rest_endpoint, schema_registry_id attributes should be set or not set in the provider block at the same time")
@@ -486,6 +497,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	apiKeysCfg := apikeys.NewConfiguration()
 	byokCfg := byok.NewConfiguration()
 	caCfg := ca.NewConfiguration()
+	catalogCfg := dc.NewConfiguration()
 	ccpCfg := ccp.NewConfiguration()
 	cmkCfg := cmk.NewConfiguration()
 	connectCfg := connect.NewConfiguration()
@@ -536,6 +548,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	apiKeysCfg.UserAgent = userAgent
 	byokCfg.UserAgent = userAgent
 	caCfg.UserAgent = userAgent
+	catalogCfg.UserAgent = userAgent
 	ccpCfg.UserAgent = userAgent
 	cmkCfg.UserAgent = userAgent
 	connectCfg.UserAgent = userAgent
@@ -558,10 +571,12 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	srcmCfg.UserAgent = userAgent
 	ssoCfg.UserAgent = userAgent
 
+	var catalogRestClientFactory *CatalogRestClientFactory
 	var flinkRestClientFactory *FlinkRestClientFactory
 	var kafkaRestClientFactory *KafkaRestClientFactory
 	var schemaRegistryRestClientFactory *SchemaRegistryRestClientFactory
 
+	catalogRestClientFactory = &CatalogRestClientFactory{ctx: ctx, userAgent: userAgent, maxRetries: &maxRetries}
 	flinkRestClientFactory = &FlinkRestClientFactory{ctx: ctx, userAgent: userAgent, maxRetries: &maxRetries}
 	kafkaRestClientFactory = &KafkaRestClientFactory{ctx: ctx, userAgent: userAgent, maxRetries: &maxRetries}
 	schemaRegistryRestClientFactory = &SchemaRegistryRestClientFactory{ctx: ctx, userAgent: userAgent, maxRetries: &maxRetries}
@@ -569,6 +584,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	apiKeysCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	byokCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	caCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
+	catalogCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	ccpCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	cmkCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	connectCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
@@ -593,6 +609,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	client := Client{
 		apiKeysClient:                   apikeys.NewAPIClient(apiKeysCfg),
 		byokClient:                      byok.NewAPIClient(byokCfg),
+		catalogClient:                   dc.NewAPIClient(catalogCfg),
 		caClient:                        ca.NewAPIClient(caCfg),
 		ccpClient:                       ccp.NewAPIClient(ccpCfg),
 		cmkClient:                       cmk.NewAPIClient(cmkCfg),
@@ -612,6 +629,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 		orgClient:                       org.NewAPIClient(orgCfg),
 		piClient:                        pi.NewAPIClient(piCfg),
 		srcmClient:                      srcm.NewAPIClient(srcmCfg),
+		catalogRestClientFactory:        catalogRestClientFactory,
 		flinkRestClientFactory:          flinkRestClientFactory,
 		kafkaRestClientFactory:          kafkaRestClientFactory,
 		schemaRegistryRestClientFactory: schemaRegistryRestClientFactory,
@@ -619,6 +637,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 		quotasClient:                    quotas.NewAPIClient(quotasCfg),
 		ssoClient:                       sso.NewAPIClient(ssoCfg),
 		userAgent:                       userAgent,
+		catalogRestEndpoint:             catalogRestEndpoint,
 		cloudApiKey:                     cloudApiKey,
 		cloudApiSecret:                  cloudApiSecret,
 		kafkaClusterId:                  kafkaClusterId,

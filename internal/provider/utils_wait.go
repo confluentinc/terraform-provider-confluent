@@ -503,7 +503,7 @@ func waitForPeeringToProvision(ctx context.Context, c *Client, environmentId, pe
 	return nil
 }
 
-func waitForTagToProvision(ctx context.Context, c *SchemaRegistryRestClient, tagId, tagName string) error {
+func waitForTagToProvision(ctx context.Context, c *CatalogRestClient, tagId, tagName string) error {
 	stateConf := &resource.StateChangeConf{
 		Pending:      []string{stateProvisioning},
 		Target:       []string{stateReady},
@@ -1366,7 +1366,7 @@ func peeringProvisionStatus(ctx context.Context, c *Client, environmentId string
 	}
 }
 
-func tagProvisionStatus(ctx context.Context, c *SchemaRegistryRestClient, tagId, tagName string) resource.StateRefreshFunc {
+func tagProvisionStatus(ctx context.Context, c *CatalogRestClient, tagId, tagName string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
 		request := c.dataCatalogApiClient.TypesV1Api.GetTagDefByName(c.dataCatalogApiContext(ctx), tagName)
 		tag, resp, err := request.Execute()
