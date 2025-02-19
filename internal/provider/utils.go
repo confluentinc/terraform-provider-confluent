@@ -576,10 +576,9 @@ func createDescriptiveError(err error, resp ...*http.Response) error {
 				if detailPtr.IsValid() && detailPtr.Kind() == reflect.Pointer && !detailPtr.IsNil() {
 					errorMessage = fmt.Sprintf("%s: %s", errorMessage, reflect.Indirect(detailPtr))
 				}
-			} else if kafkaRestOrConnectErr.IsValid() && kafkaRestOrConnectErr.Kind() == reflect.Pointer {
-				if !kafkaRestOrConnectErr.IsNil() {
-					errorMessage = fmt.Sprintf("%s: %s", errorMessage, reflect.Indirect(kafkaRestOrConnectErr))
-				}
+			} else if kafkaRestOrConnectErr.IsValid() && kafkaRestOrConnectErr.Kind() == reflect.Pointer &&
+				!kafkaRestOrConnectErr.IsNil() {
+				errorMessage = fmt.Sprintf("%s: %s", errorMessage, reflect.Indirect(kafkaRestOrConnectErr))
 			}
 		}
 	}
