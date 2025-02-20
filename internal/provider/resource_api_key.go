@@ -490,6 +490,8 @@ func fetchHttpEndpointOfSchemaRegistryCluster(ctx context.Context, c *Client, en
 	}
 	if restEndpoint := cluster.Spec.GetHttpEndpoint(); len(restEndpoint) > 0 {
 		return restEndpoint, nil
+	} else if restEndpointPrivate := cluster.Spec.GetPrivateHttpEndpoint(); len(restEndpointPrivate) > 0 {
+		return restEndpointPrivate, nil
 	} else {
 		return "", fmt.Errorf("rest_endpoint is nil or empty for Schema Registry Cluster %q", clusterId)
 	}
@@ -501,7 +503,7 @@ func fetchHttpEndpointOfFlinkRegion(ctx context.Context, c *Client, flinkRegionI
 	if err != nil {
 		return "", fmt.Errorf("error parsing Flink API Key %q attribute in %q block: %s", paramId, paramResource, createDescriptiveError(err))
 	}
-	regions, _, err := executeFlinkRegionRead(c.srcmApiContext(ctx), c, cloud, regionName)
+	regions, _, err := executeFlinkRegionRead(c.fcpmApiContext(ctx), c, cloud, regionName)
 	if err != nil {
 		return "", fmt.Errorf("error reading Flink Region %q: %s", flinkRegionId, createDescriptiveError(err))
 	}
@@ -510,6 +512,8 @@ func fetchHttpEndpointOfFlinkRegion(ctx context.Context, c *Client, flinkRegionI
 	}
 	if restEndpoint := regions.GetData()[0].GetHttpEndpoint(); len(restEndpoint) > 0 {
 		return restEndpoint, nil
+	} else if restEndpointPrivate := regions.GetData()[0].GetPrivateHttpEndpoint(); len(restEndpointPrivate) > 0 {
+		return restEndpointPrivate, nil
 	} else {
 		return "", fmt.Errorf("rest_endpoint is nil or empty for Flink Region %q", flinkRegionId)
 	}
