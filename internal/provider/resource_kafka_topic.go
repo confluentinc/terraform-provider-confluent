@@ -51,6 +51,11 @@ var editableTopicSettings = []string{"cleanup.policy", "delete.retention.ms", "m
 	"retention.bytes", "retention.ms", "segment.bytes", "segment.ms", "confluent.key.schema.validation", "confluent.value.schema.validation",
 	"confluent.key.subject.name.strategy", "confluent.value.subject.name.strategy"}
 
+// Read-only topic settings
+var ignoredTopicSettings = []string{
+	"confluent.topic.type",
+}
+
 func extractConfigs(configs map[string]interface{}) []kafkarestv3.CreateTopicRequestDataConfigs {
 	configResult := make([]kafkarestv3.CreateTopicRequestDataConfigs, len(configs))
 
@@ -669,6 +674,12 @@ func loadTopicConfigs(ctx context.Context, d *schema.ResourceData, c *KafkaRestC
 
 	config := make(map[string]string)
 	for _, remoteConfig := range topicConfigList.Data {
+		// Skip read-only / internal topic settings
+		isInternalSetting := stringInSlice(remoteConfig.GetName(), ignoredTopicSettings, false)
+		if isInternalSetting {
+			continue
+		}
+
 		// Extract configs that were set via terraform vs set by default
 		if remoteConfig.Source == dynamicTopicConfig && remoteConfig.Value.IsSet() {
 			config[remoteConfig.Name] = *remoteConfig.Value.Get()
