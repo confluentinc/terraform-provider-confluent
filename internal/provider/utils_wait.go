@@ -1591,7 +1591,7 @@ func tableflowApiKeySyncStatus(ctx context.Context, c *Client, tableflowApiKey, 
 
 func kafkaApiKeySyncStatus(ctx context.Context, c *KafkaRestClient) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		_, resp, err := c.apiClient.TopicV3Api.ListKafkaTopics(kafkaRestApiContextWithClusterApiKey(ctx, c.clusterApiKey, c.clusterApiSecret), c.clusterId).Execute()
+		_, resp, err := c.apiClient.TopicV3Api.ListKafkaTopics(c.kafkaRestApiContextWithClusterApiKey(ctx, c.clusterApiKey, c.clusterApiSecret), c.clusterId).Execute()
 		if resp != nil && resp.StatusCode == http.StatusOK {
 			tflog.Debug(ctx, fmt.Sprintf("Finishing Kafka API Key %q sync process: Received %d status code when listing Kafka Topics", c.clusterApiKey, resp.StatusCode), map[string]interface{}{apiKeyLoggingKey: c.clusterApiKey})
 			return 0, stateDone, nil

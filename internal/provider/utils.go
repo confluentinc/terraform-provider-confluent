@@ -133,12 +133,26 @@ const (
 
 func (c *Client) apiKeysApiContext(ctx context.Context) context.Context {
 	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
-		return context.WithValue(context.Background(), apikeys.ContextBasicAuth, apikeys.BasicAuth{
+		return context.WithValue(ctx, apikeys.ContextBasicAuth, apikeys.BasicAuth{
 			UserName: c.cloudApiKey,
 			Password: c.cloudApiSecret,
 		})
 	}
-	tflog.Warn(ctx, "Could not find Cloud API Key")
+
+	stsTokenSource := c.oauthClientConfig.STSTokenSource
+	if stsTokenSource != nil {
+		token, err := stsTokenSource.Token()
+		if err != nil {
+			tflog.Warn(ctx, fmt.Sprintf("Failed to get OAuth token for API Key client: %v", err))
+			return ctx
+		}
+
+		if token.AccessToken != "" {
+			return context.WithValue(ctx, apikeys.ContextAccessToken, token.AccessToken)
+		}
+	}
+
+	tflog.Warn(ctx, "Could not find Cloud API Key or OAuth Token for API Key client")
 	return ctx
 }
 
@@ -149,25 +163,52 @@ func (c *Client) byokApiContext(ctx context.Context) context.Context {
 			Password: c.cloudApiSecret,
 		})
 	}
-	tflog.Warn(ctx, "Could not find Cloud API Key")
+
+	stsTokenSource := c.oauthClientConfig.STSTokenSource
+	if stsTokenSource != nil {
+		token, err := stsTokenSource.Token()
+		if err != nil {
+			tflog.Warn(ctx, fmt.Sprintf("Failed to get OAuth token for BYOK client: %v", err))
+			return ctx
+		}
+
+		if token.AccessToken != "" {
+			return context.WithValue(ctx, byok.ContextAccessToken, token.AccessToken)
+		}
+	}
+
+	tflog.Warn(ctx, "Could not find Cloud API Key or OAuth Token for BYOK client")
 	return ctx
 }
 
-func kafkaRestApiContextWithClusterApiKey(ctx context.Context, kafkaApiKey string, kafkaApiSecret string) context.Context {
+func (c *KafkaRestClient) kafkaRestApiContextWithClusterApiKey(ctx context.Context, kafkaApiKey string, kafkaApiSecret string) context.Context {
 	if kafkaApiKey != "" && kafkaApiSecret != "" {
-		return context.WithValue(context.Background(), kafkarestv3.ContextBasicAuth, kafkarestv3.BasicAuth{
+		return context.WithValue(ctx, kafkarestv3.ContextBasicAuth, kafkarestv3.BasicAuth{
 			UserName: kafkaApiKey,
 			Password: kafkaApiSecret,
 		})
 	}
-	tflog.Warn(ctx, "Could not find Kafka API Key")
+
+	if c.oauthTokenSource != nil {
+		token, err := c.oauthTokenSource.Token()
+		if err != nil {
+			tflog.Warn(ctx, fmt.Sprintf("Failed to get OAuth token for Kafka Rest API client: %v", err))
+			return ctx
+		}
+
+		if token.AccessToken != "" {
+			return context.WithValue(ctx, kafkarestv3.ContextAccessToken, token.AccessToken)
+		}
+	}
+
+	tflog.Warn(ctx, "Could not find Cloud API Key or OAuth Token for Kafka Rest API client")
 	return ctx
 }
 
 func (c *Client) ccpApiContext(ctx context.Context) context.Context {
 	// 1. If we have a CCloud API key/secret, use Basic Auth
 	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
-		return context.WithValue(context.Background(), ccp.ContextBasicAuth, ccp.BasicAuth{
+		return context.WithValue(ctx, ccp.ContextBasicAuth, ccp.BasicAuth{
 			UserName: c.cloudApiKey,
 			Password: c.cloudApiSecret,
 		})
@@ -194,7 +235,7 @@ func (c *Client) ccpApiContext(ctx context.Context) context.Context {
 
 func (c *Client) cmkApiContext(ctx context.Context) context.Context {
 	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
-		return context.WithValue(context.Background(), cmk.ContextBasicAuth, cmk.BasicAuth{
+		return context.WithValue(ctx, cmk.ContextBasicAuth, cmk.BasicAuth{
 			UserName: c.cloudApiKey,
 			Password: c.cloudApiSecret,
 		})
@@ -219,7 +260,7 @@ func (c *Client) cmkApiContext(ctx context.Context) context.Context {
 
 func (c *Client) iamApiContext(ctx context.Context) context.Context {
 	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
-		return context.WithValue(context.Background(), iam.ContextBasicAuth, iam.BasicAuth{
+		return context.WithValue(ctx, iam.ContextBasicAuth, iam.BasicAuth{
 			UserName: c.cloudApiKey,
 			Password: c.cloudApiSecret,
 		})
@@ -244,7 +285,7 @@ func (c *Client) iamApiContext(ctx context.Context) context.Context {
 
 func (c *Client) caApiContext(ctx context.Context) context.Context {
 	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
-		return context.WithValue(context.Background(), ca.ContextBasicAuth, ca.BasicAuth{
+		return context.WithValue(ctx, ca.ContextBasicAuth, ca.BasicAuth{
 			UserName: c.cloudApiKey,
 			Password: c.cloudApiSecret,
 		})
@@ -269,7 +310,7 @@ func (c *Client) caApiContext(ctx context.Context) context.Context {
 
 func (c *Client) ssoApiContext(ctx context.Context) context.Context {
 	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
-		return context.WithValue(context.Background(), sso.ContextBasicAuth, sso.BasicAuth{
+		return context.WithValue(ctx, sso.ContextBasicAuth, sso.BasicAuth{
 			UserName: c.cloudApiKey,
 			Password: c.cloudApiSecret,
 		})
@@ -294,7 +335,7 @@ func (c *Client) ssoApiContext(ctx context.Context) context.Context {
 
 func (c *Client) piApiContext(ctx context.Context) context.Context {
 	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
-		return context.WithValue(context.Background(), pi.ContextBasicAuth, pi.BasicAuth{
+		return context.WithValue(ctx, pi.ContextBasicAuth, pi.BasicAuth{
 			UserName: c.cloudApiKey,
 			Password: c.cloudApiSecret,
 		})
@@ -319,7 +360,7 @@ func (c *Client) piApiContext(ctx context.Context) context.Context {
 
 func (c *Client) iamV1ApiContext(ctx context.Context) context.Context {
 	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
-		return context.WithValue(context.Background(), iamv1.ContextBasicAuth, iamv1.BasicAuth{
+		return context.WithValue(ctx, iamv1.ContextBasicAuth, iamv1.BasicAuth{
 			UserName: c.cloudApiKey,
 			Password: c.cloudApiSecret,
 		})
@@ -344,7 +385,7 @@ func (c *Client) iamV1ApiContext(ctx context.Context) context.Context {
 
 func (c *Client) mdsApiContext(ctx context.Context) context.Context {
 	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
-		return context.WithValue(context.Background(), mds.ContextBasicAuth, mds.BasicAuth{
+		return context.WithValue(ctx, mds.ContextBasicAuth, mds.BasicAuth{
 			UserName: c.cloudApiKey,
 			Password: c.cloudApiSecret,
 		})
@@ -369,7 +410,7 @@ func (c *Client) mdsApiContext(ctx context.Context) context.Context {
 
 func (c *Client) netApiContext(ctx context.Context) context.Context {
 	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
-		return context.WithValue(context.Background(), net.ContextBasicAuth, net.BasicAuth{
+		return context.WithValue(ctx, net.ContextBasicAuth, net.BasicAuth{
 			UserName: c.cloudApiKey,
 			Password: c.cloudApiSecret,
 		})
@@ -394,7 +435,7 @@ func (c *Client) netApiContext(ctx context.Context) context.Context {
 
 func (c *Client) faApiContext(ctx context.Context) context.Context {
 	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
-		return context.WithValue(context.Background(), fa.ContextBasicAuth, fa.BasicAuth{
+		return context.WithValue(ctx, fa.ContextBasicAuth, fa.BasicAuth{
 			UserName: c.cloudApiKey,
 			Password: c.cloudApiSecret,
 		})
@@ -419,7 +460,7 @@ func (c *Client) faApiContext(ctx context.Context) context.Context {
 
 func (c *Client) fcpmApiContext(ctx context.Context) context.Context {
 	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
-		return context.WithValue(context.Background(), fcpm.ContextBasicAuth, fcpm.BasicAuth{
+		return context.WithValue(ctx, fcpm.ContextBasicAuth, fcpm.BasicAuth{
 			UserName: c.cloudApiKey,
 			Password: c.cloudApiSecret,
 		})
@@ -444,7 +485,7 @@ func (c *Client) fcpmApiContext(ctx context.Context) context.Context {
 
 func (c *Client) netAPApiContext(ctx context.Context) context.Context {
 	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
-		return context.WithValue(context.Background(), netap.ContextBasicAuth, netap.BasicAuth{
+		return context.WithValue(ctx, netap.ContextBasicAuth, netap.BasicAuth{
 			UserName: c.cloudApiKey,
 			Password: c.cloudApiSecret,
 		})
@@ -469,7 +510,7 @@ func (c *Client) netAPApiContext(ctx context.Context) context.Context {
 
 func (c *Client) netGWApiContext(ctx context.Context) context.Context {
 	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
-		return context.WithValue(context.Background(), netgw.ContextBasicAuth, netgw.BasicAuth{
+		return context.WithValue(ctx, netgw.ContextBasicAuth, netgw.BasicAuth{
 			UserName: c.cloudApiKey,
 			Password: c.cloudApiSecret,
 		})
@@ -494,7 +535,7 @@ func (c *Client) netGWApiContext(ctx context.Context) context.Context {
 
 func (c *Client) netIPApiContext(ctx context.Context) context.Context {
 	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
-		return context.WithValue(context.Background(), netip.ContextBasicAuth, netip.BasicAuth{
+		return context.WithValue(ctx, netip.ContextBasicAuth, netip.BasicAuth{
 			UserName: c.cloudApiKey,
 			Password: c.cloudApiSecret,
 		})
@@ -519,7 +560,7 @@ func (c *Client) netIPApiContext(ctx context.Context) context.Context {
 
 func (c *Client) netPLApiContext(ctx context.Context) context.Context {
 	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
-		return context.WithValue(context.Background(), netpl.ContextBasicAuth, netpl.BasicAuth{
+		return context.WithValue(ctx, netpl.ContextBasicAuth, netpl.BasicAuth{
 			UserName: c.cloudApiKey,
 			Password: c.cloudApiSecret,
 		})
@@ -544,7 +585,7 @@ func (c *Client) netPLApiContext(ctx context.Context) context.Context {
 
 func (c *Client) netDnsApiContext(ctx context.Context) context.Context {
 	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
-		return context.WithValue(context.Background(), dns.ContextBasicAuth, dns.BasicAuth{
+		return context.WithValue(ctx, dns.ContextBasicAuth, dns.BasicAuth{
 			UserName: c.cloudApiKey,
 			Password: c.cloudApiSecret,
 		})
@@ -569,7 +610,7 @@ func (c *Client) netDnsApiContext(ctx context.Context) context.Context {
 
 func (c *Client) srcmApiContext(ctx context.Context) context.Context {
 	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
-		return context.WithValue(context.Background(), srcm.ContextBasicAuth, srcm.BasicAuth{
+		return context.WithValue(ctx, srcm.ContextBasicAuth, srcm.BasicAuth{
 			UserName: c.cloudApiKey,
 			Password: c.cloudApiSecret,
 		})
@@ -594,7 +635,7 @@ func (c *Client) srcmApiContext(ctx context.Context) context.Context {
 
 func (c *Client) connectApiContext(ctx context.Context) context.Context {
 	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
-		return context.WithValue(context.Background(), connect.ContextBasicAuth, connect.BasicAuth{
+		return context.WithValue(ctx, connect.ContextBasicAuth, connect.BasicAuth{
 			UserName: c.cloudApiKey,
 			Password: c.cloudApiSecret,
 		})
@@ -619,7 +660,7 @@ func (c *Client) connectApiContext(ctx context.Context) context.Context {
 
 func (c *Client) orgApiContext(ctx context.Context) context.Context {
 	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
-		return context.WithValue(context.Background(), org.ContextBasicAuth, org.BasicAuth{
+		return context.WithValue(ctx, org.ContextBasicAuth, org.BasicAuth{
 			UserName: c.cloudApiKey,
 			Password: c.cloudApiSecret,
 		})
@@ -669,7 +710,7 @@ func (c *Client) ksqlApiContext(ctx context.Context) context.Context {
 
 func (c *Client) oidcApiContext(ctx context.Context) context.Context {
 	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
-		return context.WithValue(context.Background(), oidc.ContextBasicAuth, oidc.BasicAuth{
+		return context.WithValue(ctx, oidc.ContextBasicAuth, oidc.BasicAuth{
 			UserName: c.cloudApiKey,
 			Password: c.cloudApiSecret,
 		})
@@ -694,7 +735,7 @@ func (c *Client) oidcApiContext(ctx context.Context) context.Context {
 
 func (c *Client) quotasApiContext(ctx context.Context) context.Context {
 	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
-		return context.WithValue(context.Background(), quotas.ContextBasicAuth, quotas.BasicAuth{
+		return context.WithValue(ctx, quotas.ContextBasicAuth, quotas.BasicAuth{
 			UserName: c.cloudApiKey,
 			Password: c.cloudApiSecret,
 		})
@@ -719,7 +760,7 @@ func (c *Client) quotasApiContext(ctx context.Context) context.Context {
 
 func orgApiContext(ctx context.Context, cloudApiKey, cloudApiSecret string) context.Context {
 	if cloudApiKey != "" && cloudApiSecret != "" {
-		return context.WithValue(context.Background(), org.ContextBasicAuth, org.BasicAuth{
+		return context.WithValue(ctx, org.ContextBasicAuth, org.BasicAuth{
 			UserName: cloudApiKey,
 			Password: cloudApiSecret,
 		})
@@ -813,7 +854,7 @@ type FlinkRestClient struct {
 func (c *KafkaRestClient) apiContext(ctx context.Context) context.Context {
 	// 1. If we have a cluster API key/secret, use Basic Auth
 	if c.clusterApiKey != "" && c.clusterApiSecret != "" {
-		return context.WithValue(context.Background(), kafkarestv3.ContextBasicAuth, kafkarestv3.BasicAuth{
+		return context.WithValue(ctx, kafkarestv3.ContextBasicAuth, kafkarestv3.BasicAuth{
 			UserName: c.clusterApiKey,
 			Password: c.clusterApiSecret,
 		})
@@ -841,7 +882,7 @@ func (c *KafkaRestClient) apiContext(ctx context.Context) context.Context {
 func (c *SchemaRegistryRestClient) apiContext(ctx context.Context) context.Context {
 	// 1. If we have a cluster API key/secret, use Basic Auth
 	if c.clusterApiKey != "" && c.clusterApiSecret != "" {
-		return context.WithValue(context.Background(), schemaregistry.ContextBasicAuth, schemaregistry.BasicAuth{
+		return context.WithValue(ctx, schemaregistry.ContextBasicAuth, schemaregistry.BasicAuth{
 			UserName: c.clusterApiKey,
 			Password: c.clusterApiSecret,
 		})
@@ -869,7 +910,7 @@ func (c *SchemaRegistryRestClient) apiContext(ctx context.Context) context.Conte
 func (c *SchemaRegistryRestClient) dataCatalogApiContext(ctx context.Context) context.Context {
 	// 1. If we have a cluster API key/secret, use Basic Auth
 	if c.clusterApiKey != "" && c.clusterApiSecret != "" {
-		return context.WithValue(context.Background(), dc.ContextBasicAuth, dc.BasicAuth{
+		return context.WithValue(ctx, dc.ContextBasicAuth, dc.BasicAuth{
 			UserName: c.clusterApiKey,
 			Password: c.clusterApiSecret,
 		})
@@ -897,7 +938,7 @@ func (c *SchemaRegistryRestClient) dataCatalogApiContext(ctx context.Context) co
 func (c *FlinkRestClient) apiContext(ctx context.Context) context.Context {
 	// 1. If we have a cluster API key/secret, use Basic Auth
 	if c.flinkApiKey != "" && c.flinkApiSecret != "" {
-		return context.WithValue(context.Background(), fgb.ContextBasicAuth, fgb.BasicAuth{
+		return context.WithValue(ctx, fgb.ContextBasicAuth, fgb.BasicAuth{
 			UserName: c.flinkApiKey,
 			Password: c.flinkApiSecret,
 		})

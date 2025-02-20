@@ -33,7 +33,7 @@ type OAuthClientConfig struct {
 type STSExchange struct {
 	OAuthTokenSource oauth2.TokenSource // Source for the original OAuth token
 	IdentityPoolID   string
-	STSURL           string
+	STSURL           string        // 'STSURL' adheres to Go’s acronym conventions
 	CurrentToken     *oauth2.Token // Cached STS token
 }
 
@@ -81,7 +81,13 @@ func exchangeSTS(oauthToken, identityPoolID, stsURL string) (*oauth2.Token, erro
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+
+		}
+	}(resp.Body)
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)

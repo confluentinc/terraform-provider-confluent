@@ -3,22 +3,24 @@ package provider
 import (
 	"context"
 	"fmt"
+	"net/http"
 
-	dc "github.com/confluentinc/ccloud-sdk-go-v2/data-catalog/v1"
-	kafkarestv3 "github.com/confluentinc/ccloud-sdk-go-v2/kafkarest/v3"
+	"golang.org/x/oauth2"
+
 	"github.com/hashicorp/go-retryablehttp"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 
-	"net/http"
-
+	dc "github.com/confluentinc/ccloud-sdk-go-v2/data-catalog/v1"
 	fgb "github.com/confluentinc/ccloud-sdk-go-v2/flink-gateway/v1"
+	kafkarestv3 "github.com/confluentinc/ccloud-sdk-go-v2/kafkarest/v3"
 	schemaregistry "github.com/confluentinc/ccloud-sdk-go-v2/schema-registry/v1"
 )
 
 type FlinkRestClientFactory struct {
-	ctx        context.Context
-	userAgent  string
-	maxRetries *int
+	ctx               context.Context
+	userAgent         string
+	maxRetries        *int
+	oauthClientConfig *OAuthClientConfig
 }
 
 func (f FlinkRestClientFactory) CreateFlinkRestClient(restEndpoint, organizationId, environmentId, computePoolId, principalId, flinkApiKey, flinkApiSecret string, isMetadataSetInProviderBlock bool) *FlinkRestClient {
@@ -31,10 +33,27 @@ func (f FlinkRestClientFactory) CreateFlinkRestClient(restEndpoint, organization
 
 	config.UserAgent = f.userAgent
 	config.Servers[0].URL = restEndpoint
-	config.HTTPClient = NewRetryableClientFactory(f.ctx, opts...).CreateRetryableClient()
+
+	baseFactory := NewRetryableClientFactory(f.ctx, opts...)
+
+	var finalHTTPClient *http.Client
+	var tokenSource oauth2.TokenSource
+
+	// TODO: Ensure the oauthClient and tokenSource are not nil from provider level
+	// Flink REST client takes the external OAuth client and token source, not the STS one
+	if f.oauthClientConfig != nil {
+		oauthClient := f.oauthClientConfig.ExternalHTTPClient
+		tokenSource = f.oauthClientConfig.ExternalTokenSource
+		finalHTTPClient = baseFactory.CreateRetryableClientWithBase(oauthClient)
+	} else {
+		finalHTTPClient = baseFactory.CreateRetryableClient()
+	}
+
+	config.HTTPClient = finalHTTPClient
 
 	return &FlinkRestClient{
 		apiClient:                    fgb.NewAPIClient(config),
+		oauthTokenSource:             tokenSource,
 		organizationId:               organizationId,
 		environmentId:                environmentId,
 		computePoolId:                computePoolId,
@@ -47,9 +66,10 @@ func (f FlinkRestClientFactory) CreateFlinkRestClient(restEndpoint, organization
 }
 
 type SchemaRegistryRestClientFactory struct {
-	ctx        context.Context
-	userAgent  string
-	maxRetries *int
+	ctx               context.Context
+	userAgent         string
+	maxRetries        *int
+	oauthClientConfig *OAuthClientConfig
 }
 
 func (f SchemaRegistryRestClientFactory) CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret string, isMetadataSetInProviderBlock bool) *SchemaRegistryRestClient {
@@ -73,11 +93,29 @@ func (f SchemaRegistryRestClientFactory) CreateSchemaRegistryRestClient(restEndp
 
 	dataCatalogConfig.UserAgent = f.userAgent
 	dataCatalogConfig.Servers[0].URL = restEndpoint
-	dataCatalogConfig.HTTPClient = NewRetryableClientFactory(f.ctx, opts...).CreateRetryableClient()
+
+	baseFactory := NewRetryableClientFactory(f.ctx, opts...)
+
+	var finalHTTPClient *http.Client
+	var tokenSource oauth2.TokenSource
+
+	// TODO: Ensure the oauthClient and tokenSource are not nil from provider level
+	// Both Schema Registry and Data Catalog REST client takes the external OAuth client and token source, not the STS one
+	if f.oauthClientConfig != nil {
+		oauthClient := f.oauthClientConfig.ExternalHTTPClient
+		tokenSource = f.oauthClientConfig.ExternalTokenSource
+		finalHTTPClient = baseFactory.CreateRetryableClientWithBase(oauthClient)
+	} else {
+		finalHTTPClient = baseFactory.CreateRetryableClient()
+	}
+
+	config.HTTPClient = finalHTTPClient
+	dataCatalogConfig.HTTPClient = finalHTTPClient
 
 	return &SchemaRegistryRestClient{
 		apiClient:                    schemaregistry.NewAPIClient(config),
 		dataCatalogApiClient:         dc.NewAPIClient(dataCatalogConfig),
+		oauthTokenSource:             tokenSource,
 		clusterId:                    clusterId,
 		clusterApiKey:                clusterApiKey,
 		clusterApiSecret:             clusterApiSecret,
@@ -87,9 +125,10 @@ func (f SchemaRegistryRestClientFactory) CreateSchemaRegistryRestClient(restEndp
 }
 
 type KafkaRestClientFactory struct {
-	ctx        context.Context
-	userAgent  string
-	maxRetries *int
+	ctx               context.Context
+	userAgent         string
+	maxRetries        *int
+	oauthClientConfig *OAuthClientConfig
 }
 
 func (f KafkaRestClientFactory) CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret string, isMetadataSetInProviderBlock, isClusterIdSetInProviderBlock bool) *KafkaRestClient {
@@ -102,10 +141,27 @@ func (f KafkaRestClientFactory) CreateKafkaRestClient(restEndpoint, clusterId, c
 
 	config.UserAgent = f.userAgent
 	config.Servers[0].URL = restEndpoint
-	config.HTTPClient = NewRetryableClientFactory(f.ctx, opts...).CreateRetryableClient()
+
+	baseFactory := NewRetryableClientFactory(f.ctx, opts...)
+
+	var finalHTTPClient *http.Client
+	var tokenSource oauth2.TokenSource
+
+	// TODO: Ensure the oauthClient and tokenSource are not nil from provider level
+	// Kafka REST client takes the external OAuth client and token source, not the STS one
+	if f.oauthClientConfig != nil {
+		oauthClient := f.oauthClientConfig.ExternalHTTPClient
+		tokenSource = f.oauthClientConfig.ExternalTokenSource
+		finalHTTPClient = baseFactory.CreateRetryableClientWithBase(oauthClient)
+	} else {
+		finalHTTPClient = baseFactory.CreateRetryableClient()
+	}
+
+	config.HTTPClient = finalHTTPClient
 
 	return &KafkaRestClient{
 		apiClient:                     kafkarestv3.NewAPIClient(config),
+		oauthTokenSource:              tokenSource,
 		clusterId:                     clusterId,
 		clusterApiKey:                 clusterApiKey,
 		clusterApiSecret:              clusterApiSecret,
@@ -160,6 +216,29 @@ func (f RetryableClientFactory) CreateRetryableClient() *http.Client {
 	// This logger will be used to send retryablehttp's internal logs to tflog
 	retryClient.Logger = logger
 
+	return retryClient.StandardClient()
+}
+
+// CreateRetryableClientWithBase wraps an existing base HTTP client (like one from oauth2.NewClient)
+// with retry logic.
+func (f RetryableClientFactory) CreateRetryableClientWithBase(baseClient *http.Client) *http.Client {
+	retryClient := retryablehttp.NewClient()
+	logger := retryClientLogger{f.ctx}
+
+	// Optionally set max retries if provided
+	if f.maxRetries != nil {
+		retryClient.RetryMax = *f.maxRetries
+	}
+
+	retryClient.Logger = logger
+
+	// This is the key line:
+	// we override the default client with your baseClient (e.g. OAuth2 client).
+	if baseClient != nil {
+		retryClient.HTTPClient = baseClient
+	}
+
+	// Return a standard *http.Client that includes the retry logic
 	return retryClient.StandardClient()
 }
 

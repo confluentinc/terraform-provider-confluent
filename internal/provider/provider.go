@@ -23,16 +23,16 @@ import (
 
 	"golang.org/x/oauth2"
 
-	ccp "github.com/confluentinc/ccloud-sdk-go-v2/connect-custom-plugin/v1"
-	dns "github.com/confluentinc/ccloud-sdk-go-v2/networking-dnsforwarder/v1"
-	netip "github.com/confluentinc/ccloud-sdk-go-v2/networking-ip/v1"
-	pi "github.com/confluentinc/ccloud-sdk-go-v2/provider-integration/v1"
-	"github.com/confluentinc/ccloud-sdk-go-v2/sso/v2"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
 	apikeys "github.com/confluentinc/ccloud-sdk-go-v2/apikeys/v2"
 	byok "github.com/confluentinc/ccloud-sdk-go-v2/byok/v1"
 	ca "github.com/confluentinc/ccloud-sdk-go-v2/certificate-authority/v2"
 	cmk "github.com/confluentinc/ccloud-sdk-go-v2/cmk/v2"
+	ccp "github.com/confluentinc/ccloud-sdk-go-v2/connect-custom-plugin/v1"
 	connect "github.com/confluentinc/ccloud-sdk-go-v2/connect/v1"
 	fa "github.com/confluentinc/ccloud-sdk-go-v2/flink-artifact/v1"
 	fcpm "github.com/confluentinc/ccloud-sdk-go-v2/flink/v2"
@@ -43,15 +43,15 @@ import (
 	ksql "github.com/confluentinc/ccloud-sdk-go-v2/ksql/v2"
 	mds "github.com/confluentinc/ccloud-sdk-go-v2/mds/v2"
 	netap "github.com/confluentinc/ccloud-sdk-go-v2/networking-access-point/v1"
+	dns "github.com/confluentinc/ccloud-sdk-go-v2/networking-dnsforwarder/v1"
 	netgw "github.com/confluentinc/ccloud-sdk-go-v2/networking-gateway/v1"
+	netip "github.com/confluentinc/ccloud-sdk-go-v2/networking-ip/v1"
 	netpl "github.com/confluentinc/ccloud-sdk-go-v2/networking-privatelink/v1"
 	net "github.com/confluentinc/ccloud-sdk-go-v2/networking/v1"
 	org "github.com/confluentinc/ccloud-sdk-go-v2/org/v2"
+	pi "github.com/confluentinc/ccloud-sdk-go-v2/provider-integration/v1"
 	srcm "github.com/confluentinc/ccloud-sdk-go-v2/srcm/v3"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"github.com/confluentinc/ccloud-sdk-go-v2/sso/v2"
 )
 
 const (
@@ -659,6 +659,10 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 }
 
 func retrieveOAuthSetting(ctx context.Context, d *schema.ResourceData) (*OAuthClientConfig, diag.Diagnostics) {
+	if _, ok := d.GetOk(paramOAuthBlockName); !ok {
+		return nil, nil
+	}
+
 	clientId := extractStringValueFromBlock(d, paramOAuthBlockName, paramOAuthClientId)
 	clientSecret := extractStringValueFromBlock(d, paramOAuthBlockName, paramOAuthClientSecret)
 	externalTokenURL := extractStringValueFromBlock(d, paramOAuthBlockName, paramOAuthTokenURL)
@@ -673,6 +677,7 @@ func retrieveOAuthSetting(ctx context.Context, d *schema.ResourceData) (*OAuthCl
 	}
 
 	// 2. Fetch the initial external token
+	// TODO: check if this PasswordCredentialsToken functions works
 	externalToken, err := externalOAuthConfig.PasswordCredentialsToken(ctx, clientId, clientSecret)
 	if err != nil {
 		return nil, diag.FromErr(err)
@@ -734,34 +739,34 @@ func providerOAuthSchema() *schema.Schema {
 					Sensitive:   true,
 					Description: "OAuth client secret",
 				},
+				paramOAuthIdentityPoolId: {
+					Type:        schema.TypeString,
+					Required:    true,
+					Description: "OAuth identity pool id",
+				},
 				paramOAuthAccessToken: {
 					Type:        schema.TypeString,
 					Optional:    true,
 					Computed:    true,
 					Sensitive:   true,
-					Description: "OAuth access token",
+					Description: "OAuth access token from external IDP",
 				},
 				paramOAuthRefreshToken: {
 					Type:        schema.TypeString,
 					Computed:    true,
 					Sensitive:   true,
-					Description: "OAuth refresh token",
+					Description: "OAuth refresh token from external IDP",
 				},
 				paramOAuthSTSToken: {
 					Type:        schema.TypeString,
 					Computed:    true,
 					Sensitive:   true,
-					Description: "OAuth STS access token from CCloud",
+					Description: "OAuth STS access token from Confluent Cloud",
 				},
 				paramOAuthScope: {
 					Type:        schema.TypeString,
 					Optional:    true,
 					Description: "OAuth access token scope",
-				},
-				paramOAuthIdentityPoolId: {
-					Type:        schema.TypeString,
-					Required:    true,
-					Description: "OAuth identity pool id",
 				},
 			},
 		},
