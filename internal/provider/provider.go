@@ -120,6 +120,7 @@ type Client struct {
 	schemaRegistryApiKey            string
 	schemaRegistryApiSecret         string
 	schemaRegistryRestEndpoint      string
+	isCatalogRegistryMetadataSet    bool
 	isSchemaRegistryMetadataSet     bool
 	flinkPrincipalId                string
 	flinkOrganizationId             string
@@ -153,7 +154,7 @@ func New(version, userAgent string) func() *schema.Provider {
 					Type:        schema.TypeString,
 					Optional:    true,
 					DefaultFunc: schema.EnvDefaultFunc("CATALOG_REST_ENDPOINT", ""),
-					Description: "The Schema Registry Cluster Catalog REST Endpoint.",
+					Description: "The Stream Catalog REST Endpoint.",
 				},
 				"cloud_api_key": {
 					Type:        schema.TypeString,
@@ -475,6 +476,13 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 		return nil, diag.Errorf("All 4 schema_registry_api_key, schema_registry_api_secret, schema_registry_rest_endpoint, schema_registry_id attributes should be set or not set in the provider block at the same time")
 	}
 
+	allCatalogAttributesAreSet := (schemaRegistryApiKey != "") && (schemaRegistryApiSecret != "") && (schemaRegistryRestEndpoint != "" || catalogRestEndpoint != "") && (schemaRegistryClusterId != "")
+	allCatalogAttributesAreNotSet := (schemaRegistryApiKey == "") && (schemaRegistryApiSecret == "") && (schemaRegistryRestEndpoint == "" || catalogRestEndpoint == "") && (schemaRegistryClusterId == "")
+	justSubsetOfCatalogAttributesAreSet := !(allCatalogAttributesAreSet || allCatalogAttributesAreNotSet)
+	if justSubsetOfCatalogAttributesAreSet {
+		return nil, diag.Errorf("All 4 schema_registry_api_key, schema_registry_api_secret, catalog_rest_endpoint, schema_registry_id attributes should be set or not set in the provider block at the same time")
+	}
+
 	// All 7 attributes should be set or not set at the same time
 	allFlinkAttributesAreSet := (flinkApiKey != "") && (flinkApiSecret != "") && (flinkRestEndpoint != "") && (flinkOrganizationId != "") && (flinkEnvironmentId != "") && (flinkComputePoolId != "") && (flinkPrincipalId != "")
 	allFlinkAttributesAreNotSet := (flinkApiKey == "") && (flinkApiSecret == "") && (flinkRestEndpoint == "") && (flinkOrganizationId == "") && (flinkEnvironmentId == "") && (flinkComputePoolId == "") && (flinkPrincipalId == "")
@@ -655,12 +663,13 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 		flinkApiKey:                     flinkApiKey,
 		flinkApiSecret:                  flinkApiSecret,
 		flinkRestEndpoint:               flinkRestEndpoint,
-		// For simplicity, treat 3 (for Kafka), 4 (for SR), and 7 (for Flink) variables as a "single" one
-		isKafkaMetadataSet:          allKafkaAttributesAreSet,
-		isKafkaClusterIdSet:         kafkaClusterId != "",
-		isSchemaRegistryMetadataSet: allSchemaRegistryAttributesAreSet,
-		isFlinkMetadataSet:          allFlinkAttributesAreSet,
-		isAcceptanceTestMode:        acceptanceTestMode,
+		// For simplicity, treat 3 (for Kafka), 4 (for SR), 4 (for catalog) and 7 (for Flink) variables as a "single" one
+		isKafkaMetadataSet:           allKafkaAttributesAreSet,
+		isKafkaClusterIdSet:          kafkaClusterId != "",
+		isSchemaRegistryMetadataSet:  allSchemaRegistryAttributesAreSet,
+		isCatalogRegistryMetadataSet: allCatalogAttributesAreSet,
+		isFlinkMetadataSet:           allFlinkAttributesAreSet,
+		isAcceptanceTestMode:         acceptanceTestMode,
 	}
 
 	return &client, nil

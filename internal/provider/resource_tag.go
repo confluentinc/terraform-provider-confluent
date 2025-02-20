@@ -364,10 +364,13 @@ func setTagAttributes(d *schema.ResourceData, c *CatalogRestClient, clusterId st
 }
 
 func extractCatalogRestEndpoint(client *Client, d *schema.ResourceData, isImportOperation bool) (string, error) {
-	if client.isSchemaRegistryMetadataSet {
+	if client.isCatalogRegistryMetadataSet {
 		if client.catalogRestEndpoint != "" {
 			return client.catalogRestEndpoint, nil
-		} else {
+		}
+	}
+	if client.isSchemaRegistryMetadataSet {
+		if client.schemaRegistryRestEndpoint != "" {
 			return client.schemaRegistryRestEndpoint, nil
 		}
 	}
@@ -379,12 +382,12 @@ func extractCatalogRestEndpoint(client *Client, d *schema.ResourceData, isImport
 		} else if restEndpointOld != "" {
 			return restEndpointOld, nil
 		} else {
-			return "", fmt.Errorf("one of provider.catalog_rest_endpoint (defaults to CATALOG_REST_ENDPOINT environment variable) or IMPORT_CATALOG_REST_ENDPOINT environment variable must be set")
+			return "", fmt.Errorf("one of provider.catalog_rest_endpoint (defaults to CATALOG_REST_ENDPOINT environment variable) or IMPORT_CATALOG_REST_ENDPOINT, or provider.schema_registry_rest_endpoint (defaults to SCHEMA_REGISTRY_REST_ENDPOINT environment variable) or IMPORT_SCHEMA_REGISTRY_REST_ENDPOINT environment variable must be set")
 		}
 	}
 	restEndpoint := d.Get(paramRestEndpoint).(string)
 	if restEndpoint != "" {
 		return restEndpoint, nil
 	}
-	return "", fmt.Errorf("one of provider.schema_registry_rest_endpoint (defaults to SCHEMA_REGISTRY_REST_ENDPOINT environment variable) or resource.rest_endpoint must be set")
+	return "", fmt.Errorf("one of provider.catalog_rest_endpoint (defaults to CATALOG_REST_ENDPOINT environment variable) or provider.schema_registry_rest_endpoint (defaults to SCHEMA_REGISTRY_REST_ENDPOINT environment variable) or resource.rest_endpoint must be set")
 }
