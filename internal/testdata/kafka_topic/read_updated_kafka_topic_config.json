@@ -581,6 +581,28 @@
       ],
       "topic_name": "read_created_kafka_topic",
       "is_default": true
+    },
+    {
+      "kind": "KafkaTopicConfig",
+      "metadata": {
+        "self": "https://pkc-0wg55.us-central1.gcp.confluent.cloud/kafka/v3/clusters/lkc-190073/topics/read_created_kafka_topic/configs/confluent.topic.type",
+        "resource_name": "crn:///kafka=lkc-190073/topic=read_created_kafka_topic/config=unclean.leader.election.enable"
+      },
+      "cluster_id": "lkc-190073",
+      "name": "confluent.topic.type",
+      "value": "standard",
+      "is_read_only": false,
+      "is_sensitive": false,
+      "source": "DYNAMIC_TOPIC_CONFIG",
+      "synonyms": [
+        {
+          "name": "confluent.topic.type",
+          "value": "standard",
+          "source": "DYNAMIC_TOPIC_CONFIG"
+        }
+      ],
+      "topic_name": "read_created_kafka_topic",
+      "is_default": false
     }
   ]
 }
