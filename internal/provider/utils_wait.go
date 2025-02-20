@@ -519,7 +519,7 @@ func waitForTagToProvision(ctx context.Context, c *CatalogRestClient, tagId, tag
 	return nil
 }
 
-func waitForBusinessMetadataToProvision(ctx context.Context, c *SchemaRegistryRestClient, businessMetadataId, businessMetadataName string) error {
+func waitForBusinessMetadataToProvision(ctx context.Context, c *CatalogRestClient, businessMetadataId, businessMetadataName string) error {
 	stateConf := &resource.StateChangeConf{
 		Pending:      []string{stateProvisioning},
 		Target:       []string{stateReady},
@@ -535,7 +535,7 @@ func waitForBusinessMetadataToProvision(ctx context.Context, c *SchemaRegistryRe
 	return nil
 }
 
-func waitForTagBindingToProvision(ctx context.Context, c *SchemaRegistryRestClient, tagBindingId, tagName, entityName, entityType string) error {
+func waitForTagBindingToProvision(ctx context.Context, c *CatalogRestClient, tagBindingId, tagName, entityName, entityType string) error {
 	stateConf := &resource.StateChangeConf{
 		Pending:      []string{stateProvisioning},
 		Target:       []string{stateReady},
@@ -551,7 +551,7 @@ func waitForTagBindingToProvision(ctx context.Context, c *SchemaRegistryRestClie
 	return nil
 }
 
-func waitForBusinessMetadataBindingToProvision(ctx context.Context, c *SchemaRegistryRestClient, businessMetadataBindingId, businessMetadataName, entityName, entityType string) error {
+func waitForBusinessMetadataBindingToProvision(ctx context.Context, c *CatalogRestClient, businessMetadataBindingId, businessMetadataName, entityName, entityType string) error {
 	stateConf := &resource.StateChangeConf{
 		Pending:      []string{stateProvisioning},
 		Target:       []string{stateReady},
@@ -1383,7 +1383,7 @@ func tagProvisionStatus(ctx context.Context, c *CatalogRestClient, tagId, tagNam
 	}
 }
 
-func businessMetadataProvisionStatus(ctx context.Context, c *SchemaRegistryRestClient, businessMetadataId, businessMetadataName string) resource.StateRefreshFunc {
+func businessMetadataProvisionStatus(ctx context.Context, c *CatalogRestClient, businessMetadataId, businessMetadataName string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
 		request := c.dataCatalogApiClient.TypesV1Api.GetBusinessMetadataDefByName(c.dataCatalogApiContext(ctx), businessMetadataName)
 		businessMetadata, resp, err := request.Execute()
@@ -1400,7 +1400,7 @@ func businessMetadataProvisionStatus(ctx context.Context, c *SchemaRegistryRestC
 	}
 }
 
-func tagBindingProvisionStatus(ctx context.Context, c *SchemaRegistryRestClient, tagBindingId, tagName, entityName, entityType string) resource.StateRefreshFunc {
+func tagBindingProvisionStatus(ctx context.Context, c *CatalogRestClient, tagBindingId, tagName, entityName, entityType string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
 		request := c.dataCatalogApiClient.EntityV1Api.GetTags(c.dataCatalogApiContext(ctx), entityType, entityName)
 		tagBindings, resp, err := request.Execute()
@@ -1422,7 +1422,7 @@ func tagBindingProvisionStatus(ctx context.Context, c *SchemaRegistryRestClient,
 	}
 }
 
-func businessMetadataBindingProvisionStatus(ctx context.Context, c *SchemaRegistryRestClient, businessMetadataBindingId, businessMetadataName, entityName, entityType string) resource.StateRefreshFunc {
+func businessMetadataBindingProvisionStatus(ctx context.Context, c *CatalogRestClient, businessMetadataBindingId, businessMetadataName, entityName, entityType string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
 		request := c.dataCatalogApiClient.EntityV1Api.GetBusinessMetadata(c.dataCatalogApiContext(ctx), entityType, entityName)
 		businessMetadataBindings, resp, err := request.Execute()
