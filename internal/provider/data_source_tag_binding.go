@@ -65,7 +65,7 @@ func tagBindingDataSource() *schema.Resource {
 }
 
 func tagBindingDataSourceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	restEndpoint, err := extractSchemaRegistryRestEndpoint(meta.(*Client), d, false)
+	restEndpoint, err := extractCatalogRestEndpoint(meta.(*Client), d, false)
 	if err != nil {
 		return diag.Errorf("error reading Tag Binding: %s", createDescriptiveError(err))
 	}
@@ -86,8 +86,8 @@ func tagBindingDataSourceRead(ctx context.Context, d *schema.ResourceData, meta 
 
 	tflog.Debug(ctx, fmt.Sprintf("Reading Tag Binding %q=%q", paramId, tagBindingId), map[string]interface{}{tagBindingLoggingKey: tagBindingId})
 
-	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
-	request := schemaRegistryRestClient.dataCatalogApiClient.EntityV1Api.GetTags(schemaRegistryRestClient.dataCatalogApiContext(ctx), entityType, entityName)
+	catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+	request := catalogRestClient.dataCatalogApiClient.EntityV1Api.GetTags(catalogRestClient.dataCatalogApiContext(ctx), entityType, entityName)
 	tagBindings, _, err := request.Execute()
 	if err != nil {
 		return diag.Errorf("error reading Tag Binding %q: %s", tagBindingId, createDescriptiveError(err))

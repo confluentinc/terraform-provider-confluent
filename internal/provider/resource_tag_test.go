@@ -105,12 +105,12 @@ func TestAccTag(t *testing.T) {
 	// Set fake values for secrets since those are required for importing
 	_ = os.Setenv("IMPORT_SCHEMA_REGISTRY_API_KEY", testSchemaRegistryUpdatedKey)
 	_ = os.Setenv("IMPORT_SCHEMA_REGISTRY_API_SECRET", testSchemaRegistryUpdatedSecret)
-	_ = os.Setenv("IMPORT_SCHEMA_REGISTRY_REST_ENDPOINT", mockServerUrl)
+	_ = os.Setenv("IMPORT_CATALOG_REST_ENDPOINT", mockServerUrl)
 
 	defer func() {
 		_ = os.Unsetenv("IMPORT_SCHEMA_REGISTRY_API_KEY")
 		_ = os.Unsetenv("IMPORT_SCHEMA_REGISTRY_API_SECRET")
-		_ = os.Unsetenv("IMPORT_SCHEMA_REGISTRY_REST_ENDPOINT")
+		_ = os.Unsetenv("IMPORT_CATALOG_REST_ENDPOINT")
 	}()
 
 	resource.Test(t, resource.TestCase{

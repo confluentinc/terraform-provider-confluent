@@ -151,8 +151,8 @@ func businessMetadataBindingResourceConfig(mockServerUrl string) string {
 	return fmt.Sprintf(`
  	provider "confluent" {
  	  schema_registry_id = "xxx"
-	  schema_registry_rest_endpoint = "%s" # optionally use SCHEMA_REGISTRY_REST_ENDPOINT env var
-	  schema_registry_api_key       = "x"       # optionally use SCHEMA_REGISTRY_API_KEY env var
+	  catalog_rest_endpoint = "%s" 	  # optionally use CATALOG_REST_ENDPOINT env var
+	  schema_registry_api_key = "x"   # optionally use SCHEMA_REGISTRY_API_KEY env var
 	  schema_registry_api_secret = "x"
  	}
  	resource "confluent_business_metadata_binding" "main" {
@@ -171,8 +171,8 @@ func updateBusinessMetadataBindingResourceConfig(mockServerUrl string) string {
 	return fmt.Sprintf(`
  	provider "confluent" {
  	  schema_registry_id = "xxx"
-	  schema_registry_rest_endpoint = "%s" # optionally use SCHEMA_REGISTRY_REST_ENDPOINT env var
-	  schema_registry_api_key       = "x"       # optionally use SCHEMA_REGISTRY_API_KEY env var
+      catalog_rest_endpoint = "%s" 	  # optionally use CATALOG_REST_ENDPOINT env var
+	  schema_registry_api_key = "x"   # optionally use SCHEMA_REGISTRY_API_KEY env var
 	  schema_registry_api_secret = "x"
  	}
  	resource "confluent_business_metadata_binding" "main" {
