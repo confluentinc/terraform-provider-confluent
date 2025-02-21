@@ -273,6 +273,7 @@ func New(version, userAgent string) func() *schema.Provider {
 			DataSourcesMap: map[string]*schema.Resource{
 				"confluent_certificate_authority":              certificateAuthorityDataSource(),
 				"confluent_certificate_pool":                   certificatePoolDataSource(),
+				"confluent_cluster_link":                       clusterLinkDataSource(),
 				"confluent_kafka_cluster":                      kafkaDataSource(),
 				"confluent_kafka_topic":                        kafkaTopicDataSource(),
 				"confluent_environment":                        environmentDataSource(),
