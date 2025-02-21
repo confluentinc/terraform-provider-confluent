@@ -144,6 +144,7 @@ func TestAccClusterLinkDestinationInbound(t *testing.T) {
 					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, "destination_kafka_cluster.0.credentials.0.key", destinationClusterApiKey),
 					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, "destination_kafka_cluster.0.credentials.0.secret", destinationClusterApiSecret),
 					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, "id", fmt.Sprintf("%s/%s", destinationClusterId, clusterLinkName)),
+					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, "cluster_link_id", "qz0HDEV-Qz2B5aPFpcWQJQ"),
 					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, "%", numberOfClusterLinkResourceAttributes),
 				),
 			},
