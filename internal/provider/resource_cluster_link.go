@@ -36,6 +36,7 @@ const (
 	paramRemoteKafkaCluster      = "remote_kafka_cluster"
 	paramLinkMode                = "link_mode"
 	paramConnectionMode          = "connection_mode"
+	paramClusterLinkId           = "cluster_link_id"
 
 	bootstrapServersConfigKey = "bootstrap.servers"
 	securityProtocolConfigKey = "security.protocol"
@@ -131,6 +132,11 @@ func clusterLinkResource() *schema.Resource {
 				ForceNew:     true,
 				ValidateFunc: validation.StringInSlice([]string{connectionModeInbound, connectionModeOutbound}, false),
 			},
+			paramClusterLinkId: {
+				Type:        schema.TypeString,
+				Description: "The actual Cluster Link ID assigned from Confluent Cloud that uniquely represents a link between two Kafka clusters.",
+				Computed:    true,
+			},
 			paramConfigs: {
 				Type: schema.TypeMap,
 				Elem: &schema.Schema{
@@ -217,7 +223,7 @@ func clusterLinkRead(ctx context.Context, d *schema.ResourceData, meta interface
 
 	kafkaRestClient, err := createKafkaRestClientForClusterLink(d, meta)
 	if err != nil {
-		return diag.Errorf("error creating Cluster Link: %s", createDescriptiveError(err))
+		return diag.Errorf("error reading Cluster Link: %s", createDescriptiveError(err))
 	}
 	linkName := d.Get(paramLinkName).(string)
 	linkMode := d.Get(paramLinkMode).(string)
@@ -296,6 +302,9 @@ func setClusterLinkAttributes(ctx context.Context, d *schema.ResourceData, c *Ka
 		return nil, err
 	}
 	if err := d.Set(paramConnectionMode, connectionMode); err != nil {
+		return nil, err
+	}
+	if err := d.Set(paramClusterLinkId, clusterLink.GetClusterLinkId()); err != nil {
 		return nil, err
 	}
 
@@ -438,7 +447,7 @@ func clusterLinkDelete(ctx context.Context, d *schema.ResourceData, meta interfa
 
 	kafkaRestClient, err := createKafkaRestClientForClusterLink(d, meta)
 	if err != nil {
-		return diag.Errorf("error creating Cluster Link: %s", createDescriptiveError(err))
+		return diag.Errorf("error deleting Cluster Link: %s", createDescriptiveError(err))
 	}
 	linkName := d.Get(paramLinkName).(string)
 
@@ -909,7 +918,7 @@ func loadClusterLinkConfigs(ctx context.Context, d *schema.ResourceData, c *Kafk
 
 	config := make(map[string]string)
 	for _, remoteConfig := range clusterLinkConfig.GetData() {
-		// Extract configs that were set via overriden vs set by default
+		// Extract configs that were set via override vs set by default
 		if stringInSlice(remoteConfig.GetName(), editableClusterLinkSettings, false) && remoteConfig.Source == dynamicClusterLinkConfig {
 			config[remoteConfig.GetName()] = remoteConfig.GetValue()
 		}
