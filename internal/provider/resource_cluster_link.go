@@ -134,7 +134,7 @@ func clusterLinkResource() *schema.Resource {
 			},
 			paramClusterLinkId: {
 				Type:        schema.TypeString,
-				Description: "The Cluster Link ID uniquely represents a link between two Kafka clusters.",
+				Description: "The actual Cluster Link ID assigned from Confluent Cloud that uniquely represents a link between two Kafka clusters.",
 				Computed:    true,
 			},
 			paramConfigs: {
