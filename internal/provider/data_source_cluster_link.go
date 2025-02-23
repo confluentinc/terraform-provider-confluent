@@ -18,20 +18,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	v3 "github.com/confluentinc/ccloud-sdk-go-v2/kafkarest/v3"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"net/http"
 	"regexp"
-	"strings"
-)
 
-const (
-	paramDestinationClusterId = "destination_cluster_id"
-	paramRemoteClusterId      = "remote_cluster_id"
-	paramSourceClusterId      = "source_cluster_id"
+	v3 "github.com/confluentinc/ccloud-sdk-go-v2/kafkarest/v3"
 )
 
 func clusterLinkDataSource() *schema.Resource {
@@ -40,19 +33,19 @@ func clusterLinkDataSource() *schema.Resource {
 		Schema: map[string]*schema.Schema{
 			paramId: {
 				Type:        schema.TypeString,
-				Description: "The Terraform identifier of the Cluster Link data-source, in the format <Kafka cluster ID>/<Cluster Link name>.",
-				Required:    true,
+				Description: "The composite ID of the Cluster Link data-source, in the format <Kafka cluster ID>/<Cluster Link name>, used by Terraform to track the data-source.",
+				Computed:    true,
 			},
 			paramKafkaCluster: clusterLinkDataSourceKafkaClusterBlockSchema(),
 			paramClusterLinkId: {
 				Type:        schema.TypeString,
-				Description: "The actual Cluster Link ID assigned by Confluent Cloud that uniquely represents a link between two Kafka clusters.",
+				Description: "The actual Cluster Link ID assigned from Confluent Cloud that uniquely represents a link between two Kafka clusters.",
 				Computed:    true,
 			},
-			paramLinkMode: {
+			paramLinkName: {
 				Type:        schema.TypeString,
-				Description: "The mode of the Cluster Link.",
-				Computed:    true,
+				Description: "The name of the Cluster Link.",
+				Required:    true,
 			},
 			paramConfigs: {
 				Type: schema.TypeMap,
@@ -69,85 +62,58 @@ func clusterLinkDataSource() *schema.Resource {
 func clusterLinkDataSourceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	tflog.Debug(ctx, fmt.Sprintf("Reading Cluster Link %q", d.Id()), map[string]interface{}{clusterLinkLoggingKey: d.Id()})
 
-	parts := strings.SplitN(d.Get(paramId).(string), "/", 2)
-	if len(parts) != 2 {
-		// handle unexpected format, e.g., log an error or return
-		fmt.Println("Unexpected format for link_name")
-		return diag.Errorf("Unexpected format of link_name: %s", paramLinkName)
-	}
+	linkName := d.Get(paramLinkName).(string)
+	clusterId := extractStringValueFromBlock(d, paramKafkaCluster, paramId)
+	endpoint := extractStringValueFromBlock(d, paramKafkaCluster, paramRestEndpoint)
+	clusterApiKey := extractStringValueFromNestedBlock(d, paramKafkaCluster, paramCredentials, paramKey)
+	clusterApiSecret := extractStringValueFromNestedBlock(d, paramKafkaCluster, paramCredentials, paramSecret)
 
-	clusterId := parts[0]
-	linkName := parts[1]
-	apiKey := d.Get(paramKey).(string)
-	apiSecret := d.Get(paramSecret).(string)
-	endpoint := d.Get(paramRestEndpoint).(string)
+	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(endpoint, clusterId, clusterApiKey, clusterApiSecret, false, false)
 
-	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(endpoint, clusterId, apiKey, apiSecret, false, false)
-
-	_, err := readDataSourceClusterLinkAndSetAttributes(ctx, d, kafkaRestClient, linkName, "", "")
+	err := readDataSourceClusterLinkAndSetAttributes(ctx, d, kafkaRestClient, linkName)
 	if err != nil {
 		return diag.Errorf("error reading Cluster Link: %s", createDescriptiveError(err))
 	}
 
+	// Set the compositeClusterLinkId to match the behavior of the `confluent_cluster_link` resource
+	compositeClusterLinkId := createClusterLinkCompositeId(clusterId, linkName)
+	d.SetId(compositeClusterLinkId)
+	tflog.Debug(ctx, fmt.Sprintf("Finished reading Cluster Link %q", d.Id()), map[string]interface{}{clusterLinkLoggingKey: d.Id()})
+
 	return nil
 }
 
-func readDataSourceClusterLinkAndSetAttributes(ctx context.Context, d *schema.ResourceData, c *KafkaRestClient, linkName, linkMode, connectionMode string) ([]*schema.ResourceData, error) {
-	clusterLink, resp, err := c.apiClient.ClusterLinkingV3Api.GetKafkaLink(c.apiContext(ctx), c.clusterId, linkName).Execute()
+func readDataSourceClusterLinkAndSetAttributes(ctx context.Context, d *schema.ResourceData, c *KafkaRestClient, linkName string) error {
+	clusterLink, _, err := c.apiClient.ClusterLinkingV3Api.GetKafkaLink(c.apiContext(ctx), c.clusterId, linkName).Execute()
 	if err != nil {
-		tflog.Warn(ctx, fmt.Sprintf("Error reading Cluster Link %q: %s", d.Id(), createDescriptiveError(err)), map[string]interface{}{clusterLinkLoggingKey: d.Id()})
-
-		isResourceNotFound := ResponseHasExpectedStatusCode(resp, http.StatusNotFound)
-		if isResourceNotFound && !d.IsNewResource() {
-			tflog.Warn(ctx, fmt.Sprintf("Removing Cluster Link %q in TF state because Cluster Link could not be found on the server", d.Id()), map[string]interface{}{clusterLinkLoggingKey: d.Id()})
-			d.SetId("")
-			return nil, nil
-		}
-
-		return nil, err
+		return fmt.Errorf("error reading Cluster Link %s: %s", linkName, createDescriptiveError(err))
 	}
+
 	clusterLinkJson, err := json.Marshal(clusterLink)
 	if err != nil {
-		return nil, fmt.Errorf("error reading Cluster Link %q: error marshaling %#v to json: %s", d.Id(), clusterLink, createDescriptiveError(err))
+		return fmt.Errorf("error reading Cluster Link %q: error marshaling %#v to json: %s", d.Id(), clusterLink, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Cluster Link %q: %s", d.Id(), clusterLinkJson), map[string]interface{}{clusterLinkLoggingKey: d.Id()})
 
-	if _, err := setDataSourceClusterLinkAttributes(ctx, d, c, clusterLink, linkMode, connectionMode); err != nil {
-		return nil, createDescriptiveError(err)
+	if err := setDataSourceClusterLinkAttributes(ctx, d, c, clusterLink); err != nil {
+		return createDescriptiveError(err)
 	}
-
-	tflog.Debug(ctx, fmt.Sprintf("Finished reading Cluster Link %q", d.Id()), map[string]interface{}{clusterLinkLoggingKey: d.Id()})
-
-	return []*schema.ResourceData{d}, nil
+	return nil
 }
 
-func setDataSourceClusterLinkAttributes(ctx context.Context, d *schema.ResourceData, c *KafkaRestClient, clusterLink v3.ListLinksResponseData,
-	linkMode, connectionMode string) (*schema.ResourceData, error) {
-	if err := d.Set(paramLinkName, clusterLink.GetLinkName()); err != nil {
-		return nil, err
-	}
-	/*
-		if err := d.Set(paramLinkMode, linkMode); err != nil {
-			return nil, err
-		}
-		if err := d.Set(paramConnectionMode, connectionMode); err != nil {
-			return nil, err
-		}
-	*/
+func setDataSourceClusterLinkAttributes(ctx context.Context, d *schema.ResourceData, c *KafkaRestClient, clusterLink v3.ListLinksResponseData) error {
 	if err := d.Set(paramClusterLinkId, clusterLink.GetClusterLinkId()); err != nil {
-		return nil, err
+		return err
 	}
 
 	configs, err := loadClusterLinkConfigs(ctx, d, c, clusterLink.GetLinkName())
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if err := d.Set(paramConfigs, configs); err != nil {
-		return nil, err
+		return err
 	}
-
-	d.SetId(createClusterLinkId(c.clusterId, clusterLink.LinkName))
-	return d, nil
+	return nil
 }
 
 func clusterLinkDataSourceKafkaClusterBlockSchema() *schema.Schema {
@@ -167,11 +133,11 @@ func clusterLinkDataSourceKafkaClusterBlockSchema() *schema.Schema {
 					Type:         schema.TypeString,
 					Required:     true,
 					Description:  "The REST endpoint of the Kafka cluster (e.g., `https://pkc-00000.us-central1.gcp.confluent.cloud:443`).",
-					ValidateFunc: validation.StringMatch(regexp.MustCompile("^http"), "the REST endpoint must start with 'https://'"),
+					ValidateFunc: validation.StringMatch(regexp.MustCompile("^https"), "the REST endpoint must start with 'https://'"),
 				},
 				paramCredentials: {
 					Type:        schema.TypeList,
-					Optional:    true,
+					Required:    true,
 					Description: "The Kafka API Credentials.",
 					MinItems:    1,
 					MaxItems:    1,
