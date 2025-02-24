@@ -37,7 +37,8 @@ func TestAccLatestSchema(t *testing.T) {
 	}
 	defer wiremockContainer.Terminate(ctx)
 
-	mockSchemaTestServerUrl := wiremockContainer.URI
+	//mockSchemaTestServerUrl := wiremockContainer.URI
+	mockSchemaTestServerUrl := "http://localhost:8080"
 	confluentCloudBaseUrl := ""
 	wiremockClient := wiremock.NewClient(mockSchemaTestServerUrl)
 	// nolint:errcheck
@@ -49,6 +50,7 @@ func TestAccLatestSchema(t *testing.T) {
 	validateSchemaStub := wiremock.Post(wiremock.URLPathEqualTo(validateSchemaPath)).
 		InScenario(schemaScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
+		WithBodyPattern(wiremock.EqualToJson(`{"references":[{"name":"sampleRecord2","subject":"test3","version":3},{"name":"sampleRecord","subject":"test2","version":9}],"schema":"foobar","schemaType":"AVRO"}`)).
 		WillReturn(
 			string(validateSchemaResponse),
 			contentTypeJSONHeader,
