@@ -36,6 +36,8 @@ const (
 	paramRemoteKafkaCluster      = "remote_kafka_cluster"
 	paramLinkMode                = "link_mode"
 	paramConnectionMode          = "connection_mode"
+	paramClusterLinkId           = "cluster_link_id"
+	paramLinkState               = "link_state"
 
 	bootstrapServersConfigKey = "bootstrap.servers"
 	securityProtocolConfigKey = "security.protocol"
@@ -131,6 +133,11 @@ func clusterLinkResource() *schema.Resource {
 				ForceNew:     true,
 				ValidateFunc: validation.StringInSlice([]string{connectionModeInbound, connectionModeOutbound}, false),
 			},
+			paramClusterLinkId: {
+				Type:        schema.TypeString,
+				Description: "The actual Cluster Link ID assigned from Confluent Cloud that uniquely represents a link between two Kafka clusters.",
+				Computed:    true,
+			},
 			paramConfigs: {
 				Type: schema.TypeMap,
 				Elem: &schema.Schema{
@@ -173,8 +180,8 @@ func clusterLinkCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 		return diag.Errorf("error creating Cluster Link: %s", createDescriptiveError(err))
 	}
 
-	clusterLinkId := createClusterLinkId(kafkaRestClient.clusterId, linkName)
-	d.SetId(clusterLinkId)
+	clusterLinkCompositeId := createClusterLinkCompositeId(kafkaRestClient.clusterId, linkName)
+	d.SetId(clusterLinkCompositeId)
 
 	// https://github.com/confluentinc/terraform-provider-confluentcloud/issues/40#issuecomment-1048782379
 	SleepIfNotTestMode(kafkaRestAPIWaitAfterCreate, meta.(*Client).isAcceptanceTestMode)
@@ -217,7 +224,7 @@ func clusterLinkRead(ctx context.Context, d *schema.ResourceData, meta interface
 
 	kafkaRestClient, err := createKafkaRestClientForClusterLink(d, meta)
 	if err != nil {
-		return diag.Errorf("error creating Cluster Link: %s", createDescriptiveError(err))
+		return diag.Errorf("error reading Cluster Link: %s", createDescriptiveError(err))
 	}
 	linkName := d.Get(paramLinkName).(string)
 	linkMode := d.Get(paramLinkMode).(string)
@@ -298,6 +305,9 @@ func setClusterLinkAttributes(ctx context.Context, d *schema.ResourceData, c *Ka
 	if err := d.Set(paramConnectionMode, connectionMode); err != nil {
 		return nil, err
 	}
+	if err := d.Set(paramClusterLinkId, clusterLink.GetClusterLinkId()); err != nil {
+		return nil, err
+	}
 
 	if linkMode == linkModeBidirectional {
 		if err := d.Set(paramLocalKafkaCluster, []interface{}{map[string]interface{}{
@@ -375,7 +385,7 @@ func setClusterLinkAttributes(ctx context.Context, d *schema.ResourceData, c *Ka
 		return nil, err
 	}
 
-	d.SetId(createClusterLinkId(c.clusterId, clusterLink.LinkName))
+	d.SetId(createClusterLinkCompositeId(c.clusterId, clusterLink.LinkName))
 	return d, nil
 }
 
@@ -438,7 +448,7 @@ func clusterLinkDelete(ctx context.Context, d *schema.ResourceData, meta interfa
 
 	kafkaRestClient, err := createKafkaRestClientForClusterLink(d, meta)
 	if err != nil {
-		return diag.Errorf("error creating Cluster Link: %s", createDescriptiveError(err))
+		return diag.Errorf("error deleting Cluster Link: %s", createDescriptiveError(err))
 	}
 	linkName := d.Get(paramLinkName).(string)
 
@@ -621,7 +631,7 @@ func constructCloudConfigForSourceOutboundMode(sourceKafkaApiKey, sourceKafkaApi
 	return config
 }
 
-func createClusterLinkId(clusterId, linkName string) string {
+func createClusterLinkCompositeId(clusterId, linkName string) string {
 	return fmt.Sprintf("%s/%s", clusterId, linkName)
 }
 
@@ -909,7 +919,7 @@ func loadClusterLinkConfigs(ctx context.Context, d *schema.ResourceData, c *Kafk
 
 	config := make(map[string]string)
 	for _, remoteConfig := range clusterLinkConfig.GetData() {
-		// Extract configs that were set via overriden vs set by default
+		// Extract configs that were set via override vs set by default
 		if stringInSlice(remoteConfig.GetName(), editableClusterLinkSettings, false) && remoteConfig.Source == dynamicClusterLinkConfig {
 			config[remoteConfig.GetName()] = remoteConfig.GetValue()
 		}
