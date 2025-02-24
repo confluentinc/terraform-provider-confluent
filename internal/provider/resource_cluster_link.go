@@ -37,6 +37,7 @@ const (
 	paramLinkMode                = "link_mode"
 	paramConnectionMode          = "connection_mode"
 	paramClusterLinkId           = "cluster_link_id"
+	paramLinkState               = "link_state"
 
 	bootstrapServersConfigKey = "bootstrap.servers"
 	securityProtocolConfigKey = "security.protocol"
@@ -179,8 +180,8 @@ func clusterLinkCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 		return diag.Errorf("error creating Cluster Link: %s", createDescriptiveError(err))
 	}
 
-	clusterLinkId := createClusterLinkId(kafkaRestClient.clusterId, linkName)
-	d.SetId(clusterLinkId)
+	clusterLinkCompositeId := createClusterLinkCompositeId(kafkaRestClient.clusterId, linkName)
+	d.SetId(clusterLinkCompositeId)
 
 	// https://github.com/confluentinc/terraform-provider-confluentcloud/issues/40#issuecomment-1048782379
 	SleepIfNotTestMode(kafkaRestAPIWaitAfterCreate, meta.(*Client).isAcceptanceTestMode)
@@ -384,7 +385,7 @@ func setClusterLinkAttributes(ctx context.Context, d *schema.ResourceData, c *Ka
 		return nil, err
 	}
 
-	d.SetId(createClusterLinkId(c.clusterId, clusterLink.LinkName))
+	d.SetId(createClusterLinkCompositeId(c.clusterId, clusterLink.LinkName))
 	return d, nil
 }
 
@@ -630,7 +631,7 @@ func constructCloudConfigForSourceOutboundMode(sourceKafkaApiKey, sourceKafkaApi
 	return config
 }
 
-func createClusterLinkId(clusterId, linkName string) string {
+func createClusterLinkCompositeId(clusterId, linkName string) string {
 	return fmt.Sprintf("%s/%s", clusterId, linkName)
 }
 
