@@ -144,6 +144,7 @@ func TestAccClusterLinkBidirectionalInbound(t *testing.T) {
 					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, "remote_kafka_cluster.0.bootstrap_endpoint", destinationClusterBootstrapEndpoint),
 					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, "remote_kafka_cluster.0.credentials.#", "0"),
 					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, "remote_kafka_cluster.0.credentials.0.%", "0"),
+					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, "cluster_link_id", "qz0HDEV-Qz2B5aPFpcWQJQ"),
 					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, "id", fmt.Sprintf("%s/%s", sourceClusterId, clusterLinkName)),
 					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, "%", numberOfClusterLinkResourceAttributes),
 				),
