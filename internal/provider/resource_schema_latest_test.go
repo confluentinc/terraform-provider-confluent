@@ -28,6 +28,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
+const (
+	testCreateSchemaRequestJson = `{"references":[{"name":"sampleRecord2","subject":"test3","version":3},{"name":"sampleRecord","subject":"test2","version":9}],"schema":"foobar","schemaType":"AVRO"}`
+)
+
 func TestAccLatestSchema(t *testing.T) {
 	ctx := context.Background()
 
@@ -49,6 +53,7 @@ func TestAccLatestSchema(t *testing.T) {
 	validateSchemaStub := wiremock.Post(wiremock.URLPathEqualTo(validateSchemaPath)).
 		InScenario(schemaScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
+		WithBodyPattern(wiremock.EqualToJson(testCreateSchemaRequestJson)).
 		WillReturn(
 			string(validateSchemaResponse),
 			contentTypeJSONHeader,
@@ -61,6 +66,7 @@ func TestAccLatestSchema(t *testing.T) {
 		InScenario(schemaScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillSetStateTo(scenarioStateSchemaHasBeenCreated).
+		WithBodyPattern(wiremock.EqualToJson(testCreateSchemaRequestJson)).
 		WillReturn(
 			string(createSchemaResponse),
 			contentTypeJSONHeader,
@@ -92,6 +98,7 @@ func TestAccLatestSchema(t *testing.T) {
 	checkSchemaExistsStub := wiremock.Post(wiremock.URLPathEqualTo(createSchemaPath)).
 		InScenario(schemaScenarioName).
 		WhenScenarioStateIs(scenarioStateSchemaHasBeenCreated).
+		WithBodyPattern(wiremock.EqualToJson(testCreateSchemaRequestJson)).
 		WillReturn(
 			string(checkSchemaExistsResponse),
 			contentTypeJSONHeader,
