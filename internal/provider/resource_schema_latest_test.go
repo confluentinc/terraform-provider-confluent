@@ -29,7 +29,22 @@ import (
 )
 
 const (
-	testCreateSchemaRequestJson = `{"references":[{"name":"sampleRecord2","subject":"test3","version":3},{"name":"sampleRecord","subject":"test2","version":9}],"schema":"foobar","schemaType":"AVRO"}`
+	testCreateSchemaRequestJson = `{
+  "references": [
+    {
+      "name": "sampleRecord2",
+      "subject": "test3",
+      "version": 3
+    },
+    {
+      "name": "sampleRecord",
+      "subject": "test2",
+      "version": 9
+    }
+  ],
+  "schema": "foobar",
+  "schemaType": "AVRO"
+}`
 )
 
 func TestAccLatestSchema(t *testing.T) {
