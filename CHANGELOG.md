@@ -1,3 +1,18 @@
+## 2.18.0 (February 24th, 2025)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.17.0...v2.18.0)
+
+**Note:**
+* Make sure to remove the `"confluent.topic.type"` topic setting from the `config` block attribute of your `confluent_kafka_topic` resource instances in your TF configuration if you can observe a related TF drift during the `terraform plan` command ([#427](https://github.com/confluentinc/terraform-provider-confluent/issues/427)).
+
+**Bug fixes:**
+* Fixed "Missing attribute `"confluent.topic.type"` of Kafka topic config in Terraform provider" issue ([#427](https://github.com/confluentinc/terraform-provider-confluent/issues/427)).
+* Fixed "Resource recreation when using ALL_GOOGLE_APIS instead of all-google-apis for private service connect endpoint target" issue ([#544](https://github.com/confluentinc/terraform-provider-confluent/issues/544)).
+* Added support for descriptive errors (displaying the raw response body when an error can't be parsed) for `confluent_kafka_topic` resource instances instead of showing "undefined response type".
+* Resolved TF drift for custom connectors.
+* Fixed "invalid reflect.Value" when displaying errors.
+* Updated TF docs.
+
 ## 2.17.0 (February 10th, 2025)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.16.0...v2.17.0)
