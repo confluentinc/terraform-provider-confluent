@@ -33,7 +33,7 @@ func clusterLinkDataSource() *schema.Resource {
 		Schema: map[string]*schema.Schema{
 			paramId: {
 				Type:        schema.TypeString,
-				Description: "The composite ID of the Cluster Link data-source, in the format <Kafka cluster ID>/<Cluster Link name>, used by Terraform to track the data-source.",
+				Description: "The composite ID of the Cluster Link data-source, in the format <Kafka cluster ID>/<Cluster Link name>.",
 				Computed:    true,
 			},
 			paramKafkaCluster: clusterLinkDataSourceKafkaClusterBlockSchema(),
@@ -46,6 +46,11 @@ func clusterLinkDataSource() *schema.Resource {
 				Type:        schema.TypeString,
 				Description: "The name of the Cluster Link.",
 				Required:    true,
+			},
+			paramLinkState: {
+				Type:        schema.TypeString,
+				Description: "The current state of the Cluster Link.",
+				Computed:    true,
 			},
 			paramConfigs: {
 				Type: schema.TypeMap,
@@ -105,7 +110,9 @@ func setDataSourceClusterLinkAttributes(ctx context.Context, d *schema.ResourceD
 	if err := d.Set(paramClusterLinkId, clusterLink.GetClusterLinkId()); err != nil {
 		return err
 	}
-
+	if err := d.Set(paramLinkState, clusterLink.GetLinkState()); err != nil {
+		return err
+	}
 	configs, err := loadClusterLinkConfigs(ctx, d, c, clusterLink.GetLinkName())
 	if err != nil {
 		return err
@@ -133,7 +140,7 @@ func clusterLinkDataSourceKafkaClusterBlockSchema() *schema.Schema {
 					Type:         schema.TypeString,
 					Required:     true,
 					Description:  "The REST endpoint of the Kafka cluster (e.g., `https://pkc-00000.us-central1.gcp.confluent.cloud:443`).",
-					ValidateFunc: validation.StringMatch(regexp.MustCompile("^https"), "the REST endpoint must start with 'https://'"),
+					ValidateFunc: validation.StringMatch(regexp.MustCompile("^http"), "the REST endpoint must start with 'https://'"),
 				},
 				paramCredentials: {
 					Type:        schema.TypeList,

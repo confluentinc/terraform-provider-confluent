@@ -37,6 +37,7 @@ const (
 	paramLinkMode                = "link_mode"
 	paramConnectionMode          = "connection_mode"
 	paramClusterLinkId           = "cluster_link_id"
+	paramLinkState               = "link_state"
 
 	bootstrapServersConfigKey = "bootstrap.servers"
 	securityProtocolConfigKey = "security.protocol"
