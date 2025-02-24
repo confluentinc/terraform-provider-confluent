@@ -9,7 +9,7 @@
 * Fixed "Missing attribute `"confluent.topic.type"` of Kafka topic config in Terraform provider" issue ([#427](https://github.com/confluentinc/terraform-provider-confluent/issues/427)).
 * Added support for descriptive errors (displaying the raw response body when an error can't be parsed) for `confluent_kafka_topic` resource instances instead of showing "undefined response type".
 * Resolved TF drift for custom connectors.
-* Fixed "<invalid reflect.Value>" when displaying errors.
+* Fixed "invalid reflect.Value" when displaying errors.
 * Updated TF docs.
 
 ## 2.17.0 (February 10th, 2025)
