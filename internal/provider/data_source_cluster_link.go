@@ -58,7 +58,7 @@ func clusterLinkDataSource() *schema.Resource {
 					Type: schema.TypeString,
 				},
 				Computed:    true,
-				Description: "The custom cluster link settings to set (e.g., `\"acl.sync.ms\" = \"5100\"`).",
+				Description: "The custom cluster link settings retrieved (e.g., `\"acl.sync.ms\" = \"5100\"`).",
 			},
 		},
 	}
