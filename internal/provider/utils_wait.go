@@ -911,8 +911,8 @@ func waitForClusterLinkToBeDeleted(ctx context.Context, c *KafkaRestClient, link
 		PollInterval: pollInterval,
 	}
 
-	topicId := createClusterLinkId(c.clusterId, linkName)
-	tflog.Debug(ctx, fmt.Sprintf("Waiting for Cluster Link %q to be deleted", topicId), map[string]interface{}{clusterLinkLoggingKey: topicId})
+	clusterLinkCompositeId := createClusterLinkCompositeId(c.clusterId, linkName)
+	tflog.Debug(ctx, fmt.Sprintf("Waiting for Cluster Link %q to be deleted", clusterLinkCompositeId), map[string]interface{}{clusterLinkLoggingKey: clusterLinkCompositeId})
 	if _, err := stateConf.WaitForStateContext(c.apiContext(ctx)); err != nil {
 		return err
 	}
@@ -922,9 +922,9 @@ func waitForClusterLinkToBeDeleted(ctx context.Context, c *KafkaRestClient, link
 func clusterLinkDeleteStatus(ctx context.Context, c *KafkaRestClient, linkName string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
 		clusterLink, resp, err := c.apiClient.ClusterLinkingV3Api.GetKafkaLink(c.apiContext(ctx), c.clusterId, linkName).Execute()
-		clusterLinkId := createClusterLinkId(c.clusterId, linkName)
+		clusterLinkCompositeId := createClusterLinkCompositeId(c.clusterId, linkName)
 		if err != nil {
-			tflog.Warn(ctx, fmt.Sprintf("Error reading Cluster Link %q: %s", clusterLinkId, createDescriptiveError(err)), map[string]interface{}{clusterLinkLoggingKey: clusterLinkId})
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Cluster Link %q: %s", clusterLinkCompositeId, createDescriptiveError(err)), map[string]interface{}{clusterLinkLoggingKey: clusterLinkCompositeId})
 
 			// 404 means that the cluster link has been deleted
 			isResourceNotFound := ResponseHasExpectedStatusCode(resp, http.StatusNotFound)
