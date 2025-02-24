@@ -14,6 +14,8 @@ description: |-
 
 ## Example Usage
 
+### Option #1: Manage multiple Kafka clusters in the same Terraform workspace
+
 ```terraform
 provider "confluent" {
   cloud_api_key    = var.confluent_cloud_api_key    # optionally use CONFLUENT_CLOUD_API_KEY env var
@@ -21,23 +23,38 @@ provider "confluent" {
 }
 
 data "confluent_cluster_link" "main" {
-  link_name = "example-link"
+  link_name = "main-link"
+  rest_endpoint = data.confluent_kafka_cluster.west.rest_endpoint
   kafka_cluster {
-    id = "lkc-abc123"
-    rest_endpoint = "https://pkc-abc123.us-east-1.aws.confluent.cloud:443"
-    credentials {
-      key    = confluent_api_key.app-manager-west-cluster-api-key.id
-      secret = confluent_api_key.app-manager-west-cluster-api-key.secret
-    }
+    id = data.confluent_kafka_cluster.west.id
+  }
+  credentials {
+    key    = confluent_api_key.app-manager-west-cluster-api-key.id
+    secret = confluent_api_key.app-manager-west-cluster-api-key.secret
   }
 }
 
 output "kafka_cluster_link_id" {
   value = data.confluent_cluster_link.main.cluster_link_id
 }
+```
 
-output "kafka_cluster_link_state" {
-  value = data.confluent_cluster_link.main.link_state
+### Option #2: Manage a single Kafka cluster in the same Terraform workspace
+
+```terraform
+provider "confluent" {
+  kafka_id            = var.kafka_id                   # optionally use KAFKA_ID env var
+  kafka_rest_endpoint = var.kafka_rest_endpoint        # optionally use KAFKA_REST_ENDPOINT env var
+  kafka_api_key       = var.kafka_api_key              # optionally use KAFKA_API_KEY env var
+  kafka_api_secret    = var.kafka_api_secret           # optionally use KAFKA_API_SECRET env var
+}
+
+data "confluent_cluster_link" "main" {
+  link_name = "main-link"
+}
+
+output "kafka_cluster_link_id" {
+  value = data.confluent_cluster_link.main.cluster_link_id
 }
 ```
 
@@ -47,12 +64,12 @@ output "kafka_cluster_link_state" {
 The following arguments are supported:
 
 - `link_name` - (Required String) The name of the cluster link, for example, `my-cluster-link`.
-- `kafka_cluster` - (Required Configuration Block) supports the following:
+- `kafka_cluster` - (Optional Configuration Block) supports the following:
   - `id` - (Required String) The ID of the Kafka cluster to query for the Cluster Link, for example, `lkc-abc123`.
-  - `rest_endpoint` - (Required String) The REST endpoint of the Kafka cluster, for example, `https://pkc-00000.us-central1.gcp.confluent.cloud:443`).
-  - `credentials` (Required Configuration Block) supports the following:
-    - `key` - (Required String, Sensitive) The Kafka API Key.
-    - `secret` - (Required String, Sensitive) The Kafka API Secret.
+- `rest_endpoint` - (Optional String) The REST endpoint of the Kafka cluster, for example, `https://pkc-00000.us-central1.gcp.confluent.cloud:443`).
+- `credentials` (Optional Configuration Block) supports the following:
+  - `key` - (Required String, Sensitive) The Kafka API Key.
+  - `secret` - (Required String, Sensitive) The Kafka API Secret.
 
 -> **Note:** A Kafka API key consists of a key and a secret. Kafka API keys are required to interact with Kafka clusters in Confluent Cloud. Each Kafka API key is valid for one specific Kafka cluster.
 
@@ -63,7 +80,7 @@ The following arguments are supported:
 In addition to the preceding arguments, the following attributes are exported:
 
 - `id` - (Required String) The composite ID of the Cluster Link data-source, in the format `<Kafka cluster ID>/<Cluster link name>`, for example, `lkc-abc123/my-cluster-link`.
-- `cluster_link_id` - (Required String) The actual Cluster Link ID assigned from Confluent Cloud that uniquely represents a link between two Kafka clusters.
+- `cluster_link_id` - (Required String) The actual Cluster Link ID assigned from Confluent Cloud that uniquely represents a link between two Kafka clusters, for example, `qz0HDEV-Qz2B5aPFpcWQJQ`.
 - `link_state` - (Required String) The current state of the Cluster Link.
 - `config` - (Optional Map) The custom cluster link settings retrieved:
   - `name` - (Required String) The setting name, for example, `acl.sync.ms`.

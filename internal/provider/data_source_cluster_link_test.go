@@ -27,7 +27,7 @@ import (
 
 const (
 	clusterLinkDataSourceLabel              = "test_cluster_link_data_source_label"
-	numberOfClusterLinkDataSourceAttributes = "6"
+	numberOfClusterLinkDataSourceAttributes = "8"
 )
 
 var fullClusterLinkDataSourceLabel = fmt.Sprintf("data.confluent_cluster_link.%s", clusterLinkDataSourceLabel)
@@ -80,14 +80,14 @@ func TestAccDataSourceClusterLink(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckClusterLinkExists(fullClusterLinkDataSourceLabel),
 					resource.TestCheckResourceAttr(fullClusterLinkDataSourceLabel, "link_name", clusterLinkName),
+					resource.TestCheckResourceAttr(fullClusterLinkDataSourceLabel, "rest_endpoint", mockClusterLinkTestServerUrl),
 					resource.TestCheckResourceAttr(fullClusterLinkDataSourceLabel, "kafka_cluster.#", "1"),
-					resource.TestCheckResourceAttr(fullClusterLinkDataSourceLabel, "kafka_cluster.0.%", "3"),
+					resource.TestCheckResourceAttr(fullClusterLinkDataSourceLabel, "kafka_cluster.0.%", "1"),
 					resource.TestCheckResourceAttr(fullClusterLinkDataSourceLabel, "kafka_cluster.0.id", sourceClusterId),
-					resource.TestCheckResourceAttr(fullClusterLinkDataSourceLabel, "kafka_cluster.0.rest_endpoint", mockClusterLinkTestServerUrl),
-					resource.TestCheckResourceAttr(fullClusterLinkDataSourceLabel, "kafka_cluster.0.credentials.#", "1"),
-					resource.TestCheckResourceAttr(fullClusterLinkDataSourceLabel, "kafka_cluster.0.credentials.0.%", "2"),
-					resource.TestCheckResourceAttr(fullClusterLinkDataSourceLabel, "kafka_cluster.0.credentials.0.key", sourceClusterApiKey),
-					resource.TestCheckResourceAttr(fullClusterLinkDataSourceLabel, "kafka_cluster.0.credentials.0.secret", sourceClusterApiSecret),
+					resource.TestCheckResourceAttr(fullClusterLinkDataSourceLabel, "credentials.#", "1"),
+					resource.TestCheckResourceAttr(fullClusterLinkDataSourceLabel, "credentials.0.%", "2"),
+					resource.TestCheckResourceAttr(fullClusterLinkDataSourceLabel, "credentials.0.key", sourceClusterApiKey),
+					resource.TestCheckResourceAttr(fullClusterLinkDataSourceLabel, "credentials.0.secret", sourceClusterApiSecret),
 					resource.TestCheckResourceAttr(fullClusterLinkDataSourceLabel, "cluster_link_id", "qz0HDEV-Qz2B5aPFpcWQJQ"),
 					resource.TestCheckResourceAttr(fullClusterLinkDataSourceLabel, "id", fmt.Sprintf("%s/%s", sourceClusterId, clusterLinkName)),
 					resource.TestCheckResourceAttr(fullClusterLinkDataSourceLabel, "link_state", "ACTIVE"),
@@ -107,15 +107,15 @@ func testAccCheckClusterLinkDataSourceConfig(confluentCloudBaseUrl, mockServerUr
 	}
 	data "confluent_cluster_link" "%s" {
 	  link_name = "%s"
+      rest_endpoint = "%s"
 	  kafka_cluster {
         id = "%s"
-        rest_endpoint = "%s"
-        credentials {
-		  key = "%s"
-		  secret = "%s"
-	    }
       }
+      credentials {
+		key = "%s"
+		secret = "%s"
+	  }
 	}
 	`, confluentCloudBaseUrl, clusterLinkDataSourceLabel,
-		clusterLinkName, sourceClusterId, mockServerUrl, sourceClusterApiKey, sourceClusterApiSecret)
+		clusterLinkName, mockServerUrl, sourceClusterId, sourceClusterApiKey, sourceClusterApiSecret)
 }

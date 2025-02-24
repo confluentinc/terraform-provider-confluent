@@ -18,11 +18,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"regexp"
+
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"regexp"
 
 	v3 "github.com/confluentinc/ccloud-sdk-go-v2/kafkarest/v3"
 )
@@ -36,7 +37,14 @@ func clusterLinkDataSource() *schema.Resource {
 				Description: "The composite ID of the Cluster Link data-source, in the format <Kafka cluster ID>/<Cluster Link name>.",
 				Computed:    true,
 			},
-			paramKafkaCluster: clusterLinkDataSourceKafkaClusterBlockSchema(),
+			paramKafkaCluster: optionalKafkaClusterBlockDataSourceSchema(),
+			paramRestEndpoint: {
+				Type:         schema.TypeString,
+				Optional:     true,
+				Description:  "The REST endpoint of the Kafka cluster (e.g., `https://pkc-00000.us-central1.gcp.confluent.cloud:443`).",
+				ValidateFunc: validation.StringMatch(regexp.MustCompile("^http"), "the REST endpoint must start with 'https://'"),
+			},
+			paramCredentials: credentialsSchema(),
 			paramClusterLinkId: {
 				Type:        schema.TypeString,
 				Description: "The actual Cluster Link ID assigned from Confluent Cloud that uniquely represents a link between two Kafka clusters.",
@@ -67,15 +75,22 @@ func clusterLinkDataSource() *schema.Resource {
 func clusterLinkDataSourceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	tflog.Debug(ctx, fmt.Sprintf("Reading Cluster Link %q", d.Id()), map[string]interface{}{clusterLinkLoggingKey: d.Id()})
 
+	restEndpoint, err := extractRestEndpoint(meta.(*Client), d, false)
+	if err != nil {
+		return diag.Errorf("error reading Cluster Link: %s", createDescriptiveError(err))
+	}
+	clusterId, err := extractKafkaClusterId(meta.(*Client), d, false)
+	if err != nil {
+		return diag.Errorf("error reading Cluster Link: %s", createDescriptiveError(err))
+	}
+	clusterApiKey, clusterApiSecret, err := extractClusterApiKeyAndApiSecret(meta.(*Client), d, false)
+	if err != nil {
+		return diag.Errorf("error reading Cluster Link: %s", createDescriptiveError(err))
+	}
+	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, false, false)
+
 	linkName := d.Get(paramLinkName).(string)
-	clusterId := extractStringValueFromBlock(d, paramKafkaCluster, paramId)
-	endpoint := extractStringValueFromBlock(d, paramKafkaCluster, paramRestEndpoint)
-	clusterApiKey := extractStringValueFromNestedBlock(d, paramKafkaCluster, paramCredentials, paramKey)
-	clusterApiSecret := extractStringValueFromNestedBlock(d, paramKafkaCluster, paramCredentials, paramSecret)
-
-	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(endpoint, clusterId, clusterApiKey, clusterApiSecret, false, false)
-
-	err := readDataSourceClusterLinkAndSetAttributes(ctx, d, kafkaRestClient, linkName)
+	err = readDataSourceClusterLinkAndSetAttributes(ctx, d, kafkaRestClient, linkName)
 	if err != nil {
 		return diag.Errorf("error reading Cluster Link: %s", createDescriptiveError(err))
 	}
@@ -121,54 +136,4 @@ func setDataSourceClusterLinkAttributes(ctx context.Context, d *schema.ResourceD
 		return err
 	}
 	return nil
-}
-
-func clusterLinkDataSourceKafkaClusterBlockSchema() *schema.Schema {
-	return &schema.Schema{
-		Type:     schema.TypeList,
-		MinItems: 1,
-		MaxItems: 1,
-		Required: true,
-		Elem: &schema.Resource{
-			Schema: map[string]*schema.Schema{
-				paramId: {
-					Type:        schema.TypeString,
-					Required:    true,
-					Description: "The unique identifier for the referred Kafka cluster.",
-				},
-				paramRestEndpoint: {
-					Type:         schema.TypeString,
-					Required:     true,
-					Description:  "The REST endpoint of the Kafka cluster (e.g., `https://pkc-00000.us-central1.gcp.confluent.cloud:443`).",
-					ValidateFunc: validation.StringMatch(regexp.MustCompile("^http"), "the REST endpoint must start with 'https://'"),
-				},
-				paramCredentials: {
-					Type:        schema.TypeList,
-					Required:    true,
-					Description: "The Kafka API Credentials.",
-					MinItems:    1,
-					MaxItems:    1,
-					Sensitive:   true,
-					Elem: &schema.Resource{
-						Schema: map[string]*schema.Schema{
-							paramKey: {
-								Type:         schema.TypeString,
-								Required:     true,
-								Description:  "The Kafka API Key for your Confluent Cloud cluster.",
-								Sensitive:    true,
-								ValidateFunc: validation.StringIsNotEmpty,
-							},
-							paramSecret: {
-								Type:         schema.TypeString,
-								Required:     true,
-								Description:  "The Kafka API Secret for your Confluent Cloud cluster.",
-								Sensitive:    true,
-								ValidateFunc: validation.StringIsNotEmpty,
-							},
-						},
-					},
-				},
-			},
-		},
-	}
 }
