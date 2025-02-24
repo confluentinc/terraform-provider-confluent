@@ -3,7 +3,7 @@
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.17.0...v2.18.0)
 
 **Note:**
-* Make sure to remove the `"confluent.topic.type"` topic setting from the `config` block attribute of your `confluent_kafka_topic` resource in your TF configuration if you can observe a related TF drift during the `terraform plan` command ([#427](https://github.com/confluentinc/terraform-provider-confluent/issues/427)).
+* Make sure to remove the `"confluent.topic.type"` topic setting from the `config` block attribute of your `confluent_kafka_topic` resource instances in your TF configuration if you can observe a related TF drift during the `terraform plan` command ([#427](https://github.com/confluentinc/terraform-provider-confluent/issues/427)).
 
 **Bug fixes:**
 * Fixed "Missing attribute `"confluent.topic.type"` of Kafka topic config in Terraform provider" issue ([#427](https://github.com/confluentinc/terraform-provider-confluent/issues/427)).
