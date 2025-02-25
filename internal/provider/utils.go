@@ -474,7 +474,16 @@ type KafkaRestClient struct {
 
 type SchemaRegistryRestClient struct {
 	apiClient                    *schemaregistry.APIClient
-	dataCatalogApiClient         *dc.APIClient
+	dataCatalogApiClient         *dc.APIClient // this will be removed
+	clusterId                    string
+	clusterApiKey                string
+	clusterApiSecret             string
+	restEndpoint                 string
+	isMetadataSetInProviderBlock bool
+}
+
+type CatalogRestClient struct {
+	apiClient                    *dc.APIClient
 	clusterId                    string
 	clusterApiKey                string
 	clusterApiSecret             string
@@ -524,6 +533,17 @@ func (c *SchemaRegistryRestClient) dataCatalogApiContext(ctx context.Context) co
 		})
 	}
 	tflog.Warn(ctx, fmt.Sprintf("Could not find Schema Registry API Key for Stream Governance Cluster %q", c.clusterId))
+	return ctx
+}
+
+func (c *CatalogRestClient) dataCatalogApiContext(ctx context.Context) context.Context {
+	if c.clusterApiKey != "" && c.clusterApiSecret != "" {
+		return context.WithValue(context.Background(), dc.ContextBasicAuth, dc.BasicAuth{
+			UserName: c.clusterApiKey,
+			Password: c.clusterApiSecret,
+		})
+	}
+	tflog.Warn(ctx, fmt.Sprintf("Could not find Catalog API Key for Stream Governance Cluster %q", c.clusterId))
 	return ctx
 }
 

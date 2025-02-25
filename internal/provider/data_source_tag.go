@@ -73,7 +73,7 @@ func tagDataSource() *schema.Resource {
 }
 
 func tagDataSourceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	restEndpoint, err := extractSchemaRegistryRestEndpoint(meta.(*Client), d, false)
+	restEndpoint, err := extractCatalogRestEndpoint(meta.(*Client), d, false)
 	if err != nil {
 		return diag.Errorf("error reading Tag: %s", createDescriptiveError(err))
 	}
@@ -93,8 +93,8 @@ func tagDataSourceRead(ctx context.Context, d *schema.ResourceData, meta interfa
 }
 
 func tagDataSourceReadUsingTagName(ctx context.Context, d *schema.ResourceData, meta interface{}, restEndpoint string, clusterId string, clusterApiKey string, clusterApiSecret string, tagName string) diag.Diagnostics {
-	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
-	request := schemaRegistryRestClient.dataCatalogApiClient.TypesV1Api.GetTagDefByName(schemaRegistryRestClient.dataCatalogApiContext(ctx), tagName)
+	catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+	request := catalogRestClient.apiClient.TypesV1Api.GetTagDefByName(catalogRestClient.dataCatalogApiContext(ctx), tagName)
 	tag, _, err := request.Execute()
 	tagId := createTagId(clusterId, tagName)
 
@@ -107,7 +107,7 @@ func tagDataSourceReadUsingTagName(ctx context.Context, d *schema.ResourceData, 
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Tag %q: %s", tagId, tagJson), map[string]interface{}{tagLoggingKey: tagId})
 
-	if _, err := setTagAttributes(d, schemaRegistryRestClient, clusterId, tag); err != nil {
+	if _, err := setTagAttributes(d, catalogRestClient, clusterId, tag); err != nil {
 		return diag.FromErr(createDescriptiveError(err))
 	}
 	return nil
