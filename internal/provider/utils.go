@@ -483,7 +483,7 @@ type SchemaRegistryRestClient struct {
 }
 
 type CatalogRestClient struct {
-	dataCatalogApiClient         *dc.APIClient
+	apiClient                    *dc.APIClient
 	clusterId                    string
 	clusterApiKey                string
 	clusterApiSecret             string

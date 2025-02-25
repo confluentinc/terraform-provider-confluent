@@ -150,7 +150,7 @@ func businessMetadataCreate(ctx context.Context, d *schema.ResourceData, meta in
 	attributeDefs := buildAttributeDefs(d.Get(paramAttributeDef).(*schema.Set).List())
 	businessMetadataRequest.SetAttributeDefs(attributeDefs)
 
-	request := catalogRestClient.dataCatalogApiClient.TypesV1Api.CreateBusinessMetadataDefs(catalogRestClient.dataCatalogApiContext(ctx))
+	request := catalogRestClient.apiClient.TypesV1Api.CreateBusinessMetadataDefs(catalogRestClient.dataCatalogApiContext(ctx))
 	request = request.BusinessMetadataDef([]dc.BusinessMetadataDef{businessMetadataRequest})
 
 	createBusinessMetadataRequestJson, err := json.Marshal(request)
@@ -216,7 +216,7 @@ func readBusinessMetadataAndSetAttributes(ctx context.Context, d *schema.Resourc
 	tflog.Debug(ctx, fmt.Sprintf("Reading Business Metadata %q=%q", paramId, businessMetadataId), map[string]interface{}{businessMetadataLoggingKey: businessMetadataId})
 
 	catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
-	request := catalogRestClient.dataCatalogApiClient.TypesV1Api.GetBusinessMetadataDefByName(catalogRestClient.dataCatalogApiContext(ctx), businessMetadataName)
+	request := catalogRestClient.apiClient.TypesV1Api.GetBusinessMetadataDefByName(catalogRestClient.dataCatalogApiContext(ctx), businessMetadataName)
 	businessMetadata, resp, err := request.Execute()
 	if err != nil {
 		tflog.Warn(ctx, fmt.Sprintf("Error reading Business Metadata %q: %s", businessMetadataId, createDescriptiveError(err)), map[string]interface{}{businessMetadataLoggingKey: businessMetadataId})
@@ -264,7 +264,7 @@ func businessMetadataDelete(ctx context.Context, d *schema.ResourceData, meta in
 	tflog.Debug(ctx, fmt.Sprintf("Deleting Business Metadata %q=%q", paramId, businessMetadataId), map[string]interface{}{businessMetadataLoggingKey: businessMetadataId})
 
 	catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
-	request := catalogRestClient.dataCatalogApiClient.TypesV1Api.DeleteBusinessMetadataDef(catalogRestClient.dataCatalogApiContext(ctx), businessMetadataName)
+	request := catalogRestClient.apiClient.TypesV1Api.DeleteBusinessMetadataDef(catalogRestClient.dataCatalogApiContext(ctx), businessMetadataName)
 	_, serviceErr := request.Execute()
 	if serviceErr != nil {
 		return diag.Errorf("error deleting Business Metadata %q: %s", businessMetadataId, createDescriptiveError(serviceErr))
@@ -305,7 +305,7 @@ func businessMetadataUpdate(ctx context.Context, d *schema.ResourceData, meta in
 		attributeDefs := buildAttributeDefs(d.Get(paramAttributeDef).(*schema.Set).List())
 		businessMetadataRequest.SetAttributeDefs(attributeDefs)
 
-		request := catalogRestClient.dataCatalogApiClient.TypesV1Api.UpdateBusinessMetadataDefs(catalogRestClient.dataCatalogApiContext(ctx))
+		request := catalogRestClient.apiClient.TypesV1Api.UpdateBusinessMetadataDefs(catalogRestClient.dataCatalogApiContext(ctx))
 		request = request.BusinessMetadataDef([]dc.BusinessMetadataDef{businessMetadataRequest})
 
 		updateBusinessMetadataRequestJson, err := json.Marshal(request)

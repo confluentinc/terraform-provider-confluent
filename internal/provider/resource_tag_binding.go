@@ -109,7 +109,7 @@ func tagBindingCreate(ctx context.Context, d *schema.ResourceData, meta interfac
 	// https://github.com/confluentinc/terraform-provider-confluent/issues/282 to resolve "error creating Tag Binding 404 Not Found"
 	SleepIfNotTestMode(60*time.Second, meta.(*Client).isAcceptanceTestMode)
 
-	request := catalogRestClient.dataCatalogApiClient.EntityV1Api.CreateTags(catalogRestClient.dataCatalogApiContext(ctx))
+	request := catalogRestClient.apiClient.EntityV1Api.CreateTags(catalogRestClient.dataCatalogApiContext(ctx))
 	request = request.Tag([]dc.Tag{tagBindingRequest})
 
 	createTagBindingRequestJson, err := json.Marshal(request)
@@ -178,7 +178,7 @@ func readTagBindingAndSetAttributes(ctx context.Context, d *schema.ResourceData,
 	tflog.Debug(ctx, fmt.Sprintf("Reading Tag Binding %q=%q", paramId, tagBindingId), map[string]interface{}{tagBindingLoggingKey: tagBindingId})
 
 	catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
-	request := catalogRestClient.dataCatalogApiClient.EntityV1Api.GetTags(catalogRestClient.dataCatalogApiContext(ctx), entityType, entityName)
+	request := catalogRestClient.apiClient.EntityV1Api.GetTags(catalogRestClient.dataCatalogApiContext(ctx), entityType, entityName)
 	tagBindings, resp, err := request.Execute()
 	if err != nil {
 		tflog.Warn(ctx, fmt.Sprintf("Error reading Tag Binding %q: %s", tagBindingId, createDescriptiveError(err)), map[string]interface{}{tagBindingLoggingKey: tagBindingId})
@@ -250,7 +250,7 @@ func tagBindingDelete(ctx context.Context, d *schema.ResourceData, meta interfac
 	tflog.Debug(ctx, fmt.Sprintf("Deleting Tag Binding %q=%q", paramId, tagBindingId), map[string]interface{}{tagBindingLoggingKey: tagBindingId})
 
 	catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
-	request := catalogRestClient.dataCatalogApiClient.EntityV1Api.DeleteTag(catalogRestClient.dataCatalogApiContext(ctx), entityType, entityName, tagName)
+	request := catalogRestClient.apiClient.EntityV1Api.DeleteTag(catalogRestClient.dataCatalogApiContext(ctx), entityType, entityName, tagName)
 	_, serviceErr := request.Execute()
 	if serviceErr != nil {
 		return diag.Errorf("error deleting Tag Binding %q: %s", tagBindingId, createDescriptiveError(serviceErr))

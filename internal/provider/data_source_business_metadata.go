@@ -123,7 +123,7 @@ func businessMetadataDataSourceRead(ctx context.Context, d *schema.ResourceData,
 
 func businessMetadataDataSourceReadUsingName(ctx context.Context, d *schema.ResourceData, meta interface{}, restEndpoint string, clusterId string, clusterApiKey string, clusterApiSecret string, businessMetadataName string) diag.Diagnostics {
 	catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
-	request := catalogRestClient.dataCatalogApiClient.TypesV1Api.GetBusinessMetadataDefByName(catalogRestClient.dataCatalogApiContext(ctx), businessMetadataName)
+	request := catalogRestClient.apiClient.TypesV1Api.GetBusinessMetadataDefByName(catalogRestClient.dataCatalogApiContext(ctx), businessMetadataName)
 	businessMetadata, _, err := request.Execute()
 	businessMetadataId := createBusinessMetadataId(clusterId, businessMetadataName)
 

@@ -1368,7 +1368,7 @@ func peeringProvisionStatus(ctx context.Context, c *Client, environmentId string
 
 func tagProvisionStatus(ctx context.Context, c *CatalogRestClient, tagId, tagName string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		request := c.dataCatalogApiClient.TypesV1Api.GetTagDefByName(c.dataCatalogApiContext(ctx), tagName)
+		request := c.apiClient.TypesV1Api.GetTagDefByName(c.dataCatalogApiContext(ctx), tagName)
 		tag, resp, err := request.Execute()
 		if err != nil && resp.StatusCode == http.StatusNotFound {
 			return nil, stateProvisioning, nil
@@ -1385,7 +1385,7 @@ func tagProvisionStatus(ctx context.Context, c *CatalogRestClient, tagId, tagNam
 
 func businessMetadataProvisionStatus(ctx context.Context, c *CatalogRestClient, businessMetadataId, businessMetadataName string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		request := c.dataCatalogApiClient.TypesV1Api.GetBusinessMetadataDefByName(c.dataCatalogApiContext(ctx), businessMetadataName)
+		request := c.apiClient.TypesV1Api.GetBusinessMetadataDefByName(c.dataCatalogApiContext(ctx), businessMetadataName)
 		businessMetadata, resp, err := request.Execute()
 		if err != nil && resp.StatusCode == http.StatusNotFound {
 			return nil, stateProvisioning, nil
@@ -1402,7 +1402,7 @@ func businessMetadataProvisionStatus(ctx context.Context, c *CatalogRestClient, 
 
 func tagBindingProvisionStatus(ctx context.Context, c *CatalogRestClient, tagBindingId, tagName, entityName, entityType string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		request := c.dataCatalogApiClient.EntityV1Api.GetTags(c.dataCatalogApiContext(ctx), entityType, entityName)
+		request := c.apiClient.EntityV1Api.GetTags(c.dataCatalogApiContext(ctx), entityType, entityName)
 		tagBindings, resp, err := request.Execute()
 		if err != nil && resp.StatusCode == http.StatusNotFound {
 			return nil, stateProvisioning, nil
@@ -1424,7 +1424,7 @@ func tagBindingProvisionStatus(ctx context.Context, c *CatalogRestClient, tagBin
 
 func businessMetadataBindingProvisionStatus(ctx context.Context, c *CatalogRestClient, businessMetadataBindingId, businessMetadataName, entityName, entityType string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		request := c.dataCatalogApiClient.EntityV1Api.GetBusinessMetadata(c.dataCatalogApiContext(ctx), entityType, entityName)
+		request := c.apiClient.EntityV1Api.GetBusinessMetadata(c.dataCatalogApiContext(ctx), entityType, entityName)
 		businessMetadataBindings, resp, err := request.Execute()
 		if err != nil && resp.StatusCode == http.StatusNotFound {
 			return nil, stateProvisioning, nil

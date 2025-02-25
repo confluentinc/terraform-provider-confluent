@@ -106,7 +106,7 @@ func tagCreate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagn
 	tagRequest.SetDescription(description)
 	tagRequest.SetEntityTypes(defaultEntityTypes)
 
-	request := catalogRestClient.dataCatalogApiClient.TypesV1Api.CreateTagDefs(catalogRestClient.dataCatalogApiContext(ctx))
+	request := catalogRestClient.apiClient.TypesV1Api.CreateTagDefs(catalogRestClient.dataCatalogApiContext(ctx))
 	request = request.TagDef([]dc.TagDef{tagRequest})
 
 	createTagRequestJson, err := json.Marshal(request)
@@ -175,7 +175,7 @@ func readTagAndSetAttributes(ctx context.Context, resourceData *schema.ResourceD
 
 	tflog.Debug(ctx, fmt.Sprintf("Reading Tag %q=%q", paramId, tagId), map[string]any{tagLoggingKey: tagId})
 
-	request := client.dataCatalogApiClient.TypesV1Api.GetTagDefByName(client.dataCatalogApiContext(ctx), tagName)
+	request := client.apiClient.TypesV1Api.GetTagDefByName(client.dataCatalogApiContext(ctx), tagName)
 	tag, resp, err := request.Execute()
 	if err != nil {
 		tflog.Warn(ctx, fmt.Sprintf("Error reading Tag %q: %s", tagId, createDescriptiveError(err)), map[string]any{tagLoggingKey: tagId})
@@ -224,7 +224,7 @@ func tagDelete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagn
 	tflog.Debug(ctx, fmt.Sprintf("Deleting Tag %q=%q", paramId, tagId), map[string]any{tagLoggingKey: tagId})
 
 	catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
-	request := catalogRestClient.dataCatalogApiClient.TypesV1Api.DeleteTagDef(catalogRestClient.dataCatalogApiContext(ctx), tagName)
+	request := catalogRestClient.apiClient.TypesV1Api.DeleteTagDef(catalogRestClient.dataCatalogApiContext(ctx), tagName)
 	_, serviceErr := request.Execute()
 	if serviceErr != nil {
 		return diag.Errorf("error deleting Tag %q: %s", tagId, createDescriptiveError(serviceErr))
@@ -263,7 +263,7 @@ func tagUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagn
 	description := d.Get(paramDescription).(string)
 	tagRequest.SetDescription(description)
 
-	request := catalogRestClient.dataCatalogApiClient.TypesV1Api.UpdateTagDefs(catalogRestClient.dataCatalogApiContext(ctx))
+	request := catalogRestClient.apiClient.TypesV1Api.UpdateTagDefs(catalogRestClient.dataCatalogApiContext(ctx))
 	request = request.TagDef([]dc.TagDef{tagRequest})
 
 	updateTagRequestJson, err := json.Marshal(request)

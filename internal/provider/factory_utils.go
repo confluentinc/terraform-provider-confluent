@@ -106,7 +106,7 @@ func (f CatalogRestClientFactory) CreateCatalogRestClient(restEndpoint, clusterI
 	dataCatalogConfig.HTTPClient = NewRetryableClientFactory(f.ctx, opts...).CreateRetryableClient()
 
 	return &CatalogRestClient{
-		dataCatalogApiClient:         dc.NewAPIClient(dataCatalogConfig),
+		apiClient:                    dc.NewAPIClient(dataCatalogConfig),
 		clusterId:                    clusterId,
 		clusterApiKey:                clusterApiKey,
 		clusterApiSecret:             clusterApiSecret,

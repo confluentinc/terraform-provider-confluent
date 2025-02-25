@@ -131,6 +131,18 @@ func TestAccBusinessMetadataBinding(t *testing.T) {
 				),
 			},
 			{
+				Config: businessMetadataBindingSchemaRegistryResourceConfig(mockServerUrl),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(businessMetadataBindingLabel, paramBusinessMetadataName, "bm"),
+					resource.TestCheckResourceAttr(businessMetadataBindingLabel, paramEntityName, "lsrc-8wrx70:lkc-m80307:topic_0"),
+					resource.TestCheckResourceAttr(businessMetadataBindingLabel, paramEntityType, "kafka_topic"),
+					resource.TestCheckResourceAttr(businessMetadataBindingLabel, paramId, "xxx/bm/lsrc-8wrx70:lkc-m80307:topic_0/kafka_topic"),
+					resource.TestCheckResourceAttr(businessMetadataBindingLabel, fmt.Sprintf("%s.%%", paramAttributes), "2"),
+					resource.TestCheckResourceAttr(businessMetadataBindingLabel, fmt.Sprintf("%s.attr1", paramAttributes), "value1"),
+					resource.TestCheckResourceAttr(businessMetadataBindingLabel, fmt.Sprintf("%s.attr2", paramAttributes), "value2"),
+				),
+			},
+			{
 				Config: updateBusinessMetadataBindingResourceConfig(mockServerUrl),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(businessMetadataBindingLabel, paramBusinessMetadataName, "bm"),
@@ -152,6 +164,26 @@ func businessMetadataBindingResourceConfig(mockServerUrl string) string {
  	provider "confluent" {
  	  schema_registry_id = "xxx"
 	  catalog_rest_endpoint = "%s" 	  # optionally use CATALOG_REST_ENDPOINT env var
+	  schema_registry_api_key = "x"   # optionally use SCHEMA_REGISTRY_API_KEY env var
+	  schema_registry_api_secret = "x"
+ 	}
+ 	resource "confluent_business_metadata_binding" "main" {
+	  business_metadata_name = "bm"
+	  entity_name = "lsrc-8wrx70:lkc-m80307:topic_0"
+	  entity_type = "kafka_topic"
+	  attributes = {
+		"attr1" = "value1"
+		"attr2" = "value2"
+	  }
+	}
+ 	`, mockServerUrl)
+}
+
+func businessMetadataBindingSchemaRegistryResourceConfig(mockServerUrl string) string {
+	return fmt.Sprintf(`
+ 	provider "confluent" {
+ 	  schema_registry_id = "xxx"
+	  schema_registry_rest_endpoint = "%s" 	  # optionally use CATALOG_REST_ENDPOINT env var
 	  schema_registry_api_key = "x"   # optionally use SCHEMA_REGISTRY_API_KEY env var
 	  schema_registry_api_secret = "x"
  	}

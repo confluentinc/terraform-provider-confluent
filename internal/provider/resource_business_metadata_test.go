@@ -140,6 +140,28 @@ func TestAccBusinessMetadata(t *testing.T) {
 				),
 			},
 			{
+				Config: businessMetadataSchemaRegistryResourceConfig(mockServerUrl),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(businessMetadataLabel, paramId, "xxx/bm"),
+					resource.TestCheckResourceAttr(businessMetadataLabel, paramName, "bm"),
+					resource.TestCheckResourceAttr(businessMetadataLabel, paramDescription, "bm description"),
+					resource.TestCheckResourceAttr(businessMetadataLabel, paramVersion, "1"),
+					resource.TestCheckResourceAttr(businessMetadataLabel, fmt.Sprintf("%s.#", paramAttributeDef), "2"),
+					resource.TestCheckResourceAttr(businessMetadataLabel, fmt.Sprintf("%s.0.%s", paramAttributeDef, paramName), "attr1"),
+					resource.TestCheckResourceAttr(businessMetadataLabel, fmt.Sprintf("%s.0.%s", paramAttributeDef, paramIsOptional), "false"),
+					resource.TestCheckResourceAttr(businessMetadataLabel, fmt.Sprintf("%s.0.%s", paramAttributeDef, paramType), "string"),
+					resource.TestCheckResourceAttr(businessMetadataLabel, fmt.Sprintf("%s.0.%s.%%", paramAttributeDef, paramOptions), "2"),
+					resource.TestCheckResourceAttr(businessMetadataLabel, fmt.Sprintf("%s.0.%s.applicableEntityTypes", paramAttributeDef, paramOptions), "[\"cf_entity\"]"),
+					resource.TestCheckResourceAttr(businessMetadataLabel, fmt.Sprintf("%s.0.%s.maxStrLength", paramAttributeDef, paramOptions), "5000"),
+					resource.TestCheckResourceAttr(businessMetadataLabel, fmt.Sprintf("%s.1.%s", paramAttributeDef, paramName), "attr2"),
+					resource.TestCheckResourceAttr(businessMetadataLabel, fmt.Sprintf("%s.1.%s", paramAttributeDef, paramIsOptional), "false"),
+					resource.TestCheckResourceAttr(businessMetadataLabel, fmt.Sprintf("%s.1.%s", paramAttributeDef, paramType), "string"),
+					resource.TestCheckResourceAttr(businessMetadataLabel, fmt.Sprintf("%s.1.%s.%%", paramAttributeDef, paramOptions), "2"),
+					resource.TestCheckResourceAttr(businessMetadataLabel, fmt.Sprintf("%s.1.%s.applicableEntityTypes", paramAttributeDef, paramOptions), "[\"cf_entity\"]"),
+					resource.TestCheckResourceAttr(businessMetadataLabel, fmt.Sprintf("%s.1.%s.maxStrLength", paramAttributeDef, paramOptions), "5000"),
+				),
+			},
+			{
 				Config: businessMetadataResourceUpdatedConfig(mockServerUrl),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(businessMetadataLabel, paramId, "xxx/bm"),
@@ -171,6 +193,27 @@ func TestAccBusinessMetadata(t *testing.T) {
 }
 
 func businessMetadataResourceConfig(mockServerUrl string) string {
+	return fmt.Sprintf(`
+ 	provider "confluent" {
+ 	  schema_registry_id = "xxx"
+	  catalog_rest_endpoint = "%s" # optionally use SCHEMA_REGISTRY_REST_ENDPOINT env var
+	  schema_registry_api_key       = "x"       # optionally use SCHEMA_REGISTRY_API_KEY env var
+	  schema_registry_api_secret = "x"
+ 	}
+ 	resource "confluent_business_metadata" "main" {
+	  name = "bm"
+	  description = "bm description"
+	  attribute_definition {
+		name = "attr1"
+	  }
+	  attribute_definition {
+		name = "attr2"
+	  }
+	}
+ 	`, mockServerUrl)
+}
+
+func businessMetadataSchemaRegistryResourceConfig(mockServerUrl string) string {
 	return fmt.Sprintf(`
  	provider "confluent" {
  	  schema_registry_id = "xxx"

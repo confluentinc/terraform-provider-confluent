@@ -105,6 +105,15 @@ func TestAccTagBinding(t *testing.T) {
 					resource.TestCheckResourceAttr(tagBindingLabel, "id", "xxx/tag1/lsrc-8wrx70:.:100001/sr_schema"),
 				),
 			},
+			{
+				Config: tagBindingResourceSchemaRegistryConfig(mockServerUrl),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(tagBindingLabel, "tag_name", "tag1"),
+					resource.TestCheckResourceAttr(tagBindingLabel, "entity_name", "lsrc-8wrx70:.:100001"),
+					resource.TestCheckResourceAttr(tagBindingLabel, "entity_type", "sr_schema"),
+					resource.TestCheckResourceAttr(tagBindingLabel, "id", "xxx/tag1/lsrc-8wrx70:.:100001/sr_schema"),
+				),
+			},
 		},
 	})
 }
@@ -114,6 +123,23 @@ func tagBindingResourceConfig(mockServerUrl string) string {
  	provider "confluent" {
  	  schema_registry_id = "xxx"
 	  catalog_rest_endpoint = "%s" 		   # optionally use CATALOG_REST_ENDPOINT env var
+	  schema_registry_api_key       = "x"  # optionally use SCHEMA_REGISTRY_API_KEY env var
+	  schema_registry_api_secret = "x"
+ 	}
+ 	resource "confluent_tag_binding" "main" {
+      tag_name = "tag1"
+	  entity_name = "lsrc-8wrx70:.:100001"
+	  entity_type = "sr_schema"
+	}
+
+ 	`, mockServerUrl)
+}
+
+func tagBindingResourceSchemaRegistryConfig(mockServerUrl string) string {
+	return fmt.Sprintf(`
+ 	provider "confluent" {
+ 	  schema_registry_id = "xxx"
+	  schema_registry_rest_endpoint = "%s" # optionally use CATALOG_REST_ENDPOINT env var
 	  schema_registry_api_key       = "x"  # optionally use SCHEMA_REGISTRY_API_KEY env var
 	  schema_registry_api_secret = "x"
  	}

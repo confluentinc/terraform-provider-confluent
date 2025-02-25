@@ -94,7 +94,7 @@ func tagDataSourceRead(ctx context.Context, d *schema.ResourceData, meta interfa
 
 func tagDataSourceReadUsingTagName(ctx context.Context, d *schema.ResourceData, meta interface{}, restEndpoint string, clusterId string, clusterApiKey string, clusterApiSecret string, tagName string) diag.Diagnostics {
 	catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
-	request := catalogRestClient.dataCatalogApiClient.TypesV1Api.GetTagDefByName(catalogRestClient.dataCatalogApiContext(ctx), tagName)
+	request := catalogRestClient.apiClient.TypesV1Api.GetTagDefByName(catalogRestClient.dataCatalogApiContext(ctx), tagName)
 	tag, _, err := request.Execute()
 	tagId := createTagId(clusterId, tagName)
 
