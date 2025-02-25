@@ -503,7 +503,7 @@ func waitForPeeringToProvision(ctx context.Context, c *Client, environmentId, pe
 	return nil
 }
 
-func waitForTagToProvision(ctx context.Context, c *SchemaRegistryRestClient, tagId, tagName string) error {
+func waitForTagToProvision(ctx context.Context, c *CatalogRestClient, tagId, tagName string) error {
 	stateConf := &resource.StateChangeConf{
 		Pending:      []string{stateProvisioning},
 		Target:       []string{stateReady},
@@ -519,7 +519,7 @@ func waitForTagToProvision(ctx context.Context, c *SchemaRegistryRestClient, tag
 	return nil
 }
 
-func waitForBusinessMetadataToProvision(ctx context.Context, c *SchemaRegistryRestClient, businessMetadataId, businessMetadataName string) error {
+func waitForBusinessMetadataToProvision(ctx context.Context, c *CatalogRestClient, businessMetadataId, businessMetadataName string) error {
 	stateConf := &resource.StateChangeConf{
 		Pending:      []string{stateProvisioning},
 		Target:       []string{stateReady},
@@ -535,7 +535,7 @@ func waitForBusinessMetadataToProvision(ctx context.Context, c *SchemaRegistryRe
 	return nil
 }
 
-func waitForTagBindingToProvision(ctx context.Context, c *SchemaRegistryRestClient, tagBindingId, tagName, entityName, entityType string) error {
+func waitForTagBindingToProvision(ctx context.Context, c *CatalogRestClient, tagBindingId, tagName, entityName, entityType string) error {
 	stateConf := &resource.StateChangeConf{
 		Pending:      []string{stateProvisioning},
 		Target:       []string{stateReady},
@@ -551,7 +551,7 @@ func waitForTagBindingToProvision(ctx context.Context, c *SchemaRegistryRestClie
 	return nil
 }
 
-func waitForBusinessMetadataBindingToProvision(ctx context.Context, c *SchemaRegistryRestClient, businessMetadataBindingId, businessMetadataName, entityName, entityType string) error {
+func waitForBusinessMetadataBindingToProvision(ctx context.Context, c *CatalogRestClient, businessMetadataBindingId, businessMetadataName, entityName, entityType string) error {
 	stateConf := &resource.StateChangeConf{
 		Pending:      []string{stateProvisioning},
 		Target:       []string{stateReady},
@@ -1366,9 +1366,9 @@ func peeringProvisionStatus(ctx context.Context, c *Client, environmentId string
 	}
 }
 
-func tagProvisionStatus(ctx context.Context, c *SchemaRegistryRestClient, tagId, tagName string) resource.StateRefreshFunc {
+func tagProvisionStatus(ctx context.Context, c *CatalogRestClient, tagId, tagName string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		request := c.dataCatalogApiClient.TypesV1Api.GetTagDefByName(c.dataCatalogApiContext(ctx), tagName)
+		request := c.apiClient.TypesV1Api.GetTagDefByName(c.dataCatalogApiContext(ctx), tagName)
 		tag, resp, err := request.Execute()
 		if err != nil && resp.StatusCode == http.StatusNotFound {
 			return nil, stateProvisioning, nil
@@ -1383,9 +1383,9 @@ func tagProvisionStatus(ctx context.Context, c *SchemaRegistryRestClient, tagId,
 	}
 }
 
-func businessMetadataProvisionStatus(ctx context.Context, c *SchemaRegistryRestClient, businessMetadataId, businessMetadataName string) resource.StateRefreshFunc {
+func businessMetadataProvisionStatus(ctx context.Context, c *CatalogRestClient, businessMetadataId, businessMetadataName string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		request := c.dataCatalogApiClient.TypesV1Api.GetBusinessMetadataDefByName(c.dataCatalogApiContext(ctx), businessMetadataName)
+		request := c.apiClient.TypesV1Api.GetBusinessMetadataDefByName(c.dataCatalogApiContext(ctx), businessMetadataName)
 		businessMetadata, resp, err := request.Execute()
 		if err != nil && resp.StatusCode == http.StatusNotFound {
 			return nil, stateProvisioning, nil
@@ -1400,9 +1400,9 @@ func businessMetadataProvisionStatus(ctx context.Context, c *SchemaRegistryRestC
 	}
 }
 
-func tagBindingProvisionStatus(ctx context.Context, c *SchemaRegistryRestClient, tagBindingId, tagName, entityName, entityType string) resource.StateRefreshFunc {
+func tagBindingProvisionStatus(ctx context.Context, c *CatalogRestClient, tagBindingId, tagName, entityName, entityType string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		request := c.dataCatalogApiClient.EntityV1Api.GetTags(c.dataCatalogApiContext(ctx), entityType, entityName)
+		request := c.apiClient.EntityV1Api.GetTags(c.dataCatalogApiContext(ctx), entityType, entityName)
 		tagBindings, resp, err := request.Execute()
 		if err != nil && resp.StatusCode == http.StatusNotFound {
 			return nil, stateProvisioning, nil
@@ -1422,9 +1422,9 @@ func tagBindingProvisionStatus(ctx context.Context, c *SchemaRegistryRestClient,
 	}
 }
 
-func businessMetadataBindingProvisionStatus(ctx context.Context, c *SchemaRegistryRestClient, businessMetadataBindingId, businessMetadataName, entityName, entityType string) resource.StateRefreshFunc {
+func businessMetadataBindingProvisionStatus(ctx context.Context, c *CatalogRestClient, businessMetadataBindingId, businessMetadataName, entityName, entityType string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		request := c.dataCatalogApiClient.EntityV1Api.GetBusinessMetadata(c.dataCatalogApiContext(ctx), entityType, entityName)
+		request := c.apiClient.EntityV1Api.GetBusinessMetadata(c.dataCatalogApiContext(ctx), entityType, entityName)
 		businessMetadataBindings, resp, err := request.Execute()
 		if err != nil && resp.StatusCode == http.StatusNotFound {
 			return nil, stateProvisioning, nil
