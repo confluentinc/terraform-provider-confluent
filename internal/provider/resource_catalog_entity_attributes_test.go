@@ -121,6 +121,18 @@ func TestAccCatalogEntityAttributes(t *testing.T) {
 				),
 			},
 			{
+				Config: entityAttributesSchemaRegistryResourceConfig(mockServerUrl),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(entityAttributesLabel, paramEntityName, "lkc-15xq83:topic_0"),
+					resource.TestCheckResourceAttr(entityAttributesLabel, paramEntityType, "kafka_topic"),
+					resource.TestCheckResourceAttr(entityAttributesLabel, paramId, "kafka_topic/lkc-15xq83:topic_0"),
+					resource.TestCheckResourceAttr(entityAttributesLabel, fmt.Sprintf("%s.%%", paramAttributes), "3"),
+					resource.TestCheckResourceAttr(entityAttributesLabel, fmt.Sprintf("%s.owner", paramAttributes), "dev"),
+					resource.TestCheckResourceAttr(entityAttributesLabel, fmt.Sprintf("%s.description", paramAttributes), "test_des"),
+					resource.TestCheckResourceAttr(entityAttributesLabel, fmt.Sprintf("%s.ownerEmail", paramAttributes), "dev@gmail.com"),
+				),
+			},
+			{
 				Config: updateEntityAttributesResourceConfig(mockServerUrl),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(entityAttributesLabel, paramEntityName, "lkc-15xq83:topic_0"),
@@ -137,6 +149,26 @@ func TestAccCatalogEntityAttributes(t *testing.T) {
 }
 
 func entityAttributesResourceConfig(mockServerUrl string) string {
+	return fmt.Sprintf(`
+ 	provider "confluent" {
+ 	  schema_registry_id = "xxx"
+	  catalog_rest_endpoint = "%s"          # optionally use SCHEMA_REGISTRY_REST_ENDPOINT env var
+	  schema_registry_api_key       = "x"   # optionally use SCHEMA_REGISTRY_API_KEY env var
+	  schema_registry_api_secret = "x"
+ 	}
+ 	resource "confluent_catalog_entity_attributes" "main" {
+	  entity_name = "lkc-15xq83:topic_0"
+	  entity_type = "kafka_topic"
+	  attributes = {
+		"owner" : "dev",
+		"description": "test_des",
+		"ownerEmail": "dev@gmail.com"
+	  }
+	}
+ 	`, mockServerUrl)
+}
+
+func entityAttributesSchemaRegistryResourceConfig(mockServerUrl string) string {
 	return fmt.Sprintf(`
  	provider "confluent" {
  	  schema_registry_id = "xxx"

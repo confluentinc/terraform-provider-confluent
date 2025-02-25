@@ -474,7 +474,6 @@ type KafkaRestClient struct {
 
 type SchemaRegistryRestClient struct {
 	apiClient                    *schemaregistry.APIClient
-	dataCatalogApiClient         *dc.APIClient // this will be removed
 	clusterId                    string
 	clusterApiKey                string
 	clusterApiSecret             string
