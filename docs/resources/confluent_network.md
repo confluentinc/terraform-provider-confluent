@@ -153,6 +153,7 @@ The following arguments are supported:
 In addition to the preceding arguments, the following attributes are exported:
 
 - `id` - (Required String) The ID of the Network, for example, `n-abc123`.
+- `endpoint_suffix` - (Optional String) The endpoint suffix for the network, if applicable, for example, `.pr1jy6.us-east-2.aws.confluent.cloud`. It is the concatenation of the subdomain separator (e.g., '.' or '-') and the DNS domain. The Flink REST endpoint can be obtained by concatenating 'https://' + 'flink' + endpoint_suffix, for example, `https://flink..pr1jy6.us-east-2.aws.confluent.cloud`.
 - `resource_name` - (Required String) The Confluent Resource Name of the Network.
 - `dns_domain` - (Optional String) The root DNS domain for the network, for example, `pr123a.us-east-2.aws.confluent.cloud` if applicable. Present on Networks that support Private Link.
 - `zonal_subdomains` - (Optional Map) The DNS subdomain for each zone. Present on networks that support Private Link. Keys are zone names, for example, `use2-az1` and values are DNS domains, for example, `use2-az1.pr123a.us-east-2.aws.confluent.cloud`.
