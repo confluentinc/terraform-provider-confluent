@@ -55,48 +55,6 @@ func waitForCreatedKafkaApiKeyToSync(ctx context.Context, c *KafkaRestClient, is
 	return nil
 }
 
-func waitForCreatedSchemaRegistryApiKeyToSync(ctx context.Context, c *SchemaRegistryRestClient, isAcceptanceTestMode bool) error {
-	delay, pollInterval := getDelayAndPollInterval(30*time.Second, 30*time.Second, isAcceptanceTestMode)
-	stateConf := &resource.StateChangeConf{
-		Pending: []string{stateInProgress},
-		Target:  []string{stateDone},
-		Refresh: schemaRegistryApiKeySyncStatus(ctx, c),
-		// Default timeout for a resource
-		// https://www.terraform.io/plugin/sdkv2/resources/retries-and-customizable-timeouts
-		// Based on the tests, Schema Registry API Key takes about 30 seconds to sync
-		Timeout:      20 * time.Minute,
-		Delay:        delay,
-		PollInterval: pollInterval,
-	}
-
-	tflog.Debug(ctx, fmt.Sprintf("Waiting for Kafka API Key %q to sync", c.clusterApiKey), map[string]interface{}{apiKeyLoggingKey: c.clusterApiKey})
-	if _, err := stateConf.WaitForStateContext(ctx); err != nil {
-		return err
-	}
-	return nil
-}
-
-func waitForCreatedFlinkApiKeyToSync(ctx context.Context, c *FlinkRestClient, organizationID string, isAcceptanceTestMode bool) error {
-	delay, pollInterval := getDelayAndPollInterval(10*time.Second, 30*time.Second, isAcceptanceTestMode)
-	stateConf := &resource.StateChangeConf{
-		Pending: []string{stateInProgress},
-		Target:  []string{stateDone},
-		Refresh: flinkApiKeySyncStatus(ctx, c, organizationID),
-		// Default timeout for a resource
-		// https://www.terraform.io/plugin/sdkv2/resources/retries-and-customizable-timeouts
-		// Based on the tests, Flink API Key takes about 10 seconds to sync
-		Timeout:      20 * time.Minute,
-		Delay:        delay,
-		PollInterval: pollInterval,
-	}
-
-	tflog.Debug(ctx, fmt.Sprintf("Waiting for Flink API Key %q to sync", c.flinkApiKey), map[string]interface{}{apiKeyLoggingKey: c.flinkApiKey})
-	if _, err := stateConf.WaitForStateContext(ctx); err != nil {
-		return err
-	}
-	return nil
-}
-
 func waitForCreatedCloudApiKeyToSync(ctx context.Context, c *Client, cloudApiKey, cloudApiSecret string) error {
 	delay, pollInterval := getDelayAndPollInterval(15*time.Second, 1*time.Minute, c.isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
