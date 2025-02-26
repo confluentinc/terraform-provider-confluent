@@ -76,6 +76,14 @@ func schemaRegistryClusterDataSource() *schema.Resource {
 				Description: "The private API endpoint of the Schema Registry Cluster.",
 				Computed:    true,
 			},
+			paramRestEndpointPrivateRegional: {
+				Type:        schema.TypeMap,
+				Description: "The private regional API endpoint of the Schema Registry Cluster.",
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+				Computed: true,
+			},
 			paramCatalogEndpoint: {
 				Type:        schema.TypeString,
 				Description: "The catalog endpoint of the Schema Registry Cluster.",
@@ -176,6 +184,9 @@ func setSchemaRegistryClusterAttributes(d *schema.ResourceData, schemaRegistryCl
 		return nil, createDescriptiveError(err)
 	}
 	if err := d.Set(paramRestEndpointPrivate, schemaRegistryCluster.Spec.GetPrivateHttpEndpoint()); err != nil {
+		return nil, createDescriptiveError(err)
+	}
+	if err := d.Set(paramRestEndpointPrivateRegional, schemaRegistryCluster.Spec.PrivateNetworkingConfig.GetRegionalEndpoints()); err != nil {
 		return nil, createDescriptiveError(err)
 	}
 	if err := d.Set(paramCatalogEndpoint, schemaRegistryCluster.Spec.GetCatalogHttpEndpoint()); err != nil {
