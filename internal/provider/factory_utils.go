@@ -77,7 +77,35 @@ func (f SchemaRegistryRestClientFactory) CreateSchemaRegistryRestClient(restEndp
 
 	return &SchemaRegistryRestClient{
 		apiClient:                    schemaregistry.NewAPIClient(config),
-		dataCatalogApiClient:         dc.NewAPIClient(dataCatalogConfig),
+		clusterId:                    clusterId,
+		clusterApiKey:                clusterApiKey,
+		clusterApiSecret:             clusterApiSecret,
+		restEndpoint:                 restEndpoint,
+		isMetadataSetInProviderBlock: isMetadataSetInProviderBlock,
+	}
+}
+
+type CatalogRestClientFactory struct {
+	ctx        context.Context
+	userAgent  string
+	maxRetries *int
+}
+
+func (f CatalogRestClientFactory) CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret string, isMetadataSetInProviderBlock bool) *CatalogRestClient {
+	var opts []RetryableClientFactoryOption = []RetryableClientFactoryOption{}
+
+	// Setup DC API Client
+	dataCatalogConfig := dc.NewConfiguration()
+	if f.maxRetries != nil {
+		opts = append(opts, WithMaxRetries(*f.maxRetries))
+	}
+
+	dataCatalogConfig.UserAgent = f.userAgent
+	dataCatalogConfig.Servers[0].URL = restEndpoint
+	dataCatalogConfig.HTTPClient = NewRetryableClientFactory(f.ctx, opts...).CreateRetryableClient()
+
+	return &CatalogRestClient{
+		apiClient:                    dc.NewAPIClient(dataCatalogConfig),
 		clusterId:                    clusterId,
 		clusterApiKey:                clusterApiKey,
 		clusterApiSecret:             clusterApiSecret,
