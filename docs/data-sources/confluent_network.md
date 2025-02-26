@@ -85,7 +85,7 @@ In addition to the preceding arguments, the following attributes are exported:
     When resolution is `CHASED_PRIVATE`, clusters in this network require both public and private DNS to resolve cluster endpoints.
     When resolution is `PRIVATE`, clusters in this network only require private DNS to resolve cluster endpoints.
 
-- `endpoint_suffix` - (Optional String) The endpoint suffix for the network if applicable, for example, `.n-abc123.us-east-1.aws.glb.confluent.cloud`. It is the concatenation of the subdomain separator (fpr example, '.' or '-') and the dns domain. For a Flink endpoint written as: "flink.$networkid.$region.$cloud.confluent.cloud" the endpoint_suffix would be ".$networkid.$region.$cloud.confluent.cloud". The full endpoint can be obtained by concatenating "flink" + endpoint_suffix.
+- `endpoint_suffix` - (Optional String) The endpoint suffix for the network, if applicable, for example, `.pr1jy6.us-east-2.aws.confluent.cloud`. It is the concatenation of the subdomain separator (e.g., '.' or '-') and the DNS domain. The Flink REST endpoint can be obtained by concatenating 'https://' + 'flink' + endpoint_suffix, for example, `https://flink..pr1jy6.us-east-2.aws.confluent.cloud`.
 - `resource_name` - (Required String) The Confluent Resource Name of the Network.
 - `gateway` (Optional Configuration Block) supports the following:
   - `id` - (Optional String) The ID of the Gateway, for example, `gw-abc123`.
