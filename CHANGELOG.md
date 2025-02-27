@@ -1,3 +1,16 @@
+## 2.19.0 (February 27th, 2025)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.18.0...v2.19.0)
+
+**New features:**
+* Updated the docs and the error message for the [Resource Importer](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/guides/resource-importer) tool.
+* Added additional `cluster_link_id` attribute for `confluent_cluster_link` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_cluster_link).
+* Added `confluent_cluster_link` [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_cluster_link).
+* Added `catalog_http_endpoint` for Stream Catalog API resources.
+
+**Bug fixes:**
+* Fixed "`rest_endpoint` is nil or empty for Schema Registry Cluster" error in confluent_api_key [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_api_key).
+
 ## 2.18.0 (February 24th, 2025)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.17.0...v2.18.0)
