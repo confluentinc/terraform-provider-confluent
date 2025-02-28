@@ -28,8 +28,10 @@ const (
 	networkLinkServiceDataSourceScenarioName = "confluent_network_link_service Data Source Lifecycle"
 
 	networkLinkServiceReadUrlPath = "/networking/v1/network-link-services/nls-p2k0l1"
+	networkLinkServiceListUrlPath = "/networking/v1/network-link-services"
 	networkLinkServiceId          = "nls-p2k0l1"
 	networkLinkServiceLabel       = "data.confluent_network_link_service.nls"
+	networkLinkServiceDisplayName = "network-link-service-2"
 )
 
 func TestAccDataSourceNetworkLinkService(t *testing.T) {
@@ -59,6 +61,16 @@ func TestAccDataSourceNetworkLinkService(t *testing.T) {
 			http.StatusOK,
 		))
 
+	listNetworkLinkServiceResponse, _ := ioutil.ReadFile("../testdata/network_link_service/list_nls.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(networkLinkServiceListUrlPath)).
+		InScenario(networkLinkServiceDataSourceScenarioName).
+		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
+		WillReturn(
+			string(listNetworkLinkServiceResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+	
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
@@ -67,6 +79,23 @@ func TestAccDataSourceNetworkLinkService(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckDataSourceNetworkLinkServiceWithIdSet(mockServerUrl),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(networkLinkServiceLabel, "id", "nls-p2k0l1"),
+					resource.TestCheckResourceAttr(networkLinkServiceLabel, "resource_name", "crn://confluent.cloud/organization=foo/environment=env-d1o8qo/network=n-6kqnx2/network-link-service=nls-p2k0l1"),
+					resource.TestCheckResourceAttr(networkLinkServiceLabel, "display_name", "network-link-service-2"),
+					resource.TestCheckResourceAttr(networkLinkServiceLabel, "environment.#", "1"),
+					resource.TestCheckResourceAttr(networkLinkServiceLabel, "environment.0.id", "env-d1o8qo"),
+					resource.TestCheckResourceAttr(networkLinkServiceLabel, "network.#", "1"),
+					resource.TestCheckResourceAttr(networkLinkServiceLabel, "network.0.id", "n-6kqnx2"),
+					resource.TestCheckResourceAttr(networkLinkServiceLabel, "accept.#", "1"),
+					resource.TestCheckResourceAttr(networkLinkServiceLabel, "accept.0.environments.#", "1"),
+					resource.TestCheckResourceAttr(networkLinkServiceLabel, "accept.0.environments.0", "env-nkv0pz"),
+					resource.TestCheckResourceAttr(networkLinkServiceLabel, "accept.0.networks.#", "1"),
+					resource.TestCheckResourceAttr(networkLinkServiceLabel, "accept.0.networks.0", "n-6xr90w"),
+				),
+			},
+			{
+				Config: testAccCheckDataSourceNetworkLinkServiceWithDisplayNameSet(mockServerUrl),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(networkLinkServiceLabel, "id", "nls-p2k0l1"),
 					resource.TestCheckResourceAttr(networkLinkServiceLabel, "resource_name", "crn://confluent.cloud/organization=foo/environment=env-d1o8qo/network=n-6kqnx2/network-link-service=nls-p2k0l1"),
@@ -99,4 +128,19 @@ func testAccCheckDataSourceNetworkLinkServiceWithIdSet(mockServerUrl string) str
 	  	}
 	}
 	`, mockServerUrl, networkLinkServiceId)
+}
+
+func testAccCheckDataSourceNetworkLinkServiceWithDisplayNameSet(mockServerUrl string) string {
+	return fmt.Sprintf(`
+	provider "confluent" {
+ 		endpoint = "%s"
+	}
+
+	data "confluent_network_link_service" "nls" {
+		display_name = "%s"
+        environment {
+			id = "env-d1o8qo"
+	  	}
+	}
+	`, mockServerUrl, networkLinkServiceDisplayName)
 }

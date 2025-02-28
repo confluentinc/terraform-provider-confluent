@@ -37,9 +37,12 @@ output "network_link_service" {
 
 The following arguments are supported:
 
-- `id` - (Required String) The ID of the Network Link Service, for example, `nls-zyw30`.
+- `id` - (Optional String) The ID of the Network Link Service, for example, `nls-zyw30`.
+- `display_name` - (Optional String) The Display Name of the Network Link Service, for example, `DR Link`
 - `environment` (Required Configuration Block) supports the following:
     - `id` - (Required String) The ID of the Environment that the Network Link Service belongs to, for example, `env-1234`.
+
+-> **Note:** Exactly one from the `id` and `display_name` attributes must be specified.
 
 ## Attributes Reference
 
