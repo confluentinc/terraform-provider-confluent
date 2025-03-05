@@ -575,7 +575,9 @@ func dedicatedClusterSchema() *schema.Schema {
 					Elem: &schema.Schema{
 						Type: schema.TypeString,
 					},
+					Optional:    true,
 					Computed:    true,
+					ForceNew:    true,
 					Description: "The list of zones the cluster is in.",
 				},
 			},
