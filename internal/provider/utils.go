@@ -990,6 +990,7 @@ const (
 )
 
 func UploadFileToAzureBlob(url, filePath, contentFormat string) error {
+	// This function was copied from the CLI repo. We have a task to export the method for general use in a more maintainable way (APIT-2912)
 	fileInfo, err := os.Stat(filePath)
 	if err != nil {
 		return err
