@@ -120,6 +120,7 @@ func TestAccGroupMapping(t *testing.T) {
 	_ = wiremockClient.StubFor(deleteGroupMappingStub)
 
 	// in order to test tf update (step #3)
+	groupMappingUpdatedFilter := "\"updated\" in groups"
 	groupMappingUpdatedDisplayName := "Default updated"
 	groupMappingUpdatedDescription := "Permission for all users in everyone group updated"
 	fullGroupMappingResourceLabel := fmt.Sprintf("confluent_group_mapping.%s", groupMappingResourceLabel)
@@ -148,12 +149,12 @@ func TestAccGroupMapping(t *testing.T) {
 				ImportStateVerify: true,
 			},
 			{
-				Config: testAccCheckGroupMappingConfig(mockServerUrl, groupMappingResourceLabel, groupMappingUpdatedDisplayName, groupMappingFilter, groupMappingUpdatedDescription),
+				Config: testAccCheckGroupMappingConfig(mockServerUrl, groupMappingResourceLabel, groupMappingUpdatedDisplayName, groupMappingUpdatedFilter, groupMappingUpdatedDescription),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckGroupMappingExists(fullGroupMappingResourceLabel),
 					resource.TestCheckResourceAttr(fullGroupMappingResourceLabel, "id", groupMappingId),
 					resource.TestCheckResourceAttr(fullGroupMappingResourceLabel, "display_name", groupMappingUpdatedDisplayName),
-					resource.TestCheckResourceAttr(fullGroupMappingResourceLabel, "filter", groupMappingFilter),
+					resource.TestCheckResourceAttr(fullGroupMappingResourceLabel, "filter", groupMappingUpdatedFilter),
 					resource.TestCheckResourceAttr(fullGroupMappingResourceLabel, "description", groupMappingUpdatedDescription),
 				),
 			},
