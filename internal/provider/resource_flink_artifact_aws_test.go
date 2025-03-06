@@ -196,10 +196,6 @@ func testAccCheckArtifactDestroy(s *terraform.State) error {
 }
 
 func testAccCheckArtifactConfig(mockServerUrl, resourceLabel string, cloud string, region string) string {
-	if cloud == "" || region == "" {
-		return "cloud or region parameter is empty for testAccCheckArtifactConfig"
-	}
-
 	return fmt.Sprintf(`
 	provider "confluent" {
  		endpoint = "%s"
