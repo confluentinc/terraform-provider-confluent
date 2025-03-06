@@ -34,7 +34,7 @@ const (
 
 var flinkArtifactsUrlPath = fmt.Sprintf("/artifact/v1/flink-artifacts/%s", flinkArtifactId)
 
-func TestAccFlinkArtifact(t *testing.T) {
+func TestAccFlinkArtifactAws(t *testing.T) {
 	ctx := context.Background()
 
 	wiremockContainer, err := setupWiremock(ctx)
