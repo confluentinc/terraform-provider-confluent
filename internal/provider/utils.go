@@ -834,10 +834,25 @@ func clusterLinkSettingsKeysValidate(v interface{}, path cty.Path) diag.Diagnost
 }
 
 // https://github.com/confluentinc/cli/blob/main/internal/connect/utils.go#L88C1-L125C2
-func uploadFile(url, filePath string, formFields map[string]any) error {
+func uploadFile(url, filePath string, formFields map[string]any, fileExtension string, cloud string) error {
 	// TODO: figure out a way to mock this function and delete this hack
 	if url == tfCustomConnectorPluginTestUrl {
 		return nil
+	}
+	if cloud == "AZURE" {
+		const (
+			maxFileSize     = 1024 * 1024 * 1024 // 1GB
+			maxFileSizeInGB = 1
+		)
+
+		fileInfo, err := os.Stat(filePath)
+		if err != nil {
+			return err
+		}
+
+		if fileInfo.Size() > maxFileSize {
+			return fmt.Errorf("file size %d exceeds the %dGB limit", fileInfo.Size(), maxFileSizeInGB)
+		}
 	}
 	var buffer bytes.Buffer
 	writer := multipart.NewWriter(&buffer)
@@ -869,7 +884,33 @@ func uploadFile(url, filePath string, formFields map[string]any) error {
 	client := &http.Client{
 		Timeout: 20 * time.Minute,
 	}
-	_, err = sling.New().Client(client).Base(url).Set("Content-Type", writer.FormDataContentType()).Post("").Body(&buffer).ReceiveSuccess(nil)
+	if cloud == "AZURE" {
+		var contentFormat string
+		switch fileExtension {
+		case "zip":
+			contentFormat = "application/zip"
+		case "jar":
+			contentFormat = "application/java-archive"
+		}
+
+		_, err = sling.New().
+			Client(client).
+			Base(url).
+			Set("Content-Type", writer.FormDataContentType()).
+			Set("x-ms-blob-type", "BlockBlob").
+			Set("Content-Type", contentFormat).
+			Put("").
+			Body(&buffer).
+			ReceiveSuccess(nil)
+	} else if cloud == "AWS" {
+		_, err = sling.New().
+			Client(client).
+			Base(url).
+			Set("Content-Type", writer.FormDataContentType()).
+			Post("").
+			Body(&buffer).
+			ReceiveSuccess(nil)
+	}
 	if err != nil {
 		return err
 	}
@@ -982,56 +1023,4 @@ func canUpdateEntityNameBusinessMetadata(entityType, oldEntityName, newEntityNam
 	default:
 		return false
 	}
-}
-
-const (
-	maxFileSize     = 1024 * 1024 * 1024 // 1GB
-	maxFileSizeInGB = 1
-)
-
-func UploadFileToAzureBlob(url, filePath, contentFormat string) error {
-	// This function was copied from the CLI repo. We have a task to export the method for general use in a more maintainable way (APIT-2912)
-	fileInfo, err := os.Stat(filePath)
-	if err != nil {
-		return err
-	}
-
-	if fileInfo.Size() > maxFileSize {
-		return fmt.Errorf("file size %d exceeds the %dGB limit", fileInfo.Size(), maxFileSizeInGB)
-	}
-
-	file, err := os.Open(filePath)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	client := &http.Client{Timeout: 20 * time.Minute}
-	request, err := http.NewRequest(http.MethodPut, url, file)
-	if err != nil {
-		return err
-	}
-	request.Header.Set("x-ms-blob-type", "BlockBlob")
-	switch contentFormat {
-	case "zip":
-		request.Header.Set("Content-Type", "application/zip")
-	case "jar":
-		request.Header.Set("Content-Type", "application/java-archive")
-	}
-	request.ContentLength = fileInfo.Size()
-	response, err := client.Do(request)
-	if err != nil {
-		return err
-	}
-	defer response.Body.Close()
-
-	if response.StatusCode >= 400 {
-		responseBody, err := io.ReadAll(response.Body)
-		if err != nil {
-			return err
-		}
-		return fmt.Errorf("%s", string(responseBody))
-	}
-
-	return nil
 }

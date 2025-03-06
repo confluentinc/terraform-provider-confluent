@@ -156,14 +156,8 @@ func artifactCreate(ctx context.Context, d *schema.ResourceData, meta interface{
 		return diag.Errorf("error uploading Flink Artifact: error fetching presigned upload URL %s", createDescriptiveError(err))
 	}
 
-	if strings.ToLower(cloud) == "azure" {
-		if err := UploadFileToAzureBlob(resp.GetUploadUrl(), artifactFile, strings.ToLower(resp.GetContentFormat())); err != nil {
-			return diag.Errorf("error uploading Flink Artifact: %s", createDescriptiveError(err))
-		}
-	} else {
-		if err := uploadFile(resp.GetUploadUrl(), artifactFile, resp.GetUploadFormData()); err != nil {
-			return diag.Errorf("error uploading Flink Artifact: %s", createDescriptiveError(err))
-		}
+	if err := uploadFile(resp.GetUploadUrl(), artifactFile, resp.GetUploadFormData(), resp.GetContentFormat(), cloud); err != nil {
+		return diag.Errorf("error uploading Flink Artifact: %s", createDescriptiveError(err))
 	}
 
 	createArtifactRequest := fa.InlineObject{
@@ -194,6 +188,7 @@ func artifactCreate(ctx context.Context, d *schema.ResourceData, meta interface{
 		return diag.Errorf("error creating Flink Artifact: error marshaling %#v to json: %s", createArtifactRequest, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Flink Artifact: %s", createArtifactRequestJson))
+	//panic(fmt.Sprintf("Creating new Flink Artifact: %s", createArtifactRequestJson))
 
 	createdArtifact, _, err := executeArtifactCreate(c.faApiContext(ctx), c, createArtifactRequest)
 	if err != nil {
