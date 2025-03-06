@@ -331,12 +331,9 @@ func kafkaCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 			config.SetEncryptionKey(encryptionKey)
 		}
 
-		diag.Errorf("############################################### zones %q", d.Get(paramZones))
-
 		zones, is_nil := extractZones(d)
 		if !is_nil {
 			config.SetZones(zones)
-			tflog.Debug(ctx, fmt.Sprintf("############################################### zones %q", zones[0]))
 		}
 
 		spec.SetConfig(cmk.CmkV2DedicatedAsCmkV2ClusterSpecConfigOneOf(config))
@@ -441,7 +438,6 @@ func extractZones(d *schema.ResourceData) ([]string, bool) {
 
 	value := d.Get(paramZones)
 	if value == nil {
-		diag.Errorf("############################################### zones %q", paramZones)
 		return []string{}, true
 	}
 
