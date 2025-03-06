@@ -188,7 +188,6 @@ func artifactCreate(ctx context.Context, d *schema.ResourceData, meta interface{
 		return diag.Errorf("error creating Flink Artifact: error marshaling %#v to json: %s", createArtifactRequest, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Flink Artifact: %s", createArtifactRequestJson))
-	//panic(fmt.Sprintf("Creating new Flink Artifact: %s", createArtifactRequestJson))
 
 	createdArtifact, _, err := executeArtifactCreate(c.faApiContext(ctx), c, createArtifactRequest)
 	if err != nil {
