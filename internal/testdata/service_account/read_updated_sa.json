@@ -9,5 +9,5 @@
     "resource_name": "crn://confluent.cloud/service-account=sa-1jjv26"
   },
   "description": "The updated description of service account",
-  "display_name": "test_service_account_display_name"
+  "display_name": "test_service_account_updated_display_name"
 }
