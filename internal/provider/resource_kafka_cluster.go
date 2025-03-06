@@ -331,6 +331,14 @@ func kafkaCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 			config.SetEncryptionKey(encryptionKey)
 		}
 
+		diag.Errorf("############################################### zones %q", d.Get(paramZones))
+
+		zones, is_nil := extractZones(d)
+		if !is_nil {
+			config.SetZones(zones)
+			tflog.Debug(ctx, fmt.Sprintf("############################################### zones %q", zones[0]))
+		}
+
 		spec.SetConfig(cmk.CmkV2DedicatedAsCmkV2ClusterSpecConfigOneOf(config))
 	} else if clusterType == kafkaClusterTypeEnterprise {
 		spec.SetConfig(cmk.CmkV2EnterpriseAsCmkV2ClusterSpecConfigOneOf(cmk.NewCmkV2Enterprise(kafkaClusterTypeEnterprise)))
@@ -427,6 +435,19 @@ func extractClusterTypeResourceDiff(d *schema.ResourceDiff) string {
 func extractCku(d *schema.ResourceData) int32 {
 	// d.Get() will return 0 if the key is not present
 	return int32(d.Get(paramDedicatedCku).(int))
+}
+
+func extractZones(d *schema.ResourceData) ([]string, bool) {
+
+	value := d.Get(paramZones)
+	if value == nil {
+		diag.Errorf("############################################### zones %q", paramZones)
+		return []string{}, true
+	}
+
+	zones := convertToStringSlice(d.Get(paramZones).([]interface{}))
+
+	return zones, false
 }
 
 func extractEncryptionKey(d *schema.ResourceData) string {
