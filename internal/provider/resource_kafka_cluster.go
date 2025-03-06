@@ -75,6 +75,7 @@ var acceptedCloudProviders = []string{"AWS", "AZURE", "GCP"}
 var acceptedClusterTypes = []string{paramBasicCluster, paramStandardCluster, paramDedicatedCluster, paramEnterpriseCluster, paramFreightCluster}
 var paramDedicatedCku = fmt.Sprintf("%s.0.%s", paramDedicatedCluster, paramCku)
 var paramDedicatedEncryptionKey = fmt.Sprintf("%s.0.%s", paramDedicatedCluster, paramEncryptionKey)
+var paramDedicatedZones = fmt.Sprintf("%s.0.%s", paramDedicatedCluster, paramZones)
 
 func kafkaResource() *schema.Resource {
 	return &schema.Resource{
@@ -331,8 +332,8 @@ func kafkaCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 			config.SetEncryptionKey(encryptionKey)
 		}
 
-		zones, is_nil := extractZones(d)
-		if !is_nil && len(zones) > 0 {
+		zones := convertToStringSlice(d.Get(paramDedicatedZones).([]interface{}))
+		if len(zones) > 0 {
 			config.SetZones(zones)
 		}
 
@@ -432,18 +433,6 @@ func extractClusterTypeResourceDiff(d *schema.ResourceDiff) string {
 func extractCku(d *schema.ResourceData) int32 {
 	// d.Get() will return 0 if the key is not present
 	return int32(d.Get(paramDedicatedCku).(int))
-}
-
-func extractZones(d *schema.ResourceData) ([]string, bool) {
-
-	value := d.Get(paramZones)
-	if value == nil {
-		return []string{}, true
-	}
-
-	zones := convertToStringSlice(d.Get(paramZones).([]interface{}))
-
-	return zones, false
 }
 
 func extractEncryptionKey(d *schema.ResourceData) string {
