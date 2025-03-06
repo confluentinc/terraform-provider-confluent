@@ -332,7 +332,7 @@ func kafkaCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 		}
 
 		zones, is_nil := extractZones(d)
-		if !is_nil {
+		if !is_nil && len(zones) > 0 {
 			config.SetZones(zones)
 		}
 
