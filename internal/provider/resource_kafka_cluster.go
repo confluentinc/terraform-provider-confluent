@@ -331,6 +331,11 @@ func kafkaCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 			config.SetEncryptionKey(encryptionKey)
 		}
 
+		zones, is_nil := extractZones(d)
+		if !is_nil && len(zones) > 0 {
+			config.SetZones(zones)
+		}
+
 		spec.SetConfig(cmk.CmkV2DedicatedAsCmkV2ClusterSpecConfigOneOf(config))
 	} else if clusterType == kafkaClusterTypeEnterprise {
 		spec.SetConfig(cmk.CmkV2EnterpriseAsCmkV2ClusterSpecConfigOneOf(cmk.NewCmkV2Enterprise(kafkaClusterTypeEnterprise)))
@@ -427,6 +432,18 @@ func extractClusterTypeResourceDiff(d *schema.ResourceDiff) string {
 func extractCku(d *schema.ResourceData) int32 {
 	// d.Get() will return 0 if the key is not present
 	return int32(d.Get(paramDedicatedCku).(int))
+}
+
+func extractZones(d *schema.ResourceData) ([]string, bool) {
+
+	value := d.Get(paramZones)
+	if value == nil {
+		return []string{}, true
+	}
+
+	zones := convertToStringSlice(d.Get(paramZones).([]interface{}))
+
+	return zones, false
 }
 
 func extractEncryptionKey(d *schema.ResourceData) string {
@@ -575,7 +592,9 @@ func dedicatedClusterSchema() *schema.Schema {
 					Elem: &schema.Schema{
 						Type: schema.TypeString,
 					},
+					Optional:    true,
 					Computed:    true,
+					ForceNew:    true,
 					Description: "The list of zones the cluster is in.",
 				},
 			},
