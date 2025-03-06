@@ -307,7 +307,7 @@ The following arguments are supported:
 - `freight` - (Optional Configuration Block) The configuration of the Freight Kafka cluster.
 - `dedicated` - (Optional Configuration Block) The configuration of the Dedicated Kafka cluster. It supports the following:
   - `cku` - (Required Number) The number of Confluent Kafka Units (CKUs) for Dedicated cluster types. The minimum number of CKUs for `SINGLE_ZONE` dedicated clusters is `1` whereas `MULTI_ZONE` dedicated clusters must have `2` CKUs or more.
-  - `zones` - (Required List of String) The list of zones the cluster is in. Zones does not work for public dedicated Kafka clusters. To specify a zone, you need to pass in the Network ID, for example, `n-abc123`. 
+  - `zones` - (Optional List of String) The list of zones the cluster is in. You can specify a zone for `SINGLE_ZONE` dedicated clusters. Zone selection does not work for public dedicated Kafka clusters. To specify a zone, you need to pass in the Network ID, for example, `n-abc123`. 
     - On AWS, zones are AWS [AZ IDs](https://docs.aws.amazon.com/ram/latest/userguide/working-with-az-ids.html), for example, `use1-az3`.
     - On GCP, zones are GCP [zones](https://cloud.google.com/compute/docs/regions-zones), for example, `us-central1-c`.
     - On Azure, zones are Confluent-chosen names (for example, `1`, `2`, `3`) since Azure does not have universal zone identifiers.
