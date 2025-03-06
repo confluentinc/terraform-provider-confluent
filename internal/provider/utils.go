@@ -835,9 +835,13 @@ func clusterLinkSettingsKeysValidate(v interface{}, path cty.Path) diag.Diagnost
 
 // https://github.com/confluentinc/cli/blob/main/internal/connect/utils.go#L88C1-L125C2
 func uploadFile(url, filePath string, formFields map[string]any, fileExtension string, cloud string) error {
+	// TODO:We have a task to export the method for general use in a more maintainable way (APIT-2912)
 	// TODO: figure out a way to mock this function and delete this hack
 	if url == tfCustomConnectorPluginTestUrl {
 		return nil
+	}
+	if cloud == "" {
+		return fmt.Errorf("cloud parameter is empty for uploadFile")
 	}
 	if cloud == "AZURE" {
 		const (
