@@ -131,7 +131,7 @@ func TestAccFlinkArtifactAws(t *testing.T) {
 		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckArtifactConfig(mockServerUrl, flinkArtifactResourceLabel),
+				Config: testAccCheckArtifactConfig(mockServerUrl, flinkArtifactResourceLabel, flinkArtifactCloud, flinkArtifactRegion),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckArtifactExists(fullFlinkArtifactResourceLabel),
 					resource.TestCheckResourceAttr(fullFlinkArtifactResourceLabel, paramId, flinkArtifactId),
@@ -195,7 +195,11 @@ func testAccCheckArtifactDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccCheckArtifactConfig(mockServerUrl, resourceLabel string) string {
+func testAccCheckArtifactConfig(mockServerUrl, resourceLabel string, cloud string, region string) string {
+	if cloud == "" || region == "" {
+		return "cloud or region parameter is empty for testAccCheckArtifactConfig"
+	}
+
 	return fmt.Sprintf(`
 	provider "confluent" {
  		endpoint = "%s"
@@ -213,7 +217,7 @@ func testAccCheckArtifactConfig(mockServerUrl, resourceLabel string) string {
 		  id = "%s"
 	    }
 	}
-	`, mockServerUrl, resourceLabel, flinkArtifactUniqueName, flinkArtifactCloud, flinkArtifactRegion, flinkArtifactClass, flinkArtifactDescription, flinkArtifactDocumentationLink, flinkArtifactRuntimeLanguage, flinkArtifactEnvironmentId)
+	`, mockServerUrl, resourceLabel, flinkArtifactUniqueName, cloud, region, flinkArtifactClass, flinkArtifactDescription, flinkArtifactDocumentationLink, flinkArtifactRuntimeLanguage, flinkArtifactEnvironmentId)
 }
 
 func testAccCheckArtifactExists(n string) resource.TestCheckFunc {

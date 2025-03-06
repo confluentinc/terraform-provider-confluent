@@ -114,9 +114,9 @@ func TestAccFlinkArtifactAzure(t *testing.T) {
 		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckArtifactConfigAzure(mockServerUrl, flinkArtifactResourceLabel),
+				Config: testAccCheckArtifactConfig(mockServerUrl, flinkArtifactResourceLabel, flinkArtifactCloudAzure, flinkArtifactRegionAzure),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckArtifactExistsAzure(fullFlinkArtifactResourceLabel),
+					testAccCheckArtifactExists(fullFlinkArtifactResourceLabel),
 					resource.TestCheckResourceAttr(fullFlinkArtifactResourceLabel, paramId, flinkArtifactId),
 					resource.TestCheckResourceAttr(fullFlinkArtifactResourceLabel, paramDisplayName, flinkArtifactUniqueName),
 					resource.TestCheckResourceAttr(fullFlinkArtifactResourceLabel, paramClass, flinkArtifactClass),
@@ -176,41 +176,4 @@ func testAccCheckArtifactDestroyAzure(s *terraform.State) error {
 		return err
 	}
 	return nil
-}
-
-func testAccCheckArtifactConfigAzure(mockServerUrl, resourceLabel string) string {
-	return fmt.Sprintf(`
-	provider "confluent" {
- 		endpoint = "%s"
-	}
-	resource "confluent_flink_artifact" "%s" {
-		artifact_file    = "abc.jar"
-        display_name     = "%s"
-        cloud            = "%s"
-	    region           = "%s"
-		class = "%s"
-		description = "%s"
-	    documentation_link = "%s"
-		runtime_language = "%s"
-	    environment {
-		  id = "%s"
-	    }
-	}
-	`, mockServerUrl, resourceLabel, flinkArtifactUniqueName, flinkArtifactCloudAzure, flinkArtifactRegionAzure, flinkArtifactClass, flinkArtifactDescription, flinkArtifactDocumentationLink, flinkArtifactRuntimeLanguage, flinkArtifactEnvironmentId)
-}
-
-func testAccCheckArtifactExistsAzure(n string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		rs, ok := s.RootModule().Resources[n]
-
-		if !ok {
-			return fmt.Errorf("%s artifact has not been found", n)
-		}
-
-		if rs.Primary.ID == "" {
-			return fmt.Errorf("ID has not been set for %s artifact", n)
-		}
-
-		return nil
-	}
 }
