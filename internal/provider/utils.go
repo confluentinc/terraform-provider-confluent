@@ -834,7 +834,8 @@ func clusterLinkSettingsKeysValidate(v interface{}, path cty.Path) diag.Diagnost
 }
 
 // https://github.com/confluentinc/cli/blob/main/internal/connect/utils.go#L88C1-L125C2
-func uploadFile(url, filePath string, formFields map[string]any) error {
+func uploadFile(url, filePath string, formFields map[string]any, fileExtension string, cloud string, isFlinkUdfArtifact bool) error {
+	// TODO: We have a task to export the method for general use in a more maintainable way (APIT-2912)
 	// TODO: figure out a way to mock this function and delete this hack
 	if url == tfCustomConnectorPluginTestUrl {
 		return nil
@@ -869,7 +870,32 @@ func uploadFile(url, filePath string, formFields map[string]any) error {
 	client := &http.Client{
 		Timeout: 20 * time.Minute,
 	}
-	_, err = sling.New().Client(client).Base(url).Set("Content-Type", writer.FormDataContentType()).Post("").Body(&buffer).ReceiveSuccess(nil)
+	if cloud == "AZURE" && isFlinkUdfArtifact {
+		var contentFormat string
+		switch fileExtension {
+		case "zip":
+			contentFormat = "application/zip"
+		case "jar":
+			contentFormat = "application/java-archive"
+		}
+
+		_, err = sling.New().
+			Client(client).
+			Base(url).
+			Set("x-ms-blob-type", "BlockBlob").
+			Set("Content-Type", contentFormat).
+			Put("").
+			Body(&buffer).
+			ReceiveSuccess(nil)
+	} else {
+		_, err = sling.New().
+			Client(client).
+			Base(url).
+			Set("Content-Type", writer.FormDataContentType()).
+			Post("").
+			Body(&buffer).
+			ReceiveSuccess(nil)
+	}
 	if err != nil {
 		return err
 	}
