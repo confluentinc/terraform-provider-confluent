@@ -834,7 +834,7 @@ func clusterLinkSettingsKeysValidate(v interface{}, path cty.Path) diag.Diagnost
 }
 
 // https://github.com/confluentinc/cli/blob/main/internal/connect/utils.go#L88C1-L125C2
-func uploadFile(url, filePath string, formFields map[string]any, fileExtension, cloud string, isFlinkUdfArtifact bool) error {
+func uploadFile(url, filePath string, formFields map[string]any, fileExtension, cloud string, isFlinkArtifact bool) error {
 	// TODO: We have a task to export the method for general use in a more maintainable way (APIT-2912)
 	// TODO: figure out a way to mock this function and delete this hack
 	if url == tfCustomConnectorPluginTestUrl {
@@ -870,7 +870,7 @@ func uploadFile(url, filePath string, formFields map[string]any, fileExtension, 
 	client := &http.Client{
 		Timeout: 20 * time.Minute,
 	}
-	if cloud == "AZURE" && isFlinkUdfArtifact {
+	if cloud == "AZURE" && isFlinkArtifact {
 		var contentFormat string
 		switch fileExtension {
 		case "zip":
