@@ -26,36 +26,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-const (
-// scenarioStateKafkaHasBeenCreated                           = "A new Kafka Basic cluster has been just created"
-// scenarioStateKafkaHasBeenCreatedButZeroSRClusters          = "A new Kafka Basic cluster has been just created: waiting for SR cluster to appear"
-// scenarioStateKafkaHasBeenCreatedButSRClusterIsProvisioning = "A new Kafka Basic cluster has been just created: SR cluster is provisioning"
-// scenarioStateKafkaHasBeenCreatedAndSRClusterIsProvisioned  = "A new Kafka Basic cluster has been just created: SR cluster is provisioned"
-// scenarioStateKafkaHasBeenCreatedAndSyncIsComplete          = "A new Kafka Basic cluster has been just created: sync is complete"
-// scenarioStateKafkaHasBeenUpdated                           = "The new Kafka cluster's kind has been just updated to Standard"
-// scenarioStateKafkaHasBeenDeleted                           = "The new Kafka cluster has been deleted"
-// kafkaScenarioName                                          = "confluent_kafka Resource Lifecycle"
-// kafkaClusterId                                             = "lkc-19ynpv"
-// testEnvironmentId                                          = "env-1jrymj"
-// kafkaNetworkId                                             = "n-123abc"
-// kafkaDisplayName                                           = "TestCluster"
-// kafkaApiVersion                                            = "cmk/v2"
-// kafkaKind                                                  = "Cluster"
-// kafkaAvailability                                          = "SINGLE_ZONE"
-// kafkaCloud                                                 = "GCP"
-// kafkaRegion                                                = "us-central1"
-// kafkaResourceLabel                                         = "basic-cluster"
-// kafkaHttpEndpoint                                          = "https://pkc-0wg55.us-central1.gcp.confluent.cloud:443"
-// kafkaBootstrapEndpoint                                     = "SASL_SSL://pkc-0wg55.us-central1.gcp.confluent.cloud:9092"
-// kafkaRbacCrn                                               = "crn://confluent.cloud/organization=1111aaaa-11aa-11aa-11aa-111111aaaaaa/environment=env-1jrymj/cloud-cluster=lkc-19ynpv"
-)
-
-//var createKafkaPath = "/cmk/v2/clusters"
-//var readKafkaPath = fmt.Sprintf("/cmk/v2/clusters/%s", kafkaClusterId)
-//var readEnvPath = fmt.Sprintf("/org/v2/environments/%s", testEnvironmentId)
-//var listSchemaRegistryClusterUrlPath = fmt.Sprintf("/srcm/v3/clusters")
-//var fullKafkaResourceLabel = fmt.Sprintf("confluent_kafka_cluster.%s", kafkaResourceLabel)
-
 func TestAccDedicatedCluster(t *testing.T) {
 	ctx := context.Background()
 
@@ -208,52 +178,6 @@ func TestAccDedicatedCluster(t *testing.T) {
 		// https://www.terraform.io/docs/extend/testing/acceptance-tests/teststep.html
 		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
 		Steps: []resource.TestStep{
-			//{
-			//	Config: testAccCheckDedicatedClusterConfig(mockServerUrl, paramBasicCluster),
-			//	Check: resource.ComposeTestCheckFunc(
-			//		testAccCheckClusterExists(fullKafkaResourceLabel),
-			//		resource.TestCheckResourceAttr(fullKafkaResourceLabel, "id", kafkaClusterId),
-			//		resource.TestCheckResourceAttr(fullKafkaResourceLabel, "api_version", kafkaApiVersion),
-			//		resource.TestCheckResourceAttr(fullKafkaResourceLabel, "kind", kafkaKind),
-			//		resource.TestCheckResourceAttr(fullKafkaResourceLabel, "display_name", kafkaDisplayName),
-			//		resource.TestCheckResourceAttr(fullKafkaResourceLabel, "availability", kafkaAvailability),
-			//		resource.TestCheckResourceAttr(fullKafkaResourceLabel, "bootstrap_endpoint", kafkaBootstrapEndpoint),
-			//		resource.TestCheckResourceAttr(fullKafkaResourceLabel, "cloud", kafkaCloud),
-			//		resource.TestCheckResourceAttr(fullKafkaResourceLabel, "basic.#", "1"),
-			//		resource.TestCheckResourceAttr(fullKafkaResourceLabel, "basic.0.%", "0"),
-			//		resource.TestCheckResourceAttr(fullKafkaResourceLabel, "standard.#", "0"),
-			//		resource.TestCheckResourceAttr(fullKafkaResourceLabel, "environment.#", "1"),
-			//		resource.TestCheckResourceAttr(fullKafkaResourceLabel, "environment.0.id", testEnvironmentId),
-			//		resource.TestCheckResourceAttr(fullKafkaResourceLabel, "network.#", "1"),
-			//		resource.TestCheckResourceAttr(fullKafkaResourceLabel, "network.0.id", kafkaNetworkId),
-			//		resource.TestCheckResourceAttr(fullKafkaResourceLabel, "rest_endpoint", kafkaHttpEndpoint),
-			//		resource.TestCheckResourceAttr(fullKafkaResourceLabel, "rbac_crn", kafkaRbacCrn),
-			//	),
-			//},
-			//{
-			//	Config: testAccCheckDedicatedClusterConfig(mockServerUrl, paramStandardCluster),
-			//	Check: resource.ComposeTestCheckFunc(
-			//		testAccCheckClusterExists(fullKafkaResourceLabel),
-			//		resource.TestCheckResourceAttr(fullKafkaResourceLabel, "id", kafkaClusterId),
-			//		resource.TestCheckResourceAttr(fullKafkaResourceLabel, "api_version", kafkaApiVersion),
-			//		resource.TestCheckResourceAttr(fullKafkaResourceLabel, "kind", kafkaKind),
-			//		resource.TestCheckResourceAttr(fullKafkaResourceLabel, "availability", kafkaAvailability),
-			//		resource.TestCheckResourceAttr(fullKafkaResourceLabel, "bootstrap_endpoint", kafkaBootstrapEndpoint),
-			//		resource.TestCheckResourceAttr(fullKafkaResourceLabel, "cloud", kafkaCloud),
-			//		resource.TestCheckResourceAttr(fullKafkaResourceLabel, "basic.#", "0"),
-			//		resource.TestCheckResourceAttr(fullKafkaResourceLabel, "enterprise.#", "0"),
-			//		resource.TestCheckResourceAttr(fullKafkaResourceLabel, "freight.#", "0"),
-			//		resource.TestCheckResourceAttr(fullKafkaResourceLabel, "standard.0.%", "0"),
-			//		resource.TestCheckResourceAttr(fullKafkaResourceLabel, "standard.#", "1"),
-			//		resource.TestCheckResourceAttr(fullKafkaResourceLabel, "display_name", kafkaDisplayName),
-			//		resource.TestCheckResourceAttr(fullKafkaResourceLabel, "environment.#", "1"),
-			//		resource.TestCheckResourceAttr(fullKafkaResourceLabel, "environment.0.id", testEnvironmentId),
-			//		resource.TestCheckResourceAttr(fullKafkaResourceLabel, "network.#", "1"),
-			//		resource.TestCheckResourceAttr(fullKafkaResourceLabel, "network.0.id", kafkaNetworkId),
-			//		resource.TestCheckResourceAttr(fullKafkaResourceLabel, "rest_endpoint", kafkaHttpEndpoint),
-			//		resource.TestCheckResourceAttr(fullKafkaResourceLabel, "rbac_crn", kafkaRbacCrn),
-			//	),
-			//},
 			{
 				Config: testAccCheckDedicatedClusterConfig(mockServerUrl, paramDedicatedCluster),
 				Check: resource.ComposeTestCheckFunc(
@@ -344,19 +268,3 @@ func testAccCheckDedicatedClusterConfig(mockServerUrl, clusterType string) strin
 	}
 	`, mockServerUrl, kafkaDisplayName, kafkaAvailability, kafkaCloud, kafkaRegion, clusterType, kafkaZones, testEnvironmentId)
 }
-
-//func testAccCheckClusterExists(n string) resource.TestCheckFunc {
-//	return func(s *terraform.State) error {
-//		rs, ok := s.RootModule().Resources[n]
-//
-//		if !ok {
-//			return fmt.Errorf("%s kafka cluster has not been found", n)
-//		}
-//
-//		if rs.Primary.ID == "" {
-//			return fmt.Errorf("ID has not been set for %s kafka cluster", n)
-//		}
-//
-//		return nil
-//	}
-//}
