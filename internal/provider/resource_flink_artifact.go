@@ -156,7 +156,7 @@ func artifactCreate(ctx context.Context, d *schema.ResourceData, meta interface{
 		return diag.Errorf("error uploading Flink Artifact: error fetching presigned upload URL %s", createDescriptiveError(err))
 	}
 
-	if err := uploadFile(resp.GetUploadUrl(), artifactFile, resp.GetUploadFormData(), resp.GetContentFormat(), cloud); err != nil {
+	if err := uploadFile(resp.GetUploadUrl(), artifactFile, resp.GetUploadFormData(), resp.GetContentFormat(), cloud, true); err != nil {
 		return diag.Errorf("error uploading Flink Artifact: %s", createDescriptiveError(err))
 	}
 
