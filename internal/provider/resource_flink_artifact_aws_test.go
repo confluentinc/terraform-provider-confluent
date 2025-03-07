@@ -195,7 +195,7 @@ func testAccCheckArtifactDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccCheckArtifactConfig(mockServerUrl, resourceLabel string, cloud string, region string) string {
+func testAccCheckArtifactConfig(mockServerUrl, resourceLabel, cloud, region string) string {
 	return fmt.Sprintf(`
 	provider "confluent" {
  		endpoint = "%s"
