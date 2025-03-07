@@ -840,7 +840,6 @@ func uploadFile(url, filePath string, formFields map[string]any, fileExtension s
 	if url == tfCustomConnectorPluginTestUrl {
 		return nil
 	}
-
 	var buffer bytes.Buffer
 	writer := multipart.NewWriter(&buffer)
 
