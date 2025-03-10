@@ -1,3 +1,11 @@
+## 2.20.0 (March 10th, 2025)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.19.0...v2.20.0)
+
+**Bug fixes:**
+* Fixed "schema = jsonencode( # whitespace changes' TF drift for `confluent_schema` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema)" issue ([#573](https://github.com/confluentinc/terraform-provider-confluent/issues/573)).
+* Updated docs.
+
 ## 2.19.0 (February 27th, 2025)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.18.0...v2.19.0)
