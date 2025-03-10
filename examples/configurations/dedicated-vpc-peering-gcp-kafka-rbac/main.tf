@@ -3,7 +3,7 @@ terraform {
   required_providers {
     confluent = {
       source  = "confluentinc/confluent"
-      version = "2.19.0"
+      version = "2.20.0"
     }
     google = {
       source  = "hashicorp/google"
