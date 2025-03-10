@@ -4,6 +4,7 @@
 
 **Bug fixes:**
 * Fixed "schema = jsonencode( # whitespace changes' TF drift for `confluent_schema` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema)" issue ([#573](https://github.com/confluentinc/terraform-provider-confluent/issues/573)).
+  * Note: this issue may affect everyone who used `2.15.0` version to manage the `confluent_schema` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema).
 * Updated docs.
 
 ## 2.19.0 (February 27th, 2025)
