@@ -63,6 +63,9 @@
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.14.0...v2.15.0)
 
+**Warning:**
+* This PR introduced a minor bug ([#573](https://github.com/confluentinc/terraform-provider-confluent/issues/573)) related to `confluent_schema` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema) that was resolved in `2.16.0`. Please update directly to `2.16.0` version, skipping this `2.15.0` version.
+
 **New features:**
 * Updated `confluent_kafka_cluster` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_cluster) to support [self-managed encryption keys](https://docs.confluent.io/cloud/current/release-notes/index.html#january-29-2025).
 For details, see [Encryption of data at rest on Kafka clusters](https://docs.confluent.io/cloud/current/security/encrypt/byok/overview.html#encryption-data-at-rest-clusters) and [Use Self-managed Encryption Keys in Confluent Cloud on AWS](https://docs.confluent.io/cloud/current/security/encrypt/byok/byok-aws.html#byok-encrypted-clusters-aws).
