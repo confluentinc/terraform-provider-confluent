@@ -449,16 +449,16 @@ func schemaLookupCheck(ctx context.Context, diff *schema.ResourceDiff, c *Schema
 }
 
 func trySchemaLookup(ctx context.Context, diff *schema.ResourceDiff, c *SchemaRegistryRestClient,
-	schemaRequest *sr.RegisterSchemaRequest, subjectName string) (bool, error) {
-	requestJson, err := json.Marshal(schemaRequest)
+	createSchemaRequest *sr.RegisterSchemaRequest, subjectName string) (bool, error) {
+	createSchemaRequestJson, err := json.Marshal(createSchemaRequest)
 	if err != nil {
 		return false, fmt.Errorf("error marshaling %#v to json: %s",
-			schemaRequest, createDescriptiveError(err))
+			createSchemaRequest, createDescriptiveError(err))
 	}
 
-	tflog.Debug(ctx, fmt.Sprintf("Customizing diff new Schema: %s", requestJson))
+	tflog.Debug(ctx, fmt.Sprintf("Customizing diff new Schema: %s", createSchemaRequestJson))
 
-	registeredSchema, schemaExists, err := schemaLookup(ctx, c, schemaRequest, subjectName)
+	registeredSchema, schemaExists, err := schemaLookup(ctx, c, createSchemaRequest, subjectName)
 	if err != nil {
 		return false, err
 	}
