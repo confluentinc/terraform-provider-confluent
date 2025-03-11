@@ -10,7 +10,7 @@
   "id": "group-w4vP",
   "display_name": "Default updated",
   "description": "Permission for all users in everyone group updated",
-  "filter": "\"engineering\" in groups",
+  "filter": "\"updated\" in groups",
   "principal": "group-w4vP",
   "state": "ENABLED"
 }
