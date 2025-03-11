@@ -18,12 +18,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
+
 	iam "github.com/confluentinc/ccloud-sdk-go-v2/iam/v2"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"net/http"
 )
 
 func serviceAccountResource() *schema.Resource {
@@ -49,7 +50,6 @@ func serviceAccountResource() *schema.Resource {
 			paramDisplayName: {
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				Description:  "A human-readable name for the Service Account.",
 				ValidateFunc: validation.StringIsNotEmpty,
 			},
@@ -63,13 +63,22 @@ func serviceAccountResource() *schema.Resource {
 }
 
 func serviceAccountUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if d.HasChangeExcept(paramDescription) {
-		return diag.Errorf("error updating Service Account %q: only %q attribute can be updated for Service Account", d.Id(), paramDescription)
+	if d.HasChangesExcept(paramDisplayName, paramDescription) {
+		return diag.Errorf("error updating Service Account %q: only %q and %q attributes can be updated for Service Account", d.Id(), paramDisplayName, paramDescription)
 	}
 
-	updateServiceAccountRequest := iam.NewIamV2ServiceAccountUpdate()
-	updatedDescription := d.Get(paramDescription).(string)
-	updateServiceAccountRequest.SetDescription(updatedDescription)
+	updateServiceAccountRequest := iam.NewIamV2ServiceAccount()
+
+	if d.HasChange(paramDisplayName) {
+		displayName := d.Get(paramDisplayName).(string)
+		updateServiceAccountRequest.SetDisplayName(displayName)
+	}
+
+	if d.HasChange(paramDescription) {
+		description := d.Get(paramDescription).(string)
+		updateServiceAccountRequest.SetDescription(description)
+	}
+
 	updateServiceAccountRequestJson, err := json.Marshal(updateServiceAccountRequest)
 	if err != nil {
 		return diag.Errorf("error updating Service Account %q: error marshaling %#v to json: %s", d.Id(), updateServiceAccountRequest, createDescriptiveError(err))
@@ -77,7 +86,7 @@ func serviceAccountUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 	tflog.Debug(ctx, fmt.Sprintf("Updating Service Account %q: %s", d.Id(), updateServiceAccountRequestJson), map[string]interface{}{serviceAccountLoggingKey: d.Id()})
 
 	c := meta.(*Client)
-	updatedServiceAccount, _, err := c.iamClient.ServiceAccountsIamV2Api.UpdateIamV2ServiceAccount(c.iamApiContext(ctx), d.Id()).IamV2ServiceAccountUpdate(*updateServiceAccountRequest).Execute()
+	updatedServiceAccount, _, err := c.iamClient.ServiceAccountsIamV2Api.UpdateIamV2ServiceAccount(c.iamApiContext(ctx), d.Id()).IamV2ServiceAccount(*updateServiceAccountRequest).Execute()
 
 	if err != nil {
 		return diag.Errorf("error updating Service Account %q: %s", d.Id(), createDescriptiveError(err))

@@ -116,6 +116,7 @@ func TestAccServiceAccount(t *testing.T) {
 	saDisplayName := "test_service_account_display_name"
 	saDescription := "The initial description of service account"
 	// in order to test tf update (step #3)
+	saUpdatedDisplayName := "test_service_account_updated_display_name"
 	saUpdatedDescription := "The updated description of service account"
 	saResourceLabel := "test_sa_resource_label"
 	fullSaResourceLabel := fmt.Sprintf("confluent_service_account.%s", saResourceLabel)
@@ -145,13 +146,13 @@ func TestAccServiceAccount(t *testing.T) {
 				ImportStateVerify: true,
 			},
 			{
-				Config: testAccCheckServiceAccountConfig(mockServerUrl, saResourceLabel, saDisplayName, saUpdatedDescription),
+				Config: testAccCheckServiceAccountConfig(mockServerUrl, saResourceLabel, saUpdatedDisplayName, saUpdatedDescription),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckServiceAccountExists(fullSaResourceLabel),
 					resource.TestCheckResourceAttr(fullSaResourceLabel, "id", "sa-1jjv26"),
 					resource.TestCheckResourceAttr(fullSaResourceLabel, "api_version", saApiVersion),
 					resource.TestCheckResourceAttr(fullSaResourceLabel, "kind", saKind),
-					resource.TestCheckResourceAttr(fullSaResourceLabel, "display_name", saDisplayName),
+					resource.TestCheckResourceAttr(fullSaResourceLabel, "display_name", saUpdatedDisplayName),
 					resource.TestCheckResourceAttr(fullSaResourceLabel, "description", saUpdatedDescription),
 				),
 			},
