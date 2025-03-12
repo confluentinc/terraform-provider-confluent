@@ -1,4 +1,3 @@
-
 // Copyright 2023 Confluent Inc. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -51,8 +50,8 @@ func TestAccDataSourcePrivateLinkAttachmentGcp(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	readPrivateLinkAttachmentGcpResponse, _ := ioutil.ReadFile("../testdata/private_link_attachment/read_gcp_platt.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(privateLinkAttachmentAzureReadUrlPath)).
-		InScenario(privateLinkAttachmentAzureDataSourceScenarioName).
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(privateLinkAttachmentGcpReadUrlPath)).
+		InScenario(privateLinkAttachmentGcpDataSourceScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillReturn(
 			string(readPrivateLinkAttachmentGcpResponse),
@@ -67,7 +66,7 @@ func TestAccDataSourcePrivateLinkAttachmentGcp(t *testing.T) {
 		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckDataSourcePrivateLinkAttachmentAzureWithIdSet(mockServerUrl),
+				Config: testAccCheckDataSourcePrivateLinkAttachmentGcpWithIdSet(mockServerUrl),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(privateLinkAttachmentGcpDataSourceLabel, "id", "platt-abcdef"),
 					resource.TestCheckResourceAttr(privateLinkAttachmentGcpDataSourceLabel, "resource_name", "crn://confluent.cloud/organization=1111aaaa-11aa-11aa-11aa-111111aaaaaa/private-link-attachment=platt-abcdef"),
