@@ -297,8 +297,6 @@ resource "confluent_tableflow_topic" "purchase" {
     id = confluent_kafka_cluster.basic.id
   }
   display_name = confluent_kafka_topic.purchase.topic_name
-  refresh_interval_ms = "900000"
-  retention_ms = "86400000"
   table_formats = ["ICEBERG"]
 
   managed_storage {}
