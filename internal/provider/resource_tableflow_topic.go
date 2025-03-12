@@ -224,11 +224,6 @@ func tableflowTopicCreate(ctx context.Context, d *schema.ResourceData, meta inte
 
 	d.SetId(displayName)
 
-	// No SLA on status transition from PENDING -> RUNNING
-	//if err := waitForTableflowTopicToProvision(tableflowRestClient.apiContext(ctx), tableflowRestClient, environmentId, clusterId, d.Id(), c.isAcceptanceTestMode); err != nil {
-	//	return diag.Errorf("error waiting for Tableflow Topic %q to provision: %s", d.Id(), createDescriptiveError(err))
-	//}
-
 	createdTableflowTopicJson, err := json.Marshal(createdTableflowTopic)
 	if err != nil {
 		return diag.Errorf("error creating Tableflow Topic %q: error marshaling %#v to json: %s", d.Id(), createdTableflowTopic, createDescriptiveError(err))

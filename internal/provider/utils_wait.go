@@ -357,25 +357,6 @@ func waitForGatewayToProvision(ctx context.Context, c *Client, environmentId, ga
 	return nil
 }
 
-func waitForTableflowTopicToProvision(ctx context.Context, c *TableflowRestClient, environmentId, clusterId, topicName string, isAcceptanceTestMode bool) error {
-	delay, pollInterval := getDelayAndPollInterval(5*time.Second, 1*time.Minute, isAcceptanceTestMode)
-	stateConf := &resource.StateChangeConf{
-		Pending: []string{statePending},
-		Target:  []string{stateRunning},
-		Refresh: tableflowTopicProvisionStatus(c.apiContext(ctx), c, environmentId, clusterId, topicName),
-		Timeout: 1 * time.Hour,
-		// TODO: increase delay
-		Delay:        delay,
-		PollInterval: pollInterval,
-	}
-
-	tflog.Debug(ctx, fmt.Sprintf("Waiting for Tableflow Topic %q status to become %q", topicName, stateReady), map[string]interface{}{tableflowTopicKey: topicName})
-	if _, err := stateConf.WaitForStateContext(c.apiContext(ctx)); err != nil {
-		return err
-	}
-	return nil
-}
-
 func waitForComputePoolToProvision(ctx context.Context, c *Client, environmentId, computePoolId string) error {
 	delay, pollInterval := getDelayAndPollInterval(5*time.Second, 1*time.Minute, c.isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
@@ -1218,25 +1199,6 @@ func gatewayProvisionStatus(ctx context.Context, c *Client, environmentId string
 		}
 		// Access Point is in an unexpected state
 		return nil, stateUnexpected, fmt.Errorf("access point %q is an unexpected state %q: %s", gatewayId, gateway.Status.GetPhase(), gateway.Status.GetErrorMessage())
-	}
-}
-
-func tableflowTopicProvisionStatus(ctx context.Context, c *TableflowRestClient, environmentId, clusterId, topicName string) resource.StateRefreshFunc {
-	return func() (result interface{}, s string, err error) {
-		tableflowTopic, _, err := executeTableflowTopicRead(c.apiContext(ctx), c, environmentId, clusterId, topicName)
-		if err != nil {
-			tflog.Warn(ctx, fmt.Sprintf("Error reading Tableflow Topic %q: %s", topicName, createDescriptiveError(err)), map[string]interface{}{tableflowTopicKey: topicName})
-			return nil, stateUnknown, err
-		}
-
-		tflog.Debug(ctx, fmt.Sprintf("Waiting for Tableflow Topic %q status to become %q: current status is %q", topicName, stateRunning, tableflowTopic.Status.GetPhase()), map[string]interface{}{tableflowTopicKey: topicName})
-		if tableflowTopic.Status.GetPhase() == statePending || tableflowTopic.Status.GetPhase() == stateRunning {
-			return tableflowTopic, tableflowTopic.Status.GetPhase(), nil
-		} else if tableflowTopic.Status.GetPhase() == stateFailed {
-			return nil, stateFailed, fmt.Errorf("tableflow topic %q provisioning status is %q: %s", topicName, stateFailed, tableflowTopic.Status.GetErrorMessage())
-		}
-		// Tableflow Topic is in an unexpected state
-		return nil, stateUnexpected, fmt.Errorf("tableflow topic %q is an unexpected state %q: %s", topicName, tableflowTopic.Status.GetPhase(), tableflowTopic.Status.GetErrorMessage())
 	}
 }
 

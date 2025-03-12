@@ -30,8 +30,6 @@ resource "confluent_tableflow_topic" "example" {
     id = data.confluent_kafka_cluster.staging.id
   }
   display_name = data.confluent_kafka_topic.orders.topic_name
-  retention_ms = "86400000"
-  refresh_interval_ms = "900000"
   table_formats = ["ICEBERG", "DELTA"]
   managed_storage {}
   credentials {
@@ -63,11 +61,9 @@ resource "confluent_tableflow_topic" "example" {
     id = data.confluent_kafka_cluster.staging.id
   }
   display_name = data.confluent_kafka_topic.orders.topic_name
-  retention_ms = "86400000"
-  refresh_interval_ms = "900000"
   byob_aws {
     bucket_name = "bucket_1"
-    provider_integration_id = "cspi-stgce89r7"
+    provider_integration_id = data.confluent_provider_integration.main.id
   }
 
   lifecycle {
