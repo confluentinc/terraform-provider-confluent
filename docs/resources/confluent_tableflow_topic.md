@@ -67,7 +67,7 @@ resource "confluent_tableflow_topic" "example" {
   refresh_interval_ms = "900000"
   byob_aws {
     bucket_name = "bucket_1"
-    provider_integration_id = "cspi-stgce89r7"
+    provider_integration_id = data.confluent_provider_integration.main.id
   }
 
   lifecycle {
