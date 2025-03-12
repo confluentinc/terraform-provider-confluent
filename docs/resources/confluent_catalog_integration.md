@@ -64,7 +64,7 @@ resource "confluent_catalog_integration" "example" {
   display_name = "catalog-integration-1"
   catalog_integration_snowflake {
       endpoint = "https://vuser1_polaris.snowflakecomputing.com/"
-      client_id = "client-id"
+      client_id = "***REDACTED***"
       client_secret = "***REDACTED***"
       warehouse = "catalog-name"
       allowed_scope = "session:role:R1"
