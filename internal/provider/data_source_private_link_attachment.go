@@ -110,15 +110,10 @@ func azurePrivateLinkServicesSchema() *schema.Schema {
 
 func gcpServiceAttachmentsSchema() *schema.Schema {
 	return &schema.Schema{
-		Type:     schema.TypeSet,
+		Type:     schema.TypeList,
 		Computed: true,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
-				paramZone: {
-					Type:        schema.TypeString,
-					Computed:    true,
-					Description: "Zone associated with the PSC Service attachment.",
-				},
 				paramPrivateServiceConnectServiceAttachment: {
 					Type:        schema.TypeString,
 					Computed:    true,
