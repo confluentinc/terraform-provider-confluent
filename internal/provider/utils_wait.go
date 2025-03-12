@@ -27,7 +27,6 @@ import (
 const (
 	stateUp                        = "UP"
 	stateCreated                   = "CREATED"
-	stateConnected                 = "CONNECTED"
 	acceptanceTestModeWaitTime     = 1 * time.Second
 	acceptanceTestModePollInterval = 1 * time.Second
 )
@@ -371,25 +370,6 @@ func waitForTableflowTopicToProvision(ctx context.Context, c *TableflowRestClien
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for Tableflow Topic %q status to become %q", topicName, stateReady), map[string]interface{}{tableflowTopicKey: topicName})
-	if _, err := stateConf.WaitForStateContext(c.apiContext(ctx)); err != nil {
-		return err
-	}
-	return nil
-}
-
-func waitForTableflowCatalogIntegrationToProvision(ctx context.Context, c *TableflowRestClient, environmentId, clusterId, catalogIntegrationId string, isAcceptanceTestMode bool) error {
-	delay, pollInterval := getDelayAndPollInterval(5*time.Second, 1*time.Minute, isAcceptanceTestMode)
-	stateConf := &resource.StateChangeConf{
-		Pending: []string{statePending},
-		Target:  []string{stateConnected},
-		Refresh: catalogIntegrationProvisionStatus(c.apiContext(ctx), c, environmentId, clusterId, catalogIntegrationId),
-		Timeout: 1 * time.Hour,
-		// TODO: increase delay
-		Delay:        delay,
-		PollInterval: pollInterval,
-	}
-
-	tflog.Debug(ctx, fmt.Sprintf("Waiting for Catalog Integration %q status to become %q", catalogIntegrationId, stateConnected), map[string]interface{}{catalogIntegrationKey: catalogIntegrationId})
 	if _, err := stateConf.WaitForStateContext(c.apiContext(ctx)); err != nil {
 		return err
 	}
@@ -1257,25 +1237,6 @@ func tableflowTopicProvisionStatus(ctx context.Context, c *TableflowRestClient, 
 		}
 		// Tableflow Topic is in an unexpected state
 		return nil, stateUnexpected, fmt.Errorf("tableflow topic %q is an unexpected state %q: %s", topicName, tableflowTopic.Status.GetPhase(), tableflowTopic.Status.GetErrorMessage())
-	}
-}
-
-func catalogIntegrationProvisionStatus(ctx context.Context, c *TableflowRestClient, environmentId, clusterId, catalogIntegrationId string) resource.StateRefreshFunc {
-	return func() (result interface{}, s string, err error) {
-		catalogIntegration, _, err := executeCatalogIntegrationRead(c.apiContext(ctx), c, environmentId, clusterId, catalogIntegrationId)
-		if err != nil {
-			tflog.Warn(ctx, fmt.Sprintf("Error reading Catalog Integration %q: %s", catalogIntegrationId, createDescriptiveError(err)), map[string]interface{}{catalogIntegrationKey: catalogIntegrationId})
-			return nil, stateUnknown, err
-		}
-
-		tflog.Debug(ctx, fmt.Sprintf("Waiting for Catalog Integration %q status to become %q: current status is %q", catalogIntegrationId, stateConnected, catalogIntegration.Status.GetPhase()), map[string]interface{}{catalogIntegrationKey: catalogIntegrationId})
-		if catalogIntegration.Status.GetPhase() == statePending || catalogIntegration.Status.GetPhase() == stateConnected {
-			return catalogIntegration, catalogIntegration.Status.GetPhase(), nil
-		} else if catalogIntegration.Status.GetPhase() == stateFailed {
-			return nil, stateFailed, fmt.Errorf("catalog integration %q provisioning status is %q: %s", catalogIntegrationId, stateFailed, catalogIntegration.Status.GetErrorMessage())
-		}
-		// Catalog Integration is in an unexpected state
-		return nil, stateUnexpected, fmt.Errorf("catalog integration %q is an unexpected state %q: %s", catalogIntegrationId, catalogIntegration.Status.GetPhase(), catalogIntegration.Status.GetErrorMessage())
 	}
 }
 

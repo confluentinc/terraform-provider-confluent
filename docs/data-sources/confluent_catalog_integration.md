@@ -83,11 +83,10 @@ The following arguments are supported:
 In addition to the preceding arguments, the following attributes are exported:
 
 - `display_name` - (Required String) The name of the catalog integration.
-- `catalog_integration_aws_glue` (Optional Configuration Block) supports the following:
+- `aws_glue` (Optional Configuration Block) supports the following:
     - `provider_integration_id` - (Required String) The provider integration id.
-- `catalog_integration_snowflake` (Optional Configuration Block) supports the following:
+- `snowflake` (Optional Configuration Block) supports the following:
     - `endpoint` - (Required String) The catalog integration connection endpoint for Snowflake Open Catalog.
     - `warehouse` - (Required String) Warehouse name of the Snowflake Open Catalog.
     - `allowed_scope` - (Required String) Allowed scope of the Snowflake Open Catalog.
 - `suspended` - (Optional Boolean) Indicates whether the Catalog Integration should be suspended.
-- `last_sync_at` - (Optional String) The date and time at which the catalog was last synced. It is represented in RFC3339 format and is in UTC.

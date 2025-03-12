@@ -43,16 +43,11 @@ func catalogIntegrationDataSource() *schema.Resource {
 				Computed:    true,
 				Description: "Indicates whether the Catalog Integration should be suspended.",
 			},
-			paramLastSyncAt: {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "The date and time at which the catalog was last synced. It is represented in RFC3339 format and is in UTC.",
-			},
-			paramKafkaCluster:                requiredKafkaClusterDataSourceSchema(),
-			paramEnvironment:                 environmentDataSourceSchema(),
-			paramCredentials:                 credentialsSchema(),
-			paramCatalogIntegrationAwsGlue:   awsGlueDataSourceSchema(),
-			paramCatalogIntegrationSnowflake: snowflakeDataSourceSchema(),
+			paramKafkaCluster: requiredKafkaClusterDataSourceSchema(),
+			paramEnvironment:  environmentDataSourceSchema(),
+			paramCredentials:  credentialsSchema(),
+			paramAwsGlue:      awsGlueDataSourceSchema(),
+			paramSnowflake:    snowflakeDataSourceSchema(),
 		},
 	}
 }

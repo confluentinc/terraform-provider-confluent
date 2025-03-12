@@ -30,7 +30,7 @@ resource "confluent_catalog_integration" "example" {
     id = data.confluent_kafka_cluster.staging.id
   }
   display_name = "catalog-integration-1"
-  catalog_integration_aws_glue {
+  aws_glue {
     provider_integration_id = data.confluent_provider_integration.main.id
   }
   credentials {
@@ -62,7 +62,7 @@ resource "confluent_catalog_integration" "example" {
     id = data.confluent_kafka_cluster.staging.id
   }
   display_name = "catalog-integration-1"
-  catalog_integration_snowflake {
+  snowflake {
       endpoint = "https://vuser1_polaris.snowflakecomputing.com/"
       client_id = "***REDACTED***"
       client_secret = "***REDACTED***"
@@ -86,9 +86,9 @@ The following arguments are supported:
 - `kafka_cluster` (Required Configuration Block) supports the following:
     - `id` - (Required String) The ID of the Kafka cluster, for example, `lkc-abc123`.
 - `display_name` - (Required String) The name of the catalog integration.
-- `catalog_integration_aws_glue` (Optional Configuration Block) supports the following:
+- `aws_glue` (Optional Configuration Block) supports the following:
     - `provider_integration_id` - (Required String) The provider integration id.
-- `catalog_integration_snowflake` (Optional Configuration Block) supports the following:
+- `snowflake` (Optional Configuration Block) supports the following:
     - `endpoint` - (Required String) The catalog integration connection endpoint for Snowflake Open Catalog.
     - `client_id` - (Required String, Sensitive) The client ID of the catalog integration.
     - `client_secret` - (Required String, Sensitive) The client secret of the catalog integration.
@@ -110,7 +110,6 @@ In addition to the preceding arguments, the following attributes are exported:
 
 - `id` - (Required String) The ID of the Catalog Integration, for example, `tci-abc123`.
 - `suspended` - (Optional Boolean) Indicates whether the Catalog Integration should be suspended.
-- `last_sync_at` - (Optional String) The date and time at which the catalog was last synced. It is represented in RFC3339 format and is in UTC.
 
 ## Import
 

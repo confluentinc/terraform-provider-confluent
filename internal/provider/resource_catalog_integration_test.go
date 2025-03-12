@@ -130,10 +130,9 @@ func TestAccCatalogIntegrationAwsGlue(t *testing.T) {
 					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "kafka_cluster.#", "1"),
 					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "kafka_cluster.0.id", "lkc-00000"),
 					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "suspended", "false"),
-					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "last_sync_at", "2024-02-01T22:25:50.415274Z"),
-					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "catalog_integration_aws_glue.#", "1"),
-					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "catalog_integration_snowflake.#", "0"),
-					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "catalog_integration_aws_glue.0.provider_integration_id", "cspi-stgce89r7"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "aws_glue.#", "1"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "snowflake.#", "0"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "aws_glue.0.provider_integration_id", "cspi-stgce89r7"),
 				),
 			},
 			{
@@ -146,10 +145,9 @@ func TestAccCatalogIntegrationAwsGlue(t *testing.T) {
 					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "kafka_cluster.#", "1"),
 					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "kafka_cluster.0.id", "lkc-00000"),
 					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "suspended", "false"),
-					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "last_sync_at", "2024-02-01T22:25:50.415274Z"),
-					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "catalog_integration_aws_glue.#", "1"),
-					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "catalog_integration_snowflake.#", "0"),
-					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "catalog_integration_aws_glue.0.provider_integration_id", "cspi-stgce89r8"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "aws_glue.#", "1"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "snowflake.#", "0"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "aws_glue.0.provider_integration_id", "cspi-stgce89r8"),
 				),
 			},
 		},
@@ -250,12 +248,11 @@ func TestAccCatalogIntegrationSnowflake(t *testing.T) {
 					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "kafka_cluster.#", "1"),
 					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "kafka_cluster.0.id", "lkc-00000"),
 					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "suspended", "false"),
-					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "last_sync_at", "2024-02-01T22:25:50.415274Z"),
-					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "catalog_integration_aws_glue.#", "0"),
-					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "catalog_integration_snowflake.#", "1"),
-					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "catalog_integration_snowflake.0.endpoint", "https://vuser1_polaris.snowflakecomputing.com/"),
-					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "catalog_integration_snowflake.0.warehouse", "warehouse-name"),
-					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "catalog_integration_snowflake.0.allowed_scope", "allowed-scope"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "aws_glue.#", "0"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "snowflake.#", "1"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "snowflake.0.endpoint", "https://vuser1_polaris.snowflakecomputing.com/"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "snowflake.0.warehouse", "warehouse-name"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "snowflake.0.allowed_scope", "allowed-scope"),
 				),
 			},
 			{
@@ -268,12 +265,11 @@ func TestAccCatalogIntegrationSnowflake(t *testing.T) {
 					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "kafka_cluster.#", "1"),
 					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "kafka_cluster.0.id", "lkc-00000"),
 					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "suspended", "false"),
-					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "last_sync_at", "2024-02-01T22:25:50.415274Z"),
-					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "catalog_integration_aws_glue.#", "0"),
-					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "catalog_integration_snowflake.#", "1"),
-					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "catalog_integration_snowflake.0.endpoint", "https://vuser2_polaris.snowflakecomputing.com/"),
-					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "catalog_integration_snowflake.0.warehouse", "warehouse-name-2"),
-					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "catalog_integration_snowflake.0.allowed_scope", "allowed-scope-2"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "aws_glue.#", "0"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "snowflake.#", "1"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "snowflake.0.endpoint", "https://vuser2_polaris.snowflakecomputing.com/"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "snowflake.0.warehouse", "warehouse-name-2"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "snowflake.0.allowed_scope", "allowed-scope-2"),
 				),
 			},
 		},
@@ -294,7 +290,7 @@ func testAccCheckResourceCatalogIntegrationAwsGlue(mockServerUrl, display_name, 
 		kafka_cluster {
 			id = "lkc-00000"
 		}
-		catalog_integration_aws_glue {
+		aws_glue {
 			provider_integration_id = "%s"
 		}
 		credentials {
@@ -319,7 +315,7 @@ func testAccCheckResourceCatalogIntegrationSnowflake(mockServerUrl, displayName,
 		kafka_cluster {
 			id = "lkc-00000"
 		}
-		catalog_integration_snowflake {
+		snowflake {
 			endpoint = "%s"
 			client_id = "%s"
 			client_secret = "%s"
