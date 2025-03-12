@@ -31,7 +31,7 @@ resource "confluent_catalog_integration" "example" {
   }
   display_name = "catalog-integration-1"
   catalog_integration_aws_glue {
-    provider_integration_id = "cspi-stgce89r7"
+    provider_integration_id = data.confluent_provider_integration.main.id
   }
   credentials {
     key    = confluent_api_key.env-admin-tableflow-api-key.id
