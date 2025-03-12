@@ -92,7 +92,7 @@ The following arguments are supported:
     - `endpoint` - (Required String) The catalog integration connection endpoint for Snowflake Open Catalog.
     - `client_id` - (Required String, Sensitive) The client ID of the catalog integration.
     - `client_secret` - (Required String, Sensitive) The client secret of the catalog integration.
-    - `warehouse` - (Required String) Warehouse name of the Snowflake Open Catalog.
+    - `warehouse` - (Required String) Warehouse name of the Snowflake Open Catalog, for example, `catalog-name`.
     - `allowed_scope` - (Required String) Allowed scope of the Snowflake Open Catalog.
 - `credentials` (Optional Configuration Block) supports the following:
     - `key` - (Required String) The Tableflow API Key.
