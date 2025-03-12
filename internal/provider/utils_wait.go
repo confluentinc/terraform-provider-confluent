@@ -76,9 +76,24 @@ func waitForCreatedCloudApiKeyToSync(ctx context.Context, c *Client, cloudApiKey
 	return nil
 }
 
-func waitForCreatedTableflowApiKeyToSync(ctx context.Context, c *Client, tableflowApiKey, tableflowApiSecret string) error {
-	//TODO: implement the waitForSync function once corresponding Tableflow APIs have its backend support ready
+func waitForCreatedTableflowApiKeyToSync(ctx context.Context, c *TableflowRestClient, isAcceptanceTestMode bool) error {
+	delay, pollInterval := getDelayAndPollInterval(10*time.Second, 30*time.Second, isAcceptanceTestMode)
+	stateConf := &resource.StateChangeConf{
+		Pending: []string{stateInProgress},
+		Target:  []string{stateDone},
+		Refresh: tableflowApiKeySyncStatus(ctx, c),
+		// Default timeout for a resource
+		// https://www.terraform.io/plugin/sdkv2/resources/retries-and-customizable-timeouts
+		// Based on the tests, Tableflow API Key takes about 10 seconds to sync
+		Timeout:      20 * time.Minute,
+		Delay:        delay,
+		PollInterval: pollInterval,
+	}
 
+	tflog.Debug(ctx, fmt.Sprintf("Waiting for Tableflow API Key %q to sync", c.tableflowApiKey), map[string]interface{}{apiKeyLoggingKey: c.tableflowApiKey})
+	if _, err := stateConf.WaitForStateContext(ctx); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -337,6 +352,25 @@ func waitForGatewayToProvision(ctx context.Context, c *Client, environmentId, ga
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for Gateway %q provisioning status to become %q", gatewayId, stateReady), map[string]interface{}{gatewayKey: gatewayId})
 	if _, err := stateConf.WaitForStateContext(c.netGWApiContext(ctx)); err != nil {
+		return err
+	}
+	return nil
+}
+
+func waitForTableflowTopicToProvision(ctx context.Context, c *TableflowRestClient, environmentId, clusterId, topicName string, isAcceptanceTestMode bool) error {
+	delay, pollInterval := getDelayAndPollInterval(5*time.Second, 1*time.Minute, isAcceptanceTestMode)
+	stateConf := &resource.StateChangeConf{
+		Pending: []string{statePending},
+		Target:  []string{stateRunning},
+		Refresh: tableflowTopicProvisionStatus(c.apiContext(ctx), c, environmentId, clusterId, topicName),
+		Timeout: 1 * time.Hour,
+		// TODO: increase delay
+		Delay:        delay,
+		PollInterval: pollInterval,
+	}
+
+	tflog.Debug(ctx, fmt.Sprintf("Waiting for Tableflow Topic %q status to become %q", topicName, stateReady), map[string]interface{}{tableflowTopicKey: topicName})
+	if _, err := stateConf.WaitForStateContext(c.apiContext(ctx)); err != nil {
 		return err
 	}
 	return nil
@@ -1187,6 +1221,25 @@ func gatewayProvisionStatus(ctx context.Context, c *Client, environmentId string
 	}
 }
 
+func tableflowTopicProvisionStatus(ctx context.Context, c *TableflowRestClient, environmentId, clusterId, topicName string) resource.StateRefreshFunc {
+	return func() (result interface{}, s string, err error) {
+		tableflowTopic, _, err := executeTableflowTopicRead(c.apiContext(ctx), c, environmentId, clusterId, topicName)
+		if err != nil {
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Tableflow Topic %q: %s", topicName, createDescriptiveError(err)), map[string]interface{}{tableflowTopicKey: topicName})
+			return nil, stateUnknown, err
+		}
+
+		tflog.Debug(ctx, fmt.Sprintf("Waiting for Tableflow Topic %q status to become %q: current status is %q", topicName, stateRunning, tableflowTopic.Status.GetPhase()), map[string]interface{}{tableflowTopicKey: topicName})
+		if tableflowTopic.Status.GetPhase() == statePending || tableflowTopic.Status.GetPhase() == stateRunning {
+			return tableflowTopic, tableflowTopic.Status.GetPhase(), nil
+		} else if tableflowTopic.Status.GetPhase() == stateFailed {
+			return nil, stateFailed, fmt.Errorf("tableflow topic %q provisioning status is %q: %s", topicName, stateFailed, tableflowTopic.Status.GetErrorMessage())
+		}
+		// Tableflow Topic is in an unexpected state
+		return nil, stateUnexpected, fmt.Errorf("tableflow topic %q is an unexpected state %q: %s", topicName, tableflowTopic.Status.GetPhase(), tableflowTopic.Status.GetErrorMessage())
+	}
+}
+
 func flinkStatementProvisionStatus(ctx context.Context, c *FlinkRestClient, statementName string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
 		statement, _, err := executeFlinkStatementRead(c.apiContext(ctx), c, statementName)
@@ -1564,22 +1617,22 @@ func cloudApiKeySyncStatus(ctx context.Context, c *Client, cloudApiKey, cloudApi
 	}
 }
 
-func tableflowApiKeySyncStatus(ctx context.Context, c *Client, tableflowApiKey, tableflowApiSecret string) resource.StateRefreshFunc {
+func tableflowApiKeySyncStatus(ctx context.Context, c *TableflowRestClient) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		_, resp, err := c.orgClient.EnvironmentsOrgV2Api.ListOrgV2Environments(orgApiContext(ctx, tableflowApiKey, tableflowApiSecret)).Execute()
+		_, resp, err := c.apiClient.RegionsTableflowV1Api.ListTableflowV1Regions(c.apiContext(ctx)).Execute()
 		if resp != nil && resp.StatusCode == http.StatusOK {
-			tflog.Debug(ctx, fmt.Sprintf("Finishing Tableflow API Key %q sync process: Received %d status code when listing environments", tableflowApiKey, resp.StatusCode), map[string]interface{}{apiKeyLoggingKey: tableflowApiKey})
+			tflog.Debug(ctx, fmt.Sprintf("Finishing Tableflow API Key %q sync process: Received %d status code when listing regions", c.tableflowApiKey, resp.StatusCode), map[string]interface{}{apiKeyLoggingKey: c.tableflowApiKey})
 			return 0, stateDone, nil
 			// Status codes for unsynced API Keys might change over time, so it's safer to rely on a timeout to fail
 		} else if resp != nil && (resp.StatusCode == http.StatusForbidden || resp.StatusCode == http.StatusUnauthorized) {
-			tflog.Debug(ctx, fmt.Sprintf("Performing Tableflow API Key %q sync process: Received %d status code when listing environments", tableflowApiKey, resp.StatusCode), map[string]interface{}{apiKeyLoggingKey: tableflowApiKey})
+			tflog.Debug(ctx, fmt.Sprintf("Performing Tableflow API Key %q sync process: Received %d status code when listing regions", c.tableflowApiKey, resp.StatusCode), map[string]interface{}{apiKeyLoggingKey: c.tableflowApiKey})
 			return 0, stateInProgress, nil
 		} else if err != nil {
-			tflog.Debug(ctx, fmt.Sprintf("Exiting Tableflow API Key %q sync process: Failed when listing Environments: %s", tableflowApiKey, createDescriptiveError(err)), map[string]interface{}{apiKeyLoggingKey: tableflowApiKey})
-			return nil, stateFailed, fmt.Errorf("error listing Environments using Cloud API Key %q: %s", tableflowApiKey, createDescriptiveError(err))
+			tflog.Debug(ctx, fmt.Sprintf("Exiting Tableflow API Key %q sync process: Failed when listing regions: %s", c.tableflowApiKey, createDescriptiveError(err)), map[string]interface{}{apiKeyLoggingKey: c.tableflowApiKey})
+			return nil, stateFailed, fmt.Errorf("error listing regions using Tableflow API Key %q: %s", c.tableflowApiKey, createDescriptiveError(err))
 		} else {
-			tflog.Debug(ctx, fmt.Sprintf("Exiting Tableflow API Key %q sync process: Received unexpected response when listing Environments: %#v", tableflowApiKey, resp), map[string]interface{}{apiKeyLoggingKey: tableflowApiKey})
-			return nil, stateUnexpected, fmt.Errorf("error listing Environments using Kafka API Key %q: received a response with unexpected %d status code", tableflowApiKey, resp.StatusCode)
+			tflog.Debug(ctx, fmt.Sprintf("Exiting Tableflow API Key %q sync process: Received unexpected response when listing regions: %#v", c.tableflowApiKey, resp), map[string]interface{}{apiKeyLoggingKey: c.tableflowApiKey})
+			return nil, stateUnexpected, fmt.Errorf("error listing regions using Tableflow API Key %q: received a response with unexpected %d status code", c.tableflowApiKey, resp.StatusCode)
 		}
 	}
 }

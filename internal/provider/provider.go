@@ -100,6 +100,7 @@ type Client struct {
 	flinkRestClientFactory          *FlinkRestClientFactory
 	kafkaRestClientFactory          *KafkaRestClientFactory
 	schemaRegistryRestClientFactory *SchemaRegistryRestClientFactory
+	tableflowRestClientFactory      *TableflowRestClientFactory
 	mdsClient                       *mds.APIClient
 	oidcClient                      *oidc.APIClient
 	quotasClient                    *quotas.APIClient
@@ -130,6 +131,9 @@ type Client struct {
 	flinkApiSecret                  string
 	flinkRestEndpoint               string
 	isFlinkMetadataSet              bool
+	tableflowApiKey                 string
+	tableflowApiSecret              string
+	isTableflowMetadataSet          bool
 	isAcceptanceTestMode            bool
 }
 
@@ -267,6 +271,20 @@ func New(version, userAgent string) func() *schema.Provider {
 					// Example: "https://flink.us-east-1.aws.confluent.cloud"
 					Description: "The Flink REST Endpoint.",
 				},
+				"tableflow_api_key": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Sensitive:   true,
+					DefaultFunc: schema.EnvDefaultFunc("TABLEFLOW_API_KEY", ""),
+					Description: "The Tableflow API Key.",
+				},
+				"tableflow_api_secret": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Sensitive:   true,
+					DefaultFunc: schema.EnvDefaultFunc("TABLEFLOW_API_SECRET", ""),
+					Description: "The Tableflow API Secret.",
+				},
 				"endpoint": {
 					Type:        schema.TypeString,
 					Optional:    true,
@@ -325,6 +343,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_byok_key":                           byokDataSource(),
 				"confluent_network_link_endpoint":              networkLinkEndpointDataSource(),
 				"confluent_network_link_service":               networkLinkServiceDataSource(),
+				"confluent_tableflow_topic":                    tableflowTopicDataSource(),
 				"confluent_tag":                                tagDataSource(),
 				"confluent_tag_binding":                        tagBindingDataSource(),
 				"confluent_business_metadata":                  businessMetadataDataSource(),
@@ -377,6 +396,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_network_link_endpoint":              networkLinkEndpointResource(),
 				"confluent_network_link_service":               networkLinkServiceResource(),
 				"confluent_tf_importer":                        tfImporterResource(),
+				"confluent_tableflow_topic":                    tableflowTopicResource(),
 				"confluent_tag":                                tagResource(),
 				"confluent_tag_binding":                        tagBindingResource(),
 				"confluent_business_metadata":                  businessMetadataResource(),
@@ -457,6 +477,8 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	flinkApiKey := d.Get("flink_api_key").(string)
 	flinkApiSecret := d.Get("flink_api_secret").(string)
 	flinkRestEndpoint := d.Get("flink_rest_endpoint").(string)
+	tableflowApiKey := d.Get("tableflow_api_key").(string)
+	tableflowApiSecret := d.Get("tableflow_api_secret").(string)
 	maxRetries := d.Get("max_retries").(int)
 
 	// 3 or 4 attributes should be set or not set at the same time
@@ -490,6 +512,13 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	justSubsetOfFlinkAttributesAreSet := !(allFlinkAttributesAreSet || allFlinkAttributesAreNotSet)
 	if justSubsetOfFlinkAttributesAreSet {
 		return nil, diag.Errorf("All 7 flink_api_key, flink_api_secret, flink_rest_endpoint, organization_id, environment_id, flink_compute_pool_id, flink_principal_id attributes should be set or not set in the provider block at the same time")
+	}
+
+	allTableflowAttributesAreSet := (tableflowApiKey != "") && (tableflowApiSecret != "")
+	allTableflowAttributesAreNotSet := (tableflowApiKey == "") && (tableflowApiSecret == "")
+	justOneTableflowAttributeSet := !(allTableflowAttributesAreSet || allTableflowAttributesAreNotSet)
+	if justOneTableflowAttributeSet {
+		return nil, diag.Errorf("Both tableflow_api_key and tableflow_api_secret should be set or not set in the provider block at the same time")
 	}
 
 	userAgent := p.UserAgent(terraformProviderUserAgent, fmt.Sprintf("%s (https://confluent.cloud; support@confluent.io)", providerVersion))
@@ -584,11 +613,13 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	var flinkRestClientFactory *FlinkRestClientFactory
 	var kafkaRestClientFactory *KafkaRestClientFactory
 	var schemaRegistryRestClientFactory *SchemaRegistryRestClientFactory
+	var tableflowRestClientFactory *TableflowRestClientFactory
 
 	catalogRestClientFactory = &CatalogRestClientFactory{ctx: ctx, userAgent: userAgent, maxRetries: &maxRetries}
 	flinkRestClientFactory = &FlinkRestClientFactory{ctx: ctx, userAgent: userAgent, maxRetries: &maxRetries}
 	kafkaRestClientFactory = &KafkaRestClientFactory{ctx: ctx, userAgent: userAgent, maxRetries: &maxRetries}
 	schemaRegistryRestClientFactory = &SchemaRegistryRestClientFactory{ctx: ctx, userAgent: userAgent, maxRetries: &maxRetries}
+	tableflowRestClientFactory = &TableflowRestClientFactory{ctx: ctx, userAgent: userAgent, maxRetries: &maxRetries, endpoint: endpoint}
 
 	apiKeysCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	byokCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
@@ -642,6 +673,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 		flinkRestClientFactory:          flinkRestClientFactory,
 		kafkaRestClientFactory:          kafkaRestClientFactory,
 		schemaRegistryRestClientFactory: schemaRegistryRestClientFactory,
+		tableflowRestClientFactory:      tableflowRestClientFactory,
 		mdsClient:                       mds.NewAPIClient(mdsCfg),
 		quotasClient:                    quotas.NewAPIClient(quotasCfg),
 		ssoClient:                       sso.NewAPIClient(ssoCfg),
@@ -664,12 +696,15 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 		flinkApiKey:                     flinkApiKey,
 		flinkApiSecret:                  flinkApiSecret,
 		flinkRestEndpoint:               flinkRestEndpoint,
-		// For simplicity, treat 3 (for Kafka), 4 (for SR), 4 (for catalog) and 7 (for Flink) variables as a "single" one
+		tableflowApiKey:                 tableflowApiKey,
+		tableflowApiSecret:              tableflowApiSecret,
+		// For simplicity, treat 3 (for Kafka), 4 (for SR), 4 (for catalog), 7 (for Flink), and 2 (for Tableflow) variables as a "single" one
 		isKafkaMetadataSet:           allKafkaAttributesAreSet,
 		isKafkaClusterIdSet:          kafkaClusterId != "",
 		isSchemaRegistryMetadataSet:  allSchemaRegistryAttributesAreSet,
 		isCatalogRegistryMetadataSet: allCatalogAttributesAreSet,
 		isFlinkMetadataSet:           allFlinkAttributesAreSet,
+		isTableflowMetadataSet:       allTableflowAttributesAreSet,
 		isAcceptanceTestMode:         acceptanceTestMode,
 	}
 

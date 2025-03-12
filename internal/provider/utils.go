@@ -58,6 +58,7 @@ import (
 	schemaregistry "github.com/confluentinc/ccloud-sdk-go-v2/schema-registry/v1"
 	srcm "github.com/confluentinc/ccloud-sdk-go-v2/srcm/v3"
 	"github.com/confluentinc/ccloud-sdk-go-v2/sso/v2"
+	tableflow "github.com/confluentinc/ccloud-sdk-go-v2/tableflow/v1"
 	"github.com/dghubble/sling"
 	"github.com/google/uuid"
 	"github.com/hashicorp/go-cty/cty"
@@ -124,6 +125,7 @@ const (
 	schemaRegistryDekKey                      = "dek_id"
 	entityAttributesLoggingKey                = "entity_attributes_id"
 	providerIntegrationLoggingKey             = "provider_integration_id"
+	tableflowTopicKey                         = "tableflow_topic_id"
 
 	deprecationMessageMajorRelease3 = "The %q %s has been deprecated and will be removed in the next major version of the provider (3.0.0). " +
 		"Refer to the Upgrade Guide at https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/guides/version-3-upgrade for more details. " +
@@ -502,6 +504,13 @@ type FlinkRestClient struct {
 	isMetadataSetInProviderBlock bool
 }
 
+type TableflowRestClient struct {
+	apiClient                    *tableflow.APIClient
+	tableflowApiKey              string
+	tableflowApiSecret           string
+	isMetadataSetInProviderBlock bool
+}
+
 func (c *KafkaRestClient) apiContext(ctx context.Context) context.Context {
 	if c.clusterApiKey != "" && c.clusterApiSecret != "" {
 		return context.WithValue(context.Background(), kafkarestv3.ContextBasicAuth, kafkarestv3.BasicAuth{
@@ -554,6 +563,17 @@ func (c *FlinkRestClient) apiContext(ctx context.Context) context.Context {
 		})
 	}
 	tflog.Warn(ctx, fmt.Sprintf("Could not find Flink API Key for Flink %q", c.restEndpoint))
+	return ctx
+}
+
+func (c *TableflowRestClient) apiContext(ctx context.Context) context.Context {
+	if c.tableflowApiKey != "" && c.tableflowApiSecret != "" {
+		return context.WithValue(context.Background(), tableflow.ContextBasicAuth, tableflow.BasicAuth{
+			UserName: c.tableflowApiKey,
+			Password: c.tableflowApiSecret,
+		})
+	}
+	tflog.Warn(ctx, fmt.Sprintf("Could not find Tableflow API Key"))
 	return ctx
 }
 
