@@ -798,6 +798,6 @@ func resourceFlinkStatementDiff(_ context.Context, diff *schema.ResourceDiff, _ 
 		}
 	}
 
-	// STOPPED -> RUNNING transition, both `paramPrincipal` and `paramComputePool` can be updated in place, so no restriction here
+	// RUNNING -> STOPPED transition, both `paramPrincipal` and `paramComputePool` can be updated in place, so no restriction here
 	return nil
 }
