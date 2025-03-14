@@ -12,8 +12,8 @@ semaphore:
     - master
     - /^v\d+\.\d+\.x$/
   tasks:
-    - name: automatically-create-jiras-for-new-issues
+    - name: automatically-create-jira-tickets-for-new-issues
       branch: master
       # In the future, we plan to enable it to run automatically by uncommenting the following line:
       # at: "0 */6 * * *" # Runs run on the hour, every 6 hours.
-      pipeline_file: ".semaphore/automatically-create-jiras-for-new-issues.yml"
+      pipeline_file: ".semaphore/github-issues-to-jira-sync.yml"
