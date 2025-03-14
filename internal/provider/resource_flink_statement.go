@@ -766,21 +766,38 @@ func resourceFlinkStatementDiff(_ context.Context, diff *schema.ResourceDiff, _ 
 	}
 
 	oldStopped, newStopped := diff.GetChange(paramStopped)
+
 	// RUNNING -> STOPPED transition, none of `paramPrincipal` and `paramComputePool` can be updated in place
 	if oldStopped == false && newStopped == true {
-		if diff.HasChanges(paramPrincipal, paramComputePool) {
-			return fmt.Errorf("error updating Flink Statement %q: 'principal' or 'compute_pool' can't be updated in place along with a `stopped` false -> true status change", diff.Id())
+		if diff.HasChanges(paramPrincipal) {
+			oldPrincipal, newPrincipal := diff.GetChange(paramPrincipal)
+			return fmt.Errorf("error updating Flink Statement %q: 'principal' (from %#v to %#v) can't be updated in place along with a `stopped` false -> true status change",
+				diff.Id(), oldPrincipal, newPrincipal)
+		}
+
+		if diff.HasChanges(paramComputePool) {
+			oldComputePool, newComputePool := diff.GetChange(paramComputePool)
+			return fmt.Errorf("error updating Flink Statement %q: 'compute_pool' (from %#v to %#v) can't be updated in place along with a `stopped` false -> true status change",
+				diff.Id(), oldComputePool, newComputePool)
 		}
 	}
 
 	// In case of no statement status transition, none of `paramPrincipal` and `paramComputePool` can be updated in place
 	// Scenarios include RUNNING -> RUNNING, STOPPED -> STOPPED
 	if oldStopped == newStopped {
-		if diff.HasChanges(paramPrincipal, paramComputePool) {
-			return fmt.Errorf("error updating Flink Statement %q: 'principal' or 'compute_pool' can't be updated in place without a `stopped` true -> false status change", diff.Id())
+		if diff.HasChanges(paramPrincipal) {
+			oldPrincipal, newPrincipal := diff.GetChange(paramPrincipal)
+			return fmt.Errorf("error updating Flink Statement %q: 'principal' (from %#v to %#v) can't be updated in place without a `stopped` true -> false status change",
+				diff.Id(), oldPrincipal, newPrincipal)
+		}
+
+		if diff.HasChanges(paramComputePool) {
+			oldComputePool, newComputePool := diff.GetChange(paramComputePool)
+			return fmt.Errorf("error updating Flink Statement %q: 'compute_pool' (from %#v to %#v) can't be updated in place without a `stopped` true -> false status change",
+				diff.Id(), oldComputePool, newComputePool)
 		}
 	}
 
-	// RUNNING -> STOPPED transition, both `paramPrincipal` and `paramComputePool` can be updated in place, so no restriction here
+	// STOPPED -> RUNNING transition, both `paramPrincipal` and `paramComputePool` can be updated in place, so no restriction here
 	return nil
 }
