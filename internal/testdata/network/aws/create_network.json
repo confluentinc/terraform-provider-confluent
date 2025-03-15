@@ -37,6 +37,7 @@
       "vpc": ""
     },
     "dns_domain": "",
+    "endpoint_suffix": ".",
     "phase": "PROVISIONING",
     "zonal_subdomains": {}
   }

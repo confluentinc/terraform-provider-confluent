@@ -82,6 +82,10 @@ func networkDataSource() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			paramEndpointSuffix: {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 			paramZonalSubdomains: {
 				Type: schema.TypeMap,
 				Elem: &schema.Schema{

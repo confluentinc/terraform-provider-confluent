@@ -39,6 +39,7 @@ const (
 	awsNetworkDefaultDnsResolution        = "CHASED_PRIVATE"
 	awsNetworkId                          = "n-pr1jy6"
 	awsDnsDomain                          = "pr1jy6.us-east-2.aws.confluent.cloud"
+	awsEndpointSuffix                     = ".pr1jy6.us-east-2.aws.confluent.cloud"
 	awsNetworkVpc                         = "vpc-03e78ba4db7bb1789"
 	awsNetworkAccount                     = "012345678901"
 	awsNetworkPrivateLinkEndpointService  = "com.amazonaws.vpce.us-east-2.vpce-svc-0089db43e25590123"
@@ -160,6 +161,7 @@ func TestAccAwsNetwork(t *testing.T) {
 					resource.TestCheckResourceAttr(fullAwsNetworkResourceLabel, fmt.Sprintf("%s.#", paramDnsConfig), "1"),
 					resource.TestCheckResourceAttr(fullAwsNetworkResourceLabel, fmt.Sprintf("%s.0.%s", paramDnsConfig, paramResolution), awsNetworkDefaultDnsResolution),
 					resource.TestCheckResourceAttr(fullAwsNetworkResourceLabel, paramResourceName, awsNetworkResourceName),
+					resource.TestCheckResourceAttr(fullAwsNetworkResourceLabel, paramEndpointSuffix, awsEndpointSuffix),
 					resource.TestCheckResourceAttr(fullAwsNetworkResourceLabel, paramDnsDomain, awsDnsDomain),
 					resource.TestCheckResourceAttr(fullAwsNetworkResourceLabel, paramReservedCidr, ""),
 					resource.TestCheckResourceAttr(fullAwsNetworkResourceLabel, fmt.Sprintf("%s.#", paramZoneInfo), "0"),
@@ -191,6 +193,7 @@ func TestAccAwsNetwork(t *testing.T) {
 					resource.TestCheckResourceAttr(fullAwsNetworkResourceLabel, fmt.Sprintf("%s.#", paramDnsConfig), "1"),
 					resource.TestCheckResourceAttr(fullAwsNetworkResourceLabel, fmt.Sprintf("%s.0.%s", paramDnsConfig, paramResolution), awsNetworkDefaultDnsResolution),
 					resource.TestCheckResourceAttr(fullAwsNetworkResourceLabel, paramResourceName, awsNetworkResourceName),
+					resource.TestCheckResourceAttr(fullAwsNetworkResourceLabel, paramEndpointSuffix, awsEndpointSuffix),
 					resource.TestCheckResourceAttr(fullAwsNetworkResourceLabel, paramDnsDomain, awsDnsDomain),
 					resource.TestCheckResourceAttr(fullAwsNetworkResourceLabel, paramReservedCidr, ""),
 					resource.TestCheckResourceAttr(fullAwsNetworkResourceLabel, fmt.Sprintf("%s.#", paramZoneInfo), "0"),
