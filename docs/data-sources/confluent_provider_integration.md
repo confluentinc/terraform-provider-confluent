@@ -65,5 +65,5 @@ In addition to the preceding arguments, the following attributes are exported:
 - `usages` - (Required List of Strings) List of resource CRNs where this provider integration is being used.
 
 ## Getting Started
-The following end-to-end examples might help to get started with `confluent_provider_integration` resource:
+The following end-to-end examples might help to get started with `confluent_provider_integration` data source:
 * [`s3-sink-connector-assume-role`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/connectors/s3-sink-connector-assume-role): Amazon S3 Sink Connector with IAM role-based authorization using a Provider Integration
