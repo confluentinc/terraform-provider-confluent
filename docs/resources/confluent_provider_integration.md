@@ -77,4 +77,4 @@ $ terraform import confluent_provider_integration.main env-abc123/cspi-4xg0q
 
 ## Getting Started
 The following end-to-end examples might help to get started with `confluent_provider_integration` resource:
-* [`s3-sink-connector-assume-role`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/connectors/s3-sink-connector-assume-role): Amazon S3 Sink Connector wit IAM role-based authorization using a Provider Integration
+* [`s3-sink-connector-assume-role`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/connectors/s3-sink-connector-assume-role): Amazon S3 Sink Connector with IAM role-based authorization using a Provider Integration
