@@ -63,3 +63,7 @@ In addition to the preceding arguments, the following attributes are exported:
     - `external_id` - (Required String) Unique external ID that Confluent Cloud uses when it assumes the IAM role in your Amazon Web Services (AWS) account.
     - `customer_role_arn` - (Required String) Amazon Resource Name (ARN) that identifies the AWS Identity and Access Management (IAM) role that Confluent Cloud assumes when it accesses resources in your AWS account, and must be unique in the same environment.
 - `usages` - (Required List of Strings) List of resource CRNs where this provider integration is being used.
+
+## Getting Started
+The following end-to-end examples might help to get started with `confluent_provider_integration` resource:
+* [`s3-sink-connector-assume-role`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/connectors/s3-sink-connector-assume-role): Amazon S3 Sink Connector wit IAM role-based authorization using a Provider Integration
