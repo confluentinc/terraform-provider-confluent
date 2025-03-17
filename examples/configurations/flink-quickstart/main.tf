@@ -179,6 +179,9 @@ resource "confluent_api_key" "app-manager-flink-api-key" {
 
   depends_on = [
     confluent_role_binding.app-manager-flink-developer,
+    // Note: these role bindings (app-manager-transaction-id-developer-read, app-manager-transaction-id-developer-write)
+    // are not required for running this example, but you may have to add it in order
+    // to create and complete transactions.
     // confluent_role_binding.app-manager-transaction-id-developer-read,
     // confluent_role_binding.app-manager-transaction-id-developer-write
   ]
