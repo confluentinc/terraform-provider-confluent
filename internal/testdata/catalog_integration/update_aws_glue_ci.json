@@ -28,7 +28,7 @@
     },
     "config": {
       "kind": "AwsGlue",
-      "provider_integration_id": "cspi-stgce89r8"
+      "provider_integration_id": "cspi-stgce89r7"
     }
   },
   "status": {

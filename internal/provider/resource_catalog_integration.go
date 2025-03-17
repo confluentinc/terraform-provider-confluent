@@ -83,6 +83,7 @@ func catalogIntegrationAwsGlueSchema() *schema.Schema {
 				paramProviderIntegrationId: {
 					Type:     schema.TypeString,
 					Required: true,
+					ForceNew: true,
 				},
 			},
 		},
@@ -328,8 +329,8 @@ func catalogIntegrationDelete(ctx context.Context, d *schema.ResourceData, meta 
 }
 
 func catalogIntegrationUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if d.HasChangesExcept(paramDisplayName, paramAwsGlue, paramSnowflake) {
-		return diag.Errorf("error updating Catalog Integration %q: only %q, %q, %q, %q, %q, %q, %q attributes can be updated for Catalog Integration", d.Id(), paramDisplayName, paramProviderIntegrationId, paramEndpoint, paramWarehouse, paramAllowedScope, paramClientId, paramClientSecret)
+	if d.HasChangesExcept(paramDisplayName, paramSnowflake) {
+		return diag.Errorf("error updating Catalog Integration %q: only %q, %q, %q, %q, %q, %q attributes can be updated for Catalog Integration", d.Id(), paramDisplayName, paramEndpoint, paramWarehouse, paramAllowedScope, paramClientId, paramClientSecret)
 	}
 
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
@@ -343,40 +344,46 @@ func catalogIntegrationUpdate(ctx context.Context, d *schema.ResourceData, meta 
 	}
 	tableflowRestClient := c.tableflowRestClientFactory.CreateTableflowRestClient(tableflowApiKey, tableflowApiSecret, c.isTableflowMetadataSet)
 
-	updateCatalogIntegrationSpec := tableflow.NewTableflowV1CatalogIntegrationSpec()
+	updateCatalogIntegrationSpec := &tableflow.TableflowV1CatalogIntegrationUpdateSpec{}
 	updateCatalogIntegrationSpec.SetEnvironment(tableflow.GlobalObjectReference{Id: environmentId})
 	updateCatalogIntegrationSpec.SetKafkaCluster(tableflow.EnvScopedObjectReference{Id: clusterId})
 	if d.HasChange(paramDisplayName) {
 		updateCatalogIntegrationSpec.SetDisplayName(d.Get(paramDisplayName).(string))
-	}
-	if d.HasChange(paramAwsGlue) && d.HasChange(fmt.Sprintf("%s.0.%s", paramAwsGlue, paramProviderIntegrationId)) {
-		updateCatalogIntegrationSpec.SetConfig(tableflow.TableflowV1CatalogIntegrationAwsGlueSpecAsTableflowV1CatalogIntegrationSpecConfigOneOf(&tableflow.TableflowV1CatalogIntegrationAwsGlueSpec{
-			Kind:                  awsGlueSpecKind,
-			ProviderIntegrationId: extractStringValueFromBlock(d, paramAwsGlue, paramProviderIntegrationId),
-		}))
+
+		isAwsGlue := len(d.Get(paramAwsGlue).([]interface{})) > 0
+		isSnowflake := len(d.Get(paramSnowflake).([]interface{})) > 0
+		if isAwsGlue {
+			updateCatalogIntegrationSpec.SetConfig(tableflow.TableflowV1CatalogIntegrationAwsGlueUpdateSpecAsTableflowV1CatalogIntegrationUpdateSpecConfigOneOf(&tableflow.TableflowV1CatalogIntegrationAwsGlueUpdateSpec{
+				Kind: awsGlueSpecKind,
+			}))
+		} else if isSnowflake {
+			updateCatalogIntegrationSpec.SetConfig(tableflow.TableflowV1CatalogIntegrationSnowflakeUpdateSpecAsTableflowV1CatalogIntegrationUpdateSpecConfigOneOf(&tableflow.TableflowV1CatalogIntegrationSnowflakeUpdateSpec{
+				Kind: snowflakeSpecKind,
+			}))
+		}
 	}
 	if d.HasChange(paramSnowflake) {
-		updateCatalogIntegrationSpec.SetConfig(tableflow.TableflowV1CatalogIntegrationSnowflakeSpecAsTableflowV1CatalogIntegrationSpecConfigOneOf(&tableflow.TableflowV1CatalogIntegrationSnowflakeSpec{
+		updateCatalogIntegrationSpec.SetConfig(tableflow.TableflowV1CatalogIntegrationSnowflakeUpdateSpecAsTableflowV1CatalogIntegrationUpdateSpecConfigOneOf(&tableflow.TableflowV1CatalogIntegrationSnowflakeUpdateSpec{
 			Kind: snowflakeSpecKind,
 		}))
 		if d.HasChange(fmt.Sprintf("%s.0.%s", paramSnowflake, paramEndpoint)) {
-			updateCatalogIntegrationSpec.Config.TableflowV1CatalogIntegrationSnowflakeSpec.SetEndpoint(extractStringValueFromBlock(d, paramSnowflake, paramEndpoint))
+			updateCatalogIntegrationSpec.Config.TableflowV1CatalogIntegrationSnowflakeUpdateSpec.SetEndpoint(extractStringValueFromBlock(d, paramSnowflake, paramEndpoint))
 		}
 		if d.HasChange(fmt.Sprintf("%s.0.%s", paramSnowflake, paramWarehouse)) {
-			updateCatalogIntegrationSpec.Config.TableflowV1CatalogIntegrationSnowflakeSpec.SetWarehouse(extractStringValueFromBlock(d, paramSnowflake, paramWarehouse))
+			updateCatalogIntegrationSpec.Config.TableflowV1CatalogIntegrationSnowflakeUpdateSpec.SetWarehouse(extractStringValueFromBlock(d, paramSnowflake, paramWarehouse))
 		}
 		if d.HasChange(fmt.Sprintf("%s.0.%s", paramSnowflake, paramAllowedScope)) {
-			updateCatalogIntegrationSpec.Config.TableflowV1CatalogIntegrationSnowflakeSpec.SetAllowedScope(extractStringValueFromBlock(d, paramSnowflake, paramAllowedScope))
+			updateCatalogIntegrationSpec.Config.TableflowV1CatalogIntegrationSnowflakeUpdateSpec.SetAllowedScope(extractStringValueFromBlock(d, paramSnowflake, paramAllowedScope))
 		}
 		if d.HasChange(fmt.Sprintf("%s.0.%s", paramSnowflake, paramClientId)) {
-			updateCatalogIntegrationSpec.Config.TableflowV1CatalogIntegrationSnowflakeSpec.SetClientId(extractStringValueFromBlock(d, paramSnowflake, paramClientId))
+			updateCatalogIntegrationSpec.Config.TableflowV1CatalogIntegrationSnowflakeUpdateSpec.SetClientId(extractStringValueFromBlock(d, paramSnowflake, paramClientId))
 		}
 		if d.HasChange(fmt.Sprintf("%s.0.%s", paramSnowflake, paramClientSecret)) {
-			updateCatalogIntegrationSpec.Config.TableflowV1CatalogIntegrationSnowflakeSpec.SetClientSecret(extractStringValueFromBlock(d, paramSnowflake, paramClientSecret))
+			updateCatalogIntegrationSpec.Config.TableflowV1CatalogIntegrationSnowflakeUpdateSpec.SetClientSecret(extractStringValueFromBlock(d, paramSnowflake, paramClientSecret))
 		}
 	}
 
-	updateCatalogIntegration := tableflow.NewTableflowV1CatalogIntegration()
+	updateCatalogIntegration := tableflow.NewTableflowV1CatalogIntegrationUpdateRequest()
 	updateCatalogIntegration.SetSpec(*updateCatalogIntegrationSpec)
 
 	updateCatalogIntegrationJson, err := json.Marshal(updateCatalogIntegration)
@@ -385,7 +392,7 @@ func catalogIntegrationUpdate(ctx context.Context, d *schema.ResourceData, meta 
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Updating Catalog Integration %q: %s", d.Id(), updateCatalogIntegrationJson), map[string]interface{}{catalogIntegrationKey: d.Id()})
 
-	req := tableflowRestClient.apiClient.CatalogIntegrationsTableflowV1Api.UpdateTableflowV1CatalogIntegration(tableflowRestClient.apiContext(ctx), d.Id()).TableflowV1CatalogIntegration(*updateCatalogIntegration)
+	req := tableflowRestClient.apiClient.CatalogIntegrationsTableflowV1Api.UpdateTableflowV1CatalogIntegration(tableflowRestClient.apiContext(ctx), d.Id()).TableflowV1CatalogIntegrationUpdateRequest(*updateCatalogIntegration)
 	updatedCatalogIntegration, _, err := req.Execute()
 	if err != nil {
 		return diag.Errorf("error updating Catalog Integration %q: %s", d.Id(), createDescriptiveError(err))

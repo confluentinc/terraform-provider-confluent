@@ -121,7 +121,7 @@ func TestAccCatalogIntegrationAwsGlue(t *testing.T) {
 		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckResourceCatalogIntegrationAwsGlue(mockServerUrl, "catalog_integration_1", "cspi-stgce89r7"),
+				Config: testAccCheckResourceCatalogIntegrationAwsGlue(mockServerUrl, "catalog_integration_1"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "id", "tci-abc123"),
 					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "display_name", "catalog_integration_1"),
@@ -136,7 +136,7 @@ func TestAccCatalogIntegrationAwsGlue(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckResourceCatalogIntegrationAwsGlue(mockServerUrl, "catalog_integration_2", "cspi-stgce89r8"),
+				Config: testAccCheckResourceCatalogIntegrationAwsGlue(mockServerUrl, "catalog_integration_2"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "id", "tci-abc123"),
 					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "display_name", "catalog_integration_2"),
@@ -147,7 +147,7 @@ func TestAccCatalogIntegrationAwsGlue(t *testing.T) {
 					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "suspended", "false"),
 					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "aws_glue.#", "1"),
 					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "snowflake.#", "0"),
-					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "aws_glue.0.provider_integration_id", "cspi-stgce89r8"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "aws_glue.0.provider_integration_id", "cspi-stgce89r7"),
 				),
 			},
 		},
@@ -276,7 +276,7 @@ func TestAccCatalogIntegrationSnowflake(t *testing.T) {
 	})
 }
 
-func testAccCheckResourceCatalogIntegrationAwsGlue(mockServerUrl, display_name, provider_integration_id string) string {
+func testAccCheckResourceCatalogIntegrationAwsGlue(mockServerUrl, display_name string) string {
 	return fmt.Sprintf(`
     provider "confluent" {
         endpoint = "%s"
@@ -291,14 +291,14 @@ func testAccCheckResourceCatalogIntegrationAwsGlue(mockServerUrl, display_name, 
 			id = "lkc-00000"
 		}
 		aws_glue {
-			provider_integration_id = "%s"
+			provider_integration_id = "cspi-stgce89r7"
 		}
 		credentials {
 			key = "test_key"
 			secret = "test_secret"
 		}
 	}
-	`, mockServerUrl, display_name, provider_integration_id)
+	`, mockServerUrl, display_name)
 }
 
 func testAccCheckResourceCatalogIntegrationSnowflake(mockServerUrl, displayName, endpoint, clientId, clientSecret, warehouse, allowedScope string) string {

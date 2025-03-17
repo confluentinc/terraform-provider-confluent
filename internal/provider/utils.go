@@ -17,6 +17,7 @@ package provider
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -639,7 +640,7 @@ func createDescriptiveError(err error, resp ...*http.Response) error {
 		}
 	}
 
-	return fmt.Errorf(errorMessage)
+	return errors.New(errorMessage)
 }
 
 // Reports whether the response has http.StatusForbidden status due to an invalid Cloud API Key vs other reasons
