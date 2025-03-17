@@ -509,7 +509,6 @@ func isTableflowApiKey(apiKey apikeys.IamV2ApiKey) bool {
 func waitForApiKeyToSync(ctx context.Context, c *Client, createdApiKey apikeys.IamV2ApiKey, isResourceSpecificApiKey bool, environmentId string) error {
 	// For Kafka API Key use Kafka REST API's List Topics request and wait for http.StatusOK
 	// For Cloud API Key use Org API's List Environments request and wait for http.StatusOK
-	// For Flink API Key use Statements API's List of Statements request and wait for http.StatusOK
 	// For Tableflow API Key skipped the waitForCreatedTableflowApiKeyToSync function for now, until backend support for tableflow secret/key verification is ready
 
 	if isResourceSpecificApiKey {
@@ -524,16 +523,15 @@ func waitForApiKeyToSync(ctx context.Context, c *Client, createdApiKey apikeys.I
 				return fmt.Errorf("error waiting for Kafka API Key %q to sync: %s", createdApiKey.GetId(), createDescriptiveError(err))
 			}
 		} else if isSchemaRegistryApiKey(createdApiKey) || isFlinkApiKey(createdApiKey) {
-			time.Sleep(2 * time.Minute)
+			SleepIfNotTestMode(1*time.Minute, c.isAcceptanceTestMode)
 		} else if isKsqlDbClusterApiKey(createdApiKey) {
 			// Currently, there are no data plane API for ksqlDB clusters so there is no endpoint we could leverage
 			// to check whether the Cluster API Key is synced which is why we're adding SleepIfNotTestMode() here.
 			// TODO: SVCF-3560
 			SleepIfNotTestMode(5*time.Minute, c.isAcceptanceTestMode)
 		} else if isTableflowApiKey(createdApiKey) {
-			// TODO: add sync implementation once backend support for tableflow secret/key verification is ready
-			// 		 tracked with JIRA Ticket APIT-2764
-			return nil
+			SleepIfNotTestMode(1*time.Minute, c.isAcceptanceTestMode)
+			// TODO: APIT-2764
 		} else {
 			resourceJson, err := json.Marshal(createdApiKey.Spec.GetResource())
 			if err != nil {
