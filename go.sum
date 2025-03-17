@@ -69,8 +69,8 @@ github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDk
 github.com/cloudflare/circl v1.3.7 h1:qlCDlTPz2n9fu58M0Nh1J/JzcFpfgkFHHX3O35r5vcU=
 github.com/cloudflare/circl v1.3.7/go.mod h1:sRTcRWXGLrKw6yIGJ+l7amYJFfAXbZG0kBSc8r4zxgA=
 github.com/cncf/udpa/go v0.0.0-20191209042840-269d4d468f6f/go.mod h1:M8M6+tZqaGXZJjfX53e64911xZQV5JYwmTeXPW+k8Sc=
-github.com/confluentinc/ccloud-sdk-go-v2-internal/tableflow v0.13.0 h1:zEOOh6sqtvqQCskfulWvHuzWgqoymh23UZzYBCVmaYI=
-github.com/confluentinc/ccloud-sdk-go-v2-internal/tableflow v0.13.0/go.mod h1:irVXhLZ14Ad3t3Op6qkNkn7GeJlzwywuvAm9B0rVB+k=
+github.com/confluentinc/ccloud-sdk-go-v2-internal/tableflow v0.16.0 h1:ejGB5doh/Nc2cqsX9ODJ7y5LvxjXDW6gjA5A8/tjL4w=
+github.com/confluentinc/ccloud-sdk-go-v2-internal/tableflow v0.16.0/go.mod h1:SWQENoICp5B3eZuWP3Vt6Xpq2NWxK1xF9Jj7gz68ouY=
 github.com/confluentinc/ccloud-sdk-go-v2/apikeys v0.4.0 h1:8fWyLwMuy8ec0MVF5Avd54UvbIxhDFhZzanHBVwgxdw=
 github.com/confluentinc/ccloud-sdk-go-v2/apikeys v0.4.0/go.mod h1:wNa9Qg2e2v/+PQsUyKh+qB22hhLkPR6Ahy6rP+1jmGI=
 github.com/confluentinc/ccloud-sdk-go-v2/byok v0.0.2 h1:BV/dPTFVovJPylrcr9lcSmukCVxBxyUeHBr6hp7zUNk=
