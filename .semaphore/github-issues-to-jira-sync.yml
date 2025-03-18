@@ -10,7 +10,8 @@ blocks:
       prologue:
         commands:
           - checkout
-          # Add error handling for GitHub token
+          - . vault-setup
+          - . vault-sem-get-secret v1/ci/kv/apif/signing_key
           - |
             if ! gh auth status &>/dev/null; then
               echo "ERROR: GitHub CLI not authenticated. Please ensure GITHUB_TOKEN is properly configured."
