@@ -124,3 +124,7 @@ $ terraform import confluent_tableflow_topic.example env-abc123/lkc-abc123/order
 ```
 
 !> **Warning:** Do not forget to delete terminal command history afterwards for security purposes.
+
+## Getting Started
+The following end-to-end examples might help to get started with `confluent_tableflow_topic` resource:
+* [`confluent-storage`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/tableflow/confluent-storage): Tableflow topic with Confluent-managed storage.
