@@ -60,7 +60,6 @@ func TestAccDataSourceTableflowTopic(t *testing.T) {
 					resource.TestCheckResourceAttr(TableflowTopicResourceName, "enable_compaction", "true"),
 					resource.TestCheckResourceAttr(TableflowTopicResourceName, "enable_partitioning", "true"),
 					resource.TestCheckResourceAttr(TableflowTopicResourceName, "suspended", "false"),
-					resource.TestCheckResourceAttr(TableflowTopicResourceName, "refresh_interval_ms", "1000000"),
 					resource.TestCheckResourceAttr(TableflowTopicResourceName, "retention_ms", "100000000"),
 					resource.TestCheckResourceAttr(TableflowTopicResourceName, "record_failure_strategy", "SUSPEND"),
 					resource.TestCheckResourceAttr(TableflowTopicResourceName, "table_formats.#", "1"),

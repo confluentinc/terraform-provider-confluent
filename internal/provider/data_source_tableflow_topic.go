@@ -48,11 +48,6 @@ func tableflowTopicDataSource() *schema.Resource {
 				Computed:    true,
 				Description: "Indicates whether the Tableflow should be suspended.",
 			},
-			paramRefreshIntervalMs: {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Refresh interval time in milliseconds for the Tableflow enabled topic.",
-			},
 			paramRetentionMs: {
 				Type:        schema.TypeString,
 				Computed:    true,

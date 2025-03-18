@@ -121,7 +121,7 @@ func TestAccTableflowTopicByobAws(t *testing.T) {
 		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckResourceTableflowTopicByobAws(mockServerUrl, 1000000, 100000000),
+				Config: testAccCheckResourceTableflowTopicByobAws(mockServerUrl, 100000000),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "id", "topic_1"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "display_name", "topic_1"),
@@ -132,7 +132,6 @@ func TestAccTableflowTopicByobAws(t *testing.T) {
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "enable_compaction", "true"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "enable_partitioning", "true"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "suspended", "false"),
-					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "refresh_interval_ms", "1000000"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "retention_ms", "100000000"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "record_failure_strategy", "SUSPEND"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "table_formats.#", "1"),
@@ -145,7 +144,7 @@ func TestAccTableflowTopicByobAws(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckResourceTableflowTopicByobAwsUpdate(mockServerUrl, 2000000, 200000000),
+				Config: testAccCheckResourceTableflowTopicByobAwsUpdate(mockServerUrl, 200000000),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "id", "topic_1"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "display_name", "topic_1"),
@@ -156,7 +155,6 @@ func TestAccTableflowTopicByobAws(t *testing.T) {
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "enable_compaction", "true"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "enable_partitioning", "true"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "suspended", "false"),
-					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "refresh_interval_ms", "2000000"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "retention_ms", "200000000"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "record_failure_strategy", "SKIP"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "table_formats.#", "1"),
@@ -257,7 +255,7 @@ func TestAccTableflowTopicManagedStorage(t *testing.T) {
 		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckResourceTableflowTopicManagedStorage(mockServerUrl, 1000000, 100000000),
+				Config: testAccCheckResourceTableflowTopicManagedStorage(mockServerUrl, 100000000),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "id", "topic_1"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "display_name", "topic_1"),
@@ -268,7 +266,6 @@ func TestAccTableflowTopicManagedStorage(t *testing.T) {
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "enable_compaction", "true"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "enable_partitioning", "true"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "suspended", "false"),
-					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "refresh_interval_ms", "1000000"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "retention_ms", "100000000"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "record_failure_strategy", "SUSPEND"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "table_formats.#", "1"),
@@ -278,7 +275,7 @@ func TestAccTableflowTopicManagedStorage(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckResourceTableflowTopicManagedStorageUpdate(mockServerUrl, 2000000, 200000000),
+				Config: testAccCheckResourceTableflowTopicManagedStorageUpdate(mockServerUrl, 200000000),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "id", "topic_1"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "display_name", "topic_1"),
@@ -289,7 +286,6 @@ func TestAccTableflowTopicManagedStorage(t *testing.T) {
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "enable_compaction", "true"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "enable_partitioning", "true"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "suspended", "false"),
-					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "refresh_interval_ms", "2000000"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "retention_ms", "200000000"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "record_failure_strategy", "SUSPEND"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "table_formats.#", "2"),
@@ -303,7 +299,7 @@ func TestAccTableflowTopicManagedStorage(t *testing.T) {
 	})
 }
 
-func testAccCheckResourceTableflowTopicByobAws(mockServerUrl string, refreshInterval, retention int) string {
+func testAccCheckResourceTableflowTopicByobAws(mockServerUrl string, retention int) string {
 	return fmt.Sprintf(`
     provider "confluent" {
         endpoint = "%s"
@@ -311,7 +307,6 @@ func testAccCheckResourceTableflowTopicByobAws(mockServerUrl string, refreshInte
 
 	resource "confluent_tableflow_topic" "main" {
 		display_name = "topic_1"
-		refresh_interval_ms = %d
 		retention_ms = %d
 		environment {
 			id = "env-abc123"
@@ -328,10 +323,10 @@ func testAccCheckResourceTableflowTopicByobAws(mockServerUrl string, refreshInte
 			secret = "test_secret"
 		}
 	}
-	`, mockServerUrl, refreshInterval, retention)
+	`, mockServerUrl, retention)
 }
 
-func testAccCheckResourceTableflowTopicByobAwsUpdate(mockServerUrl string, refreshInterval, retention int) string {
+func testAccCheckResourceTableflowTopicByobAwsUpdate(mockServerUrl string, retention int) string {
 	return fmt.Sprintf(`
     provider "confluent" {
         endpoint = "%s"
@@ -339,7 +334,6 @@ func testAccCheckResourceTableflowTopicByobAwsUpdate(mockServerUrl string, refre
 
 	resource "confluent_tableflow_topic" "main" {
 		display_name = "topic_1"
-		refresh_interval_ms = %d
 		retention_ms = %d
 		record_failure_strategy = "SKIP"
 		environment {
@@ -357,10 +351,10 @@ func testAccCheckResourceTableflowTopicByobAwsUpdate(mockServerUrl string, refre
 			secret = "test_secret"
 		}
 	}
-	`, mockServerUrl, refreshInterval, retention)
+	`, mockServerUrl, retention)
 }
 
-func testAccCheckResourceTableflowTopicManagedStorage(mockServerUrl string, refreshInterval, retention int) string {
+func testAccCheckResourceTableflowTopicManagedStorage(mockServerUrl string, retention int) string {
 	return fmt.Sprintf(`
     provider "confluent" {
         endpoint = "%s"
@@ -368,7 +362,6 @@ func testAccCheckResourceTableflowTopicManagedStorage(mockServerUrl string, refr
 
 	resource "confluent_tableflow_topic" "main" {
 		display_name = "topic_1"
-		refresh_interval_ms = %d
 		retention_ms = %d
 		environment {
 			id = "env-abc123"
@@ -382,10 +375,10 @@ func testAccCheckResourceTableflowTopicManagedStorage(mockServerUrl string, refr
 			secret = "test_secret"
 		}
 	}
-	`, mockServerUrl, refreshInterval, retention)
+	`, mockServerUrl, retention)
 }
 
-func testAccCheckResourceTableflowTopicManagedStorageUpdate(mockServerUrl string, refreshInterval, retention int) string {
+func testAccCheckResourceTableflowTopicManagedStorageUpdate(mockServerUrl string, retention int) string {
 	return fmt.Sprintf(`
     provider "confluent" {
         endpoint = "%s"
@@ -393,7 +386,6 @@ func testAccCheckResourceTableflowTopicManagedStorageUpdate(mockServerUrl string
 
 	resource "confluent_tableflow_topic" "main" {
 		display_name = "topic_1"
-		refresh_interval_ms = %d
 		retention_ms = %d
 		environment {
 			id = "env-abc123"
@@ -408,5 +400,5 @@ func testAccCheckResourceTableflowTopicManagedStorageUpdate(mockServerUrl string
 			secret = "test_secret"
 		}
 	}
-	`, mockServerUrl, refreshInterval, retention)
+	`, mockServerUrl, retention)
 }

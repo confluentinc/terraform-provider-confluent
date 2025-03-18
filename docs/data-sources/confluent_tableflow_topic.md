@@ -83,7 +83,6 @@ The following arguments are supported:
 In addition to the preceding arguments, the following attributes are exported:
 
 - `retention_ms` - (Optional String) The max age of snapshots (Iceberg) or versions (Delta) (snapshot/version expiration) to keep on the table in milliseconds for the Tableflow enabled topic.
-- `refresh_interval_ms` - (Optional String) Refresh interval time in milliseconds for the Tableflow enabled topic.
 - `table_formats` - (Optional List) The supported table formats for the Tableflow-enabled topic.
 - `record_failure_strategy` - (Optional String) The strategy to handle record failures in the Tableflow enabled topic during materialization. For `SKIP`, we skip the bad records and move to the next record. For `SUSPEND`, we suspend the materialization of the topic.
 - `enable_compaction` - (Optional Boolean) This flag determines whether to enable compaction for the Tableflow enabled topic.

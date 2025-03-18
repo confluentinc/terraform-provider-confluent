@@ -83,7 +83,6 @@ The following arguments are supported:
     - `id` - (Required String) The ID of the Kafka cluster, for example, `lkc-abc123`.
 - `display_name` - (Required String) The name of the Kafka topic for which Tableflow is enabled.
 - `retention_ms` - (Optional String) The max age of snapshots (Iceberg) or versions (Delta) (snapshot/version expiration) to keep on the table in milliseconds for the Tableflow enabled topic.
-- `refresh_interval_ms` - (Optional String) Refresh interval time in milliseconds for the Tableflow enabled topic.
 - `table_formats` - (Optional List) The supported table formats for the Tableflow-enabled topic. Accepted values are `DELTA`, `ICEBERG`.
 - `record_failure_strategy` - (Optional String) The strategy to handle record failures in the Tableflow enabled topic during materialization. Accepted values are `SKIP`, `SUSPEND`. For `SKIP`, we skip the bad records and move to the next record. For `SUSPEND`, we suspend the materialization of the topic.
 - `byob_aws` (Optional Configuration Block) supports the following:
