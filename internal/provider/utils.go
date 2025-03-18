@@ -17,6 +17,7 @@ package provider
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -126,6 +127,7 @@ const (
 	entityAttributesLoggingKey                = "entity_attributes_id"
 	providerIntegrationLoggingKey             = "provider_integration_id"
 	tableflowTopicKey                         = "tableflow_topic_id"
+	catalogIntegrationKey                     = "catalog_integration_id"
 
 	deprecationMessageMajorRelease3 = "The %q %s has been deprecated and will be removed in the next major version of the provider (3.0.0). " +
 		"Refer to the Upgrade Guide at https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/guides/version-3-upgrade for more details. " +
@@ -638,7 +640,7 @@ func createDescriptiveError(err error, resp ...*http.Response) error {
 		}
 	}
 
-	return fmt.Errorf(errorMessage)
+	return errors.New(errorMessage)
 }
 
 // Reports whether the response has http.StatusForbidden status due to an invalid Cloud API Key vs other reasons

@@ -300,6 +300,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				},
 			},
 			DataSourcesMap: map[string]*schema.Resource{
+				"confluent_catalog_integration":                catalogIntegrationDataSource(),
 				"confluent_certificate_authority":              certificateAuthorityDataSource(),
 				"confluent_certificate_pool":                   certificatePoolDataSource(),
 				"confluent_cluster_link":                       clusterLinkDataSource(),
@@ -352,6 +353,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_schema_registry_dek":                schemaRegistryDekDataSource(),
 			},
 			ResourcesMap: map[string]*schema.Resource{
+				"confluent_catalog_integration":                catalogIntegrationResource(),
 				"confluent_api_key":                            apiKeyResource(),
 				"confluent_byok_key":                           byokResource(),
 				"confluent_certificate_authority":              certificateAuthorityResource(),
