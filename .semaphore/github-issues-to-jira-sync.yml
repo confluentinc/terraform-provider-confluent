@@ -1,0 +1,147 @@
+version: v1.0
+name: GitHub Issues to JIRA Sync Pipeline
+agent:
+  machine:
+    type: s1-prod-ubuntu20-04-amd64-0
+
+blocks:
+  - name: "GitHub Issues to JIRA Sync Workflow"
+    task:
+      prologue:
+        commands:
+          - checkout
+          # Add error handling for GitHub token
+          - |
+            if ! gh auth status &>/dev/null; then
+              echo "ERROR: GitHub CLI not authenticated. Please ensure GITHUB_TOKEN is properly configured."
+              exit 1
+            fi
+          - export GITHUB_TOKEN=$(gh auth token)
+          # Verify JIRA token is set
+          - |
+            if [ -z "$JIRA_B64_TOKEN" ]; then
+              echo "ERROR: JIRA_B64_TOKEN is not set. Please ensure JIRA credentials are properly configured."
+              exit 1
+            fi
+
+      jobs:
+        - name: Sync GitHub Issues to JIRA
+          commands:
+            - "echo \"Step 1: Fetching GitHub issues from the last 12 hours...\""
+            - export REPO_OWNER="confluentinc"
+            - export REPO_NAME="terraform-provider-confluent"
+            - export SINCE_TIME=$(date -u -d '12 hours ago' '+%Y-%m-%dT%H:%M:%SZ')
+            - |
+              echo "Scanning for issues in $REPO_OWNER/$REPO_NAME created after $SINCE_TIME"
+              if ! gh issue list --repo "$REPO_OWNER/$REPO_NAME" --json number,title,body,url,author --search "created:>$SINCE_TIME" --state=open > recent_issues.json; then
+                echo "ERROR: Failed to fetch GitHub issues. Check repository access and token permissions."
+                exit 1
+              fi
+
+            - "echo \"Step 2: Checking if there are GitHub issues without CLI- prefix...\""
+            - |
+              cat recent_issues.json | jq '[.[] | select(.title | test("^CLI-") | not)]' > issues_to_process.json
+              ISSUE_COUNT=$(cat issues_to_process.json | jq '. | length')
+              echo "Found $ISSUE_COUNT issues without CLI- prefix"
+
+            - "echo \"Step 3: Creating JIRA tickets for issues without prefix...\""
+            - |
+              if [ "$ISSUE_COUNT" -gt 0 ]; then
+                cat issues_to_process.json | jq -c '.[]' | while read -r issue; do
+                  ISSUE_NUMBER=$(echo $issue | jq -r '.number')
+                  ISSUE_TITLE=$(echo $issue | jq -r '.title')
+              
+                  # Improved JSON escaping for body text
+                  ISSUE_BODY=$(echo $issue | jq -r '.body // "No description provided"')
+                  ISSUE_URL=$(echo $issue | jq -r '.url')
+                  ISSUE_CREATOR=$(echo $issue | jq -r '.author.login')
+              
+                  echo "Processing issue #$ISSUE_NUMBER: $ISSUE_TITLE"
+              
+                  # Create JIRA ticket payload using pure jq
+                  ISSUE_TITLE_CLEAN=$(echo "$ISSUE_TITLE" | sed 's/\\/\\\\/g' | sed 's/"/\\"/g')
+              
+                  # Convert multiline body to proper JSON format
+                  FORMATTED_BODY="$ISSUE_BODY
+              
+                  _Created in GitHub by $ISSUE_CREATOR._"
+              
+                  # Use jq properly - the right way to generate valid JSON
+                  jq -n \
+                  --arg summary "TF: issue #$ISSUE_NUMBER: $ISSUE_TITLE_CLEAN" \
+                  --arg body "$FORMATTED_BODY" \
+                  --arg component "$REPO_NAME" \
+                  '{
+                    "fields": {
+                      "project": {
+                        "key": "CLI"
+                      },
+                      "summary": $summary,
+                      "description": $body,
+                      "issuetype": {
+                        "name": "Task"
+                      },
+                      "labels": ["terraform"]
+                    }
+                  }' > jira_payload.json
+              
+                  # Send request to Jira API with extensive debugging
+                  echo "Sending request to JIRA API..."
+              
+                  # Execute curl with all outputs captured
+                  curl -s \
+                    -H "Authorization: Basic $JIRA_B64_TOKEN" \
+                    -X POST \
+                    -H "Content-Type: application/json" \
+                    --data @jira_payload.json \
+                    "https://confluentinc.atlassian.net/rest/api/2/issue/" > curl_output.log 2> curl_error.log
+              
+                  CURL_EXIT_CODE=$?
+              
+                  # Show detailed curl results
+                  echo "curl exit code: $CURL_EXIT_CODE"
+                  echo "curl response (stdout):"
+                  cat curl_output.log
+                  echo "curl errors (stderr):"
+                  cat curl_error.log
+              
+                  # Process the curl response
+                  if [ $CURL_EXIT_CODE -eq 0 ]; then
+                    # Check if we got a valid JSON response with a key
+                    if grep -q "\"key\":" curl_output.log; then
+                      JIRA_KEY=$(grep -o "\"key\":\"[^\"]*\"" curl_output.log | cut -d'"' -f4)
+              
+                      if [ -n "$JIRA_KEY" ]; then
+                        echo "Created Jira ticket: $JIRA_KEY"
+
+                        echo "Step 4: Updating GitHub issue title with JIRA key..."
+                        NEW_TITLE="$JIRA_KEY: $ISSUE_TITLE"
+
+                        # Add rate limiting pause between API calls
+                        sleep 1
+              
+                        if ! gh issue edit $ISSUE_NUMBER --repo $REPO_OWNER/$REPO_NAME --title "$NEW_TITLE"; then
+                          echo "WARNING: Failed to update GitHub issue title. Please check permissions."
+                        else
+                          echo "Updated GitHub issue #$ISSUE_NUMBER title to: $NEW_TITLE"
+                        fi
+                      else
+                        echo "ERROR: Could not extract JIRA key from response."
+                      fi
+                    else
+                      echo "ERROR: Response does not contain a JIRA key:"
+                      cat curl_output.log
+                    fi
+                  else
+                    # Request failed
+                    echo "ERROR: curl failed with exit code $CURL_EXIT_CODE"
+                  fi
+              
+                  # Add rate limiting pause between issues
+                  sleep 2
+              
+                  echo "-----------------------------------"
+                done
+              else
+                echo "No issues to process. Exiting."
+              fi
