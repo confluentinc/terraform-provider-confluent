@@ -18,16 +18,17 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	apikeys "github.com/confluentinc/ccloud-sdk-go-v2/apikeys/v2"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"net/http"
 	"os"
 	"regexp"
 	"strings"
 	"time"
+
+	apikeys "github.com/confluentinc/ccloud-sdk-go-v2/apikeys/v2"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 const (
@@ -530,8 +531,10 @@ func waitForApiKeyToSync(ctx context.Context, c *Client, createdApiKey apikeys.I
 			// TODO: SVCF-3560
 			SleepIfNotTestMode(5*time.Minute, c.isAcceptanceTestMode)
 		} else if isTableflowApiKey(createdApiKey) {
-			SleepIfNotTestMode(1*time.Minute, c.isAcceptanceTestMode)
-			// TODO: APIT-2764
+			tableflowRestClient := c.tableflowRestClientFactory.CreateTableflowRestClient(createdApiKey.GetId(), createdApiKey.Spec.GetSecret(), false)
+			if err := waitForCreatedTableflowApiKeyToSync(ctx, tableflowRestClient, c.isAcceptanceTestMode); err != nil {
+				return fmt.Errorf("error waiting for Tableflow API Key %q to sync: %s", createdApiKey.GetId(), createDescriptiveError(err))
+			}
 		} else {
 			resourceJson, err := json.Marshal(createdApiKey.Spec.GetResource())
 			if err != nil {

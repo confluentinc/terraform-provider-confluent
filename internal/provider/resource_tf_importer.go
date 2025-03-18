@@ -373,7 +373,7 @@ func loadInstances(ctx context.Context, resourceName string, importer *Importer,
 
 		instanceState, err := getInstanceState(ctx, resourceSchema, instanceId, meta)
 		if err != nil {
-			return nil, diag.Errorf(fmt.Sprintf("Failed to get state for %s instance %s: %v", resourceName, instanceId, err))
+			return nil, diag.Errorf("Failed to get state for %s instance %s: %v", resourceName, instanceId, err)
 		}
 
 		if instanceState == nil {
