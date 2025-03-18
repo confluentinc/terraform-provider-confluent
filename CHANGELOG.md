@@ -1,3 +1,10 @@
+## 2.21.0 (March 17th, 2025)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.20.0...v2.21.0)
+
+**Bug fixes:**
+* Updated docs.
+
 ## 2.20.0 (March 10th, 2025)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.19.0...v2.20.0)
