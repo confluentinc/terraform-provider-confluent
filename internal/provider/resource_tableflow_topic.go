@@ -32,7 +32,6 @@ const (
 	paramEnableCompaction      = "enable_compaction"
 	paramEnablePartitioning    = "enable_partitioning"
 	paramSuspended             = "suspended"
-	paramRefreshIntervalMs     = "refresh_interval_ms"
 	paramRetentionMs           = "retention_ms"
 	paramByobAws               = "byob_aws"
 	paramManagedStorage        = "managed_storage"
@@ -79,12 +78,6 @@ func tableflowTopicResource() *schema.Resource {
 				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "Indicates whether the Tableflow should be suspended.",
-			},
-			paramRefreshIntervalMs: {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Default:     "3600000",
-				Description: "Refresh interval time in milliseconds for the Tableflow enabled topic.",
 			},
 			paramRetentionMs: {
 				Type:        schema.TypeString,
@@ -182,9 +175,6 @@ func tableflowTopicCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	}
 
 	tableflowTopicSpec.Config = tableflow.NewTableflowV1TableFlowTopicConfigsSpec()
-	if refreshIntervalMs := d.Get(paramRefreshIntervalMs).(string); refreshIntervalMs != "" {
-		tableflowTopicSpec.Config.SetRefreshIntervalMs(refreshIntervalMs)
-	}
 	if retentionMs := d.Get(paramRetentionMs).(string); retentionMs != "" {
 		tableflowTopicSpec.Config.SetRetentionMs(retentionMs)
 	}
@@ -300,9 +290,6 @@ func setTableflowTopicAttributes(d *schema.ResourceData, c *TableflowRestClient,
 	if err := d.Set(paramSuspended, tableflowTopic.Spec.GetSuspended()); err != nil {
 		return nil, err
 	}
-	if err := d.Set(paramRefreshIntervalMs, tableflowTopic.GetSpec().Config.GetRefreshIntervalMs()); err != nil {
-		return nil, err
-	}
 	if err := d.Set(paramRetentionMs, tableflowTopic.GetSpec().Config.GetRetentionMs()); err != nil {
 		return nil, err
 	}
@@ -368,8 +355,8 @@ func tableflowTopicDelete(ctx context.Context, d *schema.ResourceData, meta inte
 }
 
 func tableflowTopicUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if d.HasChangesExcept(paramRefreshIntervalMs, paramRetentionMs, paramTableFormats, paramRecordFailureStrategy) {
-		return diag.Errorf("error updating Tableflow Topic %q: only %q, %q, %q, %q attributes can be updated for Tableflow Topic", d.Id(), paramRefreshIntervalMs, paramRetentionMs, paramTableFormats, paramRecordFailureStrategy)
+	if d.HasChangesExcept(paramRetentionMs, paramTableFormats, paramRecordFailureStrategy) {
+		return diag.Errorf("error updating Tableflow Topic %q: only %q, %q, %q attributes can be updated for Tableflow Topic", d.Id(), paramRetentionMs, paramTableFormats, paramRecordFailureStrategy)
 	}
 
 	c := meta.(*Client)
@@ -387,9 +374,6 @@ func tableflowTopicUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 	updateTableflowTopicSpec.Config = tableflow.NewTableflowV1TableFlowTopicConfigsSpec()
 	updateTableflowTopicSpec.SetEnvironment(tableflow.GlobalObjectReference{Id: environmentId})
 	updateTableflowTopicSpec.SetKafkaCluster(tableflow.EnvScopedObjectReference{Id: clusterId})
-	if d.HasChange(paramRefreshIntervalMs) {
-		updateTableflowTopicSpec.Config.SetRefreshIntervalMs(d.Get(paramRefreshIntervalMs).(string))
-	}
 	if d.HasChange(paramRetentionMs) {
 		updateTableflowTopicSpec.Config.SetRetentionMs(d.Get(paramRetentionMs).(string))
 	}

@@ -28,7 +28,6 @@
     "config": {
       "enable_compaction": true,
       "enable_partitioning": true,
-      "refresh_interval_ms": "2000000",
       "retention_ms": "200000000",
       "record_failure_strategy": "SUSPEND"
     },
