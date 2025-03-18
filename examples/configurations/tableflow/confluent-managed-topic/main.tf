@@ -10,7 +10,6 @@ terraform {
 provider "confluent" {
   cloud_api_key    = var.confluent_cloud_api_key
   cloud_api_secret = var.confluent_cloud_api_secret
-  endpoint         = "https://api.devel.cpdev.cloud"
 }
 
 resource "confluent_environment" "staging" {
@@ -220,7 +219,7 @@ resource "confluent_service_account" "env-manager" {
 resource "confluent_role_binding" "env-manager-environment-admin" {
   principal   = "User:${confluent_service_account.env-manager.id}"
   role_name   = "EnvironmentAdmin"
-  crn_pattern = replace(confluent_environment.staging.resource_name, "devel.cpdev.cloud", "confluent.cloud")
+  crn_pattern = confluent_environment.staging.resource_name
 }
 
 resource "confluent_api_key" "env-manager-schema-registry-api-key" {
