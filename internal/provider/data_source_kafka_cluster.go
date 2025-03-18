@@ -250,7 +250,6 @@ func dedicatedClusterDataSourceSchema() *schema.Schema {
 					Elem: &schema.Schema{
 						Type: schema.TypeString,
 					},
-					Optional:    true,
 					Computed:    true,
 					Description: "The list of zones the cluster is in.",
 				},
