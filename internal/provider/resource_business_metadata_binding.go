@@ -18,14 +18,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"regexp"
+	"strings"
+	"time"
+
 	dc "github.com/confluentinc/ccloud-sdk-go-v2/data-catalog/v1"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"regexp"
-	"strings"
-	"time"
 )
 
 const (
@@ -232,7 +233,7 @@ func findBusinessMetadataBindingByBusinessMetadataName(businessMetadataBindings 
 		}
 	}
 
-	return dc.BusinessMetadataResponse{}, fmt.Errorf(fmt.Sprintf("error reading Business Metadata Binding: couldn't find the Business Metadata binding: %s", businessMetadataName))
+	return dc.BusinessMetadataResponse{}, fmt.Errorf("error reading Business Metadata Binding: couldn't find the Business Metadata binding: %s", businessMetadataName)
 }
 
 func businessMetadataBindingDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
