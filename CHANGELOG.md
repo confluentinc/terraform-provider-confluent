@@ -1,3 +1,14 @@
+## 2.21.0 (March 17th, 2025)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.20.0...v2.21.0)
+
+**Bug fixes:**
+* Resolved "Allow updates to filter attribute for confluent_group_mapping" issue ([#468](https://github.com/confluentinc/terraform-provider-confluent/issues/468)).
+* Resolved "Allow updates to display_name attribute for confluent_service_account" issue ([#212](https://github.com/confluentinc/terraform-provider-confluent/issues/212)).
+* Updated the [flink-quickstart](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/flink-quickstart) example to have 2 more role bindings.
+* Updated the `confluent_flink_statement` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_flink_statement) to have a descriptive error message.
+* Updated docs.
+
 ## 2.20.0 (March 10th, 2025)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.19.0...v2.20.0)
