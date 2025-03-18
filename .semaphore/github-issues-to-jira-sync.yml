@@ -10,8 +10,6 @@ blocks:
       prologue:
         commands:
           - checkout
-          - . vault-setup
-          - . vault-sem-get-secret v1/ci/kv/apif/signing_key
           # Add error handling for GitHub token
           - |
             if ! gh auth status &>/dev/null; then
@@ -95,8 +93,6 @@ blocks:
                     -H "Authorization: Basic $JIRA_B64_TOKEN" \
                     -X POST \
                     -H "Content-Type: application/json" \
-                    --connect-timeout 10 \
-                    --max-time 30 \
                     --data @jira_payload.json \
                     "https://confluentinc.atlassian.net/rest/api/2/issue/" > curl_output.log 2> curl_error.log
               
