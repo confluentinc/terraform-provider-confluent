@@ -1,0 +1,10 @@
+{
+  "errors": [
+    {
+      "id": "cca01299c9671e6956b9b047fa7a6ff4",
+      "status": "401",
+      "detail": "Unauthorized",
+      "source": {}
+    }
+  ]
+}
