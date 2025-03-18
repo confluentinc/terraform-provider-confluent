@@ -64,6 +64,14 @@ resource "confluent_role_binding" "app-manager-kafka-cluster-admin" {
   crn_pattern = confluent_kafka_cluster.basic.rbac_crn
 }
 
+resource "confluent_role_binding" "app-manager-provider-integration-resource-owner" {
+  principal   = "User:${confluent_service_account.app-manager.id}"
+  role_name   = "ResourceOwner"
+  // TODO: add resource_name attribute to confluent_provider_integration
+  crn_pattern = "${confluent_environment.staging.resource_name}/provider-integration=${confluent_provider_integration.main.id}"
+
+}
+
 resource "confluent_api_key" "app-manager-kafka-api-key" {
   display_name = "app-manager-kafka-api-key"
   description  = "Kafka API Key that is owned by 'app-manager' service account"
@@ -267,9 +275,9 @@ resource "confluent_schema" "purchase" {
   }
   rest_endpoint = data.confluent_schema_registry_cluster.essentials.rest_endpoint
   # https://developer.confluent.io/learn-kafka/schema-registry/schema-subjects/#topicnamestrategy
-  subject_name = "${confluent_kafka_topic.purchase.topic_name}-value"
-  format       = "AVRO"
-  schema       = file("./schemas/avro/purchase.avsc")
+  subject_name  = "${confluent_kafka_topic.purchase.topic_name}-value"
+  format        = "AVRO"
+  schema        = file("./schemas/avro/purchase.avsc")
   credentials {
     key    = confluent_api_key.env-manager-schema-registry-api-key.id
     secret = confluent_api_key.env-manager-schema-registry-api-key.secret
@@ -294,6 +302,10 @@ resource "confluent_api_key" "app-manager-tableflow-api-key" {
       id = confluent_environment.staging.id
     }
   }
+
+  depends_on = [
+    confluent_role_binding.app-manager-provider-integration-resource-owner,
+  ]
 }
 
 resource "confluent_tableflow_topic" "purchase" {
@@ -307,12 +319,12 @@ resource "confluent_tableflow_topic" "purchase" {
 
   // Use BYOB AWS storage
   byob_aws {
-    bucket_name = var.s3_bucket_name
+    bucket_name             = var.s3_bucket_name
     provider_integration_id = confluent_provider_integration.main.id
   }
 
   credentials {
-    key = confluent_api_key.app-manager-tableflow-api-key.id
+    key    = confluent_api_key.app-manager-tableflow-api-key.id
     secret = confluent_api_key.app-manager-tableflow-api-key.secret
   }
 
