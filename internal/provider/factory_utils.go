@@ -6,6 +6,7 @@ import (
 
 	dc "github.com/confluentinc/ccloud-sdk-go-v2/data-catalog/v1"
 	kafkarestv3 "github.com/confluentinc/ccloud-sdk-go-v2/kafkarest/v3"
+	tableflow "github.com/confluentinc/ccloud-sdk-go-v2/tableflow/v1"
 	"github.com/hashicorp/go-retryablehttp"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 
@@ -140,6 +141,33 @@ func (f KafkaRestClientFactory) CreateKafkaRestClient(restEndpoint, clusterId, c
 		restEndpoint:                  restEndpoint,
 		isMetadataSetInProviderBlock:  isMetadataSetInProviderBlock,
 		isClusterIdSetInProviderBlock: isClusterIdSetInProviderBlock,
+	}
+}
+
+type TableflowRestClientFactory struct {
+	ctx        context.Context
+	userAgent  string
+	maxRetries *int
+	endpoint   string
+}
+
+func (f TableflowRestClientFactory) CreateTableflowRestClient(tableflowApiKey, tableflowApiSecret string, isMetadataSetInProviderBlock bool) *TableflowRestClient {
+	var opts []RetryableClientFactoryOption = []RetryableClientFactoryOption{}
+	config := tableflow.NewConfiguration()
+
+	if f.maxRetries != nil {
+		opts = append(opts, WithMaxRetries(*f.maxRetries))
+	}
+
+	config.UserAgent = f.userAgent
+	config.Servers[0].URL = f.endpoint
+	config.HTTPClient = NewRetryableClientFactory(f.ctx, opts...).CreateRetryableClient()
+
+	return &TableflowRestClient{
+		apiClient:                    tableflow.NewAPIClient(config),
+		tableflowApiKey:              tableflowApiKey,
+		tableflowApiSecret:           tableflowApiSecret,
+		isMetadataSetInProviderBlock: isMetadataSetInProviderBlock,
 	}
 }
 

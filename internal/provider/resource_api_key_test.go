@@ -18,11 +18,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"testing"
+
+	"github.com/walkerus/go-wiremock"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -50,6 +51,7 @@ const (
 	cloudApiKeyScenarioName                = "confluent_api_key (Cloud API Key) Resource Lifecycle"
 
 	scenarioStateTableflowApiKeyHasBeenCreated = "The new tableflow api key has been just created"
+	scenarioStateTableflowApiKeyHasBeenSynced  = "The new tableflow api key has been just synced"
 	scenarioStateTableflowApiKeyHasBeenUpdated = "The new tableflow api key's description and display_name have been just updated"
 	scenarioStateTableflowApiKeyHasBeenDeleted = "The new tableflow api key has been deleted"
 	tableflowApiKeyScenarioName                = "confluent_api_key (Tableflow API Key) Resource Lifecycle"
@@ -507,13 +509,36 @@ func TestAccTableflowApiKey(t *testing.T) {
 	createTableflowApiKeyStub := wiremock.Post(wiremock.URLPathEqualTo("/iam/v2/api-keys")).
 		InScenario(tableflowApiKeyScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
-		WillSetStateTo(scenarioStateTableflowApiKeyHasBeenCreated).
 		WillReturn(
 			string(createTableflowApiKeyResponse),
 			contentTypeJSONHeader,
 			http.StatusCreated,
 		)
 	_ = wiremockClient.StubFor(createTableflowApiKeyStub)
+
+	tableflowApi401Response, _ := ioutil.ReadFile("../testdata/apikey/read_list_tableflow_regions_401.json")
+	listRegionsTableflowApi401Stub := wiremock.Get(wiremock.URLPathEqualTo("/tableflow/v1/regions")).
+		InScenario(tableflowApiKeyScenarioName).
+		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
+		WillSetStateTo(scenarioStateTableflowApiKeyHasBeenSynced).
+		WillReturn(
+			string(tableflowApi401Response),
+			contentTypeJSONHeader,
+			http.StatusUnauthorized,
+		)
+	_ = wiremockClient.StubFor(listRegionsTableflowApi401Stub)
+
+	tableflowApi200Response, _ := ioutil.ReadFile("../testdata/apikey/read_list_tableflow_regions_200.json")
+	listRegionsTableflowApi200Stub := wiremock.Get(wiremock.URLPathEqualTo("/tableflow/v1/regions")).
+		InScenario(tableflowApiKeyScenarioName).
+		WhenScenarioStateIs(scenarioStateTableflowApiKeyHasBeenSynced).
+		WillSetStateTo(scenarioStateTableflowApiKeyHasBeenCreated).
+		WillReturn(
+			string(tableflowApi200Response),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		)
+	_ = wiremockClient.StubFor(listRegionsTableflowApi200Stub)
 
 	readCreatedTableflowApiKeyResponse, _ := ioutil.ReadFile("../testdata/apikey/read_created_tableflow_api_key.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/api-keys/HRVR6K4VMXYD2LDZ")).

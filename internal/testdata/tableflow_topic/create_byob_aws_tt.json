@@ -1,0 +1,47 @@
+{
+  "api_version": "tableflow/v1",
+  "kind": "TableflowTopic",
+  "metadata": {
+    "created_at": "2024-02-01T22:25:50.415274Z",
+    "resource_name": "crn://confluent.cloud/organization=abc123/tableflow-topic=topic_1",
+    "self": "https://api.confluent.cloud/tableflow/v1/tableflow-topics/topic_1",
+    "updated_at": "2024-02-01T22:25:50.415274Z"
+  },
+  "spec": {
+    "display_name": "topic_1",
+    "suspended": false,
+    "environment": {
+      "api_version": "org/v2",
+      "id": "env-abc123",
+      "kind": "Environment",
+      "related": "https://api.confluent.cloud/v2/environments/env-abc123",
+      "resource_name": "crn://confluent.cloud/organization=abc123/environment=env-abc123"
+    },
+    "kafka_cluster": {
+      "id": "lkc-00000",
+      "environment": "env-abc123",
+      "related": "https://api.confluent.cloud/cmk/v2/clusters/lkc-00000",
+      "resource_name": "https://api.confluent.cloud/organization=abc123/environment=env-abc123/cloud-cluster=lkc-00000",
+      "api_version": "cmk/v2",
+      "kind": "Cluster"
+    },
+    "config": {
+      "enable_compaction": true,
+      "enable_partitioning": true,
+      "retention_ms": "100000000",
+      "record_failure_strategy": "SUSPEND"
+    },
+    "storage": {
+      "kind": "ByobAws",
+      "bucket_name": "bucket_1",
+      "bucket_region": "us-east-1",
+      "provider_integration_id": "cspi-stgce89r7"
+    },
+    "table_formats": [
+      "ICEBERG"
+    ]
+  },
+  "status": {
+    "phase": "PENDING"
+  }
+}
