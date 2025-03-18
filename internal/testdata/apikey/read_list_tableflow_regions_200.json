@@ -1,0 +1,27 @@
+{
+  "api_version": "tableflow/v1",
+  "kind": "RegionList",
+  "metadata": {
+    "first": "https://api.confluent.cloud/tableflow/v1/regions",
+    "last": "https://api.confluent.cloud/tableflow/v1/regions?page_token=bcAOehAY8F16YD84Z1wT",
+    "prev": "https://api.confluent.cloud/tableflow/v1/regions?page_token=YIXRY97wWYmwzrax4dld",
+    "next": "https://api.confluent.cloud/tableflow/v1/regions?page_token=UvmDWOB1iwfAIBPj6EYb",
+    "total_size": 123
+  },
+  "data": [
+    {
+      "api_version": "tableflow/v1",
+      "kind": "Region",
+      "id": "dlz-f3a90de",
+      "metadata": {
+        "self": "https://api.confluent.cloud/tableflow/v1/regions/r-12345",
+        "resource_name": "crn://confluent.cloud/organization=9bb441c4-edef-46ac-8a41-c49e44a3fd9a/region=r-12345",
+        "created_at": "2006-01-02T15:04:05-07:00",
+        "updated_at": "2006-01-02T15:04:05-07:00",
+        "deleted_at": "2006-01-02T15:04:05-07:00"
+      },
+      "cloud": "AWS",
+      "region": "us-east-2"
+    }
+  ]
+}
