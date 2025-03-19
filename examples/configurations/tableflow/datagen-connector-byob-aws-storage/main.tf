@@ -322,6 +322,8 @@ resource "confluent_tableflow_topic" "orders" {
 
   depends_on = [
     module.s3_access_role,
+    # To avoid "Schemaless topic detected for topic orders. Schemaless topics are not supported. Please specify a value schema." error
+    confluent_connector.source
   ]
 }
 
