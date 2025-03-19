@@ -34,13 +34,13 @@ data "confluent_schema_registry_cluster" "essentials" {
   }
 
   depends_on = [
-    confluent_kafka_cluster.basic
+    confluent_kafka_cluster.standard
   ]
 }
 
 # Update the config to use a cloud provider and region of your choice.
 # https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_cluster
-resource "confluent_kafka_cluster" "basic" {
+resource "confluent_kafka_cluster" "standard" {
   display_name = "inventory"
   availability = "SINGLE_ZONE"
   cloud        = "AWS"
@@ -62,7 +62,7 @@ resource "confluent_service_account" "app-manager" {
 resource "confluent_role_binding" "app-manager-kafka-cluster-admin" {
   principal   = "User:${confluent_service_account.app-manager.id}"
   role_name   = "CloudClusterAdmin"
-  crn_pattern = confluent_kafka_cluster.basic.rbac_crn
+  crn_pattern = confluent_kafka_cluster.standard.rbac_crn
 }
 
 resource "confluent_role_binding" "app-manager-provider-integration-resource-owner" {
@@ -83,9 +83,9 @@ resource "confluent_api_key" "app-manager-kafka-api-key" {
   }
 
   managed_resource {
-    id          = confluent_kafka_cluster.basic.id
-    api_version = confluent_kafka_cluster.basic.api_version
-    kind        = confluent_kafka_cluster.basic.kind
+    id          = confluent_kafka_cluster.standard.id
+    api_version = confluent_kafka_cluster.standard.api_version
+    kind        = confluent_kafka_cluster.standard.kind
 
     environment {
       id = confluent_environment.staging.id
@@ -106,10 +106,10 @@ resource "confluent_api_key" "app-manager-kafka-api-key" {
 
 resource "confluent_kafka_topic" "stock-trades" {
   kafka_cluster {
-    id = confluent_kafka_cluster.basic.id
+    id = confluent_kafka_cluster.standard.id
   }
   topic_name    = "stock-trades"
-  rest_endpoint = confluent_kafka_cluster.basic.rest_endpoint
+  rest_endpoint = confluent_kafka_cluster.standard.rest_endpoint
   credentials {
     key    = confluent_api_key.app-manager-kafka-api-key.id
     secret = confluent_api_key.app-manager-kafka-api-key.secret
@@ -131,9 +131,9 @@ resource "confluent_api_key" "app-consumer-kafka-api-key" {
   }
 
   managed_resource {
-    id          = confluent_kafka_cluster.basic.id
-    api_version = confluent_kafka_cluster.basic.api_version
-    kind        = confluent_kafka_cluster.basic.kind
+    id          = confluent_kafka_cluster.standard.id
+    api_version = confluent_kafka_cluster.standard.api_version
+    kind        = confluent_kafka_cluster.standard.kind
 
     environment {
       id = confluent_environment.staging.id
@@ -156,9 +156,9 @@ resource "confluent_api_key" "app-producer-kafka-api-key" {
   }
 
   managed_resource {
-    id          = confluent_kafka_cluster.basic.id
-    api_version = confluent_kafka_cluster.basic.api_version
-    kind        = confluent_kafka_cluster.basic.kind
+    id          = confluent_kafka_cluster.standard.id
+    api_version = confluent_kafka_cluster.standard.api_version
+    kind        = confluent_kafka_cluster.standard.kind
 
     environment {
       id = confluent_environment.staging.id
@@ -168,7 +168,7 @@ resource "confluent_api_key" "app-producer-kafka-api-key" {
 
 resource "confluent_kafka_acl" "app-producer-write-on-topic" {
   kafka_cluster {
-    id = confluent_kafka_cluster.basic.id
+    id = confluent_kafka_cluster.standard.id
   }
   resource_type = "TOPIC"
   resource_name = confluent_kafka_topic.stock-trades.topic_name
@@ -177,7 +177,7 @@ resource "confluent_kafka_acl" "app-producer-write-on-topic" {
   host          = "*"
   operation     = "WRITE"
   permission    = "ALLOW"
-  rest_endpoint = confluent_kafka_cluster.basic.rest_endpoint
+  rest_endpoint = confluent_kafka_cluster.standard.rest_endpoint
   credentials {
     key    = confluent_api_key.app-manager-kafka-api-key.id
     secret = confluent_api_key.app-manager-kafka-api-key.secret
@@ -190,7 +190,7 @@ resource "confluent_kafka_acl" "app-producer-write-on-topic" {
 // https://docs.confluent.io/platform/current/kafka/authorization.html#using-acls
 resource "confluent_kafka_acl" "app-consumer-read-on-topic" {
   kafka_cluster {
-    id = confluent_kafka_cluster.basic.id
+    id = confluent_kafka_cluster.standard.id
   }
   resource_type = "TOPIC"
   resource_name = confluent_kafka_topic.stock-trades.topic_name
@@ -199,7 +199,7 @@ resource "confluent_kafka_acl" "app-consumer-read-on-topic" {
   host          = "*"
   operation     = "READ"
   permission    = "ALLOW"
-  rest_endpoint = confluent_kafka_cluster.basic.rest_endpoint
+  rest_endpoint = confluent_kafka_cluster.standard.rest_endpoint
   credentials {
     key    = confluent_api_key.app-manager-kafka-api-key.id
     secret = confluent_api_key.app-manager-kafka-api-key.secret
@@ -208,7 +208,7 @@ resource "confluent_kafka_acl" "app-consumer-read-on-topic" {
 
 resource "confluent_kafka_acl" "app-consumer-read-on-group" {
   kafka_cluster {
-    id = confluent_kafka_cluster.basic.id
+    id = confluent_kafka_cluster.standard.id
   }
   resource_type = "GROUP"
   // The existing values of resource_name, pattern_type attributes are set up to match Confluent CLI's default consumer group ID ("confluent_cli_consumer_<uuid>").
@@ -221,7 +221,7 @@ resource "confluent_kafka_acl" "app-consumer-read-on-group" {
   host          = "*"
   operation     = "READ"
   permission    = "ALLOW"
-  rest_endpoint = confluent_kafka_cluster.basic.rest_endpoint
+  rest_endpoint = confluent_kafka_cluster.standard.rest_endpoint
   credentials {
     key    = confluent_api_key.app-manager-kafka-api-key.id
     secret = confluent_api_key.app-manager-kafka-api-key.secret
@@ -257,7 +257,7 @@ resource "confluent_tableflow_topic" "stock-trades" {
     id = confluent_environment.staging.id
   }
   kafka_cluster {
-    id = confluent_kafka_cluster.basic.id
+    id = confluent_kafka_cluster.standard.id
   }
   display_name = confluent_kafka_topic.stock-trades.topic_name
 
@@ -315,14 +315,14 @@ module "s3_access_role" {
 }
 
 resource "confluent_service_account" "app-connector" {
-  display_name = "app-connector"
+  display_name = "app-connector567"
   description  = "Service account of S3 Sink Connector to consume from 'stock-trades' topic of 'inventory' Kafka cluster"
 }
 
 
 resource "confluent_kafka_acl" "app-connector-describe-on-cluster" {
   kafka_cluster {
-    id = confluent_kafka_cluster.basic.id
+    id = confluent_kafka_cluster.standard.id
   }
   resource_type = "CLUSTER"
   resource_name = "kafka-cluster"
@@ -331,7 +331,7 @@ resource "confluent_kafka_acl" "app-connector-describe-on-cluster" {
   host          = "*"
   operation     = "DESCRIBE"
   permission    = "ALLOW"
-  rest_endpoint = confluent_kafka_cluster.basic.rest_endpoint
+  rest_endpoint = confluent_kafka_cluster.standard.rest_endpoint
   credentials {
     key    = confluent_api_key.app-manager-kafka-api-key.id
     secret = confluent_api_key.app-manager-kafka-api-key.secret
@@ -340,7 +340,7 @@ resource "confluent_kafka_acl" "app-connector-describe-on-cluster" {
 
 resource "confluent_kafka_acl" "app-connector-write-on-target-topic" {
   kafka_cluster {
-    id = confluent_kafka_cluster.basic.id
+    id = confluent_kafka_cluster.standard.id
   }
   resource_type = "TOPIC"
   resource_name = confluent_kafka_topic.stock-trades.topic_name
@@ -349,7 +349,7 @@ resource "confluent_kafka_acl" "app-connector-write-on-target-topic" {
   host          = "*"
   operation     = "WRITE"
   permission    = "ALLOW"
-  rest_endpoint = confluent_kafka_cluster.basic.rest_endpoint
+  rest_endpoint = confluent_kafka_cluster.standard.rest_endpoint
   credentials {
     key    = confluent_api_key.app-manager-kafka-api-key.id
     secret = confluent_api_key.app-manager-kafka-api-key.secret
@@ -358,7 +358,7 @@ resource "confluent_kafka_acl" "app-connector-write-on-target-topic" {
 
 resource "confluent_kafka_acl" "app-connector-create-on-data-preview-topics" {
   kafka_cluster {
-    id = confluent_kafka_cluster.basic.id
+    id = confluent_kafka_cluster.standard.id
   }
   resource_type = "TOPIC"
   resource_name = "data-preview"
@@ -367,7 +367,7 @@ resource "confluent_kafka_acl" "app-connector-create-on-data-preview-topics" {
   host          = "*"
   operation     = "CREATE"
   permission    = "ALLOW"
-  rest_endpoint = confluent_kafka_cluster.basic.rest_endpoint
+  rest_endpoint = confluent_kafka_cluster.standard.rest_endpoint
   credentials {
     key    = confluent_api_key.app-manager-kafka-api-key.id
     secret = confluent_api_key.app-manager-kafka-api-key.secret
@@ -376,7 +376,7 @@ resource "confluent_kafka_acl" "app-connector-create-on-data-preview-topics" {
 
 resource "confluent_kafka_acl" "app-connector-write-on-data-preview-topics" {
   kafka_cluster {
-    id = confluent_kafka_cluster.basic.id
+    id = confluent_kafka_cluster.standard.id
   }
   resource_type = "TOPIC"
   resource_name = "data-preview"
@@ -385,7 +385,7 @@ resource "confluent_kafka_acl" "app-connector-write-on-data-preview-topics" {
   host          = "*"
   operation     = "WRITE"
   permission    = "ALLOW"
-  rest_endpoint = confluent_kafka_cluster.basic.rest_endpoint
+  rest_endpoint = confluent_kafka_cluster.standard.rest_endpoint
   credentials {
     key    = confluent_api_key.app-manager-kafka-api-key.id
     secret = confluent_api_key.app-manager-kafka-api-key.secret
@@ -397,7 +397,7 @@ resource "confluent_connector" "source" {
     id = confluent_environment.staging.id
   }
   kafka_cluster {
-    id = confluent_kafka_cluster.basic.id
+    id = confluent_kafka_cluster.standard.id
   }
 
   // Block for custom *sensitive* configuration properties that are labelled with "Type: password" under "Configuration Properties" section in the docs:
@@ -447,7 +447,7 @@ resource "confluent_api_key" "app-reader-tableflow-api-key" {
     kind        = "Tableflow"
 
     environment {
-      id = data.confluent_environment.staging.id
+      id = confluent_environment.staging.id
     }
   }
 
@@ -460,5 +460,5 @@ resource "confluent_api_key" "app-reader-tableflow-api-key" {
 resource "confluent_role_binding" "app-reader-cluster-resource-owner" {
   principal   = "User:${confluent_service_account.app-reader.id}"
   role_name   = "ResourceOwner"
-  crn_pattern = "${confluent_kafka_cluster.basic.rbac_crn}/kafka=${confluent_kafka_cluster.basic.id}"
+  crn_pattern = "${confluent_kafka_cluster.standard.rbac_crn}/kafka=${confluent_kafka_cluster.standard.id}"
 }
