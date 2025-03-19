@@ -10,9 +10,9 @@ variable "confluent_cloud_api_secret" {
 }
 
 variable "s3_bucket_name" {
-  description = "The name of the S3 bucket"
+  description = "The name of the S3 bucket. S3 buckets must be in the same region as the cluster"
   type        = string
-  default     = "kostyatests4"
+  default     = "myuswest2bucket"
 }
 
 variable "aws_region" {
