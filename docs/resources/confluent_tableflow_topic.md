@@ -12,6 +12,8 @@ description: |-
 
 -> **Note:** It is recommended to set `lifecycle { prevent_destroy = true }` on production instances to prevent accidental tableflow topic deletion. This setting rejects plans that would destroy or recreate the tableflow topic, such as attempting to change uneditable attributes. Read more about it in the [Terraform docs](https://www.terraform.io/language/meta-arguments/lifecycle#prevent_destroy).
 
+-> **Note:** Make sure to use `confluent_catalog_integration` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_catalog_integration) if you want to integrate Tableflow with AWS Glue Catalog or Snowflake Open Catalog.
+
 ## Example Usage
 
 ### Option #1: Manage multiple Tableflow Topics in the same Terraform workspace
