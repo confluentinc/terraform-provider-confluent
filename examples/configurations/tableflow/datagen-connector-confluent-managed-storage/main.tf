@@ -53,14 +53,6 @@ resource "confluent_role_binding" "app-manager-kafka-cluster-admin" {
   crn_pattern = confluent_kafka_cluster.standard.rbac_crn
 }
 
-resource "confluent_role_binding" "app-manager-provider-integration-resource-owner" {
-  principal   = "User:${confluent_service_account.app-manager.id}"
-  role_name   = "ResourceOwner"
-  // TODO: add resource_name attribute to confluent_provider_integration
-  crn_pattern = "${data.confluent_environment.staging.resource_name}/provider-integration=${confluent_provider_integration.main.id}"
-
-}
-
 resource "confluent_api_key" "app-manager-kafka-api-key" {
   display_name = "app-manager-kafka-api-key1"
   description  = "Kafka API Key that is owned by 'app-manager' service account"
