@@ -105,7 +105,7 @@ func testAccCheckResourcePrivateLinkAttachmentConnectionGcpWithIdSet(mockServerU
         endpoint = "%s"
     }
 
-    resource confluent_private_link_attachment_connection main {
+    resource "confluent_private_link_attachment_connection" "main" {
 	    display_name = "prod-gcp-us-central1-connection"
 		environment {
 			id = "env-12345"

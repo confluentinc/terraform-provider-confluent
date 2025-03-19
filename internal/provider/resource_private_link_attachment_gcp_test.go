@@ -106,7 +106,7 @@ func testAccCheckResourcePrivateLinkAttachmentGcpWithIdSet(mockServerUrl string)
         endpoint = "%s"
     }
 
-    resource confluent_private_link_attachment main {
+    resource "confluent_private_link_attachment" "main" {
 	    cloud = "GCP"
 	    region = "us-central1"
 	    display_name = "prod-gcp-us-central1"
