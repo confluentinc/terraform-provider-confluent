@@ -85,7 +85,7 @@ func networkLinkServiceDataSourceRead(ctx context.Context, d *schema.ResourceDat
 	} else if displayName != "" {
 		return nlsDataSourceReadUsingDisplayName(ctx, d, meta, environmentId, displayName)
 	} else {
-		return diag.Errorf("error reading network link service: exactly one of %q or %q must be specified but they're both empty", paramId, paramDisplayName)
+		return diag.Errorf("error reading network link service: exactly one of `id` or `display_name` must be specified but they're both empty")
 	}
 }
 
