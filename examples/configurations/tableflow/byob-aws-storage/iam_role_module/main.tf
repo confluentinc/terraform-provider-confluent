@@ -17,6 +17,13 @@ resource "aws_iam_role" "s3_access_role" {
             "sts:ExternalId" = var.provider_integration_external_id
           }
         }
+      },
+      {
+        Effect    = "Allow"
+        Principal = {
+          AWS = var.provider_integration_role_arn
+        }
+        Action    = "sts:TagSession"
       }
     ]
   })
