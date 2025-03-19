@@ -369,5 +369,3 @@ module "s3_access_role" {
   provider_integration_external_id = confluent_provider_integration.main.aws[0].external_id
   customer_role_name               = local.customer_s3_access_role_name
 }
-
-// TODO: add a connector with a datagen connector
