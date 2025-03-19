@@ -18,7 +18,7 @@ data "confluent_environment" "staging" {
 
 data "confluent_schema_registry_cluster" "essentials" {
   environment {
-    id = data.confluent_environment.staging.id
+    id = confluent_environment.staging.id
   }
 
   depends_on = [
@@ -32,11 +32,10 @@ resource "confluent_kafka_cluster" "standard" {
   display_name = "inventory2"
   availability = "SINGLE_ZONE"
   cloud        = "AWS"
-  // S3 buckets must be in the same region as the cluster
-  region       = var.aws_region
+  region       = "us-west-2"
   standard {}
   environment {
-    id = data.confluent_environment.staging.id
+    id = confluent_environment.staging.id
   }
 }
 
@@ -68,7 +67,7 @@ resource "confluent_api_key" "app-manager-kafka-api-key" {
     kind        = confluent_kafka_cluster.standard.kind
 
     environment {
-      id = data.confluent_environment.staging.id
+      id = confluent_environment.staging.id
     }
   }
 
@@ -116,7 +115,7 @@ resource "confluent_api_key" "app-consumer-kafka-api-key" {
     kind        = confluent_kafka_cluster.standard.kind
 
     environment {
-      id = data.confluent_environment.staging.id
+      id = confluent_environment.staging.id
     }
   }
 }
@@ -141,7 +140,7 @@ resource "confluent_api_key" "app-producer-kafka-api-key" {
     kind        = confluent_kafka_cluster.standard.kind
 
     environment {
-      id = data.confluent_environment.staging.id
+      id = confluent_environment.staging.id
     }
   }
 }
@@ -223,14 +222,14 @@ resource "confluent_api_key" "app-manager-tableflow-api-key" {
     kind        = "Tableflow"
 
     environment {
-      id = data.confluent_environment.staging.id
+      id = confluent_environment.staging.id
     }
   }
 }
 
 resource "confluent_tableflow_topic" "stock-trades" {
   environment {
-    id = data.confluent_environment.staging.id
+    id = confluent_environment.staging.id
   }
   kafka_cluster {
     id = confluent_kafka_cluster.standard.id
@@ -337,7 +336,7 @@ resource "confluent_kafka_acl" "app-connector-write-on-data-preview-topics" {
 
 resource "confluent_connector" "source" {
   environment {
-    id = data.confluent_environment.staging.id
+    id = confluent_environment.staging.id
   }
   kafka_cluster {
     id = confluent_kafka_cluster.standard.id
@@ -390,18 +389,18 @@ resource "confluent_api_key" "app-reader-tableflow-api-key" {
     kind        = "Tableflow"
 
     environment {
-      id = data.confluent_environment.staging.id
+      id = confluent_environment.staging.id
     }
   }
 
   depends_on = [
-    confluent_role_binding.app-reader-cluster-resource-owner,
+    confluent_role_binding.app-reader-environment-admin,
   ]
 }
 
 // https://docs.confluent.io/cloud/current/topics/tableflow/operate/tableflow-rbac.html#access-to-tableflow-resources
-resource "confluent_role_binding" "app-reader-cluster-resource-owner" {
+resource "confluent_role_binding" "app-reader-environment-admin" {
   principal   = "User:${confluent_service_account.app-reader.id}"
-  role_name   = "ResourceOwner"
-  crn_pattern = "${confluent_kafka_cluster.standard.rbac_crn}/kafka=${confluent_kafka_cluster.standard.id}"
+  role_name   = "EnvironmentAdmin"
+  crn_pattern = confluent_environment.staging.resource_name
 }

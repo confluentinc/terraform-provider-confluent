@@ -452,13 +452,13 @@ resource "confluent_api_key" "app-reader-tableflow-api-key" {
   }
 
   depends_on = [
-    confluent_role_binding.app-reader-cluster-resource-owner,
+    confluent_role_binding.app-reader-environment-admin,
   ]
 }
 
 // https://docs.confluent.io/cloud/current/topics/tableflow/operate/tableflow-rbac.html#access-to-tableflow-resources
-resource "confluent_role_binding" "app-reader-cluster-resource-owner" {
+resource "confluent_role_binding" "app-reader-environment-admin" {
   principal   = "User:${confluent_service_account.app-reader.id}"
-  role_name   = "ResourceOwner"
-  crn_pattern = "${confluent_kafka_cluster.standard.rbac_crn}/kafka=${confluent_kafka_cluster.standard.id}"
+  role_name   = "EnvironmentAdmin"
+  crn_pattern = confluent_environment.staging.resource_name
 }

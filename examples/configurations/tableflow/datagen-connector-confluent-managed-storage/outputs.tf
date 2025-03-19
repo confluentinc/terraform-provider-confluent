@@ -1,10 +1,9 @@
 output "resource-ids" {
   value = <<-EOT
-  You have completed steps #1-2 from https://docs.confluent.io/cloud/current/topics/tableflow/get-started/quick-start-managed-storage.html#step-1-create-a-topic-and-publish-data
+  You have completed steps #1-2 from https://docs.confluent.io/cloud/current/topics/tableflow/get-started/quick-start-managed-storage.html
 
-  Environment ID:   ${data.confluent_environment.staging.id}
+  Environment ID:   ${confluent_environment.staging.id}
   Kafka Cluster ID: ${confluent_kafka_cluster.standard.id}
-  Kafka Cluster Name: ${confluent_kafka_cluster.standard.display_name}
   Kafka topic name: ${confluent_kafka_topic.stock-trades.topic_name}
 
   Service Accounts and their Kafka API Keys (API Keys inherit the permissions granted to the owner):
@@ -22,12 +21,17 @@ output "resource-ids" {
 
   Step 3: Set up access to the Iceberg REST Catalog:
 
-  REST Catalog Endpoint: "https://tableflow.${var.aws_region}.aws.confluent.cloud/iceberg/catalog/organizations/${data.confluent_organization.main.id}/environments/${data.confluent_environment.staging.id}"
+  Kafka Cluster ID: ${confluent_kafka_cluster.standard.id}
+  REST Catalog Endpoint: "https://tableflow.${confluent_kafka_cluster.standard.region}.aws.confluent.cloud/iceberg/catalog/organizations/${data.confluent_organization.main.id}/environments/${confluent_environment.staging.id}"
 
-  Service Account with "ResourceOwner" role for the scope=Cluster and its Tableflow API Key (API Keys inherit the permissions granted to the owner):
+  Service Account with "EnvironmentAdmin" role its Tableflow API Key (API Keys inherit the permissions granted to the owner):
   ${confluent_service_account.app-reader.display_name}:                        ${confluent_service_account.app-reader.id}
   ${confluent_service_account.app-reader.display_name}'s Tableflow API Key:    "${confluent_api_key.app-reader-tableflow-api-key.id}"
   ${confluent_service_account.app-reader.display_name}'s Tableflow API Secret: "${confluent_api_key.app-reader-tableflow-api-key.secret}"
+
+  Step 4: Query Iceberg tables from Spark
+  Follow https://docs.confluent.io/cloud/current/topics/tableflow/get-started/quick-start-managed-storage.html#step-4-query-iceberg-tables-from-spark for the remaining steps.
+
 
   EOT
 
