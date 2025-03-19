@@ -2,7 +2,7 @@ output "resource-ids" {
   value = <<-EOT
   Environment ID:   ${confluent_environment.staging.id}
   Kafka Cluster ID: ${confluent_kafka_cluster.basic.id}
-  Kafka topic name: ${confluent_kafka_topic.orders.topic_name}
+  Kafka topic name: ${confluent_kafka_topic.stock-trades.topic_name}
 
   Service Accounts and their Kafka API Keys (API Keys inherit the permissions granted to the owner):
   ${confluent_service_account.app-manager.display_name}:                     ${confluent_service_account.app-manager.id}
@@ -17,15 +17,15 @@ output "resource-ids" {
   ${confluent_service_account.app-consumer.display_name}'s Kafka API Key:    "${confluent_api_key.app-consumer-kafka-api-key.id}"
   ${confluent_service_account.app-consumer.display_name}'s Kafka API Secret: "${confluent_api_key.app-consumer-kafka-api-key.secret}"
 
-  In order to use the Confluent CLI v2 to produce and consume messages from topic '${confluent_kafka_topic.orders.topic_name}' using Kafka API Keys
+  In order to use the Confluent CLI v2 to produce and consume messages from topic '${confluent_kafka_topic.stock-trades.topic_name}' using Kafka API Keys
   of ${confluent_service_account.app-producer.display_name} and ${confluent_service_account.app-consumer.display_name} service accounts
   run the following commands:
 
   # 1. Log in to Confluent Cloud
   $ confluent login
 
-  # 2. Produce key-value records to topic '${confluent_kafka_topic.orders.topic_name}' by using ${confluent_service_account.app-producer.display_name}'s Kafka API Key
-  $ confluent kafka topic produce ${confluent_kafka_topic.orders.topic_name} \
+  # 2. Produce key-value records to topic '${confluent_kafka_topic.stock-trades.topic_name}' by using ${confluent_service_account.app-producer.display_name}'s Kafka API Key
+  $ confluent kafka topic produce ${confluent_kafka_topic.stock-trades.topic_name} \
         --schema "schemas/avro/purchase.avsc" \
         --value-format avro \
         --sr-endpoint ${data.confluent_schema_registry_cluster.essentials.rest_endpoint} \
@@ -41,7 +41,7 @@ output "resource-ids" {
   # {"item":"pizza","amount":1.99,"customer_id":"lombardi"}
   # {"item":"ball","amount":29.99,"customer_id":"spalding"}
 
-  # 3. Consume records from topic '${confluent_kafka_topic.orders.topic_name}' by using ${confluent_service_account.app-consumer.display_name}'s Kafka API Key
+  # 3. Consume records from topic '${confluent_kafka_topic.stock-trades.topic_name}' by using ${confluent_service_account.app-consumer.display_name}'s Kafka API Key
   $ confluent kafka topic consume purchase \
         --from-beginning \
         --value-format avro \
