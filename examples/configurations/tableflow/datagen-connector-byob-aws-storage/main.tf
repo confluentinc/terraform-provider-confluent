@@ -316,7 +316,7 @@ module "s3_access_role" {
 
 resource "confluent_service_account" "app-connector" {
   display_name = "app-connector"
-  description  = "Service account of S3 Sink Connector to consume from 'orders' topic of 'inventory' Kafka cluster"
+  description  = "Service account of S3 Sink Connector to consume from 'stock-trades' topic of 'inventory' Kafka cluster"
 }
 
 
