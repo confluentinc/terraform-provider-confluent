@@ -104,11 +104,11 @@ resource "confluent_api_key" "app-manager-kafka-api-key" {
   ]
 }
 
-resource "confluent_kafka_topic" "purchase" {
+resource "confluent_kafka_topic" "orders" {
   kafka_cluster {
     id = confluent_kafka_cluster.basic.id
   }
-  topic_name    = "purchase"
+  topic_name    = "orders"
   rest_endpoint = confluent_kafka_cluster.basic.rest_endpoint
   credentials {
     key    = confluent_api_key.app-manager-kafka-api-key.id
@@ -171,7 +171,7 @@ resource "confluent_kafka_acl" "app-producer-write-on-topic" {
     id = confluent_kafka_cluster.basic.id
   }
   resource_type = "TOPIC"
-  resource_name = confluent_kafka_topic.purchase.topic_name
+  resource_name = confluent_kafka_topic.orders.topic_name
   pattern_type  = "LITERAL"
   principal     = "User:${confluent_service_account.app-producer.id}"
   host          = "*"
@@ -193,7 +193,7 @@ resource "confluent_kafka_acl" "app-consumer-read-on-topic" {
     id = confluent_kafka_cluster.basic.id
   }
   resource_type = "TOPIC"
-  resource_name = confluent_kafka_topic.purchase.topic_name
+  resource_name = confluent_kafka_topic.orders.topic_name
   pattern_type  = "LITERAL"
   principal     = "User:${confluent_service_account.app-consumer.id}"
   host          = "*"
@@ -270,21 +270,6 @@ resource "confluent_api_key" "env-manager-schema-registry-api-key" {
   ]
 }
 
-resource "confluent_schema" "purchase" {
-  schema_registry_cluster {
-    id = data.confluent_schema_registry_cluster.essentials.id
-  }
-  rest_endpoint = data.confluent_schema_registry_cluster.essentials.rest_endpoint
-  # https://developer.confluent.io/learn-kafka/schema-registry/schema-subjects/#topicnamestrategy
-  subject_name  = "${confluent_kafka_topic.purchase.topic_name}-value"
-  format        = "AVRO"
-  schema        = file("./schemas/avro/purchase.avsc")
-  credentials {
-    key    = confluent_api_key.env-manager-schema-registry-api-key.id
-    secret = confluent_api_key.env-manager-schema-registry-api-key.secret
-  }
-}
-
 resource "confluent_api_key" "app-manager-tableflow-api-key" {
   display_name = "app-manager-tableflow-api-key"
   description  = "Tableflow API Key that is owned by 'app-manager' service account"
@@ -309,14 +294,14 @@ resource "confluent_api_key" "app-manager-tableflow-api-key" {
   ]
 }
 
-resource "confluent_tableflow_topic" "purchase" {
+resource "confluent_tableflow_topic" "orders" {
   environment {
     id = confluent_environment.staging.id
   }
   kafka_cluster {
     id = confluent_kafka_cluster.basic.id
   }
-  display_name = confluent_kafka_topic.purchase.topic_name
+  display_name = confluent_kafka_topic.orders.topic_name
 
   // Use BYOB AWS storage
   byob_aws {
@@ -336,7 +321,6 @@ resource "confluent_tableflow_topic" "purchase" {
 
 
   depends_on = [
-    confluent_schema.purchase,
     module.s3_access_role,
   ]
 }
@@ -368,4 +352,115 @@ module "s3_access_role" {
   provider_integration_role_arn    = confluent_provider_integration.main.aws[0].iam_role_arn
   provider_integration_external_id = confluent_provider_integration.main.aws[0].external_id
   customer_role_name               = local.customer_s3_access_role_name
+}
+
+resource "confluent_service_account" "app-connector" {
+  display_name = "app-connector"
+  description  = "Service account of S3 Sink Connector to consume from 'orders' topic of 'inventory' Kafka cluster"
+}
+
+
+resource "confluent_kafka_acl" "app-connector-describe-on-cluster" {
+  kafka_cluster {
+    id = confluent_kafka_cluster.basic.id
+  }
+  resource_type = "CLUSTER"
+  resource_name = "kafka-cluster"
+  pattern_type  = "LITERAL"
+  principal     = "User:${confluent_service_account.app-connector.id}"
+  host          = "*"
+  operation     = "DESCRIBE"
+  permission    = "ALLOW"
+  rest_endpoint = confluent_kafka_cluster.basic.rest_endpoint
+  credentials {
+    key    = confluent_api_key.app-manager-kafka-api-key.id
+    secret = confluent_api_key.app-manager-kafka-api-key.secret
+  }
+}
+
+resource "confluent_kafka_acl" "app-connector-write-on-target-topic" {
+  kafka_cluster {
+    id = confluent_kafka_cluster.basic.id
+  }
+  resource_type = "TOPIC"
+  resource_name = confluent_kafka_topic.orders.topic_name
+  pattern_type  = "LITERAL"
+  principal     = "User:${confluent_service_account.app-connector.id}"
+  host          = "*"
+  operation     = "WRITE"
+  permission    = "ALLOW"
+  rest_endpoint = confluent_kafka_cluster.basic.rest_endpoint
+  credentials {
+    key    = confluent_api_key.app-manager-kafka-api-key.id
+    secret = confluent_api_key.app-manager-kafka-api-key.secret
+  }
+}
+
+resource "confluent_kafka_acl" "app-connector-create-on-data-preview-topics" {
+  kafka_cluster {
+    id = confluent_kafka_cluster.basic.id
+  }
+  resource_type = "TOPIC"
+  resource_name = "data-preview"
+  pattern_type  = "PREFIXED"
+  principal     = "User:${confluent_service_account.app-connector.id}"
+  host          = "*"
+  operation     = "CREATE"
+  permission    = "ALLOW"
+  rest_endpoint = confluent_kafka_cluster.basic.rest_endpoint
+  credentials {
+    key    = confluent_api_key.app-manager-kafka-api-key.id
+    secret = confluent_api_key.app-manager-kafka-api-key.secret
+  }
+}
+
+resource "confluent_kafka_acl" "app-connector-write-on-data-preview-topics" {
+  kafka_cluster {
+    id = confluent_kafka_cluster.basic.id
+  }
+  resource_type = "TOPIC"
+  resource_name = "data-preview"
+  pattern_type  = "PREFIXED"
+  principal     = "User:${confluent_service_account.app-connector.id}"
+  host          = "*"
+  operation     = "WRITE"
+  permission    = "ALLOW"
+  rest_endpoint = confluent_kafka_cluster.basic.rest_endpoint
+  credentials {
+    key    = confluent_api_key.app-manager-kafka-api-key.id
+    secret = confluent_api_key.app-manager-kafka-api-key.secret
+  }
+}
+
+resource "confluent_connector" "source" {
+  environment {
+    id = confluent_environment.staging.id
+  }
+  kafka_cluster {
+    id = confluent_kafka_cluster.basic.id
+  }
+
+  // Block for custom *sensitive* configuration properties that are labelled with "Type: password" under "Configuration Properties" section in the docs:
+  // https://docs.confluent.io/cloud/current/connectors/cc-datagen-source.html#configuration-properties
+  config_sensitive = {}
+
+  // Block for custom *nonsensitive* configuration properties that are *not* labelled with "Type: password" under "Configuration Properties" section in the docs:
+  // https://docs.confluent.io/cloud/current/connectors/cc-datagen-source.html#configuration-properties
+  config_nonsensitive = {
+    "connector.class"          = "DatagenSource"
+    "name"                     = "DatagenSourceConnector_0"
+    "kafka.auth.mode"          = "SERVICE_ACCOUNT"
+    "kafka.service.account.id" = confluent_service_account.app-connector.id
+    "kafka.topic"              = confluent_kafka_topic.orders.topic_name
+    "output.data.format"       = "AVRO"
+    "quickstart"               = "ORDERS"
+    "tasks.max"                = "1"
+  }
+
+  depends_on = [
+    confluent_kafka_acl.app-connector-describe-on-cluster,
+    confluent_kafka_acl.app-connector-write-on-target-topic,
+    confluent_kafka_acl.app-connector-create-on-data-preview-topics,
+    confluent_kafka_acl.app-connector-write-on-data-preview-topics,
+  ]
 }
