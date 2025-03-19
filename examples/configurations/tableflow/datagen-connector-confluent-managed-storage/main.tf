@@ -12,8 +12,12 @@ provider "confluent" {
   cloud_api_secret = var.confluent_cloud_api_secret
 }
 
-data "confluent_environment" "staging" {
-  id = "env-mzxdj2"
+resource "confluent_environment" "staging" {
+  display_name = "Staging"
+
+  stream_governance {
+    package = "ESSENTIALS"
+  }
 }
 
 data "confluent_schema_registry_cluster" "essentials" {
