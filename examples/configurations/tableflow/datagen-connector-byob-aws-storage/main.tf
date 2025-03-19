@@ -46,7 +46,7 @@ resource "confluent_kafka_cluster" "basic" {
   cloud        = "AWS"
   // S3 buckets must be in the same region as the cluster
   region       = var.aws_region
-  basic {}
+  standard {}
   environment {
     id = confluent_environment.staging.id
   }
@@ -423,4 +423,41 @@ resource "confluent_connector" "source" {
     confluent_kafka_acl.app-connector-create-on-data-preview-topics,
     confluent_kafka_acl.app-connector-write-on-data-preview-topics,
   ]
+}
+
+data "confluent_organization" "main" {}
+
+resource "confluent_service_account" "app-reader" {
+  display_name = "app-reader"
+  description  = "Service account of Iceberg Reader applications or compute engines."
+}
+
+resource "confluent_api_key" "app-reader-tableflow-api-key" {
+  display_name = "app-reader-tableflow-api-key"
+  description  = "Tableflow API Key that is owned by 'app-reader' service account"
+  owner {
+    id          = confluent_service_account.app-reader.id
+    api_version = confluent_service_account.app-reader.api_version
+    kind        = confluent_service_account.app-reader.kind
+  }
+
+  managed_resource {
+    id          = "tableflow"
+    api_version = "tableflow/v1"
+    kind        = "Tableflow"
+
+    environment {
+      id = data.confluent_environment.staging.id
+    }
+  }
+
+  depends_on = [
+    confluent_role_binding.app-reader-cluster-resource-owner,
+  ]
+}
+
+resource "confluent_role_binding" "app-reader-cluster-resource-owner" {
+  principal   = "User:${confluent_service_account.app-reader.id}"
+  role_name   = "ResourceOwner"
+  crn_pattern = "${confluent_kafka_cluster.basic.rbac_crn}/kafka=${confluent_kafka_cluster.basic.id}"
 }
