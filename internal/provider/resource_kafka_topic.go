@@ -183,7 +183,7 @@ func extractRestEndpoint(client *Client, d *schema.ResourceData, isImportOperati
 }
 
 func extractClusterApiKeyAndApiSecret(client *Client, d *schema.ResourceData, isImportOperation bool) (string, string, error) {
-	if client.isKafkaMetadataSet {
+	if client.kafkaApiKey != "" && client.kafkaApiSecret != "" {
 		return client.kafkaApiKey, client.kafkaApiSecret, nil
 	}
 	if isImportOperation {
