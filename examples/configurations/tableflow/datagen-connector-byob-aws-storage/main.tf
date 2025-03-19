@@ -104,11 +104,11 @@ resource "confluent_api_key" "app-manager-kafka-api-key" {
   ]
 }
 
-resource "confluent_kafka_topic" "orders" {
+resource "confluent_kafka_topic" "stock-trades" {
   kafka_cluster {
     id = confluent_kafka_cluster.basic.id
   }
-  topic_name    = "orders"
+  topic_name    = "stock-trades"
   rest_endpoint = confluent_kafka_cluster.basic.rest_endpoint
   credentials {
     key    = confluent_api_key.app-manager-kafka-api-key.id
@@ -171,7 +171,7 @@ resource "confluent_kafka_acl" "app-producer-write-on-topic" {
     id = confluent_kafka_cluster.basic.id
   }
   resource_type = "TOPIC"
-  resource_name = confluent_kafka_topic.orders.topic_name
+  resource_name = confluent_kafka_topic.stock-trades.topic_name
   pattern_type  = "LITERAL"
   principal     = "User:${confluent_service_account.app-producer.id}"
   host          = "*"
@@ -193,7 +193,7 @@ resource "confluent_kafka_acl" "app-consumer-read-on-topic" {
     id = confluent_kafka_cluster.basic.id
   }
   resource_type = "TOPIC"
-  resource_name = confluent_kafka_topic.orders.topic_name
+  resource_name = confluent_kafka_topic.stock-trades.topic_name
   pattern_type  = "LITERAL"
   principal     = "User:${confluent_service_account.app-consumer.id}"
   host          = "*"
@@ -294,14 +294,14 @@ resource "confluent_api_key" "app-manager-tableflow-api-key" {
   ]
 }
 
-resource "confluent_tableflow_topic" "orders" {
+resource "confluent_tableflow_topic" "stock-trades" {
   environment {
     id = confluent_environment.staging.id
   }
   kafka_cluster {
     id = confluent_kafka_cluster.basic.id
   }
-  display_name = confluent_kafka_topic.orders.topic_name
+  display_name = confluent_kafka_topic.stock-trades.topic_name
 
   // Use BYOB AWS storage
   byob_aws {
@@ -322,7 +322,7 @@ resource "confluent_tableflow_topic" "orders" {
 
   depends_on = [
     module.s3_access_role,
-    # To avoid "Schemaless topic detected for topic orders. Schemaless topics are not supported. Please specify a value schema." error
+    # To avoid "Schemaless topic detected for topic stock-trades. Schemaless topics are not supported. Please specify a value schema." error
     confluent_connector.source
   ]
 }
@@ -385,7 +385,7 @@ resource "confluent_kafka_acl" "app-connector-write-on-target-topic" {
     id = confluent_kafka_cluster.basic.id
   }
   resource_type = "TOPIC"
-  resource_name = confluent_kafka_topic.orders.topic_name
+  resource_name = confluent_kafka_topic.stock-trades.topic_name
   pattern_type  = "LITERAL"
   principal     = "User:${confluent_service_account.app-connector.id}"
   host          = "*"
@@ -453,9 +453,9 @@ resource "confluent_connector" "source" {
     "name"                     = "DatagenSourceConnector_0"
     "kafka.auth.mode"          = "SERVICE_ACCOUNT"
     "kafka.service.account.id" = confluent_service_account.app-connector.id
-    "kafka.topic"              = confluent_kafka_topic.orders.topic_name
+    "kafka.topic"              = confluent_kafka_topic.stock-trades.topic_name
     "output.data.format"       = "AVRO"
-    "quickstart"               = "ORDERS"
+    "quickstart"               = "STOCK_TRADES"
     "tasks.max"                = "1"
   }
 
