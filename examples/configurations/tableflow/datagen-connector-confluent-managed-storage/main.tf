@@ -226,10 +226,6 @@ resource "confluent_api_key" "app-manager-tableflow-api-key" {
       id = data.confluent_environment.staging.id
     }
   }
-
-  depends_on = [
-    confluent_role_binding.app-manager-provider-integration-resource-owner,
-  ]
 }
 
 resource "confluent_tableflow_topic" "stock-trades" {
