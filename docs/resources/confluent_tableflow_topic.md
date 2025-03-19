@@ -128,3 +128,4 @@ $ terraform import confluent_tableflow_topic.example env-abc123/lkc-abc123/order
 ## Getting Started
 The following end-to-end examples might help to get started with `confluent_tableflow_topic` resource:
 * [`confluent-managed-storage`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/tableflow/confluent-managed-storage): Tableflow topic with Confluent-managed storage.
+* [`byob-aws-storage`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/tableflow/confluent-managed-storage): Tableflow topic with custom (BYOB AWS) storage.
