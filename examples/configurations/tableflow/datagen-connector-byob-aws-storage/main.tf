@@ -45,7 +45,7 @@ resource "confluent_kafka_cluster" "standard" {
   availability = "SINGLE_ZONE"
   cloud        = "AWS"
   // S3 buckets must be in the same region as the cluster
-  region       = var.aws_region
+  region = var.aws_region
   standard {}
   environment {
     id = confluent_environment.staging.id
@@ -66,8 +66,8 @@ resource "confluent_role_binding" "app-manager-kafka-cluster-admin" {
 }
 
 resource "confluent_role_binding" "app-manager-provider-integration-resource-owner" {
-  principal   = "User:${confluent_service_account.app-manager.id}"
-  role_name   = "ResourceOwner"
+  principal = "User:${confluent_service_account.app-manager.id}"
+  role_name = "ResourceOwner"
   // TODO: add resource_name attribute to confluent_provider_integration
   crn_pattern = "${confluent_environment.staging.resource_name}/provider-integration=${confluent_provider_integration.main.id}"
 
