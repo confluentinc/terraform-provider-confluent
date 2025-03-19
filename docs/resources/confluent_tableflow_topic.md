@@ -64,7 +64,7 @@ resource "confluent_tableflow_topic" "example" {
   }
   display_name = data.confluent_kafka_topic.orders.topic_name
   byob_aws {
-    // S3 bucket must be in the same region as the Kafka cluster
+    # S3 bucket must be in the same region as the Kafka cluster
     bucket_name = "bucket_1"
     provider_integration_id = data.confluent_provider_integration.main.id
   }
