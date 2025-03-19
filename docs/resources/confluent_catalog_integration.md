@@ -86,9 +86,9 @@ The following arguments are supported:
 - `kafka_cluster` (Required Configuration Block) supports the following:
     - `id` - (Required String) The ID of the Kafka cluster, for example, `lkc-abc123`.
 - `display_name` - (Required String) The name of the catalog integration.
-- `aws_glue` (Optional Configuration Block) supports the following:
+- `aws_glue` (Optional Configuration Block) supports the following (see [Integrate Tableflow with the AWS Glue Catalog in Confluent Cloud](https://docs.confluent.io/cloud/current/topics/tableflow/how-to-guides/catalog-integration/integrate-with-aws-glue-catalog.html) for more details):
     - `provider_integration_id` - (Required String) The provider integration id.
-- `snowflake` (Optional Configuration Block) supports the following:
+- `snowflake` (Optional Configuration Block) supports the following (see [Integrate Tableflow with Snowflake Open Catalog or Apache Polaris in Confluent Cloud](https://docs.confluent.io/cloud/current/topics/tableflow/how-to-guides/catalog-integration/integrate-with-snowflake-open-catalog-or-apache-polaris.html) for more details):
     - `endpoint` - (Required String) The catalog integration connection endpoint for Snowflake Open Catalog.
     - `client_id` - (Required String, Sensitive) The client ID of the catalog integration.
     - `client_secret` - (Required String, Sensitive) The client secret of the catalog integration.
