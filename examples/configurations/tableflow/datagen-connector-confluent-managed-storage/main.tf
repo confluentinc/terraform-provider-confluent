@@ -383,7 +383,7 @@ resource "confluent_connector" "source" {
 data "confluent_organization" "main" {}
 
 resource "confluent_service_account" "app-reader" {
-  display_name = "app-reader"
+  display_name = "app-reader123"
   description  = "Service account of Iceberg Reader applications or compute engines."
 }
 
