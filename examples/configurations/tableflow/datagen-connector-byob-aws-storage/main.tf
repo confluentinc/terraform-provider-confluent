@@ -456,6 +456,7 @@ resource "confluent_api_key" "app-reader-tableflow-api-key" {
   ]
 }
 
+// https://docs.confluent.io/cloud/current/topics/tableflow/operate/tableflow-rbac.html#access-to-tableflow-resources
 resource "confluent_role_binding" "app-reader-cluster-resource-owner" {
   principal   = "User:${confluent_service_account.app-reader.id}"
   role_name   = "ResourceOwner"
