@@ -71,8 +71,6 @@ In addition to the preceding arguments, the following attributes are exported:
   - `zone_id` - (Required String) Cloud provider zone ID.
   - `cidr` - (Required String) The IPv4 CIDR block to be used for the network. Must be `/27`. Required for VPC peering and AWS TransitGateway.
 
--> **Note:** The `zone_info` configuration block and `reserved_cidr` are in a [Limited Availability lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy), and it's available only for AWS networks with PEERING connection type.
-
 - `connection_types` - (Required List of String) The list of connection types that may be used with the network. Accepted connection types are: `PEERING`, `TRANSITGATEWAY`, and `PRIVATELINK`.
 - `zones` - (Optional List of String) The 3 availability zones for this network. They can optionally be specified for AWS networks
   used with PrivateLink, for GCP networks used with Private Service Connect, and for AWS and GCP
