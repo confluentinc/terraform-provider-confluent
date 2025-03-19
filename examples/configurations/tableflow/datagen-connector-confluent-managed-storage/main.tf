@@ -12,10 +12,6 @@ provider "confluent" {
   cloud_api_secret = var.confluent_cloud_api_secret
 }
 
-provider "aws" {
-  region = var.aws_region
-}
-
 data "confluent_environment" "staging" {
   id = "env-mzxdj2"
 }
