@@ -17,6 +17,7 @@ description: |-
 ### Option #1: Manage multiple Tableflow Topics in the same Terraform workspace
 
 ```terraform
+# https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/tableflow/confluent-managed-storage
 provider "confluent" {
   cloud_api_key    = var.confluent_cloud_api_key    # optionally use CONFLUENT_CLOUD_API_KEY env var
   cloud_api_secret = var.confluent_cloud_api_secret # optionally use CONFLUENT_CLOUD_API_SECRET env var
@@ -46,6 +47,7 @@ resource "confluent_tableflow_topic" "example" {
 ### Option #2: Manage a single Tableflow Topic in the same Terraform workspace
 
 ```terraform
+# https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/tableflow/byob-aws-storage
 provider "confluent" {
   cloud_api_key        = var.confluent_cloud_api_key    # optionally use CONFLUENT_CLOUD_API_KEY env var
   cloud_api_secret     = var.confluent_cloud_api_secret # optionally use CONFLUENT_CLOUD_API_SECRET env var
@@ -62,6 +64,7 @@ resource "confluent_tableflow_topic" "example" {
   }
   display_name = data.confluent_kafka_topic.orders.topic_name
   byob_aws {
+    // S3 bucket must be in the same region as the Kafka cluster
     bucket_name = "bucket_1"
     provider_integration_id = data.confluent_provider_integration.main.id
   }
@@ -85,10 +88,10 @@ The following arguments are supported:
 - `retention_ms` - (Optional String) The max age of snapshots (Iceberg) or versions (Delta) (snapshot/version expiration) to keep on the table in milliseconds for the Tableflow enabled topic.
 - `table_formats` - (Optional List) The supported table formats for the Tableflow-enabled topic. Accepted values are `DELTA`, `ICEBERG`.
 - `record_failure_strategy` - (Optional String) The strategy to handle record failures in the Tableflow enabled topic during materialization. Accepted values are `SKIP`, `SUSPEND`. For `SKIP`, we skip the bad records and move to the next record. For `SUSPEND`, we suspend the materialization of the topic.
-- `byob_aws` (Optional Configuration Block) supports the following:
+- `byob_aws` (Optional Configuration Block) supports the following (See [Quick Start with Custom Storage](https://docs.confluent.io/cloud/current/topics/tableflow/get-started/quick-start-custom-storage-glue.html#cloud-tableflow-quick-start) for more details):
     - `bucket_name` - (Required String) The bucket name.
     - `provider_integration_id` - (Required String) The provider integration id.
-- `managed_storage` (Optional Configuration Block) The configuration of the Confluent managed bucket.
+- `managed_storage` (Optional Configuration Block) The configuration of the Confluent managed storage. See [Quick Start with Managed Storage](https://docs.confluent.io/cloud/current/topics/tableflow/get-started/quick-start-managed-storage.html#cloud-tableflow-quick-start-managed-storage) for more details.
 - `credentials` (Optional Configuration Block) supports the following:
     - `key` - (Required String) The Tableflow API Key.
     - `secret` - (Required String, Sensitive) The Tableflow API Secret.
