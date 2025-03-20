@@ -1,0 +1,35 @@
+{
+    "api_version": "networking/v1",
+    "kind": "PrivateLinkAttachment",
+    "id": "platt-abcdef",
+    "metadata": {
+        "self": "https://api.confluent.cloud/networking/v1/private-link-attachments/platt-abcdef",
+        "resource_name": "crn://confluent.cloud/organization=1111aaaa-11aa-11aa-11aa-111111aaaaaa/private-link-attachment=platt-abcdef",
+        "created_at": "2006-01-02T15:04:05-07:00",
+        "updated_at": "2006-01-02T15:04:05-07:00",
+        "deleted_at": "2006-01-02T15:04:05-07:00"
+    },
+    "spec": {
+        "display_name": "prod-gcp-us-central1",
+        "cloud": "GCP",
+        "region": "us-central1",
+        "environment": {
+            "id": "env-12345",
+            "environment": "env-12345",
+            "related": "https://api.confluent.cloud/v2/environments/env-12345",
+            "resource_name": "https://api.confluent.cloud/organization=1111aaaa-11aa-11aa-11aa-111111aaaaaa/environment=env-12345",
+            "api_version": "networking/v1"
+        }
+    },
+    "status": {
+        "phase": "WAITING_FOR_CONNECTIONS",
+        "error_code": "",
+        "error_message": "",
+        "cloud": {
+            "kind": "GcpPrivateLinkAttachmentStatus",
+            "service_attachment":{
+                "private_service_connect_service_attachment": "projects/project/regions/us-central1/serviceAttachments/plattg-abcd123-service-attachment"
+            }
+        }
+    }
+}
