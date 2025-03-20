@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"golang.org/x/oauth2"
-
 	"github.com/hashicorp/go-retryablehttp"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 
@@ -17,10 +15,9 @@ import (
 )
 
 type FlinkRestClientFactory struct {
-	ctx               context.Context
-	userAgent         string
-	maxRetries        *int
-	oauthClientConfig *OAuthClientConfig
+	ctx        context.Context
+	userAgent  string
+	maxRetries *int
 }
 
 func (f FlinkRestClientFactory) CreateFlinkRestClient(restEndpoint, organizationId, environmentId, computePoolId, principalId, flinkApiKey, flinkApiSecret string, isMetadataSetInProviderBlock bool) *FlinkRestClient {
@@ -36,24 +33,13 @@ func (f FlinkRestClientFactory) CreateFlinkRestClient(restEndpoint, organization
 
 	baseFactory := NewRetryableClientFactory(f.ctx, opts...)
 
-	var finalHTTPClient *http.Client
-	var tokenSource oauth2.TokenSource
-
-	// TODO: Ensure the oauthClient and tokenSource are not nil from provider level
-	// Flink REST client takes the external OAuth client and token source, not the STS one
-	if f.oauthClientConfig != nil {
-		oauthClient := f.oauthClientConfig.ExternalHTTPClient
-		tokenSource = f.oauthClientConfig.ExternalTokenSource
-		finalHTTPClient = baseFactory.CreateRetryableClientWithBase(oauthClient)
-	} else {
-		finalHTTPClient = baseFactory.CreateRetryableClient()
-	}
-
-	config.HTTPClient = finalHTTPClient
+	config.HTTPClient = baseFactory.CreateRetryableClient()
+	// TODO: Hook the token point to the client here
+	config.DefaultHeader = map[string]string{"confluent-identity-pool-id": ""}
 
 	return &FlinkRestClient{
 		apiClient:                    fgb.NewAPIClient(config),
-		oauthTokenSource:             tokenSource,
+		externalAccessToken:          nil,
 		organizationId:               organizationId,
 		environmentId:                environmentId,
 		computePoolId:                computePoolId,
@@ -66,10 +52,9 @@ func (f FlinkRestClientFactory) CreateFlinkRestClient(restEndpoint, organization
 }
 
 type SchemaRegistryRestClientFactory struct {
-	ctx               context.Context
-	userAgent         string
-	maxRetries        *int
-	oauthClientConfig *OAuthClientConfig
+	ctx        context.Context
+	userAgent  string
+	maxRetries *int
 }
 
 func (f SchemaRegistryRestClientFactory) CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret string, isMetadataSetInProviderBlock bool) *SchemaRegistryRestClient {
@@ -97,25 +82,19 @@ func (f SchemaRegistryRestClientFactory) CreateSchemaRegistryRestClient(restEndp
 	baseFactory := NewRetryableClientFactory(f.ctx, opts...)
 
 	var finalHTTPClient *http.Client
-	var tokenSource oauth2.TokenSource
-
-	// TODO: Ensure the oauthClient and tokenSource are not nil from provider level
-	// Both Schema Registry and Data Catalog REST client takes the external OAuth client and token source, not the STS one
-	if f.oauthClientConfig != nil {
-		oauthClient := f.oauthClientConfig.ExternalHTTPClient
-		tokenSource = f.oauthClientConfig.ExternalTokenSource
-		finalHTTPClient = baseFactory.CreateRetryableClientWithBase(oauthClient)
-	} else {
-		finalHTTPClient = baseFactory.CreateRetryableClient()
-	}
+	finalHTTPClient = baseFactory.CreateRetryableClient()
 
 	config.HTTPClient = finalHTTPClient
 	dataCatalogConfig.HTTPClient = finalHTTPClient
 
+	// TODO: Hook the token point to the client here
+	config.DefaultHeader = map[string]string{"confluent-identity-pool-id": ""}
+	dataCatalogConfig.DefaultHeader = map[string]string{"confluent-identity-pool-id": ""}
+
 	return &SchemaRegistryRestClient{
 		apiClient:                    schemaregistry.NewAPIClient(config),
 		dataCatalogApiClient:         dc.NewAPIClient(dataCatalogConfig),
-		oauthTokenSource:             tokenSource,
+		externalAccessToken:          nil,
 		clusterId:                    clusterId,
 		clusterApiKey:                clusterApiKey,
 		clusterApiSecret:             clusterApiSecret,
@@ -125,13 +104,12 @@ func (f SchemaRegistryRestClientFactory) CreateSchemaRegistryRestClient(restEndp
 }
 
 type KafkaRestClientFactory struct {
-	ctx               context.Context
-	userAgent         string
-	maxRetries        *int
-	oauthClientConfig *OAuthClientConfig
+	ctx        context.Context
+	userAgent  string
+	maxRetries *int
 }
 
-func (f KafkaRestClientFactory) CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret string, isMetadataSetInProviderBlock, isClusterIdSetInProviderBlock bool) *KafkaRestClient {
+func (f KafkaRestClientFactory) CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret string, isClusterIdSetInProviderBlock, isMetadataSetInProviderBlock bool, token *OAuthToken) *KafkaRestClient {
 	var opts []RetryableClientFactoryOption = []RetryableClientFactoryOption{}
 	config := kafkarestv3.NewConfiguration()
 
@@ -144,24 +122,12 @@ func (f KafkaRestClientFactory) CreateKafkaRestClient(restEndpoint, clusterId, c
 
 	baseFactory := NewRetryableClientFactory(f.ctx, opts...)
 
-	var finalHTTPClient *http.Client
-	var tokenSource oauth2.TokenSource
-
-	// TODO: Ensure the oauthClient and tokenSource are not nil from provider level
-	// Kafka REST client takes the external OAuth client and token source, not the STS one
-	if f.oauthClientConfig != nil {
-		oauthClient := f.oauthClientConfig.ExternalHTTPClient
-		tokenSource = f.oauthClientConfig.ExternalTokenSource
-		finalHTTPClient = baseFactory.CreateRetryableClientWithBase(oauthClient)
-	} else {
-		finalHTTPClient = baseFactory.CreateRetryableClient()
-	}
-
-	config.HTTPClient = finalHTTPClient
+	config.HTTPClient = baseFactory.CreateRetryableClient()
+	config.DefaultHeader = map[string]string{"confluent-identity-pool-id": token.IdentityPoolId}
 
 	return &KafkaRestClient{
 		apiClient:                     kafkarestv3.NewAPIClient(config),
-		oauthTokenSource:              tokenSource,
+		externalAccessToken:           token,
 		clusterId:                     clusterId,
 		clusterApiKey:                 clusterApiKey,
 		clusterApiSecret:              clusterApiSecret,

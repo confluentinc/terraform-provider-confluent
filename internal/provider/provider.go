@@ -21,8 +21,6 @@ import (
 	"strings"
 	"time"
 
-	"golang.org/x/oauth2"
-
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -105,7 +103,6 @@ type Client struct {
 	srcmClient                      *srcm.APIClient
 	ssoClient                       *sso.APIClient
 	piClient                        *pi.APIClient
-	oauthClientConfig               *OAuthClientConfig
 	userAgent                       string
 	cloudApiKey                     string
 	cloudApiSecret                  string
@@ -127,7 +124,8 @@ type Client struct {
 	flinkApiKey                     string
 	flinkApiSecret                  string
 	flinkRestEndpoint               string
-	oauthToken                      string
+	oauthToken                      *OAuthToken
+	stsToken                        *STSToken
 	isFlinkMetadataSet              bool
 	isAcceptanceTestMode            bool
 }
@@ -451,9 +449,14 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	flinkRestEndpoint := d.Get("flink_rest_endpoint").(string)
 	maxRetries := d.Get("max_retries").(int)
 
-	oauthClientConfig, err := retrieveOAuthSetting(ctx, d)
-	if err != nil {
-		tflog.Warn(ctx, "unexpected response when creating OAuth setting")
+	var externalOAuthToken = &OAuthToken{}
+	var stsOAuthToken = &STSToken{}
+	var err diag.Diagnostics
+	if _, ok := d.GetOk(paramOAuthBlockName); ok {
+		externalOAuthToken, stsOAuthToken, err = initializeOAuthConfigs(ctx, d)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// 3 or 4 attributes should be set or not set at the same time
@@ -646,75 +649,42 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 		flinkApiKey:                     flinkApiKey,
 		flinkApiSecret:                  flinkApiSecret,
 		flinkRestEndpoint:               flinkRestEndpoint,
+		oauthToken:                      externalOAuthToken,
+		stsToken:                        stsOAuthToken,
 		// For simplicity, treat 3 (for Kafka), 4 (for SR), and 7 (for Flink) variables as a "single" one
 		isKafkaMetadataSet:          allKafkaAttributesAreSet,
 		isKafkaClusterIdSet:         kafkaClusterId != "",
 		isSchemaRegistryMetadataSet: allSchemaRegistryAttributesAreSet,
 		isFlinkMetadataSet:          allFlinkAttributesAreSet,
 		isAcceptanceTestMode:        acceptanceTestMode,
-		oauthClientConfig:           oauthClientConfig,
 	}
 
 	return &client, nil
 }
 
-func retrieveOAuthSetting(ctx context.Context, d *schema.ResourceData) (*OAuthClientConfig, diag.Diagnostics) {
-	if _, ok := d.GetOk(paramOAuthBlockName); !ok {
-		return nil, nil
-	}
-
-	clientId := extractStringValueFromBlock(d, paramOAuthBlockName, paramOAuthClientId)
-	clientSecret := extractStringValueFromBlock(d, paramOAuthBlockName, paramOAuthClientSecret)
-	externalTokenURL := extractStringValueFromBlock(d, paramOAuthBlockName, paramOAuthTokenURL)
-
-	// 1. Create the external OAuth config
-	externalOAuthConfig := &oauth2.Config{
-		ClientID:     clientId,
-		ClientSecret: clientSecret,
-		Endpoint: oauth2.Endpoint{
-			TokenURL: externalTokenURL,
-		},
-	}
-
-	// 2. Fetch the initial external token
-	// TODO: check if this PasswordCredentialsToken functions works
-	externalToken, err := externalOAuthConfig.PasswordCredentialsToken(ctx, clientId, clientSecret)
+func initializeOAuthConfigs(ctx context.Context, d *schema.ResourceData) (*OAuthToken, *STSToken, diag.Diagnostics) {
+	tflog.Info(ctx, "Initializing OAuth settings for Confluent Cloud")
+	// External OAuth token initialization
+	clientId := extractStringValueFromBlock(d, paramOAuthBlockName, paramOAuthExternalClientId)
+	clientSecret := extractStringValueFromBlock(d, paramOAuthBlockName, paramOAuthExternalClientSecret)
+	externalTokenURL := extractStringValueFromBlock(d, paramOAuthBlockName, paramOAuthExternalTokenURL)
+	scope := extractStringValueFromBlock(d, paramOAuthBlockName, paramOAuthExternalTokenScope)
+	identityPoolId := extractStringValueFromBlock(d, paramOAuthBlockName, paramOAuthIdentityPoolId)
+	oauthToken, err := fetchExternalOAuthToken(ctx, externalTokenURL, clientId, clientSecret, scope, identityPoolId, nil)
 	if err != nil {
-		return nil, diag.FromErr(err)
+		return nil, nil, diag.FromErr(err)
 	}
+	tflog.Debug(ctx, fmt.Sprintf("OAuth Token: %v", *oauthToken))
 
-	// (Optional) Store refresh token in state
-	err = d.Set(paramOAuthRefreshToken, externalToken.RefreshToken)
+	// STS token exchanged from external OAuth token
+	expiredInSeconds := extractStringValueFromBlock(d, paramOAuthBlockName, paramOAuthSTSTokenExpiredInSeconds)
+	stsToken, err := fetchSTSOAuthToken(ctx, oauthToken.AccessToken, identityPoolId, expiredInSeconds, nil)
 	if err != nil {
-		return nil, diag.FromErr(err)
+		return nil, nil, diag.FromErr(err)
 	}
+	tflog.Debug(ctx, fmt.Sprintf("STS Token: %v", *stsToken))
 
-	// 3. Create an auto-refreshing external OAuth TokenSource
-	externalTokenSource := externalOAuthConfig.TokenSource(ctx, externalToken)
-
-	// 4. Create an HTTP client for external OAuth requests
-	externalHTTPClient := oauth2.NewClient(ctx, externalTokenSource)
-
-	// 5. Create a custom STS Token Source that exchanges the external OAuth token
-	identityPoolId := extractStringValueFromBlock(d, "oauth", paramOAuthIdentityPoolId)
-	stsTokenSource := &STSExchange{
-		OAuthTokenSource: externalTokenSource, // we reuse the external token
-		IdentityPoolID:   identityPoolId,
-		STSURL:           "https://api.confluent.cloud/sts/v1/oauth2/token",
-	}
-
-	// 6. Create an HTTP client that uses the STS token
-	stsHTTPClient := oauth2.NewClient(ctx, stsTokenSource)
-
-	// 7. Build our final config object with both token sources
-	oauthConfig := &OAuthClientConfig{
-		ExternalTokenSource: externalTokenSource,
-		STSTokenSource:      stsTokenSource,
-		ExternalHTTPClient:  externalHTTPClient,
-		STSHTTPClient:       stsHTTPClient,
-	}
-
-	return oauthConfig, nil
+	return oauthToken, stsToken, nil
 }
 
 func providerOAuthSchema() *schema.Schema {
@@ -722,51 +692,55 @@ func providerOAuthSchema() *schema.Schema {
 		Type: schema.TypeList,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
-				paramOAuthTokenURL: {
+				paramOAuthExternalTokenURL: {
 					Type:        schema.TypeString,
-					Required:    true,
+					Optional:    true,
 					Description: "OAuth token URL to fetch access token from external IDP",
 				},
-				paramOAuthClientId: {
+				paramOAuthExternalClientId: {
 					Type:         schema.TypeString,
-					Required:     true,
-					Description:  "OAuth client id",
+					Optional:     true,
+					Description:  "OAuth client id from external token source",
 					ValidateFunc: validation.StringIsNotEmpty,
 				},
-				paramOAuthClientSecret: {
+				paramOAuthExternalClientSecret: {
+					Type:         schema.TypeString,
+					Optional:     true,
+					Sensitive:    true,
+					Description:  "OAuth client secret from external token source",
+					ValidateFunc: validation.StringIsNotEmpty,
+				},
+				paramOAuthExternalAccessToken: {
 					Type:        schema.TypeString,
-					Required:    true,
+					Optional:    true,
 					Sensitive:   true,
-					Description: "OAuth client secret",
+					Description: "OAuth access token from external IDP",
+				},
+				paramOAuthExternalTokenExpiresInSeconds: {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "OAuth access token expired in second from Confluent Cloud",
+				},
+				paramOAuthExternalTokenScope: {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "OAuth access token scope",
 				},
 				paramOAuthIdentityPoolId: {
 					Type:        schema.TypeString,
 					Required:    true,
-					Description: "OAuth identity pool id",
+					Description: "OAuth identity pool id used for processing external token and exchange STS token",
 				},
-				paramOAuthAccessToken: {
+				paramOAuthSTSAccessToken: {
 					Type:        schema.TypeString,
 					Optional:    true,
-					Computed:    true,
-					Sensitive:   true,
-					Description: "OAuth access token from external IDP",
-				},
-				paramOAuthRefreshToken: {
-					Type:        schema.TypeString,
-					Computed:    true,
-					Sensitive:   true,
-					Description: "OAuth refresh token from external IDP",
-				},
-				paramOAuthSTSToken: {
-					Type:        schema.TypeString,
-					Computed:    true,
 					Sensitive:   true,
 					Description: "OAuth STS access token from Confluent Cloud",
 				},
-				paramOAuthScope: {
+				paramOAuthSTSTokenExpiredInSeconds: {
 					Type:        schema.TypeString,
 					Optional:    true,
-					Description: "OAuth access token scope",
+					Description: "OAuth STS access token expired in second from Confluent Cloud",
 				},
 			},
 		},

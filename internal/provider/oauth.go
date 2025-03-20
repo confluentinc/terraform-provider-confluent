@@ -1,80 +1,83 @@
 package provider
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
-	"golang.org/x/oauth2"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"io"
 	"net/http"
+	"net/http/httputil"
 	"net/url"
 	"strings"
 	"time"
 )
 
 const (
-	paramOAuthBlockName      = "oauth"
-	paramOAuthAccessToken    = "oauth_access_token"
-	paramOAuthClientId       = "oauth_client_id"
-	paramOAuthClientSecret   = "oauth_client_secret"
-	paramOAuthRefreshToken   = "oauth_refresh_token"
-	paramOAuthScope          = "oauth_scope"
-	paramOAuthSTSToken       = "oauth_sts_token"
-	paramOAuthTokenURL       = "oauth_token_url"
-	paramOAuthIdentityPoolId = "oauth_identity_pool_id"
+	paramOAuthBlockName                     = "oauth"
+	paramOAuthExternalTokenURL              = "oauth_external_token_url"
+	paramOAuthExternalAccessToken           = "oauth_external_access_token"
+	paramOAuthExternalClientId              = "oauth_external_client_id"
+	paramOAuthExternalClientSecret          = "oauth_external_client_secret"
+	paramOAuthExternalTokenScope            = "oauth_external_token_scope"
+	paramOAuthExternalTokenExpiresInSeconds = "oauth_external_token_expires_in_seconds"
+	paramOAuthSTSAccessToken                = "oauth_sts_access_token"
+	paramOAuthSTSTokenExpiredInSeconds      = "oauth_sts_token_expired_in_seconds"
+	paramOAuthIdentityPoolId                = "oauth_identity_pool_id"
+	stsEndpoint                             = "https://api.confluent.cloud/sts/v1/oauth2/token"
 )
 
-type OAuthClientConfig struct {
-	ExternalTokenSource oauth2.TokenSource
-	STSTokenSource      oauth2.TokenSource
-	ExternalHTTPClient  *http.Client
-	STSHTTPClient       *http.Client
+type OAuthToken struct {
+	ClientId         string    `json:"client_id"`
+	ClientSecret     string    `json:"client_secret"`
+	TokenUrl         string    `json:"token_url"`
+	ExpiresInSeconds string    `json:"expires_in_seconds"`
+	Scope            string    `json:"scope"`
+	AccessToken      string    `json:"access_token"`
+	TokenType        string    `json:"token_type"`
+	IdentityPoolId   string    `json:"identity_pool_id"`
+	ValidUntil       time.Time `json:"valid_until"`
 }
 
-type STSExchange struct {
-	OAuthTokenSource oauth2.TokenSource // Source for the original OAuth token
-	IdentityPoolID   string
-	STSURL           string        // 'STSURL' adheres to Go’s acronym conventions
-	CurrentToken     *oauth2.Token // Cached STS token
+type STSToken struct {
+	ExpiresInSeconds string    `json:"expires_in_seconds"`
+	AccessToken      string    `json:"access_token"`
+	TokenType        string    `json:"token_type"`
+	IssuedTokenType  string    `json:"issued_token_type"`
+	IdentityPoolId   string    `json:"identity_pool_id"`
+	ValidUntil       time.Time `json:"valid_until"`
 }
 
-// Token fetches a new STS token if expired
-func (s *STSExchange) Token() (*oauth2.Token, error) {
-	// If the token is still valid, return it
-	if s.CurrentToken != nil && time.Now().Before(s.CurrentToken.Expiry) {
-		return s.CurrentToken, nil
+func fetchSTSOAuthToken(ctx context.Context, subjectToken, identityPoolId, expiredInSeconds string, currToken *STSToken) (*STSToken, error) {
+	// Validate if the current token is still valid, if so, return it
+	if valid := validateCurrentSTSOAuthToken(ctx, currToken); valid {
+		return currToken, nil
 	}
-
-	// Get a fresh OAuth token
-	oauthToken, err := s.OAuthTokenSource.Token()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get OAuth token: %v", err)
-	}
-
-	// Exchange OAuth token for STS token
-	newToken, err := exchangeSTS(oauthToken.AccessToken, s.IdentityPoolID, s.STSURL)
-	if err != nil {
-		return nil, fmt.Errorf("failed to exchange STS token: %v", err)
-	}
-
-	// Cache the new STS token
-	s.CurrentToken = newToken
-	return newToken, nil
+	return requestNewSTSOAuthToken(ctx, subjectToken, identityPoolId, expiredInSeconds)
 }
 
-func exchangeSTS(oauthToken, identityPoolID, stsURL string) (*oauth2.Token, error) {
+func requestNewSTSOAuthToken(ctx context.Context, subjectToken, identityPoolId, expiredInSeconds string) (*STSToken, error) {
 	data := url.Values{}
 	data.Set("grant_type", "urn:ietf:params:oauth:grant-type:token-exchange")
-	data.Set("subject_token", oauthToken)
-	data.Set("identity_pool_id", identityPoolID)
+	data.Set("subject_token", subjectToken)
+	data.Set("identity_pool_id", identityPoolId)
 	data.Set("subject_token_type", "urn:ietf:params:oauth:token-type:jwt")
 	data.Set("requested_token_type", "urn:ietf:params:oauth:token-type:access_token")
-	data.Set("expires_in", "900")
+	data.Set("expires_in", expiredInSeconds)
 
-	req, err := http.NewRequest("POST", stsURL, strings.NewReader(data.Encode()))
+	req, err := http.NewRequest(http.MethodPost, stsEndpoint, strings.NewReader(data.Encode()))
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("content-type", "application/x-www-form-urlencoded")
+	req.Header.Set("accept", "application/json")
+
+	// For debug request purpose
+	dumpRequest, err := httputil.DumpRequestOut(req, true)
+	if err != nil {
+		return nil, err
+	}
+	tflog.Debug(ctx, fmt.Sprintf("Exchange STS token raw request is: %s\n", string(dumpRequest)))
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
@@ -89,23 +92,142 @@ func exchangeSTS(oauthToken, identityPoolID, stsURL string) (*oauth2.Token, erro
 		}
 	}(resp.Body)
 
+	// For debug response purpose
+	dumpResponse, err := httputil.DumpResponse(resp, true)
+	if err != nil {
+		return nil, err
+	}
+	tflog.Debug(ctx, fmt.Sprintf("Fetched STS token raw response is: %s\n", string(dumpResponse)))
+
 	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("STS request failed: %s", string(body))
+		return nil, fmt.Errorf("STS exchange request failed: %s", string(dumpResponse))
 	}
 
 	// Parse the response
-	var result struct {
-		AccessToken string `json:"access_token"`
-		ExpiresIn   int    `json:"expires_in"`
-	}
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+	result := &STSToken{}
+	resultMap := make(map[string]any)
+	responseBody, _ := io.ReadAll(resp.Body)
+	if err := json.Unmarshal(responseBody, &resultMap); err != nil {
 		return nil, err
 	}
 
-	// Return STS token as an `oauth2.Token`
-	return &oauth2.Token{
-		AccessToken: result.AccessToken,
-		Expiry:      time.Now().Add(time.Duration(result.ExpiresIn) * time.Second),
-	}, nil
+	for k, v := range resultMap {
+		switch k {
+		case "expires_in":
+			result.ExpiresInSeconds = fmt.Sprintf("%v", v)
+			result.ValidUntil = time.Now().Add(time.Duration(v.(float64)) * time.Second)
+		case "access_token":
+			result.AccessToken = v.(string)
+		case "token_type":
+			result.TokenType = v.(string)
+		case "issued_token_type":
+			result.IssuedTokenType = v.(string)
+		}
+	}
+	result.IdentityPoolId = identityPoolId
+	return result, nil
+}
+
+func fetchExternalOAuthToken(ctx context.Context, tokenUrl, clientId, clientSecret, customScope, identityPoolId string, currToken *OAuthToken) (*OAuthToken, error) {
+	// Validate if the current token is still valid, if so, return it
+	if valid := validateCurrentExternalOAuthToken(ctx, currToken); valid {
+		return currToken, nil
+	}
+	// If the current token is not valid, request a new one
+	return requestNewExternalOAuthToken(ctx, tokenUrl, clientId, clientSecret, customScope, identityPoolId)
+}
+
+func requestNewExternalOAuthToken(ctx context.Context, tokenUrl, clientId, clientSecret, customScope, identityPoolId string) (*OAuthToken, error) {
+	data := url.Values{}
+	data.Set("grant_type", "client_credentials")
+	data.Set("client_id", clientId)
+	data.Set("client_secret", clientSecret)
+	if customScope != "" {
+		data.Set("scope", customScope)
+	}
+
+	req, err := http.NewRequest(http.MethodPost, tokenUrl, strings.NewReader(data.Encode()))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("content-type", "application/x-www-form-urlencoded")
+	req.Header.Set("accept", "application/json")
+
+	// For debug request purpose
+	dumpRequest, err := httputil.DumpRequestOut(req, true)
+	if err != nil {
+		return nil, err
+	}
+	tflog.Debug(ctx, fmt.Sprintf("External OAuth token raw request is: %s\n", string(dumpRequest)))
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+
+		}
+	}(resp.Body)
+
+	// For debug response purpose
+	dumpResponse, err := httputil.DumpResponse(resp, true)
+	if err != nil {
+		return nil, err
+	}
+	tflog.Debug(ctx, fmt.Sprintf("External OAuth token raw response is: %s\n", string(dumpResponse)))
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("exchange external token request failed: %s\n", string(dumpResponse))
+	}
+
+	// Parse the response
+	result := &OAuthToken{}
+	resultMap := make(map[string]any)
+	responseBody, _ := io.ReadAll(resp.Body)
+	if err := json.Unmarshal(responseBody, &resultMap); err != nil {
+		return nil, err
+	}
+
+	for k, v := range resultMap {
+		switch k {
+		case "expires_in":
+			result.ExpiresInSeconds = fmt.Sprintf("%v", v)
+			result.ValidUntil = time.Now().Add(time.Duration(v.(float64)) * time.Second)
+		case "access_token":
+			result.AccessToken = v.(string)
+		case "token_type":
+			result.TokenType = v.(string)
+		case "scope":
+			result.Scope = v.(string)
+		}
+	}
+
+	result.IdentityPoolId = identityPoolId
+	return result, nil
+}
+
+func validateCurrentExternalOAuthToken(ctx context.Context, token *OAuthToken) bool {
+	if token == nil {
+		return false
+	}
+	if token.ValidUntil.Before(time.Now()) {
+		tflog.Info(ctx, fmt.Sprintf("Current external OAuth token expired at %s", token.ValidUntil))
+		return false
+	}
+	return true
+}
+
+func validateCurrentSTSOAuthToken(ctx context.Context, token *STSToken) bool {
+	if token == nil {
+		return false
+	}
+	if token.ValidUntil.Before(time.Now()) {
+		tflog.Info(ctx, fmt.Sprintf("Current STS OAuth token expired at %s", token.ValidUntil))
+		return false
+	}
+	return true
 }
