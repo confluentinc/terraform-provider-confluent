@@ -1038,6 +1038,9 @@ func extractSchemaRegistryRestEndpoint(client *Client, d *schema.ResourceData, i
 }
 
 func extractSchemaRegistryClusterApiKeyAndApiSecret(client *Client, d *schema.ResourceData, isImportOperation bool) (string, string, error) {
+	if client.isOAuthEnabled {
+		return "", "", nil
+	}
 	if client.isSchemaRegistryMetadataSet {
 		return client.schemaRegistryApiKey, client.schemaRegistryApiSecret, nil
 	}

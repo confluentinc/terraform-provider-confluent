@@ -735,12 +735,6 @@ func providerOAuthSchema() *schema.Schema {
 					Required:    true,
 					Description: "OAuth identity pool id used for processing external token and exchange STS token",
 				},
-				paramOAuthSTSAccessToken: {
-					Type:        schema.TypeString,
-					Optional:    true,
-					Sensitive:   true,
-					Description: "OAuth STS access token from Confluent Cloud",
-				},
 				paramOAuthSTSTokenExpiredInSeconds: {
 					Type:        schema.TypeString,
 					Optional:    true,

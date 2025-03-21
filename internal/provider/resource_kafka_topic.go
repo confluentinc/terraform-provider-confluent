@@ -474,9 +474,7 @@ func readTopicAndSetAttributes(ctx context.Context, d *schema.ResourceData, c *K
 	}
 
 	if !c.isMetadataSetInProviderBlock {
-		if c.externalAccessToken != nil {
-			tflog.Debug(ctx, fmt.Sprintf("skip setting credentials block in Kafka Topic %q because OAuth is enabled", d.Id()), map[string]interface{}{kafkaTopicLoggingKey: d.Id()})
-		} else if err := setKafkaCredentials(c.clusterApiKey, c.clusterApiSecret, d); err != nil {
+		if err := setKafkaCredentials(c.clusterApiKey, c.clusterApiSecret, d, c.externalAccessToken != nil); err != nil {
 			return nil, err
 		}
 		if err := d.Set(paramRestEndpoint, c.restEndpoint); err != nil {
@@ -659,7 +657,10 @@ func executeKafkaTopicPartitionsCountUpdate(ctx context.Context, c *KafkaRestCli
 	return c.apiClient.TopicV3Api.UpdatePartitionCountKafkaTopic(c.apiContext(ctx), c.clusterId, topicName).UpdatePartitionCountRequestData(requestData).Execute()
 }
 
-func setKafkaCredentials(kafkaApiKey, kafkaApiSecret string, d *schema.ResourceData) error {
+func setKafkaCredentials(kafkaApiKey, kafkaApiSecret string, d *schema.ResourceData, isOAuthEnabled bool) error {
+	if isOAuthEnabled {
+		return nil
+	}
 	return d.Set(paramCredentials, []interface{}{map[string]interface{}{
 		paramKey:    kafkaApiKey,
 		paramSecret: kafkaApiSecret,

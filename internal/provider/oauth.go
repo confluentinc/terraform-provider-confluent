@@ -21,7 +21,6 @@ const (
 	paramOAuthExternalClientSecret          = "oauth_external_client_secret"
 	paramOAuthExternalTokenScope            = "oauth_external_token_scope"
 	paramOAuthExternalTokenExpiresInSeconds = "oauth_external_token_expires_in_seconds"
-	paramOAuthSTSAccessToken                = "oauth_sts_access_token"
 	paramOAuthSTSTokenExpiredInSeconds      = "oauth_sts_token_expired_in_seconds"
 	paramOAuthIdentityPoolId                = "oauth_identity_pool_id"
 	stsEndpoint                             = "https://api.confluent.cloud/sts/v1/oauth2/token"

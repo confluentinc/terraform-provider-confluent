@@ -469,7 +469,7 @@ func setFlinkStatementAttributes(d *schema.ResourceData, c *FlinkRestClient, sta
 	}
 
 	if !c.isMetadataSetInProviderBlock {
-		if err := setKafkaCredentials(c.flinkApiKey, c.flinkApiSecret, d); err != nil {
+		if err := setKafkaCredentials(c.flinkApiKey, c.flinkApiSecret, d, c.externalAccessToken != nil); err != nil {
 			return nil, err
 		}
 		if err := d.Set(paramRestEndpoint, c.restEndpoint); err != nil {
@@ -647,6 +647,9 @@ func extractFlinkRestEndpoint(client *Client, d *schema.ResourceData, isImportOp
 }
 
 func extractFlinkApiKeyAndApiSecret(client *Client, d *schema.ResourceData, isImportOperation bool) (string, string, error) {
+	if client.isOAuthEnabled {
+		return "", "", nil
+	}
 	if client.isFlinkMetadataSet {
 		return client.flinkApiKey, client.flinkApiSecret, nil
 	}
