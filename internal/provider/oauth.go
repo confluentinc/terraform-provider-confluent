@@ -206,6 +206,9 @@ func requestNewExternalOAuthToken(ctx context.Context, tokenUrl, clientId, clien
 	}
 
 	result.IdentityPoolId = identityPoolId
+	result.TokenUrl = tokenUrl
+	result.ClientId = clientId
+	result.ClientSecret = clientSecret
 	return result, nil
 }
 
