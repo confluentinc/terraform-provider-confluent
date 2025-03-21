@@ -92,7 +92,7 @@ func catalogEntityAttributesCreate(ctx context.Context, d *schema.ResourceData, 
 	entityAttributesId := createEntityAttributesId(entityType, entityName)
 	attributes[qualifiedName] = entityName
 
-	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 	entityRequest := dc.Entity{}
 	entityRequest.SetTypeName(entityType)
 	entityRequest.SetAttributes(attributes)
@@ -154,7 +154,7 @@ func readEntityAttributesAndSetAttributes(ctx context.Context, d *schema.Resourc
 
 	tflog.Debug(ctx, fmt.Sprintf("Reading Entity Attributes %q=%q", paramId, entityAttributesId), map[string]interface{}{entityAttributesLoggingKey: entityAttributesId})
 
-	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 	request := schemaRegistryRestClient.dataCatalogApiClient.EntityV1Api.GetByUniqueAttributes(schemaRegistryRestClient.dataCatalogApiContext(ctx), entityType, entityName)
 	entity, resp, err := request.Execute()
 	if err != nil {
@@ -206,7 +206,7 @@ func catalogEntityAttributesDelete(ctx context.Context, d *schema.ResourceData, 
 	entityAttributesId := createEntityAttributesId(entityType, entityName)
 	attributes[qualifiedName] = entityName
 
-	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 	entityRequest := dc.Entity{}
 	entityRequest.SetTypeName(entityType)
 	entityRequest.SetAttributes(attributes)
@@ -256,7 +256,7 @@ func catalogEntityAttributesUpdate(ctx context.Context, d *schema.ResourceData, 
 		entityAttributesId := createEntityAttributesId(entityType, entityName)
 		attributes[qualifiedName] = entityName
 
-		schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+		schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 		entityRequest := dc.Entity{}
 		entityRequest.SetTypeName(entityType)
 		entityRequest.SetAttributes(attributes)

@@ -142,7 +142,7 @@ func businessMetadataCreate(ctx context.Context, d *schema.ResourceData, meta in
 	businessMetadataName := d.Get(paramName).(string)
 	businessMetadataId := createBusinessMetadataId(clusterId, businessMetadataName)
 
-	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 	businessMetadataRequest := dc.BusinessMetadataDef{}
 	businessMetadataRequest.SetName(businessMetadataName)
 	description := d.Get(paramDescription).(string)
@@ -215,7 +215,7 @@ func readBusinessMetadataAndSetAttributes(ctx context.Context, d *schema.Resourc
 
 	tflog.Debug(ctx, fmt.Sprintf("Reading Business Metadata %q=%q", paramId, businessMetadataId), map[string]interface{}{businessMetadataLoggingKey: businessMetadataId})
 
-	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 	request := schemaRegistryRestClient.dataCatalogApiClient.TypesV1Api.GetBusinessMetadataDefByName(schemaRegistryRestClient.dataCatalogApiContext(ctx), businessMetadataName)
 	businessMetadata, resp, err := request.Execute()
 	if err != nil {
@@ -263,7 +263,7 @@ func businessMetadataDelete(ctx context.Context, d *schema.ResourceData, meta in
 
 	tflog.Debug(ctx, fmt.Sprintf("Deleting Business Metadata %q=%q", paramId, businessMetadataId), map[string]interface{}{businessMetadataLoggingKey: businessMetadataId})
 
-	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 	request := schemaRegistryRestClient.dataCatalogApiClient.TypesV1Api.DeleteBusinessMetadataDef(schemaRegistryRestClient.dataCatalogApiContext(ctx), businessMetadataName)
 	_, serviceErr := request.Execute()
 	if serviceErr != nil {
@@ -297,7 +297,7 @@ func businessMetadataUpdate(ctx context.Context, d *schema.ResourceData, meta in
 		businessMetadataName := d.Get(paramName).(string)
 		businessMetadataId := createBusinessMetadataId(clusterId, businessMetadataName)
 
-		schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+		schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 		businessMetadataRequest := dc.BusinessMetadataDef{}
 		businessMetadataRequest.SetName(businessMetadataName)
 		description := d.Get(paramDescription).(string)

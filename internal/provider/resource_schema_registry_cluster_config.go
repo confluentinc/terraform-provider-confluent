@@ -74,7 +74,7 @@ func schemaRegistryClusterConfigCreate(ctx context.Context, d *schema.ResourceDa
 	if err != nil {
 		return diag.Errorf("error creating Schema Registry Cluster Config: %s", createDescriptiveError(err))
 	}
-	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 
 	if _, ok := d.GetOk(paramCompatibilityLevel); ok {
 		compatibilityLevel := d.Get(paramCompatibilityLevel).(string)
@@ -129,7 +129,7 @@ func schemaRegistryClusterConfigRead(ctx context.Context, d *schema.ResourceData
 	if err != nil {
 		return diag.Errorf("error reading Schema Registry Cluster Config: %s", createDescriptiveError(err))
 	}
-	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 
 	_, err = readSchemaRegistryClusterConfigAndSetAttributes(ctx, d, schemaRegistryRestClient)
 	if err != nil {
@@ -159,7 +159,7 @@ func schemaRegistryClusterConfigImport(ctx context.Context, d *schema.ResourceDa
 
 	clusterId := d.Id()
 
-	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 
 	// Mark resource as new to avoid d.Set("") when getting 404
 	d.MarkNewResource()
@@ -237,7 +237,7 @@ func schemaRegistryClusterConfigUpdate(ctx context.Context, d *schema.ResourceDa
 		if err != nil {
 			return diag.Errorf("error updating Schema Registry Cluster Config: %s", createDescriptiveError(err))
 		}
-		schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+		schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 		updateCompatibilityLevelRequestJson, err := json.Marshal(updateConfigRequest)
 		if err != nil {
 			return diag.Errorf("error updating Schema Registry Cluster Config: error marshaling %#v to json: %s", updateConfigRequest, createDescriptiveError(err))

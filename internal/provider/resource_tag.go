@@ -99,7 +99,7 @@ func tagCreate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagn
 	tagName := d.Get(paramName).(string)
 	tagId := createTagId(clusterId, tagName)
 
-	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 	tagRequest := dc.TagDef{}
 	tagRequest.SetName(tagName)
 	description := d.Get(paramDescription).(string)
@@ -157,7 +157,7 @@ func tagRead(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnos
 	if err != nil {
 		return diag.Errorf("error reading Tag: %s", createDescriptiveError(err))
 	}
-	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 	tagName := d.Get(paramName).(string)
 
 	_, err = readTagAndSetAttributes(ctx, d, schemaRegistryRestClient, tagName)
@@ -223,7 +223,7 @@ func tagDelete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagn
 
 	tflog.Debug(ctx, fmt.Sprintf("Deleting Tag %q=%q", paramId, tagId), map[string]any{tagLoggingKey: tagId})
 
-	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 	request := schemaRegistryRestClient.dataCatalogApiClient.TypesV1Api.DeleteTagDef(schemaRegistryRestClient.dataCatalogApiContext(ctx), tagName)
 	_, serviceErr := request.Execute()
 	if serviceErr != nil {
@@ -257,7 +257,7 @@ func tagUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagn
 	tagName := d.Get(paramName).(string)
 	tagId := createTagId(clusterId, tagName)
 
-	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 	tagRequest := dc.TagDef{}
 	tagRequest.SetName(tagName)
 	description := d.Get(paramDescription).(string)
@@ -317,7 +317,7 @@ func tagImport(ctx context.Context, d *schema.ResourceData, meta any) ([]*schema
 	clusterId := parts[0]
 	tagName := parts[1]
 
-	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 
 	// Mark resource as new to avoid d.Set("") when getting 404
 	d.MarkNewResource()

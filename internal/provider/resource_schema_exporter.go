@@ -185,7 +185,7 @@ func schemaExporterCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	if err != nil {
 		return diag.Errorf("error creating Schema Exporter: %s", createDescriptiveError(err))
 	}
-	c := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+	c := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 
 	subjects := convertToStringSlice(d.Get(paramSubjects).(*schema.Set).List())
 	exporterId := createExporterId(clusterId, d.Get(paramName).(string))
@@ -255,7 +255,7 @@ func readSchemaExporterAndSetAttributes(ctx context.Context, d *schema.ResourceD
 	if err != nil {
 		return nil, fmt.Errorf("error reading Schema Exporter: %s", createDescriptiveError(err))
 	}
-	c := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+	c := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 
 	name := d.Get(paramName).(string)
 	id := createExporterId(clusterId, name)
@@ -320,7 +320,7 @@ func schemaExporterUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 	if err != nil {
 		return diag.Errorf("error updating Schema Exporter: %s", createDescriptiveError(err))
 	}
-	c := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+	c := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 
 	name := d.Get(paramName).(string)
 	id := createExporterId(clusterId, name)
@@ -444,7 +444,7 @@ func schemaExporterDelete(ctx context.Context, d *schema.ResourceData, meta inte
 
 	tflog.Debug(ctx, fmt.Sprintf("Deleting Schema Exporter %q=%q", paramId, id), map[string]interface{}{schemaExporterLoggingKey: id})
 
-	c := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+	c := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 
 	// pause the exporter first
 	_, _, err = c.apiClient.ExportersV1Api.PauseExporterByName(c.apiContext(ctx), name).Execute()

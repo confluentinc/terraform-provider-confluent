@@ -151,7 +151,7 @@ func schemasDataSourceRead(ctx context.Context, d *schema.ResourceData, meta int
 	if err != nil {
 		return diag.Errorf("error reading Schemas: %s", createDescriptiveError(err))
 	}
-	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 	subjectPrefix := d.Get(fmt.Sprintf("%s.0.%s", paramFilter, paramSchemasFilterSubjectPrefix)).(string)
 	latestOnly := d.Get(fmt.Sprintf("%s.0.%s", paramFilter, paramSchemasFilterLatestOnly)).(bool)
 	deleted := d.Get(fmt.Sprintf("%s.0.%s", paramFilter, paramSchemasFilterDeleted)).(bool)

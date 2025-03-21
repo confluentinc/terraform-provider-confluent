@@ -99,7 +99,7 @@ func tagBindingCreate(ctx context.Context, d *schema.ResourceData, meta interfac
 	entityType := d.Get(paramEntityType).(string)
 	tagBindingId := createTagBindingId(clusterId, tagName, entityName, entityType)
 
-	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 	tagBindingRequest := dc.Tag{}
 	tagBindingRequest.SetEntityName(entityName)
 	tagBindingRequest.SetEntityType(entityType)
@@ -177,7 +177,7 @@ func readTagBindingAndSetAttributes(ctx context.Context, d *schema.ResourceData,
 
 	tflog.Debug(ctx, fmt.Sprintf("Reading Tag Binding %q=%q", paramId, tagBindingId), map[string]interface{}{tagBindingLoggingKey: tagBindingId})
 
-	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 	request := schemaRegistryRestClient.dataCatalogApiClient.EntityV1Api.GetTags(schemaRegistryRestClient.dataCatalogApiContext(ctx), entityType, entityName)
 	tagBindings, resp, err := request.Execute()
 	if err != nil {
@@ -249,7 +249,7 @@ func tagBindingDelete(ctx context.Context, d *schema.ResourceData, meta interfac
 
 	tflog.Debug(ctx, fmt.Sprintf("Deleting Tag Binding %q=%q", paramId, tagBindingId), map[string]interface{}{tagBindingLoggingKey: tagBindingId})
 
-	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 	request := schemaRegistryRestClient.dataCatalogApiClient.EntityV1Api.DeleteTag(schemaRegistryRestClient.dataCatalogApiContext(ctx), entityType, entityName, tagName)
 	_, serviceErr := request.Execute()
 	if serviceErr != nil {

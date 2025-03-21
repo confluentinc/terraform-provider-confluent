@@ -562,7 +562,7 @@ func waitForApiKeyToSync(ctx context.Context, c *Client, createdApiKey apikeys.I
 			if err != nil {
 				return fmt.Errorf("error fetching Schema Registry Cluster %q's %q attribute: %s", clusterId, paramRestEndpoint, createDescriptiveError(err))
 			}
-			schemaRegistryRestClient := c.schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, createdApiKey.GetId(), createdApiKey.Spec.GetSecret(), false)
+			schemaRegistryRestClient := c.schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, createdApiKey.GetId(), createdApiKey.Spec.GetSecret(), false, c.oauthToken)
 			if err := waitForCreatedSchemaRegistryApiKeyToSync(ctx, schemaRegistryRestClient, c.isAcceptanceTestMode); err != nil {
 				return fmt.Errorf("error waiting for Schema Registry API Key %q to sync: %s", createdApiKey.GetId(), createDescriptiveError(err))
 			}

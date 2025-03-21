@@ -57,7 +57,7 @@ type SchemaRegistryRestClientFactory struct {
 	maxRetries *int
 }
 
-func (f SchemaRegistryRestClientFactory) CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret string, isMetadataSetInProviderBlock bool) *SchemaRegistryRestClient {
+func (f SchemaRegistryRestClientFactory) CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret string, isMetadataSetInProviderBlock bool, token *OAuthToken) *SchemaRegistryRestClient {
 	var opts []RetryableClientFactoryOption = []RetryableClientFactoryOption{}
 
 	// Setup SR API Client
@@ -87,14 +87,13 @@ func (f SchemaRegistryRestClientFactory) CreateSchemaRegistryRestClient(restEndp
 	config.HTTPClient = finalHTTPClient
 	dataCatalogConfig.HTTPClient = finalHTTPClient
 
-	// TODO: Hook the token point to the client here
-	config.DefaultHeader = map[string]string{"confluent-identity-pool-id": ""}
-	dataCatalogConfig.DefaultHeader = map[string]string{"confluent-identity-pool-id": ""}
+	config.DefaultHeader = map[string]string{"confluent-identity-pool-id": token.IdentityPoolId}
+	dataCatalogConfig.DefaultHeader = map[string]string{"confluent-identity-pool-id": token.IdentityPoolId}
 
 	return &SchemaRegistryRestClient{
 		apiClient:                    schemaregistry.NewAPIClient(config),
 		dataCatalogApiClient:         dc.NewAPIClient(dataCatalogConfig),
-		externalAccessToken:          nil,
+		externalAccessToken:          token,
 		clusterId:                    clusterId,
 		clusterApiKey:                clusterApiKey,
 		clusterApiSecret:             clusterApiSecret,
