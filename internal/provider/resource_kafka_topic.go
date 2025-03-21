@@ -178,6 +178,9 @@ func extractRestEndpoint(client *Client, d *schema.ResourceData, isImportOperati
 }
 
 func extractClusterApiKeyAndApiSecret(client *Client, d *schema.ResourceData, isImportOperation bool) (string, string, error) {
+	if client.isOAuthEnabled {
+		return "", "", nil
+	}
 	if client.isKafkaMetadataSet {
 		return client.kafkaApiKey, client.kafkaApiSecret, nil
 	}
@@ -194,8 +197,7 @@ func extractClusterApiKeyAndApiSecret(client *Client, d *schema.ResourceData, is
 	if clusterApiKey != "" {
 		return clusterApiKey, clusterApiSecret, nil
 	}
-	return "", "", nil
-	//return "", "", fmt.Errorf("one of (provider.kafka_api_key, provider.kafka_api_secret), (KAFKA_API_KEY, KAFKA_API_SECRET environment variables) or (resource.credentials.key, resource.credentials.secret) must be set")
+	return "", "", fmt.Errorf("one of (provider.kafka_api_key, provider.kafka_api_secret), (KAFKA_API_KEY, KAFKA_API_SECRET environment variables) or (resource.credentials.key, resource.credentials.secret) must be set")
 }
 
 func kafkaTopicCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -472,7 +474,9 @@ func readTopicAndSetAttributes(ctx context.Context, d *schema.ResourceData, c *K
 	}
 
 	if !c.isMetadataSetInProviderBlock {
-		if err := setKafkaCredentials(c.clusterApiKey, c.clusterApiSecret, d); err != nil {
+		if c.externalAccessToken != nil {
+			tflog.Debug(ctx, fmt.Sprintf("skip setting credentials block in Kafka Topic %q because OAuth is enabled", d.Id()), map[string]interface{}{kafkaTopicLoggingKey: d.Id()})
+		} else if err := setKafkaCredentials(c.clusterApiKey, c.clusterApiSecret, d); err != nil {
 			return nil, err
 		}
 		if err := d.Set(paramRestEndpoint, c.restEndpoint); err != nil {

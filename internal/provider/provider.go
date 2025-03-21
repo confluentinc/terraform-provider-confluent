@@ -128,6 +128,7 @@ type Client struct {
 	stsToken                        *STSToken
 	isFlinkMetadataSet              bool
 	isAcceptanceTestMode            bool
+	isOAuthEnabled                  bool
 }
 
 // Customize configs for terraform-plugin-docs
@@ -452,11 +453,13 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	var externalOAuthToken = &OAuthToken{}
 	var stsOAuthToken = &STSToken{}
 	var err diag.Diagnostics
+	var oauthEnabled bool
 	if _, ok := d.GetOk(paramOAuthBlockName); ok {
 		externalOAuthToken, stsOAuthToken, err = initializeOAuthConfigs(ctx, d)
 		if err != nil {
 			return nil, err
 		}
+		oauthEnabled = true
 	}
 
 	// 3 or 4 attributes should be set or not set at the same time
@@ -657,6 +660,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 		isSchemaRegistryMetadataSet: allSchemaRegistryAttributesAreSet,
 		isFlinkMetadataSet:          allFlinkAttributesAreSet,
 		isAcceptanceTestMode:        acceptanceTestMode,
+		isOAuthEnabled:              oauthEnabled,
 	}
 
 	return &client, nil
