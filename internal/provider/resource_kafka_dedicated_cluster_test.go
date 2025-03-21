@@ -126,18 +126,6 @@ func TestAccDedicatedCluster(t *testing.T) {
 			http.StatusOK,
 		))
 
-	//readUpdatedClusterResponse, _ := ioutil.ReadFile("../testdata/kafka/read_updated_kafka.json")
-	//updateClusterStub := wiremock.Patch(wiremock.URLPathEqualTo(readKafkaPath)).
-	//	InScenario(kafkaScenarioName).
-	//	WhenScenarioStateIs(scenarioStateKafkaHasBeenCreatedAndSyncIsComplete).
-	//	WillSetStateTo(scenarioStateKafkaHasBeenUpdated).
-	//	WillReturn(
-	//		string(readUpdatedClusterResponse),
-	//		contentTypeJSONHeader,
-	//		http.StatusOK,
-	//	)
-	//_ = wiremockClient.StubFor(updateClusterStub)
-
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaPath)).
 		InScenario(kafkaScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(testEnvironmentId)).
