@@ -75,6 +75,7 @@ var acceptedCloudProviders = []string{"AWS", "AZURE", "GCP"}
 var acceptedClusterTypes = []string{paramBasicCluster, paramStandardCluster, paramDedicatedCluster, paramEnterpriseCluster, paramFreightCluster}
 var paramDedicatedCku = fmt.Sprintf("%s.0.%s", paramDedicatedCluster, paramCku)
 var paramDedicatedEncryptionKey = fmt.Sprintf("%s.0.%s", paramDedicatedCluster, paramEncryptionKey)
+var paramDedicatedZones = fmt.Sprintf("%s.0.%s", paramDedicatedCluster, paramZones)
 
 func kafkaResource() *schema.Resource {
 	return &schema.Resource{
@@ -331,6 +332,11 @@ func kafkaCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 			config.SetEncryptionKey(encryptionKey)
 		}
 
+		zones := convertToStringSlice(d.Get(paramDedicatedZones).([]interface{}))
+		if len(zones) > 0 {
+			config.SetZones(zones)
+		}
+
 		spec.SetConfig(cmk.CmkV2DedicatedAsCmkV2ClusterSpecConfigOneOf(config))
 	} else if clusterType == kafkaClusterTypeEnterprise {
 		spec.SetConfig(cmk.CmkV2EnterpriseAsCmkV2ClusterSpecConfigOneOf(cmk.NewCmkV2Enterprise(kafkaClusterTypeEnterprise)))
@@ -575,7 +581,9 @@ func dedicatedClusterSchema() *schema.Schema {
 					Elem: &schema.Schema{
 						Type: schema.TypeString,
 					},
+					Optional:    true,
 					Computed:    true,
+					ForceNew:    true,
 					Description: "The list of zones the cluster is in.",
 				},
 			},
