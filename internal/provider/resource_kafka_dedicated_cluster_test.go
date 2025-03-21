@@ -27,6 +27,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
+var fullKafkaDedicatedResourceLabel = fmt.Sprintf("confluent_kafka_cluster.%s", kafkaDedicatedResourceLabel)
+
 func TestAccDedicatedCluster(t *testing.T) {
 	ctx := context.Background()
 
@@ -167,38 +169,38 @@ func TestAccDedicatedCluster(t *testing.T) {
 		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckDedicatedClusterConfig(mockServerUrl, paramDedicatedCluster),
+				Config: testAccCheckDedicatedClusterConfig(mockServerUrl),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckClusterExists(fullKafkaResourceLabel),
-					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "id", kafkaClusterId),
-					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "api_version", kafkaApiVersion),
-					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "kind", kafkaKind),
-					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "display_name", kafkaDisplayName),
-					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "availability", kafkaAvailability),
-					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "bootstrap_endpoint", kafkaBootstrapEndpoint),
-					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "cloud", kafkaCloud),
-					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "basic.#", "0"),
-					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "standard.#", "0"),
-					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "environment.#", "1"),
-					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "environment.0.id", testEnvironmentId),
-					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "dedicated.#", "1"),
-					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "dedicated.0.zones.#", "1"),
-					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "dedicated.0.zones.0", kafkaZones),
-					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "network.#", "1"),
-					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "network.0.id", kafkaNetworkId),
-					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "rest_endpoint", kafkaHttpEndpoint),
-					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "rbac_crn", kafkaRbacCrn),
+					testAccCheckClusterExists(fullKafkaDedicatedResourceLabel),
+					resource.TestCheckResourceAttr(fullKafkaDedicatedResourceLabel, "id", kafkaClusterId),
+					resource.TestCheckResourceAttr(fullKafkaDedicatedResourceLabel, "api_version", kafkaApiVersion),
+					resource.TestCheckResourceAttr(fullKafkaDedicatedResourceLabel, "kind", kafkaKind),
+					resource.TestCheckResourceAttr(fullKafkaDedicatedResourceLabel, "display_name", kafkaDisplayName),
+					resource.TestCheckResourceAttr(fullKafkaDedicatedResourceLabel, "availability", kafkaAvailability),
+					resource.TestCheckResourceAttr(fullKafkaDedicatedResourceLabel, "bootstrap_endpoint", kafkaBootstrapEndpoint),
+					resource.TestCheckResourceAttr(fullKafkaDedicatedResourceLabel, "cloud", kafkaCloud),
+					resource.TestCheckResourceAttr(fullKafkaDedicatedResourceLabel, "basic.#", "0"),
+					resource.TestCheckResourceAttr(fullKafkaDedicatedResourceLabel, "standard.#", "0"),
+					resource.TestCheckResourceAttr(fullKafkaDedicatedResourceLabel, "environment.#", "1"),
+					resource.TestCheckResourceAttr(fullKafkaDedicatedResourceLabel, "environment.0.id", testEnvironmentId),
+					resource.TestCheckResourceAttr(fullKafkaDedicatedResourceLabel, "dedicated.#", "1"),
+					resource.TestCheckResourceAttr(fullKafkaDedicatedResourceLabel, "dedicated.0.zones.#", "1"),
+					resource.TestCheckResourceAttr(fullKafkaDedicatedResourceLabel, "dedicated.0.zones.0", kafkaZones),
+					resource.TestCheckResourceAttr(fullKafkaDedicatedResourceLabel, "network.#", "1"),
+					resource.TestCheckResourceAttr(fullKafkaDedicatedResourceLabel, "network.0.id", kafkaNetworkId),
+					resource.TestCheckResourceAttr(fullKafkaDedicatedResourceLabel, "rest_endpoint", kafkaHttpEndpoint),
+					resource.TestCheckResourceAttr(fullKafkaDedicatedResourceLabel, "rbac_crn", kafkaRbacCrn),
 				),
 			},
 			{
 				// https://www.terraform.io/docs/extend/resources/import.html
-				ResourceName:      fullKafkaResourceLabel,
+				ResourceName:      fullKafkaDedicatedResourceLabel,
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: func(state *terraform.State) (string, error) {
 					resources := state.RootModule().Resources
-					clusterId := resources[fullKafkaResourceLabel].Primary.ID
-					environmentId := resources[fullKafkaResourceLabel].Primary.Attributes["environment.0.id"]
+					clusterId := resources[fullKafkaDedicatedResourceLabel].Primary.ID
+					environmentId := resources[fullKafkaDedicatedResourceLabel].Primary.Attributes["environment.0.id"]
 					return environmentId + "/" + clusterId, nil
 				},
 			},
@@ -234,12 +236,12 @@ func testAccCheckDedicatedClusterDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccCheckDedicatedClusterConfig(mockServerUrl, clusterType string) string {
+func testAccCheckDedicatedClusterConfig(mockServerUrl string) string {
 	return fmt.Sprintf(`
 	provider "confluent" {
  		endpoint = "%s"
 	}
-	resource "confluent_kafka_cluster" "basic-cluster" {
+	resource "confluent_kafka_cluster" "dedicated-cluster" {
 		display_name = "%s"
 		availability = "%s"
 		cloud = "%s"
@@ -253,5 +255,5 @@ func testAccCheckDedicatedClusterConfig(mockServerUrl, clusterType string) strin
 			id = "%s"
 	  	}
 	}
-	`, mockServerUrl, kafkaDisplayName, kafkaAvailability, kafkaCloud, kafkaRegion, clusterType, kafkaZones, testEnvironmentId)
+	`, mockServerUrl, kafkaDisplayName, kafkaAvailability, kafkaCloud, kafkaRegion, paramDedicatedCluster, kafkaZones, testEnvironmentId)
 }
