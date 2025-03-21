@@ -574,7 +574,7 @@ func waitForApiKeyToSync(ctx context.Context, c *Client, createdApiKey apikeys.I
 				return fmt.Errorf("error fetching Flink Region %q attribute: %s", paramRestEndpoint, createDescriptiveError(err))
 			}
 			organizationId, err := extractOrgIdFromResourceName(createdApiKey.Metadata.GetResourceName())
-			flinkRestClient := c.flinkRestClientFactory.CreateFlinkRestClient(restEndpoint, organizationId, environmentId, "", "", createdApiKey.GetId(), createdApiKey.Spec.GetSecret(), false)
+			flinkRestClient := c.flinkRestClientFactory.CreateFlinkRestClient(restEndpoint, organizationId, environmentId, "", "", createdApiKey.GetId(), createdApiKey.Spec.GetSecret(), false, nil)
 			if err != nil {
 				return err
 			}

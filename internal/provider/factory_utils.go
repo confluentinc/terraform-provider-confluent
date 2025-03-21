@@ -20,7 +20,7 @@ type FlinkRestClientFactory struct {
 	maxRetries *int
 }
 
-func (f FlinkRestClientFactory) CreateFlinkRestClient(restEndpoint, organizationId, environmentId, computePoolId, principalId, flinkApiKey, flinkApiSecret string, isMetadataSetInProviderBlock bool) *FlinkRestClient {
+func (f FlinkRestClientFactory) CreateFlinkRestClient(restEndpoint, organizationId, environmentId, computePoolId, principalId, flinkApiKey, flinkApiSecret string, isMetadataSetInProviderBlock bool, token *OAuthToken) *FlinkRestClient {
 	var opts []RetryableClientFactoryOption = []RetryableClientFactoryOption{}
 	config := fgb.NewConfiguration()
 
@@ -34,12 +34,11 @@ func (f FlinkRestClientFactory) CreateFlinkRestClient(restEndpoint, organization
 	baseFactory := NewRetryableClientFactory(f.ctx, opts...)
 
 	config.HTTPClient = baseFactory.CreateRetryableClient()
-	// TODO: Hook the token point to the client here
-	config.DefaultHeader = map[string]string{"confluent-identity-pool-id": ""}
+	config.DefaultHeader = map[string]string{"confluent-identity-pool-id": token.IdentityPoolId}
 
 	return &FlinkRestClient{
 		apiClient:                    fgb.NewAPIClient(config),
-		externalAccessToken:          nil,
+		externalAccessToken:          token,
 		organizationId:               organizationId,
 		environmentId:                environmentId,
 		computePoolId:                computePoolId,

@@ -501,8 +501,8 @@ func TestAccTopicPartition(t *testing.T) {
 }
 
 func testAccCheckTopicDestroy(s *terraform.State, url string) error {
-	client := testAccProvider.Meta().(*Client)
-	c := client.kafkaRestClientFactory.CreateKafkaRestClient(url, clusterId, kafkaApiKey, kafkaApiSecret, false, false, client.oauthToken)
+	testClient := testAccProvider.Meta().(*Client)
+	c := testClient.kafkaRestClientFactory.CreateKafkaRestClient(url, clusterId, kafkaApiKey, kafkaApiSecret, false, false, testClient.oauthToken)
 	// Loop through the resources in state, verifying each Kafka topic is destroyed
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "confluent_kafka_topic" {

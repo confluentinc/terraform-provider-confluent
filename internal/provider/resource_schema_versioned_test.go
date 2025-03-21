@@ -256,8 +256,8 @@ func TestAccVersionedSchema(t *testing.T) {
 }
 
 func testAccCheckSchemaDestroy(s *terraform.State, url string) error {
-	client := testAccProvider.Meta().(*Client)
-	c := client.schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(url, clusterId, testSchemaRegistryKey, testSchemaRegistrySecret, false, client.oauthToken)
+	testClient := testAccProvider.Meta().(*Client)
+	c := testClient.schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(url, clusterId, testSchemaRegistryKey, testSchemaRegistrySecret, false, testClient.oauthToken)
 	// Loop through the resources in state, verifying each Schema is destroyed
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "confluent_schema" {
