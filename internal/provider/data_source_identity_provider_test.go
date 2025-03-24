@@ -17,12 +17,12 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/walkerus/go-wiremock"
 )
 
 const (
@@ -84,6 +84,7 @@ func TestAccDataSourceIdentityProvider(t *testing.T) {
 					resource.TestCheckResourceAttr(fullIdentityProviderDataSourceLabel, paramDescription, identityProviderDescription),
 					resource.TestCheckResourceAttr(fullIdentityProviderDataSourceLabel, paramIssuer, identityProviderIssuer),
 					resource.TestCheckResourceAttr(fullIdentityProviderDataSourceLabel, paramJwksUri, identityProviderJwksUri),
+					resource.TestCheckResourceAttr(fullIdentityProviderDataSourceLabel, paramIdentityClaim, identityProviderIdentityClaim),
 				),
 			},
 			{
@@ -95,6 +96,7 @@ func TestAccDataSourceIdentityProvider(t *testing.T) {
 					resource.TestCheckResourceAttr(fullIdentityProviderDataSourceLabel, paramDescription, identityProviderDescription),
 					resource.TestCheckResourceAttr(fullIdentityProviderDataSourceLabel, paramIssuer, identityProviderIssuer),
 					resource.TestCheckResourceAttr(fullIdentityProviderDataSourceLabel, paramJwksUri, identityProviderJwksUri),
+					resource.TestCheckResourceAttr(fullIdentityProviderDataSourceLabel, paramIdentityClaim, identityProviderIdentityClaim),
 				),
 			},
 		},
