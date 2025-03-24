@@ -1,0 +1,38 @@
+{
+  "api_version": "networking/v1",
+  "kind": "PrivateLinkAttachmentConnection",
+  "id": "plattc-xyzuvw1",
+  "metadata": {
+    "self": "https://api.confluent.cloud/networking/v1/private-link-attachment-connections/plattc-xyzuvw1",
+    "resource_name": "crn://confluent.cloud/organization=1111aaaa-11aa-11aa-11aa-111111aaaaaa/private-link-attachment-connection=plattc-xyzuvw1",
+    "created_at": "2006-01-02T15:04:05-07:00",
+    "updated_at": "2006-01-02T15:04:05-07:00",
+    "deleted_at": "2006-01-02T15:04:05-07:00"
+  },
+  "spec": {
+    "display_name": "prod-gcp-us-central1-connection",
+    "cloud": {
+      "kind": "GcpPrivateLinkAttachmentConnection",
+      "private_service_connect_connection_id": "1234567891234"
+    },
+    "environment": {
+      "id": "env-12345",
+      "related": "https://api.confluent.cloud/v2/environments/env-12345",
+      "resource_name": "https://api.confluent.cloud/organization=1111aaaa-11aa-11aa-11aa-111111aaaaaa/environment=env-12345"
+    },
+    "private_link_attachment": {
+      "id": "platt-abcdef",
+      "related": "https://api.confluent.cloud/networking/v1/private-link-attachments/platt-abcdef",
+      "resource_name": "https://api.confluent.cloud/organization=1111aaaa-11aa-11aa-11aa-111111aaaaaa/private-link-attachment=platt-abcdef"
+    }
+  },
+  "status": {
+    "phase": "READY",
+    "error_code": "",
+    "error_message": "",
+    "cloud": {
+      "kind": "GcpPrivateLinkAttachmentConnectionStatus",
+      "private_service_connect_connection_id": "1234567891234"
+    }
+  }
+}
