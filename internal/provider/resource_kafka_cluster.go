@@ -333,7 +333,7 @@ func kafkaCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 		}
 
 		zones := convertToStringSlice(d.Get(paramDedicatedZones).([]interface{}))
-		if len(zones) > 0 {
+		if len(zones) > 0 && availability != "SINGLE_ZONE" {
 			config.SetZones(zones)
 		}
 
@@ -584,7 +584,7 @@ func dedicatedClusterSchema() *schema.Schema {
 					Optional:    true,
 					Computed:    true,
 					ForceNew:    true,
-					Description: "The list of zones the cluster is in.",
+					Description: "The list of zones the cluster is in. Zone could be user specified for single-zone private network Dedicated cluster types, otherwise is auto-selected.",
 				},
 			},
 		},
