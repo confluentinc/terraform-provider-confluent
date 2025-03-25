@@ -18,12 +18,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
+
 	oidc "github.com/confluentinc/ccloud-sdk-go-v2/identity-provider/v2"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"net/http"
 )
 
 const (
@@ -67,16 +68,23 @@ func identityProviderResource() *schema.Resource {
 				Description:  "A publicly reachable JWKS URI for the Identity Provider.",
 				ValidateFunc: validation.StringIsNotEmpty,
 			},
+			paramIdentityClaim: {
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				Description:  "The JSON Web Token (JWT) claim to extract the authenticating identity to Confluent resources from [Registered Claim Names](https://datatracker.ietf.org/doc/html/rfc7519#section-4.1). This appears in audit log records. Note: if the client specifies mapping to one identity pool ID, the identity claim configured with that pool will be used instead.",
+				ValidateFunc: validation.StringIsNotEmpty,
+			},
 		},
 	}
 }
 
 func identityProviderUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if d.HasChangesExcept(paramDisplayName, paramDescription) {
-		return diag.Errorf("error updating Identity Provider %q: only %q, %q attributes can be updated for Identity Provider", d.Id(), paramDisplayName, paramDescription)
+	if d.HasChangesExcept(paramDisplayName, paramDescription, paramIdentityClaim) {
+		return diag.Errorf("error updating Identity Provider %q: only %q, %q, %q attributes can be updated for Identity Provider", d.Id(), paramDisplayName, paramDescription, paramIdentityClaim)
 	}
 
-	updateIdentityProviderRequest := oidc.NewIamV2IdentityProviderUpdate()
+	updateIdentityProviderRequest := oidc.NewIamV2IdentityProvider()
 
 	if d.HasChange(paramDisplayName) {
 		updatedDisplayName := d.Get(paramDisplayName).(string)
@@ -86,6 +94,10 @@ func identityProviderUpdate(ctx context.Context, d *schema.ResourceData, meta in
 		updatedDescription := d.Get(paramDescription).(string)
 		updateIdentityProviderRequest.SetDescription(updatedDescription)
 	}
+	if d.HasChange(paramIdentityClaim) {
+		updatedIdentityClaim := d.Get(paramIdentityClaim).(string)
+		updateIdentityProviderRequest.SetIdentityClaim(updatedIdentityClaim)
+	}
 
 	updateIdentityProviderRequestJson, err := json.Marshal(updateIdentityProviderRequest)
 	if err != nil {
@@ -94,7 +106,7 @@ func identityProviderUpdate(ctx context.Context, d *schema.ResourceData, meta in
 	tflog.Debug(ctx, fmt.Sprintf("Updating Identity Provider %q: %s", d.Id(), updateIdentityProviderRequestJson), map[string]interface{}{identityProviderLoggingKey: d.Id()})
 
 	c := meta.(*Client)
-	updatedIdentityProvider, _, err := c.oidcClient.IdentityProvidersIamV2Api.UpdateIamV2IdentityProvider(c.oidcApiContext(ctx), d.Id()).IamV2IdentityProviderUpdate(*updateIdentityProviderRequest).Execute()
+	updatedIdentityProvider, _, err := c.oidcClient.IdentityProvidersIamV2Api.UpdateIamV2IdentityProvider(c.oidcApiContext(ctx), d.Id()).IamV2IdentityProvider(*updateIdentityProviderRequest).Execute()
 
 	if err != nil {
 		return diag.Errorf("error updating Identity Provider %q: %s", d.Id(), createDescriptiveError(err))
@@ -116,12 +128,16 @@ func identityProviderCreate(ctx context.Context, d *schema.ResourceData, meta in
 	description := d.Get(paramDescription).(string)
 	issuer := d.Get(paramIssuer).(string)
 	jwksUri := d.Get(paramJwksUri).(string)
+	identityClaim := d.Get(paramIdentityClaim).(string)
 
 	createIdentityProviderRequest := oidc.NewIamV2IdentityProvider()
 	createIdentityProviderRequest.SetDisplayName(displayName)
 	createIdentityProviderRequest.SetDescription(description)
 	createIdentityProviderRequest.SetIssuer(issuer)
 	createIdentityProviderRequest.SetJwksUri(jwksUri)
+	if identityClaim != "" {
+		createIdentityProviderRequest.SetIdentityClaim(identityClaim)
+	}
 	createIdentityProviderRequestJson, err := json.Marshal(createIdentityProviderRequest)
 	if err != nil {
 		return diag.Errorf("error creating Identity Provider: error marshaling %#v to json: %s", createIdentityProviderRequest, createDescriptiveError(err))
@@ -210,6 +226,9 @@ func setIdentityProviderAttributes(d *schema.ResourceData, identityProvider oidc
 		return nil, createDescriptiveError(err)
 	}
 	if err := d.Set(paramJwksUri, identityProvider.GetJwksUri()); err != nil {
+		return nil, createDescriptiveError(err)
+	}
+	if err := d.Set(paramIdentityClaim, identityProvider.GetIdentityClaim()); err != nil {
 		return nil, createDescriptiveError(err)
 	}
 
