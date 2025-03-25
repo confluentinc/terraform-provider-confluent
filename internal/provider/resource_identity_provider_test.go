@@ -36,6 +36,7 @@ const (
 	identityProviderDescription                             = "fake description"
 	identityProviderIssuer                                  = "https://login.microsoftonline.com/11111111-0000-0000-0000-b3d3d184f1a5/v2.0"
 	identityProviderJwksUri                                 = "https://login.microsoftonline.com/common/discovery/v2.0/keys"
+	identityProviderIdentityClaim                           = "sub"
 )
 
 func TestAccIdentityProvider(t *testing.T) {
@@ -140,6 +141,7 @@ func TestAccIdentityProvider(t *testing.T) {
 					resource.TestCheckResourceAttr(fullIdentityProviderResourceLabel, paramDescription, identityProviderDescription),
 					resource.TestCheckResourceAttr(fullIdentityProviderResourceLabel, paramIssuer, identityProviderIssuer),
 					resource.TestCheckResourceAttr(fullIdentityProviderResourceLabel, paramJwksUri, identityProviderJwksUri),
+					resource.TestCheckResourceAttr(fullIdentityProviderResourceLabel, paramIdentityClaim, identityProviderIdentityClaim),
 				),
 			},
 			{
@@ -157,6 +159,7 @@ func TestAccIdentityProvider(t *testing.T) {
 					resource.TestCheckResourceAttr(fullIdentityProviderResourceLabel, paramDescription, identityProviderUpdatedDescription),
 					resource.TestCheckResourceAttr(fullIdentityProviderResourceLabel, paramIssuer, identityProviderIssuer),
 					resource.TestCheckResourceAttr(fullIdentityProviderResourceLabel, paramJwksUri, identityProviderJwksUri),
+					resource.TestCheckResourceAttr(fullIdentityProviderResourceLabel, paramIdentityClaim, identityProviderIdentityClaim),
 				),
 			},
 			{
@@ -206,8 +209,9 @@ func testAccCheckIdentityProviderConfig(mockServerUrl, identityProviderResourceL
 		description = "%s"
 		issuer      = "%s"
 		jwks_uri    = "%s"
+		identity_claim = "%s"
 	}
-	`, mockServerUrl, identityProviderResourceLabel, identityProviderDisplayName, identityProviderDescription, identityProviderIssuer, identityProviderJwksUri)
+	`, mockServerUrl, identityProviderResourceLabel, identityProviderDisplayName, identityProviderDescription, identityProviderIssuer, identityProviderJwksUri, identityProviderIdentityClaim)
 }
 
 func testAccCheckIdentityProviderExists(n string) resource.TestCheckFunc {
