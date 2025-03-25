@@ -71,7 +71,6 @@ func identityProviderResource() *schema.Resource {
 			paramIdentityClaim: {
 				Type:         schema.TypeString,
 				Optional:     true,
-				Computed:     true,
 				Description:  "The JSON Web Token (JWT) claim to extract the authenticating identity to Confluent resources from [Registered Claim Names](https://datatracker.ietf.org/doc/html/rfc7519#section-4.1). This appears in audit log records. Note: if the client specifies mapping to one identity pool ID, the identity claim configured with that pool will be used instead.",
 				ValidateFunc: validation.StringIsNotEmpty,
 			},
