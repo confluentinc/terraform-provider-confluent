@@ -1,4 +1,4 @@
-# Cross-region access to Confluent Cloud is not supported when VPC peering is enabled with Google Cloud. Your AWS VPC and Confluent Cloud must be in the same region.
+# Cross-region access to Confluent Cloud is not supported when VPC peering is enabled with AWS. Your AWS VPC and Confluent Cloud must be in the same region.
 # The region of your VPC that you want to connect to Confluent Cloud Cluster
 # Cross-region AWS PrivateLink connections are not supported yet.
 region = "us-east-1"
@@ -10,7 +10,7 @@ customer_region = "us-east-1"
 zones_info = [
   { zone_id : "use1-az1", cidr : "192.168.2.0/27" },
   { zone_id : "use1-az2", cidr : "192.168.2.32/27" },
-  { zone_id : "use1-az3", cidr : "192.168.2.64/27" }
+  { zone_id : "use1-az4", cidr : "192.168.2.64/27" }
 ]
 
 # The AWS Account ID of the peer VPC owner.
