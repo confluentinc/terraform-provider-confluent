@@ -21,7 +21,6 @@ import (
 	"net/http"
 
 	oidc "github.com/confluentinc/ccloud-sdk-go-v2/identity-provider/v2"
-	v2 "github.com/confluentinc/ccloud-sdk-go-v2/identity-provider/v2"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -216,7 +215,7 @@ func executeIdentityProviderRead(ctx context.Context, c *Client, identityProvide
 	return req.Execute()
 }
 
-func setIdentityProviderAttributes(d *schema.ResourceData, identityProvider v2.IamV2IdentityProvider) (*schema.ResourceData, error) {
+func setIdentityProviderAttributes(d *schema.ResourceData, identityProvider oidc.IamV2IdentityProvider) (*schema.ResourceData, error) {
 	if err := d.Set(paramDisplayName, identityProvider.GetDisplayName()); err != nil {
 		return nil, createDescriptiveError(err)
 	}
