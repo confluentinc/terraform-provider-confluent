@@ -333,7 +333,7 @@ func kafkaCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 		}
 
 		zones := convertToStringSlice(d.Get(paramDedicatedZones).([]interface{}))
-		if len(zones) > 0 && availability != "SINGLE_ZONE" {
+		if len(zones) > 0 && availability == singleZone {
 			config.SetZones(zones)
 		}
 
