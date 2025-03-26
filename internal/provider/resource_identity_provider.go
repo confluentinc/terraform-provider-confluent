@@ -69,10 +69,9 @@ func identityProviderResource() *schema.Resource {
 				ValidateFunc: validation.StringIsNotEmpty,
 			},
 			paramIdentityClaim: {
-				Type:         schema.TypeString,
-				Optional:     true,
-				Description:  "The JSON Web Token (JWT) claim to extract the authenticating identity to Confluent resources from [Registered Claim Names](https://datatracker.ietf.org/doc/html/rfc7519#section-4.1). This appears in audit log records. Note: if the client specifies mapping to one identity pool ID, the identity claim configured with that pool will be used instead.",
-				ValidateFunc: validation.StringIsNotEmpty,
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "A JWT claim to extract the authenticating identity to Confluent resources.",
 			},
 		},
 	}
@@ -134,9 +133,7 @@ func identityProviderCreate(ctx context.Context, d *schema.ResourceData, meta in
 	createIdentityProviderRequest.SetDescription(description)
 	createIdentityProviderRequest.SetIssuer(issuer)
 	createIdentityProviderRequest.SetJwksUri(jwksUri)
-	if identityClaim != "" {
-		createIdentityProviderRequest.SetIdentityClaim(identityClaim)
-	}
+	createIdentityProviderRequest.SetIdentityClaim(identityClaim)
 	createIdentityProviderRequestJson, err := json.Marshal(createIdentityProviderRequest)
 	if err != nil {
 		return diag.Errorf("error creating Identity Provider: error marshaling %#v to json: %s", createIdentityProviderRequest, createDescriptiveError(err))
