@@ -56,3 +56,4 @@ The following attributes are exported:
 - `description` - (Required String) A description for the Identity Provider.
 - `issuer` - (Required String) A publicly reachable issuer URI for the Identity Provider. The unique issuer URI string represents the entity for issuing tokens.
 - `jwks_uri` - (Required String) A publicly reachable JSON Web Key Set (JWKS) URI for the Identity Provider. A JSON Web Key Set (JWKS) provides a set of keys containing the public keys used to verify any JSON Web Token (JWT) issued by your OAuth 2.0 identity provider.
+- `identity_claim` - (Optional String) The JSON Web Token (JWT) claim to extract the authenticating identity to Confluent resources from [Registered Claim Names](https://datatracker.ietf.org/doc/html/rfc7519#section-4.1). This appears in audit log records. Note: if the client specifies mapping to one identity pool ID, the identity claim configured with that pool will be used instead.
