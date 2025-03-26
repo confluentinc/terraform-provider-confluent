@@ -373,7 +373,7 @@ func loadInstances(ctx context.Context, resourceName string, importer *Importer,
 
 		instanceState, err := getInstanceState(ctx, resourceSchema, instanceId, meta)
 		if err != nil {
-			return nil, diag.Errorf(fmt.Sprintf("Failed to get state for %s instance %s: %v", resourceName, instanceId, err))
+			return nil, diag.Errorf("Failed to get state for %s instance %s: %v", resourceName, instanceId, err)
 		}
 
 		if instanceState == nil {
@@ -593,7 +593,7 @@ func createHclFileWithHeader(mode ImporterMode) *hclwrite.File {
 	requiredProvidersBlock := tfBlock.Body().AppendNewBlock("required_providers", nil)
 	requiredProvidersBlock.Body().SetAttributeValue("confluent", zclCty.ObjectVal(map[string]zclCty.Value{
 		"source":  zclCty.StringVal("confluentinc/confluent"),
-		"version": zclCty.StringVal("2.19.0"),
+		"version": zclCty.StringVal("2.22.0"),
 	}))
 
 	providerBlock := body.AppendNewBlock("provider", []string{"confluent"})

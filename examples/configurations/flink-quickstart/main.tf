@@ -2,7 +2,7 @@ terraform {
   required_providers {
     confluent = {
       source  = "confluentinc/confluent"
-      version = "2.19.0"
+      version = "2.22.0"
     }
   }
 }
@@ -132,6 +132,23 @@ resource "confluent_role_binding" "app-manager-flink-developer" {
   role_name   = "FlinkDeveloper"
   crn_pattern = data.confluent_environment.staging.resource_name
 }
+
+// Note: these role bindings (app-manager-transaction-id-developer-read, app-manager-transaction-id-developer-write)
+// are not required for running this example, but you may have to add it in order
+// to create and complete transactions.
+// https://docs.confluent.io/cloud/current/flink/operate-and-deploy/flink-rbac.html#authorization
+// resource "confluent_role_binding" "app-manager-transaction-id-developer-read" {
+//   principal = "User:${confluent_service_account.app-manager.id}"
+//   role_name = "DeveloperRead"
+//   crn_pattern = "${confluent_kafka_cluster.standard.rbac_crn}/kafka=${confluent_kafka_cluster.standard.id}/transactional-id=_confluent-flink_"
+// }
+//
+// resource "confluent_role_binding" "app-manager-transaction-id-developer-write" {
+//   principal = "User:${confluent_service_account.app-manager.id}"
+//   role_name = "DeveloperWrite"
+//   crn_pattern = "${confluent_kafka_cluster.standard.rbac_crn}/kafka=${confluent_kafka_cluster.standard.id}/transactional-id=_confluent-flink_"
+// }
+
 // https://docs.confluent.io/cloud/current/access-management/access-control/rbac/predefined-rbac-roles.html#assigner
 // https://docs.confluent.io/cloud/current/flink/operate-and-deploy/flink-rbac.html#submit-long-running-statements
 resource "confluent_role_binding" "app-manager-assigner" {
@@ -159,6 +176,15 @@ resource "confluent_api_key" "app-manager-flink-api-key" {
       id = var.environment_id
     }
   }
+
+  depends_on = [
+    confluent_role_binding.app-manager-flink-developer,
+    // Note: these role bindings (app-manager-transaction-id-developer-read, app-manager-transaction-id-developer-write)
+    // are not required for running this example, but you may have to add it in order
+    // to create and complete transactions.
+    // confluent_role_binding.app-manager-transaction-id-developer-read,
+    // confluent_role_binding.app-manager-transaction-id-developer-write
+  ]
 }
 
 data "confluent_schema_registry_cluster" "essentials" {

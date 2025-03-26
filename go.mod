@@ -13,7 +13,7 @@ require (
 	github.com/confluentinc/ccloud-sdk-go-v2/flink v0.9.0
 	github.com/confluentinc/ccloud-sdk-go-v2/flink-artifact v0.4.0
 	github.com/confluentinc/ccloud-sdk-go-v2/flink-gateway v0.17.0
-	github.com/confluentinc/ccloud-sdk-go-v2/iam v0.14.0
+	github.com/confluentinc/ccloud-sdk-go-v2/iam v0.17.0
 	github.com/confluentinc/ccloud-sdk-go-v2/identity-provider v0.2.0
 	github.com/confluentinc/ccloud-sdk-go-v2/kafka-quotas v0.4.0
 	github.com/confluentinc/ccloud-sdk-go-v2/kafkarest v0.14.0
@@ -30,6 +30,7 @@ require (
 	github.com/confluentinc/ccloud-sdk-go-v2/schema-registry v0.4.0
 	github.com/confluentinc/ccloud-sdk-go-v2/srcm v0.7.0
 	github.com/confluentinc/ccloud-sdk-go-v2/sso v0.0.1
+	github.com/confluentinc/ccloud-sdk-go-v2/tableflow v0.1.0
 	github.com/dghubble/sling v1.4.1
 	github.com/docker/go-connections v0.5.0
 	github.com/hashicorp/go-cty v1.4.1-0.20200414143053-d3edf31b6320

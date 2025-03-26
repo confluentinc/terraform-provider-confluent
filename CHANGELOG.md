@@ -1,3 +1,31 @@
+## 2.22.0 (March 18th, 2025)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.21.0...v2.22.0)
+
+**New features:**
+* Added new `confluent_tableflow_topic` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_tableflow_topic) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_tableflow_topic) in a [General Availability lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
+* Added new `confluent_catalog_integration` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_catalog_integration) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_catalog_integration) in a [General Availability lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
+
+## 2.21.0 (March 17th, 2025)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.20.0...v2.21.0)
+
+**Bug fixes:**
+* Resolved "Allow updates to filter attribute for confluent_group_mapping" issue ([#468](https://github.com/confluentinc/terraform-provider-confluent/issues/468)).
+* Resolved "Allow updates to display_name attribute for confluent_service_account" issue ([#212](https://github.com/confluentinc/terraform-provider-confluent/issues/212)).
+* Updated the [flink-quickstart](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/flink-quickstart) example to have 2 more role bindings.
+* Updated the `confluent_flink_statement` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_flink_statement) to have a descriptive error message.
+* Updated docs.
+
+## 2.20.0 (March 10th, 2025)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.19.0...v2.20.0)
+
+**Bug fixes:**
+* Fixed "schema = jsonencode( # whitespace changes' TF drift for `confluent_schema` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema)" issue ([#573](https://github.com/confluentinc/terraform-provider-confluent/issues/573)).
+  * Note: this issue may affect everyone who used `2.15.0` version to manage the `confluent_schema` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema).
+* Updated docs.
+
 ## 2.19.0 (February 27th, 2025)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.18.0...v2.19.0)
@@ -54,6 +82,9 @@
 ## 2.15.0 (January 29th, 2025)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.14.0...v2.15.0)
+
+**Warning:**
+* This PR introduced a minor bug ([#573](https://github.com/confluentinc/terraform-provider-confluent/issues/573)) related to `confluent_schema` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema) that was resolved in `2.16.0`. Please update directly to `2.16.0` version, skipping this `2.15.0` version.
 
 **New features:**
 * Updated `confluent_kafka_cluster` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_cluster) to support [self-managed encryption keys](https://docs.confluent.io/cloud/current/release-notes/index.html#january-29-2025).

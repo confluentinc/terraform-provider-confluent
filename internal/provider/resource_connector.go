@@ -17,6 +17,7 @@ package provider
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -544,7 +545,7 @@ func createConfigValidationError(validationResponse connect.InlineResponse2003) 
 		}
 	}
 	if configValidationErrors.Len() > 0 {
-		return fmt.Errorf(configValidationErrors.String())
+		return errors.New(configValidationErrors.String())
 	}
 	return nil
 }

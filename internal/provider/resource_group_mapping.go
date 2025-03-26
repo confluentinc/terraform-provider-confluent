@@ -44,7 +44,6 @@ func groupMappingResource() *schema.Resource {
 			paramFilter: {
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				Description:  "A human-readable name for the Group Mapping.",
 				ValidateFunc: validation.StringIsNotEmpty,
 			},
@@ -58,12 +57,16 @@ func groupMappingResource() *schema.Resource {
 }
 
 func groupMappingUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if d.HasChangesExcept(paramDisplayName, paramDescription) {
-		return diag.Errorf("error updating Group Mapping %q: only %q, %q attributes can be updated for Group Mapping", d.Id(), paramDisplayName, paramDescription)
+	if d.HasChangesExcept(paramFilter, paramDisplayName, paramDescription) {
+		return diag.Errorf("error updating Group Mapping %q: only %q, %q, %q attributes can be updated for Group Mapping", d.Id(), paramFilter, paramDisplayName, paramDescription)
 	}
 
 	updateGroupMappingRequest := sso.NewIamV2SsoGroupMapping()
 
+	if d.HasChange(paramFilter) {
+		updatedFilter := d.Get(paramFilter).(string)
+		updateGroupMappingRequest.SetFilter(updatedFilter)
+	}
 	if d.HasChange(paramDisplayName) {
 		updatedDisplayName := d.Get(paramDisplayName).(string)
 		updateGroupMappingRequest.SetDisplayName(updatedDisplayName)
