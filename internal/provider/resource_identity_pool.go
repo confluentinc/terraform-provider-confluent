@@ -268,7 +268,7 @@ func identityPoolImport(ctx context.Context, d *schema.ResourceData, meta interf
 }
 
 // https://github.com/hashicorp/terraform-plugin-sdk/issues/155#issuecomment-489699737
-// //  alternative - https://github.com/hashicorp/terraform-plugin-sdk/issues/248#issuecomment-725013327
+// alternative - https://github.com/hashicorp/terraform-plugin-sdk/issues/248#issuecomment-725013327
 func identityProviderSchema() *schema.Schema {
 	return &schema.Schema{
 		Type:        schema.TypeList,
