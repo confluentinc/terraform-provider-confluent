@@ -75,6 +75,7 @@ var acceptedCloudProviders = []string{"AWS", "AZURE", "GCP"}
 var acceptedClusterTypes = []string{paramBasicCluster, paramStandardCluster, paramDedicatedCluster, paramEnterpriseCluster, paramFreightCluster}
 var paramDedicatedCku = fmt.Sprintf("%s.0.%s", paramDedicatedCluster, paramCku)
 var paramDedicatedEncryptionKey = fmt.Sprintf("%s.0.%s", paramDedicatedCluster, paramEncryptionKey)
+var paramDedicatedZones = fmt.Sprintf("%s.0.%s", paramDedicatedCluster, paramZones)
 
 func kafkaResource() *schema.Resource {
 	return &schema.Resource{
@@ -331,6 +332,17 @@ func kafkaCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 			config.SetEncryptionKey(encryptionKey)
 		}
 
+		zones := convertToStringSlice(d.Get(paramDedicatedZones).([]interface{}))
+		if len(zones) > 0 {
+			if availability != singleZone {
+				return diag.Errorf("current cluster availability is '%s'. Zone selection is only supported for single zone dedicated Kafka clusters on private network. Please specify availability as 'SINGLE_ZONE' and provide a network ID (e.g., 'n-123abc')", availability)
+			}
+			if networkId == "" {
+				return diag.Errorf("network ID not specified. Zone selection is only supported for single zone dedicated Kafka clusters on private network. Please provide a network ID (e.g., 'n-123abc') and specify availability as 'SINGLE_ZONE'")
+			}
+			config.SetZones(zones)
+		}
+
 		spec.SetConfig(cmk.CmkV2DedicatedAsCmkV2ClusterSpecConfigOneOf(config))
 	} else if clusterType == kafkaClusterTypeEnterprise {
 		spec.SetConfig(cmk.CmkV2EnterpriseAsCmkV2ClusterSpecConfigOneOf(cmk.NewCmkV2Enterprise(kafkaClusterTypeEnterprise)))
@@ -575,8 +587,12 @@ func dedicatedClusterSchema() *schema.Schema {
 					Elem: &schema.Schema{
 						Type: schema.TypeString,
 					},
+					Optional:    true,
 					Computed:    true,
-					Description: "The list of zones the cluster is in.",
+					ForceNew:    true,
+					MaxItems:    1,
+					MinItems:    1,
+					Description: "The list of zones the cluster is in. Zone could be user specified for single-zone private network Dedicated cluster types, otherwise is auto-selected.",
 				},
 			},
 		},
