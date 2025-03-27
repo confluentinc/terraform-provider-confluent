@@ -75,6 +75,7 @@ var acceptedCloudProviders = []string{"AWS", "AZURE", "GCP"}
 var acceptedClusterTypes = []string{paramBasicCluster, paramStandardCluster, paramDedicatedCluster, paramEnterpriseCluster, paramFreightCluster}
 var paramDedicatedCku = fmt.Sprintf("%s.0.%s", paramDedicatedCluster, paramCku)
 var paramDedicatedEncryptionKey = fmt.Sprintf("%s.0.%s", paramDedicatedCluster, paramEncryptionKey)
+var paramDedicatedZones = fmt.Sprintf("%s.0.%s", paramDedicatedCluster, paramZones)
 
 func kafkaResource() *schema.Resource {
 	return &schema.Resource{
@@ -331,6 +332,14 @@ func kafkaCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 			config.SetEncryptionKey(encryptionKey)
 		}
 
+		zones := convertToStringSlice(d.Get(paramDedicatedZones).([]interface{}))
+		if len(zones) > 0 {
+			if availability != singleZone || networkId == "" {
+				return diag.Errorf("availability is not single zone or netowrk ID not specified. Zone selection is supported only for creating single zone dedicated Kafka cluster on private network")
+			}
+			config.SetZones(zones)
+		}
+
 		spec.SetConfig(cmk.CmkV2DedicatedAsCmkV2ClusterSpecConfigOneOf(config))
 	} else if clusterType == kafkaClusterTypeEnterprise {
 		spec.SetConfig(cmk.CmkV2EnterpriseAsCmkV2ClusterSpecConfigOneOf(cmk.NewCmkV2Enterprise(kafkaClusterTypeEnterprise)))
@@ -575,13 +584,26 @@ func dedicatedClusterSchema() *schema.Schema {
 					Elem: &schema.Schema{
 						Type: schema.TypeString,
 					},
+					Optional:    true,
 					Computed:    true,
-					Description: "The list of zones the cluster is in.",
+					ForceNew:    true,
+					Description: "The list of zones the cluster is in. Zone could be user specified for single-zone private network Dedicated cluster types, otherwise is auto-selected.",
 				},
 			},
+			CustomizeDiff: resourceKafkaClusterCustomizeDiff,
 		},
 		ExactlyOneOf: acceptedClusterTypes,
 	}
+}
+
+func resourceKafkaClusterCustomizeDiff(ctx context.Context, diff *schema.ResourceDiff, v interface{}) error {
+	if diff.HasChange("paramZones") {
+		zones := diff.Get("paramZones").([]interface{})
+		if len(zones) > 1 {
+			return fmt.Errorf("zone selection must contain exactly one element if specified by the user, but received %d", len(zones))
+		}
+	}
+	return nil
 }
 
 func enterpriseClusterSchema() *schema.Schema {
