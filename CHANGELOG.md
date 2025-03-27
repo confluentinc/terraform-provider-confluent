@@ -1,3 +1,11 @@
+## 2.23.0 (March 27th, 2025)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.22.0...v2.23.0)
+
+**New features:**
+* Added new `private_regional_rest_endpoints` attribute for `confluent_schema_registry_cluster` [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_schema_registry_cluster) and `confluent_schema_registry_clusters` [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_schema_registry_clusters).
+* Added new `display_name` argument for `confluent_network_link_service` [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_network_link_service).
+
 ## 2.22.0 (March 18th, 2025)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.21.0...v2.22.0)
