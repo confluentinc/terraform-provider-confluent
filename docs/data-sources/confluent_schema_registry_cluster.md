@@ -81,4 +81,5 @@ In addition to the preceding arguments, the following attributes are exported:
 - `resource_name` - (Required String) The Confluent Resource Name of the Schema Registry cluster, for example, `crn://confluent.cloud/organization=1111aaaa-11aa-11aa-11aa-111111aaaaaa/environment=env-abc123/schema-registry=lsrc-abc123`.
 - `cloud` - (Required String) The cloud service provider that the Schema Registry cluster belongs to, for example, `AWS`.
 
--> **Note:** Use the `environment[0]` prefix for referencing these attributes, for example, `data.confluent_schema_registry_cluster.example_using_name.environment[0].id`.
+-> **Note:** `private_regional_rest_endpoints` supersedes `private_rest_endpoint` to provide region specific private endpoint for Schema Registry cluster.
+Please refer to the latest API [documentation](https://docs.confluent.io/cloud/current/api.html#tag/Clusters-(srcmv3)/operation/getSrcmV3Cluster) for details.

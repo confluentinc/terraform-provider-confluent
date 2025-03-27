@@ -201,6 +201,7 @@ func populateSRClusterResult(schemaRegistryCluster v3.SrcmV3Cluster) map[string]
 		paramId: schemaRegistryCluster.Spec.Environment.GetId(),
 	}
 
+	config := schemaRegistryCluster.Spec.GetPrivateNetworkingConfig()
 	return map[string]interface{}{
 		paramId:                          schemaRegistryCluster.GetId(),
 		paramDisplayName:                 schemaRegistryCluster.Spec.GetDisplayName(),
@@ -212,7 +213,7 @@ func populateSRClusterResult(schemaRegistryCluster v3.SrcmV3Cluster) map[string]
 		paramApiVersion:                  schemaRegistryCluster.GetApiVersion(),
 		paramRestEndpoint:                schemaRegistryCluster.Spec.GetHttpEndpoint(),
 		paramRestEndpointPrivate:         schemaRegistryCluster.Spec.GetPrivateHttpEndpoint(),
-		paramRestEndpointPrivateRegional: schemaRegistryCluster.Spec.PrivateNetworkingConfig.GetRegionalEndpoints(),
+		paramRestEndpointPrivateRegional: config.GetRegionalEndpoints(),
 		paramCatalogEndpoint:             schemaRegistryCluster.Spec.GetCatalogHttpEndpoint(),
 		paramResourceName:                schemaRegistryCluster.Metadata.GetResourceName(),
 	}
