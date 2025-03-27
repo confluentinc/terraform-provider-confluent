@@ -335,7 +335,7 @@ func kafkaCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 		zones := convertToStringSlice(d.Get(paramDedicatedZones).([]interface{}))
 		if len(zones) > 0 {
 			if availability != singleZone {
-				return diag.Errorf("current cluster availability='%s'. Zone selection is only supported for single zone dedicated Kafka clusters on private network. Please specify availability as 'SINGLE_ZONE' and provide a network ID (e.g., 'n-123abc')", availability)
+				return diag.Errorf("current cluster availability is '%s'. Zone selection is only supported for single zone dedicated Kafka clusters on private network. Please specify availability as 'SINGLE_ZONE' and provide a network ID (e.g., 'n-123abc')", availability)
 			}
 			if networkId == "" {
 				return diag.Errorf("network ID not specified. Zone selection is only supported for single zone dedicated Kafka clusters on private network. Please provide a network ID (e.g., 'n-123abc') and specify availability as 'SINGLE_ZONE'")
