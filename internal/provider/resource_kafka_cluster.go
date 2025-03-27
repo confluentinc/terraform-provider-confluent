@@ -46,7 +46,7 @@ const (
 	paramRestEndpoint                = "rest_endpoint"
 	paramHttpEndpoint                = "http_endpoint"
 	paramRestEndpointPrivate         = "private_rest_endpoint"
-	paramRestEndpointPrivateRegional = "private_regional_rest_endpoint"
+	paramRestEndpointPrivateRegional = "private_regional_rest_endpoints"
 	paramCatalogEndpoint             = "catalog_endpoint"
 	paramCku                         = "cku"
 	paramEncryptionKey               = "encryption_key"
