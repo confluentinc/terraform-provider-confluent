@@ -74,7 +74,7 @@ In addition to the preceding arguments, the following attributes are exported:
 - `api_version` - (Required String) An API Version of the schema version of the Schema Registry cluster, for example, `stream-governance/v2`.
 - `kind` - (Required String) A kind of the Schema Registry cluster, for example, `Cluster`.
 - `rest_endpoint` - (Required String) The HTTP endpoint of the Schema Registry cluster, for example, `https://psrc-00000.us-west-2.aws.confluent.cloud`.
-- `private_rest_endpoint` - (Required String, **Deprecated**) The private HTTP endpoint of the Schema Registry cluster, for example, `https://lsrc.us-west-2.aws.private.confluent.cloud`. Please use the `private_networking_config.private_regional_rest_endpoint` attribute instead, which supersedes the `private_rest_endpoint` attribute.
+- `private_rest_endpoint` - (Required String, **Deprecated**) The private HTTP endpoint of the Schema Registry cluster, for example, `https://lsrc.us-west-2.aws.private.confluent.cloud`. Please use the `private_regional_rest_endpoints` attribute instead, which supersedes the `private_rest_endpoint` attribute.
 - `private_regional_rest_endpoints` - (Required Map) The private regional HTTP endpoint map of the Schema Registry cluster. For example, to reference the endpoint corresponding to the us-central-1 region, use `private_regional_rest_endpoints["us-central-1"]`.
 - `catalog_endpoint` - (Required String) The Catalog endpoint of the Schema Registry cluster, for example, `https://psrc-y1113.us-west-2.aws.confluent.cloud`.
 - `display_name` - (Required String) The name of the Schema Registry cluster, for example, `Stream Governance Package`.

@@ -75,7 +75,7 @@ func schemaRegistryClusterDataSource() *schema.Resource {
 				Type:        schema.TypeString,
 				Description: "The private API endpoint of the Schema Registry Cluster.",
 				Computed:    true,
-				Deprecated:  `Please use the private_networking_config.private_regional_rest_endpoint attribute instead, which supersedes the private_rest_endpoint attribute.`,
+				Deprecated:  `Please use the private_regional_rest_endpoints attribute instead, which supersedes the private_rest_endpoint attribute.`,
 			},
 			paramRestEndpointPrivateRegional: {
 				Type:        schema.TypeMap,
