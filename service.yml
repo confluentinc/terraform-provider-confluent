@@ -1,6 +1,6 @@
 name: terraform-provider-confluent-internal
 lang: go
-lang_version: "1.22.7"
+lang_version: "1.23.7"
 git:
   enable: true
 github:
