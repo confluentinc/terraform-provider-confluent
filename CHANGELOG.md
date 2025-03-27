@@ -5,7 +5,7 @@
 **New features:**
 * Added new `private_regional_rest_endpoints` attribute for `confluent_schema_registry_cluster` [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_schema_registry_cluster) and `confluent_schema_registry_clusters` [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_schema_registry_clusters).
 * Added new `display_name` argument for `confluent_network_link_service` [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_network_link_service).
-* Released the `reserved_cidr` attribute and `zone_info` blocks in a [General Availabiliity lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy). It's available only for AWS networks with PEERING and TRANSITGATEWAY connection type.
+* Released the `reserved_cidr` attribute and `zone_info` blocks in a [General Availability lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy). It's available only for AWS networks with PEERING and TRANSITGATEWAY connection type.
 
 **Bug fixes:**
 * Updated [dedicated-vpc-peering-v2-aws-kafka-acls](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/dedicated-vpc-peering-v2-aws-kafka-acls) not to use an unsupported AZ.
