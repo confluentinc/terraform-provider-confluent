@@ -254,6 +254,10 @@ func testAccCheckDedicatedClusterConfig(mockServerUrl string) string {
 	  	environment {
 			id = "%s"
 	  	}
+	
+		network {
+			id = "n-123abc"
+		}
 	}
 	`, mockServerUrl, kafkaDisplayName, kafkaAvailability, kafkaCloud, kafkaRegion, paramDedicatedCluster, kafkaZones, testEnvironmentId)
 }

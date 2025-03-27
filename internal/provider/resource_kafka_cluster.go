@@ -333,7 +333,10 @@ func kafkaCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 		}
 
 		zones := convertToStringSlice(d.Get(paramDedicatedZones).([]interface{}))
-		if len(zones) > 0 && availability == singleZone {
+		if len(zones) > 0 {
+			if availability != singleZone || networkId == "" {
+				return diag.Errorf("availability is not single zone or netowrk ID not specified. Zone selection is supported only for creating single zone dedicated Kafka cluster on private network")
+			}
 			config.SetZones(zones)
 		}
 
@@ -587,9 +590,20 @@ func dedicatedClusterSchema() *schema.Schema {
 					Description: "The list of zones the cluster is in. Zone could be user specified for single-zone private network Dedicated cluster types, otherwise is auto-selected.",
 				},
 			},
+			CustomizeDiff: resourceKafkaClusterCustomizeDiff,
 		},
 		ExactlyOneOf: acceptedClusterTypes,
 	}
+}
+
+func resourceKafkaClusterCustomizeDiff(ctx context.Context, diff *schema.ResourceDiff, v interface{}) error {
+	if diff.HasChange("paramZones") {
+		zones := diff.Get("paramZones").([]interface{})
+		if len(zones) > 1 {
+			return fmt.Errorf("zone selection must contain exactly one element if specified by the user, but received %d", len(zones))
+		}
+	}
+	return nil
 }
 
 func enterpriseClusterSchema() *schema.Schema {
