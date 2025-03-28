@@ -65,6 +65,7 @@ const (
 	paramSkipValidationDuringPlanDefaultValue = false
 
 	latestSchemaVersionAndPlaceholderForSchemaIdentifier = "latest"
+	schemaVersionForForceCreatingNewVersion              = -1
 )
 
 var acceptedSchemaFormats = []string{avroFormat, jsonFormat, protobufFormat}
@@ -608,6 +609,12 @@ func schemaCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 		}
 		return diag.Errorf("error creating Schema: error validating a schema: %s", schemaNotCompatibleErrorMessage)
 	}
+
+	// Context: https://github.com/confluentinc/terraform-provider-confluent/issues/619
+	// Set version = -1 after the validation logic (i.e., the compatability check) as
+	// https://docs.confluent.io/platform/current/schema-registry/develop/api.html#post--compatibility-subjects-(string-%20subject)-versions
+	// only request schema, schemaType, schemaType in the request object.
+	createSchemaRequest.SetVersion(schemaVersionForForceCreatingNewVersion)
 
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Schema: %s", createSchemaRequestJson))
 
