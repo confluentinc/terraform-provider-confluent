@@ -97,7 +97,7 @@ func invitationRead(ctx context.Context, d *schema.ResourceData, meta interface{
 func invitationImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	invitationId := d.Id()
 
-	tflog.Debug(ctx, fmt.Sprintf("Imporing invitation %q=%q", paramId, invitationId), map[string]interface{}{invitationLoggingKey: invitationId})
+	tflog.Debug(ctx, fmt.Sprintf("Importing invitation %q=%q", paramId, invitationId), map[string]interface{}{invitationLoggingKey: invitationId})
 	d.MarkNewResource()
 	if _, err := readInvitationAndSetAttributes(ctx, d, meta, invitationId); err != nil {
 		return nil, fmt.Errorf("error importing invitation %q: %s", invitationId, createDescriptiveError(err))

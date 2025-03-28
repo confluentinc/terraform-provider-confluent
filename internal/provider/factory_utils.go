@@ -77,17 +77,10 @@ func (f SchemaRegistryRestClientFactory) CreateSchemaRegistryRestClient(restEndp
 
 	dataCatalogConfig.UserAgent = f.userAgent
 	dataCatalogConfig.Servers[0].URL = restEndpoint
+	dataCatalogConfig.HTTPClient = NewRetryableClientFactory(f.ctx, opts...).CreateRetryableClient()
 
-	baseFactory := NewRetryableClientFactory(f.ctx, opts...)
-
-	var finalHTTPClient *http.Client
-	finalHTTPClient = baseFactory.CreateRetryableClient()
-
-	config.HTTPClient = finalHTTPClient
-	dataCatalogConfig.HTTPClient = finalHTTPClient
-
-	config.DefaultHeader = map[string]string{"confluent-identity-pool-id": token.IdentityPoolId}
-	dataCatalogConfig.DefaultHeader = map[string]string{"confluent-identity-pool-id": token.IdentityPoolId}
+	config.DefaultHeader = map[string]string{"confluent-identity-pool-id": token.IdentityPoolId, "target-sr-cluster": clusterId}
+	dataCatalogConfig.DefaultHeader = map[string]string{"confluent-identity-pool-id": token.IdentityPoolId, "target-sr-cluster": clusterId}
 
 	return &SchemaRegistryRestClient{
 		apiClient:                    schemaregistry.NewAPIClient(config),

@@ -485,13 +485,8 @@ func (c *Client) netDnsApiContext(ctx context.Context) context.Context {
 }
 
 func (c *Client) srcmApiContext(ctx context.Context) context.Context {
-	if c.oauthToken != nil && c.stsToken != nil {
-		if err := c.fetchOrOverrideSTSOAuthTokenFromApiContext(ctx); err != nil {
-			tflog.Error(ctx, fmt.Sprintf("Failed to get OAuth token for SRCM client: %v", err))
-		}
-		return context.WithValue(ctx, srcm.ContextAccessToken, c.stsToken.AccessToken)
-	}
-
+	//TODO: OAuth support for srcm/v3 endpoints will be available on 04/24 onwards
+	//Before that, API key/secret wil be used for authentication
 	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
 		return context.WithValue(ctx, srcm.ContextBasicAuth, srcm.BasicAuth{
 			UserName: c.cloudApiKey,
@@ -499,7 +494,7 @@ func (c *Client) srcmApiContext(ctx context.Context) context.Context {
 		})
 	}
 
-	tflog.Warn(ctx, "Could not find Cloud API Key or OAuth Token for Schema Registry Clusters client")
+	tflog.Warn(ctx, "Could not find Cloud API Key for Schema Registry Clusters client")
 	return ctx
 }
 
