@@ -120,8 +120,9 @@ func networkResource() *schema.Resource {
 				Description: "The root DNS domain for the network if applicable. Present on networks that support PrivateLink.",
 			},
 			paramEndpointSuffix: {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The endpoint suffix for the network, if applicable.",
 			},
 			paramZonalSubdomains: {
 				Type: schema.TypeMap,
