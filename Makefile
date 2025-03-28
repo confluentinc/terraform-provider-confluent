@@ -21,8 +21,6 @@ BUMP ?= auto
 DEFAULT_BUMP ?= patch
 GIT_MESSAGES := $(shell git log --pretty='%s' v$(CLEAN_VERSION)...HEAD 2>/dev/null | tr '\n' ' ')
 
-include ./mk-include/cc-sonarqube.mk
-
 # If auto bump enabled, search git messages for bump hash
 ifeq ($(BUMP),auto)
 _auto_bump_msg := \(auto\)
