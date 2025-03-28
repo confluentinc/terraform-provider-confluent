@@ -105,6 +105,7 @@ const (
 	ksqlClusterLoggingKey                     = "ksql_cluster_id"
 	identityProviderLoggingKey                = "identity_provider_id"
 	identityPoolLoggingKey                    = "identity_pool_id"
+	paramIdentityClaim                        = "identity_claim"
 	clusterLinkLoggingKey                     = "cluster_link_id"
 	kafkaMirrorTopicLoggingKey                = "kafka_mirror_topic_id"
 	kafkaClientQuotaLoggingKey                = "kafka_client_quota_id"
