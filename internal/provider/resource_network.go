@@ -45,6 +45,7 @@ const (
 	paramDnsConfig                               = "dns_config"
 	paramResolution                              = "resolution"
 	paramZonalSubdomains                         = "zonal_subdomains"
+	paramEndpointSuffix                          = "endpoint_suffix"
 
 	connectionTypePrivateLink    = "PRIVATELINK"
 	connectionTypeTransitGateway = "TRANSITGATEWAY"
@@ -117,6 +118,11 @@ func networkResource() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "The root DNS domain for the network if applicable. Present on networks that support PrivateLink.",
+			},
+			paramEndpointSuffix: {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The endpoint suffix for the network, if applicable.",
 			},
 			paramZonalSubdomains: {
 				Type: schema.TypeMap,
@@ -267,16 +273,14 @@ func networkCreate(ctx context.Context, d *schema.ResourceData, meta interface{}
 	}
 	spec.SetCloud(cloud)
 	spec.SetRegion(region)
-	spec.SetConnectionTypes(net.NetworkingV1ConnectionTypes{
-		Items: connectionTypes,
-	})
+	spec.SetConnectionTypes(connectionTypes)
 	if cidr != "" {
 		spec.SetCidr(cidr)
 	}
 	if reservedCidr != "" {
 		spec.SetReservedCidr(reservedCidr)
 	}
-	if len(zonesInfo.Items) > 0 {
+	if len(zonesInfo) > 0 {
 		spec.SetZonesInfo(zonesInfo)
 	}
 	if len(zones) > 0 {
@@ -377,7 +381,7 @@ func setNetworkAttributes(d *schema.ResourceData, network net.NetworkingV1Networ
 		return nil, err
 	}
 
-	if err := d.Set(paramConnectionTypes, network.Spec.ConnectionTypes.Items); err != nil {
+	if err := d.Set(paramConnectionTypes, network.Spec.GetConnectionTypes()); err != nil {
 		return nil, err
 	}
 	if err := d.Set(paramCidr, network.Spec.GetCidr()); err != nil {
@@ -391,6 +395,9 @@ func setNetworkAttributes(d *schema.ResourceData, network net.NetworkingV1Networ
 	}
 
 	if err := d.Set(paramDnsDomain, network.Status.GetDnsDomain()); err != nil {
+		return nil, err
+	}
+	if err := d.Set(paramEndpointSuffix, network.Status.GetEndpointSuffix()); err != nil {
 		return nil, err
 	}
 	if err := d.Set(paramZonalSubdomains, network.Status.GetZonalSubdomains()); err != nil {
@@ -631,7 +638,7 @@ func computedGatewaySchema() *schema.Schema {
 	}
 }
 
-func buildZonesInfo(tfZonesInfo []interface{}) net.NetworkingV1ZonesInfo {
+func buildZonesInfo(tfZonesInfo []interface{}) []net.NetworkingV1ZoneInfo {
 	zonesInfo := make([]net.NetworkingV1ZoneInfo, len(tfZonesInfo))
 	for index, tfZoneInfo := range tfZonesInfo {
 		zoneInfo := net.NewNetworkingV1ZoneInfo()
@@ -644,14 +651,12 @@ func buildZonesInfo(tfZonesInfo []interface{}) net.NetworkingV1ZonesInfo {
 		}
 		zonesInfo[index] = *zoneInfo
 	}
-	return net.NetworkingV1ZonesInfo{
-		Items: zonesInfo,
-	}
+	return zonesInfo
 }
 
-func buildTfZonesInfo(zonesInfo net.NetworkingV1ZonesInfo) *[]map[string]interface{} {
-	tfZonesInfo := make([]map[string]interface{}, len(zonesInfo.Items))
-	for i, zoneInfo := range zonesInfo.Items {
+func buildTfZonesInfo(zonesInfo []net.NetworkingV1ZoneInfo) *[]map[string]interface{} {
+	tfZonesInfo := make([]map[string]interface{}, len(zonesInfo))
+	for i, zoneInfo := range zonesInfo {
 		tfZonesInfo[i] = *buildTfZoneInfo(zoneInfo)
 	}
 	return &tfZonesInfo
