@@ -19,7 +19,7 @@ require (
 	github.com/confluentinc/ccloud-sdk-go-v2/kafkarest v0.14.0
 	github.com/confluentinc/ccloud-sdk-go-v2/ksql v0.1.0
 	github.com/confluentinc/ccloud-sdk-go-v2/mds v0.3.0
-	github.com/confluentinc/ccloud-sdk-go-v2/networking v0.12.0
+	github.com/confluentinc/ccloud-sdk-go-v2/networking v0.14.0
 	github.com/confluentinc/ccloud-sdk-go-v2/networking-access-point v0.5.0
 	github.com/confluentinc/ccloud-sdk-go-v2/networking-dnsforwarder v0.4.0
 	github.com/confluentinc/ccloud-sdk-go-v2/networking-gateway v0.2.0
