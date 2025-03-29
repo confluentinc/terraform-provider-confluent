@@ -176,29 +176,6 @@ func (f RetryableClientFactory) CreateRetryableClient() *http.Client {
 	return retryClient.StandardClient()
 }
 
-// CreateRetryableClientWithBase wraps an existing base HTTP client (like one from oauth2.NewClient)
-// with retry logic.
-func (f RetryableClientFactory) CreateRetryableClientWithBase(baseClient *http.Client) *http.Client {
-	retryClient := retryablehttp.NewClient()
-	logger := retryClientLogger{f.ctx}
-
-	// Optionally set max retries if provided
-	if f.maxRetries != nil {
-		retryClient.RetryMax = *f.maxRetries
-	}
-
-	retryClient.Logger = logger
-
-	// This is the key line:
-	// we override the default client with your baseClient (e.g. OAuth2 client).
-	if baseClient != nil {
-		retryClient.HTTPClient = baseClient
-	}
-
-	// Return a standard *http.Client that includes the retry logic
-	return retryClient.StandardClient()
-}
-
 // Logger is used to log messages from retryablehttp.Client to tflog.
 type retryClientLogger struct {
 	ctx context.Context

@@ -8,19 +8,26 @@ terraform {
   }
 }
 
+locals {
+  cloud  = "AWS"
+  region = "us-east-2"
+}
+
 provider "confluent" {
-  cloud_api_key = "VBMLJNNQSG7LHEVN"
-  cloud_api_secret = "bnVeT4W1wBtxgaNIZ6WjdtdT1yoRS08NjBXv+LIc5yH7aS6qM+jZetBXQMJTjBJ+"
+  cloud_api_key = var.confluent_cloud_api_key
+  cloud_api_secret = var.confluent_cloud_api_secret
   oauth {
-    oauth_external_token_url = "https://ccloud-sso-sandbox.okta.com/oauth2/ausod37qoaxy2xfjI697/v1/token"
-    oauth_external_client_id  = "0oaod69tu7yYnbrMn697"
-    oauth_external_client_secret = "QN83b_1JscAAep7JTEdXvdloEUqKBXwk4_K00VyzXnYYBVFbCxdZN4Vy6NUDdo04"
-    oauth_identity_pool_id = "pool-W5Qe"
+    oauth_external_token_url = var.oauth_external_token_url
+    oauth_external_client_id  = var.oauth_external_client_id
+    oauth_external_client_secret = var.oauth_external_client_secret
+    oauth_identity_pool_id = var.oauth_identity_pool_id
   }
 }
 
-resource "confluent_environment" "oauth-demo" {
-  display_name = "OAuth_Demo_Environment"
+data "confluent_organization" "main" {}
+
+resource "confluent_environment" "staging-oauth" {
+  display_name = "Staging_OAuth"
 
   stream_governance {
     package = "ESSENTIALS"
@@ -29,41 +36,33 @@ resource "confluent_environment" "oauth-demo" {
 
 # Update the config to use a cloud provider and region of your choice.
 # https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_cluster
-resource "confluent_kafka_cluster" "basic" {
-  display_name = "basic_cluster_oauth_demo"
+resource "confluent_kafka_cluster" "standard" {
+  display_name = "standard_cluster"
   availability = "SINGLE_ZONE"
-  cloud        = "AWS"
-  region       = "us-east-2"
-  basic {}
+  cloud        = local.cloud
+  region       = local.region
+  standard {}
   environment {
-    id = confluent_environment.oauth-demo.id
+    id = confluent_environment.staging-oauth.id
   }
 }
 
 data "confluent_schema_registry_cluster" "main" {
   environment {
-    id = confluent_environment.oauth-demo.id
+    id = confluent_environment.staging-oauth.id
   }
 
   depends_on = [
-    confluent_kafka_cluster.basic
+    confluent_kafka_cluster.standard
   ]
-}
-
-resource "confluent_kafka_topic" "purchase" {
-  kafka_cluster {
-    id = confluent_kafka_cluster.basic.id
-  }
-  topic_name    = "purchase"
-  rest_endpoint = confluent_kafka_cluster.basic.rest_endpoint
 }
 
 resource "confluent_kafka_topic" "order" {
   kafka_cluster {
-    id = confluent_kafka_cluster.basic.id
+    id = confluent_kafka_cluster.standard.id
   }
   topic_name    = "order"
-  rest_endpoint = confluent_kafka_cluster.basic.rest_endpoint
+  rest_endpoint = confluent_kafka_cluster.standard.rest_endpoint
 }
 
 resource "confluent_schema" "order" {
@@ -77,31 +76,41 @@ resource "confluent_schema" "order" {
   schema       = file("./schemas/avro/order.avsc")
 }
 
-data "confluent_flink_region" "main" {
-  cloud  = "AWS"
-  region = "us-east-2"
+data "confluent_flink_region" "us-east-2" {
+  cloud  = local.cloud
+  region = local.region
+}
+
+resource "confluent_flink_compute_pool" "main" {
+  display_name = "my-compute-pool"
+  cloud        = local.cloud
+  region       = local.region
+  max_cfu      = 10
+  environment {
+    id = confluent_environment.staging-oauth.id
+  }
 }
 
 resource "confluent_flink_statement" "read-orders-source-table" {
   organization {
-    id = "1771d910-6621-41e2-92ef-1529e7e97410"
+    id = data.confluent_organization.main.id
   }
   environment {
-    id = confluent_environment.oauth-demo.id
+    id = confluent_environment.staging-oauth.id
   }
   compute_pool {
-    id = "lfcp-yx7zqo"
+    id = confluent_flink_compute_pool.main.id
   }
   principal {
-    id = "pool-W5Qe"
+    id = var.oauth_identity_pool_id
   }
   # https://docs.confluent.io/cloud/current/flink/reference/example-data.html#marketplace-database
   statement = file("./statements/query-orders-source-table.sql")
   properties = {
-    "sql.current-catalog"  = confluent_environment.oauth-demo.display_name
-    "sql.current-database" = confluent_kafka_cluster.basic.display_name
+    "sql.current-catalog"  = confluent_environment.staging-oauth.display_name
+    "sql.current-database" = confluent_kafka_cluster.standard.display_name
   }
-  rest_endpoint = data.confluent_flink_region.main.rest_endpoint
+  rest_endpoint = data.confluent_flink_region.us-east-2.rest_endpoint
 
   depends_on = [
     confluent_schema.order
