@@ -99,6 +99,7 @@ func TestAccDataSourceNetwork(t *testing.T) {
 					resource.TestCheckResourceAttr(fullNetworkDataSourceLabel, fmt.Sprintf("%s.#", paramDnsConfig), "1"),
 					resource.TestCheckResourceAttr(fullNetworkDataSourceLabel, fmt.Sprintf("%s.0.%s", paramDnsConfig, paramResolution), awsNetworkDefaultDnsResolution),
 					resource.TestCheckResourceAttr(fullNetworkDataSourceLabel, paramResourceName, awsNetworkResourceName),
+					resource.TestCheckResourceAttr(fullNetworkDataSourceLabel, paramEndpointSuffix, awsEndpointSuffix),
 					resource.TestCheckResourceAttr(fullNetworkDataSourceLabel, paramDnsDomain, awsDnsDomain),
 					resource.TestCheckResourceAttr(fullNetworkDataSourceLabel, paramReservedCidr, ""),
 					resource.TestCheckResourceAttr(fullNetworkDataSourceLabel, fmt.Sprintf("%s.#", paramZoneInfo), "0"),
