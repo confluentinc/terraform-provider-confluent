@@ -40,6 +40,7 @@
       "vpc": "vpc-03e78ba4db7bb1789"
     },
     "dns_domain": "pr1jy6.us-east-2.aws.confluent.cloud",
+    "endpoint_suffix": ".pr1jy6.us-east-2.aws.confluent.cloud",
     "phase": "READY",
     "zonal_subdomains": {
       "use2-az1": "use2-az1.pr1jy6.us-east-2.aws.confluent.cloud",
