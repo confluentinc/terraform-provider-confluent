@@ -42,12 +42,14 @@ In addition to the preceding arguments, the following attributes are exported:
 
 - `display_name` - (Optional String) The name of the Private Link Attachment Connection.
 - `resource_name` - (Required String) The Confluent Resource Name of the Private Link Attachment Connection, for example `crn://confluent.cloud/organization=1111aaaa-11aa-11aa-11aa-111111aaaaaa/environment=env-75gxp2/private-link-attachment=platt-1q0ky0/private-link-attachment-connection=plattc-77zq2w`.
-- `private_link_attachment` (Optional Configuration Block) supports the following:
+- `private_link_attachment` - (Optional Configuration Block) supports the following:
   - `id` - (Required String) The unique identifier for the private link attachment.
 - `aws` - (Optional Configuration Block) supports the following:
   - `vpc_endpoint_id` - (Required String) Id of a VPC Endpoint that is connected to the VPC Endpoint service.
-- `azure` (Optional Configuration Blocks) supports the following:
+- `azure` - (Optional Configuration Blocks) supports the following:
   - `private_endpoint_resource_id` - (Required String) Resource ID of the Private Endpoint that is connected to the Private Link service.
+- `gcp` - (Optional Configuration Block) supports the following:
+  - `private_service_connect_connection_id` - (Required String) GCP Private Service Connect ID used to establish connections for all zones.
 
 ## Getting Started
 The following end-to-end examples might help to get started with `confluent_private_link_attachment_connection` data source:
