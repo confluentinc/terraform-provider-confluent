@@ -49,11 +49,11 @@ In addition to the preceding arguments, the following attributes are exported:
 - `dns_domain` - (Required String) The root DNS domain for the Private Link Attachment, for example, `pr123a.us-east-2.aws.confluent.cloud`.
 - `aws` - (Optional Configuration Block) supports the following:
   - `vpc_endpoint_service_name` - (Required String) AWS VPC Endpoint Service that can be used to establish connections for all zones, for example `com.amazonaws.vpce.us-west-2.vpce-svc-0d3be37e21708ecd3`.
-- `azure` (Optional Configuration Block) supports the following:
+- `azure` - (Optional Configuration Block) supports the following:
   - `private_link_service_alias ` - (Required String) Azure Private Link service alias for the availability zone.
   - `private_link_service_resource_id` - (Required String) Azure Private Link service resource id for the availability zone.
 - `gcp` - (Optional Configuration Block) supports the following:
-  - `private_service_connect_connection_id` - (Required String) GCP Private Service Connection ID used to establish connections for all zones.
+  - `private_service_connect_connection_id` - (Required String) GCP Private Service Connect ID used to establish connections for all zones.
 
 ## Import
 
