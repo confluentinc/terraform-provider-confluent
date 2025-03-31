@@ -41,6 +41,19 @@ resource confluent_private_link_attachment_connection "azure" {
   }
 }
 
+resource confluent_private_link_attachment_connection "gcp" {
+  display_name = "prod-gcp-uscentral1-connection"
+  environment {
+    id = "env-12345"
+  }
+  gcp {
+    private_service_connect_connection_id = "48796d35-191c-4de1-83e6-3824517eaa1d"
+  }
+  private_link_attachment {
+    id = "platt-abcdef"
+  }
+}
+
 output "private_link_attachment_connection" {
   value = confluent_private_link_attachment_connection.aws
 }
