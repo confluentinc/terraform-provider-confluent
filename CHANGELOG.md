@@ -1,3 +1,16 @@
+## 2.24.0 (March 31st, 2025)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.23.0...v2.24.0)
+
+**New features:**
+* Add GCP support for `confluent_private_link_attachment` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_private_link_attachment) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_private_link_attachment).
+* Add GCP support for `confluent_private_link_attachment_connection` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_private_link_attachment_connection) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_private_link_attachment_connection).
+* Add new `identity_claim` argument for `confluent_identity_provider` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_identity_provider) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_identity_provider).
+* Add new `endpoint_suffix` attribute for `confluent_network` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_network) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_network).
+
+**Examples:**
+* Update the example of [private-link-schema-registry](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/private-link-schema-registry).
+
 ## 2.23.0 (March 27th, 2025)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.22.0...v2.23.0)
