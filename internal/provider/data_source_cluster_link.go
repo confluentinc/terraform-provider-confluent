@@ -87,7 +87,7 @@ func clusterLinkDataSourceRead(ctx context.Context, d *schema.ResourceData, meta
 	if err != nil {
 		return diag.Errorf("error reading Cluster Link: %s", createDescriptiveError(err))
 	}
-	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, false, false)
+	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, false, false, meta.(*Client).oauthToken)
 
 	linkName := d.Get(paramLinkName).(string)
 	err = readDataSourceClusterLinkAndSetAttributes(ctx, d, kafkaRestClient, linkName)

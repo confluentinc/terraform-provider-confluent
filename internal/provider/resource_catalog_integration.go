@@ -140,7 +140,7 @@ func catalogIntegrationCreate(ctx context.Context, d *schema.ResourceData, meta 
 	if err != nil {
 		return diag.Errorf("error creating Catalog Integration: %s", createDescriptiveError(err))
 	}
-	tableflowRestClient := c.tableflowRestClientFactory.CreateTableflowRestClient(tableflowApiKey, tableflowApiSecret, c.isTableflowMetadataSet)
+	tableflowRestClient := c.tableflowRestClientFactory.CreateTableflowRestClient(tableflowApiKey, tableflowApiSecret, c.isTableflowMetadataSet, c.oauthToken, c.stsToken)
 
 	isAwsGlue := len(d.Get(paramAwsGlue).([]interface{})) > 0
 	isSnowflake := len(d.Get(paramSnowflake).([]interface{})) > 0
@@ -212,7 +212,7 @@ func catalogIntegrationRead(ctx context.Context, d *schema.ResourceData, meta in
 	if err != nil {
 		return diag.Errorf("error creating Catalog Integration: %s", createDescriptiveError(err))
 	}
-	tableflowRestClient := c.tableflowRestClientFactory.CreateTableflowRestClient(tableflowApiKey, tableflowApiSecret, c.isTableflowMetadataSet)
+	tableflowRestClient := c.tableflowRestClientFactory.CreateTableflowRestClient(tableflowApiKey, tableflowApiSecret, c.isTableflowMetadataSet, c.oauthToken, c.stsToken)
 
 	catalogIntegrationId := d.Id()
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
@@ -295,7 +295,7 @@ func setCatalogIntegrationAttributes(d *schema.ResourceData, c *TableflowRestCli
 	}
 
 	if !c.isMetadataSetInProviderBlock {
-		if err := setKafkaCredentials(c.tableflowApiKey, c.tableflowApiSecret, d); err != nil {
+		if err := setKafkaCredentials(c.tableflowApiKey, c.tableflowApiSecret, d, c.oauthToken != nil); err != nil {
 			return nil, err
 		}
 	}
@@ -314,7 +314,7 @@ func catalogIntegrationDelete(ctx context.Context, d *schema.ResourceData, meta 
 	if err != nil {
 		return diag.Errorf("error creating Catalog Integration: %s", createDescriptiveError(err))
 	}
-	tableflowRestClient := c.tableflowRestClientFactory.CreateTableflowRestClient(tableflowApiKey, tableflowApiSecret, c.isTableflowMetadataSet)
+	tableflowRestClient := c.tableflowRestClientFactory.CreateTableflowRestClient(tableflowApiKey, tableflowApiSecret, c.isTableflowMetadataSet, c.oauthToken, c.stsToken)
 
 	req := tableflowRestClient.apiClient.CatalogIntegrationsTableflowV1Api.DeleteTableflowV1CatalogIntegration(tableflowRestClient.apiContext(ctx), d.Id()).Environment(environmentId).SpecKafkaCluster(clusterId)
 	_, err = req.Execute()
@@ -342,7 +342,7 @@ func catalogIntegrationUpdate(ctx context.Context, d *schema.ResourceData, meta 
 	if err != nil {
 		return diag.Errorf("error creating Catalog Integration: %s", createDescriptiveError(err))
 	}
-	tableflowRestClient := c.tableflowRestClientFactory.CreateTableflowRestClient(tableflowApiKey, tableflowApiSecret, c.isTableflowMetadataSet)
+	tableflowRestClient := c.tableflowRestClientFactory.CreateTableflowRestClient(tableflowApiKey, tableflowApiSecret, c.isTableflowMetadataSet, c.oauthToken, c.stsToken)
 
 	updateCatalogIntegrationSpec := &tableflow.TableflowV1CatalogIntegrationUpdateSpec{}
 	updateCatalogIntegrationSpec.SetEnvironment(tableflow.GlobalObjectReference{Id: environmentId})
@@ -415,7 +415,7 @@ func catalogIntegrationImport(ctx context.Context, d *schema.ResourceData, meta 
 	if err != nil {
 		return nil, fmt.Errorf("error creating Catalog Integration: %s", createDescriptiveError(err))
 	}
-	tableflowRestClient := c.tableflowRestClientFactory.CreateTableflowRestClient(tableflowApiKey, tableflowApiSecret, c.isTableflowMetadataSet)
+	tableflowRestClient := c.tableflowRestClientFactory.CreateTableflowRestClient(tableflowApiKey, tableflowApiSecret, c.isTableflowMetadataSet, c.oauthToken, c.stsToken)
 
 	envIDAndClusterIDAndCatalogIntegrationId := d.Id()
 	parts := strings.Split(envIDAndClusterIDAndCatalogIntegrationId, "/")

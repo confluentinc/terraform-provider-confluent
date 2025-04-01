@@ -86,7 +86,7 @@ func tableflowTopicDataSourceRead(ctx context.Context, d *schema.ResourceData, m
 	if err != nil {
 		return diag.Errorf("error reading Tableflow Topic: %s", createDescriptiveError(err))
 	}
-	tableflowRestClient := c.tableflowRestClientFactory.CreateTableflowRestClient(tableflowApiKey, tableflowApiSecret, c.isTableflowMetadataSet)
+	tableflowRestClient := c.tableflowRestClientFactory.CreateTableflowRestClient(tableflowApiKey, tableflowApiSecret, c.isTableflowMetadataSet, c.oauthToken, c.stsToken)
 
 	req := tableflowRestClient.apiClient.TableflowTopicsTableflowV1Api.GetTableflowV1TableflowTopic(tableflowRestClient.apiContext(ctx), tableflowTopicId).Environment(environmentId).SpecKafkaCluster(clusterId)
 	tableflowTopic, _, err := req.Execute()

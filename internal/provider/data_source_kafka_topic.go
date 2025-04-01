@@ -64,7 +64,7 @@ func kafkaTopicDataSourceRead(ctx context.Context, d *schema.ResourceData, meta 
 	if err != nil {
 		return diag.Errorf("error reading Kafka Topic: %s", createDescriptiveError(err))
 	}
-	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isKafkaMetadataSet, meta.(*Client).isKafkaClusterIdSet)
+	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isKafkaClusterIdSet, meta.(*Client).isKafkaMetadataSet, meta.(*Client).oauthToken)
 	topicName := d.Get(paramTopicName).(string)
 	tflog.Debug(ctx, fmt.Sprintf("Reading Kafka Topic %q", topicName))
 

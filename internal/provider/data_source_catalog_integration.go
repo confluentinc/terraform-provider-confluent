@@ -65,7 +65,7 @@ func catalogIntegrationDataSourceRead(ctx context.Context, d *schema.ResourceDat
 	if err != nil {
 		return diag.Errorf("error reading Catalog Integration: %s", createDescriptiveError(err))
 	}
-	tableflowRestClient := c.tableflowRestClientFactory.CreateTableflowRestClient(tableflowApiKey, tableflowApiSecret, c.isTableflowMetadataSet)
+	tableflowRestClient := c.tableflowRestClientFactory.CreateTableflowRestClient(tableflowApiKey, tableflowApiSecret, c.isTableflowMetadataSet, c.oauthToken, c.stsToken)
 
 	req := tableflowRestClient.apiClient.CatalogIntegrationsTableflowV1Api.GetTableflowV1CatalogIntegration(tableflowRestClient.apiContext(ctx), catalogIntegrationId).Environment(environmentId).SpecKafkaCluster(clusterId)
 	catalogIntegration, _, err := req.Execute()

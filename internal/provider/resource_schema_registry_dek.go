@@ -119,7 +119,7 @@ func schemaRegistryDekCreate(ctx context.Context, d *schema.ResourceData, meta i
 	algorithm := d.Get(paramAlgorithm).(string)
 	dekId := createDekId(clusterId, kekName, subject, algorithm, int32(version))
 
-	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 	dekRequest := sr.CreateDekRequest{}
 	dekRequest.SetSubject(subject)
 	dekRequest.SetVersion(int32(version))
@@ -186,7 +186,7 @@ func readSchemaRegistryDekAndSetAttributes(ctx context.Context, d *schema.Resour
 
 	tflog.Debug(ctx, fmt.Sprintf("Reading Schema Registry DEK %q=%q", paramId, dekId), map[string]interface{}{schemaRegistryDekKey: dekId})
 
-	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 	request := schemaRegistryRestClient.apiClient.DataEncryptionKeysV1Api.GetDekByVersion(schemaRegistryRestClient.apiContext(ctx), kekName, subject, strconv.Itoa(version))
 	request = request.Algorithm(algorithm)
 	dek, resp, err := request.Execute()
@@ -253,7 +253,7 @@ func schemaRegistryDekDelete(ctx context.Context, d *schema.ResourceData, meta i
 
 	tflog.Debug(ctx, fmt.Sprintf("Deleting Schema Registry DEK %q=%q", paramId, dekId), map[string]interface{}{schemaRegistryDekKey: dekId})
 
-	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 	isHardDeleteEnabled := d.Get(paramHardDelete).(bool)
 
 	err = deleteDekExecute(ctx, schemaRegistryRestClient, kekName, subject, strconv.Itoa(version), algorithm, false)
