@@ -32,6 +32,7 @@ import (
 	cmk "github.com/confluentinc/ccloud-sdk-go-v2/cmk/v2"
 	ccp "github.com/confluentinc/ccloud-sdk-go-v2/connect-custom-plugin/v1"
 	connect "github.com/confluentinc/ccloud-sdk-go-v2/connect/v1"
+	dc "github.com/confluentinc/ccloud-sdk-go-v2/data-catalog/v1"
 	fa "github.com/confluentinc/ccloud-sdk-go-v2/flink-artifact/v1"
 	fcpm "github.com/confluentinc/ccloud-sdk-go-v2/flink/v2"
 	iamv1 "github.com/confluentinc/ccloud-sdk-go-v2/iam/v1"
@@ -84,6 +85,8 @@ type Client struct {
 	ccpClient                       *ccp.APIClient
 	cmkClient                       *cmk.APIClient
 	connectClient                   *connect.APIClient
+	catalogClient                   *dc.APIClient
+	catalogRestClientFactory        *CatalogRestClientFactory
 	fcpmClient                      *fcpm.APIClient
 	faClient                        *fa.APIClient
 	netClient                       *net.APIClient
@@ -97,6 +100,7 @@ type Client struct {
 	flinkRestClientFactory          *FlinkRestClientFactory
 	kafkaRestClientFactory          *KafkaRestClientFactory
 	schemaRegistryRestClientFactory *SchemaRegistryRestClientFactory
+	tableflowRestClientFactory      *TableflowRestClientFactory
 	mdsClient                       *mds.APIClient
 	oidcClient                      *oidc.APIClient
 	quotasClient                    *quotas.APIClient
@@ -104,6 +108,7 @@ type Client struct {
 	ssoClient                       *sso.APIClient
 	piClient                        *pi.APIClient
 	userAgent                       string
+	catalogRestEndpoint             string
 	cloudApiKey                     string
 	cloudApiSecret                  string
 	kafkaClusterId                  string
@@ -116,6 +121,7 @@ type Client struct {
 	schemaRegistryApiKey            string
 	schemaRegistryApiSecret         string
 	schemaRegistryRestEndpoint      string
+	isCatalogRegistryMetadataSet    bool
 	isSchemaRegistryMetadataSet     bool
 	flinkPrincipalId                string
 	flinkOrganizationId             string
@@ -127,6 +133,9 @@ type Client struct {
 	oauthToken                      *OAuthToken
 	stsToken                        *STSToken
 	isFlinkMetadataSet              bool
+	tableflowApiKey                 string
+	tableflowApiSecret              string
+	isTableflowMetadataSet          bool
 	isAcceptanceTestMode            bool
 	isOAuthEnabled                  bool
 }
@@ -148,6 +157,12 @@ func New(version, userAgent string) func() *schema.Provider {
 	return func() *schema.Provider {
 		provider := &schema.Provider{
 			Schema: map[string]*schema.Schema{
+				"catalog_rest_endpoint": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					DefaultFunc: schema.EnvDefaultFunc("CATALOG_REST_ENDPOINT", ""),
+					Description: "The Stream Catalog REST Endpoint.",
+				},
 				"cloud_api_key": {
 					Type:        schema.TypeString,
 					Optional:    true,
@@ -259,6 +274,20 @@ func New(version, userAgent string) func() *schema.Provider {
 					// Example: "https://flink.us-east-1.aws.confluent.cloud"
 					Description: "The Flink REST Endpoint.",
 				},
+				"tableflow_api_key": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Sensitive:   true,
+					DefaultFunc: schema.EnvDefaultFunc("TABLEFLOW_API_KEY", ""),
+					Description: "The Tableflow API Key.",
+				},
+				"tableflow_api_secret": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Sensitive:   true,
+					DefaultFunc: schema.EnvDefaultFunc("TABLEFLOW_API_SECRET", ""),
+					Description: "The Tableflow API Secret.",
+				},
 				"endpoint": {
 					Type:        schema.TypeString,
 					Optional:    true,
@@ -275,8 +304,10 @@ func New(version, userAgent string) func() *schema.Provider {
 				"oauth": providerOAuthSchema(),
 			},
 			DataSourcesMap: map[string]*schema.Resource{
+				"confluent_catalog_integration":                catalogIntegrationDataSource(),
 				"confluent_certificate_authority":              certificateAuthorityDataSource(),
 				"confluent_certificate_pool":                   certificatePoolDataSource(),
+				"confluent_cluster_link":                       clusterLinkDataSource(),
 				"confluent_kafka_cluster":                      kafkaDataSource(),
 				"confluent_kafka_topic":                        kafkaTopicDataSource(),
 				"confluent_environment":                        environmentDataSource(),
@@ -317,6 +348,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_byok_key":                           byokDataSource(),
 				"confluent_network_link_endpoint":              networkLinkEndpointDataSource(),
 				"confluent_network_link_service":               networkLinkServiceDataSource(),
+				"confluent_tableflow_topic":                    tableflowTopicDataSource(),
 				"confluent_tag":                                tagDataSource(),
 				"confluent_tag_binding":                        tagBindingDataSource(),
 				"confluent_business_metadata":                  businessMetadataDataSource(),
@@ -325,6 +357,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_schema_registry_dek":                schemaRegistryDekDataSource(),
 			},
 			ResourcesMap: map[string]*schema.Resource{
+				"confluent_catalog_integration":                catalogIntegrationResource(),
 				"confluent_api_key":                            apiKeyResource(),
 				"confluent_byok_key":                           byokResource(),
 				"confluent_certificate_authority":              certificateAuthorityResource(),
@@ -369,6 +402,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_network_link_endpoint":              networkLinkEndpointResource(),
 				"confluent_network_link_service":               networkLinkServiceResource(),
 				"confluent_tf_importer":                        tfImporterResource(),
+				"confluent_tableflow_topic":                    tableflowTopicResource(),
 				"confluent_tag":                                tagResource(),
 				"confluent_tag_binding":                        tagBindingResource(),
 				"confluent_business_metadata":                  businessMetadataResource(),
@@ -431,6 +465,7 @@ func environmentDataSourceSchema() *schema.Schema {
 func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Provider, providerVersion, additionalUserAgent string) (interface{}, diag.Diagnostics) {
 	tflog.Info(ctx, "Initializing Terraform Provider for Confluent Cloud")
 	endpoint := d.Get("endpoint").(string)
+	catalogRestEndpoint := d.Get("catalog_rest_endpoint").(string)
 	cloudApiKey := d.Get("cloud_api_key").(string)
 	cloudApiSecret := d.Get("cloud_api_secret").(string)
 	kafkaClusterId := d.Get("kafka_id").(string)
@@ -448,6 +483,8 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	flinkApiKey := d.Get("flink_api_key").(string)
 	flinkApiSecret := d.Get("flink_api_secret").(string)
 	flinkRestEndpoint := d.Get("flink_rest_endpoint").(string)
+	tableflowApiKey := d.Get("tableflow_api_key").(string)
+	tableflowApiSecret := d.Get("tableflow_api_secret").(string)
 	maxRetries := d.Get("max_retries").(int)
 
 	var externalOAuthToken = &OAuthToken{}
@@ -473,11 +510,18 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	}
 
 	// All 4 attributes should be set or not set at the same time
-	allSchemaRegistryAttributesAreSet := (schemaRegistryApiKey != "") && (schemaRegistryApiSecret != "") && (schemaRegistryRestEndpoint != "") && (schemaRegistryClusterId != "")
-	allSchemaRegistryAttributesAreNotSet := (schemaRegistryApiKey == "") && (schemaRegistryApiSecret == "") && (schemaRegistryRestEndpoint == "") && (schemaRegistryClusterId == "")
+	allSchemaRegistryAttributesAreSet := (schemaRegistryApiKey != "") && (schemaRegistryApiSecret != "") && (schemaRegistryRestEndpoint != "" || catalogRestEndpoint != "") && (schemaRegistryClusterId != "")
+	allSchemaRegistryAttributesAreNotSet := (schemaRegistryApiKey == "") && (schemaRegistryApiSecret == "") && (schemaRegistryRestEndpoint == "" || catalogRestEndpoint == "") && (schemaRegistryClusterId == "")
 	justSubsetOfSchemaRegistryAttributesAreSet := !(allSchemaRegistryAttributesAreSet || allSchemaRegistryAttributesAreNotSet)
 	if justSubsetOfSchemaRegistryAttributesAreSet {
 		return nil, diag.Errorf("All 4 schema_registry_api_key, schema_registry_api_secret, schema_registry_rest_endpoint, schema_registry_id attributes should be set or not set in the provider block at the same time")
+	}
+
+	allCatalogAttributesAreSet := (schemaRegistryApiKey != "") && (schemaRegistryApiSecret != "") && (schemaRegistryRestEndpoint != "" || catalogRestEndpoint != "") && (schemaRegistryClusterId != "")
+	allCatalogAttributesAreNotSet := (schemaRegistryApiKey == "") && (schemaRegistryApiSecret == "") && (schemaRegistryRestEndpoint == "" || catalogRestEndpoint == "") && (schemaRegistryClusterId == "")
+	justSubsetOfCatalogAttributesAreSet := !(allCatalogAttributesAreSet || allCatalogAttributesAreNotSet)
+	if justSubsetOfCatalogAttributesAreSet {
+		return nil, diag.Errorf("All 4 schema_registry_api_key, schema_registry_api_secret, catalog_rest_endpoint, schema_registry_id attributes should be set or not set in the provider block at the same time")
 	}
 
 	// All 7 attributes should be set or not set at the same time
@@ -486,6 +530,13 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	justSubsetOfFlinkAttributesAreSet := !(allFlinkAttributesAreSet || allFlinkAttributesAreNotSet)
 	if justSubsetOfFlinkAttributesAreSet {
 		return nil, diag.Errorf("All 7 flink_api_key, flink_api_secret, flink_rest_endpoint, organization_id, environment_id, flink_compute_pool_id, flink_principal_id attributes should be set or not set in the provider block at the same time")
+	}
+
+	allTableflowAttributesAreSet := (tableflowApiKey != "") && (tableflowApiSecret != "")
+	allTableflowAttributesAreNotSet := (tableflowApiKey == "") && (tableflowApiSecret == "")
+	justOneTableflowAttributeSet := !(allTableflowAttributesAreSet || allTableflowAttributesAreNotSet)
+	if justOneTableflowAttributeSet {
+		return nil, diag.Errorf("Both tableflow_api_key and tableflow_api_secret should be set or not set in the provider block at the same time")
 	}
 
 	userAgent := p.UserAgent(terraformProviderUserAgent, fmt.Sprintf("%s (https://confluent.cloud; support@confluent.io)", providerVersion))
@@ -502,6 +553,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	apiKeysCfg := apikeys.NewConfiguration()
 	byokCfg := byok.NewConfiguration()
 	caCfg := ca.NewConfiguration()
+	catalogCfg := dc.NewConfiguration()
 	ccpCfg := ccp.NewConfiguration()
 	cmkCfg := cmk.NewConfiguration()
 	connectCfg := connect.NewConfiguration()
@@ -552,6 +604,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	apiKeysCfg.UserAgent = userAgent
 	byokCfg.UserAgent = userAgent
 	caCfg.UserAgent = userAgent
+	catalogCfg.UserAgent = userAgent
 	ccpCfg.UserAgent = userAgent
 	cmkCfg.UserAgent = userAgent
 	connectCfg.UserAgent = userAgent
@@ -574,17 +627,22 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	srcmCfg.UserAgent = userAgent
 	ssoCfg.UserAgent = userAgent
 
+	var catalogRestClientFactory *CatalogRestClientFactory
 	var flinkRestClientFactory *FlinkRestClientFactory
 	var kafkaRestClientFactory *KafkaRestClientFactory
 	var schemaRegistryRestClientFactory *SchemaRegistryRestClientFactory
+	var tableflowRestClientFactory *TableflowRestClientFactory
 
+	catalogRestClientFactory = &CatalogRestClientFactory{ctx: ctx, userAgent: userAgent, maxRetries: &maxRetries}
 	flinkRestClientFactory = &FlinkRestClientFactory{ctx: ctx, userAgent: userAgent, maxRetries: &maxRetries}
 	kafkaRestClientFactory = &KafkaRestClientFactory{ctx: ctx, userAgent: userAgent, maxRetries: &maxRetries}
 	schemaRegistryRestClientFactory = &SchemaRegistryRestClientFactory{ctx: ctx, userAgent: userAgent, maxRetries: &maxRetries}
+	tableflowRestClientFactory = &TableflowRestClientFactory{ctx: ctx, userAgent: userAgent, maxRetries: &maxRetries, endpoint: endpoint}
 
 	apiKeysCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	byokCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	caCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
+	catalogCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	ccpCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	cmkCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	connectCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
@@ -609,6 +667,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	client := Client{
 		apiKeysClient:                   apikeys.NewAPIClient(apiKeysCfg),
 		byokClient:                      byok.NewAPIClient(byokCfg),
+		catalogClient:                   dc.NewAPIClient(catalogCfg),
 		caClient:                        ca.NewAPIClient(caCfg),
 		ccpClient:                       ccp.NewAPIClient(ccpCfg),
 		cmkClient:                       cmk.NewAPIClient(cmkCfg),
@@ -628,13 +687,16 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 		orgClient:                       org.NewAPIClient(orgCfg),
 		piClient:                        pi.NewAPIClient(piCfg),
 		srcmClient:                      srcm.NewAPIClient(srcmCfg),
+		catalogRestClientFactory:        catalogRestClientFactory,
 		flinkRestClientFactory:          flinkRestClientFactory,
 		kafkaRestClientFactory:          kafkaRestClientFactory,
 		schemaRegistryRestClientFactory: schemaRegistryRestClientFactory,
+		tableflowRestClientFactory:      tableflowRestClientFactory,
 		mdsClient:                       mds.NewAPIClient(mdsCfg),
 		quotasClient:                    quotas.NewAPIClient(quotasCfg),
 		ssoClient:                       sso.NewAPIClient(ssoCfg),
 		userAgent:                       userAgent,
+		catalogRestEndpoint:             catalogRestEndpoint,
 		cloudApiKey:                     cloudApiKey,
 		cloudApiSecret:                  cloudApiSecret,
 		kafkaClusterId:                  kafkaClusterId,
@@ -652,15 +714,20 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 		flinkApiKey:                     flinkApiKey,
 		flinkApiSecret:                  flinkApiSecret,
 		flinkRestEndpoint:               flinkRestEndpoint,
+		tableflowApiKey:                 tableflowApiKey,
+		tableflowApiSecret:              tableflowApiSecret,
 		oauthToken:                      externalOAuthToken,
 		stsToken:                        stsOAuthToken,
-		// For simplicity, treat 3 (for Kafka), 4 (for SR), and 7 (for Flink) variables as a "single" one
-		isKafkaMetadataSet:          allKafkaAttributesAreSet,
-		isKafkaClusterIdSet:         kafkaClusterId != "",
-		isSchemaRegistryMetadataSet: allSchemaRegistryAttributesAreSet,
-		isFlinkMetadataSet:          allFlinkAttributesAreSet,
-		isAcceptanceTestMode:        acceptanceTestMode,
-		isOAuthEnabled:              oauthEnabled,
+
+		// For simplicity, treat 3 (for Kafka), 4 (for SR), 4 (for catalog), 7 (for Flink), and 2 (for Tableflow) variables as a "single" one
+		isKafkaMetadataSet:           allKafkaAttributesAreSet,
+		isKafkaClusterIdSet:          kafkaClusterId != "",
+		isSchemaRegistryMetadataSet:  allSchemaRegistryAttributesAreSet,
+		isCatalogRegistryMetadataSet: allCatalogAttributesAreSet,
+		isFlinkMetadataSet:           allFlinkAttributesAreSet,
+		isTableflowMetadataSet:       allTableflowAttributesAreSet,
+		isAcceptanceTestMode:         acceptanceTestMode,
+		isOAuthEnabled:               oauthEnabled,
 	}
 
 	return &client, nil

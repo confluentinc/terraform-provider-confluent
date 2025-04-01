@@ -1,9 +1,0 @@
-{
-  "api_version": "sql/v1",
-  "data": [],
-  "kind": "Statement",
-  "metadata": {
-    "next": "",
-    "self": "https://flink.us-east-1.confluent.cloud/sql/v1/organizations/foo/environments/env-3732nw/statements?page_size=10"
-  }
-}

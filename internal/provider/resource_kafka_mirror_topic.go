@@ -18,14 +18,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"regexp"
+	"strings"
+
 	v3 "github.com/confluentinc/ccloud-sdk-go-v2/kafkarest/v3"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"net/http"
-	"regexp"
-	"strings"
 )
 
 const (
@@ -349,7 +350,7 @@ func kafkaMirrorTopicUpdate(ctx context.Context, d *schema.ResourceData, meta in
 			if err := d.Set(paramStatus, oldStatus); err != nil {
 				return diag.FromErr(createDescriptiveError(err))
 			}
-			return diag.Errorf(fmt.Sprintf("error updating Kafka Mirror Topic %q: %s \nbut %q->%q was attempted", d.Id(), disallowedTransitionErrorMessage, oldStatus, newStatus))
+			return diag.Errorf("error updating Kafka Mirror Topic %q: %s \nbut %q->%q was attempted", d.Id(), disallowedTransitionErrorMessage, oldStatus, newStatus)
 		}
 		tflog.Debug(ctx, fmt.Sprintf("Finished updating Kafka Mirror Topic %q", d.Id()), map[string]interface{}{kafkaMirrorTopicLoggingKey: d.Id()})
 	}

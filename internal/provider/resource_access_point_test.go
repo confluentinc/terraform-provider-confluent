@@ -626,7 +626,7 @@ func testAccCheckResourceAccessPointGcpEgressWithIdSet(mockServerUrl, name strin
 			id = "gw-abc123"
 		}
 		gcp_egress_private_service_connect_endpoint {
-    		private_service_connect_endpoint_target = "all-google-apis"
+    		private_service_connect_endpoint_target = "ALL_GOOGLE_APIS"
   		}
 	}
 	`, mockServerUrl, name)

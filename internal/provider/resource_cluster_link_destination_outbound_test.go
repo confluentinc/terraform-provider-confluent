@@ -47,7 +47,7 @@ const (
 	clusterLinkMode                       = "DESTINATION"
 	clusterLinkConnectionMode             = "OUTBOUND"
 	clusterLinkResourceLabel              = "test_cluster_link_resource_label"
-	numberOfClusterLinkResourceAttributes = "9"
+	numberOfClusterLinkResourceAttributes = "10"
 
 	firstClusterClusterLinkConfigName         = "acl.sync.ms"
 	firstClusterClusterLinkConfigValue        = "5100"
@@ -214,6 +214,7 @@ func TestAccClusterLinkDestinationOutbound(t *testing.T) {
 					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, "destination_kafka_cluster.0.credentials.0.key", destinationClusterApiKey),
 					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, "destination_kafka_cluster.0.credentials.0.secret", destinationClusterApiSecret),
 					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, "id", fmt.Sprintf("%s/%s", destinationClusterId, clusterLinkName)),
+					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, "cluster_link_id", "qz0HDEV-Qz2B5aPFpcWQJQ"),
 					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, "config.%", "1"),
 					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, fmt.Sprintf("config.%s", firstClusterClusterLinkConfigName), firstClusterClusterLinkConfigValue),
 					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, "%", numberOfClusterLinkResourceAttributes),
@@ -245,6 +246,7 @@ func TestAccClusterLinkDestinationOutbound(t *testing.T) {
 					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, "destination_kafka_cluster.0.credentials.0.key", destinationClusterApiKey),
 					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, "destination_kafka_cluster.0.credentials.0.secret", destinationClusterApiSecret),
 					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, "id", fmt.Sprintf("%s/%s", destinationClusterId, clusterLinkName)),
+					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, "cluster_link_id", "qz0HDEV-Qz2B5aPFpcWQJQ"),
 					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, "config.%", "2"),
 					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, fmt.Sprintf("config.%s", firstClusterClusterLinkConfigName), firstClusterClusterLinkConfigUpdatedValue),
 					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, fmt.Sprintf("config.%s", secondClusterClusterLinkConfigName), secondClusterClusterLinkConfigValue),

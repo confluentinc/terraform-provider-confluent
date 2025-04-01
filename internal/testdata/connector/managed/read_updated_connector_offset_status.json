@@ -1,0 +1,25 @@
+{
+  "request": {
+    "id": "lcc-0m3z15",
+    "name": "test_connector",
+    "offsets": [
+      {
+        "partition": {
+          "kafka_partition": "0",
+          "kafka_topic": "test_topic"
+        },
+        "offset": {
+          "kafka_offset": "50"
+        }
+      }
+    ],
+    "requested_at": "2025-02-08T20:06:20.468546777Z",
+    "type": "PATCH"
+  },
+  "status": {
+    "phase": "APPLIED",
+    "message": "The Connect framework-managed offsets for this connector have been altered successfully. However, if this connector manages offsets externally, they will need to be manually altered in the system that the connector uses."
+  },
+  "previous_offsets": [],
+  "applied_at": "2025-02-08T20:07:13.880788966Z"
+}

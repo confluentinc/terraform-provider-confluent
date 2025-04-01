@@ -302,7 +302,9 @@ func writeTfState(ctx context.Context, resources []instanceData, outputPath stri
 	stateReplaceCommandStr := "terraform state replace-provider registry.terraform.io/-/confluent registry.terraform.io/confluentinc/confluent"
 	cmd, err := commandWithResolvedSymlink(ctx, "terraform")
 	if err != nil {
-		return diag.Errorf("failed to run terraform CLI command: %q. Please run it manually in %s.", stateReplaceCommandStr, outputPath)
+		return diag.Errorf("The process was successfully completed, but there's one more manual step you'll "+
+			"need to take. Please run the following terraform CLI command: %q in %s folder.", stateReplaceCommandStr,
+			outputPath)
 	}
 
 	cmd.Args = append(cmd.Args, []string{
@@ -317,7 +319,9 @@ func writeTfState(ctx context.Context, resources []instanceData, outputPath stri
 	tflog.Info(ctx, fmt.Sprintf("Running %q in %s", stateReplaceCommandStr, outputPath))
 
 	if err = cmd.Run(); err != nil {
-		return diag.Errorf("failed to run terraform CLI command: %q. Please run it manually in %s.", stateReplaceCommandStr, outputPath)
+		return diag.Errorf("The process was successfully completed, but there's one more manual step you'll "+
+			"need to take. Please run the following terraform CLI command: %q in %s folder.", stateReplaceCommandStr,
+			outputPath)
 	}
 	return nil
 }
@@ -369,7 +373,7 @@ func loadInstances(ctx context.Context, resourceName string, importer *Importer,
 
 		instanceState, err := getInstanceState(ctx, resourceSchema, instanceId, meta)
 		if err != nil {
-			return nil, diag.Errorf(fmt.Sprintf("Failed to get state for %s instance %s: %v", resourceName, instanceId, err))
+			return nil, diag.Errorf("Failed to get state for %s instance %s: %v", resourceName, instanceId, err)
 		}
 
 		if instanceState == nil {
@@ -589,7 +593,7 @@ func createHclFileWithHeader(mode ImporterMode) *hclwrite.File {
 	requiredProvidersBlock := tfBlock.Body().AppendNewBlock("required_providers", nil)
 	requiredProvidersBlock.Body().SetAttributeValue("confluent", zclCty.ObjectVal(map[string]zclCty.Value{
 		"source":  zclCty.StringVal("confluentinc/confluent"),
-		"version": zclCty.StringVal("2.16.0"),
+		"version": zclCty.StringVal("2.24.0"),
 	}))
 
 	providerBlock := body.AppendNewBlock("provider", []string{"confluent"})

@@ -13,6 +13,7 @@
   "state": "ENABLED",
   "issuer": "https://login.microsoftonline.com/11111111-0000-0000-0000-b3d3d184f1a5/v2.0",
   "jwks_uri": "https://login.microsoftonline.com/common/discovery/v2.0/keys",
+  "identity_claim": "claims.aud",
   "keys": [
     {
       "kty": "RSA",

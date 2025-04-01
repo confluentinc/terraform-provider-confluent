@@ -18,16 +18,17 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	apikeys "github.com/confluentinc/ccloud-sdk-go-v2/apikeys/v2"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"net/http"
 	"os"
 	"regexp"
 	"strings"
 	"time"
+
+	apikeys "github.com/confluentinc/ccloud-sdk-go-v2/apikeys/v2"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 const (
@@ -482,39 +483,6 @@ func fetchHttpEndpointOfKafkaCluster(ctx context.Context, c *Client, environment
 	}
 }
 
-// Send a GetCluster request to SRCM API to find out rest_endpoint for a given (environmentId, clusterId) pair
-func fetchHttpEndpointOfSchemaRegistryCluster(ctx context.Context, c *Client, environmentId, clusterId string) (string, error) {
-	cluster, _, err := executeSchemaRegistryClusterRead(c.srcmApiContext(ctx), c, environmentId, clusterId)
-	if err != nil {
-		return "", fmt.Errorf("error reading Schema Registry Cluster %q: %s", clusterId, createDescriptiveError(err))
-	}
-	if restEndpoint := cluster.Spec.GetHttpEndpoint(); len(restEndpoint) > 0 {
-		return restEndpoint, nil
-	} else {
-		return "", fmt.Errorf("rest_endpoint is nil or empty for Schema Registry Cluster %q", clusterId)
-	}
-}
-
-// Send a GetRegions request to FCPM API to find out rest_endpoint for a given (environmentId, flinkRegionId) pair
-func fetchHttpEndpointOfFlinkRegion(ctx context.Context, c *Client, flinkRegionId string) (string, error) {
-	cloud, regionName, err := extractCloudAndRegionName(flinkRegionId)
-	if err != nil {
-		return "", fmt.Errorf("error parsing Flink API Key %q attribute in %q block: %s", paramId, paramResource, createDescriptiveError(err))
-	}
-	regions, _, err := executeFlinkRegionRead(c.srcmApiContext(ctx), c, cloud, regionName)
-	if err != nil {
-		return "", fmt.Errorf("error reading Flink Region %q: %s", flinkRegionId, createDescriptiveError(err))
-	}
-	if len(regions.GetData()) == 0 {
-		return "", fmt.Errorf("error reading Flink Region %q: there are no regions available", flinkRegionId)
-	}
-	if restEndpoint := regions.GetData()[0].GetHttpEndpoint(); len(restEndpoint) > 0 {
-		return restEndpoint, nil
-	} else {
-		return "", fmt.Errorf("rest_endpoint is nil or empty for Flink Region %q", flinkRegionId)
-	}
-}
-
 func isKafkaApiKey(apiKey apikeys.IamV2ApiKey) bool {
 	return apiKey.Spec.Resource.GetKind() == clusterKind && apiKey.Spec.Resource.GetApiVersion() == cmkApiVersion
 }
@@ -542,7 +510,6 @@ func isTableflowApiKey(apiKey apikeys.IamV2ApiKey) bool {
 func waitForApiKeyToSync(ctx context.Context, c *Client, createdApiKey apikeys.IamV2ApiKey, isResourceSpecificApiKey bool, environmentId string) error {
 	// For Kafka API Key use Kafka REST API's List Topics request and wait for http.StatusOK
 	// For Cloud API Key use Org API's List Environments request and wait for http.StatusOK
-	// For Flink API Key use Statements API's List of Statements request and wait for http.StatusOK
 	// For Tableflow API Key skipped the waitForCreatedTableflowApiKeyToSync function for now, until backend support for tableflow secret/key verification is ready
 
 	if isResourceSpecificApiKey {
@@ -556,40 +523,18 @@ func waitForApiKeyToSync(ctx context.Context, c *Client, createdApiKey apikeys.I
 			if err := waitForCreatedKafkaApiKeyToSync(ctx, kafkaRestClient, c.isAcceptanceTestMode); err != nil {
 				return fmt.Errorf("error waiting for Kafka API Key %q to sync: %s", createdApiKey.GetId(), createDescriptiveError(err))
 			}
-		} else if isSchemaRegistryApiKey(createdApiKey) {
-			clusterId := createdApiKey.Spec.Resource.GetId()
-			restEndpoint, err := fetchHttpEndpointOfSchemaRegistryCluster(ctx, c, environmentId, clusterId)
-			if err != nil {
-				return fmt.Errorf("error fetching Schema Registry Cluster %q's %q attribute: %s", clusterId, paramRestEndpoint, createDescriptiveError(err))
-			}
-			schemaRegistryRestClient := c.schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, createdApiKey.GetId(), createdApiKey.Spec.GetSecret(), false, c.oauthToken)
-			if err := waitForCreatedSchemaRegistryApiKeyToSync(ctx, schemaRegistryRestClient, c.isAcceptanceTestMode); err != nil {
-				return fmt.Errorf("error waiting for Schema Registry API Key %q to sync: %s", createdApiKey.GetId(), createDescriptiveError(err))
-			}
-		} else if isFlinkApiKey(createdApiKey) {
-			// For example, flinkRegionId = "aws.us-west-2"
-			flinkRegionId := createdApiKey.Spec.Resource.GetId()
-			restEndpoint, err := fetchHttpEndpointOfFlinkRegion(ctx, c, flinkRegionId)
-			if err != nil {
-				return fmt.Errorf("error fetching Flink Region %q attribute: %s", paramRestEndpoint, createDescriptiveError(err))
-			}
-			organizationId, err := extractOrgIdFromResourceName(createdApiKey.Metadata.GetResourceName())
-			flinkRestClient := c.flinkRestClientFactory.CreateFlinkRestClient(restEndpoint, organizationId, environmentId, "", "", createdApiKey.GetId(), createdApiKey.Spec.GetSecret(), false, nil)
-			if err != nil {
-				return err
-			}
-			if err := waitForCreatedFlinkApiKeyToSync(ctx, flinkRestClient, organizationId, c.isAcceptanceTestMode); err != nil {
-				return fmt.Errorf("error waiting for Flink API Key %q to sync: %s", createdApiKey.GetId(), createDescriptiveError(err))
-			}
+		} else if isSchemaRegistryApiKey(createdApiKey) || isFlinkApiKey(createdApiKey) {
+			SleepIfNotTestMode(1*time.Minute, c.isAcceptanceTestMode)
 		} else if isKsqlDbClusterApiKey(createdApiKey) {
 			// Currently, there are no data plane API for ksqlDB clusters so there is no endpoint we could leverage
 			// to check whether the Cluster API Key is synced which is why we're adding SleepIfNotTestMode() here.
 			// TODO: SVCF-3560
 			SleepIfNotTestMode(5*time.Minute, c.isAcceptanceTestMode)
 		} else if isTableflowApiKey(createdApiKey) {
-			// TODO: add sync implementation once backend support for tableflow secret/key verification is ready
-			// 		 tracked with JIRA Ticket APIT-2764
-			return nil
+			tableflowRestClient := c.tableflowRestClientFactory.CreateTableflowRestClient(createdApiKey.GetId(), createdApiKey.Spec.GetSecret(), false)
+			if err := waitForCreatedTableflowApiKeyToSync(ctx, tableflowRestClient, c.isAcceptanceTestMode); err != nil {
+				return fmt.Errorf("error waiting for Tableflow API Key %q to sync: %s", createdApiKey.GetId(), createDescriptiveError(err))
+			}
 		} else {
 			resourceJson, err := json.Marshal(createdApiKey.Spec.GetResource())
 			if err != nil {

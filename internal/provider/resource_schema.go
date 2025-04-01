@@ -413,32 +413,68 @@ func SetSchemaDiff(ctx context.Context, diff *schema.ResourceDiff, meta interfac
 }
 
 func schemaLookupCheck(ctx context.Context, diff *schema.ResourceDiff, c *SchemaRegistryRestClient, createSchemaRequest *sr.RegisterSchemaRequest, subjectName, oldSchema string) error {
+	setOldSchemaValue := func() error {
+		if err := diff.SetNew(paramSchema, oldSchema); err != nil {
+			return fmt.Errorf("error customizing diff Schema: %s", createDescriptiveError(err))
+		}
+		return nil
+	}
+
+	// Try with original request first
+	matched, err := trySchemaLookup(ctx, diff, c, createSchemaRequest, subjectName)
+	if err != nil {
+		return fmt.Errorf("error customizing diff Schema: %s", createDescriptiveError(err))
+	}
+
+	if matched {
+		return setOldSchemaValue()
+	}
+
+	// If original request doesn't match and doesn't have ruleset, try with empty ruleset
+	if !createSchemaRequest.HasRuleSet() {
+		requestWithRuleset := *createSchemaRequest // Create a copy to avoid modifying the original
+		requestWithRuleset.SetRuleSet(*sr.NewRuleSet())
+
+		matched, err := trySchemaLookup(ctx, diff, c, &requestWithRuleset, subjectName)
+		if err != nil {
+			return fmt.Errorf("error customizing diff Schema: %s", createDescriptiveError(err))
+		}
+
+		if matched {
+			return setOldSchemaValue()
+		}
+	}
+
+	return nil
+}
+
+func trySchemaLookup(ctx context.Context, diff *schema.ResourceDiff, c *SchemaRegistryRestClient,
+	createSchemaRequest *sr.RegisterSchemaRequest, subjectName string) (bool, error) {
 	createSchemaRequestJson, err := json.Marshal(createSchemaRequest)
 	if err != nil {
-		return fmt.Errorf("error customizing diff Schema: error marshaling %#v to json: %s", createSchemaRequest, createDescriptiveError(err))
+		return false, fmt.Errorf("error marshaling %#v to json: %s",
+			createSchemaRequest, createDescriptiveError(err))
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Customizing diff new Schema: %s", createSchemaRequestJson))
 
 	registeredSchema, schemaExists, err := schemaLookup(ctx, c, createSchemaRequest, subjectName)
 	if err != nil {
-		return fmt.Errorf("error customizing diff Schema: %s", createDescriptiveError(err))
+		return false, err
 	}
+
 	if !schemaExists {
-		return nil
+		return false, nil
 	}
 
 	schemaIdentifier := diff.Get(paramSchemaIdentifier).(int)
 	if int(registeredSchema.GetId()) == schemaIdentifier {
 		// Two schemas that are semantically equivalent
 		// https://docs.confluent.io/platform/current/schema-registry/serdes-develop/index.html#schema-normalization
-
-		// Set old value to paramSchema to avoid TF drift
-		if err := diff.SetNew(paramSchema, oldSchema); err != nil {
-			return fmt.Errorf("error customizing diff Schema: %s", createDescriptiveError(err))
-		}
+		return true, nil
 	}
-	return nil
+
+	return false, nil
 }
 
 func schemaValidateCheck(ctx context.Context, c *SchemaRegistryRestClient, createSchemaRequest *sr.RegisterSchemaRequest, subjectName string) error {

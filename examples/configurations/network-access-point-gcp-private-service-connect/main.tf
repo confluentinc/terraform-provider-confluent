@@ -2,7 +2,7 @@ terraform {
   required_providers {
     confluent = {
       source  = "confluentinc/confluent"
-      version = "2.16.0"
+      version = "2.24.0"
     }
   }
 }
@@ -58,7 +58,7 @@ resource "confluent_access_point" "private-service-connect" {
     id = data.confluent_gateway.main.id
   }
   gcp_egress_private_service_connect_endpoint {
-    private_service_connect_endpoint_target = "ALL_GOOGLE_APIS"
+    private_service_connect_endpoint_target = "all-google-apis"
   }
   depends_on = [
     confluent_network.gcp-private-service-connect,

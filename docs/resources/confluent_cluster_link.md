@@ -129,7 +129,8 @@ The following arguments are supported:
 
 In addition to the preceding arguments, the following attributes are exported:
 
-- `id` - (Required String) The ID of the Cluster Link, in the format `<Kafka cluster ID>/<Cluster link name>`, for example, `lkc-abc123/my-cluster-link`.
+- `id` - (Required String) The composite ID of the Cluster Link resource, in the format `<Kafka cluster ID>/<Cluster link name>`, for example, `lkc-abc123/my-cluster-link`.
+- `cluster_link_id` - (Required String) The actual Cluster Link ID assigned from Confluent Cloud that uniquely represents a link between two Kafka clusters, for example, `qz0HDEV-Qz2B5aPFpcWQJQ`.
 
 ## Import
 
@@ -165,6 +166,6 @@ The following end-to-end examples might help to get started with `confluent_clus
   * [`destination-initiated-cluster-link-rbac`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/destination-initiated-cluster-link-rbac): An example of setting up a _destination_ initiated cluster link with a mirror topic
   * [`source-initiated-cluster-link-rbac`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/source-initiated-cluster-link-rbac): An example of setting up a _source_ initiated cluster link with a mirror topic
   * [`regular-bidirectional-cluster-link-rbac`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/regular-bidirectional-cluster-link-rbac): An example of setting up a bidirectional cluster link with 2 mirror topics
-  * [`advanced-bidirectional-cluster-link-rbac`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/regular-bidirectional-cluster-link-rbac): An example of setting up a bidirectional cluster link with 2 mirror topics ([advanced option](https://docs.confluent.io/cloud/current/multi-cloud/cluster-linking/cluster-links-cc.html#create-a-cluster-link-in-bidirectional-mode))
+  * [`advanced-bidirectional-cluster-link-rbac`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/advanced-bidirectional-cluster-link-rbac): An example of setting up a bidirectional cluster link with 2 mirror topics ([advanced option](https://docs.confluent.io/cloud/current/multi-cloud/cluster-linking/cluster-links-cc.html#create-a-cluster-link-in-bidirectional-mode))
 
 See [Cluster Linking on Confluent Cloud](https://docs.confluent.io/cloud/current/multi-cloud/cluster-linking/index.html) to learn more about Cluster Linking on Confluent Cloud.

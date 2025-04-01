@@ -135,6 +135,23 @@ func TestAccTagWithEnhancedProviderBlock(t *testing.T) {
 				),
 			},
 			{
+				Config: tagResourceConfigWithEnhancedSchemaRegistryProviderBlock(mockServerUrl),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(tagLabel, "id", fmt.Sprintf("%s/test1", testStreamGovernanceClusterId)),
+					resource.TestCheckResourceAttr(tagLabel, "schema_registry_cluster.#", "0"),
+					resource.TestCheckNoResourceAttr(tagLabel, "schema_registry_cluster.0.id"),
+					resource.TestCheckResourceAttr(tagLabel, "name", "test1"),
+					resource.TestCheckResourceAttr(tagLabel, "description", "test1Description"),
+					resource.TestCheckResourceAttr(tagLabel, "version", "1"),
+					resource.TestCheckResourceAttr(tagLabel, "entity_types.#", "1"),
+					resource.TestCheckResourceAttr(tagLabel, "entity_types.0", "cf_entity"),
+					resource.TestCheckResourceAttr(tagLabel, "credentials.#", "0"),
+					resource.TestCheckNoResourceAttr(tagLabel, "credentials.0.key"),
+					resource.TestCheckNoResourceAttr(tagLabel, "credentials.0.secret"),
+					resource.TestCheckNoResourceAttr(tagLabel, "rest_endpoint"),
+				),
+			},
+			{
 				Config: tagResourceUpdatedConfigWithEnhancedProviderBlock(mockServerUrl),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(tagLabel, "id", fmt.Sprintf("%s/test1", testStreamGovernanceClusterId)),
@@ -159,7 +176,23 @@ func tagResourceConfigWithEnhancedProviderBlock(mockServerUrl string) string {
 	return fmt.Sprintf(`
  	provider "confluent" {
  	  schema_registry_id = "%s"
-	  schema_registry_rest_endpoint = "%s" # optionally use SCHEMA_REGISTRY_REST_ENDPOINT env var
+	  catalog_rest_endpoint = "%s"               # optionally use SCHEMA_REGISTRY_REST_ENDPOINT env var
+	  schema_registry_api_key       = "%s"       # optionally use SCHEMA_REGISTRY_API_KEY env var
+	  schema_registry_api_secret = "%s"
+ 	}
+ 	resource "confluent_tag" "mytag" {
+	  name = "test1"
+	  description = "test1Description"
+	}
+
+ 	`, testStreamGovernanceClusterId, mockServerUrl, testSchemaRegistryKey, testSchemaRegistrySecret)
+}
+
+func tagResourceConfigWithEnhancedSchemaRegistryProviderBlock(mockServerUrl string) string {
+	return fmt.Sprintf(`
+ 	provider "confluent" {
+ 	  schema_registry_id = "%s"
+	  schema_registry_rest_endpoint = "%s"       # optionally use SCHEMA_REGISTRY_REST_ENDPOINT env var
 	  schema_registry_api_key       = "%s"       # optionally use SCHEMA_REGISTRY_API_KEY env var
 	  schema_registry_api_secret = "%s"
  	}
@@ -175,7 +208,7 @@ func tagResourceUpdatedConfigWithEnhancedProviderBlock(mockServerUrl string) str
 	return fmt.Sprintf(`
  	provider "confluent" {
  	  schema_registry_id = "%s"
-	  schema_registry_rest_endpoint = "%s" # optionally use SCHEMA_REGISTRY_REST_ENDPOINT env var
+	  catalog_rest_endpoint = "%s" # optionally use SCHEMA_REGISTRY_REST_ENDPOINT env var
 	  schema_registry_api_key       = "%s"       # optionally use SCHEMA_REGISTRY_API_KEY env var
 	  schema_registry_api_secret = "%s"
  	}

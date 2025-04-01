@@ -18,11 +18,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"testing"
+
+	"github.com/walkerus/go-wiremock"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -50,6 +51,7 @@ const (
 	cloudApiKeyScenarioName                = "confluent_api_key (Cloud API Key) Resource Lifecycle"
 
 	scenarioStateTableflowApiKeyHasBeenCreated = "The new tableflow api key has been just created"
+	scenarioStateTableflowApiKeyHasBeenSynced  = "The new tableflow api key has been just synced"
 	scenarioStateTableflowApiKeyHasBeenUpdated = "The new tableflow api key's description and display_name have been just updated"
 	scenarioStateTableflowApiKeyHasBeenDeleted = "The new tableflow api key has been deleted"
 	tableflowApiKeyScenarioName                = "confluent_api_key (Tableflow API Key) Resource Lifecycle"
@@ -319,52 +321,10 @@ func TestAccFlinkApiKey(t *testing.T) {
 		)
 	_ = wiremockClient.StubFor(createFlinkApiKeyStub)
 
-	createFlinkFcpmApiResponse, _ := ioutil.ReadFile("../testdata/apikey/read_list_regions.json")
-	var createFlinkFcpmApiResponseMap map[string]interface{}
-	_ = json.Unmarshal(createFlinkFcpmApiResponse, &createFlinkFcpmApiResponseMap)
-	// Override http endpoint to mock Flink REST API responses
-	createFlinkFcpmApiResponseMap["data"].([]interface{})[0].(map[string]interface{})["http_endpoint"] = mockServerUrl
-	createFlinkFcpmApiResponseWithUpdatedHttpEndpoint, _ := json.Marshal(createFlinkFcpmApiResponseMap)
-	createFcpmApiStub := wiremock.Get(wiremock.URLPathEqualTo("/fcpm/v2/regions")).
-		InScenario(flinkApiKeyScenarioName).
-		WithQueryParam("cloud", wiremock.EqualTo("aws")).
-		WithQueryParam("region_name", wiremock.EqualTo("us-east-1")).
-		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
-		WillReturn(
-			string(createFlinkFcpmApiResponseWithUpdatedHttpEndpoint),
-			contentTypeJSONHeader,
-			http.StatusOK,
-		)
-	_ = wiremockClient.StubFor(createFcpmApiStub)
-
-	flinkRestApi404Response, _ := ioutil.ReadFile("../testdata/apikey/read_list_statements_error.json")
-	listStatementsFlinkRestApi401Stub := wiremock.Get(wiremock.URLPathEqualTo("/sql/v1/organizations/foo/environments/env-3732nw/statements")).
-		InScenario(flinkApiKeyScenarioName).
-		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
-		WillSetStateTo(scenarioStateFlinkApiKeyHasBeenSyncedFirstRead).
-		WillReturn(
-			string(flinkRestApi404Response),
-			contentTypeJSONHeader,
-			http.StatusNotFound,
-		)
-	_ = wiremockClient.StubFor(listStatementsFlinkRestApi401Stub)
-
-	flinkRestApiOkResponse, _ := ioutil.ReadFile("../testdata/apikey/read_list_statements_ok.json")
-	listStatementsFlinkRestApi200Stub := wiremock.Get(wiremock.URLPathEqualTo("/sql/v1/organizations/foo/environments/env-3732nw/statements")).
-		InScenario(flinkApiKeyScenarioName).
-		WhenScenarioStateIs(scenarioStateFlinkApiKeyHasBeenSyncedFirstRead).
-		WillSetStateTo(scenarioStateFlinkApiKeyHasBeenSyncedConfirmationRead).
-		WillReturn(
-			string(flinkRestApiOkResponse),
-			contentTypeJSONHeader,
-			http.StatusOK,
-		)
-	_ = wiremockClient.StubFor(listStatementsFlinkRestApi200Stub)
-
 	readCreatedFlinkApiKeyResponse, _ := ioutil.ReadFile("../testdata/apikey/read_created_flink_api_key.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/api-keys/AK4NBR7MUYHVJMHW")).
 		InScenario(flinkApiKeyScenarioName).
-		WhenScenarioStateIs(scenarioStateFlinkApiKeyHasBeenSyncedConfirmationRead).
+		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillSetStateTo(scenarioStateFlinkApiKeyHasBeenCreated).
 		WillReturn(
 			string(readCreatedFlinkApiKeyResponse),
@@ -527,7 +487,6 @@ func TestAccFlinkApiKey(t *testing.T) {
 
 	checkStubCount(t, wiremockClient, createFlinkApiKeyStub, "POST /iam/v2/api-keys", expectedCountOne)
 	//checkStubCount(t, wiremockClient, patchFlinkApiKeyStub, "PATCH /iam/v2/api-keys/AK4NBR7MUYHVJMHW", expectedCountOne)
-	checkStubCount(t, wiremockClient, createFcpmApiStub, "GET /fcpm/v2/regions", expectedCountOne)
 }
 
 func TestAccTableflowApiKey(t *testing.T) {
@@ -550,13 +509,36 @@ func TestAccTableflowApiKey(t *testing.T) {
 	createTableflowApiKeyStub := wiremock.Post(wiremock.URLPathEqualTo("/iam/v2/api-keys")).
 		InScenario(tableflowApiKeyScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
-		WillSetStateTo(scenarioStateTableflowApiKeyHasBeenCreated).
 		WillReturn(
 			string(createTableflowApiKeyResponse),
 			contentTypeJSONHeader,
 			http.StatusCreated,
 		)
 	_ = wiremockClient.StubFor(createTableflowApiKeyStub)
+
+	tableflowApi401Response, _ := ioutil.ReadFile("../testdata/apikey/read_list_tableflow_regions_401.json")
+	listRegionsTableflowApi401Stub := wiremock.Get(wiremock.URLPathEqualTo("/tableflow/v1/regions")).
+		InScenario(tableflowApiKeyScenarioName).
+		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
+		WillSetStateTo(scenarioStateTableflowApiKeyHasBeenSynced).
+		WillReturn(
+			string(tableflowApi401Response),
+			contentTypeJSONHeader,
+			http.StatusUnauthorized,
+		)
+	_ = wiremockClient.StubFor(listRegionsTableflowApi401Stub)
+
+	tableflowApi200Response, _ := ioutil.ReadFile("../testdata/apikey/read_list_tableflow_regions_200.json")
+	listRegionsTableflowApi200Stub := wiremock.Get(wiremock.URLPathEqualTo("/tableflow/v1/regions")).
+		InScenario(tableflowApiKeyScenarioName).
+		WhenScenarioStateIs(scenarioStateTableflowApiKeyHasBeenSynced).
+		WillSetStateTo(scenarioStateTableflowApiKeyHasBeenCreated).
+		WillReturn(
+			string(tableflowApi200Response),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		)
+	_ = wiremockClient.StubFor(listRegionsTableflowApi200Stub)
 
 	readCreatedTableflowApiKeyResponse, _ := ioutil.ReadFile("../testdata/apikey/read_created_tableflow_api_key.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/api-keys/HRVR6K4VMXYD2LDZ")).

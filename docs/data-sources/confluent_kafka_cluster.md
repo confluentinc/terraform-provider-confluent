@@ -82,8 +82,6 @@ In addition to the preceding arguments, the following attributes are exported:
 
 -> **Note:** At least one from the `basic`, `standard`, `dedicated`, `enterprise` or `freight` configuration blocks should be specified.
 
--> **Note:** The `freight` block is in a [Early Access lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
-
 -> **Note:** The `freight` Kafka cluster type is only available in AWS currently.
 
 - `network` (Optional Configuration Block) supports the following:

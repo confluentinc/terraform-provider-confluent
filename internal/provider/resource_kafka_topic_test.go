@@ -47,6 +47,7 @@ const (
 	thirdConfigName                        = "segment.bytes"
 	thirdConfigAddedValue                  = "104857600"
 	fourthConfigName                       = "max.compaction.lag.ms"
+	fifthConfigName                        = "confluent.topic.type"
 	fourthConfigAddedValue                 = "604800000"
 	topicName                              = "test_topic_name"
 	topicResourceLabel                     = "test_topic_resource_label"
@@ -200,6 +201,7 @@ func TestAccTopic(t *testing.T) {
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "config.%", "2"),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "config.max.message.bytes", "12345"),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "config.retention.ms", "6789"),
+					resource.TestCheckNoResourceAttr(fullTopicResourceLabel, fmt.Sprintf("config.%s", fifthConfigName)),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "credentials.#", "1"),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "credentials.0.%", "2"),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "credentials.0.key", kafkaApiKey),
@@ -222,6 +224,7 @@ func TestAccTopic(t *testing.T) {
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, fmt.Sprintf("config.%s", secondConfigName), secondConfigUpdatedValue),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, fmt.Sprintf("config.%s", thirdConfigName), thirdConfigAddedValue),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, fmt.Sprintf("config.%s", fourthConfigName), fourthConfigAddedValue),
+					resource.TestCheckNoResourceAttr(fullTopicResourceLabel, fmt.Sprintf("config.%s", fifthConfigName)),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "credentials.#", "1"),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "credentials.0.%", "2"),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "credentials.0.key", kafkaApiKey),

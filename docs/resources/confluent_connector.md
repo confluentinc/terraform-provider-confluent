@@ -206,6 +206,80 @@ resource "confluent_connector" "sink" {
 }
 ```
 
+### Example Managed [MySQL Sink Connector](https://docs.confluent.io/cloud/current/connectors/cc-mysql-sink.html) that uses a service account to communicate with your Kafka cluster
+
+```terraform
+# https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/connectors/manage-offsets-source-sink-connector
+resource "confluent_connector" "sink" {
+  environment {
+    id = data.confluent_environment.staging.id
+  }
+  
+  kafka_cluster {
+    id = data.confluent_kafka_cluster.basic.id
+  }
+  config_sensitive = {
+    "connection.password" = "***REDACTED***"
+
+  }
+  config_nonsensitive = {
+    "connector.class"          = "MySqlSink"
+    "name"                     = "MySQLSinkConnector_0"
+    "topics"                   = confluent_kafka_topic.orders.topic_name
+    "input.data.format"        = "AVRO"
+    "kafka.auth.mode"          = "SERVICE_ACCOUNT"
+    "kafka.service.account.id" = confluent_service_account.app-connector.id
+    "db.name"                  = "test_database"
+    "connection.user"          = "confluent_user"
+    "connection.host"          = "dev-testing-temp.abcdefghijk.us-west-7.rds.amazonaws.com"
+    "connection.port"          = "3306"
+    "insert.mode"              = "INSERT"
+    "auto.create"              = "true"
+    "auto.evolve"              = "true"
+    "tasks.max"                = "1"
+  }
+  
+  offsets {
+    partition = {
+      "kafka_partition" = "0"
+      "kafka_topic"     = confluent_kafka_topic.orders.topic_name
+    }
+    offset = {
+      "kafka_offset" = "100"
+    }
+  }
+  offsets {
+    partition = {
+      "kafka_partition" = "1"
+      "kafka_topic"     = confluent_kafka_topic.orders.topic_name
+    }
+    offset = {
+      "kafka_offset" = "200"
+    }
+  }
+  offsets {
+    partition = {
+      "kafka_partition" = "2"
+      "kafka_topic"     = confluent_kafka_topic.orders.topic_name
+    }
+    offset = {
+      "kafka_offset" = "300"
+    }
+  }
+  depends_on = [
+    confluent_kafka_acl.app-connector-describe-on-cluster,
+    confluent_kafka_acl.app-connector-read-on-target-topic,
+    confluent_kafka_acl.app-connector-create-on-dlq-lcc-topics,
+    confluent_kafka_acl.app-connector-write-on-dlq-lcc-topics,
+    confluent_kafka_acl.app-connector-create-on-success-lcc-topics,
+    confluent_kafka_acl.app-connector-write-on-success-lcc-topics,
+    confluent_kafka_acl.app-connector-create-on-error-lcc-topics,
+    confluent_kafka_acl.app-connector-write-on-error-lcc-topics,
+    confluent_kafka_acl.app-connector-read-on-connect-lcc-group,
+  ]
+}
+```
+
 ### Example Custom [Datagen Source Connector](https://www.confluent.io/hub/confluentinc/kafka-connect-datagen) that uses a Kafka API Key to communicate with your Kafka cluster
 ```terraform
 # https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/connectors/custom-datagen-source-connector
@@ -261,10 +335,19 @@ The following arguments are supported:
 - `config_sensitive` - (Required Map) Block for custom *sensitive* configuration properties that are labelled with "Type: password" under "Configuration Properties" section in [the docs](https://docs.confluent.io/cloud/current/connectors/index.html):
   - `name` - (Required String) The configuration setting name, for example, `aws.secret.access.key`.
   - `value` - (Required String, Sensitive) The configuration setting value, for example, `***REDACTED***`.
-
+- `offsets` - (Optional List of Configuration Blocks) supports the following:
+  - `partition` - (Required Map) Block with partition information that supports different keys depending on the connector type. For sink connectors, use `kafka_partition` and `kafka_topic`. For source connectors, the applicable keys differ by kind—refer to the [Source connectors page](https://docs.confluent.io/cloud/current/connectors/offsets.html#source-connectors) for the full list of supported keys.
+    - `kafka_partition` - (Optional String) The partition number of the topic (applicable only for sink connectors).
+    - `kafka_topic` - (Optional String) The name of the Kafka topic (applicable only for sink connectors).
+  - `offset` - (Required Map) Block with offset information that supports different keys depending on the connector type. For sink connectors, use `kafka_offset`. For source connectors, the applicable keys differ by kind—refer to the [Source connectors page](https://docs.confluent.io/cloud/current/connectors/offsets.html#source-connectors) for the full list of supported keys. Alternatively, use the [Manage custom offsets section](https://docs.confluent.io/cloud/current/connectors/cc-github-source.html#manage-custom-offsets) on the homepage of the target source connector.
+    - `kafka_offset` - (Optional String) The offset of the Kafka topic (applicable only for sink connectors).
 !> **Warning:** Terraform doesn't encrypt the sensitive configuration settings from the `config_sensitive` block of the `confluent_connector` resource, so you must keep your state file secure to avoid exposing it. Refer to the [Terraform documentation](https://www.terraform.io/docs/language/state/sensitive-data.html) to learn more about securing your state file.
 
+-> **Note:** To reset offsets, you need to remove the existing `offsets` block from the TF configuration file.
+
 - `status` (Optional String) The status of the connector (one of `"NONE"`, `"PROVISIONING"`, `"RUNNING"`, `"DEGRADED"`, `"FAILED"`, `"PAUSED"`, `"DELETED"`). Pausing (`"RUNNING" -> "PAUSED"`) and resuming (`"PAUSED" -> "RUNNING"`) a connector is supported via an update operation.
+
+For more information on connector offset management, see [Manage Offsets for Fully-Managed Connectors in Confluent Cloud](https://docs.confluent.io/cloud/current/connectors/offsets.html).
 
 -> **Note:** If there are no _sensitive_ configuration settings for your connector, set `config_sensitive = {}` explicitly.
 
@@ -278,7 +361,7 @@ In addition to the preceding arguments, the following attributes are exported:
 
 ## Import
 
--> **Note:** Set `config_sensitive = {}` before importing a connector.
+-> **Note:** Set `config_sensitive = {}` and do not specify `offsets` block before importing a connector.
 
 You can import a connector by using Environment ID, Kafka cluster ID, and connector's name, in the format `<Environment ID>/<Kafka cluster ID>/<Connector name>`, for example:
 
@@ -302,5 +385,8 @@ The following end-to-end examples might help to get started with `confluent_conn
 * [`sql-server-cdc-debezium-source-connector`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/connectors/sql-server-cdc-debezium-source-connector)
 * [`postgre-sql-cdc-debezium-source-connector`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/connectors/postgre-sql-cdc-debezium-source-connector)
 * [`custom-datagen-source-connector`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/connectors/custom-datagen-source-connector)
+* [`manage-offsets-github-source-connector`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/connectors/manage-offsets-github-source-connector)
+* [`manage-offsets-mongo-db-source-connector`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/connectors/manage-offsets-mongo-db-source-connector)
+* [`manage-offsets-mysql-sink-connector`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/connectors/manage-offsets-mysql-sink-connector)
 
 -> **Note:** Certain connectors require additional ACL entries. See [Additional ACL entries](https://docs.confluent.io/cloud/current/connectors/service-account.html#additional-acl-entries) for more details.

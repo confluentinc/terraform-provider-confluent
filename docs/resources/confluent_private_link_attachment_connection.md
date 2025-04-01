@@ -41,6 +41,19 @@ resource confluent_private_link_attachment_connection "azure" {
   }
 }
 
+resource confluent_private_link_attachment_connection "gcp" {
+  display_name = "prod-gcp-uscentral1-connection"
+  environment {
+    id = "env-12345"
+  }
+  gcp {
+    private_service_connect_connection_id = "48796d35-191c-4de1-83e6-3824517eaa1d"
+  }
+  private_link_attachment {
+    id = "platt-abcdef"
+  }
+}
+
 output "private_link_attachment_connection" {
   value = confluent_private_link_attachment_connection.aws
 }
@@ -52,14 +65,16 @@ output "private_link_attachment_connection" {
 The following arguments are supported:
 
 - `display_name` - (Required String) The name of the Private Link Attachment Connection.
-- `environment` (Required Configuration Block) supports the following:
+- `environment` - (Required Configuration Block) supports the following:
   - `id` - (Required String) The ID of the Environment that the Private Link Attachment Connection belongs to, for example `env-xyz456`.
-- `private_link_attachment` (Required Configuration Block) supports the following:
+- `private_link_attachment` - (Required Configuration Block) supports the following:
   - `id` - (Required String) The unique identifier for the private link attachment.
 - `aws` - (Optional Configuration Block) supports the following:
-  - `vpc_endpoint_id` - (Required String) Id of a VPC Endpoint that is connected to the VPC Endpoint service.
-- `azure` (Optional Configuration Blocks) supports the following:
+  - `vpc_endpoint_id` - (Required String) ID of a VPC Endpoint that is connected to the VPC Endpoint service.
+- `azure` - (Optional Configuration Blocks) supports the following:
   - `private_endpoint_resource_id` - (Required String) Resource ID of the Private Endpoint that is connected to the Private Link service.
+- `gcp` - (Optional Configuration Block) supports the following:
+  - `private_service_connect_connection_id` - (Required String) GCP Private Service Connect ID used to establish connections for all zones.
 
 ## Attributes Reference
 

@@ -73,7 +73,7 @@ func catalogEntityAttributesResource() *schema.Resource {
 }
 
 func catalogEntityAttributesCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	restEndpoint, err := extractSchemaRegistryRestEndpoint(meta.(*Client), d, false)
+	restEndpoint, err := extractCatalogRestEndpoint(meta.(*Client), d, false)
 	if err != nil {
 		return diag.Errorf("error creating Entity Attributes: %s", createDescriptiveError(err))
 	}
@@ -92,14 +92,14 @@ func catalogEntityAttributesCreate(ctx context.Context, d *schema.ResourceData, 
 	entityAttributesId := createEntityAttributesId(entityType, entityName)
 	attributes[qualifiedName] = entityName
 
-	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
+	catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 	entityRequest := dc.Entity{}
 	entityRequest.SetTypeName(entityType)
 	entityRequest.SetAttributes(attributes)
 	entityWithExtInfo := dc.EntityWithExtInfo{}
 	entityWithExtInfo.SetEntity(entityRequest)
 
-	request := schemaRegistryRestClient.dataCatalogApiClient.EntityV1Api.PartialEntityUpdate(schemaRegistryRestClient.dataCatalogApiContext(ctx))
+	request := catalogRestClient.apiClient.EntityV1Api.PartialEntityUpdate(catalogRestClient.dataCatalogApiContext(ctx))
 	request = request.EntityWithExtInfo(entityWithExtInfo)
 
 	createEntityAttributesRequestJson, err := json.Marshal(request)
@@ -135,7 +135,7 @@ func catalogEntityAttributesRead(ctx context.Context, d *schema.ResourceData, me
 }
 
 func readEntityAttributesAndSetAttributes(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	restEndpoint, err := extractSchemaRegistryRestEndpoint(meta.(*Client), d, false)
+	restEndpoint, err := extractCatalogRestEndpoint(meta.(*Client), d, false)
 	if err != nil {
 		return nil, fmt.Errorf("error reading Entity Attributes: %s", createDescriptiveError(err))
 	}
@@ -154,8 +154,8 @@ func readEntityAttributesAndSetAttributes(ctx context.Context, d *schema.Resourc
 
 	tflog.Debug(ctx, fmt.Sprintf("Reading Entity Attributes %q=%q", paramId, entityAttributesId), map[string]interface{}{entityAttributesLoggingKey: entityAttributesId})
 
-	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
-	request := schemaRegistryRestClient.dataCatalogApiClient.EntityV1Api.GetByUniqueAttributes(schemaRegistryRestClient.dataCatalogApiContext(ctx), entityType, entityName)
+	catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
+	request := catalogRestClient.apiClient.EntityV1Api.GetByUniqueAttributes(catalogRestClient.dataCatalogApiContext(ctx), entityType, entityName)
 	entity, resp, err := request.Execute()
 	if err != nil {
 		tflog.Warn(ctx, fmt.Sprintf("Error reading Entity Attributes %q: %s", entityAttributesId, createDescriptiveError(err)), map[string]interface{}{entityAttributesLoggingKey: entityAttributesId})
@@ -186,7 +186,7 @@ func readEntityAttributesAndSetAttributes(ctx context.Context, d *schema.Resourc
 }
 
 func catalogEntityAttributesDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	restEndpoint, err := extractSchemaRegistryRestEndpoint(meta.(*Client), d, false)
+	restEndpoint, err := extractCatalogRestEndpoint(meta.(*Client), d, false)
 	if err != nil {
 		return diag.Errorf("error deleting Entity Attributes: %s", createDescriptiveError(err))
 	}
@@ -206,14 +206,14 @@ func catalogEntityAttributesDelete(ctx context.Context, d *schema.ResourceData, 
 	entityAttributesId := createEntityAttributesId(entityType, entityName)
 	attributes[qualifiedName] = entityName
 
-	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
+	catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 	entityRequest := dc.Entity{}
 	entityRequest.SetTypeName(entityType)
 	entityRequest.SetAttributes(attributes)
 	entityWithExtInfo := dc.EntityWithExtInfo{}
 	entityWithExtInfo.SetEntity(entityRequest)
 
-	request := schemaRegistryRestClient.dataCatalogApiClient.EntityV1Api.PartialEntityUpdate(schemaRegistryRestClient.dataCatalogApiContext(ctx))
+	request := catalogRestClient.apiClient.EntityV1Api.PartialEntityUpdate(catalogRestClient.dataCatalogApiContext(ctx))
 	request = request.EntityWithExtInfo(entityWithExtInfo)
 
 	updateEntityAttributesRequestJson, err := json.Marshal(request)
@@ -237,7 +237,7 @@ func catalogEntityAttributesUpdate(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	if d.HasChange(paramAttributes) {
-		restEndpoint, err := extractSchemaRegistryRestEndpoint(meta.(*Client), d, false)
+		restEndpoint, err := extractCatalogRestEndpoint(meta.(*Client), d, false)
 		if err != nil {
 			return diag.Errorf("error updating Entity Attributes: %s", createDescriptiveError(err))
 		}
@@ -256,14 +256,14 @@ func catalogEntityAttributesUpdate(ctx context.Context, d *schema.ResourceData, 
 		entityAttributesId := createEntityAttributesId(entityType, entityName)
 		attributes[qualifiedName] = entityName
 
-		schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
+		catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 		entityRequest := dc.Entity{}
 		entityRequest.SetTypeName(entityType)
 		entityRequest.SetAttributes(attributes)
 		entityWithExtInfo := dc.EntityWithExtInfo{}
 		entityWithExtInfo.SetEntity(entityRequest)
 
-		request := schemaRegistryRestClient.dataCatalogApiClient.EntityV1Api.PartialEntityUpdate(schemaRegistryRestClient.dataCatalogApiContext(ctx))
+		request := catalogRestClient.apiClient.EntityV1Api.PartialEntityUpdate(catalogRestClient.dataCatalogApiContext(ctx))
 		request = request.EntityWithExtInfo(entityWithExtInfo)
 
 		updateEntityAttributesRequestJson, err := json.Marshal(request)

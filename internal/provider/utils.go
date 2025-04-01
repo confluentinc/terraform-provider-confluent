@@ -17,6 +17,7 @@ package provider
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -58,6 +59,7 @@ import (
 	schemaregistry "github.com/confluentinc/ccloud-sdk-go-v2/schema-registry/v1"
 	srcm "github.com/confluentinc/ccloud-sdk-go-v2/srcm/v3"
 	"github.com/confluentinc/ccloud-sdk-go-v2/sso/v2"
+	tableflow "github.com/confluentinc/ccloud-sdk-go-v2/tableflow/v1"
 	"github.com/dghubble/sling"
 	"github.com/google/uuid"
 	"github.com/hashicorp/go-cty/cty"
@@ -103,6 +105,7 @@ const (
 	ksqlClusterLoggingKey                     = "ksql_cluster_id"
 	identityProviderLoggingKey                = "identity_provider_id"
 	identityPoolLoggingKey                    = "identity_pool_id"
+	paramIdentityClaim                        = "identity_claim"
 	clusterLinkLoggingKey                     = "cluster_link_id"
 	kafkaMirrorTopicLoggingKey                = "kafka_mirror_topic_id"
 	kafkaClientQuotaLoggingKey                = "kafka_client_quota_id"
@@ -124,6 +127,8 @@ const (
 	schemaRegistryDekKey                      = "dek_id"
 	entityAttributesLoggingKey                = "entity_attributes_id"
 	providerIntegrationLoggingKey             = "provider_integration_id"
+	tableflowTopicKey                         = "tableflow_topic_id"
+	catalogIntegrationKey                     = "catalog_integration_id"
 
 	deprecationMessageMajorRelease3 = "The %q %s has been deprecated and will be removed in the next major version of the provider (3.0.0). " +
 		"Refer to the Upgrade Guide at https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/guides/version-3-upgrade for more details. " +
@@ -674,6 +679,16 @@ type SchemaRegistryRestClient struct {
 	isMetadataSetInProviderBlock bool
 }
 
+type CatalogRestClient struct {
+	apiClient                    *dc.APIClient
+	externalAccessToken          *OAuthToken
+	clusterId                    string
+	clusterApiKey                string
+	clusterApiSecret             string
+	restEndpoint                 string
+	isMetadataSetInProviderBlock bool
+}
+
 type FlinkRestClient struct {
 	apiClient                    *fgb.APIClient
 	externalAccessToken          *OAuthToken
@@ -684,6 +699,13 @@ type FlinkRestClient struct {
 	flinkApiKey                  string
 	flinkApiSecret               string
 	restEndpoint                 string
+	isMetadataSetInProviderBlock bool
+}
+
+type TableflowRestClient struct {
+	apiClient                    *tableflow.APIClient
+	tableflowApiKey              string
+	tableflowApiSecret           string
 	isMetadataSetInProviderBlock bool
 }
 
@@ -753,6 +775,27 @@ func (c *SchemaRegistryRestClient) dataCatalogApiContext(ctx context.Context) co
 	return ctx
 }
 
+func (c *CatalogRestClient) dataCatalogApiContext(ctx context.Context) context.Context {
+	if c.externalAccessToken != nil {
+		currToken := c.externalAccessToken
+		token, err := fetchExternalOAuthToken(ctx, currToken.TokenUrl, currToken.ClientId, currToken.ClientSecret, currToken.Scope, currToken.IdentityPoolId, currToken)
+		if err != nil {
+			tflog.Error(ctx, fmt.Sprintf("Failed to get OAuth token for Stream Governance Cluster rest client: %v", err))
+		}
+		c.externalAccessToken = token
+		return context.WithValue(ctx, dc.ContextAccessToken, c.externalAccessToken.AccessToken)
+	}
+
+	if c.clusterApiKey != "" && c.clusterApiSecret != "" {
+		return context.WithValue(context.Background(), dc.ContextBasicAuth, dc.BasicAuth{
+			UserName: c.clusterApiKey,
+			Password: c.clusterApiSecret,
+		})
+	}
+	tflog.Warn(ctx, fmt.Sprintf("Could not find Catalog API Key or OAuth token for Stream Governance Cluster %q", c.clusterId))
+	return ctx
+}
+
 func (c *FlinkRestClient) apiContext(ctx context.Context) context.Context {
 	if c.externalAccessToken != nil {
 		currToken := c.externalAccessToken
@@ -775,6 +818,17 @@ func (c *FlinkRestClient) apiContext(ctx context.Context) context.Context {
 	return ctx
 }
 
+func (c *TableflowRestClient) apiContext(ctx context.Context) context.Context {
+	if c.tableflowApiKey != "" && c.tableflowApiSecret != "" {
+		return context.WithValue(context.Background(), tableflow.ContextBasicAuth, tableflow.BasicAuth{
+			UserName: c.tableflowApiKey,
+			Password: c.tableflowApiSecret,
+		})
+	}
+	tflog.Warn(ctx, fmt.Sprintf("Could not find Tableflow API Key"))
+	return ctx
+}
+
 type GenericOpenAPIError interface {
 	Model() interface{}
 }
@@ -788,7 +842,7 @@ func setStringAttributeInListBlockOfSizeOne(blockName, attributeName, attributeV
 // createDescriptiveError will convert GenericOpenAPIError error into an error with a more descriptive error message.
 // diag.FromErr(createDescriptiveError(err)) should be used instead of diag.FromErr(err) in this project
 // since GenericOpenAPIError.Error() returns just HTTP status code and its generic name (i.e., "400 Bad Request")
-func createDescriptiveError(err error) error {
+func createDescriptiveError(err error, resp ...*http.Response) error {
 	if err == nil {
 		return nil
 	}
@@ -802,23 +856,41 @@ func createDescriptiveError(err error) error {
 		if reflectedFailureValue.IsValid() {
 			errs := reflectedFailureValue.FieldByName("Errors")
 			kafkaRestOrConnectErr := reflectedFailureValue.FieldByName("Message")
-			if errs.Kind() == reflect.Slice && errs.Len() > 0 {
+			if errs.IsValid() && errs.Kind() == reflect.Slice && errs.Len() > 0 {
 				nest := errs.Index(0)
 				detailPtr := nest.FieldByName("Detail")
-				if detailPtr.IsValid() {
+				if detailPtr.IsValid() && detailPtr.Kind() == reflect.Pointer && !detailPtr.IsNil() {
 					errorMessage = fmt.Sprintf("%s: %s", errorMessage, reflect.Indirect(detailPtr))
 				}
 			} else if kafkaRestOrConnectErr.IsValid() && kafkaRestOrConnectErr.Kind() == reflect.Struct {
 				detailPtr := kafkaRestOrConnectErr.FieldByName("value")
-				if detailPtr.IsValid() {
+				if detailPtr.IsValid() && detailPtr.Kind() == reflect.Pointer && !detailPtr.IsNil() {
 					errorMessage = fmt.Sprintf("%s: %s", errorMessage, reflect.Indirect(detailPtr))
 				}
-			} else if kafkaRestOrConnectErr.IsValid() && kafkaRestOrConnectErr.Kind() == reflect.Pointer {
+			} else if kafkaRestOrConnectErr.IsValid() && kafkaRestOrConnectErr.Kind() == reflect.Pointer &&
+				!kafkaRestOrConnectErr.IsNil() {
 				errorMessage = fmt.Sprintf("%s: %s", errorMessage, reflect.Indirect(kafkaRestOrConnectErr))
 			}
 		}
 	}
-	return fmt.Errorf(errorMessage)
+
+	// If a *http.Response was provided, and we could not parse Error object,
+	// read its *http.Response body to provide a more descriptive error message to avoid
+	// https://github.com/confluentinc/terraform-provider-confluent/issues/53
+	if errorMessage == err.Error() && len(resp) > 0 && resp[0] != nil {
+		defer resp[0].Body.Close()
+
+		bodyBytes, readErr := io.ReadAll(resp[0].Body)
+		if readErr == nil {
+			errorMessage = fmt.Sprintf(
+				"%s; could not parse error details; raw response body: %#v",
+				errorMessage,
+				string(bodyBytes),
+			)
+		}
+	}
+
+	return errors.New(errorMessage)
 }
 
 // Reports whether the response has http.StatusForbidden status due to an invalid Cloud API Key vs other reasons

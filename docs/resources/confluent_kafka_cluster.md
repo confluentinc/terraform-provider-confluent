@@ -103,11 +103,7 @@ resource "confluent_kafka_cluster" "freight" {
   environment {
     id = confluent_environment.staging.id
   }
-  
-  network {
-    id = confluent_network.peering.id
-  }
-  
+
   lifecycle {
     prevent_destroy = true
   }
@@ -267,8 +263,6 @@ The following arguments are supported:
   - `cku` - (Required Number) The number of Confluent Kafka Units (CKUs) for Dedicated cluster types. The minimum number of CKUs for `SINGLE_ZONE` dedicated clusters is `1` whereas `MULTI_ZONE` dedicated clusters must have `2` CKUs or more.
 
 -> **Note:** Exactly one from the `basic`, `standard`, `dedicated`, `enterprise` or `freight` configuration blocks must be specified.
-
--> **Note:** The `freight` block is in an [Early Access lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy).
 
 -> **Note:** The `freight` Kafka cluster type is currently available only on AWS.
 

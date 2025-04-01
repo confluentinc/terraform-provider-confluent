@@ -55,48 +55,6 @@ func waitForCreatedKafkaApiKeyToSync(ctx context.Context, c *KafkaRestClient, is
 	return nil
 }
 
-func waitForCreatedSchemaRegistryApiKeyToSync(ctx context.Context, c *SchemaRegistryRestClient, isAcceptanceTestMode bool) error {
-	delay, pollInterval := getDelayAndPollInterval(30*time.Second, 30*time.Second, isAcceptanceTestMode)
-	stateConf := &resource.StateChangeConf{
-		Pending: []string{stateInProgress},
-		Target:  []string{stateDone},
-		Refresh: schemaRegistryApiKeySyncStatus(ctx, c),
-		// Default timeout for a resource
-		// https://www.terraform.io/plugin/sdkv2/resources/retries-and-customizable-timeouts
-		// Based on the tests, Schema Registry API Key takes about 30 seconds to sync
-		Timeout:      20 * time.Minute,
-		Delay:        delay,
-		PollInterval: pollInterval,
-	}
-
-	tflog.Debug(ctx, fmt.Sprintf("Waiting for Kafka API Key %q to sync", c.clusterApiKey), map[string]interface{}{apiKeyLoggingKey: c.clusterApiKey})
-	if _, err := stateConf.WaitForStateContext(ctx); err != nil {
-		return err
-	}
-	return nil
-}
-
-func waitForCreatedFlinkApiKeyToSync(ctx context.Context, c *FlinkRestClient, organizationID string, isAcceptanceTestMode bool) error {
-	delay, pollInterval := getDelayAndPollInterval(10*time.Second, 30*time.Second, isAcceptanceTestMode)
-	stateConf := &resource.StateChangeConf{
-		Pending: []string{stateInProgress},
-		Target:  []string{stateDone},
-		Refresh: flinkApiKeySyncStatus(ctx, c, organizationID),
-		// Default timeout for a resource
-		// https://www.terraform.io/plugin/sdkv2/resources/retries-and-customizable-timeouts
-		// Based on the tests, Flink API Key takes about 10 seconds to sync
-		Timeout:      20 * time.Minute,
-		Delay:        delay,
-		PollInterval: pollInterval,
-	}
-
-	tflog.Debug(ctx, fmt.Sprintf("Waiting for Flink API Key %q to sync", c.flinkApiKey), map[string]interface{}{apiKeyLoggingKey: c.flinkApiKey})
-	if _, err := stateConf.WaitForStateContext(ctx); err != nil {
-		return err
-	}
-	return nil
-}
-
 func waitForCreatedCloudApiKeyToSync(ctx context.Context, c *Client, cloudApiKey, cloudApiSecret string) error {
 	delay, pollInterval := getDelayAndPollInterval(15*time.Second, 1*time.Minute, c.isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
@@ -118,9 +76,24 @@ func waitForCreatedCloudApiKeyToSync(ctx context.Context, c *Client, cloudApiKey
 	return nil
 }
 
-func waitForCreatedTableflowApiKeyToSync(ctx context.Context, c *Client, tableflowApiKey, tableflowApiSecret string) error {
-	//TODO: implement the waitForSync function once corresponding Tableflow APIs have its backend support ready
+func waitForCreatedTableflowApiKeyToSync(ctx context.Context, c *TableflowRestClient, isAcceptanceTestMode bool) error {
+	delay, pollInterval := getDelayAndPollInterval(10*time.Second, 30*time.Second, isAcceptanceTestMode)
+	stateConf := &resource.StateChangeConf{
+		Pending: []string{stateInProgress},
+		Target:  []string{stateDone},
+		Refresh: tableflowApiKeySyncStatus(ctx, c),
+		// Default timeout for a resource
+		// https://www.terraform.io/plugin/sdkv2/resources/retries-and-customizable-timeouts
+		// Based on the tests, Tableflow API Key takes about 10 seconds to sync
+		Timeout:      20 * time.Minute,
+		Delay:        delay,
+		PollInterval: pollInterval,
+	}
 
+	tflog.Debug(ctx, fmt.Sprintf("Waiting for Tableflow API Key %q to sync", c.tableflowApiKey), map[string]interface{}{apiKeyLoggingKey: c.tableflowApiKey})
+	if _, err := stateConf.WaitForStateContext(ctx); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -174,6 +147,24 @@ func waitForPrivateLinkAccessToProvision(ctx context.Context, c *Client, environ
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for Private Link Access %q provisioning status to become %q", privateLinkAccessId, stateReady), map[string]interface{}{privateLinkAccessLoggingKey: privateLinkAccessId})
 	if _, err := stateConf.WaitForStateContext(c.netApiContext(ctx)); err != nil {
+		return err
+	}
+	return nil
+}
+
+func waitForConnectorOffsetsUpdateToComplete(ctx context.Context, c *Client, environmentId, clusterId, displayName string) error {
+	delay, pollInterval := getDelayAndPollInterval(30*time.Second, 15*time.Second, c.isAcceptanceTestMode)
+	stateConf := &resource.StateChangeConf{
+		Pending:      []string{statePending},
+		Target:       []string{stateApplied},
+		Refresh:      connectorOffsetUpdateStatus(c.connectApiContext(ctx), c, environmentId, clusterId, displayName),
+		Timeout:      connectOffsetsAPIUpdateTimeout,
+		Delay:        delay,
+		PollInterval: pollInterval,
+	}
+
+	tflog.Debug(ctx, fmt.Sprintf("Waiting for Connector %q offsets update status to become %q", displayName, stateApplied), map[string]interface{}{connectorLoggingKey: displayName})
+	if _, err := stateConf.WaitForStateContext(c.connectApiContext(ctx)); err != nil {
 		return err
 	}
 	return nil
@@ -407,7 +398,7 @@ func waitForAnySchemaRegistryClusterToProvision(ctx context.Context, c *Client, 
 }
 
 func waitForConnectorToProvision(ctx context.Context, c *Client, displayName, environmentId, clusterId string) error {
-	delay, pollInterval := getDelayAndPollInterval(6*time.Minute, 1*time.Minute, c.isAcceptanceTestMode)
+	delay, pollInterval := getDelayAndPollInterval(3*time.Minute, 1*time.Minute, c.isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
 		// Allow PROVISIONING -> DEGRADED -> RUNNING transition
 		Pending:      []string{stateProvisioning, stateDegraded},
@@ -485,7 +476,7 @@ func waitForPeeringToProvision(ctx context.Context, c *Client, environmentId, pe
 	return nil
 }
 
-func waitForTagToProvision(ctx context.Context, c *SchemaRegistryRestClient, tagId, tagName string) error {
+func waitForTagToProvision(ctx context.Context, c *CatalogRestClient, tagId, tagName string) error {
 	stateConf := &resource.StateChangeConf{
 		Pending:      []string{stateProvisioning},
 		Target:       []string{stateReady},
@@ -501,7 +492,7 @@ func waitForTagToProvision(ctx context.Context, c *SchemaRegistryRestClient, tag
 	return nil
 }
 
-func waitForBusinessMetadataToProvision(ctx context.Context, c *SchemaRegistryRestClient, businessMetadataId, businessMetadataName string) error {
+func waitForBusinessMetadataToProvision(ctx context.Context, c *CatalogRestClient, businessMetadataId, businessMetadataName string) error {
 	stateConf := &resource.StateChangeConf{
 		Pending:      []string{stateProvisioning},
 		Target:       []string{stateReady},
@@ -517,7 +508,7 @@ func waitForBusinessMetadataToProvision(ctx context.Context, c *SchemaRegistryRe
 	return nil
 }
 
-func waitForTagBindingToProvision(ctx context.Context, c *SchemaRegistryRestClient, tagBindingId, tagName, entityName, entityType string) error {
+func waitForTagBindingToProvision(ctx context.Context, c *CatalogRestClient, tagBindingId, tagName, entityName, entityType string) error {
 	stateConf := &resource.StateChangeConf{
 		Pending:      []string{stateProvisioning},
 		Target:       []string{stateReady},
@@ -533,7 +524,7 @@ func waitForTagBindingToProvision(ctx context.Context, c *SchemaRegistryRestClie
 	return nil
 }
 
-func waitForBusinessMetadataBindingToProvision(ctx context.Context, c *SchemaRegistryRestClient, businessMetadataBindingId, businessMetadataName, entityName, entityType string) error {
+func waitForBusinessMetadataBindingToProvision(ctx context.Context, c *CatalogRestClient, businessMetadataBindingId, businessMetadataName, entityName, entityType string) error {
 	stateConf := &resource.StateChangeConf{
 		Pending:      []string{stateProvisioning},
 		Target:       []string{stateReady},
@@ -893,8 +884,8 @@ func waitForClusterLinkToBeDeleted(ctx context.Context, c *KafkaRestClient, link
 		PollInterval: pollInterval,
 	}
 
-	topicId := createClusterLinkId(c.clusterId, linkName)
-	tflog.Debug(ctx, fmt.Sprintf("Waiting for Cluster Link %q to be deleted", topicId), map[string]interface{}{clusterLinkLoggingKey: topicId})
+	clusterLinkCompositeId := createClusterLinkCompositeId(c.clusterId, linkName)
+	tflog.Debug(ctx, fmt.Sprintf("Waiting for Cluster Link %q to be deleted", clusterLinkCompositeId), map[string]interface{}{clusterLinkLoggingKey: clusterLinkCompositeId})
 	if _, err := stateConf.WaitForStateContext(c.apiContext(ctx)); err != nil {
 		return err
 	}
@@ -904,9 +895,9 @@ func waitForClusterLinkToBeDeleted(ctx context.Context, c *KafkaRestClient, link
 func clusterLinkDeleteStatus(ctx context.Context, c *KafkaRestClient, linkName string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
 		clusterLink, resp, err := c.apiClient.ClusterLinkingV3Api.GetKafkaLink(c.apiContext(ctx), c.clusterId, linkName).Execute()
-		clusterLinkId := createClusterLinkId(c.clusterId, linkName)
+		clusterLinkCompositeId := createClusterLinkCompositeId(c.clusterId, linkName)
 		if err != nil {
-			tflog.Warn(ctx, fmt.Sprintf("Error reading Cluster Link %q: %s", clusterLinkId, createDescriptiveError(err)), map[string]interface{}{clusterLinkLoggingKey: clusterLinkId})
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Cluster Link %q: %s", clusterLinkCompositeId, createDescriptiveError(err)), map[string]interface{}{clusterLinkLoggingKey: clusterLinkCompositeId})
 
 			// 404 means that the cluster link has been deleted
 			isResourceNotFound := ResponseHasExpectedStatusCode(resp, http.StatusNotFound)
@@ -1037,6 +1028,25 @@ func privateLinkAccessProvisionStatus(ctx context.Context, c *Client, environmen
 		}
 		// Private Link Access is in an unexpected state
 		return nil, stateUnexpected, fmt.Errorf("private Link Access %q is an unexpected state %q: %s", privateLinkAccessId, privateLinkAccess.Status.GetPhase(), privateLinkAccess.Status.GetErrorMessage())
+	}
+}
+
+func connectorOffsetUpdateStatus(ctx context.Context, c *Client, environmentId, clusterId, displayName string) resource.StateRefreshFunc {
+	return func() (result interface{}, s string, err error) {
+		status, _, err := c.connectClient.OffsetsConnectV1Api.GetConnectv1ConnectorOffsetsRequestStatus(c.connectApiContext(ctx), displayName, environmentId, clusterId).Execute()
+		if err != nil {
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Connector %q offsets update status: %s", displayName, createDescriptiveError(err)), map[string]interface{}{connectorLoggingKey: displayName})
+			return nil, stateUnknown, err
+		}
+
+		tflog.Debug(ctx, fmt.Sprintf("Waiting for Connector %q offsets update status to become %q: current status is %q", displayName, stateApplied, status.Status.GetPhase()), map[string]interface{}{connectorLoggingKey: displayName})
+		if status.Status.GetPhase() == statePending || status.Status.GetPhase() == stateApplied {
+			return status, status.Status.GetPhase(), nil
+		} else if status.Status.GetPhase() == stateFailed {
+			return nil, stateFailed, fmt.Errorf("connector %q offsets update status is %q: %s", displayName, stateFailed, status.Status.GetMessage())
+		}
+		// Connector offsets update is in an unexpected state
+		return nil, stateUnexpected, fmt.Errorf("connector %q offsets update status is an unexpected state %q: %s", displayName, status.Status.GetPhase(), status.Status.GetMessage())
 	}
 }
 
@@ -1329,9 +1339,9 @@ func peeringProvisionStatus(ctx context.Context, c *Client, environmentId string
 	}
 }
 
-func tagProvisionStatus(ctx context.Context, c *SchemaRegistryRestClient, tagId, tagName string) resource.StateRefreshFunc {
+func tagProvisionStatus(ctx context.Context, c *CatalogRestClient, tagId, tagName string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		request := c.dataCatalogApiClient.TypesV1Api.GetTagDefByName(c.dataCatalogApiContext(ctx), tagName)
+		request := c.apiClient.TypesV1Api.GetTagDefByName(c.dataCatalogApiContext(ctx), tagName)
 		tag, resp, err := request.Execute()
 		if err != nil && resp.StatusCode == http.StatusNotFound {
 			return nil, stateProvisioning, nil
@@ -1346,9 +1356,9 @@ func tagProvisionStatus(ctx context.Context, c *SchemaRegistryRestClient, tagId,
 	}
 }
 
-func businessMetadataProvisionStatus(ctx context.Context, c *SchemaRegistryRestClient, businessMetadataId, businessMetadataName string) resource.StateRefreshFunc {
+func businessMetadataProvisionStatus(ctx context.Context, c *CatalogRestClient, businessMetadataId, businessMetadataName string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		request := c.dataCatalogApiClient.TypesV1Api.GetBusinessMetadataDefByName(c.dataCatalogApiContext(ctx), businessMetadataName)
+		request := c.apiClient.TypesV1Api.GetBusinessMetadataDefByName(c.dataCatalogApiContext(ctx), businessMetadataName)
 		businessMetadata, resp, err := request.Execute()
 		if err != nil && resp.StatusCode == http.StatusNotFound {
 			return nil, stateProvisioning, nil
@@ -1363,9 +1373,9 @@ func businessMetadataProvisionStatus(ctx context.Context, c *SchemaRegistryRestC
 	}
 }
 
-func tagBindingProvisionStatus(ctx context.Context, c *SchemaRegistryRestClient, tagBindingId, tagName, entityName, entityType string) resource.StateRefreshFunc {
+func tagBindingProvisionStatus(ctx context.Context, c *CatalogRestClient, tagBindingId, tagName, entityName, entityType string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		request := c.dataCatalogApiClient.EntityV1Api.GetTags(c.dataCatalogApiContext(ctx), entityType, entityName)
+		request := c.apiClient.EntityV1Api.GetTags(c.dataCatalogApiContext(ctx), entityType, entityName)
 		tagBindings, resp, err := request.Execute()
 		if err != nil && resp.StatusCode == http.StatusNotFound {
 			return nil, stateProvisioning, nil
@@ -1385,9 +1395,9 @@ func tagBindingProvisionStatus(ctx context.Context, c *SchemaRegistryRestClient,
 	}
 }
 
-func businessMetadataBindingProvisionStatus(ctx context.Context, c *SchemaRegistryRestClient, businessMetadataBindingId, businessMetadataName, entityName, entityType string) resource.StateRefreshFunc {
+func businessMetadataBindingProvisionStatus(ctx context.Context, c *CatalogRestClient, businessMetadataBindingId, businessMetadataName, entityName, entityType string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		request := c.dataCatalogApiClient.EntityV1Api.GetBusinessMetadata(c.dataCatalogApiContext(ctx), entityType, entityName)
+		request := c.apiClient.EntityV1Api.GetBusinessMetadata(c.dataCatalogApiContext(ctx), entityType, entityName)
 		businessMetadataBindings, resp, err := request.Execute()
 		if err != nil && resp.StatusCode == http.StatusNotFound {
 			return nil, stateProvisioning, nil
@@ -1569,22 +1579,22 @@ func cloudApiKeySyncStatus(ctx context.Context, c *Client, cloudApiKey, cloudApi
 	}
 }
 
-func tableflowApiKeySyncStatus(ctx context.Context, c *Client, tableflowApiKey, tableflowApiSecret string) resource.StateRefreshFunc {
+func tableflowApiKeySyncStatus(ctx context.Context, c *TableflowRestClient) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		_, resp, err := c.orgClient.EnvironmentsOrgV2Api.ListOrgV2Environments(orgApiContext(ctx, tableflowApiKey, tableflowApiSecret)).Execute()
+		_, resp, err := c.apiClient.RegionsTableflowV1Api.ListTableflowV1Regions(c.apiContext(ctx)).Execute()
 		if resp != nil && resp.StatusCode == http.StatusOK {
-			tflog.Debug(ctx, fmt.Sprintf("Finishing Tableflow API Key %q sync process: Received %d status code when listing environments", tableflowApiKey, resp.StatusCode), map[string]interface{}{apiKeyLoggingKey: tableflowApiKey})
+			tflog.Debug(ctx, fmt.Sprintf("Finishing Tableflow API Key %q sync process: Received %d status code when listing regions", c.tableflowApiKey, resp.StatusCode), map[string]interface{}{apiKeyLoggingKey: c.tableflowApiKey})
 			return 0, stateDone, nil
 			// Status codes for unsynced API Keys might change over time, so it's safer to rely on a timeout to fail
 		} else if resp != nil && (resp.StatusCode == http.StatusForbidden || resp.StatusCode == http.StatusUnauthorized) {
-			tflog.Debug(ctx, fmt.Sprintf("Performing Tableflow API Key %q sync process: Received %d status code when listing environments", tableflowApiKey, resp.StatusCode), map[string]interface{}{apiKeyLoggingKey: tableflowApiKey})
+			tflog.Debug(ctx, fmt.Sprintf("Performing Tableflow API Key %q sync process: Received %d status code when listing regions", c.tableflowApiKey, resp.StatusCode), map[string]interface{}{apiKeyLoggingKey: c.tableflowApiKey})
 			return 0, stateInProgress, nil
 		} else if err != nil {
-			tflog.Debug(ctx, fmt.Sprintf("Exiting Tableflow API Key %q sync process: Failed when listing Environments: %s", tableflowApiKey, createDescriptiveError(err)), map[string]interface{}{apiKeyLoggingKey: tableflowApiKey})
-			return nil, stateFailed, fmt.Errorf("error listing Environments using Cloud API Key %q: %s", tableflowApiKey, createDescriptiveError(err))
+			tflog.Debug(ctx, fmt.Sprintf("Exiting Tableflow API Key %q sync process: Failed when listing regions: %s", c.tableflowApiKey, createDescriptiveError(err)), map[string]interface{}{apiKeyLoggingKey: c.tableflowApiKey})
+			return nil, stateFailed, fmt.Errorf("error listing regions using Tableflow API Key %q: %s", c.tableflowApiKey, createDescriptiveError(err))
 		} else {
-			tflog.Debug(ctx, fmt.Sprintf("Exiting Tableflow API Key %q sync process: Received unexpected response when listing Environments: %#v", tableflowApiKey, resp), map[string]interface{}{apiKeyLoggingKey: tableflowApiKey})
-			return nil, stateUnexpected, fmt.Errorf("error listing Environments using Kafka API Key %q: received a response with unexpected %d status code", tableflowApiKey, resp.StatusCode)
+			tflog.Debug(ctx, fmt.Sprintf("Exiting Tableflow API Key %q sync process: Received unexpected response when listing regions: %#v", c.tableflowApiKey, resp), map[string]interface{}{apiKeyLoggingKey: c.tableflowApiKey})
+			return nil, stateUnexpected, fmt.Errorf("error listing regions using Tableflow API Key %q: received a response with unexpected %d status code", c.tableflowApiKey, resp.StatusCode)
 		}
 	}
 }
