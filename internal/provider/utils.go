@@ -670,7 +670,6 @@ type KafkaRestClient struct {
 
 type SchemaRegistryRestClient struct {
 	apiClient                    *schemaregistry.APIClient
-	dataCatalogApiClient         *dc.APIClient
 	externalAccessToken          *OAuthToken
 	clusterId                    string
 	clusterApiKey                string
@@ -704,6 +703,8 @@ type FlinkRestClient struct {
 
 type TableflowRestClient struct {
 	apiClient                    *tableflow.APIClient
+	oauthToken                   *OAuthToken
+	stsToken                     *STSToken
 	tableflowApiKey              string
 	tableflowApiSecret           string
 	isMetadataSetInProviderBlock bool
@@ -819,13 +820,20 @@ func (c *FlinkRestClient) apiContext(ctx context.Context) context.Context {
 }
 
 func (c *TableflowRestClient) apiContext(ctx context.Context) context.Context {
+	if c.oauthToken != nil && c.stsToken != nil {
+		if err := c.fetchOrOverrideSTSOAuthTokenFromApiContext(ctx); err != nil {
+			tflog.Error(ctx, fmt.Sprintf("Failed to get OAuth token for Tableflow client: %v", err))
+		}
+		return context.WithValue(ctx, tableflow.ContextAccessToken, c.stsToken.AccessToken)
+	}
+
 	if c.tableflowApiKey != "" && c.tableflowApiSecret != "" {
 		return context.WithValue(context.Background(), tableflow.ContextBasicAuth, tableflow.BasicAuth{
 			UserName: c.tableflowApiKey,
 			Password: c.tableflowApiSecret,
 		})
 	}
-	tflog.Warn(ctx, fmt.Sprintf("Could not find Tableflow API Key"))
+	tflog.Warn(ctx, fmt.Sprintf("Could not find Tableflow API Key or OAuth token for Tableflow client"))
 	return ctx
 }
 
@@ -1049,6 +1057,42 @@ func (c *Client) fetchOrOverrideExternalOAuthTokenFromApiContext(ctx context.Con
 }
 
 func (c *Client) fetchOrOverrideSTSOAuthTokenFromApiContext(ctx context.Context) error {
+	currExternalToken := c.oauthToken
+	currSTSToken := c.stsToken
+
+	// Check if the current STS OAuth token is still valid
+	if valid := validateCurrentSTSOAuthToken(ctx, currSTSToken); valid {
+		return nil
+	}
+
+	// Check if the current external OAuth token is still valid
+	// If valid, request a new STS token based on the current external OAuth token
+	if valid := validateCurrentExternalOAuthToken(ctx, currExternalToken); valid {
+		stsToken, err := requestNewSTSOAuthToken(ctx, currExternalToken.AccessToken, currSTSToken.IdentityPoolId, currSTSToken.ExpiresInSeconds)
+		if err != nil {
+			return err
+		}
+		c.stsToken = stsToken
+		return nil
+	}
+
+	// If invalid, request a new external OAuth token first
+	// then request a new STS token based on the current external OAuth token
+	externalToken, err := requestNewExternalOAuthToken(ctx, currExternalToken.TokenUrl, currExternalToken.ClientId, currExternalToken.ClientSecret, currExternalToken.Scope, currExternalToken.IdentityPoolId)
+	if err != nil {
+		return err
+	}
+	c.oauthToken = externalToken
+
+	stsToken, err := requestNewSTSOAuthToken(ctx, externalToken.AccessToken, currSTSToken.IdentityPoolId, currSTSToken.ExpiresInSeconds)
+	if err != nil {
+		return err
+	}
+	c.stsToken = stsToken
+	return nil
+}
+
+func (c *TableflowRestClient) fetchOrOverrideSTSOAuthTokenFromApiContext(ctx context.Context) error {
 	currExternalToken := c.oauthToken
 	currSTSToken := c.stsToken
 

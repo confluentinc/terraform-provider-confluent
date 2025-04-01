@@ -165,7 +165,7 @@ type TableflowRestClientFactory struct {
 	endpoint   string
 }
 
-func (f TableflowRestClientFactory) CreateTableflowRestClient(tableflowApiKey, tableflowApiSecret string, isMetadataSetInProviderBlock bool) *TableflowRestClient {
+func (f TableflowRestClientFactory) CreateTableflowRestClient(tableflowApiKey, tableflowApiSecret string, isMetadataSetInProviderBlock bool, externalToken *OAuthToken, stsToken *STSToken) *TableflowRestClient {
 	var opts []RetryableClientFactoryOption = []RetryableClientFactoryOption{}
 	config := tableflow.NewConfiguration()
 
@@ -179,6 +179,8 @@ func (f TableflowRestClientFactory) CreateTableflowRestClient(tableflowApiKey, t
 
 	return &TableflowRestClient{
 		apiClient:                    tableflow.NewAPIClient(config),
+		oauthToken:                   externalToken,
+		stsToken:                     stsToken,
 		tableflowApiKey:              tableflowApiKey,
 		tableflowApiSecret:           tableflowApiSecret,
 		isMetadataSetInProviderBlock: isMetadataSetInProviderBlock,
