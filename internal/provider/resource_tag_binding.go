@@ -25,6 +25,7 @@ import (
 	dc "github.com/confluentinc/ccloud-sdk-go-v2/data-catalog/v1"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
@@ -78,6 +79,7 @@ func tagBindingResource() *schema.Resource {
 				ForceNew:     true,
 			},
 		},
+		CustomizeDiff: customdiff.Sequence(resourceCredentialBlockValidationWithOAuth),
 	}
 }
 
@@ -100,7 +102,7 @@ func tagBindingCreate(ctx context.Context, d *schema.ResourceData, meta interfac
 	entityType := d.Get(paramEntityType).(string)
 	tagBindingId := createTagBindingId(clusterId, tagName, entityName, entityType)
 
-	catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+	catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 	tagBindingRequest := dc.Tag{}
 	tagBindingRequest.SetEntityName(entityName)
 	tagBindingRequest.SetEntityType(entityType)
@@ -178,7 +180,7 @@ func readTagBindingAndSetAttributes(ctx context.Context, d *schema.ResourceData,
 
 	tflog.Debug(ctx, fmt.Sprintf("Reading Tag Binding %q=%q", paramId, tagBindingId), map[string]interface{}{tagBindingLoggingKey: tagBindingId})
 
-	catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+	catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 	request := catalogRestClient.apiClient.EntityV1Api.GetTags(catalogRestClient.dataCatalogApiContext(ctx), entityType, entityName)
 	tagBindings, resp, err := request.Execute()
 	if err != nil {
@@ -250,7 +252,7 @@ func tagBindingDelete(ctx context.Context, d *schema.ResourceData, meta interfac
 
 	tflog.Debug(ctx, fmt.Sprintf("Deleting Tag Binding %q=%q", paramId, tagBindingId), map[string]interface{}{tagBindingLoggingKey: tagBindingId})
 
-	catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+	catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 	request := catalogRestClient.apiClient.EntityV1Api.DeleteTag(catalogRestClient.dataCatalogApiContext(ctx), entityType, entityName, tagName)
 	_, serviceErr := request.Execute()
 	if serviceErr != nil {
