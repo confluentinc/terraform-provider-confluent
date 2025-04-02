@@ -176,6 +176,7 @@ func (f TableflowRestClientFactory) CreateTableflowRestClient(tableflowApiKey, t
 	config.UserAgent = f.userAgent
 	config.Servers[0].URL = f.endpoint
 	config.HTTPClient = NewRetryableClientFactory(f.ctx, opts...).CreateRetryableClient()
+	config.DefaultHeader = map[string]string{"confluent-identity-pool-id": externalToken.IdentityPoolId}
 
 	return &TableflowRestClient{
 		apiClient:                    tableflow.NewAPIClient(config),

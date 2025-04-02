@@ -73,6 +73,10 @@ func tagDataSource() *schema.Resource {
 }
 
 func tagDataSourceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	if err := dataSourceCredentialBlockValidationWithOAuth(d, meta.(*Client).isOAuthEnabled); err != nil {
+		return diag.Errorf("error reading Tag: %s", createDescriptiveError(err))
+	}
+
 	restEndpoint, err := extractCatalogRestEndpoint(meta.(*Client), d, false)
 	if err != nil {
 		return diag.Errorf("error reading Tag: %s", createDescriptiveError(err))

@@ -24,6 +24,7 @@ import (
 	tableflow "github.com/confluentinc/ccloud-sdk-go-v2/tableflow/v1"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
@@ -104,6 +105,7 @@ func tableflowTopicResource() *schema.Resource {
 			paramByobAws:        byobAwsSchema(),
 			paramManagedStorage: managedStorageSchema(),
 		},
+		CustomizeDiff: customdiff.Sequence(resourceCredentialBlockValidationWithOAuth),
 	}
 }
 
@@ -440,6 +442,9 @@ func tableflowTopicImport(ctx context.Context, d *schema.ResourceData, meta inte
 }
 
 func extractTableflowApiKeyAndApiSecret(client *Client, d *schema.ResourceData, isImportOperation bool) (string, string, error) {
+	if client.isOAuthEnabled {
+		return "", "", nil
+	}
 	if client.isTableflowMetadataSet {
 		return client.tableflowApiKey, client.tableflowApiSecret, nil
 	}

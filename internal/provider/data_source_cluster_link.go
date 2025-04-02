@@ -73,6 +73,10 @@ func clusterLinkDataSource() *schema.Resource {
 }
 
 func clusterLinkDataSourceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	if err := dataSourceCredentialBlockValidationWithOAuth(d, meta.(*Client).isOAuthEnabled); err != nil {
+		return diag.Errorf("error reading Cluster Link: %s", createDescriptiveError(err))
+	}
+
 	tflog.Debug(ctx, fmt.Sprintf("Reading Cluster Link %q", d.Id()), map[string]interface{}{clusterLinkLoggingKey: d.Id()})
 
 	restEndpoint, err := extractRestEndpoint(meta.(*Client), d, false)

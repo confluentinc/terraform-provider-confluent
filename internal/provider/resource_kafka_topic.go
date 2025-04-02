@@ -140,6 +140,7 @@ func kafkaTopicResource() *schema.Resource {
 				// if it is decreased.
 				return new.(int) < old.(int)
 			}),
+			customdiff.Sequence(resourceCredentialBlockValidationWithOAuth),
 		),
 	}
 }

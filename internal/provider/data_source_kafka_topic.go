@@ -52,6 +52,9 @@ func kafkaTopicDataSource() *schema.Resource {
 }
 
 func kafkaTopicDataSourceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	if err := dataSourceCredentialBlockValidationWithOAuth(d, meta.(*Client).isOAuthEnabled); err != nil {
+		return diag.Errorf("error reading Kafka Topic: %s", createDescriptiveError(err))
+	}
 	restEndpoint, err := extractRestEndpoint(meta.(*Client), d, false)
 	if err != nil {
 		return diag.Errorf("error reading Kafka Topic: %s", createDescriptiveError(err))

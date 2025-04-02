@@ -65,6 +65,14 @@ resource "confluent_kafka_topic" "order" {
   rest_endpoint = confluent_kafka_cluster.standard.rest_endpoint
 }
 
+data "confluent_kafka_topic" "order_data" {
+  kafka_cluster {
+    id = confluent_kafka_cluster.standard.id
+  }
+  topic_name    = confluent_kafka_topic.order.topic_name
+  rest_endpoint = confluent_kafka_cluster.standard.rest_endpoint
+}
+
 resource "confluent_schema" "order" {
   schema_registry_cluster {
     id = data.confluent_schema_registry_cluster.main.id

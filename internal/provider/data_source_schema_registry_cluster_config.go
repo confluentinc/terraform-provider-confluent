@@ -52,6 +52,10 @@ func schemaRegistryClusterConfigDataSource() *schema.Resource {
 func schemaRegistryClusterConfigDataSourceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	tflog.Debug(ctx, fmt.Sprintf("Reading Schema Registry Cluster Compatibility Level %q", d.Id()), map[string]interface{}{schemaRegistryClusterConfigLoggingKey: d.Id()})
 
+	if err := dataSourceCredentialBlockValidationWithOAuth(d, meta.(*Client).isOAuthEnabled); err != nil {
+		return diag.Errorf("error reading Schema Registry Cluster Compatibility Level: %s", createDescriptiveError(err))
+	}
+
 	restEndpoint, err := extractSchemaRegistryRestEndpoint(meta.(*Client), d, false)
 	if err != nil {
 		return diag.Errorf("error reading Schema Registry Cluster Compatibility Level: %s", createDescriptiveError(err))

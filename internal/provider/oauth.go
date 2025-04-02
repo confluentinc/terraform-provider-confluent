@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"io"
 	"net/http"
 	"net/http/httputil"
@@ -232,4 +233,23 @@ func validateCurrentSTSOAuthToken(ctx context.Context, token *STSToken) bool {
 		return false
 	}
 	return true
+}
+
+func resourceCredentialBlockValidationWithOAuth(_ context.Context, diff *schema.ResourceDiff, meta interface{}) error {
+	if meta.(*Client).isOAuthEnabled && diff.HasChange(paramCredentials) {
+		return fmt.Errorf("error: please remove resource credentials block when OAuth is enabled")
+	}
+	return nil
+}
+
+func dataSourceCredentialBlockValidationWithOAuth(d *schema.ResourceData, oauthEnabled bool) error {
+	if oauthEnabled {
+		if _, ok := d.GetOk(paramCredentials); ok {
+			return fmt.Errorf(
+				"`%s` block cannot be used when OAuth is enabled in the provider. Please remove the `credentials` block or disable OAuth",
+				paramCredentials,
+			)
+		}
+	}
+	return nil
 }

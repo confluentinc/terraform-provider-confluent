@@ -487,16 +487,19 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	tableflowApiSecret := d.Get("tableflow_api_secret").(string)
 	maxRetries := d.Get("max_retries").(int)
 
-	var externalOAuthToken = &OAuthToken{}
-	var stsOAuthToken = &STSToken{}
+	var externalOAuthToken *OAuthToken
+	var stsOAuthToken *STSToken
 	var err diag.Diagnostics
 	var oauthEnabled bool
 	if _, ok := d.GetOk(paramOAuthBlockName); ok {
+		oauthEnabled = true
 		externalOAuthToken, stsOAuthToken, err = initializeOAuthConfigs(ctx, d)
 		if err != nil {
 			return nil, err
 		}
-		oauthEnabled = true
+		if err := validateOAuthAndProviderAPIKeysCoexist(kafkaApiKey, kafkaApiSecret, schemaRegistryApiKey, schemaRegistryApiSecret, flinkApiKey, flinkApiSecret, tableflowApiKey, tableflowApiSecret); err != nil {
+			return nil, err
+		}
 	}
 
 	// 3 or 4 attributes should be set or not set at the same time
@@ -764,9 +767,11 @@ func providerOAuthSchema() *schema.Schema {
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				paramOAuthExternalTokenURL: {
-					Type:        schema.TypeString,
-					Optional:    true,
-					Description: "OAuth token URL to fetch access token from external IDP",
+					Type:     schema.TypeString,
+					Optional: true,
+					// A user should provide a value for either "oauth_external_token_url" or "oauth_external_access_token" attribute, not both
+					ExactlyOneOf: []string{"oauth.0.oauth_external_token_url", "oauth.0.oauth_external_access_token"},
+					Description:  "OAuth token URL to fetch access token from external IDP",
 				},
 				paramOAuthExternalClientId: {
 					Type:         schema.TypeString,
@@ -782,10 +787,12 @@ func providerOAuthSchema() *schema.Schema {
 					ValidateFunc: validation.StringIsNotEmpty,
 				},
 				paramOAuthExternalAccessToken: {
-					Type:        schema.TypeString,
-					Optional:    true,
-					Sensitive:   true,
-					Description: "OAuth access token from external IDP",
+					Type:      schema.TypeString,
+					Optional:  true,
+					Sensitive: true,
+					// A user should provide a value for either "oauth_external_token_url" or "oauth_external_access_token" attribute, not both
+					ExactlyOneOf: []string{"oauth.0.oauth_external_token_url", "oauth.0.oauth_external_access_token"},
+					Description:  "OAuth existing access token already fetched from external IDP",
 				},
 				paramOAuthExternalTokenExpiresInSeconds: {
 					Type:        schema.TypeString,
@@ -814,6 +821,22 @@ func providerOAuthSchema() *schema.Schema {
 		MinItems:    1,
 		MaxItems:    1,
 	}
+}
+
+func validateOAuthAndProviderAPIKeysCoexist(kafkaApiKey, kafkaApiSecret, schemaRegistryApiKey, schemaRegistryApiSecret, flinkApiKey, flinkApiSecret, tableflowApiKey, tableflowApiSecret string) diag.Diagnostics {
+	if kafkaApiKey != "" || kafkaApiSecret != "" {
+		return diag.Errorf("(kafka_api_key, kafka_api_secret) attributes should not be set in the provider block when oauth block is present")
+	}
+	if schemaRegistryApiKey != "" || schemaRegistryApiSecret != "" {
+		return diag.Errorf("(schema_registry_api_key, schema_registry_api_secret) attributes should not be set in the provider block when oauth block is present")
+	}
+	if flinkApiKey != "" || flinkApiSecret != "" {
+		return diag.Errorf("(flink_api_key, flink_api_secret) attributes should not be set in the provider block when oauth block is present")
+	}
+	if tableflowApiKey != "" || tableflowApiSecret != "" {
+		return diag.Errorf("(tableflow_api_key, tableflow_api_secret) attributes should not be set in the provider block when oauth block is present")
+	}
+	return nil
 }
 
 func SleepIfNotTestMode(d time.Duration, isAcceptanceTestMode bool) {

@@ -133,7 +133,7 @@ func flinkStatementResource() *schema.Resource {
 		Timeouts: &schema.ResourceTimeout{
 			Create: schema.DefaultTimeout(statementsAPICreateTimeout),
 		},
-		CustomizeDiff: customdiff.Sequence(resourceFlinkStatementDiff),
+		CustomizeDiff: customdiff.Sequence(resourceFlinkStatementDiff, resourceCredentialBlockValidationWithOAuth),
 	}
 }
 

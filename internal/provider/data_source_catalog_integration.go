@@ -53,6 +53,10 @@ func catalogIntegrationDataSource() *schema.Resource {
 }
 
 func catalogIntegrationDataSourceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	if err := dataSourceCredentialBlockValidationWithOAuth(d, meta.(*Client).isOAuthEnabled); err != nil {
+		return diag.Errorf("error reading Catalog Integration: %s", createDescriptiveError(err))
+	}
+
 	catalogIntegrationId := d.Get(paramId).(string)
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
 	clusterId := extractStringValueFromBlock(d, paramKafkaCluster, paramId)
