@@ -714,7 +714,7 @@ type TableflowRestClient struct {
 func (c *KafkaRestClient) apiContext(ctx context.Context) context.Context {
 	if c.externalAccessToken != nil {
 		currToken := c.externalAccessToken
-		token, err := fetchExternalOAuthToken(ctx, currToken.TokenUrl, currToken.ClientId, currToken.ClientSecret, currToken.Scope, currToken.IdentityPoolId, currToken)
+		token, err := fetchExternalOAuthToken(ctx, currToken.TokenUrl, currToken.ClientId, currToken.ClientSecret, currToken.Scope, currToken.IdentityPoolId, currToken, currToken.HTTPClient)
 		if err != nil {
 			tflog.Error(ctx, fmt.Sprintf("Failed to get OAuth token for Kafka rest client: %v", err))
 		}
@@ -736,7 +736,7 @@ func (c *KafkaRestClient) apiContext(ctx context.Context) context.Context {
 func (c *SchemaRegistryRestClient) apiContext(ctx context.Context) context.Context {
 	if c.externalAccessToken != nil {
 		currToken := c.externalAccessToken
-		token, err := fetchExternalOAuthToken(ctx, currToken.TokenUrl, currToken.ClientId, currToken.ClientSecret, currToken.Scope, currToken.IdentityPoolId, currToken)
+		token, err := fetchExternalOAuthToken(ctx, currToken.TokenUrl, currToken.ClientId, currToken.ClientSecret, currToken.Scope, currToken.IdentityPoolId, currToken, currToken.HTTPClient)
 		if err != nil {
 			tflog.Error(ctx, fmt.Sprintf("Failed to get OAuth token for Schema Registry rest client: %v", err))
 		}
@@ -758,7 +758,7 @@ func (c *SchemaRegistryRestClient) apiContext(ctx context.Context) context.Conte
 func (c *SchemaRegistryRestClient) dataCatalogApiContext(ctx context.Context) context.Context {
 	if c.externalAccessToken != nil {
 		currToken := c.externalAccessToken
-		token, err := fetchExternalOAuthToken(ctx, currToken.TokenUrl, currToken.ClientId, currToken.ClientSecret, currToken.Scope, currToken.IdentityPoolId, currToken)
+		token, err := fetchExternalOAuthToken(ctx, currToken.TokenUrl, currToken.ClientId, currToken.ClientSecret, currToken.Scope, currToken.IdentityPoolId, currToken, currToken.HTTPClient)
 		if err != nil {
 			tflog.Error(ctx, fmt.Sprintf("Failed to get OAuth token for Data Catalog rest client: %v", err))
 		}
@@ -780,7 +780,7 @@ func (c *SchemaRegistryRestClient) dataCatalogApiContext(ctx context.Context) co
 func (c *CatalogRestClient) dataCatalogApiContext(ctx context.Context) context.Context {
 	if c.externalAccessToken != nil {
 		currToken := c.externalAccessToken
-		token, err := fetchExternalOAuthToken(ctx, currToken.TokenUrl, currToken.ClientId, currToken.ClientSecret, currToken.Scope, currToken.IdentityPoolId, currToken)
+		token, err := fetchExternalOAuthToken(ctx, currToken.TokenUrl, currToken.ClientId, currToken.ClientSecret, currToken.Scope, currToken.IdentityPoolId, currToken, currToken.HTTPClient)
 		if err != nil {
 			tflog.Error(ctx, fmt.Sprintf("Failed to get OAuth token for Stream Governance Cluster rest client: %v", err))
 		}
@@ -801,7 +801,7 @@ func (c *CatalogRestClient) dataCatalogApiContext(ctx context.Context) context.C
 func (c *FlinkRestClient) apiContext(ctx context.Context) context.Context {
 	if c.externalAccessToken != nil {
 		currToken := c.externalAccessToken
-		token, err := fetchExternalOAuthToken(ctx, currToken.TokenUrl, currToken.ClientId, currToken.ClientSecret, currToken.Scope, currToken.IdentityPoolId, currToken)
+		token, err := fetchExternalOAuthToken(ctx, currToken.TokenUrl, currToken.ClientId, currToken.ClientSecret, currToken.Scope, currToken.IdentityPoolId, currToken, currToken.HTTPClient)
 		if err != nil {
 			tflog.Error(ctx, fmt.Sprintf("Failed to get OAuth token for Flink rest client: %v", err))
 		}
@@ -1049,7 +1049,7 @@ func kafkaClusterBlockStateUpgradeV0(ctx context.Context, rawState map[string]in
 
 func (c *Client) fetchOrOverrideExternalOAuthTokenFromApiContext(ctx context.Context) error {
 	currToken := c.oauthToken
-	token, err := fetchExternalOAuthToken(ctx, currToken.TokenUrl, currToken.ClientId, currToken.ClientSecret, currToken.Scope, currToken.IdentityPoolId, currToken)
+	token, err := fetchExternalOAuthToken(ctx, currToken.TokenUrl, currToken.ClientId, currToken.ClientSecret, currToken.Scope, currToken.IdentityPoolId, currToken, currToken.HTTPClient)
 	if err != nil {
 		return err
 	}
@@ -1069,7 +1069,7 @@ func (c *Client) fetchOrOverrideSTSOAuthTokenFromApiContext(ctx context.Context)
 	// Check if the current external OAuth token is still valid
 	// If valid, request a new STS token based on the current external OAuth token
 	if valid := validateCurrentExternalOAuthToken(ctx, currExternalToken); valid {
-		stsToken, err := requestNewSTSOAuthToken(ctx, currExternalToken.AccessToken, currSTSToken.IdentityPoolId, currSTSToken.ExpiresInSeconds)
+		stsToken, err := requestNewSTSOAuthToken(ctx, currExternalToken.AccessToken, currSTSToken.IdentityPoolId, currSTSToken.ExpiresInSeconds, currSTSToken.HTTPClient)
 		if err != nil {
 			return err
 		}
@@ -1079,13 +1079,13 @@ func (c *Client) fetchOrOverrideSTSOAuthTokenFromApiContext(ctx context.Context)
 
 	// If invalid, request a new external OAuth token first
 	// then request a new STS token based on the current external OAuth token
-	externalToken, err := requestNewExternalOAuthToken(ctx, currExternalToken.TokenUrl, currExternalToken.ClientId, currExternalToken.ClientSecret, currExternalToken.Scope, currExternalToken.IdentityPoolId)
+	externalToken, err := requestNewExternalOAuthToken(ctx, currExternalToken.TokenUrl, currExternalToken.ClientId, currExternalToken.ClientSecret, currExternalToken.Scope, currExternalToken.IdentityPoolId, currExternalToken.HTTPClient)
 	if err != nil {
 		return err
 	}
 	c.oauthToken = externalToken
 
-	stsToken, err := requestNewSTSOAuthToken(ctx, externalToken.AccessToken, currSTSToken.IdentityPoolId, currSTSToken.ExpiresInSeconds)
+	stsToken, err := requestNewSTSOAuthToken(ctx, externalToken.AccessToken, currSTSToken.IdentityPoolId, currSTSToken.ExpiresInSeconds, currSTSToken.HTTPClient)
 	if err != nil {
 		return err
 	}
@@ -1105,7 +1105,7 @@ func (c *TableflowRestClient) fetchOrOverrideSTSOAuthTokenFromApiContext(ctx con
 	// Check if the current external OAuth token is still valid
 	// If valid, request a new STS token based on the current external OAuth token
 	if valid := validateCurrentExternalOAuthToken(ctx, currExternalToken); valid {
-		stsToken, err := requestNewSTSOAuthToken(ctx, currExternalToken.AccessToken, currSTSToken.IdentityPoolId, currSTSToken.ExpiresInSeconds)
+		stsToken, err := requestNewSTSOAuthToken(ctx, currExternalToken.AccessToken, currSTSToken.IdentityPoolId, currSTSToken.ExpiresInSeconds, currSTSToken.HTTPClient)
 		if err != nil {
 			return err
 		}
@@ -1115,13 +1115,13 @@ func (c *TableflowRestClient) fetchOrOverrideSTSOAuthTokenFromApiContext(ctx con
 
 	// If invalid, request a new external OAuth token first
 	// then request a new STS token based on the current external OAuth token
-	externalToken, err := requestNewExternalOAuthToken(ctx, currExternalToken.TokenUrl, currExternalToken.ClientId, currExternalToken.ClientSecret, currExternalToken.Scope, currExternalToken.IdentityPoolId)
+	externalToken, err := requestNewExternalOAuthToken(ctx, currExternalToken.TokenUrl, currExternalToken.ClientId, currExternalToken.ClientSecret, currExternalToken.Scope, currExternalToken.IdentityPoolId, currExternalToken.HTTPClient)
 	if err != nil {
 		return err
 	}
 	c.oauthToken = externalToken
 
-	stsToken, err := requestNewSTSOAuthToken(ctx, externalToken.AccessToken, currSTSToken.IdentityPoolId, currSTSToken.ExpiresInSeconds)
+	stsToken, err := requestNewSTSOAuthToken(ctx, externalToken.AccessToken, currSTSToken.IdentityPoolId, currSTSToken.ExpiresInSeconds, currSTSToken.HTTPClient)
 	if err != nil {
 		return err
 	}

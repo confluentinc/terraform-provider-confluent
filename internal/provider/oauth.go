@@ -32,35 +32,42 @@ const (
 )
 
 type OAuthToken struct {
-	ClientId         string    `json:"client_id"`
-	ClientSecret     string    `json:"client_secret"`
-	TokenUrl         string    `json:"token_url"`
-	ExpiresInSeconds string    `json:"expires_in_seconds"`
-	Scope            string    `json:"scope"`
-	AccessToken      string    `json:"access_token"`
-	TokenType        string    `json:"token_type"`
-	IdentityPoolId   string    `json:"identity_pool_id"`
-	ValidUntil       time.Time `json:"valid_until"`
+	ClientId         string       `json:"client_id"`
+	ClientSecret     string       `json:"client_secret"`
+	TokenUrl         string       `json:"token_url"`
+	ExpiresInSeconds string       `json:"expires_in_seconds"`
+	Scope            string       `json:"scope"`
+	AccessToken      string       `json:"access_token"`
+	TokenType        string       `json:"token_type"`
+	IdentityPoolId   string       `json:"identity_pool_id"`
+	ValidUntil       time.Time    `json:"valid_until"`
+	HTTPClient       *http.Client `json:"http_client"`
 }
 
 type STSToken struct {
-	ExpiresInSeconds string    `json:"expires_in_seconds"`
-	AccessToken      string    `json:"access_token"`
-	TokenType        string    `json:"token_type"`
-	IssuedTokenType  string    `json:"issued_token_type"`
-	IdentityPoolId   string    `json:"identity_pool_id"`
-	ValidUntil       time.Time `json:"valid_until"`
+	ExpiresInSeconds string       `json:"expires_in_seconds"`
+	AccessToken      string       `json:"access_token"`
+	TokenType        string       `json:"token_type"`
+	IssuedTokenType  string       `json:"issued_token_type"`
+	IdentityPoolId   string       `json:"identity_pool_id"`
+	ValidUntil       time.Time    `json:"valid_until"`
+	HTTPClient       *http.Client `json:"http_client"`
 }
 
-func fetchSTSOAuthToken(ctx context.Context, subjectToken, identityPoolId, expiredInSeconds string, currToken *STSToken) (*STSToken, error) {
+func fetchSTSOAuthToken(ctx context.Context, subjectToken, identityPoolId, expiredInSeconds string, currToken *STSToken, retryableClient *http.Client) (*STSToken, error) {
 	// Validate if the current token is still valid, if so, return it
 	if valid := validateCurrentSTSOAuthToken(ctx, currToken); valid {
 		return currToken, nil
 	}
-	return requestNewSTSOAuthToken(ctx, subjectToken, identityPoolId, expiredInSeconds)
+	return requestNewSTSOAuthToken(ctx, subjectToken, identityPoolId, expiredInSeconds, retryableClient)
 }
 
-func requestNewSTSOAuthToken(ctx context.Context, subjectToken, identityPoolId, expiredInSeconds string) (*STSToken, error) {
+// TODO: Try to make it as a SDK instead of raw HTTP request, tracked by: https://confluentinc.atlassian.net/browse/CLI-3511
+func requestNewSTSOAuthToken(ctx context.Context, subjectToken, identityPoolId, expiredInSeconds string, retryableClient *http.Client) (*STSToken, error) {
+	if retryableClient == nil {
+		return nil, fmt.Errorf("retryable HTTP client is nil, cannot request new STS OAuth token")
+	}
+
 	data := url.Values{}
 	data.Set("grant_type", "urn:ietf:params:oauth:grant-type:token-exchange")
 	data.Set("subject_token", subjectToken)
@@ -83,8 +90,7 @@ func requestNewSTSOAuthToken(ctx context.Context, subjectToken, identityPoolId, 
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Exchange STS token raw request is: %s\n", string(dumpRequest)))
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := retryableClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -135,19 +141,23 @@ func requestNewSTSOAuthToken(ctx context.Context, subjectToken, identityPoolId, 
 		}
 	}
 	result.IdentityPoolId = identityPoolId
+	result.HTTPClient = retryableClient
 	return result, nil
 }
 
-func fetchExternalOAuthToken(ctx context.Context, tokenUrl, clientId, clientSecret, customScope, identityPoolId string, currToken *OAuthToken) (*OAuthToken, error) {
+func fetchExternalOAuthToken(ctx context.Context, tokenUrl, clientId, clientSecret, customScope, identityPoolId string, currToken *OAuthToken, retryableClient *http.Client) (*OAuthToken, error) {
 	// Validate if the current token is still valid, if so, return it
 	if valid := validateCurrentExternalOAuthToken(ctx, currToken); valid {
 		return currToken, nil
 	}
-	// If the current token is not valid, request a new one
-	return requestNewExternalOAuthToken(ctx, tokenUrl, clientId, clientSecret, customScope, identityPoolId)
+	return requestNewExternalOAuthToken(ctx, tokenUrl, clientId, clientSecret, customScope, identityPoolId, retryableClient)
 }
 
-func requestNewExternalOAuthToken(ctx context.Context, tokenUrl, clientId, clientSecret, customScope, identityPoolId string) (*OAuthToken, error) {
+func requestNewExternalOAuthToken(ctx context.Context, tokenUrl, clientId, clientSecret, customScope, identityPoolId string, retryableClient *http.Client) (*OAuthToken, error) {
+	if retryableClient == nil {
+		return nil, fmt.Errorf("retryable HTTP client is nil, cannot request new external OAuth token")
+	}
+
 	data := url.Values{}
 	data.Set("grant_type", "client_credentials")
 	data.Set("client_id", clientId)
@@ -170,8 +180,7 @@ func requestNewExternalOAuthToken(ctx context.Context, tokenUrl, clientId, clien
 	}
 	tflog.Debug(ctx, fmt.Sprintf("External OAuth token raw request is: %s\n", string(dumpRequest)))
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := retryableClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -226,6 +235,7 @@ func requestNewExternalOAuthToken(ctx context.Context, tokenUrl, clientId, clien
 	result.TokenUrl = tokenUrl
 	result.ClientId = clientId
 	result.ClientSecret = clientSecret
+	result.HTTPClient = retryableClient
 	return result, nil
 }
 

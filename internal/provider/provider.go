@@ -740,8 +740,12 @@ func initializeOAuthConfigs(ctx context.Context, d *schema.ResourceData) (*OAuth
 	tflog.Info(ctx, "Initializing OAuth settings for Confluent Cloud")
 	providedToken := extractStringValueFromBlock(d, paramOAuthBlockName, paramOAuthExternalAccessToken)
 	identityPoolId := extractStringValueFromBlock(d, paramOAuthBlockName, paramOAuthIdentityPoolId)
+	maxRetries := d.Get("max_retries").(int)
 	var oauthToken *OAuthToken
 	var err error
+
+	// Use this single retryable client to fetch external and STS token
+	retryableClient := NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 
 	if providedToken == "" {
 		// External OAuth token initialization through fetching token from external IDP
@@ -749,7 +753,7 @@ func initializeOAuthConfigs(ctx context.Context, d *schema.ResourceData) (*OAuth
 		clientSecret := extractStringValueFromBlock(d, paramOAuthBlockName, paramOAuthExternalClientSecret)
 		externalTokenURL := extractStringValueFromBlock(d, paramOAuthBlockName, paramOAuthExternalTokenURL)
 		scope := extractStringValueFromBlock(d, paramOAuthBlockName, paramOAuthExternalTokenScope)
-		oauthToken, err = fetchExternalOAuthToken(ctx, externalTokenURL, clientId, clientSecret, scope, identityPoolId, nil)
+		oauthToken, err = fetchExternalOAuthToken(ctx, externalTokenURL, clientId, clientSecret, scope, identityPoolId, nil, retryableClient)
 		if err != nil {
 			return nil, nil, diag.FromErr(err)
 		}
@@ -767,13 +771,14 @@ func initializeOAuthConfigs(ctx context.Context, d *schema.ResourceData) (*OAuth
 			Scope:            "",
 			TokenType:        "",
 			ValidUntil:       time.Now().Add(100 * 365 * 24 * time.Hour),
+			HTTPClient:       retryableClient,
 		}
 	}
 	tflog.Debug(ctx, fmt.Sprintf("OAuth Token: %v", *oauthToken))
 
 	// STS token exchanged from external OAuth token
 	expiredInSeconds := extractStringValueFromBlock(d, paramOAuthBlockName, paramOAuthSTSTokenExpiredInSeconds)
-	stsToken, err := fetchSTSOAuthToken(ctx, oauthToken.AccessToken, identityPoolId, expiredInSeconds, nil)
+	stsToken, err := fetchSTSOAuthToken(ctx, oauthToken.AccessToken, identityPoolId, expiredInSeconds, nil, retryableClient)
 	if err != nil {
 		return nil, nil, diag.FromErr(err)
 	}
