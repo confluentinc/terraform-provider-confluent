@@ -77,6 +77,10 @@ func schemaRegistryDekDataSource() *schema.Resource {
 }
 
 func schemaRegistryDekDataSourceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	if err := dataSourceCredentialBlockValidationWithOAuth(d, meta.(*Client).isOAuthEnabled); err != nil {
+		return diag.Errorf("error reading Schema Registry DEK: %s", createDescriptiveError(err))
+	}
+
 	restEndpoint, err := extractSchemaRegistryRestEndpoint(meta.(*Client), d, false)
 	if err != nil {
 		return diag.Errorf("error reading Schema Registry DEK: %s", createDescriptiveError(err))
@@ -97,7 +101,7 @@ func schemaRegistryDekDataSourceRead(ctx context.Context, d *schema.ResourceData
 
 	tflog.Debug(ctx, fmt.Sprintf("Reading Schema Registry DEK %q", dekId), map[string]interface{}{schemaRegistryDekKey: dekId})
 
-	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 	request := schemaRegistryRestClient.apiClient.DataEncryptionKeysV1Api.GetDekByVersion(schemaRegistryRestClient.apiContext(ctx), kekName, subject, strconv.Itoa(version))
 	request = request.Algorithm(algorithm)
 	dek, _, err := request.Execute()

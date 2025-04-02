@@ -3,17 +3,16 @@ package provider
 import (
 	"context"
 	"fmt"
+	"net/http"
 
-	dc "github.com/confluentinc/ccloud-sdk-go-v2/data-catalog/v1"
-	kafkarestv3 "github.com/confluentinc/ccloud-sdk-go-v2/kafkarest/v3"
-	tableflow "github.com/confluentinc/ccloud-sdk-go-v2/tableflow/v1"
 	"github.com/hashicorp/go-retryablehttp"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 
-	"net/http"
-
+	dc "github.com/confluentinc/ccloud-sdk-go-v2/data-catalog/v1"
 	fgb "github.com/confluentinc/ccloud-sdk-go-v2/flink-gateway/v1"
+	kafkarestv3 "github.com/confluentinc/ccloud-sdk-go-v2/kafkarest/v3"
 	schemaregistry "github.com/confluentinc/ccloud-sdk-go-v2/schema-registry/v1"
+	tableflow "github.com/confluentinc/ccloud-sdk-go-v2/tableflow/v1"
 )
 
 type FlinkRestClientFactory struct {
@@ -22,7 +21,7 @@ type FlinkRestClientFactory struct {
 	maxRetries *int
 }
 
-func (f FlinkRestClientFactory) CreateFlinkRestClient(restEndpoint, organizationId, environmentId, computePoolId, principalId, flinkApiKey, flinkApiSecret string, isMetadataSetInProviderBlock bool) *FlinkRestClient {
+func (f FlinkRestClientFactory) CreateFlinkRestClient(restEndpoint, organizationId, environmentId, computePoolId, principalId, flinkApiKey, flinkApiSecret string, isMetadataSetInProviderBlock bool, token *OAuthToken) *FlinkRestClient {
 	var opts []RetryableClientFactoryOption = []RetryableClientFactoryOption{}
 	config := fgb.NewConfiguration()
 
@@ -32,10 +31,15 @@ func (f FlinkRestClientFactory) CreateFlinkRestClient(restEndpoint, organization
 
 	config.UserAgent = f.userAgent
 	config.Servers[0].URL = restEndpoint
-	config.HTTPClient = NewRetryableClientFactory(f.ctx, opts...).CreateRetryableClient()
+
+	baseFactory := NewRetryableClientFactory(f.ctx, opts...)
+
+	config.HTTPClient = baseFactory.CreateRetryableClient()
+	config.DefaultHeader = map[string]string{"confluent-identity-pool-id": token.IdentityPoolId}
 
 	return &FlinkRestClient{
 		apiClient:                    fgb.NewAPIClient(config),
+		externalAccessToken:          token,
 		organizationId:               organizationId,
 		environmentId:                environmentId,
 		computePoolId:                computePoolId,
@@ -53,7 +57,7 @@ type SchemaRegistryRestClientFactory struct {
 	maxRetries *int
 }
 
-func (f SchemaRegistryRestClientFactory) CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret string, isMetadataSetInProviderBlock bool) *SchemaRegistryRestClient {
+func (f SchemaRegistryRestClientFactory) CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret string, isMetadataSetInProviderBlock bool, token *OAuthToken) *SchemaRegistryRestClient {
 	var opts []RetryableClientFactoryOption = []RetryableClientFactoryOption{}
 
 	// Setup SR API Client
@@ -76,8 +80,12 @@ func (f SchemaRegistryRestClientFactory) CreateSchemaRegistryRestClient(restEndp
 	dataCatalogConfig.Servers[0].URL = restEndpoint
 	dataCatalogConfig.HTTPClient = NewRetryableClientFactory(f.ctx, opts...).CreateRetryableClient()
 
+	config.DefaultHeader = map[string]string{"confluent-identity-pool-id": token.IdentityPoolId, "target-sr-cluster": clusterId}
+	dataCatalogConfig.DefaultHeader = map[string]string{"confluent-identity-pool-id": token.IdentityPoolId, "target-sr-cluster": clusterId}
+
 	return &SchemaRegistryRestClient{
 		apiClient:                    schemaregistry.NewAPIClient(config),
+		externalAccessToken:          token,
 		clusterId:                    clusterId,
 		clusterApiKey:                clusterApiKey,
 		clusterApiSecret:             clusterApiSecret,
@@ -92,7 +100,7 @@ type CatalogRestClientFactory struct {
 	maxRetries *int
 }
 
-func (f CatalogRestClientFactory) CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret string, isMetadataSetInProviderBlock bool) *CatalogRestClient {
+func (f CatalogRestClientFactory) CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret string, isMetadataSetInProviderBlock bool, token *OAuthToken) *CatalogRestClient {
 	var opts []RetryableClientFactoryOption = []RetryableClientFactoryOption{}
 
 	// Setup DC API Client
@@ -107,6 +115,7 @@ func (f CatalogRestClientFactory) CreateCatalogRestClient(restEndpoint, clusterI
 
 	return &CatalogRestClient{
 		apiClient:                    dc.NewAPIClient(dataCatalogConfig),
+		externalAccessToken:          token,
 		clusterId:                    clusterId,
 		clusterApiKey:                clusterApiKey,
 		clusterApiSecret:             clusterApiSecret,
@@ -121,7 +130,7 @@ type KafkaRestClientFactory struct {
 	maxRetries *int
 }
 
-func (f KafkaRestClientFactory) CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret string, isMetadataSetInProviderBlock, isClusterIdSetInProviderBlock bool) *KafkaRestClient {
+func (f KafkaRestClientFactory) CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret string, isClusterIdSetInProviderBlock, isMetadataSetInProviderBlock bool, token *OAuthToken) *KafkaRestClient {
 	var opts []RetryableClientFactoryOption = []RetryableClientFactoryOption{}
 	config := kafkarestv3.NewConfiguration()
 
@@ -131,10 +140,15 @@ func (f KafkaRestClientFactory) CreateKafkaRestClient(restEndpoint, clusterId, c
 
 	config.UserAgent = f.userAgent
 	config.Servers[0].URL = restEndpoint
-	config.HTTPClient = NewRetryableClientFactory(f.ctx, opts...).CreateRetryableClient()
+
+	baseFactory := NewRetryableClientFactory(f.ctx, opts...)
+
+	config.HTTPClient = baseFactory.CreateRetryableClient()
+	config.DefaultHeader = map[string]string{"confluent-identity-pool-id": token.IdentityPoolId}
 
 	return &KafkaRestClient{
 		apiClient:                     kafkarestv3.NewAPIClient(config),
+		externalAccessToken:           token,
 		clusterId:                     clusterId,
 		clusterApiKey:                 clusterApiKey,
 		clusterApiSecret:              clusterApiSecret,
@@ -151,7 +165,7 @@ type TableflowRestClientFactory struct {
 	endpoint   string
 }
 
-func (f TableflowRestClientFactory) CreateTableflowRestClient(tableflowApiKey, tableflowApiSecret string, isMetadataSetInProviderBlock bool) *TableflowRestClient {
+func (f TableflowRestClientFactory) CreateTableflowRestClient(tableflowApiKey, tableflowApiSecret string, isMetadataSetInProviderBlock bool, externalToken *OAuthToken, stsToken *STSToken) *TableflowRestClient {
 	var opts []RetryableClientFactoryOption = []RetryableClientFactoryOption{}
 	config := tableflow.NewConfiguration()
 
@@ -162,9 +176,12 @@ func (f TableflowRestClientFactory) CreateTableflowRestClient(tableflowApiKey, t
 	config.UserAgent = f.userAgent
 	config.Servers[0].URL = f.endpoint
 	config.HTTPClient = NewRetryableClientFactory(f.ctx, opts...).CreateRetryableClient()
+	config.DefaultHeader = map[string]string{"confluent-identity-pool-id": externalToken.IdentityPoolId}
 
 	return &TableflowRestClient{
 		apiClient:                    tableflow.NewAPIClient(config),
+		oauthToken:                   externalToken,
+		stsToken:                     stsToken,
 		tableflowApiKey:              tableflowApiKey,
 		tableflowApiSecret:           tableflowApiSecret,
 		isMetadataSetInProviderBlock: isMetadataSetInProviderBlock,

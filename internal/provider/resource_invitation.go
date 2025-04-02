@@ -86,7 +86,7 @@ func userSchema() *schema.Schema {
 func invitationRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	invitationId := d.Id()
 
-	tflog.Debug(ctx, fmt.Sprintf("Reading invitation %q=%q", paramId, invitationId), map[string]interface{}{invitationloggingKey: invitationId})
+	tflog.Debug(ctx, fmt.Sprintf("Reading invitation %q=%q", paramId, invitationId), map[string]interface{}{invitationLoggingKey: invitationId})
 	if _, err := readInvitationAndSetAttributes(ctx, d, meta, invitationId); err != nil {
 		return diag.FromErr(fmt.Errorf("error reading invitation %q: %s", invitationId, createDescriptiveError(err)))
 	}
@@ -97,7 +97,7 @@ func invitationRead(ctx context.Context, d *schema.ResourceData, meta interface{
 func invitationImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	invitationId := d.Id()
 
-	tflog.Debug(ctx, fmt.Sprintf("Imporing invitation %q=%q", paramId, invitationId), map[string]interface{}{invitationloggingKey: invitationId})
+	tflog.Debug(ctx, fmt.Sprintf("Importing invitation %q=%q", paramId, invitationId), map[string]interface{}{invitationLoggingKey: invitationId})
 	d.MarkNewResource()
 	if _, err := readInvitationAndSetAttributes(ctx, d, meta, invitationId); err != nil {
 		return nil, fmt.Errorf("error importing invitation %q: %s", invitationId, createDescriptiveError(err))
@@ -107,16 +107,16 @@ func invitationImport(ctx context.Context, d *schema.ResourceData, meta interfac
 }
 
 func readInvitationAndSetAttributes(ctx context.Context, d *schema.ResourceData, meta interface{}, invitationId string) ([]*schema.ResourceData, error) {
-	tflog.Debug(ctx, fmt.Sprintf("Reading invitation %q=%q", paramId, invitationId), map[string]interface{}{invitationloggingKey: invitationId})
+	tflog.Debug(ctx, fmt.Sprintf("Reading invitation %q=%q", paramId, invitationId), map[string]interface{}{invitationLoggingKey: invitationId})
 
 	c := meta.(*Client)
 	invitation, resp, err := executeInvitationRead(c.iamApiContext(ctx), c, invitationId)
 	if err != nil {
-		tflog.Warn(ctx, fmt.Sprintf("Error reading invitation %q: %s", invitationId, createDescriptiveError(err)), map[string]interface{}{invitationloggingKey: invitationId})
+		tflog.Warn(ctx, fmt.Sprintf("Error reading invitation %q: %s", invitationId, createDescriptiveError(err)), map[string]interface{}{invitationLoggingKey: invitationId})
 
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
 		if isResourceNotFound && !d.IsNewResource() {
-			tflog.Warn(ctx, fmt.Sprintf("Removing invitation %q in TF state because invitation could not be found on the server", invitationId), map[string]interface{}{invitationloggingKey: invitationId})
+			tflog.Warn(ctx, fmt.Sprintf("Removing invitation %q in TF state because invitation could not be found on the server", invitationId), map[string]interface{}{invitationLoggingKey: invitationId})
 			d.SetId("")
 			return nil, nil
 		}
@@ -127,13 +127,13 @@ func readInvitationAndSetAttributes(ctx context.Context, d *schema.ResourceData,
 	if err != nil {
 		return nil, fmt.Errorf("error reading invitation %q: error marshaling %#v to json: %s", invitationId, invitation, createDescriptiveError(err))
 	}
-	tflog.Debug(ctx, fmt.Sprintf("Fetched invitation %q: %s", invitationId, invitationJson), map[string]interface{}{invitationloggingKey: invitationId})
+	tflog.Debug(ctx, fmt.Sprintf("Fetched invitation %q: %s", invitationId, invitationJson), map[string]interface{}{invitationLoggingKey: invitationId})
 
 	if _, err := setInvitationAttributes(d, invitation); err != nil {
 		return nil, createDescriptiveError(err)
 	}
 
-	tflog.Debug(ctx, fmt.Sprintf("Finished reading invitation %q", invitationId), map[string]interface{}{invitationloggingKey: invitationId})
+	tflog.Debug(ctx, fmt.Sprintf("Finished reading invitation %q", invitationId), map[string]interface{}{invitationLoggingKey: invitationId})
 
 	return []*schema.ResourceData{d}, nil
 }
@@ -167,7 +167,7 @@ func invitationCreate(ctx context.Context, d *schema.ResourceData, meta interfac
 	if err != nil {
 		return diag.Errorf("error creating invitation %q: error marshaling %#v to json: %s", d.Id(), createdInvitation, createDescriptiveError(err))
 	}
-	tflog.Debug(ctx, fmt.Sprintf("Finished creating invitation %q: %s", d.Id(), createdInvitationJson), map[string]interface{}{invitationloggingKey: d.Id()})
+	tflog.Debug(ctx, fmt.Sprintf("Finished creating invitation %q: %s", d.Id(), createdInvitationJson), map[string]interface{}{invitationLoggingKey: d.Id()})
 
 	return invitationRead(ctx, d, meta)
 }
@@ -179,7 +179,7 @@ func invitationUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 }
 
 func invitationDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	tflog.Debug(ctx, fmt.Sprintf("Deleting invitation %q", d.Id()), map[string]interface{}{invitationloggingKey: d.Id()})
+	tflog.Debug(ctx, fmt.Sprintf("Deleting invitation %q", d.Id()), map[string]interface{}{invitationLoggingKey: d.Id()})
 
 	invitationId := d.Id()
 
@@ -190,7 +190,7 @@ func invitationDelete(ctx context.Context, d *schema.ResourceData, meta interfac
 	c := meta.(*Client)
 
 	if d.Get(paramAllowDeletion).(bool) == true && d.Get(paramStatus).(string) == statusAccepted {
-		tflog.Debug(ctx, fmt.Sprintf("Deleted accepted Invitation %q from TF state since allow_deletion is set to true", invitationId), map[string]interface{}{invitationloggingKey: invitationId})
+		tflog.Debug(ctx, fmt.Sprintf("Deleted accepted Invitation %q from TF state since allow_deletion is set to true", invitationId), map[string]interface{}{invitationLoggingKey: invitationId})
 		return nil
 	}
 
@@ -201,7 +201,7 @@ func invitationDelete(ctx context.Context, d *schema.ResourceData, meta interfac
 		return diag.Errorf("error deleting invitation %q: %s", invitationId, createDescriptiveError(err))
 	}
 
-	tflog.Debug(ctx, fmt.Sprintf("Finished deleting invitation %q", invitationId), map[string]interface{}{invitationloggingKey: invitationId})
+	tflog.Debug(ctx, fmt.Sprintf("Finished deleting invitation %q", invitationId), map[string]interface{}{invitationLoggingKey: invitationId})
 
 	return nil
 }

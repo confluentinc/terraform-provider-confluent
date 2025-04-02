@@ -24,6 +24,7 @@ import (
 	tableflow "github.com/confluentinc/ccloud-sdk-go-v2/tableflow/v1"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
@@ -104,6 +105,7 @@ func tableflowTopicResource() *schema.Resource {
 			paramByobAws:        byobAwsSchema(),
 			paramManagedStorage: managedStorageSchema(),
 		},
+		CustomizeDiff: customdiff.Sequence(resourceCredentialBlockValidationWithOAuth),
 	}
 }
 
@@ -157,7 +159,7 @@ func tableflowTopicCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	if err != nil {
 		return diag.Errorf("error creating Tableflow Topic: %s", createDescriptiveError(err))
 	}
-	tableflowRestClient := c.tableflowRestClientFactory.CreateTableflowRestClient(tableflowApiKey, tableflowApiSecret, c.isTableflowMetadataSet)
+	tableflowRestClient := c.tableflowRestClientFactory.CreateTableflowRestClient(tableflowApiKey, tableflowApiSecret, c.isTableflowMetadataSet, c.oauthToken, c.stsToken)
 
 	isByobAws := len(d.Get(paramByobAws).([]interface{})) > 0
 	isManaged := len(d.Get(paramManagedStorage).([]interface{})) > 0
@@ -236,7 +238,7 @@ func tableflowTopicRead(ctx context.Context, d *schema.ResourceData, meta interf
 	if err != nil {
 		return diag.Errorf("error creating Tableflow Topic: %s", createDescriptiveError(err))
 	}
-	tableflowRestClient := c.tableflowRestClientFactory.CreateTableflowRestClient(tableflowApiKey, tableflowApiSecret, c.isTableflowMetadataSet)
+	tableflowRestClient := c.tableflowRestClientFactory.CreateTableflowRestClient(tableflowApiKey, tableflowApiSecret, c.isTableflowMetadataSet, c.oauthToken, c.stsToken)
 
 	tableflowTopicId := d.Id()
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
@@ -321,7 +323,7 @@ func setTableflowTopicAttributes(d *schema.ResourceData, c *TableflowRestClient,
 	}
 
 	if !c.isMetadataSetInProviderBlock {
-		if err := setKafkaCredentials(c.tableflowApiKey, c.tableflowApiSecret, d); err != nil {
+		if err := setKafkaCredentials(c.tableflowApiKey, c.tableflowApiSecret, d, c.oauthToken != nil); err != nil {
 			return nil, err
 		}
 	}
@@ -340,7 +342,7 @@ func tableflowTopicDelete(ctx context.Context, d *schema.ResourceData, meta inte
 	if err != nil {
 		return diag.Errorf("error creating Tableflow Topic: %s", createDescriptiveError(err))
 	}
-	tableflowRestClient := c.tableflowRestClientFactory.CreateTableflowRestClient(tableflowApiKey, tableflowApiSecret, c.isTableflowMetadataSet)
+	tableflowRestClient := c.tableflowRestClientFactory.CreateTableflowRestClient(tableflowApiKey, tableflowApiSecret, c.isTableflowMetadataSet, c.oauthToken, c.stsToken)
 
 	req := tableflowRestClient.apiClient.TableflowTopicsTableflowV1Api.DeleteTableflowV1TableflowTopic(tableflowRestClient.apiContext(ctx), d.Id()).Environment(environmentId).SpecKafkaCluster(clusterId)
 	_, err = req.Execute()
@@ -365,7 +367,7 @@ func tableflowTopicUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 	if err != nil {
 		return diag.Errorf("error creating Tableflow Topic: %s", createDescriptiveError(err))
 	}
-	tableflowRestClient := c.tableflowRestClientFactory.CreateTableflowRestClient(tableflowApiKey, tableflowApiSecret, c.isTableflowMetadataSet)
+	tableflowRestClient := c.tableflowRestClientFactory.CreateTableflowRestClient(tableflowApiKey, tableflowApiSecret, c.isTableflowMetadataSet, c.oauthToken, c.stsToken)
 
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
 	clusterId := extractStringValueFromBlock(d, paramKafkaCluster, paramId)
@@ -416,7 +418,7 @@ func tableflowTopicImport(ctx context.Context, d *schema.ResourceData, meta inte
 	if err != nil {
 		return nil, fmt.Errorf("error creating Tableflow Topic: %s", createDescriptiveError(err))
 	}
-	tableflowRestClient := c.tableflowRestClientFactory.CreateTableflowRestClient(tableflowApiKey, tableflowApiSecret, c.isTableflowMetadataSet)
+	tableflowRestClient := c.tableflowRestClientFactory.CreateTableflowRestClient(tableflowApiKey, tableflowApiSecret, c.isTableflowMetadataSet, c.oauthToken, c.stsToken)
 
 	envIDAndClusterIDAndTopicName := d.Id()
 	parts := strings.Split(envIDAndClusterIDAndTopicName, "/")
@@ -440,6 +442,9 @@ func tableflowTopicImport(ctx context.Context, d *schema.ResourceData, meta inte
 }
 
 func extractTableflowApiKeyAndApiSecret(client *Client, d *schema.ResourceData, isImportOperation bool) (string, string, error) {
+	if client.isOAuthEnabled {
+		return "", "", nil
+	}
 	if client.isTableflowMetadataSet {
 		return client.tableflowApiKey, client.tableflowApiSecret, nil
 	}
