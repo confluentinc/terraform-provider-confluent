@@ -27,6 +27,10 @@ const (
 	stsEndpoint                             = "https://api.confluent.cloud/sts/v1/oauth2/token"
 )
 
+const (
+	tokenExpirationBuffer = 3 * time.Minute
+)
+
 type OAuthToken struct {
 	ClientId         string    `json:"client_id"`
 	ClientSecret     string    `json:"client_secret"`
@@ -196,7 +200,13 @@ func requestNewExternalOAuthToken(ctx context.Context, tokenUrl, clientId, clien
 		switch k {
 		case "expires_in":
 			result.ExpiresInSeconds = fmt.Sprintf("%v", v)
-			result.ValidUntil = time.Now().Add(time.Duration(v.(float64)) * time.Second)
+			// Be careful about the token expiry time, use half the expiry time as buffer if expiry is too short
+			expiryDuration := time.Duration(v.(float64)) * time.Second
+			buffer := tokenExpirationBuffer
+			if expiryDuration <= buffer {
+				buffer = expiryDuration / 2
+			}
+			result.ValidUntil = time.Now().Add(expiryDuration - buffer)
 		case "access_token":
 			result.AccessToken = v.(string)
 		case "token_type":
@@ -214,7 +224,7 @@ func requestNewExternalOAuthToken(ctx context.Context, tokenUrl, clientId, clien
 }
 
 func validateCurrentExternalOAuthToken(ctx context.Context, token *OAuthToken) bool {
-	if token == nil {
+	if token == nil || token.ValidUntil.IsZero() {
 		return false
 	}
 	if token.ValidUntil.Before(time.Now()) {
@@ -225,7 +235,7 @@ func validateCurrentExternalOAuthToken(ctx context.Context, token *OAuthToken) b
 }
 
 func validateCurrentSTSOAuthToken(ctx context.Context, token *STSToken) bool {
-	if token == nil {
+	if token == nil || token.ValidUntil.IsZero() {
 		return false
 	}
 	if token.ValidUntil.Before(time.Now()) {

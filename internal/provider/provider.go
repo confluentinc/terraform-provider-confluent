@@ -738,15 +738,36 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 
 func initializeOAuthConfigs(ctx context.Context, d *schema.ResourceData) (*OAuthToken, *STSToken, diag.Diagnostics) {
 	tflog.Info(ctx, "Initializing OAuth settings for Confluent Cloud")
-	// External OAuth token initialization
-	clientId := extractStringValueFromBlock(d, paramOAuthBlockName, paramOAuthExternalClientId)
-	clientSecret := extractStringValueFromBlock(d, paramOAuthBlockName, paramOAuthExternalClientSecret)
-	externalTokenURL := extractStringValueFromBlock(d, paramOAuthBlockName, paramOAuthExternalTokenURL)
-	scope := extractStringValueFromBlock(d, paramOAuthBlockName, paramOAuthExternalTokenScope)
+	providedToken := extractStringValueFromBlock(d, paramOAuthBlockName, paramOAuthExternalAccessToken)
 	identityPoolId := extractStringValueFromBlock(d, paramOAuthBlockName, paramOAuthIdentityPoolId)
-	oauthToken, err := fetchExternalOAuthToken(ctx, externalTokenURL, clientId, clientSecret, scope, identityPoolId, nil)
-	if err != nil {
-		return nil, nil, diag.FromErr(err)
+	var oauthToken *OAuthToken
+	var err error
+
+	if providedToken == "" {
+		// External OAuth token initialization through fetching token from external IDP
+		clientId := extractStringValueFromBlock(d, paramOAuthBlockName, paramOAuthExternalClientId)
+		clientSecret := extractStringValueFromBlock(d, paramOAuthBlockName, paramOAuthExternalClientSecret)
+		externalTokenURL := extractStringValueFromBlock(d, paramOAuthBlockName, paramOAuthExternalTokenURL)
+		scope := extractStringValueFromBlock(d, paramOAuthBlockName, paramOAuthExternalTokenScope)
+		oauthToken, err = fetchExternalOAuthToken(ctx, externalTokenURL, clientId, clientSecret, scope, identityPoolId, nil)
+		if err != nil {
+			return nil, nil, diag.FromErr(err)
+		}
+	} else {
+		// External OAuth token initialization through fetching token from provided token
+		tflog.Warn(ctx, "Initializing OAuth setting from provided static token, please make sure this external token from Identity Provider is valid and not expired")
+		tflog.Warn(ctx, "This token and the associated STS token won't be refreshed automatically by the provider, please make sure to update it manually in case of expiration")
+		oauthToken = &OAuthToken{
+			AccessToken:      providedToken,
+			IdentityPoolId:   identityPoolId,
+			ClientId:         "",
+			ClientSecret:     "",
+			TokenUrl:         "",
+			ExpiresInSeconds: "",
+			Scope:            "",
+			TokenType:        "",
+			ValidUntil:       time.Now().Add(100 * 365 * 24 * time.Hour),
+		}
 	}
 	tflog.Debug(ctx, fmt.Sprintf("OAuth Token: %v", *oauthToken))
 
