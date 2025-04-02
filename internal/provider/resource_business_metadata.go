@@ -21,6 +21,7 @@ import (
 	dc "github.com/confluentinc/ccloud-sdk-go-v2/data-catalog/v1"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"regexp"
@@ -81,6 +82,7 @@ func businessMetadataResource() *schema.Resource {
 			},
 			paramAttributeDef: attributeDefsSchema(),
 		},
+		CustomizeDiff: customdiff.Sequence(resourceCredentialBlockValidationWithOAuth),
 	}
 }
 
@@ -142,7 +144,7 @@ func businessMetadataCreate(ctx context.Context, d *schema.ResourceData, meta in
 	businessMetadataName := d.Get(paramName).(string)
 	businessMetadataId := createBusinessMetadataId(clusterId, businessMetadataName)
 
-	catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+	catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 	businessMetadataRequest := dc.BusinessMetadataDef{}
 	businessMetadataRequest.SetName(businessMetadataName)
 	description := d.Get(paramDescription).(string)
@@ -215,7 +217,7 @@ func readBusinessMetadataAndSetAttributes(ctx context.Context, d *schema.Resourc
 
 	tflog.Debug(ctx, fmt.Sprintf("Reading Business Metadata %q=%q", paramId, businessMetadataId), map[string]interface{}{businessMetadataLoggingKey: businessMetadataId})
 
-	catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+	catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 	request := catalogRestClient.apiClient.TypesV1Api.GetBusinessMetadataDefByName(catalogRestClient.dataCatalogApiContext(ctx), businessMetadataName)
 	businessMetadata, resp, err := request.Execute()
 	if err != nil {
@@ -263,7 +265,7 @@ func businessMetadataDelete(ctx context.Context, d *schema.ResourceData, meta in
 
 	tflog.Debug(ctx, fmt.Sprintf("Deleting Business Metadata %q=%q", paramId, businessMetadataId), map[string]interface{}{businessMetadataLoggingKey: businessMetadataId})
 
-	catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+	catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 	request := catalogRestClient.apiClient.TypesV1Api.DeleteBusinessMetadataDef(catalogRestClient.dataCatalogApiContext(ctx), businessMetadataName)
 	_, serviceErr := request.Execute()
 	if serviceErr != nil {
@@ -297,7 +299,7 @@ func businessMetadataUpdate(ctx context.Context, d *schema.ResourceData, meta in
 		businessMetadataName := d.Get(paramName).(string)
 		businessMetadataId := createBusinessMetadataId(clusterId, businessMetadataName)
 
-		catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+		catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 		businessMetadataRequest := dc.BusinessMetadataDef{}
 		businessMetadataRequest.SetName(businessMetadataName)
 		description := d.Get(paramDescription).(string)
