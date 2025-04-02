@@ -35,7 +35,9 @@ func (f FlinkRestClientFactory) CreateFlinkRestClient(restEndpoint, organization
 	baseFactory := NewRetryableClientFactory(f.ctx, opts...)
 
 	config.HTTPClient = baseFactory.CreateRetryableClient()
-	config.DefaultHeader = map[string]string{"confluent-identity-pool-id": token.IdentityPoolId}
+	if token != nil {
+		config.DefaultHeader = map[string]string{"confluent-identity-pool-id": token.IdentityPoolId}
+	}
 
 	return &FlinkRestClient{
 		apiClient:                    fgb.NewAPIClient(config),
@@ -69,19 +71,9 @@ func (f SchemaRegistryRestClientFactory) CreateSchemaRegistryRestClient(restEndp
 	config.UserAgent = f.userAgent
 	config.Servers[0].URL = restEndpoint
 	config.HTTPClient = NewRetryableClientFactory(f.ctx, opts...).CreateRetryableClient()
-
-	// Setup DC API Client
-	dataCatalogConfig := dc.NewConfiguration()
-	if f.maxRetries != nil {
-		opts = append(opts, WithMaxRetries(*f.maxRetries))
+	if token != nil {
+		config.DefaultHeader = map[string]string{"confluent-identity-pool-id": token.IdentityPoolId, "target-sr-cluster": clusterId}
 	}
-
-	dataCatalogConfig.UserAgent = f.userAgent
-	dataCatalogConfig.Servers[0].URL = restEndpoint
-	dataCatalogConfig.HTTPClient = NewRetryableClientFactory(f.ctx, opts...).CreateRetryableClient()
-
-	config.DefaultHeader = map[string]string{"confluent-identity-pool-id": token.IdentityPoolId, "target-sr-cluster": clusterId}
-	dataCatalogConfig.DefaultHeader = map[string]string{"confluent-identity-pool-id": token.IdentityPoolId, "target-sr-cluster": clusterId}
 
 	return &SchemaRegistryRestClient{
 		apiClient:                    schemaregistry.NewAPIClient(config),
@@ -112,6 +104,9 @@ func (f CatalogRestClientFactory) CreateCatalogRestClient(restEndpoint, clusterI
 	dataCatalogConfig.UserAgent = f.userAgent
 	dataCatalogConfig.Servers[0].URL = restEndpoint
 	dataCatalogConfig.HTTPClient = NewRetryableClientFactory(f.ctx, opts...).CreateRetryableClient()
+	if token != nil {
+		dataCatalogConfig.DefaultHeader = map[string]string{"confluent-identity-pool-id": token.IdentityPoolId, "target-sr-cluster": clusterId}
+	}
 
 	return &CatalogRestClient{
 		apiClient:                    dc.NewAPIClient(dataCatalogConfig),
@@ -144,7 +139,9 @@ func (f KafkaRestClientFactory) CreateKafkaRestClient(restEndpoint, clusterId, c
 	baseFactory := NewRetryableClientFactory(f.ctx, opts...)
 
 	config.HTTPClient = baseFactory.CreateRetryableClient()
-	config.DefaultHeader = map[string]string{"confluent-identity-pool-id": token.IdentityPoolId}
+	if token != nil {
+		config.DefaultHeader = map[string]string{"confluent-identity-pool-id": token.IdentityPoolId}
+	}
 
 	return &KafkaRestClient{
 		apiClient:                     kafkarestv3.NewAPIClient(config),
@@ -176,7 +173,9 @@ func (f TableflowRestClientFactory) CreateTableflowRestClient(tableflowApiKey, t
 	config.UserAgent = f.userAgent
 	config.Servers[0].URL = f.endpoint
 	config.HTTPClient = NewRetryableClientFactory(f.ctx, opts...).CreateRetryableClient()
-	config.DefaultHeader = map[string]string{"confluent-identity-pool-id": externalToken.IdentityPoolId}
+	if externalToken != nil {
+		config.DefaultHeader = map[string]string{"confluent-identity-pool-id": externalToken.IdentityPoolId}
+	}
 
 	return &TableflowRestClient{
 		apiClient:                    tableflow.NewAPIClient(config),

@@ -174,6 +174,7 @@ func (c *Client) byokApiContext(ctx context.Context) context.Context {
 }
 
 func (c *KafkaRestClient) kafkaRestApiContextWithClusterApiKey(ctx context.Context, kafkaApiKey string, kafkaApiSecret string) context.Context {
+	// This is for API key sync status check function only, so we can skip the OAuth token option here.
 	if kafkaApiKey != "" && kafkaApiSecret != "" {
 		return context.WithValue(ctx, kafkarestv3.ContextBasicAuth, kafkarestv3.BasicAuth{
 			UserName: kafkaApiKey,
@@ -181,7 +182,7 @@ func (c *KafkaRestClient) kafkaRestApiContextWithClusterApiKey(ctx context.Conte
 		})
 	}
 
-	tflog.Warn(ctx, "Could not find Cloud API Key or OAuth Token for Kafka Rest API client")
+	tflog.Warn(ctx, "Could not find Cloud API Key for Kafka Rest API client")
 	return ctx
 }
 
