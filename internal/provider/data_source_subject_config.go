@@ -58,6 +58,10 @@ func subjectConfigDataSource() *schema.Resource {
 func subjectCompatibilityLevelDataSourceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	tflog.Debug(ctx, fmt.Sprintf("Reading Subject Compatibility Level %q", d.Id()), map[string]interface{}{subjectConfigLoggingKey: d.Id()})
 
+	if err := dataSourceCredentialBlockValidationWithOAuth(d, meta.(*Client).isOAuthEnabled); err != nil {
+		return diag.Errorf("error reading Subject Compatibility Level: %s", createDescriptiveError(err))
+	}
+
 	restEndpoint, err := extractSchemaRegistryRestEndpoint(meta.(*Client), d, false)
 	if err != nil {
 		return diag.Errorf("error reading Subject Compatibility Level: %s", createDescriptiveError(err))
@@ -70,7 +74,7 @@ func subjectCompatibilityLevelDataSourceRead(ctx context.Context, d *schema.Reso
 	if err != nil {
 		return diag.Errorf("error reading Subject Compatibility Level: %s", createDescriptiveError(err))
 	}
-	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 	subjectName := d.Get(paramSubjectName).(string)
 
 	// Mark resource as new to avoid d.Set("") when getting 404
