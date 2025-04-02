@@ -48,6 +48,10 @@ func schemaRegistryClusterModeDataSource() *schema.Resource {
 func schemaRegistryClusterModeDataSourceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	tflog.Debug(ctx, fmt.Sprintf("Reading Schema Registry Cluster Mode %q", d.Id()), map[string]interface{}{schemaRegistryClusterModeLoggingKey: d.Id()})
 
+	if err := dataSourceCredentialBlockValidationWithOAuth(d, meta.(*Client).isOAuthEnabled); err != nil {
+		return diag.Errorf("error reading Schema Registry Cluster Mode: %s", createDescriptiveError(err))
+	}
+
 	restEndpoint, err := extractSchemaRegistryRestEndpoint(meta.(*Client), d, false)
 	if err != nil {
 		return diag.Errorf("error reading Schema Registry Cluster Mode: %s", createDescriptiveError(err))
@@ -60,7 +64,7 @@ func schemaRegistryClusterModeDataSourceRead(ctx context.Context, d *schema.Reso
 	if err != nil {
 		return diag.Errorf("error reading Schema Registry Cluster Mode: %s", createDescriptiveError(err))
 	}
-	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 
 	// Mark resource as new to avoid d.Set("") when getting 404
 	d.MarkNewResource()

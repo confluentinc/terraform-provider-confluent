@@ -171,7 +171,8 @@ func TestAccClusterLinkDestinationInbound(t *testing.T) {
 }
 
 func testAccCheckClusterLinkDestinationDestroy(s *terraform.State, url string) error {
-	c := testAccProvider.Meta().(*Client).kafkaRestClientFactory.CreateKafkaRestClient(url, destinationClusterId, destinationClusterApiKey, destinationClusterApiSecret, false, false)
+	client := testAccProvider.Meta().(*Client)
+	c := client.kafkaRestClientFactory.CreateKafkaRestClient(url, destinationClusterId, destinationClusterApiKey, destinationClusterApiSecret, false, false, client.oauthToken)
 	// Loop through the resources in state, verifying each Cluster Link is destroyed
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "confluent_cluster_link" {

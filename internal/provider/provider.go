@@ -21,16 +21,16 @@ import (
 	"strings"
 	"time"
 
-	ccp "github.com/confluentinc/ccloud-sdk-go-v2/connect-custom-plugin/v1"
-	dns "github.com/confluentinc/ccloud-sdk-go-v2/networking-dnsforwarder/v1"
-	netip "github.com/confluentinc/ccloud-sdk-go-v2/networking-ip/v1"
-	pi "github.com/confluentinc/ccloud-sdk-go-v2/provider-integration/v1"
-	"github.com/confluentinc/ccloud-sdk-go-v2/sso/v2"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
 	apikeys "github.com/confluentinc/ccloud-sdk-go-v2/apikeys/v2"
 	byok "github.com/confluentinc/ccloud-sdk-go-v2/byok/v1"
 	ca "github.com/confluentinc/ccloud-sdk-go-v2/certificate-authority/v2"
 	cmk "github.com/confluentinc/ccloud-sdk-go-v2/cmk/v2"
+	ccp "github.com/confluentinc/ccloud-sdk-go-v2/connect-custom-plugin/v1"
 	connect "github.com/confluentinc/ccloud-sdk-go-v2/connect/v1"
 	dc "github.com/confluentinc/ccloud-sdk-go-v2/data-catalog/v1"
 	fa "github.com/confluentinc/ccloud-sdk-go-v2/flink-artifact/v1"
@@ -42,15 +42,15 @@ import (
 	ksql "github.com/confluentinc/ccloud-sdk-go-v2/ksql/v2"
 	mds "github.com/confluentinc/ccloud-sdk-go-v2/mds/v2"
 	netap "github.com/confluentinc/ccloud-sdk-go-v2/networking-access-point/v1"
+	dns "github.com/confluentinc/ccloud-sdk-go-v2/networking-dnsforwarder/v1"
 	netgw "github.com/confluentinc/ccloud-sdk-go-v2/networking-gateway/v1"
+	netip "github.com/confluentinc/ccloud-sdk-go-v2/networking-ip/v1"
 	netpl "github.com/confluentinc/ccloud-sdk-go-v2/networking-privatelink/v1"
 	net "github.com/confluentinc/ccloud-sdk-go-v2/networking/v1"
 	org "github.com/confluentinc/ccloud-sdk-go-v2/org/v2"
+	pi "github.com/confluentinc/ccloud-sdk-go-v2/provider-integration/v1"
 	srcm "github.com/confluentinc/ccloud-sdk-go-v2/srcm/v3"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"github.com/confluentinc/ccloud-sdk-go-v2/sso/v2"
 )
 
 const (
@@ -130,11 +130,14 @@ type Client struct {
 	flinkApiKey                     string
 	flinkApiSecret                  string
 	flinkRestEndpoint               string
+	oauthToken                      *OAuthToken
+	stsToken                        *STSToken
 	isFlinkMetadataSet              bool
 	tableflowApiKey                 string
 	tableflowApiSecret              string
 	isTableflowMetadataSet          bool
 	isAcceptanceTestMode            bool
+	isOAuthEnabled                  bool
 }
 
 // Customize configs for terraform-plugin-docs
@@ -298,6 +301,7 @@ func New(version, userAgent string) func() *schema.Provider {
 					ValidateFunc: validation.IntAtLeast(4),
 					Description:  "Maximum number of retries of HTTP client. Defaults to 4.",
 				},
+				"oauth": providerOAuthSchema(),
 			},
 			DataSourcesMap: map[string]*schema.Resource{
 				"confluent_catalog_integration":                catalogIntegrationDataSource(),
@@ -482,6 +486,21 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	tableflowApiKey := d.Get("tableflow_api_key").(string)
 	tableflowApiSecret := d.Get("tableflow_api_secret").(string)
 	maxRetries := d.Get("max_retries").(int)
+
+	var externalOAuthToken *OAuthToken
+	var stsOAuthToken *STSToken
+	var err diag.Diagnostics
+	var oauthEnabled bool
+	if _, ok := d.GetOk(paramOAuthBlockName); ok {
+		oauthEnabled = true
+		externalOAuthToken, stsOAuthToken, err = initializeOAuthConfigs(ctx, d)
+		if err != nil {
+			return nil, err
+		}
+		if err := validateOAuthAndProviderAPIKeysCoexist(kafkaApiKey, kafkaApiSecret, schemaRegistryApiKey, schemaRegistryApiSecret, flinkApiKey, flinkApiSecret, tableflowApiKey, tableflowApiSecret); err != nil {
+			return nil, err
+		}
+	}
 
 	// 3 or 4 attributes should be set or not set at the same time
 	// Option #2: (kafka_api_key, kafka_api_secret, kafka_rest_endpoint)
@@ -700,6 +719,9 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 		flinkRestEndpoint:               flinkRestEndpoint,
 		tableflowApiKey:                 tableflowApiKey,
 		tableflowApiSecret:              tableflowApiSecret,
+		oauthToken:                      externalOAuthToken,
+		stsToken:                        stsOAuthToken,
+
 		// For simplicity, treat 3 (for Kafka), 4 (for SR), 4 (for catalog), 7 (for Flink), and 2 (for Tableflow) variables as a "single" one
 		isKafkaMetadataSet:           allKafkaAttributesAreSet,
 		isKafkaClusterIdSet:          kafkaClusterId != "",
@@ -708,9 +730,129 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 		isFlinkMetadataSet:           allFlinkAttributesAreSet,
 		isTableflowMetadataSet:       allTableflowAttributesAreSet,
 		isAcceptanceTestMode:         acceptanceTestMode,
+		isOAuthEnabled:               oauthEnabled,
 	}
 
 	return &client, nil
+}
+
+func initializeOAuthConfigs(ctx context.Context, d *schema.ResourceData) (*OAuthToken, *STSToken, diag.Diagnostics) {
+	tflog.Info(ctx, "Initializing OAuth settings for Confluent Cloud")
+	providedToken := extractStringValueFromBlock(d, paramOAuthBlockName, paramOAuthExternalAccessToken)
+	identityPoolId := extractStringValueFromBlock(d, paramOAuthBlockName, paramOAuthIdentityPoolId)
+	var oauthToken *OAuthToken
+	var err error
+
+	if providedToken == "" {
+		// External OAuth token initialization through fetching token from external IDP
+		clientId := extractStringValueFromBlock(d, paramOAuthBlockName, paramOAuthExternalClientId)
+		clientSecret := extractStringValueFromBlock(d, paramOAuthBlockName, paramOAuthExternalClientSecret)
+		externalTokenURL := extractStringValueFromBlock(d, paramOAuthBlockName, paramOAuthExternalTokenURL)
+		scope := extractStringValueFromBlock(d, paramOAuthBlockName, paramOAuthExternalTokenScope)
+		oauthToken, err = fetchExternalOAuthToken(ctx, externalTokenURL, clientId, clientSecret, scope, identityPoolId, nil)
+		if err != nil {
+			return nil, nil, diag.FromErr(err)
+		}
+	} else {
+		// External OAuth token initialization through fetching token from provided token
+		tflog.Warn(ctx, "Initializing OAuth setting from provided static token, please make sure this external token from Identity Provider is valid and not expired")
+		tflog.Warn(ctx, "This token and the associated STS token won't be refreshed automatically by the provider, please make sure to update it manually in case of expiration")
+		oauthToken = &OAuthToken{
+			AccessToken:      providedToken,
+			IdentityPoolId:   identityPoolId,
+			ClientId:         "",
+			ClientSecret:     "",
+			TokenUrl:         "",
+			ExpiresInSeconds: "",
+			Scope:            "",
+			TokenType:        "",
+			ValidUntil:       time.Now().Add(100 * 365 * 24 * time.Hour),
+		}
+	}
+	tflog.Debug(ctx, fmt.Sprintf("OAuth Token: %v", *oauthToken))
+
+	// STS token exchanged from external OAuth token
+	expiredInSeconds := extractStringValueFromBlock(d, paramOAuthBlockName, paramOAuthSTSTokenExpiredInSeconds)
+	stsToken, err := fetchSTSOAuthToken(ctx, oauthToken.AccessToken, identityPoolId, expiredInSeconds, nil)
+	if err != nil {
+		return nil, nil, diag.FromErr(err)
+	}
+	tflog.Debug(ctx, fmt.Sprintf("STS Token: %v", *stsToken))
+
+	return oauthToken, stsToken, nil
+}
+
+func providerOAuthSchema() *schema.Schema {
+	return &schema.Schema{
+		Type: schema.TypeList,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramOAuthExternalTokenURL: {
+					Type:     schema.TypeString,
+					Optional: true,
+					// A user should provide a value for either "oauth_external_token_url" or "oauth_external_access_token" attribute, not both
+					ExactlyOneOf: []string{"oauth.0.oauth_external_token_url", "oauth.0.oauth_external_access_token"},
+					Description:  "OAuth token URL to fetch access token from external IDP",
+				},
+				paramOAuthExternalClientId: {
+					Type:         schema.TypeString,
+					Optional:     true,
+					Description:  "OAuth client id from external token source",
+					ValidateFunc: validation.StringIsNotEmpty,
+				},
+				paramOAuthExternalClientSecret: {
+					Type:         schema.TypeString,
+					Optional:     true,
+					Sensitive:    true,
+					Description:  "OAuth client secret from external token source",
+					ValidateFunc: validation.StringIsNotEmpty,
+				},
+				paramOAuthExternalAccessToken: {
+					Type:      schema.TypeString,
+					Optional:  true,
+					Sensitive: true,
+					// A user should provide a value for either "oauth_external_token_url" or "oauth_external_access_token" attribute, not both
+					ExactlyOneOf: []string{"oauth.0.oauth_external_token_url", "oauth.0.oauth_external_access_token"},
+					Description:  "OAuth existing access token already fetched from external IDP",
+				},
+				paramOAuthExternalTokenScope: {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "OAuth access token scope",
+				},
+				paramOAuthIdentityPoolId: {
+					Type:        schema.TypeString,
+					Required:    true,
+					Description: "OAuth identity pool id used for processing external token and exchange STS token",
+				},
+				paramOAuthSTSTokenExpiredInSeconds: {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "OAuth STS access token expired in second from Confluent Cloud",
+				},
+			},
+		},
+		Description: "OAuth config settings",
+		Optional:    true,
+		MinItems:    1,
+		MaxItems:    1,
+	}
+}
+
+func validateOAuthAndProviderAPIKeysCoexist(kafkaApiKey, kafkaApiSecret, schemaRegistryApiKey, schemaRegistryApiSecret, flinkApiKey, flinkApiSecret, tableflowApiKey, tableflowApiSecret string) diag.Diagnostics {
+	if kafkaApiKey != "" || kafkaApiSecret != "" {
+		return diag.Errorf("(kafka_api_key, kafka_api_secret) attributes should not be set in the provider block when oauth block is present")
+	}
+	if schemaRegistryApiKey != "" || schemaRegistryApiSecret != "" {
+		return diag.Errorf("(schema_registry_api_key, schema_registry_api_secret) attributes should not be set in the provider block when oauth block is present")
+	}
+	if flinkApiKey != "" || flinkApiSecret != "" {
+		return diag.Errorf("(flink_api_key, flink_api_secret) attributes should not be set in the provider block when oauth block is present")
+	}
+	if tableflowApiKey != "" || tableflowApiSecret != "" {
+		return diag.Errorf("(tableflow_api_key, tableflow_api_secret) attributes should not be set in the provider block when oauth block is present")
+	}
+	return nil
 }
 
 func SleepIfNotTestMode(d time.Duration, isAcceptanceTestMode bool) {
