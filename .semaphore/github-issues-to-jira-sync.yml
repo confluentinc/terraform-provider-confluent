@@ -82,7 +82,7 @@ blocks:
                       "issuetype": {
                         "name": "Task"
                       },
-                      "labels": ["terraform"]
+                      "labels": ["terraform", "github-issue"]
                     }
                   }' > jira_payload.json
               
