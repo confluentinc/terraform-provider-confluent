@@ -815,11 +815,6 @@ func providerOAuthSchema() *schema.Schema {
 					ExactlyOneOf: []string{"oauth.0.oauth_external_token_url", "oauth.0.oauth_external_access_token"},
 					Description:  "OAuth existing access token already fetched from external IDP",
 				},
-				paramOAuthExternalTokenExpiresInSeconds: {
-					Type:        schema.TypeString,
-					Optional:    true,
-					Description: "OAuth access token expired in second from Confluent Cloud",
-				},
 				paramOAuthExternalTokenScope: {
 					Type:        schema.TypeString,
 					Optional:    true,
