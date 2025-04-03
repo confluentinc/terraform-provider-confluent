@@ -211,7 +211,8 @@ func testAccCheckClusterLinkSourceOutboundConfig(confluentCloudBaseUrl, mockServ
 }
 
 func testAccCheckClusterLinkSourceDestroy(s *terraform.State, url string) error {
-	c := testAccProvider.Meta().(*Client).kafkaRestClientFactory.CreateKafkaRestClient(url, sourceClusterId, sourceClusterApiKey, sourceClusterApiSecret, false, false)
+	client := testAccProvider.Meta().(*Client)
+	c := client.kafkaRestClientFactory.CreateKafkaRestClient(url, sourceClusterId, sourceClusterApiKey, sourceClusterApiSecret, false, false, client.oauthToken)
 	// Loop through the resources in state, verifying each Cluster Link is destroyed
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "confluent_cluster_link" {

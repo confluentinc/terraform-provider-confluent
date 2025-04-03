@@ -21,6 +21,7 @@ import (
 	dc "github.com/confluentinc/ccloud-sdk-go-v2/data-catalog/v1"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"regexp"
@@ -69,6 +70,7 @@ func catalogEntityAttributesResource() *schema.Resource {
 				},
 			},
 		},
+		CustomizeDiff: customdiff.Sequence(resourceCredentialBlockValidationWithOAuth),
 	}
 }
 
@@ -92,7 +94,7 @@ func catalogEntityAttributesCreate(ctx context.Context, d *schema.ResourceData, 
 	entityAttributesId := createEntityAttributesId(entityType, entityName)
 	attributes[qualifiedName] = entityName
 
-	catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+	catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 	entityRequest := dc.Entity{}
 	entityRequest.SetTypeName(entityType)
 	entityRequest.SetAttributes(attributes)
@@ -154,7 +156,7 @@ func readEntityAttributesAndSetAttributes(ctx context.Context, d *schema.Resourc
 
 	tflog.Debug(ctx, fmt.Sprintf("Reading Entity Attributes %q=%q", paramId, entityAttributesId), map[string]interface{}{entityAttributesLoggingKey: entityAttributesId})
 
-	catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+	catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 	request := catalogRestClient.apiClient.EntityV1Api.GetByUniqueAttributes(catalogRestClient.dataCatalogApiContext(ctx), entityType, entityName)
 	entity, resp, err := request.Execute()
 	if err != nil {
@@ -206,7 +208,7 @@ func catalogEntityAttributesDelete(ctx context.Context, d *schema.ResourceData, 
 	entityAttributesId := createEntityAttributesId(entityType, entityName)
 	attributes[qualifiedName] = entityName
 
-	catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+	catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 	entityRequest := dc.Entity{}
 	entityRequest.SetTypeName(entityType)
 	entityRequest.SetAttributes(attributes)
@@ -256,7 +258,7 @@ func catalogEntityAttributesUpdate(ctx context.Context, d *schema.ResourceData, 
 		entityAttributesId := createEntityAttributesId(entityType, entityName)
 		attributes[qualifiedName] = entityName
 
-		catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+		catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 		entityRequest := dc.Entity{}
 		entityRequest.SetTypeName(entityType)
 		entityRequest.SetAttributes(attributes)
