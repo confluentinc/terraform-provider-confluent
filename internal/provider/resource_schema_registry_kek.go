@@ -21,6 +21,7 @@ import (
 	sr "github.com/confluentinc/ccloud-sdk-go-v2/schema-registry/v1"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"io"
@@ -98,6 +99,7 @@ func schemaRegistryKekResource() *schema.Resource {
 				Description: "Controls whether a kek should be soft or hard deleted. Set it to `true` if you want to hard delete a schema registry kek on destroy. Defaults to `false` (soft delete).",
 			},
 		},
+		CustomizeDiff: customdiff.Sequence(resourceCredentialBlockValidationWithOAuth),
 	}
 }
 
@@ -118,7 +120,7 @@ func schemaRegistryKekCreate(ctx context.Context, d *schema.ResourceData, meta i
 	kekName := d.Get(paramName).(string)
 	kekId := createKekId(clusterId, kekName)
 
-	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 	kekRequest := sr.CreateKekRequest{}
 	kekRequest.SetName(kekName)
 	kekRequest.SetKmsType(d.Get(paramKmsType).(string))
@@ -186,7 +188,7 @@ func readSchemaRegistryKekAndSetAttributes(ctx context.Context, d *schema.Resour
 
 	tflog.Debug(ctx, fmt.Sprintf("Reading Schema Registry KEK %q=%q", paramId, kekId), map[string]interface{}{schemaRegistryKekKey: kekId})
 
-	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 	request := schemaRegistryRestClient.apiClient.KeyEncryptionKeysV1Api.GetKek(schemaRegistryRestClient.apiContext(ctx), kekName)
 	kek, resp, err := request.Execute()
 	if err != nil {
@@ -241,7 +243,7 @@ func schemaRegistryKekDelete(ctx context.Context, d *schema.ResourceData, meta i
 
 	tflog.Debug(ctx, fmt.Sprintf("Deleting Schema Registry KEK %q=%q", paramId, kekId), map[string]interface{}{schemaRegistryKekKey: kekId})
 
-	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 	isHardDeleteEnabled := d.Get(paramHardDelete).(bool)
 
 	err = deleteKekExecute(ctx, schemaRegistryRestClient, kekName, false)
@@ -282,7 +284,7 @@ func schemaRegistryKekUpdate(ctx context.Context, d *schema.ResourceData, meta i
 	kekName := d.Get(paramName).(string)
 	kekId := createKekId(clusterId, kekName)
 
-	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 	kekRequest := sr.UpdateKekRequest{}
 	kekRequest.SetDoc(d.Get(paramDoc).(string))
 

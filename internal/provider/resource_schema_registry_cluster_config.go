@@ -21,6 +21,7 @@ import (
 	sr "github.com/confluentinc/ccloud-sdk-go-v2/schema-registry/v1"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"net/http"
@@ -58,6 +59,7 @@ func schemaRegistryClusterConfigResource() *schema.Resource {
 				Computed: true,
 			},
 		},
+		CustomizeDiff: customdiff.Sequence(resourceCredentialBlockValidationWithOAuth),
 	}
 }
 
@@ -74,7 +76,7 @@ func schemaRegistryClusterConfigCreate(ctx context.Context, d *schema.ResourceDa
 	if err != nil {
 		return diag.Errorf("error creating Schema Registry Cluster Config: %s", createDescriptiveError(err))
 	}
-	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 
 	if _, ok := d.GetOk(paramCompatibilityLevel); ok {
 		compatibilityLevel := d.Get(paramCompatibilityLevel).(string)
@@ -129,7 +131,7 @@ func schemaRegistryClusterConfigRead(ctx context.Context, d *schema.ResourceData
 	if err != nil {
 		return diag.Errorf("error reading Schema Registry Cluster Config: %s", createDescriptiveError(err))
 	}
-	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 
 	_, err = readSchemaRegistryClusterConfigAndSetAttributes(ctx, d, schemaRegistryRestClient)
 	if err != nil {
@@ -159,7 +161,7 @@ func schemaRegistryClusterConfigImport(ctx context.Context, d *schema.ResourceDa
 
 	clusterId := d.Id()
 
-	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 
 	// Mark resource as new to avoid d.Set("") when getting 404
 	d.MarkNewResource()
@@ -199,7 +201,7 @@ func readSchemaRegistryClusterConfigAndSetAttributes(ctx context.Context, d *sch
 	}
 
 	if !c.isMetadataSetInProviderBlock {
-		if err := setKafkaCredentials(c.clusterApiKey, c.clusterApiSecret, d); err != nil {
+		if err := setKafkaCredentials(c.clusterApiKey, c.clusterApiSecret, d, c.externalAccessToken != nil); err != nil {
 			return nil, err
 		}
 		if err := d.Set(paramRestEndpoint, c.restEndpoint); err != nil {
@@ -237,7 +239,7 @@ func schemaRegistryClusterConfigUpdate(ctx context.Context, d *schema.ResourceDa
 		if err != nil {
 			return diag.Errorf("error updating Schema Registry Cluster Config: %s", createDescriptiveError(err))
 		}
-		schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+		schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 		updateCompatibilityLevelRequestJson, err := json.Marshal(updateConfigRequest)
 		if err != nil {
 			return diag.Errorf("error updating Schema Registry Cluster Config: error marshaling %#v to json: %s", updateConfigRequest, createDescriptiveError(err))

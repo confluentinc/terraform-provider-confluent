@@ -140,6 +140,7 @@ func kafkaTopicResource() *schema.Resource {
 				// if it is decreased.
 				return new.(int) < old.(int)
 			}),
+			customdiff.Sequence(resourceCredentialBlockValidationWithOAuth),
 		),
 	}
 }
@@ -183,6 +184,9 @@ func extractRestEndpoint(client *Client, d *schema.ResourceData, isImportOperati
 }
 
 func extractClusterApiKeyAndApiSecret(client *Client, d *schema.ResourceData, isImportOperation bool) (string, string, error) {
+	if client.isOAuthEnabled {
+		return "", "", nil
+	}
 	if client.isKafkaMetadataSet {
 		return client.kafkaApiKey, client.kafkaApiSecret, nil
 	}
@@ -215,7 +219,7 @@ func kafkaTopicCreate(ctx context.Context, d *schema.ResourceData, meta interfac
 	if err != nil {
 		return diag.Errorf("error creating Kafka Topic: %s", createDescriptiveError(err))
 	}
-	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isKafkaMetadataSet, meta.(*Client).isKafkaClusterIdSet)
+	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isKafkaClusterIdSet, meta.(*Client).isKafkaMetadataSet, meta.(*Client).oauthToken)
 	topicName := d.Get(paramTopicName).(string)
 	partitionsCountInt32 := int32(d.Get(paramPartitionsCount).(int))
 	configs := extractConfigs(d.Get(paramConfigs).(map[string]interface{}))
@@ -271,7 +275,7 @@ func kafkaTopicDelete(ctx context.Context, d *schema.ResourceData, meta interfac
 	if err != nil {
 		return diag.Errorf("error deleting Kafka Topic: %s", createDescriptiveError(err))
 	}
-	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isKafkaMetadataSet, meta.(*Client).isKafkaClusterIdSet)
+	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isKafkaClusterIdSet, meta.(*Client).isKafkaMetadataSet, meta.(*Client).oauthToken)
 	topicName := d.Get(paramTopicName).(string)
 
 	resp, err := kafkaRestClient.apiClient.TopicV3Api.DeleteKafkaTopic(kafkaRestClient.apiContext(ctx), kafkaRestClient.clusterId, topicName).Execute()
@@ -304,7 +308,7 @@ func kafkaTopicRead(ctx context.Context, d *schema.ResourceData, meta interface{
 	if err != nil {
 		return diag.Errorf("error reading Kafka Topic: %s", createDescriptiveError(err))
 	}
-	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isKafkaMetadataSet, meta.(*Client).isKafkaClusterIdSet)
+	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isKafkaClusterIdSet, meta.(*Client).isKafkaMetadataSet, meta.(*Client).oauthToken)
 	topicName := d.Get(paramTopicName).(string)
 
 	_, err = readTopicAndSetAttributes(ctx, d, kafkaRestClient, topicName)
@@ -423,7 +427,7 @@ func kafkaTopicImport(ctx context.Context, d *schema.ResourceData, meta interfac
 	clusterId := parts[0]
 	topicName := parts[1]
 
-	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isKafkaMetadataSet, meta.(*Client).isKafkaClusterIdSet)
+	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isKafkaClusterIdSet, meta.(*Client).isKafkaMetadataSet, meta.(*Client).oauthToken)
 
 	// Mark resource as new to avoid d.Set("") when getting 404
 	d.MarkNewResource()
@@ -476,7 +480,7 @@ func readTopicAndSetAttributes(ctx context.Context, d *schema.ResourceData, c *K
 	}
 
 	if !c.isMetadataSetInProviderBlock {
-		if err := setKafkaCredentials(c.clusterApiKey, c.clusterApiSecret, d); err != nil {
+		if err := setKafkaCredentials(c.clusterApiKey, c.clusterApiSecret, d, c.externalAccessToken != nil); err != nil {
 			return nil, err
 		}
 		if err := d.Set(paramRestEndpoint, c.restEndpoint); err != nil {
@@ -513,7 +517,7 @@ func kafkaTopicUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 		if err != nil {
 			return diag.Errorf("error updating Kafka Topic: %s", createDescriptiveError(err))
 		}
-		kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isKafkaMetadataSet, meta.(*Client).isKafkaClusterIdSet)
+		kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isKafkaClusterIdSet, meta.(*Client).isKafkaMetadataSet, meta.(*Client).oauthToken)
 		topicName := d.Get(paramTopicName).(string)
 		updateTopicRequestJson, err := json.Marshal(updateTopicRequest)
 		if err != nil {
@@ -598,7 +602,7 @@ func kafkaTopicUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 		if err != nil {
 			return diag.Errorf("error updating Kafka Topic: %s", createDescriptiveError(err))
 		}
-		kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isKafkaMetadataSet, meta.(*Client).isKafkaClusterIdSet)
+		kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isKafkaClusterIdSet, meta.(*Client).isKafkaMetadataSet, meta.(*Client).oauthToken)
 		topicName := d.Get(paramTopicName).(string)
 		updateTopicRequestJson, err := json.Marshal(updateTopicRequest)
 		if err != nil {
@@ -659,7 +663,10 @@ func executeKafkaTopicPartitionsCountUpdate(ctx context.Context, c *KafkaRestCli
 	return c.apiClient.TopicV3Api.UpdatePartitionCountKafkaTopic(c.apiContext(ctx), c.clusterId, topicName).UpdatePartitionCountRequestData(requestData).Execute()
 }
 
-func setKafkaCredentials(kafkaApiKey, kafkaApiSecret string, d *schema.ResourceData) error {
+func setKafkaCredentials(kafkaApiKey, kafkaApiSecret string, d *schema.ResourceData, isOAuthEnabled bool) error {
+	if isOAuthEnabled {
+		return nil
+	}
 	return d.Set(paramCredentials, []interface{}{map[string]interface{}{
 		paramKey:    kafkaApiKey,
 		paramSecret: kafkaApiSecret,
@@ -709,7 +716,7 @@ func kafkaTopicImporter() *Importer {
 func loadAllKafkaTopics(ctx context.Context, client *Client) (InstanceIdsToNameMap, diag.Diagnostics) {
 	instances := make(InstanceIdsToNameMap)
 
-	kafkaRestClient := client.kafkaRestClientFactory.CreateKafkaRestClient(client.kafkaRestEndpoint, client.kafkaClusterId, client.kafkaApiKey, client.kafkaApiSecret, true, true)
+	kafkaRestClient := client.kafkaRestClientFactory.CreateKafkaRestClient(client.kafkaRestEndpoint, client.kafkaClusterId, client.kafkaApiKey, client.kafkaApiSecret, true, true, client.oauthToken)
 
 	topics, resp, err := kafkaRestClient.apiClient.TopicV3Api.ListKafkaTopics(kafkaRestClient.apiContext(ctx), kafkaRestClient.clusterId).Execute()
 	if err != nil {
