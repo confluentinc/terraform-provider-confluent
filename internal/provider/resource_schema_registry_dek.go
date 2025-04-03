@@ -21,6 +21,7 @@ import (
 	sr "github.com/confluentinc/ccloud-sdk-go-v2/schema-registry/v1"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"io"
@@ -96,6 +97,7 @@ func schemaRegistryDekResource() *schema.Resource {
 				Description: "Controls whether a dek should be soft or hard deleted. Set it to `true` if you want to hard delete a schema registry dek on destroy. Defaults to `false` (soft delete).",
 			},
 		},
+		CustomizeDiff: customdiff.Sequence(resourceCredentialBlockValidationWithOAuth),
 	}
 }
 
@@ -119,7 +121,7 @@ func schemaRegistryDekCreate(ctx context.Context, d *schema.ResourceData, meta i
 	algorithm := d.Get(paramAlgorithm).(string)
 	dekId := createDekId(clusterId, kekName, subject, algorithm, int32(version))
 
-	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 	dekRequest := sr.CreateDekRequest{}
 	dekRequest.SetSubject(subject)
 	dekRequest.SetVersion(int32(version))
@@ -186,7 +188,7 @@ func readSchemaRegistryDekAndSetAttributes(ctx context.Context, d *schema.Resour
 
 	tflog.Debug(ctx, fmt.Sprintf("Reading Schema Registry DEK %q=%q", paramId, dekId), map[string]interface{}{schemaRegistryDekKey: dekId})
 
-	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 	request := schemaRegistryRestClient.apiClient.DataEncryptionKeysV1Api.GetDekByVersion(schemaRegistryRestClient.apiContext(ctx), kekName, subject, strconv.Itoa(version))
 	request = request.Algorithm(algorithm)
 	dek, resp, err := request.Execute()
@@ -253,7 +255,7 @@ func schemaRegistryDekDelete(ctx context.Context, d *schema.ResourceData, meta i
 
 	tflog.Debug(ctx, fmt.Sprintf("Deleting Schema Registry DEK %q=%q", paramId, dekId), map[string]interface{}{schemaRegistryDekKey: dekId})
 
-	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 	isHardDeleteEnabled := d.Get(paramHardDelete).(bool)
 
 	err = deleteDekExecute(ctx, schemaRegistryRestClient, kekName, subject, strconv.Itoa(version), algorithm, false)
