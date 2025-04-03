@@ -774,7 +774,6 @@ func initializeOAuthConfigs(ctx context.Context, d *schema.ResourceData) (*OAuth
 			HTTPClient:       retryableClient,
 		}
 	}
-	tflog.Debug(ctx, fmt.Sprintf("OAuth Token: %v", *oauthToken))
 
 	// STS token exchanged from external OAuth token
 	expiredInSeconds := extractStringValueFromBlock(d, paramOAuthBlockName, paramOAuthSTSTokenExpiredInSeconds)
@@ -782,7 +781,6 @@ func initializeOAuthConfigs(ctx context.Context, d *schema.ResourceData) (*OAuth
 	if err != nil {
 		return nil, nil, diag.FromErr(err)
 	}
-	tflog.Debug(ctx, fmt.Sprintf("STS Token: %v", *stsToken))
 
 	return oauthToken, stsToken, nil
 }
