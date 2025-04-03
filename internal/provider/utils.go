@@ -492,7 +492,6 @@ func (c *Client) netDnsApiContext(ctx context.Context) context.Context {
 
 func (c *Client) srcmApiContext(ctx context.Context) context.Context {
 	//TODO: OAuth support for srcm/v3 endpoints will be available on 04/24 onwards
-	//Before that, API key/secret wil be used for authentication
 	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
 		return context.WithValue(ctx, srcm.ContextBasicAuth, srcm.BasicAuth{
 			UserName: c.cloudApiKey,
@@ -599,7 +598,6 @@ func (c *Client) quotasApiContext(ctx context.Context) context.Context {
 	return ctx
 }
 
-// TODO: think about how to make this function work with OAuth without the client
 func orgApiContext(ctx context.Context, cloudApiKey, cloudApiSecret string) context.Context {
 	if cloudApiKey != "" && cloudApiSecret != "" {
 		return context.WithValue(ctx, org.ContextBasicAuth, org.BasicAuth{

@@ -132,8 +132,6 @@ Confluent Terraform provider allows authentication by using OAuth credentials. Y
 ```shell
 # Option #1: Provide Identity Provider client id and secret, token retrieval URL, and the established Identity Pool ID
 provider "confluent" {
-  cloud_api_key = var.confluent_cloud_api_key
-  cloud_api_secret = var.confluent_cloud_api_secret
   oauth {
     oauth_external_token_url = var.oauth_external_token_url            # the URL to retrieve the token from your Identity Provider, such as "https://mycompany.okta.com/oauth2/abc123/v1/token"
     oauth_external_client_id  = var.oauth_external_client_id           # the client id of your Identity Provider authorization server
@@ -145,8 +143,6 @@ provider "confluent" {
 
 # Option #2: Provide a static token from the Identity Provider the established Identity Pool ID
 provider "confluent" {
-  cloud_api_key = var.confluent_cloud_api_key
-  cloud_api_secret = var.confluent_cloud_api_secret
   oauth {
     oauth_external_access_token = var.oauth_external_access_token    # the static access token from your Identity Provider, please ensure it is not expired
     oauth_identity_pool_id = var.oauth_identity_pool_id              # the established Identity Pool ID on Confluent Cloud based on your Identity Provider
@@ -156,13 +152,12 @@ provider "confluent" {
 ```
 A complete example for using OAuth credentials with the Confluent Terraform Provider can be found [here](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/authenticated-with-oauth).
 
--> **Note:** `cloud_api_key` and `cloud_api_secret` are still required because below Confluent Cloud resources/data-sources are not supported with OAuth credentials yet (will be available in the short future):
+-> **Note:** You still need `cloud_api_key` and `cloud_api_secret` to manage below Confluent Cloud resources/data-sources as they are not supported with OAuth credentials yet:
+* `confluent_api_key` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_api_key).
+* `confluent_kafka_cluster` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_cluster) (since it's coupled with `confluent_schema_registry_cluster` data-source).
 * `confluent_schema_registry_cluster` [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_schema_registry_cluster).
 * `confluent_schema_registry_clusters` [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_schema_registry_clusters).
-* `confluent_kafka_cluster` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_cluster) (since it's coupled with `confluent_schema_registry_cluster` data-source).
-If you are not managing these resources/data-sources, you can safely remove `cloud_api_key` and `cloud_api_secret` from the examples above.
-
--> **Note:** OAuth credentials can't be used to manage the `confluent_api_key` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_api_key).
+* `confluent_cluster_link` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_cluster_link) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_cluster_link).
 
 -> **Note:** An Identity Provider must be set up first on Confluent Cloud before using the OAuth credentials for Terraform Provider. You can find more information about Identity Provider setting up [here](https://docs.confluent.io/cloud/current/security/authenticate/workload-identities/identity-providers/oauth/identity-providers.htmll).
 
