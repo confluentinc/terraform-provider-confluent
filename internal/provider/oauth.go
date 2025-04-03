@@ -8,7 +8,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"io"
 	"net/http"
-	"net/http/httputil"
 	"net/url"
 	"strings"
 	"time"
@@ -83,13 +82,6 @@ func requestNewSTSOAuthToken(ctx context.Context, subjectToken, identityPoolId, 
 	req.Header.Set("content-type", "application/x-www-form-urlencoded")
 	req.Header.Set("accept", "application/json")
 
-	// For debug request purpose
-	dumpRequest, err := httputil.DumpRequestOut(req, true)
-	if err != nil {
-		return nil, err
-	}
-	tflog.Debug(ctx, fmt.Sprintf("Exchange STS token raw request is: %s\n", string(dumpRequest)))
-
 	resp, err := retryableClient.Do(req)
 	if err != nil {
 		return nil, err
@@ -102,15 +94,8 @@ func requestNewSTSOAuthToken(ctx context.Context, subjectToken, identityPoolId, 
 		}
 	}(resp.Body)
 
-	// For debug response purpose
-	dumpResponse, err := httputil.DumpResponse(resp, true)
-	if err != nil {
-		return nil, err
-	}
-	tflog.Debug(ctx, fmt.Sprintf("Fetched STS token raw response is: %s\n", string(dumpResponse)))
-
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("STS exchange request failed: %s", string(dumpResponse))
+		return nil, fmt.Errorf("STS exchange request failed with status: %s\n", resp.Status)
 	}
 
 	// Parse the response
@@ -173,13 +158,6 @@ func requestNewExternalOAuthToken(ctx context.Context, tokenUrl, clientId, clien
 	req.Header.Set("content-type", "application/x-www-form-urlencoded")
 	req.Header.Set("accept", "application/json")
 
-	// For debug request purpose
-	dumpRequest, err := httputil.DumpRequestOut(req, true)
-	if err != nil {
-		return nil, err
-	}
-	tflog.Debug(ctx, fmt.Sprintf("External OAuth token raw request is: %s\n", string(dumpRequest)))
-
 	resp, err := retryableClient.Do(req)
 	if err != nil {
 		return nil, err
@@ -192,15 +170,8 @@ func requestNewExternalOAuthToken(ctx context.Context, tokenUrl, clientId, clien
 		}
 	}(resp.Body)
 
-	// For debug response purpose
-	dumpResponse, err := httputil.DumpResponse(resp, true)
-	if err != nil {
-		return nil, err
-	}
-	tflog.Debug(ctx, fmt.Sprintf("External OAuth token raw response is: %s\n", string(dumpResponse)))
-
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("exchange external token request failed: %s\n", string(dumpResponse))
+		return nil, fmt.Errorf("exchange external token request failed with status: %s\n", resp.Status)
 	}
 
 	// Parse the response
