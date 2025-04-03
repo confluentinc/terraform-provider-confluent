@@ -158,6 +158,7 @@ A complete example for using OAuth credentials with the Confluent Terraform Prov
 * `confluent_schema_registry_cluster` [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_schema_registry_cluster).
 * `confluent_schema_registry_clusters` [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_schema_registry_clusters).
 * `confluent_cluster_link` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_cluster_link) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_cluster_link).
+* `confluent_flink_artifact` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_flink_artifact).
 
 -> **Note:** An Identity Provider must be set up first on Confluent Cloud before using the OAuth credentials for Terraform Provider. You can find more information about Identity Provider setting up [here](https://docs.confluent.io/cloud/current/security/authenticate/workload-identities/identity-providers/oauth/identity-providers.htmll).
 
