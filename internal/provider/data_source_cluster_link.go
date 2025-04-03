@@ -73,6 +73,10 @@ func clusterLinkDataSource() *schema.Resource {
 }
 
 func clusterLinkDataSourceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	if err := dataSourceCredentialBlockValidationWithOAuth(d, meta.(*Client).isOAuthEnabled); err != nil {
+		return diag.Errorf("error reading Cluster Link: %s", createDescriptiveError(err))
+	}
+
 	tflog.Debug(ctx, fmt.Sprintf("Reading Cluster Link %q", d.Id()), map[string]interface{}{clusterLinkLoggingKey: d.Id()})
 
 	restEndpoint, err := extractRestEndpoint(meta.(*Client), d, false)
@@ -87,7 +91,7 @@ func clusterLinkDataSourceRead(ctx context.Context, d *schema.ResourceData, meta
 	if err != nil {
 		return diag.Errorf("error reading Cluster Link: %s", createDescriptiveError(err))
 	}
-	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, false, false)
+	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, false, false, meta.(*Client).oauthToken)
 
 	linkName := d.Get(paramLinkName).(string)
 	err = readDataSourceClusterLinkAndSetAttributes(ctx, d, kafkaRestClient, linkName)

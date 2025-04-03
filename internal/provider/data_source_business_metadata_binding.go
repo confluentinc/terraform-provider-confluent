@@ -73,6 +73,10 @@ func businessMetadataBindingDataSource() *schema.Resource {
 }
 
 func businessMetadataBindingDataSourceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	if err := dataSourceCredentialBlockValidationWithOAuth(d, meta.(*Client).isOAuthEnabled); err != nil {
+		return diag.Errorf("error reading Business Metadata Binding: %s", createDescriptiveError(err))
+	}
+
 	restEndpoint, err := extractCatalogRestEndpoint(meta.(*Client), d, false)
 	if err != nil {
 		return diag.Errorf("error reading Business Metadata Binding: %s", createDescriptiveError(err))
@@ -93,8 +97,9 @@ func businessMetadataBindingDataSourceRead(ctx context.Context, d *schema.Resour
 
 	tflog.Debug(ctx, fmt.Sprintf("Reading Business Metadata Binding %q=%q", paramId, businessMetadataBindingId), map[string]interface{}{businessMetadataBindingLoggingKey: businessMetadataBindingId})
 
-	catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+	catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 	request := catalogRestClient.apiClient.EntityV1Api.GetBusinessMetadata(catalogRestClient.dataCatalogApiContext(ctx), entityType, entityName)
+
 	businessMetadataBindings, _, err := request.Execute()
 	if err != nil {
 		return diag.Errorf("error reading Business Metadata Binding %q: %s", businessMetadataBindingId, createDescriptiveError(err))
