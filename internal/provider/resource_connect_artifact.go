@@ -32,10 +32,11 @@ func connectArtifactResource() *schema.Resource {
 				ValidateFunc: validation.StringLenBetween(1, 60),
 			},
 			paramCloud: {
-				Type:        schema.TypeString,
-				Required:    true,
-				ForceNew:    true,
-				Description: "Cloud provider where the Connect Artifact archive is uploaded.",
+				Type:         schema.TypeString,
+				Required:     true,
+				ForceNew:     true,
+				Description:  "Cloud provider where the Connect Artifact archive is uploaded.",
+				ValidateFunc: validation.StringInSlice(acceptedCloudProviders, false),
 			},
 			paramRegion: {
 				Type:         schema.TypeString,
