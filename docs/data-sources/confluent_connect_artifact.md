@@ -67,5 +67,7 @@ In addition to the arguments listed above, the following computed attributes are
 * `display_name` - (String) The unique name of the Connect Artifact per cloud, region, environment scope.
 * `content_format` - (String) Archive format of the Connect Artifact (JAR).
 * `description` - (String) Description of the Connect Artifact.
-* `api_version` - (String) The schema version of this representation of a resource.
-* `kind` - (String) The object this REST resource represents. 
+* `plugins` - (List) List of classes present in the Connect Artifact uploaded.
+  * `class` - (String) The class name of the plugin.
+  * `type` - (String) The type of the plugin.
+* `usages` - (List) List of resource crns where this Connect artifact is being used. 
