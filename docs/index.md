@@ -127,8 +127,7 @@ provider "confluent" {
 
 ### OAuth Credentials
 
--> **Note:** Authentication using the `oauth` credentials block is available in **Early Access** for early adopters. Early Access features are introduced to gather customer feedback. This feature should be used only for evaluation and non-production testing purposes or to provide feedback to Confluent, particularly as it becomes more widely available in follow-on editions.  
-
+-> **Note:** Authentication using the `oauth` credentials block is available in **Early Access** for early adopters. Early Access features are introduced to gather customer feedback. This feature should be used only for evaluation and non-production testing purposes or to provide feedback to Confluent, particularly as it becomes more widely available in follow-on editions.
 **Early Access** features are intended for evaluation use in development and testing environments only, and not for production use. The warranty, SLA, and Support Services provisions of your agreement with Confluent do not apply to Early Access features. Early Access features are considered to be a Proof of Concept as defined in the Confluent Cloud Terms of Service. Confluent may discontinue providing preview releases of the Early Access features at any time in Confluent’s sole discretion.
 
 Confluent Terraform provider allows authentication by using OAuth credentials. You can use the `oauth` block to configure the provider with OAuth credentials.
