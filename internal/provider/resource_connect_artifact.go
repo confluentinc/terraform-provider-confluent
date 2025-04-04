@@ -232,12 +232,6 @@ func setConnectArtifactAttributes(d *schema.ResourceData, artifact cam.CamV1Conn
 			return nil, err
 		}
 	}
-	if err := d.Set(paramApiVersion, artifact.GetApiVersion()); err != nil {
-		return nil, createDescriptiveError(err)
-	}
-	if err := d.Set(paramKind, artifact.GetKind()); err != nil {
-		return nil, createDescriptiveError(err)
-	}
 	d.SetId(artifact.GetId())
 
 	return d, nil
