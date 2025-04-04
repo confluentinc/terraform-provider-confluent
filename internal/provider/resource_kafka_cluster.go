@@ -72,7 +72,7 @@ const (
 )
 
 var acceptedAvailabilityZones = []string{singleZone, multiZone, lowAvailability, highAvailability}
-var acceptedCloudProviders = []string{"aws", "AZURE", "GCP"}
+var acceptedCloudProviders = []string{"AWS", "AZURE", "GCP"}
 var acceptedClusterTypes = []string{paramBasicCluster, paramStandardCluster, paramDedicatedCluster, paramEnterpriseCluster, paramFreightCluster}
 var paramDedicatedCku = fmt.Sprintf("%s.0.%s", paramDedicatedCluster, paramCku)
 var paramDedicatedEncryptionKey = fmt.Sprintf("%s.0.%s", paramDedicatedCluster, paramEncryptionKey)
