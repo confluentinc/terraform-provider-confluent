@@ -68,6 +68,7 @@ const (
 	paramDisplayName     = "display_name"
 	paramName            = "name"
 	paramDescription     = "description"
+	paramPlugins         = "plugins"
 	paramKind            = "kind"
 	paramCsu             = "csu"
 	paramClass           = "class"

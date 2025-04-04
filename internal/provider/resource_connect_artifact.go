@@ -71,6 +71,33 @@ func connectArtifactResource() *schema.Resource {
 				ForceNew:    true,
 				Description: "Description of the Connect Artifact.",
 			},
+			paramPlugins: {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "List of classes present in the Connect Artifact uploaded.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"class": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The class name of the plugin.",
+						},
+						"type": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The type of the plugin.",
+						},
+					},
+				},
+			},
+			paramUsages: {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "List of resource crns where this Connect artifact is being used.",
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
 			paramApiVersion: {
 				Type:        schema.TypeString,
 				Computed:    true,
