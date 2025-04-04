@@ -116,7 +116,7 @@ The following arguments are supported:
 
 -> **Note:** Schema rules (`ruleset`) are only available with the [Stream Governance Advanced package](https://docs.confluent.io/cloud/current/stream-governance/packages.html#packages).
 
--> **Note:** The Confluent Cloud Console defaults to `on_success = "NONE"` and `on_failure = "ERROR"`. However, the TF Provider defaults to `on_success = "NONE,NONE"` and `on_failure = "ERROR,ERROR"`.
+-> **Note:** The Confluent Cloud Console uses the following default values: `on_success = "NONE"` and `on_failure = "ERROR"`. However, the TF Provider sets its defaults to `on_success = "NONE,NONE"` and `on_failure = "ERROR,ERROR"`.
 
 ## Attributes Reference
 
