@@ -48,10 +48,6 @@ The following arguments are supported:
 In addition to the arguments listed above, the following computed attributes are exported:
 
 * `id` - (String) The ID of the Connect Artifact.
-* `plugins` - (List) List of classes present in the Connect Artifact uploaded.
-  * `class` - (String) The class name of the plugin.
-  * `type` - (String) The type of the plugin.
-* `usages` - (List) List of resource crns where this Connect artifact is being used.
 
 ## Import
 

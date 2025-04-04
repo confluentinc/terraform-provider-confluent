@@ -37,6 +37,14 @@ func connectArtifactResource() *schema.Resource {
 				ForceNew:     true,
 				Description:  "Cloud provider where the Connect Artifact archive is uploaded.",
 				ValidateFunc: validation.StringInSlice(acceptedCloudProviders, false),
+				// Suppress the diff shown if the value of "cloud" attribute are equal when both compared in lower case.
+				// For example, AWS == aws
+				DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+					if strings.ToLower(old) == strings.ToLower(new) {
+						return true
+					}
+					return false
+				},
 			},
 			paramRegion: {
 				Type:         schema.TypeString,
@@ -70,33 +78,6 @@ func connectArtifactResource() *schema.Resource {
 				Optional:    true,
 				ForceNew:    true,
 				Description: "Description of the Connect Artifact.",
-			},
-			paramPlugins: {
-				Type:        schema.TypeList,
-				Computed:    true,
-				Description: "List of classes present in the Connect Artifact uploaded.",
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"class": {
-							Type:        schema.TypeString,
-							Computed:    true,
-							Description: "The class name of the plugin.",
-						},
-						"type": {
-							Type:        schema.TypeString,
-							Computed:    true,
-							Description: "The type of the plugin.",
-						},
-					},
-				},
-			},
-			paramUsages: {
-				Type:        schema.TypeList,
-				Computed:    true,
-				Description: "List of resource crns where this Connect artifact is being used.",
-				Elem: &schema.Schema{
-					Type: schema.TypeString,
-				},
 			},
 		},
 	}
@@ -250,6 +231,12 @@ func setConnectArtifactAttributes(d *schema.ResourceData, artifact cam.CamV1Conn
 		if err := d.Set(paramArtifactFile, artifactFile); err != nil {
 			return nil, err
 		}
+	}
+	if err := d.Set(paramApiVersion, artifact.GetApiVersion()); err != nil {
+		return nil, createDescriptiveError(err)
+	}
+	if err := d.Set(paramKind, artifact.GetKind()); err != nil {
+		return nil, createDescriptiveError(err)
 	}
 	d.SetId(artifact.GetId())
 
