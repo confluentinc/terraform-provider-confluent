@@ -98,16 +98,6 @@ func connectArtifactResource() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
-			paramApiVersion: {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "The schema version of this representation of a resource.",
-			},
-			paramKind: {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "The object this REST resource represents.",
-			},
 		},
 	}
 }
@@ -260,12 +250,6 @@ func setConnectArtifactAttributes(d *schema.ResourceData, artifact cam.CamV1Conn
 		if err := d.Set(paramArtifactFile, artifactFile); err != nil {
 			return nil, err
 		}
-	}
-	if err := d.Set(paramApiVersion, artifact.GetApiVersion()); err != nil {
-		return nil, createDescriptiveError(err)
-	}
-	if err := d.Set(paramKind, artifact.GetKind()); err != nil {
-		return nil, createDescriptiveError(err)
 	}
 	d.SetId(artifact.GetId())
 

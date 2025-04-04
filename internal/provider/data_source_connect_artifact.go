@@ -85,16 +85,6 @@ func connectArtifactDataSource() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
-			paramApiVersion: {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "The schema version of this representation of a resource.",
-			},
-			paramKind: {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "The object this REST resource represents.",
-			},
 		},
 	}
 }
