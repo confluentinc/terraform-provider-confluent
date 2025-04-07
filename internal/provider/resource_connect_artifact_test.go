@@ -203,7 +203,7 @@ func TestAccConnectArtifactZip(t *testing.T) {
 		)
 	_ = wiremockClient.StubFor(createArtifactPresignedUrlStub)
 
-	createArtifactResponse, _ := os.ReadFile("../testdata/connect_artifact/create_artifact.json")
+	createArtifactResponse, _ := os.ReadFile("../testdata/connect_artifact/create_artifact_zip.json")
 	createArtifactStub := wiremock.Post(wiremock.URLPathEqualTo("/cam/v1/connect-artifacts")).
 		InScenario(connectArtifactScenarioName).
 		WhenScenarioStateIs(scenarioConnectArtifactPresignedUrlHasBeenCreated).
@@ -216,7 +216,7 @@ func TestAccConnectArtifactZip(t *testing.T) {
 	_ = wiremockClient.StubFor(createArtifactStub)
 
 	// Add a stub for the provisioning state
-	provisioningArtifactResponse, _ := os.ReadFile("../testdata/connect_artifact/create_artifact.json")
+	provisioningArtifactResponse, _ := os.ReadFile("../testdata/connect_artifact/create_artifact_zip.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(connectArtifactsUrlPath)).
 		InScenario(connectArtifactScenarioName).
 		WithQueryParam("spec.region", wiremock.EqualTo(connectArtifactRegion)).
