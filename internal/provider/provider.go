@@ -497,7 +497,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 		if err != nil {
 			return nil, err
 		}
-		if err := validateOAuthAndProviderAPIKeysCoexist(kafkaApiKey, kafkaApiSecret, schemaRegistryApiKey, schemaRegistryApiSecret, flinkApiKey, flinkApiSecret, tableflowApiKey, tableflowApiSecret); err != nil {
+		if err := validateOAuthAndProviderAPIKeysCoexist(cloudApiKey, cloudApiSecret, kafkaApiKey, kafkaApiSecret, schemaRegistryApiKey, schemaRegistryApiSecret, flinkApiKey, flinkApiSecret, tableflowApiKey, tableflowApiSecret); err != nil {
 			return nil, err
 		}
 	}
@@ -842,7 +842,10 @@ func providerOAuthSchema() *schema.Schema {
 	}
 }
 
-func validateOAuthAndProviderAPIKeysCoexist(kafkaApiKey, kafkaApiSecret, schemaRegistryApiKey, schemaRegistryApiSecret, flinkApiKey, flinkApiSecret, tableflowApiKey, tableflowApiSecret string) diag.Diagnostics {
+func validateOAuthAndProviderAPIKeysCoexist(cloudApiKey, cloudApiSecret, kafkaApiKey, kafkaApiSecret, schemaRegistryApiKey, schemaRegistryApiSecret, flinkApiKey, flinkApiSecret, tableflowApiKey, tableflowApiSecret string) diag.Diagnostics {
+	if cloudApiKey != "" || cloudApiSecret != "" {
+		return diag.Errorf("(cloud_api_key, cloud_api_secret) attributes should not be set in the provider block when oauth block is present")
+	}
 	if kafkaApiKey != "" || kafkaApiSecret != "" {
 		return diag.Errorf("(kafka_api_key, kafka_api_secret) attributes should not be set in the provider block when oauth block is present")
 	}
