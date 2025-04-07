@@ -86,7 +86,6 @@ func TestAccConnectArtifactDataSource(t *testing.T) {
 					resource.TestCheckResourceAttr(fullConnectArtifactDataSourceLabel, paramRegion, connectArtifactRegion),
 					resource.TestCheckResourceAttr(fullConnectArtifactDataSourceLabel, paramContentFormat, connectArtifactContentFormat),
 					resource.TestCheckResourceAttr(fullConnectArtifactDataSourceLabel, paramDescription, connectArtifactDescription),
-					resource.TestCheckResourceAttr(fullConnectArtifactDataSourceLabel, paramStatus, "PROVISIONED"),
 				),
 			},
 		},

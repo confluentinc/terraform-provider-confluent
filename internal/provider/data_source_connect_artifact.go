@@ -58,11 +58,6 @@ func connectArtifactDataSource() *schema.Resource {
 				Computed:    true,
 				Description: "Description of the Connect Artifact.",
 			},
-			paramStatus: {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "The current status of the Connect Artifact.",
-			},
 		},
 	}
 }

@@ -250,8 +250,8 @@ func setConnectArtifactAttributes(d *schema.ResourceData, artifact cam.CamV1Conn
 		}
 	}
 
-	// Set the status attribute if it exists
-	if artifact.Status != nil {
+	// Set the status attribute if it exists in the schema
+	if _, ok := d.GetOk(paramStatus); ok && artifact.Status != nil {
 		if err := d.Set(paramStatus, artifact.Status.GetPhase()); err != nil {
 			return nil, err
 		}
