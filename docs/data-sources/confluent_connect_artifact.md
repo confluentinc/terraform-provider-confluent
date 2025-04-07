@@ -10,7 +10,7 @@ description: |-
 
 [![General Availability](https://img.shields.io/badge/Lifecycle%20Stage-General%20Availability-%2345c6e8)](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy)
 
-`confluent_connect_artifact` describes a Connect Artifact data source.
+`confluent_connect_artifact` data source represents a Connect Artifact in Confluent Cloud. Connect Artifacts are used to store and manage custom connector plugins in Confluent Cloud.
 
 ## Example Usage
 
@@ -65,5 +65,6 @@ The following arguments are supported:
 In addition to the arguments listed above, the following computed attributes are exported:
 
 * `display_name` - (String) The unique name of the Connect Artifact per cloud, region, environment scope.
-* `content_format` - (String) Archive format of the Connect Artifact.
-* `description` - (String) Description of the Connect Artifact. 
+* `content_format` - (String) Archive format of the Connect Artifact. Supported formats are JAR and ZIP.
+* `description` - (String) Description of the Connect Artifact.
+* `status` - (String) The current status of the Connect Artifact. 

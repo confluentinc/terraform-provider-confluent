@@ -50,9 +50,7 @@ func TestAccConnectArtifactDataSource(t *testing.T) {
 	// nolint:errcheck
 	defer wiremockClient.ResetAllScenarios()
 	createConnectArtifactResponse, _ := json.Marshal(map[string]interface{}{
-		"api_version": connectArtifactApiVersion,
-		"id":          connectArtifactId,
-		"kind":        connectArtifactKind,
+		"id": connectArtifactId,
 		"spec": map[string]interface{}{
 			"display_name":   connectArtifactUniqueName,
 			"cloud":          connectArtifactCloud,
@@ -60,6 +58,9 @@ func TestAccConnectArtifactDataSource(t *testing.T) {
 			"environment":    connectArtifactEnvironmentId,
 			"content_format": connectArtifactContentFormat,
 			"description":    connectArtifactDescription,
+		},
+		"status": map[string]interface{}{
+			"phase": "PROVISIONED",
 		},
 	})
 
@@ -85,8 +86,7 @@ func TestAccConnectArtifactDataSource(t *testing.T) {
 					resource.TestCheckResourceAttr(fullConnectArtifactDataSourceLabel, paramRegion, connectArtifactRegion),
 					resource.TestCheckResourceAttr(fullConnectArtifactDataSourceLabel, paramContentFormat, connectArtifactContentFormat),
 					resource.TestCheckResourceAttr(fullConnectArtifactDataSourceLabel, paramDescription, connectArtifactDescription),
-					resource.TestCheckResourceAttr(fullConnectArtifactDataSourceLabel, paramApiVersion, connectArtifactApiVersion),
-					resource.TestCheckResourceAttr(fullConnectArtifactDataSourceLabel, paramKind, connectArtifactKind),
+					resource.TestCheckResourceAttr(fullConnectArtifactDataSourceLabel, paramStatus, "PROVISIONED"),
 				),
 			},
 		},

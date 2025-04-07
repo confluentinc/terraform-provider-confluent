@@ -13,5 +13,8 @@
       "location": "PRESIGNED_URL_LOCATION",
       "upload_id": "upload-123"
     }
+  },
+  "status": {
+    "phase": "PROVISIONED"
   }
 } 

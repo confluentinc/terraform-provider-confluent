@@ -51,12 +51,17 @@ func connectArtifactDataSource() *schema.Resource {
 			paramContentFormat: {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Archive format of the Connect Artifact (JAR).",
+				Description: "Archive format of the Connect Artifact. Supported formats are JAR and ZIP.",
 			},
 			paramDescription: {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Description of the Connect Artifact.",
+			},
+			paramStatus: {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The current status of the Connect Artifact.",
 			},
 		},
 	}

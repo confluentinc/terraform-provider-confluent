@@ -7,10 +7,12 @@ import (
 	"net/http"
 	"path/filepath"
 	"strings"
+	"time"
 
 	cam "github.com/confluentinc/ccloud-sdk-go-v2/cam/v1"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
@@ -58,7 +60,11 @@ func connectArtifactResource() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Archive format of the Connect Artifact (JAR).",
+				Description: "Archive format of the Connect Artifact. Supported formats are JAR and ZIP.",
+				ValidateFunc: validation.StringInSlice([]string{
+					"JAR",
+					"ZIP",
+				}, false),
 			},
 			paramArtifactFile: {
 				Type:     schema.TypeString,
@@ -66,18 +72,23 @@ func connectArtifactResource() *schema.Resource {
 				ForceNew: true,
 				ValidateFunc: func(val interface{}, key string) (warns []string, errs []error) {
 					extension := strings.ToLower(strings.TrimPrefix(filepath.Ext(val.(string)), "."))
-					if extension != "jar" {
-						errs = append(errs, fmt.Errorf("%q must have extension .jar", key))
+					if extension != "jar" && extension != "zip" {
+						errs = append(errs, fmt.Errorf("%q must have extension .jar or .zip", key))
 					}
 					return
 				},
-				Description: "The artifact file for Connect Artifact in JAR format.",
+				Description: "The artifact file for Connect Artifact in JAR or ZIP format.",
 			},
 			paramDescription: {
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    true,
 				Description: "Description of the Connect Artifact.",
+			},
+			paramStatus: {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Status of the Connect Artifact.",
 			},
 		},
 	}
@@ -143,6 +154,12 @@ func connectArtifactCreate(ctx context.Context, d *schema.ResourceData, meta int
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating Connect Artifact %q: %s", d.Id(), createdArtifactJson), map[string]interface{}{connectArtifactLoggingKey: d.Id()})
+
+	// Wait for the Connect Artifact to be ready
+	if err := waitForConnectArtifactToProvision(ctx, c, environmentId, d.Id(), region, cloud); err != nil {
+		return diag.Errorf("error waiting for Connect Artifact to be ready: %s", createDescriptiveError(err))
+	}
+
 	return connectArtifactRead(ctx, d, meta)
 }
 
@@ -232,6 +249,14 @@ func setConnectArtifactAttributes(d *schema.ResourceData, artifact cam.CamV1Conn
 			return nil, err
 		}
 	}
+
+	// Set the status attribute if it exists
+	if artifact.Status != nil {
+		if err := d.Set(paramStatus, artifact.Status.GetPhase()); err != nil {
+			return nil, err
+		}
+	}
+
 	d.SetId(artifact.GetId())
 
 	return d, nil
@@ -283,4 +308,49 @@ func connectArtifactImport(ctx context.Context, d *schema.ResourceData, meta int
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished importing Connect Artifact %q", d.Id()), map[string]interface{}{connectArtifactLoggingKey: d.Id()})
 	return []*schema.ResourceData{d}, nil
+}
+
+func waitForConnectArtifactToProvision(ctx context.Context, c *Client, environmentId, artifactId, region, cloud string) error {
+	delay, pollInterval := getDelayAndPollInterval(5*time.Second, 1*time.Minute, c.isAcceptanceTestMode)
+	stateConf := &resource.StateChangeConf{
+		Pending:      []string{stateProvisioning},
+		Target:       []string{stateProvisioned, stateReady},
+		Refresh:      connectArtifactProvisionStatus(c.camApiContext(ctx), c, environmentId, artifactId, region, cloud),
+		Timeout:      10 * time.Minute,
+		Delay:        delay,
+		PollInterval: pollInterval,
+	}
+
+	tflog.Debug(ctx, fmt.Sprintf("Waiting for Connect Artifact %q provisioning status to become %q", artifactId, stateProvisioned), map[string]interface{}{connectArtifactLoggingKey: artifactId})
+	if _, err := stateConf.WaitForStateContext(c.camApiContext(ctx)); err != nil {
+		return err
+	}
+	return nil
+}
+
+func connectArtifactProvisionStatus(ctx context.Context, c *Client, environmentId, artifactId, region, cloud string) resource.StateRefreshFunc {
+	return func() (result interface{}, s string, err error) {
+		artifact, _, err := executeConnectArtifactRead(ctx, c, region, cloud, artifactId, environmentId)
+		if err != nil {
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Connect Artifact %q: %s", artifactId, createDescriptiveError(err)), map[string]interface{}{connectArtifactLoggingKey: artifactId})
+			return nil, stateUnknown, err
+		}
+
+		// Check if the artifact has a status field
+		if artifact.Status == nil {
+			// If no status field, assume it's provisioned
+			return artifact, stateProvisioned, nil
+		}
+
+		phase := artifact.Status.GetPhase()
+		tflog.Debug(ctx, fmt.Sprintf("Waiting for Connect Artifact %q provisioning status to become %q: current status is %q", artifactId, stateProvisioned, phase), map[string]interface{}{connectArtifactLoggingKey: artifactId})
+
+		if phase == stateProvisioning || phase == stateProvisioned || phase == stateReady {
+			return artifact, phase, nil
+		} else if phase == stateFailed {
+			return nil, stateFailed, fmt.Errorf("connect artifact %q provisioning status is %q", artifactId, stateFailed)
+		}
+		// Connect Artifact is in an unexpected state
+		return nil, stateUnexpected, fmt.Errorf("connect artifact %q is in an unexpected state %q", artifactId, phase)
+	}
 }
