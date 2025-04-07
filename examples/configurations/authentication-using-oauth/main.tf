@@ -13,8 +13,6 @@ locals {
 }
 
 provider "confluent" {
-  cloud_api_key = var.confluent_cloud_api_key
-  cloud_api_secret = var.confluent_cloud_api_secret
   oauth {
     oauth_external_token_url = var.oauth_external_token_url
     oauth_external_client_id  = var.oauth_external_client_id
