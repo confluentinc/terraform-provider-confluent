@@ -39,8 +39,8 @@ The following arguments are supported:
 * `region` - (Required String) The Cloud provider region the Connect Artifact archive is uploaded.
 * `environment` - (Required Block) The Environment that the Connect Artifact belongs to, for example, `env-abc123`. It supports the following:
 * `id` - (Required String) The ID of the Environment that the Connect Artifact belongs to.
-* `content_format` - (Required String) Archive format of the Connect Artifact. Supported formats are JAR and ZIP.
-* `artifact_file` - (Optional String) The artifact file for Connect Artifact in JAR or ZIP format.
+* `content_format` - (Required String) Archive format of the Connect Artifact. Supported formats are `JAR` and `ZIP`.
+* `artifact_file` - (Optional String) The artifact file for Connect Artifact in `JAR` or `ZIP` format.
 * `description` - (Optional String) Description of the Connect Artifact.
 
 ## Attributes Reference

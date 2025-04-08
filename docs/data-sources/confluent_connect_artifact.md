@@ -65,5 +65,5 @@ The following arguments are supported:
 In addition to the arguments listed above, the following computed attributes are exported:
 
 * `display_name` - (String) The unique name of the Connect Artifact per cloud, region, environment scope.
-* `content_format` - (String) Archive format of the Connect Artifact. Supported formats are JAR and ZIP.
+* `content_format` - (String) Archive format of the Connect Artifact. Supported formats are `JAR` and `ZIP`.
 * `description` - (String) Description of the Connect Artifact. 
