@@ -1,4 +1,10 @@
 name: terraform-provider-confluent-internal
+contact:
+  name: api
+  jira_project_key: CLI
+  email: api-team@confluent.io
+  slack_team_channel: api-eng
+  slack_oncall_channel: terraform
 lang: go
 lang_version: "1.23.7"
 git:
@@ -11,3 +17,9 @@ semaphore:
   branches:
     - master
     - /^v\d+\.\d+\.x$/
+make:
+  enable: true
+sonarqube:
+  enable: true
+  languages: go
+  main_branch: master

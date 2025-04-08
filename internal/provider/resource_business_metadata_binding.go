@@ -18,14 +18,16 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	dc "github.com/confluentinc/ccloud-sdk-go-v2/data-catalog/v1"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"regexp"
 	"strings"
 	"time"
+
+	dc "github.com/confluentinc/ccloud-sdk-go-v2/data-catalog/v1"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 const (
@@ -82,6 +84,7 @@ func businessMetadataBindingResource() *schema.Resource {
 				},
 			},
 		},
+		CustomizeDiff: customdiff.Sequence(resourceCredentialBlockValidationWithOAuth),
 	}
 }
 
@@ -105,7 +108,7 @@ func businessMetadataBindingCreate(ctx context.Context, d *schema.ResourceData, 
 	attributes := d.Get(paramAttributes).(map[string]interface{})
 	businessMetadataBindingId := createBusinessMetadataBindingId(clusterId, businessMetadataName, entityName, entityType)
 
-	catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+	catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 	businessMetadataBindingRequest := dc.BusinessMetadata{}
 	businessMetadataBindingRequest.SetEntityName(entityName)
 	businessMetadataBindingRequest.SetEntityType(entityType)
@@ -184,7 +187,7 @@ func readBusinessMetadataBindingAndSetAttributes(ctx context.Context, d *schema.
 
 	tflog.Debug(ctx, fmt.Sprintf("Reading Business Metadata Binding %q=%q", paramId, businessMetadataBindingId), map[string]interface{}{businessMetadataBindingLoggingKey: businessMetadataBindingId})
 
-	catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+	catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 	request := catalogRestClient.apiClient.EntityV1Api.GetBusinessMetadata(catalogRestClient.dataCatalogApiContext(ctx), entityType, entityName)
 	businessMetadataBindings, resp, err := request.Execute()
 	if err != nil {
@@ -232,7 +235,7 @@ func findBusinessMetadataBindingByBusinessMetadataName(businessMetadataBindings 
 		}
 	}
 
-	return dc.BusinessMetadataResponse{}, fmt.Errorf(fmt.Sprintf("error reading Business Metadata Binding: couldn't find the Business Metadata binding: %s", businessMetadataName))
+	return dc.BusinessMetadataResponse{}, fmt.Errorf("error reading Business Metadata Binding: couldn't find the Business Metadata binding: %s", businessMetadataName)
 }
 
 func businessMetadataBindingDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -256,7 +259,7 @@ func businessMetadataBindingDelete(ctx context.Context, d *schema.ResourceData, 
 
 	tflog.Debug(ctx, fmt.Sprintf("Deleting Business Metadata Binding %q=%q", paramId, businessMetadataBindingId), map[string]interface{}{businessMetadataBindingLoggingKey: businessMetadataBindingId})
 
-	catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+	catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 	request := catalogRestClient.apiClient.EntityV1Api.DeleteBusinessMetadata(catalogRestClient.dataCatalogApiContext(ctx), entityType, entityName, businessMetadataName)
 	_, serviceErr := request.Execute()
 	if serviceErr != nil {
@@ -300,7 +303,7 @@ func businessMetadataBindingUpdate(ctx context.Context, d *schema.ResourceData, 
 		attributes := d.Get(paramAttributes).(map[string]interface{})
 		businessMetadataBindingId := createBusinessMetadataBindingId(clusterId, businessMetadataName, entityName, entityType)
 
-		catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+		catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 		businessMetadataBindingRequest := dc.BusinessMetadata{}
 		businessMetadataBindingRequest.SetEntityName(entityName)
 		businessMetadataBindingRequest.SetEntityType(entityType)

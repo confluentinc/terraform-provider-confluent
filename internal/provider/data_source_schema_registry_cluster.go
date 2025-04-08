@@ -75,6 +75,15 @@ func schemaRegistryClusterDataSource() *schema.Resource {
 				Type:        schema.TypeString,
 				Description: "The private API endpoint of the Schema Registry Cluster.",
 				Computed:    true,
+				Deprecated:  `Please use the private_regional_rest_endpoints attribute instead, which supersedes the private_rest_endpoint attribute.`,
+			},
+			paramRestEndpointPrivateRegional: {
+				Type:        schema.TypeMap,
+				Description: "The private regional API endpoint of the Schema Registry Cluster.",
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+				Computed: true,
 			},
 			paramCatalogEndpoint: {
 				Type:        schema.TypeString,
@@ -176,6 +185,10 @@ func setSchemaRegistryClusterAttributes(d *schema.ResourceData, schemaRegistryCl
 		return nil, createDescriptiveError(err)
 	}
 	if err := d.Set(paramRestEndpointPrivate, schemaRegistryCluster.Spec.GetPrivateHttpEndpoint()); err != nil {
+		return nil, createDescriptiveError(err)
+	}
+	config := schemaRegistryCluster.Spec.GetPrivateNetworkingConfig()
+	if err := d.Set(paramRestEndpointPrivateRegional, config.GetRegionalEndpoints()); err != nil {
 		return nil, createDescriptiveError(err)
 	}
 	if err := d.Set(paramCatalogEndpoint, schemaRegistryCluster.Spec.GetCatalogHttpEndpoint()); err != nil {

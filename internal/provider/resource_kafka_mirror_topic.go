@@ -18,14 +18,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"regexp"
+	"strings"
+
 	v3 "github.com/confluentinc/ccloud-sdk-go-v2/kafkarest/v3"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"net/http"
-	"regexp"
-	"strings"
 )
 
 const (
@@ -259,7 +260,7 @@ func kafkaMirrorTopicImport(ctx context.Context, d *schema.ResourceData, meta in
 	linkName := parts[1]
 	mirrorTopicName := parts[2]
 
-	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, false, false)
+	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, false, false, meta.(*Client).oauthToken)
 
 	// Mark resource as new to avoid d.Set("") when getting 404
 	d.MarkNewResource()
@@ -349,7 +350,7 @@ func kafkaMirrorTopicUpdate(ctx context.Context, d *schema.ResourceData, meta in
 			if err := d.Set(paramStatus, oldStatus); err != nil {
 				return diag.FromErr(createDescriptiveError(err))
 			}
-			return diag.Errorf(fmt.Sprintf("error updating Kafka Mirror Topic %q: %s \nbut %q->%q was attempted", d.Id(), disallowedTransitionErrorMessage, oldStatus, newStatus))
+			return diag.Errorf("error updating Kafka Mirror Topic %q: %s \nbut %q->%q was attempted", d.Id(), disallowedTransitionErrorMessage, oldStatus, newStatus)
 		}
 		tflog.Debug(ctx, fmt.Sprintf("Finished updating Kafka Mirror Topic %q", d.Id()), map[string]interface{}{kafkaMirrorTopicLoggingKey: d.Id()})
 	}
@@ -363,7 +364,7 @@ func createKafkaRestClientFromKafkaBlock(d *schema.ResourceData, meta interface{
 	kafkaClusterApiKey := extractStringValueFromNestedBlock(d, paramKafkaCluster, paramCredentials, paramKey)
 	kafkaClusterApiSecret := extractStringValueFromNestedBlock(d, paramKafkaCluster, paramCredentials, paramSecret)
 	// Set isMetadataSetInProviderBlock to 'false' to disable inferring rest_endpoint / Kafka API Key from 'providers' block for confluent_cluster_link resource
-	return meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(kafkaClusterRestEndpoint, kafkaClusterId, kafkaClusterApiKey, kafkaClusterApiSecret, false, false), nil
+	return meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(kafkaClusterRestEndpoint, kafkaClusterId, kafkaClusterApiKey, kafkaClusterApiSecret, false, false, meta.(*Client).oauthToken), nil
 }
 
 func clusterLinkBlockSchema() *schema.Schema {

@@ -139,6 +139,10 @@ func schemasDataSource() *schema.Resource {
 func schemasDataSourceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	tflog.Debug(ctx, "Reading Schemas")
 
+	if err := dataSourceCredentialBlockValidationWithOAuth(d, meta.(*Client).isOAuthEnabled); err != nil {
+		return diag.Errorf("error reading Schemas: %s", createDescriptiveError(err))
+	}
+
 	restEndpoint, err := extractSchemaRegistryRestEndpoint(meta.(*Client), d, false)
 	if err != nil {
 		return diag.Errorf("error reading Schemas: %s", createDescriptiveError(err))
@@ -151,7 +155,7 @@ func schemasDataSourceRead(ctx context.Context, d *schema.ResourceData, meta int
 	if err != nil {
 		return diag.Errorf("error reading Schemas: %s", createDescriptiveError(err))
 	}
-	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 	subjectPrefix := d.Get(fmt.Sprintf("%s.0.%s", paramFilter, paramSchemasFilterSubjectPrefix)).(string)
 	latestOnly := d.Get(fmt.Sprintf("%s.0.%s", paramFilter, paramSchemasFilterLatestOnly)).(bool)
 	deleted := d.Get(fmt.Sprintf("%s.0.%s", paramFilter, paramSchemasFilterDeleted)).(bool)

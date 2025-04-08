@@ -63,7 +63,7 @@ data "confluent_business_metadata_binding" "main" {
 The following arguments are supported:
 
 - `business_metadata_name` - (Required String) The name of the Business Metadata to be applied, for example, `PII`. The name must not be empty and consist of a letter followed by a sequence of letter, number, space, or _ characters.
-- `entity_name` - (Required String) The qualified name of the entity., for example, `${data.confluent_schema_registry_cluster.main.id}:.:${confluent_schema.purchase.schema_identifier}`, `${data.confluent_schema_registry_cluster.main.id}:${confluent_kafka_cluster.basic.id}:${confluent_kafka_topic.purchase.topic_name}`.
+- `entity_name` - (Required String) The qualified name of the entity, for example, `${data.confluent_schema_registry_cluster.essentials.id}:.:${confluent_schema.purchase.schema_identifier}`, `${data.confluent_schema_registry_cluster.essentials.id}:${confluent_kafka_cluster.basic.id}:${confluent_kafka_topic.purchase.topic_name}`. Refer to the [Examples of qualified names](https://docs.confluent.io/cloud/current/stream-governance/stream-catalog-rest-apis.html#examples-of-qualified-names) to see the full list of supported values for the `entity_name` attribute.
 - `entity_type` - (Required String) The entity type, for example, `sr_schema`.
 - `schema_registry_cluster` - (Optional Configuration Block) supports the following:
     - `id` - (Required String) The ID of the Schema Registry cluster, for example, `lsrc-abc123`.

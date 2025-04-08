@@ -338,7 +338,7 @@ func SetSchemaDiff(ctx context.Context, diff *schema.ResourceDiff, meta interfac
 		return nil
 	}
 
-	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 
 	subjectName := diff.Get(paramSubjectName).(string)
 	format := diff.Get(paramFormat).(string)
@@ -552,7 +552,7 @@ func schemaCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 	if err != nil {
 		return diag.Errorf("error creating Schema: %s", createDescriptiveError(err))
 	}
-	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 	subjectName := d.Get(paramSubjectName).(string)
 	format := d.Get(paramFormat).(string)
 	schemaContent := d.Get(paramSchema).(string)
@@ -655,7 +655,7 @@ func schemaDelete(ctx context.Context, d *schema.ResourceData, meta interface{})
 	if err != nil {
 		return diag.Errorf("error %s deleting Schema: %s", deletionType, createDescriptiveError(err))
 	}
-	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 	subjectName := d.Get(paramSubjectName).(string)
 	schemaVersion := d.Get(paramVersion).(int)
 
@@ -694,7 +694,7 @@ func schemaRead(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 	if err != nil {
 		return diag.Errorf("error reading Schema: %s", createDescriptiveError(err))
 	}
-	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 
 	schemaIdentifier, err := extractSchemaIdentifierFromTfId(d.Id())
 	if err != nil {
@@ -814,7 +814,7 @@ func schemaImport(ctx context.Context, d *schema.ResourceData, meta interface{})
 		return nil, fmt.Errorf("error importing Schema: %s", err.Error())
 	}
 
-	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet)
+	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 
 	// Mark resource as new to avoid d.Set("") when getting 404
 	d.MarkNewResource()
@@ -909,7 +909,7 @@ func readSchemaRegistryConfigAndSetAttributes(ctx context.Context, d *schema.Res
 	}
 
 	if !c.isMetadataSetInProviderBlock {
-		if err := setKafkaCredentials(c.clusterApiKey, c.clusterApiSecret, d); err != nil {
+		if err := setKafkaCredentials(c.clusterApiKey, c.clusterApiSecret, d, c.externalAccessToken != nil); err != nil {
 			return nil, err
 		}
 		if err := d.Set(paramRestEndpoint, c.restEndpoint); err != nil {
@@ -1074,6 +1074,9 @@ func extractSchemaRegistryRestEndpoint(client *Client, d *schema.ResourceData, i
 }
 
 func extractSchemaRegistryClusterApiKeyAndApiSecret(client *Client, d *schema.ResourceData, isImportOperation bool) (string, string, error) {
+	if client.isOAuthEnabled {
+		return "", "", nil
+	}
 	if client.isSchemaRegistryMetadataSet {
 		return client.schemaRegistryApiKey, client.schemaRegistryApiSecret, nil
 	}
@@ -1121,7 +1124,7 @@ func schemaImporter() *Importer {
 func loadAllSchemas(ctx context.Context, client *Client) (InstanceIdsToNameMap, diag.Diagnostics) {
 	instances := make(InstanceIdsToNameMap)
 
-	schemaRegistryRestClient := client.schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(client.schemaRegistryRestEndpoint, client.schemaRegistryClusterId, client.schemaRegistryApiKey, client.schemaRegistryApiSecret, true)
+	schemaRegistryRestClient := client.schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(client.schemaRegistryRestEndpoint, client.schemaRegistryClusterId, client.schemaRegistryApiKey, client.schemaRegistryApiSecret, true, client.oauthToken)
 
 	subjects, _, err := schemaRegistryRestClient.apiClient.SubjectsV1Api.List(schemaRegistryRestClient.apiContext(ctx)).Execute()
 	if err != nil {

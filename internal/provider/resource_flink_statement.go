@@ -133,7 +133,7 @@ func flinkStatementResource() *schema.Resource {
 		Timeouts: &schema.ResourceTimeout{
 			Create: schema.DefaultTimeout(statementsAPICreateTimeout),
 		},
-		CustomizeDiff: customdiff.Sequence(resourceFlinkStatementDiff),
+		CustomizeDiff: customdiff.Sequence(resourceFlinkStatementDiff, resourceCredentialBlockValidationWithOAuth),
 	}
 }
 
@@ -162,7 +162,7 @@ func flinkStatementCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	if err != nil {
 		return diag.Errorf("error creating Flink Statement: %s", createDescriptiveError(err))
 	}
-	flinkRestClient := meta.(*Client).flinkRestClientFactory.CreateFlinkRestClient(restEndpoint, organizationId, environmentId, computePoolId, principalId, flinkApiKey, flinkApiSecret, meta.(*Client).isFlinkMetadataSet)
+	flinkRestClient := meta.(*Client).flinkRestClientFactory.CreateFlinkRestClient(restEndpoint, organizationId, environmentId, computePoolId, principalId, flinkApiKey, flinkApiSecret, meta.(*Client).isFlinkMetadataSet, meta.(*Client).oauthToken)
 
 	statementName := d.Get(paramStatementName).(string)
 	if len(statementName) == 0 {
@@ -246,7 +246,7 @@ func flinkStatementRead(ctx context.Context, d *schema.ResourceData, meta interf
 	if err != nil {
 		return diag.Errorf("error reading Flink Statement: %s", createDescriptiveError(err))
 	}
-	flinkRestClient := meta.(*Client).flinkRestClientFactory.CreateFlinkRestClient(restEndpoint, organizationId, environmentId, computePoolId, "", flinkApiKey, flinkApiSecret, meta.(*Client).isFlinkMetadataSet)
+	flinkRestClient := meta.(*Client).flinkRestClientFactory.CreateFlinkRestClient(restEndpoint, organizationId, environmentId, computePoolId, "", flinkApiKey, flinkApiSecret, meta.(*Client).isFlinkMetadataSet, meta.(*Client).oauthToken)
 	statementName, err := parseStatementName(d.Id())
 	if err != nil {
 		return diag.Errorf("error reading Flink Statement: %s", createDescriptiveError(err))
@@ -314,7 +314,7 @@ func flinkStatementStop(ctx context.Context, d *schema.ResourceData, meta interf
 	if err != nil {
 		return diag.Errorf(stopFlinkStatementErrorFormat, createDescriptiveError(err))
 	}
-	flinkRestClient := meta.(*Client).flinkRestClientFactory.CreateFlinkRestClient(restEndpoint, organizationId, environmentId, computePoolId, principalId, flinkApiKey, flinkApiSecret, meta.(*Client).isFlinkMetadataSet)
+	flinkRestClient := meta.(*Client).flinkRestClientFactory.CreateFlinkRestClient(restEndpoint, organizationId, environmentId, computePoolId, principalId, flinkApiKey, flinkApiSecret, meta.(*Client).isFlinkMetadataSet, meta.(*Client).oauthToken)
 
 	statementName := d.Get(paramStatementName).(string)
 
@@ -381,7 +381,7 @@ func flinkStatementResume(ctx context.Context, d *schema.ResourceData, meta inte
 	if err != nil {
 		return diag.Errorf(resumeFlinkStatementErrorFormat, createDescriptiveError(err))
 	}
-	flinkRestClient := meta.(*Client).flinkRestClientFactory.CreateFlinkRestClient(restEndpoint, organizationId, environmentId, computePoolId, principalId, flinkApiKey, flinkApiSecret, meta.(*Client).isFlinkMetadataSet)
+	flinkRestClient := meta.(*Client).flinkRestClientFactory.CreateFlinkRestClient(restEndpoint, organizationId, environmentId, computePoolId, principalId, flinkApiKey, flinkApiSecret, meta.(*Client).isFlinkMetadataSet, meta.(*Client).oauthToken)
 
 	statementName := d.Get(paramStatementName).(string)
 
@@ -469,7 +469,7 @@ func setFlinkStatementAttributes(d *schema.ResourceData, c *FlinkRestClient, sta
 	}
 
 	if !c.isMetadataSetInProviderBlock {
-		if err := setKafkaCredentials(c.flinkApiKey, c.flinkApiSecret, d); err != nil {
+		if err := setKafkaCredentials(c.flinkApiKey, c.flinkApiSecret, d, c.externalAccessToken != nil); err != nil {
 			return nil, err
 		}
 		if err := d.Set(paramRestEndpoint, c.restEndpoint); err != nil {
@@ -530,7 +530,7 @@ func flinkStatementDelete(ctx context.Context, d *schema.ResourceData, meta inte
 	if err != nil {
 		return diag.Errorf("error deleting Flink Statement: %s", createDescriptiveError(err))
 	}
-	flinkRestClient := meta.(*Client).flinkRestClientFactory.CreateFlinkRestClient(restEndpoint, organizationId, environmentId, computePoolId, "", flinkApiKey, flinkApiSecret, meta.(*Client).isFlinkMetadataSet)
+	flinkRestClient := meta.(*Client).flinkRestClientFactory.CreateFlinkRestClient(restEndpoint, organizationId, environmentId, computePoolId, "", flinkApiKey, flinkApiSecret, meta.(*Client).isFlinkMetadataSet, meta.(*Client).oauthToken)
 	statementName := d.Get(paramStatementName).(string)
 
 	req := flinkRestClient.apiClient.StatementsSqlV1Api.DeleteSqlv1Statement(flinkRestClient.apiContext(ctx), organizationId, environmentId, statementName)
@@ -576,7 +576,7 @@ func flinkStatementImport(ctx context.Context, d *schema.ResourceData, meta inte
 	if err != nil {
 		return nil, fmt.Errorf("error importing Flink Statement: %s", createDescriptiveError(err))
 	}
-	flinkRestClient := meta.(*Client).flinkRestClientFactory.CreateFlinkRestClient(restEndpoint, organizationId, environmentId, computePoolId, principalId, flinkApiKey, flinkApiSecret, meta.(*Client).isFlinkMetadataSet)
+	flinkRestClient := meta.(*Client).flinkRestClientFactory.CreateFlinkRestClient(restEndpoint, organizationId, environmentId, computePoolId, principalId, flinkApiKey, flinkApiSecret, meta.(*Client).isFlinkMetadataSet, meta.(*Client).oauthToken)
 
 	statementName := d.Id()
 	d.SetId(createFlinkStatementId(environmentId, computePoolId, statementName))
@@ -647,6 +647,9 @@ func extractFlinkRestEndpoint(client *Client, d *schema.ResourceData, isImportOp
 }
 
 func extractFlinkApiKeyAndApiSecret(client *Client, d *schema.ResourceData, isImportOperation bool) (string, string, error) {
+	if client.isOAuthEnabled {
+		return "", "", nil
+	}
 	if client.isFlinkMetadataSet {
 		return client.flinkApiKey, client.flinkApiSecret, nil
 	}
@@ -724,6 +727,9 @@ func extractFlinkComputePoolId(client *Client, d *schema.ResourceData, isImportO
 }
 
 func extractFlinkPrincipalId(client *Client, d *schema.ResourceData, isImportOperation bool) (string, error) {
+	if client.isOAuthEnabled {
+		return client.oauthToken.IdentityPoolId, nil
+	}
 	if client.isFlinkMetadataSet {
 		return client.flinkPrincipalId, nil
 	}
@@ -766,18 +772,35 @@ func resourceFlinkStatementDiff(_ context.Context, diff *schema.ResourceDiff, _ 
 	}
 
 	oldStopped, newStopped := diff.GetChange(paramStopped)
+
 	// RUNNING -> STOPPED transition, none of `paramPrincipal` and `paramComputePool` can be updated in place
 	if oldStopped == false && newStopped == true {
-		if diff.HasChanges(paramPrincipal, paramComputePool) {
-			return fmt.Errorf("error updating Flink Statement %q: 'principal' or 'compute_pool' can't be updated in place along with a `stopped` false -> true status change", diff.Id())
+		if diff.HasChanges(paramPrincipal) {
+			oldPrincipal, newPrincipal := diff.GetChange(paramPrincipal)
+			return fmt.Errorf("error updating Flink Statement %q: 'principal' (from %#v to %#v) can't be updated in place along with a `stopped` false -> true status change",
+				diff.Id(), oldPrincipal, newPrincipal)
+		}
+
+		if diff.HasChanges(paramComputePool) {
+			oldComputePool, newComputePool := diff.GetChange(paramComputePool)
+			return fmt.Errorf("error updating Flink Statement %q: 'compute_pool' (from %#v to %#v) can't be updated in place along with a `stopped` false -> true status change",
+				diff.Id(), oldComputePool, newComputePool)
 		}
 	}
 
 	// In case of no statement status transition, none of `paramPrincipal` and `paramComputePool` can be updated in place
 	// Scenarios include RUNNING -> RUNNING, STOPPED -> STOPPED
 	if oldStopped == newStopped {
-		if diff.HasChanges(paramPrincipal, paramComputePool) {
-			return fmt.Errorf("error updating Flink Statement %q: 'principal' or 'compute_pool' can't be updated in place without a `stopped` true -> false status change", diff.Id())
+		if diff.HasChanges(paramPrincipal) {
+			oldPrincipal, newPrincipal := diff.GetChange(paramPrincipal)
+			return fmt.Errorf("error updating Flink Statement %q: 'principal' (from %#v to %#v) can't be updated in place without a `stopped` true -> false status change",
+				diff.Id(), oldPrincipal, newPrincipal)
+		}
+
+		if diff.HasChanges(paramComputePool) {
+			oldComputePool, newComputePool := diff.GetChange(paramComputePool)
+			return fmt.Errorf("error updating Flink Statement %q: 'compute_pool' (from %#v to %#v) can't be updated in place without a `stopped` true -> false status change",
+				diff.Id(), oldComputePool, newComputePool)
 		}
 	}
 
