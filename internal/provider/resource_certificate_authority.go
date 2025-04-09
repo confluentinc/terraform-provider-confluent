@@ -66,7 +66,7 @@ func certificateAuthorityResource() *schema.Resource {
 				Type:         schema.TypeString,
 				Required:     true,
 				Sensitive:    true,
-				Description:  "A base64 encoded string containing the signing certificate chain.",
+				Description:  "A PEM encoded string containing the signing certificate chain.",
 				ValidateFunc: validation.StringIsNotEmpty,
 			},
 			paramCertificateChainFilename: {
@@ -111,7 +111,7 @@ func certificateAuthorityResource() *schema.Resource {
 				Type:         schema.TypeString,
 				Optional:     true,
 				Sensitive:    true,
-				Description:  "A base64 encoded string containing the CRL for this certificate authority.",
+				Description:  "A PEM encoded string containing the CRL for this certificate authority.",
 				ValidateFunc: validation.StringIsNotEmpty,
 			},
 		},
