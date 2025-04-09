@@ -11,7 +11,7 @@ auto_cancel:
 global_job_config:
   prologue:
     commands:
-      - sem-version go 1.23.7
+      - sem-version go 1.23.8
       - export "GOPATH=$(go env GOPATH)"
       - >-
         export
