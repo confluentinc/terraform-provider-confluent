@@ -2,7 +2,7 @@ version: "v1.0"
 name: GoReleaser
 agent:
   machine:
-    type: s1-prod-ubuntu20-04-amd64-1
+    type: s1-prod-ubuntu24-04-amd64-1
 blocks:
   - name: "Draft a Release (Part 1)"
     dependencies: []
@@ -40,7 +40,7 @@ blocks:
       jobs:
         - name: goreleaser
           commands:
-            - sem-version go 1.23.7
+            - sem-version go 1.23.8
             - export "GOPATH=$(go env GOPATH)"
             - export "GITHUB_TOKEN=$(gh auth token)"
             - >-

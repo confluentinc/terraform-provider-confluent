@@ -2,7 +2,7 @@ version: v1.0
 name: Terraform Provider for Confluent Cloud Pipeline
 agent:
   machine:
-    type: s1-prod-ubuntu20-04-amd64-1
+    type: s1-prod-ubuntu24-04-amd64-1
 
 auto_cancel:
   running:
@@ -11,7 +11,7 @@ auto_cancel:
 global_job_config:
   prologue:
     commands:
-      - sem-version go 1.23.7
+      - sem-version go 1.23.8
       - export "GOPATH=$(go env GOPATH)"
       - >-
         export
