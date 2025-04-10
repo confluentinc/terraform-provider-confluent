@@ -156,7 +156,7 @@ func TestAccClusterConfig(t *testing.T) {
 					resource.TestCheckResourceAttr(fullConfigResourceLabel, "id", fmt.Sprintf("%s", clusterId)),
 					resource.TestCheckResourceAttr(fullConfigResourceLabel, "%", "5"),
 					resource.TestCheckResourceAttr(fullConfigResourceLabel, "rest_endpoint", mockConfigTestServerUrl),
-					resource.TestCheckResourceAttr(fullConfigResourceLabel, "config.%", "5"),
+					resource.TestCheckResourceAttr(fullConfigResourceLabel, "config.%", "6"),
 					resource.TestCheckResourceAttr(fullConfigResourceLabel, fmt.Sprintf("config.%s", firstClusterConfigName), firstClusterConfigUpdatedValue),
 					resource.TestCheckResourceAttr(fullConfigResourceLabel, fmt.Sprintf("config.%s", secondClusterConfigName), secondClusterConfigValue),
 					resource.TestCheckResourceAttr(fullConfigResourceLabel, fmt.Sprintf("config.%s", thirdClusterConfigName), thirdClusterConfigUpdatedValue),

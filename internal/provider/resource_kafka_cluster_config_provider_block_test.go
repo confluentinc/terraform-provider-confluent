@@ -114,7 +114,7 @@ func TestAccClusterConfigWithEnhancedProviderBlock(t *testing.T) {
 					resource.TestCheckResourceAttr(fullConfigResourceLabel, "kafka_cluster.0.id", clusterId),
 					resource.TestCheckResourceAttr(fullConfigResourceLabel, "id", fmt.Sprintf("%s", clusterId)),
 					resource.TestCheckResourceAttr(fullConfigResourceLabel, "%", "5"),
-					resource.TestCheckResourceAttr(fullConfigResourceLabel, "config.%", "5"),
+					resource.TestCheckResourceAttr(fullConfigResourceLabel, "config.%", "6"),
 					resource.TestCheckResourceAttr(fullConfigResourceLabel, fmt.Sprintf("config.%s", firstClusterConfigName), firstClusterConfigUpdatedValue),
 					resource.TestCheckResourceAttr(fullConfigResourceLabel, fmt.Sprintf("config.%s", secondClusterConfigName), secondClusterConfigValue),
 					resource.TestCheckResourceAttr(fullConfigResourceLabel, fmt.Sprintf("config.%s", thirdClusterConfigName), thirdClusterConfigUpdatedValue),
