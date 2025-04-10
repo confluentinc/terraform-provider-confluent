@@ -43,6 +43,8 @@ const (
 	fourthClusterConfigAddedValue     = "9223372036854775807"
 	fifthClusterConfigName            = "log.retention.ms"
 	fifthClusterConfigAddedValue      = "604800001"
+	sixthClusterConfigName            = "ssl.enabled.protocols"
+	sixthClusterConfigAddedValue      = "TLSv1.3"
 	configResourceLabel               = "test_config_resource_label"
 )
 
@@ -154,12 +156,13 @@ func TestAccClusterConfig(t *testing.T) {
 					resource.TestCheckResourceAttr(fullConfigResourceLabel, "id", fmt.Sprintf("%s", clusterId)),
 					resource.TestCheckResourceAttr(fullConfigResourceLabel, "%", "5"),
 					resource.TestCheckResourceAttr(fullConfigResourceLabel, "rest_endpoint", mockConfigTestServerUrl),
-					resource.TestCheckResourceAttr(fullConfigResourceLabel, "config.%", "5"),
+					resource.TestCheckResourceAttr(fullConfigResourceLabel, "config.%", "6"),
 					resource.TestCheckResourceAttr(fullConfigResourceLabel, fmt.Sprintf("config.%s", firstClusterConfigName), firstClusterConfigUpdatedValue),
 					resource.TestCheckResourceAttr(fullConfigResourceLabel, fmt.Sprintf("config.%s", secondClusterConfigName), secondClusterConfigValue),
 					resource.TestCheckResourceAttr(fullConfigResourceLabel, fmt.Sprintf("config.%s", thirdClusterConfigName), thirdClusterConfigUpdatedValue),
 					resource.TestCheckResourceAttr(fullConfigResourceLabel, fmt.Sprintf("config.%s", fourthClusterConfigName), fourthClusterConfigAddedValue),
 					resource.TestCheckResourceAttr(fullConfigResourceLabel, fmt.Sprintf("config.%s", fifthClusterConfigName), fifthClusterConfigAddedValue),
+					resource.TestCheckResourceAttr(fullConfigResourceLabel, fmt.Sprintf("config.%s", sixthClusterConfigName), sixthClusterConfigAddedValue),
 					resource.TestCheckResourceAttr(fullConfigResourceLabel, "credentials.#", "1"),
 					resource.TestCheckResourceAttr(fullConfigResourceLabel, "credentials.0.%", "2"),
 					resource.TestCheckResourceAttr(fullConfigResourceLabel, "credentials.0.key", kafkaApiKey),
@@ -228,6 +231,7 @@ func testAccCheckConfigUpdatedConfig(confluentCloudBaseUrl, mockServerUrl string
 		"%s" = "%s"
 		"%s" = "%s"
 		"%s" = "%s"
+		"%s" = "%s"
 	  }
 
 	  credentials {
@@ -238,7 +242,7 @@ func testAccCheckConfigUpdatedConfig(confluentCloudBaseUrl, mockServerUrl string
 	`, confluentCloudBaseUrl, configResourceLabel, clusterId, mockServerUrl,
 		firstClusterConfigName, firstClusterConfigUpdatedValue, secondClusterConfigName, secondClusterConfigValue,
 		thirdClusterConfigName, thirdClusterConfigUpdatedValue, fourthClusterConfigName, fourthClusterConfigAddedValue,
-		fifthClusterConfigName, fifthClusterConfigAddedValue,
+		fifthClusterConfigName, fifthClusterConfigAddedValue, sixthClusterConfigName, sixthClusterConfigAddedValue,
 		kafkaApiKey, kafkaApiSecret)
 }
 
