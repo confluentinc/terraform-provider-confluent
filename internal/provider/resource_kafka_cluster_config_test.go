@@ -43,6 +43,8 @@ const (
 	fourthClusterConfigAddedValue     = "9223372036854775807"
 	fifthClusterConfigName            = "log.retention.ms"
 	fifthClusterConfigAddedValue      = "604800001"
+	sixthClusterConfigName            = "ssl.protocols.enabled"
+	sixthClusterConfigValue           = "TLSv1.3"
 	configResourceLabel               = "test_config_resource_label"
 )
 
@@ -160,6 +162,7 @@ func TestAccClusterConfig(t *testing.T) {
 					resource.TestCheckResourceAttr(fullConfigResourceLabel, fmt.Sprintf("config.%s", thirdClusterConfigName), thirdClusterConfigUpdatedValue),
 					resource.TestCheckResourceAttr(fullConfigResourceLabel, fmt.Sprintf("config.%s", fourthClusterConfigName), fourthClusterConfigAddedValue),
 					resource.TestCheckResourceAttr(fullConfigResourceLabel, fmt.Sprintf("config.%s", fifthClusterConfigName), fifthClusterConfigAddedValue),
+					resource.TestCheckResourceAttr(fullConfigResourceLabel, fmt.Sprintf("config.%s", sixthClusterConfigName), sixthClusterConfigValue),
 					resource.TestCheckResourceAttr(fullConfigResourceLabel, "credentials.#", "1"),
 					resource.TestCheckResourceAttr(fullConfigResourceLabel, "credentials.0.%", "2"),
 					resource.TestCheckResourceAttr(fullConfigResourceLabel, "credentials.0.key", kafkaApiKey),

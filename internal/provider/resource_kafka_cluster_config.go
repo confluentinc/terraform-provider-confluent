@@ -32,6 +32,7 @@ import (
 var editableClusterSettings = []string{
 	"auto.create.topics.enable",
 	"ssl.cipher.suites",
+	"ssl.protocols.enabled",
 	"num.partitions",
 	"log.cleaner.max.compaction.lag.ms",
 	"log.retention.ms",
