@@ -120,6 +120,7 @@ func TestAccClusterConfigWithEnhancedProviderBlock(t *testing.T) {
 					resource.TestCheckResourceAttr(fullConfigResourceLabel, fmt.Sprintf("config.%s", thirdClusterConfigName), thirdClusterConfigUpdatedValue),
 					resource.TestCheckResourceAttr(fullConfigResourceLabel, fmt.Sprintf("config.%s", fourthClusterConfigName), fourthClusterConfigAddedValue),
 					resource.TestCheckResourceAttr(fullConfigResourceLabel, fmt.Sprintf("config.%s", fifthClusterConfigName), fifthClusterConfigAddedValue),
+					resource.TestCheckResourceAttr(fullConfigResourceLabel, fmt.Sprintf("config.%s", sixthClusterConfigName), sixthClusterConfigAddedValue),
 					resource.TestCheckResourceAttr(fullConfigResourceLabel, "credentials.#", "0"),
 				),
 			},
@@ -178,10 +179,11 @@ func testAccCheckConfigUpdatedConfigWithEnhancedProviderBlock(confluentCloudBase
 		"%s" = "%s"
 		"%s" = "%s"
 		"%s" = "%s"
+		"%s" = "%s"
 	  }
 	}
 	`, confluentCloudBaseUrl, kafkaApiKey, kafkaApiSecret, mockServerUrl, configResourceLabel, clusterId,
 		firstClusterConfigName, firstClusterConfigUpdatedValue, secondClusterConfigName, secondClusterConfigValue,
 		thirdClusterConfigName, thirdClusterConfigUpdatedValue, fourthClusterConfigName, fourthClusterConfigAddedValue,
-		fifthClusterConfigName, fifthClusterConfigAddedValue)
+		fifthClusterConfigName, fifthClusterConfigAddedValue, sixthClusterConfigName, sixthClusterConfigAddedValue)
 }
