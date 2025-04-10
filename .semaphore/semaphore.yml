@@ -31,8 +31,8 @@ blocks:
           execution_time_limit:
             hours: 2
           commands:
-            - make all
             - make sonar-scan
+            - make all
             # Run make-release CI if the current commit is not tagged
             - if [[ -z $(git tag --points-at HEAD) ]]; then make release-ci; fi
 
