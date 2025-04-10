@@ -31,6 +31,7 @@ import (
 // https://docs.confluent.io/cloud/current/clusters/broker-config.html#change-cluster-settings-for-dedicated-clusters
 var editableClusterSettings = []string{
 	"auto.create.topics.enable",
+	"ssl.enabled.protocols",
 	"ssl.cipher.suites",
 	"num.partitions",
 	"log.cleaner.max.compaction.lag.ms",
