@@ -32,6 +32,7 @@ blocks:
             hours: 2
           commands:
             - . vault-sem-get-secret v1/ci/kv/apif/sonar_token
+            - export SONAR_TOKEN="$SCRIPT"
             - make sonar-scan
             - make all
             # Run make-release CI if the current commit is not tagged
