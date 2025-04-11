@@ -45,7 +45,6 @@ func TestAccAccessPointAwsEgressPrivateLinkEndpoint(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
@@ -160,6 +159,10 @@ func TestAccAccessPointAwsEgressPrivateLinkEndpoint(t *testing.T) {
 			},
 		},
 	})
+	err = wiremockContainer.Terminate(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestAccAccessPointAwsPrivateNetworkInterface(t *testing.T) {
@@ -169,7 +172,6 @@ func TestAccAccessPointAwsPrivateNetworkInterface(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
@@ -286,6 +288,10 @@ func TestAccAccessPointAwsPrivateNetworkInterface(t *testing.T) {
 			},
 		},
 	})
+	err = wiremockContainer.Terminate(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestAccAccessPointAzureEgressPrivateLinkEndpoint(t *testing.T) {
@@ -295,7 +301,6 @@ func TestAccAccessPointAzureEgressPrivateLinkEndpoint(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
@@ -420,6 +425,10 @@ func TestAccAccessPointAzureEgressPrivateLinkEndpoint(t *testing.T) {
 			},
 		},
 	})
+	err = wiremockContainer.Terminate(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestAccAccessPointGcpEgressPrivateServiceConnectEndpoint(t *testing.T) {
@@ -429,7 +438,6 @@ func TestAccAccessPointGcpEgressPrivateServiceConnectEndpoint(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
@@ -544,6 +552,10 @@ func TestAccAccessPointGcpEgressPrivateServiceConnectEndpoint(t *testing.T) {
 			},
 		},
 	})
+	err = wiremockContainer.Terminate(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func testAccCheckResourceAccessPointAwsEgressWithIdSet(mockServerUrl, name string) string {
