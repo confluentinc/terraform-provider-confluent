@@ -42,7 +42,6 @@ func TestAccDnsForwarder(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
@@ -119,6 +118,11 @@ func TestAccDnsForwarder(t *testing.T) {
 			},
 		},
 	})
+
+	err = wiremockContainer.Terminate(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestAccDnsForwarderGcp(t *testing.T) {
@@ -128,7 +132,6 @@ func TestAccDnsForwarderGcp(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
@@ -204,6 +207,11 @@ func TestAccDnsForwarderGcp(t *testing.T) {
 			},
 		},
 	})
+
+	err = wiremockContainer.Terminate(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func testAccCheckResourceDnsForwarderWithIdSet(mockServerUrl string) string {

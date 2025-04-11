@@ -42,7 +42,6 @@ func TestAccCustomConnectorPlugin(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
@@ -185,6 +184,11 @@ func TestAccCustomConnectorPlugin(t *testing.T) {
 	checkStubCount(t, wiremockClient, createCustomConnectorPluginStub, "POST /connect/v1/custom-connector-plugins", expectedCountOne)
 	checkStubCount(t, wiremockClient, patchCustomConnectorPluginStub, "PATCH /connect/v1/custom-connector-plugins/ccp-4rrw00", expectedCountOne)
 	checkStubCount(t, wiremockClient, deleteCustomConnectorPluginStub, "DELETE /connect/v1/custom-connector-plugins/ccp-4rrw00", expectedCountOne)
+
+	err = wiremockContainer.Terminate(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func testAccCheckCustomConnectorPluginDestroy(s *terraform.State) error {
