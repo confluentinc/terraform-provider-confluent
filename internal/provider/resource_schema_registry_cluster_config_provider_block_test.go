@@ -50,7 +50,6 @@ func TestAccSchemaRegistryClusterCompatibilityLevelWithEnhancedProviderBlock(t *
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockSchemaRegistryClusterCompatibilityLevelTestServerUrl := wiremockContainer.URI
 	confluentCloudBaseUrl := ""
@@ -170,6 +169,11 @@ func TestAccSchemaRegistryClusterCompatibilityLevelWithEnhancedProviderBlock(t *
 
 	checkStubCount(t, wiremockClient, createSchemaRegistryClusterCompatibilityLevelStub, fmt.Sprintf("PUT (CREATE) %s", updateSchemaRegistryClusterCompatibilityLevelPath), expectedCountTwo)
 	checkStubCount(t, wiremockClient, deleteSchemaRegistryClusterCompatibilityLevelStub, fmt.Sprintf("DELETE %s", updateSchemaRegistryClusterCompatibilityLevelPath), expectedCountZero)
+
+	err = wiremockContainer.Terminate(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func testAccCheckSchemaRegistryClusterCompatibilityLevelConfigWithEnhancedProviderBlock(confluentCloudBaseUrl, mockServerUrl, compatibilityLevel, compatibilityGroup string) string {

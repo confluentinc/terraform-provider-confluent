@@ -54,7 +54,6 @@ func TestAccLatestSchema(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockSchemaTestServerUrl := wiremockContainer.URI
 	confluentCloudBaseUrl := ""
@@ -285,6 +284,11 @@ func TestAccLatestSchema(t *testing.T) {
 	})
 
 	checkStubCount(t, wiremockClient, deleteSchemaStub, fmt.Sprintf("DELETE %s", readSchemasPath), expectedCountOne)
+
+	err = wiremockContainer.Terminate(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func testAccCheckLatestSchemaConfig(confluentCloudBaseUrl, mockServerUrl string) string {
