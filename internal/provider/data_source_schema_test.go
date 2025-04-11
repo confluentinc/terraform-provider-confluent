@@ -22,6 +22,7 @@ import (
 	"net/http"
 	"strconv"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
@@ -35,6 +36,7 @@ var fullSchemaDataSourceLabel = fmt.Sprintf("data.confluent_schema.%s", testSche
 func TestAccDataSourceSchema(t *testing.T) {
 	ctx := context.Background()
 
+	time.Sleep(5 * time.Second)
 	wiremockContainer, err := setupWiremock(ctx)
 	if err != nil {
 		t.Fatal(err)

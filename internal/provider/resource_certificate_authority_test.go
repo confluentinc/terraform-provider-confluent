@@ -20,6 +20,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/walkerus/go-wiremock"
 
@@ -39,6 +40,7 @@ const (
 func TestAccCertificateAuthority(t *testing.T) {
 	ctx := context.Background()
 
+	time.Sleep(5 * time.Second)
 	wiremockContainer, err := setupWiremock(ctx)
 	if err != nil {
 		t.Fatal(err)
@@ -143,6 +145,7 @@ func TestAccCertificateAuthority(t *testing.T) {
 func TestAccCertificateAuthorityCrl(t *testing.T) {
 	ctx := context.Background()
 
+	time.Sleep(5 * time.Second)
 	wiremockContainer, err := setupWiremock(ctx)
 	if err != nil {
 		t.Fatal(err)

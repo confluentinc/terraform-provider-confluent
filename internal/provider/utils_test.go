@@ -20,6 +20,7 @@ import (
 	dns "github.com/confluentinc/ccloud-sdk-go-v2/networking-dnsforwarder/v1"
 	"reflect"
 	"testing"
+	"time"
 
 	apikeys "github.com/confluentinc/ccloud-sdk-go-v2/apikeys/v2"
 )

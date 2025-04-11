@@ -18,6 +18,7 @@ import (
 	"context"
 	"reflect"
 	"testing"
+	"time"
 )
 
 const testEndpoint = "https://pkc-012345.us-central1.gcp.confluent.cloud:443"
