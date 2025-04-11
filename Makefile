@@ -221,7 +221,7 @@ test:
 
 .PHONY: testacc
 testacc:
-	TF_LOG=debug TF_ACC=1 $(GOCMD) test $(TEST) -v $(TESTARGS) -timeout 120m -failfast -p 1
+	TF_LOG=debug TF_ACC=1 $(GOCMD) test $(TEST) -v $(TESTARGS) -timeout 120m
 	@echo "finished testacc"
 
 install: build
