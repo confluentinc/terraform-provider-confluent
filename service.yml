@@ -1,4 +1,4 @@
-name: terraform-provider-confluent-internal
+name: terraform-provider-confluent
 contact:
   name: api
   jira_project_key: CLI
@@ -6,7 +6,7 @@ contact:
   slack_team_channel: api-eng
   slack_oncall_channel: terraform
 lang: go
-lang_version: "1.23.7"
+lang_version: 1.23.7
 git:
   enable: true
 github:

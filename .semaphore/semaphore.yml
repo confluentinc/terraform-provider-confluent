@@ -2,7 +2,7 @@ version: v1.0
 name: Terraform Provider for Confluent Cloud Pipeline
 agent:
   machine:
-    type: s1-prod-ubuntu20-04-amd64-1
+    type: s1-prod-ubuntu24-04-amd64-1
 
 auto_cancel:
   running:
@@ -31,9 +31,13 @@ blocks:
           execution_time_limit:
             hours: 2
           commands:
+            - make sonar-scan
             - make all
             # Run make-release CI if the current commit is not tagged
             - if [[ -z $(git tag --points-at HEAD) ]]; then make release-ci; fi
+      env_vars:
+        - name: SONAR_TOKEN
+          value: sqp_8f9bdade072d94fa8299e67e62f6fb4414887034
 
 promotions:
   - name: Draft a Release
