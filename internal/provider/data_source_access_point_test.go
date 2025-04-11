@@ -25,7 +25,6 @@ func TestAccDataSourceAccessPointAwsEgressPrivateLinkEndpoint(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
@@ -74,6 +73,10 @@ func TestAccDataSourceAccessPointAwsEgressPrivateLinkEndpoint(t *testing.T) {
 			},
 		},
 	})
+	err = wiremockContainer.Terminate(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestAccDataSourceAccessPointAwsPrivateNetworkInterface(t *testing.T) {
@@ -83,7 +86,6 @@ func TestAccDataSourceAccessPointAwsPrivateNetworkInterface(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
@@ -133,6 +135,10 @@ func TestAccDataSourceAccessPointAwsPrivateNetworkInterface(t *testing.T) {
 			},
 		},
 	})
+	err = wiremockContainer.Terminate(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestAccDataSourceAccessPointAzureEgressPrivateLinkEndpoint(t *testing.T) {
@@ -142,7 +148,6 @@ func TestAccDataSourceAccessPointAzureEgressPrivateLinkEndpoint(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
@@ -196,6 +201,10 @@ func TestAccDataSourceAccessPointAzureEgressPrivateLinkEndpoint(t *testing.T) {
 			},
 		},
 	})
+	err = wiremockContainer.Terminate(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestAccDataSourceAccessPointGcpEgressPrivateServiceConnectEndpoint(t *testing.T) {
@@ -205,7 +214,6 @@ func TestAccDataSourceAccessPointGcpEgressPrivateServiceConnectEndpoint(t *testi
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
@@ -254,6 +262,10 @@ func TestAccDataSourceAccessPointGcpEgressPrivateServiceConnectEndpoint(t *testi
 			},
 		},
 	})
+	err = wiremockContainer.Terminate(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func testAccCheckDataSourceAccessPoint(mockServerUrl, resourceId, resourceName string) string {
