@@ -43,7 +43,6 @@ func TestAccCertificateAuthority(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
@@ -138,6 +137,11 @@ func TestAccCertificateAuthority(t *testing.T) {
 			},
 		},
 	})
+
+	err = wiremockContainer.Terminate(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestAccCertificateAuthorityCrl(t *testing.T) {
@@ -147,7 +151,6 @@ func TestAccCertificateAuthorityCrl(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
@@ -248,6 +251,11 @@ func TestAccCertificateAuthorityCrl(t *testing.T) {
 			},
 		},
 	})
+
+	err = wiremockContainer.Terminate(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func testAccCheckResourceCertificateAuthorityConfig(mockServerUrl, description string) string {
