@@ -31,8 +31,7 @@ blocks:
           execution_time_limit:
             hours: 2
           commands:
-            - . vault-sem-get-secret v1/ci/kv/apif/sonar_token
-            - export SONAR_TOKEN="$SCRIPT"
+            - . vault-sem-get-secret v1/ci/kv/apif/terraform-provider-confluent/sonar_token
             - make sonar-scan
             - make all
             # Run make-release CI if the current commit is not tagged
