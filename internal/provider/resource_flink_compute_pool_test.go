@@ -53,7 +53,6 @@ func TestAccComputePool(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
@@ -178,6 +177,11 @@ func TestAccComputePool(t *testing.T) {
 
 	checkStubCount(t, wiremockClient, createComputePoolStub, fmt.Sprintf("POST %s", flinkComputePoolUrlPath), expectedCountOne)
 	checkStubCount(t, wiremockClient, deleteComputePoolStub, fmt.Sprintf("DELETE %s?environment=%s", flinkComputePoolUrlPath, flinkComputePoolEnvironmentId), expectedCountOne)
+
+	err = wiremockContainer.Terminate(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func testAccCheckComputePoolDestroy(s *terraform.State) error {
