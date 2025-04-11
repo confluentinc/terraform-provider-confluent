@@ -67,6 +67,7 @@ var updateClusterLinkConfigPath = fmt.Sprintf("/kafka/v3/clusters/%s/links/%s/co
 func TestAccClusterLinkDestinationOutbound(t *testing.T) {
 	ctx := context.Background()
 
+	time.Sleep(5 * time.Second)
 	wiremockContainer, err := setupWiremock(ctx)
 	if err != nil {
 		t.Fatal(err)

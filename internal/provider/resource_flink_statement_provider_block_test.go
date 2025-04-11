@@ -60,6 +60,7 @@ var readFlinkStatementPath = fmt.Sprintf("/sql/v1/organizations/%s/environments/
 func TestAccFlinkStatementWithEnhancedProviderBlock(t *testing.T) {
 	ctx := context.Background()
 
+	time.Sleep(5 * time.Second)
 	wiremockContainer, err := setupWiremock(ctx)
 	if err != nil {
 		t.Fatal(err)

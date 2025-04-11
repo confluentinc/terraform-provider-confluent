@@ -59,6 +59,7 @@ var fullKafkaResourceLabel = fmt.Sprintf("confluent_kafka_cluster.%s", kafkaReso
 func TestAccClusterWithSGPackage(t *testing.T) {
 	ctx := context.Background()
 
+	time.Sleep(5 * time.Second)
 	wiremockContainer, err := setupWiremock(ctx)
 	if err != nil {
 		t.Fatal(err)

@@ -36,6 +36,7 @@ var environments = []string{"env-1jnw8z", "env-7n1r31"}
 func TestAccDataSourceSchemaRegistryClusters(t *testing.T) {
 	ctx := context.Background()
 
+	time.Sleep(5 * time.Second)
 	wiremockContainer, err := setupWiremock(ctx)
 	if err != nil {
 		t.Fatal(err)
@@ -124,6 +125,7 @@ func TestAccDataSourceSchemaRegistryClusters(t *testing.T) {
 func TestAccDataSourceSchemaRegistryClustersPrivate(t *testing.T) {
 	ctx := context.Background()
 
+	time.Sleep(5 * time.Second)
 	wiremockContainer, err := setupWiremock(ctx)
 	if err != nil {
 		t.Fatal(err)

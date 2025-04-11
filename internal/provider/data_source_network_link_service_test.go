@@ -37,6 +37,7 @@ const (
 func TestAccDataSourceNetworkLinkService(t *testing.T) {
 	ctx := context.Background()
 
+	time.Sleep(5 * time.Second)
 	wiremockContainer, err := setupWiremock(ctx)
 	if err != nil {
 		t.Fatal(err)
@@ -70,7 +71,7 @@ func TestAccDataSourceNetworkLinkService(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		))
-	
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,

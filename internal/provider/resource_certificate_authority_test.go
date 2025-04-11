@@ -39,6 +39,7 @@ const (
 func TestAccCertificateAuthority(t *testing.T) {
 	ctx := context.Background()
 
+	time.Sleep(5 * time.Second)
 	wiremockContainer, err := setupWiremock(ctx)
 	if err != nil {
 		t.Fatal(err)
@@ -143,6 +144,7 @@ func TestAccCertificateAuthority(t *testing.T) {
 func TestAccCertificateAuthorityCrl(t *testing.T) {
 	ctx := context.Background()
 
+	time.Sleep(5 * time.Second)
 	wiremockContainer, err := setupWiremock(ctx)
 	if err != nil {
 		t.Fatal(err)

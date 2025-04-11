@@ -21,6 +21,7 @@ const (
 func TestAccDataSourceAccessPointAwsEgressPrivateLinkEndpoint(t *testing.T) {
 	ctx := context.Background()
 
+	time.Sleep(5 * time.Second)
 	wiremockContainer, err := setupWiremock(ctx)
 	if err != nil {
 		t.Fatal(err)
@@ -79,6 +80,7 @@ func TestAccDataSourceAccessPointAwsEgressPrivateLinkEndpoint(t *testing.T) {
 func TestAccDataSourceAccessPointAwsPrivateNetworkInterface(t *testing.T) {
 	ctx := context.Background()
 
+	time.Sleep(5 * time.Second)
 	wiremockContainer, err := setupWiremock(ctx)
 	if err != nil {
 		t.Fatal(err)
@@ -138,6 +140,7 @@ func TestAccDataSourceAccessPointAwsPrivateNetworkInterface(t *testing.T) {
 func TestAccDataSourceAccessPointAzureEgressPrivateLinkEndpoint(t *testing.T) {
 	ctx := context.Background()
 
+	time.Sleep(5 * time.Second)
 	wiremockContainer, err := setupWiremock(ctx)
 	if err != nil {
 		t.Fatal(err)
@@ -201,6 +204,7 @@ func TestAccDataSourceAccessPointAzureEgressPrivateLinkEndpoint(t *testing.T) {
 func TestAccDataSourceAccessPointGcpEgressPrivateServiceConnectEndpoint(t *testing.T) {
 	ctx := context.Background()
 
+	time.Sleep(5 * time.Second)
 	wiremockContainer, err := setupWiremock(ctx)
 	if err != nil {
 		t.Fatal(err)

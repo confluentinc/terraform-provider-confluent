@@ -36,6 +36,7 @@ var userIds = []string{"u-1jjv21", "u-1jjv22", "u-1jjv23"}
 func TestAccDataSourceUsers(t *testing.T) {
 	ctx := context.Background()
 
+	time.Sleep(5 * time.Second)
 	wiremockContainer, err := setupWiremock(ctx)
 	if err != nil {
 		t.Fatal(err)
