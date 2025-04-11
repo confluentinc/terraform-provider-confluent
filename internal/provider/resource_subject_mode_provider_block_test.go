@@ -45,6 +45,7 @@ var updateSubjectModePath = fmt.Sprintf("/mode/%s", testSubjectName)
 func TestAccSubjectModeWithEnhancedProviderBlock(t *testing.T) {
 	ctx := context.Background()
 
+	time.Sleep(5 * time.Second)
 	wiremockContainer, err := setupWiremock(ctx)
 	if err != nil {
 		t.Fatal(err)

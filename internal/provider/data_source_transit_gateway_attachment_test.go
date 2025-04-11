@@ -36,6 +36,7 @@ var fullTransitGatewayAttachmentDataSourceLabel = fmt.Sprintf("data.confluent_tr
 func TestAccDataSourceTransitGatewayAttachment(t *testing.T) {
 	ctx := context.Background()
 
+	time.Sleep(5 * time.Second)
 	wiremockContainer, err := setupWiremock(ctx)
 	if err != nil {
 		t.Fatal(err)

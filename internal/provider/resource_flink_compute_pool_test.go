@@ -49,6 +49,7 @@ var flinkComputePoolUrlPath = fmt.Sprintf("/fcpm/v2/compute-pools/%s", flinkComp
 func TestAccComputePool(t *testing.T) {
 	ctx := context.Background()
 
+	time.Sleep(5 * time.Second)
 	wiremockContainer, err := setupWiremock(ctx)
 	if err != nil {
 		t.Fatal(err)

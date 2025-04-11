@@ -77,6 +77,7 @@ var deleteSchemaPathUpdated = fmt.Sprintf("/subjects/%s/versions/%s", testSubjec
 func TestAccVersionedSchema(t *testing.T) {
 	ctx := context.Background()
 
+	time.Sleep(5 * time.Second)
 	wiremockContainer, err := setupWiremock(ctx)
 	if err != nil {
 		t.Fatal(err)
