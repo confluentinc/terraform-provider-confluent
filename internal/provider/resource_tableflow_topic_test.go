@@ -43,7 +43,6 @@ func TestAccTableflowTopicByobAws(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
@@ -168,6 +167,10 @@ func TestAccTableflowTopicByobAws(t *testing.T) {
 			},
 		},
 	})
+	err = wiremockContainer.Terminate(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestAccTableflowTopicManagedStorage(t *testing.T) {
@@ -177,7 +180,6 @@ func TestAccTableflowTopicManagedStorage(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
@@ -297,6 +299,10 @@ func TestAccTableflowTopicManagedStorage(t *testing.T) {
 			},
 		},
 	})
+	err = wiremockContainer.Terminate(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func testAccCheckResourceTableflowTopicByobAws(mockServerUrl string, retention int) string {

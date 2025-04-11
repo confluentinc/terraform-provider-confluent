@@ -49,7 +49,6 @@ func TestAccSubjectModeWithEnhancedProviderBlock(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockSubjectModeTestServerUrl := wiremockContainer.URI
 	confluentCloudBaseUrl := ""
@@ -171,6 +170,11 @@ func TestAccSubjectModeWithEnhancedProviderBlock(t *testing.T) {
 
 	checkStubCount(t, wiremockClient, createSubjectModeStub, fmt.Sprintf("PUT (CREATE) %s", updateSubjectModePath), expectedCountTwo)
 	checkStubCount(t, wiremockClient, deleteSubjectModeStub, fmt.Sprintf("DELETE %s", updateSubjectModePath), expectedCountOne)
+
+	err = wiremockContainer.Terminate(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func testAccCheckSubjectModeConfigWithEnhancedProviderBlock(confluentCloudBaseUrl, mockServerUrl, mode string) string {
