@@ -45,11 +45,7 @@ func TestAccCustomConnectorPlugin(t *testing.T) {
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
-	// nolint:errcheck
-	defer wiremockClient.Reset()
 
-	// nolint:errcheck
-	defer wiremockClient.ResetAllScenarios()
 	createCustomConnectorPluginPresignedUrlResponse, _ := ioutil.ReadFile("../testdata/custom_connector_plugin/read_presigned_url.json")
 	createCustomConnectorPluginPresignedUrlStub := wiremock.Post(wiremock.URLPathEqualTo("/connect/v1/presigned-upload-url")).
 		InScenario(customConnectorPluginScenarioName).
@@ -185,10 +181,23 @@ func TestAccCustomConnectorPlugin(t *testing.T) {
 	checkStubCount(t, wiremockClient, patchCustomConnectorPluginStub, "PATCH /connect/v1/custom-connector-plugins/ccp-4rrw00", expectedCountOne)
 	checkStubCount(t, wiremockClient, deleteCustomConnectorPluginStub, "DELETE /connect/v1/custom-connector-plugins/ccp-4rrw00", expectedCountOne)
 
-	err = wiremockContainer.Terminate(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
+	t.Cleanup(func() {
+		err := wiremockClient.Reset()
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to reset wiremock: %v", err))
+		}
+
+		err = wiremockClient.ResetAllScenarios()
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to reset scenarios: %v", err))
+		}
+
+		// Also add container termination here to ensure it happens
+		err = wiremockContainer.Terminate(ctx)
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to terminate container: %v", err))
+		}
+	})
 }
 
 func testAccCheckCustomConnectorPluginDestroy(s *terraform.State) error {

@@ -46,11 +46,6 @@ func TestAccTableflowTopicByobAws(t *testing.T) {
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
-	// nolint:errcheck
-	defer wiremockClient.Reset()
-
-	// nolint:errcheck
-	defer wiremockClient.ResetAllScenarios()
 
 	createTableflowTopicResponse, _ := os.ReadFile("../testdata/tableflow_topic/create_byob_aws_tt.json")
 	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(tableflowTopicUrlPath)).
@@ -167,10 +162,23 @@ func TestAccTableflowTopicByobAws(t *testing.T) {
 			},
 		},
 	})
-	err = wiremockContainer.Terminate(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
+	t.Cleanup(func() {
+		err := wiremockClient.Reset()
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to reset wiremock: %v", err))
+		}
+
+		err = wiremockClient.ResetAllScenarios()
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to reset scenarios: %v", err))
+		}
+
+		// Also add container termination here to ensure it happens
+		err = wiremockContainer.Terminate(ctx)
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to terminate container: %v", err))
+		}
+	})
 }
 
 func TestAccTableflowTopicManagedStorage(t *testing.T) {
@@ -183,11 +191,6 @@ func TestAccTableflowTopicManagedStorage(t *testing.T) {
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
-	// nolint:errcheck
-	defer wiremockClient.Reset()
-
-	// nolint:errcheck
-	defer wiremockClient.ResetAllScenarios()
 
 	createTableflowTopicResponse, _ := os.ReadFile("../testdata/tableflow_topic/create_managed_storage_tt.json")
 	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(tableflowTopicUrlPath)).
@@ -299,10 +302,23 @@ func TestAccTableflowTopicManagedStorage(t *testing.T) {
 			},
 		},
 	})
-	err = wiremockContainer.Terminate(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
+	t.Cleanup(func() {
+		err := wiremockClient.Reset()
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to reset wiremock: %v", err))
+		}
+
+		err = wiremockClient.ResetAllScenarios()
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to reset scenarios: %v", err))
+		}
+
+		// Also add container termination here to ensure it happens
+		err = wiremockContainer.Terminate(ctx)
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to terminate container: %v", err))
+		}
+	})
 }
 
 func testAccCheckResourceTableflowTopicByobAws(mockServerUrl string, retention int) string {

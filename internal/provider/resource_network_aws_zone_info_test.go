@@ -61,11 +61,7 @@ func TestAccAwsZoneInfoNetwork(t *testing.T) {
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
-	// nolint:errcheck
-	defer wiremockClient.Reset()
 
-	// nolint:errcheck
-	defer wiremockClient.ResetAllScenarios()
 	createAwsNetworkResponse, _ := ioutil.ReadFile("../testdata/network/aws_zone_info/create_network.json")
 	createAwsNetworkStub := wiremock.Post(wiremock.URLPathEqualTo("/networking/v1/networks")).
 		InScenario(awsNetworkScenarioName).
@@ -234,10 +230,23 @@ func TestAccAwsZoneInfoNetwork(t *testing.T) {
 	checkStubCount(t, wiremockClient, createAwsNetworkStub, fmt.Sprintf("POST %s", awsNetworkUrlPath), expectedCountOne)
 	checkStubCount(t, wiremockClient, deleteAwsNetworkStub, fmt.Sprintf("DELETE %s?environment=%s", awsNetworkUrlPath, awsNetworkEnvironmentId), expectedCountOne)
 
-	err = wiremockContainer.Terminate(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
+	t.Cleanup(func() {
+		err := wiremockClient.Reset()
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to reset wiremock: %v", err))
+		}
+
+		err = wiremockClient.ResetAllScenarios()
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to reset scenarios: %v", err))
+		}
+
+		// Also add container termination here to ensure it happens
+		err = wiremockContainer.Terminate(ctx)
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to terminate container: %v", err))
+		}
+	})
 }
 
 func testAccCheckAwsPeeringNetworkConfig(mockServerUrl, networkDisplayName, resourceLabel string) string {

@@ -45,11 +45,6 @@ func TestAccDataSourceNetwork(t *testing.T) {
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
-	// nolint:errcheck
-	defer wiremockClient.Reset()
-
-	// nolint:errcheck
-	defer wiremockClient.ResetAllScenarios()
 
 	readCreatedAwsNetworkResponse, _ := ioutil.ReadFile("../testdata/network/aws/read_created_network.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(awsNetworkUrlPath)).
@@ -143,10 +138,23 @@ func TestAccDataSourceNetwork(t *testing.T) {
 			},
 		},
 	})
-	err = wiremockContainer.Terminate(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
+	t.Cleanup(func() {
+		err := wiremockClient.Reset()
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to reset wiremock: %v", err))
+		}
+
+		err = wiremockClient.ResetAllScenarios()
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to reset scenarios: %v", err))
+		}
+
+		// Also add container termination here to ensure it happens
+		err = wiremockContainer.Terminate(ctx)
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to terminate container: %v", err))
+		}
+	})
 }
 
 func testAccCheckDataSourceAzureNetworkConfigWithDisplayNameSet(mockServerUrl string) string {

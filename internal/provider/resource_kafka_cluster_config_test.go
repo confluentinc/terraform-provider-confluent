@@ -61,11 +61,7 @@ func TestAccClusterConfig(t *testing.T) {
 	mockConfigTestServerUrl := wiremockContainer.URI
 	confluentCloudBaseUrl := ""
 	wiremockClient := wiremock.NewClient(mockConfigTestServerUrl)
-	// nolint:errcheck
-	defer wiremockClient.Reset()
 
-	// nolint:errcheck
-	defer wiremockClient.ResetAllScenarios()
 	createConfigStub := wiremock.Post(wiremock.URLPathEqualTo(updateKafkaConfigPath)).
 		InScenario(configScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
@@ -176,10 +172,23 @@ func TestAccClusterConfig(t *testing.T) {
 
 	checkStubCount(t, wiremockClient, createConfigStub, fmt.Sprintf("POST %s", updateKafkaConfigPath), 2)
 
-	err = wiremockContainer.Terminate(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
+	t.Cleanup(func() {
+		err := wiremockClient.Reset()
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to reset wiremock: %v", err))
+		}
+
+		err = wiremockClient.ResetAllScenarios()
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to reset scenarios: %v", err))
+		}
+
+		// Also add container termination here to ensure it happens
+		err = wiremockContainer.Terminate(ctx)
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to terminate container: %v", err))
+		}
+	})
 }
 
 func testAccCheckConfigDestroy(s *terraform.State) error {

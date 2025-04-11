@@ -48,11 +48,7 @@ func TestAccIdentityPool(t *testing.T) {
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
-	// nolint:errcheck
-	defer wiremockClient.Reset()
 
-	// nolint:errcheck
-	defer wiremockClient.ResetAllScenarios()
 	createSaResponse, _ := ioutil.ReadFile("../testdata/identity_pool/create_identity_pool.json")
 	createSaStub := wiremock.Post(wiremock.URLPathEqualTo(fmt.Sprintf("/iam/v2/identity-providers/%s/identity-pools", identityProviderId))).
 		InScenario(identityPoolScenarioName).
@@ -172,10 +168,23 @@ func TestAccIdentityPool(t *testing.T) {
 	checkStubCount(t, wiremockClient, patchSaStub, "PATCH /iam/v2/identity-providers/op-537/identity-pools/pool-rORN", expectedCountOne)
 	checkStubCount(t, wiremockClient, deleteSaStub, "DELETE /iam/v2/identity-providers/op-537/identity-pools/pool-rORN", expectedCountOne)
 
-	err = wiremockContainer.Terminate(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
+	t.Cleanup(func() {
+		err := wiremockClient.Reset()
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to reset wiremock: %v", err))
+		}
+
+		err = wiremockClient.ResetAllScenarios()
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to reset scenarios: %v", err))
+		}
+
+		// Also add container termination here to ensure it happens
+		err = wiremockContainer.Terminate(ctx)
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to terminate container: %v", err))
+		}
+	})
 }
 
 func testAccCheckIdentityPoolDestroy(s *terraform.State) error {

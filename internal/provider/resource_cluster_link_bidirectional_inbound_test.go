@@ -38,11 +38,7 @@ func TestAccClusterLinkBidirectionalInbound(t *testing.T) {
 	mockClusterLinkTestServerUrl := wiremockContainer.URI
 	confluentCloudBaseUrl := ""
 	wiremockClient := wiremock.NewClient(mockClusterLinkTestServerUrl)
-	// nolint:errcheck
-	defer wiremockClient.Reset()
 
-	// nolint:errcheck
-	defer wiremockClient.ResetAllScenarios()
 	createClusterLinkResponse, _ := ioutil.ReadFile("../testdata/cluster_link/create_cluster_link.json")
 	createClusterLinkStub := wiremock.Post(wiremock.URLPathEqualTo(createClusterLinkSourceOutboundPath)).
 		InScenario(clusterLinkScenarioName).
@@ -169,10 +165,23 @@ func TestAccClusterLinkBidirectionalInbound(t *testing.T) {
 	checkStubCount(t, wiremockClient, createClusterLinkStub, fmt.Sprintf("POST %s", createClusterLinkSourceOutboundPath), expectedCountOne)
 	checkStubCount(t, wiremockClient, deleteClusterLinkStub, fmt.Sprintf("DELETE %s", readClusterLinkSourceOutboundPath), expectedCountOne)
 
-	err = wiremockContainer.Terminate(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
+	t.Cleanup(func() {
+		err := wiremockClient.Reset()
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to reset wiremock: %v", err))
+		}
+
+		err = wiremockClient.ResetAllScenarios()
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to reset scenarios: %v", err))
+		}
+
+		// Also add container termination here to ensure it happens
+		err = wiremockContainer.Terminate(ctx)
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to terminate container: %v", err))
+		}
+	})
 }
 
 func testAccCheckClusterLinkBidirectionalInboundConfig(confluentCloudBaseUrl, mockServerUrl string) string {

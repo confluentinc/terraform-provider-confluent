@@ -31,11 +31,6 @@ func TestAccDataSourceGatewayAwsPeeringGatewaySpec(t *testing.T) {
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
-	// nolint:errcheck
-	defer wiremockClient.Reset()
-
-	// nolint:errcheck
-	defer wiremockClient.ResetAllScenarios()
 
 	readAwsPeeringGatewayResponse, _ := os.ReadFile("../testdata/gateway/read_aws_peering_gateway.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/networking/v1/gateways/gw-abc123")).
@@ -74,10 +69,23 @@ func TestAccDataSourceGatewayAwsPeeringGatewaySpec(t *testing.T) {
 			},
 		},
 	})
-	err = wiremockContainer.Terminate(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
+	t.Cleanup(func() {
+		err := wiremockClient.Reset()
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to reset wiremock: %v", err))
+		}
+
+		err = wiremockClient.ResetAllScenarios()
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to reset scenarios: %v", err))
+		}
+
+		// Also add container termination here to ensure it happens
+		err = wiremockContainer.Terminate(ctx)
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to terminate container: %v", err))
+		}
+	})
 }
 
 func TestAccDataSourceGatewayAwsEgressPrivateLinkGatewaySpec(t *testing.T) {
@@ -90,11 +98,6 @@ func TestAccDataSourceGatewayAwsEgressPrivateLinkGatewaySpec(t *testing.T) {
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
-	// nolint:errcheck
-	defer wiremockClient.Reset()
-
-	// nolint:errcheck
-	defer wiremockClient.ResetAllScenarios()
 
 	readAwsEgressPrivateLinkGatewayResponse, _ := os.ReadFile("../testdata/gateway/read_aws_egress_private_link_gateway.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/networking/v1/gateways/gw-def456")).
@@ -146,11 +149,6 @@ func TestAccDataSourceGatewayAwsPrivateNetworkInterfaceGatewaySpec(t *testing.T)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
-	// nolint:errcheck
-	defer wiremockClient.Reset()
-
-	// nolint:errcheck
-	defer wiremockClient.ResetAllScenarios()
 
 	readAwsEgressPrivateLinkGatewayResponse, _ := os.ReadFile("../testdata/gateway/read_aws_private_network_interface_gateway.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/networking/v1/gateways/gw-abc789")).
@@ -205,11 +203,6 @@ func TestAccDataSourceGatewayAzurePeeringGatewaySpec(t *testing.T) {
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
-	// nolint:errcheck
-	defer wiremockClient.Reset()
-
-	// nolint:errcheck
-	defer wiremockClient.ResetAllScenarios()
 
 	readAzurePeeringGatewayResponse, _ := os.ReadFile("../testdata/gateway/read_azure_peering_gateway.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/networking/v1/gateways/gw-def123")).
@@ -260,11 +253,6 @@ func TestAccDataSourceGatewayAzureEgressPrivateLinkGatewaySpec(t *testing.T) {
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
-	// nolint:errcheck
-	defer wiremockClient.Reset()
-
-	// nolint:errcheck
-	defer wiremockClient.ResetAllScenarios()
 
 	readAzureEgressPrivateLinkGatewayResponse, _ := os.ReadFile("../testdata/gateway/read_azure_egress_private_link_gateway.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/networking/v1/gateways/gw-abc456")).
@@ -316,11 +304,6 @@ func TestAccDataSourceGatewayGcpEgressPrivateServiceConnectGatewaySpec(t *testin
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
-	// nolint:errcheck
-	defer wiremockClient.Reset()
-
-	// nolint:errcheck
-	defer wiremockClient.ResetAllScenarios()
 
 	readGcpEgressPrivateServiceConnectGatewayResponse, _ := os.ReadFile("../testdata/gateway/read_gcp_egress_private_service_connect_gateway.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/networking/v1/gateways/gw-def456")).
@@ -372,11 +355,6 @@ func TestAccDataSourceGatewayGcpPeeringGatewaySpec(t *testing.T) {
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
-	// nolint:errcheck
-	defer wiremockClient.Reset()
-
-	// nolint:errcheck
-	defer wiremockClient.ResetAllScenarios()
 
 	readGcpPeeringGatewayResponse, _ := os.ReadFile("../testdata/gateway/read_gcp_peering_gateway.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/networking/v1/gateways/gw-gcp123")).

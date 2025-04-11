@@ -49,11 +49,7 @@ func TestAccRoleBinding(t *testing.T) {
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
-	// nolint:errcheck
-	defer wiremockClient.Reset()
 
-	// nolint:errcheck
-	defer wiremockClient.ResetAllScenarios()
 	createRolebindingResponse, _ := ioutil.ReadFile("../testdata/role_binding/create_role_binding.json")
 	createRolebindingStub := wiremock.Post(wiremock.URLPathEqualTo("/iam/v2/role-bindings")).
 		InScenario(rolebindingScenarioName).
@@ -128,10 +124,23 @@ func TestAccRoleBinding(t *testing.T) {
 	checkStubCount(t, wiremockClient, createRolebindingStub, "POST /iam/v2/role-bindings", expectedCountOne)
 	checkStubCount(t, wiremockClient, deleteRolebindingStub, fmt.Sprintf("DELETE /iam/v2/role-bindings/%s", roleBindingId), expectedCountOne)
 
-	err = wiremockContainer.Terminate(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
+	t.Cleanup(func() {
+		err := wiremockClient.Reset()
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to reset wiremock: %v", err))
+		}
+
+		err = wiremockClient.ResetAllScenarios()
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to reset scenarios: %v", err))
+		}
+
+		// Also add container termination here to ensure it happens
+		err = wiremockContainer.Terminate(ctx)
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to terminate container: %v", err))
+		}
+	})
 }
 
 func testAccCheckRoleBindingDestroy(s *terraform.State) error {

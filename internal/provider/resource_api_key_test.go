@@ -67,11 +67,7 @@ func TestAccKafkaApiKey(t *testing.T) {
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
-	// nolint:errcheck
-	defer wiremockClient.Reset()
 
-	// nolint:errcheck
-	defer wiremockClient.ResetAllScenarios()
 	createKafkaApiKeyResponse, _ := ioutil.ReadFile("../testdata/apikey/create_kafka_api_key.json")
 	createKafkaApiKeyStub := wiremock.Post(wiremock.URLPathEqualTo("/iam/v2/api-keys")).
 		InScenario(kafkaApiKeyScenarioName).
@@ -292,10 +288,23 @@ func TestAccKafkaApiKey(t *testing.T) {
 	checkStubCount(t, wiremockClient, patchKafkaApiKeyStub, "PATCH /iam/v2/api-keys/NUYYQXLNGKLJLTWT", expectedCountOne)
 	checkStubCount(t, wiremockClient, createCmkApiStub, "GET /cmk/v2/clusters/lkc-zmmq63", expectedCountOne)
 
-	err = wiremockContainer.Terminate(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
+	t.Cleanup(func() {
+		err := wiremockClient.Reset()
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to reset wiremock: %v", err))
+		}
+
+		err = wiremockClient.ResetAllScenarios()
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to reset scenarios: %v", err))
+		}
+
+		// Also add container termination here to ensure it happens
+		err = wiremockContainer.Terminate(ctx)
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to terminate container: %v", err))
+		}
+	})
 }
 
 func TestAccFlinkApiKey(t *testing.T) {
@@ -308,11 +317,7 @@ func TestAccFlinkApiKey(t *testing.T) {
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
-	// nolint:errcheck
-	defer wiremockClient.Reset()
 
-	// nolint:errcheck
-	defer wiremockClient.ResetAllScenarios()
 	createFlinkApiKeyResponse, _ := ioutil.ReadFile("../testdata/apikey/create_flink_api_key.json")
 	createFlinkApiKeyStub := wiremock.Post(wiremock.URLPathEqualTo("/iam/v2/api-keys")).
 		InScenario(flinkApiKeyScenarioName).
@@ -491,10 +496,23 @@ func TestAccFlinkApiKey(t *testing.T) {
 	checkStubCount(t, wiremockClient, createFlinkApiKeyStub, "POST /iam/v2/api-keys", expectedCountOne)
 	//checkStubCount(t, wiremockClient, patchFlinkApiKeyStub, "PATCH /iam/v2/api-keys/AK4NBR7MUYHVJMHW", expectedCountOne)
 
-	err = wiremockContainer.Terminate(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
+	t.Cleanup(func() {
+		err := wiremockClient.Reset()
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to reset wiremock: %v", err))
+		}
+
+		err = wiremockClient.ResetAllScenarios()
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to reset scenarios: %v", err))
+		}
+
+		// Also add container termination here to ensure it happens
+		err = wiremockContainer.Terminate(ctx)
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to terminate container: %v", err))
+		}
+	})
 }
 
 func TestAccTableflowApiKey(t *testing.T) {
@@ -507,11 +525,7 @@ func TestAccTableflowApiKey(t *testing.T) {
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
-	// nolint:errcheck
-	defer wiremockClient.Reset()
 
-	// nolint:errcheck
-	defer wiremockClient.ResetAllScenarios()
 	createTableflowApiKeyResponse, _ := ioutil.ReadFile("../testdata/apikey/create_tableflow_api_key.json")
 	createTableflowApiKeyStub := wiremock.Post(wiremock.URLPathEqualTo("/iam/v2/api-keys")).
 		InScenario(tableflowApiKeyScenarioName).
@@ -681,10 +695,23 @@ func TestAccTableflowApiKey(t *testing.T) {
 	checkStubCount(t, wiremockClient, createTableflowApiKeyStub, "POST /iam/v2/api-keys", expectedCountOne)
 	checkStubCount(t, wiremockClient, patchTableflowApiKeyStub, "PATCH /iam/v2/api-keys/HRVR6K4VMXYD2LDZ", expectedCountOne)
 
-	err = wiremockContainer.Terminate(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
+	t.Cleanup(func() {
+		err := wiremockClient.Reset()
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to reset wiremock: %v", err))
+		}
+
+		err = wiremockClient.ResetAllScenarios()
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to reset scenarios: %v", err))
+		}
+
+		// Also add container termination here to ensure it happens
+		err = wiremockContainer.Terminate(ctx)
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to terminate container: %v", err))
+		}
+	})
 }
 
 func TestAccCloudApiKey(t *testing.T) {
@@ -697,11 +724,7 @@ func TestAccCloudApiKey(t *testing.T) {
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
-	// nolint:errcheck
-	defer wiremockClient.Reset()
 
-	// nolint:errcheck
-	defer wiremockClient.ResetAllScenarios()
 	createCloudApiKeyResponse, _ := ioutil.ReadFile("../testdata/apikey/create_cloud_api_key.json")
 	createCloudApiKeyStub := wiremock.Post(wiremock.URLPathEqualTo("/iam/v2/api-keys")).
 		InScenario(cloudApiKeyScenarioName).
@@ -863,10 +886,23 @@ func TestAccCloudApiKey(t *testing.T) {
 	// Combine both stubs into a single check since it doesn't differentiate between states
 	checkStubCount(t, wiremockClient, listEnvsOrgApi401Stub, "GET /org/v2/environments", 2)
 
-	err = wiremockContainer.Terminate(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
+	t.Cleanup(func() {
+		err := wiremockClient.Reset()
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to reset wiremock: %v", err))
+		}
+
+		err = wiremockClient.ResetAllScenarios()
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to reset scenarios: %v", err))
+		}
+
+		// Also add container termination here to ensure it happens
+		err = wiremockContainer.Terminate(ctx)
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to terminate container: %v", err))
+		}
+	})
 }
 
 func testAccCheckApiKeyDestroy(s *terraform.State) error {
