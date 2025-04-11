@@ -33,7 +33,6 @@ func TestAccDataSchemaRegistryClusterModeSchemaWithEnhancedProviderBlock(t *test
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockSchemaTestServerUrl := wiremockContainer.URI
 	confluentCloudBaseUrl := ""
@@ -77,6 +76,10 @@ func TestAccDataSchemaRegistryClusterModeSchemaWithEnhancedProviderBlock(t *test
 			},
 		},
 	})
+	err = wiremockContainer.Terminate(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func testAccCheckSchemaRegistryClusterModeDataSourceConfigWithEnhancedProviderBlock(confluentCloudBaseUrl, mockServerUrl string) string {

@@ -37,7 +37,6 @@ func TestAccDataSourceKafkaClientQuota(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
@@ -87,6 +86,10 @@ func TestAccDataSourceKafkaClientQuota(t *testing.T) {
 			},
 		},
 	})
+	err = wiremockContainer.Terminate(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func testAccCheckKafkaClientQuotaDataSourceConfig(mockServerUrl string) string {

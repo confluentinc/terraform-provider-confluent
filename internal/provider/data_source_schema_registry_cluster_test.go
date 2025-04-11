@@ -58,7 +58,6 @@ func TestAccDataSourceSchemaRegistryCluster(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
@@ -158,6 +157,10 @@ func TestAccDataSourceSchemaRegistryCluster(t *testing.T) {
 			},
 		},
 	})
+	err = wiremockContainer.Terminate(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestAccDataSourceSchemaRegistryClusterPrivate(t *testing.T) {
@@ -167,7 +170,6 @@ func TestAccDataSourceSchemaRegistryClusterPrivate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
@@ -267,6 +269,10 @@ func TestAccDataSourceSchemaRegistryClusterPrivate(t *testing.T) {
 			},
 		},
 	})
+	err = wiremockContainer.Terminate(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func testAccCheckDataSourceSchemaRegistryClusterConfigWithIdSet(mockServerUrl string) string {
