@@ -22,6 +22,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"testing"
+	"time"
 )
 
 func TestAccSchemaExporterWithEnhancedProviderBlock(t *testing.T) {
