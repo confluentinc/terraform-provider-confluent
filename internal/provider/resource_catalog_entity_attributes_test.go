@@ -41,7 +41,6 @@ func TestAccCatalogEntityAttributes(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
@@ -146,6 +145,11 @@ func TestAccCatalogEntityAttributes(t *testing.T) {
 			},
 		},
 	})
+
+	err = wiremockContainer.Terminate(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func entityAttributesResourceConfig(mockServerUrl string) string {

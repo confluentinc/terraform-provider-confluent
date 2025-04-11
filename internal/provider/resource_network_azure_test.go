@@ -63,7 +63,6 @@ func TestAccAzureNetwork(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
@@ -223,6 +222,11 @@ func TestAccAzureNetwork(t *testing.T) {
 
 	checkStubCount(t, wiremockClient, createAzureNetworkStub, fmt.Sprintf("POST %s", azureNetworkUrlPath), expectedCountOne)
 	checkStubCount(t, wiremockClient, deleteAzureNetworkStub, fmt.Sprintf("DELETE %s?environment=%s", azureNetworkUrlPath, azureNetworkEnvironmentId), expectedCountOne)
+
+	err = wiremockContainer.Terminate(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func testAccCheckAzureNetworkDestroy(s *terraform.State) error {

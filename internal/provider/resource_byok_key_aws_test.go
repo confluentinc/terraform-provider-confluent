@@ -27,7 +27,6 @@ func TestAccAwsBYOKKey(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
@@ -99,6 +98,11 @@ func TestAccAwsBYOKKey(t *testing.T) {
 	})
 	checkStubCount(t, wiremockClient, createAwsKeyStub, fmt.Sprintf("POST %s", byokV1Path), expectedCountOne)
 	checkStubCount(t, wiremockClient, deleteAwsKeyStub, fmt.Sprintf("DELETE %s", fmt.Sprintf("%s/cck-abcde", byokV1Path)), expectedCountOne)
+
+	err = wiremockContainer.Terminate(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 }
 

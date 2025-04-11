@@ -28,7 +28,6 @@ func TestAccGcpBYOKKey(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
@@ -99,6 +98,10 @@ func TestAccGcpBYOKKey(t *testing.T) {
 	checkStubCount(t, wiremockClient, createGcpKeyStub, fmt.Sprintf("POST %s", byokV1Path), expectedCountOne)
 	checkStubCount(t, wiremockClient, deleteGcpKeyStub, fmt.Sprintf("DELETE %s", fmt.Sprintf("%s/cck-abcde", byokV1Path)), expectedCountOne)
 
+	err = wiremockContainer.Terminate(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func testAccCheckGcpByokKeyConfig(mockServerUrl, resourceName, keyId string) string {

@@ -56,7 +56,6 @@ func TestAccAwsTransitGatewayAttachmentAccess(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
@@ -183,6 +182,10 @@ func TestAccAwsTransitGatewayAttachmentAccess(t *testing.T) {
 
 	checkStubCount(t, wiremockClient, createAwsTransitGatewayAttachmentStub, fmt.Sprintf("POST %s", awsTransitGatewayAttachmentUrlPath), expectedCountOne)
 	checkStubCount(t, wiremockClient, deleteAwsTransitGatewayAttachmentStub, fmt.Sprintf("DELETE %s?environment=%s", awsTransitGatewayAttachmentUrlPath, awsTransitGatewayAttachmentEnvironmentId), expectedCountOne)
+	err = wiremockContainer.Terminate(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func testAccCheckAwsTransitGatewayAttachmentDestroy(s *terraform.State) error {

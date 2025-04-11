@@ -33,7 +33,6 @@ func TestAccDataSubjectCompatibilityLevelSchemaWithEnhancedProviderBlock(t *test
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockSchemaTestServerUrl := wiremockContainer.URI
 	confluentCloudBaseUrl := ""
@@ -79,6 +78,10 @@ func TestAccDataSubjectCompatibilityLevelSchemaWithEnhancedProviderBlock(t *test
 			},
 		},
 	})
+	err = wiremockContainer.Terminate(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func testAccCheckSubjectCompatibilityLevelDataSourceConfigWithEnhancedProviderBlock(confluentCloudBaseUrl, mockServerUrl string) string {

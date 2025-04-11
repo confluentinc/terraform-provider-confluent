@@ -34,7 +34,6 @@ func TestAccFlinkStatement(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockFlinkStatementTestServerUrl := wiremockContainer.URI
 	confluentCloudBaseUrl := ""
@@ -307,6 +306,11 @@ func TestAccFlinkStatement(t *testing.T) {
 	checkStubCount(t, wiremockClient, createFlinkStatementStub, fmt.Sprintf("POST %s", createFlinkStatementPath), expectedCountOne)
 	checkStubCount(t, wiremockClient, stopFlinkStatementStub, fmt.Sprintf("PUT %s", readFlinkStatementPath), expectedCountTwo)
 	checkStubCount(t, wiremockClient, deleteFlinkStatementStub, fmt.Sprintf("DELETE %s", readFlinkStatementPath), expectedCountOne)
+
+	err = wiremockContainer.Terminate(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func testAccCheckFlinkStatement(confluentCloudBaseUrl, mockServerUrl string) string {

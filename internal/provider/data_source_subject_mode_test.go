@@ -40,7 +40,6 @@ func TestAccDataSubjectModeSchema(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockSchemaTestServerUrl := wiremockContainer.URI
 	confluentCloudBaseUrl := ""
@@ -87,6 +86,10 @@ func TestAccDataSubjectModeSchema(t *testing.T) {
 			},
 		},
 	})
+	err = wiremockContainer.Terminate(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func testAccCheckSubjectModeDataSourceConfig(confluentCloudBaseUrl, mockServerUrl string) string {

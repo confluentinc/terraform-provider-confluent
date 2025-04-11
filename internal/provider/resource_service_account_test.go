@@ -40,7 +40,6 @@ func TestAccServiceAccount(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
@@ -167,6 +166,11 @@ func TestAccServiceAccount(t *testing.T) {
 	checkStubCount(t, wiremockClient, createSaStub, "POST /iam/v2/service-accounts", expectedCountOne)
 	checkStubCount(t, wiremockClient, patchSaStub, "PATCH /iam/v2/service-accounts/sa-1jjv26", expectedCountOne)
 	checkStubCount(t, wiremockClient, deleteSaStub, "DELETE /iam/v2/service-accounts/sa-1jjv26", expectedCountOne)
+
+	err = wiremockContainer.Terminate(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func testAccCheckServiceAccountDestroy(s *terraform.State) error {

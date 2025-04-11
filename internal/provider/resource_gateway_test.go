@@ -46,7 +46,6 @@ func TestAccGatewayAwsEgressPrivateLink(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
@@ -146,6 +145,11 @@ func TestAccGatewayAwsEgressPrivateLink(t *testing.T) {
 			},
 		},
 	})
+
+	err = wiremockContainer.Terminate(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestAccGatewayAwsPrivateNetworkInterface(t *testing.T) {
@@ -155,7 +159,6 @@ func TestAccGatewayAwsPrivateNetworkInterface(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
@@ -261,6 +264,11 @@ func TestAccGatewayAwsPrivateNetworkInterface(t *testing.T) {
 			},
 		},
 	})
+
+	err = wiremockContainer.Terminate(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestAccGatewayAzure(t *testing.T) {
@@ -270,7 +278,6 @@ func TestAccGatewayAzure(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
@@ -370,6 +377,11 @@ func TestAccGatewayAzure(t *testing.T) {
 			},
 		},
 	})
+
+	err = wiremockContainer.Terminate(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func testAccCheckResourceGatewayAwsEgressPrivateLinkConfig(mockServerUrl, name string) string {

@@ -64,7 +64,6 @@ func TestAccKafkaApiKey(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
@@ -292,6 +291,11 @@ func TestAccKafkaApiKey(t *testing.T) {
 	checkStubCount(t, wiremockClient, createKafkaApiKeyStub, "POST /iam/v2/api-keys", expectedCountOne)
 	checkStubCount(t, wiremockClient, patchKafkaApiKeyStub, "PATCH /iam/v2/api-keys/NUYYQXLNGKLJLTWT", expectedCountOne)
 	checkStubCount(t, wiremockClient, createCmkApiStub, "GET /cmk/v2/clusters/lkc-zmmq63", expectedCountOne)
+
+	err = wiremockContainer.Terminate(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestAccFlinkApiKey(t *testing.T) {
@@ -301,7 +305,6 @@ func TestAccFlinkApiKey(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
@@ -487,6 +490,11 @@ func TestAccFlinkApiKey(t *testing.T) {
 
 	checkStubCount(t, wiremockClient, createFlinkApiKeyStub, "POST /iam/v2/api-keys", expectedCountOne)
 	//checkStubCount(t, wiremockClient, patchFlinkApiKeyStub, "PATCH /iam/v2/api-keys/AK4NBR7MUYHVJMHW", expectedCountOne)
+
+	err = wiremockContainer.Terminate(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestAccTableflowApiKey(t *testing.T) {
@@ -496,7 +504,6 @@ func TestAccTableflowApiKey(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
@@ -673,6 +680,11 @@ func TestAccTableflowApiKey(t *testing.T) {
 
 	checkStubCount(t, wiremockClient, createTableflowApiKeyStub, "POST /iam/v2/api-keys", expectedCountOne)
 	checkStubCount(t, wiremockClient, patchTableflowApiKeyStub, "PATCH /iam/v2/api-keys/HRVR6K4VMXYD2LDZ", expectedCountOne)
+
+	err = wiremockContainer.Terminate(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestAccCloudApiKey(t *testing.T) {
@@ -682,7 +694,6 @@ func TestAccCloudApiKey(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
@@ -851,6 +862,11 @@ func TestAccCloudApiKey(t *testing.T) {
 	checkStubCount(t, wiremockClient, patchCloudApiKeyStub, "PATCH /iam/v2/api-keys/HRVR6K4VMXYD2LDZ", expectedCountOne)
 	// Combine both stubs into a single check since it doesn't differentiate between states
 	checkStubCount(t, wiremockClient, listEnvsOrgApi401Stub, "GET /org/v2/environments", 2)
+
+	err = wiremockContainer.Terminate(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func testAccCheckApiKeyDestroy(s *terraform.State) error {

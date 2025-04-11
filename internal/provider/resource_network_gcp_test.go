@@ -63,7 +63,6 @@ func TestAccGcpNetwork(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
@@ -215,6 +214,11 @@ func TestAccGcpNetwork(t *testing.T) {
 
 	checkStubCount(t, wiremockClient, createGcpNetworkStub, fmt.Sprintf("POST %s", gcpNetworkUrlPath), expectedCountOne)
 	checkStubCount(t, wiremockClient, deleteGcpNetworkStub, fmt.Sprintf("DELETE %s?environment=%s", gcpNetworkUrlPath, gcpNetworkEnvironmentId), expectedCountOne)
+
+	err = wiremockContainer.Terminate(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func testAccCheckGcpNetworkDestroy(s *terraform.State) error {

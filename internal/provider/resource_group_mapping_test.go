@@ -46,7 +46,6 @@ func TestAccGroupMapping(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
@@ -169,6 +168,11 @@ func TestAccGroupMapping(t *testing.T) {
 	checkStubCount(t, wiremockClient, createGroupMappingStub, "POST /iam/v2/sso/group-mappings", expectedCountOne)
 	checkStubCount(t, wiremockClient, patchGroupMappingStub, "PATCH /iam/v2/sso/group-mappings/group-w4vP", expectedCountOne)
 	checkStubCount(t, wiremockClient, deleteGroupMappingStub, "DELETE /iam/v2/sso/group-mappings/group-w4vP", expectedCountOne)
+
+	err = wiremockContainer.Terminate(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func testAccCheckGroupMappingDestroy(s *terraform.State) error {

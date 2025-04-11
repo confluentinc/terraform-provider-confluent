@@ -73,7 +73,6 @@ func TestAccCreateKsqlClusterError(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
@@ -107,6 +106,11 @@ func TestAccCreateKsqlClusterError(t *testing.T) {
 	})
 
 	checkStubCount(t, wiremockClient, createClusterStub, fmt.Sprintf("POST %s", createKsqlPath), 1)
+
+	err = wiremockContainer.Terminate(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestAccImportKsqlCluster(t *testing.T) {
@@ -116,7 +120,6 @@ func TestAccImportKsqlCluster(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
@@ -189,7 +192,6 @@ func TestAccReadKsqlClusterError(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
@@ -245,7 +247,6 @@ func TestAccKsqlCluster(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)

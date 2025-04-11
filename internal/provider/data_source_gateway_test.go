@@ -28,7 +28,6 @@ func TestAccDataSourceGatewayAwsPeeringGatewaySpec(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
@@ -75,6 +74,10 @@ func TestAccDataSourceGatewayAwsPeeringGatewaySpec(t *testing.T) {
 			},
 		},
 	})
+	err = wiremockContainer.Terminate(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestAccDataSourceGatewayAwsEgressPrivateLinkGatewaySpec(t *testing.T) {
@@ -84,7 +87,6 @@ func TestAccDataSourceGatewayAwsEgressPrivateLinkGatewaySpec(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
@@ -141,7 +143,6 @@ func TestAccDataSourceGatewayAwsPrivateNetworkInterfaceGatewaySpec(t *testing.T)
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
@@ -201,7 +202,6 @@ func TestAccDataSourceGatewayAzurePeeringGatewaySpec(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
@@ -257,7 +257,6 @@ func TestAccDataSourceGatewayAzureEgressPrivateLinkGatewaySpec(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
@@ -314,7 +313,6 @@ func TestAccDataSourceGatewayGcpEgressPrivateServiceConnectGatewaySpec(t *testin
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
@@ -371,7 +369,6 @@ func TestAccDataSourceGatewayGcpPeeringGatewaySpec(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)

@@ -69,7 +69,6 @@ func TestAccTopic(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockTopicTestServerUrl := wiremockContainer.URI
 	confluentCloudBaseUrl := ""
@@ -242,6 +241,11 @@ func TestAccTopic(t *testing.T) {
 
 	checkStubCount(t, wiremockClient, createTopicStub, fmt.Sprintf("POST %s", createKafkaTopicPath), expectedCountOne)
 	checkStubCount(t, wiremockClient, deleteTopicStub, fmt.Sprintf("DELETE %s", kafkaTopicPath), expectedCountOne)
+
+	err = wiremockContainer.Terminate(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestAccTopicPartition(t *testing.T) {
@@ -251,7 +255,6 @@ func TestAccTopicPartition(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockTopicTestServerUrl := wiremockContainer.URI
 	confluentCloudBaseUrl := ""

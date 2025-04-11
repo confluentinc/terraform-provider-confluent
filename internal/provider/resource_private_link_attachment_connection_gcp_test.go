@@ -39,7 +39,6 @@ func TestAccPrivateLinkAttachmentConnectionGcp(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
@@ -97,6 +96,11 @@ func TestAccPrivateLinkAttachmentConnectionGcp(t *testing.T) {
 			},
 		},
 	})
+
+	err = wiremockContainer.Terminate(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func testAccCheckResourcePrivateLinkAttachmentConnectionGcpWithIdSet(mockServerUrl string) string {

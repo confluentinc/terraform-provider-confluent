@@ -38,7 +38,6 @@ func TestAccClusterLinkSourceOutbound(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockClusterLinkTestServerUrl := wiremockContainer.URI
 	confluentCloudBaseUrl := ""
@@ -175,6 +174,11 @@ func TestAccClusterLinkSourceOutbound(t *testing.T) {
 
 	checkStubCount(t, wiremockClient, createClusterLinkStub, fmt.Sprintf("POST %s", createClusterLinkSourceOutboundPath), expectedCountOne)
 	checkStubCount(t, wiremockClient, deleteClusterLinkStub, fmt.Sprintf("DELETE %s", readClusterLinkSourceOutboundPath), expectedCountOne)
+
+	err = wiremockContainer.Terminate(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func testAccCheckClusterLinkSourceOutboundConfig(confluentCloudBaseUrl, mockServerUrl string) string {

@@ -43,7 +43,6 @@ func TestAccCatalogIntegrationAwsGlue(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
@@ -152,6 +151,11 @@ func TestAccCatalogIntegrationAwsGlue(t *testing.T) {
 			},
 		},
 	})
+
+	err = wiremockContainer.Terminate(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestAccCatalogIntegrationSnowflake(t *testing.T) {
@@ -161,7 +165,6 @@ func TestAccCatalogIntegrationSnowflake(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
@@ -274,6 +277,11 @@ func TestAccCatalogIntegrationSnowflake(t *testing.T) {
 			},
 		},
 	})
+
+	err = wiremockContainer.Terminate(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func testAccCheckResourceCatalogIntegrationAwsGlue(mockServerUrl, display_name string) string {

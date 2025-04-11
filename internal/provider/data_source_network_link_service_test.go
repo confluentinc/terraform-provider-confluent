@@ -41,7 +41,6 @@ func TestAccDataSourceNetworkLinkService(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
@@ -70,7 +69,7 @@ func TestAccDataSourceNetworkLinkService(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		))
-	
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
@@ -113,6 +112,10 @@ func TestAccDataSourceNetworkLinkService(t *testing.T) {
 			},
 		},
 	})
+	err = wiremockContainer.Terminate(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func testAccCheckDataSourceNetworkLinkServiceWithIdSet(mockServerUrl string) string {

@@ -33,7 +33,6 @@ func TestAccSchemaRegistryClusterMode(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockSchemaRegistryClusterModeTestServerUrl := wiremockContainer.URI
 	confluentCloudBaseUrl := ""
@@ -159,6 +158,10 @@ func TestAccSchemaRegistryClusterMode(t *testing.T) {
 
 	checkStubCount(t, wiremockClient, createSchemaRegistryClusterModeStub, fmt.Sprintf("PUT (CREATE) %s", updateSchemaRegistryClusterModePath), expectedCountTwo)
 	checkStubCount(t, wiremockClient, deleteSchemaRegistryClusterModeStub, fmt.Sprintf("DELETE %s", updateSchemaRegistryClusterModePath), expectedCountZero)
+	err = wiremockContainer.Terminate(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func testAccCheckSchemaRegistryClusterModeConfig(confluentCloudBaseUrl, mockServerUrl, mode, schemaRegistryKey, schemaRegistrySecret string) string {

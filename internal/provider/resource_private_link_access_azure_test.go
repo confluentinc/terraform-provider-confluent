@@ -48,7 +48,6 @@ func TestAccAzurePrivateLinkAccess(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
@@ -186,6 +185,11 @@ func TestAccAzurePrivateLinkAccess(t *testing.T) {
 
 	checkStubCount(t, wiremockClient, createAzurePlaStub, fmt.Sprintf("POST %s", azurePlaUrlPath), expectedCountOne)
 	checkStubCount(t, wiremockClient, deleteAzurePlaStub, fmt.Sprintf("DELETE %s?environment=%s", azurePlaUrlPath, azurePlaEnvironmentId), expectedCountOne)
+
+	err = wiremockContainer.Terminate(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func testAccCheckAzurePlaDestroy(s *terraform.State) error {

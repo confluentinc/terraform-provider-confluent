@@ -58,7 +58,6 @@ func TestAccDataSourceWithIdKsql(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
@@ -100,6 +99,10 @@ func TestAccDataSourceWithIdKsql(t *testing.T) {
 			},
 		},
 	})
+	err = wiremockContainer.Terminate(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestAccDataSourceListKsql(t *testing.T) {
@@ -109,7 +112,6 @@ func TestAccDataSourceListKsql(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
@@ -139,6 +141,10 @@ func TestAccDataSourceListKsql(t *testing.T) {
 			},
 		},
 	})
+	err = wiremockContainer.Terminate(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestAccDataSourceKsqlApi5xxError(t *testing.T) {
@@ -148,7 +154,6 @@ func TestAccDataSourceKsqlApi5xxError(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
@@ -180,6 +185,10 @@ func TestAccDataSourceKsqlApi5xxError(t *testing.T) {
 			},
 		},
 	})
+	err = wiremockContainer.Terminate(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestAccDataSourceKsqlApi4xxError(t *testing.T) {
@@ -189,7 +198,6 @@ func TestAccDataSourceKsqlApi4xxError(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
@@ -220,6 +228,10 @@ func TestAccDataSourceKsqlApi4xxError(t *testing.T) {
 			},
 		},
 	})
+	err = wiremockContainer.Terminate(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func datasourceConfigId(mockServerUrl string) string {

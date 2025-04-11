@@ -18,7 +18,6 @@ func TestAccDataSourceGcpBYOKKey(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
@@ -57,7 +56,10 @@ func TestAccDataSourceGcpBYOKKey(t *testing.T) {
 			},
 		},
 	})
-
+	err = wiremockContainer.Terminate(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func testAccCheckDataSourceGcpByokKeyConfig(mockServerUrl, resourceName string) string {

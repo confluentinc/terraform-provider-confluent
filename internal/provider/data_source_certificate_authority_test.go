@@ -22,7 +22,6 @@ func TestAccDataSourceCertificateAuthority(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
@@ -68,6 +67,10 @@ func TestAccDataSourceCertificateAuthority(t *testing.T) {
 			},
 		},
 	})
+	err = wiremockContainer.Terminate(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func testAccCheckDataSourceCertificateAuthority(mockServerUrl, resourceId string) string {

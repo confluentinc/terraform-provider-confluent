@@ -39,7 +39,6 @@ func TestAccDataSourceTopic(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockTopicTestServerUrl := wiremockContainer.URI
 	confluentCloudBaseUrl := ""
@@ -94,6 +93,10 @@ func TestAccDataSourceTopic(t *testing.T) {
 			},
 		},
 	})
+	err = wiremockContainer.Terminate(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func testAccCheckDataSourceTopicConfig(confluentCloudBaseUrl, mockServerUrl string) string {
