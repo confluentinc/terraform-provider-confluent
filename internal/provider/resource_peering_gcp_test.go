@@ -48,7 +48,6 @@ func TestAccGcpPeeringAccess(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
@@ -190,6 +189,11 @@ func TestAccGcpPeeringAccess(t *testing.T) {
 
 	checkStubCount(t, wiremockClient, createGcpPeeringStub, fmt.Sprintf("POST %s", gcpPeeringUrlPath), expectedCountOne)
 	checkStubCount(t, wiremockClient, deleteGcpPeeringStub, fmt.Sprintf("DELETE %s?environment=%s", gcpPeeringUrlPath, gcpPeeringEnvironmentId), expectedCountOne)
+
+	err = wiremockContainer.Terminate(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func testAccCheckGcpPeeringDestroy(s *terraform.State) error {

@@ -34,7 +34,6 @@ func TestAccTopicWithEnhancedProviderBlock2(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockTopicTestServerUrl := wiremockContainer.URI
 	confluentCloudBaseUrl := ""
@@ -195,6 +194,11 @@ func TestAccTopicWithEnhancedProviderBlock2(t *testing.T) {
 
 	checkStubCount(t, wiremockClient, createTopicStub, fmt.Sprintf("POST %s", createKafkaTopicPath), expectedCountOne)
 	checkStubCount(t, wiremockClient, deleteTopicStub, fmt.Sprintf("DELETE %s", kafkaTopicPath), expectedCountOne)
+
+	err = wiremockContainer.Terminate(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func testAccCheckTopicConfigWithEnhancedProviderBlock2(confluentCloudBaseUrl, mockServerUrl string) string {

@@ -49,7 +49,6 @@ func TestAccAzurePeeringAccess(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
@@ -191,6 +190,11 @@ func TestAccAzurePeeringAccess(t *testing.T) {
 
 	checkStubCount(t, wiremockClient, createAzurePeeringStub, fmt.Sprintf("POST %s", azurePeeringUrlPath), expectedCountOne)
 	checkStubCount(t, wiremockClient, deleteAzurePeeringStub, fmt.Sprintf("DELETE %s?environment=%s", azurePeeringUrlPath, azurePeeringEnvironmentId), expectedCountOne)
+
+	err = wiremockContainer.Terminate(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func testAccCheckAzurePeeringDestroy(s *terraform.State) error {

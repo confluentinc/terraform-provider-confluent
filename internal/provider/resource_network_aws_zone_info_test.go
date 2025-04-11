@@ -58,7 +58,6 @@ func TestAccAwsZoneInfoNetwork(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
@@ -234,6 +233,11 @@ func TestAccAwsZoneInfoNetwork(t *testing.T) {
 
 	checkStubCount(t, wiremockClient, createAwsNetworkStub, fmt.Sprintf("POST %s", awsNetworkUrlPath), expectedCountOne)
 	checkStubCount(t, wiremockClient, deleteAwsNetworkStub, fmt.Sprintf("DELETE %s?environment=%s", awsNetworkUrlPath, awsNetworkEnvironmentId), expectedCountOne)
+
+	err = wiremockContainer.Terminate(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func testAccCheckAwsPeeringNetworkConfig(mockServerUrl, networkDisplayName, resourceLabel string) string {
