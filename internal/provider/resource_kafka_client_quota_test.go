@@ -23,6 +23,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -52,6 +53,7 @@ var kafkaClientQuotaPrincipals = []string{"sa-rv1vo7", "sa-jzgzgq"}
 func TestAccKafkaClientQuota(t *testing.T) {
 	ctx := context.Background()
 
+	time.Sleep(5 * time.Second)
 	wiremockContainer, err := setupWiremock(ctx)
 	if err != nil {
 		t.Fatal(err)

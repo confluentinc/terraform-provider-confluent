@@ -23,6 +23,7 @@ import (
 	"net/http"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
@@ -34,6 +35,7 @@ var readClusterLinkSourceOutboundConfigPath = fmt.Sprintf("/kafka/v3/clusters/%s
 func TestAccClusterLinkSourceOutbound(t *testing.T) {
 	ctx := context.Background()
 
+	time.Sleep(5 * time.Second)
 	wiremockContainer, err := setupWiremock(ctx)
 	if err != nil {
 		t.Fatal(err)

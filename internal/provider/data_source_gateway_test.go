@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -24,6 +25,7 @@ const (
 func TestAccDataSourceGatewayAwsPeeringGatewaySpec(t *testing.T) {
 	ctx := context.Background()
 
+	time.Sleep(5 * time.Second)
 	wiremockContainer, err := setupWiremock(ctx)
 	if err != nil {
 		t.Fatal(err)
@@ -80,6 +82,7 @@ func TestAccDataSourceGatewayAwsPeeringGatewaySpec(t *testing.T) {
 func TestAccDataSourceGatewayAwsEgressPrivateLinkGatewaySpec(t *testing.T) {
 	ctx := context.Background()
 
+	time.Sleep(5 * time.Second)
 	wiremockContainer, err := setupWiremock(ctx)
 	if err != nil {
 		t.Fatal(err)
@@ -137,6 +140,7 @@ func TestAccDataSourceGatewayAwsEgressPrivateLinkGatewaySpec(t *testing.T) {
 func TestAccDataSourceGatewayAwsPrivateNetworkInterfaceGatewaySpec(t *testing.T) {
 	ctx := context.Background()
 
+	time.Sleep(5 * time.Second)
 	wiremockContainer, err := setupWiremock(ctx)
 	if err != nil {
 		t.Fatal(err)
@@ -197,6 +201,7 @@ func TestAccDataSourceGatewayAwsPrivateNetworkInterfaceGatewaySpec(t *testing.T)
 func TestAccDataSourceGatewayAzurePeeringGatewaySpec(t *testing.T) {
 	ctx := context.Background()
 
+	time.Sleep(5 * time.Second)
 	wiremockContainer, err := setupWiremock(ctx)
 	if err != nil {
 		t.Fatal(err)
@@ -253,6 +258,7 @@ func TestAccDataSourceGatewayAzurePeeringGatewaySpec(t *testing.T) {
 func TestAccDataSourceGatewayAzureEgressPrivateLinkGatewaySpec(t *testing.T) {
 	ctx := context.Background()
 
+	time.Sleep(5 * time.Second)
 	wiremockContainer, err := setupWiremock(ctx)
 	if err != nil {
 		t.Fatal(err)
@@ -310,6 +316,7 @@ func TestAccDataSourceGatewayAzureEgressPrivateLinkGatewaySpec(t *testing.T) {
 func TestAccDataSourceGatewayGcpEgressPrivateServiceConnectGatewaySpec(t *testing.T) {
 	ctx := context.Background()
 
+	time.Sleep(5 * time.Second)
 	wiremockContainer, err := setupWiremock(ctx)
 	if err != nil {
 		t.Fatal(err)
@@ -367,6 +374,7 @@ func TestAccDataSourceGatewayGcpEgressPrivateServiceConnectGatewaySpec(t *testin
 func TestAccDataSourceGatewayGcpPeeringGatewaySpec(t *testing.T) {
 	ctx := context.Background()
 
+	time.Sleep(5 * time.Second)
 	wiremockContainer, err := setupWiremock(ctx)
 	if err != nil {
 		t.Fatal(err)

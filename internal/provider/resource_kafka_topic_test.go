@@ -23,6 +23,7 @@ import (
 	"os"
 	"strconv"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -65,6 +66,7 @@ var updateKafkaTopicConfigPath = fmt.Sprintf("/kafka/v3/clusters/%s/topics/%s/co
 func TestAccTopic(t *testing.T) {
 	ctx := context.Background()
 
+	time.Sleep(5 * time.Second)
 	wiremockContainer, err := setupWiremock(ctx)
 	if err != nil {
 		t.Fatal(err)
@@ -247,6 +249,7 @@ func TestAccTopic(t *testing.T) {
 func TestAccTopicPartition(t *testing.T) {
 	ctx := context.Background()
 
+	time.Sleep(5 * time.Second)
 	wiremockContainer, err := setupWiremock(ctx)
 	if err != nil {
 		t.Fatal(err)

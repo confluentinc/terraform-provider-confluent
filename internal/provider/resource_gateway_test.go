@@ -20,6 +20,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/walkerus/go-wiremock"
 
@@ -42,6 +43,7 @@ const (
 func TestAccGatewayAwsEgressPrivateLink(t *testing.T) {
 	ctx := context.Background()
 
+	time.Sleep(5 * time.Second)
 	wiremockContainer, err := setupWiremock(ctx)
 	if err != nil {
 		t.Fatal(err)
@@ -151,6 +153,7 @@ func TestAccGatewayAwsEgressPrivateLink(t *testing.T) {
 func TestAccGatewayAwsPrivateNetworkInterface(t *testing.T) {
 	ctx := context.Background()
 
+	time.Sleep(5 * time.Second)
 	wiremockContainer, err := setupWiremock(ctx)
 	if err != nil {
 		t.Fatal(err)
@@ -266,6 +269,7 @@ func TestAccGatewayAwsPrivateNetworkInterface(t *testing.T) {
 func TestAccGatewayAzure(t *testing.T) {
 	ctx := context.Background()
 
+	time.Sleep(5 * time.Second)
 	wiremockContainer, err := setupWiremock(ctx)
 	if err != nil {
 		t.Fatal(err)

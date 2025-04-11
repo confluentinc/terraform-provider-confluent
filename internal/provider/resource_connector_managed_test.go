@@ -20,6 +20,7 @@ import (
 	"net/http"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/walkerus/go-wiremock"
 
@@ -46,6 +47,7 @@ const (
 func TestAccManagedConnector(t *testing.T) {
 	ctx := context.Background()
 
+	time.Sleep(5 * time.Second)
 	wiremockContainer, err := setupWiremock(ctx)
 	if err != nil {
 		t.Fatal(err)

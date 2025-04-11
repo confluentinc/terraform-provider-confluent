@@ -22,6 +22,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
@@ -54,6 +55,7 @@ var fullSchemaRegistryDataSourceLabel = fmt.Sprintf("data.confluent_schema_regis
 func TestAccDataSourceSchemaRegistryCluster(t *testing.T) {
 	ctx := context.Background()
 
+	time.Sleep(5 * time.Second)
 	wiremockContainer, err := setupWiremock(ctx)
 	if err != nil {
 		t.Fatal(err)
@@ -163,6 +165,7 @@ func TestAccDataSourceSchemaRegistryCluster(t *testing.T) {
 func TestAccDataSourceSchemaRegistryClusterPrivate(t *testing.T) {
 	ctx := context.Background()
 
+	time.Sleep(5 * time.Second)
 	wiremockContainer, err := setupWiremock(ctx)
 	if err != nil {
 		t.Fatal(err)
