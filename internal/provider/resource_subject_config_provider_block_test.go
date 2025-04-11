@@ -50,16 +50,10 @@ func TestAccSubjectCompatibilityLevelWithEnhancedProviderBlock(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockSubjectCompatibilityLevelTestServerUrl := wiremockContainer.URI
 	confluentCloudBaseUrl := ""
 	wiremockClient := wiremock.NewClient(mockSubjectCompatibilityLevelTestServerUrl)
-	// nolint:errcheck
-	defer wiremockClient.Reset()
-
-	// nolint:errcheck
-	defer wiremockClient.ResetAllScenarios()
 
 	createSubjectCompatibilityLevelResponse, _ := ioutil.ReadFile("../testdata/subject_compatibility_level/read_created_subject_compatibility_level.json")
 	createSubjectCompatibilityLevelStub := wiremock.Put(wiremock.URLPathEqualTo(updateSubjectCompatibilityLevelPath)).
@@ -174,6 +168,24 @@ func TestAccSubjectCompatibilityLevelWithEnhancedProviderBlock(t *testing.T) {
 
 	checkStubCount(t, wiremockClient, createSubjectCompatibilityLevelStub, fmt.Sprintf("PUT (CREATE) %s", updateSubjectCompatibilityLevelPath), expectedCountTwo)
 	checkStubCount(t, wiremockClient, deleteSubjectCompatibilityLevelStub, fmt.Sprintf("DELETE %s", updateSubjectCompatibilityLevelPath), expectedCountOne)
+
+	t.Cleanup(func() {
+		err := wiremockClient.Reset()
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to reset wiremock: %v", err))
+		}
+
+		err = wiremockClient.ResetAllScenarios()
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to reset scenarios: %v", err))
+		}
+
+		// Also add container termination here to ensure it happens
+		err = wiremockContainer.Terminate(ctx)
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to terminate container: %v", err))
+		}
+	})
 }
 
 func testAccCheckSubjectCompatibilityLevelConfigWithEnhancedProviderBlock(confluentCloudBaseUrl, mockServerUrl, compatibilityLevel string) string {

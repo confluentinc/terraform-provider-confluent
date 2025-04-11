@@ -52,16 +52,10 @@ func TestAccAcls(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockAclTestServerUrl := wiremockContainer.URI
 	confluentCloudBaseUrl := ""
 	wiremockClient := wiremock.NewClient(mockAclTestServerUrl)
-	// nolint:errcheck
-	defer wiremockClient.Reset()
-
-	// nolint:errcheck
-	defer wiremockClient.ResetAllScenarios()
 
 	createAclStub := wiremock.Post(wiremock.URLPathEqualTo(createKafkaAclPath)).
 		InScenario(aclScenarioName).
@@ -176,6 +170,24 @@ func TestAccAcls(t *testing.T) {
 
 	checkStubCount(t, wiremockClient, createAclStub, fmt.Sprintf("POST %s", createKafkaAclPath), expectedCountOne)
 	checkStubCount(t, wiremockClient, deleteAclStub, fmt.Sprintf("DELETE %s", readKafkaAclPath), expectedCountOne)
+
+	t.Cleanup(func() {
+		err := wiremockClient.Reset()
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to reset wiremock: %v", err))
+		}
+
+		err = wiremockClient.ResetAllScenarios()
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to reset scenarios: %v", err))
+		}
+
+		// Also add container termination here to ensure it happens
+		err = wiremockContainer.Terminate(ctx)
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to terminate container: %v", err))
+		}
+	})
 }
 
 func testAccCheckAclDestroy(s *terraform.State, url string) error {

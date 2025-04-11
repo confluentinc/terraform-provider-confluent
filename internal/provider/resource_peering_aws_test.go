@@ -53,15 +53,10 @@ func TestAccAwsPeeringAccess(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
-	// nolint:errcheck
-	defer wiremockClient.Reset()
 
-	// nolint:errcheck
-	defer wiremockClient.ResetAllScenarios()
 	createAwsPeeringResponse, _ := ioutil.ReadFile("../testdata/peering/aws/create_peering.json")
 	createAwsPeeringStub := wiremock.Post(wiremock.URLPathEqualTo("/networking/v1/peerings")).
 		InScenario(awsPeeringScenarioName).
@@ -199,6 +194,24 @@ func TestAccAwsPeeringAccess(t *testing.T) {
 
 	checkStubCount(t, wiremockClient, createAwsPeeringStub, fmt.Sprintf("POST %s", awsPeeringUrlPath), expectedCountOne)
 	checkStubCount(t, wiremockClient, deleteAwsPeeringStub, fmt.Sprintf("DELETE %s?environment=%s", awsPeeringUrlPath, awsPeeringEnvironmentId), expectedCountOne)
+
+	t.Cleanup(func() {
+		err := wiremockClient.Reset()
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to reset wiremock: %v", err))
+		}
+
+		err = wiremockClient.ResetAllScenarios()
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to reset scenarios: %v", err))
+		}
+
+		// Also add container termination here to ensure it happens
+		err = wiremockContainer.Terminate(ctx)
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to terminate container: %v", err))
+		}
+	})
 }
 
 func testAccCheckAwsPeeringDestroy(s *terraform.State) error {

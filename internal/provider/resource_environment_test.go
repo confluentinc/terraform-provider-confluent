@@ -46,7 +46,6 @@ func TestAccEnvironment(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
@@ -168,6 +167,24 @@ func TestAccEnvironment(t *testing.T) {
 	checkStubCount(t, wiremockClient, createEnvStub, "POST /org/v2/environments", expectedCountOne)
 	checkStubCount(t, wiremockClient, patchEnvStub, "PATCH /org/v2/environments/env-1jrymj", expectedCountOne)
 	checkStubCount(t, wiremockClient, deleteEnvStub, "DELETE /org/v2/environments/env-1jrymj", expectedCountOne)
+
+	t.Cleanup(func() {
+		err := wiremockClient.Reset()
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to reset wiremock: %v", err))
+		}
+
+		err = wiremockClient.ResetAllScenarios()
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to reset scenarios: %v", err))
+		}
+
+		// Also add container termination here to ensure it happens
+		err = wiremockContainer.Terminate(ctx)
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to terminate container: %v", err))
+		}
+	})
 }
 
 func TestAccEnvironmentWithoutSg(t *testing.T) {
@@ -177,7 +194,6 @@ func TestAccEnvironmentWithoutSg(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)

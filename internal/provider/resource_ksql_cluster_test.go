@@ -73,15 +73,9 @@ func TestAccCreateKsqlClusterError(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
-	// nolint:errcheck
-	defer wiremockClient.Reset()
-
-	// nolint:errcheck
-	defer wiremockClient.ResetAllScenarios()
 
 	createClusterResponse, _ := ioutil.ReadFile("../testdata/ksql/501_internal_server_error.json")
 	createClusterStub := wiremock.Post(wiremock.URLPathEqualTo(createKsqlPath)).
@@ -107,6 +101,24 @@ func TestAccCreateKsqlClusterError(t *testing.T) {
 	})
 
 	checkStubCount(t, wiremockClient, createClusterStub, fmt.Sprintf("POST %s", createKsqlPath), 1)
+
+	t.Cleanup(func() {
+		err := wiremockClient.Reset()
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to reset wiremock: %v", err))
+		}
+
+		err = wiremockClient.ResetAllScenarios()
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to reset scenarios: %v", err))
+		}
+
+		// Also add container termination here to ensure it happens
+		err = wiremockContainer.Terminate(ctx)
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to terminate container: %v", err))
+		}
+	})
 }
 
 func TestAccImportKsqlCluster(t *testing.T) {
@@ -116,15 +128,9 @@ func TestAccImportKsqlCluster(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
-	// nolint:errcheck
-	defer wiremockClient.Reset()
-
-	// nolint:errcheck
-	defer wiremockClient.ResetAllScenarios()
 
 	createClusterResponse, _ := ioutil.ReadFile("../testdata/ksql/PROVISIONING_ksql_4_csu.json")
 	createClusterStub := wiremock.Post(wiremock.URLPathEqualTo(createKsqlPath)).
@@ -189,15 +195,9 @@ func TestAccReadKsqlClusterError(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
-	// nolint:errcheck
-	defer wiremockClient.Reset()
-
-	// nolint:errcheck
-	defer wiremockClient.ResetAllScenarios()
 
 	createClusterResponse, _ := ioutil.ReadFile("../testdata/ksql/PROVISIONED_ksql_4_csu.json")
 	createClusterStub := wiremock.Post(wiremock.URLPathEqualTo(createKsqlPath)).
@@ -245,15 +245,10 @@ func TestAccKsqlCluster(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
-	// nolint:errcheck
-	defer wiremockClient.Reset()
 
-	// nolint:errcheck
-	defer wiremockClient.ResetAllScenarios()
 	createClusterResponse, _ := ioutil.ReadFile("../testdata/ksql/PROVISIONING_ksql_4_csu.json")
 	createClusterStub := wiremock.Post(wiremock.URLPathEqualTo(createKsqlPath)).
 		InScenario(ksqlScenarioName).

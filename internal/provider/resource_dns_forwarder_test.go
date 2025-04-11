@@ -42,15 +42,9 @@ func TestAccDnsForwarder(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
-	// nolint:errcheck
-	defer wiremockClient.Reset()
-
-	// nolint:errcheck
-	defer wiremockClient.ResetAllScenarios()
 
 	createDnsForwarderResponse, _ := ioutil.ReadFile("../testdata/network_dns_forwarder/create_dnsf.json")
 	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(dnsForwarderUrlPath)).
@@ -119,6 +113,24 @@ func TestAccDnsForwarder(t *testing.T) {
 			},
 		},
 	})
+
+	t.Cleanup(func() {
+		err := wiremockClient.Reset()
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to reset wiremock: %v", err))
+		}
+
+		err = wiremockClient.ResetAllScenarios()
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to reset scenarios: %v", err))
+		}
+
+		// Also add container termination here to ensure it happens
+		err = wiremockContainer.Terminate(ctx)
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to terminate container: %v", err))
+		}
+	})
 }
 
 func TestAccDnsForwarderGcp(t *testing.T) {
@@ -128,15 +140,9 @@ func TestAccDnsForwarderGcp(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
-	// nolint:errcheck
-	defer wiremockClient.Reset()
-
-	// nolint:errcheck
-	defer wiremockClient.ResetAllScenarios()
 
 	createDnsForwarderResponse, _ := ioutil.ReadFile("../testdata/network_dns_forwarder/create_dnsf_gcp.json")
 	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(dnsForwarderUrlPath)).
@@ -203,6 +209,24 @@ func TestAccDnsForwarderGcp(t *testing.T) {
 					resource.TestCheckResourceAttr(dnsForwarderResourceLabel, "forward_via_ip.0.dns_server_ips.#", "0")),
 			},
 		},
+	})
+
+	t.Cleanup(func() {
+		err := wiremockClient.Reset()
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to reset wiremock: %v", err))
+		}
+
+		err = wiremockClient.ResetAllScenarios()
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to reset scenarios: %v", err))
+		}
+
+		// Also add container termination here to ensure it happens
+		err = wiremockContainer.Terminate(ctx)
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to terminate container: %v", err))
+		}
 	})
 }
 

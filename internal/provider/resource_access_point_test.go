@@ -45,15 +45,9 @@ func TestAccAccessPointAwsEgressPrivateLinkEndpoint(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
-	// nolint:errcheck
-	defer wiremockClient.Reset()
-
-	// nolint:errcheck
-	defer wiremockClient.ResetAllScenarios()
 
 	createAccessPointResponse, _ := os.ReadFile("../testdata/network_access_point/create_aws_egress_ap.json")
 	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(accessPointUrlPath)).
@@ -160,6 +154,23 @@ func TestAccAccessPointAwsEgressPrivateLinkEndpoint(t *testing.T) {
 			},
 		},
 	})
+	t.Cleanup(func() {
+		err := wiremockClient.Reset()
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to reset wiremock: %v", err))
+		}
+
+		err = wiremockClient.ResetAllScenarios()
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to reset scenarios: %v", err))
+		}
+
+		// Also add container termination here to ensure it happens
+		err = wiremockContainer.Terminate(ctx)
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to terminate container: %v", err))
+		}
+	})
 }
 
 func TestAccAccessPointAwsPrivateNetworkInterface(t *testing.T) {
@@ -169,15 +180,9 @@ func TestAccAccessPointAwsPrivateNetworkInterface(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
-	// nolint:errcheck
-	defer wiremockClient.Reset()
-
-	// nolint:errcheck
-	defer wiremockClient.ResetAllScenarios()
 
 	createAccessPointResponse, _ := os.ReadFile("../testdata/network_access_point/read_created_aws_private_network_interface_ap.json") // private network interface has no status, so we can use the same json file for create and read
 	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(accessPointUrlPath)).
@@ -286,6 +291,23 @@ func TestAccAccessPointAwsPrivateNetworkInterface(t *testing.T) {
 			},
 		},
 	})
+	t.Cleanup(func() {
+		err := wiremockClient.Reset()
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to reset wiremock: %v", err))
+		}
+
+		err = wiremockClient.ResetAllScenarios()
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to reset scenarios: %v", err))
+		}
+
+		// Also add container termination here to ensure it happens
+		err = wiremockContainer.Terminate(ctx)
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to terminate container: %v", err))
+		}
+	})
 }
 
 func TestAccAccessPointAzureEgressPrivateLinkEndpoint(t *testing.T) {
@@ -295,15 +317,9 @@ func TestAccAccessPointAzureEgressPrivateLinkEndpoint(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
-	// nolint:errcheck
-	defer wiremockClient.Reset()
-
-	// nolint:errcheck
-	defer wiremockClient.ResetAllScenarios()
 
 	createAccessPointResponse, _ := os.ReadFile("../testdata/network_access_point/create_azure_egress_ap.json")
 	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(accessPointUrlPath)).
@@ -420,6 +436,23 @@ func TestAccAccessPointAzureEgressPrivateLinkEndpoint(t *testing.T) {
 			},
 		},
 	})
+	t.Cleanup(func() {
+		err := wiremockClient.Reset()
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to reset wiremock: %v", err))
+		}
+
+		err = wiremockClient.ResetAllScenarios()
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to reset scenarios: %v", err))
+		}
+
+		// Also add container termination here to ensure it happens
+		err = wiremockContainer.Terminate(ctx)
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to terminate container: %v", err))
+		}
+	})
 }
 
 func TestAccAccessPointGcpEgressPrivateServiceConnectEndpoint(t *testing.T) {
@@ -429,15 +462,9 @@ func TestAccAccessPointGcpEgressPrivateServiceConnectEndpoint(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
-	// nolint:errcheck
-	defer wiremockClient.Reset()
-
-	// nolint:errcheck
-	defer wiremockClient.ResetAllScenarios()
 
 	createAccessPointResponse, _ := os.ReadFile("../testdata/network_access_point/create_gcp_egress_ap.json")
 	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(accessPointUrlPath)).
@@ -543,6 +570,23 @@ func TestAccAccessPointGcpEgressPrivateServiceConnectEndpoint(t *testing.T) {
 				),
 			},
 		},
+	})
+	t.Cleanup(func() {
+		err := wiremockClient.Reset()
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to reset wiremock: %v", err))
+		}
+
+		err = wiremockClient.ResetAllScenarios()
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to reset scenarios: %v", err))
+		}
+
+		// Also add container termination here to ensure it happens
+		err = wiremockContainer.Terminate(ctx)
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to terminate container: %v", err))
+		}
 	})
 }
 

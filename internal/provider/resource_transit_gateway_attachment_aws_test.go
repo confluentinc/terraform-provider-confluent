@@ -56,15 +56,10 @@ func TestAccAwsTransitGatewayAttachmentAccess(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
-	// nolint:errcheck
-	defer wiremockClient.Reset()
 
-	// nolint:errcheck
-	defer wiremockClient.ResetAllScenarios()
 	createAwsTransitGatewayAttachmentResponse, _ := ioutil.ReadFile("../testdata/transit_gateway_attachment/aws/create_transit_gateway_attachment.json")
 	createAwsTransitGatewayAttachmentStub := wiremock.Post(wiremock.URLPathEqualTo("/networking/v1/transit-gateway-attachments")).
 		InScenario(awsTransitGatewayAttachmentScenarioName).
@@ -183,6 +178,23 @@ func TestAccAwsTransitGatewayAttachmentAccess(t *testing.T) {
 
 	checkStubCount(t, wiremockClient, createAwsTransitGatewayAttachmentStub, fmt.Sprintf("POST %s", awsTransitGatewayAttachmentUrlPath), expectedCountOne)
 	checkStubCount(t, wiremockClient, deleteAwsTransitGatewayAttachmentStub, fmt.Sprintf("DELETE %s?environment=%s", awsTransitGatewayAttachmentUrlPath, awsTransitGatewayAttachmentEnvironmentId), expectedCountOne)
+	t.Cleanup(func() {
+		err := wiremockClient.Reset()
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to reset wiremock: %v", err))
+		}
+
+		err = wiremockClient.ResetAllScenarios()
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to reset scenarios: %v", err))
+		}
+
+		// Also add container termination here to ensure it happens
+		err = wiremockContainer.Terminate(ctx)
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to terminate container: %v", err))
+		}
+	})
 }
 
 func testAccCheckAwsTransitGatewayAttachmentDestroy(s *terraform.State) error {

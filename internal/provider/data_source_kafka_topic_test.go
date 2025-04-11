@@ -39,16 +39,10 @@ func TestAccDataSourceTopic(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockTopicTestServerUrl := wiremockContainer.URI
 	confluentCloudBaseUrl := ""
 	wiremockClient := wiremock.NewClient(mockTopicTestServerUrl)
-	// nolint:errcheck
-	defer wiremockClient.Reset()
-
-	// nolint:errcheck
-	defer wiremockClient.ResetAllScenarios()
 
 	readCreatedTopicResponse, _ := ioutil.ReadFile("../testdata/kafka_topic/read_created_kafka_topic.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(kafkaTopicPath)).
@@ -93,6 +87,23 @@ func TestAccDataSourceTopic(t *testing.T) {
 				),
 			},
 		},
+	})
+	t.Cleanup(func() {
+		err := wiremockClient.Reset()
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to reset wiremock: %v", err))
+		}
+
+		err = wiremockClient.ResetAllScenarios()
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to reset scenarios: %v", err))
+		}
+
+		// Also add container termination here to ensure it happens
+		err = wiremockContainer.Terminate(ctx)
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to terminate container: %v", err))
+		}
 	})
 }
 

@@ -47,16 +47,10 @@ func TestAccLatestRefreshSchema(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockSchemaTestServerUrl := wiremockContainer.URI
 	confluentCloudBaseUrl := ""
 	wiremockClient := wiremock.NewClient(mockSchemaTestServerUrl)
-	// nolint:errcheck
-	defer wiremockClient.Reset()
-
-	// nolint:errcheck
-	defer wiremockClient.ResetAllScenarios()
 
 	// Schema has not yet been created. Used for test step 1.
 
@@ -234,6 +228,24 @@ func TestAccLatestRefreshSchema(t *testing.T) {
 	})
 
 	checkStubCount(t, wiremockClient, deleteSchemaStub, fmt.Sprintf("DELETE %s", readSchemasPath), expectedCountOne)
+
+	t.Cleanup(func() {
+		err := wiremockClient.Reset()
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to reset wiremock: %v", err))
+		}
+
+		err = wiremockClient.ResetAllScenarios()
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to reset scenarios: %v", err))
+		}
+
+		// Also add container termination here to ensure it happens
+		err = wiremockContainer.Terminate(ctx)
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to terminate container: %v", err))
+		}
+	})
 }
 
 func testAccCheckLatestRefreshSchemaConfig(confluentCloudBaseUrl, mockServerUrl string, schemaContent string) string {

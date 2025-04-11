@@ -44,16 +44,11 @@ func TestAccKafkaMirrorTopicWithPrefix(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockKafkaMirrorTestServerUrl := wiremockContainer.URI
 	confluentCloudBaseUrl := ""
 	wiremockClient := wiremock.NewClient(mockKafkaMirrorTestServerUrl)
-	// nolint:errcheck
-	defer wiremockClient.Reset()
 
-	// nolint:errcheck
-	defer wiremockClient.ResetAllScenarios()
 	createClusterLinkResponse, _ := ioutil.ReadFile("../testdata/kafka_mirror_topic/with_prefix/create_kafka_mirror_topic.json")
 	createClusterLinkStub := wiremock.Post(wiremock.URLPathEqualTo(createKafkaMirrorTopicWithPrefixPath)).
 		InScenario(kafkaMirrorTopicScenarioName).
@@ -195,6 +190,24 @@ func TestAccKafkaMirrorTopicWithPrefix(t *testing.T) {
 
 	checkStubCount(t, wiremockClient, createClusterLinkStub, fmt.Sprintf("POST %s", createClusterLinkDestinationOutboundPath), expectedCountOne)
 	checkStubCount(t, wiremockClient, deleteClusterLinkStub, fmt.Sprintf("DELETE %s", readClusterLinkDestinationOutboundPath), expectedCountOne)
+
+	t.Cleanup(func() {
+		err := wiremockClient.Reset()
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to reset wiremock: %v", err))
+		}
+
+		err = wiremockClient.ResetAllScenarios()
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to reset scenarios: %v", err))
+		}
+
+		// Also add container termination here to ensure it happens
+		err = wiremockContainer.Terminate(ctx)
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to terminate container: %v", err))
+		}
+	})
 }
 
 func testAccCheckKafkaMirrorTopicWithPrefixConfig(confluentCloudBaseUrl, mockServerUrl string) string {

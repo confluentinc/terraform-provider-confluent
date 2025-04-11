@@ -39,15 +39,9 @@ func TestAccDataSourceNetworkLinkEndpoint(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
-	// nolint:errcheck
-	defer wiremockClient.Reset()
-
-	// nolint:errcheck
-	defer wiremockClient.ResetAllScenarios()
 
 	readNetworkLinkEndpointResponse, _ := ioutil.ReadFile("../testdata/network_link_endpoint/read_nle.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(networkLinkEndpointReadUrlPath)).
