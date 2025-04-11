@@ -69,6 +69,7 @@ func TestAccCreateKsqlClusterError(t *testing.T) {
 
 	ctx := context.Background()
 
+	time.Sleep(5 * time.Second)
 	wiremockContainer, err := setupWiremock(ctx)
 	if err != nil {
 		t.Fatal(err)
@@ -112,6 +113,7 @@ func TestAccCreateKsqlClusterError(t *testing.T) {
 func TestAccImportKsqlCluster(t *testing.T) {
 	ctx := context.Background()
 
+	time.Sleep(5 * time.Second)
 	wiremockContainer, err := setupWiremock(ctx)
 	if err != nil {
 		t.Fatal(err)
@@ -185,6 +187,7 @@ func TestAccImportKsqlCluster(t *testing.T) {
 func TestAccReadKsqlClusterError(t *testing.T) {
 	ctx := context.Background()
 
+	time.Sleep(5 * time.Second)
 	wiremockContainer, err := setupWiremock(ctx)
 	if err != nil {
 		t.Fatal(err)
@@ -241,6 +244,7 @@ func TestAccReadKsqlClusterError(t *testing.T) {
 func TestAccKsqlCluster(t *testing.T) {
 	ctx := context.Background()
 
+	time.Sleep(5 * time.Second)
 	wiremockContainer, err := setupWiremock(ctx)
 	if err != nil {
 		t.Fatal(err)

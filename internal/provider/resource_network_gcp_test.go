@@ -59,6 +59,7 @@ var gcpNetworkUrlPath = fmt.Sprintf("/networking/v1/networks/%s", gcpNetworkId)
 func TestAccGcpNetwork(t *testing.T) {
 	ctx := context.Background()
 
+	time.Sleep(5 * time.Second)
 	wiremockContainer, err := setupWiremock(ctx)
 	if err != nil {
 		t.Fatal(err)

@@ -44,6 +44,7 @@ var awsPlaUrlPath = fmt.Sprintf("/networking/v1/private-link-accesses/%s", awsPl
 func TestAccAwsPrivateLinkAccess(t *testing.T) {
 	ctx := context.Background()
 
+	time.Sleep(5 * time.Second)
 	wiremockContainer, err := setupWiremock(ctx)
 	if err != nil {
 		t.Fatal(err)

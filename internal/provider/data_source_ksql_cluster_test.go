@@ -54,6 +54,7 @@ var datasourceCommonChecks = resource.ComposeTestCheckFunc(
 func TestAccDataSourceWithIdKsql(t *testing.T) {
 	ctx := context.Background()
 
+	time.Sleep(5 * time.Second)
 	wiremockContainer, err := setupWiremock(ctx)
 	if err != nil {
 		t.Fatal(err)
@@ -105,6 +106,7 @@ func TestAccDataSourceWithIdKsql(t *testing.T) {
 func TestAccDataSourceListKsql(t *testing.T) {
 	ctx := context.Background()
 
+	time.Sleep(5 * time.Second)
 	wiremockContainer, err := setupWiremock(ctx)
 	if err != nil {
 		t.Fatal(err)
@@ -144,6 +146,7 @@ func TestAccDataSourceListKsql(t *testing.T) {
 func TestAccDataSourceKsqlApi5xxError(t *testing.T) {
 	ctx := context.Background()
 
+	time.Sleep(5 * time.Second)
 	wiremockContainer, err := setupWiremock(ctx)
 	if err != nil {
 		t.Fatal(err)
@@ -185,6 +188,7 @@ func TestAccDataSourceKsqlApi5xxError(t *testing.T) {
 func TestAccDataSourceKsqlApi4xxError(t *testing.T) {
 	ctx := context.Background()
 
+	time.Sleep(5 * time.Second)
 	wiremockContainer, err := setupWiremock(ctx)
 	if err != nil {
 		t.Fatal(err)

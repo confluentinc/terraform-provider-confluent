@@ -53,6 +53,7 @@ var updateKafkaConfigPath = fmt.Sprintf("/kafka/v3/clusters/%s/broker-configs:al
 func TestAccClusterConfig(t *testing.T) {
 	ctx := context.Background()
 
+	time.Sleep(5 * time.Second)
 	wiremockContainer, err := setupWiremock(ctx)
 	if err != nil {
 		t.Fatal(err)

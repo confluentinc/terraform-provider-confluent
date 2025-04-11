@@ -39,6 +39,7 @@ const (
 func TestAccCatalogIntegrationAwsGlue(t *testing.T) {
 	ctx := context.Background()
 
+	time.Sleep(5 * time.Second)
 	wiremockContainer, err := setupWiremock(ctx)
 	if err != nil {
 		t.Fatal(err)
@@ -157,6 +158,7 @@ func TestAccCatalogIntegrationAwsGlue(t *testing.T) {
 func TestAccCatalogIntegrationSnowflake(t *testing.T) {
 	ctx := context.Background()
 
+	time.Sleep(5 * time.Second)
 	wiremockContainer, err := setupWiremock(ctx)
 	if err != nil {
 		t.Fatal(err)

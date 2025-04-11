@@ -60,6 +60,7 @@ const (
 func TestAccKafkaApiKey(t *testing.T) {
 	ctx := context.Background()
 
+	time.Sleep(5 * time.Second)
 	wiremockContainer, err := setupWiremock(ctx)
 	if err != nil {
 		t.Fatal(err)
@@ -297,6 +298,7 @@ func TestAccKafkaApiKey(t *testing.T) {
 func TestAccFlinkApiKey(t *testing.T) {
 	ctx := context.Background()
 
+	time.Sleep(5 * time.Second)
 	wiremockContainer, err := setupWiremock(ctx)
 	if err != nil {
 		t.Fatal(err)
@@ -492,6 +494,7 @@ func TestAccFlinkApiKey(t *testing.T) {
 func TestAccTableflowApiKey(t *testing.T) {
 	ctx := context.Background()
 
+	time.Sleep(5 * time.Second)
 	wiremockContainer, err := setupWiremock(ctx)
 	if err != nil {
 		t.Fatal(err)
@@ -678,6 +681,7 @@ func TestAccTableflowApiKey(t *testing.T) {
 func TestAccCloudApiKey(t *testing.T) {
 	ctx := context.Background()
 
+	time.Sleep(5 * time.Second)
 	wiremockContainer, err := setupWiremock(ctx)
 	if err != nil {
 		t.Fatal(err)

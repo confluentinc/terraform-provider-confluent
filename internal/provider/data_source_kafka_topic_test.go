@@ -35,6 +35,7 @@ var fullTopicDataSourceLabel = fmt.Sprintf("data.confluent_kafka_topic.%s", topi
 func TestAccDataSourceTopic(t *testing.T) {
 	ctx := context.Background()
 
+	time.Sleep(5 * time.Second)
 	wiremockContainer, err := setupWiremock(ctx)
 	if err != nil {
 		t.Fatal(err)

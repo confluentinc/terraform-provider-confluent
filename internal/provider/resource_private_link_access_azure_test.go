@@ -44,6 +44,7 @@ var azurePlaUrlPath = fmt.Sprintf("/networking/v1/private-link-accesses/%s", azu
 func TestAccAzurePrivateLinkAccess(t *testing.T) {
 	ctx := context.Background()
 
+	time.Sleep(5 * time.Second)
 	wiremockContainer, err := setupWiremock(ctx)
 	if err != nil {
 		t.Fatal(err)

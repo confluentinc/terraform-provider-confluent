@@ -42,6 +42,7 @@ var contentTypeJSONHeader = map[string]string{"Content-Type": "application/json"
 func TestAccEnvironment(t *testing.T) {
 	ctx := context.Background()
 
+	time.Sleep(5 * time.Second)
 	wiremockContainer, err := setupWiremock(ctx)
 	if err != nil {
 		t.Fatal(err)
@@ -173,6 +174,7 @@ func TestAccEnvironment(t *testing.T) {
 func TestAccEnvironmentWithoutSg(t *testing.T) {
 	ctx := context.Background()
 
+	time.Sleep(5 * time.Second)
 	wiremockContainer, err := setupWiremock(ctx)
 	if err != nil {
 		t.Fatal(err)
