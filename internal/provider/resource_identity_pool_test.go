@@ -45,7 +45,6 @@ func TestAccIdentityPool(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
@@ -172,6 +171,11 @@ func TestAccIdentityPool(t *testing.T) {
 	checkStubCount(t, wiremockClient, createSaStub, "POST /iam/v2/identity-providers/op-537/identity-pools", expectedCountOne)
 	checkStubCount(t, wiremockClient, patchSaStub, "PATCH /iam/v2/identity-providers/op-537/identity-pools/pool-rORN", expectedCountOne)
 	checkStubCount(t, wiremockClient, deleteSaStub, "DELETE /iam/v2/identity-providers/op-537/identity-pools/pool-rORN", expectedCountOne)
+
+	err = wiremockContainer.Terminate(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func testAccCheckIdentityPoolDestroy(s *terraform.State) error {

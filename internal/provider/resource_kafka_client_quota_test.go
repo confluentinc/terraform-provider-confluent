@@ -56,7 +56,6 @@ func TestAccKafkaClientQuota(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
@@ -200,6 +199,11 @@ func TestAccKafkaClientQuota(t *testing.T) {
 	checkStubCount(t, wiremockClient, createKafkaClientQuotaStub, "POST /kafka-quotas/v1/client-quotas", expectedCountOne)
 	checkStubCount(t, wiremockClient, patchKafkaClientQuotaStub, "PATCH /kafka-quotas/v1/client-quotas/cq-e857e", expectedCountOne)
 	checkStubCount(t, wiremockClient, deleteKafkaClientQuotaStub, "DELETE /kafka-quotas/v1/client-quotas/cq-e857e", expectedCountOne)
+
+	err = wiremockContainer.Terminate(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func testAccCheckKafkaClientQuotaDestroy(s *terraform.State) error {
