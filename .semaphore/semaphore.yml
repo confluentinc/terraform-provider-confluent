@@ -31,13 +31,11 @@ blocks:
           execution_time_limit:
             hours: 2
           commands:
+            - . vault-sem-get-secret v1/ci/kv/apif/sonar_token
             - make sonar-scan
             - make all
             # Run make-release CI if the current commit is not tagged
             - if [[ -z $(git tag --points-at HEAD) ]]; then make release-ci; fi
-      env_vars:
-        - name: SONAR_TOKEN
-          value: sqp_8f9bdade072d94fa8299e67e62f6fb4414887034
 
 promotions:
   - name: Draft a Release
