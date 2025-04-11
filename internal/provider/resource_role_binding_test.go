@@ -46,7 +46,6 @@ func TestAccRoleBinding(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
@@ -128,6 +127,11 @@ func TestAccRoleBinding(t *testing.T) {
 
 	checkStubCount(t, wiremockClient, createRolebindingStub, "POST /iam/v2/role-bindings", expectedCountOne)
 	checkStubCount(t, wiremockClient, deleteRolebindingStub, fmt.Sprintf("DELETE /iam/v2/role-bindings/%s", roleBindingId), expectedCountOne)
+
+	err = wiremockContainer.Terminate(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func testAccCheckRoleBindingDestroy(s *terraform.State) error {

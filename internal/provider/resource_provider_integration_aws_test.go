@@ -45,7 +45,6 @@ func TestAccProviderIntegration(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockServerUrl := wiremockContainer.URI
 	wiremockClient := wiremock.NewClient(mockServerUrl)
@@ -145,6 +144,11 @@ func TestAccProviderIntegration(t *testing.T) {
 		},
 		CheckDestroy: testAccCheckProviderIntegrationDestroy,
 	})
+
+	err = wiremockContainer.Terminate(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func testAccCheckProviderIntegrationDestroy(s *terraform.State) error {
