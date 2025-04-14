@@ -77,6 +77,8 @@ data "confluent_schema_registry_cluster" "essentials" {
 # (e.g., data.confluent_schema_registry_cluster.essentials).
 ```
 
+-> **Note:** The [Stream Governance Essentials package](https://docs.confluent.io/cloud/current/stream-governance/packages.html#sg-packages-features-and-limits-in-ccloud) is available by default for all Confluent Cloud environments. Therefore, the region and package attributes are no longer required as arguments in the `confluent_schema_registry_cluster` [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_schema_registry_cluster).
+
 Next, remove the `confluent_schema_registry_cluster` [resource](https://registry.terraform.io/providers/confluentinc/confluent/1.83.0/docs/resources/confluent_schema_registry_cluster) from TF state (again, just from TF state and not on Confluent Cloud).
 
 ```bash
