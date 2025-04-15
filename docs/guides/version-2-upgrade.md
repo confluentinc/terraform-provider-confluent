@@ -129,7 +129,7 @@ The next step is to upgrade your TF configuration:
 #### Before
 ```
 data "confluent_schema_registry_cluster" "example" {
-  # <other attributes like display_name or id>
+  # <other attributes>
   environment {
     id = "env-xyz456"
   }
