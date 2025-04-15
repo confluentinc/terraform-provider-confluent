@@ -56,7 +56,7 @@ The next step is to upgrade your TF configuration:
 #### Before
 ```
 resource "confluent_schema_registry_cluster" "essentials" {
-  # <other attributes>
+  # ...additional attributes here...
   environment {
     id = confluent_environment.staging.id
   }
@@ -110,7 +110,7 @@ To remove `confluent_schema_registry_region`
 #### Before
 ```
 data "confluent_schema_registry_region" "essentials" {
-  # ...
+  # ...additional attributes here...
 }
 ```
 
@@ -129,7 +129,7 @@ The next step is to upgrade your TF configuration:
 #### Before
 ```
 data "confluent_schema_registry_cluster" "example" {
-  # <other attributes>
+  # ...additional attributes here...
   environment {
     id = "env-xyz456"
   }
