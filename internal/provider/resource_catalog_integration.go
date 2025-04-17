@@ -297,7 +297,7 @@ func setCatalogIntegrationAttributes(d *schema.ResourceData, c *TableflowRestCli
 	}
 
 	if !c.isMetadataSetInProviderBlock {
-		if err := setKafkaCredentials(c.tableflowApiKey, c.tableflowApiSecret, d, c.oauthToken != nil); err != nil {
+		if err := setKafkaCredentials(c.tableflowApiKey, c.tableflowApiSecret, d, false); err != nil {
 			return nil, err
 		}
 	}
