@@ -21,6 +21,7 @@ import (
 	kafkarestv3 "github.com/confluentinc/ccloud-sdk-go-v2/kafkarest/v3"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"net/http"
@@ -30,6 +31,7 @@ import (
 // https://docs.confluent.io/cloud/current/clusters/broker-config.html#change-cluster-settings-for-dedicated-clusters
 var editableClusterSettings = []string{
 	"auto.create.topics.enable",
+	"ssl.enabled.protocols",
 	"ssl.cipher.suites",
 	"num.partitions",
 	"log.cleaner.max.compaction.lag.ms",
@@ -67,6 +69,7 @@ func kafkaConfigResource() *schema.Resource {
 			},
 			paramCredentials: credentialsSchema(),
 		},
+		CustomizeDiff: customdiff.Sequence(resourceCredentialBlockValidationWithOAuth),
 	}
 }
 
@@ -83,7 +86,7 @@ func kafkaConfigCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 	if err != nil {
 		return diag.Errorf("error creating Kafka Config: %s", createDescriptiveError(err))
 	}
-	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isKafkaMetadataSet, meta.(*Client).isKafkaClusterIdSet)
+	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isKafkaClusterIdSet, meta.(*Client).isKafkaMetadataSet, meta.(*Client).oauthToken)
 	configs := extractClusterConfigs(d.Get(paramConfigs).(map[string]interface{}))
 
 	createConfigRequest := kafkarestv3.AlterConfigBatchRequestData{
@@ -141,7 +144,7 @@ func kafkaConfigRead(ctx context.Context, d *schema.ResourceData, meta interface
 	if err != nil {
 		return diag.Errorf("error reading Kafka Config: %s", createDescriptiveError(err))
 	}
-	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isKafkaMetadataSet, meta.(*Client).isKafkaClusterIdSet)
+	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isKafkaClusterIdSet, meta.(*Client).isKafkaMetadataSet, meta.(*Client).oauthToken)
 
 	_, err = readConfigAndSetAttributes(ctx, d, kafkaRestClient)
 	if err != nil {
@@ -171,7 +174,7 @@ func kafkaConfigImport(ctx context.Context, d *schema.ResourceData, meta interfa
 
 	clusterId := d.Id()
 
-	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isKafkaMetadataSet, meta.(*Client).isKafkaClusterIdSet)
+	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isKafkaClusterIdSet, meta.(*Client).isKafkaMetadataSet, meta.(*Client).oauthToken)
 
 	// Mark resource as new to avoid d.Set("") when getting 404
 	d.MarkNewResource()
@@ -213,7 +216,7 @@ func readConfigAndSetAttributes(ctx context.Context, d *schema.ResourceData, c *
 	}
 
 	if !c.isMetadataSetInProviderBlock {
-		if err := setKafkaCredentials(c.clusterApiKey, c.clusterApiSecret, d); err != nil {
+		if err := setKafkaCredentials(c.clusterApiKey, c.clusterApiSecret, d, c.externalAccessToken != nil); err != nil {
 			return nil, err
 		}
 		if err := d.Set(paramRestEndpoint, c.restEndpoint); err != nil {
@@ -269,7 +272,7 @@ func kafkaConfigUpdate(ctx context.Context, d *schema.ResourceData, meta interfa
 		if err != nil {
 			return diag.Errorf("error updating Kafka Config: %s", createDescriptiveError(err))
 		}
-		kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isKafkaMetadataSet, meta.(*Client).isKafkaClusterIdSet)
+		kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isKafkaClusterIdSet, meta.(*Client).isKafkaMetadataSet, meta.(*Client).oauthToken)
 		updateConfigRequestJson, err := json.Marshal(updateConfigRequest)
 		if err != nil {
 			return diag.Errorf("error updating Kafka Config: error marshaling %#v to json: %s", updateConfigRequest, createDescriptiveError(err))

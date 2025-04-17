@@ -31,9 +31,9 @@ The following arguments are supported:
 - `display_name` - (Required String) The name of the Certificate Authority.
 - `description` - (Required String) A description of the Certificate Authority.
 - `certificate_chain_filename` - (Required String) The name of the certificate file.
-- `certificate_chain` - (Required String, Sensitive) A base64 encoded string containing the signing certificate chain.
+- `certificate_chain` - (Required String, Sensitive) A PEM encoded string containing the signing certificate chain.
 - `crl_url` - (Optional String) The url from which to fetch the CRL for the certificate authority.
-- `crl_chain` - (Optional String, Sensitive) A base64 encoded string containing the CRL for this certificate authority.
+- `crl_chain` - (Optional String, Sensitive) A PEM encoded string containing the CRL for this certificate authority.
 
 ## Attributes Reference
 

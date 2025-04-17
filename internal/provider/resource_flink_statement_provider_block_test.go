@@ -381,7 +381,8 @@ func testAccCheckFlinkStatementResumedWithEnhancedProviderBlock(confluentCloudBa
 }
 
 func testAccCheckFlinkStatementDestroy(s *terraform.State, url string) error {
-	c := testAccProvider.Meta().(*Client).flinkRestClientFactory.CreateFlinkRestClient(url, flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkComputePoolIdTest, flinkPrincipalIdTest, kafkaApiKey, kafkaApiSecret, false)
+	testClient := testAccProvider.Meta().(*Client)
+	c := testClient.flinkRestClientFactory.CreateFlinkRestClient(url, flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkComputePoolIdTest, flinkPrincipalIdTest, kafkaApiKey, kafkaApiSecret, false, testClient.oauthToken)
 	// Loop through the resources in state, verifying each Kafka topic is destroyed
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "confluent_flink_statement" {

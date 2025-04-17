@@ -1,12 +1,12 @@
 module github.com/confluentinc/terraform-provider-confluent
 
-go 1.22.7
+go 1.23.7
 
 require (
 	github.com/confluentinc/ccloud-sdk-go-v2/apikeys v0.4.0
 	github.com/confluentinc/ccloud-sdk-go-v2/byok v0.0.2
+	github.com/confluentinc/ccloud-sdk-go-v2/certificate-authority v0.0.2
 	github.com/confluentinc/ccloud-sdk-go-v2/cam v0.3.0
-	github.com/confluentinc/ccloud-sdk-go-v2/certificate-authority v0.0.0-20240921001517-750d06dd7c27
 	github.com/confluentinc/ccloud-sdk-go-v2/cmk v0.21.0
 	github.com/confluentinc/ccloud-sdk-go-v2/connect v0.7.0
 	github.com/confluentinc/ccloud-sdk-go-v2/connect-custom-plugin v0.0.2
@@ -48,6 +48,7 @@ require (
 	github.com/moby/sys/userns v0.1.0 // indirect
 	github.com/sergi/go-diff v1.3.2-0.20230802210424-5b0b94c5c0d3 // indirect
 	github.com/stretchr/testify v1.10.0 // indirect
+	golang.org/x/oauth2 v0.17.0 // indirect
 )
 
 require (
@@ -135,12 +136,11 @@ require (
 	go.opentelemetry.io/otel/sdk v1.24.0 // indirect
 	go.opentelemetry.io/otel/trace v1.25.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.1.0 // indirect
-	golang.org/x/crypto v0.31.0 // indirect
+	golang.org/x/crypto v0.35.0 // indirect
 	golang.org/x/exp v0.0.0-20240409090435-93d18d7e34b8 // indirect
-	golang.org/x/net v0.33.0 // indirect
-	golang.org/x/oauth2 v0.17.0 // indirect
-	golang.org/x/sys v0.28.0 // indirect
-	golang.org/x/text v0.21.0 // indirect
+	golang.org/x/net v0.36.0 // indirect
+	golang.org/x/sys v0.30.0 // indirect
+	golang.org/x/text v0.22.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240412170617-26222e5d3d56 // indirect

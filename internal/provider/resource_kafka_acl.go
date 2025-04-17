@@ -21,6 +21,7 @@ import (
 	kafkarestv3 "github.com/confluentinc/ccloud-sdk-go-v2/kafkarest/v3"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"net/http"
@@ -141,6 +142,7 @@ func kafkaAclResource() *schema.Resource {
 				Version: 1,
 			},
 		},
+		CustomizeDiff: customdiff.Sequence(resourceCredentialBlockValidationWithOAuth),
 	}
 }
 
@@ -157,7 +159,7 @@ func kafkaAclCreate(ctx context.Context, d *schema.ResourceData, meta interface{
 	if err != nil {
 		return diag.Errorf("error creating Kafka ACLs: %s", createDescriptiveError(err))
 	}
-	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isKafkaMetadataSet, meta.(*Client).isKafkaClusterIdSet)
+	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isKafkaClusterIdSet, meta.(*Client).isKafkaMetadataSet, meta.(*Client).oauthToken)
 	acl, err := extractAcl(d)
 	if err != nil {
 		return diag.FromErr(createDescriptiveError(err))
@@ -209,7 +211,7 @@ func kafkaAclDelete(ctx context.Context, d *schema.ResourceData, meta interface{
 		return diag.Errorf("error deleting Kafka ACLs: %s", createDescriptiveError(err))
 	}
 	clusterApiKey, clusterApiSecret, err := extractClusterApiKeyAndApiSecret(meta.(*Client), d, false)
-	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isKafkaMetadataSet, meta.(*Client).isKafkaClusterIdSet)
+	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isKafkaClusterIdSet, meta.(*Client).isKafkaMetadataSet, meta.(*Client).oauthToken)
 
 	acl, err := extractAcl(d)
 	if err != nil {
@@ -251,7 +253,7 @@ func kafkaAclRead(ctx context.Context, d *schema.ResourceData, meta interface{})
 		return diag.Errorf("error reading Kafka ACLs: %s", createDescriptiveError(err))
 	}
 	client := meta.(*Client)
-	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isKafkaMetadataSet, meta.(*Client).isKafkaClusterIdSet)
+	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isKafkaClusterIdSet, meta.(*Client).isKafkaMetadataSet, meta.(*Client).oauthToken)
 	acl, err := extractAcl(d)
 	if err != nil {
 		return diag.FromErr(createDescriptiveError(err))
@@ -340,7 +342,7 @@ func readAclAndSetAttributes(ctx context.Context, d *schema.ResourceData, client
 		}
 	}
 	if !c.isMetadataSetInProviderBlock {
-		if err := setKafkaCredentials(c.clusterApiKey, c.clusterApiSecret, d); err != nil {
+		if err := setKafkaCredentials(c.clusterApiKey, c.clusterApiSecret, d, client.isOAuthEnabled); err != nil {
 			return nil, err
 		}
 		if err := d.Set(paramRestEndpoint, c.restEndpoint); err != nil {
@@ -381,7 +383,7 @@ func kafkaAclImport(ctx context.Context, d *schema.ResourceData, meta interface{
 	}
 
 	client := meta.(*Client)
-	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isKafkaMetadataSet, meta.(*Client).isKafkaClusterIdSet)
+	kafkaRestClient := meta.(*Client).kafkaRestClientFactory.CreateKafkaRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isKafkaClusterIdSet, meta.(*Client).isKafkaMetadataSet, meta.(*Client).oauthToken)
 
 	// Mark resource as new to avoid d.Set("") when getting 404
 	d.MarkNewResource()
@@ -430,7 +432,7 @@ func kafkaAclImporter() *Importer {
 func loadAllKafkaAcls(ctx context.Context, client *Client) (InstanceIdsToNameMap, diag.Diagnostics) {
 	instances := make(InstanceIdsToNameMap)
 
-	kafkaRestClient := client.kafkaRestClientFactory.CreateKafkaRestClient(client.kafkaRestEndpoint, client.kafkaClusterId, client.kafkaApiKey, client.kafkaApiSecret, true, true)
+	kafkaRestClient := client.kafkaRestClientFactory.CreateKafkaRestClient(client.kafkaRestEndpoint, client.kafkaClusterId, client.kafkaApiKey, client.kafkaApiSecret, true, true, client.oauthToken)
 
 	acls, _, err := kafkaRestClient.apiClient.ACLV3Api.GetKafkaAcls(kafkaRestClient.apiContext(ctx), kafkaRestClient.clusterId).Execute()
 

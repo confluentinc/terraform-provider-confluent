@@ -114,6 +114,28 @@
       ],
       "config_type": "BROKER",
       "is_default": false
+    },
+    {
+      "kind": "KafkaClusterConfig",
+      "metadata": {
+        "self": "https://pkc-qy65d.us-east-1.aws.confluent.cloud/kafka/v3/clusters/lkc-190073/broker-configs/ssl.enabled.protocols",
+        "resource_name": "crn:///kafka=lkc-190073/broker-config=ssl.enabled.protocols"
+      },
+      "cluster_id": "lkc-190073",
+      "name": "ssl.enabled.protocols",
+      "value": "TLSv1.3",
+      "is_read_only": true,
+      "is_sensitive": false,
+      "source": "DYNAMIC_DEFAULT_BROKER_CONFIG",
+      "synonyms": [
+        {
+          "name": "listener.name.external.ssl.enabled.protocols",
+          "value": "TLSv1.3",
+          "source": "DYNAMIC_DEFAULT_BROKER_CONFIG"
+        }
+      ],
+      "config_type": "BROKER",
+      "is_default": false
     }
   ]
 }
