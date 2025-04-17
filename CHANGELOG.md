@@ -13,7 +13,7 @@
 * Added additional note for the Confluent Provider 2.0.0 [Upgrade Guide](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/guides/version-2-upgrade).
 
 **Examples:**
-* Updated the examples of [flink-quickstart](https://github.com/confluentinc/terraform-provider-confluent/blob/master/examples/configurations/flink-quickstart).
+* Updated the [flink-quickstart](https://github.com/confluentinc/terraform-provider-confluent/blob/master/examples/configurations/flink-quickstart) example.
 
 ## 2.24.0 (March 31st, 2025)
 
