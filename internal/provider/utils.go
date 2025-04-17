@@ -793,7 +793,7 @@ func (c *CatalogRestClient) dataCatalogApiContext(ctx context.Context) context.C
 	}
 
 	if c.clusterApiKey != "" && c.clusterApiSecret != "" {
-		return context.WithValue(context.Background(), dc.ContextBasicAuth, dc.BasicAuth{
+		return context.WithValue(ctx, dc.ContextBasicAuth, dc.BasicAuth{
 			UserName: c.clusterApiKey,
 			Password: c.clusterApiSecret,
 		})
@@ -827,7 +827,7 @@ func (c *FlinkRestClient) apiContext(ctx context.Context) context.Context {
 // TODO: Tableflow APIs don't support OAuth at this moment, following up in CLI-3534 for OAuth GA
 func (c *TableflowRestClient) apiContext(ctx context.Context) context.Context {
 	if c.tableflowApiKey != "" && c.tableflowApiSecret != "" {
-		return context.WithValue(context.Background(), tableflow.ContextBasicAuth, tableflow.BasicAuth{
+		return context.WithValue(ctx, tableflow.ContextBasicAuth, tableflow.BasicAuth{
 			UserName: c.tableflowApiKey,
 			Password: c.tableflowApiSecret,
 		})
