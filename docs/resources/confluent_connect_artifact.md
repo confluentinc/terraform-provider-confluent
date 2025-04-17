@@ -36,7 +36,7 @@ The following arguments are supported:
 * `display_name` - (Required String) The unique name of the Connect Artifact per cloud, environment scope.
 * `cloud` - (Required String) Cloud provider where the Connect Artifact archive is uploaded.
 * `environment` - (Required Block) The Environment that the Connect Artifact belongs to, for example, `env-abc123`. It supports the following:
-  * `id` - (Required String) The ID of the Environment that the Connect Artifact belongs to.
+* `id` - (Required String) The ID of the Environment that the Connect Artifact belongs to.
 * `content_format` - (Required String) Archive format of the Connect Artifact. Supported formats are `JAR` and `ZIP`.
 * `artifact_file` - (Optional String) The artifact file for Connect Artifact in `JAR` or `ZIP` format.
 * `description` - (Optional String) Description of the Connect Artifact.
@@ -46,7 +46,6 @@ The following arguments are supported:
 In addition to the arguments listed above, the following computed attributes are exported:
 
 * `id` - (String) The ID of the Connect Artifact.
-* `status` - (String) The status of the Connect Artifact. Possible values are `PROVISIONING`, `PROVISIONED`, `READY`, `FAILED`.
 
 ## Import
 
