@@ -323,7 +323,7 @@ func setTableflowTopicAttributes(d *schema.ResourceData, c *TableflowRestClient,
 	}
 
 	if !c.isMetadataSetInProviderBlock {
-		if err := setKafkaCredentials(c.tableflowApiKey, c.tableflowApiSecret, d, c.oauthToken != nil); err != nil {
+		if err := setKafkaCredentials(c.tableflowApiKey, c.tableflowApiSecret, d, false); err != nil {
 			return nil, err
 		}
 	}
@@ -442,9 +442,6 @@ func tableflowTopicImport(ctx context.Context, d *schema.ResourceData, meta inte
 }
 
 func extractTableflowApiKeyAndApiSecret(client *Client, d *schema.ResourceData, isImportOperation bool) (string, string, error) {
-	if client.isOAuthEnabled {
-		return "", "", nil
-	}
 	if client.isTableflowMetadataSet {
 		return client.tableflowApiKey, client.tableflowApiSecret, nil
 	}
