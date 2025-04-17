@@ -1,3 +1,20 @@
+## 2.25.0 (April 17th, 2025)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.24.0...v2.25.0)
+
+**New features:**
+* Added EA OAuth support for most Confluent Provider resources and data-sources with [instructions](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs#oauth-credentials).
+
+**Bug fixes:**
+* Fixed a bug for `confluent_kafka_cluster_config` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_cluster_config) that the editable `ssl.enabled.protocols` cluster setting could not be updated issue.
+* Updated the docs of `confluent_tableflow_topic` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_tableflow_topic) to reference additional examples.
+* Updated the docs of `confluent_schema` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_schema) with additional notes.
+* Updated the docs of `confluent_certificate_authority` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_certificate_authority) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_certificate_authority) with correct encoded type for `certificate_chain` and `crl_chain`.
+* Added additional note for the Confluent Provider 2.0.0 [Upgrade Guide](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/guides/version-2-upgrade).
+
+**Examples:**
+* Updated the [flink-quickstart](https://github.com/confluentinc/terraform-provider-confluent/blob/master/examples/configurations/flink-quickstart) example.
+
 ## 2.24.0 (March 31st, 2025)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.23.0...v2.24.0)
