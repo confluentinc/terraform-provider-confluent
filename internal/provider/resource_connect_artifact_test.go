@@ -20,7 +20,6 @@ const (
 	scenarioStateConnectArtifactHasBeenDeleted        = "The new connect artifact has been deleted"
 	connectArtifactScenarioName                       = "confluent_connect_artifact Resource Lifecycle"
 	connectArtifactCloud                              = "AWS"
-	connectArtifactRegion                             = "us-east-2"
 	connectArtifactEnvironmentId                      = "env-gz903"
 	connectArtifactContentFormat                      = "JAR"
 	connectArtifactContentFormatZip                   = "ZIP"
@@ -76,7 +75,6 @@ func TestAccConnectArtifact(t *testing.T) {
 	provisioningArtifactResponse, _ := os.ReadFile("../testdata/connect_artifact/create_artifact.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(connectArtifactsUrlPath)).
 		InScenario(connectArtifactScenarioName).
-		WithQueryParam("spec.region", wiremock.EqualTo(connectArtifactRegion)).
 		WithQueryParam("spec.cloud", wiremock.EqualTo(connectArtifactCloud)).
 		WithQueryParam("environment", wiremock.EqualTo(connectArtifactEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateConnectArtifactIsProvisioning).
@@ -90,7 +88,6 @@ func TestAccConnectArtifact(t *testing.T) {
 	readCreatedArtifactResponse, _ := os.ReadFile("../testdata/connect_artifact/read_created_artifact.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(connectArtifactsUrlPath)).
 		InScenario(connectArtifactScenarioName).
-		WithQueryParam("spec.region", wiremock.EqualTo(connectArtifactRegion)).
 		WithQueryParam("spec.cloud", wiremock.EqualTo(connectArtifactCloud)).
 		WithQueryParam("environment", wiremock.EqualTo(connectArtifactEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateConnectArtifactHasBeenCreated).
@@ -102,7 +99,6 @@ func TestAccConnectArtifact(t *testing.T) {
 
 	deleteArtifactStub := wiremock.Delete(wiremock.URLPathEqualTo(connectArtifactsUrlPath)).
 		InScenario(connectArtifactScenarioName).
-		WithQueryParam("spec.region", wiremock.EqualTo(connectArtifactRegion)).
 		WithQueryParam("spec.cloud", wiremock.EqualTo(connectArtifactCloud)).
 		WhenScenarioStateIs(scenarioStateConnectArtifactHasBeenCreated).
 		WillSetStateTo(scenarioStateConnectArtifactHasBeenDeleted).
@@ -116,7 +112,6 @@ func TestAccConnectArtifact(t *testing.T) {
 	readDeletedArtifactResponse, _ := os.ReadFile("../testdata/connect_artifact/read_deleted_artifact.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(connectArtifactsUrlPath)).
 		InScenario(connectArtifactScenarioName).
-		WithQueryParam("spec.region", wiremock.EqualTo(connectArtifactRegion)).
 		WithQueryParam("spec.cloud", wiremock.EqualTo(connectArtifactCloud)).
 		WithQueryParam("environment", wiremock.EqualTo(connectArtifactEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateConnectArtifactHasBeenDeleted).
@@ -146,7 +141,6 @@ func TestAccConnectArtifact(t *testing.T) {
 					resource.TestCheckResourceAttr(fullConnectArtifactResourceLabel, paramId, connectArtifactId),
 					resource.TestCheckResourceAttr(fullConnectArtifactResourceLabel, paramDisplayName, connectArtifactUniqueName),
 					resource.TestCheckResourceAttr(fullConnectArtifactResourceLabel, paramCloud, connectArtifactCloud),
-					resource.TestCheckResourceAttr(fullConnectArtifactResourceLabel, paramRegion, connectArtifactRegion),
 					resource.TestCheckResourceAttr(fullConnectArtifactResourceLabel, fmt.Sprintf("%s.#", paramEnvironment), "1"),
 					resource.TestCheckResourceAttr(fullConnectArtifactResourceLabel, fmt.Sprintf("%s.0.%s", paramEnvironment, paramId), connectArtifactEnvironmentId),
 					resource.TestCheckResourceAttr(fullConnectArtifactResourceLabel, paramArtifactFile, "abc.jar"),
@@ -161,10 +155,9 @@ func TestAccConnectArtifact(t *testing.T) {
 				ImportStateIdFunc: func(state *terraform.State) (string, error) {
 					resources := state.RootModule().Resources
 					connectArtifactId := resources[fullConnectArtifactResourceLabel].Primary.ID
-					region := resources[fullConnectArtifactResourceLabel].Primary.Attributes["region"]
 					cloud := resources[fullConnectArtifactResourceLabel].Primary.Attributes["cloud"]
 					environment := resources[fullConnectArtifactResourceLabel].Primary.Attributes["environment.0.id"]
-					return environment + "/" + region + "/" + cloud + "/" + connectArtifactId, nil
+					return environment + "/" + cloud + "/" + connectArtifactId, nil
 				},
 			},
 		},
@@ -219,7 +212,6 @@ func TestAccConnectArtifactZip(t *testing.T) {
 	provisioningArtifactResponse, _ := os.ReadFile("../testdata/connect_artifact/create_artifact_zip.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(connectArtifactsUrlPath)).
 		InScenario(connectArtifactScenarioName).
-		WithQueryParam("spec.region", wiremock.EqualTo(connectArtifactRegion)).
 		WithQueryParam("spec.cloud", wiremock.EqualTo(connectArtifactCloud)).
 		WithQueryParam("environment", wiremock.EqualTo(connectArtifactEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateConnectArtifactIsProvisioning).
@@ -233,7 +225,6 @@ func TestAccConnectArtifactZip(t *testing.T) {
 	readCreatedArtifactResponse, _ := os.ReadFile("../testdata/connect_artifact/read_created_artifact_zip.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(connectArtifactsUrlPath)).
 		InScenario(connectArtifactScenarioName).
-		WithQueryParam("spec.region", wiremock.EqualTo(connectArtifactRegion)).
 		WithQueryParam("spec.cloud", wiremock.EqualTo(connectArtifactCloud)).
 		WithQueryParam("environment", wiremock.EqualTo(connectArtifactEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateConnectArtifactHasBeenCreated).
@@ -245,7 +236,6 @@ func TestAccConnectArtifactZip(t *testing.T) {
 
 	deleteArtifactStub := wiremock.Delete(wiremock.URLPathEqualTo(connectArtifactsUrlPath)).
 		InScenario(connectArtifactScenarioName).
-		WithQueryParam("spec.region", wiremock.EqualTo(connectArtifactRegion)).
 		WithQueryParam("spec.cloud", wiremock.EqualTo(connectArtifactCloud)).
 		WhenScenarioStateIs(scenarioStateConnectArtifactHasBeenCreated).
 		WillSetStateTo(scenarioStateConnectArtifactHasBeenDeleted).
@@ -259,7 +249,6 @@ func TestAccConnectArtifactZip(t *testing.T) {
 	readDeletedArtifactResponse, _ := os.ReadFile("../testdata/connect_artifact/read_deleted_artifact.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(connectArtifactsUrlPath)).
 		InScenario(connectArtifactScenarioName).
-		WithQueryParam("spec.region", wiremock.EqualTo(connectArtifactRegion)).
 		WithQueryParam("spec.cloud", wiremock.EqualTo(connectArtifactCloud)).
 		WithQueryParam("environment", wiremock.EqualTo(connectArtifactEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateConnectArtifactHasBeenDeleted).
@@ -289,7 +278,6 @@ func TestAccConnectArtifactZip(t *testing.T) {
 					resource.TestCheckResourceAttr(fullConnectArtifactResourceLabel, paramId, connectArtifactId),
 					resource.TestCheckResourceAttr(fullConnectArtifactResourceLabel, paramDisplayName, connectArtifactUniqueName),
 					resource.TestCheckResourceAttr(fullConnectArtifactResourceLabel, paramCloud, connectArtifactCloud),
-					resource.TestCheckResourceAttr(fullConnectArtifactResourceLabel, paramRegion, connectArtifactRegion),
 					resource.TestCheckResourceAttr(fullConnectArtifactResourceLabel, fmt.Sprintf("%s.#", paramEnvironment), "1"),
 					resource.TestCheckResourceAttr(fullConnectArtifactResourceLabel, fmt.Sprintf("%s.0.%s", paramEnvironment, paramId), connectArtifactEnvironmentId),
 					resource.TestCheckResourceAttr(fullConnectArtifactResourceLabel, paramArtifactFile, "abc.zip"),
@@ -304,10 +292,9 @@ func TestAccConnectArtifactZip(t *testing.T) {
 				ImportStateIdFunc: func(state *terraform.State) (string, error) {
 					resources := state.RootModule().Resources
 					connectArtifactId := resources[fullConnectArtifactResourceLabel].Primary.ID
-					region := resources[fullConnectArtifactResourceLabel].Primary.Attributes["region"]
 					cloud := resources[fullConnectArtifactResourceLabel].Primary.Attributes["cloud"]
 					environment := resources[fullConnectArtifactResourceLabel].Primary.Attributes["environment.0.id"]
-					return environment + "/" + region + "/" + cloud + "/" + connectArtifactId, nil
+					return environment + "/" + cloud + "/" + connectArtifactId, nil
 				},
 			},
 		},
@@ -326,7 +313,6 @@ func testAccCheckConnectArtifactDestroy(s *terraform.State) error {
 		}
 		deletedArtifactId := rs.Primary.ID
 		req := c.camClient.ConnectArtifactsCamV1Api.GetCamV1ConnectArtifact(c.camApiContext(context.Background()), deletedArtifactId).
-			SpecRegion(connectArtifactRegion).
 			SpecCloud(connectArtifactCloud).
 			Environment(connectArtifactEnvironmentId)
 		deletedArtifact, response, err := req.Execute()
@@ -351,7 +337,6 @@ func testAccCheckConnectArtifactConfig(mockServerUrl, resourceLabel string) stri
 	resource "confluent_connect_artifact" "%s" {
 		display_name = "%s"
 		cloud = "%s"
-		region = "%s"
 		artifact_file = "abc.jar"
 		content_format = "%s"
 		description = "%s"
@@ -359,7 +344,7 @@ func testAccCheckConnectArtifactConfig(mockServerUrl, resourceLabel string) stri
 			id = "%s"
 		}
 	}
-	`, mockServerUrl, resourceLabel, connectArtifactUniqueName, connectArtifactCloud, connectArtifactRegion, connectArtifactContentFormat, connectArtifactDescription, connectArtifactEnvironmentId)
+	`, mockServerUrl, resourceLabel, connectArtifactUniqueName, connectArtifactCloud, connectArtifactContentFormat, connectArtifactDescription, connectArtifactEnvironmentId)
 }
 
 func testAccCheckConnectArtifactZipConfig(mockServerUrl, resourceLabel string) string {
@@ -370,7 +355,6 @@ func testAccCheckConnectArtifactZipConfig(mockServerUrl, resourceLabel string) s
 	resource "confluent_connect_artifact" "%s" {
 		display_name = "%s"
 		cloud = "%s"
-		region = "%s"
 		artifact_file = "abc.zip"
 		content_format = "%s"
 		description = "%s"
@@ -378,7 +362,7 @@ func testAccCheckConnectArtifactZipConfig(mockServerUrl, resourceLabel string) s
 			id = "%s"
 		}
 	}
-	`, mockServerUrl, resourceLabel, connectArtifactUniqueName, connectArtifactCloud, connectArtifactRegion, connectArtifactContentFormatZip, connectArtifactDescription, connectArtifactEnvironmentId)
+	`, mockServerUrl, resourceLabel, connectArtifactUniqueName, connectArtifactCloud, connectArtifactContentFormatZip, connectArtifactDescription, connectArtifactEnvironmentId)
 }
 
 func testAccCheckConnectArtifactExists(n string) resource.TestCheckFunc {

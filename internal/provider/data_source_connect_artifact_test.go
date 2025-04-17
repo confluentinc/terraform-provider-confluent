@@ -54,7 +54,6 @@ func TestAccConnectArtifactDataSource(t *testing.T) {
 		"spec": map[string]interface{}{
 			"display_name":   connectArtifactUniqueName,
 			"cloud":          connectArtifactCloud,
-			"region":         connectArtifactRegion,
 			"environment":    connectArtifactEnvironmentId,
 			"content_format": connectArtifactContentFormat,
 			"description":    connectArtifactDescription,
@@ -83,7 +82,6 @@ func TestAccConnectArtifactDataSource(t *testing.T) {
 					resource.TestCheckResourceAttr(fullConnectArtifactDataSourceLabel, paramId, connectArtifactId),
 					resource.TestCheckResourceAttr(fullConnectArtifactDataSourceLabel, paramDisplayName, connectArtifactUniqueName),
 					resource.TestCheckResourceAttr(fullConnectArtifactDataSourceLabel, paramCloud, connectArtifactCloud),
-					resource.TestCheckResourceAttr(fullConnectArtifactDataSourceLabel, paramRegion, connectArtifactRegion),
 					resource.TestCheckResourceAttr(fullConnectArtifactDataSourceLabel, paramContentFormat, connectArtifactContentFormat),
 					resource.TestCheckResourceAttr(fullConnectArtifactDataSourceLabel, paramDescription, connectArtifactDescription),
 				),
@@ -104,7 +102,6 @@ func testAccCheckConnectArtifactDataSourceConfig(mockServerUrl string) string {
 		id = "%s"
 	  }
 	  cloud  = "%s"
-	  region = "%s"
 	}
-	`, mockServerUrl, connectArtifactDataSourceLabel, connectArtifactId, connectArtifactEnvironmentId, connectArtifactCloud, connectArtifactRegion)
+	`, mockServerUrl, connectArtifactDataSourceLabel, connectArtifactId, connectArtifactEnvironmentId, connectArtifactCloud)
 }

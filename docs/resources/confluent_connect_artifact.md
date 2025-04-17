@@ -20,7 +20,6 @@ description: |-
 resource "confluent_connect_artifact" "example" {
   display_name = "example-connect-artifact"
   cloud        = "AWS"
-  region       = "us-west-2"
   environment {
     id = "env-123456"
   }
@@ -34,11 +33,10 @@ resource "confluent_connect_artifact" "example" {
 
 The following arguments are supported:
 
-* `display_name` - (Required String) The unique name of the Connect Artifact per cloud, region, environment scope.
+* `display_name` - (Required String) The unique name of the Connect Artifact per cloud, environment scope.
 * `cloud` - (Required String) Cloud provider where the Connect Artifact archive is uploaded.
-* `region` - (Required String) The Cloud provider region the Connect Artifact archive is uploaded.
 * `environment` - (Required Block) The Environment that the Connect Artifact belongs to, for example, `env-abc123`. It supports the following:
-* `id` - (Required String) The ID of the Environment that the Connect Artifact belongs to.
+  * `id` - (Required String) The ID of the Environment that the Connect Artifact belongs to.
 * `content_format` - (Required String) Archive format of the Connect Artifact. Supported formats are `JAR` and `ZIP`.
 * `artifact_file` - (Optional String) The artifact file for Connect Artifact in `JAR` or `ZIP` format.
 * `description` - (Optional String) Description of the Connect Artifact.
@@ -48,6 +46,7 @@ The following arguments are supported:
 In addition to the arguments listed above, the following computed attributes are exported:
 
 * `id` - (String) The ID of the Connect Artifact.
+* `status` - (String) The status of the Connect Artifact. Possible values are `PROVISIONING`, `PROVISIONED`, `READY`, `FAILED`.
 
 ## Import
 
@@ -55,12 +54,12 @@ In addition to the arguments listed above, the following computed attributes are
 
 -> **Note:** `CONFLUENT_CLOUD_API_KEY` and `CONFLUENT_CLOUD_API_SECRET` environment variables must be set before importing a Connect Artifact.
 
-You can import a Connect Artifact by using Environment ID, Region, Cloud, and Connect Artifact ID in the format `<Environment ID>/<region>/<cloud>/<Connect Artifact ID>`, for example:
+You can import a Connect Artifact by using Environment ID, Cloud, and Connect Artifact ID in the format `<Environment ID>/<cloud>/<Connect Artifact ID>`, for example:
 
 ```shell
 $ export CONFLUENT_CLOUD_API_KEY="<cloud_api_key>"
 $ export CONFLUENT_CLOUD_API_SECRET="<cloud_api_secret>"
-$ terraform import confluent_connect_artifact.example env-123456/us-west-2/AWS/ca-123456
+$ terraform import confluent_connect_artifact.example env-123456/AWS/ca-123456
 ```
 
 !> **Warning:** Do not forget to delete terminal command history afterwards for security purposes.

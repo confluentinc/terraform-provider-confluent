@@ -36,17 +36,12 @@ func connectArtifactDataSource() *schema.Resource {
 			paramDisplayName: {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "The unique name of the Connect Artifact per cloud, region, environment scope.",
+				Description: "The unique name of the Connect Artifact per cloud, environment scope.",
 			},
 			paramCloud: {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Cloud provider where the Connect Artifact archive is uploaded.",
-			},
-			paramRegion: {
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "The Cloud provider region the Connect Artifact archive is uploaded.",
 			},
 			paramContentFormat: {
 				Type:        schema.TypeString,
@@ -68,7 +63,7 @@ func connectArtifactDataSourceRead(ctx context.Context, d *schema.ResourceData, 
 	artifactId := d.Get(paramId).(string)
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
 
-	if _, err := readConnectArtifactAndSetAttributes(ctx, d, meta, d.Get(paramRegion).(string), d.Get(paramCloud).(string), artifactId, "", environmentId); err != nil {
+	if _, err := readConnectArtifactAndSetAttributes(ctx, d, meta, d.Get(paramCloud).(string), artifactId, "", environmentId); err != nil {
 		return diag.FromErr(fmt.Errorf("error reading connect artifact %q: %s", d.Id(), createDescriptiveError(err)))
 	}
 

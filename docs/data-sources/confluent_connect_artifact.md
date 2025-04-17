@@ -21,7 +21,6 @@ data "confluent_connect_artifact" "example" {
     id = "env-123456"
   }
   cloud  = "AWS"
-  region = "us-west-2"
 }
 
 output "artifact_name" {
@@ -32,11 +31,6 @@ output "artifact_name" {
 output "artifact_cloud" {
   value       = data.confluent_connect_artifact.example.cloud
   description = "The cloud provider where the Connect Artifact is stored"
-}
-
-output "artifact_region" {
-  value       = data.confluent_connect_artifact.example.region
-  description = "The region where the Connect Artifact is stored"
 }
 
 output "artifact_content_format" {
@@ -58,12 +52,11 @@ The following arguments are supported:
 * `environment` - (Required Block) The Environment that the Connect Artifact belongs to, for example, `env-abc123`. It supports the following:
   * `id` - (Required String) The ID of the Environment that the Connect Artifact belongs to.
 * `cloud` - (Required String) Cloud provider where the Connect Artifact archive is uploaded.
-* `region` - (Required String) The Cloud provider region the Connect Artifact archive is uploaded.
 
 ## Attributes Reference
 
 In addition to the arguments listed above, the following computed attributes are exported:
 
-* `display_name` - (String) The unique name of the Connect Artifact per cloud, region, environment scope.
+* `display_name` - (String) The unique name of the Connect Artifact per cloud, environment scope.
 * `content_format` - (String) Archive format of the Connect Artifact. Supported formats are `JAR` and `ZIP`.
 * `description` - (String) Description of the Connect Artifact. 

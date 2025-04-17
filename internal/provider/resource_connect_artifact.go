@@ -30,7 +30,7 @@ func connectArtifactResource() *schema.Resource {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				Description:  "The unique name of the Connect Artifact per cloud, region, environment scope.",
+				Description:  "The unique name of the Connect Artifact per cloud, environment scope.",
 				ValidateFunc: validation.StringLenBetween(1, 60),
 			},
 			paramCloud: {
@@ -47,13 +47,6 @@ func connectArtifactResource() *schema.Resource {
 					}
 					return false
 				},
-			},
-			paramRegion: {
-				Type:         schema.TypeString,
-				Description:  "The Cloud provider region the Connect Artifact archive is uploaded.",
-				ValidateFunc: validation.StringIsNotEmpty,
-				Required:     true,
-				ForceNew:     true,
 			},
 			paramEnvironment: environmentSchema(),
 			paramContentFormat: {
@@ -98,7 +91,6 @@ func connectArtifactCreate(ctx context.Context, d *schema.ResourceData, meta int
 	c := meta.(*Client)
 	name := d.Get(paramDisplayName).(string)
 	cloud := d.Get(paramCloud).(string)
-	region := d.Get(paramRegion).(string)
 	contentFormat := d.Get(paramContentFormat).(string)
 	artifactFile := d.Get(paramArtifactFile).(string)
 	description := d.Get(paramDescription).(string)
@@ -107,12 +99,9 @@ func connectArtifactCreate(ctx context.Context, d *schema.ResourceData, meta int
 
 	// Step 1: Get presigned URL
 	request := cam.CamV1PresignedUrlRequest{
-		Cloud:       cam.PtrString(cloud),
-		Region:      cam.PtrString(region),
-		Environment: cam.PtrString(environmentId),
-	}
-	if contentFormat != "" {
-		request.SetContentFormat(contentFormat)
+		Cloud:         cam.PtrString(cloud),
+		Environment:   cam.PtrString(environmentId),
+		ContentFormat: cam.PtrString(contentFormat),
 	}
 	resp, _, err := getConnectPresignedUrl(c.camApiContext(ctx), c, request)
 	if err != nil {
@@ -128,7 +117,6 @@ func connectArtifactCreate(ctx context.Context, d *schema.ResourceData, meta int
 	createArtifactRequest := cam.CamV1ConnectArtifactSpec{
 		DisplayName:   name,
 		Cloud:         cloud,
-		Region:        region,
 		Environment:   environmentId,
 		ContentFormat: cam.PtrString(contentFormat),
 		UploadSource: &cam.CamV1ConnectArtifactSpecUploadSourceOneOf{
@@ -156,7 +144,7 @@ func connectArtifactCreate(ctx context.Context, d *schema.ResourceData, meta int
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating Connect Artifact %q: %s", d.Id(), createdArtifactJson), map[string]interface{}{connectArtifactLoggingKey: d.Id()})
 
 	// Wait for the Connect Artifact to be ready
-	if err := waitForConnectArtifactToProvision(ctx, c, environmentId, d.Id(), region, cloud); err != nil {
+	if err := waitForConnectArtifactToProvision(ctx, c, environmentId, d.Id(), cloud); err != nil {
 		return diag.Errorf("error waiting for Connect Artifact to be ready: %s", createDescriptiveError(err))
 	}
 
@@ -169,13 +157,15 @@ func getConnectPresignedUrl(ctx context.Context, c *Client, request cam.CamV1Pre
 }
 
 func executeConnectArtifactCreate(ctx context.Context, c *Client, artifact cam.CamV1ConnectArtifactSpec) (cam.CamV1ConnectArtifact, *http.Response, error) {
-	req := c.camClient.ConnectArtifactsCamV1Api.CreateCamV1ConnectArtifact(c.camApiContext(ctx)).SpecCloud(artifact.GetCloud()).SpecRegion(artifact.GetRegion()).CamV1ConnectArtifact(cam.CamV1ConnectArtifact{Spec: &artifact})
+	req := c.camClient.ConnectArtifactsCamV1Api.CreateCamV1ConnectArtifact(c.camApiContext(ctx)).
+		SpecCloud(artifact.GetCloud()).
+		Environment(artifact.GetEnvironment()).
+		CamV1ConnectArtifact(cam.CamV1ConnectArtifact{Spec: &artifact})
 	return req.Execute()
 }
 
-func executeConnectArtifactRead(ctx context.Context, c *Client, region, cloud, artifactID, envId string) (cam.CamV1ConnectArtifact, *http.Response, error) {
+func executeConnectArtifactRead(ctx context.Context, c *Client, cloud, artifactID, envId string) (cam.CamV1ConnectArtifact, *http.Response, error) {
 	req := c.camClient.ConnectArtifactsCamV1Api.GetCamV1ConnectArtifact(c.camApiContext(ctx), artifactID).
-		SpecRegion(region).
 		SpecCloud(cloud).
 		Environment(envId)
 	return req.Execute()
@@ -185,18 +175,22 @@ func connectArtifactRead(ctx context.Context, d *schema.ResourceData, meta inter
 	tflog.Debug(ctx, fmt.Sprintf("Reading Connect Artifact %q", d.Id()), map[string]interface{}{connectArtifactLoggingKey: d.Id()})
 
 	artifactId := d.Id()
+	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
+	if environmentId == "" {
+		return diag.Errorf("error reading Connect Artifact: environment is required and must be specified")
+	}
 
-	if _, err := readConnectArtifactAndSetAttributes(ctx, d, meta, d.Get(paramRegion).(string), d.Get(paramCloud).(string), artifactId, d.Get(paramArtifactFile).(string), extractStringValueFromBlock(d, paramEnvironment, paramId)); err != nil {
+	if _, err := readConnectArtifactAndSetAttributes(ctx, d, meta, d.Get(paramCloud).(string), artifactId, d.Get(paramArtifactFile).(string), environmentId); err != nil {
 		return diag.FromErr(fmt.Errorf("error reading connect artifact %q: %s", d.Id(), createDescriptiveError(err)))
 	}
 
 	return nil
 }
 
-func readConnectArtifactAndSetAttributes(ctx context.Context, d *schema.ResourceData, meta interface{}, region, cloud, artifactId, artifactFile, envId string) ([]*schema.ResourceData, error) {
+func readConnectArtifactAndSetAttributes(ctx context.Context, d *schema.ResourceData, meta interface{}, cloud, artifactId, artifactFile, envId string) ([]*schema.ResourceData, error) {
 	c := meta.(*Client)
 
-	artifact, resp, err := executeConnectArtifactRead(c.camApiContext(ctx), c, region, cloud, artifactId, envId)
+	artifact, resp, err := executeConnectArtifactRead(c.camApiContext(ctx), c, cloud, artifactId, envId)
 	if err != nil {
 		tflog.Warn(ctx, fmt.Sprintf("Error reading Connect Artifact %q: %s", d.Id(), createDescriptiveError(err)), map[string]interface{}{connectArtifactLoggingKey: d.Id()})
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
@@ -231,9 +225,6 @@ func setConnectArtifactAttributes(d *schema.ResourceData, artifact cam.CamV1Conn
 	if err := d.Set(paramCloud, spec.GetCloud()); err != nil {
 		return nil, err
 	}
-	if err := d.Set(paramRegion, spec.GetRegion()); err != nil {
-		return nil, err
-	}
 
 	if err := setStringAttributeInListBlockOfSizeOne(paramEnvironment, paramId, spec.GetEnvironment(), d); err != nil {
 		return nil, err
@@ -266,7 +257,10 @@ func connectArtifactDelete(ctx context.Context, d *schema.ResourceData, meta int
 	tflog.Debug(ctx, fmt.Sprintf("Deleting Connect Artifact %q", d.Id()), map[string]interface{}{connectArtifactLoggingKey: d.Id()})
 	c := meta.(*Client)
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
-	_, err := executeConnectArtifactDelete(c.camApiContext(ctx), c, d.Id(), d.Get(paramRegion).(string), d.Get(paramCloud).(string), environmentId)
+	if environmentId == "" {
+		return diag.Errorf("error deleting Connect Artifact: environment is required and must be specified")
+	}
+	_, err := executeConnectArtifactDelete(c.camApiContext(ctx), c, d.Id(), d.Get(paramCloud).(string), environmentId)
 
 	if err != nil {
 		return diag.Errorf("error deleting connect artifact %q: %s", d.Id(), createDescriptiveError(err))
@@ -277,9 +271,8 @@ func connectArtifactDelete(ctx context.Context, d *schema.ResourceData, meta int
 	return nil
 }
 
-func executeConnectArtifactDelete(ctx context.Context, c *Client, artifactID, region, cloud, envId string) (*http.Response, error) {
+func executeConnectArtifactDelete(ctx context.Context, c *Client, artifactID, cloud, envId string) (*http.Response, error) {
 	req := c.camClient.ConnectArtifactsCamV1Api.DeleteCamV1ConnectArtifact(c.camApiContext(ctx), artifactID).
-		SpecRegion(region).
 		SpecCloud(cloud).
 		Environment(envId)
 	return req.Execute()
@@ -288,34 +281,33 @@ func executeConnectArtifactDelete(ctx context.Context, c *Client, artifactID, re
 func connectArtifactImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	tflog.Debug(ctx, fmt.Sprintf("Importing Connect Artifact %q", d.Id()), map[string]interface{}{connectArtifactLoggingKey: d.Id()})
 
-	regionCloudAndArtifactId := d.Id()
-	parts := strings.Split(regionCloudAndArtifactId, "/")
-	if len(parts) != 4 {
-		return nil, fmt.Errorf("error importing connect artifact: invalid format: expected '<Environment ID>/<region>/<cloud>/<Connect Artifact ID>'")
+	cloudAndArtifactId := d.Id()
+	parts := strings.Split(cloudAndArtifactId, "/")
+	if len(parts) != 3 {
+		return nil, fmt.Errorf("error importing connect artifact: invalid format: expected '<Environment ID>/<cloud>/<Connect Artifact ID>'")
 	}
 
-	artifactId := parts[3]
-	region := parts[1]
-	cloud := parts[2]
+	artifactId := parts[2]
+	cloud := parts[1]
 	envId := parts[0]
 	artifactFile := getEnv("IMPORT_ARTIFACT_FILENAME", "")
 	d.SetId(artifactId)
 
 	// Mark resource as new to avoid d.Set("") when getting 404
 	d.MarkNewResource()
-	if _, err := readConnectArtifactAndSetAttributes(ctx, d, meta, region, cloud, artifactId, artifactFile, envId); err != nil {
+	if _, err := readConnectArtifactAndSetAttributes(ctx, d, meta, cloud, artifactId, artifactFile, envId); err != nil {
 		return nil, fmt.Errorf("error importing connect artifact %q: %s", d.Id(), err)
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished importing Connect Artifact %q", d.Id()), map[string]interface{}{connectArtifactLoggingKey: d.Id()})
 	return []*schema.ResourceData{d}, nil
 }
 
-func waitForConnectArtifactToProvision(ctx context.Context, c *Client, environmentId, artifactId, region, cloud string) error {
+func waitForConnectArtifactToProvision(ctx context.Context, c *Client, environmentId, artifactId, cloud string) error {
 	delay, pollInterval := getDelayAndPollInterval(5*time.Second, 1*time.Minute, c.isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
 		Pending:      []string{stateProvisioning},
 		Target:       []string{stateProvisioned, stateReady},
-		Refresh:      connectArtifactProvisionStatus(c.camApiContext(ctx), c, environmentId, artifactId, region, cloud),
+		Refresh:      connectArtifactProvisionStatus(c.camApiContext(ctx), c, environmentId, artifactId, cloud),
 		Timeout:      10 * time.Minute,
 		Delay:        delay,
 		PollInterval: pollInterval,
@@ -328,9 +320,9 @@ func waitForConnectArtifactToProvision(ctx context.Context, c *Client, environme
 	return nil
 }
 
-func connectArtifactProvisionStatus(ctx context.Context, c *Client, environmentId, artifactId, region, cloud string) resource.StateRefreshFunc {
+func connectArtifactProvisionStatus(ctx context.Context, c *Client, environmentId, artifactId, cloud string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		artifact, _, err := executeConnectArtifactRead(ctx, c, region, cloud, artifactId, environmentId)
+		artifact, _, err := executeConnectArtifactRead(ctx, c, cloud, artifactId, environmentId)
 		if err != nil {
 			tflog.Warn(ctx, fmt.Sprintf("Error reading Connect Artifact %q: %s", artifactId, createDescriptiveError(err)), map[string]interface{}{connectArtifactLoggingKey: artifactId})
 			return nil, stateUnknown, err

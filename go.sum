@@ -75,6 +75,8 @@ github.com/confluentinc/ccloud-sdk-go-v2/byok v0.0.2 h1:BV/dPTFVovJPylrcr9lcSmuk
 github.com/confluentinc/ccloud-sdk-go-v2/byok v0.0.2/go.mod h1:MMtRTfg1g32bQrRwfqvGpe+grS5pQzeq9V+L5GKydV4=
 github.com/confluentinc/ccloud-sdk-go-v2/cam v0.2.0 h1:kn54sB+/iDIyjxB23KEjkJs4t5AkL/C1eVj1zFhhueg=
 github.com/confluentinc/ccloud-sdk-go-v2/cam v0.2.0/go.mod h1:C8wyHqXaX0KtA9aKg4mLwQdsaQV1O6uGrXXlLx/Lonw=
+github.com/confluentinc/ccloud-sdk-go-v2/cam v0.3.0 h1:9MMm9VeJ8ZVg9A6ofplPPvLZH4OGP56PtrJ/WP18EtY=
+github.com/confluentinc/ccloud-sdk-go-v2/cam v0.3.0/go.mod h1:vderFceIQXBEdhkulkwTZ0SPxHz4yZ3uDMne/FA4dJ8=
 github.com/confluentinc/ccloud-sdk-go-v2/certificate-authority v0.0.0-20240921001517-750d06dd7c27 h1:prbOJKQGZ6VgBFRDN3mzE942apQnlS5d68L7HyA2Gz8=
 github.com/confluentinc/ccloud-sdk-go-v2/certificate-authority v0.0.0-20240921001517-750d06dd7c27/go.mod h1:xqB2YHUtcYF5cbwctSDzXoYw0YXaawj13d0lzcvphEA=
 github.com/confluentinc/ccloud-sdk-go-v2/cmk v0.21.0 h1:ioG3TsP8FwskPtwitfGfvBgTdprYKutHB0oxG5F4Dj8=
