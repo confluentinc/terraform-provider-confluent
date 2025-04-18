@@ -23,7 +23,7 @@ terraform {
   required_providers {
     confluent = {
       source  = "confluentinc/confluent"
-      version = "2.24.0"
+      version = "2.25.0"
     }
   }
 }
@@ -157,9 +157,11 @@ A complete example for using OAuth credentials with the Confluent Terraform Prov
 
 -> **Note:** You still need `cloud_api_key` and `cloud_api_secret` to manage below Confluent Cloud resources/data-sources as they are not supported with OAuth credentials yet:
 * `confluent_api_key` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_api_key).
+* `confluent_catalog_integration` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_catalog_integration) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_catalog_integration).
 * `confluent_cluster_link` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_cluster_link) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_cluster_link).
-* `confluent_flink_artifact` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_flink_artifact).
 * `confluent_custom_connector_plugin` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_custom_connector_plugin).
+* `confluent_flink_artifact` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_flink_artifact).
+* `confluent_tableflow_topic` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_tableflow_topic) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_tableflow_topic).
 
 -> **Note:** An Identity Provider must be set up first on Confluent Cloud before using the OAuth credentials for Terraform Provider. You can find more information about Identity Provider setting up [here](https://docs.confluent.io/cloud/current/security/authenticate/workload-identities/identity-providers/oauth/identity-providers.htmll).
 

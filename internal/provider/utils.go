@@ -806,7 +806,7 @@ func (c *CatalogRestClient) dataCatalogApiContext(ctx context.Context) context.C
 	}
 
 	if c.clusterApiKey != "" && c.clusterApiSecret != "" {
-		return context.WithValue(context.Background(), dc.ContextBasicAuth, dc.BasicAuth{
+		return context.WithValue(ctx, dc.ContextBasicAuth, dc.BasicAuth{
 			UserName: c.clusterApiKey,
 			Password: c.clusterApiSecret,
 		})
@@ -837,21 +837,15 @@ func (c *FlinkRestClient) apiContext(ctx context.Context) context.Context {
 	return ctx
 }
 
+// TODO: Tableflow APIs don't support OAuth at this moment, following up in CLI-3534 for OAuth GA
 func (c *TableflowRestClient) apiContext(ctx context.Context) context.Context {
-	if c.oauthToken != nil && c.stsToken != nil {
-		if err := c.fetchOrOverrideSTSOAuthTokenFromApiContext(ctx); err != nil {
-			tflog.Error(ctx, fmt.Sprintf("Failed to get OAuth token for Tableflow client: %v", err))
-		}
-		return context.WithValue(ctx, tableflow.ContextAccessToken, c.stsToken.AccessToken)
-	}
-
 	if c.tableflowApiKey != "" && c.tableflowApiSecret != "" {
-		return context.WithValue(context.Background(), tableflow.ContextBasicAuth, tableflow.BasicAuth{
+		return context.WithValue(ctx, tableflow.ContextBasicAuth, tableflow.BasicAuth{
 			UserName: c.tableflowApiKey,
 			Password: c.tableflowApiSecret,
 		})
 	}
-	tflog.Warn(ctx, fmt.Sprintf("Could not find Tableflow API Key or OAuth token for Tableflow client"))
+	tflog.Warn(ctx, fmt.Sprintf("Could not find Tableflow API Key for Tableflow client"))
 	return ctx
 }
 
