@@ -1,3 +1,5 @@
+/mk-include
+/.mk-include-timestamp
 prebuilt/
 
 # Binaries for programs and plugins
