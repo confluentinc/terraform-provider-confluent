@@ -49,16 +49,10 @@ func TestAccSchemaRegistryClusterModeWithEnhancedProviderBlock(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
 
 	mockSchemaRegistryClusterModeTestServerUrl := wiremockContainer.URI
 	confluentCloudBaseUrl := ""
 	wiremockClient := wiremock.NewClient(mockSchemaRegistryClusterModeTestServerUrl)
-	// nolint:errcheck
-	defer wiremockClient.Reset()
-
-	// nolint:errcheck
-	defer wiremockClient.ResetAllScenarios()
 
 	createSchemaRegistryClusterModeResponse, _ := ioutil.ReadFile("../testdata/schema_registry_cluster_mode/read_created_schema_registry_cluster_mode.json")
 	createSchemaRegistryClusterModeStub := wiremock.Put(wiremock.URLPathEqualTo(updateSchemaRegistryClusterModePath)).
@@ -167,6 +161,23 @@ func TestAccSchemaRegistryClusterModeWithEnhancedProviderBlock(t *testing.T) {
 
 	checkStubCount(t, wiremockClient, createSchemaRegistryClusterModeStub, fmt.Sprintf("PUT (CREATE) %s", updateSchemaRegistryClusterModePath), expectedCountTwo)
 	checkStubCount(t, wiremockClient, deleteSchemaRegistryClusterModeStub, fmt.Sprintf("DELETE %s", updateSchemaRegistryClusterModePath), expectedCountZero)
+	t.Cleanup(func() {
+		err := wiremockClient.Reset()
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to reset wiremock: %v", err))
+		}
+
+		err = wiremockClient.ResetAllScenarios()
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to reset scenarios: %v", err))
+		}
+
+		// Also add container termination here to ensure it happens
+		err = wiremockContainer.Terminate(ctx)
+		if err != nil {
+			t.Fatal(fmt.Sprintf("Failed to terminate container: %v", err))
+		}
+	})
 }
 
 func testAccCheckSchemaRegistryClusterModeConfigWithEnhancedProviderBlock(confluentCloudBaseUrl, mockServerUrl, mode string) string {

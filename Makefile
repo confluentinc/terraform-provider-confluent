@@ -104,11 +104,11 @@ build-all: clean ## Build binary for all OS/ARCH
 
 .PHONY: test
 test:
-	$(GOCMD) test ./...
+	$(GOCMD) test ./... -p 1
 
 .PHONY: testacc
 testacc:
-	TF_LOG=debug TF_ACC=1 $(GOCMD) test $(TEST) -v $(TESTARGS) -timeout 120m -failfast
+	TF_LOG=debug TF_ACC=1 $(GOCMD) test $(TEST) -v $(TESTARGS) -timeout 120m -failfast -p 1
 	@echo "finished testacc"
 
 install: build
