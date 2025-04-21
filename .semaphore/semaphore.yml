@@ -32,7 +32,7 @@ blocks:
             hours: 2
           commands:
             - . vault-sem-get-secret v1/ci/kv/apif/terraform-provider-confluent/sonar_token
-            - - make all
+            - make all
             - make sonar-scan
             # Run make-release CI if the current commit is not tagged
             - if [[ -z $(git tag --points-at HEAD) ]]; then make release-ci; fi
