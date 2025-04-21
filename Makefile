@@ -1,3 +1,6 @@
+GOOS_USE_HOST_OS=true
+GOARCH_USE_HOST_ARCH=true
+
 ### BEGIN HEADERS ###
 # This block is managed by ServiceBot plugin - Make. The content in this block is created using a common
 # template and configurations in service.yml.
