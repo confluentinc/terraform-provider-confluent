@@ -29,6 +29,13 @@ resource "confluent_role_binding" "environment-example-rb" {
   crn_pattern = confluent_environment.stag.resource_name
 }
 
+resource "confluent_role_binding" "environment-example-rb-skip-sync" {
+  principal              = "User:${confluent_service_account.test.id}"
+  role_name              = "EnvironmentAdmin"
+  crn_pattern            = confluent_environment.stag.resource_name
+  disable_wait_for_ready = true
+}
+
 resource "confluent_role_binding" "environment-example-rb-2" {
   principal   = "User:${confluent_identity_pool.test.id}"
   role_name   = "EnvironmentAdmin"
@@ -129,7 +136,15 @@ The following arguments are supported:
 - `principal` - (Required String) A principal User to bind the role to, for example, "User:u-111aaa" for binding to a user "u-111aaa", or "User:sa-111aaa" for binding to a service account "sa-111aaa".
 - `role_name` - (Required String) A name of the role to bind to the principal. See [Confluent Cloud RBAC Roles](https://docs.confluent.io/cloud/current/access-management/access-control/cloud-rbac.html#ccloud-rbac-roles) for a full list of supported role names.
 - `crn_pattern` - (Required String) A [Confluent Resource Name(CRN)](https://docs.confluent.io/cloud/current/api.html#section/Identifiers-and-URLs/Confluent-Resource-Names-(CRNs)) that specifies the scope and resource patterns necessary for the role to bind.
+- `disable_wait_for_ready` - (Optional Boolean) An optional flag to disable wait-for-readiness on create. Its primary use case is to ensure that the role bindings are properly synchronized across the system before exiting the Terraform creation step. Must be unset when importing. Defaults to `false`.
 
+!> **Warning:** When `disable_wait_for_ready = true` is used, Terraform skips waiting for role bindings to fully propagate. This can lead to a situation where Terraform attempts to create resources before the service account has the necessary permissions—resulting in HTTP 403 Forbidden errors.
+For example, if you're creating a new service account, a new Kafka API Key, a new CloudClusterAdmin role binding, and a Kafka topic in a single run (see this [code snippet](https://github.com/confluentinc/terraform-provider-confluent/blob/master/examples/configurations/standard-kafka-rbac/main.tf#L46-L100)), the topic creation may fail if the role binding hasn’t taken effect yet. Without that role, the service account won’t have permission to create the topic.
+This setting is best suited for scenarios where you're provisioning a large number of role bindings without dependent resources, as it significantly speeds up the apply process.
+Note: If you encounter 403 errors, it’s safe to reapply once the role bindings have had time to propagate.
+
+
+https://github.com/confluentinc/terraform-provider-confluent/blob/master/examples/configurations/standard-kafka-rbac/main.tf#L46-L100
 ## Attributes Reference
 
 In addition to the preceding arguments, the following attributes are exported:
