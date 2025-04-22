@@ -120,7 +120,7 @@ The following arguments are supported:
 
 -> **Note:** The Confluent Cloud Console uses the following default values: `on_success = "NONE"` and `on_failure = "ERROR"`. However, the TF Provider sets its defaults to `on_success = "NONE,NONE"` and `on_failure = "ERROR,ERROR"`.
 
--> **Note:** When deleting rulesets from the schema, Terraform drift can occur when evolving a schema to a version that already exists. See this [comment](https://github.com/confluentinc/terraform-provider-confluent/issues/619#issuecomment-2765360562) for more details and a workaround.
+-> **Note:** When editing rulesets from the schema, Terraform drift can occur when evolving a schema to a version that already exists. See this [comment](https://github.com/confluentinc/terraform-provider-confluent/issues/619#issuecomment-2765360562) for more details and a workaround.
 
 ## Attributes Reference
 
