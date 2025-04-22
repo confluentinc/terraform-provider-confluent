@@ -80,6 +80,8 @@ The following arguments are supported:
 
 -> **Note:** Use Option #2 to simplify the key rotation process. When using Option #1, to rotate a Schema Registry API key, create a new Kafka API key, update the `credentials` block in all configuration files to use the new Kafka API key, run `terraform apply -target="confluent_schema.orders"`, and remove the old Schema Registry API key. Alternatively, in case the old Schema Registry API Key was deleted already, you might need to run `terraform plan -refresh=false -target="confluent_schema.orders" -out=rotate-schema-registry-api-key` and `terraform apply rotate-schema-registry-api-key` instead.
 
+**Note:** When using [Option #1 (managing the latest schema version only)](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema#default-option-1-manage-the-latest-schema-version-only-the-resource-instance-always-points-to-the-latest-schema-version-by-supporting-in-place-updates), Terraform drift can occur when evolving a schema to a version that existed previously. See this [comment](https://github.com/confluentinc/terraform-provider-confluent/issues/619#issuecomment-2765360562) for more details and a workaround.
+
 !> **Warning:** Use Option #2 to avoid exposing sensitive `credentials` value in a state file. When using Option #1, Terraform doesn't encrypt the sensitive `credentials` value of the `confluent_schema` resource, so you must keep your state file secure to avoid exposing it. Refer to the [Terraform documentation](https://www.terraform.io/docs/language/state/sensitive-data.html) to learn more about securing your state file.
 
 - `subject_name` - (Required String) The name of the subject (in other words, the namespace), representing the subject under which the schema will be registered, for example, `test-subject`. Schemas evolve safely, following a compatibility mode defined, under a subject name.
@@ -117,6 +119,8 @@ The following arguments are supported:
 -> **Note:** Schema rules (`ruleset`) are only available with the [Stream Governance Advanced package](https://docs.confluent.io/cloud/current/stream-governance/packages.html#packages).
 
 -> **Note:** The Confluent Cloud Console uses the following default values: `on_success = "NONE"` and `on_failure = "ERROR"`. However, the TF Provider sets its defaults to `on_success = "NONE,NONE"` and `on_failure = "ERROR,ERROR"`.
+
+-> **Note:** When deleting rulesets from the schema, Terraform drift can occur when evolving a schema to a version that already exists. See this [comment](https://github.com/confluentinc/terraform-provider-confluent/issues/619#issuecomment-2765360562) for more details and a workaround.
 
 ## Attributes Reference
 
