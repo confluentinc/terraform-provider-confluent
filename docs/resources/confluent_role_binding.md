@@ -144,6 +144,7 @@ This setting is best suited for scenarios where you're provisioning a large numb
 
 -> **Note:** If you encounter HTTP 403 Forbidden errors when creating role bindings, feel free to rerun `terraform apply` after a few minutes, once the role bindings have had time to propagate.
 
+-> **Note:** Feel free to use `time_sleep` [resource](https://registry.terraform.io/providers/hashicorp/time/latest/docs/resources/sleep) to configure a custom waiting period, see [this example](#example-of-using-time_sleep) for more details.
 
 ## Attributes Reference
 
@@ -177,3 +178,34 @@ The following end-to-end examples might help to get started with `confluent_role
   * [`dedicated-transit-gateway-attachment-aws-kafka-acls`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/dedicated-transit-gateway-attachment-aws-kafka-acls): _Dedicated_ Kafka cluster on AWS that is accessible via Transit Gateway Endpoint with authorization using ACLs
   * [`dedicated-transit-gateway-attachment-aws-kafka-rbac`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/dedicated-transit-gateway-attachment-aws-kafka-rbac): _Dedicated_ Kafka cluster on AWS that is accessible via Transit Gateway Endpoint with authorization using RBAC
   * [`enterprise-privatelinkattachment-aws-kafka-acls`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/enterprise-privatelinkattachment-aws-kafka-acls): _Enterprise_ Kafka cluster on AWS that is accessible via PrivateLink connections with authorization using ACLs
+
+## Example of using time_sleep
+
+This configuration introduces a 10-second custom delay after the creation of a role binding, before creating a Kafka topic.
+
+```terraform
+resource "confluent_role_binding" "app-manager-kafka-cluster-admin-skip-sync" {
+  principal   = "User:${confluent_service_account.app-manager.id}"
+  role_name   = "CloudClusterAdmin"
+  crn_pattern = confluent_kafka_cluster.standard.rbac_crn
+  disable_wait_for_ready = true
+}
+
+resource "time_sleep" "wait_10_seconds_after_role_binding" {
+  depends_on = [confluent_role_binding.app-manager-kafka-cluster-admin-skip-sync]
+  create_duration = "10s"
+}
+
+resource "confluent_kafka_topic" "orders" {
+  depends_on = [time_sleep.wait_10_seconds_after_role_binding]
+  kafka_cluster {
+    id = confluent_kafka_cluster.standard.id
+  }
+  topic_name    = "orders"
+  rest_endpoint = confluent_kafka_cluster.standard.rest_endpoint
+  credentials {
+    key    = confluent_api_key.app-manager-kafka-api-key.id
+    secret = confluent_api_key.app-manager-kafka-api-key.secret
+  }
+}
+```
