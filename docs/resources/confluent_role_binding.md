@@ -141,7 +141,9 @@ The following arguments are supported:
 !> **Warning:** When `disable_wait_for_ready = true` is used, Terraform skips waiting for role bindings to fully propagate. This can lead to a situation where Terraform attempts to create resources before the service account has the necessary permissions—resulting in HTTP 403 Forbidden errors.
 For example, if you're creating a new service account, a new Kafka API Key, a new CloudClusterAdmin role binding, and a Kafka topic in a single run (see this [code snippet](https://github.com/confluentinc/terraform-provider-confluent/blob/master/examples/configurations/standard-kafka-rbac/main.tf#L46-L100)), the topic creation may fail if the role binding hasn’t taken effect yet. Without that role, the service account won’t have permission to create the topic.
 This setting is best suited for scenarios where you're provisioning a large number of role bindings without dependent resources, as it significantly speeds up the apply process.
-Note: If you encounter 403 errors, it’s safe to reapply once the role bindings have had time to propagate.
+
+-> **Note:** If you encounter HTTP 403 Forbidden errors when creating role bindings, feel free to rerun `terraform apply` after a few minutes, once the role bindings have had time to propagate.
+
 
 ## Attributes Reference
 
