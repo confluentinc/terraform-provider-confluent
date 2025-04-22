@@ -143,8 +143,6 @@ For example, if you're creating a new service account, a new Kafka API Key, a ne
 This setting is best suited for scenarios where you're provisioning a large number of role bindings without dependent resources, as it significantly speeds up the apply process.
 Note: If you encounter 403 errors, it’s safe to reapply once the role bindings have had time to propagate.
 
-
-https://github.com/confluentinc/terraform-provider-confluent/blob/master/examples/configurations/standard-kafka-rbac/main.tf#L46-L100
 ## Attributes Reference
 
 In addition to the preceding arguments, the following attributes are exported:
