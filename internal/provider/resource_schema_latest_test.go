@@ -42,6 +42,37 @@ const (
       "version": 9
     }
   ],
+ "ruleSet" : {
+    "domainRules" : [ {   
+        "disabled" : false,                                                          
+        "doc" : "",
+        "expr" : "",
+        "kind" : "TRANSFORM",
+        "mode" : "WRITEREAD",
+        "name" : "encrypt",
+        "onFailure" : "ERROR,ERROR",
+        "onSuccess" : "NONE,NONE",
+        "params" : {
+            "encrypt.kek.name" : "testkek2"
+            },
+        "tags" : [ "PIIIII" ],
+        "type" : "ENCRYPT"
+        }, {
+        "disabled" : false,
+        "doc" : "",
+        "expr" : "",
+        "kind" : "TRANSFORM",
+        "mode" : "WRITEREAD",
+        "name" : "encryptPII",
+        "onFailure" : "ERROR,ERROR",
+        "onSuccess" : "NONE,NONE",
+        "params" : {
+            "encrypt.kek.name" : "testkek2"
+            },
+         "tags" : [ "PII" ],
+         "type" : "ENCRYPT"
+         } ]
+},
   "schema": "foobar",
   "schemaType": "AVRO"
 }`
@@ -314,6 +345,28 @@ func testAccCheckLatestSchemaConfig(confluentCloudBaseUrl, mockServerUrl string)
         subject_name = "%s"
         version = %d
       }
+ruleset {
+		domain_rules {
+		  name = "encryptPII"
+		  kind = "TRANSFORM"
+		  type = "ENCRYPT"
+		  mode = "WRITEREAD"
+		  tags = ["PII"]
+		  params = {
+			  "encrypt.kek.name" = "testkek2"
+		  }
+		}
+		domain_rules  {
+		  name = "encrypt"
+		  kind = "TRANSFORM"
+		  type = "ENCRYPT"
+		  mode = "WRITEREAD"
+		  tags = ["PIIIII"]
+		  params = {
+			  "encrypt.kek.name" = "testkek2"
+		  }
+		}
+	  }
 
       schema_reference {
         name = "%s"
@@ -347,6 +400,28 @@ func testAccCheckLatestSchemaConfigWithUpdatedCredentials(confluentCloudBaseUrl,
 
       hard_delete = "%s"
       recreate_on_update = "%s"
+	  ruleset {
+		domain_rules {
+		  name = "encryptPII"
+		  kind = "TRANSFORM"
+		  type = "ENCRYPT"
+		  mode = "WRITEREAD"
+		  tags = ["PII"]
+		  params = {
+			  "encrypt.kek.name" = "testkek2"
+		  }
+		}
+		domain_rules  {
+		  name = "encrypt"
+		  kind = "TRANSFORM"
+		  type = "ENCRYPT"
+		  mode = "WRITEREAD"
+		  tags = ["PIIIII"]
+		  params = {
+			  "encrypt.kek.name" = "testkek2"
+		  }
+		}
+	  }
 	  
       schema_reference {
         name = "%s"
