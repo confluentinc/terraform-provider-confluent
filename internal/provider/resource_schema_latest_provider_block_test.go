@@ -260,6 +260,7 @@ func testAccCheckSchemaConfigWithEnhancedProviderBlock(confluentCloudBaseUrl, mo
 		  value = ["PIIIII"]
 		}
 	  }
+
 	  ruleset {
 		domain_rules {
 		  name = "encryptPII"
