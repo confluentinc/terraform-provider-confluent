@@ -345,7 +345,7 @@ func testAccCheckLatestSchemaConfig(confluentCloudBaseUrl, mockServerUrl string)
         subject_name = "%s"
         version = %d
       }
-ruleset {
+	  ruleset {
 		domain_rules {
 		  name = "encryptPII"
 		  kind = "TRANSFORM"
