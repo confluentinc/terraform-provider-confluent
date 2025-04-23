@@ -144,7 +144,7 @@ This setting is best suited for scenarios where you're provisioning a large numb
 
 -> **Note:** If you encounter HTTP 403 Forbidden errors when creating role bindings, you can rerun `terraform apply` after a few minutes, once the role bindings have had time to propagate.
 
--> **Note:** Feel free to use `time_sleep` [resource](https://registry.terraform.io/providers/hashicorp/time/latest/docs/resources/sleep) to configure a custom waiting period, see [this example](#example-of-using-time_sleep) for more details.
+-> **Note:** You can also use `time_sleep` [resource](https://registry.terraform.io/providers/hashicorp/time/latest/docs/resources/sleep) of HashiCorp's `time` TF provider to configure a custom waiting period, see [this example](#example-of-using-time_sleep) for more details.
 
 ## Attributes Reference
 
