@@ -356,7 +356,7 @@ func SetSchemaDiff(ctx context.Context, diff *schema.ResourceDiff, meta interfac
 			ruleset := sr.NewRuleSet()
 			ruleset.SetDomainRules([]sr.Rule{})
 			createSchemaRequest.SetRuleSet(*ruleset)
-		} else { //this is the case of adding a ruleset.
+		} else { //this is the case when a ruleset is not empty after an operation.
 			ruleset := sr.NewRuleSet()
 			tfRulesetMap := tfRuleset[0].(map[string]interface{})
 			if tfRulesetMap[paramDomainRules] != nil {
@@ -570,11 +570,11 @@ func schemaCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 	createSchemaRequest.SetSchema(schemaContent)
 	createSchemaRequest.SetReferences(schemaReferences)
 	oldRuleset, newRuleset := d.GetChange(paramRuleset)
-	if len(newRuleset.([]interface{})) == 0 && len(oldRuleset.([]interface{})) > 0 {
+	if len(newRuleset.([]interface{})) == 0 && len(oldRuleset.([]interface{})) > 0 { //this is the case of an advanced package user trying to delete a ruleset.
 		ruleset := sr.NewRuleSet()
 		ruleset.SetDomainRules([]sr.Rule{})
 		createSchemaRequest.SetRuleSet(*ruleset)
-	} else if tfRuleset := d.Get(paramRuleset).([]interface{}); len(tfRuleset) == 1 {
+	} else if tfRuleset := d.Get(paramRuleset).([]interface{}); len(tfRuleset) == 1 { //this is the case when a ruleset is not empty after an operation.
 		ruleset := sr.NewRuleSet()
 		tfRulesetMap := tfRuleset[0].(map[string]interface{})
 		if tfRulesetMap[paramDomainRules] != nil {
