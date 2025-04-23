@@ -181,7 +181,9 @@ The following end-to-end examples might help to get started with `confluent_role
 
 ## Example of using time_sleep
 
-This configuration introduces a 10-second custom delay after the creation of a role binding, before creating a Kafka topic.
+This configuration introduces a 360-second custom delay after the creation of a role binding, before creating a Kafka topic.
+
+For context, setting `disable_wait_for_ready = false` (the default setting) results in a 90-second [hardcoded](https://github.com/confluentinc/terraform-provider-confluent/blob/master/internal/provider/resource_role_binding.go#L99) delay, while setting `disable_wait_for_ready = true` results in a 0-second delay.
 
 ```terraform
 resource "confluent_role_binding" "app-manager-kafka-cluster-admin-skip-sync" {
@@ -191,13 +193,13 @@ resource "confluent_role_binding" "app-manager-kafka-cluster-admin-skip-sync" {
   disable_wait_for_ready = true
 }
 
-resource "time_sleep" "wait_10_seconds_after_role_binding" {
+resource "time_sleep" "wait_360_seconds_after_role_binding" {
   depends_on = [confluent_role_binding.app-manager-kafka-cluster-admin-skip-sync]
-  create_duration = "10s"
+  create_duration = "360s"
 }
 
 resource "confluent_kafka_topic" "orders" {
-  depends_on = [time_sleep.wait_10_seconds_after_role_binding]
+  depends_on = [time_sleep.wait_360_seconds_after_role_binding]
   kafka_cluster {
     id = confluent_kafka_cluster.standard.id
   }
