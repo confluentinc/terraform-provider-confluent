@@ -29,6 +29,13 @@ resource "confluent_role_binding" "environment-example-rb" {
   crn_pattern = confluent_environment.stag.resource_name
 }
 
+resource "confluent_role_binding" "environment-example-rb-skip-sync" {
+  principal              = "User:${confluent_service_account.test.id}"
+  role_name              = "EnvironmentAdmin"
+  crn_pattern            = confluent_environment.stag.resource_name
+  disable_wait_for_ready = true
+}
+
 resource "confluent_role_binding" "environment-example-rb-2" {
   principal   = "User:${confluent_identity_pool.test.id}"
   role_name   = "EnvironmentAdmin"
@@ -128,7 +135,16 @@ The following arguments are supported:
 
 - `principal` - (Required String) A principal User to bind the role to, for example, "User:u-111aaa" for binding to a user "u-111aaa", or "User:sa-111aaa" for binding to a service account "sa-111aaa".
 - `role_name` - (Required String) A name of the role to bind to the principal. See [Confluent Cloud RBAC Roles](https://docs.confluent.io/cloud/current/access-management/access-control/cloud-rbac.html#ccloud-rbac-roles) for a full list of supported role names.
-- `crn_pattern` - (Required String) A [Confluent Resource Name(CRN)](https://docs.confluent.io/cloud/current/api.html#section/Identifiers-and-URLs/Confluent-Resource-Names-(CRNs)) that specifies the scope and resource patterns necessary for the role to bind.
+- `crn_pattern` - (Required String) A [Confluent Resource Name (CRN)](https://docs.confluent.io/cloud/current/api.html#section/Identifiers-and-URLs/Confluent-Resource-Names-(CRNs)) that specifies the scope and resource patterns necessary for the role to bind.
+- `disable_wait_for_ready` - (Optional Boolean) An optional flag to disable wait-for-readiness on create. Its primary use case is to ensure that the role bindings are properly synchronized across the system before exiting the Terraform creation step. Must be unset when importing. Defaults to `false`.
+
+!> **Warning:** When `disable_wait_for_ready = true` is used, Terraform skips waiting for role bindings to fully propagate. This can lead to a situation where Terraform attempts to create resources before the service account has the necessary permissions—resulting in HTTP 403 Forbidden errors.
+For example, if you're creating a new service account, a new Kafka API Key, a new `CloudClusterAdmin` role binding, and a Kafka topic in a single run (see this [code snippet](https://github.com/confluentinc/terraform-provider-confluent/blob/master/examples/configurations/standard-kafka-rbac/main.tf#L46-L100)), the topic creation may fail if the role binding hasn’t taken effect yet. Without that role, the service account won’t have permission to create the topic.
+This setting is best suited for scenarios where you're provisioning a large number of role bindings without dependent resources, as it significantly speeds up the apply process.
+
+-> **Note:** If you encounter HTTP 403 Forbidden errors when creating role bindings, you can rerun `terraform apply` after a few minutes, once the role bindings have had time to propagate.
+
+-> **Note:** You can also use `time_sleep` [resource](https://registry.terraform.io/providers/hashicorp/time/latest/docs/resources/sleep) of HashiCorp's `time` [TF provider](https://registry.terraform.io/providers/hashicorp/time/latest) to configure a custom waiting period, see [this example](#example-of-using-time_sleep) for more details.
 
 ## Attributes Reference
 
@@ -162,3 +178,34 @@ The following end-to-end examples might help to get started with `confluent_role
   * [`dedicated-transit-gateway-attachment-aws-kafka-acls`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/dedicated-transit-gateway-attachment-aws-kafka-acls): _Dedicated_ Kafka cluster on AWS that is accessible via Transit Gateway Endpoint with authorization using ACLs
   * [`dedicated-transit-gateway-attachment-aws-kafka-rbac`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/dedicated-transit-gateway-attachment-aws-kafka-rbac): _Dedicated_ Kafka cluster on AWS that is accessible via Transit Gateway Endpoint with authorization using RBAC
   * [`enterprise-privatelinkattachment-aws-kafka-acls`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/enterprise-privatelinkattachment-aws-kafka-acls): _Enterprise_ Kafka cluster on AWS that is accessible via PrivateLink connections with authorization using ACLs
+
+## Example of using time_sleep
+
+This configuration introduces a 10-second custom delay after the creation of a role binding, before creating a Kafka topic.
+
+```terraform
+resource "confluent_role_binding" "app-manager-kafka-cluster-admin-skip-sync" {
+  principal   = "User:${confluent_service_account.app-manager.id}"
+  role_name   = "CloudClusterAdmin"
+  crn_pattern = confluent_kafka_cluster.standard.rbac_crn
+  disable_wait_for_ready = true
+}
+
+resource "time_sleep" "wait_10_seconds_after_role_binding" {
+  depends_on = [confluent_role_binding.app-manager-kafka-cluster-admin-skip-sync]
+  create_duration = "10s"
+}
+
+resource "confluent_kafka_topic" "orders" {
+  depends_on = [time_sleep.wait_10_seconds_after_role_binding]
+  kafka_cluster {
+    id = confluent_kafka_cluster.standard.id
+  }
+  topic_name    = "orders"
+  rest_endpoint = confluent_kafka_cluster.standard.rest_endpoint
+  credentials {
+    key    = confluent_api_key.app-manager-kafka-api-key.id
+    secret = confluent_api_key.app-manager-kafka-api-key.secret
+  }
+}
+```
