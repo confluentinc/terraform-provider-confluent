@@ -64,6 +64,12 @@ func roleBindingResource() *schema.Resource {
 				Description:  "A CRN that specifies the scope and resource patterns necessary for the role to bind.",
 				ValidateFunc: validation.StringMatch(regexp.MustCompile("^crn://"), "the CRN must be of the form 'crn://'"),
 			},
+			paramDisableWaitForReady: {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  false,
+				ForceNew: true,
+			},
 		},
 	}
 }
@@ -74,6 +80,7 @@ func roleBindingCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 	principal := d.Get(paramPrincipal).(string)
 	roleName := d.Get(paramRoleName).(string)
 	crnPattern := d.Get(paramCrnPattern).(string)
+	skipSync := d.Get(paramDisableWaitForReady).(bool)
 
 	createRoleBindingRequest := mds.NewIamV2RoleBinding()
 	createRoleBindingRequest.SetPrincipal(principal)
@@ -96,7 +103,9 @@ func roleBindingCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 		return diag.Errorf("error creating Role Binding: %q: error marshaling %#v to json: %s", createdRoleBinding.GetId(), createdRoleBinding, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating Role Binding %q: %s", d.Id(), createdRoleBindingJson), map[string]interface{}{roleBindingLoggingKey: d.Id()})
-	SleepIfNotTestMode(rbacWaitAfterCreateToSync, meta.(*Client).isAcceptanceTestMode)
+	if !skipSync {
+		SleepIfNotTestMode(rbacWaitAfterCreateToSync, meta.(*Client).isAcceptanceTestMode)
+	}
 	return roleBindingRead(ctx, d, meta)
 }
 
@@ -165,6 +174,12 @@ func setRoleBindingAttributes(d *schema.ResourceData, roleBinding mds.IamV2RoleB
 	}
 	if err := d.Set(paramCrnPattern, roleBinding.GetCrnPattern()); err != nil {
 		return nil, createDescriptiveError(err)
+	}
+	// Explicitly set paramDisableWaitForReady to the default value if unset
+	if _, ok := d.GetOk(paramDisableWaitForReady); !ok {
+		if err := d.Set(paramDisableWaitForReady, d.Get(paramDisableWaitForReady)); err != nil {
+			return nil, createDescriptiveError(err)
+		}
 	}
 
 	d.SetId(roleBinding.GetId())
