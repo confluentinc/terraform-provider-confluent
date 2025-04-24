@@ -79,7 +79,7 @@ The following arguments are supported:
 
 !> **Warning:** Use Option #2 to avoid exposing sensitive `credentials` value in a state file. When using Option #1, Terraform doesn't encrypt the sensitive `credentials` value of the `confluent_schema_registry_cluster_config` resource, so you must keep your state file secure to avoid exposing it. Refer to the [Terraform documentation](https://www.terraform.io/docs/language/state/sensitive-data.html) to learn more about securing your state file.
 
--> **Note:** To configure a config at the context level, affecting all subjects created within that context, use `confluent_subject_config` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_subject_config) instead.
+-> **Note:** To configure a config at the context level, affecting all subjects created within that context, use `confluent_subject_config` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_subject_config) and pass in the context name as the `subject_name`. See the [`confluent_subject_config` resource documentation](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_subject_config#argument-reference) for more details.
 
 - `compatibility_level` - (Optional String) The global Schema Registry compatibility level. Accepted values are: `BACKWARD`, `BACKWARD_TRANSITIVE`, `FORWARD`, `FORWARD_TRANSITIVE`, `FULL`, `FULL_TRANSITIVE`, and `NONE`. See the [Compatibility Types](https://docs.confluent.io/platform/current/schema-registry/avro.html#compatibility-types) for more details.
 - `compatibility_group` - (Optional String) The global Schema Registry compatibility group.
