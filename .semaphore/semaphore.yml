@@ -34,6 +34,17 @@ blocks:
             - make all
             # Run make-release CI if the current commit is not tagged
             - if [[ -z $(git tag --points-at HEAD) ]]; then make release-ci; fi
+            # Push coverage artifact
+            - artifact push workflow coverage.txt
+
+after_pipeline:
+  task:
+    jobs:
+      - name: Report SonarQube Results
+        commands:
+          - checkout
+          - sem-version java 11
+          - emit-sonarqube-data -a coverage.txt
 
 promotions:
   - name: Draft a Release
