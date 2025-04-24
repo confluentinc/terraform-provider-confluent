@@ -84,7 +84,7 @@ The following arguments are supported:
 
 - `subject_name` - (Required String) The name of the subject (in other words, the namespace), representing the subject under which the schema will be registered, for example, `test-subject`. Schemas evolve safely, following a compatibility mode defined, under a subject name.
 
--> **Note:** By default, subjects are created in the `default` context. If you want subjects to be created in a custom context, use the following naming pattern: `:.contextName.:subjectName`. For example, use `subject_name = ":.context1.:test-subject"` to create a subject named `test-subject` in the `context1` context and use `subject_name = "test-subject"` to create a subject named `test-subject` in the `default` context.
+-> **Note:** By default, subjects are created in the `default` context. If you want subjects to be created in a custom context, use the following naming pattern: `:.contextName:subjectName`. For example, use `subject_name = ":.context1:test-subject"` to create a subject named `test-subject` in the `context1` context and use `subject_name = "test-subject"` to create a subject named `test-subject` in the `default` context.
 
 - `format` - (Required String) The format of the schema. Accepted values are: `AVRO`, `PROTOBUF`, and `JSON`.
 - `schema` - (Required String) The schema string, for example, `file("./schema_version_1.avsc")`.
