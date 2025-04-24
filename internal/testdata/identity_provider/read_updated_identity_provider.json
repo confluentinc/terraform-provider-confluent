@@ -11,8 +11,8 @@
   "display_name": "My OIDC Provider updated",
   "description": "fake description updated",
   "state": "ENABLED",
-  "issuer": "https://login.microsoftonline.com/11111111-0000-0000-0000-b3d3d184f1a5/v2.0",
-  "jwks_uri": "https://login.microsoftonline.com/common/discovery/v2.0/keys",
+  "issuer": "https://login.microsoftonline.com/11111111-0000-0000-0000-b3d3d184f1a5/v2.1",
+  "jwks_uri": "https://login.microsoftonline.com/common/discovery/v2.1/keys",
   "identity_claim": "claims.aud",
   "keys": [
     {
