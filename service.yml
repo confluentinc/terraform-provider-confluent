@@ -1,4 +1,4 @@
-name: terraform-provider-confluent-internal
+name: terraform-provider-confluent
 contact:
   name: api
   jira_project_key: CLI
