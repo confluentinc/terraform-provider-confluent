@@ -842,8 +842,8 @@ removed in the next major version of the provider (2.0.0). Refer to the [Upgrade
 * Added **4** new examples:
   * [azure-key-vault](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/azure-key-vault)
   * [hashicorp-vault](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/hashicorp-vault)
-  * [manage-topics-via-json](https://github.com/confluentinc/terraform-provider-confluent-internal/tree/master/examples/configurations/manage-topics-via-json)
-  * [topic-as-a-service](https://github.com/confluentinc/terraform-provider-confluent-internal/tree/master/examples/configurations/topic-as-a-service)
+  * [manage-topics-via-json](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/manage-topics-via-json)
+  * [topic-as-a-service](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/topic-as-a-service)
 
 **Bug fixes:**
 * Fixed a bug "422 Unprocessable Entity: Availability update is only supported on BASIC and STANDARD clusters" when updating `cku` attribute of `confluent_kafka_cluster` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_cluster).
