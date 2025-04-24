@@ -6,12 +6,12 @@
 apiVersion: v1alpha
 kind: Project
 metadata:
-  name: terraform-provider-confluent-internal
+  name: terraform-provider-confluent
   description: ""
 spec:
   visibility: private
   repository:
-    url: git@github.com:confluentinc/terraform-provider-confluent-internal.git
+    url: git@github.com:confluentinc/terraform-provider-confluent.git
     run_on:
     - branches
     - tags
