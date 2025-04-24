@@ -18,6 +18,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	mds "github.com/confluentinc/ccloud-sdk-go-v2/mds/v2"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -65,11 +66,26 @@ func roleBindingDataSourceRead(ctx context.Context, d *schema.ResourceData, meta
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Role Binding %q: %s", roleBindingId, roleBindingJson), map[string]interface{}{roleBindingLoggingKey: roleBindingId})
 
-	if _, err := setRoleBindingAttributes(d, roleBinding); err != nil {
+	if _, err := setRoleBindingDataSourceAttributes(d, roleBinding); err != nil {
 		return diag.FromErr(createDescriptiveError(err))
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished reading Role Binding %q", roleBindingId), map[string]interface{}{roleBindingLoggingKey: roleBindingId})
 
 	return nil
+}
+
+func setRoleBindingDataSourceAttributes(d *schema.ResourceData, roleBinding mds.IamV2RoleBinding) (*schema.ResourceData, error) {
+	if err := d.Set(paramPrincipal, roleBinding.GetPrincipal()); err != nil {
+		return nil, createDescriptiveError(err)
+	}
+	if err := d.Set(paramRoleName, roleBinding.GetRoleName()); err != nil {
+		return nil, createDescriptiveError(err)
+	}
+	if err := d.Set(paramCrnPattern, roleBinding.GetCrnPattern()); err != nil {
+		return nil, createDescriptiveError(err)
+	}
+
+	d.SetId(roleBinding.GetId())
+	return d, nil
 }
