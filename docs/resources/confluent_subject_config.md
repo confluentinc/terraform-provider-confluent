@@ -87,7 +87,7 @@ The following arguments are supported:
 
 -> **Note:** If you want to reference the subject that is located in a custom context, use the following naming pattern: `:.contextName:subjectName`. For example, use `subject_name = ":.context1:test-subject"` to reference the subject named `test-subject` in the `context1` context, and use `subject_name = "test-subject"` to reference the subject named `test-subject` in the `default` context.
 
--> **Note:** To configure config at the context level, affecting all subjects created within that context, use the following naming pattern: `:.contextName:`. For example, to set the global configuration for the `context1` context, use `subject_name = ":.context1:"`.
+-> **Note:** To configure a config at the context level, affecting all subjects created within that context, use the following naming pattern: `:.contextName:`. For example, to set the global configuration for the `context1` context, use `subject_name = ":.context1:"`.
 
 `compatibility_level` - (Optional String) The Compatibility Level of the specified subject. Accepted values are: `BACKWARD`, `BACKWARD_TRANSITIVE`, `FORWARD`, `FORWARD_TRANSITIVE`, `FULL`, `FULL_TRANSITIVE`, and `NONE`. See the [Compatibility Types](https://docs.confluent.io/platform/current/schema-registry/avro.html#compatibility-types) for more details.
 - `compatibility_group` - (Optional String) The Compatibility Group of the specified subject.
