@@ -83,6 +83,9 @@ The following arguments are supported:
 !> **Warning:** Use Option #2 to avoid exposing sensitive `credentials` value in a state file. When using Option #1, Terraform doesn't encrypt the sensitive `credentials` value of the `confluent_schema` resource, so you must keep your state file secure to avoid exposing it. Refer to the [Terraform documentation](https://www.terraform.io/docs/language/state/sensitive-data.html) to learn more about securing your state file.
 
 - `subject_name` - (Required String) The name of the subject (in other words, the namespace), representing the subject under which the schema will be registered, for example, `test-subject`. Schemas evolve safely, following a compatibility mode defined, under a subject name.
+
+-> **Note:** By default, subjects are created in the `default` context. If you want subjects to be created in a specific context, use the following naming pattern: `:.contextName.:subjectName`. For example, use `subject_name = ":.context1.:test-subject"` to create a subject named `test-subject` in the `context1` context and use `subject_name = "test-subject"` to create a subject named `test-subject` in the `default` context.
+
 - `format` - (Required String) The format of the schema. Accepted values are: `AVRO`, `PROTOBUF`, and `JSON`.
 - `schema` - (Required String) The schema string, for example, `file("./schema_version_1.avsc")`.
 - `hard_delete` - (Optional Boolean) An optional flag to control whether a schema should be soft or hard deleted. Set it to `true` if you want to hard delete a schema on destroy (see [Schema Deletion Guidelines](https://docs.confluent.io/platform/current/schema-registry/schema-deletion-guidelines.html#schema-deletion-guidelines) for more details). Must be unset when importing. Defaults to `false` (soft delete).
