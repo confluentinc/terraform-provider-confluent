@@ -57,14 +57,12 @@ func identityProviderResource() *schema.Resource {
 			paramIssuer: {
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				Description:  "A publicly reachable issuer URI for the Identity Provider.",
 				ValidateFunc: validation.StringIsNotEmpty,
 			},
 			paramJwksUri: {
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				Description:  "A publicly reachable JWKS URI for the Identity Provider.",
 				ValidateFunc: validation.StringIsNotEmpty,
 			},
@@ -78,8 +76,8 @@ func identityProviderResource() *schema.Resource {
 }
 
 func identityProviderUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if d.HasChangesExcept(paramDisplayName, paramDescription, paramIdentityClaim) {
-		return diag.Errorf("error updating Identity Provider %q: only %q, %q, %q attributes can be updated for Identity Provider", d.Id(), paramDisplayName, paramDescription, paramIdentityClaim)
+	if d.HasChangesExcept(paramDisplayName, paramDescription, paramIssuer, paramJwksUri, paramIdentityClaim) {
+		return diag.Errorf("error updating Identity Provider %q: only %q, %q, %q, %q, %q attributes can be updated for Identity Provider", d.Id(), paramDisplayName, paramDescription, paramIssuer, paramJwksUri, paramIdentityClaim)
 	}
 
 	updateIdentityProviderRequest := oidc.NewIamV2IdentityProvider()
@@ -91,6 +89,14 @@ func identityProviderUpdate(ctx context.Context, d *schema.ResourceData, meta in
 	if d.HasChange(paramDescription) {
 		updatedDescription := d.Get(paramDescription).(string)
 		updateIdentityProviderRequest.SetDescription(updatedDescription)
+	}
+	if d.HasChange(paramIssuer) {
+		updatedIssuer := d.Get(paramIssuer).(string)
+		updateIdentityProviderRequest.SetIssuer(updatedIssuer)
+	}
+	if d.HasChange(paramJwksUri) {
+		updatedJwksUri := d.Get(paramJwksUri).(string)
+		updateIdentityProviderRequest.SetJwksUri(updatedJwksUri)
 	}
 	if d.HasChange(paramIdentityClaim) {
 		updatedIdentityClaim := d.Get(paramIdentityClaim).(string)

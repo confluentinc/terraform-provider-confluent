@@ -17,10 +17,11 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
 	"testing"
+
+	"github.com/walkerus/go-wiremock"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -122,6 +123,8 @@ func TestAccIdentityProvider(t *testing.T) {
 	// in order to test tf update (step #3)
 	identityProviderUpdatedDescription := "fake description updated"
 	identityProviderUpdatedDisplayName := "My OIDC Provider updated"
+	identityProviderUpdatedIssuer := "https://login.microsoftonline.com/11111111-0000-0000-0000-b3d3d184f1a5/v2.1"
+	identityProviderUpdatedJwksUri := "https://login.microsoftonline.com/common/discovery/v2.1/keys"
 	identityProviderResourceLabel := "test_identity_provider_resource_label"
 	fullIdentityProviderResourceLabel := fmt.Sprintf("confluent_identity_provider.%s", identityProviderResourceLabel)
 
@@ -151,14 +154,14 @@ func TestAccIdentityProvider(t *testing.T) {
 				ImportStateVerify: true,
 			},
 			{
-				Config: testAccCheckIdentityProviderConfig(mockServerUrl, identityProviderResourceLabel, identityProviderUpdatedDisplayName, identityProviderUpdatedDescription, identityProviderIssuer, identityProviderJwksUri),
+				Config: testAccCheckIdentityProviderConfig(mockServerUrl, identityProviderResourceLabel, identityProviderUpdatedDisplayName, identityProviderUpdatedDescription, identityProviderUpdatedIssuer, identityProviderUpdatedJwksUri),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckIdentityProviderExists(fullIdentityProviderResourceLabel),
 					resource.TestCheckResourceAttr(fullIdentityProviderResourceLabel, paramId, identityProviderId),
 					resource.TestCheckResourceAttr(fullIdentityProviderResourceLabel, paramDisplayName, identityProviderUpdatedDisplayName),
 					resource.TestCheckResourceAttr(fullIdentityProviderResourceLabel, paramDescription, identityProviderUpdatedDescription),
-					resource.TestCheckResourceAttr(fullIdentityProviderResourceLabel, paramIssuer, identityProviderIssuer),
-					resource.TestCheckResourceAttr(fullIdentityProviderResourceLabel, paramJwksUri, identityProviderJwksUri),
+					resource.TestCheckResourceAttr(fullIdentityProviderResourceLabel, paramIssuer, identityProviderUpdatedIssuer),
+					resource.TestCheckResourceAttr(fullIdentityProviderResourceLabel, paramJwksUri, identityProviderUpdatedJwksUri),
 					resource.TestCheckResourceAttr(fullIdentityProviderResourceLabel, paramIdentityClaim, identityProviderIdentityClaim),
 				),
 			},
