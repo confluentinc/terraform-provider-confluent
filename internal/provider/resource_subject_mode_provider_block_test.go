@@ -35,8 +35,10 @@ const (
 	testSubjectModeResourceLabel = "test_subject_mode_resource_label"
 	testSubjectMode              = "READWRITE"
 	testUpdatedSubjectMode       = "READONLY"
+	testForceFalse               = "false"
+	testForceTrue                = "true"
 
-	testNumberOfSubjectModeResourceAttributes = "6"
+	testNumberOfSubjectModeResourceAttributes = "7"
 )
 
 var fullSubjectModeResourceLabel = fmt.Sprintf("confluent_subject_mode.%s", testSubjectModeResourceLabel)
@@ -123,7 +125,7 @@ func TestAccSubjectModeWithEnhancedProviderBlock(t *testing.T) {
 		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckSubjectModeConfigWithEnhancedProviderBlock(confluentCloudBaseUrl, mockSubjectModeTestServerUrl, testSubjectMode),
+				Config: testAccCheckSubjectModeConfigWithEnhancedProviderBlock(confluentCloudBaseUrl, mockSubjectModeTestServerUrl, testSubjectMode, ""),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSubjectModeExists(fullSubjectModeResourceLabel),
 					resource.TestCheckResourceAttr(fullSubjectModeResourceLabel, "id", fmt.Sprintf("%s/%s", testStreamGovernanceClusterId, testSubjectName)),
@@ -131,6 +133,7 @@ func TestAccSubjectModeWithEnhancedProviderBlock(t *testing.T) {
 					resource.TestCheckNoResourceAttr(fullSubjectModeResourceLabel, "schema_registry_cluster.0.id"),
 					resource.TestCheckResourceAttr(fullSubjectModeResourceLabel, "subject_name", testSubjectName),
 					resource.TestCheckResourceAttr(fullSubjectModeResourceLabel, "mode", testSubjectMode),
+					resource.TestCheckResourceAttr(fullSubjectModeResourceLabel, "force", testForceFalse),
 					resource.TestCheckResourceAttr(fullSubjectModeResourceLabel, "credentials.#", "0"),
 					resource.TestCheckNoResourceAttr(fullSubjectModeResourceLabel, "credentials.0.key"),
 					resource.TestCheckNoResourceAttr(fullSubjectModeResourceLabel, "credentials.0.secret"),
@@ -145,7 +148,7 @@ func TestAccSubjectModeWithEnhancedProviderBlock(t *testing.T) {
 				ImportStateVerify: true,
 			},
 			{
-				Config: testAccCheckSubjectModeConfigWithEnhancedProviderBlock(confluentCloudBaseUrl, mockSubjectModeTestServerUrl, testUpdatedSubjectMode),
+				Config: testAccCheckSubjectModeConfigWithEnhancedProviderBlock(confluentCloudBaseUrl, mockSubjectModeTestServerUrl, testUpdatedSubjectMode, testForceTrue),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSubjectModeExists(fullSubjectModeResourceLabel),
 					resource.TestCheckResourceAttr(fullSubjectModeResourceLabel, "id", fmt.Sprintf("%s/%s", testStreamGovernanceClusterId, testSubjectName)),
@@ -153,6 +156,7 @@ func TestAccSubjectModeWithEnhancedProviderBlock(t *testing.T) {
 					resource.TestCheckNoResourceAttr(fullSubjectModeResourceLabel, "schema_registry_cluster.0.id"),
 					resource.TestCheckResourceAttr(fullSubjectModeResourceLabel, "subject_name", testSubjectName),
 					resource.TestCheckResourceAttr(fullSubjectModeResourceLabel, "mode", testUpdatedSubjectMode),
+					resource.TestCheckResourceAttr(fullSubjectModeResourceLabel, "force", testForceTrue),
 					resource.TestCheckResourceAttr(fullSubjectModeResourceLabel, "credentials.#", "0"),
 					resource.TestCheckNoResourceAttr(fullSubjectModeResourceLabel, "credentials.0.key"),
 					resource.TestCheckNoResourceAttr(fullSubjectModeResourceLabel, "credentials.0.secret"),
@@ -173,8 +177,9 @@ func TestAccSubjectModeWithEnhancedProviderBlock(t *testing.T) {
 	checkStubCount(t, wiremockClient, deleteSubjectModeStub, fmt.Sprintf("DELETE %s", updateSubjectModePath), expectedCountOne)
 }
 
-func testAccCheckSubjectModeConfigWithEnhancedProviderBlock(confluentCloudBaseUrl, mockServerUrl, mode string) string {
-	return fmt.Sprintf(`
+func testAccCheckSubjectModeConfigWithEnhancedProviderBlock(confluentCloudBaseUrl, mockServerUrl, mode, force string) string {
+	if force == "" {
+		return fmt.Sprintf(`
 	provider "confluent" {
 	  endpoint = "%s"
 	  schema_registry_api_key = "%s"
@@ -187,6 +192,21 @@ func testAccCheckSubjectModeConfigWithEnhancedProviderBlock(confluentCloudBaseUr
 	  mode = "%s"
 	}
 	`, confluentCloudBaseUrl, testSchemaRegistryKey, testSchemaRegistrySecret, mockServerUrl, testStreamGovernanceClusterId, testSubjectModeResourceLabel, testSubjectName, mode)
+	}
+	return fmt.Sprintf(`
+	provider "confluent" {
+	  endpoint = "%s"
+	  schema_registry_api_key = "%s"
+	  schema_registry_api_secret = "%s"
+	  schema_registry_rest_endpoint = "%s"
+	  schema_registry_id = "%s"
+	}
+	resource "confluent_subject_mode" "%s" {
+	  subject_name = "%s"
+	  mode = "%s"
+      force = "%s"
+	}
+	`, confluentCloudBaseUrl, testSchemaRegistryKey, testSchemaRegistrySecret, mockServerUrl, testStreamGovernanceClusterId, testSubjectModeResourceLabel, testSubjectName, mode, force)
 }
 
 func testAccCheckSubjectModeExists(n string) resource.TestCheckFunc {
