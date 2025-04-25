@@ -195,6 +195,13 @@ func readSchemaRegistryClusterModeAndSetAttributes(ctx context.Context, d *schem
 		return nil, err
 	}
 
+	// Explicitly set paramForce to the default value if unset
+	if _, ok := d.GetOk(paramForce); !ok {
+		if err := d.Set(paramForce, paramForceDefaultValue); err != nil {
+			return nil, createDescriptiveError(err)
+		}
+	}
+
 	if !c.isMetadataSetInProviderBlock {
 		if err := setKafkaCredentials(c.clusterApiKey, c.clusterApiSecret, d, c.externalAccessToken != nil); err != nil {
 			return nil, err
