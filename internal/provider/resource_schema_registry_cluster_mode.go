@@ -215,8 +215,8 @@ func readSchemaRegistryClusterModeAndSetAttributes(ctx context.Context, d *schem
 }
 
 func schemaRegistryClusterModeUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if d.HasChangesExcept(paramCredentials, paramMode) {
-		return diag.Errorf("error updating Schema Registry Cluster Mode %q: only %q and %q blocks can be updated for Schema Registry Cluster Mode", d.Id(), paramCredentials, paramMode)
+	if d.HasChangesExcept(paramCredentials, paramMode, paramForce) {
+		return diag.Errorf("error updating Schema Registry Cluster Mode %q: only %q, %q and %q blocks can be updated for Schema Registry Cluster Mode", d.Id(), paramCredentials, paramMode, paramForce)
 	}
 	if d.HasChange(paramMode) {
 		updatedMode := d.Get(paramMode).(string)

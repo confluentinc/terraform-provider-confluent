@@ -268,8 +268,8 @@ func readSubjectModeAndSetAttributes(ctx context.Context, d *schema.ResourceData
 }
 
 func subjectModeUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if d.HasChangesExcept(paramCredentials, paramMode) {
-		return diag.Errorf("error updating Subject Mode %q: only %q and %q blocks can be updated for Subject Mode", d.Id(), paramCredentials, paramMode)
+	if d.HasChangesExcept(paramCredentials, paramMode, paramForce) {
+		return diag.Errorf("error updating Subject Mode %q: only %q, %q and %q blocks can be updated for Subject Mode", d.Id(), paramCredentials, paramMode, paramForce)
 	}
 	if d.HasChange(paramMode) {
 		updatedMode := d.Get(paramMode).(string)
