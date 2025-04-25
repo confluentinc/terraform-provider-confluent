@@ -28,6 +28,8 @@ import (
 	"regexp"
 )
 
+const paramForce = "force"
+
 func schemaRegistryClusterModeResource() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: schemaRegistryClusterModeCreate,
@@ -52,6 +54,11 @@ func schemaRegistryClusterModeResource() *schema.Resource {
 				Optional:     true,
 				Computed:     true,
 				ValidateFunc: validation.StringInSlice(acceptedModes, false),
+			},
+			paramForce: {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  false,
 			},
 		},
 		CustomizeDiff: customdiff.Sequence(resourceCredentialBlockValidationWithOAuth),
