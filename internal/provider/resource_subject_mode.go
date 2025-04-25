@@ -72,6 +72,12 @@ func subjectModeResource() *schema.Resource {
 				Computed:     true,
 				ValidateFunc: validation.StringInSlice(acceptedModes, false),
 			},
+			paramForce: {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "Controls whether it should force a mode change even if the Schema Registry has existing schemas. This can be useful in disaster recovery (DR) scenarios using Schema Linking. Defaults to `false`, which does not allow a mode change to IMPORT if Schema Registry has registered schemas.",
+			},
 		},
 		CustomizeDiff: customdiff.Sequence(resourceCredentialBlockValidationWithOAuth),
 	}
