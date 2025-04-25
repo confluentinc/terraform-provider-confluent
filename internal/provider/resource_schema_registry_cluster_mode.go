@@ -28,8 +28,6 @@ import (
 	"regexp"
 )
 
-const paramForce = "force"
-
 func schemaRegistryClusterModeResource() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: schemaRegistryClusterModeCreate,
