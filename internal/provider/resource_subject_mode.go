@@ -72,6 +72,12 @@ func subjectModeResource() *schema.Resource {
 				Computed:     true,
 				ValidateFunc: validation.StringInSlice(acceptedModes, false),
 			},
+			paramForce: {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     paramForceDefaultValue,
+				Description: "Controls whether it should force a mode change even if the Schema Registry has existing schemas. This can be useful in disaster recovery (DR) scenarios using Schema Linking. Defaults to `false`, which does not allow a mode change to IMPORT if Schema Registry has registered schemas.",
+			},
 		},
 		CustomizeDiff: customdiff.Sequence(resourceCredentialBlockValidationWithOAuth),
 	}
@@ -244,6 +250,13 @@ func readSubjectModeAndSetAttributes(ctx context.Context, d *schema.ResourceData
 		return nil, err
 	}
 
+	// Explicitly set paramForce to the default value if unset
+	if _, ok := d.GetOk(paramForce); !ok {
+		if err := d.Set(paramForce, paramForceDefaultValue); err != nil {
+			return nil, createDescriptiveError(err)
+		}
+	}
+
 	if !c.isMetadataSetInProviderBlock {
 		if err := setKafkaCredentials(c.clusterApiKey, c.clusterApiSecret, d, c.externalAccessToken != nil); err != nil {
 			return nil, err
@@ -262,8 +275,8 @@ func readSubjectModeAndSetAttributes(ctx context.Context, d *schema.ResourceData
 }
 
 func subjectModeUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if d.HasChangesExcept(paramCredentials, paramMode) {
-		return diag.Errorf("error updating Subject Mode %q: only %q and %q blocks can be updated for Subject Mode", d.Id(), paramCredentials, paramMode)
+	if d.HasChangesExcept(paramCredentials, paramMode, paramForce) {
+		return diag.Errorf("error updating Subject Mode %q: only %q, %q and %q blocks can be updated for Subject Mode", d.Id(), paramCredentials, paramMode, paramForce)
 	}
 	if d.HasChange(paramMode) {
 		updatedMode := d.Get(paramMode).(string)
