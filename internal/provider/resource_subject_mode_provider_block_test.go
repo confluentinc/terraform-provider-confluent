@@ -64,7 +64,7 @@ func TestAccSubjectModeWithEnhancedProviderBlock(t *testing.T) {
 
 	createSubjectModeResponse, _ := ioutil.ReadFile("../testdata/subject_mode/read_created_subject_mode.json")
 	createSubjectModeStub := wiremock.Put(wiremock.URLPathEqualTo(updateSubjectModePath)).
-		WithQueryParam("force", wiremock.EqualTo(fmt.Sprintf(testForceTrue))).
+		WithQueryParam(paramForce, wiremock.EqualTo(fmt.Sprintf(testForceTrue))).
 		InScenario(subjectModeScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillSetStateTo(scenarioStateSubjectModeHasBeenCreated).
@@ -87,7 +87,7 @@ func TestAccSubjectModeWithEnhancedProviderBlock(t *testing.T) {
 		))
 
 	_ = wiremockClient.StubFor(wiremock.Put(wiremock.URLPathEqualTo(updateSubjectModePath)).
-		WithQueryParam("force", wiremock.EqualTo(fmt.Sprintf(testForceFalse))).
+		WithQueryParam(paramForce, wiremock.EqualTo(fmt.Sprintf(testForceFalse))).
 		InScenario(subjectModeScenarioName).
 		WhenScenarioStateIs(scenarioStateSubjectModeHasBeenCreated).
 		WillSetStateTo(scenarioStateSubjectModeHasBeenUpdated).
