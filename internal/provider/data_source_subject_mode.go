@@ -16,11 +16,13 @@ package provider
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"net/http"
 	"regexp"
 )
 
@@ -76,11 +78,56 @@ func subjectModeDataSourceRead(ctx context.Context, d *schema.ResourceData, meta
 	// Mark resource as new to avoid d.Set("") when getting 404
 	d.MarkNewResource()
 
-	if _, err := readSubjectModeAndSetAttributes(ctx, d, schemaRegistryRestClient, subjectName); err != nil {
+	if _, err := readSubjectModeDataSourceAndSetAttributes(ctx, d, schemaRegistryRestClient, subjectName); err != nil {
 		return diag.Errorf("error reading Subject Mode: %s", createDescriptiveError(err))
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished reading Subject Mode %q", d.Id()), map[string]interface{}{subjectModeLoggingKey: d.Id()})
 
 	return nil
+}
+
+func readSubjectModeDataSourceAndSetAttributes(ctx context.Context, d *schema.ResourceData, c *SchemaRegistryRestClient, subjectName string) ([]*schema.ResourceData, error) {
+	subjectMode, resp, err := c.apiClient.ModesV1Api.GetMode(c.apiContext(ctx), subjectName).DefaultToGlobal(true).Execute()
+	if err != nil {
+		tflog.Warn(ctx, fmt.Sprintf("Error reading Subject Mode %q: %s", d.Id(), createDescriptiveError(err)), map[string]interface{}{subjectModeLoggingKey: d.Id()})
+
+		isResourceNotFound := ResponseHasExpectedStatusCode(resp, http.StatusNotFound)
+		if isResourceNotFound && !d.IsNewResource() {
+			tflog.Warn(ctx, fmt.Sprintf("Removing Subject Mode %q in TF state because Subject Mode could not be found on the server", d.Id()), map[string]interface{}{subjectModeLoggingKey: d.Id()})
+			d.SetId("")
+			return nil, nil
+		}
+
+		return nil, err
+	}
+	subjectModeJson, err := json.Marshal(subjectMode)
+	if err != nil {
+		return nil, fmt.Errorf("error reading Subject Mode %q: error marshaling %#v to json: %s", d.Id(), subjectMode, createDescriptiveError(err))
+	}
+	tflog.Debug(ctx, fmt.Sprintf("Fetched Subject Mode %q: %s", d.Id(), subjectModeJson), map[string]interface{}{subjectModeLoggingKey: d.Id()})
+
+	if err := d.Set(paramSubjectName, subjectName); err != nil {
+		return nil, err
+	}
+
+	if err := d.Set(paramMode, subjectMode.GetMode()); err != nil {
+		return nil, err
+	}
+
+	if !c.isMetadataSetInProviderBlock {
+		if err := setKafkaCredentials(c.clusterApiKey, c.clusterApiSecret, d, c.externalAccessToken != nil); err != nil {
+			return nil, err
+		}
+		if err := d.Set(paramRestEndpoint, c.restEndpoint); err != nil {
+			return nil, err
+		}
+		if err := setStringAttributeInListBlockOfSizeOne(paramSchemaRegistryCluster, paramId, c.clusterId, d); err != nil {
+			return nil, err
+		}
+	}
+
+	d.SetId(createSubjectModeId(c.clusterId, subjectName))
+
+	return []*schema.ResourceData{d}, nil
 }
