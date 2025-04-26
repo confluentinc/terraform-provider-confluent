@@ -86,7 +86,7 @@ func TestAccSubjectModeWithEnhancedProviderBlock(t *testing.T) {
 			http.StatusOK,
 		))
 
-	_ = wiremockClient.StubFor(wiremock.Put(wiremock.URLPathEqualTo(updateSubjectModePath)).
+	updateSubjectModeStub := wiremock.Put(wiremock.URLPathEqualTo(updateSubjectModePath)).
 		WithQueryParam(paramForce, wiremock.EqualTo(fmt.Sprintf(testForceFalse))).
 		InScenario(subjectModeScenarioName).
 		WhenScenarioStateIs(scenarioStateSubjectModeHasBeenCreated).
@@ -95,7 +95,8 @@ func TestAccSubjectModeWithEnhancedProviderBlock(t *testing.T) {
 			"",
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)
+	_ = wiremockClient.StubFor(updateSubjectModeStub)
 
 	readUpdatedSubjectModesResponse, _ := ioutil.ReadFile("../testdata/subject_mode/read_updated_subject_mode.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(updateSubjectModePath)).
@@ -169,7 +170,8 @@ func TestAccSubjectModeWithEnhancedProviderBlock(t *testing.T) {
 		},
 	})
 
-	checkStubCount(t, wiremockClient, createSubjectModeStub, fmt.Sprintf("PUT (CREATE) %s", updateSubjectModePath), expectedCountTwo)
+	checkStubCount(t, wiremockClient, createSubjectModeStub, fmt.Sprintf("PUT (CREATE) %s", updateSubjectModePath), expectedCountOne)
+	checkStubCount(t, wiremockClient, updateSubjectModeStub, fmt.Sprintf("PUT (UPDATE) %s", updateSubjectModePath), expectedCountOne)
 	checkStubCount(t, wiremockClient, deleteSubjectModeStub, fmt.Sprintf("DELETE %s", updateSubjectModePath), expectedCountOne)
 }
 
