@@ -46,6 +46,7 @@ func TestAccSchemaRegistryClusterMode(t *testing.T) {
 
 	createSchemaRegistryClusterModeResponse, _ := ioutil.ReadFile("../testdata/schema_registry_cluster_mode/read_created_schema_registry_cluster_mode.json")
 	createSchemaRegistryClusterModeStub := wiremock.Put(wiremock.URLPathEqualTo(updateSchemaRegistryClusterModePath)).
+		WithQueryParam(paramForce, wiremock.EqualTo(fmt.Sprintf(testForceTrue))).
 		InScenario(schemaRegistryClusterModeScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillSetStateTo(scenarioStateSchemaRegistryClusterModeHasBeenCreated).
@@ -66,7 +67,8 @@ func TestAccSchemaRegistryClusterMode(t *testing.T) {
 			http.StatusOK,
 		))
 
-	_ = wiremockClient.StubFor(wiremock.Put(wiremock.URLPathEqualTo(updateSchemaRegistryClusterModePath)).
+	updateSchemaRegistryClusterModeStub := wiremock.Put(wiremock.URLPathEqualTo(updateSchemaRegistryClusterModePath)).
+		WithQueryParam(paramForce, wiremock.EqualTo(fmt.Sprintf(testForceFalse))).
 		InScenario(schemaRegistryClusterModeScenarioName).
 		WhenScenarioStateIs(scenarioStateSchemaRegistryClusterModeHasBeenCreated).
 		WillSetStateTo(scenarioStateSchemaRegistryClusterModeHasBeenUpdated).
@@ -74,7 +76,8 @@ func TestAccSchemaRegistryClusterMode(t *testing.T) {
 			"",
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)
+	_ = wiremockClient.StubFor(updateSchemaRegistryClusterModeStub)
 
 	readUpdatedSchemaRegistryClusterModesResponse, _ := ioutil.ReadFile("../testdata/schema_registry_cluster_mode/read_updated_schema_registry_cluster_mode.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(updateSchemaRegistryClusterModePath)).
@@ -115,7 +118,7 @@ func TestAccSchemaRegistryClusterMode(t *testing.T) {
 		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckSchemaRegistryClusterModeConfig(confluentCloudBaseUrl, mockSchemaRegistryClusterModeTestServerUrl, testSchemaRegistryClusterMode, testSchemaRegistryKey, testSchemaRegistrySecret),
+				Config: testAccCheckSchemaRegistryClusterModeConfig(confluentCloudBaseUrl, mockSchemaRegistryClusterModeTestServerUrl, testSchemaRegistryClusterMode, testForceTrue, testSchemaRegistryKey, testSchemaRegistrySecret),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSchemaRegistryClusterModeExists(fullSchemaRegistryClusterModeResourceLabel),
 					resource.TestCheckResourceAttr(fullSchemaRegistryClusterModeResourceLabel, "id", testStreamGovernanceClusterId),
@@ -123,6 +126,7 @@ func TestAccSchemaRegistryClusterMode(t *testing.T) {
 					resource.TestCheckResourceAttr(fullSchemaRegistryClusterModeResourceLabel, "schema_registry_cluster.0.%", "1"),
 					resource.TestCheckResourceAttr(fullSchemaRegistryClusterModeResourceLabel, "schema_registry_cluster.0.id", testStreamGovernanceClusterId),
 					resource.TestCheckResourceAttr(fullSchemaRegistryClusterModeResourceLabel, "mode", testSchemaRegistryClusterMode),
+					resource.TestCheckResourceAttr(fullSchemaRegistryClusterModeResourceLabel, "force", testForceTrue),
 					resource.TestCheckResourceAttr(fullSchemaRegistryClusterModeResourceLabel, "rest_endpoint", mockSchemaRegistryClusterModeTestServerUrl),
 					resource.TestCheckResourceAttr(fullSchemaRegistryClusterModeResourceLabel, "credentials.#", "1"),
 					resource.TestCheckResourceAttr(fullSchemaRegistryClusterModeResourceLabel, "credentials.0.%", "2"),
@@ -132,7 +136,7 @@ func TestAccSchemaRegistryClusterMode(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckSchemaRegistryClusterModeConfig(confluentCloudBaseUrl, mockSchemaRegistryClusterModeTestServerUrl, testUpdatedSchemaRegistryClusterMode, testSchemaRegistryUpdatedKey, testSchemaRegistryUpdatedSecret),
+				Config: testAccCheckSchemaRegistryClusterModeConfig(confluentCloudBaseUrl, mockSchemaRegistryClusterModeTestServerUrl, testUpdatedSchemaRegistryClusterMode, testForceFalse, testSchemaRegistryUpdatedKey, testSchemaRegistryUpdatedSecret),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSchemaRegistryClusterModeExists(fullSchemaRegistryClusterModeResourceLabel),
 					resource.TestCheckResourceAttr(fullSchemaRegistryClusterModeResourceLabel, "id", testStreamGovernanceClusterId),
@@ -140,6 +144,7 @@ func TestAccSchemaRegistryClusterMode(t *testing.T) {
 					resource.TestCheckResourceAttr(fullSchemaRegistryClusterModeResourceLabel, "schema_registry_cluster.0.%", "1"),
 					resource.TestCheckResourceAttr(fullSchemaRegistryClusterModeResourceLabel, "schema_registry_cluster.0.id", testStreamGovernanceClusterId),
 					resource.TestCheckResourceAttr(fullSchemaRegistryClusterModeResourceLabel, "mode", testUpdatedSchemaRegistryClusterMode),
+					resource.TestCheckResourceAttr(fullSchemaRegistryClusterModeResourceLabel, "force", testForceFalse),
 					resource.TestCheckResourceAttr(fullSchemaRegistryClusterModeResourceLabel, "rest_endpoint", mockSchemaRegistryClusterModeTestServerUrl),
 					resource.TestCheckResourceAttr(fullSchemaRegistryClusterModeResourceLabel, "credentials.#", "1"),
 					resource.TestCheckResourceAttr(fullSchemaRegistryClusterModeResourceLabel, "credentials.0.%", "2"),
@@ -157,11 +162,12 @@ func TestAccSchemaRegistryClusterMode(t *testing.T) {
 		},
 	})
 
-	checkStubCount(t, wiremockClient, createSchemaRegistryClusterModeStub, fmt.Sprintf("PUT (CREATE) %s", updateSchemaRegistryClusterModePath), expectedCountTwo)
+	checkStubCount(t, wiremockClient, createSchemaRegistryClusterModeStub, fmt.Sprintf("PUT (CREATE) %s", updateSchemaRegistryClusterModePath), expectedCountOne)
+	checkStubCount(t, wiremockClient, updateSchemaRegistryClusterModeStub, fmt.Sprintf("PUT (UPDATE) %s", updateSchemaRegistryClusterModePath), expectedCountOne)
 	checkStubCount(t, wiremockClient, deleteSchemaRegistryClusterModeStub, fmt.Sprintf("DELETE %s", updateSchemaRegistryClusterModePath), expectedCountZero)
 }
 
-func testAccCheckSchemaRegistryClusterModeConfig(confluentCloudBaseUrl, mockServerUrl, mode, schemaRegistryKey, schemaRegistrySecret string) string {
+func testAccCheckSchemaRegistryClusterModeConfig(confluentCloudBaseUrl, mockServerUrl, mode, force, schemaRegistryKey, schemaRegistrySecret string) string {
 	return fmt.Sprintf(`
 	provider "confluent" {
 	  endpoint = "%s"
@@ -177,6 +183,7 @@ func testAccCheckSchemaRegistryClusterModeConfig(confluentCloudBaseUrl, mockServ
       }
 	
 	  mode = "%s"
+	  force = "%s"
 	}
-	`, confluentCloudBaseUrl, testSchemaRegistryClusterModeResourceLabel, schemaRegistryKey, schemaRegistrySecret, mockServerUrl, testStreamGovernanceClusterId, mode)
+	`, confluentCloudBaseUrl, testSchemaRegistryClusterModeResourceLabel, schemaRegistryKey, schemaRegistrySecret, mockServerUrl, testStreamGovernanceClusterId, mode, force)
 }
