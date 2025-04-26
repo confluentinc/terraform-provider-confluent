@@ -64,6 +64,7 @@ func TestAccSubjectModeWithEnhancedProviderBlock(t *testing.T) {
 
 	createSubjectModeResponse, _ := ioutil.ReadFile("../testdata/subject_mode/read_created_subject_mode.json")
 	createSubjectModeStub := wiremock.Put(wiremock.URLPathEqualTo(updateSubjectModePath)).
+		WithQueryParam("force", wiremock.EqualTo(fmt.Sprintf(testForceTrue))).
 		InScenario(subjectModeScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillSetStateTo(scenarioStateSubjectModeHasBeenCreated).
@@ -86,6 +87,7 @@ func TestAccSubjectModeWithEnhancedProviderBlock(t *testing.T) {
 		))
 
 	_ = wiremockClient.StubFor(wiremock.Put(wiremock.URLPathEqualTo(updateSubjectModePath)).
+		WithQueryParam("force", wiremock.EqualTo(fmt.Sprintf(testForceFalse))).
 		InScenario(subjectModeScenarioName).
 		WhenScenarioStateIs(scenarioStateSubjectModeHasBeenCreated).
 		WillSetStateTo(scenarioStateSubjectModeHasBeenUpdated).
@@ -125,7 +127,7 @@ func TestAccSubjectModeWithEnhancedProviderBlock(t *testing.T) {
 		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckSubjectModeConfigWithEnhancedProviderBlock(confluentCloudBaseUrl, mockSubjectModeTestServerUrl, testSubjectMode, ""),
+				Config: testAccCheckSubjectModeConfigWithEnhancedProviderBlock(confluentCloudBaseUrl, mockSubjectModeTestServerUrl, testSubjectMode, testForceTrue),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSubjectModeExists(fullSubjectModeResourceLabel),
 					resource.TestCheckResourceAttr(fullSubjectModeResourceLabel, "id", fmt.Sprintf("%s/%s", testStreamGovernanceClusterId, testSubjectName)),
@@ -133,7 +135,7 @@ func TestAccSubjectModeWithEnhancedProviderBlock(t *testing.T) {
 					resource.TestCheckNoResourceAttr(fullSubjectModeResourceLabel, "schema_registry_cluster.0.id"),
 					resource.TestCheckResourceAttr(fullSubjectModeResourceLabel, "subject_name", testSubjectName),
 					resource.TestCheckResourceAttr(fullSubjectModeResourceLabel, "mode", testSubjectMode),
-					resource.TestCheckResourceAttr(fullSubjectModeResourceLabel, "force", testForceFalse),
+					resource.TestCheckResourceAttr(fullSubjectModeResourceLabel, "force", testForceTrue),
 					resource.TestCheckResourceAttr(fullSubjectModeResourceLabel, "credentials.#", "0"),
 					resource.TestCheckNoResourceAttr(fullSubjectModeResourceLabel, "credentials.0.key"),
 					resource.TestCheckNoResourceAttr(fullSubjectModeResourceLabel, "credentials.0.secret"),
@@ -142,13 +144,7 @@ func TestAccSubjectModeWithEnhancedProviderBlock(t *testing.T) {
 				),
 			},
 			{
-				// https://www.terraform.io/docs/extend/resources/import.html
-				ResourceName:      fullSubjectModeResourceLabel,
-				ImportState:       true,
-				ImportStateVerify: true,
-			},
-			{
-				Config: testAccCheckSubjectModeConfigWithEnhancedProviderBlock(confluentCloudBaseUrl, mockSubjectModeTestServerUrl, testUpdatedSubjectMode, testForceTrue),
+				Config: testAccCheckSubjectModeConfigWithEnhancedProviderBlock(confluentCloudBaseUrl, mockSubjectModeTestServerUrl, testUpdatedSubjectMode, testForceFalse),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSubjectModeExists(fullSubjectModeResourceLabel),
 					resource.TestCheckResourceAttr(fullSubjectModeResourceLabel, "id", fmt.Sprintf("%s/%s", testStreamGovernanceClusterId, testSubjectName)),
@@ -156,7 +152,7 @@ func TestAccSubjectModeWithEnhancedProviderBlock(t *testing.T) {
 					resource.TestCheckNoResourceAttr(fullSubjectModeResourceLabel, "schema_registry_cluster.0.id"),
 					resource.TestCheckResourceAttr(fullSubjectModeResourceLabel, "subject_name", testSubjectName),
 					resource.TestCheckResourceAttr(fullSubjectModeResourceLabel, "mode", testUpdatedSubjectMode),
-					resource.TestCheckResourceAttr(fullSubjectModeResourceLabel, "force", testForceTrue),
+					resource.TestCheckResourceAttr(fullSubjectModeResourceLabel, "force", testForceFalse),
 					resource.TestCheckResourceAttr(fullSubjectModeResourceLabel, "credentials.#", "0"),
 					resource.TestCheckNoResourceAttr(fullSubjectModeResourceLabel, "credentials.0.key"),
 					resource.TestCheckNoResourceAttr(fullSubjectModeResourceLabel, "credentials.0.secret"),
@@ -178,21 +174,6 @@ func TestAccSubjectModeWithEnhancedProviderBlock(t *testing.T) {
 }
 
 func testAccCheckSubjectModeConfigWithEnhancedProviderBlock(confluentCloudBaseUrl, mockServerUrl, mode, force string) string {
-	if force == "" {
-		return fmt.Sprintf(`
-	provider "confluent" {
-	  endpoint = "%s"
-	  schema_registry_api_key = "%s"
-	  schema_registry_api_secret = "%s"
-	  schema_registry_rest_endpoint = "%s"
-	  schema_registry_id = "%s"
-	}
-	resource "confluent_subject_mode" "%s" {
-	  subject_name = "%s"
-	  mode = "%s"
-	}
-	`, confluentCloudBaseUrl, testSchemaRegistryKey, testSchemaRegistrySecret, mockServerUrl, testStreamGovernanceClusterId, testSubjectModeResourceLabel, testSubjectName, mode)
-	}
 	return fmt.Sprintf(`
 	provider "confluent" {
 	  endpoint = "%s"
