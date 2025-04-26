@@ -59,6 +59,8 @@ const (
 	paramSubjectName                          = "subject_name"
 	paramHardDelete                           = "hard_delete"
 	paramHardDeleteDefaultValue               = false
+	paramForce                                = "force"
+	paramForceDefaultValue                    = false
 	paramRecreateOnUpdate                     = "recreate_on_update"
 	paramRecreateOnUpdateDefaultValue         = false
 	paramSkipValidationDuringPlan             = "skip_validation_during_plan"

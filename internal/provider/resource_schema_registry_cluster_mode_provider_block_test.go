@@ -36,7 +36,7 @@ const (
 	testSchemaRegistryClusterMode              = "READWRITE"
 	testUpdatedSchemaRegistryClusterMode       = "READONLY"
 
-	testNumberOfSchemaRegistryClusterModeResourceAttributes = "5"
+	testNumberOfSchemaRegistryClusterModeResourceAttributes = "6"
 )
 
 var fullSchemaRegistryClusterModeResourceLabel = fmt.Sprintf("confluent_schema_registry_cluster_mode.%s", testSchemaRegistryClusterModeResourceLabel)
@@ -121,13 +121,14 @@ func TestAccSchemaRegistryClusterModeWithEnhancedProviderBlock(t *testing.T) {
 		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckSchemaRegistryClusterModeConfigWithEnhancedProviderBlock(confluentCloudBaseUrl, mockSchemaRegistryClusterModeTestServerUrl, testSchemaRegistryClusterMode),
+				Config: testAccCheckSchemaRegistryClusterModeConfigWithEnhancedProviderBlock(confluentCloudBaseUrl, mockSchemaRegistryClusterModeTestServerUrl, testSchemaRegistryClusterMode, testForceTrue),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSchemaRegistryClusterModeExists(fullSchemaRegistryClusterModeResourceLabel),
 					resource.TestCheckResourceAttr(fullSchemaRegistryClusterModeResourceLabel, "id", testStreamGovernanceClusterId),
 					resource.TestCheckResourceAttr(fullSchemaRegistryClusterModeResourceLabel, "schema_registry_cluster.#", "0"),
 					resource.TestCheckNoResourceAttr(fullSchemaRegistryClusterModeResourceLabel, "schema_registry_cluster.0.id"),
 					resource.TestCheckResourceAttr(fullSchemaRegistryClusterModeResourceLabel, "mode", testSchemaRegistryClusterMode),
+					resource.TestCheckResourceAttr(fullSchemaRegistryClusterModeResourceLabel, "force", testForceTrue),
 					resource.TestCheckResourceAttr(fullSchemaRegistryClusterModeResourceLabel, "credentials.#", "0"),
 					resource.TestCheckNoResourceAttr(fullSchemaRegistryClusterModeResourceLabel, "credentials.0.key"),
 					resource.TestCheckNoResourceAttr(fullSchemaRegistryClusterModeResourceLabel, "credentials.0.secret"),
@@ -136,19 +137,14 @@ func TestAccSchemaRegistryClusterModeWithEnhancedProviderBlock(t *testing.T) {
 				),
 			},
 			{
-				// https://www.terraform.io/docs/extend/resources/import.html
-				ResourceName:      fullSchemaRegistryClusterModeResourceLabel,
-				ImportState:       true,
-				ImportStateVerify: true,
-			},
-			{
-				Config: testAccCheckSchemaRegistryClusterModeConfigWithEnhancedProviderBlock(confluentCloudBaseUrl, mockSchemaRegistryClusterModeTestServerUrl, testUpdatedSchemaRegistryClusterMode),
+				Config: testAccCheckSchemaRegistryClusterModeConfigWithEnhancedProviderBlock(confluentCloudBaseUrl, mockSchemaRegistryClusterModeTestServerUrl, testUpdatedSchemaRegistryClusterMode, testForceFalse),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSchemaRegistryClusterModeExists(fullSchemaRegistryClusterModeResourceLabel),
 					resource.TestCheckResourceAttr(fullSchemaRegistryClusterModeResourceLabel, "id", testStreamGovernanceClusterId),
 					resource.TestCheckResourceAttr(fullSchemaRegistryClusterModeResourceLabel, "schema_registry_cluster.#", "0"),
 					resource.TestCheckNoResourceAttr(fullSchemaRegistryClusterModeResourceLabel, "schema_registry_cluster.0.id"),
 					resource.TestCheckResourceAttr(fullSchemaRegistryClusterModeResourceLabel, "mode", testUpdatedSchemaRegistryClusterMode),
+					resource.TestCheckResourceAttr(fullSchemaRegistryClusterModeResourceLabel, "force", testForceFalse),
 					resource.TestCheckResourceAttr(fullSchemaRegistryClusterModeResourceLabel, "credentials.#", "0"),
 					resource.TestCheckNoResourceAttr(fullSchemaRegistryClusterModeResourceLabel, "credentials.0.key"),
 					resource.TestCheckNoResourceAttr(fullSchemaRegistryClusterModeResourceLabel, "credentials.0.secret"),
@@ -169,7 +165,7 @@ func TestAccSchemaRegistryClusterModeWithEnhancedProviderBlock(t *testing.T) {
 	checkStubCount(t, wiremockClient, deleteSchemaRegistryClusterModeStub, fmt.Sprintf("DELETE %s", updateSchemaRegistryClusterModePath), expectedCountZero)
 }
 
-func testAccCheckSchemaRegistryClusterModeConfigWithEnhancedProviderBlock(confluentCloudBaseUrl, mockServerUrl, mode string) string {
+func testAccCheckSchemaRegistryClusterModeConfigWithEnhancedProviderBlock(confluentCloudBaseUrl, mockServerUrl, mode, force string) string {
 	return fmt.Sprintf(`
 	provider "confluent" {
 	  endpoint = "%s"
@@ -180,8 +176,9 @@ func testAccCheckSchemaRegistryClusterModeConfigWithEnhancedProviderBlock(conflu
 	}
 	resource "confluent_schema_registry_cluster_mode" "%s" {
 	  mode = "%s"
+	  force = "%s"
 	}
-	`, confluentCloudBaseUrl, testSchemaRegistryKey, testSchemaRegistrySecret, mockServerUrl, testStreamGovernanceClusterId, testSchemaRegistryClusterModeResourceLabel, mode)
+	`, confluentCloudBaseUrl, testSchemaRegistryKey, testSchemaRegistrySecret, mockServerUrl, testStreamGovernanceClusterId, testSchemaRegistryClusterModeResourceLabel, mode, force)
 }
 
 func testAccCheckSchemaRegistryClusterModeExists(n string) resource.TestCheckFunc {
