@@ -16,11 +16,13 @@ package provider
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"net/http"
 	"regexp"
 )
 
@@ -69,11 +71,52 @@ func schemaRegistryClusterModeDataSourceRead(ctx context.Context, d *schema.Reso
 	// Mark resource as new to avoid d.Set("") when getting 404
 	d.MarkNewResource()
 
-	if _, err := readSchemaRegistryClusterModeAndSetAttributes(ctx, d, schemaRegistryRestClient); err != nil {
+	if _, err := readSchemaRegistryClusterModeDataSourceAndSetAttributes(ctx, d, schemaRegistryRestClient); err != nil {
 		return diag.Errorf("error reading Schema Registry Cluster Mode: %s", createDescriptiveError(err))
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished reading Schema Registry Cluster Mode %q", d.Id()), map[string]interface{}{schemaRegistryClusterModeLoggingKey: d.Id()})
 
 	return nil
+}
+
+func readSchemaRegistryClusterModeDataSourceAndSetAttributes(ctx context.Context, d *schema.ResourceData, c *SchemaRegistryRestClient) ([]*schema.ResourceData, error) {
+	schemaRegistryClusterMode, resp, err := c.apiClient.ModesV1Api.GetTopLevelMode(c.apiContext(ctx)).Execute()
+	if err != nil {
+		tflog.Warn(ctx, fmt.Sprintf("Error reading Schema Registry Cluster Mode %q: %s", d.Id(), createDescriptiveError(err)), map[string]interface{}{schemaRegistryClusterModeLoggingKey: d.Id()})
+
+		isResourceNotFound := ResponseHasExpectedStatusCode(resp, http.StatusNotFound)
+		if isResourceNotFound && !d.IsNewResource() {
+			tflog.Warn(ctx, fmt.Sprintf("Removing Schema Registry Cluster Mode %q in TF state because Schema Registry Cluster Mode could not be found on the server", d.Id()), map[string]interface{}{schemaRegistryClusterModeLoggingKey: d.Id()})
+			d.SetId("")
+			return nil, nil
+		}
+
+		return nil, err
+	}
+	schemaRegistryClusterModeJson, err := json.Marshal(schemaRegistryClusterMode)
+	if err != nil {
+		return nil, fmt.Errorf("error reading Schema Registry Cluster Mode %q: error marshaling %#v to json: %s", d.Id(), schemaRegistryClusterMode, createDescriptiveError(err))
+	}
+	tflog.Debug(ctx, fmt.Sprintf("Fetched Schema Registry Cluster Mode %q: %s", d.Id(), schemaRegistryClusterModeJson), map[string]interface{}{schemaRegistryClusterModeLoggingKey: d.Id()})
+
+	if err := d.Set(paramMode, schemaRegistryClusterMode.GetMode()); err != nil {
+		return nil, err
+	}
+
+	if !c.isMetadataSetInProviderBlock {
+		if err := setKafkaCredentials(c.clusterApiKey, c.clusterApiSecret, d, c.externalAccessToken != nil); err != nil {
+			return nil, err
+		}
+		if err := d.Set(paramRestEndpoint, c.restEndpoint); err != nil {
+			return nil, err
+		}
+		if err := setStringAttributeInListBlockOfSizeOne(paramSchemaRegistryCluster, paramId, c.clusterId, d); err != nil {
+			return nil, err
+		}
+	}
+
+	d.SetId(createSchemaRegistryClusterModeId(c.clusterId))
+
+	return []*schema.ResourceData{d}, nil
 }
