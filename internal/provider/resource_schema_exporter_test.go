@@ -121,7 +121,7 @@ func TestAccSchemaExporter(t *testing.T) {
 			http.StatusCreated,
 		))
 
-	runningStatusResponse, _ := ioutil.ReadFile("../testdata/schema_exporter/running_status.json")
+	runningStatusResponse, _ := ioutil.ReadFile("../testdata/schema_exporter/starting_status.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readCreatedSchemaExporterStatusUrlPath)).
 		InScenario(schemaExporterResourceScenarioName).
 		WhenScenarioStateIs(scenarioStateSchemaExporterHasBeenCreated).
