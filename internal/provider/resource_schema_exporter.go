@@ -47,6 +47,8 @@ const (
 	basicAuthUserInfoConfig               = "basic.auth.user.info"
 
 	schemaExporterAPICreateTimeout = 4 * time.Hour
+
+	stateStarting = "STARTING"
 )
 
 var standardConfigs = []string{basicAuthUserInfoConfig, schemaRegistryUrlConfig, basicAuthCredentialsSourceConfig}
@@ -289,7 +291,7 @@ func readSchemaExporterAndSetAttributes(ctx context.Context, d *schema.ResourceD
 	if err != nil {
 		return nil, fmt.Errorf("error creating Schema Exporter Status: %s", createDescriptiveError(err))
 	}
-	if status.GetState() == stateRunning {
+	if status.GetState() == stateRunning || status.GetState() == stateStarting {
 		if err := d.Set(paramStatus, stateRunning); err != nil {
 			return nil, err
 		}
