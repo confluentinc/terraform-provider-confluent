@@ -39,6 +39,7 @@ func roleBindingResource() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: roleBindingCreate,
 		ReadContext:   roleBindingRead,
+		UpdateContext: roleBindingUpdate,
 		DeleteContext: roleBindingDelete,
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
@@ -104,6 +105,13 @@ func roleBindingCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating Role Binding %q: %s", d.Id(), createdRoleBindingJson), map[string]interface{}{roleBindingLoggingKey: d.Id()})
 	if !skipSync {
 		SleepIfNotTestMode(rbacWaitAfterCreateToSync, meta.(*Client).isAcceptanceTestMode)
+	}
+	return roleBindingRead(ctx, d, meta)
+}
+
+func roleBindingUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	if d.HasChangesExcept(paramDisableWaitForReady) {
+		return diag.Errorf("error updating Role Binding %q: only %q attribute can be updated for Role Binding", d.Id(), paramDisableWaitForReady)
 	}
 	return roleBindingRead(ctx, d, meta)
 }
