@@ -96,6 +96,8 @@ The following arguments are supported:
 - `status` - (Optional String) The status of the schema exporter. Accepted values are: `RUNNING` and `PAUSED`.
 - `reset_on_update` - (Optional Boolean) The flag to control whether to reset the exporter when updating configs. Defaults to `false`.
 
+-> **Note:** When Schema Registry API returns `STARTING` state, it will still be recorded as `status = RUNNING` in TF state.
+
 ## Attributes Reference
 
 In addition to the preceding arguments, the following attributes are exported:
