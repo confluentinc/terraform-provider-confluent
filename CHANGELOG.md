@@ -1,3 +1,10 @@
+## 2.27.0 (May 6th, 2025)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.26.0...v2.27.0)
+
+**Bug fixes:**
+* Updated `confluent_schema_exporter` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema_exporter) to resolve time out issues for create and update operations.
+
 ## 2.26.0 (May 5th, 2025)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.25.0...v2.26.0)
