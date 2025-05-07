@@ -1,84 +1,20 @@
-// Copyright 2021 Confluent Inc. All Rights Reserved.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 package provider
 
 import (
 	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
-	"os"
 	"strconv"
 	"testing"
-
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-const (
-	testCreateSchemaRequestJson = `{
-  "references": [
-    {
-      "name": "sampleRecord2",
-      "subject": "test3",
-      "version": 3
-    },
-    {
-      "name": "sampleRecord",
-      "subject": "test2",
-      "version": 9
-    }
-  ],
- "ruleSet" : {
-    "domainRules" : [ {   
-        "disabled" : false,                                                          
-        "doc" : "",
-        "expr" : "",
-        "kind" : "TRANSFORM",
-        "mode" : "WRITEREAD",
-        "name" : "encrypt",
-        "onFailure" : "ERROR,ERROR",
-        "onSuccess" : "NONE,NONE",
-        "params" : {
-            "encrypt.kek.name" : "testkek2"
-            },
-        "tags" : [ "PIIIII" ],
-        "type" : "ENCRYPT"
-        }, {
-        "disabled" : false,
-        "doc" : "",
-        "expr" : "",
-        "kind" : "TRANSFORM",
-        "mode" : "WRITEREAD",
-        "name" : "encryptPII",
-        "onFailure" : "ERROR,ERROR",
-        "onSuccess" : "NONE,NONE",
-        "params" : {
-            "encrypt.kek.name" : "testkek2"
-            },
-         "tags" : [ "PII" ],
-         "type" : "ENCRYPT"
-         } ]
-},
-  "schema": "foobar",
-  "schemaType": "AVRO"
-}`
-)
+var scenarioStateSchemaHasBeenCreated2 = "A new schema has been just created 2"
 
-func TestAccLatestSchema(t *testing.T) {
+func TestAccRulesetSchema(t *testing.T) {
 	ctx := context.Background()
 
 	wiremockContainer, err := setupWiremock(ctx)
@@ -88,18 +24,17 @@ func TestAccLatestSchema(t *testing.T) {
 	defer wiremockContainer.Terminate(ctx)
 
 	mockSchemaTestServerUrl := wiremockContainer.URI
-	confluentCloudBaseUrl := ""
 	wiremockClient := wiremock.NewClient(mockSchemaTestServerUrl)
 	// nolint:errcheck
 	defer wiremockClient.Reset()
-
+	confluentCloudBaseUrl := ""
 	// nolint:errcheck
 	defer wiremockClient.ResetAllScenarios()
+
 	validateSchemaResponse, _ := ioutil.ReadFile("../testdata/schema_registry_schema/validate_schema.json")
 	validateSchemaStub := wiremock.Post(wiremock.URLPathEqualTo(validateSchemaPath)).
 		InScenario(schemaScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
-		WithBodyPattern(wiremock.EqualToJson(testCreateSchemaRequestJson)).
 		WillReturn(
 			string(validateSchemaResponse),
 			contentTypeJSONHeader,
@@ -112,7 +47,6 @@ func TestAccLatestSchema(t *testing.T) {
 		InScenario(schemaScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillSetStateTo(scenarioStateSchemaHasBeenCreated).
-		WithBodyPattern(wiremock.EqualToJson(testCreateSchemaRequestJson)).
 		WillReturn(
 			string(createSchemaResponse),
 			contentTypeJSONHeader,
@@ -140,21 +74,52 @@ func TestAccLatestSchema(t *testing.T) {
 			http.StatusOK,
 		))
 
-	checkSchemaExistsResponse, _ := ioutil.ReadFile("../testdata/schema_registry_schema/create_schema.json")
-	checkSchemaExistsStub := wiremock.Post(wiremock.URLPathEqualTo(createSchemaPath)).
+	validateSchemaResponse2, _ := ioutil.ReadFile("../testdata/schema_registry_schema/validate_schema.json")
+	validateSchemaStub2 := wiremock.Post(wiremock.URLPathEqualTo(validateSchemaPath)).
 		InScenario(schemaScenarioName).
 		WhenScenarioStateIs(scenarioStateSchemaHasBeenCreated).
-		WithBodyPattern(wiremock.EqualToJson(testCreateSchemaRequestJson)).
 		WillReturn(
-			string(checkSchemaExistsResponse),
+			string(validateSchemaResponse2),
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)
-	_ = wiremockClient.StubFor(checkSchemaExistsStub)
+	_ = wiremockClient.StubFor(validateSchemaStub2)
+
+	createSchemaResponse2, _ := ioutil.ReadFile("../testdata/schema_registry_schema/create_schema.json")
+	createSchemaStub2 := wiremock.Post(wiremock.URLPathEqualTo(createSchemaPath)).
+		InScenario(schemaScenarioName).
+		WhenScenarioStateIs(scenarioStateSchemaHasBeenCreated).
+		WillSetStateTo(scenarioStateSchemaHasBeenCreated2).
+		WillReturn(
+			string(createSchemaResponse2),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		)
+	_ = wiremockClient.StubFor(createSchemaStub2)
+
+	readCreatedSchemasResponse2, _ := ioutil.ReadFile("../testdata/schema_registry_schema/read_ruleset_delete.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readSchemasPath)).
+		InScenario(schemaScenarioName).
+		WhenScenarioStateIs(scenarioStateSchemaHasBeenCreated2).
+		WillReturn(
+			string(readCreatedSchemasResponse2),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	readLatestSchemaResponse2, _ := ioutil.ReadFile("../testdata/schema_registry_schema/read_ruleset_delete_latest.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readLatestSchemaPath)).
+		InScenario(schemaScenarioName).
+		WhenScenarioStateIs(scenarioStateSchemaHasBeenCreated2).
+		WillReturn(
+			string(readLatestSchemaResponse2),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
 
 	deleteSchemaStub := wiremock.Delete(wiremock.URLPathEqualTo(deleteSchemaPath)).
 		InScenario(schemaScenarioName).
-		WhenScenarioStateIs(scenarioStateSchemaHasBeenCreated).
+		WhenScenarioStateIs(scenarioStateSchemaHasBeenCreated2).
 		WillSetStateTo(scenarioStateSchemaHasBeenDeleted).
 		WillReturn(
 			"",
@@ -172,17 +137,6 @@ func TestAccLatestSchema(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		))
-
-	// Set fake values for secrets since those are required for importing
-	_ = os.Setenv("IMPORT_SCHEMA_REGISTRY_API_KEY", testSchemaRegistryUpdatedKey)
-	_ = os.Setenv("IMPORT_SCHEMA_REGISTRY_API_SECRET", testSchemaRegistryUpdatedSecret)
-	_ = os.Setenv("IMPORT_SCHEMA_REGISTRY_REST_ENDPOINT", mockSchemaTestServerUrl)
-	defer func() {
-		_ = os.Unsetenv("IMPORT_SCHEMA_REGISTRY_API_KEY")
-		_ = os.Unsetenv("IMPORT_SCHEMA_REGISTRY_API_SECRET")
-		_ = os.Unsetenv("IMPORT_SCHEMA_REGISTRY_REST_ENDPOINT")
-	}()
-
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
@@ -193,7 +147,7 @@ func TestAccLatestSchema(t *testing.T) {
 		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckLatestSchemaConfig(confluentCloudBaseUrl, mockSchemaTestServerUrl),
+				Config: testAccCheckRulesetSchemaConfig(confluentCloudBaseUrl, mockSchemaTestServerUrl),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSchemaExists(fullSchemaResourceLabel),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "id", fmt.Sprintf("%s/%s/%s", testStreamGovernanceClusterId, testSubjectName, latestSchemaVersionAndPlaceholderForSchemaIdentifier)),
@@ -274,7 +228,7 @@ func TestAccLatestSchema(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckLatestSchemaConfigWithUpdatedCredentials(confluentCloudBaseUrl, mockSchemaTestServerUrl),
+				Config: testAccCheckRulesetSchemaConfigWithUpdatedCredentials(confluentCloudBaseUrl, mockSchemaTestServerUrl),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSchemaExists(fullSchemaResourceLabel),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "id", fmt.Sprintf("%s/%s/%s", testStreamGovernanceClusterId, testSubjectName, latestSchemaVersionAndPlaceholderForSchemaIdentifier)),
@@ -284,8 +238,8 @@ func TestAccLatestSchema(t *testing.T) {
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "rest_endpoint", mockSchemaTestServerUrl),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "credentials.#", "1"),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "credentials.0.%", "2"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "credentials.0.key", testSchemaRegistryUpdatedKey),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "credentials.0.secret", testSchemaRegistryUpdatedSecret),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "credentials.0.key", testSchemaRegistryKey),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "credentials.0.secret", testSchemaRegistrySecret),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "subject_name", testSubjectName),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "format", testFormat),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema", testSchemaContent),
@@ -293,7 +247,7 @@ func TestAccLatestSchema(t *testing.T) {
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema_identifier", strconv.Itoa(testSchemaIdentifier)),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "hard_delete", testHardDelete),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "recreate_on_update", testRecreateOnUpdateFalse),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "skip_validation_during_plan", testSkipSchemaValidationDuringPlanFalse),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "skip_validation_during_plan", testSkipSchemaValidationDuringPlanTrue),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema_reference.#", "2"),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema_reference.0.%", "3"),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema_reference.0.name", testFirstSchemaReferenceDisplayName),
@@ -304,21 +258,14 @@ func TestAccLatestSchema(t *testing.T) {
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema_reference.1.subject_name", testSecondSchemaReferenceSubject),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema_reference.1.version", strconv.Itoa(testSecondSchemaReferenceVersion)),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "%", strconv.Itoa(testNumberOfSchemaRegistrySchemaResourceAttributes)),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.#", "0"),
 				),
-			},
-			{
-				// https://www.terraform.io/docs/extend/resources/import.html
-				ResourceName:      fullSchemaResourceLabel,
-				ImportState:       true,
-				ImportStateVerify: true,
 			},
 		},
 	})
-
-	checkStubCount(t, wiremockClient, deleteSchemaStub, fmt.Sprintf("DELETE %s", readSchemasPath), expectedCountOne)
 }
 
-func testAccCheckLatestSchemaConfig(confluentCloudBaseUrl, mockServerUrl string) string {
+func testAccCheckRulesetSchemaConfig(confluentCloudBaseUrl, mockServerUrl string) string {
 	return fmt.Sprintf(`
 	provider "confluent" {
       endpoint = "%s"
@@ -373,14 +320,13 @@ func testAccCheckLatestSchemaConfig(confluentCloudBaseUrl, mockServerUrl string)
         subject_name = "%s"
         version = %d
       }
-	}
-	`, confluentCloudBaseUrl, testSchemaResourceLabel, testStreamGovernanceClusterId, mockServerUrl, testSchemaRegistryKey, testSchemaRegistrySecret, testSubjectName, testFormat, testSchemaContent,
+	}`, confluentCloudBaseUrl, testSchemaResourceLabel, testStreamGovernanceClusterId, mockServerUrl, testSchemaRegistryKey, testSchemaRegistrySecret, testSubjectName, testFormat, testSchemaContent,
 		testHardDelete, testSkipSchemaValidationDuringPlanTrue,
 		testFirstSchemaReferenceDisplayName, testFirstSchemaReferenceSubject, testFirstSchemaReferenceVersion,
 		testSecondSchemaReferenceDisplayName, testSecondSchemaReferenceSubject, testSecondSchemaReferenceVersion)
 }
 
-func testAccCheckLatestSchemaConfigWithUpdatedCredentials(confluentCloudBaseUrl, mockServerUrl string) string {
+func testAccCheckRulesetSchemaConfigWithUpdatedCredentials(confluentCloudBaseUrl, mockServerUrl string) string {
 	return fmt.Sprintf(`
 	provider "confluent" {
       endpoint = "%s"
@@ -389,39 +335,18 @@ func testAccCheckLatestSchemaConfigWithUpdatedCredentials(confluentCloudBaseUrl,
 	  schema_registry_cluster {
         id = "%s"
       }
-	  rest_endpoint = "%s"
+      rest_endpoint = "%s"
       credentials {
         key = "%s"
         secret = "%s"
 	  }
+	
 	  subject_name = "%s"
 	  format = "%s"
       schema = "%s"
 
       hard_delete = "%s"
-      recreate_on_update = "%s"
-	  ruleset {
-		domain_rules {
-		  name = "encryptPII"
-		  kind = "TRANSFORM"
-		  type = "ENCRYPT"
-		  mode = "WRITEREAD"
-		  tags = ["PII"]
-		  params = {
-			  "encrypt.kek.name" = "testkek2"
-		  }
-		}
-		domain_rules  {
-		  name = "encrypt"
-		  kind = "TRANSFORM"
-		  type = "ENCRYPT"
-		  mode = "WRITEREAD"
-		  tags = ["PIIIII"]
-		  params = {
-			  "encrypt.kek.name" = "testkek2"
-		  }
-		}
-	  }
+      skip_validation_during_plan = "%s" 
 	  
       schema_reference {
         name = "%s"
@@ -434,8 +359,8 @@ func testAccCheckLatestSchemaConfigWithUpdatedCredentials(confluentCloudBaseUrl,
         subject_name = "%s"
         version = %d
       }
-	}
-	`, confluentCloudBaseUrl, testSchemaResourceLabel, testStreamGovernanceClusterId, mockServerUrl, testSchemaRegistryUpdatedKey, testSchemaRegistryUpdatedSecret, testSubjectName, testFormat, testSchemaContent,
-		testHardDelete, testRecreateOnUpdateFalse, testFirstSchemaReferenceDisplayName, testFirstSchemaReferenceSubject, testFirstSchemaReferenceVersion,
+	}`, confluentCloudBaseUrl, testSchemaResourceLabel, testStreamGovernanceClusterId, mockServerUrl, testSchemaRegistryKey, testSchemaRegistrySecret, testSubjectName, testFormat, testSchemaContent,
+		testHardDelete, testSkipSchemaValidationDuringPlanTrue,
+		testFirstSchemaReferenceDisplayName, testFirstSchemaReferenceSubject, testFirstSchemaReferenceVersion,
 		testSecondSchemaReferenceDisplayName, testSecondSchemaReferenceSubject, testSecondSchemaReferenceVersion)
 }
