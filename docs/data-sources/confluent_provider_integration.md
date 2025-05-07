@@ -66,4 +66,4 @@ In addition to the preceding arguments, the following attributes are exported:
 
 ## Getting Started
 The following end-to-end examples might help to get started with `confluent_provider_integration` data source:
-* [`s3-sink-connector-assume-role`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/connectors/s3-sink-connector-assume-role): Amazon S3 Sink Connector with IAM role-based authorization using a Provider Integration
+* [s3-sink-connector-assume-role](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/connectors/s3-sink-connector-assume-role): Amazon S3 Sink Connector with IAM role-based authorization using a Provider Integration
