@@ -55,5 +55,5 @@ In addition to the preceding arguments, the following attributes are exported:
 
 ## Getting Started
 The following end-to-end examples might help to get started with `confluent_private_link_attachment` data source:
-* [`enterprise-privatelinkattachment-aws-kafka-acls`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/enterprise-privatelinkattachment-aws-kafka-acls): _Enterprise_ Kafka cluster on AWS that is accessible via PrivateLink connections with authorization using ACLs
-* [`enterprise-privatelinkattachment-azure-kafka-acls`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/enterprise-privatelinkattachment-azure-kafka-acls): _Enterprise_ Kafka cluster on Azure that is accessible via PrivateLink connections with authorization using ACLs
+* [enterprise-privatelinkattachment-aws-kafka-acls](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/enterprise-privatelinkattachment-aws-kafka-acls): _Enterprise_ Kafka cluster on AWS that is accessible via PrivateLink connections with authorization using ACLs
+* [enterprise-privatelinkattachment-azure-kafka-acls](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/enterprise-privatelinkattachment-azure-kafka-acls): _Enterprise_ Kafka cluster on Azure that is accessible via PrivateLink connections with authorization using ACLs

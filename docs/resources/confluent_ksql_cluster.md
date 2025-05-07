@@ -155,5 +155,5 @@ $ terraform import confluent_ksql_cluster.example env-abc123/lksqlc-abc123
 ## Getting Started
 
 The following end-to-end examples might help to get started with `confluent_ksql_cluster` resource:
-* [`ksql-acls`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/ksql-acls)
-* [`ksql-rbac`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/ksql-rbac)
+* [`ksql-acls](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/ksql-acls)
+* [`ksql-rbac](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/ksql-rbac)
