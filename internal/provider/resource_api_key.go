@@ -96,7 +96,6 @@ func apiKeyResource() *schema.Resource {
 				Type:     schema.TypeBool,
 				Optional: true,
 				Default:  false,
-				ForceNew: true,
 			},
 		},
 		// TODO: APIT-2820
@@ -195,8 +194,13 @@ func executeApiKeysCreate(ctx context.Context, c *Client, apiKey *apikeys.IamV2A
 }
 
 func apiKeyUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	isUpdateAllowed := d.HasChange(paramDisplayName) || d.HasChange(paramDescription)
-	if isUpdateAllowed {
+	if d.HasChangesExcept(paramDisplayName, paramDescription, paramDisableWaitForReady) {
+		return diag.Errorf("error updating API Key %q: only %q, %q and %q blocks can be updated for Kafka Config", d.Id(), paramDisplayName, paramDescription, paramDisableWaitForReady)
+	}
+	shouldSendPatchApiRequest := d.HasChanges(paramDisplayName, paramDescription)
+
+	// There is no need to send an API request when updating only the paramDisableWaitForReady parameter.
+	if shouldSendPatchApiRequest {
 		c := meta.(*Client)
 		displayName := d.Get(paramDisplayName).(string)
 		description := d.Get(paramDescription).(string)
@@ -230,8 +234,6 @@ func apiKeyUpdate(ctx context.Context, d *schema.ResourceData, meta interface{})
 			return diag.Errorf("error updating API Key %q: error marshaling %#v to json: %s", d.Id(), updatedApiKey, createDescriptiveError(err))
 		}
 		tflog.Debug(ctx, fmt.Sprintf("Finished updating API Key %q: %s", d.Id(), updatedApiKeyJson), map[string]interface{}{apiKeyLoggingKey: d.Id()})
-	} else {
-		return diag.Errorf("only %s, %s attributes can be updated for an API Key", paramDisplayName, paramDescription)
 	}
 
 	return apiKeyRead(ctx, d, meta)
