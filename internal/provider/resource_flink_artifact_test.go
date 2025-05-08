@@ -34,7 +34,7 @@ const (
 
 var flinkArtifactsUrlPath = fmt.Sprintf("/artifact/v1/flink-artifacts/%s", flinkArtifactId)
 
-func TestAccFlinkArtifactAws(t *testing.T) {
+func TestAccFlinkArtifact(t *testing.T) {
 	ctx := context.Background()
 
 	wiremockContainer, err := setupWiremock(ctx)
@@ -131,7 +131,7 @@ func TestAccFlinkArtifactAws(t *testing.T) {
 		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckArtifactConfig(mockServerUrl, flinkArtifactResourceLabel, flinkArtifactCloud, flinkArtifactRegion),
+				Config: testAccCheckArtifactConfig(mockServerUrl, flinkArtifactResourceLabel),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckArtifactExists(fullFlinkArtifactResourceLabel),
 					resource.TestCheckResourceAttr(fullFlinkArtifactResourceLabel, paramId, flinkArtifactId),
@@ -195,7 +195,7 @@ func testAccCheckArtifactDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccCheckArtifactConfig(mockServerUrl, resourceLabel, cloud, region string) string {
+func testAccCheckArtifactConfig(mockServerUrl, resourceLabel string) string {
 	return fmt.Sprintf(`
 	provider "confluent" {
  		endpoint = "%s"
@@ -213,7 +213,7 @@ func testAccCheckArtifactConfig(mockServerUrl, resourceLabel, cloud, region stri
 		  id = "%s"
 	    }
 	}
-	`, mockServerUrl, resourceLabel, flinkArtifactUniqueName, cloud, region, flinkArtifactClass, flinkArtifactDescription, flinkArtifactDocumentationLink, flinkArtifactRuntimeLanguage, flinkArtifactEnvironmentId)
+	`, mockServerUrl, resourceLabel, flinkArtifactUniqueName, flinkArtifactCloud, flinkArtifactRegion, flinkArtifactClass, flinkArtifactDescription, flinkArtifactDocumentationLink, flinkArtifactRuntimeLanguage, flinkArtifactEnvironmentId)
 }
 
 func testAccCheckArtifactExists(n string) resource.TestCheckFunc {
