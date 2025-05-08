@@ -164,7 +164,7 @@ $ terraform import confluent_cluster_link.my_cluster_link my-cluster-link/BIDIRE
 ## Getting Started
 The following end-to-end examples might help to get started with `confluent_cluster_link` resource:
   * [destination-initiated-cluster-link-rbac](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/destination-initiated-cluster-link-rbac): An example of setting up a _destination_ initiated cluster link with a mirror topic
-  * [`source-initiated-cluster-link-rbac](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/source-initiated-cluster-link-rbac): An example of setting up a _source_ initiated cluster link with a mirror topic
+  * [source-initiated-cluster-link-rbac](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/source-initiated-cluster-link-rbac): An example of setting up a _source_ initiated cluster link with a mirror topic
   * [regular-bidirectional-cluster-link-rbac](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/regular-bidirectional-cluster-link-rbac): An example of setting up a bidirectional cluster link with 2 mirror topics
   * [advanced-bidirectional-cluster-link-rbac](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/advanced-bidirectional-cluster-link-rbac): An example of setting up a bidirectional cluster link with 2 mirror topics ([advanced option](https://docs.confluent.io/cloud/current/multi-cloud/cluster-linking/cluster-links-cc.html#create-a-cluster-link-in-bidirectional-mode))
 

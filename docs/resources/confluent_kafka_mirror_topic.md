@@ -93,6 +93,6 @@ $ terraform import confluent_kafka_mirror_topic.my_mirror_topic lkc-abc123/my-cl
 ## Getting Started
 The following end-to-end examples might help to get started with `confluent_kafka_mirror_topic` resource:
   * [destination-initiated-cluster-link-rbac](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/destination-initiated-cluster-link-rbac): An example of setting up a _destination_ initiated cluster link with a mirror topic
-  * [`source-initiated-cluster-link-rbac](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/source-initiated-cluster-link-rbac): An example of setting up a _source_ initiated cluster link with a mirror topic
+  * [source-initiated-cluster-link-rbac](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/source-initiated-cluster-link-rbac): An example of setting up a _source_ initiated cluster link with a mirror topic
 
 See [Mirror Topics on Confluent Cloud](https://docs.confluent.io/cloud/current/multi-cloud/cluster-linking/mirror-topics-cc.html) to learn more about Mirror Topics on Confluent Cloud.
