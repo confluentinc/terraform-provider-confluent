@@ -1,6 +1,6 @@
 {
   "name": "exporter1",
-  "state": "STARTING",
+  "state": "RUNNING",
   "offset": 15685259,
   "ts": 1690356186895
 }
