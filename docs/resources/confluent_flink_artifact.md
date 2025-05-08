@@ -38,7 +38,7 @@ resource "confluent_flink_artifact" "main" {
 The following arguments are supported:
 
 - `display_name` - (Required String) The unique name of the Flink Artifact per cloud, region, environment scope.
-- `cloud` - (Required String) The cloud service provider that runs the Flink Artifact. Accepted values are: `AWS`, `AZURE`.
+- `cloud` - (Required String) The cloud service provider that runs the Flink Artifact.
 - `region` - (Required String) The cloud service provider region that hosts the Flink Artifact.
 - `class` - (Optional String, **Deprecated**) Java class or alias for the Flink Artifact as provided by developer.
 - `artifact_file` - (Required String) The artifact file for Flink Artifact.
