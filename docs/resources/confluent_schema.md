@@ -151,12 +151,12 @@ $ terraform import confluent_schema.my_schema_1 lsrc-abc123/test-subject/100003
 
 ## Getting Started
 The following end-to-end examples might help to get started with `confluent_schema` resource:
-* [`single-event-types-avro-schema`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/single-event-types-avro-schema)
-* [`single-event-types-proto-schema`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/single-event-types-proto-schema)
-* [`single-event-types-proto-schema-with-alias](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/single-event-types-proto-schema-with-alias)
-* [`multiple-event-types-avro-schema`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/multiple-event-types-avro-schema)
-* [`multiple-event-types-proto-schema`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/multiple-event-types-proto-schema)
-* [`field-level-encryption-schema`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/field-level-encryption-schema)
+* [single-event-types-avro-schema](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/single-event-types-avro-schema)
+* [single-event-types-proto-schema](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/single-event-types-proto-schema)
+* [single-event-types-proto-schema-with-alias](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/single-event-types-proto-schema-with-alias)
+* [multiple-event-types-avro-schema](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/multiple-event-types-avro-schema)
+* [multiple-event-types-proto-schema](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/multiple-event-types-proto-schema)
+* [field-level-encryption-schema](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/field-level-encryption-schema)
 
 ## Additional Examples
 
