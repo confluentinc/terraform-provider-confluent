@@ -1234,7 +1234,7 @@ func uploadFile(url, filePath string, formFields map[string]any, fileExtension, 
 	}
 	if cloud == "AZURE" && isFlinkArtifact {
 		var contentFormat string
-		switch fileExtension {
+		switch strings.ToLower(fileExtension) {
 		case "zip":
 			contentFormat = "application/zip"
 		case "jar":
