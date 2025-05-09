@@ -209,14 +209,14 @@ func testAccCheckConnectionDestroy(s *terraform.State, url string) error {
 		if rs.Type != "confluent_flink_connection" {
 			continue
 		}
-		deletedTopicId := rs.Primary.ID
+		deletedconnectionId := rs.Primary.ID
 		_, response, err := c.apiClient.ConnectionsSqlV1Api.GetSqlv1Connection(c.apiContext(context.Background()), flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkConnectionNameTest).Execute()
 		if response != nil && (response.StatusCode == http.StatusForbidden || response.StatusCode == http.StatusNotFound) {
 			return nil
-		} else if err == nil && deletedTopicId != "" {
+		} else if err == nil && deletedconnectionId != "" {
 			// Otherwise return the error
-			if deletedTopicId == rs.Primary.ID {
-				return fmt.Errorf("topic (%s) still exists", rs.Primary.ID)
+			if deletedconnectionId == rs.Primary.ID {
+				return fmt.Errorf("connection (%s) still exists", rs.Primary.ID)
 			}
 		}
 		return err
