@@ -1430,7 +1430,7 @@ func schemaExporterProvisionStatus(ctx context.Context, c *SchemaRegistryRestCli
 		}
 
 		if status.GetState() == "STARTING" {
-			return nil, stateProvisioning, nil
+			return status, stateProvisioning, nil
 		}
 		if status.GetState() == "RUNNING" || status.GetState() == "PAUSED" {
 			return status, stateReady, nil

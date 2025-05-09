@@ -46,7 +46,7 @@ const (
 	schemaRegistryUrlConfig               = "schema.registry.url"
 	basicAuthUserInfoConfig               = "basic.auth.user.info"
 
-	schemaExporterAPICreateTimeout = 4 * time.Hour
+	schemaExporterAPICreateTimeout = 12 * time.Hour
 )
 
 var standardConfigs = []string{basicAuthUserInfoConfig, schemaRegistryUrlConfig, basicAuthCredentialsSourceConfig}
