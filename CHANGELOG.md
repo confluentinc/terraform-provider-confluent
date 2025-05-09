@@ -3,7 +3,7 @@
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.27.0...v2.28.0)
 
 **Bug fixes:**
-* Updated `confluent_schema_exporter` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema_exporter) to resolve time out issues for create and update operations by reverting the previous fix #671 and resolving a 10 timeout issue directly.
+* Updated the `confluent_schema_exporter` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema_exporter) to address timeout issues during create and update operations. This was achieved by reverting the previous fix (#671) and directly resolving a 10-minute timeout issue.
 * Updated the docs.
 
 ## 2.27.0 (May 6th, 2025)
