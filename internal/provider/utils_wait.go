@@ -27,7 +27,7 @@ import (
 const (
 	stateUp                        = "UP"
 	stateCreated                   = "CREATED"
-	acceptanceTestModeWaitTime     = 1 * time.Second
+	acceptanceTestModeWaitTime     = 200 * time.Millisecond
 	acceptanceTestModePollInterval = 1 * time.Second
 )
 
