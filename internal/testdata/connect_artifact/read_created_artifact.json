@@ -1,0 +1,19 @@
+{
+  "id": "lccp-abc123",
+  "api_version": "artifact/v1",
+  "kind": "ConnectArtifact",
+  "spec": {
+    "display_name": "connect_artifact_0",
+    "cloud": "AWS",
+    "environment": "env-gz903",
+    "content_format": "JAR",
+    "description": "string",
+    "upload_source": {
+      "location": "PRESIGNED_URL_LOCATION",
+      "upload_id": "upload-123"
+    }
+  },
+  "status": {
+    "phase": "READY"
+  }
+} 
