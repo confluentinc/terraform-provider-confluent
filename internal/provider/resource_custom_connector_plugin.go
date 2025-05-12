@@ -217,7 +217,7 @@ func uploadCustomConnectorPlugin(ctx context.Context, c *Client, filename, cloud
 		return "", fmt.Errorf(`error uploading Custom Connector Plugin: error fetching presigned upload URL: %s`, err)
 	}
 
-	if err := uploadFile(createdPresignedUrl.GetUploadUrl(), filename, createdPresignedUrl.GetUploadFormData()); err != nil {
+	if err := uploadFile(createdPresignedUrl.GetUploadUrl(), filename, createdPresignedUrl.GetUploadFormData(), createdPresignedUrl.GetContentFormat(), cloud, false); err != nil {
 		return "", fmt.Errorf(`error uploading Custom Connector Plugin: error uploading a file: %s`, err)
 	}
 	return createdPresignedUrl.GetUploadId(), nil
