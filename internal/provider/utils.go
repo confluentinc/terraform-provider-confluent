@@ -86,6 +86,7 @@ const (
 	apiKeyLoggingKey                          = "api_key_id"
 	computePoolLoggingKey                     = "compute_pool_id"
 	flinkArtifactLoggingKey                   = "flink_artifact_id"
+	flinkConnectionLoggingKey                 = "flink_connection_id"
 	flinkStatementLoggingKey                  = "flink_statement_key_id"
 	networkLoggingKey                         = "network_key_id"
 	customConnectorPluginLoggingKey           = "custom_connector_plugin_key_id"

@@ -1,0 +1,12 @@
+{
+  "errors": [
+    {
+      "id": "ed42afdc-f0d5-4c0d-b428-9fc6ed6e279d",
+      "status": "400",
+      "code": "invalid_filter",
+      "title": "Invalid Filter",
+      "detail": "error details",
+      "source": {}
+    }
+  ]
+}
