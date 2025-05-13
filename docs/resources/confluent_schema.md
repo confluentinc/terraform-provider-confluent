@@ -28,6 +28,10 @@ resource "confluent_schema" "avro-purchase" {
   schema_registry_cluster {
     id = data.confluent_schema_registry_cluster.essentials.id
   }
+  # For private networking use
+  # data.confluent_schema_registry_cluster.essentials.private_regional_rest_endpoints["us-east-2"]
+  # or
+  # "https://${data.confluent_schema_registry_cluster.essentials.id}${data.confluent_network.main.endpoint_suffix}"
   rest_endpoint = data.confluent_schema_registry_cluster.essentials.rest_endpoint
   subject_name = "avro-purchase-value"
   format = "AVRO"
