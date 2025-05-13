@@ -3,7 +3,7 @@
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.28.0...v2.29.0)
 
 **New features:**
-* Added TF Support for Flink UDF (User-Defined Functions) for Azure.
+* Added support for Flink UDF (User-Defined Functions) for Azure.
 
 ## 2.28.0 (May 8th, 2025)
 
