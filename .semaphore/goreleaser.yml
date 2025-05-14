@@ -40,7 +40,7 @@ blocks:
       jobs:
         - name: goreleaser
           commands:
-            - sem-version go 1.22.7
+            - sem-version go 1.23.9
             - export "GOPATH=$(go env GOPATH)"
             - export "GITHUB_TOKEN=$(gh auth token)"
             - >-
