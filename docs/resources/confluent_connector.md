@@ -390,3 +390,7 @@ The following end-to-end examples might help to get started with `confluent_conn
 * [manage-offsets-mysql-sink-connector](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/connectors/manage-offsets-mysql-sink-connector)
 
 -> **Note:** Certain connectors require additional ACL entries. See [Additional ACL entries](https://docs.confluent.io/cloud/current/connectors/service-account.html#additional-acl-entries) for more details.
+
+-> **Note:** If there isn’t an example available for your target connector in the [connectors](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/connectors) folder, use the Confluent Cloud Console to begin the provisioning process. This can help you determine the required ACLs. You can also refer to the connector’s documentation page ([example](https://docs.confluent.io/cloud/current/connectors/cc-amazon-dynamo-db-sink.html#step-3-create-the-connector-configuration-file)) to copy its default configuration and learn more about all available settings. Afterward, we recommend selecting an example with the same connector type (sink or source) and modifying its ACL list and configuration to fit your specific requirements.
+Here is an example of the ACLs:
+![Example of Connector ACLs](https://github.com/confluentinc/terraform-provider-confluent/raw/master/docs/images/ConnectorACLs.png)
