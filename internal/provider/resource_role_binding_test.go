@@ -174,7 +174,7 @@ func testAccCheckRoleBindingConfig(mockServerUrl, label, principal, roleName, cr
 		principal = "%s"
 		role_name = "%s"
 		crn_pattern = "%s"
-        disable_wait_for_ready = %s
+		disable_wait_for_ready = %s
 	}
 	`, mockServerUrl, label, principal, roleName, crn, disableWaitForReady)
 }
