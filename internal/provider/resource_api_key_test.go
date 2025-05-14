@@ -898,7 +898,7 @@ func testAccCheckKafkaApiKeyConfig(mockServerUrl, kafkaApiKeyResourceLabel, kafk
 		}
 		managed_resource {
 			id = "%s"
-           api_version = "%s"
+			api_version = "%s"
 			kind = "%s"
 			environment {
 				id = "%s"
