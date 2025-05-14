@@ -97,6 +97,10 @@ func apiKeyResource() *schema.Resource {
 				Optional: true,
 				Default:  false,
 				ForceNew: true,
+				// Suppress any diffs, as this attribute only applies during resource creation.
+				DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+					return true
+				},
 			},
 		},
 		// TODO: APIT-2820
