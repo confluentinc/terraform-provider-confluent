@@ -33,10 +33,12 @@ const (
 	roleBindingId                          = "rb-OOXL7"
 	roleBindingUrlPath                     = "/iam/v2/role-bindings/rb-OOXL7"
 
-	rbPrincipal     = "User:u-vr99n5"
-	rbRolename      = "CloudClusterAdmin"
-	rbCrn           = "crn://confluent.cloud/organization=0d9c5d94-e4fe-44ec-9cf1-bd99761fca75/environment=env-ym2y0k/cloud-cluster=lkc-xrk0ng"
-	rbResourceLabel = "test_rb_resource_label"
+	rbPrincipal                = "User:u-vr99n5"
+	rbRolename                 = "CloudClusterAdmin"
+	rbCrn                      = "crn://confluent.cloud/organization=0d9c5d94-e4fe-44ec-9cf1-bd99761fca75/environment=env-ym2y0k/cloud-cluster=lkc-xrk0ng"
+	rbResourceLabel            = "test_rb_resource_label"
+	rbDisableWaitForReadyFalse = "false"
+	rbDisableWaitForReadyTrue  = "true"
 )
 
 func TestAccRoleBinding(t *testing.T) {
@@ -108,14 +110,25 @@ func TestAccRoleBinding(t *testing.T) {
 		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckRoleBindingConfig(mockServerUrl, rbResourceLabel, rbPrincipal, rbRolename, rbCrn),
+				Config: testAccCheckRoleBindingConfig(mockServerUrl, rbResourceLabel, rbPrincipal, rbRolename, rbCrn, rbDisableWaitForReadyFalse),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckRoleBindingExists(fullRbResourceLabel),
 					resource.TestCheckResourceAttr(fullRbResourceLabel, "id", roleBindingId),
 					resource.TestCheckResourceAttr(fullRbResourceLabel, "principal", rbPrincipal),
 					resource.TestCheckResourceAttr(fullRbResourceLabel, "role_name", rbRolename),
 					resource.TestCheckResourceAttr(fullRbResourceLabel, "crn_pattern", rbCrn),
-					resource.TestCheckResourceAttr(fullRbResourceLabel, "disable_wait_for_ready", "false"),
+					resource.TestCheckResourceAttr(fullRbResourceLabel, "disable_wait_for_ready", rbDisableWaitForReadyFalse),
+				),
+			},
+			{
+				Config: testAccCheckRoleBindingConfig(mockServerUrl, rbResourceLabel, rbPrincipal, rbRolename, rbCrn, rbDisableWaitForReadyTrue),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckRoleBindingExists(fullRbResourceLabel),
+					resource.TestCheckResourceAttr(fullRbResourceLabel, "id", roleBindingId),
+					resource.TestCheckResourceAttr(fullRbResourceLabel, "principal", rbPrincipal),
+					resource.TestCheckResourceAttr(fullRbResourceLabel, "role_name", rbRolename),
+					resource.TestCheckResourceAttr(fullRbResourceLabel, "crn_pattern", rbCrn),
+					resource.TestCheckResourceAttr(fullRbResourceLabel, "disable_wait_for_ready", rbDisableWaitForReadyFalse),
 				),
 			},
 			{
@@ -154,7 +167,7 @@ func testAccCheckRoleBindingDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccCheckRoleBindingConfig(mockServerUrl, label, principal, roleName, crn string) string {
+func testAccCheckRoleBindingConfig(mockServerUrl, label, principal, roleName, crn, disableWaitForReady string) string {
 	return fmt.Sprintf(`
 	provider "confluent" {
 		endpoint = "%s"
@@ -163,8 +176,9 @@ func testAccCheckRoleBindingConfig(mockServerUrl, label, principal, roleName, cr
 		principal = "%s"
 		role_name = "%s"
 		crn_pattern = "%s"
+        disable_wait_for_ready = %s
 	}
-	`, mockServerUrl, label, principal, roleName, crn)
+	`, mockServerUrl, label, principal, roleName, crn, disableWaitForReady)
 }
 
 func testAccCheckRoleBindingExists(n string) resource.TestCheckFunc {
