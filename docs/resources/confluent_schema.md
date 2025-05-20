@@ -121,6 +121,8 @@ The following arguments are supported:
 
 -> **Note:** The Confluent Cloud Console uses the following default values: `on_success = "NONE"` and `on_failure = "ERROR"`. However, the TF Provider sets its defaults to `on_success = "NONE,NONE"` and `on_failure = "ERROR,ERROR"`.
 
+-> **Note:** To delete all domain rules from an existing schema, remove the `ruleset` block from the `confluent_schema` resource in the Terraform configuration.
+
 ## Attributes Reference
 
 In addition to the preceding arguments, the following attributes are exported:
