@@ -354,7 +354,7 @@ func SetSchemaDiff(ctx context.Context, diff *schema.ResourceDiff, meta interfac
 
 	oldRuleset, newRuleset := diff.GetChange(paramRuleset)
 	if tfRuleset := diff.Get(paramRuleset).([]interface{}); len(tfRuleset) == 1 {
-		if len(newRuleset.([]interface{})) == 0 && len(oldRuleset.([]interface{})) > 0 { //this is the case of an advanced package user trying to delete a ruleset.
+		if len(newRuleset.([]interface{})) == 0 && len(oldRuleset.([]interface{})) > 0 { //this is the case of an advanced package user trying to delete a ruleset. // TODO: Revisit this logic after we add migration rules, this might never be hit.
 			ruleset := sr.NewRuleSet()
 			ruleset.SetDomainRules([]sr.Rule{})
 			createSchemaRequest.SetRuleSet(*ruleset)
