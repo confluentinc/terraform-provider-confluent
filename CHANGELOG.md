@@ -3,8 +3,8 @@
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.29.0...v2.30.0)
 
 **Bug fixes:**
-* Allow deletion of rulesets in schemas using terraform for advanced package users.
-* Update Connector docs.
+* Allow deletion of rulesets in schemas for advanced package users.
+* Update the docs of `confluent_connector` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_connector).
 
 ## 2.29.0 (May 12th, 2025)
 
