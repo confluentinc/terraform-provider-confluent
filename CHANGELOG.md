@@ -4,6 +4,8 @@
 
 **New features:**
 * Allow deletion of rulesets in schemas for advanced package users.
+
+**Bug fixes:**
 * Update the docs of `confluent_connector` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_connector).
 
 ## 2.29.0 (May 12th, 2025)
