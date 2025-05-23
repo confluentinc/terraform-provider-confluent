@@ -17,6 +17,8 @@ semaphore:
   branches:
     - master
     - /^v\d+\.\d+\.x$/
+make:
+  enable: true
 sonarqube:
   enable: true
   languages:
