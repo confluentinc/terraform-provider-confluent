@@ -66,9 +66,9 @@ var (
 	}
 	ConnectionSecretBackendKeyMapping = map[string]string{
 		"api_key":           "API_KEY",
-		"aws_access_key":    "AWS_ACCESS_KEY_ID",
-		"aws_secret_key":    "AWS_SECRET_ACCESS_KEY",
-		"aws_session_token": "AWS_SESSION_TOKEN",
+		"aws_access_key":    "AWS_ACCESS_KEY_ID_CONNECTION",
+		"aws_secret_key":    "AWS_SECRET_ACCESS_KEY_CONNECTION",
+		"aws_session_token": "AWS_SESSION_TOKEN_CONNECTION",
 		"service_key":       "SERVICE_KEY",
 		"username":          "USERNAME",
 		"password":          "PASSWORD",
@@ -521,15 +521,15 @@ func setImportData(d *schema.ResourceData) {
 	if err != nil {
 		return
 	}
-	err = d.Set(paramAwsAccessKey, getEnv("AWS_ACCESS_KEY_ID", ""))
+	err = d.Set(paramAwsAccessKey, getEnv("AWS_ACCESS_KEY_ID_CONNECTION", ""))
 	if err != nil {
 		return
 	}
-	err = d.Set(paramAwsSecretKey, getEnv("AWS_SECRET_ACCESS_KEY", ""))
+	err = d.Set(paramAwsSecretKey, getEnv("AWS_SECRET_ACCESS_KEY_CONNECTION", ""))
 	if err != nil {
 		return
 	}
-	err = d.Set(paramAwsSessionToken, getEnv("AWS_SESSION_TOKEN", ""))
+	err = d.Set(paramAwsSessionToken, getEnv("AWS_SESSION_TOKEN_CONNECTION", ""))
 	if err != nil {
 		return
 	}
