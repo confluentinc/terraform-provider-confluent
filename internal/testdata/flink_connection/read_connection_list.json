@@ -9,13 +9,6 @@
     {
       "api_version": "sql/v1",
       "kind": "Connection",
-      "metadata": {
-        "self": "https://flink.us-west1.aws.confluent.cloud/sql/v1/organizations/org-abc/environments/env-123/connections/Connection1",
-        "created_at": "1996-03-19T01:02:03-04:05",
-        "uid": "12345678-1234-1234-1234-123456789012",
-        "resource_version": "a23av",
-        "resource_name": ""
-      },
       "name": "Connection1",
       "spec": {
         "connection_type": "OPENAI",
