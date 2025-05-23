@@ -131,15 +131,15 @@ $ export IMPORT_FLINK_API_KEY="<flink_api_key>"
 $ export IMPORT_FLINK_API_SECRET="<flink_api_secret>"
 $ export IMPORT_FLINK_REST_ENDPOINT="<flink_rest_endpoint>"
 $ export IMPORT_FLINK_PRINCIPAL_ID="<flink_principal>"
-$ export API_KEY="<api_key>"
+$ export API_KEY="<API_KEY>"
 $ terraform import confluent_flink_connection.example org-xyz123/env-abc123/connection1
 
 # Option #2: Manage a single Flink Compute Pool in the same Terraform workspace
-$ export API_KEY="<api_key>"
+$ export API_KEY="<API_KEY>"
 $ terraform import confluent_flink_connection.example org-xyz123/env-abc123/connection1
 ```
 
--> **Note:** The example above is for `type = OPENAI`, so we exported `api_key`. Export the required field for each type as mentioned above. 
+-> **Note:** The example above is for `type = OPENAI`, so we exported `API_KEY`. Export the required field for each type as mentioned above. The fields that can be exported are: `API_KEY`, `AWS_SECRET_ACCESS_KEY_CONNECTION`, `AWS_ACCESS_KEY_ID_CONNECTION`, `AWS_SESSION_TOKEN_CONNECTION`, `SERVICE_KEY`, `USERNAME`, `PASSWORD`. 
 
 !> **Warning:** Do not forget to delete terminal command history afterwards for security purposes.
 

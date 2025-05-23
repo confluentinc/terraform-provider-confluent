@@ -66,9 +66,9 @@ var (
 	}
 	ConnectionSecretBackendKeyMapping = map[string]string{
 		"api_key":           "API_KEY",
-		"aws_access_key":    "AWS_ACCESS_KEY_ID_CONNECTION",
-		"aws_secret_key":    "AWS_SECRET_ACCESS_KEY_CONNECTION",
-		"aws_session_token": "AWS_SESSION_TOKEN_CONNECTION",
+		"aws_access_key":    "AWS_ACCESS_KEY_ID",
+		"aws_secret_key":    "AWS_SECRET_ACCESS_KEY",
+		"aws_session_token": "AWS_SESSION_TOKEN",
 		"service_key":       "SERVICE_KEY",
 		"username":          "USERNAME",
 		"password":          "PASSWORD",
