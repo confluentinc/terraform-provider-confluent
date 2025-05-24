@@ -123,7 +123,7 @@ The following arguments are supported:
 
 -> **Note:** To delete all domain rules from an existing schema, remove the `ruleset` block from the `confluent_schema` resource in the Terraform configuration.
 
--> **Note:** If you use _Option A: recreate_on_update = false_ and create a schema that already existed as one of the previous versions, make sure to follow [this workaround](https://github.com/confluentinc/terraform-provider-confluent/issues/619#issuecomment-2765360562) to prevent Terraform drift.
+-> **Note:** If you use _Option A: recreate_on_update = false_ and create a schema that already existed as one of the previous versions, make sure to follow [this workaround](https://github.com/confluentinc/terraform-provider-confluent/issues/619#issuecomment-2765360562) to prevent persistent Terraform drift.
 
 ## Attributes Reference
 
