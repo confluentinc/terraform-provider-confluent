@@ -14,16 +14,18 @@ import (
 
 const (
 	scenarioStateConnectionHasBeenCreated = "A new connection has been just created"
+	scenarioStateConnectionHasBeenUpdated = "A connection has been updated"
 	scenarioStateConnectionHasBeenDeleted = "The connection has been deleted"
 	connectionScenarioName                = "confluent_flink_connection Resource Lifecycle"
 
 	flinkConnectionDisplayName = "Connection1"
-	flinkConnectionNameTest    = "connection-test"
+	flinkConnectionNameTest    = "Connection1"
 	flinkConnectionApiVersion  = "sql/v1"
 	flinkConnectionKind        = "Connection"
 	flinkConnectionType        = "OPENAI"
 	flinkEndpoint              = "https://api.openai.com/v1/chat/completions"
-	flinkAPIKey                = "OPENAI"
+	flinkAPIKey                = "key_1"
+	flinkAPIKeyUpdated         = "key_2"
 )
 
 var createFlinkConnectionPath = fmt.Sprintf("/sql/v1/organizations/%s/environments/%s/connections", flinkOrganizationIdTest, flinkEnvironmentIdTest)
@@ -67,9 +69,31 @@ func TestAccFlinkConnection(t *testing.T) {
 			http.StatusOK,
 		))
 
-	deleteConnectionStub := wiremock.Delete(wiremock.URLPathEqualTo(readFlinkConnectionPath)).
+	updateFlinkConnectionResponse, _ := ioutil.ReadFile("../testdata/flink_connection/update_connection.json")
+	updateFlinkConnectionStub := wiremock.Put(wiremock.URLPathEqualTo(readFlinkConnectionPath)).
 		InScenario(connectionScenarioName).
 		WhenScenarioStateIs(scenarioStateConnectionHasBeenCreated).
+		WillSetStateTo(scenarioStateConnectionHasBeenUpdated).
+		WillReturn(
+			string(updateFlinkConnectionResponse),
+			contentTypeJSONHeader,
+			http.StatusCreated,
+		)
+	_ = wiremockClient.StubFor(updateFlinkConnectionStub)
+
+	readUpdatedConnectionsResponse, _ := ioutil.ReadFile("../testdata/flink_connection/read_connection.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readFlinkConnectionPath)).
+		InScenario(connectionScenarioName).
+		WhenScenarioStateIs(scenarioStateConnectionHasBeenUpdated).
+		WillReturn(
+			string(readUpdatedConnectionsResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	deleteConnectionStub := wiremock.Delete(wiremock.URLPathEqualTo(readFlinkConnectionPath)).
+		InScenario(connectionScenarioName).
+		WhenScenarioStateIs(scenarioStateConnectionHasBeenUpdated).
 		WillSetStateTo(scenarioStateConnectionHasBeenDeleted).
 		WillReturn(
 			"",
@@ -91,7 +115,7 @@ func TestAccFlinkConnection(t *testing.T) {
 	flinkConnectionResourceLabel := "test"
 	fullConnectionResourceLabel := fmt.Sprintf("confluent_flink_connection.%s", flinkConnectionResourceLabel)
 
-	_ = os.Setenv("API_KEY", flinkAPIKey)
+	_ = os.Setenv("API_KEY", flinkAPIKeyUpdated)
 	_ = os.Setenv("IMPORT_FLINK_API_KEY", kafkaApiKey)
 	_ = os.Setenv("IMPORT_FLINK_API_SECRET", kafkaApiSecret)
 	_ = os.Setenv("IMPORT_FLINK_REST_ENDPOINT", mockTestServerUrl)
@@ -119,13 +143,32 @@ func TestAccFlinkConnection(t *testing.T) {
 		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckConnectionConfig(mockTestServerUrl, flinkConnectionResourceLabel),
+				Config: testAccCheckConnectionConfig(mockTestServerUrl, flinkConnectionResourceLabel, flinkAPIKey),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckConnectionExists(fullConnectionResourceLabel),
 					resource.TestCheckResourceAttr(fullConnectionResourceLabel, paramDisplayName, flinkConnectionDisplayName),
 					resource.TestCheckResourceAttr(fullConnectionResourceLabel, paramType, flinkConnectionType),
 					resource.TestCheckResourceAttr(fullConnectionResourceLabel, paramEndpoint, flinkEndpoint),
 					resource.TestCheckResourceAttr(fullConnectionResourceLabel, paramApiKey, flinkAPIKey),
+					resource.TestCheckResourceAttr(fullConnectionResourceLabel, paramApiVersion, flinkConnectionApiVersion),
+					resource.TestCheckResourceAttr(fullConnectionResourceLabel, paramKind, flinkConnectionKind),
+					resource.TestCheckResourceAttr(fullConnectionResourceLabel, fmt.Sprintf("%s.0.%s", paramEnvironment, paramId), flinkEnvironmentIdTest),
+					resource.TestCheckResourceAttr(fullConnectionResourceLabel, fmt.Sprintf("%s.0.%s", paramOrganization, paramId), flinkOrganizationIdTest),
+					resource.TestCheckResourceAttr(fullConnectionResourceLabel, fmt.Sprintf("%s.0.%s", paramComputePool, paramId), flinkComputePoolIdTest),
+					resource.TestCheckResourceAttr(fullConnectionResourceLabel, fmt.Sprintf("%s.0.%s", paramPrincipal, paramId), flinkPrincipalIdTest),
+					resource.TestCheckResourceAttr(fullConnectionResourceLabel, paramRestEndpoint, mockTestServerUrl),
+					resource.TestCheckResourceAttr(fullConnectionResourceLabel, "credentials.0.key", kafkaApiKey),
+					resource.TestCheckResourceAttr(fullConnectionResourceLabel, "credentials.0.secret", kafkaApiSecret),
+				),
+			},
+			{
+				Config: testAccCheckConnectionConfig(mockTestServerUrl, flinkConnectionResourceLabel, flinkAPIKeyUpdated),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckConnectionExists(fullConnectionResourceLabel),
+					resource.TestCheckResourceAttr(fullConnectionResourceLabel, paramDisplayName, flinkConnectionDisplayName),
+					resource.TestCheckResourceAttr(fullConnectionResourceLabel, paramType, flinkConnectionType),
+					resource.TestCheckResourceAttr(fullConnectionResourceLabel, paramEndpoint, flinkEndpoint),
+					resource.TestCheckResourceAttr(fullConnectionResourceLabel, paramApiKey, flinkAPIKeyUpdated),
 					resource.TestCheckResourceAttr(fullConnectionResourceLabel, paramApiVersion, flinkConnectionApiVersion),
 					resource.TestCheckResourceAttr(fullConnectionResourceLabel, paramKind, flinkConnectionKind),
 					resource.TestCheckResourceAttr(fullConnectionResourceLabel, fmt.Sprintf("%s.0.%s", paramEnvironment, paramId), flinkEnvironmentIdTest),
@@ -152,7 +195,7 @@ func TestAccFlinkConnection(t *testing.T) {
 	})
 }
 
-func testAccCheckConnectionConfig(mockServerUrl, resourceLabel string) string {
+func testAccCheckConnectionConfig(mockServerUrl, resourceLabel, apikey string) string {
 	return fmt.Sprintf(`
 	provider "confluent" {
     	endpoint = "%s"
@@ -182,7 +225,7 @@ func testAccCheckConnectionConfig(mockServerUrl, resourceLabel string) string {
  	  api_key 		= "%s"
 	}
 	`, mockServerUrl, resourceLabel, kafkaApiKey, kafkaApiSecret, mockServerUrl, flinkPrincipalIdTest,
-		flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkComputePoolIdTest, flinkConnectionDisplayName, flinkConnectionType, flinkEndpoint, flinkAPIKey)
+		flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkComputePoolIdTest, flinkConnectionDisplayName, flinkConnectionType, flinkEndpoint, apikey)
 }
 
 func testAccCheckConnectionExists(n string) resource.TestCheckFunc {

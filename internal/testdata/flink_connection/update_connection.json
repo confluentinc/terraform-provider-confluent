@@ -1,0 +1,11 @@
+{
+  "name": "Connection1",
+  "spec": {
+    "connection_type": "OPENAI",
+    "endpoint": "https://api.openai.com/v1/chat/completions",
+    "auth_data": {
+      "kind": "PlaintextProvider",
+      "data": "string"
+    }
+  }
+}
