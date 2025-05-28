@@ -28,6 +28,7 @@ import (
 
 	apikeys "github.com/confluentinc/ccloud-sdk-go-v2/apikeys/v2"
 	byok "github.com/confluentinc/ccloud-sdk-go-v2/byok/v1"
+	cam "github.com/confluentinc/ccloud-sdk-go-v2/cam/v1"
 	ca "github.com/confluentinc/ccloud-sdk-go-v2/certificate-authority/v2"
 	cmk "github.com/confluentinc/ccloud-sdk-go-v2/cmk/v2"
 	ccp "github.com/confluentinc/ccloud-sdk-go-v2/connect-custom-plugin/v1"
@@ -83,6 +84,7 @@ type Client struct {
 	iamV1Client                     *iamv1.APIClient
 	caClient                        *ca.APIClient
 	ccpClient                       *ccp.APIClient
+	camClient                       *cam.APIClient
 	cmkClient                       *cmk.APIClient
 	connectClient                   *connect.APIClient
 	catalogClient                   *dc.APIClient
@@ -308,6 +310,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_certificate_authority":              certificateAuthorityDataSource(),
 				"confluent_certificate_pool":                   certificatePoolDataSource(),
 				"confluent_cluster_link":                       clusterLinkDataSource(),
+				"confluent_connect_artifact":                   connectArtifactDataSource(),
 				"confluent_kafka_cluster":                      kafkaDataSource(),
 				"confluent_kafka_topic":                        kafkaTopicDataSource(),
 				"confluent_environment":                        environmentDataSource(),
@@ -364,6 +367,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_certificate_authority":              certificateAuthorityResource(),
 				"confluent_certificate_pool":                   certificatePoolResource(),
 				"confluent_cluster_link":                       clusterLinkResource(),
+				"confluent_connect_artifact":                   connectArtifactResource(),
 				"confluent_kafka_cluster":                      kafkaResource(),
 				"confluent_kafka_cluster_config":               kafkaConfigResource(),
 				"confluent_environment":                        environmentResource(),
@@ -558,6 +562,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	apiKeysCfg := apikeys.NewConfiguration()
 	byokCfg := byok.NewConfiguration()
 	caCfg := ca.NewConfiguration()
+	camCfg := cam.NewConfiguration()
 	catalogCfg := dc.NewConfiguration()
 	ccpCfg := ccp.NewConfiguration()
 	cmkCfg := cmk.NewConfiguration()
@@ -585,6 +590,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	byokCfg.Servers[0].URL = endpoint
 	caCfg.Servers[0].URL = endpoint
 	ccpCfg.Servers[0].URL = endpoint
+	camCfg.Servers[0].URL = endpoint
 	cmkCfg.Servers[0].URL = endpoint
 	connectCfg.Servers[0].URL = endpoint
 	faCfg.Servers[0].URL = endpoint
@@ -611,6 +617,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	caCfg.UserAgent = userAgent
 	catalogCfg.UserAgent = userAgent
 	ccpCfg.UserAgent = userAgent
+	camCfg.UserAgent = userAgent
 	cmkCfg.UserAgent = userAgent
 	connectCfg.UserAgent = userAgent
 	faCfg.UserAgent = userAgent
@@ -649,6 +656,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	caCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	catalogCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	ccpCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
+	camCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	cmkCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	connectCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	faCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
@@ -675,6 +683,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 		catalogClient:                   dc.NewAPIClient(catalogCfg),
 		caClient:                        ca.NewAPIClient(caCfg),
 		ccpClient:                       ccp.NewAPIClient(ccpCfg),
+		camClient:                       cam.NewAPIClient(camCfg),
 		cmkClient:                       cmk.NewAPIClient(cmkCfg),
 		connectClient:                   connect.NewAPIClient(connectCfg),
 		faClient:                        fa.NewAPIClient(faCfg),
