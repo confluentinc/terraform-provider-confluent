@@ -123,6 +123,8 @@ The following arguments are supported:
 
 -> **Note:** To delete all domain rules from an existing schema, remove the `ruleset` block from the `confluent_schema` resource in the Terraform configuration.
 
+-> **Note:** If you use _Option A: recreate_on_update = false_ and create a schema that already existed as one of the previous versions, make sure to follow [this workaround](https://github.com/confluentinc/terraform-provider-confluent/issues/619#issuecomment-2765360562) to prevent persistent Terraform drift.
+
 ## Attributes Reference
 
 In addition to the preceding arguments, the following attributes are exported:
@@ -162,7 +164,7 @@ The following end-to-end examples might help to get started with `confluent_sche
 
 ## Additional Examples
 
-### Default Option #1: Manage the latest schema version only. The resource instance always points to the latest schema version by supporting in-place updates
+### Default Option A: Manage the latest schema version only. The resource instance always points to the latest schema version by supporting in-place updates
 
 ```terraform
 # Step #1: Run 'terraform plan' and 'terraform apply' to create
@@ -236,7 +238,7 @@ resource "confluent_schema" "avro-purchase" {
 # be soft-deleted by default (set hard_delete=true for a hard deletion).
 ```
 
-### Option #2: Manage different schema versions using different resource instances
+### Option B: Manage different schema versions using different resource instances
 
 ```terraform
 # Before
