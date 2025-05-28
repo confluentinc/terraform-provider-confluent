@@ -1,0 +1,27 @@
+{
+  "api_version": "sql/v1",
+  "kind": "ConnectionList",
+  "metadata": {
+    "first": "",
+    "next": ""
+  },
+  "data": [
+    {
+      "api_version": "sql/v1",
+      "kind": "Connection",
+      "name": "Connection1",
+      "spec": {
+        "connection_type": "OPENAI",
+        "endpoint": "https://api.openai.com/v1/chat/completions",
+        "auth_data": {
+          "kind": "PlaintextProvider",
+          "data": "string"
+        }
+      },
+      "status": {
+        "phase": "READY",
+        "detail": "Lookup failed: ai.openai.com"
+      }
+    }
+  ]
+}
