@@ -6,7 +6,7 @@ contact:
   slack_team_channel: api-eng
   slack_oncall_channel: terraform
 lang: go
-lang_version: 1.23.9
+lang_version: 1.22.7
 git:
   enable: true
 github:
@@ -17,6 +17,8 @@ semaphore:
   branches:
     - master
     - /^v\d+\.\d+\.x$/
+make:
+  enable: true
 sonarqube:
   enable: true
   languages:

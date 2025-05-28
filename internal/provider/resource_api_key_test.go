@@ -55,9 +55,6 @@ const (
 	scenarioStateTableflowApiKeyHasBeenUpdated = "The new tableflow api key's description and display_name have been just updated"
 	scenarioStateTableflowApiKeyHasBeenDeleted = "The new tableflow api key has been deleted"
 	tableflowApiKeyScenarioName                = "confluent_api_key (Tableflow API Key) Resource Lifecycle"
-
-	disableWaitForReadyFalse = "false"
-	disableWaitForReadyTrue  = "true"
 )
 
 func TestAccKafkaApiKey(t *testing.T) {
@@ -219,13 +216,12 @@ func TestAccKafkaApiKey(t *testing.T) {
 		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckKafkaApiKeyConfig(mockServerUrl, kafkaApiKeyResourceLabel, kafkaApiKeyDisplayName, kafkaApiKeyDescription, ownerId, ownerApiVersion, ownerKind, resourceId, resourceApiVersion, resourceKind, environmentId, disableWaitForReadyFalse),
+				Config: testAccCheckKafkaApiKeyConfig(mockServerUrl, kafkaApiKeyResourceLabel, kafkaApiKeyDisplayName, kafkaApiKeyDescription, ownerId, ownerApiVersion, ownerKind, resourceId, resourceApiVersion, resourceKind, environmentId),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckApiKeyExists(fullKafkaApiKeyResourceLabel),
 					resource.TestCheckResourceAttr(fullKafkaApiKeyResourceLabel, "id", "7FJIYKQ4SGQDQ72H"),
 					resource.TestCheckResourceAttr(fullKafkaApiKeyResourceLabel, "display_name", kafkaApiKeyDisplayName),
 					resource.TestCheckResourceAttr(fullKafkaApiKeyResourceLabel, "description", kafkaApiKeyDescription),
-					resource.TestCheckResourceAttr(fullKafkaApiKeyResourceLabel, "disable_wait_for_ready", disableWaitForReadyFalse),
 					resource.TestCheckResourceAttr(fullKafkaApiKeyResourceLabel, "owner.#", "1"),
 					resource.TestCheckResourceAttr(fullKafkaApiKeyResourceLabel, "owner.0.%", "3"),
 					resource.TestCheckResourceAttr(fullKafkaApiKeyResourceLabel, "owner.0.api_version", "iam/v2"),
@@ -255,13 +251,13 @@ func TestAccKafkaApiKey(t *testing.T) {
 				},
 			},
 			{
-				Config: testAccCheckKafkaApiKeyConfig(mockServerUrl, kafkaApiKeyResourceLabel, kafkaApiKeyUpdatedDisplayName, kafkaApiKeyUpdatedDescription, ownerId, ownerApiVersion, ownerKind, resourceId, resourceApiVersion, resourceKind, environmentId, disableWaitForReadyTrue),
+				Config: testAccCheckKafkaApiKeyConfig(mockServerUrl, kafkaApiKeyResourceLabel, kafkaApiKeyUpdatedDisplayName, kafkaApiKeyUpdatedDescription, ownerId, ownerApiVersion, ownerKind, resourceId, resourceApiVersion, resourceKind, environmentId),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckApiKeyExists(fullKafkaApiKeyResourceLabel),
 					resource.TestCheckResourceAttr(fullKafkaApiKeyResourceLabel, "id", "7FJIYKQ4SGQDQ72H"),
 					resource.TestCheckResourceAttr(fullKafkaApiKeyResourceLabel, "display_name", kafkaApiKeyUpdatedDisplayName),
 					resource.TestCheckResourceAttr(fullKafkaApiKeyResourceLabel, "description", kafkaApiKeyUpdatedDescription),
-					resource.TestCheckResourceAttr(fullKafkaApiKeyResourceLabel, "disable_wait_for_ready", disableWaitForReadyFalse),
+					resource.TestCheckResourceAttr(fullKafkaApiKeyResourceLabel, "disable_wait_for_ready", "false"),
 					resource.TestCheckResourceAttr(fullKafkaApiKeyResourceLabel, "owner.#", "1"),
 					resource.TestCheckResourceAttr(fullKafkaApiKeyResourceLabel, "owner.0.%", "3"),
 					resource.TestCheckResourceAttr(fullKafkaApiKeyResourceLabel, "owner.0.api_version", "iam/v2"),
@@ -416,13 +412,12 @@ func TestAccFlinkApiKey(t *testing.T) {
 		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckFlinkApiKeyConfig(mockServerUrl, flinkApiKeyResourceLabel, flinkApiKeyDisplayName, flinkApiKeyDescription, ownerId, ownerApiVersion, ownerKind, resourceId, resourceApiVersion, resourceKind, environmentId, disableWaitForReadyFalse),
+				Config: testAccCheckFlinkApiKeyConfig(mockServerUrl, flinkApiKeyResourceLabel, flinkApiKeyDisplayName, flinkApiKeyDescription, ownerId, ownerApiVersion, ownerKind, resourceId, resourceApiVersion, resourceKind, environmentId),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckApiKeyExists(fullFlinkApiKeyResourceLabel),
 					resource.TestCheckResourceAttr(fullFlinkApiKeyResourceLabel, "id", "AK4NBR7MUYHVJMHW"),
 					resource.TestCheckResourceAttr(fullFlinkApiKeyResourceLabel, "display_name", flinkApiKeyDisplayName),
 					resource.TestCheckResourceAttr(fullFlinkApiKeyResourceLabel, "description", flinkApiKeyDescription),
-					resource.TestCheckResourceAttr(fullFlinkApiKeyResourceLabel, "disable_wait_for_ready", disableWaitForReadyFalse),
 					resource.TestCheckResourceAttr(fullFlinkApiKeyResourceLabel, "owner.#", "1"),
 					resource.TestCheckResourceAttr(fullFlinkApiKeyResourceLabel, "owner.0.%", "3"),
 					resource.TestCheckResourceAttr(fullFlinkApiKeyResourceLabel, "owner.0.api_version", "iam/v2"),
@@ -452,13 +447,13 @@ func TestAccFlinkApiKey(t *testing.T) {
 				},
 			},
 			{
-				Config: testAccCheckFlinkApiKeyConfig(mockServerUrl, flinkApiKeyResourceLabel, flinkApiKeyUpdatedDisplayName, flinkApiKeyUpdatedDescription, ownerId, ownerApiVersion, ownerKind, resourceId, resourceApiVersion, resourceKind, environmentId, disableWaitForReadyTrue),
+				Config: testAccCheckFlinkApiKeyConfig(mockServerUrl, flinkApiKeyResourceLabel, flinkApiKeyUpdatedDisplayName, flinkApiKeyUpdatedDescription, ownerId, ownerApiVersion, ownerKind, resourceId, resourceApiVersion, resourceKind, environmentId),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckApiKeyExists(fullFlinkApiKeyResourceLabel),
 					resource.TestCheckResourceAttr(fullFlinkApiKeyResourceLabel, "id", "AK4NBR7MUYHVJMHW"),
 					resource.TestCheckResourceAttr(fullFlinkApiKeyResourceLabel, "display_name", flinkApiKeyUpdatedDisplayName),
 					resource.TestCheckResourceAttr(fullFlinkApiKeyResourceLabel, "description", flinkApiKeyUpdatedDescription),
-					resource.TestCheckResourceAttr(fullFlinkApiKeyResourceLabel, "disable_wait_for_ready", disableWaitForReadyFalse),
+					resource.TestCheckResourceAttr(fullFlinkApiKeyResourceLabel, "disable_wait_for_ready", "false"),
 					resource.TestCheckResourceAttr(fullFlinkApiKeyResourceLabel, "owner.#", "1"),
 					resource.TestCheckResourceAttr(fullFlinkApiKeyResourceLabel, "owner.0.%", "3"),
 					resource.TestCheckResourceAttr(fullFlinkApiKeyResourceLabel, "owner.0.api_version", "iam/v2"),
@@ -625,13 +620,12 @@ func TestAccTableflowApiKey(t *testing.T) {
 		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckTableflowApiKeyConfig(mockServerUrl, tableflowApiKeyResourceLabel, tableflowApiKeyDisplayName, tableflowApiKeyDescription, ownerId, ownerApiVersion, ownerKind, resourceApiVersion, resourceId, resourceKind, disableWaitForReadyFalse),
+				Config: testAccCheckTableflowApiKeyConfig(mockServerUrl, tableflowApiKeyResourceLabel, tableflowApiKeyDisplayName, tableflowApiKeyDescription, ownerId, ownerApiVersion, ownerKind, resourceApiVersion, resourceId, resourceKind),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckApiKeyExists(fullTableflowApiKeyResourceLabel),
 					resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "id", "HRVR6K4VMXYD2LDZ"),
 					resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "display_name", tableflowApiKeyDisplayName),
 					resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "description", tableflowApiKeyDescription),
-					resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "disable_wait_for_ready", disableWaitForReadyFalse),
 					resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "owner.#", "1"),
 					resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "owner.0.%", "3"),
 					resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "owner.0.api_version", "iam/v2"),
@@ -650,13 +644,13 @@ func TestAccTableflowApiKey(t *testing.T) {
 				ImportStateVerify: true,
 			},
 			{
-				Config: testAccCheckTableflowApiKeyConfig(mockServerUrl, tableflowApiKeyResourceLabel, tableflowApiKeyUpdatedDisplayName, tableflowApiKeyUpdatedDescription, ownerId, ownerApiVersion, ownerKind, resourceApiVersion, resourceId, resourceKind, disableWaitForReadyTrue),
+				Config: testAccCheckTableflowApiKeyConfig(mockServerUrl, tableflowApiKeyResourceLabel, tableflowApiKeyUpdatedDisplayName, tableflowApiKeyUpdatedDescription, ownerId, ownerApiVersion, ownerKind, resourceApiVersion, resourceId, resourceKind),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckApiKeyExists(fullTableflowApiKeyResourceLabel),
 					resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "id", "HRVR6K4VMXYD2LDZ"),
 					resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "display_name", tableflowApiKeyUpdatedDisplayName),
 					resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "description", tableflowApiKeyUpdatedDescription),
-					resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "disable_wait_for_ready", disableWaitForReadyFalse),
+					resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "disable_wait_for_ready", "false"),
 					resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "owner.#", "1"),
 					resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "owner.0.%", "3"),
 					resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "owner.0.api_version", "iam/v2"),
@@ -808,13 +802,12 @@ func TestAccCloudApiKey(t *testing.T) {
 		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckCloudApiKeyConfig(mockServerUrl, cloudApiKeyResourceLabel, cloudApiKeyDisplayName, cloudApiKeyDescription, ownerId, ownerApiVersion, ownerKind, disableWaitForReadyFalse),
+				Config: testAccCheckCloudApiKeyConfig(mockServerUrl, cloudApiKeyResourceLabel, cloudApiKeyDisplayName, cloudApiKeyDescription, ownerId, ownerApiVersion, ownerKind),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckApiKeyExists(fullCloudApiKeyResourceLabel),
 					resource.TestCheckResourceAttr(fullCloudApiKeyResourceLabel, "id", "HRVR6K4VMXYD2LDZ"),
 					resource.TestCheckResourceAttr(fullCloudApiKeyResourceLabel, "display_name", cloudApiKeyDisplayName),
 					resource.TestCheckResourceAttr(fullCloudApiKeyResourceLabel, "description", cloudApiKeyDescription),
-					resource.TestCheckResourceAttr(fullCloudApiKeyResourceLabel, "disable_wait_for_ready", disableWaitForReadyFalse),
 					resource.TestCheckResourceAttr(fullCloudApiKeyResourceLabel, "owner.#", "1"),
 					resource.TestCheckResourceAttr(fullCloudApiKeyResourceLabel, "owner.0.%", "3"),
 					resource.TestCheckResourceAttr(fullCloudApiKeyResourceLabel, "owner.0.api_version", "iam/v2"),
@@ -830,13 +823,13 @@ func TestAccCloudApiKey(t *testing.T) {
 				ImportStateVerify: true,
 			},
 			{
-				Config: testAccCheckCloudApiKeyConfig(mockServerUrl, cloudApiKeyResourceLabel, cloudApiKeyUpdatedDisplayName, cloudApiKeyUpdatedDescription, ownerId, ownerApiVersion, ownerKind, disableWaitForReadyTrue),
+				Config: testAccCheckCloudApiKeyConfig(mockServerUrl, cloudApiKeyResourceLabel, cloudApiKeyUpdatedDisplayName, cloudApiKeyUpdatedDescription, ownerId, ownerApiVersion, ownerKind),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckApiKeyExists(fullCloudApiKeyResourceLabel),
 					resource.TestCheckResourceAttr(fullCloudApiKeyResourceLabel, "id", "HRVR6K4VMXYD2LDZ"),
 					resource.TestCheckResourceAttr(fullCloudApiKeyResourceLabel, "display_name", cloudApiKeyUpdatedDisplayName),
 					resource.TestCheckResourceAttr(fullCloudApiKeyResourceLabel, "description", cloudApiKeyUpdatedDescription),
-					resource.TestCheckResourceAttr(fullCloudApiKeyResourceLabel, "disable_wait_for_ready", disableWaitForReadyFalse),
+					resource.TestCheckResourceAttr(fullCloudApiKeyResourceLabel, "disable_wait_for_ready", "false"),
 					resource.TestCheckResourceAttr(fullCloudApiKeyResourceLabel, "owner.#", "1"),
 					resource.TestCheckResourceAttr(fullCloudApiKeyResourceLabel, "owner.0.%", "3"),
 					resource.TestCheckResourceAttr(fullCloudApiKeyResourceLabel, "owner.0.api_version", "iam/v2"),
@@ -859,6 +852,7 @@ func TestAccCloudApiKey(t *testing.T) {
 	// Combine both stubs into a single check since it doesn't differentiate between states
 	checkStubCount(t, wiremockClient, listEnvsOrgApi401Stub, "GET /org/v2/environments", 2)
 }
+
 func testAccCheckApiKeyDestroy(s *terraform.State) error {
 	c := testAccProvider.Meta().(*Client)
 	// Loop through the resources in state, verifying each kafka api key is destroyed
@@ -882,7 +876,7 @@ func testAccCheckApiKeyDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccCheckKafkaApiKeyConfig(mockServerUrl, kafkaApiKeyResourceLabel, kafkaApiKeyDisplayName, kafkaApiKeyDescription, ownerId, ownerApiVersion, ownerKind, resourceId, resourceApiVersion, resourceKind, environmentId, disableWaitForReady string) string {
+func testAccCheckKafkaApiKeyConfig(mockServerUrl, kafkaApiKeyResourceLabel, kafkaApiKeyDisplayName, kafkaApiKeyDescription, ownerId, ownerApiVersion, ownerKind, resourceId, resourceApiVersion, resourceKind, environmentId string) string {
 	return fmt.Sprintf(`
 	provider "confluent" {
 		endpoint = "%s"
@@ -890,7 +884,6 @@ func testAccCheckKafkaApiKeyConfig(mockServerUrl, kafkaApiKeyResourceLabel, kafk
 	resource "confluent_api_key" "%s" {
 		display_name = "%s"
 		description = "%s"
-		disable_wait_for_ready = %s
 		owner {
 			id = "%s"
 			api_version = "%s"
@@ -898,19 +891,19 @@ func testAccCheckKafkaApiKeyConfig(mockServerUrl, kafkaApiKeyResourceLabel, kafk
 		}
 		managed_resource {
 			id = "%s"
-			api_version = "%s"
+            api_version = "%s"
 			kind = "%s"
 			environment {
 				id = "%s"
 			}
 		}
 	}
-	`, mockServerUrl, kafkaApiKeyResourceLabel, kafkaApiKeyDisplayName, kafkaApiKeyDescription, disableWaitForReady, ownerId, ownerApiVersion, ownerKind, resourceId, resourceApiVersion, resourceKind, environmentId)
+	`, mockServerUrl, kafkaApiKeyResourceLabel, kafkaApiKeyDisplayName, kafkaApiKeyDescription, ownerId, ownerApiVersion, ownerKind, resourceId, resourceApiVersion, resourceKind, environmentId)
 }
 
 func testAccCheckFlinkApiKeyConfig(mockServerUrl, flinkApiKeyResourceLabel, flinkApiKeyDisplayName,
 	flinkApiKeyDescription, ownerId, ownerApiVersion, ownerKind, resourceId, resourceApiVersion,
-	resourceKind, environmentId, disableWaitForReady string) string {
+	resourceKind, environmentId string) string {
 	return fmt.Sprintf(`
 	provider "confluent" {
 		endpoint = "%s"
@@ -918,7 +911,6 @@ func testAccCheckFlinkApiKeyConfig(mockServerUrl, flinkApiKeyResourceLabel, flin
 	resource "confluent_api_key" "%s" {
 		display_name = "%s"
 		description = "%s"
-		disable_wait_for_ready = %s
 		owner {
 			id = "%s"
 			api_version = "%s"
@@ -933,27 +925,10 @@ func testAccCheckFlinkApiKeyConfig(mockServerUrl, flinkApiKeyResourceLabel, flin
 			}
 		}
 	}
-	`, mockServerUrl, flinkApiKeyResourceLabel, flinkApiKeyDisplayName, flinkApiKeyDescription, disableWaitForReady, ownerId, ownerApiVersion, ownerKind, resourceId, resourceApiVersion, resourceKind, environmentId)
+	`, mockServerUrl, flinkApiKeyResourceLabel, flinkApiKeyDisplayName, flinkApiKeyDescription, ownerId, ownerApiVersion, ownerKind, resourceId, resourceApiVersion, resourceKind, environmentId)
 }
 
-func testAccCheckCloudApiKeyConfig(mockServerUrl, cloudApiKeyResourceLabel, cloudApiKeyDisplayName, cloudApiKeyDescription, ownerId, ownerApiVersion, ownerKind, disableWaitForReady string) string {
-	return fmt.Sprintf(`
-		provider "confluent" {
-			endpoint = "%s"
-		}
-		resource "confluent_api_key" "%s" {
-			display_name = "%s"
-			description = "%s"
-			disable_wait_for_ready = %s
-			owner {
-				id = "%s"
-				api_version = "%s"
-				kind = "%s"
-			}
-		}
-		`, mockServerUrl, cloudApiKeyResourceLabel, cloudApiKeyDisplayName, cloudApiKeyDescription, disableWaitForReady, ownerId, ownerApiVersion, ownerKind)
-}
-func testAccCheckTableflowApiKeyConfig(mockServerUrl, tableflowApiKeyResourceLabel, tableflowApiKeyDisplayName, tableflowApiKeyDescription, ownerId, ownerApiVersion, ownerKind, resourceApiVersion, resourceId, resourceKind, disableWaitForReady string) string {
+func testAccCheckCloudApiKeyConfig(mockServerUrl, cloudApiKeyResourceLabel, cloudApiKeyDisplayName, cloudApiKeyDescription, ownerId, ownerApiVersion, ownerKind string) string {
 	return fmt.Sprintf(`
 	provider "confluent" {
 		endpoint = "%s"
@@ -961,7 +936,23 @@ func testAccCheckTableflowApiKeyConfig(mockServerUrl, tableflowApiKeyResourceLab
 	resource "confluent_api_key" "%s" {
 		display_name = "%s"
 		description = "%s"
-		disable_wait_for_ready = %s
+		owner {
+			id = "%s"
+			api_version = "%s"
+			kind = "%s"
+		}
+	}
+	`, mockServerUrl, cloudApiKeyResourceLabel, cloudApiKeyDisplayName, cloudApiKeyDescription, ownerId, ownerApiVersion, ownerKind)
+}
+
+func testAccCheckTableflowApiKeyConfig(mockServerUrl, tableflowApiKeyResourceLabel, tableflowApiKeyDisplayName, tableflowApiKeyDescription, ownerId, ownerApiVersion, ownerKind, resourceApiVersion, resourceId, resourceKind string) string {
+	return fmt.Sprintf(`
+	provider "confluent" {
+		endpoint = "%s"
+	}
+	resource "confluent_api_key" "%s" {
+		display_name = "%s"
+		description = "%s"
 		owner {
 			id = "%s"
 			api_version = "%s"
@@ -973,7 +964,7 @@ func testAccCheckTableflowApiKeyConfig(mockServerUrl, tableflowApiKeyResourceLab
 			kind = "%s"
 		}
 	}
-	`, mockServerUrl, tableflowApiKeyResourceLabel, tableflowApiKeyDisplayName, tableflowApiKeyDescription, disableWaitForReady, ownerId, ownerApiVersion, ownerKind, resourceApiVersion, resourceId, resourceKind)
+	`, mockServerUrl, tableflowApiKeyResourceLabel, tableflowApiKeyDisplayName, tableflowApiKeyDescription, ownerId, ownerApiVersion, ownerKind, resourceApiVersion, resourceId, resourceKind)
 }
 
 func testAccCheckApiKeyExists(n string) resource.TestCheckFunc {
