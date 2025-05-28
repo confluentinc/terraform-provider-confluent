@@ -83,6 +83,9 @@ The following arguments are supported:
 !> **Warning:** Use Option #2 to avoid exposing sensitive `credentials` value in a state file. When using Option #1, Terraform doesn't encrypt the sensitive `credentials` value of the `confluent_schema` resource, so you must keep your state file secure to avoid exposing it. Refer to the [Terraform documentation](https://www.terraform.io/docs/language/state/sensitive-data.html) to learn more about securing your state file.
 
 - `subject_name` - (Required String) The name of the subject (in other words, the namespace), representing the subject under which the schema will be registered, for example, `test-subject`. Schemas evolve safely, following a compatibility mode defined, under a subject name.
+
+-> **Note:** By default, subjects are created in the `default` context. If you want subjects to be created in a custom context, use the following naming pattern: `:.contextName:subjectName`. For example, use `subject_name = ":.context1:test-subject"` to create a subject named `test-subject` in the `context1` context, and use `subject_name = "test-subject"` to create a subject named `test-subject` in the `default` context.
+
 - `format` - (Required String) The format of the schema. Accepted values are: `AVRO`, `PROTOBUF`, and `JSON`.
 - `schema` - (Required String) The schema string, for example, `file("./schema_version_1.avsc")`.
 - `hard_delete` - (Optional Boolean) An optional flag to control whether a schema should be soft or hard deleted. Set it to `true` if you want to hard delete a schema on destroy (see [Schema Deletion Guidelines](https://docs.confluent.io/platform/current/schema-registry/schema-deletion-guidelines.html#schema-deletion-guidelines) for more details). Must be unset when importing. Defaults to `false` (soft delete).
@@ -118,6 +121,8 @@ The following arguments are supported:
 
 -> **Note:** The Confluent Cloud Console uses the following default values: `on_success = "NONE"` and `on_failure = "ERROR"`. However, the TF Provider sets its defaults to `on_success = "NONE,NONE"` and `on_failure = "ERROR,ERROR"`.
 
+-> **Note:** To delete all domain rules from an existing schema, remove the `ruleset` block from the `confluent_schema` resource in the Terraform configuration.
+
 ## Attributes Reference
 
 In addition to the preceding arguments, the following attributes are exported:
@@ -148,12 +153,12 @@ $ terraform import confluent_schema.my_schema_1 lsrc-abc123/test-subject/100003
 
 ## Getting Started
 The following end-to-end examples might help to get started with `confluent_schema` resource:
-* [`single-event-types-avro-schema`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/single-event-types-avro-schema)
-* [`single-event-types-proto-schema`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/single-event-types-proto-schema)
-* [`single-event-types-proto-schema-with-alias`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/single-event-types-proto-schema-with-alias)
-* [`multiple-event-types-avro-schema`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/multiple-event-types-avro-schema)
-* [`multiple-event-types-proto-schema`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/multiple-event-types-proto-schema)
-* [`field-level-encryption-schema`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/field-level-encryption-schema)
+* [single-event-types-avro-schema](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/single-event-types-avro-schema)
+* [single-event-types-proto-schema](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/single-event-types-proto-schema)
+* [single-event-types-proto-schema-with-alias](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/single-event-types-proto-schema-with-alias)
+* [multiple-event-types-avro-schema](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/multiple-event-types-avro-schema)
+* [multiple-event-types-proto-schema](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/multiple-event-types-proto-schema)
+* [field-level-encryption-schema](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/field-level-encryption-schema)
 
 ## Additional Examples
 

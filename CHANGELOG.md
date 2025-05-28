@@ -1,3 +1,49 @@
+## 2.30.0 (May 22nd, 2025)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.29.0...v2.30.0)
+
+**New features:**
+* Enabled the ability to remove all domain rules from an existing schema by deleting the ruleset block from the `confluent_schema` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema) in the Terraform configuration.
+
+**Bug fixes:**
+* Updated the docs of `confluent_connector` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_connector). 
+
+## 2.29.0 (May 12th, 2025)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.28.0...v2.29.0)
+
+**New features:**
+* Added support for Flink UDF (User-Defined Functions) for Azure.
+
+## 2.28.0 (May 8th, 2025)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.27.0...v2.28.0)
+
+**Bug fixes:**
+* Updated the `confluent_schema_exporter` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema_exporter) to address timeout issues during create and update operations. This was achieved by reverting the previous fix ([#671](https://github.com/confluentinc/terraform-provider-confluent/pull/671)) and directly resolving a 10-minute timeout issue.
+* Updated the docs.
+
+## 2.27.0 (May 6th, 2025)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.26.0...v2.27.0)
+
+**Bug fixes:**
+* Updated `confluent_schema_exporter` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema_exporter) to resolve time out issues for create and update operations.
+
+## 2.26.0 (May 5th, 2025)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.25.0...v2.26.0)
+
+**New features:**
+* Added `disable_wait_for_ready` attribute for `confluent_role_binding` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_role_binding) to disable the readiness check.
+* Added support to update `issuer` and `jwks_uri` arguments for `confluent_identity_provider` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_identity_provider) to fix the "URL update behavior doesn't match UI" issue ([#583](https://github.com/confluentinc/terraform-provider-confluent/issues/583)).
+* Added support for new `force` attribute for `confluent_schema_registry_cluster_mode` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema_registry_cluster_mode) and `confluent_subject_mode` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_subject_mode).
+
+**Bug fixes:**
+* Updated the docs of `confluent_schema` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema) with additional notes.
+* Updated the docs of `confluent_subject_config` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_subject_config) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_subject_config) with additional notes.
+* Updated the docs of `confluent_schema_registry_cluster_config` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema_registry_cluster_config) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_schema_registry_cluster_config) with additional notes.
+
 ## 2.25.0 (April 17th, 2025)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.24.0...v2.25.0)
@@ -842,8 +888,8 @@ removed in the next major version of the provider (2.0.0). Refer to the [Upgrade
 * Added **4** new examples:
   * [azure-key-vault](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/azure-key-vault)
   * [hashicorp-vault](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/hashicorp-vault)
-  * [manage-topics-via-json](https://github.com/confluentinc/terraform-provider-confluent-internal/tree/master/examples/configurations/manage-topics-via-json)
-  * [topic-as-a-service](https://github.com/confluentinc/terraform-provider-confluent-internal/tree/master/examples/configurations/topic-as-a-service)
+  * [manage-topics-via-json](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/manage-topics-via-json)
+  * [topic-as-a-service](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/topic-as-a-service)
 
 **Bug fixes:**
 * Fixed a bug "422 Unprocessable Entity: Availability update is only supported on BASIC and STANDARD clusters" when updating `cku` attribute of `confluent_kafka_cluster` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_cluster).

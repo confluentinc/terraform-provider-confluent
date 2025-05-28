@@ -59,6 +59,8 @@ const (
 	paramSubjectName                          = "subject_name"
 	paramHardDelete                           = "hard_delete"
 	paramHardDeleteDefaultValue               = false
+	paramForce                                = "force"
+	paramForceDefaultValue                    = false
 	paramRecreateOnUpdate                     = "recreate_on_update"
 	paramRecreateOnUpdateDefaultValue         = false
 	paramSkipValidationDuringPlan             = "skip_validation_during_plan"
@@ -187,7 +189,7 @@ func rulesetSchema() *schema.Schema {
 			},
 		},
 		MaxItems: 1,
-		Computed: true,
+		Computed: false,
 		Optional: true,
 	}
 }
@@ -350,13 +352,20 @@ func SetSchemaDiff(ctx context.Context, diff *schema.ResourceDiff, meta interfac
 	createSchemaRequest.SetSchema(schemaContent)
 	createSchemaRequest.SetReferences(schemaReferences)
 
+	oldRuleset, newRuleset := diff.GetChange(paramRuleset)
 	if tfRuleset := diff.Get(paramRuleset).([]interface{}); len(tfRuleset) == 1 {
-		ruleset := sr.NewRuleSet()
-		tfRulesetMap := tfRuleset[0].(map[string]interface{})
-		if tfRulesetMap[paramDomainRules] != nil {
-			ruleset.SetDomainRules(buildRules(tfRulesetMap[paramDomainRules].(*schema.Set).List()))
+		if len(newRuleset.([]interface{})) == 0 && len(oldRuleset.([]interface{})) > 0 { //this is the case of an advanced package user trying to delete a ruleset. // TODO: Revisit this logic after we add migration rules, this might never be hit.
+			ruleset := sr.NewRuleSet()
+			ruleset.SetDomainRules([]sr.Rule{})
+			createSchemaRequest.SetRuleSet(*ruleset)
+		} else { //this is the case when a ruleset is not empty after an operation.
+			ruleset := sr.NewRuleSet()
+			tfRulesetMap := tfRuleset[0].(map[string]interface{})
+			if tfRulesetMap[paramDomainRules] != nil {
+				ruleset.SetDomainRules(buildRules(tfRulesetMap[paramDomainRules].(*schema.Set).List()))
+			}
+			createSchemaRequest.SetRuleSet(*ruleset)
 		}
-		createSchemaRequest.SetRuleSet(*ruleset)
 	}
 	if tfMetadata := diff.Get(paramMetadata).([]interface{}); len(tfMetadata) == 1 {
 		metadata := sr.NewMetadata()
@@ -562,7 +571,12 @@ func schemaCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 	createSchemaRequest.SetSchemaType(format)
 	createSchemaRequest.SetSchema(schemaContent)
 	createSchemaRequest.SetReferences(schemaReferences)
-	if tfRuleset := d.Get(paramRuleset).([]interface{}); len(tfRuleset) == 1 {
+	oldRuleset, newRuleset := d.GetChange(paramRuleset)
+	if len(newRuleset.([]interface{})) == 0 && len(oldRuleset.([]interface{})) > 0 { //this is the case of an advanced package user trying to delete a ruleset.
+		ruleset := sr.NewRuleSet()
+		ruleset.SetDomainRules([]sr.Rule{})
+		createSchemaRequest.SetRuleSet(*ruleset)
+	} else if tfRuleset := d.Get(paramRuleset).([]interface{}); len(tfRuleset) == 1 { //this is the case when a ruleset is not empty after an operation.
 		ruleset := sr.NewRuleSet()
 		tfRulesetMap := tfRuleset[0].(map[string]interface{})
 		if tfRulesetMap[paramDomainRules] != nil {

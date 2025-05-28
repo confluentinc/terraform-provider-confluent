@@ -88,6 +88,7 @@ const (
 	apiKeyLoggingKey                          = "api_key_id"
 	computePoolLoggingKey                     = "compute_pool_id"
 	flinkArtifactLoggingKey                   = "flink_artifact_id"
+	flinkConnectionLoggingKey                 = "flink_connection_id"
 	flinkStatementLoggingKey                  = "flink_statement_key_id"
 	networkLoggingKey                         = "network_key_id"
 	customConnectorPluginLoggingKey           = "custom_connector_plugin_key_id"
@@ -1247,7 +1248,7 @@ func uploadFile(url, filePath string, formFields map[string]any, fileExtension, 
 	}
 	if cloud == "AZURE" && isFlinkArtifact {
 		var contentFormat string
-		switch fileExtension {
+		switch strings.ToLower(fileExtension) {
 		case "zip":
 			contentFormat = "application/zip"
 		case "jar":

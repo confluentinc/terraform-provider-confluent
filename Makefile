@@ -108,7 +108,7 @@ test:
 
 .PHONY: testacc
 testacc:
-	TF_LOG=debug TF_ACC=1 $(GOCMD) test $(TEST) -v $(TESTARGS) -timeout 120m -failfast
+	TF_LOG=debug TF_ACC=1 $(GOCMD) test $(TEST) -v $(TESTARGS) -coverprofile=coverage.txt -covermode=atomic -timeout 120m -failfast
 	@echo "finished testacc"
 
 install: build

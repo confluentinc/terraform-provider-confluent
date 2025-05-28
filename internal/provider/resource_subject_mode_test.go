@@ -46,6 +46,7 @@ func TestAccSubjectMode(t *testing.T) {
 
 	createSubjectModeResponse, _ := ioutil.ReadFile("../testdata/subject_mode/read_created_subject_mode.json")
 	createSubjectModeStub := wiremock.Put(wiremock.URLPathEqualTo(updateSubjectModePath)).
+		WithQueryParam(paramForce, wiremock.EqualTo(fmt.Sprintf(testForceTrue))).
 		InScenario(subjectModeScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillSetStateTo(scenarioStateSubjectModeHasBeenCreated).
@@ -67,7 +68,8 @@ func TestAccSubjectMode(t *testing.T) {
 			http.StatusOK,
 		))
 
-	_ = wiremockClient.StubFor(wiremock.Put(wiremock.URLPathEqualTo(updateSubjectModePath)).
+	updateSubjectModeStub := wiremock.Put(wiremock.URLPathEqualTo(updateSubjectModePath)).
+		WithQueryParam(paramForce, wiremock.EqualTo(fmt.Sprintf(testForceFalse))).
 		InScenario(subjectModeScenarioName).
 		WhenScenarioStateIs(scenarioStateSubjectModeHasBeenCreated).
 		WillSetStateTo(scenarioStateSubjectModeHasBeenUpdated).
@@ -75,7 +77,8 @@ func TestAccSubjectMode(t *testing.T) {
 			"",
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)
+	_ = wiremockClient.StubFor(updateSubjectModeStub)
 
 	readUpdatedSubjectModesResponse, _ := ioutil.ReadFile("../testdata/subject_mode/read_updated_subject_mode.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(updateSubjectModePath)).
@@ -117,7 +120,7 @@ func TestAccSubjectMode(t *testing.T) {
 		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckSubjectModeConfig(confluentCloudBaseUrl, mockSubjectModeTestServerUrl, testSubjectMode, testSchemaRegistryKey, testSchemaRegistrySecret),
+				Config: testAccCheckSubjectModeConfig(confluentCloudBaseUrl, mockSubjectModeTestServerUrl, testSubjectMode, testForceTrue, testSchemaRegistryKey, testSchemaRegistrySecret),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSubjectModeExists(fullSubjectModeResourceLabel),
 					resource.TestCheckResourceAttr(fullSubjectModeResourceLabel, "id", fmt.Sprintf("%s/%s", testStreamGovernanceClusterId, testSubjectName)),
@@ -135,7 +138,7 @@ func TestAccSubjectMode(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckSubjectModeConfig(confluentCloudBaseUrl, mockSubjectModeTestServerUrl, testUpdatedSubjectMode, testSchemaRegistryUpdatedKey, testSchemaRegistryUpdatedSecret),
+				Config: testAccCheckSubjectModeConfig(confluentCloudBaseUrl, mockSubjectModeTestServerUrl, testUpdatedSubjectMode, testForceFalse, testSchemaRegistryUpdatedKey, testSchemaRegistryUpdatedSecret),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSubjectModeExists(fullSubjectModeResourceLabel),
 					resource.TestCheckResourceAttr(fullSubjectModeResourceLabel, "id", fmt.Sprintf("%s/%s", testStreamGovernanceClusterId, testSubjectName)),
@@ -161,11 +164,12 @@ func TestAccSubjectMode(t *testing.T) {
 		},
 	})
 
-	checkStubCount(t, wiremockClient, createSubjectModeStub, fmt.Sprintf("PUT (CREATE) %s", updateSubjectModePath), expectedCountTwo)
+	checkStubCount(t, wiremockClient, createSubjectModeStub, fmt.Sprintf("PUT (CREATE) %s", updateSubjectModePath), expectedCountOne)
+	checkStubCount(t, wiremockClient, updateSubjectModeStub, fmt.Sprintf("PUT (UPDATE) %s", updateSubjectModePath), expectedCountOne)
 	checkStubCount(t, wiremockClient, deleteSubjectModeStub, fmt.Sprintf("DELETE %s", updateSubjectModePath), expectedCountOne)
 }
 
-func testAccCheckSubjectModeConfig(confluentCloudBaseUrl, mockServerUrl, mode, schemaRegistryKey, schemaRegistrySecret string) string {
+func testAccCheckSubjectModeConfig(confluentCloudBaseUrl, mockServerUrl, mode, force, schemaRegistryKey, schemaRegistrySecret string) string {
 	return fmt.Sprintf(`
 	provider "confluent" {
 	  endpoint = "%s"
@@ -182,6 +186,7 @@ func testAccCheckSubjectModeConfig(confluentCloudBaseUrl, mockServerUrl, mode, s
 	
 	  subject_name = "%s"
 	  mode = "%s"
+	  force = "%s"
 	}
-	`, confluentCloudBaseUrl, testSubjectModeResourceLabel, schemaRegistryKey, schemaRegistrySecret, mockServerUrl, testStreamGovernanceClusterId, testSubjectName, mode)
+	`, confluentCloudBaseUrl, testSubjectModeResourceLabel, schemaRegistryKey, schemaRegistrySecret, mockServerUrl, testStreamGovernanceClusterId, testSubjectName, mode, force)
 }

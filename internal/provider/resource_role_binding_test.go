@@ -115,6 +115,7 @@ func TestAccRoleBinding(t *testing.T) {
 					resource.TestCheckResourceAttr(fullRbResourceLabel, "principal", rbPrincipal),
 					resource.TestCheckResourceAttr(fullRbResourceLabel, "role_name", rbRolename),
 					resource.TestCheckResourceAttr(fullRbResourceLabel, "crn_pattern", rbCrn),
+					resource.TestCheckResourceAttr(fullRbResourceLabel, "disable_wait_for_ready", "false"),
 				),
 			},
 			{
