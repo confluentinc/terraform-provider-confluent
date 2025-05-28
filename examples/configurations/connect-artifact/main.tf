@@ -48,6 +48,8 @@ resource "confluent_connector" "datagen_with_custom_smt" {
     "transforms"     = "customSMT"
     "transforms.customSMT.type" = "io.confluent.connect.transforms.ExtractTopic$Value"
     "transforms.customSMT.custom.smt.artifact.id" = confluent_connect_artifact.main.id
+  }
+  config_sensitive = {
     "transforms.customSMT.field" = "itemid"
     "kafka.api.key" = var.kafka_api_key
     "kafka.api.secret" = var.kafka_api_secret
