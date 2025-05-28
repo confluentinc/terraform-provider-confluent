@@ -105,3 +105,4 @@ In addition to the preceding arguments, the following attributes are exported:
 - `data` - (Required String) The authentication data of the Flink Connection.
 - `status` - (Required String) The status of the Flink Connection.
 - `status_detail` - (Required String) The status details of the Flink Connection.
+- 
