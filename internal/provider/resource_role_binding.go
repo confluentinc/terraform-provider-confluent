@@ -39,6 +39,7 @@ func roleBindingResource() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: roleBindingCreate,
 		ReadContext:   roleBindingRead,
+		UpdateContext: roleBindingUpdate,
 		DeleteContext: roleBindingDelete,
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
@@ -68,7 +69,6 @@ func roleBindingResource() *schema.Resource {
 				Type:     schema.TypeBool,
 				Optional: true,
 				Default:  false,
-				ForceNew: true,
 			},
 		},
 	}
@@ -112,6 +112,13 @@ func roleBindingCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 func executeRoleBindingCreate(ctx context.Context, c *Client, roleBinding *mds.IamV2RoleBinding) (mds.IamV2RoleBinding, *http.Response, error) {
 	req := c.mdsClient.RoleBindingsIamV2Api.CreateIamV2RoleBinding(c.mdsApiContext(ctx)).IamV2RoleBinding(*roleBinding)
 	return req.Execute()
+}
+
+func roleBindingUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	if d.HasChangesExcept(paramDisableWaitForReady) {
+		return diag.Errorf("error updating Role Binding %q: only %q attribute can be updated for Role Binding", d.Id(), paramDisableWaitForReady)
+	}
+	return roleBindingRead(ctx, d, meta)
 }
 
 func roleBindingDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
