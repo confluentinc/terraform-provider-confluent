@@ -55,6 +55,9 @@ const (
 	scenarioStateTableflowApiKeyHasBeenUpdated = "The new tableflow api key's description and display_name have been just updated"
 	scenarioStateTableflowApiKeyHasBeenDeleted = "The new tableflow api key has been deleted"
 	tableflowApiKeyScenarioName                = "confluent_api_key (Tableflow API Key) Resource Lifecycle"
+
+	testShouldDisableBefore = "false"
+	testShouldDisableAfter  = "true"
 )
 
 func TestAccKafkaApiKey(t *testing.T) {
@@ -216,7 +219,7 @@ func TestAccKafkaApiKey(t *testing.T) {
 		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckKafkaApiKeyConfig(mockServerUrl, kafkaApiKeyResourceLabel, kafkaApiKeyDisplayName, kafkaApiKeyDescription, ownerId, ownerApiVersion, ownerKind, resourceId, resourceApiVersion, resourceKind, environmentId),
+				Config: testAccCheckKafkaApiKeyConfig(mockServerUrl, kafkaApiKeyResourceLabel, kafkaApiKeyDisplayName, kafkaApiKeyDescription, testShouldDisableBefore, ownerId, ownerApiVersion, ownerKind, resourceId, resourceApiVersion, resourceKind, environmentId),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckApiKeyExists(fullKafkaApiKeyResourceLabel),
 					resource.TestCheckResourceAttr(fullKafkaApiKeyResourceLabel, "id", "7FJIYKQ4SGQDQ72H"),
@@ -251,7 +254,7 @@ func TestAccKafkaApiKey(t *testing.T) {
 				},
 			},
 			{
-				Config: testAccCheckKafkaApiKeyConfig(mockServerUrl, kafkaApiKeyResourceLabel, kafkaApiKeyUpdatedDisplayName, kafkaApiKeyUpdatedDescription, ownerId, ownerApiVersion, ownerKind, resourceId, resourceApiVersion, resourceKind, environmentId),
+				Config: testAccCheckKafkaApiKeyConfig(mockServerUrl, kafkaApiKeyResourceLabel, kafkaApiKeyUpdatedDisplayName, kafkaApiKeyUpdatedDescription, testShouldDisableAfter, ownerId, ownerApiVersion, ownerKind, resourceId, resourceApiVersion, resourceKind, environmentId),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckApiKeyExists(fullKafkaApiKeyResourceLabel),
 					resource.TestCheckResourceAttr(fullKafkaApiKeyResourceLabel, "id", "7FJIYKQ4SGQDQ72H"),
@@ -876,7 +879,7 @@ func testAccCheckApiKeyDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccCheckKafkaApiKeyConfig(mockServerUrl, kafkaApiKeyResourceLabel, kafkaApiKeyDisplayName, kafkaApiKeyDescription, ownerId, ownerApiVersion, ownerKind, resourceId, resourceApiVersion, resourceKind, environmentId string) string {
+func testAccCheckKafkaApiKeyConfig(mockServerUrl, kafkaApiKeyResourceLabel, kafkaApiKeyDisplayName, kafkaApiKeyDescription, shouldDisable, ownerId, ownerApiVersion, ownerKind, resourceId, resourceApiVersion, resourceKind, environmentId string) string {
 	return fmt.Sprintf(`
 	provider "confluent" {
 		endpoint = "%s"
@@ -884,6 +887,7 @@ func testAccCheckKafkaApiKeyConfig(mockServerUrl, kafkaApiKeyResourceLabel, kafk
 	resource "confluent_api_key" "%s" {
 		display_name = "%s"
 		description = "%s"
+		disable_wait_for_ready = %s
 		owner {
 			id = "%s"
 			api_version = "%s"
@@ -898,11 +902,11 @@ func testAccCheckKafkaApiKeyConfig(mockServerUrl, kafkaApiKeyResourceLabel, kafk
 			}
 		}
 	}
-	`, mockServerUrl, kafkaApiKeyResourceLabel, kafkaApiKeyDisplayName, kafkaApiKeyDescription, ownerId, ownerApiVersion, ownerKind, resourceId, resourceApiVersion, resourceKind, environmentId)
+	`, mockServerUrl, kafkaApiKeyResourceLabel, kafkaApiKeyDisplayName, kafkaApiKeyDescription, shouldDisable, ownerId, ownerApiVersion, ownerKind, resourceId, resourceApiVersion, resourceKind, environmentId)
 }
 
 func testAccCheckFlinkApiKeyConfig(mockServerUrl, flinkApiKeyResourceLabel, flinkApiKeyDisplayName,
-	flinkApiKeyDescription, ownerId, ownerApiVersion, ownerKind, resourceId, resourceApiVersion,
+	flinkApiKeyDescription, shouldDisable, ownerId, ownerApiVersion, ownerKind, resourceId, resourceApiVersion,
 	resourceKind, environmentId string) string {
 	return fmt.Sprintf(`
 	provider "confluent" {
@@ -911,6 +915,7 @@ func testAccCheckFlinkApiKeyConfig(mockServerUrl, flinkApiKeyResourceLabel, flin
 	resource "confluent_api_key" "%s" {
 		display_name = "%s"
 		description = "%s"
+		disable_wait_for_ready = %s
 		owner {
 			id = "%s"
 			api_version = "%s"
@@ -925,10 +930,10 @@ func testAccCheckFlinkApiKeyConfig(mockServerUrl, flinkApiKeyResourceLabel, flin
 			}
 		}
 	}
-	`, mockServerUrl, flinkApiKeyResourceLabel, flinkApiKeyDisplayName, flinkApiKeyDescription, ownerId, ownerApiVersion, ownerKind, resourceId, resourceApiVersion, resourceKind, environmentId)
+	`, mockServerUrl, flinkApiKeyResourceLabel, flinkApiKeyDisplayName, flinkApiKeyDescription, shouldDisable, ownerId, ownerApiVersion, ownerKind, resourceId, resourceApiVersion, resourceKind, environmentId)
 }
 
-func testAccCheckCloudApiKeyConfig(mockServerUrl, cloudApiKeyResourceLabel, cloudApiKeyDisplayName, cloudApiKeyDescription, ownerId, ownerApiVersion, ownerKind string) string {
+func testAccCheckCloudApiKeyConfig(mockServerUrl, cloudApiKeyResourceLabel, cloudApiKeyDisplayName, cloudApiKeyDescription, shouldDisable, ownerId, ownerApiVersion, ownerKind string) string {
 	return fmt.Sprintf(`
 	provider "confluent" {
 		endpoint = "%s"
@@ -936,16 +941,17 @@ func testAccCheckCloudApiKeyConfig(mockServerUrl, cloudApiKeyResourceLabel, clou
 	resource "confluent_api_key" "%s" {
 		display_name = "%s"
 		description = "%s"
+		disable_wait_for_ready = %s
 		owner {
 			id = "%s"
 			api_version = "%s"
 			kind = "%s"
 		}
 	}
-	`, mockServerUrl, cloudApiKeyResourceLabel, cloudApiKeyDisplayName, cloudApiKeyDescription, ownerId, ownerApiVersion, ownerKind)
+	`, mockServerUrl, cloudApiKeyResourceLabel, cloudApiKeyDisplayName, cloudApiKeyDescription, shouldDisable, ownerId, ownerApiVersion, ownerKind)
 }
 
-func testAccCheckTableflowApiKeyConfig(mockServerUrl, tableflowApiKeyResourceLabel, tableflowApiKeyDisplayName, tableflowApiKeyDescription, ownerId, ownerApiVersion, ownerKind, resourceApiVersion, resourceId, resourceKind string) string {
+func testAccCheckTableflowApiKeyConfig(mockServerUrl, tableflowApiKeyResourceLabel, tableflowApiKeyDisplayName, tableflowApiKeyDescription, shouldDisable, ownerId, ownerApiVersion, ownerKind, resourceApiVersion, resourceId, resourceKind string) string {
 	return fmt.Sprintf(`
 	provider "confluent" {
 		endpoint = "%s"
@@ -953,6 +959,7 @@ func testAccCheckTableflowApiKeyConfig(mockServerUrl, tableflowApiKeyResourceLab
 	resource "confluent_api_key" "%s" {
 		display_name = "%s"
 		description = "%s"
+		disable_wait_for_ready = %s
 		owner {
 			id = "%s"
 			api_version = "%s"
