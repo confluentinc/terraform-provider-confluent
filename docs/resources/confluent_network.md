@@ -151,7 +151,9 @@ The following arguments are supported:
 In addition to the preceding arguments, the following attributes are exported:
 
 - `id` - (Required String) The ID of the Network, for example, `n-abc123`.
-- `endpoint_suffix` - (Optional String) The endpoint suffix for the network, if applicable. It can take various forms (for example, `.pr1jy6.us-east-2.aws.confluent.cloud` or `-pr1jy6.us-east-2.aws.confluent.cloud`). Full service endpoints can be constructed by appending the service identifier to the beginning of the endpoint suffix. For example, the Flink REST endpoint can be constructed by adding `flink` — that is, `https://flink` + `endpoint_suffix`; namely, `https://flink.pr1jy6.us-east-2.aws.confluent.cloud`.
+- `endpoint_suffix` - (Optional String) The endpoint suffix for the network, if applicable. It can take various forms (for example, `.pr1jy6.us-east-2.aws.confluent.cloud` or `-pr1jy6.us-east-2.aws.confluent.cloud`). Full service endpoints can be constructed by appending the service identifier to the beginning of the endpoint suffix. 
+  - The Flink REST API endpoint can be constructed by adding `flink` — that is, `https://flink` + `endpoint_suffix`; namely, `https://flink.pr1jy6.us-east-2.aws.confluent.cloud` or `https://flink${data.confluent_network.main.endpoint_suffix}`
+  - The Schema Registry REST API endpoint can be constructed by adding the Schema Registry Cluster ID — that is, `https://lsrc-abc123` + `endpoint_suffix`; namely, `https://lsrc-abc123.pr1jy6.us-east-2.aws.confluent.cloud` or `https://${data.confluent_schema_registry_cluster.example.id}${data.confluent_network.main.endpoint_suffix}`.
 - `resource_name` - (Required String) The Confluent Resource Name of the Network.
 - `dns_domain` - (Optional String) The root DNS domain for the network, for example, `pr123a.us-east-2.aws.confluent.cloud` if applicable. Present on Networks that support Private Link.
 - `zonal_subdomains` - (Optional Map) The DNS subdomain for each zone. Present on networks that support Private Link. Keys are zone names, for example, `use2-az1` and values are DNS domains, for example, `use2-az1.pr123a.us-east-2.aws.confluent.cloud`.
