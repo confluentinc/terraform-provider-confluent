@@ -199,7 +199,7 @@ func apiKeyUpdate(ctx context.Context, d *schema.ResourceData, meta interface{})
 		return diag.Errorf("only %s, %s, %s attributes can be updated for an API Key", paramDisplayName, paramDescription, paramDisableWaitForReady)
 	}
 
-	// PATCH API request should be skipped when updating paramDisableWaitForReady
+	// When updating the paramDisableWaitForReady, the PATCH API request should be skipped.
 	if d.HasChanges(paramDisplayName, paramDescription) {
 		updateApiKeyRequest := apikeys.NewIamV2ApiKeyUpdate()
 		updateSpec := apikeys.NewIamV2ApiKeySpecUpdate()
