@@ -198,7 +198,7 @@ func ruleSchema() *schema.Schema {
 	return &schema.Schema{
 		Type:     schema.TypeSet,
 		Optional: true,
-		Computed: true,
+		Computed: false,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				paramName: {
@@ -357,12 +357,16 @@ func SetSchemaDiff(ctx context.Context, diff *schema.ResourceDiff, meta interfac
 		if len(newRuleset.([]interface{})) == 0 && len(oldRuleset.([]interface{})) > 0 { //this is the case of an advanced package user trying to delete a ruleset. // TODO: Revisit this logic after we add migration rules, this might never be hit.
 			ruleset := sr.NewRuleSet()
 			ruleset.SetDomainRules([]sr.Rule{})
+			ruleset.SetMigrationRules([]sr.Rule{})
 			createSchemaRequest.SetRuleSet(*ruleset)
 		} else { //this is the case when a ruleset is not empty after an operation.
 			ruleset := sr.NewRuleSet()
 			tfRulesetMap := tfRuleset[0].(map[string]interface{})
 			if tfRulesetMap[paramDomainRules] != nil {
 				ruleset.SetDomainRules(buildRules(tfRulesetMap[paramDomainRules].(*schema.Set).List()))
+			}
+			if tfRulesetMap[paramMigrationRules] != nil {
+				ruleset.SetMigrationRules(buildRules(tfRulesetMap[paramMigrationRules].(*schema.Set).List()))
 			}
 			createSchemaRequest.SetRuleSet(*ruleset)
 		}
@@ -575,12 +579,16 @@ func schemaCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 	if len(newRuleset.([]interface{})) == 0 && len(oldRuleset.([]interface{})) > 0 { //this is the case of an advanced package user trying to delete a ruleset.
 		ruleset := sr.NewRuleSet()
 		ruleset.SetDomainRules([]sr.Rule{})
+		ruleset.SetMigrationRules([]sr.Rule{})
 		createSchemaRequest.SetRuleSet(*ruleset)
 	} else if tfRuleset := d.Get(paramRuleset).([]interface{}); len(tfRuleset) == 1 { //this is the case when a ruleset is not empty after an operation.
 		ruleset := sr.NewRuleSet()
 		tfRulesetMap := tfRuleset[0].(map[string]interface{})
 		if tfRulesetMap[paramDomainRules] != nil {
 			ruleset.SetDomainRules(buildRules(tfRulesetMap[paramDomainRules].(*schema.Set).List()))
+		}
+		if tfRulesetMap[paramMigrationRules] != nil {
+			ruleset.SetMigrationRules(buildRules(tfRulesetMap[paramMigrationRules].(*schema.Set).List()))
 		}
 		createSchemaRequest.SetRuleSet(*ruleset)
 	}
@@ -604,6 +612,7 @@ func schemaCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Validating new Schema: %s", createSchemaRequestJson))
+	//panic(subjectName)
 	validationResponse, _, err := executeSchemaValidate(ctx, schemaRegistryRestClient, createSchemaRequest, subjectName)
 	if err != nil {
 		return diag.Errorf("error creating Schema: error sending validation request: %s", createDescriptiveError(err))
@@ -935,8 +944,8 @@ func readSchemaRegistryConfigAndSetAttributes(ctx context.Context, d *schema.Res
 	}
 
 	if ruleSet, ok := srSchema.GetRuleSetOk(); ok {
-		if len(ruleSet.GetDomainRules()) > 0 {
-			if err := d.Set(paramRuleset, buildTfRules(ruleSet.GetDomainRules())); err != nil {
+		if len(ruleSet.GetDomainRules()) > 0 || len(ruleSet.GetMigrationRules()) > 0 {
+			if err := d.Set(paramRuleset, buildTfRules(ruleSet.GetDomainRules(), ruleSet.GetMigrationRules())); err != nil {
 				return nil, err
 			}
 		}
@@ -1214,28 +1223,49 @@ func buildRules(tfRules []interface{}) []sr.Rule {
 	return rules
 }
 
-func buildTfRules(rules []sr.Rule) *[]map[string]interface{} {
-	tfRules := make([]map[string]interface{}, len(rules))
-	for i, rule := range rules {
-		tfRule := make(map[string]interface{})
-		tfRule[paramName] = rule.GetName()
-		tfRule[paramDoc] = rule.GetDoc()
-		tfRule[paramKind] = rule.GetKind()
-		tfRule[paramMode] = rule.GetMode()
-		tfRule[paramType] = rule.GetType()
-		tfRule[paramExpr] = rule.GetExpr()
-		tfRule[paramOnSuccess] = rule.GetOnSuccess()
-		tfRule[paramOnFailure] = rule.GetOnFailure()
-		tfRule[paramDisabled] = rule.GetDisabled()
-		tfRule[paramTags] = rule.GetTags()
-		tfRule[paramParams] = rule.GetParams()
-		tfRules[i] = tfRule
+func buildTfRules(domainRules, migrationRules []sr.Rule) *[]map[string]interface{} {
+	tfDomainMigrationRules := make(map[string]interface{})
+	if len(domainRules) > 0 {
+		tfRules := make([]map[string]interface{}, len(domainRules))
+		for i, rule := range domainRules {
+			tfRule := make(map[string]interface{})
+			tfRule[paramName] = rule.GetName()
+			tfRule[paramDoc] = rule.GetDoc()
+			tfRule[paramKind] = rule.GetKind()
+			tfRule[paramMode] = rule.GetMode()
+			tfRule[paramType] = rule.GetType()
+			tfRule[paramExpr] = rule.GetExpr()
+			tfRule[paramOnSuccess] = rule.GetOnSuccess()
+			tfRule[paramOnFailure] = rule.GetOnFailure()
+			tfRule[paramDisabled] = rule.GetDisabled()
+			tfRule[paramTags] = rule.GetTags()
+			tfRule[paramParams] = rule.GetParams()
+			tfRules[i] = tfRule
+		}
+		tfDomainMigrationRules[paramDomainRules] = tfRules
 	}
-	tfDomainRules := make(map[string]interface{})
-	tfDomainRules[paramDomainRules] = tfRules
+	if len(migrationRules) > 0 {
+		tfRules := make([]map[string]interface{}, len(migrationRules))
+		for i, rule := range migrationRules {
+			tfRule := make(map[string]interface{})
+			tfRule[paramName] = rule.GetName()
+			tfRule[paramDoc] = rule.GetDoc()
+			tfRule[paramKind] = rule.GetKind()
+			tfRule[paramMode] = rule.GetMode()
+			tfRule[paramType] = rule.GetType()
+			tfRule[paramExpr] = rule.GetExpr()
+			tfRule[paramOnSuccess] = rule.GetOnSuccess()
+			tfRule[paramOnFailure] = rule.GetOnFailure()
+			tfRule[paramDisabled] = rule.GetDisabled()
+			tfRule[paramTags] = rule.GetTags()
+			tfRule[paramParams] = rule.GetParams()
+			tfRules[i] = tfRule
+		}
+		tfDomainMigrationRules[paramMigrationRules] = tfRules
+	}
 
 	tfRuleSet := make([]map[string]interface{}, 1)
-	tfRuleSet[0] = tfDomainRules
+	tfRuleSet[0] = tfDomainMigrationRules
 	return &tfRuleSet
 }
 
