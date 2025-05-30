@@ -651,183 +651,178 @@ func TestAccTableflowApiKey(t *testing.T) {
 	checkStubCount(t, wiremockClient, patchTableflowApiKeyStub, "PATCH /iam/v2/api-keys/HRVR6K4VMXYD2LDZ", expectedCountOne)
 }
 
-//	func TestAccCloudApiKey(t *testing.T) {
-//		ctx := context.Background()
-//
-//		wiremockContainer, err := setupWiremock(ctx)
-//		if err != nil {
-//			t.Fatal(err)
-//		}
-//		defer wiremockContainer.Terminate(ctx)
-//
-//		mockServerUrl := wiremockContainer.URI
-//		wiremockClient := wiremock.NewClient(mockServerUrl)
-//		// nolint:errcheck
-//		defer wiremockClient.Reset()
-//
-//		// nolint:errcheck
-//		defer wiremockClient.ResetAllScenarios()
-//		createCloudApiKeyResponse, _ := ioutil.ReadFile("../testdata/apikey/create_cloud_api_key.json")
-//		createCloudApiKeyStub := wiremock.Post(wiremock.URLPathEqualTo("/iam/v2/api-keys")).
-//			InScenario(cloudApiKeyScenarioName).
-//			WhenScenarioStateIs(wiremock.ScenarioStateStarted).
-//			WillReturn(
-//				string(createCloudApiKeyResponse),
-//				contentTypeJSONHeader,
-//				http.StatusCreated,
-//			)
-//		_ = wiremockClient.StubFor(createCloudApiKeyStub)
-//
-//		listEnvs401Response, _ := ioutil.ReadFile("../testdata/apikey/read_list_envs_401.json")
-//		listEnvsOrgApi401Stub := wiremock.Get(wiremock.URLPathEqualTo("/org/v2/environments")).
-//			InScenario(cloudApiKeyScenarioName).
-//			WhenScenarioStateIs(wiremock.ScenarioStateStarted).
-//			WillSetStateTo(scenarioStateCloudApiKeyHasBeenSynced).
-//			WillReturn(
-//				string(listEnvs401Response),
-//				contentTypeJSONHeader,
-//				http.StatusUnauthorized,
-//			)
-//		_ = wiremockClient.StubFor(listEnvsOrgApi401Stub)
-//
-//		listEnvs200Response, _ := ioutil.ReadFile("../testdata/apikey/read_list_envs_200.json")
-//		listEnvsOrgApi200Stub := wiremock.Get(wiremock.URLPathEqualTo("/org/v2/environments")).
-//			InScenario(cloudApiKeyScenarioName).
-//			WhenScenarioStateIs(scenarioStateCloudApiKeyHasBeenSynced).
-//			WillSetStateTo(scenarioStateCloudApiKeyHasBeenCreated).
-//			WillReturn(
-//				string(listEnvs200Response),
-//				contentTypeJSONHeader,
-//				http.StatusOK,
-//			)
-//		_ = wiremockClient.StubFor(listEnvsOrgApi200Stub)
-//
-//		readCreatedCloudApiKeyResponse, _ := ioutil.ReadFile("../testdata/apikey/read_created_cloud_api_key.json")
-//		_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/api-keys/HRVR6K4VMXYD2LDZ")).
-//			InScenario(cloudApiKeyScenarioName).
-//			WhenScenarioStateIs(scenarioStateCloudApiKeyHasBeenCreated).
-//			WillReturn(
-//				string(readCreatedCloudApiKeyResponse),
-//				contentTypeJSONHeader,
-//				http.StatusOK,
-//			))
-//
-//		readUpdatedCloudApiKeyResponse, _ := ioutil.ReadFile("../testdata/apikey/read_updated_cloud_api_key.json")
-//		patchCloudApiKeyStub := wiremock.Patch(wiremock.URLPathEqualTo("/iam/v2/api-keys/HRVR6K4VMXYD2LDZ")).
-//			InScenario(cloudApiKeyScenarioName).
-//			WhenScenarioStateIs(scenarioStateCloudApiKeyHasBeenCreated).
-//			WillSetStateTo(scenarioStateCloudApiKeyHasBeenUpdated).
-//			WillReturn(
-//				string(readUpdatedCloudApiKeyResponse),
-//				contentTypeJSONHeader,
-//				http.StatusOK,
-//			)
-//		_ = wiremockClient.StubFor(patchCloudApiKeyStub)
-//
-//		_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/api-keys/HRVR6K4VMXYD2LDZ")).
-//			InScenario(cloudApiKeyScenarioName).
-//			WhenScenarioStateIs(scenarioStateCloudApiKeyHasBeenUpdated).
-//			WillReturn(
-//				string(readUpdatedCloudApiKeyResponse),
-//				contentTypeJSONHeader,
-//				http.StatusOK,
-//			))
-//
-//		readDeletedCloudApiKeyResponse, _ := ioutil.ReadFile("../testdata/apikey/read_deleted_cloud_api_key.json")
-//		_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/api-keys/HRVR6K4VMXYD2LDZ")).
-//			InScenario(cloudApiKeyScenarioName).
-//			WhenScenarioStateIs(scenarioStateCloudApiKeyHasBeenDeleted).
-//			WillReturn(
-//				string(readDeletedCloudApiKeyResponse),
-//				contentTypeJSONHeader,
-//				http.StatusForbidden,
-//			))
-//		deleteCloudApiKeyStub := wiremock.Delete(wiremock.URLPathEqualTo("/iam/v2/api-keys/HRVR6K4VMXYD2LDZ")).
-//			InScenario(cloudApiKeyScenarioName).
-//			WhenScenarioStateIs(scenarioStateCloudApiKeyHasBeenUpdated).
-//			WillSetStateTo(scenarioStateCloudApiKeyHasBeenDeleted).
-//			WillReturn(
-//				"",
-//				contentTypeJSONHeader,
-//				http.StatusNoContent,
-//			)
-//		_ = wiremockClient.StubFor(deleteCloudApiKeyStub)
-//
-//		cloudApiKeyDisplayName := "CI Cloud API Key"
-//		cloudApiKeyDescription := "temp description"
-//		// in order to test tf update (step #3)
-//		cloudApiKeyUpdatedDisplayName := "CI Cloud API Key updated"
-//		cloudApiKeyUpdatedDescription := "temp description updated"
-//		cloudApiKeyResourceLabel := "test_cloud_api_key_resource_label"
-//		fullCloudApiKeyResourceLabel := fmt.Sprintf("confluent_api_key.%s", cloudApiKeyResourceLabel)
-//		ownerId := "sa-12mgdv"
-//		ownerApiVersion := "iam/v2"
-//		ownerKind := "ServiceAccount"
-//
-//		// Set fake values for secrets since those are required for importing
-//		os.Setenv("API_KEY_SECRET", "p07o8EyjQvink5NmErBffigyynQXrTsYGKBzIgr3M10Mg+JOgnObYjlqCC1Q1id1")
-//		defer func() {
-//			os.Unsetenv("API_KEY_SECRET")
-//		}()
-//
-//		resource.Test(t, resource.TestCase{
-//			PreCheck:          func() { testAccPreCheck(t) },
-//			ProviderFactories: testAccProviderFactories,
-//			CheckDestroy:      testAccCheckApiKeyDestroy,
-//			// https://www.terraform.io/docs/extend/testing/acceptance-tests/teststep.html
-//			// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
-//			Steps: []resource.TestStep{
-//				{
-//					Config: testAccCheckCloudApiKeyConfig(mockServerUrl, cloudApiKeyResourceLabel, cloudApiKeyDisplayName, cloudApiKeyDescription, ownerId, ownerApiVersion, ownerKind),
-//					Check: resource.ComposeTestCheckFunc(
-//						testAccCheckApiKeyExists(fullCloudApiKeyResourceLabel),
-//						resource.TestCheckResourceAttr(fullCloudApiKeyResourceLabel, "id", "HRVR6K4VMXYD2LDZ"),
-//						resource.TestCheckResourceAttr(fullCloudApiKeyResourceLabel, "display_name", cloudApiKeyDisplayName),
-//						resource.TestCheckResourceAttr(fullCloudApiKeyResourceLabel, "description", cloudApiKeyDescription),
-//						resource.TestCheckResourceAttr(fullCloudApiKeyResourceLabel, "owner.#", "1"),
-//						resource.TestCheckResourceAttr(fullCloudApiKeyResourceLabel, "owner.0.%", "3"),
-//						resource.TestCheckResourceAttr(fullCloudApiKeyResourceLabel, "owner.0.api_version", "iam/v2"),
-//						resource.TestCheckResourceAttr(fullCloudApiKeyResourceLabel, "owner.0.id", "sa-12mgdv"),
-//						resource.TestCheckResourceAttr(fullCloudApiKeyResourceLabel, "owner.0.kind", "ServiceAccount"),
-//						resource.TestCheckResourceAttr(fullCloudApiKeyResourceLabel, "secret", "p07o8EyjQvink5NmErBffigyynQXrTsYGKBzIgr3M10Mg+JOgnObYjlqCC1Q1id1"),
-//					),
-//				},
-//				{
-//					// https://www.terraform.io/docs/extend/resources/import.html
-//					ResourceName:      fullCloudApiKeyResourceLabel,
-//					ImportState:       true,
-//					ImportStateVerify: true,
-//				},
-//				{
-//					Config: testAccCheckCloudApiKeyConfig(mockServerUrl, cloudApiKeyResourceLabel, cloudApiKeyUpdatedDisplayName, cloudApiKeyUpdatedDescription, sownerId, ownerApiVersion, ownerKind),
-//					Check: resource.ComposeTestCheckFunc(
-//						testAccCheckApiKeyExists(fullCloudApiKeyResourceLabel),
-//						resource.TestCheckResourceAttr(fullCloudApiKeyResourceLabel, "id", "HRVR6K4VMXYD2LDZ"),
-//						resource.TestCheckResourceAttr(fullCloudApiKeyResourceLabel, "display_name", cloudApiKeyUpdatedDisplayName),
-//						resource.TestCheckResourceAttr(fullCloudApiKeyResourceLabel, "description", cloudApiKeyUpdatedDescription),
-//						resource.TestCheckResourceAttr(fullCloudApiKeyResourceLabel, "disable_wait_for_ready", "false"),
-//						resource.TestCheckResourceAttr(fullCloudApiKeyResourceLabel, "owner.#", "1"),
-//						resource.TestCheckResourceAttr(fullCloudApiKeyResourceLabel, "owner.0.%", "3"),
-//						resource.TestCheckResourceAttr(fullCloudApiKeyResourceLabel, "owner.0.api_version", "iam/v2"),
-//						resource.TestCheckResourceAttr(fullCloudApiKeyResourceLabel, "owner.0.id", "sa-12mgdv"),
-//						resource.TestCheckResourceAttr(fullCloudApiKeyResourceLabel, "owner.0.kind", "ServiceAccount"),
-//						resource.TestCheckResourceAttr(fullCloudApiKeyResourceLabel, "secret", "p07o8EyjQvink5NmErBffigyynQXrTsYGKBzIgr3M10Mg+JOgnObYjlqCC1Q1id1"),
-//					),
-//				},
-//				{
-//					// https://www.terraform.io/docs/extend/resources/import.html
-//					ResourceName:      fullCloudApiKeyResourceLabel,
-//					ImportState:       true,
-//					ImportStateVerify: true,
-//				},
-//			},
-//		})
-//
-//		checkStubCount(t, wiremockClient, createCloudApiKeyStub, "POST /iam/v2/api-keys", expectedCountOne)
-//		checkStubCount(t, wiremockClient, patchCloudApiKeyStub, "PATCH /iam/v2/api-keys/HRVR6K4VMXYD2LDZ", expectedCountOne)
-//		// Combine both stubs into a single check since it doesn't differentiate between states
-//		checkStubCount(t, wiremockClient, listEnvsOrgApi401Stub, "GET /org/v2/environments", 2)
-//	}
+func TestAccCloudApiKey(t *testing.T) {
+	ctx := context.Background()
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
+
+	mockServerUrl := wiremockContainer.URI
+	wiremockClient := wiremock.NewClient(mockServerUrl)
+	// nolint:errcheck
+	defer wiremockClient.Reset()
+
+	// nolint:errcheck
+	defer wiremockClient.ResetAllScenarios()
+	createCloudApiKeyResponse, _ := ioutil.ReadFile("../testdata/apikey/create_cloud_api_key.json")
+	createCloudApiKeyStub := wiremock.Post(wiremock.URLPathEqualTo("/iam/v2/api-keys")).
+		InScenario(cloudApiKeyScenarioName).
+		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
+		WillReturn(
+			string(createCloudApiKeyResponse),
+			contentTypeJSONHeader,
+			http.StatusCreated,
+		)
+	_ = wiremockClient.StubFor(createCloudApiKeyStub)
+
+	listEnvs401Response, _ := ioutil.ReadFile("../testdata/apikey/read_list_envs_401.json")
+	listEnvsOrgApi401Stub := wiremock.Get(wiremock.URLPathEqualTo("/org/v2/environments")).
+		InScenario(cloudApiKeyScenarioName).
+		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
+		WillSetStateTo(scenarioStateCloudApiKeyHasBeenSynced).
+		WillReturn(
+			string(listEnvs401Response),
+			contentTypeJSONHeader,
+			http.StatusUnauthorized,
+		)
+	_ = wiremockClient.StubFor(listEnvsOrgApi401Stub)
+
+	listEnvs200Response, _ := ioutil.ReadFile("../testdata/apikey/read_list_envs_200.json")
+	listEnvsOrgApi200Stub := wiremock.Get(wiremock.URLPathEqualTo("/org/v2/environments")).
+		InScenario(cloudApiKeyScenarioName).
+		WhenScenarioStateIs(scenarioStateCloudApiKeyHasBeenSynced).
+		WillSetStateTo(scenarioStateCloudApiKeyHasBeenCreated).
+		WillReturn(
+			string(listEnvs200Response),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		)
+	_ = wiremockClient.StubFor(listEnvsOrgApi200Stub)
+
+	readCreatedCloudApiKeyResponse, _ := ioutil.ReadFile("../testdata/apikey/read_created_cloud_api_key.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/api-keys/HRVR6K4VMXYD2LDZ")).
+		InScenario(cloudApiKeyScenarioName).
+		WhenScenarioStateIs(scenarioStateCloudApiKeyHasBeenCreated).
+		WillReturn(
+			string(readCreatedCloudApiKeyResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	readUpdatedCloudApiKeyResponse, _ := ioutil.ReadFile("../testdata/apikey/read_updated_cloud_api_key.json")
+	patchCloudApiKeyStub := wiremock.Patch(wiremock.URLPathEqualTo("/iam/v2/api-keys/HRVR6K4VMXYD2LDZ")).
+		InScenario(cloudApiKeyScenarioName).
+		WhenScenarioStateIs(scenarioStateCloudApiKeyHasBeenCreated).
+		WillSetStateTo(scenarioStateCloudApiKeyHasBeenUpdated).
+		WillReturn(
+			string(readUpdatedCloudApiKeyResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		)
+	_ = wiremockClient.StubFor(patchCloudApiKeyStub)
+
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/api-keys/HRVR6K4VMXYD2LDZ")).
+		InScenario(cloudApiKeyScenarioName).
+		WhenScenarioStateIs(scenarioStateCloudApiKeyHasBeenUpdated).
+		WillReturn(
+			string(readUpdatedCloudApiKeyResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	readDeletedCloudApiKeyResponse, _ := ioutil.ReadFile("../testdata/apikey/read_deleted_cloud_api_key.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/api-keys/HRVR6K4VMXYD2LDZ")).
+		InScenario(cloudApiKeyScenarioName).
+		WhenScenarioStateIs(scenarioStateCloudApiKeyHasBeenDeleted).
+		WillReturn(
+			string(readDeletedCloudApiKeyResponse),
+			contentTypeJSONHeader,
+			http.StatusForbidden,
+		))
+	deleteCloudApiKeyStub := wiremock.Delete(wiremock.URLPathEqualTo("/iam/v2/api-keys/HRVR6K4VMXYD2LDZ")).
+		InScenario(cloudApiKeyScenarioName).
+		WhenScenarioStateIs(scenarioStateCloudApiKeyHasBeenUpdated).
+		WillSetStateTo(scenarioStateCloudApiKeyHasBeenDeleted).
+		WillReturn(
+			"",
+			contentTypeJSONHeader,
+			http.StatusNoContent,
+		)
+	_ = wiremockClient.StubFor(deleteCloudApiKeyStub)
+
+	cloudApiKeyDisplayName := "CI Cloud API Key"
+	cloudApiKeyDescription := "temp description"
+	// in order to test tf update (step #3)
+	cloudApiKeyUpdatedDisplayName := "CI Cloud API Key updated"
+	cloudApiKeyUpdatedDescription := "temp description updated"
+	cloudApiKeyResourceLabel := "test_cloud_api_key_resource_label"
+	fullCloudApiKeyResourceLabel := fmt.Sprintf("confluent_api_key.%s", cloudApiKeyResourceLabel)
+	ownerId := "sa-12mgdv"
+	ownerApiVersion := "iam/v2"
+	ownerKind := "ServiceAccount"
+
+	// Set fake values for secrets since those are required for importing
+	os.Setenv("API_KEY_SECRET", "p07o8EyjQvink5NmErBffigyynQXrTsYGKBzIgr3M10Mg+JOgnObYjlqCC1Q1id1")
+	defer func() {
+		os.Unsetenv("API_KEY_SECRET")
+	}()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckApiKeyDestroy,
+		// https://www.terraform.io/docs/extend/testing/acceptance-tests/teststep.html
+		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckCloudApiKeyConfig(mockServerUrl, cloudApiKeyResourceLabel, cloudApiKeyDisplayName, cloudApiKeyDescription, testShouldDisableBefore, ownerId, ownerApiVersion, ownerKind),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckApiKeyExists(fullCloudApiKeyResourceLabel),
+					resource.TestCheckResourceAttr(fullCloudApiKeyResourceLabel, "id", "HRVR6K4VMXYD2LDZ"),
+					resource.TestCheckResourceAttr(fullCloudApiKeyResourceLabel, "display_name", cloudApiKeyDisplayName),
+					resource.TestCheckResourceAttr(fullCloudApiKeyResourceLabel, "description", cloudApiKeyDescription),
+					resource.TestCheckResourceAttr(fullCloudApiKeyResourceLabel, "disable_wait_for_ready", "false"),
+					resource.TestCheckResourceAttr(fullCloudApiKeyResourceLabel, "owner.#", "1"),
+					resource.TestCheckResourceAttr(fullCloudApiKeyResourceLabel, "owner.0.%", "3"),
+					resource.TestCheckResourceAttr(fullCloudApiKeyResourceLabel, "owner.0.api_version", "iam/v2"),
+					resource.TestCheckResourceAttr(fullCloudApiKeyResourceLabel, "owner.0.id", "sa-12mgdv"),
+					resource.TestCheckResourceAttr(fullCloudApiKeyResourceLabel, "owner.0.kind", "ServiceAccount"),
+					resource.TestCheckResourceAttr(fullCloudApiKeyResourceLabel, "secret", "p07o8EyjQvink5NmErBffigyynQXrTsYGKBzIgr3M10Mg+JOgnObYjlqCC1Q1id1"),
+				),
+			},
+			{
+				// https://www.terraform.io/docs/extend/resources/import.html
+				ResourceName:      fullCloudApiKeyResourceLabel,
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+			{
+				Config: testAccCheckCloudApiKeyConfig(mockServerUrl, cloudApiKeyResourceLabel, cloudApiKeyUpdatedDisplayName, cloudApiKeyUpdatedDescription, testShouldDisableAfter, ownerId, ownerApiVersion, ownerKind),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckApiKeyExists(fullCloudApiKeyResourceLabel),
+					resource.TestCheckResourceAttr(fullCloudApiKeyResourceLabel, "id", "HRVR6K4VMXYD2LDZ"),
+					resource.TestCheckResourceAttr(fullCloudApiKeyResourceLabel, "display_name", cloudApiKeyUpdatedDisplayName),
+					resource.TestCheckResourceAttr(fullCloudApiKeyResourceLabel, "description", cloudApiKeyUpdatedDescription),
+					resource.TestCheckResourceAttr(fullCloudApiKeyResourceLabel, "disable_wait_for_ready", "true"),
+					resource.TestCheckResourceAttr(fullCloudApiKeyResourceLabel, "owner.#", "1"),
+					resource.TestCheckResourceAttr(fullCloudApiKeyResourceLabel, "owner.0.%", "3"),
+					resource.TestCheckResourceAttr(fullCloudApiKeyResourceLabel, "owner.0.api_version", "iam/v2"),
+					resource.TestCheckResourceAttr(fullCloudApiKeyResourceLabel, "owner.0.id", "sa-12mgdv"),
+					resource.TestCheckResourceAttr(fullCloudApiKeyResourceLabel, "owner.0.kind", "ServiceAccount"),
+					resource.TestCheckResourceAttr(fullCloudApiKeyResourceLabel, "secret", "p07o8EyjQvink5NmErBffigyynQXrTsYGKBzIgr3M10Mg+JOgnObYjlqCC1Q1id1"),
+				),
+			},
+		},
+	})
+
+	checkStubCount(t, wiremockClient, createCloudApiKeyStub, "POST /iam/v2/api-keys", expectedCountOne)
+	checkStubCount(t, wiremockClient, patchCloudApiKeyStub, "PATCH /iam/v2/api-keys/HRVR6K4VMXYD2LDZ", expectedCountOne)
+	// Combine both stubs into a single check since it doesn't differentiate between states
+	checkStubCount(t, wiremockClient, listEnvsOrgApi401Stub, "GET /org/v2/environments", 2)
+}
 func testAccCheckApiKeyDestroy(s *terraform.State) error {
 	c := testAccProvider.Meta().(*Client)
 	// Loop through the resources in state, verifying each kafka api key is destroyed
@@ -905,24 +900,23 @@ func testAccCheckFlinkApiKeyConfig(mockServerUrl, flinkApiKeyResourceLabel, flin
 	`, mockServerUrl, flinkApiKeyResourceLabel, flinkApiKeyDisplayName, flinkApiKeyDescription, shouldDisable, ownerId, ownerApiVersion, ownerKind, resourceId, resourceApiVersion, resourceKind, environmentId)
 }
 
-//
-//func testAccCheckCloudApiKeyConfig(mockServerUrl, cloudApiKeyResourceLabel, cloudApiKeyDisplayName, cloudApiKeyDescription, shouldDisable, ownerId, ownerApiVersion, ownerKind string) string {
-//	return fmt.Sprintf(`
-//	provider "confluent" {
-//		endpoint = "%s"
-//	}
-//	resource "confluent_api_key" "%s" {
-//		display_name = "%s"
-//		description = "%s"
-//		disable_wait_for_ready = %s
-//		owner {
-//			id = "%s"
-//			api_version = "%s"
-//			kind = "%s"
-//		}
-//	}
-//	`, mockServerUrl, cloudApiKeyResourceLabel, cloudApiKeyDisplayName, cloudApiKeyDescription, shouldDisable, ownerId, ownerApiVersion, ownerKind)
-//}
+func testAccCheckCloudApiKeyConfig(mockServerUrl, cloudApiKeyResourceLabel, cloudApiKeyDisplayName, cloudApiKeyDescription, shouldDisable, ownerId, ownerApiVersion, ownerKind string) string {
+	return fmt.Sprintf(`
+	provider "confluent" {
+		endpoint = "%s"
+	}
+	resource "confluent_api_key" "%s" {
+		display_name = "%s"
+		description = "%s"
+		disable_wait_for_ready = %s
+		owner {
+			id = "%s"
+			api_version = "%s"
+			kind = "%s"
+		}
+	}
+	`, mockServerUrl, cloudApiKeyResourceLabel, cloudApiKeyDisplayName, cloudApiKeyDescription, shouldDisable, ownerId, ownerApiVersion, ownerKind)
+}
 
 func testAccCheckTableflowApiKeyConfig(mockServerUrl, tableflowApiKeyResourceLabel, tableflowApiKeyDisplayName, tableflowApiKeyDescription, shouldDisable, ownerId, ownerApiVersion, ownerKind, resourceApiVersion, resourceId, resourceKind string) string {
 	return fmt.Sprintf(`
