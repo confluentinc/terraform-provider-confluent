@@ -288,6 +288,16 @@ func testAccCheckLatestRefreshSchemaConfig(confluentCloudBaseUrl, mockServerUrl 
 			  "encrypt.kek.name" = "testkek2"
 		  }
 		}
+		migration_rules  {
+		  name = "encrypt"
+		  kind = "TRANSFORM"
+		  type = "ENCRYPT"
+		  mode = "WRITEREAD"
+		  tags = ["PIm"]
+		  params = {
+			  "encrypt.kek.name" = "testkekM"
+		  }
+		}
 	  }
 	}
 	`, confluentCloudBaseUrl, testSchemaResourceLabel, testStreamGovernanceClusterId, mockServerUrl, testSchemaRegistryKey, testSchemaRegistrySecret, testSubjectName, testFormat, schemaContent,

@@ -208,6 +208,21 @@ func TestAccRulesetSchema(t *testing.T) {
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.1.tags.0", "PII"),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.1.type", "ENCRYPT"),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.1.disabled", "false"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.migration_rules.#", "1"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.migration_rules.0.%", "11"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.migration_rules.0.doc", ""),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.migration_rules.0.expr", ""),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.migration_rules.0.kind", "TRANSFORM"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.migration_rules.0.mode", "WRITEREAD"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.migration_rules.0.name", "encrypt"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.migration_rules.0.on_failure", "ERROR,ERROR"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.migration_rules.0.on_success", "NONE,NONE"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.migration_rules.0.params.%", "1"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.migration_rules.0.params.encrypt.kek.name", "testkekM"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.migration_rules.0.tags.#", "1"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.migration_rules.0.tags.0", "PIm"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.migration_rules.0.type", "ENCRYPT"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.migration_rules.0.disabled", "false"),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "metadata.#", "1"),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "metadata.0.%", "3"),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "metadata.0.properties.%", "2"),
@@ -311,6 +326,16 @@ func testAccCheckRulesetSchemaConfig(confluentCloudBaseUrl, mockServerUrl string
 		  tags = ["PIIIII"]
 		  params = {
 			  "encrypt.kek.name" = "testkek2"
+		  }
+		}
+		migration_rules  {
+		  name = "encrypt"
+		  kind = "TRANSFORM"
+		  type = "ENCRYPT"
+		  mode = "WRITEREAD"
+		  tags = ["PIm"]
+		  params = {
+			  "encrypt.kek.name" = "testkekM"
 		  }
 		}
 	  }
