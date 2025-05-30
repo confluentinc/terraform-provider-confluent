@@ -1,9 +1,0 @@
-{
-  "id": "lccp-abc123",
-  "upload_url": "TF_TEST_URL",
-  "upload_id": "upload-123",
-  "content_format": "JAR",
-  "upload_form_data": {
-    "key": "value"
-  }
-} 
