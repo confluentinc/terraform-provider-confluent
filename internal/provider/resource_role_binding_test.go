@@ -108,7 +108,7 @@ func TestAccRoleBinding(t *testing.T) {
 		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckRoleBindingConfig(mockServerUrl, rbResourceLabel, rbPrincipal, rbRolename, rbCrn),
+				Config: testAccCheckRoleBindingConfig(mockServerUrl, rbResourceLabel, rbPrincipal, rbRolename, rbCrn, testShouldDisableBefore),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckRoleBindingExists(fullRbResourceLabel),
 					resource.TestCheckResourceAttr(fullRbResourceLabel, "id", roleBindingId),
@@ -123,6 +123,17 @@ func TestAccRoleBinding(t *testing.T) {
 				ResourceName:      fullRbResourceLabel,
 				ImportState:       true,
 				ImportStateVerify: true,
+			},
+			{
+				Config: testAccCheckRoleBindingConfig(mockServerUrl, rbResourceLabel, rbPrincipal, rbRolename, rbCrn, testShouldDisableAfter),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckRoleBindingExists(fullRbResourceLabel),
+					resource.TestCheckResourceAttr(fullRbResourceLabel, "id", roleBindingId),
+					resource.TestCheckResourceAttr(fullRbResourceLabel, "principal", rbPrincipal),
+					resource.TestCheckResourceAttr(fullRbResourceLabel, "role_name", rbRolename),
+					resource.TestCheckResourceAttr(fullRbResourceLabel, "crn_pattern", rbCrn),
+					resource.TestCheckResourceAttr(fullRbResourceLabel, "disable_wait_for_ready", "true"),
+				),
 			},
 		},
 	})
@@ -154,7 +165,7 @@ func testAccCheckRoleBindingDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccCheckRoleBindingConfig(mockServerUrl, label, principal, roleName, crn string) string {
+func testAccCheckRoleBindingConfig(mockServerUrl, label, principal, roleName, crn, shouldDisable string) string {
 	return fmt.Sprintf(`
 	provider "confluent" {
 		endpoint = "%s"
@@ -163,8 +174,9 @@ func testAccCheckRoleBindingConfig(mockServerUrl, label, principal, roleName, cr
 		principal = "%s"
 		role_name = "%s"
 		crn_pattern = "%s"
+		disable_wait_for_ready = %s
 	}
-	`, mockServerUrl, label, principal, roleName, crn)
+	`, mockServerUrl, label, principal, roleName, crn, shouldDisable)
 }
 
 func testAccCheckRoleBindingExists(n string) resource.TestCheckFunc {
