@@ -95,7 +95,6 @@ func TestAccVersionedSchema(t *testing.T) {
 	validateSchemaStub := wiremock.Post(wiremock.URLPathEqualTo(validateSchemaPath)).
 		InScenario(schemaScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
-		//WithBodyPattern(wiremock.EqualToJson(testCreateSchemaRequestJson)).
 		WillReturn(
 			string(validateSchemaResponse),
 			contentTypeJSONHeader,
@@ -108,7 +107,6 @@ func TestAccVersionedSchema(t *testing.T) {
 		InScenario(schemaScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillSetStateTo(scenarioStateSchemaHasBeenCreated).
-		//WithBodyPattern(wiremock.EqualToJson(testCreateSchemaRequestJson)).
 		WillReturn(
 			string(createSchemaResponse),
 			contentTypeJSONHeader,
@@ -130,7 +128,6 @@ func TestAccVersionedSchema(t *testing.T) {
 	checkSchemaExistsStub := wiremock.Post(wiremock.URLPathEqualTo(createSchemaPath)).
 		InScenario(schemaScenarioName).
 		WhenScenarioStateIs(scenarioStateSchemaHasBeenCreated).
-		//WithBodyPattern(wiremock.EqualToJson(testCreateSchemaRequestJson)).
 		WillReturn(
 			string(checkSchemaExistsResponse),
 			contentTypeJSONHeader,
