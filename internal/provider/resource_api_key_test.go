@@ -470,192 +470,186 @@ func TestAccFlinkApiKey(t *testing.T) {
 	checkStubCount(t, wiremockClient, patchFlinkApiKeyStub, "PATCH /iam/v2/api-keys/AK4NBR7MUYHVJMHW", expectedCountOne)
 }
 
-//	func TestAccTableflowApiKey(t *testing.T) {
-//		ctx := context.Background()
-//
-//		wiremockContainer, err := setupWiremock(ctx)
-//		if err != nil {
-//			t.Fatal(err)
-//		}
-//		defer wiremockContainer.Terminate(ctx)
-//
-//		mockServerUrl := wiremockContainer.URI
-//		wiremockClient := wiremock.NewClient(mockServerUrl)
-//		// nolint:errcheck
-//		defer wiremockClient.Reset()
-//
-//		// nolint:errcheck
-//		defer wiremockClient.ResetAllScenarios()
-//		createTableflowApiKeyResponse, _ := ioutil.ReadFile("../testdata/apikey/create_tableflow_api_key.json")
-//		createTableflowApiKeyStub := wiremock.Post(wiremock.URLPathEqualTo("/iam/v2/api-keys")).
-//			InScenario(tableflowApiKeyScenarioName).
-//			WhenScenarioStateIs(wiremock.ScenarioStateStarted).
-//			WillReturn(
-//				string(createTableflowApiKeyResponse),
-//				contentTypeJSONHeader,
-//				http.StatusCreated,
-//			)
-//		_ = wiremockClient.StubFor(createTableflowApiKeyStub)
-//
-//		tableflowApi401Response, _ := ioutil.ReadFile("../testdata/apikey/read_list_tableflow_regions_401.json")
-//		listRegionsTableflowApi401Stub := wiremock.Get(wiremock.URLPathEqualTo("/tableflow/v1/regions")).
-//			InScenario(tableflowApiKeyScenarioName).
-//			WhenScenarioStateIs(wiremock.ScenarioStateStarted).
-//			WillSetStateTo(scenarioStateTableflowApiKeyHasBeenSynced).
-//			WillReturn(
-//				string(tableflowApi401Response),
-//				contentTypeJSONHeader,
-//				http.StatusUnauthorized,
-//			)
-//		_ = wiremockClient.StubFor(listRegionsTableflowApi401Stub)
-//
-//		tableflowApi200Response, _ := ioutil.ReadFile("../testdata/apikey/read_list_tableflow_regions_200.json")
-//		listRegionsTableflowApi200Stub := wiremock.Get(wiremock.URLPathEqualTo("/tableflow/v1/regions")).
-//			InScenario(tableflowApiKeyScenarioName).
-//			WhenScenarioStateIs(scenarioStateTableflowApiKeyHasBeenSynced).
-//			WillSetStateTo(scenarioStateTableflowApiKeyHasBeenCreated).
-//			WillReturn(
-//				string(tableflowApi200Response),
-//				contentTypeJSONHeader,
-//				http.StatusOK,
-//			)
-//		_ = wiremockClient.StubFor(listRegionsTableflowApi200Stub)
-//
-//		readCreatedTableflowApiKeyResponse, _ := ioutil.ReadFile("../testdata/apikey/read_created_tableflow_api_key.json")
-//		_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/api-keys/HRVR6K4VMXYD2LDZ")).
-//			InScenario(tableflowApiKeyScenarioName).
-//			WhenScenarioStateIs(scenarioStateTableflowApiKeyHasBeenCreated).
-//			WillReturn(
-//				string(readCreatedTableflowApiKeyResponse),
-//				contentTypeJSONHeader,
-//				http.StatusOK,
-//			))
-//
-//		readUpdatedTableflowApiKeyResponse, _ := ioutil.ReadFile("../testdata/apikey/read_updated_tableflow_api_key.json")
-//		patchTableflowApiKeyStub := wiremock.Patch(wiremock.URLPathEqualTo("/iam/v2/api-keys/HRVR6K4VMXYD2LDZ")).
-//			InScenario(tableflowApiKeyScenarioName).
-//			WhenScenarioStateIs(scenarioStateTableflowApiKeyHasBeenCreated).
-//			WillSetStateTo(scenarioStateTableflowApiKeyHasBeenUpdated).
-//			WillReturn(
-//				string(readUpdatedTableflowApiKeyResponse),
-//				contentTypeJSONHeader,
-//				http.StatusOK,
-//			)
-//		_ = wiremockClient.StubFor(patchTableflowApiKeyStub)
-//
-//		_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/api-keys/HRVR6K4VMXYD2LDZ")).
-//			InScenario(tableflowApiKeyScenarioName).
-//			WhenScenarioStateIs(scenarioStateTableflowApiKeyHasBeenUpdated).
-//			WillReturn(
-//				string(readUpdatedTableflowApiKeyResponse),
-//				contentTypeJSONHeader,
-//				http.StatusOK,
-//			))
-//
-//		deleteTableflowApiKeyStub := wiremock.Delete(wiremock.URLPathEqualTo("/iam/v2/api-keys/HRVR6K4VMXYD2LDZ")).
-//			InScenario(tableflowApiKeyScenarioName).
-//			WhenScenarioStateIs(scenarioStateTableflowApiKeyHasBeenUpdated).
-//			WillSetStateTo(scenarioStateTableflowApiKeyHasBeenDeleted).
-//			WillReturn(
-//				"",
-//				contentTypeJSONHeader,
-//				http.StatusNoContent,
-//			)
-//		_ = wiremockClient.StubFor(deleteTableflowApiKeyStub)
-//
-//		readDeletedTableflowApiKeyResponse, _ := ioutil.ReadFile("../testdata/apikey/read_deleted_tableflow_api_key.json")
-//		_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/api-keys/HRVR6K4VMXYD2LDZ")).
-//			InScenario(tableflowApiKeyScenarioName).
-//			WhenScenarioStateIs(scenarioStateTableflowApiKeyHasBeenDeleted).
-//			WillReturn(
-//				string(readDeletedTableflowApiKeyResponse),
-//				contentTypeJSONHeader,
-//				http.StatusForbidden,
-//			))
-//
-//		tableflowApiKeyDisplayName := "CI Tableflow API Key"
-//		tableflowApiKeyDescription := "temp description"
-//		// in order to test tf update (step #3)
-//		tableflowApiKeyUpdatedDisplayName := "CI Tableflow API Key updated"
-//		tableflowApiKeyUpdatedDescription := "temp description updated"
-//		tableflowApiKeyResourceLabel := "test_tableflow_api_key_resource_label"
-//		fullTableflowApiKeyResourceLabel := fmt.Sprintf("confluent_api_key.%s", tableflowApiKeyResourceLabel)
-//		ownerId := "sa-12mgdv"
-//		ownerApiVersion := "iam/v2"
-//		ownerKind := "ServiceAccount"
-//		resourceId := "tableflow"
-//		resourceKind := "Tableflow"
-//		resourceApiVersion := "tableflow/v1"
-//
-//		// Set fake values for secrets since those are required for importing
-//		os.Setenv("API_KEY_SECRET", "p07o8EyjQvink5NmErBffigyynQXrTsYGKBzIgr3M10Mg+JOgnObYjlqCC1Q1id1")
-//		defer func() {
-//			os.Unsetenv("API_KEY_SECRET")
-//		}()
-//
-//		resource.Test(t, resource.TestCase{
-//			PreCheck:          func() { testAccPreCheck(t) },
-//			ProviderFactories: testAccProviderFactories,
-//			CheckDestroy:      testAccCheckApiKeyDestroy,
-//			// https://www.terraform.io/docs/extend/testing/acceptance-tests/teststep.html
-//			// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
-//			Steps: []resource.TestStep{
-//				{
-//					Config: testAccCheckTableflowApiKeyConfig(mockServerUrl, tableflowApiKeyResourceLabel, tableflowApiKeyDisplayName, tableflowApiKeyDescription, ownerId, ownerApiVersion, ownerKind, resourceApiVersion, resourceId, resourceKind),
-//					Check: resource.ComposeTestCheckFunc(
-//						testAccCheckApiKeyExists(fullTableflowApiKeyResourceLabel),
-//						resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "id", "HRVR6K4VMXYD2LDZ"),
-//						resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "display_name", tableflowApiKeyDisplayName),
-//						resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "description", tableflowApiKeyDescription),
-//						resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "owner.#", "1"),
-//						resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "owner.0.%", "3"),
-//						resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "owner.0.api_version", "iam/v2"),
-//						resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "owner.0.id", "sa-12mgdv"),
-//						resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "owner.0.kind", "ServiceAccount"),
-//						resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "managed_resource.0.api_version", "tableflow/v1"),
-//						resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "managed_resource.0.kind", "Tableflow"),
-//						resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "managed_resource.0.id", "tableflow"),
-//						resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "secret", "p07o8EyjQvink5NmErBffigyynQXrTsYGKBzIgr3M10Mg+JOgnObYjlqCC1Q1id1"),
-//					),
-//				},
-//				{
-//					// https://www.terraform.io/docs/extend/resources/import.html
-//					ResourceName:      fullTableflowApiKeyResourceLabel,
-//					ImportState:       true,
-//					ImportStateVerify: true,
-//				},
-//				{
-//					Config: testAccCheckTableflowApiKeyConfig(mockServerUrl, tableflowApiKeyResourceLabel, tableflowApiKeyUpdatedDisplayName, tableflowApiKeyUpdatedDescription, ownerId, ownerApiVersion, ownerKind, resourceApiVersion, resourceId, resourceKind),
-//					Check: resource.ComposeTestCheckFunc(
-//						testAccCheckApiKeyExists(fullTableflowApiKeyResourceLabel),
-//						resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "id", "HRVR6K4VMXYD2LDZ"),
-//						resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "display_name", tableflowApiKeyUpdatedDisplayName),
-//						resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "description", tableflowApiKeyUpdatedDescription),
-//						resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "disable_wait_for_ready", "false"),
-//						resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "owner.#", "1"),
-//						resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "owner.0.%", "3"),
-//						resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "owner.0.api_version", "iam/v2"),
-//						resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "owner.0.id", "sa-12mgdv"),
-//						resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "owner.0.kind", "ServiceAccount"),
-//						resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "managed_resource.0.api_version", "tableflow/v1"),
-//						resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "managed_resource.0.kind", "Tableflow"),
-//						resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "managed_resource.0.id", "tableflow"),
-//						resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "secret", "p07o8EyjQvink5NmErBffigyynQXrTsYGKBzIgr3M10Mg+JOgnObYjlqCC1Q1id1"),
-//					),
-//				},
-//				{
-//					// https://www.terraform.io/docs/extend/resources/import.html
-//					ResourceName:      fullTableflowApiKeyResourceLabel,
-//					ImportState:       true,
-//					ImportStateVerify: true,
-//				},
-//			},
-//		})
-//
-//		checkStubCount(t, wiremockClient, createTableflowApiKeyStub, "POST /iam/v2/api-keys", expectedCountOne)
-//		checkStubCount(t, wiremockClient, patchTableflowApiKeyStub, "PATCH /iam/v2/api-keys/HRVR6K4VMXYD2LDZ", expectedCountOne)
-//	}
-//
+func TestAccTableflowApiKey(t *testing.T) {
+	ctx := context.Background()
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
+
+	mockServerUrl := wiremockContainer.URI
+	wiremockClient := wiremock.NewClient(mockServerUrl)
+	// nolint:errcheck
+	defer wiremockClient.Reset()
+
+	// nolint:errcheck
+	defer wiremockClient.ResetAllScenarios()
+	createTableflowApiKeyResponse, _ := ioutil.ReadFile("../testdata/apikey/create_tableflow_api_key.json")
+	createTableflowApiKeyStub := wiremock.Post(wiremock.URLPathEqualTo("/iam/v2/api-keys")).
+		InScenario(tableflowApiKeyScenarioName).
+		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
+		WillReturn(
+			string(createTableflowApiKeyResponse),
+			contentTypeJSONHeader,
+			http.StatusCreated,
+		)
+	_ = wiremockClient.StubFor(createTableflowApiKeyStub)
+
+	tableflowApi401Response, _ := ioutil.ReadFile("../testdata/apikey/read_list_tableflow_regions_401.json")
+	listRegionsTableflowApi401Stub := wiremock.Get(wiremock.URLPathEqualTo("/tableflow/v1/regions")).
+		InScenario(tableflowApiKeyScenarioName).
+		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
+		WillSetStateTo(scenarioStateTableflowApiKeyHasBeenSynced).
+		WillReturn(
+			string(tableflowApi401Response),
+			contentTypeJSONHeader,
+			http.StatusUnauthorized,
+		)
+	_ = wiremockClient.StubFor(listRegionsTableflowApi401Stub)
+
+	tableflowApi200Response, _ := ioutil.ReadFile("../testdata/apikey/read_list_tableflow_regions_200.json")
+	listRegionsTableflowApi200Stub := wiremock.Get(wiremock.URLPathEqualTo("/tableflow/v1/regions")).
+		InScenario(tableflowApiKeyScenarioName).
+		WhenScenarioStateIs(scenarioStateTableflowApiKeyHasBeenSynced).
+		WillSetStateTo(scenarioStateTableflowApiKeyHasBeenCreated).
+		WillReturn(
+			string(tableflowApi200Response),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		)
+	_ = wiremockClient.StubFor(listRegionsTableflowApi200Stub)
+
+	readCreatedTableflowApiKeyResponse, _ := ioutil.ReadFile("../testdata/apikey/read_created_tableflow_api_key.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/api-keys/HRVR6K4VMXYD2LDZ")).
+		InScenario(tableflowApiKeyScenarioName).
+		WhenScenarioStateIs(scenarioStateTableflowApiKeyHasBeenCreated).
+		WillReturn(
+			string(readCreatedTableflowApiKeyResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	readUpdatedTableflowApiKeyResponse, _ := ioutil.ReadFile("../testdata/apikey/read_updated_tableflow_api_key.json")
+	patchTableflowApiKeyStub := wiremock.Patch(wiremock.URLPathEqualTo("/iam/v2/api-keys/HRVR6K4VMXYD2LDZ")).
+		InScenario(tableflowApiKeyScenarioName).
+		WhenScenarioStateIs(scenarioStateTableflowApiKeyHasBeenCreated).
+		WillSetStateTo(scenarioStateTableflowApiKeyHasBeenUpdated).
+		WillReturn(
+			string(readUpdatedTableflowApiKeyResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		)
+	_ = wiremockClient.StubFor(patchTableflowApiKeyStub)
+
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/api-keys/HRVR6K4VMXYD2LDZ")).
+		InScenario(tableflowApiKeyScenarioName).
+		WhenScenarioStateIs(scenarioStateTableflowApiKeyHasBeenUpdated).
+		WillReturn(
+			string(readUpdatedTableflowApiKeyResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	deleteTableflowApiKeyStub := wiremock.Delete(wiremock.URLPathEqualTo("/iam/v2/api-keys/HRVR6K4VMXYD2LDZ")).
+		InScenario(tableflowApiKeyScenarioName).
+		WhenScenarioStateIs(scenarioStateTableflowApiKeyHasBeenUpdated).
+		WillSetStateTo(scenarioStateTableflowApiKeyHasBeenDeleted).
+		WillReturn(
+			"",
+			contentTypeJSONHeader,
+			http.StatusNoContent,
+		)
+	_ = wiremockClient.StubFor(deleteTableflowApiKeyStub)
+
+	readDeletedTableflowApiKeyResponse, _ := ioutil.ReadFile("../testdata/apikey/read_deleted_tableflow_api_key.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/api-keys/HRVR6K4VMXYD2LDZ")).
+		InScenario(tableflowApiKeyScenarioName).
+		WhenScenarioStateIs(scenarioStateTableflowApiKeyHasBeenDeleted).
+		WillReturn(
+			string(readDeletedTableflowApiKeyResponse),
+			contentTypeJSONHeader,
+			http.StatusForbidden,
+		))
+
+	tableflowApiKeyDisplayName := "CI Tableflow API Key"
+	tableflowApiKeyDescription := "temp description"
+	// in order to test tf update (step #3)
+	tableflowApiKeyUpdatedDisplayName := "CI Tableflow API Key updated"
+	tableflowApiKeyUpdatedDescription := "temp description updated"
+	tableflowApiKeyResourceLabel := "test_tableflow_api_key_resource_label"
+	fullTableflowApiKeyResourceLabel := fmt.Sprintf("confluent_api_key.%s", tableflowApiKeyResourceLabel)
+	ownerId := "sa-12mgdv"
+	ownerApiVersion := "iam/v2"
+	ownerKind := "ServiceAccount"
+	resourceId := "tableflow"
+	resourceKind := "Tableflow"
+	resourceApiVersion := "tableflow/v1"
+
+	// Set fake values for secrets since those are required for importing
+	os.Setenv("API_KEY_SECRET", "p07o8EyjQvink5NmErBffigyynQXrTsYGKBzIgr3M10Mg+JOgnObYjlqCC1Q1id1")
+	defer func() {
+		os.Unsetenv("API_KEY_SECRET")
+	}()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckApiKeyDestroy,
+		// https://www.terraform.io/docs/extend/testing/acceptance-tests/teststep.html
+		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckTableflowApiKeyConfig(mockServerUrl, tableflowApiKeyResourceLabel, tableflowApiKeyDisplayName, tableflowApiKeyDescription, ownerId, ownerApiVersion, ownerKind, resourceApiVersion, resourceId, resourceKind),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckApiKeyExists(fullTableflowApiKeyResourceLabel),
+					resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "id", "HRVR6K4VMXYD2LDZ"),
+					resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "display_name", tableflowApiKeyDisplayName),
+					resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "description", tableflowApiKeyDescription),
+					resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "owner.#", "1"),
+					resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "owner.0.%", "3"),
+					resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "owner.0.api_version", "iam/v2"),
+					resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "owner.0.id", "sa-12mgdv"),
+					resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "owner.0.kind", "ServiceAccount"),
+					resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "managed_resource.0.api_version", "tableflow/v1"),
+					resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "managed_resource.0.kind", "Tableflow"),
+					resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "managed_resource.0.id", "tableflow"),
+					resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "secret", "p07o8EyjQvink5NmErBffigyynQXrTsYGKBzIgr3M10Mg+JOgnObYjlqCC1Q1id1"),
+				),
+			},
+			{
+				// https://www.terraform.io/docs/extend/resources/import.html
+				ResourceName:      fullTableflowApiKeyResourceLabel,
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+			{
+				Config: testAccCheckTableflowApiKeyConfig(mockServerUrl, tableflowApiKeyResourceLabel, tableflowApiKeyUpdatedDisplayName, tableflowApiKeyUpdatedDescription, ownerId, ownerApiVersion, ownerKind, resourceApiVersion, resourceId, resourceKind),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckApiKeyExists(fullTableflowApiKeyResourceLabel),
+					resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "id", "HRVR6K4VMXYD2LDZ"),
+					resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "display_name", tableflowApiKeyUpdatedDisplayName),
+					resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "description", tableflowApiKeyUpdatedDescription),
+					resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "disable_wait_for_ready", "false"),
+					resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "owner.#", "1"),
+					resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "owner.0.%", "3"),
+					resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "owner.0.api_version", "iam/v2"),
+					resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "owner.0.id", "sa-12mgdv"),
+					resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "owner.0.kind", "ServiceAccount"),
+					resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "managed_resource.0.api_version", "tableflow/v1"),
+					resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "managed_resource.0.kind", "Tableflow"),
+					resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "managed_resource.0.id", "tableflow"),
+					resource.TestCheckResourceAttr(fullTableflowApiKeyResourceLabel, "secret", "p07o8EyjQvink5NmErBffigyynQXrTsYGKBzIgr3M10Mg+JOgnObYjlqCC1Q1id1"),
+				),
+			},
+		},
+	})
+
+	checkStubCount(t, wiremockClient, createTableflowApiKeyStub, "POST /iam/v2/api-keys", expectedCountOne)
+	checkStubCount(t, wiremockClient, patchTableflowApiKeyStub, "PATCH /iam/v2/api-keys/HRVR6K4VMXYD2LDZ", expectedCountOne)
+}
+
 //	func TestAccCloudApiKey(t *testing.T) {
 //		ctx := context.Background()
 //
@@ -928,29 +922,29 @@ func testAccCheckFlinkApiKeyConfig(mockServerUrl, flinkApiKeyResourceLabel, flin
 //	}
 //	`, mockServerUrl, cloudApiKeyResourceLabel, cloudApiKeyDisplayName, cloudApiKeyDescription, shouldDisable, ownerId, ownerApiVersion, ownerKind)
 //}
-//
-//func testAccCheckTableflowApiKeyConfig(mockServerUrl, tableflowApiKeyResourceLabel, tableflowApiKeyDisplayName, tableflowApiKeyDescription, shouldDisable, ownerId, ownerApiVersion, ownerKind, resourceApiVersion, resourceId, resourceKind string) string {
-//	return fmt.Sprintf(`
-//	provider "confluent" {
-//		endpoint = "%s"
-//	}
-//	resource "confluent_api_key" "%s" {
-//		display_name = "%s"
-//		description = "%s"
-//		disable_wait_for_ready = %s
-//		owner {
-//			id = "%s"
-//			api_version = "%s"
-//			kind = "%s"
-//		}
-//		managed_resource {
-//			api_version = "%s"
-//			id = "%s"
-//			kind = "%s"
-//		}
-//	}
-//	`, mockServerUrl, tableflowApiKeyResourceLabel, tableflowApiKeyDisplayName, tableflowApiKeyDescription, ownerId, ownerApiVersion, ownerKind, resourceApiVersion, resourceId, resourceKind)
-//}
+
+func testAccCheckTableflowApiKeyConfig(mockServerUrl, tableflowApiKeyResourceLabel, tableflowApiKeyDisplayName, tableflowApiKeyDescription, shouldDisable, ownerId, ownerApiVersion, ownerKind, resourceApiVersion, resourceId, resourceKind string) string {
+	return fmt.Sprintf(`
+	provider "confluent" {
+		endpoint = "%s"
+	}
+	resource "confluent_api_key" "%s" {
+		display_name = "%s"
+		description = "%s"
+		disable_wait_for_ready = %s
+		owner {
+			id = "%s"
+			api_version = "%s"
+			kind = "%s"
+		}
+		managed_resource {
+			api_version = "%s"
+			id = "%s"
+			kind = "%s"
+		}
+	}
+	`, mockServerUrl, tableflowApiKeyResourceLabel, tableflowApiKeyDisplayName, tableflowApiKeyDescription, shouldDisable, ownerId, ownerApiVersion, ownerKind, resourceApiVersion, resourceId, resourceKind)
+}
 
 func testAccCheckApiKeyExists(n string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
