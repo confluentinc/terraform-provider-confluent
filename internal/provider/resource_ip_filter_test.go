@@ -14,16 +14,67 @@
 
 package provider
 
-import "fmt"
+import (
+	"context"
+	"fmt"
+	"io/ioutil"
+	"net/http"
+	"testing"
+
+	"github.com/walkerus/go-wiremock"
+)
 
 const (
 	ipFilterResourceScenarioName = "confluent_ip_filter Resource Lifecycle"
+
+	scenarioStateIpFilterHasBeenCreated = "A new IP group has been created"
 
 	createIpFilterUrlPath      = "/iam/v2/ip-filters"
 	readCreatedIpFilterUrlPath = "/iam/v2/ip-filters/ipf-12345"
 )
 
-func testAccReourceIpFilterConfig(mockServerUrl, resourceLabel, filter_name, resource_group, resource_scope, operation_group, ip_group string) string {
+func TestAccResourceIpFilter(t *testing.T) {
+	ctx := context.Background()
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
+
+	mockServerUrl := wiremockContainer.URI
+	wiremockClient := wiremock.NewClient(mockServerUrl)
+	// nolint:errcheck
+	defer wiremockClient.Reset()
+
+	// nolint:errcheck
+	defer wiremockClient.ResetAllScenarios()
+
+	createIpFilterResponse, _ := ioutil.ReadFile("../testdata/create_ip_filter.json")
+
+	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(createIpFilterUrlPath)).
+		InScenario(ipFilterResourceScenarioName).
+		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
+		WillSetStateTo(scenarioStateIpFilterHasBeenCreated).
+		WillReturn(
+			string(createIpFilterResponse),
+			contentTypeJSONHeader,
+			http.StatusCreated,
+		))
+
+	readIpFilterResponse, _ := ioutil.ReadFile("../testdata/read_ip_filter.json")
+
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readCreatedIpFilterUrlPath)).
+		InScenario(ipFilterResourceScenarioName).
+		WhenScenarioStateIs(scenarioStateIpFilterHasBeenCreated).
+		WillReturn(
+			string(readIpFilterResponse),
+			contentTypeJSONHeader,
+			http.StatusCreated,
+		))
+}
+
+func testAccResourceIpFilterConfig(mockServerUrl, resourceLabel, filter_name, resource_group, resource_scope, operation_group, ip_group string) string {
 	return fmt.Sprintf(`
 	provider "confluent" {
 		endpoint = "%s"

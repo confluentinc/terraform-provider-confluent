@@ -14,7 +14,15 @@
 
 package provider
 
-import "fmt"
+import (
+	"context"
+	"fmt"
+	"io/ioutil"
+	"net/http"
+	"testing"
+
+	"github.com/walkerus/go-wiremock"
+)
 
 const (
 	ipGroupDataSourceScenarioName = "confluent_ip_group Data Source Lifecycle"
@@ -22,6 +30,35 @@ const (
 	ipGroupUrlPath = "/iam/v2/ip-groups/ipg-12345"
 	ipGroupId      = "ipg-12345"
 )
+
+func TestAccDataSourceIpGroup(t *testing.T) {
+	ctx := context.Background()
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
+
+	mockServerUrl := wiremockContainer.URI
+	wiremockClient := wiremock.NewClient(mockServerUrl)
+	// nolint:errcheck
+	defer wiremockClient.Reset()
+
+	// nolint:errcheck
+	defer wiremockClient.ResetAllScenarios()
+
+	readIpGroupResponse, _ := ioutil.ReadFile("../testdata/ip_group/read_ip_group.json")
+
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(ipGroupUrlPath)).
+		InScenario(ipGroupDataSourceScenarioName).
+		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
+		WillReturn(
+			string(readIpGroupResponse),
+			contentTypeJSONHeader,
+			http.StatusCreated,
+		))
+}
 
 func testAccDataSourceIpGroupConfig(mockServerUrl, resourceLabel, id string) string {
 	return fmt.Sprintf(`

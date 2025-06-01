@@ -14,7 +14,15 @@
 
 package provider
 
-import "fmt"
+import (
+	"context"
+	"fmt"
+	"io/ioutil"
+	"net/http"
+	"testing"
+
+	"github.com/walkerus/go-wiremock"
+)
 
 const (
 	ipFilterDataSourceScenarioName = "confluent_ip_filter Data Source Lifecycle"
@@ -22,6 +30,35 @@ const (
 	ipFilterUrlPath = "/iam/v2/ip-filters/ipf-12345"
 	ipFilterId      = "ipf-12345"
 )
+
+func TestAccDataSourceIpFilter(t *testing.T) {
+	ctx := context.Background()
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
+
+	mockServerUrl := wiremockContainer.URI
+	wiremockClient := wiremock.NewClient(mockServerUrl)
+	// nolint:errcheck
+	defer wiremockClient.Reset()
+
+	// nolint:errcheck
+	defer wiremockClient.ResetAllScenarios()
+
+	readIpFilterResponse, _ := ioutil.ReadFile("../testdata/read_ip_filter.json")
+
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(ipFilterUrlPath)).
+		InScenario(ipFilterDataSourceScenarioName).
+		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
+		WillReturn(
+			string(readIpFilterResponse),
+			contentTypeJSONHeader,
+			http.StatusCreated,
+		))
+}
 
 func testAccDataSourceIpFilterConfig(mockServerUrl, resourceLabel, id string) string {
 	return fmt.Sprintf(`

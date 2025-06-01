@@ -14,16 +14,67 @@
 
 package provider
 
-import "fmt"
+import (
+	"context"
+	"fmt"
+	"io/ioutil"
+	"net/http"
+	"testing"
+
+	"github.com/walkerus/go-wiremock"
+)
 
 const (
 	ipGroupResourceScenarioName = "confluent_ip_group Resource Lifecycle"
+
+	scenarioStateIpGroupHasBeenCreated = "A new IP group has been created"
 
 	createIpGroupUrlPath      = "/iam/v2/ip-groups"
 	readCreatedIpGroupUrlPath = "/iam/v2/ip-groups/ipg-12345"
 )
 
-func testAccReourceIpGroupConfig(mockServerUrl, resourceLabel, groupName, cidrBlock string) string {
+func TestAccResourceIpGroup(t *testing.T) {
+	ctx := context.Background()
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
+
+	mockServerUrl := wiremockContainer.URI
+	wiremockClient := wiremock.NewClient(mockServerUrl)
+	// nolint:errcheck
+	defer wiremockClient.Reset()
+
+	// nolint:errcheck
+	defer wiremockClient.ResetAllScenarios()
+
+	createIpGroupResponse, _ := ioutil.ReadFile("../testdata/ip_group/create_ip_group.json")
+
+	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(createIpGroupUrlPath)).
+		InScenario(ipGroupResourceScenarioName).
+		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
+		WillSetStateTo(scenarioStateIpGroupHasBeenCreated).
+		WillReturn(
+			string(createIpGroupResponse),
+			contentTypeJSONHeader,
+			http.StatusCreated,
+		))
+
+	readIpGroupResponse, _ := ioutil.ReadFile("../testdata/ip_group/read_ip_group.json")
+
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readCreatedIpGroupUrlPath)).
+		InScenario(ipGroupResourceScenarioName).
+		WhenScenarioStateIs(scenarioStateIpGroupHasBeenCreated).
+		WillReturn(
+			string(readIpGroupResponse),
+			contentTypeJSONHeader,
+			http.StatusCreated,
+		))
+}
+
+func testAccResourceIpGroupConfig(mockServerUrl, resourceLabel, groupName, cidrBlock string) string {
 	return fmt.Sprintf(`
 	provider "confluent" {
 		endpoint = "%s"
