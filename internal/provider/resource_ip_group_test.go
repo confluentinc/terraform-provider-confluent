@@ -16,6 +16,13 @@ package provider
 
 import "fmt"
 
+const (
+	ipGroupResourceScenarioName = "confluent_ip_group Resource Lifecycle"
+
+	createIpGroupUrlPath      = "/iam/v2/ip-groups"
+	readCreatedIpGroupUrlPath = "/iam/v2/ip-groups/ipg-12345"
+)
+
 func testAccReourceIpGroupConfig(mockServerUrl, resourceLabel, groupName, cidrBlock string) string {
 	return fmt.Sprintf(`
 	provider "confluent" {

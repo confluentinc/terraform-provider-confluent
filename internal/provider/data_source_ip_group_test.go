@@ -16,6 +16,13 @@ package provider
 
 import "fmt"
 
+const (
+	ipGroupDataSourceScenarioName = "confluent_ip_group Data Source Lifecycle"
+
+	ipGroupUrlPath = "/iam/v2/ip-groups/ipg-12345"
+	ipGroupId      = "ipg-12345"
+)
+
 func testAccDataSourceIpGroupConfig(mockServerUrl, resourceLabel, id string) string {
 	return fmt.Sprintf(`
 	provider "confluent" {

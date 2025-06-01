@@ -16,6 +16,13 @@ package provider
 
 import "fmt"
 
+const (
+	ipFilterDataSourceScenarioName = "confluent_ip_filter Data Source Lifecycle"
+
+	ipFilterUrlPath = "/iam/v2/ip-filters/ipf-12345"
+	ipFilterId      = "ipf-12345"
+)
+
 func testAccDataSourceIpFilterConfig(mockServerUrl, resourceLabel, id string) string {
 	return fmt.Sprintf(`
 	provider "confluent" {
