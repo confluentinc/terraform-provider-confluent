@@ -21,6 +21,7 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/walkerus/go-wiremock"
 )
 
@@ -72,6 +73,21 @@ func TestAccResourceIpFilter(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusCreated,
 		))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		// https://www.terraform.io/docs/extend/testing/acceptance-tests/teststep.html
+		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
+		Steps: []resource.TestStep{
+			{
+				Config: testAccResourceIpFilterConfig(mockServerUrl, "test", "filter name", "resourcegroup", "resourcescope", "operationgroup", "ipgroup"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("test", "id", "ipf-12345"),
+				),
+			},
+		},
+	})
 }
 
 func testAccResourceIpFilterConfig(mockServerUrl, resourceLabel, filter_name, resource_group, resource_scope, operation_group, ip_group string) string {
