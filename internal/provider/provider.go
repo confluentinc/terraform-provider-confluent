@@ -35,6 +35,7 @@ import (
 	dc "github.com/confluentinc/ccloud-sdk-go-v2/data-catalog/v1"
 	fa "github.com/confluentinc/ccloud-sdk-go-v2/flink-artifact/v1"
 	fcpm "github.com/confluentinc/ccloud-sdk-go-v2/flink/v2"
+	iamipfiltering "github.com/confluentinc/ccloud-sdk-go-v2/iam-ip-filtering/v2"
 	iamv1 "github.com/confluentinc/ccloud-sdk-go-v2/iam/v1"
 	iam "github.com/confluentinc/ccloud-sdk-go-v2/iam/v2"
 	oidc "github.com/confluentinc/ccloud-sdk-go-v2/identity-provider/v2"
@@ -81,6 +82,7 @@ type Client struct {
 	byokClient                      *byok.APIClient
 	iamClient                       *iam.APIClient
 	iamV1Client                     *iamv1.APIClient
+	ipFilteringClient               *iamipfiltering.APIClient
 	caClient                        *ca.APIClient
 	ccpClient                       *ccp.APIClient
 	cmkClient                       *cmk.APIClient
@@ -567,6 +569,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	fcpmCfg := fcpm.NewConfiguration()
 	iamCfg := iam.NewConfiguration()
 	iamV1Cfg := iamv1.NewConfiguration()
+	ipFilteringCfg := iamipfiltering.NewConfiguration()
 	ksqlCfg := ksql.NewConfiguration()
 	mdsCfg := mds.NewConfiguration()
 	netAccessPointCfg := netap.NewConfiguration()
@@ -592,6 +595,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	fcpmCfg.Servers[0].URL = endpoint
 	iamCfg.Servers[0].URL = endpoint
 	iamV1Cfg.Servers[0].URL = endpoint
+	ipFilteringCfg.Servers[0].URL = endpoint
 	ksqlCfg.Servers[0].URL = endpoint
 	mdsCfg.Servers[0].URL = endpoint
 	netCfg.Servers[0].URL = endpoint
@@ -618,6 +622,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	fcpmCfg.UserAgent = userAgent
 	iamCfg.UserAgent = userAgent
 	iamV1Cfg.UserAgent = userAgent
+	ipFilteringCfg.UserAgent = userAgent
 	ksqlCfg.UserAgent = userAgent
 	mdsCfg.UserAgent = userAgent
 	netCfg.UserAgent = userAgent
@@ -656,6 +661,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	fcpmCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	iamCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	iamV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
+	ipFilteringCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	ksqlCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	mdsCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	netCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
@@ -682,6 +688,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 		fcpmClient:                      fcpm.NewAPIClient(fcpmCfg),
 		iamClient:                       iam.NewAPIClient(iamCfg),
 		iamV1Client:                     iamv1.NewAPIClient(iamV1Cfg),
+		ipFilteringClient:               iamipfiltering.NewAPIClient(ipFilteringCfg),
 		ksqlClient:                      ksql.NewAPIClient(ksqlCfg),
 		netClient:                       net.NewAPIClient(netCfg),
 		netAccessPointClient:            netap.NewAPIClient(netAccessPointCfg),
