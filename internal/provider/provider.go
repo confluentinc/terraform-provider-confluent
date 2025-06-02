@@ -401,6 +401,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_schema_registry_cluster_config":     schemaRegistryClusterConfigResource(),
 				"confluent_transit_gateway_attachment":         transitGatewayAttachmentResource(),
 				"confluent_invitation":                         invitationResource(),
+				"confluent_ip_group":                           ipGroupResource(),
 				"confluent_network_link_endpoint":              networkLinkEndpointResource(),
 				"confluent_network_link_service":               networkLinkServiceResource(),
 				"confluent_tf_importer":                        tfImporterResource(),
