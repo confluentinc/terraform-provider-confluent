@@ -612,7 +612,6 @@ func schemaCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Validating new Schema: %s", createSchemaRequestJson))
-	//panic(subjectName)
 	validationResponse, _, err := executeSchemaValidate(ctx, schemaRegistryRestClient, createSchemaRequest, subjectName)
 	if err != nil {
 		return diag.Errorf("error creating Schema: error sending validation request: %s", createDescriptiveError(err))
