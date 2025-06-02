@@ -33,7 +33,6 @@ import (
 
 	apikeys "github.com/confluentinc/ccloud-sdk-go-v2/apikeys/v2"
 	byok "github.com/confluentinc/ccloud-sdk-go-v2/byok/v1"
-	cam "github.com/confluentinc/ccloud-sdk-go-v2/cam/v1"
 	ca "github.com/confluentinc/ccloud-sdk-go-v2/certificate-authority/v2"
 	cmk "github.com/confluentinc/ccloud-sdk-go-v2/cmk/v2"
 	ccp "github.com/confluentinc/ccloud-sdk-go-v2/connect-custom-plugin/v1"
@@ -71,7 +70,6 @@ import (
 
 const (
 	byokKeyLoggingKey                         = "byok_key_id"
-	connectArtifactLoggingKey                 = "connect_artifact_id"
 	certificateAuthorityKey                   = "certificate_authority_id"
 	certificatePoolKey                        = "certificate_pool_id"
 	crnKafkaSuffix                            = "/kafka="
@@ -262,17 +260,6 @@ func (c *Client) caApiContext(ctx context.Context) context.Context {
 	}
 
 	tflog.Warn(ctx, "Could not find Cloud API Key or OAuth Token for Certificate Authorities client")
-	return ctx
-}
-
-func (c *Client) camApiContext(ctx context.Context) context.Context {
-	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
-		return context.WithValue(context.Background(), cam.ContextBasicAuth, cam.BasicAuth{
-			UserName: c.cloudApiKey,
-			Password: c.cloudApiSecret,
-		})
-	}
-	tflog.Warn(ctx, "Could not find Cloud API Key")
 	return ctx
 }
 
