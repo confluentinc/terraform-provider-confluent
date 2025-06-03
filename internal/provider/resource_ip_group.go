@@ -16,6 +16,7 @@ package provider
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -35,6 +36,9 @@ func ipGroupResource() *schema.Resource {
 		ReadContext:   resourceIPGroupRead,
 		UpdateContext: resourceIPGroupUpdate,
 		DeleteContext: resourceIPGroupDelete,
+		Importer: &schema.ResourceImporter{
+			StateContext: resourceIPGroupImport,
+		},
 		Schema: map[string]*schema.Schema{
 			paramId: {
 				Type:        schema.TypeString,
@@ -145,4 +149,12 @@ func setIPGroupAttributes(d *schema.ResourceData, ipGroup iamipfiltering.IamV2Ip
 	d.SetId(ipGroup.GetId())
 
 	return d, nil
+}
+
+func resourceIPGroupImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	if diagnostics := resourceIPGroupRead(ctx, d, m); diagnostics != nil {
+		return nil, fmt.Errorf("error importing IP group %q: %s", d.Id(), diagnostics[0].Summary)
+	}
+
+	return []*schema.ResourceData{d}, nil
 }

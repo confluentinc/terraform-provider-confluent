@@ -43,9 +43,7 @@ var createIpGroupUrlPath = "/iam/v2/ip-groups"
 var newIpGroupUrlPath = fmt.Sprintf("/iam/v2/ip-groups/%s", newIpGroupId)
 
 func TestAccResourceIpGroup(t *testing.T) {
-	// Set TF_ACC environment variable to enable acceptance tests
-	t.Setenv("TF_ACC", "1")
-
+	// ===== Setup wiremock =====
 	ctx := context.Background()
 
 	wiremockContainer, err := setupWiremock(ctx)
@@ -62,6 +60,7 @@ func TestAccResourceIpGroup(t *testing.T) {
 	// nolint:errcheck
 	defer wiremockClient.ResetAllScenarios()
 
+	// ===== Create stubs =====
 	createIpGroupResponse, _ := ioutil.ReadFile("../testdata/ip_group/create_ip_group.json")
 
 	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(createIpGroupUrlPath)).
@@ -71,7 +70,7 @@ func TestAccResourceIpGroup(t *testing.T) {
 		WillReturn(
 			string(createIpGroupResponse),
 			contentTypeJSONHeader,
-			http.StatusOK,
+			http.StatusCreated,
 		))
 
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(newIpGroupUrlPath)).
@@ -80,9 +79,10 @@ func TestAccResourceIpGroup(t *testing.T) {
 		WillReturn(
 			string(createIpGroupResponse),
 			contentTypeJSONHeader,
-			http.StatusCreated,
+			http.StatusOK,
 		))
 
+	// ===== Update stubs =====
 	updateIpGroupResponse, _ := ioutil.ReadFile("../testdata/ip_group/update_ip_group.json")
 
 	_ = wiremockClient.StubFor(wiremock.Patch(wiremock.URLPathEqualTo(newIpGroupUrlPath)).
@@ -104,8 +104,7 @@ func TestAccResourceIpGroup(t *testing.T) {
 			http.StatusOK,
 		))
 
-	notFoundIpGroupResponse, _ := ioutil.ReadFile("../testdata/ip_group/not_found_ip_group.json")
-
+	// ===== Delete stubs =====
 	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(newIpGroupUrlPath)).
 		InScenario(ipGroupResourceScenarioName).
 		WhenScenarioStateIs(scenarioStateIpGroupHasBeenUpdated).
@@ -116,21 +115,11 @@ func TestAccResourceIpGroup(t *testing.T) {
 			http.StatusNoContent,
 		))
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(newIpGroupUrlPath)).
-		InScenario(ipGroupResourceScenarioName).
-		WhenScenarioStateIs(scenarioStateIpGroupHasBeenDeleted).
-		WillReturn(
-			string(notFoundIpGroupResponse),
-			contentTypeJSONHeader,
-			http.StatusNotFound,
-		))
-
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
-		// https://www.terraform.io/docs/extend/testing/acceptance-tests/teststep.html
-		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
 		Steps: []resource.TestStep{
+			// ===== Create test =====
 			{
 				Config: testAccResourceIpGroupConfig(
 					mockServerUrl,
@@ -148,6 +137,13 @@ func TestAccResourceIpGroup(t *testing.T) {
 					resource.TestCheckResourceAttr(fullIpGroupResourceLabel, "cidr_blocks.1", "192.168.7.0/24"),
 				),
 			},
+			// ===== Import test =====
+			{
+				ResourceName:      fullIpGroupResourceLabel,
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+			// ===== Update test =====
 			{
 				Config: testAccResourceIpGroupConfig(
 					mockServerUrl,
@@ -163,6 +159,7 @@ func TestAccResourceIpGroup(t *testing.T) {
 					resource.TestCheckResourceAttr(fullIpGroupResourceLabel, "cidr_blocks.0", "192.168.0.0/24"),
 				),
 			},
+			// ===== Delete test =====
 			{
 				Config: testAccResourceIpGroupConfig(
 					mockServerUrl,
