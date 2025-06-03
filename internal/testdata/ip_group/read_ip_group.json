@@ -1,7 +1,7 @@
 {
   "api_version": "iam/v2",
   "kind": "IpGroup",
-  "id": "dlz-f3a90de",
+  "id": "ipg-12345",
   "metadata": {
     "self": "https://api.confluent.cloud/iam/v2/ip-groups/ipg-12345",
     "resource_name": "crn://confluent.cloud/organization=9bb441c4-edef-46ac-8a41-c49e44a3fd9a/ip-group=ipg-12345",
