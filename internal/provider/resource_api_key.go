@@ -96,7 +96,6 @@ func apiKeyResource() *schema.Resource {
 				Type:     schema.TypeBool,
 				Optional: true,
 				Default:  false,
-				ForceNew: true,
 			},
 		},
 		// TODO: APIT-2820
@@ -195,21 +194,25 @@ func executeApiKeysCreate(ctx context.Context, c *Client, apiKey *apikeys.IamV2A
 }
 
 func apiKeyUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	isUpdateAllowed := d.HasChange(paramDisplayName) || d.HasChange(paramDescription)
-	if isUpdateAllowed {
-		c := meta.(*Client)
-		displayName := d.Get(paramDisplayName).(string)
-		description := d.Get(paramDescription).(string)
+	if d.HasChangesExcept(paramDisplayName, paramDescription, paramDisableWaitForReady) {
+		return diag.Errorf("error updating API Key %q: only %s, %s, %s attributes can be updated for an API Key", d.Id(), paramDisplayName, paramDescription, paramDisableWaitForReady)
+	}
 
+	// When updating the paramDisableWaitForReady, the PATCH API request should be skipped.
+	if d.HasChanges(paramDisplayName, paramDescription) {
 		updateApiKeyRequest := apikeys.NewIamV2ApiKeyUpdate()
 		updateSpec := apikeys.NewIamV2ApiKeySpecUpdate()
 
 		if d.HasChange(paramDisplayName) {
+			displayName := d.Get(paramDisplayName).(string)
 			updateSpec.SetDisplayName(displayName)
 		}
+
 		if d.HasChange(paramDescription) {
+			description := d.Get(paramDescription).(string)
 			updateSpec.SetDescription(description)
 		}
+
 		updateApiKeyRequest.SetSpec(*updateSpec)
 
 		updateApiKeyRequestJson, err := json.Marshal(updateApiKeyRequest)
@@ -218,8 +221,8 @@ func apiKeyUpdate(ctx context.Context, d *schema.ResourceData, meta interface{})
 		}
 		tflog.Debug(ctx, fmt.Sprintf("Updating API Key %q: %s", d.Id(), updateApiKeyRequestJson), map[string]interface{}{apiKeyLoggingKey: d.Id()})
 
-		req := c.apiKeysClient.APIKeysIamV2Api.UpdateIamV2ApiKey(c.apiKeysApiContext(ctx), d.Id()).IamV2ApiKeyUpdate(*updateApiKeyRequest)
-		updatedApiKey, _, err := req.Execute()
+		c := meta.(*Client)
+		updatedApiKey, _, err := c.apiKeysClient.APIKeysIamV2Api.UpdateIamV2ApiKey(c.apiKeysApiContext(ctx), d.Id()).IamV2ApiKeyUpdate(*updateApiKeyRequest).Execute()
 
 		if err != nil {
 			return diag.Errorf("error updating API Key %q: %s", d.Id(), createDescriptiveError(err))
@@ -230,8 +233,6 @@ func apiKeyUpdate(ctx context.Context, d *schema.ResourceData, meta interface{})
 			return diag.Errorf("error updating API Key %q: error marshaling %#v to json: %s", d.Id(), updatedApiKey, createDescriptiveError(err))
 		}
 		tflog.Debug(ctx, fmt.Sprintf("Finished updating API Key %q: %s", d.Id(), updatedApiKeyJson), map[string]interface{}{apiKeyLoggingKey: d.Id()})
-	} else {
-		return diag.Errorf("only %s, %s attributes can be updated for an API Key", paramDisplayName, paramDescription)
 	}
 
 	return apiKeyRead(ctx, d, meta)
