@@ -119,7 +119,17 @@ func resourceIPGroupUpdate(ctx context.Context, d *schema.ResourceData, m interf
 }
 
 func resourceIPGroupDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	// TODO: Implement delete logic.
+	c := m.(*Client)
+
+	id := d.Get(paramId).(string)
+
+	req := c.ipFilteringClient.IPGroupsIamV2Api.DeleteIamV2IpGroup(ctx, id)
+	_, err := req.Execute()
+
+	if err != nil {
+		return diag.Errorf("error deleting ip group %s", createDescriptiveError(err))
+	}
+
 	return nil
 }
 

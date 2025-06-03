@@ -31,6 +31,7 @@ const (
 
 	scenarioStateIpGroupHasBeenCreated = "A new IP group has been created"
 	scenarioStateIpGroupHasBeenUpdated = "A IP group has been updated"
+	scenarioStateIpGroupHasBeenDeleted = "A IP group has been deleted"
 
 	ipGroupResourceLabel = "test"
 	newIpGroupId         = "ipg-12345"
@@ -103,6 +104,27 @@ func TestAccResourceIpGroup(t *testing.T) {
 			http.StatusOK,
 		))
 
+	notFoundIpGroupResponse, _ := ioutil.ReadFile("../testdata/ip_group/not_found_ip_group.json")
+
+	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(newIpGroupUrlPath)).
+		InScenario(ipGroupResourceScenarioName).
+		WhenScenarioStateIs(scenarioStateIpGroupHasBeenUpdated).
+		WillSetStateTo(scenarioStateIpGroupHasBeenDeleted).
+		WillReturn(
+			"",
+			nil,
+			http.StatusNoContent,
+		))
+
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(newIpGroupUrlPath)).
+		InScenario(ipGroupResourceScenarioName).
+		WhenScenarioStateIs(scenarioStateIpGroupHasBeenDeleted).
+		WillReturn(
+			string(notFoundIpGroupResponse),
+			contentTypeJSONHeader,
+			http.StatusNotFound,
+		))
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
@@ -140,6 +162,16 @@ func TestAccResourceIpGroup(t *testing.T) {
 					resource.TestCheckResourceAttr(fullIpGroupResourceLabel, "cidr_blocks.#", "1"),
 					resource.TestCheckResourceAttr(fullIpGroupResourceLabel, "cidr_blocks.0", "192.168.0.0/24"),
 				),
+			},
+			{
+				Config: testAccResourceIpGroupConfig(
+					mockServerUrl,
+					ipGroupResourceLabel,
+					"CorpNet",
+					[]string{
+						"192.168.0.0/24",
+					}),
+				Destroy: true,
 			},
 		},
 	})
