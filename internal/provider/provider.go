@@ -323,6 +323,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_identity_pool":                      identityPoolDataSource(),
 				"confluent_identity_provider":                  identityProviderDataSource(),
 				"confluent_ip_addresses":                       ipAddressesDataSource(),
+				"confluent_ip_group":                           dataSourceIPGroup(),
 				"confluent_kafka_client_quota":                 kafkaClientQuotaDataSource(),
 				"confluent_network":                            networkDataSource(),
 				"confluent_access_point":                       accessPointDataSource(),
