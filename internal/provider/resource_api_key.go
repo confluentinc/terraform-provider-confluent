@@ -195,7 +195,7 @@ func executeApiKeysCreate(ctx context.Context, c *Client, apiKey *apikeys.IamV2A
 
 func apiKeyUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	if d.HasChangesExcept(paramDisplayName, paramDescription, paramDisableWaitForReady) {
-		return diag.Errorf("only %s, %s, %s attributes can be updated for an API Key", paramDisplayName, paramDescription, paramDisableWaitForReady)
+		return diag.Errorf("error updating API Key %q: only %s, %s, %s attributes can be updated for an API Key", d.Id(), paramDisplayName, paramDescription, paramDisableWaitForReady)
 	}
 
 	// When updating the paramDisableWaitForReady, the PATCH API request should be skipped.
