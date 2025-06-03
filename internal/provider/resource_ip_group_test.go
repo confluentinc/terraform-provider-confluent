@@ -69,7 +69,7 @@ func TestAccResourceIpGroup(t *testing.T) {
 		WillReturn(
 			string(createIpGroupResponse),
 			contentTypeJSONHeader,
-			http.StatusCreated,
+			http.StatusOK,
 		))
 
 	readIpGroupResponse, _ := ioutil.ReadFile("../testdata/ip_group/read_ip_group.json")

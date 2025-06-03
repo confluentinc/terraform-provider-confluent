@@ -79,7 +79,19 @@ func resourceIPGroupCreate(ctx context.Context, d *schema.ResourceData, m interf
 }
 
 func resourceIPGroupRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	// TODO: Implement read logic.
+	c := m.(*Client)
+
+	id := d.Get(paramId).(string)
+
+	req := c.ipFilteringClient.IPGroupsIamV2Api.GetIamV2IpGroup(ctx, id)
+	ipGroup, _, err := req.Execute()
+
+	if err != nil {
+		return diag.Errorf("error reading ip group %s", createDescriptiveError(err))
+	}
+
+	setIPGroupAttributes(d, ipGroup)
+
 	return nil
 }
 
