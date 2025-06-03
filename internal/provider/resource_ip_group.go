@@ -96,7 +96,25 @@ func resourceIPGroupRead(ctx context.Context, d *schema.ResourceData, m interfac
 }
 
 func resourceIPGroupUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	// TODO: Implement update logic.
+	c := m.(*Client)
+
+	id := d.Get(paramId).(string)
+	groupName := d.Get(paramGroupName).(string)
+	cidrBlocks := convertToStringSlice(d.Get(paramCIDRBlocks).(*schema.Set).List())
+
+	ipGroup := iamipfiltering.NewIamV2IpGroup()
+	ipGroup.GroupName = &groupName
+	ipGroup.CidrBlocks = &cidrBlocks
+
+	req := c.ipFilteringClient.IPGroupsIamV2Api.UpdateIamV2IpGroup(ctx, id).IamV2IpGroup(*ipGroup)
+	updatedIpGroup, _, err := req.Execute()
+
+	if err != nil {
+		return diag.Errorf("error updating ip group %s", createDescriptiveError(err))
+	}
+
+	setIPGroupAttributes(d, updatedIpGroup)
+
 	return nil
 }
 

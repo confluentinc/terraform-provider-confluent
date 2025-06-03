@@ -28,8 +28,8 @@ import (
 const (
 	ipGroupDataSourceScenarioName = "confluent_ip_group Data Source Lifecycle"
 
-	ipGroupUrlPath = "/iam/v2/ip-groups/ipg-12345"
-	ipGroupId      = "ipg-12345"
+	existingIpGroupUrlPath = "/iam/v2/ip-groups/ipg-12345"
+	existingIpGroupId      = "ipg-12345"
 )
 
 func TestAccDataSourceIpGroup(t *testing.T) {
@@ -51,7 +51,7 @@ func TestAccDataSourceIpGroup(t *testing.T) {
 
 	readIpGroupResponse, _ := ioutil.ReadFile("../testdata/ip_group/read_ip_group.json")
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(ipGroupUrlPath)).
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(existingIpGroupUrlPath)).
 		InScenario(ipGroupDataSourceScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillReturn(
