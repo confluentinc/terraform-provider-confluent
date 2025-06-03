@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -30,11 +31,19 @@ const (
 
 	scenarioStateIpGroupHasBeenCreated = "A new IP group has been created"
 
-	createIpGroupUrlPath      = "/iam/v2/ip-groups"
-	readCreatedIpGroupUrlPath = "/iam/v2/ip-groups/ipg-12345"
+	ipGroupResourceLabel = "test"
+	CreatedIpGroupId     = "ipg-12345"
 )
 
+var fullIpGroupResourceLabel = fmt.Sprintf("confluent_ip_group.%s", ipGroupResourceLabel)
+
+var createIpGroupUrlPath = "/iam/v2/ip-groups"
+var createdIpGroupUrlPath = fmt.Sprintf("/iam/v2/ip-groups/%s", ipGroupId)
+
 func TestAccResourceIpGroup(t *testing.T) {
+	// Set TF_ACC environment variable to enable acceptance tests
+	t.Setenv("TF_ACC", "1")
+
 	ctx := context.Background()
 
 	wiremockContainer, err := setupWiremock(ctx)
@@ -65,7 +74,7 @@ func TestAccResourceIpGroup(t *testing.T) {
 
 	readIpGroupResponse, _ := ioutil.ReadFile("../testdata/ip_group/read_ip_group.json")
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readCreatedIpGroupUrlPath)).
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(createdIpGroupUrlPath)).
 		InScenario(ipGroupResourceScenarioName).
 		WhenScenarioStateIs(scenarioStateIpGroupHasBeenCreated).
 		WillReturn(
@@ -81,23 +90,40 @@ func TestAccResourceIpGroup(t *testing.T) {
 		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
 		Steps: []resource.TestStep{
 			{
-				Config: testAccResourceIpGroupConfig(mockServerUrl, "test", "Group Name", "192.168.0.0/24"),
+				Config: testAccResourceIpGroupConfig(
+					mockServerUrl,
+					ipGroupResourceLabel,
+					"CorpNet",
+					[]string{
+						"192.168.0.0/24",
+						"192.168.7.0/24",
+					}),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("test", "id", "ipg-12345"),
+					resource.TestCheckResourceAttr(fullIpGroupResourceLabel, paramId, "ipg-12345"),
+					resource.TestCheckResourceAttr(fullIpGroupResourceLabel, paramGroupName, "CorpNet"),
+					resource.TestCheckResourceAttr(fullIpGroupResourceLabel, "cidr_blocks.#", "2"),
+					resource.TestCheckResourceAttr(fullIpGroupResourceLabel, "cidr_blocks.0", "192.168.0.0/24"),
+					resource.TestCheckResourceAttr(fullIpGroupResourceLabel, "cidr_blocks.1", "192.168.7.0/24"),
 				),
 			},
 		},
 	})
 }
 
-func testAccResourceIpGroupConfig(mockServerUrl, resourceLabel, groupName, cidrBlock string) string {
+func testAccResourceIpGroupConfig(mockServerUrl, resourceLabel, groupName string, cidrBlocks []string) string {
+	for i, v := range cidrBlocks {
+		cidrBlocks[i] = fmt.Sprintf("%q", v)
+	}
+
 	return fmt.Sprintf(`
 	provider "confluent" {
 		endpoint = "%s"
 	}
 	resource "confluent_ip_group" "%s" {
 		group_name = "%s"
-		cidr_blocks = ["%s"]
+		cidr_blocks = [
+			%s
+		]
 	}
-	`, mockServerUrl, resourceLabel, groupName, cidrBlock)
+	`, mockServerUrl, resourceLabel, groupName, strings.Join(cidrBlocks, ",\n"))
 }
