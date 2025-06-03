@@ -59,7 +59,7 @@ func TestAccDataSourceCluster(t *testing.T) {
 			http.StatusOK,
 		))
 
-	readClustersResponse, _ := ioutil.ReadFile("../testdata/kafka/read_kafkas.json")
+	readClustersResponse, _ := ioutil.ReadFile("../testdata/kafka/read_clusters.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/cmk/v2/clusters")).
 		InScenario(dataSourceKafkaScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(testEnvironmentId)).

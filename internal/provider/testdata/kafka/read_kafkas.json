@@ -1,0 +1,28 @@
+{
+  "data": [
+    {
+      "id": "lkc-abc123",
+      "display_name": "Test Cluster 1",
+      "cloud": "AWS",
+      "region": "us-west-2",
+      "availability": "SINGLE_ZONE",
+      "kind": "Cluster",
+      "api_version": "v1",
+      "bootstrap_endpoint": "bootstrap.example.com:9092",
+      "rest_endpoint": "rest.example.com:8082",
+      "rbac_crn": "crn://confluent.cloud/organization=org-123/environment=env-456/cloud-cluster=lkc-abc123"
+    },
+    {
+      "id": "lkc-def456",
+      "display_name": "Test Cluster 2",
+      "cloud": "GCP",
+      "region": "us-central1",
+      "availability": "MULTI_ZONE",
+      "kind": "Cluster",
+      "api_version": "v1",
+      "bootstrap_endpoint": "bootstrap2.example.com:9092",
+      "rest_endpoint": "rest2.example.com:8082",
+      "rbac_crn": "crn://confluent.cloud/organization=org-123/environment=env-456/cloud-cluster=lkc-def456"
+    }
+  ]
+} 
