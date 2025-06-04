@@ -1,3 +1,17 @@
+## 2.31.0 (June 4th, 2025)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.30.0...v2.31.0)
+
+**New features:**
+* Added `confluent_flink_connection` resource and data source to manage connections between Flink statements and UDFs and third party services.
+* Added `confluent_connect_artifact` resource and data source to manage Custom SMTs (Single Message Transform) for fully managed connectors.
+
+
+**Bug fixes:**
+* Updated the docs of `confluent_role_binding` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_role_binding) and `confluent_api_key` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_api_key) to support in-place updates for "disable_wait_for_ready" attribute. 
+* Updated the docs of `confluent_schema` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema) to include a workaround for a Terraform drift issue.
+
+
 ## 2.30.0 (May 22nd, 2025)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.29.0...v2.30.0)
