@@ -11,7 +11,7 @@
 * Updated the docs of `confluent_schema` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema) to include a workaround for a Terraform drift issue.
 
 **Examples:**
-* Updated the [connect-artifact](https://github.com/confluentinc/terraform-provider-confluent/blob/master/examples/configurations/connect-artifact) example.
+* Added the [connect-artifact](https://github.com/confluentinc/terraform-provider-confluent/blob/master/examples/configurations/connect-artifact) example.
 
 ## 2.30.0 (May 22nd, 2025)
 
