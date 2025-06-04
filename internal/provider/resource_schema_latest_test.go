@@ -71,6 +71,21 @@ const (
             },
          "tags" : [ "PII" ],
          "type" : "ENCRYPT"
+         } ],
+	"migrationRules" : [ {   
+		"disabled" : false,                                                          
+        "doc" : "",
+        "expr" : "",
+        "kind" : "TRANSFORM",
+        "mode" : "WRITEREAD",
+        "name" : "encrypt",
+        "onFailure" : "ERROR,ERROR",
+        "onSuccess" : "NONE,NONE",
+        "params" : {
+            "encrypt.kek.name" : "testkekM"
+            },
+        "tags" : [ "PIm" ],
+        "type" : "ENCRYPT"
          } ]
 },
   "schema": "foobar",
@@ -366,6 +381,16 @@ func testAccCheckLatestSchemaConfig(confluentCloudBaseUrl, mockServerUrl string)
 			  "encrypt.kek.name" = "testkek2"
 		  }
 		}
+		migration_rules  {
+		  name = "encrypt"
+		  kind = "TRANSFORM"
+		  type = "ENCRYPT"
+		  mode = "WRITEREAD"
+		  tags = ["PIm"]
+		  params = {
+			  "encrypt.kek.name" = "testkekM"
+		  }
+		}
 	  }
 
       schema_reference {
@@ -419,6 +444,16 @@ func testAccCheckLatestSchemaConfigWithUpdatedCredentials(confluentCloudBaseUrl,
 		  tags = ["PIIIII"]
 		  params = {
 			  "encrypt.kek.name" = "testkek2"
+		  }
+		}
+		migration_rules  {
+		  name = "encrypt"
+		  kind = "TRANSFORM"
+		  type = "ENCRYPT"
+		  mode = "WRITEREAD"
+		  tags = ["PIm"]
+		  params = {
+			  "encrypt.kek.name" = "testkekM"
 		  }
 		}
 	  }
