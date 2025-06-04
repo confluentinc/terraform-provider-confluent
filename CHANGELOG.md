@@ -6,7 +6,6 @@
 * Added `confluent_flink_connection` resource and data source to manage connections between Flink statements and UDFs and third party services.
 * Added `confluent_connect_artifact` resource and data source to manage Custom SMTs (Single Message Transform) for fully managed connectors.
 
-
 **Bug fixes:**
 * Updated the docs of `confluent_role_binding` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_role_binding) and `confluent_api_key` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_api_key) to support in-place updates for "disable_wait_for_ready" attribute. 
 * Updated the docs of `confluent_schema` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema) to include a workaround for a Terraform drift issue.
