@@ -3,7 +3,7 @@
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.30.0...v2.31.0)
 
 **New features:**
-* Added `confluent_flink_connection` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_flink_connection) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_flink_connection)data source to manage connections between Flink statements and UDFs and third party services.
+* Added `confluent_flink_connection` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_flink_connection) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_flink_connection) to manage connections between Flink statements and UDFs and third party services.
 * Added `confluent_connect_artifact` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_connect_artifact) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_connect_artifact) to manage Custom SMTs (Single Message Transform) for fully managed connectors.
 
 **Bug fixes:**
