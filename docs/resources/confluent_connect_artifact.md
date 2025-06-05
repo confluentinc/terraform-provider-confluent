@@ -24,7 +24,7 @@ resource "confluent_connect_artifact" "example" {
     id = "env-123456"
   }
   content_format = "JAR"
-  artifact_file  = "my_connect_artifact.jar"
+  artifact_file  = "path/to/your/artifact.jar" # Can be relative or absolute path
   description    = "Example Connect Artifact"
 }
 ```
@@ -38,7 +38,7 @@ The following arguments are supported:
 * `environment` - (Required Block) The Environment that the Connect Artifact belongs to, for example, `env-abc123`. It supports the following:
 * `id` - (Required String) The ID of the Environment that the Connect Artifact belongs to.
 * `content_format` - (Required String) Archive format of the Connect Artifact. Supported formats are `JAR` and `ZIP`.
-* `artifact_file` - (Optional String) The artifact file for Connect Artifact in `JAR` or `ZIP` format.
+* `artifact_file` - (Optional String) The artifact file for Connect Artifact in `JAR` or `ZIP` format. This can be relative or absolute path
 * `description` - (Optional String) Description of the Connect Artifact.
 
 ## Attributes Reference
