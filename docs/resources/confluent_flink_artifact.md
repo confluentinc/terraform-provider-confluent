@@ -26,6 +26,7 @@ resource "confluent_flink_artifact" "main" {
   region         = "us-west-2"
   display_name   = "my_flink_sumscalar_artifact"
   content_format = "JAR"
+  artifact_file  = "path/to/your/artifact.jar"  # Can be relative or absolute path
   environment {
     id = confluent_environment.development.id
   }
@@ -41,7 +42,8 @@ The following arguments are supported:
 - `cloud` - (Required String) The cloud service provider that runs the Flink Artifact. Accepted values are: `AWS`, `AZURE`.
 - `region` - (Required String) The cloud service provider region that hosts the Flink Artifact.
 - `class` - (Optional String, **Deprecated**) Java class or alias for the Flink Artifact as provided by developer.
-- `artifact_file` - (Required String) The artifact file for Flink Artifact.
+- `artifact_file` - (Required String) The artifact file for Flink Artifact. Can be a relative or absolute path. Must have a `.jar` or `.zip` extension. This can be relative or absolute path
+- `content_format` - (Optional String) Archive format of the Flink Artifact. Accepted values are: `JAR`, `ZIP`. Should match the file extension of your artifact file.
 - `environment` (Required Configuration Block) supports the following:
     - `id` - (Required String) The ID of the Environment that the Flink Artifact Pool belongs to, for example, `env-abc123`.
 
@@ -50,7 +52,6 @@ The following arguments are supported:
 In addition to the preceding arguments, the following attributes are exported:
 
 - `id` - (Required String) The ID of the Flink Artifact, for example, `lfa-abc123`.
-- `content_format` - (Optional String) Archive format of the Flink Artifact. Accepted values are: `JAR`, `ZIP`.
 - `runtime_language` - (Optional String) Runtime language of the Flink Artifact as `Python` or `Java`. Defaults to `Java`.
 - `description` - (Optional String) Description of the Flink Artifact.
 - `documentation_link` - (Optional String) Documentation link of the Flink Artifact.
