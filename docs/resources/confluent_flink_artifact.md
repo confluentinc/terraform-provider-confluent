@@ -42,7 +42,7 @@ The following arguments are supported:
 - `cloud` - (Required String) The cloud service provider that runs the Flink Artifact. Accepted values are: `AWS`, `AZURE`.
 - `region` - (Required String) The cloud service provider region that hosts the Flink Artifact.
 - `class` - (Optional String, **Deprecated**) Java class or alias for the Flink Artifact as provided by developer.
-- `artifact_file` - (Required String) The artifact file for Flink Artifact. Can be a relative or absolute path. Must have a `.jar` or `.zip` extension.
+- `artifact_file` - (Required String) The artifact file for Flink Artifact. Can be a relative or absolute path. Must have a `.jar` or `.zip` extension. This can be relative or absolute path
 - `content_format` - (Optional String) Archive format of the Flink Artifact. Accepted values are: `JAR`, `ZIP`. Should match the file extension of your artifact file.
 - `environment` (Required Configuration Block) supports the following:
     - `id` - (Required String) The ID of the Environment that the Flink Artifact Pool belongs to, for example, `env-abc123`.
