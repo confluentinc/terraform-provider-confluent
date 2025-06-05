@@ -24,7 +24,7 @@ resource "confluent_connect_artifact" "example" {
     id = "env-123456"
   }
   content_format = "JAR"
-  artifact_file  = "my_connect_artifact.jar"
+  artifact_file  = "path/to/your/artifact.jar" # Can be relative or absolute path
   description    = "Example Connect Artifact"
 }
 ```
