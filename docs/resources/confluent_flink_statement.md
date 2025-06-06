@@ -115,7 +115,9 @@ The following arguments are supported:
     - `id` - (Required String) The ID of the Principal the Flink Statement runs as, for example, `sa-abc123`.
 - `statement` - (Required String) The raw SQL text statement, for example, `SELECT CURRENT_TIMESTAMP;`.
 - `statement_name` - (Optional String) The ID of the Flink Statement, for example, `cfeab4fe-b62c-49bd-9e99-51cc98c77a67`.
-- `rest_endpoint` - (Optional String) The REST endpoint of the Flink region, for example, `https://flink.us-east-1.aws.confluent.cloud`).
+- `rest_endpoint` - (Optional String) The REST endpoint of the Flink region. For example, for public networking: `https://flink.us-east-1.aws.confluent.cloud`. In the case of private networking, the endpoint might look like `https://flink.pr1jy6.us-east-2.aws.confluent.cloud`. You can construct it using either:
+  - `data.confluent_flink_region.main.private_rest_endpoint`, or
+  - `https://flink${data.confluent_network.main.endpoint_suffix}`
 - `credentials` (Optional Configuration Block) supports the following:
     - `key` - (Required String) The Flink API Key.
     - `secret` - (Required String, Sensitive) The Flink API Secret.
