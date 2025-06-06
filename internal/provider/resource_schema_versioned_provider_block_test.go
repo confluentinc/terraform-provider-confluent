@@ -206,6 +206,16 @@ func testAccCheckVersionedSchemaConfigWithEnhancedProviderBlock(confluentCloudBa
 			  "encrypt.kek.name" = "testkek2"
 		  }
 		}
+		migration_rules  {
+		  name = "encrypt"
+		  kind = "TRANSFORM"
+		  type = "ENCRYPT"
+		  mode = "WRITEREAD"
+		  tags = ["PIm"]
+		  params = {
+			  "encrypt.kek.name" = "testkekM"
+		  }
+		}
 	  }
 
       schema_reference {

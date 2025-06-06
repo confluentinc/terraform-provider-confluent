@@ -282,6 +282,16 @@ func testAccCheckSchemaConfigWithEnhancedProviderBlock(confluentCloudBaseUrl, mo
 			  "encrypt.kek.name" = "testkek2"
 		  }
 		}
+		migration_rules  {
+		  name = "encrypt"
+		  kind = "TRANSFORM"
+		  type = "ENCRYPT"
+		  mode = "WRITEREAD"
+		  tags = ["PIm"]
+		  params = {
+			  "encrypt.kek.name" = "testkekM"
+		  }
+		}
 	  }
 	}
 	`, confluentCloudBaseUrl, kafkaApiKey, kafkaApiSecret, mockServerUrl, testStreamGovernanceClusterId, testSchemaResourceLabel, testSubjectName, testFormat, testSchemaContent,

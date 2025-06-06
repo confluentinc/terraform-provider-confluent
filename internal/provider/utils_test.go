@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 	dns "github.com/confluentinc/ccloud-sdk-go-v2/networking-dnsforwarder/v1"
+	sr "github.com/confluentinc/ccloud-sdk-go-v2/schema-registry/v1"
 	"reflect"
 	"testing"
 
@@ -284,6 +285,329 @@ func TestConvertToStringObjectMap(t *testing.T) {
 
 		if reflect.DeepEqual(actual, map1Expected) {
 			t.Fatalf("Unexpected error: expected %v, got %v", map1Expected, actual)
+		}
+	})
+}
+
+func TestBuildTfRules(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		domainRules := []sr.Rule{
+			{
+				Name:     sr.PtrString("ABC"),
+				Disabled: sr.PtrBool(false),
+				Doc:      sr.PtrString("Doc"),
+				Expr:     sr.PtrString("EXPR"),
+				Kind:     sr.PtrString("TRANSFORM"),
+				Mode:     sr.PtrString("WRITEREAD"),
+				Type:     sr.PtrString("ENCRYPT"),
+				Tags: &[]string{
+					"PII",
+				},
+				Params: &map[string]string{
+					"encrypt.kek.name": "testkek2",
+				},
+				OnSuccess: sr.PtrString("NONE,NONE"),
+				OnFailure: sr.PtrString("ERROR,ERROR"),
+			},
+		}
+		migrationRules := []sr.Rule{
+			{
+				Name:     sr.PtrString("ABC"),
+				Disabled: sr.PtrBool(false),
+				Doc:      sr.PtrString("Doc"),
+				Expr:     sr.PtrString("EXPR"),
+				Kind:     sr.PtrString("TRANSFORM"),
+				Mode:     sr.PtrString("WRITEREAD"),
+				Type:     sr.PtrString("ENCRYPT"),
+				Tags: &[]string{
+					"PIIM",
+				},
+				Params: &map[string]string{
+					"encrypt.kek.name": "testkekM",
+				},
+				OnSuccess: sr.PtrString("NONE,NONE"),
+				OnFailure: sr.PtrString("ERROR,ERROR"),
+			},
+		}
+		tfDomainMigrationRules := make(map[string]interface{})
+		tfRulesDomain := make([]map[string]interface{}, 1)
+		tfRuleDomain := make(map[string]interface{})
+		tfRuleDomain[paramName] = "ABC"
+		tfRuleDomain[paramDoc] = "Doc"
+		tfRuleDomain[paramKind] = "TRANSFORM"
+		tfRuleDomain[paramMode] = "WRITEREAD"
+		tfRuleDomain[paramType] = "ENCRYPT"
+		tfRuleDomain[paramExpr] = "EXPR"
+		tfRuleDomain[paramOnSuccess] = "NONE,NONE"
+		tfRuleDomain[paramOnFailure] = "ERROR,ERROR"
+		tfRuleDomain[paramDisabled] = false
+		tfRuleDomain[paramTags] = []string{
+			"PII",
+		}
+		tfRuleDomain[paramParams] = map[string]string{
+			"encrypt.kek.name": "testkek2",
+		}
+
+		tfRulesMigration := make([]map[string]interface{}, 1)
+		tfRuleMigration := make(map[string]interface{})
+		tfRuleMigration[paramName] = "ABC"
+		tfRuleMigration[paramDoc] = "Doc"
+		tfRuleMigration[paramKind] = "TRANSFORM"
+		tfRuleMigration[paramMode] = "WRITEREAD"
+		tfRuleMigration[paramType] = "ENCRYPT"
+		tfRuleMigration[paramExpr] = "EXPR"
+		tfRuleMigration[paramOnSuccess] = "NONE,NONE"
+		tfRuleMigration[paramOnFailure] = "ERROR,ERROR"
+		tfRuleMigration[paramDisabled] = false
+		tfRuleMigration[paramTags] = []string{
+			"PIIM",
+		}
+		tfRuleMigration[paramParams] = map[string]string{
+			"encrypt.kek.name": "testkekM",
+		}
+		tfRulesDomain[0] = tfRuleDomain
+		tfRulesMigration[0] = tfRuleMigration
+		tfDomainMigrationRules[paramDomainRules] = tfRulesDomain
+		tfDomainMigrationRules[paramMigrationRules] = tfRulesMigration
+		tfRuleSet := make([]map[string]interface{}, 1)
+		tfRuleSet[0] = tfDomainMigrationRules
+		actual := buildTfRules(domainRules, migrationRules)
+
+		if !reflect.DeepEqual(*actual, tfRuleSet) {
+			t.Fatalf("Unexpected error: expected %v, got %v", tfRuleSet, *actual)
+		}
+	})
+
+	t.Run("success, incomplete set", func(t *testing.T) {
+		domainRules := []sr.Rule{
+			{
+				Name:     sr.PtrString("ABC"),
+				Disabled: sr.PtrBool(false),
+				Expr:     sr.PtrString("EXPR"),
+				Kind:     sr.PtrString("TRANSFORM"),
+				Mode:     sr.PtrString("WRITEREAD"),
+				Type:     sr.PtrString("ENCRYPT"),
+				Tags: &[]string{
+					"PII",
+				},
+				Params: &map[string]string{
+					"encrypt.kek.name": "testkek2",
+				},
+				OnSuccess: sr.PtrString("NONE,NONE"),
+				OnFailure: sr.PtrString("ERROR,ERROR"),
+			},
+		}
+		migrationRules := []sr.Rule{
+			{
+				Name:     sr.PtrString("ABC"),
+				Disabled: sr.PtrBool(false),
+				Expr:     sr.PtrString("EXPR"),
+				Kind:     sr.PtrString("TRANSFORM"),
+				Mode:     sr.PtrString("WRITEREAD"),
+				Type:     sr.PtrString("ENCRYPT"),
+				Tags: &[]string{
+					"PIIM",
+				},
+				Params: &map[string]string{
+					"encrypt.kek.name": "testkekM",
+				},
+				OnSuccess: sr.PtrString("NONE,NONE"),
+				OnFailure: sr.PtrString("ERROR,ERROR"),
+			},
+		}
+		tfDomainMigrationRules := make(map[string]interface{})
+		tfRulesDomain := make([]map[string]interface{}, 1)
+		tfRuleDomain := make(map[string]interface{})
+		tfRuleDomain[paramName] = "ABC"
+		tfRuleDomain[paramKind] = "TRANSFORM"
+		tfRuleDomain[paramDoc] = ""
+		tfRuleDomain[paramMode] = "WRITEREAD"
+		tfRuleDomain[paramType] = "ENCRYPT"
+		tfRuleDomain[paramExpr] = "EXPR"
+		tfRuleDomain[paramOnSuccess] = "NONE,NONE"
+		tfRuleDomain[paramOnFailure] = "ERROR,ERROR"
+		tfRuleDomain[paramDisabled] = false
+		tfRuleDomain[paramTags] = []string{
+			"PII",
+		}
+		tfRuleDomain[paramParams] = map[string]string{
+			"encrypt.kek.name": "testkek2",
+		}
+
+		tfRulesMigration := make([]map[string]interface{}, 1)
+		tfRuleMigration := make(map[string]interface{})
+		tfRuleMigration[paramName] = "ABC"
+		tfRuleMigration[paramKind] = "TRANSFORM"
+		tfRuleMigration[paramDoc] = ""
+		tfRuleMigration[paramMode] = "WRITEREAD"
+		tfRuleMigration[paramType] = "ENCRYPT"
+		tfRuleMigration[paramExpr] = "EXPR"
+		tfRuleMigration[paramOnSuccess] = "NONE,NONE"
+		tfRuleMigration[paramOnFailure] = "ERROR,ERROR"
+		tfRuleMigration[paramDisabled] = false
+		tfRuleMigration[paramTags] = []string{
+			"PIIM",
+		}
+		tfRuleMigration[paramParams] = map[string]string{
+			"encrypt.kek.name": "testkekM",
+		}
+		tfRulesDomain[0] = tfRuleDomain
+		tfRulesMigration[0] = tfRuleMigration
+		tfDomainMigrationRules[paramDomainRules] = tfRulesDomain
+		tfDomainMigrationRules[paramMigrationRules] = tfRulesMigration
+		tfRuleSet := make([]map[string]interface{}, 1)
+		tfRuleSet[0] = tfDomainMigrationRules
+		actual := buildTfRules(domainRules, migrationRules)
+
+		if !reflect.DeepEqual(*actual, tfRuleSet) {
+			t.Fatalf("Unexpected error: expected %v, got %v", tfRuleSet, *actual)
+		}
+	})
+
+	t.Run("success, without migration rules", func(t *testing.T) {
+		domainRules := []sr.Rule{
+			{
+				Name:     sr.PtrString("ABC"),
+				Disabled: sr.PtrBool(false),
+				Expr:     sr.PtrString("EXPR"),
+				Kind:     sr.PtrString("TRANSFORM"),
+				Mode:     sr.PtrString("WRITEREAD"),
+				Type:     sr.PtrString("ENCRYPT"),
+				Tags: &[]string{
+					"PII",
+				},
+				Params: &map[string]string{
+					"encrypt.kek.name": "testkek2",
+				},
+				OnSuccess: sr.PtrString("NONE,NONE"),
+				OnFailure: sr.PtrString("ERROR,ERROR"),
+			},
+		}
+		tfDomainMigrationRules := make(map[string]interface{})
+		tfRulesDomain := make([]map[string]interface{}, 1)
+		tfRuleDomain := make(map[string]interface{})
+		tfRuleDomain[paramName] = "ABC"
+		tfRuleDomain[paramKind] = "TRANSFORM"
+		tfRuleDomain[paramDoc] = ""
+		tfRuleDomain[paramMode] = "WRITEREAD"
+		tfRuleDomain[paramType] = "ENCRYPT"
+		tfRuleDomain[paramExpr] = "EXPR"
+		tfRuleDomain[paramOnSuccess] = "NONE,NONE"
+		tfRuleDomain[paramOnFailure] = "ERROR,ERROR"
+		tfRuleDomain[paramDisabled] = false
+		tfRuleDomain[paramTags] = []string{
+			"PII",
+		}
+		tfRuleDomain[paramParams] = map[string]string{
+			"encrypt.kek.name": "testkek2",
+		}
+
+		tfRulesDomain[0] = tfRuleDomain
+		tfDomainMigrationRules[paramDomainRules] = tfRulesDomain
+		tfRuleSet := make([]map[string]interface{}, 1)
+		tfRuleSet[0] = tfDomainMigrationRules
+		actual := buildTfRules(domainRules, []sr.Rule{})
+
+		if !reflect.DeepEqual(*actual, tfRuleSet) {
+			t.Fatalf("Unexpected error: expected %v, got %v", tfRuleSet, *actual)
+		}
+	})
+
+	t.Run("success, without domain rules", func(t *testing.T) {
+		migrationRules := []sr.Rule{
+			{
+				Name:     sr.PtrString("ABC"),
+				Disabled: sr.PtrBool(false),
+				Expr:     sr.PtrString("EXPR"),
+				Kind:     sr.PtrString("TRANSFORM"),
+				Mode:     sr.PtrString("WRITEREAD"),
+				Type:     sr.PtrString("ENCRYPT"),
+				Tags: &[]string{
+					"PII",
+				},
+				Params: &map[string]string{
+					"encrypt.kek.name": "testkek2",
+				},
+				OnSuccess: sr.PtrString("NONE,NONE"),
+				OnFailure: sr.PtrString("ERROR,ERROR"),
+			},
+		}
+		tfDomainMigrationRules := make(map[string]interface{})
+		tfRulesMigration := make([]map[string]interface{}, 1)
+		tfRuleMigration := make(map[string]interface{})
+		tfRuleMigration[paramName] = "ABC"
+		tfRuleMigration[paramKind] = "TRANSFORM"
+		tfRuleMigration[paramDoc] = ""
+		tfRuleMigration[paramMode] = "WRITEREAD"
+		tfRuleMigration[paramType] = "ENCRYPT"
+		tfRuleMigration[paramExpr] = "EXPR"
+		tfRuleMigration[paramOnSuccess] = "NONE,NONE"
+		tfRuleMigration[paramOnFailure] = "ERROR,ERROR"
+		tfRuleMigration[paramDisabled] = false
+		tfRuleMigration[paramTags] = []string{
+			"PII",
+		}
+		tfRuleMigration[paramParams] = map[string]string{
+			"encrypt.kek.name": "testkek2",
+		}
+
+		tfRulesMigration[0] = tfRuleMigration
+		tfDomainMigrationRules[paramMigrationRules] = tfRulesMigration
+		tfRuleSet := make([]map[string]interface{}, 1)
+		tfRuleSet[0] = tfDomainMigrationRules
+		actual := buildTfRules([]sr.Rule{}, migrationRules)
+
+		if !reflect.DeepEqual(*actual, tfRuleSet) {
+			t.Fatalf("Unexpected error: expected %v, got %v", tfRuleSet, *actual)
+		}
+	})
+
+	t.Run("fail, inconsistent domain rules", func(t *testing.T) {
+		migrationRules := []sr.Rule{
+			{
+				Name:     sr.PtrString("ABC"),
+				Disabled: sr.PtrBool(false),
+				Expr:     sr.PtrString("EXPR"),
+				Kind:     sr.PtrString("TRANSFORM"),
+				Mode:     sr.PtrString("WRITEREAD"),
+				Type:     sr.PtrString("ENCRYPT"),
+				Tags: &[]string{
+					"PII",
+				},
+				Params: &map[string]string{
+					"encrypt.kek.name": "testkek2",
+				},
+				OnSuccess: sr.PtrString("NONE,NONE"),
+				OnFailure: sr.PtrString("ERROR,ERROR"),
+			},
+		}
+		tfDomainMigrationRules := make(map[string]interface{})
+		tfRulesMigration := make([]map[string]interface{}, 1)
+		tfRuleMigration := make(map[string]interface{})
+		tfRuleMigration[paramName] = "ABC"
+		tfRuleMigration[paramKind] = "TRANSFORM"
+		tfRuleMigration[paramDoc] = ""
+		tfRuleMigration[paramMode] = "WRITEREAD"
+		tfRuleMigration[paramType] = "ENCRYPT"
+		tfRuleMigration[paramExpr] = "EXPR"
+		tfRuleMigration[paramOnSuccess] = "NONE,NONE"
+		tfRuleMigration[paramOnFailure] = "ERROR,ERROR"
+		tfRuleMigration[paramDisabled] = false
+		tfRuleMigration[paramTags] = []string{
+			"PII",
+		}
+		tfRuleMigration[paramParams] = map[string]string{
+			"encrypt.kek.name": "testkek2",
+		}
+
+		tfRulesMigration[0] = tfRuleMigration
+		tfDomainMigrationRules[paramMigrationRules] = tfRulesMigration
+		tfRuleSet := make([]map[string]interface{}, 1)
+		tfRuleSet[0] = tfDomainMigrationRules
+		actual := buildTfRules(migrationRules, migrationRules)
+
+		if reflect.DeepEqual(*actual, tfRuleSet) {
+			t.Fatalf("Unexpected error: expected %v, got %v", tfRuleSet, *actual)
 		}
 	})
 }

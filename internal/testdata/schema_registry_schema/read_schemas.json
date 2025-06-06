@@ -13,7 +13,7 @@
       {
         "name": "sampleRecord2",
         "subject": "test3",
-        "version":  3
+        "version": 3
       }
     ],
     "metadata": {
@@ -61,6 +61,23 @@
           ],
           "params": {
             "encrypt.kek.name": "testkek2"
+          },
+          "onSuccess": "NONE,NONE",
+          "onFailure": "ERROR,ERROR",
+          "disabled": false
+        }
+      ],
+      "migrationRules": [
+        {
+          "name": "encrypt",
+          "kind": "TRANSFORM",
+          "mode": "WRITEREAD",
+          "type": "ENCRYPT",
+          "tags": [
+            "PIm"
+          ],
+          "params": {
+            "encrypt.kek.name": "testkekM"
           },
           "onSuccess": "NONE,NONE",
           "onFailure": "ERROR,ERROR",
