@@ -1,7 +1,7 @@
 {
   "api_version": "iam/v2",
   "kind": "IpFilter",
-  "id": "dlz-f3a90de",
+  "id": "ipf-12345",
   "metadata": {
     "self": "https://api.confluent.cloud/iam/v2/ip-filters/ipf-12345",
     "resource_name": "crn://confluent.cloud/organization=9bb441c4-edef-46ac-8a41-c49e44a3fd9a/ip-filter=ipf-12345",
