@@ -30,7 +30,11 @@ const (
 
 	existingIpGroupUrlPath = "/iam/v2/ip-groups/ipg-12345"
 	existingIpGroupId      = "ipg-12345"
+
+	ipGroupDataSourceLabel = "test"
 )
+
+var fullIpGroupDataSourceLabel = fmt.Sprintf("data.confluent_ip_group.%s", ipGroupDataSourceLabel)
 
 func TestAccDataSourceIpGroup(t *testing.T) {
 	ctx := context.Background()
@@ -67,9 +71,13 @@ func TestAccDataSourceIpGroup(t *testing.T) {
 		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDataSourceIpGroupConfig(mockServerUrl, "test", "ipg-12345"),
+				Config: testAccDataSourceIpGroupConfig(mockServerUrl, ipGroupDataSourceLabel, "ipg-12345"),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("test", "id", "ipg-12345"),
+					resource.TestCheckResourceAttr(fullIpGroupDataSourceLabel, paramId, "ipg-12345"),
+					resource.TestCheckResourceAttr(fullIpGroupDataSourceLabel, paramGroupName, "CorpNet"),
+					resource.TestCheckResourceAttr(fullIpGroupDataSourceLabel, "cidr_blocks.#", "2"),
+					resource.TestCheckResourceAttr(fullIpGroupDataSourceLabel, "cidr_blocks.0", "192.168.0.0/24"),
+					resource.TestCheckResourceAttr(fullIpGroupDataSourceLabel, "cidr_blocks.1", "192.168.7.0/24"),
 				),
 			},
 		},

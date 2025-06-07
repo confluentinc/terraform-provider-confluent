@@ -15,26 +15,25 @@
 package provider
 
 import (
+	"context"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func dataSourceIPGroup() *schema.Resource {
 	return &schema.Resource{
-		Read: dataSourceIpGroupRead,
+		ReadContext: dataSourceIpGroupRead,
 		Schema: map[string]*schema.Schema{
 			paramId: {
-				Type:         schema.TypeString,
-				Computed:     true,
-				Optional:     true,
-				Description:  "The ID of the IP group.",
-				ExactlyOneOf: []string{paramId, paramGroupName},
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "The ID of the IP group.",
 			},
 			paramGroupName: {
-				Type:         schema.TypeString,
-				Computed:     true,
-				Optional:     true,
-				Description:  "A human readable name for an IP Group.",
-				ExactlyOneOf: []string{paramId, paramGroupName},
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "A human readable name for an IP Group.",
 			},
 			paramCIDRBlocks: {
 				Type:        schema.TypeSet,
@@ -46,7 +45,27 @@ func dataSourceIPGroup() *schema.Resource {
 	}
 }
 
-func dataSourceIpGroupRead(d *schema.ResourceData, m interface{}) error {
-	// Implement data source read logic here
+func dataSourceIpGroupRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	c := m.(*Client)
+
+	id := d.Get(paramId).(string)
+
+	req := c.ipFilteringClient.IPGroupsIamV2Api.GetIamV2IpGroup(ctx, id)
+	ipGroup, _, err := req.Execute()
+
+	if err != nil {
+		return diag.Errorf("error reading IP group %q: %s", id, createDescriptiveError(err))
+	}
+
+	if err := d.Set(paramGroupName, ipGroup.GetGroupName()); err != nil {
+		return diag.Errorf("error reading IP group %q: %s", id, createDescriptiveError(err))
+	}
+
+	if err := d.Set(paramCIDRBlocks, ipGroup.GetCidrBlocks()); err != nil {
+		return diag.Errorf("error reading IP group %q: %s", id, createDescriptiveError(err))
+	}
+
+	d.SetId(ipGroup.GetId())
+
 	return nil
 }
