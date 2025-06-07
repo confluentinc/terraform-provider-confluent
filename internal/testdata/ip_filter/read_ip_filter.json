@@ -1,0 +1,27 @@
+{
+  "api_version": "iam/v2",
+  "kind": "IpFilter",
+  "id": "dlz-f3a90de",
+  "metadata": {
+    "self": "https://api.confluent.cloud/iam/v2/ip-filters/ipf-12345",
+    "resource_name": "crn://confluent.cloud/organization=9bb441c4-edef-46ac-8a41-c49e44a3fd9a/ip-filter=ipf-12345",
+    "created_at": "2006-01-02T15:04:05-07:00",
+    "updated_at": "2006-01-02T15:04:05-07:00",
+    "deleted_at": "2006-01-02T15:04:05-07:00"
+  },
+  "filter_name": "Management API Rules",
+  "resource_group": "management",
+  "resource_scope": "crn://confluent.cloud/organization=org-123/environment=env-abc",
+  "operation_groups": [
+    "MANAGEMENT",
+    "SCHEMA",
+    "FLINK"
+  ],
+  "ip_groups": [
+    {
+      "id": "string",
+      "related": "http://example.com",
+      "resource_name": "http://example.com"
+    }
+  ]
+}

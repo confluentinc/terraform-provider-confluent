@@ -1,0 +1,15 @@
+{
+  "filter_name": "Management API Rules",
+  "resource_group": "management",
+  "resource_scope": "crn://confluent.cloud/organization=org-123/environment=env-abc",
+  "operation_groups": [
+    "MANAGEMENT",
+    "SCHEMA",
+    "FLINK"
+  ],
+  "ip_groups": [
+    {
+      "id": "string"
+    }
+  ]
+}
