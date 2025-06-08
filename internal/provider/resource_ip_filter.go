@@ -188,7 +188,17 @@ func ipFilterResourceUpdate(ctx context.Context, d *schema.ResourceData, m inter
 }
 
 func ipFilterResourceDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	// TODO: Implement delete logic
+	c := m.(*Client)
+
+	ipFilterId := d.Get(paramId).(string)
+
+	req := c.ipFilteringClient.IPFiltersIamV2Api.DeleteIamV2IpFilter(ctx, ipFilterId)
+	_, err := req.Execute()
+
+	if err != nil {
+		return diag.Errorf("error deleting IP Filter %s", createDescriptiveError(err))
+	}
+
 	return nil
 }
 

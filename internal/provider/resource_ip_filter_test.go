@@ -157,7 +157,7 @@ func TestAccResourceIpFilter(t *testing.T) {
 				ImportState:       true,
 				ImportStateVerify: true,
 			},
-			// ===== Create test =====
+			// ===== Update test =====
 			{
 				Config: testAccResourceIpFilterConfig(
 					mockServerUrl,
@@ -186,6 +186,25 @@ func TestAccResourceIpFilter(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(fullIpFilterResourceLabel, "ip_group_ids.*", "ipg-12345"),
 					resource.TestCheckTypeSetElemAttr(fullIpFilterResourceLabel, "ip_group_ids.*", "ipg-67890"),
 				),
+			},
+			// ===== Delete test =====
+			{
+				Config: testAccResourceIpFilterConfig(
+					mockServerUrl,
+					ipFilterResourceLabel,
+					"Management API Rules Update",
+					"multiple",
+					"crn://confluent.cloud/organization=org-123/environment=env-abc",
+					[]string{
+						"MANAGEMENT",
+						"FLINK",
+					},
+					[]string{
+						"ipg-12345",
+						"ipg-67890",
+					},
+				),
+				Destroy: true,
 			},
 		},
 	})
