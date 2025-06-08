@@ -155,7 +155,35 @@ func ipFilterResourceRead(ctx context.Context, d *schema.ResourceData, m interfa
 }
 
 func ipFilterResourceUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	// TODO: Implement update logic
+	c := m.(*Client)
+
+	ipFilterId := d.Get(paramId).(string)
+	filterName := d.Get(paramFilterName).(string)
+	resourceGroup := d.Get(paramResourceGroup).(string)
+	resourceScope := d.Get(paramResourceScope).(string)
+	operationGroups := convertToStringSlice(d.Get(paramOperationGroups).(*schema.Set).List())
+	ipGroupIds := convertToStringSlice(d.Get(paramIpGroupIds).(*schema.Set).List())
+
+	ipGroupIdGlobalObjectReferences := make([]iamipfiltering.GlobalObjectReference, len(ipGroupIds))
+	for i, v := range ipGroupIds {
+		ipGroupIdGlobalObjectReferences[i] = iamipfiltering.GlobalObjectReference{Id: v}
+	}
+
+	ipFilter := iamipfiltering.NewIamV2IpFilter()
+	ipFilter.Id = &ipFilterId
+	ipFilter.FilterName = &filterName
+	ipFilter.ResourceGroup = &resourceGroup
+	ipFilter.ResourceScope = &resourceScope
+	ipFilter.OperationGroups = &operationGroups
+	ipFilter.IpGroups = &ipGroupIdGlobalObjectReferences
+
+	req := c.ipFilteringClient.IPFiltersIamV2Api.UpdateIamV2IpFilter(ctx, ipFilterId).IamV2IpFilter(*ipFilter)
+	_, _, err := req.Execute()
+
+	if err != nil {
+		return diag.Errorf("error updating IP Filter %s", createDescriptiveError(err))
+	}
+
 	return ipFilterResourceRead(ctx, d, m)
 }
 

@@ -30,8 +30,7 @@ const (
 	ipFilterResourceScenarioName = "confluent_ip_filter Resource Lifecycle"
 
 	scenarioStateIpFilterHasBeenCreated = "A new IP group has been created"
-
-	readCreatedIpFilterUrlPath = "/iam/v2/ip-filters/ipf-12345"
+	scenarioStateIpFilterHasBeenUpdated = "A IP group has been updated"
 
 	ipFilterResourceLabel = "test"
 	newIpFilterId         = "ipf-12345"
@@ -62,6 +61,7 @@ func TestAccResourceIpFilter(t *testing.T) {
 	// nolint:errcheck
 	defer wiremockClient.ResetAllScenarios()
 
+	// ===== Create stubs =====
 	createIpFilterResponse, _ := ioutil.ReadFile("../testdata/ip_filter/create_ip_filter.json")
 
 	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(createIpFilterUrlPath)).
@@ -74,15 +74,45 @@ func TestAccResourceIpFilter(t *testing.T) {
 			http.StatusCreated,
 		))
 
-	readIpFilterResponse, _ := ioutil.ReadFile("../testdata/ip_filter/read_ip_filter.json")
-
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readCreatedIpFilterUrlPath)).
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(newIpFilterUrlPath)).
 		InScenario(ipFilterResourceScenarioName).
 		WhenScenarioStateIs(scenarioStateIpFilterHasBeenCreated).
 		WillReturn(
-			string(readIpFilterResponse),
+			string(createIpFilterResponse),
 			contentTypeJSONHeader,
-			http.StatusCreated,
+			http.StatusOK,
+		))
+
+	// ===== Update stubs =====
+	updateIpFilterResponse, _ := ioutil.ReadFile("../testdata/ip_filter/update_ip_filter.json")
+
+	_ = wiremockClient.StubFor(wiremock.Patch(wiremock.URLPathEqualTo(newIpFilterUrlPath)).
+		InScenario(ipFilterResourceScenarioName).
+		WhenScenarioStateIs(scenarioStateIpFilterHasBeenCreated).
+		WillSetStateTo(scenarioStateIpFilterHasBeenUpdated).
+		WillReturn(
+			string(updateIpFilterResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(newIpFilterUrlPath)).
+		InScenario(ipFilterResourceScenarioName).
+		WhenScenarioStateIs(scenarioStateIpFilterHasBeenUpdated).
+		WillReturn(
+			string(updateIpFilterResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	// ===== Delete stubs =====
+	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(newIpFilterUrlPath)).
+		InScenario(ipFilterResourceScenarioName).
+		WhenScenarioStateIs(scenarioStateIpFilterHasBeenUpdated).
+		WillReturn(
+			"",
+			nil,
+			http.StatusNoContent,
 		))
 
 	resource.Test(t, resource.TestCase{
@@ -126,6 +156,36 @@ func TestAccResourceIpFilter(t *testing.T) {
 				ResourceName:      fullIpFilterResourceLabel,
 				ImportState:       true,
 				ImportStateVerify: true,
+			},
+			// ===== Create test =====
+			{
+				Config: testAccResourceIpFilterConfig(
+					mockServerUrl,
+					ipFilterResourceLabel,
+					"Management API Rules Update",
+					"multiple",
+					"crn://confluent.cloud/organization=org-123/environment=env-abc",
+					[]string{
+						"MANAGEMENT",
+						"FLINK",
+					},
+					[]string{
+						"ipg-12345",
+						"ipg-67890",
+					},
+				),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(fullIpFilterResourceLabel, paramId, "ipf-12345"),
+					resource.TestCheckResourceAttr(fullIpFilterResourceLabel, paramFilterName, "Management API Rules Update"),
+					resource.TestCheckResourceAttr(fullIpFilterResourceLabel, paramResourceGroup, "multiple"),
+					resource.TestCheckResourceAttr(fullIpFilterResourceLabel, paramResourceScope, "crn://confluent.cloud/organization=org-123/environment=env-abc"),
+					resource.TestCheckResourceAttr(fullIpFilterResourceLabel, "operation_groups.#", "2"),
+					resource.TestCheckTypeSetElemAttr(fullIpFilterResourceLabel, "operation_groups.*", "MANAGEMENT"),
+					resource.TestCheckTypeSetElemAttr(fullIpFilterResourceLabel, "operation_groups.*", "FLINK"),
+					resource.TestCheckResourceAttr(fullIpFilterResourceLabel, "ip_group_ids.#", "2"),
+					resource.TestCheckTypeSetElemAttr(fullIpFilterResourceLabel, "ip_group_ids.*", "ipg-12345"),
+					resource.TestCheckTypeSetElemAttr(fullIpFilterResourceLabel, "ip_group_ids.*", "ipg-67890"),
+				),
 			},
 		},
 	})

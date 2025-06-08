@@ -9,17 +9,21 @@
     "updated_at": "2006-01-02T15:04:05-07:00",
     "deleted_at": "2006-01-02T15:04:05-07:00"
   },
-  "filter_name": "Management API Rules",
-  "resource_group": "management",
+  "filter_name": "Management API Rules Update",
+  "resource_group": "multiple",
   "resource_scope": "crn://confluent.cloud/organization=org-123/environment=env-abc",
   "operation_groups": [
     "MANAGEMENT",
-    "SCHEMA",
     "FLINK"
   ],
   "ip_groups": [
     {
       "id": "ipg-12345",
+      "related": "http://example.com",
+      "resource_name": "http://example.com"
+    },
+    {
+      "id": "ipg-67890",
       "related": "http://example.com",
       "resource_name": "http://example.com"
     }
