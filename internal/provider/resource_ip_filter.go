@@ -16,6 +16,7 @@ package provider
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -37,7 +38,9 @@ func ipFilterResource() *schema.Resource {
 		ReadContext:   ipFilterResourceRead,
 		UpdateContext: ipFilterResourceUpdate,
 		DeleteContext: ipFilterResourceDelete,
-
+		Importer: &schema.ResourceImporter{
+			StateContext: resourceIPFilterImport,
+		},
 		Schema: map[string]*schema.Schema{
 			paramId: {
 				Type:        schema.TypeString,
@@ -123,16 +126,30 @@ func ipFilterResourceRead(ctx context.Context, d *schema.ResourceData, m interfa
 	if err := d.Set(paramFilterName, ipFilter.GetFilterName()); err != nil {
 		return diag.Errorf("error reading IP Filter %s", createDescriptiveError(err))
 	}
+
 	if err := d.Set(paramResourceGroup, ipFilter.GetResourceGroup()); err != nil {
 		return diag.Errorf("error reading IP Filter %s", createDescriptiveError(err))
 	}
+
 	if err := d.Set(paramResourceScope, ipFilter.GetResourceScope()); err != nil {
 		return diag.Errorf("error reading IP Filter %s", createDescriptiveError(err))
 	}
+
 	if err := d.Set(paramOperationGroups, ipFilter.GetOperationGroups()); err != nil {
 		return diag.Errorf("error reading IP Filter %s", createDescriptiveError(err))
 	}
-	//d.Set(paramIpGroupIds, ipFilter.GetIpGroups())
+
+	ipGroupGlobalObjectReferences := ipFilter.GetIpGroups()
+
+	ipGroupIds := make([]string, len(ipGroupGlobalObjectReferences))
+
+	for i, v := range ipGroupGlobalObjectReferences {
+		ipGroupIds[i] = v.Id
+	}
+
+	if err := d.Set(paramIpGroupIds, ipGroupIds); err != nil {
+		return diag.Errorf("error reading IP Filter %s", createDescriptiveError(err))
+	}
 
 	return nil
 }
@@ -145,4 +162,12 @@ func ipFilterResourceUpdate(ctx context.Context, d *schema.ResourceData, m inter
 func ipFilterResourceDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	// TODO: Implement delete logic
 	return nil
+}
+
+func resourceIPFilterImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	if diagnostics := ipFilterResourceRead(ctx, d, m); diagnostics != nil {
+		return nil, fmt.Errorf("error importing IP Filter %q: %s", d.Id(), diagnostics[0].Summary)
+	}
+
+	return []*schema.ResourceData{d}, nil
 }

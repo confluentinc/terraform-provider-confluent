@@ -121,6 +121,12 @@ func TestAccResourceIpFilter(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(fullIpFilterResourceLabel, "ip_group_ids.*", "ipg-12345"),
 				),
 			},
+			// ===== Import test =====
+			{
+				ResourceName:      fullIpFilterResourceLabel,
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }
