@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -30,11 +31,21 @@ const (
 
 	scenarioStateIpFilterHasBeenCreated = "A new IP group has been created"
 
-	createIpFilterUrlPath      = "/iam/v2/ip-filters"
 	readCreatedIpFilterUrlPath = "/iam/v2/ip-filters/ipf-12345"
+
+	ipFilterResourceLabel = "test"
+	newIpFilterId         = "ipf-12345"
 )
 
+var fullIpFilterResourceLabel = fmt.Sprintf("confluent_ip_filter.%s", ipFilterResourceLabel)
+
+var createIpFilterUrlPath = "/iam/v2/ip-filters"
+var newIpFilterUrlPath = fmt.Sprintf("/iam/v2/ip-filters/%s", newIpFilterId)
+
 func TestAccResourceIpFilter(t *testing.T) {
+	// Set TF_ACC environment variable to enable acceptance tests
+	t.Setenv("TF_ACC", "1")
+
 	ctx := context.Background()
 
 	wiremockContainer, err := setupWiremock(ctx)
@@ -51,7 +62,7 @@ func TestAccResourceIpFilter(t *testing.T) {
 	// nolint:errcheck
 	defer wiremockClient.ResetAllScenarios()
 
-	createIpFilterResponse, _ := ioutil.ReadFile("../testdata/create_ip_filter.json")
+	createIpFilterResponse, _ := ioutil.ReadFile("../testdata/ip_filter/create_ip_filter.json")
 
 	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(createIpFilterUrlPath)).
 		InScenario(ipFilterResourceScenarioName).
@@ -63,7 +74,7 @@ func TestAccResourceIpFilter(t *testing.T) {
 			http.StatusCreated,
 		))
 
-	readIpFilterResponse, _ := ioutil.ReadFile("../testdata/read_ip_filter.json")
+	readIpFilterResponse, _ := ioutil.ReadFile("../testdata/ip_filter/read_ip_filter.json")
 
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readCreatedIpFilterUrlPath)).
 		InScenario(ipFilterResourceScenarioName).
@@ -80,17 +91,49 @@ func TestAccResourceIpFilter(t *testing.T) {
 		// https://www.terraform.io/docs/extend/testing/acceptance-tests/teststep.html
 		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
 		Steps: []resource.TestStep{
+			// ===== Create test =====
 			{
-				Config: testAccResourceIpFilterConfig(mockServerUrl, "test", "filter name", "resourcegroup", "resourcescope", "operationgroup", "ipgroup"),
+				Config: testAccResourceIpFilterConfig(
+					mockServerUrl,
+					ipFilterResourceLabel,
+					"Management API Rules",
+					"management",
+					"crn://confluent.cloud/organization=org-123/environment=env-abc",
+					[]string{
+						"MANAGEMENT",
+						"SCHEMA",
+						"FLINK",
+					},
+					[]string{
+						"ipg-12345",
+					},
+				),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("test", "id", "ipf-12345"),
+					resource.TestCheckResourceAttr(fullIpFilterResourceLabel, paramId, "ipf-12345"),
+					resource.TestCheckResourceAttr(fullIpFilterResourceLabel, paramFilterName, "Management API Rules"),
+					resource.TestCheckResourceAttr(fullIpFilterResourceLabel, paramResourceGroup, "management"),
+					resource.TestCheckResourceAttr(fullIpFilterResourceLabel, paramResourceScope, "crn://confluent.cloud/organization=org-123/environment=env-abc"),
+					resource.TestCheckResourceAttr(fullIpFilterResourceLabel, "operation_groups.#", "3"),
+					resource.TestCheckTypeSetElemAttr(fullIpFilterResourceLabel, "operation_groups.*", "MANAGEMENT"),
+					resource.TestCheckTypeSetElemAttr(fullIpFilterResourceLabel, "operation_groups.*", "SCHEMA"),
+					resource.TestCheckTypeSetElemAttr(fullIpFilterResourceLabel, "operation_groups.*", "FLINK"),
+					resource.TestCheckResourceAttr(fullIpFilterResourceLabel, "ip_group_ids.#", "1"),
+					resource.TestCheckTypeSetElemAttr(fullIpFilterResourceLabel, "ip_group_ids.*", "ipg-12345"),
 				),
 			},
 		},
 	})
 }
 
-func testAccResourceIpFilterConfig(mockServerUrl, resourceLabel, filter_name, resource_group, resource_scope, operation_group, ip_group string) string {
+func testAccResourceIpFilterConfig(mockServerUrl, resourceLabel, filterName, resourceGroup, resourceScope string, operationGroups, ipGroupIds []string) string {
+	for i, v := range operationGroups {
+		operationGroups[i] = fmt.Sprintf("%q", v)
+	}
+
+	for i, v := range ipGroupIds {
+		ipGroupIds[i] = fmt.Sprintf("%q", v)
+	}
+
 	return fmt.Sprintf(`
 	provider "confluent" {
 		endpoint = "%s"
@@ -99,8 +142,12 @@ func testAccResourceIpFilterConfig(mockServerUrl, resourceLabel, filter_name, re
 		filter_name = "%s"
 		resource_group = "%s"
 		resource_scope = "%s"
-		operation_groups = [ "%s" ]
-		ip_groups = [ "%s" ]
+		operation_groups = [
+			%s
+		]
+		ip_group_ids = [
+			%s
+		]
 	}
-	`, mockServerUrl, resourceLabel, filter_name, resource_group, resource_scope, operation_group, ip_group)
+	`, mockServerUrl, resourceLabel, filterName, resourceGroup, resourceScope, strings.Join(operationGroups, ",\n"), strings.Join(ipGroupIds, ",\n"))
 }

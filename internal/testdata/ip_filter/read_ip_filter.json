@@ -19,7 +19,7 @@
   ],
   "ip_groups": [
     {
-      "id": "string",
+      "id": "ipg-12345",
       "related": "http://example.com",
       "resource_name": "http://example.com"
     }

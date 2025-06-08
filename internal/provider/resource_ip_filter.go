@@ -15,7 +15,12 @@
 package provider
 
 import (
+	"context"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+
+	iamipfiltering "github.com/confluentinc/ccloud-sdk-go-v2/iam-ip-filtering/v2"
 )
 
 const (
@@ -28,10 +33,10 @@ const (
 
 func ipFilterResource() *schema.Resource {
 	return &schema.Resource{
-		Create: ipFilterResourceCreate,
-		Read:   ipFilterResourceRead,
-		Update: ipFilterResourceUpdate,
-		Delete: ipFilterResourceDelete,
+		CreateContext: ipFilterResourceCreate,
+		ReadContext:   ipFilterResourceRead,
+		UpdateContext: ipFilterResourceUpdate,
+		DeleteContext: ipFilterResourceDelete,
 
 		Schema: map[string]*schema.Schema{
 			paramId: {
@@ -70,22 +75,74 @@ func ipFilterResource() *schema.Resource {
 	}
 }
 
-func ipFilterResourceCreate(d *schema.ResourceData, m interface{}) error {
-	// TODO: Implement create logic
-	return ipFilterResourceRead(d, m)
+func ipFilterResourceCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	c := m.(*Client)
+
+	filterName := d.Get(paramFilterName).(string)
+	resourceGroup := d.Get(paramResourceGroup).(string)
+	resourceScope := d.Get(paramResourceScope).(string)
+	operationGroups := convertToStringSlice(d.Get(paramOperationGroups).(*schema.Set).List())
+	ipGroupIds := convertToStringSlice(d.Get(paramIpGroupIds).(*schema.Set).List())
+
+	ipGroupIdGlobalObjectReferences := make([]iamipfiltering.GlobalObjectReference, len(ipGroupIds))
+	for i, v := range ipGroupIds {
+		ipGroupIdGlobalObjectReferences[i] = iamipfiltering.GlobalObjectReference{Id: v}
+	}
+
+	ipFilter := iamipfiltering.NewIamV2IpFilter()
+	ipFilter.FilterName = &filterName
+	ipFilter.ResourceGroup = &resourceGroup
+	ipFilter.ResourceScope = &resourceScope
+	ipFilter.OperationGroups = &operationGroups
+	ipFilter.IpGroups = &ipGroupIdGlobalObjectReferences
+
+	req := c.ipFilteringClient.IPFiltersIamV2Api.CreateIamV2IpFilter(ctx).IamV2IpFilter(*ipFilter)
+	createdIpFilter, _, err := req.Execute()
+
+	if err != nil {
+		return diag.Errorf("error creating IP Filter %s", createDescriptiveError(err))
+	}
+
+	d.SetId(createdIpFilter.GetId())
+
+	return ipFilterResourceRead(ctx, d, m)
 }
 
-func ipFilterResourceRead(d *schema.ResourceData, m interface{}) error {
-	// TODO: Implement read logic
+func ipFilterResourceRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	c := m.(*Client)
+
+	ipFilterId := d.Get(paramId).(string)
+
+	req := c.ipFilteringClient.IPFiltersIamV2Api.GetIamV2IpFilter(ctx, ipFilterId)
+	ipFilter, _, err := req.Execute()
+
+	if err != nil {
+		return diag.Errorf("error reading IP Filter %s", createDescriptiveError(err))
+	}
+
+	if err := d.Set(paramFilterName, ipFilter.GetFilterName()); err != nil {
+		return diag.Errorf("error reading IP Filter %s", createDescriptiveError(err))
+	}
+	if err := d.Set(paramResourceGroup, ipFilter.GetResourceGroup()); err != nil {
+		return diag.Errorf("error reading IP Filter %s", createDescriptiveError(err))
+	}
+	if err := d.Set(paramResourceScope, ipFilter.GetResourceScope()); err != nil {
+		return diag.Errorf("error reading IP Filter %s", createDescriptiveError(err))
+	}
+	if err := d.Set(paramOperationGroups, ipFilter.GetOperationGroups()); err != nil {
+		return diag.Errorf("error reading IP Filter %s", createDescriptiveError(err))
+	}
+	//d.Set(paramIpGroupIds, ipFilter.GetIpGroups())
+
 	return nil
 }
 
-func ipFilterResourceUpdate(d *schema.ResourceData, m interface{}) error {
+func ipFilterResourceUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	// TODO: Implement update logic
-	return ipFilterResourceRead(d, m)
+	return ipFilterResourceRead(ctx, d, m)
 }
 
-func ipFilterResourceDelete(d *schema.ResourceData, m interface{}) error {
+func ipFilterResourceDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	// TODO: Implement delete logic
 	return nil
 }
