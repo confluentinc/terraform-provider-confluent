@@ -95,6 +95,7 @@ var editableClusterLinkSettings = []string{
 	"consumer.offset.sync.ms",
 	"mirror.start.offset.spec",
 	"topic.config.sync.ms",
+	"topic.config.sync.include",
 }
 
 func clusterLinkResource() *schema.Resource {
