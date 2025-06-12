@@ -133,6 +133,7 @@ const (
 	providerIntegrationLoggingKey             = "provider_integration_id"
 	tableflowTopicKey                         = "tableflow_topic_id"
 	catalogIntegrationKey                     = "catalog_integration_id"
+	parentOrganizationLinkLoggingKey          = "parent_organization_link_id"
 
 	deprecationMessageMajorRelease3 = "The %q %s has been deprecated and will be removed in the next major version of the provider (3.0.0). " +
 		"Refer to the Upgrade Guide at https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/guides/version-3-upgrade for more details. " +
