@@ -30,8 +30,8 @@ const (
 	parentDataSourceScenarioName = "confluent_parent Data Source Lifecycle"
 	parentDataSourceLabel        = "test_parent_data_source_label"
 
-	expectedParentResourceName = "crn://stag.cpdev.cloud/parent=98c3e8af-c392-418a-b87e-af33c7853b1f"
-	expectedParentId           = "98c3e8af-c392-418a-b87e-af33c7853b1f"
+	expectedParentResourceName = "crn://confluent.cloud/parent=1111aaaa-11aa-11aa-11aa-111111aaaaaa"
+	expectedParentId           = "1111aaaa-11aa-11aa-11aa-111111aaaaaa"
 )
 
 var fullParentDataSourceLabel = fmt.Sprintf("data.confluent_parent.%s", parentDataSourceLabel)
@@ -54,7 +54,7 @@ func TestAccDataSourceParent(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	readParentResponse, _ := ioutil.ReadFile("../testdata/parent/read_parent.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/parent/98c3e8af-c392-418a-b87e-af33c7853b1f")).
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/parent/1111aaaa-11aa-11aa-11aa-111111aaaaaa")).
 		InScenario(parentDataSourceScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillReturn(
@@ -88,7 +88,7 @@ func testAccCheckDataSourceParentConfig(confluentCloudBaseUrl string) string {
       endpoint = "%s"
     }
 	data "confluent_parent" "%s" {
-		id = "98c3e8af-c392-418a-b87e-af33c7853b1f"
+		id = "1111aaaa-11aa-11aa-11aa-111111aaaaaa"
 	}
 	`, confluentCloudBaseUrl, parentDataSourceLabel)
 }
