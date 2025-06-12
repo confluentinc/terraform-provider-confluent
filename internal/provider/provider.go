@@ -584,6 +584,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	netDnsCfg := dns.NewConfiguration()
 	oidcCfg := oidc.NewConfiguration()
 	orgCfg := org.NewConfiguration()
+	parentCfg := parent.NewConfiguration()
 	piCfg := pi.NewConfiguration()
 	quotasCfg := quotas.NewConfiguration()
 	srcmCfg := srcm.NewConfiguration()
@@ -610,6 +611,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	netDnsCfg.Servers[0].URL = endpoint
 	oidcCfg.Servers[0].URL = endpoint
 	orgCfg.Servers[0].URL = endpoint
+	parentCfg.Servers[0].URL = endpoint
 	piCfg.Servers[0].URL = endpoint
 	quotasCfg.Servers[0].URL = endpoint
 	srcmCfg.Servers[0].URL = endpoint
@@ -637,6 +639,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	netPLCfg.UserAgent = userAgent
 	oidcCfg.UserAgent = userAgent
 	orgCfg.UserAgent = userAgent
+	parentCfg.UserAgent = userAgent
 	piCfg.UserAgent = userAgent
 	quotasCfg.UserAgent = userAgent
 	srcmCfg.UserAgent = userAgent
@@ -675,6 +678,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	netDnsCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	oidcCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	orgCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
+	parentCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	piCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	quotasCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	srcmCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
@@ -702,6 +706,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 		netDnsClient:                    dns.NewAPIClient(netDnsCfg),
 		oidcClient:                      oidc.NewAPIClient(oidcCfg),
 		orgClient:                       org.NewAPIClient(orgCfg),
+		parentClient:                    parent.NewAPIClient(parentCfg),
 		piClient:                        pi.NewAPIClient(piCfg),
 		srcmClient:                      srcm.NewAPIClient(srcmCfg),
 		catalogRestClientFactory:        catalogRestClientFactory,
