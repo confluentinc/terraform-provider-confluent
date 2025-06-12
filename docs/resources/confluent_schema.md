@@ -122,6 +122,19 @@ The following arguments are supported:
     - `disabled` - (Optional Boolean) The boolean flag to control whether the rule should be disabled. Defaults to `false`.
     - `tags` - (Optional String List) The tags to which the rule applies, if any.
     - `params` - (Optional Configuration Block) A set of static parameters for the rule, which is optional. These are key-value pairs that are passed to the rule.
+  - `migration_rules` - (Optional Block) supports the following:
+    - `name` - (Required String) A user-defined name that can be used to reference the rule.
+    - `doc` - (Optional String) An optional description of the rule. Defaults to "".
+    - `kind` - (Required String) The kind of the rule. Accepted values are `CONDITION` and `TRANSFORM`. `CONDITION` - validate the value of a field, `TRANSFORM` - transform the value of a field. Data quality rules use `CONDITION` kind, data transformation, encryption and migration rules use `TRANSFORM` kind.
+    - `mode` - (Required String) The mode of the rule. Accepted values are `UPGRADE`, `DOWNGRADE`, `UPDOWN`, `WRITE`, `READ`, and `WRITEREAD`.
+    - `type` - (Required String) The type of rule, which invokes a specific rule executor that that will run the rule. Google Common Expression Language (`CEL`) is used for data quality and transformation rules, Confluent `ENCRYPT` is used for data encryption rules, and `JSONata` is used for migration rules.
+    - `expr` - (Optional String) The rule body. Data quality and transformation rules use `CEL` language expressions, data migration rules use `JSONata` expressions. Defaults to "".
+    - `on_success` - (Optional String) An optional action to execute if the rule succeeds, otherwise the built-in action type `NONE` is used. For `UPDOWN` and `WRITEREAD` rules, one can specify two actions separated by commas, such as `NONE,ERROR` for a `WRITEREAD` rule. In this case `NONE` applies to `WRITE` and `ERROR` applies to `READ`. Defaults to `NONE,NONE`.
+    - `on_failure` - (Optional String) An optional action to execute if the rule fails, otherwise the built-in action type `ERROR` is used. For `UPDOWN` and `WRITEREAD` rules, one can specify two actions separated by commas, as mentioned above. Defaults to `ERROR,ERROR`.
+    - `disabled` - (Optional Boolean) The boolean flag to control whether the rule should be disabled. Defaults to `false`.
+    - `tags` - (Optional String List) The tags to which the rule applies, if any.
+    - `params` - (Optional Configuration Block) A set of static parameters for the rule, which is optional. These are key-value pairs that are passed to the rule.
+
 
 -> **Note:** Schema rules (`ruleset`) are only available with the [Stream Governance Advanced package](https://docs.confluent.io/cloud/current/stream-governance/packages.html#packages).
 
@@ -225,6 +238,16 @@ resource "confluent_schema" "avro-purchase" {
       tags = ["PIIIII"]
       params = {
           "encrypt.kek.name" = "testkek2"
+      }
+    }
+    migration_rules  {
+      name = "encrypt"
+      kind = "TRANSFORM"
+      type = "ENCRYPT"
+      mode = "WRITEREAD"
+      tags = ["PIM"]
+      params = {
+          "encrypt.kek.name" = "testkekM"
       }
     }
   }
