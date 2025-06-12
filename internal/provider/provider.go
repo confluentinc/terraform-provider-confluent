@@ -26,6 +26,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
+	parent "github.com/confluentinc/ccloud-sdk-go-v2-internal/parent/v2"
 	apikeys "github.com/confluentinc/ccloud-sdk-go-v2/apikeys/v2"
 	byok "github.com/confluentinc/ccloud-sdk-go-v2/byok/v1"
 	cam "github.com/confluentinc/ccloud-sdk-go-v2/cam/v1"
@@ -108,6 +109,7 @@ type Client struct {
 	quotasClient                    *quotas.APIClient
 	srcmClient                      *srcm.APIClient
 	ssoClient                       *sso.APIClient
+	parentClient                    *parent.APIClient
 	piClient                        *pi.APIClient
 	userAgent                       string
 	catalogRestEndpoint             string
@@ -329,6 +331,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_access_point":                       accessPointDataSource(),
 				"confluent_dns_record":                         dnsRecordDataSource(),
 				"confluent_gateway":                            gatewayDataSource(),
+				"confluent_organization":                       parentDataSource(),
 				"confluent_organization":                       organizationDataSource(),
 				"confluent_peering":                            peeringDataSource(),
 				"confluent_transit_gateway_attachment":         transitGatewayAttachmentDataSource(),
