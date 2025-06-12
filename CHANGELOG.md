@@ -3,7 +3,7 @@
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.31.0...v2.32.0)
 
 **New features:**
-* Support migration rules for `confluent_schema` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_schema).
+* Added support for migration rules for `confluent_schema` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_schema).
 
 **Bug fixes:**
 * Updated the `confluent_cluster_link` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_cluster_link) to allow specifying a custom value for the "topic.config.sync.include" configuration parameter.
