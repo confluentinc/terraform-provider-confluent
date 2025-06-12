@@ -7,7 +7,7 @@
 
 **Bug fixes:**
 * Updated the `confluent_cluster_link` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_cluster_link) to allow specifying a custom value for the "topic.config.sync.include" configuration parameter.
-* Updated the docs of `confluent_network` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_network), `confluent_schema` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema) and `confluent_flink_statement` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_flink_statement) to support Schema Registry(SR) CCN feature.
+* Updated the docs of `confluent_network` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_network), `confluent_schema` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema) and `confluent_flink_statement` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_flink_statement) to explain how to construct REST endpoints.
 
 ## 2.31.0 (June 4th, 2025)
 
