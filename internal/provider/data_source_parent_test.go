@@ -30,8 +30,8 @@ const (
 	parentDataSourceScenarioName = "confluent_parent Data Source Lifecycle"
 	parentDataSourceLabel        = "test_parent_data_source_label"
 
-	expectedOrgResourceName = "crn://stag.cpdev.cloud/parent=98c3e8af-c392-418a-b87e-af33c7853b1f"
-	expectedOrgId           = "98c3e8af-c392-418a-b87e-af33c7853b1f"
+	expectedParentResourceName = "crn://stag.cpdev.cloud/parent=98c3e8af-c392-418a-b87e-af33c7853b1f"
+	expectedParentId           = "98c3e8af-c392-418a-b87e-af33c7853b1f"
 )
 
 var fullParentDataSourceLabel = fmt.Sprintf("data.confluent_parent.%s", parentDataSourceLabel)
@@ -73,8 +73,8 @@ func TestAccDataSourceParent(t *testing.T) {
 				Config: testAccCheckDataSourceParentConfig(mockServerUrl),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckParentExists(fullParentDataSourceLabel),
-					resource.TestCheckResourceAttr(fullParentDataSourceLabel, "id", expectedOrgId),
-					resource.TestCheckResourceAttr(fullParentDataSourceLabel, "resource_name", expectedOrgResourceName),
+					resource.TestCheckResourceAttr(fullParentDataSourceLabel, "id", expectedParentId),
+					resource.TestCheckResourceAttr(fullParentDataSourceLabel, "resource_name", expectedParentResourceName),
 					resource.TestCheckResourceAttr(fullParentDataSourceLabel, "invitation_restrictions_enabled", "true"),
 				),
 			},
