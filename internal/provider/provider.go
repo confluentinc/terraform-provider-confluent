@@ -333,6 +333,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_gateway":                            gatewayDataSource(),
 				"confluent_organization":                       organizationDataSource(),
 				"confluent_parent":                             parentDataSource(),
+				"confluent_parent_organization_link":           parentOrganizationLinkDataSource(),
 				"confluent_peering":                            peeringDataSource(),
 				"confluent_transit_gateway_attachment":         transitGatewayAttachmentDataSource(),
 				"confluent_private_link_access":                privateLinkAccessDataSource(),
