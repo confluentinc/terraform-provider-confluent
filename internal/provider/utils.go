@@ -894,7 +894,9 @@ func createDescriptiveError(err error, resp ...*http.Response) error {
 			}
 		}
 	}
-
+	if len(resp) > 0 && resp[0].StatusCode == 429 {
+		errorMessage = "Error code 429: " + errorMessage
+	}
 	// If a *http.Response was provided, and we could not parse Error object,
 	// read its *http.Response body to provide a more descriptive error message to avoid
 	// https://github.com/confluentinc/terraform-provider-confluent/issues/53
