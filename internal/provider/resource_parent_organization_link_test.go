@@ -30,12 +30,12 @@ const (
 	scenarioStateParentOrgLinkHasBeenCreated = "The new parent organization link has been just created"
 	scenarioStateParentOrgLinkHasBeenDeleted = "The requested parent organization link has been deleted"
 	parentOrgLinkScenarioName                = "confluent_parent_organization_link Resource Lifecycle"
-	parentOrgLinkId                          = "78acf398-ef5d-4373-ac40-e2f99ca8f991"
 	parentOrgLinkUrlPath                     = "/iam/v2/parent-organization-links/78acf398-ef5d-4373-ac40-e2f99ca8f991"
 
-	polParentId       = "98c3e8af-c392-418a-b87e-af33c7853b1f"
-	polOrganizationId = "085d3340-aef4-41e7-b537-9804d34e18fc"
-	polResourceLabel  = "test_parent_org_link_resource_label"
+	testParentOrgLinkId             = "78acf398-ef5d-4373-ac40-e2f99ca8f991"
+	testParentOrgLinkParentId       = "98c3e8af-c392-418a-b87e-af33c7853b1f"
+	testParentOrgLinkOrganizationId = "085d3340-aef4-41e7-b537-9804d34e18fc"
+	testParentOrgLinkResourceLabel  = "test_parent_org_link_resource_label"
 )
 
 func TestAccParentOrganizationLink(t *testing.T) {
@@ -97,7 +97,7 @@ func TestAccParentOrganizationLink(t *testing.T) {
 		)
 	_ = wiremockClient.StubFor(deleteParentOrgLinkStub)
 
-	fullPolResourceLabel := fmt.Sprintf("confluent_parent_organization_link.%s", polResourceLabel)
+	fullPolResourceLabel := fmt.Sprintf("confluent_parent_organization_link.%s", testParentOrgLinkResourceLabel)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -107,14 +107,14 @@ func TestAccParentOrganizationLink(t *testing.T) {
 		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckParentOrganizationLinkConfig(mockServerUrl, polResourceLabel, polParentId, polOrganizationId),
+				Config: testAccCheckParentOrganizationLinkConfig(mockServerUrl, testParentOrgLinkResourceLabel, testParentOrgLinkParentId, testParentOrgLinkOrganizationId),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckParentOrganizationLinkExists(fullPolResourceLabel),
-					resource.TestCheckResourceAttr(fullPolResourceLabel, "id", parentOrgLinkId),
+					resource.TestCheckResourceAttr(fullPolResourceLabel, "id", testParentOrgLinkId),
 					resource.TestCheckResourceAttr(fullPolResourceLabel, "parent.#", "1"),
-					resource.TestCheckResourceAttr(fullPolResourceLabel, "parent.0.id", polParentId),
+					resource.TestCheckResourceAttr(fullPolResourceLabel, "parent.0.id", testParentOrgLinkParentId),
 					resource.TestCheckResourceAttr(fullPolResourceLabel, "organization.#", "1"),
-					resource.TestCheckResourceAttr(fullPolResourceLabel, "organization.0.id", polOrganizationId),
+					resource.TestCheckResourceAttr(fullPolResourceLabel, "organization.0.id", testParentOrgLinkOrganizationId),
 				),
 			},
 			{
@@ -127,7 +127,7 @@ func TestAccParentOrganizationLink(t *testing.T) {
 	})
 
 	checkStubCount(t, wiremockClient, createParentOrgLinkStub, "POST /iam/v2/parent-organization-links", expectedCountOne)
-	checkStubCount(t, wiremockClient, deleteParentOrgLinkStub, fmt.Sprintf("DELETE /iam/v2/parent-organization-links/%s", parentOrgLinkId), expectedCountOne)
+	checkStubCount(t, wiremockClient, deleteParentOrgLinkStub, fmt.Sprintf("DELETE /iam/v2/parent-organization-links/%s", testParentOrgLinkId), expectedCountOne)
 }
 
 func testAccCheckParentOrganizationLinkDestroy(s *terraform.State) error {
