@@ -32,8 +32,8 @@ func parentOrganizationLinkDataSource() *schema.Resource {
 				Description: "The id of the Parent Organization Link",
 				Required:    true,
 			},
-			paramParent:       environmentDataSourceSchema(),
-			paramOrganization: environmentDataSourceSchema(),
+			paramParent:       optionalIdBlockSchema(),
+			paramOrganization: optionalIdBlockSchema(),
 		},
 	}
 }
