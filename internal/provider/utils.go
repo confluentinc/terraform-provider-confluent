@@ -31,6 +31,7 @@ import (
 	"strings"
 	"time"
 
+	parent "github.com/confluentinc/ccloud-sdk-go-v2-internal/parent/v2"
 	apikeys "github.com/confluentinc/ccloud-sdk-go-v2/apikeys/v2"
 	byok "github.com/confluentinc/ccloud-sdk-go-v2/byok/v1"
 	cam "github.com/confluentinc/ccloud-sdk-go-v2/cam/v1"
@@ -132,6 +133,7 @@ const (
 	providerIntegrationLoggingKey             = "provider_integration_id"
 	tableflowTopicKey                         = "tableflow_topic_id"
 	catalogIntegrationKey                     = "catalog_integration_id"
+	parentOrganizationLinkLoggingKey          = "parent_organization_link_id"
 
 	deprecationMessageMajorRelease3 = "The %q %s has been deprecated and will be removed in the next major version of the provider (3.0.0). " +
 		"Refer to the Upgrade Guide at https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/guides/version-3-upgrade for more details. " +
@@ -243,6 +245,25 @@ func (c *Client) iamApiContext(ctx context.Context) context.Context {
 	}
 
 	tflog.Warn(ctx, "Could not find Cloud API Key or OAuth Token for IAM client")
+	return ctx
+}
+
+func (c *Client) parentApiContext(ctx context.Context) context.Context {
+	if c.oauthToken != nil && c.stsToken != nil {
+		if err := c.fetchOrOverrideSTSOAuthTokenFromApiContext(ctx); err != nil {
+			tflog.Error(ctx, fmt.Sprintf("Failed to get OAuth token for Parent client: %v", err))
+		}
+		return context.WithValue(ctx, parent.ContextAccessToken, c.stsToken.AccessToken)
+	}
+
+	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
+		return context.WithValue(ctx, parent.ContextBasicAuth, parent.BasicAuth{
+			UserName: c.cloudApiKey,
+			Password: c.cloudApiSecret,
+		})
+	}
+
+	tflog.Warn(ctx, "Could not find Cloud API Key or OAuth Token for Parent client")
 	return ctx
 }
 

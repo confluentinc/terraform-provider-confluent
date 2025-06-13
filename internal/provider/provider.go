@@ -26,6 +26,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
+	parent "github.com/confluentinc/ccloud-sdk-go-v2-internal/parent/v2"
 	apikeys "github.com/confluentinc/ccloud-sdk-go-v2/apikeys/v2"
 	byok "github.com/confluentinc/ccloud-sdk-go-v2/byok/v1"
 	cam "github.com/confluentinc/ccloud-sdk-go-v2/cam/v1"
@@ -108,6 +109,7 @@ type Client struct {
 	quotasClient                    *quotas.APIClient
 	srcmClient                      *srcm.APIClient
 	ssoClient                       *sso.APIClient
+	parentClient                    *parent.APIClient
 	piClient                        *pi.APIClient
 	userAgent                       string
 	catalogRestEndpoint             string
@@ -330,6 +332,8 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_dns_record":                         dnsRecordDataSource(),
 				"confluent_gateway":                            gatewayDataSource(),
 				"confluent_organization":                       organizationDataSource(),
+				"confluent_parent":                             parentDataSource(),
+				"confluent_parent_organization_link":           parentOrganizationLinkDataSource(),
 				"confluent_peering":                            peeringDataSource(),
 				"confluent_transit_gateway_attachment":         transitGatewayAttachmentDataSource(),
 				"confluent_private_link_access":                privateLinkAccessDataSource(),
@@ -416,6 +420,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_schema_registry_kek":                schemaRegistryKekResource(),
 				"confluent_schema_registry_dek":                schemaRegistryDekResource(),
 				"confluent_catalog_entity_attributes":          catalogEntityAttributesResource(),
+				"confluent_parent_organization_link":           parentOrganizationLinkResource(),
 			},
 		}
 
@@ -581,6 +586,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	netDnsCfg := dns.NewConfiguration()
 	oidcCfg := oidc.NewConfiguration()
 	orgCfg := org.NewConfiguration()
+	parentCfg := parent.NewConfiguration()
 	piCfg := pi.NewConfiguration()
 	quotasCfg := quotas.NewConfiguration()
 	srcmCfg := srcm.NewConfiguration()
@@ -607,6 +613,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	netDnsCfg.Servers[0].URL = endpoint
 	oidcCfg.Servers[0].URL = endpoint
 	orgCfg.Servers[0].URL = endpoint
+	parentCfg.Servers[0].URL = endpoint
 	piCfg.Servers[0].URL = endpoint
 	quotasCfg.Servers[0].URL = endpoint
 	srcmCfg.Servers[0].URL = endpoint
@@ -634,6 +641,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	netPLCfg.UserAgent = userAgent
 	oidcCfg.UserAgent = userAgent
 	orgCfg.UserAgent = userAgent
+	parentCfg.UserAgent = userAgent
 	piCfg.UserAgent = userAgent
 	quotasCfg.UserAgent = userAgent
 	srcmCfg.UserAgent = userAgent
@@ -672,6 +680,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	netDnsCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	oidcCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	orgCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
+	parentCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	piCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	quotasCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	srcmCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
@@ -699,6 +708,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 		netDnsClient:                    dns.NewAPIClient(netDnsCfg),
 		oidcClient:                      oidc.NewAPIClient(oidcCfg),
 		orgClient:                       org.NewAPIClient(orgCfg),
+		parentClient:                    parent.NewAPIClient(parentCfg),
 		piClient:                        pi.NewAPIClient(piCfg),
 		srcmClient:                      srcm.NewAPIClient(srcmCfg),
 		catalogRestClientFactory:        catalogRestClientFactory,
