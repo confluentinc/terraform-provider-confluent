@@ -1,0 +1,11 @@
+{
+  "api_version": "connect/v1",
+  "content_format": "ZIP",
+  "kind": "PresignedUrl",
+  "upload_form_data": {
+    "bucket": "foo-gcp",
+    "key": "bar-gcp"
+  },
+  "upload_id": "d7fa641f-7b17-4eb8-b326-6731b02aad12",
+  "upload_url": "TF_TEST_URL"
+} 

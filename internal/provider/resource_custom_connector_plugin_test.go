@@ -33,6 +33,7 @@ const (
 	scenarioStateCustomConnectorPluginDescriptionHaveBeenUpdated = "The new custom connector plugin's description and display name have been just updated"
 	scenarioStateCustomConnectorPluginHasBeenDeleted             = "The new custom connector plugin has been deleted"
 	customConnectorPluginScenarioName                            = "confluent_custom_connector_plugin Resource Lifecycle"
+	customConnectorPluginGCPScenarioName                         = "confluent_custom_connector_plugin GCP Resource Lifecycle"
 )
 
 func TestAccCustomConnectorPlugin(t *testing.T) {
@@ -187,6 +188,115 @@ func TestAccCustomConnectorPlugin(t *testing.T) {
 	checkStubCount(t, wiremockClient, deleteCustomConnectorPluginStub, "DELETE /connect/v1/custom-connector-plugins/ccp-4rrw00", expectedCountOne)
 }
 
+func TestAccCustomConnectorPluginGCP(t *testing.T) {
+	ctx := context.Background()
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
+
+	mockServerUrl := wiremockContainer.URI
+	wiremockClient := wiremock.NewClient(mockServerUrl)
+	// nolint:errcheck
+	defer wiremockClient.Reset()
+
+	// nolint:errcheck
+	defer wiremockClient.ResetAllScenarios()
+	createCustomConnectorPluginPresignedUrlResponse, _ := ioutil.ReadFile("../testdata/custom_connector_plugin/read_presigned_url_gcp.json")
+	createCustomConnectorPluginPresignedUrlStub := wiremock.Post(wiremock.URLPathEqualTo("/connect/v1/presigned-upload-url")).
+		InScenario(customConnectorPluginGCPScenarioName).
+		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
+		WillSetStateTo(scenarioStateCustomConnectorPluginPresignedUrlHasBeenCreated).
+		WillReturn(
+			string(createCustomConnectorPluginPresignedUrlResponse),
+			contentTypeJSONHeader,
+			http.StatusCreated,
+		)
+	_ = wiremockClient.StubFor(createCustomConnectorPluginPresignedUrlStub)
+
+	createCustomConnectorPluginResponse, _ := ioutil.ReadFile("../testdata/custom_connector_plugin/create_plugin_gcp.json")
+	createCustomConnectorPluginStub := wiremock.Post(wiremock.URLPathEqualTo("/connect/v1/custom-connector-plugins")).
+		InScenario(customConnectorPluginGCPScenarioName).
+		WhenScenarioStateIs(scenarioStateCustomConnectorPluginPresignedUrlHasBeenCreated).
+		WillSetStateTo(scenarioStateCustomConnectorPluginHasBeenCreated).
+		WillReturn(
+			string(createCustomConnectorPluginResponse),
+			contentTypeJSONHeader,
+			http.StatusCreated,
+		)
+	_ = wiremockClient.StubFor(createCustomConnectorPluginStub)
+
+	readCreatedCustomConnectorPluginResponse, _ := ioutil.ReadFile("../testdata/custom_connector_plugin/read_created_plugin_gcp.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/connect/v1/custom-connector-plugins/ccp-5rrw00")).
+		InScenario(customConnectorPluginGCPScenarioName).
+		WhenScenarioStateIs(scenarioStateCustomConnectorPluginHasBeenCreated).
+		WillReturn(
+			string(readCreatedCustomConnectorPluginResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	deleteCustomConnectorPluginStub := wiremock.Delete(wiremock.URLPathEqualTo("/connect/v1/custom-connector-plugins/ccp-5rrw00")).
+		InScenario(customConnectorPluginGCPScenarioName).
+		WhenScenarioStateIs(scenarioStateCustomConnectorPluginHasBeenCreated).
+		WillSetStateTo(scenarioStateCustomConnectorPluginHasBeenDeleted).
+		WillReturn(
+			"",
+			contentTypeJSONHeader,
+			http.StatusNoContent,
+		)
+	_ = wiremockClient.StubFor(deleteCustomConnectorPluginStub)
+
+	readDeletedCustomConnectorPluginResponse, _ := ioutil.ReadFile("../testdata/custom_connector_plugin/read_deleted_plugin_gcp.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/connect/v1/custom-connector-plugins/ccp-5rrw00")).
+		InScenario(customConnectorPluginGCPScenarioName).
+		WhenScenarioStateIs(scenarioStateCustomConnectorPluginHasBeenDeleted).
+		WillReturn(
+			string(readDeletedCustomConnectorPluginResponse),
+			contentTypeJSONHeader,
+			http.StatusNotFound,
+		))
+
+	customConnectorPluginDisplayName := "datagen-plugin-name-gcp"
+	customConnectorPluginDescription := "datagen-plugin-description-gcp"
+	customConnectorPluginResourceLabel := "test_plugin_resource_label_gcp"
+	fullCustomConnectorPluginResourceLabel := fmt.Sprintf("confluent_custom_connector_plugin.%s", customConnectorPluginResourceLabel)
+
+	// Set fake values for secrets since those are required for importing
+	_ = os.Setenv("IMPORT_CUSTOM_CONNECTOR_PLUGIN_FILENAME", "foo.zip")
+	defer func() {
+		_ = os.Unsetenv("IMPORT_CUSTOM_CONNECTOR_PLUGIN_FILENAME")
+	}()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckCustomConnectorPluginDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckCustomConnectorPluginConfigWithCloud(mockServerUrl, customConnectorPluginResourceLabel, customConnectorPluginDisplayName, customConnectorPluginDescription, "GCP"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckCustomConnectorPluginExists(fullCustomConnectorPluginResourceLabel),
+					resource.TestCheckResourceAttr(fullCustomConnectorPluginResourceLabel, "id", "ccp-5rrw00"),
+					resource.TestCheckResourceAttr(fullCustomConnectorPluginResourceLabel, "display_name", customConnectorPluginDisplayName),
+					resource.TestCheckResourceAttr(fullCustomConnectorPluginResourceLabel, "description", customConnectorPluginDescription),
+					resource.TestCheckResourceAttr(fullCustomConnectorPluginResourceLabel, "cloud", "GCP"),
+				),
+			},
+			{
+				ResourceName:      fullCustomConnectorPluginResourceLabel,
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+
+	checkStubCount(t, wiremockClient, createCustomConnectorPluginStub, "POST /connect/v1/custom-connector-plugins", expectedCountOne)
+	checkStubCount(t, wiremockClient, deleteCustomConnectorPluginStub, "DELETE /connect/v1/custom-connector-plugins/ccp-5rrw00", expectedCountOne)
+}
+
 func testAccCheckCustomConnectorPluginDestroy(s *terraform.State) error {
 	c := testAccProvider.Meta().(*Client)
 	// Loop through the resources in state, verifying each custom connector plugin is destroyed
@@ -227,6 +337,24 @@ func testAccCheckCustomConnectorPluginConfig(mockServerUrl, customConnectorPlugi
 		filename = "foo.zip"
 	}
 	`, mockServerUrl, customConnectorPluginResourceLabel, saDisplayName, saDescription)
+}
+
+func testAccCheckCustomConnectorPluginConfigWithCloud(mockServerUrl, customConnectorPluginResourceLabel, saDisplayName, saDescription, cloud string) string {
+	return fmt.Sprintf(`
+	provider "confluent" {
+		endpoint = "%s"
+	}
+	resource "confluent_custom_connector_plugin" "%s" {
+		display_name = "%s"
+		description = "%s"
+		documentation_link = "https://www.confluent.io/hub/confluentinc/kafka-connect-datagen"
+		connector_class = "io.confluent.kafka.connect.datagen.DatagenConnector"
+		connector_type = "SOURCE"
+		sensitive_config_properties = ["keys", "passwords"]
+		filename = "foo.zip"
+		cloud = "%s"
+	}
+	`, mockServerUrl, customConnectorPluginResourceLabel, saDisplayName, saDescription, cloud)
 }
 
 func testAccCheckCustomConnectorPluginExists(n string) resource.TestCheckFunc {
