@@ -1,0 +1,17 @@
+{
+  "api_version": "iam/v2",
+  "bup_enabled": true,
+  "connection_name": "confluent-sso",
+  "email_attribute_mapping": "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddressupdated",
+  "id": "5d457a1e-6314-4867-95bc-e84ef2d6eaaa",
+  "idp_initiated": false,
+  "jit_enabled": false,
+  "kind": "ParentSSO",
+  "metadata": {
+    "resource_name": "crn://confluent.cloud/parent=3896f2af-bec0-40f8-8d87-eed91188c046/parent-sso=5d457a1e-6314-4867-95bc-e84ef2d6eaaa",
+    "self": "https://api.confluent.cloud/iam/v2/parent-sso/5d457a1e-6314-4867-95bc-e84ef2d6eaaa"
+  },
+  "parent_id": "3896f2af-bec0-40f8-8d87-eed91188c046",
+  "sign_in_endpoint": "https://okta.com/app/updated/sso/saml",
+  "signing_cert": ""
+}
