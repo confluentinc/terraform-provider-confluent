@@ -19,6 +19,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	ccpm "github.com/confluentinc/ccloud-sdk-go-v2-internal/ccpm/v1"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -92,6 +93,8 @@ const (
 	flinkStatementLoggingKey                  = "flink_statement_key_id"
 	networkLoggingKey                         = "network_key_id"
 	customConnectorPluginLoggingKey           = "custom_connector_plugin_key_id"
+	customConnectorPluginVersionLoggingKey    = "custom_connector_plugin_version_key_id"
+	pluginLoggingKey                          = "plugin_key_id"
 	connectorLoggingKey                       = "connector_key_id"
 	groupMappingLoggingKey                    = "group_mapping_id"
 	privateLinkAccessLoggingKey               = "private_link_access_id"
@@ -199,6 +202,25 @@ func (c *Client) ccpApiContext(ctx context.Context) context.Context {
 
 	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
 		return context.WithValue(ctx, ccp.ContextBasicAuth, ccp.BasicAuth{
+			UserName: c.cloudApiKey,
+			Password: c.cloudApiSecret,
+		})
+	}
+
+	tflog.Warn(ctx, "Could not find Cloud API Key or OAuth Token for Custom Code Logging client")
+	return ctx
+}
+
+func (c *Client) ccpmApiContext(ctx context.Context) context.Context {
+	if c.oauthToken != nil && c.stsToken != nil {
+		if err := c.fetchOrOverrideSTSOAuthTokenFromApiContext(ctx); err != nil {
+			tflog.Error(ctx, fmt.Sprintf("Failed to get OAuth token for Custom Code Logging client: %v", err))
+		}
+		return context.WithValue(ctx, ccp.ContextAccessToken, c.stsToken.AccessToken)
+	}
+
+	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
+		return context.WithValue(ctx, ccpm.ContextBasicAuth, ccpm.BasicAuth{
 			UserName: c.cloudApiKey,
 			Password: c.cloudApiSecret,
 		})
