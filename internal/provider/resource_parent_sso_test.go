@@ -42,7 +42,6 @@ const (
 	pssoResourceLabel         = "test_parent_sso_resource_label"
 
 	// Updated values
-	pssoUpdatedConnectionName        = "confluent-sso-updated"
 	pssoUpdatedEmailAttributeMapping = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddressupdated"
 	pssoUpdatedSignInEndpoint        = "https://okta.com/app/updated/sso/saml"
 	pssoUpdatedSigningCert           = "cert-abc-updated"
@@ -161,11 +160,11 @@ func TestAccParentSSO(t *testing.T) {
 			},
 			{
 				// Test updating all supported attributes
-				Config: testAccCheckParentSSOConfig(mockServerUrl, pssoResourceLabel, pssoUpdatedConnectionName, pssoUpdatedEmailAttributeMapping, "false", "false", "true", pssoUpdatedSignInEndpoint, pssoUpdatedSigningCert),
+				Config: testAccCheckParentSSOConfig(mockServerUrl, pssoResourceLabel, pssoConnectionName, pssoUpdatedEmailAttributeMapping, "false", "false", "true", pssoUpdatedSignInEndpoint, pssoUpdatedSigningCert),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckParentSSOExists(fullParentSSOResourceLabel),
 					resource.TestCheckResourceAttr(fullParentSSOResourceLabel, "id", parentSSOId),
-					resource.TestCheckResourceAttr(fullParentSSOResourceLabel, "connection_name", pssoUpdatedConnectionName),
+					resource.TestCheckResourceAttr(fullParentSSOResourceLabel, "connection_name", pssoConnectionName),
 					resource.TestCheckResourceAttr(fullParentSSOResourceLabel, "email_attribute_mapping", pssoUpdatedEmailAttributeMapping),
 					resource.TestCheckResourceAttr(fullParentSSOResourceLabel, "idp_initiated", "false"),
 					resource.TestCheckResourceAttr(fullParentSSOResourceLabel, "jit_enabled", "false"),

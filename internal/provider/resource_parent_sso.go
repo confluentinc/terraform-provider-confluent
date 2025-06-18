@@ -96,11 +96,12 @@ func parentSSOResource() *schema.Resource {
 }
 
 func parentSSOUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if d.HasChangesExcept(paramConnectionName, paramEmailAttributeMapping, paramIdpInitiated, paramJitEnabled, paramBupEnabled, paramSignInEndpoint, paramSigningCert) {
+	if d.HasChangesExcept(paramEmailAttributeMapping, paramIdpInitiated, paramJitEnabled, paramBupEnabled, paramSignInEndpoint, paramSigningCert) {
 		return diag.Errorf("error updating Parent SSO %q: only %q, %q, %q, %q, %q, %q, and %q attributes can be updated for Parent SSO", d.Id(), paramConnectionName, paramEmailAttributeMapping, paramIdpInitiated, paramJitEnabled, paramBupEnabled, paramSignInEndpoint, paramSigningCert)
 	}
 
 	updateParentSSORequest := parent.NewIamV2ParentSSOUpdate()
+	updateParentSSORequest.SetId(d.Id())
 
 	if d.HasChange(paramEmailAttributeMapping) {
 		emailAttributeMapping := d.Get(paramEmailAttributeMapping).(string)

@@ -1,7 +1,7 @@
 {
   "api_version": "iam/v2",
   "bup_enabled": true,
-  "connection_name": "confluent-sso-updated",
+  "connection_name": "confluent-sso",
   "email_attribute_mapping": "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddressupdated",
   "id": "5d457a1e-6314-4867-95bc-e84ef2d6eaaa",
   "idp_initiated": false,
