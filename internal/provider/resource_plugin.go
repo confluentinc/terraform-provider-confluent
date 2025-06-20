@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"net/http"
+	"strings"
 )
 
 func pluginResource() *schema.Resource {
@@ -233,10 +234,20 @@ func executePluginRead(ctx context.Context, c *Client, pluginId, envID string) (
 
 func pluginImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	tflog.Debug(ctx, fmt.Sprintf("Importing Plugin %q", d.Id()), map[string]interface{}{pluginLoggingKey: d.Id()})
-	env := getEnv("IMPORT_ENVIRONMENT", "")
-	// Mark resource as new to avoid d.Set("") when getting 404
+
+	envIDAndPluginId := d.Id()
+	parts := strings.Split(envIDAndPluginId, "/")
+
+	if len(parts) != 2 {
+		return nil, fmt.Errorf("error importing Plugin: invalid format: expected '<env ID>/<plugin ID>'")
+	}
+
+	environmentId := parts[0]
+	pluginId := parts[1]
+	d.SetId(pluginId)
+
 	d.MarkNewResource()
-	if _, err := readPluginAndSetAttributes(ctx, d, meta.(*Client), env); err != nil {
+	if _, err := readPluginAndSetAttributes(ctx, d, meta.(*Client), environmentId); err != nil {
 		return nil, fmt.Errorf("error importing Plugin %q: %s", d.Id(), createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished importing Plugin %q", d.Id()), map[string]interface{}{pluginLoggingKey: d.Id()})

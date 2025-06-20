@@ -139,6 +139,12 @@ func TestAccPlugin(t *testing.T) {
 				ResourceName:      fullPluginResourceLabel,
 				ImportState:       true,
 				ImportStateVerify: true,
+				ImportStateIdFunc: func(state *terraform.State) (string, error) {
+					resources := state.RootModule().Resources
+					pluginId := resources[fullPluginResourceLabel].Primary.ID
+					environmentId := resources[fullPluginResourceLabel].Primary.Attributes["environment.0.id"]
+					return environmentId + "/" + pluginId, nil
+				},
 			},
 			{
 				Config: testAccPluginConfig(mockServerUrl, pluginResourceLabel, pluginUpdatedDisplayName, pluginUpdatedDescription),
@@ -156,6 +162,12 @@ func TestAccPlugin(t *testing.T) {
 				ResourceName:      fullPluginResourceLabel,
 				ImportState:       true,
 				ImportStateVerify: true,
+				ImportStateIdFunc: func(state *terraform.State) (string, error) {
+					resources := state.RootModule().Resources
+					pluginId := resources[fullPluginResourceLabel].Primary.ID
+					environmentId := resources[fullPluginResourceLabel].Primary.Attributes["environment.0.id"]
+					return environmentId + "/" + pluginId, nil
+				},
 			},
 		},
 	})
