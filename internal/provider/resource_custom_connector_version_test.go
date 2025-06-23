@@ -179,7 +179,7 @@ func testAccCheckCustomConnectorPluginVersionExists(n string) resource.TestCheck
 		}
 
 		if rs.Primary.ID == "" {
-			return fmt.Errorf("ID has not been set for %s custom connector pluginversion", n)
+			return fmt.Errorf("ID has not been set for %s custom connector plugin version", n)
 		}
 
 		return nil
