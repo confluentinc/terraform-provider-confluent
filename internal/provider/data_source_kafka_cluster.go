@@ -91,6 +91,32 @@ func kafkaDataSource() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			paramEndpoints: {
+				Type: schema.TypeList,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						paramAccessPointID: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The access point ID (e.g., 'public', 'privatelink').",
+						},
+						paramBootStrapEndpoint: {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						paramRestEndpoint: {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						paramConnectionType: {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+					},
+				},
+				Computed:    true,
+				Description: "A map of endpoints for connecting to the Kafka cluster, keyed by access_point_id. Access Point ID 'public' and 'privatelink' are reserved. These can be used for different network access methods or regions.",
+			},
 		},
 	}
 }
