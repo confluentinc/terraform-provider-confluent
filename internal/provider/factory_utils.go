@@ -228,11 +228,22 @@ func (f RetryableClientFactory) CreateRetryableClient() *http.Client {
 		retryClient.RetryMax = *f.maxRetries
 	}
 
+	retryClient.ErrorHandler = customErrorHandler
+
 	// Create a logger for retryablehttp
 	// This logger will be used to send retryablehttp's internal logs to tflog
 	retryClient.Logger = logger
 
 	return retryClient.StandardClient()
+}
+
+func customErrorHandler(resp *http.Response, err error, _ int) (*http.Response, error) {
+	if resp != nil {
+		if resp.StatusCode == 429 {
+			return resp, fmt.Errorf("received HTTP 429 Too Many Requests: (URL: %s, Method: %s)", resp.Request.URL, resp.Request.Method)
+		}
+	}
+	return resp, err
 }
 
 // Logger is used to log messages from retryablehttp.Client to tflog.
