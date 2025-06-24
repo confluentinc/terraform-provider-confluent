@@ -2,7 +2,7 @@ version: v1.0
 name: GitHub Issues to JIRA Sync Pipeline
 agent:
   machine:
-    type: s1-prod-ubuntu20-04-amd64-0
+    type: s1-prod-ubuntu20-04-amd64-1
 
 blocks:
   - name: "GitHub Issues to JIRA Sync Workflow"
