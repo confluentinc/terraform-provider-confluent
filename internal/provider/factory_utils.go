@@ -228,11 +228,22 @@ func (f RetryableClientFactory) CreateRetryableClient() *http.Client {
 		retryClient.RetryMax = *f.maxRetries
 	}
 
+	retryClient.ErrorHandler = MyCustomErrorHandler
+
 	// Create a logger for retryablehttp
 	// This logger will be used to send retryablehttp's internal logs to tflog
 	retryClient.Logger = logger
 
 	return retryClient.StandardClient()
+}
+
+func MyCustomErrorHandler(resp *http.Response, err error, _ int) (*http.Response, error) {
+	if resp != nil {
+		if resp.StatusCode == 429 {
+			return resp, fmt.Errorf("error code 429: %v", err)
+		}
+	}
+	return resp, err
 }
 
 // Logger is used to log messages from retryablehttp.Client to tflog.
