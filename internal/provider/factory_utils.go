@@ -240,7 +240,7 @@ func (f RetryableClientFactory) CreateRetryableClient() *http.Client {
 func customErrorHandler(resp *http.Response, err error, _ int) (*http.Response, error) {
 	if resp != nil {
 		if resp.StatusCode == 429 {
-			return resp, fmt.Errorf("error code 429: %v", err)
+			return resp, fmt.Errorf("received HTTP 429 Too Many Requests: %v (URL: %s, Method: %s)", err, resp.Request.URL, resp.Request.Method)
 		}
 	}
 	return resp, err
