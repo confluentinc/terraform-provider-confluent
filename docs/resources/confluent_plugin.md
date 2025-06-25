@@ -44,7 +44,7 @@ The following arguments are supported:
 In addition to the preceding arguments, the following attributes are exported:
 
 - `id` - (Required String) The ID of the Custom Connector Plugin, for example, `ccp-abc123xyz`.
-- `runtime_language` - (Required Strings) Runtime language of the plugin.
+- `runtime_language` - (Optional String) Runtime language of the plugin.
 - `api_version` - (Required String) The API Version of the schema version of the plugin, for example, `ccpm/v1`.
 - `kind` - (Required String) The kind of the Plugin, for example, `CustomConnectPlugin`.
 
