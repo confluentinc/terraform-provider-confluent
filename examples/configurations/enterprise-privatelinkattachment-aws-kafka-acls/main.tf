@@ -24,6 +24,20 @@ provider "aws" {
 
 resource "confluent_environment" "staging" {
   display_name = "Staging"
+
+  stream_governance {
+    package = "ESSENTIALS"
+  }
+}
+
+data "confluent_schema_registry_cluster" "essentials" {
+  environment {
+    id = confluent_environment.staging.id
+  }
+
+  depends_on = [
+    confluent_kafka_cluster.enterprise
+  ]
 }
 
 resource "confluent_kafka_cluster" "enterprise" {

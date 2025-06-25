@@ -29,6 +29,20 @@ provider "azurerm" {
 
 resource "confluent_environment" "main" {
   display_name = "Staging"
+
+  stream_governance {
+    package = "ESSENTIALS"
+  }
+}
+
+data "confluent_schema_registry_cluster" "essentials" {
+  environment {
+    id = confluent_environment.main.id
+  }
+
+  depends_on = [
+    confluent_kafka_cluster.enterprise
+  ]
 }
 
 resource "confluent_private_link_attachment" "main" {
