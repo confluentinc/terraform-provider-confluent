@@ -31,51 +31,36 @@ data "confluent_schema_registry_cluster" "essentials" {
   }
 
   depends_on = [
-    confluent_kafka_cluster.dedicated
+    confluent_kafka_cluster.enterprise
   ]
 }
 
-resource "confluent_network" "private-service-connect" {
-  display_name     = "Private Service Connect Network"
-  cloud            = "GCP"
-  region           = var.region
-  connection_types = ["PRIVATELINK"]
-  zones            = keys(var.subnet_name_by_zone)
-  environment {
-    id = confluent_environment.staging.id
-  }
-  dns_config {
-    resolution = "PRIVATE"
-  }
-}
-
-resource "confluent_private_link_access" "gcp" {
-  display_name = "GCP Private Service Connect"
-  gcp {
-    project = var.customer_project_id
-  }
-  environment {
-    id = confluent_environment.staging.id
-  }
-  network {
-    id = confluent_network.private-service-connect.id
-  }
-}
-
-resource "confluent_kafka_cluster" "dedicated" {
+resource "confluent_kafka_cluster" "enterprise" {
   display_name = "inventory"
-  availability = "MULTI_ZONE"
-  cloud        = confluent_network.private-service-connect.cloud
-  region       = confluent_network.private-service-connect.region
-  dedicated {
-    cku = 2
-  }
+  availability = "HIGH"
+  cloud        = "GCP"
+  region       = var.region
+  enterprise {}
   environment {
     id = confluent_environment.staging.id
   }
-  network {
-    id = confluent_network.private-service-connect.id
+}
+
+resource "confluent_private_link_attachment" "pla" {
+  cloud = "GCP"
+  region = var.region
+  display_name = "staging-gcp-platt"
+  environment {
+    id = confluent_environment.staging.id
   }
+}
+
+module "private-service-connect" {
+  source                   = "./gcp-private-service-connect-endpoint"
+  vpc_id                   = var.vpc_id
+  privatelink_service_name = confluent_private_link_attachment.pla.aws[0].vpc_endpoint_service_name
+  dns_domain               = confluent_private_link_attachment.pla.dns_domain
+  subnets_to_privatelink   = var.subnets_to_privatelink
 }
 
 // 'app-manager' service account is required in this configuration to create 'orders' topic and grant ACLs
@@ -88,7 +73,7 @@ resource "confluent_service_account" "app-manager" {
 resource "confluent_role_binding" "app-manager-kafka-cluster-admin" {
   principal   = "User:${confluent_service_account.app-manager.id}"
   role_name   = "CloudClusterAdmin"
-  crn_pattern = confluent_kafka_cluster.dedicated.rbac_crn
+  crn_pattern = confluent_kafka_cluster.enterprise.rbac_crn
 }
 
 resource "confluent_api_key" "app-manager-kafka-api-key" {
@@ -101,9 +86,9 @@ resource "confluent_api_key" "app-manager-kafka-api-key" {
   }
 
   managed_resource {
-    id          = confluent_kafka_cluster.dedicated.id
-    api_version = confluent_kafka_cluster.dedicated.api_version
-    kind        = confluent_kafka_cluster.dedicated.kind
+    id          = confluent_kafka_cluster.enterprise.id
+    api_version = confluent_kafka_cluster.enterprise.api_version
+    kind        = confluent_kafka_cluster.enterprise.kind
 
     environment {
       id = confluent_environment.staging.id
@@ -117,21 +102,16 @@ resource "confluent_api_key" "app-manager-kafka-api-key" {
   # 2. Kafka connectivity through GCP Private Service Connect is setup.
   depends_on = [
     confluent_role_binding.app-manager-kafka-cluster-admin,
-
-    confluent_private_link_access.gcp,
-    google_compute_forwarding_rule.psc_endpoint_ilb,
-    google_dns_record_set.psc_endpoint_rs,
-    google_dns_record_set.psc_endpoint_zonal_rs,
-    google_compute_firewall.allow-https-kafka,
+    confluent_private_link_attachment.pla,
   ]
 }
 
 resource "confluent_kafka_topic" "orders" {
   kafka_cluster {
-    id = confluent_kafka_cluster.dedicated.id
+    id = confluent_kafka_cluster.enterprise.id
   }
   topic_name    = "orders"
-  rest_endpoint = confluent_kafka_cluster.dedicated.rest_endpoint
+  rest_endpoint = confluent_kafka_cluster.enterprise.rest_endpoint
   credentials {
     key    = confluent_api_key.app-manager-kafka-api-key.id
     secret = confluent_api_key.app-manager-kafka-api-key.secret
@@ -153,9 +133,9 @@ resource "confluent_api_key" "app-consumer-kafka-api-key" {
   }
 
   managed_resource {
-    id          = confluent_kafka_cluster.dedicated.id
-    api_version = confluent_kafka_cluster.dedicated.api_version
-    kind        = confluent_kafka_cluster.dedicated.kind
+    id          = confluent_kafka_cluster.enterprise.id
+    api_version = confluent_kafka_cluster.enterprise.api_version
+    kind        = confluent_kafka_cluster.enterprise.kind
 
     environment {
       id = confluent_environment.staging.id
@@ -164,17 +144,13 @@ resource "confluent_api_key" "app-consumer-kafka-api-key" {
 
   # The goal is to ensure that Kafka connectivity through AWS PrivateLink is setup.
   depends_on = [
-    confluent_private_link_access.gcp,
-    google_compute_forwarding_rule.psc_endpoint_ilb,
-    google_dns_record_set.psc_endpoint_rs,
-    google_dns_record_set.psc_endpoint_zonal_rs,
-    google_compute_firewall.allow-https-kafka,
+    confluent_private_link_attachment.pla,
   ]
 }
 
 resource "confluent_kafka_acl" "app-producer-write-on-topic" {
   kafka_cluster {
-    id = confluent_kafka_cluster.dedicated.id
+    id = confluent_kafka_cluster.enterprise.id
   }
   resource_type = "TOPIC"
   resource_name = confluent_kafka_topic.orders.topic_name
@@ -183,7 +159,7 @@ resource "confluent_kafka_acl" "app-producer-write-on-topic" {
   host          = "*"
   operation     = "WRITE"
   permission    = "ALLOW"
-  rest_endpoint = confluent_kafka_cluster.dedicated.rest_endpoint
+  rest_endpoint = confluent_kafka_cluster.enterprise.rest_endpoint
   credentials {
     key    = confluent_api_key.app-manager-kafka-api-key.id
     secret = confluent_api_key.app-manager-kafka-api-key.secret
@@ -205,9 +181,9 @@ resource "confluent_api_key" "app-producer-kafka-api-key" {
   }
 
   managed_resource {
-    id          = confluent_kafka_cluster.dedicated.id
-    api_version = confluent_kafka_cluster.dedicated.api_version
-    kind        = confluent_kafka_cluster.dedicated.kind
+    id          = confluent_kafka_cluster.enterprise.id
+    api_version = confluent_kafka_cluster.enterprise.api_version
+    kind        = confluent_kafka_cluster.enterprise.kind
 
     environment {
       id = confluent_environment.staging.id
@@ -216,11 +192,7 @@ resource "confluent_api_key" "app-producer-kafka-api-key" {
 
   # The goal is to ensure that Kafka connectivity through GCP Private Service Connect is setup.
   depends_on = [
-    confluent_private_link_access.gcp,
-    google_compute_forwarding_rule.psc_endpoint_ilb,
-    google_dns_record_set.psc_endpoint_rs,
-    google_dns_record_set.psc_endpoint_zonal_rs,
-    google_compute_firewall.allow-https-kafka,
+    confluent_private_link_attachment.pla,
   ]
 }
 
@@ -230,7 +202,7 @@ resource "confluent_api_key" "app-producer-kafka-api-key" {
 // https://docs.confluent.io/platform/current/kafka/authorization.html#using-acls
 resource "confluent_kafka_acl" "app-consumer-read-on-topic" {
   kafka_cluster {
-    id = confluent_kafka_cluster.dedicated.id
+    id = confluent_kafka_cluster.enterprise.id
   }
   resource_type = "TOPIC"
   resource_name = confluent_kafka_topic.orders.topic_name
@@ -239,7 +211,7 @@ resource "confluent_kafka_acl" "app-consumer-read-on-topic" {
   host          = "*"
   operation     = "READ"
   permission    = "ALLOW"
-  rest_endpoint = confluent_kafka_cluster.dedicated.rest_endpoint
+  rest_endpoint = confluent_kafka_cluster.enterprise.rest_endpoint
   credentials {
     key    = confluent_api_key.app-manager-kafka-api-key.id
     secret = confluent_api_key.app-manager-kafka-api-key.secret
@@ -248,7 +220,7 @@ resource "confluent_kafka_acl" "app-consumer-read-on-topic" {
 
 resource "confluent_kafka_acl" "app-consumer-read-on-group" {
   kafka_cluster {
-    id = confluent_kafka_cluster.dedicated.id
+    id = confluent_kafka_cluster.enterprise.id
   }
   resource_type = "GROUP"
   // The existing values of resource_name, pattern_type attributes are set up to match Confluent CLI's default consumer group ID ("confluent_cli_consumer_<uuid>").
@@ -261,7 +233,7 @@ resource "confluent_kafka_acl" "app-consumer-read-on-group" {
   host          = "*"
   operation     = "READ"
   permission    = "ALLOW"
-  rest_endpoint = confluent_kafka_cluster.dedicated.rest_endpoint
+  rest_endpoint = confluent_kafka_cluster.enterprise.rest_endpoint
   credentials {
     key    = confluent_api_key.app-manager-kafka-api-key.id
     secret = confluent_api_key.app-manager-kafka-api-key.secret
