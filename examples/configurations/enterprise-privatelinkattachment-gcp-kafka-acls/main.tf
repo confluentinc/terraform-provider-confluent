@@ -17,6 +17,13 @@ provider "confluent" {
   cloud_api_secret = var.confluent_cloud_api_secret
 }
 
+# Set GOOGLE_APPLICATION_CREDENTIALS environment variable to a path to a key file
+# for Google TF Provider to work: https://registry.terraform.io/providers/hashicorp/google/latest/docs/guides/getting_started#adding-credentials
+provider "google" {
+  project = var.customer_project_id
+  region  = var.region
+}
+
 resource "confluent_environment" "staging" {
   display_name = "Staging"
 
@@ -57,10 +64,11 @@ resource "confluent_private_link_attachment" "pla" {
 
 module "private-service-connect" {
   source                   = "./gcp-private-service-connect-endpoint"
-  vpc_id                   = var.vpc_id
   privatelink_service_name = confluent_private_link_attachment.pla.aws[0].vpc_endpoint_service_name
   dns_domain               = confluent_private_link_attachment.pla.dns_domain
-  subnets_to_privatelink   = var.subnets_to_privatelink
+  customer_vpc_network     = var.customer_vpc_network
+  customer_subnetwork_name = var.customer_subnetwork_name
+  subnet_name_by_zone      = var.subnet_name_by_zone
 }
 
 // 'app-manager' service account is required in this configuration to create 'orders' topic and grant ACLs

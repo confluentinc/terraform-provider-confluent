@@ -1,6 +1,5 @@
 locals {
-  dns_domain = confluent_network.private-service-connect.dns_domain
-  network_id = split(".", local.dns_domain)[0]
+  network_id = split(".", var.dns_domain)[0]
 }
 
 data "google_compute_network" "psc_endpoint_network" {
@@ -34,7 +33,7 @@ resource "google_compute_forwarding_rule" "psc_endpoint_ilb" {
 # Private hosted zone for Private Service Connect endpoints
 resource "google_dns_managed_zone" "psc_endpoint_hz" {
   name     = "ccloud-endpoint-zone-${local.network_id}"
-  dns_name = "${local.dns_domain}."
+  dns_name = "${var.dns_domain}."
 
   visibility = "private"
 
