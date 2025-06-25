@@ -1246,15 +1246,24 @@ func uploadFile(url, filePath string, formFields map[string]any, fileExtension, 
 	client := &http.Client{
 		Timeout: 20 * time.Minute,
 	}
-	if cloud == "AZURE" && isFlinkArtifact {
-		var contentFormat string
-		switch strings.ToLower(fileExtension) {
-		case "zip":
-			contentFormat = "application/zip"
-		case "jar":
-			contentFormat = "application/java-archive"
-		}
 
+	var contentFormat string
+	switch strings.ToLower(fileExtension) {
+	case "zip":
+		contentFormat = "application/zip"
+	case "jar":
+		contentFormat = "application/java-archive"
+	}
+
+	if cloud == "GCP" {
+		_, err = sling.New().
+			Client(client).
+			Base(url).
+			Set("Content-Type", contentFormat).
+			Put("").
+			Body(&buffer).
+			ReceiveSuccess(nil)
+	} else if cloud == "AZURE" && isFlinkArtifact {
 		_, err = sling.New().
 			Client(client).
 			Base(url).
