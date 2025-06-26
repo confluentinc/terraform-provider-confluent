@@ -177,16 +177,17 @@ func customConnectorPluginVersionRead(ctx context.Context, d *schema.ResourceDat
 	c := meta.(*Client)
 	filename := d.Get(paramFilename).(string)
 	pluginId := d.Get(paramPluginId).(string)
+	cloud := d.Get(paramCloud).(string)
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
 
-	_, err := readCustomConnectorPluginVersionAndSetAttributes(ctx, d, c, filename, pluginId, environmentId)
+	_, err := readCustomConnectorPluginVersionAndSetAttributes(ctx, d, c, filename, pluginId, environmentId, cloud)
 	if err != nil {
 		return diag.Errorf("error reading Custom Connector Plugin Version %q: %s", d.Id(), createDescriptiveError(err))
 	}
 	return nil
 }
 
-func readCustomConnectorPluginVersionAndSetAttributes(ctx context.Context, d *schema.ResourceData, c *Client, filename, pluginId, envId string) ([]*schema.ResourceData, error) {
+func readCustomConnectorPluginVersionAndSetAttributes(ctx context.Context, d *schema.ResourceData, c *Client, filename, pluginId, envId, cloud string) ([]*schema.ResourceData, error) {
 	customConnectorPluginVersion, resp, err := executeCustomConnectorPluginVersionRead(c.ccpmApiContext(ctx), c, d.Id(), pluginId, envId)
 	if err != nil {
 		tflog.Warn(ctx, fmt.Sprintf("Error reading Custom Connector Plugin Version %q: %s", d.Id(), createDescriptiveError(err)), map[string]interface{}{customConnectorPluginVersionLoggingKey: d.Id()})
@@ -206,7 +207,7 @@ func readCustomConnectorPluginVersionAndSetAttributes(ctx context.Context, d *sc
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Custom Connector Plugin Version %q: %s", d.Id(), customConnectorPluginVersionJson), map[string]interface{}{customConnectorPluginVersionLoggingKey: d.Id()})
 
-	if _, err := setCustomConnectorPluginVersionAttributes(d, customConnectorPluginVersion, filename, pluginId); err != nil {
+	if _, err := setCustomConnectorPluginVersionAttributes(d, customConnectorPluginVersion, filename, pluginId, cloud); err != nil {
 		return nil, createDescriptiveError(err)
 	}
 
@@ -215,7 +216,7 @@ func readCustomConnectorPluginVersionAndSetAttributes(ctx context.Context, d *sc
 	return []*schema.ResourceData{d}, nil
 }
 
-func setCustomConnectorPluginVersionAttributes(d *schema.ResourceData, customConnectorPlugin ccpm.CcpmV1CustomConnectPluginVersion, filename, pluginId string) (*schema.ResourceData, error) {
+func setCustomConnectorPluginVersionAttributes(d *schema.ResourceData, customConnectorPlugin ccpm.CcpmV1CustomConnectPluginVersion, filename, pluginId, cloud string) (*schema.ResourceData, error) {
 	spec := customConnectorPlugin.GetSpec()
 
 	if err := d.Set(paramVersion, spec.GetVersion()); err != nil {
@@ -242,7 +243,7 @@ func setCustomConnectorPluginVersionAttributes(d *schema.ResourceData, customCon
 	if err := d.Set(paramKind, customConnectorPlugin.GetKind()); err != nil {
 		return nil, createDescriptiveError(err)
 	}
-	if err := d.Set(paramCloud, d.Get(paramCloud)); err != nil {
+	if err := d.Set(paramCloud, cloud); err != nil {
 		return nil, createDescriptiveError(err)
 	}
 	if err := d.Set(paramPluginId, pluginId); err != nil {
@@ -289,6 +290,7 @@ func uploadCustomConnectorVersionPlugin(ctx context.Context, c *Client, filename
 func customConnectorPluginVersionImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	tflog.Debug(ctx, fmt.Sprintf("Importing Custom Connector Plugin Version %q", d.Id()), map[string]interface{}{customConnectorPluginVersionLoggingKey: d.Id()})
 	filename := getEnv("IMPORT_CUSTOM_CONNECTOR_PLUGIN_VERSION_FILENAME", "")
+	cloud := getEnv("IMPORT_CLOUD", "")
 	envIDAndPluginIDAndVersionID := d.Id()
 	parts := strings.Split(envIDAndPluginIDAndVersionID, "/")
 
@@ -304,7 +306,7 @@ func customConnectorPluginVersionImport(ctx context.Context, d *schema.ResourceD
 	// Mark resource as new to avoid d.Set("") when getting 404
 	d.MarkNewResource()
 
-	if _, err := readCustomConnectorPluginVersionAndSetAttributes(ctx, d, meta.(*Client), filename, pluginId, environmentId); err != nil {
+	if _, err := readCustomConnectorPluginVersionAndSetAttributes(ctx, d, meta.(*Client), filename, pluginId, environmentId, cloud); err != nil {
 		return nil, fmt.Errorf("error importing Custom Connector Plugin Version %q: %s", d.Id(), createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished importing Custom Connector Plugin Version %q", d.Id()), map[string]interface{}{customConnectorPluginVersionLoggingKey: d.Id()})
