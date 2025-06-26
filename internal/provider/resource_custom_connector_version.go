@@ -206,7 +206,7 @@ func readCustomConnectorPluginVersionAndSetAttributes(ctx context.Context, d *sc
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Custom Connector Plugin Version %q: %s", d.Id(), customConnectorPluginVersionJson), map[string]interface{}{customConnectorPluginVersionLoggingKey: d.Id()})
 
-	if _, err := setCustomConnectorPluginVersionAttributes(d, customConnectorPluginVersion, filename); err != nil {
+	if _, err := setCustomConnectorPluginVersionAttributes(d, customConnectorPluginVersion, filename, pluginId); err != nil {
 		return nil, createDescriptiveError(err)
 	}
 
@@ -215,7 +215,7 @@ func readCustomConnectorPluginVersionAndSetAttributes(ctx context.Context, d *sc
 	return []*schema.ResourceData{d}, nil
 }
 
-func setCustomConnectorPluginVersionAttributes(d *schema.ResourceData, customConnectorPlugin ccpm.CcpmV1CustomConnectPluginVersion, filename string) (*schema.ResourceData, error) {
+func setCustomConnectorPluginVersionAttributes(d *schema.ResourceData, customConnectorPlugin ccpm.CcpmV1CustomConnectPluginVersion, filename, pluginId string) (*schema.ResourceData, error) {
 	spec := customConnectorPlugin.GetSpec()
 
 	if err := d.Set(paramVersion, spec.GetVersion()); err != nil {
@@ -243,6 +243,9 @@ func setCustomConnectorPluginVersionAttributes(d *schema.ResourceData, customCon
 		return nil, createDescriptiveError(err)
 	}
 	if err := d.Set(paramCloud, d.Get(paramCloud)); err != nil {
+		return nil, createDescriptiveError(err)
+	}
+	if err := d.Set(paramPluginId, pluginId); err != nil {
 		return nil, createDescriptiveError(err)
 	}
 	d.SetId(customConnectorPlugin.GetId())
@@ -296,10 +299,10 @@ func customConnectorPluginVersionImport(ctx context.Context, d *schema.ResourceD
 	environmentId := parts[0]
 	pluginId := parts[1]
 	versionId := parts[2]
+	d.SetId(versionId)
 
 	// Mark resource as new to avoid d.Set("") when getting 404
 	d.MarkNewResource()
-	d.SetId(versionId)
 
 	if _, err := readCustomConnectorPluginVersionAndSetAttributes(ctx, d, meta.(*Client), filename, pluginId, environmentId); err != nil {
 		return nil, fmt.Errorf("error importing Custom Connector Plugin Version %q: %s", d.Id(), createDescriptiveError(err))
