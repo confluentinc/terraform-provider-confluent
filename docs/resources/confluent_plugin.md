@@ -35,7 +35,7 @@ The following arguments are supported:
 
 - `display_name` - (Required String) The name of the Plugin.
 - `description` - (Optional String) The description of the Plugin.
-- `cloud` - (Required String) Cloud provider where the Custom Connector Plugin archive is uploaded. Accepted values are: `AWS`, `AZURE`..
+- `cloud` - (Required String) Cloud provider where the Custom Connector Plugin archive is uploaded. Accepted values are: `AWS`, `AZURE`, `GCP`.
 - `environment` (Required Configuration Block) supports the following:
     - `id` - (Required String) The ID of the Environment, for example, `env-abc123`.
 
