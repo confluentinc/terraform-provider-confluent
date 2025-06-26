@@ -17,7 +17,7 @@ package provider
 import (
 	"context"
 	"fmt"
-	ccpm "github.com/confluentinc/ccloud-sdk-go-v2-internal/ccpm/v1"
+	ccpm "github.com/confluentinc/ccloud-sdk-go-v2/ccpm/v1"
 	dns "github.com/confluentinc/ccloud-sdk-go-v2/networking-dnsforwarder/v1"
 	sr "github.com/confluentinc/ccloud-sdk-go-v2/schema-registry/v1"
 	"reflect"
