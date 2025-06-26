@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	ccpm "github.com/confluentinc/ccloud-sdk-go-v2-internal/ccpm/v1"
+	ccpm "github.com/confluentinc/ccloud-sdk-go-v2/ccpm/v1"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
