@@ -17,6 +17,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	ccpm "github.com/confluentinc/ccloud-sdk-go-v2/ccpm/v1"
 	dns "github.com/confluentinc/ccloud-sdk-go-v2/networking-dnsforwarder/v1"
 	sr "github.com/confluentinc/ccloud-sdk-go-v2/schema-registry/v1"
 	"reflect"
@@ -608,6 +609,157 @@ func TestBuildTfRules(t *testing.T) {
 
 		if reflect.DeepEqual(*actual, tfRuleSet) {
 			t.Fatalf("Unexpected error: expected %v, got %v", tfRuleSet, *actual)
+		}
+	})
+}
+
+func TestBuildTfConnectorClasses(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		classes := []ccpm.CcpmV1ConnectorClass{
+			{
+				ClassName: "Class1",
+				Type:      "SOURCE",
+			},
+			{
+				ClassName: "Class2",
+				Type:      "SOURCE",
+			},
+		}
+		actual := buildTfConnectorClasses(classes)
+		connectorClasses := make([]map[string]interface{}, 2)
+		tfConnectorClasses := make(map[string]interface{})
+		tfConnectorClasses[paramConnectorClassName] = "Class1"
+		tfConnectorClasses[paramConnectorType] = "SOURCE"
+		tfConnectorClasses2 := make(map[string]interface{})
+		tfConnectorClasses2[paramConnectorClassName] = "Class2"
+		tfConnectorClasses2[paramConnectorType] = "SOURCE"
+		connectorClasses[0] = tfConnectorClasses
+		connectorClasses[1] = tfConnectorClasses2
+		if !reflect.DeepEqual(*actual, connectorClasses) {
+			t.Fatalf("Unexpected error: expected %v, got %v", connectorClasses, *actual)
+		}
+	})
+
+	t.Run("success empty", func(t *testing.T) {
+		classes := []ccpm.CcpmV1ConnectorClass{
+			{
+				ClassName: "",
+				Type:      "SOURCE",
+			},
+		}
+		actual := buildTfConnectorClasses(classes)
+		connectorClasses := make([]map[string]interface{}, 1)
+		tfConnectorClasses := make(map[string]interface{})
+		tfConnectorClasses[paramConnectorClassName] = ""
+		tfConnectorClasses[paramConnectorType] = "SOURCE"
+		connectorClasses[0] = tfConnectorClasses
+		if !reflect.DeepEqual(*actual, connectorClasses) {
+			t.Fatalf("Unexpected error: expected %v, got %v", connectorClasses, *actual)
+		}
+	})
+
+	t.Run("fail wrong value", func(t *testing.T) {
+		classes := []ccpm.CcpmV1ConnectorClass{
+			{
+				ClassName: "name1",
+				Type:      "SOURCE",
+			},
+		}
+		actual := buildTfConnectorClasses(classes)
+		connectorClasses := make(map[string]interface{})
+		connectorClasses[paramConnectorClassName] = ""
+		connectorClasses[paramConnectorType] = "SOURCE"
+		if reflect.DeepEqual(*actual, connectorClasses) {
+			t.Fatalf("Unexpected error: expected %v, got %v", connectorClasses, *actual)
+		}
+	})
+}
+
+func TestBuildConnectorClass(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		connectorClasses := make(map[string]interface{})
+		connectorClasses[paramConnectorClassName] = "Class1"
+		connectorClasses[paramConnectorType] = "SOURCE"
+
+		connectorClasses2 := make(map[string]interface{})
+		connectorClasses2[paramConnectorClassName] = "Class2"
+		connectorClasses2[paramConnectorType] = "SOURCE"
+
+		connectorClass := []interface{}{connectorClasses, connectorClasses2}
+		actual := buildConnectorClass(connectorClass)
+		classes := make([]ccpm.CcpmV1ConnectorClass, 2)
+
+		class := ccpm.NewCcpmV1ConnectorClassWithDefaults()
+		class.SetClassName("Class1")
+		class.SetType("SOURCE")
+
+		class2 := ccpm.NewCcpmV1ConnectorClassWithDefaults()
+		class2.SetClassName("Class2")
+		class2.SetType("SOURCE")
+
+		classes[0] = *class
+		classes[1] = *class2
+
+		if !reflect.DeepEqual(actual, classes) {
+			t.Fatalf("Unexpected error: expected %v, got %v", classes, actual)
+		}
+	})
+
+	t.Run("success - empty", func(t *testing.T) {
+		connectorClasses := make(map[string]interface{})
+		connectorClasses[paramConnectorClassName] = "Class1"
+		connectorClasses[paramConnectorType] = "SOURCE"
+
+		connectorClasses2 := make(map[string]interface{})
+		connectorClasses2[paramConnectorClassName] = ""
+		connectorClasses2[paramConnectorType] = ""
+
+		connectorClass := []interface{}{connectorClasses, connectorClasses2}
+		actual := buildConnectorClass(connectorClass)
+		classes := make([]ccpm.CcpmV1ConnectorClass, 2)
+
+		class := ccpm.NewCcpmV1ConnectorClassWithDefaults()
+		class.SetClassName("Class1")
+		class.SetType("SOURCE")
+
+		class2 := ccpm.NewCcpmV1ConnectorClassWithDefaults()
+		class2.SetClassName("")
+		class2.SetType("")
+
+		classes[0] = *class
+		classes[1] = *class2
+
+		if !reflect.DeepEqual(actual, classes) {
+			t.Fatalf("Unexpected error: expected %v, got %v", classes, actual)
+		}
+	})
+
+	t.Run("fail - wrong value", func(t *testing.T) {
+		connectorClasses := make(map[string]interface{})
+		connectorClasses[paramConnectorClassName] = "Class1"
+		connectorClasses[paramConnectorType] = "SOURCE"
+
+		connectorClasses2 := make(map[string]interface{})
+		connectorClasses2[paramConnectorClassName] = "Class3"
+		connectorClasses2[paramConnectorType] = "SOURCE"
+
+		connectorClass := []interface{}{connectorClasses, connectorClasses2}
+		actual := buildConnectorClass(connectorClass)
+		classes := make([]ccpm.CcpmV1ConnectorClass, 2)
+
+		class := ccpm.NewCcpmV1ConnectorClassWithDefaults()
+		class.SetClassName("Class1")
+		class.SetType("SOURCE")
+
+		class2 := ccpm.NewCcpmV1ConnectorClassWithDefaults()
+		class2.SetClassName("Class2")
+		class2.SetType("")
+
+		classes[0] = *class
+		classes[1] = *class2
+
+		if reflect.DeepEqual(actual, classes) {
+			t.Fatalf("Unexpected error: expected %v, got %v", classes, actual)
 		}
 	})
 }
