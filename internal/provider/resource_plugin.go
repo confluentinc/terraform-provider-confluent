@@ -180,6 +180,7 @@ func readPluginAndSetAttributes(ctx context.Context, d *schema.ResourceData, c *
 
 	return []*schema.ResourceData{d}, nil
 }
+
 func setPluginAttributes(d *schema.ResourceData, plugin ccpm.CcpmV1CustomConnectPlugin) (*schema.ResourceData, error) {
 	spec := plugin.GetSpec()
 	if err := d.Set(paramDisplayName, spec.GetDisplayName()); err != nil {
