@@ -111,6 +111,7 @@ func TestAccCustomConnectorPluginVersion(t *testing.T) {
 	fullCustomConnectorPluginResourceLabel := fmt.Sprintf("confluent_custom_connector_plugin_version.%s", customConnectorPluginResourceLabel)
 
 	_ = os.Setenv("IMPORT_CUSTOM_CONNECTOR_PLUGIN_VERSION_FILENAME", "foo.zip")
+	_ = os.Setenv("IMPORT_CLOUD", "AWS")
 	defer func() {
 		_ = os.Unsetenv("IMPORT_CUSTOM_CONNECTOR_PLUGIN_VERSION_FILENAME")
 	}()
@@ -139,6 +140,19 @@ func TestAccCustomConnectorPluginVersion(t *testing.T) {
 					resource.TestCheckResourceAttr(fullCustomConnectorPluginResourceLabel, "connector_class.0.connector_type", "SOURCE"),
 					resource.TestCheckResourceAttr(fullCustomConnectorPluginResourceLabel, "environment.0.id", "env-00000"),
 				),
+			},
+			{
+				// https://www.terraform.io/docs/extend/resources/import.html
+				ResourceName:      fullCustomConnectorPluginResourceLabel,
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateIdFunc: func(state *terraform.State) (string, error) {
+					resources := state.RootModule().Resources
+					pluginId := resources[fullCustomConnectorPluginResourceLabel].Primary.Attributes["plugin_id"]
+					envId := resources[fullCustomConnectorPluginResourceLabel].Primary.Attributes["environment.0.id"]
+					versionId := resources[fullCustomConnectorPluginResourceLabel].Primary.Attributes["id"]
+					return envId + "/" + pluginId + "/" + versionId, nil
+				},
 			},
 		},
 	})
