@@ -1,0 +1,10 @@
+{
+  "errors": [
+    {
+      "id": "dd173b5be501293738a4b095059e5d32",
+      "status": "404",
+      "detail": "Parent organization link not found",
+      "source": {}
+    }
+  ]
+}

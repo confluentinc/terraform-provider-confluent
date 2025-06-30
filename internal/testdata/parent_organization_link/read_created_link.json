@@ -1,0 +1,13 @@
+{
+  "api_version": "iam/v2",
+  "id": "78acf398-ef5d-4373-ac40-e2f99ca8f991",
+  "kind": "ParentOrganizationLink",
+  "metadata": {
+    "created_at": "2025-06-12T10:01:06.918553Z",
+    "resource_name": "crn://stag.cpdev.cloud/parent=98c3e8af-c392-418a-b87e-af33c7853b1f/parent-organization-link=78acf398-ef5d-4373-ac40-e2f99ca8f991",
+    "self": "https://api.stag.cpdev.cloud/iam/v2/parent-organization-links/78acf398-ef5d-4373-ac40-e2f99ca8f991",
+    "updated_at": "2025-06-12T10:01:06.918553Z"
+  },
+  "organization_id": "085d3340-aef4-41e7-b537-9804d34e18fc",
+  "parent_id": "98c3e8af-c392-418a-b87e-af33c7853b1f"
+}
