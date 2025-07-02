@@ -6,7 +6,7 @@ contact:
   slack_team_channel: api-eng
   slack_oncall_channel: terraform
 lang: go
-lang_version: 1.22.7
+lang_version: 1.24.4
 git:
   enable: true
 github:
