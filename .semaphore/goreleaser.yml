@@ -13,6 +13,9 @@ blocks:
       jobs:
         - name: goreleaser-darwin-fips
           commands:
+            - sudo chown -R semaphore $HOME
+            - sudo chmod -R 777 $HOME
+            - sudo sem-version go 1.22.7
             - checkout
             - cd ..
             - wget "https://go.dev/dl/go$(cat terraform-provider-confluent*/.go-version).src.tar.gz"
@@ -27,7 +30,6 @@ blocks:
             - cd src/
             - ./make.bash -v
             - cd ../../
-            - sudo sem-version go 1.22.7
             - export PATH=$(pwd)/go/bin:$PATH
             - export "GITHUB_TOKEN=$(gh auth token)"
             - export GOROOT=$(pwd)/go
