@@ -13,9 +13,11 @@ blocks:
       jobs:
         - name: goreleaser-darwin-fips
           commands:
-            - sudo chown -R semaphore $HOME
-            - sudo chmod -R 777 $HOME
             - sudo sem-version go 1.22.7
+            - sudo chown -R semaphore /Users/semaphore/.local/
+            - sudo chmod -R 777 /Users/semaphore/.local/
+            - sudo chown -R semaphore /Users/semaphore/.config/
+            - sudo chmod -R 777 /Users/semaphore/.config/
             - checkout
             - cd ..
             - wget "https://go.dev/dl/go$(cat terraform-provider-confluent*/.go-version).src.tar.gz"
