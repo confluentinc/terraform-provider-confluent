@@ -13,8 +13,6 @@ blocks:
       jobs:
         - name: goreleaser-darwin-fips
           commands:
-            - sudo chown -R semaphore $HOME
-            - sudo chmod -R 777 $HOME
             - sudo sem-version go 1.22.7
             - checkout
             - cd ..
