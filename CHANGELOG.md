@@ -1,3 +1,10 @@
+## 2.34.0 (July 2nd, 2025)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.33.0...v2.34.0)
+
+**Bug fixes:**
+* Fixed an issue affecting the use of the existing `confluent_custom_connector_plugin` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_custom_connector_plugin) for GCP use cases.
+
 ## 2.33.0 (July 1st, 2025)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.32.0...v2.33.0)
