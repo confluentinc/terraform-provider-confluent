@@ -1,0 +1,36 @@
+{
+  "plugin_id": "foo",
+  "api_version": "ccpm/v1",
+  "kind": "CustomConnectPluginVersion",
+  "id": "dlz-f3a90de",
+  "spec": {
+    "version": "v0.0.1",
+    "sensitive_config_properties": [
+      "passwords",
+      "keys",
+      "tokens"
+    ],
+    "documentation_link": "https://github.com/confluentinc/kafka-connect-datagen",
+    "content_format": "ZIP",
+    "connector_classes": [
+      {
+        "class_name": "io.confluent.kafka.connect.datagen.DatagenConnector",
+        "type": "SOURCE"
+      }
+    ],
+    "upload_source": {
+      "location": "PRESIGNED_URL_LOCATION",
+      "upload_id": "e53bb2e8-8de3-49fa-9fb1-4e3fd9a16b66"
+    },
+    "environment": {
+      "id": "env-00000",
+      "environment": "string",
+      "related": "https://api.confluent.cloud/v2/environments/env-00000",
+      "resource_name": "https://api.confluent.cloud/organization=9bb441c4-edef-46ac-8a41-c49e44a3fd9a/environment=env-00000"
+    }
+  },
+  "status": {
+    "phase": "PROCESSING",
+    "error_message": "Version creation failed due to invalid plugin archive."
+  }
+}
