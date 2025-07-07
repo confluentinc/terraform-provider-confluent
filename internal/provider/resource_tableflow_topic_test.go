@@ -398,7 +398,6 @@ func testAccCheckResourceTableflowTopicManagedStorageUpdate(mockServerUrl string
 			id = "lkc-00000"
 		}
 		table_formats = ["ICEBERG", "DELTA"]
-		table_path = "s3://dummy-bucket-name-1//10011010/11101100/org-1/env-2/lkc-3/v1/tableId"
 		managed_storage {}
 		credentials {
 			key = "test_key"
