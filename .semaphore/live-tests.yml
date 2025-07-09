@@ -1,0 +1,33 @@
+version: v1.0
+name: Live Integration Tests for Confluent Provider
+agent:
+  machine:
+    type: s1-prod-ubuntu24-04-amd64-2
+
+auto_cancel:
+  running:
+    when: "false"
+
+global_job_config:
+  prologue:
+    commands:
+      - sem-version go 1.24.4
+      - export "GOPATH=$(go env GOPATH)"
+      - >-
+        export
+        "SEMAPHORE_GIT_DIR=${GOPATH}/src/github.com/confluentinc/${SEMAPHORE_PROJECT_NAME}"
+      - 'export "PATH=${GOPATH}/bin:${PATH}"'
+      - 'mkdir -vp "${SEMAPHORE_GIT_DIR}" "${GOPATH}/bin"'
+      - checkout
+
+execution_time_limit:
+  hours: 8
+
+blocks:
+  - name: "Live Integration Tests"
+    task:
+      jobs:
+        - name: "Run Live Tests"
+          commands:
+            - . vault-sem-get-secret v1/ci/kv/apif/terraform-provider-confluent/live_testing_credentials
+            - make live-test 
