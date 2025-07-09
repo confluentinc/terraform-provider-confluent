@@ -1,0 +1,76 @@
+version: v1.0
+name: Live Integration Tests for Confluent Provider
+agent:
+  machine:
+    type: s1-prod-ubuntu24-04-amd64-2
+
+auto_cancel:
+  running:
+    when: "false"
+
+global_job_config:
+  prologue:
+    commands:
+      - sem-version go 1.24.4
+      - export "GOPATH=$(go env GOPATH)"
+      - >-
+        export
+        "SEMAPHORE_GIT_DIR=${GOPATH}/src/github.com/confluentinc/${SEMAPHORE_PROJECT_NAME}"
+      - 'export "PATH=${GOPATH}/bin:${PATH}"'
+      - 'mkdir -vp "${SEMAPHORE_GIT_DIR}" "${GOPATH}/bin"'
+      - checkout
+
+execution_time_limit:
+  hours: 8
+
+blocks:
+  - name: "Live Integration Tests"
+    task:
+      jobs:
+        - name: "Run Live Tests"
+          commands:
+            - . vault-sem-get-secret v1/ci/kv/apif/terraform-provider-confluent/live-testing-data
+            - |
+              # Debug: Show what parameters we received
+              echo "=== DEBUG: Parameter Values ==="
+              echo "GROUPS parameter: '$GROUPS'"
+              echo "GROUPS length: ${#GROUPS}"
+              echo "GROUPS type: $(echo "$GROUPS" | wc -c)"
+              echo "All env vars with GROUPS: $(env | grep -i groups || echo 'none found')"
+              echo "All SEMAPHORE env vars: $(env | grep SEMAPHORE | head -10)"
+              echo "Current working directory: $(pwd)"
+              echo "User: $(whoami)"
+              echo "Shell: $SHELL"
+              echo "All environment variables (first 20):"
+              env | head -20
+              echo "=============================="
+              
+              # Try to decode what 1001 might be
+              if [ "$GROUPS" = "1001" ]; then
+                echo "🚨 DETECTED 1001 VALUE - This is likely a Semaphore parameter bug"
+                echo "Checking for alternative parameter sources..."
+                
+                # Check for common Semaphore parameter patterns
+                echo "Checking SEMAPHORE_PARAMETER_GROUPS: ${SEMAPHORE_PARAMETER_GROUPS:-'not set'}"
+                echo "Checking SEMAPHORE_GROUPS: ${SEMAPHORE_GROUPS:-'not set'}"
+                
+                # Override with a safe default for testing
+                echo "⚠️  Overriding 1001 with 'core' for testing purposes"
+                GROUPS="core"
+              fi
+              
+              # Alternative: Try reading from different environment variable names
+              if [ -z "$GROUPS" ] || [ "$GROUPS" = "1001" ]; then
+                # Try alternative parameter names that Semaphore might use
+                GROUPS="${SEMAPHORE_PARAMETER_GROUPS:-${TEST_GROUPS:-}}"
+                echo "Trying alternative parameter sources: '$GROUPS'"
+              fi
+              
+              # Set default groups if not provided
+              if [ -z "$GROUPS" ]; then
+                echo "No GROUPS parameter provided, running ALL tests"
+                make live-test
+              else
+                echo "Running tests for groups: $GROUPS"
+                make live-test GROUPS="$GROUPS"
+              fi 
