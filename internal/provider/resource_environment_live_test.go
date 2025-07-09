@@ -1,6 +1,4 @@
 //go:build live_test && (all || core)
-// +build live_test
-// +build all core
 
 // Copyright 2021 Confluent Inc. All Rights Reserved.
 //

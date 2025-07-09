@@ -7,8 +7,6 @@ When adding new live tests, follow this template structure:
 ### 1. File Structure
 ```go
 //go:build live_test && (all || YOUR_GROUP_HERE)
-// +build live_test
-// +build all YOUR_GROUP_HERE
 
 // Copyright 2021 Confluent Inc. All Rights Reserved.
 // ... (standard license header)
@@ -104,8 +102,6 @@ Use these build tags based on your resource type:
 If your resource spans multiple groups, use multiple tags:
 ```go
 //go:build live_test && (all || core || kafka)
-// +build live_test
-// +build all core kafka
 ```
 
 ### 4. Testing Your New Test

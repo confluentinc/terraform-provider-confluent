@@ -1,6 +1,4 @@
 //go:build live_test && (all || kafka)
-// +build live_test
-// +build all kafka
 
 // Copyright 2021 Confluent Inc. All Rights Reserved.
 //
