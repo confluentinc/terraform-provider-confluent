@@ -1,3 +1,7 @@
+//go:build live_test && (all || core)
+// +build live_test
+// +build all core
+
 // Copyright 2021 Confluent Inc. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");

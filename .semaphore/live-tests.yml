@@ -30,4 +30,90 @@ blocks:
         - name: "Run Live Tests"
           commands:
             - . vault-sem-get-secret v1/ci/kv/apif/terraform-provider-confluent/live_testing_credentials
-            - make live-test 
+            - |
+              # Set default groups if not provided
+              if [ -z "$GROUPS" ]; then
+                echo "No GROUPS parameter provided, running ALL tests"
+                make live-test
+              else
+                echo "Running tests for groups: $GROUPS"
+                make live-test GROUPS="$GROUPS"
+              fi
+
+promotions:
+  - name: "Core Resources Only"
+    pipeline_file: live-tests.yml
+    parameters:
+      env_vars:
+        - name: GROUPS
+          value: "core"
+  
+  - name: "Kafka Resources Only"
+    pipeline_file: live-tests.yml
+    parameters:
+      env_vars:
+        - name: GROUPS
+          value: "kafka"
+  
+  - name: "Essential Resources (Core + Kafka)"
+    pipeline_file: live-tests.yml
+    parameters:
+      env_vars:
+        - name: GROUPS
+          value: "core,kafka"
+  
+  - name: "Connect Resources Only"
+    pipeline_file: live-tests.yml
+    parameters:
+      env_vars:
+        - name: GROUPS
+          value: "connect"
+  
+  - name: "Schema Registry Resources Only"
+    pipeline_file: live-tests.yml
+    parameters:
+      env_vars:
+        - name: GROUPS
+          value: "schema_registry"
+  
+  - name: "Networking Resources Only"
+    pipeline_file: live-tests.yml
+    parameters:
+      env_vars:
+        - name: GROUPS
+          value: "networking"
+  
+  - name: "Flink Resources Only"
+    pipeline_file: live-tests.yml
+    parameters:
+      env_vars:
+        - name: GROUPS
+          value: "flink"
+  
+  - name: "RBAC Resources Only"
+    pipeline_file: live-tests.yml
+    parameters:
+      env_vars:
+        - name: GROUPS
+          value: "rbac"
+  
+  - name: "Data Catalog Resources Only"
+    pipeline_file: live-tests.yml
+    parameters:
+      env_vars:
+        - name: GROUPS
+          value: "data_catalog"
+  
+  - name: "Tableflow Resources Only"
+    pipeline_file: live-tests.yml
+    parameters:
+      env_vars:
+        - name: GROUPS
+          value: "tableflow"
+  
+  - name: "All Resources (Full Suite)"
+    pipeline_file: live-tests.yml
+    parameters:
+      env_vars:
+        - name: GROUPS
+          value: "" 

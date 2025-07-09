@@ -111,12 +111,64 @@ testacc:
 	TF_LOG=debug TF_ACC=1 $(GOCMD) test $(TEST) -v $(TESTARGS) -coverprofile=coverage.txt -covermode=atomic -timeout 120m -failfast
 	@echo "finished testacc"
 
-# NEW TARGET for executing live integration tests
+# Live integration tests with group filtering support
+# Usage: make live-test GROUPS="core,kafka" or make live-test (for all)
 .PHONY: live-test
 live-test:
 	@echo "Running live integration tests against Confluent Cloud..."
-	TF_ACC=1 TF_ACC_PROD=1 $(GOCMD) test ./internal/provider/ -v -run=".*Live$$" -timeout 1440m
+	@if [ -z "$(GROUPS)" ]; then \
+		echo "Running ALL live tests..."; \
+		TF_ACC=1 TF_ACC_PROD=1 $(GOCMD) test ./internal/provider/ -v -run=".*Live$$" -tags="live_test,all" -timeout 1440m; \
+	else \
+		echo "Running live tests for groups: $(GROUPS)"; \
+		TAGS="live_test"; \
+		for group in $$(echo "$(GROUPS)" | tr ',' ' '); do \
+			TAGS="$$TAGS,$$group"; \
+		done; \
+		TF_ACC=1 TF_ACC_PROD=1 $(GOCMD) test ./internal/provider/ -v -run=".*Live$$" -tags="$$TAGS" -timeout 1440m; \
+	fi
 	@echo "Finished running live integration tests against Confluent Cloud"
+
+# Helper targets for common group combinations
+.PHONY: live-test-core
+live-test-core:
+	@$(MAKE) live-test GROUPS="core"
+
+.PHONY: live-test-kafka
+live-test-kafka:
+	@$(MAKE) live-test GROUPS="kafka"
+
+.PHONY: live-test-connect
+live-test-connect:
+	@$(MAKE) live-test GROUPS="connect"
+
+.PHONY: live-test-schema-registry
+live-test-schema-registry:
+	@$(MAKE) live-test GROUPS="schema_registry"
+
+.PHONY: live-test-networking
+live-test-networking:
+	@$(MAKE) live-test GROUPS="networking"
+
+.PHONY: live-test-flink
+live-test-flink:
+	@$(MAKE) live-test GROUPS="flink"
+
+.PHONY: live-test-rbac
+live-test-rbac:
+	@$(MAKE) live-test GROUPS="rbac"
+
+.PHONY: live-test-data-catalog
+live-test-data-catalog:
+	@$(MAKE) live-test GROUPS="data_catalog"
+
+.PHONY: live-test-tableflow
+live-test-tableflow:
+	@$(MAKE) live-test GROUPS="tableflow"
+
+.PHONY: live-test-essential
+live-test-essential:
+	@$(MAKE) live-test GROUPS="core,kafka"
 
 install: build
 	mkdir -p ~/.terraform.d/plugins/$(GOOS)_$(GOARCH)
