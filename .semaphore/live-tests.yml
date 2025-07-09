@@ -29,7 +29,7 @@ blocks:
       jobs:
         - name: "Run Live Tests"
           commands:
-            - . vault-sem-get-secret v1/ci/kv/apif/terraform-provider-confluent/live_testing_credentials
+            - . vault-sem-get-secret v1/ci/kv/apif/terraform-provider-confluent/live-testing-data
             - |
               # Set default groups if not provided
               if [ -z "$GROUPS" ]; then
