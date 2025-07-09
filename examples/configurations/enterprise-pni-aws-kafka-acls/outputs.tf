@@ -115,8 +115,8 @@ MAINEOF
 
   # Test connectivity to the Kafka cluster REST endpoint that corresponds to the target access point
   curl --request GET \
-    --url ${[for endpoint in confluent_kafka_cluster.enterprise.endpoints : endpoint.rest_endpoint if endpoint.access_point_id == confluent_access_point.aws.id][0]}/kafka/v3/clusters/${confluent_kafka_cluster.enterprise.id}/topics \
-    --header 'Authorization: Basic $(echo -n "${confluent_api_key.app-manager-kafka-api-key.id}:${confluent_api_key.app-manager-kafka-api-key.secret}" | base64)'
+  --url ${[for endpoint in confluent_kafka_cluster.enterprise.endpoints : endpoint.rest_endpoint if endpoint.access_point_id == confluent_access_point.aws.id][0]}/kafka/v3/clusters/${confluent_kafka_cluster.enterprise.id}/topics \
+  -u "${confluent_api_key.app-manager-kafka-api-key.id}:${confluent_api_key.app-manager-kafka-api-key.secret}"
 
   In order to use the Confluent CLI v4 to produce and consume messages from topic '${local.topic_name}' using Kafka API Keys
   of ${confluent_service_account.app-producer.display_name} and ${confluent_service_account.app-consumer.display_name} service accounts
