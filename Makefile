@@ -111,6 +111,13 @@ testacc:
 	TF_LOG=debug TF_ACC=1 $(GOCMD) test $(TEST) -v $(TESTARGS) -coverprofile=coverage.txt -covermode=atomic -timeout 120m -failfast
 	@echo "finished testacc"
 
+# NEW TARGET for executing live integration tests
+.PHONY: live-test
+live-test:
+	@echo "Running live integration tests against Confluent Cloud..."
+	TF_ACC=1 TF_ACC_PROD=1 $(GOCMD) test ./internal/provider/ -v -run=".*Live$$" -timeout 1440m
+	@echo "Finished running live integration tests against Confluent Cloud"
+
 install: build
 	mkdir -p ~/.terraform.d/plugins/$(GOOS)_$(GOARCH)
 	cp ./$(BUILD_DIR)/$(GOOS)-$(GOARCH)/$(NAME) ~/.terraform.d/plugins/$(GOOS)_$(GOARCH)/
