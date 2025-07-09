@@ -1,0 +1,52 @@
+version: v1.0
+name: Live Integration Tests for Confluent Provider
+agent:
+  machine:
+    type: s1-prod-ubuntu24-04-amd64-2
+
+auto_cancel:
+  running:
+    when: "false"
+
+global_job_config:
+  prologue:
+    commands:
+      - sem-version go 1.24.4
+      - export "GOPATH=$(go env GOPATH)"
+      - >-
+        export
+        "SEMAPHORE_GIT_DIR=${GOPATH}/src/github.com/confluentinc/${SEMAPHORE_PROJECT_NAME}"
+      - 'export "PATH=${GOPATH}/bin:${PATH}"'
+      - 'mkdir -vp "${SEMAPHORE_GIT_DIR}" "${GOPATH}/bin"'
+      - checkout
+
+execution_time_limit:
+  hours: 8
+
+blocks:
+  - name: "Live Integration Tests"
+    task:
+      jobs:
+        - name: "Run Live Tests - All Groups"
+          commands:
+            - . vault-sem-get-secret v1/ci/kv/apif/terraform-provider-confluent/live-testing-data
+            - echo "Running ALL live tests..."
+            - make live-test
+        
+        - name: "Run Live Tests - Core Only"
+          commands:
+            - . vault-sem-get-secret v1/ci/kv/apif/terraform-provider-confluent/live-testing-data
+            - echo "Running CORE live tests..."
+            - make live-test GROUPS="core"
+        
+        - name: "Run Live Tests - Kafka Only"
+          commands:
+            - . vault-sem-get-secret v1/ci/kv/apif/terraform-provider-confluent/live-testing-data
+            - echo "Running KAFKA live tests..."
+            - make live-test GROUPS="kafka"
+        
+        - name: "Run Live Tests - Essential (Core + Kafka)"
+          commands:
+            - . vault-sem-get-secret v1/ci/kv/apif/terraform-provider-confluent/live-testing-data
+            - echo "Running ESSENTIAL live tests..."
+            - make live-test GROUPS="core,kafka" 
