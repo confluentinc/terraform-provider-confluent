@@ -141,6 +141,7 @@ func TestAccTableflowTopicByobAws(t *testing.T) {
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "byob_aws.0.bucket_name", "bucket_1"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "byob_aws.0.bucket_region", "us-east-1"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "byob_aws.0.provider_integration_id", "cspi-stgce89r7"),
+					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "table_path", "s3://dummy-bucket-name-1//10011010/11101100/org-1/env-2/lkc-3/v1/tableId"),
 				),
 			},
 			{
@@ -164,6 +165,7 @@ func TestAccTableflowTopicByobAws(t *testing.T) {
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "byob_aws.0.bucket_name", "bucket_1"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "byob_aws.0.bucket_region", "us-east-1"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "byob_aws.0.provider_integration_id", "cspi-stgce89r7"),
+					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "table_path", "s3://dummy-bucket-name-1//10011010/11101100/org-1/env-2/lkc-3/v1/tableId"),
 				),
 			},
 		},
@@ -272,6 +274,7 @@ func TestAccTableflowTopicManagedStorage(t *testing.T) {
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "table_formats.0", "ICEBERG"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "byob_aws.#", "0"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "managed_storage.#", "1"),
+					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "table_path", "s3://dummy-bucket-name-1//10011010/11101100/org-1/env-2/lkc-3/v1/tableId"),
 				),
 			},
 			{
@@ -293,6 +296,7 @@ func TestAccTableflowTopicManagedStorage(t *testing.T) {
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "table_formats.1", "ICEBERG"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "byob_aws.#", "0"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "managed_storage.#", "1"),
+					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "table_path", "s3://dummy-bucket-name-1//10011010/11101100/org-1/env-2/lkc-3/v1/tableId"),
 				),
 			},
 		},
