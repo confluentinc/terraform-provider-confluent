@@ -27,26 +27,60 @@ blocks:
   - name: "Live Integration Tests"
     task:
       jobs:
-        - name: "Run Live Tests - All Groups"
+        - name: "Run Live Tests"
           commands:
             - . vault-sem-get-secret v1/ci/kv/apif/terraform-provider-confluent/live-testing-data
-            - echo "Running ALL live tests..."
-            - make live-test
-        
-        - name: "Run Live Tests - Core Only"
-          commands:
-            - . vault-sem-get-secret v1/ci/kv/apif/terraform-provider-confluent/live-testing-data
-            - echo "Running CORE live tests..."
-            - make live-test GROUPS="core"
-        
-        - name: "Run Live Tests - Kafka Only"
-          commands:
-            - . vault-sem-get-secret v1/ci/kv/apif/terraform-provider-confluent/live-testing-data
-            - echo "Running KAFKA live tests..."
-            - make live-test GROUPS="kafka"
-        
-        - name: "Run Live Tests - Essential (Core + Kafka)"
-          commands:
-            - . vault-sem-get-secret v1/ci/kv/apif/terraform-provider-confluent/live-testing-data
-            - echo "Running ESSENTIAL live tests..."
-            - make live-test GROUPS="core,kafka" 
+            - |              
+              # Map parameter values to make commands
+              case "$GROUPS" in
+                "all"|"")
+                  echo "Running ALL live tests..."
+                  make live-test
+                  ;;
+                "core")
+                  echo "Running CORE live tests..."
+                  make live-test GROUPS="core"
+                  ;;
+                "kafka")
+                  echo "Running KAFKA live tests..."
+                  make live-test GROUPS="kafka"
+                  ;;
+                "essential")
+                  echo "Running ESSENTIAL live tests (Core + Kafka)..."
+                  make live-test GROUPS="core,kafka"
+                  ;;
+                "connect")
+                  echo "Running CONNECT live tests..."
+                  make live-test GROUPS="connect"
+                  ;;
+                "schema_registry")
+                  echo "Running SCHEMA REGISTRY live tests..."
+                  make live-test GROUPS="schema_registry"
+                  ;;
+                "networking")
+                  echo "Running NETWORKING live tests..."
+                  make live-test GROUPS="networking"
+                  ;;
+                "flink")
+                  echo "Running FLINK live tests..."
+                  make live-test GROUPS="flink"
+                  ;;
+                "rbac")
+                  echo "Running RBAC live tests..."
+                  make live-test GROUPS="rbac"
+                  ;;
+                "data_catalog")
+                  echo "Running DATA CATALOG live tests..."
+                  make live-test GROUPS="data_catalog"
+                  ;;
+                "tableflow")
+                  echo "Running TABLEFLOW live tests..."
+                  make live-test GROUPS="tableflow"
+                  ;;
+                *)
+                  echo "Unknown GROUPS value: '$GROUPS'"
+                  echo "Valid options: all, core, kafka, essential, connect, schema_registry, networking, flink, rbac, data_catalog, tableflow"
+                  echo "Defaulting to ALL tests..."
+                  make live-test
+                  ;;
+              esac 
