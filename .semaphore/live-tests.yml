@@ -1,0 +1,119 @@
+version: v1.0
+name: Live Integration Tests for Confluent Provider
+agent:
+  machine:
+    type: s1-prod-ubuntu24-04-amd64-2
+
+auto_cancel:
+  running:
+    when: "false"
+
+global_job_config:
+  prologue:
+    commands:
+      - sem-version go 1.24.4
+      - export "GOPATH=$(go env GOPATH)"
+      - >-
+        export
+        "SEMAPHORE_GIT_DIR=${GOPATH}/src/github.com/confluentinc/${SEMAPHORE_PROJECT_NAME}"
+      - 'export "PATH=${GOPATH}/bin:${PATH}"'
+      - 'mkdir -vp "${SEMAPHORE_GIT_DIR}" "${GOPATH}/bin"'
+      - checkout
+
+execution_time_limit:
+  hours: 8
+
+blocks:
+  - name: "Live Integration Tests"
+    task:
+      jobs:
+        - name: "Run Live Tests"
+          commands:
+            - . vault-sem-get-secret v1/ci/kv/apif/terraform-provider-confluent/live_testing_credentials
+            - |
+              # Set default groups if not provided
+              if [ -z "$GROUPS" ]; then
+                echo "No GROUPS parameter provided, running ALL tests"
+                make live-test
+              else
+                echo "Running tests for groups: $GROUPS"
+                make live-test GROUPS="$GROUPS"
+              fi
+
+promotions:
+  - name: "Core Resources Only"
+    pipeline_file: live-tests.yml
+    parameters:
+      env_vars:
+        - name: GROUPS
+          value: "core"
+  
+  - name: "Kafka Resources Only"
+    pipeline_file: live-tests.yml
+    parameters:
+      env_vars:
+        - name: GROUPS
+          value: "kafka"
+  
+  - name: "Essential Resources (Core + Kafka)"
+    pipeline_file: live-tests.yml
+    parameters:
+      env_vars:
+        - name: GROUPS
+          value: "core,kafka"
+  
+  - name: "Connect Resources Only"
+    pipeline_file: live-tests.yml
+    parameters:
+      env_vars:
+        - name: GROUPS
+          value: "connect"
+  
+  - name: "Schema Registry Resources Only"
+    pipeline_file: live-tests.yml
+    parameters:
+      env_vars:
+        - name: GROUPS
+          value: "schema_registry"
+  
+  - name: "Networking Resources Only"
+    pipeline_file: live-tests.yml
+    parameters:
+      env_vars:
+        - name: GROUPS
+          value: "networking"
+  
+  - name: "Flink Resources Only"
+    pipeline_file: live-tests.yml
+    parameters:
+      env_vars:
+        - name: GROUPS
+          value: "flink"
+  
+  - name: "RBAC Resources Only"
+    pipeline_file: live-tests.yml
+    parameters:
+      env_vars:
+        - name: GROUPS
+          value: "rbac"
+  
+  - name: "Data Catalog Resources Only"
+    pipeline_file: live-tests.yml
+    parameters:
+      env_vars:
+        - name: GROUPS
+          value: "data_catalog"
+  
+  - name: "Tableflow Resources Only"
+    pipeline_file: live-tests.yml
+    parameters:
+      env_vars:
+        - name: GROUPS
+          value: "tableflow"
+  
+  - name: "All Resources (Full Suite)"
+    pipeline_file: live-tests.yml
+    parameters:
+      env_vars:
+        - name: GROUPS
+          value: "" 
