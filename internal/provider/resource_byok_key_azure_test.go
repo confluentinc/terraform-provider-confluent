@@ -113,6 +113,8 @@ func TestAccAzureBYOKKey(t *testing.T) {
 					resource.TestCheckResourceAttr(fullAzureKeyResourceName, "azure.0.key_vault_id", "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/test-vault/providers/Microsoft.KeyVault/vaults/test-vault"),
 					resource.TestCheckResourceAttr(fullAzureKeyResourceName, "azure.0.key_identifier", "https://test-vault.vault.azure.net/keys/test-key/dd554e3117e74ed8bbcd43390e1e3824"),
 					resource.TestCheckResourceAttr(fullAzureKeyResourceName, "azure.0.application_id", "11111111-1111-1111-1111-111111111111"),
+					resource.TestCheckResourceAttr(fullAzureKeyResourceName, "validation.0.phase", "INITIALIZING"),
+					resource.TestCheckResourceAttr(fullAzureKeyResourceName, "validation.0.since", "2023-01-19T17:02:15.000Z"),
 				),
 			},
 			{
@@ -125,6 +127,9 @@ func TestAccAzureBYOKKey(t *testing.T) {
 					resource.TestCheckResourceAttr(fullAzureKeyResourceName, "azure.0.key_vault_id", "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/test-vault/providers/Microsoft.KeyVault/vaults/test-vault"),
 					resource.TestCheckResourceAttr(fullAzureKeyResourceName, "azure.0.key_identifier", "https://test-vault.vault.azure.net/keys/test-key/dd554e3117e74ed8bbcd43390e1e3824"),
 					resource.TestCheckResourceAttr(fullAzureKeyResourceName, "azure.0.application_id", "11111111-1111-1111-1111-111111111111"),
+					resource.TestCheckResourceAttr(fullAzureKeyResourceName, "validation.0.phase", "VALID"),
+					resource.TestCheckResourceAttr(fullAzureKeyResourceName, "validation.0.since", "2023-01-19T17:03:00.000Z"),
+					resource.TestCheckResourceAttr(fullAzureKeyResourceName, "validation.0.region", "eastus"),
 				),
 			},
 			{

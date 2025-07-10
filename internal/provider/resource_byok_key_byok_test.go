@@ -109,6 +109,9 @@ func TestAccGcpBYOKKey(t *testing.T) {
 					resource.TestCheckResourceAttr(fullGcpKeyResourceName, "display_name", "My GCP BYOK Key"),
 					resource.TestCheckResourceAttr(fullGcpKeyResourceName, "gcp.0.key_id", testGcpByokKeyId),
 					resource.TestCheckResourceAttr(fullGcpKeyResourceName, "gcp.0.security_group", testGcpByokSecurityGroup),
+					resource.TestCheckResourceAttr(fullGcpKeyResourceName, "validation.0.phase", "INVALID"),
+					resource.TestCheckResourceAttr(fullGcpKeyResourceName, "validation.0.since", "2023-11-23T23:37:00.000Z"),
+					resource.TestCheckResourceAttr(fullGcpKeyResourceName, "validation.0.message", "Key access permissions not configured correctly"),
 				),
 			},
 			{
@@ -119,6 +122,9 @@ func TestAccGcpBYOKKey(t *testing.T) {
 					resource.TestCheckResourceAttr(fullGcpKeyResourceName, "display_name", "Updated GCP BYOK Key"),
 					resource.TestCheckResourceAttr(fullGcpKeyResourceName, "gcp.0.key_id", testGcpByokKeyId),
 					resource.TestCheckResourceAttr(fullGcpKeyResourceName, "gcp.0.security_group", testGcpByokSecurityGroup),
+					resource.TestCheckResourceAttr(fullGcpKeyResourceName, "validation.0.phase", "VALID"),
+					resource.TestCheckResourceAttr(fullGcpKeyResourceName, "validation.0.since", "2023-11-23T23:38:15.000Z"),
+					resource.TestCheckResourceAttr(fullGcpKeyResourceName, "validation.0.region", "us-central1"),
 				),
 			},
 			{

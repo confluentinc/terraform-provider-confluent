@@ -16,5 +16,10 @@
     "self": "https://api.confluent.cloud/byok/v1/keys/cck-l8n0l"
   },
   "provider": "Azure",
-  "state": "AVAILABLE"
+  "state": "AVAILABLE",
+  "validation": {
+    "phase": "VALID",
+    "since": "2023-01-19T17:03:00.000Z",
+    "region": "eastus"
+  }
 }
