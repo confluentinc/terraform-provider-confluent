@@ -56,9 +56,29 @@ func TestAccAwsBYOKKey(t *testing.T) {
 			http.StatusOK,
 		)
 
-	deleteAwsKeyStub := wiremock.Delete(wiremock.URLPathEqualTo(fmt.Sprintf("%s/cck-abcde", byokV1Path))).
+	updateAwsKeyResponse, _ := ioutil.ReadFile("../testdata/byok/aws_key_updated.json")
+	updateAwsKeyStub := wiremock.Patch(wiremock.URLPathEqualTo(fmt.Sprintf("%s/cck-abcde", byokV1Path))).
 		InScenario(awsKeyScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
+		WillSetStateTo("KeyUpdated").
+		WillReturn(
+			string(updateAwsKeyResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		)
+
+	readUpdatedAwsKeyResponse, _ := ioutil.ReadFile("../testdata/byok/aws_key_updated.json")
+	readUpdatedAwsKeyStub := wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("%s/cck-abcde", byokV1Path))).
+		InScenario(awsKeyScenarioName).
+		WhenScenarioStateIs("KeyUpdated").
+		WillReturn(
+			string(readUpdatedAwsKeyResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		)
+
+	deleteAwsKeyStub := wiremock.Delete(wiremock.URLPathEqualTo(fmt.Sprintf("%s/cck-abcde", byokV1Path))).
+		InScenario(awsKeyScenarioName).
 		WillSetStateTo(scenarioStateAwsKeyHasBeenDeleted).
 		WillReturn(
 			"",
@@ -68,6 +88,8 @@ func TestAccAwsBYOKKey(t *testing.T) {
 
 	_ = wiremockClient.StubFor(createAwsKeyStub)
 	_ = wiremockClient.StubFor(readAwsKeyStub)
+	_ = wiremockClient.StubFor(updateAwsKeyStub)
+	_ = wiremockClient.StubFor(readUpdatedAwsKeyStub)
 	_ = wiremockClient.StubFor(deleteAwsKeyStub)
 
 	awsKeyResourceName := "aws_key"
@@ -83,6 +105,19 @@ func TestAccAwsBYOKKey(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckAwsKeyExists(fullAwsKeyResourceName),
 					resource.TestCheckResourceAttr(fullAwsKeyResourceName, "id", "cck-abcde"),
+					resource.TestCheckResourceAttr(fullAwsKeyResourceName, "display_name", "My AWS BYOK Key"),
+					resource.TestCheckResourceAttr(fullAwsKeyResourceName, "aws.0.key_arn", keyArn),
+					resource.TestCheckResourceAttr(fullAwsKeyResourceName, "aws.0.roles.0", "arn:aws:iam::111111111111:role/testRoleId1"),
+					resource.TestCheckResourceAttr(fullAwsKeyResourceName, "aws.0.roles.1", "arn:aws:iam::111111111111:role/testRoleId2"),
+					resource.TestCheckResourceAttr(fullAwsKeyResourceName, "aws.0.roles.2", "arn:aws:iam::111111111111:role/testRoleId3"),
+				),
+			},
+			{
+				Config: testAccCheckAwsByokKeyConfigUpdated(mockServerUrl, awsKeyResourceName, keyArn),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckAwsKeyExists(fullAwsKeyResourceName),
+					resource.TestCheckResourceAttr(fullAwsKeyResourceName, "id", "cck-abcde"),
+					resource.TestCheckResourceAttr(fullAwsKeyResourceName, "display_name", "Updated AWS BYOK Key"),
 					resource.TestCheckResourceAttr(fullAwsKeyResourceName, "aws.0.key_arn", keyArn),
 					resource.TestCheckResourceAttr(fullAwsKeyResourceName, "aws.0.roles.0", "arn:aws:iam::111111111111:role/testRoleId1"),
 					resource.TestCheckResourceAttr(fullAwsKeyResourceName, "aws.0.roles.1", "arn:aws:iam::111111111111:role/testRoleId2"),
@@ -108,6 +143,21 @@ func testAccCheckAwsByokKeyConfig(mockServerUrl, resourceName, keyArn string) st
 	  endpoint = "%s"
 	}
 	resource "confluent_byok_key" "%s" {
+	  display_name = "My AWS BYOK Key"
+	  aws {
+		key_arn = "%s"
+	  }
+	}
+	`, mockServerUrl, resourceName, keyArn)
+}
+
+func testAccCheckAwsByokKeyConfigUpdated(mockServerUrl, resourceName, keyArn string) string {
+	return fmt.Sprintf(`
+	provider "confluent" {
+	  endpoint = "%s"
+	}
+	resource "confluent_byok_key" "%s" {
+	  display_name = "Updated AWS BYOK Key"
 	  aws {
 		key_arn = "%s"
 	  }

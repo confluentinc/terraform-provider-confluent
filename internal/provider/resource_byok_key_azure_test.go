@@ -59,9 +59,29 @@ func TestAccAzureBYOKKey(t *testing.T) {
 			http.StatusOK,
 		)
 
-	deleteAzureKeyStub := wiremock.Delete(wiremock.URLPathEqualTo(fmt.Sprintf("%s/cck-abcde", byokV1Path))).
+	updateAzureKeyResponse, _ := ioutil.ReadFile("../testdata/byok/azure_key_updated.json")
+	updateAzureKeyStub := wiremock.Patch(wiremock.URLPathEqualTo(fmt.Sprintf("%s/cck-abcde", byokV1Path))).
 		InScenario(azureKeyScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
+		WillSetStateTo("KeyUpdated").
+		WillReturn(
+			string(updateAzureKeyResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		)
+
+	readUpdatedAzureKeyResponse, _ := ioutil.ReadFile("../testdata/byok/azure_key_updated.json")
+	readUpdatedAzureKeyStub := wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("%s/cck-abcde", byokV1Path))).
+		InScenario(azureKeyScenarioName).
+		WhenScenarioStateIs("KeyUpdated").
+		WillReturn(
+			string(readUpdatedAzureKeyResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		)
+
+	deleteAzureKeyStub := wiremock.Delete(wiremock.URLPathEqualTo(fmt.Sprintf("%s/cck-abcde", byokV1Path))).
+		InScenario(azureKeyScenarioName).
 		WillSetStateTo(scenarioStateAzureKeyHasBeenDeleted).
 		WillReturn(
 			"",
@@ -71,6 +91,8 @@ func TestAccAzureBYOKKey(t *testing.T) {
 
 	_ = wiremockClient.StubFor(createAzureKeyStub)
 	_ = wiremockClient.StubFor(readAzureKeyStub)
+	_ = wiremockClient.StubFor(updateAzureKeyStub)
+	_ = wiremockClient.StubFor(readUpdatedAzureKeyStub)
 	_ = wiremockClient.StubFor(deleteAzureKeyStub)
 
 	azureKeyResourceName := "azure_key"
@@ -86,6 +108,19 @@ func TestAccAzureBYOKKey(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckAzureKeyExists(fullAzureKeyResourceName),
 					resource.TestCheckResourceAttr(fullAzureKeyResourceName, "id", "cck-abcde"),
+					resource.TestCheckResourceAttr(fullAzureKeyResourceName, "display_name", "My Azure BYOK Key"),
+					resource.TestCheckResourceAttr(fullAzureKeyResourceName, "azure.0.tenant_id", azureByokTenant),
+					resource.TestCheckResourceAttr(fullAzureKeyResourceName, "azure.0.key_vault_id", "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/test-vault/providers/Microsoft.KeyVault/vaults/test-vault"),
+					resource.TestCheckResourceAttr(fullAzureKeyResourceName, "azure.0.key_identifier", "https://test-vault.vault.azure.net/keys/test-key/dd554e3117e74ed8bbcd43390e1e3824"),
+					resource.TestCheckResourceAttr(fullAzureKeyResourceName, "azure.0.application_id", "11111111-1111-1111-1111-111111111111"),
+				),
+			},
+			{
+				Config: testAccCheckAzureByokKeyConfigUpdated(mockServerUrl, azureKeyResourceName, azureByokTenant, keyVaultId, keyUrl),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckAzureKeyExists(fullAzureKeyResourceName),
+					resource.TestCheckResourceAttr(fullAzureKeyResourceName, "id", "cck-abcde"),
+					resource.TestCheckResourceAttr(fullAzureKeyResourceName, "display_name", "Updated Azure BYOK Key"),
 					resource.TestCheckResourceAttr(fullAzureKeyResourceName, "azure.0.tenant_id", azureByokTenant),
 					resource.TestCheckResourceAttr(fullAzureKeyResourceName, "azure.0.key_vault_id", "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/test-vault/providers/Microsoft.KeyVault/vaults/test-vault"),
 					resource.TestCheckResourceAttr(fullAzureKeyResourceName, "azure.0.key_identifier", "https://test-vault.vault.azure.net/keys/test-key/dd554e3117e74ed8bbcd43390e1e3824"),
@@ -133,6 +168,23 @@ func testAccCheckAzureByokKeyConfig(mockServerUrl, resourceName, tenantId, keyVa
 	  endpoint = "%s"
 	}
 	resource "confluent_byok_key" "%s"{
+		display_name = "My Azure BYOK Key"
+		azure {
+		  tenant_id      = "%s"
+		  key_vault_id   = "%s"
+		  key_identifier = "%s"
+	  }
+	}
+	`, mockServerUrl, resourceName, tenantId, keyVaultId, keyUrl)
+}
+
+func testAccCheckAzureByokKeyConfigUpdated(mockServerUrl, resourceName, tenantId, keyVaultId, keyUrl string) string {
+	return fmt.Sprintf(`
+	provider "confluent" {
+	  endpoint = "%s"
+	}
+	resource "confluent_byok_key" "%s"{
+		display_name = "Updated Azure BYOK Key"
 		azure {
 		  tenant_id      = "%s"
 		  key_vault_id   = "%s"

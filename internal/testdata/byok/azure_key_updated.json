@@ -1,7 +1,7 @@
 {
   "api_version": "byok/v1",
   "id": "cck-abcde",
-  "display_name": "My Azure BYOK Key",
+  "display_name": "Updated Azure BYOK Key",
   "key": {
     "application_id": "11111111-1111-1111-1111-111111111111",
     "key_id": "https://test-vault.vault.azure.net/keys/test-key/dd554e3117e74ed8bbcd43390e1e3824",
@@ -12,7 +12,7 @@
   "kind": "Key",
   "metadata": {
     "created_at": "2023-01-19T17:01:53.870945835Z",
-    "resource_name": "crn://confluent.cloud/organization=11111111-1111-1111-111111111111/key=cck-abcde",
+    "resource_name": "crn://confluent.cloud/organization=11111111-1111-1111-1111-111111111111/key=cck-abcde",
     "self": "https://api.confluent.cloud/byok/v1/keys/cck-l8n0l"
   },
   "provider": "Azure",

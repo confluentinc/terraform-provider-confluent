@@ -35,11 +35,17 @@ func byokResource() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: byokCreate,
 		ReadContext:   byokRead,
+		UpdateContext: byokUpdate,
 		DeleteContext: byokDelete,
 		Importer: &schema.ResourceImporter{
 			StateContext: byokImport,
 		},
 		Schema: map[string]*schema.Schema{
+			paramDisplayName: {
+				Type:        schema.TypeString,
+				Description: "A human-readable name for the BYOK key.",
+				Optional:    true,
+			},
 			paramAws:   awsKeySchema(),
 			paramAzure: azureKeySchema(),
 			paramGcp:   gcpKeySchema(),
@@ -134,6 +140,13 @@ func byokCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 	c := meta.(*Client)
 
 	createByokKeyRequest := byok.NewByokV1Key()
+	
+	// Set display name if provided
+	if v, ok := d.GetOk(paramDisplayName); ok {
+		displayName := v.(string)
+		createByokKeyRequest.SetDisplayName(displayName)
+	}
+
 	_, isAwsKey := d.GetOk(paramAws)
 	_, isAzureKey := d.GetOk(paramAzure)
 	_, isGcpKey := d.GetOk(paramGcp)
@@ -246,6 +259,13 @@ func readKeyAndSetAttributes(ctx context.Context, d *schema.ResourceData, meta i
 }
 
 func setKeyAttributes(d *schema.ResourceData, byokKey byok.ByokV1Key) (*schema.ResourceData, error) {
+	// Set display name if available
+	if displayName, ok := byokKey.GetDisplayNameOk(); ok {
+		if err := d.Set(paramDisplayName, *displayName); err != nil {
+			return nil, err
+		}
+	}
+
 	oneOfKeys := byokKey.GetKey()
 
 	switch {
@@ -276,6 +296,40 @@ func setKeyAttributes(d *schema.ResourceData, byokKey byok.ByokV1Key) (*schema.R
 
 	d.SetId(byokKey.GetId())
 	return d, nil
+}
+
+func byokUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	if d.HasChange(paramDisplayName) {
+		tflog.Debug(ctx, fmt.Sprintf("Updating BYOK Key %q", d.Id()), map[string]interface{}{byokKeyLoggingKey: d.Id()})
+
+		c := meta.(*Client)
+		updateByokKeyRequest := byok.NewByokV1KeyUpdate()
+		
+		if v, ok := d.GetOk(paramDisplayName); ok {
+			displayName := v.(string)
+			updateByokKeyRequest.SetDisplayName(displayName)
+		}
+
+		updateByokKeyRequestJson, err := json.Marshal(updateByokKeyRequest)
+		if err != nil {
+			return diag.Errorf("error updating BYOK Key: error marshaling %#v to json: %s", updateByokKeyRequest, createDescriptiveError(err))
+		}
+		tflog.Debug(ctx, fmt.Sprintf("Updating BYOK Key %q: %s", d.Id(), updateByokKeyRequestJson))
+
+		_, _, err = executeKeyUpdate(ctx, c, d.Id(), *updateByokKeyRequest)
+		if err != nil {
+			return diag.Errorf("error updating BYOK Key %q: %s", d.Id(), createDescriptiveError(err))
+		}
+
+		tflog.Debug(ctx, fmt.Sprintf("Finished updating BYOK Key %q", d.Id()), map[string]interface{}{byokKeyLoggingKey: d.Id()})
+	}
+
+	return byokRead(ctx, d, meta)
+}
+
+func executeKeyUpdate(ctx context.Context, c *Client, id string, keyUpdate byok.ByokV1KeyUpdate) (byok.ByokV1Key, *http.Response, error) {
+	req := c.byokClient.KeysByokV1Api.UpdateByokV1Key(c.byokApiContext(ctx), id).ByokV1KeyUpdate(keyUpdate)
+	return req.Execute()
 }
 
 func byokImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {

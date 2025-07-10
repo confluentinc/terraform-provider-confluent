@@ -1,7 +1,7 @@
 {
   "api_version": "byok/v1",
   "id": "cck-abcde",
-  "display_name": "My GCP BYOK Key",
+  "display_name": "Updated GCP BYOK Key",
   "key": {
     "key_id": "projects/temp-gear-123456/locations/us-central1/keyRings/byok-test/cryptoKeys/byok-test",
     "kind": "GcpKey",
@@ -10,7 +10,7 @@
   "kind": "Key",
   "metadata": {
     "created_at": "2023-11-23T23:36:23.152024671Z",
-    "resource_name": "crn://confluent.cloud/organization=11111111-1111-1111-111111111111/key=cck-abcde",
+    "resource_name": "crn://confluent.cloud/organization=11111111-1111-1111-1111-111111111111/key=cck-abcde",
     "self": "https://api.confluent.cloud/byok/v1/keys/cck-abcde"
   },
   "provider": "GCP",
