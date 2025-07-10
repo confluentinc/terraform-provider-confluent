@@ -41,9 +41,13 @@ func init() {
 			return testAccProvider, nil
 		},
 	}
-	// Set fake values for secrets since those are required
-	_ = os.Setenv("CONFLUENT_CLOUD_API_KEY", "foo")
-	_ = os.Setenv("CONFLUENT_CLOUD_API_SECRET", "bar")
+	// Set fake values for secrets since those are required (only if not already set)
+	if os.Getenv("CONFLUENT_CLOUD_API_KEY") == "" {
+		_ = os.Setenv("CONFLUENT_CLOUD_API_KEY", "foo")
+	}
+	if os.Getenv("CONFLUENT_CLOUD_API_SECRET") == "" {
+		_ = os.Setenv("CONFLUENT_CLOUD_API_SECRET", "bar")
+	}
 }
 
 func TestProvider_InternalValidate(t *testing.T) {
