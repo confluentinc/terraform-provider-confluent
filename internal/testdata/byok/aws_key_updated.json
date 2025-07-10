@@ -1,7 +1,7 @@
 {
   "api_version": "byok/v1",
   "id": "cck-abcde",
-  "display_name": "My AWS BYOK Key",
+  "display_name": "Updated AWS BYOK Key",
   "key": {
     "key_arn": "arn:aws:kms:us-west-2:111111111111:key/11111111-1111-1111-1111-111111111111",
     "kind": "AwsKey",
