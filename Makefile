@@ -112,17 +112,17 @@ testacc:
 	@echo "finished testacc"
 
 # Live integration tests with group filtering support
-# Usage: make live-test GROUPS="core,kafka" or make live-test (for all)
+# Usage: make live-test TF_LIVE_TEST_GROUPS="core,kafka" or make live-test (for all)
 .PHONY: live-test
 live-test:
 	@echo "Running live integration tests against Confluent Cloud..."
-	@if [ -z "$(GROUPS)" ]; then \
+	@if [ -z "$(TF_LIVE_TEST_GROUPS)" ]; then \
 		echo "Running ALL live tests..."; \
 		TF_ACC=1 TF_ACC_PROD=1 $(GOCMD) test ./internal/provider/ -v -run=".*Live$$" -tags="live_test,all" -timeout 1440m; \
 	else \
-		echo "Running live tests for groups: $(GROUPS)"; \
+		echo "Running live tests for groups: $(TF_LIVE_TEST_GROUPS)"; \
 		TAGS="live_test"; \
-		for group in $$(echo "$(GROUPS)" | tr ',' ' '); do \
+		for group in $$(echo "$(TF_LIVE_TEST_GROUPS)" | tr ',' ' '); do \
 			TAGS="$$TAGS,$$group"; \
 		done; \
 		TF_ACC=1 TF_ACC_PROD=1 $(GOCMD) test ./internal/provider/ -v -run=".*Live$$" -tags="$$TAGS" -timeout 1440m; \
@@ -132,43 +132,43 @@ live-test:
 # Helper targets for common group combinations
 .PHONY: live-test-core
 live-test-core:
-	@$(MAKE) live-test GROUPS="core"
+	@$(MAKE) live-test TF_LIVE_TEST_GROUPS="core"
 
 .PHONY: live-test-kafka
 live-test-kafka:
-	@$(MAKE) live-test GROUPS="kafka"
+	@$(MAKE) live-test TF_LIVE_TEST_GROUPS="kafka"
 
 .PHONY: live-test-connect
 live-test-connect:
-	@$(MAKE) live-test GROUPS="connect"
+	@$(MAKE) live-test TF_LIVE_TEST_GROUPS="connect"
 
 .PHONY: live-test-schema-registry
 live-test-schema-registry:
-	@$(MAKE) live-test GROUPS="schema_registry"
+	@$(MAKE) live-test TF_LIVE_TEST_GROUPS="schema_registry"
 
 .PHONY: live-test-networking
 live-test-networking:
-	@$(MAKE) live-test GROUPS="networking"
+	@$(MAKE) live-test TF_LIVE_TEST_GROUPS="networking"
 
 .PHONY: live-test-flink
 live-test-flink:
-	@$(MAKE) live-test GROUPS="flink"
+	@$(MAKE) live-test TF_LIVE_TEST_GROUPS="flink"
 
 .PHONY: live-test-rbac
 live-test-rbac:
-	@$(MAKE) live-test GROUPS="rbac"
+	@$(MAKE) live-test TF_LIVE_TEST_GROUPS="rbac"
 
 .PHONY: live-test-data-catalog
 live-test-data-catalog:
-	@$(MAKE) live-test GROUPS="data_catalog"
+	@$(MAKE) live-test TF_LIVE_TEST_GROUPS="data_catalog"
 
 .PHONY: live-test-tableflow
 live-test-tableflow:
-	@$(MAKE) live-test GROUPS="tableflow"
+	@$(MAKE) live-test TF_LIVE_TEST_GROUPS="tableflow"
 
 .PHONY: live-test-essential
 live-test-essential:
-	@$(MAKE) live-test GROUPS="core,kafka"
+	@$(MAKE) live-test TF_LIVE_TEST_GROUPS="core,kafka"
 
 install: build
 	mkdir -p ~/.terraform.d/plugins/$(GOOS)_$(GOARCH)
