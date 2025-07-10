@@ -30,9 +30,9 @@ blocks:
         - name: "Run Live Tests"
           commands:
             - . vault-sem-get-secret v1/ci/kv/apif/terraform-provider-confluent/live-testing-data
-            - |              
+            - |
               # Map parameter values to make commands
-              case "$GROUPS" in
+              case "$TF_LIVE_TEST_GROUPS" in
                 "all"|"")
                   echo "Running ALL live tests..."
                   make live-test
@@ -78,7 +78,7 @@ blocks:
                   make live-test GROUPS="tableflow"
                   ;;
                 *)
-                  echo "Unknown GROUPS value: '$GROUPS'"
+                  echo "Unknown TF_LIVE_TEST_GROUPS value: '$TF_LIVE_TEST_GROUPS'"
                   echo "Valid options: all, core, kafka, essential, connect, schema_registry, networking, flink, rbac, data_catalog, tableflow"
                   echo "Defaulting to ALL tests..."
                   make live-test

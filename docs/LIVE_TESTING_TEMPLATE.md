@@ -136,4 +136,4 @@ All live tests expect these environment variables:
 
 ### 7. Semaphore Integration
 
-Once your test is tagged properly, it will automatically be included in the appropriate Semaphore pipeline promotions. No additional configuration needed! 
+Once your test is tagged properly, it will automatically be included in the appropriate Semaphore pipeline. The pipeline uses the `TF_LIVE_TEST_GROUPS` parameter to control which groups to run. 
