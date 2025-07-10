@@ -33,10 +33,10 @@ blocks:
             - |
               # Map special values and run tests
               case "$TF_LIVE_TEST_GROUPS" in
-                "essential") GROUPS="core,kafka" ;;
-                "all"|"") GROUPS="" ;;
-                *) GROUPS="$TF_LIVE_TEST_GROUPS" ;;
+                "essential") TF_LIVE_TEST_GROUPS="core,kafka" ;;
+                "all"|"") TF_LIVE_TEST_GROUPS="" ;;
+                *) TF_LIVE_TEST_GROUPS="$TF_LIVE_TEST_GROUPS" ;;
               esac
               
-              echo "Running live tests for: ${GROUPS:-all groups}"
-              make live-test ${GROUPS:+GROUPS="$GROUPS"} 
+              echo "Running live tests for: ${TF_LIVE_TEST_GROUPS:-all groups}"
+              make live-test ${TF_LIVE_TEST_GROUPS:+TF_LIVE_TEST_GROUPS="$TF_LIVE_TEST_GROUPS"} 
