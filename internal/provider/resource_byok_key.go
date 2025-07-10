@@ -24,6 +24,12 @@ const (
 	paramGcpKeyId  = "key_id"
 	paramAwsRoles  = "roles"
 
+	paramValidation        = "validation"
+	paramValidationPhase   = "phase"
+	paramValidationSince   = "since"
+	paramValidationMessage = "message"
+	paramValidationRegion  = "region"
+
 	kindAws   = "AwsKey"
 	kindAzure = "AzureKey"
 	kindGcp   = "GcpKey"
@@ -46,9 +52,10 @@ func byokResource() *schema.Resource {
 				Description: "A human-readable name for the BYOK key.",
 				Optional:    true,
 			},
-			paramAws:   awsKeySchema(),
-			paramAzure: azureKeySchema(),
-			paramGcp:   gcpKeySchema(),
+			paramValidation: validationSchema(),
+			paramAws:        awsKeySchema(),
+			paramAzure:      azureKeySchema(),
+			paramGcp:        gcpKeySchema(),
 		},
 	}
 }
@@ -99,6 +106,38 @@ func gcpKeySchema() *schema.Schema {
 		Computed: true,
 		MinItems: 1,
 		MaxItems: 1,
+	}
+}
+
+func validationSchema() *schema.Schema {
+	return &schema.Schema{
+		Type:        schema.TypeList,
+		Description: "Validation information for the BYOK key.",
+		Computed:    true,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramValidationPhase: {
+					Type:        schema.TypeString,
+					Description: "The validation phase of the key (INITIALIZING, VALID, INVALID).",
+					Computed:    true,
+				},
+				paramValidationSince: {
+					Type:        schema.TypeString,
+					Description: "Timestamp when the key entered the current validation phase.",
+					Computed:    true,
+				},
+				paramValidationMessage: {
+					Type:        schema.TypeString,
+					Description: "Optional validation message providing additional details.",
+					Computed:    true,
+				},
+				paramValidationRegion: {
+					Type:        schema.TypeString,
+					Description: "Region information for successfully validated keys.",
+					Computed:    true,
+				},
+			},
+		},
 	}
 }
 
@@ -262,6 +301,23 @@ func setKeyAttributes(d *schema.ResourceData, byokKey byok.ByokV1Key) (*schema.R
 	// Set display name if available
 	if displayName, ok := byokKey.GetDisplayNameOk(); ok {
 		if err := d.Set(paramDisplayName, *displayName); err != nil {
+			return nil, err
+		}
+	}
+
+	// Set validation information if available
+	if validation, ok := byokKey.GetValidationOk(); ok {
+		validationMap := map[string]interface{}{
+			paramValidationPhase: validation.GetPhase(),
+			paramValidationSince: validation.GetSince().Format("2006-01-02T15:04:05.000Z"),
+		}
+		if message, messageOk := validation.GetMessageOk(); messageOk {
+			validationMap[paramValidationMessage] = *message
+		}
+		if region, regionOk := validation.GetRegionOk(); regionOk {
+			validationMap[paramValidationRegion] = *region
+		}
+		if err := d.Set(paramValidation, []interface{}{validationMap}); err != nil {
 			return nil, err
 		}
 	}

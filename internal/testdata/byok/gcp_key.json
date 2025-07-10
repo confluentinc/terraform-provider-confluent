@@ -14,5 +14,10 @@
     "self": "https://api.confluent.cloud/byok/v1/keys/cck-abcde"
   },
   "provider": "GCP",
-  "state": "AVAILABLE"
+  "state": "AVAILABLE",
+  "validation": {
+    "phase": "INVALID",
+    "since": "2023-11-23T23:37:00.000Z",
+    "message": "Key access permissions not configured correctly"
+  }
 }

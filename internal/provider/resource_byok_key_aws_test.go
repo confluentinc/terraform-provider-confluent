@@ -110,6 +110,9 @@ func TestAccAwsBYOKKey(t *testing.T) {
 					resource.TestCheckResourceAttr(fullAwsKeyResourceName, "aws.0.roles.0", "arn:aws:iam::111111111111:role/testRoleId1"),
 					resource.TestCheckResourceAttr(fullAwsKeyResourceName, "aws.0.roles.1", "arn:aws:iam::111111111111:role/testRoleId2"),
 					resource.TestCheckResourceAttr(fullAwsKeyResourceName, "aws.0.roles.2", "arn:aws:iam::111111111111:role/testRoleId3"),
+					resource.TestCheckResourceAttr(fullAwsKeyResourceName, "validation.0.phase", "VALID"),
+					resource.TestCheckResourceAttr(fullAwsKeyResourceName, "validation.0.since", "2023-01-20T10:18:30.000Z"),
+					resource.TestCheckResourceAttr(fullAwsKeyResourceName, "validation.0.region", "us-west-2"),
 				),
 			},
 			{
@@ -122,6 +125,9 @@ func TestAccAwsBYOKKey(t *testing.T) {
 					resource.TestCheckResourceAttr(fullAwsKeyResourceName, "aws.0.roles.0", "arn:aws:iam::111111111111:role/testRoleId1"),
 					resource.TestCheckResourceAttr(fullAwsKeyResourceName, "aws.0.roles.1", "arn:aws:iam::111111111111:role/testRoleId2"),
 					resource.TestCheckResourceAttr(fullAwsKeyResourceName, "aws.0.roles.2", "arn:aws:iam::111111111111:role/testRoleId3"),
+					resource.TestCheckResourceAttr(fullAwsKeyResourceName, "validation.0.phase", "VALID"),
+					resource.TestCheckResourceAttr(fullAwsKeyResourceName, "validation.0.since", "2023-01-20T10:18:30.000Z"),
+					resource.TestCheckResourceAttr(fullAwsKeyResourceName, "validation.0.region", "us-west-2"),
 				),
 			},
 			{

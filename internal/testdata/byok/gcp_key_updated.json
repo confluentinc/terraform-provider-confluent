@@ -14,5 +14,10 @@
     "self": "https://api.confluent.cloud/byok/v1/keys/cck-abcde"
   },
   "provider": "GCP",
-  "state": "AVAILABLE"
+  "state": "AVAILABLE",
+  "validation": {
+    "phase": "VALID",
+    "since": "2023-11-23T23:38:15.000Z",
+    "region": "us-central1"
+  }
 }

@@ -18,5 +18,10 @@
     "self": "https://api.confluent.cloud/byok/v1/keys/cck-abcde"
   },
   "provider": "AWS",
-  "state": "AVAILABLE"
+  "state": "AVAILABLE",
+  "validation": {
+    "phase": "VALID",
+    "since": "2023-01-20T10:18:30.000Z",
+    "region": "us-west-2"
+  }
 }
