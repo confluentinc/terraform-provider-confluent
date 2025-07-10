@@ -34,42 +34,42 @@ blocks:
             - cd ../../
             - export PATH=$(pwd)/go/bin:$PATH
             - export "GITHUB_TOKEN=$(gh auth token)"
-            - $(pwd)
+#            - $(pwd)
 #            - export GOROOT=$(pwd)/go
             - cd terraform-provider-confluent*
-            - curl https://goreleaser.com/static/run | GOROOT=/Users/semaphore/cli-release/go VERSION=v1.25.1 bash -s -- build --config .goreleaser-darwin-fips.yml
+            - curl https://goreleaser.com/static/run | GOROOT=/Users/semaphore/go VERSION=v1.25.1 bash -s -- build --config .goreleaser-darwin-fips.yml
             - artifact push workflow dist/darwin-fips_darwin_amd64_v1
             - artifact push workflow dist/darwin-fips_darwin_arm64
-#  - name: "Draft a Release (Part 2)"
-#    dependencies: ["Draft a Release (Part 1)"]
-#    task:
-#      jobs:
-#        - name: goreleaser
-#          commands:
-#            - sem-version go 1.24.4
-#            - export "GOPATH=$(go env GOPATH)"
-#            - export "GITHUB_TOKEN=$(gh auth token)"
-#            - >-
-#              export
-#              "SEMAPHORE_GIT_DIR=${GOPATH}/src/github.com/confluentinc/${SEMAPHORE_PROJECT_NAME}"
-#            - 'export "PATH=${GOPATH}/bin:${PATH}"'
-#            - 'mkdir -vp "${SEMAPHORE_GIT_DIR}" "${GOPATH}/bin"'
-#            - checkout
-#            - . vault-setup
-#            # GitHub token is required for running GoReleaser
-#            - . vault-sem-get-secret v1/ci/kv/apif/signing_key
-#            # Import GPG private key
-#            - echo -e "${GPG_PRIVATE_KEY}" | gpg --import --batch --no-tty
-#            - echo "foo" > temp.txt
-#            - gpg --detach-sig --yes -v --output=/dev/null --pinentry-mode loopback --passphrase "${PASSPHRASE}" temp.txt
-#            - rm temp.txt
-#            # Clean up git state
-#            - git clean -fx
-#            # Install deps for compiling for linux/arm64 from linux/amd64
-#            - sudo apt update
-#            - sudo apt install -y gcc-aarch64-linux-gnu
-#            - mkdir prebuilt && cd prebuilt
-#            - artifact pull workflow darwin-fips_darwin_amd64_v1
-#            - artifact pull workflow darwin-fips_darwin_arm64
-#            - cd ..
-#            - curl https://goreleaser.com/static/run | DISTRIBUTION=pro VERSION=v1.25.1-pro bash -s -- release --config .goreleaser.yml --key $(vault kv get -field goreleaser_key v1/ci/kv/cli/release)
+  - name: "Draft a Release (Part 2)"
+    dependencies: ["Draft a Release (Part 1)"]
+    task:
+      jobs:
+        - name: goreleaser
+          commands:
+            - sem-version go 1.24.4
+            - export "GOPATH=$(go env GOPATH)"
+            - export "GITHUB_TOKEN=$(gh auth token)"
+            - >-
+              export
+              "SEMAPHORE_GIT_DIR=${GOPATH}/src/github.com/confluentinc/${SEMAPHORE_PROJECT_NAME}"
+            - 'export "PATH=${GOPATH}/bin:${PATH}"'
+            - 'mkdir -vp "${SEMAPHORE_GIT_DIR}" "${GOPATH}/bin"'
+            - checkout
+            - . vault-setup
+            # GitHub token is required for running GoReleaser
+            - . vault-sem-get-secret v1/ci/kv/apif/signing_key
+            # Import GPG private key
+            - echo -e "${GPG_PRIVATE_KEY}" | gpg --import --batch --no-tty
+            - echo "foo" > temp.txt
+            - gpg --detach-sig --yes -v --output=/dev/null --pinentry-mode loopback --passphrase "${PASSPHRASE}" temp.txt
+            - rm temp.txt
+            # Clean up git state
+            - git clean -fx
+            # Install deps for compiling for linux/arm64 from linux/amd64
+            - sudo apt update
+            - sudo apt install -y gcc-aarch64-linux-gnu
+            - mkdir prebuilt && cd prebuilt
+            - artifact pull workflow darwin-fips_darwin_amd64_v1
+            - artifact pull workflow darwin-fips_darwin_arm64
+            - cd ..
+            - curl https://goreleaser.com/static/run | DISTRIBUTION=pro VERSION=v1.25.1-pro bash -s -- release --config .goreleaser.yml --key $(vault kv get -field goreleaser_key v1/ci/kv/cli/release)
