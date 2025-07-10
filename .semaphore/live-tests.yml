@@ -21,7 +21,7 @@ global_job_config:
       - checkout
 
 execution_time_limit:
-  hours: 8
+  hours: 24
 
 blocks:
   - name: "Live Integration Tests"
