@@ -458,3 +458,35 @@ resource "confluent_role_binding" "app-consumer-developer-read-from-group" {
   // Update it to match your target consumer group ID.
   crn_pattern = replace("${confluent_kafka_cluster.enterprise.rbac_crn}/kafka=${confluent_kafka_cluster.enterprise.id}/group=confluent_cli_consumer_*", "stag.cpdev.cloud", "confluent.cloud")
 }
+
+// ESKU PL
+resource "confluent_private_link_attachment" "pla" {
+  cloud = "AWS"
+  region = var.region
+  display_name = "staging-aws-platt"
+  environment {
+    id = data.confluent_environment.staging.id
+  }
+}
+
+module "privatelink" {
+  source                   = "./aws-privatelink-endpoint"
+  vpc_id                   = aws_vpc.main.id
+  privatelink_service_name = confluent_private_link_attachment.pla.aws[0].vpc_endpoint_service_name
+  dns_domain               = confluent_private_link_attachment.pla.dns_domain
+  subnets_to_privatelink   = var.subnets_to_privatelink
+}
+
+resource "confluent_private_link_attachment_connection" "plac" {
+  display_name = "staging-aws-plattc"
+  environment {
+    id = data.confluent_environment.staging.id
+  }
+  aws {
+    vpc_endpoint_id = module.privatelink.vpc_endpoint_id
+  }
+
+  private_link_attachment {
+    id = confluent_private_link_attachment.pla.id
+  }
+}
