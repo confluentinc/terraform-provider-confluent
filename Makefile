@@ -95,13 +95,6 @@ build: clean ## Build binary for current OS/ARCH
 	@ $(MAKE) --no-print-directory log-$@
 	$(GOBUILD) -o ./$(BUILD_DIR)/$(GOOS)-$(GOARCH)/$(NAME)
 
-.PHONY: build-all
-build-all: GOOS      = linux darwin
-build-all: GOARCH    = amd64
-build-all: clean ## Build binary for all OS/ARCH
-	@ $(MAKE) --no-print-directory log-$
-	@ ./scripts/build/build-all-osarch.sh "$(BUILD_DIR)" "$(NAME)" "$(VERSION)" "$(GOOS)" "$(GOARCH)"
-
 .PHONY: test
 test:
 	$(GOCMD) test ./...
