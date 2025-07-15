@@ -742,7 +742,7 @@ func schemaUpdate(ctx context.Context, d *schema.ResourceData, meta interface{})
 		return diag.Errorf("error updating Schema %q: only %q, %q, %q, %q, %q, %q, %q and %q blocks can be updated for Schema", d.Id(), paramCredentials, paramConfigs, paramHardDelete, paramSchema, paramSchemaReference, paramSkipValidationDuringPlan, paramRuleset, paramMetadata)
 	}
 
-	if d.HasChanges(paramSchema, paramSchemaReference, paramRuleset) {
+	if d.HasChanges(paramSchema, paramSchemaReference, paramRuleset, paramMetadata) {
 		oldSchema, _ := d.GetChange(paramSchema)
 		oldSchemaReference, _ := d.GetChange(paramSchemaReference)
 		oldMetadata, _ := d.GetChange(paramMetadata)
