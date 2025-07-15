@@ -71,6 +71,8 @@ resource "aws_vpc" "main" {
 }
 
 # Create single security group for demo (both EC2 and ENIs)
+# WARNING: This configuration uses 0.0.0.0/0 for demonstration purposes only.
+# In production environments, restrict CIDR blocks to specific IP ranges or VPCs for security.
 resource "aws_security_group" "main" {
   name        = "pni-demo-sg"
   description = "Demo security group for PNI test (EC2 + ENIs)"
