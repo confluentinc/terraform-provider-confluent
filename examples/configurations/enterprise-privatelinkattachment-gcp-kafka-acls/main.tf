@@ -64,11 +64,10 @@ resource "confluent_private_link_attachment" "pla" {
 
 module "private-service-connect" {
   source                   = "./gcp-private-service-connect-endpoint"
-  privatelink_service_name = confluent_private_link_attachment.pla.aws[0].vpc_endpoint_service_name
+  privatelink_service_name = confluent_private_link_attachment.pla.gcp[0].private_service_connect_service_attachment
   dns_domain               = confluent_private_link_attachment.pla.dns_domain
   customer_vpc_network     = var.customer_vpc_network
   customer_subnetwork_name = var.customer_subnetwork_name
-  subnet_name_by_zone      = var.subnet_name_by_zone
 }
 
 // 'app-manager' service account is required in this configuration to create 'orders' topic and grant ACLs
