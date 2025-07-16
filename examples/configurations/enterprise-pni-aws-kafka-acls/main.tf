@@ -469,12 +469,30 @@ resource "confluent_private_link_attachment" "pla" {
   }
 }
 
-module "privatelink" {
-  source                   = "./aws-privatelink-endpoint"
-  vpc_id                   = aws_vpc.main.id
-  privatelink_service_name = confluent_private_link_attachment.pla.aws[0].vpc_endpoint_service_name
-  dns_domain               = confluent_private_link_attachment.pla.dns_domain
-  subnets_to_privatelink   = var.subnets_to_privatelink
+data "aws_subnets" "existing" {
+  filter {
+    name   = "vpc-id"
+    values = [aws_vpc.main.id]
+  }
+}
+
+# pick first 3 subnet IDs (ordered by ID)
+locals {
+  first_three_ids = slice(sort(data.aws_subnets.existing.ids), 0, 3)
+}
+
+# fetch AZ & other attrs only for those three
+data "aws_subnet" "selected" {
+  for_each = toset(local.first_three_ids)
+  id       = each.value
+}
+
+# Create the map of Zone ID to Subnet ID
+locals {
+  subnets_to_privatelink = {
+    for subnet_id, subnet in data.aws_subnet.selected :
+    subnet.availability_zone_id => subnet_id
+  }
 }
 
 resource "confluent_private_link_attachment_connection" "plac" {
@@ -483,10 +501,108 @@ resource "confluent_private_link_attachment_connection" "plac" {
     id = data.confluent_environment.staging.id
   }
   aws {
-    vpc_endpoint_id = module.privatelink.vpc_endpoint_id
+    vpc_endpoint_id = aws_vpc_endpoint.privatelink.id
   }
 
   private_link_attachment {
     id = confluent_private_link_attachment.pla.id
   }
+}
+
+data "aws_availability_zone" "privatelink" {
+  for_each = local.subnets_to_privatelink
+  zone_id = each.key
+}
+
+locals {
+  network_id = split(".", confluent_private_link_attachment.pla.dns_domain)[0]
+}
+
+resource "aws_security_group" "privatelink" {
+  # Ensure that SG is unique, so that this module can be used multiple times within a single VPC
+  name = "ccloud-privatelink_${local.network_id}_${aws_vpc.main.id}"
+  description = "Confluent Cloud Private Link minimal security group for ${confluent_private_link_attachment.pla.dns_domain} in ${aws_vpc.main.id}"
+  vpc_id = aws_vpc.main.id
+
+  ingress {
+    # only necessary if redirect support from http/https is desired
+    from_port = 80
+    to_port = 80
+    protocol = "tcp"
+    cidr_blocks = [aws_vpc.main.cidr_block]
+  }
+
+  ingress {
+    from_port = 443
+    to_port = 443
+    protocol = "tcp"
+    cidr_blocks = [aws_vpc.main.cidr_block]
+  }
+
+  ingress {
+    from_port = 9092
+    to_port = 9092
+    protocol = "tcp"
+    cidr_blocks = [aws_vpc.main.cidr_block]
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+resource "aws_vpc_endpoint" "privatelink" {
+  vpc_id = aws_vpc.main.id
+  service_name = confluent_private_link_attachment.pla.aws[0].vpc_endpoint_service_name
+  vpc_endpoint_type = "Interface"
+
+  security_group_ids = [
+    aws_security_group.privatelink.id,
+  ]
+
+  subnet_ids = [for zone, subnet_id in local.subnets_to_privatelink: subnet_id]
+  private_dns_enabled = false
+}
+
+resource "aws_route53_zone" "privatelink" {
+  name = confluent_private_link_attachment.pla.dns_domain
+
+  vpc {
+    vpc_id = aws_vpc.main.id
+  }
+}
+
+resource "aws_route53_record" "privatelink" {
+  count = length(local.subnets_to_privatelink) == 1 ? 0 : 1
+  zone_id = aws_route53_zone.privatelink.zone_id
+  name = "*.${aws_route53_zone.privatelink.name}"
+  type = "CNAME"
+  ttl  = "60"
+  records = [
+    aws_vpc_endpoint.privatelink.dns_entry[0]["dns_name"]
+  ]
+}
+
+locals {
+  endpoint_prefix = split(".", aws_vpc_endpoint.privatelink.dns_entry[0]["dns_name"])[0]
+}
+
+resource "aws_route53_record" "privatelink-zonal" {
+  for_each = local.subnets_to_privatelink
+
+  zone_id = aws_route53_zone.privatelink.zone_id
+  name = length(local.subnets_to_privatelink) == 1 ? "*" : "*.${each.key}"
+  type = "CNAME"
+  ttl  = "60"
+  records = [
+    format("%s-%s%s",
+      local.endpoint_prefix,
+      data.aws_availability_zone.privatelink[each.key].name,
+      replace(aws_vpc_endpoint.privatelink.dns_entry[0]["dns_name"], local.endpoint_prefix, "")
+    )
+  ]
+}
+
+output "vpc_endpoint_id" {
+  value = aws_vpc_endpoint.privatelink.id
 }
