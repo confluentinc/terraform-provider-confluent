@@ -97,8 +97,8 @@ MAINEOF
   curl -sL --http1.1 https://cnfl.io/cli | sudo sh -s -- -b /usr/local/bin
 
   # Alternative: Download specific version manually
-  # wget https://packages.confluent.io/cli/confluent-cli_latest_linux_amd64.tar.gz
-  # tar -xzf confluent-cli_latest_linux_amd64.tar.gz
+  # wget https://packages.confluent.io/confluent-cli/archives/latest/confluent_linux_amd64.tar.gz
+  # tar -xzf confluent_linux_amd64.tar.gz
   # sudo mv confluent /usr/local/bin/
   # sudo chmod +x /usr/local/bin/confluent
 
