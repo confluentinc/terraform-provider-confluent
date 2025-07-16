@@ -116,6 +116,7 @@ func TestAccDataSourceCluster(t *testing.T) {
 					resource.TestCheckResourceAttr(fullKafkaDataSourceLabel, "environment.0.id", testEnvironmentId),
 					resource.TestCheckResourceAttr(fullKafkaDataSourceLabel, "rest_endpoint", kafkaHttpEndpoint),
 					resource.TestCheckResourceAttr(fullKafkaDataSourceLabel, "rbac_crn", kafkaRbacCrn),
+					resource.TestCheckResourceAttr(fullKafkaDataSourceLabel, "endpoints.#", "0"),
 				),
 			},
 		},

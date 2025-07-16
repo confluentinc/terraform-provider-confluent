@@ -323,7 +323,7 @@ func waitForAccessPointToProvision(ctx context.Context, c *Client, environmentId
 	delay, pollInterval := getDelayAndPollInterval(5*time.Second, 1*time.Minute, c.isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
 		Pending: []string{stateProvisioning},
-		Target:  []string{stateReady, statePendingAccept},
+		Target:  []string{stateReady, statePendingAccept, stateCreated},
 		Refresh: accessPointProvisionStatus(c.netAPApiContext(ctx), c, environmentId, accessPointId),
 		Timeout: networkingAPICreateTimeout,
 		// TODO: increase delay
@@ -1173,7 +1173,7 @@ func accessPointProvisionStatus(ctx context.Context, c *Client, environmentId st
 		}
 
 		tflog.Debug(ctx, fmt.Sprintf("Waiting for Access Point %q provisioning status to become %q: current status is %q", accessPointId, stateReady, accessPoint.Status.GetPhase()), map[string]interface{}{accessPointKey: accessPointId})
-		if accessPoint.Status.GetPhase() == stateProvisioning || accessPoint.Status.GetPhase() == stateReady || accessPoint.Status.GetPhase() == statePendingAccept {
+		if accessPoint.Status.GetPhase() == stateProvisioning || accessPoint.Status.GetPhase() == stateReady || accessPoint.Status.GetPhase() == statePendingAccept || accessPoint.Status.GetPhase() == stateCreated {
 			return accessPoint, accessPoint.Status.GetPhase(), nil
 		} else if accessPoint.Status.GetPhase() == stateFailed {
 			return nil, stateFailed, fmt.Errorf("access point %q provisioning status is %q: %s", accessPointId, stateFailed, accessPoint.Status.GetErrorMessage())
