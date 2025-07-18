@@ -1668,3 +1668,40 @@ func getDelayAndPollInterval(delayNormal, pollIntervalNormal time.Duration, isAc
 	}
 	return delayNormal, pollIntervalNormal
 }
+
+func waitForKafkaClusterToBeDeleted(ctx context.Context, c *Client, environmentId, clusterId string) error {
+	delay, pollInterval := getDelayAndPollInterval(1*time.Minute, 1*time.Minute, c.isAcceptanceTestMode)
+	stateConf := &resource.StateChangeConf{
+		Pending:      []string{stateInProgress},
+		Target:       []string{stateDone},
+		Refresh:      kafkaClusterDeleteStatus(c.cmkApiContext(ctx), c, environmentId, clusterId),
+		Timeout:      30 * time.Minute, // Kafka clusters can take up to 30 minutes to be fully deleted
+		Delay:        delay,
+		PollInterval: pollInterval,
+	}
+
+	tflog.Debug(ctx, fmt.Sprintf("Waiting for Kafka Cluster %q to be deleted", clusterId), map[string]interface{}{kafkaClusterLoggingKey: clusterId})
+	if _, err := stateConf.WaitForStateContext(c.cmkApiContext(ctx)); err != nil {
+		return err
+	}
+	return nil
+}
+
+func kafkaClusterDeleteStatus(ctx context.Context, c *Client, environmentId, clusterId string) resource.StateRefreshFunc {
+	return func() (result interface{}, s string, err error) {
+		cluster, resp, err := executeKafkaRead(c.cmkApiContext(ctx), c, environmentId, clusterId)
+		if err != nil {
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Kafka Cluster %q: %s", clusterId, createDescriptiveError(err)), map[string]interface{}{kafkaClusterLoggingKey: clusterId})
+
+			// 404 or 403 means that the cluster has been deleted
+			isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
+			if isResourceNotFound {
+				// Result (the 1st argument) can't be nil
+				return 0, stateDone, nil
+			} else {
+				return nil, stateFailed, err
+			}
+		}
+		return cluster, stateInProgress, nil
+	}
+}
