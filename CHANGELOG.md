@@ -1,3 +1,10 @@
+## 2.35.0 (July 17th, 2025)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.34.0...v2.35.0)
+
+**New features:**
+* Added `resource_plugin` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_plugin) and `resource_custom_connector_plugin_version` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_custom_connector_plugin_version).
+
 ## 2.34.0 (July 2nd, 2025)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.33.0...v2.34.0)
