@@ -3,10 +3,7 @@
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.34.0...v2.35.0)
 
 **New features:**
-* Added `resource_plugin` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/resource_plugin) and `resource_custom_connector_version` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/resource_custom_connector_version) to support Custom Connector Plugin Versioning.
-
-**Bug fixes:**
-* Improved logging to simplify debugging process. 
+* Added `resource_plugin` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/resource_plugin) and `resource_custom_connector_version` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/resource_custom_connector_version).
 
 ## 2.34.0 (July 2nd, 2025)
 
