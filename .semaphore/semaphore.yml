@@ -50,3 +50,5 @@ after_pipeline:
 promotions:
   - name: Draft a Release
     pipeline_file: goreleaser.yml
+  - name: Run Live Integration Tests
+    pipeline_file: live-tests.yml

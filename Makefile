@@ -95,13 +95,6 @@ build: clean ## Build binary for current OS/ARCH
 	@ $(MAKE) --no-print-directory log-$@
 	$(GOBUILD) -o ./$(BUILD_DIR)/$(GOOS)-$(GOARCH)/$(NAME)
 
-.PHONY: build-all
-build-all: GOOS      = linux darwin
-build-all: GOARCH    = amd64
-build-all: clean ## Build binary for all OS/ARCH
-	@ $(MAKE) --no-print-directory log-$
-	@ ./scripts/build/build-all-osarch.sh "$(BUILD_DIR)" "$(NAME)" "$(VERSION)" "$(GOOS)" "$(GOARCH)"
-
 .PHONY: test
 test:
 	$(GOCMD) test ./...
@@ -110,6 +103,65 @@ test:
 testacc:
 	TF_LOG=debug TF_ACC=1 $(GOCMD) test $(TEST) -v $(TESTARGS) -coverprofile=coverage.txt -covermode=atomic -timeout 120m -failfast
 	@echo "finished testacc"
+
+# Live integration tests with group filtering and concurrency support
+# Usage: make live-test TF_LIVE_TEST_GROUPS="core,kafka" or make live-test (for all)
+.PHONY: live-test
+live-test:
+	@echo "Running live integration tests against Confluent Cloud..."
+	@if [ -z "$(TF_LIVE_TEST_GROUPS)" ]; then \
+		echo "Running ALL live tests with parallel execution..."; \
+		TF_ACC=1 TF_ACC_PROD=1 $(GOCMD) test ./internal/provider/ -v -run=".*Live$$" -tags="live_test,all" -timeout 1440m -parallel 100; \
+	else \
+		echo "Running live tests for groups: $(TF_LIVE_TEST_GROUPS) with parallel execution..."; \
+		TAGS="live_test"; \
+		for group in $$(echo "$(TF_LIVE_TEST_GROUPS)" | tr ',' ' '); do \
+			TAGS="$$TAGS,$$group"; \
+		done; \
+		TF_ACC=1 TF_ACC_PROD=1 $(GOCMD) test ./internal/provider/ -v -run=".*Live$$" -tags="$$TAGS" -timeout 1440m -parallel 100; \
+	fi
+	@echo "Finished running live integration tests against Confluent Cloud"
+
+# Helper targets for common group combinations
+.PHONY: live-test-core
+live-test-core:
+	@$(MAKE) live-test TF_LIVE_TEST_GROUPS="core"
+
+.PHONY: live-test-kafka
+live-test-kafka:
+	@$(MAKE) live-test TF_LIVE_TEST_GROUPS="kafka"
+
+.PHONY: live-test-connect
+live-test-connect:
+	@$(MAKE) live-test TF_LIVE_TEST_GROUPS="connect"
+
+.PHONY: live-test-schema-registry
+live-test-schema-registry:
+	@$(MAKE) live-test TF_LIVE_TEST_GROUPS="schema_registry"
+
+.PHONY: live-test-networking
+live-test-networking:
+	@$(MAKE) live-test TF_LIVE_TEST_GROUPS="networking"
+
+.PHONY: live-test-flink
+live-test-flink:
+	@$(MAKE) live-test TF_LIVE_TEST_GROUPS="flink"
+
+.PHONY: live-test-rbac
+live-test-rbac:
+	@$(MAKE) live-test TF_LIVE_TEST_GROUPS="rbac"
+
+.PHONY: live-test-data-catalog
+live-test-data-catalog:
+	@$(MAKE) live-test TF_LIVE_TEST_GROUPS="data_catalog"
+
+.PHONY: live-test-tableflow
+live-test-tableflow:
+	@$(MAKE) live-test TF_LIVE_TEST_GROUPS="tableflow"
+
+.PHONY: live-test-essential
+live-test-essential:
+	@$(MAKE) live-test TF_LIVE_TEST_GROUPS="core,kafka"
 
 install: build
 	mkdir -p ~/.terraform.d/plugins/$(GOOS)_$(GOARCH)
