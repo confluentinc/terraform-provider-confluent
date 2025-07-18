@@ -18,14 +18,17 @@ package provider
 
 import (
 	"fmt"
+	"math/rand"
 	"os"
 	"testing"
-	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
 func TestAccEnvironmentLive(t *testing.T) {
+	// Enable parallel execution for I/O bound operations
+	t.Parallel()
+
 	// Skip this test unless explicitly enabled
 	if os.Getenv("TF_ACC_PROD") == "" {
 		t.Skip("Skipping live test. Set TF_ACC_PROD=1 to run this test.")
@@ -35,13 +38,16 @@ func TestAccEnvironmentLive(t *testing.T) {
 	apiKey := os.Getenv("CONFLUENT_CLOUD_API_KEY")
 	apiSecret := os.Getenv("CONFLUENT_CLOUD_API_SECRET")
 	endpoint := os.Getenv("CONFLUENT_CLOUD_ENDPOINT")
+	if endpoint == "" {
+		endpoint = "https://api.confluent.cloud" // Use default endpoint if not set
+	}
 
 	// Validate required environment variables are present
 	if apiKey == "" || apiSecret == "" {
 		t.Fatal("CONFLUENT_CLOUD_API_KEY and CONFLUENT_CLOUD_API_SECRET must be set for live tests")
 	}
 
-	environmentDisplayName := fmt.Sprintf("tf-provider-live-test-%d", time.Now().Unix())
+	environmentDisplayName := fmt.Sprintf("tf-live-env-%d", rand.Intn(1000000))
 	environmentResourceLabel := "test_live_env"
 	environmentSgPackage := "ESSENTIALS"
 

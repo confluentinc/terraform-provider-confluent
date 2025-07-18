@@ -111,21 +111,21 @@ testacc:
 	TF_LOG=debug TF_ACC=1 $(GOCMD) test $(TEST) -v $(TESTARGS) -coverprofile=coverage.txt -covermode=atomic -timeout 120m -failfast
 	@echo "finished testacc"
 
-# Live integration tests with group filtering support
+# Live integration tests with group filtering and concurrency support
 # Usage: make live-test TF_LIVE_TEST_GROUPS="core,kafka" or make live-test (for all)
 .PHONY: live-test
 live-test:
 	@echo "Running live integration tests against Confluent Cloud..."
 	@if [ -z "$(TF_LIVE_TEST_GROUPS)" ]; then \
-		echo "Running ALL live tests..."; \
-		TF_ACC=1 TF_ACC_PROD=1 $(GOCMD) test ./internal/provider/ -v -run=".*Live$$" -tags="live_test,all" -timeout 1440m; \
+		echo "Running ALL live tests with parallel execution..."; \
+		TF_ACC=1 TF_ACC_PROD=1 $(GOCMD) test ./internal/provider/ -v -run=".*Live$$" -tags="live_test,all" -timeout 1440m -parallel 100; \
 	else \
-		echo "Running live tests for groups: $(TF_LIVE_TEST_GROUPS)"; \
+		echo "Running live tests for groups: $(TF_LIVE_TEST_GROUPS) with parallel execution..."; \
 		TAGS="live_test"; \
 		for group in $$(echo "$(TF_LIVE_TEST_GROUPS)" | tr ',' ' '); do \
 			TAGS="$$TAGS,$$group"; \
 		done; \
-		TF_ACC=1 TF_ACC_PROD=1 $(GOCMD) test ./internal/provider/ -v -run=".*Live$$" -tags="$$TAGS" -timeout 1440m; \
+		TF_ACC=1 TF_ACC_PROD=1 $(GOCMD) test ./internal/provider/ -v -run=".*Live$$" -tags="$$TAGS" -timeout 1440m -parallel 100; \
 	fi
 	@echo "Finished running live integration tests against Confluent Cloud"
 
