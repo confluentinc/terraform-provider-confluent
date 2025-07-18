@@ -314,6 +314,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_cluster_link":                       clusterLinkDataSource(),
 				"confluent_connect_artifact":                   connectArtifactDataSource(),
 				"confluent_kafka_cluster":                      kafkaDataSource(),
+				"confluent_kafka_clusters":                     kafkaClustersDataSource(),
 				"confluent_kafka_topic":                        kafkaTopicDataSource(),
 				"confluent_environment":                        environmentDataSource(),
 				"confluent_environments":                       environmentsDataSource(),
