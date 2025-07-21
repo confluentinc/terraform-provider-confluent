@@ -78,9 +78,10 @@ func TestAccSchemaLive(t *testing.T) {
 				),
 			},
 			{
-				ResourceName:      fmt.Sprintf("confluent_schema.%s", schemaResourceLabel),
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            fmt.Sprintf("confluent_schema.%s", schemaResourceLabel),
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"hard_delete"},
 			},
 		},
 	})
