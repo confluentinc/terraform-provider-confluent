@@ -26,8 +26,8 @@ import (
 )
 
 func TestAccSchemaRegistryClusterConfigLive(t *testing.T) {
-	// Enable parallel execution for I/O bound operations
-	t.Parallel()
+	// Disable parallel execution since this test modifies global cluster config
+	// t.Parallel()
 
 	// Skip this test unless explicitly enabled
 	if os.Getenv("TF_ACC_PROD") == "" {
@@ -82,8 +82,8 @@ func TestAccSchemaRegistryClusterConfigLive(t *testing.T) {
 }
 
 func TestAccSchemaRegistryClusterConfigUpdateLive(t *testing.T) {
-	// Enable parallel execution for I/O bound operations
-	t.Parallel()
+	// Disable parallel execution since this test modifies global cluster config
+	// t.Parallel()
 
 	// Skip this test unless explicitly enabled
 	if os.Getenv("TF_ACC_PROD") == "" {
@@ -132,6 +132,14 @@ func TestAccSchemaRegistryClusterConfigUpdateLive(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSchemaRegistryClusterConfigLiveExists(fmt.Sprintf("confluent_schema_registry_cluster_config.%s", clusterConfigResourceLabel)),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_schema_registry_cluster_config.%s", clusterConfigResourceLabel), "compatibility_level", "FORWARD"),
+				),
+			},
+			{
+				// Reset back to BACKWARD to ensure consistent state for other tests
+				Config: testAccCheckSchemaRegistryClusterConfigLiveConfig(endpoint, clusterConfigResourceLabel, apiKey, apiSecret, schemaRegistryApiKey, schemaRegistryApiSecret, schemaRegistryRestEndpoint, schemaRegistryId),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckSchemaRegistryClusterConfigLiveExists(fmt.Sprintf("confluent_schema_registry_cluster_config.%s", clusterConfigResourceLabel)),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_schema_registry_cluster_config.%s", clusterConfigResourceLabel), "compatibility_level", "BACKWARD"),
 				),
 			},
 		},
