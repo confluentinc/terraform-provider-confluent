@@ -161,6 +161,7 @@ func testAccCheckSchemaLiveConfig(endpoint, schemaResourceLabel, subjectName, ap
 	resource "confluent_schema" "%s" {
 		subject_name = "%s"
 		format       = "AVRO"
+		hard_delete  = true
 		schema       = <<EOF
 {
   "type": "record",
@@ -191,6 +192,7 @@ func testAccCheckSchemaUpdateLiveConfig(endpoint, schemaResourceLabel, subjectNa
 	resource "confluent_schema" "%s" {
 		subject_name = "%s"
 		format       = "AVRO"
+		hard_delete  = true
 		schema       = <<EOF
 {
   "type": "record",
