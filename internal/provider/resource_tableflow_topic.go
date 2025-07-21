@@ -40,6 +40,7 @@ const (
 	paramBucketRegion          = "bucket_region"
 	paramProviderIntegrationId = "provider_integration_id"
 	paramTableFormats          = "table_formats"
+	paramTablePath             = "table_path"
 	paramRecordFailureStrategy = "record_failure_strategy"
 
 	byobAwsSpecKind        = "ByobAws"
@@ -92,6 +93,11 @@ func tableflowTopicResource() *schema.Resource {
 				Computed:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Description: "The supported table formats for the Tableflow-enabled topic.",
+			},
+			paramTablePath: {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The current storage path where the data and metadata is stored for this table.",
 			},
 			paramRecordFailureStrategy: {
 				Type:        schema.TypeString,
@@ -280,6 +286,11 @@ func readTableflowTopicAndSetAttributes(ctx context.Context, d *schema.ResourceD
 }
 
 func setTableflowTopicAttributes(d *schema.ResourceData, c *TableflowRestClient, tableflowTopic tableflow.TableflowV1TableflowTopic) (*schema.ResourceData, error) {
+	storageType, err := getStorageType(tableflowTopic)
+	if err != nil {
+		return nil, err
+	}
+
 	if err := d.Set(paramDisplayName, tableflowTopic.Spec.GetDisplayName()); err != nil {
 		return nil, err
 	}
@@ -298,6 +309,17 @@ func setTableflowTopicAttributes(d *schema.ResourceData, c *TableflowRestClient,
 	if err := d.Set(paramTableFormats, tableflowTopic.Spec.GetTableFormats()); err != nil {
 		return nil, err
 	}
+
+	if storageType == byobAwsSpecKind {
+		if err := d.Set(paramTablePath, tableflowTopic.GetSpec().Storage.TableflowV1ByobAwsSpec.GetTablePath()); err != nil {
+			return nil, err
+		}
+	} else if storageType == managedStorageSpecKind {
+		if err := d.Set(paramTablePath, tableflowTopic.GetSpec().Storage.TableflowV1ManagedStorageSpec.GetTablePath()); err != nil {
+			return nil, err
+		}
+	}
+
 	if err := d.Set(paramRecordFailureStrategy, tableflowTopic.GetSpec().Config.GetRecordFailureStrategy()); err != nil {
 		return nil, err
 	}
@@ -330,6 +352,20 @@ func setTableflowTopicAttributes(d *schema.ResourceData, c *TableflowRestClient,
 
 	d.SetId(tableflowTopic.Spec.GetDisplayName())
 	return d, nil
+}
+
+func getStorageType(tableflowTopic tableflow.TableflowV1TableflowTopic) (string, error) {
+	config := tableflowTopic.Spec.GetStorage()
+
+	if config.TableflowV1ByobAwsSpec != nil {
+		return byobAwsSpecKind, nil
+	}
+
+	if config.TableflowV1ManagedStorageSpec != nil {
+		return managedStorageSpecKind, nil
+	}
+
+	return "", fmt.Errorf("error reading storage type for Tableflow Topic %q", tableflowTopic.Spec.GetDisplayName())
 }
 
 func tableflowTopicDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
