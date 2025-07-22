@@ -49,7 +49,7 @@ func ipFilterResource() *schema.Resource {
 				Type:         schema.TypeString,
 				Required:     true,
 				Description:  "A human readable name for an IP Filter.",
-				ValidateFunc: validation.StringIsNotEmpty,
+				ValidateFunc: validation.StringLenBetween(1, 64),
 			},
 			paramResourceGroup: {
 				Type:         schema.TypeString,
@@ -74,6 +74,7 @@ func ipFilterResource() *schema.Resource {
 				Type:        schema.TypeSet,
 				Description: "A list of IP Groups.",
 				MinItems:    1,
+				MaxItems:    25,
 				Required:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
