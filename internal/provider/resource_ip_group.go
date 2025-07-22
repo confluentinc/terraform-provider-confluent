@@ -114,9 +114,9 @@ func ipGroupCreate(ctx context.Context, d *schema.ResourceData, meta interface{}
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new IP Group: %s", createIPGroupRequestJson))
 
-	createdIPGroup, _, err := executeIPGroupCreate(c.iamIPApiContext(ctx), c, createIPGroupRequest)
+	createdIPGroup, resp, err := executeIPGroupCreate(c.iamIPApiContext(ctx), c, createIPGroupRequest)
 	if err != nil {
-		return diag.Errorf("error creating IP Group %q: %s", groupName, createDescriptiveError(err))
+		return diag.Errorf("error creating IP Group %q: %s", groupName, createDescriptiveError(err, resp))
 	}
 	d.SetId(createdIPGroup.GetId())
 

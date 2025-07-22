@@ -174,9 +174,9 @@ func ipFilterCreate(ctx context.Context, d *schema.ResourceData, meta interface{
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new IP Filter: %s", createIPFilterRequestJson))
 
-	createdIPFilter, _, err := executeIPFilterCreate(c.iamIPApiContext(ctx), c, createIPFilterRequest)
+	createdIPFilter, resp, err := executeIPFilterCreate(c.iamIPApiContext(ctx), c, createIPFilterRequest)
 	if err != nil {
-		return diag.Errorf("error creating IP Filter %q: %s", filterName, createDescriptiveError(err))
+		return diag.Errorf("error creating IP Filter %q: %s", filterName, createDescriptiveError(err, resp))
 	}
 	d.SetId(createdIPFilter.GetId())
 
