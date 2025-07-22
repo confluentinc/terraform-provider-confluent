@@ -19,8 +19,7 @@ resource "confluent_ip_filter" "example" {
   filter_name = "Management API Rules"
   resource_group = "management"
   operation_groups = [
-    "192.168.0.0/24",
-    "192.168.7.0/24"
+    "MANAGEMENT"
   ]
   ip_groups = [
     confluent_ip_group.example.id
