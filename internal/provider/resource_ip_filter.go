@@ -127,10 +127,10 @@ func ipFilterUpdate(ctx context.Context, d *schema.ResourceData, meta interface{
 	tflog.Debug(ctx, fmt.Sprintf("Updating IP Filter %q: %s", d.Id(), updateIPFilterRequestJson), map[string]interface{}{ipFilterLoggingKey: d.Id()})
 
 	c := meta.(*Client)
-	updatedIPFilter, _, err := c.iamIPClient.IPFiltersIamV2Api.UpdateIamV2IpFilter(c.iamIPApiContext(ctx), d.Id()).IamV2IpFilter(*updateIPFilterRequest).Execute()
+	updatedIPFilter, resp, err := c.iamIPClient.IPFiltersIamV2Api.UpdateIamV2IpFilter(c.iamIPApiContext(ctx), d.Id()).IamV2IpFilter(*updateIPFilterRequest).Execute()
 
 	if err != nil {
-		return diag.Errorf("error updating IP Filter %q: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error updating IP Filter %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	updatedIPFilterJson, err := json.Marshal(updatedIPFilter)
