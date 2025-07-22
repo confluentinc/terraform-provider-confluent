@@ -1,0 +1,10 @@
+{
+  "errors": [
+    {
+      "id": "fbf9f3678c3643de2615689a1cf87e9f",
+      "status": "404",
+      "detail": "IP group not found: not found",
+      "source": {}
+    }
+  ]
+}
