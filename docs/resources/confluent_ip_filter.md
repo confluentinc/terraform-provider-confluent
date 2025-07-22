@@ -18,9 +18,6 @@ description: |-
 resource "confluent_ip_filter" "example" {
   filter_name = "Management API Rules"
   resource_group = "management"
-  operation_groups = [
-    "MANAGEMENT"
-  ]
   ip_groups = [
     confluent_ip_group.example.id
   ]
