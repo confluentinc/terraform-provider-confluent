@@ -14,7 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
-	sts "github.com/confluentinc/ccloud-sdk-go-v2-internal/sts/v1"
+	sts "github.com/confluentinc/ccloud-sdk-go-v2/sts/v1"
 )
 
 const (
@@ -59,7 +59,7 @@ type STSToken struct {
 	IssuedTokenType  string         `json:"issued_token_type"`
 	IdentityPoolId   string         `json:"identity_pool_id"`
 	ValidUntil       time.Time      `json:"valid_until"`
-	HTTPClient       *sts.APIClient `json:"http_client"`
+	STSClient        *sts.APIClient `json:"sts_client"`
 }
 
 func fetchSTSOAuthToken(ctx context.Context, subjectToken, identityPoolId, expiredInSeconds string, currToken *STSToken, stsClient *sts.APIClient) (*STSToken, error) {
@@ -112,9 +112,9 @@ func requestNewSTSOAuthToken(ctx context.Context, subjectToken, identityPoolId, 
 	if expiryDuration <= buffer {
 		buffer = expiryDuration / 2
 	}
-	result.ValidUntil = time.Now().Add(expiryDuration)
+	result.ValidUntil = time.Now().Add(expiryDuration - buffer)
 	result.IdentityPoolId = identityPoolId
-	result.HTTPClient = stsClient
+	result.STSClient = stsClient
 	return result, nil
 }
 
