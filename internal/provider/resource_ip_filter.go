@@ -87,31 +87,22 @@ func ipFilterUpdate(ctx context.Context, d *schema.ResourceData, meta interface{
 		return diag.Errorf("error updating IP Filter %q: only %q, %q, %q, %q and %q attributes can be updated for IP Filter", d.Id(), paramFilterName, paramResourceGroup, paramResourceScope, paramOperationGroups, paramIPGroups)
 	}
 
+	filterName := d.Get(paramFilterName).(string)
+	resourceGroup := d.Get(paramResourceGroup).(string)
+	resourceScope := d.Get(paramResourceScope).(string)
+	operationGroups := convertToStringSlice(d.Get(paramOperationGroups).(*schema.Set).List())
+	ipGroupStrings := convertToStringSlice(d.Get(paramIPGroups).(*schema.Set).List())
+
 	updateIPFilterRequest := iamip.NewIamV2IpFilter()
-
-	if d.HasChange(paramFilterName) {
-		filterName := d.Get(paramFilterName).(string)
-		updateIPFilterRequest.SetFilterName(filterName)
-	}
-
-	if d.HasChange(paramResourceGroup) {
-		resourceGroup := d.Get(paramResourceGroup).(string)
-		updateIPFilterRequest.SetResourceGroup(resourceGroup)
-	}
-
-	if d.HasChange(paramResourceScope) {
-		resourceScope := d.Get(paramResourceScope).(string)
+	updateIPFilterRequest.SetFilterName(filterName)
+	updateIPFilterRequest.SetResourceGroup(resourceGroup)
+	if len(resourceScope) > 0 {
 		updateIPFilterRequest.SetResourceScope(resourceScope)
 	}
-
-	if d.HasChange(paramOperationGroups) {
-		operationGroups := convertToStringSlice(d.Get(paramOperationGroups).(*schema.Set).List())
+	if len(operationGroups) > 0 {
 		updateIPFilterRequest.SetOperationGroups(operationGroups)
 	}
-
-	if d.HasChange(paramIPGroups) {
-		ipGroupStrings := convertToStringSlice(d.Get(paramIPGroups).(*schema.Set).List())
-
+	if len(ipGroupStrings) > 0 {
 		var ipGroupRefs []iamip.GlobalObjectReference
 		for _, id := range ipGroupStrings {
 			ipGroupRefs = append(ipGroupRefs, iamip.GlobalObjectReference{Id: id})
