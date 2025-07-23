@@ -1,0 +1,25 @@
+{
+  "api_version": "iam/v2",
+  "filter_name": "New Filter",
+  "id": "ipf-w7rg0",
+  "ip_groups": [
+    {
+      "id": "ipg-3o91o",
+      "related": "https://confluent.cloud/iam/v2/ip-groups/ipg-3o91o",
+      "resource_name": "crn://confluent.cloud/organization=1111aaaa-11aa-11aa-11aa-111111aaaaaa/ip-group=ipg-3o91o"
+    }
+  ],
+  "kind": "IpFilter",
+  "metadata": {
+    "created_at": "2025-07-22T15:32:30.568852Z",
+    "resource_name": "crn://confluent.cloud/organization=1111aaaa-11aa-11aa-11aa-111111aaaaaa/ip-filter=ipf-w7rg0",
+    "self": "https://confluent.cloud/iam/v2/ip-filters/ipf-w7rg0",
+    "updated_at": "2025-07-22T15:32:30.568852Z"
+  },
+  "operation_groups": [
+    "MANAGEMENT",
+    "FLINK"
+  ],
+  "resource_group": "multiple",
+  "resource_scope": "crn://confluent.cloud/organization=1111aaaa-11aa-11aa-11aa-111111aaaaaa"
+}
