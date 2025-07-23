@@ -12,6 +12,8 @@ description: |-
 
 `confluent_ip_group` describes an IP Group data source.
 
+-> **Note:** See [IP Filtering on Confluent Cloud](https://docs.confluent.io/cloud/current/security/access-control/ip-filtering/overview.html) for more details about the IP Filtering feature and its limitations.
+
 ## Example Usage
 
 ```terraform
