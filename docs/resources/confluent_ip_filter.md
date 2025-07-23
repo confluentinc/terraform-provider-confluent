@@ -31,7 +31,7 @@ resource "confluent_ip_filter" "multiple-filter" {
     "SCHEMA",
     "FLINK"
   ]
-  ip_groups = [confluent_ip_group.group.id]
+  ip_groups = [confluent_ip_group.example.id]
 }
 ```
 
