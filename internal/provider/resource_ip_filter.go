@@ -83,8 +83,8 @@ func ipFilterResource() *schema.Resource {
 }
 
 func ipFilterUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if d.HasChangesExcept(paramFilterName, paramResourceGroup, paramResourceScope, paramOperationGroups, paramIPGroups) {
-		return diag.Errorf("error updating IP Filter %q: only %q, %q, %q, %q and %q attributes can be updated for IP Filter", d.Id(), paramFilterName, paramResourceGroup, paramResourceScope, paramOperationGroups, paramIPGroups)
+	if d.HasChangesExcept(paramFilterName, paramResourceGroup, paramOperationGroups, paramIPGroups) {
+		return diag.Errorf("error updating IP Filter %q: only %q, %q, %q, and %q attributes can be updated for IP Filter", d.Id(), paramFilterName, paramResourceGroup, paramOperationGroups, paramIPGroups)
 	}
 
 	filterName := d.Get(paramFilterName).(string)
