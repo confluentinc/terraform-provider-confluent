@@ -4,25 +4,34 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"io"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
+
+	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+
+	sts "github.com/confluentinc/ccloud-sdk-go-v2-internal/sts/v1"
 )
 
 const (
-	paramOAuthBlockName                = "oauth"
-	paramOAuthExternalAccessToken      = "oauth_external_access_token"
-	paramOAuthExternalClientId         = "oauth_external_client_id"
-	paramOAuthExternalClientSecret     = "oauth_external_client_secret"
-	paramOAuthExternalTokenScope       = "oauth_external_token_scope"
-	paramOAuthExternalTokenURL         = "oauth_external_token_url"
-	paramOAuthIdentityPoolId           = "oauth_identity_pool_id"
-	paramOAuthSTSTokenExpiredInSeconds = "oauth_sts_token_expired_in_seconds"
-	stsEndpoint                        = "https://api.confluent.cloud/sts/v1/oauth2/token"
+	paramOAuthBlockName            = "oauth"
+	paramOAuthExternalAccessToken  = "oauth_external_access_token"
+	paramOAuthExternalClientId     = "oauth_external_client_id"
+	paramOAuthExternalClientSecret = "oauth_external_client_secret"
+	paramOAuthExternalTokenScope   = "oauth_external_token_scope"
+	paramOAuthExternalTokenURL     = "oauth_external_token_url"
+	paramOAuthIdentityPoolId       = "oauth_identity_pool_id"
+)
+
+const (
+	paramOAuthSTSTokenExpiredInSeconds        = "oauth_sts_token_expired_in_seconds"
+	paramOAuthSTSTokenGrantTypeValue          = "urn:ietf:params:oauth:grant-type:token-exchange"
+	paramOAuthSTSTokenSubjectTokenTypeValue   = "urn:ietf:params:oauth:token-type:jwt"
+	paramOAuthSTSTokenRequestedTokenTypeValue = "urn:ietf:params:oauth:token-type:access_token"
 )
 
 const (
@@ -44,89 +53,68 @@ type OAuthToken struct {
 }
 
 type STSToken struct {
-	ExpiresInSeconds string       `json:"expires_in_seconds"`
-	AccessToken      string       `json:"access_token"`
-	TokenType        string       `json:"token_type"`
-	IssuedTokenType  string       `json:"issued_token_type"`
-	IdentityPoolId   string       `json:"identity_pool_id"`
-	ValidUntil       time.Time    `json:"valid_until"`
-	HTTPClient       *http.Client `json:"http_client"`
+	ExpiresInSeconds string         `json:"expires_in_seconds"`
+	AccessToken      string         `json:"access_token"`
+	TokenType        string         `json:"token_type"`
+	IssuedTokenType  string         `json:"issued_token_type"`
+	IdentityPoolId   string         `json:"identity_pool_id"`
+	ValidUntil       time.Time      `json:"valid_until"`
+	HTTPClient       *sts.APIClient `json:"http_client"`
 }
 
-func fetchSTSOAuthToken(ctx context.Context, subjectToken, identityPoolId, expiredInSeconds string, currToken *STSToken, retryableClient *http.Client) (*STSToken, error) {
+func fetchSTSOAuthToken(ctx context.Context, subjectToken, identityPoolId, expiredInSeconds string, currToken *STSToken, stsClient *sts.APIClient) (*STSToken, error) {
 	// Validate if the current token is still valid, if so, return it
 	if valid := validateCurrentSTSOAuthToken(ctx, currToken); valid {
 		return currToken, nil
 	}
-	return requestNewSTSOAuthToken(ctx, subjectToken, identityPoolId, expiredInSeconds, retryableClient)
+	return requestNewSTSOAuthToken(ctx, subjectToken, identityPoolId, expiredInSeconds, stsClient)
 }
 
-// TODO: Try to make it as a SDK instead of raw HTTP request, tracked by: https://confluentinc.atlassian.net/browse/CLI-3511
-func requestNewSTSOAuthToken(ctx context.Context, subjectToken, identityPoolId, expiredInSeconds string, retryableClient *http.Client) (*STSToken, error) {
-	if retryableClient == nil {
-		return nil, fmt.Errorf("retryable HTTP client is nil, cannot request new STS OAuth token")
+func requestNewSTSOAuthToken(ctx context.Context, subjectToken, identityPoolId, expiredInSeconds string, stsClient *sts.APIClient) (*STSToken, error) {
+	if stsClient == nil {
+		return nil, fmt.Errorf("STS HTTP client is nil, cannot request new STS OAuth token")
 	}
 
-	data := url.Values{}
-	data.Set("grant_type", "urn:ietf:params:oauth:grant-type:token-exchange")
-	data.Set("subject_token", subjectToken)
-	data.Set("identity_pool_id", identityPoolId)
-	data.Set("subject_token_type", "urn:ietf:params:oauth:token-type:jwt")
-	data.Set("requested_token_type", "urn:ietf:params:oauth:token-type:access_token")
-	data.Set("expires_in", expiredInSeconds)
+	req := stsClient.OAuthTokensStsV1Api.ExchangeStsV1OauthToken(ctx).
+		GrantType(paramOAuthSTSTokenGrantTypeValue).
+		SubjectToken(subjectToken).
+		IdentityPoolId(identityPoolId).
+		SubjectTokenType(paramOAuthSTSTokenSubjectTokenTypeValue).
+		RequestedTokenType(paramOAuthSTSTokenRequestedTokenTypeValue)
 
-	req, err := http.NewRequest(http.MethodPost, stsEndpoint, strings.NewReader(data.Encode()))
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Set("content-type", "application/x-www-form-urlencoded")
-	req.Header.Set("accept", "application/json")
-
-	resp, err := retryableClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-
-	defer func(Body io.ReadCloser) {
-		err := Body.Close()
+	// Handle the optional "expires_in" string parameter
+	if expiredInSeconds != "" {
+		expiredInSecondsInt, err := strconv.ParseInt(expiredInSeconds, 10, 32)
 		if err != nil {
-
+			return nil, fmt.Errorf("error casting `oauth_sts_token_expired_in_seconds` value: %s, must be a valid integer", expiredInSeconds)
 		}
-	}(resp.Body)
+		req = req.ExpiresIn(int32(expiredInSecondsInt))
+	}
 
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("STS exchange request failed with status: %s\n", resp.Status)
+	resp, status, err := req.Execute()
+	if err != nil {
+		return nil, err
+	}
+	if status.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("STS token exchange request failed with status: %s\n", status.Status)
 	}
 
 	// Parse the response
 	result := &STSToken{}
-	resultMap := make(map[string]any)
-	responseBody, _ := io.ReadAll(resp.Body)
-	if err := json.Unmarshal(responseBody, &resultMap); err != nil {
-		return nil, err
-	}
+	result.ExpiresInSeconds = strconv.Itoa(int(resp.ExpiresIn))
+	result.AccessToken = resp.AccessToken
+	result.TokenType = resp.TokenType
+	result.IssuedTokenType = resp.IssuedTokenType
 
-	for k, v := range resultMap {
-		switch k {
-		case "expires_in":
-			result.ExpiresInSeconds = fmt.Sprintf("%v", v)
-			// Be careful about the token expiry time, use half the expiry time as buffer if expiry is too short
-			expiryDuration := time.Duration(v.(float64)) * time.Second
-			buffer := stsTokenExpirationBuffer
-			if expiryDuration <= buffer {
-				buffer = expiryDuration / 2
-			}
-			result.ValidUntil = time.Now().Add(expiryDuration - buffer)
-		case "access_token":
-			result.AccessToken = v.(string)
-		case "token_type":
-			result.TokenType = v.(string)
-		case "issued_token_type":
-			result.IssuedTokenType = v.(string)
-		}
+	// Be careful about the token expiry time, use half the expiry time as buffer if expiry is too short
+	expiryDuration := time.Duration(resp.ExpiresIn) * time.Second
+	buffer := stsTokenExpirationBuffer
+	if expiryDuration <= buffer {
+		buffer = expiryDuration / 2
 	}
+	result.ValidUntil = time.Now().Add(expiryDuration)
 	result.IdentityPoolId = identityPoolId
-	result.HTTPClient = retryableClient
+	result.HTTPClient = stsClient
 	return result, nil
 }
 
