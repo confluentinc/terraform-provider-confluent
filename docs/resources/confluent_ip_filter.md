@@ -12,7 +12,7 @@ description: |-
 
 `confluent_ip_filter` provides an IP Filter resource that enables creating, editing, and deleting IP Filters on Confluent Cloud.
 
--> **Note:** See [IP Filtering on Confluent Cloud](https://docs.confluent.io/cloud/current/security/access-control/ip-filtering/overview.html) for more details about the IP Filtering feature and its limitations.
+-> **Note:** See [IP Filtering on Confluent Cloud](https://docs.confluent.io/cloud/current/security/access-control/ip-filtering/overview.html) for more details about the IP Filtering feature, its prerequisites, and its limitations.
 
 ## Example Usage
 
