@@ -101,7 +101,7 @@ func ipFilterUpdate(ctx context.Context, d *schema.ResourceData, meta interface{
 
 	if d.HasChange(paramResourceScope) {
 		resourceScope := d.Get(paramResourceScope).(string)
-		updateIPFilterRequest.SetResourceGroup(resourceScope)
+		updateIPFilterRequest.SetResourceScope(resourceScope)
 	}
 
 	if d.HasChange(paramOperationGroups) {
