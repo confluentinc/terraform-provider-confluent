@@ -15,12 +15,21 @@ description: |-
 ## Example Usage
 
 ```terraform
-resource "confluent_ip_filter" "example" {
-  filter_name = "Management API Rules"
+resource "confluent_ip_filter" "management-filter" {
+  filter_name    = "Management API Rules"
   resource_group = "management"
-  ip_groups = [
-    confluent_ip_group.example.id
+  ip_groups      = [ confluent_ip_group.example.id ]
+}
+
+resource "confluent_ip_filter" "multiple-filter" {
+  filter_name      = "Management, Schema, Flink API Rules"
+  resource_group   = "multiple"
+  operation_groups = [
+    "MANAGEMENT",
+    "SCHEMA",
+    "FLINK"
   ]
+  ip_groups = [confluent_ip_group.group.id]
 }
 ```
 
