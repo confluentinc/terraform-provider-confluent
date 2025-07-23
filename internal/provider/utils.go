@@ -1103,7 +1103,7 @@ func (c *Client) fetchOrOverrideSTSOAuthTokenFromApiContext(ctx context.Context)
 	// Check if the current external OAuth token is still valid
 	// If valid, request a new STS token based on the current external OAuth token
 	if valid := validateCurrentExternalOAuthToken(ctx, currExternalToken); valid {
-		stsToken, err := requestNewSTSOAuthToken(ctx, currExternalToken.AccessToken, currSTSToken.IdentityPoolId, currSTSToken.ExpiresInSeconds, currSTSToken.HTTPClient)
+		stsToken, err := requestNewSTSOAuthToken(ctx, currExternalToken.AccessToken, currSTSToken.IdentityPoolId, currSTSToken.ExpiresInSeconds, currSTSToken.STSClient)
 		if err != nil {
 			return err
 		}
@@ -1119,7 +1119,7 @@ func (c *Client) fetchOrOverrideSTSOAuthTokenFromApiContext(ctx context.Context)
 	}
 	c.oauthToken = externalToken
 
-	stsToken, err := requestNewSTSOAuthToken(ctx, externalToken.AccessToken, currSTSToken.IdentityPoolId, currSTSToken.ExpiresInSeconds, currSTSToken.HTTPClient)
+	stsToken, err := requestNewSTSOAuthToken(ctx, externalToken.AccessToken, currSTSToken.IdentityPoolId, currSTSToken.ExpiresInSeconds, currSTSToken.STSClient)
 	if err != nil {
 		return err
 	}
@@ -1139,7 +1139,7 @@ func (c *TableflowRestClient) fetchOrOverrideSTSOAuthTokenFromApiContext(ctx con
 	// Check if the current external OAuth token is still valid
 	// If valid, request a new STS token based on the current external OAuth token
 	if valid := validateCurrentExternalOAuthToken(ctx, currExternalToken); valid {
-		stsToken, err := requestNewSTSOAuthToken(ctx, currExternalToken.AccessToken, currSTSToken.IdentityPoolId, currSTSToken.ExpiresInSeconds, currSTSToken.HTTPClient)
+		stsToken, err := requestNewSTSOAuthToken(ctx, currExternalToken.AccessToken, currSTSToken.IdentityPoolId, currSTSToken.ExpiresInSeconds, currSTSToken.STSClient)
 		if err != nil {
 			return err
 		}
@@ -1155,7 +1155,7 @@ func (c *TableflowRestClient) fetchOrOverrideSTSOAuthTokenFromApiContext(ctx con
 	}
 	c.oauthToken = externalToken
 
-	stsToken, err := requestNewSTSOAuthToken(ctx, externalToken.AccessToken, currSTSToken.IdentityPoolId, currSTSToken.ExpiresInSeconds, currSTSToken.HTTPClient)
+	stsToken, err := requestNewSTSOAuthToken(ctx, externalToken.AccessToken, currSTSToken.IdentityPoolId, currSTSToken.ExpiresInSeconds, currSTSToken.STSClient)
 	if err != nil {
 		return err
 	}
