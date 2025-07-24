@@ -37,6 +37,7 @@ import (
 	dc "github.com/confluentinc/ccloud-sdk-go-v2/data-catalog/v1"
 	fa "github.com/confluentinc/ccloud-sdk-go-v2/flink-artifact/v1"
 	fcpm "github.com/confluentinc/ccloud-sdk-go-v2/flink/v2"
+	iamip "github.com/confluentinc/ccloud-sdk-go-v2/iam-ip-filtering/v2"
 	iamv1 "github.com/confluentinc/ccloud-sdk-go-v2/iam/v1"
 	iam "github.com/confluentinc/ccloud-sdk-go-v2/iam/v2"
 	oidc "github.com/confluentinc/ccloud-sdk-go-v2/identity-provider/v2"
@@ -83,6 +84,7 @@ type Client struct {
 	apiKeysClient                   *apikeys.APIClient
 	byokClient                      *byok.APIClient
 	iamClient                       *iam.APIClient
+	iamIPClient                     *iamip.APIClient
 	iamV1Client                     *iamv1.APIClient
 	caClient                        *ca.APIClient
 	ccpClient                       *ccp.APIClient
@@ -315,6 +317,8 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_certificate_pool":                   certificatePoolDataSource(),
 				"confluent_cluster_link":                       clusterLinkDataSource(),
 				"confluent_connect_artifact":                   connectArtifactDataSource(),
+				"confluent_ip_filter":                          ipFilterDataSource(),
+				"confluent_ip_group":                           ipGroupDataSource(),
 				"confluent_kafka_cluster":                      kafkaDataSource(),
 				"confluent_kafka_topic":                        kafkaTopicDataSource(),
 				"confluent_environment":                        environmentDataSource(),
@@ -372,6 +376,8 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_certificate_pool":                   certificatePoolResource(),
 				"confluent_cluster_link":                       clusterLinkResource(),
 				"confluent_connect_artifact":                   connectArtifactResource(),
+				"confluent_ip_group":                           ipGroupResource(),
+				"confluent_ip_filter":                          ipFilterResource(),
 				"confluent_kafka_cluster":                      kafkaResource(),
 				"confluent_kafka_cluster_config":               kafkaConfigResource(),
 				"confluent_environment":                        environmentResource(),
@@ -562,6 +568,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	faCfg := fa.NewConfiguration()
 	fcpmCfg := fcpm.NewConfiguration()
 	iamCfg := iam.NewConfiguration()
+	iamIPCfg := iamip.NewConfiguration()
 	iamV1Cfg := iamv1.NewConfiguration()
 	ksqlCfg := ksql.NewConfiguration()
 	mdsCfg := mds.NewConfiguration()
@@ -590,6 +597,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	faCfg.Servers[0].URL = endpoint
 	fcpmCfg.Servers[0].URL = endpoint
 	iamCfg.Servers[0].URL = endpoint
+	iamIPCfg.Servers[0].URL = endpoint
 	iamV1Cfg.Servers[0].URL = endpoint
 	ksqlCfg.Servers[0].URL = endpoint
 	mdsCfg.Servers[0].URL = endpoint
@@ -619,6 +627,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	faCfg.UserAgent = userAgent
 	fcpmCfg.UserAgent = userAgent
 	iamCfg.UserAgent = userAgent
+	iamIPCfg.UserAgent = userAgent
 	iamV1Cfg.UserAgent = userAgent
 	ksqlCfg.UserAgent = userAgent
 	mdsCfg.UserAgent = userAgent
@@ -660,6 +669,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	faCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	fcpmCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	iamCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
+	iamIPCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	iamV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	ksqlCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	mdsCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
@@ -706,6 +716,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 		faClient:                        fa.NewAPIClient(faCfg),
 		fcpmClient:                      fcpm.NewAPIClient(fcpmCfg),
 		iamClient:                       iam.NewAPIClient(iamCfg),
+		iamIPClient:                     iamip.NewAPIClient(iamIPCfg),
 		iamV1Client:                     iamv1.NewAPIClient(iamV1Cfg),
 		ksqlClient:                      ksql.NewAPIClient(ksqlCfg),
 		netClient:                       net.NewAPIClient(netCfg),
