@@ -112,7 +112,7 @@ const (
 	ksqlClusterLoggingKey                     = "ksql_cluster_id"
 	identityProviderLoggingKey                = "identity_provider_id"
 	identityPoolLoggingKey                    = "identity_pool_id"
-	ipGroupLoggingKey                         = "ip_group_key"
+	ipGroupLoggingKey                         = "ip_group_id"
 	ipFilterLoggingKey                        = "ip_filter_key"
 	paramIdentityClaim                        = "identity_claim"
 	clusterLinkLoggingKey                     = "cluster_link_id"
