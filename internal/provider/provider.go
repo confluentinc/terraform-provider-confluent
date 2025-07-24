@@ -26,11 +26,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
-	cmk "github.com/confluentinc/ccloud-sdk-go-v2-internal/cmk/v2"
 	apikeys "github.com/confluentinc/ccloud-sdk-go-v2/apikeys/v2"
 	byok "github.com/confluentinc/ccloud-sdk-go-v2/byok/v1"
 	cam "github.com/confluentinc/ccloud-sdk-go-v2/cam/v1"
 	ca "github.com/confluentinc/ccloud-sdk-go-v2/certificate-authority/v2"
+	cmk "github.com/confluentinc/ccloud-sdk-go-v2/cmk/v2"
 	ccp "github.com/confluentinc/ccloud-sdk-go-v2/connect-custom-plugin/v1"
 	connect "github.com/confluentinc/ccloud-sdk-go-v2/connect/v1"
 	dc "github.com/confluentinc/ccloud-sdk-go-v2/data-catalog/v1"

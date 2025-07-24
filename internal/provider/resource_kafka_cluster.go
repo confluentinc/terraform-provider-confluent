@@ -23,7 +23,7 @@ import (
 	"sort"
 	"strings"
 
-	cmk "github.com/confluentinc/ccloud-sdk-go-v2-internal/cmk/v2"
+	cmk "github.com/confluentinc/ccloud-sdk-go-v2/cmk/v2"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
