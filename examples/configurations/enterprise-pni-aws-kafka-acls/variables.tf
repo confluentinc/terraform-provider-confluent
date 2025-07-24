@@ -31,5 +31,5 @@ variable "availability_zone_ids" {
 variable "num_eni_per_subnet" {
   description = "Number of ENIs to create per subnet"
   type        = number
-  default     = 2
+  default     = 17
 }
