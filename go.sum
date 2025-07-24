@@ -95,6 +95,8 @@ github.com/confluentinc/ccloud-sdk-go-v2/flink-gateway v0.17.0 h1:8Y1uXjolI2d5ma
 github.com/confluentinc/ccloud-sdk-go-v2/flink-gateway v0.17.0/go.mod h1:cJ6erfVlWSyz6L+2dR46cF2+s5I2r+pTNrPm2fNbcqU=
 github.com/confluentinc/ccloud-sdk-go-v2/iam v0.17.0 h1:I5nYXbiSU37Vb6cPmatzJk7szQJUNojTNPkscb+jK/4=
 github.com/confluentinc/ccloud-sdk-go-v2/iam v0.17.0/go.mod h1:jnWqax4kM22sutPGMtGmHqe2usgfqYig4UtmHsLENz0=
+github.com/confluentinc/ccloud-sdk-go-v2/iam-ip-filtering v0.5.0 h1:xD7CXcyAqezFnSVFB4U27oWUY4FlbyciVP0ftDIiI18=
+github.com/confluentinc/ccloud-sdk-go-v2/iam-ip-filtering v0.5.0/go.mod h1:uAlz9SscVXU6XkDj2DHCytJcieT8tR0lnMPJMOX1BQ0=
 github.com/confluentinc/ccloud-sdk-go-v2/identity-provider v0.3.0 h1:COUuWIW9GLz/Wq8mgrrvT3Pe78CZSL2mlZkE2vNvkQo=
 github.com/confluentinc/ccloud-sdk-go-v2/identity-provider v0.3.0/go.mod h1:VHpsi0yWBEhN6Hp2oOyGkRaNJjtnaVfYjpbtB8pnNnk=
 github.com/confluentinc/ccloud-sdk-go-v2/kafka-quotas v0.4.0 h1:T9e7lNj/VjxE89+tcpX2RS2NE4rWNWbJjxcO2yehEqM=

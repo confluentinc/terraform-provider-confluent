@@ -1,0 +1,10 @@
+{
+  "errors": [
+    {
+      "id": "541838c88587f60b37bb8bd72d6cfb6b",
+      "status": "404",
+      "detail": "IP filter not found: not found",
+      "source": {}
+    }
+  ]
+}
