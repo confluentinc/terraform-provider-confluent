@@ -54,7 +54,7 @@ func ipFilterDataSource() *schema.Resource {
 			},
 			paramIPGroups: {
 				Type:        schema.TypeSet,
-				Description: "A list of IP Groups.",
+				Description: "A list of IP Filters.",
 				Computed:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
@@ -65,19 +65,19 @@ func ipFilterDataSource() *schema.Resource {
 func ipFilterDataSourceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	ipFilterID := d.Get(paramId).(string)
 
-	tflog.Debug(ctx, fmt.Sprintf("Reading IP Group %q=%q", paramId, ipFilterID), map[string]interface{}{ipFilterLoggingKey: ipFilterID})
+	tflog.Debug(ctx, fmt.Sprintf("Reading IP Filter %q=%q", paramId, ipFilterID), map[string]interface{}{ipFilterLoggingKey: ipFilterID})
 
 	c := meta.(*Client)
 	request := c.iamIPClient.IPFiltersIamV2Api.GetIamV2IpFilter(c.iamIPApiContext(ctx), ipFilterID)
 	ipFilter, _, err := c.iamIPClient.IPFiltersIamV2Api.GetIamV2IpFilterExecute(request)
 	if err != nil {
-		return diag.Errorf("error reading IP Group %q: %s", ipFilterID, createDescriptiveError(err))
+		return diag.Errorf("error reading IP Filter %q: %s", ipFilterID, createDescriptiveError(err))
 	}
 	ipFilterJson, err := json.Marshal(ipFilter)
 	if err != nil {
-		return diag.Errorf("error reading IP Group %q: error marshaling %#v to json: %s", ipFilterID, ipFilter, createDescriptiveError(err))
+		return diag.Errorf("error reading IP Filter %q: error marshaling %#v to json: %s", ipFilterID, ipFilter, createDescriptiveError(err))
 	}
-	tflog.Debug(ctx, fmt.Sprintf("Fetched IP Group %q: %s", ipFilterID, ipFilterJson), map[string]interface{}{ipFilterLoggingKey: ipFilterID})
+	tflog.Debug(ctx, fmt.Sprintf("Fetched IP Filter %q: %s", ipFilterID, ipFilterJson), map[string]interface{}{ipFilterLoggingKey: ipFilterID})
 
 	if _, err := setIPFilterAttributes(d, ipFilter); err != nil {
 		return diag.FromErr(createDescriptiveError(err))

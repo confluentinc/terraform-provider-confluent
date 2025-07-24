@@ -10,7 +10,7 @@ description: |-
 
 [![General Availability](https://img.shields.io/badge/Lifecycle%20Stage-General%20Availability-%2345c6e8)](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy)
 
-`confluent_ip_filter` describes an IP Group data source.
+`confluent_ip_filter` describes an IP Filter data source.
 
 -> **Note:** See [IP Filtering on Confluent Cloud](https://docs.confluent.io/cloud/current/security/access-control/ip-filtering/overview.html) for more details about the IP Filtering feature, its prerequisites, and its limitations.
 

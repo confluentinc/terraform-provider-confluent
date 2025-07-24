@@ -23,7 +23,7 @@ provider "confluent" {
 }
 
 data "confluent_ip_group" "example" {
-  id = "sa-abc123"
+  id = "ipg-abc123"
 }
 
 output "example" {
