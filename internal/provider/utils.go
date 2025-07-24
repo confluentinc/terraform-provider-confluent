@@ -113,7 +113,7 @@ const (
 	identityProviderLoggingKey                = "identity_provider_id"
 	identityPoolLoggingKey                    = "identity_pool_id"
 	ipGroupLoggingKey                         = "ip_group_id"
-	ipFilterLoggingKey                        = "ip_filter_key"
+	ipFilterLoggingKey                        = "ip_filter_id"
 	paramIdentityClaim                        = "identity_claim"
 	clusterLinkLoggingKey                     = "cluster_link_id"
 	kafkaMirrorTopicLoggingKey                = "kafka_mirror_topic_id"
