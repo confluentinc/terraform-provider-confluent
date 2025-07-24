@@ -118,7 +118,7 @@ func customConnectorPluginUpdate(ctx context.Context, d *schema.ResourceData, me
 	}
 	if d.HasChange(paramDocumentationLink) {
 		updatedDocumentationLink := d.Get(paramDocumentationLink).(string)
-		updateCustomConnectorPluginRequest.SetDescription(updatedDocumentationLink)
+		updateCustomConnectorPluginRequest.SetDocumentationLink(updatedDocumentationLink)
 	}
 
 	updateCustomConnectorPluginRequestJson, err := json.Marshal(updateCustomConnectorPluginRequest)
