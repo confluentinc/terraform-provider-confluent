@@ -103,13 +103,13 @@ resource "aws_security_group" "main" {
     description = "Kafka broker access"
   }
 
-  # Outbound rules
+  # https://docs.confluent.io/cloud/current/networking/aws-pni.html#update-the-security-group-to-block-outbound-traffic
+  # Disable all outbound traffic (removes default 0.0.0.0/0)
   egress {
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
-    cidr_blocks = var.client_cidr_blocks
-    description = "All outbound traffic"
+    cidr_blocks = []
   }
 
   tags = {
