@@ -10,12 +10,17 @@ variable "confluent_cloud_api_secret" {
 }
 
 variable "aws_account_id" {
-  description = "The AWS Account ID (12 digits)"
+  description = "The AWS Account ID (12 digits) in which to create the VPC."
   type        = string
 }
 
 variable "region" {
-  description = "The region of the AWS peer VPC."
+  description = "The region in which to create the VPC and Kafka cluster."
+  type        = string
+}
+
+variable "environment_id" {
+  description = "The ID of the Confluent Cloud environment in which to create a Kafka cluster."
   type        = string
 }
 

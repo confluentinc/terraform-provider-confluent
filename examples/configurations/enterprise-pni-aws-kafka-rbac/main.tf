@@ -292,9 +292,8 @@ resource "aws_network_interface_permission" "main" {
   aws_account_id       = confluent_gateway.main.aws_private_network_interface_gateway[0].account
 }
 
-// TODO: use a resource in the actual example
 data "confluent_environment" "staging" {
-  id = "env-stgczzp6r0"
+  id = var.environment_id
 }
 
 resource "confluent_gateway" "main" {
