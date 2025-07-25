@@ -319,6 +319,10 @@ resource "confluent_access_point" "aws" {
     network_interfaces = aws_network_interface.main[*].id
     account            = var.aws_account_id
   }
+
+  depends_on = [
+    aws_network_interface_permission.main
+  ]
 }
 
 # Run on EC2 instance
