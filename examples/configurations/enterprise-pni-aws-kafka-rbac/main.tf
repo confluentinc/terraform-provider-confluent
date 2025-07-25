@@ -74,7 +74,7 @@ resource "aws_vpc" "main" {
 # WARNING: This configuration uses 0.0.0.0/0 for demonstration purposes only.
 # In production environments, restrict CIDR blocks to specific IP ranges or VPCs for security.
 resource "aws_security_group" "main" {
-  name        = "pni-demo-sg"
+  name        = "pni-demo-sg-${var.environment_id}"
   description = "Demo security group for PNI test (EC2 + ENIs)"
   vpc_id      = aws_vpc.main.id
 
@@ -127,7 +127,7 @@ resource "tls_private_key" "main" {
 
 # Create key pair for EC2 access
 resource "aws_key_pair" "main" {
-  key_name   = "pni-test-key"
+  key_name   = "pni-test-key-${var.environment_id}"
   public_key = tls_private_key.main.public_key_openssh
 }
 
@@ -338,7 +338,7 @@ resource "confluent_kafka_cluster" "enterprise" {
 }
 
 resource "confluent_service_account" "app-manager" {
-  display_name = "app-manager"
+  display_name = "app-manager-${var.environment_id}"
   description  = "Service account to manage 'inventory' Kafka cluster"
 }
 
@@ -349,7 +349,7 @@ resource "confluent_role_binding" "app-manager-kafka-cluster-admin" {
 }
 
 resource "confluent_api_key" "app-manager-kafka-api-key" {
-  display_name           = "app-manager-kafka-api-key"
+  display_name           = "${confluent_service_account.app-manager.display_name}-kafka-api-key"
   description            = "Kafka API Key that is owned by 'app-manager' service account"
   disable_wait_for_ready = true
   owner {
@@ -384,7 +384,7 @@ locals {
 }
 
 resource "confluent_service_account" "app-consumer" {
-  display_name = "app-${local.topic_name}-consumer"
+  display_name = "app-consumer-${var.environment_id}"
   description  = "Service account to consume from '${local.topic_name}' topic of ${confluent_kafka_cluster.enterprise.id} Kafka cluster"
 }
 
@@ -416,7 +416,7 @@ resource "confluent_role_binding" "app-producer-developer-write" {
 }
 
 resource "confluent_service_account" "app-producer" {
-  display_name = "app-${local.topic_name}-producer"
+  display_name = "app-producer-${var.environment_id}"
   description  = "Service account to produce to '${local.topic_name}' topic of ${confluent_kafka_cluster.enterprise.id} Kafka cluster"
 }
 
@@ -519,7 +519,7 @@ locals {
 
 resource "aws_security_group" "privatelink" {
   # Ensure that SG is unique, so that this module can be used multiple times within a single VPC
-  name = "ccloud-privatelink_${local.network_id}_${aws_vpc.main.id}"
+  name = "ccloud-privatelink_${local.network_id}_${aws_vpc.main.id}_${var.environment_id}"
   description = "Confluent Cloud Private Link minimal security group for ${confluent_private_link_attachment.pla.dns_domain} in ${aws_vpc.main.id}"
   vpc_id = aws_vpc.main.id
 
