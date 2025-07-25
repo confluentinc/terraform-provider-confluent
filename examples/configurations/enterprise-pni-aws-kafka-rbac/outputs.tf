@@ -47,8 +47,7 @@ output "instructions-pni" {
 
   # First, check if user_data script ran successfully
   sudo cat /var/log/cloud-init-output.log | tail -20  # Check for any errors during boot
-
-  # TODO: add more commands to setup nginx proxy as well
+  sudo cat /var/log/user-data.log | tail -20  # Check for any errors during boot
 
   # Verify Confluent CLI installation
   confluent version
@@ -111,14 +110,21 @@ MAINEOF
 
   🔑 CONFLUENT CLOUD CONSOLE ACCESS INSTRUCTIONS:
 
-  1. Exit the SSH session.
+  1. Exit the EC2 SSH session.
 
   2. You should see "Create topic" button grayed out on ${local.topics_confluent_cloud_url}.
 
   3. Update the /etc/hosts file on your laptop (the NGINX proxy was set up via Terraform already):
-     echo "${aws_instance.test.public_ip} ${local.pni_kafka_rest_endpoint}" >> /etc/hosts
+     echo "\n${aws_instance.test.public_ip} ${trimprefix(trimsuffix(local.pni_kafka_rest_endpoint, ":443"), "https://")}" | sudo tee -a /etc/hosts
 
   4. You should now see the "orders" topic on ${local.topics_confluent_cloud_url}.
+
+  5. (Optional) Alternatively, you can also send a direct cURL request from your laptop to verify the NGINX proxy was set up correctly:
+
+    curl --request GET \
+    --url ${local.pni_kafka_rest_endpoint}/kafka/v3/clusters/${confluent_kafka_cluster.enterprise.id}/topics \
+    -u "${confluent_api_key.app-manager-kafka-api-key.id}:${confluent_api_key.app-manager-kafka-api-key.secret}"
+
 
   5. For more details,
      see https://docs.confluent.io/cloud/current/networking/ccloud-console-access.html#configure-a-proxy for more details.

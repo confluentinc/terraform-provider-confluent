@@ -90,7 +90,7 @@ resource "aws_security_group" "main" {
     from_port   = 443
     to_port     = 443
     protocol    = "tcp"
-    cidr_blocks = var.client_cidr_blocks
+    cidr_blocks = concat(var.client_cidr_blocks, [aws_vpc.main.cidr_block])
     description = "HTTPS access"
   }
 
@@ -99,17 +99,19 @@ resource "aws_security_group" "main" {
     from_port   = 9092
     to_port     = 9092
     protocol    = "tcp"
-    cidr_blocks = var.client_cidr_blocks
+    cidr_blocks = concat(var.client_cidr_blocks, [aws_vpc.main.cidr_block])
     description = "Kafka broker access"
   }
 
   # https://docs.confluent.io/cloud/current/networking/aws-pni.html#update-the-security-group-to-block-outbound-traffic
-  # Disable all outbound traffic (removes default 0.0.0.0/0)
+  # SECURITY WARNING: For production deployments, restrict egress to egress = [] to remove the default 0.0.0.0/0 egress rule.
+  # This demo intentionally uses 0.0.0.0/0 to allow downloading Confluent CLI, Terraform provider, and related dependencies.
   egress {
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
-    cidr_blocks = []
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "All outbound traffic"
   }
 
   tags = {
@@ -183,104 +185,134 @@ resource "aws_instance" "test" {
   associate_public_ip_address = true
 
   user_data = <<-EOF
-    #!/bin/bash
-    set -e
+#!/bin/bash
+set -e
 
-    yum update -y
-    yum install -y curl wget yum-utils nginx bind-utils
+yum update -y
+# Install nginx and stream module (Amazon Linux 2023 specific)
+yum install -y wget yum-utils nginx nginx-mod-stream bind-utils
 
-    # START of setting up https://docs.confluent.io/cloud/current/networking/ccloud-console-access.html#configure-a-proxy
-    BOOTSTRAP_HOST="${local.pni_bootstrap_endpoint}"
+# START of setting up https://docs.confluent.io/cloud/current/networking/ccloud-console-access.html#configure-a-proxy
+BOOTSTRAP_HOST="${local.pni_bootstrap_endpoint}"
 
-    echo "Testing DNS resolution for $BOOTSTRAP_HOST via 127.0.0.53" >> /var/log/user-data.log
-    if nslookup $BOOTSTRAP_HOST 127.0.0.53; then
-      echo "DNS resolution successful via 127.0.0.53" >> /var/log/user-data.log
-      RESOLVER="127.0.0.53"
-    else
-      echo "DNS resolution failed via 127.0.0.53, switching to AWS resolver 169.254.169.253" >> /var/log/user-data.log
-      RESOLVER="169.254.169.253"
-    fi
+echo "Setting up NGINX proxy for Confluent Cloud PNI" >> /var/log/user-data.log
+echo "Bootstrap host: $BOOTSTRAP_HOST" >> /var/log/user-data.log
 
-    # Enable NGINX at boot
-    systemctl enable nginx
+# Step 3: Test NGINX configuration (before we modify it)
+echo "Testing initial NGINX configuration..." >> /var/log/user-data.log
+nginx -t >> /var/log/user-data.log 2>&1
 
-    # Load ngx_stream_module if available
-    if [ -f /usr/lib64/nginx/modules/ngx_stream_module.so ]; then
-      sed -i '1iload_module /usr/lib64/nginx/modules/ngx_stream_module.so;' /etc/nginx/nginx.conf
-    elif [ -f /usr/lib/nginx/modules/ngx_stream_module.so ]; then
-      sed -i '1iload_module /usr/lib/nginx/modules/ngx_stream_module.so;' /etc/nginx/nginx.conf
-    fi
+# Step 4: Check if ngx_stream_module.so exists and set MODULE_PATH
+echo "Checking for stream module..." >> /var/log/user-data.log
+if [ -f /usr/lib64/nginx/modules/ngx_stream_module.so ]; then
+  MODULE_PATH="/usr/lib64/nginx/modules/ngx_stream_module.so"
+  echo "Found stream module at: $MODULE_PATH" >> /var/log/user-data.log
+elif [ -f /usr/lib/nginx/modules/ngx_stream_module.so ]; then
+  MODULE_PATH="/usr/lib/nginx/modules/ngx_stream_module.so"
+  echo "Found stream module at: $MODULE_PATH" >> /var/log/user-data.log
+else
+  echo "ERROR: ngx_stream_module.so not found!" >> /var/log/user-data.log
+  exit 1
+fi
 
-    # Write nginx.conf with dynamic resolver
-    cat > /etc/nginx/nginx.conf <<NGINXCONF
-    load_module /usr/lib64/nginx/modules/ngx_stream_module.so;
+# Step 5: Use AWS resolver directly (we know it works on EC2)
+RESOLVER="169.254.169.253"
+echo "Using AWS resolver: $RESOLVER" >> /var/log/user-data.log
 
-    events {}
-    stream {
-      map \$ssl_preread_server_name \$targetBackend {
-        default \$ssl_preread_server_name;
-      }
+# Step 6: Update NGINX configuration
+cat > /etc/nginx/nginx.conf <<NGINXCONF
+load_module $MODULE_PATH;
 
-      server {
-        listen 9092;
-        proxy_connect_timeout 1s;
-        proxy_timeout 7200s;
-        resolver $RESOLVER;
-        proxy_pass \$targetBackend:9092;
-        ssl_preread on;
-      }
+events {}
+stream {
+  map \$ssl_preread_server_name \$targetBackend {
+    default \$ssl_preread_server_name;
+  }
 
-      server {
-        listen 443;
-        proxy_connect_timeout 1s;
-        proxy_timeout 7200s;
-        resolver $RESOLVER;
-        proxy_pass \$targetBackend:443;
-        ssl_preread on;
-      }
+  server {
+    listen 9092;
+    proxy_connect_timeout 1s;
+    proxy_timeout 7200s;
+    resolver $RESOLVER;
+    proxy_pass \$targetBackend:9092;
+    ssl_preread on;
+  }
 
-      log_format stream_routing '[$time_local] remote address \$remote_addr '
-                                'with SNI name "\$ssl_preread_server_name" '
-                                'proxied to "\$upstream_addr" '
-                                '\$protocol \$status \$bytes_sent \$bytes_received '
-                                '\$session_time';
-      access_log /var/log/nginx/stream-access.log stream_routing;
-    }
-    NGINXCONF
+  server {
+    listen 443;
+    proxy_connect_timeout 1s;
+    proxy_timeout 7200s;
+    resolver $RESOLVER;
+    proxy_pass \$targetBackend:443;
+    ssl_preread on;
+  }
 
-    # Test and restart NGINX
-    nginx -t && systemctl restart nginx
+  log_format stream_routing '[\$time_local] remote address \$remote_addr '
+                            'with SNI name "\$ssl_preread_server_name" '
+                            'proxied to "\$upstream_addr" '
+                            '\$protocol \$status \$bytes_sent \$bytes_received '
+                            '\$session_time';
+  access_log /var/log/nginx/stream-access.log stream_routing;
+}
+NGINXCONF
 
-    # Verify NGINX is running
-    if systemctl is-active --quiet nginx; then
-      echo "NGINX is running" >> /var/log/user-data.log
-    else
-      echo "NGINX failed to start" >> /var/log/user-data.log
-      exit 1
-    fi
-    # END of setting up https://docs.confluent.io/cloud/current/networking/ccloud-console-access.html#configure-a-proxy
+# Step 7: Re-test NGINX configuration
+echo "Testing NGINX configuration after update..." >> /var/log/user-data.log
+if nginx -t >> /var/log/user-data.log 2>&1; then
+  echo "NGINX configuration test passed" >> /var/log/user-data.log
+else
+  echo "NGINX configuration test failed:" >> /var/log/user-data.log
+  nginx -t >> /var/log/user-data.log 2>&1
+  exit 1
+fi
 
-    # Install Confluent CLI
-    curl -sL --http1.1 https://cnfl.io/cli | sh -s -- -b /usr/local/bin
+# Step 8: Restart NGINX
+echo "Restarting NGINX..." >> /var/log/user-data.log
+systemctl restart nginx
 
-    # Install Terraform
-    yum-config-manager --add-repo https://rpm.releases.hashicorp.com/AmazonLinux/hashicorp.repo
-    yum -y install terraform
+# Step 9: Verify NGINX is running
+echo "Verifying NGINX status..." >> /var/log/user-data.log
+if systemctl is-active --quiet nginx; then
+  echo "NGINX is running successfully" >> /var/log/user-data.log
+  systemctl status nginx >> /var/log/user-data.log 2>&1
+else
+  echo "NGINX failed to start:" >> /var/log/user-data.log
+  systemctl status nginx >> /var/log/user-data.log 2>&1
+  # Check error logs as suggested in Confluent docs
+  echo "NGINX error log:" >> /var/log/user-data.log
+  tail -20 /var/log/nginx/error.log >> /var/log/user-data.log 2>&1
+  exit 1
+fi
 
-    # Verify Confluent CLI
-    if /usr/local/bin/confluent version >> /var/log/user-data.log 2>&1; then
-      echo "Confluent CLI installed successfully" >> /var/log/user-data.log
-    else
-      echo "Confluent CLI installation failed" >> /var/log/user-data.log
-    fi
+# Enable NGINX to start on boot
+systemctl enable nginx
 
-    # Verify Terraform
-    if terraform version >> /var/log/user-data.log 2>&1; then
-      echo "Terraform installed successfully" >> /var/log/user-data.log
-    else
-      echo "Terraform installation failed" >> /var/log/user-data.log
-    fi
-  EOF
+# Install Confluent CLI
+echo "Installing Confluent CLI..." >> /var/log/user-data.log
+mkdir -p /usr/local/bin
+curl -sL --http1.1 https://cnfl.io/cli | sh -s -- -b /usr/local/bin
+
+# Install Terraform
+echo "Installing Terraform..." >> /var/log/user-data.log
+yum-config-manager --add-repo https://rpm.releases.hashicorp.com/AmazonLinux/hashicorp.repo
+yum -y install terraform
+
+# Verify installations
+if /usr/local/bin/confluent version >> /var/log/user-data.log 2>&1; then
+  echo "Confluent CLI installed successfully" >> /var/log/user-data.log
+else
+  echo "Confluent CLI installation failed" >> /var/log/user-data.log
+fi
+
+if terraform version >> /var/log/user-data.log 2>&1; then
+  echo "Terraform installed successfully" >> /var/log/user-data.log
+else
+  echo "Terraform installation failed" >> /var/log/user-data.log
+fi
+
+echo "Proxy setup completed successfully!" >> /var/log/user-data.log
+echo "You can now test with: nslookup $BOOTSTRAP_HOST $RESOLVER" >> /var/log/user-data.log
+EOF
 
   tags = {
     Name = "enterprise-pni-aws-kafka-rbac"
@@ -507,151 +539,3 @@ resource "confluent_role_binding" "app-consumer-developer-read-from-group" {
   // Update it to match your target consumer group ID.
   crn_pattern = replace("${confluent_kafka_cluster.enterprise.rbac_crn}/kafka=${confluent_kafka_cluster.enterprise.id}/group=confluent_cli_consumer_*", "stag.cpdev.cloud", "confluent.cloud")
 }
-
-// ESKU PL
-# resource "confluent_private_link_attachment" "pla" {
-#   cloud = "AWS"
-#   region = var.region
-#   display_name = "staging-aws-platt"
-#   environment {
-#     id = data.confluent_environment.staging.id
-#   }
-# }
-#
-# data "aws_subnets" "existing" {
-#   filter {
-#     name   = "vpc-id"
-#     values = [aws_vpc.main.id]
-#   }
-# }
-#
-# # pick first 3 subnet IDs (ordered by ID)
-# locals {
-#   first_three_ids = slice(sort(data.aws_subnets.existing.ids), 0, 3)
-# }
-#
-# # fetch AZ & other attrs only for those three
-# data "aws_subnet" "selected" {
-#   for_each = toset(local.first_three_ids)
-#   id       = each.value
-# }
-#
-# # Create the map of Zone ID to Subnet ID
-# locals {
-#   subnets_to_privatelink = {
-#     for subnet_id, subnet in data.aws_subnet.selected :
-#     subnet.availability_zone_id => subnet_id
-#   }
-# }
-#
-# resource "confluent_private_link_attachment_connection" "plac" {
-#   display_name = "staging-aws-plattc"
-#   environment {
-#     id = data.confluent_environment.staging.id
-#   }
-#   aws {
-#     vpc_endpoint_id = aws_vpc_endpoint.privatelink.id
-#   }
-#
-#   private_link_attachment {
-#     id = confluent_private_link_attachment.pla.id
-#   }
-# }
-#
-# data "aws_availability_zone" "privatelink" {
-#   for_each = local.subnets_to_privatelink
-#   zone_id = each.key
-# }
-#
-# locals {
-#   network_id = split(".", confluent_private_link_attachment.pla.dns_domain)[0]
-# }
-#
-# resource "aws_security_group" "privatelink" {
-#   # Ensure that SG is unique, so that this module can be used multiple times within a single VPC
-#   name = "ccloud-privatelink_${local.network_id}_${aws_vpc.main.id}_${var.environment_id}"
-#   description = "Confluent Cloud Private Link minimal security group for ${confluent_private_link_attachment.pla.dns_domain} in ${aws_vpc.main.id}"
-#   vpc_id = aws_vpc.main.id
-#
-#   ingress {
-#     # only necessary if redirect support from http/https is desired
-#     from_port = 80
-#     to_port = 80
-#     protocol = "tcp"
-#     cidr_blocks = [aws_vpc.main.cidr_block]
-#   }
-#
-#   ingress {
-#     from_port = 443
-#     to_port = 443
-#     protocol = "tcp"
-#     cidr_blocks = [aws_vpc.main.cidr_block]
-#   }
-#
-#   ingress {
-#     from_port = 9092
-#     to_port = 9092
-#     protocol = "tcp"
-#     cidr_blocks = [aws_vpc.main.cidr_block]
-#   }
-#
-#   lifecycle {
-#     create_before_destroy = true
-#   }
-# }
-#
-# resource "aws_vpc_endpoint" "privatelink" {
-#   vpc_id = aws_vpc.main.id
-#   service_name = confluent_private_link_attachment.pla.aws[0].vpc_endpoint_service_name
-#   vpc_endpoint_type = "Interface"
-#
-#   security_group_ids = [
-#     aws_security_group.privatelink.id,
-#   ]
-#
-#   subnet_ids = [for zone, subnet_id in local.subnets_to_privatelink: subnet_id]
-#   private_dns_enabled = false
-# }
-#
-# resource "aws_route53_zone" "privatelink" {
-#   name = confluent_private_link_attachment.pla.dns_domain
-#
-#   vpc {
-#     vpc_id = aws_vpc.main.id
-#   }
-# }
-#
-# resource "aws_route53_record" "privatelink" {
-#   count = length(local.subnets_to_privatelink) == 1 ? 0 : 1
-#   zone_id = aws_route53_zone.privatelink.zone_id
-#   name = "*.${aws_route53_zone.privatelink.name}"
-#   type = "CNAME"
-#   ttl  = "60"
-#   records = [
-#     aws_vpc_endpoint.privatelink.dns_entry[0]["dns_name"]
-#   ]
-# }
-#
-# locals {
-#   endpoint_prefix = split(".", aws_vpc_endpoint.privatelink.dns_entry[0]["dns_name"])[0]
-# }
-#
-# resource "aws_route53_record" "privatelink-zonal" {
-#   for_each = local.subnets_to_privatelink
-#
-#   zone_id = aws_route53_zone.privatelink.zone_id
-#   name = length(local.subnets_to_privatelink) == 1 ? "*" : "*.${each.key}"
-#   type = "CNAME"
-#   ttl  = "60"
-#   records = [
-#     format("%s-%s%s",
-#       local.endpoint_prefix,
-#       data.aws_availability_zone.privatelink[each.key].name,
-#       replace(aws_vpc_endpoint.privatelink.dns_entry[0]["dns_name"], local.endpoint_prefix, "")
-#     )
-#   ]
-# }
-#
-# output "vpc_endpoint_id" {
-#   value = aws_vpc_endpoint.privatelink.id
-# }
