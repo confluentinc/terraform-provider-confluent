@@ -1,3 +1,7 @@
+locals {
+  topics_confluent_cloud_url = "https://confluent.cloud/environments/${data.confluent_environment.staging.id}/clusters/${confluent_kafka_cluster.enterprise.id}/topics?topics_filter=showAll"
+}
+
 output "instructions-pni" {
   value = <<-EOT
   Environment ID:   ${data.confluent_environment.staging.id}
@@ -104,6 +108,21 @@ MAINEOF
   # 3. Consume records from topic '${local.topic_name}' by using ${confluent_service_account.app-consumer.display_name}'s Kafka API Key
   $ confluent kafka topic consume ${local.topic_name} --from-beginning --api-key "${confluent_api_key.app-consumer-kafka-api-key.id}" --api-secret "${confluent_api_key.app-consumer-kafka-api-key.secret} --bootstrap ${local.pni_bootstrap_endpoint}"
   # When you are done, press 'Ctrl-C'.
+
+  🔑 CONFLUENT CLOUD CONSOLE ACCESS INSTRUCTIONS:
+
+  1. Exit the SSH session.
+
+  2. You should see "Create topic" button grayed out on ${local.topics_confluent_cloud_url}.
+
+  3. Update the /etc/hosts file on your laptop (the NGINX proxy was set up via Terraform already):
+     echo "${aws_instance.test.public_ip} ${local.pni_kafka_rest_endpoint}" >> /etc/hosts
+
+  4. You should now see the "orders" topic on ${local.topics_confluent_cloud_url}.
+
+  5. For more details,
+     see https://docs.confluent.io/cloud/current/networking/ccloud-console-access.html#configure-a-proxy for more details.
+
   EOT
 
   sensitive = true
