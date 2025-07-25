@@ -1,4 +1,9 @@
-output "instructions" {
+locals {
+  pni_kafka_rest_endpoint = [for endpoint in confluent_kafka_cluster.enterprise.endpoints : endpoint.rest_endpoint if endpoint.access_point_id == confluent_access_point.aws.id][0]
+  pni_bootstrap_endpoint = [for endpoint in confluent_kafka_cluster.enterprise.endpoints : endpoint.bootstrap_endpoint if endpoint.access_point_id == confluent_access_point.aws.id][0]
+}
+
+output "instructions-pni" {
   value = <<-EOT
   Environment ID:   ${data.confluent_environment.staging.id}
   Kafka Cluster ID: ${confluent_kafka_cluster.enterprise.id}
@@ -70,7 +75,7 @@ terraform {
 
 provider "confluent" {
   kafka_id            = "${confluent_kafka_cluster.enterprise.id}"
-  kafka_rest_endpoint = "${[for endpoint in confluent_kafka_cluster.enterprise.endpoints : endpoint.rest_endpoint if endpoint.access_point_id == confluent_access_point.aws.id][0]}"
+  kafka_rest_endpoint = "${local.pni_kafka_rest_endpoint}"
   kafka_api_key       = "${confluent_api_key.app-manager-kafka-api-key.id}"
   kafka_api_secret    = "${confluent_api_key.app-manager-kafka-api-key.secret}"
 }
@@ -101,6 +106,7 @@ MAINEOF
   # tar -xzf confluent_linux_amd64.tar.gz
   # sudo mv confluent /usr/local/bin/
   # sudo chmod +x /usr/local/bin/confluent
+  # TODO: add more commands to setup nginx proxy as well
 
   # Verify Confluent CLI installation
   confluent version
@@ -126,7 +132,7 @@ MAINEOF
   $ confluent login
 
   # 2. Produce key-value records to topic '${local.topic_name}' by using ${confluent_service_account.app-producer.display_name}'s Kafka API Key
-  $ confluent kafka topic produce ${local.topic_name} --environment ${data.confluent_environment.staging.id} --cluster ${confluent_kafka_cluster.enterprise.id} --api-key "${confluent_api_key.app-producer-kafka-api-key.id}" --api-secret "${confluent_api_key.app-producer-kafka-api-key.secret} --bootstrap ${confluent_kafka_cluster.enterprise.bootstrap_endpoint}"
+  $ confluent kafka topic produce ${local.topic_name} --environment ${data.confluent_environment.staging.id} --cluster ${confluent_kafka_cluster.enterprise.id} --api-key "${confluent_api_key.app-producer-kafka-api-key.id}" --api-secret "${confluent_api_key.app-producer-kafka-api-key.secret} --bootstrap ${local.pni_bootstrap_endpoint}"
   # Enter a few records and then press 'Ctrl-C' when you're done.
   # Sample records:
   # {"number":1,"date":18500,"shipping_address":"899 W Evelyn Ave, Mountain View, CA 94041, USA","cost":15.00}
@@ -134,7 +140,7 @@ MAINEOF
   # {"number":3,"date":18502,"shipping_address":"3307 Northland Dr Suite 400, Austin, TX 78731, USA","cost":10.00}
 
   # 3. Consume records from topic '${local.topic_name}' by using ${confluent_service_account.app-consumer.display_name}'s Kafka API Key
-  $ confluent kafka topic consume ${local.topic_name} --from-beginning --environment ${data.confluent_environment.staging.id} --cluster ${confluent_kafka_cluster.enterprise.id} --api-key "${confluent_api_key.app-consumer-kafka-api-key.id}" --api-secret "${confluent_api_key.app-consumer-kafka-api-key.secret} --bootstrap ${confluent_kafka_cluster.enterprise.bootstrap_endpoint}"
+  $ confluent kafka topic consume ${local.topic_name} --from-beginning --environment ${data.confluent_environment.staging.id} --cluster ${confluent_kafka_cluster.enterprise.id} --api-key "${confluent_api_key.app-consumer-kafka-api-key.id}" --api-secret "${confluent_api_key.app-consumer-kafka-api-key.secret} --bootstrap ${local.pni_bootstrap_endpoint}"
   # When you are done, press 'Ctrl-C'.
   EOT
 

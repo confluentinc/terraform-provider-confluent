@@ -342,7 +342,7 @@ resource "confluent_kafka_cluster" "enterprise" {
 }
 
 resource "confluent_service_account" "app-manager" {
-  display_name = "app-manager-${var.environment_id}"
+  display_name = "app-manager-${confluent_kafka_cluster.enterprise.id}"
   description  = "Service account to manage 'inventory' Kafka cluster"
 }
 
@@ -388,7 +388,7 @@ locals {
 }
 
 resource "confluent_service_account" "app-consumer" {
-  display_name = "app-consumer-${var.environment_id}"
+  display_name = "app-consumer-${confluent_kafka_cluster.enterprise.id}"
   description  = "Service account to consume from '${local.topic_name}' topic of ${confluent_kafka_cluster.enterprise.id} Kafka cluster"
 }
 
@@ -420,7 +420,7 @@ resource "confluent_role_binding" "app-producer-developer-write" {
 }
 
 resource "confluent_service_account" "app-producer" {
-  display_name = "app-producer-${var.environment_id}"
+  display_name = "app-producer-${confluent_kafka_cluster.enterprise.id}"
   description  = "Service account to produce to '${local.topic_name}' topic of ${confluent_kafka_cluster.enterprise.id} Kafka cluster"
 }
 
