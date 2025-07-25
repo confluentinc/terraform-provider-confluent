@@ -42,11 +42,11 @@ resource "random_integer" "network_prefix_2" {
 
 locals {
   network_addr_prefix = "10.${random_integer.network_prefix_1.result}.${random_integer.network_prefix_2.result}"
-  vpc_cidr_block      = "${local.network_addr_prefix}.0/24"
+  vpc_cidr_block = "${local.network_addr_prefix}.0/24"
 
   # Calculate subnet CIDRs (equivalent to subnet_cidr="$network_addr_prefix.$((i * 64))/26")
   subnet_cidrs = [
-    "${local.network_addr_prefix}.0/26",  # i=0: 0/26
+    "${local.network_addr_prefix}.0/26", # i=0: 0/26
     "${local.network_addr_prefix}.64/26", # i=1: 64/26
     "${local.network_addr_prefix}.128/26" # i=2: 128/26
   ]
@@ -160,28 +160,23 @@ resource "aws_route_table_association" "public" {
   route_table_id = aws_route_table.public.id
 }
 
-# Get latest Amazon Linux 2 AMI
-data "aws_ami" "amazon_linux" {
+data "aws_ami" "amazon_linux_2023" {
   most_recent = true
   owners      = ["amazon"]
 
   filter {
     name   = "name"
-    values = ["amzn2-ami-hvm-*-x86_64-gp2"]
-  }
-
-  filter {
-    name   = "virtualization-type"
-    values = ["hvm"]
+    values = ["al2023-ami-2023.*-x86_64"]
   }
 }
 
+
 # Create EC2 instance
 resource "aws_instance" "test" {
-  ami                         = data.aws_ami.amazon_linux.id
+  ami                         = data.aws_ami.amazon_linux_2023.id
   instance_type               = "t2.micro"
   key_name                    = aws_key_pair.main.key_name
-  vpc_security_group_ids      = [aws_security_group.main.id]
+  vpc_security_group_ids = [aws_security_group.main.id]
   subnet_id                   = aws_subnet.main[0].id
   associate_public_ip_address = true
 
@@ -259,7 +254,7 @@ resource "aws_subnet" "main" {
 resource "aws_network_interface" "main" {
   count = 3 * var.num_eni_per_subnet
 
-  subnet_id       = aws_subnet.main[floor(count.index / var.num_eni_per_subnet)].id
+  subnet_id = aws_subnet.main[floor(count.index / var.num_eni_per_subnet)].id
   security_groups = [aws_security_group.main.id]
 
   # Calculate private IP: base_ip + (j+1) where j is the ENI number within subnet
@@ -347,8 +342,8 @@ resource "confluent_service_account" "app-manager" {
 }
 
 resource "confluent_role_binding" "app-manager-kafka-cluster-admin" {
-  principal   = "User:${confluent_service_account.app-manager.id}"
-  role_name   = "CloudClusterAdmin"
+  principal = "User:${confluent_service_account.app-manager.id}"
+  role_name = "CloudClusterAdmin"
   crn_pattern = replace(confluent_kafka_cluster.enterprise.rbac_crn, "stag.cpdev.cloud", "confluent.cloud")
 }
 
@@ -393,8 +388,8 @@ resource "confluent_service_account" "app-consumer" {
 }
 
 resource "confluent_api_key" "app-consumer-kafka-api-key" {
-  display_name = "${confluent_service_account.app-consumer.display_name}-kafka-api-key"
-  description  = "Kafka API Key that is owned by ${confluent_service_account.app-consumer.display_name} service account"
+  display_name           = "${confluent_service_account.app-consumer.display_name}-kafka-api-key"
+  description            = "Kafka API Key that is owned by ${confluent_service_account.app-consumer.display_name} service account"
   disable_wait_for_ready = true
   owner {
     id          = confluent_service_account.app-consumer.id
@@ -414,8 +409,8 @@ resource "confluent_api_key" "app-consumer-kafka-api-key" {
 }
 
 resource "confluent_role_binding" "app-producer-developer-write" {
-  principal   = "User:${confluent_service_account.app-producer.id}"
-  role_name   = "DeveloperWrite"
+  principal = "User:${confluent_service_account.app-producer.id}"
+  role_name = "DeveloperWrite"
   crn_pattern = replace("${confluent_kafka_cluster.enterprise.rbac_crn}/kafka=${confluent_kafka_cluster.enterprise.id}/topic=${local.topic_name}", "stag.cpdev.cloud", "confluent.cloud")
 }
 
@@ -425,8 +420,8 @@ resource "confluent_service_account" "app-producer" {
 }
 
 resource "confluent_api_key" "app-producer-kafka-api-key" {
-  display_name = "${confluent_service_account.app-producer.display_name}-kafka-api-key"
-  description  = "Kafka API Key that is owned by ${confluent_service_account.app-producer.display_name} service account"
+  display_name           = "${confluent_service_account.app-producer.display_name}-kafka-api-key"
+  description            = "Kafka API Key that is owned by ${confluent_service_account.app-producer.display_name} service account"
   disable_wait_for_ready = true
   owner {
     id          = confluent_service_account.app-producer.id
@@ -448,8 +443,8 @@ resource "confluent_api_key" "app-producer-kafka-api-key" {
 // Note that in order to consume from a topic, the principal of the consumer ('app-consumer' service account)
 // needs to be authorized to perform 'READ' operation on both Topic and Group resources:
 resource "confluent_role_binding" "app-consumer-developer-read-from-topic" {
-  principal   = "User:${confluent_service_account.app-consumer.id}"
-  role_name   = "DeveloperRead"
+  principal = "User:${confluent_service_account.app-consumer.id}"
+  role_name = "DeveloperRead"
   crn_pattern = replace("${confluent_kafka_cluster.enterprise.rbac_crn}/kafka=${confluent_kafka_cluster.enterprise.id}/topic=${local.topic_name}", "stag.cpdev.cloud", "confluent.cloud")
 }
 
