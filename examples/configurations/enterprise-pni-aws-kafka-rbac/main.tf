@@ -71,8 +71,6 @@ resource "aws_vpc" "main" {
 }
 
 # Create single security group for demo (both EC2 and ENIs)
-# WARNING: This configuration uses 0.0.0.0/0 for demonstration purposes only.
-# In production environments, restrict CIDR blocks to specific IP ranges or VPCs for security.
 resource "aws_security_group" "main" {
   name        = "pni-demo-sg-${var.environment_id}"
   description = "Demo security group for PNI test (EC2 + ENIs)"
@@ -83,7 +81,7 @@ resource "aws_security_group" "main" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = var.client_cidr_blocks
     description = "SSH access"
   }
 
@@ -92,7 +90,7 @@ resource "aws_security_group" "main" {
     from_port   = 443
     to_port     = 443
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = var.client_cidr_blocks
     description = "HTTPS access"
   }
 
@@ -101,7 +99,7 @@ resource "aws_security_group" "main" {
     from_port   = 9092
     to_port     = 9092
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = var.client_cidr_blocks
     description = "Kafka broker access"
   }
 
@@ -110,7 +108,7 @@ resource "aws_security_group" "main" {
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = var.client_cidr_blocks
     description = "All outbound traffic"
   }
 
@@ -170,31 +168,118 @@ data "aws_ami" "amazon_linux_2023" {
   }
 }
 
+locals {
+  pni_kafka_rest_endpoint = [for endpoint in confluent_kafka_cluster.enterprise.endpoints : endpoint.rest_endpoint if endpoint.access_point_id == confluent_access_point.aws.id][0]
+  pni_bootstrap_endpoint = [for endpoint in confluent_kafka_cluster.enterprise.endpoints : endpoint.bootstrap_endpoint if endpoint.access_point_id == confluent_access_point.aws.id][0]
+}
 
 # Create EC2 instance
 resource "aws_instance" "test" {
   ami                         = data.aws_ami.amazon_linux_2023.id
   instance_type               = "t2.micro"
   key_name                    = aws_key_pair.main.key_name
-  vpc_security_group_ids = [aws_security_group.main.id]
+  vpc_security_group_ids      = [aws_security_group.main.id]
   subnet_id                   = aws_subnet.main[0].id
   associate_public_ip_address = true
 
   user_data = <<-EOF
     #!/bin/bash
-    yum update -y
-    yum install -y curl wget yum-utils
+    set -e
 
-    # Install Confluent CLI using binary download (YUM package requires newer GLIBC than Amazon Linux 2 has)
+    yum update -y
+    yum install -y curl wget yum-utils nginx bind-utils
+
+    # START of setting up https://docs.confluent.io/cloud/current/networking/ccloud-console-access.html#configure-a-proxy
+    BOOTSTRAP_HOST="${local.pni_bootstrap_endpoint}"
+
+    echo "Testing DNS resolution for $BOOTSTRAP_HOST via 127.0.0.53" >> /var/log/user-data.log
+    if nslookup $BOOTSTRAP_HOST 127.0.0.53; then
+      echo "DNS resolution successful via 127.0.0.53" >> /var/log/user-data.log
+      RESOLVER="127.0.0.53"
+    else
+      echo "DNS resolution failed via 127.0.0.53, switching to AWS resolver 169.254.169.253" >> /var/log/user-data.log
+      RESOLVER="169.254.169.253"
+    fi
+
+    # Enable NGINX at boot
+    systemctl enable nginx
+
+    # Load ngx_stream_module if available
+    if [ -f /usr/lib64/nginx/modules/ngx_stream_module.so ]; then
+      sed -i '1iload_module /usr/lib64/nginx/modules/ngx_stream_module.so;' /etc/nginx/nginx.conf
+    elif [ -f /usr/lib/nginx/modules/ngx_stream_module.so ]; then
+      sed -i '1iload_module /usr/lib/nginx/modules/ngx_stream_module.so;' /etc/nginx/nginx.conf
+    fi
+
+    # Write nginx.conf with dynamic resolver
+    cat > /etc/nginx/nginx.conf <<NGINXCONF
+    load_module /usr/lib64/nginx/modules/ngx_stream_module.so;
+
+    events {}
+    stream {
+      map \$ssl_preread_server_name \$targetBackend {
+        default \$ssl_preread_server_name;
+      }
+
+      server {
+        listen 9092;
+        proxy_connect_timeout 1s;
+        proxy_timeout 7200s;
+        resolver $RESOLVER;
+        proxy_pass \$targetBackend:9092;
+        ssl_preread on;
+      }
+
+      server {
+        listen 443;
+        proxy_connect_timeout 1s;
+        proxy_timeout 7200s;
+        resolver $RESOLVER;
+        proxy_pass \$targetBackend:443;
+        ssl_preread on;
+      }
+
+      log_format stream_routing '[$time_local] remote address \$remote_addr '
+                                'with SNI name "\$ssl_preread_server_name" '
+                                'proxied to "\$upstream_addr" '
+                                '\$protocol \$status \$bytes_sent \$bytes_received '
+                                '\$session_time';
+      access_log /var/log/nginx/stream-access.log stream_routing;
+    }
+    NGINXCONF
+
+    # Test and restart NGINX
+    nginx -t && systemctl restart nginx
+
+    # Verify NGINX is running
+    if systemctl is-active --quiet nginx; then
+      echo "NGINX is running" >> /var/log/user-data.log
+    else
+      echo "NGINX failed to start" >> /var/log/user-data.log
+      exit 1
+    fi
+    # END of setting up https://docs.confluent.io/cloud/current/networking/ccloud-console-access.html#configure-a-proxy
+
+    # Install Confluent CLI
     curl -sL --http1.1 https://cnfl.io/cli | sh -s -- -b /usr/local/bin
 
     # Install Terraform
     yum-config-manager --add-repo https://rpm.releases.hashicorp.com/AmazonLinux/hashicorp.repo
     yum -y install terraform
 
-    # Verify installations
-    /usr/local/bin/confluent version || echo "Confluent CLI installation failed"
-    terraform version || echo "Terraform installation failed"
+    # Verify Confluent CLI
+    if /usr/local/bin/confluent version >> /var/log/user-data.log 2>&1; then
+      echo "Confluent CLI installed successfully" >> /var/log/user-data.log
+    else
+      echo "Confluent CLI installation failed" >> /var/log/user-data.log
+    fi
+
+    # Verify Terraform
+    if terraform version >> /var/log/user-data.log 2>&1; then
+      echo "Terraform installed successfully" >> /var/log/user-data.log
+    else
+      echo "Terraform installation failed" >> /var/log/user-data.log
+    fi
   EOF
 
   tags = {

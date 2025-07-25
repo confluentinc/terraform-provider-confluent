@@ -38,3 +38,8 @@ variable "num_eni_per_subnet" {
   type        = number
   default     = 17
 }
+
+variable "client_cidr_blocks" {
+  description = "List of client CIDR blocks allowed to access EC2"
+  type        = list(string)
+}
