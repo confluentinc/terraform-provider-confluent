@@ -86,13 +86,10 @@ resource "confluent_flink_statement" "example" {
 Example of `confluent_flink_statement` that creates a model:
 ```
 resource "confluent_flink_statement" "example" {
-  statement  = "CREATE MODEL `vector_encoding` INPUT (input STRING) OUTPUT (vector ARRAY<FLOAT>) WITH( 'TASK' = 'classification','PROVIDER' = 'OPENAI','OPENAI.ENDPOINT' = 'https://api.openai.com/v1/embeddings','OPENAI.API_KEY' = '{{sessionconfig/sql.secrets.openaikey}}');"  
+  statement  = "CREATE MODEL `vector_encoding` INPUT (input STRING) OUTPUT (vector ARRAY<FLOAT>) WITH( 'TASK' = 'classification','PROVIDER' = 'OPENAI','OPENAI.CONNECTION' = 'openai-cli-connection');"  
   properties = {
     "sql.current-catalog"  = var.confluent_environment_display_name
     "sql.current-database" = var.confluent_kafka_cluster_display_name
-  }
-  properties_sensitive = {
-      "sql.secrets.openaikey" : "***REDACTED***"
   }
   lifecycle {
     prevent_destroy = true
