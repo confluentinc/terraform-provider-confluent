@@ -97,7 +97,7 @@ MAINEOF
   $ confluent login
 
   # 2. Produce key-value records to topic '${local.topic_name}' by using ${confluent_service_account.app-producer.display_name}'s Kafka API Key
-  $ confluent kafka topic produce ${local.topic_name} --api-key "${confluent_api_key.app-producer-kafka-api-key.id}" --api-secret "${confluent_api_key.app-producer-kafka-api-key.secret} --bootstrap ${local.pni_bootstrap_endpoint}"
+  $ confluent kafka topic produce ${local.topic_name} --environment ${data.confluent_environment.staging.id} --cluster ${confluent_kafka_cluster.enterprise.id} --api-key "${confluent_api_key.app-producer-kafka-api-key.id}" --api-secret "${confluent_api_key.app-producer-kafka-api-key.secret} --bootstrap ${local.pni_bootstrap_endpoint}"
   # Enter a few records and then press 'Ctrl-C' when you're done.
   # Sample records:
   # {"number":1,"date":18500,"shipping_address":"899 W Evelyn Ave, Mountain View, CA 94041, USA","cost":15.00}
@@ -105,7 +105,7 @@ MAINEOF
   # {"number":3,"date":18502,"shipping_address":"3307 Northland Dr Suite 400, Austin, TX 78731, USA","cost":10.00}
 
   # 3. Consume records from topic '${local.topic_name}' by using ${confluent_service_account.app-consumer.display_name}'s Kafka API Key
-  $ confluent kafka topic consume ${local.topic_name} --from-beginning --api-key "${confluent_api_key.app-consumer-kafka-api-key.id}" --api-secret "${confluent_api_key.app-consumer-kafka-api-key.secret} --bootstrap ${local.pni_bootstrap_endpoint}"
+  $ confluent kafka topic consume ${local.topic_name} --from-beginning --environment ${data.confluent_environment.staging.id} --cluster ${confluent_kafka_cluster.enterprise.id} --api-key "${confluent_api_key.app-consumer-kafka-api-key.id}" --api-secret "${confluent_api_key.app-consumer-kafka-api-key.secret} --bootstrap ${local.pni_bootstrap_endpoint}"
   # When you are done, press 'Ctrl-C'.
 
   🔑 CONFLUENT CLOUD CONSOLE ACCESS INSTRUCTIONS:
