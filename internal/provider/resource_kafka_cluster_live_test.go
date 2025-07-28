@@ -214,6 +214,8 @@ func TestAccKafkaClusterEnterpriseLive(t *testing.T) {
 
 // Test Dedicated cluster with private networking - requires network dependency
 func TestAccKafkaClusterDedicatedWithNetworkLive(t *testing.T) {
+	// Disable dedicated tests until cost is figured out
+	t.Skip()
 	// Enable parallel execution for I/O bound operations (Dedicated takes ~45 minutes)
 	t.Parallel()
 
@@ -283,6 +285,8 @@ func TestAccKafkaClusterDedicatedWithNetworkLive(t *testing.T) {
 
 // Test Dedicated cluster - CKU-based with optional networking and encryption
 func TestAccKafkaClusterDedicatedLive(t *testing.T) {
+	// Disable dedicated tests until cost is figured out
+	t.Skip()
 	// Enable parallel execution for I/O bound operations (Dedicated takes ~45 minutes)
 	t.Parallel()
 
