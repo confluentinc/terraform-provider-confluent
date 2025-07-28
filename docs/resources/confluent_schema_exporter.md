@@ -34,6 +34,8 @@ resource "confluent_schema_exporter" "main" {
   
   name = "test-exporter"
   subjects = ["foo"]
+  # Uncomment to copy all schemas:
+  # subjects = [":*:"]
   
   destination_schema_registry_cluster {
       rest_endpoint = data.confluent_schema_registry_cluster.destination.rest_endpoint
