@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
+	"sort"
 	"strings"
 
 	cmk "github.com/confluentinc/ccloud-sdk-go-v2/cmk/v2"
@@ -52,6 +53,8 @@ const (
 	paramEncryptionKey               = "encryption_key"
 	paramRbacCrn                     = "rbac_crn"
 	paramConfluentCustomerKey        = "byok_key"
+	paramEndpoints                   = "endpoints"
+	paramConnectionType              = "connection_type"
 
 	stateInProgress = "IN_PROGRESS"
 	stateDone       = "DONE"
@@ -69,6 +72,8 @@ const (
 	multiZone        = "MULTI_ZONE"
 	lowAvailability  = "LOW"
 	highAvailability = "HIGH"
+
+	paramAccessPointID = "access_point_id"
 )
 
 var acceptedAvailabilityZones = []string{singleZone, multiZone, lowAvailability, highAvailability}
@@ -147,6 +152,32 @@ func kafkaResource() *schema.Resource {
 			},
 			paramEnvironment:          environmentSchema(),
 			paramConfluentCustomerKey: byokSchema(),
+			paramEndpoints: {
+				Type: schema.TypeList,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						paramAccessPointID: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The access point ID (e.g., 'public', 'privatelink').",
+						},
+						paramBootStrapEndpoint: {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						paramRestEndpoint: {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						paramConnectionType: {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+					},
+				},
+				Computed:    true,
+				Description: "A map of endpoints for connecting to the Kafka cluster, keyed by access_point_id. Access Point ID 'public' and 'privatelink' are reserved. These can be used for different network access methods or regions.",
+			},
 		},
 		CustomizeDiff: customdiff.Sequence(resourceKafkaCustomizeDiff),
 		Timeouts: &schema.ResourceTimeout{
@@ -741,8 +772,35 @@ func setKafkaClusterAttributes(d *schema.ResourceData, cluster cmk.CmkV2Cluster)
 	if err := setStringAttributeInListBlockOfSizeOne(paramConfluentCustomerKey, paramId, cluster.Spec.Byok.GetId(), d); err != nil {
 		return nil, err
 	}
+	if err := setEndpointsBlock(cluster.Spec.GetEndpoints(), d); err != nil {
+		return nil, err
+	}
 	d.SetId(cluster.GetId())
 	return d, nil
+}
+
+func setEndpointsBlock(modelMap cmk.ModelMap, d *schema.ResourceData) error {
+	var endpointsList []interface{}
+
+	// Ensure consistent ordering
+	var accessPointIds []string
+	for accessPointId := range modelMap {
+		accessPointIds = append(accessPointIds, accessPointId)
+	}
+	sort.Strings(accessPointIds)
+
+	for _, accessPointId := range accessPointIds {
+		endpoints := modelMap[accessPointId]
+		endpointData := map[string]interface{}{
+			paramAccessPointID:     accessPointId,
+			paramBootStrapEndpoint: endpoints.GetKafkaBootstrapEndpoint(),
+			paramRestEndpoint:      endpoints.GetHttpEndpoint(),
+			paramConnectionType:    endpoints.GetConnectionType(),
+		}
+		endpointsList = append(endpointsList, endpointData)
+	}
+
+	return d.Set(paramEndpoints, endpointsList)
 }
 
 func optionalNetworkSchema() *schema.Schema {
