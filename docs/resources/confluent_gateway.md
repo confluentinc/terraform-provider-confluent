@@ -70,3 +70,7 @@ $ terraform import confluent_gateway.main env-abc123/gw-abc123
 ```
 
 !> **Warning:** Do not forget to delete terminal command history afterwards for security purposes.
+
+## Getting Started
+The following end-to-end examples might help to get started with `confluent_gateway` resource:
+  * [enterprise-pni-aws-kafka-rbac](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/enterprise-pni-aws-kafka-rbac): _Enterprise_ Kafka cluster on AWS that is accessible via Confluent Private Network Interface (PNI) with authorization using RBAC
