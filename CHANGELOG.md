@@ -9,7 +9,7 @@
 * Added `Table Path` output field for `confluent_tableflow_topic` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_tableflow_topic) and [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_tableflow_topic).
 
 **Bug Fixes:**
-* Enable update for `confluent_schema` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema) when only the metadata field changes.
+* Enabled update for `confluent_schema` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema) when only the metadata field changes.
 
 **Examples:**
 * Added the [enterprise-pni-aws-kafka-rbac](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/enterprise-pni-aws-kafka-rbac) example.
