@@ -355,7 +355,7 @@ func setTableflowTopicAttributes(d *schema.ResourceData, c *TableflowRestClient,
 }
 
 func getStorageType(tableflowTopic tableflow.TableflowV1TableflowTopic) (string, error) {
-	config := tableflowTopic.Spec.GetStorage()
+	config := tableflowTopic.GetSpec().Storage
 
 	if config.TableflowV1ByobAwsSpec != nil {
 		return byobAwsSpecKind, nil
