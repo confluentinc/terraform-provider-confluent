@@ -1,0 +1,22 @@
+{
+  "api_version": "connect/v1",
+  "connector_class": "io.confluent.kafka.connect.datagen.DatagenConnector",
+  "connector_type": "SOURCE",
+  "content_format": "ZIP",
+  "description": "datagen-plugin-description-gcp",
+  "display_name": "datagen-plugin-name-gcp",
+  "documentation_link": "https://www.confluent.io/hub/confluentinc/kafka-connect-datagen",
+  "id": "ccp-5rrw00",
+  "kind": "CustomConnectorPlugin",
+  "metadata": {
+    "created_at": "2023-10-02T17:33:05.271949Z",
+    "resource_name": "crn://confluent.cloud/organization=cc2d2db8-b889-4d72-8948-9d7cb37c6a9c/custom-connector-plugins=ccp-5rrw00",
+    "self": "http://api.confluent.cloud/connect/v1/custom-connector-plugins/ccp-5rrw00",
+    "updated_at": "2023-10-02T17:33:22.059058Z"
+  },
+  "sensitive_config_properties": [
+    "keys",
+    "passwords"
+  ],
+  "cloud": "GCP"
+} 

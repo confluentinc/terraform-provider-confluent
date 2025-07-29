@@ -34,6 +34,7 @@ import (
 	apikeys "github.com/confluentinc/ccloud-sdk-go-v2/apikeys/v2"
 	byok "github.com/confluentinc/ccloud-sdk-go-v2/byok/v1"
 	cam "github.com/confluentinc/ccloud-sdk-go-v2/cam/v1"
+	ccpm "github.com/confluentinc/ccloud-sdk-go-v2/ccpm/v1"
 	ca "github.com/confluentinc/ccloud-sdk-go-v2/certificate-authority/v2"
 	cmk "github.com/confluentinc/ccloud-sdk-go-v2/cmk/v2"
 	ccp "github.com/confluentinc/ccloud-sdk-go-v2/connect-custom-plugin/v1"
@@ -92,6 +93,8 @@ const (
 	flinkStatementLoggingKey                  = "flink_statement_key_id"
 	networkLoggingKey                         = "network_key_id"
 	customConnectorPluginLoggingKey           = "custom_connector_plugin_key_id"
+	customConnectorPluginVersionLoggingKey    = "custom_connector_plugin_version_key_id"
+	pluginLoggingKey                          = "plugin_key_id"
 	connectorLoggingKey                       = "connector_key_id"
 	groupMappingLoggingKey                    = "group_mapping_id"
 	privateLinkAccessLoggingKey               = "private_link_access_id"
@@ -199,6 +202,25 @@ func (c *Client) ccpApiContext(ctx context.Context) context.Context {
 
 	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
 		return context.WithValue(ctx, ccp.ContextBasicAuth, ccp.BasicAuth{
+			UserName: c.cloudApiKey,
+			Password: c.cloudApiSecret,
+		})
+	}
+
+	tflog.Warn(ctx, "Could not find Cloud API Key or OAuth Token for Custom Code Logging client")
+	return ctx
+}
+
+func (c *Client) ccpmApiContext(ctx context.Context) context.Context {
+	if c.oauthToken != nil && c.stsToken != nil {
+		if err := c.fetchOrOverrideSTSOAuthTokenFromApiContext(ctx); err != nil {
+			tflog.Error(ctx, fmt.Sprintf("Failed to get OAuth token for Custom Code Logging client: %v", err))
+		}
+		return context.WithValue(ctx, ccp.ContextAccessToken, c.stsToken.AccessToken)
+	}
+
+	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
+		return context.WithValue(ctx, ccpm.ContextBasicAuth, ccpm.BasicAuth{
 			UserName: c.cloudApiKey,
 			Password: c.cloudApiSecret,
 		})
@@ -1246,15 +1268,24 @@ func uploadFile(url, filePath string, formFields map[string]any, fileExtension, 
 	client := &http.Client{
 		Timeout: 20 * time.Minute,
 	}
-	if cloud == "AZURE" && isFlinkArtifact {
-		var contentFormat string
-		switch strings.ToLower(fileExtension) {
-		case "zip":
-			contentFormat = "application/zip"
-		case "jar":
-			contentFormat = "application/java-archive"
-		}
 
+	var contentFormat string
+	switch strings.ToLower(fileExtension) {
+	case "zip":
+		contentFormat = "application/zip"
+	case "jar":
+		contentFormat = "application/java-archive"
+	}
+
+	if cloud == "GCP" {
+		_, err = sling.New().
+			Client(client).
+			Base(url).
+			Set("Content-Type", contentFormat).
+			Put("").
+			Body(&buffer).
+			ReceiveSuccess(nil)
+	} else if cloud == "AZURE" && isFlinkArtifact {
 		_, err = sling.New().
 			Client(client).
 			Base(url).

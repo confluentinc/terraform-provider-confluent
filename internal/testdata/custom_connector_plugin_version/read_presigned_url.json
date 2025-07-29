@@ -1,0 +1,24 @@
+{
+  "api_version": "ccpm/v1",
+  "kind": "PresignedUrl",
+  "content_format": "ZIP",
+  "cloud": "AWS",
+  "upload_id": "e53bb2e8-8de3-49fa-9fb1-4e3fd9a16b66",
+  "upload_url": "TF_TEST_URL",
+  "upload_form_data": {
+    "bucket": "confluent-custom-connectors-stag-us-west-2",
+    "key": "staging/custom-plugin/2f37f0b6-f8da-4e8b-bc5f-282ebb0511be/connect-e53bb2e8-8de3-49fa-9fb1-4e3fd9a16b66/plugin.zip",
+    "policy": "string",
+    "x-amz-algorithm": "AWS4-HMAC-SHA256",
+    "x-amz-credential": "string",
+    "x-amz-date": "20230725T013857Z",
+    "x-amz-security-token": "string",
+    "x-amz-signature": "string"
+  },
+  "environment": {
+    "id": "env-00000",
+    "environment": "string",
+    "related": "https://api.confluent.cloud/v2/environments/env-00000",
+    "resource_name": "https://api.confluent.cloud/organization=9bb441c4-edef-46ac-8a41-c49e44a3fd9a/environment=env-00000"
+  }
+}

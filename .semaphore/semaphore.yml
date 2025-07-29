@@ -11,7 +11,7 @@ auto_cancel:
 global_job_config:
   prologue:
     commands:
-      - sem-version go 1.22.7
+      - sem-version go 1.24.4
       - export "GOPATH=$(go env GOPATH)"
       - >-
         export
@@ -50,3 +50,5 @@ after_pipeline:
 promotions:
   - name: Draft a Release
     pipeline_file: goreleaser.yml
+  - name: Run Live Integration Tests
+    pipeline_file: live-tests.yml

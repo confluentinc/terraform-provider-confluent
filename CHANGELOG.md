@@ -1,3 +1,27 @@
+## 2.35.0 (July 17th, 2025)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.34.0...v2.35.0)
+
+**New features:**
+* Added `resource_plugin` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_plugin) and `resource_custom_connector_plugin_version` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_custom_connector_plugin_version).
+
+## 2.34.0 (July 2nd, 2025)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.33.0...v2.34.0)
+
+**Bug fixes:**
+* Fixed an issue affecting the use of the existing `confluent_custom_connector_plugin` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_custom_connector_plugin) for GCP use cases.
+
+## 2.33.0 (July 1st, 2025)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.32.0...v2.33.0)
+
+**New features:**
+* Added the GCP support for the existing `confluent_custom_connector_plugin` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_custom_connector_plugin) to allow users uploading Custom Connector Plugin archive through GCP.
+
+**Bug fixes:**
+* Updated the docs of `confluent_kafka_cluster` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_cluster) to fix a statement that is no longer correct.
+
 ## 2.32.0 (June 12th, 2025)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.31.0...v2.32.0)

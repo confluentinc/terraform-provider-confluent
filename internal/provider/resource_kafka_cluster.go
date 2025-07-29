@@ -479,6 +479,10 @@ func kafkaDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 		return diag.Errorf("error deleting Kafka Cluster %q: %s", d.Id(), createDescriptiveError(err))
 	}
 
+	if err := waitForKafkaClusterToBeDeleted(c.cmkApiContext(ctx), c, environmentId, d.Id()); err != nil {
+		return diag.Errorf("error waiting for Kafka Cluster %q to be deleted: %s", d.Id(), createDescriptiveError(err))
+	}
+
 	tflog.Debug(ctx, fmt.Sprintf("Finished deleting Kafka Cluster %q", d.Id()), map[string]interface{}{kafkaClusterLoggingKey: d.Id()})
 
 	return nil

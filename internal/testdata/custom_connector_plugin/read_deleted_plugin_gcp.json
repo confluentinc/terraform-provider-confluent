@@ -1,0 +1,11 @@
+{
+  "errors": [
+    {
+      "id": "2068bbaf0c4907787b3a693fc23259ff",
+      "status": "404",
+      "code": "not_found",
+      "detail": "failed to retrieve custom plugin: Not Found",
+      "source": {}
+    }
+  ]
+} 
