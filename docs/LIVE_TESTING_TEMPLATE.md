@@ -253,3 +253,41 @@ Once your test is tagged properly, it will automatically be included in the appr
 - **Intermittent failures**: Often due to timing issues or resource limits
 - **Import failures**: Check that ImportStateIdFunc correctly formats the resource ID
 - **Destroy failures**: Usually handled by Terraform, but check for dependency issues 
+
+### 10. Advanced Patterns and Learnings
+
+#### Managing Global State Resources
+
+Some resources (like `confluent_schema_registry_cluster_mode`) modify global state that affects other tests:
+
+#### Problem: Global State Conflicts
+```go
+// ❌ AVOID: This can cause parallel test conflicts
+func TestAccClusterModeLive(t *testing.T) {
+    t.Parallel() // This will conflict with other tests!
+    
+    // Test sets cluster to READONLY mode
+    // Other parallel tests fail because they can't write
+}
+```
+
+#### Solution: Sequential Execution for Global State
+```go
+// ✅ GOOD: Disable parallel execution for global state modifiers
+func TestAccSchemaRegistryClusterModeLive(t *testing.T) {
+    // Disable parallel execution since this test modifies global cluster mode
+    // t.Parallel() - commented out intentionally
+    
+    // Test logic here...
+    
+    // Always reset back to READWRITE at the end
+    Steps: []resource.TestStep{
+        // ... other steps
+        {
+            // Reset back to READWRITE to ensure other tests can run
+            Config: resetToReadWriteConfig(),
+            Check: resource.TestCheckResourceAttr("confluent_schema_registry_cluster_mode.test", "mode", "READWRITE"),
+        },
+    }
+}
+```

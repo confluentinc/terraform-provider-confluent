@@ -16,6 +16,7 @@ require (
 	github.com/confluentinc/ccloud-sdk-go-v2/flink-artifact v0.4.0
 	github.com/confluentinc/ccloud-sdk-go-v2/flink-gateway v0.17.0
 	github.com/confluentinc/ccloud-sdk-go-v2/iam v0.17.0
+	github.com/confluentinc/ccloud-sdk-go-v2/iam-ip-filtering v0.5.0
 	github.com/confluentinc/ccloud-sdk-go-v2/identity-provider v0.3.0
 	github.com/confluentinc/ccloud-sdk-go-v2/kafka-quotas v0.4.0
 	github.com/confluentinc/ccloud-sdk-go-v2/kafkarest v0.14.0
@@ -33,6 +34,7 @@ require (
 	github.com/confluentinc/ccloud-sdk-go-v2/srcm v0.7.3
 	github.com/confluentinc/ccloud-sdk-go-v2/sso v0.0.1
 	github.com/confluentinc/ccloud-sdk-go-v2/tableflow v0.2.0
+	github.com/confluentinc/ccloud-sdk-go-v2/sts v0.0.2
 	github.com/dghubble/sling v1.4.1
 	github.com/docker/go-connections v0.5.0
 	github.com/hashicorp/go-cty v1.4.1-0.20200414143053-d3edf31b6320
@@ -49,7 +51,7 @@ require (
 	github.com/moby/sys/userns v0.1.0 // indirect
 	github.com/sergi/go-diff v1.3.2-0.20230802210424-5b0b94c5c0d3 // indirect
 	github.com/stretchr/testify v1.10.0 // indirect
-	golang.org/x/oauth2 v0.17.0 // indirect
+	golang.org/x/oauth2 v0.27.0 // indirect
 )
 
 require (
@@ -137,11 +139,11 @@ require (
 	go.opentelemetry.io/otel/sdk v1.24.0 // indirect
 	go.opentelemetry.io/otel/trace v1.25.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.1.0 // indirect
-	golang.org/x/crypto v0.31.0 // indirect
+	golang.org/x/crypto v0.36.0 // indirect
 	golang.org/x/exp v0.0.0-20240409090435-93d18d7e34b8 // indirect
-	golang.org/x/net v0.33.0 // indirect
-	golang.org/x/sys v0.28.0 // indirect
-	golang.org/x/text v0.21.0 // indirect
+	golang.org/x/net v0.38.0 // indirect
+	golang.org/x/sys v0.31.0 // indirect
+	golang.org/x/text v0.23.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240412170617-26222e5d3d56 // indirect

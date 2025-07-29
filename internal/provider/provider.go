@@ -37,6 +37,7 @@ import (
 	dc "github.com/confluentinc/ccloud-sdk-go-v2/data-catalog/v1"
 	fa "github.com/confluentinc/ccloud-sdk-go-v2/flink-artifact/v1"
 	fcpm "github.com/confluentinc/ccloud-sdk-go-v2/flink/v2"
+	iamip "github.com/confluentinc/ccloud-sdk-go-v2/iam-ip-filtering/v2"
 	iamv1 "github.com/confluentinc/ccloud-sdk-go-v2/iam/v1"
 	iam "github.com/confluentinc/ccloud-sdk-go-v2/iam/v2"
 	oidc "github.com/confluentinc/ccloud-sdk-go-v2/identity-provider/v2"
@@ -53,6 +54,7 @@ import (
 	pi "github.com/confluentinc/ccloud-sdk-go-v2/provider-integration/v1"
 	srcm "github.com/confluentinc/ccloud-sdk-go-v2/srcm/v3"
 	"github.com/confluentinc/ccloud-sdk-go-v2/sso/v2"
+	sts "github.com/confluentinc/ccloud-sdk-go-v2/sts/v1"
 )
 
 const (
@@ -82,6 +84,7 @@ type Client struct {
 	apiKeysClient                   *apikeys.APIClient
 	byokClient                      *byok.APIClient
 	iamClient                       *iam.APIClient
+	iamIPClient                     *iamip.APIClient
 	iamV1Client                     *iamv1.APIClient
 	caClient                        *ca.APIClient
 	ccpClient                       *ccp.APIClient
@@ -110,6 +113,7 @@ type Client struct {
 	quotasClient                    *quotas.APIClient
 	srcmClient                      *srcm.APIClient
 	ssoClient                       *sso.APIClient
+	stsClient                       *sts.APIClient
 	piClient                        *pi.APIClient
 	userAgent                       string
 	catalogRestEndpoint             string
@@ -313,6 +317,8 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_certificate_pool":                   certificatePoolDataSource(),
 				"confluent_cluster_link":                       clusterLinkDataSource(),
 				"confluent_connect_artifact":                   connectArtifactDataSource(),
+				"confluent_ip_filter":                          ipFilterDataSource(),
+				"confluent_ip_group":                           ipGroupDataSource(),
 				"confluent_kafka_cluster":                      kafkaDataSource(),
 				"confluent_kafka_topic":                        kafkaTopicDataSource(),
 				"confluent_environment":                        environmentDataSource(),
@@ -370,6 +376,8 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_certificate_pool":                   certificatePoolResource(),
 				"confluent_cluster_link":                       clusterLinkResource(),
 				"confluent_connect_artifact":                   connectArtifactResource(),
+				"confluent_ip_group":                           ipGroupResource(),
+				"confluent_ip_filter":                          ipFilterResource(),
 				"confluent_kafka_cluster":                      kafkaResource(),
 				"confluent_kafka_cluster_config":               kafkaConfigResource(),
 				"confluent_environment":                        environmentResource(),
@@ -497,21 +505,6 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	tableflowApiSecret := d.Get("tableflow_api_secret").(string)
 	maxRetries := d.Get("max_retries").(int)
 
-	var externalOAuthToken *OAuthToken
-	var stsOAuthToken *STSToken
-	var err diag.Diagnostics
-	var oauthEnabled bool
-	if _, ok := d.GetOk(paramOAuthBlockName); ok {
-		oauthEnabled = true
-		externalOAuthToken, stsOAuthToken, err = initializeOAuthConfigs(ctx, d)
-		if err != nil {
-			return nil, err
-		}
-		if err := validateOAuthAndProviderAPIKeysCoexist(cloudApiKey, cloudApiSecret, kafkaApiKey, kafkaApiSecret, schemaRegistryApiKey, schemaRegistryApiSecret, flinkApiKey, flinkApiSecret, tableflowApiKey, tableflowApiSecret); err != nil {
-			return nil, err
-		}
-	}
-
 	// 3 or 4 attributes should be set or not set at the same time
 	// Option #2: (kafka_api_key, kafka_api_secret, kafka_rest_endpoint)
 	// Option #3 (primary): (kafka_api_key, kafka_api_secret, kafka_rest_endpoint, kafka_id)
@@ -575,6 +568,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	faCfg := fa.NewConfiguration()
 	fcpmCfg := fcpm.NewConfiguration()
 	iamCfg := iam.NewConfiguration()
+	iamIPCfg := iamip.NewConfiguration()
 	iamV1Cfg := iamv1.NewConfiguration()
 	ksqlCfg := ksql.NewConfiguration()
 	mdsCfg := mds.NewConfiguration()
@@ -590,6 +584,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	quotasCfg := quotas.NewConfiguration()
 	srcmCfg := srcm.NewConfiguration()
 	ssoCfg := sso.NewConfiguration()
+	stsCfg := sts.NewConfiguration()
 
 	apiKeysCfg.Servers[0].URL = endpoint
 	byokCfg.Servers[0].URL = endpoint
@@ -602,6 +597,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	faCfg.Servers[0].URL = endpoint
 	fcpmCfg.Servers[0].URL = endpoint
 	iamCfg.Servers[0].URL = endpoint
+	iamIPCfg.Servers[0].URL = endpoint
 	iamV1Cfg.Servers[0].URL = endpoint
 	ksqlCfg.Servers[0].URL = endpoint
 	mdsCfg.Servers[0].URL = endpoint
@@ -617,6 +613,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	quotasCfg.Servers[0].URL = endpoint
 	srcmCfg.Servers[0].URL = endpoint
 	ssoCfg.Servers[0].URL = endpoint
+	stsCfg.Servers[0].URL = endpoint
 
 	apiKeysCfg.UserAgent = userAgent
 	byokCfg.UserAgent = userAgent
@@ -630,6 +627,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	faCfg.UserAgent = userAgent
 	fcpmCfg.UserAgent = userAgent
 	iamCfg.UserAgent = userAgent
+	iamIPCfg.UserAgent = userAgent
 	iamV1Cfg.UserAgent = userAgent
 	ksqlCfg.UserAgent = userAgent
 	mdsCfg.UserAgent = userAgent
@@ -645,6 +643,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	quotasCfg.UserAgent = userAgent
 	srcmCfg.UserAgent = userAgent
 	ssoCfg.UserAgent = userAgent
+	stsCfg.UserAgent = userAgent
 
 	var catalogRestClientFactory *CatalogRestClientFactory
 	var flinkRestClientFactory *FlinkRestClientFactory
@@ -670,6 +669,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	faCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	fcpmCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	iamCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
+	iamIPCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	iamV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	ksqlCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	mdsCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
@@ -684,6 +684,24 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	quotasCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	srcmCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	ssoCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
+	stsCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
+
+	secureTokenServiceClient := sts.NewAPIClient(stsCfg)
+
+	var externalOAuthToken *OAuthToken
+	var stsOAuthToken *STSToken
+	var err diag.Diagnostics
+	var oauthEnabled bool
+	if _, ok := d.GetOk(paramOAuthBlockName); ok {
+		oauthEnabled = true
+		externalOAuthToken, stsOAuthToken, err = initializeOAuthConfigs(ctx, d, secureTokenServiceClient)
+		if err != nil {
+			return nil, err
+		}
+		if err := validateOAuthAndProviderAPIKeysCoexist(cloudApiKey, cloudApiSecret, kafkaApiKey, kafkaApiSecret, schemaRegistryApiKey, schemaRegistryApiSecret, flinkApiKey, flinkApiSecret, tableflowApiKey, tableflowApiSecret); err != nil {
+			return nil, err
+		}
+	}
 
 	client := Client{
 		apiKeysClient:                   apikeys.NewAPIClient(apiKeysCfg),
@@ -698,6 +716,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 		faClient:                        fa.NewAPIClient(faCfg),
 		fcpmClient:                      fcpm.NewAPIClient(fcpmCfg),
 		iamClient:                       iam.NewAPIClient(iamCfg),
+		iamIPClient:                     iamip.NewAPIClient(iamIPCfg),
 		iamV1Client:                     iamv1.NewAPIClient(iamV1Cfg),
 		ksqlClient:                      ksql.NewAPIClient(ksqlCfg),
 		netClient:                       net.NewAPIClient(netCfg),
@@ -718,6 +737,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 		mdsClient:                       mds.NewAPIClient(mdsCfg),
 		quotasClient:                    quotas.NewAPIClient(quotasCfg),
 		ssoClient:                       sso.NewAPIClient(ssoCfg),
+		stsClient:                       secureTokenServiceClient,
 		userAgent:                       userAgent,
 		catalogRestEndpoint:             catalogRestEndpoint,
 		cloudApiKey:                     cloudApiKey,
@@ -756,7 +776,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	return &client, nil
 }
 
-func initializeOAuthConfigs(ctx context.Context, d *schema.ResourceData) (*OAuthToken, *STSToken, diag.Diagnostics) {
+func initializeOAuthConfigs(ctx context.Context, d *schema.ResourceData, stsClient *sts.APIClient) (*OAuthToken, *STSToken, diag.Diagnostics) {
 	tflog.Info(ctx, "Initializing OAuth settings for Confluent Cloud")
 	providedToken := extractStringValueFromBlock(d, paramOAuthBlockName, paramOAuthExternalAccessToken)
 	identityPoolId := extractStringValueFromBlock(d, paramOAuthBlockName, paramOAuthIdentityPoolId)
@@ -764,7 +784,7 @@ func initializeOAuthConfigs(ctx context.Context, d *schema.ResourceData) (*OAuth
 	var oauthToken *OAuthToken
 	var err error
 
-	// Use this single retryable client to fetch external and STS token
+	// Use this single retryable client to fetch external token
 	retryableClient := NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 
 	if providedToken == "" {
@@ -796,8 +816,9 @@ func initializeOAuthConfigs(ctx context.Context, d *schema.ResourceData) (*OAuth
 	}
 
 	// STS token exchanged from external OAuth token
+	// STS token will be fetched using the STS special client
 	expiredInSeconds := extractStringValueFromBlock(d, paramOAuthBlockName, paramOAuthSTSTokenExpiredInSeconds)
-	stsToken, err := fetchSTSOAuthToken(ctx, oauthToken.AccessToken, identityPoolId, expiredInSeconds, nil, retryableClient)
+	stsToken, err := fetchSTSOAuthToken(ctx, oauthToken.AccessToken, identityPoolId, expiredInSeconds, nil, stsClient)
 	if err != nil {
 		return nil, nil, diag.FromErr(err)
 	}
