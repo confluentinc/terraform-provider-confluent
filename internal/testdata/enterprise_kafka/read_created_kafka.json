@@ -1,0 +1,43 @@
+{
+  "api_version": "cmk/v2",
+  "id": "lkc-19ynpv",
+  "kind": "Cluster",
+  "metadata": {
+    "created_at": "2021-08-24T14:37:56.09422Z",
+    "resource_name": "crn://confluent.cloud/organization=1111aaaa-11aa-11aa-11aa-111111aaaaaa/environment=env-1jrymj/cloud-cluster=lkc-19ynpv/kafka=lkc-19ynpv",
+    "self": "https://api.confluent.cloud/cmk/v2/clusters/lkc-19ynpv",
+    "updated_at": "2021-08-24T14:37:56.09422Z"
+  },
+  "spec": {
+    "api_endpoint": "https://lkaclkc-19ynpv.us-east-2.aws.private.confluent.cloud:443",
+    "availability": "LOW",
+    "cloud": "AWS",
+    "config": {
+      "kind": "Enterprise"
+    },
+    "display_name": "TestCluster",
+    "environment": {
+      "id": "env-1jrymj",
+      "related": "https://api.confluent.cloud/v2/environments/env-1jrymj",
+      "resource_name": "crn://confluent.cloud/organization=1111aaaa-11aa-11aa-11aa-111111aaaaaa/environment=env-1jrymj"
+    },
+    "http_endpoint": "https://lkc-19ynpv.us-east-2.aws.private.confluent.cloud:443",
+    "kafka_bootstrap_endpoint": "lkc-19ynpv.us-east-2.aws.private.confluent.cloud:9092",
+    "region": "us-east-2",
+    "endpoints": {
+      "ap1pni123": {
+        "kafka_bootstrap_endpoint": "lkc-s1232-00000.us-central1.gcp.private.confluent.cloud:9092",
+        "http_endpoint": "https://lkc-s1232.us-central1.gcp.private.confluent.cloud:443",
+        "connection_type": "PRIVATENETWORKINTERFACE"
+      },
+      "ap2platt67890": {
+        "kafka_bootstrap_endpoint": "lkc-00000-00000.us-central1.gcp.glb.confluent.cloud:9092",
+        "http_endpoint": "https://lkc-00000-00000.us-central1.gcp.glb.confluent.cloud:443",
+        "connection_type": "PRIVATELINK"
+      }
+    }
+  },
+  "status": {
+    "phase": "PROVISIONED"
+  }
+}
