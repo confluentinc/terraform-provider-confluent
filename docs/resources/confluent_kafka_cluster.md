@@ -296,10 +296,10 @@ In addition to the preceding arguments, the following attributes are exported:
   - `zones` - (Required List of String) The list of zones the cluster is in.
     - On AWS, zones are AWS [AZ IDs](https://docs.aws.amazon.com/ram/latest/userguide/working-with-az-ids.html), for example, `use1-az3`.
 - `endpoints` - (Optional List) The list of endpoints for connecting to the Kafka cluster. These endpoints provide different network access methods or regions for connecting to the cluster:
-  - `access_point_id` - (Required String) The ID of the Access Point that the endpoint corresponds to. Access Point IDs 'public' and 'privatelink' are reserved.
-  - `bootstrap_endpoint` - (Required String) The bootstrap endpoint used by Kafka clients to connect to the cluster.
-  - `rest_endpoint` - (Required String) The REST endpoint of the Kafka cluster (e.g., `https://lkc-00000-00000.us-central1.gcp.glb.confluent.cloud:443`).
-  - `connection_type` - (Required String) The type of connection used for the endpoint.
+  - `access_point_id` - (Required String) The ID of the Access Point that the endpoint corresponds to. Access Point IDs `PUBLIC` and `PRIVATE_LINK` are reserved.
+  - `bootstrap_endpoint` - (Required String) The bootstrap endpoint used by Kafka clients to connect to the cluster (for example, `lkc-abc123-apfoo123.eu-west-3.aws.accesspoint.glb.confluent.cloud:9092`).
+  - `rest_endpoint` - (Required String) The REST endpoint of the Kafka cluster (for example, `https://lkc-abc123-apfoo123.eu-west-3.aws.accesspoint.glb.confluent.cloud:443`).
+  - `connection_type` - (Required String) The type of connection used for the endpoint (for example, `PRIVATE_NETWORK_INTERFACE`).
 
 ## Import
 
