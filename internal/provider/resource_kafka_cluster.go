@@ -793,9 +793,9 @@ func setEndpointsBlock(modelMap cmk.ModelMap, d *schema.ResourceData) error {
 		endpoints := modelMap[accessPointId]
 		endpointData := map[string]interface{}{
 			paramAccessPointID:     accessPointId,
-			paramBootStrapEndpoint: endpoints.KafkaBootstrapEndpoint,
-			paramRestEndpoint:      endpoints.HttpEndpoint,
-			paramConnectionType:    endpoints.ConnectionType,
+			paramBootStrapEndpoint: endpoints.GetKafkaBootstrapEndpoint(),
+			paramRestEndpoint:      endpoints.GetHttpEndpoint(),
+			paramConnectionType:    endpoints.GetConnectionType(),
 		}
 		endpointsList = append(endpointsList, endpointData)
 	}
