@@ -59,6 +59,11 @@ func tableflowTopicDataSource() *schema.Resource {
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Description: "The supported table formats for the Tableflow-enabled topic.",
 			},
+			paramTablePath: {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The current storage path where the data and metadata is stored for this table.",
+			},
 			paramRecordFailureStrategy: {
 				Type:        schema.TypeString,
 				Computed:    true,

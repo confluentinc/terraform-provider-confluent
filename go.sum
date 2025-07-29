@@ -79,6 +79,8 @@ github.com/confluentinc/ccloud-sdk-go-v2/ccpm v0.0.1 h1:q++EceNVxARLSE5J9FO3Vbp9
 github.com/confluentinc/ccloud-sdk-go-v2/ccpm v0.0.1/go.mod h1:toZWg8FVpQZ/80az0XTB4Fv22E5HJtEiMXxt4rU1JoI=
 github.com/confluentinc/ccloud-sdk-go-v2/certificate-authority v0.0.2 h1:stsiO1JIRX6ITdw4DCsidQ0w7uhsyKDsYXwzxvi14GI=
 github.com/confluentinc/ccloud-sdk-go-v2/certificate-authority v0.0.2/go.mod h1:OU1RGuP2y5l54jX5rA++QBAKeRvSa7GmkfNgJvB9J6M=
+github.com/confluentinc/ccloud-sdk-go-v2/cmk v0.21.0 h1:ioG3TsP8FwskPtwitfGfvBgTdprYKutHB0oxG5F4Dj8=
+github.com/confluentinc/ccloud-sdk-go-v2/cmk v0.21.0/go.mod h1:WndyhYUqeH7usVOfh+3g9CpVPqHWxIkJqopSISD0pGg=
 github.com/confluentinc/ccloud-sdk-go-v2/cmk v0.25.0 h1:EdZzQZ4SI5q+f0DQPjH3lWpygz1wYz7IE0K62Mv06bY=
 github.com/confluentinc/ccloud-sdk-go-v2/cmk v0.25.0/go.mod h1:FSSO9mkNPJKMa7Ky66IlXEG7o5H6cpyuKKClvRf9y+0=
 github.com/confluentinc/ccloud-sdk-go-v2/connect v0.7.0 h1:ISrVOX9qJ2Sxiu/fGBqqHeaA0SRJQujc8yP7qAZRL3Y=
@@ -133,6 +135,8 @@ github.com/confluentinc/ccloud-sdk-go-v2/sts v0.0.2 h1:QjHlqfA0nMOz4moHZxxWhggUf
 github.com/confluentinc/ccloud-sdk-go-v2/sts v0.0.2/go.mod h1:j+A/YgmDq0P9kvemjbpVofWv6ZMuL4nFNZOr0YxZJSM=
 github.com/confluentinc/ccloud-sdk-go-v2/tableflow v0.1.0 h1:dNpNo4hUrZ5v3L+gJp00aa1VvuPaIANPR6BV0MFCb8A=
 github.com/confluentinc/ccloud-sdk-go-v2/tableflow v0.1.0/go.mod h1:s76DpQdEVXWWk3K97xrUUFqCWBHyp9fIbOa/rdWmGzk=
+github.com/confluentinc/ccloud-sdk-go-v2/tableflow v0.2.0 h1:ALDmQhIbzKjOz8xVgOx0ud89P3YFiOWff6IpXggkEdc=
+github.com/confluentinc/ccloud-sdk-go-v2/tableflow v0.2.0/go.mod h1:9eUl1KxQurBT6HgO/Whd7v2mfCBeqkA7FV8IGAjCOPY=
 github.com/containerd/containerd v1.7.27 h1:yFyEyojddO3MIGVER2xJLWoCIn+Up4GaHFquP7hsFII=
 github.com/containerd/containerd v1.7.27/go.mod h1:xZmPnl75Vc+BLGt4MIfu6bp+fy03gdHAn9bz+FreFR0=
 github.com/containerd/log v0.1.0 h1:TCJt7ioM2cr/tfR8GPbGf9/VRAX8D2B4PjzCpfX540I=
