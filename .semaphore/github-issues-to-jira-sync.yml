@@ -75,7 +75,7 @@ blocks:
                   '{
                     "fields": {
                       "project": {
-                        "key": "CLI"
+                        "key": "APIE"
                       },
                       "summary": $summary,
                       "description": $body,
