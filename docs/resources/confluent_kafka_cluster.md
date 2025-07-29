@@ -295,6 +295,11 @@ In addition to the preceding arguments, the following attributes are exported:
 - `freight` - (Optional Configuration Block) The configuration of the Freight Kafka cluster. It supports the following:
   - `zones` - (Required List of String) The list of zones the cluster is in.
     - On AWS, zones are AWS [AZ IDs](https://docs.aws.amazon.com/ram/latest/userguide/working-with-az-ids.html), for example, `use1-az3`.
+- `endpoints` - (Optional List) The list of endpoints for connecting to the Kafka cluster. These endpoints provide different network access methods or regions for connecting to the cluster:
+  - `access_point_id` - (Required String) The ID of the Access Point that the endpoint corresponds to. Access Point IDs `PUBLIC` and `PRIVATE_LINK` are reserved.
+  - `bootstrap_endpoint` - (Required String) The bootstrap endpoint used by Kafka clients to connect to the cluster (for example, `lkc-abc123-apfoo123.eu-west-3.aws.accesspoint.glb.confluent.cloud:9092`).
+  - `rest_endpoint` - (Required String) The REST endpoint of the Kafka cluster (for example, `https://lkc-abc123-apfoo123.eu-west-3.aws.accesspoint.glb.confluent.cloud:443`).
+  - `connection_type` - (Required String) The type of connection used for the endpoint (for example, `PRIVATE_NETWORK_INTERFACE`).
 
 ## Import
 
@@ -334,3 +339,4 @@ The following end-to-end examples might help to get started with `confluent_kafk
   * [dedicated-transit-gateway-attachment-aws-kafka-rbac](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/dedicated-transit-gateway-attachment-aws-kafka-rbac): _Dedicated_ Kafka cluster on AWS that is accessible via Transit Gateway Endpoint with authorization using RBAC
   * [enterprise-privatelinkattachment-aws-kafka-acls](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/enterprise-privatelinkattachment-aws-kafka-acls): _Enterprise_ Kafka cluster on AWS that is accessible via PrivateLink connections with authorization using ACLs
   * [enterprise-privatelinkattachment-azure-kafka-acls](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/enterprise-privatelinkattachment-azure-kafka-acls): _Enterprise_ Kafka cluster on Azure that is accessible via PrivateLink connections with authorization using ACLs
+  * [enterprise-pni-aws-kafka-rbac](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/enterprise-pni-aws-kafka-rbac): _Enterprise_ Kafka cluster on AWS that is accessible via Confluent Private Network Interface (PNI) with authorization using RBAC
