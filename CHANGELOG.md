@@ -3,13 +3,16 @@
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.35.0...v2.36.0)
 
 **New features:**
-* Added `endpoints` attribute for `confluent_kafka_cluster` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_cluster) and the corresponding data source to support the PNI feature.
+* Added `endpoints` attribute for `confluent_kafka_cluster` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_cluster) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_kafka_cluster) to support the PNI feature.
 * Added `confluent_ip_group` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_ip_group) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_ip_group) to manage IP Groups. 
 * Added `confluent_ip_filter` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_ip_filter) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_ip_filter) to manage IP Filters.
 * Add `Table Path` output field for `confluent_tableflow_topic` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_tableflow_topic) and [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_tableflow_topic).
 
 **Bug Fixes:**
 * Enable update for `confluent_schema` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema) when only the metadata field changes.
+
+**Examples:**
+* Added the [enterprise-pni-aws-kafka-rbac](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/enterprise-pni-aws-kafka-rbac) example.
 
 ## 2.35.0 (July 17th, 2025)
 
