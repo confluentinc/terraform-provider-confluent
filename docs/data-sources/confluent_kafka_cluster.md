@@ -91,3 +91,8 @@ In addition to the preceding arguments, the following attributes are exported:
 - `bootstrap_endpoint` - (Required String) The bootstrap endpoint used by Kafka clients to connect to the Kafka cluster. (e.g., `pkc-00000.us-central1.gcp.confluent.cloud:9092`).
 - `rest_endpoint` - (Required String) The REST endpoint of the Kafka cluster (e.g., `https://pkc-00000.us-central1.gcp.confluent.cloud:443`).
 - `rbac_crn` - (Required String) The Confluent Resource Name of the Kafka cluster, for example, `crn://confluent.cloud/organization=1111aaaa-11aa-11aa-11aa-111111aaaaaa/environment=env-abc123/cloud-cluster=lkc-abc123`.
+- `endpoints` - (Optional List) The list of endpoints for connecting to the Kafka cluster. These endpoints provide different network access methods or regions for connecting to the cluster:
+    - `access_point_id` - (Required String) The ID of the Access Point that the endpoint corresponds to. Access Point IDs 'public' and 'privatelink' are reserved.
+    - `bootstrap_endpoint` - (Required String) The bootstrap endpoint used by Kafka clients to connect to the cluster.
+    - `rest_endpoint` - (Required String) The REST endpoint of the Kafka cluster (e.g., `https://lkc-00000-00000.us-central1.gcp.glb.confluent.cloud:443`).
+    - `connection_type` - (Required String) The type of connection used for the endpoint.
