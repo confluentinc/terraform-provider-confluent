@@ -1,4 +1,4 @@
-## 2.36.0 (July 17th, 2025)
+## 2.36.0 (July 29th, 2025)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.35.0...v2.36.0)
 
