@@ -127,8 +127,7 @@ provider "confluent" {
 
 ### OAuth Credentials
 
--> **Note:** Authentication using the `oauth` credentials block is available in **Early Access** for early adopters. Early Access features are introduced to gather customer feedback. This feature should be used only for evaluation and non-production testing purposes or to provide feedback to Confluent, particularly as it becomes more widely available in follow-on editions.
-**Early Access** features are intended for evaluation use in development and testing environments only, and not for production use. The warranty, SLA, and Support Services provisions of your agreement with Confluent do not apply to Early Access features. Early Access features are considered to be a Proof of Concept as defined in the Confluent Cloud Terms of Service. Confluent may discontinue providing preview releases of the Early Access features at any time in Confluent’s sole discretion.
+-> **Note:** Authentication using the `oauth` credentials block is available in **General Availability** for all customers. However, it's recommended to try OAuth features in non-production environments before rolling out to production.
 
 Confluent Terraform provider allows authentication by using OAuth credentials. You can use the `oauth` block to configure the provider with OAuth credentials.
 
@@ -140,6 +139,7 @@ provider "confluent" {
     oauth_external_client_id  = var.oauth_external_client_id           # the client id of your Identity Provider authorization server
     oauth_external_client_secret = var.oauth_external_client_secret    # the client secret of your Identity Provider authorization server
     oauth_identity_pool_id = var.oauth_identity_pool_id                # the established Identity Pool ID on Confluent Cloud based on your Identity Provider
+    oauth_external_token_scope = var.oauth_external_token_scope        # the application client scope, might be required by your Identity Provider, such as Microsoft Azure Entra ID requires "api://<client_id>/.default" scope
   }
 }
 # Token refresh capability is supported by Confluent Provider for Option #1.
@@ -153,12 +153,11 @@ provider "confluent" {
 }
 # Token refresh capability is NOT supported by Confluent Provider for Option #2.
 ```
-A complete example for using OAuth credentials with the Confluent Terraform Provider can be found [here](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/authentication-using-oauth).
+Complete examples (with Okta and Microsoft Azure Entra ID as identity provider) for using OAuth credentials with the Confluent Terraform Provider can be found [here](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/authentication-using-oauth).
 
 -> **Note:** You still need `cloud_api_key` and `cloud_api_secret` to manage below Confluent Cloud resources/data-sources as they are not supported with OAuth credentials yet:
 * `confluent_api_key` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_api_key).
 * `confluent_catalog_integration` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_catalog_integration) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_catalog_integration).
-* `confluent_cluster_link` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_cluster_link) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_cluster_link).
 * `confluent_custom_connector_plugin` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_custom_connector_plugin).
 * `confluent_flink_artifact` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_flink_artifact).
 * `confluent_tableflow_topic` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_tableflow_topic) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_tableflow_topic).
@@ -166,6 +165,8 @@ A complete example for using OAuth credentials with the Confluent Terraform Prov
 -> **Note:** An Identity Provider must be set up first on Confluent Cloud before using the OAuth credentials for Terraform Provider. You can find more information about Identity Provider setting up [here](https://docs.confluent.io/cloud/current/security/authenticate/workload-identities/identity-providers/oauth/identity-providers.htmll).
 
 -> **Note:** After Identity Provider is set up, an Identity Pool must be added and assigned proper RBAC roles to manage Confluent Cloud resources/data-sources with corresponding scope, more details can be found [here](https://docs.confluent.io/cloud/current/security/authenticate/workload-identities/identity-providers/oauth/identity-pools.html).
+
+-> **Note:** `oauth_external_token_scope` could be optional or required based on your Identity Provider. For example, Microsoft Azure Entra ID requires `api://<client_id>/.default` scope to retrieve the token, while Okta does not require any scope.
 
 !> **Warning:** Without proper Identity Provider setup, Identity Pool creation and RBAC roles assignment, the OAuth credentials will not work with Confluent Terraform Provider.
 
