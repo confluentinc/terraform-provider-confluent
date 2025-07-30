@@ -504,6 +504,36 @@ func TestAccTopicPartition(t *testing.T) {
 	checkStubCount(t, wiremockClient, deleteTopicStub, fmt.Sprintf("DELETE %s", kafkaTopicPath), expectedCountTwo)
 }
 
+func TestAccTopicConfigDiffSuppression(t *testing.T) {
+	d := schema.TestResourceDataRaw(t, kafkaTopicResource().Schema, map[string]interface{}{
+		"config": map[string]interface{}{
+			"retention.ms": "604800000",
+		},
+	})
+
+	diffSuppressFunc := kafkaTopicResource().Schema["config"].DiffSuppressFunc
+
+	result1 := diffSuppressFunc("config.cleanup.policy", "", "", d)
+	if !result1 {
+		t.Error("Expected diff to be suppressed when both old and new values are empty")
+	}
+
+	result2 := diffSuppressFunc("config.cleanup.policy", "delete", "", d)
+	if !result2 {
+		t.Error("Expected diff to be suppressed when old value exists but key is not in new config")
+	}
+
+	result3 := diffSuppressFunc("config.retention.ms", "123456", "", d)
+	if result3 {
+		t.Error("Expected diff NOT to be suppressed when key exists in new config but values differ")
+	}
+
+	result4 := diffSuppressFunc("config.retention.ms", "123456", "604800000", d)
+	if result4 {
+		t.Error("Expected diff NOT to be suppressed when both values exist but are different")
+	}
+}
+
 func testAccCheckTopicDestroy(s *terraform.State, url string) error {
 	testClient := testAccProvider.Meta().(*Client)
 	c := testClient.kafkaRestClientFactory.CreateKafkaRestClient(url, clusterId, kafkaApiKey, kafkaApiSecret, false, false, testClient.oauthToken)
