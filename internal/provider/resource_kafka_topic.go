@@ -118,6 +118,27 @@ func kafkaTopicResource() *schema.Resource {
 				Optional:    true,
 				Computed:    true,
 				Description: "The custom topic settings to set (e.g., `\"cleanup.policy\" = \"compact\"`).",
+				DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+					if old == "" && new == "" {
+						return true
+					}
+
+					// when old value exists but new value is empty, check if key is in new config and suppress diff if not 
+					if new == "" && old != "" {
+						configKey := k
+						if strings.HasPrefix(k, "config.") {
+							configKey = strings.TrimPrefix(k, "config.")
+						}
+						
+						if newConfigs, ok := d.GetOk(paramConfigs); ok {
+							newConfigMap := newConfigs.(map[string]interface{})
+							_, keyExists := newConfigMap[configKey]
+
+							return !keyExists
+						}
+					}
+					return false
+				},
 			},
 			paramCredentials: credentialsSchema(),
 		},
