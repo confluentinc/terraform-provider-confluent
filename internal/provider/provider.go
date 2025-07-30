@@ -841,14 +841,14 @@ func providerOAuthSchema() *schema.Schema {
 				paramOAuthExternalClientId: {
 					Type:         schema.TypeString,
 					Optional:     true,
-					Description:  "OAuth token client id from external identity provider.",
+					Description:  "OAuth token application client id from external Identity Provider.",
 					ValidateFunc: validation.StringIsNotEmpty,
 				},
 				paramOAuthExternalClientSecret: {
 					Type:         schema.TypeString,
 					Optional:     true,
 					Sensitive:    true,
-					Description:  "OAuth token client secret from external identity provider.",
+					Description:  "OAuth token application client secret from external Identity Provider.",
 					ValidateFunc: validation.StringIsNotEmpty,
 				},
 				paramOAuthExternalAccessToken: {
@@ -862,7 +862,7 @@ func providerOAuthSchema() *schema.Schema {
 				paramOAuthExternalTokenScope: {
 					Type:        schema.TypeString,
 					Optional:    true,
-					Description: "OAuth client application scope, required field for Microsoft Azure Entra ID as the identity provider.",
+					Description: "OAuth client application scope, this is a required field when using Microsoft Azure Entra ID as the identity provider.",
 				},
 				paramOAuthIdentityPoolId: {
 					Type:        schema.TypeString,
