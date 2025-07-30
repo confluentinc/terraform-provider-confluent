@@ -18,7 +18,7 @@ provider "confluent" {
     oauth_external_client_id  = var.oauth_external_client_id
     oauth_external_client_secret = var.oauth_external_client_secret
     oauth_identity_pool_id = var.oauth_identity_pool_id
-    oauth_external_scopes = var.oauth_external_token_scope
+    oauth_external_token_scope = var.oauth_external_token_scope
   }
 }
 
