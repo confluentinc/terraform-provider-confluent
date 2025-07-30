@@ -91,6 +91,8 @@ func requestNewSTSOAuthToken(ctx context.Context, subjectToken, identityPoolId, 
 		req = req.ExpiresIn(int32(expiredInSecondsInt))
 	}
 
+	tflog.Debug(ctx, "requesting new STS OAuth token")
+
 	resp, status, err := req.Execute()
 	if err != nil {
 		return nil, err
@@ -146,6 +148,8 @@ func requestNewExternalOAuthToken(ctx context.Context, tokenUrl, clientId, clien
 	req.Header.Set("content-type", "application/x-www-form-urlencoded")
 	req.Header.Set("accept", "application/json")
 
+	tflog.Debug(ctx, "requesting new external OAuth token")
+
 	resp, err := retryableClient.Do(req)
 	if err != nil {
 		return nil, err
@@ -185,11 +189,13 @@ func requestNewExternalOAuthToken(ctx context.Context, tokenUrl, clientId, clien
 			result.AccessToken = v.(string)
 		case "token_type":
 			result.TokenType = v.(string)
-		case "scope":
-			result.Scope = v.(string)
+		default:
+			// Ignore other fields
 		}
 	}
 
+	// Always override the scope field to the requested scope, as some providers do not return it from the response
+	result.Scope = customScope
 	result.IdentityPoolId = identityPoolId
 	result.TokenUrl = tokenUrl
 	result.ClientId = clientId
