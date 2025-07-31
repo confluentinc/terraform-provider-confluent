@@ -836,19 +836,19 @@ func providerOAuthSchema() *schema.Schema {
 					Optional: true,
 					// A user should provide a value for either "oauth_external_token_url" or "oauth_external_access_token" attribute, not both
 					ExactlyOneOf: []string{"oauth.0.oauth_external_token_url", "oauth.0.oauth_external_access_token"},
-					Description:  "OAuth token URL to fetch access token from external IDP",
+					Description:  "OAuth token URL to fetch access token from external Identity Provider.",
 				},
 				paramOAuthExternalClientId: {
 					Type:         schema.TypeString,
 					Optional:     true,
-					Description:  "OAuth client id from external token source",
+					Description:  "OAuth token application client id from external Identity Provider.",
 					ValidateFunc: validation.StringIsNotEmpty,
 				},
 				paramOAuthExternalClientSecret: {
 					Type:         schema.TypeString,
 					Optional:     true,
 					Sensitive:    true,
-					Description:  "OAuth client secret from external token source",
+					Description:  "OAuth token application client secret from external Identity Provider.",
 					ValidateFunc: validation.StringIsNotEmpty,
 				},
 				paramOAuthExternalAccessToken: {
@@ -857,17 +857,17 @@ func providerOAuthSchema() *schema.Schema {
 					Sensitive: true,
 					// A user should provide a value for either "oauth_external_token_url" or "oauth_external_access_token" attribute, not both
 					ExactlyOneOf: []string{"oauth.0.oauth_external_token_url", "oauth.0.oauth_external_access_token"},
-					Description:  "OAuth existing access token already fetched from external IDP",
+					Description:  "OAuth existing static access token already fetched from external Identity Provider.",
 				},
 				paramOAuthExternalTokenScope: {
 					Type:        schema.TypeString,
 					Optional:    true,
-					Description: "OAuth access token scope",
+					Description: "OAuth client application scope, this is a required field when using Microsoft Azure Entra ID as the identity provider.",
 				},
 				paramOAuthIdentityPoolId: {
 					Type:        schema.TypeString,
 					Required:    true,
-					Description: "OAuth identity pool id used for processing external token and exchange STS token",
+					Description: "OAuth identity pool id used for processing external token and exchange STS token, registered with Confluent Cloud.",
 				},
 				paramOAuthSTSTokenExpiredInSeconds: {
 					Type:        schema.TypeString,
