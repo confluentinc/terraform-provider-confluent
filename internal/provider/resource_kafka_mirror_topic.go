@@ -185,10 +185,7 @@ func setKafkaMirrorTopicAttributes(d *schema.ResourceData, c *KafkaRestClient, k
 	if err := d.Set(paramKafkaCluster, []interface{}{map[string]interface{}{
 		paramId:           c.clusterId,
 		paramRestEndpoint: c.restEndpoint,
-		paramCredentials: []interface{}{map[string]interface{}{
-			paramKey:    c.clusterApiKey,
-			paramSecret: c.clusterApiSecret,
-		}},
+		paramCredentials:  buildOptionalCredentialBlock(c.clusterApiKey, c.clusterApiSecret),
 	}}); err != nil {
 		return nil, err
 	}
