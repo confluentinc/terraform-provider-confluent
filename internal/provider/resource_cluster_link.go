@@ -594,12 +594,12 @@ func constructCloudConfigForBidirectionalOutboundMode(localApiKey, localKafkaApi
 		tokenEndpoint := meta.(*Client).oauthToken.TokenUrl
 
 		// Local Kafka cluster configuration
-		// TODO: not sure everything regarding local Kafka cluster is correct here, check with real examples
 		config[localSaslMechanismConfigKey] = "OAUTHBEARER"
 		config[localSaslOAuthBearerTokenEndpointUrlConfigKey] = tokenEndpoint
 		config[localSaslLoginCallbackHandlerClassConfigKey] = "org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginCallbackHandler"
 		config[localSaslJaasConfigConfigKey] = fmt.Sprintf("org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required clientId='%s' scope='%s' clientSecret='%s' extension_logicalCluster='%s' extension_identityPoolId='%s';", clientId, scope, clientSecret, localKafkaClusterId, identityPoolId)
 
+		// Remote Kafka cluster configuration
 		config[saslMechanismConfigKey] = "OAUTHBEARER"
 		config[saslOAuthBearerTokenEndpointUrlConfigKey] = tokenEndpoint
 		config[saslLoginCallbackHandlerClassConfigKey] = "org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginCallbackHandler"
@@ -684,13 +684,13 @@ func constructCloudConfigForSourceOutboundMode(sourceKafkaApiKey, sourceKafkaApi
 		scope := meta.(*Client).oauthToken.Scope
 		tokenEndpoint := meta.(*Client).oauthToken.TokenUrl
 
-		// Source(Local) Kafka cluster configuration
-		// TODO: not sure everything regarding local Kafka cluster is correct here, check with real examples
+		// Source Kafka cluster configuration
 		config[localSaslMechanismConfigKey] = "OAUTHBEARER"
 		config[localSaslOAuthBearerTokenEndpointUrlConfigKey] = tokenEndpoint
 		config[localSaslLoginCallbackHandlerClassConfigKey] = "org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginCallbackHandler"
 		config[localSaslJaasConfigConfigKey] = fmt.Sprintf("org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required clientId='%s' scope='%s' clientSecret='%s' extension_logicalCluster='%s' extension_identityPoolId='%s';", clientId, scope, clientSecret, sourceKafkaClusterId, identityPoolId)
 
+		// Destination Kafka cluster configuration
 		config[saslMechanismConfigKey] = "OAUTHBEARER"
 		config[saslOAuthBearerTokenEndpointUrlConfigKey] = tokenEndpoint
 		config[saslLoginCallbackHandlerClassConfigKey] = "org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginCallbackHandler"

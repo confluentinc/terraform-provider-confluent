@@ -1,9 +1,8 @@
 terraform {
   required_providers {
     confluent = {
-      # source  = "confluentinc/confluent"
-      # version = "2.35.0"
-      source = "terraform.confluent.io/confluentinc/confluent"
+      source  = "confluentinc/confluent"
+      version = "2.35.0"
     }
   }
 }
@@ -28,19 +27,19 @@ data "confluent_environment" "destination" {
 data "confluent_kafka_cluster" "source" {
   id = var.source_kafka_cluster_id
   environment {
-    id = var.source_kafka_cluster_environment_id
+    id = data.confluent_environment.source.id
   }
 }
 
 data "confluent_kafka_cluster" "destination" {
   id = var.destination_kafka_cluster_id
   environment {
-    id = var.destination_kafka_cluster_environment_id
+    id = data.confluent_environment.destination.id
   }
 }
 
 resource "confluent_cluster_link" "destination-outbound" {
-  link_name = "destination-initiated-terraform-using-oauth"
+  link_name = var.cluster_link_name
   source_kafka_cluster {
     id                 = data.confluent_kafka_cluster.source.id
     bootstrap_endpoint = data.confluent_kafka_cluster.source.bootstrap_endpoint
