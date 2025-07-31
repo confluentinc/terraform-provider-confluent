@@ -42,20 +42,25 @@ const (
 	bootstrapServersConfigKey = "bootstrap.servers"
 	securityProtocolConfigKey = "security.protocol"
 
-	saslMechanismConfigKey  = "sasl.mechanism"
-	saslJaasConfigConfigKey = "sasl.jaas.config"
+	saslMechanismConfigKey                   = "sasl.mechanism"
+	saslJaasConfigConfigKey                  = "sasl.jaas.config"
+	saslLoginCallbackHandlerClassConfigKey   = "sasl.login.callback.handler.class"
+	saslOAuthBearerTokenEndpointUrlConfigKey = "sasl.oauthbearer.token.endpoint.url"
 
-	localSecurityProtocolConfigKey = "local.security.protocol"
-	localSaslMechanismConfigKey    = "local.sasl.mechanism"
-	localSaslJaasConfigConfigKey   = "local.sasl.jaas.config"
-	connectionModeConfigKey        = "connection.mode"
-	linkModeConfigKey              = "link.mode"
-	remoteLinkConnectionMode       = "remote.link.connection.mode"
-	linkModeDestination            = "DESTINATION"
-	linkModeSource                 = "SOURCE"
-	linkModeBidirectional          = "BIDIRECTIONAL"
-	connectionModeInbound          = "INBOUND"
-	connectionModeOutbound         = "OUTBOUND"
+	localSecurityProtocolConfigKey                = "local.security.protocol"
+	localSaslMechanismConfigKey                   = "local.sasl.mechanism"
+	localSaslJaasConfigConfigKey                  = "local.sasl.jaas.config"
+	localSaslLoginCallbackHandlerClassConfigKey   = "local.sasl.login.callback.handler.class"
+	localSaslOAuthBearerTokenEndpointUrlConfigKey = "local.sasl.oauthbearer.token.endpoint.url"
+
+	connectionModeConfigKey  = "connection.mode"
+	linkModeConfigKey        = "link.mode"
+	remoteLinkConnectionMode = "remote.link.connection.mode"
+	linkModeDestination      = "DESTINATION"
+	linkModeSource           = "SOURCE"
+	linkModeBidirectional    = "BIDIRECTIONAL"
+	connectionModeInbound    = "INBOUND"
+	connectionModeOutbound   = "OUTBOUND"
 
 	importSourceKafkaRestEndpointEnvVar           = "IMPORT_SOURCE_KAFKA_REST_ENDPOINT"
 	importSourceKafkaBootstrapEndpointEnvVar      = "IMPORT_SOURCE_KAFKA_BOOTSTRAP_ENDPOINT"
@@ -155,7 +160,7 @@ func clusterLinkResource() *schema.Resource {
 
 func clusterLinkCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	// TODO: update validateClusterLinkInput to accept BIDIRECTIONAL link mode
-	err := validateClusterLinkInput(d)
+	err := validateClusterLinkInput(d, meta.(*Client).isOAuthEnabled)
 	if err != nil {
 		return diag.Errorf("error creating Cluster Link: %s", createDescriptiveError(err))
 	}
@@ -165,7 +170,7 @@ func clusterLinkCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 	}
 	linkName := d.Get(paramLinkName).(string)
 
-	createClusterLinkRequest, err := constructClusterLinkRequest(d)
+	createClusterLinkRequest, err := constructClusterLinkRequest(d, meta)
 	if err != nil {
 		return diag.Errorf("error creating Cluster Link: %s", createDescriptiveError(err))
 	}
@@ -315,10 +320,7 @@ func setClusterLinkAttributes(ctx context.Context, d *schema.ResourceData, c *Ka
 			paramId:                clusterLinkMetadata.localClusterId,
 			paramRestEndpoint:      clusterLinkMetadata.localRestEndpoint,
 			paramBootStrapEndpoint: clusterLinkMetadata.localBootstrapEndpoint,
-			paramCredentials: []interface{}{map[string]interface{}{
-				paramKey:    clusterLinkMetadata.localClusterApiKey,
-				paramSecret: clusterLinkMetadata.localClusterApiSecret,
-			}},
+			paramCredentials:       buildOptionalCredentialBlock(clusterLinkMetadata.localClusterApiKey, clusterLinkMetadata.localClusterApiSecret),
 		}}); err != nil {
 			return nil, err
 		}
@@ -335,10 +337,7 @@ func setClusterLinkAttributes(ctx context.Context, d *schema.ResourceData, c *Ka
 				paramId:                clusterLinkMetadata.remoteClusterId,
 				paramRestEndpoint:      clusterLinkMetadata.remoteRestEndpoint,
 				paramBootStrapEndpoint: clusterLinkMetadata.remoteBootstrapEndpoint,
-				paramCredentials: []interface{}{map[string]interface{}{
-					paramKey:    clusterLinkMetadata.remoteClusterApiKey,
-					paramSecret: clusterLinkMetadata.remoteClusterApiSecret,
-				}},
+				paramCredentials:       buildOptionalCredentialBlock(clusterLinkMetadata.remoteClusterApiKey, clusterLinkMetadata.remoteClusterApiSecret),
 			}}); err != nil {
 				return nil, err
 			}
@@ -348,10 +347,7 @@ func setClusterLinkAttributes(ctx context.Context, d *schema.ResourceData, c *Ka
 			paramId:                clusterLinkMetadata.destinationClusterId,
 			paramRestEndpoint:      clusterLinkMetadata.destinationRestEndpoint,
 			paramBootStrapEndpoint: clusterLinkMetadata.destinationBootstrapEndpoint,
-			paramCredentials: []interface{}{map[string]interface{}{
-				paramKey:    clusterLinkMetadata.destinationClusterApiKey,
-				paramSecret: clusterLinkMetadata.destinationClusterApiSecret,
-			}},
+			paramCredentials:       buildOptionalCredentialBlock(clusterLinkMetadata.destinationClusterApiKey, clusterLinkMetadata.destinationClusterApiSecret),
 		}}); err != nil {
 			return nil, err
 		}
@@ -368,10 +364,7 @@ func setClusterLinkAttributes(ctx context.Context, d *schema.ResourceData, c *Ka
 				paramId:                clusterLinkMetadata.sourceClusterId,
 				paramRestEndpoint:      clusterLinkMetadata.sourceRestEndpoint,
 				paramBootStrapEndpoint: clusterLinkMetadata.sourceBootstrapEndpoint,
-				paramCredentials: []interface{}{map[string]interface{}{
-					paramKey:    clusterLinkMetadata.sourceClusterApiKey,
-					paramSecret: clusterLinkMetadata.sourceClusterApiSecret,
-				}},
+				paramCredentials:       buildOptionalCredentialBlock(clusterLinkMetadata.sourceClusterApiKey, clusterLinkMetadata.sourceClusterApiSecret),
 			}}); err != nil {
 				return nil, err
 			}
@@ -388,6 +381,17 @@ func setClusterLinkAttributes(ctx context.Context, d *schema.ResourceData, c *Ka
 
 	d.SetId(createClusterLinkCompositeId(c.clusterId, clusterLink.LinkName))
 	return d, nil
+}
+
+// Function to optionally bypass setting credentials for source, destination, local and remote Kafka clusters if OAuth is enabled
+func buildOptionalCredentialBlock(credentialKey, credentialSecret string) []interface{} {
+	if credentialKey == "" && credentialSecret == "" {
+		return nil
+	}
+	return []interface{}{map[string]interface{}{
+		paramKey:    credentialKey,
+		paramSecret: credentialSecret,
+	}}
 }
 
 func clusterLinkUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -569,18 +573,44 @@ func convertToConfigData(configs map[string]interface{}) []v3.ConfigData {
 }
 
 func constructCloudConfigForBidirectionalOutboundMode(localApiKey, localKafkaApiSecret,
-	remoteKafkaBootstrapEndpoint, remoteKafkaApiKey, remoteKafkaApiSecret string) map[string]interface{} {
+	remoteKafkaBootstrapEndpoint, remoteKafkaApiKey, remoteKafkaApiSecret string, localKafkaClusterId, remoteKafkaClusterId string, meta interface{}) map[string]interface{} {
 	config := make(map[string]interface{})
+
+	// Common configurations for both OAuth and PLAIN API key/secret authentication
 	config[connectionModeConfigKey] = connectionModeOutbound
 	config[remoteLinkConnectionMode] = connectionModeInbound
 	config[linkModeConfigKey] = linkModeBidirectional
+	config[bootstrapServersConfigKey] = remoteKafkaBootstrapEndpoint
 	config[localSecurityProtocolConfigKey] = "SASL_SSL"
+	config[securityProtocolConfigKey] = "SASL_SSL"
+
+	// OAuth specific configurations
+	if meta.(*Client).isOAuthEnabled {
+		// Extract OAuth token details from the meta client
+		identityPoolId := meta.(*Client).oauthToken.IdentityPoolId
+		clientId := meta.(*Client).oauthToken.ClientId
+		clientSecret := meta.(*Client).oauthToken.ClientSecret
+		scope := meta.(*Client).oauthToken.Scope
+		tokenEndpoint := meta.(*Client).oauthToken.TokenUrl
+
+		// Local Kafka cluster configuration
+		config[localSaslMechanismConfigKey] = "OAUTHBEARER"
+		config[localSaslOAuthBearerTokenEndpointUrlConfigKey] = tokenEndpoint
+		config[localSaslLoginCallbackHandlerClassConfigKey] = "org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginCallbackHandler"
+		config[localSaslJaasConfigConfigKey] = fmt.Sprintf("org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required clientId='%s' scope='%s' clientSecret='%s' extension_logicalCluster='%s' extension_identityPoolId='%s';", clientId, scope, clientSecret, localKafkaClusterId, identityPoolId)
+
+		// Remote Kafka cluster configuration
+		config[saslMechanismConfigKey] = "OAUTHBEARER"
+		config[saslOAuthBearerTokenEndpointUrlConfigKey] = tokenEndpoint
+		config[saslLoginCallbackHandlerClassConfigKey] = "org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginCallbackHandler"
+		config[saslJaasConfigConfigKey] = fmt.Sprintf("org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required clientId='%s' scope='%s' clientSecret='%s' extension_logicalCluster='%s' extension_identityPoolId='%s';", clientId, scope, clientSecret, remoteKafkaClusterId, identityPoolId)
+
+		return config
+	}
+
+	// PLAIN API key/secret specific configurations
 	config[localSaslMechanismConfigKey] = "PLAIN"
 	config[localSaslJaasConfigConfigKey] = fmt.Sprintf("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"%s\" password=\"%s\";", localApiKey, localKafkaApiSecret)
-
-	// TODO: use constructCloudConfigForDestinationOutboundMode and merge 2 configs
-	config[bootstrapServersConfigKey] = remoteKafkaBootstrapEndpoint
-	config[securityProtocolConfigKey] = "SASL_SSL"
 	config[saslMechanismConfigKey] = "PLAIN"
 	config[saslJaasConfigConfigKey] = fmt.Sprintf("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"%s\" password=\"%s\";", remoteKafkaApiKey, remoteKafkaApiSecret)
 
@@ -595,12 +625,32 @@ func constructCloudConfigForBidirectionalInboundMode(bootstrapEndpoint string) m
 	return config
 }
 
-func constructCloudConfigForDestinationOutboundMode(bootstrapEndpoint, kafkaApiKey, kafkaApiSecret string) map[string]interface{} {
+func constructCloudConfigForDestinationOutboundMode(sourceClusterBootstrapEndpoint, sourceClusterId, kafkaApiKey, kafkaApiSecret string, meta interface{}) map[string]interface{} {
 	config := make(map[string]interface{})
+
+	// Common configurations for both OAuth and PLAIN API key/secret authentication
 	config[connectionModeConfigKey] = connectionModeOutbound
 	config[linkModeConfigKey] = linkModeDestination
-	config[bootstrapServersConfigKey] = bootstrapEndpoint
+	config[bootstrapServersConfigKey] = sourceClusterBootstrapEndpoint
 	config[securityProtocolConfigKey] = "SASL_SSL"
+
+	// OAuth specific configurations
+	if meta.(*Client).isOAuthEnabled {
+		// Extract OAuth token details from the meta client
+		identityPoolId := meta.(*Client).oauthToken.IdentityPoolId
+		clientId := meta.(*Client).oauthToken.ClientId
+		clientSecret := meta.(*Client).oauthToken.ClientSecret
+		scope := meta.(*Client).oauthToken.Scope
+		tokenEndpoint := meta.(*Client).oauthToken.TokenUrl
+
+		config[saslMechanismConfigKey] = "OAUTHBEARER"
+		config[saslOAuthBearerTokenEndpointUrlConfigKey] = tokenEndpoint
+		config[saslLoginCallbackHandlerClassConfigKey] = "org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginCallbackHandler"
+		config[saslJaasConfigConfigKey] = fmt.Sprintf("org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required clientId='%s' scope='%s' clientSecret='%s' extension_logicalCluster='%s' extension_identityPoolId='%s';", clientId, scope, clientSecret, sourceClusterId, identityPoolId)
+		return config
+	}
+
+	// PLAIN API key/secret specific configurations
 	config[saslMechanismConfigKey] = "PLAIN"
 	config[saslJaasConfigConfigKey] = fmt.Sprintf("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"%s\" password=\"%s\";", kafkaApiKey, kafkaApiSecret)
 	return config
@@ -615,17 +665,44 @@ func constructCloudConfigForDestinationInboundMode(bootstrapEndpoint string) map
 }
 
 func constructCloudConfigForSourceOutboundMode(sourceKafkaApiKey, sourceKafkaApiSecret,
-	destinationKafkaBootstrapEndpoint, destinationKafkaApiKey, destinationKafkaApiSecret string) map[string]interface{} {
+	destinationKafkaBootstrapEndpoint, destinationKafkaApiKey, destinationKafkaApiSecret string, sourceKafkaClusterId, destKafkaClusterId string, meta interface{}) map[string]interface{} {
 	config := make(map[string]interface{})
+
+	// Common configurations for both OAuth and PLAIN API key/secret authentication
 	config[connectionModeConfigKey] = connectionModeOutbound
 	config[linkModeConfigKey] = linkModeSource
 	config[localSecurityProtocolConfigKey] = "SASL_SSL"
+	config[securityProtocolConfigKey] = "SASL_SSL"
+	config[bootstrapServersConfigKey] = destinationKafkaBootstrapEndpoint
+
+	// OAuth specific configurations
+	if meta.(*Client).isOAuthEnabled {
+		// Extract OAuth token details from the meta client
+		identityPoolId := meta.(*Client).oauthToken.IdentityPoolId
+		clientId := meta.(*Client).oauthToken.ClientId
+		clientSecret := meta.(*Client).oauthToken.ClientSecret
+		scope := meta.(*Client).oauthToken.Scope
+		tokenEndpoint := meta.(*Client).oauthToken.TokenUrl
+
+		// Source Kafka cluster configuration
+		config[localSaslMechanismConfigKey] = "OAUTHBEARER"
+		config[localSaslOAuthBearerTokenEndpointUrlConfigKey] = tokenEndpoint
+		config[localSaslLoginCallbackHandlerClassConfigKey] = "org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginCallbackHandler"
+		config[localSaslJaasConfigConfigKey] = fmt.Sprintf("org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required clientId='%s' scope='%s' clientSecret='%s' extension_logicalCluster='%s' extension_identityPoolId='%s';", clientId, scope, clientSecret, sourceKafkaClusterId, identityPoolId)
+
+		// Destination Kafka cluster configuration
+		config[saslMechanismConfigKey] = "OAUTHBEARER"
+		config[saslOAuthBearerTokenEndpointUrlConfigKey] = tokenEndpoint
+		config[saslLoginCallbackHandlerClassConfigKey] = "org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginCallbackHandler"
+		config[saslJaasConfigConfigKey] = fmt.Sprintf("org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required clientId='%s' scope='%s' clientSecret='%s' extension_logicalCluster='%s' extension_identityPoolId='%s';", clientId, scope, clientSecret, destKafkaClusterId, identityPoolId)
+
+		return config
+	}
+
+	// PLAIN API key/secret specific configurations
 	config[localSaslMechanismConfigKey] = "PLAIN"
 	config[localSaslJaasConfigConfigKey] = fmt.Sprintf("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"%s\" password=\"%s\";", sourceKafkaApiKey, sourceKafkaApiSecret)
 
-	// TODO: use constructCloudConfigForDestinationOutboundMode and merge 2 configs
-	config[bootstrapServersConfigKey] = destinationKafkaBootstrapEndpoint
-	config[securityProtocolConfigKey] = "SASL_SSL"
 	config[saslMechanismConfigKey] = "PLAIN"
 	config[saslJaasConfigConfigKey] = fmt.Sprintf("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"%s\" password=\"%s\";", destinationKafkaApiKey, destinationKafkaApiSecret)
 
@@ -663,20 +740,21 @@ func createKafkaRestClientForClusterLink(d *schema.ResourceData, meta interface{
 	}
 }
 
-func constructClusterLinkRequest(d *schema.ResourceData) (v3.CreateLinkRequestData, error) {
+func constructClusterLinkRequest(d *schema.ResourceData, meta interface{}) (v3.CreateLinkRequestData, error) {
 	linkMode := d.Get(paramLinkMode).(string)
 	connectionMode := d.Get(paramConnectionMode).(string)
 	clusterLinkSettings := extractClusterLinkConfigsConfigData(d.Get(paramConfigs).(map[string]interface{}))
 
 	if linkMode == linkModeBidirectional {
 		if connectionMode == connectionModeOutbound {
+			localKafkaClusterId := extractStringValueFromBlock(d, paramLocalKafkaCluster, paramId)
 			localKafkaClusterApiKey := extractStringValueFromNestedBlock(d, paramLocalKafkaCluster, paramCredentials, paramKey)
 			localKafkaClusterApiSecret := extractStringValueFromNestedBlock(d, paramLocalKafkaCluster, paramCredentials, paramSecret)
 			remoteKafkaClusterId := extractStringValueFromBlock(d, paramRemoteKafkaCluster, paramId)
 			remoteKafkaClusterApiKey := extractStringValueFromNestedBlock(d, paramRemoteKafkaCluster, paramCredentials, paramKey)
 			remoteKafkaClusterApiSecret := extractStringValueFromNestedBlock(d, paramRemoteKafkaCluster, paramCredentials, paramSecret)
 			remoteKafkaClusterBootstrapEndpoint := extractStringValueFromBlock(d, paramRemoteKafkaCluster, paramBootStrapEndpoint)
-			configs := convertToConfigData(constructCloudConfigForBidirectionalOutboundMode(localKafkaClusterApiKey, localKafkaClusterApiSecret, remoteKafkaClusterBootstrapEndpoint, remoteKafkaClusterApiKey, remoteKafkaClusterApiSecret))
+			configs := convertToConfigData(constructCloudConfigForBidirectionalOutboundMode(localKafkaClusterApiKey, localKafkaClusterApiSecret, remoteKafkaClusterBootstrapEndpoint, remoteKafkaClusterApiKey, remoteKafkaClusterApiSecret, localKafkaClusterId, remoteKafkaClusterId, meta))
 
 			// Add top level cluster link configs
 			configs = append(configs, clusterLinkSettings...)
@@ -705,7 +783,7 @@ func constructClusterLinkRequest(d *schema.ResourceData) (v3.CreateLinkRequestDa
 			sourceKafkaClusterBootstrapEndpoint := extractStringValueFromBlock(d, paramSourceKafkaCluster, paramBootStrapEndpoint)
 			sourceKafkaClusterApiKey := extractStringValueFromNestedBlock(d, paramSourceKafkaCluster, paramCredentials, paramKey)
 			sourceKafkaClusterApiSecret := extractStringValueFromNestedBlock(d, paramSourceKafkaCluster, paramCredentials, paramSecret)
-			configs := convertToConfigData(constructCloudConfigForDestinationOutboundMode(sourceKafkaClusterBootstrapEndpoint, sourceKafkaClusterApiKey, sourceKafkaClusterApiSecret))
+			configs := convertToConfigData(constructCloudConfigForDestinationOutboundMode(sourceKafkaClusterBootstrapEndpoint, sourceKafkaClusterId, sourceKafkaClusterApiKey, sourceKafkaClusterApiSecret, meta))
 
 			// Add top level cluster link configs
 			configs = append(configs, clusterLinkSettings...)
@@ -730,13 +808,14 @@ func constructClusterLinkRequest(d *schema.ResourceData) (v3.CreateLinkRequestDa
 		}
 	} else {
 		// linkMode = linkModeSource
+		sourceKafkaClusterId := extractStringValueFromBlock(d, paramSourceKafkaCluster, paramId)
 		sourceKafkaClusterApiKey := extractStringValueFromNestedBlock(d, paramSourceKafkaCluster, paramCredentials, paramKey)
 		sourceKafkaClusterApiSecret := extractStringValueFromNestedBlock(d, paramSourceKafkaCluster, paramCredentials, paramSecret)
 		destinationKafkaClusterId := extractStringValueFromBlock(d, paramDestinationKafkaCluster, paramId)
 		destinationKafkaClusterBootstrapEndpoint := extractStringValueFromBlock(d, paramDestinationKafkaCluster, paramBootStrapEndpoint)
 		destinationKafkaClusterApiKey := extractStringValueFromNestedBlock(d, paramDestinationKafkaCluster, paramCredentials, paramKey)
 		destinationKafkaClusterApiSecret := extractStringValueFromNestedBlock(d, paramDestinationKafkaCluster, paramCredentials, paramSecret)
-		configs := convertToConfigData(constructCloudConfigForSourceOutboundMode(sourceKafkaClusterApiKey, sourceKafkaClusterApiSecret, destinationKafkaClusterBootstrapEndpoint, destinationKafkaClusterApiKey, destinationKafkaClusterApiSecret))
+		configs := convertToConfigData(constructCloudConfigForSourceOutboundMode(sourceKafkaClusterApiKey, sourceKafkaClusterApiSecret, destinationKafkaClusterBootstrapEndpoint, destinationKafkaClusterApiKey, destinationKafkaClusterApiSecret, sourceKafkaClusterId, destinationKafkaClusterId, meta))
 
 		// Add top level cluster link configs
 		configs = append(configs, clusterLinkSettings...)
@@ -780,7 +859,7 @@ func clusterLinkKafkaClusterBlockSchema(blockName string) *schema.Schema {
 					Type:        schema.TypeString,
 					Optional:    true,
 					ForceNew:    true,
-					Description: "The bootstrap endpoint used by Kafka clients to connect to the Kafka cluster. (e.g., `SASL_SSL://pkc-00000.us-central1.gcp.confluent.cloud:9092` or pkc-00000.us-central1.gcp.confluent.cloud:9092`).",
+					Description: "The bootstrap endpoint used by Kafka clients to connect to the Kafka cluster. (e.g., `SASL_SSL://pkc-00000.us-central1.gcp.confluent.cloud:9092` or `pkc-00000.us-central1.gcp.confluent.cloud:9092`).",
 					// A user should provide a value for either "paramRestEndpoint" or "paramBootStrapEndpoint" attribute
 					ExactlyOneOf: oneOfEndpointsKeys,
 				},
@@ -846,9 +925,9 @@ func extractRemoteClusterApiKeyAndApiSecret() (string, string) {
 	return clusterApiKey, clusterApiSecret
 }
 
-func validateClusterLinkInputByLinkModeAndConnectionMode(d *schema.ResourceData, linkMode, connectionMode string) error {
+func validateClusterLinkInputByLinkModeAndConnectionMode(d *schema.ResourceData, linkMode, connectionMode string, isOAuthEnabled bool) error {
 	if linkMode == linkModeBidirectional {
-		if d.Get(localKafkaCredentialsBlockKey).(int) == 0 {
+		if !isOAuthEnabled && d.Get(localKafkaCredentialsBlockKey).(int) == 0 {
 			return fmt.Errorf("%q must be specified for %q", paramCredentials, paramLocalKafkaCluster)
 		}
 		// Expect
@@ -863,7 +942,7 @@ func validateClusterLinkInputByLinkModeAndConnectionMode(d *schema.ResourceData,
 		return nil
 	}
 
-	if d.Get(destinationKafkaCredentialsBlockKey).(int) == 0 {
+	if !isOAuthEnabled && d.Get(destinationKafkaCredentialsBlockKey).(int) == 0 {
 		return fmt.Errorf("%q must be specified for %q", paramCredentials, paramDestinationKafkaCluster)
 	}
 	if linkMode == linkModeDestination {
@@ -877,7 +956,7 @@ func validateClusterLinkInputByLinkModeAndConnectionMode(d *schema.ResourceData,
 			return fmt.Errorf("%q must be specified for %q", paramRestEndpoint, paramDestinationKafkaCluster)
 		}
 		if connectionMode == connectionModeOutbound {
-			if d.Get(sourceKafkaCredentialsBlockKey).(int) == 0 {
+			if !isOAuthEnabled && d.Get(sourceKafkaCredentialsBlockKey).(int) == 0 {
 				return fmt.Errorf("%q must be specified for %q", paramCredentials, paramSourceKafkaCluster)
 			}
 		} else {
@@ -896,7 +975,7 @@ func validateClusterLinkInputByLinkModeAndConnectionMode(d *schema.ResourceData,
 			if d.Get(fmt.Sprintf("%s.0.%s", paramDestinationKafkaCluster, paramBootStrapEndpoint)).(string) == "" {
 				return fmt.Errorf("%q must be specified for %q", paramBootStrapEndpoint, paramDestinationKafkaCluster)
 			}
-			if d.Get(sourceKafkaCredentialsBlockKey).(int) == 0 {
+			if !isOAuthEnabled && d.Get(sourceKafkaCredentialsBlockKey).(int) == 0 {
 				return fmt.Errorf("%q must be specified for %q", paramCredentials, paramSourceKafkaCluster)
 			}
 		} else {
@@ -906,10 +985,10 @@ func validateClusterLinkInputByLinkModeAndConnectionMode(d *schema.ResourceData,
 	return nil
 }
 
-func validateClusterLinkInput(d *schema.ResourceData) error {
+func validateClusterLinkInput(d *schema.ResourceData, isOAuthEnabled bool) error {
 	linkMode := d.Get(paramLinkMode).(string)
 	connectionMode := d.Get(paramConnectionMode).(string)
-	return validateClusterLinkInputByLinkModeAndConnectionMode(d, linkMode, connectionMode)
+	return validateClusterLinkInputByLinkModeAndConnectionMode(d, linkMode, connectionMode, isOAuthEnabled)
 }
 
 func loadClusterLinkConfigs(ctx context.Context, d *schema.ResourceData, c *KafkaRestClient, linkName string) (map[string]string, error) {
