@@ -66,13 +66,13 @@ resource "aws_vpc" "main" {
   enable_dns_support   = true
 
   tags = {
-    Name = "enterprise-pni-aws-kafka-rbac"
+    Name = "freight-aws-kafka-rbac"
   }
 }
 
 # Create single security group for demo (both EC2 and ENIs)
 resource "aws_security_group" "main" {
-  name        = "pni-demo-sg-${var.environment_id}"
+  name        = "freight-demo-sg-${var.environment_id}"
   description = "Demo security group for PNI test (EC2 + ENIs)"
   vpc_id      = aws_vpc.main.id
 
@@ -115,7 +115,7 @@ resource "aws_security_group" "main" {
   }
 
   tags = {
-    Name = "enterprise-pni-aws-kafka-rbac"
+    Name = "freight-aws-kafka-rbac"
   }
 }
 
@@ -127,7 +127,7 @@ resource "tls_private_key" "main" {
 
 # Create key pair for EC2 access
 resource "aws_key_pair" "main" {
-  key_name   = "pni-test-key-${var.environment_id}"
+  key_name   = "freight-test-key-${var.environment_id}"
   public_key = tls_private_key.main.public_key_openssh
 }
 
@@ -136,7 +136,7 @@ resource "aws_internet_gateway" "main" {
   vpc_id = aws_vpc.main.id
 
   tags = {
-    Name = "enterprise-pni-aws-kafka-rbac"
+    Name = "freight-aws-kafka-rbac"
   }
 }
 
@@ -150,7 +150,7 @@ resource "aws_route_table" "public" {
   }
 
   tags = {
-    Name = "enterprise-pni-aws-kafka-rbac"
+    Name = "freight-aws-kafka-rbac"
   }
 }
 
@@ -315,7 +315,7 @@ echo "You can now test with: nslookup $BOOTSTRAP_HOST $RESOLVER" >> /var/log/use
 EOF
 
   tags = {
-    Name = "enterprise-pni-aws-kafka-rbac"
+    Name = "freight-aws-kafka-rbac"
   }
 }
 
@@ -350,10 +350,10 @@ resource "aws_network_interface" "main" {
     )
   ]
 
-  description = "Confluent PNI-sub-${floor(count.index / var.num_eni_per_subnet)}-eni-${(count.index % var.num_eni_per_subnet) + 1}"
+  description = "Confluent freight-sub-${floor(count.index / var.num_eni_per_subnet)}-eni-${(count.index % var.num_eni_per_subnet) + 1}"
 
   tags = {
-    Name = "Confluent-PNI-sub-${floor(count.index / var.num_eni_per_subnet)}-eni-${(count.index % var.num_eni_per_subnet) + 1}"
+    Name = "Confluent-freight-sub-${floor(count.index / var.num_eni_per_subnet)}-eni-${(count.index % var.num_eni_per_subnet) + 1}"
   }
 
   depends_on = [
