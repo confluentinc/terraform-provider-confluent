@@ -170,11 +170,6 @@ data "aws_ami" "amazon_linux_2023" {
   }
 }
 
-locals {
-  pni_kafka_rest_endpoint = [for endpoint in confluent_kafka_cluster.enterprise.endpoints : endpoint.rest_endpoint if endpoint.access_point_id == confluent_access_point.aws.id][0]
-  pni_bootstrap_endpoint = [for endpoint in confluent_kafka_cluster.enterprise.endpoints : endpoint.bootstrap_endpoint if endpoint.access_point_id == confluent_access_point.aws.id][0]
-}
-
 # Create EC2 instance
 resource "aws_instance" "test" {
   ami                         = data.aws_ami.amazon_linux_2023.id
@@ -193,7 +188,7 @@ yum update -y
 yum install -y wget yum-utils nginx nginx-mod-stream bind-utils
 
 # START of setting up https://docs.confluent.io/cloud/current/networking/ccloud-console-access.html#configure-a-proxy
-BOOTSTRAP_HOST="${local.pni_bootstrap_endpoint}"
+BOOTSTRAP_HOST="${confluent_kafka_cluster.enterprise.bootstrap_endpoint}"
 
 echo "Setting up NGINX proxy for Confluent Cloud PNI" >> /var/log/user-data.log
 echo "Bootstrap host: $BOOTSTRAP_HOST" >> /var/log/user-data.log
