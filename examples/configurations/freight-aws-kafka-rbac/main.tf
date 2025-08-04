@@ -409,7 +409,7 @@ resource "confluent_kafka_cluster" "enterprise" {
   availability = "HIGH"
   cloud        = "AWS"
   region       = var.region
-  enterprise {}
+  freight {}
   environment {
     id = data.confluent_environment.staging.id
   }
