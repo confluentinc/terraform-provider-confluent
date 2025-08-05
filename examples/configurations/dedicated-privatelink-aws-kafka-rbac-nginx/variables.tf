@@ -15,16 +15,11 @@ variable "aws_account_id" {
 }
 
 variable "region" {
-  description = "The AWS Region of the existing VPC"
+  description = "The AWS Region"
   type        = string
 }
 
-variable "vpc_id" {
-  description = "The VPC ID to private link to Confluent Cloud"
-  type        = string
-}
-
-variable "subnets_to_privatelink" {
-  description = "A map of Zone ID to Subnet ID (i.e.: {\"use1-az1\" = \"subnet-abcdef0123456789a\", ...})"
-  type        = map(string)
+variable "client_cidr_blocks" {
+  description = "List of client CIDR blocks allowed to access EC2 via SSH"
+  type        = list(string)
 }
