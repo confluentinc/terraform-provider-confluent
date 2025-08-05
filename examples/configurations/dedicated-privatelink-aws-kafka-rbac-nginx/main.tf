@@ -326,18 +326,6 @@ resource "confluent_api_key" "app-manager-kafka-api-key" {
   ]
 }
 
-resource "confluent_kafka_topic" "orders" {
-  kafka_cluster {
-    id = confluent_kafka_cluster.dedicated.id
-  }
-  topic_name    = local.topic_name
-  rest_endpoint = confluent_kafka_cluster.dedicated.rest_endpoint
-  credentials {
-    key    = confluent_api_key.app-manager-kafka-api-key.id
-    secret = confluent_api_key.app-manager-kafka-api-key.secret
-  }
-}
-
 resource "confluent_service_account" "app-consumer" {
   display_name = "app-consumer"
   description  = "Service account to consume from '${local.topic_name}' topic of 'inventory' Kafka cluster"
