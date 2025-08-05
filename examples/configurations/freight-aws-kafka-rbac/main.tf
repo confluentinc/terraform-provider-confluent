@@ -188,7 +188,7 @@ yum update -y
 yum install -y wget yum-utils nginx nginx-mod-stream bind-utils
 
 # START of setting up https://docs.confluent.io/cloud/current/networking/ccloud-console-access.html#configure-a-proxy
-BOOTSTRAP_HOST="${confluent_kafka_cluster.enterprise.bootstrap_endpoint}"
+BOOTSTRAP_HOST="${confluent_kafka_cluster.freight.bootstrap_endpoint}"
 
 echo "Setting up NGINX proxy for Confluent Cloud PNI" >> /var/log/user-data.log
 echo "Bootstrap host: $BOOTSTRAP_HOST" >> /var/log/user-data.log
@@ -399,7 +399,7 @@ resource "confluent_access_point" "aws" {
 }
 
 # Run on EC2 instance
-resource "confluent_kafka_cluster" "enterprise" {
+resource "confluent_kafka_cluster" "freight" {
   display_name = "inventory"
   availability = "HIGH"
   cloud        = "AWS"
@@ -415,14 +415,14 @@ resource "confluent_kafka_cluster" "enterprise" {
 }
 
 resource "confluent_service_account" "app-manager" {
-  display_name = "app-manager-${confluent_kafka_cluster.enterprise.id}"
+  display_name = "app-manager-${confluent_kafka_cluster.freight.id}"
   description  = "Service account to manage 'inventory' Kafka cluster"
 }
 
 resource "confluent_role_binding" "app-manager-kafka-cluster-admin" {
   principal = "User:${confluent_service_account.app-manager.id}"
   role_name = "CloudClusterAdmin"
-  crn_pattern = replace(confluent_kafka_cluster.enterprise.rbac_crn, "stag.cpdev.cloud", "confluent.cloud")
+  crn_pattern = replace(confluent_kafka_cluster.freight.rbac_crn, "stag.cpdev.cloud", "confluent.cloud")
 }
 
 resource "confluent_api_key" "app-manager-kafka-api-key" {
@@ -436,9 +436,9 @@ resource "confluent_api_key" "app-manager-kafka-api-key" {
   }
 
   managed_resource {
-    id          = confluent_kafka_cluster.enterprise.id
-    api_version = confluent_kafka_cluster.enterprise.api_version
-    kind        = confluent_kafka_cluster.enterprise.kind
+    id          = confluent_kafka_cluster.freight.id
+    api_version = confluent_kafka_cluster.freight.api_version
+    kind        = confluent_kafka_cluster.freight.kind
 
     environment {
       id = data.confluent_environment.staging.id
@@ -461,8 +461,8 @@ locals {
 }
 
 resource "confluent_service_account" "app-consumer" {
-  display_name = "app-consumer-${confluent_kafka_cluster.enterprise.id}"
-  description  = "Service account to consume from '${local.topic_name}' topic of ${confluent_kafka_cluster.enterprise.id} Kafka cluster"
+  display_name = "app-consumer-${confluent_kafka_cluster.freight.id}"
+  description  = "Service account to consume from '${local.topic_name}' topic of ${confluent_kafka_cluster.freight.id} Kafka cluster"
 }
 
 resource "confluent_api_key" "app-consumer-kafka-api-key" {
@@ -476,9 +476,9 @@ resource "confluent_api_key" "app-consumer-kafka-api-key" {
   }
 
   managed_resource {
-    id          = confluent_kafka_cluster.enterprise.id
-    api_version = confluent_kafka_cluster.enterprise.api_version
-    kind        = confluent_kafka_cluster.enterprise.kind
+    id          = confluent_kafka_cluster.freight.id
+    api_version = confluent_kafka_cluster.freight.api_version
+    kind        = confluent_kafka_cluster.freight.kind
 
     environment {
       id = data.confluent_environment.staging.id
@@ -489,12 +489,12 @@ resource "confluent_api_key" "app-consumer-kafka-api-key" {
 resource "confluent_role_binding" "app-producer-developer-write" {
   principal = "User:${confluent_service_account.app-producer.id}"
   role_name = "DeveloperWrite"
-  crn_pattern = replace("${confluent_kafka_cluster.enterprise.rbac_crn}/kafka=${confluent_kafka_cluster.enterprise.id}/topic=${local.topic_name}", "stag.cpdev.cloud", "confluent.cloud")
+  crn_pattern = replace("${confluent_kafka_cluster.freight.rbac_crn}/kafka=${confluent_kafka_cluster.freight.id}/topic=${local.topic_name}", "stag.cpdev.cloud", "confluent.cloud")
 }
 
 resource "confluent_service_account" "app-producer" {
-  display_name = "app-producer-${confluent_kafka_cluster.enterprise.id}"
-  description  = "Service account to produce to '${local.topic_name}' topic of ${confluent_kafka_cluster.enterprise.id} Kafka cluster"
+  display_name = "app-producer-${confluent_kafka_cluster.freight.id}"
+  description  = "Service account to produce to '${local.topic_name}' topic of ${confluent_kafka_cluster.freight.id} Kafka cluster"
 }
 
 resource "confluent_api_key" "app-producer-kafka-api-key" {
@@ -508,9 +508,9 @@ resource "confluent_api_key" "app-producer-kafka-api-key" {
   }
 
   managed_resource {
-    id          = confluent_kafka_cluster.enterprise.id
-    api_version = confluent_kafka_cluster.enterprise.api_version
-    kind        = confluent_kafka_cluster.enterprise.kind
+    id          = confluent_kafka_cluster.freight.id
+    api_version = confluent_kafka_cluster.freight.api_version
+    kind        = confluent_kafka_cluster.freight.kind
 
     environment {
       id = data.confluent_environment.staging.id
@@ -523,7 +523,7 @@ resource "confluent_api_key" "app-producer-kafka-api-key" {
 resource "confluent_role_binding" "app-consumer-developer-read-from-topic" {
   principal = "User:${confluent_service_account.app-consumer.id}"
   role_name = "DeveloperRead"
-  crn_pattern = replace("${confluent_kafka_cluster.enterprise.rbac_crn}/kafka=${confluent_kafka_cluster.enterprise.id}/topic=${local.topic_name}", "stag.cpdev.cloud", "confluent.cloud")
+  crn_pattern = replace("${confluent_kafka_cluster.freight.rbac_crn}/kafka=${confluent_kafka_cluster.freight.id}/topic=${local.topic_name}", "stag.cpdev.cloud", "confluent.cloud")
 }
 
 resource "confluent_role_binding" "app-consumer-developer-read-from-group" {
@@ -532,5 +532,5 @@ resource "confluent_role_binding" "app-consumer-developer-read-from-group" {
   // The existing value of crn_pattern's suffix (group=confluent_cli_consumer_*) are set up to match Confluent CLI's default consumer group ID ("confluent_cli_consumer_<uuid>").
   // https://docs.confluent.io/confluent-cli/current/command-reference/kafka/topic/confluent_kafka_topic_consume.html
   // Update it to match your target consumer group ID.
-  crn_pattern = replace("${confluent_kafka_cluster.enterprise.rbac_crn}/kafka=${confluent_kafka_cluster.enterprise.id}/group=confluent_cli_consumer_*", "stag.cpdev.cloud", "confluent.cloud")
+  crn_pattern = replace("${confluent_kafka_cluster.freight.rbac_crn}/kafka=${confluent_kafka_cluster.freight.id}/group=confluent_cli_consumer_*", "stag.cpdev.cloud", "confluent.cloud")
 }

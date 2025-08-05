@@ -1,11 +1,11 @@
 locals {
-  topics_confluent_cloud_url = "https://confluent.cloud/environments/${data.confluent_environment.staging.id}/clusters/${confluent_kafka_cluster.enterprise.id}/topics?topics_filter=showAll"
+  topics_confluent_cloud_url = "https://confluent.cloud/environments/${data.confluent_environment.staging.id}/clusters/${confluent_kafka_cluster.freight.id}/topics?topics_filter=showAll"
 }
 
 output "instructions" {
   value = <<-EOT
   Environment ID:   ${data.confluent_environment.staging.id}
-  Kafka Cluster ID: ${confluent_kafka_cluster.enterprise.id}
+  Kafka Cluster ID: ${confluent_kafka_cluster.freight.id}
   Kafka topic name: ${local.topic_name}
 
   Service Accounts and their Kafka API Keys (API Keys inherit the permissions granted to the owner):
@@ -40,7 +40,7 @@ output "instructions" {
 
   5. Test connectivity (port 443):
     curl --request GET \
-    --url ${confluent_kafka_cluster.enterprise.rest_endpoint}/kafka/v3/clusters/${confluent_kafka_cluster.enterprise.id}/topics \
+    --url ${confluent_kafka_cluster.freight.rest_endpoint}/kafka/v3/clusters/${confluent_kafka_cluster.freight.id}/topics \
     -u "${confluent_api_key.app-manager-kafka-api-key.id}:${confluent_api_key.app-manager-kafka-api-key.secret}"
 
   6. Testing installation commands:
@@ -71,8 +71,8 @@ terraform {
 }
 
 provider "confluent" {
-  kafka_id            = "${confluent_kafka_cluster.enterprise.id}"
-  kafka_rest_endpoint = "${confluent_kafka_cluster.enterprise.rest_endpoint}"
+  kafka_id            = "${confluent_kafka_cluster.freight.id}"
+  kafka_rest_endpoint = "${confluent_kafka_cluster.freight.rest_endpoint}"
   kafka_api_key       = "${confluent_api_key.app-manager-kafka-api-key.id}"
   kafka_api_secret    = "${confluent_api_key.app-manager-kafka-api-key.secret}"
 }
@@ -97,7 +97,7 @@ MAINEOF
   $ confluent login
 
   # 2. Produce key-value records to topic '${local.topic_name}' by using ${confluent_service_account.app-producer.display_name}'s Kafka API Key
-  $ confluent kafka topic produce ${local.topic_name} --environment ${data.confluent_environment.staging.id} --cluster ${confluent_kafka_cluster.enterprise.id} --api-key "${confluent_api_key.app-producer-kafka-api-key.id}" --api-secret "${confluent_api_key.app-producer-kafka-api-key.secret}" --bootstrap "${confluent_kafka_cluster.enterprise.bootstrap_endpoint}"
+  $ confluent kafka topic produce ${local.topic_name} --environment ${data.confluent_environment.staging.id} --cluster ${confluent_kafka_cluster.freight.id} --api-key "${confluent_api_key.app-producer-kafka-api-key.id}" --api-secret "${confluent_api_key.app-producer-kafka-api-key.secret}" --bootstrap "${confluent_kafka_cluster.freight.bootstrap_endpoint}"
   # Enter a few records and then press 'Ctrl-C' when you're done.
   # Sample records:
   # {"number":1,"date":18500,"shipping_address":"899 W Evelyn Ave, Mountain View, CA 94041, USA","cost":15.00}
@@ -105,7 +105,7 @@ MAINEOF
   # {"number":3,"date":18502,"shipping_address":"3307 Northland Dr Suite 400, Austin, TX 78731, USA","cost":10.00}
 
   # 3. Consume records from topic '${local.topic_name}' by using ${confluent_service_account.app-consumer.display_name}'s Kafka API Key
-  $ confluent kafka topic consume ${local.topic_name} --from-beginning --environment ${data.confluent_environment.staging.id} --cluster ${confluent_kafka_cluster.enterprise.id} --api-key "${confluent_api_key.app-consumer-kafka-api-key.id}" --api-secret "${confluent_api_key.app-consumer-kafka-api-key.secret}" --bootstrap "${confluent_kafka_cluster.enterprise.bootstrap_endpoint}"
+  $ confluent kafka topic consume ${local.topic_name} --from-beginning --environment ${data.confluent_environment.staging.id} --cluster ${confluent_kafka_cluster.freight.id} --api-key "${confluent_api_key.app-consumer-kafka-api-key.id}" --api-secret "${confluent_api_key.app-consumer-kafka-api-key.secret}" --bootstrap "${confluent_kafka_cluster.freight.bootstrap_endpoint}"
   # When you are done, press 'Ctrl-C'.
 
   🔑 CONFLUENT CLOUD CONSOLE ACCESS INSTRUCTIONS:
@@ -115,14 +115,14 @@ MAINEOF
   2. You should see "Create topic" button grayed out on ${local.topics_confluent_cloud_url}.
 
   3. Update the /etc/hosts file on your laptop (the NGINX proxy was set up via Terraform already):
-     echo "\n${aws_instance.test.public_ip} ${trimprefix(trimsuffix(confluent_kafka_cluster.enterprise.rest_endpoint, ":443"), "https://")}" | sudo tee -a /etc/hosts
+     echo "\n${aws_instance.test.public_ip} ${trimprefix(trimsuffix(confluent_kafka_cluster.freight.rest_endpoint, ":443"), "https://")}" | sudo tee -a /etc/hosts
 
   4. You should now see the "orders" topic on ${local.topics_confluent_cloud_url}.
 
   5. (Optional) Alternatively, you can also send a direct cURL request from your laptop to verify the NGINX proxy was set up correctly:
 
     curl --request GET \
-    --url ${confluent_kafka_cluster.enterprise.rest_endpoint}/kafka/v3/clusters/${confluent_kafka_cluster.enterprise.id}/topics \
+    --url ${confluent_kafka_cluster.freight.rest_endpoint}/kafka/v3/clusters/${confluent_kafka_cluster.freight.id}/topics \
     -u "${confluent_api_key.app-manager-kafka-api-key.id}:${confluent_api_key.app-manager-kafka-api-key.secret}"
 
 
