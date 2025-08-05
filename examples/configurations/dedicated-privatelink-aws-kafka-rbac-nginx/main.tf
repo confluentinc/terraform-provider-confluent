@@ -156,6 +156,9 @@ resource "aws_security_group" "ec2" {
     description = "Kafka broker access"
   }
 
+  # https://docs.confluent.io/cloud/current/networking/aws-pni.html#update-the-security-group-to-block-outbound-traffic
+  # SECURITY WARNING: For production deployments, restrict egress to egress = [] to remove the default 0.0.0.0/0 egress rule.
+  # This demo intentionally uses 0.0.0.0/0 to allow downloading Confluent CLI, Terraform provider, and related dependencies.
   egress {
     from_port   = 0
     to_port     = 0
