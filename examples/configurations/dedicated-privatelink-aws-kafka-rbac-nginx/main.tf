@@ -123,13 +123,20 @@ resource "aws_key_pair" "main" {
   public_key = tls_private_key.main.public_key_openssh
 }
 
-# Create security group for EC2
-resource "aws_security_group" "ec2" {
-  name        = "confluent-privatelink-ec2-sg"
-  description = "Security group for EC2 instance to access Confluent Cloud via PrivateLink"
+# Create single security group for demo (both EC2 and PL)
+resource "aws_security_group" "main" {
+  name        = "pni-demo-sg-${confluent_environment.staging.id}"
+  description = "Demo security group for PNI test (EC2 + PL)"
   vpc_id      = aws_vpc.main.id
 
-  # SSH access
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = [aws_vpc.main.cidr_block]
+  }
+
+  # SSH access for EC2
   ingress {
     from_port   = 22
     to_port     = 22
@@ -143,16 +150,16 @@ resource "aws_security_group" "ec2" {
     from_port   = 443
     to_port     = 443
     protocol    = "tcp"
-    cidr_blocks = [aws_vpc.main.cidr_block]
+    cidr_blocks = concat(var.client_cidr_blocks, [aws_vpc.main.cidr_block])
     description = "HTTPS access"
   }
 
-  # Kafka broker access
+  # Kafka broker access for ENIs
   ingress {
     from_port   = 9092
     to_port     = 9092
     protocol    = "tcp"
-    cidr_blocks = [aws_vpc.main.cidr_block]
+    cidr_blocks = concat(var.client_cidr_blocks, [aws_vpc.main.cidr_block])
     description = "Kafka broker access"
   }
 
@@ -168,7 +175,7 @@ resource "aws_security_group" "ec2" {
   }
 
   tags = {
-    Name = "confluent-privatelink-ec2-sg"
+    Name = "confluent-privatelink-vpc"
   }
 }
 
@@ -188,7 +195,7 @@ resource "aws_instance" "test" {
   ami                         = data.aws_ami.amazon_linux_2023.id
   instance_type               = "t2.micro"
   key_name                    = aws_key_pair.main.key_name
-  vpc_security_group_ids      = [aws_security_group.ec2.id]
+  vpc_security_group_ids      = [aws_security_group.main.id]
   subnet_id                   = aws_subnet.main[0].id
   associate_public_ip_address = true
 
@@ -531,45 +538,13 @@ data "aws_availability_zone" "privatelink" {
   zone_id  = each.key
 }
 
-# Security group for PrivateLink
-resource "aws_security_group" "privatelink" {
-  name        = "ccloud-privatelink_${local.bootstrap_prefix}_${aws_vpc.main.id}"
-  description = "Confluent Cloud Private Link minimal security group for ${confluent_kafka_cluster.dedicated.bootstrap_endpoint} in ${aws_vpc.main.id}"
-  vpc_id      = aws_vpc.main.id
-
-  ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = [aws_vpc.main.cidr_block]
-  }
-
-  ingress {
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = [aws_vpc.main.cidr_block]
-  }
-
-  ingress {
-    from_port   = 9092
-    to_port     = 9092
-    protocol    = "tcp"
-    cidr_blocks = [aws_vpc.main.cidr_block]
-  }
-
-  lifecycle {
-    create_before_destroy = true
-  }
-}
-
 resource "aws_vpc_endpoint" "privatelink" {
   vpc_id            = aws_vpc.main.id
   service_name      = confluent_network.private-link.aws[0].private_link_endpoint_service
   vpc_endpoint_type = "Interface"
 
   security_group_ids = [
-    aws_security_group.privatelink.id,
+    aws_security_group.main.id,
   ]
 
   subnet_ids          = [for zone, subnet_id in local.subnets_to_privatelink : subnet_id]
