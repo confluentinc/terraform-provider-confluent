@@ -4,7 +4,7 @@ oauth_external_token_url = ""
 # The Application (client) ID registered in external identity provider for OAuth purpose
 oauth_external_client_id = ""
 
-# The Application (client) ID registered in external identity provider for OAuth purpose
+# The Application (client) secret registered in external identity provider for OAuth purpose
 oauth_external_client_secret = ""
 
 # The OAuth identity pool id with external identity provider, registered with Confluent Cloud
