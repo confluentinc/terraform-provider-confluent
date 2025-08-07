@@ -168,6 +168,8 @@ Complete examples (with Okta and Microsoft Azure Entra ID as identity provider) 
 
 -> **Note:** `oauth_external_token_scope` could be optional or required based on your Identity Provider. For example, Microsoft Azure Entra ID requires `api://<client_id>/.default` scope to retrieve the token, while Okta does not require any scope.
 
+-> **Note:** If you are switching from API key/secret to OAuth credentials in the same Terraform workspace, expect a one-time Terraform drift that removes the API key/secret pair from your state file.
+
 !> **Warning:** Without proper Identity Provider setup, Identity Pool creation and RBAC roles assignment, the OAuth credentials will not work with Confluent Terraform Provider.
 
 ## Helpful Links/Information
