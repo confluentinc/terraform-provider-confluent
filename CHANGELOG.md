@@ -1,3 +1,19 @@
+## 2.37.0 (August 7th, 2025)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.36.0...v2.37.0)
+
+**New Features:**
+* Added `oauth` authentication support for `confluent_cluster_link` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_cluster_link) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_cluster_link).
+* Added `oauth` authentication support with Azure Entra ID as identity provider.
+
+**Bug Fixes:**
+* Updated the Confluent Provider doc to reflect the GA support for `oauth` authentication with latest [instructions](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs#oauth-credentials).
+* Updated the docs of `confluent_access_point` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_access_point) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_access_point) to add `pni` reference.
+
+**Examples:**
+* Added the [freight-aws-kafka-rbac](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/freight-aws-kafka-rbac) example.
+* Removed the redundancy from [enterprise-pni-aws-kafka-rbac](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/enterprise-pni-aws-kafka-rbac) example.
+
 ## 2.36.0 (July 29th, 2025)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.35.0...v2.36.0)
