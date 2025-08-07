@@ -12,7 +12,7 @@
 
 **Examples:**
 * Added the [freight-aws-kafka-rbac](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/freight-aws-kafka-rbac) example.
-* Removed the redundancy from [enterprise-pni-aws-kafka-rbac](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/enterprise-pni-aws-kafka-rbac) example.
+* Simplified the [enterprise-pni-aws-kafka-rbac](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/enterprise-pni-aws-kafka-rbac) example.
 
 ## 2.36.0 (July 29th, 2025)
 
