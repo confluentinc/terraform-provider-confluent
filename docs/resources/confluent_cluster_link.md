@@ -150,10 +150,10 @@ $ terraform import confluent_cluster_link.my_cluster_link my-cluster-link/DESTIN
 
 ```shell
 # Option #2 when using bidirectional cluster links
-$ export IMPORT_LOCAL_KAFKA_REST_ENDPOINT="<local_kafka_rest_endpoint>"
+$ export IMPORT_LOCAL_KAFKA_BOOTSTRAP_ENDPOINT="<local_kafka_bootstrap_endpoint>"
 $ export IMPORT_LOCAL_KAFKA_API_KEY="<local_kafka_api_key>"
 $ export IMPORT_LOCAL_KAFKA_API_SECRET="<local_kafka_api_secret>"
-$ export IMPORT_REMOTE_KAFKA_BOOTSTRAP_ENDPOINT="<remote_kafka_bootstrap_endpoint>"
+$ export IMPORT_REMOTE_KAFKA_REST_ENDPOINT="<remote_kafka_rest_endpoint>"
 $ export IMPORT_REMOTE_KAFKA_API_KEY="<remote_kafka_api_key>"
 $ export IMPORT_REMOTE_KAFKA_API_SECRET="<remote_kafka_api_secret>"
 $ terraform import confluent_cluster_link.my_cluster_link my-cluster-link/BIDIRECTIONAL/OUTBOUND/lkc-abc123/lkc-xyz456
