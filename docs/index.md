@@ -168,6 +168,8 @@ Complete examples (with Okta and Microsoft Azure Entra ID as identity provider) 
 
 -> **Note:** `oauth_external_token_scope` could be optional or required based on your Identity Provider. For example, Microsoft Azure Entra ID requires `api://<client_id>/.default` scope to retrieve the token, while Okta does not require any scope.
 
+-> **Note:** To switch your Terraform configuration from API key/secret authentication to OAuth, update your provider block by removing any references to variables such as `cloud_api_key`, `flink_api_key`, `kafka_api_key`, `schema_registry_api_key`, and similar variables. Also, remove any `credentials` blocks from resources like `confluent_kafka_topic`, `confluent_schema`, and `confluent_flink_statement`. Instead, specify your authentication details within the `oauth {}` block. After making these changes, apply your configuration to start using OAuth.
+
 !> **Warning:** Without proper Identity Provider setup, Identity Pool creation and RBAC roles assignment, the OAuth credentials will not work with Confluent Terraform Provider.
 
 ## Helpful Links/Information
