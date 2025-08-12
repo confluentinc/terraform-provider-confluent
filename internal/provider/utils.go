@@ -1083,6 +1083,13 @@ func convertToStringStringListMap(data []interface{}) map[string][]string {
 	return stringListMap
 }
 
+func normalizeCrn(crn string) string {
+	if v, err := url.PathUnescape(crn); err == nil {
+		return v
+	}
+	return crn
+}
+
 func ptr(s string) *string {
 	return &s
 }

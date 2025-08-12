@@ -64,6 +64,7 @@ func roleBindingResource() *schema.Resource {
 				ForceNew:     true,
 				Description:  "A CRN that specifies the scope and resource patterns necessary for the role to bind.",
 				ValidateFunc: validation.StringMatch(regexp.MustCompile("^crn://"), "the CRN must be of the form 'crn://'"),
+				DiffSuppressFunc: suppressSameCrnPattern,
 			},
 			paramDisableWaitForReady: {
 				Type:     schema.TypeBool,
@@ -72,6 +73,12 @@ func roleBindingResource() *schema.Resource {
 			},
 		},
 	}
+}
+
+// suppresses diffs when the only difference is encoding (':' vs '%3A') 
+// so that logically same CRNs do not trigger force replacement 
+func suppressSameCrnPattern(k, old, new string, d *schema.ResourceData) bool {
+	return normalizeCrn(old) == normalizeCrn(new)
 }
 
 func roleBindingCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
