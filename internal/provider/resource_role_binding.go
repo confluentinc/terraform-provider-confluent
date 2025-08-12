@@ -80,9 +80,6 @@ func roleBindingResource() *schema.Resource {
 // so that logically same CRNs do not trigger force replacement 
 func suppressSameCrnPattern(k, old, new string, d *schema.ResourceData) bool {
     decode := func(s string) string {
-        if v, err := url.QueryUnescape(s); err == nil {
-            return v
-        }
         if v, err := url.PathUnescape(s); err == nil {
             return v
         }
