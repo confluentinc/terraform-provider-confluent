@@ -763,3 +763,52 @@ func TestBuildConnectorClass(t *testing.T) {
 		}
 	})
 }
+
+func TestNormalizeCrn(t *testing.T) {
+    tests := []struct{
+        name string
+        a    string
+        b    string
+        equal bool
+    }{
+        {
+            name:  "Identical CRN 1",
+            a:     "crn://confluent.cloud/organization=org-123/environment=env-abc",
+            b:     "crn://confluent.cloud/organization=org-123/environment=env-abc",
+            equal: true,
+        },
+		{
+            name:  "Identical CRN 2",
+            a:     "crn://confluent.cloud/organization=org-123/environment=env-abc/cloud-cluster=lkc-123/kafka=lkc-123/topic=my.topic",
+            b:     "crn://confluent.cloud/organization=org-123/environment=env-abc/cloud-cluster=lkc-123/kafka=lkc-123/topic=my.topic",
+            equal: true,
+        },
+        {
+            name:  "Logically equivalent CRN",
+            a:     "crn://confluent.cloud/organization=org-123/environment=env-abc/schema-registry=lsrc-123/subject=:.context:subject.v1",
+            b:     "crn://confluent.cloud/organization=org-123/environment=env-abc/schema-registry=lsrc-123/subject=%3A.context%3Asubject.v1",
+            equal: true,
+        },
+        {
+            name:  "CRN with different SRs",
+            a:     "crn://confluent.cloud/organization=org-123/environment=env-abc/schema-registry=lsrc-123/subject=:.context:subject.v1",
+            b:     "crn://confluent.cloud/organization=org-123/environment=env-abc/schema-registry=lsrc-456/subject=:.context:subject.v1",
+            equal: false,
+        },
+		{
+            name:  "CRN with different subjects",
+            a:     "crn://confluent.cloud/organization=org-123/environment=env-abc/schema-registry=lsrc-123/subject=:.context:subject.v1",
+            b:     "crn://confluent.cloud/organization=org-123/environment=env-abc/schema-registry=lsrc-123/subject=subject.v1",
+            equal: false,
+        },
+    }
+
+    for _, tt := range tests {
+        t.Run(tt.name, func(t *testing.T) {
+            got := normalizeCrn(tt.a) == normalizeCrn(tt.b)
+            if got != tt.equal {
+                t.Fatalf("Unexpected error: %v expected %v, got %v", tt.name, tt.equal, got)
+            }
+        })
+    }
+}

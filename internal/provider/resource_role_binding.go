@@ -24,7 +24,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"net/http"
-    "net/url"
 	"regexp"
 	"time"
 )
@@ -79,13 +78,7 @@ func roleBindingResource() *schema.Resource {
 // suppresses diffs when the only difference is encoding (':' vs '%3A') 
 // so that logically same CRNs do not trigger force replacement 
 func suppressSameCrnPattern(k, old, new string, d *schema.ResourceData) bool {
-    decode := func(s string) string {
-        if v, err := url.PathUnescape(s); err == nil {
-            return v
-        }
-        return s
-    }
-    return decode(old) == decode(new)
+    return normalizeCrn(old) == normalizeCrn(new)
 }
 
 func roleBindingCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
