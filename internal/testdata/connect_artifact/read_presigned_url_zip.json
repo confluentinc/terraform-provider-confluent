@@ -1,9 +1,18 @@
 {
-  "id": "lccp-abc123",
-  "upload_url": "TF_TEST_URL",
-  "upload_id": "upload-123",
+  "api_version": "cam/v1",
+  "cloud": "AWS",
   "content_format": "ZIP",
+  "kind": "PresignedUrl",
   "upload_form_data": {
-    "key": "value"
-  }
-} 
+    "bucket": "confluent-custom-connectors-stag-us-west-2",
+    "key": "staging/ccp/v1/2f37f0b6-f8da-4e8b-bc5f-282ebb0511be/connect-e53bb2e8-8de3-49fa-9fb1-4e3fd9a16b66/plugin.jar",
+    "policy": "policy-foobar",
+    "x-amz-algorithm": "AWS4-HMAC-SHA256",
+    "x-amz-credential": "x-amz-credential-foobar",
+    "x-amz-date": "20250814T205018Z",
+    "x-amz-security-token": "x-amz-security-token-foobar",
+    "x-amz-signature": "x-amz-signature-foobar"
+  },
+  "upload_id": "e53bb2e8-8de3-49fa-9fb1-4e3fd9a16b66",
+  "upload_url": "TF_TEST_URL"
+}
