@@ -50,6 +50,7 @@ const (
 	paramRestEndpointPrivateRegional = "private_regional_rest_endpoints"
 	paramCatalogEndpoint             = "catalog_endpoint"
 	paramCku                         = "cku"
+	paramMaxEcku                     = "max_ecku"
 	paramEncryptionKey               = "encryption_key"
 	paramRbacCrn                     = "rbac_crn"
 	paramConfluentCustomerKey        = "byok_key"
@@ -81,6 +82,10 @@ var acceptedCloudProviders = []string{"AWS", "AZURE", "GCP"}
 var acceptedClusterTypes = []string{paramBasicCluster, paramStandardCluster, paramDedicatedCluster, paramEnterpriseCluster, paramFreightCluster}
 var paramDedicatedCku = fmt.Sprintf("%s.0.%s", paramDedicatedCluster, paramCku)
 var paramDedicatedEncryptionKey = fmt.Sprintf("%s.0.%s", paramDedicatedCluster, paramEncryptionKey)
+var paramBasicMaxEcku = fmt.Sprintf("%s.0.%s", paramBasicCluster, paramMaxEcku)
+var paramStandardMaxEcku = fmt.Sprintf("%s.0.%s", paramStandardCluster, paramMaxEcku)
+var paramEnterpriseMaxEcku = fmt.Sprintf("%s.0.%s", paramEnterpriseCluster, paramMaxEcku)
+var paramFreightMaxEcku = fmt.Sprintf("%s.0.%s", paramFreightCluster, paramMaxEcku)
 
 func kafkaResource() *schema.Resource {
 	return &schema.Resource{
@@ -319,6 +324,15 @@ func kafkaUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 		tflog.Debug(ctx, fmt.Sprintf("Updated Kafka Cluster %q: %s", d.Id(), updatedClusterJson), map[string]interface{}{kafkaClusterLoggingKey: d.Id()})
 	}
 
+	// Max eCKU update
+	//extractBasicMaxEcku
+	isMaxEckuBasicUpdate := d.HasChange(paramBasicCluster) && clusterType == kafkaClusterTypeBasic && d.HasChange(paramBasicMaxEcku)
+	isMaxEckuStandardUpdate := d.HasChange(paramStandardCluster) && clusterType == kafkaClusterTypeStandard && d.HasChange(paramStandardMaxEcku)
+	isMaxEckuEnterpriseUpdate := d.HasChange(paramEnterpriseCluster) && clusterType == kafkaClusterTypeEnterprise && d.HasChange(paramEnterpriseMaxEcku)
+	isMaxEckuFreightUpdate := d.HasChange(paramFreightCluster) && clusterType == kafkaClusterTypeFreight && d.HasChange(paramFreightMaxEcku)
+
+	//if
+
 	tflog.Debug(ctx, fmt.Sprintf("Finished updating Kafka Cluster %q", d.Id()), map[string]interface{}{kafkaClusterLoggingKey: d.Id()})
 
 	return kafkaRead(ctx, d, meta)
@@ -347,9 +361,21 @@ func kafkaCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 	spec.SetCloud(cloud)
 	spec.SetRegion(region)
 	if clusterType == kafkaClusterTypeBasic {
-		spec.SetConfig(cmk.CmkV2BasicAsCmkV2ClusterSpecConfigOneOf(cmk.NewCmkV2Basic(kafkaClusterTypeBasic)))
+		max_ecku := extractBasicMaxEcku(d)
+		config := cmk.NewCmkV2Basic(kafkaClusterTypeBasic)
+		if max_ecku != 0 {
+			config.SetMaxEcku(max_ecku)
+		}
+
+		spec.SetConfig(cmk.CmkV2BasicAsCmkV2ClusterSpecConfigOneOf(config))
 	} else if clusterType == kafkaClusterTypeStandard {
-		spec.SetConfig(cmk.CmkV2StandardAsCmkV2ClusterSpecConfigOneOf(cmk.NewCmkV2Standard(kafkaClusterTypeStandard)))
+		max_ecku := extractStandardMaxEcku(d)
+		config := cmk.NewCmkV2Standard(kafkaClusterTypeStandard)
+		if max_ecku != 0 {
+			config.SetMaxEcku(max_ecku)
+		}
+
+		spec.SetConfig(cmk.CmkV2StandardAsCmkV2ClusterSpecConfigOneOf(config))
 	} else if clusterType == kafkaClusterTypeDedicated {
 		cku := extractCku(d)
 		err := ckuCheck(cku, availability)
@@ -365,9 +391,21 @@ func kafkaCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 
 		spec.SetConfig(cmk.CmkV2DedicatedAsCmkV2ClusterSpecConfigOneOf(config))
 	} else if clusterType == kafkaClusterTypeEnterprise {
-		spec.SetConfig(cmk.CmkV2EnterpriseAsCmkV2ClusterSpecConfigOneOf(cmk.NewCmkV2Enterprise(kafkaClusterTypeEnterprise)))
+		max_ecku := extractEnterpriseMaxEcku(d)
+		config := cmk.NewCmkV2Enterprise(kafkaClusterTypeEnterprise)
+		if max_ecku != 0 {
+			config.SetMaxEcku(max_ecku)
+		}
+
+		spec.SetConfig(cmk.CmkV2EnterpriseAsCmkV2ClusterSpecConfigOneOf(config))
 	} else if clusterType == kafkaClusterTypeFreight {
-		spec.SetConfig(cmk.CmkV2FreightAsCmkV2ClusterSpecConfigOneOf(cmk.NewCmkV2Freight(kafkaClusterTypeFreight)))
+		max_ecku := extractFreightMaxEcku(d)
+		config := cmk.NewCmkV2Freight(kafkaClusterTypeFreight)
+		if max_ecku != 0 {
+			config.SetMaxEcku(max_ecku)
+		}
+
+		spec.SetConfig(cmk.CmkV2FreightAsCmkV2ClusterSpecConfigOneOf(config))
 	} else {
 		return diag.Errorf("error creating Kafka Cluster: unknown Kafka Cluster type was provided: %q", clusterType)
 	}
@@ -464,6 +502,26 @@ func extractCku(d *schema.ResourceData) int32 {
 func extractEncryptionKey(d *schema.ResourceData) string {
 	// d.Get() will return "" if the key is not present
 	return d.Get(paramDedicatedEncryptionKey).(string)
+}
+
+func extractBasicMaxEcku(d *schema.ResourceData) int32 {
+	// d.Get() will return 0 if the key is not present
+	return int32(d.Get(paramBasicMaxEcku).(int))
+}
+
+func extractStandardMaxEcku(d *schema.ResourceData) int32 {
+	// d.Get() will return 0 if the key is not present
+	return int32(d.Get(paramStandardMaxEcku).(int))
+}
+
+func extractEnterpriseMaxEcku(d *schema.ResourceData) int32 {
+	// d.Get() will return 0 if the key is not present
+	return int32(d.Get(paramEnterpriseMaxEcku).(int))
+}
+
+func extractFreightMaxEcku(d *schema.ResourceData) int32 {
+	// d.Get() will return 0 if the key is not present
+	return int32(d.Get(paramFreightMaxEcku).(int))
 }
 
 func kafkaDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -566,7 +624,13 @@ func basicClusterSchema() *schema.Schema {
 		Optional: true,
 		MaxItems: 0,
 		Elem: &schema.Resource{
-			Schema: map[string]*schema.Schema{},
+			Schema: map[string]*schema.Schema{
+				paramMaxEcku: {
+					Type:        schema.TypeInt,
+					Optional:    true,
+					Description: "The maximum number of Elastic Confluent Kafka Units (eCKUs) that Kafka clusters should auto-scale to. Kafka clusters with HIGH availability must have at least two eCKUs.",
+				},
+			},
 		},
 		ExactlyOneOf:  acceptedClusterTypes,
 		ConflictsWith: []string{paramConfluentCustomerKey},
@@ -579,7 +643,13 @@ func standardClusterSchema() *schema.Schema {
 		Optional: true,
 		MaxItems: 0,
 		Elem: &schema.Resource{
-			Schema: map[string]*schema.Schema{},
+			Schema: map[string]*schema.Schema{
+				paramMaxEcku: {
+					Type:        schema.TypeInt,
+					Optional:    true,
+					Description: "The maximum number of Elastic Confluent Kafka Units (eCKUs) that Kafka clusters should auto-scale to. Kafka clusters with HIGH availability must have at least two eCKUs.",
+				},
+			},
 		},
 		ExactlyOneOf:  acceptedClusterTypes,
 		ConflictsWith: []string{paramConfluentCustomerKey},
@@ -626,7 +696,13 @@ func enterpriseClusterSchema() *schema.Schema {
 		Optional: true,
 		MaxItems: 0,
 		Elem: &schema.Resource{
-			Schema: map[string]*schema.Schema{},
+			Schema: map[string]*schema.Schema{
+				paramMaxEcku: {
+					Type:        schema.TypeInt,
+					Optional:    true,
+					Description: "The maximum number of Elastic Confluent Kafka Units (eCKUs) that Kafka clusters should auto-scale to. Kafka clusters with HIGH availability must have at least two eCKUs.",
+				},
+			},
 		},
 		ExactlyOneOf: acceptedClusterTypes,
 	}
@@ -646,6 +722,11 @@ func freightClusterSchema() *schema.Schema {
 					},
 					Computed:    true,
 					Description: "The list of zones the cluster is in.",
+				},
+				paramMaxEcku: {
+					Type:        schema.TypeInt,
+					Optional:    true,
+					Description: "The maximum number of Elastic Confluent Kafka Units (eCKUs) that Kafka clusters should auto-scale to. Kafka clusters with HIGH availability must have at least two eCKUs.",
 				},
 			},
 		},
@@ -723,11 +804,15 @@ func setKafkaClusterAttributes(d *schema.ResourceData, cluster cmk.CmkV2Cluster)
 
 	// Set a specific cluster type
 	if cluster.Spec.Config.CmkV2Basic != nil {
-		if err := d.Set(paramBasicCluster, []interface{}{make(map[string]string)}); err != nil {
+		if err := d.Set(paramBasicCluster, []interface{}{map[string]interface{}{
+			paramMaxEcku: cluster.Spec.Config.CmkV2Basic.GetMaxEcku(),
+		}}); err != nil {
 			return nil, err
 		}
 	} else if cluster.Spec.Config.CmkV2Standard != nil {
-		if err := d.Set(paramStandardCluster, []interface{}{make(map[string]string)}); err != nil {
+		if err := d.Set(paramStandardCluster, []interface{}{map[string]interface{}{
+			paramMaxEcku: cluster.Spec.Config.CmkV2Standard.GetMaxEcku(),
+		}}); err != nil {
 			return nil, err
 		}
 	} else if cluster.Spec.Config.CmkV2Dedicated != nil {
@@ -739,12 +824,15 @@ func setKafkaClusterAttributes(d *schema.ResourceData, cluster cmk.CmkV2Cluster)
 			return nil, err
 		}
 	} else if cluster.Spec.Config.CmkV2Enterprise != nil {
-		if err := d.Set(paramEnterpriseCluster, []interface{}{make(map[string]string)}); err != nil {
+		if err := d.Set(paramEnterpriseCluster, []interface{}{map[string]interface{}{
+			paramMaxEcku: cluster.Spec.Config.CmkV2Enterprise.GetMaxEcku(),
+		}}); err != nil {
 			return nil, err
 		}
 	} else if cluster.Spec.Config.CmkV2Freight != nil {
 		if err := d.Set(paramFreightCluster, []interface{}{map[string]interface{}{
-			paramZones: cluster.Spec.Config.CmkV2Freight.GetZones(),
+			paramZones:   cluster.Spec.Config.CmkV2Freight.GetZones(),
+			paramMaxEcku: cluster.Spec.Config.CmkV2Freight.GetMaxEcku(),
 		}}); err != nil {
 			return nil, err
 		}
