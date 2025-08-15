@@ -24,11 +24,11 @@ GIT_MESSAGES := $(shell git log --pretty='%s' v$(CLEAN_VERSION)...HEAD 2>/dev/nu
 # If auto bump enabled, search git messages for bump hash
 ifeq ($(BUMP),auto)
 _auto_bump_msg := \(auto\)
-ifneq (,$(findstring \#major,$(GIT_MESSAGES)))
+ifneq (,$(findstring #major,$(GIT_MESSAGES)))
 BUMP := major
-else ifneq (,$(findstring \#minor,$(GIT_MESSAGES)))
+else ifneq (,$(findstring #minor,$(GIT_MESSAGES)))
 BUMP := minor
-else ifneq (,$(findstring \#patch,$(GIT_MESSAGES)))
+else ifneq (,$(findstring #patch,$(GIT_MESSAGES)))
 BUMP := patch
 else
 BUMP := $(DEFAULT_BUMP)
