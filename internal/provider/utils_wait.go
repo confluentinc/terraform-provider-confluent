@@ -29,6 +29,8 @@ const (
 	stateCreated                   = "CREATED"
 	acceptanceTestModeWaitTime     = 1 * time.Second
 	acceptanceTestModePollInterval = 1 * time.Second
+
+	flinkCarryOverOffsetsProperty = "sql.tables.initial-offset-from"
 )
 
 func waitForCreatedKafkaApiKeyToSync(ctx context.Context, c *KafkaRestClient, isAcceptanceTestMode bool) error {
@@ -244,7 +246,7 @@ func waitForNetworkToProvision(ctx context.Context, c *Client, environmentId, ne
 	return nil
 }
 
-func waitForFlinkStatementToProvision(ctx context.Context, c *FlinkRestClient, statementName string, isAcceptanceTestMode bool) error {
+func waitForFlinkStatementToProvision(ctx context.Context, c *FlinkRestClient, statementName string, properties map[string]string, isAcceptanceTestMode bool) error {
 	delay, pollInterval := getDelayAndPollInterval(5*time.Second, 10*time.Second, isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
 		Pending:      []string{statePending},
@@ -253,6 +255,11 @@ func waitForFlinkStatementToProvision(ctx context.Context, c *FlinkRestClient, s
 		Timeout:      statementsAPICreateTimeout,
 		Delay:        delay,
 		PollInterval: pollInterval,
+	}
+
+	if _, ok := properties[flinkCarryOverOffsetsProperty]; ok {
+		stateConf.Pending = []string{}
+		stateConf.Target = []string{statePending, stateRunning, stateCompleted}
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for Flink Statement %q provisioning status to become %q", statementName, stateReady), map[string]interface{}{flinkStatementLoggingKey: statementName})

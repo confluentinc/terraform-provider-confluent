@@ -30,32 +30,24 @@ resource "confluent_flink_statement" "old" {
   }
 
   stopped = false
-  # Step #1: Stop confluent_flink_statement.old
+  # Step #2: Stop confluent_flink_statement.old, which will trigger the start for confluent_flink_statement.new (PENDING -> RUNNING state transition)
   # stopped = true
 }
 
-# Step #2: Create confluent_flink_statement.new
+# Step #1: Create confluent_flink_statement.new, which will start from the last offsets of confluent_flink_statement.old once it's stopped
 #resource "confluent_flink_statement" "new" {
 #  statement = <<-EOT
 #    INSERT INTO customers_sink (customer_id, name, address, postcode, city, email)
 #    SELECT customer_id, name, address, postcode, city, email
 #    FROM customers_source
-#    /*+ OPTIONS(
-#        'scan.startup.mode' = 'specific-offsets',
-#        'scan.startup.specific-offsets' = '${confluent_flink_statement.old.latest_offsets["customers_source"]}'
-#    ) */;
 #  EOT
 #
 #  properties = {
 #    "sql.current-catalog"  = var.current_catalog
 #    "sql.current-database" = var.current_database
+#    "sql.tables.initial-offset-from" =  confluent_flink_statement.old.statement_name
 #  }
 #}
 
-# Note: for a statement with multiple topics, use OPTIONS for each table
-# SELECT *
-# FROM table1 /*+ OPTIONS('scan.startup.mode'='specific-offsets', 'scan.startup.specific-offsets' = '...') */ t1
-# JOIN table2 /*+ OPTIONS('scan.startup.mode'='specific-offsets', 'scan.startup.specific-offsets' = '...') */ t2
-# ON t1.id = t2.id;
-# For more details, refer to the official Confluent documentation:
-# https://docs.confluent.io/cloud/current/flink/reference/statements/hints.html#examples
+# Note: For more details, refer to the official Confluent documentation:
+# https://docs.confluent.io/cloud/current/flink/operate-and-deploy/carry-over-offsets.html
