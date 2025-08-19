@@ -264,7 +264,15 @@ func kafkaUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 	if isBasicStandardUpdate {
 		updateClusterRequest := cmk.NewCmkV2ClusterUpdate()
 		updateSpec := cmk.NewCmkV2ClusterSpecUpdate()
-		updateSpec.SetConfig(cmk.CmkV2StandardAsCmkV2ClusterSpecUpdateConfigOneOf(cmk.NewCmkV2Standard(kafkaClusterTypeStandard)))
+		config := cmk.NewCmkV2Standard(kafkaClusterTypeStandard)
+		if d.HasChange(paramBasicMaxEcku) || d.Get(paramBasicMaxEcku) != nil {
+			// if max_ecku was set in Basic cluster, preserve it in Standard cluster
+			maxEcku := extractBasicMaxEcku(d)
+			if maxEcku > 0 {
+				config.SetMaxEcku(maxEcku)
+			}
+		}
+		updateSpec.SetConfig(cmk.CmkV2StandardAsCmkV2ClusterSpecUpdateConfigOneOf(config))
 		updateSpec.SetEnvironment(cmk.EnvScopedObjectReference{Id: environmentId})
 		updateClusterRequest.SetSpec(*updateSpec)
 		updateClusterRequestJson, err := json.Marshal(updateClusterRequest)
@@ -331,7 +339,51 @@ func kafkaUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 	isMaxEckuEnterpriseUpdate := d.HasChange(paramEnterpriseCluster) && clusterType == kafkaClusterTypeEnterprise && d.HasChange(paramEnterpriseMaxEcku)
 	isMaxEckuFreightUpdate := d.HasChange(paramFreightCluster) && clusterType == kafkaClusterTypeFreight && d.HasChange(paramFreightMaxEcku)
 
-	//if
+	if !isBasicStandardUpdate && (isMaxEckuBasicUpdate || isMaxEckuStandardUpdate || isMaxEckuEnterpriseUpdate || isMaxEckuFreightUpdate) {
+		updateClusterRequest := cmk.NewCmkV2ClusterUpdate()
+		updateSpec := cmk.NewCmkV2ClusterSpecUpdate()
+
+		if isMaxEckuBasicUpdate {
+			config := cmk.NewCmkV2Basic(kafkaClusterTypeBasic)
+			config.SetMaxEcku(extractBasicMaxEcku(d))
+			updateSpec.SetConfig(cmk.CmkV2BasicAsCmkV2ClusterSpecUpdateConfigOneOf(config))
+		} else if isMaxEckuStandardUpdate {
+			config := cmk.NewCmkV2Standard(kafkaClusterTypeStandard)
+			config.SetMaxEcku(extractStandardMaxEcku(d))
+			updateSpec.SetConfig(cmk.CmkV2StandardAsCmkV2ClusterSpecUpdateConfigOneOf(config))
+		} else if isMaxEckuEnterpriseUpdate {
+			config := cmk.NewCmkV2Enterprise(kafkaClusterTypeEnterprise)
+			config.SetMaxEcku(extractEnterpriseMaxEcku(d))
+			updateSpec.SetConfig(cmk.CmkV2EnterpriseAsCmkV2ClusterSpecUpdateConfigOneOf(config))
+		} else if isMaxEckuFreightUpdate {
+			config := cmk.NewCmkV2Freight(kafkaClusterTypeFreight)
+			config.SetMaxEcku(extractFreightMaxEcku(d))
+			updateSpec.SetConfig(cmk.CmkV2FreightAsCmkV2ClusterSpecUpdateConfigOneOf(config))
+		}
+
+		updateSpec.SetEnvironment(cmk.EnvScopedObjectReference{Id: environmentId})
+		updateClusterRequest.SetSpec(*updateSpec)
+		updateClusterRequestJson, err := json.Marshal(updateClusterRequest)
+		if err != nil {
+			return diag.Errorf("error updating Kafka Cluster %q: error marshaling %#v to json: %s", d.Id(), updateClusterRequest, createDescriptiveError(err))
+		}
+		tflog.Debug(ctx, fmt.Sprintf("Updating Kafka Cluster %q: %s", d.Id(), updateClusterRequestJson), map[string]interface{}{kafkaClusterLoggingKey: d.Id()})
+		req := c.cmkClient.ClustersCmkV2Api.UpdateCmkV2Cluster(c.cmkApiContext(ctx), d.Id()).CmkV2ClusterUpdate(*updateClusterRequest)
+
+		updatedCluster, _, err := req.Execute()
+		if err != nil {
+			return diag.Errorf("error updating Kafka Cluster %q: %s", d.Id(), createDescriptiveError(err))
+		}
+
+		if err := waitForKafkaClusterCkuUpdateToComplete(c.cmkApiContext(ctx), c, environmentId, d.Id(), cku); err != nil {
+			return diag.Errorf("error waiting for Kafka Cluster %q to perform Max eCKU update: %s", d.Id(), createDescriptiveError(err))
+		}
+		updatedClusterJson, err := json.Marshal(updatedCluster)
+		if err != nil {
+			return diag.Errorf("error updating Kafka Cluster %q: error marshaling %#v to json: %s", d.Id(), updatedCluster, createDescriptiveError(err))
+		}
+		tflog.Debug(ctx, fmt.Sprintf("Updated Kafka Cluster %q: %s", d.Id(), updatedClusterJson), map[string]interface{}{kafkaClusterLoggingKey: d.Id()})
+	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished updating Kafka Cluster %q", d.Id()), map[string]interface{}{kafkaClusterLoggingKey: d.Id()})
 
