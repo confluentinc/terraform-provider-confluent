@@ -31,7 +31,7 @@ blocks:
             - "echo \"Step 1: Fetching GitHub issues from the last 48 hours...\""
             - export REPO_OWNER="confluentinc"
             - export REPO_NAME="terraform-provider-confluent"
-            - export SINCE_TIME=$(date -u -d '3360 hours ago' '+%Y-%m-%dT%H:%M:%SZ')
+            - export SINCE_TIME=$(date -u -d '168 hours ago' '+%Y-%m-%dT%H:%M:%SZ')
             - |
               echo "Scanning for issues in $REPO_OWNER/$REPO_NAME created after $SINCE_TIME"
               if ! gh issue list --repo "$REPO_OWNER/$REPO_NAME" --json number,title,body,url,author --search "created:>$SINCE_TIME" --state=open > recent_issues.json; then
