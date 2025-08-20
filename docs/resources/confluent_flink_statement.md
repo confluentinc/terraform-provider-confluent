@@ -108,7 +108,7 @@ The following arguments are supported:
 - `organization` (Optional Configuration Block) supports the following:
     - `id` - (Required String) The ID of the Organization, for example, `1111aaaa-11aa-11aa-11aa-111111aaaaaa`.
 - `environment` (Optional Configuration Block) supports the following:
-    - `id` - (Required String) The ID of the Environment, for example, `env-abc123`. 
+    - `id` - (Required String) The ID of the Environment, for example, `env-abc123`.
 - `compute_pool` - (Optional Configuration Block) supports the following:
     - `id` - (Required String) The ID of the Flink Compute Pool, for example, `lfcp-abc123`.
 - `principal` - (Optional Configuration Block) supports the following:
@@ -159,7 +159,7 @@ In addition to the preceding arguments, the following attributes are exported:
 
 !> **Note:** The values for the `latest_offsets` and `latest_offsets_timestamp` attributes are populated only for stopped statements.
 
--> **Note:** To start a statement from the last offset of a previous statement, you can inject `latest_offsets` as a SQL hint as documented in the [flink-carry-over-offset-between-statements](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/flink-carry-over-offset-between-statements) example.
+-> **Note:** To start a statement from the last offsets of a previous statement, you can automatically reuse the offsets of a previous statement as documented in the [flink-carry-over-offset-between-statements](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/flink-carry-over-offset-between-statements) example, or inject `latest_offsets` as a SQL hint.
 
 ## Import
 
