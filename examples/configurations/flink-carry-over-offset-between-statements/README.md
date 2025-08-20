@@ -44,9 +44,9 @@
     ```
 3. Apply this Terraform configuration by following the [Sample Project for Confluent Terraform Provider](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/guides/sample-project) to start the initial statement.
 4. Make the following changes to update the statement to the new version and restart automatically where the previous one stops:
-   * Uncomment `confluent_flink_statement.new`
-   * Stop `confluent_flink_statement.old` by setting `stopped = true`
-   * Run `terraform apply` to apply all these steps. The new statement will start automatically when the old one stops
+   * Step #1: Uncomment `confluent_flink_statement.new` and run `terraform apply`.
+   * Step #2: Stop `confluent_flink_statement.old` by setting `stopped = true` and run `terraform apply`.
+   * Note: the new statement will automatically start from the last offsets of `confluent_flink_statement.old` once it's stopped.
 5. In Confluent Cloud for Apache Flink®, an environment is mapped to a Flink catalog, a Kafka cluster is mapped to a Flink database, and a Kafka topic is mapped to a Flink table.
 6. See [Sample Project for Confluent Terraform Provider](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/guides/sample-project) that provides step-by-step instructions of running this example.
 7. See [Flink SQL Quick Start with Confluent Cloud Console](https://docs.confluent.io/cloud/current/flink/get-started/quick-start-cloud-console.html#flink-sql-quick-start-with-ccloud-console) for more details about Flink Statements.
