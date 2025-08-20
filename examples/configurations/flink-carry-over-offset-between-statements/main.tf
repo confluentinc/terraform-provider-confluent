@@ -45,7 +45,7 @@ resource "confluent_flink_statement" "old" {
 #  properties = {
 #    "sql.current-catalog"  = var.current_catalog
 #    "sql.current-database" = var.current_database
-#    "sql.tables.initial-offset-from" =  "confluent_flink_statement.old"
+#    "sql.tables.initial-offset-from" =  confluent_flink_statement.old.statement_name
 #  }
 #}
 
