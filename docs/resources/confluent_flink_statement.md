@@ -3,7 +3,7 @@
 page_title: "confluent_flink_statement Resource - terraform-provider-confluent"
 subcategory: ""
 description: |-
-
+  
 ---
 
 # confluent_flink_statement Resource
