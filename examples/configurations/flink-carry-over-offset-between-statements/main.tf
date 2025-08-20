@@ -34,7 +34,7 @@ resource "confluent_flink_statement" "old" {
   # stopped = true
 }
 
-# Step #1: Create confluent_flink_statement.new that will start from the last offset of confluent_flink_statement.old
+# Step #1: Create confluent_flink_statement.new that will start from the last offsets of confluent_flink_statement.old
 #resource "confluent_flink_statement" "new" {
 #  statement = <<-EOT
 #    INSERT INTO customers_sink (customer_id, name, address, postcode, city, email)
