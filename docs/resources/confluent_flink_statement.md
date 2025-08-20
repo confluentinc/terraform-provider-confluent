@@ -159,7 +159,7 @@ In addition to the preceding arguments, the following attributes are exported:
 
 !> **Note:** The values for the `latest_offsets` and `latest_offsets_timestamp` attributes are populated only for stopped statements.
 
--> **Note:** To start a statement from the last offsets of a previous statement, you can automatically reuse the offsets of a previous statement as documented in the [flink-carry-over-offset-between-statements](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/flink-carry-over-offset-between-statements) example, or inject `latest_offsets` as a SQL hint.
+-> **Note:** To start a statement from the last offsets of a previous statement, you can automatically reuse the offsets of a previous statement as documented in the [flink-carry-over-offset-between-statements](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/flink-carry-over-offset-between-statements) example, or inject `latest_offsets` as a [SQL hint](https://docs.confluent.io/cloud/current/flink/reference/statements/hints.html#examples).
 
 ## Import
 
