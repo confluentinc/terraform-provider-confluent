@@ -30,11 +30,11 @@ resource "confluent_flink_statement" "old" {
   }
 
   stopped = false
-  # Step #2: Stop confluent_flink_statement.old
+  # Step #2: Stop confluent_flink_statement.old, which will trigger the start for confluent_flink_statement.new (PENDING -> RUNNING state transition)
   # stopped = true
 }
 
-# Step #1: Create confluent_flink_statement.new that will start from the last offsets of confluent_flink_statement.old
+# Step #1: Create confluent_flink_statement.new, which will start from the last offsets of confluent_flink_statement.old once it's stopped
 #resource "confluent_flink_statement" "new" {
 #  statement = <<-EOT
 #    INSERT INTO customers_sink (customer_id, name, address, postcode, city, email)
