@@ -106,32 +106,32 @@ resource "confluent_flink_statement" "example" {
 The following arguments are supported:
 
 - `organization` (Optional Configuration Block) supports the following:
-    - `id` - (Required String) The ID of the Organization, for example, `1111aaaa-11aa-11aa-11aa-111111aaaaaa`.
+  - `id` - (Required String) The ID of the Organization, for example, `1111aaaa-11aa-11aa-11aa-111111aaaaaa`.
 - `environment` (Optional Configuration Block) supports the following:
-    - `id` - (Required String) The ID of the Environment, for example, `env-abc123`. 
+  - `id` - (Required String) The ID of the Environment, for example, `env-abc123`.
 - `compute_pool` - (Optional Configuration Block) supports the following:
-    - `id` - (Required String) The ID of the Flink Compute Pool, for example, `lfcp-abc123`.
+  - `id` - (Required String) The ID of the Flink Compute Pool, for example, `lfcp-abc123`.
 - `principal` - (Optional Configuration Block) supports the following:
-    - `id` - (Required String) The ID of the Principal the Flink Statement runs as, for example, `sa-abc123`.
+  - `id` - (Required String) The ID of the Principal the Flink Statement runs as, for example, `sa-abc123`.
 - `statement` - (Required String) The raw SQL text statement, for example, `SELECT CURRENT_TIMESTAMP;`.
 - `statement_name` - (Optional String) The ID of the Flink Statement, for example, `cfeab4fe-b62c-49bd-9e99-51cc98c77a67`.
 - `rest_endpoint` - (Optional String) The REST endpoint of the Flink region. For example, for public networking: `https://flink.us-east-1.aws.confluent.cloud`. In the case of private networking, the endpoint might look like `https://flink.pr1jy6.us-east-2.aws.confluent.cloud`. You can construct it using either:
   - `data.confluent_flink_region.main.private_rest_endpoint`, or
   - `https://flink${data.confluent_network.main.endpoint_suffix}`
 - `credentials` (Optional Configuration Block) supports the following:
-    - `key` - (Required String) The Flink API Key.
-    - `secret` - (Required String, Sensitive) The Flink API Secret.
+  - `key` - (Required String) The Flink API Key.
+  - `secret` - (Required String, Sensitive) The Flink API Secret.
 
 -> **Note:** A Flink API key consists of a key and a secret. Flink API keys are required to interact with Flink Statements in Confluent Cloud. Each Flink API key is valid for one specific Flink Region.
 
 -> **Note:** Use Option #2 to simplify the key rotation process. When using Option #1, to rotate a Flink API key, create a new Flink API key, update the `credentials` block in all configuration files to use the new Flink API key, run `terraform apply -target="confluent_flink_statement.example"`, and remove the old Flink API key. Alternatively, in case the old Flink API Key was deleted already, you might need to run `terraform plan -refresh=false -target="confluent_flink_statement.example" -out=rotate-flink-api-key` and `terraform apply rotate-flink-api-key` instead.
 
 - `properties` - (Optional Map) The custom topic settings to set:
-    - `name` - (Required String) The setting name, for example, `sql.local-time-zone`.
-    - `value` - (Required String) The setting value, for example, `GMT-08:00`.
+  - `name` - (Required String) The setting name, for example, `sql.local-time-zone`.
+  - `value` - (Required String) The setting value, for example, `GMT-08:00`.
 - `properties_sensitive` - (Optional Map) Block for sensitive statement properties:
-    - `name` - (Required String) The setting name, for example, `sql.secrets.openaikey`.
-    - `value` - (Required String) The setting value, for example, `s1234`.
+  - `name` - (Required String) The setting name, for example, `sql.secrets.openaikey`.
+  - `value` - (Required String) The setting value, for example, `s1234`.
 
 - `stopped` - (Optional Boolean) The boolean flag is used to indicate the statement's running status and to control whether the Flink Statement should be stopped or resumed. Defaults to `false`. Update it to `true` to stop the statement. Subsequently update it to `false` to resume the statement.
 
@@ -159,7 +159,7 @@ In addition to the preceding arguments, the following attributes are exported:
 
 !> **Note:** The values for the `latest_offsets` and `latest_offsets_timestamp` attributes are populated only for stopped statements.
 
--> **Note:** To start a statement from the last offset of a previous statement, you can inject `latest_offsets` as a SQL hint as documented in the [flink-carry-over-offset-between-statements](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/flink-carry-over-offset-between-statements) example.
+-> **Note:** To start a statement from the last offsets of a previous statement, you can automatically reuse the offsets of a previous statement as documented in the [flink-carry-over-offset-between-statements](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/flink-carry-over-offset-between-statements) example, or inject `latest_offsets` as a SQL hint.
 
 ## Import
 
