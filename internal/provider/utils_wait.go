@@ -594,6 +594,25 @@ func waitForKafkaClusterCkuUpdateToComplete(ctx context.Context, c *Client, envi
 	return nil
 }
 
+//func waitForKafkaClusterMaxEckuUpdateToComplete(ctx context.Context, c *Client, environmentId, clusterId string, maxEcku int32) error {
+//	delay, pollInterval := getDelayAndPollInterval(5*time.Second, 1*time.Minute, c.isAcceptanceTestMode)
+//	stateConf := &resource.StateChangeConf{
+//		Pending: []string{stateInProgress},
+//		Target:  []string{stateDone},
+//		Refresh: kafkaClusterMaxEckuUpdateStatus(c.cmkApiContext(ctx), c, environmentId, clusterId, maxEcku),
+//		// https://docs.confluent.io/cloud/current/clusters/cluster-types.html#resizing-time
+//		Timeout:      getTimeoutFor(kafkaClusterTypeDedicated),
+//		Delay:        delay,
+//		PollInterval: pollInterval,
+//	}
+//
+//	tflog.Debug(ctx, fmt.Sprintf("Waiting for Kafka Cluster %q Max eCKU update", clusterId), map[string]interface{}{kafkaClusterLoggingKey: clusterId})
+//	if _, err := stateConf.WaitForStateContext(c.cmkApiContext(ctx)); err != nil {
+//		return err
+//	}
+//	return nil
+//}
+
 func waitForDnsRecordToBeDeleted(ctx context.Context, c *Client, environmentId, dnsRecordId string) error {
 	delay, pollInterval := getDelayAndPollInterval(1*time.Minute, 1*time.Minute, c.isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
@@ -932,6 +951,27 @@ func kafkaClusterCkuUpdateStatus(ctx context.Context, c *Client, environmentId s
 		return cluster, stateInProgress, nil
 	}
 }
+
+//func kafkaClusterMaxEckuUpdateStatus(ctx context.Context, c *Client, environmentId string, clusterId string, desiredMaxEcku int32) resource.StateRefreshFunc {
+//	return func() (result interface{}, s string, err error) {
+//		cluster, _, err := executeKafkaRead(c.cmkApiContext(ctx), c, environmentId, clusterId)
+//		if err != nil {
+//			tflog.Warn(ctx, fmt.Sprintf("Error reading Kafka Cluster %q: %s", clusterId, createDescriptiveError(err)), map[string]interface{}{kafkaClusterLoggingKey: clusterId})
+//			return nil, stateUnknown, err
+//		}
+//
+//		tflog.Debug(ctx, fmt.Sprintf("Waiting for Kafka Cluster %q Max eCKU update", clusterId), map[string]interface{}{kafkaClusterLoggingKey: clusterId})
+//		// Wail until actual # of CKUs is the same as desired one
+//		// spec.cku is the user’s desired # of CKUs, and status.cku is the current # of CKUs in effect
+//		// because the change is still pending, for example
+//		// Use desiredCku on the off chance that API will not work as expected (i.e., spec.cku = status.cku during expansion).
+//		// CAPAC-293
+//		if cluster.Status. == cluster.Spec.Config.CmkV2Dedicated.Cku && cluster.Status.GetCku() == desiredMaxEcku {
+//			return cluster, stateDone, nil
+//		}
+//		return cluster, stateInProgress, nil
+//	}
+//}
 
 func kafkaClusterProvisionStatus(ctx context.Context, c *Client, environmentId string, clusterId string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
