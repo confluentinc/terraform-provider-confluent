@@ -200,7 +200,7 @@ func flinkStatementCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	}
 	d.SetId(createFlinkStatementId(flinkRestClient.environmentId, createdFlinkStatement.Spec.GetComputePoolId(), createdFlinkStatement.GetName()))
 
-	if err := waitForFlinkStatementToProvision(flinkRestClient.apiContext(ctx), flinkRestClient, createdFlinkStatement.GetName(), meta.(*Client).isAcceptanceTestMode); err != nil {
+	if err := waitForFlinkStatementToProvision(flinkRestClient.apiContext(ctx), flinkRestClient, createdFlinkStatement.GetName(), mergedProperties, meta.(*Client).isAcceptanceTestMode); err != nil {
 		return diag.Errorf("error waiting for Flink Statement %q to provision: %s", createdFlinkStatement.GetName(), createDescriptiveError(err))
 	}
 
