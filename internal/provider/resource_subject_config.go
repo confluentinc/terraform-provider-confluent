@@ -117,10 +117,10 @@ func subjectConfigCreate(ctx context.Context, d *schema.ResourceData, meta inter
 		}
 		tflog.Debug(ctx, fmt.Sprintf("Creating new Subject Config: %s", createConfigRequestJson))
 
-		_, _, err = executeSubjectConfigUpdate(ctx, schemaRegistryRestClient, createConfigRequest, subjectName)
+		_, resp, err := executeSubjectConfigUpdate(ctx, schemaRegistryRestClient, createConfigRequest, subjectName)
 
 		if err != nil {
-			return diag.Errorf("error creating Subject Config: %s", createDescriptiveError(err))
+			return diag.Errorf("error creating Subject Config: %s", createDescriptiveError(err, resp))
 		}
 
 		SleepIfNotTestMode(schemaRegistryAPIWaitAfterCreateOrDelete, meta.(*Client).isAcceptanceTestMode)
@@ -153,10 +153,10 @@ func subjectConfigDelete(ctx context.Context, d *schema.ResourceData, meta inter
 	subjectName := d.Get(paramSubjectName).(string)
 
 	// Deletes the specified subject-level compatibility level config and reverts to the global default.
-	_, _, err = schemaRegistryRestClient.apiClient.ConfigV1Api.DeleteSubjectConfig(schemaRegistryRestClient.apiContext(ctx), subjectName).Execute()
+	_, resp, err := schemaRegistryRestClient.apiClient.ConfigV1Api.DeleteSubjectConfig(schemaRegistryRestClient.apiContext(ctx), subjectName).Execute()
 
 	if err != nil {
-		return diag.Errorf("error deleting Subject Config %q: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error deleting Subject Config %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	SleepIfNotTestMode(schemaRegistryAPIWaitAfterCreateOrDelete, meta.(*Client).isAcceptanceTestMode)
@@ -232,7 +232,7 @@ func subjectConfigImport(ctx context.Context, d *schema.ResourceData, meta inter
 func readSubjectConfigAndSetAttributes(ctx context.Context, d *schema.ResourceData, c *SchemaRegistryRestClient, subjectName string) ([]*schema.ResourceData, error) {
 	subjectConfig, resp, err := c.apiClient.ConfigV1Api.GetSubjectLevelConfig(c.apiContext(ctx), subjectName).DefaultToGlobal(true).Execute()
 	if err != nil {
-		tflog.Warn(ctx, fmt.Sprintf("Error reading Subject Config %q: %s", d.Id(), createDescriptiveError(err)), map[string]interface{}{subjectConfigLoggingKey: d.Id()})
+		tflog.Warn(ctx, fmt.Sprintf("Error reading Subject Config %q: %s", d.Id(), createDescriptiveError(err, resp)), map[string]interface{}{subjectConfigLoggingKey: d.Id()})
 
 		isResourceNotFound := ResponseHasExpectedStatusCode(resp, http.StatusNotFound)
 		if isResourceNotFound && !d.IsNewResource() {
@@ -245,7 +245,7 @@ func readSubjectConfigAndSetAttributes(ctx context.Context, d *schema.ResourceDa
 	}
 	subjectConfigJson, err := json.Marshal(subjectConfig)
 	if err != nil {
-		return nil, fmt.Errorf("error reading Subject Config %q: error marshaling %#v to json: %s", d.Id(), subjectConfig, createDescriptiveError(err))
+		return nil, fmt.Errorf("error reading Subject Config %q: error marshaling %#v to json: %s", d.Id(), subjectConfig, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Subject Config %q: %s", d.Id(), subjectConfigJson), map[string]interface{}{subjectConfigLoggingKey: d.Id()})
 
@@ -308,9 +308,9 @@ func subjectConfigUpdate(ctx context.Context, d *schema.ResourceData, meta inter
 		}
 		tflog.Debug(ctx, fmt.Sprintf("Updating Subject Config %q: %s", d.Id(), updateConfigRequestJson), map[string]interface{}{kafkaClusterConfigLoggingKey: d.Id()})
 
-		_, _, err = executeSubjectConfigUpdate(ctx, schemaRegistryRestClient, updateConfigRequest, subjectName)
+		_, resp, err := executeSubjectConfigUpdate(ctx, schemaRegistryRestClient, updateConfigRequest, subjectName)
 		if err != nil {
-			return diag.Errorf("error updating Subject Config: %s", createDescriptiveError(err))
+			return diag.Errorf("error updating Subject Config: %s", createDescriptiveError(err, resp))
 		}
 		SleepIfNotTestMode(kafkaRestAPIWaitAfterCreate, meta.(*Client).isAcceptanceTestMode)
 		tflog.Debug(ctx, fmt.Sprintf("Finished updating Subject Config %q", d.Id()), map[string]interface{}{kafkaClusterConfigLoggingKey: d.Id()})

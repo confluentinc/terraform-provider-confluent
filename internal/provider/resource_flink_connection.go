@@ -196,14 +196,14 @@ func connectionCreate(ctx context.Context, d *schema.ResourceData, meta interfac
 			},
 		},
 	}
-	createdConnection, _, err := executeConnectionCreate(flinkRestClient.apiContext(ctx), flinkRestClient, connection)
+	createdConnection, resp, err := executeConnectionCreate(flinkRestClient.apiContext(ctx), flinkRestClient, connection)
 	if err != nil {
-		return diag.Errorf("error creating Flink Connection: %s", createDescriptiveError(err))
+		return diag.Errorf("errorr creating Flink Connection: %s", createDescriptiveError(err, resp))
 	}
 	d.SetId(createFlinkConnectionId(flinkRestClient.organizationId, flinkRestClient.environmentId, createdConnection.GetName()))
 	createdConnectionJson, err := json.Marshal(createdConnection)
 	if err != nil {
-		return diag.Errorf("error creating Flink Connection: error marshaling %#v to json: %s", createdConnectionJson, createDescriptiveError(err))
+		return diag.Errorf("error creating Flink Connection: error marshaling %#v to json: %s", createdConnectionJson, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating Flink Connection %q: %s", d.Id(), createdConnectionJson), map[string]interface{}{flinkConnectionLoggingKey: d.Id()})
 	return connectionRead(ctx, d, meta)
@@ -251,9 +251,9 @@ func connectionUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 	tflog.Debug(ctx, fmt.Sprintf("Updating Flink Connection %q: %s", d.Id(), updateConnectionRequestJson), map[string]interface{}{flinkConnectionLoggingKey: d.Id()})
 
 	req := flinkRestClient.apiClient.ConnectionsSqlV1Api.UpdateSqlv1Connection(flinkRestClient.apiContext(ctx), flinkRestClient.organizationId, flinkRestClient.environmentId, name).SqlV1Connection(connection)
-	_, err = req.Execute()
+	resp, err := req.Execute()
 	if err != nil {
-		return diag.Errorf("error updating Flink Connection %q: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error updating Flink Connection %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 	return connectionRead(ctx, d, meta)
 }
@@ -287,7 +287,7 @@ func connectionRead(ctx context.Context, d *schema.ResourceData, meta interface{
 func readConnectionAndSetAttributes(ctx context.Context, d *schema.ResourceData, c *FlinkRestClient, connectionName string) ([]*schema.ResourceData, error) {
 	connection, resp, err := executeConnectionRead(c.apiContext(ctx), c, connectionName)
 	if err != nil {
-		tflog.Warn(ctx, fmt.Sprintf("Error reading Flink Connection %q: %s", d.Id(), createDescriptiveError(err)), map[string]interface{}{flinkConnectionLoggingKey: d.Id()})
+		tflog.Warn(ctx, fmt.Sprintf("Error reading Flink Connection %q: %s", d.Id(), createDescriptiveError(err, resp)), map[string]interface{}{flinkConnectionLoggingKey: d.Id()})
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
 		if isResourceNotFound && !d.IsNewResource() {
 			tflog.Warn(ctx, fmt.Sprintf("Removing Flink Connection %q in TF state because Flink Connection could not be found on the server", d.Id()), map[string]interface{}{flinkArtifactLoggingKey: d.Id()})
@@ -299,7 +299,7 @@ func readConnectionAndSetAttributes(ctx context.Context, d *schema.ResourceData,
 	}
 	connectionJson, err := json.Marshal(connection)
 	if err != nil {
-		return nil, fmt.Errorf("error reading flink connection %q: error marshaling %#v to json: %s", d.Id(), connection, createDescriptiveError(err))
+		return nil, fmt.Errorf("error reading flink connection %q: error marshaling %#v to json: %s", d.Id(), connection, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Flink Connection %q: %s", d.Id(), connectionJson), map[string]interface{}{flinkConnectionLoggingKey: d.Id()})
 
@@ -381,10 +381,10 @@ func connectionDelete(ctx context.Context, d *schema.ResourceData, meta interfac
 
 	name := d.Get(paramDisplayName).(string)
 	req := flinkRestClient.apiClient.ConnectionsSqlV1Api.DeleteSqlv1Connection(flinkRestClient.apiContext(ctx), flinkRestClient.organizationId, flinkRestClient.environmentId, name)
-	_, err := req.Execute()
+	resp, err := req.Execute()
 
 	if err != nil {
-		return diag.Errorf("error deleting flink connection %q: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error deleting flink connection %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished deleting Flink Connection %q", d.Id()), map[string]interface{}{flinkConnectionLoggingKey: d.Id()})
 	return nil
