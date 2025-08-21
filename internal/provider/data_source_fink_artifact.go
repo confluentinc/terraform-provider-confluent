@@ -135,19 +135,19 @@ func flinkArtifactDataSourceRead(ctx context.Context, d *schema.ResourceData, me
 func flinkArtifactDataSourceReadUsingId(ctx context.Context, d *schema.ResourceData, meta interface{}, artifactId, envId string) diag.Diagnostics {
 	tflog.Debug(ctx, fmt.Sprintf("Reading Flink Artifact data source using Id %q", artifactId), map[string]interface{}{flinkArtifactLoggingKey: d.Id()})
 	c := meta.(*Client)
-	fam, _, err := executeArtifactRead(c.faApiContext(ctx), c, d.Get(paramRegion).(string), d.Get(paramCloud).(string), artifactId, envId)
+	fam, resp, err := executeArtifactRead(c.faApiContext(ctx), c, d.Get(paramRegion).(string), d.Get(paramCloud).(string), artifactId, envId)
 
 	if err != nil {
-		return diag.Errorf("error reading flink artifact data source using Id %q: %s", artifactId, createDescriptiveError(err))
+		return diag.Errorf("error reading flink artifact data source using Id %q: %s", artifactId, createDescriptiveError(err, resp))
 	}
 	famJson, err := json.Marshal(fam)
 	if err != nil {
-		return diag.Errorf("error reading flink artifact %q: error marshaling %#v to json: %s", artifactId, fam, createDescriptiveError(err))
+		return diag.Errorf("error reading flink artifact %q: error marshaling %#v to json: %s", artifactId, fam, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Flink Artifact %q: %s", artifactId, famJson), map[string]interface{}{flinkArtifactLoggingKey: artifactId})
 
 	if _, err := setArtifactAttributes(d, fam, ""); err != nil {
-		return diag.FromErr(createDescriptiveError(err))
+		return diag.FromErr(createDescriptiveError(err, resp))
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished reading Flink Artifact %q", artifactId), map[string]interface{}{flinkArtifactLoggingKey: artifactId})
@@ -188,9 +188,9 @@ func loadFlinkArtifacts(ctx context.Context, c *Client, environmentId, cloud, re
 	done := false
 	pageToken := ""
 	for !done {
-		artifactPageList, _, err := executeListFlinkArtifacts(ctx, c, environmentId, cloud, region, pageToken)
+		artifactPageList, resp, err := executeListFlinkArtifacts(ctx, c, environmentId, cloud, region, pageToken)
 		if err != nil {
-			return nil, fmt.Errorf("error reading flink artifacts list: %s", createDescriptiveError(err))
+			return nil, fmt.Errorf("error reading flink artifacts list: %s", createDescriptiveError(err, resp))
 		}
 		flinkArtifacts = append(flinkArtifacts, artifactPageList.GetData()...)
 
@@ -203,7 +203,7 @@ func loadFlinkArtifacts(ctx context.Context, c *Client, environmentId, cloud, re
 			} else {
 				pageToken, err = extractPageToken(nextPageUrlString)
 				if err != nil {
-					return nil, fmt.Errorf("error reading flink artifacts list: %s", createDescriptiveError(err))
+					return nil, fmt.Errorf("error reading flink artifacts list: %s", createDescriptiveError(err, resp))
 				}
 			}
 		} else {

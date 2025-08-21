@@ -111,10 +111,10 @@ func subjectModeCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 		}
 		tflog.Debug(ctx, fmt.Sprintf("Creating new Subject Mode: %s", createModeRequestJson))
 
-		_, _, err = executeSubjectConfigModeUpdate(ctx, schemaRegistryRestClient, createModeRequest, subjectName, force)
+		_, resp, err := executeSubjectConfigModeUpdate(ctx, schemaRegistryRestClient, createModeRequest, subjectName, force)
 
 		if err != nil {
-			return diag.Errorf("error creating Subject Mode: %s", createDescriptiveError(err))
+			return diag.Errorf("error creating Subject Mode: %s", createDescriptiveError(err, resp))
 		}
 
 		SleepIfNotTestMode(schemaRegistryAPIWaitAfterCreateOrDelete, meta.(*Client).isAcceptanceTestMode)
@@ -147,10 +147,10 @@ func subjectModeDelete(ctx context.Context, d *schema.ResourceData, meta interfa
 	subjectName := d.Get(paramSubjectName).(string)
 
 	// Deletes the specified subject-level mode config and reverts to the global default.
-	_, _, err = schemaRegistryRestClient.apiClient.ModesV1Api.DeleteSubjectMode(schemaRegistryRestClient.apiContext(ctx), subjectName).Execute()
+	_, resp, err := schemaRegistryRestClient.apiClient.ModesV1Api.DeleteSubjectMode(schemaRegistryRestClient.apiContext(ctx), subjectName).Execute()
 
 	if err != nil {
-		return diag.Errorf("error deleting Subject Mode %q: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error deleting Subject Mode %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	SleepIfNotTestMode(schemaRegistryAPIWaitAfterCreateOrDelete, meta.(*Client).isAcceptanceTestMode)
@@ -226,7 +226,7 @@ func subjectModeImport(ctx context.Context, d *schema.ResourceData, meta interfa
 func readSubjectModeAndSetAttributes(ctx context.Context, d *schema.ResourceData, c *SchemaRegistryRestClient, subjectName string) ([]*schema.ResourceData, error) {
 	subjectMode, resp, err := c.apiClient.ModesV1Api.GetMode(c.apiContext(ctx), subjectName).DefaultToGlobal(true).Execute()
 	if err != nil {
-		tflog.Warn(ctx, fmt.Sprintf("Error reading Subject Mode %q: %s", d.Id(), createDescriptiveError(err)), map[string]interface{}{subjectModeLoggingKey: d.Id()})
+		tflog.Warn(ctx, fmt.Sprintf("Error reading Subject Mode %q: %s", d.Id(), createDescriptiveError(err, resp)), map[string]interface{}{subjectModeLoggingKey: d.Id()})
 
 		isResourceNotFound := ResponseHasExpectedStatusCode(resp, http.StatusNotFound)
 		if isResourceNotFound && !d.IsNewResource() {
@@ -239,7 +239,7 @@ func readSubjectModeAndSetAttributes(ctx context.Context, d *schema.ResourceData
 	}
 	subjectModeJson, err := json.Marshal(subjectMode)
 	if err != nil {
-		return nil, fmt.Errorf("error reading Subject Mode %q: error marshaling %#v to json: %s", d.Id(), subjectMode, createDescriptiveError(err))
+		return nil, fmt.Errorf("error reading Subject Mode %q: error marshaling %#v to json: %s", d.Id(), subjectMode, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Subject Mode %q: %s", d.Id(), subjectModeJson), map[string]interface{}{subjectModeLoggingKey: d.Id()})
 
@@ -304,9 +304,9 @@ func subjectModeUpdate(ctx context.Context, d *schema.ResourceData, meta interfa
 		}
 		tflog.Debug(ctx, fmt.Sprintf("Updating Subject Mode %q: %s", d.Id(), updateModeRequestJson), map[string]interface{}{kafkaClusterConfigLoggingKey: d.Id()})
 
-		_, _, err = executeSubjectConfigModeUpdate(ctx, schemaRegistryRestClient, updateModeRequest, subjectName, force)
+		_, resp, err := executeSubjectConfigModeUpdate(ctx, schemaRegistryRestClient, updateModeRequest, subjectName, force)
 		if err != nil {
-			return diag.Errorf("error updating Subject Mode: %s", createDescriptiveError(err))
+			return diag.Errorf("error updating Subject Mode: %s", createDescriptiveError(err, resp))
 		}
 		SleepIfNotTestMode(kafkaRestAPIWaitAfterCreate, meta.(*Client).isAcceptanceTestMode)
 		tflog.Debug(ctx, fmt.Sprintf("Finished updating Subject Mode %q", d.Id()), map[string]interface{}{kafkaClusterConfigLoggingKey: d.Id()})

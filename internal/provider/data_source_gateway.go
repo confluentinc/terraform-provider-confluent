@@ -199,18 +199,18 @@ func gatewayDataSourceRead(ctx context.Context, d *schema.ResourceData, meta int
 
 	c := meta.(*Client)
 	request := c.netGatewayClient.GatewaysNetworkingV1Api.GetNetworkingV1Gateway(c.netGWApiContext(ctx), gatewayId).Environment(environmentId)
-	gateway, _, err := c.netGatewayClient.GatewaysNetworkingV1Api.GetNetworkingV1GatewayExecute(request)
+	gateway, resp, err := c.netGatewayClient.GatewaysNetworkingV1Api.GetNetworkingV1GatewayExecute(request)
 	if err != nil {
-		return diag.Errorf("error reading Gateway %q: %s", gatewayId, createDescriptiveError(err))
+		return diag.Errorf("error reading Gateway %q: %s", gatewayId, createDescriptiveError(err, resp))
 	}
 	gatewayJson, err := json.Marshal(gateway)
 	if err != nil {
-		return diag.Errorf("error reading Gateway %q: error marshaling %#v to json: %s", gatewayId, gateway, createDescriptiveError(err))
+		return diag.Errorf("error reading Gateway %q: error marshaling %#v to json: %s", gatewayId, gateway, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Gateway %q: %s", gatewayId, gatewayJson), map[string]interface{}{gatewayKey: gatewayId})
 
 	if _, err := setGatewayAttributes(d, gateway); err != nil {
-		return diag.FromErr(createDescriptiveError(err))
+		return diag.FromErr(createDescriptiveError(err, resp))
 	}
 	return nil
 }

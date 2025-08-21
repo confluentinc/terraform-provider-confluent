@@ -94,18 +94,18 @@ func certificateAuthorityDataSourceRead(ctx context.Context, d *schema.ResourceD
 
 	c := meta.(*Client)
 	request := c.caClient.CertificateAuthoritiesIamV2Api.GetIamV2CertificateAuthority(c.caApiContext(ctx), certificateAuthorityId)
-	certificateAuthority, _, err := c.caClient.CertificateAuthoritiesIamV2Api.GetIamV2CertificateAuthorityExecute(request)
+	certificateAuthority, resp, err := c.caClient.CertificateAuthoritiesIamV2Api.GetIamV2CertificateAuthorityExecute(request)
 	if err != nil {
-		return diag.Errorf("error reading Certificate Authority %q: %s", certificateAuthorityId, createDescriptiveError(err))
+		return diag.Errorf("error reading Certificate Authority %q: %s", certificateAuthorityId, createDescriptiveError(err, resp))
 	}
 	certificateAuthorityJson, err := json.Marshal(certificateAuthority)
 	if err != nil {
-		return diag.Errorf("error reading Certificate Authority %q: error marshaling %#v to json: %s", certificateAuthorityId, certificateAuthority, createDescriptiveError(err))
+		return diag.Errorf("error reading Certificate Authority %q: error marshaling %#v to json: %s", certificateAuthorityId, certificateAuthority, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Certificate Authority %q: %s", certificateAuthorityId, certificateAuthorityJson), map[string]interface{}{certificateAuthorityKey: certificateAuthorityId})
 
 	if _, err := setCertificateAuthorityAttributes(d, certificateAuthority); err != nil {
-		return diag.FromErr(createDescriptiveError(err))
+		return diag.FromErr(createDescriptiveError(err, resp))
 	}
 	return nil
 }

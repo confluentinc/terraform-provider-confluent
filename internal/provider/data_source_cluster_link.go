@@ -108,19 +108,19 @@ func clusterLinkDataSourceRead(ctx context.Context, d *schema.ResourceData, meta
 }
 
 func readDataSourceClusterLinkAndSetAttributes(ctx context.Context, d *schema.ResourceData, c *KafkaRestClient, linkName string) error {
-	clusterLink, _, err := c.apiClient.ClusterLinkingV3Api.GetKafkaLink(c.apiContext(ctx), c.clusterId, linkName).Execute()
+	clusterLink, resp, err := c.apiClient.ClusterLinkingV3Api.GetKafkaLink(c.apiContext(ctx), c.clusterId, linkName).Execute()
 	if err != nil {
-		return fmt.Errorf("error reading Cluster Link %s: %s", linkName, createDescriptiveError(err))
+		return fmt.Errorf("error reading Cluster Link %s: %s", linkName, createDescriptiveError(err, resp))
 	}
 
 	clusterLinkJson, err := json.Marshal(clusterLink)
 	if err != nil {
-		return fmt.Errorf("error reading Cluster Link %q: error marshaling %#v to json: %s", d.Id(), clusterLink, createDescriptiveError(err))
+		return fmt.Errorf("error reading Cluster Link %q: error marshaling %#v to json: %s", d.Id(), clusterLink, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Cluster Link %q: %s", d.Id(), clusterLinkJson), map[string]interface{}{clusterLinkLoggingKey: d.Id()})
 
 	if err := setDataSourceClusterLinkAttributes(ctx, d, c, clusterLink); err != nil {
-		return createDescriptiveError(err)
+		return createDescriptiveError(err, resp)
 	}
 	return nil
 }

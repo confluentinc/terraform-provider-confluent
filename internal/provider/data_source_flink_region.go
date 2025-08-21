@@ -90,13 +90,13 @@ func executeFlinkRegionDataSourceRead(ctx context.Context, d *schema.ResourceDat
 	tflog.Debug(ctx, fmt.Sprintf("Reading Flink Region with %q=%q, %q=%q", paramCloud, cloud, paramRegion, region))
 
 	c := meta.(*Client)
-	flinkRegions, _, err := executeListFlinkRegions(c.fcpmApiContext(ctx), c, cloud, region)
+	flinkRegions, resp, err := executeListFlinkRegions(c.fcpmApiContext(ctx), c, cloud, region)
 	if err != nil {
-		return diag.Errorf("error reading Flink Region: %s", createDescriptiveError(err))
+		return diag.Errorf("error reading Flink Region: %s", createDescriptiveError(err, resp))
 	}
 	flinkRegionJson, err := json.Marshal(flinkRegions)
 	if err != nil {
-		return diag.Errorf("error reading Flink Region: error marshaling %#v to json: %s", flinkRegions, createDescriptiveError(err))
+		return diag.Errorf("error reading Flink Region: error marshaling %#v to json: %s", flinkRegions, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Flink Regions: %s", flinkRegionJson))
 
@@ -107,7 +107,7 @@ func executeFlinkRegionDataSourceRead(ctx context.Context, d *schema.ResourceDat
 		return diag.Errorf("error reading Flink Region: there are multiple Flink Regions with %q=%q, %q=%q", paramCloud, cloud, paramRegion, region)
 	}
 	if _, err := setFlinkRegionAttributes(d, flinkRegions.GetData()[0]); err != nil {
-		return diag.FromErr(createDescriptiveError(err))
+		return diag.FromErr(createDescriptiveError(err, resp))
 	}
 
 	return nil
