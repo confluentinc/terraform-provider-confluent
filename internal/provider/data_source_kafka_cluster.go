@@ -238,7 +238,13 @@ func basicClusterDataSourceSchema() *schema.Schema {
 		Optional: true,
 		MaxItems: 0,
 		Elem: &schema.Resource{
-			Schema: map[string]*schema.Schema{},
+			Schema: map[string]*schema.Schema{
+				paramMaxEcku: {
+					Type:        schema.TypeInt,
+					Optional:    true,
+					Description: "The maximum number of Elastic Confluent Kafka Units (eCKUs) that Kafka clusters should auto-scale to. Kafka clusters with HIGH availability must have at least two eCKUs.",
+				},
+			},
 		},
 	}
 }
@@ -249,7 +255,13 @@ func standardClusterDataSourceSchema() *schema.Schema {
 		Optional: true,
 		MaxItems: 0,
 		Elem: &schema.Resource{
-			Schema: map[string]*schema.Schema{},
+			Schema: map[string]*schema.Schema{
+				paramMaxEcku: {
+					Type:        schema.TypeInt,
+					Optional:    true,
+					Description: "The maximum number of Elastic Confluent Kafka Units (eCKUs) that Kafka clusters should auto-scale to. Kafka clusters with HIGH availability must have at least two eCKUs.",
+				},
+			},
 		},
 	}
 }
@@ -290,7 +302,13 @@ func enterpriseClusterDataSourceSchema() *schema.Schema {
 		Optional: true,
 		MaxItems: 0,
 		Elem: &schema.Resource{
-			Schema: map[string]*schema.Schema{},
+			Schema: map[string]*schema.Schema{
+				paramMaxEcku: {
+					Type:        schema.TypeInt,
+					Optional:    true,
+					Description: "The maximum number of Elastic Confluent Kafka Units (eCKUs) that Kafka clusters should auto-scale to. Kafka clusters with HIGH availability must have at least two eCKUs.",
+				},
+			},
 		},
 	}
 }
@@ -309,6 +327,11 @@ func freightClusterDataSourceSchema() *schema.Schema {
 					},
 					Computed:    true,
 					Description: "The list of zones the cluster is in.",
+				},
+				paramMaxEcku: {
+					Type:        schema.TypeInt,
+					Optional:    true,
+					Description: "The maximum number of Elastic Confluent Kafka Units (eCKUs) that Kafka clusters should auto-scale to. Kafka clusters with HIGH availability must have at least two eCKUs.",
 				},
 			},
 		},
