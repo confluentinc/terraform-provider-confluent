@@ -123,18 +123,18 @@ func privateLinkAttachmentConnectionDataSourceRead(ctx context.Context, d *schem
 
 	c := meta.(*Client)
 	request := c.netPLClient.PrivateLinkAttachmentConnectionsNetworkingV1Api.GetNetworkingV1PrivateLinkAttachmentConnection(c.netPLApiContext(ctx), plattcId).Environment(environmentId)
-	plattc, _, err := c.netPLClient.PrivateLinkAttachmentConnectionsNetworkingV1Api.GetNetworkingV1PrivateLinkAttachmentConnectionExecute(request)
+	plattc, resp, err := c.netPLClient.PrivateLinkAttachmentConnectionsNetworkingV1Api.GetNetworkingV1PrivateLinkAttachmentConnectionExecute(request)
 	if err != nil {
-		return diag.Errorf("error reading Private Link Attachment Connection %q: %s", plattcId, createDescriptiveError(err))
+		return diag.Errorf("error reading Private Link Attachment Connection %q: %s", plattcId, resp)
 	}
 	plattcJson, err := json.Marshal(plattc)
 	if err != nil {
-		return diag.Errorf("error reading Private Link Attachment Connection %q: error marshaling %#v to json: %s", plattcId, plattc, createDescriptiveError(err))
+		return diag.Errorf("error reading Private Link Attachment Connection %q: error marshaling %#v to json: %s", plattcId, plattc, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Private Link Attachment Connection %q: %s", plattcId, plattcJson), map[string]interface{}{privateLinkAttachmentConnectionLoggingKey: plattcId})
 
 	if _, err := setPrivateLinkAttachmentConnectionAttributes(d, plattc); err != nil {
-		return diag.FromErr(createDescriptiveError(err))
+		return diag.FromErr(createDescriptiveError(err, resp))
 	}
 	return nil
 }

@@ -25,6 +25,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"io"
+	"net/http"
 	"regexp"
 	"strings"
 )
@@ -146,13 +147,13 @@ func schemaRegistryKekCreate(ctx context.Context, d *schema.ResourceData, meta i
 	createdKek, resp, err := request.Execute()
 	if err != nil {
 		b, err := io.ReadAll(resp.Body)
-		return diag.Errorf("error creating Schema Registry KEK %s, error message: %s", createDescriptiveError(err), string(b))
+		return diag.Errorf("error creating Schema Registry KEK %s, error message: %s", createDescriptiveError(err, resp), string(b))
 	}
 	d.SetId(kekId)
 
 	createdKekJson, err := json.Marshal(createdKek)
 	if err != nil {
-		return diag.Errorf("error creating Schema Registry KEK %q: error marshaling %#v to json: %s", kekId, createdKek, createDescriptiveError(err))
+		return diag.Errorf("error creating Schema Registry KEK %q: error marshaling %#v to json: %s", kekId, createdKek, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating Schema Registry KEK %q: %s", kekId, createdKekJson), map[string]interface{}{schemaRegistryKekKey: kekId})
 	return schemaRegistryKekRead(ctx, d, meta)
@@ -205,7 +206,7 @@ func readSchemaRegistryKekAndSetAttributes(ctx context.Context, d *schema.Resour
 	}
 	kekJson, err := json.Marshal(kek)
 	if err != nil {
-		return nil, fmt.Errorf("error reading Schema Registry KEK %q: error marshaling %#v to json: %s", kekId, kekJson, createDescriptiveError(err))
+		return nil, fmt.Errorf("error reading Schema Registry KEK %q: error marshaling %#v to json: %s", kekId, kekJson, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Schema Registry KEK %q: %s", kekId, kekJson), map[string]interface{}{schemaRegistryKekKey: kekId})
 
@@ -218,10 +219,10 @@ func readSchemaRegistryKekAndSetAttributes(ctx context.Context, d *schema.Resour
 	return []*schema.ResourceData{d}, nil
 }
 
-func deleteKekExecute(ctx context.Context, client *SchemaRegistryRestClient, kekName string, hardDelete bool) error {
+func deleteKekExecute(ctx context.Context, client *SchemaRegistryRestClient, kekName string, hardDelete bool) (*http.Response, error) {
 	request := client.apiClient.KeyEncryptionKeysV1Api.DeleteKek(client.apiContext(ctx), kekName).Permanent(hardDelete)
-	_, err := request.Execute()
-	return err
+	resp, err := request.Execute()
+	return resp, err
 }
 
 func schemaRegistryKekDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -246,15 +247,15 @@ func schemaRegistryKekDelete(ctx context.Context, d *schema.ResourceData, meta i
 	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 	isHardDeleteEnabled := d.Get(paramHardDelete).(bool)
 
-	err = deleteKekExecute(ctx, schemaRegistryRestClient, kekName, false)
+	resp, err := deleteKekExecute(ctx, schemaRegistryRestClient, kekName, false)
 	if err != nil {
-		return diag.Errorf("error soft-deleting Schema Registry KEK %q: %s", kekId, createDescriptiveError(err))
+		return diag.Errorf("error soft-deleting Schema Registry KEK %q: %s", kekId, createDescriptiveError(err, resp))
 	}
 
 	if isHardDeleteEnabled {
-		err = deleteKekExecute(ctx, schemaRegistryRestClient, kekName, true)
+		resp, err := deleteKekExecute(ctx, schemaRegistryRestClient, kekName, true)
 		if err != nil {
-			return diag.Errorf("error hard-deleting Schema Registry KEK %q: %s", kekId, createDescriptiveError(err))
+			return diag.Errorf("error hard-deleting Schema Registry KEK %q: %s", kekId, createDescriptiveError(err, resp))
 		}
 	}
 
@@ -304,12 +305,12 @@ func schemaRegistryKekUpdate(ctx context.Context, d *schema.ResourceData, meta i
 	updatedKek, resp, err := request.Execute()
 	if err != nil {
 		b, err := io.ReadAll(resp.Body)
-		return diag.Errorf("error updating Schema Registry KEK %s, error message: %s", createDescriptiveError(err), string(b))
+		return diag.Errorf("error updating Schema Registry KEK %s, error message: %s", createDescriptiveError(err, resp), string(b))
 	}
 
 	updatedKekJson, err := json.Marshal(updatedKek)
 	if err != nil {
-		return diag.Errorf("error updating Schema Registry KEK %q: error marshaling %#v to json: %s", kekId, updatedKek, createDescriptiveError(err))
+		return diag.Errorf("error updating Schema Registry KEK %q: error marshaling %#v to json: %s", kekId, updatedKek, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished updating Schema Registry KEK %q: %s", kekId, updatedKekJson), map[string]interface{}{schemaRegistryKekKey: kekId})
 	return schemaRegistryKekRead(ctx, d, meta)

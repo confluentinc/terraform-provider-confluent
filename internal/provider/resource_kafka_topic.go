@@ -249,7 +249,7 @@ func kafkaTopicCreate(ctx context.Context, d *schema.ResourceData, meta interfac
 
 	createdKafkaTopicJson, err := json.Marshal(createdKafkaTopic)
 	if err != nil {
-		return diag.Errorf("error creating Kafka Topic: error marshaling %#v to json: %s", createdKafkaTopic, createDescriptiveError(err))
+		return diag.Errorf("error creating Kafka Topic: error marshaling %#v to json: %s", createdKafkaTopic, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating Kafka Topic %q: %s", d.Id(), createdKafkaTopicJson), map[string]interface{}{kafkaTopicLoggingKey: d.Id()})
 
@@ -285,7 +285,7 @@ func kafkaTopicDelete(ctx context.Context, d *schema.ResourceData, meta interfac
 	}
 
 	if err := waitForKafkaTopicToBeDeleted(kafkaRestClient.apiContext(ctx), kafkaRestClient, topicName, meta.(*Client).isAcceptanceTestMode); err != nil {
-		return diag.Errorf("error waiting for Kafka Topic %q to be deleted: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error waiting for Kafka Topic %q to be deleted: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished deleting Kafka Topic %q", d.Id()), map[string]interface{}{kafkaTopicLoggingKey: d.Id()})
@@ -454,7 +454,7 @@ func readTopicAndSetAttributes(ctx context.Context, d *schema.ResourceData, c *K
 	}
 	kafkaTopicJson, err := json.Marshal(kafkaTopic)
 	if err != nil {
-		return nil, fmt.Errorf("error reading Kafka Topic %q: error marshaling %#v to json: %s", d.Id(), kafkaTopic, createDescriptiveError(err))
+		return nil, fmt.Errorf("error reading Kafka Topic %q: error marshaling %#v to json: %s", d.Id(), kafkaTopic, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Kafka Topic %q: %s", d.Id(), kafkaTopicJson), map[string]interface{}{kafkaTopicLoggingKey: d.Id()})
 
@@ -624,7 +624,7 @@ func kafkaTopicUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 		// In other words, remote topic setting values returned by Kafka REST API match topic setting values from updated TF configuration
 		actualTopicSettings, err := loadTopicConfigs(ctx, d, kafkaRestClient, topicName)
 		if err != nil {
-			return diag.FromErr(createDescriptiveError(err))
+			return diag.FromErr(createDescriptiveError(err, resp))
 		}
 
 		var updatedTopicSettings, outdatedTopicSettings []string
@@ -648,7 +648,7 @@ func kafkaTopicUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 		}
 		updatedTopicSettingsJson, err := json.Marshal(updatedTopicSettings)
 		if err != nil {
-			return diag.Errorf("error updating Kafka Topic: error marshaling %#v to json: %s", updatedTopicSettings, createDescriptiveError(err))
+			return diag.Errorf("error updating Kafka Topic: error marshaling %#v to json: %s", updatedTopicSettings, createDescriptiveError(err, resp))
 		}
 		tflog.Debug(ctx, fmt.Sprintf("Finished updating Kafka Topic %q: topic settings update has been completed for %s", d.Id(), updatedTopicSettingsJson), map[string]interface{}{kafkaTopicLoggingKey: d.Id()})
 	}
@@ -694,7 +694,7 @@ func loadTopicConfigs(ctx context.Context, d *schema.ResourceData, c *KafkaRestC
 	}
 	configJson, err := json.Marshal(config)
 	if err != nil {
-		return nil, fmt.Errorf("error reading Kafka Topic: error marshaling %#v to json: %s", config, createDescriptiveError(err))
+		return nil, fmt.Errorf("error reading Kafka Topic: error marshaling %#v to json: %s", config, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Kafka Topic %q Settings: %s", d.Id(), configJson), map[string]interface{}{"kafka_acl_id": d.Id()})
 
@@ -725,7 +725,7 @@ func loadAllKafkaTopics(ctx context.Context, client *Client) (InstanceIdsToNameM
 	}
 	topicsJson, err := json.Marshal(topics)
 	if err != nil {
-		return nil, diag.Errorf("error reading Kafka Topics for Kafka Cluster %q: error marshaling %#v to json: %s", kafkaRestClient.clusterId, topics, createDescriptiveError(err))
+		return nil, diag.Errorf("error reading Kafka Topics for Kafka Cluster %q: error marshaling %#v to json: %s", kafkaRestClient.clusterId, topics, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Kafka Topics for Kafka Cluster %q: %s", kafkaRestClient.clusterId, topicsJson), map[string]interface{}{kafkaClusterLoggingKey: kafkaRestClient.clusterId})
 
