@@ -551,74 +551,22 @@ func extractEncryptionKey(d *schema.ResourceData) string {
 
 func extractBasicMaxEcku(d *schema.ResourceData) int32 {
 	// d.Get() will return 0 if the key is not present
-	value := d.Get(paramBasicMaxEcku)
-	if value == nil {
-		return 0
-	}
-	switch v := value.(type) {
-	case int:
-		return int32(v)
-	case int32:
-		return v
-	case int64:
-		return int32(v)
-	default:
-		return 0
-	}
+	return int32(d.Get(paramBasicMaxEcku).(int))
 }
 
 func extractStandardMaxEcku(d *schema.ResourceData) int32 {
 	// d.Get() will return 0 if the key is not present
-	value := d.Get(paramStandardMaxEcku)
-	if value == nil {
-		return 0
-	}
-	switch v := value.(type) {
-	case int:
-		return int32(v)
-	case int32:
-		return v
-	case int64:
-		return int32(v)
-	default:
-		return 0
-	}
+	return int32(d.Get(paramStandardMaxEcku).(int))
 }
 
 func extractEnterpriseMaxEcku(d *schema.ResourceData) int32 {
 	// d.Get() will return 0 if the key is not present
-	value := d.Get(paramEnterpriseMaxEcku)
-	if value == nil {
-		return 0
-	}
-	switch v := value.(type) {
-	case int:
-		return int32(v)
-	case int32:
-		return v
-	case int64:
-		return int32(v)
-	default:
-		return 0
-	}
+	return int32(d.Get(paramEnterpriseMaxEcku).(int))
 }
 
 func extractFreightMaxEcku(d *schema.ResourceData) int32 {
 	// d.Get() will return 0 if the key is not present
-	value := d.Get(paramFreightMaxEcku)
-	if value == nil {
-		return 0
-	}
-	switch v := value.(type) {
-	case int:
-		return int32(v)
-	case int32:
-		return v
-	case int64:
-		return int32(v)
-	default:
-		return 0
-	}
+	return int32(d.Get(paramFreightMaxEcku).(int))
 }
 
 func kafkaDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
