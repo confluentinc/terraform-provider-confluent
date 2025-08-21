@@ -84,7 +84,7 @@ func invitationDataSourceReadUsingId(ctx context.Context, d *schema.ResourceData
 	c := meta.(*Client)
 	invitation, resp, err := executeInvitationRead(c.iamApiContext(ctx), c, invitationId)
 	if err != nil {
-		return diag.Errorf("error reading invitation %q: %s", invitationId, resp)
+		return diag.Errorf("error reading invitation %q: %s", invitationId, createDescriptiveError(err, resp))
 	}
 	invitationJson, err := json.Marshal(invitation)
 	if err != nil {

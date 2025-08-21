@@ -125,7 +125,7 @@ func privateLinkAttachmentConnectionDataSourceRead(ctx context.Context, d *schem
 	request := c.netPLClient.PrivateLinkAttachmentConnectionsNetworkingV1Api.GetNetworkingV1PrivateLinkAttachmentConnection(c.netPLApiContext(ctx), plattcId).Environment(environmentId)
 	plattc, resp, err := c.netPLClient.PrivateLinkAttachmentConnectionsNetworkingV1Api.GetNetworkingV1PrivateLinkAttachmentConnectionExecute(request)
 	if err != nil {
-		return diag.Errorf("error reading Private Link Attachment Connection %q: %s", plattcId, resp)
+		return diag.Errorf("error reading Private Link Attachment Connection %q: %s", plattcId, createDescriptiveError(err, resp))
 	}
 	plattcJson, err := json.Marshal(plattc)
 	if err != nil {
