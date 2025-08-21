@@ -428,7 +428,7 @@ func TestAccFlinkStatementWithInitialOffsetsWithEnhancedProviderBlock(t *testing
 				Config: testAccCheckFlinkStatementWithInitialOffsetWithEnhancedProviderBlock(confluentCloudBaseUrl, mockFlinkStatementTestServerUrl),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckFlinkStatementExists(fullFlinkStatementResourceLabel),
-					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "id", fmt.Sprintf("%s/%s/%s", flinkEnvironmentIdTest, flinkComputePoolUpdatedIdTest, flinkStatementNameTest)),
+					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "id", fmt.Sprintf("%s/%s/%s", flinkEnvironmentIdTest, flinkComputePoolIdTest, flinkStatementNameTest)),
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "compute_pool.#", "0"),
 					resource.TestCheckNoResourceAttr(fullFlinkStatementResourceLabel, "compute_pool.0.id"),
 					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "principal.#", "0"),
