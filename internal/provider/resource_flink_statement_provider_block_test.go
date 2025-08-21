@@ -319,7 +319,7 @@ func TestAccFlinkStatementWithInitialOffsetsWithEnhancedProviderBlock(t *testing
 	}
 	defer wiremockContainer.Terminate(ctx)
 
-	mockFlinkStatementTestServerUrl := "http://localhost:8080"
+	mockFlinkStatementTestServerUrl := wiremockContainer.URI
 	confluentCloudBaseUrl := ""
 	wiremockClient := wiremock.NewClient(mockFlinkStatementTestServerUrl)
 	// nolint:errcheck
