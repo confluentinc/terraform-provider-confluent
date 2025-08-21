@@ -221,6 +221,70 @@ func resourceKafkaCustomizeDiff(ctx context.Context, diff *schema.ResourceDiff, 
 	return nil
 }
 
+func createMaxEckuUpdateSpec(d *schema.ResourceData, clusterType string, isBasic, isStandard, isEnterprise, isFreight bool) *cmk.CmkV2ClusterSpecUpdate {
+	updateSpec := cmk.NewCmkV2ClusterSpecUpdate()
+
+	if isBasic {
+		config := cmk.NewCmkV2Basic(kafkaClusterTypeBasic)
+		maxEcku := extractBasicMaxEcku(d)
+		if maxEcku > 0 {
+			config.SetMaxEcku(maxEcku)
+		}
+		updateSpec.SetConfig(cmk.CmkV2BasicAsCmkV2ClusterSpecUpdateConfigOneOf(config))
+	} else if isStandard {
+		config := cmk.NewCmkV2Standard(kafkaClusterTypeStandard)
+		maxEcku := extractStandardMaxEcku(d)
+		if maxEcku > 0 {
+			config.SetMaxEcku(maxEcku)
+		}
+		updateSpec.SetConfig(cmk.CmkV2StandardAsCmkV2ClusterSpecUpdateConfigOneOf(config))
+	} else if isEnterprise {
+		config := cmk.NewCmkV2Enterprise(kafkaClusterTypeEnterprise)
+		maxEcku := extractEnterpriseMaxEcku(d)
+		if maxEcku > 0 {
+			config.SetMaxEcku(maxEcku)
+		}
+		updateSpec.SetConfig(cmk.CmkV2EnterpriseAsCmkV2ClusterSpecUpdateConfigOneOf(config))
+	} else if isFreight {
+		config := cmk.NewCmkV2Freight(kafkaClusterTypeFreight)
+		maxEcku := extractFreightMaxEcku(d)
+		if maxEcku > 0 {
+			config.SetMaxEcku(maxEcku)
+		}
+		updateSpec.SetConfig(cmk.CmkV2FreightAsCmkV2ClusterSpecUpdateConfigOneOf(config))
+	}
+
+	return updateSpec
+}
+
+func executeClusterUpdate(ctx context.Context, c *Client, clusterId string, updateSpec *cmk.CmkV2ClusterSpecUpdate, updateType string) diag.Diagnostics {
+	updateClusterRequest := cmk.NewCmkV2ClusterUpdate()
+	updateClusterRequest.SetSpec(*updateSpec)
+
+	updateClusterRequestJson, err := json.Marshal(updateClusterRequest)
+	if err != nil {
+		return diag.Errorf("error updating Kafka Cluster %q: error marshaling %#v to json: %s", clusterId, updateClusterRequest, createDescriptiveError(err))
+	}
+
+	tflog.Debug(ctx, fmt.Sprintf("Updating Kafka Cluster %q: %s", clusterId, updateClusterRequestJson), map[string]interface{}{kafkaClusterLoggingKey: clusterId})
+
+	req := c.cmkClient.ClustersCmkV2Api.UpdateCmkV2Cluster(c.cmkApiContext(ctx), clusterId).CmkV2ClusterUpdate(*updateClusterRequest)
+
+	updatedCluster, _, err := req.Execute()
+	if err != nil {
+		return diag.Errorf("error updating Kafka Cluster %q: %s", clusterId, createDescriptiveError(err))
+	}
+
+	updatedClusterJson, err := json.Marshal(updatedCluster)
+	if err != nil {
+		return diag.Errorf("error updating Kafka Cluster %q: error marshaling %#v to json: %s", clusterId, updatedCluster, createDescriptiveError(err))
+	}
+
+	tflog.Debug(ctx, fmt.Sprintf("Updated Kafka Cluster %q: %s", clusterId, updatedClusterJson), map[string]interface{}{kafkaClusterLoggingKey: clusterId})
+
+	return nil
+}
+
 func kafkaUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	c := meta.(*Client)
 
@@ -229,96 +293,32 @@ func kafkaUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 	clusterType := extractClusterType(d)
 	// Non-zero value means CKU has been set
 	cku := extractCku(d)
-	
-	// Check if we need to update display_name and/or max_ecku together
+
 	hasDisplayNameChange := d.HasChange(paramDisplayName)
 	isMaxEckuBasicUpdate := d.HasChange(paramBasicCluster) && clusterType == kafkaClusterTypeBasic && d.HasChange(paramBasicMaxEcku)
 	isMaxEckuStandardUpdate := d.HasChange(paramStandardCluster) && clusterType == kafkaClusterTypeStandard && d.HasChange(paramStandardMaxEcku)
 	isMaxEckuEnterpriseUpdate := d.HasChange(paramEnterpriseCluster) && clusterType == kafkaClusterTypeEnterprise && d.HasChange(paramEnterpriseMaxEcku)
 	isMaxEckuFreightUpdate := d.HasChange(paramFreightCluster) && clusterType == kafkaClusterTypeFreight && d.HasChange(paramFreightMaxEcku)
 	hasMaxEckuChange := isMaxEckuBasicUpdate || isMaxEckuStandardUpdate || isMaxEckuEnterpriseUpdate || isMaxEckuFreightUpdate
-	
-	// If we have both display_name and max_ecku changes, handle them together
+
+	// handle together if we have both display_name and max_ecku changes
+	// ACC test will fail if we handle them as separate requests as it expects to handle everything as one update request in a single step
 	if hasDisplayNameChange && hasMaxEckuChange {
-		updateClusterRequest := cmk.NewCmkV2ClusterUpdate()
-		updateSpec := cmk.NewCmkV2ClusterSpecUpdate()
+		updateSpec := createMaxEckuUpdateSpec(d, clusterType, isMaxEckuBasicUpdate, isMaxEckuStandardUpdate, isMaxEckuEnterpriseUpdate, isMaxEckuFreightUpdate)
 		updateSpec.SetDisplayName(displayName)
-		
-		// Set the appropriate config based on cluster type
-		if isMaxEckuBasicUpdate {
-			config := cmk.NewCmkV2Basic(kafkaClusterTypeBasic)
-			maxEcku := extractBasicMaxEcku(d)
-			if maxEcku > 0 {
-				config.SetMaxEcku(maxEcku)
-			}
-			updateSpec.SetConfig(cmk.CmkV2BasicAsCmkV2ClusterSpecUpdateConfigOneOf(config))
-		} else if isMaxEckuStandardUpdate {
-			config := cmk.NewCmkV2Standard(kafkaClusterTypeStandard)
-			maxEcku := extractStandardMaxEcku(d)
-			if maxEcku > 0 {
-				config.SetMaxEcku(maxEcku)
-			}
-			updateSpec.SetConfig(cmk.CmkV2StandardAsCmkV2ClusterSpecUpdateConfigOneOf(config))
-		} else if isMaxEckuEnterpriseUpdate {
-			config := cmk.NewCmkV2Enterprise(kafkaClusterTypeEnterprise)
-			maxEcku := extractEnterpriseMaxEcku(d)
-			if maxEcku > 0 {
-				config.SetMaxEcku(maxEcku)
-			}
-			updateSpec.SetConfig(cmk.CmkV2EnterpriseAsCmkV2ClusterSpecUpdateConfigOneOf(config))
-		} else if isMaxEckuFreightUpdate {
-			config := cmk.NewCmkV2Freight(kafkaClusterTypeFreight)
-			maxEcku := extractFreightMaxEcku(d)
-			if maxEcku > 0 {
-				config.SetMaxEcku(maxEcku)
-			}
-			updateSpec.SetConfig(cmk.CmkV2FreightAsCmkV2ClusterSpecUpdateConfigOneOf(config))
-		}
-		
 		updateSpec.SetEnvironment(cmk.EnvScopedObjectReference{Id: environmentId})
-		updateClusterRequest.SetSpec(*updateSpec)
-		updateClusterRequestJson, err := json.Marshal(updateClusterRequest)
-		if err != nil {
-			return diag.Errorf("error updating Kafka Cluster %q: error marshaling %#v to json: %s", d.Id(), updateClusterRequest, createDescriptiveError(err))
-		}
-		tflog.Debug(ctx, fmt.Sprintf("Updating Kafka Cluster %q: %s", d.Id(), updateClusterRequestJson), map[string]interface{}{kafkaClusterLoggingKey: d.Id()})
-		
-		req := c.cmkClient.ClustersCmkV2Api.UpdateCmkV2Cluster(c.cmkApiContext(ctx), d.Id()).CmkV2ClusterUpdate(*updateClusterRequest)
 
-		updatedCluster, _, err := req.Execute()
-
-		if err != nil {
-			return diag.Errorf("error updating Kafka Cluster %q: %s", d.Id(), createDescriptiveError(err))
+		if err := executeClusterUpdate(ctx, c, d.Id(), updateSpec, "Combined display_name and Max eCKU"); err != nil {
+			return err
 		}
-		updatedClusterJson, err := json.Marshal(updatedCluster)
-		if err != nil {
-			return diag.Errorf("error updating Kafka Cluster %q: error marshaling %#v to json: %s", d.Id(), updatedCluster, createDescriptiveError(err))
-		}
-		tflog.Debug(ctx, fmt.Sprintf("Updated Kafka Cluster %q: %s", d.Id(), updatedClusterJson), map[string]interface{}{kafkaClusterLoggingKey: d.Id()})
 	} else if hasDisplayNameChange {
-		updateClusterRequest := cmk.NewCmkV2ClusterUpdate()
 		updateSpec := cmk.NewCmkV2ClusterSpecUpdate()
 		updateSpec.SetDisplayName(displayName)
 		updateSpec.SetEnvironment(cmk.EnvScopedObjectReference{Id: environmentId})
-		updateClusterRequest.SetSpec(*updateSpec)
-		updateClusterRequestJson, err := json.Marshal(updateClusterRequest)
-		if err != nil {
-			return diag.Errorf("error updating Kafka Cluster %q: error marshaling %#v to json: %s", d.Id(), updateClusterRequest, createDescriptiveError(err))
-		}
-		tflog.Debug(ctx, fmt.Sprintf("Updating Kafka Cluster %q: %s", d.Id(), updateClusterRequestJson), map[string]interface{}{kafkaClusterLoggingKey: d.Id()})
 
-		req := c.cmkClient.ClustersCmkV2Api.UpdateCmkV2Cluster(c.cmkApiContext(ctx), d.Id()).CmkV2ClusterUpdate(*updateClusterRequest)
-
-		updatedCluster, _, err := req.Execute()
-
-		if err != nil {
-			return diag.Errorf("error updating Kafka Cluster %q: %s", d.Id(), createDescriptiveError(err))
+		if err := executeClusterUpdate(ctx, c, d.Id(), updateSpec, "display_name"); err != nil {
+			return err
 		}
-		updatedClusterJson, err := json.Marshal(updatedCluster)
-		if err != nil {
-			return diag.Errorf("error updating Kafka Cluster %q: error marshaling %#v to json: %s", d.Id(), updatedCluster, createDescriptiveError(err))
-		}
-		tflog.Debug(ctx, fmt.Sprintf("Updated Kafka Cluster %q: %s", d.Id(), updatedClusterJson), map[string]interface{}{kafkaClusterLoggingKey: d.Id()})
 	}
 
 	// Allow only Basic -> Standard upgrade
@@ -328,7 +328,6 @@ func kafkaUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 	isForbiddenDedicatedUpdate := d.HasChange(paramDedicatedCluster) && (d.HasChange(paramBasicCluster) || d.HasChange(paramStandardCluster))
 
 	if isBasicStandardUpdate {
-		updateClusterRequest := cmk.NewCmkV2ClusterUpdate()
 		updateSpec := cmk.NewCmkV2ClusterSpecUpdate()
 		config := cmk.NewCmkV2Standard(kafkaClusterTypeStandard)
 		if d.HasChange(paramBasicMaxEcku) || d.Get(paramBasicMaxEcku) != nil {
@@ -340,25 +339,10 @@ func kafkaUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 		}
 		updateSpec.SetConfig(cmk.CmkV2StandardAsCmkV2ClusterSpecUpdateConfigOneOf(config))
 		updateSpec.SetEnvironment(cmk.EnvScopedObjectReference{Id: environmentId})
-		updateClusterRequest.SetSpec(*updateSpec)
-		updateClusterRequestJson, err := json.Marshal(updateClusterRequest)
-		if err != nil {
-			return diag.Errorf("error updating Kafka Cluster %q: error marshaling %#v to json: %s", d.Id(), updateClusterRequest, createDescriptiveError(err))
-		}
-		tflog.Debug(ctx, fmt.Sprintf("Updating Kafka Cluster %q: %s", d.Id(), updateClusterRequestJson), map[string]interface{}{kafkaClusterLoggingKey: d.Id()})
 
-		req := c.cmkClient.ClustersCmkV2Api.UpdateCmkV2Cluster(c.cmkApiContext(ctx), d.Id()).CmkV2ClusterUpdate(*updateClusterRequest)
-
-		updatedCluster, _, err := req.Execute()
-
-		if err != nil {
-			return diag.Errorf("error updating Kafka Cluster %q: %s", d.Id(), createDescriptiveError(err))
+		if err := executeClusterUpdate(ctx, c, d.Id(), updateSpec, "Basic to Standard upgrade"); err != nil {
+			return err
 		}
-		updatedClusterJson, err := json.Marshal(updatedCluster)
-		if err != nil {
-			return diag.Errorf("error updating Kafka Cluster %q: error marshaling %#v to json: %s", d.Id(), updatedCluster, createDescriptiveError(err))
-		}
-		tflog.Debug(ctx, fmt.Sprintf("Updated Kafka Cluster %q: %s", d.Id(), updatedClusterJson), map[string]interface{}{kafkaClusterLoggingKey: d.Id()})
 	} else if isForbiddenStandardBasicDowngrade || isForbiddenDedicatedUpdate {
 		return diag.Errorf("error updating Kafka Cluster %q: clusters can only be upgraded from 'Basic' to 'Standard'", d.Id())
 	}
@@ -371,88 +355,27 @@ func kafkaUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 			return diag.FromErr(createDescriptiveError(err))
 		}
 
-		updateClusterRequest := cmk.NewCmkV2ClusterUpdate()
 		updateSpec := cmk.NewCmkV2ClusterSpecUpdate()
 		updateSpec.SetConfig(cmk.CmkV2DedicatedAsCmkV2ClusterSpecUpdateConfigOneOf(cmk.NewCmkV2Dedicated(kafkaClusterTypeDedicated, cku)))
 		updateSpec.SetEnvironment(cmk.EnvScopedObjectReference{Id: environmentId})
-		updateClusterRequest.SetSpec(*updateSpec)
-		updateClusterRequestJson, err := json.Marshal(updateClusterRequest)
-		if err != nil {
-			return diag.Errorf("error updating Kafka Cluster %q: error marshaling %#v to json: %s", d.Id(), updateClusterRequest, createDescriptiveError(err))
-		}
-		tflog.Debug(ctx, fmt.Sprintf("Updating Kafka Cluster %q: %s", d.Id(), updateClusterRequestJson), map[string]interface{}{kafkaClusterLoggingKey: d.Id()})
-		req := c.cmkClient.ClustersCmkV2Api.UpdateCmkV2Cluster(c.cmkApiContext(ctx), d.Id()).CmkV2ClusterUpdate(*updateClusterRequest)
 
-		updatedCluster, _, err := req.Execute()
-		if err != nil {
-			return diag.Errorf("error updating Kafka Cluster %q: %s", d.Id(), createDescriptiveError(err))
+		if err := executeClusterUpdate(ctx, c, d.Id(), updateSpec, "CKU"); err != nil {
+			return err
 		}
 
 		if err := waitForKafkaClusterCkuUpdateToComplete(c.cmkApiContext(ctx), c, environmentId, d.Id(), cku); err != nil {
 			return diag.Errorf("error waiting for Kafka Cluster %q to perform CKU update: %s", d.Id(), createDescriptiveError(err))
 		}
-		updatedClusterJson, err := json.Marshal(updatedCluster)
-		if err != nil {
-			return diag.Errorf("error updating Kafka Cluster %q: error marshaling %#v to json: %s", d.Id(), updatedCluster, createDescriptiveError(err))
-		}
-		tflog.Debug(ctx, fmt.Sprintf("Updated Kafka Cluster %q: %s", d.Id(), updatedClusterJson), map[string]interface{}{kafkaClusterLoggingKey: d.Id()})
 	}
 
-	// Handle max_ecku-only updates (when display_name is not changing)
+	// handle max_ecku-only updates (when display_name is not changing)
 	if !hasDisplayNameChange && hasMaxEckuChange && !isBasicStandardUpdate {
-		updateClusterRequest := cmk.NewCmkV2ClusterUpdate()
-		updateSpec := cmk.NewCmkV2ClusterSpecUpdate()
-
-		if isMaxEckuBasicUpdate {
-			config := cmk.NewCmkV2Basic(kafkaClusterTypeBasic)
-			maxEcku := extractBasicMaxEcku(d)
-			if maxEcku > 0 {
-				config.SetMaxEcku(maxEcku)
-			}
-			updateSpec.SetConfig(cmk.CmkV2BasicAsCmkV2ClusterSpecUpdateConfigOneOf(config))
-		} else if isMaxEckuStandardUpdate {
-			config := cmk.NewCmkV2Standard(kafkaClusterTypeStandard)
-			maxEcku := extractStandardMaxEcku(d)
-			if maxEcku > 0 {
-				config.SetMaxEcku(maxEcku)
-			}
-			updateSpec.SetConfig(cmk.CmkV2StandardAsCmkV2ClusterSpecUpdateConfigOneOf(config))
-		} else if isMaxEckuEnterpriseUpdate {
-			config := cmk.NewCmkV2Enterprise(kafkaClusterTypeEnterprise)
-			maxEcku := extractEnterpriseMaxEcku(d)
-			if maxEcku > 0 {
-				config.SetMaxEcku(maxEcku)
-			}
-			updateSpec.SetConfig(cmk.CmkV2EnterpriseAsCmkV2ClusterSpecUpdateConfigOneOf(config))
-		} else if isMaxEckuFreightUpdate {
-			config := cmk.NewCmkV2Freight(kafkaClusterTypeFreight)
-			maxEcku := extractFreightMaxEcku(d)
-			if maxEcku > 0 {
-				config.SetMaxEcku(maxEcku)
-			}
-			updateSpec.SetConfig(cmk.CmkV2FreightAsCmkV2ClusterSpecUpdateConfigOneOf(config))
-		}
-
+		updateSpec := createMaxEckuUpdateSpec(d, clusterType, isMaxEckuBasicUpdate, isMaxEckuStandardUpdate, isMaxEckuEnterpriseUpdate, isMaxEckuFreightUpdate)
 		updateSpec.SetEnvironment(cmk.EnvScopedObjectReference{Id: environmentId})
-		updateClusterRequest.SetSpec(*updateSpec)
-		updateClusterRequestJson, err := json.Marshal(updateClusterRequest)
-		if err != nil {
-			return diag.Errorf("error updating Kafka Cluster %q: error marshaling %#v to json: %s", d.Id(), updateClusterRequest, createDescriptiveError(err))
-		}
-		tflog.Debug(ctx, fmt.Sprintf("Updating Kafka Cluster %q: %s", d.Id(), updateClusterRequestJson), map[string]interface{}{kafkaClusterLoggingKey: d.Id()})
-		
-		req := c.cmkClient.ClustersCmkV2Api.UpdateCmkV2Cluster(c.cmkApiContext(ctx), d.Id()).CmkV2ClusterUpdate(*updateClusterRequest)
 
-		updatedCluster, _, err := req.Execute()
-		if err != nil {
-			return diag.Errorf("error updating Kafka Cluster %q: %s", d.Id(), createDescriptiveError(err))
+		if err := executeClusterUpdate(ctx, c, d.Id(), updateSpec, "Max eCKU"); err != nil {
+			return err
 		}
-
-		updatedClusterJson, err := json.Marshal(updatedCluster)
-		if err != nil {
-			return diag.Errorf("error updating Kafka Cluster %q: error marshaling %#v to json: %s", d.Id(), updatedCluster, createDescriptiveError(err))
-		}
-		tflog.Debug(ctx, fmt.Sprintf("Updated Kafka Cluster %q: %s", d.Id(), updatedClusterJson), map[string]interface{}{kafkaClusterLoggingKey: d.Id()})
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished updating Kafka Cluster %q", d.Id()), map[string]interface{}{kafkaClusterLoggingKey: d.Id()})
