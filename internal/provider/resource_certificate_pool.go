@@ -90,15 +90,15 @@ func certificatePoolCreate(ctx context.Context, d *schema.ResourceData, meta int
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Certificate Pool: %s", createCertificatePoolRequestJson))
 
 	req := c.caClient.CertificateIdentityPoolsIamV2Api.CreateIamV2CertificateIdentityPool(c.caApiContext(ctx), certificateAuthorityId).IamV2CertificateIdentityPool(*createCertificatePoolRequest)
-	createdCertificatePool, _, err := req.Execute()
+	createdCertificatePool, resp, err := req.Execute()
 	if err != nil {
-		return diag.Errorf("error creating Certificate Pool %q: %s", createdCertificatePool.GetId(), createDescriptiveError(err))
+		return diag.Errorf("error creating Certificate Pool %q: %s", createdCertificatePool.GetId(), createDescriptiveError(err, resp))
 	}
 	d.SetId(createdCertificatePool.GetId())
 
 	createdCertificatePoolJson, err := json.Marshal(createdCertificatePool)
 	if err != nil {
-		return diag.Errorf("error creating Certificate Pool %q: error marshaling %#v to json: %s", d.Id(), createdCertificatePool, createDescriptiveError(err))
+		return diag.Errorf("error creating Certificate Pool %q: error marshaling %#v to json: %s", d.Id(), createdCertificatePool, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating Certificate Pool %q: %s", d.Id(), createdCertificatePoolJson), map[string]interface{}{certificatePoolKey: d.Id()})
 
@@ -140,7 +140,7 @@ func readCertificatePoolAndSetAttributes(ctx context.Context, d *schema.Resource
 	}
 	certificatePoolJson, err := json.Marshal(certificatePool)
 	if err != nil {
-		return nil, fmt.Errorf("error reading Certificate Pool %q: error marshaling %#v to json: %s", certificatePoolId, certificatePool, createDescriptiveError(err))
+		return nil, fmt.Errorf("error reading Certificate Pool %q: error marshaling %#v to json: %s", certificatePoolId, certificatePool, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Certificate Pool %q: %s", d.Id(), certificatePoolJson), map[string]interface{}{certificatePoolKey: d.Id()})
 
@@ -180,10 +180,10 @@ func certificatePoolDelete(ctx context.Context, d *schema.ResourceData, meta int
 	c := meta.(*Client)
 
 	req := c.caClient.CertificateIdentityPoolsIamV2Api.DeleteIamV2CertificateIdentityPool(c.caApiContext(ctx), certificateAuthorityId, d.Id())
-	_, _, err := req.Execute()
+	_, resp, err := req.Execute()
 
 	if err != nil {
-		return diag.Errorf("error deleting Certificate Pool %q: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error deleting Certificate Pool %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished deleting Certificate Pool %q", d.Id()), map[string]interface{}{certificatePoolKey: d.Id()})
@@ -212,15 +212,15 @@ func certificatePoolUpdate(ctx context.Context, d *schema.ResourceData, meta int
 	c := meta.(*Client)
 	certificateAuthorityId := extractStringValueFromBlock(d, paramCertificateAuthority, paramId)
 	req := c.caClient.CertificateIdentityPoolsIamV2Api.UpdateIamV2CertificateIdentityPool(c.caApiContext(ctx), certificateAuthorityId, d.Id()).IamV2CertificateIdentityPool(*updateCertificatePool)
-	updatedCertificatePool, _, err := req.Execute()
+	updatedCertificatePool, resp, err := req.Execute()
 
 	if err != nil {
-		return diag.Errorf("error updating Certificate Pool %q: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error updating Certificate Pool %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	UpdatedCertificatePoolJson, err := json.Marshal(updatedCertificatePool)
 	if err != nil {
-		return diag.Errorf("error updating Certificate Pool %q: error marshaling %#v to json: %s", d.Id(), updatedCertificatePool, createDescriptiveError(err))
+		return diag.Errorf("error updating Certificate Pool %q: error marshaling %#v to json: %s", d.Id(), updatedCertificatePool, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished updating Certificate Pool %q: %s", d.Id(), UpdatedCertificatePoolJson), map[string]interface{}{certificatePoolKey: d.Id()})
 	return certificatePoolRead(ctx, d, meta)

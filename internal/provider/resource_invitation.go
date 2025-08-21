@@ -112,7 +112,7 @@ func readInvitationAndSetAttributes(ctx context.Context, d *schema.ResourceData,
 	c := meta.(*Client)
 	invitation, resp, err := executeInvitationRead(c.iamApiContext(ctx), c, invitationId)
 	if err != nil {
-		tflog.Warn(ctx, fmt.Sprintf("Error reading invitation %q: %s", invitationId, createDescriptiveError(err)), map[string]interface{}{invitationLoggingKey: invitationId})
+		tflog.Warn(ctx, fmt.Sprintf("Error reading invitation %q: %s", invitationId, createDescriptiveError(err, resp)), map[string]interface{}{invitationLoggingKey: invitationId})
 
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
 		if isResourceNotFound && !d.IsNewResource() {
@@ -125,7 +125,7 @@ func readInvitationAndSetAttributes(ctx context.Context, d *schema.ResourceData,
 	}
 	invitationJson, err := json.Marshal(invitation)
 	if err != nil {
-		return nil, fmt.Errorf("error reading invitation %q: error marshaling %#v to json: %s", invitationId, invitation, createDescriptiveError(err))
+		return nil, fmt.Errorf("error reading invitation %q: error marshaling %#v to json: %s", invitationId, invitation, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched invitation %q: %s", invitationId, invitationJson), map[string]interface{}{invitationLoggingKey: invitationId})
 
@@ -157,15 +157,15 @@ func invitationCreate(ctx context.Context, d *schema.ResourceData, meta interfac
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new invitation: %s", createInvitationRequestJson))
 
-	createdInvitation, _, err := executeInvitationCreate(c.iamApiContext(ctx), c, &createInvitationRequest)
+	createdInvitation, resp, err := executeInvitationCreate(c.iamApiContext(ctx), c, &createInvitationRequest)
 	if err != nil {
-		return diag.Errorf("error creating invitation %s", createDescriptiveError(err))
+		return diag.Errorf("error creating invitation %s", createDescriptiveError(err, resp))
 	}
 	d.SetId(createdInvitation.GetId())
 
 	createdInvitationJson, err := json.Marshal(createdInvitation)
 	if err != nil {
-		return diag.Errorf("error creating invitation %q: error marshaling %#v to json: %s", d.Id(), createdInvitation, createDescriptiveError(err))
+		return diag.Errorf("error creating invitation %q: error marshaling %#v to json: %s", d.Id(), createdInvitation, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating invitation %q: %s", d.Id(), createdInvitationJson), map[string]interface{}{invitationLoggingKey: d.Id()})
 
@@ -195,10 +195,10 @@ func invitationDelete(ctx context.Context, d *schema.ResourceData, meta interfac
 	}
 
 	req := c.iamClient.InvitationsIamV2Api.DeleteIamV2Invitation(c.iamApiContext(ctx), invitationId)
-	_, err := req.Execute()
+	resp, err := req.Execute()
 
 	if err != nil {
-		return diag.Errorf("error deleting invitation %q: %s", invitationId, createDescriptiveError(err))
+		return diag.Errorf("error deleting invitation %q: %s", invitationId, createDescriptiveError(err, resp))
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished deleting invitation %q", invitationId), map[string]interface{}{invitationLoggingKey: invitationId})

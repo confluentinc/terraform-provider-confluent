@@ -128,9 +128,9 @@ func businessMetadataBindingCreate(ctx context.Context, d *schema.ResourceData, 
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Business Metadata Binding: %s", createBusinessMetadataBindingRequestJson))
 
-	createdBusinessMetadataBinding, _, err := request.Execute()
+	createdBusinessMetadataBinding, resp, err := request.Execute()
 	if err != nil {
-		return diag.Errorf("error creating Business Metadata Binding %s", createDescriptiveError(err))
+		return diag.Errorf("error creating Business Metadata Binding %s", createDescriptiveError(err, resp))
 	}
 	if len(createdBusinessMetadataBinding) == 0 {
 		return diag.Errorf("error creating Business Metadata Binding %q: empty response", businessMetadataBindingId)
@@ -141,7 +141,7 @@ func businessMetadataBindingCreate(ctx context.Context, d *schema.ResourceData, 
 	d.SetId(businessMetadataBindingId)
 
 	if err := waitForBusinessMetadataBindingToProvision(catalogRestClient.dataCatalogApiContext(ctx), catalogRestClient, businessMetadataBindingId, businessMetadataName, entityName, entityType); err != nil {
-		return diag.Errorf("error waiting for Business Metadata Binding %q to provision: %s", businessMetadataBindingId, createDescriptiveError(err))
+		return diag.Errorf("error waiting for Business Metadata Binding %q to provision: %s", businessMetadataBindingId, createDescriptiveError(err, resp))
 	}
 
 	// https://github.com/confluentinc/terraform-provider-confluent/issues/282 to resolve "Root object was present, but now absent."
@@ -191,7 +191,7 @@ func readBusinessMetadataBindingAndSetAttributes(ctx context.Context, d *schema.
 	request := catalogRestClient.apiClient.EntityV1Api.GetBusinessMetadata(catalogRestClient.dataCatalogApiContext(ctx), entityType, entityName)
 	businessMetadataBindings, resp, err := request.Execute()
 	if err != nil {
-		tflog.Warn(ctx, fmt.Sprintf("Error reading Business Metadata Binding %q: %s", businessMetadataBindingId, createDescriptiveError(err)), map[string]interface{}{businessMetadataBindingLoggingKey: businessMetadataBindingId})
+		tflog.Warn(ctx, fmt.Sprintf("Error reading Business Metadata Binding %q: %s", businessMetadataBindingId, createDescriptiveError(err, resp)), map[string]interface{}{businessMetadataBindingLoggingKey: businessMetadataBindingId})
 
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
 		if isResourceNotFound && !d.IsNewResource() {
@@ -215,7 +215,7 @@ func readBusinessMetadataBindingAndSetAttributes(ctx context.Context, d *schema.
 
 	businessMetadataBindingJson, err := json.Marshal(businessMetadataBinding)
 	if err != nil {
-		return nil, fmt.Errorf("error reading Business Metadata Binding %q: error marshaling %#v to json: %s", businessMetadataBindingId, businessMetadataBindingJson, createDescriptiveError(err))
+		return nil, fmt.Errorf("error reading Business Metadata Binding %q: error marshaling %#v to json: %s", businessMetadataBindingId, businessMetadataBindingJson, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Business Metadata Binding %q: %s", businessMetadataBindingId, businessMetadataBindingJson), map[string]interface{}{businessMetadataBindingLoggingKey: businessMetadataBindingId})
 
@@ -319,9 +319,9 @@ func businessMetadataBindingUpdate(ctx context.Context, d *schema.ResourceData, 
 		}
 		tflog.Debug(ctx, fmt.Sprintf("Updating new Business Metadata Binding: %s", updateBusinessMetadataBindingRequestJson))
 
-		updatedBusinessMetadataBinding, _, err := request.Execute()
+		updatedBusinessMetadataBinding, resp, err := request.Execute()
 		if err != nil {
-			return diag.Errorf("error updating Business Metadata Binding %s", createDescriptiveError(err))
+			return diag.Errorf("error updating Business Metadata Binding %s", createDescriptiveError(err, resp))
 		}
 		if len(updatedBusinessMetadataBinding) == 0 {
 			return diag.Errorf("error updating Business Metadata Binding %q: empty response", businessMetadataBindingId)
@@ -333,7 +333,7 @@ func businessMetadataBindingUpdate(ctx context.Context, d *schema.ResourceData, 
 
 		updatedBusinessMetadataBindingJson, err := json.Marshal(updatedBusinessMetadataBinding)
 		if err != nil {
-			return diag.Errorf("error updating Business Metadata Binding %q: error marshaling %#v to json: %s", businessMetadataBindingId, updatedBusinessMetadataBinding, createDescriptiveError(err))
+			return diag.Errorf("error updating Business Metadata Binding %q: error marshaling %#v to json: %s", businessMetadataBindingId, updatedBusinessMetadataBinding, createDescriptiveError(err, resp))
 		}
 		tflog.Debug(ctx, fmt.Sprintf("Finished updating Business Metadata Binding %q: %s", businessMetadataBindingId, updatedBusinessMetadataBindingJson), map[string]interface{}{businessMetadataBindingLoggingKey: businessMetadataBindingId})
 	}

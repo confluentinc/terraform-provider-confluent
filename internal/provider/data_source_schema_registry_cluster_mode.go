@@ -83,7 +83,7 @@ func schemaRegistryClusterModeDataSourceRead(ctx context.Context, d *schema.Reso
 func readSchemaRegistryClusterModeDataSourceAndSetAttributes(ctx context.Context, d *schema.ResourceData, c *SchemaRegistryRestClient) ([]*schema.ResourceData, error) {
 	schemaRegistryClusterMode, resp, err := c.apiClient.ModesV1Api.GetTopLevelMode(c.apiContext(ctx)).Execute()
 	if err != nil {
-		tflog.Warn(ctx, fmt.Sprintf("Error reading Schema Registry Cluster Mode %q: %s", d.Id(), createDescriptiveError(err)), map[string]interface{}{schemaRegistryClusterModeLoggingKey: d.Id()})
+		tflog.Warn(ctx, fmt.Sprintf("Error reading Schema Registry Cluster Mode %q: %s", d.Id(), createDescriptiveError(err, resp)), map[string]interface{}{schemaRegistryClusterModeLoggingKey: d.Id()})
 
 		isResourceNotFound := ResponseHasExpectedStatusCode(resp, http.StatusNotFound)
 		if isResourceNotFound && !d.IsNewResource() {
@@ -96,7 +96,7 @@ func readSchemaRegistryClusterModeDataSourceAndSetAttributes(ctx context.Context
 	}
 	schemaRegistryClusterModeJson, err := json.Marshal(schemaRegistryClusterMode)
 	if err != nil {
-		return nil, fmt.Errorf("error reading Schema Registry Cluster Mode %q: error marshaling %#v to json: %s", d.Id(), schemaRegistryClusterMode, createDescriptiveError(err))
+		return nil, fmt.Errorf("error reading Schema Registry Cluster Mode %q: error marshaling %#v to json: %s", d.Id(), schemaRegistryClusterMode, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Schema Registry Cluster Mode %q: %s", d.Id(), schemaRegistryClusterModeJson), map[string]interface{}{schemaRegistryClusterModeLoggingKey: d.Id()})
 

@@ -105,18 +105,18 @@ func privateLinkAccessDataSourceReadUsingId(ctx context.Context, d *schema.Resou
 	tflog.Debug(ctx, fmt.Sprintf("Reading Private Link Access %q=%q", paramId, privateLinkAccessId), map[string]interface{}{privateLinkAccessLoggingKey: privateLinkAccessId})
 
 	c := meta.(*Client)
-	privateLinkAccess, _, err := executePrivateLinkAccessRead(c.netApiContext(ctx), c, environmentId, privateLinkAccessId)
+	privateLinkAccess, resp, err := executePrivateLinkAccessRead(c.netApiContext(ctx), c, environmentId, privateLinkAccessId)
 	if err != nil {
-		return diag.Errorf("error reading Private Link Access %q: %s", privateLinkAccessId, createDescriptiveError(err))
+		return diag.Errorf("error reading Private Link Access %q: %s", privateLinkAccessId, createDescriptiveError(err, resp))
 	}
 	privateLinkAccessJson, err := json.Marshal(privateLinkAccess)
 	if err != nil {
-		return diag.Errorf("error reading Private Link Access %q: error marshaling %#v to json: %s", privateLinkAccessId, privateLinkAccess, createDescriptiveError(err))
+		return diag.Errorf("error reading Private Link Access %q: error marshaling %#v to json: %s", privateLinkAccessId, privateLinkAccess, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Private Link Access %q: %s", privateLinkAccessId, privateLinkAccessJson), map[string]interface{}{privateLinkAccessLoggingKey: privateLinkAccessId})
 
 	if _, err := setPrivateLinkAccessAttributes(d, privateLinkAccess); err != nil {
-		return diag.FromErr(createDescriptiveError(err))
+		return diag.FromErr(createDescriptiveError(err, resp))
 	}
 	return nil
 }
@@ -137,9 +137,9 @@ func loadPrivateLinkAccesses(ctx context.Context, c *Client, environmentId strin
 	allPrivateLinkAccessesAreCollected := false
 	pageToken := ""
 	for !allPrivateLinkAccessesAreCollected {
-		privateLinkAccessesPageList, _, err := executeListPrivateLinkAccesses(ctx, c, environmentId, pageToken)
+		privateLinkAccessesPageList, resp, err := executeListPrivateLinkAccesses(ctx, c, environmentId, pageToken)
 		if err != nil {
-			return nil, fmt.Errorf("error reading PrivateLinkAccesses: %s", createDescriptiveError(err))
+			return nil, fmt.Errorf("error reading PrivateLinkAccesses: %s", createDescriptiveError(err, resp))
 		}
 		privateLinkAccesses = append(privateLinkAccesses, privateLinkAccessesPageList.GetData()...)
 
@@ -153,7 +153,7 @@ func loadPrivateLinkAccesses(ctx context.Context, c *Client, environmentId strin
 			} else {
 				pageToken, err = extractPageToken(nextPageUrlString)
 				if err != nil {
-					return nil, fmt.Errorf("error reading PrivateLinkAccesses: %s", createDescriptiveError(err))
+					return nil, fmt.Errorf("error reading PrivateLinkAccesses: %s", createDescriptiveError(err, resp))
 				}
 			}
 		} else {

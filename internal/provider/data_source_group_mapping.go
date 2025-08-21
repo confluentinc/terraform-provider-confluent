@@ -106,9 +106,9 @@ func loadGroupMappings(ctx context.Context, c *Client) ([]v2.IamV2SsoGroupMappin
 	allGroupMappingsAreCollected := false
 	pageToken := ""
 	for !allGroupMappingsAreCollected {
-		groupMappingPageList, _, err := executeListGroupMappings(ctx, c, pageToken)
+		groupMappingPageList, resp, err := executeListGroupMappings(ctx, c, pageToken)
 		if err != nil {
-			return nil, fmt.Errorf("error reading Group Mappings: %s", createDescriptiveError(err))
+			return nil, fmt.Errorf("error reading Group Mappings: %s", createDescriptiveError(err, resp))
 		}
 		groupMappings = append(groupMappings, groupMappingPageList.GetData()...)
 
@@ -122,7 +122,7 @@ func loadGroupMappings(ctx context.Context, c *Client) ([]v2.IamV2SsoGroupMappin
 			} else {
 				pageToken, err = extractPageToken(nextPageUrlString)
 				if err != nil {
-					return nil, fmt.Errorf("error reading Group Mappings: %s", createDescriptiveError(err))
+					return nil, fmt.Errorf("error reading Group Mappings: %s", createDescriptiveError(err, resp))
 				}
 			}
 		} else {
@@ -144,18 +144,18 @@ func groupMappingDataSourceReadUsingId(ctx context.Context, d *schema.ResourceDa
 	tflog.Debug(ctx, fmt.Sprintf("Reading Group Mapping %q=%q", paramId, groupMappingId), map[string]interface{}{groupMappingLoggingKey: groupMappingId})
 
 	c := meta.(*Client)
-	groupMapping, _, err := executeGroupMappingRead(c.ssoApiContext(ctx), c, groupMappingId)
+	groupMapping, resp, err := executeGroupMappingRead(c.ssoApiContext(ctx), c, groupMappingId)
 	if err != nil {
-		return diag.Errorf("error reading Group Mapping %q: %s", groupMappingId, createDescriptiveError(err))
+		return diag.Errorf("error reading Group Mapping %q: %s", groupMappingId, createDescriptiveError(err, resp))
 	}
 	groupMappingJson, err := json.Marshal(groupMapping)
 	if err != nil {
-		return diag.Errorf("error reading Group Mapping %q: error marshaling %#v to json: %s", groupMappingId, groupMapping, createDescriptiveError(err))
+		return diag.Errorf("error reading Group Mapping %q: error marshaling %#v to json: %s", groupMappingId, groupMapping, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Group Mapping %q: %s", groupMappingId, groupMappingJson), map[string]interface{}{groupMappingLoggingKey: groupMappingId})
 
 	if _, err := setGroupMappingAttributes(d, groupMapping); err != nil {
-		return diag.FromErr(createDescriptiveError(err))
+		return diag.FromErr(createDescriptiveError(err, resp))
 	}
 	return nil
 }
