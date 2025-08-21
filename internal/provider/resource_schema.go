@@ -1150,7 +1150,7 @@ func loadAllSchemas(ctx context.Context, client *Client) (InstanceIdsToNameMap, 
 
 	subjects, resp, err := schemaRegistryRestClient.apiClient.SubjectsV1Api.List(schemaRegistryRestClient.apiContext(ctx)).Execute()
 	if err != nil {
-		tflog.Warn(ctx, fmt.Sprintf("Error reading Subjects for Schema Registry Cluster %q: %s", schemaRegistryRestClient.clusterId, resp), map[string]interface{}{schemaRegistryClusterLoggingKey: schemaRegistryRestClient.clusterId})
+		tflog.Warn(ctx, fmt.Sprintf("Error reading Subjects for Schema Registry Cluster %q: %s", schemaRegistryRestClient.clusterId, createDescriptiveError(err, resp)), map[string]interface{}{schemaRegistryClusterLoggingKey: schemaRegistryRestClient.clusterId})
 		return nil, diag.FromErr(createDescriptiveError(err, resp))
 	}
 	subjectsJson, err := json.Marshal(subjects)
