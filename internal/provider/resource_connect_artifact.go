@@ -313,7 +313,7 @@ func waitForConnectArtifactToProvision(ctx context.Context, c *Client, environme
 		Pending:      []string{stateProvisioning, stateProcessing},
 		Target:       []string{stateProvisioned, stateReady},
 		Refresh:      connectArtifactProvisionStatus(c.camApiContext(ctx), c, environmentId, artifactId, cloud),
-		Timeout:      10 * time.Minute,
+		Timeout:      1 * time.Hour,
 		Delay:        delay,
 		PollInterval: pollInterval,
 	}
