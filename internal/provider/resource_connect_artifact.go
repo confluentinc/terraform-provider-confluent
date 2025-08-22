@@ -344,6 +344,7 @@ func connectArtifactProvisionStatus(ctx context.Context, c *Client, environmentI
 
 		if phase == stateProcessing || phase == stateProvisioning || phase == stateProvisioned || phase == stateReady {
 			return artifact, phase, nil
+			// WaitingForProcessing state does intended to be a final failed state
 		} else if phase == stateWaitingForProcessing || phase == stateFailed {
 			return nil, phase, fmt.Errorf("connect artifact %q provisioning status is %q", artifactId, phase)
 		}
