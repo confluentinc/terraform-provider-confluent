@@ -1,19 +1,23 @@
 {
-  "id": "lccp-abc123",
-  "api_version": "artifact/v1",
+  "api_version": "cam/v1",
+  "id": "cca-xryjrg",
   "kind": "ConnectArtifact",
+  "metadata": {
+    "created_at": "2025-08-14T21:58:48.97731Z",
+    "resource_name": "crn://confluent.cloud/organization=1111aaaa-11aa-11aa-11aa-111111aaaaaa/environment=env-gz903/connect-artifact=cca-xryjrg",
+    "self": "https://confluent.cloud/cam/v1/connect-artifacts/cca-xryjrg",
+    "updated_at": "2025-08-14T21:58:48.97731Z"
+  },
   "spec": {
-    "display_name": "connect_artifact_0",
-    "cloud": "AWS",
-    "environment": "env-gz903",
+    "cloud": "aws",
     "content_format": "JAR",
-    "description": "string",
-    "upload_source": {
-      "location": "PRESIGNED_URL_LOCATION",
-      "upload_id": "upload-123"
-    }
+    "description": "test-description",
+    "display_name": "connect_artifact_0",
+    "environment": "env-gz903",
+    "plugins": null,
+    "usages": []
   },
   "status": {
-    "phase": "PROVISIONING"
+    "phase": "PROCESSING"
   }
-} 
+}

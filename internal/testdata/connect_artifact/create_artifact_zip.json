@@ -1,13 +1,13 @@
 {
-  "id": "lccp-abc123",
+  "id": "cca-xryjrg",
   "api_version": "artifact/v1",
   "kind": "ConnectArtifact",
   "spec": {
     "display_name": "connect_artifact_0",
-    "cloud": "AWS",
+    "cloud": "aws",
     "environment": "env-gz903",
     "content_format": "ZIP",
-    "description": "string",
+    "description": "test-description",
     "upload_source": {
       "location": "PRESIGNED_URL_LOCATION",
       "upload_id": "upload-123"
