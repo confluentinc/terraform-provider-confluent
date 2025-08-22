@@ -1,0 +1,9 @@
+{
+  "errors": [
+    {
+      "status": "404",
+      "detail": "Statement resource=workspace-2023-11-15-030109-0408d52d-eaff-4d50-a246-f822a29f2eb9 does not exist",
+      "source": {}
+    }
+  ]
+}

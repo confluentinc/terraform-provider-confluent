@@ -1,0 +1,32 @@
+{
+  "api_version": "sql/v1",
+  "environment_id": "env-abc123",
+  "kind": "Statement",
+  "metadata": {
+    "created_at": "2025-08-21T00:23:35.45976Z",
+    "labels": {},
+    "resource_version": "5",
+    "self": "https://flink.us-east-2.aws.confluent.cloud/sql/v1/organizations/1111aaaa-11aa-11aa-11aa-111111aaaaaa/environments/env-abc123/statements/workspace-2023-11-15-030109-0408d52d-eaff-4d50-a246-f822a29f2eb9",
+    "uid": "f6955293-9764-44ce-9129-675f5b6d4b73",
+    "updated_at": "2025-08-21T00:23:35.863783Z"
+  },
+  "name": "workspace-2023-11-15-030109-0408d52d-eaff-4d50-a246-f822a29f2eb9",
+  "organization_id": "1111aaaa-11aa-11aa-11aa-111111aaaaaa",
+  "spec": {
+    "compute_pool_id": "lfcp-x7rgx1",
+    "principal": "u-yo9j87",
+    "properties": {
+      "sql.current-catalog": "test",
+      "sql.current-database": "cluster_0",
+      "sql.local-time-zone": "GMT-08:00",
+      "sql.tables.initial-offset-from": "tf-2025-08-20-171534-5f6e0644-dc74-4c30-81c1-cd9eaede302f"
+    },
+    "statement": "INSERT INTO customers_sink123 (customer_id, name, address, postcode, city, email) SELECT customer_id, name, address, postcode, city, email FROM customers_source123",
+    "stopped": false
+  },
+  "status": {
+    "detail": "Statement is currently pending until referenced statement tf-2025-08-20-171534-5f6e0644-dc74-4c30-81c1-cd9eaede302f is stopped. If tf-2025-08-20-171534-5f6e0644-dc74-4c30-81c1-cd9eaede302f is not stopped before 2025-08-21T06:23:35Z, this statement will fail.",
+    "network_kind": "PUBLIC",
+    "phase": "PENDING"
+  }
+}
