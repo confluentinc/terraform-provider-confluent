@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"regexp"
 	"testing"
 
 	"github.com/walkerus/go-wiremock"
@@ -20,11 +21,12 @@ const (
 	scenarioStateConnectArtifactHasBeenDeleted        = "The new connect artifact has been deleted"
 	connectArtifactScenarioName                       = "confluent_connect_artifact Resource Lifecycle"
 	connectArtifactCloud                              = "AWS"
+	connectArtifactCloudAPIResponse                   = "aws"
 	connectArtifactEnvironmentId                      = "env-gz903"
 	connectArtifactContentFormat                      = "JAR"
 	connectArtifactContentFormatZip                   = "ZIP"
-	connectArtifactDescription                        = "string"
-	connectArtifactId                                 = "lccp-abc123"
+	connectArtifactDescription                        = "test-description"
+	connectArtifactId                                 = "cca-xryjrg"
 	connectArtifactUniqueName                         = "connect_artifact_0"
 )
 
@@ -75,7 +77,7 @@ func TestAccConnectArtifact(t *testing.T) {
 	provisioningArtifactResponse, _ := os.ReadFile("../testdata/connect_artifact/create_artifact.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(connectArtifactsUrlPath)).
 		InScenario(connectArtifactScenarioName).
-		WithQueryParam("spec.cloud", wiremock.EqualTo(connectArtifactCloud)).
+		WithQueryParam("spec.cloud", wiremock.Matching("(?i)^"+regexp.QuoteMeta(connectArtifactCloudAPIResponse)+"$")).
 		WithQueryParam("environment", wiremock.EqualTo(connectArtifactEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateConnectArtifactIsProvisioning).
 		WillSetStateTo(scenarioStateConnectArtifactHasBeenCreated).
@@ -88,7 +90,7 @@ func TestAccConnectArtifact(t *testing.T) {
 	readCreatedArtifactResponse, _ := os.ReadFile("../testdata/connect_artifact/read_created_artifact.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(connectArtifactsUrlPath)).
 		InScenario(connectArtifactScenarioName).
-		WithQueryParam("spec.cloud", wiremock.EqualTo(connectArtifactCloud)).
+		WithQueryParam("spec.cloud", wiremock.Matching("(?i)^"+regexp.QuoteMeta(connectArtifactCloud)+"$")).
 		WithQueryParam("environment", wiremock.EqualTo(connectArtifactEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateConnectArtifactHasBeenCreated).
 		WillReturn(
@@ -99,7 +101,7 @@ func TestAccConnectArtifact(t *testing.T) {
 
 	deleteArtifactStub := wiremock.Delete(wiremock.URLPathEqualTo(connectArtifactsUrlPath)).
 		InScenario(connectArtifactScenarioName).
-		WithQueryParam("spec.cloud", wiremock.EqualTo(connectArtifactCloud)).
+		WithQueryParam("spec.cloud", wiremock.Matching("(?i)^"+regexp.QuoteMeta(connectArtifactCloud)+"$")).
 		WhenScenarioStateIs(scenarioStateConnectArtifactHasBeenCreated).
 		WillSetStateTo(scenarioStateConnectArtifactHasBeenDeleted).
 		WillReturn(
@@ -112,7 +114,7 @@ func TestAccConnectArtifact(t *testing.T) {
 	readDeletedArtifactResponse, _ := os.ReadFile("../testdata/connect_artifact/read_deleted_artifact.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(connectArtifactsUrlPath)).
 		InScenario(connectArtifactScenarioName).
-		WithQueryParam("spec.cloud", wiremock.EqualTo(connectArtifactCloud)).
+		WithQueryParam("spec.cloud", wiremock.Matching("(?i)^"+regexp.QuoteMeta(connectArtifactCloud)+"$")).
 		WithQueryParam("environment", wiremock.EqualTo(connectArtifactEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateConnectArtifactHasBeenDeleted).
 		WillReturn(
@@ -140,7 +142,7 @@ func TestAccConnectArtifact(t *testing.T) {
 					testAccCheckConnectArtifactExists(fullConnectArtifactResourceLabel),
 					resource.TestCheckResourceAttr(fullConnectArtifactResourceLabel, paramId, connectArtifactId),
 					resource.TestCheckResourceAttr(fullConnectArtifactResourceLabel, paramDisplayName, connectArtifactUniqueName),
-					resource.TestCheckResourceAttr(fullConnectArtifactResourceLabel, paramCloud, connectArtifactCloud),
+					resource.TestCheckResourceAttr(fullConnectArtifactResourceLabel, paramCloud, connectArtifactCloudAPIResponse),
 					resource.TestCheckResourceAttr(fullConnectArtifactResourceLabel, fmt.Sprintf("%s.#", paramEnvironment), "1"),
 					resource.TestCheckResourceAttr(fullConnectArtifactResourceLabel, fmt.Sprintf("%s.0.%s", paramEnvironment, paramId), connectArtifactEnvironmentId),
 					resource.TestCheckResourceAttr(fullConnectArtifactResourceLabel, paramArtifactFile, "abc.jar"),
@@ -212,7 +214,7 @@ func TestAccConnectArtifactZip(t *testing.T) {
 	provisioningArtifactResponse, _ := os.ReadFile("../testdata/connect_artifact/create_artifact_zip.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(connectArtifactsUrlPath)).
 		InScenario(connectArtifactScenarioName).
-		WithQueryParam("spec.cloud", wiremock.EqualTo(connectArtifactCloud)).
+		WithQueryParam("spec.cloud", wiremock.Matching("(?i)^"+regexp.QuoteMeta(connectArtifactCloud)+"$")).
 		WithQueryParam("environment", wiremock.EqualTo(connectArtifactEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateConnectArtifactIsProvisioning).
 		WillSetStateTo(scenarioStateConnectArtifactHasBeenCreated).
@@ -225,7 +227,7 @@ func TestAccConnectArtifactZip(t *testing.T) {
 	readCreatedArtifactResponse, _ := os.ReadFile("../testdata/connect_artifact/read_created_artifact_zip.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(connectArtifactsUrlPath)).
 		InScenario(connectArtifactScenarioName).
-		WithQueryParam("spec.cloud", wiremock.EqualTo(connectArtifactCloud)).
+		WithQueryParam("spec.cloud", wiremock.Matching("(?i)^"+regexp.QuoteMeta(connectArtifactCloud)+"$")).
 		WithQueryParam("environment", wiremock.EqualTo(connectArtifactEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateConnectArtifactHasBeenCreated).
 		WillReturn(
@@ -236,7 +238,7 @@ func TestAccConnectArtifactZip(t *testing.T) {
 
 	deleteArtifactStub := wiremock.Delete(wiremock.URLPathEqualTo(connectArtifactsUrlPath)).
 		InScenario(connectArtifactScenarioName).
-		WithQueryParam("spec.cloud", wiremock.EqualTo(connectArtifactCloud)).
+		WithQueryParam("spec.cloud", wiremock.Matching("(?i)^"+regexp.QuoteMeta(connectArtifactCloud)+"$")).
 		WhenScenarioStateIs(scenarioStateConnectArtifactHasBeenCreated).
 		WillSetStateTo(scenarioStateConnectArtifactHasBeenDeleted).
 		WillReturn(
@@ -249,7 +251,7 @@ func TestAccConnectArtifactZip(t *testing.T) {
 	readDeletedArtifactResponse, _ := os.ReadFile("../testdata/connect_artifact/read_deleted_artifact.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(connectArtifactsUrlPath)).
 		InScenario(connectArtifactScenarioName).
-		WithQueryParam("spec.cloud", wiremock.EqualTo(connectArtifactCloud)).
+		WithQueryParam("spec.cloud", wiremock.Matching("(?i)^"+regexp.QuoteMeta(connectArtifactCloud)+"$")).
 		WithQueryParam("environment", wiremock.EqualTo(connectArtifactEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateConnectArtifactHasBeenDeleted).
 		WillReturn(
@@ -277,7 +279,7 @@ func TestAccConnectArtifactZip(t *testing.T) {
 					testAccCheckConnectArtifactExists(fullConnectArtifactResourceLabel),
 					resource.TestCheckResourceAttr(fullConnectArtifactResourceLabel, paramId, connectArtifactId),
 					resource.TestCheckResourceAttr(fullConnectArtifactResourceLabel, paramDisplayName, connectArtifactUniqueName),
-					resource.TestCheckResourceAttr(fullConnectArtifactResourceLabel, paramCloud, connectArtifactCloud),
+					resource.TestCheckResourceAttr(fullConnectArtifactResourceLabel, paramCloud, connectArtifactCloudAPIResponse),
 					resource.TestCheckResourceAttr(fullConnectArtifactResourceLabel, fmt.Sprintf("%s.#", paramEnvironment), "1"),
 					resource.TestCheckResourceAttr(fullConnectArtifactResourceLabel, fmt.Sprintf("%s.0.%s", paramEnvironment, paramId), connectArtifactEnvironmentId),
 					resource.TestCheckResourceAttr(fullConnectArtifactResourceLabel, paramArtifactFile, "abc.zip"),
