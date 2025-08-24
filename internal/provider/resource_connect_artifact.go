@@ -310,7 +310,7 @@ func connectArtifactImport(ctx context.Context, d *schema.ResourceData, meta int
 func waitForConnectArtifactToProvision(ctx context.Context, c *Client, environmentId, artifactId, cloud string) error {
 	delay, pollInterval := getDelayAndPollInterval(5*time.Second, 1*time.Minute, c.isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
-		Pending:      []string{stateProvisioning, stateProcessing},
+		Pending:      []string{stateProvisioning, stateProcessing, stateWaitingForProcessing},
 		Target:       []string{stateProvisioned, stateReady},
 		Refresh:      connectArtifactProvisionStatus(c.camApiContext(ctx), c, environmentId, artifactId, cloud),
 		Timeout:      1 * time.Hour,
@@ -342,10 +342,9 @@ func connectArtifactProvisionStatus(ctx context.Context, c *Client, environmentI
 		phase := artifact.Status.GetPhase()
 		tflog.Debug(ctx, fmt.Sprintf("Waiting for Connect Artifact %q provisioning status to become %q: current status is %q", artifactId, stateProvisioned, phase), map[string]interface{}{connectArtifactLoggingKey: artifactId})
 
-		if phase == stateProcessing || phase == stateProvisioning || phase == stateProvisioned || phase == stateReady {
+		if phase == stateProcessing || phase == stateWaitingForProcessing || phase == stateProvisioning || phase == stateProvisioned || phase == stateReady {
 			return artifact, phase, nil
-			// WaitingForProcessing state does intended to be a final failed state
-		} else if phase == stateWaitingForProcessing || phase == stateFailed {
+		} else if phase == stateFailed {
 			return nil, phase, fmt.Errorf("connect artifact %q provisioning status is %q", artifactId, phase)
 		}
 		// Connect Artifact is in an unexpected state
