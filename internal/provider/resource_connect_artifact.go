@@ -345,7 +345,7 @@ func connectArtifactProvisionStatus(ctx context.Context, c *Client, environmentI
 		if phase == stateProcessing || phase == stateWaitingForProcessing || phase == stateProvisioning || phase == stateProvisioned || phase == stateReady {
 			return artifact, phase, nil
 		} else if phase == stateFailed {
-			return nil, phase, fmt.Errorf("connect artifact %q provisioning status is %q", artifactId, phase)
+			return nil, stateFailed, fmt.Errorf("connect artifact %q provisioning status is %q", artifactId, stateFailed)
 		}
 		// Connect Artifact is in an unexpected state
 		return nil, stateUnexpected, fmt.Errorf("connect artifact %q is in an unexpected state %q", artifactId, phase)
