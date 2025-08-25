@@ -97,19 +97,19 @@ func transitGatewayAttachmentCreate(ctx context.Context, d *schema.ResourceData,
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Transit Gateway Attachment: %s", createTransitGatewayAttachmentRequestJson))
 
-	createdTransitGatewayAttachment, _, err := executeTransitGatewayAttachmentCreate(c.netApiContext(ctx), c, createTransitGatewayAttachmentRequest)
+	createdTransitGatewayAttachment, resp, err := executeTransitGatewayAttachmentCreate(c.netApiContext(ctx), c, createTransitGatewayAttachmentRequest)
 	if err != nil {
-		return diag.Errorf("error creating Transit Gateway Attachment %q: %s", createdTransitGatewayAttachment.GetId(), createDescriptiveError(err))
+		return diag.Errorf("error creating Transit Gateway Attachment %q: %s", createdTransitGatewayAttachment.GetId(), createDescriptiveError(err, resp))
 	}
 	d.SetId(createdTransitGatewayAttachment.GetId())
 
 	if err := waitForTransitGatewayAttachmentToProvision(c.netApiContext(ctx), c, environmentId, d.Id()); err != nil {
-		return diag.Errorf("error waiting for Transit Gateway Attachment %q to provision: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error waiting for Transit Gateway Attachment %q to provision: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	createdTransitGatewayAttachmentJson, err := json.Marshal(createdTransitGatewayAttachment)
 	if err != nil {
-		return diag.Errorf("error creating Transit Gateway Attachment %q: error marshaling %#v to json: %s", d.Id(), createdTransitGatewayAttachment, createDescriptiveError(err))
+		return diag.Errorf("error creating Transit Gateway Attachment %q: error marshaling %#v to json: %s", d.Id(), createdTransitGatewayAttachment, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating Transit Gateway Attachment %q: %s", d.Id(), createdTransitGatewayAttachmentJson), map[string]interface{}{transitGatewayAttachmentLoggingKey: d.Id()})
 
@@ -144,7 +144,7 @@ func readTransitGatewayAttachmentAndSetAttributes(ctx context.Context, d *schema
 
 	transitGatewayAttachment, resp, err := executeTransitGatewayAttachmentRead(c.netApiContext(ctx), c, environmentId, transitGatewayAttachmentId)
 	if err != nil {
-		tflog.Warn(ctx, fmt.Sprintf("Error reading Transit Gateway Attachment %q: %s", d.Id(), createDescriptiveError(err)), map[string]interface{}{transitGatewayAttachmentLoggingKey: d.Id()})
+		tflog.Warn(ctx, fmt.Sprintf("Error reading Transit Gateway Attachment %q: %s", d.Id(), createDescriptiveError(err, resp)), map[string]interface{}{transitGatewayAttachmentLoggingKey: d.Id()})
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
 		if isResourceNotFound && !d.IsNewResource() {
 			tflog.Warn(ctx, fmt.Sprintf("Removing Transit Gateway Attachment %q in TF state because Transit Gateway Attachment could not be found on the server", d.Id()), map[string]interface{}{transitGatewayAttachmentLoggingKey: d.Id()})
@@ -156,7 +156,7 @@ func readTransitGatewayAttachmentAndSetAttributes(ctx context.Context, d *schema
 	}
 	transitGatewayAttachmentJson, err := json.Marshal(transitGatewayAttachment)
 	if err != nil {
-		return nil, fmt.Errorf("error reading Transit Gateway Attachment %q: error marshaling %#v to json: %s", transitGatewayAttachmentId, transitGatewayAttachment, createDescriptiveError(err))
+		return nil, fmt.Errorf("error reading Transit Gateway Attachment %q: error marshaling %#v to json: %s", transitGatewayAttachmentId, transitGatewayAttachment, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Transit Gateway Attachment %q: %s", d.Id(), transitGatewayAttachmentJson), map[string]interface{}{transitGatewayAttachmentLoggingKey: d.Id()})
 
@@ -201,14 +201,14 @@ func transitGatewayAttachmentDelete(ctx context.Context, d *schema.ResourceData,
 	c := meta.(*Client)
 
 	req := c.netClient.TransitGatewayAttachmentsNetworkingV1Api.DeleteNetworkingV1TransitGatewayAttachment(c.netApiContext(ctx), d.Id()).Environment(environmentId)
-	_, err := req.Execute()
+	resp, err := req.Execute()
 
 	if err != nil {
-		return diag.Errorf("error deleting Transit Gateway Attachment %q: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error deleting Transit Gateway Attachment %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	if err := waitForTransitGatewayAttachmentToBeDeleted(c.netApiContext(ctx), c, environmentId, d.Id()); err != nil {
-		return diag.Errorf("error waiting for Transit Gateway Attachment %q to be deleted: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error waiting for Transit Gateway Attachment %q to be deleted: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished deleting Transit Gateway Attachment %q", d.Id()), map[string]interface{}{transitGatewayAttachmentLoggingKey: d.Id()})
@@ -236,15 +236,15 @@ func transitGatewayAttachmentUpdate(ctx context.Context, d *schema.ResourceData,
 	tflog.Debug(ctx, fmt.Sprintf("Updating Transit Gateway Attachment %q: %s", d.Id(), updateTransitGatewayAttachmentRequestJson), map[string]interface{}{transitGatewayAttachmentLoggingKey: d.Id()})
 
 	req := c.netClient.TransitGatewayAttachmentsNetworkingV1Api.UpdateNetworkingV1TransitGatewayAttachment(c.netApiContext(ctx), d.Id()).NetworkingV1TransitGatewayAttachmentUpdate(*updateTransitGatewayAttachmentRequest)
-	updatedTransitGatewayAttachment, _, err := req.Execute()
+	updatedTransitGatewayAttachment, resp, err := req.Execute()
 
 	if err != nil {
-		return diag.Errorf("error updating Transit Gateway Attachment %q: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error updating Transit Gateway Attachment %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	updatedTransitGatewayAttachmentJson, err := json.Marshal(updatedTransitGatewayAttachment)
 	if err != nil {
-		return diag.Errorf("error updating Transit Gateway Attachment %q: error marshaling %#v to json: %s", d.Id(), updatedTransitGatewayAttachment, createDescriptiveError(err))
+		return diag.Errorf("error updating Transit Gateway Attachment %q: error marshaling %#v to json: %s", d.Id(), updatedTransitGatewayAttachment, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished updating Transit Gateway Attachment %q: %s", d.Id(), updatedTransitGatewayAttachmentJson), map[string]interface{}{transitGatewayAttachmentLoggingKey: d.Id()})
 	return transitGatewayAttachmentRead(ctx, d, meta)

@@ -66,18 +66,18 @@ func certificatePoolDataSourceRead(ctx context.Context, d *schema.ResourceData, 
 	c := meta.(*Client)
 	CertificateAuthorityId := extractStringValueFromBlock(d, paramCertificateAuthority, paramId)
 	request := c.caClient.CertificateIdentityPoolsIamV2Api.GetIamV2CertificateIdentityPool(c.caApiContext(ctx), CertificateAuthorityId, certificatePoolId)
-	certificatePool, _, err := c.caClient.CertificateIdentityPoolsIamV2Api.GetIamV2CertificateIdentityPoolExecute(request)
+	certificatePool, resp, err := c.caClient.CertificateIdentityPoolsIamV2Api.GetIamV2CertificateIdentityPoolExecute(request)
 	if err != nil {
-		return diag.Errorf("error reading Certificate Pool %q: %s", certificatePoolId, createDescriptiveError(err))
+		return diag.Errorf("error reading Certificate Pool %q: %s", certificatePoolId, createDescriptiveError(err, resp))
 	}
 	certificatePoolJson, err := json.Marshal(certificatePool)
 	if err != nil {
-		return diag.Errorf("error reading Certificate Pool %q: error marshaling %#v to json: %s", certificatePoolId, certificatePool, createDescriptiveError(err))
+		return diag.Errorf("error reading Certificate Pool %q: error marshaling %#v to json: %s", certificatePoolId, certificatePool, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Certificate Pool %q: %s", certificatePoolId, certificatePoolJson), map[string]interface{}{certificatePoolKey: certificatePoolId})
 
 	if _, err := setCertificatePoolAttributes(d, certificatePool, CertificateAuthorityId); err != nil {
-		return diag.FromErr(createDescriptiveError(err))
+		return diag.FromErr(createDescriptiveError(err, resp))
 	}
 	return nil
 }
