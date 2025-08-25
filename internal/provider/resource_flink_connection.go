@@ -198,7 +198,7 @@ func connectionCreate(ctx context.Context, d *schema.ResourceData, meta interfac
 	}
 	createdConnection, resp, err := executeConnectionCreate(flinkRestClient.apiContext(ctx), flinkRestClient, connection)
 	if err != nil {
-		return diag.Errorf("errorr creating Flink Connection: %s", createDescriptiveError(err, resp))
+		return diag.Errorf("error creating Flink Connection: %s", createDescriptiveError(err, resp))
 	}
 	d.SetId(createFlinkConnectionId(flinkRestClient.organizationId, flinkRestClient.environmentId, createdConnection.GetName()))
 	createdConnectionJson, err := json.Marshal(createdConnection)
