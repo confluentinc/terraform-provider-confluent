@@ -30,8 +30,8 @@ blocks:
           commands:
             - "echo \"Step 1: Fetching GitHub issues from the last 48 hours...\""
             - export REPO_OWNER="confluentinc"
-            - export REPO_NAME="cli"
-            - export SINCE_TIME=$(date -u -d '400 hours ago' '+%Y-%m-%dT%H:%M:%SZ')
+            - export REPO_NAME="terraform-provider-confluent"
+            - export SINCE_TIME=$(date -u -d '200 hours ago' '+%Y-%m-%dT%H:%M:%SZ')
             - |
               echo "Scanning for issues in $REPO_OWNER/$REPO_NAME created after $SINCE_TIME"
               if ! gh issue list --repo "$REPO_OWNER/$REPO_NAME" --json number,title,body,url,author --search "created:>$SINCE_TIME" --state=open > recent_issues.json; then
@@ -39,11 +39,11 @@ blocks:
                 exit 1
               fi
 
-            - "echo \"Step 2: Checking if there are GitHub issues without CLI- prefix...\""
+            - "echo \"Step 2: Checking if there are GitHub issues without APIE- prefix...\""
             - |
-              cat recent_issues.json | jq '[.[] | select(.title | test("^CLI-") | not)]' > issues_to_process.json
+              cat recent_issues.json | jq '[.[] | select(.title | test("^APIE-") | not)]' > issues_to_process.json
               ISSUE_COUNT=$(cat issues_to_process.json | jq '. | length')
-              echo "Found $ISSUE_COUNT issues without CLI- prefix"
+              echo "Found $ISSUE_COUNT issues without APIE- prefix"
 
             - "echo \"Step 3: Creating JIRA tickets for issues without prefix...\""
             - |
@@ -75,7 +75,7 @@ blocks:
                   '{
                     "fields": {
                       "project": {
-                        "key": "CLI"
+                        "key": "APIE"
                       },
                       "summary": $summary,
                       "description": $body,
