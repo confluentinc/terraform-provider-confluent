@@ -7,7 +7,7 @@
 
 **Bug Fixes:**
 * Fixed an issue in `confluent_role_binding` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_role_binding) that prompts Terraform to recreate the resource unnecessarily.
-* Fixed an issue of  `confluent_connect_artifact` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_connect_artifact) failing to provision due to unrecognized statuses.
+* Fixed an issue of `confluent_connect_artifact` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_connect_artifact) failing to provision due to unrecognized statuses.
 
 **Examples:**
 * Updated the [flink-carry-over-offset-between-statements](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/flink-carry-over-offset-between-statements) example.
