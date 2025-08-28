@@ -12,7 +12,6 @@
 **Examples:**
 * Updated the [flink-carry-over-offset-between-statements](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/flink-carry-over-offset-between-statements) example.
 
-
 ## 2.37.0 (August 7th, 2025)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.36.0...v2.37.0)
