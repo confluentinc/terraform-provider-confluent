@@ -300,7 +300,7 @@ func (t *loggingTransport) RoundTrip(req *http.Request) (*http.Response, error) 
 	// 1. Call the original transport to do the actual HTTP work
 	resp, err := t.transport.RoundTrip(req)
 
-	// 2. Add our logging logic on top to output request_id HTTP requests
+	// 2. Add our logging logic on top to output request_id for HTTP requests
 	if err == nil && resp != nil && resp.Header != nil && req.URL != nil {
 		if requestID := resp.Header.Get("x-request-id"); requestID != "" {
 			tflog.Debug(t.ctx, "API request completed",
