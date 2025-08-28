@@ -234,7 +234,14 @@ func (f RetryableClientFactory) CreateRetryableClient() *http.Client {
 	// This logger will be used to send retryablehttp's internal logs to tflog
 	retryClient.Logger = logger
 
-	return retryClient.StandardClient()
+	standardClient := retryClient.StandardClient()
+
+	standardClient.Transport = &loggingTransport{
+		transport: standardClient.Transport,
+		ctx:       f.ctx,
+	}
+
+	return standardClient
 }
 
 func customErrorHandler(resp *http.Response, err error, retries int) (*http.Response, error) {
@@ -282,4 +289,30 @@ func (l retryClientLogger) additionalFields(keysAndValues []interface{}) map[str
 	}
 
 	return additionalFields
+}
+
+type loggingTransport struct {
+	transport http.RoundTripper
+	ctx       context.Context
+}
+
+func (t *loggingTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	// 1. Call the original transport to do the actual HTTP work
+	resp, err := t.transport.RoundTrip(req)
+
+	// 2. Add our logging logic on top to output request_id HTTP requests
+	if err == nil && resp != nil && resp.Header != nil && req.URL != nil {
+		if requestID := resp.Header.Get("x-request-id"); requestID != "" {
+			tflog.Debug(t.ctx, "API request completed",
+				map[string]interface{}{
+					"request_id": requestID,
+					"method":     req.Method,
+					"url":        req.URL.String(),
+					"status":     resp.StatusCode,
+				})
+		}
+	}
+
+	// 3. Return the original response
+	return resp, err
 }
