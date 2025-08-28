@@ -1,0 +1,10 @@
+{
+  "errors": [
+    {
+      "id": "32676c236ad170e4e1c131fed415d30a",
+      "status": "403",
+      "detail": "This service is not available in Confluent Cloud for Government. If you think this is incorrect, contact support@confluent.io",
+      "source": {}
+    }
+  ]
+}

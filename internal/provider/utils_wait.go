@@ -17,7 +17,9 @@ package provider
 import (
 	"context"
 	"fmt"
+	v3 "github.com/confluentinc/ccloud-sdk-go-v2/srcm/v3"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -25,10 +27,11 @@ import (
 )
 
 const (
-	stateUp                        = "UP"
-	stateCreated                   = "CREATED"
-	acceptanceTestModeWaitTime     = 1 * time.Second
-	acceptanceTestModePollInterval = 1 * time.Second
+	govCloudNotAvailableErrorMessage = "this service is not available in confluent cloud for government"
+	stateUp                          = "UP"
+	stateCreated                     = "CREATED"
+	acceptanceTestModeWaitTime       = 1 * time.Second
+	acceptanceTestModePollInterval   = 1 * time.Second
 
 	flinkCarryOverOffsetsProperty = "sql.tables.initial-offset-from"
 )
@@ -982,6 +985,15 @@ func anySchemaRegistryClusterProvisionStatus(ctx context.Context, c *Client, env
 	return func() (result interface{}, s string, err error) {
 		clusters, err := loadSchemaRegistryClusters(c.srcmApiContext(ctx), c, environmentId)
 		if err != nil {
+			errorStr := strings.ToLower(err.Error())
+			if strings.Contains(errorStr, govCloudNotAvailableErrorMessage) {
+				tflog.Debug(ctx, fmt.Sprintf("Ignoring %q error", govCloudNotAvailableErrorMessage))
+				// Return non-nil result to avoid triggering "not found" logic in StateChangeConf.
+				// When result is nil, WaitForStateContext treats it as a missing resource,
+				// causing endless polling.
+				return v3.NewSrcmV3Cluster(), stateProvisioned, nil
+			}
+
 			tflog.Warn(ctx, fmt.Sprintf("Error reading Schema Registry Clusters in environment %q: %s", environmentId, createDescriptiveError(err)))
 			return nil, stateUnknown, err
 		}
