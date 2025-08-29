@@ -1,6 +1,6 @@
 ## 2.38.1 (August 29th, 2025)
 
-[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.38.0...v2.39.0)
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.38.0...v2.38.1)
 
 **Bug Fixes:**
 * Fix an issue for the `confluent_kafka_cluster` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_cluster).
