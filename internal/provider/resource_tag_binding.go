@@ -78,6 +78,11 @@ func tagBindingResource() *schema.Resource {
 				Description:  "The entity type.",
 				ForceNew:     true,
 			},
+			paramDisableWaitForReady: {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  false,
+			},
 		},
 		CustomizeDiff: customdiff.Sequence(resourceCredentialBlockValidationWithOAuth),
 	}
@@ -100,6 +105,7 @@ func tagBindingCreate(ctx context.Context, d *schema.ResourceData, meta interfac
 	tagName := d.Get(paramTagName).(string)
 	entityName := d.Get(paramEntityName).(string)
 	entityType := d.Get(paramEntityType).(string)
+	skipSync := d.Get(paramDisableWaitForReady).(bool)
 	tagBindingId := createTagBindingId(clusterId, tagName, entityName, entityType)
 
 	catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
@@ -108,9 +114,11 @@ func tagBindingCreate(ctx context.Context, d *schema.ResourceData, meta interfac
 	tagBindingRequest.SetEntityType(entityType)
 	tagBindingRequest.SetTypeName(tagName)
 
-	// sleep 60 seconds to wait for entity (resource) to sync to SR
-	// https://github.com/confluentinc/terraform-provider-confluent/issues/282 to resolve "error creating Tag Binding 404 Not Found"
-	SleepIfNotTestMode(60*time.Second, meta.(*Client).isAcceptanceTestMode)
+	if !skipSync {
+		// sleep 60 seconds to wait for entity (resource) to sync to SR
+		// https://github.com/confluentinc/terraform-provider-confluent/issues/282 to resolve "error creating Tag Binding 404 Not Found"
+		SleepIfNotTestMode(60*time.Second, meta.(*Client).isAcceptanceTestMode)
+	}
 
 	request := catalogRestClient.apiClient.EntityV1Api.CreateTags(catalogRestClient.dataCatalogApiContext(ctx))
 	request = request.Tag([]dc.Tag{tagBindingRequest})
@@ -137,8 +145,10 @@ func tagBindingCreate(ctx context.Context, d *schema.ResourceData, meta interfac
 		return diag.Errorf("error waiting for Tag Binding %q to provision: %s", tagBindingId, createDescriptiveError(err))
 	}
 
-	// https://github.com/confluentinc/terraform-provider-confluent/issues/282 to resolve "Root object was present, but now absent."
-	SleepIfNotTestMode(2*dataCatalogAPIWaitAfterCreate, meta.(*Client).isAcceptanceTestMode)
+	if !skipSync {
+		// https://github.com/confluentinc/terraform-provider-confluent/issues/282 to resolve "Root object was present, but now absent."
+		SleepIfNotTestMode(2*dataCatalogAPIWaitAfterCreate, meta.(*Client).isAcceptanceTestMode)
+	}
 
 	createdTagBindingJson, err := json.Marshal(createdTagBinding)
 	if err != nil {
@@ -289,8 +299,8 @@ func tagBindingImport(ctx context.Context, d *schema.ResourceData, meta interfac
 }
 
 func tagBindingUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if d.HasChangesExcept(paramCredentials, paramEntityName) {
-		return diag.Errorf("error updating Tag Binding %q: only %q, %q blocks can be updated for Tag Bindings", d.Id(), paramCredentials, paramEntityName)
+	if d.HasChangesExcept(paramCredentials, paramEntityName, paramDisableWaitForReady) {
+		return diag.Errorf("error updating Tag Binding %q: only %q, %q blocks and %q attribute can be updated for Tag Bindings", d.Id(), paramCredentials, paramEntityName, paramDisableWaitForReady)
 	}
 	if d.HasChange(paramEntityName) {
 		entityType := d.Get(paramEntityType).(string)
@@ -300,6 +310,7 @@ func tagBindingUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 		if !canUpdateEntityName(entityType, oldEntityName, newEntityName) {
 			return diag.Errorf("error updating Tag Binding %q: schema_identifier in %q block can only be updated for Tag Bindings if entity type is %q, %q or %q", d.Id(), paramEntityName, schemaEntityType, recordEntityType, fieldEntityType)
 		}
+		// TODO: APIE-574
 		// entity_name will be silently updated
 	}
 	return tagBindingRead(ctx, d, meta)
@@ -318,6 +329,12 @@ func setTagBindingAttributes(d *schema.ResourceData, clusterId string, tagBindin
 	}
 	if err := d.Set(paramEntityType, tagBinding.GetEntityType()); err != nil {
 		return nil, err
+	}
+	// Explicitly set paramDisableWaitForReady to the default value if unset
+	if _, ok := d.GetOk(paramDisableWaitForReady); !ok {
+		if err := d.Set(paramDisableWaitForReady, d.Get(paramDisableWaitForReady)); err != nil {
+			return nil, createDescriptiveError(err)
+		}
 	}
 	d.SetId(createTagBindingId(clusterId, tagBinding.GetTypeName(), tagBinding.GetEntityName(), tagBinding.GetEntityType()))
 	return d, nil
