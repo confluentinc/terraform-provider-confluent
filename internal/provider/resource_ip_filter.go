@@ -105,7 +105,7 @@ func ipFilterUpdate(ctx context.Context, d *schema.ResourceData, meta interface{
 
 	updatedIPFilterJson, err := json.Marshal(updatedIPFilter)
 	if err != nil {
-		return diag.Errorf("error updating IP Filter %q: error marshaling %#v to json: %s", d.Id(), updatedIPFilter, createDescriptiveError(err))
+		return diag.Errorf("error updating IP Filter %q: error marshaling %#v to json: %s", d.Id(), updatedIPFilter, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished updating IP Filter %q: %s", d.Id(), updatedIPFilterJson), map[string]interface{}{ipFilterLoggingKey: d.Id()})
 
@@ -131,7 +131,7 @@ func ipFilterCreate(ctx context.Context, d *schema.ResourceData, meta interface{
 
 	createdIPFilterJson, err := json.Marshal(createdIPFilter)
 	if err != nil {
-		return diag.Errorf("error creating IP Filter %q: error marshaling %#v to json: %s", d.Id(), createdIPFilter, createDescriptiveError(err))
+		return diag.Errorf("error creating IP Filter %q: error marshaling %#v to json: %s", d.Id(), createdIPFilter, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating IP Filter %q: %s", d.Id(), createdIPFilterJson), map[string]interface{}{ipFilterLoggingKey: d.Id()})
 
@@ -148,10 +148,10 @@ func ipFilterDelete(ctx context.Context, d *schema.ResourceData, meta interface{
 	c := meta.(*Client)
 
 	req := c.iamIPClient.IPFiltersIamV2Api.DeleteIamV2IpFilter(c.iamIPApiContext(ctx), d.Id())
-	_, err := req.Execute()
+	resp, err := req.Execute()
 
 	if err != nil {
-		return diag.Errorf("error deleting IP Filter %q: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error deleting IP Filter %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished deleting IP Filter %q", d.Id()), map[string]interface{}{ipFilterLoggingKey: d.Id()})
@@ -169,7 +169,7 @@ func ipFilterRead(ctx context.Context, d *schema.ResourceData, meta interface{})
 	c := meta.(*Client)
 	ipFilter, resp, err := executeIPFilterRead(c.iamIPApiContext(ctx), c, d.Id())
 	if err != nil {
-		tflog.Warn(ctx, fmt.Sprintf("Error reading IP Filter %q: %s", d.Id(), createDescriptiveError(err)), map[string]interface{}{ipFilterLoggingKey: d.Id()})
+		tflog.Warn(ctx, fmt.Sprintf("Error reading IP Filter %q: %s", d.Id(), createDescriptiveError(err, resp)), map[string]interface{}{ipFilterLoggingKey: d.Id()})
 
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
 		if isResourceNotFound && !d.IsNewResource() {
@@ -178,16 +178,16 @@ func ipFilterRead(ctx context.Context, d *schema.ResourceData, meta interface{})
 			return nil
 		}
 
-		return diag.FromErr(createDescriptiveError(err))
+		return diag.FromErr(createDescriptiveError(err, resp))
 	}
 	ipFilterJson, err := json.Marshal(ipFilter)
 	if err != nil {
-		return diag.Errorf("error reading IP Filter %q: error marshaling %#v to json: %s", d.Id(), ipFilter, createDescriptiveError(err))
+		return diag.Errorf("error reading IP Filter %q: error marshaling %#v to json: %s", d.Id(), ipFilter, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched IP Filter %q: %s", d.Id(), ipFilterJson), map[string]interface{}{ipFilterLoggingKey: d.Id()})
 
 	if _, err := setIPFilterAttributes(d, ipFilter); err != nil {
-		return diag.FromErr(createDescriptiveError(err))
+		return diag.FromErr(createDescriptiveError(err, resp))
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished reading IP Filter %q", d.Id()), map[string]interface{}{ipFilterLoggingKey: d.Id()})

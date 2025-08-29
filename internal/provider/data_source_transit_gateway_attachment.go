@@ -103,18 +103,18 @@ func transitGatewayAttachmentDataSourceReadUsingId(ctx context.Context, d *schem
 	tflog.Debug(ctx, fmt.Sprintf("Reading Transit Gateway Attachment %q=%q", paramId, transitGatewayAttachmentId), map[string]interface{}{transitGatewayAttachmentLoggingKey: transitGatewayAttachmentId})
 
 	c := meta.(*Client)
-	transitGatewayAttachment, _, err := executeTransitGatewayAttachmentRead(c.netApiContext(ctx), c, environmentId, transitGatewayAttachmentId)
+	transitGatewayAttachment, resp, err := executeTransitGatewayAttachmentRead(c.netApiContext(ctx), c, environmentId, transitGatewayAttachmentId)
 	if err != nil {
-		return diag.Errorf("error reading Transit Gateway Attachment %q: %s", transitGatewayAttachmentId, createDescriptiveError(err))
+		return diag.Errorf("error reading Transit Gateway Attachment %q: %s", transitGatewayAttachmentId, createDescriptiveError(err, resp))
 	}
 	transitGatewayAttachmentJson, err := json.Marshal(transitGatewayAttachment)
 	if err != nil {
-		return diag.Errorf("error reading Transit Gateway Attachment %q: error marshaling %#v to json: %s", transitGatewayAttachmentId, transitGatewayAttachment, createDescriptiveError(err))
+		return diag.Errorf("error reading Transit Gateway Attachment %q: error marshaling %#v to json: %s", transitGatewayAttachmentId, transitGatewayAttachment, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Transit Gateway Attachment %q: %s", transitGatewayAttachmentId, transitGatewayAttachmentJson), map[string]interface{}{transitGatewayAttachmentLoggingKey: transitGatewayAttachmentId})
 
 	if _, err := setTransitGatewayAttachmentAttributes(d, transitGatewayAttachment); err != nil {
-		return diag.FromErr(createDescriptiveError(err))
+		return diag.FromErr(createDescriptiveError(err, resp))
 	}
 	return nil
 }
@@ -135,9 +135,9 @@ func loadTransitGatewayAttachments(ctx context.Context, c *Client, environmentId
 	allTransitGatewayAttachmentsAreCollected := false
 	pageToken := ""
 	for !allTransitGatewayAttachmentsAreCollected {
-		transitGatewayAttachmentsPageList, _, err := executeListTransitGatewayAttachments(ctx, c, environmentId, pageToken)
+		transitGatewayAttachmentsPageList, resp, err := executeListTransitGatewayAttachments(ctx, c, environmentId, pageToken)
 		if err != nil {
-			return nil, fmt.Errorf("error reading TransitGatewayAttachments: %s", createDescriptiveError(err))
+			return nil, fmt.Errorf("error reading TransitGatewayAttachments: %s", createDescriptiveError(err, resp))
 		}
 		transitGatewayAttachments = append(transitGatewayAttachments, transitGatewayAttachmentsPageList.GetData()...)
 

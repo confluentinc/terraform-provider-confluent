@@ -293,19 +293,19 @@ func accessPointCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Access Point: %s", createAccessPointRequestJson))
 
 	req := c.netAccessPointClient.AccessPointsNetworkingV1Api.CreateNetworkingV1AccessPoint(c.netAPApiContext(ctx)).NetworkingV1AccessPoint(createAccessPointRequest)
-	createdAccessPoint, _, err := req.Execute()
+	createdAccessPoint, resp, err := req.Execute()
 	if err != nil {
-		return diag.Errorf("error creating Access Point %q: %s", createdAccessPoint.GetId(), createDescriptiveError(err))
+		return diag.Errorf("error creating Access Point %q: %s", createdAccessPoint.GetId(), createDescriptiveError(err, resp))
 	}
 	d.SetId(createdAccessPoint.GetId())
 
 	if err := waitForAccessPointToProvision(c.netAPApiContext(ctx), c, environmentId, d.Id()); err != nil {
-		return diag.Errorf("error waiting for Access Point %q to provision: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error waiting for Access Point %q to provision: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	createdAccessPointJson, err := json.Marshal(createdAccessPoint)
 	if err != nil {
-		return diag.Errorf("error creating Access Point %q: error marshaling %#v to json: %s", d.Id(), createdAccessPoint, createDescriptiveError(err))
+		return diag.Errorf("error creating Access Point %q: error marshaling %#v to json: %s", d.Id(), createdAccessPoint, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating Access Point %q: %s", d.Id(), createdAccessPointJson), map[string]interface{}{accessPointKey: d.Id()})
 
@@ -347,7 +347,7 @@ func readAccessPointAndSetAttributes(ctx context.Context, d *schema.ResourceData
 	}
 	accessPointJson, err := json.Marshal(accessPoint)
 	if err != nil {
-		return nil, fmt.Errorf("error reading Access Point %q: error marshaling %#v to json: %s", accessPointId, accessPoint, createDescriptiveError(err))
+		return nil, fmt.Errorf("error reading Access Point %q: error marshaling %#v to json: %s", accessPointId, accessPoint, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Access Point %q: %s", d.Id(), accessPointJson), map[string]interface{}{accessPointKey: d.Id()})
 
@@ -366,10 +366,10 @@ func accessPointDelete(ctx context.Context, d *schema.ResourceData, meta interfa
 	c := meta.(*Client)
 
 	req := c.netAccessPointClient.AccessPointsNetworkingV1Api.DeleteNetworkingV1AccessPoint(c.netAPApiContext(ctx), d.Id()).Environment(environmentId)
-	_, err := req.Execute()
+	resp, err := req.Execute()
 
 	if err != nil {
-		return diag.Errorf("error deleting Access Point %q: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error deleting Access Point %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished deleting Access Point %q", d.Id()), map[string]interface{}{accessPointKey: d.Id()})
@@ -409,15 +409,15 @@ func accessPointUpdate(ctx context.Context, d *schema.ResourceData, meta interfa
 
 	c := meta.(*Client)
 	req := c.netAccessPointClient.AccessPointsNetworkingV1Api.UpdateNetworkingV1AccessPoint(c.netAPApiContext(ctx), d.Id()).NetworkingV1AccessPointUpdate(*updateAccessPoint)
-	updatedAccessPoint, _, err := req.Execute()
+	updatedAccessPoint, resp, err := req.Execute()
 
 	if err != nil {
-		return diag.Errorf("error updating Access Point %q: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error updating Access Point %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	updatedAccessPointJson, err := json.Marshal(updatedAccessPoint)
 	if err != nil {
-		return diag.Errorf("error updating Access Point %q: error marshaling %#v to json: %s", d.Id(), updatedAccessPoint, createDescriptiveError(err))
+		return diag.Errorf("error updating Access Point %q: error marshaling %#v to json: %s", d.Id(), updatedAccessPoint, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished updating Access Point %q: %s", d.Id(), updatedAccessPointJson), map[string]interface{}{accessPointKey: d.Id()})
 	return accessPointRead(ctx, d, meta)

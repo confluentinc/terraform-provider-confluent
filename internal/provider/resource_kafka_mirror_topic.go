@@ -111,10 +111,10 @@ func kafkaMirrorTopicCreate(ctx context.Context, d *schema.ResourceData, meta in
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Kafka Mirror Topic: %s", createKafkaMirrorTopicRequestJson))
 
-	_, err = executeKafkaMirrorTopicCreate(ctx, kafkaRestClient, createKafkaMirrorTopicRequest, linkName)
+	resp, err := executeKafkaMirrorTopicCreate(ctx, kafkaRestClient, createKafkaMirrorTopicRequest, linkName)
 
 	if err != nil {
-		return diag.Errorf("error creating Kafka Mirror Topic: %s", createDescriptiveError(err))
+		return diag.Errorf("error creating Kafka Mirror Topic: %s", createDescriptiveError(err, resp))
 	}
 
 	kafkaMirrorTopicId := createKafkaMirrorTopicId(kafkaRestClient.clusterId, linkName, mirrorTopicName)
@@ -155,7 +155,7 @@ func readKafkaMirrorTopicAndSetAttributes(ctx context.Context, d *schema.Resourc
 	kafkaMirrorTopic, resp, err := c.apiClient.ClusterLinkingV3Api.ReadKafkaMirrorTopic(c.apiContext(ctx), c.clusterId, linkName, mirrorTopicName).Execute()
 
 	if err != nil {
-		tflog.Warn(ctx, fmt.Sprintf("Error reading Kafka Mirror Topic %q: %s", d.Id(), createDescriptiveError(err)), map[string]interface{}{kafkaMirrorTopicLoggingKey: d.Id()})
+		tflog.Warn(ctx, fmt.Sprintf("Error reading Kafka Mirror Topic %q: %s", d.Id(), createDescriptiveError(err, resp)), map[string]interface{}{kafkaMirrorTopicLoggingKey: d.Id()})
 
 		isResourceNotFound := ResponseHasExpectedStatusCode(resp, http.StatusNotFound)
 		if isResourceNotFound && !d.IsNewResource() {
@@ -168,7 +168,7 @@ func readKafkaMirrorTopicAndSetAttributes(ctx context.Context, d *schema.Resourc
 	}
 	kafkaMirrorTopicJson, err := json.Marshal(kafkaMirrorTopic)
 	if err != nil {
-		return nil, fmt.Errorf("error reading Kafka Mirror Topic %q: error marshaling %#v to json: %s", d.Id(), kafkaMirrorTopic, createDescriptiveError(err))
+		return nil, fmt.Errorf("error reading Kafka Mirror Topic %q: error marshaling %#v to json: %s", d.Id(), kafkaMirrorTopic, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Kafka Mirror Topic %q: %s", d.Id(), kafkaMirrorTopicJson), map[string]interface{}{kafkaMirrorTopicLoggingKey: d.Id()})
 
@@ -220,14 +220,14 @@ func kafkaMirrorTopicDelete(ctx context.Context, d *schema.ResourceData, meta in
 		mirrorTopicName = sourceTopicName
 	}
 
-	_, err = kafkaRestClient.apiClient.TopicV3Api.DeleteKafkaTopic(kafkaRestClient.apiContext(ctx), kafkaRestClient.clusterId, mirrorTopicName).Execute()
+	resp, err := kafkaRestClient.apiClient.TopicV3Api.DeleteKafkaTopic(kafkaRestClient.apiContext(ctx), kafkaRestClient.clusterId, mirrorTopicName).Execute()
 
 	if err != nil {
-		return diag.Errorf("error deleting Kafka Mirror Topic %q: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error deleting Kafka Mirror Topic %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	if err := waitForKafkaMirrorTopicToBeDeleted(kafkaRestClient.apiContext(ctx), kafkaRestClient, linkName, mirrorTopicName, meta.(*Client).isAcceptanceTestMode); err != nil {
-		return diag.Errorf("error waiting for Kafka Mirror Topic %q to be deleted: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error waiting for Kafka Mirror Topic %q to be deleted: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished deleting Kafka Mirror Topic %q", d.Id()), map[string]interface{}{kafkaMirrorTopicLoggingKey: d.Id()})
@@ -296,12 +296,12 @@ func kafkaMirrorTopicUpdate(ctx context.Context, d *schema.ResourceData, meta in
 			requestData := v3.AlterMirrorsRequestData{
 				MirrorTopicNames: &[]string{mirrorTopicName},
 			}
-			_, _, err := kafkaRestClient.apiClient.ClusterLinkingV3Api.UpdateKafkaMirrorTopicsPause(kafkaRestClient.apiContext(ctx), kafkaRestClient.clusterId, linkName).AlterMirrorsRequestData(requestData).Execute()
+			_, resp, err := kafkaRestClient.apiClient.ClusterLinkingV3Api.UpdateKafkaMirrorTopicsPause(kafkaRestClient.apiContext(ctx), kafkaRestClient.clusterId, linkName).AlterMirrorsRequestData(requestData).Execute()
 			if err != nil {
-				return diag.Errorf("error updating Kafka Mirror Topic %q: %s", d.Id(), createDescriptiveError(err))
+				return diag.Errorf("error updating Kafka Mirror Topic %q: %s", d.Id(), createDescriptiveError(err, resp))
 			}
 			if err := waitForKafkaMirrorTopicToChangeStatus(kafkaRestClient.apiContext(ctx), kafkaRestClient, kafkaRestClient.clusterId, linkName, mirrorTopicName, stateActive, statePaused, meta.(*Client).isAcceptanceTestMode); err != nil {
-				return diag.Errorf("error waiting for Kafka Mirror Topic %q to be updated: %s", d.Id(), createDescriptiveError(err))
+				return diag.Errorf("error waiting for Kafka Mirror Topic %q to be updated: %s", d.Id(), createDescriptiveError(err, resp))
 			}
 		} else if shouldResumeKafkaMirrorTopic {
 			tflog.Debug(ctx, fmt.Sprintf("Resuming Kafka Mirror Topic %q", d.Id()), map[string]interface{}{kafkaMirrorTopicLoggingKey: d.Id()})
@@ -309,12 +309,12 @@ func kafkaMirrorTopicUpdate(ctx context.Context, d *schema.ResourceData, meta in
 			requestData := v3.AlterMirrorsRequestData{
 				MirrorTopicNames: &[]string{mirrorTopicName},
 			}
-			_, _, err := kafkaRestClient.apiClient.ClusterLinkingV3Api.UpdateKafkaMirrorTopicsResume(kafkaRestClient.apiContext(ctx), kafkaRestClient.clusterId, linkName).AlterMirrorsRequestData(requestData).Execute()
+			_, resp, err := kafkaRestClient.apiClient.ClusterLinkingV3Api.UpdateKafkaMirrorTopicsResume(kafkaRestClient.apiContext(ctx), kafkaRestClient.clusterId, linkName).AlterMirrorsRequestData(requestData).Execute()
 			if err != nil {
-				return diag.Errorf("error updating Kafka Mirror Topic %q: %s", d.Id(), createDescriptiveError(err))
+				return diag.Errorf("error updating Kafka Mirror Topic %q: %s", d.Id(), createDescriptiveError(err, resp))
 			}
 			if err := waitForKafkaMirrorTopicToChangeStatus(kafkaRestClient.apiContext(ctx), kafkaRestClient, kafkaRestClient.clusterId, linkName, mirrorTopicName, statePaused, stateActive, meta.(*Client).isAcceptanceTestMode); err != nil {
-				return diag.Errorf("error waiting for Kafka Mirror Topic %q to be updated: %s", d.Id(), createDescriptiveError(err))
+				return diag.Errorf("error waiting for Kafka Mirror Topic %q to be updated: %s", d.Id(), createDescriptiveError(err, resp))
 			}
 		} else if shouldFailoverKafkaMirrorTopic {
 			tflog.Debug(ctx, fmt.Sprintf("Running a failover of Kafka Mirror Topic %q", d.Id()), map[string]interface{}{kafkaMirrorTopicLoggingKey: d.Id()})
@@ -322,12 +322,12 @@ func kafkaMirrorTopicUpdate(ctx context.Context, d *schema.ResourceData, meta in
 			requestData := v3.AlterMirrorsRequestData{
 				MirrorTopicNames: &[]string{mirrorTopicName},
 			}
-			_, _, err := kafkaRestClient.apiClient.ClusterLinkingV3Api.UpdateKafkaMirrorTopicsFailover(kafkaRestClient.apiContext(ctx), kafkaRestClient.clusterId, linkName).AlterMirrorsRequestData(requestData).Execute()
+			_, resp, err := kafkaRestClient.apiClient.ClusterLinkingV3Api.UpdateKafkaMirrorTopicsFailover(kafkaRestClient.apiContext(ctx), kafkaRestClient.clusterId, linkName).AlterMirrorsRequestData(requestData).Execute()
 			if err != nil {
-				return diag.Errorf("error updating Kafka Mirror Topic %q: %s", d.Id(), createDescriptiveError(err))
+				return diag.Errorf("error updating Kafka Mirror Topic %q: %s", d.Id(), createDescriptiveError(err, resp))
 			}
 			if err := waitForKafkaMirrorTopicToChangeStatus(kafkaRestClient.apiContext(ctx), kafkaRestClient, kafkaRestClient.clusterId, linkName, mirrorTopicName, oldStatus, stateStopped, meta.(*Client).isAcceptanceTestMode); err != nil {
-				return diag.Errorf("error waiting for Kafka Mirror Topic %q to be updated: %s", d.Id(), createDescriptiveError(err))
+				return diag.Errorf("error waiting for Kafka Mirror Topic %q to be updated: %s", d.Id(), createDescriptiveError(err, resp))
 			}
 		} else if shouldPromoteKafkaMirrorTopic {
 			tflog.Debug(ctx, fmt.Sprintf("Running a promote of Kafka Mirror Topic %q", d.Id()), map[string]interface{}{kafkaMirrorTopicLoggingKey: d.Id()})
@@ -335,12 +335,12 @@ func kafkaMirrorTopicUpdate(ctx context.Context, d *schema.ResourceData, meta in
 			requestData := v3.AlterMirrorsRequestData{
 				MirrorTopicNames: &[]string{mirrorTopicName},
 			}
-			_, _, err := kafkaRestClient.apiClient.ClusterLinkingV3Api.UpdateKafkaMirrorTopicsPromote(kafkaRestClient.apiContext(ctx), kafkaRestClient.clusterId, linkName).AlterMirrorsRequestData(requestData).Execute()
+			_, resp, err := kafkaRestClient.apiClient.ClusterLinkingV3Api.UpdateKafkaMirrorTopicsPromote(kafkaRestClient.apiContext(ctx), kafkaRestClient.clusterId, linkName).AlterMirrorsRequestData(requestData).Execute()
 			if err != nil {
-				return diag.Errorf("error updating Kafka Mirror Topic %q: %s", d.Id(), createDescriptiveError(err))
+				return diag.Errorf("error updating Kafka Mirror Topic %q: %s", d.Id(), createDescriptiveError(err, resp))
 			}
 			if err := waitForKafkaMirrorTopicToChangeStatus(kafkaRestClient.apiContext(ctx), kafkaRestClient, kafkaRestClient.clusterId, linkName, mirrorTopicName, oldStatus, stateStopped, meta.(*Client).isAcceptanceTestMode); err != nil {
-				return diag.Errorf("error waiting for Kafka Mirror Topic %q to be updated: %s", d.Id(), createDescriptiveError(err))
+				return diag.Errorf("error waiting for Kafka Mirror Topic %q to be updated: %s", d.Id(), createDescriptiveError(err, resp))
 			}
 		} else {
 			// Reset the state in TF state

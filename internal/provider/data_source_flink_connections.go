@@ -105,9 +105,9 @@ func loadFlinkConnections(ctx context.Context, c *FlinkRestClient, connectionTyp
 	done := false
 	pageToken := ""
 	for !done {
-		connectionPageList, _, err := executeListFlinkConnections(ctx, c, connectionType, pageToken)
+		connectionPageList, resp, err := executeListFlinkConnections(ctx, c, connectionType, pageToken)
 		if err != nil {
-			return nil, fmt.Errorf("error reading flink connections list: %s", createDescriptiveError(err))
+			return nil, fmt.Errorf("error reading flink connections list: %s", createDescriptiveError(err, resp))
 		}
 		flinkConnections = append(flinkConnections, connectionPageList.GetData()...)
 
@@ -121,7 +121,7 @@ func loadFlinkConnections(ctx context.Context, c *FlinkRestClient, connectionTyp
 			} else {
 				pageToken, err = extractPageToken(nextPageUrlString2)
 				if err != nil {
-					return nil, fmt.Errorf("error reading Connection: %s", createDescriptiveError(err))
+					return nil, fmt.Errorf("error reading Connection: %s", createDescriptiveError(err, resp))
 				}
 			}
 		} else {

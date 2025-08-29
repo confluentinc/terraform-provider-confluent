@@ -154,9 +154,9 @@ func apiKeyCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new API Key: %s", createApiKeyRequestJson))
 
-	createdApiKey, _, err := executeApiKeysCreate(c.apiKeysApiContext(ctx), c, &createApiKeyRequest)
+	createdApiKey, resp, err := executeApiKeysCreate(c.apiKeysApiContext(ctx), c, &createApiKeyRequest)
 	if err != nil {
-		return diag.Errorf("error creating API Key %q: %s", createdApiKey.GetId(), createDescriptiveError(err))
+		return diag.Errorf("error creating API Key %q: %s", createdApiKey.GetId(), createDescriptiveError(err, resp))
 	}
 	if err := validateApiKey(createdApiKey); err != nil {
 		return diag.Errorf("Created API Key is malformed: %s", err)
@@ -166,13 +166,13 @@ func apiKeyCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 		// Wait until the API Key is synced and is ready to use
 		tflog.Debug(ctx, fmt.Sprintf("Waiting for API Key %q to sync", createdApiKey.GetId()), map[string]interface{}{apiKeyLoggingKey: createdApiKey.GetId()})
 		if err := waitForApiKeyToSync(ctx, c, createdApiKey, isResourceSpecificApiKey, environmentId); err != nil {
-			return diag.FromErr(createDescriptiveError(err))
+			return diag.FromErr(createDescriptiveError(err, resp))
 		}
 	}
 
 	// Save the API Key Secret
 	if err := d.Set(paramSecret, createdApiKey.Spec.GetSecret()); err != nil {
-		return diag.FromErr(createDescriptiveError(err))
+		return diag.FromErr(createDescriptiveError(err, resp))
 	}
 
 	d.SetId(createdApiKey.GetId())
@@ -181,7 +181,7 @@ func apiKeyCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 	createdApiKey.Spec.SetSecret("")
 	createdApiKeyJson, err := json.Marshal(createdApiKey)
 	if err != nil {
-		return diag.Errorf("error creating API Key %q: error marshaling %#v to json: %s", d.Id(), createdApiKey, createDescriptiveError(err))
+		return diag.Errorf("error creating API Key %q: error marshaling %#v to json: %s", d.Id(), createdApiKey, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating API Key %q: %s", d.Id(), createdApiKeyJson), map[string]interface{}{apiKeyLoggingKey: d.Id()})
 
@@ -222,15 +222,15 @@ func apiKeyUpdate(ctx context.Context, d *schema.ResourceData, meta interface{})
 		tflog.Debug(ctx, fmt.Sprintf("Updating API Key %q: %s", d.Id(), updateApiKeyRequestJson), map[string]interface{}{apiKeyLoggingKey: d.Id()})
 
 		c := meta.(*Client)
-		updatedApiKey, _, err := c.apiKeysClient.APIKeysIamV2Api.UpdateIamV2ApiKey(c.apiKeysApiContext(ctx), d.Id()).IamV2ApiKeyUpdate(*updateApiKeyRequest).Execute()
+		updatedApiKey, resp, err := c.apiKeysClient.APIKeysIamV2Api.UpdateIamV2ApiKey(c.apiKeysApiContext(ctx), d.Id()).IamV2ApiKeyUpdate(*updateApiKeyRequest).Execute()
 
 		if err != nil {
-			return diag.Errorf("error updating API Key %q: %s", d.Id(), createDescriptiveError(err))
+			return diag.Errorf("error updating API Key %q: %s", d.Id(), createDescriptiveError(err, resp))
 		}
 
 		updatedApiKeyJson, err := json.Marshal(updatedApiKey)
 		if err != nil {
-			return diag.Errorf("error updating API Key %q: error marshaling %#v to json: %s", d.Id(), updatedApiKey, createDescriptiveError(err))
+			return diag.Errorf("error updating API Key %q: error marshaling %#v to json: %s", d.Id(), updatedApiKey, createDescriptiveError(err, resp))
 		}
 		tflog.Debug(ctx, fmt.Sprintf("Finished updating API Key %q: %s", d.Id(), updatedApiKeyJson), map[string]interface{}{apiKeyLoggingKey: d.Id()})
 	}
@@ -243,10 +243,10 @@ func apiKeyDelete(ctx context.Context, d *schema.ResourceData, meta interface{})
 	c := meta.(*Client)
 
 	req := c.apiKeysClient.APIKeysIamV2Api.DeleteIamV2ApiKey(c.apiKeysApiContext(ctx), d.Id())
-	_, err := req.Execute()
+	resp, err := req.Execute()
 
 	if err != nil {
-		return diag.Errorf("error deleting API Key %q: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error deleting API Key %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished deleting API Key %q", d.Id()), map[string]interface{}{apiKeyLoggingKey: d.Id()})
@@ -259,7 +259,7 @@ func apiKeyRead(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 	c := meta.(*Client)
 	apiKey, resp, err := executeApiKeysRead(c.apiKeysApiContext(ctx), c, d.Id())
 	if err != nil {
-		tflog.Warn(ctx, fmt.Sprintf("Error reading API Key %q: %s", d.Id(), createDescriptiveError(err)), map[string]interface{}{apiKeyLoggingKey: d.Id()})
+		tflog.Warn(ctx, fmt.Sprintf("Error reading API Key %q: %s", d.Id(), createDescriptiveError(err, resp)), map[string]interface{}{apiKeyLoggingKey: d.Id()})
 
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
 		if isResourceNotFound && !d.IsNewResource() {
@@ -268,16 +268,16 @@ func apiKeyRead(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 			return nil
 		}
 
-		return diag.FromErr(createDescriptiveError(err))
+		return diag.FromErr(createDescriptiveError(err, resp))
 	}
 	apiKeyJson, err := json.Marshal(apiKey)
 	if err != nil {
-		return diag.Errorf("error reading API Key %q: error marshaling %#v to json: %s", d.Id(), apiKey, createDescriptiveError(err))
+		return diag.Errorf("error reading API Key %q: error marshaling %#v to json: %s", d.Id(), apiKey, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched API Key %q: %s", d.Id(), apiKeyJson), map[string]interface{}{apiKeyLoggingKey: d.Id()})
 
 	if _, err := setApiKeyAttributes(d, apiKey); err != nil {
-		return diag.FromErr(createDescriptiveError(err))
+		return diag.FromErr(createDescriptiveError(err, resp))
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished reading API Key %q", d.Id()), map[string]interface{}{apiKeyLoggingKey: d.Id()})
@@ -473,9 +473,9 @@ func validateApiKey(apiKey apikeys.IamV2ApiKey) error {
 
 // Send a GetCluster request to CMK API to find out rest_endpoint for a given (environmentId, clusterId) pair
 func fetchHttpEndpointOfKafkaCluster(ctx context.Context, c *Client, environmentId, clusterId string) (string, error) {
-	cluster, _, err := executeKafkaRead(c.cmkApiContext(ctx), c, environmentId, clusterId)
+	cluster, resp, err := executeKafkaRead(c.cmkApiContext(ctx), c, environmentId, clusterId)
 	if err != nil {
-		return "", fmt.Errorf("error reading Kafka Cluster %q: %s", clusterId, createDescriptiveError(err))
+		return "", fmt.Errorf("error reading Kafka Cluster %q: %s", clusterId, createDescriptiveError(err, resp))
 	}
 	if restEndpoint := cluster.Spec.GetHttpEndpoint(); len(restEndpoint) > 0 {
 		return restEndpoint, nil

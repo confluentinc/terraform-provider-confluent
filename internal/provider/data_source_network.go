@@ -147,18 +147,18 @@ func networkDataSourceReadUsingId(ctx context.Context, d *schema.ResourceData, m
 	tflog.Debug(ctx, fmt.Sprintf("Reading Network %q=%q", paramId, networkId), map[string]interface{}{networkLoggingKey: networkId})
 
 	c := meta.(*Client)
-	network, _, err := executeNetworkRead(c.netApiContext(ctx), c, environmentId, networkId)
+	network, resp, err := executeNetworkRead(c.netApiContext(ctx), c, environmentId, networkId)
 	if err != nil {
-		return diag.Errorf("error reading Network %q: %s", networkId, createDescriptiveError(err))
+		return diag.Errorf("error reading Network %q: %s", networkId, createDescriptiveError(err, resp))
 	}
 	networkJson, err := json.Marshal(network)
 	if err != nil {
-		return diag.Errorf("error reading Network %q: error marshaling %#v to json: %s", networkId, network, createDescriptiveError(err))
+		return diag.Errorf("error reading Network %q: error marshaling %#v to json: %s", networkId, network, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Network %q: %s", networkId, networkJson), map[string]interface{}{networkLoggingKey: networkId})
 
 	if _, err := setNetworkAttributes(d, network); err != nil {
-		return diag.FromErr(createDescriptiveError(err))
+		return diag.FromErr(createDescriptiveError(err, resp))
 	}
 	return nil
 }
@@ -179,9 +179,9 @@ func loadNetworks(ctx context.Context, c *Client, environmentId string) ([]net.N
 	allNetworksAreCollected := false
 	pageToken := ""
 	for !allNetworksAreCollected {
-		networksPageList, _, err := executeListNetworks(ctx, c, environmentId, pageToken)
+		networksPageList, resp, err := executeListNetworks(ctx, c, environmentId, pageToken)
 		if err != nil {
-			return nil, fmt.Errorf("error reading Networks: %s", createDescriptiveError(err))
+			return nil, fmt.Errorf("error reading Networks: %s", createDescriptiveError(err, resp))
 		}
 		networks = append(networks, networksPageList.GetData()...)
 
@@ -195,7 +195,7 @@ func loadNetworks(ctx context.Context, c *Client, environmentId string) ([]net.N
 			} else {
 				pageToken, err = extractPageToken(nextPageUrlString)
 				if err != nil {
-					return nil, fmt.Errorf("error reading Networks: %s", createDescriptiveError(err))
+					return nil, fmt.Errorf("error reading Networks: %s", createDescriptiveError(err, resp))
 				}
 			}
 		} else {

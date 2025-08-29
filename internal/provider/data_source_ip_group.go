@@ -52,18 +52,18 @@ func ipGroupDataSourceRead(ctx context.Context, d *schema.ResourceData, meta int
 
 	c := meta.(*Client)
 	request := c.iamIPClient.IPGroupsIamV2Api.GetIamV2IpGroup(c.iamIPApiContext(ctx), ipGroupID)
-	ipGroup, _, err := c.iamIPClient.IPGroupsIamV2Api.GetIamV2IpGroupExecute(request)
+	ipGroup, resp, err := c.iamIPClient.IPGroupsIamV2Api.GetIamV2IpGroupExecute(request)
 	if err != nil {
-		return diag.Errorf("error reading IP Group %q: %s", ipGroupID, createDescriptiveError(err))
+		return diag.Errorf("error reading IP Group %q: %s", ipGroupID, createDescriptiveError(err, resp))
 	}
 	ipGroupJson, err := json.Marshal(ipGroup)
 	if err != nil {
-		return diag.Errorf("error reading IP Group %q: error marshaling %#v to json: %s", ipGroupID, ipGroup, createDescriptiveError(err))
+		return diag.Errorf("error reading IP Group %q: error marshaling %#v to json: %s", ipGroupID, ipGroup, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched IP Group %q: %s", ipGroupID, ipGroupJson), map[string]interface{}{ipGroupLoggingKey: ipGroupID})
 
 	if _, err := setIPGroupAttributes(d, ipGroup); err != nil {
-		return diag.FromErr(createDescriptiveError(err))
+		return diag.FromErr(createDescriptiveError(err, resp))
 	}
 	return nil
 }

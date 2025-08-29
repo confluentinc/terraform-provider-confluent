@@ -169,18 +169,18 @@ func accessPointDataSourceRead(ctx context.Context, d *schema.ResourceData, meta
 
 	c := meta.(*Client)
 	request := c.netAccessPointClient.AccessPointsNetworkingV1Api.GetNetworkingV1AccessPoint(c.netAPApiContext(ctx), accessPointId).Environment(environmentId)
-	accessPoint, _, err := c.netAccessPointClient.AccessPointsNetworkingV1Api.GetNetworkingV1AccessPointExecute(request)
+	accessPoint, resp, err := c.netAccessPointClient.AccessPointsNetworkingV1Api.GetNetworkingV1AccessPointExecute(request)
 	if err != nil {
 		return diag.Errorf("error reading Access Point %q: %s", accessPointId, createDescriptiveError(err))
 	}
 	accessPointJson, err := json.Marshal(accessPoint)
 	if err != nil {
-		return diag.Errorf("error reading Access Point %q: error marshaling %#v to json: %s", accessPointId, accessPoint, createDescriptiveError(err))
+		return diag.Errorf("error reading Access Point %q: error marshaling %#v to json: %s", accessPointId, accessPoint, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Access Point %q: %s", accessPointId, accessPointJson), map[string]interface{}{accessPointKey: accessPointId})
 
 	if _, err := setAccessPointAttributes(d, accessPoint); err != nil {
-		return diag.FromErr(createDescriptiveError(err))
+		return diag.FromErr(createDescriptiveError(err, resp))
 	}
 	return nil
 }

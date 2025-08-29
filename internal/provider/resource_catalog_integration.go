@@ -185,16 +185,16 @@ func catalogIntegrationCreate(ctx context.Context, d *schema.ResourceData, meta 
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Catalog Integration: %s", createCatalogIntegrationRequestJson))
 
 	req := tableflowRestClient.apiClient.CatalogIntegrationsTableflowV1Api.CreateTableflowV1CatalogIntegration(tableflowRestClient.apiContext(ctx)).TableflowV1CatalogIntegration(*createCatalogIntegrationRequest)
-	createdCatalogIntegration, _, err := req.Execute()
+	createdCatalogIntegration, resp, err := req.Execute()
 	if err != nil {
-		return diag.Errorf("error creating Catalog Integration: %s", createDescriptiveError(err))
+		return diag.Errorf("error creating Catalog Integration: %s", createDescriptiveError(err, resp))
 	}
 
 	d.SetId(createdCatalogIntegration.GetId())
 
 	createdCatalogIntegrationJson, err := json.Marshal(createdCatalogIntegration)
 	if err != nil {
-		return diag.Errorf("error creating Catalog Integration %q: error marshaling %#v to json: %s", d.Id(), createdCatalogIntegration, createDescriptiveError(err))
+		return diag.Errorf("error creating Catalog Integration %q: error marshaling %#v to json: %s", d.Id(), createdCatalogIntegration, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating Catalog Integration %q: %s", d.Id(), createdCatalogIntegrationJson), map[string]interface{}{catalogIntegrationKey: d.Id()})
 
@@ -242,7 +242,7 @@ func readCatalogIntegrationAndSetAttributes(ctx context.Context, d *schema.Resou
 	}
 	catalogIntegrationJson, err := json.Marshal(catalogIntegration)
 	if err != nil {
-		return nil, fmt.Errorf("error reading Catalog Integration %q: error marshaling %#v to json: %s", catalogIntegrationId, catalogIntegration, createDescriptiveError(err))
+		return nil, fmt.Errorf("error reading Catalog Integration %q: error marshaling %#v to json: %s", catalogIntegrationId, catalogIntegration, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Catalog Integration %q: %s", d.Id(), catalogIntegrationJson), map[string]interface{}{catalogIntegrationKey: d.Id()})
 
@@ -319,10 +319,10 @@ func catalogIntegrationDelete(ctx context.Context, d *schema.ResourceData, meta 
 	tableflowRestClient := c.tableflowRestClientFactory.CreateTableflowRestClient(tableflowApiKey, tableflowApiSecret, c.isTableflowMetadataSet, c.oauthToken, c.stsToken)
 
 	req := tableflowRestClient.apiClient.CatalogIntegrationsTableflowV1Api.DeleteTableflowV1CatalogIntegration(tableflowRestClient.apiContext(ctx), d.Id()).Environment(environmentId).SpecKafkaCluster(clusterId)
-	_, err = req.Execute()
+	resp, err := req.Execute()
 
 	if err != nil {
-		return diag.Errorf("error deleting Catalog Integration %q: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error deleting Catalog Integration %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished deleting Catalog Integration %q", d.Id()), map[string]interface{}{catalogIntegrationKey: d.Id()})
@@ -395,14 +395,14 @@ func catalogIntegrationUpdate(ctx context.Context, d *schema.ResourceData, meta 
 	tflog.Debug(ctx, fmt.Sprintf("Updating Catalog Integration %q: %s", d.Id(), updateCatalogIntegrationJson), map[string]interface{}{catalogIntegrationKey: d.Id()})
 
 	req := tableflowRestClient.apiClient.CatalogIntegrationsTableflowV1Api.UpdateTableflowV1CatalogIntegration(tableflowRestClient.apiContext(ctx), d.Id()).TableflowV1CatalogIntegrationUpdateRequest(*updateCatalogIntegration)
-	updatedCatalogIntegration, _, err := req.Execute()
+	updatedCatalogIntegration, resp, err := req.Execute()
 	if err != nil {
-		return diag.Errorf("error updating Catalog Integration %q: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error updating Catalog Integration %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	UpdatedCatalogIntegrationJson, err := json.Marshal(updatedCatalogIntegration)
 	if err != nil {
-		return diag.Errorf("error updating Catalog Integration %q: error marshaling %#v to json: %s", d.Id(), updatedCatalogIntegration, createDescriptiveError(err))
+		return diag.Errorf("error updating Catalog Integration %q: error marshaling %#v to json: %s", d.Id(), updatedCatalogIntegration, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished updating Catalog Integration %q: %s", d.Id(), UpdatedCatalogIntegrationJson), map[string]interface{}{catalogIntegrationKey: d.Id()})
 	return catalogIntegrationRead(ctx, d, meta)

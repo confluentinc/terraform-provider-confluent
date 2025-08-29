@@ -188,28 +188,28 @@ func connectorCreate(ctx context.Context, d *schema.ResourceData, meta interface
 	createdConnector, resp, err := executeConnectorCreate(c.connectApiContext(ctx), c, environmentId, clusterId, createConnectorRequest)
 	if err != nil {
 		descriptiveError, _ := io.ReadAll(resp.Body)
-		return diag.Errorf("error creating Connector %q: %s: %s", displayName, createDescriptiveError(err), string(descriptiveError))
+		return diag.Errorf("error creating Connector %q: %s: %s", displayName, createDescriptiveError(err, resp), string(descriptiveError))
 	}
 	// There's no ID attribute in createdConnector, so we have to send another request to a different endpoint to get a connector object with ID attribute
 	SleepIfNotTestMode(connectAPIWaitAfterCreate, meta.(*Client).isAcceptanceTestMode)
-	createdConnectorWithId, _, err := executeConnectorRead(c.connectApiContext(ctx), c, displayName, environmentId, clusterId)
+	createdConnectorWithId, resp, err := executeConnectorRead(c.connectApiContext(ctx), c, displayName, environmentId, clusterId)
 	if err != nil {
-		return diag.Errorf("error creating Connector %q: error reading created Connector: %s", displayName, createDescriptiveError(err))
+		return diag.Errorf("error creating Connector %q: error reading created Connector: %s", displayName, createDescriptiveError(err, resp))
 	}
 	d.SetId(createdConnectorWithId.Id.GetId())
 
 	if err := waitForConnectorToProvision(c.connectApiContext(ctx), c, displayName, environmentId, clusterId); err != nil {
-		return diag.Errorf("error waiting for Connector %q to provision: %s", displayName, createDescriptiveError(err))
+		return diag.Errorf("error waiting for Connector %q to provision: %s", displayName, createDescriptiveError(err, resp))
 	}
 
 	_, err = json.Marshal(createdConnector)
 	if err != nil {
-		return diag.Errorf("error creating Connector %q: error marshaling %#v to json: %s", d.Id(), createdConnector, createDescriptiveError(err))
+		return diag.Errorf("error creating Connector %q: error marshaling %#v to json: %s", d.Id(), createdConnector, createDescriptiveError(err, resp))
 	}
 
 	// Save sensitive configs
 	if err := d.Set(paramSensitiveConfig, sensitiveConfig); err != nil {
-		return diag.FromErr(createDescriptiveError(err))
+		return diag.FromErr(createDescriptiveError(err, resp))
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating Connector %q", displayName))
@@ -231,9 +231,9 @@ func validateConnectorConfig(ctx context.Context, c *Client, config map[string]s
 			return fmt.Errorf("error validating Connector config: %q attribute is missing in %q block", connectorConfigAttributeClass, paramNonSensitiveConfig)
 		}
 		tflog.Debug(ctx, "Validating new Connector's config")
-		validationResponse, _, err := c.connectClient.ManagedConnectorPluginsConnectV1Api.ValidateConnectv1ConnectorPlugin(c.connectApiContext(ctx), connectorClass, environmentId, clusterId).RequestBody(config).Execute()
+		validationResponse, resp, err := c.connectClient.ManagedConnectorPluginsConnectV1Api.ValidateConnectv1ConnectorPlugin(c.connectApiContext(ctx), connectorClass, environmentId, clusterId).RequestBody(config).Execute()
 		if err != nil {
-			return fmt.Errorf("error creating Connector: error sending validation request: %s", createDescriptiveError(err))
+			return fmt.Errorf("error creating Connector: error sending validation request: %s", createDescriptiveError(err, resp))
 		}
 		if validationResponse.GetErrorCount() > 0 {
 			return fmt.Errorf("error creating Connector %q: error validating config: %s", connectorClass, createDescriptiveError(createConfigValidationError(validationResponse)))
@@ -265,7 +265,7 @@ func executeConnectorRead(ctx context.Context, c *Client, displayName, environme
 		return *connect.NewConnectV1ConnectorExpansionWithDefaults(), resp, err
 	}
 	if err != nil {
-		return *connect.NewConnectV1ConnectorExpansionWithDefaults(), resp, createDescriptiveError(err)
+		return *connect.NewConnectV1ConnectorExpansionWithDefaults(), resp, createDescriptiveError(err, resp)
 	}
 	// Find the target connector in a list of connectors by its name
 	if connector, ok := connectors[displayName]; ok {
@@ -297,7 +297,7 @@ func readConnectorAndSetAttributes(ctx context.Context, d *schema.ResourceData, 
 
 	connector, resp, err := executeConnectorRead(c.connectApiContext(ctx), c, displayName, environmentId, clusterId)
 	if err != nil {
-		tflog.Warn(ctx, fmt.Sprintf("Error reading Connector %q: %s", d.Id(), createDescriptiveError(err)))
+		tflog.Warn(ctx, fmt.Sprintf("Error reading Connector %q: %s", d.Id(), createDescriptiveError(err, resp)))
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
 		if isResourceNotFound && !d.IsNewResource() {
 			tflog.Warn(ctx, fmt.Sprintf("Removing Connector %q in TF state because Connector could not be found on the server", d.Id()))
@@ -309,7 +309,7 @@ func readConnectorAndSetAttributes(ctx context.Context, d *schema.ResourceData, 
 	}
 	connectorJson, err := json.Marshal(connector)
 	if err != nil {
-		return nil, fmt.Errorf("error reading Connector %q: error marshaling %#v to json: %s", displayName, connector, createDescriptiveError(err))
+		return nil, fmt.Errorf("error reading Connector %q: error marshaling %#v to json: %s", displayName, connector, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Connector %q: %s", displayName, connectorJson))
 
@@ -371,23 +371,23 @@ func connectorUpdate(ctx context.Context, d *schema.ResourceData, meta interface
 			tflog.Debug(ctx, fmt.Sprintf("Pausing Connector %q", d.Id()), map[string]interface{}{connectorLoggingKey: d.Id()})
 
 			req := c.connectClient.LifecycleConnectV1Api.PauseConnectv1Connector(c.connectApiContext(ctx), displayName, environmentId, clusterId)
-			_, err := req.Execute()
+			resp, err := req.Execute()
 			if err != nil {
-				return diag.Errorf("error updating Connector %q: %s", d.Id(), createDescriptiveError(err))
+				return diag.Errorf("error updating Connector %q: %s", d.Id(), createDescriptiveError(err, resp))
 			}
 			if err := waitForConnectorToChangeStatus(c.connectApiContext(ctx), c, displayName, environmentId, clusterId, stateRunning, statePaused); err != nil {
-				return diag.Errorf("error waiting for Connector %q to be updated: %s", d.Id(), createDescriptiveError(err))
+				return diag.Errorf("error waiting for Connector %q to be updated: %s", d.Id(), createDescriptiveError(err, resp))
 			}
 		} else if shouldResumeConnector {
 			tflog.Debug(ctx, fmt.Sprintf("Resuming Connector %q", d.Id()), map[string]interface{}{connectorLoggingKey: d.Id()})
 
 			req := c.connectClient.LifecycleConnectV1Api.ResumeConnectv1Connector(c.connectApiContext(ctx), displayName, environmentId, clusterId)
-			_, err := req.Execute()
+			resp, err := req.Execute()
 			if err != nil {
-				return diag.Errorf("error updating Connector %q: %s", d.Id(), createDescriptiveError(err))
+				return diag.Errorf("error updating Connector %q: %s", d.Id(), createDescriptiveError(err, resp))
 			}
 			if err := waitForConnectorToChangeStatus(c.connectApiContext(ctx), c, displayName, environmentId, clusterId, statePaused, stateRunning); err != nil {
-				return diag.Errorf("error waiting for Connector %q to be updated: %s", d.Id(), createDescriptiveError(err))
+				return diag.Errorf("error waiting for Connector %q to be updated: %s", d.Id(), createDescriptiveError(err, resp))
 			}
 		} else {
 			return diag.Errorf("error updating Connector %q: only %q->%q or %q->%q transitions are supported but %q->%q was attempted", d.Id(), statePaused, stateRunning, stateRunning, statePaused, oldStatus, newStatus)
@@ -412,12 +412,12 @@ func connectorUpdate(ctx context.Context, d *schema.ResourceData, meta interface
 			return diag.Errorf("error updating Connector %q: %s", d.Id(), resp.Status)
 		}
 		if err != nil {
-			return diag.Errorf("error updating Connector %q: %s", d.Id(), createDescriptiveError(err))
+			return diag.Errorf("error updating Connector %q: %s", d.Id(), createDescriptiveError(err, resp))
 		}
 
 		updatedConnectorJson, err := json.Marshal(updatedConnector)
 		if err != nil {
-			return diag.Errorf("error updating Connector %q: error marshaling %#v to json: %s", d.Id(), updatedConnector, createDescriptiveError(err))
+			return diag.Errorf("error updating Connector %q: error marshaling %#v to json: %s", d.Id(), updatedConnector, createDescriptiveError(err, resp))
 		}
 		tflog.Debug(ctx, fmt.Sprintf("Finished updating Connector %q: %s", d.Id(), updatedConnectorJson), map[string]interface{}{connectorLoggingKey: d.Id()})
 	}
@@ -443,15 +443,15 @@ func connectorUpdate(ctx context.Context, d *schema.ResourceData, meta interface
 		updatedConnectorOffsets, resp, err := req.Execute()
 		if err != nil {
 			body, _ := io.ReadAll(resp.Body)
-			return diag.Errorf("error updating Connector %q offsets: %s: %s", d.Id(), createDescriptiveError(err), string(body))
+			return diag.Errorf("error updating Connector %q offsets: %s: %s", d.Id(), createDescriptiveError(err, resp), string(body))
 		}
 		if err := waitForConnectorOffsetsUpdateToComplete(c.connectApiContext(ctx), c, environmentId, clusterId, displayName); err != nil {
-			return diag.Errorf("error waiting for Connector %q offsets update to complete: %s", d.Id(), createDescriptiveError(err))
+			return diag.Errorf("error waiting for Connector %q offsets update to complete: %s", d.Id(), createDescriptiveError(err, resp))
 		}
 
 		updatedConnectorOffsetsJson, err := json.Marshal(updatedConnectorOffsets)
 		if err != nil {
-			return diag.Errorf("error updating Connector %q offsets: error marshaling %#v to json: %s", d.Id(), updatedConnectorOffsets, createDescriptiveError(err))
+			return diag.Errorf("error updating Connector %q offsets: error marshaling %#v to json: %s", d.Id(), updatedConnectorOffsets, createDescriptiveError(err, resp))
 		}
 		tflog.Debug(ctx, fmt.Sprintf("Finished updating Connector %q offsets : %s", d.Id(), updatedConnectorOffsetsJson), map[string]interface{}{connectorLoggingKey: d.Id()})
 	}
@@ -470,10 +470,10 @@ func connectorDelete(ctx context.Context, d *schema.ResourceData, meta interface
 	c := meta.(*Client)
 
 	req := c.connectClient.ConnectorsConnectV1Api.DeleteConnectv1Connector(c.connectApiContext(ctx), displayName, environmentId, clusterId)
-	deletionError, _, err := req.Execute()
+	deletionError, resp, err := req.Execute()
 
 	if err != nil {
-		return diag.Errorf("error deleting Connector %q: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error deleting Connector %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 	if deletionError.Error != nil {
 		return diag.Errorf("error deleting Connector %q: %q", d.Id(), deletionError.GetError())

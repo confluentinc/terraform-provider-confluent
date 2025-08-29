@@ -117,21 +117,21 @@ func networkLinkEndpointCreate(ctx context.Context, d *schema.ResourceData, meta
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Network Link Endpoint: %s", createNetworkLinkEndpointRequestJson))
 
-	createdNLE, _, err := c.netClient.NetworkLinkEndpointsNetworkingV1Api.CreateNetworkingV1NetworkLinkEndpointExecute(request)
+	createdNLE, resp, err := c.netClient.NetworkLinkEndpointsNetworkingV1Api.CreateNetworkingV1NetworkLinkEndpointExecute(request)
 	if err != nil {
-		return diag.Errorf("error creating Network Link Endpoint %s", createDescriptiveError(err))
+		return diag.Errorf("error creating Network Link Endpoint %s", createDescriptiveError(err, resp))
 	}
 
 	nleId := createdNLE.GetId()
 	d.SetId(nleId)
 
 	if err := waitForNetworkLinkEndpointToProvision(c.netApiContext(ctx), c, environmentId, d.Id()); err != nil {
-		return diag.Errorf("error waiting for Network Link Endpoint %q to provision: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error waiting for Network Link Endpoint %q to provision: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	createdNetworkLinkEndpointJson, err := json.Marshal(createdNLE)
 	if err != nil {
-		return diag.Errorf("error creating Network Link Endpoint %q: error marshaling %#v to json: %s", nleId, createdNLE, createDescriptiveError(err))
+		return diag.Errorf("error creating Network Link Endpoint %q: error marshaling %#v to json: %s", nleId, createdNLE, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating Network Link Endpoint %q: %s", nleId, createdNetworkLinkEndpointJson), map[string]interface{}{networkLinkEndpointLoggingKey: nleId})
 	return networkLinkEndpointRead(ctx, d, meta)
@@ -166,7 +166,7 @@ func readNetworkLinkEndpointAndSetAttributes(ctx context.Context, d *schema.Reso
 	c := meta.(*Client)
 	nle, resp, err := executeNLERead(c.netApiContext(ctx), c, nleId, environmentId)
 	if err != nil {
-		tflog.Warn(ctx, fmt.Sprintf("Error reading Network Link Endpoint %q: %s", nleId, createDescriptiveError(err)), map[string]interface{}{networkLinkEndpointLoggingKey: nleId})
+		tflog.Warn(ctx, fmt.Sprintf("Error reading Network Link Endpoint %q: %s", nleId, createDescriptiveError(err, resp)), map[string]interface{}{networkLinkEndpointLoggingKey: nleId})
 
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
 		if isResourceNotFound && !d.IsNewResource() {
@@ -180,7 +180,7 @@ func readNetworkLinkEndpointAndSetAttributes(ctx context.Context, d *schema.Reso
 
 	nleJson, err := json.Marshal(nle)
 	if err != nil {
-		return nil, fmt.Errorf("error reading Network Link Endpoint %q: error marshaling %#v to json: %s", nleId, nle, createDescriptiveError(err))
+		return nil, fmt.Errorf("error reading Network Link Endpoint %q: error marshaling %#v to json: %s", nleId, nle, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Network Link Endpoint %q: %s", nleId, nleJson), map[string]interface{}{networkLinkEndpointLoggingKey: nleId})
 
@@ -201,13 +201,13 @@ func networkLinkEndpointDelete(ctx context.Context, d *schema.ResourceData, meta
 
 	c := meta.(*Client)
 	request := c.netClient.NetworkLinkEndpointsNetworkingV1Api.DeleteNetworkingV1NetworkLinkEndpoint(c.netApiContext(ctx), nleId).Environment(environmentId)
-	_, err := c.netClient.NetworkLinkEndpointsNetworkingV1Api.DeleteNetworkingV1NetworkLinkEndpointExecute(request)
+	resp, err := c.netClient.NetworkLinkEndpointsNetworkingV1Api.DeleteNetworkingV1NetworkLinkEndpointExecute(request)
 	if err != nil {
-		return diag.Errorf("error deleting Network Link Endpoint %q: %s", nleId, createDescriptiveError(err))
+		return diag.Errorf("error deleting Network Link Endpoint %q: %s", nleId, createDescriptiveError(err, resp))
 	}
 
 	if err := waitForNetworkLinkEndpointToBeDeleted(c.netApiContext(ctx), c, environmentId, d.Id()); err != nil {
-		return diag.Errorf("error waiting for Network Link Endpoint %q to be deleted: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error waiting for Network Link Endpoint %q to be deleted: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished deleting Network Link Endpoint %q", nleId), map[string]interface{}{networkLinkEndpointLoggingKey: nleId})
@@ -244,14 +244,14 @@ func networkLinkEndpointUpdate(ctx context.Context, d *schema.ResourceData, meta
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Updating new Network Link Endpoint: %s", updateNetworkLinkEndpointRequestJson))
 
-	updatedNLE, _, err := c.netClient.NetworkLinkEndpointsNetworkingV1Api.UpdateNetworkingV1NetworkLinkEndpointExecute(request)
+	updatedNLE, resp, err := c.netClient.NetworkLinkEndpointsNetworkingV1Api.UpdateNetworkingV1NetworkLinkEndpointExecute(request)
 	if err != nil {
-		return diag.Errorf("error updating Network Link Endpoint, %s", createDescriptiveError(err))
+		return diag.Errorf("error updating Network Link Endpoint, %s", createDescriptiveError(err, resp))
 	}
 
 	updatedNetworkLinkEndpointJson, err := json.Marshal(updatedNLE)
 	if err != nil {
-		return diag.Errorf("error updating Network Link Endpoint %q: error marshaling %#v to json: %s", nleId, updatedNLE, createDescriptiveError(err))
+		return diag.Errorf("error updating Network Link Endpoint %q: error marshaling %#v to json: %s", nleId, updatedNLE, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished updating Network Link Endpoint %q: %s", nleId, updatedNetworkLinkEndpointJson), map[string]interface{}{networkLinkEndpointLoggingKey: nleId})
 	return networkLinkEndpointRead(ctx, d, meta)

@@ -110,16 +110,16 @@ func catalogEntityAttributesCreate(ctx context.Context, d *schema.ResourceData, 
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Entity Attributes: %s", createEntityAttributesRequestJson))
 
-	createdEntityAttributes, _, err := request.Execute()
+	createdEntityAttributes, resp, err := request.Execute()
 	if err != nil {
-		return diag.Errorf("error creating Entity Attributes %s", createDescriptiveError(err))
+		return diag.Errorf("error creating Entity Attributes %s", createDescriptiveError(err, resp))
 	}
 
 	d.SetId(entityAttributesId)
 
 	createdEntityAttributesJson, err := json.Marshal(createdEntityAttributes)
 	if err != nil {
-		return diag.Errorf("error creating Entity Attributes %q: error marshaling %#v to json: %s", entityAttributesId, createdEntityAttributes, createDescriptiveError(err))
+		return diag.Errorf("error creating Entity Attributes %q: error marshaling %#v to json: %s", entityAttributesId, createdEntityAttributes, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating Entity Attributes %q: %s", entityAttributesId, createdEntityAttributesJson), map[string]interface{}{entityAttributesLoggingKey: entityAttributesId})
 	return catalogEntityAttributesRead(ctx, d, meta)
@@ -160,7 +160,7 @@ func readEntityAttributesAndSetAttributes(ctx context.Context, d *schema.Resourc
 	request := catalogRestClient.apiClient.EntityV1Api.GetByUniqueAttributes(catalogRestClient.dataCatalogApiContext(ctx), entityType, entityName)
 	entity, resp, err := request.Execute()
 	if err != nil {
-		tflog.Warn(ctx, fmt.Sprintf("Error reading Entity Attributes %q: %s", entityAttributesId, createDescriptiveError(err)), map[string]interface{}{entityAttributesLoggingKey: entityAttributesId})
+		tflog.Warn(ctx, fmt.Sprintf("Error reading Entity Attributes %q: %s", entityAttributesId, createDescriptiveError(err, resp)), map[string]interface{}{entityAttributesLoggingKey: entityAttributesId})
 
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
 		if isResourceNotFound && !d.IsNewResource() {
@@ -174,7 +174,7 @@ func readEntityAttributesAndSetAttributes(ctx context.Context, d *schema.Resourc
 
 	entityJson, err := json.Marshal(entity)
 	if err != nil {
-		return nil, fmt.Errorf("error reading Entity Attributes %q: error marshaling %#v to json: %s", entityAttributesId, entityJson, createDescriptiveError(err))
+		return nil, fmt.Errorf("error reading Entity Attributes %q: error marshaling %#v to json: %s", entityAttributesId, entityJson, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Entity Attributes %q: %s", entityAttributesId, entityJson), map[string]interface{}{entityAttributesLoggingKey: entityAttributesId})
 
@@ -224,9 +224,9 @@ func catalogEntityAttributesDelete(ctx context.Context, d *schema.ResourceData, 
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Deleting new Entity Attributes: %s", updateEntityAttributesRequestJson))
 
-	_, _, err = request.Execute()
+	_, resp, err := request.Execute()
 	if err != nil {
-		return diag.Errorf("error creating Entity Attributes %s", createDescriptiveError(err))
+		return diag.Errorf("error creating Entity Attributes %s", createDescriptiveError(err, resp))
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Deleting Entity Attributes %q=%q", paramId, entityAttributesId), map[string]interface{}{entityAttributesLoggingKey: entityAttributesId})
@@ -274,16 +274,16 @@ func catalogEntityAttributesUpdate(ctx context.Context, d *schema.ResourceData, 
 		}
 		tflog.Debug(ctx, fmt.Sprintf("Creating new Entity Attributes: %s", updateEntityAttributesRequestJson))
 
-		updatedEntityAttributes, _, err := request.Execute()
+		updatedEntityAttributes, resp, err := request.Execute()
 		if err != nil {
-			return diag.Errorf("error creating Entity Attributes %s", createDescriptiveError(err))
+			return diag.Errorf("error creating Entity Attributes %s", createDescriptiveError(err, resp))
 		}
 
 		d.SetId(entityAttributesId)
 
 		updatedEntityAttributesJson, err := json.Marshal(updatedEntityAttributes)
 		if err != nil {
-			return diag.Errorf("error updating Entity Attributes %q: error marshaling %#v to json: %s", entityAttributesId, updatedEntityAttributes, createDescriptiveError(err))
+			return diag.Errorf("error updating Entity Attributes %q: error marshaling %#v to json: %s", entityAttributesId, updatedEntityAttributes, createDescriptiveError(err, resp))
 		}
 		tflog.Debug(ctx, fmt.Sprintf("Finished updating Entity Attributes %q: %s", entityAttributesId, updatedEntityAttributesJson), map[string]interface{}{entityAttributesLoggingKey: entityAttributesId})
 	}

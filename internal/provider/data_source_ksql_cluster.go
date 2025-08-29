@@ -97,18 +97,18 @@ func ksqlDataSourceReadUsingId(ctx context.Context, d *schema.ResourceData, meta
 	tflog.Debug(ctx, fmt.Sprintf("Reading ksqlDB Cluster %q=%q", paramId, clusterId), map[string]interface{}{ksqlClusterLoggingKey: clusterId})
 
 	c := meta.(*Client)
-	ksqlCluster, _, err := executeKsqlRead(c.ksqlApiContext(ctx), c, environmentId, clusterId)
+	ksqlCluster, resp, err := executeKsqlRead(c.ksqlApiContext(ctx), c, environmentId, clusterId)
 	if err != nil {
-		return diag.Errorf("error reading ksqlDB cluster %q: %s", clusterId, createDescriptiveError(err))
+		return diag.Errorf("error reading ksqlDB cluster %q: %s", clusterId, createDescriptiveError(err, resp))
 	}
 	ksqlClusterJson, err := json.Marshal(ksqlCluster)
 	if err != nil {
-		return diag.Errorf("error reading ksqlDB Cluster %q: error marshaling %#v to json: %s", clusterId, ksqlCluster, createDescriptiveError(err))
+		return diag.Errorf("error reading ksqlDB Cluster %q: error marshaling %#v to json: %s", clusterId, ksqlCluster, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched ksqlDb Cluster %q: %s", clusterId, ksqlClusterJson), map[string]interface{}{ksqlClusterLoggingKey: clusterId})
 
 	if _, err := setKsqlAttributes(d, ksqlCluster); err != nil {
-		return diag.FromErr(createDescriptiveError(err))
+		return diag.FromErr(createDescriptiveError(err, resp))
 	}
 	return nil
 }
@@ -153,9 +153,9 @@ func loadKsqlClusters(ctx context.Context, c *Client, environmentId string) ([]k
 	allClustersAreCollected := false
 	pageToken := ""
 	for !allClustersAreCollected {
-		clustersPageList, _, err := executeListKsqlClusters(ctx, c, environmentId, pageToken)
+		clustersPageList, resp, err := executeListKsqlClusters(ctx, c, environmentId, pageToken)
 		if err != nil {
-			return nil, fmt.Errorf("error reading ksqlDB Clusters: %s", createDescriptiveError(err))
+			return nil, fmt.Errorf("error reading ksqlDB Clusters: %s", createDescriptiveError(err, resp))
 		}
 		clusters = append(clusters, clustersPageList.GetData()...)
 
@@ -169,7 +169,7 @@ func loadKsqlClusters(ctx context.Context, c *Client, environmentId string) ([]k
 			} else {
 				pageToken, err = extractPageToken(nextPageUrlString)
 				if err != nil {
-					return nil, fmt.Errorf("error reading ksqlDB Clusters: %s", createDescriptiveError(err))
+					return nil, fmt.Errorf("error reading ksqlDB Clusters: %s", createDescriptiveError(err, resp))
 				}
 			}
 		} else {

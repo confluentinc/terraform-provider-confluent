@@ -118,19 +118,19 @@ func dnsRecordCreate(ctx context.Context, d *schema.ResourceData, meta interface
 	tflog.Debug(ctx, fmt.Sprintf("Creating new DNS Record: %s", createDnsRecordRequestJson))
 
 	req := c.netAccessPointClient.DNSRecordsNetworkingV1Api.CreateNetworkingV1DnsRecord(c.netAPApiContext(ctx)).NetworkingV1DnsRecord(createDnsRecordRequest)
-	createdDnsRecord, _, err := req.Execute()
+	createdDnsRecord, resp, err := req.Execute()
 	if err != nil {
-		return diag.Errorf("error creating DNS Record %q: %s", createdDnsRecord.GetId(), createDescriptiveError(err))
+		return diag.Errorf("error creating DNS Record %q: %s", createdDnsRecord.GetId(), createDescriptiveError(err, resp))
 	}
 	d.SetId(createdDnsRecord.GetId())
 
 	if err := waitForDnsRecordToProvision(c.netAPApiContext(ctx), c, environmentId, d.Id()); err != nil {
-		return diag.Errorf("error waiting for DNS Record %q to provision: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error waiting for DNS Record %q to provision: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	createdDnsRecordJson, err := json.Marshal(createdDnsRecord)
 	if err != nil {
-		return diag.Errorf("error creating DNS Record %q: error marshaling %#v to json: %s", d.Id(), createdDnsRecord, createDescriptiveError(err))
+		return diag.Errorf("error creating DNS Record %q: error marshaling %#v to json: %s", d.Id(), createdDnsRecord, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating DNS Record %q: %s", d.Id(), createdDnsRecordJson), map[string]interface{}{dnsRecordKey: d.Id()})
 
@@ -172,7 +172,7 @@ func readDnsRecordAndSetAttributes(ctx context.Context, d *schema.ResourceData, 
 	}
 	dnsRecordJson, err := json.Marshal(dnsRecord)
 	if err != nil {
-		return nil, fmt.Errorf("error reading DNS Record %q: error marshaling %#v to json: %s", dnsRecordId, dnsRecord, createDescriptiveError(err))
+		return nil, fmt.Errorf("error reading DNS Record %q: error marshaling %#v to json: %s", dnsRecordId, dnsRecord, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched DNS Record %q: %s", d.Id(), dnsRecordJson), map[string]interface{}{dnsRecordKey: d.Id()})
 
@@ -191,14 +191,14 @@ func dnsRecordDelete(ctx context.Context, d *schema.ResourceData, meta interface
 	c := meta.(*Client)
 
 	req := c.netAccessPointClient.DNSRecordsNetworkingV1Api.DeleteNetworkingV1DnsRecord(c.netAPApiContext(ctx), d.Id()).Environment(environmentId)
-	_, err := req.Execute()
+	resp, err := req.Execute()
 
 	if err != nil {
-		return diag.Errorf("error deleting DNS Record %q: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error deleting DNS Record %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	if err := waitForDnsRecordToBeDeleted(c.netAPApiContext(ctx), c, environmentId, d.Id()); err != nil {
-		return diag.Errorf("error waiting for DNS Record %q to be deleted: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error waiting for DNS Record %q to be deleted: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished deleting DNS Record %q", d.Id()), map[string]interface{}{dnsRecordKey: d.Id()})
@@ -238,15 +238,15 @@ func dnsRecordUpdate(ctx context.Context, d *schema.ResourceData, meta interface
 
 	c := meta.(*Client)
 	req := c.netAccessPointClient.DNSRecordsNetworkingV1Api.UpdateNetworkingV1DnsRecord(c.netAPApiContext(ctx), d.Id()).NetworkingV1DnsRecordUpdate(*updateDnsRecord)
-	updatedDnsRecord, _, err := req.Execute()
+	updatedDnsRecord, resp, err := req.Execute()
 
 	if err != nil {
-		return diag.Errorf("error updating DNS Record %q: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error updating DNS Record %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	updatedDnsRecordJson, err := json.Marshal(updatedDnsRecord)
 	if err != nil {
-		return diag.Errorf("error updating DNS Record %q: error marshaling %#v to json: %s", d.Id(), updatedDnsRecord, createDescriptiveError(err))
+		return diag.Errorf("error updating DNS Record %q: error marshaling %#v to json: %s", d.Id(), updatedDnsRecord, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished updating DNS Record %q: %s", d.Id(), updatedDnsRecordJson), map[string]interface{}{dnsRecordKey: d.Id()})
 	return dnsRecordRead(ctx, d, meta)

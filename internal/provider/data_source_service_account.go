@@ -92,9 +92,9 @@ func serviceAccountDataSourceReadUsingDisplayName(ctx context.Context, d *schema
 	tflog.Debug(ctx, fmt.Sprintf("Reading Service Account %q=%q", paramDisplayName, displayName))
 
 	c := meta.(*Client)
-	serviceAccountList, _, err := c.iamClient.ServiceAccountsIamV2Api.ListIamV2ServiceAccounts(c.iamApiContext(ctx)).DisplayName(strings.Fields(displayName)).Execute()
+	serviceAccountList, resp, err := c.iamClient.ServiceAccountsIamV2Api.ListIamV2ServiceAccounts(c.iamApiContext(ctx)).DisplayName(strings.Fields(displayName)).Execute()
 	if err != nil {
-		return diag.Errorf("error reading Service Account %q: %s", displayName, createDescriptiveError(err))
+		return diag.Errorf("error reading Service Account %q: %s", displayName, createDescriptiveError(err, resp))
 	}
 	serviceAccounts := serviceAccountList.GetData()
 	if len(serviceAccounts) == 0 {
@@ -106,12 +106,12 @@ func serviceAccountDataSourceReadUsingDisplayName(ctx context.Context, d *schema
 	serviceAccount := serviceAccounts[0]
 	serviceAccountJson, err := json.Marshal(serviceAccount)
 	if err != nil {
-		return diag.Errorf("error reading Service Account %q: error marshaling %#v to json: %s", displayName, serviceAccount, createDescriptiveError(err))
+		return diag.Errorf("error reading Service Account %q: error marshaling %#v to json: %s", displayName, serviceAccount, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Service Account %q: %s", serviceAccount.GetId(), serviceAccountJson), map[string]interface{}{serviceAccountLoggingKey: serviceAccount.GetId()})
 
 	if _, err := setServiceAccountAttributes(d, serviceAccount); err != nil {
-		return diag.FromErr(createDescriptiveError(err))
+		return diag.FromErr(createDescriptiveError(err, resp))
 	}
 	return nil
 }
@@ -122,9 +122,9 @@ func loadServiceAccounts(ctx context.Context, c *Client) ([]v2.IamV2ServiceAccou
 	allServiceAccountsAreCollected := false
 	pageToken := ""
 	for !allServiceAccountsAreCollected {
-		serviceAccountPageList, _, err := executeListServiceAccounts(ctx, c, pageToken)
+		serviceAccountPageList, resp, err := executeListServiceAccounts(ctx, c, pageToken)
 		if err != nil {
-			return nil, fmt.Errorf("error reading Service Accounts: %s", createDescriptiveError(err))
+			return nil, fmt.Errorf("error reading Service Accounts: %s", createDescriptiveError(err, resp))
 		}
 		serviceAccounts = append(serviceAccounts, serviceAccountPageList.GetData()...)
 
@@ -138,7 +138,7 @@ func loadServiceAccounts(ctx context.Context, c *Client) ([]v2.IamV2ServiceAccou
 			} else {
 				pageToken, err = extractPageToken(nextPageUrlString)
 				if err != nil {
-					return nil, fmt.Errorf("error reading Service Accounts: %s", createDescriptiveError(err))
+					return nil, fmt.Errorf("error reading Service Accounts: %s", createDescriptiveError(err, resp))
 				}
 			}
 		} else {
@@ -160,18 +160,18 @@ func serviceAccountDataSourceReadUsingId(ctx context.Context, d *schema.Resource
 	tflog.Debug(ctx, fmt.Sprintf("Reading Service Account %q=%q", paramId, serviceAccountId), map[string]interface{}{serviceAccountLoggingKey: serviceAccountId})
 
 	c := meta.(*Client)
-	serviceAccount, _, err := executeServiceAccountRead(c.iamApiContext(ctx), c, serviceAccountId)
+	serviceAccount, resp, err := executeServiceAccountRead(c.iamApiContext(ctx), c, serviceAccountId)
 	if err != nil {
-		return diag.Errorf("error reading Service Account %q: %s", serviceAccountId, createDescriptiveError(err))
+		return diag.Errorf("error reading Service Account %q: %s", serviceAccountId, createDescriptiveError(err, resp))
 	}
 	serviceAccountJson, err := json.Marshal(serviceAccount)
 	if err != nil {
-		return diag.Errorf("error reading Service Account %q: error marshaling %#v to json: %s", serviceAccountId, serviceAccount, createDescriptiveError(err))
+		return diag.Errorf("error reading Service Account %q: error marshaling %#v to json: %s", serviceAccountId, serviceAccount, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Service Account %q: %s", serviceAccountId, serviceAccountJson), map[string]interface{}{serviceAccountLoggingKey: serviceAccountId})
 
 	if _, err := setServiceAccountAttributes(d, serviceAccount); err != nil {
-		return diag.FromErr(createDescriptiveError(err))
+		return diag.FromErr(createDescriptiveError(err, resp))
 	}
 	return nil
 }

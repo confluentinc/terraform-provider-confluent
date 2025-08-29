@@ -128,15 +128,15 @@ func customConnectorPluginUpdate(ctx context.Context, d *schema.ResourceData, me
 	tflog.Debug(ctx, fmt.Sprintf("Updating Custom Connector Plugin %q: %s", d.Id(), updateCustomConnectorPluginRequestJson), map[string]interface{}{customConnectorPluginLoggingKey: d.Id()})
 
 	c := meta.(*Client)
-	updatedCustomConnectorPlugin, _, err := c.ccpClient.CustomConnectorPluginsConnectV1Api.UpdateConnectV1CustomConnectorPlugin(c.ccpApiContext(ctx), d.Id()).ConnectV1CustomConnectorPluginUpdate(*updateCustomConnectorPluginRequest).Execute()
+	updatedCustomConnectorPlugin, resp, err := c.ccpClient.CustomConnectorPluginsConnectV1Api.UpdateConnectV1CustomConnectorPlugin(c.ccpApiContext(ctx), d.Id()).ConnectV1CustomConnectorPluginUpdate(*updateCustomConnectorPluginRequest).Execute()
 
 	if err != nil {
-		return diag.Errorf("error updating Custom Connector Plugin %q: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error updating Custom Connector Plugin %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	updatedCustomConnectorPluginJson, err := json.Marshal(updatedCustomConnectorPlugin)
 	if err != nil {
-		return diag.Errorf("error updating Custom Connector Plugin %q: error marshaling %#v to json: %s", d.Id(), updatedCustomConnectorPlugin, createDescriptiveError(err))
+		return diag.Errorf("error updating Custom Connector Plugin %q: error marshaling %#v to json: %s", d.Id(), updatedCustomConnectorPlugin, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished updating Custom Connector Plugin %q: %s", d.Id(), updatedCustomConnectorPluginJson), map[string]interface{}{customConnectorPluginLoggingKey: d.Id()})
 
@@ -184,15 +184,15 @@ func customConnectorPluginCreate(ctx context.Context, d *schema.ResourceData, me
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Custom Connector Plugin: %s", createCustomConnectorPluginRequestJson))
 
-	createdCustomConnectorPlugin, _, err := executeCustomConnectorPluginCreate(c.ccpApiContext(ctx), c, createCustomConnectorPluginRequest)
+	createdCustomConnectorPlugin, resp, err := executeCustomConnectorPluginCreate(c.ccpApiContext(ctx), c, createCustomConnectorPluginRequest)
 	if err != nil {
-		return diag.Errorf("error creating Custom Connector Plugin %q: %s", displayName, createDescriptiveError(err))
+		return diag.Errorf("error creating Custom Connector Plugin %q: %s", displayName, createDescriptiveError(err, resp))
 	}
 	d.SetId(createdCustomConnectorPlugin.GetId())
 
 	createdCustomConnectorPluginJson, err := json.Marshal(createdCustomConnectorPlugin)
 	if err != nil {
-		return diag.Errorf("error creating Custom Connector Plugin %q: error marshaling %#v to json: %s", d.Id(), createdCustomConnectorPlugin, createDescriptiveError(err))
+		return diag.Errorf("error creating Custom Connector Plugin %q: error marshaling %#v to json: %s", d.Id(), createdCustomConnectorPlugin, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating Custom Connector Plugin %q: %s", d.Id(), createdCustomConnectorPluginJson), map[string]interface{}{customConnectorPluginLoggingKey: d.Id()})
 
@@ -233,10 +233,10 @@ func customConnectorPluginDelete(ctx context.Context, d *schema.ResourceData, me
 	c := meta.(*Client)
 
 	req := c.ccpClient.CustomConnectorPluginsConnectV1Api.DeleteConnectV1CustomConnectorPlugin(c.ccpApiContext(ctx), d.Id())
-	_, err := req.Execute()
+	resp, err := req.Execute()
 
 	if err != nil {
-		return diag.Errorf("error deleting Custom Connector Plugin %q: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error deleting Custom Connector Plugin %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished deleting Custom Connector Plugin %q", d.Id()), map[string]interface{}{customConnectorPluginLoggingKey: d.Id()})
@@ -265,7 +265,7 @@ func customConnectorPluginRead(ctx context.Context, d *schema.ResourceData, meta
 func readCustomConnectorPluginAndSetAttributes(ctx context.Context, d *schema.ResourceData, c *Client, filename string) ([]*schema.ResourceData, error) {
 	customConnectorPlugin, resp, err := executeCustomConnectorPluginRead(c.ccpApiContext(ctx), c, d.Id())
 	if err != nil {
-		tflog.Warn(ctx, fmt.Sprintf("Error reading Custom Connector Plugin %q: %s", d.Id(), createDescriptiveError(err)), map[string]interface{}{customConnectorPluginLoggingKey: d.Id()})
+		tflog.Warn(ctx, fmt.Sprintf("Error reading Custom Connector Plugin %q: %s", d.Id(), createDescriptiveError(err, resp)), map[string]interface{}{customConnectorPluginLoggingKey: d.Id()})
 
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
 		if isResourceNotFound && !d.IsNewResource() {
@@ -278,7 +278,7 @@ func readCustomConnectorPluginAndSetAttributes(ctx context.Context, d *schema.Re
 	}
 	customConnectorPluginJson, err := json.Marshal(customConnectorPlugin)
 	if err != nil {
-		return nil, fmt.Errorf("error reading Custom Connector Plugin %q: error marshaling %#v to json: %s", d.Id(), customConnectorPlugin, createDescriptiveError(err))
+		return nil, fmt.Errorf("error reading Custom Connector Plugin %q: error marshaling %#v to json: %s", d.Id(), customConnectorPlugin, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Custom Connector Plugin %q: %s", d.Id(), customConnectorPluginJson), map[string]interface{}{customConnectorPluginLoggingKey: d.Id()})
 

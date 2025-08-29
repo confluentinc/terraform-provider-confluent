@@ -99,20 +99,20 @@ func tagDataSourceRead(ctx context.Context, d *schema.ResourceData, meta interfa
 func tagDataSourceReadUsingTagName(ctx context.Context, d *schema.ResourceData, meta interface{}, restEndpoint string, clusterId string, clusterApiKey string, clusterApiSecret string, tagName string) diag.Diagnostics {
 	catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 	request := catalogRestClient.apiClient.TypesV1Api.GetTagDefByName(catalogRestClient.dataCatalogApiContext(ctx), tagName)
-	tag, _, err := request.Execute()
+	tag, resp, err := request.Execute()
 	tagId := createTagId(clusterId, tagName)
 
 	if err != nil {
-		return diag.Errorf("error reading Tag %q: %s", tagId, createDescriptiveError(err))
+		return diag.Errorf("error reading Tag %q: %s", tagId, createDescriptiveError(err, resp))
 	}
 	tagJson, err := json.Marshal(tag)
 	if err != nil {
-		return diag.Errorf("error reading Tag %q: error marshaling %#v to json: %s", tagId, tag, createDescriptiveError(err))
+		return diag.Errorf("error reading Tag %q: error marshaling %#v to json: %s", tagId, tag, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Tag %q: %s", tagId, tagJson), map[string]interface{}{tagLoggingKey: tagId})
 
 	if _, err := setTagAttributes(d, catalogRestClient, clusterId, tag); err != nil {
-		return diag.FromErr(createDescriptiveError(err))
+		return diag.FromErr(createDescriptiveError(err, resp))
 	}
 	return nil
 }

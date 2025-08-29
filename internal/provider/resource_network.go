@@ -298,19 +298,19 @@ func networkCreate(ctx context.Context, d *schema.ResourceData, meta interface{}
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Network: %s", createNetworkRequestJson))
 
-	createdNetwork, _, err := executeNetworkCreate(c.netApiContext(ctx), c, createNetworkRequest)
+	createdNetwork, resp, err := executeNetworkCreate(c.netApiContext(ctx), c, createNetworkRequest)
 	if err != nil {
-		return diag.Errorf("error creating Network %q: %s", createdNetwork.GetId(), createDescriptiveError(err))
+		return diag.Errorf("error creating Network %q: %s", createdNetwork.GetId(), createDescriptiveError(err, resp))
 	}
 	d.SetId(createdNetwork.GetId())
 
 	if err := waitForNetworkToProvision(c.netApiContext(ctx), c, environmentId, d.Id()); err != nil {
-		return diag.Errorf("error waiting for Network %q to provision: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error waiting for Network %q to provision: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	createdNetworkJson, err := json.Marshal(createdNetwork)
 	if err != nil {
-		return diag.Errorf("error creating Network %q: error marshaling %#v to json: %s", d.Id(), createdNetwork, createDescriptiveError(err))
+		return diag.Errorf("error creating Network %q: error marshaling %#v to json: %s", d.Id(), createdNetwork, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating Network %q: %s", d.Id(), createdNetworkJson), map[string]interface{}{networkLoggingKey: d.Id()})
 
@@ -345,7 +345,7 @@ func readNetworkAndSetAttributes(ctx context.Context, d *schema.ResourceData, me
 
 	network, resp, err := executeNetworkRead(c.netApiContext(ctx), c, environmentId, networkId)
 	if err != nil {
-		tflog.Warn(ctx, fmt.Sprintf("Error reading Network %q: %s", d.Id(), createDescriptiveError(err)), map[string]interface{}{networkLoggingKey: d.Id()})
+		tflog.Warn(ctx, fmt.Sprintf("Error reading Network %q: %s", d.Id(), createDescriptiveError(err, resp)), map[string]interface{}{networkLoggingKey: d.Id()})
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
 		if isResourceNotFound && !d.IsNewResource() {
 			tflog.Warn(ctx, fmt.Sprintf("Removing Network %q in TF state because Network could not be found on the server", d.Id()), map[string]interface{}{networkLoggingKey: d.Id()})
@@ -357,7 +357,7 @@ func readNetworkAndSetAttributes(ctx context.Context, d *schema.ResourceData, me
 	}
 	networkJson, err := json.Marshal(network)
 	if err != nil {
-		return nil, fmt.Errorf("error reading Network %q: error marshaling %#v to json: %s", networkId, network, createDescriptiveError(err))
+		return nil, fmt.Errorf("error reading Network %q: error marshaling %#v to json: %s", networkId, network, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Network %q: %s", d.Id(), networkJson), map[string]interface{}{networkLoggingKey: d.Id()})
 
@@ -452,10 +452,10 @@ func networkDelete(ctx context.Context, d *schema.ResourceData, meta interface{}
 	c := meta.(*Client)
 
 	req := c.netClient.NetworksNetworkingV1Api.DeleteNetworkingV1Network(c.netApiContext(ctx), d.Id()).Environment(environmentId)
-	_, err := req.Execute()
+	resp, err := req.Execute()
 
 	if err != nil {
-		return diag.Errorf("error deleting Network %q: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error deleting Network %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished deleting Network %q", d.Id()), map[string]interface{}{networkLoggingKey: d.Id()})
@@ -483,15 +483,15 @@ func networkUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}
 	tflog.Debug(ctx, fmt.Sprintf("Updating Network %q: %s", d.Id(), updateNetworkRequestJson), map[string]interface{}{networkLoggingKey: d.Id()})
 
 	req := c.netClient.NetworksNetworkingV1Api.UpdateNetworkingV1Network(c.netApiContext(ctx), d.Id()).NetworkingV1NetworkUpdate(*updateNetworkRequest)
-	updatedNetwork, _, err := req.Execute()
+	updatedNetwork, resp, err := req.Execute()
 
 	if err != nil {
-		return diag.Errorf("error updating Network %q: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error updating Network %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	updatedNetworkJson, err := json.Marshal(updatedNetwork)
 	if err != nil {
-		return diag.Errorf("error updating Network %q: error marshaling %#v to json: %s", d.Id(), updatedNetwork, createDescriptiveError(err))
+		return diag.Errorf("error updating Network %q: error marshaling %#v to json: %s", d.Id(), updatedNetwork, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished updating Network %q: %s", d.Id(), updatedNetworkJson), map[string]interface{}{networkLoggingKey: d.Id()})
 	return networkRead(ctx, d, meta)

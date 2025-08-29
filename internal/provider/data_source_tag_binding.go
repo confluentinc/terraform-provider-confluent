@@ -92,9 +92,9 @@ func tagBindingDataSourceRead(ctx context.Context, d *schema.ResourceData, meta 
 
 	catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 	request := catalogRestClient.apiClient.EntityV1Api.GetTags(catalogRestClient.dataCatalogApiContext(ctx), entityType, entityName)
-	tagBindings, _, err := request.Execute()
+	tagBindings, resp, err := request.Execute()
 	if err != nil {
-		return diag.Errorf("error reading Tag Binding %q: %s", tagBindingId, createDescriptiveError(err))
+		return diag.Errorf("error reading Tag Binding %q: %s", tagBindingId, createDescriptiveError(err, resp))
 	}
 	tagBinding, err := findTagBindingByTagName(tagBindings, tagName)
 	if err != nil {
@@ -103,12 +103,12 @@ func tagBindingDataSourceRead(ctx context.Context, d *schema.ResourceData, meta 
 
 	tagBindingJson, err := json.Marshal(tagBinding)
 	if err != nil {
-		return diag.Errorf("error reading Tag Binding %q: error marshaling %#v to json: %s", tagBindingId, tagBinding, createDescriptiveError(err))
+		return diag.Errorf("error reading Tag Binding %q: error marshaling %#v to json: %s", tagBindingId, tagBinding, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Tag Binding %q: %s", tagBindingId, tagBindingJson), map[string]interface{}{tagBindingLoggingKey: tagBindingId})
 
 	if _, err := setTagBindingAttributes(d, clusterId, tagBinding); err != nil {
-		return diag.FromErr(createDescriptiveError(err))
+		return diag.FromErr(createDescriptiveError(err, resp))
 	}
 
 	return nil

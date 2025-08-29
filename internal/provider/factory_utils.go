@@ -242,15 +242,32 @@ func customErrorHandler(resp *http.Response, err error, retries int) (*http.Resp
 		body := resp.Body
 		defer body.Close()
 		if resp.StatusCode == 429 {
-			if err == nil {
-				return resp, fmt.Errorf("received HTTP 429 Too Many Requests: (URL: %s, Method: %s, Retries: %d)", resp.Request.URL, resp.Request.Method, retries)
-			} else {
-				return resp, fmt.Errorf("received HTTP 429 Too Many Requests: %v (URL: %s, Method: %s, Retries: %d)", err, resp.Request.URL, resp.Request.Method, retries)
-
-			}
+			return customErrorHandlerCode(resp, err, retries, "received HTTP 429 Too Many Requests")
+		} else if resp.StatusCode == 500 {
+			return customErrorHandlerCode(resp, err, retries, "received HTTP 500 Internal Server Error")
+		} else if resp.StatusCode == 501 {
+			return customErrorHandlerCode(resp, err, retries, "received HTTP 501 Not Implemented")
+		} else if resp.StatusCode == 502 {
+			return customErrorHandlerCode(resp, err, retries, "received HTTP 502 Bad Gateway")
+		} else if resp.StatusCode == 503 {
+			return customErrorHandlerCode(resp, err, retries, "received HTTP 503 Service Unavailable")
+		} else if resp.StatusCode == 504 {
+			return customErrorHandlerCode(resp, err, retries, "received HTTP 504 Gateway Timeout")
+		} else if resp.StatusCode == 505 {
+			return customErrorHandlerCode(resp, err, retries, "received HTTP 505 HTTP Version Not Supported")
+		} else if resp.StatusCode > 505 && resp.StatusCode < 600 {
+			return customErrorHandlerCode(resp, err, retries, "received HTTP 5xx error")
 		}
 	}
 	return resp, err
+}
+
+func customErrorHandlerCode(resp *http.Response, err error, retries int, text string) (*http.Response, error) {
+	if err == nil {
+		return resp, fmt.Errorf(text+": (URL: %s, Method: %s, Retries: %d)", resp.Request.URL, resp.Request.Method, retries)
+	} else {
+		return resp, fmt.Errorf(text+": %v (URL: %s, Method: %s, Retries: %d)", err, resp.Request.URL, resp.Request.Method, retries)
+	}
 }
 
 // Logger is used to log messages from retryablehttp.Client to tflog.
