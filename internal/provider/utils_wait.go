@@ -17,11 +17,11 @@ package provider
 import (
 	"context"
 	"fmt"
-	v3 "github.com/confluentinc/ccloud-sdk-go-v2/srcm/v3"
 	"net/http"
 	"strings"
 	"time"
 
+	v3 "github.com/confluentinc/ccloud-sdk-go-v2/srcm/v3"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
