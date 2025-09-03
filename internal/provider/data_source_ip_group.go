@@ -63,7 +63,7 @@ func ipGroupDataSourceRead(ctx context.Context, d *schema.ResourceData, meta int
 	tflog.Debug(ctx, fmt.Sprintf("Fetched IP Group %q: %s", ipGroupID, ipGroupJson), map[string]interface{}{ipGroupLoggingKey: ipGroupID})
 
 	if _, err := setIPGroupAttributes(d, ipGroup); err != nil {
-		return diag.FromErr(createDescriptiveError(err, resp))
+		return diag.FromErr(createDescriptiveError(err))
 	}
 	return nil
 }

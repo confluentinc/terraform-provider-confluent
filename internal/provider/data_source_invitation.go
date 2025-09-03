@@ -93,7 +93,7 @@ func invitationDataSourceReadUsingId(ctx context.Context, d *schema.ResourceData
 	tflog.Debug(ctx, fmt.Sprintf("Fetched invitation %q: %s", invitationId, invitationJson), map[string]interface{}{invitationLoggingKey: invitationId})
 
 	if _, err := setInvitationAttributes(d, invitation); err != nil {
-		return diag.FromErr(createDescriptiveError(err, resp))
+		return diag.FromErr(createDescriptiveError(err))
 	}
 	return nil
 }

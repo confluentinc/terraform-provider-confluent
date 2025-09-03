@@ -147,7 +147,7 @@ func flinkArtifactDataSourceReadUsingId(ctx context.Context, d *schema.ResourceD
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Flink Artifact %q: %s", artifactId, famJson), map[string]interface{}{flinkArtifactLoggingKey: artifactId})
 
 	if _, err := setArtifactAttributes(d, fam, ""); err != nil {
-		return diag.FromErr(createDescriptiveError(err, resp))
+		return diag.FromErr(createDescriptiveError(err))
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished reading Flink Artifact %q", artifactId), map[string]interface{}{flinkArtifactLoggingKey: artifactId})

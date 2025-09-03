@@ -180,7 +180,7 @@ func accessPointDataSourceRead(ctx context.Context, d *schema.ResourceData, meta
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Access Point %q: %s", accessPointId, accessPointJson), map[string]interface{}{accessPointKey: accessPointId})
 
 	if _, err := setAccessPointAttributes(d, accessPoint); err != nil {
-		return diag.FromErr(createDescriptiveError(err, resp))
+		return diag.FromErr(createDescriptiveError(err))
 	}
 	return nil
 }

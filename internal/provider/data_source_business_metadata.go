@@ -140,7 +140,7 @@ func businessMetadataDataSourceReadUsingName(ctx context.Context, d *schema.Reso
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Business Metadata %q: %s", businessMetadataId, businessMetadataJson), map[string]interface{}{businessMetadataLoggingKey: businessMetadataId})
 
 	if _, err := setBusinessMetadataAttributes(d, clusterId, businessMetadata); err != nil {
-		return diag.FromErr(createDescriptiveError(err, resp))
+		return diag.FromErr(createDescriptiveError(err))
 	}
 	return nil
 }

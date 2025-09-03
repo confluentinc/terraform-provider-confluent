@@ -97,7 +97,7 @@ func dnsRecordDataSourceRead(ctx context.Context, d *schema.ResourceData, meta i
 	tflog.Debug(ctx, fmt.Sprintf("Fetched DNS Record %q: %s", dnsRecordId, dnsRecordJson), map[string]interface{}{dnsRecordKey: dnsRecordId})
 
 	if _, err := setDnsRecordAttributes(d, dnsRecord); err != nil {
-		return diag.FromErr(createDescriptiveError(err, resp))
+		return diag.FromErr(createDescriptiveError(err))
 	}
 	return nil
 }

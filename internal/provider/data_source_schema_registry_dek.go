@@ -116,7 +116,7 @@ func schemaRegistryDekDataSourceRead(ctx context.Context, d *schema.ResourceData
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Schema Registry DEK %q: %s", dekId, dekJson), map[string]interface{}{schemaRegistryDekKey: dekId})
 
 	if _, err := setDekAttributes(d, clusterId, dek); err != nil {
-		return diag.FromErr(createDescriptiveError(err, resp))
+		return diag.FromErr(createDescriptiveError(err))
 	}
 	return nil
 }

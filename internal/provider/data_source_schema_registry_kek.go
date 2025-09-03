@@ -113,7 +113,7 @@ func schemaRegistryKekDataSourceReadUsingKekName(ctx context.Context, d *schema.
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Schema Registry KEK %q: %s", kekId, kekJson), map[string]interface{}{schemaRegistryKekKey: kekId})
 
 	if _, err := setKekAttributes(d, clusterId, kek); err != nil {
-		return diag.FromErr(createDescriptiveError(err, resp))
+		return diag.FromErr(createDescriptiveError(err))
 	}
 	return nil
 }

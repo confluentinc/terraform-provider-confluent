@@ -111,7 +111,7 @@ func serviceAccountDataSourceReadUsingDisplayName(ctx context.Context, d *schema
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Service Account %q: %s", serviceAccount.GetId(), serviceAccountJson), map[string]interface{}{serviceAccountLoggingKey: serviceAccount.GetId()})
 
 	if _, err := setServiceAccountAttributes(d, serviceAccount); err != nil {
-		return diag.FromErr(createDescriptiveError(err, resp))
+		return diag.FromErr(createDescriptiveError(err))
 	}
 	return nil
 }
@@ -171,7 +171,7 @@ func serviceAccountDataSourceReadUsingId(ctx context.Context, d *schema.Resource
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Service Account %q: %s", serviceAccountId, serviceAccountJson), map[string]interface{}{serviceAccountLoggingKey: serviceAccountId})
 
 	if _, err := setServiceAccountAttributes(d, serviceAccount); err != nil {
-		return diag.FromErr(createDescriptiveError(err, resp))
+		return diag.FromErr(createDescriptiveError(err))
 	}
 	return nil
 }

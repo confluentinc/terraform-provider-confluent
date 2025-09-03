@@ -116,7 +116,7 @@ func privateLinkAccessDataSourceReadUsingId(ctx context.Context, d *schema.Resou
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Private Link Access %q: %s", privateLinkAccessId, privateLinkAccessJson), map[string]interface{}{privateLinkAccessLoggingKey: privateLinkAccessId})
 
 	if _, err := setPrivateLinkAccessAttributes(d, privateLinkAccess); err != nil {
-		return diag.FromErr(createDescriptiveError(err, resp))
+		return diag.FromErr(createDescriptiveError(err))
 	}
 	return nil
 }

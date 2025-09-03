@@ -158,7 +158,7 @@ func networkDataSourceReadUsingId(ctx context.Context, d *schema.ResourceData, m
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Network %q: %s", networkId, networkJson), map[string]interface{}{networkLoggingKey: networkId})
 
 	if _, err := setNetworkAttributes(d, network); err != nil {
-		return diag.FromErr(createDescriptiveError(err, resp))
+		return diag.FromErr(createDescriptiveError(err))
 	}
 	return nil
 }

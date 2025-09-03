@@ -116,7 +116,7 @@ func businessMetadataBindingDataSourceRead(ctx context.Context, d *schema.Resour
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Business Metadata Binding %q: %s", businessMetadataBindingId, businessMetadataBindingJson), map[string]interface{}{businessMetadataBindingLoggingKey: businessMetadataBindingId})
 
 	if _, err := setBusinessMetadataBindingAttributes(d, clusterId, businessMetadataBinding); err != nil {
-		return diag.FromErr(createDescriptiveError(err, resp))
+		return diag.FromErr(createDescriptiveError(err))
 	}
 
 	return nil

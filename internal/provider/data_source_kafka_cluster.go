@@ -177,7 +177,7 @@ func kafkaDataSourceReadUsingId(ctx context.Context, d *schema.ResourceData, met
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Kafka Cluster %q: %s", clusterId, clusterJson), map[string]interface{}{kafkaClusterLoggingKey: clusterId})
 
 	if _, err := setKafkaClusterAttributes(d, cluster); err != nil {
-		return diag.FromErr(createDescriptiveError(err, resp))
+		return diag.FromErr(createDescriptiveError(err))
 	}
 	return nil
 }

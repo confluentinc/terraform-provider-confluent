@@ -116,7 +116,7 @@ func providerIntegrationDataSourceReadUsingId(ctx context.Context, d *schema.Res
 	tflog.Debug(ctx, fmt.Sprintf("Fetched provider integration %q: %s", pimId, pimJson), map[string]interface{}{providerIntegrationLoggingKey: pimId})
 
 	if _, err := setProviderIntegrationAttributes(d, pim); err != nil {
-		return diag.FromErr(createDescriptiveError(err, resp))
+		return diag.FromErr(createDescriptiveError(err))
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished reading provider integration %q", pimId), map[string]interface{}{providerIntegrationLoggingKey: pimId})

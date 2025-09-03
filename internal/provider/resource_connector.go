@@ -209,7 +209,7 @@ func connectorCreate(ctx context.Context, d *schema.ResourceData, meta interface
 
 	// Save sensitive configs
 	if err := d.Set(paramSensitiveConfig, sensitiveConfig); err != nil {
-		return diag.FromErr(createDescriptiveError(err, resp))
+		return diag.FromErr(createDescriptiveError(err))
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating Connector %q", displayName))

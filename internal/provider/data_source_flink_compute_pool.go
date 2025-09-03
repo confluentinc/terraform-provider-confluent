@@ -136,7 +136,7 @@ func computePoolDataSourceReadUsingId(ctx context.Context, d *schema.ResourceDat
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Flink Compute Pool %q: %s", computePoolId, computePoolJson), map[string]interface{}{computePoolLoggingKey: computePoolId})
 
 	if _, err := setComputePoolAttributes(d, computePool); err != nil {
-		return diag.FromErr(createDescriptiveError(err, resp))
+		return diag.FromErr(createDescriptiveError(err))
 	}
 	return nil
 }

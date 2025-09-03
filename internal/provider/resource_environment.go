@@ -174,7 +174,7 @@ func environmentRead(ctx context.Context, d *schema.ResourceData, meta interface
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Environment %q: %s", d.Id(), environmentJson), map[string]interface{}{environmentLoggingKey: d.Id()})
 
 	if _, err := setEnvironmentAttributes(d, environment); err != nil {
-		return diag.FromErr(createDescriptiveError(err, resp))
+		return diag.FromErr(createDescriptiveError(err))
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished reading Environment %q", d.Id()), map[string]interface{}{environmentLoggingKey: d.Id()})

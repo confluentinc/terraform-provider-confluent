@@ -114,7 +114,7 @@ func transitGatewayAttachmentDataSourceReadUsingId(ctx context.Context, d *schem
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Transit Gateway Attachment %q: %s", transitGatewayAttachmentId, transitGatewayAttachmentJson), map[string]interface{}{transitGatewayAttachmentLoggingKey: transitGatewayAttachmentId})
 
 	if _, err := setTransitGatewayAttachmentAttributes(d, transitGatewayAttachment); err != nil {
-		return diag.FromErr(createDescriptiveError(err, resp))
+		return diag.FromErr(createDescriptiveError(err))
 	}
 	return nil
 }

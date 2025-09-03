@@ -125,7 +125,7 @@ func byokDataSourceRead(ctx context.Context, d *schema.ResourceData, meta interf
 	tflog.Debug(ctx, fmt.Sprintf("Fetched byok key %q: %s", keyId, keyJson), map[string]interface{}{byokKeyLoggingKey: keyId})
 
 	if _, err := setKeyAttributes(d, key); err != nil {
-		return diag.FromErr(createDescriptiveError(err, resp))
+		return diag.FromErr(createDescriptiveError(err))
 	}
 	return nil
 }

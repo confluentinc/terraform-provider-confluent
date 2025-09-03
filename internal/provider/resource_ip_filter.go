@@ -187,7 +187,7 @@ func ipFilterRead(ctx context.Context, d *schema.ResourceData, meta interface{})
 	tflog.Debug(ctx, fmt.Sprintf("Fetched IP Filter %q: %s", d.Id(), ipFilterJson), map[string]interface{}{ipFilterLoggingKey: d.Id()})
 
 	if _, err := setIPFilterAttributes(d, ipFilter); err != nil {
-		return diag.FromErr(createDescriptiveError(err, resp))
+		return diag.FromErr(createDescriptiveError(err))
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished reading IP Filter %q", d.Id()), map[string]interface{}{ipFilterLoggingKey: d.Id()})

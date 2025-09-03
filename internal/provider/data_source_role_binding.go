@@ -67,7 +67,7 @@ func roleBindingDataSourceRead(ctx context.Context, d *schema.ResourceData, meta
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Role Binding %q: %s", roleBindingId, roleBindingJson), map[string]interface{}{roleBindingLoggingKey: roleBindingId})
 
 	if _, err := setRoleBindingDataSourceAttributes(d, roleBinding); err != nil {
-		return diag.FromErr(createDescriptiveError(err, resp))
+		return diag.FromErr(createDescriptiveError(err))
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished reading Role Binding %q", roleBindingId), map[string]interface{}{roleBindingLoggingKey: roleBindingId})

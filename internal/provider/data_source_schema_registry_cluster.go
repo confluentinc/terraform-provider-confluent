@@ -229,7 +229,7 @@ func schemaRegistryDataSourceReadUsingId(ctx context.Context, d *schema.Resource
 	tflog.Debug(ctx, fmt.Sprintf("Fetched SchemaRegistry Cluster %q: %s", clusterId, clusterJson), map[string]interface{}{schemaRegistryClusterLoggingKey: clusterId})
 
 	if _, err := setSchemaRegistryClusterAttributes(d, cluster); err != nil {
-		return diag.FromErr(createDescriptiveError(err, resp))
+		return diag.FromErr(createDescriptiveError(err))
 	}
 	return nil
 }

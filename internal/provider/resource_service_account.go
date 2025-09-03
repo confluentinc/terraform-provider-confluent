@@ -180,7 +180,7 @@ func serviceAccountRead(ctx context.Context, d *schema.ResourceData, meta interf
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Service Account %q: %s", d.Id(), serviceAccountJson), map[string]interface{}{serviceAccountLoggingKey: d.Id()})
 
 	if _, err := setServiceAccountAttributes(d, serviceAccount); err != nil {
-		return diag.FromErr(createDescriptiveError(err, resp))
+		return diag.FromErr(createDescriptiveError(err))
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished reading Service Account %q", d.Id()), map[string]interface{}{serviceAccountLoggingKey: d.Id()})

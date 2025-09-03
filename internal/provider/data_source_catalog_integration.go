@@ -83,7 +83,7 @@ func catalogIntegrationDataSourceRead(ctx context.Context, d *schema.ResourceDat
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Catalog Integration %q: %s", catalogIntegrationId, catalogIntegrationJson), map[string]interface{}{catalogIntegrationKey: catalogIntegrationId})
 
 	if _, err := setCatalogIntegrationAttributes(d, tableflowRestClient, catalogIntegration); err != nil {
-		return diag.FromErr(createDescriptiveError(err, resp))
+		return diag.FromErr(createDescriptiveError(err))
 	}
 	return nil
 }

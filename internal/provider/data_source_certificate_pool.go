@@ -77,7 +77,7 @@ func certificatePoolDataSourceRead(ctx context.Context, d *schema.ResourceData, 
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Certificate Pool %q: %s", certificatePoolId, certificatePoolJson), map[string]interface{}{certificatePoolKey: certificatePoolId})
 
 	if _, err := setCertificatePoolAttributes(d, certificatePool, CertificateAuthorityId); err != nil {
-		return diag.FromErr(createDescriptiveError(err, resp))
+		return diag.FromErr(createDescriptiveError(err))
 	}
 	return nil
 }

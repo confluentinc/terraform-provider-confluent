@@ -107,7 +107,7 @@ func executeFlinkRegionDataSourceRead(ctx context.Context, d *schema.ResourceDat
 		return diag.Errorf("error reading Flink Region: there are multiple Flink Regions with %q=%q, %q=%q", paramCloud, cloud, paramRegion, region)
 	}
 	if _, err := setFlinkRegionAttributes(d, flinkRegions.GetData()[0]); err != nil {
-		return diag.FromErr(createDescriptiveError(err, resp))
+		return diag.FromErr(createDescriptiveError(err))
 	}
 
 	return nil

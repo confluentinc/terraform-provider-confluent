@@ -165,7 +165,7 @@ func ipGroupRead(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 	tflog.Debug(ctx, fmt.Sprintf("Fetched IP Group %q: %s", d.Id(), ipGroupJson), map[string]interface{}{ipGroupLoggingKey: d.Id()})
 
 	if _, err := setIPGroupAttributes(d, ipGroup); err != nil {
-		return diag.FromErr(createDescriptiveError(err, resp))
+		return diag.FromErr(createDescriptiveError(err))
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished reading IP Group %q", d.Id()), map[string]interface{}{ipGroupLoggingKey: d.Id()})

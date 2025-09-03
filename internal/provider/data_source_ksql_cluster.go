@@ -108,7 +108,7 @@ func ksqlDataSourceReadUsingId(ctx context.Context, d *schema.ResourceData, meta
 	tflog.Debug(ctx, fmt.Sprintf("Fetched ksqlDb Cluster %q: %s", clusterId, ksqlClusterJson), map[string]interface{}{ksqlClusterLoggingKey: clusterId})
 
 	if _, err := setKsqlAttributes(d, ksqlCluster); err != nil {
-		return diag.FromErr(createDescriptiveError(err, resp))
+		return diag.FromErr(createDescriptiveError(err))
 	}
 	return nil
 }

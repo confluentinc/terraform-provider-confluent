@@ -172,7 +172,7 @@ func apiKeyCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 
 	// Save the API Key Secret
 	if err := d.Set(paramSecret, createdApiKey.Spec.GetSecret()); err != nil {
-		return diag.FromErr(createDescriptiveError(err, resp))
+		return diag.FromErr(createDescriptiveError(err))
 	}
 
 	d.SetId(createdApiKey.GetId())
@@ -277,7 +277,7 @@ func apiKeyRead(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 	tflog.Debug(ctx, fmt.Sprintf("Fetched API Key %q: %s", d.Id(), apiKeyJson), map[string]interface{}{apiKeyLoggingKey: d.Id()})
 
 	if _, err := setApiKeyAttributes(d, apiKey); err != nil {
-		return diag.FromErr(createDescriptiveError(err, resp))
+		return diag.FromErr(createDescriptiveError(err))
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished reading API Key %q", d.Id()), map[string]interface{}{apiKeyLoggingKey: d.Id()})

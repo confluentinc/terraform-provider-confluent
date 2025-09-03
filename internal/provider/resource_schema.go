@@ -641,7 +641,7 @@ func schemaCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 
 	// Save the schema content
 	if err := d.Set(paramSchema, schemaContent); err != nil {
-		return diag.FromErr(createDescriptiveError(err, resp))
+		return diag.FromErr(createDescriptiveError(err))
 	}
 
 	schemaId := createSchemaId(schemaRegistryRestClient.clusterId, subjectName, registeredSchema.GetId(), d.Get(paramRecreateOnUpdate).(bool))

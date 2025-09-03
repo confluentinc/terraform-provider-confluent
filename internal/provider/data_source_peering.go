@@ -116,7 +116,7 @@ func peeringDataSourceReadUsingId(ctx context.Context, d *schema.ResourceData, m
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Peering %q: %s", peeringId, peeringJson), map[string]interface{}{peeringLoggingKey: peeringId})
 
 	if _, err := setPeeringAttributes(d, peering); err != nil {
-		return diag.FromErr(createDescriptiveError(err, resp))
+		return diag.FromErr(createDescriptiveError(err))
 	}
 	return nil
 }

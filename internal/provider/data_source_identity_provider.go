@@ -169,7 +169,7 @@ func identityProviderDataSourceReadUsingId(ctx context.Context, d *schema.Resour
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Identity Provider %q: %s", identityProviderId, identityProviderJson), map[string]interface{}{identityProviderLoggingKey: identityProviderId})
 
 	if _, err := setIdentityProviderAttributes(d, identityProvider); err != nil {
-		return diag.FromErr(createDescriptiveError(err, resp))
+		return diag.FromErr(createDescriptiveError(err))
 	}
 	return nil
 }

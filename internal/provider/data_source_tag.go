@@ -112,7 +112,7 @@ func tagDataSourceReadUsingTagName(ctx context.Context, d *schema.ResourceData, 
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Tag %q: %s", tagId, tagJson), map[string]interface{}{tagLoggingKey: tagId})
 
 	if _, err := setTagAttributes(d, catalogRestClient, clusterId, tag); err != nil {
-		return diag.FromErr(createDescriptiveError(err, resp))
+		return diag.FromErr(createDescriptiveError(err))
 	}
 	return nil
 }

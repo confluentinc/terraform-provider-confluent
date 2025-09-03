@@ -69,7 +69,7 @@ func organizationDataSourceRead(ctx context.Context, d *schema.ResourceData, met
 		return diag.FromErr(createDescriptiveError(err, resp))
 	}
 	if err := d.Set(paramResourceName, organizationResourceName); err != nil {
-		return diag.FromErr(createDescriptiveError(err, resp))
+		return diag.FromErr(createDescriptiveError(err))
 	}
 	d.SetId(organizationId)
 

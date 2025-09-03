@@ -109,7 +109,7 @@ func tableflowTopicDataSourceRead(ctx context.Context, d *schema.ResourceData, m
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Tableflow Topic %q: %s", tableflowTopicId, tableflowTopicJson), map[string]interface{}{tableflowTopicKey: tableflowTopicId})
 
 	if _, err := setTableflowTopicAttributes(d, tableflowRestClient, tableflowTopic); err != nil {
-		return diag.FromErr(createDescriptiveError(err, resp))
+		return diag.FromErr(createDescriptiveError(err))
 	}
 	return nil
 }

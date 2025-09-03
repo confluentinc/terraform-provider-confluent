@@ -134,7 +134,7 @@ func privateLinkAttachmentConnectionDataSourceRead(ctx context.Context, d *schem
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Private Link Attachment Connection %q: %s", plattcId, plattcJson), map[string]interface{}{privateLinkAttachmentConnectionLoggingKey: plattcId})
 
 	if _, err := setPrivateLinkAttachmentConnectionAttributes(d, plattc); err != nil {
-		return diag.FromErr(createDescriptiveError(err, resp))
+		return diag.FromErr(createDescriptiveError(err))
 	}
 	return nil
 }

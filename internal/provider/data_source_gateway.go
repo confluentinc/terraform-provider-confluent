@@ -210,7 +210,7 @@ func gatewayDataSourceRead(ctx context.Context, d *schema.ResourceData, meta int
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Gateway %q: %s", gatewayId, gatewayJson), map[string]interface{}{gatewayKey: gatewayId})
 
 	if _, err := setGatewayAttributes(d, gateway); err != nil {
-		return diag.FromErr(createDescriptiveError(err, resp))
+		return diag.FromErr(createDescriptiveError(err))
 	}
 	return nil
 }

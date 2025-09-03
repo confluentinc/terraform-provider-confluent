@@ -97,7 +97,7 @@ func networkLinkEndpointDataSourceRead(ctx context.Context, d *schema.ResourceDa
 	tflog.Debug(ctx, fmt.Sprintf("Fetched network link endpoint %q: %s", nleId, nleJson), map[string]interface{}{networkLinkEndpointLoggingKey: nleId})
 
 	if _, err := setNetworkLinkEndpointAttributes(d, nle); err != nil {
-		return diag.FromErr(createDescriptiveError(err, resp))
+		return diag.FromErr(createDescriptiveError(err))
 	}
 	return nil
 }

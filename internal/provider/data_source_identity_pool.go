@@ -122,7 +122,7 @@ func identityPoolDataSourceReadUsingId(ctx context.Context, d *schema.ResourceDa
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Identity Pool %q: %s", identityPoolId, identityPoolJson), map[string]interface{}{identityPoolLoggingKey: identityPoolId})
 
 	if _, err := setIdentityPoolAttributes(d, identityPool, identityProviderId); err != nil {
-		return diag.FromErr(createDescriptiveError(err, resp))
+		return diag.FromErr(createDescriptiveError(err))
 	}
 	return nil
 }

@@ -155,7 +155,7 @@ func groupMappingDataSourceReadUsingId(ctx context.Context, d *schema.ResourceDa
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Group Mapping %q: %s", groupMappingId, groupMappingJson), map[string]interface{}{groupMappingLoggingKey: groupMappingId})
 
 	if _, err := setGroupMappingAttributes(d, groupMapping); err != nil {
-		return diag.FromErr(createDescriptiveError(err, resp))
+		return diag.FromErr(createDescriptiveError(err))
 	}
 	return nil
 }

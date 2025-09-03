@@ -110,7 +110,7 @@ func kafkaClientQuotaDataSourceRead(ctx context.Context, d *schema.ResourceData,
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Kafka Client Quota %q: %s", kafkaClientQuotaId, kafkaClientQuotaJson), map[string]interface{}{kafkaClientQuotaLoggingKey: kafkaClientQuotaId})
 
 	if _, err := setKafkaClientQuotaAttributes(d, kafkaClientQuota); err != nil {
-		return diag.FromErr(createDescriptiveError(err, resp))
+		return diag.FromErr(createDescriptiveError(err))
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished reading Kafka Client Quota %q", kafkaClientQuotaId), map[string]interface{}{kafkaClientQuotaLoggingKey: kafkaClientQuotaId})

@@ -179,7 +179,7 @@ func groupMappingRead(ctx context.Context, d *schema.ResourceData, meta interfac
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Group Mapping %q: %s", d.Id(), groupMappingJson), map[string]interface{}{groupMappingLoggingKey: d.Id()})
 
 	if _, err := setGroupMappingAttributes(d, groupMapping); err != nil {
-		return diag.FromErr(createDescriptiveError(err, resp))
+		return diag.FromErr(createDescriptiveError(err))
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished reading Group Mapping %q", d.Id()), map[string]interface{}{groupMappingLoggingKey: d.Id()})

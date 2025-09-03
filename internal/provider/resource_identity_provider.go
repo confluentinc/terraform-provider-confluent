@@ -205,7 +205,7 @@ func identityProviderRead(ctx context.Context, d *schema.ResourceData, meta inte
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Identity Provider %q: %s", d.Id(), identityProviderJson), map[string]interface{}{identityProviderLoggingKey: d.Id()})
 
 	if _, err := setIdentityProviderAttributes(d, identityProvider); err != nil {
-		return diag.FromErr(createDescriptiveError(err, resp))
+		return diag.FromErr(createDescriptiveError(err))
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished reading Identity Provider %q", d.Id()), map[string]interface{}{identityProviderLoggingKey: d.Id()})
