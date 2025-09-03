@@ -39,20 +39,20 @@ func networkLinkServiceDataSource() *schema.Resource {
 		ReadContext: networkLinkServiceDataSourceRead,
 		Schema: map[string]*schema.Schema{
 			paramId: {
-				Type:        schema.TypeString,
+				Type:     schema.TypeString,
 				Computed: true,
 				Optional: true,
 				// A user should provide a value for either "id" or "display_name" attribute, not both
 				ExactlyOneOf: []string{paramId, paramDisplayName},
-				Description: "The ID of the network link service, for example, `nls-a1b2c`.",
+				Description:  "The ID of the network link service, for example, `nls-a1b2c`.",
 			},
 			paramDisplayName: {
-				Type:        schema.TypeString,
+				Type:     schema.TypeString,
 				Computed: true,
 				Optional: true,
 				// A user should provide a value for either "id" or "display_name" attribute, not both
 				ExactlyOneOf: []string{paramId, paramDisplayName},
-				Description: "The display name of the network link service.",
+				Description:  "The display name of the network link service.",
 			},
 			paramDescription: {
 				Type:     schema.TypeString,
@@ -93,13 +93,13 @@ func nlsDataSourceReadUsingId(ctx context.Context, d *schema.ResourceData, meta 
 	tflog.Debug(ctx, fmt.Sprintf("Reading network link service %q", nlsId), map[string]interface{}{networkLinkServiceLoggingKey: nlsId})
 
 	c := meta.(*Client)
-	nls, _, err := executeNlsRead(c.ssoApiContext(ctx), c, environmentId, nlsId)
+	nls, resp, err := executeNlsRead(c.ssoApiContext(ctx), c, environmentId, nlsId)
 	if err != nil {
-		return diag.Errorf("error reading network link service %q: %s", nlsId, createDescriptiveError(err))
+		return diag.Errorf("error reading network link service %q: %s", nlsId, createDescriptiveError(err, resp))
 	}
 	nlsJson, err := json.Marshal(nls)
 	if err != nil {
-		return diag.Errorf("error reading network link service %q: error marshaling %#v to json: %s", nlsId, nls, createDescriptiveError(err))
+		return diag.Errorf("error reading network link service %q: error marshaling %#v to json: %s", nlsId, nls, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched network link service %q: %s", nlsId, nlsJson), map[string]interface{}{networkLinkServiceLoggingKey: nlsId})
 
@@ -146,9 +146,9 @@ func loadNetworkLinkServices(ctx context.Context, c *Client, environmentId strin
 	allNlsAreCollected := false
 	pageToken := ""
 	for !allNlsAreCollected {
-		nlsList, _, err := executeListNetworkLinkServices(ctx, c, environmentId, pageToken)
+		nlsList, resp, err := executeListNetworkLinkServices(ctx, c, environmentId, pageToken)
 		if err != nil {
-			return nil, fmt.Errorf("error reading network link services: %s", createDescriptiveError(err))
+			return nil, fmt.Errorf("error reading network link services: %s", createDescriptiveError(err, resp))
 		}
 		networkLinks = append(networkLinks, nlsList.GetData()...)
 
@@ -162,7 +162,7 @@ func loadNetworkLinkServices(ctx context.Context, c *Client, environmentId strin
 			} else {
 				pageToken, err = extractPageToken(nextPageUrlString)
 				if err != nil {
-					return nil, fmt.Errorf("error reading network link services: %s", createDescriptiveError(err))
+					return nil, fmt.Errorf("error reading network link services: %s", createDescriptiveError(err, resp))
 				}
 			}
 		} else {

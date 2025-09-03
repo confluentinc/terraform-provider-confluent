@@ -238,14 +238,14 @@ func kafkaUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 
 		req := c.cmkClient.ClustersCmkV2Api.UpdateCmkV2Cluster(c.cmkApiContext(ctx), d.Id()).CmkV2ClusterUpdate(*updateClusterRequest)
 
-		updatedCluster, _, err := req.Execute()
+		updatedCluster, resp, err := req.Execute()
 
 		if err != nil {
-			return diag.Errorf("error updating Kafka Cluster %q: %s", d.Id(), createDescriptiveError(err))
+			return diag.Errorf("error updating Kafka Cluster %q: %s", d.Id(), createDescriptiveError(err, resp))
 		}
 		updatedClusterJson, err := json.Marshal(updatedCluster)
 		if err != nil {
-			return diag.Errorf("error updating Kafka Cluster %q: error marshaling %#v to json: %s", d.Id(), updatedCluster, createDescriptiveError(err))
+			return diag.Errorf("error updating Kafka Cluster %q: error marshaling %#v to json: %s", d.Id(), updatedCluster, createDescriptiveError(err, resp))
 		}
 		tflog.Debug(ctx, fmt.Sprintf("Updated Kafka Cluster %q: %s", d.Id(), updatedClusterJson), map[string]interface{}{kafkaClusterLoggingKey: d.Id()})
 	}
@@ -270,14 +270,14 @@ func kafkaUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 
 		req := c.cmkClient.ClustersCmkV2Api.UpdateCmkV2Cluster(c.cmkApiContext(ctx), d.Id()).CmkV2ClusterUpdate(*updateClusterRequest)
 
-		updatedCluster, _, err := req.Execute()
+		updatedCluster, resp, err := req.Execute()
 
 		if err != nil {
-			return diag.Errorf("error updating Kafka Cluster %q: %s", d.Id(), createDescriptiveError(err))
+			return diag.Errorf("error updating Kafka Cluster %q: %s", d.Id(), createDescriptiveError(err, resp))
 		}
 		updatedClusterJson, err := json.Marshal(updatedCluster)
 		if err != nil {
-			return diag.Errorf("error updating Kafka Cluster %q: error marshaling %#v to json: %s", d.Id(), updatedCluster, createDescriptiveError(err))
+			return diag.Errorf("error updating Kafka Cluster %q: error marshaling %#v to json: %s", d.Id(), updatedCluster, createDescriptiveError(err, resp))
 		}
 		tflog.Debug(ctx, fmt.Sprintf("Updated Kafka Cluster %q: %s", d.Id(), updatedClusterJson), map[string]interface{}{kafkaClusterLoggingKey: d.Id()})
 	} else if isForbiddenStandardBasicDowngrade || isForbiddenDedicatedUpdate {
@@ -304,17 +304,17 @@ func kafkaUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 		tflog.Debug(ctx, fmt.Sprintf("Updating Kafka Cluster %q: %s", d.Id(), updateClusterRequestJson), map[string]interface{}{kafkaClusterLoggingKey: d.Id()})
 		req := c.cmkClient.ClustersCmkV2Api.UpdateCmkV2Cluster(c.cmkApiContext(ctx), d.Id()).CmkV2ClusterUpdate(*updateClusterRequest)
 
-		updatedCluster, _, err := req.Execute()
+		updatedCluster, resp, err := req.Execute()
 		if err != nil {
-			return diag.Errorf("error updating Kafka Cluster %q: %s", d.Id(), createDescriptiveError(err))
+			return diag.Errorf("error updating Kafka Cluster %q: %s", d.Id(), createDescriptiveError(err, resp))
 		}
 
 		if err := waitForKafkaClusterCkuUpdateToComplete(c.cmkApiContext(ctx), c, environmentId, d.Id(), cku); err != nil {
-			return diag.Errorf("error waiting for Kafka Cluster %q to perform CKU update: %s", d.Id(), createDescriptiveError(err))
+			return diag.Errorf("error waiting for Kafka Cluster %q to perform CKU update: %s", d.Id(), createDescriptiveError(err, resp))
 		}
 		updatedClusterJson, err := json.Marshal(updatedCluster)
 		if err != nil {
-			return diag.Errorf("error updating Kafka Cluster %q: error marshaling %#v to json: %s", d.Id(), updatedCluster, createDescriptiveError(err))
+			return diag.Errorf("error updating Kafka Cluster %q: error marshaling %#v to json: %s", d.Id(), updatedCluster, createDescriptiveError(err, resp))
 		}
 		tflog.Debug(ctx, fmt.Sprintf("Updated Kafka Cluster %q: %s", d.Id(), updatedClusterJson), map[string]interface{}{kafkaClusterLoggingKey: d.Id()})
 	}
@@ -385,29 +385,29 @@ func kafkaCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Kafka Cluster: %s", createClusterRequestJson))
 
-	createdKafkaCluster, _, err := executeKafkaCreate(c.cmkApiContext(ctx), c, &createClusterRequest)
+	createdKafkaCluster, resp, err := executeKafkaCreate(c.cmkApiContext(ctx), c, &createClusterRequest)
 	if err != nil {
-		return diag.Errorf("error creating Kafka Cluster %q: %s", displayName, createDescriptiveError(err))
+		return diag.Errorf("error creating Kafka Cluster %q: %s", displayName, createDescriptiveError(err, resp))
 	}
 	d.SetId(createdKafkaCluster.GetId())
 
 	if err := waitForKafkaClusterToProvision(c.cmkApiContext(ctx), c, environmentId, d.Id(), clusterType); err != nil {
-		return diag.Errorf("error waiting for Kafka Cluster %q to provision: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error waiting for Kafka Cluster %q to provision: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
-	environment, _, err := executeEnvironmentRead(c.orgApiContext(ctx), c, environmentId)
+	environment, resp, err := executeEnvironmentRead(c.orgApiContext(ctx), c, environmentId)
 	if err != nil {
-		return diag.Errorf("error reading Environment %q: %s", environmentId, createDescriptiveError(err))
+		return diag.Errorf("error reading Environment %q: %s", environmentId, createDescriptiveError(err, resp))
 	}
 	if environment.StreamGovernanceConfig != nil {
 		if err := waitForAnySchemaRegistryClusterToProvision(c.srcmApiContext(ctx), c, environmentId); err != nil {
-			return diag.Errorf("error waiting for Schema Registry Cluster to provision: %s", createDescriptiveError(err))
+			return diag.Errorf("error waiting for Schema Registry Cluster to provision: %s", createDescriptiveError(err, resp))
 		}
 	}
 
 	createdKafkaClusterJson, err := json.Marshal(createdKafkaCluster)
 	if err != nil {
-		return diag.Errorf("error creating Kafka Cluster %q: error marshaling %#v to json: %s", d.Id(), createdKafkaCluster, createDescriptiveError(err))
+		return diag.Errorf("error creating Kafka Cluster %q: error marshaling %#v to json: %s", d.Id(), createdKafkaCluster, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating Kafka Cluster %q: %s", d.Id(), createdKafkaClusterJson), map[string]interface{}{kafkaClusterLoggingKey: d.Id()})
 
@@ -473,14 +473,14 @@ func kafkaDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
 
 	req := c.cmkClient.ClustersCmkV2Api.DeleteCmkV2Cluster(c.cmkApiContext(ctx), d.Id()).Environment(environmentId)
-	_, err := req.Execute()
+	resp, err := req.Execute()
 
 	if err != nil {
-		return diag.Errorf("error deleting Kafka Cluster %q: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error deleting Kafka Cluster %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	if err := waitForKafkaClusterToBeDeleted(c.cmkApiContext(ctx), c, environmentId, d.Id()); err != nil {
-		return diag.Errorf("error waiting for Kafka Cluster %q to be deleted: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error waiting for Kafka Cluster %q to be deleted: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished deleting Kafka Cluster %q", d.Id()), map[string]interface{}{kafkaClusterLoggingKey: d.Id()})
@@ -534,7 +534,7 @@ func readKafkaClusterAndSetAttributes(ctx context.Context, d *schema.ResourceDat
 
 	cluster, resp, err := executeKafkaRead(c.cmkApiContext(ctx), c, environmentId, clusterId)
 	if err != nil {
-		tflog.Warn(ctx, fmt.Sprintf("Error reading Kafka Cluster %q: %s", d.Id(), createDescriptiveError(err)), map[string]interface{}{kafkaClusterLoggingKey: d.Id()})
+		tflog.Warn(ctx, fmt.Sprintf("Error reading Kafka Cluster %q: %s", d.Id(), createDescriptiveError(err, resp)), map[string]interface{}{kafkaClusterLoggingKey: d.Id()})
 
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
 		if isResourceNotFound && !d.IsNewResource() {
@@ -547,7 +547,7 @@ func readKafkaClusterAndSetAttributes(ctx context.Context, d *schema.ResourceDat
 	}
 	clusterJson, err := json.Marshal(cluster)
 	if err != nil {
-		return nil, fmt.Errorf("error reading Kafka Cluster %q: error marshaling %#v to json: %s", clusterId, cluster, createDescriptiveError(err))
+		return nil, fmt.Errorf("error reading Kafka Cluster %q: error marshaling %#v to json: %s", clusterId, cluster, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Kafka Cluster %q: %s", d.Id(), clusterJson), map[string]interface{}{kafkaClusterLoggingKey: d.Id()})
 

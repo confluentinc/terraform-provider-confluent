@@ -120,9 +120,9 @@ func loadIdentityProviders(ctx context.Context, c *Client) ([]v2.IamV2IdentityPr
 	allIdentityProvidersAreCollected := false
 	pageToken := ""
 	for !allIdentityProvidersAreCollected {
-		identityProviderPageList, _, err := executeListIdentityProviders(ctx, c, pageToken)
+		identityProviderPageList, resp, err := executeListIdentityProviders(ctx, c, pageToken)
 		if err != nil {
-			return nil, fmt.Errorf("error reading Identity Providers: %s", createDescriptiveError(err))
+			return nil, fmt.Errorf("error reading Identity Providers: %s", createDescriptiveError(err, resp))
 		}
 		identityProviders = append(identityProviders, identityProviderPageList.GetData()...)
 
@@ -136,7 +136,7 @@ func loadIdentityProviders(ctx context.Context, c *Client) ([]v2.IamV2IdentityPr
 			} else {
 				pageToken, err = extractPageToken(nextPageUrlString)
 				if err != nil {
-					return nil, fmt.Errorf("error reading Identity Providers: %s", createDescriptiveError(err))
+					return nil, fmt.Errorf("error reading Identity Providers: %s", createDescriptiveError(err, resp))
 				}
 			}
 		} else {
@@ -158,13 +158,13 @@ func identityProviderDataSourceReadUsingId(ctx context.Context, d *schema.Resour
 	tflog.Debug(ctx, fmt.Sprintf("Reading Identity Provider %q=%q", paramId, identityProviderId), map[string]interface{}{identityProviderLoggingKey: identityProviderId})
 
 	c := meta.(*Client)
-	identityProvider, _, err := executeIdentityProviderRead(c.oidcApiContext(ctx), c, identityProviderId)
+	identityProvider, resp, err := executeIdentityProviderRead(c.oidcApiContext(ctx), c, identityProviderId)
 	if err != nil {
-		return diag.Errorf("error reading Identity Provider %q: %s", identityProviderId, createDescriptiveError(err))
+		return diag.Errorf("error reading Identity Provider %q: %s", identityProviderId, createDescriptiveError(err, resp))
 	}
 	identityProviderJson, err := json.Marshal(identityProvider)
 	if err != nil {
-		return diag.Errorf("error reading Identity Provider %q: error marshaling %#v to json: %s", identityProviderId, identityProvider, createDescriptiveError(err))
+		return diag.Errorf("error reading Identity Provider %q: error marshaling %#v to json: %s", identityProviderId, identityProvider, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Identity Provider %q: %s", identityProviderId, identityProviderJson), map[string]interface{}{identityProviderLoggingKey: identityProviderId})
 

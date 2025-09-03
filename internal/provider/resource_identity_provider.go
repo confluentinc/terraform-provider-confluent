@@ -110,15 +110,15 @@ func identityProviderUpdate(ctx context.Context, d *schema.ResourceData, meta in
 	tflog.Debug(ctx, fmt.Sprintf("Updating Identity Provider %q: %s", d.Id(), updateIdentityProviderRequestJson), map[string]interface{}{identityProviderLoggingKey: d.Id()})
 
 	c := meta.(*Client)
-	updatedIdentityProvider, _, err := c.oidcClient.IdentityProvidersIamV2Api.UpdateIamV2IdentityProvider(c.oidcApiContext(ctx), d.Id()).IamV2IdentityProvider(*updateIdentityProviderRequest).Execute()
+	updatedIdentityProvider, resp, err := c.oidcClient.IdentityProvidersIamV2Api.UpdateIamV2IdentityProvider(c.oidcApiContext(ctx), d.Id()).IamV2IdentityProvider(*updateIdentityProviderRequest).Execute()
 
 	if err != nil {
-		return diag.Errorf("error updating Identity Provider %q: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error updating Identity Provider %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	updatedIdentityProviderJson, err := json.Marshal(updatedIdentityProvider)
 	if err != nil {
-		return diag.Errorf("error updating Identity Provider %q: error marshaling %#v to json: %s", d.Id(), updatedIdentityProvider, createDescriptiveError(err))
+		return diag.Errorf("error updating Identity Provider %q: error marshaling %#v to json: %s", d.Id(), updatedIdentityProvider, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished updating Identity Provider %q: %s", d.Id(), updatedIdentityProviderJson), map[string]interface{}{identityProviderLoggingKey: d.Id()})
 
@@ -146,15 +146,15 @@ func identityProviderCreate(ctx context.Context, d *schema.ResourceData, meta in
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Identity Provider: %s", createIdentityProviderRequestJson))
 
-	createdIdentityProvider, _, err := executeIdentityProviderCreate(c.oidcApiContext(ctx), c, createIdentityProviderRequest)
+	createdIdentityProvider, resp, err := executeIdentityProviderCreate(c.oidcApiContext(ctx), c, createIdentityProviderRequest)
 	if err != nil {
-		return diag.Errorf("error creating Identity Provider: %s", createDescriptiveError(err))
+		return diag.Errorf("error creating Identity Provider: %s", createDescriptiveError(err, resp))
 	}
 	d.SetId(createdIdentityProvider.GetId())
 
 	createdIdentityProviderJson, err := json.Marshal(createdIdentityProvider)
 	if err != nil {
-		return diag.Errorf("error creating Identity Provider: %q: error marshaling %#v to json: %s", createdIdentityProvider.GetId(), createdIdentityProvider, createDescriptiveError(err))
+		return diag.Errorf("error creating Identity Provider: %q: error marshaling %#v to json: %s", createdIdentityProvider.GetId(), createdIdentityProvider, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating Identity Provider %q: %s", d.Id(), createdIdentityProviderJson), map[string]interface{}{identityProviderLoggingKey: d.Id()})
 
@@ -171,10 +171,10 @@ func identityProviderDelete(ctx context.Context, d *schema.ResourceData, meta in
 	c := meta.(*Client)
 
 	req := c.oidcClient.IdentityProvidersIamV2Api.DeleteIamV2IdentityProvider(c.oidcApiContext(ctx), d.Id())
-	_, err := req.Execute()
+	resp, err := req.Execute()
 
 	if err != nil {
-		return diag.Errorf("error deleting Identity Provider %q: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error deleting Identity Provider %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished deleting Identity Provider %q", d.Id()), map[string]interface{}{identityProviderLoggingKey: d.Id()})
@@ -187,7 +187,7 @@ func identityProviderRead(ctx context.Context, d *schema.ResourceData, meta inte
 	c := meta.(*Client)
 	identityProvider, resp, err := executeIdentityProviderRead(c.oidcApiContext(ctx), c, d.Id())
 	if err != nil {
-		tflog.Warn(ctx, fmt.Sprintf("Error reading Identity Provider %q: %s", d.Id(), createDescriptiveError(err)), map[string]interface{}{identityProviderLoggingKey: d.Id()})
+		tflog.Warn(ctx, fmt.Sprintf("Error reading Identity Provider %q: %s", d.Id(), createDescriptiveError(err, resp)), map[string]interface{}{identityProviderLoggingKey: d.Id()})
 
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
 		if isResourceNotFound && !d.IsNewResource() {
@@ -196,11 +196,11 @@ func identityProviderRead(ctx context.Context, d *schema.ResourceData, meta inte
 			return nil
 		}
 
-		return diag.FromErr(createDescriptiveError(err))
+		return diag.FromErr(createDescriptiveError(err, resp))
 	}
 	identityProviderJson, err := json.Marshal(identityProvider)
 	if err != nil {
-		return diag.Errorf("error reading Identity Provider %q: error marshaling %#v to json: %s", d.Id(), identityProvider, createDescriptiveError(err))
+		return diag.Errorf("error reading Identity Provider %q: error marshaling %#v to json: %s", d.Id(), identityProvider, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Identity Provider %q: %s", d.Id(), identityProviderJson), map[string]interface{}{identityProviderLoggingKey: d.Id()})
 

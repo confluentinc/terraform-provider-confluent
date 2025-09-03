@@ -79,15 +79,15 @@ func environmentUpdate(ctx context.Context, d *schema.ResourceData, meta interfa
 	tflog.Debug(ctx, fmt.Sprintf("Updating Environment %q: %s", d.Id(), updateEnvironmentRequestJson), map[string]interface{}{environmentLoggingKey: d.Id()})
 
 	c := meta.(*Client)
-	updatedEnvironment, _, err := c.orgClient.EnvironmentsOrgV2Api.UpdateOrgV2Environment(c.orgApiContext(ctx), d.Id()).OrgV2Environment(*updateEnvironmentRequest).Execute()
+	updatedEnvironment, resp, err := c.orgClient.EnvironmentsOrgV2Api.UpdateOrgV2Environment(c.orgApiContext(ctx), d.Id()).OrgV2Environment(*updateEnvironmentRequest).Execute()
 
 	if err != nil {
-		return diag.Errorf("error updating Environment %q: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error updating Environment %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	updatedEnvironmentJson, err := json.Marshal(updatedEnvironment)
 	if err != nil {
-		return diag.Errorf("error updating Environment %q: error marshaling %#v to json: %s", d.Id(), updatedEnvironment, createDescriptiveError(err))
+		return diag.Errorf("error updating Environment %q: error marshaling %#v to json: %s", d.Id(), updatedEnvironment, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished updating Environment %q: %s", d.Id(), updatedEnvironmentJson), map[string]interface{}{environmentLoggingKey: d.Id()})
 
@@ -110,15 +110,15 @@ func environmentCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Environment: %s", createEnvironmentRequestJson))
 
-	createdEnvironment, _, err := executeEnvironmentCreate(c.orgApiContext(ctx), c, createEnvironmentRequest)
+	createdEnvironment, resp, err := executeEnvironmentCreate(c.orgApiContext(ctx), c, createEnvironmentRequest)
 	if err != nil {
-		return diag.Errorf("error creating Environment %q: %s", displayName, createDescriptiveError(err))
+		return diag.Errorf("error creating Environment %q: %s", displayName, createDescriptiveError(err, resp))
 	}
 	d.SetId(createdEnvironment.GetId())
 
 	createdEnvironmentJson, err := json.Marshal(createdEnvironment)
 	if err != nil {
-		return diag.Errorf("error creating Environment %q: error marshaling %#v to json: %s", d.Id(), createdEnvironment, createDescriptiveError(err))
+		return diag.Errorf("error creating Environment %q: error marshaling %#v to json: %s", d.Id(), createdEnvironment, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating Environment %q: %s", d.Id(), createdEnvironmentJson), map[string]interface{}{environmentLoggingKey: d.Id()})
 
@@ -135,10 +135,10 @@ func environmentDelete(ctx context.Context, d *schema.ResourceData, meta interfa
 	c := meta.(*Client)
 
 	req := c.orgClient.EnvironmentsOrgV2Api.DeleteOrgV2Environment(c.orgApiContext(ctx), d.Id())
-	_, err := req.Execute()
+	resp, err := req.Execute()
 
 	if err != nil {
-		return diag.Errorf("error deleting Environment %q: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error deleting Environment %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished deleting Environment %q", d.Id()), map[string]interface{}{environmentLoggingKey: d.Id()})
@@ -156,7 +156,7 @@ func environmentRead(ctx context.Context, d *schema.ResourceData, meta interface
 	c := meta.(*Client)
 	environment, resp, err := executeEnvironmentRead(c.orgApiContext(ctx), c, d.Id())
 	if err != nil {
-		tflog.Warn(ctx, fmt.Sprintf("Error reading Environment %q: %s", d.Id(), createDescriptiveError(err)), map[string]interface{}{environmentLoggingKey: d.Id()})
+		tflog.Warn(ctx, fmt.Sprintf("Error reading Environment %q: %s", d.Id(), createDescriptiveError(err, resp)), map[string]interface{}{environmentLoggingKey: d.Id()})
 
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
 		if isResourceNotFound && !d.IsNewResource() {
@@ -165,11 +165,11 @@ func environmentRead(ctx context.Context, d *schema.ResourceData, meta interface
 			return nil
 		}
 
-		return diag.FromErr(createDescriptiveError(err))
+		return diag.FromErr(createDescriptiveError(err, resp))
 	}
 	environmentJson, err := json.Marshal(environment)
 	if err != nil {
-		return diag.Errorf("error reading Environment %q: error marshaling %#v to json: %s", d.Id(), environment, createDescriptiveError(err))
+		return diag.Errorf("error reading Environment %q: error marshaling %#v to json: %s", d.Id(), environment, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Environment %q: %s", d.Id(), environmentJson), map[string]interface{}{environmentLoggingKey: d.Id()})
 

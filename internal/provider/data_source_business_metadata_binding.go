@@ -100,9 +100,9 @@ func businessMetadataBindingDataSourceRead(ctx context.Context, d *schema.Resour
 	catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 	request := catalogRestClient.apiClient.EntityV1Api.GetBusinessMetadata(catalogRestClient.dataCatalogApiContext(ctx), entityType, entityName)
 
-	businessMetadataBindings, _, err := request.Execute()
+	businessMetadataBindings, resp, err := request.Execute()
 	if err != nil {
-		return diag.Errorf("error reading Business Metadata Binding %q: %s", businessMetadataBindingId, createDescriptiveError(err))
+		return diag.Errorf("error reading Business Metadata Binding %q: %s", businessMetadataBindingId, createDescriptiveError(err, resp))
 	}
 	businessMetadataBinding, err := findBusinessMetadataBindingByBusinessMetadataName(businessMetadataBindings, businessMetadataName)
 	if err != nil {
@@ -111,7 +111,7 @@ func businessMetadataBindingDataSourceRead(ctx context.Context, d *schema.Resour
 
 	businessMetadataBindingJson, err := json.Marshal(businessMetadataBinding)
 	if err != nil {
-		return diag.Errorf("error reading Business Metadata Binding %q: error marshaling %#v to json: %s", businessMetadataBindingId, businessMetadataBinding, createDescriptiveError(err))
+		return diag.Errorf("error reading Business Metadata Binding %q: error marshaling %#v to json: %s", businessMetadataBindingId, businessMetadataBinding, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Business Metadata Binding %q: %s", businessMetadataBindingId, businessMetadataBindingJson), map[string]interface{}{businessMetadataBindingLoggingKey: businessMetadataBindingId})
 

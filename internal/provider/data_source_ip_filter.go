@@ -69,13 +69,13 @@ func ipFilterDataSourceRead(ctx context.Context, d *schema.ResourceData, meta in
 
 	c := meta.(*Client)
 	request := c.iamIPClient.IPFiltersIamV2Api.GetIamV2IpFilter(c.iamIPApiContext(ctx), ipFilterID)
-	ipFilter, _, err := c.iamIPClient.IPFiltersIamV2Api.GetIamV2IpFilterExecute(request)
+	ipFilter, resp, err := c.iamIPClient.IPFiltersIamV2Api.GetIamV2IpFilterExecute(request)
 	if err != nil {
-		return diag.Errorf("error reading IP Filter %q: %s", ipFilterID, createDescriptiveError(err))
+		return diag.Errorf("error reading IP Filter %q: %s", ipFilterID, createDescriptiveError(err, resp))
 	}
 	ipFilterJson, err := json.Marshal(ipFilter)
 	if err != nil {
-		return diag.Errorf("error reading IP Filter %q: error marshaling %#v to json: %s", ipFilterID, ipFilter, createDescriptiveError(err))
+		return diag.Errorf("error reading IP Filter %q: error marshaling %#v to json: %s", ipFilterID, ipFilter, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched IP Filter %q: %s", ipFilterID, ipFilterJson), map[string]interface{}{ipFilterLoggingKey: ipFilterID})
 

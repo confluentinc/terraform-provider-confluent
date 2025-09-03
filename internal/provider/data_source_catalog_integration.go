@@ -72,13 +72,13 @@ func catalogIntegrationDataSourceRead(ctx context.Context, d *schema.ResourceDat
 	tableflowRestClient := c.tableflowRestClientFactory.CreateTableflowRestClient(tableflowApiKey, tableflowApiSecret, c.isTableflowMetadataSet, c.oauthToken, c.stsToken)
 
 	req := tableflowRestClient.apiClient.CatalogIntegrationsTableflowV1Api.GetTableflowV1CatalogIntegration(tableflowRestClient.apiContext(ctx), catalogIntegrationId).Environment(environmentId).SpecKafkaCluster(clusterId)
-	catalogIntegration, _, err := req.Execute()
+	catalogIntegration, resp, err := req.Execute()
 	if err != nil {
-		return diag.Errorf("error reading Catalog Integration %q: %s", catalogIntegrationId, createDescriptiveError(err))
+		return diag.Errorf("error reading Catalog Integration %q: %s", catalogIntegrationId, createDescriptiveError(err, resp))
 	}
 	catalogIntegrationJson, err := json.Marshal(catalogIntegration)
 	if err != nil {
-		return diag.Errorf("error reading Catalog Integration %q: error marshaling %#v to json: %s", catalogIntegrationId, catalogIntegration, createDescriptiveError(err))
+		return diag.Errorf("error reading Catalog Integration %q: error marshaling %#v to json: %s", catalogIntegrationId, catalogIntegration, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Catalog Integration %q: %s", catalogIntegrationId, catalogIntegrationJson), map[string]interface{}{catalogIntegrationKey: catalogIntegrationId})
 

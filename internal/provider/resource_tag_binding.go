@@ -121,9 +121,9 @@ func tagBindingCreate(ctx context.Context, d *schema.ResourceData, meta interfac
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Tag Binding: %s", createTagBindingRequestJson))
 
-	createdTagBinding, _, err := request.Execute()
+	createdTagBinding, resp, err := request.Execute()
 	if err != nil {
-		return diag.Errorf("error creating Tag Binding %s", createDescriptiveError(err))
+		return diag.Errorf("error creating Tag Binding %s", createDescriptiveError(err, resp))
 	}
 	if len(createdTagBinding) == 0 {
 		return diag.Errorf("error creating Tag Binding %q: empty response", tagBindingId)
@@ -134,7 +134,7 @@ func tagBindingCreate(ctx context.Context, d *schema.ResourceData, meta interfac
 	d.SetId(tagBindingId)
 
 	if err := waitForTagBindingToProvision(catalogRestClient.dataCatalogApiContext(ctx), catalogRestClient, tagBindingId, tagName, entityName, entityType); err != nil {
-		return diag.Errorf("error waiting for Tag Binding %q to provision: %s", tagBindingId, createDescriptiveError(err))
+		return diag.Errorf("error waiting for Tag Binding %q to provision: %s", tagBindingId, createDescriptiveError(err, resp))
 	}
 
 	// https://github.com/confluentinc/terraform-provider-confluent/issues/282 to resolve "Root object was present, but now absent."
@@ -184,7 +184,7 @@ func readTagBindingAndSetAttributes(ctx context.Context, d *schema.ResourceData,
 	request := catalogRestClient.apiClient.EntityV1Api.GetTags(catalogRestClient.dataCatalogApiContext(ctx), entityType, entityName)
 	tagBindings, resp, err := request.Execute()
 	if err != nil {
-		tflog.Warn(ctx, fmt.Sprintf("Error reading Tag Binding %q: %s", tagBindingId, createDescriptiveError(err)), map[string]interface{}{tagBindingLoggingKey: tagBindingId})
+		tflog.Warn(ctx, fmt.Sprintf("Error reading Tag Binding %q: %s", tagBindingId, createDescriptiveError(err, resp)), map[string]interface{}{tagBindingLoggingKey: tagBindingId})
 
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
 		if isResourceNotFound && !d.IsNewResource() {
@@ -208,7 +208,7 @@ func readTagBindingAndSetAttributes(ctx context.Context, d *schema.ResourceData,
 
 	tagBindingJson, err := json.Marshal(tagBinding)
 	if err != nil {
-		return nil, fmt.Errorf("error reading Tag Binding %q: error marshaling %#v to json: %s", tagBindingId, tagBindingJson, createDescriptiveError(err))
+		return nil, fmt.Errorf("error reading Tag Binding %q: error marshaling %#v to json: %s", tagBindingId, tagBindingJson, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Tag Binding %q: %s", tagBindingId, tagBindingJson), map[string]interface{}{tagBindingLoggingKey: tagBindingId})
 

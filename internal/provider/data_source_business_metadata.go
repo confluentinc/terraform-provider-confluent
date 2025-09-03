@@ -127,15 +127,15 @@ func businessMetadataDataSourceRead(ctx context.Context, d *schema.ResourceData,
 func businessMetadataDataSourceReadUsingName(ctx context.Context, d *schema.ResourceData, meta interface{}, restEndpoint string, clusterId string, clusterApiKey string, clusterApiSecret string, businessMetadataName string) diag.Diagnostics {
 	catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 	request := catalogRestClient.apiClient.TypesV1Api.GetBusinessMetadataDefByName(catalogRestClient.dataCatalogApiContext(ctx), businessMetadataName)
-	businessMetadata, _, err := request.Execute()
+	businessMetadata, resp, err := request.Execute()
 	businessMetadataId := createBusinessMetadataId(clusterId, businessMetadataName)
 
 	if err != nil {
-		return diag.Errorf("error reading Business Metadata %q: %s", businessMetadataId, createDescriptiveError(err))
+		return diag.Errorf("error reading Business Metadata %q: %s", businessMetadataId, createDescriptiveError(err, resp))
 	}
 	businessMetadataJson, err := json.Marshal(businessMetadata)
 	if err != nil {
-		return diag.Errorf("error reading Business Metadata %q: error marshaling %#v to json: %s", businessMetadataId, businessMetadata, createDescriptiveError(err))
+		return diag.Errorf("error reading Business Metadata %q: error marshaling %#v to json: %s", businessMetadataId, businessMetadata, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Business Metadata %q: %s", businessMetadataId, businessMetadataJson), map[string]interface{}{businessMetadataLoggingKey: businessMetadataId})
 

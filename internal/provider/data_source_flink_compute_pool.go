@@ -125,13 +125,13 @@ func computePoolDataSourceReadUsingId(ctx context.Context, d *schema.ResourceDat
 	tflog.Debug(ctx, fmt.Sprintf("Reading Flink Compute Pool %q=%q", paramId, computePoolId), map[string]interface{}{computePoolLoggingKey: computePoolId})
 
 	c := meta.(*Client)
-	computePool, _, err := executeComputePoolRead(c.fcpmApiContext(ctx), c, environmentId, computePoolId)
+	computePool, resp, err := executeComputePoolRead(c.fcpmApiContext(ctx), c, environmentId, computePoolId)
 	if err != nil {
-		return diag.Errorf("error reading Flink Compute Pool %q: %s", computePoolId, createDescriptiveError(err))
+		return diag.Errorf("error reading Flink Compute Pool %q: %s", computePoolId, createDescriptiveError(err, resp))
 	}
 	computePoolJson, err := json.Marshal(computePool)
 	if err != nil {
-		return diag.Errorf("error reading Flink Compute Pool %q: error marshaling %#v to json: %s", computePoolId, computePool, createDescriptiveError(err))
+		return diag.Errorf("error reading Flink Compute Pool %q: error marshaling %#v to json: %s", computePoolId, computePool, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Flink Compute Pool %q: %s", computePoolId, computePoolJson), map[string]interface{}{computePoolLoggingKey: computePoolId})
 
@@ -157,9 +157,9 @@ func loadComputePools(ctx context.Context, c *Client, environmentId string) ([]f
 	allComputePoolsAreCollected := false
 	pageToken := ""
 	for !allComputePoolsAreCollected {
-		computePoolsPageList, _, err := executeListComputePools(ctx, c, environmentId, pageToken)
+		computePoolsPageList, resp, err := executeListComputePools(ctx, c, environmentId, pageToken)
 		if err != nil {
-			return nil, fmt.Errorf("error reading ComputePools: %s", createDescriptiveError(err))
+			return nil, fmt.Errorf("error reading ComputePools: %s", createDescriptiveError(err, resp))
 		}
 		computePools = append(computePools, computePoolsPageList.GetData()...)
 
@@ -173,7 +173,7 @@ func loadComputePools(ctx context.Context, c *Client, environmentId string) ([]f
 			} else {
 				pageToken, err = extractPageToken(nextPageUrlString)
 				if err != nil {
-					return nil, fmt.Errorf("error reading ComputePools: %s", createDescriptiveError(err))
+					return nil, fmt.Errorf("error reading ComputePools: %s", createDescriptiveError(err, resp))
 				}
 			}
 		} else {

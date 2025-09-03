@@ -132,13 +132,13 @@ func privateLinkAttachmentDataSourceRead(ctx context.Context, d *schema.Resource
 
 	c := meta.(*Client)
 	request := c.netPLClient.PrivateLinkAttachmentsNetworkingV1Api.GetNetworkingV1PrivateLinkAttachment(c.netPLApiContext(ctx), plattId).Environment(environmentId)
-	platt, _, err := c.netPLClient.PrivateLinkAttachmentsNetworkingV1Api.GetNetworkingV1PrivateLinkAttachmentExecute(request)
+	platt, resp, err := c.netPLClient.PrivateLinkAttachmentsNetworkingV1Api.GetNetworkingV1PrivateLinkAttachmentExecute(request)
 	if err != nil {
-		return diag.Errorf("error reading Private Link Attachment %q: %s", plattId, createDescriptiveError(err))
+		return diag.Errorf("error reading Private Link Attachment %q: %s", plattId, createDescriptiveError(err, resp))
 	}
 	plattJson, err := json.Marshal(platt)
 	if err != nil {
-		return diag.Errorf("error reading Private Link Attachment %q: error marshaling %#v to json: %s", plattId, platt, createDescriptiveError(err))
+		return diag.Errorf("error reading Private Link Attachment %q: error marshaling %#v to json: %s", plattId, platt, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Private Link Attachment %q: %s", plattId, plattJson), map[string]interface{}{privateLinkAttachmentLoggingKey: plattId})
 

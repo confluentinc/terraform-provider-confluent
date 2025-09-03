@@ -496,9 +496,9 @@ func schemaValidateCheck(ctx context.Context, c *SchemaRegistryRestClient, creat
 		return fmt.Errorf("error validating Schema: error marshaling %#v to json: %s", createSchemaRequest, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Validating new Schema: %s", createSchemaRequestJson))
-	validationResponse, _, err := executeSchemaValidate(ctx, c, createSchemaRequest, subjectName)
+	validationResponse, resp, err := executeSchemaValidate(ctx, c, createSchemaRequest, subjectName)
 	if err != nil {
-		return fmt.Errorf("error validating Schema: error sending validation request: %s", createDescriptiveError(err))
+		return fmt.Errorf("error validating Schema: error sending validation request: %s", createDescriptiveError(err, resp))
 	}
 	// Validation has failed
 	if !validationResponse.GetIsCompatible() {
@@ -546,7 +546,7 @@ func schemaLookupByNormalize(ctx context.Context, c *SchemaRegistryRestClient, c
 	}
 
 	if err != nil {
-		return nil, false, createDescriptiveError(err)
+		return nil, false, createDescriptiveError(err, resp)
 	}
 
 	return &srSchema, true, nil
@@ -612,9 +612,9 @@ func schemaCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Validating new Schema: %s", createSchemaRequestJson))
-	validationResponse, _, err := executeSchemaValidate(ctx, schemaRegistryRestClient, createSchemaRequest, subjectName)
+	validationResponse, resp, err := executeSchemaValidate(ctx, schemaRegistryRestClient, createSchemaRequest, subjectName)
 	if err != nil {
-		return diag.Errorf("error creating Schema: error sending validation request: %s", createDescriptiveError(err))
+		return diag.Errorf("error creating Schema: error sending validation request: %s", createDescriptiveError(err, resp))
 	}
 	// Validation has failed
 	if !validationResponse.GetIsCompatible() {
@@ -633,10 +633,10 @@ func schemaCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Schema: %s", createSchemaRequestJson))
 
-	registeredSchema, _, err := executeSchemaCreate(ctx, schemaRegistryRestClient, createSchemaRequest, subjectName)
+	registeredSchema, resp, err := executeSchemaCreate(ctx, schemaRegistryRestClient, createSchemaRequest, subjectName)
 
 	if err != nil {
-		return diag.Errorf("error creating Schema: %s", createDescriptiveError(err))
+		return diag.Errorf("error creating Schema: %s", createDescriptiveError(err, resp))
 	}
 
 	// Save the schema content
@@ -682,17 +682,17 @@ func schemaDelete(ctx context.Context, d *schema.ResourceData, meta interface{})
 	schemaVersion := d.Get(paramVersion).(int)
 
 	// Both soft and hard delete requires a user to run a soft delete first
-	err = executeSchemaDelete(schemaRegistryRestClient.apiContext(ctx), schemaRegistryRestClient, subjectName, strconv.Itoa(schemaVersion), false)
+	resp, err := executeSchemaDelete(schemaRegistryRestClient.apiContext(ctx), schemaRegistryRestClient, subjectName, strconv.Itoa(schemaVersion), false)
 
 	if err != nil {
-		return diag.Errorf("error %s deleting Schema %q: %s", deletionType, d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error %s deleting Schema %q: %s", deletionType, d.Id(), createDescriptiveError(err, resp))
 	}
 
 	if isHardDeleteEnabled {
-		err = executeSchemaDelete(schemaRegistryRestClient.apiContext(ctx), schemaRegistryRestClient, subjectName, strconv.Itoa(schemaVersion), true)
+		resp, err := executeSchemaDelete(schemaRegistryRestClient.apiContext(ctx), schemaRegistryRestClient, subjectName, strconv.Itoa(schemaVersion), true)
 
 		if err != nil {
-			return diag.Errorf("error %s deleting Schema %q: %s", deletionType, d.Id(), createDescriptiveError(err))
+			return diag.Errorf("error %s deleting Schema %q: %s", deletionType, d.Id(), createDescriptiveError(err, resp))
 		}
 	}
 
@@ -877,13 +877,13 @@ func loadSchema(ctx context.Context, d *schema.ResourceData, c *SchemaRegistryRe
 	//  [{"subject": "test2", "version": 5, "id": 100004, "schema": "{\"type\":\"record\",...}]}"},
 	//   {"subject": "test2", "version": 6, "id": 100006, "schema": "{\"type\":\"record\",...}]}"}]
 	// Search for all subjects by filtering subjects based on subject name prefix in all contexts.
-	schemas, _, err := c.apiClient.SchemasV1Api.GetSchemas(c.apiContext(ctx)).SubjectPrefix(subjectName).Execute()
+	schemas, resp, err := c.apiClient.SchemasV1Api.GetSchemas(c.apiContext(ctx)).SubjectPrefix(subjectName).Execute()
 	if err != nil {
-		return nil, false, fmt.Errorf("error loading Schemas: %s", createDescriptiveError(err))
+		return nil, false, fmt.Errorf("error loading Schemas: %s", createDescriptiveError(err, resp))
 	}
 	schemasJson, err := json.Marshal(schemas)
 	if err != nil {
-		return nil, false, fmt.Errorf("error marshaling %#v to json: %s", schemas, createDescriptiveError(err))
+		return nil, false, fmt.Errorf("error marshaling %#v to json: %s", schemas, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Schemas %q: %s", d.Id(), schemasJson), map[string]interface{}{schemaLoggingKey: d.Id()})
 	srSchema, exists := findSchemaById(schemas, schemaIdentifier, subjectName)
@@ -1007,17 +1007,17 @@ func executeSchemaCreate(ctx context.Context, c *SchemaRegistryRestClient, reque
 	return c.apiClient.SubjectsV1Api.Register(c.apiContext(ctx), subjectName).RegisterSchemaRequest(*requestData).Execute()
 }
 
-func executeSchemaDelete(ctx context.Context, c *SchemaRegistryRestClient, subjectName, schemaVersion string, isHardDelete bool) error {
-	_, _, err := c.apiClient.SubjectsV1Api.DeleteSchemaVersion(c.apiContext(ctx), subjectName, schemaVersion).Permanent(isHardDelete).Execute()
+func executeSchemaDelete(ctx context.Context, c *SchemaRegistryRestClient, subjectName, schemaVersion string, isHardDelete bool) (*http.Response, error) {
+	_, resp, err := c.apiClient.SubjectsV1Api.DeleteSchemaVersion(c.apiContext(ctx), subjectName, schemaVersion).Permanent(isHardDelete).Execute()
 	if err != nil {
 		if isHardDelete {
-			return fmt.Errorf("error hard deleting Schema: %s", createDescriptiveError(err))
+			return resp, fmt.Errorf("error hard deleting Schema: %s", createDescriptiveError(err, resp))
 		} else {
-			return fmt.Errorf("error soft deleting Schema: %s", createDescriptiveError(err))
+			return resp, fmt.Errorf("error soft deleting Schema: %s", createDescriptiveError(err, resp))
 		}
 	} else {
 		time.Sleep(schemaRegistryAPIWaitAfterCreateOrDelete)
-		return nil
+		return resp, nil
 	}
 }
 
@@ -1148,14 +1148,14 @@ func loadAllSchemas(ctx context.Context, client *Client) (InstanceIdsToNameMap, 
 
 	schemaRegistryRestClient := client.schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(client.schemaRegistryRestEndpoint, client.schemaRegistryClusterId, client.schemaRegistryApiKey, client.schemaRegistryApiSecret, true, client.oauthToken)
 
-	subjects, _, err := schemaRegistryRestClient.apiClient.SubjectsV1Api.List(schemaRegistryRestClient.apiContext(ctx)).Execute()
+	subjects, resp, err := schemaRegistryRestClient.apiClient.SubjectsV1Api.List(schemaRegistryRestClient.apiContext(ctx)).Execute()
 	if err != nil {
-		tflog.Warn(ctx, fmt.Sprintf("Error reading Subjects for Schema Registry Cluster %q: %s", schemaRegistryRestClient.clusterId, createDescriptiveError(err)), map[string]interface{}{schemaRegistryClusterLoggingKey: schemaRegistryRestClient.clusterId})
-		return nil, diag.FromErr(createDescriptiveError(err))
+		tflog.Warn(ctx, fmt.Sprintf("Error reading Subjects for Schema Registry Cluster %q: %s", schemaRegistryRestClient.clusterId, createDescriptiveError(err, resp)), map[string]interface{}{schemaRegistryClusterLoggingKey: schemaRegistryRestClient.clusterId})
+		return nil, diag.FromErr(createDescriptiveError(err, resp))
 	}
 	subjectsJson, err := json.Marshal(subjects)
 	if err != nil {
-		return nil, diag.Errorf("error reading Subjects for Schema Registry Cluster %q: error marshaling %#v to json: %s", schemaRegistryRestClient.clusterId, subjects, createDescriptiveError(err))
+		return nil, diag.Errorf("error reading Subjects for Schema Registry Cluster %q: error marshaling %#v to json: %s", schemaRegistryRestClient.clusterId, subjects, createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Subjects for Schema Registry Cluster %q: %s", schemaRegistryRestClient.clusterId, subjectsJson), map[string]interface{}{schemaRegistryClusterLoggingKey: schemaRegistryRestClient.clusterId})
 
@@ -1163,12 +1163,12 @@ func loadAllSchemas(ctx context.Context, client *Client) (InstanceIdsToNameMap, 
 		// using schemaSr as schema collides with the package name
 		schemaSr, _, err := loadSchema(schemaRegistryRestClient.apiContext(ctx), &schema.ResourceData{}, schemaRegistryRestClient, subjectName, latestSchemaVersionAndPlaceholderForSchemaIdentifier)
 		if err != nil {
-			tflog.Warn(ctx, fmt.Sprintf("Error reading the latest Schema for Subject %q: %s", schemaSr.GetSubject(), createDescriptiveError(err)), map[string]interface{}{schemaRegistryClusterLoggingKey: schemaRegistryRestClient.clusterId})
-			return nil, diag.FromErr(createDescriptiveError(err))
+			tflog.Warn(ctx, fmt.Sprintf("Error reading the latest Schema for Subject %q: %s", schemaSr.GetSubject(), createDescriptiveError(err, resp)), map[string]interface{}{schemaRegistryClusterLoggingKey: schemaRegistryRestClient.clusterId})
+			return nil, diag.FromErr(createDescriptiveError(err, resp))
 		}
 		schemaJson, err := json.Marshal(schemaSr)
 		if err != nil {
-			return nil, diag.Errorf("error reading the latest Schema for Subject %q: error marshaling %#v to json: %s", schemaSr.GetSubject(), schemaSr, createDescriptiveError(err))
+			return nil, diag.Errorf("error reading the latest Schema for Subject %q: error marshaling %#v to json: %s", schemaSr.GetSubject(), schemaSr, createDescriptiveError(err, resp))
 		}
 		tflog.Debug(ctx, fmt.Sprintf("Fetched the latest Schema for Subject %q: %s", schemaSr.GetSubject(), schemaJson), map[string]interface{}{schemaRegistryClusterLoggingKey: schemaRegistryRestClient.clusterId})
 
