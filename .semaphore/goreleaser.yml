@@ -36,8 +36,8 @@ blocks:
             - export "GITHUB_TOKEN=$(gh auth token)"
             - cd terraform-provider-confluent*
             - curl https://goreleaser.com/static/run | GOROOT=/Users/semaphore/go VERSION=v1.25.1 bash -s -- build --config .goreleaser-darwin-fips.yml
-            - artifact push workflow dist/darwin-fips_darwin_amd64_v1
-            - artifact push workflow dist/darwin-fips_darwin_arm64
+            - artifact push workflow dist/darwin-fips_darwin_amd64_v1 --force
+            - artifact push workflow dist/darwin-fips_darwin_arm64 --force
   - name: "Draft a Release (Part 2)"
     dependencies: ["Draft a Release (Part 1)"]
     task:
