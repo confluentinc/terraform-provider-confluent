@@ -47,6 +47,7 @@ blocks:
             - sem-version go 1.24.4
             - export "GOPATH=$(go env GOPATH)"
             - export "GITHUB_TOKEN=$(gh auth token)"
+            - export "GPG_TTY=$(tty)"
             - >-
               export
               "SEMAPHORE_GIT_DIR=${GOPATH}/src/github.com/confluentinc/${SEMAPHORE_PROJECT_NAME}"
