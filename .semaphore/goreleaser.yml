@@ -47,7 +47,6 @@ blocks:
             - sem-version go 1.24.4
             - export "GOPATH=$(go env GOPATH)"
             - export "GITHUB_TOKEN=$(gh auth token)"
-            - export "GPG_TTY=$(tty)"
             - >-
               export
               "SEMAPHORE_GIT_DIR=${GOPATH}/src/github.com/confluentinc/${SEMAPHORE_PROJECT_NAME}"
@@ -72,4 +71,3 @@ blocks:
             - artifact pull workflow darwin-fips_darwin_arm64 --force
             - cd ..
             - curl https://goreleaser.com/static/run | DISTRIBUTION=pro VERSION=v1.25.1-pro bash -s -- release --config .goreleaser.yml --key $(vault kv get -field goreleaser_key v1/ci/kv/cli/release)
-            #2.39.0
