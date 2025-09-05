@@ -13,7 +13,8 @@
     "availability": "LOW",
     "cloud": "AWS",
     "config": {
-      "kind": "Enterprise"
+      "kind": "Enterprise",
+      "max_ecku": 5
     },
     "display_name": "TestCluster",
     "environment": {

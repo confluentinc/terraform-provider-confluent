@@ -130,7 +130,7 @@ func TestAccClusterWithoutSGPackage(t *testing.T) {
 		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckClusterConfig(mockServerUrl, paramBasicCluster),
+				Config: testAccCheckClusterConfig(mockServerUrl, paramBasicCluster, kafkaMaxEcku),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckClusterExists(fullKafkaResourceLabel),
 					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "id", kafkaClusterId),
@@ -141,7 +141,8 @@ func TestAccClusterWithoutSGPackage(t *testing.T) {
 					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "bootstrap_endpoint", kafkaBootstrapEndpoint),
 					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "cloud", kafkaCloud),
 					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "basic.#", "1"),
-					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "basic.0.%", "0"),
+					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "basic.0.%", "1"),
+					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "basic.0.max_ecku", "5"),
 					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "standard.#", "0"),
 					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "environment.#", "1"),
 					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "environment.0.id", testEnvironmentId),
@@ -152,7 +153,7 @@ func TestAccClusterWithoutSGPackage(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckClusterConfig(mockServerUrl, paramStandardCluster),
+				Config: testAccCheckClusterConfig(mockServerUrl, paramStandardCluster, kafkaMaxEckuUpdated),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckClusterExists(fullKafkaResourceLabel),
 					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "id", kafkaClusterId),
@@ -164,7 +165,9 @@ func TestAccClusterWithoutSGPackage(t *testing.T) {
 					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "basic.#", "0"),
 					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "enterprise.#", "0"),
 					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "freight.#", "0"),
-					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "standard.0.%", "0"),
+					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "standard.0.%", "1"),
+					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "standard.#", "1"),
+					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "standard.0.max_ecku", "3"),
 					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "standard.#", "1"),
 					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "display_name", kafkaDisplayName),
 					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "environment.#", "1"),
