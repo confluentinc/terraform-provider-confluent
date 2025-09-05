@@ -36,15 +36,15 @@ builds:
       - CGO_ENABLED=0
     # https://goreleaser.com/customization/build/#reproducible-builds
     mod_timestamp: '{{ .CommitTimestamp }}'
-  - id: darwin-fips
-    builder: prebuilt
-    goos:
-      - darwin
-    goarch:
-      - amd64
-      - arm64
-    prebuilt:
-      path: "prebuilt/darwin-fips_{{ .Os }}_{{ .Arch }}{{ with .Amd64 }}_{{ . }}{{ end }}/{{ .ProjectName }}_{{ .Version }}"
+#  - id: darwin-fips
+#    builder: prebuilt
+#    goos:
+#      - darwin
+#    goarch:
+#      - amd64
+#      - arm64
+#    prebuilt:
+#      path: "prebuilt/darwin-fips_{{ .Os }}_{{ .Arch }}{{ with .Amd64 }}_{{ . }}{{ end }}/{{ .ProjectName }}_{{ .Version }}"
   - binary: '{{ .ProjectName }}_{{ .Version }}'
     id: "linux-amd64-build"
     flags:
