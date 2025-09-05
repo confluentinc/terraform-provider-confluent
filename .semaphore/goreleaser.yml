@@ -40,6 +40,7 @@ blocks:
             - artifact push workflow dist/darwin-fips_darwin_amd64_v1 --force
             - artifact push workflow dist/darwin-fips_darwin_arm64 --force
   - name: "Draft a Release (Part 2)"
+    dependencies: []
     task:
       jobs:
         - name: goreleaser
