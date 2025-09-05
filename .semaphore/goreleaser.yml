@@ -5,7 +5,7 @@ agent:
     type: s1-prod-ubuntu24-04-amd64-1
 blocks:
   - name: "Draft a Release (Part 1)"
-    dependencies: ["Draft a Release (Part 1)"]
+    dependencies: []
     task:
       agent:
         machine:
@@ -39,7 +39,7 @@ blocks:
             - artifact push workflow dist/darwin-fips_darwin_amd64_v1 --force
             - artifact push workflow dist/darwin-fips_darwin_arm64 --force
   - name: "Draft a Release (Part 2)"
-    dependencies: []
+    dependencies: ["Draft a Release (Part 1)"]
     task:
       jobs:
         - name: goreleaser
