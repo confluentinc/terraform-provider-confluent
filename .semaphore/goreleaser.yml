@@ -4,43 +4,7 @@ agent:
   machine:
     type: s1-prod-ubuntu24-04-amd64-1
 blocks:
-  - name: "Draft a Release (Part 1)"
-    dependencies: []
-    task:
-      agent:
-        machine:
-          type: s1-prod-macos-13-5-arm64
-      jobs:
-        - name: goreleaser-darwin-fips
-          commands:
-            - sudo chown -R semaphore /Users/semaphore/.local/
-            - sudo chmod -R 777 /Users/semaphore/.local/
-            - sudo chown -R semaphore /Users/semaphore/.config/
-            - sudo chmod -R 777 /Users/semaphore/.config/
-            - sudo sem-version go 1.24.4
-            - checkout
-            - cd ..
-            - wget "https://go.dev/dl/go$(cat terraform-provider-confluent*/.go-version).src.tar.gz"
-            - tar -xf go$(cat terraform-provider-confluent*/.go-version).src.tar.gz
-            - git clone --branch go$(cat terraform-provider-confluent*/.go-version)-1-openssl-fips --depth 1 https://github.com/golang-fips/go.git go-openssl
-            - cd go
-            - brew install gpatch
-            - cat ../go-openssl/patches/*.patch | gpatch -p1
-            - sed -i '' 's/linux/darwin/' src/crypto/internal/backend/nobackend.go
-            - sed -i '' 's/linux/darwin/' src/crypto/internal/backend/openssl.go
-            - sed -i '' 's/"libcrypto.so.%s"/"libcrypto.%s.dylib"/' src/crypto/internal/backend/openssl.go
-            - cd src/
-            - ./make.bash -v
-            - cd ../../
-            - export PATH=$(pwd)/go/bin:$PATH
-            - export "GITHUB_TOKEN=$(gh auth token)"
-            - cd terraform-provider-confluent*
-            - git tag v2.39.0-dryrun
-            - curl https://goreleaser.com/static/run | GOROOT=/Users/semaphore/go VERSION=v1.25.1 bash -s -- build --config .goreleaser-darwin-fips.yml
-            - artifact push workflow dist/darwin-fips_darwin_amd64_v1 --force
-            - artifact push workflow dist/darwin-fips_darwin_arm64 --force
   - name: "Draft a Release (Part 2)"
-#    dependencies: ["Draft a Release (Part 1)"]
     task:
       jobs:
         - name: goreleaser
@@ -68,7 +32,5 @@ blocks:
             - sudo apt update
             - sudo apt install -y gcc-aarch64-linux-gnu
             - mkdir prebuilt && cd prebuilt
-#            - artifact pull workflow darwin-fips_darwin_amd64_v1 --force
-#            - artifact pull workflow darwin-fips_darwin_arm64 --force
             - cd ..
             - curl https://goreleaser.com/static/run | DISTRIBUTION=pro VERSION=v1.25.1-pro bash -s -- release --config .goreleaser.yml --key $(vault kv get -field goreleaser_key v1/ci/kv/cli/release)
