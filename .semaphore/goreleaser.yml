@@ -5,7 +5,7 @@ agent:
     type: s1-prod-ubuntu24-04-amd64-1
 blocks:
   - name: "Draft a Release (Part 1)"
-    dependencies: []
+    dependencies: ["Draft a Release (Part 1)"]
     task:
       agent:
         machine:
@@ -35,7 +35,6 @@ blocks:
             - export PATH=$(pwd)/go/bin:$PATH
             - export "GITHUB_TOKEN=$(gh auth token)"
             - cd terraform-provider-confluent*
-            - git tag v2.39.0-dryrun
             - curl https://goreleaser.com/static/run | GOROOT=/Users/semaphore/go VERSION=v1.25.1 bash -s -- build --config .goreleaser-darwin-fips.yml
             - artifact push workflow dist/darwin-fips_darwin_amd64_v1 --force
             - artifact push workflow dist/darwin-fips_darwin_arm64 --force
@@ -62,12 +61,13 @@ blocks:
             - echo "foo" > temp.txt
             - gpg --detach-sig --yes -v --output=/dev/null --pinentry-mode loopback --passphrase "${PASSPHRASE}" temp.txt
             - rm temp.txt
-            - git tag v2.39.0-dryrun
             # Clean up git state
             - git clean -fx
             # Install deps for compiling for linux/arm64 from linux/amd64
             - sudo apt update
             - sudo apt install -y gcc-aarch64-linux-gnu
             - mkdir prebuilt && cd prebuilt
+            - artifact pull workflow darwin-fips_darwin_amd64_v1 --force
+            - artifact pull workflow darwin-fips_darwin_arm64 --force
             - cd ..
             - curl https://goreleaser.com/static/run | DISTRIBUTION=pro VERSION=v1.25.1-pro bash -s -- release --config .goreleaser.yml --key $(vault kv get -field goreleaser_key v1/ci/kv/cli/release)
