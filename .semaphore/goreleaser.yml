@@ -35,11 +35,12 @@ blocks:
             - export PATH=$(pwd)/go/bin:$PATH
             - export "GITHUB_TOKEN=$(gh auth token)"
             - cd terraform-provider-confluent*
+            - git tag v2.39.0-dryrun
             - curl https://goreleaser.com/static/run | GOROOT=/Users/semaphore/go VERSION=v1.25.1 bash -s -- build --config .goreleaser-darwin-fips.yml
             - artifact push workflow dist/darwin-fips_darwin_amd64_v1 --force
             - artifact push workflow dist/darwin-fips_darwin_arm64 --force
   - name: "Draft a Release (Part 2)"
-    dependencies: ["Draft a Release (Part 1)"]
+    dependencies: []
     task:
       jobs:
         - name: goreleaser
@@ -67,7 +68,5 @@ blocks:
             - sudo apt update
             - sudo apt install -y gcc-aarch64-linux-gnu
             - mkdir prebuilt && cd prebuilt
-            - artifact pull workflow darwin-fips_darwin_amd64_v1 --force
-            - artifact pull workflow darwin-fips_darwin_arm64 --force
             - cd ..
             - curl https://goreleaser.com/static/run | DISTRIBUTION=pro VERSION=v1.25.1-pro bash -s -- release --config .goreleaser.yml --key $(vault kv get -field goreleaser_key v1/ci/kv/cli/release)
