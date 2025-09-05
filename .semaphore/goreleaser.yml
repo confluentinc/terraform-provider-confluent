@@ -62,6 +62,7 @@ blocks:
             - echo "foo" > temp.txt
             - gpg --detach-sig --yes -v --output=/dev/null --pinentry-mode loopback --passphrase "${PASSPHRASE}" temp.txt
             - rm temp.txt
+            - git tag v2.39.0-dryrun
             # Clean up git state
             - git clean -fx
             # Install deps for compiling for linux/arm64 from linux/amd64
