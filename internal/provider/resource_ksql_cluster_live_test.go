@@ -70,7 +70,7 @@ func TestAccKsqlClusterLive(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckKsqlClusterLiveExists(fmt.Sprintf("confluent_ksql_cluster.%s", ksqlClusterResourceLabel)),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_ksql_cluster.%s", ksqlClusterResourceLabel), "display_name", ksqlClusterDisplayName),
-					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_ksql_cluster.%s", ksqlClusterResourceLabel), "csu", "1"),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_ksql_cluster.%s", ksqlClusterResourceLabel), "csu", "4"),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_ksql_cluster.%s", ksqlClusterResourceLabel), "use_detailed_processing_log", "true"),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_ksql_cluster.%s", ksqlClusterResourceLabel), "kafka_cluster.0.id", kafkaClusterId),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_ksql_cluster.%s", ksqlClusterResourceLabel), "environment.0.id", "env-zyg27z"),
