@@ -147,7 +147,7 @@ func testAccCheckKsqlClusterLiveConfig(endpoint, ksqlClusterResourceLabel, ksqlC
 
 	resource "confluent_ksql_cluster" "%s" {
 		display_name = "%s"
-		csu          = 1
+		csu          = 4
 		kafka_cluster {
 			id = "%s"
 		}
@@ -162,4 +162,4 @@ func testAccCheckKsqlClusterLiveConfig(endpoint, ksqlClusterResourceLabel, ksqlC
 		]
 	}
 	`, endpoint, apiKey, apiSecret, ksqlClusterDisplayName, kafkaClusterId, ksqlClusterResourceLabel, ksqlClusterDisplayName, kafkaClusterId)
-} 
+}
