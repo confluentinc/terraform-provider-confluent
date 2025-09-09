@@ -72,10 +72,10 @@ func TestAccKsqlClusterDataSourceLive(t *testing.T) {
 					// Check the resource was created
 					resource.TestCheckResourceAttrSet(fmt.Sprintf("confluent_ksql_cluster.%s", ksqlClusterResourceLabel), "id"),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_ksql_cluster.%s", ksqlClusterResourceLabel), "display_name", ksqlClusterDisplayName),
-					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_ksql_cluster.%s", ksqlClusterResourceLabel), "csu", "1"),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_ksql_cluster.%s", ksqlClusterResourceLabel), "csu", "4"),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_ksql_cluster.%s", ksqlClusterResourceLabel), "kafka_cluster.0.id", kafkaClusterId),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_ksql_cluster.%s", ksqlClusterResourceLabel), "environment.0.id", "env-zyg27z"),
-					
+
 					// Check the data source can find it
 					resource.TestCheckResourceAttrPair(
 						fmt.Sprintf("data.confluent_ksql_cluster.%s", ksqlClusterDataSourceLabel), "id",
@@ -109,7 +109,7 @@ func testAccCheckKsqlClusterDataSourceLiveConfig(endpoint, ksqlClusterResourceLa
 
 	resource "confluent_ksql_cluster" "%s" {
 		display_name = "%s"
-		csu          = 1
+		csu          = 4
 		kafka_cluster {
 			id = "%s"
 		}
@@ -142,4 +142,4 @@ func testAccCheckKsqlClusterDataSourceLiveConfig(endpoint, ksqlClusterResourceLa
 		}
 	}
 	`, endpoint, apiKey, apiSecret, ksqlClusterResourceLabel, ksqlClusterDisplayName, kafkaClusterId, ksqlClusterDisplayName, kafkaClusterId, ksqlClusterDataSourceLabel, ksqlClusterResourceLabel)
-} 
+}
