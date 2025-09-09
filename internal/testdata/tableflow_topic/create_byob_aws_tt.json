@@ -43,6 +43,7 @@
     ]
   },
   "status": {
-    "phase": "PENDING"
+    "phase": "PENDING",
+    "write_mode": "UPSERT"
   }
 }
