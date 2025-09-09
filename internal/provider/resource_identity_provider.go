@@ -69,6 +69,7 @@ func identityProviderResource() *schema.Resource {
 			paramIdentityClaim: {
 				Type:        schema.TypeString,
 				Optional:    true,
+				Computed:    true,
 				Description: "A JWT claim to extract the authenticating identity to Confluent resources.",
 			},
 		},
@@ -139,7 +140,10 @@ func identityProviderCreate(ctx context.Context, d *schema.ResourceData, meta in
 	createIdentityProviderRequest.SetDescription(description)
 	createIdentityProviderRequest.SetIssuer(issuer)
 	createIdentityProviderRequest.SetJwksUri(jwksUri)
-	createIdentityProviderRequest.SetIdentityClaim(identityClaim)
+	if len(identityClaim) > 0 {
+		createIdentityProviderRequest.SetIdentityClaim(identityClaim)
+	}
+
 	createIdentityProviderRequestJson, err := json.Marshal(createIdentityProviderRequest)
 	if err != nil {
 		return diag.Errorf("error creating Identity Provider: error marshaling %#v to json: %s", createIdentityProviderRequest, createDescriptiveError(err))
