@@ -109,7 +109,7 @@ func tableflowTopicResource() *schema.Resource {
 			paramWriteMode: {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Indicates the write mode of the tableflow topic..",
+				Description: "Indicates the write mode of the tableflow topic.",
 			},
 			paramKafkaCluster:   requiredKafkaClusterBlockSchema(),
 			paramEnvironment:    environmentSchema(),
