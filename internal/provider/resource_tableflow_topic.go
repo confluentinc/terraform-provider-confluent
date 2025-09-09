@@ -42,6 +42,7 @@ const (
 	paramTableFormats          = "table_formats"
 	paramTablePath             = "table_path"
 	paramRecordFailureStrategy = "record_failure_strategy"
+	paramWriteMode             = "write_mode"
 
 	byobAwsSpecKind        = "ByobAws"
 	managedStorageSpecKind = "Managed"
@@ -104,6 +105,11 @@ func tableflowTopicResource() *schema.Resource {
 				Optional:    true,
 				Computed:    true,
 				Description: "The strategy to handle record failures in the Tableflow enabled topic during materialization.",
+			},
+			paramWriteMode: {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Indicates the write mode of the tableflow topic..",
 			},
 			paramKafkaCluster:   requiredKafkaClusterBlockSchema(),
 			paramEnvironment:    environmentSchema(),
@@ -328,6 +334,9 @@ func setTableflowTopicAttributes(d *schema.ResourceData, c *TableflowRestClient,
 	}
 	if err := setStringAttributeInListBlockOfSizeOne(paramKafkaCluster, paramId, tableflowTopic.GetSpec().KafkaCluster.GetId(), d); err != nil {
 		return nil, createDescriptiveError(err)
+	}
+	if err := d.Set(paramWriteMode, tableflowTopic.Status.GetWriteMode()); err != nil {
+		return nil, err
 	}
 
 	if tableflowTopic.Spec.GetStorage().TableflowV1ByobAwsSpec != nil {
