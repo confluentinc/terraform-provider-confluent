@@ -95,7 +95,7 @@ func readPrivateLinkAttachmentAndSetAttributes(ctx context.Context, d *schema.Re
 	c := meta.(*Client)
 	platt, resp, err := executePlattRead(c.netPLApiContext(ctx), c, plattId, environmentId)
 	if err != nil {
-		tflog.Warn(ctx, fmt.Sprintf("Error reading Private Link Attachment %q: %s", plattId, createDescriptiveError(err)), map[string]interface{}{privateLinkAttachmentLoggingKey: plattId})
+		tflog.Warn(ctx, fmt.Sprintf("Error reading Private Link Attachment %q: %s", plattId, createDescriptiveError(err, resp)), map[string]interface{}{privateLinkAttachmentLoggingKey: plattId})
 
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
 		if isResourceNotFound && !d.IsNewResource() {
@@ -154,16 +154,16 @@ func privateLinkAttachmentCreate(ctx context.Context, d *schema.ResourceData, me
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Private Link Attachment: %s", createPrivateLinkAttachmentRequestJson))
 
-	createdPlatt, _, err := c.netPLClient.PrivateLinkAttachmentsNetworkingV1Api.CreateNetworkingV1PrivateLinkAttachmentExecute(request)
+	createdPlatt, resp, err := c.netPLClient.PrivateLinkAttachmentsNetworkingV1Api.CreateNetworkingV1PrivateLinkAttachmentExecute(request)
 	if err != nil {
-		return diag.Errorf("error creating Private Link Attachment %s", createDescriptiveError(err))
+		return diag.Errorf("error creating Private Link Attachment %s", createDescriptiveError(err, resp))
 	}
 
 	plattId := createdPlatt.GetId()
 	d.SetId(plattId)
 
 	if err := waitForPrivateLinkAttachmentToProvision(c.netPLApiContext(ctx), c, environmentId, d.Id()); err != nil {
-		return diag.Errorf("error waiting for Private Link Attachment %q to provision: %s", plattId, createDescriptiveError(err))
+		return diag.Errorf("error waiting for Private Link Attachment %q to provision: %s", plattId, createDescriptiveError(err, resp))
 	}
 
 	createdPrivateLinkAttachmentJson, err := json.Marshal(createdPlatt)
@@ -182,9 +182,9 @@ func privateLinkAttachmentDelete(ctx context.Context, d *schema.ResourceData, me
 
 	c := meta.(*Client)
 	request := c.netPLClient.PrivateLinkAttachmentsNetworkingV1Api.DeleteNetworkingV1PrivateLinkAttachment(c.netPLApiContext(ctx), plattId).Environment(environmentId)
-	_, err := c.netPLClient.PrivateLinkAttachmentsNetworkingV1Api.DeleteNetworkingV1PrivateLinkAttachmentExecute(request)
+	resp, err := c.netPLClient.PrivateLinkAttachmentsNetworkingV1Api.DeleteNetworkingV1PrivateLinkAttachmentExecute(request)
 	if err != nil {
-		return diag.Errorf("error deleting Private Link Attachment %q: %s", plattId, createDescriptiveError(err))
+		return diag.Errorf("error deleting Private Link Attachment %q: %s", plattId, createDescriptiveError(err, resp))
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished deleting Private Link Attachment %q", plattId), map[string]interface{}{privateLinkAttachmentLoggingKey: plattId})
@@ -219,9 +219,9 @@ func privateLinkAttachmentUpdate(ctx context.Context, d *schema.ResourceData, me
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Updating new Private Link Attachment: %s", updatePrivateLinkAttachmentRequestJson))
 
-	updatedPlatt, _, err := c.netPLClient.PrivateLinkAttachmentsNetworkingV1Api.UpdateNetworkingV1PrivateLinkAttachmentExecute(request)
+	updatedPlatt, resp, err := c.netPLClient.PrivateLinkAttachmentsNetworkingV1Api.UpdateNetworkingV1PrivateLinkAttachmentExecute(request)
 	if err != nil {
-		return diag.Errorf("error updating Private Link Attachment, %s", createDescriptiveError(err))
+		return diag.Errorf("error updating Private Link Attachment, %s", createDescriptiveError(err, resp))
 	}
 
 	updatedPrivateLinkAttachmentJson, err := json.Marshal(updatedPlatt)

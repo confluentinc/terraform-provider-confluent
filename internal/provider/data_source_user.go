@@ -140,9 +140,9 @@ func loadUsers(ctx context.Context, c *Client) ([]v2.IamV2User, error) {
 	collectedAllUsers := false
 	pageToken := ""
 	for !collectedAllUsers {
-		userList, _, err := executeListUsers(ctx, c, pageToken)
+		userList, resp, err := executeListUsers(ctx, c, pageToken)
 		if err != nil {
-			return nil, fmt.Errorf("error reading Users: %s", createDescriptiveError(err))
+			return nil, fmt.Errorf("error reading Users: %s", createDescriptiveError(err, resp))
 		}
 		users = append(users, userList.GetData()...)
 
@@ -156,7 +156,7 @@ func loadUsers(ctx context.Context, c *Client) ([]v2.IamV2User, error) {
 			} else {
 				pageToken, err = extractPageToken(nextPageUrlString)
 				if err != nil {
-					return nil, fmt.Errorf("error reading Users: %s", createDescriptiveError(err))
+					return nil, fmt.Errorf("error reading Users: %s", createDescriptiveError(err, resp))
 				}
 			}
 		} else {
@@ -178,9 +178,9 @@ func userDataSourceReadUsingId(ctx context.Context, d *schema.ResourceData, meta
 	tflog.Debug(ctx, fmt.Sprintf("Reading User %q=%q", paramId, userId), map[string]interface{}{userLoggingKey: userId})
 
 	c := meta.(*Client)
-	user, _, err := executeUserRead(c.iamApiContext(ctx), c, userId)
+	user, resp, err := executeUserRead(c.iamApiContext(ctx), c, userId)
 	if err != nil {
-		return diag.Errorf("error reading User %q: %s", userId, createDescriptiveError(err))
+		return diag.Errorf("error reading User %q: %s", userId, createDescriptiveError(err, resp))
 	}
 	userJson, err := json.Marshal(user)
 	if err != nil {

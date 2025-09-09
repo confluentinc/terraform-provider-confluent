@@ -130,14 +130,14 @@ func peeringCreate(ctx context.Context, d *schema.ResourceData, meta interface{}
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Peering: %s", createPeeringRequestJson))
 
-	createdPeering, _, err := executePeeringCreate(c.netApiContext(ctx), c, createPeeringRequest)
+	createdPeering, resp, err := executePeeringCreate(c.netApiContext(ctx), c, createPeeringRequest)
 	if err != nil {
-		return diag.Errorf("error creating Peering %q: %s", createdPeering.GetId(), createDescriptiveError(err))
+		return diag.Errorf("error creating Peering %q: %s", createdPeering.GetId(), createDescriptiveError(err, resp))
 	}
 	d.SetId(createdPeering.GetId())
 
 	if err := waitForPeeringToProvision(c.netApiContext(ctx), c, environmentId, d.Id()); err != nil {
-		return diag.Errorf("error waiting for Peering %q to provision: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error waiting for Peering %q to provision: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	createdPeeringJson, err := json.Marshal(createdPeering)
@@ -177,7 +177,7 @@ func readPeeringAndSetAttributes(ctx context.Context, d *schema.ResourceData, me
 
 	peering, resp, err := executePeeringRead(c.netApiContext(ctx), c, environmentId, peeringId)
 	if err != nil {
-		tflog.Warn(ctx, fmt.Sprintf("Error reading Peering %q: %s", d.Id(), createDescriptiveError(err)), map[string]interface{}{peeringLoggingKey: d.Id()})
+		tflog.Warn(ctx, fmt.Sprintf("Error reading Peering %q: %s", d.Id(), createDescriptiveError(err, resp)), map[string]interface{}{peeringLoggingKey: d.Id()})
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
 		if isResourceNotFound && !d.IsNewResource() {
 			tflog.Warn(ctx, fmt.Sprintf("Removing Peering %q in TF state because Peering could not be found on the server", d.Id()), map[string]interface{}{peeringLoggingKey: d.Id()})
@@ -250,14 +250,14 @@ func peeringDelete(ctx context.Context, d *schema.ResourceData, meta interface{}
 	c := meta.(*Client)
 
 	req := c.netClient.PeeringsNetworkingV1Api.DeleteNetworkingV1Peering(c.netApiContext(ctx), d.Id()).Environment(environmentId)
-	_, err := req.Execute()
+	resp, err := req.Execute()
 
 	if err != nil {
-		return diag.Errorf("error deleting Peering %q: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error deleting Peering %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	if err := waitForPeeringToBeDeleted(c.netApiContext(ctx), c, environmentId, d.Id()); err != nil {
-		return diag.Errorf("error waiting for Peering %q to be deleted: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error waiting for Peering %q to be deleted: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished deleting Peering %q", d.Id()), map[string]interface{}{peeringLoggingKey: d.Id()})
@@ -285,10 +285,10 @@ func peeringUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}
 	tflog.Debug(ctx, fmt.Sprintf("Updating Peering %q: %s", d.Id(), updatePeeringRequestJson), map[string]interface{}{peeringLoggingKey: d.Id()})
 
 	req := c.netClient.PeeringsNetworkingV1Api.UpdateNetworkingV1Peering(c.netApiContext(ctx), d.Id()).NetworkingV1PeeringUpdate(*updatePeeringRequest)
-	updatedPeering, _, err := req.Execute()
+	updatedPeering, resp, err := req.Execute()
 
 	if err != nil {
-		return diag.Errorf("error updating Peering %q: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error updating Peering %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	updatedPeeringJson, err := json.Marshal(updatedPeering)
