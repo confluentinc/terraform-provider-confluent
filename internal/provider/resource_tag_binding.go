@@ -208,7 +208,7 @@ func readTagBindingAndSetAttributes(ctx context.Context, d *schema.ResourceData,
 
 	tagBindingJson, err := json.Marshal(tagBinding)
 	if err != nil {
-		return nil, fmt.Errorf("error reading Tag Binding %q: error marshaling %#v to json: %s", tagBindingId, tagBindingJson, createDescriptiveError(err, resp))
+		return nil, fmt.Errorf("error reading Tag Binding %q: error marshaling %#v to json: %s", tagBindingId, tagBindingJson, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Tag Binding %q: %s", tagBindingId, tagBindingJson), map[string]interface{}{tagBindingLoggingKey: tagBindingId})
 

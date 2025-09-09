@@ -305,7 +305,7 @@ func accessPointCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 
 	createdAccessPointJson, err := json.Marshal(createdAccessPoint)
 	if err != nil {
-		return diag.Errorf("error creating Access Point %q: error marshaling %#v to json: %s", d.Id(), createdAccessPoint, createDescriptiveError(err, resp))
+		return diag.Errorf("error creating Access Point %q: error marshaling %#v to json: %s", d.Id(), createdAccessPoint, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating Access Point %q: %s", d.Id(), createdAccessPointJson), map[string]interface{}{accessPointKey: d.Id()})
 
@@ -347,7 +347,7 @@ func readAccessPointAndSetAttributes(ctx context.Context, d *schema.ResourceData
 	}
 	accessPointJson, err := json.Marshal(accessPoint)
 	if err != nil {
-		return nil, fmt.Errorf("error reading Access Point %q: error marshaling %#v to json: %s", accessPointId, accessPoint, createDescriptiveError(err, resp))
+		return nil, fmt.Errorf("error reading Access Point %q: error marshaling %#v to json: %s", accessPointId, accessPoint, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Access Point %q: %s", d.Id(), accessPointJson), map[string]interface{}{accessPointKey: d.Id()})
 
@@ -417,7 +417,7 @@ func accessPointUpdate(ctx context.Context, d *schema.ResourceData, meta interfa
 
 	updatedAccessPointJson, err := json.Marshal(updatedAccessPoint)
 	if err != nil {
-		return diag.Errorf("error updating Access Point %q: error marshaling %#v to json: %s", d.Id(), updatedAccessPoint, createDescriptiveError(err, resp))
+		return diag.Errorf("error updating Access Point %q: error marshaling %#v to json: %s", d.Id(), updatedAccessPoint, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished updating Access Point %q: %s", d.Id(), updatedAccessPointJson), map[string]interface{}{accessPointKey: d.Id()})
 	return accessPointRead(ctx, d, meta)

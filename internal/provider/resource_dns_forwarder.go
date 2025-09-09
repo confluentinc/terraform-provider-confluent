@@ -196,7 +196,7 @@ func dnsForwarderCreate(ctx context.Context, d *schema.ResourceData, meta interf
 
 	createdDnsForwarderJson, err := json.Marshal(createdDnsForwarder)
 	if err != nil {
-		return diag.Errorf("error creating DNS Forwarder %q: error marshaling %#v to json: %s", d.Id(), createdDnsForwarder, createDescriptiveError(err, resp))
+		return diag.Errorf("error creating DNS Forwarder %q: error marshaling %#v to json: %s", d.Id(), createdDnsForwarder, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating DNS Forwarder %q: %s", d.Id(), createdDnsForwarderJson), map[string]interface{}{dnsForwarderKey: d.Id()})
 	return dnsForwarderRead(ctx, d, meta)
@@ -256,7 +256,7 @@ func readDnsForwarderAndSetAttributes(ctx context.Context, d *schema.ResourceDat
 	}
 	dnsForwarderJson, err := json.Marshal(dnsForwarder)
 	if err != nil {
-		return nil, fmt.Errorf("error reading DNS Forwarder %q: error marshaling %#v to json: %s", dnsForwarderId, dnsForwarder, createDescriptiveError(err, resp))
+		return nil, fmt.Errorf("error reading DNS Forwarder %q: error marshaling %#v to json: %s", dnsForwarderId, dnsForwarder, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched DNS Forwarder %q: %s", d.Id(), dnsForwarderJson), map[string]interface{}{dnsForwarderKey: d.Id()})
 
@@ -314,7 +314,7 @@ func dnsForwarderUpdate(ctx context.Context, d *schema.ResourceData, meta interf
 
 	updatedDnsForwarderJson, err := json.Marshal(updatedDnsForwarder)
 	if err != nil {
-		return diag.Errorf("error updating DNS Forwarder %q: error marshaling %#v to json: %s", d.Id(), updatedDnsForwarder, createDescriptiveError(err, resp))
+		return diag.Errorf("error updating DNS Forwarder %q: error marshaling %#v to json: %s", d.Id(), updatedDnsForwarder, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished updating DNS Forwarder %q: %s", d.Id(), updatedDnsForwarderJson), map[string]interface{}{dnsForwarderKey: d.Id()})
 	return dnsForwarderRead(ctx, d, meta)

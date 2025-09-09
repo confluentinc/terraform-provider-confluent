@@ -188,7 +188,7 @@ func readSchemaRegistryClusterConfigAndSetAttributes(ctx context.Context, d *sch
 	}
 	schemaRegistryClusterConfigJson, err := json.Marshal(schemaRegistryClusterConfig)
 	if err != nil {
-		return nil, fmt.Errorf("error reading Schema Registry Cluster Config %q: error marshaling %#v to json: %s", d.Id(), schemaRegistryClusterConfig, createDescriptiveError(err, resp))
+		return nil, fmt.Errorf("error reading Schema Registry Cluster Config %q: error marshaling %#v to json: %s", d.Id(), schemaRegistryClusterConfig, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Schema Registry Cluster Config %q: %s", d.Id(), schemaRegistryClusterConfigJson), map[string]interface{}{schemaRegistryClusterConfigLoggingKey: d.Id()})
 

@@ -310,7 +310,7 @@ func readAclAndSetAttributes(ctx context.Context, d *schema.ResourceData, client
 	matchedAcl := remoteAcls.Data[0]
 	matchedAclJson, err := json.Marshal(matchedAcl)
 	if err != nil {
-		return nil, fmt.Errorf("error reading Kafka ACLs: error marshaling %#v to json: %s", matchedAcl, createDescriptiveError(err, resp))
+		return nil, fmt.Errorf("error reading Kafka ACLs: error marshaling %#v to json: %s", matchedAcl, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Kafka ACLs %q: %s", d.Id(), matchedAclJson), map[string]interface{}{kafkaAclLoggingKey: d.Id()})
 
@@ -442,7 +442,7 @@ func loadAllKafkaAcls(ctx context.Context, client *Client) (InstanceIdsToNameMap
 	}
 	kafkaAclsJson, err := json.Marshal(acls)
 	if err != nil {
-		return nil, diag.Errorf("error reading Kafka ACLs for Kafka Cluster %q: error marshaling %#v to json: %s", kafkaRestClient.clusterId, acls, createDescriptiveError(err, resp))
+		return nil, diag.Errorf("error reading Kafka ACLs for Kafka Cluster %q: error marshaling %#v to json: %s", kafkaRestClient.clusterId, acls, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Kafka ACLs for Kafka Cluster %q: %s", kafkaRestClient.clusterId, kafkaAclsJson))
 

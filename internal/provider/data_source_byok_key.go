@@ -120,7 +120,7 @@ func byokDataSourceRead(ctx context.Context, d *schema.ResourceData, meta interf
 	}
 	keyJson, err := json.Marshal(key)
 	if err != nil {
-		return diag.Errorf("error reading byok key %q: error marshaling %#v to json: %s", keyId, key, createDescriptiveError(err, resp))
+		return diag.Errorf("error reading byok key %q: error marshaling %#v to json: %s", keyId, key, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched byok key %q: %s", keyId, keyJson), map[string]interface{}{byokKeyLoggingKey: keyId})
 

@@ -119,7 +119,7 @@ func catalogEntityAttributesCreate(ctx context.Context, d *schema.ResourceData, 
 
 	createdEntityAttributesJson, err := json.Marshal(createdEntityAttributes)
 	if err != nil {
-		return diag.Errorf("error creating Entity Attributes %q: error marshaling %#v to json: %s", entityAttributesId, createdEntityAttributes, createDescriptiveError(err, resp))
+		return diag.Errorf("error creating Entity Attributes %q: error marshaling %#v to json: %s", entityAttributesId, createdEntityAttributes, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating Entity Attributes %q: %s", entityAttributesId, createdEntityAttributesJson), map[string]interface{}{entityAttributesLoggingKey: entityAttributesId})
 	return catalogEntityAttributesRead(ctx, d, meta)
@@ -174,7 +174,7 @@ func readEntityAttributesAndSetAttributes(ctx context.Context, d *schema.Resourc
 
 	entityJson, err := json.Marshal(entity)
 	if err != nil {
-		return nil, fmt.Errorf("error reading Entity Attributes %q: error marshaling %#v to json: %s", entityAttributesId, entityJson, createDescriptiveError(err, resp))
+		return nil, fmt.Errorf("error reading Entity Attributes %q: error marshaling %#v to json: %s", entityAttributesId, entityJson, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Entity Attributes %q: %s", entityAttributesId, entityJson), map[string]interface{}{entityAttributesLoggingKey: entityAttributesId})
 
@@ -283,7 +283,7 @@ func catalogEntityAttributesUpdate(ctx context.Context, d *schema.ResourceData, 
 
 		updatedEntityAttributesJson, err := json.Marshal(updatedEntityAttributes)
 		if err != nil {
-			return diag.Errorf("error updating Entity Attributes %q: error marshaling %#v to json: %s", entityAttributesId, updatedEntityAttributes, createDescriptiveError(err, resp))
+			return diag.Errorf("error updating Entity Attributes %q: error marshaling %#v to json: %s", entityAttributesId, updatedEntityAttributes, createDescriptiveError(err))
 		}
 		tflog.Debug(ctx, fmt.Sprintf("Finished updating Entity Attributes %q: %s", entityAttributesId, updatedEntityAttributesJson), map[string]interface{}{entityAttributesLoggingKey: entityAttributesId})
 	}

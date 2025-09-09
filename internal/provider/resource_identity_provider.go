@@ -118,7 +118,7 @@ func identityProviderUpdate(ctx context.Context, d *schema.ResourceData, meta in
 
 	updatedIdentityProviderJson, err := json.Marshal(updatedIdentityProvider)
 	if err != nil {
-		return diag.Errorf("error updating Identity Provider %q: error marshaling %#v to json: %s", d.Id(), updatedIdentityProvider, createDescriptiveError(err, resp))
+		return diag.Errorf("error updating Identity Provider %q: error marshaling %#v to json: %s", d.Id(), updatedIdentityProvider, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished updating Identity Provider %q: %s", d.Id(), updatedIdentityProviderJson), map[string]interface{}{identityProviderLoggingKey: d.Id()})
 
@@ -154,7 +154,7 @@ func identityProviderCreate(ctx context.Context, d *schema.ResourceData, meta in
 
 	createdIdentityProviderJson, err := json.Marshal(createdIdentityProvider)
 	if err != nil {
-		return diag.Errorf("error creating Identity Provider: %q: error marshaling %#v to json: %s", createdIdentityProvider.GetId(), createdIdentityProvider, createDescriptiveError(err, resp))
+		return diag.Errorf("error creating Identity Provider: %q: error marshaling %#v to json: %s", createdIdentityProvider.GetId(), createdIdentityProvider, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating Identity Provider %q: %s", d.Id(), createdIdentityProviderJson), map[string]interface{}{identityProviderLoggingKey: d.Id()})
 
@@ -200,7 +200,7 @@ func identityProviderRead(ctx context.Context, d *schema.ResourceData, meta inte
 	}
 	identityProviderJson, err := json.Marshal(identityProvider)
 	if err != nil {
-		return diag.Errorf("error reading Identity Provider %q: error marshaling %#v to json: %s", d.Id(), identityProvider, createDescriptiveError(err, resp))
+		return diag.Errorf("error reading Identity Provider %q: error marshaling %#v to json: %s", d.Id(), identityProvider, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Identity Provider %q: %s", d.Id(), identityProviderJson), map[string]interface{}{identityProviderLoggingKey: d.Id()})
 

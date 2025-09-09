@@ -130,7 +130,7 @@ func dnsRecordCreate(ctx context.Context, d *schema.ResourceData, meta interface
 
 	createdDnsRecordJson, err := json.Marshal(createdDnsRecord)
 	if err != nil {
-		return diag.Errorf("error creating DNS Record %q: error marshaling %#v to json: %s", d.Id(), createdDnsRecord, createDescriptiveError(err, resp))
+		return diag.Errorf("error creating DNS Record %q: error marshaling %#v to json: %s", d.Id(), createdDnsRecord, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating DNS Record %q: %s", d.Id(), createdDnsRecordJson), map[string]interface{}{dnsRecordKey: d.Id()})
 
@@ -172,7 +172,7 @@ func readDnsRecordAndSetAttributes(ctx context.Context, d *schema.ResourceData, 
 	}
 	dnsRecordJson, err := json.Marshal(dnsRecord)
 	if err != nil {
-		return nil, fmt.Errorf("error reading DNS Record %q: error marshaling %#v to json: %s", dnsRecordId, dnsRecord, createDescriptiveError(err, resp))
+		return nil, fmt.Errorf("error reading DNS Record %q: error marshaling %#v to json: %s", dnsRecordId, dnsRecord, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched DNS Record %q: %s", d.Id(), dnsRecordJson), map[string]interface{}{dnsRecordKey: d.Id()})
 
@@ -246,7 +246,7 @@ func dnsRecordUpdate(ctx context.Context, d *schema.ResourceData, meta interface
 
 	updatedDnsRecordJson, err := json.Marshal(updatedDnsRecord)
 	if err != nil {
-		return diag.Errorf("error updating DNS Record %q: error marshaling %#v to json: %s", d.Id(), updatedDnsRecord, createDescriptiveError(err, resp))
+		return diag.Errorf("error updating DNS Record %q: error marshaling %#v to json: %s", d.Id(), updatedDnsRecord, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished updating DNS Record %q: %s", d.Id(), updatedDnsRecordJson), map[string]interface{}{dnsRecordKey: d.Id()})
 	return dnsRecordRead(ctx, d, meta)

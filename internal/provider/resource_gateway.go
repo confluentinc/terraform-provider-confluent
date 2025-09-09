@@ -199,7 +199,7 @@ func gatewayCreate(ctx context.Context, d *schema.ResourceData, meta interface{}
 
 	createdGatewayJson, err := json.Marshal(createdGateway)
 	if err != nil {
-		return diag.Errorf("error creating Gateway %q: error marshaling %#v to json: %s", d.Id(), createdGateway, createDescriptiveError(err, resp))
+		return diag.Errorf("error creating Gateway %q: error marshaling %#v to json: %s", d.Id(), createdGateway, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating Gateway %q: %s", d.Id(), createdGatewayJson), map[string]interface{}{gatewayKey: d.Id()})
 
@@ -241,7 +241,7 @@ func readGatewayAndSetAttributes(ctx context.Context, d *schema.ResourceData, me
 	}
 	gatewayJson, err := json.Marshal(gateway)
 	if err != nil {
-		return nil, fmt.Errorf("error reading Gateway %q: error marshaling %#v to json: %s", gatewayId, gateway, createDescriptiveError(err, resp))
+		return nil, fmt.Errorf("error reading Gateway %q: error marshaling %#v to json: %s", gatewayId, gateway, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Gateway %q: %s", d.Id(), gatewayJson), map[string]interface{}{gatewayKey: d.Id()})
 
@@ -365,7 +365,7 @@ func gatewayUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}
 
 	UpdatedGatewayJson, err := json.Marshal(updatedGateway)
 	if err != nil {
-		return diag.Errorf("error updating Gateway %q: error marshaling %#v to json: %s", d.Id(), updatedGateway, createDescriptiveError(err, resp))
+		return diag.Errorf("error updating Gateway %q: error marshaling %#v to json: %s", d.Id(), updatedGateway, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished updating Gateway %q: %s", d.Id(), UpdatedGatewayJson), map[string]interface{}{gatewayKey: d.Id()})
 	return gatewayRead(ctx, d, meta)

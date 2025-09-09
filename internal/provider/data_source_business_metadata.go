@@ -135,7 +135,7 @@ func businessMetadataDataSourceReadUsingName(ctx context.Context, d *schema.Reso
 	}
 	businessMetadataJson, err := json.Marshal(businessMetadata)
 	if err != nil {
-		return diag.Errorf("error reading Business Metadata %q: error marshaling %#v to json: %s", businessMetadataId, businessMetadata, createDescriptiveError(err, resp))
+		return diag.Errorf("error reading Business Metadata %q: error marshaling %#v to json: %s", businessMetadataId, businessMetadata, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Business Metadata %q: %s", businessMetadataId, businessMetadataJson), map[string]interface{}{businessMetadataLoggingKey: businessMetadataId})
 

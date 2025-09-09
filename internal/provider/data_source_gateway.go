@@ -205,7 +205,7 @@ func gatewayDataSourceRead(ctx context.Context, d *schema.ResourceData, meta int
 	}
 	gatewayJson, err := json.Marshal(gateway)
 	if err != nil {
-		return diag.Errorf("error reading Gateway %q: error marshaling %#v to json: %s", gatewayId, gateway, createDescriptiveError(err, resp))
+		return diag.Errorf("error reading Gateway %q: error marshaling %#v to json: %s", gatewayId, gateway, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Gateway %q: %s", gatewayId, gatewayJson), map[string]interface{}{gatewayKey: gatewayId})
 

@@ -103,7 +103,7 @@ func tagBindingDataSourceRead(ctx context.Context, d *schema.ResourceData, meta 
 
 	tagBindingJson, err := json.Marshal(tagBinding)
 	if err != nil {
-		return diag.Errorf("error reading Tag Binding %q: error marshaling %#v to json: %s", tagBindingId, tagBinding, createDescriptiveError(err, resp))
+		return diag.Errorf("error reading Tag Binding %q: error marshaling %#v to json: %s", tagBindingId, tagBinding, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Tag Binding %q: %s", tagBindingId, tagBindingJson), map[string]interface{}{tagBindingLoggingKey: tagBindingId})
 

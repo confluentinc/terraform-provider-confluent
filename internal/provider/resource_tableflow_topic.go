@@ -224,7 +224,7 @@ func tableflowTopicCreate(ctx context.Context, d *schema.ResourceData, meta inte
 
 	createdTableflowTopicJson, err := json.Marshal(createdTableflowTopic)
 	if err != nil {
-		return diag.Errorf("error creating Tableflow Topic %q: error marshaling %#v to json: %s", d.Id(), createdTableflowTopic, createDescriptiveError(err, resp))
+		return diag.Errorf("error creating Tableflow Topic %q: error marshaling %#v to json: %s", d.Id(), createdTableflowTopic, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating Tableflow Topic %q: %s", d.Id(), createdTableflowTopicJson), map[string]interface{}{tableflowTopicKey: d.Id()})
 
@@ -272,7 +272,7 @@ func readTableflowTopicAndSetAttributes(ctx context.Context, d *schema.ResourceD
 	}
 	tableflowTopicJson, err := json.Marshal(tableflowTopic)
 	if err != nil {
-		return nil, fmt.Errorf("error reading Tableflow Topic %q: error marshaling %#v to json: %s", tableflowTopicId, tableflowTopic, createDescriptiveError(err, resp))
+		return nil, fmt.Errorf("error reading Tableflow Topic %q: error marshaling %#v to json: %s", tableflowTopicId, tableflowTopic, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Tableflow Topic %q: %s", d.Id(), tableflowTopicJson), map[string]interface{}{tableflowTopicKey: d.Id()})
 
@@ -439,7 +439,7 @@ func tableflowTopicUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 
 	UpdatedTableflowTopicJson, err := json.Marshal(updatedTableflowTopic)
 	if err != nil {
-		return diag.Errorf("error updating Tableflow Topic %q: error marshaling %#v to json: %s", d.Id(), updatedTableflowTopic, createDescriptiveError(err, resp))
+		return diag.Errorf("error updating Tableflow Topic %q: error marshaling %#v to json: %s", d.Id(), updatedTableflowTopic, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished updating Tableflow Topic %q: %s", d.Id(), UpdatedTableflowTopicJson), map[string]interface{}{tableflowTopicKey: d.Id()})
 	return tableflowTopicRead(ctx, d, meta)

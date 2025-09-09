@@ -96,7 +96,7 @@ func executeFlinkRegionDataSourceRead(ctx context.Context, d *schema.ResourceDat
 	}
 	flinkRegionJson, err := json.Marshal(flinkRegions)
 	if err != nil {
-		return diag.Errorf("error reading Flink Region: error marshaling %#v to json: %s", flinkRegions, createDescriptiveError(err, resp))
+		return diag.Errorf("error reading Flink Region: error marshaling %#v to json: %s", flinkRegions, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Flink Regions: %s", flinkRegionJson))
 

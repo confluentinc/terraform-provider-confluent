@@ -249,7 +249,7 @@ func readArtifactAndSetAttributes(ctx context.Context, d *schema.ResourceData, m
 	}
 	artifactJson, err := json.Marshal(artifact)
 	if err != nil {
-		return nil, fmt.Errorf("error reading flink artifact %q: error marshaling %#v to json: %s", artifactId, artifact, createDescriptiveError(err, resp))
+		return nil, fmt.Errorf("error reading flink artifact %q: error marshaling %#v to json: %s", artifactId, artifact, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Flink Artifact %q: %s", d.Id(), artifactJson), map[string]interface{}{flinkArtifactLoggingKey: d.Id()})
 

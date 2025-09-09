@@ -150,7 +150,7 @@ func groupMappingDataSourceReadUsingId(ctx context.Context, d *schema.ResourceDa
 	}
 	groupMappingJson, err := json.Marshal(groupMapping)
 	if err != nil {
-		return diag.Errorf("error reading Group Mapping %q: error marshaling %#v to json: %s", groupMappingId, groupMapping, createDescriptiveError(err, resp))
+		return diag.Errorf("error reading Group Mapping %q: error marshaling %#v to json: %s", groupMappingId, groupMapping, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Group Mapping %q: %s", groupMappingId, groupMappingJson), map[string]interface{}{groupMappingLoggingKey: groupMappingId})
 

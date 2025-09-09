@@ -150,7 +150,7 @@ func schemaRegistryDekCreate(ctx context.Context, d *schema.ResourceData, meta i
 
 	createdDekJson, err := json.Marshal(createdDek)
 	if err != nil {
-		return diag.Errorf("error creating Schema Registry DEK %q: error marshaling %#v to json: %s", dekId, createdDek, createDescriptiveError(err, resp))
+		return diag.Errorf("error creating Schema Registry DEK %q: error marshaling %#v to json: %s", dekId, createdDek, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating Schema Registry DEK %q: %s", dekId, createdDekJson), map[string]interface{}{schemaRegistryDekKey: dekId})
 	return schemaRegistryDekRead(ctx, d, meta)
@@ -207,7 +207,7 @@ func readSchemaRegistryDekAndSetAttributes(ctx context.Context, d *schema.Resour
 	}
 	dekJson, err := json.Marshal(dek)
 	if err != nil {
-		return nil, fmt.Errorf("error reading Schema Registry DEK %q: error marshaling %#v to json: %s", dekId, dekJson, createDescriptiveError(err, resp))
+		return nil, fmt.Errorf("error reading Schema Registry DEK %q: error marshaling %#v to json: %s", dekId, dekJson, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Schema Registry DEK %q: %s", dekId, dekJson), map[string]interface{}{schemaRegistryDekKey: dekId})
 

@@ -94,7 +94,7 @@ func serviceAccountUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 
 	updatedServiceAccountJson, err := json.Marshal(updatedServiceAccount)
 	if err != nil {
-		return diag.Errorf("error updating Service Account %q: error marshaling %#v to json: %s", d.Id(), updatedServiceAccount, createDescriptiveError(err, resp))
+		return diag.Errorf("error updating Service Account %q: error marshaling %#v to json: %s", d.Id(), updatedServiceAccount, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished updating Service Account %q: %s", d.Id(), updatedServiceAccountJson), map[string]interface{}{serviceAccountLoggingKey: d.Id()})
 
@@ -124,7 +124,7 @@ func serviceAccountCreate(ctx context.Context, d *schema.ResourceData, meta inte
 
 	createdServiceAccountJson, err := json.Marshal(createdServiceAccount)
 	if err != nil {
-		return diag.Errorf("error creating Service Account %q: error marshaling %#v to json: %s", d.Id(), createdServiceAccount, createDescriptiveError(err, resp))
+		return diag.Errorf("error creating Service Account %q: error marshaling %#v to json: %s", d.Id(), createdServiceAccount, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating Service Account %q: %s", d.Id(), createdServiceAccountJson), map[string]interface{}{serviceAccountLoggingKey: d.Id()})
 
@@ -175,7 +175,7 @@ func serviceAccountRead(ctx context.Context, d *schema.ResourceData, meta interf
 	}
 	serviceAccountJson, err := json.Marshal(serviceAccount)
 	if err != nil {
-		return diag.Errorf("error reading Service Account %q: error marshaling %#v to json: %s", d.Id(), serviceAccount, createDescriptiveError(err, resp))
+		return diag.Errorf("error reading Service Account %q: error marshaling %#v to json: %s", d.Id(), serviceAccount, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Service Account %q: %s", d.Id(), serviceAccountJson), map[string]interface{}{serviceAccountLoggingKey: d.Id()})
 

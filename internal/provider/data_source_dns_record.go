@@ -92,7 +92,7 @@ func dnsRecordDataSourceRead(ctx context.Context, d *schema.ResourceData, meta i
 	}
 	dnsRecordJson, err := json.Marshal(dnsRecord)
 	if err != nil {
-		return diag.Errorf("error reading DNS Record %q: error marshaling %#v to json: %s", dnsRecordId, dnsRecord, createDescriptiveError(err, resp))
+		return diag.Errorf("error reading DNS Record %q: error marshaling %#v to json: %s", dnsRecordId, dnsRecord, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched DNS Record %q: %s", dnsRecordId, dnsRecordJson), map[string]interface{}{dnsRecordKey: dnsRecordId})
 

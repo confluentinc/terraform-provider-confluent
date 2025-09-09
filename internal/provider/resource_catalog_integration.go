@@ -194,7 +194,7 @@ func catalogIntegrationCreate(ctx context.Context, d *schema.ResourceData, meta 
 
 	createdCatalogIntegrationJson, err := json.Marshal(createdCatalogIntegration)
 	if err != nil {
-		return diag.Errorf("error creating Catalog Integration %q: error marshaling %#v to json: %s", d.Id(), createdCatalogIntegration, createDescriptiveError(err, resp))
+		return diag.Errorf("error creating Catalog Integration %q: error marshaling %#v to json: %s", d.Id(), createdCatalogIntegration, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating Catalog Integration %q: %s", d.Id(), createdCatalogIntegrationJson), map[string]interface{}{catalogIntegrationKey: d.Id()})
 
@@ -242,7 +242,7 @@ func readCatalogIntegrationAndSetAttributes(ctx context.Context, d *schema.Resou
 	}
 	catalogIntegrationJson, err := json.Marshal(catalogIntegration)
 	if err != nil {
-		return nil, fmt.Errorf("error reading Catalog Integration %q: error marshaling %#v to json: %s", catalogIntegrationId, catalogIntegration, createDescriptiveError(err, resp))
+		return nil, fmt.Errorf("error reading Catalog Integration %q: error marshaling %#v to json: %s", catalogIntegrationId, catalogIntegration, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Catalog Integration %q: %s", d.Id(), catalogIntegrationJson), map[string]interface{}{catalogIntegrationKey: d.Id()})
 
@@ -402,7 +402,7 @@ func catalogIntegrationUpdate(ctx context.Context, d *schema.ResourceData, meta 
 
 	UpdatedCatalogIntegrationJson, err := json.Marshal(updatedCatalogIntegration)
 	if err != nil {
-		return diag.Errorf("error updating Catalog Integration %q: error marshaling %#v to json: %s", d.Id(), updatedCatalogIntegration, createDescriptiveError(err, resp))
+		return diag.Errorf("error updating Catalog Integration %q: error marshaling %#v to json: %s", d.Id(), updatedCatalogIntegration, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished updating Catalog Integration %q: %s", d.Id(), UpdatedCatalogIntegrationJson), map[string]interface{}{catalogIntegrationKey: d.Id()})
 	return catalogIntegrationRead(ctx, d, meta)

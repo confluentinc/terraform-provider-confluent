@@ -90,7 +90,7 @@ func pluginCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 
 	createdPluginJson, err := json.Marshal(createdPlugin)
 	if err != nil {
-		return diag.Errorf("error creating Plugin %q: error marshaling %#v to json: %s", d.Id(), createdPluginJson, createDescriptiveError(err, resp))
+		return diag.Errorf("error creating Plugin %q: error marshaling %#v to json: %s", d.Id(), createdPluginJson, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating Plugin %q: %s", d.Id(), createdPluginJson), map[string]interface{}{pluginLoggingKey: d.Id()})
 
@@ -132,7 +132,7 @@ func pluginUpdate(ctx context.Context, d *schema.ResourceData, meta interface{})
 
 	updatedPluginJson, err := json.Marshal(updatedPlugin)
 	if err != nil {
-		return diag.Errorf("error updating Plugin %q: error marshaling %#v to json: %s", d.Id(), updatedPlugin, createDescriptiveError(err, resp))
+		return diag.Errorf("error updating Plugin %q: error marshaling %#v to json: %s", d.Id(), updatedPlugin, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished updating Plugin %q: %s", d.Id(), updatedPluginJson), map[string]interface{}{pluginLoggingKey: d.Id()})
 
@@ -168,7 +168,7 @@ func readPluginAndSetAttributes(ctx context.Context, d *schema.ResourceData, c *
 	}
 	pluginJson, err := json.Marshal(plugin)
 	if err != nil {
-		return nil, fmt.Errorf("error reading Plugin %q: error marshaling %#v to json: %s", d.Id(), plugin, createDescriptiveError(err, resp))
+		return nil, fmt.Errorf("error reading Plugin %q: error marshaling %#v to json: %s", d.Id(), plugin, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Plugin %q: %s", d.Id(), pluginJson), map[string]interface{}{pluginLoggingKey: d.Id()})
 

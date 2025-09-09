@@ -103,7 +103,7 @@ func ksqlDataSourceReadUsingId(ctx context.Context, d *schema.ResourceData, meta
 	}
 	ksqlClusterJson, err := json.Marshal(ksqlCluster)
 	if err != nil {
-		return diag.Errorf("error reading ksqlDB Cluster %q: error marshaling %#v to json: %s", clusterId, ksqlCluster, createDescriptiveError(err, resp))
+		return diag.Errorf("error reading ksqlDB Cluster %q: error marshaling %#v to json: %s", clusterId, ksqlCluster, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched ksqlDb Cluster %q: %s", clusterId, ksqlClusterJson), map[string]interface{}{ksqlClusterLoggingKey: clusterId})
 

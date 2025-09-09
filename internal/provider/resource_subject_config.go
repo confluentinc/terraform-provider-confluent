@@ -245,7 +245,7 @@ func readSubjectConfigAndSetAttributes(ctx context.Context, d *schema.ResourceDa
 	}
 	subjectConfigJson, err := json.Marshal(subjectConfig)
 	if err != nil {
-		return nil, fmt.Errorf("error reading Subject Config %q: error marshaling %#v to json: %s", d.Id(), subjectConfig, createDescriptiveError(err, resp))
+		return nil, fmt.Errorf("error reading Subject Config %q: error marshaling %#v to json: %s", d.Id(), subjectConfig, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Subject Config %q: %s", d.Id(), subjectConfigJson), map[string]interface{}{subjectConfigLoggingKey: d.Id()})
 

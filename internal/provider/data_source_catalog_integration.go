@@ -78,7 +78,7 @@ func catalogIntegrationDataSourceRead(ctx context.Context, d *schema.ResourceDat
 	}
 	catalogIntegrationJson, err := json.Marshal(catalogIntegration)
 	if err != nil {
-		return diag.Errorf("error reading Catalog Integration %q: error marshaling %#v to json: %s", catalogIntegrationId, catalogIntegration, createDescriptiveError(err, resp))
+		return diag.Errorf("error reading Catalog Integration %q: error marshaling %#v to json: %s", catalogIntegrationId, catalogIntegration, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Catalog Integration %q: %s", catalogIntegrationId, catalogIntegrationJson), map[string]interface{}{catalogIntegrationKey: catalogIntegrationId})
 

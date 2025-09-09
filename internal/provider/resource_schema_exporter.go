@@ -280,7 +280,7 @@ func readSchemaExporterAndSetAttributes(ctx context.Context, d *schema.ResourceD
 	}
 	exporterJson, err := json.Marshal(exporter)
 	if err != nil {
-		return nil, fmt.Errorf("error reading Schema Exporter %q: error marshaling %#v to json: %s", id, exporterJson, createDescriptiveError(err, resp))
+		return nil, fmt.Errorf("error reading Schema Exporter %q: error marshaling %#v to json: %s", id, exporterJson, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Schema Exporter %q: %s", id, exporterJson), map[string]interface{}{schemaExporterLoggingKey: id})
 
@@ -374,7 +374,7 @@ func schemaExporterUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 		}
 		updatedExporterJson, err := json.Marshal(updatedExporter)
 		if err != nil {
-			return diag.Errorf("error updating Schema Exporter: error marshaling %#v to json: %s", request, createDescriptiveError(err, resp))
+			return diag.Errorf("error updating Schema Exporter: error marshaling %#v to json: %s", request, createDescriptiveError(err))
 		}
 		tflog.Debug(ctx, fmt.Sprintf("Updating Schema Exporter: %s", updatedExporterJson))
 

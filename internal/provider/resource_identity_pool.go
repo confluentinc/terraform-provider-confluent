@@ -111,7 +111,7 @@ func identityPoolUpdate(ctx context.Context, d *schema.ResourceData, meta interf
 
 	updatedIdentityPoolJson, err := json.Marshal(updatedIdentityPool)
 	if err != nil {
-		return diag.Errorf("error updating Identity Pool %q: error marshaling %#v to json: %s", d.Id(), updatedIdentityPool, createDescriptiveError(err, resp))
+		return diag.Errorf("error updating Identity Pool %q: error marshaling %#v to json: %s", d.Id(), updatedIdentityPool, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished updating Identity Pool %q: %s", d.Id(), updatedIdentityPoolJson), map[string]interface{}{identityPoolLoggingKey: d.Id()})
 
@@ -146,7 +146,7 @@ func identityPoolCreate(ctx context.Context, d *schema.ResourceData, meta interf
 
 	createdIdentityPoolJson, err := json.Marshal(createdIdentityPool)
 	if err != nil {
-		return diag.Errorf("error creating Identity Pool: %q: error marshaling %#v to json: %s", createdIdentityPool.GetId(), createdIdentityPool, createDescriptiveError(err, resp))
+		return diag.Errorf("error creating Identity Pool: %q: error marshaling %#v to json: %s", createdIdentityPool.GetId(), createdIdentityPool, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating Identity Pool %q: %s", d.Id(), createdIdentityPoolJson), map[string]interface{}{identityPoolLoggingKey: d.Id()})
 
@@ -205,7 +205,7 @@ func readIdentityPoolAndSetAttributes(ctx context.Context, d *schema.ResourceDat
 	}
 	identityPoolJson, err := json.Marshal(identityPool)
 	if err != nil {
-		return nil, fmt.Errorf("error reading Identity Pool %q: error marshaling %#v to json: %s", d.Id(), identityPool, createDescriptiveError(err, resp))
+		return nil, fmt.Errorf("error reading Identity Pool %q: error marshaling %#v to json: %s", d.Id(), identityPool, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Identity Pool %q: %s", d.Id(), identityPoolJson), map[string]interface{}{identityPoolLoggingKey: d.Id()})
 

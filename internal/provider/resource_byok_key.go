@@ -175,7 +175,7 @@ func byokCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 
 	createdKeyJson, err := json.Marshal(createdKey)
 	if err != nil {
-		return diag.Errorf("error creating BYOK Key %q: error marshaling %#v to json: %s", d.Id(), createdKey, createDescriptiveError(err, resp))
+		return diag.Errorf("error creating BYOK Key %q: error marshaling %#v to json: %s", d.Id(), createdKey, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating BYOK BYOK Key %q: %s", d.Id(), createdKeyJson), map[string]interface{}{byokKeyLoggingKey: d.Id()})
 
@@ -233,7 +233,7 @@ func readKeyAndSetAttributes(ctx context.Context, d *schema.ResourceData, meta i
 
 	keyJson, err := json.Marshal(key)
 	if err != nil {
-		return nil, fmt.Errorf("error reading BYOK Key %q: error marshaling %#v to json: %s", key.GetId(), key, createDescriptiveError(err, resp))
+		return nil, fmt.Errorf("error reading BYOK Key %q: error marshaling %#v to json: %s", key.GetId(), key, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched BYOK Key %q: %s", d.Id(), keyJson), map[string]interface{}{byokKeyLoggingKey: d.Id()})
 

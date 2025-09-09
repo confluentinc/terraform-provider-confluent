@@ -139,7 +139,7 @@ func computePoolCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 
 	createdComputePoolJson, err := json.Marshal(createdComputePool)
 	if err != nil {
-		return diag.Errorf("error creating Flink Compute Pool %q: error marshaling %#v to json: %s", d.Id(), createdComputePool, createDescriptiveError(err, resp))
+		return diag.Errorf("error creating Flink Compute Pool %q: error marshaling %#v to json: %s", d.Id(), createdComputePool, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating Flink Compute Pool %q: %s", d.Id(), createdComputePoolJson), map[string]interface{}{computePoolLoggingKey: d.Id()})
 
@@ -186,7 +186,7 @@ func readComputePoolAndSetAttributes(ctx context.Context, d *schema.ResourceData
 	}
 	computePoolJson, err := json.Marshal(computePool)
 	if err != nil {
-		return nil, fmt.Errorf("error reading Flink Compute Pool %q: error marshaling %#v to json: %s", computePoolId, computePool, createDescriptiveError(err, resp))
+		return nil, fmt.Errorf("error reading Flink Compute Pool %q: error marshaling %#v to json: %s", computePoolId, computePool, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Flink Compute Pool %q: %s", d.Id(), computePoolJson), map[string]interface{}{computePoolLoggingKey: d.Id()})
 
@@ -281,7 +281,7 @@ func computePoolUpdate(ctx context.Context, d *schema.ResourceData, meta interfa
 
 	updatedComputePoolJson, err := json.Marshal(updatedComputePool)
 	if err != nil {
-		return diag.Errorf("error updating Flink Compute Pool %q: error marshaling %#v to json: %s", d.Id(), updatedComputePool, createDescriptiveError(err, resp))
+		return diag.Errorf("error updating Flink Compute Pool %q: error marshaling %#v to json: %s", d.Id(), updatedComputePool, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished updating Flink Compute Pool %q: %s", d.Id(), updatedComputePoolJson), map[string]interface{}{computePoolLoggingKey: d.Id()})
 	return computePoolRead(ctx, d, meta)

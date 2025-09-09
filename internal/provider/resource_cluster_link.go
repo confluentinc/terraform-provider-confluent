@@ -287,7 +287,7 @@ func readClusterLinkAndSetAttributes(ctx context.Context, d *schema.ResourceData
 	}
 	clusterLinkJson, err := json.Marshal(clusterLink)
 	if err != nil {
-		return nil, fmt.Errorf("error reading Cluster Link %q: error marshaling %#v to json: %s", d.Id(), clusterLink, createDescriptiveError(err, resp))
+		return nil, fmt.Errorf("error reading Cluster Link %q: error marshaling %#v to json: %s", d.Id(), clusterLink, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Cluster Link %q: %s", d.Id(), clusterLinkJson), map[string]interface{}{clusterLinkLoggingKey: d.Id()})
 
@@ -1006,7 +1006,7 @@ func loadClusterLinkConfigs(ctx context.Context, d *schema.ResourceData, c *Kafk
 	}
 	configJson, err := json.Marshal(config)
 	if err != nil {
-		return nil, fmt.Errorf("error reading Cluster Link: error marshaling %#v to json: %s", config, createDescriptiveError(err, resp))
+		return nil, fmt.Errorf("error reading Cluster Link: error marshaling %#v to json: %s", config, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Cluster Link %q Settings: %s", d.Id(), configJson), map[string]interface{}{clusterLinkLoggingKey: d.Id()})
 

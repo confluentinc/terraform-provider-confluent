@@ -131,7 +131,7 @@ func networkLinkEndpointCreate(ctx context.Context, d *schema.ResourceData, meta
 
 	createdNetworkLinkEndpointJson, err := json.Marshal(createdNLE)
 	if err != nil {
-		return diag.Errorf("error creating Network Link Endpoint %q: error marshaling %#v to json: %s", nleId, createdNLE, createDescriptiveError(err, resp))
+		return diag.Errorf("error creating Network Link Endpoint %q: error marshaling %#v to json: %s", nleId, createdNLE, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating Network Link Endpoint %q: %s", nleId, createdNetworkLinkEndpointJson), map[string]interface{}{networkLinkEndpointLoggingKey: nleId})
 	return networkLinkEndpointRead(ctx, d, meta)
@@ -180,7 +180,7 @@ func readNetworkLinkEndpointAndSetAttributes(ctx context.Context, d *schema.Reso
 
 	nleJson, err := json.Marshal(nle)
 	if err != nil {
-		return nil, fmt.Errorf("error reading Network Link Endpoint %q: error marshaling %#v to json: %s", nleId, nle, createDescriptiveError(err, resp))
+		return nil, fmt.Errorf("error reading Network Link Endpoint %q: error marshaling %#v to json: %s", nleId, nle, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Network Link Endpoint %q: %s", nleId, nleJson), map[string]interface{}{networkLinkEndpointLoggingKey: nleId})
 
@@ -251,7 +251,7 @@ func networkLinkEndpointUpdate(ctx context.Context, d *schema.ResourceData, meta
 
 	updatedNetworkLinkEndpointJson, err := json.Marshal(updatedNLE)
 	if err != nil {
-		return diag.Errorf("error updating Network Link Endpoint %q: error marshaling %#v to json: %s", nleId, updatedNLE, createDescriptiveError(err, resp))
+		return diag.Errorf("error updating Network Link Endpoint %q: error marshaling %#v to json: %s", nleId, updatedNLE, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished updating Network Link Endpoint %q: %s", nleId, updatedNetworkLinkEndpointJson), map[string]interface{}{networkLinkEndpointLoggingKey: nleId})
 	return networkLinkEndpointRead(ctx, d, meta)

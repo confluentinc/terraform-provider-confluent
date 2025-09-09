@@ -83,7 +83,7 @@ func ipGroupUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}
 
 	updatedIPGroupJson, err := json.Marshal(updatedIPGroup)
 	if err != nil {
-		return diag.Errorf("error updating IP Group %q: error marshaling %#v to json: %s", d.Id(), updatedIPGroup, createDescriptiveError(err, resp))
+		return diag.Errorf("error updating IP Group %q: error marshaling %#v to json: %s", d.Id(), updatedIPGroup, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished updating IP Group %q: %s", d.Id(), updatedIPGroupJson), map[string]interface{}{ipGroupLoggingKey: d.Id()})
 
@@ -109,7 +109,7 @@ func ipGroupCreate(ctx context.Context, d *schema.ResourceData, meta interface{}
 
 	createdIPGroupJson, err := json.Marshal(createdIPGroup)
 	if err != nil {
-		return diag.Errorf("error creating IP Group %q: error marshaling %#v to json: %s", d.Id(), createdIPGroup, createDescriptiveError(err, resp))
+		return diag.Errorf("error creating IP Group %q: error marshaling %#v to json: %s", d.Id(), createdIPGroup, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating IP Group %q: %s", d.Id(), createdIPGroupJson), map[string]interface{}{ipGroupLoggingKey: d.Id()})
 
@@ -160,7 +160,7 @@ func ipGroupRead(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 	}
 	ipGroupJson, err := json.Marshal(ipGroup)
 	if err != nil {
-		return diag.Errorf("error reading IP Group %q: error marshaling %#v to json: %s", d.Id(), ipGroup, createDescriptiveError(err, resp))
+		return diag.Errorf("error reading IP Group %q: error marshaling %#v to json: %s", d.Id(), ipGroup, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched IP Group %q: %s", d.Id(), ipGroupJson), map[string]interface{}{ipGroupLoggingKey: d.Id()})
 

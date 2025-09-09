@@ -115,7 +115,7 @@ func readDataSourceClusterLinkAndSetAttributes(ctx context.Context, d *schema.Re
 
 	clusterLinkJson, err := json.Marshal(clusterLink)
 	if err != nil {
-		return fmt.Errorf("error reading Cluster Link %q: error marshaling %#v to json: %s", d.Id(), clusterLink, createDescriptiveError(err, resp))
+		return fmt.Errorf("error reading Cluster Link %q: error marshaling %#v to json: %s", d.Id(), clusterLink, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Cluster Link %q: %s", d.Id(), clusterLinkJson), map[string]interface{}{clusterLinkLoggingKey: d.Id()})
 

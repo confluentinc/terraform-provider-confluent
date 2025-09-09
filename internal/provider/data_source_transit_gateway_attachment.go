@@ -109,7 +109,7 @@ func transitGatewayAttachmentDataSourceReadUsingId(ctx context.Context, d *schem
 	}
 	transitGatewayAttachmentJson, err := json.Marshal(transitGatewayAttachment)
 	if err != nil {
-		return diag.Errorf("error reading Transit Gateway Attachment %q: error marshaling %#v to json: %s", transitGatewayAttachmentId, transitGatewayAttachment, createDescriptiveError(err, resp))
+		return diag.Errorf("error reading Transit Gateway Attachment %q: error marshaling %#v to json: %s", transitGatewayAttachmentId, transitGatewayAttachment, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Transit Gateway Attachment %q: %s", transitGatewayAttachmentId, transitGatewayAttachmentJson), map[string]interface{}{transitGatewayAttachmentLoggingKey: transitGatewayAttachmentId})
 

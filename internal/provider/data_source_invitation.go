@@ -88,7 +88,7 @@ func invitationDataSourceReadUsingId(ctx context.Context, d *schema.ResourceData
 	}
 	invitationJson, err := json.Marshal(invitation)
 	if err != nil {
-		return diag.Errorf("error reading invitation %q: error marshaling %#v to json: %s", invitationId, invitation, createDescriptiveError(err, resp))
+		return diag.Errorf("error reading invitation %q: error marshaling %#v to json: %s", invitationId, invitation, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched invitation %q: %s", invitationId, invitationJson), map[string]interface{}{invitationLoggingKey: invitationId})
 

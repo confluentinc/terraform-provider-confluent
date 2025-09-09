@@ -187,7 +187,7 @@ func readPrivateLinkAttachmentConnectionAndSetAttributes(ctx context.Context, d 
 
 	plattcJson, err := json.Marshal(plattc)
 	if err != nil {
-		return nil, fmt.Errorf("error reading Private Link Attachment Connection %q: error marshaling %#v to json: %s", plattcId, plattc, createDescriptiveError(err, resp))
+		return nil, fmt.Errorf("error reading Private Link Attachment Connection %q: error marshaling %#v to json: %s", plattcId, plattc, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Private Link Attachment Connection %q: %s", plattcId, plattcJson), map[string]interface{}{privateLinkAttachmentConnectionLoggingKey: plattcId})
 
@@ -256,7 +256,7 @@ func privateLinkAttachmentConnectionCreate(ctx context.Context, d *schema.Resour
 
 	createdPrivateLinkAttachmentConnectionJson, err := json.Marshal(createdPlattc)
 	if err != nil {
-		return diag.Errorf("error creating Private Link Attachment Connection %q: error marshaling %#v to json: %s", plattcId, createdPlattc, createDescriptiveError(err, resp))
+		return diag.Errorf("error creating Private Link Attachment Connection %q: error marshaling %#v to json: %s", plattcId, createdPlattc, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating Private Link Attachment Connection %q: %s", plattcId, createdPrivateLinkAttachmentConnectionJson), map[string]interface{}{privateLinkAttachmentConnectionLoggingKey: plattcId})
 	return privateLinkAttachmentConnectionRead(ctx, d, meta)
@@ -318,7 +318,7 @@ func privateLinkAttachmentConnectionUpdate(ctx context.Context, d *schema.Resour
 
 	updatedPrivateLinkAttachmentConnectionJson, err := json.Marshal(updatedPlattc)
 	if err != nil {
-		return diag.Errorf("error updating Private Link Attachment Connection %q: error marshaling %#v to json: %s", plattcId, updatedPlattc, createDescriptiveError(err, resp))
+		return diag.Errorf("error updating Private Link Attachment Connection %q: error marshaling %#v to json: %s", plattcId, updatedPlattc, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished updating Private Link Attachment Connection %q: %s", plattcId, updatedPrivateLinkAttachmentConnectionJson), map[string]interface{}{privateLinkAttachmentConnectionLoggingKey: plattcId})
 	return privateLinkAttachmentConnectionRead(ctx, d, meta)

@@ -203,7 +203,7 @@ func connectionCreate(ctx context.Context, d *schema.ResourceData, meta interfac
 	d.SetId(createFlinkConnectionId(flinkRestClient.organizationId, flinkRestClient.environmentId, createdConnection.GetName()))
 	createdConnectionJson, err := json.Marshal(createdConnection)
 	if err != nil {
-		return diag.Errorf("error creating Flink Connection: error marshaling %#v to json: %s", createdConnectionJson, createDescriptiveError(err, resp))
+		return diag.Errorf("error creating Flink Connection: error marshaling %#v to json: %s", createdConnectionJson, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating Flink Connection %q: %s", d.Id(), createdConnectionJson), map[string]interface{}{flinkConnectionLoggingKey: d.Id()})
 	return connectionRead(ctx, d, meta)
@@ -299,7 +299,7 @@ func readConnectionAndSetAttributes(ctx context.Context, d *schema.ResourceData,
 	}
 	connectionJson, err := json.Marshal(connection)
 	if err != nil {
-		return nil, fmt.Errorf("error reading flink connection %q: error marshaling %#v to json: %s", d.Id(), connection, createDescriptiveError(err, resp))
+		return nil, fmt.Errorf("error reading flink connection %q: error marshaling %#v to json: %s", d.Id(), connection, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Flink Connection %q: %s", d.Id(), connectionJson), map[string]interface{}{flinkConnectionLoggingKey: d.Id()})
 

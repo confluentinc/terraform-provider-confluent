@@ -92,7 +92,7 @@ func networkLinkEndpointDataSourceRead(ctx context.Context, d *schema.ResourceDa
 	}
 	nleJson, err := json.Marshal(nle)
 	if err != nil {
-		return diag.Errorf("error reading network link endpoint %q: error marshaling %#v to json: %s", nleId, nle, createDescriptiveError(err, resp))
+		return diag.Errorf("error reading network link endpoint %q: error marshaling %#v to json: %s", nleId, nle, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched network link endpoint %q: %s", nleId, nleJson), map[string]interface{}{networkLinkEndpointLoggingKey: nleId})
 

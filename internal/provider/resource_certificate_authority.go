@@ -144,7 +144,7 @@ func certificateAuthorityCreate(ctx context.Context, d *schema.ResourceData, met
 
 	createdCertificateAuthorityJson, err := json.Marshal(createdCertificateAuthority)
 	if err != nil {
-		return diag.Errorf("error creating Certificate Authority %q: error marshaling %#v to json: %s", d.Id(), createdCertificateAuthority, createDescriptiveError(err, resp))
+		return diag.Errorf("error creating Certificate Authority %q: error marshaling %#v to json: %s", d.Id(), createdCertificateAuthority, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating Certificate Authority %q: %s", d.Id(), createdCertificateAuthorityJson), map[string]interface{}{certificateAuthorityKey: d.Id()})
 
@@ -185,7 +185,7 @@ func readCertificateAuthorityAndSetAttributes(ctx context.Context, d *schema.Res
 	}
 	certificateAuthorityJson, err := json.Marshal(certificateAuthority)
 	if err != nil {
-		return nil, fmt.Errorf("error reading Certificate Authority %q: error marshaling %#v to json: %s", certificateAuthorityId, certificateAuthority, createDescriptiveError(err, resp))
+		return nil, fmt.Errorf("error reading Certificate Authority %q: error marshaling %#v to json: %s", certificateAuthorityId, certificateAuthority, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Certificate Authority %q: %s", d.Id(), certificateAuthorityJson), map[string]interface{}{certificateAuthorityKey: d.Id()})
 
@@ -277,7 +277,7 @@ func certificateAuthorityUpdate(ctx context.Context, d *schema.ResourceData, met
 
 	UpdatedCertificateAuthorityJson, err := json.Marshal(updatedCertificateAuthority)
 	if err != nil {
-		return diag.Errorf("error updating Certificate Authority %q: error marshaling %#v to json: %s", d.Id(), updatedCertificateAuthority, createDescriptiveError(err, resp))
+		return diag.Errorf("error updating Certificate Authority %q: error marshaling %#v to json: %s", d.Id(), updatedCertificateAuthority, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished updating Certificate Authority %q: %s", d.Id(), UpdatedCertificateAuthorityJson), map[string]interface{}{certificateAuthorityKey: d.Id()})
 	return certificateAuthorityRead(ctx, d, meta)

@@ -72,7 +72,7 @@ func certificatePoolDataSourceRead(ctx context.Context, d *schema.ResourceData, 
 	}
 	certificatePoolJson, err := json.Marshal(certificatePool)
 	if err != nil {
-		return diag.Errorf("error reading Certificate Pool %q: error marshaling %#v to json: %s", certificatePoolId, certificatePool, createDescriptiveError(err, resp))
+		return diag.Errorf("error reading Certificate Pool %q: error marshaling %#v to json: %s", certificatePoolId, certificatePool, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Certificate Pool %q: %s", certificatePoolId, certificatePoolJson), map[string]interface{}{certificatePoolKey: certificatePoolId})
 

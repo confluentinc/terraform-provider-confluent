@@ -107,7 +107,7 @@ func tagDataSourceReadUsingTagName(ctx context.Context, d *schema.ResourceData, 
 	}
 	tagJson, err := json.Marshal(tag)
 	if err != nil {
-		return diag.Errorf("error reading Tag %q: error marshaling %#v to json: %s", tagId, tag, createDescriptiveError(err, resp))
+		return diag.Errorf("error reading Tag %q: error marshaling %#v to json: %s", tagId, tag, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Tag %q: %s", tagId, tagJson), map[string]interface{}{tagLoggingKey: tagId})
 

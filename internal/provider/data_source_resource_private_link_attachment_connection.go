@@ -129,7 +129,7 @@ func privateLinkAttachmentConnectionDataSourceRead(ctx context.Context, d *schem
 	}
 	plattcJson, err := json.Marshal(plattc)
 	if err != nil {
-		return diag.Errorf("error reading Private Link Attachment Connection %q: error marshaling %#v to json: %s", plattcId, plattc, createDescriptiveError(err, resp))
+		return diag.Errorf("error reading Private Link Attachment Connection %q: error marshaling %#v to json: %s", plattcId, plattc, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Private Link Attachment Connection %q: %s", plattcId, plattcJson), map[string]interface{}{privateLinkAttachmentConnectionLoggingKey: plattcId})
 

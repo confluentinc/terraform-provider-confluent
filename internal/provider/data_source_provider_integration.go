@@ -111,7 +111,7 @@ func providerIntegrationDataSourceReadUsingId(ctx context.Context, d *schema.Res
 	}
 	pimJson, err := json.Marshal(pim)
 	if err != nil {
-		return diag.Errorf("error reading provider integration %q: error marshaling %#v to json: %s", pimId, pim, createDescriptiveError(err, resp))
+		return diag.Errorf("error reading provider integration %q: error marshaling %#v to json: %s", pimId, pim, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched provider integration %q: %s", pimId, pimJson), map[string]interface{}{providerIntegrationLoggingKey: pimId})
 

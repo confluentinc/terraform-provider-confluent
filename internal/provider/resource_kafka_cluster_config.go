@@ -201,7 +201,7 @@ func readConfigAndSetAttributes(ctx context.Context, d *schema.ResourceData, c *
 	}
 	kafkaConfigJson, err := json.Marshal(kafkaConfig)
 	if err != nil {
-		return nil, fmt.Errorf("error reading Kafka Config %q: error marshaling %#v to json: %s", d.Id(), kafkaConfig, createDescriptiveError(err, resp))
+		return nil, fmt.Errorf("error reading Kafka Config %q: error marshaling %#v to json: %s", d.Id(), kafkaConfig, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Kafka Config %q: %s", d.Id(), kafkaConfigJson), map[string]interface{}{kafkaClusterLoggingKey: d.Id()})
 

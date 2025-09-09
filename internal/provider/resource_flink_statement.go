@@ -206,7 +206,7 @@ func flinkStatementCreate(ctx context.Context, d *schema.ResourceData, meta inte
 
 	createdFlinkStatementJson, err := json.Marshal(createdFlinkStatement)
 	if err != nil {
-		return diag.Errorf("error creating Flink Statement %q: error marshaling %#v to json: %s", createdFlinkStatement.GetName(), createdFlinkStatement, createDescriptiveError(err, resp))
+		return diag.Errorf("error creating Flink Statement %q: error marshaling %#v to json: %s", createdFlinkStatement.GetName(), createdFlinkStatement, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating Flink Statement %q: %s", createdFlinkStatement.GetName(), createdFlinkStatementJson), map[string]interface{}{flinkStatementLoggingKey: d.Id()})
 
@@ -334,7 +334,7 @@ func flinkStatementStop(ctx context.Context, d *schema.ResourceData, meta interf
 		statement.Spec.SetStopped(true)
 		updateFlinkStatementRequestJson, err := json.Marshal(statement)
 		if err != nil {
-			return diag.Errorf("error stopping Flink Statement %q: error marshaling %#v to json: %s", statementName, statement, createDescriptiveError(err, resp))
+			return diag.Errorf("error stopping Flink Statement %q: error marshaling %#v to json: %s", statementName, statement, createDescriptiveError(err))
 		}
 		tflog.Debug(ctx, fmt.Sprintf("stopping Flink Statement %q: %s", statementName, updateFlinkStatementRequestJson), map[string]interface{}{flinkStatementLoggingKey: d.Id()})
 		req := flinkRestClient.apiClient.StatementsSqlV1Api.UpdateSqlv1Statement(flinkRestClient.apiContext(ctx), organizationId, environmentId, statementName).SqlV1Statement(statement)
@@ -430,7 +430,7 @@ func readFlinkStatementAndSetAttributes(ctx context.Context, d *schema.ResourceD
 	}
 	statementJson, err := json.Marshal(statement)
 	if err != nil {
-		return nil, fmt.Errorf("error reading Flink Statement %q: error marshaling %#v to json: %s", statementName, statement, createDescriptiveError(err, resp))
+		return nil, fmt.Errorf("error reading Flink Statement %q: error marshaling %#v to json: %s", statementName, statement, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Flink Statement %q: %s", d.Id(), statementJson), map[string]interface{}{flinkStatementLoggingKey: d.Id()})
 

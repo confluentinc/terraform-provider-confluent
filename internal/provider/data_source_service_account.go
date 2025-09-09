@@ -106,7 +106,7 @@ func serviceAccountDataSourceReadUsingDisplayName(ctx context.Context, d *schema
 	serviceAccount := serviceAccounts[0]
 	serviceAccountJson, err := json.Marshal(serviceAccount)
 	if err != nil {
-		return diag.Errorf("error reading Service Account %q: error marshaling %#v to json: %s", displayName, serviceAccount, createDescriptiveError(err, resp))
+		return diag.Errorf("error reading Service Account %q: error marshaling %#v to json: %s", displayName, serviceAccount, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Service Account %q: %s", serviceAccount.GetId(), serviceAccountJson), map[string]interface{}{serviceAccountLoggingKey: serviceAccount.GetId()})
 
@@ -166,7 +166,7 @@ func serviceAccountDataSourceReadUsingId(ctx context.Context, d *schema.Resource
 	}
 	serviceAccountJson, err := json.Marshal(serviceAccount)
 	if err != nil {
-		return diag.Errorf("error reading Service Account %q: error marshaling %#v to json: %s", serviceAccountId, serviceAccount, createDescriptiveError(err, resp))
+		return diag.Errorf("error reading Service Account %q: error marshaling %#v to json: %s", serviceAccountId, serviceAccount, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Service Account %q: %s", serviceAccountId, serviceAccountJson), map[string]interface{}{serviceAccountLoggingKey: serviceAccountId})
 

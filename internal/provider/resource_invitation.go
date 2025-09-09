@@ -125,7 +125,7 @@ func readInvitationAndSetAttributes(ctx context.Context, d *schema.ResourceData,
 	}
 	invitationJson, err := json.Marshal(invitation)
 	if err != nil {
-		return nil, fmt.Errorf("error reading invitation %q: error marshaling %#v to json: %s", invitationId, invitation, createDescriptiveError(err, resp))
+		return nil, fmt.Errorf("error reading invitation %q: error marshaling %#v to json: %s", invitationId, invitation, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched invitation %q: %s", invitationId, invitationJson), map[string]interface{}{invitationLoggingKey: invitationId})
 
@@ -165,7 +165,7 @@ func invitationCreate(ctx context.Context, d *schema.ResourceData, meta interfac
 
 	createdInvitationJson, err := json.Marshal(createdInvitation)
 	if err != nil {
-		return diag.Errorf("error creating invitation %q: error marshaling %#v to json: %s", d.Id(), createdInvitation, createDescriptiveError(err, resp))
+		return diag.Errorf("error creating invitation %q: error marshaling %#v to json: %s", d.Id(), createdInvitation, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating invitation %q: %s", d.Id(), createdInvitationJson), map[string]interface{}{invitationLoggingKey: d.Id()})
 

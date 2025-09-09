@@ -58,7 +58,7 @@ func ipGroupDataSourceRead(ctx context.Context, d *schema.ResourceData, meta int
 	}
 	ipGroupJson, err := json.Marshal(ipGroup)
 	if err != nil {
-		return diag.Errorf("error reading IP Group %q: error marshaling %#v to json: %s", ipGroupID, ipGroup, createDescriptiveError(err, resp))
+		return diag.Errorf("error reading IP Group %q: error marshaling %#v to json: %s", ipGroupID, ipGroup, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched IP Group %q: %s", ipGroupID, ipGroupJson), map[string]interface{}{ipGroupLoggingKey: ipGroupID})
 

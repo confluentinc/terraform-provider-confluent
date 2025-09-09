@@ -111,7 +111,7 @@ func businessMetadataBindingDataSourceRead(ctx context.Context, d *schema.Resour
 
 	businessMetadataBindingJson, err := json.Marshal(businessMetadataBinding)
 	if err != nil {
-		return diag.Errorf("error reading Business Metadata Binding %q: error marshaling %#v to json: %s", businessMetadataBindingId, businessMetadataBinding, createDescriptiveError(err, resp))
+		return diag.Errorf("error reading Business Metadata Binding %q: error marshaling %#v to json: %s", businessMetadataBindingId, businessMetadataBinding, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Business Metadata Binding %q: %s", businessMetadataBindingId, businessMetadataBindingJson), map[string]interface{}{businessMetadataBindingLoggingKey: businessMetadataBindingId})
 

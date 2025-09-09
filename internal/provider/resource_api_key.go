@@ -181,7 +181,7 @@ func apiKeyCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 	createdApiKey.Spec.SetSecret("")
 	createdApiKeyJson, err := json.Marshal(createdApiKey)
 	if err != nil {
-		return diag.Errorf("error creating API Key %q: error marshaling %#v to json: %s", d.Id(), createdApiKey, createDescriptiveError(err, resp))
+		return diag.Errorf("error creating API Key %q: error marshaling %#v to json: %s", d.Id(), createdApiKey, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating API Key %q: %s", d.Id(), createdApiKeyJson), map[string]interface{}{apiKeyLoggingKey: d.Id()})
 
@@ -230,7 +230,7 @@ func apiKeyUpdate(ctx context.Context, d *schema.ResourceData, meta interface{})
 
 		updatedApiKeyJson, err := json.Marshal(updatedApiKey)
 		if err != nil {
-			return diag.Errorf("error updating API Key %q: error marshaling %#v to json: %s", d.Id(), updatedApiKey, createDescriptiveError(err, resp))
+			return diag.Errorf("error updating API Key %q: error marshaling %#v to json: %s", d.Id(), updatedApiKey, createDescriptiveError(err))
 		}
 		tflog.Debug(ctx, fmt.Sprintf("Finished updating API Key %q: %s", d.Id(), updatedApiKeyJson), map[string]interface{}{apiKeyLoggingKey: d.Id()})
 	}
@@ -272,7 +272,7 @@ func apiKeyRead(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 	}
 	apiKeyJson, err := json.Marshal(apiKey)
 	if err != nil {
-		return diag.Errorf("error reading API Key %q: error marshaling %#v to json: %s", d.Id(), apiKey, createDescriptiveError(err, resp))
+		return diag.Errorf("error reading API Key %q: error marshaling %#v to json: %s", d.Id(), apiKey, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched API Key %q: %s", d.Id(), apiKeyJson), map[string]interface{}{apiKeyLoggingKey: d.Id()})
 

@@ -111,7 +111,7 @@ func peeringDataSourceReadUsingId(ctx context.Context, d *schema.ResourceData, m
 	}
 	peeringJson, err := json.Marshal(peering)
 	if err != nil {
-		return diag.Errorf("error reading Peering %q: error marshaling %#v to json: %s", peeringId, peering, createDescriptiveError(err, resp))
+		return diag.Errorf("error reading Peering %q: error marshaling %#v to json: %s", peeringId, peering, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Peering %q: %s", peeringId, peeringJson), map[string]interface{}{peeringLoggingKey: peeringId})
 

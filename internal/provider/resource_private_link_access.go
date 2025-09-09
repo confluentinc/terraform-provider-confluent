@@ -139,7 +139,7 @@ func privateLinkAccessCreate(ctx context.Context, d *schema.ResourceData, meta i
 
 	createdPrivateLinkAccessJson, err := json.Marshal(createdPrivateLinkAccess)
 	if err != nil {
-		return diag.Errorf("error creating Private Link Access %q: error marshaling %#v to json: %s", d.Id(), createdPrivateLinkAccess, createDescriptiveError(err, resp))
+		return diag.Errorf("error creating Private Link Access %q: error marshaling %#v to json: %s", d.Id(), createdPrivateLinkAccess, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating Private Link Access %q: %s", d.Id(), createdPrivateLinkAccessJson), map[string]interface{}{privateLinkAccessLoggingKey: d.Id()})
 
@@ -186,7 +186,7 @@ func readPrivateLinkAccessAndSetAttributes(ctx context.Context, d *schema.Resour
 	}
 	privateLinkAccessJson, err := json.Marshal(privateLinkAccess)
 	if err != nil {
-		return nil, fmt.Errorf("error reading Private Link Access %q: error marshaling %#v to json: %s", privateLinkAccessId, privateLinkAccess, createDescriptiveError(err, resp))
+		return nil, fmt.Errorf("error reading Private Link Access %q: error marshaling %#v to json: %s", privateLinkAccessId, privateLinkAccess, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Private Link Access %q: %s", d.Id(), privateLinkAccessJson), map[string]interface{}{privateLinkAccessLoggingKey: d.Id()})
 
@@ -282,7 +282,7 @@ func privateLinkAccessUpdate(ctx context.Context, d *schema.ResourceData, meta i
 
 	updatedPrivateLinkAccessJson, err := json.Marshal(updatedPrivateLinkAccess)
 	if err != nil {
-		return diag.Errorf("error updating Private Link Access %q: error marshaling %#v to json: %s", d.Id(), updatedPrivateLinkAccess, createDescriptiveError(err, resp))
+		return diag.Errorf("error updating Private Link Access %q: error marshaling %#v to json: %s", d.Id(), updatedPrivateLinkAccess, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished updating Private Link Access %q: %s", d.Id(), updatedPrivateLinkAccessJson), map[string]interface{}{privateLinkAccessLoggingKey: d.Id()})
 	return privateLinkAccessRead(ctx, d, meta)

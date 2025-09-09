@@ -91,7 +91,7 @@ func groupMappingUpdate(ctx context.Context, d *schema.ResourceData, meta interf
 
 	updatedGroupMappingJson, err := json.Marshal(updatedGroupMapping)
 	if err != nil {
-		return diag.Errorf("error updating Group Mapping %q: error marshaling %#v to json: %s", d.Id(), updatedGroupMapping, createDescriptiveError(err, resp))
+		return diag.Errorf("error updating Group Mapping %q: error marshaling %#v to json: %s", d.Id(), updatedGroupMapping, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished updating Group Mapping %q: %s", d.Id(), updatedGroupMappingJson), map[string]interface{}{groupMappingLoggingKey: d.Id()})
 
@@ -123,7 +123,7 @@ func groupMappingCreate(ctx context.Context, d *schema.ResourceData, meta interf
 
 	createdGroupMappingJson, err := json.Marshal(createdGroupMapping)
 	if err != nil {
-		return diag.Errorf("error creating Group Mapping %q: error marshaling %#v to json: %s", d.Id(), createdGroupMapping, createDescriptiveError(err, resp))
+		return diag.Errorf("error creating Group Mapping %q: error marshaling %#v to json: %s", d.Id(), createdGroupMapping, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating Group Mapping %q: %s", d.Id(), createdGroupMappingJson), map[string]interface{}{groupMappingLoggingKey: d.Id()})
 
@@ -174,7 +174,7 @@ func groupMappingRead(ctx context.Context, d *schema.ResourceData, meta interfac
 	}
 	groupMappingJson, err := json.Marshal(groupMapping)
 	if err != nil {
-		return diag.Errorf("error reading Group Mapping %q: error marshaling %#v to json: %s", d.Id(), groupMapping, createDescriptiveError(err, resp))
+		return diag.Errorf("error reading Group Mapping %q: error marshaling %#v to json: %s", d.Id(), groupMapping, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Group Mapping %q: %s", d.Id(), groupMappingJson), map[string]interface{}{groupMappingLoggingKey: d.Id()})
 

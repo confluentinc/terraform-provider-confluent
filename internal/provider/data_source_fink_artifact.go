@@ -142,7 +142,7 @@ func flinkArtifactDataSourceReadUsingId(ctx context.Context, d *schema.ResourceD
 	}
 	famJson, err := json.Marshal(fam)
 	if err != nil {
-		return diag.Errorf("error reading flink artifact %q: error marshaling %#v to json: %s", artifactId, fam, createDescriptiveError(err, resp))
+		return diag.Errorf("error reading flink artifact %q: error marshaling %#v to json: %s", artifactId, fam, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Flink Artifact %q: %s", artifactId, famJson), map[string]interface{}{flinkArtifactLoggingKey: artifactId})
 

@@ -105,7 +105,7 @@ func kafkaClientQuotaDataSourceRead(ctx context.Context, d *schema.ResourceData,
 	}
 	kafkaClientQuotaJson, err := json.Marshal(kafkaClientQuota)
 	if err != nil {
-		return diag.Errorf("error reading Kafka Client Quota %q: error marshaling %#v to json: %s", kafkaClientQuotaId, kafkaClientQuota, createDescriptiveError(err, resp))
+		return diag.Errorf("error reading Kafka Client Quota %q: error marshaling %#v to json: %s", kafkaClientQuotaId, kafkaClientQuota, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Kafka Client Quota %q: %s", kafkaClientQuotaId, kafkaClientQuotaJson), map[string]interface{}{kafkaClientQuotaLoggingKey: kafkaClientQuotaId})
 

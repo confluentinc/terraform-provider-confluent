@@ -168,7 +168,7 @@ func readKafkaMirrorTopicAndSetAttributes(ctx context.Context, d *schema.Resourc
 	}
 	kafkaMirrorTopicJson, err := json.Marshal(kafkaMirrorTopic)
 	if err != nil {
-		return nil, fmt.Errorf("error reading Kafka Mirror Topic %q: error marshaling %#v to json: %s", d.Id(), kafkaMirrorTopic, createDescriptiveError(err, resp))
+		return nil, fmt.Errorf("error reading Kafka Mirror Topic %q: error marshaling %#v to json: %s", d.Id(), kafkaMirrorTopic, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Kafka Mirror Topic %q: %s", d.Id(), kafkaMirrorTopicJson), map[string]interface{}{kafkaMirrorTopicLoggingKey: d.Id()})
 

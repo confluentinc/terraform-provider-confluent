@@ -103,7 +103,7 @@ func readSubjectModeDataSourceAndSetAttributes(ctx context.Context, d *schema.Re
 	}
 	subjectModeJson, err := json.Marshal(subjectMode)
 	if err != nil {
-		return nil, fmt.Errorf("error reading Subject Mode %q: error marshaling %#v to json: %s", d.Id(), subjectMode, createDescriptiveError(err, resp))
+		return nil, fmt.Errorf("error reading Subject Mode %q: error marshaling %#v to json: %s", d.Id(), subjectMode, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Subject Mode %q: %s", d.Id(), subjectModeJson), map[string]interface{}{subjectModeLoggingKey: d.Id()})
 

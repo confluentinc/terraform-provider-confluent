@@ -138,7 +138,7 @@ func networkLinkServiceCreate(ctx context.Context, d *schema.ResourceData, meta 
 
 	createdNetworkLinkServiceJson, err := json.Marshal(createdNLS)
 	if err != nil {
-		return diag.Errorf("error creating Network Link Service %q: error marshaling %#v to json: %s", nlsId, createdNLS, createDescriptiveError(err, resp))
+		return diag.Errorf("error creating Network Link Service %q: error marshaling %#v to json: %s", nlsId, createdNLS, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating Network Link Service %q: %s", nlsId, createdNetworkLinkServiceJson), map[string]interface{}{networkLinkServiceLoggingKey: nlsId})
 	return networkLinkServiceRead(ctx, d, meta)
@@ -182,7 +182,7 @@ func readNetworkLinkServiceAndSetAttributes(ctx context.Context, d *schema.Resou
 
 	nlsJson, err := json.Marshal(nls)
 	if err != nil {
-		return nil, fmt.Errorf("error reading Network Link Service %q: error marshaling %#v to json: %s", nlsId, nls, createDescriptiveError(err, resp))
+		return nil, fmt.Errorf("error reading Network Link Service %q: error marshaling %#v to json: %s", nlsId, nls, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Network Link Service %q: %s", nlsId, nlsJson), map[string]interface{}{networkLinkServiceLoggingKey: nlsId})
 
@@ -263,7 +263,7 @@ func networkLinkServiceUpdate(ctx context.Context, d *schema.ResourceData, meta 
 
 	updatedNetworkLinkServiceJson, err := json.Marshal(updatedNLS)
 	if err != nil {
-		return diag.Errorf("error updating Network Link Service %q: error marshaling %#v to json: %s", nlsId, updatedNLS, createDescriptiveError(err, resp))
+		return diag.Errorf("error updating Network Link Service %q: error marshaling %#v to json: %s", nlsId, updatedNLS, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished updating Network Link Service %q: %s", nlsId, updatedNetworkLinkServiceJson), map[string]interface{}{networkLinkServiceLoggingKey: nlsId})
 	return networkLinkServiceRead(ctx, d, meta)

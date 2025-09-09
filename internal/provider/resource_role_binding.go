@@ -107,7 +107,7 @@ func roleBindingCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 
 	createdRoleBindingJson, err := json.Marshal(createdRoleBinding)
 	if err != nil {
-		return diag.Errorf("error creating Role Binding: %q: error marshaling %#v to json: %s", createdRoleBinding.GetId(), createdRoleBinding, createDescriptiveError(err, resp))
+		return diag.Errorf("error creating Role Binding: %q: error marshaling %#v to json: %s", createdRoleBinding.GetId(), createdRoleBinding, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating Role Binding %q: %s", d.Id(), createdRoleBindingJson), map[string]interface{}{roleBindingLoggingKey: d.Id()})
 	if !skipSync {
@@ -162,7 +162,7 @@ func roleBindingRead(ctx context.Context, d *schema.ResourceData, meta interface
 	}
 	roleBindingJson, err := json.Marshal(roleBinding)
 	if err != nil {
-		return diag.Errorf("error reading Role Binding %q: error marshaling %#v to json: %s", d.Id(), roleBinding, createDescriptiveError(err, resp))
+		return diag.Errorf("error reading Role Binding %q: error marshaling %#v to json: %s", d.Id(), roleBinding, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Role Binding %q: %s", d.Id(), roleBindingJson), map[string]interface{}{roleBindingLoggingKey: d.Id()})
 

@@ -245,7 +245,7 @@ func kafkaUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 		}
 		updatedClusterJson, err := json.Marshal(updatedCluster)
 		if err != nil {
-			return diag.Errorf("error updating Kafka Cluster %q: error marshaling %#v to json: %s", d.Id(), updatedCluster, createDescriptiveError(err, resp))
+			return diag.Errorf("error updating Kafka Cluster %q: error marshaling %#v to json: %s", d.Id(), updatedCluster, createDescriptiveError(err))
 		}
 		tflog.Debug(ctx, fmt.Sprintf("Updated Kafka Cluster %q: %s", d.Id(), updatedClusterJson), map[string]interface{}{kafkaClusterLoggingKey: d.Id()})
 	}
@@ -277,7 +277,7 @@ func kafkaUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 		}
 		updatedClusterJson, err := json.Marshal(updatedCluster)
 		if err != nil {
-			return diag.Errorf("error updating Kafka Cluster %q: error marshaling %#v to json: %s", d.Id(), updatedCluster, createDescriptiveError(err, resp))
+			return diag.Errorf("error updating Kafka Cluster %q: error marshaling %#v to json: %s", d.Id(), updatedCluster, createDescriptiveError(err))
 		}
 		tflog.Debug(ctx, fmt.Sprintf("Updated Kafka Cluster %q: %s", d.Id(), updatedClusterJson), map[string]interface{}{kafkaClusterLoggingKey: d.Id()})
 	} else if isForbiddenStandardBasicDowngrade || isForbiddenDedicatedUpdate {
@@ -314,7 +314,7 @@ func kafkaUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 		}
 		updatedClusterJson, err := json.Marshal(updatedCluster)
 		if err != nil {
-			return diag.Errorf("error updating Kafka Cluster %q: error marshaling %#v to json: %s", d.Id(), updatedCluster, createDescriptiveError(err, resp))
+			return diag.Errorf("error updating Kafka Cluster %q: error marshaling %#v to json: %s", d.Id(), updatedCluster, createDescriptiveError(err))
 		}
 		tflog.Debug(ctx, fmt.Sprintf("Updated Kafka Cluster %q: %s", d.Id(), updatedClusterJson), map[string]interface{}{kafkaClusterLoggingKey: d.Id()})
 	}
@@ -407,7 +407,7 @@ func kafkaCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 
 	createdKafkaClusterJson, err := json.Marshal(createdKafkaCluster)
 	if err != nil {
-		return diag.Errorf("error creating Kafka Cluster %q: error marshaling %#v to json: %s", d.Id(), createdKafkaCluster, createDescriptiveError(err, resp))
+		return diag.Errorf("error creating Kafka Cluster %q: error marshaling %#v to json: %s", d.Id(), createdKafkaCluster, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating Kafka Cluster %q: %s", d.Id(), createdKafkaClusterJson), map[string]interface{}{kafkaClusterLoggingKey: d.Id()})
 
@@ -547,7 +547,7 @@ func readKafkaClusterAndSetAttributes(ctx context.Context, d *schema.ResourceDat
 	}
 	clusterJson, err := json.Marshal(cluster)
 	if err != nil {
-		return nil, fmt.Errorf("error reading Kafka Cluster %q: error marshaling %#v to json: %s", clusterId, cluster, createDescriptiveError(err, resp))
+		return nil, fmt.Errorf("error reading Kafka Cluster %q: error marshaling %#v to json: %s", clusterId, cluster, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Kafka Cluster %q: %s", d.Id(), clusterJson), map[string]interface{}{kafkaClusterLoggingKey: d.Id()})
 

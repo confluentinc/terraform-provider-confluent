@@ -121,7 +121,7 @@ func kafkaClientQuotaUpdate(ctx context.Context, d *schema.ResourceData, meta in
 
 	updatedClientQuotaJson, err := json.Marshal(updatedClientQuota)
 	if err != nil {
-		return diag.Errorf("error updating Kafka Client Quota %q: error marshaling %#v to json: %s", d.Id(), updatedClientQuota, createDescriptiveError(err, resp))
+		return diag.Errorf("error updating Kafka Client Quota %q: error marshaling %#v to json: %s", d.Id(), updatedClientQuota, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished updating Kafka Client Quota %q: %s", d.Id(), updatedClientQuotaJson), map[string]interface{}{kafkaClientQuotaLoggingKey: d.Id()})
 
@@ -165,7 +165,7 @@ func kafkaClientQuotaCreate(ctx context.Context, d *schema.ResourceData, meta in
 
 	createdClientQuotaJson, err := json.Marshal(createdKafkaClientQuota)
 	if err != nil {
-		return diag.Errorf("error creating Kafka Client Quota: %q: error marshaling %#v to json: %s", createdKafkaClientQuota.GetId(), createdKafkaClientQuota, createDescriptiveError(err, resp))
+		return diag.Errorf("error creating Kafka Client Quota: %q: error marshaling %#v to json: %s", createdKafkaClientQuota.GetId(), createdKafkaClientQuota, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating Kafka Client Quota %q: %s", d.Id(), createdClientQuotaJson), map[string]interface{}{kafkaClientQuotaLoggingKey: d.Id()})
 
@@ -222,7 +222,7 @@ func readKafkaClientQuotaAndSetAttributes(ctx context.Context, d *schema.Resourc
 	}
 	kafkaClientQuotaJson, err := json.Marshal(kafkaClientQuota)
 	if err != nil {
-		return nil, fmt.Errorf("error reading Kafka Client Quota %q: error marshaling %#v to json: %s", d.Id(), kafkaClientQuota, createDescriptiveError(err, resp))
+		return nil, fmt.Errorf("error reading Kafka Client Quota %q: error marshaling %#v to json: %s", d.Id(), kafkaClientQuota, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Kafka Client Quota %q: %s", d.Id(), kafkaClientQuotaJson), map[string]interface{}{kafkaClientQuotaLoggingKey: d.Id()})
 

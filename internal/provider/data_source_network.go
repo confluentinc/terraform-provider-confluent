@@ -153,7 +153,7 @@ func networkDataSourceReadUsingId(ctx context.Context, d *schema.ResourceData, m
 	}
 	networkJson, err := json.Marshal(network)
 	if err != nil {
-		return diag.Errorf("error reading Network %q: error marshaling %#v to json: %s", networkId, network, createDescriptiveError(err, resp))
+		return diag.Errorf("error reading Network %q: error marshaling %#v to json: %s", networkId, network, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Network %q: %s", networkId, networkJson), map[string]interface{}{networkLoggingKey: networkId})
 

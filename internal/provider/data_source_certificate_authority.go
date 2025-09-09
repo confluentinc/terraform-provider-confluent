@@ -100,7 +100,7 @@ func certificateAuthorityDataSourceRead(ctx context.Context, d *schema.ResourceD
 	}
 	certificateAuthorityJson, err := json.Marshal(certificateAuthority)
 	if err != nil {
-		return diag.Errorf("error reading Certificate Authority %q: error marshaling %#v to json: %s", certificateAuthorityId, certificateAuthority, createDescriptiveError(err, resp))
+		return diag.Errorf("error reading Certificate Authority %q: error marshaling %#v to json: %s", certificateAuthorityId, certificateAuthority, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Certificate Authority %q: %s", certificateAuthorityId, certificateAuthorityJson), map[string]interface{}{certificateAuthorityKey: certificateAuthorityId})
 

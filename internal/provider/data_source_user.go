@@ -184,7 +184,7 @@ func userDataSourceReadUsingId(ctx context.Context, d *schema.ResourceData, meta
 	}
 	userJson, err := json.Marshal(user)
 	if err != nil {
-		return diag.Errorf("error reading User %q: error marshaling %#v to json: %s", userId, user, createDescriptiveError(err, resp))
+		return diag.Errorf("error reading User %q: error marshaling %#v to json: %s", userId, user, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched User %q: %#v", userId, userJson), map[string]interface{}{userLoggingKey: userId})
 	return setUserAttributes(d, user)

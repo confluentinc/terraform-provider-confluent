@@ -204,7 +204,7 @@ func readConnectArtifactAndSetAttributes(ctx context.Context, d *schema.Resource
 	}
 	artifactJson, err := json.Marshal(artifact)
 	if err != nil {
-		return nil, fmt.Errorf("error reading connect artifact %q: error marshaling %#v to json: %s", artifactId, artifact, createDescriptiveError(err, resp))
+		return nil, fmt.Errorf("error reading connect artifact %q: error marshaling %#v to json: %s", artifactId, artifact, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Connect Artifact %q: %s", d.Id(), artifactJson), map[string]interface{}{connectArtifactLoggingKey: d.Id()})
 

@@ -108,7 +108,7 @@ func schemaRegistryKekDataSourceReadUsingKekName(ctx context.Context, d *schema.
 	}
 	kekJson, err := json.Marshal(kek)
 	if err != nil {
-		return diag.Errorf("error reading Schema Registry KEK %q: error marshaling %#v to json: %s", kekId, kek, createDescriptiveError(err, resp))
+		return diag.Errorf("error reading Schema Registry KEK %q: error marshaling %#v to json: %s", kekId, kek, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Schema Registry KEK %q: %s", kekId, kekJson), map[string]interface{}{schemaRegistryKekKey: kekId})
 

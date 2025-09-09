@@ -117,7 +117,7 @@ func identityPoolDataSourceReadUsingId(ctx context.Context, d *schema.ResourceDa
 	}
 	identityPoolJson, err := json.Marshal(identityPool)
 	if err != nil {
-		return diag.Errorf("error reading Identity Pool %q: error marshaling %#v to json: %s", identityPoolId, identityPool, createDescriptiveError(err, resp))
+		return diag.Errorf("error reading Identity Pool %q: error marshaling %#v to json: %s", identityPoolId, identityPool, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Identity Pool %q: %s", identityPoolId, identityPoolJson), map[string]interface{}{identityPoolLoggingKey: identityPoolId})
 

@@ -150,7 +150,7 @@ func customConnectorPluginVersionCreate(ctx context.Context, d *schema.ResourceD
 
 	createdCustomConnectorPluginVersionJson, err := json.Marshal(createdCustomConnectorPluginVersion)
 	if err != nil {
-		return diag.Errorf("error creating Custom Connector Plugin Version %q: error marshaling %#v to json: %s", d.Id(), createdCustomConnectorPluginVersion, createDescriptiveError(err, resp))
+		return diag.Errorf("error creating Custom Connector Plugin Version %q: error marshaling %#v to json: %s", d.Id(), createdCustomConnectorPluginVersion, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating Custom Connector Plugin Version %q: %s", d.Id(), createdCustomConnectorPluginVersionJson), map[string]interface{}{customConnectorPluginVersionLoggingKey: d.Id()})
 
@@ -203,7 +203,7 @@ func readCustomConnectorPluginVersionAndSetAttributes(ctx context.Context, d *sc
 	}
 	customConnectorPluginVersionJson, err := json.Marshal(customConnectorPluginVersion)
 	if err != nil {
-		return nil, fmt.Errorf("error reading Custom Connector Plugin Version %q: error marshaling %#v to json: %s", d.Id(), customConnectorPluginVersionJson, createDescriptiveError(err, resp))
+		return nil, fmt.Errorf("error reading Custom Connector Plugin Version %q: error marshaling %#v to json: %s", d.Id(), customConnectorPluginVersionJson, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Custom Connector Plugin Version %q: %s", d.Id(), customConnectorPluginVersionJson), map[string]interface{}{customConnectorPluginVersionLoggingKey: d.Id()})
 

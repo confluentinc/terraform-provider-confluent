@@ -152,7 +152,7 @@ func providerIntegrationCreate(ctx context.Context, d *schema.ResourceData, meta
 	createdPimResponseJson, err := json.Marshal(createdPimResponse)
 
 	if err != nil {
-		return diag.Errorf("error creating provider integration: error marshaling %#v to json: %s", createdPimResponseJson, createDescriptiveError(err, resp))
+		return diag.Errorf("error creating provider integration: error marshaling %#v to json: %s", createdPimResponseJson, createDescriptiveError(err))
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating provider integration %q: %s", d.Id(), createdPimResponseJson), map[string]interface{}{providerIntegrationLoggingKey: d.Id()})
@@ -226,7 +226,7 @@ func readProviderIntegrationAndSetAttributes(ctx context.Context, d *schema.Reso
 
 	pimJson, err := json.Marshal(pim)
 	if err != nil {
-		return nil, fmt.Errorf("error reading provider integration %q: error marshaling %#v to json: %s", id, pim, createDescriptiveError(err, resp))
+		return nil, fmt.Errorf("error reading provider integration %q: error marshaling %#v to json: %s", id, pim, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched provider integration %q: %s", d.Id(), pimJson), map[string]interface{}{providerIntegrationLoggingKey: d.Id()})
 

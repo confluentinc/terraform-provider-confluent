@@ -149,7 +149,7 @@ func environmentDataSourceReadUsingId(ctx context.Context, d *schema.ResourceDat
 	}
 	environmentJson, err := json.Marshal(environment)
 	if err != nil {
-		return diag.Errorf("error reading Environment %q: error marshaling %#v to json: %s", environmentId, environment, createDescriptiveError(err, resp))
+		return diag.Errorf("error reading Environment %q: error marshaling %#v to json: %s", environmentId, environment, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Environment %q: %s", environmentId, environmentJson), map[string]interface{}{environmentLoggingKey: environmentId})
 

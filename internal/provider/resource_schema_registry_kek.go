@@ -153,7 +153,7 @@ func schemaRegistryKekCreate(ctx context.Context, d *schema.ResourceData, meta i
 
 	createdKekJson, err := json.Marshal(createdKek)
 	if err != nil {
-		return diag.Errorf("error creating Schema Registry KEK %q: error marshaling %#v to json: %s", kekId, createdKek, createDescriptiveError(err, resp))
+		return diag.Errorf("error creating Schema Registry KEK %q: error marshaling %#v to json: %s", kekId, createdKek, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating Schema Registry KEK %q: %s", kekId, createdKekJson), map[string]interface{}{schemaRegistryKekKey: kekId})
 	return schemaRegistryKekRead(ctx, d, meta)
@@ -206,7 +206,7 @@ func readSchemaRegistryKekAndSetAttributes(ctx context.Context, d *schema.Resour
 	}
 	kekJson, err := json.Marshal(kek)
 	if err != nil {
-		return nil, fmt.Errorf("error reading Schema Registry KEK %q: error marshaling %#v to json: %s", kekId, kekJson, createDescriptiveError(err, resp))
+		return nil, fmt.Errorf("error reading Schema Registry KEK %q: error marshaling %#v to json: %s", kekId, kekJson, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Schema Registry KEK %q: %s", kekId, kekJson), map[string]interface{}{schemaRegistryKekKey: kekId})
 
@@ -310,7 +310,7 @@ func schemaRegistryKekUpdate(ctx context.Context, d *schema.ResourceData, meta i
 
 	updatedKekJson, err := json.Marshal(updatedKek)
 	if err != nil {
-		return diag.Errorf("error updating Schema Registry KEK %q: error marshaling %#v to json: %s", kekId, updatedKek, createDescriptiveError(err, resp))
+		return diag.Errorf("error updating Schema Registry KEK %q: error marshaling %#v to json: %s", kekId, updatedKek, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished updating Schema Registry KEK %q: %s", kekId, updatedKekJson), map[string]interface{}{schemaRegistryKekKey: kekId})
 	return schemaRegistryKekRead(ctx, d, meta)

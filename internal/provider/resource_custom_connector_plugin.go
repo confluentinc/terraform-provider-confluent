@@ -136,7 +136,7 @@ func customConnectorPluginUpdate(ctx context.Context, d *schema.ResourceData, me
 
 	updatedCustomConnectorPluginJson, err := json.Marshal(updatedCustomConnectorPlugin)
 	if err != nil {
-		return diag.Errorf("error updating Custom Connector Plugin %q: error marshaling %#v to json: %s", d.Id(), updatedCustomConnectorPlugin, createDescriptiveError(err, resp))
+		return diag.Errorf("error updating Custom Connector Plugin %q: error marshaling %#v to json: %s", d.Id(), updatedCustomConnectorPlugin, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished updating Custom Connector Plugin %q: %s", d.Id(), updatedCustomConnectorPluginJson), map[string]interface{}{customConnectorPluginLoggingKey: d.Id()})
 
@@ -192,7 +192,7 @@ func customConnectorPluginCreate(ctx context.Context, d *schema.ResourceData, me
 
 	createdCustomConnectorPluginJson, err := json.Marshal(createdCustomConnectorPlugin)
 	if err != nil {
-		return diag.Errorf("error creating Custom Connector Plugin %q: error marshaling %#v to json: %s", d.Id(), createdCustomConnectorPlugin, createDescriptiveError(err, resp))
+		return diag.Errorf("error creating Custom Connector Plugin %q: error marshaling %#v to json: %s", d.Id(), createdCustomConnectorPlugin, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating Custom Connector Plugin %q: %s", d.Id(), createdCustomConnectorPluginJson), map[string]interface{}{customConnectorPluginLoggingKey: d.Id()})
 
@@ -278,7 +278,7 @@ func readCustomConnectorPluginAndSetAttributes(ctx context.Context, d *schema.Re
 	}
 	customConnectorPluginJson, err := json.Marshal(customConnectorPlugin)
 	if err != nil {
-		return nil, fmt.Errorf("error reading Custom Connector Plugin %q: error marshaling %#v to json: %s", d.Id(), customConnectorPlugin, createDescriptiveError(err, resp))
+		return nil, fmt.Errorf("error reading Custom Connector Plugin %q: error marshaling %#v to json: %s", d.Id(), customConnectorPlugin, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Custom Connector Plugin %q: %s", d.Id(), customConnectorPluginJson), map[string]interface{}{customConnectorPluginLoggingKey: d.Id()})
 

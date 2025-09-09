@@ -172,7 +172,7 @@ func kafkaDataSourceReadUsingId(ctx context.Context, d *schema.ResourceData, met
 	}
 	clusterJson, err := json.Marshal(cluster)
 	if err != nil {
-		return diag.Errorf("error reading Kafka Cluster %q: error marshaling %#v to json: %s", clusterId, cluster, createDescriptiveError(err, resp))
+		return diag.Errorf("error reading Kafka Cluster %q: error marshaling %#v to json: %s", clusterId, cluster, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Kafka Cluster %q: %s", clusterId, clusterJson), map[string]interface{}{kafkaClusterLoggingKey: clusterId})
 

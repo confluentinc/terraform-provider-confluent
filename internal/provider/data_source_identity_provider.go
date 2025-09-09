@@ -164,7 +164,7 @@ func identityProviderDataSourceReadUsingId(ctx context.Context, d *schema.Resour
 	}
 	identityProviderJson, err := json.Marshal(identityProvider)
 	if err != nil {
-		return diag.Errorf("error reading Identity Provider %q: error marshaling %#v to json: %s", identityProviderId, identityProvider, createDescriptiveError(err, resp))
+		return diag.Errorf("error reading Identity Provider %q: error marshaling %#v to json: %s", identityProviderId, identityProvider, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Identity Provider %q: %s", identityProviderId, identityProviderJson), map[string]interface{}{identityProviderLoggingKey: identityProviderId})
 

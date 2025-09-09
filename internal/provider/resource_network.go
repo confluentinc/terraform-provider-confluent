@@ -310,7 +310,7 @@ func networkCreate(ctx context.Context, d *schema.ResourceData, meta interface{}
 
 	createdNetworkJson, err := json.Marshal(createdNetwork)
 	if err != nil {
-		return diag.Errorf("error creating Network %q: error marshaling %#v to json: %s", d.Id(), createdNetwork, createDescriptiveError(err, resp))
+		return diag.Errorf("error creating Network %q: error marshaling %#v to json: %s", d.Id(), createdNetwork, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating Network %q: %s", d.Id(), createdNetworkJson), map[string]interface{}{networkLoggingKey: d.Id()})
 
@@ -357,7 +357,7 @@ func readNetworkAndSetAttributes(ctx context.Context, d *schema.ResourceData, me
 	}
 	networkJson, err := json.Marshal(network)
 	if err != nil {
-		return nil, fmt.Errorf("error reading Network %q: error marshaling %#v to json: %s", networkId, network, createDescriptiveError(err, resp))
+		return nil, fmt.Errorf("error reading Network %q: error marshaling %#v to json: %s", networkId, network, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Network %q: %s", d.Id(), networkJson), map[string]interface{}{networkLoggingKey: d.Id()})
 
@@ -491,7 +491,7 @@ func networkUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}
 
 	updatedNetworkJson, err := json.Marshal(updatedNetwork)
 	if err != nil {
-		return diag.Errorf("error updating Network %q: error marshaling %#v to json: %s", d.Id(), updatedNetwork, createDescriptiveError(err, resp))
+		return diag.Errorf("error updating Network %q: error marshaling %#v to json: %s", d.Id(), updatedNetwork, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished updating Network %q: %s", d.Id(), updatedNetworkJson), map[string]interface{}{networkLoggingKey: d.Id()})
 	return networkRead(ctx, d, meta)

@@ -111,7 +111,7 @@ func schemaRegistryDekDataSourceRead(ctx context.Context, d *schema.ResourceData
 	}
 	dekJson, err := json.Marshal(dek)
 	if err != nil {
-		return diag.Errorf("error reading Schema Registry DEK %q: error marshaling %#v to json: %s", dekId, dek, createDescriptiveError(err, resp))
+		return diag.Errorf("error reading Schema Registry DEK %q: error marshaling %#v to json: %s", dekId, dek, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Schema Registry DEK %q: %s", dekId, dekJson), map[string]interface{}{schemaRegistryDekKey: dekId})
 

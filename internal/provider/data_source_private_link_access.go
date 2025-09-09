@@ -111,7 +111,7 @@ func privateLinkAccessDataSourceReadUsingId(ctx context.Context, d *schema.Resou
 	}
 	privateLinkAccessJson, err := json.Marshal(privateLinkAccess)
 	if err != nil {
-		return diag.Errorf("error reading Private Link Access %q: error marshaling %#v to json: %s", privateLinkAccessId, privateLinkAccess, createDescriptiveError(err, resp))
+		return diag.Errorf("error reading Private Link Access %q: error marshaling %#v to json: %s", privateLinkAccessId, privateLinkAccess, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Private Link Access %q: %s", privateLinkAccessId, privateLinkAccessJson), map[string]interface{}{privateLinkAccessLoggingKey: privateLinkAccessId})
 

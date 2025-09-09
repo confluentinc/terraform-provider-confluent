@@ -75,7 +75,7 @@ func ipFilterDataSourceRead(ctx context.Context, d *schema.ResourceData, meta in
 	}
 	ipFilterJson, err := json.Marshal(ipFilter)
 	if err != nil {
-		return diag.Errorf("error reading IP Filter %q: error marshaling %#v to json: %s", ipFilterID, ipFilter, createDescriptiveError(err, resp))
+		return diag.Errorf("error reading IP Filter %q: error marshaling %#v to json: %s", ipFilterID, ipFilter, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched IP Filter %q: %s", ipFilterID, ipFilterJson), map[string]interface{}{ipFilterLoggingKey: ipFilterID})
 

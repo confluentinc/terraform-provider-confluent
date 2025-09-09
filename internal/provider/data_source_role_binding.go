@@ -62,7 +62,7 @@ func roleBindingDataSourceRead(ctx context.Context, d *schema.ResourceData, meta
 	}
 	roleBindingJson, err := json.Marshal(roleBinding)
 	if err != nil {
-		return diag.Errorf("error reading Role Binding %q: error marshaling %#v to json: %s", roleBindingId, roleBinding, createDescriptiveError(err, resp))
+		return diag.Errorf("error reading Role Binding %q: error marshaling %#v to json: %s", roleBindingId, roleBinding, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Role Binding %q: %s", roleBindingId, roleBindingJson), map[string]interface{}{roleBindingLoggingKey: roleBindingId})
 

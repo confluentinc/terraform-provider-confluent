@@ -131,7 +131,7 @@ func computePoolDataSourceReadUsingId(ctx context.Context, d *schema.ResourceDat
 	}
 	computePoolJson, err := json.Marshal(computePool)
 	if err != nil {
-		return diag.Errorf("error reading Flink Compute Pool %q: error marshaling %#v to json: %s", computePoolId, computePool, createDescriptiveError(err, resp))
+		return diag.Errorf("error reading Flink Compute Pool %q: error marshaling %#v to json: %s", computePoolId, computePool, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Flink Compute Pool %q: %s", computePoolId, computePoolJson), map[string]interface{}{computePoolLoggingKey: computePoolId})
 

@@ -883,7 +883,7 @@ func loadSchema(ctx context.Context, d *schema.ResourceData, c *SchemaRegistryRe
 	}
 	schemasJson, err := json.Marshal(schemas)
 	if err != nil {
-		return nil, false, fmt.Errorf("error marshaling %#v to json: %s", schemas, createDescriptiveError(err, resp))
+		return nil, false, fmt.Errorf("error marshaling %#v to json: %s", schemas, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Schemas %q: %s", d.Id(), schemasJson), map[string]interface{}{schemaLoggingKey: d.Id()})
 	srSchema, exists := findSchemaById(schemas, schemaIdentifier, subjectName)
@@ -1155,7 +1155,7 @@ func loadAllSchemas(ctx context.Context, client *Client) (InstanceIdsToNameMap, 
 	}
 	subjectsJson, err := json.Marshal(subjects)
 	if err != nil {
-		return nil, diag.Errorf("error reading Subjects for Schema Registry Cluster %q: error marshaling %#v to json: %s", schemaRegistryRestClient.clusterId, subjects, createDescriptiveError(err, resp))
+		return nil, diag.Errorf("error reading Subjects for Schema Registry Cluster %q: error marshaling %#v to json: %s", schemaRegistryRestClient.clusterId, subjects, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Subjects for Schema Registry Cluster %q: %s", schemaRegistryRestClient.clusterId, subjectsJson), map[string]interface{}{schemaRegistryClusterLoggingKey: schemaRegistryRestClient.clusterId})
 
@@ -1168,7 +1168,7 @@ func loadAllSchemas(ctx context.Context, client *Client) (InstanceIdsToNameMap, 
 		}
 		schemaJson, err := json.Marshal(schemaSr)
 		if err != nil {
-			return nil, diag.Errorf("error reading the latest Schema for Subject %q: error marshaling %#v to json: %s", schemaSr.GetSubject(), schemaSr, createDescriptiveError(err, resp))
+			return nil, diag.Errorf("error reading the latest Schema for Subject %q: error marshaling %#v to json: %s", schemaSr.GetSubject(), schemaSr, createDescriptiveError(err))
 		}
 		tflog.Debug(ctx, fmt.Sprintf("Fetched the latest Schema for Subject %q: %s", schemaSr.GetSubject(), schemaJson), map[string]interface{}{schemaRegistryClusterLoggingKey: schemaRegistryRestClient.clusterId})
 

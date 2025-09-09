@@ -87,7 +87,7 @@ func environmentUpdate(ctx context.Context, d *schema.ResourceData, meta interfa
 
 	updatedEnvironmentJson, err := json.Marshal(updatedEnvironment)
 	if err != nil {
-		return diag.Errorf("error updating Environment %q: error marshaling %#v to json: %s", d.Id(), updatedEnvironment, createDescriptiveError(err, resp))
+		return diag.Errorf("error updating Environment %q: error marshaling %#v to json: %s", d.Id(), updatedEnvironment, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished updating Environment %q: %s", d.Id(), updatedEnvironmentJson), map[string]interface{}{environmentLoggingKey: d.Id()})
 
@@ -118,7 +118,7 @@ func environmentCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 
 	createdEnvironmentJson, err := json.Marshal(createdEnvironment)
 	if err != nil {
-		return diag.Errorf("error creating Environment %q: error marshaling %#v to json: %s", d.Id(), createdEnvironment, createDescriptiveError(err, resp))
+		return diag.Errorf("error creating Environment %q: error marshaling %#v to json: %s", d.Id(), createdEnvironment, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating Environment %q: %s", d.Id(), createdEnvironmentJson), map[string]interface{}{environmentLoggingKey: d.Id()})
 
@@ -169,7 +169,7 @@ func environmentRead(ctx context.Context, d *schema.ResourceData, meta interface
 	}
 	environmentJson, err := json.Marshal(environment)
 	if err != nil {
-		return diag.Errorf("error reading Environment %q: error marshaling %#v to json: %s", d.Id(), environment, createDescriptiveError(err, resp))
+		return diag.Errorf("error reading Environment %q: error marshaling %#v to json: %s", d.Id(), environment, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Environment %q: %s", d.Id(), environmentJson), map[string]interface{}{environmentLoggingKey: d.Id()})
 

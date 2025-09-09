@@ -138,7 +138,7 @@ func tagCreate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagn
 
 	createdTagJson, err := json.Marshal(createdTag)
 	if err != nil {
-		return diag.Errorf("error creating Tag %q: error marshaling %#v to json: %s", tagId, createdTag, createDescriptiveError(err, resp))
+		return diag.Errorf("error creating Tag %q: error marshaling %#v to json: %s", tagId, createdTag, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating Tag %q: %s", tagId, createdTagJson), map[string]any{tagLoggingKey: tagId})
 	return tagRead(ctx, d, meta)
@@ -193,7 +193,7 @@ func readTagAndSetAttributes(ctx context.Context, resourceData *schema.ResourceD
 	}
 	tagJson, err := json.Marshal(tag)
 	if err != nil {
-		return nil, fmt.Errorf("error reading Tag %q: error marshaling %#v to json: %s", tagId, tagJson, createDescriptiveError(err, resp))
+		return nil, fmt.Errorf("error reading Tag %q: error marshaling %#v to json: %s", tagId, tagJson, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Tag %q: %s", tagId, tagJson), map[string]any{tagLoggingKey: tagId})
 
@@ -288,7 +288,7 @@ func tagUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagn
 
 	updatedTagJson, err := json.Marshal(updatedTag)
 	if err != nil {
-		return diag.Errorf("error updating Tag %q: error marshaling %#v to json: %s", tagId, updatedTag, createDescriptiveError(err, resp))
+		return diag.Errorf("error updating Tag %q: error marshaling %#v to json: %s", tagId, updatedTag, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished updating Tag %q: %s", tagId, updatedTagJson), map[string]any{tagLoggingKey: tagId})
 	return tagRead(ctx, d, meta)

@@ -234,7 +234,7 @@ func readBusinessMetadataAndSetAttributes(ctx context.Context, d *schema.Resourc
 	}
 	businessMetadataJson, err := json.Marshal(businessMetadata)
 	if err != nil {
-		return nil, fmt.Errorf("error reading Business Metadata %q: error marshaling %#v to json: %s", businessMetadataId, businessMetadataJson, createDescriptiveError(err, resp))
+		return nil, fmt.Errorf("error reading Business Metadata %q: error marshaling %#v to json: %s", businessMetadataId, businessMetadataJson, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Business Metadata %q: %s", businessMetadataId, businessMetadataJson), map[string]interface{}{businessMetadataLoggingKey: businessMetadataId})
 
@@ -330,7 +330,7 @@ func businessMetadataUpdate(ctx context.Context, d *schema.ResourceData, meta in
 
 		updatedBusinessMetadataJson, err := json.Marshal(updatedBusinessMetadata)
 		if err != nil {
-			return diag.Errorf("error updating Business Metadata %q: error marshaling %#v to json: %s", businessMetadataId, updatedBusinessMetadata, createDescriptiveError(err, resp))
+			return diag.Errorf("error updating Business Metadata %q: error marshaling %#v to json: %s", businessMetadataId, updatedBusinessMetadata, createDescriptiveError(err))
 		}
 		tflog.Debug(ctx, fmt.Sprintf("Finished updating Business Metadata %q: %s", businessMetadataId, updatedBusinessMetadataJson), map[string]interface{}{businessMetadataLoggingKey: businessMetadataId})
 	}

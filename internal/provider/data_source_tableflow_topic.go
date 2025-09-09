@@ -104,7 +104,7 @@ func tableflowTopicDataSourceRead(ctx context.Context, d *schema.ResourceData, m
 	}
 	tableflowTopicJson, err := json.Marshal(tableflowTopic)
 	if err != nil {
-		return diag.Errorf("error reading Tableflow Topic %q: error marshaling %#v to json: %s", tableflowTopicId, tableflowTopic, createDescriptiveError(err, resp))
+		return diag.Errorf("error reading Tableflow Topic %q: error marshaling %#v to json: %s", tableflowTopicId, tableflowTopic, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Tableflow Topic %q: %s", tableflowTopicId, tableflowTopicJson), map[string]interface{}{tableflowTopicKey: tableflowTopicId})
 

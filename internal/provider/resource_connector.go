@@ -204,7 +204,7 @@ func connectorCreate(ctx context.Context, d *schema.ResourceData, meta interface
 
 	_, err = json.Marshal(createdConnector)
 	if err != nil {
-		return diag.Errorf("error creating Connector %q: error marshaling %#v to json: %s", d.Id(), createdConnector, createDescriptiveError(err, resp))
+		return diag.Errorf("error creating Connector %q: error marshaling %#v to json: %s", d.Id(), createdConnector, createDescriptiveError(err))
 	}
 
 	// Save sensitive configs
@@ -309,7 +309,7 @@ func readConnectorAndSetAttributes(ctx context.Context, d *schema.ResourceData, 
 	}
 	connectorJson, err := json.Marshal(connector)
 	if err != nil {
-		return nil, fmt.Errorf("error reading Connector %q: error marshaling %#v to json: %s", displayName, connector, createDescriptiveError(err, resp))
+		return nil, fmt.Errorf("error reading Connector %q: error marshaling %#v to json: %s", displayName, connector, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Connector %q: %s", displayName, connectorJson))
 
@@ -417,7 +417,7 @@ func connectorUpdate(ctx context.Context, d *schema.ResourceData, meta interface
 
 		updatedConnectorJson, err := json.Marshal(updatedConnector)
 		if err != nil {
-			return diag.Errorf("error updating Connector %q: error marshaling %#v to json: %s", d.Id(), updatedConnector, createDescriptiveError(err, resp))
+			return diag.Errorf("error updating Connector %q: error marshaling %#v to json: %s", d.Id(), updatedConnector, createDescriptiveError(err))
 		}
 		tflog.Debug(ctx, fmt.Sprintf("Finished updating Connector %q: %s", d.Id(), updatedConnectorJson), map[string]interface{}{connectorLoggingKey: d.Id()})
 	}
@@ -451,7 +451,7 @@ func connectorUpdate(ctx context.Context, d *schema.ResourceData, meta interface
 
 		updatedConnectorOffsetsJson, err := json.Marshal(updatedConnectorOffsets)
 		if err != nil {
-			return diag.Errorf("error updating Connector %q offsets: error marshaling %#v to json: %s", d.Id(), updatedConnectorOffsets, createDescriptiveError(err, resp))
+			return diag.Errorf("error updating Connector %q offsets: error marshaling %#v to json: %s", d.Id(), updatedConnectorOffsets, createDescriptiveError(err))
 		}
 		tflog.Debug(ctx, fmt.Sprintf("Finished updating Connector %q offsets : %s", d.Id(), updatedConnectorOffsetsJson), map[string]interface{}{connectorLoggingKey: d.Id()})
 	}

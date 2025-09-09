@@ -142,7 +142,7 @@ func peeringCreate(ctx context.Context, d *schema.ResourceData, meta interface{}
 
 	createdPeeringJson, err := json.Marshal(createdPeering)
 	if err != nil {
-		return diag.Errorf("error creating Peering %q: error marshaling %#v to json: %s", d.Id(), createdPeering, createDescriptiveError(err, resp))
+		return diag.Errorf("error creating Peering %q: error marshaling %#v to json: %s", d.Id(), createdPeering, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating Peering %q: %s", d.Id(), createdPeeringJson), map[string]interface{}{peeringLoggingKey: d.Id()})
 
@@ -189,7 +189,7 @@ func readPeeringAndSetAttributes(ctx context.Context, d *schema.ResourceData, me
 	}
 	peeringJson, err := json.Marshal(peering)
 	if err != nil {
-		return nil, fmt.Errorf("error reading Peering %q: error marshaling %#v to json: %s", peeringId, peering, createDescriptiveError(err, resp))
+		return nil, fmt.Errorf("error reading Peering %q: error marshaling %#v to json: %s", peeringId, peering, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Peering %q: %s", d.Id(), peeringJson), map[string]interface{}{peeringLoggingKey: d.Id()})
 
@@ -293,7 +293,7 @@ func peeringUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}
 
 	updatedPeeringJson, err := json.Marshal(updatedPeering)
 	if err != nil {
-		return diag.Errorf("error updating Peering %q: error marshaling %#v to json: %s", d.Id(), updatedPeering, createDescriptiveError(err, resp))
+		return diag.Errorf("error updating Peering %q: error marshaling %#v to json: %s", d.Id(), updatedPeering, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished updating Peering %q: %s", d.Id(), updatedPeeringJson), map[string]interface{}{peeringLoggingKey: d.Id()})
 	return peeringRead(ctx, d, meta)

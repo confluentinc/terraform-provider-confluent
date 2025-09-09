@@ -109,7 +109,7 @@ func readPrivateLinkAttachmentAndSetAttributes(ctx context.Context, d *schema.Re
 
 	plattJson, err := json.Marshal(platt)
 	if err != nil {
-		return nil, fmt.Errorf("error reading Private Link Attachment %q: error marshaling %#v to json: %s", plattId, platt, createDescriptiveError(err, resp))
+		return nil, fmt.Errorf("error reading Private Link Attachment %q: error marshaling %#v to json: %s", plattId, platt, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Private Link Attachment %q: %s", plattId, plattJson), map[string]interface{}{privateLinkAttachmentLoggingKey: plattId})
 
@@ -168,7 +168,7 @@ func privateLinkAttachmentCreate(ctx context.Context, d *schema.ResourceData, me
 
 	createdPrivateLinkAttachmentJson, err := json.Marshal(createdPlatt)
 	if err != nil {
-		return diag.Errorf("error creating Private Link Attachment %q: error marshaling %#v to json: %s", plattId, createdPlatt, createDescriptiveError(err, resp))
+		return diag.Errorf("error creating Private Link Attachment %q: error marshaling %#v to json: %s", plattId, createdPlatt, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating Private Link Attachment %q: %s", plattId, createdPrivateLinkAttachmentJson), map[string]interface{}{privateLinkAttachmentLoggingKey: plattId})
 	return privateLinkAttachmentRead(ctx, d, meta)
@@ -226,7 +226,7 @@ func privateLinkAttachmentUpdate(ctx context.Context, d *schema.ResourceData, me
 
 	updatedPrivateLinkAttachmentJson, err := json.Marshal(updatedPlatt)
 	if err != nil {
-		return diag.Errorf("error updating Private Link Attachment %q: error marshaling %#v to json: %s", plattId, updatedPlatt, createDescriptiveError(err, resp))
+		return diag.Errorf("error updating Private Link Attachment %q: error marshaling %#v to json: %s", plattId, updatedPlatt, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished updating Private Link Attachment %q: %s", plattId, updatedPrivateLinkAttachmentJson), map[string]interface{}{privateLinkAttachmentLoggingKey: plattId})
 	return privateLinkAttachmentRead(ctx, d, meta)

@@ -98,7 +98,7 @@ func certificatePoolCreate(ctx context.Context, d *schema.ResourceData, meta int
 
 	createdCertificatePoolJson, err := json.Marshal(createdCertificatePool)
 	if err != nil {
-		return diag.Errorf("error creating Certificate Pool %q: error marshaling %#v to json: %s", d.Id(), createdCertificatePool, createDescriptiveError(err, resp))
+		return diag.Errorf("error creating Certificate Pool %q: error marshaling %#v to json: %s", d.Id(), createdCertificatePool, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating Certificate Pool %q: %s", d.Id(), createdCertificatePoolJson), map[string]interface{}{certificatePoolKey: d.Id()})
 
@@ -140,7 +140,7 @@ func readCertificatePoolAndSetAttributes(ctx context.Context, d *schema.Resource
 	}
 	certificatePoolJson, err := json.Marshal(certificatePool)
 	if err != nil {
-		return nil, fmt.Errorf("error reading Certificate Pool %q: error marshaling %#v to json: %s", certificatePoolId, certificatePool, createDescriptiveError(err, resp))
+		return nil, fmt.Errorf("error reading Certificate Pool %q: error marshaling %#v to json: %s", certificatePoolId, certificatePool, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Certificate Pool %q: %s", d.Id(), certificatePoolJson), map[string]interface{}{certificatePoolKey: d.Id()})
 
@@ -220,7 +220,7 @@ func certificatePoolUpdate(ctx context.Context, d *schema.ResourceData, meta int
 
 	UpdatedCertificatePoolJson, err := json.Marshal(updatedCertificatePool)
 	if err != nil {
-		return diag.Errorf("error updating Certificate Pool %q: error marshaling %#v to json: %s", d.Id(), updatedCertificatePool, createDescriptiveError(err, resp))
+		return diag.Errorf("error updating Certificate Pool %q: error marshaling %#v to json: %s", d.Id(), updatedCertificatePool, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished updating Certificate Pool %q: %s", d.Id(), UpdatedCertificatePoolJson), map[string]interface{}{certificatePoolKey: d.Id()})
 	return certificatePoolRead(ctx, d, meta)

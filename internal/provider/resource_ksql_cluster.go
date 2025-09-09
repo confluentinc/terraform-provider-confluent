@@ -129,7 +129,7 @@ func ksqlCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 
 	createdKsqlClusterJson, err := json.Marshal(createdKsqlCluster)
 	if err != nil {
-		return diag.Errorf("error creating ksqlDB Cluster %q: error marshaling %#v to json: %s", d.Id(), createdKsqlCluster, createDescriptiveError(err, resp))
+		return diag.Errorf("error creating ksqlDB Cluster %q: error marshaling %#v to json: %s", d.Id(), createdKsqlCluster, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating ksqlDB Cluster %q: %s", d.Id(), createdKsqlClusterJson), map[string]interface{}{ksqlClusterLoggingKey: d.Id()})
 
@@ -205,7 +205,7 @@ func readKsqlClusterAndSetAttributes(ctx context.Context, d *schema.ResourceData
 	}
 	clusterJson, err := json.Marshal(cluster)
 	if err != nil {
-		return nil, fmt.Errorf("error reading ksqlDB Cluster %q: error marshaling %#v to json: %s", clusterId, cluster, createDescriptiveError(err, resp))
+		return nil, fmt.Errorf("error reading ksqlDB Cluster %q: error marshaling %#v to json: %s", clusterId, cluster, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched ksqlDB Cluster %q: %s", d.Id(), clusterJson), map[string]interface{}{ksqlClusterLoggingKey: d.Id()})
 

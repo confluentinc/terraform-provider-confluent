@@ -99,7 +99,7 @@ func nlsDataSourceReadUsingId(ctx context.Context, d *schema.ResourceData, meta 
 	}
 	nlsJson, err := json.Marshal(nls)
 	if err != nil {
-		return diag.Errorf("error reading network link service %q: error marshaling %#v to json: %s", nlsId, nls, createDescriptiveError(err, resp))
+		return diag.Errorf("error reading network link service %q: error marshaling %#v to json: %s", nlsId, nls, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched network link service %q: %s", nlsId, nlsJson), map[string]interface{}{networkLinkServiceLoggingKey: nlsId})
 

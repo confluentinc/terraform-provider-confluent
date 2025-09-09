@@ -105,7 +105,7 @@ func ipFilterUpdate(ctx context.Context, d *schema.ResourceData, meta interface{
 
 	updatedIPFilterJson, err := json.Marshal(updatedIPFilter)
 	if err != nil {
-		return diag.Errorf("error updating IP Filter %q: error marshaling %#v to json: %s", d.Id(), updatedIPFilter, createDescriptiveError(err, resp))
+		return diag.Errorf("error updating IP Filter %q: error marshaling %#v to json: %s", d.Id(), updatedIPFilter, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished updating IP Filter %q: %s", d.Id(), updatedIPFilterJson), map[string]interface{}{ipFilterLoggingKey: d.Id()})
 
@@ -131,7 +131,7 @@ func ipFilterCreate(ctx context.Context, d *schema.ResourceData, meta interface{
 
 	createdIPFilterJson, err := json.Marshal(createdIPFilter)
 	if err != nil {
-		return diag.Errorf("error creating IP Filter %q: error marshaling %#v to json: %s", d.Id(), createdIPFilter, createDescriptiveError(err, resp))
+		return diag.Errorf("error creating IP Filter %q: error marshaling %#v to json: %s", d.Id(), createdIPFilter, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating IP Filter %q: %s", d.Id(), createdIPFilterJson), map[string]interface{}{ipFilterLoggingKey: d.Id()})
 
@@ -182,7 +182,7 @@ func ipFilterRead(ctx context.Context, d *schema.ResourceData, meta interface{})
 	}
 	ipFilterJson, err := json.Marshal(ipFilter)
 	if err != nil {
-		return diag.Errorf("error reading IP Filter %q: error marshaling %#v to json: %s", d.Id(), ipFilter, createDescriptiveError(err, resp))
+		return diag.Errorf("error reading IP Filter %q: error marshaling %#v to json: %s", d.Id(), ipFilter, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched IP Filter %q: %s", d.Id(), ipFilterJson), map[string]interface{}{ipFilterLoggingKey: d.Id()})
 
