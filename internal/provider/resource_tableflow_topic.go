@@ -176,7 +176,7 @@ func errorHandlingSuspendSchema() *schema.Schema {
 		Type:        schema.TypeList,
 		Optional:    true,
 		Computed:    true,
-		Description: "In this error handling mode, the materialization of the topic is suspended in case of record failures.",
+		Description: "The error handling mode where the materialization of the topic is suspended in case of record failures.",
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{},
 		},
@@ -190,7 +190,7 @@ func errorHandlingSkipSchema() *schema.Schema {
 		Type:        schema.TypeList,
 		Optional:    true,
 		Computed:    true,
-		Description: "In this error handling mode, the bad records are skipped and the materialization continues with the next record.",
+		Description: "The error handling mode where the bad records are skipped and the materialization continues with the next record.",
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{},
 		},
@@ -205,13 +205,14 @@ func errorHandlingLogSchema() *schema.Schema {
 		Type:        schema.TypeList,
 		Optional:    true,
 		Computed:    true,
-		Description: "In this error handling mode, the bad records are logged to a dead-letter queue (DLQ) topic and the materialization continues with the next record.",
+		Description: "The error handling mode where the bad records are logged to a dead-letter queue (DLQ) topic and the materialization continues with the next record.",
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				paramTarget: {
-					Type:     schema.TypeString,
-					Optional: true,
-					Computed: true,
+					Type:        schema.TypeString,
+					Optional:    true,
+					Computed:    true,
+					Description: `The topic to which the bad records will be logged. Creates the topic if it doesn't already exist. The default topic is "error_log".`,
 				},
 			},
 		},
