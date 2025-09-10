@@ -743,7 +743,35 @@ func schemaUpdate(ctx context.Context, d *schema.ResourceData, meta interface{})
 	}
 
 	if d.HasChanges(paramRecreateOnUpdate) {
-		// TODO: update schema ID
+		oldValue, newValue := d.GetChange(paramRecreateOnUpdate)
+		oldRecreateOnUpdate := oldValue.(bool)
+		newRecreateOnUpdate := newValue.(bool)
+
+		// Only support transition from false -> true.
+		// If user attempts to set from true -> false, return a clear error message.
+		if oldRecreateOnUpdate && !newRecreateOnUpdate {
+			return diag.Errorf(
+				"error updating Schema %q: changing %s from true to false is not supported. To evolve the schema using the same resource instance without recreating the resource, reimport it with %s = false",
+				d.Id(), paramRecreateOnUpdate, paramRecreateOnUpdate,
+			)
+		}
+
+		restEndpoint, err := extractSchemaRegistryRestEndpoint(meta.(*Client), d, false)
+		if err != nil {
+			return diag.Errorf("error updating Schema %q: %s", d.Id(), createDescriptiveError(err))
+		}
+		clusterId, err := extractSchemaRegistryClusterId(meta.(*Client), d, false)
+		if err != nil {
+			return diag.Errorf("error updating Schema %q: %s", d.Id(), createDescriptiveError(err))
+		}
+		clusterApiKey, clusterApiSecret, err := extractSchemaRegistryClusterApiKeyAndApiSecret(meta.(*Client), d, false)
+		if err != nil {
+			return diag.Errorf("error updating Schema %q: %s", d.Id(), createDescriptiveError(err))
+		}
+		schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
+		// Overwrite schema ID to make sure it's new format is compatible with Option B:
+		schemaId := createSchemaId(schemaRegistryRestClient.clusterId, d.Get(paramSubjectName).(string), d.Get(paramSchemaIdentifier).(int32), d.Get(paramRecreateOnUpdate).(bool))
+		d.SetId(schemaId)
 	}
 
 	if d.HasChanges(paramSchema, paramSchemaReference, paramRuleset, paramMetadata) {
