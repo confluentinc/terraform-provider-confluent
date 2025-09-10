@@ -69,11 +69,14 @@ func tableflowTopicDataSource() *schema.Resource {
 				Computed:    true,
 				Description: "The strategy to handle record failures in the Tableflow enabled topic during materialization.",
 			},
-			paramKafkaCluster:   requiredKafkaClusterDataSourceSchema(),
-			paramEnvironment:    environmentDataSourceSchema(),
-			paramCredentials:    credentialsSchema(),
-			paramByobAws:        byobAwsDataSourceSchema(),
-			paramManagedStorage: managedStorageDataSourceSchema(),
+			paramKafkaCluster:         requiredKafkaClusterDataSourceSchema(),
+			paramEnvironment:          environmentDataSourceSchema(),
+			paramCredentials:          credentialsSchema(),
+			paramByobAws:              byobAwsDataSourceSchema(),
+			paramManagedStorage:       managedStorageDataSourceSchema(),
+			paramErrorHandlingSuspend: errorHandlingSuspendDataSourceSchema(),
+			paramErrorHandlingSkip:    errorHandlingSkipDataSourceSchema(),
+			paramErrorHandlingLog:     errorHandlingLogDataSourceSchema(),
 		},
 	}
 }
@@ -161,5 +164,42 @@ func requiredKafkaClusterDataSourceSchema() *schema.Schema {
 		},
 		Required: true,
 		MaxItems: 1,
+	}
+}
+
+func errorHandlingSuspendDataSourceSchema() *schema.Schema {
+	return &schema.Schema{
+		Type:     schema.TypeList,
+		MaxItems: 0,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{},
+		},
+		Computed: true,
+	}
+}
+
+func errorHandlingSkipDataSourceSchema() *schema.Schema {
+	return &schema.Schema{
+		Type:     schema.TypeList,
+		MaxItems: 0,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{},
+		},
+		Computed: true,
+	}
+}
+
+func errorHandlingLogDataSourceSchema() *schema.Schema {
+	return &schema.Schema{
+		Type: schema.TypeList,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramTarget: {
+					Type:     schema.TypeString,
+					Computed: true,
+				},
+			},
+		},
+		Computed: true,
 	}
 }
