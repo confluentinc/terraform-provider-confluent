@@ -372,6 +372,10 @@ func accessPointDelete(ctx context.Context, d *schema.ResourceData, meta interfa
 		return diag.Errorf("error deleting Access Point %q: %s", d.Id(), createDescriptiveError(err))
 	}
 
+	if err := waitForAccessPointToBeDeleted(c.netAPApiContext(ctx), c, environmentId, d.Id(), c.isAcceptanceTestMode); err != nil {
+		return diag.Errorf("error waiting for Access Point %q to be deleted: %s", d.Id(), createDescriptiveError(err))
+	}
+
 	tflog.Debug(ctx, fmt.Sprintf("Finished deleting Access Point %q", d.Id()), map[string]interface{}{accessPointKey: d.Id()})
 
 	return nil
