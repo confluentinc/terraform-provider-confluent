@@ -101,7 +101,7 @@ checksum:
 signs:
   - artifacts: checksum
     cmd: gpg
-    args: ['--batch', '--pinentry-mode', 'loopback', '-u', '{{ .Env.GPG_FINGERPRINT }}', '--output', '${signature}', '--detach-sign', '${artifact}']
+    args: ['--batch', '--pinentry-mode', 'loopback', '--passphrase-fd', '0', '-u', '{{ .Env.GPG_FINGERPRINT }}', '--output', '${signature}', '--detach-sign', '${artifact}']
     stdin: '{{ .Env.GPG_PASSWORD }}'
 
 changelog:
