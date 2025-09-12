@@ -9,7 +9,7 @@ blocks:
     task:
       agent:
         machine:
-          type: s1-prod-macos-13-5-arm64
+          type: s1-macos-15-arm64-8
       jobs:
         - name: goreleaser-darwin-fips
           commands:
@@ -17,7 +17,7 @@ blocks:
             - sudo chmod -R 777 /Users/semaphore/.local/
             - sudo chown -R semaphore /Users/semaphore/.config/
             - sudo chmod -R 777 /Users/semaphore/.config/
-            - sudo sem-version go 1.24.4
+            - sudo sem-version go 1.24.7
             - checkout
             - cd ..
             - wget "https://go.dev/dl/go$(cat terraform-provider-confluent*/.go-version).src.tar.gz"
@@ -44,7 +44,7 @@ blocks:
       jobs:
         - name: goreleaser
           commands:
-            - sem-version go 1.24.4
+            - sem-version go 1.24.7
             - export "GOPATH=$(go env GOPATH)"
             - export "GITHUB_TOKEN=$(gh auth token)"
             - >-
