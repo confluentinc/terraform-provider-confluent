@@ -56,9 +56,6 @@ blocks:
             - . vault-setup
             # GitHub token is required for running GoReleaser
             - . vault-sem-get-secret v1/ci/kv/apif/signing_key
-            # Set required environment variables for goreleaser
-            - export GPG_PASSWORD="${PASSPHRASE}"
-            - export GPG_FINGERPRINT="${GPG_FINGERPRINT}"
             # Import GPG private key
             - echo -e "${GPG_PRIVATE_KEY}" | gpg --import --batch --no-tty
             - echo "foo" > temp.txt
