@@ -114,9 +114,9 @@ func byokDataSourceRead(ctx context.Context, d *schema.ResourceData, meta interf
 	tflog.Debug(ctx, fmt.Sprintf("Reading byok key %q=%q", paramId, keyId), map[string]interface{}{byokKeyLoggingKey: keyId})
 
 	c := meta.(*Client)
-	key, _, err := executeKeyRead(c.byokApiContext(ctx), c, keyId)
+	key, resp, err := executeKeyRead(c.byokApiContext(ctx), c, keyId)
 	if err != nil {
-		return diag.Errorf("error reading byok key %q: %s", keyId, createDescriptiveError(err))
+		return diag.Errorf("error reading byok key %q: %s", keyId, createDescriptiveError(err, resp))
 	}
 	keyJson, err := json.Marshal(key)
 	if err != nil {

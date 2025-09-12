@@ -104,10 +104,10 @@ func schemaRegistryDekDataSourceRead(ctx context.Context, d *schema.ResourceData
 	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 	request := schemaRegistryRestClient.apiClient.DataEncryptionKeysV1Api.GetDekByVersion(schemaRegistryRestClient.apiContext(ctx), kekName, subject, strconv.Itoa(version))
 	request = request.Algorithm(algorithm)
-	dek, _, err := request.Execute()
+	dek, resp, err := request.Execute()
 
 	if err != nil {
-		return diag.Errorf("error reading Schema Registry DEK %q: %s", dekId, createDescriptiveError(err))
+		return diag.Errorf("error reading Schema Registry DEK %q: %s", dekId, createDescriptiveError(err, resp))
 	}
 	dekJson, err := json.Marshal(dek)
 	if err != nil {

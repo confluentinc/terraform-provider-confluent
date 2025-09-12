@@ -59,11 +59,11 @@ func roleBindingResource() *schema.Resource {
 				Description: "The name of the role to bind to the principal.",
 			},
 			paramCrnPattern: {
-				Type:         schema.TypeString,
-				Required:     true,
-				ForceNew:     true,
-				Description:  "A CRN that specifies the scope and resource patterns necessary for the role to bind.",
-				ValidateFunc: validation.StringMatch(regexp.MustCompile("^crn://"), "the CRN must be of the form 'crn://'"),
+				Type:             schema.TypeString,
+				Required:         true,
+				ForceNew:         true,
+				Description:      "A CRN that specifies the scope and resource patterns necessary for the role to bind.",
+				ValidateFunc:     validation.StringMatch(regexp.MustCompile("^crn://"), "the CRN must be of the form 'crn://'"),
 				DiffSuppressFunc: suppressSameCrnPattern,
 			},
 			paramDisableWaitForReady: {
@@ -75,8 +75,8 @@ func roleBindingResource() *schema.Resource {
 	}
 }
 
-// suppresses diffs when the only difference is encoding (':' vs '%3A') 
-// so that logically same CRNs do not trigger force replacement 
+// suppresses diffs when the only difference is encoding (':' vs '%3A')
+// so that logically same CRNs do not trigger force replacement
 func suppressSameCrnPattern(k, old, new string, d *schema.ResourceData) bool {
 	return normalizeCrn(old) == normalizeCrn(new)
 }
@@ -99,9 +99,9 @@ func roleBindingCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Role Binding: %s", createRoleBindingRequestJson))
 
-	createdRoleBinding, _, err := executeRoleBindingCreate(c.mdsApiContext(ctx), c, createRoleBindingRequest)
+	createdRoleBinding, resp, err := executeRoleBindingCreate(c.mdsApiContext(ctx), c, createRoleBindingRequest)
 	if err != nil {
-		return diag.Errorf("error creating Role Binding: %s", createDescriptiveError(err))
+		return diag.Errorf("error creating Role Binding: %s", createDescriptiveError(err, resp))
 	}
 	d.SetId(createdRoleBinding.GetId())
 
@@ -133,10 +133,10 @@ func roleBindingDelete(ctx context.Context, d *schema.ResourceData, meta interfa
 	c := meta.(*Client)
 
 	req := c.mdsClient.RoleBindingsIamV2Api.DeleteIamV2RoleBinding(c.mdsApiContext(ctx), d.Id())
-	_, err := req.Execute()
+	resp, err := req.Execute()
 
 	if err != nil {
-		return diag.Errorf("error deleting Role Binding %q: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error deleting Role Binding %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished deleting Role Binding %q", d.Id()), map[string]interface{}{roleBindingLoggingKey: d.Id()})
@@ -149,7 +149,7 @@ func roleBindingRead(ctx context.Context, d *schema.ResourceData, meta interface
 	c := meta.(*Client)
 	roleBinding, resp, err := executeRoleBindingRead(c.mdsApiContext(ctx), c, d.Id())
 	if err != nil {
-		tflog.Warn(ctx, fmt.Sprintf("Error reading Role Binding %q: %s", d.Id(), createDescriptiveError(err)), map[string]interface{}{roleBindingLoggingKey: d.Id()})
+		tflog.Warn(ctx, fmt.Sprintf("Error reading Role Binding %q: %s", d.Id(), createDescriptiveError(err, resp)), map[string]interface{}{roleBindingLoggingKey: d.Id()})
 
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
 		if isResourceNotFound && !d.IsNewResource() {
@@ -158,7 +158,7 @@ func roleBindingRead(ctx context.Context, d *schema.ResourceData, meta interface
 			return nil
 		}
 
-		return diag.FromErr(createDescriptiveError(err))
+		return diag.FromErr(createDescriptiveError(err, resp))
 	}
 	roleBindingJson, err := json.Marshal(roleBinding)
 	if err != nil {

@@ -82,9 +82,9 @@ func invitationDataSourceReadUsingId(ctx context.Context, d *schema.ResourceData
 	tflog.Debug(ctx, fmt.Sprintf("Reading invitation %q=%q", paramId, invitationId), map[string]interface{}{invitationLoggingKey: invitationId})
 
 	c := meta.(*Client)
-	invitation, _, err := executeInvitationRead(c.iamApiContext(ctx), c, invitationId)
+	invitation, resp, err := executeInvitationRead(c.iamApiContext(ctx), c, invitationId)
 	if err != nil {
-		return diag.Errorf("error reading invitation %q: %s", invitationId, createDescriptiveError(err))
+		return diag.Errorf("error reading invitation %q: %s", invitationId, createDescriptiveError(err, resp))
 	}
 	invitationJson, err := json.Marshal(invitation)
 	if err != nil {

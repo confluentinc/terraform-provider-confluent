@@ -104,10 +104,10 @@ func providerIntegrationDataSourceRead(ctx context.Context, d *schema.ResourceDa
 func providerIntegrationDataSourceReadUsingId(ctx context.Context, d *schema.ResourceData, meta interface{}, environmentId, pimId string) diag.Diagnostics {
 	tflog.Debug(ctx, fmt.Sprintf("Reading provider integration data source using Id %q", pimId), map[string]interface{}{providerIntegrationLoggingKey: d.Id()})
 	c := meta.(*Client)
-	pim, _, err := executeProviderIntegrationRead(c.piApiContext(ctx), c, environmentId, pimId)
+	pim, resp, err := executeProviderIntegrationRead(c.piApiContext(ctx), c, environmentId, pimId)
 
 	if err != nil {
-		return diag.Errorf("error reading provider integration data source using Id %q: %s", pimId, createDescriptiveError(err))
+		return diag.Errorf("error reading provider integration data source using Id %q: %s", pimId, createDescriptiveError(err, resp))
 	}
 	pimJson, err := json.Marshal(pim)
 	if err != nil {
@@ -159,9 +159,9 @@ func loadProviderIntegrations(ctx context.Context, c *Client, environmentId stri
 	pageToken := ""
 
 	for !done {
-		providerIntegrationsPageList, _, err := executeListProviderIntegrations(ctx, c, environmentId, pageToken)
+		providerIntegrationsPageList, resp, err := executeListProviderIntegrations(ctx, c, environmentId, pageToken)
 		if err != nil {
-			return nil, fmt.Errorf("error reading provider integrations list: %s", createDescriptiveError(err))
+			return nil, fmt.Errorf("error reading provider integrations list: %s", createDescriptiveError(err, resp))
 		}
 		providerIntegrations = append(providerIntegrations, providerIntegrationsPageList.GetData()...)
 
@@ -175,7 +175,7 @@ func loadProviderIntegrations(ctx context.Context, c *Client, environmentId stri
 			} else {
 				pageToken, err = extractPageToken(nextPageUrlString)
 				if err != nil {
-					return nil, fmt.Errorf("error reading provider integration list: %s", createDescriptiveError(err))
+					return nil, fmt.Errorf("error reading provider integration list: %s", createDescriptiveError(err, resp))
 				}
 			}
 		} else {

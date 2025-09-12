@@ -82,9 +82,9 @@ func pluginCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 		return diag.Errorf("error creating Plugin: error marshaling %#v to json: %s", createPluginRequest, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Plugin: %s", pluginRequestJson))
-	createdPlugin, _, err := executePluginCreate(c.ccpmApiContext(ctx), c, createPluginRequest)
+	createdPlugin, resp, err := executePluginCreate(c.ccpmApiContext(ctx), c, createPluginRequest)
 	if err != nil {
-		return diag.Errorf("error creating Plugin %q: %s", displayName, createDescriptiveError(err))
+		return diag.Errorf("error creating Plugin %q: %s", displayName, createDescriptiveError(err, resp))
 	}
 	d.SetId(createdPlugin.GetId())
 
@@ -124,10 +124,10 @@ func pluginUpdate(ctx context.Context, d *schema.ResourceData, meta interface{})
 	tflog.Debug(ctx, fmt.Sprintf("Updating Plugin %q: %s", d.Id(), updatePluginRequestJson), map[string]interface{}{pluginLoggingKey: d.Id()})
 
 	c := meta.(*Client)
-	updatedPlugin, _, err := c.ccpmClient.CustomConnectPluginsCcpmV1Api.UpdateCcpmV1CustomConnectPlugin(c.ccpmApiContext(ctx), d.Id()).CcpmV1CustomConnectPluginUpdate(*updatePluginRequest).Execute()
+	updatedPlugin, resp, err := c.ccpmClient.CustomConnectPluginsCcpmV1Api.UpdateCcpmV1CustomConnectPlugin(c.ccpmApiContext(ctx), d.Id()).CcpmV1CustomConnectPluginUpdate(*updatePluginRequest).Execute()
 
 	if err != nil {
-		return diag.Errorf("error updating Plugin %q: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error updating Plugin %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	updatedPluginJson, err := json.Marshal(updatedPlugin)
@@ -155,7 +155,7 @@ func pluginRead(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 func readPluginAndSetAttributes(ctx context.Context, d *schema.ResourceData, c *Client, environmentId string) ([]*schema.ResourceData, error) {
 	plugin, resp, err := executePluginRead(c.ccpmApiContext(ctx), c, d.Id(), environmentId)
 	if err != nil {
-		tflog.Warn(ctx, fmt.Sprintf("Error reading Plugin %q: %s", d.Id(), createDescriptiveError(err)), map[string]interface{}{pluginLoggingKey: d.Id()})
+		tflog.Warn(ctx, fmt.Sprintf("Error reading Plugin %q: %s", d.Id(), createDescriptiveError(err, resp)), map[string]interface{}{pluginLoggingKey: d.Id()})
 
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
 		if isResourceNotFound && !d.IsNewResource() {
@@ -214,10 +214,10 @@ func pluginDelete(ctx context.Context, d *schema.ResourceData, meta interface{})
 
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
 	req := c.ccpmClient.CustomConnectPluginsCcpmV1Api.DeleteCcpmV1CustomConnectPlugin(c.ccpmApiContext(ctx), d.Id()).Environment(environmentId)
-	_, err := req.Execute()
+	resp, err := req.Execute()
 
 	if err != nil {
-		return diag.Errorf("error deleting Plugin %q: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error deleting Plugin %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished deleting Plugin %q", d.Id()), map[string]interface{}{pluginLoggingKey: d.Id()})
 	return nil

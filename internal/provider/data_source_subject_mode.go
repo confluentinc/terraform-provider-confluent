@@ -90,7 +90,7 @@ func subjectModeDataSourceRead(ctx context.Context, d *schema.ResourceData, meta
 func readSubjectModeDataSourceAndSetAttributes(ctx context.Context, d *schema.ResourceData, c *SchemaRegistryRestClient, subjectName string) ([]*schema.ResourceData, error) {
 	subjectMode, resp, err := c.apiClient.ModesV1Api.GetMode(c.apiContext(ctx), subjectName).DefaultToGlobal(true).Execute()
 	if err != nil {
-		tflog.Warn(ctx, fmt.Sprintf("Error reading Subject Mode %q: %s", d.Id(), createDescriptiveError(err)), map[string]interface{}{subjectModeLoggingKey: d.Id()})
+		tflog.Warn(ctx, fmt.Sprintf("Error reading Subject Mode %q: %s", d.Id(), createDescriptiveError(err, resp)), map[string]interface{}{subjectModeLoggingKey: d.Id()})
 
 		isResourceNotFound := ResponseHasExpectedStatusCode(resp, http.StatusNotFound)
 		if isResourceNotFound && !d.IsNewResource() {

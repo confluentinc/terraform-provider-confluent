@@ -180,10 +180,10 @@ func clusterLinkCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Cluster Link: %s", createClusterLinkRequestJson))
 
-	_, err = executeClusterLinkCreate(ctx, kafkaRestClient, createClusterLinkRequest, linkName)
+	resp, err := executeClusterLinkCreate(ctx, kafkaRestClient, createClusterLinkRequest, linkName)
 
 	if err != nil {
-		return diag.Errorf("error creating Cluster Link: %s", createDescriptiveError(err))
+		return diag.Errorf("error creating Cluster Link: %s", createDescriptiveError(err, resp))
 	}
 
 	clusterLinkCompositeId := createClusterLinkCompositeId(kafkaRestClient.clusterId, linkName)
@@ -274,7 +274,7 @@ func clusterLinkRead(ctx context.Context, d *schema.ResourceData, meta interface
 func readClusterLinkAndSetAttributes(ctx context.Context, d *schema.ResourceData, c *KafkaRestClient, linkName, linkMode, connectionMode string, clusterLinkMetadata *ClusterLinkMetadata) ([]*schema.ResourceData, error) {
 	clusterLink, resp, err := c.apiClient.ClusterLinkingV3Api.GetKafkaLink(c.apiContext(ctx), c.clusterId, linkName).Execute()
 	if err != nil {
-		tflog.Warn(ctx, fmt.Sprintf("Error reading Cluster Link %q: %s", d.Id(), createDescriptiveError(err)), map[string]interface{}{clusterLinkLoggingKey: d.Id()})
+		tflog.Warn(ctx, fmt.Sprintf("Error reading Cluster Link %q: %s", d.Id(), createDescriptiveError(err, resp)), map[string]interface{}{clusterLinkLoggingKey: d.Id()})
 
 		isResourceNotFound := ResponseHasExpectedStatusCode(resp, http.StatusNotFound)
 		if isResourceNotFound && !d.IsNewResource() {
@@ -436,11 +436,11 @@ func clusterLinkUpdate(ctx context.Context, d *schema.ResourceData, meta interfa
 		tflog.Debug(ctx, fmt.Sprintf("Updating Cluster Link %q: %s", d.Id(), updateConfigRequestJson), map[string]interface{}{clusterLinkLoggingKey: d.Id()})
 
 		// Send a request to Kafka REST API
-		_, err = executeClusterLinkConfigUpdate(ctx, kafkaRestClient, linkName, updateConfigRequest)
+		resp, err := executeClusterLinkConfigUpdate(ctx, kafkaRestClient, linkName, updateConfigRequest)
 		if err != nil {
 			// For example, Kafka REST API will return Bad Request if new cluster link setting value exceeds the max limit:
 			// 400 Bad Request: Config property 'delete.retention.ms' with value '63113904003' exceeded max limit of 60566400000.
-			return diag.Errorf("error updating Cluster Link Config: %s", createDescriptiveError(err))
+			return diag.Errorf("error updating Cluster Link Config: %s", createDescriptiveError(err, resp))
 		}
 		SleepIfNotTestMode(kafkaRestAPIWaitAfterCreate, meta.(*Client).isAcceptanceTestMode)
 		tflog.Debug(ctx, fmt.Sprintf("Finished updating Cluster Link %q", d.Id()), map[string]interface{}{clusterLinkLoggingKey: d.Id()})
@@ -457,14 +457,14 @@ func clusterLinkDelete(ctx context.Context, d *schema.ResourceData, meta interfa
 	}
 	linkName := d.Get(paramLinkName).(string)
 
-	_, err = kafkaRestClient.apiClient.ClusterLinkingV3Api.DeleteKafkaLink(kafkaRestClient.apiContext(ctx), kafkaRestClient.clusterId, linkName).Execute()
+	resp, err := kafkaRestClient.apiClient.ClusterLinkingV3Api.DeleteKafkaLink(kafkaRestClient.apiContext(ctx), kafkaRestClient.clusterId, linkName).Execute()
 
 	if err != nil {
-		return diag.Errorf("error deleting Cluster Link %q: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error deleting Cluster Link %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	if err := waitForClusterLinkToBeDeleted(kafkaRestClient.apiContext(ctx), kafkaRestClient, linkName, meta.(*Client).isAcceptanceTestMode); err != nil {
-		return diag.Errorf("error waiting for Cluster Link %q to be deleted: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error waiting for Cluster Link %q to be deleted: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished deleting Cluster Link %q", d.Id()), map[string]interface{}{clusterLinkLoggingKey: d.Id()})
@@ -992,9 +992,9 @@ func validateClusterLinkInput(d *schema.ResourceData, isOAuthEnabled bool) error
 }
 
 func loadClusterLinkConfigs(ctx context.Context, d *schema.ResourceData, c *KafkaRestClient, linkName string) (map[string]string, error) {
-	clusterLinkConfig, _, err := c.apiClient.ClusterLinkingV3Api.ListKafkaLinkConfigs(c.apiContext(ctx), c.clusterId, linkName).Execute()
+	clusterLinkConfig, resp, err := c.apiClient.ClusterLinkingV3Api.ListKafkaLinkConfigs(c.apiContext(ctx), c.clusterId, linkName).Execute()
 	if err != nil {
-		return nil, fmt.Errorf("error reading Cluster Link %q: could not load configs %s", linkName, createDescriptiveError(err))
+		return nil, fmt.Errorf("error reading Cluster Link %q: could not load configs %s", linkName, createDescriptiveError(err, resp))
 	}
 
 	config := make(map[string]string)

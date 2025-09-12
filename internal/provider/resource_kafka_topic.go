@@ -285,7 +285,7 @@ func kafkaTopicDelete(ctx context.Context, d *schema.ResourceData, meta interfac
 	}
 
 	if err := waitForKafkaTopicToBeDeleted(kafkaRestClient.apiContext(ctx), kafkaRestClient, topicName, meta.(*Client).isAcceptanceTestMode); err != nil {
-		return diag.Errorf("error waiting for Kafka Topic %q to be deleted: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error waiting for Kafka Topic %q to be deleted: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished deleting Kafka Topic %q", d.Id()), map[string]interface{}{kafkaTopicLoggingKey: d.Id()})
@@ -624,7 +624,7 @@ func kafkaTopicUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 		// In other words, remote topic setting values returned by Kafka REST API match topic setting values from updated TF configuration
 		actualTopicSettings, err := loadTopicConfigs(ctx, d, kafkaRestClient, topicName)
 		if err != nil {
-			return diag.FromErr(createDescriptiveError(err))
+			return diag.FromErr(createDescriptiveError(err, resp))
 		}
 
 		var updatedTopicSettings, outdatedTopicSettings []string

@@ -98,10 +98,10 @@ func kafkaConfigCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Kafka Config: %s", createConfigRequestJson))
 
-	_, err = executeKafkaConfigCreate(ctx, kafkaRestClient, createConfigRequest)
+	resp, err := executeKafkaConfigCreate(ctx, kafkaRestClient, createConfigRequest)
 
 	if err != nil {
-		return diag.Errorf("error creating Kafka Config: %s", createDescriptiveError(err))
+		return diag.Errorf("error creating Kafka Config: %s", createDescriptiveError(err, resp))
 	}
 
 	kafkaConfigId := createKafkaConfigId(kafkaRestClient.clusterId)
@@ -188,7 +188,7 @@ func kafkaConfigImport(ctx context.Context, d *schema.ResourceData, meta interfa
 func readConfigAndSetAttributes(ctx context.Context, d *schema.ResourceData, c *KafkaRestClient) ([]*schema.ResourceData, error) {
 	kafkaConfig, resp, err := c.apiClient.ConfigsV3Api.ListKafkaClusterConfigs(c.apiContext(ctx), c.clusterId).Execute()
 	if err != nil {
-		tflog.Warn(ctx, fmt.Sprintf("Error reading Kafka Config %q: %s", d.Id(), createDescriptiveError(err)), map[string]interface{}{kafkaClusterLoggingKey: d.Id()})
+		tflog.Warn(ctx, fmt.Sprintf("Error reading Kafka Config %q: %s", d.Id(), createDescriptiveError(err, resp)), map[string]interface{}{kafkaClusterLoggingKey: d.Id()})
 
 		isResourceNotFound := ResponseHasExpectedStatusCode(resp, http.StatusNotFound)
 		if isResourceNotFound && !d.IsNewResource() {
@@ -280,11 +280,11 @@ func kafkaConfigUpdate(ctx context.Context, d *schema.ResourceData, meta interfa
 		tflog.Debug(ctx, fmt.Sprintf("Updating Kafka Config %q: %s", d.Id(), updateConfigRequestJson), map[string]interface{}{kafkaClusterConfigLoggingKey: d.Id()})
 
 		// Send a request to Kafka REST API
-		_, err = executeKafkaConfigUpdate(ctx, kafkaRestClient, updateConfigRequest)
+		resp, err := executeKafkaConfigUpdate(ctx, kafkaRestClient, updateConfigRequest)
 		if err != nil {
 			// For example, Kafka REST API will return Bad Request if new cluster setting value exceeds the max limit:
 			// 400 Bad Request: Config property 'delete.retention.ms' with value '63113904003' exceeded max limit of 60566400000.
-			return diag.Errorf("error updating Kafka Config: %s", createDescriptiveError(err))
+			return diag.Errorf("error updating Kafka Config: %s", createDescriptiveError(err, resp))
 		}
 		SleepIfNotTestMode(kafkaRestAPIWaitAfterCreate, meta.(*Client).isAcceptanceTestMode)
 		tflog.Debug(ctx, fmt.Sprintf("Finished updating Kafka Config %q", d.Id()), map[string]interface{}{kafkaClusterConfigLoggingKey: d.Id()})

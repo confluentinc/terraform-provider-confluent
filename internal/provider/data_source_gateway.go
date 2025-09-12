@@ -199,9 +199,9 @@ func gatewayDataSourceRead(ctx context.Context, d *schema.ResourceData, meta int
 
 	c := meta.(*Client)
 	request := c.netGatewayClient.GatewaysNetworkingV1Api.GetNetworkingV1Gateway(c.netGWApiContext(ctx), gatewayId).Environment(environmentId)
-	gateway, _, err := c.netGatewayClient.GatewaysNetworkingV1Api.GetNetworkingV1GatewayExecute(request)
+	gateway, resp, err := c.netGatewayClient.GatewaysNetworkingV1Api.GetNetworkingV1GatewayExecute(request)
 	if err != nil {
-		return diag.Errorf("error reading Gateway %q: %s", gatewayId, createDescriptiveError(err))
+		return diag.Errorf("error reading Gateway %q: %s", gatewayId, createDescriptiveError(err, resp))
 	}
 	gatewayJson, err := json.Marshal(gateway)
 	if err != nil {

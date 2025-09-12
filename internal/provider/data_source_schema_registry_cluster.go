@@ -218,9 +218,9 @@ func schemaRegistryDataSourceReadUsingId(ctx context.Context, d *schema.Resource
 	tflog.Debug(ctx, fmt.Sprintf("Reading SchemaRegistry Cluster %q=%q", paramId, clusterId), map[string]interface{}{schemaRegistryClusterLoggingKey: clusterId})
 
 	c := meta.(*Client)
-	cluster, _, err := executeSchemaRegistryClusterRead(c.srcmApiContext(ctx), c, environmentId, clusterId)
+	cluster, resp, err := executeSchemaRegistryClusterRead(c.srcmApiContext(ctx), c, environmentId, clusterId)
 	if err != nil {
-		return diag.Errorf("error reading Schema Registry Cluster %q: %s", clusterId, createDescriptiveError(err))
+		return diag.Errorf("error reading Schema Registry Cluster %q: %s", clusterId, createDescriptiveError(err, resp))
 	}
 	clusterJson, err := json.Marshal(cluster)
 	if err != nil {
@@ -250,9 +250,9 @@ func loadSchemaRegistryClusters(ctx context.Context, c *Client, environmentId st
 	allClustersAreCollected := false
 	pageToken := ""
 	for !allClustersAreCollected {
-		clustersPageList, _, err := executeListSchemaRegistryClusters(ctx, c, environmentId, pageToken)
+		clustersPageList, resp, err := executeListSchemaRegistryClusters(ctx, c, environmentId, pageToken)
 		if err != nil {
-			return nil, fmt.Errorf("error reading Schema Registry Clusters: %s", createDescriptiveError(err))
+			return nil, fmt.Errorf("error reading Schema Registry Clusters: %s", createDescriptiveError(err, resp))
 		}
 		clusters = append(clusters, clustersPageList.GetData()...)
 
@@ -266,7 +266,7 @@ func loadSchemaRegistryClusters(ctx context.Context, c *Client, environmentId st
 			} else {
 				pageToken, err = extractPageToken(nextPageUrlString)
 				if err != nil {
-					return nil, fmt.Errorf("error reading Schema Registry Clusters: %s", createDescriptiveError(err))
+					return nil, fmt.Errorf("error reading Schema Registry Clusters: %s", createDescriptiveError(err, resp))
 				}
 			}
 		} else {

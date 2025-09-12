@@ -166,9 +166,9 @@ func kafkaDataSourceReadUsingId(ctx context.Context, d *schema.ResourceData, met
 	tflog.Debug(ctx, fmt.Sprintf("Reading Kafka Cluster %q=%q", paramId, clusterId), map[string]interface{}{kafkaClusterLoggingKey: clusterId})
 
 	c := meta.(*Client)
-	cluster, _, err := executeKafkaRead(c.cmkApiContext(ctx), c, environmentId, clusterId)
+	cluster, resp, err := executeKafkaRead(c.cmkApiContext(ctx), c, environmentId, clusterId)
 	if err != nil {
-		return diag.Errorf("error reading Kafka Cluster %q: %s", clusterId, createDescriptiveError(err))
+		return diag.Errorf("error reading Kafka Cluster %q: %s", clusterId, createDescriptiveError(err, resp))
 	}
 	clusterJson, err := json.Marshal(cluster)
 	if err != nil {
@@ -198,9 +198,9 @@ func loadKafkaClusters(ctx context.Context, c *Client, environmentId string) ([]
 	allClustersAreCollected := false
 	pageToken := ""
 	for !allClustersAreCollected {
-		clustersPageList, _, err := executeListKafkaClusters(ctx, c, environmentId, pageToken)
+		clustersPageList, resp, err := executeListKafkaClusters(ctx, c, environmentId, pageToken)
 		if err != nil {
-			return nil, fmt.Errorf("error reading Kafka Clusters: %s", createDescriptiveError(err))
+			return nil, fmt.Errorf("error reading Kafka Clusters: %s", createDescriptiveError(err, resp))
 		}
 		clusters = append(clusters, clustersPageList.GetData()...)
 
@@ -214,7 +214,7 @@ func loadKafkaClusters(ctx context.Context, c *Client, environmentId string) ([]
 			} else {
 				pageToken, err = extractPageToken(nextPageUrlString)
 				if err != nil {
-					return nil, fmt.Errorf("error reading Kafka Clusters: %s", createDescriptiveError(err))
+					return nil, fmt.Errorf("error reading Kafka Clusters: %s", createDescriptiveError(err, resp))
 				}
 			}
 		} else {

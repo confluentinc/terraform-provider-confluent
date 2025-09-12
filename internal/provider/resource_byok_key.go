@@ -167,9 +167,9 @@ func byokCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new BYOK Key: %s", createByokKeyRequestJson))
 
-	createdKey, _, err := executeKeyCreate(ctx, c, *createByokKeyRequest)
+	createdKey, resp, err := executeKeyCreate(ctx, c, *createByokKeyRequest)
 	if err != nil {
-		return diag.Errorf("error creating BYOK Key %q: %s", key, createDescriptiveError(err))
+		return diag.Errorf("error creating BYOK Key %q: %s", key, createDescriptiveError(err, resp))
 	}
 	d.SetId(createdKey.GetId())
 
@@ -188,9 +188,9 @@ func byokDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 	c := meta.(*Client)
 
 	req := c.byokClient.KeysByokV1Api.DeleteByokV1Key(c.byokApiContext(ctx), d.Id())
-	_, err := req.Execute()
+	resp, err := req.Execute()
 	if err != nil {
-		return diag.Errorf("error deleting BYOK Key %q: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error deleting BYOK Key %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished deleting BYOK Key %q", d.Id()), map[string]interface{}{byokKeyLoggingKey: d.Id()})
@@ -221,14 +221,14 @@ func readKeyAndSetAttributes(ctx context.Context, d *schema.ResourceData, meta i
 
 	key, resp, err := executeKeyRead(ctx, c, d.Id())
 	if err != nil {
-		tflog.Warn(ctx, fmt.Sprintf("Error reading BYOK Key %q: %s", d.Id(), createDescriptiveError(err)), map[string]interface{}{byokKeyLoggingKey: d.Id()})
+		tflog.Warn(ctx, fmt.Sprintf("Error reading BYOK Key %q: %s", d.Id(), createDescriptiveError(err, resp)), map[string]interface{}{byokKeyLoggingKey: d.Id()})
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
 		if isResourceNotFound && !d.IsNewResource() {
 			tflog.Warn(ctx, fmt.Sprintf("Removing BYOK Key %q in TF state because BYOK Key could not be found on the server", d.Id()), map[string]interface{}{byokKeyLoggingKey: d.Id()})
 			d.SetId("")
 			return nil, nil
 		}
-		return nil, fmt.Errorf("error reading BYOK Key %q: %s", d.Id(), createDescriptiveError(err))
+		return nil, fmt.Errorf("error reading BYOK Key %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	keyJson, err := json.Marshal(key)
@@ -238,7 +238,7 @@ func readKeyAndSetAttributes(ctx context.Context, d *schema.ResourceData, meta i
 	tflog.Debug(ctx, fmt.Sprintf("Fetched BYOK Key %q: %s", d.Id(), keyJson), map[string]interface{}{byokKeyLoggingKey: d.Id()})
 
 	if _, err := setKeyAttributes(d, key); err != nil {
-		return nil, fmt.Errorf("error setting BYOK Key attributes %q: %s", d.Id(), createDescriptiveError(err))
+		return nil, fmt.Errorf("error setting BYOK Key attributes %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished reading BYOK Key %q", d.Id()), map[string]interface{}{byokKeyLoggingKey: d.Id()})
 

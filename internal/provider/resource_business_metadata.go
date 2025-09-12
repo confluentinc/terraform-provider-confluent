@@ -161,9 +161,9 @@ func businessMetadataCreate(ctx context.Context, d *schema.ResourceData, meta in
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Business Metadata: %s", createBusinessMetadataRequestJson))
 
-	createdBusinessMetadata, _, err := request.Execute()
+	createdBusinessMetadata, resp, err := request.Execute()
 	if err != nil {
-		return diag.Errorf("error creating Business Metadata %s", createDescriptiveError(err))
+		return diag.Errorf("error creating Business Metadata %s", createDescriptiveError(err, resp))
 	}
 	if len(createdBusinessMetadata) == 0 {
 		return diag.Errorf("error creating Business Metadata %q: empty response", businessMetadataId)
@@ -174,7 +174,7 @@ func businessMetadataCreate(ctx context.Context, d *schema.ResourceData, meta in
 	d.SetId(businessMetadataId)
 
 	if err := waitForBusinessMetadataToProvision(catalogRestClient.dataCatalogApiContext(ctx), catalogRestClient, businessMetadataId, businessMetadataName); err != nil {
-		return diag.Errorf("error waiting for Business Metadata %q to provision: %s", businessMetadataId, createDescriptiveError(err))
+		return diag.Errorf("error waiting for Business Metadata %q to provision: %s", businessMetadataId, createDescriptiveError(err, resp))
 	}
 
 	// https://github.com/confluentinc/terraform-provider-confluent/issues/282
@@ -221,7 +221,7 @@ func readBusinessMetadataAndSetAttributes(ctx context.Context, d *schema.Resourc
 	request := catalogRestClient.apiClient.TypesV1Api.GetBusinessMetadataDefByName(catalogRestClient.dataCatalogApiContext(ctx), businessMetadataName)
 	businessMetadata, resp, err := request.Execute()
 	if err != nil {
-		tflog.Warn(ctx, fmt.Sprintf("Error reading Business Metadata %q: %s", businessMetadataId, createDescriptiveError(err)), map[string]interface{}{businessMetadataLoggingKey: businessMetadataId})
+		tflog.Warn(ctx, fmt.Sprintf("Error reading Business Metadata %q: %s", businessMetadataId, createDescriptiveError(err, resp)), map[string]interface{}{businessMetadataLoggingKey: businessMetadataId})
 
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
 		if isResourceNotFound && !d.IsNewResource() {
@@ -316,9 +316,9 @@ func businessMetadataUpdate(ctx context.Context, d *schema.ResourceData, meta in
 		}
 		tflog.Debug(ctx, fmt.Sprintf("Updating new businessMetadata: %s", updateBusinessMetadataRequestJson))
 
-		updatedBusinessMetadata, _, err := request.Execute()
+		updatedBusinessMetadata, resp, err := request.Execute()
 		if err != nil {
-			return diag.Errorf("error updating Business Metadata %s", createDescriptiveError(err))
+			return diag.Errorf("error updating Business Metadata %s", createDescriptiveError(err, resp))
 		}
 		if len(updatedBusinessMetadata) == 0 {
 			return diag.Errorf("error updating Business Metadata %q: empty response", businessMetadataId)

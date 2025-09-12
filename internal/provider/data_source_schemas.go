@@ -160,9 +160,9 @@ func schemasDataSourceRead(ctx context.Context, d *schema.ResourceData, meta int
 	latestOnly := d.Get(fmt.Sprintf("%s.0.%s", paramFilter, paramSchemasFilterLatestOnly)).(bool)
 	deleted := d.Get(fmt.Sprintf("%s.0.%s", paramFilter, paramSchemasFilterDeleted)).(bool)
 
-	schemas, _, err := schemaRegistryRestClient.apiClient.SchemasV1Api.GetSchemas(schemaRegistryRestClient.apiContext(ctx)).SubjectPrefix(subjectPrefix).Deleted(deleted).LatestOnly(latestOnly).Execute()
+	schemas, resp, err := schemaRegistryRestClient.apiClient.SchemasV1Api.GetSchemas(schemaRegistryRestClient.apiContext(ctx)).SubjectPrefix(subjectPrefix).Deleted(deleted).LatestOnly(latestOnly).Execute()
 	if err != nil {
-		return diag.Errorf("error reading Schemas: %s", createDescriptiveError(err))
+		return diag.Errorf("error reading Schemas: %s", createDescriptiveError(err, resp))
 	}
 	result := make([]map[string]interface{}, len(schemas))
 	for i, srSchema := range schemas {

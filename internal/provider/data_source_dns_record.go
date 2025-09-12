@@ -86,9 +86,9 @@ func dnsRecordDataSourceRead(ctx context.Context, d *schema.ResourceData, meta i
 
 	c := meta.(*Client)
 	request := c.netAccessPointClient.DNSRecordsNetworkingV1Api.GetNetworkingV1DnsRecord(c.netAPApiContext(ctx), dnsRecordId).Environment(environmentId)
-	dnsRecord, _, err := c.netAccessPointClient.DNSRecordsNetworkingV1Api.GetNetworkingV1DnsRecordExecute(request)
+	dnsRecord, resp, err := c.netAccessPointClient.DNSRecordsNetworkingV1Api.GetNetworkingV1DnsRecordExecute(request)
 	if err != nil {
-		return diag.Errorf("error reading DNS Record %q: %s", dnsRecordId, createDescriptiveError(err))
+		return diag.Errorf("error reading DNS Record %q: %s", dnsRecordId, createDescriptiveError(err, resp))
 	}
 	dnsRecordJson, err := json.Marshal(dnsRecord)
 	if err != nil {

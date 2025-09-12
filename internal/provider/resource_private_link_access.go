@@ -127,14 +127,14 @@ func privateLinkAccessCreate(ctx context.Context, d *schema.ResourceData, meta i
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Private Link Access: %s", createPrivateLinkAccessRequestJson))
 
-	createdPrivateLinkAccess, _, err := executePrivateLinkAccessCreate(c.netApiContext(ctx), c, createPrivateLinkAccessRequest)
+	createdPrivateLinkAccess, resp, err := executePrivateLinkAccessCreate(c.netApiContext(ctx), c, createPrivateLinkAccessRequest)
 	if err != nil {
-		return diag.Errorf("error creating Private Link Access %q: %s", createdPrivateLinkAccess.GetId(), createDescriptiveError(err))
+		return diag.Errorf("error creating Private Link Access %q: %s", createdPrivateLinkAccess.GetId(), createDescriptiveError(err, resp))
 	}
 	d.SetId(createdPrivateLinkAccess.GetId())
 
 	if err := waitForPrivateLinkAccessToProvision(c.netApiContext(ctx), c, environmentId, d.Id()); err != nil {
-		return diag.Errorf("error waiting for Private Link Access %q to provision: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error waiting for Private Link Access %q to provision: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	createdPrivateLinkAccessJson, err := json.Marshal(createdPrivateLinkAccess)
@@ -174,7 +174,7 @@ func readPrivateLinkAccessAndSetAttributes(ctx context.Context, d *schema.Resour
 
 	privateLinkAccess, resp, err := executePrivateLinkAccessRead(c.netApiContext(ctx), c, environmentId, privateLinkAccessId)
 	if err != nil {
-		tflog.Warn(ctx, fmt.Sprintf("Error reading Private Link Access %q: %s", d.Id(), createDescriptiveError(err)), map[string]interface{}{privateLinkAccessLoggingKey: d.Id()})
+		tflog.Warn(ctx, fmt.Sprintf("Error reading Private Link Access %q: %s", d.Id(), createDescriptiveError(err, resp)), map[string]interface{}{privateLinkAccessLoggingKey: d.Id()})
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
 		if isResourceNotFound && !d.IsNewResource() {
 			tflog.Warn(ctx, fmt.Sprintf("Removing Private Link Access %q in TF state because Private Link Access could not be found on the server", d.Id()), map[string]interface{}{privateLinkAccessLoggingKey: d.Id()})
@@ -239,14 +239,14 @@ func privateLinkAccessDelete(ctx context.Context, d *schema.ResourceData, meta i
 	c := meta.(*Client)
 
 	req := c.netClient.PrivateLinkAccessesNetworkingV1Api.DeleteNetworkingV1PrivateLinkAccess(c.netApiContext(ctx), d.Id()).Environment(environmentId)
-	_, err := req.Execute()
+	resp, err := req.Execute()
 
 	if err != nil {
-		return diag.Errorf("error deleting Private Link Access %q: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error deleting Private Link Access %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	if err := waitForPrivateLinkAccessToBeDeleted(c.netApiContext(ctx), c, environmentId, d.Id(), c.isAcceptanceTestMode); err != nil {
-		return diag.Errorf("error waiting for Private Link Access %q to be deleted: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error waiting for Private Link Access %q to be deleted: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished deleting Private Link Access %q", d.Id()), map[string]interface{}{privateLinkAccessLoggingKey: d.Id()})
@@ -274,10 +274,10 @@ func privateLinkAccessUpdate(ctx context.Context, d *schema.ResourceData, meta i
 	tflog.Debug(ctx, fmt.Sprintf("Updating Private Link Access %q: %s", d.Id(), updatePrivateLinkAccessRequestJson), map[string]interface{}{privateLinkAccessLoggingKey: d.Id()})
 
 	req := c.netClient.PrivateLinkAccessesNetworkingV1Api.UpdateNetworkingV1PrivateLinkAccess(c.netApiContext(ctx), d.Id()).NetworkingV1PrivateLinkAccessUpdate(*updatePrivateLinkAccessRequest)
-	updatedPrivateLinkAccess, _, err := req.Execute()
+	updatedPrivateLinkAccess, resp, err := req.Execute()
 
 	if err != nil {
-		return diag.Errorf("error updating Private Link Access %q: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error updating Private Link Access %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	updatedPrivateLinkAccessJson, err := json.Marshal(updatedPrivateLinkAccess)

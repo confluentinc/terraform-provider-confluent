@@ -48,9 +48,9 @@ func organizationDataSourceRead(ctx context.Context, d *schema.ResourceData, met
 	tflog.Debug(ctx, "Reading Organization")
 
 	c := meta.(*Client)
-	environments, _, err := c.orgClient.EnvironmentsOrgV2Api.ListOrgV2Environments(c.orgApiContext(ctx)).Execute()
+	environments, resp, err := c.orgClient.EnvironmentsOrgV2Api.ListOrgV2Environments(c.orgApiContext(ctx)).Execute()
 	if err != nil {
-		return diag.Errorf("error reading Environments: %s", createDescriptiveError(err))
+		return diag.Errorf("error reading Environments: %s", createDescriptiveError(err, resp))
 	}
 
 	// At least one environment is required in every organization
@@ -62,11 +62,11 @@ func organizationDataSourceRead(ctx context.Context, d *schema.ResourceData, met
 	environmentResourceName := environment.Metadata.GetResourceName()
 	organizationResourceName, err := extractOrgResourceName(environmentResourceName)
 	if err != nil {
-		return diag.FromErr(createDescriptiveError(err))
+		return diag.FromErr(createDescriptiveError(err, resp))
 	}
 	organizationId, err := extractOrgIdFromResourceName(organizationResourceName)
 	if err != nil {
-		return diag.FromErr(createDescriptiveError(err))
+		return diag.FromErr(createDescriptiveError(err, resp))
 	}
 	if err := d.Set(paramResourceName, organizationResourceName); err != nil {
 		return diag.FromErr(createDescriptiveError(err))

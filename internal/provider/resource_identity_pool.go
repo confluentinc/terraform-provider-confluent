@@ -103,10 +103,10 @@ func identityPoolUpdate(ctx context.Context, d *schema.ResourceData, meta interf
 
 	c := meta.(*Client)
 	identityProviderId := extractStringValueFromBlock(d, paramIdentityProvider, paramId)
-	updatedIdentityPool, _, err := c.oidcClient.IdentityPoolsIamV2Api.UpdateIamV2IdentityPool(c.oidcApiContext(ctx), identityProviderId, d.Id()).IamV2IdentityPool(*updateIdentityPoolRequest).Execute()
+	updatedIdentityPool, resp, err := c.oidcClient.IdentityPoolsIamV2Api.UpdateIamV2IdentityPool(c.oidcApiContext(ctx), identityProviderId, d.Id()).IamV2IdentityPool(*updateIdentityPoolRequest).Execute()
 
 	if err != nil {
-		return diag.Errorf("error updating Identity Pool %q: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error updating Identity Pool %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	updatedIdentityPoolJson, err := json.Marshal(updatedIdentityPool)
@@ -138,9 +138,9 @@ func identityPoolCreate(ctx context.Context, d *schema.ResourceData, meta interf
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Identity Pool: %s", createIdentityPoolRequestJson))
 
-	createdIdentityPool, _, err := executeIdentityPoolCreate(c.oidcApiContext(ctx), c, createIdentityPoolRequest, identityProviderId)
+	createdIdentityPool, resp, err := executeIdentityPoolCreate(c.oidcApiContext(ctx), c, createIdentityPoolRequest, identityProviderId)
 	if err != nil {
-		return diag.Errorf("error creating Identity Pool: %s", createDescriptiveError(err))
+		return diag.Errorf("error creating Identity Pool: %s", createDescriptiveError(err, resp))
 	}
 	d.SetId(createdIdentityPool.GetId())
 
@@ -164,10 +164,10 @@ func identityPoolDelete(ctx context.Context, d *schema.ResourceData, meta interf
 	c := meta.(*Client)
 
 	req := c.oidcClient.IdentityPoolsIamV2Api.DeleteIamV2IdentityPool(c.oidcApiContext(ctx), identityProviderId, d.Id())
-	_, err := req.Execute()
+	resp, err := req.Execute()
 
 	if err != nil {
-		return diag.Errorf("error deleting Identity Pool %q: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error deleting Identity Pool %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished deleting Identity Pool %q", d.Id()), map[string]interface{}{identityPoolLoggingKey: d.Id()})
@@ -193,7 +193,7 @@ func readIdentityPoolAndSetAttributes(ctx context.Context, d *schema.ResourceDat
 
 	identityPool, resp, err := executeIdentityPoolRead(c.oidcApiContext(ctx), c, d.Id(), identityProviderId)
 	if err != nil {
-		tflog.Warn(ctx, fmt.Sprintf("Error reading Identity Pool %q: %s", d.Id(), createDescriptiveError(err)), map[string]interface{}{identityPoolLoggingKey: d.Id()})
+		tflog.Warn(ctx, fmt.Sprintf("Error reading Identity Pool %q: %s", d.Id(), createDescriptiveError(err, resp)), map[string]interface{}{identityPoolLoggingKey: d.Id()})
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
 		if isResourceNotFound && !d.IsNewResource() {
 			tflog.Warn(ctx, fmt.Sprintf("Removing Identity Pool %q in TF state because Identity Pool could not be found on the server", d.Id()), map[string]interface{}{identityPoolLoggingKey: d.Id()})

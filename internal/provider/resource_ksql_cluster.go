@@ -117,14 +117,14 @@ func ksqlCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new ksqlDB Cluster: %s", createKsqlClusterRequestJson))
 
-	createdKsqlCluster, _, err := executeKsqlCreate(c.ksqlApiContext(ctx), c, &createKsqlClusterRequest)
+	createdKsqlCluster, resp, err := executeKsqlCreate(c.ksqlApiContext(ctx), c, &createKsqlClusterRequest)
 	if err != nil {
-		return diag.Errorf("error creating ksqlDB Cluster %q: %s", createdKsqlCluster.GetId(), createDescriptiveError(err))
+		return diag.Errorf("error creating ksqlDB Cluster %q: %s", createdKsqlCluster.GetId(), createDescriptiveError(err, resp))
 	}
 	d.SetId(createdKsqlCluster.GetId())
 
 	if err := waitForKsqlClusterToProvision(c.ksqlApiContext(ctx), c, environmentId, d.Id()); err != nil {
-		return diag.Errorf("error waiting for ksqlDB Cluster %q to provision: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error waiting for ksqlDB Cluster %q to provision: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	createdKsqlClusterJson, err := json.Marshal(createdKsqlCluster)
@@ -154,9 +154,9 @@ func ksqlDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
 	c := meta.(*Client)
 
-	err := executeKsqlDelete(c.ksqlApiContext(ctx), c, environmentId, d.Id())
+	resp, err := executeKsqlDelete(c.ksqlApiContext(ctx), c, environmentId, d.Id())
 	if err != nil {
-		return diag.Errorf("error deleting ksqlDB Cluster %q: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error deleting ksqlDB Cluster %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished deleting ksqlDB Cluster %q", d.Id()), map[string]interface{}{ksqlClusterLoggingKey: d.Id()})
@@ -192,7 +192,7 @@ func readKsqlClusterAndSetAttributes(ctx context.Context, d *schema.ResourceData
 
 	cluster, resp, err := executeKsqlRead(c.ksqlApiContext(ctx), c, environmentId, clusterId)
 	if err != nil {
-		tflog.Warn(ctx, fmt.Sprintf("Error reading ksqlDB Cluster %q: %s", d.Id(), createDescriptiveError(err)), map[string]interface{}{ksqlClusterLoggingKey: d.Id()})
+		tflog.Warn(ctx, fmt.Sprintf("Error reading ksqlDB Cluster %q: %s", d.Id(), createDescriptiveError(err, resp)), map[string]interface{}{ksqlClusterLoggingKey: d.Id()})
 
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
 		if isResourceNotFound && !d.IsNewResource() {
@@ -228,10 +228,10 @@ func executeKsqlRead(ctx context.Context, c *Client, environmentId, clusterId st
 	return req.Execute()
 }
 
-func executeKsqlDelete(ctx context.Context, c *Client, environmentId, clusterId string) error {
+func executeKsqlDelete(ctx context.Context, c *Client, environmentId, clusterId string) (*http.Response, error) {
 	req := c.ksqlClient.ClustersKsqldbcmV2Api.DeleteKsqldbcmV2Cluster(c.ksqlApiContext(ctx), clusterId).Environment(environmentId)
-	_, err := req.Execute()
-	return err
+	resp, err := req.Execute()
+	return resp, err
 }
 
 func credentialIdentityBlockSchema() *schema.Schema {

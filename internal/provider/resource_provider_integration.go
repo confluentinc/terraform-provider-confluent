@@ -143,9 +143,9 @@ func providerIntegrationCreate(ctx context.Context, d *schema.ResourceData, meta
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Creating new provider integration resource: %s", createPimRequestRequestJson))
-	createdPimResponse, _, err := executeProviderIntegrationCreate(c.piApiContext(ctx), c, &createPimRequest)
+	createdPimResponse, resp, err := executeProviderIntegrationCreate(c.piApiContext(ctx), c, &createPimRequest)
 	if err != nil {
-		return diag.Errorf("error creating provider integration: %s", createDescriptiveError(err))
+		return diag.Errorf("error creating provider integration: %s", createDescriptiveError(err, resp))
 	}
 
 	d.SetId(createdPimResponse.GetId())
@@ -176,9 +176,9 @@ func providerIntegrationDelete(ctx context.Context, d *schema.ResourceData, meta
 	c := meta.(*Client)
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
 
-	_, err := executeProviderIntegrationDelete(ctx, c, environmentId, d.Id())
+	resp, err := executeProviderIntegrationDelete(ctx, c, environmentId, d.Id())
 	if err != nil {
-		return diag.Errorf("error deleting provider integration %q: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error deleting provider integration %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished deleting provider integration %q", d.Id()), map[string]interface{}{providerIntegrationLoggingKey: d.Id()})
 
@@ -213,7 +213,7 @@ func readProviderIntegrationAndSetAttributes(ctx context.Context, d *schema.Reso
 	pim, resp, err := executeProviderIntegrationRead(c.piApiContext(ctx), c, environmentId, id)
 
 	if err != nil {
-		tflog.Warn(ctx, fmt.Sprintf("Error reading provider integration %q: %s", id, createDescriptiveError(err)), map[string]interface{}{providerIntegrationLoggingKey: d.Id()})
+		tflog.Warn(ctx, fmt.Sprintf("Error reading provider integration %q: %s", id, createDescriptiveError(err, resp)), map[string]interface{}{providerIntegrationLoggingKey: d.Id()})
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
 		if isResourceNotFound && !d.IsNewResource() {
 			tflog.Warn(ctx, fmt.Sprintf("Removing provider integration %q in TF state because provider integration could not be found on the server", d.Id()), map[string]interface{}{providerIntegrationLoggingKey: d.Id()})

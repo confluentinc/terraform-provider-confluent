@@ -94,9 +94,9 @@ func certificateAuthorityDataSourceRead(ctx context.Context, d *schema.ResourceD
 
 	c := meta.(*Client)
 	request := c.caClient.CertificateAuthoritiesIamV2Api.GetIamV2CertificateAuthority(c.caApiContext(ctx), certificateAuthorityId)
-	certificateAuthority, _, err := c.caClient.CertificateAuthoritiesIamV2Api.GetIamV2CertificateAuthorityExecute(request)
+	certificateAuthority, resp, err := c.caClient.CertificateAuthoritiesIamV2Api.GetIamV2CertificateAuthorityExecute(request)
 	if err != nil {
-		return diag.Errorf("error reading Certificate Authority %q: %s", certificateAuthorityId, createDescriptiveError(err))
+		return diag.Errorf("error reading Certificate Authority %q: %s", certificateAuthorityId, createDescriptiveError(err, resp))
 	}
 	certificateAuthorityJson, err := json.Marshal(certificateAuthority)
 	if err != nil {

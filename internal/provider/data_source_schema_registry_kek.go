@@ -100,11 +100,11 @@ func schemaRegistryKekDataSourceRead(ctx context.Context, d *schema.ResourceData
 func schemaRegistryKekDataSourceReadUsingKekName(ctx context.Context, d *schema.ResourceData, meta interface{}, restEndpoint string, clusterId string, clusterApiKey string, clusterApiSecret string, kekName string) diag.Diagnostics {
 	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 	request := schemaRegistryRestClient.apiClient.KeyEncryptionKeysV1Api.GetKek(schemaRegistryRestClient.apiContext(ctx), kekName)
-	kek, _, err := request.Execute()
+	kek, resp, err := request.Execute()
 	kekId := createKekId(clusterId, kekName)
 
 	if err != nil {
-		return diag.Errorf("error reading Schema Registry KEK %q: %s", kekId, createDescriptiveError(err))
+		return diag.Errorf("error reading Schema Registry KEK %q: %s", kekId, createDescriptiveError(err, resp))
 	}
 	kekJson, err := json.Marshal(kek)
 	if err != nil {

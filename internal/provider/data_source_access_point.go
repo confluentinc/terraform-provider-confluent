@@ -169,9 +169,9 @@ func accessPointDataSourceRead(ctx context.Context, d *schema.ResourceData, meta
 
 	c := meta.(*Client)
 	request := c.netAccessPointClient.AccessPointsNetworkingV1Api.GetNetworkingV1AccessPoint(c.netAPApiContext(ctx), accessPointId).Environment(environmentId)
-	accessPoint, _, err := c.netAccessPointClient.AccessPointsNetworkingV1Api.GetNetworkingV1AccessPointExecute(request)
+	accessPoint, resp, err := c.netAccessPointClient.AccessPointsNetworkingV1Api.GetNetworkingV1AccessPointExecute(request)
 	if err != nil {
-		return diag.Errorf("error reading Access Point %q: %s", accessPointId, createDescriptiveError(err))
+		return diag.Errorf("error reading Access Point %q: %s", accessPointId, createDescriptiveError(err, resp))
 	}
 	accessPointJson, err := json.Marshal(accessPoint)
 	if err != nil {

@@ -127,14 +127,14 @@ func computePoolCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Flink Compute Pool: %s", createComputePoolRequestJson))
 
-	createdComputePool, _, err := executeComputePoolCreate(c.fcpmApiContext(ctx), c, createComputePoolRequest)
+	createdComputePool, resp, err := executeComputePoolCreate(c.fcpmApiContext(ctx), c, createComputePoolRequest)
 	if err != nil {
-		return diag.Errorf("error creating Flink Compute Pool %q: %s", createdComputePool.GetId(), createDescriptiveError(err))
+		return diag.Errorf("error creating Flink Compute Pool %q: %s", createdComputePool.GetId(), createDescriptiveError(err, resp))
 	}
 	d.SetId(createdComputePool.GetId())
 
 	if err := waitForComputePoolToProvision(c.fcpmApiContext(ctx), c, environmentId, d.Id()); err != nil {
-		return diag.Errorf("error waiting for Flink Compute Pool %q to provision: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error waiting for Flink Compute Pool %q to provision: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	createdComputePoolJson, err := json.Marshal(createdComputePool)
@@ -174,7 +174,7 @@ func readComputePoolAndSetAttributes(ctx context.Context, d *schema.ResourceData
 
 	computePool, resp, err := executeComputePoolRead(c.fcpmApiContext(ctx), c, environmentId, computePoolId)
 	if err != nil {
-		tflog.Warn(ctx, fmt.Sprintf("Error reading Flink Compute Pool %q: %s", d.Id(), createDescriptiveError(err)), map[string]interface{}{computePoolLoggingKey: d.Id()})
+		tflog.Warn(ctx, fmt.Sprintf("Error reading Flink Compute Pool %q: %s", d.Id(), createDescriptiveError(err, resp)), map[string]interface{}{computePoolLoggingKey: d.Id()})
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
 		if isResourceNotFound && !d.IsNewResource() {
 			tflog.Warn(ctx, fmt.Sprintf("Removing Flink Compute Pool %q in TF state because Flink Compute Pool could not be found on the server", d.Id()), map[string]interface{}{computePoolLoggingKey: d.Id()})
@@ -236,10 +236,10 @@ func computePoolDelete(ctx context.Context, d *schema.ResourceData, meta interfa
 	c := meta.(*Client)
 
 	req := c.fcpmClient.ComputePoolsFcpmV2Api.DeleteFcpmV2ComputePool(c.fcpmApiContext(ctx), d.Id()).Environment(environmentId)
-	_, err := req.Execute()
+	resp, err := req.Execute()
 
 	if err != nil {
-		return diag.Errorf("error deleting Flink Compute Pool %q: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error deleting Flink Compute Pool %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished deleting Flink Compute Pool %q", d.Id()), map[string]interface{}{computePoolLoggingKey: d.Id()})
@@ -273,10 +273,10 @@ func computePoolUpdate(ctx context.Context, d *schema.ResourceData, meta interfa
 	tflog.Debug(ctx, fmt.Sprintf("Updating Flink Compute Pool %q: %s", d.Id(), updateComputePoolRequestJson), map[string]interface{}{computePoolLoggingKey: d.Id()})
 
 	req := c.fcpmClient.ComputePoolsFcpmV2Api.UpdateFcpmV2ComputePool(c.fcpmApiContext(ctx), d.Id()).FcpmV2ComputePoolUpdate(*updateComputePoolRequest)
-	updatedComputePool, _, err := req.Execute()
+	updatedComputePool, resp, err := req.Execute()
 
 	if err != nil {
-		return diag.Errorf("error updating Flink Compute Pool %q: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error updating Flink Compute Pool %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	updatedComputePoolJson, err := json.Marshal(updatedComputePool)

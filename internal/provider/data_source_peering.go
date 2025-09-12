@@ -105,9 +105,9 @@ func peeringDataSourceReadUsingId(ctx context.Context, d *schema.ResourceData, m
 	tflog.Debug(ctx, fmt.Sprintf("Reading Peering %q=%q", paramId, peeringId), map[string]interface{}{peeringLoggingKey: peeringId})
 
 	c := meta.(*Client)
-	peering, _, err := executePeeringRead(c.netApiContext(ctx), c, environmentId, peeringId)
+	peering, resp, err := executePeeringRead(c.netApiContext(ctx), c, environmentId, peeringId)
 	if err != nil {
-		return diag.Errorf("error reading Peering %q: %s", peeringId, createDescriptiveError(err))
+		return diag.Errorf("error reading Peering %q: %s", peeringId, createDescriptiveError(err, resp))
 	}
 	peeringJson, err := json.Marshal(peering)
 	if err != nil {
@@ -137,9 +137,9 @@ func loadPeerings(ctx context.Context, c *Client, environmentId string) ([]net.N
 	allPeeringsAreCollected := false
 	pageToken := ""
 	for !allPeeringsAreCollected {
-		peeringsPageList, _, err := executeListPeerings(ctx, c, environmentId, pageToken)
+		peeringsPageList, resp, err := executeListPeerings(ctx, c, environmentId, pageToken)
 		if err != nil {
-			return nil, fmt.Errorf("error reading Peerings: %s", createDescriptiveError(err))
+			return nil, fmt.Errorf("error reading Peerings: %s", createDescriptiveError(err, resp))
 		}
 		peerings = append(peerings, peeringsPageList.GetData()...)
 
@@ -153,7 +153,7 @@ func loadPeerings(ctx context.Context, c *Client, environmentId string) ([]net.N
 			} else {
 				pageToken, err = extractPageToken(nextPageUrlString)
 				if err != nil {
-					return nil, fmt.Errorf("error reading Peerings: %s", createDescriptiveError(err))
+					return nil, fmt.Errorf("error reading Peerings: %s", createDescriptiveError(err, resp))
 				}
 			}
 		} else {

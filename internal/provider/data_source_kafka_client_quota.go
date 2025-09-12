@@ -99,9 +99,9 @@ func kafkaClientQuotaDataSourceRead(ctx context.Context, d *schema.ResourceData,
 	kafkaClientQuotaId := d.Get(paramId).(string)
 	tflog.Debug(ctx, fmt.Sprintf("Reading Kafka Client Quota %q", kafkaClientQuotaId), map[string]interface{}{kafkaClientQuotaLoggingKey: kafkaClientQuotaId})
 	c := meta.(*Client)
-	kafkaClientQuota, _, err := executeKafkaClientQuotaRead(c.mdsApiContext(ctx), c, kafkaClientQuotaId)
+	kafkaClientQuota, resp, err := executeKafkaClientQuotaRead(c.mdsApiContext(ctx), c, kafkaClientQuotaId)
 	if err != nil {
-		return diag.Errorf("error reading Kafka Client Quota %q: %s", kafkaClientQuotaId, createDescriptiveError(err))
+		return diag.Errorf("error reading Kafka Client Quota %q: %s", kafkaClientQuotaId, createDescriptiveError(err, resp))
 	}
 	kafkaClientQuotaJson, err := json.Marshal(kafkaClientQuota)
 	if err != nil {

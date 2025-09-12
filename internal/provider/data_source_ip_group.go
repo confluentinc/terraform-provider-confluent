@@ -52,9 +52,9 @@ func ipGroupDataSourceRead(ctx context.Context, d *schema.ResourceData, meta int
 
 	c := meta.(*Client)
 	request := c.iamIPClient.IPGroupsIamV2Api.GetIamV2IpGroup(c.iamIPApiContext(ctx), ipGroupID)
-	ipGroup, _, err := c.iamIPClient.IPGroupsIamV2Api.GetIamV2IpGroupExecute(request)
+	ipGroup, resp, err := c.iamIPClient.IPGroupsIamV2Api.GetIamV2IpGroupExecute(request)
 	if err != nil {
-		return diag.Errorf("error reading IP Group %q: %s", ipGroupID, createDescriptiveError(err))
+		return diag.Errorf("error reading IP Group %q: %s", ipGroupID, createDescriptiveError(err, resp))
 	}
 	ipGroupJson, err := json.Marshal(ipGroup)
 	if err != nil {

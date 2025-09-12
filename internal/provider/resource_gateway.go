@@ -187,14 +187,14 @@ func gatewayCreate(ctx context.Context, d *schema.ResourceData, meta interface{}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Gateway: %s", createGatewayRequestJson))
 
 	req := c.netGatewayClient.GatewaysNetworkingV1Api.CreateNetworkingV1Gateway(c.netGWApiContext(ctx)).NetworkingV1Gateway(*createGatewayRequest)
-	createdGateway, _, err := req.Execute()
+	createdGateway, resp, err := req.Execute()
 	if err != nil {
-		return diag.Errorf("error creating Gateway %q: %s", createdGateway.GetId(), createDescriptiveError(err))
+		return diag.Errorf("error creating Gateway %q: %s", createdGateway.GetId(), createDescriptiveError(err, resp))
 	}
 	d.SetId(createdGateway.GetId())
 
 	if err := waitForGatewayToProvision(c.netGWApiContext(ctx), c, environmentId, d.Id()); err != nil {
-		return diag.Errorf("error waiting for Gateway %q to provision: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error waiting for Gateway %q to provision: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	createdGatewayJson, err := json.Marshal(createdGateway)
@@ -323,10 +323,10 @@ func gatewayDelete(ctx context.Context, d *schema.ResourceData, meta interface{}
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
 
 	req := c.netGatewayClient.GatewaysNetworkingV1Api.DeleteNetworkingV1Gateway(c.netGWApiContext(ctx), d.Id()).Environment(environmentId)
-	_, err := req.Execute()
+	resp, err := req.Execute()
 
 	if err != nil {
-		return diag.Errorf("error deleting Gateway %q: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error deleting Gateway %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished deleting Gateway %q", d.Id()), map[string]interface{}{gatewayKey: d.Id()})
@@ -357,10 +357,10 @@ func gatewayUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}
 
 	c := meta.(*Client)
 	req := c.netGatewayClient.GatewaysNetworkingV1Api.UpdateNetworkingV1Gateway(c.netGWApiContext(ctx), d.Id()).NetworkingV1GatewayUpdate(*updateGateway)
-	updatedGateway, _, err := req.Execute()
+	updatedGateway, resp, err := req.Execute()
 
 	if err != nil {
-		return diag.Errorf("error updating Gateway %q: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error updating Gateway %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	UpdatedGatewayJson, err := json.Marshal(updatedGateway)

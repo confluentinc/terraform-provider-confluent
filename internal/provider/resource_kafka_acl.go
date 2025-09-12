@@ -179,10 +179,10 @@ func kafkaAclCreate(ctx context.Context, d *schema.ResourceData, meta interface{
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Kafka ACLs: %s", createAclRequestJson))
 
-	_, err = executeKafkaAclCreate(ctx, kafkaRestClient, createAclRequest)
+	resp, err := executeKafkaAclCreate(ctx, kafkaRestClient, createAclRequest)
 
 	if err != nil {
-		return diag.Errorf("error creating Kafka ACLs: %s", createDescriptiveError(err))
+		return diag.Errorf("error creating Kafka ACLs: %s", createDescriptiveError(err, resp))
 	}
 	kafkaAclId := createKafkaAclId(kafkaRestClient.clusterId, acl)
 	d.SetId(kafkaAclId)
@@ -218,10 +218,10 @@ func kafkaAclDelete(ctx context.Context, d *schema.ResourceData, meta interface{
 		return diag.FromErr(createDescriptiveError(err))
 	}
 
-	_, _, err = executeKafkaAclDelete(kafkaRestClient.apiContext(ctx), kafkaRestClient, acl)
+	_, resp, err := executeKafkaAclDelete(kafkaRestClient.apiContext(ctx), kafkaRestClient, acl)
 
 	if err != nil {
-		return diag.Errorf("error deleting Kafka ACLs %q: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error deleting Kafka ACLs %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished deleting Kafka ACLs %q", d.Id()), map[string]interface{}{kafkaAclLoggingKey: d.Id()})
@@ -284,7 +284,7 @@ func createKafkaAclId(clusterId string, acl Acl) string {
 func readAclAndSetAttributes(ctx context.Context, d *schema.ResourceData, client *Client, c *KafkaRestClient, acl Acl) ([]*schema.ResourceData, error) {
 	remoteAcls, resp, err := executeKafkaAclRead(ctx, c, acl)
 	if err != nil {
-		tflog.Warn(ctx, fmt.Sprintf("Error reading Kafka ACLs %q: %s", d.Id(), createDescriptiveError(err)), map[string]interface{}{kafkaAclLoggingKey: d.Id()})
+		tflog.Warn(ctx, fmt.Sprintf("Error reading Kafka ACLs %q: %s", d.Id(), createDescriptiveError(err, resp)), map[string]interface{}{kafkaAclLoggingKey: d.Id()})
 
 		isResourceNotFound := ResponseHasExpectedStatusCode(resp, http.StatusNotFound)
 		if isResourceNotFound && !d.IsNewResource() {
@@ -434,11 +434,11 @@ func loadAllKafkaAcls(ctx context.Context, client *Client) (InstanceIdsToNameMap
 
 	kafkaRestClient := client.kafkaRestClientFactory.CreateKafkaRestClient(client.kafkaRestEndpoint, client.kafkaClusterId, client.kafkaApiKey, client.kafkaApiSecret, true, true, client.oauthToken)
 
-	acls, _, err := kafkaRestClient.apiClient.ACLV3Api.GetKafkaAcls(kafkaRestClient.apiContext(ctx), kafkaRestClient.clusterId).Execute()
+	acls, resp, err := kafkaRestClient.apiClient.ACLV3Api.GetKafkaAcls(kafkaRestClient.apiContext(ctx), kafkaRestClient.clusterId).Execute()
 
 	if err != nil {
 		tflog.Warn(ctx, fmt.Sprintf("Error reading Kafka ACLs for Kafka Cluster %q: %s", kafkaRestClient.clusterId, createDescriptiveError(err)), map[string]interface{}{kafkaClusterLoggingKey: kafkaRestClient.clusterId})
-		return nil, diag.FromErr(createDescriptiveError(err))
+		return nil, diag.FromErr(createDescriptiveError(err, resp))
 	}
 	kafkaAclsJson, err := json.Marshal(acls)
 	if err != nil {
@@ -447,8 +447,8 @@ func loadAllKafkaAcls(ctx context.Context, client *Client) (InstanceIdsToNameMap
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Kafka ACLs for Kafka Cluster %q: %s", kafkaRestClient.clusterId, kafkaAclsJson))
 
 	// APIF-2038: Kafka REST API only accepts integer ID at the moment
-	serviceAccounts, _, err := client.iamV1Client.ServiceAccountsV1Api.ListV1ServiceAccounts(client.iamV1ApiContext(ctx)).Execute()
-	users, _, err := client.iamV1Client.UsersV1Api.ListV1Users(client.iamV1ApiContext(ctx)).Execute()
+	serviceAccounts, resp, err := client.iamV1Client.ServiceAccountsV1Api.ListV1ServiceAccounts(client.iamV1ApiContext(ctx)).Execute()
+	users, resp, err := client.iamV1Client.UsersV1Api.ListV1Users(client.iamV1ApiContext(ctx)).Execute()
 
 	principalIdMap := make(map[int32]string)
 

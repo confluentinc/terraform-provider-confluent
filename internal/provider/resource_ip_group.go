@@ -75,10 +75,10 @@ func ipGroupUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}
 	tflog.Debug(ctx, fmt.Sprintf("Updating IP Group %q: %s", d.Id(), updateIPGroupRequestJson), map[string]interface{}{ipGroupLoggingKey: d.Id()})
 
 	c := meta.(*Client)
-	updatedIPGroup, _, err := c.iamIPClient.IPGroupsIamV2Api.UpdateIamV2IpGroup(c.iamIPApiContext(ctx), d.Id()).IamV2IpGroup(*updateIPGroupRequest).Execute()
+	updatedIPGroup, resp, err := c.iamIPClient.IPGroupsIamV2Api.UpdateIamV2IpGroup(c.iamIPApiContext(ctx), d.Id()).IamV2IpGroup(*updateIPGroupRequest).Execute()
 
 	if err != nil {
-		return diag.Errorf("error updating IP Group %q: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error updating IP Group %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	updatedIPGroupJson, err := json.Marshal(updatedIPGroup)
@@ -126,10 +126,10 @@ func ipGroupDelete(ctx context.Context, d *schema.ResourceData, meta interface{}
 	c := meta.(*Client)
 
 	req := c.iamIPClient.IPGroupsIamV2Api.DeleteIamV2IpGroup(c.iamIPApiContext(ctx), d.Id())
-	_, err := req.Execute()
+	resp, err := req.Execute()
 
 	if err != nil {
-		return diag.Errorf("error deleting IP Group %q: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error deleting IP Group %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished deleting IP Group %q", d.Id()), map[string]interface{}{ipGroupLoggingKey: d.Id()})
@@ -147,7 +147,7 @@ func ipGroupRead(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 	c := meta.(*Client)
 	ipGroup, resp, err := executeIPGroupRead(c.iamIPApiContext(ctx), c, d.Id())
 	if err != nil {
-		tflog.Warn(ctx, fmt.Sprintf("Error reading IP Group %q: %s", d.Id(), createDescriptiveError(err)), map[string]interface{}{ipGroupLoggingKey: d.Id()})
+		tflog.Warn(ctx, fmt.Sprintf("Error reading IP Group %q: %s", d.Id(), createDescriptiveError(err, resp)), map[string]interface{}{ipGroupLoggingKey: d.Id()})
 
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
 		if isResourceNotFound && !d.IsNewResource() {
@@ -156,7 +156,7 @@ func ipGroupRead(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 			return nil
 		}
 
-		return diag.FromErr(createDescriptiveError(err))
+		return diag.FromErr(createDescriptiveError(err, resp))
 	}
 	ipGroupJson, err := json.Marshal(ipGroup)
 	if err != nil {
