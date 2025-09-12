@@ -7,9 +7,9 @@
 * Added `write_mode` read-only attribute for the `confluent_tableflow_topic` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_tableflow_topic) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_tableflow_topic).
 
 **Bug Fixes:**
-* Fix the Terraform drift issue for the `identity_claim` attribute of the `confluent_identity_provider` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_identity_provider).
-* Update the error handling mechanism to output detailed error messages.
-* Update the logging mechanism to output an additional parameter, the request ID, for an improved debugging process.
+* Fixed the Terraform drift issue for the `identity_claim` attribute of the `confluent_identity_provider` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_identity_provider).
+* Updated the error handling mechanism to output detailed error messages.
+* Updated the logging mechanism to output an additional parameter, the request ID, for an improved debugging process.
 
 ## 2.39.0 (August 29th, 2025)
 
