@@ -61,6 +61,10 @@ blocks:
             - echo "foo" > temp.txt
             - gpg --detach-sig --yes -v --output=/dev/null --pinentry-mode loopback --passphrase "${PASSPHRASE}" temp.txt
             - rm temp.txt
+            - echo "pinentry-mode loopback" >> ~/.gnupg/gpg.conf
+            - echo "allow-loopback-pinentry" >> ~/.gnupg/gpg-agent.conf
+            - gpgconf --kill gpg-agent
+            - gpgconf --launch gpg-agent
             # Clean up git state
             - git clean -fx
             # Install deps for compiling for linux/arm64 from linux/amd64
