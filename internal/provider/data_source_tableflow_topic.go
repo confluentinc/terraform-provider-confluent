@@ -69,6 +69,11 @@ func tableflowTopicDataSource() *schema.Resource {
 				Computed:    true,
 				Description: "The strategy to handle record failures in the Tableflow enabled topic during materialization.",
 			},
+			paramWriteMode: {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Indicates the write mode of the tableflow topic.",
+			},
 			paramKafkaCluster:   requiredKafkaClusterDataSourceSchema(),
 			paramEnvironment:    environmentDataSourceSchema(),
 			paramCredentials:    credentialsSchema(),
