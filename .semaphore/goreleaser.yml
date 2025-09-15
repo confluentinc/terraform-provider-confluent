@@ -59,7 +59,7 @@ blocks:
             # Import GPG private key
             - echo -e "${GPG_PRIVATE_KEY}" | gpg --import --batch --no-tty
             - echo "foo" > temp.txt
-            - gpg --detach-sig --yes -v --output=/dev/null --pinentry-mode loopback --passphrase "${GPG_PASSWORD}" temp.txt
+            - gpg --detach-sig --yes -v --output=/dev/null --pinentry-mode loopback --passphrase "${PASSPHRASE}" temp.txt
             - rm temp.txt
             - echo "pinentry-mode loopback" >> ~/.gnupg/gpg.conf
             - echo "allow-loopback-pinentry" >> ~/.gnupg/gpg-agent.conf
