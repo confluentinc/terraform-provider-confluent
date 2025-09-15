@@ -36,16 +36,21 @@ func TestAccProviderIntegrationV2AzureLive(t *testing.T) {
 		t.Skip("Skipping live test. Set TF_ACC_PROD=1 to run this test.")
 	}
 
-	// Hardcoded staging credentials
-	apiKey := "TCCECPIBWM34DOIO"
-	apiSecret := "cfltVOMYz7nyRH++6ugoO1rySCnpcDDDDMrA4QmP18mRsuiJrdlUplxeFC/D/N0A"
-	endpoint := "https://api.stag.cpdev.cloud"
-	environmentId := "env-stgcg289dm"
-	azureTenantId := "0893715b-959b-4906-a185-2789e1ead045" // Test Azure tenant ID
+	// Use environment variables for credentials, hardcode environment
+	apiKey := os.Getenv("CONFLUENT_CLOUD_API_KEY")
+	apiSecret := os.Getenv("CONFLUENT_CLOUD_API_SECRET")
+	endpoint := os.Getenv("CONFLUENT_CLOUD_ENDPOINT")
+	environmentId := "env-zyg27z" // Hardcoded test environment
+	azureTenantId := os.Getenv("AZURE_TENANT_ID")
 
-	// Validate staging values are present
-	if apiKey == "" || apiSecret == "" || environmentId == "" {
-		t.Fatal("Staging API key, secret, and environment ID must be set in the test file")
+	// Validate required environment variables are present
+	if apiKey == "" || apiSecret == "" || azureTenantId == "" {
+		t.Fatal("CONFLUENT_CLOUD_API_KEY, CONFLUENT_CLOUD_API_SECRET, and AZURE_TENANT_ID environment variables must be set for live tests")
+	}
+
+	// Use production endpoint if not specified
+	if endpoint == "" {
+		endpoint = "https://api.confluent.cloud"
 	}
 
 	// Generate unique names for test resources to avoid conflicts
@@ -244,16 +249,21 @@ func TestAccProviderIntegrationV2GcpLive(t *testing.T) {
 	// Generate unique names for test resources to avoid conflicts
 	randomSuffix := rand.Intn(100000)
 
-	// Hardcoded staging credentials - same as Azure
-	apiKey := "TCCECPIBWM34DOIO"
-	apiSecret := "cfltVOMYz7nyRH++6ugoO1rySCnpcDDDDMrA4QmP18mRsuiJrdlUplxeFC/D/N0A"
-	endpoint := "https://api.stag.cpdev.cloud"
-	environmentId := "env-stgcg289dm"
+	// Use environment variables for credentials, hardcode environment
+	apiKey := os.Getenv("CONFLUENT_CLOUD_API_KEY")
+	apiSecret := os.Getenv("CONFLUENT_CLOUD_API_SECRET")
+	endpoint := os.Getenv("CONFLUENT_CLOUD_ENDPOINT")
+	environmentId := "env-zyg27z"                                                                            // Hardcoded test environment
 	gcpServiceAccount := fmt.Sprintf("test-sa-%d@test-project-123456.iam.gserviceaccount.com", randomSuffix) // Unique test service account
 
-	// Validate staging values are present
-	if apiKey == "" || apiSecret == "" || environmentId == "" {
-		t.Fatal("Staging API key, secret, and environment ID must be set in the test file")
+	// Validate required environment variables are present
+	if apiKey == "" || apiSecret == "" {
+		t.Fatal("CONFLUENT_CLOUD_API_KEY and CONFLUENT_CLOUD_API_SECRET environment variables must be set for live tests")
+	}
+
+	// Use production endpoint if not specified
+	if endpoint == "" {
+		endpoint = "https://api.confluent.cloud"
 	}
 	integrationDisplayName := fmt.Sprintf("tf-live-test-gcp-%d", randomSuffix)
 	integrationResourceLabel := "test_gcp"
