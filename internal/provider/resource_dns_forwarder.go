@@ -185,9 +185,9 @@ func dnsForwarderCreate(ctx context.Context, d *schema.ResourceData, meta interf
 	tflog.Debug(ctx, fmt.Sprintf("Creating new DnsForwarder: %s", createDnsForwarderRequestJson))
 
 	req := c.netDnsClient.DNSForwardersNetworkingV1Api.CreateNetworkingV1DnsForwarder(c.netDnsApiContext(ctx)).NetworkingV1DnsForwarder(createDnsForwarderRequest)
-	createdDnsForwarder, _, err := req.Execute()
+	createdDnsForwarder, resp, err := req.Execute()
 	if err != nil {
-		return diag.Errorf("error creating DNS Forwarder %q: %s", createdDnsForwarder.GetId(), createDescriptiveError(err))
+		return diag.Errorf("error creating DNS Forwarder %q: %s", createdDnsForwarder.GetId(), createDescriptiveError(err, resp))
 	}
 	d.SetId(createdDnsForwarder.GetId())
 	if err := waitForDnsForwarderToProvision(c.netDnsApiContext(ctx), c, environmentId, d.Id()); err != nil {
@@ -244,7 +244,7 @@ func readDnsForwarderAndSetAttributes(ctx context.Context, d *schema.ResourceDat
 	req := c.netDnsClient.DNSForwardersNetworkingV1Api.GetNetworkingV1DnsForwarder(c.netDnsApiContext(ctx), dnsForwarderId).Environment(environmentId)
 	dnsForwarder, resp, err := req.Execute()
 	if err != nil {
-		tflog.Warn(ctx, fmt.Sprintf("Error reading DNS Forwarder %q: %s", d.Id(), createDescriptiveError(err)), map[string]interface{}{dnsForwarderKey: d.Id()})
+		tflog.Warn(ctx, fmt.Sprintf("Error reading DNS Forwarder %q: %s", d.Id(), createDescriptiveError(err, resp)), map[string]interface{}{dnsForwarderKey: d.Id()})
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
 		if isResourceNotFound && !d.IsNewResource() {
 			tflog.Warn(ctx, fmt.Sprintf("Removing DNS Forwarder %q in TF state because DNS Forwarder could not be found on the server", d.Id()), map[string]interface{}{dnsForwarderKey: d.Id()})
@@ -275,10 +275,10 @@ func dnsForwarderDelete(ctx context.Context, d *schema.ResourceData, meta interf
 	c := meta.(*Client)
 
 	req := c.netDnsClient.DNSForwardersNetworkingV1Api.DeleteNetworkingV1DnsForwarder(c.netDnsApiContext(ctx), d.Id()).Environment(environmentId)
-	_, err := req.Execute()
+	resp, err := req.Execute()
 
 	if err != nil {
-		return diag.Errorf("error deleting DNS Forwarder %q: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error deleting DNS Forwarder %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished deleting DNS Forwarder %q", d.Id()), map[string]interface{}{dnsForwarderKey: d.Id()})
@@ -306,10 +306,10 @@ func dnsForwarderUpdate(ctx context.Context, d *schema.ResourceData, meta interf
 	tflog.Debug(ctx, fmt.Sprintf("Updating DNS Forwarder %q: %s", d.Id(), updateDnsForwarderRequestJson), map[string]interface{}{dnsForwarderKey: d.Id()})
 
 	req := c.netDnsClient.DNSForwardersNetworkingV1Api.UpdateNetworkingV1DnsForwarder(c.netDnsApiContext(ctx), d.Id()).NetworkingV1DnsForwarderUpdate(*updateDnsForwarderRequest)
-	updatedDnsForwarder, _, err := req.Execute()
+	updatedDnsForwarder, resp, err := req.Execute()
 
 	if err != nil {
-		return diag.Errorf("error updating DNS Forwarder %q: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error updating DNS Forwarder %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	updatedDnsForwarderJson, err := json.Marshal(updatedDnsForwarder)

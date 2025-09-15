@@ -194,14 +194,14 @@ func flinkStatementCreate(ctx context.Context, d *schema.ResourceData, meta inte
 
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Flink Statement: %s", createFlinkStatementRequestJson))
 
-	createdFlinkStatement, _, err := executeFlinkStatementCreate(flinkRestClient.apiContext(ctx), flinkRestClient, createFlinkStatementRequest)
+	createdFlinkStatement, resp, err := executeFlinkStatementCreate(flinkRestClient.apiContext(ctx), flinkRestClient, createFlinkStatementRequest)
 	if err != nil {
-		return diag.Errorf("error creating Flink Statement %q: %s", createdFlinkStatement.GetName(), createDescriptiveError(err))
+		return diag.Errorf("error creating Flink Statement %q: %s", createdFlinkStatement.GetName(), createDescriptiveError(err, resp))
 	}
 	d.SetId(createFlinkStatementId(flinkRestClient.environmentId, createdFlinkStatement.Spec.GetComputePoolId(), createdFlinkStatement.GetName()))
 
 	if err := waitForFlinkStatementToProvision(flinkRestClient.apiContext(ctx), flinkRestClient, createdFlinkStatement.GetName(), mergedProperties, meta.(*Client).isAcceptanceTestMode); err != nil {
-		return diag.Errorf("error waiting for Flink Statement %q to provision: %s", createdFlinkStatement.GetName(), createDescriptiveError(err))
+		return diag.Errorf("error waiting for Flink Statement %q to provision: %s", createdFlinkStatement.GetName(), createDescriptiveError(err, resp))
 	}
 
 	createdFlinkStatementJson, err := json.Marshal(createdFlinkStatement)
@@ -319,7 +319,7 @@ func flinkStatementStop(ctx context.Context, d *schema.ResourceData, meta interf
 	statementName := d.Get(paramStatementName).(string)
 
 	req := flinkRestClient.apiClient.StatementsSqlV1Api.GetSqlv1Statement(flinkRestClient.apiContext(ctx), flinkRestClient.organizationId, flinkRestClient.environmentId, statementName)
-	statement, _, err := req.Execute()
+	statement, resp, err := req.Execute()
 
 	if err != nil {
 		return diag.Errorf("error stopping Flink Statement: error fetching Flink Statement: %s", createDescriptiveError(err))
@@ -338,12 +338,12 @@ func flinkStatementStop(ctx context.Context, d *schema.ResourceData, meta interf
 		}
 		tflog.Debug(ctx, fmt.Sprintf("stopping Flink Statement %q: %s", statementName, updateFlinkStatementRequestJson), map[string]interface{}{flinkStatementLoggingKey: d.Id()})
 		req := flinkRestClient.apiClient.StatementsSqlV1Api.UpdateSqlv1Statement(flinkRestClient.apiContext(ctx), organizationId, environmentId, statementName).SqlV1Statement(statement)
-		_, err = req.Execute()
+		resp, err = req.Execute()
 		if err != nil {
-			return diag.Errorf("error stopping Flink Statement %q: %s", statementName, createDescriptiveError(err))
+			return diag.Errorf("error stopping Flink Statement %q: %s", statementName, createDescriptiveError(err, resp))
 		}
 		if err := waitForFlinkStatementToBeUpdated(flinkRestClient.apiContext(ctx), flinkRestClient, statementName, meta.(*Client).isAcceptanceTestMode, true); err != nil {
-			return diag.Errorf("error waiting for Flink Statement %q to update: %s", statementName, createDescriptiveError(err))
+			return diag.Errorf("error waiting for Flink Statement %q to update: %s", statementName, createDescriptiveError(err, resp))
 		}
 	}
 
@@ -403,12 +403,12 @@ func flinkStatementResume(ctx context.Context, d *schema.ResourceData, meta inte
 	}
 	tflog.Debug(ctx, fmt.Sprintf("resuming Flink Statement %q: %s", statementName, updateFlinkStatementRequestJson), map[string]interface{}{flinkStatementLoggingKey: d.Id()})
 	updateRequest := flinkRestClient.apiClient.StatementsSqlV1Api.UpdateSqlv1Statement(flinkRestClient.apiContext(ctx), organizationId, environmentId, statementName).SqlV1Statement(statement)
-	_, err = updateRequest.Execute()
+	resp, err := updateRequest.Execute()
 	if err != nil {
-		return diag.Errorf("error resuming Flink Statement %q: %s", statementName, createDescriptiveError(err))
+		return diag.Errorf("error resuming Flink Statement %q: %s", statementName, createDescriptiveError(err, resp))
 	}
 	if err := waitForFlinkStatementToBeUpdated(flinkRestClient.apiContext(ctx), flinkRestClient, statementName, meta.(*Client).isAcceptanceTestMode, false); err != nil {
-		return diag.Errorf("error waiting for Flink Statement %q to update: %s", statementName, createDescriptiveError(err))
+		return diag.Errorf("error waiting for Flink Statement %q to update: %s", statementName, createDescriptiveError(err, resp))
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished resuming Flink Statement %q", statementName), map[string]interface{}{flinkStatementLoggingKey: d.Id()})
@@ -418,7 +418,7 @@ func flinkStatementResume(ctx context.Context, d *schema.ResourceData, meta inte
 func readFlinkStatementAndSetAttributes(ctx context.Context, d *schema.ResourceData, c *FlinkRestClient, statementName string) ([]*schema.ResourceData, error) {
 	statement, resp, err := executeFlinkStatementRead(c.apiContext(ctx), c, statementName)
 	if err != nil {
-		tflog.Warn(ctx, fmt.Sprintf("Error reading Flink Statement %q: %s", d.Id(), createDescriptiveError(err)), map[string]interface{}{flinkStatementLoggingKey: d.Id()})
+		tflog.Warn(ctx, fmt.Sprintf("Error reading Flink Statement %q: %s", d.Id(), createDescriptiveError(err, resp)), map[string]interface{}{flinkStatementLoggingKey: d.Id()})
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
 		if isResourceNotFound && !d.IsNewResource() {
 			tflog.Warn(ctx, fmt.Sprintf("Removing Flink Statement %q in TF state because Flink Statement could not be found on the server", d.Id()), map[string]interface{}{flinkStatementLoggingKey: d.Id()})
@@ -534,14 +534,14 @@ func flinkStatementDelete(ctx context.Context, d *schema.ResourceData, meta inte
 	statementName := d.Get(paramStatementName).(string)
 
 	req := flinkRestClient.apiClient.StatementsSqlV1Api.DeleteSqlv1Statement(flinkRestClient.apiContext(ctx), organizationId, environmentId, statementName)
-	_, err = req.Execute()
+	resp, err := req.Execute()
 
 	if err != nil {
-		return diag.Errorf("error deleting Flink Statement %q: %s", statementName, createDescriptiveError(err))
+		return diag.Errorf("error deleting Flink Statement %q: %s", statementName, createDescriptiveError(err, resp))
 	}
 
 	if err := waitForFlinkStatementToBeDeleted(flinkRestClient.apiContext(ctx), flinkRestClient, statementName, meta.(*Client).isAcceptanceTestMode); err != nil {
-		return diag.Errorf("error waiting for Flink Statement %q to be deleted: %s", statementName, createDescriptiveError(err))
+		return diag.Errorf("error waiting for Flink Statement %q to be deleted: %s", statementName, createDescriptiveError(err, resp))
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished deleting Flink Statement %q", statementName), map[string]interface{}{flinkStatementLoggingKey: d.Id()})

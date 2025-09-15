@@ -214,13 +214,13 @@ func schemaExporterCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Schema Exporter: %s", requestJson))
 
-	createdExporter, _, err := request.Execute()
+	createdExporter, resp, err := request.Execute()
 	if err != nil {
-		return diag.Errorf("error creating Schema Exporter: %s", createDescriptiveError(err))
+		return diag.Errorf("error creating Schema Exporter: %s", createDescriptiveError(err, resp))
 	}
 
 	if err := waitForSchemaExporterToProvision(c.apiContext(ctx), c, exporterId, name); err != nil {
-		return diag.Errorf("error waiting for Schema Exporter %q to provision: %s", exporterId, createDescriptiveError(err))
+		return diag.Errorf("error waiting for Schema Exporter %q to provision: %s", exporterId, createDescriptiveError(err, resp))
 	}
 
 	d.SetId(exporterId)
@@ -267,7 +267,7 @@ func readSchemaExporterAndSetAttributes(ctx context.Context, d *schema.ResourceD
 	request := c.apiClient.ExportersV1Api.GetExporterInfoByName(c.apiContext(ctx), name)
 	exporter, resp, err := request.Execute()
 	if err != nil {
-		tflog.Warn(ctx, fmt.Sprintf("Error reading Schema Exporter %q: %s", id, createDescriptiveError(err)), map[string]interface{}{schemaExporterLoggingKey: id})
+		tflog.Warn(ctx, fmt.Sprintf("Error reading Schema Exporter %q: %s", id, createDescriptiveError(err, resp)), map[string]interface{}{schemaExporterLoggingKey: id})
 
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
 		if isResourceNotFound && !d.IsNewResource() {
@@ -285,9 +285,9 @@ func readSchemaExporterAndSetAttributes(ctx context.Context, d *schema.ResourceD
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Schema Exporter %q: %s", id, exporterJson), map[string]interface{}{schemaExporterLoggingKey: id})
 
 	tflog.Debug(ctx, fmt.Sprintf("Reading Schema Exporter Status %q", name))
-	status, _, err := c.apiClient.ExportersV1Api.GetExporterStatusByName(c.apiContext(ctx), name).Execute()
+	status, resp, err := c.apiClient.ExportersV1Api.GetExporterStatusByName(c.apiContext(ctx), name).Execute()
 	if err != nil {
-		return nil, fmt.Errorf("error creating Schema Exporter Status: %s", createDescriptiveError(err))
+		return nil, fmt.Errorf("error creating Schema Exporter Status: %s", createDescriptiveError(err, resp))
 	}
 	if status.GetState() == stateRunning {
 		if err := d.Set(paramStatus, stateRunning); err != nil {
@@ -331,9 +331,9 @@ func schemaExporterUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 		isPaused := d.Get(paramStatus).(string) == statePaused
 		if isPaused {
 			// pause the exporter first before making any changes
-			_, _, err = c.apiClient.ExportersV1Api.PauseExporterByName(c.apiContext(ctx), name).Execute()
+			_, resp, err := c.apiClient.ExportersV1Api.PauseExporterByName(c.apiContext(ctx), name).Execute()
 			if err != nil {
-				return diag.Errorf("error pausing Schema Exporter (Failed to pause the exporter): %s", createDescriptiveError(err))
+				return diag.Errorf("error pausing Schema Exporter (Failed to pause the exporter): %s", createDescriptiveError(err, resp))
 			}
 		}
 	}
@@ -341,9 +341,9 @@ func schemaExporterUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 	if d.HasChanges(paramContextType, paramContext, paramSubjectRenameFormat, paramSubjects, paramConfigs, paramDestinationSchemaRegistryCluster) {
 		// pause the exporter whenever there's an update on configs
 		// https://github.com/confluentinc/terraform-provider-confluent/issues/321
-		_, _, err = c.apiClient.ExportersV1Api.PauseExporterByName(c.apiContext(ctx), name).Execute()
+		_, resp, err := c.apiClient.ExportersV1Api.PauseExporterByName(c.apiContext(ctx), name).Execute()
 		if err != nil {
-			return diag.Errorf("error pausing Schema Exporter (Failed to pause the exporter): %s", createDescriptiveError(err))
+			return diag.Errorf("error pausing Schema Exporter (Failed to pause the exporter): %s", createDescriptiveError(err, resp))
 		}
 
 		subjects := convertToStringSlice(d.Get(paramSubjects).(*schema.Set).List())
@@ -368,9 +368,9 @@ func schemaExporterUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 		}
 		tflog.Debug(ctx, fmt.Sprintf("Updating Schema Exporter: %s", requestJson))
 
-		updatedExporter, _, err := request.Execute()
+		updatedExporter, resp, err := request.Execute()
 		if err != nil {
-			return diag.Errorf("error updating Schema Exporter: %s", createDescriptiveError(err))
+			return diag.Errorf("error updating Schema Exporter: %s", createDescriptiveError(err, resp))
 		}
 		updatedExporterJson, err := json.Marshal(updatedExporter)
 		if err != nil {
@@ -380,9 +380,9 @@ func schemaExporterUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 
 		isReset := d.Get(paramResetOnUpdate).(bool)
 		if isReset {
-			_, _, err = c.apiClient.ExportersV1Api.ResetExporterByName(c.apiContext(ctx), name).Execute()
+			_, resp, err := c.apiClient.ExportersV1Api.ResetExporterByName(c.apiContext(ctx), name).Execute()
 			if err != nil {
-				return diag.Errorf("error updating Schema Exporter (Failed to reset the exporter): %s", createDescriptiveError(err))
+				return diag.Errorf("error updating Schema Exporter (Failed to reset the exporter): %s", createDescriptiveError(err, resp))
 			}
 		}
 
@@ -410,15 +410,15 @@ func resumeExporter(ctx context.Context, d *schema.ResourceData, c *SchemaRegist
 		// resume the exporter last after making any changes
 		_, resp, err := c.apiClient.ExportersV1Api.ResumeExporterByName(c.apiContext(ctx), name).Execute()
 		if err != nil && resp.StatusCode != http.StatusConflict {
-			return diag.Errorf("error resuming Schema Exporter (Failed to resume the exporter): %s", createDescriptiveError(err))
+			return diag.Errorf("error resuming Schema Exporter (Failed to resume the exporter): %s", createDescriptiveError(err, resp))
 		}
 
 		if err := waitForSchemaExporterToProvision(c.apiContext(ctx), c, id, name); err != nil {
-			return diag.Errorf("error waiting for Schema Exporter %q to updating: %s", id, createDescriptiveError(err))
+			return diag.Errorf("error waiting for Schema Exporter %q to updating: %s", id, createDescriptiveError(err, resp))
 		}
-		status, _, err := c.apiClient.ExportersV1Api.GetExporterStatusByName(c.apiContext(ctx), name).Execute()
+		status, resp, err := c.apiClient.ExportersV1Api.GetExporterStatusByName(c.apiContext(ctx), name).Execute()
 		if err != nil {
-			return diag.Errorf("error resuming Schema Exporter (Failed to read status): %s", createDescriptiveError(err))
+			return diag.Errorf("error resuming Schema Exporter (Failed to read status): %s", createDescriptiveError(err, resp))
 		}
 		if status.GetTrace() != "" {
 			return diag.Errorf("error resuming Schema Exporter %q: %s", id, status.GetTrace())
@@ -449,15 +449,15 @@ func schemaExporterDelete(ctx context.Context, d *schema.ResourceData, meta inte
 	c := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 
 	// pause the exporter first
-	_, _, err = c.apiClient.ExportersV1Api.PauseExporterByName(c.apiContext(ctx), name).Execute()
+	_, resp, err := c.apiClient.ExportersV1Api.PauseExporterByName(c.apiContext(ctx), name).Execute()
 	if err != nil {
-		return diag.Errorf("error deleting Schema Exporter (failed to pause the exporter): %s", createDescriptiveError(err))
+		return diag.Errorf("error deleting Schema Exporter (failed to pause the exporter): %s", createDescriptiveError(err, resp))
 	}
 
 	request := c.apiClient.ExportersV1Api.DeleteExporter(c.apiContext(ctx), name)
-	_, err = request.Execute()
+	resp, err = request.Execute()
 	if err != nil {
-		return diag.Errorf("error deleting Schema Exporter %q: %s", id, createDescriptiveError(err))
+		return diag.Errorf("error deleting Schema Exporter %q: %s", id, createDescriptiveError(err, resp))
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished deleting Schema Exporter %q", id), map[string]interface{}{schemaExporterLoggingKey: id})

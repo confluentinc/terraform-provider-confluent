@@ -100,9 +100,9 @@ func businessMetadataBindingDataSourceRead(ctx context.Context, d *schema.Resour
 	catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 	request := catalogRestClient.apiClient.EntityV1Api.GetBusinessMetadata(catalogRestClient.dataCatalogApiContext(ctx), entityType, entityName)
 
-	businessMetadataBindings, _, err := request.Execute()
+	businessMetadataBindings, resp, err := request.Execute()
 	if err != nil {
-		return diag.Errorf("error reading Business Metadata Binding %q: %s", businessMetadataBindingId, createDescriptiveError(err))
+		return diag.Errorf("error reading Business Metadata Binding %q: %s", businessMetadataBindingId, createDescriptiveError(err, resp))
 	}
 	businessMetadataBinding, err := findBusinessMetadataBindingByBusinessMetadataName(businessMetadataBindings, businessMetadataName)
 	if err != nil {
