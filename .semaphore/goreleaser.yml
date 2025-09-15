@@ -39,7 +39,7 @@ blocks:
             - artifact push workflow dist/darwin-fips_darwin_amd64_v1 --force
             - artifact push workflow dist/darwin-fips_darwin_arm64 --force
   - name: "Draft a Release (Part 2)"
-    dependencies: ["Draft a Release (Part 1)"]
+    dependencies: []
     task:
       jobs:
         - name: goreleaser
@@ -65,13 +65,12 @@ blocks:
             - echo "allow-loopback-pinentry" >> ~/.gnupg/gpg-agent.conf
             - gpgconf --kill gpg-agent
             - gpgconf --launch gpg-agent
+            - git tag v2.40.0-kostya-dryrun
             # Clean up git state
             - git clean -fx
             # Install deps for compiling for linux/arm64 from linux/amd64
             - sudo apt update
             - sudo apt install -y gcc-aarch64-linux-gnu
             - mkdir prebuilt && cd prebuilt
-            - artifact pull workflow darwin-fips_darwin_amd64_v1 --force
-            - artifact pull workflow darwin-fips_darwin_arm64 --force
             - cd ..
             - curl https://goreleaser.com/static/run | DISTRIBUTION=pro VERSION=v1.25.1-pro bash -s -- release --config .goreleaser.yml --key $(vault kv get -field goreleaser_key v1/ci/kv/cli/release)
