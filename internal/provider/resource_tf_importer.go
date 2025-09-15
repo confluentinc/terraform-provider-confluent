@@ -57,6 +57,8 @@ const (
 	SchemaRegistry
 )
 
+const importerCreateTimeout = 24 * time.Hour
+
 var ImportableResources = []string{
 	// Cloud
 	"confluent_service_account",
@@ -98,6 +100,9 @@ func tfImporterResource() *schema.Resource {
 				Default:  defaultOutputPath,
 			},
 			// TODO: add paramFormat = HCL (default) | JSON?
+		},
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(importerCreateTimeout),
 		},
 	}
 }
@@ -348,6 +353,10 @@ func commandWithResolvedSymlink(ctx context.Context, commandName string) (*exec.
 }
 
 func loadInstances(ctx context.Context, resourceName string, importer *Importer, fakeProvider *schema.Provider, meta interface{}) ([]instanceData, diag.Diagnostics) {
+	tflog.Debug(ctx, fmt.Sprintf("Loading instances for %s", resourceName), map[string]interface{}{
+		"resource_name":  resourceName,
+		"instance_count": len(importer.InstanceIdMap),
+	})
 	resourceSchema := fakeProvider.ResourcesMap[resourceName]
 	if resourceSchema == nil {
 		return nil, diag.Errorf("Resource type %s not defined", resourceName)
@@ -372,6 +381,16 @@ func loadInstances(ctx context.Context, resourceName string, importer *Importer,
 		}
 
 		instanceState, err := getInstanceState(ctx, resourceSchema, instanceId, meta)
+		// Log time remaining for both success and error cases
+		if deadline, ok := ctx.Deadline(); ok {
+			timeRemaining := time.Until(deadline)
+			if err != nil {
+				tflog.Error(ctx, fmt.Sprintf("Failed to get state for %s instance %s, time remaining: %v", resourceName, instanceId, timeRemaining))
+			} else {
+				tflog.Debug(ctx, fmt.Sprintf("Successfully got state for %s instance %s, time remaining: %v", resourceName, instanceId, timeRemaining))
+			}
+		}
+
 		if err != nil {
 			return nil, diag.Errorf("Failed to get state for %s instance %s: %v", resourceName, instanceId, err)
 		}
