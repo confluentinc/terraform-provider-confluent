@@ -57,6 +57,8 @@ const (
 	SchemaRegistry
 )
 
+const importerCreateTimeout = 8 * time.Hour
+
 var ImportableResources = []string{
 	// Cloud
 	"confluent_service_account",
@@ -98,6 +100,9 @@ func tfImporterResource() *schema.Resource {
 				Default:  defaultOutputPath,
 			},
 			// TODO: add paramFormat = HCL (default) | JSON?
+		},
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(importerCreateTimeout),
 		},
 	}
 }
