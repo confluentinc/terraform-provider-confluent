@@ -57,7 +57,7 @@ const (
 	SchemaRegistry
 )
 
-const importerCreateTimeout = 24 * time.Hour
+const importerCreateTimeout = 8 * time.Hour
 
 var ImportableResources = []string{
 	// Cloud
