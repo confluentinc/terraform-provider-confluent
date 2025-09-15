@@ -603,6 +603,28 @@
       ],
       "topic_name": "read_created_kafka_topic",
       "is_default": false
+    },
+    {
+      "kind": "KafkaTopicConfig",
+      "metadata": {
+        "self": "https://pkc-0wg55.us-central1.gcp.confluent.cloud/kafka/v3/clusters/lkc-190073/topics/read_created_kafka_topic/configs/confluent.schema.validation.context.name",
+        "resource_name": "crn:///kafka=lkc-190073/topic=read_created_kafka_topic/config=confluent.schema.validation.context.name"
+      },
+      "cluster_id": "lkc-190073",
+      "name": "confluent.schema.validation.context.name",
+      "value": "default",
+      "is_read_only": false,
+      "is_sensitive": false,
+      "source": "DYNAMIC_TOPIC_CONFIG",
+      "synonyms": [
+        {
+          "name": "confluent.schema.validation.context.name",
+          "value": "default",
+          "source": "DYNAMIC_TOPIC_CONFIG"
+        }
+      ],
+      "topic_name": "read_created_kafka_topic",
+      "is_default": false
     }
   ]
 }
