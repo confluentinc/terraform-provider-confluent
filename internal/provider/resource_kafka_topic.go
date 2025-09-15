@@ -53,7 +53,7 @@ var editableTopicSettings = []string{"cleanup.policy", "delete.retention.ms", "m
 
 // Read-only topic settings
 var ignoredTopicSettings = []string{
-	"confluent.topic.type",
+	"confluent.topic.type", "confluent.schema.validation.context.name",
 }
 
 func extractConfigs(configs map[string]interface{}) []kafkarestv3.CreateTopicRequestDataConfigs {
