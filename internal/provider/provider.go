@@ -346,6 +346,8 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_private_link_attachment":            privateLinkAttachmentDataSource(),
 				"confluent_private_link_attachment_connection": privateLinkAttachmentConnectionDataSource(),
 				"confluent_provider_integration":               providerIntegrationDataSource(),
+				"confluent_provider_integration_v2":            providerIntegrationV2DataSource(),
+				"confluent_provider_integration_v2_authorization": providerIntegrationV2AuthorizationDataSource(),
 				"confluent_role_binding":                       roleBindingDataSource(),
 				"confluent_schema":                             schemaDataSource(),
 				"confluent_schemas":                            schemasDataSource(),

@@ -108,12 +108,12 @@ func TestAccProviderIntegrationV2AuthorizationAzure(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
-		CheckDestroy:      testAccCheckProviderIntegrationV2AuthDestroy,
+		CheckDestroy:      testAccCheckProviderIntegrationV2AuthMockDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckProviderIntegrationV2AuthorizationAzureConfig(confluentCloudBaseUrl, mockServerUrl),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckProviderIntegrationV2AuthExists(fullAzureProviderIntegrationV2AuthResourceLabel),
+					testAccCheckProviderIntegrationV2AuthMockExists(fullAzureProviderIntegrationV2AuthResourceLabel),
 					resource.TestCheckResourceAttr(fullAzureProviderIntegrationV2AuthResourceLabel, paramId, azureProviderIntegrationV2AuthId),
 					resource.TestCheckResourceAttr(fullAzureProviderIntegrationV2AuthResourceLabel, paramProviderIntegrationIdAuth, azureProviderIntegrationV2AuthId),
 					resource.TestCheckResourceAttr(fullAzureProviderIntegrationV2AuthResourceLabel, fmt.Sprintf("azure.0.%s", paramAzureCustomerTenantId), azureProviderIntegrationV2AuthTenantId),
@@ -203,12 +203,12 @@ func TestAccProviderIntegrationV2AuthorizationGcp(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
-		CheckDestroy:      testAccCheckProviderIntegrationV2AuthDestroy,
+		CheckDestroy:      testAccCheckProviderIntegrationV2AuthMockDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckProviderIntegrationV2AuthorizationGcpConfig(confluentCloudBaseUrl, mockServerUrl),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckProviderIntegrationV2AuthExists(fullGcpProviderIntegrationV2AuthResourceLabel),
+					testAccCheckProviderIntegrationV2AuthMockExists(fullGcpProviderIntegrationV2AuthResourceLabel),
 					resource.TestCheckResourceAttr(fullGcpProviderIntegrationV2AuthResourceLabel, paramId, gcpProviderIntegrationV2AuthId),
 					resource.TestCheckResourceAttr(fullGcpProviderIntegrationV2AuthResourceLabel, paramProviderIntegrationIdAuth, gcpProviderIntegrationV2AuthId),
 					resource.TestCheckResourceAttr(fullGcpProviderIntegrationV2AuthResourceLabel, fmt.Sprintf("gcp.0.%s", paramGcpCustomerServiceAccount), gcpProviderIntegrationV2CustomerSA),
@@ -236,12 +236,12 @@ const (
 	gcpProviderIntegrationV2AuthResourceLabel   = "test_gcp_auth"
 )
 
-func testAccCheckProviderIntegrationV2AuthDestroy(s *terraform.State) error {
+func testAccCheckProviderIntegrationV2AuthMockDestroy(s *terraform.State) error {
 	// Authorization resource delete only removes from state, doesn't call API
 	return nil
 }
 
-func testAccCheckProviderIntegrationV2AuthExists(n string) resource.TestCheckFunc {
+func testAccCheckProviderIntegrationV2AuthMockExists(n string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {

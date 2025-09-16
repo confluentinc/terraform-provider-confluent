@@ -110,12 +110,12 @@ func TestAccProviderIntegrationV2Azure(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
-		CheckDestroy:      testAccCheckProviderIntegrationV2Destroy,
+		CheckDestroy:      testAccCheckProviderIntegrationV2MockDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckProviderIntegrationV2AzureConfig(confluentCloudBaseUrl, mockServerUrl),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckProviderIntegrationV2Exists(fullAzureProviderIntegrationV2ResourceLabel),
+					testAccCheckProviderIntegrationV2MockExists(fullAzureProviderIntegrationV2ResourceLabel),
 					resource.TestCheckResourceAttr(fullAzureProviderIntegrationV2ResourceLabel, paramId, azureProviderIntegrationV2Id),
 					resource.TestCheckResourceAttr(fullAzureProviderIntegrationV2ResourceLabel, paramDisplayName, azureProviderIntegrationV2DisplayName),
 					resource.TestCheckResourceAttr(fullAzureProviderIntegrationV2ResourceLabel, paramCloudProvider, "azure"),
@@ -203,12 +203,12 @@ func TestAccProviderIntegrationV2Gcp(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
-		CheckDestroy:      testAccCheckProviderIntegrationV2Destroy,
+		CheckDestroy:      testAccCheckProviderIntegrationV2MockDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckProviderIntegrationV2GcpConfig(confluentCloudBaseUrl, mockServerUrl),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckProviderIntegrationV2Exists(fullGcpProviderIntegrationV2ResourceLabel),
+					testAccCheckProviderIntegrationV2MockExists(fullGcpProviderIntegrationV2ResourceLabel),
 					resource.TestCheckResourceAttr(fullGcpProviderIntegrationV2ResourceLabel, paramId, gcpProviderIntegrationV2Id),
 					resource.TestCheckResourceAttr(fullGcpProviderIntegrationV2ResourceLabel, paramDisplayName, gcpProviderIntegrationV2DisplayName),
 					resource.TestCheckResourceAttr(fullGcpProviderIntegrationV2ResourceLabel, paramCloudProvider, "gcp"),
@@ -236,12 +236,12 @@ const (
 	gcpProviderIntegrationV2ResourceLabel   = "test_gcp"
 )
 
-func testAccCheckProviderIntegrationV2Destroy(s *terraform.State) error {
+func testAccCheckProviderIntegrationV2MockDestroy(s *terraform.State) error {
 	// This is handled by wiremock scenarios
 	return nil
 }
 
-func testAccCheckProviderIntegrationV2Exists(n string) resource.TestCheckFunc {
+func testAccCheckProviderIntegrationV2MockExists(n string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
