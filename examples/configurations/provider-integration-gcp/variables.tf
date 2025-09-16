@@ -25,9 +25,3 @@ variable "gcp_service_account" {
   description = "Your Google Service Account that Confluent Cloud will impersonate (e.g., my-sa@my-project.iam.gserviceaccount.com)"
   type        = string
 }
-
-variable "autovalidate" {
-  description = "Whether to validate the integration. Set to false initially, then true after GCP IAM setup."
-  type        = bool
-  default     = false
-}

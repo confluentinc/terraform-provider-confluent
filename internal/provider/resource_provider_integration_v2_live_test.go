@@ -232,7 +232,6 @@ resource "confluent_provider_integration_v2_authorization" "%s" {
     customer_azure_tenant_id = "%s"
   }
   
-  autovalidate = true
 }
 `, endpoint, apiKey, apiSecret, integrationResourceLabel, environmentId, displayName, authResourceLabel, integrationResourceLabel, environmentId, azureTenantId)
 }
