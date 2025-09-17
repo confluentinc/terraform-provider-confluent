@@ -612,14 +612,14 @@
       },
       "cluster_id": "lkc-190073",
       "name": "confluent.schema.validation.context.name",
-      "value": "default",
+      "value": ".mycontext",
       "is_read_only": false,
       "is_sensitive": false,
       "source": "DYNAMIC_TOPIC_CONFIG",
       "synonyms": [
         {
           "name": "confluent.schema.validation.context.name",
-          "value": "default",
+          "value": ".mycontext",
           "source": "DYNAMIC_TOPIC_CONFIG"
         }
       ],
