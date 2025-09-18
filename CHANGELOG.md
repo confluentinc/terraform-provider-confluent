@@ -4,7 +4,7 @@
 
 **Bug Fixes:**
 * Fixed the timeout issue for the `confluent_tf_importer` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_tf_importer) when importing huge number of resources.
-* Fixed the Terraform drift issue [#771](https://github.com/confluentinc/terraform-provider-confluent/issues/771) for the topic setting `confluent.schema.validation.context.name` for `confluent_kafka_topic` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_topic).
+* Fixed the Terraform drift issue ([#771](https://github.com/confluentinc/terraform-provider-confluent/issues/771)) for the topic setting `confluent.schema.validation.context.name` for `confluent_kafka_topic` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_topic).
 
 ## 2.40.0 (September 11th, 2025)
 
