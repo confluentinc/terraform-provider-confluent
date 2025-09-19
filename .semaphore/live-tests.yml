@@ -33,7 +33,7 @@ blocks:
             - . vault-sem-get-secret v1/ci/kv/apif/terraform-provider-confluent/live-testing-data
             - . vault-sem-get-secret v1/ci/kv/apif/terraform-provider-confluent/slack-notifications-live-testing
 
-            # 2. The main script
+            # 2. The main script with added debugging
             - |
               set -e
 
@@ -42,24 +42,19 @@ blocks:
                 if [ $RC -ne 0 ]; then
                   echo "Live tests failed, sending Slack notification..."
               
-                  # Construct the job URL from the environment variable
                   JOB_URL="https://semaphore.ci.confluent.io/jobs/$SEMAPHORE_JOB_ID"
-
-                  # Create the JSON payload to match your Slack Workflow variable
                   MESSAGE_JSON=$(printf ''{"PIPELINE_URL": "%s"}'' "$JOB_URL")
 
-                  # Send the notification
-                  curl -X POST -H "Content-type: application/json" --data "$MESSAGE_JSON" "$SLACK_WEBHOOK_URL"
+                  # ADDED: Print the JSON payload to the log for review
+                  echo "--- PAYLOAD BEING SENT ---"
+                  echo "$MESSAGE_JSON"
+                  echo "--------------------------"
+
+                  # ADDED: -v flag for verbose output
+                  curl -v -X POST -H "Content-type: application/json" --data "$MESSAGE_JSON" "$SLACK_WEBHOOK_URL"
                 fi
                 exit $RC
               ' EXIT
 
               # Your original test logic runs here
-              case "$TF_LIVE_TEST_GROUPS" in
-                "essential") TF_LIVE_TEST_GROUPS="core,kafka" ;;
-                "all"|"") TF_LIVE_TEST_GROUPS="" ;;
-                *) TF_LIVE_TEST_GROUPS="$TF_LIVE_TEST_GROUPS" ;;
-              esac
-              
-              echo "Running live tests for: ${TF_LIVE_TEST_GROUPS:-all groups}"
               make live-test ${TF_LIVE_TEST_GROUPS:+TF_LIVE_TEST_GROUPS="$TF_LIVE_TEST_GROUPS"}
