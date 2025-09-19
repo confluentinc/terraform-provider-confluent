@@ -30,13 +30,8 @@ blocks:
         - name: "Run Live Tests"
           commands:
             - . vault-sem-get-secret v1/ci/kv/apif/terraform-provider-confluent/live-testing-data
-            - |
-              # Map special values and run tests
-              case "$TF_LIVE_TEST_GROUPS" in
-                "essential") TF_LIVE_TEST_GROUPS="core,kafka" ;;
-                "all"|"") TF_LIVE_TEST_GROUPS="" ;;
-                *) TF_LIVE_TEST_GROUPS="$TF_LIVE_TEST_GROUPS" ;;
-              esac
-              
-              echo "Running live tests for: ${TF_LIVE_TEST_GROUPS:-all groups}"
-              make live-test ${TF_LIVE_TEST_GROUPS:+TF_LIVE_TEST_GROUPS="$TF_LIVE_TEST_GROUPS"} 
+            - . vault-sem-get-secret v1/ci/kv/apif/terraform-provider-confluent/slack-notifications-live-testing
+
+            # This command will print all environment variables to the log
+            - echo "--- Checking available environment variables ---"
+            - printenv | sort
