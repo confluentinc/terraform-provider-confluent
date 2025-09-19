@@ -27,7 +27,6 @@ import (
 )
 
 func TestAccConnectorLive(t *testing.T) {
-	t.Skip()
 	// Enable parallel execution for I/O bound operations
 	t.Parallel()
 
@@ -102,7 +101,6 @@ func TestAccConnectorLive(t *testing.T) {
 }
 
 func TestAccConnectorUpdateLive(t *testing.T) {
-	t.Skip()
 	// Enable parallel execution for I/O bound operations
 	t.Parallel()
 
