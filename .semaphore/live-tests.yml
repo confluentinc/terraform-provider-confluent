@@ -33,7 +33,7 @@ blocks:
             - . vault-sem-get-secret v1/ci/kv/apif/terraform-provider-confluent/live-testing-data
             - . vault-sem-get-secret v1/ci/kv/apif/terraform-provider-confluent/slack-notifications-live-testing
 
-            # 2. The main script with the corrected JSON payload
+            # 2. The main script with a minimal error trap
             - |
               set -e
 
@@ -42,14 +42,8 @@ blocks:
                 if [ $RC -ne 0 ]; then
                   echo "Live tests failed, sending Slack notification..."
               
-                  # Construct the job URL from the environment variable
-                  JOB_URL="https://semaphore.ci.confluent.io/jobs/$SEMAPHORE_JOB_ID"
-
-                  # CORRECTED: Create the JSON payload to match your Slack Workflow variable
-                  MESSAGE_JSON=$(printf ''{"PIPELINE_URL": "%s"}'' "$JOB_URL")
-
-                  # Send the notification
-                  curl -X POST -H "Content-type: application/json" --data "$MESSAGE_JSON" "$SLACK_WEBHOOK_URL"
+                  # Send a simple, empty JSON payload to the webhook
+                  curl -X POST -H "Content-type: application/json" --data "{}" "$SLACK_WEBHOOK_URL"
                 fi
                 exit $RC
               ' EXIT
