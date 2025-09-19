@@ -42,7 +42,7 @@ blocks:
               
               echo "Running live tests for: ${TF_LIVE_TEST_GROUPS:-all groups}"
               make live-test ${TF_LIVE_TEST_GROUPS:+TF_LIVE_TEST_GROUPS="$TF_LIVE_TEST_GROUPS"}
-  - notifications:
-    - name: "Alert Slack on Failure"
-      rule: "result = 'failed'"
-      endpoint: sem-context('slack-webhook-url')
+    notifications:
+      - name: "Alert Slack on Failure"
+        rule: "result = 'failed'"
+        endpoint: sem-context('slack-webhook-url')
