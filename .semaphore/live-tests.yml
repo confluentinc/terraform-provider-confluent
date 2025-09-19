@@ -30,6 +30,8 @@ blocks:
         - name: "Run Live Tests"
           commands:
             - . vault-sem-get-secret v1/ci/kv/apif/terraform-provider-confluent/live-testing-data
+            - . vault-sem-get-secret v1/ci/kv/apif/terraform-provider-confluent/slack-notifications-live-testing
+            - sem-context put slack-webhook-url=$SLACK_WEBHOOK_URL
             - |
               # Map special values and run tests
               case "$TF_LIVE_TEST_GROUPS" in
@@ -39,4 +41,8 @@ blocks:
               esac
               
               echo "Running live tests for: ${TF_LIVE_TEST_GROUPS:-all groups}"
-              make live-test ${TF_LIVE_TEST_GROUPS:+TF_LIVE_TEST_GROUPS="$TF_LIVE_TEST_GROUPS"} 
+              make live-test ${TF_LIVE_TEST_GROUPS:+TF_LIVE_TEST_GROUPS="$TF_LIVE_TEST_GROUPS"}
+    notifications:
+      - name: "Alert Slack on Failure"
+        rule: "result = 'failed'"
+        endpoint: sem-context('slack-webhook-url')
