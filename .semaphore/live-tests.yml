@@ -29,9 +29,33 @@ blocks:
       jobs:
         - name: "Run Live Tests"
           commands:
+            # 1. Fetch secrets
             - . vault-sem-get-secret v1/ci/kv/apif/terraform-provider-confluent/live-testing-data
+            - . vault-sem-get-secret v1/ci/kv/apif/terraform-provider-confluent/slack-notifications-live-testing
+
+            # 2. The main script with an error trap
             - |
-              # Map special values and run tests
+              set -e
+
+              # This trap defines what happens when the script exits
+              trap '
+                RC=$?
+                if [ $RC -ne 0 ]; then
+                  echo "Live tests failed, sending Slack notification..."
+              
+                  # Construct the job URL from the environment variable
+                  JOB_URL="https://semaphore.ci.confluent.io/jobs/$SEMAPHORE_JOB_ID"
+
+                  # CORRECTED: Simplified printf with proper quoting
+                  MESSAGE_JSON=$(printf ''{"text": "🚨 Live Integration Tests failed. View job logs: %s"}'' "$JOB_URL")
+
+                  # Send the notification
+                  curl -X POST -H "Content-type: application/json" --data "$MESSAGE_JSON" "$SLACK_WEBHOOK_URL"
+                fi
+                exit $RC
+              ' EXIT
+
+              # Your original test logic runs here
               case "$TF_LIVE_TEST_GROUPS" in
                 "essential") TF_LIVE_TEST_GROUPS="core,kafka" ;;
                 "all"|"") TF_LIVE_TEST_GROUPS="" ;;
@@ -39,4 +63,4 @@ blocks:
               esac
               
               echo "Running live tests for: ${TF_LIVE_TEST_GROUPS:-all groups}"
-              make live-test ${TF_LIVE_TEST_GROUPS:+TF_LIVE_TEST_GROUPS="$TF_LIVE_TEST_GROUPS"} 
+              make live-test ${TF_LIVE_TEST_GROUPS:+TF_LIVE_TEST_GROUPS="$TF_LIVE_TEST_GROUPS"}
