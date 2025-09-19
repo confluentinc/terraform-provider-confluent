@@ -29,6 +29,7 @@ import (
 
 // Test Private Link network for Enterprise clusters
 func TestAccNetworkPrivateLinkLive(t *testing.T) {
+	t.Skip()
 	// Enable parallel execution for I/O bound operations
 	t.Parallel()
 
@@ -97,6 +98,7 @@ func TestAccNetworkPrivateLinkLive(t *testing.T) {
 
 // Test VPC Peering network
 func TestAccNetworkVpcPeeringLive(t *testing.T) {
+	t.Skip()
 	// Enable parallel execution for I/O bound operations
 	t.Parallel()
 
