@@ -29,9 +29,56 @@ blocks:
       jobs:
         - name: "Run Live Tests"
           commands:
+            # 1. Fetch secrets first to make the webhook URL available
             - . vault-sem-get-secret v1/ci/kv/apif/terraform-provider-confluent/live-testing-data
+            - . vault-sem-get-secret v1/ci/kv/apif/terraform-provider-confluent/slack-notifications-live-testing
+
+            # 2. The main script with an error trap for notifications
             - |
-              # Map special values and run tests
+              set -e
+
+              # This trap defines what happens when the script exits
+              trap '
+                RC=$?
+                if [ $RC -ne 0 ]; then
+                  echo "Live tests failed, sending Slack notification..."
+              
+                  # Construct a message for Slack
+                  MESSAGE_JSON=$(printf "{
+                    \"text\": \"🚨 Live Integration Tests Failed for *%s*\",
+                    \"blocks\": [
+                      {
+                        \"type\": \"header\",
+                        \"text\": { \"type\": \"plain_text\", \"text\": \"🚨 Live Integration Tests Failed\" }
+                      },
+                      {
+                        \"type\": \"section\",
+                        \"fields\": [
+                          { \"type\": \"mrkdwn\", \"text\": \"*Project:*\n`%s`\" },
+                          { \"type\": \"mrkdwn\", \"text\": \"*Triggered by:*\n%s\" }
+                        ]
+                      },
+                      {
+                        \"type\": \"actions\",
+                        \"elements\": [
+                          {
+                            \"type\": \"button\",
+                            \"text\": { \"type\": \"plain_text\", \"text\": \"View Failed Job\" },
+                            \"style\": \"danger\",
+                            \"url\": \"%s\"
+                          }
+                        ]
+                      }
+                    ]
+                  }" "$SEMAPHORE_PROJECT_NAME" "$SEMAPHORE_PROJECT_NAME" "$SEMAPHORE_WORKFLOW_TRIGGERED_BY" "$SEMAPHORE_JOB_URL")
+
+                  # Send the notification
+                  curl -X POST -H "Content-type: application/json" --data "$MESSAGE_JSON" "$SLACK_WEBHOOK_URL"
+                fi
+                exit $RC
+              ' EXIT
+
+              # Your original test logic runs here, after the trap is set
               case "$TF_LIVE_TEST_GROUPS" in
                 "essential") TF_LIVE_TEST_GROUPS="core,kafka" ;;
                 "all"|"") TF_LIVE_TEST_GROUPS="" ;;
@@ -39,4 +86,4 @@ blocks:
               esac
               
               echo "Running live tests for: ${TF_LIVE_TEST_GROUPS:-all groups}"
-              make live-test ${TF_LIVE_TEST_GROUPS:+TF_LIVE_TEST_GROUPS="$TF_LIVE_TEST_GROUPS"} 
+              make live-test ${TF_LIVE_TEST_GROUPS:+TF_LIVE_TEST_GROUPS="$TF_LIVE_TEST_GROUPS"}
