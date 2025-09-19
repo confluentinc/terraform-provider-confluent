@@ -42,7 +42,48 @@ blocks:
               
               echo "Running live tests for: ${TF_LIVE_TEST_GROUPS:-all groups}"
               make live-test ${TF_LIVE_TEST_GROUPS:+TF_LIVE_TEST_GROUPS="$TF_LIVE_TEST_GROUPS"}
-notifications:
-  - name: "Alert Slack on Failure"
-    rule: "result = 'failed'"
-    endpoint: sem-context('slack-webhook-url')
+after_task:
+  always:
+    commands:
+      # This script only executes if the pipeline has failed
+      - |
+        if [ "$SEMAPHORE_PIPELINE_RESULT" = "failed" ]; then
+          echo "Pipeline failed. Sending Slack notification..."
+
+          # Fetch the Slack webhook URL from Vault
+          # This script must export the URL into an env var, e.g., SLACK_WEBHOOK_URL
+          . vault-sem-get-secret v1/ci/kv/apif/terraform-provider-confluent/slack-notifications-live-testing
+        
+          # Construct a rich JSON payload for Slack
+          COMMIT_AUTHOR=$(git log -1 --pretty=format:'%an')
+          MESSAGE_JSON=$(printf '{
+            "text": "🚨 Pipeline Failed: *%s*",
+            "blocks": [
+              {
+                "type": "header",
+                "text": { "type": "plain_text", "text": "🚨 Pipeline Failed: %s" }
+              },
+              {
+                "type": "section",
+                "fields": [
+                  { "type": "mrkdwn", "text": "*Project:*\n`%s`" },
+                  { "type": "mrkdwn", "text": "*Triggered by:*\n%s" }
+                ]
+              },
+              {
+                "type": "actions",
+                "elements": [
+                  {
+                    "type": "button",
+                    "text": { "type": "plain_text", "text": "View Failed Pipeline" },
+                    "style": "danger",
+                    "url": "%s"
+                  }
+                ]
+              }
+            ]
+          }' "$SEMAPHORE_PIPELINE_NAME" "$SEMAPHORE_PIPELINE_NAME" "$SEMAPHORE_PROJECT_NAME" "$SEMAPHORE_WORKFLOW_TRIGGERED_BY" "$SEMAPHORE_PIPELINE_URL")
+
+          # Send the notification using curl
+          curl -X POST -H 'Content-type: application/json' --data "$MESSAGE_JSON" $SLACK_WEBHOOK_URL
+        fi
