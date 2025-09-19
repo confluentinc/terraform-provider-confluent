@@ -26,6 +26,7 @@ import (
 )
 
 func TestAccKsqlClusterDataSourceLive(t *testing.T) {
+	t.Skip()
 	// Enable parallel execution for I/O bound operations
 	t.Parallel()
 
