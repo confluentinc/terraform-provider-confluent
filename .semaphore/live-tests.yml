@@ -44,11 +44,12 @@ blocks:
               
                   JOB_URL="https://semaphore.ci.confluent.io/jobs/$SEMAPHORE_JOB_ID"
 
+                  # Heredoc to safely create the JSON string
                   MESSAGE_JSON=$(cat <<EOF
                   {"PIPELINE_URL": "$JOB_URL"}
                   EOF
                   )
-
+              
                   # Send the notification
                   curl -X POST -H "Content-type: application/json" --data "$MESSAGE_JSON" "$SLACK_WEBHOOK_URL"
                 fi
