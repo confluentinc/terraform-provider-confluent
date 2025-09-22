@@ -71,9 +71,9 @@ func TestAccConnectArtifactLive(t *testing.T) {
 				),
 			},
 			{
-				ResourceName:      fmt.Sprintf("confluent_connect_artifact.%s", artifactResourceLabel),
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            fmt.Sprintf("confluent_connect_artifact.%s", artifactResourceLabel),
+				ImportState:             true,
+				ImportStateVerify:       true,
 				ImportStateVerifyIgnore: []string{"artifact_file"},
 				ImportStateIdFunc: func(state *terraform.State) (string, error) {
 					resources := state.RootModule().Resources
@@ -138,4 +138,4 @@ func testAccCheckConnectArtifactLiveConfig(endpoint, artifactResourceLabel, arti
 		}
 	}
 	`, endpoint, apiKey, apiSecret, artifactResourceLabel, artifactDisplayName)
-} 
+}
