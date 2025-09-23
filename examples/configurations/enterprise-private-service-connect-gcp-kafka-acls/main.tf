@@ -132,6 +132,9 @@ resource "confluent_kafka_topic" "orders" {
     key    = confluent_api_key.app-manager-kafka-api-key.id
     secret = confluent_api_key.app-manager-kafka-api-key.secret
   }
+  depends_on = [
+    module.private-service-connect
+]
 }
 
 resource "confluent_service_account" "app-consumer" {
