@@ -1,3 +1,10 @@
+## 2.42.0 (September 22nd, 2025)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.41.0...v2.42.0)
+
+**Bug Fixes:**
+* Fixed a nil pointer dereference panic in the createDescriptiveError function.
+
 ## 2.41.0 (September 18th, 2025)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.40.0...v2.41.0)
