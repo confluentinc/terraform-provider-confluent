@@ -91,8 +91,8 @@ func TestAccDataSourceProviderIntegrationAuthorizationGcp(t *testing.T) {
 	// nolint:errcheck
 	defer wiremockClient.ResetAllScenarios()
 
-	// Mock the GET of a GCP provider integration v2 authorization
-	readResponse, _ := ioutil.ReadFile("../testdata/provider_integration_v2_authorization/update_gcp_provider_integration_v2_authorization.json")
+	// Mock the GET of a GCP provider integration authorization
+	readResponse, _ := ioutil.ReadFile("../testdata/provider_integration_authorization/update_gcp_provider_integration_authorization.json")
 	readStub := wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("/pim/v2/integrations/%s", gcpProviderIntegrationV2AuthId))).
 		InScenario(dataSourceProviderIntegrationAuthScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).

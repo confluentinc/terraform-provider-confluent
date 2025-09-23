@@ -27,25 +27,25 @@ import (
 )
 
 const (
-	providerIntegrationSetupScenarioName                = "confluent_provider_integration_setup Resource Lifecycle"
+	providerIntegrationSetupScenarioName             = "confluent_provider_integration_setup Resource Lifecycle"
 	scenarioStateProviderIntegrationV2HasBeenCreated = "The new provider_integration_setup has been just created"
 	scenarioStateProviderIntegrationV2HasBeenDeleted = "The provider_integration_setup has been deleted"
-	
+
 	// Azure constants
 	azureProviderIntegrationV2Id               = "cspi-abc123"
 	azureProviderIntegrationV2DisplayName      = "azure-test-integration"
 	azureProviderIntegrationV2EnvironmentId    = "env-00000"
 	azureProviderIntegrationV2MultiTenantAppId = "12345678-1234-1234-1234-123456789abc"
-	
+
 	// GCP constants
-	gcpProviderIntegrationV2Id                = "cspi-def456"
-	gcpProviderIntegrationV2DisplayName       = "gcp-test-integration"
-	gcpProviderIntegrationV2EnvironmentId     = "env-00000"
-	gcpProviderIntegrationV2ConfluentSA       = "cspi-def456@cflt-cspi-prod-1.iam.gserviceaccount.com"
-	gcpProviderIntegrationV2CustomerSA        = "test-sa@test-project.iam.gserviceaccount.com"
+	gcpProviderIntegrationV2Id            = "cspi-def456"
+	gcpProviderIntegrationV2DisplayName   = "gcp-test-integration"
+	gcpProviderIntegrationV2EnvironmentId = "env-00000"
+	gcpProviderIntegrationV2ConfluentSA   = "cspi-def456@cflt-cspi-prod-1.iam.gserviceaccount.com"
+	gcpProviderIntegrationV2CustomerSA    = "test-sa@test-project.iam.gserviceaccount.com"
 )
 
-func TestAccProviderIntegrationV2Azure(t *testing.T) {
+func TestAccProviderIntegrationSetupAzure(t *testing.T) {
 	ctx := context.Background()
 	wiremockContainer, err := setupWiremock(ctx)
 	if err != nil {
@@ -110,12 +110,12 @@ func TestAccProviderIntegrationV2Azure(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
-		CheckDestroy:      testAccCheckProviderIntegrationV2MockDestroy,
+		CheckDestroy:      testAccCheckProviderIntegrationSetupMockDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckProviderIntegrationV2AzureConfig(confluentCloudBaseUrl, mockServerUrl),
+				Config: testAccCheckProviderIntegrationSetupAzureConfig(confluentCloudBaseUrl, mockServerUrl),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckProviderIntegrationV2MockExists(fullAzureProviderIntegrationV2ResourceLabel),
+					testAccCheckProviderIntegrationSetupMockExists(fullAzureProviderIntegrationV2ResourceLabel),
 					resource.TestCheckResourceAttr(fullAzureProviderIntegrationV2ResourceLabel, paramId, azureProviderIntegrationV2Id),
 					resource.TestCheckResourceAttr(fullAzureProviderIntegrationV2ResourceLabel, paramDisplayName, azureProviderIntegrationV2DisplayName),
 					resource.TestCheckResourceAttr(fullAzureProviderIntegrationV2ResourceLabel, paramCloudProvider, "azure"),
@@ -138,7 +138,7 @@ func TestAccProviderIntegrationV2Azure(t *testing.T) {
 	})
 }
 
-func TestAccProviderIntegrationV2Gcp(t *testing.T) {
+func TestAccProviderIntegrationSetupGcp(t *testing.T) {
 	ctx := context.Background()
 	wiremockContainer, err := setupWiremock(ctx)
 	if err != nil {
@@ -203,12 +203,12 @@ func TestAccProviderIntegrationV2Gcp(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
-		CheckDestroy:      testAccCheckProviderIntegrationV2MockDestroy,
+		CheckDestroy:      testAccCheckProviderIntegrationSetupMockDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckProviderIntegrationV2GcpConfig(confluentCloudBaseUrl, mockServerUrl),
+				Config: testAccCheckProviderIntegrationSetupGcpConfig(confluentCloudBaseUrl, mockServerUrl),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckProviderIntegrationV2MockExists(fullGcpProviderIntegrationV2ResourceLabel),
+					testAccCheckProviderIntegrationSetupMockExists(fullGcpProviderIntegrationV2ResourceLabel),
 					resource.TestCheckResourceAttr(fullGcpProviderIntegrationV2ResourceLabel, paramId, gcpProviderIntegrationV2Id),
 					resource.TestCheckResourceAttr(fullGcpProviderIntegrationV2ResourceLabel, paramDisplayName, gcpProviderIntegrationV2DisplayName),
 					resource.TestCheckResourceAttr(fullGcpProviderIntegrationV2ResourceLabel, paramCloudProvider, "gcp"),
@@ -236,12 +236,12 @@ const (
 	gcpProviderIntegrationV2ResourceLabel   = "test_gcp"
 )
 
-func testAccCheckProviderIntegrationV2MockDestroy(s *terraform.State) error {
+func testAccCheckProviderIntegrationSetupMockDestroy(s *terraform.State) error {
 	// This is handled by wiremock scenarios
 	return nil
 }
 
-func testAccCheckProviderIntegrationV2MockExists(n string) resource.TestCheckFunc {
+func testAccCheckProviderIntegrationSetupMockExists(n string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -254,7 +254,7 @@ func testAccCheckProviderIntegrationV2MockExists(n string) resource.TestCheckFun
 	}
 }
 
-func testAccCheckProviderIntegrationV2AzureConfig(confluentCloudBaseUrl, mockServerUrl string) string {
+func testAccCheckProviderIntegrationSetupAzureConfig(confluentCloudBaseUrl, mockServerUrl string) string {
 	return fmt.Sprintf(`
 	provider "confluent" {
 		endpoint = "%s"
@@ -269,7 +269,7 @@ func testAccCheckProviderIntegrationV2AzureConfig(confluentCloudBaseUrl, mockSer
 	`, mockServerUrl, azureProviderIntegrationV2ResourceLabel, azureProviderIntegrationV2EnvironmentId, azureProviderIntegrationV2DisplayName)
 }
 
-func testAccCheckProviderIntegrationV2GcpConfig(confluentCloudBaseUrl, mockServerUrl string) string {
+func testAccCheckProviderIntegrationSetupGcpConfig(confluentCloudBaseUrl, mockServerUrl string) string {
 	return fmt.Sprintf(`
 	provider "confluent" {
 		endpoint = "%s"

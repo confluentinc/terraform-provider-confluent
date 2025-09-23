@@ -27,17 +27,17 @@ import (
 )
 
 const (
-	providerIntegrationAuthScenarioName                = "confluent_provider_integration_authorization Resource Lifecycle"
+	providerIntegrationAuthScenarioName                  = "confluent_provider_integration_authorization Resource Lifecycle"
 	scenarioStateProviderIntegrationV2AuthHasBeenCreated = "The new provider_integration_authorization has been just created"
 	scenarioStateProviderIntegrationV2AuthHasBeenDeleted = "The provider_integration_authorization has been deleted"
-	
+
 	// Azure authorization constants
-	azureProviderIntegrationV2AuthId           = "cspi-abc123"
-	azureProviderIntegrationV2AuthTenantId     = "12345678-1234-1234-1234-123456789abc"
+	azureProviderIntegrationV2AuthId            = "cspi-abc123"
+	azureProviderIntegrationV2AuthTenantId      = "12345678-1234-1234-1234-123456789abc"
 	azureProviderIntegrationV2AuthEnvironmentId = "env-00000"
-	
+
 	// GCP authorization constants
-	gcpProviderIntegrationV2AuthId           = "cspi-def456"
+	gcpProviderIntegrationV2AuthId            = "cspi-def456"
 	gcpProviderIntegrationV2AuthEnvironmentId = "env-00000"
 )
 
@@ -108,12 +108,12 @@ func TestAccProviderIntegrationAuthorizationAzure(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
-		CheckDestroy:      testAccCheckProviderIntegrationV2AuthMockDestroy,
+		CheckDestroy:      testAccCheckProviderIntegrationAuthMockDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckProviderIntegrationAuthorizationAzureConfig(confluentCloudBaseUrl, mockServerUrl),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckProviderIntegrationV2AuthMockExists(fullAzureProviderIntegrationV2AuthResourceLabel),
+					testAccCheckProviderIntegrationAuthMockExists(fullAzureProviderIntegrationV2AuthResourceLabel),
 					resource.TestCheckResourceAttr(fullAzureProviderIntegrationV2AuthResourceLabel, paramId, azureProviderIntegrationV2AuthId),
 					resource.TestCheckResourceAttr(fullAzureProviderIntegrationV2AuthResourceLabel, paramProviderIntegrationIdAuth, azureProviderIntegrationV2AuthId),
 					resource.TestCheckResourceAttr(fullAzureProviderIntegrationV2AuthResourceLabel, fmt.Sprintf("azure.0.%s", paramAzureCustomerTenantId), azureProviderIntegrationV2AuthTenantId),
@@ -203,12 +203,12 @@ func TestAccProviderIntegrationAuthorizationGcp(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
-		CheckDestroy:      testAccCheckProviderIntegrationV2AuthMockDestroy,
+		CheckDestroy:      testAccCheckProviderIntegrationAuthMockDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckProviderIntegrationAuthorizationGcpConfig(confluentCloudBaseUrl, mockServerUrl),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckProviderIntegrationV2AuthMockExists(fullGcpProviderIntegrationV2AuthResourceLabel),
+					testAccCheckProviderIntegrationAuthMockExists(fullGcpProviderIntegrationV2AuthResourceLabel),
 					resource.TestCheckResourceAttr(fullGcpProviderIntegrationV2AuthResourceLabel, paramId, gcpProviderIntegrationV2AuthId),
 					resource.TestCheckResourceAttr(fullGcpProviderIntegrationV2AuthResourceLabel, paramProviderIntegrationIdAuth, gcpProviderIntegrationV2AuthId),
 					resource.TestCheckResourceAttr(fullGcpProviderIntegrationV2AuthResourceLabel, fmt.Sprintf("gcp.0.%s", paramGcpCustomerServiceAccount), gcpProviderIntegrationV2CustomerSA),
@@ -236,12 +236,12 @@ const (
 	gcpProviderIntegrationV2AuthResourceLabel   = "test_gcp_auth"
 )
 
-func testAccCheckProviderIntegrationV2AuthMockDestroy(s *terraform.State) error {
+func testAccCheckProviderIntegrationAuthMockDestroy(s *terraform.State) error {
 	// Authorization resource delete only removes from state, doesn't call API
 	return nil
 }
 
-func testAccCheckProviderIntegrationV2AuthMockExists(n string) resource.TestCheckFunc {
+func testAccCheckProviderIntegrationAuthMockExists(n string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
