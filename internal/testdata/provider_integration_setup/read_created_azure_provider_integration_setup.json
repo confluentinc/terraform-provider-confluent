@@ -1,0 +1,19 @@
+{
+  "api_version": "pim/v2",
+  "kind": "Integration",
+  "id": "cspi-abc123",
+  "display_name": "azure-test-integration",
+  "provider": "azure",
+  "status": "CREATED",
+  "config": {
+    "customer_azure_tenant_id": "12345678-1234-1234-1234-123456789abc",
+    "confluent_multi_tenant_app_id": "87654321-4321-4321-4321-abcdef123456",
+    "kind": "AzureIntegrationConfig"
+  },
+  "usages": [],
+  "environment": {
+    "id": "env-00000",
+    "related": "https://api.confluent.cloud/org/v2/environments/env-00000",
+    "resource_name": "crn://confluent.cloud/organization=9bb441c4-edef-46ac-8a41-c49e44a3fd9a/environment=env-00000"
+  }
+}
