@@ -46,7 +46,7 @@ func TestAccDataSourceProviderIntegrationAuthorizationAzure(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	// Mock the GET of an Azure provider integration v2 authorization
-	readResponse, _ := ioutil.ReadFile("../testdata/provider_integration_v2_authorization/update_azure_provider_integration_v2_authorization.json")
+	readResponse, _ := ioutil.ReadFile("../testdata/provider_integration_authorization/update_azure_provider_integration_authorization.json")
 	readStub := wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("/pim/v2/integrations/%s", azureProviderIntegrationV2AuthId))).
 		InScenario(dataSourceProviderIntegrationAuthScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
