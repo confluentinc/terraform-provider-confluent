@@ -25,7 +25,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-func TestAccProviderIntegrationSetupDataSourceLive(t *testing.T) {
+func TestAccProviderIntegrationSetupAzureDataSourceLive(t *testing.T) {
 	// Enable parallel execution for I/O bound operations
 	t.Parallel()
 
@@ -45,7 +45,7 @@ func TestAccProviderIntegrationSetupDataSourceLive(t *testing.T) {
 	if apiKey == "" || apiSecret == "" || azureTenantId == "" {
 		t.Fatal("CONFLUENT_CLOUD_API_KEY, CONFLUENT_CLOUD_API_SECRET, and AZURE_TENANT_ID environment variables must be set for live tests")
 	}
-	
+
 	// Use production endpoint if not specified
 	if endpoint == "" {
 		endpoint = "https://api.confluent.cloud"
@@ -74,14 +74,14 @@ func TestAccProviderIntegrationSetupDataSourceLive(t *testing.T) {
 					// Verify resources exist
 					testAccCheckProviderIntegrationSetupExists(fullIntegrationResourceLabel),
 					testAccCheckProviderIntegrationSetupAuthorizationExists(fullAuthResourceLabel),
-					
+
 					// Test integration data source
 					resource.TestCheckResourceAttrPair(fullIntegrationDataSourceLabel, paramId, fullIntegrationResourceLabel, paramId),
 					resource.TestCheckResourceAttrPair(fullIntegrationDataSourceLabel, paramDisplayName, fullIntegrationResourceLabel, paramDisplayName),
 					resource.TestCheckResourceAttrPair(fullIntegrationDataSourceLabel, paramCloudProvider, fullIntegrationResourceLabel, paramCloudProvider),
 					resource.TestCheckResourceAttrPair(fullIntegrationDataSourceLabel, paramStatus, fullIntegrationResourceLabel, paramStatus),
 					resource.TestCheckResourceAttrPair(fullIntegrationDataSourceLabel, fmt.Sprintf("%s.0.%s", paramEnvironment, paramId), fullIntegrationResourceLabel, fmt.Sprintf("%s.0.%s", paramEnvironment, paramId)),
-					
+
 					// Test authorization data source
 					resource.TestCheckResourceAttrPair(fullAuthDataSourceLabel, paramId, fullAuthResourceLabel, paramId),
 					resource.TestCheckResourceAttrPair(fullAuthDataSourceLabel, paramProviderIntegrationIdAuth, fullAuthResourceLabel, paramProviderIntegrationIdAuth),
@@ -104,19 +104,19 @@ func TestAccProviderIntegrationSetupGcpDataSourceLive(t *testing.T) {
 
 	// Generate unique names for test resources to avoid conflicts
 	randomSuffix := rand.Intn(100000)
-	
+
 	// Use environment variables for credentials, hardcode environment
 	apiKey := os.Getenv("CONFLUENT_CLOUD_API_KEY")
 	apiSecret := os.Getenv("CONFLUENT_CLOUD_API_SECRET")
 	endpoint := os.Getenv("CONFLUENT_CLOUD_ENDPOINT")
-	environmentId := "env-zyg27z" // Hardcoded test environment
+	environmentId := "env-zyg27z"                                                                            // Hardcoded test environment
 	gcpServiceAccount := fmt.Sprintf("test-sa-%d@test-project-123456.iam.gserviceaccount.com", randomSuffix) // Unique test service account
 
 	// Validate required environment variables are present
 	if apiKey == "" || apiSecret == "" {
 		t.Fatal("CONFLUENT_CLOUD_API_KEY and CONFLUENT_CLOUD_API_SECRET environment variables must be set for live tests")
 	}
-	
+
 	// Use production endpoint if not specified
 	if endpoint == "" {
 		endpoint = "https://api.confluent.cloud"
@@ -143,14 +143,14 @@ func TestAccProviderIntegrationSetupGcpDataSourceLive(t *testing.T) {
 					// Verify resources exist
 					testAccCheckProviderIntegrationSetupExists(fullIntegrationResourceLabel),
 					testAccCheckProviderIntegrationSetupAuthorizationExists(fullAuthResourceLabel),
-					
+
 					// Test integration data source
 					resource.TestCheckResourceAttrPair(fullIntegrationDataSourceLabel, paramId, fullIntegrationResourceLabel, paramId),
 					resource.TestCheckResourceAttrPair(fullIntegrationDataSourceLabel, paramDisplayName, fullIntegrationResourceLabel, paramDisplayName),
 					resource.TestCheckResourceAttrPair(fullIntegrationDataSourceLabel, paramCloudProvider, fullIntegrationResourceLabel, paramCloudProvider),
 					resource.TestCheckResourceAttrPair(fullIntegrationDataSourceLabel, paramStatus, fullIntegrationResourceLabel, paramStatus),
 					resource.TestCheckResourceAttrPair(fullIntegrationDataSourceLabel, fmt.Sprintf("%s.0.%s", paramEnvironment, paramId), fullIntegrationResourceLabel, fmt.Sprintf("%s.0.%s", paramEnvironment, paramId)),
-					
+
 					// Test authorization data source
 					resource.TestCheckResourceAttrPair(fullAuthDataSourceLabel, paramId, fullAuthResourceLabel, paramId),
 					resource.TestCheckResourceAttrPair(fullAuthDataSourceLabel, paramProviderIntegrationIdAuth, fullAuthResourceLabel, paramProviderIntegrationIdAuth),
