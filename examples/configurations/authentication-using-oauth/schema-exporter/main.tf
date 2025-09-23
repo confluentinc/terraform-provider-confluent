@@ -1,15 +1,11 @@
 terraform {
   required_providers {
     confluent = {
-      source  = "confluentinc/confluent"
-      version = "2.40.0"
+      # source  = "confluentinc/confluent"
+      # version = "2.41.0"
+      source = "terraform.confluent.io/confluentinc/confluent"
     }
   }
-}
-
-locals {
-  cloud  = "AWS"
-  region = "us-east-2"
 }
 
 provider "confluent" {
@@ -18,78 +14,119 @@ provider "confluent" {
     oauth_external_client_id  = var.oauth_external_client_id
     oauth_external_client_secret = var.oauth_external_client_secret
     oauth_identity_pool_id = var.oauth_identity_pool_id
+    oauth_external_token_scope = "api://c8b8b903-0114-424b-8157-b832e7103367/.default"
   }
 }
 
-data "confluent_organization" "main" {}
-
-resource "confluent_environment" "staging-oauth" {
-  display_name = "Staging_OAuth"
+resource "confluent_environment" "source" {
+  display_name = "Source"
 
   stream_governance {
     package = "ESSENTIALS"
   }
 }
 
-# Update the config to use a cloud provider and region of your choice.
-# https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_cluster
-resource "confluent_kafka_cluster" "standard" {
-  display_name = "standard_cluster"
-  availability = "SINGLE_ZONE"
-  cloud        = local.cloud
-  region       = local.region
-  standard {}
-  environment {
-    id = confluent_environment.staging-oauth.id
+resource "confluent_environment" "destination" {
+  display_name = "Destination"
+
+  stream_governance {
+    package = "ESSENTIALS"
   }
 }
 
-data "confluent_schema_registry_cluster" "main" {
+resource "confluent_kafka_cluster" "source" {
+  display_name = "inventory"
+  availability = "SINGLE_ZONE"
+  cloud        = "AWS"
+  region       = "us-east-2"
+  basic {}
   environment {
-    id = confluent_environment.staging-oauth.id
+    id = confluent_environment.source.id
+  }
+}
+
+resource "confluent_kafka_cluster" "destination" {
+  display_name = "inventory"
+  availability = "SINGLE_ZONE"
+  cloud        = "AWS"
+  region       = "us-east-1"
+  basic {}
+  environment {
+    id = confluent_environment.destination.id
+  }
+}
+
+data "confluent_schema_registry_cluster" "source" {
+  environment {
+    id = confluent_environment.source.id
   }
 
   depends_on = [
-    confluent_kafka_cluster.standard
+    confluent_kafka_cluster.source
   ]
 }
 
-resource "confluent_kafka_topic" "order" {
-  kafka_cluster {
-    id = confluent_kafka_cluster.standard.id
+data "confluent_schema_registry_cluster" "destination" {
+  environment {
+    id = confluent_environment.destination.id
   }
-  topic_name    = "order"
-  rest_endpoint = confluent_kafka_cluster.standard.rest_endpoint
+
+  depends_on = [
+    confluent_kafka_cluster.destination
+  ]
 }
 
-data "confluent_kafka_topic" "order_data" {
+resource "confluent_kafka_topic" "purchase_source" {
   kafka_cluster {
-    id = confluent_kafka_cluster.standard.id
+    id = confluent_kafka_cluster.source.id
   }
-  topic_name    = confluent_kafka_topic.order.topic_name
-  rest_endpoint = confluent_kafka_cluster.standard.rest_endpoint
+  topic_name    = "purchase_source"
+  rest_endpoint = confluent_kafka_cluster.source.rest_endpoint
+
+  depends_on = [
+    confluent_kafka_cluster.source
+  ]
 }
 
-resource "confluent_schema" "order" {
+resource "confluent_kafka_topic" "purchase_destination" {
+  kafka_cluster {
+    id = confluent_kafka_cluster.destination.id
+  }
+  topic_name    = "purchase_destination"
+  rest_endpoint = confluent_kafka_cluster.destination.rest_endpoint
+
+  depends_on = [
+    confluent_kafka_cluster.destination
+  ]
+}
+
+resource "confluent_schema" "purchase" {
   schema_registry_cluster {
-    id = data.confluent_schema_registry_cluster.main.id
+    id = data.confluent_schema_registry_cluster.source.id
   }
-  rest_endpoint = data.confluent_schema_registry_cluster.main.rest_endpoint
+  rest_endpoint = data.confluent_schema_registry_cluster.source.rest_endpoint
   # https://developer.confluent.io/learn-kafka/schema-registry/schema-subjects/#topicnamestrategy
-  subject_name = "${confluent_kafka_topic.order.topic_name}-value"
-  format       = "AVRO"
-  schema       = file("./schemas/avro/order.avsc")
+  subject_name = "${confluent_kafka_topic.purchase_source.topic_name}-value"
+  format       = "PROTOBUF"
+  schema       = file("./schemas/proto/purchase.proto")
 }
 
-resource "confluent_schema_exporter" "order_exporter" {
+resource "confluent_schema_exporter" "main" {
   schema_registry_cluster {
-    id = data.confluent_schema_registry_cluster.main.id
+    id = data.confluent_schema_registry_cluster.source.id
   }
-  rest_endpoint = data.confluent_schema_registry_cluster.main.rest_endpoint
-  schema_id     = confluent_schema.order.id
-  kafka_topic   = confluent_kafka_topic.order.topic_name
-  # Optional: If not specified, the exporter will use the Kafka cluster associated with the Schema Registry cluster.
-  kafka_cluster {
-    id = confluent_kafka_cluster.standard.id
+
+  name         = "my_exporter"
+  rest_endpoint = data.confluent_schema_registry_cluster.source.rest_endpoint
+
+  context      = "schema_context"
+  context_type = "CUSTOM"
+  subjects     = [confluent_schema.purchase.subject_name]
+
+  destination_schema_registry_cluster {
+    id = data.confluent_schema_registry_cluster.destination.id
+    rest_endpoint = data.confluent_schema_registry_cluster.destination.rest_endpoint
   }
+
+  reset_on_update = true
 }

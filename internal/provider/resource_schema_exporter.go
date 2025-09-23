@@ -188,10 +188,14 @@ func constructDestinationSRClusterRequest(d *schema.ResourceData, meta interface
 		configs[bearerAuthClientId] = client.oauthToken.ClientId
 		configs[bearerAuthClientSecret] = client.oauthToken.ClientSecret
 		configs[bearerAuthIssuerEndpointUrl] = client.oauthToken.TokenUrl
-		configs[bearerAuthCredentialsSource] = "OAUTHBEARER"
-		configs[bearerAuthScope] = client.oauthToken.Scope
+		configs[bearerAuthCredentialsSource] = configOAuthBearer
+		// The Scope field is optional in the API, setting arbitrary values will cause exception from service side
+		// Check with SR team if the scope field is ok with the scope for Azure AD
 		configs[bearerAuthIdentityPoolId] = client.oauthToken.IdentityPoolId
-		configs[bearerAuthLogicalCluster] = extractStringValueFromBlock(d, paramDestinationSchemaRegistryCluster, paramRestEndpoint)
+		configs[bearerAuthLogicalCluster] = extractStringValueFromBlock(d, paramDestinationSchemaRegistryCluster, paramId)
+		if client.oauthToken.Scope != "" {
+			configs[bearerAuthScope] = client.oauthToken.Scope
+		}
 		return configs
 	}
 
