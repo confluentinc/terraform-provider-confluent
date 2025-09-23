@@ -13,7 +13,7 @@ provider "confluent" {
 }
 
 # Step 1: Create the provider integration (DRAFT status)
-resource "confluent_provider_integration_v2" "gcp" {
+resource "confluent_provider_integration_setup" "gcp" {
   environment {
     id = var.environment_id
   }
@@ -23,8 +23,8 @@ resource "confluent_provider_integration_v2" "gcp" {
 }
 
 # Step 2: Configure and validate GCP integration
-resource "confluent_provider_integration_v2_authorization" "gcp" {
-  provider_integration_id = confluent_provider_integration_v2.gcp.id
+resource "confluent_provider_integration_authorization" "gcp" {
+  provider_integration_id = confluent_provider_integration_setup.gcp.id
   
   environment {
     id = var.environment_id

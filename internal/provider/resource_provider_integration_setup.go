@@ -34,7 +34,7 @@ const (
 )
 
 // providerIntegrationSetupResource defines the setup/creation resource for PIM v2 integrations.
-// This resource only handles POST (creates DRAFT integration). Use confluent_provider_integration_setup_authorization for config/validation.
+// This resource only handles POST (creates DRAFT integration). Use confluent_provider_integration_authorization for config/validation.
 func providerIntegrationSetupResource() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: providerIntegrationSetupCreate,

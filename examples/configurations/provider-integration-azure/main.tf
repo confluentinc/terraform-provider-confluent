@@ -13,7 +13,7 @@ provider "confluent" {
 }
 
 # Step 1: Create the provider integration (DRAFT status)
-resource "confluent_provider_integration_v2" "azure" {
+resource "confluent_provider_integration_setup" "azure" {
   environment {
     id = var.environment_id
   }
@@ -23,8 +23,8 @@ resource "confluent_provider_integration_v2" "azure" {
 }
 
 # Step 2: Configure and validate Azure integration
-resource "confluent_provider_integration_v2_authorization" "azure" {
-  provider_integration_id = confluent_provider_integration_v2.azure.id
+resource "confluent_provider_integration_authorization" "azure" {
+  provider_integration_id = confluent_provider_integration_setup.azure.id
   
   environment {
     id = var.environment_id

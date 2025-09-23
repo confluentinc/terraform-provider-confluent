@@ -15,4 +15,4 @@
 
 3. See [Sample Project for Confluent Terraform Provider](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/guides/sample-project) that provides step-by-step instructions of running this example.
 
-4. See [Provider Integration Documentation](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_provider_integration_v2) for more details.
+4. See [Provider Integration Documentation](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_provider_integration_setup) for more details.

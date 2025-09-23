@@ -58,9 +58,9 @@ func TestAccProviderIntegrationSetupDataSourceLive(t *testing.T) {
 	authResourceLabel := "test_azure_auth"
 
 	fullIntegrationResourceLabel := fmt.Sprintf("confluent_provider_integration_setup.%s", integrationResourceLabel)
-	fullAuthResourceLabel := fmt.Sprintf("confluent_provider_integration_setup_authorization.%s", authResourceLabel)
+	fullAuthResourceLabel := fmt.Sprintf("confluent_provider_integration_authorization.%s", authResourceLabel)
 	fullIntegrationDataSourceLabel := fmt.Sprintf("data.confluent_provider_integration_setup.%s", integrationResourceLabel)
-	fullAuthDataSourceLabel := fmt.Sprintf("data.confluent_provider_integration_setup_authorization.%s", authResourceLabel)
+	fullAuthDataSourceLabel := fmt.Sprintf("data.confluent_provider_integration_authorization.%s", authResourceLabel)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheckLive(t) },
@@ -127,9 +127,9 @@ func TestAccProviderIntegrationSetupGcpDataSourceLive(t *testing.T) {
 	authResourceLabel := "test_gcp_auth"
 
 	fullIntegrationResourceLabel := fmt.Sprintf("confluent_provider_integration_setup.%s", integrationResourceLabel)
-	fullAuthResourceLabel := fmt.Sprintf("confluent_provider_integration_setup_authorization.%s", authResourceLabel)
+	fullAuthResourceLabel := fmt.Sprintf("confluent_provider_integration_authorization.%s", authResourceLabel)
 	fullIntegrationDataSourceLabel := fmt.Sprintf("data.confluent_provider_integration_setup.%s", integrationResourceLabel)
-	fullAuthDataSourceLabel := fmt.Sprintf("data.confluent_provider_integration_setup_authorization.%s", authResourceLabel)
+	fullAuthDataSourceLabel := fmt.Sprintf("data.confluent_provider_integration_authorization.%s", authResourceLabel)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheckLive(t) },
@@ -179,7 +179,7 @@ resource "confluent_provider_integration_setup" "%s" {
   cloud_provider = "azure"
 }
 
-resource "confluent_provider_integration_setup_authorization" "%s" {
+resource "confluent_provider_integration_authorization" "%s" {
   provider_integration_id = confluent_provider_integration_setup.%s.id
   
   environment {
@@ -198,8 +198,8 @@ data "confluent_provider_integration_setup" "%s" {
   }
 }
 
-data "confluent_provider_integration_setup_authorization" "%s" {
-  id = confluent_provider_integration_setup_authorization.%s.id
+data "confluent_provider_integration_authorization" "%s" {
+  id = confluent_provider_integration_authorization.%s.id
   environment {
     id = "%s"
   }
@@ -224,7 +224,7 @@ resource "confluent_provider_integration_setup" "%s" {
   cloud_provider = "gcp"
 }
 
-resource "confluent_provider_integration_setup_authorization" "%s" {
+resource "confluent_provider_integration_authorization" "%s" {
   provider_integration_id = confluent_provider_integration_setup.%s.id
   
   environment {
@@ -243,8 +243,8 @@ data "confluent_provider_integration_setup" "%s" {
   }
 }
 
-data "confluent_provider_integration_setup_authorization" "%s" {
-  id = confluent_provider_integration_setup_authorization.%s.id
+data "confluent_provider_integration_authorization" "%s" {
+  id = confluent_provider_integration_authorization.%s.id
   environment {
     id = "%s"
   }
