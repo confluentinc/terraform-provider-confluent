@@ -1,0 +1,19 @@
+{
+  "api_version": "pim/v2",
+  "kind": "Integration",
+  "id": "cspi-def456",
+  "display_name": "gcp-test-integration",
+  "provider": "gcp",
+  "status": "CREATED",
+  "config": {
+    "customer_google_service_account": "test-sa@test-project.iam.gserviceaccount.com",
+    "google_service_account": "cspi-def456@cflt-cspi-prod-1.iam.gserviceaccount.com",
+    "kind": "GcpIntegrationConfig"
+  },
+  "usages": [],
+  "environment": {
+    "id": "env-00000",
+    "related": "https://api.confluent.cloud/org/v2/environments/env-00000",
+    "resource_name": "crn://confluent.cloud/organization=9bb441c4-edef-46ac-8a41-c49e44a3fd9a/environment=env-00000"
+  }
+}
