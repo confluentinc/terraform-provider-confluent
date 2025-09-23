@@ -494,8 +494,8 @@ func readTopicAndSetAttributes(ctx context.Context, d *schema.ResourceData, c *K
 }
 
 func kafkaTopicUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if d.HasChangesExcept(paramCredentials, paramConfigs, paramPartitionsCount) {
-		return diag.Errorf("error updating Kafka Topic %q: only %q, %q and %q blocks can be updated for Kafka Topic", d.Id(), paramCredentials, paramConfigs, paramPartitionsCount)
+	if d.HasChangesExcept(paramCredentials, paramConfigs, paramPartitionsCount, paramRestEndpoint) {
+		return diag.Errorf("error updating Kafka Topic %q: only %q, %q, %q and %q blocks can be updated for Kafka Topic", d.Id(), paramCredentials, paramConfigs, paramPartitionsCount, paramRestEndpoint)
 	}
 	if d.HasChange(paramPartitionsCount) {
 		oldPartitionsCount, newPartitionsCount := d.GetChange(paramPartitionsCount)
