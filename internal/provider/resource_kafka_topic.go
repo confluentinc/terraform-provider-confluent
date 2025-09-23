@@ -49,7 +49,7 @@ var editableTopicSettings = []string{"cleanup.policy", "delete.retention.ms", "m
 	"message.timestamp.difference.max.ms", "message.timestamp.before.max.ms", "message.timestamp.after.max.ms",
 	"message.timestamp.type", "min.compaction.lag.ms", "min.insync.replicas",
 	"retention.bytes", "retention.ms", "segment.bytes", "segment.ms", "confluent.key.schema.validation", "confluent.value.schema.validation",
-	"confluent.key.subject.name.strategy", "confluent.value.subject.name.strategy"}
+	"confluent.key.subject.name.strategy", "confluent.value.subject.name.strategy", "confluent.schema.validation.context.name"}
 
 // Read-only topic settings
 var ignoredTopicSettings = []string{
@@ -285,7 +285,7 @@ func kafkaTopicDelete(ctx context.Context, d *schema.ResourceData, meta interfac
 	}
 
 	if err := waitForKafkaTopicToBeDeleted(kafkaRestClient.apiContext(ctx), kafkaRestClient, topicName, meta.(*Client).isAcceptanceTestMode); err != nil {
-		return diag.Errorf("error waiting for Kafka Topic %q to be deleted: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error waiting for Kafka Topic %q to be deleted: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished deleting Kafka Topic %q", d.Id()), map[string]interface{}{kafkaTopicLoggingKey: d.Id()})
@@ -624,7 +624,7 @@ func kafkaTopicUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 		// In other words, remote topic setting values returned by Kafka REST API match topic setting values from updated TF configuration
 		actualTopicSettings, err := loadTopicConfigs(ctx, d, kafkaRestClient, topicName)
 		if err != nil {
-			return diag.FromErr(createDescriptiveError(err))
+			return diag.FromErr(createDescriptiveError(err, resp))
 		}
 
 		var updatedTopicSettings, outdatedTopicSettings []string

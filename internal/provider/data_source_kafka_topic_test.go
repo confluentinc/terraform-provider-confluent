@@ -87,7 +87,7 @@ func TestAccDataSourceTopic(t *testing.T) {
 					resource.TestCheckResourceAttr(fullTopicDataSourceLabel, "topic_name", topicName),
 					resource.TestCheckResourceAttr(fullTopicDataSourceLabel, "partitions_count", strconv.Itoa(partitionCount)),
 					resource.TestCheckResourceAttr(fullTopicDataSourceLabel, "rest_endpoint", mockTopicTestServerUrl),
-					resource.TestCheckResourceAttr(fullTopicDataSourceLabel, "config.%", "2"),
+					resource.TestCheckResourceAttr(fullTopicDataSourceLabel, "config.%", "3"),
 					resource.TestCheckResourceAttr(fullTopicDataSourceLabel, "config.max.message.bytes", "12345"),
 					resource.TestCheckResourceAttr(fullTopicDataSourceLabel, "config.retention.ms", "6789"),
 				),

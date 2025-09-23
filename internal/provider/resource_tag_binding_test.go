@@ -97,28 +97,30 @@ func TestAccTagBinding(t *testing.T) {
 		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
 		Steps: []resource.TestStep{
 			{
-				Config: tagBindingResourceConfig(mockServerUrl),
+				Config: tagBindingResourceConfig(mockServerUrl, testShouldDisableBefore),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(tagBindingLabel, "tag_name", "tag1"),
 					resource.TestCheckResourceAttr(tagBindingLabel, "entity_name", "lsrc-8wrx70:.:100001"),
 					resource.TestCheckResourceAttr(tagBindingLabel, "entity_type", "sr_schema"),
 					resource.TestCheckResourceAttr(tagBindingLabel, "id", "xxx/tag1/lsrc-8wrx70:.:100001/sr_schema"),
+					resource.TestCheckResourceAttr(tagBindingLabel, "disable_wait_for_ready", "false"),
 				),
 			},
 			{
-				Config: tagBindingResourceSchemaRegistryConfig(mockServerUrl),
+				Config: tagBindingResourceSchemaRegistryConfig(mockServerUrl, testShouldDisableAfter),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(tagBindingLabel, "tag_name", "tag1"),
 					resource.TestCheckResourceAttr(tagBindingLabel, "entity_name", "lsrc-8wrx70:.:100001"),
 					resource.TestCheckResourceAttr(tagBindingLabel, "entity_type", "sr_schema"),
 					resource.TestCheckResourceAttr(tagBindingLabel, "id", "xxx/tag1/lsrc-8wrx70:.:100001/sr_schema"),
+					resource.TestCheckResourceAttr(tagBindingLabel, "disable_wait_for_ready", "true"),
 				),
 			},
 		},
 	})
 }
 
-func tagBindingResourceConfig(mockServerUrl string) string {
+func tagBindingResourceConfig(mockServerUrl string, shouldDisable string) string {
 	return fmt.Sprintf(`
  	provider "confluent" {
  	  schema_registry_id = "xxx"
@@ -130,12 +132,13 @@ func tagBindingResourceConfig(mockServerUrl string) string {
       tag_name = "tag1"
 	  entity_name = "lsrc-8wrx70:.:100001"
 	  entity_type = "sr_schema"
+      disable_wait_for_ready = %s
 	}
 
- 	`, mockServerUrl)
+ 	`, mockServerUrl, shouldDisable)
 }
 
-func tagBindingResourceSchemaRegistryConfig(mockServerUrl string) string {
+func tagBindingResourceSchemaRegistryConfig(mockServerUrl string, shouldDisable string) string {
 	return fmt.Sprintf(`
  	provider "confluent" {
  	  schema_registry_id = "xxx"
@@ -147,7 +150,8 @@ func tagBindingResourceSchemaRegistryConfig(mockServerUrl string) string {
       tag_name = "tag1"
 	  entity_name = "lsrc-8wrx70:.:100001"
 	  entity_type = "sr_schema"
+      disable_wait_for_ready = %s
 	}
 
- 	`, mockServerUrl)
+ 	`, mockServerUrl, shouldDisable)
 }

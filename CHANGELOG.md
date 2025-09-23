@@ -1,3 +1,31 @@
+## 2.42.0 (September 22nd, 2025)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.41.0...v2.42.0)
+
+**Bug Fixes:**
+* Fixed a nil pointer dereference panic in the createDescriptiveError function.
+
+## 2.41.0 (September 18th, 2025)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.40.0...v2.41.0)
+
+**Bug Fixes:**
+* Fixed the timeout issue for the `confluent_tf_importer` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_tf_importer) when importing huge number of resources.
+* Fixed the Terraform drift issue ([#771](https://github.com/confluentinc/terraform-provider-confluent/issues/771)) for the topic setting `confluent.schema.validation.context.name` for `confluent_kafka_topic` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_topic).
+
+## 2.40.0 (September 11th, 2025)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.39.0...v2.40.0)
+
+**New features:**
+* Added `disable_wait_for_ready` attribute for the `confluent_tag_binding` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_tag_binding) to disable the readiness check.
+* Added `write_mode` read-only attribute for the `confluent_tableflow_topic` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_tableflow_topic) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_tableflow_topic).
+
+**Bug Fixes:**
+* Fixed the Terraform drift issue for the `identity_claim` attribute of the `confluent_identity_provider` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_identity_provider).
+* Updated the error handling mechanism to output detailed error messages.
+* Updated the logging mechanism to output an additional parameter, the request ID, for an improved debugging process.
+
 ## 2.39.0 (August 29th, 2025)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.38.0...v2.39.0)

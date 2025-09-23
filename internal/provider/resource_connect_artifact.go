@@ -108,14 +108,14 @@ func connectArtifactCreate(ctx context.Context, d *schema.ResourceData, meta int
 		Environment:   cam.PtrString(environmentId),
 		ContentFormat: cam.PtrString(contentFormat),
 	}
-	resp, _, err := getConnectPresignedUrl(c.camApiContext(ctx), c, request)
+	resp, res, err := getConnectPresignedUrl(c.camApiContext(ctx), c, request)
 	if err != nil {
-		return diag.Errorf("error uploading Connect Artifact: error fetching presigned upload URL %s", createDescriptiveError(err))
+		return diag.Errorf("error uploading Connect Artifact: error fetching presigned upload URL %s", createDescriptiveError(err, res))
 	}
 
 	// Step 2: Upload file to presigned URL
 	if err := uploadFile(resp.GetUploadUrl(), artifactFile, resp.GetUploadFormData(), resp.GetContentFormat(), cloud, false); err != nil {
-		return diag.Errorf("error uploading Connect Artifact: %s", createDescriptiveError(err))
+		return diag.Errorf("error uploading Connect Artifact: %s", createDescriptiveError(err, res))
 	}
 
 	// Step 3: Create artifact with upload ID
@@ -135,22 +135,22 @@ func connectArtifactCreate(ctx context.Context, d *schema.ResourceData, meta int
 		createArtifactRequest.SetDescription(description)
 	}
 
-	createdArtifact, _, err := executeConnectArtifactCreate(c.camApiContext(ctx), c, createArtifactRequest)
+	createdArtifact, res, err := executeConnectArtifactCreate(c.camApiContext(ctx), c, createArtifactRequest)
 	if err != nil {
-		return diag.Errorf("error creating Connect Artifact: %s", createDescriptiveError(err))
+		return diag.Errorf("error creating Connect Artifact: %s", createDescriptiveError(err, res))
 	}
 	d.SetId(createdArtifact.GetId())
 
 	createdArtifactJson, err := json.Marshal(createdArtifact)
 	if err != nil {
-		return diag.Errorf("error creating Connect Artifact: error marshaling %#v to json: %s", createdArtifactJson, createDescriptiveError(err))
+		return diag.Errorf("error creating Connect Artifact: error marshaling %#v to json: %s", createdArtifactJson, createDescriptiveError(err, res))
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating Connect Artifact %q: %s", d.Id(), createdArtifactJson), map[string]interface{}{connectArtifactLoggingKey: d.Id()})
 
 	// Wait for the Connect Artifact to be ready
 	if err := waitForConnectArtifactToProvision(ctx, c, environmentId, d.Id(), cloud); err != nil {
-		return diag.Errorf("error waiting for Connect Artifact to be ready: %s", createDescriptiveError(err))
+		return diag.Errorf("error waiting for Connect Artifact to be ready: %s", createDescriptiveError(err, res))
 	}
 
 	return connectArtifactRead(ctx, d, meta)
@@ -197,7 +197,7 @@ func readConnectArtifactAndSetAttributes(ctx context.Context, d *schema.Resource
 
 	artifact, resp, err := executeConnectArtifactRead(c.camApiContext(ctx), c, cloud, artifactId, envId)
 	if err != nil {
-		tflog.Warn(ctx, fmt.Sprintf("Error reading Connect Artifact %q: %s", d.Id(), createDescriptiveError(err)), map[string]interface{}{connectArtifactLoggingKey: d.Id()})
+		tflog.Warn(ctx, fmt.Sprintf("Error reading Connect Artifact %q: %s", d.Id(), createDescriptiveError(err, resp)), map[string]interface{}{connectArtifactLoggingKey: d.Id()})
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
 		if isResourceNotFound && !d.IsNewResource() {
 			tflog.Warn(ctx, fmt.Sprintf("Removing Connect Artifact %q in TF state because Connect Artifact could not be found on the server", d.Id()), map[string]interface{}{connectArtifactLoggingKey: d.Id()})
@@ -265,10 +265,10 @@ func connectArtifactDelete(ctx context.Context, d *schema.ResourceData, meta int
 	if environmentId == "" {
 		return diag.Errorf("error deleting Connect Artifact: environment is required and must be specified")
 	}
-	_, err := executeConnectArtifactDelete(c.camApiContext(ctx), c, d.Id(), d.Get(paramCloud).(string), environmentId)
+	resp, err := executeConnectArtifactDelete(c.camApiContext(ctx), c, d.Id(), d.Get(paramCloud).(string), environmentId)
 
 	if err != nil {
-		return diag.Errorf("error deleting connect artifact %q: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error deleting connect artifact %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished deleting Connect Artifact %q", d.Id()), map[string]interface{}{connectArtifactLoggingKey: d.Id()})
@@ -327,9 +327,9 @@ func waitForConnectArtifactToProvision(ctx context.Context, c *Client, environme
 
 func connectArtifactProvisionStatus(ctx context.Context, c *Client, environmentId, artifactId, cloud string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		artifact, _, err := executeConnectArtifactRead(ctx, c, cloud, artifactId, environmentId)
+		artifact, resp, err := executeConnectArtifactRead(ctx, c, cloud, artifactId, environmentId)
 		if err != nil {
-			tflog.Warn(ctx, fmt.Sprintf("Error reading Connect Artifact %q: %s", artifactId, createDescriptiveError(err)), map[string]interface{}{connectArtifactLoggingKey: artifactId})
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Connect Artifact %q: %s", artifactId, createDescriptiveError(err, resp)), map[string]interface{}{connectArtifactLoggingKey: artifactId})
 			return nil, stateUnknown, err
 		}
 

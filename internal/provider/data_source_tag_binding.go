@@ -18,6 +18,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	dc "github.com/confluentinc/ccloud-sdk-go-v2/data-catalog/v1"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -92,9 +93,9 @@ func tagBindingDataSourceRead(ctx context.Context, d *schema.ResourceData, meta 
 
 	catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 	request := catalogRestClient.apiClient.EntityV1Api.GetTags(catalogRestClient.dataCatalogApiContext(ctx), entityType, entityName)
-	tagBindings, _, err := request.Execute()
+	tagBindings, resp, err := request.Execute()
 	if err != nil {
-		return diag.Errorf("error reading Tag Binding %q: %s", tagBindingId, createDescriptiveError(err))
+		return diag.Errorf("error reading Tag Binding %q: %s", tagBindingId, createDescriptiveError(err, resp))
 	}
 	tagBinding, err := findTagBindingByTagName(tagBindings, tagName)
 	if err != nil {
@@ -107,9 +108,23 @@ func tagBindingDataSourceRead(ctx context.Context, d *schema.ResourceData, meta 
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Tag Binding %q: %s", tagBindingId, tagBindingJson), map[string]interface{}{tagBindingLoggingKey: tagBindingId})
 
-	if _, err := setTagBindingAttributes(d, clusterId, tagBinding); err != nil {
+	if _, err := setTagBindingDataSourceAttributes(d, clusterId, tagBinding); err != nil {
 		return diag.FromErr(createDescriptiveError(err))
 	}
 
 	return nil
+}
+
+func setTagBindingDataSourceAttributes(d *schema.ResourceData, clusterId string, tagBinding dc.TagResponse) (*schema.ResourceData, error) {
+	if err := d.Set(paramTagName, tagBinding.GetTypeName()); err != nil {
+		return nil, err
+	}
+	if err := d.Set(paramEntityName, tagBinding.GetEntityName()); err != nil {
+		return nil, err
+	}
+	if err := d.Set(paramEntityType, tagBinding.GetEntityType()); err != nil {
+		return nil, err
+	}
+	d.SetId(createTagBindingId(clusterId, tagBinding.GetTypeName(), tagBinding.GetEntityName(), tagBinding.GetEntityType()))
+	return d, nil
 }

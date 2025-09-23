@@ -176,9 +176,9 @@ func loadIPAddresses(ctx context.Context, c *Client, clouds, regions, services, 
 	allIPAddressesAreCollected := false
 	pageToken := ""
 	for !allIPAddressesAreCollected {
-		ipAddressesPageList, _, err := executeListIpAddresses(c.netIPApiContext(ctx), c, clouds, regions, services, addressTypes, pageToken)
+		ipAddressesPageList, resp, err := executeListIpAddresses(c.netIPApiContext(ctx), c, clouds, regions, services, addressTypes, pageToken)
 		if err != nil {
-			return nil, fmt.Errorf("error reading IP Addresses: %s", createDescriptiveError(err))
+			return nil, fmt.Errorf("error reading IP Addresses: %s", createDescriptiveError(err, resp))
 		}
 		ipAddresses = append(ipAddresses, ipAddressesPageList.GetData()...)
 
@@ -192,7 +192,7 @@ func loadIPAddresses(ctx context.Context, c *Client, clouds, regions, services, 
 			} else {
 				pageToken, err = extractPageToken(nextPageUrlString)
 				if err != nil {
-					return nil, fmt.Errorf("error reading IP Addresses: %s", createDescriptiveError(err))
+					return nil, fmt.Errorf("error reading IP Addresses: %s", createDescriptiveError(err, resp))
 				}
 			}
 		} else {

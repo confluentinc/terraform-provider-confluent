@@ -142,9 +142,9 @@ func customConnectorPluginVersionCreate(ctx context.Context, d *schema.ResourceD
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Custom Connector Plugin Version: %s", createCustomConnectorPluginVersionRequestJson))
 
-	createdCustomConnectorPluginVersion, _, err := executeCustomConnectorPluginVersionCreate(c.ccpmApiContext(ctx), c, createCustomConnectorVersionRequest, pluginId)
+	createdCustomConnectorPluginVersion, resp, err := executeCustomConnectorPluginVersionCreate(c.ccpmApiContext(ctx), c, createCustomConnectorVersionRequest, pluginId)
 	if err != nil {
-		return diag.Errorf("error creating Custom Connector Plugin Version %q: %s", createdCustomConnectorPluginVersion.GetId(), createDescriptiveError(err))
+		return diag.Errorf("error creating Custom Connector Plugin Version %q: %s", createdCustomConnectorPluginVersion.GetId(), createDescriptiveError(err, resp))
 	}
 	d.SetId(createdCustomConnectorPluginVersion.GetId())
 
@@ -163,9 +163,9 @@ func customConnectorPluginVersionDelete(ctx context.Context, d *schema.ResourceD
 	pluginId := d.Get(paramPluginId).(string)
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
 	req := c.ccpmClient.CustomConnectPluginVersionsCcpmV1Api.DeleteCcpmV1CustomConnectPluginVersion(c.ccpmApiContext(ctx), pluginId, d.Id()).Environment(environmentId)
-	_, err := req.Execute()
+	resp, err := req.Execute()
 	if err != nil {
-		return diag.Errorf("error deleting Custom Connector Plugin Version %q: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error deleting Custom Connector Plugin Version %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished deleting Custom Connector Plugin Version %q", d.Id()), map[string]interface{}{customConnectorPluginVersionLoggingKey: d.Id()})
@@ -190,7 +190,7 @@ func customConnectorPluginVersionRead(ctx context.Context, d *schema.ResourceDat
 func readCustomConnectorPluginVersionAndSetAttributes(ctx context.Context, d *schema.ResourceData, c *Client, filename, pluginId, envId, cloud string) ([]*schema.ResourceData, error) {
 	customConnectorPluginVersion, resp, err := executeCustomConnectorPluginVersionRead(c.ccpmApiContext(ctx), c, d.Id(), pluginId, envId)
 	if err != nil {
-		tflog.Warn(ctx, fmt.Sprintf("Error reading Custom Connector Plugin Version %q: %s", d.Id(), createDescriptiveError(err)), map[string]interface{}{customConnectorPluginVersionLoggingKey: d.Id()})
+		tflog.Warn(ctx, fmt.Sprintf("Error reading Custom Connector Plugin Version %q: %s", d.Id(), createDescriptiveError(err, resp)), map[string]interface{}{customConnectorPluginVersionLoggingKey: d.Id()})
 
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
 		if isResourceNotFound && !d.IsNewResource() {
