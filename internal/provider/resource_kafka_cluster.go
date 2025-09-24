@@ -61,7 +61,7 @@ const (
 
 	stateFailed        = "FAILED"
 	stateUnknown       = "UNKNOWN"
-	stateUnexpected    = "UNEXEPCTED"
+	stateUnexpected    = "UNEXPECTED"
 	stateProvisioned   = "PROVISIONED"
 	stateReady         = "READY"
 	stateRunning       = "RUNNING"
