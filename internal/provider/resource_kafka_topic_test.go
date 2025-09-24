@@ -68,20 +68,46 @@ var updateKafkaTopicConfigPath = fmt.Sprintf("/kafka/v3/clusters/%s/topics/%s/co
 func TestAccTopic(t *testing.T) {
 	ctx := context.Background()
 
-	wiremockContainer, err := setupWiremock(ctx)
+	initialContainer, err := setupWiremock(ctx)
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
+	defer initialContainer.Terminate(ctx)
 
-	mockTopicTestServerUrl := wiremockContainer.URI
+	updatedContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer updatedContainer.Terminate(ctx)
+
+	mockTopicTestServerInitialUrl := initialContainer.URI
+	mockTopicTestServerUpdatedUrl := updatedContainer.URI
 	confluentCloudBaseUrl := ""
-	wiremockClient := wiremock.NewClient(mockTopicTestServerUrl)
+	initialClient := wiremock.NewClient(mockTopicTestServerInitialUrl)
+	updatedClient := wiremock.NewClient(mockTopicTestServerUpdatedUrl)
 	// nolint:errcheck
-	defer wiremockClient.Reset()
+	defer initialClient.Reset()
+	defer updatedClient.Reset()
 
 	// nolint:errcheck
-	defer wiremockClient.ResetAllScenarios()
+	defer initialClient.ResetAllScenarios()
+	defer updatedClient.ResetAllScenarios()
+
+	// WireMock doesn't support scenario state transitions between different client instances.
+	// Each WireMock container maintains its own independent scenario state, so when we switch
+	// from initialClient (port 8080) to updatedClient (port 8081) between test steps,
+	// the scenario state doesn't carry over. This hack creates a dummy endpoint that transitions
+	// the state from "Started" to "A new topic has been just created" on the second instance.
+	dummyPath := "/state-sync"
+	_ = updatedClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(dummyPath)).
+		InScenario(topicScenarioName).
+		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
+		WillSetStateTo(scenarioStateTopicHasBeenCreated).
+		WillReturn("OK", contentTypeJSONHeader, http.StatusOK))
+
+	// Trigger the state transition by calling the dummy endpoint
+	http.Get(mockTopicTestServerUpdatedUrl + dummyPath)
+
 	createTopicResponse, _ := ioutil.ReadFile("../testdata/kafka_topic/create_kafka_topic.json")
 	createTopicStub := wiremock.Post(wiremock.URLPathEqualTo(createKafkaTopicPath)).
 		InScenario(topicScenarioName).
@@ -92,10 +118,10 @@ func TestAccTopic(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusCreated,
 		)
-	_ = wiremockClient.StubFor(createTopicStub)
+	_ = initialClient.StubFor(createTopicStub)
 
 	readCreatedTopicResponse, _ := ioutil.ReadFile("../testdata/kafka_topic/read_created_kafka_topic.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(kafkaTopicPath)).
+	_ = initialClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(kafkaTopicPath)).
 		InScenario(topicScenarioName).
 		WhenScenarioStateIs(scenarioStateTopicHasBeenCreated).
 		WillReturn(
@@ -103,7 +129,7 @@ func TestAccTopic(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		))
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(kafkaTopicPath)).
+	_ = initialClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(kafkaTopicPath)).
 		InScenario(topicScenarioName).
 		WhenScenarioStateIs(scenarioStateTopicHasBeenUpdated).
 		WillReturn(
@@ -113,7 +139,7 @@ func TestAccTopic(t *testing.T) {
 		))
 
 	readCreatedTopicConfigResponse, _ := ioutil.ReadFile("../testdata/kafka_topic/read_created_kafka_topic_config.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaTopicConfigPath)).
+	_ = initialClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaTopicConfigPath)).
 		InScenario(topicScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillReturn(
@@ -121,7 +147,7 @@ func TestAccTopic(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		))
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaTopicConfigPath)).
+	_ = initialClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaTopicConfigPath)).
 		InScenario(topicScenarioName).
 		WhenScenarioStateIs(scenarioStateTopicHasBeenCreated).
 		WillReturn(
@@ -130,7 +156,7 @@ func TestAccTopic(t *testing.T) {
 			http.StatusOK,
 		))
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(kafkaTopicPath)).
+	_ = updatedClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(kafkaTopicPath)).
 		InScenario(topicScenarioName).
 		WhenScenarioStateIs(scenarioStateTopicHasBeenDeleted).
 		WillReturn(
@@ -148,10 +174,19 @@ func TestAccTopic(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNoContent,
 		)
-	_ = wiremockClient.StubFor(updateTopicStub)
+	_ = updatedClient.StubFor(updateTopicStub)
+
+	_ = updatedClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(kafkaTopicPath)).
+		InScenario(topicScenarioName).
+		WhenScenarioStateIs(scenarioStateTopicHasBeenUpdated).
+		WillReturn(
+			string(readCreatedTopicResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
 
 	readUpdatedTopicConfigResponse, _ := ioutil.ReadFile("../testdata/kafka_topic/read_updated_kafka_topic_config.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaTopicConfigPath)).
+	_ = updatedClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaTopicConfigPath)).
 		InScenario(topicScenarioName).
 		WhenScenarioStateIs(scenarioStateTopicHasBeenUpdated).
 		WillReturn(
@@ -169,12 +204,12 @@ func TestAccTopic(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNoContent,
 		)
-	_ = wiremockClient.StubFor(deleteTopicStub)
+	_ = updatedClient.StubFor(deleteTopicStub)
 
 	// Set fake values for secrets since those are required for importing
 	_ = os.Setenv("IMPORT_KAFKA_API_KEY", kafkaApiKey)
 	_ = os.Setenv("IMPORT_KAFKA_API_SECRET", kafkaApiSecret)
-	_ = os.Setenv("IMPORT_KAFKA_REST_ENDPOINT", mockTopicTestServerUrl)
+	_ = os.Setenv("IMPORT_KAFKA_REST_ENDPOINT", mockTopicTestServerUpdatedUrl)
 	defer func() {
 		_ = os.Unsetenv("IMPORT_KAFKA_API_KEY")
 		_ = os.Unsetenv("IMPORT_KAFKA_API_SECRET")
@@ -185,13 +220,13 @@ func TestAccTopic(t *testing.T) {
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
 		CheckDestroy: func(s *terraform.State) error {
-			return testAccCheckTopicDestroy(s, mockTopicTestServerUrl)
+			return testAccCheckTopicDestroy(s, mockTopicTestServerUpdatedUrl)
 		},
 		// https://www.terraform.io/docs/extend/testing/acceptance-tests/teststep.html
 		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckTopicConfig(confluentCloudBaseUrl, mockTopicTestServerUrl),
+				Config: testAccCheckTopicConfig(confluentCloudBaseUrl, mockTopicTestServerInitialUrl),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckTopicExists(fullTopicResourceLabel),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "kafka_cluster.#", "1"),
@@ -200,7 +235,7 @@ func TestAccTopic(t *testing.T) {
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "%", numberOfResourceAttributes),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "topic_name", topicName),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "partitions_count", strconv.Itoa(partitionCount)),
-					resource.TestCheckResourceAttr(fullTopicResourceLabel, "rest_endpoint", mockTopicTestServerUrl),
+					resource.TestCheckResourceAttr(fullTopicResourceLabel, "rest_endpoint", mockTopicTestServerInitialUrl),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "config.%", "3"),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "config.max.message.bytes", "12345"),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "config.retention.ms", "6789"),
@@ -213,7 +248,7 @@ func TestAccTopic(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckTopicUpdatedConfig(confluentCloudBaseUrl, mockTopicTestServerUrl),
+				Config: testAccCheckTopicUpdatedConfig(confluentCloudBaseUrl, mockTopicTestServerUpdatedUrl),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckTopicExists(fullTopicResourceLabel),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "kafka_cluster.#", "1"),
@@ -222,7 +257,7 @@ func TestAccTopic(t *testing.T) {
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "%", numberOfResourceAttributes),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "topic_name", topicName),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "partitions_count", strconv.Itoa(partitionCount)),
-					resource.TestCheckResourceAttr(fullTopicResourceLabel, "rest_endpoint", mockTopicTestServerUrl),
+					resource.TestCheckResourceAttr(fullTopicResourceLabel, "rest_endpoint", mockTopicTestServerUpdatedUrl),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "config.%", "5"),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, fmt.Sprintf("config.%s", firstConfigName), firstConfigValue),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, fmt.Sprintf("config.%s", secondConfigName), secondConfigUpdatedValue),
@@ -245,8 +280,8 @@ func TestAccTopic(t *testing.T) {
 		},
 	})
 
-	checkStubCount(t, wiremockClient, createTopicStub, fmt.Sprintf("POST %s", createKafkaTopicPath), expectedCountOne)
-	checkStubCount(t, wiremockClient, deleteTopicStub, fmt.Sprintf("DELETE %s", kafkaTopicPath), expectedCountOne)
+	checkStubCount(t, initialClient, createTopicStub, fmt.Sprintf("POST %s", createKafkaTopicPath), expectedCountOne)
+	checkStubCount(t, updatedClient, deleteTopicStub, fmt.Sprintf("DELETE %s", kafkaTopicPath), expectedCountOne)
 }
 
 func TestAccTopicPartition(t *testing.T) {
