@@ -59,6 +59,7 @@ import (
 	net "github.com/confluentinc/ccloud-sdk-go-v2/networking/v1"
 	org "github.com/confluentinc/ccloud-sdk-go-v2/org/v2"
 	pi "github.com/confluentinc/ccloud-sdk-go-v2/provider-integration/v1"
+	piv2 "github.com/confluentinc/ccloud-sdk-go-v2/provider-integration/v2"
 	schemaregistry "github.com/confluentinc/ccloud-sdk-go-v2/schema-registry/v1"
 	srcm "github.com/confluentinc/ccloud-sdk-go-v2/srcm/v3"
 	"github.com/confluentinc/ccloud-sdk-go-v2/sso/v2"
@@ -355,6 +356,25 @@ func (c *Client) piApiContext(ctx context.Context) context.Context {
 	}
 
 	tflog.Warn(ctx, "Could not find Cloud API Key or OAuth Token for Provider Integration client")
+	return ctx
+}
+
+func (c *Client) piV2ApiContext(ctx context.Context) context.Context {
+	if c.oauthToken != nil && c.stsToken != nil {
+		if err := c.fetchOrOverrideSTSOAuthTokenFromApiContext(ctx); err != nil {
+			tflog.Error(ctx, fmt.Sprintf("Failed to get OAuth token for Provider Integration v2 client: %v", err))
+		}
+		return context.WithValue(ctx, piv2.ContextAccessToken, c.stsToken.AccessToken)
+	}
+
+	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
+		return context.WithValue(ctx, piv2.ContextBasicAuth, piv2.BasicAuth{
+			UserName: c.cloudApiKey,
+			Password: c.cloudApiSecret,
+		})
+	}
+
+	tflog.Warn(ctx, "Could not find Cloud API Key or OAuth Token for Provider Integration v2 client")
 	return ctx
 }
 
