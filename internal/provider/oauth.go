@@ -39,6 +39,10 @@ const (
 	stsTokenExpirationBuffer      = 1 * time.Minute
 )
 
+const (
+	configOAuthBearer = "OAUTHBEARER"
+)
+
 type OAuthToken struct {
 	ClientId         string       `json:"client_id"`
 	ClientSecret     string       `json:"client_secret"`
