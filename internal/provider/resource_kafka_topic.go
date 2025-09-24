@@ -106,7 +106,6 @@ func kafkaTopicResource() *schema.Resource {
 			paramRestEndpoint: {
 				Type:         schema.TypeString,
 				Optional:     true,
-				ForceNew:     true,
 				Description:  "The REST endpoint of the Kafka cluster (e.g., `https://pkc-00000.us-central1.gcp.confluent.cloud:443`).",
 				ValidateFunc: validation.StringMatch(regexp.MustCompile("^http"), "the REST endpoint must start with 'https://'"),
 			},
@@ -494,8 +493,8 @@ func readTopicAndSetAttributes(ctx context.Context, d *schema.ResourceData, c *K
 }
 
 func kafkaTopicUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if d.HasChangesExcept(paramCredentials, paramConfigs, paramPartitionsCount) {
-		return diag.Errorf("error updating Kafka Topic %q: only %q, %q and %q blocks can be updated for Kafka Topic", d.Id(), paramCredentials, paramConfigs, paramPartitionsCount)
+	if d.HasChangesExcept(paramCredentials, paramConfigs, paramPartitionsCount, paramRestEndpoint) {
+		return diag.Errorf("error updating Kafka Topic %q: only %q, %q, %q and %q blocks can be updated for Kafka Topic", d.Id(), paramCredentials, paramConfigs, paramPartitionsCount, paramRestEndpoint)
 	}
 	if d.HasChange(paramPartitionsCount) {
 		oldPartitionsCount, newPartitionsCount := d.GetChange(paramPartitionsCount)
