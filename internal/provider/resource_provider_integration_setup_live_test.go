@@ -73,7 +73,7 @@ func TestAccProviderIntegrationSetupAzureLive(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckProviderIntegrationSetupExists(fullIntegrationResourceLabel),
 					resource.TestCheckResourceAttr(fullIntegrationResourceLabel, paramDisplayName, integrationDisplayName),
-					resource.TestCheckResourceAttr(fullIntegrationResourceLabel, paramCloudProvider, "azure"),
+					resource.TestCheckResourceAttr(fullIntegrationResourceLabel, paramCloud, "AZURE"),
 					resource.TestCheckResourceAttr(fullIntegrationResourceLabel, fmt.Sprintf("%s.0.%s", paramEnvironment, paramId), environmentId),
 					resource.TestCheckResourceAttrSet(fullIntegrationResourceLabel, paramId),
 					resource.TestCheckResourceAttr(fullIntegrationResourceLabel, paramStatus, "DRAFT"),
@@ -168,7 +168,7 @@ resource "confluent_provider_integration_setup" "%s" {
   }
   
   display_name   = "%s"
-  cloud_provider = "azure"
+  cloud = "AZURE"
 }
 `, endpoint, apiKey, apiSecret, integrationResourceLabel, environmentId, displayName)
 }
@@ -187,7 +187,7 @@ resource "confluent_provider_integration_setup" "%s" {
   }
   
   display_name   = "%s"
-  cloud_provider = "azure"
+  cloud = "AZURE"
 }
 
 resource "confluent_provider_integration_authorization" "%s" {
@@ -218,7 +218,7 @@ resource "confluent_provider_integration_setup" "%s" {
   }
   
   display_name = "%s"
-  cloud_provider = "azure"
+  cloud = "AZURE"
 }
 
 resource "confluent_provider_integration_authorization" "%s" {
@@ -282,7 +282,7 @@ func TestAccProviderIntegrationSetupGcpLive(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckProviderIntegrationSetupExists(fullIntegrationResourceLabel),
 					resource.TestCheckResourceAttr(fullIntegrationResourceLabel, paramDisplayName, integrationDisplayName),
-					resource.TestCheckResourceAttr(fullIntegrationResourceLabel, paramCloudProvider, "gcp"),
+					resource.TestCheckResourceAttr(fullIntegrationResourceLabel, paramCloud, "GCP"),
 					resource.TestCheckResourceAttr(fullIntegrationResourceLabel, fmt.Sprintf("%s.0.%s", paramEnvironment, paramId), environmentId),
 					resource.TestCheckResourceAttrSet(fullIntegrationResourceLabel, paramId),
 					resource.TestCheckResourceAttr(fullIntegrationResourceLabel, paramStatus, "DRAFT"),
@@ -334,7 +334,7 @@ resource "confluent_provider_integration_setup" "%s" {
   }
   
   display_name   = "%s"
-  cloud_provider = "gcp"
+  cloud = "GCP"
 }
 `, endpoint, apiKey, apiSecret, integrationResourceLabel, environmentId, displayName)
 }
@@ -353,7 +353,7 @@ resource "confluent_provider_integration_setup" "%s" {
   }
   
   display_name   = "%s"
-  cloud_provider = "gcp"
+  cloud = "GCP"
 }
 
 resource "confluent_provider_integration_authorization" "%s" {

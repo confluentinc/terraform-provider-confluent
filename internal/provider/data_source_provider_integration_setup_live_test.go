@@ -78,7 +78,7 @@ func TestAccProviderIntegrationSetupAzureDataSourceLive(t *testing.T) {
 					// Test integration data source
 					resource.TestCheckResourceAttrPair(fullIntegrationDataSourceLabel, paramId, fullIntegrationResourceLabel, paramId),
 					resource.TestCheckResourceAttrPair(fullIntegrationDataSourceLabel, paramDisplayName, fullIntegrationResourceLabel, paramDisplayName),
-					resource.TestCheckResourceAttrPair(fullIntegrationDataSourceLabel, paramCloudProvider, fullIntegrationResourceLabel, paramCloudProvider),
+					resource.TestCheckResourceAttrPair(fullIntegrationDataSourceLabel, paramCloud, fullIntegrationResourceLabel, paramCloud),
 					resource.TestCheckResourceAttrPair(fullIntegrationDataSourceLabel, paramStatus, fullIntegrationResourceLabel, paramStatus),
 					resource.TestCheckResourceAttrPair(fullIntegrationDataSourceLabel, fmt.Sprintf("%s.0.%s", paramEnvironment, paramId), fullIntegrationResourceLabel, fmt.Sprintf("%s.0.%s", paramEnvironment, paramId)),
 
@@ -147,7 +147,7 @@ func TestAccProviderIntegrationSetupGcpDataSourceLive(t *testing.T) {
 					// Test integration data source
 					resource.TestCheckResourceAttrPair(fullIntegrationDataSourceLabel, paramId, fullIntegrationResourceLabel, paramId),
 					resource.TestCheckResourceAttrPair(fullIntegrationDataSourceLabel, paramDisplayName, fullIntegrationResourceLabel, paramDisplayName),
-					resource.TestCheckResourceAttrPair(fullIntegrationDataSourceLabel, paramCloudProvider, fullIntegrationResourceLabel, paramCloudProvider),
+					resource.TestCheckResourceAttrPair(fullIntegrationDataSourceLabel, paramCloud, fullIntegrationResourceLabel, paramCloud),
 					resource.TestCheckResourceAttrPair(fullIntegrationDataSourceLabel, paramStatus, fullIntegrationResourceLabel, paramStatus),
 					resource.TestCheckResourceAttrPair(fullIntegrationDataSourceLabel, fmt.Sprintf("%s.0.%s", paramEnvironment, paramId), fullIntegrationResourceLabel, fmt.Sprintf("%s.0.%s", paramEnvironment, paramId)),
 
@@ -176,7 +176,7 @@ resource "confluent_provider_integration_setup" "%s" {
   }
   
   display_name   = "%s"
-  cloud_provider = "azure"
+  cloud = "AZURE"
 }
 
 resource "confluent_provider_integration_authorization" "%s" {
@@ -221,7 +221,7 @@ resource "confluent_provider_integration_setup" "%s" {
   }
   
   display_name   = "%s"
-  cloud_provider = "gcp"
+  cloud = "GCP"
 }
 
 resource "confluent_provider_integration_authorization" "%s" {

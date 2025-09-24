@@ -118,7 +118,7 @@ func TestAccProviderIntegrationSetupAzure(t *testing.T) {
 					testAccCheckProviderIntegrationSetupMockExists(fullAzureProviderIntegrationV2ResourceLabel),
 					resource.TestCheckResourceAttr(fullAzureProviderIntegrationV2ResourceLabel, paramId, azureProviderIntegrationV2Id),
 					resource.TestCheckResourceAttr(fullAzureProviderIntegrationV2ResourceLabel, paramDisplayName, azureProviderIntegrationV2DisplayName),
-					resource.TestCheckResourceAttr(fullAzureProviderIntegrationV2ResourceLabel, paramCloudProvider, "azure"),
+					resource.TestCheckResourceAttr(fullAzureProviderIntegrationV2ResourceLabel, paramCloud, "AZURE"),
 					resource.TestCheckResourceAttr(fullAzureProviderIntegrationV2ResourceLabel, paramStatus, "DRAFT"),
 					resource.TestCheckResourceAttr(fullAzureProviderIntegrationV2ResourceLabel, fmt.Sprintf("%s.0.%s", paramEnvironment, paramId), azureProviderIntegrationV2EnvironmentId),
 				),
@@ -211,7 +211,7 @@ func TestAccProviderIntegrationSetupGcp(t *testing.T) {
 					testAccCheckProviderIntegrationSetupMockExists(fullGcpProviderIntegrationV2ResourceLabel),
 					resource.TestCheckResourceAttr(fullGcpProviderIntegrationV2ResourceLabel, paramId, gcpProviderIntegrationV2Id),
 					resource.TestCheckResourceAttr(fullGcpProviderIntegrationV2ResourceLabel, paramDisplayName, gcpProviderIntegrationV2DisplayName),
-					resource.TestCheckResourceAttr(fullGcpProviderIntegrationV2ResourceLabel, paramCloudProvider, "gcp"),
+					resource.TestCheckResourceAttr(fullGcpProviderIntegrationV2ResourceLabel, paramCloud, "GCP"),
 					resource.TestCheckResourceAttr(fullGcpProviderIntegrationV2ResourceLabel, paramStatus, "DRAFT"),
 					resource.TestCheckResourceAttr(fullGcpProviderIntegrationV2ResourceLabel, fmt.Sprintf("%s.0.%s", paramEnvironment, paramId), gcpProviderIntegrationV2EnvironmentId),
 				),
@@ -264,7 +264,7 @@ func testAccCheckProviderIntegrationSetupAzureConfig(confluentCloudBaseUrl, mock
 			id = "%s"
 		}
 		display_name   = "%s"
-		cloud_provider = "azure"
+		cloud = "AZURE"
 	}
 	`, mockServerUrl, azureProviderIntegrationV2ResourceLabel, azureProviderIntegrationV2EnvironmentId, azureProviderIntegrationV2DisplayName)
 }
@@ -279,7 +279,7 @@ func testAccCheckProviderIntegrationSetupGcpConfig(confluentCloudBaseUrl, mockSe
 			id = "%s"
 		}
 		display_name   = "%s"
-		cloud_provider = "gcp"
+		cloud = "GCP"
 	}
 	`, mockServerUrl, gcpProviderIntegrationV2ResourceLabel, gcpProviderIntegrationV2EnvironmentId, gcpProviderIntegrationV2DisplayName)
 }

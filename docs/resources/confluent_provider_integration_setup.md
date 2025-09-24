@@ -34,8 +34,8 @@ resource "confluent_provider_integration_setup" "azure" {
     id = confluent_environment.staging.id
   }
   
-  display_name   = "azure-integration"
-  cloud_provider = "azure"
+  display_name = "azure-integration"
+  cloud        = "AZURE"
 }
 
 # Configure and validate the Azure integration
@@ -60,8 +60,8 @@ resource "confluent_provider_integration_setup" "gcp" {
     id = confluent_environment.staging.id
   }
   
-  display_name   = "gcp-integration"
-  cloud_provider = "gcp"
+  display_name = "gcp-integration"
+  cloud        = "GCP"
 }
 
 # Configure and validate the GCP integration
@@ -84,7 +84,7 @@ resource "confluent_provider_integration_authorization" "gcp" {
 The following arguments are supported:
 
 - `display_name` - (Required String) The name of the Provider Integration.
-- `cloud_provider` - (Required String) The cloud service provider. Supported values are `azure` and `gcp`.
+- `cloud` - (Required String) The cloud service provider. Supported values are `AZURE` and `GCP`.
 - `environment` - (Required Configuration Block) supports the following:
     - `id` - (Required String) The ID of the Environment that the Provider Integration belongs to, for example, `env-abc123`.
 

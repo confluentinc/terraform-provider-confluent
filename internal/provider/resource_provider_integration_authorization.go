@@ -127,9 +127,9 @@ func providerIntegrationAuthorizationCreate(ctx context.Context, d *schema.Resou
 
 	// First, read the integration to get current state
 	req := c.piV2Client.IntegrationsPimV2Api.GetPimV2Integration(c.piV2ApiContext(ctx), integrationId).Environment(environmentId)
-	integration, _, err := req.Execute()
+	integration, resp, err := req.Execute()
 	if err != nil {
-		return diag.FromErr(createDescriptiveError(err))
+		return diag.FromErr(createDescriptiveError(err, resp))
 	}
 
 	// Check if integration is in valid status for authorization (DRAFT or CREATED)
@@ -142,7 +142,7 @@ func providerIntegrationAuthorizationCreate(ctx context.Context, d *schema.Resou
 	var updateConfig piv2.PimV2IntegrationUpdateConfigOneOf
 	provider := integration.GetProvider()
 
-	switch provider {
+	switch strings.ToUpper(provider) {
 	case providerAzure:
 		azureConfig := d.Get(paramAzureAuth).([]interface{})
 		if len(azureConfig) == 0 {
@@ -199,20 +199,28 @@ func providerIntegrationAuthorizationCreate(ctx context.Context, d *schema.Resou
 		updatedIntegration = &integration
 	}
 
-	// Set the resource ID and populate data first (so we get setup information even if validation fails)
-	d.SetId(integrationId)
+	// Always validate the integration first
+	validateDiags := validateIntegrationSetup(ctx, c, integrationId, environmentId, status, updateConfig)
 
-	// Read the integration data to populate outputs (including multi-tenant app ID)
-	readDiags := providerIntegrationAuthorizationRead(ctx, d, meta)
-	if readDiags.HasError() {
-		return readDiags
+	// Set the resource ID only after successful operations (validation may have warnings but shouldn't have errors)
+	if !validateDiags.HasError() {
+		d.SetId(integrationId)
+
+		// Read the integration data to populate outputs (including multi-tenant app ID)
+		readDiags := providerIntegrationAuthorizationRead(ctx, d, meta)
+		if readDiags.HasError() {
+			return readDiags
+		}
+
+		// Return validation diagnostics (may include warnings)
+		return validateDiags
 	}
 
-	// Always validate the integration
-	return validateIntegrationSetup(ctx, c, integrationId, environmentId, status, updateConfig)
+	return validateDiags
 }
 
 func providerIntegrationAuthorizationRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	// Skip read if resource ID is not set (resource creation may have failed)
 	if d.Id() == "" {
 		return nil
 	}
@@ -337,14 +345,14 @@ func validateIntegrationSetup(ctx context.Context, c *Client, integrationId, env
 
 		// Read the integration to determine the provider type for appropriate warning
 		req := c.piV2Client.IntegrationsPimV2Api.GetPimV2Integration(c.piV2ApiContext(ctx), integrationId).Environment(environmentId)
-		integration, _, readErr := req.Execute()
+		integration, resp, readErr := req.Execute()
 		if readErr != nil {
-			return diag.FromErr(createDescriptiveError(readErr))
+			return diag.FromErr(createDescriptiveError(readErr, resp))
 		}
 
 		// Generate provider-specific warning message
 		provider := integration.GetProvider()
-		switch provider {
+		switch strings.ToUpper(provider) {
 		case providerAzure:
 			return createAzureSetupWarning(integration)
 		case providerGcp:

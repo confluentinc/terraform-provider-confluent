@@ -18,6 +18,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -46,7 +47,7 @@ func providerIntegrationSetupDataSource() *schema.Resource {
 				ExactlyOneOf: []string{paramId, paramDisplayName},
 				Description:  "The display name of provider integration setup.",
 			},
-			paramCloudProvider: {
+			paramCloud: {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "The cloud service provider for the integration.",
@@ -139,7 +140,7 @@ func setProviderIntegrationV2Attributes(d *schema.ResourceData, integration piv2
 	if err := d.Set(paramDisplayName, integration.GetDisplayName()); err != nil {
 		return nil, err
 	}
-	if err := d.Set(paramCloudProvider, integration.GetProvider()); err != nil {
+	if err := d.Set(paramCloud, strings.ToUpper(integration.GetProvider())); err != nil {
 		return nil, err
 	}
 	if err := d.Set(paramStatus, integration.GetStatus()); err != nil {

@@ -66,7 +66,7 @@ func TestAccDataSourceProviderIntegrationSetupAzure(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("data.confluent_provider_integration_setup.test_azure", paramId, azureProviderIntegrationV2Id),
 					resource.TestCheckResourceAttr("data.confluent_provider_integration_setup.test_azure", paramDisplayName, azureProviderIntegrationV2DisplayName),
-					resource.TestCheckResourceAttr("data.confluent_provider_integration_setup.test_azure", paramCloudProvider, "azure"),
+					resource.TestCheckResourceAttr("data.confluent_provider_integration_setup.test_azure", paramCloud, "AZURE"),
 					resource.TestCheckResourceAttr("data.confluent_provider_integration_setup.test_azure", paramStatus, "CREATED"),
 					resource.TestCheckResourceAttr("data.confluent_provider_integration_setup.test_azure", fmt.Sprintf("%s.0.%s", paramEnvironment, paramId), azureProviderIntegrationV2EnvironmentId),
 				),
@@ -112,7 +112,7 @@ func TestAccDataSourceProviderIntegrationSetupGcp(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("data.confluent_provider_integration_setup.test_gcp", paramId, gcpProviderIntegrationV2Id),
 					resource.TestCheckResourceAttr("data.confluent_provider_integration_setup.test_gcp", paramDisplayName, gcpProviderIntegrationV2DisplayName),
-					resource.TestCheckResourceAttr("data.confluent_provider_integration_setup.test_gcp", paramCloudProvider, "gcp"),
+					resource.TestCheckResourceAttr("data.confluent_provider_integration_setup.test_gcp", paramCloud, "GCP"),
 					resource.TestCheckResourceAttr("data.confluent_provider_integration_setup.test_gcp", paramStatus, "CREATED"),
 					resource.TestCheckResourceAttr("data.confluent_provider_integration_setup.test_gcp", fmt.Sprintf("%s.0.%s", paramEnvironment, paramId), gcpProviderIntegrationV2EnvironmentId),
 				),

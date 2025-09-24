@@ -28,9 +28,8 @@ import (
 
 const (
 	// Provider constants
-	paramCloudProvider = "cloud_provider"
-	providerAzure      = "azure"
-	providerGcp        = "gcp"
+	providerAzure = "AZURE"
+	providerGcp   = "GCP"
 )
 
 // providerIntegrationSetupResource defines the setup/creation resource for PIM v2 integrations.
@@ -56,12 +55,12 @@ func providerIntegrationSetupResource() *schema.Resource {
 				Description:  "Display name of Provider Integration.",
 				ValidateFunc: validation.StringIsNotEmpty,
 			},
-			paramCloudProvider: {
+			paramCloud: {
 				Type:         schema.TypeString,
+				Description:  "The cloud service provider in which the network exists.",
+				ValidateFunc: validation.StringInSlice(acceptedCloudProviders, false),
 				Required:     true,
 				ForceNew:     true,
-				Description:  "Cloud provider (azure, gcp).",
-				ValidateFunc: validation.StringInSlice([]string{providerAzure, providerGcp}, false),
 			},
 			paramUsages: {
 				Type:        schema.TypeList,
@@ -84,12 +83,12 @@ func providerIntegrationSetupCreate(ctx context.Context, d *schema.ResourceData,
 	c := meta.(*Client)
 
 	displayName := d.Get(paramDisplayName).(string)
-	provider := d.Get(paramCloudProvider).(string)
+	provider := d.Get(paramCloud).(string)
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
 
 	createReq := piv2.PimV2Integration{}
 	createReq.SetDisplayName(displayName)
-	createReq.SetProvider(provider)
+	createReq.SetProvider(strings.ToLower(provider))
 	createReq.SetEnvironment(piv2.ObjectReference{Id: environmentId})
 
 	req := c.piV2Client.IntegrationsPimV2Api.CreatePimV2Integration(c.piV2ApiContext(ctx)).PimV2Integration(createReq)
@@ -125,7 +124,7 @@ func providerIntegrationSetupRead(ctx context.Context, d *schema.ResourceData, m
 	if err := d.Set(paramDisplayName, pim.GetDisplayName()); err != nil {
 		return diag.FromErr(err)
 	}
-	if err := d.Set(paramCloudProvider, pim.GetProvider()); err != nil {
+	if err := d.Set(paramCloud, strings.ToUpper(pim.GetProvider())); err != nil {
 		return diag.FromErr(err)
 	}
 	if err := d.Set(paramStatus, pim.GetStatus()); err != nil {

@@ -79,7 +79,7 @@ In addition to the preceding arguments, the following attributes are exported:
 
 - `id` - (Required String) The ID of the Provider Integration, for example, `cspi-4xg0q`.
 - `display_name` - (Required String) The display name of the Provider Integration.
-- `cloud_provider` - (Required String) The cloud service provider. Values are `azure` and `gcp`.
+- `cloud` - (Computed String) The cloud service provider. Values are `AZURE` and `GCP`.
 - `status` - (Required String) The status of the Provider Integration. Values are `DRAFT` and `CREATED`.
 - `usages` - (Required List of Strings) List of resource CRNs where this provider integration is being used.
 - `environment` - (Required Configuration Block) supports the following:

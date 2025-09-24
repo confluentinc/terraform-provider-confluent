@@ -18,14 +18,30 @@ description: |-
 
 ### Azure Provider Integration Authorization
 
+You have two options to complete the Azure setup after creating the authorization resource:
+
+#### Option 1: Using Azure Terraform Provider (Recommended for Infrastructure as Code)
+
 ```terraform
+# Configure required providers
+terraform {
+  required_providers {
+    confluent = {
+      source = "confluentinc/confluent"
+    }
+    azuread = {
+      source = "hashicorp/azuread"
+    }
+  }
+}
+
 resource "confluent_provider_integration_setup" "azure" {
   environment {
     id = var.environment_id
   }
   
-  display_name   = "azure-integration"
-  cloud_provider = "azure"
+  display_name = "azure-integration"
+  cloud        = "AZURE"
 }
 
 resource "confluent_provider_integration_authorization" "azure" {
@@ -40,12 +56,48 @@ resource "confluent_provider_integration_authorization" "azure" {
   }
 }
 
-# Output the multi-tenant app ID for Azure setup
+# Automatically create the service principal using Azure Terraform Provider
+resource "azuread_service_principal" "confluent" {
+  client_id = confluent_provider_integration_authorization.azure.azure[0].confluent_multi_tenant_app_id
+}
+
+# Output the setup information
 output "azure_app_id" {
   description = "Multi-tenant App ID for Azure setup"
   value       = confluent_provider_integration_authorization.azure.azure[0].confluent_multi_tenant_app_id
 }
 
+output "service_principal_object_id" {
+  description = "Azure service principal object ID"
+  value       = azuread_service_principal.confluent.object_id
+}
+```
+
+#### Option 2: Using Azure CLI Commands
+
+```terraform
+resource "confluent_provider_integration_setup" "azure" {
+  environment {
+    id = var.environment_id
+  }
+  
+  display_name = "azure-integration"
+  cloud        = "AZURE"
+}
+
+resource "confluent_provider_integration_authorization" "azure" {
+  provider_integration_id = confluent_provider_integration_setup.azure.id
+  
+  environment {
+    id = var.environment_id
+  }
+  
+  azure {
+    customer_azure_tenant_id = var.azure_tenant_id
+  }
+}
+
+# Output CLI commands for manual setup
 output "azure_setup_command" {
   description = "Azure CLI command to create the service principal"
   value       = "az ad sp create --id ${confluent_provider_integration_authorization.azure.azure[0].confluent_multi_tenant_app_id}"
@@ -54,14 +106,30 @@ output "azure_setup_command" {
 
 ### GCP Provider Integration Authorization
 
+You have two options to complete the GCP setup after creating the authorization resource:
+
+#### Option 1: Using Google Terraform Provider (Recommended for Infrastructure as Code)
+
 ```terraform
+# Configure required providers
+terraform {
+  required_providers {
+    confluent = {
+      source = "confluentinc/confluent"
+    }
+    google = {
+      source = "hashicorp/google"
+    }
+  }
+}
+
 resource "confluent_provider_integration_setup" "gcp" {
   environment {
     id = var.environment_id
   }
   
-  display_name   = "gcp-integration"
-  cloud_provider = "gcp"
+  display_name = "gcp-integration"
+  cloud        = "GCP"
 }
 
 resource "confluent_provider_integration_authorization" "gcp" {
@@ -76,7 +144,56 @@ resource "confluent_provider_integration_authorization" "gcp" {
   }
 }
 
-# Output the Confluent service account for GCP IAM setup
+# Grant IAM permissions using Google Terraform Provider
+resource "google_project_iam_member" "confluent_token_creator" {
+  project = var.gcp_project_id
+  role    = "roles/iam.serviceAccountTokenCreator"
+  member  = "serviceAccount:${confluent_provider_integration_authorization.gcp.gcp[0].google_service_account}"
+  
+  condition {
+    title       = "Confluent Cloud Access"
+    description = "Allow Confluent Cloud to impersonate the customer service account"
+    expression  = "request.auth.claims.sub == '${confluent_provider_integration_authorization.gcp.gcp[0].google_service_account}'"
+  }
+}
+
+# Output the setup information
+output "confluent_service_account" {
+  description = "Confluent service account for GCP IAM setup"
+  value       = confluent_provider_integration_authorization.gcp.gcp[0].google_service_account
+}
+```
+
+#### Option 2: Using gcloud CLI Commands
+
+```terraform
+resource "confluent_provider_integration_setup" "gcp" {
+  environment {
+    id = var.environment_id
+  }
+  
+  display_name = "gcp-integration"
+  cloud        = "GCP"
+}
+
+resource "confluent_provider_integration_authorization" "gcp" {
+  provider_integration_id = confluent_provider_integration_setup.gcp.id
+  
+  environment {
+    id = var.environment_id
+  }
+  
+  gcp {
+    customer_google_service_account = var.gcp_service_account
+  }
+}
+
+# Output gcloud commands for manual setup
+output "gcp_iam_command" {
+  description = "gcloud command to grant IAM permissions"
+  value       = "gcloud projects add-iam-policy-binding YOUR_PROJECT_ID --member=\"serviceAccount:${confluent_provider_integration_authorization.gcp.gcp[0].google_service_account}\" --role=\"roles/iam.serviceAccountTokenCreator\" --condition=\"expression=request.auth.claims.sub=='${confluent_provider_integration_authorization.gcp.gcp[0].google_service_account}'\""
+}
+
 output "confluent_service_account" {
   description = "Confluent service account for GCP IAM setup"
   value       = confluent_provider_integration_authorization.gcp.gcp[0].google_service_account
