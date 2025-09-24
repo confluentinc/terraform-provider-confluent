@@ -220,11 +220,6 @@ func providerIntegrationAuthorizationCreate(ctx context.Context, d *schema.Resou
 }
 
 func providerIntegrationAuthorizationRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	// Skip read if resource ID is not set (resource creation may have failed)
-	if d.Id() == "" {
-		return nil
-	}
-
 	c := meta.(*Client)
 	integrationId := d.Id()
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)

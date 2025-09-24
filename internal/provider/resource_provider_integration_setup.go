@@ -102,9 +102,6 @@ func providerIntegrationSetupCreate(ctx context.Context, d *schema.ResourceData,
 }
 
 func providerIntegrationSetupRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if d.Id() == "" {
-		return nil
-	}
 	c := meta.(*Client)
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
 
