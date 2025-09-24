@@ -594,13 +594,13 @@ func constructCloudConfigForBidirectionalOutboundMode(localApiKey, localKafkaApi
 		tokenEndpoint := meta.(*Client).oauthToken.TokenUrl
 
 		// Local Kafka cluster configuration
-		config[localSaslMechanismConfigKey] = "OAUTHBEARER"
+		config[localSaslMechanismConfigKey] = configOAuthBearer
 		config[localSaslOAuthBearerTokenEndpointUrlConfigKey] = tokenEndpoint
 		config[localSaslLoginCallbackHandlerClassConfigKey] = "org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginCallbackHandler"
 		config[localSaslJaasConfigConfigKey] = fmt.Sprintf("org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required clientId='%s' scope='%s' clientSecret='%s' extension_logicalCluster='%s' extension_identityPoolId='%s';", clientId, scope, clientSecret, localKafkaClusterId, identityPoolId)
 
 		// Remote Kafka cluster configuration
-		config[saslMechanismConfigKey] = "OAUTHBEARER"
+		config[saslMechanismConfigKey] = configOAuthBearer
 		config[saslOAuthBearerTokenEndpointUrlConfigKey] = tokenEndpoint
 		config[saslLoginCallbackHandlerClassConfigKey] = "org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginCallbackHandler"
 		config[saslJaasConfigConfigKey] = fmt.Sprintf("org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required clientId='%s' scope='%s' clientSecret='%s' extension_logicalCluster='%s' extension_identityPoolId='%s';", clientId, scope, clientSecret, remoteKafkaClusterId, identityPoolId)
@@ -643,7 +643,7 @@ func constructCloudConfigForDestinationOutboundMode(sourceClusterBootstrapEndpoi
 		scope := meta.(*Client).oauthToken.Scope
 		tokenEndpoint := meta.(*Client).oauthToken.TokenUrl
 
-		config[saslMechanismConfigKey] = "OAUTHBEARER"
+		config[saslMechanismConfigKey] = configOAuthBearer
 		config[saslOAuthBearerTokenEndpointUrlConfigKey] = tokenEndpoint
 		config[saslLoginCallbackHandlerClassConfigKey] = "org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginCallbackHandler"
 		config[saslJaasConfigConfigKey] = fmt.Sprintf("org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required clientId='%s' scope='%s' clientSecret='%s' extension_logicalCluster='%s' extension_identityPoolId='%s';", clientId, scope, clientSecret, sourceClusterId, identityPoolId)
@@ -685,13 +685,13 @@ func constructCloudConfigForSourceOutboundMode(sourceKafkaApiKey, sourceKafkaApi
 		tokenEndpoint := meta.(*Client).oauthToken.TokenUrl
 
 		// Source Kafka cluster configuration
-		config[localSaslMechanismConfigKey] = "OAUTHBEARER"
+		config[localSaslMechanismConfigKey] = configOAuthBearer
 		config[localSaslOAuthBearerTokenEndpointUrlConfigKey] = tokenEndpoint
 		config[localSaslLoginCallbackHandlerClassConfigKey] = "org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginCallbackHandler"
 		config[localSaslJaasConfigConfigKey] = fmt.Sprintf("org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required clientId='%s' scope='%s' clientSecret='%s' extension_logicalCluster='%s' extension_identityPoolId='%s';", clientId, scope, clientSecret, sourceKafkaClusterId, identityPoolId)
 
 		// Destination Kafka cluster configuration
-		config[saslMechanismConfigKey] = "OAUTHBEARER"
+		config[saslMechanismConfigKey] = configOAuthBearer
 		config[saslOAuthBearerTokenEndpointUrlConfigKey] = tokenEndpoint
 		config[saslLoginCallbackHandlerClassConfigKey] = "org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginCallbackHandler"
 		config[saslJaasConfigConfigKey] = fmt.Sprintf("org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required clientId='%s' scope='%s' clientSecret='%s' extension_logicalCluster='%s' extension_identityPoolId='%s';", clientId, scope, clientSecret, destKafkaClusterId, identityPoolId)
