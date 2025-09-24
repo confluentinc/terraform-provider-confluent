@@ -65,7 +65,7 @@ var kafkaTopicPath = fmt.Sprintf("/kafka/v3/clusters/%s/topics/%s", clusterId, t
 var readKafkaTopicConfigPath = fmt.Sprintf("/kafka/v3/clusters/%s/topics/%s/configs", clusterId, topicName)
 var updateKafkaTopicConfigPath = fmt.Sprintf("/kafka/v3/clusters/%s/topics/%s/configs:alter", clusterId, topicName)
 
-func TestAccTopicKostya(t *testing.T) {
+func TestAccTopic(t *testing.T) {
 	ctx := context.Background()
 
 	initialContainer, err := setupWiremock(ctx)
