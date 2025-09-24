@@ -13,8 +13,8 @@ provider "confluent" {
     oauth_external_token_url = var.oauth_external_token_url
     oauth_external_client_id  = var.oauth_external_client_id
     oauth_external_client_secret = var.oauth_external_client_secret
+    oauth_external_token_scope = var.oauth_external_token_scope
     oauth_identity_pool_id = var.oauth_identity_pool_id
-    oauth_external_token_scope = "api://c8b8b903-0114-424b-8157-b832e7103367/.default"
   }
 }
 

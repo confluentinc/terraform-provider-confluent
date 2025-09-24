@@ -144,6 +144,7 @@ func destinationSchemaRegistryClusterBlockSchema() *schema.Schema {
 					Optional:     true,
 					ForceNew:     true,
 					ValidateFunc: validation.StringIsNotEmpty,
+					Description:  "The ID of the destination Schema Registry cluster. Required when using OAuth authentication.",
 				},
 				paramRestEndpoint: {
 					Type:     schema.TypeString,
@@ -189,10 +190,10 @@ func constructDestinationSRClusterRequest(d *schema.ResourceData, meta interface
 		configs[bearerAuthClientSecret] = client.oauthToken.ClientSecret
 		configs[bearerAuthIssuerEndpointUrl] = client.oauthToken.TokenUrl
 		configs[bearerAuthCredentialsSource] = configOAuthBearer
-		// The Scope field is optional in the API, setting arbitrary values will cause exception from service side
-		// Check with SR team if the scope field is ok with the scope for Azure AD
 		configs[bearerAuthIdentityPoolId] = client.oauthToken.IdentityPoolId
 		configs[bearerAuthLogicalCluster] = extractStringValueFromBlock(d, paramDestinationSchemaRegistryCluster, paramId)
+		// The Scope field is optional for Okta, but required for Azure Entra ID
+		// setting arbitrary values may cause exporter exception from backend service
 		if client.oauthToken.Scope != "" {
 			configs[bearerAuthScope] = client.oauthToken.Scope
 		}
