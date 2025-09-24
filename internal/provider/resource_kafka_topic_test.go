@@ -74,14 +74,14 @@ func TestAccTopic(t *testing.T) {
 	}
 	defer initialContainer.Terminate(ctx)
 
-	updatedServerUrl, err := setupWiremock(ctx)
+	updatedContainer, err := setupWiremock(ctx)
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer updatedServerUrl.Terminate(ctx)
+	defer updatedContainer.Terminate(ctx)
 
 	mockTopicTestServerInitialUrl := initialContainer.URI
-	mockTopicTestServerUpdatedUrl := updatedServerUrl.URI
+	mockTopicTestServerUpdatedUrl := updatedContainer.URI
 	confluentCloudBaseUrl := ""
 	initialClient := wiremock.NewClient(mockTopicTestServerInitialUrl)
 	updatedClient := wiremock.NewClient(mockTopicTestServerUpdatedUrl)
