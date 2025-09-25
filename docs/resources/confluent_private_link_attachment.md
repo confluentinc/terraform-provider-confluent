@@ -53,7 +53,7 @@ In addition to the preceding arguments, the following attributes are exported:
   - `private_link_service_alias ` - (Required String) Azure Private Link service alias for the availability zone.
   - `private_link_service_resource_id` - (Required String) Azure Private Link service resource id for the availability zone.
 - `gcp` - (Optional Configuration Block) supports the following:
-  - `private_service_connect_connection_id` - (Required String) GCP Private Service Connect ID used to establish connections for all zones.
+  - `private_service_connect_service_attachment` - (Required String) GCP Private Service Connect ID used to establish connections for all zones.
 
 ## Import
 
