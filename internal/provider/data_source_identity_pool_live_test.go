@@ -26,9 +26,6 @@ import (
 )
 
 func TestAccDataSourceIdentityPoolLive(t *testing.T) {
-	// Enable parallel execution for I/O bound operations
-	t.Parallel()
-
 	// Skip this test unless explicitly enabled
 	if os.Getenv("TF_ACC_PROD") == "" {
 		t.Skip("Skipping live test. Set TF_ACC_PROD=1 to run this test.")
