@@ -21,10 +21,17 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+)
+
+const (
+	// Using Google's OIDC configuration for the update step to test changing providers
+	updatedIssuer  = "https://accounts.google.com"
+	updatedJwksUri = "https://www.googleapis.com/oauth2/v3/certs"
 )
 
 func TestAccIdentityProviderLive(t *testing.T) {
@@ -36,7 +43,7 @@ func TestAccIdentityProviderLive(t *testing.T) {
 		t.Skip("Skipping live test. Set TF_ACC_PROD=1 to run this test.")
 	}
 
-	// Read credentials and configuration from environment variables (populated by Vault)
+	// Read credentials and configuration from environment variables
 	apiKey := os.Getenv("CONFLUENT_CLOUD_API_KEY")
 	apiSecret := os.Getenv("CONFLUENT_CLOUD_API_SECRET")
 	endpoint := os.Getenv("CONFLUENT_CLOUD_ENDPOINT")
@@ -50,30 +57,70 @@ func TestAccIdentityProviderLive(t *testing.T) {
 	}
 
 	// Generate unique names for test resources to avoid conflicts
-	randomSuffix := rand.Intn(100000)
-	identityProviderDisplayName := fmt.Sprintf("tf-live-idp-%d", randomSuffix)
-	identityProviderResourceLabel := "test_live_identity_provider"
+    randomSuffix := rand.Intn(100000)
+    identityProviderResourceLabel := "test_live_identity_provider"
+    resourceName := fmt.Sprintf("confluent_identity_provider.%s", identityProviderResourceLabel)
 
-	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: testAccProviderFactories,
-		CheckDestroy:      testAccCheckIdentityProviderLiveDestroy,
-		Steps: []resource.TestStep{
+    // Initial resource attributes
+    initialDisplayName := fmt.Sprintf("tf-live-idp-%d", randomSuffix)
+    initialDescription := "Test IdP (Initial)"
+    initialIssuer := "https://login.microsoftonline.com/common/v2.0"
+    initialJwksUri := "https://login.microsoftonline.com/common/discovery/v2.0/keys"
+
+    // Updated resource attributes
+    updatedDisplayName := fmt.Sprintf("tf-live-idp-updated-%d", randomSuffix)
+    updatedDescription := "Test IdP (Updated with Google OIDC)"
+    updatedIdentityClaim := "claims.email"
+
+    resource.Test(t, resource.TestCase{
+        PreCheck:          func() { testAccPreCheck(t) },
+        ProviderFactories: testAccProviderFactories,
+        CheckDestroy:      testAccCheckIdentityProviderLiveDestroy,
+        Steps: []resource.TestStep{
+            // Step 1: Test Create
+            {
+                Config: testAccCheckIdentityProviderLiveConfig(endpoint, identityProviderResourceLabel, initialDisplayName, initialDescription, initialIssuer, initialJwksUri, apiKey, apiSecret),
+                Check: resource.ComposeTestCheckFunc(
+                    testAccCheckIdentityProviderLiveExists(resourceName),
+                    resource.TestCheckResourceAttr(resourceName, "display_name", initialDisplayName),
+                    resource.TestCheckResourceAttr(resourceName, "description", initialDescription),
+                    resource.TestCheckResourceAttr(resourceName, "issuer", initialIssuer),
+                    resource.TestCheckResourceAttr(resourceName, "jwks_uri", initialJwksUri),
+                    resource.TestCheckResourceAttr(resourceName, "identity_claim", "claims.sub"),
+                    resource.TestCheckResourceAttrSet(resourceName, "id"),
+                ),
+            },
+            // Step 2: Test Update all attributes
+            {
+                Config: testAccCheckIdentityProviderLiveConfigWithUpdate(endpoint, identityProviderResourceLabel, updatedDisplayName, updatedDescription, updatedIssuer, updatedJwksUri, updatedIdentityClaim, apiKey, apiSecret),
+                Check: resource.ComposeTestCheckFunc(
+                    testAccCheckIdentityProviderLiveExists(resourceName),
+                    resource.TestCheckResourceAttr(resourceName, "display_name", updatedDisplayName),
+                    resource.TestCheckResourceAttr(resourceName, "description", updatedDescription),
+                    resource.TestCheckResourceAttr(resourceName, "issuer", updatedIssuer),
+                    resource.TestCheckResourceAttr(resourceName, "jwks_uri", updatedJwksUri),
+                    resource.TestCheckResourceAttr(resourceName, "identity_claim", updatedIdentityClaim),
+                ),
+            },
+            // Step 3: Test Import (after update)
+            {
+                ResourceName:      resourceName,
+                ImportState:       true,
+                ImportStateVerify: true,
+            },
+            // Step 4: Test API Error Handling with invalid input
 			{
-				Config: testAccCheckIdentityProviderLiveConfig(endpoint, identityProviderResourceLabel, identityProviderDisplayName, apiKey, apiSecret),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckIdentityProviderLiveExists(fmt.Sprintf("confluent_identity_provider.%s", identityProviderResourceLabel)),
-					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_identity_provider.%s", identityProviderResourceLabel), "display_name", identityProviderDisplayName),
-					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_identity_provider.%s", identityProviderResourceLabel), "description", "Test identity provider for live testing"),
-					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_identity_provider.%s", identityProviderResourceLabel), "issuer", "https://login.microsoftonline.com/common/discovery/v2.0"),
-					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_identity_provider.%s", identityProviderResourceLabel), "jwks_uri", "https://login.microsoftonline.com/common/discovery/v2.0/keys"),
-					resource.TestCheckResourceAttrSet(fmt.Sprintf("confluent_identity_provider.%s", identityProviderResourceLabel), "id"),
+				Config: testAccCheckIdentityProviderLiveConfig(
+					endpoint,
+					identityProviderResourceLabel,
+					"Bad IdP",
+					"This should fail",
+					"https://login.microsoftonline.com/common/v2.0",
+					"https://example.com/this/uri/is/invalid", // Invalid JWKS URI
+					apiKey,
+					apiSecret,
 				),
-			},
-			{
-				ResourceName:      fmt.Sprintf("confluent_identity_provider.%s", identityProviderResourceLabel),
-				ImportState:       true,
-				ImportStateVerify: true,
+				ExpectError: regexp.MustCompile("(Unable to verify Jwks URI|jwks uri.*may be invalid)"),
 			},
 		},
 	})
@@ -94,7 +141,7 @@ func testAccCheckIdentityProviderLiveExists(resourceName string) resource.TestCh
 
 		c := testAccProvider.Meta().(*Client)
 		_, resp, err := c.oidcClient.IdentityProvidersIamV2Api.GetIamV2IdentityProvider(c.oidcApiContext(context.Background()), rs.Primary.ID).Execute()
-		
+
 		if err != nil {
 			return fmt.Errorf("identity provider (%s) was not found: %s", rs.Primary.ID, createDescriptiveError(err, resp))
 		}
@@ -112,36 +159,56 @@ func testAccCheckIdentityProviderLiveDestroy(s *terraform.State) error {
 			continue
 		}
 		deletedIdentityProviderId := rs.Primary.ID
-		req := c.oidcClient.IdentityProvidersIamV2Api.GetIamV2IdentityProvider(c.oidcApiContext(context.Background()), deletedIdentityProviderId)
-		deletedIdentityProvider, response, err := req.Execute()
-		isResourceNotFound := isNonKafkaRestApiResourceNotFound(response)
-		if isResourceNotFound {
-			return nil
-		} else if err == nil && deletedIdentityProvider.Id == nil {
-			// Otherwise return the error
-			if *deletedIdentityProvider.Id == rs.Primary.ID {
-				return fmt.Errorf("identity provider (%q) still exists", rs.Primary.ID)
+		_, response, err := c.oidcClient.IdentityProvidersIamV2Api.GetIamV2IdentityProvider(c.oidcApiContext(context.Background()), deletedIdentityProviderId).Execute()
+
+		if err != nil {
+			if isNonKafkaRestApiResourceNotFound(response) {
+				// Resource is gone as expected
+				return nil
 			}
+			// An unexpected error occurred
+			return fmt.Errorf("unexpected error checking for deleted identity provider %q: %s", rs.Primary.ID, err)
 		}
-		return err
+
+		// If err is nil, the resource still exists
+		return fmt.Errorf("identity provider (%q) still exists", rs.Primary.ID)
 	}
 	return nil
 }
 
-// Configuration functions for each test case
-func testAccCheckIdentityProviderLiveConfig(endpoint, identityProviderResourceLabel, identityProviderDisplayName, apiKey, apiSecret string) string {
+// Configuration function for the initial create step
+func testAccCheckIdentityProviderLiveConfig(endpoint, resourceLabel, displayName, description, issuer, jwksUri, apiKey, apiSecret string) string {
 	return fmt.Sprintf(`
 	provider "confluent" {
-		endpoint 			= "%s"
-		cloud_api_key 		= "%s"
-		cloud_api_secret 	= "%s"
+		endpoint         = "%s"
+		cloud_api_key    = "%s"
+		cloud_api_secret = "%s"
 	}
 
 	resource "confluent_identity_provider" "%s" {
 		display_name = "%s"
-		description = "Test identity provider for live testing"
-		issuer = "https://login.microsoftonline.com/common/discovery/v2.0"
-		jwks_uri = "https://login.microsoftonline.com/common/discovery/v2.0/keys"
+		description  = "%s"
+		issuer       = "%s"
+		jwks_uri     = "%s"
 	}
-	`, endpoint, apiKey, apiSecret, identityProviderResourceLabel, identityProviderDisplayName)
+	`, endpoint, apiKey, apiSecret, resourceLabel, displayName, description, issuer, jwksUri)
+}
+
+// Configuration function for the update step, including the optional identity_claim
+func testAccCheckIdentityProviderLiveConfigWithUpdate(endpoint, resourceLabel, displayName, description, issuer, jwksUri, identityClaim, apiKey, apiSecret string) string {
+	return fmt.Sprintf(`
+	provider "confluent" {
+		endpoint         = "%s"
+		cloud_api_key    = "%s"
+		cloud_api_secret = "%s"
+	}
+
+	resource "confluent_identity_provider" "%s" {
+		display_name   = "%s"
+		description    = "%s"
+		issuer         = "%s"
+		jwks_uri       = "%s"
+		identity_claim = "%s"
+	}
+	`, endpoint, apiKey, apiSecret, resourceLabel, displayName, description, issuer, jwksUri, identityClaim)
 }
