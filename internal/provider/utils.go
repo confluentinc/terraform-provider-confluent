@@ -32,6 +32,7 @@ import (
 	"strings"
 	"time"
 
+	tableflow "github.com/confluentinc/ccloud-sdk-go-v2-internal/tableflow/v1"
 	apikeys "github.com/confluentinc/ccloud-sdk-go-v2/apikeys/v2"
 	byok "github.com/confluentinc/ccloud-sdk-go-v2/byok/v1"
 	cam "github.com/confluentinc/ccloud-sdk-go-v2/cam/v1"
@@ -63,7 +64,6 @@ import (
 	schemaregistry "github.com/confluentinc/ccloud-sdk-go-v2/schema-registry/v1"
 	srcm "github.com/confluentinc/ccloud-sdk-go-v2/srcm/v3"
 	"github.com/confluentinc/ccloud-sdk-go-v2/sso/v2"
-	tableflow "github.com/confluentinc/ccloud-sdk-go-v2/tableflow/v1"
 	"github.com/dghubble/sling"
 	"github.com/google/uuid"
 	"github.com/hashicorp/go-cty/cty"
