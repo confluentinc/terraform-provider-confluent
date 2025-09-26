@@ -327,20 +327,9 @@ func readSchemaExporterAndSetAttributes(ctx context.Context, d *schema.ResourceD
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Schema Exporter %q: %s", id, exporterJson), map[string]interface{}{schemaExporterLoggingKey: id})
 
-	tflog.Debug(ctx, fmt.Sprintf("Reading Schema Exporter Status %q", name))
-	status, resp, err := c.apiClient.ExportersV1Api.GetExporterStatusByName(c.apiContext(ctx), name).Execute()
-	if err != nil {
-		return nil, fmt.Errorf("error creating Schema Exporter Status: %s", createDescriptiveError(err, resp))
-	}
-	if status.GetState() == stateRunning {
-		if err := d.Set(paramStatus, stateRunning); err != nil {
-			return nil, err
-		}
-	}
-	if status.GetState() == statePaused {
-		if err := d.Set(paramStatus, statePaused); err != nil {
-			return nil, err
-		}
+	// Read and set the Schema Exporter status with a different API call
+	if err := readSchemaExporterStatusAndSetAttributes(ctx, d, c, id, name); err != nil {
+		return nil, err
 	}
 
 	if _, err := setSchemaExporterAttributes(d, clusterId, exporter, c, meta); err != nil {
@@ -561,18 +550,48 @@ func setSchemaExporterAttributes(d *schema.ResourceData, clusterId string, expor
 	}
 
 	configs := exporter.GetConfig()
+	if err := setDestinationSchemaRegistryClusterAttributes(d, configs, meta.(*Client).isOAuthEnabled); err != nil {
+		return nil, err
+	}
+
+	removeSensitiveInfoFromConfigs(configs, standardConfigs, oauthBearConfigs)
+	if err := d.Set(paramConfigs, configs); err != nil {
+		return nil, err
+	}
+
+	d.SetId(createExporterId(clusterId, exporter.GetName()))
+	return d, nil
+}
+
+func readSchemaExporterStatusAndSetAttributes(ctx context.Context, d *schema.ResourceData, c *SchemaRegistryRestClient, id, name string) error {
+	tflog.Debug(ctx, fmt.Sprintf("Reading Schema Exporter Status %q", name))
+	status, resp, err := c.apiClient.ExportersV1Api.GetExporterStatusByName(c.apiContext(ctx), name).Execute()
+	if err != nil {
+		return fmt.Errorf("error reading Schema Exporter %q Status: %s", id, createDescriptiveError(err, resp))
+	}
+	switch state := status.GetState(); state {
+	case stateRunning, statePaused:
+		// valid states at this point
+		if err := d.Set(paramStatus, state); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func setDestinationSchemaRegistryClusterAttributes(d *schema.ResourceData, configs map[string]string, isOAuthEnabled bool) error {
 	destinationClusterId := configs[bearerAuthLogicalCluster]
 	destinationClusterEndpoint := configs[schemaRegistryUrlConfig]
 	destinationSRClusterApiKey := extractStringValueFromNestedBlock(d, paramDestinationSchemaRegistryCluster, paramCredentials, paramKey)
 	destinationSRClusterApiSecret := extractStringValueFromNestedBlock(d, paramDestinationSchemaRegistryCluster, paramCredentials, paramSecret)
 
-	if meta.(*Client).isOAuthEnabled {
+	if isOAuthEnabled {
 		if err := d.Set(paramDestinationSchemaRegistryCluster, []interface{}{map[string]interface{}{
 			paramId:           destinationClusterId,
 			paramRestEndpoint: destinationClusterEndpoint,
 		},
 		}); err != nil {
-			return nil, err
+			return err
 		}
 	} else {
 		if err := d.Set(paramDestinationSchemaRegistryCluster, []interface{}{map[string]interface{}{
@@ -582,25 +601,18 @@ func setSchemaExporterAttributes(d *schema.ResourceData, clusterId string, expor
 				paramSecret: destinationSRClusterApiSecret,
 			}},
 		}}); err != nil {
-			return nil, err
+			return err
 		}
 	}
+	return nil
+}
 
-	// Remove the API key/secret authentication related configs from the user provided configs
-	for _, key := range standardConfigs {
-		delete(configs, key)
+func removeSensitiveInfoFromConfigs(configs map[string]string, keysGroupToRemove ...[]string) {
+	for _, group := range keysGroupToRemove {
+		for _, key := range group {
+			delete(configs, key)
+		}
 	}
-	// Remove the OAuth authentication related configs from the user provided configs
-	for _, key := range oauthBearConfigs {
-		delete(configs, key)
-	}
-
-	if err := d.Set(paramConfigs, configs); err != nil {
-		return nil, err
-	}
-
-	d.SetId(createExporterId(clusterId, exporter.GetName()))
-	return d, nil
 }
 
 func createExporterId(clusterId, exporterName string) string {
