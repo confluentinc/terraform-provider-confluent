@@ -205,7 +205,7 @@ func TestAccAccessPointAwsPrivateNetworkInterface(t *testing.T) {
 	// nolint:errcheck
 	defer wiremockClient.ResetAllScenarios()
 
-	createAccessPointResponse, _ := os.ReadFile("../testdata/network_access_point/read_created_aws_private_network_interface_ap.json") // private network interface has no status, so we can use the same json file for create and read
+	createAccessPointResponse, _ := os.ReadFile("../testdata/network_access_point/create_aws_private_network_interface_ap.json") // private network interface has no status, so we can use the same json file for create and read
 	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(accessPointUrlPath)).
 		InScenario(awsPrivateNetworkInterfaceAccessPointScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
