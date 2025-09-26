@@ -26,9 +26,12 @@ import (
 )
 
 const (
-	scenarioStateAccessPointIsProvisioning            = "The new access point is provisioning"
-	scenarioStateAccessPointHasBeenCreated            = "The new access point has been just created"
-	scenarioStateAccessPointHasBeenUpdated            = "The new access point has been updated"
+	scenarioStateAccessPointIsProvisioning   = "The new access point is provisioning"
+	scenarioStateAccessPointHasBeenCreated   = "The new access point has been just created"
+	scenarioStateAccessPointHasBeenUpdated   = "The new access point has been updated"
+	scenarioStateAccessPointIsDeprovisioning = "The new access point is deprovisioning"
+	scenarioStateAccessPointHasBeenDeleted   = "The new access point's deletion has been just completed"
+
 	awsEgressAccessPointScenarioName                  = "confluent_access_point Aws Egress Private Link Endpoint Resource Lifecycle"
 	awsPrivateNetworkInterfaceAccessPointScenarioName = "confluent_access_point Aws Private Network Interface Endpoint Resource Lifecycle"
 	azureEgressAccessPointScenarioName                = "confluent_access_point Azure Egress Private Link Endpoint Resource Lifecycle"
@@ -110,10 +113,33 @@ func TestAccAccessPointAwsEgressPrivateLinkEndpoint(t *testing.T) {
 
 	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(accessPointReadUrlPath)).
 		InScenario(awsEgressAccessPointScenarioName).
+		WhenScenarioStateIs(scenarioStateAccessPointHasBeenUpdated).
+		WillSetStateTo(scenarioStateAccessPointIsDeprovisioning).
 		WillReturn(
 			"",
 			contentTypeJSONHeader,
 			http.StatusNoContent,
+		))
+
+	readDeprovisioningAccessPointResponse, _ := os.ReadFile("../testdata/network_access_point/read_deprovisioning_aws_egress_ap.json")
+	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(accessPointReadUrlPath)).
+		InScenario(awsEgressAccessPointScenarioName).
+		WhenScenarioStateIs(scenarioStateAccessPointIsDeprovisioning).
+		WillSetStateTo(scenarioStateAccessPointHasBeenDeleted).
+		WillReturn(
+			string(readDeprovisioningAccessPointResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	readDeletedAccessPointResponse, _ := os.ReadFile("../testdata/network_access_point/read_deleted_aws_egress_ap.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(accessPointReadUrlPath)).
+		InScenario(awsEgressAccessPointScenarioName).
+		WhenScenarioStateIs(scenarioStateAccessPointHasBeenDeleted).
+		WillReturn(
+			string(readDeletedAccessPointResponse),
+			contentTypeJSONHeader,
+			http.StatusNotFound,
 		))
 
 	resource.Test(t, resource.TestCase{
@@ -179,7 +205,7 @@ func TestAccAccessPointAwsPrivateNetworkInterface(t *testing.T) {
 	// nolint:errcheck
 	defer wiremockClient.ResetAllScenarios()
 
-	createAccessPointResponse, _ := os.ReadFile("../testdata/network_access_point/read_created_aws_private_network_interface_ap.json") // private network interface has no status, so we can use the same json file for create and read
+	createAccessPointResponse, _ := os.ReadFile("../testdata/network_access_point/create_aws_private_network_interface_ap.json") // private network interface has no status, so we can use the same json file for create and read
 	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(accessPointUrlPath)).
 		InScenario(awsPrivateNetworkInterfaceAccessPointScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
@@ -234,10 +260,33 @@ func TestAccAccessPointAwsPrivateNetworkInterface(t *testing.T) {
 
 	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(accessPointReadUrlPath)).
 		InScenario(awsPrivateNetworkInterfaceAccessPointScenarioName).
+		WhenScenarioStateIs(scenarioStateAccessPointHasBeenUpdated).
+		WillSetStateTo(scenarioStateAccessPointIsDeprovisioning).
 		WillReturn(
 			"",
 			contentTypeJSONHeader,
 			http.StatusNoContent,
+		))
+
+	readDeprovisioningAccessPointResponse, _ := os.ReadFile("../testdata/network_access_point/read_deprovisioning_aws_private_network_interface_ap.json")
+	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(accessPointReadUrlPath)).
+		InScenario(awsPrivateNetworkInterfaceAccessPointScenarioName).
+		WhenScenarioStateIs(scenarioStateAccessPointIsDeprovisioning).
+		WillSetStateTo(scenarioStateAccessPointHasBeenDeleted).
+		WillReturn(
+			string(readDeprovisioningAccessPointResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	readDeletedAccessPointResponse, _ := os.ReadFile("../testdata/network_access_point/read_deleted_aws_private_network_interface_ap.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(accessPointReadUrlPath)).
+		InScenario(awsPrivateNetworkInterfaceAccessPointScenarioName).
+		WhenScenarioStateIs(scenarioStateAccessPointHasBeenDeleted).
+		WillReturn(
+			string(readDeletedAccessPointResponse),
+			contentTypeJSONHeader,
+			http.StatusNotFound,
 		))
 
 	resource.Test(t, resource.TestCase{
@@ -360,10 +409,33 @@ func TestAccAccessPointAzureEgressPrivateLinkEndpoint(t *testing.T) {
 
 	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(accessPointReadUrlPath)).
 		InScenario(azureEgressAccessPointScenarioName).
+		WhenScenarioStateIs(scenarioStateAccessPointHasBeenUpdated).
+		WillSetStateTo(scenarioStateAccessPointIsDeprovisioning).
 		WillReturn(
 			"",
 			contentTypeJSONHeader,
 			http.StatusNoContent,
+		))
+
+	readDeprovisioningAccessPointResponse, _ := os.ReadFile("../testdata/network_access_point/read_deprovisioning_azure_egress_ap.json")
+	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(accessPointReadUrlPath)).
+		InScenario(azureEgressAccessPointScenarioName).
+		WhenScenarioStateIs(scenarioStateAccessPointIsDeprovisioning).
+		WillSetStateTo(scenarioStateAccessPointHasBeenDeleted).
+		WillReturn(
+			string(readDeprovisioningAccessPointResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	readDeletedAccessPointResponse, _ := os.ReadFile("../testdata/network_access_point/read_deleted_azure_egress_ap.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(accessPointReadUrlPath)).
+		InScenario(azureEgressAccessPointScenarioName).
+		WhenScenarioStateIs(scenarioStateAccessPointHasBeenDeleted).
+		WillReturn(
+			string(readDeletedAccessPointResponse),
+			contentTypeJSONHeader,
+			http.StatusNotFound,
 		))
 
 	resource.Test(t, resource.TestCase{
@@ -494,10 +566,33 @@ func TestAccAccessPointGcpEgressPrivateServiceConnectEndpoint(t *testing.T) {
 
 	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(accessPointReadUrlPath)).
 		InScenario(gcpEgressAccessPointScenarioName).
+		WhenScenarioStateIs(scenarioStateAccessPointHasBeenUpdated).
+		WillSetStateTo(scenarioStateAccessPointIsDeprovisioning).
 		WillReturn(
 			"",
 			contentTypeJSONHeader,
 			http.StatusNoContent,
+		))
+
+	readDeprovisioningAccessPointResponse, _ := os.ReadFile("../testdata/network_access_point/read_deprovisioning_gcp_egress_ap.json")
+	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(accessPointReadUrlPath)).
+		InScenario(gcpEgressAccessPointScenarioName).
+		WhenScenarioStateIs(scenarioStateAccessPointIsDeprovisioning).
+		WillSetStateTo(scenarioStateAccessPointHasBeenDeleted).
+		WillReturn(
+			string(readDeprovisioningAccessPointResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	readDeletedAccessPointResponse, _ := os.ReadFile("../testdata/network_access_point/read_deleted_gcp_egress_ap.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(accessPointReadUrlPath)).
+		InScenario(gcpEgressAccessPointScenarioName).
+		WhenScenarioStateIs(scenarioStateAccessPointHasBeenDeleted).
+		WillReturn(
+			string(readDeletedAccessPointResponse),
+			contentTypeJSONHeader,
+			http.StatusNotFound,
 		))
 
 	resource.Test(t, resource.TestCase{
