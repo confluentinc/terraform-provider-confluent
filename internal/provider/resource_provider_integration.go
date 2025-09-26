@@ -124,6 +124,9 @@ func providerIntegrationCreate(ctx context.Context, d *schema.ResourceData, meta
 			Kind:               AwsIntegrationConfigKind,
 			CustomerIamRoleArn: pi.PtrString(extractStringValueFromBlock(d, paramAws, paramCustomerRoleArn)),
 		}
+		
+		// Add deprecation warning for AWS provider integration v1
+		tflog.Warn(ctx, "⚠️  DEPRECATION NOTICE: The confluent_provider_integration resource for AWS will be deprecated in Q4 2025. Please prepare to migrate to the new confluent_provider_integration_setup resource when AWS support becomes available.")
 	} else {
 		return diag.Errorf("None of %q block was provided for confluent_provider_integration resource", paramAws)
 	}
@@ -164,8 +167,24 @@ func providerIntegrationRead(ctx context.Context, d *schema.ResourceData, meta i
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
 	tflog.Debug(ctx, fmt.Sprintf("Reading provider integration resource %q", pimId), map[string]interface{}{providerIntegrationLoggingKey: pimId})
 
-	if _, err := readProviderIntegrationAndSetAttributes(ctx, d, meta, environmentId, pimId); err != nil {
+	result, err := readProviderIntegrationAndSetAttributes(ctx, d, meta, environmentId, pimId)
+	if err != nil {
 		return diag.FromErr(fmt.Errorf("error reading provider integration %q: %s", pimId, createDescriptiveError(err)))
+	}
+
+	// Check if this is an AWS integration and add deprecation warning
+	if result != nil && len(result) > 0 {
+		// Get the AWS config to determine if this is AWS
+		awsConfigs := d.Get(paramAws).([]interface{})
+		if len(awsConfigs) > 0 {
+			return diag.Diagnostics{
+				{
+					Severity: diag.Warning,
+					Summary:  "⚠️  Deprecation Notice",
+					Detail:   "The confluent_provider_integration resource for AWS will be deprecated in Q4 2025. Please prepare to migrate to the new confluent_provider_integration_setup resource when AWS support becomes available.",
+				},
+			}
+		}
 	}
 
 	return nil
@@ -232,6 +251,11 @@ func readProviderIntegrationAndSetAttributes(ctx context.Context, d *schema.Reso
 
 	if _, err := setProviderIntegrationAttributes(d, pim); err != nil {
 		return nil, createDescriptiveError(err)
+	}
+
+	// Add deprecation warning for AWS provider integration v1
+	if pim.GetProvider() == "aws" {
+		tflog.Warn(ctx, "⚠️  DEPRECATION NOTICE: The confluent_provider_integration resource for AWS will be deprecated in Q4 2025. Please prepare to migrate to the new confluent_provider_integration_setup resource when AWS support becomes available.")
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished reading provider integration %q", id), map[string]interface{}{providerIntegrationLoggingKey: d.Id()})
