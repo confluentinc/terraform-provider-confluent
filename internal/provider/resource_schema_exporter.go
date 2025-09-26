@@ -39,17 +39,25 @@ const (
 	paramSubjects                         = "subjects"
 	paramResetOnUpdate                    = "reset_on_update"
 	paramResetOnUpdateDefaultValue        = false
-	paramBasicAuthCredentialsSource       = "basic_auth_credentials_source"
 	paramBasicAuthCredentialsSourceValue  = "USER_INFO"
 	paramDestinationSchemaRegistryCluster = "destination_schema_registry_cluster"
 	basicAuthCredentialsSourceConfig      = "basic.auth.credentials.source"
 	schemaRegistryUrlConfig               = "schema.registry.url"
 	basicAuthUserInfoConfig               = "basic.auth.user.info"
 
+	bearerAuthClientId          = "bearer.auth.client.id"
+	bearerAuthClientSecret      = "bearer.auth.client.secret"
+	bearerAuthIssuerEndpointUrl = "bearer.auth.issuer.endpoint.url"
+	bearerAuthCredentialsSource = "bearer.auth.credentials.source"
+	bearerAuthScope             = "bearer.auth.scope"
+	bearerAuthIdentityPoolId    = "bearer.auth.identity.pool.id"
+	bearerAuthLogicalCluster    = "bearer.auth.logical.cluster"
+
 	schemaExporterAPICreateTimeout = 12 * time.Hour
 )
 
 var standardConfigs = []string{basicAuthUserInfoConfig, schemaRegistryUrlConfig, basicAuthCredentialsSourceConfig}
+var oauthBearConfigs = []string{bearerAuthClientId, bearerAuthClientSecret, bearerAuthIssuerEndpointUrl, bearerAuthCredentialsSource, bearerAuthScope, bearerAuthIdentityPoolId, bearerAuthLogicalCluster, configOAuthBearer}
 
 func schemaExporterResource() *schema.Resource {
 	return &schema.Resource{
@@ -132,13 +140,29 @@ func destinationSchemaRegistryClusterBlockSchema() *schema.Schema {
 		Required: true,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
+				paramId: {
+					Type:         schema.TypeString,
+					Optional:     true,
+					ForceNew:     true,
+					Computed:     true,
+					ValidateFunc: validation.StringIsNotEmpty,
+					DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+						// During API key -> OAuth migration, ignore diffs on id as it is not required for API key/secret authentication
+						// In this scenario, resource should not be recreated
+						if old == "" && new != "" {
+							return true
+						}
+						return false
+					},
+					Description: "The ID of the destination Schema Registry cluster. Required when using OAuth authentication.",
+				},
 				paramRestEndpoint: {
 					Type:     schema.TypeString,
 					Required: true,
 				},
 				paramCredentials: {
 					Type:      schema.TypeList,
-					Required:  true,
+					Optional:  true,
 					MinItems:  1,
 					MaxItems:  1,
 					Sensitive: true,
@@ -164,10 +188,29 @@ func destinationSchemaRegistryClusterBlockSchema() *schema.Schema {
 	}
 }
 
-func constructDestinationSRClusterRequest(d *schema.ResourceData) map[string]string {
+func constructDestinationSRClusterRequest(d *schema.ResourceData, meta interface{}) map[string]string {
+	client := meta.(*Client)
 	configs := convertToStringStringMap(d.Get(paramConfigs).(map[string]interface{}))
-	configs[basicAuthCredentialsSourceConfig] = paramBasicAuthCredentialsSourceValue
 	configs[schemaRegistryUrlConfig] = extractStringValueFromBlock(d, paramDestinationSchemaRegistryCluster, paramRestEndpoint)
+
+	// OAuth specific configurations
+	if client.isOAuthEnabled {
+		// Extract OAuth token details from the meta client
+		configs[bearerAuthClientId] = client.oauthToken.ClientId
+		configs[bearerAuthClientSecret] = client.oauthToken.ClientSecret
+		configs[bearerAuthIssuerEndpointUrl] = client.oauthToken.TokenUrl
+		configs[bearerAuthCredentialsSource] = configOAuthBearer
+		configs[bearerAuthIdentityPoolId] = client.oauthToken.IdentityPoolId
+		configs[bearerAuthLogicalCluster] = extractStringValueFromBlock(d, paramDestinationSchemaRegistryCluster, paramId)
+		// The Scope field is optional for Okta, but required for Azure Entra ID
+		// setting arbitrary values may cause exporter exception from backend service
+		if client.oauthToken.Scope != "" {
+			configs[bearerAuthScope] = client.oauthToken.Scope
+		}
+		return configs
+	}
+
+	configs[basicAuthCredentialsSourceConfig] = paramBasicAuthCredentialsSourceValue
 	destinationSRClusterApiKey := extractStringValueFromNestedBlock(d, paramDestinationSchemaRegistryCluster, paramCredentials, paramKey)
 	destinationSRClusterApiSecret := extractStringValueFromNestedBlock(d, paramDestinationSchemaRegistryCluster, paramCredentials, paramSecret)
 	configs[basicAuthUserInfoConfig] = fmt.Sprintf("%s:%s", destinationSRClusterApiKey, destinationSRClusterApiSecret)
@@ -205,7 +248,7 @@ func schemaExporterCreate(ctx context.Context, d *schema.ResourceData, meta inte
 		er.SetSubjectRenameFormat(v)
 	}
 	er.SetSubjects(subjects)
-	er.SetConfig(constructDestinationSRClusterRequest(d))
+	er.SetConfig(constructDestinationSRClusterRequest(d, meta))
 
 	request := c.apiClient.ExportersV1Api.RegisterExporter(c.apiContext(ctx)).ExporterReference(*er)
 	requestJson, err := json.Marshal(request)
@@ -300,7 +343,7 @@ func readSchemaExporterAndSetAttributes(ctx context.Context, d *schema.ResourceD
 		}
 	}
 
-	if _, err := setSchemaExporterAttributes(d, clusterId, exporter, c); err != nil {
+	if _, err := setSchemaExporterAttributes(d, clusterId, exporter, c, meta); err != nil {
 		return nil, createDescriptiveError(err)
 	}
 
@@ -359,7 +402,7 @@ func schemaExporterUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 			req.SetSubjectRenameFormat(v)
 		}
 		req.SetSubjects(subjects)
-		req.SetConfig(constructDestinationSRClusterRequest(d))
+		req.SetConfig(constructDestinationSRClusterRequest(d, meta))
 
 		request := c.apiClient.ExportersV1Api.UpdateExporterInfo(c.apiContext(ctx), name).ExporterUpdateRequest(*req)
 		requestJson, err := json.Marshal(request)
@@ -488,7 +531,7 @@ func schemaExporterImport(ctx context.Context, d *schema.ResourceData, meta inte
 	return []*schema.ResourceData{d}, nil
 }
 
-func setSchemaExporterAttributes(d *schema.ResourceData, clusterId string, exporter sr.ExporterReference, c *SchemaRegistryRestClient) (*schema.ResourceData, error) {
+func setSchemaExporterAttributes(d *schema.ResourceData, clusterId string, exporter sr.ExporterReference, c *SchemaRegistryRestClient, meta interface{}) (*schema.ResourceData, error) {
 	if !c.isMetadataSetInProviderBlock {
 		if err := setKafkaCredentials(c.clusterApiKey, c.clusterApiSecret, d, c.externalAccessToken != nil); err != nil {
 			return nil, err
@@ -518,21 +561,40 @@ func setSchemaExporterAttributes(d *schema.ResourceData, clusterId string, expor
 	}
 
 	configs := exporter.GetConfig()
+	destinationClusterId := configs[bearerAuthLogicalCluster]
+	destinationClusterEndpoint := configs[schemaRegistryUrlConfig]
 	destinationSRClusterApiKey := extractStringValueFromNestedBlock(d, paramDestinationSchemaRegistryCluster, paramCredentials, paramKey)
 	destinationSRClusterApiSecret := extractStringValueFromNestedBlock(d, paramDestinationSchemaRegistryCluster, paramCredentials, paramSecret)
-	if err := d.Set(paramDestinationSchemaRegistryCluster, []interface{}{map[string]interface{}{
-		paramRestEndpoint: configs[schemaRegistryUrlConfig],
-		paramCredentials: []interface{}{map[string]interface{}{
-			paramKey:    destinationSRClusterApiKey,
-			paramSecret: destinationSRClusterApiSecret,
-		}},
-	}}); err != nil {
-		return nil, err
+
+	if meta.(*Client).isOAuthEnabled {
+		if err := d.Set(paramDestinationSchemaRegistryCluster, []interface{}{map[string]interface{}{
+			paramId:           destinationClusterId,
+			paramRestEndpoint: destinationClusterEndpoint,
+		},
+		}); err != nil {
+			return nil, err
+		}
+	} else {
+		if err := d.Set(paramDestinationSchemaRegistryCluster, []interface{}{map[string]interface{}{
+			paramRestEndpoint: destinationClusterEndpoint,
+			paramCredentials: []interface{}{map[string]interface{}{
+				paramKey:    destinationSRClusterApiKey,
+				paramSecret: destinationSRClusterApiSecret,
+			}},
+		}}); err != nil {
+			return nil, err
+		}
 	}
 
+	// Remove the API key/secret authentication related configs from the user provided configs
 	for _, key := range standardConfigs {
 		delete(configs, key)
 	}
+	// Remove the OAuth authentication related configs from the user provided configs
+	for _, key := range oauthBearConfigs {
+		delete(configs, key)
+	}
+
 	if err := d.Set(paramConfigs, configs); err != nil {
 		return nil, err
 	}
