@@ -57,6 +57,7 @@ const (
 )
 
 var standardConfigs = []string{basicAuthUserInfoConfig, schemaRegistryUrlConfig, basicAuthCredentialsSourceConfig}
+var oauthBearConfigs = []string{bearerAuthClientId, bearerAuthClientSecret, bearerAuthIssuerEndpointUrl, bearerAuthCredentialsSource, bearerAuthScope, bearerAuthIdentityPoolId, bearerAuthLogicalCluster, configOAuthBearer}
 
 func schemaExporterResource() *schema.Resource {
 	return &schema.Resource{
@@ -143,8 +144,17 @@ func destinationSchemaRegistryClusterBlockSchema() *schema.Schema {
 					Type:         schema.TypeString,
 					Optional:     true,
 					ForceNew:     true,
+					Computed:     true,
 					ValidateFunc: validation.StringIsNotEmpty,
-					Description:  "The ID of the destination Schema Registry cluster. Required when using OAuth authentication.",
+					DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+						// During API key -> OAuth migration, ignore diffs on id as it is not required for API key/secret authentication
+						// In this scenario, resource should not be recreated
+						if old == "" && new != "" {
+							return true
+						}
+						return false
+					},
+					Description: "The ID of the destination Schema Registry cluster. Required when using OAuth authentication.",
 				},
 				paramRestEndpoint: {
 					Type:     schema.TypeString,
@@ -576,9 +586,15 @@ func setSchemaExporterAttributes(d *schema.ResourceData, clusterId string, expor
 		}
 	}
 
+	// Remove the API key/secret authentication related configs from the user provided configs
 	for _, key := range standardConfigs {
 		delete(configs, key)
 	}
+	// Remove the OAuth authentication related configs from the user provided configs
+	for _, key := range oauthBearConfigs {
+		delete(configs, key)
+	}
+
 	if err := d.Set(paramConfigs, configs); err != nil {
 		return nil, err
 	}

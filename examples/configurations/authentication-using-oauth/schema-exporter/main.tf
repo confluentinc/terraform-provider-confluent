@@ -1,9 +1,8 @@
 terraform {
   required_providers {
     confluent = {
-      # source  = "confluentinc/confluent"
-      # version = "2.41.0"
-      source = "terraform.confluent.io/confluentinc/confluent"
+      source  = "confluentinc/confluent"
+      version = "2.42.0"
     }
   }
 }
@@ -11,7 +10,7 @@ terraform {
 provider "confluent" {
   oauth {
     oauth_external_token_url = var.oauth_external_token_url
-    oauth_external_client_id  = var.oauth_external_client_id
+    oauth_external_client_id = var.oauth_external_client_id
     oauth_external_client_secret = var.oauth_external_client_secret
     oauth_external_token_scope = var.oauth_external_token_scope
     oauth_identity_pool_id = var.oauth_identity_pool_id

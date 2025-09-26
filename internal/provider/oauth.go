@@ -230,8 +230,15 @@ func validateCurrentSTSOAuthToken(ctx context.Context, token *STSToken) bool {
 	return true
 }
 
-func resourceCredentialBlockValidationWithOAuth(_ context.Context, diff *schema.ResourceDiff, meta interface{}) error {
+func resourceCredentialBlockValidationWithOAuth(ctx context.Context, diff *schema.ResourceDiff, meta interface{}) error {
 	if meta.(*Client).isOAuthEnabled && diff.HasChange(paramCredentials) {
+		// When migrating from API key/secret to OAuth authentication
+		// `oldValue` in the TF state is non-empty slice, `newValue` in the TF config file is empty slice (not `nil`)
+		oldValue, newValue := diff.GetChange(paramCredentials)
+		if interfaceToSliceLen(oldValue) > 0 && interfaceToSliceLen(newValue) == 0 {
+			tflog.Debug(ctx, fmt.Sprintf("resource credentials block removed, OAuth is enabled in the provider"))
+			return nil
+		}
 		return fmt.Errorf("error: please remove resource credentials block when OAuth is enabled")
 	}
 	return nil
@@ -247,4 +254,11 @@ func dataSourceCredentialBlockValidationWithOAuth(d *schema.ResourceData, oauthE
 		}
 	}
 	return nil
+}
+
+func interfaceToSliceLen(v interface{}) int {
+	if list, ok := v.([]interface{}); ok {
+		return len(list)
+	}
+	return 0
 }
