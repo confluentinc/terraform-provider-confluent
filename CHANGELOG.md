@@ -1,3 +1,11 @@
+## 2.43.0 (September 29nd, 2025)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.42.0...v2.43.0)
+
+**Bug Fixes:**
+* Added `oauth` authentication support for the `confluent_schema_exporter` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema_exporter).
+* Updated the `confluent_kafka_topic` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_topic) to support in-place update for the `rest_endpoint` attribute.
+
 ## 2.42.0 (September 22nd, 2025)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.41.0...v2.42.0)
