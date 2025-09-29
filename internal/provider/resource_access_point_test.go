@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -686,6 +687,35 @@ func TestAccAccessPointGcpEgressPrivateServiceConnectEndpoint(t *testing.T) {
 	})
 }
 
+func TestAccAccessPoint_InvalidConfig(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccCheckResourceAccessPointInvalidConfig(),
+				ExpectError: regexp.MustCompile(`Invalid combination of arguments`),
+			},
+		},
+	})
+}
+
+func TestAccAccessPoint_InvalidImportFormat(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:        testAccCheckResourceAccessPointAwsEgressWithIdSet("http://localhost:8080", "test-ap"),
+				ResourceName:  accessPointResourceLabel,
+				ImportState:   true,
+				ImportStateId: "invalid-format",
+				ExpectError:   regexp.MustCompile(`error importing Access Point: invalid format: expected '<env ID>/<Access Point ID>'`),
+			},
+		},
+	})
+}
+
 func testAccCheckResourceAccessPointAwsEgressWithIdSet(mockServerUrl, name string) string {
 	return fmt.Sprintf(`
     provider "confluent" {
@@ -770,4 +800,19 @@ func testAccCheckResourceAccessPointGcpEgressWithIdSet(mockServerUrl, name strin
   		}
 	}
 	`, mockServerUrl, name)
+}
+
+func testAccCheckResourceAccessPointInvalidConfig() string {
+	return `
+	resource "confluent_access_point" "main" {
+		display_name = "invalid-ap"
+		environment {
+			id = "env-abc123"
+		}
+		gateway {
+			id = "gw-abc123"
+		}
+		// No endpoint configuration blocks provided - this should trigger error
+	}
+	`
 }

@@ -282,7 +282,7 @@ func accessPointCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 		}
 		spec.SetConfig(config)
 	} else {
-		return diag.Errorf("None of %q, %q, %q blocks was provided for confluent_access_point resource", paramAwsEgressPrivateLinkEndpoint, paramAzureEgressPrivateLinkEndpoint, paramAwsPrivateNetworkInterface)
+		return diag.Errorf("None of %q, %q, %q, %q blocks was provided for confluent_access_point resource", paramAwsEgressPrivateLinkEndpoint, paramAzureEgressPrivateLinkEndpoint, paramGcpEgressPrivateServiceConnectEndpoint, paramAwsPrivateNetworkInterface)
 	}
 
 	createAccessPointRequest := netap.NetworkingV1AccessPoint{Spec: spec}
