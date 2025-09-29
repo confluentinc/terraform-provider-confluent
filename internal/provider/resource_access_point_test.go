@@ -22,6 +22,7 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/walkerus/go-wiremock"
 )
 
@@ -184,6 +185,17 @@ func TestAccAccessPointAwsEgressPrivateLinkEndpoint(t *testing.T) {
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_egress_private_link_endpoint.0.vpc_endpoint_dns_name", "*.vpce-00000000000000000-abcd1234.s3.us-west-2.vpce.amazonaws.com"),
 				),
 			},
+			{
+				ResourceName: accessPointResourceLabel,
+				ImportStateIdFunc: func(state *terraform.State) (string, error) {
+					resources := state.RootModule().Resources
+					accessPointId := resources[accessPointResourceLabel].Primary.ID
+					environmentId := resources[accessPointResourceLabel].Primary.Attributes["environment.0.id"]
+					return environmentId + "/" + accessPointId, nil
+				},
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }
@@ -332,6 +344,17 @@ func TestAccAccessPointAwsPrivateNetworkInterface(t *testing.T) {
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_private_network_interface.0.network_interfaces.1", "eni-00000000000000001"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_private_network_interface.0.account", "000000000000"),
 				),
+			},
+			{
+				ResourceName: accessPointResourceLabel,
+				ImportStateIdFunc: func(state *terraform.State) (string, error) {
+					resources := state.RootModule().Resources
+					accessPointId := resources[accessPointResourceLabel].Primary.ID
+					environmentId := resources[accessPointResourceLabel].Primary.Attributes["environment.0.id"]
+					return environmentId + "/" + accessPointId, nil
+				},
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -490,6 +513,17 @@ func TestAccAccessPointAzureEgressPrivateLinkEndpoint(t *testing.T) {
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "azure_egress_private_link_endpoint.0.private_endpoint_custom_dns_config_domains.1", "dbname-region.database.windows.net"),
 				),
 			},
+			{
+				ResourceName: accessPointResourceLabel,
+				ImportStateIdFunc: func(state *terraform.State) (string, error) {
+					resources := state.RootModule().Resources
+					accessPointId := resources[accessPointResourceLabel].Primary.ID
+					environmentId := resources[accessPointResourceLabel].Primary.Attributes["environment.0.id"]
+					return environmentId + "/" + accessPointId, nil
+				},
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }
@@ -636,6 +670,17 @@ func TestAccAccessPointGcpEgressPrivateServiceConnectEndpoint(t *testing.T) {
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "gcp_egress_private_service_connect_endpoint.0.private_service_connect_endpoint_ip_address", "10.2.255.255"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "gcp_egress_private_service_connect_endpoint.0.private_service_connect_endpoint_name", "plapstgc493ll4"),
 				),
+			},
+			{
+				ResourceName: accessPointResourceLabel,
+				ImportStateIdFunc: func(state *terraform.State) (string, error) {
+					resources := state.RootModule().Resources
+					accessPointId := resources[accessPointResourceLabel].Primary.ID
+					environmentId := resources[accessPointResourceLabel].Primary.Attributes["environment.0.id"]
+					return environmentId + "/" + accessPointId, nil
+				},
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
