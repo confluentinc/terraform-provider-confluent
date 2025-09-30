@@ -70,6 +70,7 @@ func TestAccDataSourceTableflowTopic(t *testing.T) {
 					resource.TestCheckResourceAttr(TableflowTopicResourceName, "byob_aws.0.bucket_region", "us-east-1"),
 					resource.TestCheckResourceAttr(TableflowTopicResourceName, "byob_aws.0.provider_integration_id", "cspi-stgce89r7"),
 					resource.TestCheckResourceAttr(TableflowTopicResourceName, "table_path", "s3://dummy-bucket-name-1//10011010/11101100/org-1/env-2/lkc-3/v1/tableId"),
+					resource.TestCheckResourceAttr(TableflowTopicResourceName, "write_mode", "UPSERT"),
 				),
 			},
 		},

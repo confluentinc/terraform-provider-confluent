@@ -1,3 +1,60 @@
+## 2.43.0 (September 29nd, 2025)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.42.0...v2.43.0)
+
+**Bug Fixes:**
+* Added `oauth` authentication support for the `confluent_schema_exporter` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema_exporter).
+* Updated the `confluent_kafka_topic` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_topic) to support in-place update for the `rest_endpoint` attribute.
+
+## 2.42.0 (September 22nd, 2025)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.41.0...v2.42.0)
+
+**Bug Fixes:**
+* Fixed a nil pointer dereference panic in the createDescriptiveError function.
+
+## 2.41.0 (September 18th, 2025)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.40.0...v2.41.0)
+
+**Bug Fixes:**
+* Fixed the timeout issue for the `confluent_tf_importer` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_tf_importer) when importing huge number of resources.
+* Fixed the Terraform drift issue ([#771](https://github.com/confluentinc/terraform-provider-confluent/issues/771)) for the topic setting `confluent.schema.validation.context.name` for `confluent_kafka_topic` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_topic).
+
+## 2.40.0 (September 11th, 2025)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.39.0...v2.40.0)
+
+**New features:**
+* Added `disable_wait_for_ready` attribute for the `confluent_tag_binding` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_tag_binding) to disable the readiness check.
+* Added `write_mode` read-only attribute for the `confluent_tableflow_topic` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_tableflow_topic) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_tableflow_topic).
+
+**Bug Fixes:**
+* Fixed the Terraform drift issue for the `identity_claim` attribute of the `confluent_identity_provider` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_identity_provider).
+* Updated the error handling mechanism to output detailed error messages.
+* Updated the logging mechanism to output an additional parameter, the request ID, for an improved debugging process.
+
+## 2.39.0 (August 29th, 2025)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.38.0...v2.39.0)
+
+**Bug Fixes:**
+* Fixed a provisioning issue for the `confluent_kafka_cluster` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_cluster).
+
+## 2.38.0 (August 28th, 2025)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.37.0...v2.38.0)
+
+**New Features:**
+* Added support for the `sql.tables.initial-offset-from` property for `confluent_flink_statement` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_flink_statement) to enable seamless Flink statement evolution with automated offset carryover. 
+
+**Bug Fixes:**
+* Fixed an issue in `confluent_role_binding` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_role_binding) that prompts Terraform to recreate the resource unnecessarily.
+* Fixed an issue of `confluent_connect_artifact` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_connect_artifact) failing to provision due to unrecognized statuses.
+
+**Examples:**
+* Updated the [flink-carry-over-offset-between-statements](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/flink-carry-over-offset-between-statements) example.
+
 ## 2.37.0 (August 7th, 2025)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.36.0...v2.37.0)

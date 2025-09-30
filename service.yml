@@ -17,6 +17,32 @@ semaphore:
   branches:
     - master
     - /^v\d+\.\d+\.x$/
+  tasks:
+    - name: "Live Integration Tests - PROD"
+      description: "Run live integration tests against Confluent Cloud with optional resource group filtering"
+      scheduled: true
+      at: "0 1 * * *"
+      branch: master
+      pipeline_file: ".semaphore/live-tests.yml"
+      status: ACTIVE
+      parameters:
+        - name: TF_LIVE_TEST_GROUPS
+          required: false
+          description: "Test groups to run (comma-separated). Leave empty to run all tests."
+          default_value: ""
+          options:
+            - ""
+            - "essential"
+            - "all"
+            - "core"
+            - "kafka"
+            - "connect"
+            - "schema_registry"
+            - "networking"
+            - "flink"
+            - "rbac"
+            - "data_catalog"
+            - "tableflow"
 make:
   enable: true
 sonarqube:

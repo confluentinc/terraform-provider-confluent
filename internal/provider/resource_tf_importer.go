@@ -57,6 +57,8 @@ const (
 	SchemaRegistry
 )
 
+const importerCreateTimeout = 8 * time.Hour
+
 var ImportableResources = []string{
 	// Cloud
 	"confluent_service_account",
@@ -98,6 +100,9 @@ func tfImporterResource() *schema.Resource {
 				Default:  defaultOutputPath,
 			},
 			// TODO: add paramFormat = HCL (default) | JSON?
+		},
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(importerCreateTimeout),
 		},
 	}
 }
@@ -593,7 +598,7 @@ func createHclFileWithHeader(mode ImporterMode) *hclwrite.File {
 	requiredProvidersBlock := tfBlock.Body().AppendNewBlock("required_providers", nil)
 	requiredProvidersBlock.Body().SetAttributeValue("confluent", zclCty.ObjectVal(map[string]zclCty.Value{
 		"source":  zclCty.StringVal("confluentinc/confluent"),
-		"version": zclCty.StringVal("2.37.0"),
+		"version": zclCty.StringVal("2.42.0"),
 	}))
 
 	providerBlock := body.AppendNewBlock("provider", []string{"confluent"})

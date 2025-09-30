@@ -69,6 +69,11 @@ func tableflowTopicDataSource() *schema.Resource {
 				Computed:    true,
 				Description: "The strategy to handle record failures in the Tableflow enabled topic during materialization.",
 			},
+			paramWriteMode: {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Indicates the write mode of the tableflow topic.",
+			},
 			paramKafkaCluster:   requiredKafkaClusterDataSourceSchema(),
 			paramEnvironment:    environmentDataSourceSchema(),
 			paramCredentials:    credentialsSchema(),
@@ -98,9 +103,9 @@ func tableflowTopicDataSourceRead(ctx context.Context, d *schema.ResourceData, m
 	tableflowRestClient := c.tableflowRestClientFactory.CreateTableflowRestClient(tableflowApiKey, tableflowApiSecret, c.isTableflowMetadataSet, c.oauthToken, c.stsToken)
 
 	req := tableflowRestClient.apiClient.TableflowTopicsTableflowV1Api.GetTableflowV1TableflowTopic(tableflowRestClient.apiContext(ctx), tableflowTopicId).Environment(environmentId).SpecKafkaCluster(clusterId)
-	tableflowTopic, _, err := req.Execute()
+	tableflowTopic, resp, err := req.Execute()
 	if err != nil {
-		return diag.Errorf("error reading Tableflow Topic %q: %s", tableflowTopicId, createDescriptiveError(err))
+		return diag.Errorf("error reading Tableflow Topic %q: %s", tableflowTopicId, createDescriptiveError(err, resp))
 	}
 	tableflowTopicJson, err := json.Marshal(tableflowTopic)
 	if err != nil {

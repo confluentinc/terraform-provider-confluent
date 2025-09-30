@@ -41,6 +41,7 @@
     ]
   },
   "status": {
-    "phase": "RUNNING"
+    "phase": "RUNNING",
+    "write_mode": "UPSERT"
   }
 }

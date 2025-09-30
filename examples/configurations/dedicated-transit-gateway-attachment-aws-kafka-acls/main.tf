@@ -3,7 +3,7 @@ terraform {
   required_providers {
     confluent = {
       source  = "confluentinc/confluent"
-      version = "2.37.0"
+      version = "2.43.0"
     }
     aws = {
       source  = "hashicorp/aws"
