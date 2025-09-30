@@ -16,6 +16,7 @@ package provider
 
 import (
 	"bytes"
+	"compress/gzip"
 	"context"
 	"errors"
 	"fmt"
@@ -945,14 +946,52 @@ func createDescriptiveError(err error, resp ...*http.Response) error {
 	if errorMessage == err.Error() && len(resp) > 0 && resp[0] != nil && resp[0].Body != nil {
 		defer resp[0].Body.Close()
 
+		// Read the raw body first to check for gzip magic bytes
 		bodyBytes, readErr := io.ReadAll(resp[0].Body)
-		if readErr == nil {
+		if readErr != nil {
 			errorMessage = fmt.Sprintf(
-				"%s; could not parse error details; raw response body: %#v",
+				"%s; could not read response body: %v",
 				errorMessage,
-				string(bodyBytes),
+				readErr,
 			)
+			return errors.New(errorMessage)
 		}
+
+		// Check if the response looks like gzip (magic bytes 0x1f 0x8b)
+		// This handles cases where Content-Encoding header is missing
+		if len(bodyBytes) >= 2 && bodyBytes[0] == 0x1f && bodyBytes[1] == 0x8b {
+			gzipReader, gzipErr := gzip.NewReader(bytes.NewReader(bodyBytes))
+			if gzipErr == nil {
+				defer gzipReader.Close()
+				decompressedBytes, decompressErr := io.ReadAll(gzipReader)
+				if decompressErr == nil {
+					bodyBytes = decompressedBytes
+				} else {
+					errorMessage = fmt.Sprintf(
+						"%s; received gzip-compressed response but failed to decompress: %v; raw bytes length: %d",
+						errorMessage,
+						decompressErr,
+						len(bodyBytes),
+					)
+					return errors.New(errorMessage)
+				}
+			} else {
+				errorMessage = fmt.Sprintf(
+					"%s; received gzip-compressed response but failed to create gzip reader: %v; raw bytes length: %d",
+					errorMessage,
+					gzipErr,
+					len(bodyBytes),
+				)
+				return errors.New(errorMessage)
+			}
+		}
+
+		// Now bodyBytes contains either the original or decompressed content
+		errorMessage = fmt.Sprintf(
+			"%s; could not parse error details; raw response body: %#v",
+			errorMessage,
+			string(bodyBytes),
+		)
 	}
 
 	return errors.New(errorMessage)
