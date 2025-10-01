@@ -1,10 +1,5 @@
 version: v1.0
 name: Live Integration Tests for Confluent Provider
-
-scheduling:
-  cron: "0 1 * * *"  # Run at 1 AM UTC every day
-  branch:
-    - master
 agent:
   machine:
     type: s1-prod-ubuntu24-04-amd64-2
