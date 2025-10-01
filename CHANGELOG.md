@@ -1,3 +1,10 @@
+## 2.44.0 (September 30th, 2025)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.43.0...v2.44.0)
+
+**Bug Fixes:**
+* Fixed gzip decompression in error responses by detecting and decompressing gzip magic bytes (0x1f 0x8b) even when the Content-Encoding header is missing, resolving JSON parsing errors and improving error message readability.
+
 ## 2.43.0 (September 29nd, 2025)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.42.0...v2.43.0)
