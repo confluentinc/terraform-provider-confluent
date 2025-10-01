@@ -158,7 +158,7 @@ func TestAccClusterWithSGPackageAndDisabledSRApi(t *testing.T) {
 		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckClusterConfig(mockServerUrl, paramBasicCluster),
+				Config: testAccCheckClusterConfig(mockServerUrl, paramBasicCluster, 5),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckClusterExists(fullKafkaResourceLabel),
 					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "id", kafkaClusterId),
@@ -180,7 +180,7 @@ func TestAccClusterWithSGPackageAndDisabledSRApi(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckClusterConfig(mockServerUrl, paramStandardCluster),
+				Config: testAccCheckClusterConfig(mockServerUrl, paramStandardCluster, 5),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckClusterExists(fullKafkaResourceLabel),
 					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "id", kafkaClusterId),

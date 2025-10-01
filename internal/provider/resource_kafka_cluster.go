@@ -257,7 +257,7 @@ func createMaxEckuUpdateSpec(d *schema.ResourceData, clusterType string, isBasic
 	return updateSpec
 }
 
-func executeClusterUpdate(ctx context.Context, d *schema.ResourceData, c *Client, clusterId string, updateSpec *cmk.CmkV2ClusterSpecUpdate, updateType string) diag.Diagnostics {
+func executeClusterUpdate(ctx context.Context, c *Client, clusterId string, updateSpec *cmk.CmkV2ClusterSpecUpdate, updateType string) diag.Diagnostics {
 	updateClusterRequest := cmk.NewCmkV2ClusterUpdate()
 	updateClusterRequest.SetSpec(*updateSpec)
 
@@ -273,7 +273,7 @@ func executeClusterUpdate(ctx context.Context, d *schema.ResourceData, c *Client
 	updatedCluster, resp, err := req.Execute()
 
 	if err != nil {
-		return diag.Errorf("error updating Kafka Cluster %q: %s", d.Id(), createDescriptiveError(err, resp))
+		return diag.Errorf("error updating Kafka Cluster %q: %s", clusterId, createDescriptiveError(err, resp))
 	}
 
 	updatedClusterJson, err := json.Marshal(updatedCluster)
@@ -341,8 +341,8 @@ func kafkaUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 		updateSpec.SetConfig(cmk.CmkV2StandardAsCmkV2ClusterSpecUpdateConfigOneOf(config))
 		updateSpec.SetEnvironment(cmk.EnvScopedObjectReference{Id: environmentId})
 
-		if err != nil {
-			return diag.Errorf("error updating Kafka Cluster %q: %s", d.Id(), createDescriptiveError(err, resp))
+		if err := executeClusterUpdate(ctx, c, d.Id(), updateSpec, "Basic to Standard upgrade"); err != nil {
+			return err
 		}
 	} else if isForbiddenStandardBasicDowngrade || isForbiddenDedicatedUpdate {
 		return diag.Errorf("error updating Kafka Cluster %q: clusters can only be upgraded from 'Basic' to 'Standard'", d.Id())
@@ -365,7 +365,7 @@ func kafkaUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 		}
 
 		if err := waitForKafkaClusterCkuUpdateToComplete(c.cmkApiContext(ctx), c, environmentId, d.Id(), cku); err != nil {
-			return diag.Errorf("error waiting for Kafka Cluster %q to perform CKU update: %s", d.Id(), createDescriptiveError(err, resp))
+			return diag.Errorf("error waiting for Kafka Cluster %q to perform CKU update: %s", d.Id(), createDescriptiveError(err))
 		}
 	}
 
@@ -377,7 +377,6 @@ func kafkaUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 		if err := executeClusterUpdate(ctx, c, d.Id(), updateSpec, "Max eCKU"); err != nil {
 			return err
 		}
-		tflog.Debug(ctx, fmt.Sprintf("Updated Kafka Cluster %q: %s", d.Id(), updatedClusterJson), map[string]interface{}{kafkaClusterLoggingKey: d.Id()})
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished updating Kafka Cluster %q", d.Id()), map[string]interface{}{kafkaClusterLoggingKey: d.Id()})
