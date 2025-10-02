@@ -16,6 +16,7 @@ package provider
 
 import (
 	"bytes"
+	"compress/gzip"
 	"context"
 	"errors"
 	"fmt"
@@ -947,6 +948,19 @@ func createDescriptiveError(err error, resp ...*http.Response) error {
 
 		bodyBytes, readErr := io.ReadAll(resp[0].Body)
 		if readErr == nil {
+			// Check if the response looks like gzip (magic bytes 0x1f 0x8b)
+			// This handles cases where Content-Encoding header is missing
+			if len(bodyBytes) >= 2 && bodyBytes[0] == 0x1f && bodyBytes[1] == 0x8b {
+				gzipReader, gzipErr := gzip.NewReader(bytes.NewReader(bodyBytes))
+				if gzipErr == nil {
+					defer gzipReader.Close()
+					decompressedBytes, decompressErr := io.ReadAll(gzipReader)
+					if decompressErr == nil {
+						bodyBytes = decompressedBytes
+					}
+				}
+			}
+
 			errorMessage = fmt.Sprintf(
 				"%s; could not parse error details; raw response body: %#v",
 				errorMessage,
