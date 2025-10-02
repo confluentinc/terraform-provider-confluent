@@ -12,7 +12,8 @@
     "availability": "SINGLE_ZONE",
     "cloud": "GCP",
     "config": {
-      "kind": "Basic"
+      "kind": "Basic",
+      "max_ecku": 5
     },
     "display_name": "TestCluster",
     "environment": {
