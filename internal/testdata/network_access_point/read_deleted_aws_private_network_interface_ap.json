@@ -1,0 +1,10 @@
+{
+  "errors": [
+    {
+      "id": "2d3e89d89c713814ae61425b56d5d5db",
+      "status": "404",
+      "detail": "access point ap-abc456 not found",
+      "source": {}
+    }
+  ]
+}
