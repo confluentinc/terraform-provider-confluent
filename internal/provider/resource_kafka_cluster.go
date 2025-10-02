@@ -331,13 +331,14 @@ func kafkaUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 	if isBasicStandardUpdate {
 		updateSpec := cmk.NewCmkV2ClusterSpecUpdate()
 		config := cmk.NewCmkV2Standard(kafkaClusterTypeStandard)
-		if d.HasChange(paramBasicMaxEcku) || d.Get(paramBasicMaxEcku) != nil {
-			// if max_ecku was set in Basic cluster, preserve it in Standard cluster
-			maxEcku := extractBasicMaxEcku(d)
-			if maxEcku > 0 {
-				config.SetMaxEcku(maxEcku)
-			}
+
+		// check if user has explicitly specified max_ecku in new Standard configuration
+		// if not, let the backend use the default value for Standard cluster
+		standardMaxEcku := extractStandardMaxEcku(d)
+		if standardMaxEcku > 0 {
+			config.SetMaxEcku(standardMaxEcku)
 		}
+
 		updateSpec.SetConfig(cmk.CmkV2StandardAsCmkV2ClusterSpecUpdateConfigOneOf(config))
 		updateSpec.SetEnvironment(cmk.EnvScopedObjectReference{Id: environmentId})
 
@@ -674,6 +675,7 @@ func basicClusterSchema() *schema.Schema {
 				paramMaxEcku: {
 					Type:        schema.TypeInt,
 					Optional:    true,
+					Computed:    true,
 					Description: "The maximum number of Elastic Confluent Kafka Units (eCKUs) that Kafka clusters should auto-scale to. Kafka clusters with HIGH availability must have at least two eCKUs.",
 				},
 			},
@@ -693,6 +695,7 @@ func standardClusterSchema() *schema.Schema {
 				paramMaxEcku: {
 					Type:        schema.TypeInt,
 					Optional:    true,
+					Computed:    true,
 					Description: "The maximum number of Elastic Confluent Kafka Units (eCKUs) that Kafka clusters should auto-scale to. Kafka clusters with HIGH availability must have at least two eCKUs.",
 				},
 			},
@@ -746,6 +749,7 @@ func enterpriseClusterSchema() *schema.Schema {
 				paramMaxEcku: {
 					Type:        schema.TypeInt,
 					Optional:    true,
+					Computed:    true,
 					Description: "The maximum number of Elastic Confluent Kafka Units (eCKUs) that Kafka clusters should auto-scale to. Kafka clusters with HIGH availability must have at least two eCKUs.",
 				},
 			},
@@ -772,6 +776,7 @@ func freightClusterSchema() *schema.Schema {
 				paramMaxEcku: {
 					Type:        schema.TypeInt,
 					Optional:    true,
+					Computed:    true,
 					Description: "The maximum number of Elastic Confluent Kafka Units (eCKUs) that Kafka clusters should auto-scale to. Kafka clusters with HIGH availability must have at least two eCKUs.",
 				},
 			},
