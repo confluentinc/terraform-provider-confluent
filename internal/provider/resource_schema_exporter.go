@@ -57,7 +57,7 @@ const (
 )
 
 var standardConfigs = []string{basicAuthUserInfoConfig, schemaRegistryUrlConfig, basicAuthCredentialsSourceConfig}
-var oauthBearConfigs = []string{bearerAuthClientId, bearerAuthClientSecret, bearerAuthIssuerEndpointUrl, bearerAuthCredentialsSource, bearerAuthScope, bearerAuthIdentityPoolId, bearerAuthLogicalCluster, configOAuthBearer}
+var oauthBearerConfigs = []string{bearerAuthClientId, bearerAuthClientSecret, bearerAuthIssuerEndpointUrl, bearerAuthCredentialsSource, bearerAuthScope, bearerAuthIdentityPoolId, bearerAuthLogicalCluster, configOAuthBearer}
 
 func schemaExporterResource() *schema.Resource {
 	return &schema.Resource{
@@ -554,7 +554,7 @@ func setSchemaExporterAttributes(d *schema.ResourceData, clusterId string, expor
 		return nil, err
 	}
 
-	removeSensitiveInfoFromConfigs(configs, standardConfigs, oauthBearConfigs)
+	removeSensitiveInfoFromConfigs(configs, standardConfigs, oauthBearerConfigs)
 	if err := d.Set(paramConfigs, configs); err != nil {
 		return nil, err
 	}
