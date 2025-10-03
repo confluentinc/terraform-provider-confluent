@@ -138,10 +138,8 @@ resource "confluent_schema_exporter" "main" {
   schema_registry_cluster {
     id = data.confluent_schema_registry_cluster.source.id
   }
-
-  name         = "my_exporter"
   rest_endpoint = data.confluent_schema_registry_cluster.source.rest_endpoint
-
+  name         = "my_exporter"
   context      = "schema_context"
   context_type = "CUSTOM"
   subjects     = [confluent_schema.purchase.subject_name]
