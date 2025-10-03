@@ -175,7 +175,7 @@ func requestNewExternalOAuthToken(ctx context.Context, tokenUrl, clientId, clien
 		if err != nil {
 			return nil, fmt.Errorf("failed to read external token exchange response body: %w", err)
 		}
-		return nil, fmt.Errorf("external token exchange request failed: status=%s, description=%s\n", resp.Status, string(body))
+		return nil, fmt.Errorf("external token exchange request failed: status=%s, description=%s", resp.Status, string(body))
 	}
 
 	// Parse the response
