@@ -30,7 +30,7 @@ blocks:
         - name: "Run Live Tests"
           commands:
             # 1. Fetch secrets
-            - . vault-sem-get-secret v1/ci/kv/apif/terraform-provider-confluent/live-testing-data
+            - . vault-sem-get-secret v1/ci/kv/apif/terraform-provider-confluent/live-testing-data-gov-prod
             - . vault-sem-get-secret v1/ci/kv/apif/terraform-provider-confluent/slack-notifications-live-testing
 
             # 2. The main script
