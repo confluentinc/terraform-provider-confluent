@@ -98,11 +98,14 @@ func requestNewSTSOAuthToken(ctx context.Context, subjectToken, identityPoolId, 
 	tflog.Debug(ctx, "requesting new STS OAuth token")
 
 	resp, status, err := req.Execute()
+	// Both Transport-level error (DNS, timeout, TLS, etc.)
+	// and Application-level error (HTTP 4xx/5xx) are handled here
 	if err != nil {
-		return nil, err
-	}
-	if status.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("STS token exchange request failed with status: %s\n", status.Status)
+		if status != nil && status.Body != nil {
+			body, _ := io.ReadAll(status.Body)
+			return nil, fmt.Errorf("STS token exchange request failed: status=%s, description=%s", status.Status, string(body))
+		}
+		return nil, fmt.Errorf("STS token exchange request failed: %w", err)
 	}
 
 	// Parse the response
@@ -155,19 +158,24 @@ func requestNewExternalOAuthToken(ctx context.Context, tokenUrl, clientId, clien
 	tflog.Debug(ctx, "requesting new external OAuth token")
 
 	resp, err := retryableClient.Do(req)
+	// Transport-level error (DNS, timeout, TLS, etc.)
 	if err != nil {
 		return nil, err
 	}
 
-	defer func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
-
+	defer func() {
+		if closeErr := resp.Body.Close(); closeErr != nil {
+			tflog.Warn(ctx, "failed to close external token exchange response body", map[string]any{"error": closeErr.Error()})
 		}
-	}(resp.Body)
+	}()
 
+	// Application-level error (HTTP 4xx/5xx)
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("exchange external token request failed with status: %s\n", resp.Status)
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read external token exchange response body: %w", err)
+		}
+		return nil, fmt.Errorf("external token exchange request failed: status=%s, description=%s", resp.Status, string(body))
 	}
 
 	// Parse the response
