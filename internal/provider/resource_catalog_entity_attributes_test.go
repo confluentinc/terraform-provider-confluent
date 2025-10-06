@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
@@ -32,6 +33,8 @@ const (
 	readCreatedEntityAttributesUrlPath          = "/catalog/v1/entity/type/kafka_topic/name/lkc-15xq83:topic_0"
 	deleteCreatedEntityAttributesUrlPath        = "/catalog/v1/entity"
 	entityAttributesLabel                       = "confluent_catalog_entity_attributes.main"
+	testDataCatalogSchemaRegistryClusterID      = "lsrc-8wrx70"
+	testAttributesToImport                      = "owner,description,ownerEmail"
 )
 
 func TestAccCatalogEntityAttributes(t *testing.T) {
@@ -43,7 +46,8 @@ func TestAccCatalogEntityAttributes(t *testing.T) {
 	}
 	defer wiremockContainer.Terminate(ctx)
 
-	mockServerUrl := wiremockContainer.URI
+	//mockServerUrl := wiremockContainer.URI
+	mockServerUrl := "http://localhost:8080"
 	wiremockClient := wiremock.NewClient(mockServerUrl)
 	// nolint:errcheck
 	defer wiremockClient.Reset()
@@ -109,7 +113,7 @@ func TestAccCatalogEntityAttributes(t *testing.T) {
 		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
 		Steps: []resource.TestStep{
 			{
-				Config: entityAttributesResourceConfig(mockServerUrl),
+				Config: entityAttributesResourceConfig(testDataCatalogSchemaRegistryClusterID, mockServerUrl),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(entityAttributesLabel, paramEntityName, "lkc-15xq83:topic_0"),
 					resource.TestCheckResourceAttr(entityAttributesLabel, paramEntityType, "kafka_topic"),
@@ -121,7 +125,18 @@ func TestAccCatalogEntityAttributes(t *testing.T) {
 				),
 			},
 			{
-				Config: entityAttributesSchemaRegistryResourceConfig(mockServerUrl),
+				// https://www.terraform.io/docs/extend/resources/import.html
+				ResourceName:      entityAttributesLabel,
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateIdFunc: func(state *terraform.State) (string, error) {
+					resources := state.RootModule().Resources
+					entityTypeAndEntityName := resources[entityAttributesLabel].Primary.ID
+					return testDataCatalogSchemaRegistryClusterID + "/" + entityTypeAndEntityName + "/" + testAttributesToImport, nil
+				},
+			},
+			{
+				Config: entityAttributesSchemaRegistryResourceConfig(testDataCatalogSchemaRegistryClusterID, mockServerUrl),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(entityAttributesLabel, paramEntityName, "lkc-15xq83:topic_0"),
 					resource.TestCheckResourceAttr(entityAttributesLabel, paramEntityType, "kafka_topic"),
@@ -133,7 +148,18 @@ func TestAccCatalogEntityAttributes(t *testing.T) {
 				),
 			},
 			{
-				Config: updateEntityAttributesResourceConfig(mockServerUrl),
+				// https://www.terraform.io/docs/extend/resources/import.html
+				ResourceName:      entityAttributesLabel,
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateIdFunc: func(state *terraform.State) (string, error) {
+					resources := state.RootModule().Resources
+					entityTypeAndEntityName := resources[entityAttributesLabel].Primary.ID
+					return testDataCatalogSchemaRegistryClusterID + "/" + entityTypeAndEntityName + "/" + testAttributesToImport, nil
+				},
+			},
+			{
+				Config: updateEntityAttributesResourceConfig(testDataCatalogSchemaRegistryClusterID, mockServerUrl),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(entityAttributesLabel, paramEntityName, "lkc-15xq83:topic_0"),
 					resource.TestCheckResourceAttr(entityAttributesLabel, paramEntityType, "kafka_topic"),
@@ -144,14 +170,25 @@ func TestAccCatalogEntityAttributes(t *testing.T) {
 					resource.TestCheckResourceAttr(entityAttributesLabel, fmt.Sprintf("%s.ownerEmail", paramAttributes), "dev2@gmail.com"),
 				),
 			},
+			{
+				// https://www.terraform.io/docs/extend/resources/import.html
+				ResourceName:      entityAttributesLabel,
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateIdFunc: func(state *terraform.State) (string, error) {
+					resources := state.RootModule().Resources
+					entityTypeAndEntityName := resources[entityAttributesLabel].Primary.ID
+					return testDataCatalogSchemaRegistryClusterID + "/" + entityTypeAndEntityName + "/" + testAttributesToImport, nil
+				},
+			},
 		},
 	})
 }
 
-func entityAttributesResourceConfig(mockServerUrl string) string {
+func entityAttributesResourceConfig(testDataCatalogSchemaRegistryClusterID, mockServerUrl string) string {
 	return fmt.Sprintf(`
  	provider "confluent" {
- 	  schema_registry_id = "xxx"
+ 	  schema_registry_id = "%s"
 	  catalog_rest_endpoint = "%s"          # optionally use SCHEMA_REGISTRY_REST_ENDPOINT env var
 	  schema_registry_api_key       = "x"   # optionally use SCHEMA_REGISTRY_API_KEY env var
 	  schema_registry_api_secret = "x"
@@ -165,13 +202,13 @@ func entityAttributesResourceConfig(mockServerUrl string) string {
 		"ownerEmail": "dev@gmail.com"
 	  }
 	}
- 	`, mockServerUrl)
+ 	`, testDataCatalogSchemaRegistryClusterID, mockServerUrl)
 }
 
-func entityAttributesSchemaRegistryResourceConfig(mockServerUrl string) string {
+func entityAttributesSchemaRegistryResourceConfig(testDataCatalogSchemaRegistryClusterID, mockServerUrl string) string {
 	return fmt.Sprintf(`
  	provider "confluent" {
- 	  schema_registry_id = "xxx"
+ 	  schema_registry_id = "%s"
 	  schema_registry_rest_endpoint = "%s" # optionally use SCHEMA_REGISTRY_REST_ENDPOINT env var
 	  schema_registry_api_key       = "x"       # optionally use SCHEMA_REGISTRY_API_KEY env var
 	  schema_registry_api_secret = "x"
@@ -185,13 +222,13 @@ func entityAttributesSchemaRegistryResourceConfig(mockServerUrl string) string {
 		"ownerEmail": "dev@gmail.com"
 	  }
 	}
- 	`, mockServerUrl)
+ 	`, testDataCatalogSchemaRegistryClusterID, mockServerUrl)
 }
 
-func updateEntityAttributesResourceConfig(mockServerUrl string) string {
+func updateEntityAttributesResourceConfig(testDataCatalogSchemaRegistryClusterID, mockServerUrl string) string {
 	return fmt.Sprintf(`
  	provider "confluent" {
- 	  schema_registry_id = "xxx"
+ 	  schema_registry_id = "%s"
 	  schema_registry_rest_endpoint = "%s" # optionally use SCHEMA_REGISTRY_REST_ENDPOINT env var
 	  schema_registry_api_key       = "x"       # optionally use SCHEMA_REGISTRY_API_KEY env var
 	  schema_registry_api_secret = "x"
@@ -205,5 +242,5 @@ func updateEntityAttributesResourceConfig(mockServerUrl string) string {
 		"ownerEmail": "dev2@gmail.com"
 	  }
 	}
- 	`, mockServerUrl)
+ 	`, testDataCatalogSchemaRegistryClusterID, mockServerUrl)
 }
