@@ -37,6 +37,9 @@ func catalogEntityAttributesResource() *schema.Resource {
 		CreateContext: catalogEntityAttributesCreate,
 		DeleteContext: catalogEntityAttributesDelete,
 		UpdateContext: catalogEntityAttributesUpdate,
+		Importer: &schema.ResourceImporter{
+			StateContext: catalogEntityAttributesImport,
+		},
 		Schema: map[string]*schema.Schema{
 			paramSchemaRegistryCluster: schemaRegistryClusterBlockSchema(),
 			paramRestEndpoint: {
@@ -331,4 +334,15 @@ func resetAttributes(entityAttributes map[string]interface{}) {
 	for attributeName, _ := range entityAttributes {
 		entityAttributes[attributeName] = ""
 	}
+}
+
+func catalogEntityAttributesImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	tflog.Debug(ctx, fmt.Sprintf("Importing Entity Attributes %q", d.Id()), map[string]interface{}{entityAttributesLoggingKey: d.Id()})
+	// Mark resource as new to avoid d.Set("") when getting 404
+	d.MarkNewResource()
+	if diagnostics := catalogEntityAttributesRead(ctx, d, meta); diagnostics != nil {
+		return nil, fmt.Errorf("error importing Entity Attributes %q: %s", d.Id(), diagnostics[0].Summary)
+	}
+	tflog.Debug(ctx, fmt.Sprintf("Finished importing Entity Attributes %q", d.Id()), map[string]interface{}{entityAttributesLoggingKey: d.Id()})
+	return []*schema.ResourceData{d}, nil
 }
