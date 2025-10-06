@@ -80,6 +80,7 @@ func TestAccGcpBYOKKey(t *testing.T) {
 
 	deleteGcpKeyStub := wiremock.Delete(wiremock.URLPathEqualTo(fmt.Sprintf("%s/cck-abcde", byokV1Path))).
 		InScenario(gcpKeyScenarioName).
+		WhenScenarioStateIs("KeyUpdated").
 		WillSetStateTo(scenarioStateGcpKeyHasBeenDeleted).
 		WillReturn(
 			"",
