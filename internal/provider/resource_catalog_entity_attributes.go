@@ -147,8 +147,8 @@ func catalogEntityAttributesRead(ctx context.Context, d *schema.ResourceData, me
 		return diag.Errorf("error reading Entity Attributes: %s", createDescriptiveError(err))
 	}
 	catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
-	entityType := d.Get(paramEntityType).(string)
 	entityName := d.Get(paramEntityName).(string)
+	entityType := d.Get(paramEntityType).(string)
 
 	_, err = readEntityAttributesAndSetAttributes(ctx, d, catalogRestClient, entityType, entityName)
 	if err != nil {
