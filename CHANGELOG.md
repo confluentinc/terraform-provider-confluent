@@ -1,3 +1,10 @@
+## 2.45.0 (October 7th, 2025)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.44.0...v2.45.0)
+
+**New Features:**
+* Added import functionality for the `confluent_catalog_entity_attributes` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_catalog_entity_attributes).
+
 ## 2.44.0 (September 30th, 2025)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.43.0...v2.44.0)
