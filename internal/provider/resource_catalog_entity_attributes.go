@@ -25,6 +25,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"regexp"
+	"strings"
 )
 
 const (
@@ -37,6 +38,9 @@ func catalogEntityAttributesResource() *schema.Resource {
 		CreateContext: catalogEntityAttributesCreate,
 		DeleteContext: catalogEntityAttributesDelete,
 		UpdateContext: catalogEntityAttributesUpdate,
+		Importer: &schema.ResourceImporter{
+			StateContext: catalogEntityAttributesImport,
+		},
 		Schema: map[string]*schema.Schema{
 			paramSchemaRegistryCluster: schemaRegistryClusterBlockSchema(),
 			paramRestEndpoint: {
@@ -129,34 +133,38 @@ func catalogEntityAttributesRead(ctx context.Context, d *schema.ResourceData, me
 	entityAttributesId := d.Id()
 
 	tflog.Debug(ctx, fmt.Sprintf("Reading Entity Attributes %q=%q", paramId, entityAttributesId), map[string]interface{}{entityAttributesLoggingKey: entityAttributesId})
-	if _, err := readEntityAttributesAndSetAttributes(ctx, d, meta); err != nil {
-		return diag.FromErr(fmt.Errorf("error reading Entity Attributes %q: %s", entityAttributesId, createDescriptiveError(err)))
+
+	restEndpoint, err := extractCatalogRestEndpoint(meta.(*Client), d, false)
+	if err != nil {
+		return diag.Errorf("error reading Entity Attributes: %s", createDescriptiveError(err))
 	}
+	clusterId, err := extractSchemaRegistryClusterId(meta.(*Client), d, false)
+	if err != nil {
+		return diag.Errorf("error reading Entity Attributes: %s", createDescriptiveError(err))
+	}
+	clusterApiKey, clusterApiSecret, err := extractSchemaRegistryClusterApiKeyAndApiSecret(meta.(*Client), d, false)
+	if err != nil {
+		return diag.Errorf("error reading Entity Attributes: %s", createDescriptiveError(err))
+	}
+	catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
+	entityName := d.Get(paramEntityName).(string)
+	entityType := d.Get(paramEntityType).(string)
+
+	_, err = readEntityAttributesAndSetAttributes(ctx, d, catalogRestClient, entityType, entityName)
+	if err != nil {
+		return diag.Errorf("error reading Entity Attributes: %s", createDescriptiveError(err))
+	}
+
+	tflog.Debug(ctx, fmt.Sprintf("Finished reading Entity Attributes %q", d.Id()), map[string]any{entityAttributesLoggingKey: d.Id()})
 
 	return nil
 }
 
-func readEntityAttributesAndSetAttributes(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	restEndpoint, err := extractCatalogRestEndpoint(meta.(*Client), d, false)
-	if err != nil {
-		return nil, fmt.Errorf("error reading Entity Attributes: %s", createDescriptiveError(err))
-	}
-	clusterId, err := extractSchemaRegistryClusterId(meta.(*Client), d, false)
-	if err != nil {
-		return nil, fmt.Errorf("error reading Entity Attributes: %s", createDescriptiveError(err))
-	}
-	clusterApiKey, clusterApiSecret, err := extractSchemaRegistryClusterApiKeyAndApiSecret(meta.(*Client), d, false)
-	if err != nil {
-		return nil, fmt.Errorf("error reading Entity Attributes: %s", createDescriptiveError(err))
-	}
-
-	entityName := d.Get(paramEntityName).(string)
-	entityType := d.Get(paramEntityType).(string)
+func readEntityAttributesAndSetAttributes(ctx context.Context, d *schema.ResourceData, catalogRestClient *CatalogRestClient, entityType, entityName string) ([]*schema.ResourceData, error) {
 	entityAttributesId := createEntityAttributesId(entityType, entityName)
 
 	tflog.Debug(ctx, fmt.Sprintf("Reading Entity Attributes %q=%q", paramId, entityAttributesId), map[string]interface{}{entityAttributesLoggingKey: entityAttributesId})
 
-	catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 	request := catalogRestClient.apiClient.EntityV1Api.GetByUniqueAttributes(catalogRestClient.dataCatalogApiContext(ctx), entityType, entityName)
 	entity, resp, err := request.Execute()
 	if err != nil {
@@ -331,4 +339,79 @@ func resetAttributes(entityAttributes map[string]interface{}) {
 	for attributeName, _ := range entityAttributes {
 		entityAttributes[attributeName] = ""
 	}
+}
+
+func catalogEntityAttributesImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	tflog.Debug(ctx, fmt.Sprintf("Importing Entity Attributes %q", d.Id()), map[string]any{entityAttributesLoggingKey: d.Id()})
+
+	restEndpoint, err := extractCatalogRestEndpoint(meta.(*Client), d, true)
+	if err != nil {
+		return nil, fmt.Errorf("error importing Entity Attributes: %s", createDescriptiveError(err))
+	}
+	clusterApiKey, clusterApiSecret, err := extractSchemaRegistryClusterApiKeyAndApiSecret(meta.(*Client), d, true)
+	if err != nil {
+		return nil, fmt.Errorf("error importing Entity Attributes: %s", createDescriptiveError(err))
+	}
+
+	entityAttributesId := d.Id()
+	if entityAttributesId == "" {
+		return nil, fmt.Errorf("error importing Entity Attributes: invalid format: Entity Attributes import ID is missing")
+	}
+
+	parts := strings.Split(entityAttributesId, "/")
+	if len(parts) != 4 {
+		return nil, fmt.Errorf("error importing Entity Attributes: invalid format: expected '<Schema Registry Cluster Id>/<Entity Type>/<Entity Name>/<Comma-Delimited-Attributes>' (for example, 'lsrc-abc123/kafka_topic/lkc-xyz:topic_0/owner,description,ownerEmail')")
+		// TODO: add a note saying that <Schema Registry Cluster Id>/<Entity Type>/<Entity Name>/ should be used for 0 attributes
+	}
+
+	clusterId := parts[0]
+	entityType := parts[1]
+	entityName := parts[2]
+	attributesList := parts[3]
+
+	// Parse and validate attributes
+	initialAttributes, err := parseImportAttributes(attributesList)
+	if err != nil {
+		return nil, fmt.Errorf("error importing Entity Attributes: %s", createDescriptiveError(err))
+	}
+
+	if err := d.Set(paramAttributes, initialAttributes); err != nil {
+		return nil, fmt.Errorf("error importing Entity Attributes: %s", createDescriptiveError(err))
+	}
+	if err := d.Set(paramEntityName, entityName); err != nil {
+		return nil, fmt.Errorf("error importing Entity Attributes: %s", createDescriptiveError(err))
+	}
+	if err := d.Set(paramEntityType, entityType); err != nil {
+		return nil, fmt.Errorf("error importing Entity Attributes: %s", createDescriptiveError(err))
+	}
+
+	catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
+
+	// Mark resource as new to avoid d.Set("") when getting 404
+	d.MarkNewResource()
+	_, err = readEntityAttributesAndSetAttributes(ctx, d, catalogRestClient, entityType, entityName)
+	if err != nil {
+		return nil, fmt.Errorf("error importing Entity Attributes %q: %s", d.Id(), createDescriptiveError(err))
+	}
+	tflog.Debug(ctx, fmt.Sprintf("Finished importing Entity Attributes %q", d.Id()), map[string]any{entityAttributesLoggingKey: d.Id()})
+	return []*schema.ResourceData{d}, nil
+}
+
+func parseImportAttributes(attributesList string) (map[string]interface{}, error) {
+	// Allow empty attributes list
+	if attributesList == "" {
+		return make(map[string]interface{}), nil
+	}
+
+	attributeNames := strings.Split(attributesList, ",")
+	initialAttributes := make(map[string]interface{})
+
+	for _, attrName := range attributeNames {
+		attrName = strings.TrimSpace(attrName)
+		if attrName != "" && attrName != qualifiedName {
+			initialAttributes[attrName] = ""
+		}
+	}
+
+	return initialAttributes, nil
 }
