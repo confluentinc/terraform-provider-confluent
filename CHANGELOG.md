@@ -6,7 +6,6 @@
 * Added import functionality for the `confluent_catalog_entity_attributes` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_catalog_entity_attributes).
 
 **Bug Fixes:**
-* Updated the error handling mechanism to show detailed error messages when OAuth token exchange request fails.
 * Added ["Upgrade Guide for OAuth Authentication Migration" guide](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/guides/migration-guide-oauth).
 
 ## 2.44.0 (September 30th, 2025)
