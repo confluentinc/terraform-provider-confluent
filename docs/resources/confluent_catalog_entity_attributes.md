@@ -212,7 +212,7 @@ In addition to the preceding arguments, the following attributes are exported:
 
 ## Import
 
-You can import a Catalog Entity Attributes resource by using the Schema Registry Cluster ID, Entity name in the format `<Schema Registry Cluster Id>/<Entity Type>/<Entity Name>/<Comma-Delimited-Attributes>`, for example:
+You can import a Catalog Entity Attributes resource by using the Schema Registry Cluster ID, Entity name in the format `<Schema Registry Cluster ID>/<Entity Type>/<Entity Name>/<Comma-Delimited-Attributes>`, for example:
 
 ```shell
 # Option #1: Manage multiple Catalog Entity Attributes in the same Terraform workspace
@@ -224,5 +224,7 @@ $ terraform import confluent_catalog_entity_attributes.environment lsrc-abc123/c
 # Option #2: Manage a single Catalog Entity Attributes in the same Terraform workspace
 $ terraform import confluent_catalog_entity_attributes.environment lsrc-abc123/cf_environment/env-abc123/owner,description,ownerEmail
 ```
+
+-> **Note:** Use the `<Schema Registry Cluster ID>/<Entity Type>/<Entity Name>/` format to import a Catalog Entity Attributes resource with an empty list of attributes.
 
 !> **Warning:** Do not forget to delete terminal command history afterwards for security purposes.
