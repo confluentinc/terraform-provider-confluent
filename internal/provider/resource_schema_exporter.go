@@ -39,17 +39,25 @@ const (
 	paramSubjects                         = "subjects"
 	paramResetOnUpdate                    = "reset_on_update"
 	paramResetOnUpdateDefaultValue        = false
-	paramBasicAuthCredentialsSource       = "basic_auth_credentials_source"
 	paramBasicAuthCredentialsSourceValue  = "USER_INFO"
 	paramDestinationSchemaRegistryCluster = "destination_schema_registry_cluster"
 	basicAuthCredentialsSourceConfig      = "basic.auth.credentials.source"
 	schemaRegistryUrlConfig               = "schema.registry.url"
 	basicAuthUserInfoConfig               = "basic.auth.user.info"
 
+	bearerAuthClientId          = "bearer.auth.client.id"
+	bearerAuthClientSecret      = "bearer.auth.client.secret"
+	bearerAuthIssuerEndpointUrl = "bearer.auth.issuer.endpoint.url"
+	bearerAuthCredentialsSource = "bearer.auth.credentials.source"
+	bearerAuthScope             = "bearer.auth.scope"
+	bearerAuthIdentityPoolId    = "bearer.auth.identity.pool.id"
+	bearerAuthLogicalCluster    = "bearer.auth.logical.cluster"
+
 	schemaExporterAPICreateTimeout = 12 * time.Hour
 )
 
 var standardConfigs = []string{basicAuthUserInfoConfig, schemaRegistryUrlConfig, basicAuthCredentialsSourceConfig}
+var oauthBearerConfigs = []string{bearerAuthClientId, bearerAuthClientSecret, bearerAuthIssuerEndpointUrl, bearerAuthCredentialsSource, bearerAuthScope, bearerAuthIdentityPoolId, bearerAuthLogicalCluster, configOAuthBearer}
 
 func schemaExporterResource() *schema.Resource {
 	return &schema.Resource{
@@ -132,13 +140,29 @@ func destinationSchemaRegistryClusterBlockSchema() *schema.Schema {
 		Required: true,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
+				paramId: {
+					Type:         schema.TypeString,
+					Optional:     true,
+					ForceNew:     true,
+					Computed:     true,
+					ValidateFunc: validation.StringIsNotEmpty,
+					DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+						// During API key -> OAuth migration, ignore diffs on id as it is not required for API key/secret authentication
+						// In this scenario, resource should not be recreated
+						if old == "" && new != "" {
+							return true
+						}
+						return false
+					},
+					Description: "The ID of the destination Schema Registry cluster. Required when using OAuth authentication.",
+				},
 				paramRestEndpoint: {
 					Type:     schema.TypeString,
 					Required: true,
 				},
 				paramCredentials: {
 					Type:      schema.TypeList,
-					Required:  true,
+					Optional:  true,
 					MinItems:  1,
 					MaxItems:  1,
 					Sensitive: true,
@@ -164,10 +188,29 @@ func destinationSchemaRegistryClusterBlockSchema() *schema.Schema {
 	}
 }
 
-func constructDestinationSRClusterRequest(d *schema.ResourceData) map[string]string {
+func constructDestinationSRClusterRequest(d *schema.ResourceData, meta interface{}) map[string]string {
+	client := meta.(*Client)
 	configs := convertToStringStringMap(d.Get(paramConfigs).(map[string]interface{}))
-	configs[basicAuthCredentialsSourceConfig] = paramBasicAuthCredentialsSourceValue
 	configs[schemaRegistryUrlConfig] = extractStringValueFromBlock(d, paramDestinationSchemaRegistryCluster, paramRestEndpoint)
+
+	// OAuth specific configurations
+	if client.isOAuthEnabled {
+		// Extract OAuth token details from the meta client
+		configs[bearerAuthClientId] = client.oauthToken.ClientId
+		configs[bearerAuthClientSecret] = client.oauthToken.ClientSecret
+		configs[bearerAuthIssuerEndpointUrl] = client.oauthToken.TokenUrl
+		configs[bearerAuthCredentialsSource] = configOAuthBearer
+		configs[bearerAuthIdentityPoolId] = client.oauthToken.IdentityPoolId
+		configs[bearerAuthLogicalCluster] = extractStringValueFromBlock(d, paramDestinationSchemaRegistryCluster, paramId)
+		// The Scope field is optional for Okta, but required for Azure Entra ID
+		// setting arbitrary values may cause exporter exception from backend service
+		if client.oauthToken.Scope != "" {
+			configs[bearerAuthScope] = client.oauthToken.Scope
+		}
+		return configs
+	}
+
+	configs[basicAuthCredentialsSourceConfig] = paramBasicAuthCredentialsSourceValue
 	destinationSRClusterApiKey := extractStringValueFromNestedBlock(d, paramDestinationSchemaRegistryCluster, paramCredentials, paramKey)
 	destinationSRClusterApiSecret := extractStringValueFromNestedBlock(d, paramDestinationSchemaRegistryCluster, paramCredentials, paramSecret)
 	configs[basicAuthUserInfoConfig] = fmt.Sprintf("%s:%s", destinationSRClusterApiKey, destinationSRClusterApiSecret)
@@ -205,7 +248,7 @@ func schemaExporterCreate(ctx context.Context, d *schema.ResourceData, meta inte
 		er.SetSubjectRenameFormat(v)
 	}
 	er.SetSubjects(subjects)
-	er.SetConfig(constructDestinationSRClusterRequest(d))
+	er.SetConfig(constructDestinationSRClusterRequest(d, meta))
 
 	request := c.apiClient.ExportersV1Api.RegisterExporter(c.apiContext(ctx)).ExporterReference(*er)
 	requestJson, err := json.Marshal(request)
@@ -214,13 +257,13 @@ func schemaExporterCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Schema Exporter: %s", requestJson))
 
-	createdExporter, _, err := request.Execute()
+	createdExporter, resp, err := request.Execute()
 	if err != nil {
-		return diag.Errorf("error creating Schema Exporter: %s", createDescriptiveError(err))
+		return diag.Errorf("error creating Schema Exporter: %s", createDescriptiveError(err, resp))
 	}
 
 	if err := waitForSchemaExporterToProvision(c.apiContext(ctx), c, exporterId, name); err != nil {
-		return diag.Errorf("error waiting for Schema Exporter %q to provision: %s", exporterId, createDescriptiveError(err))
+		return diag.Errorf("error waiting for Schema Exporter %q to provision: %s", exporterId, createDescriptiveError(err, resp))
 	}
 
 	d.SetId(exporterId)
@@ -267,7 +310,7 @@ func readSchemaExporterAndSetAttributes(ctx context.Context, d *schema.ResourceD
 	request := c.apiClient.ExportersV1Api.GetExporterInfoByName(c.apiContext(ctx), name)
 	exporter, resp, err := request.Execute()
 	if err != nil {
-		tflog.Warn(ctx, fmt.Sprintf("Error reading Schema Exporter %q: %s", id, createDescriptiveError(err)), map[string]interface{}{schemaExporterLoggingKey: id})
+		tflog.Warn(ctx, fmt.Sprintf("Error reading Schema Exporter %q: %s", id, createDescriptiveError(err, resp)), map[string]interface{}{schemaExporterLoggingKey: id})
 
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
 		if isResourceNotFound && !d.IsNewResource() {
@@ -284,23 +327,12 @@ func readSchemaExporterAndSetAttributes(ctx context.Context, d *schema.ResourceD
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Schema Exporter %q: %s", id, exporterJson), map[string]interface{}{schemaExporterLoggingKey: id})
 
-	tflog.Debug(ctx, fmt.Sprintf("Reading Schema Exporter Status %q", name))
-	status, _, err := c.apiClient.ExportersV1Api.GetExporterStatusByName(c.apiContext(ctx), name).Execute()
-	if err != nil {
-		return nil, fmt.Errorf("error creating Schema Exporter Status: %s", createDescriptiveError(err))
-	}
-	if status.GetState() == stateRunning {
-		if err := d.Set(paramStatus, stateRunning); err != nil {
-			return nil, err
-		}
-	}
-	if status.GetState() == statePaused {
-		if err := d.Set(paramStatus, statePaused); err != nil {
-			return nil, err
-		}
+	// Read and set the Schema Exporter status with a different API call
+	if err := readSchemaExporterStatusAndSetAttributes(ctx, d, c, id, name); err != nil {
+		return nil, err
 	}
 
-	if _, err := setSchemaExporterAttributes(d, clusterId, exporter, c); err != nil {
+	if _, err := setSchemaExporterAttributes(d, clusterId, exporter, c, meta); err != nil {
 		return nil, createDescriptiveError(err)
 	}
 
@@ -331,9 +363,9 @@ func schemaExporterUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 		isPaused := d.Get(paramStatus).(string) == statePaused
 		if isPaused {
 			// pause the exporter first before making any changes
-			_, _, err = c.apiClient.ExportersV1Api.PauseExporterByName(c.apiContext(ctx), name).Execute()
+			_, resp, err := c.apiClient.ExportersV1Api.PauseExporterByName(c.apiContext(ctx), name).Execute()
 			if err != nil {
-				return diag.Errorf("error pausing Schema Exporter (Failed to pause the exporter): %s", createDescriptiveError(err))
+				return diag.Errorf("error pausing Schema Exporter (Failed to pause the exporter): %s", createDescriptiveError(err, resp))
 			}
 		}
 	}
@@ -341,9 +373,9 @@ func schemaExporterUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 	if d.HasChanges(paramContextType, paramContext, paramSubjectRenameFormat, paramSubjects, paramConfigs, paramDestinationSchemaRegistryCluster) {
 		// pause the exporter whenever there's an update on configs
 		// https://github.com/confluentinc/terraform-provider-confluent/issues/321
-		_, _, err = c.apiClient.ExportersV1Api.PauseExporterByName(c.apiContext(ctx), name).Execute()
+		_, resp, err := c.apiClient.ExportersV1Api.PauseExporterByName(c.apiContext(ctx), name).Execute()
 		if err != nil {
-			return diag.Errorf("error pausing Schema Exporter (Failed to pause the exporter): %s", createDescriptiveError(err))
+			return diag.Errorf("error pausing Schema Exporter (Failed to pause the exporter): %s", createDescriptiveError(err, resp))
 		}
 
 		subjects := convertToStringSlice(d.Get(paramSubjects).(*schema.Set).List())
@@ -359,7 +391,7 @@ func schemaExporterUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 			req.SetSubjectRenameFormat(v)
 		}
 		req.SetSubjects(subjects)
-		req.SetConfig(constructDestinationSRClusterRequest(d))
+		req.SetConfig(constructDestinationSRClusterRequest(d, meta))
 
 		request := c.apiClient.ExportersV1Api.UpdateExporterInfo(c.apiContext(ctx), name).ExporterUpdateRequest(*req)
 		requestJson, err := json.Marshal(request)
@@ -368,9 +400,9 @@ func schemaExporterUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 		}
 		tflog.Debug(ctx, fmt.Sprintf("Updating Schema Exporter: %s", requestJson))
 
-		updatedExporter, _, err := request.Execute()
+		updatedExporter, resp, err := request.Execute()
 		if err != nil {
-			return diag.Errorf("error updating Schema Exporter: %s", createDescriptiveError(err))
+			return diag.Errorf("error updating Schema Exporter: %s", createDescriptiveError(err, resp))
 		}
 		updatedExporterJson, err := json.Marshal(updatedExporter)
 		if err != nil {
@@ -380,9 +412,9 @@ func schemaExporterUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 
 		isReset := d.Get(paramResetOnUpdate).(bool)
 		if isReset {
-			_, _, err = c.apiClient.ExportersV1Api.ResetExporterByName(c.apiContext(ctx), name).Execute()
+			_, resp, err := c.apiClient.ExportersV1Api.ResetExporterByName(c.apiContext(ctx), name).Execute()
 			if err != nil {
-				return diag.Errorf("error updating Schema Exporter (Failed to reset the exporter): %s", createDescriptiveError(err))
+				return diag.Errorf("error updating Schema Exporter (Failed to reset the exporter): %s", createDescriptiveError(err, resp))
 			}
 		}
 
@@ -410,15 +442,15 @@ func resumeExporter(ctx context.Context, d *schema.ResourceData, c *SchemaRegist
 		// resume the exporter last after making any changes
 		_, resp, err := c.apiClient.ExportersV1Api.ResumeExporterByName(c.apiContext(ctx), name).Execute()
 		if err != nil && resp.StatusCode != http.StatusConflict {
-			return diag.Errorf("error resuming Schema Exporter (Failed to resume the exporter): %s", createDescriptiveError(err))
+			return diag.Errorf("error resuming Schema Exporter (Failed to resume the exporter): %s", createDescriptiveError(err, resp))
 		}
 
 		if err := waitForSchemaExporterToProvision(c.apiContext(ctx), c, id, name); err != nil {
-			return diag.Errorf("error waiting for Schema Exporter %q to updating: %s", id, createDescriptiveError(err))
+			return diag.Errorf("error waiting for Schema Exporter %q to updating: %s", id, createDescriptiveError(err, resp))
 		}
-		status, _, err := c.apiClient.ExportersV1Api.GetExporterStatusByName(c.apiContext(ctx), name).Execute()
+		status, resp, err := c.apiClient.ExportersV1Api.GetExporterStatusByName(c.apiContext(ctx), name).Execute()
 		if err != nil {
-			return diag.Errorf("error resuming Schema Exporter (Failed to read status): %s", createDescriptiveError(err))
+			return diag.Errorf("error resuming Schema Exporter (Failed to read status): %s", createDescriptiveError(err, resp))
 		}
 		if status.GetTrace() != "" {
 			return diag.Errorf("error resuming Schema Exporter %q: %s", id, status.GetTrace())
@@ -449,15 +481,15 @@ func schemaExporterDelete(ctx context.Context, d *schema.ResourceData, meta inte
 	c := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 
 	// pause the exporter first
-	_, _, err = c.apiClient.ExportersV1Api.PauseExporterByName(c.apiContext(ctx), name).Execute()
+	_, resp, err := c.apiClient.ExportersV1Api.PauseExporterByName(c.apiContext(ctx), name).Execute()
 	if err != nil {
-		return diag.Errorf("error deleting Schema Exporter (failed to pause the exporter): %s", createDescriptiveError(err))
+		return diag.Errorf("error deleting Schema Exporter (failed to pause the exporter): %s", createDescriptiveError(err, resp))
 	}
 
 	request := c.apiClient.ExportersV1Api.DeleteExporter(c.apiContext(ctx), name)
-	_, err = request.Execute()
+	resp, err = request.Execute()
 	if err != nil {
-		return diag.Errorf("error deleting Schema Exporter %q: %s", id, createDescriptiveError(err))
+		return diag.Errorf("error deleting Schema Exporter %q: %s", id, createDescriptiveError(err, resp))
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished deleting Schema Exporter %q", id), map[string]interface{}{schemaExporterLoggingKey: id})
@@ -488,7 +520,7 @@ func schemaExporterImport(ctx context.Context, d *schema.ResourceData, meta inte
 	return []*schema.ResourceData{d}, nil
 }
 
-func setSchemaExporterAttributes(d *schema.ResourceData, clusterId string, exporter sr.ExporterReference, c *SchemaRegistryRestClient) (*schema.ResourceData, error) {
+func setSchemaExporterAttributes(d *schema.ResourceData, clusterId string, exporter sr.ExporterReference, c *SchemaRegistryRestClient, meta interface{}) (*schema.ResourceData, error) {
 	if !c.isMetadataSetInProviderBlock {
 		if err := setKafkaCredentials(c.clusterApiKey, c.clusterApiSecret, d, c.externalAccessToken != nil); err != nil {
 			return nil, err
@@ -518,27 +550,69 @@ func setSchemaExporterAttributes(d *schema.ResourceData, clusterId string, expor
 	}
 
 	configs := exporter.GetConfig()
-	destinationSRClusterApiKey := extractStringValueFromNestedBlock(d, paramDestinationSchemaRegistryCluster, paramCredentials, paramKey)
-	destinationSRClusterApiSecret := extractStringValueFromNestedBlock(d, paramDestinationSchemaRegistryCluster, paramCredentials, paramSecret)
-	if err := d.Set(paramDestinationSchemaRegistryCluster, []interface{}{map[string]interface{}{
-		paramRestEndpoint: configs[schemaRegistryUrlConfig],
-		paramCredentials: []interface{}{map[string]interface{}{
-			paramKey:    destinationSRClusterApiKey,
-			paramSecret: destinationSRClusterApiSecret,
-		}},
-	}}); err != nil {
+	if err := setDestinationSchemaRegistryClusterAttributes(d, configs, meta.(*Client).isOAuthEnabled); err != nil {
 		return nil, err
 	}
 
-	for _, key := range standardConfigs {
-		delete(configs, key)
-	}
+	removeSensitiveInfoFromConfigs(configs, standardConfigs, oauthBearerConfigs)
 	if err := d.Set(paramConfigs, configs); err != nil {
 		return nil, err
 	}
 
 	d.SetId(createExporterId(clusterId, exporter.GetName()))
 	return d, nil
+}
+
+func readSchemaExporterStatusAndSetAttributes(ctx context.Context, d *schema.ResourceData, c *SchemaRegistryRestClient, id, name string) error {
+	tflog.Debug(ctx, fmt.Sprintf("Reading Schema Exporter Status %q", name))
+	status, resp, err := c.apiClient.ExportersV1Api.GetExporterStatusByName(c.apiContext(ctx), name).Execute()
+	if err != nil {
+		return fmt.Errorf("error reading Schema Exporter %q Status: %s", id, createDescriptiveError(err, resp))
+	}
+	switch state := status.GetState(); state {
+	case stateRunning, statePaused:
+		// valid states at this point
+		if err := d.Set(paramStatus, state); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func setDestinationSchemaRegistryClusterAttributes(d *schema.ResourceData, configs map[string]string, isOAuthEnabled bool) error {
+	destinationClusterId := configs[bearerAuthLogicalCluster]
+	destinationClusterEndpoint := configs[schemaRegistryUrlConfig]
+	destinationSRClusterApiKey := extractStringValueFromNestedBlock(d, paramDestinationSchemaRegistryCluster, paramCredentials, paramKey)
+	destinationSRClusterApiSecret := extractStringValueFromNestedBlock(d, paramDestinationSchemaRegistryCluster, paramCredentials, paramSecret)
+
+	if isOAuthEnabled {
+		if err := d.Set(paramDestinationSchemaRegistryCluster, []interface{}{map[string]interface{}{
+			paramId:           destinationClusterId,
+			paramRestEndpoint: destinationClusterEndpoint,
+		},
+		}); err != nil {
+			return err
+		}
+	} else {
+		if err := d.Set(paramDestinationSchemaRegistryCluster, []interface{}{map[string]interface{}{
+			paramRestEndpoint: destinationClusterEndpoint,
+			paramCredentials: []interface{}{map[string]interface{}{
+				paramKey:    destinationSRClusterApiKey,
+				paramSecret: destinationSRClusterApiSecret,
+			}},
+		}}); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func removeSensitiveInfoFromConfigs(configs map[string]string, keysGroupToRemove ...[]string) {
+	for _, group := range keysGroupToRemove {
+		for _, key := range group {
+			delete(configs, key)
+		}
+	}
 }
 
 func createExporterId(clusterId, exporterName string) string {

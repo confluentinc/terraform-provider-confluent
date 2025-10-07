@@ -84,9 +84,9 @@ func TestAccConnectorLive(t *testing.T) {
 				),
 			},
 			{
-				ResourceName:      fmt.Sprintf("confluent_connector.%s", connectorResourceLabel),
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            fmt.Sprintf("confluent_connector.%s", connectorResourceLabel),
+				ImportState:             true,
+				ImportStateVerify:       true,
 				ImportStateVerifyIgnore: []string{"config_sensitive"},
 				ImportStateIdFunc: func(state *terraform.State) (string, error) {
 					resources := state.RootModule().Resources
@@ -287,4 +287,4 @@ func testAccCheckConnectorUpdateLiveConfig(endpoint, connectorResourceLabel, con
 		depends_on = [confluent_kafka_topic.connector_topic]
 	}
 	`, endpoint, apiKey, apiSecret, kafkaClusterId, topicName, kafkaRestEndpoint, kafkaApiKey, kafkaApiSecret, connectorResourceLabel, kafkaClusterId, connectorName, kafkaApiKey, kafkaApiSecret)
-} 
+}

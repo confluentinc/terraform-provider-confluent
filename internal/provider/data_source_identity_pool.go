@@ -111,9 +111,9 @@ func identityPoolDataSourceReadUsingId(ctx context.Context, d *schema.ResourceDa
 	tflog.Debug(ctx, fmt.Sprintf("Reading Identity Pool %q=%q", paramId, identityPoolId), map[string]interface{}{identityPoolLoggingKey: identityPoolId})
 
 	c := meta.(*Client)
-	identityPool, _, err := executeIdentityPoolRead(c.oidcApiContext(ctx), c, identityPoolId, identityProviderId)
+	identityPool, resp, err := executeIdentityPoolRead(c.oidcApiContext(ctx), c, identityPoolId, identityProviderId)
 	if err != nil {
-		return diag.Errorf("error reading Identity Pool %q: %s", identityPoolId, createDescriptiveError(err))
+		return diag.Errorf("error reading Identity Pool %q: %s", identityPoolId, createDescriptiveError(err, resp))
 	}
 	identityPoolJson, err := json.Marshal(identityPool)
 	if err != nil {
@@ -143,9 +143,9 @@ func loadIdentityPools(ctx context.Context, c *Client, identityProviderId string
 	allIdentityPoolsAreCollected := false
 	pageToken := ""
 	for !allIdentityPoolsAreCollected {
-		identityPoolsPageList, _, err := executeListIdentityPools(ctx, c, identityProviderId, pageToken)
+		identityPoolsPageList, resp, err := executeListIdentityPools(ctx, c, identityProviderId, pageToken)
 		if err != nil {
-			return nil, fmt.Errorf("error reading Identity Pools: %s", createDescriptiveError(err))
+			return nil, fmt.Errorf("error reading Identity Pools: %s", createDescriptiveError(err, resp))
 		}
 		identityPools = append(identityPools, identityPoolsPageList.GetData()...)
 
@@ -159,7 +159,7 @@ func loadIdentityPools(ctx context.Context, c *Client, identityProviderId string
 			} else {
 				pageToken, err = extractPageToken(nextPageUrlString)
 				if err != nil {
-					return nil, fmt.Errorf("error reading Identity Pools: %s", createDescriptiveError(err))
+					return nil, fmt.Errorf("error reading Identity Pools: %s", createDescriptiveError(err, resp))
 				}
 			}
 		} else {
@@ -178,7 +178,7 @@ func executeListIdentityPools(ctx context.Context, c *Client, identityProviderId
 }
 
 // https://github.com/hashicorp/terraform-plugin-sdk/issues/155#issuecomment-489699737
-////  alternative - https://github.com/hashicorp/terraform-plugin-sdk/issues/248#issuecomment-725013327
+// //  alternative - https://github.com/hashicorp/terraform-plugin-sdk/issues/248#issuecomment-725013327
 func identityProviderDataSourceSchema() *schema.Schema {
 	return &schema.Schema{
 		Type: schema.TypeList,

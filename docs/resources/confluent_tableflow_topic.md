@@ -112,6 +112,7 @@ In addition to the preceding arguments, the following attributes are exported:
 - `enable_partitioning` - (Optional Boolean) This flag determines whether to enable partitioning for the Tableflow enabled topic.
 - `suspended` - (Optional Boolean) Indicates whether the Tableflow should be suspended.
 - `table_path` - (Optional String) The current storage path where the data and metadata is stored for this table.
+- `write_mode` - (Optional String) Indicates the write mode of the Tableflow topic.
 - `byob_aws` (Optional Configuration Block) supports the following:
     - `bucket_region` - (Required String) The bucket region.
 

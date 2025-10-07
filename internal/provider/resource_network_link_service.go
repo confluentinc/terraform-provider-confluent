@@ -124,16 +124,16 @@ func networkLinkServiceCreate(ctx context.Context, d *schema.ResourceData, meta 
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Network Link Service: %s", createNetworkLinkServiceRequestJson))
 
-	createdNLS, _, err := c.netClient.NetworkLinkServicesNetworkingV1Api.CreateNetworkingV1NetworkLinkServiceExecute(request)
+	createdNLS, resp, err := c.netClient.NetworkLinkServicesNetworkingV1Api.CreateNetworkingV1NetworkLinkServiceExecute(request)
 	if err != nil {
-		return diag.Errorf("error creating Network Link Service %s", createDescriptiveError(err))
+		return diag.Errorf("error creating Network Link Service %s", createDescriptiveError(err, resp))
 	}
 
 	nlsId := createdNLS.GetId()
 	d.SetId(nlsId)
 
 	if err := waitForNetworkLinkServiceToProvision(c.netApiContext(ctx), c, environmentId, d.Id()); err != nil {
-		return diag.Errorf("error waiting for Network Link Service %q to provision: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error waiting for Network Link Service %q to provision: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	createdNetworkLinkServiceJson, err := json.Marshal(createdNLS)
@@ -168,7 +168,7 @@ func readNetworkLinkServiceAndSetAttributes(ctx context.Context, d *schema.Resou
 	c := meta.(*Client)
 	nls, resp, err := executeNLSRead(ctx, c, nlsId, environmentId)
 	if err != nil {
-		tflog.Warn(ctx, fmt.Sprintf("Error reading Network Link Service %q: %s", nlsId, createDescriptiveError(err)), map[string]interface{}{networkLinkServiceLoggingKey: nlsId})
+		tflog.Warn(ctx, fmt.Sprintf("Error reading Network Link Service %q: %s", nlsId, createDescriptiveError(err, resp)), map[string]interface{}{networkLinkServiceLoggingKey: nlsId})
 
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
 		if isResourceNotFound && !d.IsNewResource() {
@@ -208,9 +208,9 @@ func networkLinkServiceDelete(ctx context.Context, d *schema.ResourceData, meta 
 
 	c := meta.(*Client)
 	request := c.netClient.NetworkLinkServicesNetworkingV1Api.DeleteNetworkingV1NetworkLinkService(c.netApiContext(ctx), nlsId).Environment(environmentId)
-	_, err := c.netClient.NetworkLinkServicesNetworkingV1Api.DeleteNetworkingV1NetworkLinkServiceExecute(request)
+	resp, err := c.netClient.NetworkLinkServicesNetworkingV1Api.DeleteNetworkingV1NetworkLinkServiceExecute(request)
 	if err != nil {
-		return diag.Errorf("error deleting Network Link Service %q: %s", nlsId, createDescriptiveError(err))
+		return diag.Errorf("error deleting Network Link Service %q: %s", nlsId, createDescriptiveError(err, resp))
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished deleting Network Link Service %q", nlsId), map[string]interface{}{networkLinkServiceLoggingKey: nlsId})
@@ -256,9 +256,9 @@ func networkLinkServiceUpdate(ctx context.Context, d *schema.ResourceData, meta 
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Updating new Network Link Service: %s", updateNetworkLinkServiceRequestJson))
 
-	updatedNLS, _, err := c.netClient.NetworkLinkServicesNetworkingV1Api.UpdateNetworkingV1NetworkLinkServiceExecute(request)
+	updatedNLS, resp, err := c.netClient.NetworkLinkServicesNetworkingV1Api.UpdateNetworkingV1NetworkLinkServiceExecute(request)
 	if err != nil {
-		return diag.Errorf("error updating Network Link Service, %s", createDescriptiveError(err))
+		return diag.Errorf("error updating Network Link Service, %s", createDescriptiveError(err, resp))
 	}
 
 	updatedNetworkLinkServiceJson, err := json.Marshal(updatedNLS)

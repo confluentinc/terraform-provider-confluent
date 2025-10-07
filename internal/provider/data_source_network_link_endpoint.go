@@ -86,9 +86,9 @@ func networkLinkEndpointDataSourceRead(ctx context.Context, d *schema.ResourceDa
 
 	c := meta.(*Client)
 	request := c.netClient.NetworkLinkEndpointsNetworkingV1Api.GetNetworkingV1NetworkLinkEndpoint(c.netApiContext(ctx), nleId).Environment(environmentId)
-	nle, _, err := c.netClient.NetworkLinkEndpointsNetworkingV1Api.GetNetworkingV1NetworkLinkEndpointExecute(request)
+	nle, resp, err := c.netClient.NetworkLinkEndpointsNetworkingV1Api.GetNetworkingV1NetworkLinkEndpointExecute(request)
 	if err != nil {
-		return diag.Errorf("error reading network link endpoint %q: %s", nleId, createDescriptiveError(err))
+		return diag.Errorf("error reading network link endpoint %q: %s", nleId, createDescriptiveError(err, resp))
 	}
 	nleJson, err := json.Marshal(nle)
 	if err != nil {

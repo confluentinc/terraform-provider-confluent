@@ -807,14 +807,14 @@ func flinkStatementDeleteStatus(ctx context.Context, c *FlinkRestClient, stateme
 		statement, resp, err := executeFlinkStatementRead(c.apiContext(ctx), c, statementName)
 		statementId := createFlinkStatementId(c.environmentId, c.computePoolId, statementName)
 		if err != nil {
-			tflog.Warn(ctx, fmt.Sprintf("Error reading Flink Statement %q: %s", statementName, createDescriptiveError(err)), map[string]interface{}{flinkStatementLoggingKey: statementId})
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Flink Statement %q: %s", statementName, createDescriptiveError(err, resp)), map[string]interface{}{flinkStatementLoggingKey: statementId})
 
 			isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
 			if isResourceNotFound {
 				tflog.Debug(ctx, fmt.Sprintf("Finishing Flink Statement %q deletion process: Received %d status code when reading %q Flink Statement", statementName, resp.StatusCode, statementName), map[string]interface{}{flinkStatementLoggingKey: statementId})
 				return 0, stateDone, nil
 			} else {
-				tflog.Debug(ctx, fmt.Sprintf("Exiting Flink Statement %q deletion process: Failed when reading Flink Statement: %s", statementName, createDescriptiveError(err)), map[string]interface{}{flinkStatementLoggingKey: statementId})
+				tflog.Debug(ctx, fmt.Sprintf("Exiting Flink Statement %q deletion process: Failed when reading Flink Statement: %s", statementName, createDescriptiveError(err, resp)), map[string]interface{}{flinkStatementLoggingKey: statementId})
 				return nil, stateFailed, err
 			}
 		}
@@ -828,7 +828,7 @@ func kafkaTopicDeleteStatus(ctx context.Context, c *KafkaRestClient, topicName s
 		kafkaTopic, resp, err := c.apiClient.TopicV3Api.GetKafkaTopic(c.apiContext(ctx), c.clusterId, topicName).Execute()
 		topicId := createKafkaTopicId(c.clusterId, topicName)
 		if err != nil {
-			tflog.Warn(ctx, fmt.Sprintf("Error reading Kafka Topic %q: %s", topicId, createDescriptiveError(err)), map[string]interface{}{kafkaTopicLoggingKey: topicId})
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Kafka Topic %q: %s", topicId, createDescriptiveError(err, resp)), map[string]interface{}{kafkaTopicLoggingKey: topicId})
 
 			// 404 means that the topic has been deleted
 			isResourceNotFound := ResponseHasExpectedStatusCode(resp, http.StatusNotFound)
@@ -848,7 +848,7 @@ func kafkaMirrorTopicDeleteStatus(ctx context.Context, c *KafkaRestClient, linkN
 		kafkaTopic, resp, err := c.apiClient.ClusterLinkingV3Api.ReadKafkaMirrorTopic(c.apiContext(ctx), c.clusterId, linkName, mirrorTopicName).Execute()
 		kafkaMirrorTopicId := createKafkaMirrorTopicId(c.clusterId, linkName, mirrorTopicName)
 		if err != nil {
-			tflog.Warn(ctx, fmt.Sprintf("Error reading Kafka Mirror Topic %q: %s", kafkaMirrorTopicId, createDescriptiveError(err)), map[string]interface{}{kafkaMirrorTopicLoggingKey: kafkaMirrorTopicId})
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Kafka Mirror Topic %q: %s", kafkaMirrorTopicId, createDescriptiveError(err, resp)), map[string]interface{}{kafkaMirrorTopicLoggingKey: kafkaMirrorTopicId})
 
 			// 404 means that the topic has been deleted
 			isResourceNotFound := ResponseHasExpectedStatusCode(resp, http.StatusNotFound)
@@ -867,14 +867,14 @@ func plattcDeleteStatus(ctx context.Context, c *Client, environmentId, plattcId 
 	return func() (result interface{}, s string, err error) {
 		plattc, resp, err := executePlattcRead(c.netPLApiContext(ctx), c, environmentId, plattcId)
 		if err != nil {
-			tflog.Warn(ctx, fmt.Sprintf("Error reading Private Link Attachment Connection %q: %s", plattcId, createDescriptiveError(err)), map[string]interface{}{privateLinkAttachmentConnectionLoggingKey: plattcId})
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Private Link Attachment Connection %q: %s", plattcId, createDescriptiveError(err, resp)), map[string]interface{}{privateLinkAttachmentConnectionLoggingKey: plattcId})
 
 			isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
 			if isResourceNotFound {
 				tflog.Debug(ctx, fmt.Sprintf("Finishing Private Link Attachment Connection %q deletion process: Received %d status code when reading %q Plattc", plattcId, resp.StatusCode, plattcId), map[string]interface{}{privateLinkAttachmentConnectionLoggingKey: plattcId})
 				return 0, stateDone, nil
 			} else {
-				tflog.Debug(ctx, fmt.Sprintf("Exiting Private Link Attachment Connection %q deletion process: Failed when reading Plattc: %s: %s", plattcId, createDescriptiveError(err), plattc.Status.GetErrorMessage()), map[string]interface{}{privateLinkAttachmentConnectionLoggingKey: plattcId})
+				tflog.Debug(ctx, fmt.Sprintf("Exiting Private Link Attachment Connection %q deletion process: Failed when reading Plattc: %s: %s", plattcId, createDescriptiveError(err, resp), plattc.Status.GetErrorMessage()), map[string]interface{}{privateLinkAttachmentConnectionLoggingKey: plattcId})
 				return nil, stateFailed, err
 			}
 		}
@@ -907,7 +907,7 @@ func clusterLinkDeleteStatus(ctx context.Context, c *KafkaRestClient, linkName s
 		clusterLink, resp, err := c.apiClient.ClusterLinkingV3Api.GetKafkaLink(c.apiContext(ctx), c.clusterId, linkName).Execute()
 		clusterLinkCompositeId := createClusterLinkCompositeId(c.clusterId, linkName)
 		if err != nil {
-			tflog.Warn(ctx, fmt.Sprintf("Error reading Cluster Link %q: %s", clusterLinkCompositeId, createDescriptiveError(err)), map[string]interface{}{clusterLinkLoggingKey: clusterLinkCompositeId})
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Cluster Link %q: %s", clusterLinkCompositeId, createDescriptiveError(err, resp)), map[string]interface{}{clusterLinkLoggingKey: clusterLinkCompositeId})
 
 			// 404 means that the cluster link has been deleted
 			isResourceNotFound := ResponseHasExpectedStatusCode(resp, http.StatusNotFound)
@@ -924,9 +924,9 @@ func clusterLinkDeleteStatus(ctx context.Context, c *KafkaRestClient, linkName s
 
 func kafkaClusterCkuUpdateStatus(ctx context.Context, c *Client, environmentId string, clusterId string, desiredCku int32) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		cluster, _, err := executeKafkaRead(c.cmkApiContext(ctx), c, environmentId, clusterId)
+		cluster, resp, err := executeKafkaRead(c.cmkApiContext(ctx), c, environmentId, clusterId)
 		if err != nil {
-			tflog.Warn(ctx, fmt.Sprintf("Error reading Kafka Cluster %q: %s", clusterId, createDescriptiveError(err)), map[string]interface{}{kafkaClusterLoggingKey: clusterId})
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Kafka Cluster %q: %s", clusterId, createDescriptiveError(err, resp)), map[string]interface{}{kafkaClusterLoggingKey: clusterId})
 			return nil, stateUnknown, err
 		}
 
@@ -945,9 +945,9 @@ func kafkaClusterCkuUpdateStatus(ctx context.Context, c *Client, environmentId s
 
 func kafkaClusterProvisionStatus(ctx context.Context, c *Client, environmentId string, clusterId string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		cluster, _, err := executeKafkaRead(c.cmkApiContext(ctx), c, environmentId, clusterId)
+		cluster, resp, err := executeKafkaRead(c.cmkApiContext(ctx), c, environmentId, clusterId)
 		if err != nil {
-			tflog.Warn(ctx, fmt.Sprintf("Error reading Kafka Cluster %q: %s", clusterId, createDescriptiveError(err)), map[string]interface{}{kafkaClusterLoggingKey: clusterId})
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Kafka Cluster %q: %s", clusterId, createDescriptiveError(err, resp)), map[string]interface{}{kafkaClusterLoggingKey: clusterId})
 			return nil, stateUnknown, err
 		}
 
@@ -964,9 +964,9 @@ func kafkaClusterProvisionStatus(ctx context.Context, c *Client, environmentId s
 
 func ksqlClusterProvisionStatus(ctx context.Context, c *Client, environmentId, clusterId string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		cluster, _, err := executeKsqlRead(c.ksqlApiContext(ctx), c, environmentId, clusterId)
+		cluster, resp, err := executeKsqlRead(c.ksqlApiContext(ctx), c, environmentId, clusterId)
 		if err != nil {
-			tflog.Warn(ctx, fmt.Sprintf("Error reading ksqlDB Cluster %q: %s", clusterId, createDescriptiveError(err)), map[string]interface{}{ksqlClusterLoggingKey: clusterId})
+			tflog.Warn(ctx, fmt.Sprintf("Error reading ksqlDB Cluster %q: %s", clusterId, createDescriptiveError(err, resp)), map[string]interface{}{ksqlClusterLoggingKey: clusterId})
 			return nil, stateUnknown, err
 		}
 
@@ -1014,9 +1014,9 @@ func anySchemaRegistryClusterProvisionStatus(ctx context.Context, c *Client, env
 
 func schemaRegistryClusterProvisionStatus(ctx context.Context, c *Client, environmentId string, clusterId string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		cluster, _, err := executeSchemaRegistryClusterRead(c.srcmApiContext(ctx), c, environmentId, clusterId)
+		cluster, resp, err := executeSchemaRegistryClusterRead(c.srcmApiContext(ctx), c, environmentId, clusterId)
 		if err != nil {
-			tflog.Warn(ctx, fmt.Sprintf("Error reading Schema Registry Cluster %q: %s", clusterId, createDescriptiveError(err)), map[string]interface{}{schemaRegistryClusterLoggingKey: clusterId})
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Schema Registry Cluster %q: %s", clusterId, createDescriptiveError(err, resp)), map[string]interface{}{schemaRegistryClusterLoggingKey: clusterId})
 			return nil, stateUnknown, err
 		}
 
@@ -1033,9 +1033,9 @@ func schemaRegistryClusterProvisionStatus(ctx context.Context, c *Client, enviro
 
 func privateLinkAccessProvisionStatus(ctx context.Context, c *Client, environmentId string, privateLinkAccessId string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		privateLinkAccess, _, err := executePrivateLinkAccessRead(c.netApiContext(ctx), c, environmentId, privateLinkAccessId)
+		privateLinkAccess, resp, err := executePrivateLinkAccessRead(c.netApiContext(ctx), c, environmentId, privateLinkAccessId)
 		if err != nil {
-			tflog.Warn(ctx, fmt.Sprintf("Error reading Private Link Access %q: %s", privateLinkAccessId, createDescriptiveError(err)), map[string]interface{}{privateLinkAccessLoggingKey: privateLinkAccessId})
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Private Link Access %q: %s", privateLinkAccessId, createDescriptiveError(err, resp)), map[string]interface{}{privateLinkAccessLoggingKey: privateLinkAccessId})
 			return nil, stateUnknown, err
 		}
 
@@ -1052,9 +1052,9 @@ func privateLinkAccessProvisionStatus(ctx context.Context, c *Client, environmen
 
 func connectorOffsetUpdateStatus(ctx context.Context, c *Client, environmentId, clusterId, displayName string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		status, _, err := c.connectClient.OffsetsConnectV1Api.GetConnectv1ConnectorOffsetsRequestStatus(c.connectApiContext(ctx), displayName, environmentId, clusterId).Execute()
+		status, resp, err := c.connectClient.OffsetsConnectV1Api.GetConnectv1ConnectorOffsetsRequestStatus(c.connectApiContext(ctx), displayName, environmentId, clusterId).Execute()
 		if err != nil {
-			tflog.Warn(ctx, fmt.Sprintf("Error reading Connector %q offsets update status: %s", displayName, createDescriptiveError(err)), map[string]interface{}{connectorLoggingKey: displayName})
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Connector %q offsets update status: %s", displayName, createDescriptiveError(err, resp)), map[string]interface{}{connectorLoggingKey: displayName})
 			return nil, stateUnknown, err
 		}
 
@@ -1071,9 +1071,9 @@ func connectorOffsetUpdateStatus(ctx context.Context, c *Client, environmentId, 
 
 func privateLinkAttachmentProvisionStatus(ctx context.Context, c *Client, environmentId string, privateLinkAttachmentId string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		privateLinkAttachment, _, err := executePlattRead(c.netPLApiContext(ctx), c, privateLinkAttachmentId, environmentId)
+		privateLinkAttachment, resp, err := executePlattRead(c.netPLApiContext(ctx), c, privateLinkAttachmentId, environmentId)
 		if err != nil {
-			tflog.Warn(ctx, fmt.Sprintf("Error reading Private Link Attachment %q: %s", privateLinkAttachmentId, createDescriptiveError(err)), map[string]interface{}{privateLinkAttachmentLoggingKey: privateLinkAttachmentId})
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Private Link Attachment %q: %s", privateLinkAttachmentId, createDescriptiveError(err, resp)), map[string]interface{}{privateLinkAttachmentLoggingKey: privateLinkAttachmentId})
 			return nil, stateUnknown, err
 		}
 
@@ -1090,9 +1090,9 @@ func privateLinkAttachmentProvisionStatus(ctx context.Context, c *Client, enviro
 
 func privateLinkAttachmentConnectionProvisionStatus(ctx context.Context, c *Client, environmentId string, privateLinkAttachmentConnectionId string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		privateLinkAttachmentConnection, _, err := executePlattcRead(c.netPLApiContext(ctx), c, privateLinkAttachmentConnectionId, environmentId)
+		privateLinkAttachmentConnection, resp, err := executePlattcRead(c.netPLApiContext(ctx), c, privateLinkAttachmentConnectionId, environmentId)
 		if err != nil {
-			tflog.Warn(ctx, fmt.Sprintf("Error reading Private Link Attachment Connection %q: %s", privateLinkAttachmentConnectionId, createDescriptiveError(err)), map[string]interface{}{privateLinkAttachmentConnectionLoggingKey: privateLinkAttachmentConnectionId})
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Private Link Attachment Connection %q: %s", privateLinkAttachmentConnectionId, createDescriptiveError(err, resp)), map[string]interface{}{privateLinkAttachmentConnectionLoggingKey: privateLinkAttachmentConnectionId})
 			return nil, stateUnknown, err
 		}
 
@@ -1109,9 +1109,9 @@ func privateLinkAttachmentConnectionProvisionStatus(ctx context.Context, c *Clie
 
 func nlsProvisionStatus(ctx context.Context, c *Client, environmentId string, nlsId string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		nls, _, err := executeNLSRead(c.netApiContext(ctx), c, nlsId, environmentId)
+		nls, resp, err := executeNLSRead(c.netApiContext(ctx), c, nlsId, environmentId)
 		if err != nil {
-			tflog.Warn(ctx, fmt.Sprintf("Error reading Network Link Service %q: %s", nlsId, createDescriptiveError(err)), map[string]interface{}{networkLinkServiceLoggingKey: nlsId})
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Network Link Service %q: %s", nlsId, createDescriptiveError(err, resp)), map[string]interface{}{networkLinkServiceLoggingKey: nlsId})
 			return nil, stateUnknown, err
 		}
 
@@ -1128,9 +1128,9 @@ func nlsProvisionStatus(ctx context.Context, c *Client, environmentId string, nl
 
 func networkProvisionStatus(ctx context.Context, c *Client, environmentId string, networkId string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		network, _, err := executeNetworkRead(c.netApiContext(ctx), c, environmentId, networkId)
+		network, resp, err := executeNetworkRead(c.netApiContext(ctx), c, environmentId, networkId)
 		if err != nil {
-			tflog.Warn(ctx, fmt.Sprintf("Error reading Network %q: %s", networkId, createDescriptiveError(err)), map[string]interface{}{networkLoggingKey: networkId})
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Network %q: %s", networkId, createDescriptiveError(err, resp)), map[string]interface{}{networkLoggingKey: networkId})
 			return nil, stateUnknown, err
 		}
 
@@ -1147,9 +1147,9 @@ func networkProvisionStatus(ctx context.Context, c *Client, environmentId string
 
 func dnsRecordProvisionStatus(ctx context.Context, c *Client, environmentId string, dnsRecordId string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		dnsRecord, _, err := executeDnsRecordRead(c.netAPApiContext(ctx), c, environmentId, dnsRecordId)
+		dnsRecord, resp, err := executeDnsRecordRead(c.netAPApiContext(ctx), c, environmentId, dnsRecordId)
 		if err != nil {
-			tflog.Warn(ctx, fmt.Sprintf("Error reading DNS Record %q: %s", dnsRecordId, createDescriptiveError(err)), map[string]interface{}{dnsRecordKey: dnsRecordId})
+			tflog.Warn(ctx, fmt.Sprintf("Error reading DNS Record %q: %s", dnsRecordId, createDescriptiveError(err, resp)), map[string]interface{}{dnsRecordKey: dnsRecordId})
 			return nil, stateUnknown, err
 		}
 
@@ -1166,9 +1166,9 @@ func dnsRecordProvisionStatus(ctx context.Context, c *Client, environmentId stri
 
 func dnsForwarderProvisionStatus(ctx context.Context, c *Client, environmentId string, dnsForwarderId string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		dnsForwarder, _, err := executeDnsForwarderRead(c.netDnsApiContext(ctx), c, environmentId, dnsForwarderId)
+		dnsForwarder, resp, err := executeDnsForwarderRead(c.netDnsApiContext(ctx), c, environmentId, dnsForwarderId)
 		if err != nil {
-			tflog.Warn(ctx, fmt.Sprintf("Error reading DNS Forwarder %q: %s", dnsForwarderId, createDescriptiveError(err)), map[string]interface{}{dnsForwarderKey: dnsForwarderId})
+			tflog.Warn(ctx, fmt.Sprintf("Error reading DNS Forwarder %q: %s", dnsForwarderId, createDescriptiveError(err, resp)), map[string]interface{}{dnsForwarderKey: dnsForwarderId})
 			return nil, stateUnknown, err
 		}
 
@@ -1185,9 +1185,9 @@ func dnsForwarderProvisionStatus(ctx context.Context, c *Client, environmentId s
 
 func accessPointProvisionStatus(ctx context.Context, c *Client, environmentId string, accessPointId string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		accessPoint, _, err := executeAccessPointRead(c.netAPApiContext(ctx), c, environmentId, accessPointId)
+		accessPoint, resp, err := executeAccessPointRead(c.netAPApiContext(ctx), c, environmentId, accessPointId)
 		if err != nil {
-			tflog.Warn(ctx, fmt.Sprintf("Error reading Access Point %q: %s", accessPointId, createDescriptiveError(err)), map[string]interface{}{accessPointKey: accessPointId})
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Access Point %q: %s", accessPointId, createDescriptiveError(err, resp)), map[string]interface{}{accessPointKey: accessPointId})
 			return nil, stateUnknown, err
 		}
 
@@ -1204,9 +1204,9 @@ func accessPointProvisionStatus(ctx context.Context, c *Client, environmentId st
 
 func gatewayProvisionStatus(ctx context.Context, c *Client, environmentId string, gatewayId string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		gateway, _, err := executeGatewayRead(c.netAPApiContext(ctx), c, environmentId, gatewayId)
+		gateway, resp, err := executeGatewayRead(c.netAPApiContext(ctx), c, environmentId, gatewayId)
 		if err != nil {
-			tflog.Warn(ctx, fmt.Sprintf("Error reading Gateway %q: %s", gatewayId, createDescriptiveError(err)), map[string]interface{}{gatewayKey: gatewayId})
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Gateway %q: %s", gatewayId, createDescriptiveError(err, resp)), map[string]interface{}{gatewayKey: gatewayId})
 			return nil, stateUnknown, err
 		}
 
@@ -1223,9 +1223,9 @@ func gatewayProvisionStatus(ctx context.Context, c *Client, environmentId string
 
 func flinkStatementProvisionStatus(ctx context.Context, c *FlinkRestClient, statementName string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		statement, _, err := executeFlinkStatementRead(c.apiContext(ctx), c, statementName)
+		statement, resp, err := executeFlinkStatementRead(c.apiContext(ctx), c, statementName)
 		if err != nil {
-			tflog.Warn(ctx, fmt.Sprintf("Error reading Flink Statement %q: %s", statementName, createDescriptiveError(err)), map[string]interface{}{flinkStatementLoggingKey: statementName})
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Flink Statement %q: %s", statementName, createDescriptiveError(err, resp)), map[string]interface{}{flinkStatementLoggingKey: statementName})
 			return nil, stateUnknown, err
 		}
 
@@ -1242,9 +1242,9 @@ func flinkStatementProvisionStatus(ctx context.Context, c *FlinkRestClient, stat
 
 func flinkStatementUpdatingStatus(ctx context.Context, c *FlinkRestClient, statementName, targetStatusMessage string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		statement, _, err := executeFlinkStatementRead(c.apiContext(ctx), c, statementName)
+		statement, resp, err := executeFlinkStatementRead(c.apiContext(ctx), c, statementName)
 		if err != nil {
-			tflog.Warn(ctx, fmt.Sprintf("Error reading Flink Statement %q: %s", statementName, createDescriptiveError(err)), map[string]interface{}{flinkStatementLoggingKey: statementName})
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Flink Statement %q: %s", statementName, createDescriptiveError(err, resp)), map[string]interface{}{flinkStatementLoggingKey: statementName})
 			return nil, stateUnknown, err
 		}
 
@@ -1261,9 +1261,9 @@ func flinkStatementUpdatingStatus(ctx context.Context, c *FlinkRestClient, state
 
 func computePoolProvisionStatus(ctx context.Context, c *Client, environmentId string, computePoolId string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		computePool, _, err := executeComputePoolRead(c.fcpmApiContext(ctx), c, environmentId, computePoolId)
+		computePool, resp, err := executeComputePoolRead(c.fcpmApiContext(ctx), c, environmentId, computePoolId)
 		if err != nil {
-			tflog.Warn(ctx, fmt.Sprintf("Error reading Flink Compute Pool %q: %s", computePoolId, createDescriptiveError(err)), map[string]interface{}{computePoolLoggingKey: computePoolId})
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Flink Compute Pool %q: %s", computePoolId, createDescriptiveError(err, resp)), map[string]interface{}{computePoolLoggingKey: computePoolId})
 			return nil, stateUnknown, err
 		}
 
@@ -1280,9 +1280,9 @@ func computePoolProvisionStatus(ctx context.Context, c *Client, environmentId st
 
 func nleProvisionStatus(ctx context.Context, c *Client, environmentId string, nleId string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		nle, _, err := executeNLERead(c.netApiContext(ctx), c, nleId, environmentId)
+		nle, resp, err := executeNLERead(c.netApiContext(ctx), c, nleId, environmentId)
 		if err != nil {
-			tflog.Warn(ctx, fmt.Sprintf("Error reading Network Link Endpoint %q: %s", nleId, createDescriptiveError(err)), map[string]interface{}{networkLinkEndpointLoggingKey: nleId})
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Network Link Endpoint %q: %s", nleId, createDescriptiveError(err, resp)), map[string]interface{}{networkLinkEndpointLoggingKey: nleId})
 			return nil, stateUnknown, err
 		}
 
@@ -1299,9 +1299,9 @@ func nleProvisionStatus(ctx context.Context, c *Client, environmentId string, nl
 
 func connectorProvisionStatus(ctx context.Context, c *Client, displayName, environmentId, clusterId string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		connector, _, err := executeConnectorStatusCreate(c.connectApiContext(ctx), c, displayName, environmentId, clusterId)
+		connector, resp, err := executeConnectorStatusCreate(c.connectApiContext(ctx), c, displayName, environmentId, clusterId)
 		if err != nil {
-			tflog.Warn(ctx, fmt.Sprintf("Error reading Connector %q=%q: %s", paramDisplayName, displayName, createDescriptiveError(err)))
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Connector %q=%q: %s", paramDisplayName, displayName, createDescriptiveError(err, resp)))
 			return nil, stateUnknown, err
 		}
 
@@ -1317,9 +1317,9 @@ func connectorProvisionStatus(ctx context.Context, c *Client, displayName, envir
 
 func connectorUpdateStatus(ctx context.Context, c *Client, displayName, environmentId, clusterId string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		connector, _, err := executeConnectorStatusCreate(c.connectApiContext(ctx), c, displayName, environmentId, clusterId)
+		connector, resp, err := executeConnectorStatusCreate(c.connectApiContext(ctx), c, displayName, environmentId, clusterId)
 		if err != nil {
-			tflog.Warn(ctx, fmt.Sprintf("Error reading Connector %q=%q: %s", paramDisplayName, displayName, createDescriptiveError(err)))
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Connector %q=%q: %s", paramDisplayName, displayName, createDescriptiveError(err, resp)))
 			return nil, stateUnknown, err
 		}
 		return connector, connector.Connector.GetState(), nil
@@ -1328,11 +1328,11 @@ func connectorUpdateStatus(ctx context.Context, c *Client, displayName, environm
 
 func kafkaMirrorTopicUpdateStatus(ctx context.Context, c *KafkaRestClient, clusterId, linkName, mirrorTopicName string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		mirrorKafkaTopic, _, err := c.apiClient.ClusterLinkingV3Api.ReadKafkaMirrorTopic(c.apiContext(ctx), clusterId, linkName, mirrorTopicName).Execute()
+		mirrorKafkaTopic, resp, err := c.apiClient.ClusterLinkingV3Api.ReadKafkaMirrorTopic(c.apiContext(ctx), clusterId, linkName, mirrorTopicName).Execute()
 		kafkaMirrorTopicId := createKafkaMirrorTopicId(clusterId, linkName, mirrorTopicName)
 
 		if err != nil {
-			tflog.Warn(ctx, fmt.Sprintf("Error reading Kafka Mirror Topic %q: %s", kafkaMirrorTopicId, createDescriptiveError(err)), map[string]interface{}{kafkaMirrorTopicLoggingKey: kafkaMirrorTopicId})
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Kafka Mirror Topic %q: %s", kafkaMirrorTopicId, createDescriptiveError(err, resp)), map[string]interface{}{kafkaMirrorTopicLoggingKey: kafkaMirrorTopicId})
 			return nil, stateUnknown, err
 		}
 		return mirrorKafkaTopic, string(mirrorKafkaTopic.GetMirrorStatus()), nil
@@ -1341,9 +1341,9 @@ func kafkaMirrorTopicUpdateStatus(ctx context.Context, c *KafkaRestClient, clust
 
 func peeringProvisionStatus(ctx context.Context, c *Client, environmentId string, peeringId string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		peering, _, err := executePeeringRead(c.netApiContext(ctx), c, environmentId, peeringId)
+		peering, resp, err := executePeeringRead(c.netApiContext(ctx), c, environmentId, peeringId)
 		if err != nil {
-			tflog.Warn(ctx, fmt.Sprintf("Error reading Peering %q: %s", peeringId, createDescriptiveError(err)), map[string]interface{}{peeringLoggingKey: peeringId})
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Peering %q: %s", peeringId, createDescriptiveError(err, resp)), map[string]interface{}{peeringLoggingKey: peeringId})
 			return nil, stateUnknown, err
 		}
 
@@ -1367,7 +1367,7 @@ func tagProvisionStatus(ctx context.Context, c *CatalogRestClient, tagId, tagNam
 		}
 
 		if err != nil {
-			tflog.Warn(ctx, fmt.Sprintf("Error reading Tag %q: %s", tagId, createDescriptiveError(err)), map[string]interface{}{tagLoggingKey: tagId})
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Tag %q: %s", tagId, createDescriptiveError(err, resp)), map[string]interface{}{tagLoggingKey: tagId})
 			return nil, stateUnknown, err
 		}
 
@@ -1384,7 +1384,7 @@ func businessMetadataProvisionStatus(ctx context.Context, c *CatalogRestClient, 
 		}
 
 		if err != nil {
-			tflog.Warn(ctx, fmt.Sprintf("Error reading Business Metadata %q: %s", businessMetadataId, createDescriptiveError(err)), map[string]interface{}{businessMetadataLoggingKey: businessMetadataId})
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Business Metadata %q: %s", businessMetadataId, createDescriptiveError(err, resp)), map[string]interface{}{businessMetadataLoggingKey: businessMetadataId})
 			return nil, stateUnknown, err
 		}
 
@@ -1401,7 +1401,7 @@ func tagBindingProvisionStatus(ctx context.Context, c *CatalogRestClient, tagBin
 		}
 
 		if err != nil {
-			tflog.Warn(ctx, fmt.Sprintf("Error reading Tag Binding %q: %s", tagBindingId, createDescriptiveError(err)), map[string]interface{}{tagBindingLoggingKey: tagBindingId})
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Tag Binding %q: %s", tagBindingId, createDescriptiveError(err, resp)), map[string]interface{}{tagBindingLoggingKey: tagBindingId})
 			return nil, stateUnknown, err
 		}
 
@@ -1423,7 +1423,7 @@ func businessMetadataBindingProvisionStatus(ctx context.Context, c *CatalogRestC
 		}
 
 		if err != nil {
-			tflog.Warn(ctx, fmt.Sprintf("Error reading Business Metadata Binding %q: %s", businessMetadataBindingId, createDescriptiveError(err)), map[string]interface{}{businessMetadataBindingLoggingKey: businessMetadataBindingId})
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Business Metadata Binding %q: %s", businessMetadataBindingId, createDescriptiveError(err, resp)), map[string]interface{}{businessMetadataBindingLoggingKey: businessMetadataBindingId})
 			return nil, stateUnknown, err
 		}
 
@@ -1444,7 +1444,7 @@ func schemaExporterProvisionStatus(ctx context.Context, c *SchemaRegistryRestCli
 			return nil, stateProvisioning, nil
 		}
 		if err != nil {
-			tflog.Warn(ctx, fmt.Sprintf("Error reading Schema Exporter status %q: %s", id, createDescriptiveError(err)), map[string]interface{}{schemaExporterLoggingKey: id})
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Schema Exporter status %q: %s", id, createDescriptiveError(err, resp)), map[string]interface{}{schemaExporterLoggingKey: id})
 			return nil, stateUnknown, err
 		}
 
@@ -1461,9 +1461,9 @@ func schemaExporterProvisionStatus(ctx context.Context, c *SchemaRegistryRestCli
 
 func transitGatewayAttachmentProvisionStatus(ctx context.Context, c *Client, environmentId string, transitGatewayAttachmentId string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		transitGatewayAttachment, _, err := executeTransitGatewayAttachmentRead(c.netApiContext(ctx), c, environmentId, transitGatewayAttachmentId)
+		transitGatewayAttachment, resp, err := executeTransitGatewayAttachmentRead(c.netApiContext(ctx), c, environmentId, transitGatewayAttachmentId)
 		if err != nil {
-			tflog.Warn(ctx, fmt.Sprintf("Error reading Peering %q: %s", transitGatewayAttachmentId, createDescriptiveError(err)), map[string]interface{}{transitGatewayAttachmentLoggingKey: transitGatewayAttachmentId})
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Peering %q: %s", transitGatewayAttachmentId, createDescriptiveError(err, resp)), map[string]interface{}{transitGatewayAttachmentLoggingKey: transitGatewayAttachmentId})
 			return nil, stateUnknown, err
 		}
 
@@ -1482,14 +1482,14 @@ func dnsRecordDeleteStatus(ctx context.Context, c *Client, environmentId, dnsRec
 	return func() (result interface{}, s string, err error) {
 		dnsRecord, resp, err := executeDnsRecordRead(c.netAPApiContext(ctx), c, environmentId, dnsRecordId)
 		if err != nil {
-			tflog.Warn(ctx, fmt.Sprintf("Error reading DNS Record %q: %s", dnsRecordId, createDescriptiveError(err)), map[string]interface{}{dnsRecordKey: dnsRecordId})
+			tflog.Warn(ctx, fmt.Sprintf("Error reading DNS Record %q: %s", dnsRecordId, createDescriptiveError(err, resp)), map[string]interface{}{dnsRecordKey: dnsRecordId})
 
 			isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
 			if isResourceNotFound {
 				tflog.Debug(ctx, fmt.Sprintf("Finishing DNS Record %q deletion process: Received %d status code when reading %q DNS Record", dnsRecordId, resp.StatusCode, dnsRecordId), map[string]interface{}{dnsRecordKey: dnsRecordId})
 				return 0, stateDone, nil
 			} else {
-				tflog.Debug(ctx, fmt.Sprintf("Exiting DNS Record %q deletion process: Failed when reading DNS Record: %s: %s", dnsRecordId, createDescriptiveError(err), dnsRecord.Status.GetErrorMessage()), map[string]interface{}{dnsRecordKey: dnsRecordId})
+				tflog.Debug(ctx, fmt.Sprintf("Exiting DNS Record %q deletion process: Failed when reading DNS Record: %s: %s", dnsRecordId, createDescriptiveError(err, resp), dnsRecord.Status.GetErrorMessage()), map[string]interface{}{dnsRecordKey: dnsRecordId})
 				return nil, stateFailed, err
 			}
 		}
@@ -1502,14 +1502,14 @@ func privateLinkAccessDeleteStatus(ctx context.Context, c *Client, environmentId
 	return func() (result interface{}, s string, err error) {
 		privateLinkAccess, resp, err := executePrivateLinkAccessRead(c.netApiContext(ctx), c, environmentId, privateLinkAccessId)
 		if err != nil {
-			tflog.Warn(ctx, fmt.Sprintf("Error reading Private Link Access %q: %s", privateLinkAccessId, createDescriptiveError(err)), map[string]interface{}{privateLinkAccessLoggingKey: privateLinkAccessId})
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Private Link Access %q: %s", privateLinkAccessId, createDescriptiveError(err, resp)), map[string]interface{}{privateLinkAccessLoggingKey: privateLinkAccessId})
 
 			isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
 			if isResourceNotFound {
 				tflog.Debug(ctx, fmt.Sprintf("Finishing Private Link Access %q deletion process: Received %d status code when reading %q Private Link Access", privateLinkAccessId, resp.StatusCode, privateLinkAccessId), map[string]interface{}{privateLinkAccessLoggingKey: privateLinkAccessId})
 				return 0, stateDone, nil
 			} else {
-				tflog.Debug(ctx, fmt.Sprintf("Exiting Private Link Access %q deletion process: Failed when reading Private Link Access: %s: %s", privateLinkAccessId, createDescriptiveError(err), privateLinkAccess.Status.GetErrorMessage()), map[string]interface{}{privateLinkAccessLoggingKey: privateLinkAccessId})
+				tflog.Debug(ctx, fmt.Sprintf("Exiting Private Link Access %q deletion process: Failed when reading Private Link Access: %s: %s", privateLinkAccessId, createDescriptiveError(err, resp), privateLinkAccess.Status.GetErrorMessage()), map[string]interface{}{privateLinkAccessLoggingKey: privateLinkAccessId})
 				return nil, stateFailed, err
 			}
 		}
@@ -1522,14 +1522,14 @@ func peeringDeleteStatus(ctx context.Context, c *Client, environmentId, peeringI
 	return func() (result interface{}, s string, err error) {
 		peering, resp, err := executePeeringRead(c.netApiContext(ctx), c, environmentId, peeringId)
 		if err != nil {
-			tflog.Warn(ctx, fmt.Sprintf("Error reading Peering %q: %s", peeringId, createDescriptiveError(err)), map[string]interface{}{peeringLoggingKey: peeringId})
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Peering %q: %s", peeringId, createDescriptiveError(err, resp)), map[string]interface{}{peeringLoggingKey: peeringId})
 
 			isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
 			if isResourceNotFound {
 				tflog.Debug(ctx, fmt.Sprintf("Finishing Peering %q deletion process: Received %d status code when reading %q Peering", peeringId, resp.StatusCode, peeringId), map[string]interface{}{peeringLoggingKey: peeringId})
 				return 0, stateDone, nil
 			} else {
-				tflog.Debug(ctx, fmt.Sprintf("Exiting Peering %q deletion process: Failed when reading Peering: %s: %s", peeringId, createDescriptiveError(err), peering.Status.GetErrorMessage()), map[string]interface{}{peeringLoggingKey: peeringId})
+				tflog.Debug(ctx, fmt.Sprintf("Exiting Peering %q deletion process: Failed when reading Peering: %s: %s", peeringId, createDescriptiveError(err, resp), peering.Status.GetErrorMessage()), map[string]interface{}{peeringLoggingKey: peeringId})
 				return nil, stateFailed, err
 			}
 		}
@@ -1542,14 +1542,14 @@ func nleDeleteStatus(ctx context.Context, c *Client, environmentId, nleId string
 	return func() (result interface{}, s string, err error) {
 		nle, resp, err := executeNLERead(c.netApiContext(ctx), c, nleId, environmentId)
 		if err != nil {
-			tflog.Warn(ctx, fmt.Sprintf("Error reading Network Link Endpoint %q: %s", nleId, createDescriptiveError(err)), map[string]interface{}{networkLinkEndpointLoggingKey: nleId})
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Network Link Endpoint %q: %s", nleId, createDescriptiveError(err, resp)), map[string]interface{}{networkLinkEndpointLoggingKey: nleId})
 
 			isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
 			if isResourceNotFound {
 				tflog.Debug(ctx, fmt.Sprintf("Finishing Network Link Endpoint %q deletion process: Received %d status code when reading %q nle", nleId, resp.StatusCode, nleId), map[string]interface{}{networkLinkEndpointLoggingKey: nleId})
 				return 0, stateDone, nil
 			} else {
-				tflog.Debug(ctx, fmt.Sprintf("Exiting Network Link Endpoint %q deletion process: Failed when reading nle: %s: %s", nleId, createDescriptiveError(err), nle.Status.GetErrorMessage()), map[string]interface{}{networkLinkEndpointLoggingKey: nleId})
+				tflog.Debug(ctx, fmt.Sprintf("Exiting Network Link Endpoint %q deletion process: Failed when reading nle: %s: %s", nleId, createDescriptiveError(err, resp), nle.Status.GetErrorMessage()), map[string]interface{}{networkLinkEndpointLoggingKey: nleId})
 				return nil, stateFailed, err
 			}
 		}
@@ -1562,14 +1562,14 @@ func transitGatewayAttachmentDeleteStatus(ctx context.Context, c *Client, enviro
 	return func() (result interface{}, s string, err error) {
 		transitGatewayAttachment, resp, err := executeTransitGatewayAttachmentRead(c.netApiContext(ctx), c, environmentId, transitGatewayAttachmentId)
 		if err != nil {
-			tflog.Warn(ctx, fmt.Sprintf("Error reading Transit Gateway Attachment %q: %s", transitGatewayAttachmentId, createDescriptiveError(err)), map[string]interface{}{transitGatewayAttachmentLoggingKey: transitGatewayAttachmentId})
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Transit Gateway Attachment %q: %s", transitGatewayAttachmentId, createDescriptiveError(err, resp)), map[string]interface{}{transitGatewayAttachmentLoggingKey: transitGatewayAttachmentId})
 
 			isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
 			if isResourceNotFound {
 				tflog.Debug(ctx, fmt.Sprintf("Finishing Transit Gateway Attachment %q deletion process: Received %d status code when reading %q Transit Gateway Attachment", transitGatewayAttachmentId, resp.StatusCode, transitGatewayAttachmentId), map[string]interface{}{transitGatewayAttachmentLoggingKey: transitGatewayAttachmentId})
 				return 0, stateDone, nil
 			} else {
-				tflog.Debug(ctx, fmt.Sprintf("Exiting Transit Gateway Attachment %q deletion process: Failed when reading Transit Gateway Attachment: %s: %s", transitGatewayAttachmentId, createDescriptiveError(err), transitGatewayAttachment.Status.GetErrorMessage()), map[string]interface{}{transitGatewayAttachmentLoggingKey: transitGatewayAttachmentId})
+				tflog.Debug(ctx, fmt.Sprintf("Exiting Transit Gateway Attachment %q deletion process: Failed when reading Transit Gateway Attachment: %s: %s", transitGatewayAttachmentId, createDescriptiveError(err, resp), transitGatewayAttachment.Status.GetErrorMessage()), map[string]interface{}{transitGatewayAttachmentLoggingKey: transitGatewayAttachmentId})
 				return nil, stateFailed, err
 			}
 		}
@@ -1589,8 +1589,8 @@ func cloudApiKeySyncStatus(ctx context.Context, c *Client, cloudApiKey, cloudApi
 			tflog.Debug(ctx, fmt.Sprintf("Performing Cloud API Key %q sync process: Received %d status code when listing environments", cloudApiKey, resp.StatusCode), map[string]interface{}{apiKeyLoggingKey: cloudApiKey})
 			return 0, stateInProgress, nil
 		} else if err != nil {
-			tflog.Debug(ctx, fmt.Sprintf("Exiting Cloud API Key %q sync process: Failed when listing Environments: %s", cloudApiKey, createDescriptiveError(err)), map[string]interface{}{apiKeyLoggingKey: cloudApiKey})
-			return nil, stateFailed, fmt.Errorf("error listing Environments using Cloud API Key %q: %s", cloudApiKey, createDescriptiveError(err))
+			tflog.Debug(ctx, fmt.Sprintf("Exiting Cloud API Key %q sync process: Failed when listing Environments: %s", cloudApiKey, createDescriptiveError(err, resp)), map[string]interface{}{apiKeyLoggingKey: cloudApiKey})
+			return nil, stateFailed, fmt.Errorf("error listing Environments using Cloud API Key %q: %s", cloudApiKey, createDescriptiveError(err, resp))
 		} else {
 			tflog.Debug(ctx, fmt.Sprintf("Exiting Cloud API Key %q sync process: Received unexpected response when listing Environments: %#v", cloudApiKey, resp), map[string]interface{}{apiKeyLoggingKey: cloudApiKey})
 			return nil, stateUnexpected, fmt.Errorf("error listing Environments using Kafka API Key %q: received a response with unexpected %d status code", cloudApiKey, resp.StatusCode)
@@ -1609,8 +1609,8 @@ func tableflowApiKeySyncStatus(ctx context.Context, c *TableflowRestClient) reso
 			tflog.Debug(ctx, fmt.Sprintf("Performing Tableflow API Key %q sync process: Received %d status code when listing regions", c.tableflowApiKey, resp.StatusCode), map[string]interface{}{apiKeyLoggingKey: c.tableflowApiKey})
 			return 0, stateInProgress, nil
 		} else if err != nil {
-			tflog.Debug(ctx, fmt.Sprintf("Exiting Tableflow API Key %q sync process: Failed when listing regions: %s", c.tableflowApiKey, createDescriptiveError(err)), map[string]interface{}{apiKeyLoggingKey: c.tableflowApiKey})
-			return nil, stateFailed, fmt.Errorf("error listing regions using Tableflow API Key %q: %s", c.tableflowApiKey, createDescriptiveError(err))
+			tflog.Debug(ctx, fmt.Sprintf("Exiting Tableflow API Key %q sync process: Failed when listing regions: %s", c.tableflowApiKey, createDescriptiveError(err, resp)), map[string]interface{}{apiKeyLoggingKey: c.tableflowApiKey})
+			return nil, stateFailed, fmt.Errorf("error listing regions using Tableflow API Key %q: %s", c.tableflowApiKey, createDescriptiveError(err, resp))
 		} else {
 			tflog.Debug(ctx, fmt.Sprintf("Exiting Tableflow API Key %q sync process: Received unexpected response when listing regions: %#v", c.tableflowApiKey, resp), map[string]interface{}{apiKeyLoggingKey: c.tableflowApiKey})
 			return nil, stateUnexpected, fmt.Errorf("error listing regions using Tableflow API Key %q: received a response with unexpected %d status code", c.tableflowApiKey, resp.StatusCode)
@@ -1630,7 +1630,7 @@ func kafkaApiKeySyncStatus(ctx context.Context, c *KafkaRestClient) resource.Sta
 			tflog.Debug(ctx, fmt.Sprintf("Performing Kafka API Key %q sync process: Received %d status code when listing Kafka Topics", c.clusterApiKey, resp.StatusCode), map[string]interface{}{apiKeyLoggingKey: c.clusterApiKey})
 			return 0, stateInProgress, nil
 		} else if err != nil {
-			tflog.Debug(ctx, fmt.Sprintf("Exiting Kafka API Key %q sync process: Failed when listing Kafka Topics: %s", c.clusterApiKey, createDescriptiveError(err)), map[string]interface{}{apiKeyLoggingKey: c.clusterApiKey})
+			tflog.Debug(ctx, fmt.Sprintf("Exiting Kafka API Key %q sync process: Failed when listing Kafka Topics: %s", c.clusterApiKey, createDescriptiveError(err, resp)), map[string]interface{}{apiKeyLoggingKey: c.clusterApiKey})
 			return nil, stateFailed, fmt.Errorf("error listing Kafka Topics using Kafka API Key %q: %s", c.clusterApiKey, err)
 		} else {
 			tflog.Debug(ctx, fmt.Sprintf("Exiting Kafka API Key %q sync process: Received unexpected response when listing Kafka Topics: %#v", c.clusterApiKey, resp), map[string]interface{}{apiKeyLoggingKey: c.clusterApiKey})
@@ -1650,7 +1650,7 @@ func schemaRegistryApiKeySyncStatus(ctx context.Context, c *SchemaRegistryRestCl
 			tflog.Debug(ctx, fmt.Sprintf("Performing Schema Registry API Key %q sync process: Received %d status code when listing Subjects", c.clusterApiKey, resp.StatusCode), map[string]interface{}{apiKeyLoggingKey: c.clusterApiKey})
 			return 0, stateInProgress, nil
 		} else if err != nil {
-			tflog.Debug(ctx, fmt.Sprintf("Exiting Schema Registry API Key %q sync process: Failed when listing Subjects: %s", c.clusterApiKey, createDescriptiveError(err)), map[string]interface{}{apiKeyLoggingKey: c.clusterApiKey})
+			tflog.Debug(ctx, fmt.Sprintf("Exiting Schema Registry API Key %q sync process: Failed when listing Subjects: %s", c.clusterApiKey, createDescriptiveError(err, resp)), map[string]interface{}{apiKeyLoggingKey: c.clusterApiKey})
 			return nil, stateFailed, fmt.Errorf("error listing Subjects using Schema Registry API Key %q: %s", c.clusterApiKey, err)
 		} else {
 			tflog.Debug(ctx, fmt.Sprintf("Exiting Schema Registry API Key %q sync process: Received unexpected response when listing Subjects: %#v", c.clusterApiKey, resp), map[string]interface{}{apiKeyLoggingKey: c.clusterApiKey})
@@ -1670,7 +1670,7 @@ func flinkApiKeySyncStatus(ctx context.Context, c *FlinkRestClient, organization
 			tflog.Debug(ctx, fmt.Sprintf("Performing Flink API Key %q sync process: Received %d status code when listing Statements", c.flinkApiKey, resp.StatusCode), map[string]interface{}{apiKeyLoggingKey: c.flinkApiKey})
 			return 0, stateInProgress, nil
 		} else if err != nil {
-			tflog.Debug(ctx, fmt.Sprintf("Exiting Flink API Key %q sync process: Failed when listing Statements: %s", c.flinkApiKey, createDescriptiveError(err)), map[string]interface{}{apiKeyLoggingKey: c.flinkApiKey})
+			tflog.Debug(ctx, fmt.Sprintf("Exiting Flink API Key %q sync process: Failed when listing Statements: %s", c.flinkApiKey, createDescriptiveError(err, resp)), map[string]interface{}{apiKeyLoggingKey: c.flinkApiKey})
 			return nil, stateFailed, fmt.Errorf("error listing Statements using Flink API Key %q: %s", c.flinkApiKey, err)
 		} else {
 			tflog.Debug(ctx, fmt.Sprintf("Exiting Flink API Key %q sync process: Received unexpected response when listing Subjects: %#v", c.flinkApiKey, resp), map[string]interface{}{apiKeyLoggingKey: c.flinkApiKey})
@@ -1686,6 +1686,55 @@ func getDelayAndPollInterval(delayNormal, pollIntervalNormal time.Duration, isAc
 		return acceptanceTestModeWaitTime, acceptanceTestModePollInterval
 	}
 	return delayNormal, pollIntervalNormal
+}
+
+func waitForCreatedKafkaAclToSync(ctx context.Context, c *KafkaRestClient, acl Acl, isAcceptanceTestMode bool) error {
+	delay, pollInterval := getDelayAndPollInterval(30*time.Second, 30*time.Second, isAcceptanceTestMode)
+	stateConf := &resource.StateChangeConf{
+		Pending: []string{stateInProgress},
+		Target:  []string{stateDone},
+		Refresh: kafkaAclSyncStatus(ctx, c, acl),
+		// ACL propagation can take several minutes in some cases
+		// Based on observations, ACLs typically sync within 5 minutes
+		Timeout:      10 * time.Minute,
+		Delay:        delay,
+		PollInterval: pollInterval,
+	}
+
+	aclId := fmt.Sprintf("%s#%s#%s#%s", acl.ResourceType, acl.ResourceName, acl.PatternType, acl.Principal)
+	tflog.Debug(ctx, fmt.Sprintf("Waiting for Kafka ACL %q to sync", aclId), map[string]interface{}{kafkaAclLoggingKey: aclId})
+	if _, err := stateConf.WaitForStateContext(ctx); err != nil {
+		return err
+	}
+	return nil
+}
+
+func kafkaAclSyncStatus(ctx context.Context, c *KafkaRestClient, acl Acl) resource.StateRefreshFunc {
+	return func() (result interface{}, s string, err error) {
+		remoteAcls, resp, err := c.apiClient.ACLV3Api.GetKafkaAcls(c.apiContext(ctx), c.clusterId).
+			ResourceType(acl.ResourceType).
+			ResourceName(acl.ResourceName).
+			PatternType(acl.PatternType).
+			Principal(acl.Principal).
+			Host(acl.Host).
+			Operation(acl.Operation).
+			Permission(acl.Permission).
+			Execute()
+
+		if err != nil {
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Kafka ACL during sync check: %s", createDescriptiveError(err, resp)))
+			// Don't return error immediately, continue polling
+			return nil, stateInProgress, nil
+		}
+
+		if len(remoteAcls.Data) == 0 {
+			tflog.Debug(ctx, "Kafka ACL not yet available, continuing to poll")
+			return nil, stateInProgress, nil
+		}
+
+		tflog.Debug(ctx, "Kafka ACL is now available")
+		return remoteAcls, stateDone, nil
+	}
 }
 
 func waitForKafkaClusterToBeDeleted(ctx context.Context, c *Client, environmentId, clusterId string) error {
@@ -1710,7 +1759,7 @@ func kafkaClusterDeleteStatus(ctx context.Context, c *Client, environmentId, clu
 	return func() (result interface{}, s string, err error) {
 		cluster, resp, err := executeKafkaRead(c.cmkApiContext(ctx), c, environmentId, clusterId)
 		if err != nil {
-			tflog.Warn(ctx, fmt.Sprintf("Error reading Kafka Cluster %q: %s", clusterId, createDescriptiveError(err)), map[string]interface{}{kafkaClusterLoggingKey: clusterId})
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Kafka Cluster %q: %s", clusterId, createDescriptiveError(err, resp)), map[string]interface{}{kafkaClusterLoggingKey: clusterId})
 
 			// 404 or 403 means that the cluster has been deleted
 			isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)

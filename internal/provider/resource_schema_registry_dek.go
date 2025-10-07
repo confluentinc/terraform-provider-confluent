@@ -25,6 +25,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"io"
+	"net/http"
 	"regexp"
 	"strconv"
 	"strings"
@@ -143,7 +144,7 @@ func schemaRegistryDekCreate(ctx context.Context, d *schema.ResourceData, meta i
 	createdDek, resp, err := request.Execute()
 	if err != nil {
 		b, err := io.ReadAll(resp.Body)
-		return diag.Errorf("error creating Schema Registry DEK %s, error msg: %s", createDescriptiveError(err), string(b))
+		return diag.Errorf("error creating Schema Registry DEK %s, error msg: %s", createDescriptiveError(err, resp), string(b))
 	}
 	d.SetId(dekId)
 
@@ -193,7 +194,7 @@ func readSchemaRegistryDekAndSetAttributes(ctx context.Context, d *schema.Resour
 	request = request.Algorithm(algorithm)
 	dek, resp, err := request.Execute()
 	if err != nil {
-		tflog.Warn(ctx, fmt.Sprintf("Error reading Schema Registry DEK %q: %s", dekId, createDescriptiveError(err)), map[string]interface{}{schemaRegistryDekKey: dekId})
+		tflog.Warn(ctx, fmt.Sprintf("Error reading Schema Registry DEK %q: %s", dekId, createDescriptiveError(err, resp)), map[string]interface{}{schemaRegistryDekKey: dekId})
 
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
 		if isResourceNotFound && !d.IsNewResource() {
@@ -211,7 +212,7 @@ func readSchemaRegistryDekAndSetAttributes(ctx context.Context, d *schema.Resour
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Schema Registry DEK %q: %s", dekId, dekJson), map[string]interface{}{schemaRegistryDekKey: dekId})
 
 	if _, err := setDekAttributes(d, clusterId, dek); err != nil {
-		return nil, createDescriptiveError(err)
+		return nil, createDescriptiveError(err, resp)
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished reading Schema Registry DEK %q", dekId), map[string]interface{}{schemaRegistryDekKey: dekId})
@@ -227,10 +228,10 @@ func schemaRegistryDekUpdate(ctx context.Context, d *schema.ResourceData, meta i
 	return schemaRegistryDekRead(ctx, d, meta)
 }
 
-func deleteDekExecute(ctx context.Context, client *SchemaRegistryRestClient, kekName, subject, version, algorithm string, hardDelete bool) error {
+func deleteDekExecute(ctx context.Context, client *SchemaRegistryRestClient, kekName, subject, version, algorithm string, hardDelete bool) (*http.Response, error) {
 	request := client.apiClient.DataEncryptionKeysV1Api.DeleteDekVersion(client.apiContext(ctx), kekName, subject, version).Permanent(hardDelete).Algorithm(algorithm)
-	_, err := request.Execute()
-	return err
+	resp, err := request.Execute()
+	return resp, err
 }
 
 func schemaRegistryDekDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -258,15 +259,15 @@ func schemaRegistryDekDelete(ctx context.Context, d *schema.ResourceData, meta i
 	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 	isHardDeleteEnabled := d.Get(paramHardDelete).(bool)
 
-	err = deleteDekExecute(ctx, schemaRegistryRestClient, kekName, subject, strconv.Itoa(version), algorithm, false)
+	resp, err := deleteDekExecute(ctx, schemaRegistryRestClient, kekName, subject, strconv.Itoa(version), algorithm, false)
 	if err != nil {
-		return diag.Errorf("error soft-deleting Schema Registry DEK %q: %s", dekId, createDescriptiveError(err))
+		return diag.Errorf("error soft-deleting Schema Registry DEK %q: %s", dekId, createDescriptiveError(err, resp))
 	}
 
 	if isHardDeleteEnabled {
-		err = deleteDekExecute(ctx, schemaRegistryRestClient, kekName, subject, strconv.Itoa(version), algorithm, true)
+		resp, err := deleteDekExecute(ctx, schemaRegistryRestClient, kekName, subject, strconv.Itoa(version), algorithm, true)
 		if err != nil {
-			return diag.Errorf("error hard-deleting Schema Registry DEK %q: %s", dekId, createDescriptiveError(err))
+			return diag.Errorf("error hard-deleting Schema Registry DEK %q: %s", dekId, createDescriptiveError(err, resp))
 		}
 	}
 
