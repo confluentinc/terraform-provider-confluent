@@ -7,9 +7,9 @@ page_title: "Confluent Provider 2.45.0: Upgrade Guide for OAuth Authentication M
 
 This guide provides detailed instructions for migrating from API key/secret authentication (both Cloud-level and resource-specific) to OAuth-based authentication in the Confluent Terraform Provider.
 
-**Note:** 
-- OAuth authentication requires Confluent Terraform Provider version v2.37.0 or later, and v2.43.0 or later is recommended for best functionality and compatibility.
-- Please read the [OAuth Authentication Guide](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs#oauth-credentials) for more fundamentals on OAuth authentication.
+-> **Note:** 
+OAuth authentication requires Confluent Terraform Provider version v2.37.0 or later, and v2.43.0 or later is recommended for best functionality and compatibility.
+Please read the [OAuth Authentication Guide](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs#oauth-credentials) for more fundamentals on OAuth authentication.
 
 ## Provider Configuration Migration Instructions
 
@@ -237,6 +237,7 @@ provider "confluent" {
   schema_registry_id            = var.schema_registry_id            # optionally use SCHEMA_REGISTRY_ID env var
   schema_registry_rest_endpoint = var.schema_registry_rest_endpoint # optionally use SCHEMA_REGISTRY_REST_ENDPOINT env var
 }
+
 #... other resources ...
 resource "confluent_kafka_topic" "purchase" {
   topic_name    = "purchase"
@@ -272,7 +273,7 @@ resource "confluent_schema_exporter" "main" {
 }
 ```
 
-**Note:** Once the migration is complete, you can optionally remove any `confluent_api_key` or `confluent_role_binding` resources from your configuration, if they are no longer needed elsewhere.
+-> **Note:** Once the migration is complete, you can optionally remove any `confluent_api_key` or `confluent_role_binding` resources from your configuration, if they are no longer needed elsewhere.
 
 ### Verify the Terraform Plan Output
 
@@ -334,7 +335,7 @@ Terraform will perform the following actions:
 Plan: 0 to add, 3 to change, 0 to destroy.
 ```
 
-**Note:** The plan output should display `0 to add` **and** `0 to destroy`, confirming that no resources will be recreated or deleted.
+-> **Note:** The plan output should display `0 to add` **and** `0 to destroy`, confirming that no resources will be recreated or deleted.
 
 ## Sanity Check
 
