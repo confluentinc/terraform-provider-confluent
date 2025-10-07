@@ -361,7 +361,6 @@ func catalogEntityAttributesImport(ctx context.Context, d *schema.ResourceData, 
 	parts := strings.Split(entityAttributesId, "/")
 	if len(parts) != 4 {
 		return nil, fmt.Errorf("error importing Entity Attributes: invalid format: expected '<Schema Registry Cluster Id>/<Entity Type>/<Entity Name>/<Comma-Delimited-Attributes>' (for example, 'lsrc-abc123/kafka_topic/lkc-xyz:topic_0/owner,description,ownerEmail')")
-		// TODO: add a note saying that <Schema Registry Cluster Id>/<Entity Type>/<Entity Name>/ should be used for 0 attributes
 	}
 
 	clusterId := parts[0]
