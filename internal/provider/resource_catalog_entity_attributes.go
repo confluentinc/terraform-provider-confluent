@@ -371,7 +371,7 @@ func catalogEntityAttributesImport(ctx context.Context, d *schema.ResourceData, 
 	// Parse and validate attributes
 	initialAttributes, err := parseImportAttributes(attributesList)
 	if err != nil {
-		return nil, fmt.Errorf("error importing Entity Attributes: %s", err.Error())
+		return nil, fmt.Errorf("error importing Entity Attributes: %s", createDescriptiveError(err))
 	}
 
 	if err := d.Set(paramAttributes, initialAttributes); err != nil {
