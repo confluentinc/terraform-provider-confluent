@@ -187,12 +187,8 @@ func kafkaAclCreate(ctx context.Context, d *schema.ResourceData, meta interface{
 	kafkaAclId := createKafkaAclId(kafkaRestClient.clusterId, acl)
 	d.SetId(kafkaAclId)
 
-	// Wait for ACL to propagate across the Kafka cluster
-	// ACL creation can take time to propagate, especially in distributed environments
 	// https://github.com/confluentinc/terraform-provider-confluentcloud/issues/40#issuecomment-1048782379
-	if err := waitForCreatedKafkaAclToSync(ctx, kafkaRestClient, acl, meta.(*Client).isAcceptanceTestMode); err != nil {
-		return diag.Errorf("error waiting for Kafka ACLs %q to sync: %s", d.Id(), createDescriptiveError(err))
-	}
+	SleepIfNotTestMode(kafkaRestAPIWaitAfterCreate, meta.(*Client).isAcceptanceTestMode)
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating Kafka ACLs %q", d.Id()), map[string]interface{}{kafkaAclLoggingKey: d.Id()})
 
