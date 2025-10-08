@@ -98,14 +98,11 @@ func requestNewSTSOAuthToken(ctx context.Context, subjectToken, identityPoolId, 
 	tflog.Debug(ctx, "requesting new STS OAuth token")
 
 	resp, status, err := req.Execute()
-	// Both Transport-level error (DNS, timeout, TLS, etc.)
-	// and Application-level error (HTTP 4xx/5xx) are handled here
 	if err != nil {
-		if status != nil && status.Body != nil {
-			body, _ := io.ReadAll(status.Body)
-			return nil, fmt.Errorf("STS token exchange request failed: status=%s, description=%s", status.Status, string(body))
-		}
-		return nil, fmt.Errorf("STS token exchange request failed: %w", err)
+		return nil, err
+	}
+	if status.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("STS token exchange request failed with status: %s\n", status.Status)
 	}
 
 	// Parse the response
@@ -140,102 +137,74 @@ func requestNewExternalOAuthToken(ctx context.Context, tokenUrl, clientId, clien
 		return nil, fmt.Errorf("retryable HTTP client is nil, cannot request new external OAuth token")
 	}
 
-	req, err := buildExternalOAuthRequest(tokenUrl, clientId, clientSecret, customScope)
-	if err != nil {
-		return nil, fmt.Errorf("failed to build external OAuth request: %w", err)
-	}
-
-	tflog.Debug(ctx, "requesting new external OAuth token")
-
-	resp, err := retryableClient.Do(req)
-	// Transport-level error (DNS, timeout, TLS, etc.)
-	if err != nil {
-		return nil, err
-	}
-
-	defer func() {
-		if closeErr := resp.Body.Close(); closeErr != nil {
-			tflog.Warn(ctx, "failed to close external token exchange response body", map[string]any{"error": closeErr.Error()})
-		}
-	}()
-
-	// Application-level error (HTTP 4xx/5xx)
-	if resp.StatusCode != http.StatusOK {
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return nil, fmt.Errorf("failed to read external token exchange response body: %w", err)
-		}
-		return nil, fmt.Errorf("external token exchange request failed: status=%s, description=%s", resp.Status, string(body))
-	}
-
-	// Parse the response
-	result, err := parseExternalOAuthResponse(resp.Body, customScope, identityPoolId, tokenUrl, clientId, clientSecret, retryableClient)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse OAuth response: %w", err)
-	}
-	tflog.Debug(ctx, "new external OAuth token acquired", map[string]any{
-		"expires_in":  result.ExpiresInSeconds + "s",
-		"valid_until": result.ValidUntil.Format(time.RFC3339),
-	})
-	return result, nil
-}
-
-func buildExternalOAuthRequest(tokenURL, clientID, clientSecret, customScope string) (*http.Request, error) {
-	data := url.Values{
-		"grant_type":    {"client_credentials"},
-		"client_id":     {clientID},
-		"client_secret": {clientSecret},
-	}
+	data := url.Values{}
+	data.Set("grant_type", "client_credentials")
+	data.Set("client_id", clientId)
+	data.Set("client_secret", clientSecret)
 	if customScope != "" {
 		data.Set("scope", customScope)
 	}
 
-	req, err := http.NewRequest(http.MethodPost, tokenURL, strings.NewReader(data.Encode()))
+	req, err := http.NewRequest(http.MethodPost, tokenUrl, strings.NewReader(data.Encode()))
 	if err != nil {
 		return nil, err
 	}
 	req.Header.Set("content-type", "application/x-www-form-urlencoded")
 	req.Header.Set("accept", "application/json")
-	return req, nil
-}
 
-func parseExternalOAuthResponse(body io.Reader, customScope, identityPoolId, tokenUrl, clientId, clientSecret string, client *http.Client) (*OAuthToken, error) {
-	raw, err := io.ReadAll(body)
+	tflog.Debug(ctx, "requesting new external OAuth token")
+
+	resp, err := retryableClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
 
-	var respMap map[string]any
-	if err := json.Unmarshal(raw, &respMap); err != nil {
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+
+		}
+	}(resp.Body)
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("exchange external token request failed with status: %s\n", resp.Status)
+	}
+
+	// Parse the response
+	result := &OAuthToken{}
+	resultMap := make(map[string]any)
+	responseBody, _ := io.ReadAll(resp.Body)
+	if err := json.Unmarshal(responseBody, &resultMap); err != nil {
 		return nil, err
 	}
 
-	result := &OAuthToken{
-		Scope:          customScope,
-		IdentityPoolId: identityPoolId,
-		TokenUrl:       tokenUrl,
-		ClientId:       clientId,
-		ClientSecret:   clientSecret,
-		HTTPClient:     client,
-	}
-
-	if v, ok := respMap["access_token"].(string); ok {
-		result.AccessToken = v
-	}
-	if v, ok := respMap["token_type"].(string); ok {
-		result.TokenType = v
-	}
-	if v, ok := respMap["expires_in"]; ok {
-		result.ExpiresInSeconds = fmt.Sprintf("%v", v)
-		// Be careful about the token expiry time, use half the expiry time as buffer if expiry is too short
-		expiryDuration := time.Duration(v.(float64)) * time.Second
-		buffer := externalTokenExpirationBuffer
-		if expiryDuration <= buffer {
-			buffer = expiryDuration / 2
+	for k, v := range resultMap {
+		switch k {
+		case "expires_in":
+			result.ExpiresInSeconds = fmt.Sprintf("%v", v)
+			// Be careful about the token expiry time, use half the expiry time as buffer if expiry is too short
+			expiryDuration := time.Duration(v.(float64)) * time.Second
+			buffer := externalTokenExpirationBuffer
+			if expiryDuration <= buffer {
+				buffer = expiryDuration / 2
+			}
+			result.ValidUntil = time.Now().Add(expiryDuration - buffer)
+		case "access_token":
+			result.AccessToken = v.(string)
+		case "token_type":
+			result.TokenType = v.(string)
+		default:
+			// Ignore other fields
 		}
-		result.ValidUntil = time.Now().Add(expiryDuration - buffer)
 	}
 
+	// Always override the scope field to the requested scope, as some providers do not return it from the response
+	result.Scope = customScope
+	result.IdentityPoolId = identityPoolId
+	result.TokenUrl = tokenUrl
+	result.ClientId = clientId
+	result.ClientSecret = clientSecret
+	result.HTTPClient = retryableClient
 	return result, nil
 }
 
