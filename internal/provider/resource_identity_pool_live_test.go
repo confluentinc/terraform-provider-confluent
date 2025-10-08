@@ -170,8 +170,8 @@ func testAccCheckIdentityPoolLiveConfig(endpoint, apiKey, apiSecret, idpResource
 	resource "confluent_identity_provider" "%s" {
 		display_name = "%s"
 		description  = "Identity Provider for Identity Pool live test"
-		issuer       = "https://accounts.google.com"
-		jwks_uri     = "https://www.googleapis.com/oauth2/v3/certs"
+		issuer       = "https://login.microsoftonline.com/common/v2.0"
+		jwks_uri     = "https://login.microsoftonline.com/common/discovery/v2.0/keys"
 	}
 
 	resource "confluent_identity_pool" "%s" {
