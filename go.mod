@@ -15,7 +15,7 @@ require (
 	github.com/confluentinc/ccloud-sdk-go-v2/endpoint v0.4.0
 	github.com/confluentinc/ccloud-sdk-go-v2/flink v0.9.0
 	github.com/confluentinc/ccloud-sdk-go-v2/flink-artifact v0.4.0
-	github.com/confluentinc/ccloud-sdk-go-v2/flink-gateway v0.17.0
+	github.com/confluentinc/ccloud-sdk-go-v2/flink-gateway v0.18.0
 	github.com/confluentinc/ccloud-sdk-go-v2/iam v0.17.0
 	github.com/confluentinc/ccloud-sdk-go-v2/iam-ip-filtering v0.5.0
 	github.com/confluentinc/ccloud-sdk-go-v2/identity-provider v0.3.0
