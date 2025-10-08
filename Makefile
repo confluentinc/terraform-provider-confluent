@@ -159,6 +159,10 @@ live-test-data-catalog:
 live-test-tableflow:
 	@$(MAKE) live-test TF_LIVE_TEST_GROUPS="tableflow"
 
+.PHONY: live-test-drift
+live-test-drift:
+	@$(MAKE) live-test TF_LIVE_TEST_GROUPS="drift"
+
 .PHONY: live-test-essential
 live-test-essential:
 	@$(MAKE) live-test TF_LIVE_TEST_GROUPS="core,kafka"
