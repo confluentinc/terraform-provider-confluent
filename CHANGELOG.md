@@ -2,9 +2,6 @@
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.45.0...v2.46.0)
 
-**New Features:**
-* Added provider integration support for GCP and Azure for the `confluent_provider_integration_setup` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_provider_integration_setup) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_provider_integration_setup), and the `confluent_provider_integration_authorization` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_provider_integration_authorization) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_provider_integration_authorization).
-
 **Bug Fixes:**
 * Fixed a deletion issue with the `confluent_access_point` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_access_point).
 
