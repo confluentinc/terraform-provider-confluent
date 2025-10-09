@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -27,6 +28,14 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
 	flinkv2 "github.com/confluentinc/ccloud-sdk-go-v2/flink/v2"
+)
+
+const (
+	paramMaxCfu      = "max_cfu"
+	paramDefaultPool = "default_pool"
+
+	fcpmAPICreateTimeout = 1 * time.Hour
+	fcpmAPIDeleteTimeout = 1 * time.Hour
 )
 
 var acceptedComputePoolTypes = []string{paramStandardCluster}
@@ -74,6 +83,12 @@ func computePoolResource() *schema.Resource {
 				Optional:    true,
 				Computed:    true,
 			},
+			paramDefaultPool: {
+				Type:        schema.TypeBool,
+				Description: "Indicate whether the Flink compute pool is a default compute pool or not.",
+				Optional:    true,
+				Default:     false,
+			},
 			paramEnvironment: environmentSchema(),
 			paramApiVersion: {
 				Type:     schema.TypeString,
@@ -104,6 +119,7 @@ func computePoolCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 	region := d.Get(paramRegion).(string)
 	// Non-zero value means maxCfu has been set
 	maxCfu := d.Get(paramMaxCfu).(int)
+	defaultPool := d.Get(paramDefaultPool).(bool)
 
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
 
@@ -112,6 +128,7 @@ func computePoolCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 	spec.SetCloud(cloud)
 	spec.SetRegion(region)
 	spec.SetMaxCfu(int32(maxCfu))
+	spec.SetDefaultPool(defaultPool)
 	spec.SetEnvironment(flinkv2.GlobalObjectReference{Id: environmentId})
 
 	createComputePoolRequest := flinkv2.FcpmV2ComputePool{Spec: spec}
@@ -206,6 +223,9 @@ func setComputePoolAttributes(d *schema.ResourceData, computePool flinkv2.FcpmV2
 	if err := d.Set(paramMaxCfu, computePool.Spec.GetMaxCfu()); err != nil {
 		return nil, err
 	}
+	if err := d.Set(paramDefaultPool, computePool.Spec.GetDefaultPool()); err != nil {
+		return nil, err
+	}
 
 	if err := setStringAttributeInListBlockOfSizeOne(paramEnvironment, paramId, computePool.Spec.Environment.GetId(), d); err != nil {
 		return nil, err
@@ -242,8 +262,8 @@ func computePoolDelete(ctx context.Context, d *schema.ResourceData, meta interfa
 }
 
 func computePoolUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if d.HasChangesExcept(paramMaxCfu, paramDisplayName) {
-		return diag.Errorf("error updating Flink Compute Pool %q: only %q, and %q attributes can be updated for Flink Compute Pool", d.Id(), paramMaxCfu, paramDisplayName)
+	if d.HasChangesExcept(paramMaxCfu, paramDisplayName, paramDefaultPool) {
+		return diag.Errorf("error updating Flink Compute Pool %q: only %q, %q, and %q attributes can be updated for Flink Compute Pool", d.Id(), paramMaxCfu, paramDisplayName, paramDefaultPool)
 	}
 
 	c := meta.(*Client)
@@ -257,6 +277,9 @@ func computePoolUpdate(ctx context.Context, d *schema.ResourceData, meta interfa
 	}
 	if d.HasChange(paramDisplayName) {
 		updateSpec.SetDisplayName(d.Get(paramDisplayName).(string))
+	}
+	if d.HasChange(paramDefaultPool) {
+		updateSpec.SetDefaultPool(d.Get(paramDefaultPool).(bool))
 	}
 
 	updateComputePoolRequest.SetSpec(*updateSpec)
