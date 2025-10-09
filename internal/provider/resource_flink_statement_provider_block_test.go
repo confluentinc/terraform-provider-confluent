@@ -236,6 +236,29 @@ func TestAccFlinkStatementWithEnhancedProviderBlock(t *testing.T) {
 				),
 			},
 			{
+				Config: testAccCheckFlinkStatementWithEnhancedProviderBlockWithoutComputePool(confluentCloudBaseUrl, mockFlinkStatementTestServerUrl),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckFlinkStatementExists(fullFlinkStatementResourceLabel),
+					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "id", fmt.Sprintf("%s/%s/%s", flinkEnvironmentIdTest, flinkComputePoolIdTest, flinkStatementNameTest)),
+					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "compute_pool.#", "0"),
+					resource.TestCheckNoResourceAttr(fullFlinkStatementResourceLabel, "compute_pool.0.id"),
+					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "principal.#", "0"),
+					resource.TestCheckNoResourceAttr(fullFlinkStatementResourceLabel, "principal.0.id"),
+					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "statement_name", flinkStatementNameTest),
+					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "statement", flinkStatementTest),
+					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "stopped", "false"),
+					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "latest_offsets.%", "0"),
+					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "latest_offsets_timestamp", latestOffsetsTimestampEmptyValueTest),
+					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "properties.%", "1"),
+					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, fmt.Sprintf("properties.%s", flinkFirstPropertyKeyTest), flinkFirstPropertyValueTest),
+					resource.TestCheckNoResourceAttr(fullFlinkStatementResourceLabel, "sql.secrets.openaikey"),
+					resource.TestCheckResourceAttr(fullFlinkStatementResourceLabel, "credentials.#", "0"),
+					resource.TestCheckNoResourceAttr(fullFlinkStatementResourceLabel, "credentials.0.key"),
+					resource.TestCheckNoResourceAttr(fullFlinkStatementResourceLabel, "credentials.0.secret"),
+					resource.TestCheckNoResourceAttr(fullFlinkStatementResourceLabel, "rest_endpoint"),
+				),
+			},
+			{
 				Config: testAccCheckFlinkStatementStoppedWithEnhancedProviderBlock(confluentCloudBaseUrl, mockFlinkStatementTestServerUrl),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckFlinkStatementExists(fullFlinkStatementResourceLabel),
@@ -465,6 +488,30 @@ func testAccCheckFlinkStatementWithEnhancedProviderBlock(confluentCloudBaseUrl, 
 	}
 	`, confluentCloudBaseUrl, kafkaApiKey, kafkaApiSecret, mockServerUrl, flinkPrincipalIdTest,
 		flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkComputePoolIdTest,
+		flinkStatementResourceLabel, flinkStatementNameTest, flinkStatementTest, flinkFirstPropertyKeyTest, flinkFirstPropertyValueTest)
+}
+
+func testAccCheckFlinkStatementWithEnhancedProviderBlockWithoutComputePool(confluentCloudBaseUrl, mockServerUrl string) string {
+	return fmt.Sprintf(`
+	provider "confluent" {
+      endpoint = "%s"
+      flink_api_key = "%s"
+      flink_api_secret = "%s"
+      flink_rest_endpoint = "%s"
+      flink_principal_id = "%s"
+      organization_id = "%s"
+      environment_id = "%s"
+    }
+	resource "confluent_flink_statement" "%s" {
+	  statement_name = "%s"
+	  statement = "%s"
+	
+	  properties = {
+		"%s" = "%s"
+	  }
+	}
+	`, confluentCloudBaseUrl, kafkaApiKey, kafkaApiSecret, mockServerUrl, flinkPrincipalIdTest,
+		flinkOrganizationIdTest, flinkEnvironmentIdTest,
 		flinkStatementResourceLabel, flinkStatementNameTest, flinkStatementTest, flinkFirstPropertyKeyTest, flinkFirstPropertyValueTest)
 }
 
