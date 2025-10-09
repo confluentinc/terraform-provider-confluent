@@ -1,12 +1,16 @@
+## 2.47.0 (October 9th, 2025)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.46.0...v2.47.0)
+
+**Bug Fixes:**
+* Fixed a deletion issue with the `confluent_access_point` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_access_point).
+
 ## 2.46.0 (October 8th, 2025)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.45.0...v2.46.0)
 
 **Bug Fixes:**
-* Fixed a deletion issue with the `confluent_access_point` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_access_point).
-
-**Examples:**
-* Updated the [enterprise-private-service-connect-gcp-kafka-acls](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/enterprise-private-service-connect-gcp-kafka-acls) example on how to provision a Confluent Cloud enterprise cluster on Google Cloud Platform (GCP) with Private Service Connect (PSC).
+* General fixes and improvements. 
 
 ## 2.45.0 (October 7th, 2025)
 
