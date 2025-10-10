@@ -157,6 +157,12 @@ func TestAccTag(t *testing.T) {
 					resource.TestCheckResourceAttr(tagLabel, "entity_types.0", "cf_entity"),
 				),
 			},
+			{
+				// https://www.terraform.io/docs/extend/resources/import.html
+				ResourceName:      tagLabel,
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }
