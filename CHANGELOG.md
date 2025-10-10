@@ -1,3 +1,10 @@
+## 2.48.0 (October 10th, 2025)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.47.0...v2.48.0)
+
+**Bug Fixes:**
+* Fixed a bug in the import functionality for the `confluent_catalog_entity_attributes` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_catalog_entity_attributes).
+
 ## 2.47.0 (October 9th, 2025)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.46.0...v2.47.0)
