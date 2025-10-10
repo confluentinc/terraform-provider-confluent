@@ -88,6 +88,7 @@ func TestAccTag(t *testing.T) {
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readCreatedTagUrlPath)).
 		InScenario(tagResourceScenarioName).
 		WhenScenarioStateIs(scenarioStateTagHasBeenUpdated).
+		WillSetStateTo(scenarioStateTagHasBeenDeleted).
 		WillReturn(
 			string(readUpdatedTagResponse),
 			contentTypeJSONHeader,
@@ -96,15 +97,26 @@ func TestAccTag(t *testing.T) {
 
 	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(readCreatedTagUrlPath)).
 		InScenario(tagResourceScenarioName).
+		WhenScenarioStateIs(scenarioStateTagHasBeenUpdated).
+		WillSetStateTo(scenarioStateTagHasBeenDeleted).
 		WillReturn(
 			"",
 			contentTypeJSONHeader,
 			http.StatusNoContent,
 		))
 
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readCreatedTagUrlPath)).
+		InScenario(tagResourceScenarioName).
+		WhenScenarioStateIs(scenarioStateTagHasBeenDeleted).
+		WillReturn(
+			"",
+			contentTypeJSONHeader,
+			http.StatusNotFound,
+		))
+
 	// Set fake values for secrets since those are required for importing
-	_ = os.Setenv("IMPORT_SCHEMA_REGISTRY_API_KEY", testSchemaRegistryUpdatedKey)
-	_ = os.Setenv("IMPORT_SCHEMA_REGISTRY_API_SECRET", testSchemaRegistryUpdatedSecret)
+	_ = os.Setenv("IMPORT_SCHEMA_REGISTRY_API_KEY", testSchemaRegistryKey)
+	_ = os.Setenv("IMPORT_SCHEMA_REGISTRY_API_SECRET", testSchemaRegistrySecret)
 	_ = os.Setenv("IMPORT_CATALOG_REST_ENDPOINT", mockServerUrl)
 
 	defer func() {
@@ -148,8 +160,8 @@ func TestAccTag(t *testing.T) {
 					resource.TestCheckResourceAttr(tagLabel, "rest_endpoint", mockServerUrl),
 					resource.TestCheckResourceAttr(tagLabel, "credentials.#", "1"),
 					resource.TestCheckResourceAttr(tagLabel, "credentials.0.%", "2"),
-					resource.TestCheckResourceAttr(tagLabel, "credentials.0.key", testSchemaRegistryUpdatedKey),
-					resource.TestCheckResourceAttr(tagLabel, "credentials.0.secret", testSchemaRegistryUpdatedSecret),
+					resource.TestCheckResourceAttr(tagLabel, "credentials.0.key", testSchemaRegistryKey),
+					resource.TestCheckResourceAttr(tagLabel, "credentials.0.secret", testSchemaRegistrySecret),
 					resource.TestCheckResourceAttr(tagLabel, "name", "test1"),
 					resource.TestCheckResourceAttr(tagLabel, "description", "test1UpdatedDescription"),
 					resource.TestCheckResourceAttr(tagLabel, "version", "2"),
@@ -208,5 +220,5 @@ func tagResourceUpdatedConfig(mockServerUrl string) string {
         secret = "%s"
       }
    }
- 	`, testStreamGovernanceClusterId, mockServerUrl, testSchemaRegistryUpdatedKey, testSchemaRegistryUpdatedSecret)
+ 	`, testStreamGovernanceClusterId, mockServerUrl, testSchemaRegistryKey, testSchemaRegistrySecret)
 }
