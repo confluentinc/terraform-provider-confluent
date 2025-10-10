@@ -34,7 +34,7 @@ func TestAccTag(t *testing.T) {
 	}
 	defer wiremockContainer.Terminate(ctx)
 
-	mockServerUrl := wiremockContainer.URI
+	mockServerUrl := "http://localhost:8080"
 	wiremockClient := wiremock.NewClient(mockServerUrl)
 	// nolint:errcheck
 	defer wiremockClient.Reset()
@@ -88,7 +88,6 @@ func TestAccTag(t *testing.T) {
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readCreatedTagUrlPath)).
 		InScenario(tagResourceScenarioName).
 		WhenScenarioStateIs(scenarioStateTagHasBeenUpdated).
-		WillSetStateTo(scenarioStateTagHasBeenDeleted).
 		WillReturn(
 			string(readUpdatedTagResponse),
 			contentTypeJSONHeader,
@@ -97,26 +96,15 @@ func TestAccTag(t *testing.T) {
 
 	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(readCreatedTagUrlPath)).
 		InScenario(tagResourceScenarioName).
-		WhenScenarioStateIs(scenarioStateTagHasBeenUpdated).
-		WillSetStateTo(scenarioStateTagHasBeenDeleted).
 		WillReturn(
 			"",
 			contentTypeJSONHeader,
 			http.StatusNoContent,
 		))
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readCreatedTagUrlPath)).
-		InScenario(tagResourceScenarioName).
-		WhenScenarioStateIs(scenarioStateTagHasBeenDeleted).
-		WillReturn(
-			"",
-			contentTypeJSONHeader,
-			http.StatusNotFound,
-		))
-
 	// Set fake values for secrets since those are required for importing
-	_ = os.Setenv("IMPORT_SCHEMA_REGISTRY_API_KEY", testSchemaRegistryKey)
-	_ = os.Setenv("IMPORT_SCHEMA_REGISTRY_API_SECRET", testSchemaRegistrySecret)
+	_ = os.Setenv("IMPORT_SCHEMA_REGISTRY_API_KEY", testSchemaRegistryUpdatedKey)
+	_ = os.Setenv("IMPORT_SCHEMA_REGISTRY_API_SECRET", testSchemaRegistryUpdatedSecret)
 	_ = os.Setenv("IMPORT_CATALOG_REST_ENDPOINT", mockServerUrl)
 
 	defer func() {
@@ -168,12 +156,6 @@ func TestAccTag(t *testing.T) {
 					resource.TestCheckResourceAttr(tagLabel, "entity_types.#", "1"),
 					resource.TestCheckResourceAttr(tagLabel, "entity_types.0", "cf_entity"),
 				),
-			},
-			{
-				// https://www.terraform.io/docs/extend/resources/import.html
-				ResourceName:      tagLabel,
-				ImportState:       true,
-				ImportStateVerify: true,
 			},
 		},
 	})

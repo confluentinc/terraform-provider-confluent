@@ -29,7 +29,6 @@ const (
 	scenarioStateTagHasBeenCreated = "A new tag has been just created"
 	scenarioStateTagHasBeenPending = "A new tag has been just pending"
 	scenarioStateTagHasBeenUpdated = "A new tag has been just updated"
-	scenarioStateTagHasBeenDeleted = "A new tag has been just deleted"
 	createTagUrlPath               = "/catalog/v1/types/tagdefs"
 	readCreatedTagUrlPath          = "/catalog/v1/types/tagdefs/test1"
 	tagLabel                       = "confluent_tag.mytag"
