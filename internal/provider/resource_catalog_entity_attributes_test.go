@@ -135,7 +135,7 @@ func TestAccCatalogEntityAttributes(t *testing.T) {
 				},
 			},
 			{
-				Config: entityAttributesSchemaRegistryResourceConfig(testDataCatalogSchemaRegistryClusterID, mockServerUrl),
+				Config: entityAttributesResourceConfig(testDataCatalogSchemaRegistryClusterID, mockServerUrl),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(entityAttributesLabel, paramEntityName, "lkc-15xq83:topic_0"),
 					resource.TestCheckResourceAttr(entityAttributesLabel, paramEntityType, "kafka_topic"),
@@ -190,26 +190,6 @@ func entityAttributesResourceConfig(testDataCatalogSchemaRegistryClusterID, mock
  	  schema_registry_id = "%s"
 	  catalog_rest_endpoint = "%s"          # optionally use SCHEMA_REGISTRY_REST_ENDPOINT env var
 	  schema_registry_api_key       = "x"   # optionally use SCHEMA_REGISTRY_API_KEY env var
-	  schema_registry_api_secret = "x"
- 	}
- 	resource "confluent_catalog_entity_attributes" "main" {
-	  entity_name = "lkc-15xq83:topic_0"
-	  entity_type = "kafka_topic"
-	  attributes = {
-		"owner" : "dev",
-		"description": "test_des",
-		"ownerEmail": "dev@gmail.com"
-	  }
-	}
- 	`, testDataCatalogSchemaRegistryClusterID, mockServerUrl)
-}
-
-func entityAttributesSchemaRegistryResourceConfig(testDataCatalogSchemaRegistryClusterID, mockServerUrl string) string {
-	return fmt.Sprintf(`
- 	provider "confluent" {
- 	  schema_registry_id = "%s"
-	  schema_registry_rest_endpoint = "%s" # optionally use SCHEMA_REGISTRY_REST_ENDPOINT env var
-	  schema_registry_api_key       = "x"       # optionally use SCHEMA_REGISTRY_API_KEY env var
 	  schema_registry_api_secret = "x"
  	}
  	resource "confluent_catalog_entity_attributes" "main" {
