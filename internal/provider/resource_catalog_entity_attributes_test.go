@@ -37,7 +37,7 @@ const (
 	testAttributesToImport                      = "owner,description,ownerEmail"
 )
 
-func TestAccCatalogEntityAttributes(t *testing.T) {
+func TestAccCatalogEntityAttributesWithEnhancedProviderBlock(t *testing.T) {
 	ctx := context.Background()
 
 	wiremockContainer, err := setupWiremock(ctx)
@@ -112,7 +112,7 @@ func TestAccCatalogEntityAttributes(t *testing.T) {
 		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
 		Steps: []resource.TestStep{
 			{
-				Config: entityAttributesResourceConfig(testDataCatalogSchemaRegistryClusterID, mockServerUrl),
+				Config: entityAttributesResourceConfigWithEnhancedProviderBlock(testDataCatalogSchemaRegistryClusterID, mockServerUrl),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(entityAttributesLabel, paramEntityName, "lkc-15xq83:topic_0"),
 					resource.TestCheckResourceAttr(entityAttributesLabel, paramEntityType, "kafka_topic"),
@@ -135,7 +135,7 @@ func TestAccCatalogEntityAttributes(t *testing.T) {
 				},
 			},
 			{
-				Config: entityAttributesResourceConfig(testDataCatalogSchemaRegistryClusterID, mockServerUrl),
+				Config: entityAttributesResourceConfigWithEnhancedProviderBlock(testDataCatalogSchemaRegistryClusterID, mockServerUrl),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(entityAttributesLabel, paramEntityName, "lkc-15xq83:topic_0"),
 					resource.TestCheckResourceAttr(entityAttributesLabel, paramEntityType, "kafka_topic"),
@@ -158,7 +158,7 @@ func TestAccCatalogEntityAttributes(t *testing.T) {
 				},
 			},
 			{
-				Config: updateEntityAttributesResourceConfig(testDataCatalogSchemaRegistryClusterID, mockServerUrl),
+				Config: updateEntityAttributesResourceConfigWithEnhancedProviderBlock(testDataCatalogSchemaRegistryClusterID, mockServerUrl),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(entityAttributesLabel, paramEntityName, "lkc-15xq83:topic_0"),
 					resource.TestCheckResourceAttr(entityAttributesLabel, paramEntityType, "kafka_topic"),
@@ -184,7 +184,7 @@ func TestAccCatalogEntityAttributes(t *testing.T) {
 	})
 }
 
-func entityAttributesResourceConfig(testDataCatalogSchemaRegistryClusterID, mockServerUrl string) string {
+func entityAttributesResourceConfigWithEnhancedProviderBlock(testDataCatalogSchemaRegistryClusterID, mockServerUrl string) string {
 	return fmt.Sprintf(`
  	provider "confluent" {
  	  schema_registry_id = "%s"
@@ -204,7 +204,7 @@ func entityAttributesResourceConfig(testDataCatalogSchemaRegistryClusterID, mock
  	`, testDataCatalogSchemaRegistryClusterID, mockServerUrl)
 }
 
-func updateEntityAttributesResourceConfig(testDataCatalogSchemaRegistryClusterID, mockServerUrl string) string {
+func updateEntityAttributesResourceConfigWithEnhancedProviderBlock(testDataCatalogSchemaRegistryClusterID, mockServerUrl string) string {
 	return fmt.Sprintf(`
  	provider "confluent" {
  	  schema_registry_id = "%s"
