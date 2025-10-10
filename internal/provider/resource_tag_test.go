@@ -148,8 +148,8 @@ func TestAccTag(t *testing.T) {
 					resource.TestCheckResourceAttr(tagLabel, "rest_endpoint", mockServerUrl),
 					resource.TestCheckResourceAttr(tagLabel, "credentials.#", "1"),
 					resource.TestCheckResourceAttr(tagLabel, "credentials.0.%", "2"),
-					resource.TestCheckResourceAttr(tagLabel, "credentials.0.key", testSchemaRegistryKey),
-					resource.TestCheckResourceAttr(tagLabel, "credentials.0.secret", testSchemaRegistrySecret),
+					resource.TestCheckResourceAttr(tagLabel, "credentials.0.key", testSchemaRegistryUpdatedKey),
+					resource.TestCheckResourceAttr(tagLabel, "credentials.0.secret", testSchemaRegistryUpdatedSecret),
 					resource.TestCheckResourceAttr(tagLabel, "name", "test1"),
 					resource.TestCheckResourceAttr(tagLabel, "description", "test1UpdatedDescription"),
 					resource.TestCheckResourceAttr(tagLabel, "version", "2"),
@@ -189,7 +189,7 @@ func tagResourceConfig(mockServerUrl string) string {
  	`, testStreamGovernanceClusterId, mockServerUrl, testSchemaRegistryKey, testSchemaRegistrySecret)
 }
 
-func tagResourceUpdatedConfig(mockServerUrl string) string {
+func tagResourceUpdatedConfig(mockServerUrl, key, secret string) string {
 	return fmt.Sprintf(`
  	provider "confluent" {
  	}
@@ -208,5 +208,5 @@ func tagResourceUpdatedConfig(mockServerUrl string) string {
         secret = "%s"
       }
    }
- 	`, testStreamGovernanceClusterId, mockServerUrl, testSchemaRegistryKey, testSchemaRegistrySecret)
+ 	`, testStreamGovernanceClusterId, mockServerUrl, testSchemaRegistryUpdatedKey, testSchemaRegistryUpdatedSecret)
 }
