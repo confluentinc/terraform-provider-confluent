@@ -25,19 +25,7 @@ import (
 	"testing"
 )
 
-const (
-	entityAttributesResourceScenarioName        = "confluent_catalog_entity_attributes Resource Lifecycle"
-	scenarioStateEntityAttributesHasBeenCreated = "A new entity attributes has been just created"
-	scenarioStateEntityAttributesHasBeenUpdated = "A new entity attributes has been just updated"
-	createEntityAttributesUrlPath               = "/catalog/v1/entity"
-	readCreatedEntityAttributesUrlPath          = "/catalog/v1/entity/type/kafka_topic/name/lkc-15xq83:topic_0"
-	deleteCreatedEntityAttributesUrlPath        = "/catalog/v1/entity"
-	entityAttributesLabel                       = "confluent_catalog_entity_attributes.main"
-	testDataCatalogSchemaRegistryClusterID      = "lsrc-8wrx70"
-	testAttributesToImport                      = "owner,description,ownerEmail"
-)
-
-func TestAccCatalogEntityAttributesWithEnhancedProviderBlock(t *testing.T) {
+func TestAccCatalogEntityAttributes(t *testing.T) {
 	ctx := context.Background()
 
 	wiremockContainer, err := setupWiremock(ctx)
