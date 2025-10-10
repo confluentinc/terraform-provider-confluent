@@ -121,6 +121,8 @@ func TestAccCatalogEntityAttributesWithEnhancedProviderBlock(t *testing.T) {
 					resource.TestCheckResourceAttr(entityAttributesLabel, fmt.Sprintf("%s.owner", paramAttributes), "dev"),
 					resource.TestCheckResourceAttr(entityAttributesLabel, fmt.Sprintf("%s.description", paramAttributes), "test_des"),
 					resource.TestCheckResourceAttr(entityAttributesLabel, fmt.Sprintf("%s.ownerEmail", paramAttributes), "dev@gmail.com"),
+					resource.TestCheckResourceAttr(entityAttributesLabel, "schema_registry_cluster.#", "0"),
+					resource.TestCheckNoResourceAttr(entityAttributesLabel, "schema_registry_cluster.0.id"),
 				),
 			},
 			{
@@ -144,6 +146,8 @@ func TestAccCatalogEntityAttributesWithEnhancedProviderBlock(t *testing.T) {
 					resource.TestCheckResourceAttr(entityAttributesLabel, fmt.Sprintf("%s.owner", paramAttributes), "dev"),
 					resource.TestCheckResourceAttr(entityAttributesLabel, fmt.Sprintf("%s.description", paramAttributes), "test_des"),
 					resource.TestCheckResourceAttr(entityAttributesLabel, fmt.Sprintf("%s.ownerEmail", paramAttributes), "dev@gmail.com"),
+					resource.TestCheckResourceAttr(entityAttributesLabel, "schema_registry_cluster.#", "0"),
+					resource.TestCheckNoResourceAttr(entityAttributesLabel, "schema_registry_cluster.0.id"),
 				),
 			},
 			{
@@ -167,6 +171,8 @@ func TestAccCatalogEntityAttributesWithEnhancedProviderBlock(t *testing.T) {
 					resource.TestCheckResourceAttr(entityAttributesLabel, fmt.Sprintf("%s.owner", paramAttributes), "dev"),
 					resource.TestCheckResourceAttr(entityAttributesLabel, fmt.Sprintf("%s.description", paramAttributes), "test_des"),
 					resource.TestCheckResourceAttr(entityAttributesLabel, fmt.Sprintf("%s.ownerEmail", paramAttributes), "dev2@gmail.com"),
+					resource.TestCheckResourceAttr(entityAttributesLabel, "schema_registry_cluster.#", "0"),
+					resource.TestCheckNoResourceAttr(entityAttributesLabel, "schema_registry_cluster.0.id"),
 				),
 			},
 			{
