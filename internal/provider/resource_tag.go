@@ -377,8 +377,8 @@ func extractCatalogRestEndpoint(client *Client, d *schema.ResourceData, isImport
 		}
 	}
 	if isImportOperation {
-		restEndpoint := getEnv("CATALOG_REST_ENDPOINT", "")
-		restEndpointOld := getEnv("SCHEMA_REGISTRY_REST_ENDPOINT", "")
+		restEndpoint := getEnv("IMPORT_CATALOG_REST_ENDPOINT", "")
+		restEndpointOld := getEnv("IMPORT_SCHEMA_REGISTRY_REST_ENDPOINT", "")
 		if restEndpoint != "" {
 			return restEndpoint, nil
 		} else if restEndpointOld != "" {

@@ -186,7 +186,7 @@ func readEntityAttributesAndSetAttributes(ctx context.Context, d *schema.Resourc
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Entity Attributes %q: %s", entityAttributesId, entityJson), map[string]interface{}{entityAttributesLoggingKey: entityAttributesId})
 
-	if _, err := setEntityAttributesAttributes(d, entity.Entity); err != nil {
+	if _, err := setEntityAttributesAttributes(d, entity.Entity, catalogRestClient); err != nil {
 		return nil, createDescriptiveError(err)
 	}
 
@@ -302,7 +302,7 @@ func createEntityAttributesId(entityType, entityName string) string {
 	return fmt.Sprintf("%s/%s", entityType, entityName)
 }
 
-func setEntityAttributesAttributes(d *schema.ResourceData, entity *dc.Entity) (*schema.ResourceData, error) {
+func setEntityAttributesAttributes(d *schema.ResourceData, entity *dc.Entity, c *CatalogRestClient) (*schema.ResourceData, error) {
 	entityName := d.Get(paramEntityName).(string)
 	if err := d.Set(paramEntityType, entity.GetTypeName()); err != nil {
 		return nil, err
@@ -314,6 +314,19 @@ func setEntityAttributesAttributes(d *schema.ResourceData, entity *dc.Entity) (*
 	if err := d.Set(paramAttributes, filterAttributes(d, entity.GetAttributes())); err != nil {
 		return nil, err
 	}
+
+	if !c.isMetadataSetInProviderBlock {
+		if err := setKafkaCredentials(c.clusterApiKey, c.clusterApiSecret, d, c.externalAccessToken != nil); err != nil {
+			return nil, err
+		}
+		if err := d.Set(paramRestEndpoint, c.restEndpoint); err != nil {
+			return nil, err
+		}
+		if err := setStringAttributeInListBlockOfSizeOne(paramSchemaRegistryCluster, paramId, c.clusterId, d); err != nil {
+			return nil, err
+		}
+	}
+
 	d.SetId(createEntityAttributesId(entity.GetTypeName(), entityName))
 	return d, nil
 }
