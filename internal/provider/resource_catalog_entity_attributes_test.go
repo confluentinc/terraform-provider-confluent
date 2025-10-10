@@ -175,8 +175,8 @@ func TestAccCatalogEntityAttributes(t *testing.T) {
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: func(state *terraform.State) (string, error) {
-					resources := state.RootModule().Resources
-					entityTypeAndEntityName := resources[entityAttributesLabel].Primary.ID
+					resourcesFoo := state.RootModule().Resources
+					entityTypeAndEntityName := resourcesFoo[entityAttributesLabel].Primary.ID
 					return testDataCatalogSchemaRegistryClusterID + "/" + entityTypeAndEntityName + "/" + testAttributesToImport, nil
 				},
 			},
