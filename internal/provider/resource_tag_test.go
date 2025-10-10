@@ -189,7 +189,7 @@ func tagResourceConfig(mockServerUrl string) string {
  	`, testStreamGovernanceClusterId, mockServerUrl, testSchemaRegistryKey, testSchemaRegistrySecret)
 }
 
-func tagResourceUpdatedConfig(mockServerUrl, key, secret string) string {
+func tagResourceUpdatedConfig(mockServerUrl string) string {
 	return fmt.Sprintf(`
  	provider "confluent" {
  	}
