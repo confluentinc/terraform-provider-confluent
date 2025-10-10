@@ -175,10 +175,6 @@ func TestAccCatalogEntityAttributes(t *testing.T) {
 func entityAttributesResourceConfig(testDataCatalogSchemaRegistryClusterID, mockServerUrl string) string {
 	return fmt.Sprintf(`
  	provider "confluent" {
- 	  schema_registry_id = "%s"
-	  catalog_rest_endpoint = "%s"          # optionally use SCHEMA_REGISTRY_REST_ENDPOINT env var
-	  schema_registry_api_key       = "x"   # optionally use SCHEMA_REGISTRY_API_KEY env var
-	  schema_registry_api_secret = "x"
  	}
  	resource "confluent_catalog_entity_attributes" "main" {
 	  entity_name = "lkc-15xq83:topic_0"
@@ -188,17 +184,21 @@ func entityAttributesResourceConfig(testDataCatalogSchemaRegistryClusterID, mock
 		"description": "test_des",
 		"ownerEmail": "dev@gmail.com"
 	  }
+	  schema_registry_cluster {
+	    id = "%s"
+	  }
+	  rest_endpoint = "%s"
+	  credentials {
+	    key    = "%s"
+	    secret = "%s"
+	  }
 	}
- 	`, testDataCatalogSchemaRegistryClusterID, mockServerUrl)
+ 	`, testDataCatalogSchemaRegistryClusterID, mockServerUrl, testSchemaRegistryKey, testSchemaRegistrySecret)
 }
 
 func updateEntityAttributesResourceConfig(testDataCatalogSchemaRegistryClusterID, mockServerUrl string) string {
 	return fmt.Sprintf(`
  	provider "confluent" {
- 	  schema_registry_id = "%s"
-	  schema_registry_rest_endpoint = "%s" # optionally use SCHEMA_REGISTRY_REST_ENDPOINT env var
-	  schema_registry_api_key       = "x"       # optionally use SCHEMA_REGISTRY_API_KEY env var
-	  schema_registry_api_secret = "x"
  	}
  	resource "confluent_catalog_entity_attributes" "main" {
 	  entity_name = "lkc-15xq83:topic_0"
@@ -208,6 +208,14 @@ func updateEntityAttributesResourceConfig(testDataCatalogSchemaRegistryClusterID
 		"description": "test_des",
 		"ownerEmail": "dev2@gmail.com"
 	  }
+	  schema_registry_cluster {
+	    id = "%s"
+	  }
+	  rest_endpoint = "%s"
+	  credentials {
+	    key    = "%s"
+	    secret = "%s"
+	  }
 	}
- 	`, testDataCatalogSchemaRegistryClusterID, mockServerUrl)
+ 	`, testDataCatalogSchemaRegistryClusterID, mockServerUrl, testSchemaRegistryKey, testSchemaRegistrySecret)
 }
