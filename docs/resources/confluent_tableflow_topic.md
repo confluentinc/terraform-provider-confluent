@@ -106,7 +106,7 @@ The following arguments are supported:
 
 -> **Note:** Use Option #2 to simplify the key rotation process. When using Option #1, to rotate a Tableflow API key, create a new Tableflow API key, update the `credentials` block in all configuration files to use the new Tableflow API key, run `terraform apply -target="confluent_tableflow_topic.example"`, and remove the old Tableflow API key. Alternatively, in case the old Tableflow API Key was deleted already, you might need to run `terraform plan -refresh=false -target="confluent_tableflow_topic.example" -out=rotate-tableflow-api-key` and `terraform apply rotate-tableflow-api-key` instead.
 
--> **Note** At most one of the arguments `record_failure_strategy`, `error_handling_suspend`, `error_handling_skip`, and `error_handling_log` may be specified at the same time.
+-> **Note** At most one of the arguments `error_handling_suspend`, `error_handling_skip`, and `error_handling_log` may be specified at the same time.
 
 !> **Warning:** Use Option #2 to avoid exposing sensitive `credentials` value in a state file. When using Option #1, Terraform doesn't encrypt the sensitive `credentials` value of the `confluent_tableflow_topic` resource, so you must keep your state file secure to avoid exposing it. Refer to the [Terraform documentation](https://www.terraform.io/docs/language/state/sensitive-data.html) to learn more about securing your state file.
 

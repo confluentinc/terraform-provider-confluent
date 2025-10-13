@@ -109,12 +109,11 @@ func tableflowTopicResource() *schema.Resource {
 				Description: "The current storage path where the data and metadata is stored for this table.",
 			},
 			paramRecordFailureStrategy: {
-				Type:          schema.TypeString,
-				Optional:      true,
-				Computed:      true,
-				Deprecated:    "This attribute is deprecated and will be removed in a future release.",
-				Description:   "The strategy to handle record failures in the Tableflow enabled topic during materialization.",
-				ConflictsWith: []string{paramErrorHandlingSuspend, paramErrorHandlingSkip, paramErrorHandlingLog},
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				Deprecated:  "This attribute is deprecated and will be removed in a future release.",
+				Description: "The strategy to handle record failures in the Tableflow enabled topic during materialization.",
 			},
 			paramWriteMode: {
 				Type:        schema.TypeString,
@@ -187,7 +186,7 @@ func errorHandlingSuspendSchema() *schema.Schema {
 			Schema: map[string]*schema.Schema{},
 		},
 		MaxItems:      0,
-		ConflictsWith: []string{paramErrorHandlingSkip, paramErrorHandlingLog, paramRecordFailureStrategy},
+		ConflictsWith: []string{paramErrorHandlingSkip, paramErrorHandlingLog},
 	}
 }
 
@@ -201,7 +200,7 @@ func errorHandlingSkipSchema() *schema.Schema {
 			Schema: map[string]*schema.Schema{},
 		},
 		MaxItems:      0,
-		ConflictsWith: []string{paramErrorHandlingSuspend, paramErrorHandlingLog, paramRecordFailureStrategy},
+		ConflictsWith: []string{paramErrorHandlingSuspend, paramErrorHandlingLog},
 	}
 }
 
@@ -224,7 +223,7 @@ func errorHandlingLogSchema() *schema.Schema {
 		},
 		MaxItems:      1,
 		MinItems:      1,
-		ConflictsWith: []string{paramErrorHandlingSuspend, paramErrorHandlingSkip, paramRecordFailureStrategy},
+		ConflictsWith: []string{paramErrorHandlingSuspend, paramErrorHandlingSkip},
 	}
 }
 
