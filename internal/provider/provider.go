@@ -531,11 +531,11 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	}
 
 	// All 7 attributes should be set or not set at the same time
-	allFlinkAttributesAreSet := (flinkApiKey != "") && (flinkApiSecret != "") && (flinkRestEndpoint != "") && (flinkOrganizationId != "") && (flinkEnvironmentId != "") && (flinkComputePoolId != "") && (flinkPrincipalId != "")
-	allFlinkAttributesAreNotSet := (flinkApiKey == "") && (flinkApiSecret == "") && (flinkRestEndpoint == "") && (flinkOrganizationId == "") && (flinkEnvironmentId == "") && (flinkComputePoolId == "") && (flinkPrincipalId == "")
+	allFlinkAttributesAreSet := (flinkApiKey != "") && (flinkApiSecret != "") && (flinkRestEndpoint != "") && (flinkOrganizationId != "") && (flinkEnvironmentId != "") && (flinkPrincipalId != "")
+	allFlinkAttributesAreNotSet := (flinkApiKey == "") && (flinkApiSecret == "") && (flinkRestEndpoint == "") && (flinkOrganizationId == "") && (flinkEnvironmentId == "") && (flinkPrincipalId == "")
 	justSubsetOfFlinkAttributesAreSet := !(allFlinkAttributesAreSet || allFlinkAttributesAreNotSet)
 	if justSubsetOfFlinkAttributesAreSet {
-		return nil, diag.Errorf("All 7 flink_api_key, flink_api_secret, flink_rest_endpoint, organization_id, environment_id, flink_compute_pool_id, flink_principal_id attributes should be set or not set in the provider block at the same time")
+		return nil, diag.Errorf("All 6 flink_api_key, flink_api_secret, flink_rest_endpoint, organization_id, environment_id, flink_principal_id attributes should be set or not set in the provider block at the same time")
 	}
 
 	allTableflowAttributesAreSet := (tableflowApiKey != "") && (tableflowApiSecret != "")
