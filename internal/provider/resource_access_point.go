@@ -282,7 +282,7 @@ func accessPointCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 		}
 		spec.SetConfig(config)
 	} else {
-		return diag.Errorf("None of %q, %q, %q blocks was provided for confluent_access_point resource", paramAwsEgressPrivateLinkEndpoint, paramAzureEgressPrivateLinkEndpoint, paramAwsPrivateNetworkInterface)
+		return diag.Errorf("None of %q, %q, %q, %q blocks was provided for confluent_access_point resource", paramAwsEgressPrivateLinkEndpoint, paramAzureEgressPrivateLinkEndpoint, paramGcpEgressPrivateServiceConnectEndpoint, paramAwsPrivateNetworkInterface)
 	}
 
 	createAccessPointRequest := netap.NetworkingV1AccessPoint{Spec: spec}
@@ -293,14 +293,14 @@ func accessPointCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Access Point: %s", createAccessPointRequestJson))
 
 	req := c.netAccessPointClient.AccessPointsNetworkingV1Api.CreateNetworkingV1AccessPoint(c.netAPApiContext(ctx)).NetworkingV1AccessPoint(createAccessPointRequest)
-	createdAccessPoint, _, err := req.Execute()
+	createdAccessPoint, resp, err := req.Execute()
 	if err != nil {
-		return diag.Errorf("error creating Access Point %q: %s", createdAccessPoint.GetId(), createDescriptiveError(err))
+		return diag.Errorf("error creating Access Point %q: %s", createdAccessPoint.GetId(), createDescriptiveError(err, resp))
 	}
 	d.SetId(createdAccessPoint.GetId())
 
 	if err := waitForAccessPointToProvision(c.netAPApiContext(ctx), c, environmentId, d.Id()); err != nil {
-		return diag.Errorf("error waiting for Access Point %q to provision: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error waiting for Access Point %q to provision: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	createdAccessPointJson, err := json.Marshal(createdAccessPoint)
@@ -366,10 +366,14 @@ func accessPointDelete(ctx context.Context, d *schema.ResourceData, meta interfa
 	c := meta.(*Client)
 
 	req := c.netAccessPointClient.AccessPointsNetworkingV1Api.DeleteNetworkingV1AccessPoint(c.netAPApiContext(ctx), d.Id()).Environment(environmentId)
-	_, err := req.Execute()
+	resp, err := req.Execute()
 
 	if err != nil {
-		return diag.Errorf("error deleting Access Point %q: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error deleting Access Point %q: %s", d.Id(), createDescriptiveError(err, resp))
+	}
+
+	if err := waitForAccessPointToBeDeleted(c.netAPApiContext(ctx), c, environmentId, d.Id(), c.isAcceptanceTestMode); err != nil {
+		return diag.Errorf("error waiting for Access Point %q to be deleted: %s", d.Id(), createDescriptiveError(err))
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished deleting Access Point %q", d.Id()), map[string]interface{}{accessPointKey: d.Id()})
@@ -409,10 +413,10 @@ func accessPointUpdate(ctx context.Context, d *schema.ResourceData, meta interfa
 
 	c := meta.(*Client)
 	req := c.netAccessPointClient.AccessPointsNetworkingV1Api.UpdateNetworkingV1AccessPoint(c.netAPApiContext(ctx), d.Id()).NetworkingV1AccessPointUpdate(*updateAccessPoint)
-	updatedAccessPoint, _, err := req.Execute()
+	updatedAccessPoint, resp, err := req.Execute()
 
 	if err != nil {
-		return diag.Errorf("error updating Access Point %q: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error updating Access Point %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	updatedAccessPointJson, err := json.Marshal(updatedAccessPoint)

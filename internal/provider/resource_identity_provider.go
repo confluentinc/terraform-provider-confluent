@@ -69,6 +69,7 @@ func identityProviderResource() *schema.Resource {
 			paramIdentityClaim: {
 				Type:        schema.TypeString,
 				Optional:    true,
+				Computed:    true,
 				Description: "A JWT claim to extract the authenticating identity to Confluent resources.",
 			},
 		},
@@ -110,10 +111,10 @@ func identityProviderUpdate(ctx context.Context, d *schema.ResourceData, meta in
 	tflog.Debug(ctx, fmt.Sprintf("Updating Identity Provider %q: %s", d.Id(), updateIdentityProviderRequestJson), map[string]interface{}{identityProviderLoggingKey: d.Id()})
 
 	c := meta.(*Client)
-	updatedIdentityProvider, _, err := c.oidcClient.IdentityProvidersIamV2Api.UpdateIamV2IdentityProvider(c.oidcApiContext(ctx), d.Id()).IamV2IdentityProvider(*updateIdentityProviderRequest).Execute()
+	updatedIdentityProvider, resp, err := c.oidcClient.IdentityProvidersIamV2Api.UpdateIamV2IdentityProvider(c.oidcApiContext(ctx), d.Id()).IamV2IdentityProvider(*updateIdentityProviderRequest).Execute()
 
 	if err != nil {
-		return diag.Errorf("error updating Identity Provider %q: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error updating Identity Provider %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	updatedIdentityProviderJson, err := json.Marshal(updatedIdentityProvider)
@@ -139,16 +140,19 @@ func identityProviderCreate(ctx context.Context, d *schema.ResourceData, meta in
 	createIdentityProviderRequest.SetDescription(description)
 	createIdentityProviderRequest.SetIssuer(issuer)
 	createIdentityProviderRequest.SetJwksUri(jwksUri)
-	createIdentityProviderRequest.SetIdentityClaim(identityClaim)
+	if len(identityClaim) > 0 {
+		createIdentityProviderRequest.SetIdentityClaim(identityClaim)
+	}
+
 	createIdentityProviderRequestJson, err := json.Marshal(createIdentityProviderRequest)
 	if err != nil {
 		return diag.Errorf("error creating Identity Provider: error marshaling %#v to json: %s", createIdentityProviderRequest, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Identity Provider: %s", createIdentityProviderRequestJson))
 
-	createdIdentityProvider, _, err := executeIdentityProviderCreate(c.oidcApiContext(ctx), c, createIdentityProviderRequest)
+	createdIdentityProvider, resp, err := executeIdentityProviderCreate(c.oidcApiContext(ctx), c, createIdentityProviderRequest)
 	if err != nil {
-		return diag.Errorf("error creating Identity Provider: %s", createDescriptiveError(err))
+		return diag.Errorf("error creating Identity Provider: %s", createDescriptiveError(err, resp))
 	}
 	d.SetId(createdIdentityProvider.GetId())
 
@@ -171,10 +175,10 @@ func identityProviderDelete(ctx context.Context, d *schema.ResourceData, meta in
 	c := meta.(*Client)
 
 	req := c.oidcClient.IdentityProvidersIamV2Api.DeleteIamV2IdentityProvider(c.oidcApiContext(ctx), d.Id())
-	_, err := req.Execute()
+	resp, err := req.Execute()
 
 	if err != nil {
-		return diag.Errorf("error deleting Identity Provider %q: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error deleting Identity Provider %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished deleting Identity Provider %q", d.Id()), map[string]interface{}{identityProviderLoggingKey: d.Id()})
@@ -187,7 +191,7 @@ func identityProviderRead(ctx context.Context, d *schema.ResourceData, meta inte
 	c := meta.(*Client)
 	identityProvider, resp, err := executeIdentityProviderRead(c.oidcApiContext(ctx), c, d.Id())
 	if err != nil {
-		tflog.Warn(ctx, fmt.Sprintf("Error reading Identity Provider %q: %s", d.Id(), createDescriptiveError(err)), map[string]interface{}{identityProviderLoggingKey: d.Id()})
+		tflog.Warn(ctx, fmt.Sprintf("Error reading Identity Provider %q: %s", d.Id(), createDescriptiveError(err, resp)), map[string]interface{}{identityProviderLoggingKey: d.Id()})
 
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
 		if isResourceNotFound && !d.IsNewResource() {
@@ -196,7 +200,7 @@ func identityProviderRead(ctx context.Context, d *schema.ResourceData, meta inte
 			return nil
 		}
 
-		return diag.FromErr(createDescriptiveError(err))
+		return diag.FromErr(createDescriptiveError(err, resp))
 	}
 	identityProviderJson, err := json.Marshal(identityProvider)
 	if err != nil {

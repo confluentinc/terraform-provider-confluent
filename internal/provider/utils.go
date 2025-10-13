@@ -16,6 +16,7 @@ package provider
 
 import (
 	"bytes"
+	"compress/gzip"
 	"context"
 	"errors"
 	"fmt"
@@ -942,11 +943,24 @@ func createDescriptiveError(err error, resp ...*http.Response) error {
 	// If a *http.Response was provided, and we could not parse Error object,
 	// read its *http.Response body to provide a more descriptive error message to avoid
 	// https://github.com/confluentinc/terraform-provider-confluent/issues/53
-	if errorMessage == err.Error() && len(resp) > 0 && resp[0] != nil {
+	if errorMessage == err.Error() && len(resp) > 0 && resp[0] != nil && resp[0].Body != nil {
 		defer resp[0].Body.Close()
 
 		bodyBytes, readErr := io.ReadAll(resp[0].Body)
 		if readErr == nil {
+			// Check if the response looks like gzip (magic bytes 0x1f 0x8b)
+			// This handles cases where Content-Encoding header is missing
+			if len(bodyBytes) >= 2 && bodyBytes[0] == 0x1f && bodyBytes[1] == 0x8b {
+				gzipReader, gzipErr := gzip.NewReader(bytes.NewReader(bodyBytes))
+				if gzipErr == nil {
+					defer gzipReader.Close()
+					decompressedBytes, decompressErr := io.ReadAll(gzipReader)
+					if decompressErr == nil {
+						bodyBytes = decompressedBytes
+					}
+				}
+			}
+
 			errorMessage = fmt.Sprintf(
 				"%s; could not parse error details; raw response body: %#v",
 				errorMessage,

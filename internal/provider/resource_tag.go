@@ -117,9 +117,9 @@ func tagCreate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagn
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Tag: %s", createTagRequestJson))
 
-	createdTag, _, err := request.Execute()
+	createdTag, resp, err := request.Execute()
 	if err != nil {
-		return diag.Errorf("error creating Tag %s", createDescriptiveError(err))
+		return diag.Errorf("error creating Tag %s", createDescriptiveError(err, resp))
 	}
 	if len(createdTag) == 0 {
 		return diag.Errorf("error creating Tag %q: empty response", tagId)
@@ -130,7 +130,7 @@ func tagCreate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagn
 	d.SetId(tagId)
 
 	if err := waitForTagToProvision(catalogRestClient.dataCatalogApiContext(ctx), catalogRestClient, tagId, tagName); err != nil {
-		return diag.Errorf("error waiting for Tag %q to provision: %s", tagId, createDescriptiveError(err))
+		return diag.Errorf("error waiting for Tag %q to provision: %s", tagId, createDescriptiveError(err, resp))
 	}
 
 	// https://github.com/confluentinc/terraform-provider-confluent/issues/282
@@ -180,7 +180,7 @@ func readTagAndSetAttributes(ctx context.Context, resourceData *schema.ResourceD
 	request := client.apiClient.TypesV1Api.GetTagDefByName(client.dataCatalogApiContext(ctx), tagName)
 	tag, resp, err := request.Execute()
 	if err != nil {
-		tflog.Warn(ctx, fmt.Sprintf("Error reading Tag %q: %s", tagId, createDescriptiveError(err)), map[string]any{tagLoggingKey: tagId})
+		tflog.Warn(ctx, fmt.Sprintf("Error reading Tag %q: %s", tagId, createDescriptiveError(err, resp)), map[string]any{tagLoggingKey: tagId})
 
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
 		if isResourceNotFound && !resourceData.IsNewResource() {
@@ -198,7 +198,7 @@ func readTagAndSetAttributes(ctx context.Context, resourceData *schema.ResourceD
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Tag %q: %s", tagId, tagJson), map[string]any{tagLoggingKey: tagId})
 
 	if _, err := setTagAttributes(resourceData, client, client.clusterId, tag); err != nil {
-		return nil, createDescriptiveError(err)
+		return nil, createDescriptiveError(err, resp)
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished reading Tag %q", tagId), map[string]any{tagLoggingKey: tagId})
@@ -274,9 +274,9 @@ func tagUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagn
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Updating new Tag: %s", updateTagRequestJson))
 
-	updatedTag, _, err := request.Execute()
+	updatedTag, resp, err := request.Execute()
 	if err != nil {
-		return diag.Errorf("error updating Tag %s", createDescriptiveError(err))
+		return diag.Errorf("error updating Tag %s", createDescriptiveError(err, resp))
 	}
 	if len(updatedTag) == 0 {
 		return diag.Errorf("error updating Tag %q: empty response", tagId)
@@ -377,8 +377,8 @@ func extractCatalogRestEndpoint(client *Client, d *schema.ResourceData, isImport
 		}
 	}
 	if isImportOperation {
-		restEndpoint := getEnv("CATALOG_REST_ENDPOINT", "")
-		restEndpointOld := getEnv("SCHEMA_REGISTRY_REST_ENDPOINT", "")
+		restEndpoint := getEnv("IMPORT_CATALOG_REST_ENDPOINT", "")
+		restEndpointOld := getEnv("IMPORT_SCHEMA_REGISTRY_REST_ENDPOINT", "")
 		if restEndpoint != "" {
 			return restEndpoint, nil
 		} else if restEndpointOld != "" {

@@ -93,6 +93,7 @@ In addition to the preceding arguments, the following attributes are exported:
 - `enable_compaction` - (Optional Boolean) This flag determines whether to enable compaction for the Tableflow enabled topic.
 - `enable_partitioning` - (Optional Boolean) This flag determines whether to enable partitioning for the Tableflow enabled topic.
 - `suspended` - (Optional Boolean) Indicates whether the Tableflow should be suspended.
+- `write_mode` - (Optional String) Indicates the write mode of the Tableflow topic.
 - `byob_aws` (Optional Configuration Block) supports the following:
     - `bucket_name` - (Required String) The bucket name.
     - `bucket_region` - (Required String) The bucket region.

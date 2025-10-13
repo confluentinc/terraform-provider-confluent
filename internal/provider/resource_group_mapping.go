@@ -83,10 +83,10 @@ func groupMappingUpdate(ctx context.Context, d *schema.ResourceData, meta interf
 	tflog.Debug(ctx, fmt.Sprintf("Updating Group Mapping %q: %s", d.Id(), updateGroupMappingRequestJson), map[string]interface{}{groupMappingLoggingKey: d.Id()})
 
 	c := meta.(*Client)
-	updatedGroupMapping, _, err := c.ssoClient.GroupMappingsIamV2SsoApi.UpdateIamV2SsoGroupMapping(c.ssoApiContext(ctx), d.Id()).IamV2SsoGroupMapping(*updateGroupMappingRequest).Execute()
+	updatedGroupMapping, resp, err := c.ssoClient.GroupMappingsIamV2SsoApi.UpdateIamV2SsoGroupMapping(c.ssoApiContext(ctx), d.Id()).IamV2SsoGroupMapping(*updateGroupMappingRequest).Execute()
 
 	if err != nil {
-		return diag.Errorf("error updating Group Mapping %q: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error updating Group Mapping %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	updatedGroupMappingJson, err := json.Marshal(updatedGroupMapping)
@@ -115,9 +115,9 @@ func groupMappingCreate(ctx context.Context, d *schema.ResourceData, meta interf
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Group Mapping: %s", createGroupMappingRequestJson))
 
-	createdGroupMapping, _, err := executeGroupMappingCreate(c.ssoApiContext(ctx), c, createGroupMappingRequest)
+	createdGroupMapping, resp, err := executeGroupMappingCreate(c.ssoApiContext(ctx), c, createGroupMappingRequest)
 	if err != nil {
-		return diag.Errorf("error creating Group Mapping %q: %s", displayName, createDescriptiveError(err))
+		return diag.Errorf("error creating Group Mapping %q: %s", displayName, createDescriptiveError(err, resp))
 	}
 	d.SetId(createdGroupMapping.GetId())
 
@@ -140,10 +140,10 @@ func groupMappingDelete(ctx context.Context, d *schema.ResourceData, meta interf
 	c := meta.(*Client)
 
 	req := c.ssoClient.GroupMappingsIamV2SsoApi.DeleteIamV2SsoGroupMapping(c.ssoApiContext(ctx), d.Id())
-	_, err := req.Execute()
+	resp, err := req.Execute()
 
 	if err != nil {
-		return diag.Errorf("error deleting Group Mapping %q: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error deleting Group Mapping %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished deleting Group Mapping %q", d.Id()), map[string]interface{}{groupMappingLoggingKey: d.Id()})
@@ -161,7 +161,7 @@ func groupMappingRead(ctx context.Context, d *schema.ResourceData, meta interfac
 	c := meta.(*Client)
 	groupMapping, resp, err := executeGroupMappingRead(c.ssoApiContext(ctx), c, d.Id())
 	if err != nil {
-		tflog.Warn(ctx, fmt.Sprintf("Error reading Group Mapping %q: %s", d.Id(), createDescriptiveError(err)), map[string]interface{}{groupMappingLoggingKey: d.Id()})
+		tflog.Warn(ctx, fmt.Sprintf("Error reading Group Mapping %q: %s", d.Id(), createDescriptiveError(err, resp)), map[string]interface{}{groupMappingLoggingKey: d.Id()})
 
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
 		if isResourceNotFound && !d.IsNewResource() {
@@ -170,7 +170,7 @@ func groupMappingRead(ctx context.Context, d *schema.ResourceData, meta interfac
 			return nil
 		}
 
-		return diag.FromErr(createDescriptiveError(err))
+		return diag.FromErr(createDescriptiveError(err, resp))
 	}
 	groupMappingJson, err := json.Marshal(groupMapping)
 	if err != nil {

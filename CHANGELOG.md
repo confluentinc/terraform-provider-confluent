@@ -1,3 +1,77 @@
+## 2.48.0 (October 10th, 2025)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.47.0...v2.48.0)
+
+**Bug Fixes:**
+* Fixed a bug in the import functionality for the `confluent_catalog_entity_attributes` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_catalog_entity_attributes).
+
+## 2.47.0 (October 9th, 2025)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.46.0...v2.47.0)
+
+**Bug Fixes:**
+* Fixed a deletion issue with the `confluent_access_point` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_access_point).
+
+## 2.46.0 (October 8th, 2025)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.45.0...v2.46.0)
+
+**Bug Fixes:**
+* General fixes and improvements. 
+
+## 2.45.0 (October 7th, 2025)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.44.0...v2.45.0)
+
+**New Features:**
+* Added import functionality for the `confluent_catalog_entity_attributes` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_catalog_entity_attributes).
+
+**Bug Fixes:**
+* Added ["Upgrade Guide for OAuth Authentication Migration" guide](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/guides/migration-guide-oauth).
+
+## 2.44.0 (September 30th, 2025)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.43.0...v2.44.0)
+
+**Bug Fixes:**
+* Fixed gzip decompression in error responses by detecting and decompressing gzip magic bytes (0x1f 0x8b) even when the Content-Encoding header is missing, resolving JSON parsing errors and improving error message readability.
+
+## 2.43.0 (September 29nd, 2025)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.42.0...v2.43.0)
+
+**Bug Fixes:**
+* Added `oauth` authentication support for the `confluent_schema_exporter` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema_exporter).
+* Updated the `confluent_kafka_topic` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_topic) to support in-place update for the `rest_endpoint` attribute.
+
+## 2.42.0 (September 22nd, 2025)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.41.0...v2.42.0)
+
+**Bug Fixes:**
+* Fixed a nil pointer dereference panic in the createDescriptiveError function.
+
+## 2.41.0 (September 18th, 2025)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.40.0...v2.41.0)
+
+**Bug Fixes:**
+* Fixed the timeout issue for the `confluent_tf_importer` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_tf_importer) when importing huge number of resources.
+* Fixed the Terraform drift issue ([#771](https://github.com/confluentinc/terraform-provider-confluent/issues/771)) for the topic setting `confluent.schema.validation.context.name` for `confluent_kafka_topic` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_topic).
+
+## 2.40.0 (September 11th, 2025)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.39.0...v2.40.0)
+
+**New features:**
+* Added `disable_wait_for_ready` attribute for the `confluent_tag_binding` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_tag_binding) to disable the readiness check.
+* Added `write_mode` read-only attribute for the `confluent_tableflow_topic` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_tableflow_topic) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_tableflow_topic).
+
+**Bug Fixes:**
+* Fixed the Terraform drift issue for the `identity_claim` attribute of the `confluent_identity_provider` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_identity_provider).
+* Updated the error handling mechanism to output detailed error messages.
+* Updated the logging mechanism to output an additional parameter, the request ID, for an improved debugging process.
+
 ## 2.39.0 (August 29th, 2025)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.38.0...v2.39.0)

@@ -21,6 +21,7 @@ import (
 	"math/rand"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -71,6 +72,7 @@ func TestAccKafkaAclLive(t *testing.T) {
 			{
 				Config: testAccCheckKafkaAclLiveConfig(endpoint, aclResourceLabel, kafkaClusterId, kafkaApiKey, kafkaApiSecret, kafkaRestEndpoint, topicName, apiKey, apiSecret),
 				Check: resource.ComposeTestCheckFunc(
+					testAccWaitForKafkaAclPropagation(), // Wait for ACL to propagate before checking
 					testAccCheckKafkaAclLiveExists(fmt.Sprintf("confluent_kafka_acl.%s", aclResourceLabel)),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_acl.%s", aclResourceLabel), "resource_type", "TOPIC"),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_acl.%s", aclResourceLabel), "resource_name", topicName),
@@ -130,6 +132,7 @@ func TestAccKafkaAclUpdateLive(t *testing.T) {
 			{
 				Config: testAccCheckKafkaAclLiveConfig(endpoint, aclResourceLabel, kafkaClusterId, kafkaApiKey, kafkaApiSecret, kafkaRestEndpoint, topicName, apiKey, apiSecret),
 				Check: resource.ComposeTestCheckFunc(
+					testAccWaitForKafkaAclPropagation(), // Wait for ACL to propagate before checking
 					testAccCheckKafkaAclLiveExists(fmt.Sprintf("confluent_kafka_acl.%s", aclResourceLabel)),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_acl.%s", aclResourceLabel), "operation", "READ"),
 				),
@@ -137,6 +140,7 @@ func TestAccKafkaAclUpdateLive(t *testing.T) {
 			{
 				Config: testAccCheckKafkaAclUpdateLiveConfig(endpoint, aclResourceLabel, kafkaClusterId, kafkaApiKey, kafkaApiSecret, kafkaRestEndpoint, topicName, apiKey, apiSecret),
 				Check: resource.ComposeTestCheckFunc(
+					testAccWaitForKafkaAclPropagation(), // Wait for ACL to propagate before checking
 					testAccCheckKafkaAclLiveExists(fmt.Sprintf("confluent_kafka_acl.%s", aclResourceLabel)),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_acl.%s", aclResourceLabel), "operation", "WRITE"),
 				),
@@ -199,6 +203,17 @@ func testAccCheckKafkaAclUpdateLiveConfig(endpoint, aclResourceLabel, kafkaClust
 		permission    = "ALLOW"
 	}
 	`, endpoint, apiKey, apiSecret, aclResourceLabel, kafkaClusterId, kafkaApiKey, kafkaApiSecret, kafkaRestEndpoint, topicName)
+}
+
+// testAccWaitForKafkaAclPropagation adds a delay to allow for ACL propagation
+// This is specifically for live tests to handle eventual consistency
+func testAccWaitForKafkaAclPropagation() resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		// Wait for ACL to propagate across the Kafka cluster
+		// In live environments, ACLs may take several seconds to become visible
+		time.Sleep(5 * time.Second)
+		return nil
+	}
 }
 
 func testAccCheckKafkaAclLiveExists(resourceName string) resource.TestCheckFunc {

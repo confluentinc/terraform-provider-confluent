@@ -46,6 +46,7 @@ const (
 	paramErrorHandlingSuspend  = "error_handling_suspend"
 	paramErrorHandlingLog      = "error_handling_log"
 	paramTarget                = "target"
+	paramWriteMode             = "write_mode"
 
 	byobAwsSpecKind        = "ByobAws"
 	managedStorageSpecKind = "Managed"
@@ -114,6 +115,11 @@ func tableflowTopicResource() *schema.Resource {
 				Deprecated:    "This attribute is deprecated and will be removed in a future release.",
 				Description:   "The strategy to handle record failures in the Tableflow enabled topic during materialization.",
 				ConflictsWith: []string{paramErrorHandlingSuspend, paramErrorHandlingSkip, paramErrorHandlingLog},
+			},
+			paramWriteMode: {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Indicates the write mode of the tableflow topic.",
 			},
 			paramErrorHandlingSuspend: errorHandlingSuspendSchema(),
 			paramErrorHandlingSkip:    errorHandlingSkipSchema(),
@@ -300,9 +306,9 @@ func tableflowTopicCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Tableflow Topic: %s", createTableflowTopicRequestJson))
 
 	req := tableflowRestClient.apiClient.TableflowTopicsTableflowV1Api.CreateTableflowV1TableflowTopic(tableflowRestClient.apiContext(ctx)).TableflowV1TableflowTopic(*createTableflowTopicRequest)
-	createdTableflowTopic, _, err := req.Execute()
+	createdTableflowTopic, resp, err := req.Execute()
 	if err != nil {
-		return diag.Errorf("error creating Tableflow Topic: %s", createDescriptiveError(err))
+		return diag.Errorf("error creating Tableflow Topic: %s", createDescriptiveError(err, resp))
 	}
 
 	d.SetId(displayName)
@@ -345,7 +351,7 @@ func tableflowTopicRead(ctx context.Context, d *schema.ResourceData, meta interf
 func readTableflowTopicAndSetAttributes(ctx context.Context, d *schema.ResourceData, c *TableflowRestClient, environmentId, clusterId, tableflowTopicId string) ([]*schema.ResourceData, error) {
 	tableflowTopic, resp, err := executeTableflowTopicRead(c.apiContext(ctx), c, environmentId, clusterId, tableflowTopicId)
 	if err != nil {
-		tflog.Warn(ctx, fmt.Sprintf("Error reading Tableflow Topic %q: %s", tableflowTopicId, createDescriptiveError(err)), map[string]interface{}{tableflowTopicKey: d.Id()})
+		tflog.Warn(ctx, fmt.Sprintf("Error reading Tableflow Topic %q: %s", tableflowTopicId, createDescriptiveError(err, resp)), map[string]interface{}{tableflowTopicKey: d.Id()})
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
 		if isResourceNotFound && !d.IsNewResource() {
 			tflog.Warn(ctx, fmt.Sprintf("Removing Tableflow Topic %q in TF state because Tableflow Topic could not be found on the server", d.Id()), map[string]interface{}{tableflowTopicKey: d.Id()})
@@ -413,6 +419,9 @@ func setTableflowTopicAttributes(d *schema.ResourceData, c *TableflowRestClient,
 	}
 	if err := setStringAttributeInListBlockOfSizeOne(paramKafkaCluster, paramId, tableflowTopic.GetSpec().KafkaCluster.GetId(), d); err != nil {
 		return nil, createDescriptiveError(err)
+	}
+	if err := d.Set(paramWriteMode, tableflowTopic.Status.GetWriteMode()); err != nil {
+		return nil, err
 	}
 
 	if tableflowTopic.Spec.GetStorage().TableflowV1ByobAwsSpec != nil {
@@ -500,10 +509,10 @@ func tableflowTopicDelete(ctx context.Context, d *schema.ResourceData, meta inte
 	tableflowRestClient := c.tableflowRestClientFactory.CreateTableflowRestClient(tableflowApiKey, tableflowApiSecret, c.isTableflowMetadataSet, c.oauthToken, c.stsToken)
 
 	req := tableflowRestClient.apiClient.TableflowTopicsTableflowV1Api.DeleteTableflowV1TableflowTopic(tableflowRestClient.apiContext(ctx), d.Id()).Environment(environmentId).SpecKafkaCluster(clusterId)
-	_, err = req.Execute()
+	resp, err := req.Execute()
 
 	if err != nil {
-		return diag.Errorf("error deleting Tableflow Topic %q: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error deleting Tableflow Topic %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished deleting Tableflow Topic %q", d.Id()), map[string]interface{}{tableflowTopicKey: d.Id()})
@@ -573,9 +582,9 @@ func tableflowTopicUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 	tflog.Debug(ctx, fmt.Sprintf("Updating Tableflow Topic %q: %s", d.Id(), updateTableflowTopicJson), map[string]interface{}{tableflowTopicKey: d.Id()})
 
 	req := tableflowRestClient.apiClient.TableflowTopicsTableflowV1Api.UpdateTableflowV1TableflowTopic(tableflowRestClient.apiContext(ctx), d.Id()).TableflowV1TableflowTopicUpdate(*updateTableflowTopic)
-	updatedTableflowTopic, _, err := req.Execute()
+	updatedTableflowTopic, resp, err := req.Execute()
 	if err != nil {
-		return diag.Errorf("error updating Tableflow Topic %q: %s", d.Id(), createDescriptiveError(err))
+		return diag.Errorf("error updating Tableflow Topic %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	UpdatedTableflowTopicJson, err := json.Marshal(updatedTableflowTopic)
