@@ -1,5 +1,5 @@
 ---
-page_title: "Confluent Provider 2.45.0: Upgrade Guide for OAuth Authentication Migration"
+page_title: "Confluent Provider 2.46.0: Upgrade Guide for OAuth Authentication Migration"
 ---
 # Confluent Provider 2.45.0: Upgrade Guide for OAuth Authentication Migration
 

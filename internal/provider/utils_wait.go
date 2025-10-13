@@ -622,6 +622,24 @@ func waitForDnsRecordToBeDeleted(ctx context.Context, c *Client, environmentId, 
 	return nil
 }
 
+func waitForAccessPointToBeDeleted(ctx context.Context, c *Client, environmentId, accessPointId string, isAcceptanceTestMode bool) error {
+	delay, pollInterval := getDelayAndPollInterval(1*time.Minute, 1*time.Minute, isAcceptanceTestMode)
+	stateConf := &resource.StateChangeConf{
+		Pending:      []string{stateInProgress},
+		Target:       []string{stateDone},
+		Refresh:      accessPointDeleteStatus(c.netAPApiContext(ctx), c, environmentId, accessPointId),
+		Timeout:      networkingAPIDeleteTimeout,
+		Delay:        delay,
+		PollInterval: pollInterval,
+	}
+
+	tflog.Debug(ctx, fmt.Sprintf("Waiting for Access Point %q to be deleted", accessPointId), map[string]interface{}{accessPointKey: accessPointId})
+	if _, err := stateConf.WaitForStateContext(c.netAPApiContext(ctx)); err != nil {
+		return err
+	}
+	return nil
+}
+
 func waitForPrivateLinkAccessToBeDeleted(ctx context.Context, c *Client, environmentId, privateLinkAccessId string, isAcceptanceTestMode bool) error {
 	delay, pollInterval := getDelayAndPollInterval(1*time.Minute, 1*time.Minute, isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
@@ -1495,6 +1513,26 @@ func dnsRecordDeleteStatus(ctx context.Context, c *Client, environmentId, dnsRec
 		}
 		tflog.Debug(ctx, fmt.Sprintf("Performing DNS Record %q deletion process: DNS Record %d's status is %q", dnsRecordId, resp.StatusCode, dnsRecord.Status.GetPhase()), map[string]interface{}{dnsRecordKey: dnsRecordId})
 		return dnsRecord, stateInProgress, nil
+	}
+}
+
+func accessPointDeleteStatus(ctx context.Context, c *Client, environmentId, accessPointId string) resource.StateRefreshFunc {
+	return func() (result interface{}, s string, err error) {
+		accessPoint, resp, err := executeAccessPointRead(c.netAPApiContext(ctx), c, environmentId, accessPointId)
+		if err != nil {
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Access Point %q: %s", accessPointId, createDescriptiveError(err)), map[string]interface{}{accessPointKey: accessPointId})
+
+			isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
+			if isResourceNotFound {
+				tflog.Debug(ctx, fmt.Sprintf("Finishing Access Point %q deletion process: Received %d status code when reading %q Access Point", accessPointId, resp.StatusCode, accessPointId), map[string]interface{}{accessPointKey: accessPointId})
+				return 0, stateDone, nil
+			} else {
+				tflog.Debug(ctx, fmt.Sprintf("Exiting Access Point %q deletion process: Failed when reading Access Point: %s: %s", accessPointId, createDescriptiveError(err), accessPoint.Status.GetErrorMessage()), map[string]interface{}{accessPointKey: accessPointId})
+				return nil, stateFailed, err
+			}
+		}
+		tflog.Debug(ctx, fmt.Sprintf("Performing Access Point %q deletion process: Access Point %d's status is %q", accessPointId, resp.StatusCode, accessPoint.Status.GetPhase()), map[string]interface{}{accessPointKey: accessPointId})
+		return accessPoint, stateInProgress, nil
 	}
 }
 

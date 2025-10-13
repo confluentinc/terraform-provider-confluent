@@ -22,19 +22,8 @@ import (
 	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"testing"
-)
-
-const (
-	entityAttributesResourceScenarioName        = "confluent_catalog_entity_attributes Resource Lifecycle"
-	scenarioStateEntityAttributesHasBeenCreated = "A new entity attributes has been just created"
-	scenarioStateEntityAttributesHasBeenUpdated = "A new entity attributes has been just updated"
-	createEntityAttributesUrlPath               = "/catalog/v1/entity"
-	readCreatedEntityAttributesUrlPath          = "/catalog/v1/entity/type/kafka_topic/name/lkc-15xq83:topic_0"
-	deleteCreatedEntityAttributesUrlPath        = "/catalog/v1/entity"
-	entityAttributesLabel                       = "confluent_catalog_entity_attributes.main"
-	testDataCatalogSchemaRegistryClusterID      = "lsrc-8wrx70"
-	testAttributesToImport                      = "owner,description,ownerEmail"
 )
 
 func TestAccCatalogEntityAttributes(t *testing.T) {
@@ -105,6 +94,17 @@ func TestAccCatalogEntityAttributes(t *testing.T) {
 			http.StatusNoContent,
 		))
 
+	// Set fake values for secrets since those are required for importing
+	_ = os.Setenv("IMPORT_SCHEMA_REGISTRY_API_KEY", testSchemaRegistryKey)
+	_ = os.Setenv("IMPORT_SCHEMA_REGISTRY_API_SECRET", testSchemaRegistrySecret)
+	_ = os.Setenv("IMPORT_CATALOG_REST_ENDPOINT", mockServerUrl)
+
+	defer func() {
+		_ = os.Unsetenv("IMPORT_SCHEMA_REGISTRY_API_KEY")
+		_ = os.Unsetenv("IMPORT_SCHEMA_REGISTRY_API_SECRET")
+		_ = os.Unsetenv("IMPORT_CATALOG_REST_ENDPOINT")
+	}()
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
@@ -121,6 +121,14 @@ func TestAccCatalogEntityAttributes(t *testing.T) {
 					resource.TestCheckResourceAttr(entityAttributesLabel, fmt.Sprintf("%s.owner", paramAttributes), "dev"),
 					resource.TestCheckResourceAttr(entityAttributesLabel, fmt.Sprintf("%s.description", paramAttributes), "test_des"),
 					resource.TestCheckResourceAttr(entityAttributesLabel, fmt.Sprintf("%s.ownerEmail", paramAttributes), "dev@gmail.com"),
+					resource.TestCheckResourceAttr(entityAttributesLabel, "schema_registry_cluster.#", "1"),
+					resource.TestCheckResourceAttr(entityAttributesLabel, "schema_registry_cluster.0.%", "1"),
+					resource.TestCheckResourceAttr(entityAttributesLabel, "schema_registry_cluster.0.id", testDataCatalogSchemaRegistryClusterID),
+					resource.TestCheckResourceAttr(entityAttributesLabel, "rest_endpoint", mockServerUrl),
+					resource.TestCheckResourceAttr(entityAttributesLabel, "credentials.#", "1"),
+					resource.TestCheckResourceAttr(entityAttributesLabel, "credentials.0.%", "2"),
+					resource.TestCheckResourceAttr(entityAttributesLabel, "credentials.0.key", testSchemaRegistryKey),
+					resource.TestCheckResourceAttr(entityAttributesLabel, "credentials.0.secret", testSchemaRegistrySecret),
 				),
 			},
 			{
@@ -135,7 +143,7 @@ func TestAccCatalogEntityAttributes(t *testing.T) {
 				},
 			},
 			{
-				Config: entityAttributesSchemaRegistryResourceConfig(testDataCatalogSchemaRegistryClusterID, mockServerUrl),
+				Config: entityAttributesResourceConfig(testDataCatalogSchemaRegistryClusterID, mockServerUrl),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(entityAttributesLabel, paramEntityName, "lkc-15xq83:topic_0"),
 					resource.TestCheckResourceAttr(entityAttributesLabel, paramEntityType, "kafka_topic"),
@@ -144,6 +152,14 @@ func TestAccCatalogEntityAttributes(t *testing.T) {
 					resource.TestCheckResourceAttr(entityAttributesLabel, fmt.Sprintf("%s.owner", paramAttributes), "dev"),
 					resource.TestCheckResourceAttr(entityAttributesLabel, fmt.Sprintf("%s.description", paramAttributes), "test_des"),
 					resource.TestCheckResourceAttr(entityAttributesLabel, fmt.Sprintf("%s.ownerEmail", paramAttributes), "dev@gmail.com"),
+					resource.TestCheckResourceAttr(entityAttributesLabel, "schema_registry_cluster.#", "1"),
+					resource.TestCheckResourceAttr(entityAttributesLabel, "schema_registry_cluster.0.%", "1"),
+					resource.TestCheckResourceAttr(entityAttributesLabel, "schema_registry_cluster.0.id", testDataCatalogSchemaRegistryClusterID),
+					resource.TestCheckResourceAttr(entityAttributesLabel, "rest_endpoint", mockServerUrl),
+					resource.TestCheckResourceAttr(entityAttributesLabel, "credentials.#", "1"),
+					resource.TestCheckResourceAttr(entityAttributesLabel, "credentials.0.%", "2"),
+					resource.TestCheckResourceAttr(entityAttributesLabel, "credentials.0.key", testSchemaRegistryKey),
+					resource.TestCheckResourceAttr(entityAttributesLabel, "credentials.0.secret", testSchemaRegistrySecret),
 				),
 			},
 			{
@@ -167,6 +183,14 @@ func TestAccCatalogEntityAttributes(t *testing.T) {
 					resource.TestCheckResourceAttr(entityAttributesLabel, fmt.Sprintf("%s.owner", paramAttributes), "dev"),
 					resource.TestCheckResourceAttr(entityAttributesLabel, fmt.Sprintf("%s.description", paramAttributes), "test_des"),
 					resource.TestCheckResourceAttr(entityAttributesLabel, fmt.Sprintf("%s.ownerEmail", paramAttributes), "dev2@gmail.com"),
+					resource.TestCheckResourceAttr(entityAttributesLabel, "schema_registry_cluster.#", "1"),
+					resource.TestCheckResourceAttr(entityAttributesLabel, "schema_registry_cluster.0.%", "1"),
+					resource.TestCheckResourceAttr(entityAttributesLabel, "schema_registry_cluster.0.id", testDataCatalogSchemaRegistryClusterID),
+					resource.TestCheckResourceAttr(entityAttributesLabel, "rest_endpoint", mockServerUrl),
+					resource.TestCheckResourceAttr(entityAttributesLabel, "credentials.#", "1"),
+					resource.TestCheckResourceAttr(entityAttributesLabel, "credentials.0.%", "2"),
+					resource.TestCheckResourceAttr(entityAttributesLabel, "credentials.0.key", testSchemaRegistryKey),
+					resource.TestCheckResourceAttr(entityAttributesLabel, "credentials.0.secret", testSchemaRegistrySecret),
 				),
 			},
 			{
@@ -187,10 +211,6 @@ func TestAccCatalogEntityAttributes(t *testing.T) {
 func entityAttributesResourceConfig(testDataCatalogSchemaRegistryClusterID, mockServerUrl string) string {
 	return fmt.Sprintf(`
  	provider "confluent" {
- 	  schema_registry_id = "%s"
-	  catalog_rest_endpoint = "%s"          # optionally use SCHEMA_REGISTRY_REST_ENDPOINT env var
-	  schema_registry_api_key       = "x"   # optionally use SCHEMA_REGISTRY_API_KEY env var
-	  schema_registry_api_secret = "x"
  	}
  	resource "confluent_catalog_entity_attributes" "main" {
 	  entity_name = "lkc-15xq83:topic_0"
@@ -200,37 +220,21 @@ func entityAttributesResourceConfig(testDataCatalogSchemaRegistryClusterID, mock
 		"description": "test_des",
 		"ownerEmail": "dev@gmail.com"
 	  }
-	}
- 	`, testDataCatalogSchemaRegistryClusterID, mockServerUrl)
-}
-
-func entityAttributesSchemaRegistryResourceConfig(testDataCatalogSchemaRegistryClusterID, mockServerUrl string) string {
-	return fmt.Sprintf(`
- 	provider "confluent" {
- 	  schema_registry_id = "%s"
-	  schema_registry_rest_endpoint = "%s" # optionally use SCHEMA_REGISTRY_REST_ENDPOINT env var
-	  schema_registry_api_key       = "x"       # optionally use SCHEMA_REGISTRY_API_KEY env var
-	  schema_registry_api_secret = "x"
- 	}
- 	resource "confluent_catalog_entity_attributes" "main" {
-	  entity_name = "lkc-15xq83:topic_0"
-	  entity_type = "kafka_topic"
-	  attributes = {
-		"owner" : "dev",
-		"description": "test_des",
-		"ownerEmail": "dev@gmail.com"
+	  schema_registry_cluster {
+	    id = "%s"
+	  }
+	  rest_endpoint = "%s"
+	  credentials {
+	    key    = "%s"
+	    secret = "%s"
 	  }
 	}
- 	`, testDataCatalogSchemaRegistryClusterID, mockServerUrl)
+ 	`, testDataCatalogSchemaRegistryClusterID, mockServerUrl, testSchemaRegistryKey, testSchemaRegistrySecret)
 }
 
 func updateEntityAttributesResourceConfig(testDataCatalogSchemaRegistryClusterID, mockServerUrl string) string {
 	return fmt.Sprintf(`
  	provider "confluent" {
- 	  schema_registry_id = "%s"
-	  schema_registry_rest_endpoint = "%s" # optionally use SCHEMA_REGISTRY_REST_ENDPOINT env var
-	  schema_registry_api_key       = "x"       # optionally use SCHEMA_REGISTRY_API_KEY env var
-	  schema_registry_api_secret = "x"
  	}
  	resource "confluent_catalog_entity_attributes" "main" {
 	  entity_name = "lkc-15xq83:topic_0"
@@ -240,6 +244,14 @@ func updateEntityAttributesResourceConfig(testDataCatalogSchemaRegistryClusterID
 		"description": "test_des",
 		"ownerEmail": "dev2@gmail.com"
 	  }
+	  schema_registry_cluster {
+	    id = "%s"
+	  }
+	  rest_endpoint = "%s"
+	  credentials {
+	    key    = "%s"
+	    secret = "%s"
+	  }
 	}
- 	`, testDataCatalogSchemaRegistryClusterID, mockServerUrl)
+ 	`, testDataCatalogSchemaRegistryClusterID, mockServerUrl, testSchemaRegistryKey, testSchemaRegistrySecret)
 }
