@@ -469,24 +469,6 @@ func getStorageType(tableflowTopic tableflow.TableflowV1TableflowTopic) (string,
 	return "", fmt.Errorf("error reading storage type for Tableflow Topic %q", tableflowTopic.Spec.GetDisplayName())
 }
 
-func getErrorHandlingMode(tableflowTopic tableflow.TableflowV1TableflowTopic) (string, error) {
-	config := tableflowTopic.GetSpec().Config
-
-	if config.GetErrorHandling().TableflowV1ErrorHandlingSuspend != nil {
-		return errorHandlingSuspendMode, nil
-	}
-
-	if config.GetErrorHandling().TableflowV1ErrorHandlingSkip != nil {
-		return errorHandlingSkipMode, nil
-	}
-
-	if config.GetErrorHandling().TableflowV1ErrorHandlingLog != nil {
-		return errorHandlingLogMode, nil
-	}
-
-	return "", nil // error handling modes are optional so we don't return an error if they are not set
-}
-
 func tableflowTopicDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	tflog.Debug(ctx, fmt.Sprintf("Deleting Tableflow Topic %q", d.Id()), map[string]interface{}{tableflowTopicKey: d.Id()})
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
