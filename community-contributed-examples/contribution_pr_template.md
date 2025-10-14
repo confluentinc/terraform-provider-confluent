@@ -2,7 +2,7 @@
 - [Briefly describe the use case and the scenario targeted by this example].
 
 ## Testing
-- [Has this example been validated in an actual setting?]
+- [Has this example been validated in an actual setting? Which version(s) was it tested against?]
 
 ## Target Resource
 - [Specify the resource targeted (e.g., `confluent_kafka_cluster`)].

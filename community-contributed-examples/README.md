@@ -10,7 +10,7 @@ Welcome to the community-contributed examples directory! This section contains T
 - Require modifications to work with your specific environment
 - Not be maintained by the Confluent team
 
-**Use these examples at your own discretion and always test thoroughly in a non-production environment first.**
+**Use these examples at your own discretion and always test thoroughly in a NON-PRODUCTION environment first.**
 
 ## 📋 How to Use These Examples
 
@@ -31,14 +31,6 @@ We welcome community contributions! If you have a working Terraform configuratio
 4. **Use the PR template** when submitting your pull request (see [contribution_pr_template.md](./contribution_pr_template.md))
 5. **Submit your PR** for review by the API team
 
-### What to Include in Your Contribution
-
-- **Clear documentation**: Explain what your example does and when to use it
-- **Working configuration**: Ensure your Terraform files are functional
-- **Variable definitions**: Include `variables.tf` with clear descriptions
-- **Example values**: Provide `terraform.tfvars.example` or similar
-- **README**: Add a README.md in your example directory explaining the use case
-
 
 ## 📁 Example Structure
 
@@ -47,17 +39,17 @@ Each contributed example should follow a structure similar to below:
 ```
 community-contributed-examples/
 └── your-example-name/
-    ├── README.md              # Detailed explanation of the use case
+    ├── README.md             # Explanation of the use case
     ├── main.tf               # Main Terraform configuration
-    ├── variables.tf          # Variable definitions
+    ├── variables.tf          # Variable definitions (if applicable)
     ├── outputs.tf            # Output definitions (if applicable)
-    ├── terraform.tfvars.example  # Example variable values
-    └── versions.tf           # Provider version constraints
+    ├── terraform.tfvars.example  # Example variable values (if applicable)
+    └── versions.tf           # Provider version constraints (if applicable)
 ```
 
 ## 🏷️ Categories
 
-Examples are organized by use case and functionality. Common categories include:
+Examples are organized by use case and functionality. Each example name should be descriptive of the category/scenario it addresses. Common categories include:
 
 - **Authentication & Security**: OAuth, RBAC, ACLs, API keys
 - **Networking**: Private Link, VPC peering, network configurations
@@ -66,11 +58,8 @@ Examples are organized by use case and functionality. Common categories include:
 - **Connect**: Connector configurations, custom plugins
 - **ksqlDB**: ksqlDB cluster and application setups
 - **Flink**: Flink compute pools, statements, and applications
+- **Tableflow**: Tableflow topics, catalog integrations 
 - **Other** 
-
-## 🔍 Finding Examples
-
-Browse the directories in this folder to find examples relevant to your use case. Each directory name should be descriptive of the scenario it addresses.
 
 ## 📞 Support
 
@@ -90,7 +79,7 @@ This directory is maintained on a quarterly basis. Examples may be:
 
 ## 📜 License
 
-These community examples are provided under the same license as the main repository. By contributing, you agree to license your contribution under these terms.
+These community examples are shared under the same license as the main repository. By contributing, you agree to license your contribution under these terms.
 
 ---
 
