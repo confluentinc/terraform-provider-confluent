@@ -30,8 +30,7 @@
       "enable_partitioning": true,
       "retention_ms": "100000000",
       "error_handling": {
-        "mode": "LOG",
-        "target": "log_topic"
+        "mode": "SUSPEND"
       }
     },
     "storage": {
