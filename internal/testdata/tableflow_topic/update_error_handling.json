@@ -31,7 +31,7 @@
       "retention_ms": "100000000",
       "error_handling": {
         "mode": "LOG",
-        "target": "dlq_topic_2"
+        "target": "log_topic"
       }
     },
     "storage": {

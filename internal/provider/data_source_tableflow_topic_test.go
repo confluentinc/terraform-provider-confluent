@@ -77,7 +77,7 @@ func TestAccDataSourceTableflowTopic(t *testing.T) {
 	})
 }
 
-func TestAccDataSourceTableflowTopicErrorHandlingLog(t *testing.T) {
+func TestAccDataSourceTableflowTopicErrorHandling(t *testing.T) {
 	ctx := context.Background()
 
 	wiremockContainer, err := setupWiremock(ctx)
@@ -94,7 +94,7 @@ func TestAccDataSourceTableflowTopicErrorHandlingLog(t *testing.T) {
 	// nolint:errcheck
 	defer wiremockClient.ResetAllScenarios()
 
-	readTableflowTopicResponse, _ := os.ReadFile("../testdata/tableflow_topic/read_created_error_handling_log_tt.json")
+	readTableflowTopicResponse, _ := os.ReadFile("../testdata/tableflow_topic/update_error_handling.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/tableflow/v1/tableflow-topics/topic_1")).
 		InScenario(TableflowTopicDataSourceScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
@@ -123,10 +123,12 @@ func TestAccDataSourceTableflowTopicErrorHandlingLog(t *testing.T) {
 					resource.TestCheckResourceAttr(TableflowTopicResourceName, "enable_partitioning", "true"),
 					resource.TestCheckResourceAttr(TableflowTopicResourceName, "suspended", "false"),
 					resource.TestCheckResourceAttr(TableflowTopicResourceName, "retention_ms", "100000000"),
-					resource.TestCheckResourceAttr(TableflowTopicResourceName, "error_handling_log.#", "1"),
-					resource.TestCheckResourceAttr(TableflowTopicResourceName, "error_handling_log.0.target", "dlq_topic_1"),
-					resource.TestCheckResourceAttr(TableflowTopicResourceName, "table_formats.#", "1"),
-					resource.TestCheckResourceAttr(TableflowTopicResourceName, "table_formats.0", "ICEBERG"),
+					resource.TestCheckResourceAttr(TableflowTopicResourceName, "error_handling.#", "1"),
+					resource.TestCheckResourceAttr(TableflowTopicResourceName, "error_handling.0.mode", "LOG"),
+					resource.TestCheckResourceAttr(TableflowTopicResourceName, "error_handling.0.log_target", "log_topic"),
+					resource.TestCheckResourceAttr(TableflowTopicResourceName, "table_formats.#", "2"),
+					resource.TestCheckResourceAttr(TableflowTopicResourceName, "table_formats.0", "DELTA"),
+					resource.TestCheckResourceAttr(TableflowTopicResourceName, "table_formats.1", "ICEBERG"),
 					resource.TestCheckResourceAttr(TableflowTopicResourceName, "byob_aws.#", "0"),
 					resource.TestCheckResourceAttr(TableflowTopicResourceName, "managed_storage.#", "1"),
 					resource.TestCheckResourceAttr(TableflowTopicResourceName, "table_path", "s3://dummy-bucket-name-1//10011010/11101100/org-1/env-2/lkc-3/v1/tableId"),

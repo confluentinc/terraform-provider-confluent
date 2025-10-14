@@ -307,7 +307,7 @@ func TestAccTableflowTopicManagedStorage(t *testing.T) {
 	})
 }
 
-func TestAccTableflowTopicErrorHandlingLog(t *testing.T) {
+func TestAccTableflowTopicErrorHandling(t *testing.T) {
 	ctx := context.Background()
 
 	wiremockContainer, err := setupWiremock(ctx)
@@ -324,7 +324,7 @@ func TestAccTableflowTopicErrorHandlingLog(t *testing.T) {
 	// nolint:errcheck
 	defer wiremockClient.ResetAllScenarios()
 
-	createTableflowTopicResponse, _ := os.ReadFile("../testdata/tableflow_topic/create_error_handling_log_tt.json")
+	createTableflowTopicResponse, _ := os.ReadFile("../testdata/tableflow_topic/create_error_handling.json")
 	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(tableflowTopicUrlPath)).
 		InScenario(managedStorageTableflowTopicScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
@@ -336,7 +336,7 @@ func TestAccTableflowTopicErrorHandlingLog(t *testing.T) {
 		))
 
 	tableflowTopicReadUrlPath := fmt.Sprintf("%s/topic_1", tableflowTopicUrlPath)
-	readCreatedTableflowTopicResponse, _ := os.ReadFile("../testdata/tableflow_topic/read_created_error_handling_log_tt.json")
+	readCreatedTableflowTopicResponse, _ := os.ReadFile("../testdata/tableflow_topic/read_created_error_handling.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(tableflowTopicReadUrlPath)).
 		InScenario(managedStorageTableflowTopicScenarioName).
 		WhenScenarioStateIs(scenarioStateTableflowTopicHasBeenCreated).
@@ -346,7 +346,7 @@ func TestAccTableflowTopicErrorHandlingLog(t *testing.T) {
 			http.StatusOK,
 		))
 
-	updatedTableflowTopicResponse, _ := os.ReadFile("../testdata/tableflow_topic/update_error_handling_log_tt.json")
+	updatedTableflowTopicResponse, _ := os.ReadFile("../testdata/tableflow_topic/update_error_handling.json")
 	_ = wiremockClient.StubFor(wiremock.Patch(wiremock.URLPathEqualTo(tableflowTopicReadUrlPath)).
 		InScenario(managedStorageTableflowTopicScenarioName).
 		WhenScenarioStateIs(scenarioStateTableflowTopicHasBeenCreated).
@@ -381,7 +381,7 @@ func TestAccTableflowTopicErrorHandlingLog(t *testing.T) {
 		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckResourceTableflowTopicErrorHandlingLog(mockServerUrl, "dlq_topic_1"),
+				Config: testAccCheckResourceTableflowTopicErrorHandling(mockServerUrl, "SKIP", ""),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "id", "topic_1"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "display_name", "topic_1"),
@@ -393,8 +393,9 @@ func TestAccTableflowTopicErrorHandlingLog(t *testing.T) {
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "enable_partitioning", "true"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "suspended", "false"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "retention_ms", "100000000"),
-					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "error_handling_log.#", "1"),
-					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "error_handling_log.0.target", "dlq_topic_1"),
+					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "error_handling.#", "1"),
+					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "error_handling.0.mode", "SKIP"),
+					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "error_handling.0.log_target", ""),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "table_formats.#", "1"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "table_formats.0", "ICEBERG"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "byob_aws.#", "0"),
@@ -403,7 +404,7 @@ func TestAccTableflowTopicErrorHandlingLog(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckResourceTableflowTopicErrorHandlingLog(mockServerUrl, "dlq_topic_2"),
+				Config: testAccCheckResourceTableflowTopicErrorHandling(mockServerUrl, "LOG", "log_topic"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "id", "topic_1"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "display_name", "topic_1"),
@@ -415,8 +416,9 @@ func TestAccTableflowTopicErrorHandlingLog(t *testing.T) {
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "enable_partitioning", "true"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "suspended", "false"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "retention_ms", "100000000"),
-					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "error_handling_log.#", "1"),
-					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "error_handling_log.0.target", "dlq_topic_2"),
+					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "error_handling.#", "1"),
+					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "error_handling.0.mode", "LOG"),
+					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "error_handling.0.log_target", "log_topic"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "table_formats.#", "1"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "table_formats.0", "ICEBERG"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "byob_aws.#", "0"),
@@ -532,7 +534,7 @@ func testAccCheckResourceTableflowTopicManagedStorageUpdate(mockServerUrl string
 	`, mockServerUrl, retention)
 }
 
-func testAccCheckResourceTableflowTopicErrorHandlingLog(mockServerUrl, targetTopic string) string {
+func testAccCheckResourceTableflowTopicErrorHandling(mockServerUrl, mode, logTarget string) string {
 	return fmt.Sprintf(`
     provider "confluent" {
         endpoint = "%s"
@@ -548,13 +550,14 @@ func testAccCheckResourceTableflowTopicErrorHandlingLog(mockServerUrl, targetTop
 			id = "lkc-00000"
 		}
 		managed_storage {}
-		error_handling_log {
-			target = "%s"
+		error_handling {
+			mode = "%s"
+			log_target = "%s"
 		}
 		credentials {
 			key = "test_key"
 			secret = "test_secret"
 		}
 	}
-	`, mockServerUrl, targetTopic)
+	`, mockServerUrl, mode, logTarget)
 }
