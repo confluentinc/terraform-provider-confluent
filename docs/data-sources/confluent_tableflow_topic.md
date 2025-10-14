@@ -85,7 +85,10 @@ In addition to the preceding arguments, the following attributes are exported:
 - `retention_ms` - (Optional String) The max age of snapshots (Iceberg) or versions (Delta) (snapshot/version expiration) to keep on the table in milliseconds for the Tableflow enabled topic.
 - `table_formats` - (Optional List) The supported table formats for the Tableflow-enabled topic.
 - `table_path` - (Optional String) The current storage path where the data and metadata is stored for this table.
-- `record_failure_strategy` - (Optional String) The strategy to handle record failures in the Tableflow enabled topic during materialization. For `SKIP`, we skip the bad records and move to the next record. For `SUSPEND`, we suspend the materialization of the topic.
+- `record_failure_strategy` - (Optional String, **Deprecated**) The strategy to handle record failures in the Tableflow enabled topic during materialization. For `SKIP`, we skip the bad records and move to the next record. For `SUSPEND`, we suspend the materialization of the topic.
+- `error_handling` (Optional Configuration Block) supports the following:
+    - `mode` - (Optional String) The error handling mode. For `SUSPEND`, the materialization of the topic is suspended in case of record failures. For `SKIP`, bad records are skipped and the materialization continues with the next record. For `LOG`, bad records are logged to a dead-letter queue (DLQ) topic and the materialization continues with the next record.
+    - `log_target` - (Optional String) The topic to which the bad records will be logged for error handling mode `LOG`.
 - `enable_compaction` - (Optional Boolean) This flag determines whether to enable compaction for the Tableflow enabled topic.
 - `enable_partitioning` - (Optional Boolean) This flag determines whether to enable partitioning for the Tableflow enabled topic.
 - `suspended` - (Optional Boolean) Indicates whether the Tableflow should be suspended.

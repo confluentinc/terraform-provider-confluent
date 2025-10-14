@@ -307,6 +307,129 @@ func TestAccTableflowTopicManagedStorage(t *testing.T) {
 	})
 }
 
+func TestAccTableflowTopicErrorHandling(t *testing.T) {
+	ctx := context.Background()
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
+
+	mockServerUrl := wiremockContainer.URI
+	wiremockClient := wiremock.NewClient(mockServerUrl)
+	// nolint:errcheck
+	defer wiremockClient.Reset()
+
+	// nolint:errcheck
+	defer wiremockClient.ResetAllScenarios()
+
+	createTableflowTopicResponse, _ := os.ReadFile("../testdata/tableflow_topic/create_error_handling.json")
+	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(tableflowTopicUrlPath)).
+		InScenario(managedStorageTableflowTopicScenarioName).
+		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
+		WillSetStateTo(scenarioStateTableflowTopicHasBeenCreated).
+		WillReturn(
+			string(createTableflowTopicResponse),
+			contentTypeJSONHeader,
+			http.StatusCreated,
+		))
+
+	tableflowTopicReadUrlPath := fmt.Sprintf("%s/topic_1", tableflowTopicUrlPath)
+	readCreatedTableflowTopicResponse, _ := os.ReadFile("../testdata/tableflow_topic/read_created_error_handling.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(tableflowTopicReadUrlPath)).
+		InScenario(managedStorageTableflowTopicScenarioName).
+		WhenScenarioStateIs(scenarioStateTableflowTopicHasBeenCreated).
+		WillReturn(
+			string(readCreatedTableflowTopicResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	updatedTableflowTopicResponse, _ := os.ReadFile("../testdata/tableflow_topic/update_error_handling.json")
+	_ = wiremockClient.StubFor(wiremock.Patch(wiremock.URLPathEqualTo(tableflowTopicReadUrlPath)).
+		InScenario(managedStorageTableflowTopicScenarioName).
+		WhenScenarioStateIs(scenarioStateTableflowTopicHasBeenCreated).
+		WillSetStateTo(scenarioStateTableflowTopicHasBeenUpdated).
+		WillReturn(
+			string(updatedTableflowTopicResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(tableflowTopicReadUrlPath)).
+		InScenario(managedStorageTableflowTopicScenarioName).
+		WhenScenarioStateIs(scenarioStateTableflowTopicHasBeenUpdated).
+		WillReturn(
+			string(updatedTableflowTopicResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(tableflowTopicReadUrlPath)).
+		InScenario(managedStorageTableflowTopicScenarioName).
+		WillReturn(
+			"",
+			contentTypeJSONHeader,
+			http.StatusNoContent,
+		))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		// https://www.terraform.io/docs/extend/testing/acceptance-tests/teststep.html
+		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckResourceTableflowTopicErrorHandling(mockServerUrl, "SKIP", ""),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "id", "topic_1"),
+					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "display_name", "topic_1"),
+					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "environment.#", "1"),
+					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "environment.0.id", "env-abc123"),
+					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "kafka_cluster.#", "1"),
+					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "kafka_cluster.0.id", "lkc-00000"),
+					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "enable_compaction", "true"),
+					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "enable_partitioning", "true"),
+					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "suspended", "false"),
+					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "retention_ms", "100000000"),
+					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "error_handling.#", "1"),
+					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "error_handling.0.mode", "SKIP"),
+					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "error_handling.0.log_target", ""),
+					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "table_formats.#", "1"),
+					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "table_formats.0", "ICEBERG"),
+					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "byob_aws.#", "0"),
+					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "managed_storage.#", "1"),
+					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "table_path", "s3://dummy-bucket-name-1//10011010/11101100/org-1/env-2/lkc-3/v1/tableId"),
+				),
+			},
+			{
+				Config: testAccCheckResourceTableflowTopicErrorHandling(mockServerUrl, "LOG", "log_topic"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "id", "topic_1"),
+					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "display_name", "topic_1"),
+					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "environment.#", "1"),
+					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "environment.0.id", "env-abc123"),
+					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "kafka_cluster.#", "1"),
+					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "kafka_cluster.0.id", "lkc-00000"),
+					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "enable_compaction", "true"),
+					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "enable_partitioning", "true"),
+					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "suspended", "false"),
+					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "retention_ms", "100000000"),
+					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "error_handling.#", "1"),
+					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "error_handling.0.mode", "LOG"),
+					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "error_handling.0.log_target", "log_topic"),
+					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "table_formats.#", "1"),
+					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "table_formats.0", "ICEBERG"),
+					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "byob_aws.#", "0"),
+					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "managed_storage.#", "1"),
+					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "table_path", "s3://dummy-bucket-name-1//10011010/11101100/org-1/env-2/lkc-3/v1/tableId"),
+				),
+			},
+		},
+	})
+}
+
 func testAccCheckResourceTableflowTopicByobAws(mockServerUrl string, retention int) string {
 	return fmt.Sprintf(`
     provider "confluent" {
@@ -409,4 +532,32 @@ func testAccCheckResourceTableflowTopicManagedStorageUpdate(mockServerUrl string
 		}
 	}
 	`, mockServerUrl, retention)
+}
+
+func testAccCheckResourceTableflowTopicErrorHandling(mockServerUrl, mode, logTarget string) string {
+	return fmt.Sprintf(`
+    provider "confluent" {
+        endpoint = "%s"
+    }
+
+	resource "confluent_tableflow_topic" "main" {
+		display_name = "topic_1"
+		retention_ms = 100000000
+		environment {
+			id = "env-abc123"
+		}
+		kafka_cluster {
+			id = "lkc-00000"
+		}
+		managed_storage {}
+		error_handling {
+			mode = "%s"
+			log_target = "%s"
+		}
+		credentials {
+			key = "test_key"
+			secret = "test_secret"
+		}
+	}
+	`, mockServerUrl, mode, logTarget)
 }
