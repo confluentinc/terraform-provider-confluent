@@ -69,6 +69,7 @@ func TestAccLatestSchemaWithEnhancedProviderBlock(t *testing.T) {
 
 	readCreatedSchemasResponse, _ := ioutil.ReadFile("../testdata/schema_registry_schema/read_schemas.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readSchemasPath)).
+		WithQueryParam("subjectPrefix", wiremock.Matching(testSubjectName)).
 		InScenario(schemaScenarioName).
 		WhenScenarioStateIs(scenarioStateSchemaHasBeenCreated).
 		WillReturn(
