@@ -510,7 +510,7 @@ func tableflowTopicUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 	clusterId := extractStringValueFromBlock(d, paramKafkaCluster, paramId)
 
 	updateTableflowTopicSpec := tableflow.NewTableflowV1TableflowTopicSpecUpdate()
-	updateTableflowTopicSpec.Config = tableflow.NewTableflowV1TableFlowTopicConfigsSpec()
+	updateTableflowTopicSpec.Config = &tableflow.TableflowV1TableFlowTopicConfigsSpec{} // don't call NewTableflowV1TableFlowTopicConfigsSpec() because it explicitlysets RecordFailureStrategy to "SUSPEND"
 	updateTableflowTopicSpec.SetEnvironment(tableflow.GlobalObjectReference{Id: environmentId})
 	updateTableflowTopicSpec.SetKafkaCluster(tableflow.EnvScopedObjectReference{Id: clusterId})
 	if d.HasChange(paramRetentionMs) {
