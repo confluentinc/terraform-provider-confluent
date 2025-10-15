@@ -59,6 +59,15 @@ func TestAccFlinkConnectionLive(t *testing.T) {
 		t.Fatal("FLINK_COMPUTE_POOL_ID, FLINK_API_KEY, FLINK_API_SECRET, FLINK_REST_ENDPOINT, and FLINK_PRINCIPAL_ID must be set for Flink Connection live tests")
 	}
 
+	// Cleanup: Unset Flink environment variables after test completes to avoid affecting other tests
+	t.Cleanup(func() {
+		os.Unsetenv("FLINK_COMPUTE_POOL_ID")
+		os.Unsetenv("FLINK_API_KEY")
+		os.Unsetenv("FLINK_API_SECRET")
+		os.Unsetenv("FLINK_REST_ENDPOINT")
+		os.Unsetenv("FLINK_PRINCIPAL_ID")
+	})
+
 	// Generate unique names for test resources to avoid conflicts
 	randomSuffix := rand.Intn(100000)
 	connectionDisplayName := fmt.Sprintf("tf-live-flink-connection-%d", randomSuffix)
