@@ -130,7 +130,7 @@ func TestAccLatestSchemaWithEnhancedProviderBlock(t *testing.T) {
 		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckSchemaConfigWithEnhancedProviderBlock(confluentCloudBaseUrl, mockSchemaTestServerUrl, false),
+				Config: testAccCheckSchemaConfigWithEnhancedProviderBlock(confluentCloudBaseUrl, mockSchemaTestServerUrl, paramRecreateOnUpdateDefaultValue),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSchemaExists(fullSchemaResourceLabel),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "id", fmt.Sprintf("%s/%s/%s", testStreamGovernanceClusterId, testSubjectName, latestSchemaVersionAndPlaceholderForSchemaIdentifier)),
@@ -209,7 +209,7 @@ func TestAccLatestSchemaWithEnhancedProviderBlock(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckSchemaConfigWithEnhancedProviderBlock(confluentCloudBaseUrl, mockSchemaTestServerUrl, true),
+				Config: testAccCheckSchemaConfigWithEnhancedProviderBlock(confluentCloudBaseUrl, mockSchemaTestServerUrl, !paramRecreateOnUpdateDefaultValue),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSchemaExists(fullSchemaResourceLabel),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "id", fmt.Sprintf("%s/%s/%s", testStreamGovernanceClusterId, testSubjectName, strconv.Itoa(testSchemaIdentifier))),
