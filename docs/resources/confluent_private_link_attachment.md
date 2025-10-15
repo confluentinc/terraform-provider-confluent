@@ -51,7 +51,7 @@ In addition to the preceding arguments, the following attributes are exported:
   - `vpc_endpoint_service_name` - (Required String) AWS VPC Endpoint Service that can be used to establish connections for all zones, for example `com.amazonaws.vpce.us-west-2.vpce-svc-0d3be37e21708ecd3`.
 - `azure` - (Optional Configuration Block) supports the following:
   - `private_link_service_alias` - (Required String) Azure Private Link service alias for the availability zone.
-  - `private_link_service_resource_id` - (Required String) Azure Private Link service resource id for the availability zone.
+  - `private_link_service_resource_id` - (Required String) Azure Private Link service resource ID for the availability zone.
 - `gcp` - (Optional Configuration Block) supports the following:
   - `private_service_connect_service_attachment` - (Required String) The ID of the GCP Private Service Connect Service Attachment on Confluent Cloud.
 
