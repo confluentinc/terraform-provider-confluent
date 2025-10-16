@@ -1,9 +1,16 @@
+## 2.50.0 (October 15th, 2025)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.49.0...v2.50.0)
+
+**Bug Fixes:**
+* General fixes and improvements.
+
 ## 2.49.0 (October 15th, 2025)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.48.0...v2.49.0)
 
-**New Features:**
-* Added support for the `confluent_provider_integration` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_provider_integration) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_provider_integration) for Azure and GCP.
+**Bug Fixes:**
+* General fixes and improvements.
 
 ## 2.48.0 (October 10th, 2025)
 
