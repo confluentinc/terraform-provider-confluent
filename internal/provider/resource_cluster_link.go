@@ -1102,12 +1102,6 @@ func extractCredentialConfigs(configs []v3.ConfigData) []v3.AlterConfigBatchRequ
 		localSaslJaasConfigConfigKey,
 		saslMechanismConfigKey,
 		localSaslMechanismConfigKey,
-		saslOAuthBearerTokenEndpointUrlConfigKey,
-		localSaslOAuthBearerTokenEndpointUrlConfigKey,
-		saslLoginCallbackHandlerClassConfigKey,
-		localSaslLoginCallbackHandlerClassConfigKey,
-		securityProtocolConfigKey,
-		localSecurityProtocolConfigKey,
 	}
 
 	var filteredConfigs []v3.ConfigData
