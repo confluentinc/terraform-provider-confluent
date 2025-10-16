@@ -8,11 +8,11 @@ import (
 	"github.com/hashicorp/go-retryablehttp"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 
+	tableflow "github.com/confluentinc/ccloud-sdk-go-v2-internal/tableflow/v1"
 	dc "github.com/confluentinc/ccloud-sdk-go-v2/data-catalog/v1"
 	fgb "github.com/confluentinc/ccloud-sdk-go-v2/flink-gateway/v1"
 	kafkarestv3 "github.com/confluentinc/ccloud-sdk-go-v2/kafkarest/v3"
 	schemaregistry "github.com/confluentinc/ccloud-sdk-go-v2/schema-registry/v1"
-	tableflow "github.com/confluentinc/ccloud-sdk-go-v2/tableflow/v1"
 )
 
 type FlinkRestClientFactory struct {
