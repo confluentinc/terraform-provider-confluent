@@ -411,10 +411,16 @@ func clusterLinkUpdate(ctx context.Context, d *schema.ResourceData, meta interfa
 
 		updateClusterLinkRequest, err := constructClusterLinkRequest(d, meta)
 		if err != nil {
-			return diag.Errorf("error updating Cluster Link: %s", createDescriptiveError(err))
+			return diag.Errorf("error updating Cluster Link: updateClusterLinkRequest is nil")
 		}
-
-		resp, err := executeClusterLinkConfigUpdate(ctx, kafkaRestClient, linkName, updateClusterLinkRequest)
+		credentialConfigs := extractCredentialConfigs(updateClusterLinkRequest.GetConfigs())
+		if len(credentialConfigs) == 0 {
+			return diag.Errorf("error updating Cluster Link: len(credentialConfigs) is 0")
+		}
+		updateCredentialConfigsRequest := v3.AlterConfigBatchRequestData{
+			Data: credentialConfigs,
+		}
+		resp, err := executeClusterLinkConfigUpdate(ctx, kafkaRestClient, linkName, updateCredentialConfigsRequest)
 
 		if err != nil {
 			return diag.Errorf("error creating Cluster Link: %s", createDescriptiveError(err, resp))
@@ -1073,4 +1079,43 @@ func extractClusterLinkConfigsConfigData(configs map[string]interface{}) []v3.Co
 
 func executeClusterLinkConfigUpdate(ctx context.Context, c *KafkaRestClient, linkName string, requestData v3.AlterConfigBatchRequestData) (*http.Response, error) {
 	return c.apiClient.ClusterLinkingV3Api.UpdateKafkaLinkConfigBatch(c.apiContext(ctx), c.clusterId, linkName).AlterConfigBatchRequestData(requestData).Execute()
+}
+
+func convertConfigDataToAlterConfigBatchRequestData(configs []v3.ConfigData) []v3.AlterConfigBatchRequestDataData {
+	configResult := make([]v3.AlterConfigBatchRequestDataData, len(configs))
+	setOperation := "SET"
+
+	for i, config := range configs {
+		configResult[i] = v3.AlterConfigBatchRequestDataData{
+			Name:      config.Name,
+			Value:     config.Value,
+			Operation: *v3.NewNullableString(&setOperation),
+		}
+	}
+
+	return configResult
+}
+
+func extractCredentialConfigs(configs []v3.ConfigData) []v3.AlterConfigBatchRequestDataData {
+	credentialConfigKeys := []string{
+		saslJaasConfigConfigKey,
+		localSaslJaasConfigConfigKey,
+		saslMechanismConfigKey,
+		localSaslMechanismConfigKey,
+		saslOAuthBearerTokenEndpointUrlConfigKey,
+		localSaslOAuthBearerTokenEndpointUrlConfigKey,
+		saslLoginCallbackHandlerClassConfigKey,
+		localSaslLoginCallbackHandlerClassConfigKey,
+		securityProtocolConfigKey,
+		localSecurityProtocolConfigKey,
+	}
+
+	var filteredConfigs []v3.ConfigData
+	for _, config := range configs {
+		if stringInSlice(config.Name, credentialConfigKeys, false) {
+			filteredConfigs = append(filteredConfigs, config)
+		}
+	}
+
+	return convertConfigDataToAlterConfigBatchRequestData(filteredConfigs)
 }
