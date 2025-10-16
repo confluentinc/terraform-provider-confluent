@@ -28,10 +28,9 @@
     "config": {
       "enable_compaction": true,
       "enable_partitioning": true,
-      "retention_ms": "200000000",
+      "retention_ms": "100000000",
       "error_handling": {
-        "mode": "LOG",
-        "target": "log_topic"
+        "mode": "SUSPEND"
       }
     },
     "storage": {
@@ -44,7 +43,6 @@
     ]
   },
   "status": {
-    "phase": "RUNNING",
-    "write_mode": "UPSERT"
+    "phase": "RUNNING"
   }
 }
