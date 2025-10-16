@@ -398,6 +398,37 @@ func clusterLinkUpdate(ctx context.Context, d *schema.ResourceData, meta interfa
 	if d.HasChangesExcept(paramSourceKafkaCluster, paramSourceKafkaCredentials, paramDestinationKafkaCluster, paramDestinationKafkaCredentials, paramLocalKafkaCluster, paramLocalKafkaCredentials, paramRemoteKafkaCluster, paramRemoteKafkaCredentials, paramConfigs) {
 		return diag.Errorf("error updating Cluster Link %q: only %q, %q, %q, %q and %q attributes can be updated for Cluster Link", d.Id(), paramSourceKafkaCredentials, paramDestinationKafkaCredentials, paramLocalKafkaCredentials, paramRemoteKafkaCredentials, paramConfigs)
 	}
+
+	if d.HasChanges(paramSourceKafkaCredentials) || d.HasChanges(paramDestinationKafkaCredentials) ||
+		d.HasChanges(paramLocalKafkaCredentials) || d.HasChanges(paramRemoteKafkaCredentials) {
+		tflog.Debug(ctx, fmt.Sprintf("Updating credentials for Cluster Link %q", d.Id()), map[string]interface{}{clusterLinkLoggingKey: d.Id()})
+
+		kafkaRestClient, err := createKafkaRestClientForClusterLink(d, meta)
+		if err != nil {
+			return diag.Errorf("error updating Cluster Link: %s", createDescriptiveError(err))
+		}
+		linkName := d.Get(paramLinkName).(string)
+
+		updateClusterLinkRequest, err := constructClusterLinkRequest(d, meta)
+		if err != nil {
+			return diag.Errorf("error updating Cluster Link: %s", createDescriptiveError(err))
+		}
+		updateClusterLinkRequestJson, err := json.Marshal(updateClusterLinkRequest)
+		if err != nil {
+			return diag.Errorf("error updating Cluster Link: error marshaling %#v to json: %s", updateClusterLinkRequest, createDescriptiveError(err))
+		}
+		tflog.Debug(ctx, fmt.Sprintf("Updating new Cluster Link: %s", updateClusterLinkRequestJson))
+
+		resp, err := executeClusterLinkConfigUpdate(ctx, kafkaRestClient, linkName, updateClusterLinkRequest)
+
+		if err != nil {
+			return diag.Errorf("error creating Cluster Link: %s", createDescriptiveError(err, resp))
+		}
+
+		// https://github.com/confluentinc/terraform-provider-confluentcloud/issues/40#issuecomment-1048782379
+		SleepIfNotTestMode(kafkaRestAPIWaitAfterCreate, meta.(*Client).isAcceptanceTestMode)
+	}
+
 	if d.HasChange(paramConfigs) {
 		// TF Provider allows the following operations for editable cluster link settings under 'config' block:
 		// 1. Adding new key value pair, for example, "retention.ms" = "600000"
