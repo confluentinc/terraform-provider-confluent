@@ -164,6 +164,7 @@ func schemaResource() *schema.Resource {
 			paramRecreateOnUpdate: {
 				Type:        schema.TypeBool,
 				Optional:    true,
+				ForceNew:    true,
 				Default:     paramRecreateOnUpdateDefaultValue,
 				Description: "Controls whether a schema should be recreated on update.",
 			},
@@ -737,29 +738,8 @@ func schemaRead(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 }
 
 func schemaUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if d.HasChangesExcept(paramCredentials, paramConfigs, paramHardDelete, paramSchema, paramSchemaReference, paramSkipValidationDuringPlan, paramRecreateOnUpdate, paramRuleset, paramMetadata) {
-		return diag.Errorf("error updating Schema %q: only %q, %q, %q, %q, %q, %q, %q, %q and %q blocks can be updated for Schema", d.Id(), paramCredentials, paramConfigs, paramHardDelete, paramSchema, paramSchemaReference, paramSkipValidationDuringPlan, paramRecreateOnUpdate, paramRuleset, paramMetadata)
-	}
-
-	if d.HasChange(paramRecreateOnUpdate) {
-		restEndpoint, err := extractSchemaRegistryRestEndpoint(meta.(*Client), d, false)
-		if err != nil {
-			return diag.Errorf("error updating Schema %q: %s", d.Id(), createDescriptiveError(err))
-		}
-		clusterId, err := extractSchemaRegistryClusterId(meta.(*Client), d, false)
-		if err != nil {
-			return diag.Errorf("error updating Schema %q: %s", d.Id(), createDescriptiveError(err))
-		}
-		clusterApiKey, clusterApiSecret, err := extractSchemaRegistryClusterApiKeyAndApiSecret(meta.(*Client), d, false)
-		if err != nil {
-			return diag.Errorf("error updating Schema %q: %s", d.Id(), createDescriptiveError(err))
-		}
-		schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
-		subjectName := d.Get(paramSubjectName).(string)
-		schemaIdentifier := d.Get(paramSchemaIdentifier).(int)
-		recreateOnUpdate := d.Get(paramRecreateOnUpdate).(bool)
-		schemaId := createSchemaId(schemaRegistryRestClient.clusterId, subjectName, int32(schemaIdentifier), recreateOnUpdate)
-		d.SetId(schemaId)
+	if d.HasChangesExcept(paramCredentials, paramConfigs, paramHardDelete, paramSchema, paramSchemaReference, paramSkipValidationDuringPlan, paramRuleset, paramMetadata) {
+		return diag.Errorf("error updating Schema %q: only %q, %q, %q, %q, %q, %q, %q and %q blocks can be updated for Schema", d.Id(), paramCredentials, paramConfigs, paramHardDelete, paramSchema, paramSchemaReference, paramSkipValidationDuringPlan, paramRuleset, paramMetadata)
 	}
 
 	if d.HasChanges(paramSchema, paramSchemaReference, paramRuleset, paramMetadata) {
