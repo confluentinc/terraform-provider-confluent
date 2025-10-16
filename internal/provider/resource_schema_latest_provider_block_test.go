@@ -69,7 +69,6 @@ func TestAccLatestSchemaWithEnhancedProviderBlock(t *testing.T) {
 
 	readCreatedSchemasResponse, _ := ioutil.ReadFile("../testdata/schema_registry_schema/read_schemas.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readSchemasPath)).
-		WithQueryParam("subjectPrefix", wiremock.Matching(testSubjectName)).
 		InScenario(schemaScenarioName).
 		WhenScenarioStateIs(scenarioStateSchemaHasBeenCreated).
 		WillReturn(
@@ -130,165 +129,7 @@ func TestAccLatestSchemaWithEnhancedProviderBlock(t *testing.T) {
 		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckSchemaConfigWithEnhancedProviderBlock(confluentCloudBaseUrl, mockSchemaTestServerUrl, paramRecreateOnUpdateDefaultValue),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckSchemaExists(fullSchemaResourceLabel),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "id", fmt.Sprintf("%s/%s/%s", testStreamGovernanceClusterId, testSubjectName, latestSchemaVersionAndPlaceholderForSchemaIdentifier)),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema_registry_cluster.#", "0"),
-					resource.TestCheckNoResourceAttr(fullSchemaResourceLabel, "schema_registry_cluster.0.id"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "subject_name", testSubjectName),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "format", testFormat),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema", testSchemaContent),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "version", strconv.Itoa(testSchemaVersion)),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema_identifier", strconv.Itoa(testSchemaIdentifier)),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "hard_delete", testHardDelete),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "recreate_on_update", testRecreateOnUpdateFalse),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "skip_validation_during_plan", testSkipSchemaValidationDuringPlanFalse),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema_reference.#", "2"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema_reference.0.%", "3"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema_reference.0.name", testFirstSchemaReferenceDisplayName),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema_reference.0.subject_name", testFirstSchemaReferenceSubject),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema_reference.0.version", strconv.Itoa(testFirstSchemaReferenceVersion)),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema_reference.1.%", "3"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema_reference.1.name", testSecondSchemaReferenceDisplayName),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema_reference.1.subject_name", testSecondSchemaReferenceSubject),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema_reference.1.version", strconv.Itoa(testSecondSchemaReferenceVersion)),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "credentials.#", "0"),
-					resource.TestCheckNoResourceAttr(fullSchemaResourceLabel, "credentials.0.key"),
-					resource.TestCheckNoResourceAttr(fullSchemaResourceLabel, "credentials.0.secret"),
-					resource.TestCheckNoResourceAttr(fullSchemaResourceLabel, "rest_endpoint"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "%", strconv.Itoa(testNumberOfSchemaRegistrySchemaResourceAttributes)),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.#", "1"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.%", "2"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.#", "2"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.0.%", "11"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.0.doc", ""),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.0.expr", ""),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.0.kind", "TRANSFORM"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.0.mode", "WRITEREAD"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.0.name", "encrypt"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.0.on_failure", "ERROR,ERROR"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.0.on_success", "NONE,NONE"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.0.params.%", "1"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.0.params.encrypt.kek.name", "testkek2"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.0.tags.#", "1"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.0.tags.0", "PIIIII"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.0.type", "ENCRYPT"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.0.disabled", "false"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.1.%", "11"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.1.doc", ""),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.1.expr", ""),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.1.kind", "TRANSFORM"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.1.mode", "WRITEREAD"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.1.name", "encryptPII"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.1.on_failure", "ERROR,ERROR"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.1.on_success", "NONE,NONE"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.1.params.%", "1"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.1.params.encrypt.kek.name", "testkek2"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.1.tags.#", "1"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.1.tags.0", "PII"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.1.type", "ENCRYPT"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.1.disabled", "false"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "metadata.#", "1"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "metadata.0.%", "3"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "metadata.0.properties.%", "2"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "metadata.0.properties.email", "bob@acme.com"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "metadata.0.properties.owner", "Bob Jones"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "metadata.0.sensitive.#", "2"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "metadata.0.sensitive.0", "s1"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "metadata.0.sensitive.1", "s2"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "metadata.0.tags.#", "2"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "metadata.0.tags.0.%", "2"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "metadata.0.tags.0.key", "tag1"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "metadata.0.tags.0.value.#", "1"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "metadata.0.tags.0.value.0", "PII"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "metadata.0.tags.1.%", "2"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "metadata.0.tags.1.key", "tag2"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "metadata.0.tags.1.value.#", "1"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "metadata.0.tags.1.value.0", "PIIIII"),
-				),
-			},
-			{
-				Config: testAccCheckSchemaConfigWithEnhancedProviderBlock(confluentCloudBaseUrl, mockSchemaTestServerUrl, !paramRecreateOnUpdateDefaultValue),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckSchemaExists(fullSchemaResourceLabel),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "id", fmt.Sprintf("%s/%s/%s", testStreamGovernanceClusterId, testSubjectName, strconv.Itoa(testSchemaIdentifier))),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema_registry_cluster.#", "0"),
-					resource.TestCheckNoResourceAttr(fullSchemaResourceLabel, "schema_registry_cluster.0.id"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "subject_name", testSubjectName),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "format", testFormat),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema", testSchemaContent),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "version", strconv.Itoa(testSchemaVersion)),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema_identifier", strconv.Itoa(testSchemaIdentifier)),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "hard_delete", testHardDelete),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "recreate_on_update", testRecreateOnUpdateTrue),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "skip_validation_during_plan", testSkipSchemaValidationDuringPlanFalse),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema_reference.#", "2"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema_reference.0.%", "3"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema_reference.0.name", testFirstSchemaReferenceDisplayName),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema_reference.0.subject_name", testFirstSchemaReferenceSubject),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema_reference.0.version", strconv.Itoa(testFirstSchemaReferenceVersion)),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema_reference.1.%", "3"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema_reference.1.name", testSecondSchemaReferenceDisplayName),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema_reference.1.subject_name", testSecondSchemaReferenceSubject),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema_reference.1.version", strconv.Itoa(testSecondSchemaReferenceVersion)),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "credentials.#", "0"),
-					resource.TestCheckNoResourceAttr(fullSchemaResourceLabel, "credentials.0.key"),
-					resource.TestCheckNoResourceAttr(fullSchemaResourceLabel, "credentials.0.secret"),
-					resource.TestCheckNoResourceAttr(fullSchemaResourceLabel, "rest_endpoint"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "%", strconv.Itoa(testNumberOfSchemaRegistrySchemaResourceAttributes)),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.#", "1"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.%", "2"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.#", "2"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.0.%", "11"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.0.doc", ""),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.0.expr", ""),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.0.kind", "TRANSFORM"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.0.mode", "WRITEREAD"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.0.name", "encrypt"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.0.on_failure", "ERROR,ERROR"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.0.on_success", "NONE,NONE"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.0.params.%", "1"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.0.params.encrypt.kek.name", "testkek2"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.0.tags.#", "1"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.0.tags.0", "PIIIII"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.0.type", "ENCRYPT"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.0.disabled", "false"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.1.%", "11"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.1.doc", ""),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.1.expr", ""),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.1.kind", "TRANSFORM"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.1.mode", "WRITEREAD"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.1.name", "encryptPII"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.1.on_failure", "ERROR,ERROR"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.1.on_success", "NONE,NONE"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.1.params.%", "1"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.1.params.encrypt.kek.name", "testkek2"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.1.tags.#", "1"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.1.tags.0", "PII"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.1.type", "ENCRYPT"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.1.disabled", "false"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "metadata.#", "1"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "metadata.0.%", "3"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "metadata.0.properties.%", "2"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "metadata.0.properties.email", "bob@acme.com"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "metadata.0.properties.owner", "Bob Jones"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "metadata.0.sensitive.#", "2"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "metadata.0.sensitive.0", "s1"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "metadata.0.sensitive.1", "s2"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "metadata.0.tags.#", "2"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "metadata.0.tags.0.%", "2"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "metadata.0.tags.0.key", "tag1"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "metadata.0.tags.0.value.#", "1"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "metadata.0.tags.0.value.0", "PII"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "metadata.0.tags.1.%", "2"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "metadata.0.tags.1.key", "tag2"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "metadata.0.tags.1.value.#", "1"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "metadata.0.tags.1.value.0", "PIIIII"),
-				),
-			},
-			{
-				Config: testAccCheckSchemaConfigWithEnhancedProviderBlock(confluentCloudBaseUrl, mockSchemaTestServerUrl, paramRecreateOnUpdateDefaultValue),
+				Config: testAccCheckSchemaConfigWithEnhancedProviderBlock(confluentCloudBaseUrl, mockSchemaTestServerUrl),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSchemaExists(fullSchemaResourceLabel),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "id", fmt.Sprintf("%s/%s/%s", testStreamGovernanceClusterId, testSubjectName, latestSchemaVersionAndPlaceholderForSchemaIdentifier)),
@@ -378,7 +219,7 @@ func TestAccLatestSchemaWithEnhancedProviderBlock(t *testing.T) {
 	checkStubCount(t, wiremockClient, deleteSchemaStub, fmt.Sprintf("DELETE %s", readSchemasPath), expectedCountOne)
 }
 
-func testAccCheckSchemaConfigWithEnhancedProviderBlock(confluentCloudBaseUrl, mockServerUrl string, recreateOnUpdate bool) string {
+func testAccCheckSchemaConfigWithEnhancedProviderBlock(confluentCloudBaseUrl, mockServerUrl string) string {
 	return fmt.Sprintf(`
 	provider "confluent" {
 	  endpoint = "%s"
@@ -391,8 +232,6 @@ func testAccCheckSchemaConfigWithEnhancedProviderBlock(confluentCloudBaseUrl, mo
 	  subject_name = "%s"
 	  format = "%s"
       schema = "%s"
-
-      recreate_on_update = %t
 	  
       schema_reference {
         name = "%s"
@@ -456,7 +295,6 @@ func testAccCheckSchemaConfigWithEnhancedProviderBlock(confluentCloudBaseUrl, mo
 	  }
 	}
 	`, confluentCloudBaseUrl, kafkaApiKey, kafkaApiSecret, mockServerUrl, testStreamGovernanceClusterId, testSchemaResourceLabel, testSubjectName, testFormat, testSchemaContent,
-		recreateOnUpdate,
 		testFirstSchemaReferenceDisplayName, testFirstSchemaReferenceSubject, testFirstSchemaReferenceVersion,
 		testSecondSchemaReferenceDisplayName, testSecondSchemaReferenceSubject, testSecondSchemaReferenceVersion)
 }
