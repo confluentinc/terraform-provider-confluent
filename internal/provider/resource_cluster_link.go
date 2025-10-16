@@ -413,11 +413,6 @@ func clusterLinkUpdate(ctx context.Context, d *schema.ResourceData, meta interfa
 		if err != nil {
 			return diag.Errorf("error updating Cluster Link: %s", createDescriptiveError(err))
 		}
-		updateClusterLinkRequestJson, err := json.Marshal(updateClusterLinkRequest)
-		if err != nil {
-			return diag.Errorf("error updating Cluster Link: error marshaling %#v to json: %s", updateClusterLinkRequest, createDescriptiveError(err))
-		}
-		tflog.Debug(ctx, fmt.Sprintf("Updating new Cluster Link: %s", updateClusterLinkRequestJson))
 
 		resp, err := executeClusterLinkConfigUpdate(ctx, kafkaRestClient, linkName, updateClusterLinkRequest)
 
