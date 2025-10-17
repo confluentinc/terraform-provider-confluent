@@ -1,0 +1,20 @@
+# Confluent Cloud Credentials
+# Get these from: https://confluent.cloud/settings/api-keys
+confluent_cloud_api_key    = "your-confluent-api-key"
+confluent_cloud_api_secret = "your-confluent-api-secret"
+
+# Azure Credentials
+# Get these from Azure Portal or via: az account show
+azure_tenant_id       = "12345678-1234-1234-1234-123456789abc"
+azure_subscription_id = "87654321-4321-4321-4321-cba987654321"
+
+# Azure Region for Kafka Cluster
+# See available regions: https://docs.confluent.io/cloud/current/clusters/regions.html
+azure_region = "eastus"
+
+# Azure Storage Account Configuration
+# The storage account and container must exist before running this example
+azure_storage_account_name = "yourstorageaccount"
+azure_resource_group_name  = "your-resource-group"
+azure_container_name       = "kafka-sink-data"
+
