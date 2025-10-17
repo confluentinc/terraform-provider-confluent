@@ -24,6 +24,11 @@ const (
 	paramGcpKeyId  = "key_id"
 	paramAwsRoles  = "roles"
 
+	paramValidation = "validation"
+	paramPhase      = "phase"
+	paramSince      = "since"
+	paramMessage    = "message"
+
 	kindAws   = "AwsKey"
 	kindAzure = "AzureKey"
 	kindGcp   = "GcpKey"
@@ -35,14 +40,21 @@ func byokResource() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: byokCreate,
 		ReadContext:   byokRead,
+		UpdateContext: byokUpdate,
 		DeleteContext: byokDelete,
 		Importer: &schema.ResourceImporter{
 			StateContext: byokImport,
 		},
 		Schema: map[string]*schema.Schema{
-			paramAws:   awsKeySchema(),
-			paramAzure: azureKeySchema(),
-			paramGcp:   gcpKeySchema(),
+			paramDisplayName: {
+				Type:        schema.TypeString,
+				Description: "A human-readable name for the BYOK key.",
+				Optional:    true,
+			},
+			paramValidation: validationSchema(),
+			paramAws:        awsKeySchema(),
+			paramAzure:      azureKeySchema(),
+			paramGcp:        gcpKeySchema(),
 		},
 	}
 }
@@ -96,6 +108,38 @@ func gcpKeySchema() *schema.Schema {
 	}
 }
 
+func validationSchema() *schema.Schema {
+	return &schema.Schema{
+		Type:        schema.TypeList,
+		Description: "Validation information for the BYOK key.",
+		Computed:    true,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramPhase: {
+					Type:        schema.TypeString,
+					Description: "The validation phase of the key (INITIALIZING, VALID, INVALID).",
+					Computed:    true,
+				},
+				paramSince: {
+					Type:        schema.TypeString,
+					Description: "Timestamp when the key entered the current validation phase.",
+					Computed:    true,
+				},
+				paramMessage: {
+					Type:        schema.TypeString,
+					Description: "Optional validation message providing additional details.",
+					Computed:    true,
+				},
+				paramRegion: {
+					Type:        schema.TypeString,
+					Description: "Region information for successfully validated keys.",
+					Computed:    true,
+				},
+			},
+		},
+	}
+}
+
 func azureKeySchema() *schema.Schema {
 	return &schema.Schema{
 		Type: schema.TypeList,
@@ -134,6 +178,11 @@ func byokCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 	c := meta.(*Client)
 
 	createByokKeyRequest := byok.NewByokV1Key()
+	
+	// Set display name
+	displayName := d.Get(paramDisplayName).(string)
+	createByokKeyRequest.SetDisplayName(displayName)
+
 	_, isAwsKey := d.GetOk(paramAws)
 	_, isAzureKey := d.GetOk(paramAzure)
 	_, isGcpKey := d.GetOk(paramGcp)
@@ -246,6 +295,28 @@ func readKeyAndSetAttributes(ctx context.Context, d *schema.ResourceData, meta i
 }
 
 func setKeyAttributes(d *schema.ResourceData, byokKey byok.ByokV1Key) (*schema.ResourceData, error) {
+	// Set display name
+	if err := d.Set(paramDisplayName, byokKey.GetDisplayName()); err != nil {
+		return nil, err
+	}
+
+	// Set validation information if available
+	if validation, ok := byokKey.GetValidationOk(); ok {
+		validationMap := map[string]interface{}{
+			paramPhase: validation.GetPhase(),
+			paramSince: validation.GetSince().Format("2006-01-02T15:04:05.000Z"),
+		}
+		if message, messageOk := validation.GetMessageOk(); messageOk {
+			validationMap[paramMessage] = *message
+		}
+		if region, regionOk := validation.GetRegionOk(); regionOk {
+			validationMap[paramRegion] = *region
+		}
+		if err := d.Set(paramValidation, []interface{}{validationMap}); err != nil {
+			return nil, err
+		}
+	}
+
 	oneOfKeys := byokKey.GetKey()
 
 	switch {
@@ -276,6 +347,40 @@ func setKeyAttributes(d *schema.ResourceData, byokKey byok.ByokV1Key) (*schema.R
 
 	d.SetId(byokKey.GetId())
 	return d, nil
+}
+
+func byokUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	if d.HasChangeExcept(paramDisplayName) {
+		return diag.Errorf("error updating BYOK Key %q: only %q attribute can be updated for BYOK Key", d.Id(), paramDisplayName)
+	}
+
+	tflog.Debug(ctx, fmt.Sprintf("Updating BYOK Key %q", d.Id()), map[string]interface{}{byokKeyLoggingKey: d.Id()})
+
+	c := meta.(*Client)
+	updateByokKeyRequest := byok.NewByokV1KeyUpdate()
+	
+	displayName := d.Get(paramDisplayName).(string)
+	updateByokKeyRequest.SetDisplayName(displayName)
+
+	updateByokKeyRequestJson, err := json.Marshal(updateByokKeyRequest)
+	if err != nil {
+		return diag.Errorf("error updating BYOK Key: error marshaling %#v to json: %s", updateByokKeyRequest, createDescriptiveError(err))
+	}
+	tflog.Debug(ctx, fmt.Sprintf("Updating BYOK Key %q: %s", d.Id(), updateByokKeyRequestJson))
+
+	_, _, err = executeKeyUpdate(ctx, c, d.Id(), *updateByokKeyRequest)
+	if err != nil {
+		return diag.Errorf("error updating BYOK Key %q: %s", d.Id(), createDescriptiveError(err))
+	}
+
+	tflog.Debug(ctx, fmt.Sprintf("Finished updating BYOK Key %q", d.Id()), map[string]interface{}{byokKeyLoggingKey: d.Id()})
+
+	return byokRead(ctx, d, meta)
+}
+
+func executeKeyUpdate(ctx context.Context, c *Client, id string, keyUpdate byok.ByokV1KeyUpdate) (byok.ByokV1Key, *http.Response, error) {
+	req := c.byokClient.KeysByokV1Api.UpdateByokV1Key(c.byokApiContext(ctx), id).ByokV1KeyUpdate(keyUpdate)
+	return req.Execute()
 }
 
 func byokImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
