@@ -423,7 +423,7 @@ func clusterLinkUpdate(ctx context.Context, d *schema.ResourceData, meta interfa
 		resp, err := executeClusterLinkConfigUpdate(ctx, kafkaRestClient, linkName, updateCredentialConfigsRequest)
 
 		if err != nil {
-			return diag.Errorf("error creating Cluster Link: %s", createDescriptiveError(err, resp))
+			return diag.Errorf("error updating Cluster Link: %s", createDescriptiveError(err, resp))
 		}
 
 		// https://github.com/confluentinc/terraform-provider-confluentcloud/issues/40#issuecomment-1048782379
