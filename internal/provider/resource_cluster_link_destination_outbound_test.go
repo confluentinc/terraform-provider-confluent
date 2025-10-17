@@ -28,21 +28,26 @@ import (
 )
 
 const (
-	scenarioStateClusterLinkHasBeenCreated = "A new cluster link has been just created"
-	scenarioStateClusterLinkHasBeenUpdated = "A new cluster link has been just updated"
-	scenarioStateClusterLinkHasBeenDeleted = "The cluster link has been deleted"
-	clusterLinkScenarioName                = "confluent_cluster_link Resource Lifecycle"
-	sourceClusterId                        = "lkc-nv0zqv"
-	sourceClusterRestEndpoint              = "https://pkc-pgq85.us-west-2.aws.confluent.cloud:443"
-	sourceClusterBootstrapEndpoint         = "SASL_SSL://pkc-pgq85.us-west-2.aws.confluent.cloud:9092"
-	sourceClusterApiKey                    = "sourceClusterApiKey"
-	sourceClusterApiSecret                 = "sourceClusterApiSecret"
-	destinationClusterId                   = "lkc-81knqq"
+	scenarioStateClusterLinkHasBeenCreated             = "A new cluster link has been just created"
+	scenarioStateClusterLinkHasBeenUpdated             = "A new cluster link has been just updated"
+	scenarioStateClusterLinkCredentialsHaveBeenUpdated = "cluster link credentials have just been updated"
+	scenarioStateClusterLinkHasBeenDeleted             = "The cluster link has been deleted"
+	clusterLinkScenarioName                            = "confluent_cluster_link Resource Lifecycle"
+	sourceClusterId                                    = "lkc-nv0zqv"
+	sourceClusterRestEndpoint                          = "https://pkc-pgq85.us-west-2.aws.confluent.cloud:443"
+	sourceClusterBootstrapEndpoint                     = "SASL_SSL://pkc-pgq85.us-west-2.aws.confluent.cloud:9092"
+	sourceClusterApiKey                                = "sourceClusterApiKeyUpdated"
+	sourceClusterApiKeyUpdated                         = "sourceClusterApiKey"
+	sourceClusterApiSecret                             = "sourceClusterApiSecret"
+	sourceClusterApiSecretUpdated                      = "sourceClusterApiSecretUpdated"
+	destinationClusterId                               = "lkc-81knqq"
 	// mockServerUrl will be used instead for TestAccClusterLinkDestination test
 	destinationClusterRestEndpoint        = "https://pkc-3588w.us-east-1.aws.confluent.cloud:443"
 	destinationClusterBootstrapEndpoint   = "SASL_SSL://pkc-3588w.us-east-1.aws.confluent.cloud:9092"
-	destinationClusterApiKey              = "destinationClusterApiKey"
+	destinationClusterApiKey              = "destinationClusterApiKeyUpdated"
+	destinationClusterApiKeyUpdated       = "destinationClusterApiKey"
 	destinationClusterApiSecret           = "destinationClusterApiSecret"
+	destinationClusterApiSecretUpdated    = "destinationClusterApiSecretUpdated"
 	clusterLinkName                       = "ui-test"
 	clusterLinkMode                       = "DESTINATION"
 	clusterLinkConnectionMode             = "OUTBOUND"
@@ -54,6 +59,25 @@ const (
 	firstClusterClusterLinkConfigUpdatedValue = "5101"
 	secondClusterClusterLinkConfigName        = "consumer.offset.sync.ms"
 	secondClusterClusterLinkConfigValue       = "30001"
+)
+
+var testPatchClusterLinkCredentialsConfigRequestJson = fmt.Sprintf(
+	`{`+
+		`"data":[`+
+		`{`+
+		`"name":"sasl.mechanism",`+
+		`"operation":"SET",`+
+		`"value":"PLAIN"`+
+		`},`+
+		`{`+
+		`"name":"sasl.jaas.config",`+
+		`"operation":"SET",`+
+		`"value":"org.apache.kafka.common.security.plain.PlainLoginModule required username=\"%s\" password=\"%s\";"`+
+		`}`+
+		`]`+
+		`}`,
+	sourceClusterApiKeyUpdated,
+	sourceClusterApiSecretUpdated,
 )
 
 var fullClusterLinkResourceLabel = fmt.Sprintf("confluent_cluster_link.%s", clusterLinkResourceLabel)
@@ -113,9 +137,21 @@ func TestAccClusterLinkDestinationOutbound(t *testing.T) {
 			http.StatusOK,
 		))
 
-	patchClusterLinkConfigStub := wiremock.Put(wiremock.URLPathEqualTo(updateClusterLinkConfigPath)).
+	patchClusterLinkCredentialsConfigStub := wiremock.Put(wiremock.URLPathEqualTo(updateClusterLinkConfigPath)).
 		InScenario(clusterLinkScenarioName).
 		WhenScenarioStateIs(scenarioStateClusterLinkHasBeenCreated).
+		WillSetStateTo(scenarioStateClusterLinkCredentialsHaveBeenUpdated).
+		WithBodyPattern(wiremock.EqualToJson(testPatchClusterLinkCredentialsConfigRequestJson)).
+		WillReturn(
+			"",
+			contentTypeJSONHeader,
+			http.StatusOK,
+		)
+	_ = wiremockClient.StubFor(patchClusterLinkCredentialsConfigStub)
+
+	patchClusterLinkConfigStub := wiremock.Put(wiremock.URLPathEqualTo(updateClusterLinkConfigPath)).
+		InScenario(clusterLinkScenarioName).
+		WhenScenarioStateIs(scenarioStateClusterLinkCredentialsHaveBeenUpdated).
 		WillSetStateTo(scenarioStateClusterLinkHasBeenUpdated).
 		WillReturn(
 			"",
@@ -165,11 +201,11 @@ func TestAccClusterLinkDestinationOutbound(t *testing.T) {
 
 	// Set fake values for secrets since those are required for importing
 	_ = os.Setenv("IMPORT_SOURCE_KAFKA_BOOTSTRAP_ENDPOINT", sourceClusterBootstrapEndpoint)
-	_ = os.Setenv("IMPORT_SOURCE_KAFKA_API_KEY", sourceClusterApiKey)
-	_ = os.Setenv("IMPORT_SOURCE_KAFKA_API_SECRET", sourceClusterApiSecret)
+	_ = os.Setenv("IMPORT_SOURCE_KAFKA_API_KEY", sourceClusterApiKeyUpdated)
+	_ = os.Setenv("IMPORT_SOURCE_KAFKA_API_SECRET", sourceClusterApiSecretUpdated)
 	_ = os.Setenv("IMPORT_DESTINATION_KAFKA_REST_ENDPOINT", mockClusterLinkTestServerUrl)
-	_ = os.Setenv("IMPORT_DESTINATION_KAFKA_API_KEY", destinationClusterApiKey)
-	_ = os.Setenv("IMPORT_DESTINATION_KAFKA_API_SECRET", destinationClusterApiSecret)
+	_ = os.Setenv("IMPORT_DESTINATION_KAFKA_API_KEY", destinationClusterApiKeyUpdated)
+	_ = os.Setenv("IMPORT_DESTINATION_KAFKA_API_SECRET", destinationClusterApiSecretUpdated)
 	defer func() {
 		_ = os.Unsetenv("IMPORT_SOURCE_KAFKA_BOOTSTRAP_ENDPOINT")
 		_ = os.Unsetenv("IMPORT_SOURCE_KAFKA_API_KEY")
@@ -234,8 +270,8 @@ func TestAccClusterLinkDestinationOutbound(t *testing.T) {
 					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, "source_kafka_cluster.0.bootstrap_endpoint", sourceClusterBootstrapEndpoint),
 					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, "source_kafka_cluster.0.credentials.#", "1"),
 					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, "source_kafka_cluster.0.credentials.0.%", "2"),
-					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, "source_kafka_cluster.0.credentials.0.key", sourceClusterApiKey),
-					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, "source_kafka_cluster.0.credentials.0.secret", sourceClusterApiSecret),
+					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, "source_kafka_cluster.0.credentials.0.key", sourceClusterApiKeyUpdated),
+					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, "source_kafka_cluster.0.credentials.0.secret", sourceClusterApiSecretUpdated),
 					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, "destination_kafka_cluster.#", "1"),
 					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, "destination_kafka_cluster.0.%", "4"),
 					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, "destination_kafka_cluster.0.id", destinationClusterId),
@@ -243,8 +279,8 @@ func TestAccClusterLinkDestinationOutbound(t *testing.T) {
 					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, "destination_kafka_cluster.0.bootstrap_endpoint", ""),
 					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, "destination_kafka_cluster.0.credentials.#", "1"),
 					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, "destination_kafka_cluster.0.credentials.0.%", "2"),
-					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, "destination_kafka_cluster.0.credentials.0.key", destinationClusterApiKey),
-					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, "destination_kafka_cluster.0.credentials.0.secret", destinationClusterApiSecret),
+					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, "destination_kafka_cluster.0.credentials.0.key", destinationClusterApiKeyUpdated),
+					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, "destination_kafka_cluster.0.credentials.0.secret", destinationClusterApiSecretUpdated),
 					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, "id", fmt.Sprintf("%s/%s", destinationClusterId, clusterLinkName)),
 					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, "cluster_link_id", "qz0HDEV-Qz2B5aPFpcWQJQ"),
 					resource.TestCheckResourceAttr(fullClusterLinkResourceLabel, "config.%", "2"),
@@ -347,8 +383,8 @@ func testAccCheckClusterLinkDestinationOutboundConfigUpdated(confluentCloudBaseU
 	}
 	`, confluentCloudBaseUrl, clusterLinkResourceLabel,
 		clusterLinkName, linkModeDestination, connectionModeOutbound,
-		sourceClusterId, sourceClusterBootstrapEndpoint, sourceClusterApiKey, sourceClusterApiSecret,
-		destinationClusterId, mockServerUrl, destinationClusterApiKey, destinationClusterApiSecret,
+		sourceClusterId, sourceClusterBootstrapEndpoint, sourceClusterApiKeyUpdated, sourceClusterApiSecretUpdated,
+		destinationClusterId, mockServerUrl, destinationClusterApiKeyUpdated, destinationClusterApiSecretUpdated,
 		firstClusterClusterLinkConfigName, firstClusterClusterLinkConfigUpdatedValue,
 		secondClusterClusterLinkConfigName, secondClusterClusterLinkConfigValue)
 }
