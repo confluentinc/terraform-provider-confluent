@@ -30,7 +30,7 @@ import (
 const (
 	scenarioStateClusterLinkHasBeenCreated             = "A new cluster link has been just created"
 	scenarioStateClusterLinkHasBeenUpdated             = "A new cluster link has been just updated"
-	scenarioStateClusterLinkCredentialsHaveBeenUpdated = "A new cluster link credentials has been just updated"
+	scenarioStateClusterLinkCredentialsHaveBeenUpdated = "cluster link credentials have just been updated"
 	scenarioStateClusterLinkHasBeenDeleted             = "The cluster link has been deleted"
 	clusterLinkScenarioName                            = "confluent_cluster_link Resource Lifecycle"
 	sourceClusterId                                    = "lkc-nv0zqv"
