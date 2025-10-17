@@ -149,6 +149,16 @@ func TestAccClusterLinkDestinationOutbound(t *testing.T) {
 		)
 	_ = wiremockClient.StubFor(patchClusterLinkCredentialsConfigStub)
 
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readClusterLinkDestinationOutboundPath)).
+		InScenario(clusterLinkScenarioName).
+		WhenScenarioStateIs(scenarioStateClusterLinkCredentialsHaveBeenUpdated).
+		WillSetStateTo(scenarioStateClusterLinkHasBeenUpdated).
+		WillReturn(
+			string(readCreatedClusterLinkResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
 	patchClusterLinkConfigStub := wiremock.Put(wiremock.URLPathEqualTo(updateClusterLinkConfigPath)).
 		InScenario(clusterLinkScenarioName).
 		WhenScenarioStateIs(scenarioStateClusterLinkCredentialsHaveBeenUpdated).
