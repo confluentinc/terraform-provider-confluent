@@ -1080,36 +1080,3 @@ func extractClusterLinkConfigsConfigData(configs map[string]interface{}) []v3.Co
 func executeClusterLinkConfigUpdate(ctx context.Context, c *KafkaRestClient, linkName string, requestData v3.AlterConfigBatchRequestData) (*http.Response, error) {
 	return c.apiClient.ClusterLinkingV3Api.UpdateKafkaLinkConfigBatch(c.apiContext(ctx), c.clusterId, linkName).AlterConfigBatchRequestData(requestData).Execute()
 }
-
-func convertConfigDataToAlterConfigBatchRequestData(configs []v3.ConfigData) []v3.AlterConfigBatchRequestDataData {
-	configResult := make([]v3.AlterConfigBatchRequestDataData, len(configs))
-	setOperation := "SET"
-
-	for i, config := range configs {
-		configResult[i] = v3.AlterConfigBatchRequestDataData{
-			Name:      config.Name,
-			Value:     config.Value,
-			Operation: *v3.NewNullableString(&setOperation),
-		}
-	}
-
-	return configResult
-}
-
-func extractCredentialConfigs(configs []v3.ConfigData) []v3.AlterConfigBatchRequestDataData {
-	credentialConfigKeys := []string{
-		saslJaasConfigConfigKey,
-		localSaslJaasConfigConfigKey,
-		saslMechanismConfigKey,
-		localSaslMechanismConfigKey,
-	}
-
-	var filteredConfigs []v3.ConfigData
-	for _, config := range configs {
-		if stringInSlice(config.Name, credentialConfigKeys, false) {
-			filteredConfigs = append(filteredConfigs, config)
-		}
-	}
-
-	return convertConfigDataToAlterConfigBatchRequestData(filteredConfigs)
-}
