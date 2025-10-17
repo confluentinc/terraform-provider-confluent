@@ -61,6 +61,25 @@ const (
 	secondClusterClusterLinkConfigValue       = "30001"
 )
 
+var testPatchClusterLinkCredentialsConfigRequestJson = fmt.Sprintf(
+	`{`+
+		`"data":[`+
+		`{`+
+		`"name":"sasl.mechanism",`+
+		`"operation":"SET",`+
+		`"value":"PLAIN"`+
+		`},`+
+		`{`+
+		`"name":"sasl.jaas.config",`+
+		`"operation":"SET",`+
+		`"value":"org.apache.kafka.common.security.plain.PlainLoginModule required username=\"%s\" password=\"%s\";"`+
+		`}`+
+		`]`+
+		`}`,
+	sourceClusterApiKeyUpdated,
+	sourceClusterApiSecretUpdated,
+)
+
 var fullClusterLinkResourceLabel = fmt.Sprintf("confluent_cluster_link.%s", clusterLinkResourceLabel)
 
 var createClusterLinkDestinationOutboundPath = fmt.Sprintf("/kafka/v3/clusters/%s/links", destinationClusterId)
@@ -122,6 +141,7 @@ func TestAccClusterLinkDestinationOutbound(t *testing.T) {
 		InScenario(clusterLinkScenarioName).
 		WhenScenarioStateIs(scenarioStateClusterLinkHasBeenCreated).
 		WillSetStateTo(scenarioStateClusterLinkCredentialsHaveBeenUpdated).
+		WithBodyPattern(wiremock.EqualToJson(testPatchClusterLinkCredentialsConfigRequestJson)).
 		WillReturn(
 			"",
 			contentTypeJSONHeader,
