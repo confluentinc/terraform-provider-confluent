@@ -415,7 +415,7 @@ resource "confluent_kafka_cluster" "enterprise" {
   }
 
   depends_on = [
-    aws_network_interface_permission.main
+    confluent_access_point.aws
   ]
 }
 
