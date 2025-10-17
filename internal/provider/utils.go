@@ -1459,3 +1459,35 @@ func canUpdateEntityNameBusinessMetadata(entityType, oldEntityName, newEntityNam
 		return false
 	}
 }
+
+func convertConfigDataToAlterConfigBatchRequestData(configs []kafkarestv3.ConfigData) []kafkarestv3.AlterConfigBatchRequestDataData {
+	configResult := make([]kafkarestv3.AlterConfigBatchRequestDataData, len(configs))
+
+	for i, config := range configs {
+		configResult[i] = kafkarestv3.AlterConfigBatchRequestDataData{
+			Name:      config.Name,
+			Value:     config.Value,
+			Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
+		}
+	}
+
+	return configResult
+}
+
+func extractCredentialConfigs(configs []kafkarestv3.ConfigData) []kafkarestv3.AlterConfigBatchRequestDataData {
+	credentialConfigKeys := []string{
+		saslJaasConfigConfigKey,
+		localSaslJaasConfigConfigKey,
+		saslMechanismConfigKey,
+		localSaslMechanismConfigKey,
+	}
+
+	var filteredConfigs []kafkarestv3.ConfigData
+	for _, config := range configs {
+		if stringInSlice(config.Name, credentialConfigKeys, false) {
+			filteredConfigs = append(filteredConfigs, config)
+		}
+	}
+
+	return convertConfigDataToAlterConfigBatchRequestData(filteredConfigs)
+}
