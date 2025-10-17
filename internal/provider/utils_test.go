@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 	ccpm "github.com/confluentinc/ccloud-sdk-go-v2/ccpm/v1"
+	kafkarestv3 "github.com/confluentinc/ccloud-sdk-go-v2/kafkarest/v3"
 	dns "github.com/confluentinc/ccloud-sdk-go-v2/networking-dnsforwarder/v1"
 	sr "github.com/confluentinc/ccloud-sdk-go-v2/schema-registry/v1"
 	"reflect"
@@ -765,10 +766,10 @@ func TestBuildConnectorClass(t *testing.T) {
 }
 
 func TestNormalizeCrn(t *testing.T) {
-	tests := []struct{
-		name string
-		a    string
-		b    string
+	tests := []struct {
+		name  string
+		a     string
+		b     string
 		equal bool
 	}{
 		{
@@ -808,6 +809,264 @@ func TestNormalizeCrn(t *testing.T) {
 			got := normalizeCrn(tt.a) == normalizeCrn(tt.b)
 			if got != tt.equal {
 				t.Fatalf("Unexpected error: %v expected %v, got %v", tt.name, tt.equal, got)
+			}
+		})
+	}
+}
+
+func TestConvertConfigDataToAlterConfigBatchRequestData(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    []kafkarestv3.ConfigData
+		expected []kafkarestv3.AlterConfigBatchRequestDataData
+	}{
+		{
+			name:     "empty configs",
+			input:    []kafkarestv3.ConfigData{},
+			expected: []kafkarestv3.AlterConfigBatchRequestDataData{},
+		},
+		{
+			name: "single config with PLAIN mechanism",
+			input: []kafkarestv3.ConfigData{
+				{
+					Name:  "sasl.mechanism",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("PLAIN")),
+				},
+			},
+			expected: []kafkarestv3.AlterConfigBatchRequestDataData{
+				{
+					Name:      "sasl.mechanism",
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("PLAIN")),
+					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
+				},
+			},
+		},
+		{
+			name: "multiple credential configs",
+			input: []kafkarestv3.ConfigData{
+				{
+					Name:  "sasl.mechanism",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("PLAIN")),
+				},
+				{
+					Name:  "sasl.jaas.config",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"test-key\" password=\"test-secret\";")),
+				},
+				{
+					Name:  "security.protocol",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SASL_SSL")),
+				},
+			},
+			expected: []kafkarestv3.AlterConfigBatchRequestDataData{
+				{
+					Name:      "sasl.mechanism",
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("PLAIN")),
+					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
+				},
+				{
+					Name:      "sasl.jaas.config",
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"test-key\" password=\"test-secret\";")),
+					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
+				},
+				{
+					Name:      "security.protocol",
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SASL_SSL")),
+					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
+				},
+			},
+		},
+		{
+			name: "OAuth OAUTHBEARER configs",
+			input: []kafkarestv3.ConfigData{
+				{
+					Name:  "sasl.mechanism",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("OAUTHBEARER")),
+				},
+				{
+					Name:  "sasl.oauthbearer.token.endpoint.url",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("https://example.com/oauth/token")),
+				},
+				{
+					Name:  "sasl.login.callback.handler.class",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginCallbackHandler")),
+				},
+				{
+					Name:  "sasl.jaas.config",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required clientId='test-client' scope='test-scope' clientSecret='test-secret' extension_logicalCluster='lkc-123' extension_identityPoolId='pool-123';")),
+				},
+			},
+			expected: []kafkarestv3.AlterConfigBatchRequestDataData{
+				{
+					Name:      "sasl.mechanism",
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("OAUTHBEARER")),
+					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
+				},
+				{
+					Name:      "sasl.oauthbearer.token.endpoint.url",
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("https://example.com/oauth/token")),
+					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
+				},
+				{
+					Name:      "sasl.login.callback.handler.class",
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginCallbackHandler")),
+					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
+				},
+				{
+					Name:      "sasl.jaas.config",
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required clientId='test-client' scope='test-scope' clientSecret='test-secret' extension_logicalCluster='lkc-123' extension_identityPoolId='pool-123';")),
+					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
+				},
+			},
+		},
+		{
+			name: "local cluster configs for bidirectional link",
+			input: []kafkarestv3.ConfigData{
+				{
+					Name:  "local.security.protocol",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SASL_SSL")),
+				},
+				{
+					Name:  "local.sasl.mechanism",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("PLAIN")),
+				},
+				{
+					Name:  "local.sasl.jaas.config",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"local-key\" password=\"local-secret\";")),
+				},
+			},
+			expected: []kafkarestv3.AlterConfigBatchRequestDataData{
+				{
+					Name:      "local.security.protocol",
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SASL_SSL")),
+					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
+				},
+				{
+					Name:      "local.sasl.mechanism",
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("PLAIN")),
+					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
+				},
+				{
+					Name:      "local.sasl.jaas.config",
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"local-key\" password=\"local-secret\";")),
+					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
+				},
+			},
+		},
+		{
+			name: "bootstrap servers config",
+			input: []kafkarestv3.ConfigData{
+				{
+					Name:  "bootstrap.servers",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("pkc-12345.us-east-1.aws.confluent.cloud:9092")),
+				},
+			},
+			expected: []kafkarestv3.AlterConfigBatchRequestDataData{
+				{
+					Name:      "bootstrap.servers",
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("pkc-12345.us-east-1.aws.confluent.cloud:9092")),
+					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
+				},
+			},
+		},
+		{
+			name: "config with empty string value",
+			input: []kafkarestv3.ConfigData{
+				{
+					Name:  "test.config",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("")),
+				},
+			},
+			expected: []kafkarestv3.AlterConfigBatchRequestDataData{
+				{
+					Name:      "test.config",
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("")),
+					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
+				},
+			},
+		},
+		{
+			name: "cluster link mode and connection mode configs",
+			input: []kafkarestv3.ConfigData{
+				{
+					Name:  "link.mode",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("BIDIRECTIONAL")),
+				},
+				{
+					Name:  "connection.mode",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("OUTBOUND")),
+				},
+			},
+			expected: []kafkarestv3.AlterConfigBatchRequestDataData{
+				{
+					Name:      "link.mode",
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("BIDIRECTIONAL")),
+					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
+				},
+				{
+					Name:      "connection.mode",
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("OUTBOUND")),
+					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := convertConfigDataToAlterConfigBatchRequestData(tt.input)
+
+			// Verify length
+			if len(result) != len(tt.expected) {
+				t.Fatalf("Unexpected result length: expected %d, got %d", len(tt.expected), len(result))
+			}
+
+			// Verify each config entry
+			for i := range result {
+				// Check Name
+				if result[i].Name != tt.expected[i].Name {
+					t.Errorf("Config at index %d: unexpected Name: expected %q, got %q", i, tt.expected[i].Name, result[i].Name)
+				}
+
+				// Check Value - carefully handle NullableString
+				resultValue := result[i].Value.Get()
+				expectedValue := tt.expected[i].Value.Get()
+
+				if (resultValue == nil) != (expectedValue == nil) {
+					t.Errorf("Config at index %d (%s): Value nullability mismatch: expected nil=%v, got nil=%v",
+						i, result[i].Name, expectedValue == nil, resultValue == nil)
+				}
+
+				if resultValue != nil && expectedValue != nil {
+					if *resultValue != *expectedValue {
+						t.Errorf("Config at index %d (%s): unexpected Value: expected %q, got %q",
+							i, result[i].Name, *expectedValue, *resultValue)
+					}
+				}
+
+				// Check Operation - must always be "SET"
+				resultOperation := result[i].Operation.Get()
+				if resultOperation == nil {
+					t.Errorf("Config at index %d (%s): Operation is nil, expected 'SET'", i, result[i].Name)
+				} else if *resultOperation != "SET" {
+					t.Errorf("Config at index %d (%s): unexpected Operation: expected 'SET', got %q",
+						i, result[i].Name, *resultOperation)
+				}
+
+				// Verify Operation matches expected
+				expectedOperation := tt.expected[i].Operation.Get()
+				if expectedOperation != nil && resultOperation != nil {
+					if *resultOperation != *expectedOperation {
+						t.Errorf("Config at index %d (%s): Operation mismatch: expected %q, got %q",
+							i, result[i].Name, *expectedOperation, *resultOperation)
+					}
+				}
+			}
+
+			// Additional deep equality check for paranoia
+			if !reflect.DeepEqual(result, tt.expected) {
+				t.Errorf("Deep equality check failed for test case %q", tt.name)
+				t.Logf("Expected: %+v", tt.expected)
+				t.Logf("Got:      %+v", result)
 			}
 		})
 	}
