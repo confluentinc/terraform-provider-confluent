@@ -1071,3 +1071,381 @@ func TestConvertConfigDataToAlterConfigBatchRequestData(t *testing.T) {
 		})
 	}
 }
+
+func TestExtractCredentialConfigs(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    []kafkarestv3.ConfigData
+		expected []kafkarestv3.AlterConfigBatchRequestDataData
+	}{
+		{
+			name:     "empty configs",
+			input:    []kafkarestv3.ConfigData{},
+			expected: []kafkarestv3.AlterConfigBatchRequestDataData{},
+		},
+		{
+			name: "only credential configs - PLAIN mechanism",
+			input: []kafkarestv3.ConfigData{
+				{
+					Name:  "sasl.mechanism",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("PLAIN")),
+				},
+				{
+					Name:  "sasl.jaas.config",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"test-key\" password=\"test-secret\";")),
+				},
+			},
+			expected: []kafkarestv3.AlterConfigBatchRequestDataData{
+				{
+					Name:      "sasl.mechanism",
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("PLAIN")),
+					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
+				},
+				{
+					Name:      "sasl.jaas.config",
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"test-key\" password=\"test-secret\";")),
+					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
+				},
+			},
+		},
+		{
+			name: "mixed configs - filters out non-credential configs",
+			input: []kafkarestv3.ConfigData{
+				{
+					Name:  "sasl.mechanism",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("PLAIN")),
+				},
+				{
+					Name:  "bootstrap.servers",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("pkc-12345.us-east-1.aws.confluent.cloud:9092")),
+				},
+				{
+					Name:  "sasl.jaas.config",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"key\" password=\"secret\";")),
+				},
+				{
+					Name:  "security.protocol",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SASL_SSL")),
+				},
+				{
+					Name:  "link.mode",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("DESTINATION")),
+				},
+			},
+			expected: []kafkarestv3.AlterConfigBatchRequestDataData{
+				{
+					Name:      "sasl.mechanism",
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("PLAIN")),
+					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
+				},
+				{
+					Name:      "sasl.jaas.config",
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"key\" password=\"secret\";")),
+					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
+				},
+			},
+		},
+		{
+			name: "local cluster credential configs for bidirectional link",
+			input: []kafkarestv3.ConfigData{
+				{
+					Name:  "local.sasl.mechanism",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("PLAIN")),
+				},
+				{
+					Name:  "local.sasl.jaas.config",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"local-key\" password=\"local-secret\";")),
+				},
+				{
+					Name:  "local.security.protocol",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SASL_SSL")),
+				},
+			},
+			expected: []kafkarestv3.AlterConfigBatchRequestDataData{
+				{
+					Name:      "local.sasl.mechanism",
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("PLAIN")),
+					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
+				},
+				{
+					Name:      "local.sasl.jaas.config",
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"local-key\" password=\"local-secret\";")),
+					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
+				},
+			},
+		},
+		{
+			name: "both local and remote credential configs",
+			input: []kafkarestv3.ConfigData{
+				{
+					Name:  "sasl.mechanism",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("PLAIN")),
+				},
+				{
+					Name:  "sasl.jaas.config",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"remote-key\" password=\"remote-secret\";")),
+				},
+				{
+					Name:  "local.sasl.mechanism",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("PLAIN")),
+				},
+				{
+					Name:  "local.sasl.jaas.config",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"local-key\" password=\"local-secret\";")),
+				},
+				{
+					Name:  "bootstrap.servers",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("pkc-99999.us-west-2.aws.confluent.cloud:9092")),
+				},
+			},
+			expected: []kafkarestv3.AlterConfigBatchRequestDataData{
+				{
+					Name:      "sasl.mechanism",
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("PLAIN")),
+					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
+				},
+				{
+					Name:      "sasl.jaas.config",
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"remote-key\" password=\"remote-secret\";")),
+					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
+				},
+				{
+					Name:      "local.sasl.mechanism",
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("PLAIN")),
+					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
+				},
+				{
+					Name:      "local.sasl.jaas.config",
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"local-key\" password=\"local-secret\";")),
+					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
+				},
+			},
+		},
+		{
+			name: "no credential configs - all filtered out",
+			input: []kafkarestv3.ConfigData{
+				{
+					Name:  "bootstrap.servers",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("pkc-12345.us-east-1.aws.confluent.cloud:9092")),
+				},
+				{
+					Name:  "security.protocol",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SASL_SSL")),
+				},
+				{
+					Name:  "link.mode",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("DESTINATION")),
+				},
+				{
+					Name:  "connection.mode",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("OUTBOUND")),
+				},
+			},
+			expected: []kafkarestv3.AlterConfigBatchRequestDataData{},
+		},
+		{
+			name: "only sasl.mechanism without jaas.config",
+			input: []kafkarestv3.ConfigData{
+				{
+					Name:  "sasl.mechanism",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("OAUTHBEARER")),
+				},
+				{
+					Name:  "sasl.oauthbearer.token.endpoint.url",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("https://example.com/oauth/token")),
+				},
+			},
+			expected: []kafkarestv3.AlterConfigBatchRequestDataData{
+				{
+					Name:      "sasl.mechanism",
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("OAUTHBEARER")),
+					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
+				},
+			},
+		},
+		{
+			name: "only jaas.config without mechanism",
+			input: []kafkarestv3.ConfigData{
+				{
+					Name:  "sasl.jaas.config",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"key\" password=\"secret\";")),
+				},
+				{
+					Name:  "bootstrap.servers",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("pkc-12345.us-east-1.aws.confluent.cloud:9092")),
+				},
+			},
+			expected: []kafkarestv3.AlterConfigBatchRequestDataData{
+				{
+					Name:      "sasl.jaas.config",
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"key\" password=\"secret\";")),
+					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
+				},
+			},
+		},
+		{
+			name: "credential config with empty value",
+			input: []kafkarestv3.ConfigData{
+				{
+					Name:  "sasl.mechanism",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("")),
+				},
+			},
+			expected: []kafkarestv3.AlterConfigBatchRequestDataData{
+				{
+					Name:      "sasl.mechanism",
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("")),
+					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
+				},
+			},
+		},
+		{
+			name: "case sensitivity - non-matching similar keys",
+			input: []kafkarestv3.ConfigData{
+				{
+					Name:  "SASL.MECHANISM", // Wrong case
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("PLAIN")),
+				},
+				{
+					Name:  "sasl.mechanism", // Correct case
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("PLAIN")),
+				},
+				{
+					Name:  "Sasl.Jaas.Config", // Wrong case
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("config")),
+				},
+			},
+			expected: []kafkarestv3.AlterConfigBatchRequestDataData{
+				{
+					Name:      "sasl.mechanism",
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("PLAIN")),
+					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
+				},
+			},
+		},
+		{
+			name: "all four credential config keys",
+			input: []kafkarestv3.ConfigData{
+				{
+					Name:  "sasl.mechanism",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("PLAIN")),
+				},
+				{
+					Name:  "sasl.jaas.config",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"remote-key\" password=\"remote-secret\";")),
+				},
+				{
+					Name:  "local.sasl.mechanism",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("PLAIN")),
+				},
+				{
+					Name:  "local.sasl.jaas.config",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"local-key\" password=\"local-secret\";")),
+				},
+			},
+			expected: []kafkarestv3.AlterConfigBatchRequestDataData{
+				{
+					Name:      "sasl.mechanism",
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("PLAIN")),
+					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
+				},
+				{
+					Name:      "sasl.jaas.config",
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"remote-key\" password=\"remote-secret\";")),
+					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
+				},
+				{
+					Name:      "local.sasl.mechanism",
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("PLAIN")),
+					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
+				},
+				{
+					Name:      "local.sasl.jaas.config",
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"local-key\" password=\"local-secret\";")),
+					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := extractCredentialConfigs(tt.input)
+
+			// Verify length
+			if len(result) != len(tt.expected) {
+				t.Fatalf("Unexpected result length: expected %d, got %d\nInput configs: %+v\nExpected: %+v\nGot: %+v",
+					len(tt.expected), len(result), tt.input, tt.expected, result)
+			}
+
+			// Verify each filtered and converted config entry
+			for i := range result {
+				// Check Name
+				if result[i].Name != tt.expected[i].Name {
+					t.Errorf("Config at index %d: unexpected Name: expected %q, got %q", i, tt.expected[i].Name, result[i].Name)
+				}
+
+				// Check Value - carefully handle NullableString
+				resultValue := result[i].Value.Get()
+				expectedValue := tt.expected[i].Value.Get()
+
+				if (resultValue == nil) != (expectedValue == nil) {
+					t.Errorf("Config at index %d (%s): Value nullability mismatch: expected nil=%v, got nil=%v",
+						i, result[i].Name, expectedValue == nil, resultValue == nil)
+				}
+
+				if resultValue != nil && expectedValue != nil {
+					if *resultValue != *expectedValue {
+						t.Errorf("Config at index %d (%s): unexpected Value: expected %q, got %q",
+							i, result[i].Name, *expectedValue, *resultValue)
+					}
+				}
+
+				// Check Operation - must always be "SET"
+				resultOperation := result[i].Operation.Get()
+				if resultOperation == nil {
+					t.Errorf("Config at index %d (%s): Operation is nil, expected 'SET'", i, result[i].Name)
+				} else if *resultOperation != "SET" {
+					t.Errorf("Config at index %d (%s): unexpected Operation: expected 'SET', got %q",
+						i, result[i].Name, *resultOperation)
+				}
+
+				// Verify Operation matches expected
+				expectedOperation := tt.expected[i].Operation.Get()
+				if expectedOperation != nil && resultOperation != nil {
+					if *resultOperation != *expectedOperation {
+						t.Errorf("Config at index %d (%s): Operation mismatch: expected %q, got %q",
+							i, result[i].Name, *expectedOperation, *resultOperation)
+					}
+				}
+			}
+
+			// Verify no non-credential configs leaked through
+			for _, resultConfig := range result {
+				isCredentialConfig := false
+				credentialKeys := []string{
+					"sasl.jaas.config",
+					"local.sasl.jaas.config",
+					"sasl.mechanism",
+					"local.sasl.mechanism",
+				}
+				for _, key := range credentialKeys {
+					if resultConfig.Name == key {
+						isCredentialConfig = true
+						break
+					}
+				}
+				if !isCredentialConfig {
+					t.Errorf("Non-credential config leaked through filter: %q", resultConfig.Name)
+				}
+			}
+
+			// Additional deep equality check for paranoia
+			if !reflect.DeepEqual(result, tt.expected) {
+				t.Errorf("Deep equality check failed for test case %q", tt.name)
+				t.Logf("Expected: %+v", tt.expected)
+				t.Logf("Got:      %+v", result)
+			}
+		})
+	}
+}
