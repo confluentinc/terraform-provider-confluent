@@ -1726,55 +1726,6 @@ func getDelayAndPollInterval(delayNormal, pollIntervalNormal time.Duration, isAc
 	return delayNormal, pollIntervalNormal
 }
 
-func waitForCreatedKafkaAclToSync(ctx context.Context, c *KafkaRestClient, acl Acl, isAcceptanceTestMode bool) error {
-	delay, pollInterval := getDelayAndPollInterval(30*time.Second, 30*time.Second, isAcceptanceTestMode)
-	stateConf := &resource.StateChangeConf{
-		Pending: []string{stateInProgress},
-		Target:  []string{stateDone},
-		Refresh: kafkaAclSyncStatus(ctx, c, acl),
-		// ACL propagation can take several minutes in some cases
-		// Based on observations, ACLs typically sync within 5 minutes
-		Timeout:      10 * time.Minute,
-		Delay:        delay,
-		PollInterval: pollInterval,
-	}
-
-	aclId := fmt.Sprintf("%s#%s#%s#%s", acl.ResourceType, acl.ResourceName, acl.PatternType, acl.Principal)
-	tflog.Debug(ctx, fmt.Sprintf("Waiting for Kafka ACL %q to sync", aclId), map[string]interface{}{kafkaAclLoggingKey: aclId})
-	if _, err := stateConf.WaitForStateContext(ctx); err != nil {
-		return err
-	}
-	return nil
-}
-
-func kafkaAclSyncStatus(ctx context.Context, c *KafkaRestClient, acl Acl) resource.StateRefreshFunc {
-	return func() (result interface{}, s string, err error) {
-		remoteAcls, resp, err := c.apiClient.ACLV3Api.GetKafkaAcls(c.apiContext(ctx), c.clusterId).
-			ResourceType(acl.ResourceType).
-			ResourceName(acl.ResourceName).
-			PatternType(acl.PatternType).
-			Principal(acl.Principal).
-			Host(acl.Host).
-			Operation(acl.Operation).
-			Permission(acl.Permission).
-			Execute()
-
-		if err != nil {
-			tflog.Warn(ctx, fmt.Sprintf("Error reading Kafka ACL during sync check: %s", createDescriptiveError(err, resp)))
-			// Don't return error immediately, continue polling
-			return nil, stateInProgress, nil
-		}
-
-		if len(remoteAcls.Data) == 0 {
-			tflog.Debug(ctx, "Kafka ACL not yet available, continuing to poll")
-			return nil, stateInProgress, nil
-		}
-
-		tflog.Debug(ctx, "Kafka ACL is now available")
-		return remoteAcls, stateDone, nil
-	}
-}
-
 func waitForKafkaClusterToBeDeleted(ctx context.Context, c *Client, environmentId, clusterId string) error {
 	delay, pollInterval := getDelayAndPollInterval(1*time.Minute, 1*time.Minute, c.isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
