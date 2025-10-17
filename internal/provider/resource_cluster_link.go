@@ -420,13 +420,6 @@ func clusterLinkUpdate(ctx context.Context, d *schema.ResourceData, meta interfa
 		updateCredentialConfigsRequest := v3.AlterConfigBatchRequestData{
 			Data: credentialConfigs,
 		}
-
-		requestJson, err := json.Marshal(updateCredentialConfigsRequest)
-		if err != nil {
-			return diag.Errorf("error updating Cluster Link: error marshaling %#v to json: %s", requestJson, createDescriptiveError(err))
-		}
-		tflog.Debug(ctx, fmt.Sprintf("Updating Cluster Link %q: %s", d.Id(), requestJson), map[string]interface{}{clusterLinkLoggingKey: d.Id()})
-
 		resp, err := executeClusterLinkConfigUpdate(ctx, kafkaRestClient, linkName, updateCredentialConfigsRequest)
 
 		if err != nil {
