@@ -398,6 +398,38 @@ func clusterLinkUpdate(ctx context.Context, d *schema.ResourceData, meta interfa
 	if d.HasChangesExcept(paramSourceKafkaCluster, paramSourceKafkaCredentials, paramDestinationKafkaCluster, paramDestinationKafkaCredentials, paramLocalKafkaCluster, paramLocalKafkaCredentials, paramRemoteKafkaCluster, paramRemoteKafkaCredentials, paramConfigs) {
 		return diag.Errorf("error updating Cluster Link %q: only %q, %q, %q, %q and %q attributes can be updated for Cluster Link", d.Id(), paramSourceKafkaCredentials, paramDestinationKafkaCredentials, paramLocalKafkaCredentials, paramRemoteKafkaCredentials, paramConfigs)
 	}
+
+	if d.HasChanges(paramSourceKafkaCredentials) || d.HasChanges(paramDestinationKafkaCredentials) ||
+		d.HasChanges(paramLocalKafkaCredentials) || d.HasChanges(paramRemoteKafkaCredentials) {
+		tflog.Debug(ctx, fmt.Sprintf("Updating credentials for Cluster Link %q", d.Id()), map[string]interface{}{clusterLinkLoggingKey: d.Id()})
+
+		kafkaRestClient, err := createKafkaRestClientForClusterLink(d, meta)
+		if err != nil {
+			return diag.Errorf("error updating Cluster Link: %s", createDescriptiveError(err))
+		}
+		linkName := d.Get(paramLinkName).(string)
+
+		updateClusterLinkRequest, err := constructClusterLinkRequest(d, meta)
+		if err != nil {
+			return diag.Errorf("error updating Cluster Link: updateClusterLinkRequest is nil")
+		}
+		credentialConfigs := extractCredentialConfigs(updateClusterLinkRequest.GetConfigs())
+		if len(credentialConfigs) == 0 {
+			return diag.Errorf("error updating Cluster Link: len(credentialConfigs) is 0")
+		}
+		updateCredentialConfigsRequest := v3.AlterConfigBatchRequestData{
+			Data: credentialConfigs,
+		}
+		resp, err := executeClusterLinkConfigUpdate(ctx, kafkaRestClient, linkName, updateCredentialConfigsRequest)
+
+		if err != nil {
+			return diag.Errorf("error updating Cluster Link: %s", createDescriptiveError(err, resp))
+		}
+
+		// https://github.com/confluentinc/terraform-provider-confluentcloud/issues/40#issuecomment-1048782379
+		SleepIfNotTestMode(kafkaRestAPIWaitAfterCreate, meta.(*Client).isAcceptanceTestMode)
+	}
+
 	if d.HasChange(paramConfigs) {
 		// TF Provider allows the following operations for editable cluster link settings under 'config' block:
 		// 1. Adding new key value pair, for example, "retention.ms" = "600000"
@@ -1047,4 +1079,37 @@ func extractClusterLinkConfigsConfigData(configs map[string]interface{}) []v3.Co
 
 func executeClusterLinkConfigUpdate(ctx context.Context, c *KafkaRestClient, linkName string, requestData v3.AlterConfigBatchRequestData) (*http.Response, error) {
 	return c.apiClient.ClusterLinkingV3Api.UpdateKafkaLinkConfigBatch(c.apiContext(ctx), c.clusterId, linkName).AlterConfigBatchRequestData(requestData).Execute()
+}
+
+func convertConfigDataToAlterConfigBatchRequestData(configs []v3.ConfigData) []v3.AlterConfigBatchRequestDataData {
+	configResult := make([]v3.AlterConfigBatchRequestDataData, len(configs))
+	setOperation := "SET"
+
+	for i, config := range configs {
+		configResult[i] = v3.AlterConfigBatchRequestDataData{
+			Name:      config.Name,
+			Value:     config.Value,
+			Operation: *v3.NewNullableString(&setOperation),
+		}
+	}
+
+	return configResult
+}
+
+func extractCredentialConfigs(configs []v3.ConfigData) []v3.AlterConfigBatchRequestDataData {
+	credentialConfigKeys := []string{
+		saslJaasConfigConfigKey,
+		localSaslJaasConfigConfigKey,
+		saslMechanismConfigKey,
+		localSaslMechanismConfigKey,
+	}
+
+	var filteredConfigs []v3.ConfigData
+	for _, config := range configs {
+		if stringInSlice(config.Name, credentialConfigKeys, false) {
+			filteredConfigs = append(filteredConfigs, config)
+		}
+	}
+
+	return convertConfigDataToAlterConfigBatchRequestData(filteredConfigs)
 }
