@@ -1482,13 +1482,12 @@ func canUpdateEntityNameBusinessMetadata(entityType, oldEntityName, newEntityNam
 
 func convertConfigDataToAlterConfigBatchRequestData(configs []kafkarestv3.ConfigData) []kafkarestv3.AlterConfigBatchRequestDataData {
 	configResult := make([]kafkarestv3.AlterConfigBatchRequestDataData, len(configs))
-	setOperation := "SET"
 
 	for i, config := range configs {
 		configResult[i] = kafkarestv3.AlterConfigBatchRequestDataData{
 			Name:      config.Name,
 			Value:     config.Value,
-			Operation: *kafkarestv3.NewNullableString(&setOperation),
+			Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
 		}
 	}
 
