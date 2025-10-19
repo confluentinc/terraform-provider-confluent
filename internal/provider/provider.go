@@ -975,7 +975,7 @@ func validateAllOrNoneAttributesSetForResourcesWithOAuth(
 		return flags, diag.Errorf("All 5 (flink_rest_endpoint, organization_id, environment_id, flink_compute_pool_id, flink_principal_id) attributes should be set or not set in the provider block at the same time with OAuth enabled")
 	}
 
-	// Tableflow doesn't support OAuth authentication at the time of Oct 2025
+	// Tableflow doesn't support OAuth authentication as of this implementation
 	// So the `flags.areTableflowAllSet` is always false
 	flags.isKafkaMetadataSet = allKafkaAttributesAreSet
 	flags.isSchemaRegistryMetadataSet = allSchemaRegistryAttributesAreSet
