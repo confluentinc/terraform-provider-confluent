@@ -1491,3 +1491,90 @@ func extractCredentialConfigs(configs []kafkarestv3.ConfigData) []kafkarestv3.Al
 
 	return convertConfigDataToAlterConfigBatchRequestData(filteredConfigs)
 }
+
+func validateAllOrNoneAttributesSetForResources(
+	kafkaApiKey, kafkaApiSecret, kafkaID, kafkaRestEndpoint,
+	schemaRegistryApiKey, schemaRegistryApiSecret, schemaRegistryClusterId, schemaRegistryRestEndpoint, catalogRestEndpoint,
+	flinkApiKey, flinkApiSecret, flinkOrganizationId, flinkEnvironmentId, flinkComputePoolId, flinkRestEndpoint, flinkPrincipalId,
+	tableflowApiKey, tableflowApiSecret string) (ResourceMetadataSetFlags, diag.Diagnostics) {
+	var flags ResourceMetadataSetFlags
+	// 3 or 4 attributes should be set or not set at the same time
+	// Option #2: (kafka_api_key, kafka_api_secret, kafka_rest_endpoint)
+	// Option #3 (primary): (kafka_api_key, kafka_api_secret, kafka_rest_endpoint, kafka_id)
+	allKafkaAttributesAreSet := (kafkaApiKey != "") && (kafkaApiSecret != "") && (kafkaRestEndpoint != "")
+	allKafkaAttributesAreNotSet := (kafkaApiKey == "") && (kafkaApiSecret == "") && (kafkaRestEndpoint == "")
+	justOneOrTwoKafkaAttributesAreSet := !(allKafkaAttributesAreSet || allKafkaAttributesAreNotSet)
+	if justOneOrTwoKafkaAttributesAreSet {
+		return flags, diag.Errorf("(kafka_api_key, kafka_api_secret, kafka_rest_endpoint) or (kafka_api_key, kafka_api_secret, kafka_rest_endpoint, kafka_id) attributes should be set or not set in the provider block at the same time")
+	}
+	flags.isKafkaMetadataSet = allKafkaAttributesAreSet
+
+	// All 4 attributes should be set or not set at the same time
+	endpointIsSet := schemaRegistryRestEndpoint != "" || catalogRestEndpoint != ""
+	allSchemaRegistryAttributesAreSet := (schemaRegistryApiKey != "") && (schemaRegistryApiSecret != "") && endpointIsSet && (schemaRegistryClusterId != "")
+	allSchemaRegistryAttributesAreNotSet := (schemaRegistryApiKey == "") && (schemaRegistryApiSecret == "") && !endpointIsSet && (schemaRegistryClusterId == "")
+	justSubsetOfSchemaRegistryAttributesAreSet := !(allSchemaRegistryAttributesAreSet || allSchemaRegistryAttributesAreNotSet)
+	if justSubsetOfSchemaRegistryAttributesAreSet {
+		return flags, diag.Errorf("All 4 schema_registry_api_key, schema_registry_api_secret, schema_registry_rest_endpoint, schema_registry_id attributes should be set or not set in the provider block at the same time")
+	}
+	flags.isSchemaRegistryMetadataSet = allSchemaRegistryAttributesAreSet
+	flags.isCatalogMetadataSet = allSchemaRegistryAttributesAreSet
+
+	// All 7 attributes should be set or not set at the same time
+	allFlinkAttributesAreSet := (flinkApiKey != "") && (flinkApiSecret != "") && (flinkRestEndpoint != "") && (flinkOrganizationId != "") && (flinkEnvironmentId != "") && (flinkComputePoolId != "") && (flinkPrincipalId != "")
+	allFlinkAttributesAreNotSet := (flinkApiKey == "") && (flinkApiSecret == "") && (flinkRestEndpoint == "") && (flinkOrganizationId == "") && (flinkEnvironmentId == "") && (flinkComputePoolId == "") && (flinkPrincipalId == "")
+	justSubsetOfFlinkAttributesAreSet := !(allFlinkAttributesAreSet || allFlinkAttributesAreNotSet)
+	if justSubsetOfFlinkAttributesAreSet {
+		return flags, diag.Errorf("All 7 flink_api_key, flink_api_secret, flink_rest_endpoint, organization_id, environment_id, flink_compute_pool_id, flink_principal_id attributes should be set or not set in the provider block at the same time")
+	}
+	flags.isFlinkMetadataSet = allFlinkAttributesAreSet
+
+	allTableflowAttributesAreSet := (tableflowApiKey != "") && (tableflowApiSecret != "")
+	allTableflowAttributesAreNotSet := (tableflowApiKey == "") && (tableflowApiSecret == "")
+	justOneTableflowAttributeSet := !(allTableflowAttributesAreSet || allTableflowAttributesAreNotSet)
+	if justOneTableflowAttributeSet {
+		return flags, diag.Errorf("Both tableflow_api_key and tableflow_api_secret should be set or not set in the provider block at the same time")
+	}
+	flags.isTableflowMetadataSet = allTableflowAttributesAreSet
+
+	return flags, nil
+}
+
+func validateAllOrNoneAttributesSetForResourcesWithOAuth(
+	kafkaID, kafkaRestEndpoint,
+	srID, srRestEndpoint, catalogRestEndpoint,
+	flinkOrganizationId, flinkEnvironmentId, flinkComputePoolId, flinkRestEndpoint, flinkPrincipalId string) (ResourceMetadataSetFlags, diag.Diagnostics) {
+	var flags ResourceMetadataSetFlags
+	// When OAuth is enabled, the Kafka ID and rest endpoint should be set or not set at the same time
+	allKafkaAttributesAreSet := (kafkaID != "") && (kafkaRestEndpoint != "")
+	allKafkaAttributesAreNotSet := (kafkaID == "") && (kafkaRestEndpoint == "")
+	justOneOfKafkaAttributesAreSet := !(allKafkaAttributesAreSet || allKafkaAttributesAreNotSet)
+	if justOneOfKafkaAttributesAreSet {
+		return flags, diag.Errorf("(kafka_rest_endpoint, kafka_id) attributes should both be set or not set in the provider block at the same time with OAuth enabled.")
+	}
+	flags.isKafkaMetadataSet = allKafkaAttributesAreSet
+
+	// When OAuth is enabled, the Schema Registry ID and rest endpoint (Schema Registry or Catalog) should be set or not set at the same time
+	endpointIsSet := srRestEndpoint != "" || catalogRestEndpoint != ""
+	allSchemaRegistryAttributesAreSet := endpointIsSet && (srID != "")
+	allSchemaRegistryAttributesAreNotSet := !endpointIsSet && (srID == "")
+	justOneOfSchemaRegistryAttributesAreSet := !(allSchemaRegistryAttributesAreSet || allSchemaRegistryAttributesAreNotSet)
+	if justOneOfSchemaRegistryAttributesAreSet {
+		return flags, diag.Errorf("(either schema_registry_rest_endpoint or catalog_rest_endpoint) and schema_registry_id attributes should both be set or not set in the provider block at the same time with OAuth enabled")
+	}
+	flags.isSchemaRegistryMetadataSet = allSchemaRegistryAttributesAreSet
+	flags.isCatalogMetadataSet = allSchemaRegistryAttributesAreSet
+
+	// When OAuth is enabled, all Flink related attributes below should be set or not set at the same time
+	allFlinkAttributesAreSet := (flinkRestEndpoint != "") && (flinkOrganizationId != "") && (flinkEnvironmentId != "") && (flinkComputePoolId != "") && (flinkPrincipalId != "")
+	allFlinkAttributesAreNotSet := (flinkRestEndpoint == "") && (flinkOrganizationId == "") && (flinkEnvironmentId == "") && (flinkComputePoolId == "") && (flinkPrincipalId == "")
+	justSubsetOfFlinkAttributesAreSet := !(allFlinkAttributesAreSet || allFlinkAttributesAreNotSet)
+	if justSubsetOfFlinkAttributesAreSet {
+		return flags, diag.Errorf("All 5 (flink_rest_endpoint, organization_id, environment_id, flink_compute_pool_id, flink_principal_id) attributes should be set or not set in the provider block at the same time with OAuth enabled")
+	}
+	flags.isFlinkMetadataSet = allFlinkAttributesAreSet
+
+	// Tableflow doesn't support OAuth authentication as of this implementation
+	// So the `flags.areTableflowAllSet` is always false
+	return flags, nil
+}

@@ -148,6 +148,14 @@ type Client struct {
 	isOAuthEnabled                  bool
 }
 
+type ResourceMetadataSetFlags struct {
+	isCatalogMetadataSet        bool
+	isFlinkMetadataSet          bool
+	isKafkaMetadataSet          bool
+	isSchemaRegistryMetadataSet bool
+	isTableflowMetadataSet      bool
+}
+
 // Customize configs for terraform-plugin-docs
 func init() {
 	schema.DescriptionKind = schema.StringMarkdown
@@ -505,46 +513,6 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	tableflowApiSecret := d.Get("tableflow_api_secret").(string)
 	maxRetries := d.Get("max_retries").(int)
 
-	// 3 or 4 attributes should be set or not set at the same time
-	// Option #2: (kafka_api_key, kafka_api_secret, kafka_rest_endpoint)
-	// Option #3 (primary): (kafka_api_key, kafka_api_secret, kafka_rest_endpoint, kafka_id)
-	allKafkaAttributesAreSet := (kafkaApiKey != "") && (kafkaApiSecret != "") && (kafkaRestEndpoint != "")
-	allKafkaAttributesAreNotSet := (kafkaApiKey == "") && (kafkaApiSecret == "") && (kafkaRestEndpoint == "")
-	justOneOrTwoKafkaAttributesAreSet := !(allKafkaAttributesAreSet || allKafkaAttributesAreNotSet)
-	if justOneOrTwoKafkaAttributesAreSet {
-		return nil, diag.Errorf("(kafka_api_key, kafka_api_secret, kafka_rest_endpoint) or (kafka_api_key, kafka_api_secret, kafka_rest_endpoint, kafka_id) attributes should be set or not set in the provider block at the same time")
-	}
-
-	// All 4 attributes should be set or not set at the same time
-	allSchemaRegistryAttributesAreSet := (schemaRegistryApiKey != "") && (schemaRegistryApiSecret != "") && (schemaRegistryRestEndpoint != "" || catalogRestEndpoint != "") && (schemaRegistryClusterId != "")
-	allSchemaRegistryAttributesAreNotSet := (schemaRegistryApiKey == "") && (schemaRegistryApiSecret == "") && (schemaRegistryRestEndpoint == "" || catalogRestEndpoint == "") && (schemaRegistryClusterId == "")
-	justSubsetOfSchemaRegistryAttributesAreSet := !(allSchemaRegistryAttributesAreSet || allSchemaRegistryAttributesAreNotSet)
-	if justSubsetOfSchemaRegistryAttributesAreSet {
-		return nil, diag.Errorf("All 4 schema_registry_api_key, schema_registry_api_secret, schema_registry_rest_endpoint, schema_registry_id attributes should be set or not set in the provider block at the same time")
-	}
-
-	allCatalogAttributesAreSet := (schemaRegistryApiKey != "") && (schemaRegistryApiSecret != "") && (schemaRegistryRestEndpoint != "" || catalogRestEndpoint != "") && (schemaRegistryClusterId != "")
-	allCatalogAttributesAreNotSet := (schemaRegistryApiKey == "") && (schemaRegistryApiSecret == "") && (schemaRegistryRestEndpoint == "" || catalogRestEndpoint == "") && (schemaRegistryClusterId == "")
-	justSubsetOfCatalogAttributesAreSet := !(allCatalogAttributesAreSet || allCatalogAttributesAreNotSet)
-	if justSubsetOfCatalogAttributesAreSet {
-		return nil, diag.Errorf("All 4 schema_registry_api_key, schema_registry_api_secret, catalog_rest_endpoint, schema_registry_id attributes should be set or not set in the provider block at the same time")
-	}
-
-	// All 7 attributes should be set or not set at the same time
-	allFlinkAttributesAreSet := (flinkApiKey != "") && (flinkApiSecret != "") && (flinkRestEndpoint != "") && (flinkOrganizationId != "") && (flinkEnvironmentId != "") && (flinkComputePoolId != "") && (flinkPrincipalId != "")
-	allFlinkAttributesAreNotSet := (flinkApiKey == "") && (flinkApiSecret == "") && (flinkRestEndpoint == "") && (flinkOrganizationId == "") && (flinkEnvironmentId == "") && (flinkComputePoolId == "") && (flinkPrincipalId == "")
-	justSubsetOfFlinkAttributesAreSet := !(allFlinkAttributesAreSet || allFlinkAttributesAreNotSet)
-	if justSubsetOfFlinkAttributesAreSet {
-		return nil, diag.Errorf("All 7 flink_api_key, flink_api_secret, flink_rest_endpoint, organization_id, environment_id, flink_compute_pool_id, flink_principal_id attributes should be set or not set in the provider block at the same time")
-	}
-
-	allTableflowAttributesAreSet := (tableflowApiKey != "") && (tableflowApiSecret != "")
-	allTableflowAttributesAreNotSet := (tableflowApiKey == "") && (tableflowApiSecret == "")
-	justOneTableflowAttributeSet := !(allTableflowAttributesAreSet || allTableflowAttributesAreNotSet)
-	if justOneTableflowAttributeSet {
-		return nil, diag.Errorf("Both tableflow_api_key and tableflow_api_secret should be set or not set in the provider block at the same time")
-	}
-
 	userAgent := p.UserAgent(terraformProviderUserAgent, fmt.Sprintf("%s (https://confluent.cloud; support@confluent.io)", providerVersion))
 	if additionalUserAgent != "" {
 		userAgent = fmt.Sprintf("%s %s", additionalUserAgent, userAgent)
@@ -692,13 +660,35 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	var stsOAuthToken *STSToken
 	var err diag.Diagnostics
 	var oauthEnabled bool
+	var resourceMetadataFlags ResourceMetadataSetFlags
 	if _, ok := d.GetOk(paramOAuthBlockName); ok {
 		oauthEnabled = true
 		externalOAuthToken, stsOAuthToken, err = initializeOAuthConfigs(ctx, d, secureTokenServiceClient)
 		if err != nil {
 			return nil, err
 		}
-		if err := validateOAuthAndProviderAPIKeysCoexist(cloudApiKey, cloudApiSecret, kafkaApiKey, kafkaApiSecret, schemaRegistryApiKey, schemaRegistryApiSecret, flinkApiKey, flinkApiSecret, tableflowApiKey, tableflowApiSecret); err != nil {
+		if err = validateOAuthAndProviderAPIKeysCoexist(
+			cloudApiKey, cloudApiSecret,
+			kafkaApiKey, kafkaApiSecret,
+			schemaRegistryApiKey, schemaRegistryApiSecret,
+			flinkApiKey, flinkApiSecret,
+			tableflowApiKey, tableflowApiSecret); err != nil {
+			return nil, err
+		}
+		// Verify that the resources specific attributes should NOT be partially set when OAuth is enabled
+		if resourceMetadataFlags, err = validateAllOrNoneAttributesSetForResourcesWithOAuth(
+			kafkaClusterId, kafkaRestEndpoint,
+			schemaRegistryClusterId, schemaRegistryRestEndpoint, catalogRestEndpoint,
+			flinkOrganizationId, flinkEnvironmentId, flinkComputePoolId, flinkRestEndpoint, flinkPrincipalId); err != nil {
+			return nil, err
+		}
+	} else {
+		resourceMetadataFlags, err = validateAllOrNoneAttributesSetForResources(
+			kafkaApiKey, kafkaApiSecret, kafkaClusterId, kafkaRestEndpoint,
+			schemaRegistryApiKey, schemaRegistryApiSecret, schemaRegistryClusterId, schemaRegistryRestEndpoint, catalogRestEndpoint,
+			flinkApiKey, flinkApiSecret, flinkOrganizationId, flinkEnvironmentId, flinkComputePoolId, flinkRestEndpoint, flinkPrincipalId,
+			tableflowApiKey, tableflowApiSecret)
+		if err != nil {
 			return nil, err
 		}
 	}
@@ -763,12 +753,12 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 		stsToken:                        stsOAuthToken,
 
 		// For simplicity, treat 3 (for Kafka), 4 (for SR), 4 (for catalog), 7 (for Flink), and 2 (for Tableflow) variables as a "single" one
-		isKafkaMetadataSet:           allKafkaAttributesAreSet,
+		isKafkaMetadataSet:           resourceMetadataFlags.isKafkaMetadataSet,
 		isKafkaClusterIdSet:          kafkaClusterId != "",
-		isSchemaRegistryMetadataSet:  allSchemaRegistryAttributesAreSet,
-		isCatalogRegistryMetadataSet: allCatalogAttributesAreSet,
-		isFlinkMetadataSet:           allFlinkAttributesAreSet,
-		isTableflowMetadataSet:       allTableflowAttributesAreSet,
+		isSchemaRegistryMetadataSet:  resourceMetadataFlags.isSchemaRegistryMetadataSet,
+		isCatalogRegistryMetadataSet: resourceMetadataFlags.isCatalogMetadataSet,
+		isFlinkMetadataSet:           resourceMetadataFlags.isFlinkMetadataSet,
+		isTableflowMetadataSet:       resourceMetadataFlags.isTableflowMetadataSet,
 		isAcceptanceTestMode:         acceptanceTestMode,
 		isOAuthEnabled:               oauthEnabled,
 	}
@@ -883,7 +873,12 @@ func providerOAuthSchema() *schema.Schema {
 	}
 }
 
-func validateOAuthAndProviderAPIKeysCoexist(cloudApiKey, cloudApiSecret, kafkaApiKey, kafkaApiSecret, schemaRegistryApiKey, schemaRegistryApiSecret, flinkApiKey, flinkApiSecret, tableflowApiKey, tableflowApiSecret string) diag.Diagnostics {
+func validateOAuthAndProviderAPIKeysCoexist(
+	cloudApiKey, cloudApiSecret,
+	kafkaApiKey, kafkaApiSecret,
+	schemaRegistryApiKey, schemaRegistryApiSecret,
+	flinkApiKey, flinkApiSecret,
+	tableflowApiKey, tableflowApiSecret string) diag.Diagnostics {
 	if cloudApiKey != "" || cloudApiSecret != "" {
 		return diag.Errorf("(cloud_api_key, cloud_api_secret) attributes should not be set in the provider block when oauth block is present")
 	}
