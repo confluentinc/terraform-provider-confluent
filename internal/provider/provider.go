@@ -328,6 +328,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_ip_filter":                          ipFilterDataSource(),
 				"confluent_ip_group":                           ipGroupDataSource(),
 				"confluent_kafka_cluster":                      kafkaDataSource(),
+				"confluent_kafka_clusters":                     kafkaClustersDataSource(),
 				"confluent_kafka_topic":                        kafkaTopicDataSource(),
 				"confluent_environment":                        environmentDataSource(),
 				"confluent_environments":                       environmentsDataSource(),
