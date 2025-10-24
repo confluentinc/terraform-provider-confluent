@@ -772,14 +772,14 @@ func setKafkaClusterAttributes(d *schema.ResourceData, cluster cmk.CmkV2Cluster)
 	if err := setStringAttributeInListBlockOfSizeOne(paramConfluentCustomerKey, paramId, cluster.Spec.Byok.GetId(), d); err != nil {
 		return nil, err
 	}
-	if err := setEndpointsBlock(cluster.Spec.GetEndpoints(), d); err != nil {
+	if err := d.Set(paramEndpoints, constructEndpointsBlockValue(cluster.Spec.GetEndpoints())); err != nil {
 		return nil, err
 	}
 	d.SetId(cluster.GetId())
 	return d, nil
 }
 
-func setEndpointsBlock(modelMap cmk.ModelMap, d *schema.ResourceData) error {
+func constructEndpointsBlockValue(modelMap cmk.ModelMap) []interface{} {
 	var endpointsList []interface{}
 
 	// Ensure consistent ordering
@@ -800,7 +800,7 @@ func setEndpointsBlock(modelMap cmk.ModelMap, d *schema.ResourceData) error {
 		endpointsList = append(endpointsList, endpointData)
 	}
 
-	return d.Set(paramEndpoints, endpointsList)
+	return endpointsList
 }
 
 func optionalNetworkSchema() *schema.Schema {
