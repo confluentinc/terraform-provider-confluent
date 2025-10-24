@@ -79,6 +79,7 @@ func tableflowTopicDataSource() *schema.Resource {
 			paramCredentials:    credentialsSchema(),
 			paramByobAws:        byobAwsDataSourceSchema(),
 			paramManagedStorage: managedStorageDataSourceSchema(),
+			paramErrorHandling:  errorHandlingDataSourceSchema(),
 		},
 	}
 }
@@ -166,5 +167,24 @@ func requiredKafkaClusterDataSourceSchema() *schema.Schema {
 		},
 		Required: true,
 		MaxItems: 1,
+	}
+}
+
+func errorHandlingDataSourceSchema() *schema.Schema {
+	return &schema.Schema{
+		Type: schema.TypeList,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramMode: {
+					Type:     schema.TypeString,
+					Computed: true,
+				},
+				paramLogTarget: {
+					Type:     schema.TypeString,
+					Computed: true,
+				},
+			},
+		},
+		Computed: true,
 	}
 }
