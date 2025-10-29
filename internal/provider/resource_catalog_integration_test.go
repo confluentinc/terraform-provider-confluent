@@ -31,6 +31,7 @@ const (
 	scenarioStateCatalogIntegrationHasBeenUpdated = "The new catalog integration has been updated"
 	byobAwsCatalogIntegrationScenarioName         = "confluent_catalog_integration Byob Aws Resource Lifecycle"
 	snowflakeCatalogIntegrationScenarioName       = "confluent_catalog_integration Snowflake Resource Lifecycle"
+	unityCatalogIntegrationScenarioName           = "confluent_catalog_integration Unity Resource Lifecycle"
 
 	catalogIntegrationUrlPath       = "/tableflow/v1/catalog-integrations"
 	catalogIntegrationResourceLabel = "confluent_catalog_integration.main"
@@ -132,6 +133,7 @@ func TestAccCatalogIntegrationAwsGlue(t *testing.T) {
 					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "suspended", "false"),
 					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "aws_glue.#", "1"),
 					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "snowflake.#", "0"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "unity.#", "0"),
 					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "aws_glue.0.provider_integration_id", "cspi-stgce89r7"),
 				),
 			},
@@ -147,6 +149,7 @@ func TestAccCatalogIntegrationAwsGlue(t *testing.T) {
 					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "suspended", "false"),
 					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "aws_glue.#", "1"),
 					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "snowflake.#", "0"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "unity.#", "0"),
 					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "aws_glue.0.provider_integration_id", "cspi-stgce89r7"),
 				),
 			},
@@ -249,6 +252,7 @@ func TestAccCatalogIntegrationSnowflake(t *testing.T) {
 					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "kafka_cluster.0.id", "lkc-00000"),
 					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "suspended", "false"),
 					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "aws_glue.#", "0"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "unity.#", "0"),
 					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "snowflake.#", "1"),
 					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "snowflake.0.endpoint", "https://vuser1_polaris.snowflakecomputing.com/"),
 					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "snowflake.0.warehouse", "warehouse-name"),
@@ -266,10 +270,124 @@ func TestAccCatalogIntegrationSnowflake(t *testing.T) {
 					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "kafka_cluster.0.id", "lkc-00000"),
 					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "suspended", "false"),
 					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "aws_glue.#", "0"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "unity.#", "0"),
 					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "snowflake.#", "1"),
 					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "snowflake.0.endpoint", "https://vuser2_polaris.snowflakecomputing.com/"),
 					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "snowflake.0.warehouse", "warehouse-name-2"),
 					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "snowflake.0.allowed_scope", "allowed-scope-2"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccCatalogIntegrationUnity(t *testing.T) {
+	ctx := context.Background()
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
+
+	mockServerUrl := wiremockContainer.URI
+	wiremockClient := wiremock.NewClient(mockServerUrl)
+	// nolint:errcheck
+	defer wiremockClient.Reset()
+
+	// nolint:errcheck
+	defer wiremockClient.ResetAllScenarios()
+
+	createCatalogIntegrationResponse, _ := os.ReadFile("../testdata/catalog_integration/create_unity_ci.json")
+	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(catalogIntegrationUrlPath)).
+		InScenario(unityCatalogIntegrationScenarioName).
+		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
+		//WillSetStateTo(scenarioStateCatalogIntegrationIsProvisioning).
+		WillSetStateTo(scenarioStateCatalogIntegrationHasBeenCreated).
+		WillReturn(
+			string(createCatalogIntegrationResponse),
+			contentTypeJSONHeader,
+			http.StatusCreated,
+		))
+
+	catalogIntegrationReadUrlPath := fmt.Sprintf("%s/tci-abc123", catalogIntegrationUrlPath)
+
+	readCreatedCatalogIntegrationResponse, _ := os.ReadFile("../testdata/catalog_integration/read_created_unity_ci.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(catalogIntegrationReadUrlPath)).
+		InScenario(unityCatalogIntegrationScenarioName).
+		WhenScenarioStateIs(scenarioStateCatalogIntegrationHasBeenCreated).
+		WillReturn(
+			string(readCreatedCatalogIntegrationResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	updatedCatalogIntegrationResponse, _ := os.ReadFile("../testdata/catalog_integration/update_unity_ci.json")
+	_ = wiremockClient.StubFor(wiremock.Patch(wiremock.URLPathEqualTo(catalogIntegrationReadUrlPath)).
+		InScenario(unityCatalogIntegrationScenarioName).
+		WhenScenarioStateIs(scenarioStateCatalogIntegrationHasBeenCreated).
+		WillSetStateTo(scenarioStateCatalogIntegrationHasBeenUpdated).
+		WillReturn(
+			string(updatedCatalogIntegrationResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(catalogIntegrationReadUrlPath)).
+		InScenario(unityCatalogIntegrationScenarioName).
+		WhenScenarioStateIs(scenarioStateCatalogIntegrationHasBeenUpdated).
+		WillReturn(
+			string(updatedCatalogIntegrationResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(catalogIntegrationReadUrlPath)).
+		InScenario(unityCatalogIntegrationScenarioName).
+		WillReturn(
+			"",
+			contentTypeJSONHeader,
+			http.StatusNoContent,
+		))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		// https://www.terraform.io/docs/extend/testing/acceptance-tests/teststep.html
+		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckResourceCatalogIntegrationUnity(mockServerUrl, "catalog_integration_1", "https://user1.cloud.databricks.com", "catalog_name", "client-id", "client-secret"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "id", "tci-abc123"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "display_name", "catalog_integration_1"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "environment.#", "1"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "environment.0.id", "env-abc123"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "kafka_cluster.#", "1"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "kafka_cluster.0.id", "lkc-00000"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "suspended", "false"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "aws_glue.#", "0"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "snowflake.#", "0"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "unity.#", "1"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "unity.0.workspace_endpoint", "https://user1.cloud.databricks.com"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "unity.0.catalog_name", "catalog_name"),
+				),
+			},
+			{
+				Config: testAccCheckResourceCatalogIntegrationUnity(mockServerUrl, "catalog_integration_2", "https://user2.cloud.databricks.com", "catalog_name_2", "client-id-2", "client-secret-2"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "id", "tci-abc123"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "display_name", "catalog_integration_2"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "environment.#", "1"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "environment.0.id", "env-abc123"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "kafka_cluster.#", "1"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "kafka_cluster.0.id", "lkc-00000"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "suspended", "false"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "aws_glue.#", "0"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "snowflake.#", "0"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "unity.#", "1"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "unity.0.workspace_endpoint", "https://user2.cloud.databricks.com"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "unity.0.catalog_name", "catalog_name_2"),
 				),
 			},
 		},
@@ -328,4 +446,32 @@ func testAccCheckResourceCatalogIntegrationSnowflake(mockServerUrl, displayName,
 		}
 	}
 	`, mockServerUrl, displayName, endpoint, clientId, clientSecret, warehouse, allowedScope)
+}
+
+func testAccCheckResourceCatalogIntegrationUnity(mockServerUrl, displayName, workspaceEndpoint, catalogName, clientId, clientSecret string) string {
+	return fmt.Sprintf(`
+    provider "confluent" {
+        endpoint = "%s"
+    }
+
+	resource "confluent_catalog_integration" "main" {
+		display_name = "%s"
+		environment {
+			id = "env-abc123"
+		}
+		kafka_cluster {
+			id = "lkc-00000"
+		}
+		unity {
+			workspace_endpoint = "%s"
+			catalog_name = "%s"
+			client_id = "%s"
+			client_secret = "%s"
+		}
+		credentials {
+			key = "test_key"
+			secret = "test_secret"
+		}
+	}
+	`, mockServerUrl, displayName, workspaceEndpoint, catalogName, clientId, clientSecret)
 }
