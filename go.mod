@@ -3,6 +3,7 @@ module github.com/confluentinc/terraform-provider-confluent
 go 1.24.6
 
 require (
+	github.com/confluentinc/ccloud-sdk-go-v2-internal/vim v0.1.0
 	github.com/confluentinc/ccloud-sdk-go-v2/apikeys v0.4.0
 	github.com/confluentinc/ccloud-sdk-go-v2/byok v0.0.2
 	github.com/confluentinc/ccloud-sdk-go-v2/cam v0.3.0
@@ -45,6 +46,8 @@ require (
 	github.com/testcontainers/testcontainers-go v0.32.0
 	github.com/walkerus/go-wiremock v1.2.0
 )
+
+replace github.com/confluentinc/ccloud-sdk-go-v2-internal/vim v0.1.0 => /Users/klinou/work/ccloud-sdk-go-v2-internal/vim
 
 require (
 	github.com/containerd/platforms v0.2.1 // indirect

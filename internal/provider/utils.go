@@ -32,6 +32,7 @@ import (
 	"strings"
 	"time"
 
+	vim "github.com/confluentinc/ccloud-sdk-go-v2-internal/vim/v1"
 	apikeys "github.com/confluentinc/ccloud-sdk-go-v2/apikeys/v2"
 	byok "github.com/confluentinc/ccloud-sdk-go-v2/byok/v1"
 	cam "github.com/confluentinc/ccloud-sdk-go-v2/cam/v1"
@@ -263,6 +264,25 @@ func (c *Client) iamApiContext(ctx context.Context) context.Context {
 
 	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
 		return context.WithValue(ctx, iam.ContextBasicAuth, iam.BasicAuth{
+			UserName: c.cloudApiKey,
+			Password: c.cloudApiSecret,
+		})
+	}
+
+	tflog.Warn(ctx, "Could not find Cloud API Key or OAuth Token for IAM client")
+	return ctx
+}
+
+func (c *Client) vimApiContext(ctx context.Context) context.Context {
+	if c.oauthToken != nil && c.stsToken != nil {
+		if err := c.fetchOrOverrideSTSOAuthTokenFromApiContext(ctx); err != nil {
+			tflog.Error(ctx, fmt.Sprintf("Failed to get OAuth token for IAM client: %v", err))
+		}
+		return context.WithValue(ctx, vim.ContextAccessToken, c.stsToken.AccessToken)
+	}
+
+	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
+		return context.WithValue(ctx, vim.ContextBasicAuth, vim.BasicAuth{
 			UserName: c.cloudApiKey,
 			Password: c.cloudApiSecret,
 		})

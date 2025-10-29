@@ -17,6 +17,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	vim "github.com/confluentinc/ccloud-sdk-go-v2-internal/vim/v1"
 	"os"
 	"strings"
 	"time"
@@ -84,6 +85,7 @@ type Client struct {
 	apiKeysClient                   *apikeys.APIClient
 	byokClient                      *byok.APIClient
 	iamClient                       *iam.APIClient
+	vimClient                       *vim.APIClient
 	iamIPClient                     *iamip.APIClient
 	iamV1Client                     *iamv1.APIClient
 	caClient                        *ca.APIClient
@@ -377,6 +379,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_schema_registry_dek":                schemaRegistryDekDataSource(),
 			},
 			ResourcesMap: map[string]*schema.Resource{
+				"confluent_vim_car":                            resourceVimCar(),
 				"confluent_catalog_integration":                catalogIntegrationResource(),
 				"confluent_api_key":                            apiKeyResource(),
 				"confluent_byok_key":                           byokResource(),
@@ -553,6 +556,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	srcmCfg := srcm.NewConfiguration()
 	ssoCfg := sso.NewConfiguration()
 	stsCfg := sts.NewConfiguration()
+	vimCfg := vim.NewConfiguration()
 
 	apiKeysCfg.Servers[0].URL = endpoint
 	byokCfg.Servers[0].URL = endpoint
@@ -582,6 +586,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	srcmCfg.Servers[0].URL = endpoint
 	ssoCfg.Servers[0].URL = endpoint
 	stsCfg.Servers[0].URL = endpoint
+	vimCfg.Servers[0].URL = endpoint
 
 	apiKeysCfg.UserAgent = userAgent
 	byokCfg.UserAgent = userAgent
@@ -612,6 +617,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	srcmCfg.UserAgent = userAgent
 	ssoCfg.UserAgent = userAgent
 	stsCfg.UserAgent = userAgent
+	vimCfg.UserAgent = userAgent
 
 	var catalogRestClientFactory *CatalogRestClientFactory
 	var flinkRestClientFactory *FlinkRestClientFactory
@@ -653,6 +659,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	srcmCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	ssoCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	stsCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
+	vimCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 
 	secureTokenServiceClient := sts.NewAPIClient(stsCfg)
 
@@ -719,6 +726,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 		orgClient:                       org.NewAPIClient(orgCfg),
 		piClient:                        pi.NewAPIClient(piCfg),
 		srcmClient:                      srcm.NewAPIClient(srcmCfg),
+		vimClient:                       vim.NewAPIClient(vimCfg),
 		catalogRestClientFactory:        catalogRestClientFactory,
 		flinkRestClientFactory:          flinkRestClientFactory,
 		kafkaRestClientFactory:          kafkaRestClientFactory,

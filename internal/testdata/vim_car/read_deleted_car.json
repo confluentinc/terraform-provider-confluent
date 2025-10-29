@@ -1,0 +1,11 @@
+{
+  "errors": [
+    {
+      "id": "5d83d44c-8579-4115-967e-f5b971a2d4c4",
+      "status": "404",
+      "code": "resource_not_found",
+      "title": "Not Found",
+      "detail": "Car car-abc123 was not found."
+    }
+  ]
+}
