@@ -13,8 +13,9 @@
     "availability": "LOW",
     "cloud": "AWS",
     "config": {
-      "kind": "Enterprise",
-      "max_ecku": 3
+      "kind": "Freight",
+      "max_ecku": 3,
+      "zones": ["use1-az2", "use1-az3"]
     },
     "display_name": "TestClusterUpdated",
     "environment": {
