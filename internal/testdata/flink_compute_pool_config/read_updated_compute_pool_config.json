@@ -1,0 +1,9 @@
+{
+  "api_version": "fcpm/v2",
+  "kind": "OrgComputePoolConfig",
+  "organization_id": "9bb441c4-edef-46ac-8a41-c49e44a3fd9a",
+  "spec": {
+    "default_pool_enabled": false,
+    "default_pool_max_cfu": 15
+  }
+}
