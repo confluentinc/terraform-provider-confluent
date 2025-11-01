@@ -90,6 +90,7 @@ const (
 	roleBindingLoggingKey                     = "role_binding_id"
 	apiKeyLoggingKey                          = "api_key_id"
 	computePoolLoggingKey                     = "compute_pool_id"
+	computePoolLoggingConfigKey               = "compute_pool_config_id"
 	flinkArtifactLoggingKey                   = "flink_artifact_id"
 	flinkConnectionLoggingKey                 = "flink_connection_id"
 	flinkStatementLoggingKey                  = "flink_statement_key_id"
