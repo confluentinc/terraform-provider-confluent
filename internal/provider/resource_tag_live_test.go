@@ -134,6 +134,15 @@ func TestAccTagUpdateLive(t *testing.T) {
 		CheckDestroy:      testAccCheckTagLiveDestroy,
 		Steps: []resource.TestStep{
 			{
+				// Step 1: Create tag first to allow it to propagate
+				Config: testAccCheckTagLiveConfig(endpoint, tagResourceLabel, tagName, schemaRegistryId, schemaRegistryRestEndpoint, apiKey, apiSecret, schemaRegistryApiKey, schemaRegistryApiSecret),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckTagLiveExists(fmt.Sprintf("confluent_tag.%s", tagResourceLabel)),
+					// Only check basic existence in first step to allow propagation
+				),
+			},
+			{
+				// Step 2: Verify attributes after propagation, then update
 				Config: testAccCheckTagLiveConfig(endpoint, tagResourceLabel, tagName, schemaRegistryId, schemaRegistryRestEndpoint, apiKey, apiSecret, schemaRegistryApiKey, schemaRegistryApiSecret),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckTagLiveExists(fmt.Sprintf("confluent_tag.%s", tagResourceLabel)),
@@ -141,6 +150,7 @@ func TestAccTagUpdateLive(t *testing.T) {
 				),
 			},
 			{
+				// Step 3: Apply update after previous step has propagated
 				Config: testAccCheckTagUpdateLiveConfig(endpoint, tagResourceLabel, tagName, schemaRegistryId, schemaRegistryRestEndpoint, apiKey, apiSecret, schemaRegistryApiKey, schemaRegistryApiSecret),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckTagLiveExists(fmt.Sprintf("confluent_tag.%s", tagResourceLabel)),
