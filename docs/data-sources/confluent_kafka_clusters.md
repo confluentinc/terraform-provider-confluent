@@ -20,7 +20,11 @@ provider "confluent" {
   cloud_api_secret = var.confluent_cloud_api_secret # optionally use CONFLUENT_CLOUD_API_SECRET env var
 }
 
-data "confluent_kafka_clusters" "main" {}
+data "confluent_kafka_clusters" "main" {
+  environment {
+    id = "env-123abc"
+  }
+}
 ```
 
 ## Argument Reference
