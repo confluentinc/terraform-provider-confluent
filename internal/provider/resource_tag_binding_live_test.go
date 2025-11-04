@@ -72,6 +72,15 @@ func TestAccTagBindingLive(t *testing.T) {
 		CheckDestroy:      testAccCheckTagBindingLiveDestroy,
 		Steps: []resource.TestStep{
 			{
+				// Step 1: Create tag and schema first to allow them to propagate
+				Config: testAccCheckTagBindingLiveConfigStep1(endpoint, tagResourceLabel, schemaResourceLabel, tagName, subjectName, schemaRegistryId, schemaRegistryRestEndpoint, apiKey, apiSecret, schemaRegistryApiKey, schemaRegistryApiSecret),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_tag.%s", tagResourceLabel), "name", tagName),
+					resource.TestCheckResourceAttrSet(fmt.Sprintf("confluent_schema.%s", schemaResourceLabel), "id"),
+				),
+			},
+			{
+				// Step 2: Create binding after tag has propagated
 				Config: testAccCheckTagBindingLiveConfig(endpoint, tagResourceLabel, schemaResourceLabel, tagBindingResourceLabel, tagName, subjectName, schemaRegistryId, schemaRegistryRestEndpoint, apiKey, apiSecret, schemaRegistryApiKey, schemaRegistryApiSecret),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckTagBindingLiveExists(fmt.Sprintf("confluent_tag_binding.%s", tagBindingResourceLabel)),
@@ -111,6 +120,64 @@ func testAccCheckTagBindingLiveExists(resourceName string) resource.TestCheckFun
 
 		return nil
 	}
+}
+
+func testAccCheckTagBindingLiveConfigStep1(endpoint, tagResourceLabel, schemaResourceLabel, tagName, subjectName, schemaRegistryId, schemaRegistryRestEndpoint, apiKey, apiSecret, schemaRegistryApiKey, schemaRegistryApiSecret string) string {
+	return fmt.Sprintf(`
+	provider "confluent" {
+		endpoint         = "%s"
+		cloud_api_key    = "%s"
+		cloud_api_secret = "%s"
+	}
+
+	# Create a tag to bind to the schema
+	resource "confluent_tag" "%s" {
+		name        = "%s"
+		description = "Live test tag for binding"
+
+		schema_registry_cluster {
+			id = "%s"
+		}
+
+		rest_endpoint = "%s"
+
+		credentials {
+			key    = "%s"
+			secret = "%s"
+		}
+	}
+
+	# Create a schema to bind the tag to
+	resource "confluent_schema" "%s" {
+		subject_name = "%s"
+		format       = "AVRO"
+		schema       = jsonencode({
+			type = "record"
+			name = "User"
+			fields = [
+				{
+					name = "id"
+					type = "int"
+				},
+				{
+					name = "name"
+					type = "string"
+				}
+			]
+		})
+
+		schema_registry_cluster {
+			id = "%s"
+		}
+
+		rest_endpoint = "%s"
+
+		credentials {
+			key    = "%s"
+			secret = "%s"
+		}
+	}
+	`, endpoint, apiKey, apiSecret, tagResourceLabel, tagName, schemaRegistryId, schemaRegistryRestEndpoint, schemaRegistryApiKey, schemaRegistryApiSecret, schemaResourceLabel, subjectName, schemaRegistryId, schemaRegistryRestEndpoint, schemaRegistryApiKey, schemaRegistryApiSecret)
 }
 
 func testAccCheckTagBindingLiveConfig(endpoint, tagResourceLabel, schemaResourceLabel, tagBindingResourceLabel, tagName, subjectName, schemaRegistryId, schemaRegistryRestEndpoint, apiKey, apiSecret, schemaRegistryApiKey, schemaRegistryApiSecret string) string {

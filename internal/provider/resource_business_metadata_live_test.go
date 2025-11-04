@@ -69,6 +69,15 @@ func TestAccBusinessMetadataLive(t *testing.T) {
 		CheckDestroy:      testAccCheckBusinessMetadataLiveDestroy,
 		Steps: []resource.TestStep{
 			{
+				// Step 1: Create business metadata first to allow it to propagate
+				Config: testAccCheckBusinessMetadataLiveConfig(endpoint, businessMetadataResourceLabel, businessMetadataName, schemaRegistryId, schemaRegistryRestEndpoint, apiKey, apiSecret, schemaRegistryApiKey, schemaRegistryApiSecret),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckBusinessMetadataLiveExists(fmt.Sprintf("confluent_business_metadata.%s", businessMetadataResourceLabel)),
+					// Only check basic existence in first step to allow propagation
+				),
+			},
+			{
+				// Step 2: Verify all attributes after propagation
 				Config: testAccCheckBusinessMetadataLiveConfig(endpoint, businessMetadataResourceLabel, businessMetadataName, schemaRegistryId, schemaRegistryRestEndpoint, apiKey, apiSecret, schemaRegistryApiKey, schemaRegistryApiSecret),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBusinessMetadataLiveExists(fmt.Sprintf("confluent_business_metadata.%s", businessMetadataResourceLabel)),
@@ -133,6 +142,15 @@ func TestAccBusinessMetadataUpdateLive(t *testing.T) {
 		CheckDestroy:      testAccCheckBusinessMetadataLiveDestroy,
 		Steps: []resource.TestStep{
 			{
+				// Step 1: Create business metadata first to allow it to propagate
+				Config: testAccCheckBusinessMetadataLiveConfig(endpoint, businessMetadataResourceLabel, businessMetadataName, schemaRegistryId, schemaRegistryRestEndpoint, apiKey, apiSecret, schemaRegistryApiKey, schemaRegistryApiSecret),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckBusinessMetadataLiveExists(fmt.Sprintf("confluent_business_metadata.%s", businessMetadataResourceLabel)),
+					// Only check basic existence in first step to allow propagation
+				),
+			},
+			{
+				// Step 2: Verify attributes after propagation, then update
 				Config: testAccCheckBusinessMetadataLiveConfig(endpoint, businessMetadataResourceLabel, businessMetadataName, schemaRegistryId, schemaRegistryRestEndpoint, apiKey, apiSecret, schemaRegistryApiKey, schemaRegistryApiSecret),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBusinessMetadataLiveExists(fmt.Sprintf("confluent_business_metadata.%s", businessMetadataResourceLabel)),
@@ -140,6 +158,15 @@ func TestAccBusinessMetadataUpdateLive(t *testing.T) {
 				),
 			},
 			{
+				// Step 3: Apply update after previous step has propagated
+				Config: testAccCheckBusinessMetadataUpdateLiveConfig(endpoint, businessMetadataResourceLabel, businessMetadataName, schemaRegistryId, schemaRegistryRestEndpoint, apiKey, apiSecret, schemaRegistryApiKey, schemaRegistryApiSecret),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckBusinessMetadataLiveExists(fmt.Sprintf("confluent_business_metadata.%s", businessMetadataResourceLabel)),
+					// Only check basic existence in update step to allow propagation
+				),
+			},
+			{
+				// Step 4: Verify update attributes after propagation
 				Config: testAccCheckBusinessMetadataUpdateLiveConfig(endpoint, businessMetadataResourceLabel, businessMetadataName, schemaRegistryId, schemaRegistryRestEndpoint, apiKey, apiSecret, schemaRegistryApiKey, schemaRegistryApiSecret),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBusinessMetadataLiveExists(fmt.Sprintf("confluent_business_metadata.%s", businessMetadataResourceLabel)),

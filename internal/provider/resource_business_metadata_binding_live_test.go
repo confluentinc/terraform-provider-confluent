@@ -72,6 +72,15 @@ func TestAccBusinessMetadataBindingLive(t *testing.T) {
 		CheckDestroy:      testAccCheckBusinessMetadataBindingLiveDestroy,
 		Steps: []resource.TestStep{
 			{
+				// Step 1: Create business metadata and schema first to allow them to propagate
+				Config: testAccCheckBusinessMetadataBindingLiveConfigStep1(endpoint, businessMetadataResourceLabel, schemaResourceLabel, businessMetadataName, subjectName, schemaRegistryId, schemaRegistryRestEndpoint, apiKey, apiSecret, schemaRegistryApiKey, schemaRegistryApiSecret),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_business_metadata.%s", businessMetadataResourceLabel), "name", businessMetadataName),
+					resource.TestCheckResourceAttrSet(fmt.Sprintf("confluent_schema.%s", schemaResourceLabel), "id"),
+				),
+			},
+			{
+				// Step 2: Create binding after business metadata has propagated
 				Config: testAccCheckBusinessMetadataBindingLiveConfig(endpoint, businessMetadataResourceLabel, schemaResourceLabel, businessMetadataBindingResourceLabel, businessMetadataName, subjectName, schemaRegistryId, schemaRegistryRestEndpoint, apiKey, apiSecret, schemaRegistryApiKey, schemaRegistryApiSecret),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBusinessMetadataBindingLiveExists(fmt.Sprintf("confluent_business_metadata_binding.%s", businessMetadataBindingResourceLabel)),
@@ -111,6 +120,72 @@ func testAccCheckBusinessMetadataBindingLiveExists(resourceName string) resource
 
 		return nil
 	}
+}
+
+func testAccCheckBusinessMetadataBindingLiveConfigStep1(endpoint, businessMetadataResourceLabel, schemaResourceLabel, businessMetadataName, subjectName, schemaRegistryId, schemaRegistryRestEndpoint, apiKey, apiSecret, schemaRegistryApiKey, schemaRegistryApiSecret string) string {
+	return fmt.Sprintf(`
+	provider "confluent" {
+		endpoint         = "%s"
+		cloud_api_key    = "%s"
+		cloud_api_secret = "%s"
+	}
+
+	# Create business metadata to bind to the schema
+	resource "confluent_business_metadata" "%s" {
+		name        = "%s"
+		description = "Live test business metadata for binding"
+
+		attribute_definition {
+			name = "owner"
+		}
+
+		attribute_definition {
+			name = "department"
+		}
+
+		schema_registry_cluster {
+			id = "%s"
+		}
+
+		rest_endpoint = "%s"
+
+		credentials {
+			key    = "%s"
+			secret = "%s"
+		}
+	}
+
+	# Create a schema to bind the business metadata to
+	resource "confluent_schema" "%s" {
+		subject_name = "%s"
+		format       = "AVRO"
+		schema       = jsonencode({
+			type = "record"
+			name = "User"
+			fields = [
+				{
+					name = "id"
+					type = "int"
+				},
+				{
+					name = "name"
+					type = "string"
+				}
+			]
+		})
+
+		schema_registry_cluster {
+			id = "%s"
+		}
+
+		rest_endpoint = "%s"
+
+		credentials {
+			key    = "%s"
+			secret = "%s"
+		}
+	}
+	`, endpoint, apiKey, apiSecret, businessMetadataResourceLabel, businessMetadataName, schemaRegistryId, schemaRegistryRestEndpoint, schemaRegistryApiKey, schemaRegistryApiSecret, schemaResourceLabel, subjectName, schemaRegistryId, schemaRegistryRestEndpoint, schemaRegistryApiKey, schemaRegistryApiSecret)
 }
 
 func testAccCheckBusinessMetadataBindingLiveConfig(endpoint, businessMetadataResourceLabel, schemaResourceLabel, businessMetadataBindingResourceLabel, businessMetadataName, subjectName, schemaRegistryId, schemaRegistryRestEndpoint, apiKey, apiSecret, schemaRegistryApiKey, schemaRegistryApiSecret string) string {
