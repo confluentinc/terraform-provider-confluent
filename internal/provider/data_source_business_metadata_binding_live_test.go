@@ -21,13 +21,14 @@ import (
 	"math/rand"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
 func TestAccBusinessMetadataBindingDataSourceLive(t *testing.T) {
-	// Enable parallel execution for I/O bound operations
-	t.Parallel()
+	// Disable parallel execution to avoid resource name collisions and API propagation issues
+	// t.Parallel()
 
 	// Skip this test unless explicitly enabled
 	if os.Getenv("TF_ACC_PROD") == "" {
@@ -71,6 +72,16 @@ func TestAccBusinessMetadataBindingDataSourceLive(t *testing.T) {
 		ProviderFactories: testAccProviderFactories,
 		Steps: []resource.TestStep{
 			{
+				// Step 1: Create business metadata and schema first to allow them to propagate
+				Config: testAccCheckBusinessMetadataBindingDataSourceLiveConfigStep1(endpoint, businessMetadataResourceLabel, schemaResourceLabel, businessMetadataName, subjectName, schemaRegistryId, schemaRegistryRestEndpoint, apiKey, apiSecret, schemaRegistryApiKey, schemaRegistryApiSecret),
+				Check: resource.ComposeTestCheckFunc(
+					// Use retry logic to handle API propagation delays
+					testAccCheckResourceAttrWithRetry(fmt.Sprintf("confluent_business_metadata.%s", businessMetadataResourceLabel), "name", businessMetadataName, 5, 2*time.Second),
+					resource.TestCheckResourceAttrSet(fmt.Sprintf("confluent_schema.%s", schemaResourceLabel), "id"),
+				),
+			},
+			{
+				// Step 2: Create binding and data source after business metadata has propagated
 				Config: testAccCheckBusinessMetadataBindingDataSourceLiveConfig(endpoint, businessMetadataResourceLabel, schemaResourceLabel, businessMetadataBindingResourceLabel, businessMetadataBindingDataSourceLabel, businessMetadataName, subjectName, schemaRegistryId, schemaRegistryRestEndpoint, apiKey, apiSecret, schemaRegistryApiKey, schemaRegistryApiSecret),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(fmt.Sprintf("data.confluent_business_metadata_binding.%s", businessMetadataBindingDataSourceLabel), "business_metadata_name", businessMetadataName),
@@ -84,6 +95,72 @@ func TestAccBusinessMetadataBindingDataSourceLive(t *testing.T) {
 			},
 		},
 	})
+}
+
+func testAccCheckBusinessMetadataBindingDataSourceLiveConfigStep1(endpoint, businessMetadataResourceLabel, schemaResourceLabel, businessMetadataName, subjectName, schemaRegistryId, schemaRegistryRestEndpoint, apiKey, apiSecret, schemaRegistryApiKey, schemaRegistryApiSecret string) string {
+	return fmt.Sprintf(`
+	provider "confluent" {
+		endpoint         = "%s"
+		cloud_api_key    = "%s"
+		cloud_api_secret = "%s"
+	}
+
+	# Create business metadata to bind to the schema
+	resource "confluent_business_metadata" "%s" {
+		name        = "%s"
+		description = "Live test business metadata for binding data source"
+
+		attribute_definition {
+			name = "owner"
+		}
+
+		attribute_definition {
+			name = "department"
+		}
+
+		schema_registry_cluster {
+			id = "%s"
+		}
+
+		rest_endpoint = "%s"
+
+		credentials {
+			key    = "%s"
+			secret = "%s"
+		}
+	}
+
+	# Create a schema to bind the business metadata to
+	resource "confluent_schema" "%s" {
+		subject_name = "%s"
+		format       = "AVRO"
+		schema       = jsonencode({
+			type = "record"
+			name = "User"
+			fields = [
+				{
+					name = "id"
+					type = "int"
+				},
+				{
+					name = "name"
+					type = "string"
+				}
+			]
+		})
+
+		schema_registry_cluster {
+			id = "%s"
+		}
+
+		rest_endpoint = "%s"
+
+		credentials {
+			key    = "%s"
+			secret = "%s"
+		}
+	}
+	`, endpoint, apiKey, apiSecret, businessMetadataResourceLabel, businessMetadataName, schemaRegistryId, schemaRegistryRestEndpoint, schemaRegistryApiKey, schemaRegistryApiSecret, schemaResourceLabel, subjectName, schemaRegistryId, schemaRegistryRestEndpoint, schemaRegistryApiKey, schemaRegistryApiSecret)
 }
 
 func testAccCheckBusinessMetadataBindingDataSourceLiveConfig(endpoint, businessMetadataResourceLabel, schemaResourceLabel, businessMetadataBindingResourceLabel, businessMetadataBindingDataSourceLabel, businessMetadataName, subjectName, schemaRegistryId, schemaRegistryRestEndpoint, apiKey, apiSecret, schemaRegistryApiKey, schemaRegistryApiSecret string) string {
