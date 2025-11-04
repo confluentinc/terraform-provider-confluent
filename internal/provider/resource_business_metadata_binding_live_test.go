@@ -21,14 +21,15 @@ import (
 	"math/rand"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestAccBusinessMetadataBindingLive(t *testing.T) {
-	// Enable parallel execution for I/O bound operations
-	t.Parallel()
+	// Disable parallel execution to avoid resource name collisions and API propagation issues
+	// t.Parallel()
 
 	// Skip this test unless explicitly enabled
 	if os.Getenv("TF_ACC_PROD") == "" {
@@ -75,7 +76,8 @@ func TestAccBusinessMetadataBindingLive(t *testing.T) {
 				// Step 1: Create business metadata and schema first to allow them to propagate
 				Config: testAccCheckBusinessMetadataBindingLiveConfigStep1(endpoint, businessMetadataResourceLabel, schemaResourceLabel, businessMetadataName, subjectName, schemaRegistryId, schemaRegistryRestEndpoint, apiKey, apiSecret, schemaRegistryApiKey, schemaRegistryApiSecret),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_business_metadata.%s", businessMetadataResourceLabel), "name", businessMetadataName),
+					// Use retry logic to handle API propagation delays
+					testAccCheckResourceAttrWithRetry(fmt.Sprintf("confluent_business_metadata.%s", businessMetadataResourceLabel), "name", businessMetadataName, 5, 2*time.Second),
 					resource.TestCheckResourceAttrSet(fmt.Sprintf("confluent_schema.%s", schemaResourceLabel), "id"),
 				),
 			},

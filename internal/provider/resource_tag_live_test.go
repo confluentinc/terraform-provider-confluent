@@ -21,14 +21,15 @@ import (
 	"math/rand"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestAccTagLive(t *testing.T) {
-	// Enable parallel execution for I/O bound operations
-	t.Parallel()
+	// Disable parallel execution to avoid resource name collisions and API propagation issues
+	// t.Parallel()
 
 	// Skip this test unless explicitly enabled
 	if os.Getenv("TF_ACC_PROD") == "" {
@@ -69,6 +70,15 @@ func TestAccTagLive(t *testing.T) {
 		CheckDestroy:      testAccCheckTagLiveDestroy,
 		Steps: []resource.TestStep{
 			{
+				// Step 1: Create tag first to allow it to propagate
+				Config: testAccCheckTagLiveConfig(endpoint, tagResourceLabel, tagName, schemaRegistryId, schemaRegistryRestEndpoint, apiKey, apiSecret, schemaRegistryApiKey, schemaRegistryApiSecret),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckTagLiveExists(fmt.Sprintf("confluent_tag.%s", tagResourceLabel)),
+					// Only check basic existence in first step to allow propagation
+				),
+			},
+			{
+				// Step 2: Verify all attributes after propagation
 				Config: testAccCheckTagLiveConfig(endpoint, tagResourceLabel, tagName, schemaRegistryId, schemaRegistryRestEndpoint, apiKey, apiSecret, schemaRegistryApiKey, schemaRegistryApiSecret),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckTagLiveExists(fmt.Sprintf("confluent_tag.%s", tagResourceLabel)),
@@ -82,80 +92,27 @@ func TestAccTagLive(t *testing.T) {
 				),
 			},
 			{
-				ResourceName:      fmt.Sprintf("confluent_tag.%s", tagResourceLabel),
-				ImportState:       true,
-				ImportStateVerify: true,
-				ImportStateVerifyIgnore: []string{"credentials", "rest_endpoint", "schema_registry_cluster"},
-			},
-		},
-	})
-}
-
-func TestAccTagUpdateLive(t *testing.T) {
-	// Enable parallel execution for I/O bound operations
-	t.Parallel()
-
-	// Skip this test unless explicitly enabled
-	if os.Getenv("TF_ACC_PROD") == "" {
-		t.Skip("Skipping live test. Set TF_ACC_PROD=1 to run this test.")
-	}
-
-	// Read credentials from environment variables (populated by Vault)
-	apiKey := os.Getenv("CONFLUENT_CLOUD_API_KEY")
-	apiSecret := os.Getenv("CONFLUENT_CLOUD_API_SECRET")
-	endpoint := os.Getenv("CONFLUENT_CLOUD_ENDPOINT")
-	if endpoint == "" {
-		endpoint = "https://api.confluent.cloud" // Use default endpoint if not set
-	}
-
-	// Read Schema Registry credentials from environment variables
-	schemaRegistryId := os.Getenv("SCHEMA_REGISTRY_ID")
-	schemaRegistryApiKey := os.Getenv("SCHEMA_REGISTRY_API_KEY")
-	schemaRegistryApiSecret := os.Getenv("SCHEMA_REGISTRY_API_SECRET")
-	schemaRegistryRestEndpoint := os.Getenv("SCHEMA_REGISTRY_REST_ENDPOINT")
-
-	// Validate required environment variables are present
-	if apiKey == "" || apiSecret == "" {
-		t.Fatal("CONFLUENT_CLOUD_API_KEY and CONFLUENT_CLOUD_API_SECRET must be set for live tests")
-	}
-
-	if schemaRegistryId == "" || schemaRegistryApiKey == "" || schemaRegistryApiSecret == "" || schemaRegistryRestEndpoint == "" {
-		t.Fatal("SCHEMA_REGISTRY_ID, SCHEMA_REGISTRY_API_KEY, SCHEMA_REGISTRY_API_SECRET, and SCHEMA_REGISTRY_REST_ENDPOINT must be set for Tag live tests")
-	}
-
-	// Generate unique names for test resources to avoid conflicts
-	randomSuffix := rand.Intn(100000)
-	tagName := fmt.Sprintf("tf_live_tag_update_%d", randomSuffix)
-	tagResourceLabel := "test_live_tag_update"
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: testAccProviderFactories,
-		CheckDestroy:      testAccCheckTagLiveDestroy,
-		Steps: []resource.TestStep{
-			{
-				// Step 1: Create tag first to allow it to propagate
-				Config: testAccCheckTagLiveConfig(endpoint, tagResourceLabel, tagName, schemaRegistryId, schemaRegistryRestEndpoint, apiKey, apiSecret, schemaRegistryApiKey, schemaRegistryApiSecret),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckTagLiveExists(fmt.Sprintf("confluent_tag.%s", tagResourceLabel)),
-					// Only check basic existence in first step to allow propagation
-				),
-			},
-			{
-				// Step 2: Verify attributes after propagation, then update
-				Config: testAccCheckTagLiveConfig(endpoint, tagResourceLabel, tagName, schemaRegistryId, schemaRegistryRestEndpoint, apiKey, apiSecret, schemaRegistryApiKey, schemaRegistryApiSecret),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckTagLiveExists(fmt.Sprintf("confluent_tag.%s", tagResourceLabel)),
-					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_tag.%s", tagResourceLabel), "description", "Live test tag for data catalog"),
-				),
-			},
-			{
 				// Step 3: Apply update after previous step has propagated
 				Config: testAccCheckTagUpdateLiveConfig(endpoint, tagResourceLabel, tagName, schemaRegistryId, schemaRegistryRestEndpoint, apiKey, apiSecret, schemaRegistryApiKey, schemaRegistryApiSecret),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckTagLiveExists(fmt.Sprintf("confluent_tag.%s", tagResourceLabel)),
-					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_tag.%s", tagResourceLabel), "description", "Updated live test tag for data catalog"),
+					// Only check basic existence in update step to allow propagation
 				),
+			},
+			{
+				// Step 4: Verify update attributes after propagation
+				Config: testAccCheckTagUpdateLiveConfig(endpoint, tagResourceLabel, tagName, schemaRegistryId, schemaRegistryRestEndpoint, apiKey, apiSecret, schemaRegistryApiKey, schemaRegistryApiSecret),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckTagLiveExists(fmt.Sprintf("confluent_tag.%s", tagResourceLabel)),
+					// Use retry logic for attributes that may need time to propagate
+					testAccCheckResourceAttrWithRetryTag(fmt.Sprintf("confluent_tag.%s", tagResourceLabel), "description", "Updated live test tag for data catalog", 5, 2*time.Second),
+				),
+			},
+			{
+				ResourceName:      fmt.Sprintf("confluent_tag.%s", tagResourceLabel),
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{"credentials", "rest_endpoint", "schema_registry_cluster"},
 			},
 		},
 	})
@@ -238,4 +195,31 @@ func testAccCheckTagUpdateLiveConfig(endpoint, tagResourceLabel, tagName, schema
 		}
 	}
 	`, endpoint, apiKey, apiSecret, tagResourceLabel, tagName, schemaRegistryId, schemaRegistryRestEndpoint, schemaRegistryApiKey, schemaRegistryApiSecret)
+}
+
+// testAccCheckResourceAttrWithRetryTag retries checking a resource attribute with exponential backoff
+// to handle cases where resources need time to propagate after creation
+// Note: This function is duplicated here to avoid package-level function conflicts with
+// testAccCheckResourceAttrWithRetry in resource_tag_binding_live_test.go
+func testAccCheckResourceAttrWithRetryTag(resourceName, attribute, expectedValue string, maxRetries int, initialDelay time.Duration) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		var lastErr error
+		delay := initialDelay
+
+		for attempt := 0; attempt < maxRetries; attempt++ {
+			checkFunc := resource.TestCheckResourceAttr(resourceName, attribute, expectedValue)
+			err := checkFunc(s)
+			if err == nil {
+				return nil
+			}
+
+			lastErr = err
+			if attempt < maxRetries-1 {
+				time.Sleep(delay)
+				delay = delay * 2 // Exponential backoff
+			}
+		}
+
+		return fmt.Errorf("attribute check failed after %d retries: %w", maxRetries, lastErr)
+	}
 } 

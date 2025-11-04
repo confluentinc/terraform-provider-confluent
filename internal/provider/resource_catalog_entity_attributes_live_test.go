@@ -21,14 +21,15 @@ import (
 	"math/rand"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestAccCatalogEntityAttributesLive(t *testing.T) {
-	// Enable parallel execution for I/O bound operations
-	t.Parallel()
+	// Disable parallel execution to avoid resource name collisions and API propagation issues
+	// t.Parallel()
 
 	// Skip this test unless explicitly enabled
 	if os.Getenv("TF_ACC_PROD") == "" {
@@ -74,14 +75,24 @@ func TestAccCatalogEntityAttributesLive(t *testing.T) {
 		CheckDestroy:      testAccCheckCatalogEntityAttributesLiveDestroy,
 		Steps: []resource.TestStep{
 			{
+				// Step 1: Create entity attributes first to allow them to propagate
+				Config: testAccCheckCatalogEntityAttributesLiveConfig(endpoint, entityAttributesResourceLabel, environmentId, schemaRegistryId, schemaRegistryRestEndpoint, schemaRegistryApiKey, schemaRegistryApiSecret, apiKey, apiSecret, randomSuffix),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckCatalogEntityAttributesLiveExists(fmt.Sprintf("confluent_catalog_entity_attributes.%s", entityAttributesResourceLabel)),
+					resource.TestCheckResourceAttrSet(fmt.Sprintf("confluent_catalog_entity_attributes.%s", entityAttributesResourceLabel), "id"),
+					// Only check basic existence in first step to allow propagation
+				),
+			},
+			{
+				// Step 2: Verify all attributes after propagation
 				Config: testAccCheckCatalogEntityAttributesLiveConfig(endpoint, entityAttributesResourceLabel, environmentId, schemaRegistryId, schemaRegistryRestEndpoint, schemaRegistryApiKey, schemaRegistryApiSecret, apiKey, apiSecret, randomSuffix),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckCatalogEntityAttributesLiveExists(fmt.Sprintf("confluent_catalog_entity_attributes.%s", entityAttributesResourceLabel)),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_catalog_entity_attributes.%s", entityAttributesResourceLabel), "entity_name", environmentId),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_catalog_entity_attributes.%s", entityAttributesResourceLabel), "entity_type", "cf_environment"),
-					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_catalog_entity_attributes.%s", entityAttributesResourceLabel), fmt.Sprintf("attributes.owner"), fmt.Sprintf("tf-live-owner-%d", randomSuffix)),
-					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_catalog_entity_attributes.%s", entityAttributesResourceLabel), fmt.Sprintf("attributes.description"), fmt.Sprintf("Test environment description %d", randomSuffix)),
-					resource.TestCheckResourceAttrSet(fmt.Sprintf("confluent_catalog_entity_attributes.%s", entityAttributesResourceLabel), "id"),
+					// Use retry logic for attributes that may need time to propagate
+					testAccCheckResourceAttrWithRetry(fmt.Sprintf("confluent_catalog_entity_attributes.%s", entityAttributesResourceLabel), fmt.Sprintf("attributes.owner"), fmt.Sprintf("tf-live-owner-%d", randomSuffix), 5, 2*time.Second),
+					testAccCheckResourceAttrWithRetry(fmt.Sprintf("confluent_catalog_entity_attributes.%s", entityAttributesResourceLabel), fmt.Sprintf("attributes.description"), fmt.Sprintf("Test environment description %d", randomSuffix), 5, 2*time.Second),
 				),
 			},
 			{

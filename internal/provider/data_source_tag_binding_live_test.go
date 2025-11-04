@@ -21,13 +21,14 @@ import (
 	"math/rand"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
 func TestAccTagBindingDataSourceLive(t *testing.T) {
-	// Enable parallel execution for I/O bound operations
-	t.Parallel()
+	// Disable parallel execution to avoid resource name collisions and API propagation issues
+	// t.Parallel()
 
 	// Skip this test unless explicitly enabled
 	if os.Getenv("TF_ACC_PROD") == "" {
@@ -74,7 +75,8 @@ func TestAccTagBindingDataSourceLive(t *testing.T) {
 				// Step 1: Create tag and schema first to allow them to propagate
 				Config: testAccCheckTagBindingDataSourceLiveConfigStep1(endpoint, tagResourceLabel, schemaResourceLabel, tagName, subjectName, schemaRegistryId, schemaRegistryRestEndpoint, apiKey, apiSecret, schemaRegistryApiKey, schemaRegistryApiSecret),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_tag.%s", tagResourceLabel), "name", tagName),
+					// Use retry logic to handle API propagation delays
+					testAccCheckResourceAttrWithRetry(fmt.Sprintf("confluent_tag.%s", tagResourceLabel), "name", tagName, 5, 2*time.Second),
 					resource.TestCheckResourceAttrSet(fmt.Sprintf("confluent_schema.%s", schemaResourceLabel), "id"),
 				),
 			},

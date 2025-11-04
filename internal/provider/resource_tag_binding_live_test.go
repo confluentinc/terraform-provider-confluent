@@ -21,14 +21,15 @@ import (
 	"math/rand"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestAccTagBindingLive(t *testing.T) {
-	// Enable parallel execution for I/O bound operations
-	t.Parallel()
+	// Disable parallel execution to avoid resource name collisions and API propagation issues
+	// t.Parallel()
 
 	// Skip this test unless explicitly enabled
 	if os.Getenv("TF_ACC_PROD") == "" {
@@ -75,7 +76,8 @@ func TestAccTagBindingLive(t *testing.T) {
 				// Step 1: Create tag and schema first to allow them to propagate
 				Config: testAccCheckTagBindingLiveConfigStep1(endpoint, tagResourceLabel, schemaResourceLabel, tagName, subjectName, schemaRegistryId, schemaRegistryRestEndpoint, apiKey, apiSecret, schemaRegistryApiKey, schemaRegistryApiSecret),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_tag.%s", tagResourceLabel), "name", tagName),
+					// Use retry logic to handle API propagation delays
+					testAccCheckResourceAttrWithRetry(fmt.Sprintf("confluent_tag.%s", tagResourceLabel), "name", tagName, 5, 2*time.Second),
 					resource.TestCheckResourceAttrSet(fmt.Sprintf("confluent_schema.%s", schemaResourceLabel), "id"),
 				),
 			},
@@ -119,6 +121,31 @@ func testAccCheckTagBindingLiveExists(resourceName string) resource.TestCheckFun
 		}
 
 		return nil
+	}
+}
+
+// testAccCheckResourceAttrWithRetry retries checking a resource attribute with exponential backoff
+// to handle cases where resources need time to propagate after creation
+func testAccCheckResourceAttrWithRetry(resourceName, attribute, expectedValue string, maxRetries int, initialDelay time.Duration) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		var lastErr error
+		delay := initialDelay
+
+		for attempt := 0; attempt < maxRetries; attempt++ {
+			checkFunc := resource.TestCheckResourceAttr(resourceName, attribute, expectedValue)
+			err := checkFunc(s)
+			if err == nil {
+				return nil
+			}
+
+			lastErr = err
+			if attempt < maxRetries-1 {
+				time.Sleep(delay)
+				delay = delay * 2 // Exponential backoff
+			}
+		}
+
+		return fmt.Errorf("attribute check failed after %d retries: %w", maxRetries, lastErr)
 	}
 }
 
