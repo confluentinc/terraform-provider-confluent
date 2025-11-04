@@ -63,7 +63,7 @@ func TestAccKafkaClustersDataSourceLive(t *testing.T) {
 					resource.TestCheckResourceAttr(fullKafkaClustersDataSourceLabel, "clusters.0.availability", "HIGH"),
 					resource.TestCheckResourceAttr(fullKafkaClustersDataSourceLabel, "clusters.0.bootstrap_endpoint", "SASL_SSL://pkc-921jm.us-east-2.aws.confluent.cloud:9092"),
 					resource.TestCheckResourceAttr(fullKafkaClustersDataSourceLabel, "clusters.0.cloud", "AWS"),
-					resource.TestCheckResourceAttr(fullKafkaClustersDataSourceLabel, "clusters.1.region", "us-east-2"),
+					resource.TestCheckResourceAttr(fullKafkaClustersDataSourceLabel, "clusters.0.region", "us-east-2"),
 					resource.TestCheckResourceAttr(fullKafkaClustersDataSourceLabel, "clusters.0.basic.#", "0"),
 					resource.TestCheckResourceAttr(fullKafkaClustersDataSourceLabel, "clusters.0.standard.#", "1"),
 					resource.TestCheckResourceAttr(fullKafkaClustersDataSourceLabel, "clusters.0.standard.0.%", "0"),
