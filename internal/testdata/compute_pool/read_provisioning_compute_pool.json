@@ -21,6 +21,7 @@
     },
     "http_endpoint": "https://flink.us-east-2.aws.confluent.cloud/sql/v1alpha1/environments/env-gz903",
     "max_cfu": 5,
+    "default_pool": true,
     "region": "us-east-2"
   },
   "status": {

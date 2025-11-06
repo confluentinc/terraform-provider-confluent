@@ -90,6 +90,7 @@ const (
 	roleBindingLoggingKey                     = "role_binding_id"
 	apiKeyLoggingKey                          = "api_key_id"
 	computePoolLoggingKey                     = "compute_pool_id"
+	computePoolLoggingConfigKey               = "compute_pool_config_id"
 	flinkArtifactLoggingKey                   = "flink_artifact_id"
 	flinkConnectionLoggingKey                 = "flink_connection_id"
 	flinkStatementLoggingKey                  = "flink_statement_key_id"
@@ -1495,7 +1496,7 @@ func extractCredentialConfigs(configs []kafkarestv3.ConfigData) []kafkarestv3.Al
 func validateAllOrNoneAttributesSetForResources(
 	kafkaApiKey, kafkaApiSecret, kafkaID, kafkaRestEndpoint,
 	schemaRegistryApiKey, schemaRegistryApiSecret, schemaRegistryClusterId, schemaRegistryRestEndpoint, catalogRestEndpoint,
-	flinkApiKey, flinkApiSecret, flinkOrganizationId, flinkEnvironmentId, flinkComputePoolId, flinkRestEndpoint, flinkPrincipalId,
+	flinkApiKey, flinkApiSecret, flinkOrganizationId, flinkEnvironmentId, flinkRestEndpoint, flinkPrincipalId,
 	tableflowApiKey, tableflowApiSecret string) (ResourceMetadataSetFlags, diag.Diagnostics) {
 	var flags ResourceMetadataSetFlags
 	// 3 or 4 attributes should be set or not set at the same time
@@ -1521,11 +1522,11 @@ func validateAllOrNoneAttributesSetForResources(
 	flags.isCatalogMetadataSet = allSchemaRegistryAttributesAreSet
 
 	// All 7 attributes should be set or not set at the same time
-	allFlinkAttributesAreSet := (flinkApiKey != "") && (flinkApiSecret != "") && (flinkRestEndpoint != "") && (flinkOrganizationId != "") && (flinkEnvironmentId != "") && (flinkComputePoolId != "") && (flinkPrincipalId != "")
-	allFlinkAttributesAreNotSet := (flinkApiKey == "") && (flinkApiSecret == "") && (flinkRestEndpoint == "") && (flinkOrganizationId == "") && (flinkEnvironmentId == "") && (flinkComputePoolId == "") && (flinkPrincipalId == "")
+	allFlinkAttributesAreSet := (flinkApiKey != "") && (flinkApiSecret != "") && (flinkRestEndpoint != "") && (flinkOrganizationId != "") && (flinkEnvironmentId != "") && (flinkPrincipalId != "")
+	allFlinkAttributesAreNotSet := (flinkApiKey == "") && (flinkApiSecret == "") && (flinkRestEndpoint == "") && (flinkOrganizationId == "") && (flinkEnvironmentId == "") && (flinkPrincipalId == "")
 	justSubsetOfFlinkAttributesAreSet := !(allFlinkAttributesAreSet || allFlinkAttributesAreNotSet)
 	if justSubsetOfFlinkAttributesAreSet {
-		return flags, diag.Errorf("All 7 flink_api_key, flink_api_secret, flink_rest_endpoint, organization_id, environment_id, flink_compute_pool_id, flink_principal_id attributes should be set or not set in the provider block at the same time")
+		return flags, diag.Errorf("All 6 flink_api_key, flink_api_secret, flink_rest_endpoint, organization_id, environment_id, flink_principal_id attributes should be set or not set in the provider block at the same time")
 	}
 	flags.isFlinkMetadataSet = allFlinkAttributesAreSet
 
@@ -1543,7 +1544,7 @@ func validateAllOrNoneAttributesSetForResources(
 func validateAllOrNoneAttributesSetForResourcesWithOAuth(
 	kafkaID, kafkaRestEndpoint,
 	srID, srRestEndpoint, catalogRestEndpoint,
-	flinkOrganizationId, flinkEnvironmentId, flinkComputePoolId, flinkRestEndpoint, flinkPrincipalId string) (ResourceMetadataSetFlags, diag.Diagnostics) {
+	flinkOrganizationId, flinkEnvironmentId, flinkRestEndpoint, flinkPrincipalId string) (ResourceMetadataSetFlags, diag.Diagnostics) {
 	var flags ResourceMetadataSetFlags
 	// When OAuth is enabled, the Kafka ID and rest endpoint should be set or not set at the same time
 	allKafkaAttributesAreSet := (kafkaID != "") && (kafkaRestEndpoint != "")
@@ -1566,11 +1567,11 @@ func validateAllOrNoneAttributesSetForResourcesWithOAuth(
 	flags.isCatalogMetadataSet = allSchemaRegistryAttributesAreSet
 
 	// When OAuth is enabled, all Flink related attributes below should be set or not set at the same time
-	allFlinkAttributesAreSet := (flinkRestEndpoint != "") && (flinkOrganizationId != "") && (flinkEnvironmentId != "") && (flinkComputePoolId != "") && (flinkPrincipalId != "")
-	allFlinkAttributesAreNotSet := (flinkRestEndpoint == "") && (flinkOrganizationId == "") && (flinkEnvironmentId == "") && (flinkComputePoolId == "") && (flinkPrincipalId == "")
+	allFlinkAttributesAreSet := (flinkRestEndpoint != "") && (flinkOrganizationId != "") && (flinkEnvironmentId != "") && (flinkPrincipalId != "")
+	allFlinkAttributesAreNotSet := (flinkRestEndpoint == "") && (flinkOrganizationId == "") && (flinkEnvironmentId == "") && (flinkPrincipalId == "")
 	justSubsetOfFlinkAttributesAreSet := !(allFlinkAttributesAreSet || allFlinkAttributesAreNotSet)
 	if justSubsetOfFlinkAttributesAreSet {
-		return flags, diag.Errorf("All 5 (flink_rest_endpoint, organization_id, environment_id, flink_compute_pool_id, flink_principal_id) attributes should be set or not set in the provider block at the same time with OAuth enabled")
+		return flags, diag.Errorf("All 4 (flink_rest_endpoint, organization_id, environment_id, flink_principal_id) attributes should be set or not set in the provider block at the same time with OAuth enabled")
 	}
 	flags.isFlinkMetadataSet = allFlinkAttributesAreSet
 
