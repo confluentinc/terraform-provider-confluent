@@ -79,6 +79,7 @@ func tableflowTopicDataSource() *schema.Resource {
 			paramCredentials:    credentialsSchema(),
 			paramByobAws:        byobAwsDataSourceSchema(),
 			paramManagedStorage: managedStorageDataSourceSchema(),
+			paramAzureStorage:   azureStorageDataSourceSchema(),
 			paramErrorHandling:  errorHandlingDataSourceSchema(),
 		},
 	}
@@ -134,6 +135,37 @@ func byobAwsDataSourceSchema() *schema.Schema {
 					Computed: true,
 				},
 				paramProviderIntegrationId: {
+					Type:     schema.TypeString,
+					Computed: true,
+				},
+			},
+		},
+		Computed: true,
+	}
+}
+
+func azureStorageDataSourceSchema() *schema.Schema {
+	return &schema.Schema{
+		Type: schema.TypeList,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramStorageAccount: {
+					Type:     schema.TypeString,
+					Computed: true,
+				},
+				paramContainerName: {
+					Type:     schema.TypeString,
+					Computed: true,
+				},
+				paramProviderIntegrationId: {
+					Type:     schema.TypeString,
+					Computed: true,
+				},
+				paramStorageRegion: {
+					Type:     schema.TypeString,
+					Computed: true,
+				},
+				paramTablePath: {
 					Type:     schema.TypeString,
 					Computed: true,
 				},
