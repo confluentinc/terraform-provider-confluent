@@ -1496,7 +1496,7 @@ func extractCredentialConfigs(configs []kafkarestv3.ConfigData) []kafkarestv3.Al
 func validateAllOrNoneAttributesSetForResources(
 	kafkaApiKey, kafkaApiSecret, kafkaID, kafkaRestEndpoint,
 	schemaRegistryApiKey, schemaRegistryApiSecret, schemaRegistryClusterId, schemaRegistryRestEndpoint, catalogRestEndpoint,
-	flinkApiKey, flinkApiSecret, flinkOrganizationId, flinkEnvironmentId, flinkComputePoolId, flinkRestEndpoint, flinkPrincipalId,
+	flinkApiKey, flinkApiSecret, flinkOrganizationId, flinkEnvironmentId, flinkRestEndpoint, flinkPrincipalId,
 	tableflowApiKey, tableflowApiSecret string) (ResourceMetadataSetFlags, diag.Diagnostics) {
 	var flags ResourceMetadataSetFlags
 	// 3 or 4 attributes should be set or not set at the same time
@@ -1544,7 +1544,7 @@ func validateAllOrNoneAttributesSetForResources(
 func validateAllOrNoneAttributesSetForResourcesWithOAuth(
 	kafkaID, kafkaRestEndpoint,
 	srID, srRestEndpoint, catalogRestEndpoint,
-	flinkOrganizationId, flinkEnvironmentId, flinkComputePoolId, flinkRestEndpoint, flinkPrincipalId string) (ResourceMetadataSetFlags, diag.Diagnostics) {
+	flinkOrganizationId, flinkEnvironmentId, flinkRestEndpoint, flinkPrincipalId string) (ResourceMetadataSetFlags, diag.Diagnostics) {
 	var flags ResourceMetadataSetFlags
 	// When OAuth is enabled, the Kafka ID and rest endpoint should be set or not set at the same time
 	allKafkaAttributesAreSet := (kafkaID != "") && (kafkaRestEndpoint != "")

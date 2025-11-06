@@ -682,14 +682,14 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 		if resourceMetadataFlags, err = validateAllOrNoneAttributesSetForResourcesWithOAuth(
 			kafkaClusterId, kafkaRestEndpoint,
 			schemaRegistryClusterId, schemaRegistryRestEndpoint, catalogRestEndpoint,
-			flinkOrganizationId, flinkEnvironmentId, flinkComputePoolId, flinkRestEndpoint, flinkPrincipalId); err != nil {
+			flinkOrganizationId, flinkEnvironmentId, flinkRestEndpoint, flinkPrincipalId); err != nil {
 			return nil, err
 		}
 	} else {
 		resourceMetadataFlags, err = validateAllOrNoneAttributesSetForResources(
 			kafkaApiKey, kafkaApiSecret, kafkaClusterId, kafkaRestEndpoint,
 			schemaRegistryApiKey, schemaRegistryApiSecret, schemaRegistryClusterId, schemaRegistryRestEndpoint, catalogRestEndpoint,
-			flinkApiKey, flinkApiSecret, flinkOrganizationId, flinkEnvironmentId, flinkComputePoolId, flinkRestEndpoint, flinkPrincipalId,
+			flinkApiKey, flinkApiSecret, flinkOrganizationId, flinkEnvironmentId, flinkRestEndpoint, flinkPrincipalId,
 			tableflowApiKey, tableflowApiSecret)
 		if err != nil {
 			return nil, err
