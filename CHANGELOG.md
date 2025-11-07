@@ -1,3 +1,23 @@
+## 2.52.0 (November 6th, 2025)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.51.0...v2.52.0)
+
+**New Features:**
+* Added the `confluent_provider_integration` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_provider_integration) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_provider_integration) for Azure and GCP in a General Availability lifecycle stage.
+* Added the `confluent_kafka_clusters` [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_kafka_clusters) in a General Availability lifecycle stage.
+
+## 2.51.0 (October 24th, 2025)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.50.0...v2.51.0)
+
+**New Features:**
+* Added support for a new optional `error_handling` block to `confluent_tableflow_topic` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_tableflow_topic) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_tableflow_topic) in a General Availability lifecycle stage.
+* Updated the `confluent_schema` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema) to support in-place update for the `recreate_on_update` attribute.
+* Updated the `confluent_cluster_link` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_cluster_link) to support in-place update for four different credentials attributes.
+
+**Bug Fixes:**
+* Fixed validation error when migrating from API key/secret to OAuth authentication in the provider block.
+
 ## 2.50.0 (October 15th, 2025)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.49.0...v2.50.0)
