@@ -1,3 +1,11 @@
+## 2.52.0 (November 6th, 2025)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.51.0...v2.52.0)
+
+**New Features:**
+* Added the `confluent_provider_integration` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_provider_integration) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_provider_integration) for Azure and GCP in a General Availability lifecycle stage.
+* Added the `confluent_kafka_clusters` [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_kafka_clusters) in a General Availability lifecycle stage.
+
 ## 2.51.0 (October 24th, 2025)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.50.0...v2.51.0)
