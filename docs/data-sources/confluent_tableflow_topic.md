@@ -98,3 +98,9 @@ In addition to the preceding arguments, the following attributes are exported:
     - `bucket_region` - (Required String) The bucket region.
     - `provider_integration_id` - (Required String) The provider integration id.
 - `managed_storage` (Optional Configuration Block) The configuration of the Confluent managed bucket.
+- `azure_data_lake_storage_gen_2` (Optional Configuration Block) supports the following:
+    - `container_name` - (Required String) The container name.
+    - `storage_account_name` - (Required String) The storage account name.
+    - `provider_integration_id` - (Required String) The provider integration id.
+    - `storage_region` - (Required String) The storage region.
+
