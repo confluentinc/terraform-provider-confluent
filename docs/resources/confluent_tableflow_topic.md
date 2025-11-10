@@ -76,7 +76,7 @@ resource "confluent_tableflow_topic" "example" {
   }
 }
 ```
-### Option #3: Manage azure Tableflow Topics in Terraform workspace
+### Option #3: Manage Azure Tableflow Topics in Terraform workspace
 
 ```terraform
 provider "confluent" {

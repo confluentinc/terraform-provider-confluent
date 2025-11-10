@@ -211,15 +211,6 @@ func TestAccTableflowTopicAzure(t *testing.T) {
 		))
 
 	tableflowTopicReadUrlPath := fmt.Sprintf("%s/topic_1", tableflowTopicUrlPath)
-	/*_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(tableflowTopicReadUrlPath)).
-	InScenario(byobAwsTableflowTopicScenarioName).
-	WhenScenarioStateIs(scenarioStateTableflowTopicIsProvisioning).
-	WillSetStateTo(scenarioStateTableflowTopicHasBeenCreated).
-	WillReturn(
-		string(createTableflowTopicResponse),
-		contentTypeJSONHeader,
-		http.StatusOK,
-	))*/
 
 	readCreatedTableflowTopicResponse, _ := os.ReadFile("../testdata/tableflow_topic/read_created_azure_tt.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(tableflowTopicReadUrlPath)).
