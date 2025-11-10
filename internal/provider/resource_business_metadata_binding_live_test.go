@@ -21,14 +21,15 @@ import (
 	"math/rand"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestAccBusinessMetadataBindingLive(t *testing.T) {
-	// Enable parallel execution for I/O bound operations
-	t.Parallel()
+	// Disable parallel execution to avoid resource name collisions and API propagation issues
+	// t.Parallel()
 
 	// Skip this test unless explicitly enabled
 	if os.Getenv("TF_ACC_PROD") == "" {
@@ -72,6 +73,16 @@ func TestAccBusinessMetadataBindingLive(t *testing.T) {
 		CheckDestroy:      testAccCheckBusinessMetadataBindingLiveDestroy,
 		Steps: []resource.TestStep{
 			{
+				// Step 1: Create business metadata and schema first to allow them to propagate
+				Config: testAccCheckBusinessMetadataBindingLiveConfigStep1(endpoint, businessMetadataResourceLabel, schemaResourceLabel, businessMetadataName, subjectName, schemaRegistryId, schemaRegistryRestEndpoint, apiKey, apiSecret, schemaRegistryApiKey, schemaRegistryApiSecret),
+				Check: resource.ComposeTestCheckFunc(
+					// Use retry logic to handle API propagation delays
+					testAccCheckResourceAttrWithRetry(fmt.Sprintf("confluent_business_metadata.%s", businessMetadataResourceLabel), "name", businessMetadataName, 5, 2*time.Second),
+					resource.TestCheckResourceAttrSet(fmt.Sprintf("confluent_schema.%s", schemaResourceLabel), "id"),
+				),
+			},
+			{
+				// Step 2: Create binding after business metadata has propagated
 				Config: testAccCheckBusinessMetadataBindingLiveConfig(endpoint, businessMetadataResourceLabel, schemaResourceLabel, businessMetadataBindingResourceLabel, businessMetadataName, subjectName, schemaRegistryId, schemaRegistryRestEndpoint, apiKey, apiSecret, schemaRegistryApiKey, schemaRegistryApiSecret),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBusinessMetadataBindingLiveExists(fmt.Sprintf("confluent_business_metadata_binding.%s", businessMetadataBindingResourceLabel)),
@@ -111,6 +122,72 @@ func testAccCheckBusinessMetadataBindingLiveExists(resourceName string) resource
 
 		return nil
 	}
+}
+
+func testAccCheckBusinessMetadataBindingLiveConfigStep1(endpoint, businessMetadataResourceLabel, schemaResourceLabel, businessMetadataName, subjectName, schemaRegistryId, schemaRegistryRestEndpoint, apiKey, apiSecret, schemaRegistryApiKey, schemaRegistryApiSecret string) string {
+	return fmt.Sprintf(`
+	provider "confluent" {
+		endpoint         = "%s"
+		cloud_api_key    = "%s"
+		cloud_api_secret = "%s"
+	}
+
+	# Create business metadata to bind to the schema
+	resource "confluent_business_metadata" "%s" {
+		name        = "%s"
+		description = "Live test business metadata for binding"
+
+		attribute_definition {
+			name = "owner"
+		}
+
+		attribute_definition {
+			name = "department"
+		}
+
+		schema_registry_cluster {
+			id = "%s"
+		}
+
+		rest_endpoint = "%s"
+
+		credentials {
+			key    = "%s"
+			secret = "%s"
+		}
+	}
+
+	# Create a schema to bind the business metadata to
+	resource "confluent_schema" "%s" {
+		subject_name = "%s"
+		format       = "AVRO"
+		schema       = jsonencode({
+			type = "record"
+			name = "User"
+			fields = [
+				{
+					name = "id"
+					type = "int"
+				},
+				{
+					name = "name"
+					type = "string"
+				}
+			]
+		})
+
+		schema_registry_cluster {
+			id = "%s"
+		}
+
+		rest_endpoint = "%s"
+
+		credentials {
+			key    = "%s"
+			secret = "%s"
+		}
+	}
+	`, endpoint, apiKey, apiSecret, businessMetadataResourceLabel, businessMetadataName, schemaRegistryId, schemaRegistryRestEndpoint, schemaRegistryApiKey, schemaRegistryApiSecret, schemaResourceLabel, subjectName, schemaRegistryId, schemaRegistryRestEndpoint, schemaRegistryApiKey, schemaRegistryApiSecret)
 }
 
 func testAccCheckBusinessMetadataBindingLiveConfig(endpoint, businessMetadataResourceLabel, schemaResourceLabel, businessMetadataBindingResourceLabel, businessMetadataName, subjectName, schemaRegistryId, schemaRegistryRestEndpoint, apiKey, apiSecret, schemaRegistryApiKey, schemaRegistryApiSecret string) string {
