@@ -302,8 +302,9 @@ func TestAccProviderIntegrationSetupGcpLive(t *testing.T) {
 					resource.TestCheckResourceAttrSet(fullAuthResourceLabel, fmt.Sprintf("gcp.0.%s", paramGcpGoogleServiceAccount)),
 
 					// Verify Confluent service account follows expected pattern
+					// Pattern matches both staging (cflt-cspi-stag-1) and production (cflt-cspi-1) formats
 					resource.TestMatchResourceAttr(fullAuthResourceLabel, fmt.Sprintf("gcp.0.%s", paramGcpGoogleServiceAccount),
-						regexp.MustCompile(`^cspi-[a-z0-9]+@cflt-cspi-stag-1\.iam\.gserviceaccount\.com$`)),
+						regexp.MustCompile(`^cspi-[a-z0-9]+@cflt-cspi(-stag)?-\d+\.iam\.gserviceaccount\.com$`)),
 				),
 			},
 			{

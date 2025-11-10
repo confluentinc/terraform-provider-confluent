@@ -21,14 +21,15 @@ import (
 	"math/rand"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestAccTagBindingLive(t *testing.T) {
-	// Enable parallel execution for I/O bound operations
-	t.Parallel()
+	// Disable parallel execution to avoid resource name collisions and API propagation issues
+	// t.Parallel()
 
 	// Skip this test unless explicitly enabled
 	if os.Getenv("TF_ACC_PROD") == "" {
@@ -72,6 +73,16 @@ func TestAccTagBindingLive(t *testing.T) {
 		CheckDestroy:      testAccCheckTagBindingLiveDestroy,
 		Steps: []resource.TestStep{
 			{
+				// Step 1: Create tag and schema first to allow them to propagate
+				Config: testAccCheckTagBindingLiveConfigStep1(endpoint, tagResourceLabel, schemaResourceLabel, tagName, subjectName, schemaRegistryId, schemaRegistryRestEndpoint, apiKey, apiSecret, schemaRegistryApiKey, schemaRegistryApiSecret),
+				Check: resource.ComposeTestCheckFunc(
+					// Use retry logic to handle API propagation delays
+					testAccCheckResourceAttrWithRetry(fmt.Sprintf("confluent_tag.%s", tagResourceLabel), "name", tagName, 5, 2*time.Second),
+					resource.TestCheckResourceAttrSet(fmt.Sprintf("confluent_schema.%s", schemaResourceLabel), "id"),
+				),
+			},
+			{
+				// Step 2: Create binding after tag has propagated
 				Config: testAccCheckTagBindingLiveConfig(endpoint, tagResourceLabel, schemaResourceLabel, tagBindingResourceLabel, tagName, subjectName, schemaRegistryId, schemaRegistryRestEndpoint, apiKey, apiSecret, schemaRegistryApiKey, schemaRegistryApiSecret),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckTagBindingLiveExists(fmt.Sprintf("confluent_tag_binding.%s", tagBindingResourceLabel)),
@@ -111,6 +122,89 @@ func testAccCheckTagBindingLiveExists(resourceName string) resource.TestCheckFun
 
 		return nil
 	}
+}
+
+// testAccCheckResourceAttrWithRetry retries checking a resource attribute with exponential backoff
+// to handle cases where resources need time to propagate after creation
+func testAccCheckResourceAttrWithRetry(resourceName, attribute, expectedValue string, maxRetries int, initialDelay time.Duration) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		var lastErr error
+		delay := initialDelay
+
+		for attempt := 0; attempt < maxRetries; attempt++ {
+			checkFunc := resource.TestCheckResourceAttr(resourceName, attribute, expectedValue)
+			err := checkFunc(s)
+			if err == nil {
+				return nil
+			}
+
+			lastErr = err
+			if attempt < maxRetries-1 {
+				time.Sleep(delay)
+				delay = delay * 2 // Exponential backoff
+			}
+		}
+
+		return fmt.Errorf("attribute check failed after %d retries: %w", maxRetries, lastErr)
+	}
+}
+
+func testAccCheckTagBindingLiveConfigStep1(endpoint, tagResourceLabel, schemaResourceLabel, tagName, subjectName, schemaRegistryId, schemaRegistryRestEndpoint, apiKey, apiSecret, schemaRegistryApiKey, schemaRegistryApiSecret string) string {
+	return fmt.Sprintf(`
+	provider "confluent" {
+		endpoint         = "%s"
+		cloud_api_key    = "%s"
+		cloud_api_secret = "%s"
+	}
+
+	# Create a tag to bind to the schema
+	resource "confluent_tag" "%s" {
+		name        = "%s"
+		description = "Live test tag for binding"
+
+		schema_registry_cluster {
+			id = "%s"
+		}
+
+		rest_endpoint = "%s"
+
+		credentials {
+			key    = "%s"
+			secret = "%s"
+		}
+	}
+
+	# Create a schema to bind the tag to
+	resource "confluent_schema" "%s" {
+		subject_name = "%s"
+		format       = "AVRO"
+		schema       = jsonencode({
+			type = "record"
+			name = "User"
+			fields = [
+				{
+					name = "id"
+					type = "int"
+				},
+				{
+					name = "name"
+					type = "string"
+				}
+			]
+		})
+
+		schema_registry_cluster {
+			id = "%s"
+		}
+
+		rest_endpoint = "%s"
+
+		credentials {
+			key    = "%s"
+			secret = "%s"
+		}
+	}
+	`, endpoint, apiKey, apiSecret, tagResourceLabel, tagName, schemaRegistryId, schemaRegistryRestEndpoint, schemaRegistryApiKey, schemaRegistryApiSecret, schemaResourceLabel, subjectName, schemaRegistryId, schemaRegistryRestEndpoint, schemaRegistryApiKey, schemaRegistryApiSecret)
 }
 
 func testAccCheckTagBindingLiveConfig(endpoint, tagResourceLabel, schemaResourceLabel, tagBindingResourceLabel, tagName, subjectName, schemaRegistryId, schemaRegistryRestEndpoint, apiKey, apiSecret, schemaRegistryApiKey, schemaRegistryApiSecret string) string {
