@@ -48,6 +48,7 @@ func catalogIntegrationDataSource() *schema.Resource {
 			paramCredentials:  credentialsSchema(),
 			paramAwsGlue:      awsGlueDataSourceSchema(),
 			paramSnowflake:    snowflakeDataSourceSchema(),
+			paramUnity:        unityDataSourceSchema(),
 		},
 	}
 }
@@ -123,6 +124,27 @@ func snowflakeDataSourceSchema() *schema.Schema {
 					Type:        schema.TypeString,
 					Computed:    true,
 					Description: "Allowed scope of the Snowflake Open Catalog.",
+				},
+			},
+		},
+		Computed: true,
+	}
+}
+
+func unityDataSourceSchema() *schema.Schema {
+	return &schema.Schema{
+		Type: schema.TypeList,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramWorkspaceEndpoint: {
+					Type:        schema.TypeString,
+					Computed:    true,
+					Description: "The Databricks workspace URL associated with the Unity Catalog.",
+				},
+				paramCatalogName: {
+					Type:        schema.TypeString,
+					Computed:    true,
+					Description: "The name of the catalog within Unity Catalog.",
 				},
 			},
 		},

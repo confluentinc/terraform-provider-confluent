@@ -94,6 +94,11 @@ The following arguments are supported:
     - `client_secret` - (Required String, Sensitive) The client secret of the catalog integration.
     - `warehouse` - (Required String) Warehouse name of the Snowflake Open Catalog, for example, `catalog-name`.
     - `allowed_scope` - (Required String) Allowed scope of the Snowflake Open Catalog.
+- `unity` (Optional Configuration Block) supports the following (see [Integrate Tableflow with Unity Catalog in Confluent Cloud](https://docs.confluent.io/cloud/current/topics/tableflow/how-to-guides/catalog-integration/integrate-with-unity-catalog.html) for more details):
+    - `workspace_endpoint` - (Required String) The Databricks workspace URL associated with the Unity Catalog, for example, `https://user1.cloud.databricks.com`.
+    - `catalog_name` - (Required String) The name of the catalog within Unity Catalog.
+    - `client_id` - (Required String, Sensitive) The OAuth client ID used to authenticate with the Unity Catalog.
+    - `client_secret` - (Required String, Sensitive) The OAuth client secret used for authentication with the Unity Catalog.
 - `credentials` (Optional Configuration Block) supports the following:
     - `key` - (Required String) The Tableflow API Key.
     - `secret` - (Required String, Sensitive) The Tableflow API Secret.
