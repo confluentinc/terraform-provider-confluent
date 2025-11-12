@@ -70,9 +70,18 @@ func TestAccKafkaTopicDataSourceLive(t *testing.T) {
 		CheckDestroy:      testAccCheckKafkaTopicDataSourceLiveDestroy,
 		Steps: []resource.TestStep{
 			{
+				// Step 1: Create topic first to allow it to propagate
+				Config: testAccCheckKafkaTopicDataSourceLiveConfigStep1(endpoint, topicResourceLabel, topicName, kafkaClusterId, kafkaRestEndpoint, apiKey, apiSecret, kafkaApiKey, kafkaApiSecret),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckKafkaTopicDataSourceLiveExists(fmt.Sprintf("confluent_kafka_topic.%s", topicResourceLabel)),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_topic.%s", topicResourceLabel), "topic_name", topicName),
+				),
+			},
+			{
+				// Step 2: Read topic with data source after it has propagated
 				Config: testAccCheckKafkaTopicDataSourceLiveConfig(endpoint, topicResourceLabel, topicDataSourceLabel, topicName, kafkaClusterId, kafkaRestEndpoint, apiKey, apiSecret, kafkaApiKey, kafkaApiSecret),
 				Check: resource.ComposeTestCheckFunc(
-					// Check the resource was created
+					// Check the resource exists
 					testAccCheckKafkaTopicDataSourceLiveExists(fmt.Sprintf("confluent_kafka_topic.%s", topicResourceLabel)),
 					// Check the data source can read it
 					testAccCheckKafkaTopicDataSourceLiveExists(fmt.Sprintf("data.confluent_kafka_topic.%s", topicDataSourceLabel)),
@@ -85,6 +94,35 @@ func TestAccKafkaTopicDataSourceLive(t *testing.T) {
 			},
 		},
 	})
+}
+
+func testAccCheckKafkaTopicDataSourceLiveConfigStep1(endpoint, topicResourceLabel, topicName, kafkaClusterId, kafkaRestEndpoint, apiKey, apiSecret, kafkaApiKey, kafkaApiSecret string) string {
+	return fmt.Sprintf(`
+	provider "confluent" {
+		endpoint          = "%s"
+		cloud_api_key     = "%s"
+		cloud_api_secret  = "%s"
+	}
+
+	resource "confluent_kafka_topic" "%s" {
+		kafka_cluster {
+			id = "%s"
+		}
+		topic_name       = "%s"
+		partitions_count = 6
+		rest_endpoint    = "%s"
+		
+		config = {
+			"cleanup.policy" = "delete"
+			"retention.ms"   = "604800000"
+		}
+
+		credentials {
+			key    = "%s"
+			secret = "%s"
+		}
+	}
+	`, endpoint, apiKey, apiSecret, topicResourceLabel, kafkaClusterId, topicName, kafkaRestEndpoint, kafkaApiKey, kafkaApiSecret)
 }
 
 func testAccCheckKafkaTopicDataSourceLiveConfig(endpoint, topicResourceLabel, topicDataSourceLabel, topicName, kafkaClusterId, kafkaRestEndpoint, apiKey, apiSecret, kafkaApiKey, kafkaApiSecret string) string {
