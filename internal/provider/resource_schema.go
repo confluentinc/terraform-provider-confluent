@@ -334,8 +334,12 @@ func SetSchemaDiff(ctx context.Context, diff *schema.ResourceDiff, meta interfac
 		clusterApiSecret = diff.Get(fmt.Sprintf("%s.0.%s", paramCredentials, paramSecret)).(string)
 	}
 
-	if restEndpoint == "" || clusterId == "" || clusterApiKey == "" || clusterApiSecret == "" {
-		// Skip checks since these attributes reference other resources attributes that are unknown before "terraform apply"
+	// Skip checks if required attributes are missing
+	// For OAuth, API key/secret are not required
+	if restEndpoint == "" || clusterId == "" {
+		return nil
+	}
+	if !client.isOAuthEnabled && (clusterApiKey == "" || clusterApiSecret == "") {
 		return nil
 	}
 
