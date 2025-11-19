@@ -1,3 +1,10 @@
+## 2.53.0 (November 19th, 2025)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.52.0...v2.53.0)
+
+**Bug Fixes:**
+* Resolved whitespace changes for the `confluent_schema` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema) during a subsequent `terraform plan` when using OAuth.
+
 ## 2.52.0 (November 6th, 2025)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.51.0...v2.52.0)
