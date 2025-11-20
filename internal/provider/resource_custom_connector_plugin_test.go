@@ -21,6 +21,8 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -130,9 +132,11 @@ func TestAccCustomConnectorPlugin(t *testing.T) {
 
 	customConnectorPluginDisplayName := "datagen-plugin-name"
 	customConnectorPluginDescription := "datagen-plugin-description"
+	customConnectorPluginSensitiveProperties := []string{"keys", "passwords"}
 	// in order to test tf update (step #3)
 	customConnectorPluginUpdatedDisplayName := "datagen-plugin-name-upd"
 	customConnectorPluginUpdatedDescription := "datagen-plugin-description-upd"
+	customConnectorPluginUpdatedSensitiveProperties := []string{"keys", "passwords", "auth_token"}
 	customConnectorPluginResourceLabel := "test_plugin_resource_label"
 	fullCustomConnectorPluginResourceLabel := fmt.Sprintf("confluent_custom_connector_plugin.%s", customConnectorPluginResourceLabel)
 
@@ -150,12 +154,19 @@ func TestAccCustomConnectorPlugin(t *testing.T) {
 		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckCustomConnectorPluginConfig(mockServerUrl, customConnectorPluginResourceLabel, customConnectorPluginDisplayName, customConnectorPluginDescription),
+				Config: testAccCheckCustomConnectorPluginConfig(mockServerUrl, customConnectorPluginResourceLabel, customConnectorPluginDisplayName, customConnectorPluginDescription, customConnectorPluginSensitiveProperties),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckCustomConnectorPluginExists(fullCustomConnectorPluginResourceLabel),
 					resource.TestCheckResourceAttr(fullCustomConnectorPluginResourceLabel, "id", "ccp-4rrw00"),
 					resource.TestCheckResourceAttr(fullCustomConnectorPluginResourceLabel, "display_name", customConnectorPluginDisplayName),
 					resource.TestCheckResourceAttr(fullCustomConnectorPluginResourceLabel, "description", customConnectorPluginDescription),
+					resource.TestCheckResourceAttr(fullCustomConnectorPluginResourceLabel, "documentation_link", "https://www.confluent.io/hub/confluentinc/kafka-connect-datagen"),
+					resource.TestCheckResourceAttr(fullCustomConnectorPluginResourceLabel, "connector_class", "io.confluent.kafka.connect.datagen.DatagenConnector"),
+					resource.TestCheckResourceAttr(fullCustomConnectorPluginResourceLabel, "connector_type", "SOURCE"),
+					resource.TestCheckResourceAttr(fullCustomConnectorPluginResourceLabel, "sensitive_config_properties.#", strconv.Itoa(len(customConnectorPluginSensitiveProperties))),
+					resource.TestCheckTypeSetElemAttr(fullCustomConnectorPluginResourceLabel, "sensitive_config_properties.*", customConnectorPluginSensitiveProperties[0]),
+					resource.TestCheckTypeSetElemAttr(fullCustomConnectorPluginResourceLabel, "sensitive_config_properties.*", customConnectorPluginSensitiveProperties[1]),
+					resource.TestCheckResourceAttr(fullCustomConnectorPluginResourceLabel, "filename", "foo.zip"),
 					resource.TestCheckResourceAttr(fullCustomConnectorPluginResourceLabel, "cloud", "AWS"),
 				),
 			},
@@ -166,12 +177,20 @@ func TestAccCustomConnectorPlugin(t *testing.T) {
 				ImportStateVerify: true,
 			},
 			{
-				Config: testAccCheckCustomConnectorPluginConfig(mockServerUrl, customConnectorPluginResourceLabel, customConnectorPluginUpdatedDisplayName, customConnectorPluginUpdatedDescription),
+				Config: testAccCheckCustomConnectorPluginConfig(mockServerUrl, customConnectorPluginResourceLabel, customConnectorPluginUpdatedDisplayName, customConnectorPluginUpdatedDescription, customConnectorPluginUpdatedSensitiveProperties),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckCustomConnectorPluginExists(fullCustomConnectorPluginResourceLabel),
 					resource.TestCheckResourceAttr(fullCustomConnectorPluginResourceLabel, "id", "ccp-4rrw00"),
 					resource.TestCheckResourceAttr(fullCustomConnectorPluginResourceLabel, "display_name", customConnectorPluginUpdatedDisplayName),
 					resource.TestCheckResourceAttr(fullCustomConnectorPluginResourceLabel, "description", customConnectorPluginUpdatedDescription),
+					resource.TestCheckResourceAttr(fullCustomConnectorPluginResourceLabel, "documentation_link", "https://www.confluent.io/hub/confluentinc/kafka-connect-datagen"),
+					resource.TestCheckResourceAttr(fullCustomConnectorPluginResourceLabel, "connector_class", "io.confluent.kafka.connect.datagen.DatagenConnector"),
+					resource.TestCheckResourceAttr(fullCustomConnectorPluginResourceLabel, "connector_type", "SOURCE"),
+					resource.TestCheckResourceAttr(fullCustomConnectorPluginResourceLabel, "sensitive_config_properties.#", strconv.Itoa(len(customConnectorPluginUpdatedSensitiveProperties))),
+					resource.TestCheckTypeSetElemAttr(fullCustomConnectorPluginResourceLabel, "sensitive_config_properties.*", customConnectorPluginUpdatedSensitiveProperties[0]),
+					resource.TestCheckTypeSetElemAttr(fullCustomConnectorPluginResourceLabel, "sensitive_config_properties.*", customConnectorPluginUpdatedSensitiveProperties[1]),
+					resource.TestCheckTypeSetElemAttr(fullCustomConnectorPluginResourceLabel, "sensitive_config_properties.*", customConnectorPluginUpdatedSensitiveProperties[2]),
+					resource.TestCheckResourceAttr(fullCustomConnectorPluginResourceLabel, "filename", "foo.zip"),
 					resource.TestCheckResourceAttr(fullCustomConnectorPluginResourceLabel, "cloud", "AWS"),
 				),
 			},
@@ -262,6 +281,7 @@ func TestAccCustomConnectorPluginGCP(t *testing.T) {
 	customConnectorPluginDisplayName := "datagen-plugin-name-gcp"
 	customConnectorPluginDescription := "datagen-plugin-description-gcp"
 	customConnectorPluginResourceLabel := "test_plugin_resource_label_gcp"
+	customConnectorPluginSensitiveProperties := []string{"keys", "passwords"}
 	fullCustomConnectorPluginResourceLabel := fmt.Sprintf("confluent_custom_connector_plugin.%s", customConnectorPluginResourceLabel)
 
 	// Set fake values for secrets since those are required for importing
@@ -276,12 +296,19 @@ func TestAccCustomConnectorPluginGCP(t *testing.T) {
 		CheckDestroy:      testAccCheckCustomConnectorPluginDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckCustomConnectorPluginConfigWithCloud(mockServerUrl, customConnectorPluginResourceLabel, customConnectorPluginDisplayName, customConnectorPluginDescription, "GCP"),
+				Config: testAccCheckCustomConnectorPluginConfigWithCloud(mockServerUrl, customConnectorPluginResourceLabel, customConnectorPluginDisplayName, customConnectorPluginDescription, "GCP", customConnectorPluginSensitiveProperties),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckCustomConnectorPluginExists(fullCustomConnectorPluginResourceLabel),
 					resource.TestCheckResourceAttr(fullCustomConnectorPluginResourceLabel, "id", "ccp-5rrw00"),
 					resource.TestCheckResourceAttr(fullCustomConnectorPluginResourceLabel, "display_name", customConnectorPluginDisplayName),
 					resource.TestCheckResourceAttr(fullCustomConnectorPluginResourceLabel, "description", customConnectorPluginDescription),
+					resource.TestCheckResourceAttr(fullCustomConnectorPluginResourceLabel, "documentation_link", "https://www.confluent.io/hub/confluentinc/kafka-connect-datagen"),
+					resource.TestCheckResourceAttr(fullCustomConnectorPluginResourceLabel, "connector_class", "io.confluent.kafka.connect.datagen.DatagenConnector"),
+					resource.TestCheckResourceAttr(fullCustomConnectorPluginResourceLabel, "connector_type", "SOURCE"),
+					resource.TestCheckResourceAttr(fullCustomConnectorPluginResourceLabel, "sensitive_config_properties.#", strconv.Itoa(len(customConnectorPluginSensitiveProperties))),
+					resource.TestCheckTypeSetElemAttr(fullCustomConnectorPluginResourceLabel, "sensitive_config_properties.*", customConnectorPluginSensitiveProperties[0]),
+					resource.TestCheckTypeSetElemAttr(fullCustomConnectorPluginResourceLabel, "sensitive_config_properties.*", customConnectorPluginSensitiveProperties[1]),
+					resource.TestCheckResourceAttr(fullCustomConnectorPluginResourceLabel, "filename", "foo.zip"),
 					resource.TestCheckResourceAttr(fullCustomConnectorPluginResourceLabel, "cloud", "GCP"),
 				),
 			},
@@ -322,7 +349,14 @@ func testAccCheckCustomConnectorPluginDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccCheckCustomConnectorPluginConfig(mockServerUrl, customConnectorPluginResourceLabel, saDisplayName, saDescription string) string {
+func testAccCheckCustomConnectorPluginConfig(mockServerUrl, customConnectorPluginResourceLabel, saDisplayName, saDescription string, sensitiveConfigProperties []string) string {
+	quotedSensitiveConfigProperties := make([]string, len(sensitiveConfigProperties))
+	for i, prop := range sensitiveConfigProperties {
+		quotedSensitiveConfigProperties[i] = fmt.Sprintf("%q", prop)
+	}
+
+	joinedQuotedSensitiveConfigProperties := strings.Join(quotedSensitiveConfigProperties, ",\n    ")
+
 	return fmt.Sprintf(`
 	provider "confluent" {
 		endpoint = "%s"
@@ -333,28 +367,39 @@ func testAccCheckCustomConnectorPluginConfig(mockServerUrl, customConnectorPlugi
 		documentation_link = "https://www.confluent.io/hub/confluentinc/kafka-connect-datagen"
 		connector_class = "io.confluent.kafka.connect.datagen.DatagenConnector"
 		connector_type = "SOURCE"
-		sensitive_config_properties = ["keys", "passwords"]
+		sensitive_config_properties = [
+			%s
+		]
 		filename = "foo.zip"
 	}
-	`, mockServerUrl, customConnectorPluginResourceLabel, saDisplayName, saDescription)
+	`, mockServerUrl, customConnectorPluginResourceLabel, saDisplayName, saDescription, joinedQuotedSensitiveConfigProperties)
 }
 
-func testAccCheckCustomConnectorPluginConfigWithCloud(mockServerUrl, customConnectorPluginResourceLabel, saDisplayName, saDescription, cloud string) string {
-	return fmt.Sprintf(`
-	provider "confluent" {
-		endpoint = "%s"
+func testAccCheckCustomConnectorPluginConfigWithCloud(mockServerUrl, customConnectorPluginResourceLabel, saDisplayName, saDescription, cloud string, sensitiveConfigProperties []string) string {
+	quotedSensitiveConfigProperties := make([]string, len(sensitiveConfigProperties))
+	for i, prop := range sensitiveConfigProperties {
+		quotedSensitiveConfigProperties[i] = fmt.Sprintf("%q", prop)
 	}
-	resource "confluent_custom_connector_plugin" "%s" {
+
+	joinedQuotedSensitiveConfigProperties := strings.Join(quotedSensitiveConfigProperties, ",\n    ")
+
+	return fmt.Sprintf(`
+    provider "confluent" {
+		endpoint = "%s"
+    }
+    resource "confluent_custom_connector_plugin" "%s" {
 		display_name = "%s"
 		description = "%s"
 		documentation_link = "https://www.confluent.io/hub/confluentinc/kafka-connect-datagen"
 		connector_class = "io.confluent.kafka.connect.datagen.DatagenConnector"
 		connector_type = "SOURCE"
-		sensitive_config_properties = ["keys", "passwords"]
+		sensitive_config_properties = [
+			%s
+		]
 		filename = "foo.zip"
 		cloud = "%s"
 	}
-	`, mockServerUrl, customConnectorPluginResourceLabel, saDisplayName, saDescription, cloud)
+	`, mockServerUrl, customConnectorPluginResourceLabel, saDisplayName, saDescription, joinedQuotedSensitiveConfigProperties, cloud)
 }
 
 func testAccCheckCustomConnectorPluginExists(n string) resource.TestCheckFunc {
