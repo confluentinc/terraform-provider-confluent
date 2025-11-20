@@ -36,6 +36,7 @@ const (
 	paramRetentionMs           = "retention_ms"
 	paramByobAws               = "byob_aws"
 	paramManagedStorage        = "managed_storage"
+	paramAzureStorage          = "azure_data_lake_storage_gen_2"
 	paramBucketName            = "bucket_name"
 	paramBucketRegion          = "bucket_region"
 	paramProviderIntegrationId = "provider_integration_id"
@@ -45,16 +46,20 @@ const (
 	paramErrorHandling         = "error_handling"
 	paramLogTarget             = "log_target"
 	paramWriteMode             = "write_mode"
+	paramStorageAccount        = "storage_account_name"
+	paramContainerName         = "container_name"
+	paramStorageRegion         = "storage_region"
 
 	byobAwsSpecKind        = "ByobAws"
 	managedStorageSpecKind = "Managed"
+	azureSpecKind          = "AzureDataLakeStorageGen2"
 
 	errorHandlingSuspendMode = "SUSPEND"
 	errorHandlingSkipMode    = "SKIP"
 	errorHandlingLogMode     = "LOG"
 )
 
-var acceptedBucketTypes = []string{paramByobAws, paramManagedStorage}
+var acceptedBucketTypes = []string{paramByobAws, paramManagedStorage, paramAzureStorage}
 var acceptedErrorHandlingModes = []string{errorHandlingSuspendMode, errorHandlingSkipMode, errorHandlingLogMode}
 
 func tableflowTopicResource() *schema.Resource {
@@ -125,6 +130,7 @@ func tableflowTopicResource() *schema.Resource {
 			paramCredentials:    credentialsSchema(),
 			paramByobAws:        byobAwsSchema(),
 			paramManagedStorage: managedStorageSchema(),
+			paramAzureStorage:   azureStorageSchema(),
 		},
 		CustomizeDiff: customdiff.Sequence(resourceCredentialBlockValidationWithOAuth),
 	}
@@ -173,6 +179,41 @@ func managedStorageSchema() *schema.Schema {
 	}
 }
 
+func azureStorageSchema() *schema.Schema {
+	return &schema.Schema{
+		Type:        schema.TypeList,
+		ForceNew:    true,
+		Optional:    true,
+		Description: "The Tableflow storage configuration for topic in Azure.",
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramStorageAccount: {
+					Type:     schema.TypeString,
+					Required: true,
+					ForceNew: true,
+				},
+				paramContainerName: {
+					Type:     schema.TypeString,
+					Required: true,
+					ForceNew: true,
+				},
+				paramProviderIntegrationId: {
+					Type:     schema.TypeString,
+					Required: true,
+					ForceNew: true,
+				},
+				paramStorageRegion: {
+					Type:     schema.TypeString,
+					Computed: true,
+				},
+			},
+		},
+		MinItems:     1,
+		MaxItems:     1,
+		ExactlyOneOf: acceptedBucketTypes,
+	}
+}
+
 func errorHandlingSchema() *schema.Schema {
 	return &schema.Schema{
 		Type:     schema.TypeList,
@@ -216,6 +257,7 @@ func tableflowTopicCreate(ctx context.Context, d *schema.ResourceData, meta inte
 
 	isByobAws := len(d.Get(paramByobAws).([]interface{})) > 0
 	isManaged := len(d.Get(paramManagedStorage).([]interface{})) > 0
+	isAzure := len(d.Get(paramAzureStorage).([]interface{})) > 0
 
 	displayName := d.Get(paramDisplayName).(string)
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
@@ -275,6 +317,16 @@ func tableflowTopicCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	} else if isManaged {
 		tableflowTopicSpec.SetStorage(tableflow.TableflowV1TableflowTopicSpecStorageOneOf{
 			TableflowV1ManagedStorageSpec: tableflow.NewTableflowV1ManagedStorageSpec(managedStorageSpecKind),
+		})
+	} else if isAzure {
+		tableflowTopicSpec.SetStorage(tableflow.TableflowV1TableflowTopicSpecStorageOneOf{
+			TableflowV1AzureAdlsSpec: &tableflow.TableflowV1AzureAdlsSpec{
+				Kind:                  azureSpecKind,
+				ContainerName:         extractStringValueFromBlock(d, paramAzureStorage, paramContainerName),
+				StorageAccountName:    extractStringValueFromBlock(d, paramAzureStorage, paramStorageAccount),
+				ProviderIntegrationId: extractStringValueFromBlock(d, paramAzureStorage, paramProviderIntegrationId),
+				StorageRegion:         tableflow.PtrString(extractStringValueFromBlock(d, paramAzureStorage, paramStorageRegion)),
+			},
 		})
 	}
 
@@ -391,6 +443,10 @@ func setTableflowTopicAttributes(d *schema.ResourceData, c *TableflowRestClient,
 		if err := d.Set(paramTablePath, tableflowTopic.GetSpec().Storage.TableflowV1ManagedStorageSpec.GetTablePath()); err != nil {
 			return nil, err
 		}
+	} else if storageType == azureSpecKind {
+		if err := d.Set(paramTablePath, tableflowTopic.GetSpec().Storage.TableflowV1AzureAdlsSpec.GetTablePath()); err != nil {
+			return nil, err
+		}
 	}
 
 	if err := d.Set(paramRecordFailureStrategy, tableflowTopic.GetSpec().Config.GetRecordFailureStrategy()); err != nil {
@@ -416,6 +472,15 @@ func setTableflowTopicAttributes(d *schema.ResourceData, c *TableflowRestClient,
 		}
 	} else if tableflowTopic.Spec.GetStorage().TableflowV1ManagedStorageSpec != nil {
 		if err := d.Set(paramManagedStorage, []interface{}{make(map[string]string)}); err != nil {
+			return nil, err
+		}
+	} else if tableflowTopic.Spec.GetStorage().TableflowV1AzureAdlsSpec != nil {
+		if err := d.Set(paramAzureStorage, []interface{}{map[string]interface{}{
+			paramStorageAccount:        tableflowTopic.Spec.GetStorage().TableflowV1AzureAdlsSpec.GetStorageAccountName(),
+			paramContainerName:         tableflowTopic.Spec.GetStorage().TableflowV1AzureAdlsSpec.GetContainerName(),
+			paramStorageRegion:         tableflowTopic.Spec.GetStorage().TableflowV1AzureAdlsSpec.GetStorageRegion(),
+			paramProviderIntegrationId: tableflowTopic.Spec.GetStorage().TableflowV1AzureAdlsSpec.GetProviderIntegrationId(),
+		}}); err != nil {
 			return nil, err
 		}
 	}
@@ -464,6 +529,10 @@ func getStorageType(tableflowTopic tableflow.TableflowV1TableflowTopic) (string,
 
 	if config.TableflowV1ManagedStorageSpec != nil {
 		return managedStorageSpecKind, nil
+	}
+
+	if config.TableflowV1AzureAdlsSpec != nil {
+		return azureSpecKind, nil
 	}
 
 	return "", fmt.Errorf("error reading storage type for Tableflow Topic %q", tableflowTopic.Spec.GetDisplayName())
