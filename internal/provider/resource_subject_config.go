@@ -212,7 +212,7 @@ func subjectConfigImport(ctx context.Context, d *schema.ResourceData, meta inter
 	clusterIDAndSubjectName := d.Id()
 	parts := strings.Split(clusterIDAndSubjectName, "/")
 	if len(parts) < 2 {
-		return nil, fmt.Errorf("error importing Subject Config: invalid format: expected '<SR cluster ID>/<subject name>'")
+		return nil, fmt.Errorf("error importing Subject Config: invalid format: expected '<SR cluster ID>/<subject name>' where subject name may contain forward slashes")
 	}
 
 	clusterId := parts[0]
