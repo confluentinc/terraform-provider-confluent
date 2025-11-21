@@ -188,7 +188,7 @@ func TestAccEnterpriseClusterWithSGPackage(t *testing.T) {
 		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckEnterpriseClusterConfig(mockServerUrl, paramEnterpriseCluster, kafkaDisplayName),
+				Config: testAccCheckEnterpriseClusterConfig(mockServerUrl, paramEnterpriseCluster, kafkaDisplayName, kafkaMaxEcku),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckClusterExists(fullEnterpriseKafkaResourceLabel),
 					resource.TestCheckResourceAttr(fullEnterpriseKafkaResourceLabel, "id", kafkaClusterId),
@@ -201,7 +201,8 @@ func TestAccEnterpriseClusterWithSGPackage(t *testing.T) {
 					resource.TestCheckResourceAttr(fullEnterpriseKafkaResourceLabel, "basic.#", "0"),
 					resource.TestCheckResourceAttr(fullEnterpriseKafkaResourceLabel, "standard.#", "0"),
 					resource.TestCheckResourceAttr(fullEnterpriseKafkaResourceLabel, "enterprise.#", "1"),
-					resource.TestCheckResourceAttr(fullEnterpriseKafkaResourceLabel, "enterprise.0.%", "0"),
+					resource.TestCheckResourceAttr(fullEnterpriseKafkaResourceLabel, "enterprise.0.%", "1"),
+					resource.TestCheckResourceAttr(fullEnterpriseKafkaResourceLabel, "enterprise.0.max_ecku", "5"),
 					resource.TestCheckResourceAttr(fullEnterpriseKafkaResourceLabel, "environment.#", "1"),
 					resource.TestCheckResourceAttr(fullEnterpriseKafkaResourceLabel, "environment.0.id", testEnvironmentId),
 					resource.TestCheckResourceAttr(fullEnterpriseKafkaResourceLabel, "network.#", "1"),
@@ -220,7 +221,7 @@ func TestAccEnterpriseClusterWithSGPackage(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckEnterpriseClusterConfig(mockServerUrl, paramEnterpriseCluster, kafkaDisplayNameUpdated),
+				Config: testAccCheckEnterpriseClusterConfig(mockServerUrl, paramEnterpriseCluster, kafkaDisplayNameUpdated, kafkaMaxEckuUpdated),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckClusterExists(fullEnterpriseKafkaResourceLabel),
 					resource.TestCheckResourceAttr(fullEnterpriseKafkaResourceLabel, "id", kafkaClusterId),
@@ -233,7 +234,8 @@ func TestAccEnterpriseClusterWithSGPackage(t *testing.T) {
 					resource.TestCheckResourceAttr(fullEnterpriseKafkaResourceLabel, "basic.#", "0"),
 					resource.TestCheckResourceAttr(fullEnterpriseKafkaResourceLabel, "standard.#", "0"),
 					resource.TestCheckResourceAttr(fullEnterpriseKafkaResourceLabel, "enterprise.#", "1"),
-					resource.TestCheckResourceAttr(fullEnterpriseKafkaResourceLabel, "enterprise.0.%", "0"),
+					resource.TestCheckResourceAttr(fullEnterpriseKafkaResourceLabel, "enterprise.0.%", "1"),
+					resource.TestCheckResourceAttr(fullEnterpriseKafkaResourceLabel, "enterprise.0.max_ecku", "3"),
 					resource.TestCheckResourceAttr(fullEnterpriseKafkaResourceLabel, "environment.#", "1"),
 					resource.TestCheckResourceAttr(fullEnterpriseKafkaResourceLabel, "environment.0.id", testEnvironmentId),
 					resource.TestCheckResourceAttr(fullEnterpriseKafkaResourceLabel, "network.#", "1"),
@@ -271,7 +273,7 @@ func TestAccEnterpriseClusterWithSGPackage(t *testing.T) {
 	checkStubCount(t, wiremockClient, deleteClusterStub, fmt.Sprintf("DELETE %s", readKafkaPath), expectedCountOne)
 }
 
-func testAccCheckEnterpriseClusterConfig(mockServerUrl, clusterType, displayName string) string {
+func testAccCheckEnterpriseClusterConfig(mockServerUrl, clusterType, displayName string, maxEcku int32) string {
 	return fmt.Sprintf(`
 	provider "confluent" {
  		endpoint = "%s"
@@ -281,11 +283,13 @@ func testAccCheckEnterpriseClusterConfig(mockServerUrl, clusterType, displayName
 		availability = "%s"
 		cloud = "%s"
 		region = "%s"
-		%s {}
+		%s {
+			max_ecku = %v
+		}
 	
 	  	environment {
 			id = "%s"
 	  	}
 	}
-	`, mockServerUrl, displayName, lowAvailability, enterpriseKafkaCloud, enterpriseKafkaRegion, clusterType, testEnvironmentId)
+	`, mockServerUrl, displayName, lowAvailability, enterpriseKafkaCloud, enterpriseKafkaRegion, clusterType, maxEcku, testEnvironmentId)
 }
