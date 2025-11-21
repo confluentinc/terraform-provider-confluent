@@ -211,12 +211,12 @@ func subjectConfigImport(ctx context.Context, d *schema.ResourceData, meta inter
 
 	clusterIDAndSubjectName := d.Id()
 	parts := strings.Split(clusterIDAndSubjectName, "/")
-	if len(parts) != 2 {
+	if len(parts) < 2 {
 		return nil, fmt.Errorf("error importing Subject Config: invalid format: expected '<SR cluster ID>/<subject name>'")
 	}
 
 	clusterId := parts[0]
-	subjectName := parts[1]
+	subjectName := strings.Join(parts[1:], "/")
 
 	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 
