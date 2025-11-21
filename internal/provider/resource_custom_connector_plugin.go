@@ -102,8 +102,8 @@ func customConnectorPluginResource() *schema.Resource {
 }
 
 func customConnectorPluginUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if d.HasChangesExcept(paramDisplayName, paramDescription, paramDocumentationLink) {
-		return diag.Errorf("error updating Custom Connector Plugin %q: only %q, %q, %q attributes can be updated for Custom Connector Plugin", d.Id(), paramDisplayName, paramDescription, paramDocumentationLink)
+	if d.HasChangesExcept(paramDisplayName, paramDescription, paramDocumentationLink, paramSensitiveConfigProperties) {
+		return diag.Errorf("error updating Custom Connector Plugin %q: only %q, %q, %q, %q attributes can be updated for Custom Connector Plugin", d.Id(), paramDisplayName, paramDescription, paramDocumentationLink, paramSensitiveConfigProperties)
 	}
 
 	updateCustomConnectorPluginRequest := ccp.NewConnectV1CustomConnectorPluginUpdate()
@@ -119,6 +119,10 @@ func customConnectorPluginUpdate(ctx context.Context, d *schema.ResourceData, me
 	if d.HasChange(paramDocumentationLink) {
 		updatedDocumentationLink := d.Get(paramDocumentationLink).(string)
 		updateCustomConnectorPluginRequest.SetDocumentationLink(updatedDocumentationLink)
+	}
+	if d.HasChange(paramSensitiveConfigProperties) {
+		updatedSensitiveConfigProperties := convertToStringSlice(d.Get(paramSensitiveConfigProperties).(*schema.Set).List())
+		updateCustomConnectorPluginRequest.SetSensitiveConfigProperties(updatedSensitiveConfigProperties)
 	}
 
 	updateCustomConnectorPluginRequestJson, err := json.Marshal(updateCustomConnectorPluginRequest)
