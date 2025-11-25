@@ -89,7 +89,12 @@ func TestAccTableflowTopicLive(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
-		CheckDestroy:      testAccCheckTableflowTopicLiveDestroy,
+		ExternalProviders: map[string]resource.ExternalProvider{
+			"time": {
+				Source: "hashicorp/time",
+			},
+		},
+		CheckDestroy: testAccCheckTableflowTopicLiveDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckTableflowTopicLiveConfig(endpoint, kafkaTopicResourceLabel, tableflowTopicResourceLabel, topicName, environmentId, kafkaClusterId, kafkaRestEndpoint, kafkaApiKey, kafkaApiSecret, apiKey, apiSecret, tableflowApiKey, tableflowApiSecret),
@@ -195,6 +200,12 @@ func testAccCheckTableflowTopicLiveConfig(endpoint, kafkaTopicResourceLabel, tab
 		}
 	}
 
+	# Wait for Kafka topic to propagate before creating tableflow topic
+	resource "time_sleep" "wait_after_kafka_topic" {
+		depends_on = [confluent_kafka_topic.%s]
+		create_duration = "30s"
+	}
+
 	# Enable tableflow on the topic
 	resource "confluent_tableflow_topic" "%s" {
 		display_name = "%s"
@@ -210,8 +221,9 @@ func testAccCheckTableflowTopicLiveConfig(endpoint, kafkaTopicResourceLabel, tab
 			key    = "%s"
 			secret = "%s"
 		}
+		depends_on = [time_sleep.wait_after_kafka_topic]
 	}
-	`, endpoint, apiKey, apiSecret, kafkaTopicResourceLabel, topicName, kafkaRestEndpoint, kafkaClusterId, kafkaApiKey, kafkaApiSecret, tableflowTopicResourceLabel, topicName, environmentId, kafkaClusterId, tableflowApiKey, tableflowApiSecret)
+	`, endpoint, apiKey, apiSecret, kafkaTopicResourceLabel, topicName, kafkaRestEndpoint, kafkaClusterId, kafkaApiKey, kafkaApiSecret, kafkaTopicResourceLabel, tableflowTopicResourceLabel, topicName, environmentId, kafkaClusterId, tableflowApiKey, tableflowApiSecret)
 }
 
 func testAccCheckTableflowTopicLiveConfigUpdate(endpoint, kafkaTopicResourceLabel, tableflowTopicResourceLabel, topicName, environmentId, kafkaClusterId, kafkaRestEndpoint, kafkaApiKey, kafkaApiSecret, apiKey, apiSecret, tableflowApiKey, tableflowApiSecret string) string {
@@ -236,6 +248,12 @@ func testAccCheckTableflowTopicLiveConfigUpdate(endpoint, kafkaTopicResourceLabe
 		}
 	}
 
+	# Wait for Kafka topic to propagate before creating tableflow topic
+	resource "time_sleep" "wait_after_kafka_topic" {
+		depends_on = [confluent_kafka_topic.%s]
+		create_duration = "30s"
+	}
+
 	# Update tableflow topic
 	resource "confluent_tableflow_topic" "%s" {
 		display_name = "%s"
@@ -251,7 +269,8 @@ func testAccCheckTableflowTopicLiveConfigUpdate(endpoint, kafkaTopicResourceLabe
 			key    = "%s"
 			secret = "%s"
 		}
+		depends_on = [time_sleep.wait_after_kafka_topic]
 	}
-	`, endpoint, apiKey, apiSecret, kafkaTopicResourceLabel, topicName, kafkaRestEndpoint, kafkaClusterId, kafkaApiKey, kafkaApiSecret, tableflowTopicResourceLabel, topicName, environmentId, kafkaClusterId, tableflowApiKey, tableflowApiSecret)
+	`, endpoint, apiKey, apiSecret, kafkaTopicResourceLabel, topicName, kafkaRestEndpoint, kafkaClusterId, kafkaApiKey, kafkaApiSecret, kafkaTopicResourceLabel, tableflowTopicResourceLabel, topicName, environmentId, kafkaClusterId, tableflowApiKey, tableflowApiSecret)
 }
 
