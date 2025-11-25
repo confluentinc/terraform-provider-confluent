@@ -117,7 +117,7 @@ func businessMetadataBindingCreate(ctx context.Context, d *schema.ResourceData, 
 
 	// sleep 60 seconds to wait for entity (resource) to sync to SR
 	// https://github.com/confluentinc/terraform-provider-confluent/issues/282 to resolve "error creating Business Metadata Binding 404 Not Found"
-	SleepIfNotTestMode(60*time.Second, meta.(*Client).isAcceptanceTestMode)
+	SleepIfNotTestMode(60*time.Second, meta.(*Client).isAcceptanceTestMode, meta.(*Client).isLiveProductionTestMode)
 
 	request := catalogRestClient.apiClient.EntityV1Api.CreateBusinessMetadata(catalogRestClient.dataCatalogApiContext(ctx))
 	request = request.BusinessMetadata([]dc.BusinessMetadata{businessMetadataBindingRequest})
@@ -145,7 +145,7 @@ func businessMetadataBindingCreate(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	// https://github.com/confluentinc/terraform-provider-confluent/issues/282 to resolve "Root object was present, but now absent."
-	SleepIfNotTestMode(2*dataCatalogAPIWaitAfterCreate, meta.(*Client).isAcceptanceTestMode)
+	SleepIfNotTestMode(2*dataCatalogAPIWaitAfterCreate, meta.(*Client).isAcceptanceTestMode, meta.(*Client).isLiveProductionTestMode)
 
 	createdBusinessMetadataBindingJson, err := json.Marshal(createdBusinessMetadataBinding)
 	if err != nil {
@@ -266,7 +266,7 @@ func businessMetadataBindingDelete(ctx context.Context, d *schema.ResourceData, 
 		return diag.Errorf("error deleting Business Metadata Binding %q: %s", businessMetadataBindingId, createDescriptiveError(serviceErr))
 	}
 
-	SleepIfNotTestMode(time.Second, meta.(*Client).isAcceptanceTestMode)
+	SleepIfNotTestMode(time.Second, meta.(*Client).isAcceptanceTestMode, meta.(*Client).isLiveProductionTestMode)
 	tflog.Debug(ctx, fmt.Sprintf("Finished deleting Business Metadata Binding %q", businessMetadataBindingId), map[string]interface{}{businessMetadataBindingLoggingKey: businessMetadataBindingId})
 
 	return nil

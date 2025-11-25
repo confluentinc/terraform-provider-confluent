@@ -111,7 +111,7 @@ func roleBindingCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating Role Binding %q: %s", d.Id(), createdRoleBindingJson), map[string]interface{}{roleBindingLoggingKey: d.Id()})
 	if !skipSync {
-		SleepIfNotTestMode(rbacWaitAfterCreateToSync, meta.(*Client).isAcceptanceTestMode)
+		SleepIfNotTestMode(rbacWaitAfterCreateToSync, meta.(*Client).isAcceptanceTestMode, meta.(*Client).isLiveProductionTestMode)
 	}
 	return roleBindingRead(ctx, d, meta)
 }

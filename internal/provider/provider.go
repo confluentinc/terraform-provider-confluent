@@ -147,6 +147,7 @@ type Client struct {
 	tableflowApiSecret              string
 	isTableflowMetadataSet          bool
 	isAcceptanceTestMode            bool
+	isLiveProductionTestMode        bool
 	isOAuthEnabled                  bool
 }
 
@@ -531,6 +532,12 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	}
 	tflog.Info(ctx, fmt.Sprintf("Provider: acceptance test mode is %t\n", acceptanceTestMode))
 
+	liveProductionTestMode := false
+	if os.Getenv("TF_ACC_PROD") == "1" {
+		liveProductionTestMode = true
+	}
+	tflog.Info(ctx, fmt.Sprintf("Provider: live production test mode is %t\n", liveProductionTestMode))
+
 	apiKeysCfg := apikeys.NewConfiguration()
 	byokCfg := byok.NewConfiguration()
 	caCfg := ca.NewConfiguration()
@@ -772,6 +779,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 		isFlinkMetadataSet:           resourceMetadataFlags.isFlinkMetadataSet,
 		isTableflowMetadataSet:       resourceMetadataFlags.isTableflowMetadataSet,
 		isAcceptanceTestMode:         acceptanceTestMode,
+		isLiveProductionTestMode:     liveProductionTestMode,
 		isOAuthEnabled:               oauthEnabled,
 	}
 
@@ -909,8 +917,9 @@ func validateOAuthAndProviderAPIKeysCoexist(
 	return nil
 }
 
-func SleepIfNotTestMode(d time.Duration, isAcceptanceTestMode bool) {
-	if isAcceptanceTestMode {
+func SleepIfNotTestMode(d time.Duration, isAcceptanceTestMode bool, isLiveProductionTestMode bool) {
+	// In live production test mode, use full delay since we're testing against real infrastructure
+	if isAcceptanceTestMode && !isLiveProductionTestMode {
 		time.Sleep(500 * time.Millisecond)
 		return
 	}

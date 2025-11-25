@@ -117,7 +117,7 @@ func subjectModeCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 			return diag.Errorf("error creating Subject Mode: %s", createDescriptiveError(err, resp))
 		}
 
-		SleepIfNotTestMode(schemaRegistryAPIWaitAfterCreateOrDelete, meta.(*Client).isAcceptanceTestMode)
+		SleepIfNotTestMode(schemaRegistryAPIWaitAfterCreateOrDelete, meta.(*Client).isAcceptanceTestMode, meta.(*Client).isLiveProductionTestMode)
 	}
 
 	subjectModeId := createSubjectModeId(schemaRegistryRestClient.clusterId, subjectName)
@@ -153,7 +153,7 @@ func subjectModeDelete(ctx context.Context, d *schema.ResourceData, meta interfa
 		return diag.Errorf("error deleting Subject Mode %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
-	SleepIfNotTestMode(schemaRegistryAPIWaitAfterCreateOrDelete, meta.(*Client).isAcceptanceTestMode)
+	SleepIfNotTestMode(schemaRegistryAPIWaitAfterCreateOrDelete, meta.(*Client).isAcceptanceTestMode, meta.(*Client).isLiveProductionTestMode)
 	tflog.Debug(ctx, fmt.Sprintf("Finished deleting Subject Mode %q", d.Id()), map[string]interface{}{subjectModeLoggingKey: d.Id()})
 
 	return nil
@@ -308,7 +308,7 @@ func subjectModeUpdate(ctx context.Context, d *schema.ResourceData, meta interfa
 		if err != nil {
 			return diag.Errorf("error updating Subject Mode: %s", createDescriptiveError(err, resp))
 		}
-		SleepIfNotTestMode(kafkaRestAPIWaitAfterCreate, meta.(*Client).isAcceptanceTestMode)
+		SleepIfNotTestMode(kafkaRestAPIWaitAfterCreate, meta.(*Client).isAcceptanceTestMode, meta.(*Client).isLiveProductionTestMode)
 		tflog.Debug(ctx, fmt.Sprintf("Finished updating Subject Mode %q", d.Id()), map[string]interface{}{kafkaClusterConfigLoggingKey: d.Id()})
 	}
 	return subjectModeRead(ctx, d, meta)
