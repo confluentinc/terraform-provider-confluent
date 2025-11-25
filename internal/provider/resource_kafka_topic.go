@@ -244,7 +244,7 @@ func kafkaTopicCreate(ctx context.Context, d *schema.ResourceData, meta interfac
 	d.SetId(kafkaTopicId)
 
 	// https://github.com/confluentinc/terraform-provider-confluentcloud/issues/40#issuecomment-1048782379
-	SleepIfNotTestMode(kafkaRestAPIWaitAfterCreate, meta.(*Client).isAcceptanceTestMode)
+	SleepIfNotTestMode(kafkaRestAPIWaitAfterCreate, meta.(*Client).isAcceptanceTestMode, meta.(*Client).isLiveProductionTestMode)
 
 	createdKafkaTopicJson, err := json.Marshal(createdKafkaTopic)
 	if err != nil {
@@ -538,7 +538,7 @@ func kafkaTopicUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 			return diag.FromErr(createDescriptiveError(err, resp))
 		}
 		// Give some time to Kafka REST API to apply an update of partitions count
-		SleepIfNotTestMode(kafkaRestAPIWaitAfterCreate, meta.(*Client).isAcceptanceTestMode)
+		SleepIfNotTestMode(kafkaRestAPIWaitAfterCreate, meta.(*Client).isAcceptanceTestMode, meta.(*Client).isLiveProductionTestMode)
 		tflog.Debug(ctx, fmt.Sprintf("Finished updating Kafka Topic %q: topic settings update has been completed", d.Id()), map[string]interface{}{kafkaTopicLoggingKey: d.Id()})
 	}
 	if d.HasChange(paramConfigs) {
@@ -617,7 +617,7 @@ func kafkaTopicUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 			return diag.FromErr(createDescriptiveError(err, resp))
 		}
 		// Give some time to Kafka REST API to apply an update of topic settings
-		SleepIfNotTestMode(kafkaRestAPIWaitAfterCreate, meta.(*Client).isAcceptanceTestMode)
+		SleepIfNotTestMode(kafkaRestAPIWaitAfterCreate, meta.(*Client).isAcceptanceTestMode, meta.(*Client).isLiveProductionTestMode)
 
 		// Check that topic configs update was successfully executed
 		// In other words, remote topic setting values returned by Kafka REST API match topic setting values from updated TF configuration
