@@ -190,7 +190,7 @@ func clusterLinkCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 	d.SetId(clusterLinkCompositeId)
 
 	// https://github.com/confluentinc/terraform-provider-confluentcloud/issues/40#issuecomment-1048782379
-	SleepIfNotTestMode(kafkaRestAPIWaitAfterCreate, meta.(*Client).isAcceptanceTestMode)
+	SleepIfNotTestMode(kafkaRestAPIWaitAfterCreate, meta.(*Client).isAcceptanceTestMode, meta.(*Client).isLiveProductionTestMode)
 
 	// Don't log created cluster link since API returns an empty 201 response.
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating Cluster Link %q", d.Id()), map[string]interface{}{clusterLinkLoggingKey: d.Id()})
@@ -427,7 +427,7 @@ func clusterLinkUpdate(ctx context.Context, d *schema.ResourceData, meta interfa
 		}
 
 		// https://github.com/confluentinc/terraform-provider-confluentcloud/issues/40#issuecomment-1048782379
-		SleepIfNotTestMode(kafkaRestAPIWaitAfterCreate, meta.(*Client).isAcceptanceTestMode)
+		SleepIfNotTestMode(kafkaRestAPIWaitAfterCreate, meta.(*Client).isAcceptanceTestMode, meta.(*Client).isLiveProductionTestMode)
 	}
 
 	if d.HasChange(paramConfigs) {
@@ -474,7 +474,7 @@ func clusterLinkUpdate(ctx context.Context, d *schema.ResourceData, meta interfa
 			// 400 Bad Request: Config property 'delete.retention.ms' with value '63113904003' exceeded max limit of 60566400000.
 			return diag.Errorf("error updating Cluster Link Config: %s", createDescriptiveError(err, resp))
 		}
-		SleepIfNotTestMode(kafkaRestAPIWaitAfterCreate, meta.(*Client).isAcceptanceTestMode)
+		SleepIfNotTestMode(kafkaRestAPIWaitAfterCreate, meta.(*Client).isAcceptanceTestMode, meta.(*Client).isLiveProductionTestMode)
 		tflog.Debug(ctx, fmt.Sprintf("Finished updating Cluster Link %q", d.Id()), map[string]interface{}{clusterLinkLoggingKey: d.Id()})
 	}
 	return clusterLinkRead(ctx, d, meta)

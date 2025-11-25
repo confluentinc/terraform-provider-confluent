@@ -66,9 +66,9 @@ func testAccPreCheck(t *testing.T) {
 }
 
 func TestSleepIfNotTestMode(t *testing.T) {
-	t.Run("should not sleep in acceptance test mode", func(t *testing.T) {
+	t.Run("should not sleep in acceptance test mode (mock tests)", func(t *testing.T) {
 		start := time.Now()
-		SleepIfNotTestMode(time.Second, true)
+		SleepIfNotTestMode(time.Second, true, false)
 		duration := time.Since(start)
 
 		if duration >= time.Second {
@@ -78,11 +78,21 @@ func TestSleepIfNotTestMode(t *testing.T) {
 
 	t.Run("should sleep in normal mode", func(t *testing.T) {
 		start := time.Now()
-		SleepIfNotTestMode(time.Second, false)
+		SleepIfNotTestMode(time.Second, false, false)
 		duration := time.Since(start)
 
 		if duration < time.Second {
 			t.Errorf("expected to sleep, but slept for %v\n", duration)
+		}
+	})
+
+	t.Run("should sleep in live production test mode", func(t *testing.T) {
+		start := time.Now()
+		SleepIfNotTestMode(time.Second, true, true)
+		duration := time.Since(start)
+
+		if duration < time.Second {
+			t.Errorf("expected to sleep in live production test mode, but slept for %v\n", duration)
 		}
 	})
 }

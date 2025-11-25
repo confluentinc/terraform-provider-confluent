@@ -117,7 +117,7 @@ func tagBindingCreate(ctx context.Context, d *schema.ResourceData, meta interfac
 	if !skipSync {
 		// sleep 60 seconds to wait for entity (resource) to sync to SR
 		// https://github.com/confluentinc/terraform-provider-confluent/issues/282 to resolve "error creating Tag Binding 404 Not Found"
-		SleepIfNotTestMode(60*time.Second, meta.(*Client).isAcceptanceTestMode)
+		SleepIfNotTestMode(60*time.Second, meta.(*Client).isAcceptanceTestMode, meta.(*Client).isLiveProductionTestMode)
 	}
 
 	request := catalogRestClient.apiClient.EntityV1Api.CreateTags(catalogRestClient.dataCatalogApiContext(ctx))
@@ -147,7 +147,7 @@ func tagBindingCreate(ctx context.Context, d *schema.ResourceData, meta interfac
 
 	if !skipSync {
 		// https://github.com/confluentinc/terraform-provider-confluent/issues/282 to resolve "Root object was present, but now absent."
-		SleepIfNotTestMode(2*dataCatalogAPIWaitAfterCreate, meta.(*Client).isAcceptanceTestMode)
+		SleepIfNotTestMode(2*dataCatalogAPIWaitAfterCreate, meta.(*Client).isAcceptanceTestMode, meta.(*Client).isLiveProductionTestMode)
 	}
 
 	createdTagBindingJson, err := json.Marshal(createdTagBinding)
@@ -269,7 +269,7 @@ func tagBindingDelete(ctx context.Context, d *schema.ResourceData, meta interfac
 		return diag.Errorf("error deleting Tag Binding %q: %s", tagBindingId, createDescriptiveError(serviceErr))
 	}
 
-	SleepIfNotTestMode(time.Second, meta.(*Client).isAcceptanceTestMode)
+	SleepIfNotTestMode(time.Second, meta.(*Client).isAcceptanceTestMode, meta.(*Client).isLiveProductionTestMode)
 	tflog.Debug(ctx, fmt.Sprintf("Finished deleting Tag Binding %q", tagBindingId), map[string]interface{}{tagBindingLoggingKey: tagBindingId})
 
 	return nil

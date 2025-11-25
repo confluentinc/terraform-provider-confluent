@@ -525,12 +525,12 @@ func waitForApiKeyToSync(ctx context.Context, c *Client, createdApiKey apikeys.I
 				return fmt.Errorf("error waiting for Kafka API Key %q to sync: %s", createdApiKey.GetId(), createDescriptiveError(err))
 			}
 		} else if isSchemaRegistryApiKey(createdApiKey) || isFlinkApiKey(createdApiKey) {
-			SleepIfNotTestMode(1*time.Minute, c.isAcceptanceTestMode)
+			SleepIfNotTestMode(1*time.Minute, c.isAcceptanceTestMode, c.isLiveProductionTestMode)
 		} else if isKsqlDbClusterApiKey(createdApiKey) {
 			// Currently, there are no data plane API for ksqlDB clusters so there is no endpoint we could leverage
 			// to check whether the Cluster API Key is synced which is why we're adding SleepIfNotTestMode() here.
 			// TODO: SVCF-3560
-			SleepIfNotTestMode(5*time.Minute, c.isAcceptanceTestMode)
+			SleepIfNotTestMode(5*time.Minute, c.isAcceptanceTestMode, c.isLiveProductionTestMode)
 		} else if isTableflowApiKey(createdApiKey) {
 			tableflowRestClient := c.tableflowRestClientFactory.CreateTableflowRestClient(createdApiKey.GetId(), createdApiKey.Spec.GetSecret(), false, c.oauthToken, c.stsToken)
 			if err := waitForCreatedTableflowApiKeyToSync(ctx, tableflowRestClient, c.isAcceptanceTestMode); err != nil {
