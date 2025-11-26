@@ -190,7 +190,14 @@ In addition to the preceding arguments, the following attributes are exported:
 - `id` - (Required String) The ID of the API Key, for example, `EGWX3S4BVNQIRBMJ`.
 - `secret` - (Required String, Sensitive) The secret of the API Key.
 
--> **Note:** If human access is required, you can read out and store the `secret` attribute itself in a key vault.
+-> **Note:** If human access is required, you can read out and store the `secret` attribute itself in a key vault. For example, you can declare a vault resource:
+```
+resource "azurerm_key_vault_secret" "connect-xyz-consumer-secret" {
+  key_vault_id = data.azurerm_key_vault.vault.id
+  name = "connect-xyz-consumer-secret"
+  value = confluent_api_key.xyz-consumer-key.secret
+}
+```
 
 ## Import
 
