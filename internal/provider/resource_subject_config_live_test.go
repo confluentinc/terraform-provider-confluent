@@ -146,6 +146,67 @@ func TestAccSubjectConfigUpdateLive(t *testing.T) {
 	})
 }
 
+func TestAccSubjectConfigWithSlashesLive(t *testing.T) {
+	// Enable parallel execution for I/O bound operations
+	t.Parallel()
+
+	// Skip this test unless explicitly enabled
+	if os.Getenv("TF_ACC_PROD") == "" {
+		t.Skip("Skipping live test. Set TF_ACC_PROD=1 to run this test.")
+	}
+
+	// Read credentials and configuration from environment variables (populated by Vault)
+	apiKey := os.Getenv("CONFLUENT_CLOUD_API_KEY")
+	apiSecret := os.Getenv("CONFLUENT_CLOUD_API_SECRET")
+	endpoint := os.Getenv("CONFLUENT_CLOUD_ENDPOINT")
+	if endpoint == "" {
+		endpoint = "https://api.confluent.cloud" // Use default endpoint if not set
+	}
+
+	// Read Schema Registry credentials from environment variables
+	schemaRegistryApiKey := os.Getenv("SCHEMA_REGISTRY_API_KEY")
+	schemaRegistryApiSecret := os.Getenv("SCHEMA_REGISTRY_API_SECRET")
+	schemaRegistryRestEndpoint := os.Getenv("SCHEMA_REGISTRY_REST_ENDPOINT")
+	schemaRegistryId := os.Getenv("SCHEMA_REGISTRY_ID")
+
+	// Validate required environment variables are present
+	if apiKey == "" || apiSecret == "" {
+		t.Fatal("CONFLUENT_CLOUD_API_KEY and CONFLUENT_CLOUD_API_SECRET must be set for live tests")
+	}
+
+	if schemaRegistryApiKey == "" || schemaRegistryApiSecret == "" || schemaRegistryRestEndpoint == "" || schemaRegistryId == "" {
+		t.Fatal("SCHEMA_REGISTRY_API_KEY, SCHEMA_REGISTRY_API_SECRET, SCHEMA_REGISTRY_REST_ENDPOINT, and SCHEMA_REGISTRY_ID must be set for Schema Registry live tests")
+	}
+
+	// Generate unique names for test resources to avoid conflicts
+	// Use a subject name with slashes to test the import fix
+	randomSuffix := rand.Intn(100000)
+	subjectName := fmt.Sprintf("header/tf-live-subject-config-%d/sagent_header.proto", randomSuffix)
+	subjectConfigResourceLabel := "test_live_subject_config_with_slashes"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckSubjectConfigLiveDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckSubjectConfigLiveConfig(endpoint, subjectConfigResourceLabel, subjectName, apiKey, apiSecret, schemaRegistryApiKey, schemaRegistryApiSecret, schemaRegistryRestEndpoint, schemaRegistryId),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckSubjectConfigLiveExists(fmt.Sprintf("confluent_subject_config.%s", subjectConfigResourceLabel)),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_subject_config.%s", subjectConfigResourceLabel), "subject_name", subjectName),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_subject_config.%s", subjectConfigResourceLabel), "compatibility_level", "BACKWARD"),
+					resource.TestCheckResourceAttrSet(fmt.Sprintf("confluent_subject_config.%s", subjectConfigResourceLabel), "id"),
+				),
+			},
+			{
+				ResourceName:      fmt.Sprintf("confluent_subject_config.%s", subjectConfigResourceLabel),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
 func testAccCheckSubjectConfigLiveConfig(endpoint, subjectConfigResourceLabel, subjectName, apiKey, apiSecret, schemaRegistryApiKey, schemaRegistryApiSecret, schemaRegistryRestEndpoint, schemaRegistryId string) string {
 	return fmt.Sprintf(`
 	provider "confluent" {
