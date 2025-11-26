@@ -44,7 +44,7 @@ semaphore:
             - "data_catalog"
             - "tableflow"
 make:
-  enable: true
+  enable: false
 sonarqube:
   enable: true
   languages:
