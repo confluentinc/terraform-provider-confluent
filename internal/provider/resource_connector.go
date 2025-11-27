@@ -577,7 +577,6 @@ func extractConnectorConfigs(d *schema.ResourceData) (map[string]string, map[str
 // are treated as numbers, not booleans.
 func inferTypeFromString(value string) interface{} {
 	// Try integer first (int64 to handle large numbers like LSN)
-	// This ensures numeric strings like "0", "1", "9943856034248" are converted to numbers
 	if i, err := strconv.ParseInt(value, 10, 64); err == nil {
 		return i
 	}
@@ -633,8 +632,6 @@ func extractConnectorOffsets(d *schema.ResourceData) []map[string]interface{} {
 		}
 
 		// Convert string values to their proper types (int64, bool, string)
-		// This is necessary because Terraform schema stores all values as strings,
-		// but the Debezium connector expects numeric values (e.g., LSN) to be actual numbers
 		convertedPartitionMap := convertMapTypes(partitionMap)
 		convertedOffsetMap := convertMapTypes(offsetMap)
 
