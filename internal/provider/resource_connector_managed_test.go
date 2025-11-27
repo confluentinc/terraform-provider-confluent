@@ -484,8 +484,7 @@ func testAccCheckConnectorExists(n string) resource.TestCheckFunc {
 	}
 }
 
-// TestConvertMapTypes tests the map type conversion function to ensure proper
-// conversion of string values in maps while preserving non-string values
+// TestConvertMapTypes tests the map type conversion function to ensure connector offset values are converted from strings to proper types
 func TestConvertMapTypes(t *testing.T) {
 	tests := []struct {
 		name     string

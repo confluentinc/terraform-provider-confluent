@@ -576,17 +576,17 @@ func extractConnectorConfigs(d *schema.ResourceData) (map[string]string, map[str
 // for backward compatibility. Order matters: integer before boolean to ensure "0" and "1"
 // are treated as numbers, not booleans.
 func inferTypeFromString(value string) interface{} {
-	// Try integer first (int64 to handle large numbers like LSN)
+	// Try integer first (int64 to handle large numbers like LSN), then float, then boolean
 	if i, err := strconv.ParseInt(value, 10, 64); err == nil {
 		return i
 	}
 
-	// Try float for decimal numbers
-	if f, err := strconv.ParseFloat(value, 64); err == nil {
-		return f
+	if strings.ContainsAny(value, ".eE") {
+		if f, err := strconv.ParseFloat(value, 64); err == nil {
+			return f
+		}
 	}
 
-	// Try boolean (only strings like "true", "false" that aren't numeric)
 	if b, err := strconv.ParseBool(value); err == nil {
 		return b
 	}
