@@ -1348,7 +1348,7 @@ func uploadFile(url, filePath string, formFields map[string]any, fileExtension, 
 			Put("").
 			Body(&buffer).
 			ReceiveSuccess(nil)
-	} else if cloud == "AZURE" && isFlinkArtifact {
+	} else if cloud == "AZURE" {
 		_, err = sling.New().
 			Client(client).
 			Base(url).
