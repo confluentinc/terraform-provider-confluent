@@ -22,6 +22,7 @@ import (
 	"io"
 	"net/http"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -570,6 +571,40 @@ func extractConnectorConfigs(d *schema.ResourceData) (map[string]string, map[str
 	return config, sensitiveConfigs, nonsensitiveConfigs
 }
 
+// inferTypeFromString attempts to parse a string value into its appropriate type
+func inferTypeFromString(value string) interface{} {
+	// Try boolean
+	if b, err := strconv.ParseBool(value); err == nil {
+		return b
+	}
+
+	// Try integer (int64 to handle large numbers like LSN)
+	if i, err := strconv.ParseInt(value, 10, 64); err == nil {
+		return i
+	}
+
+	// Try float
+	if f, err := strconv.ParseFloat(value, 64); err == nil {
+		return f
+	}
+
+	// Default to string
+	return value
+}
+
+// convertMapTypes converts all string values in a map to their inferred types
+func convertMapTypes(input map[string]interface{}) map[string]interface{} {
+	result := make(map[string]interface{})
+	for key, value := range input {
+		if strValue, ok := value.(string); ok {
+			result[key] = inferTypeFromString(strValue)
+		} else {
+			result[key] = value
+		}
+	}
+	return result
+}
+
 // extractConnectorOffsets returns an array of map with Offsets and Partitions
 func extractConnectorOffsets(d *schema.ResourceData) []map[string]interface{} {
 	offsets := d.Get(paramOffsetsConfig).(*schema.Set).List()
@@ -593,9 +628,15 @@ func extractConnectorOffsets(d *schema.ResourceData) []map[string]interface{} {
 			continue
 		}
 
+		// Convert string values to their proper types (int64, bool, string)
+		// This is necessary because Terraform schema stores all values as strings,
+		// but the Debezium connector expects numeric values (e.g., LSN) to be actual numbers
+		convertedPartitionMap := convertMapTypes(partitionMap)
+		convertedOffsetMap := convertMapTypes(offsetMap)
+
 		result = append(result, map[string]interface{}{
-			paramPartition: partitionMap,
-			paramOffset:    offsetMap,
+			paramPartition: convertedPartitionMap,
+			paramOffset:    convertedOffsetMap,
 		})
 	}
 	return result
