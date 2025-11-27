@@ -483,3 +483,98 @@ func testAccCheckConnectorExists(n string) resource.TestCheckFunc {
 		return nil
 	}
 }
+
+// TestConvertMapTypes tests the map type conversion function to ensure proper
+// conversion of string values in maps while preserving non-string values
+func TestConvertMapTypes(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    map[string]interface{}
+		expected map[string]interface{}
+	}{
+		{
+			name: "Offsets with LSN",
+			input: map[string]interface{}{
+				"lsn": "123456789",
+			},
+			expected: map[string]interface{}{
+				"lsn": int64(123456789),
+			},
+		},
+		{
+			name: "Mixed types in offset map",
+			input: map[string]interface{}{
+				"lsn_proc":    "true",
+				"messageType": "INSERT",
+				"lsn":         "123456789",
+			},
+			expected: map[string]interface{}{
+				"lsn_proc":    bool(true),
+				"messageType": "INSERT",
+				"lsn":         int64(123456789),
+			},
+		},
+		{
+			name: "All string values",
+			input: map[string]interface{}{
+				"key1": "value1",
+				"key2": "value2",
+			},
+			expected: map[string]interface{}{
+				"key1": "value1",
+				"key2": "value2",
+			},
+		},
+		{
+			name: "Mixed string and non-string values",
+			input: map[string]interface{}{
+				"lsn":          "123456789",
+				"already_int":  int64(123),
+				"already_bool": true,
+			},
+			expected: map[string]interface{}{
+				"lsn":          int64(123456789),
+				"already_int":  int64(123),
+				"already_bool": true,
+			},
+		},
+		{
+			name: "Decimal numbers",
+			input: map[string]interface{}{
+				"key1": "99.99",
+				"key2": "42",
+			},
+			expected: map[string]interface{}{
+				"key1": float64(99.99),
+				"key2": int64(42),
+			},
+		},
+		{
+			name:     "Empty map",
+			input:    map[string]interface{}{},
+			expected: map[string]interface{}{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := convertMapTypes(tt.input)
+			if len(result) != len(tt.expected) {
+				t.Errorf("convertMapTypes() returned map with length %d, expected %d",
+					len(result), len(tt.expected))
+				return
+			}
+			for key, expectedValue := range tt.expected {
+				actualValue, ok := result[key]
+				if !ok {
+					t.Errorf("convertMapTypes() missing key %q", key)
+					continue
+				}
+				if actualValue != expectedValue {
+					t.Errorf("convertMapTypes() [%q] = %v (type %T), expected %v (type %T)",
+						key, actualValue, actualValue, expectedValue, expectedValue)
+				}
+			}
+		})
+	}
+}
