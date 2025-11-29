@@ -53,6 +53,9 @@ In addition to the preceding arguments, the following attributes are exported:
   - `enable_high_availability` - (Required Boolean) Whether a resource should be provisioned with high availability. Endpoints deployed with high availability have network interfaces deployed in multiple AZs. Defaults to `false`.
   - `vpc_endpoint_id` - (Required String) The ID of a VPC Endpoint (if any) that is connected to the VPC Endpoint service, for example, `vpce-00000000000000000`.
   - `vpc_endpoint_dns_name` - (Required String) The DNS name of a VPC Endpoint (if any) that is connected to the VPC Endpoint service, for example, `*.vpce-00000000000000000-abcd1234.s3.us-west-2.vpce.amazonaws.com`.
+- `aws_ingress_private_link_endpoint` (Optional Configuration Block) supports the following:
+  - `vpc_endpoint_id` - (Required String) ID of the VPC Endpoint used for connecting to the VPC Endpoint service, for example, `vpce-00000000000000000`.
+  - `vpc_endpoint_service_name` - (Required String) ID of the Confluent Cloud VPC Endpoint service used for PrivateLink, for example, `com.amazonaws.vpce.us-west-2.vpce-svc-00000000000000000`.
 - `azure_egress_private_link_endpoint` (Optional Configuration Block) supports the following:
   - `private_link_service_resource_id` - (Required String) Resource ID of the Azure Private Link service.
   - `private_link_subresource_name` - (Required String) Name of the subresource for the Private Endpoint to connect to.
