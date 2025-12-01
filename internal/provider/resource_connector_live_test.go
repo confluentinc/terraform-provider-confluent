@@ -235,6 +235,19 @@ func testAccCheckConnectorLiveConfig(endpoint, connectorResourceLabel, connector
 			"kafka.api.secret" = "%s"
 		}
 
+		# Test offset type conversion: PostgreSQL CDC format with LSN, boolean, and string values
+		# Numeric strings should be converted to int64, boolean strings to bool, others remain strings
+		offsets {
+			partition = {
+				"lsn" = "123456789"
+			}
+			offset = {
+				"lsn_proc"    = "true"
+				"messageType" = "INSERT"
+				"txId"        = "12345"
+			}
+		}
+
 		depends_on = [confluent_kafka_topic.connector_topic]
 	}
 	`, endpoint, apiKey, apiSecret, kafkaClusterId, topicName, kafkaRestEndpoint, kafkaApiKey, kafkaApiSecret, connectorResourceLabel, kafkaClusterId, connectorName, kafkaApiKey, kafkaApiSecret)
@@ -282,6 +295,19 @@ func testAccCheckConnectorUpdateLiveConfig(endpoint, connectorResourceLabel, con
 		config_sensitive = {
 			"kafka.api.key"    = "%s"
 			"kafka.api.secret" = "%s"
+		}
+
+		# Test offset type conversion: PostgreSQL CDC format with LSN, boolean, and string values
+		# Numeric strings should be converted to int64, boolean strings to bool, others remain strings
+		offsets {
+			partition = {
+				"lsn" = "123456789"
+			}
+			offset = {
+				"lsn_proc"    = "true"
+				"messageType" = "INSERT"
+				"txId"        = "12345"
+			}
 		}
 
 		depends_on = [confluent_kafka_topic.connector_topic]
