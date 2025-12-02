@@ -2,7 +2,7 @@ terraform {
   required_providers {
     confluent = {
       source  = "confluentinc/confluent"
-      version = "2.54.0"
+      version = "2.55.0"
     }
     vault = {
       source  = "hashicorp/vault"
