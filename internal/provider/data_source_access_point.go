@@ -40,6 +40,7 @@ func accessPointDataSource() *schema.Resource {
 			},
 			paramGateway:                                gatewayDataSourceSchema(),
 			paramAwsEgressPrivateLinkEndpoint:           awsEgressPrivateLinkEndpointDataSourceSchema(),
+			paramAwsIngressPrivateLinkEndpoint:          awsIngressPrivateLinkEndpointDataSourceSchema(),
 			paramAzureEgressPrivateLinkEndpoint:         azureEgressPrivateLinkEndpointDataSourceSchema(),
 			paramGcpEgressPrivateServiceConnectEndpoint: gcpEgressPrivateServiceConnectEndpointDataSourceSchema(),
 			paramAwsPrivateNetworkInterface:             awsPrivateNetworkInterfaceDataSourceSchema(),
@@ -66,6 +67,25 @@ func awsEgressPrivateLinkEndpointDataSourceSchema() *schema.Schema {
 				},
 				paramEnableHighAvailability: {
 					Type:     schema.TypeBool,
+					Computed: true,
+				},
+			},
+		},
+		Computed: true,
+	}
+}
+
+func awsIngressPrivateLinkEndpointDataSourceSchema() *schema.Schema {
+	return &schema.Schema{
+		Type: schema.TypeList,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramVpcEndpointId: {
+					Type:     schema.TypeString,
+					Computed: true,
+				},
+				paramVpcEndpointServiceName: {
+					Type:     schema.TypeString,
 					Computed: true,
 				},
 			},
