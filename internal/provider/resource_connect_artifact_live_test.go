@@ -192,7 +192,7 @@ func testAccCheckConnectArtifactLiveConfig(endpoint, artifactResourceLabel, arti
 		cloud          = "%s"
 		content_format = "JAR"
 		description    = "A test connect artifact for live testing"
-		artifact_file  = "test_artifacts/InsertUuid-1.0-SNAPSHOT.jar"
+		artifact_file  = "test_artifacts/connect_artifact.jar"
 
 		environment {
 			id = "env-zyg27z"
