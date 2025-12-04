@@ -461,10 +461,10 @@ func TestAccKafkaClusterAvailabilityDriftSingleZoneToLowLive(t *testing.T) {
 			},
 			{
 				// Step 2: Simulate API returning LOW (V2 billing model) when config has SINGLE_ZONE
-				// This tests that CustomizeDiff correctly ignores SINGLE_ZONE → LOW drift
+				// This tests that DiffSuppressFunc correctly suppresses SINGLE_ZONE → LOW drift
 				Config:             testAccCheckKafkaClusterAvailabilityDriftLowConfig(endpoint, environmentResourceLabel, environmentDisplayName, clusterResourceLabel, clusterDisplayName, apiKey, apiSecret),
 				PlanOnly:           true,
-				ExpectNonEmptyPlan: false, // Should NOT show drift after CustomizeDiff normalization
+				ExpectNonEmptyPlan: false, // Should NOT show drift after DiffSuppressFunc suppresses the diff
 			},
 		},
 	})
@@ -518,10 +518,10 @@ func TestAccKafkaClusterAvailabilityDriftMultiZoneToHighLive(t *testing.T) {
 			},
 			{
 				// Step 2: Simulate API returning HIGH (V2 billing model) when config has MULTI_ZONE
-				// This tests that CustomizeDiff correctly ignores MULTI_ZONE → HIGH drift
+				// This tests that DiffSuppressFunc correctly suppresses MULTI_ZONE → HIGH drift
 				Config:             testAccCheckKafkaClusterAvailabilityDriftHighConfig(endpoint, environmentResourceLabel, environmentDisplayName, clusterResourceLabel, clusterDisplayName, apiKey, apiSecret),
 				PlanOnly:           true,
-				ExpectNonEmptyPlan: false, // Should NOT show drift after CustomizeDiff normalization
+				ExpectNonEmptyPlan: false, // Should NOT show drift after DiffSuppressFunc suppresses the diff
 			},
 		},
 	})
