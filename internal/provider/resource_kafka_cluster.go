@@ -114,6 +114,12 @@ func kafkaResource() *schema.Resource {
 				ForceNew:     true,
 				Description:  "The availability zone configuration of the Kafka cluster.",
 				ValidateFunc: validation.StringInSlice(acceptedAvailabilityZones, false),
+				DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+					// Suppress diff for equivalent availability values during V1 to V2 billing model migration
+					// SINGLE_ZONE → LOW and MULTI_ZONE → HIGH should not trigger drift
+					return (old == singleZone && new == lowAvailability) ||
+						(old == multiZone && new == highAvailability)
+				},
 			},
 			paramCloud: {
 				Type:         schema.TypeString,
@@ -211,27 +217,6 @@ func resourceKafkaCustomizeDiff(ctx context.Context, diff *schema.ResourceDiff, 
 
 	if isForbiddenStandardBasicUpdate || isForbiddenDedicatedUpdate {
 		return fmt.Errorf("error updating Kafka Cluster %q: clusters can only be upgraded from 'Basic' to 'Standard'", diff.Id())
-	}
-
-	// Ignore equivalent availability zone mappings during migration from V1 to V2 billing model.
-	if diff.HasChange(paramAvailability) {
-		oldAvailabilityInterface, newAvailabilityInterface := diff.GetChange(paramAvailability)
-		oldAvailability := oldAvailabilityInterface.(string)
-		newAvailability := newAvailabilityInterface.(string)
-
-		// If the change is SINGLE_ZONE → LOW, ignore the drift by keeping the old value
-		if oldAvailability == singleZone && newAvailability == lowAvailability {
-			if err := diff.SetNew(paramAvailability, oldAvailability); err != nil {
-				return fmt.Errorf("error updating availability from SINGLE_ZONE to LOW: %s", createDescriptiveError(err))
-			}
-		}
-
-		// If the change is MULTI_ZONE → HIGH, ignore the drift by keeping the old value
-		if oldAvailability == multiZone && newAvailability == highAvailability {
-			if err := diff.SetNew(paramAvailability, oldAvailability); err != nil {
-				return fmt.Errorf("error updating availability from MULTI_ZONE to HIGH: %s", createDescriptiveError(err))
-			}
-		}
 	}
 
 	return nil
