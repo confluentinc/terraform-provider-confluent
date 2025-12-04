@@ -213,6 +213,27 @@ func resourceKafkaCustomizeDiff(ctx context.Context, diff *schema.ResourceDiff, 
 		return fmt.Errorf("error updating Kafka Cluster %q: clusters can only be upgraded from 'Basic' to 'Standard'", diff.Id())
 	}
 
+	// Ignore equivalent availability zone mappings during migration from V1 to V2 billing model.
+	if diff.HasChange(paramAvailability) {
+		oldAvailabilityInterface, newAvailabilityInterface := diff.GetChange(paramAvailability)
+		oldAvailability := oldAvailabilityInterface.(string)
+		newAvailability := newAvailabilityInterface.(string)
+
+		// If the change is SINGLE_ZONE → LOW, ignore the drift by keeping the old value
+		if oldAvailability == singleZone && newAvailability == lowAvailability {
+			if err := diff.SetNew(paramAvailability, oldAvailability); err != nil {
+				return fmt.Errorf("error updating availability from SINGLE_ZONE to LOW: %s", createDescriptiveError(err))
+			}
+		}
+
+		// If the change is MULTI_ZONE → HIGH, ignore the drift by keeping the old value
+		if oldAvailability == multiZone && newAvailability == highAvailability {
+			if err := diff.SetNew(paramAvailability, oldAvailability); err != nil {
+				return fmt.Errorf("error updating availability from MULTI_ZONE to HIGH: %s", createDescriptiveError(err))
+			}
+		}
+	}
+
 	return nil
 }
 
