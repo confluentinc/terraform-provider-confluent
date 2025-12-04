@@ -3,7 +3,7 @@
 page_title: "confluent_connect_artifact Resource - terraform-provider-confluent"
 subcategory: ""
 description: |-
-  
+
 ---
 
 # confluent_connect_artifact Resource
@@ -34,7 +34,7 @@ resource "confluent_connect_artifact" "example" {
 The following arguments are supported:
 
 * `display_name` - (Required String) The unique name of the Connect Artifact per cloud, environment scope.
-* `cloud` - (Required String) Cloud provider where the Connect Artifact archive is uploaded.
+* `cloud` - (Required String) Cloud provider where the Connect Artifact archive is uploaded. Accepted values are: `AWS`, `AZURE`.
 * `environment` - (Required Block) The Environment that the Connect Artifact belongs to, for example, `env-abc123`. It supports the following:
 * `id` - (Required String) The ID of the Environment that the Connect Artifact belongs to.
 * `content_format` - (Required String) Archive format of the Connect Artifact. Supported formats are `JAR` and `ZIP`.
