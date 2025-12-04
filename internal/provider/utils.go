@@ -1348,14 +1348,20 @@ func uploadFile(url, filePath string, formFields map[string]any, fileExtension, 
 			Put("").
 			Body(&buffer).
 			ReceiveSuccess(nil)
-	} else if cloud == "AZURE" && isFlinkArtifact {
+	} else if cloud == "AZURE" {
+		fileContent, readErr := os.ReadFile(filePath)
+		if readErr != nil {
+			return readErr
+		}
+
 		_, err = sling.New().
 			Client(client).
 			Base(url).
 			Set("x-ms-blob-type", "BlockBlob").
 			Set("Content-Type", contentFormat).
+			Set("Content-Length", strconv.Itoa(len(fileContent))).
 			Put("").
-			Body(&buffer).
+			Body(bytes.NewReader(fileContent)).
 			ReceiveSuccess(nil)
 	} else {
 		_, err = sling.New().
