@@ -18,6 +18,7 @@ blocks:
             - sudo chown -R semaphore /Users/semaphore/.config/
             - sudo chmod -R 777 /Users/semaphore/.config/
             - sudo sem-version go 1.24.9
+            - mise use --global go@1.24.9
             - checkout
             - cd ..
             - wget "https://go.dev/dl/go$(cat terraform-provider-confluent*/.go-version).src.tar.gz"
@@ -30,7 +31,7 @@ blocks:
             - sed -i '' 's/linux/darwin/' src/crypto/internal/backend/openssl.go
             - sed -i '' 's/"libcrypto.so.%s"/"libcrypto.%s.dylib"/' src/crypto/internal/backend/openssl.go
             - cd src/
-            - MISE_GO_VERSION=1.24.9 ./make.bash -v
+            - ./make.bash -v
             - cd ../../
             - export PATH=$(pwd)/go/bin:$PATH
             - export "GITHUB_TOKEN=$(gh auth token)"
