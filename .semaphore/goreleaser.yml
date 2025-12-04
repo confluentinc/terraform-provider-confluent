@@ -17,7 +17,8 @@ blocks:
             - sudo chmod -R 777 /Users/semaphore/.local/
             - sudo chown -R semaphore /Users/semaphore/.config/
             - sudo chmod -R 777 /Users/semaphore/.config/
-            - sudo sem-version go 1.24.4
+            - sudo sem-version go 1.24.9
+            - mise use --global go@1.24.9
             - checkout
             - cd ..
             - wget "https://go.dev/dl/go$(cat terraform-provider-confluent*/.go-version).src.tar.gz"
@@ -30,21 +31,21 @@ blocks:
             - sed -i '' 's/linux/darwin/' src/crypto/internal/backend/openssl.go
             - sed -i '' 's/"libcrypto.so.%s"/"libcrypto.%s.dylib"/' src/crypto/internal/backend/openssl.go
             - cd src/
-            - ./make.bash -v
+            - CGO_CFLAGS="-Wno-error=gnu-folding-constant" ./make.bash -v
             - cd ../../
             - export PATH=$(pwd)/go/bin:$PATH
             - export "GITHUB_TOKEN=$(gh auth token)"
             - cd terraform-provider-confluent*
-            - curl https://goreleaser.com/static/run | GOROOT=/Users/semaphore/go VERSION=v1.25.1 bash -s -- build --config .goreleaser-darwin-fips.yml
+            - GOROOT=/Users/semaphore/go VERSION=v1.25.1 ./scripts/run-goreleaser.sh build --config .goreleaser-darwin-fips.yml
             - artifact push workflow dist/darwin-fips_darwin_amd64_v1 --force
-            - artifact push workflow dist/darwin-fips_darwin_arm64 --force
+            - artifact push workflow dist/darwin-fips_darwin_arm64_v8.0 --force
   - name: "Draft a Release (Part 2)"
     dependencies: ["Draft a Release (Part 1)"]
     task:
       jobs:
         - name: goreleaser
           commands:
-            - sem-version go 1.24.4
+            - sem-version go 1.24.9
             - export "GOPATH=$(go env GOPATH)"
             - export "GITHUB_TOKEN=$(gh auth token)"
             - >-
@@ -72,6 +73,6 @@ blocks:
             - sudo apt install -y gcc-aarch64-linux-gnu
             - mkdir prebuilt && cd prebuilt
             - artifact pull workflow darwin-fips_darwin_amd64_v1 --force
-            - artifact pull workflow darwin-fips_darwin_arm64 --force
+            - artifact pull workflow darwin-fips_darwin_arm64_v8.0 --force
             - cd ..
-            - curl https://goreleaser.com/static/run | DISTRIBUTION=pro VERSION=v1.25.1-pro bash -s -- release --config .goreleaser.yml --key $(vault kv get -field goreleaser_key v1/ci/kv/cli/release)
+            - DISTRIBUTION=pro VERSION=v1.25.1-pro ./scripts/run-goreleaser.sh release --config .goreleaser.yml --key $(vault kv get -field goreleaser_key v1/ci/kv/cli/release)

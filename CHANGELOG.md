@@ -1,3 +1,12 @@
+## 2.55.0 (December 2nd, 2025)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.54.0...v2.55.0)
+
+**Bug Fixes:**
+* Updated the `confluent_custom_connector_plugin` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_custom_connector_plugin) to support in-place update for the `sensitive_config_properties` attribute. 
+* Fixed an issue with importing of the `resource_subject_config` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/resource_subject_config). 
+* Fixed `ClassCastException` due to type casting errors when provisioning connectors with LSN (Log Sequence Number) offsets. The provider now correctly converts numeric offset values from strings to int64 and boolean values to bool before sending to the API.
+
 ## 2.54.0 (November 20th, 2025)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.53.0...v2.54.0)
