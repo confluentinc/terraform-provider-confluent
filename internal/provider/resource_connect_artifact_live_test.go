@@ -26,7 +26,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-func TestAccConnectArtifactLive(t *testing.T) {
+func TestAccConnectArtifactAWSLive(t *testing.T) {
 	// Enable parallel execution for I/O bound operations
 	t.Parallel()
 
