@@ -147,3 +147,7 @@ require (
 	google.golang.org/grpc v1.63.2 // indirect
 	google.golang.org/protobuf v1.35.2 // indirect
 )
+
+replace github.com/confluentinc/ccloud-sdk-go-v2/networking-gateway v0.2.0 => github.com/confluentinc/ccloud-sdk-go-v2-internal/networking-gateway v0.11.0
+
+replace github.com/confluentinc/ccloud-sdk-go-v2/networking-access-point v0.5.0 => github.com/confluentinc/ccloud-sdk-go-v2-internal/networking-access-point v0.9.0
