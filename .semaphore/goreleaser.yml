@@ -38,7 +38,7 @@ blocks:
             - cd terraform-provider-confluent*
             - GOROOT=/Users/semaphore/go VERSION=v1.25.1 ./scripts/run-goreleaser.sh build --config .goreleaser-darwin-fips.yml
             - artifact push workflow dist/darwin-fips_darwin_amd64_v1 --force
-            - artifact push workflow dist/darwin-fips_darwin_arm64_v8.0 --force
+            - artifact push workflow dist/darwin-fips_darwin_arm64 --force
   - name: "Draft a Release (Part 2)"
     dependencies: ["Draft a Release (Part 1)"]
     task:
@@ -73,6 +73,6 @@ blocks:
             - sudo apt install -y gcc-aarch64-linux-gnu
             - mkdir prebuilt && cd prebuilt
             - artifact pull workflow darwin-fips_darwin_amd64_v1 --force
-            - artifact pull workflow darwin-fips_darwin_arm64_v8.0 --force
+            - artifact pull workflow darwin-fips_darwin_arm64 --force
             - cd ..
             - DISTRIBUTION=pro VERSION=v1.25.1-pro ./scripts/run-goreleaser.sh release --config .goreleaser.yml --key $(vault kv get -field goreleaser_key v1/ci/kv/cli/release)
