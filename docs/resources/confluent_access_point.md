@@ -122,6 +122,7 @@ In addition to the preceding arguments, the following attributes are exported:
   - `vpc_endpoint_dns_name` - (Required String) The DNS name of a VPC Endpoint (if any) that is connected to the VPC Endpoint service, for example, `*.vpce-00000000000000000-abcd1234.s3.us-west-2.vpce.amazonaws.com`.
 - `aws_ingress_private_link_endpoint` (Optional Configuration Block) supports the following:
   - `vpc_endpoint_service_name` - (Required String) ID of the Confluent Cloud VPC Endpoint service used for PrivateLink, for example, `com.amazonaws.vpce.us-west-2.vpce-svc-00000000000000000`.
+  - `dns_domain` - (Required String) DNS domain name used to configure the Private Hosted Zone for the Access Point, for example, `ap123abc.us-west-2.aws.accesspoint.confluent.cloud`.
 - `aws_private_network_interface` (Optional Configuration Block) supports the following:
   - `network_interfaces` - (Required List of Strings) List of the IDs of the Elastic Network Interfaces, for example: `["eni-00000000000000000", "eni-00000000000000001", "eni-00000000000000002", "eni-00000000000000003", "eni-00000000000000004", "eni-00000000000000005"]`
   - `account` - (Required String) The AWS account ID associated with the ENIs you are using for the Confluent Private Network Interface, for example: `000000000000`.

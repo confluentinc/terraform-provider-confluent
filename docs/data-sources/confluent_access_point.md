@@ -56,6 +56,7 @@ In addition to the preceding arguments, the following attributes are exported:
 - `aws_ingress_private_link_endpoint` (Optional Configuration Block) supports the following:
   - `vpc_endpoint_id` - (Required String) ID of the VPC Endpoint used for connecting to the VPC Endpoint service, for example, `vpce-00000000000000000`.
   - `vpc_endpoint_service_name` - (Required String) ID of the Confluent Cloud VPC Endpoint service used for PrivateLink, for example, `com.amazonaws.vpce.us-west-2.vpce-svc-00000000000000000`.
+  - `dns_domain` - (Required String) DNS domain name used to configure the Private Hosted Zone for the Access Point, for example, `ap123abc.us-west-2.aws.accesspoint.confluent.cloud`.
 - `azure_egress_private_link_endpoint` (Optional Configuration Block) supports the following:
   - `private_link_service_resource_id` - (Required String) Resource ID of the Azure Private Link service.
   - `private_link_subresource_name` - (Required String) Name of the subresource for the Private Endpoint to connect to.

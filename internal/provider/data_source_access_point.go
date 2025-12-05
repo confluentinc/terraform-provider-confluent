@@ -88,6 +88,11 @@ func awsIngressPrivateLinkEndpointDataSourceSchema() *schema.Schema {
 					Type:     schema.TypeString,
 					Computed: true,
 				},
+				paramDnsDomain: {
+					Type:        schema.TypeString,
+					Computed:    true,
+					Description: "DNS domain name used to configure the Private Hosted Zone for the Access Point.",
+				},
 			},
 		},
 		Computed: true,

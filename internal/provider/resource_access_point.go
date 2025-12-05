@@ -134,6 +134,11 @@ func paramAwsIngressPrivateLinkEndpointSchema() *schema.Schema {
 					Computed:    true,
 					Description: "ID of the Confluent Cloud VPC Endpoint service used for PrivateLink.",
 				},
+				paramDnsDomain: {
+					Type:        schema.TypeString,
+					Computed:    true,
+					Description: "DNS domain name used to configure the Private Hosted Zone for the Access Point.",
+				},
 			},
 		},
 		ExactlyOneOf: acceptedEndpointConfig,
@@ -501,10 +506,14 @@ func setAccessPointAttributes(d *schema.ResourceData, accessPoint netap.Networki
 			return nil, err
 		}
 	} else if accessPoint.Spec.Config.NetworkingV1AwsIngressPrivateLinkEndpoint != nil && accessPoint.Status.Config.NetworkingV1AwsIngressPrivateLinkEndpointStatus != nil {
-		if err := d.Set(paramAwsIngressPrivateLinkEndpoint, []interface{}{map[string]interface{}{
+		ingressEndpointMap := map[string]interface{}{
 			paramVpcEndpointId:          accessPoint.Spec.Config.NetworkingV1AwsIngressPrivateLinkEndpoint.GetVpcEndpointId(),
 			paramVpcEndpointServiceName: accessPoint.Status.Config.NetworkingV1AwsIngressPrivateLinkEndpointStatus.GetVpcEndpointServiceName(),
-		}}); err != nil {
+		}
+		if accessPoint.Status.Config.NetworkingV1AwsIngressPrivateLinkEndpointStatus.HasDnsDomain() {
+			ingressEndpointMap[paramDnsDomain] = accessPoint.Status.Config.NetworkingV1AwsIngressPrivateLinkEndpointStatus.GetDnsDomain()
+		}
+		if err := d.Set(paramAwsIngressPrivateLinkEndpoint, []interface{}{ingressEndpointMap}); err != nil {
 			return nil, err
 		}
 	} else if accessPoint.Spec.Config.NetworkingV1AzureEgressPrivateLinkEndpoint != nil && accessPoint.Status.Config.NetworkingV1AzureEgressPrivateLinkEndpointStatus != nil {
