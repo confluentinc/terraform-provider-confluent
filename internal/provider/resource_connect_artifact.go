@@ -114,7 +114,7 @@ func connectArtifactCreate(ctx context.Context, d *schema.ResourceData, meta int
 	}
 
 	// Step 2: Upload file to presigned URL
-	if err := uploadFile(resp.GetUploadUrl(), artifactFile, resp.GetUploadFormData(), resp.GetContentFormat(), cloud, false); err != nil {
+	if err := uploadFile(resp.GetUploadUrl(), artifactFile, resp.GetUploadFormData(), resp.GetContentFormat(), cloud, false, true); err != nil {
 		return diag.Errorf("error uploading Connect Artifact: %s", createDescriptiveError(err, res))
 	}
 
