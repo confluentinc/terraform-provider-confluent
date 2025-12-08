@@ -460,8 +460,10 @@ func TestAccKafkaClusterAvailabilityDriftSingleZoneToLowLive(t *testing.T) {
 				),
 			},
 			{
-				// Step 2: Simulate API returning LOW (V2 billing model) when config has SINGLE_ZONE
-				// This tests that DiffSuppressFunc correctly suppresses SINGLE_ZONE → LOW drift
+				// Step 2: Test that changing config from SINGLE_ZONE to LOW doesn't trigger drift
+				// Note: The actual drift scenario (API returns LOW while config has SINGLE_ZONE) would require
+				// state to have LOW, but in live tests the API returns what was created. This case
+				// tests TF config change with API returning SINGLE_ZONE still
 				Config:             testAccCheckKafkaClusterAvailabilityDriftLowConfig(endpoint, environmentResourceLabel, environmentDisplayName, clusterResourceLabel, clusterDisplayName, apiKey, apiSecret),
 				PlanOnly:           true,
 				ExpectNonEmptyPlan: false, // Should NOT show drift after DiffSuppressFunc suppresses the diff
@@ -517,8 +519,10 @@ func TestAccKafkaClusterAvailabilityDriftMultiZoneToHighLive(t *testing.T) {
 				),
 			},
 			{
-				// Step 2: Simulate API returning HIGH (V2 billing model) when config has MULTI_ZONE
-				// This tests that DiffSuppressFunc correctly suppresses MULTI_ZONE → HIGH drift
+				// Step 2: Test that changing config from MULTI_ZONE to HIGH doesn't trigger drift
+				// Note: The actual drift scenario (API returns HIGH while config has MULTI_ZONE) would require
+				// state to have HIGH, but in live tests the API returns what was created. This case
+				// tests TF config change with API returning MULTI_ZONE still
 				Config:             testAccCheckKafkaClusterAvailabilityDriftHighConfig(endpoint, environmentResourceLabel, environmentDisplayName, clusterResourceLabel, clusterDisplayName, apiKey, apiSecret),
 				PlanOnly:           true,
 				ExpectNonEmptyPlan: false, // Should NOT show drift after DiffSuppressFunc suppresses the diff
