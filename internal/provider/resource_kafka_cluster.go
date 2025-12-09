@@ -116,9 +116,11 @@ func kafkaResource() *schema.Resource {
 				ValidateFunc: validation.StringInSlice(acceptedAvailabilityZones, false),
 				DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
 					// Suppress diff for equivalent availability values during V1 to V2 billing model migration
-					// SINGLE_ZONE → LOW and MULTI_ZONE → HIGH should not trigger drift
+					// SINGLE_ZONE ↔ LOW and MULTI_ZONE ↔ HIGH  should not trigger drift
 					return (old == singleZone && new == lowAvailability) ||
-						(old == multiZone && new == highAvailability)
+						(old == lowAvailability && new == singleZone) ||
+						(old == multiZone && new == highAvailability) ||
+						(old == highAvailability && new == multiZone)
 				},
 			},
 			paramCloud: {
