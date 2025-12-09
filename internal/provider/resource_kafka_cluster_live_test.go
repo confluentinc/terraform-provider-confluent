@@ -414,6 +414,123 @@ func TestAccKafkaClusterFreightLive(t *testing.T) {
 	})
 }
 
+// Test availability drift fix: SINGLE_ZONE → LOW should not cause drift
+func TestAccKafkaClusterAvailabilityDriftSingleZoneToLowLive(t *testing.T) {
+	// Enable parallel execution for I/O bound operations
+	t.Parallel()
+
+	// Skip this test unless explicitly enabled
+	if os.Getenv("TF_ACC_PROD") == "" {
+		t.Skip("Skipping live test. Set TF_ACC_PROD=1 to run this test.")
+	}
+
+	// Read credentials and configuration from environment variables (populated by Vault)
+	apiKey := os.Getenv("CONFLUENT_CLOUD_API_KEY")
+	apiSecret := os.Getenv("CONFLUENT_CLOUD_API_SECRET")
+	endpoint := os.Getenv("CONFLUENT_CLOUD_ENDPOINT")
+	if endpoint == "" {
+		endpoint = "https://api.confluent.cloud" // Use default endpoint if not set
+	}
+
+	// Validate required environment variables are present
+	if apiKey == "" || apiSecret == "" {
+		t.Fatal("CONFLUENT_CLOUD_API_KEY and CONFLUENT_CLOUD_API_SECRET must be set for live tests")
+	}
+
+	clusterDisplayName := fmt.Sprintf("tf-live-drift-sz-%d", rand.Intn(1000000))
+	environmentDisplayName := fmt.Sprintf("tf-live-env-%d", rand.Intn(1000000))
+	clusterResourceLabel := "test_live_drift_sz_cluster"
+	environmentResourceLabel := "test_live_env"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckClusterDestroy,
+		Steps: []resource.TestStep{
+			{
+				// Step 1: Create cluster with SINGLE_ZONE (V1 billing model)
+				Config: testAccCheckKafkaClusterAvailabilityDriftSingleZoneConfig(endpoint, environmentResourceLabel, environmentDisplayName, clusterResourceLabel, clusterDisplayName, apiKey, apiSecret),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckClusterExists(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel)),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "display_name", clusterDisplayName),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "availability", "SINGLE_ZONE"),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "cloud", "AWS"),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "region", "us-east-1"),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "basic.#", "1"),
+				),
+			},
+			{
+				// Step 2: Test that changing config from SINGLE_ZONE to LOW doesn't trigger drift
+				// Note: The actual drift scenario (API returns LOW while config has SINGLE_ZONE) would require
+				// state to have LOW, but in live tests the API returns what was created. This case
+				// tests TF config change with API returning SINGLE_ZONE still
+				Config:             testAccCheckKafkaClusterAvailabilityDriftLowConfig(endpoint, environmentResourceLabel, environmentDisplayName, clusterResourceLabel, clusterDisplayName, apiKey, apiSecret),
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: false, // Should NOT show drift after DiffSuppressFunc suppresses the diff
+			},
+		},
+	})
+}
+
+// Test availability drift fix: MULTI_ZONE → HIGH should not cause drift
+func TestAccKafkaClusterAvailabilityDriftMultiZoneToHighLive(t *testing.T) {
+	// Enable parallel execution for I/O bound operations
+	t.Parallel()
+
+	// Skip this test unless explicitly enabled
+	if os.Getenv("TF_ACC_PROD") == "" {
+		t.Skip("Skipping live test. Set TF_ACC_PROD=1 to run this test.")
+	}
+
+	// Read credentials and configuration from environment variables (populated by Vault)
+	apiKey := os.Getenv("CONFLUENT_CLOUD_API_KEY")
+	apiSecret := os.Getenv("CONFLUENT_CLOUD_API_SECRET")
+	endpoint := os.Getenv("CONFLUENT_CLOUD_ENDPOINT")
+	if endpoint == "" {
+		endpoint = "https://api.confluent.cloud" // Use default endpoint if not set
+	}
+
+	// Validate required environment variables are present
+	if apiKey == "" || apiSecret == "" {
+		t.Fatal("CONFLUENT_CLOUD_API_KEY and CONFLUENT_CLOUD_API_SECRET must be set for live tests")
+	}
+
+	clusterDisplayName := fmt.Sprintf("tf-live-drift-mz-%d", rand.Intn(1000000))
+	environmentDisplayName := fmt.Sprintf("tf-live-env-%d", rand.Intn(1000000))
+	clusterResourceLabel := "test_live_drift_mz_cluster"
+	environmentResourceLabel := "test_live_env"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckClusterDestroy,
+		Steps: []resource.TestStep{
+			{
+				// Step 1: Create cluster with MULTI_ZONE (V1 billing model)
+				// Note: Using standard cluster as it supports MULTI_ZONE
+				Config: testAccCheckKafkaClusterAvailabilityDriftMultiZoneConfig(endpoint, environmentResourceLabel, environmentDisplayName, clusterResourceLabel, clusterDisplayName, apiKey, apiSecret),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckClusterExists(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel)),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "display_name", clusterDisplayName),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "availability", "MULTI_ZONE"),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "cloud", "AWS"),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "region", "us-east-1"),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "standard.#", "1"),
+				),
+			},
+			{
+				// Step 2: Test that changing config from MULTI_ZONE to HIGH doesn't trigger drift
+				// Note: The actual drift scenario (API returns HIGH while config has MULTI_ZONE) would require
+				// state to have HIGH, but in live tests the API returns what was created. This case
+				// tests TF config change with API returning MULTI_ZONE still
+				Config:             testAccCheckKafkaClusterAvailabilityDriftHighConfig(endpoint, environmentResourceLabel, environmentDisplayName, clusterResourceLabel, clusterDisplayName, apiKey, apiSecret),
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: false, // Should NOT show drift after DiffSuppressFunc suppresses the diff
+			},
+		},
+	})
+}
+
 // Configuration for Basic cluster
 func testAccCheckKafkaClusterBasicLiveConfig(endpoint, environmentResourceLabel, environmentDisplayName, clusterResourceLabel, clusterDisplayName, apiKey, apiSecret string) string {
 	return fmt.Sprintf(`
@@ -605,6 +722,126 @@ func testAccCheckKafkaClusterFreightLiveConfig(endpoint, environmentResourceLabe
 		cloud        = "AWS"
 		region       = "us-east-1"
 		freight {}
+
+		environment {
+			id = confluent_environment.%s.id
+		}
+	}
+	`, endpoint, apiKey, apiSecret, environmentResourceLabel, environmentDisplayName, clusterResourceLabel, clusterDisplayName, environmentResourceLabel)
+}
+
+// Configuration for availability drift test: SINGLE_ZONE (V1 billing model)
+func testAccCheckKafkaClusterAvailabilityDriftSingleZoneConfig(endpoint, environmentResourceLabel, environmentDisplayName, clusterResourceLabel, clusterDisplayName, apiKey, apiSecret string) string {
+	return fmt.Sprintf(`
+	provider "confluent" {
+		endpoint         = "%s"
+		cloud_api_key    = "%s"
+		cloud_api_secret = "%s"
+	}
+
+	resource "confluent_environment" "%s" {
+		display_name = "%s"
+		stream_governance {
+			package = "ESSENTIALS"
+		}
+	}
+
+	resource "confluent_kafka_cluster" "%s" {
+		display_name = "%s"
+		availability = "SINGLE_ZONE"
+		cloud        = "AWS"
+		region       = "us-east-1"
+		basic {}
+
+		environment {
+			id = confluent_environment.%s.id
+		}
+	}
+	`, endpoint, apiKey, apiSecret, environmentResourceLabel, environmentDisplayName, clusterResourceLabel, clusterDisplayName, environmentResourceLabel)
+}
+
+// Configuration for availability drift test: LOW (V2 billing model) - simulates API returning LOW
+func testAccCheckKafkaClusterAvailabilityDriftLowConfig(endpoint, environmentResourceLabel, environmentDisplayName, clusterResourceLabel, clusterDisplayName, apiKey, apiSecret string) string {
+	return fmt.Sprintf(`
+	provider "confluent" {
+		endpoint         = "%s"
+		cloud_api_key    = "%s"
+		cloud_api_secret = "%s"
+	}
+
+	resource "confluent_environment" "%s" {
+		display_name = "%s"
+		stream_governance {
+			package = "ESSENTIALS"
+		}
+	}
+
+	resource "confluent_kafka_cluster" "%s" {
+		display_name = "%s"
+		availability = "LOW"
+		cloud        = "AWS"
+		region       = "us-east-1"
+		basic {}
+
+		environment {
+			id = confluent_environment.%s.id
+		}
+	}
+	`, endpoint, apiKey, apiSecret, environmentResourceLabel, environmentDisplayName, clusterResourceLabel, clusterDisplayName, environmentResourceLabel)
+}
+
+// Configuration for availability drift test: MULTI_ZONE (V1 billing model)
+func testAccCheckKafkaClusterAvailabilityDriftMultiZoneConfig(endpoint, environmentResourceLabel, environmentDisplayName, clusterResourceLabel, clusterDisplayName, apiKey, apiSecret string) string {
+	return fmt.Sprintf(`
+	provider "confluent" {
+		endpoint         = "%s"
+		cloud_api_key    = "%s"
+		cloud_api_secret = "%s"
+	}
+
+	resource "confluent_environment" "%s" {
+		display_name = "%s"
+		stream_governance {
+			package = "ESSENTIALS"
+		}
+	}
+
+	resource "confluent_kafka_cluster" "%s" {
+		display_name = "%s"
+		availability = "MULTI_ZONE"
+		cloud        = "AWS"
+		region       = "us-east-1"
+		standard {}
+
+		environment {
+			id = confluent_environment.%s.id
+		}
+	}
+	`, endpoint, apiKey, apiSecret, environmentResourceLabel, environmentDisplayName, clusterResourceLabel, clusterDisplayName, environmentResourceLabel)
+}
+
+// Configuration for availability drift test: HIGH (V2 billing model) - simulates API returning HIGH
+func testAccCheckKafkaClusterAvailabilityDriftHighConfig(endpoint, environmentResourceLabel, environmentDisplayName, clusterResourceLabel, clusterDisplayName, apiKey, apiSecret string) string {
+	return fmt.Sprintf(`
+	provider "confluent" {
+		endpoint         = "%s"
+		cloud_api_key    = "%s"
+		cloud_api_secret = "%s"
+	}
+
+	resource "confluent_environment" "%s" {
+		display_name = "%s"
+		stream_governance {
+			package = "ESSENTIALS"
+		}
+	}
+
+	resource "confluent_kafka_cluster" "%s" {
+		display_name = "%s"
+		availability = "HIGH"
+		cloud        = "AWS"
+		region       = "us-east-1"
+		standard {}
 
 		environment {
 			id = confluent_environment.%s.id
