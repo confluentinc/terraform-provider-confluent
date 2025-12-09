@@ -114,6 +114,14 @@ func kafkaResource() *schema.Resource {
 				ForceNew:     true,
 				Description:  "The availability zone configuration of the Kafka cluster.",
 				ValidateFunc: validation.StringInSlice(acceptedAvailabilityZones, false),
+				DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+					// Suppress diff for equivalent availability values during V1 to V2 billing model migration
+					// SINGLE_ZONE ↔ LOW and MULTI_ZONE ↔ HIGH  should not trigger drift
+					return (old == singleZone && new == lowAvailability) ||
+						(old == lowAvailability && new == singleZone) ||
+						(old == multiZone && new == highAvailability) ||
+						(old == highAvailability && new == multiZone)
+				},
 			},
 			paramCloud: {
 				Type:         schema.TypeString,
