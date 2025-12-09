@@ -349,9 +349,9 @@ func TestAccKafkaClusterAvailabilityDriftMultiZoneToHigh(t *testing.T) {
 			http.StatusOK,
 		))
 
-	// DELETE stub for cleanup - handle all possible states
+	// DELETE stub for cleanup
 	readDeletedKafkaResponse, _ := ioutil.ReadFile("../testdata/kafka/read_deleted_kafka.json")
-	deleteClusterStub1 := wiremock.Delete(wiremock.URLPathEqualTo(readKafkaPath)).
+	deleteClusterStub := wiremock.Delete(wiremock.URLPathEqualTo(readKafkaPath)).
 		InScenario(availabilityDriftScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(testEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateKafkaApiReturnsHigh).
@@ -361,19 +361,7 @@ func TestAccKafkaClusterAvailabilityDriftMultiZoneToHigh(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNoContent,
 		)
-	_ = wiremockClient.StubFor(deleteClusterStub1)
-
-	deleteClusterStub2 := wiremock.Delete(wiremock.URLPathEqualTo(readKafkaPath)).
-		InScenario(availabilityDriftScenarioName).
-		WithQueryParam("environment", wiremock.EqualTo(testEnvironmentId)).
-		WhenScenarioStateIs(scenarioStateKafkaReadyForHighTransition).
-		WillSetStateTo("deleted").
-		WillReturn(
-			"",
-			contentTypeJSONHeader,
-			http.StatusNoContent,
-		)
-	_ = wiremockClient.StubFor(deleteClusterStub2)
+	_ = wiremockClient.StubFor(deleteClusterStub)
 
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaPath)).
 		InScenario(availabilityDriftScenarioName).
