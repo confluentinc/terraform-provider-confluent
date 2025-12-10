@@ -7,7 +7,7 @@ terraform {
     }
     confluent = {
       source  = "confluentinc/confluent"
-      version = "2.44.0"
+      version = "2.55.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -415,7 +415,7 @@ resource "confluent_kafka_cluster" "enterprise" {
   }
 
   depends_on = [
-    aws_network_interface_permission.main
+    confluent_access_point.aws
   ]
 }
 

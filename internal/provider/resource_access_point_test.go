@@ -19,16 +19,21 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/walkerus/go-wiremock"
 )
 
 const (
-	scenarioStateAccessPointIsProvisioning            = "The new access point is provisioning"
-	scenarioStateAccessPointHasBeenCreated            = "The new access point has been just created"
-	scenarioStateAccessPointHasBeenUpdated            = "The new access point has been updated"
+	scenarioStateAccessPointIsProvisioning   = "The new access point is provisioning"
+	scenarioStateAccessPointHasBeenCreated   = "The new access point has been just created"
+	scenarioStateAccessPointHasBeenUpdated   = "The new access point has been updated"
+	scenarioStateAccessPointIsDeprovisioning = "The new access point is deprovisioning"
+	scenarioStateAccessPointHasBeenDeleted   = "The new access point's deletion has been just completed"
+
 	awsEgressAccessPointScenarioName                  = "confluent_access_point Aws Egress Private Link Endpoint Resource Lifecycle"
 	awsPrivateNetworkInterfaceAccessPointScenarioName = "confluent_access_point Aws Private Network Interface Endpoint Resource Lifecycle"
 	azureEgressAccessPointScenarioName                = "confluent_access_point Azure Egress Private Link Endpoint Resource Lifecycle"
@@ -110,10 +115,33 @@ func TestAccAccessPointAwsEgressPrivateLinkEndpoint(t *testing.T) {
 
 	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(accessPointReadUrlPath)).
 		InScenario(awsEgressAccessPointScenarioName).
+		WhenScenarioStateIs(scenarioStateAccessPointHasBeenUpdated).
+		WillSetStateTo(scenarioStateAccessPointIsDeprovisioning).
 		WillReturn(
 			"",
 			contentTypeJSONHeader,
 			http.StatusNoContent,
+		))
+
+	readDeprovisioningAccessPointResponse, _ := os.ReadFile("../testdata/network_access_point/read_deprovisioning_aws_egress_ap.json")
+	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(accessPointReadUrlPath)).
+		InScenario(awsEgressAccessPointScenarioName).
+		WhenScenarioStateIs(scenarioStateAccessPointIsDeprovisioning).
+		WillSetStateTo(scenarioStateAccessPointHasBeenDeleted).
+		WillReturn(
+			string(readDeprovisioningAccessPointResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	readDeletedAccessPointResponse, _ := os.ReadFile("../testdata/network_access_point/read_deleted_aws_egress_ap.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(accessPointReadUrlPath)).
+		InScenario(awsEgressAccessPointScenarioName).
+		WhenScenarioStateIs(scenarioStateAccessPointHasBeenDeleted).
+		WillReturn(
+			string(readDeletedAccessPointResponse),
+			contentTypeJSONHeader,
+			http.StatusNotFound,
 		))
 
 	resource.Test(t, resource.TestCase{
@@ -158,6 +186,17 @@ func TestAccAccessPointAwsEgressPrivateLinkEndpoint(t *testing.T) {
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_egress_private_link_endpoint.0.vpc_endpoint_dns_name", "*.vpce-00000000000000000-abcd1234.s3.us-west-2.vpce.amazonaws.com"),
 				),
 			},
+			{
+				ResourceName: accessPointResourceLabel,
+				ImportStateIdFunc: func(state *terraform.State) (string, error) {
+					resources := state.RootModule().Resources
+					accessPointId := resources[accessPointResourceLabel].Primary.ID
+					environmentId := resources[accessPointResourceLabel].Primary.Attributes["environment.0.id"]
+					return environmentId + "/" + accessPointId, nil
+				},
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }
@@ -179,7 +218,7 @@ func TestAccAccessPointAwsPrivateNetworkInterface(t *testing.T) {
 	// nolint:errcheck
 	defer wiremockClient.ResetAllScenarios()
 
-	createAccessPointResponse, _ := os.ReadFile("../testdata/network_access_point/read_created_aws_private_network_interface_ap.json") // private network interface has no status, so we can use the same json file for create and read
+	createAccessPointResponse, _ := os.ReadFile("../testdata/network_access_point/create_aws_private_network_interface_ap.json") // private network interface has no status, so we can use the same json file for create and read
 	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(accessPointUrlPath)).
 		InScenario(awsPrivateNetworkInterfaceAccessPointScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
@@ -234,10 +273,33 @@ func TestAccAccessPointAwsPrivateNetworkInterface(t *testing.T) {
 
 	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(accessPointReadUrlPath)).
 		InScenario(awsPrivateNetworkInterfaceAccessPointScenarioName).
+		WhenScenarioStateIs(scenarioStateAccessPointHasBeenUpdated).
+		WillSetStateTo(scenarioStateAccessPointIsDeprovisioning).
 		WillReturn(
 			"",
 			contentTypeJSONHeader,
 			http.StatusNoContent,
+		))
+
+	readDeprovisioningAccessPointResponse, _ := os.ReadFile("../testdata/network_access_point/read_deprovisioning_aws_private_network_interface_ap.json")
+	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(accessPointReadUrlPath)).
+		InScenario(awsPrivateNetworkInterfaceAccessPointScenarioName).
+		WhenScenarioStateIs(scenarioStateAccessPointIsDeprovisioning).
+		WillSetStateTo(scenarioStateAccessPointHasBeenDeleted).
+		WillReturn(
+			string(readDeprovisioningAccessPointResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	readDeletedAccessPointResponse, _ := os.ReadFile("../testdata/network_access_point/read_deleted_aws_private_network_interface_ap.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(accessPointReadUrlPath)).
+		InScenario(awsPrivateNetworkInterfaceAccessPointScenarioName).
+		WhenScenarioStateIs(scenarioStateAccessPointHasBeenDeleted).
+		WillReturn(
+			string(readDeletedAccessPointResponse),
+			contentTypeJSONHeader,
+			http.StatusNotFound,
 		))
 
 	resource.Test(t, resource.TestCase{
@@ -283,6 +345,17 @@ func TestAccAccessPointAwsPrivateNetworkInterface(t *testing.T) {
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_private_network_interface.0.network_interfaces.1", "eni-00000000000000001"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_private_network_interface.0.account", "000000000000"),
 				),
+			},
+			{
+				ResourceName: accessPointResourceLabel,
+				ImportStateIdFunc: func(state *terraform.State) (string, error) {
+					resources := state.RootModule().Resources
+					accessPointId := resources[accessPointResourceLabel].Primary.ID
+					environmentId := resources[accessPointResourceLabel].Primary.Attributes["environment.0.id"]
+					return environmentId + "/" + accessPointId, nil
+				},
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -360,10 +433,33 @@ func TestAccAccessPointAzureEgressPrivateLinkEndpoint(t *testing.T) {
 
 	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(accessPointReadUrlPath)).
 		InScenario(azureEgressAccessPointScenarioName).
+		WhenScenarioStateIs(scenarioStateAccessPointHasBeenUpdated).
+		WillSetStateTo(scenarioStateAccessPointIsDeprovisioning).
 		WillReturn(
 			"",
 			contentTypeJSONHeader,
 			http.StatusNoContent,
+		))
+
+	readDeprovisioningAccessPointResponse, _ := os.ReadFile("../testdata/network_access_point/read_deprovisioning_azure_egress_ap.json")
+	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(accessPointReadUrlPath)).
+		InScenario(azureEgressAccessPointScenarioName).
+		WhenScenarioStateIs(scenarioStateAccessPointIsDeprovisioning).
+		WillSetStateTo(scenarioStateAccessPointHasBeenDeleted).
+		WillReturn(
+			string(readDeprovisioningAccessPointResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	readDeletedAccessPointResponse, _ := os.ReadFile("../testdata/network_access_point/read_deleted_azure_egress_ap.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(accessPointReadUrlPath)).
+		InScenario(azureEgressAccessPointScenarioName).
+		WhenScenarioStateIs(scenarioStateAccessPointHasBeenDeleted).
+		WillReturn(
+			string(readDeletedAccessPointResponse),
+			contentTypeJSONHeader,
+			http.StatusNotFound,
 		))
 
 	resource.Test(t, resource.TestCase{
@@ -417,6 +513,17 @@ func TestAccAccessPointAzureEgressPrivateLinkEndpoint(t *testing.T) {
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "azure_egress_private_link_endpoint.0.private_endpoint_custom_dns_config_domains.0", "dbname.database.windows.net"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "azure_egress_private_link_endpoint.0.private_endpoint_custom_dns_config_domains.1", "dbname-region.database.windows.net"),
 				),
+			},
+			{
+				ResourceName: accessPointResourceLabel,
+				ImportStateIdFunc: func(state *terraform.State) (string, error) {
+					resources := state.RootModule().Resources
+					accessPointId := resources[accessPointResourceLabel].Primary.ID
+					environmentId := resources[accessPointResourceLabel].Primary.Attributes["environment.0.id"]
+					return environmentId + "/" + accessPointId, nil
+				},
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -494,10 +601,33 @@ func TestAccAccessPointGcpEgressPrivateServiceConnectEndpoint(t *testing.T) {
 
 	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(accessPointReadUrlPath)).
 		InScenario(gcpEgressAccessPointScenarioName).
+		WhenScenarioStateIs(scenarioStateAccessPointHasBeenUpdated).
+		WillSetStateTo(scenarioStateAccessPointIsDeprovisioning).
 		WillReturn(
 			"",
 			contentTypeJSONHeader,
 			http.StatusNoContent,
+		))
+
+	readDeprovisioningAccessPointResponse, _ := os.ReadFile("../testdata/network_access_point/read_deprovisioning_gcp_egress_ap.json")
+	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(accessPointReadUrlPath)).
+		InScenario(gcpEgressAccessPointScenarioName).
+		WhenScenarioStateIs(scenarioStateAccessPointIsDeprovisioning).
+		WillSetStateTo(scenarioStateAccessPointHasBeenDeleted).
+		WillReturn(
+			string(readDeprovisioningAccessPointResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	readDeletedAccessPointResponse, _ := os.ReadFile("../testdata/network_access_point/read_deleted_gcp_egress_ap.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(accessPointReadUrlPath)).
+		InScenario(gcpEgressAccessPointScenarioName).
+		WhenScenarioStateIs(scenarioStateAccessPointHasBeenDeleted).
+		WillReturn(
+			string(readDeletedAccessPointResponse),
+			contentTypeJSONHeader,
+			http.StatusNotFound,
 		))
 
 	resource.Test(t, resource.TestCase{
@@ -541,6 +671,46 @@ func TestAccAccessPointGcpEgressPrivateServiceConnectEndpoint(t *testing.T) {
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "gcp_egress_private_service_connect_endpoint.0.private_service_connect_endpoint_ip_address", "10.2.255.255"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "gcp_egress_private_service_connect_endpoint.0.private_service_connect_endpoint_name", "plapstgc493ll4"),
 				),
+			},
+			{
+				ResourceName: accessPointResourceLabel,
+				ImportStateIdFunc: func(state *terraform.State) (string, error) {
+					resources := state.RootModule().Resources
+					accessPointId := resources[accessPointResourceLabel].Primary.ID
+					environmentId := resources[accessPointResourceLabel].Primary.Attributes["environment.0.id"]
+					return environmentId + "/" + accessPointId, nil
+				},
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func TestAccAccessPoint_InvalidConfig(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccCheckResourceAccessPointInvalidConfig(),
+				ExpectError: regexp.MustCompile(`Invalid combination of arguments`),
+			},
+		},
+	})
+}
+
+func TestAccAccessPoint_InvalidImportFormat(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:        testAccCheckResourceAccessPointAwsEgressWithIdSet("http://localhost:8080", "test-ap"),
+				ResourceName:  accessPointResourceLabel,
+				ImportState:   true,
+				ImportStateId: "invalid-format",
+				ExpectError:   regexp.MustCompile(`error importing Access Point: invalid format: expected '<env ID>/<Access Point ID>'`),
 			},
 		},
 	})
@@ -630,4 +800,19 @@ func testAccCheckResourceAccessPointGcpEgressWithIdSet(mockServerUrl, name strin
   		}
 	}
 	`, mockServerUrl, name)
+}
+
+func testAccCheckResourceAccessPointInvalidConfig() string {
+	return `
+	resource "confluent_access_point" "main" {
+		display_name = "invalid-ap"
+		environment {
+			id = "env-abc123"
+		}
+		gateway {
+			id = "gw-abc123"
+		}
+		// No endpoint configuration blocks provided - this should trigger error
+	}
+	`
 }

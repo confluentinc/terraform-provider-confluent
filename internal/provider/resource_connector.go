@@ -22,6 +22,7 @@ import (
 	"io"
 	"net/http"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -191,7 +192,7 @@ func connectorCreate(ctx context.Context, d *schema.ResourceData, meta interface
 		return diag.Errorf("error creating Connector %q: %s: %s", displayName, createDescriptiveError(err, resp), string(descriptiveError))
 	}
 	// There's no ID attribute in createdConnector, so we have to send another request to a different endpoint to get a connector object with ID attribute
-	SleepIfNotTestMode(connectAPIWaitAfterCreate, meta.(*Client).isAcceptanceTestMode)
+	SleepIfNotTestMode(connectAPIWaitAfterCreate, meta.(*Client).isAcceptanceTestMode, meta.(*Client).isLiveProductionTestMode)
 	createdConnectorWithId, resp, err := executeConnectorRead(c.connectApiContext(ctx), c, displayName, environmentId, clusterId)
 	if err != nil {
 		return diag.Errorf("error creating Connector %q: error reading created Connector: %s", displayName, createDescriptiveError(err, resp))
@@ -570,6 +571,43 @@ func extractConnectorConfigs(d *schema.ResourceData) (map[string]string, map[str
 	return config, sensitiveConfigs, nonsensitiveConfigs
 }
 
+// inferTypeFromString attempts to parse a string value into its appropriate type
+// It tries to parse numeric strings as int64/float64 when valid, otherwise keeps the string
+// for backward compatibility. Order matters: integer before boolean to ensure "0" and "1"
+// are treated as numbers, not booleans.
+func inferTypeFromString(value string) interface{} {
+	// Try integer first (int64 to handle large numbers like LSN), then float, then boolean
+	if i, err := strconv.ParseInt(value, 10, 64); err == nil {
+		return i
+	}
+
+	if strings.ContainsAny(value, ".eE") {
+		if f, err := strconv.ParseFloat(value, 64); err == nil {
+			return f
+		}
+	}
+
+	if b, err := strconv.ParseBool(value); err == nil {
+		return b
+	}
+
+	// Default to string for backward compatibility
+	return value
+}
+
+// convertMapTypes converts all string values in a map to their inferred types
+func convertMapTypes(input map[string]interface{}) map[string]interface{} {
+	result := make(map[string]interface{})
+	for key, value := range input {
+		if strValue, ok := value.(string); ok {
+			result[key] = inferTypeFromString(strValue)
+		} else {
+			result[key] = value
+		}
+	}
+	return result
+}
+
 // extractConnectorOffsets returns an array of map with Offsets and Partitions
 func extractConnectorOffsets(d *schema.ResourceData) []map[string]interface{} {
 	offsets := d.Get(paramOffsetsConfig).(*schema.Set).List()
@@ -593,9 +631,13 @@ func extractConnectorOffsets(d *schema.ResourceData) []map[string]interface{} {
 			continue
 		}
 
+		// Convert string values to their proper types (int64, bool, string)
+		convertedPartitionMap := convertMapTypes(partitionMap)
+		convertedOffsetMap := convertMapTypes(offsetMap)
+
 		result = append(result, map[string]interface{}{
-			paramPartition: partitionMap,
-			paramOffset:    offsetMap,
+			paramPartition: convertedPartitionMap,
+			paramOffset:    convertedOffsetMap,
 		})
 	}
 	return result

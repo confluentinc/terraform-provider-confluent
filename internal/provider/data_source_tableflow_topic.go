@@ -79,6 +79,8 @@ func tableflowTopicDataSource() *schema.Resource {
 			paramCredentials:    credentialsSchema(),
 			paramByobAws:        byobAwsDataSourceSchema(),
 			paramManagedStorage: managedStorageDataSourceSchema(),
+			paramAzureStorage:   azureStorageDataSourceSchema(),
+			paramErrorHandling:  errorHandlingDataSourceSchema(),
 		},
 	}
 }
@@ -142,6 +144,37 @@ func byobAwsDataSourceSchema() *schema.Schema {
 	}
 }
 
+func azureStorageDataSourceSchema() *schema.Schema {
+	return &schema.Schema{
+		Type: schema.TypeList,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramStorageAccount: {
+					Type:     schema.TypeString,
+					Computed: true,
+				},
+				paramContainerName: {
+					Type:     schema.TypeString,
+					Computed: true,
+				},
+				paramProviderIntegrationId: {
+					Type:     schema.TypeString,
+					Computed: true,
+				},
+				paramStorageRegion: {
+					Type:     schema.TypeString,
+					Computed: true,
+				},
+				paramTablePath: {
+					Type:     schema.TypeString,
+					Computed: true,
+				},
+			},
+		},
+		Computed: true,
+	}
+}
+
 func managedStorageDataSourceSchema() *schema.Schema {
 	return &schema.Schema{
 		Type:     schema.TypeList,
@@ -166,5 +199,24 @@ func requiredKafkaClusterDataSourceSchema() *schema.Schema {
 		},
 		Required: true,
 		MaxItems: 1,
+	}
+}
+
+func errorHandlingDataSourceSchema() *schema.Schema {
+	return &schema.Schema{
+		Type: schema.TypeList,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramMode: {
+					Type:     schema.TypeString,
+					Computed: true,
+				},
+				paramLogTarget: {
+					Type:     schema.TypeString,
+					Computed: true,
+				},
+			},
+		},
+		Computed: true,
 	}
 }

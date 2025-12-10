@@ -119,6 +119,14 @@ func kafkaResource() *schema.Resource {
 				ForceNew:     true,
 				Description:  "The availability zone configuration of the Kafka cluster.",
 				ValidateFunc: validation.StringInSlice(acceptedAvailabilityZones, false),
+				DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+					// Suppress diff for equivalent availability values during V1 to V2 billing model migration
+					// SINGLE_ZONE ↔ LOW and MULTI_ZONE ↔ HIGH  should not trigger drift
+					return (old == singleZone && new == lowAvailability) ||
+						(old == lowAvailability && new == singleZone) ||
+						(old == multiZone && new == highAvailability) ||
+						(old == highAvailability && new == multiZone)
+				},
 			},
 			paramCloud: {
 				Type:         schema.TypeString,
@@ -911,14 +919,14 @@ func setKafkaClusterAttributes(d *schema.ResourceData, cluster cmk.CmkV2Cluster)
 	if err := setStringAttributeInListBlockOfSizeOne(paramConfluentCustomerKey, paramId, cluster.Spec.Byok.GetId(), d); err != nil {
 		return nil, err
 	}
-	if err := setEndpointsBlock(cluster.Spec.GetEndpoints(), d); err != nil {
+	if err := d.Set(paramEndpoints, constructEndpointsBlockValue(cluster.Spec.GetEndpoints())); err != nil {
 		return nil, err
 	}
 	d.SetId(cluster.GetId())
 	return d, nil
 }
 
-func setEndpointsBlock(modelMap cmk.ModelMap, d *schema.ResourceData) error {
+func constructEndpointsBlockValue(modelMap cmk.ModelMap) []interface{} {
 	var endpointsList []interface{}
 
 	// Ensure consistent ordering
@@ -939,7 +947,7 @@ func setEndpointsBlock(modelMap cmk.ModelMap, d *schema.ResourceData) error {
 		endpointsList = append(endpointsList, endpointData)
 	}
 
-	return d.Set(paramEndpoints, endpointsList)
+	return endpointsList
 }
 
 func optionalNetworkSchema() *schema.Schema {

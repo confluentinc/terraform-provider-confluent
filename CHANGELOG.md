@@ -1,3 +1,91 @@
+## 2.55.0 (December 2nd, 2025)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.54.0...v2.55.0)
+
+**Bug Fixes:**
+* Updated the `confluent_custom_connector_plugin` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_custom_connector_plugin) to support in-place update for the `sensitive_config_properties` attribute. 
+* Fixed an issue with importing of the `resource_subject_config` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/resource_subject_config). 
+* Fixed `ClassCastException` due to type casting errors when provisioning connectors with LSN (Log Sequence Number) offsets. The provider now correctly converts numeric offset values from strings to int64 and boolean values to bool before sending to the API.
+
+## 2.54.0 (November 20th, 2025)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.53.0...v2.54.0)
+
+**New Features:**
+* Added Azure support for `confluent_tableflow_topic` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_tableflow_topic) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_tableflow_topic).
+
+## 2.53.0 (November 19th, 2025)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.52.0...v2.53.0)
+
+**Bug Fixes:**
+* Resolved whitespace changes for the `confluent_schema` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema) during a subsequent `terraform plan` when using OAuth.
+
+## 2.52.0 (November 6th, 2025)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.51.0...v2.52.0)
+
+**New Features:**
+* Added the `confluent_provider_integration` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_provider_integration) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_provider_integration) for Azure and GCP in a General Availability lifecycle stage.
+* Added the `confluent_kafka_clusters` [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_kafka_clusters) in a General Availability lifecycle stage.
+
+## 2.51.0 (October 24th, 2025)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.50.0...v2.51.0)
+
+**New Features:**
+* Added support for a new optional `error_handling` block to `confluent_tableflow_topic` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_tableflow_topic) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_tableflow_topic) in a General Availability lifecycle stage.
+* Updated the `confluent_schema` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema) to support in-place update for the `recreate_on_update` attribute.
+* Updated the `confluent_cluster_link` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_cluster_link) to support in-place update for four different credentials attributes.
+
+**Bug Fixes:**
+* Fixed validation error when migrating from API key/secret to OAuth authentication in the provider block.
+
+## 2.50.0 (October 15th, 2025)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.49.0...v2.50.0)
+
+**Bug Fixes:**
+* General fixes and improvements.
+
+## 2.49.0 (October 15th, 2025)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.48.0...v2.49.0)
+
+**Bug Fixes:**
+* General fixes and improvements.
+
+## 2.48.0 (October 10th, 2025)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.47.0...v2.48.0)
+
+**Bug Fixes:**
+* Fixed a bug in the import functionality for the `confluent_catalog_entity_attributes` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_catalog_entity_attributes).
+
+## 2.47.0 (October 9th, 2025)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.46.0...v2.47.0)
+
+**Bug Fixes:**
+* Fixed a deletion issue with the `confluent_access_point` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_access_point).
+
+## 2.46.0 (October 8th, 2025)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.45.0...v2.46.0)
+
+**Bug Fixes:**
+* General fixes and improvements. 
+
+## 2.45.0 (October 7th, 2025)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.44.0...v2.45.0)
+
+**New Features:**
+* Added import functionality for the `confluent_catalog_entity_attributes` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_catalog_entity_attributes).
+
+**Bug Fixes:**
+* Added ["Upgrade Guide for OAuth Authentication Migration" guide](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/guides/migration-guide-oauth).
+
 ## 2.44.0 (September 30th, 2025)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.43.0...v2.44.0)

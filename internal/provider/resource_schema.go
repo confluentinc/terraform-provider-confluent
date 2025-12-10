@@ -164,7 +164,6 @@ func schemaResource() *schema.Resource {
 			paramRecreateOnUpdate: {
 				Type:        schema.TypeBool,
 				Optional:    true,
-				ForceNew:    true,
 				Default:     paramRecreateOnUpdateDefaultValue,
 				Description: "Controls whether a schema should be recreated on update.",
 			},
@@ -335,8 +334,12 @@ func SetSchemaDiff(ctx context.Context, diff *schema.ResourceDiff, meta interfac
 		clusterApiSecret = diff.Get(fmt.Sprintf("%s.0.%s", paramCredentials, paramSecret)).(string)
 	}
 
-	if restEndpoint == "" || clusterId == "" || clusterApiKey == "" || clusterApiSecret == "" {
-		// Skip checks since these attributes reference other resources attributes that are unknown before "terraform apply"
+	// Skip checks if required attributes are missing
+	// For OAuth, API key/secret are not required
+	if restEndpoint == "" || clusterId == "" {
+		return nil
+	}
+	if !client.isOAuthEnabled && (clusterApiKey == "" || clusterApiSecret == "") {
 		return nil
 	}
 
@@ -648,7 +651,7 @@ func schemaCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 	d.SetId(schemaId)
 
 	// https://github.com/confluentinc/terraform-provider-confluentcloud/issues/40#issuecomment-1048782379
-	SleepIfNotTestMode(schemaRegistryAPIWaitAfterCreateOrDelete, meta.(*Client).isAcceptanceTestMode)
+	SleepIfNotTestMode(schemaRegistryAPIWaitAfterCreateOrDelete, meta.(*Client).isAcceptanceTestMode, meta.(*Client).isLiveProductionTestMode)
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating Schema %q", d.Id()), map[string]interface{}{schemaLoggingKey: d.Id()})
 
@@ -738,8 +741,29 @@ func schemaRead(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 }
 
 func schemaUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if d.HasChangesExcept(paramCredentials, paramConfigs, paramHardDelete, paramSchema, paramSchemaReference, paramSkipValidationDuringPlan, paramRuleset, paramMetadata) {
-		return diag.Errorf("error updating Schema %q: only %q, %q, %q, %q, %q, %q, %q and %q blocks can be updated for Schema", d.Id(), paramCredentials, paramConfigs, paramHardDelete, paramSchema, paramSchemaReference, paramSkipValidationDuringPlan, paramRuleset, paramMetadata)
+	if d.HasChangesExcept(paramCredentials, paramConfigs, paramHardDelete, paramSchema, paramSchemaReference, paramSkipValidationDuringPlan, paramRecreateOnUpdate, paramRuleset, paramMetadata) {
+		return diag.Errorf("error updating Schema %q: only %q, %q, %q, %q, %q, %q, %q, %q and %q blocks can be updated for Schema", d.Id(), paramCredentials, paramConfigs, paramHardDelete, paramSchema, paramSchemaReference, paramSkipValidationDuringPlan, paramRecreateOnUpdate, paramRuleset, paramMetadata)
+	}
+
+	if d.HasChange(paramRecreateOnUpdate) {
+		restEndpoint, err := extractSchemaRegistryRestEndpoint(meta.(*Client), d, false)
+		if err != nil {
+			return diag.Errorf("error updating Schema %q: %s", d.Id(), createDescriptiveError(err))
+		}
+		clusterId, err := extractSchemaRegistryClusterId(meta.(*Client), d, false)
+		if err != nil {
+			return diag.Errorf("error updating Schema %q: %s", d.Id(), createDescriptiveError(err))
+		}
+		clusterApiKey, clusterApiSecret, err := extractSchemaRegistryClusterApiKeyAndApiSecret(meta.(*Client), d, false)
+		if err != nil {
+			return diag.Errorf("error updating Schema %q: %s", d.Id(), createDescriptiveError(err))
+		}
+		schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
+		subjectName := d.Get(paramSubjectName).(string)
+		schemaIdentifier := d.Get(paramSchemaIdentifier).(int)
+		recreateOnUpdate := d.Get(paramRecreateOnUpdate).(bool)
+		schemaId := createSchemaId(schemaRegistryRestClient.clusterId, subjectName, int32(schemaIdentifier), recreateOnUpdate)
+		d.SetId(schemaId)
 	}
 
 	if d.HasChanges(paramSchema, paramSchemaReference, paramRuleset, paramMetadata) {

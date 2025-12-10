@@ -17,13 +17,15 @@ package provider
 import (
 	"context"
 	"fmt"
-	ccpm "github.com/confluentinc/ccloud-sdk-go-v2/ccpm/v1"
-	dns "github.com/confluentinc/ccloud-sdk-go-v2/networking-dnsforwarder/v1"
-	sr "github.com/confluentinc/ccloud-sdk-go-v2/schema-registry/v1"
 	"reflect"
+	"strings"
 	"testing"
 
 	apikeys "github.com/confluentinc/ccloud-sdk-go-v2/apikeys/v2"
+	ccpm "github.com/confluentinc/ccloud-sdk-go-v2/ccpm/v1"
+	kafkarestv3 "github.com/confluentinc/ccloud-sdk-go-v2/kafkarest/v3"
+	dns "github.com/confluentinc/ccloud-sdk-go-v2/networking-dnsforwarder/v1"
+	sr "github.com/confluentinc/ccloud-sdk-go-v2/schema-registry/v1"
 )
 
 func testKafkaClusterBlockStateDataV0() map[string]interface{} {
@@ -765,10 +767,10 @@ func TestBuildConnectorClass(t *testing.T) {
 }
 
 func TestNormalizeCrn(t *testing.T) {
-	tests := []struct{
-		name string
-		a    string
-		b    string
+	tests := []struct {
+		name  string
+		a     string
+		b     string
 		equal bool
 	}{
 		{
@@ -808,6 +810,974 @@ func TestNormalizeCrn(t *testing.T) {
 			got := normalizeCrn(tt.a) == normalizeCrn(tt.b)
 			if got != tt.equal {
 				t.Fatalf("Unexpected error: %v expected %v, got %v", tt.name, tt.equal, got)
+			}
+		})
+	}
+}
+
+func TestConvertConfigDataToAlterConfigBatchRequestData(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    []kafkarestv3.ConfigData
+		expected []kafkarestv3.AlterConfigBatchRequestDataData
+	}{
+		{
+			name:     "empty configs",
+			input:    []kafkarestv3.ConfigData{},
+			expected: []kafkarestv3.AlterConfigBatchRequestDataData{},
+		},
+		{
+			name: "single config with PLAIN mechanism",
+			input: []kafkarestv3.ConfigData{
+				{
+					Name:  "sasl.mechanism",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("PLAIN")),
+				},
+			},
+			expected: []kafkarestv3.AlterConfigBatchRequestDataData{
+				{
+					Name:      "sasl.mechanism",
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("PLAIN")),
+					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
+				},
+			},
+		},
+		{
+			name: "multiple credential configs",
+			input: []kafkarestv3.ConfigData{
+				{
+					Name:  "sasl.mechanism",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("PLAIN")),
+				},
+				{
+					Name:  "sasl.jaas.config",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"test-key\" password=\"test-secret\";")),
+				},
+				{
+					Name:  "security.protocol",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SASL_SSL")),
+				},
+			},
+			expected: []kafkarestv3.AlterConfigBatchRequestDataData{
+				{
+					Name:      "sasl.mechanism",
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("PLAIN")),
+					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
+				},
+				{
+					Name:      "sasl.jaas.config",
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"test-key\" password=\"test-secret\";")),
+					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
+				},
+				{
+					Name:      "security.protocol",
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SASL_SSL")),
+					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
+				},
+			},
+		},
+		{
+			name: "OAuth OAUTHBEARER configs",
+			input: []kafkarestv3.ConfigData{
+				{
+					Name:  "sasl.mechanism",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("OAUTHBEARER")),
+				},
+				{
+					Name:  "sasl.oauthbearer.token.endpoint.url",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("https://example.com/oauth/token")),
+				},
+				{
+					Name:  "sasl.login.callback.handler.class",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginCallbackHandler")),
+				},
+				{
+					Name:  "sasl.jaas.config",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required clientId='test-client' scope='test-scope' clientSecret='test-secret' extension_logicalCluster='lkc-123' extension_identityPoolId='pool-123';")),
+				},
+			},
+			expected: []kafkarestv3.AlterConfigBatchRequestDataData{
+				{
+					Name:      "sasl.mechanism",
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("OAUTHBEARER")),
+					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
+				},
+				{
+					Name:      "sasl.oauthbearer.token.endpoint.url",
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("https://example.com/oauth/token")),
+					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
+				},
+				{
+					Name:      "sasl.login.callback.handler.class",
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginCallbackHandler")),
+					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
+				},
+				{
+					Name:      "sasl.jaas.config",
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required clientId='test-client' scope='test-scope' clientSecret='test-secret' extension_logicalCluster='lkc-123' extension_identityPoolId='pool-123';")),
+					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
+				},
+			},
+		},
+		{
+			name: "local cluster configs for bidirectional link",
+			input: []kafkarestv3.ConfigData{
+				{
+					Name:  "local.security.protocol",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SASL_SSL")),
+				},
+				{
+					Name:  "local.sasl.mechanism",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("PLAIN")),
+				},
+				{
+					Name:  "local.sasl.jaas.config",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"local-key\" password=\"local-secret\";")),
+				},
+			},
+			expected: []kafkarestv3.AlterConfigBatchRequestDataData{
+				{
+					Name:      "local.security.protocol",
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SASL_SSL")),
+					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
+				},
+				{
+					Name:      "local.sasl.mechanism",
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("PLAIN")),
+					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
+				},
+				{
+					Name:      "local.sasl.jaas.config",
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"local-key\" password=\"local-secret\";")),
+					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
+				},
+			},
+		},
+		{
+			name: "bootstrap servers config",
+			input: []kafkarestv3.ConfigData{
+				{
+					Name:  "bootstrap.servers",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("pkc-12345.us-east-1.aws.confluent.cloud:9092")),
+				},
+			},
+			expected: []kafkarestv3.AlterConfigBatchRequestDataData{
+				{
+					Name:      "bootstrap.servers",
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("pkc-12345.us-east-1.aws.confluent.cloud:9092")),
+					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
+				},
+			},
+		},
+		{
+			name: "config with empty string value",
+			input: []kafkarestv3.ConfigData{
+				{
+					Name:  "test.config",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("")),
+				},
+			},
+			expected: []kafkarestv3.AlterConfigBatchRequestDataData{
+				{
+					Name:      "test.config",
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("")),
+					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
+				},
+			},
+		},
+		{
+			name: "cluster link mode and connection mode configs",
+			input: []kafkarestv3.ConfigData{
+				{
+					Name:  "link.mode",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("BIDIRECTIONAL")),
+				},
+				{
+					Name:  "connection.mode",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("OUTBOUND")),
+				},
+			},
+			expected: []kafkarestv3.AlterConfigBatchRequestDataData{
+				{
+					Name:      "link.mode",
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("BIDIRECTIONAL")),
+					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
+				},
+				{
+					Name:      "connection.mode",
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("OUTBOUND")),
+					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := convertConfigDataToAlterConfigBatchRequestData(tt.input)
+
+			// Verify length
+			if len(result) != len(tt.expected) {
+				t.Fatalf("Unexpected result length: expected %d, got %d", len(tt.expected), len(result))
+			}
+
+			// Verify each config entry
+			for i := range result {
+				// Check Name
+				if result[i].Name != tt.expected[i].Name {
+					t.Errorf("Config at index %d: unexpected Name: expected %q, got %q", i, tt.expected[i].Name, result[i].Name)
+				}
+
+				// Check Value - carefully handle NullableString
+				resultValue := result[i].Value.Get()
+				expectedValue := tt.expected[i].Value.Get()
+
+				if (resultValue == nil) != (expectedValue == nil) {
+					t.Errorf("Config at index %d (%s): Value nullability mismatch: expected nil=%v, got nil=%v",
+						i, result[i].Name, expectedValue == nil, resultValue == nil)
+				}
+
+				if resultValue != nil && expectedValue != nil {
+					if *resultValue != *expectedValue {
+						t.Errorf("Config at index %d (%s): unexpected Value: expected %q, got %q",
+							i, result[i].Name, *expectedValue, *resultValue)
+					}
+				}
+
+				// Check Operation - must always be "SET"
+				resultOperation := result[i].Operation.Get()
+				if resultOperation == nil {
+					t.Errorf("Config at index %d (%s): Operation is nil, expected 'SET'", i, result[i].Name)
+				} else if *resultOperation != "SET" {
+					t.Errorf("Config at index %d (%s): unexpected Operation: expected 'SET', got %q",
+						i, result[i].Name, *resultOperation)
+				}
+
+				// Verify Operation matches expected
+				expectedOperation := tt.expected[i].Operation.Get()
+				if expectedOperation != nil && resultOperation != nil {
+					if *resultOperation != *expectedOperation {
+						t.Errorf("Config at index %d (%s): Operation mismatch: expected %q, got %q",
+							i, result[i].Name, *expectedOperation, *resultOperation)
+					}
+				}
+			}
+
+			// Additional deep equality check for paranoia
+			if !reflect.DeepEqual(result, tt.expected) {
+				t.Errorf("Deep equality check failed for test case %q", tt.name)
+				t.Logf("Expected: %+v", tt.expected)
+				t.Logf("Got:      %+v", result)
+			}
+		})
+	}
+}
+
+func TestExtractCredentialConfigs(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    []kafkarestv3.ConfigData
+		expected []kafkarestv3.AlterConfigBatchRequestDataData
+	}{
+		{
+			name:     "empty configs",
+			input:    []kafkarestv3.ConfigData{},
+			expected: []kafkarestv3.AlterConfigBatchRequestDataData{},
+		},
+		{
+			name: "only credential configs - PLAIN mechanism",
+			input: []kafkarestv3.ConfigData{
+				{
+					Name:  "sasl.mechanism",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("PLAIN")),
+				},
+				{
+					Name:  "sasl.jaas.config",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"test-key\" password=\"test-secret\";")),
+				},
+			},
+			expected: []kafkarestv3.AlterConfigBatchRequestDataData{
+				{
+					Name:      "sasl.mechanism",
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("PLAIN")),
+					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
+				},
+				{
+					Name:      "sasl.jaas.config",
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"test-key\" password=\"test-secret\";")),
+					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
+				},
+			},
+		},
+		{
+			name: "mixed configs - filters out non-credential configs",
+			input: []kafkarestv3.ConfigData{
+				{
+					Name:  "sasl.mechanism",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("PLAIN")),
+				},
+				{
+					Name:  "bootstrap.servers",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("pkc-12345.us-east-1.aws.confluent.cloud:9092")),
+				},
+				{
+					Name:  "sasl.jaas.config",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"key\" password=\"secret\";")),
+				},
+				{
+					Name:  "security.protocol",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SASL_SSL")),
+				},
+				{
+					Name:  "link.mode",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("DESTINATION")),
+				},
+			},
+			expected: []kafkarestv3.AlterConfigBatchRequestDataData{
+				{
+					Name:      "sasl.mechanism",
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("PLAIN")),
+					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
+				},
+				{
+					Name:      "sasl.jaas.config",
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"key\" password=\"secret\";")),
+					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
+				},
+			},
+		},
+		{
+			name: "local cluster credential configs for bidirectional link",
+			input: []kafkarestv3.ConfigData{
+				{
+					Name:  "local.sasl.mechanism",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("PLAIN")),
+				},
+				{
+					Name:  "local.sasl.jaas.config",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"local-key\" password=\"local-secret\";")),
+				},
+				{
+					Name:  "local.security.protocol",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SASL_SSL")),
+				},
+			},
+			expected: []kafkarestv3.AlterConfigBatchRequestDataData{
+				{
+					Name:      "local.sasl.mechanism",
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("PLAIN")),
+					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
+				},
+				{
+					Name:      "local.sasl.jaas.config",
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"local-key\" password=\"local-secret\";")),
+					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
+				},
+			},
+		},
+		{
+			name: "both local and remote credential configs",
+			input: []kafkarestv3.ConfigData{
+				{
+					Name:  "sasl.mechanism",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("PLAIN")),
+				},
+				{
+					Name:  "sasl.jaas.config",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"remote-key\" password=\"remote-secret\";")),
+				},
+				{
+					Name:  "local.sasl.mechanism",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("PLAIN")),
+				},
+				{
+					Name:  "local.sasl.jaas.config",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"local-key\" password=\"local-secret\";")),
+				},
+				{
+					Name:  "bootstrap.servers",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("pkc-99999.us-west-2.aws.confluent.cloud:9092")),
+				},
+			},
+			expected: []kafkarestv3.AlterConfigBatchRequestDataData{
+				{
+					Name:      "sasl.mechanism",
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("PLAIN")),
+					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
+				},
+				{
+					Name:      "sasl.jaas.config",
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"remote-key\" password=\"remote-secret\";")),
+					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
+				},
+				{
+					Name:      "local.sasl.mechanism",
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("PLAIN")),
+					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
+				},
+				{
+					Name:      "local.sasl.jaas.config",
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"local-key\" password=\"local-secret\";")),
+					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
+				},
+			},
+		},
+		{
+			name: "no credential configs - all filtered out",
+			input: []kafkarestv3.ConfigData{
+				{
+					Name:  "bootstrap.servers",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("pkc-12345.us-east-1.aws.confluent.cloud:9092")),
+				},
+				{
+					Name:  "security.protocol",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SASL_SSL")),
+				},
+				{
+					Name:  "link.mode",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("DESTINATION")),
+				},
+				{
+					Name:  "connection.mode",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("OUTBOUND")),
+				},
+			},
+			expected: []kafkarestv3.AlterConfigBatchRequestDataData{},
+		},
+		{
+			name: "only sasl.mechanism without jaas.config",
+			input: []kafkarestv3.ConfigData{
+				{
+					Name:  "sasl.mechanism",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("OAUTHBEARER")),
+				},
+				{
+					Name:  "sasl.oauthbearer.token.endpoint.url",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("https://example.com/oauth/token")),
+				},
+			},
+			expected: []kafkarestv3.AlterConfigBatchRequestDataData{
+				{
+					Name:      "sasl.mechanism",
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("OAUTHBEARER")),
+					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
+				},
+			},
+		},
+		{
+			name: "only jaas.config without mechanism",
+			input: []kafkarestv3.ConfigData{
+				{
+					Name:  "sasl.jaas.config",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"key\" password=\"secret\";")),
+				},
+				{
+					Name:  "bootstrap.servers",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("pkc-12345.us-east-1.aws.confluent.cloud:9092")),
+				},
+			},
+			expected: []kafkarestv3.AlterConfigBatchRequestDataData{
+				{
+					Name:      "sasl.jaas.config",
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"key\" password=\"secret\";")),
+					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
+				},
+			},
+		},
+		{
+			name: "credential config with empty value",
+			input: []kafkarestv3.ConfigData{
+				{
+					Name:  "sasl.mechanism",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("")),
+				},
+			},
+			expected: []kafkarestv3.AlterConfigBatchRequestDataData{
+				{
+					Name:      "sasl.mechanism",
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("")),
+					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
+				},
+			},
+		},
+		{
+			name: "case sensitivity - non-matching similar keys",
+			input: []kafkarestv3.ConfigData{
+				{
+					Name:  "SASL.MECHANISM", // Wrong case
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("PLAIN")),
+				},
+				{
+					Name:  "sasl.mechanism", // Correct case
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("PLAIN")),
+				},
+				{
+					Name:  "Sasl.Jaas.Config", // Wrong case
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("config")),
+				},
+			},
+			expected: []kafkarestv3.AlterConfigBatchRequestDataData{
+				{
+					Name:      "sasl.mechanism",
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("PLAIN")),
+					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
+				},
+			},
+		},
+		{
+			name: "all four credential config keys",
+			input: []kafkarestv3.ConfigData{
+				{
+					Name:  "sasl.mechanism",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("PLAIN")),
+				},
+				{
+					Name:  "sasl.jaas.config",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"remote-key\" password=\"remote-secret\";")),
+				},
+				{
+					Name:  "local.sasl.mechanism",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("PLAIN")),
+				},
+				{
+					Name:  "local.sasl.jaas.config",
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"local-key\" password=\"local-secret\";")),
+				},
+			},
+			expected: []kafkarestv3.AlterConfigBatchRequestDataData{
+				{
+					Name:      "sasl.mechanism",
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("PLAIN")),
+					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
+				},
+				{
+					Name:      "sasl.jaas.config",
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"remote-key\" password=\"remote-secret\";")),
+					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
+				},
+				{
+					Name:      "local.sasl.mechanism",
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("PLAIN")),
+					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
+				},
+				{
+					Name:      "local.sasl.jaas.config",
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"local-key\" password=\"local-secret\";")),
+					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := extractCredentialConfigs(tt.input)
+
+			// Verify length
+			if len(result) != len(tt.expected) {
+				t.Fatalf("Unexpected result length: expected %d, got %d\nInput configs: %+v\nExpected: %+v\nGot: %+v",
+					len(tt.expected), len(result), tt.input, tt.expected, result)
+			}
+
+			// Verify each filtered and converted config entry
+			for i := range result {
+				// Check Name
+				if result[i].Name != tt.expected[i].Name {
+					t.Errorf("Config at index %d: unexpected Name: expected %q, got %q", i, tt.expected[i].Name, result[i].Name)
+				}
+
+				// Check Value - carefully handle NullableString
+				resultValue := result[i].Value.Get()
+				expectedValue := tt.expected[i].Value.Get()
+
+				if (resultValue == nil) != (expectedValue == nil) {
+					t.Errorf("Config at index %d (%s): Value nullability mismatch: expected nil=%v, got nil=%v",
+						i, result[i].Name, expectedValue == nil, resultValue == nil)
+				}
+
+				if resultValue != nil && expectedValue != nil {
+					if *resultValue != *expectedValue {
+						t.Errorf("Config at index %d (%s): unexpected Value: expected %q, got %q",
+							i, result[i].Name, *expectedValue, *resultValue)
+					}
+				}
+
+				// Check Operation - must always be "SET"
+				resultOperation := result[i].Operation.Get()
+				if resultOperation == nil {
+					t.Errorf("Config at index %d (%s): Operation is nil, expected 'SET'", i, result[i].Name)
+				} else if *resultOperation != "SET" {
+					t.Errorf("Config at index %d (%s): unexpected Operation: expected 'SET', got %q",
+						i, result[i].Name, *resultOperation)
+				}
+
+				// Verify Operation matches expected
+				expectedOperation := tt.expected[i].Operation.Get()
+				if expectedOperation != nil && resultOperation != nil {
+					if *resultOperation != *expectedOperation {
+						t.Errorf("Config at index %d (%s): Operation mismatch: expected %q, got %q",
+							i, result[i].Name, *expectedOperation, *resultOperation)
+					}
+				}
+			}
+
+			// Verify no non-credential configs leaked through
+			for _, resultConfig := range result {
+				isCredentialConfig := false
+				credentialKeys := []string{
+					"sasl.jaas.config",
+					"local.sasl.jaas.config",
+					"sasl.mechanism",
+					"local.sasl.mechanism",
+				}
+				for _, key := range credentialKeys {
+					if resultConfig.Name == key {
+						isCredentialConfig = true
+						break
+					}
+				}
+				if !isCredentialConfig {
+					t.Errorf("Non-credential config leaked through filter: %q", resultConfig.Name)
+				}
+			}
+
+			// Additional deep equality check for paranoia
+			if !reflect.DeepEqual(result, tt.expected) {
+				t.Errorf("Deep equality check failed for test case %q", tt.name)
+				t.Logf("Expected: %+v", tt.expected)
+				t.Logf("Got:      %+v", result)
+			}
+		})
+	}
+}
+
+func TestValidateAllOrNoneAttributesSetForResources(t *testing.T) {
+	tests := []struct {
+		name string
+
+		kafkaApiKey, kafkaApiSecret, kafkaID, kafkaRestEndpoint                                                                       string
+		schemaRegistryApiKey, schemaRegistryApiSecret, schemaRegistryClusterId, schemaRegistryRestEndpoint, catalogRestEndpoint       string
+		flinkApiKey, flinkApiSecret, flinkOrganizationId, flinkEnvironmentId, flinkComputePoolId, flinkRestEndpoint, flinkPrincipalId string
+		tableflowApiKey, tableflowApiSecret                                                                                           string
+
+		shouldErr      bool
+		expectedErrMsg string
+		expectedFlags  ResourceMetadataSetFlags
+	}{
+		{
+			name: "all attributes unset - valid",
+			expectedFlags: ResourceMetadataSetFlags{
+				isKafkaMetadataSet:          false,
+				isSchemaRegistryMetadataSet: false,
+				isCatalogMetadataSet:        false,
+				isFlinkMetadataSet:          false,
+				isTableflowMetadataSet:      false,
+			},
+		},
+		{
+			name:              "all attributes set correctly - valid",
+			kafkaApiKey:       "kafka-key",
+			kafkaApiSecret:    "kafka-secret",
+			kafkaID:           "lkc-abc123",
+			kafkaRestEndpoint: "https://lkc-123.us-east-1.aws.confluent.cloud",
+
+			schemaRegistryApiKey:       "sr-key",
+			schemaRegistryApiSecret:    "sr-secret",
+			schemaRegistryClusterId:    "lsrc-abc123",
+			schemaRegistryRestEndpoint: "https://lsrc-123.us-east-1.aws.confluent.cloud",
+
+			flinkApiKey:         "flink-key",
+			flinkApiSecret:      "flink-secret",
+			flinkOrganizationId: "org-123",
+			flinkEnvironmentId:  "env-456",
+			flinkComputePoolId:  "pool-789",
+			flinkRestEndpoint:   "https://flink.us-east-1.aws.confluent.cloud",
+			flinkPrincipalId:    "u-123456",
+
+			tableflowApiKey:    "tf-key",
+			tableflowApiSecret: "tf-secret",
+
+			expectedFlags: ResourceMetadataSetFlags{
+				isKafkaMetadataSet:          true,
+				isSchemaRegistryMetadataSet: true,
+				isCatalogMetadataSet:        true,
+				isFlinkMetadataSet:          true,
+				isTableflowMetadataSet:      true,
+			},
+		},
+		{
+			name:           "Kafka partially set - missing rest endpoint",
+			kafkaApiKey:    "kafka-key",
+			kafkaApiSecret: "kafka-secret",
+			shouldErr:      true,
+			expectedErrMsg: "(kafka_api_key, kafka_api_secret, kafka_rest_endpoint)",
+			expectedFlags:  ResourceMetadataSetFlags{},
+		},
+		{
+			name:                    "Schema Registry partially set - missing endpoint",
+			schemaRegistryApiKey:    "sr-key",
+			schemaRegistryApiSecret: "sr-secret",
+			schemaRegistryClusterId: "lsrc-abc123",
+			shouldErr:               true,
+			expectedErrMsg:          "All 4 schema_registry_api_key",
+			expectedFlags:           ResourceMetadataSetFlags{isKafkaMetadataSet: false},
+		},
+		{
+			name:                    "Schema Registry valid via catalog endpoint",
+			schemaRegistryApiKey:    "sr-key",
+			schemaRegistryApiSecret: "sr-secret",
+			schemaRegistryClusterId: "lsrc-abc123",
+			catalogRestEndpoint:     "https://catalog.us-east-1.aws.confluent.cloud",
+			expectedFlags: ResourceMetadataSetFlags{
+				isKafkaMetadataSet:          false,
+				isSchemaRegistryMetadataSet: true,
+				isCatalogMetadataSet:        true,
+				isFlinkMetadataSet:          false,
+				isTableflowMetadataSet:      false,
+			},
+		},
+		{
+			name:                "Flink partially set - missing principal ID",
+			flinkApiKey:         "flink-key",
+			flinkApiSecret:      "flink-secret",
+			flinkOrganizationId: "org-123",
+			flinkEnvironmentId:  "env-456",
+			flinkComputePoolId:  "pool-789",
+			flinkRestEndpoint:   "https://flink.us-east-1.aws.confluent.cloud",
+			shouldErr:           true,
+			expectedErrMsg:      "All 7 flink_api_key, flink_api_secret",
+			expectedFlags: ResourceMetadataSetFlags{
+				isKafkaMetadataSet:          false,
+				isSchemaRegistryMetadataSet: false,
+				isCatalogMetadataSet:        false,
+				isFlinkMetadataSet:          false,
+				isTableflowMetadataSet:      false,
+			},
+		},
+		{
+			name:            "Tableflow partially set - missing secret",
+			tableflowApiKey: "tf-key",
+			shouldErr:       true,
+			expectedErrMsg:  "Both tableflow_api_key and tableflow_api_secret",
+			expectedFlags: ResourceMetadataSetFlags{
+				isKafkaMetadataSet:          false,
+				isSchemaRegistryMetadataSet: false,
+				isCatalogMetadataSet:        false,
+				isFlinkMetadataSet:          false,
+				isTableflowMetadataSet:      false,
+			},
+		},
+		{
+			name:              "Kafka and Schema Registry valid, Flink and Tableflow unset - valid",
+			kafkaApiKey:       "kafka-key",
+			kafkaApiSecret:    "kafka-secret",
+			kafkaID:           "lkc-abc123",
+			kafkaRestEndpoint: "https://lkc-123.us-east-1.aws.confluent.cloud",
+
+			schemaRegistryApiKey:       "sr-key",
+			schemaRegistryApiSecret:    "sr-secret",
+			schemaRegistryClusterId:    "lsrc-abc123",
+			schemaRegistryRestEndpoint: "https://lsrc-123.us-east-1.aws.confluent.cloud",
+
+			expectedFlags: ResourceMetadataSetFlags{
+				isKafkaMetadataSet:          true,
+				isSchemaRegistryMetadataSet: true,
+				isCatalogMetadataSet:        true,
+				isFlinkMetadataSet:          false,
+				isTableflowMetadataSet:      false,
+			},
+		},
+		{
+			name: "Kafka valid but Schema Registry partially set - invalid",
+			// Kafka valid
+			kafkaApiKey:       "kafka-key",
+			kafkaApiSecret:    "kafka-secret",
+			kafkaID:           "lkc-abc123",
+			kafkaRestEndpoint: "https://lkc-123.us-east-1.aws.confluent.cloud",
+			// Schema Registry invalid (missing endpoint)
+			schemaRegistryApiKey:    "sr-key",
+			schemaRegistryApiSecret: "sr-secret",
+			schemaRegistryClusterId: "lsrc-abc123",
+			shouldErr:               true,
+			expectedErrMsg:          "All 4 schema_registry_api_key",
+			expectedFlags: ResourceMetadataSetFlags{
+				isKafkaMetadataSet:          true,  // Kafka should still be marked as set
+				isSchemaRegistryMetadataSet: false, // Validation fails here
+				isCatalogMetadataSet:        false,
+				isFlinkMetadataSet:          false,
+				isTableflowMetadataSet:      false,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			flags, diags := validateAllOrNoneAttributesSetForResources(
+				tt.kafkaApiKey, tt.kafkaApiSecret, tt.kafkaID, tt.kafkaRestEndpoint,
+				tt.schemaRegistryApiKey, tt.schemaRegistryApiSecret, tt.schemaRegistryClusterId, tt.schemaRegistryRestEndpoint, tt.catalogRestEndpoint,
+				tt.flinkApiKey, tt.flinkApiSecret, tt.flinkOrganizationId, tt.flinkEnvironmentId, tt.flinkComputePoolId, tt.flinkRestEndpoint, tt.flinkPrincipalId,
+				tt.tableflowApiKey, tt.tableflowApiSecret,
+			)
+
+			if tt.shouldErr {
+				if len(diags) == 0 || !diags.HasError() {
+					t.Fatalf("expected error, got none")
+				}
+				got := diags[0].Summary
+				if !strings.Contains(got, tt.expectedErrMsg) {
+					t.Fatalf("expected diagnostic to contain %q, got %q", tt.expectedErrMsg, got)
+				}
+				if !reflect.DeepEqual(flags, tt.expectedFlags) {
+					t.Fatalf("expected flags %+v, got %+v", tt.expectedFlags, flags)
+				}
+				return
+			}
+
+			if diags.HasError() {
+				t.Fatalf("expected no error, got: %+v", diags)
+			}
+			if !reflect.DeepEqual(flags, tt.expectedFlags) {
+				t.Fatalf("expected flags %+v, got %+v", tt.expectedFlags, flags)
+			}
+		})
+	}
+}
+
+func TestValidateAllOrNoneAttributesSetForResourcesWithOAuth(t *testing.T) {
+	tests := []struct {
+		name string
+
+		kafkaID, kafkaRestEndpoint                                               string
+		srID, srRestEndpoint, catalogRestEndpoint                                string
+		flinkOrgID, flinkEnvID, flinkPoolID, flinkRestEndpoint, flinkPrincipalID string
+
+		shouldErr      bool
+		expectedErrMsg string
+		expectedFlags  ResourceMetadataSetFlags
+	}{
+		{
+			name: "all attributes unset - valid",
+			expectedFlags: ResourceMetadataSetFlags{
+				isKafkaMetadataSet:          false,
+				isSchemaRegistryMetadataSet: false,
+				isCatalogMetadataSet:        false,
+				isFlinkMetadataSet:          false,
+			},
+		},
+		{
+			name:              "all attributes set correctly - valid",
+			kafkaID:           "lkc-abc123",
+			kafkaRestEndpoint: "https://lkc-123.us-east-1.aws.confluent.cloud",
+			srID:              "lsrc-abc123",
+			srRestEndpoint:    "https://lsrc-123.us-east-1.aws.confluent.cloud",
+			flinkOrgID:        "org-123",
+			flinkEnvID:        "env-456",
+			flinkPoolID:       "pool-789",
+			flinkRestEndpoint: "https://flink.us-east-1.aws.confluent.cloud",
+			flinkPrincipalID:  "u-123456",
+			expectedFlags: ResourceMetadataSetFlags{
+				isKafkaMetadataSet:          true,
+				isSchemaRegistryMetadataSet: true,
+				isCatalogMetadataSet:        true,
+				isFlinkMetadataSet:          true,
+			},
+		},
+		{
+			name:           "Kafka partially set - invalid (missing rest endpoint)",
+			kafkaID:        "lkc-abc123",
+			shouldErr:      true,
+			expectedErrMsg: "(kafka_rest_endpoint, kafka_id) attributes should both be set",
+			expectedFlags:  ResourceMetadataSetFlags{},
+		},
+		{
+			name:              "Kafka partially set - invalid (missing ID)",
+			kafkaRestEndpoint: "https://lkc-123.us-east-1.aws.confluent.cloud",
+			shouldErr:         true,
+			expectedErrMsg:    "(kafka_rest_endpoint, kafka_id) attributes should both be set",
+			expectedFlags:     ResourceMetadataSetFlags{},
+		},
+		{
+			name:           "Schema Registry partially set (only ID) - invalid",
+			srID:           "lsrc-abc123",
+			shouldErr:      true,
+			expectedErrMsg: "(either schema_registry_rest_endpoint or catalog_rest_endpoint)",
+			expectedFlags:  ResourceMetadataSetFlags{isKafkaMetadataSet: false},
+		},
+		{
+			name:           "Schema Registry partially set (only endpoint) - invalid",
+			srRestEndpoint: "https://lsrc-123.us-east-1.aws.confluent.cloud",
+			shouldErr:      true,
+			expectedErrMsg: "(either schema_registry_rest_endpoint or catalog_rest_endpoint)",
+			expectedFlags:  ResourceMetadataSetFlags{isKafkaMetadataSet: false},
+		},
+		{
+			name:                "Schema Registry valid via catalog endpoint",
+			srID:                "lsrc-abc123",
+			catalogRestEndpoint: "https://catalog.us-east-1.aws.confluent.cloud",
+			expectedFlags: ResourceMetadataSetFlags{
+				isKafkaMetadataSet:          false,
+				isSchemaRegistryMetadataSet: true,
+				isCatalogMetadataSet:        true,
+				isFlinkMetadataSet:          false,
+			},
+		},
+		{
+			name:              "Flink partially set - missing principal",
+			flinkOrgID:        "org-123",
+			flinkEnvID:        "env-456",
+			flinkPoolID:       "pool-789",
+			flinkRestEndpoint: "https://flink.us-east-1.aws.confluent.cloud",
+			shouldErr:         true,
+			expectedErrMsg:    "All 5 (flink_rest_endpoint, organization_id, environment_id, flink_compute_pool_id, flink_principal_id)",
+			expectedFlags: ResourceMetadataSetFlags{
+				isKafkaMetadataSet:          false,
+				isSchemaRegistryMetadataSet: false,
+				isCatalogMetadataSet:        false,
+				isFlinkMetadataSet:          false,
+			},
+		},
+		{
+			name:              "Kafka and Schema Registry valid, Flink unset - valid",
+			kafkaID:           "lkc-abc123",
+			kafkaRestEndpoint: "https://lkc-123.us-east-1.aws.confluent.cloud",
+			srID:              "lsrc-abc123",
+			srRestEndpoint:    "https://lsrc-123.us-east-1.aws.confluent.cloud",
+			expectedFlags: ResourceMetadataSetFlags{
+				isKafkaMetadataSet:          true,
+				isSchemaRegistryMetadataSet: true,
+				isCatalogMetadataSet:        true,
+				isFlinkMetadataSet:          false,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			flags, diags := validateAllOrNoneAttributesSetForResourcesWithOAuth(
+				tt.kafkaID, tt.kafkaRestEndpoint,
+				tt.srID, tt.srRestEndpoint, tt.catalogRestEndpoint,
+				tt.flinkOrgID, tt.flinkEnvID, tt.flinkPoolID, tt.flinkRestEndpoint, tt.flinkPrincipalID,
+			)
+
+			if tt.shouldErr {
+				if len(diags) == 0 || !diags.HasError() {
+					t.Fatalf("expected an error but got none")
+				}
+				got := diags[0].Summary
+				if !strings.Contains(got, tt.expectedErrMsg) {
+					t.Fatalf("expected diagnostic to contain %q, got %q", tt.expectedErrMsg, got)
+				}
+				if !reflect.DeepEqual(flags, tt.expectedFlags) {
+					t.Fatalf("expected flags %+v, got %+v", tt.expectedFlags, flags)
+				}
+				return
+			}
+
+			if diags.HasError() {
+				t.Fatalf("expected no error, got: %+v", diags)
+			}
+			if !reflect.DeepEqual(flags, tt.expectedFlags) {
+				t.Fatalf("expected flags %+v, got %+v", tt.expectedFlags, flags)
 			}
 		})
 	}

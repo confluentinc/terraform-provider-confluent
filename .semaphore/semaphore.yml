@@ -11,7 +11,7 @@ auto_cancel:
 global_job_config:
   prologue:
     commands:
-      - sem-version go 1.24.4
+      - sem-version go 1.24.9
       - export "GOPATH=$(go env GOPATH)"
       - >-
         export
@@ -44,8 +44,8 @@ after_pipeline:
       - name: Report SonarQube Results
         commands:
           - checkout
-          - sem-version java 11
-          - emit-sonarqube-data -a coverage.txt
+          - sem-version java 17
+          - emit-sonarqube-data -a coverage.txt --enable_sonarqube_enterprise
 
 promotions:
   - name: Draft a Release

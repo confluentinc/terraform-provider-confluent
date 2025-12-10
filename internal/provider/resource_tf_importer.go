@@ -373,7 +373,7 @@ func loadInstances(ctx context.Context, resourceName string, importer *Importer,
 		if resourceName == "confluent_kafka_topic" || resourceName == "confluent_kafka_acl" {
 			// APIF-2043: TEMPORARY HACK
 			// Sleep for 0.5s to avoid sending too many requests
-			SleepIfNotTestMode(500*time.Millisecond, meta.(*Client).isAcceptanceTestMode)
+			SleepIfNotTestMode(500*time.Millisecond, meta.(*Client).isAcceptanceTestMode, meta.(*Client).isLiveProductionTestMode)
 		}
 
 		instanceState, err := getInstanceState(ctx, resourceSchema, instanceId, meta)
@@ -598,7 +598,7 @@ func createHclFileWithHeader(mode ImporterMode) *hclwrite.File {
 	requiredProvidersBlock := tfBlock.Body().AppendNewBlock("required_providers", nil)
 	requiredProvidersBlock.Body().SetAttributeValue("confluent", zclCty.ObjectVal(map[string]zclCty.Value{
 		"source":  zclCty.StringVal("confluentinc/confluent"),
-		"version": zclCty.StringVal("2.42.0"),
+		"version": zclCty.StringVal("2.55.0"),
 	}))
 
 	providerBlock := body.AppendNewBlock("provider", []string{"confluent"})

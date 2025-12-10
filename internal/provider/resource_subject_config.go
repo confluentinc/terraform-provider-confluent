@@ -123,7 +123,7 @@ func subjectConfigCreate(ctx context.Context, d *schema.ResourceData, meta inter
 			return diag.Errorf("error creating Subject Config: %s", createDescriptiveError(err, resp))
 		}
 
-		SleepIfNotTestMode(schemaRegistryAPIWaitAfterCreateOrDelete, meta.(*Client).isAcceptanceTestMode)
+		SleepIfNotTestMode(schemaRegistryAPIWaitAfterCreateOrDelete, meta.(*Client).isAcceptanceTestMode, meta.(*Client).isLiveProductionTestMode)
 	}
 
 	subjectConfigId := createSubjectConfigId(schemaRegistryRestClient.clusterId, subjectName)
@@ -159,7 +159,7 @@ func subjectConfigDelete(ctx context.Context, d *schema.ResourceData, meta inter
 		return diag.Errorf("error deleting Subject Config %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
-	SleepIfNotTestMode(schemaRegistryAPIWaitAfterCreateOrDelete, meta.(*Client).isAcceptanceTestMode)
+	SleepIfNotTestMode(schemaRegistryAPIWaitAfterCreateOrDelete, meta.(*Client).isAcceptanceTestMode, meta.(*Client).isLiveProductionTestMode)
 	tflog.Debug(ctx, fmt.Sprintf("Finished deleting Subject Config %q", d.Id()), map[string]interface{}{subjectConfigLoggingKey: d.Id()})
 
 	return nil
@@ -211,12 +211,12 @@ func subjectConfigImport(ctx context.Context, d *schema.ResourceData, meta inter
 
 	clusterIDAndSubjectName := d.Id()
 	parts := strings.Split(clusterIDAndSubjectName, "/")
-	if len(parts) != 2 {
-		return nil, fmt.Errorf("error importing Subject Config: invalid format: expected '<SR cluster ID>/<subject name>'")
+	if len(parts) < 2 {
+		return nil, fmt.Errorf("error importing Subject Config: invalid format: expected '<SR cluster ID>/<subject name>' where subject name may contain forward slashes")
 	}
 
 	clusterId := parts[0]
-	subjectName := parts[1]
+	subjectName := strings.Join(parts[1:], "/")
 
 	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 
@@ -312,7 +312,7 @@ func subjectConfigUpdate(ctx context.Context, d *schema.ResourceData, meta inter
 		if err != nil {
 			return diag.Errorf("error updating Subject Config: %s", createDescriptiveError(err, resp))
 		}
-		SleepIfNotTestMode(kafkaRestAPIWaitAfterCreate, meta.(*Client).isAcceptanceTestMode)
+		SleepIfNotTestMode(kafkaRestAPIWaitAfterCreate, meta.(*Client).isAcceptanceTestMode, meta.(*Client).isLiveProductionTestMode)
 		tflog.Debug(ctx, fmt.Sprintf("Finished updating Subject Config %q", d.Id()), map[string]interface{}{kafkaClusterConfigLoggingKey: d.Id()})
 	}
 	return subjectConfigRead(ctx, d, meta)

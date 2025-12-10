@@ -36,19 +36,31 @@ const (
 	paramRetentionMs           = "retention_ms"
 	paramByobAws               = "byob_aws"
 	paramManagedStorage        = "managed_storage"
+	paramAzureStorage          = "azure_data_lake_storage_gen_2"
 	paramBucketName            = "bucket_name"
 	paramBucketRegion          = "bucket_region"
 	paramProviderIntegrationId = "provider_integration_id"
 	paramTableFormats          = "table_formats"
 	paramTablePath             = "table_path"
 	paramRecordFailureStrategy = "record_failure_strategy"
+	paramErrorHandling         = "error_handling"
+	paramLogTarget             = "log_target"
 	paramWriteMode             = "write_mode"
+	paramStorageAccount        = "storage_account_name"
+	paramContainerName         = "container_name"
+	paramStorageRegion         = "storage_region"
 
 	byobAwsSpecKind        = "ByobAws"
 	managedStorageSpecKind = "Managed"
+	azureSpecKind          = "AzureDataLakeStorageGen2"
+
+	errorHandlingSuspendMode = "SUSPEND"
+	errorHandlingSkipMode    = "SKIP"
+	errorHandlingLogMode     = "LOG"
 )
 
-var acceptedBucketTypes = []string{paramByobAws, paramManagedStorage}
+var acceptedBucketTypes = []string{paramByobAws, paramManagedStorage, paramAzureStorage}
+var acceptedErrorHandlingModes = []string{errorHandlingSuspendMode, errorHandlingSkipMode, errorHandlingLogMode}
 
 func tableflowTopicResource() *schema.Resource {
 	return &schema.Resource{
@@ -104,6 +116,7 @@ func tableflowTopicResource() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Computed:    true,
+				Deprecated:  "This attribute is deprecated and will be removed in a future release.",
 				Description: "The strategy to handle record failures in the Tableflow enabled topic during materialization.",
 			},
 			paramWriteMode: {
@@ -111,11 +124,13 @@ func tableflowTopicResource() *schema.Resource {
 				Computed:    true,
 				Description: "Indicates the write mode of the tableflow topic.",
 			},
+			paramErrorHandling:  errorHandlingSchema(),
 			paramKafkaCluster:   requiredKafkaClusterBlockSchema(),
 			paramEnvironment:    environmentSchema(),
 			paramCredentials:    credentialsSchema(),
 			paramByobAws:        byobAwsSchema(),
 			paramManagedStorage: managedStorageSchema(),
+			paramAzureStorage:   azureStorageSchema(),
 		},
 		CustomizeDiff: customdiff.Sequence(resourceCredentialBlockValidationWithOAuth),
 	}
@@ -164,6 +179,73 @@ func managedStorageSchema() *schema.Schema {
 	}
 }
 
+func azureStorageSchema() *schema.Schema {
+	return &schema.Schema{
+		Type:        schema.TypeList,
+		ForceNew:    true,
+		Optional:    true,
+		Description: "The Tableflow storage configuration for topic in Azure.",
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramStorageAccount: {
+					Type:     schema.TypeString,
+					Required: true,
+					ForceNew: true,
+				},
+				paramContainerName: {
+					Type:     schema.TypeString,
+					Required: true,
+					ForceNew: true,
+				},
+				paramProviderIntegrationId: {
+					Type:     schema.TypeString,
+					Required: true,
+					ForceNew: true,
+				},
+				paramStorageRegion: {
+					Type:     schema.TypeString,
+					Computed: true,
+				},
+			},
+		},
+		MinItems:     1,
+		MaxItems:     1,
+		ExactlyOneOf: acceptedBucketTypes,
+	}
+}
+
+func errorHandlingSchema() *schema.Schema {
+	return &schema.Schema{
+		Type:     schema.TypeList,
+		Optional: true,
+		Computed: true,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramMode: {
+					Type:         schema.TypeString,
+					Optional:     true,
+					Computed:     true,
+					Description:  "The error handling mode where the bad records are logged to a dead-letter queue (DLQ) topic and the materialization continues with the next record.",
+					ValidateFunc: validation.StringInSlice(acceptedErrorHandlingModes, true),
+					DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+						if strings.ToLower(old) == strings.ToLower(new) {
+							return true
+						}
+						return false
+					},
+				},
+				paramLogTarget: {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Computed:    true,
+					Description: `The topic to which the bad records will be logged. Creates the topic if it doesn't already exist. The default topic is "error_log".`,
+				},
+			},
+		},
+		MaxItems: 1,
+	}
+}
+
 func tableflowTopicCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	c := meta.(*Client)
 
@@ -175,6 +257,7 @@ func tableflowTopicCreate(ctx context.Context, d *schema.ResourceData, meta inte
 
 	isByobAws := len(d.Get(paramByobAws).([]interface{})) > 0
 	isManaged := len(d.Get(paramManagedStorage).([]interface{})) > 0
+	isAzure := len(d.Get(paramAzureStorage).([]interface{})) > 0
 
 	displayName := d.Get(paramDisplayName).(string)
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
@@ -196,6 +279,32 @@ func tableflowTopicCreate(ctx context.Context, d *schema.ResourceData, meta inte
 		tableflowTopicSpec.Config.SetRecordFailureStrategy(recordFailureStrategy)
 	}
 
+	if len(d.Get(paramErrorHandling).([]interface{})) > 0 {
+		mode := extractStringValueFromBlock(d, paramErrorHandling, paramMode)
+		target := extractStringValueFromBlock(d, paramErrorHandling, paramLogTarget)
+
+		if strings.ToUpper(mode) == errorHandlingSuspendMode {
+			tableflowTopicSpec.Config.SetErrorHandling(tableflow.TableflowV1TableFlowTopicConfigsSpecErrorHandlingOneOf{
+				TableflowV1ErrorHandlingSuspend: &tableflow.TableflowV1ErrorHandlingSuspend{
+					Mode: errorHandlingSuspendMode,
+				},
+			})
+		} else if strings.ToUpper(mode) == errorHandlingSkipMode {
+			tableflowTopicSpec.Config.SetErrorHandling(tableflow.TableflowV1TableFlowTopicConfigsSpecErrorHandlingOneOf{
+				TableflowV1ErrorHandlingSkip: &tableflow.TableflowV1ErrorHandlingSkip{
+					Mode: errorHandlingSkipMode,
+				},
+			})
+		} else if strings.ToUpper(mode) == errorHandlingLogMode {
+			tableflowTopicSpec.Config.SetErrorHandling(tableflow.TableflowV1TableFlowTopicConfigsSpecErrorHandlingOneOf{
+				TableflowV1ErrorHandlingLog: &tableflow.TableflowV1ErrorHandlingLog{
+					Mode:   errorHandlingLogMode,
+					Target: tableflow.PtrString(target),
+				},
+			})
+		}
+	}
+
 	if isByobAws {
 		tableflowTopicSpec.SetStorage(tableflow.TableflowV1TableflowTopicSpecStorageOneOf{
 			TableflowV1ByobAwsSpec: &tableflow.TableflowV1ByobAwsSpec{
@@ -208,6 +317,16 @@ func tableflowTopicCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	} else if isManaged {
 		tableflowTopicSpec.SetStorage(tableflow.TableflowV1TableflowTopicSpecStorageOneOf{
 			TableflowV1ManagedStorageSpec: tableflow.NewTableflowV1ManagedStorageSpec(managedStorageSpecKind),
+		})
+	} else if isAzure {
+		tableflowTopicSpec.SetStorage(tableflow.TableflowV1TableflowTopicSpecStorageOneOf{
+			TableflowV1AzureAdlsSpec: &tableflow.TableflowV1AzureAdlsSpec{
+				Kind:                  azureSpecKind,
+				ContainerName:         extractStringValueFromBlock(d, paramAzureStorage, paramContainerName),
+				StorageAccountName:    extractStringValueFromBlock(d, paramAzureStorage, paramStorageAccount),
+				ProviderIntegrationId: extractStringValueFromBlock(d, paramAzureStorage, paramProviderIntegrationId),
+				StorageRegion:         tableflow.PtrString(extractStringValueFromBlock(d, paramAzureStorage, paramStorageRegion)),
+			},
 		})
 	}
 
@@ -324,6 +443,10 @@ func setTableflowTopicAttributes(d *schema.ResourceData, c *TableflowRestClient,
 		if err := d.Set(paramTablePath, tableflowTopic.GetSpec().Storage.TableflowV1ManagedStorageSpec.GetTablePath()); err != nil {
 			return nil, err
 		}
+	} else if storageType == azureSpecKind {
+		if err := d.Set(paramTablePath, tableflowTopic.GetSpec().Storage.TableflowV1AzureAdlsSpec.GetTablePath()); err != nil {
+			return nil, err
+		}
 	}
 
 	if err := d.Set(paramRecordFailureStrategy, tableflowTopic.GetSpec().Config.GetRecordFailureStrategy()); err != nil {
@@ -351,6 +474,40 @@ func setTableflowTopicAttributes(d *schema.ResourceData, c *TableflowRestClient,
 		if err := d.Set(paramManagedStorage, []interface{}{make(map[string]string)}); err != nil {
 			return nil, err
 		}
+	} else if tableflowTopic.Spec.GetStorage().TableflowV1AzureAdlsSpec != nil {
+		if err := d.Set(paramAzureStorage, []interface{}{map[string]interface{}{
+			paramStorageAccount:        tableflowTopic.Spec.GetStorage().TableflowV1AzureAdlsSpec.GetStorageAccountName(),
+			paramContainerName:         tableflowTopic.Spec.GetStorage().TableflowV1AzureAdlsSpec.GetContainerName(),
+			paramStorageRegion:         tableflowTopic.Spec.GetStorage().TableflowV1AzureAdlsSpec.GetStorageRegion(),
+			paramProviderIntegrationId: tableflowTopic.Spec.GetStorage().TableflowV1AzureAdlsSpec.GetProviderIntegrationId(),
+		}}); err != nil {
+			return nil, err
+		}
+	}
+
+	// Since target is not returned for Suspend and Skip modes, we need to extract it from the error_handling block to prevent drift in case the user has set it
+	target := extractStringValueFromBlock(d, paramErrorHandling, paramLogTarget)
+	if tableflowTopic.GetSpec().Config.GetErrorHandling().TableflowV1ErrorHandlingSuspend != nil {
+		if err := d.Set(paramErrorHandling, []interface{}{map[string]interface{}{
+			paramMode:      errorHandlingSuspendMode,
+			paramLogTarget: target,
+		}}); err != nil {
+			return nil, err
+		}
+	} else if tableflowTopic.GetSpec().Config.GetErrorHandling().TableflowV1ErrorHandlingSkip != nil {
+		if err := d.Set(paramErrorHandling, []interface{}{map[string]interface{}{
+			paramMode:      errorHandlingSkipMode,
+			paramLogTarget: target,
+		}}); err != nil {
+			return nil, err
+		}
+	} else if tableflowTopic.GetSpec().Config.GetErrorHandling().TableflowV1ErrorHandlingLog != nil {
+		if err := d.Set(paramErrorHandling, []interface{}{map[string]interface{}{
+			paramMode:      errorHandlingLogMode,
+			paramLogTarget: tableflowTopic.GetSpec().Config.GetErrorHandling().TableflowV1ErrorHandlingLog.GetTarget(),
+		}}); err != nil {
+			return nil, err
+		}
 	}
 
 	if !c.isMetadataSetInProviderBlock {
@@ -372,6 +529,10 @@ func getStorageType(tableflowTopic tableflow.TableflowV1TableflowTopic) (string,
 
 	if config.TableflowV1ManagedStorageSpec != nil {
 		return managedStorageSpecKind, nil
+	}
+
+	if config.TableflowV1AzureAdlsSpec != nil {
+		return azureSpecKind, nil
 	}
 
 	return "", fmt.Errorf("error reading storage type for Tableflow Topic %q", tableflowTopic.Spec.GetDisplayName())
@@ -402,8 +563,8 @@ func tableflowTopicDelete(ctx context.Context, d *schema.ResourceData, meta inte
 }
 
 func tableflowTopicUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if d.HasChangesExcept(paramRetentionMs, paramTableFormats, paramRecordFailureStrategy) {
-		return diag.Errorf("error updating Tableflow Topic %q: only %q, %q, %q attributes can be updated for Tableflow Topic", d.Id(), paramRetentionMs, paramTableFormats, paramRecordFailureStrategy)
+	if d.HasChangesExcept(paramRetentionMs, paramTableFormats, paramRecordFailureStrategy, paramErrorHandling) {
+		return diag.Errorf("error updating Tableflow Topic %q: only %q, %q, %q, %q, %q, %q attributes can be updated for Tableflow Topic", d.Id(), paramRetentionMs, paramTableFormats, paramRecordFailureStrategy, paramErrorHandling, paramMode, paramLogTarget)
 	}
 
 	c := meta.(*Client)
@@ -418,7 +579,7 @@ func tableflowTopicUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 	clusterId := extractStringValueFromBlock(d, paramKafkaCluster, paramId)
 
 	updateTableflowTopicSpec := tableflow.NewTableflowV1TableflowTopicSpecUpdate()
-	updateTableflowTopicSpec.Config = tableflow.NewTableflowV1TableFlowTopicConfigsSpec()
+	updateTableflowTopicSpec.Config = &tableflow.TableflowV1TableFlowTopicConfigsSpec{} // don't call NewTableflowV1TableFlowTopicConfigsSpec() because it explicitlysets RecordFailureStrategy to "SUSPEND"
 	updateTableflowTopicSpec.SetEnvironment(tableflow.GlobalObjectReference{Id: environmentId})
 	updateTableflowTopicSpec.SetKafkaCluster(tableflow.EnvScopedObjectReference{Id: clusterId})
 	if d.HasChange(paramRetentionMs) {
@@ -429,6 +590,31 @@ func tableflowTopicUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 	}
 	if d.HasChange(paramRecordFailureStrategy) {
 		updateTableflowTopicSpec.Config.SetRecordFailureStrategy(d.Get(paramRecordFailureStrategy).(string))
+	}
+	if d.HasChange(paramErrorHandling) {
+		mode := extractStringValueFromBlock(d, paramErrorHandling, paramMode)
+		target := extractStringValueFromBlock(d, paramErrorHandling, paramLogTarget)
+
+		if strings.ToUpper(mode) == errorHandlingSuspendMode {
+			updateTableflowTopicSpec.Config.SetErrorHandling(tableflow.TableflowV1TableFlowTopicConfigsSpecErrorHandlingOneOf{
+				TableflowV1ErrorHandlingSuspend: &tableflow.TableflowV1ErrorHandlingSuspend{
+					Mode: errorHandlingSuspendMode,
+				},
+			})
+		} else if strings.ToUpper(mode) == errorHandlingSkipMode {
+			updateTableflowTopicSpec.Config.SetErrorHandling(tableflow.TableflowV1TableFlowTopicConfigsSpecErrorHandlingOneOf{
+				TableflowV1ErrorHandlingSkip: &tableflow.TableflowV1ErrorHandlingSkip{
+					Mode: errorHandlingSkipMode,
+				},
+			})
+		} else if strings.ToUpper(mode) == errorHandlingLogMode {
+			updateTableflowTopicSpec.Config.SetErrorHandling(tableflow.TableflowV1TableFlowTopicConfigsSpecErrorHandlingOneOf{
+				TableflowV1ErrorHandlingLog: &tableflow.TableflowV1ErrorHandlingLog{
+					Mode:   errorHandlingLogMode,
+					Target: tableflow.PtrString(target),
+				},
+			})
+		}
 	}
 
 	updateTableflowTopic := tableflow.NewTableflowV1TableflowTopicUpdate()

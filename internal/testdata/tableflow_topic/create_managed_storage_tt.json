@@ -29,7 +29,10 @@
       "enable_compaction": true,
       "enable_partitioning": true,
       "retention_ms": "100000000",
-      "record_failure_strategy": "SUSPEND"
+      "record_failure_strategy": "SKIP",
+      "error_handling": {
+        "mode": "SKIP"
+      }
     },
     "storage": {
       "kind": "Managed"

@@ -117,7 +117,7 @@ func kafkaClientQuotaUpdate(ctx context.Context, d *schema.ResourceData, meta in
 		return diag.Errorf("error updating Kafka Client Quota %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
-	SleepIfNotTestMode(kafkaQuotasAPIWaitAfterUpdate, meta.(*Client).isAcceptanceTestMode)
+	SleepIfNotTestMode(kafkaQuotasAPIWaitAfterUpdate, meta.(*Client).isAcceptanceTestMode, meta.(*Client).isLiveProductionTestMode)
 
 	updatedClientQuotaJson, err := json.Marshal(updatedClientQuota)
 	if err != nil {
@@ -161,7 +161,7 @@ func kafkaClientQuotaCreate(ctx context.Context, d *schema.ResourceData, meta in
 	}
 	d.SetId(createdKafkaClientQuota.GetId())
 
-	SleepIfNotTestMode(kafkaQuotasAPIWaitAfterCreate, meta.(*Client).isAcceptanceTestMode)
+	SleepIfNotTestMode(kafkaQuotasAPIWaitAfterCreate, meta.(*Client).isAcceptanceTestMode, meta.(*Client).isLiveProductionTestMode)
 
 	createdClientQuotaJson, err := json.Marshal(createdKafkaClientQuota)
 	if err != nil {

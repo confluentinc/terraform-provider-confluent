@@ -121,7 +121,7 @@ func kafkaMirrorTopicCreate(ctx context.Context, d *schema.ResourceData, meta in
 	d.SetId(kafkaMirrorTopicId)
 
 	// https://github.com/confluentinc/terraform-provider-confluentcloud/issues/40#issuecomment-1048782379
-	SleepIfNotTestMode(kafkaRestAPIWaitAfterCreate, meta.(*Client).isAcceptanceTestMode)
+	SleepIfNotTestMode(kafkaRestAPIWaitAfterCreate, meta.(*Client).isAcceptanceTestMode, meta.(*Client).isLiveProductionTestMode)
 
 	// Don't log created Kafka Mirror Topic since API returns an empty 201 response.
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating Kafka Mirror Topic %q", d.Id()), map[string]interface{}{kafkaMirrorTopicLoggingKey: d.Id()})

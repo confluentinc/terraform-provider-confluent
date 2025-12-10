@@ -209,3 +209,22 @@ The following arguments are supported:
 In addition to the preceding arguments, the following attributes are exported:
 
 - `id` - (Required String) The ID of the Entity Attributes, in the format `<Entity Type>/<Entity Name>`, for example, `lsrc-8wrx70/PII/lsrc-8wrx70:.:100001/sr_schema`.
+
+## Import
+
+You can import a Catalog Entity Attributes resource by using the Schema Registry Cluster ID, Entity name in the format `<Schema Registry Cluster ID>/<Entity Type>/<Entity Name>/<Comma-Delimited-Attributes>`, for example:
+
+```shell
+# Option #1: Manage multiple Catalog Entity Attributes in the same Terraform workspace
+$ export IMPORT_SCHEMA_REGISTRY_API_KEY="<schema_registry_api_key>"
+$ export IMPORT_SCHEMA_REGISTRY_API_SECRET="<schema_registry_api_secret>"
+$ export IMPORT_SCHEMA_REGISTRY_REST_ENDPOINT="<schema_registry_rest_endpoint>"
+$ terraform import confluent_catalog_entity_attributes.environment lsrc-abc123/cf_environment/env-abc123/owner,description,ownerEmail
+
+# Option #2: Manage a single Catalog Entity Attributes in the same Terraform workspace
+$ terraform import confluent_catalog_entity_attributes.environment lsrc-abc123/cf_environment/env-abc123/owner,description,ownerEmail
+```
+
+-> **Note:** Use the `<Schema Registry Cluster ID>/<Entity Type>/<Entity Name>/` format to import a Catalog Entity Attributes resource with an empty list of attributes.
+
+!> **Warning:** Do not forget to delete terminal command history afterwards for security purposes.

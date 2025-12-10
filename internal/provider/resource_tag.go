@@ -134,7 +134,7 @@ func tagCreate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagn
 	}
 
 	// https://github.com/confluentinc/terraform-provider-confluent/issues/282
-	SleepIfNotTestMode(dataCatalogAPIWaitAfterCreate, meta.(*Client).isAcceptanceTestMode)
+	SleepIfNotTestMode(dataCatalogAPIWaitAfterCreate, meta.(*Client).isAcceptanceTestMode, meta.(*Client).isLiveProductionTestMode)
 
 	createdTagJson, err := json.Marshal(createdTag)
 	if err != nil {
@@ -232,7 +232,7 @@ func tagDelete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagn
 		return diag.Errorf("error deleting Tag %q: %s", tagId, createDescriptiveError(serviceErr))
 	}
 
-	SleepIfNotTestMode(time.Second, meta.(*Client).isAcceptanceTestMode)
+	SleepIfNotTestMode(time.Second, meta.(*Client).isAcceptanceTestMode, meta.(*Client).isLiveProductionTestMode)
 	tflog.Debug(ctx, fmt.Sprintf("Finished deleting Tag %q", tagId), map[string]any{tagLoggingKey: tagId})
 
 	return nil
@@ -377,8 +377,8 @@ func extractCatalogRestEndpoint(client *Client, d *schema.ResourceData, isImport
 		}
 	}
 	if isImportOperation {
-		restEndpoint := getEnv("CATALOG_REST_ENDPOINT", "")
-		restEndpointOld := getEnv("SCHEMA_REGISTRY_REST_ENDPOINT", "")
+		restEndpoint := getEnv("IMPORT_CATALOG_REST_ENDPOINT", "")
+		restEndpointOld := getEnv("IMPORT_SCHEMA_REGISTRY_REST_ENDPOINT", "")
 		if restEndpoint != "" {
 			return restEndpoint, nil
 		} else if restEndpointOld != "" {

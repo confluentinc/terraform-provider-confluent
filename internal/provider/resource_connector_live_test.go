@@ -69,7 +69,8 @@ func TestAccConnectorLive(t *testing.T) {
 		CheckDestroy:      testAccCheckConnectorLiveDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckConnectorLiveConfig(endpoint, connectorResourceLabel, connectorName, fmt.Sprintf("%s-topic", connectorName), kafkaClusterId, kafkaRestEndpoint, apiKey, apiSecret, kafkaApiKey, kafkaApiSecret),
+				// Create connector without offsets first (offsets cannot be set during creation)
+				Config: testAccCheckConnectorLiveConfigWithoutOffsets(endpoint, connectorResourceLabel, connectorName, fmt.Sprintf("%s-topic", connectorName), kafkaClusterId, kafkaRestEndpoint, apiKey, apiSecret, kafkaApiKey, kafkaApiSecret),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckConnectorLiveExists(fmt.Sprintf("confluent_connector.%s", connectorResourceLabel)),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_connector.%s", connectorResourceLabel), "config_nonsensitive.name", connectorName),
@@ -143,14 +144,16 @@ func TestAccConnectorUpdateLive(t *testing.T) {
 		CheckDestroy:      testAccCheckConnectorLiveDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckConnectorLiveConfig(endpoint, connectorResourceLabel, connectorName, fmt.Sprintf("%s-topic", connectorName), kafkaClusterId, kafkaRestEndpoint, apiKey, apiSecret, kafkaApiKey, kafkaApiSecret),
+				// Create connector without offsets first (offsets cannot be set during creation)
+				Config: testAccCheckConnectorLiveConfigWithoutOffsets(endpoint, connectorResourceLabel, connectorName, fmt.Sprintf("%s-topic", connectorName), kafkaClusterId, kafkaRestEndpoint, apiKey, apiSecret, kafkaApiKey, kafkaApiSecret),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckConnectorLiveExists(fmt.Sprintf("confluent_connector.%s", connectorResourceLabel)),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_connector.%s", connectorResourceLabel), "config_nonsensitive.max.interval", "1000"),
 				),
 			},
 			{
-				Config: testAccCheckConnectorUpdateLiveConfig(endpoint, connectorResourceLabel, connectorName, fmt.Sprintf("%s-topic", connectorName), kafkaClusterId, kafkaRestEndpoint, apiKey, apiSecret, kafkaApiKey, kafkaApiSecret),
+				// Update config (without offsets - offset operations are not permitted for this connector type)
+				Config: testAccCheckConnectorUpdateLiveConfigWithoutOffsets(endpoint, connectorResourceLabel, connectorName, fmt.Sprintf("%s-topic", connectorName), kafkaClusterId, kafkaRestEndpoint, apiKey, apiSecret, kafkaApiKey, kafkaApiSecret),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckConnectorLiveExists(fmt.Sprintf("confluent_connector.%s", connectorResourceLabel)),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_connector.%s", connectorResourceLabel), "config_nonsensitive.max.interval", "2000"),
@@ -191,7 +194,7 @@ func testAccCheckConnectorLiveExists(resourceName string) resource.TestCheckFunc
 	}
 }
 
-func testAccCheckConnectorLiveConfig(endpoint, connectorResourceLabel, connectorName, topicName, kafkaClusterId, kafkaRestEndpoint, apiKey, apiSecret, kafkaApiKey, kafkaApiSecret string) string {
+func testAccCheckConnectorLiveConfigWithoutOffsets(endpoint, connectorResourceLabel, connectorName, topicName, kafkaClusterId, kafkaRestEndpoint, apiKey, apiSecret, kafkaApiKey, kafkaApiSecret string) string {
 	return fmt.Sprintf(`
 	provider "confluent" {
 		endpoint         = "%s"
@@ -240,7 +243,7 @@ func testAccCheckConnectorLiveConfig(endpoint, connectorResourceLabel, connector
 	`, endpoint, apiKey, apiSecret, kafkaClusterId, topicName, kafkaRestEndpoint, kafkaApiKey, kafkaApiSecret, connectorResourceLabel, kafkaClusterId, connectorName, kafkaApiKey, kafkaApiSecret)
 }
 
-func testAccCheckConnectorUpdateLiveConfig(endpoint, connectorResourceLabel, connectorName, topicName, kafkaClusterId, kafkaRestEndpoint, apiKey, apiSecret, kafkaApiKey, kafkaApiSecret string) string {
+func testAccCheckConnectorUpdateLiveConfigWithoutOffsets(endpoint, connectorResourceLabel, connectorName, topicName, kafkaClusterId, kafkaRestEndpoint, apiKey, apiSecret, kafkaApiKey, kafkaApiSecret string) string {
 	return fmt.Sprintf(`
 	provider "confluent" {
 		endpoint         = "%s"
@@ -288,3 +291,4 @@ func testAccCheckConnectorUpdateLiveConfig(endpoint, connectorResourceLabel, con
 	}
 	`, endpoint, apiKey, apiSecret, kafkaClusterId, topicName, kafkaRestEndpoint, kafkaApiKey, kafkaApiSecret, connectorResourceLabel, kafkaClusterId, connectorName, kafkaApiKey, kafkaApiSecret)
 }
+

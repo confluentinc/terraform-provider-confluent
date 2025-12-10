@@ -52,6 +52,7 @@ import (
 	net "github.com/confluentinc/ccloud-sdk-go-v2/networking/v1"
 	org "github.com/confluentinc/ccloud-sdk-go-v2/org/v2"
 	pi "github.com/confluentinc/ccloud-sdk-go-v2/provider-integration/v1"
+	piv2 "github.com/confluentinc/ccloud-sdk-go-v2/provider-integration/v2"
 	srcm "github.com/confluentinc/ccloud-sdk-go-v2/srcm/v3"
 	"github.com/confluentinc/ccloud-sdk-go-v2/sso/v2"
 	sts "github.com/confluentinc/ccloud-sdk-go-v2/sts/v1"
@@ -115,6 +116,7 @@ type Client struct {
 	ssoClient                       *sso.APIClient
 	stsClient                       *sts.APIClient
 	piClient                        *pi.APIClient
+	piV2Client                      *piv2.APIClient
 	userAgent                       string
 	catalogRestEndpoint             string
 	cloudApiKey                     string
@@ -145,7 +147,16 @@ type Client struct {
 	tableflowApiSecret              string
 	isTableflowMetadataSet          bool
 	isAcceptanceTestMode            bool
+	isLiveProductionTestMode        bool
 	isOAuthEnabled                  bool
+}
+
+type ResourceMetadataSetFlags struct {
+	isCatalogMetadataSet        bool
+	isFlinkMetadataSet          bool
+	isKafkaMetadataSet          bool
+	isSchemaRegistryMetadataSet bool
+	isTableflowMetadataSet      bool
 }
 
 // Customize configs for terraform-plugin-docs
@@ -320,6 +331,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_ip_filter":                          ipFilterDataSource(),
 				"confluent_ip_group":                           ipGroupDataSource(),
 				"confluent_kafka_cluster":                      kafkaDataSource(),
+				"confluent_kafka_clusters":                     kafkaClustersDataSource(),
 				"confluent_kafka_topic":                        kafkaTopicDataSource(),
 				"confluent_environment":                        environmentDataSource(),
 				"confluent_environments":                       environmentsDataSource(),
@@ -344,6 +356,8 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_private_link_attachment":            privateLinkAttachmentDataSource(),
 				"confluent_private_link_attachment_connection": privateLinkAttachmentConnectionDataSource(),
 				"confluent_provider_integration":               providerIntegrationDataSource(),
+				"confluent_provider_integration_setup":         providerIntegrationSetupDataSource(),
+				"confluent_provider_integration_authorization": providerIntegrationAuthorizationDataSource(),
 				"confluent_role_binding":                       roleBindingDataSource(),
 				"confluent_schema":                             schemaDataSource(),
 				"confluent_schemas":                            schemasDataSource(),
@@ -369,65 +383,67 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_schema_registry_dek":                schemaRegistryDekDataSource(),
 			},
 			ResourcesMap: map[string]*schema.Resource{
-				"confluent_catalog_integration":                catalogIntegrationResource(),
-				"confluent_api_key":                            apiKeyResource(),
-				"confluent_byok_key":                           byokResource(),
-				"confluent_certificate_authority":              certificateAuthorityResource(),
-				"confluent_certificate_pool":                   certificatePoolResource(),
-				"confluent_cluster_link":                       clusterLinkResource(),
-				"confluent_connect_artifact":                   connectArtifactResource(),
-				"confluent_ip_group":                           ipGroupResource(),
-				"confluent_ip_filter":                          ipFilterResource(),
-				"confluent_kafka_cluster":                      kafkaResource(),
-				"confluent_kafka_cluster_config":               kafkaConfigResource(),
-				"confluent_environment":                        environmentResource(),
-				"confluent_identity_pool":                      identityPoolResource(),
-				"confluent_identity_provider":                  identityProviderResource(),
-				"confluent_group_mapping":                      groupMappingResource(),
-				"confluent_kafka_client_quota":                 kafkaClientQuotaResource(),
-				"confluent_ksql_cluster":                       ksqlResource(),
-				"confluent_flink_artifact":                     artifactResource(),
-				"confluent_flink_compute_pool":                 computePoolResource(),
-				"confluent_flink_connection":                   flinkConnectionResource(),
-				"confluent_flink_statement":                    flinkStatementResource(),
-				"confluent_connector":                          connectorResource(),
-				"confluent_custom_connector_plugin":            customConnectorPluginResource(),
-				"confluent_custom_connector_plugin_version":    customConnectorPluginVersionResource(),
-				"confluent_service_account":                    serviceAccountResource(),
-				"confluent_kafka_topic":                        kafkaTopicResource(),
-				"confluent_kafka_mirror_topic":                 kafkaMirrorTopicResource(),
-				"confluent_kafka_acl":                          kafkaAclResource(),
-				"confluent_network":                            networkResource(),
-				"confluent_access_point":                       accessPointResource(),
-				"confluent_dns_forwarder":                      dnsForwarderResource(),
-				"confluent_dns_record":                         dnsRecordResource(),
-				"confluent_gateway":                            gatewayResource(),
-				"confluent_peering":                            peeringResource(),
-				"confluent_plugin":                             pluginResource(),
-				"confluent_private_link_access":                privateLinkAccessResource(),
-				"confluent_private_link_attachment":            privateLinkAttachmentResource(),
-				"confluent_private_link_attachment_connection": privateLinkAttachmentConnectionResource(),
-				"confluent_provider_integration":               providerIntegrationResource(),
-				"confluent_role_binding":                       roleBindingResource(),
-				"confluent_schema":                             schemaResource(),
-				"confluent_schema_exporter":                    schemaExporterResource(),
-				"confluent_subject_mode":                       subjectModeResource(),
-				"confluent_subject_config":                     subjectConfigResource(),
-				"confluent_schema_registry_cluster_mode":       schemaRegistryClusterModeResource(),
-				"confluent_schema_registry_cluster_config":     schemaRegistryClusterConfigResource(),
-				"confluent_transit_gateway_attachment":         transitGatewayAttachmentResource(),
-				"confluent_invitation":                         invitationResource(),
-				"confluent_network_link_endpoint":              networkLinkEndpointResource(),
-				"confluent_network_link_service":               networkLinkServiceResource(),
-				"confluent_tf_importer":                        tfImporterResource(),
-				"confluent_tableflow_topic":                    tableflowTopicResource(),
-				"confluent_tag":                                tagResource(),
-				"confluent_tag_binding":                        tagBindingResource(),
-				"confluent_business_metadata":                  businessMetadataResource(),
-				"confluent_business_metadata_binding":          businessMetadataBindingResource(),
-				"confluent_schema_registry_kek":                schemaRegistryKekResource(),
-				"confluent_schema_registry_dek":                schemaRegistryDekResource(),
-				"confluent_catalog_entity_attributes":          catalogEntityAttributesResource(),
+				"confluent_catalog_integration":                   catalogIntegrationResource(),
+				"confluent_api_key":                               apiKeyResource(),
+				"confluent_byok_key":                              byokResource(),
+				"confluent_certificate_authority":                 certificateAuthorityResource(),
+				"confluent_certificate_pool":                      certificatePoolResource(),
+				"confluent_cluster_link":                          clusterLinkResource(),
+				"confluent_connect_artifact":                      connectArtifactResource(),
+				"confluent_ip_group":                              ipGroupResource(),
+				"confluent_ip_filter":                             ipFilterResource(),
+				"confluent_kafka_cluster":                         kafkaResource(),
+				"confluent_kafka_cluster_config":                  kafkaConfigResource(),
+				"confluent_environment":                           environmentResource(),
+				"confluent_identity_pool":                         identityPoolResource(),
+				"confluent_identity_provider":                     identityProviderResource(),
+				"confluent_group_mapping":                         groupMappingResource(),
+				"confluent_kafka_client_quota":                    kafkaClientQuotaResource(),
+				"confluent_ksql_cluster":                          ksqlResource(),
+				"confluent_flink_artifact":                        artifactResource(),
+				"confluent_flink_compute_pool":                    computePoolResource(),
+				"confluent_flink_connection":                      flinkConnectionResource(),
+				"confluent_flink_statement":                       flinkStatementResource(),
+				"confluent_connector":                             connectorResource(),
+				"confluent_custom_connector_plugin":               customConnectorPluginResource(),
+				"confluent_custom_connector_plugin_version":       customConnectorPluginVersionResource(),
+				"confluent_service_account":                       serviceAccountResource(),
+				"confluent_kafka_topic":                           kafkaTopicResource(),
+				"confluent_kafka_mirror_topic":                    kafkaMirrorTopicResource(),
+				"confluent_kafka_acl":                             kafkaAclResource(),
+				"confluent_network":                               networkResource(),
+				"confluent_access_point":                          accessPointResource(),
+				"confluent_dns_forwarder":                         dnsForwarderResource(),
+				"confluent_dns_record":                            dnsRecordResource(),
+				"confluent_gateway":                               gatewayResource(),
+				"confluent_peering":                               peeringResource(),
+				"confluent_plugin":                                pluginResource(),
+				"confluent_private_link_access":                   privateLinkAccessResource(),
+				"confluent_private_link_attachment":               privateLinkAttachmentResource(),
+				"confluent_private_link_attachment_connection":    privateLinkAttachmentConnectionResource(),
+				"confluent_provider_integration":                  providerIntegrationResource(),
+				"confluent_provider_integration_setup":            providerIntegrationSetupResource(),
+				"confluent_provider_integration_authorization":    providerIntegrationAuthorizationResource(),
+				"confluent_role_binding":                          roleBindingResource(),
+				"confluent_schema":                                schemaResource(),
+				"confluent_schema_exporter":                       schemaExporterResource(),
+				"confluent_subject_mode":                          subjectModeResource(),
+				"confluent_subject_config":                        subjectConfigResource(),
+				"confluent_schema_registry_cluster_mode":          schemaRegistryClusterModeResource(),
+				"confluent_schema_registry_cluster_config":        schemaRegistryClusterConfigResource(),
+				"confluent_transit_gateway_attachment":            transitGatewayAttachmentResource(),
+				"confluent_invitation":                            invitationResource(),
+				"confluent_network_link_endpoint":                 networkLinkEndpointResource(),
+				"confluent_network_link_service":                  networkLinkServiceResource(),
+				"confluent_tf_importer":                           tfImporterResource(),
+				"confluent_tableflow_topic":                       tableflowTopicResource(),
+				"confluent_tag":                                   tagResource(),
+				"confluent_tag_binding":                           tagBindingResource(),
+				"confluent_business_metadata":                     businessMetadataResource(),
+				"confluent_business_metadata_binding":             businessMetadataBindingResource(),
+				"confluent_schema_registry_kek":                   schemaRegistryKekResource(),
+				"confluent_schema_registry_dek":                   schemaRegistryDekResource(),
+				"confluent_catalog_entity_attributes":             catalogEntityAttributesResource(),
 			},
 		}
 
@@ -505,46 +521,6 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	tableflowApiSecret := d.Get("tableflow_api_secret").(string)
 	maxRetries := d.Get("max_retries").(int)
 
-	// 3 or 4 attributes should be set or not set at the same time
-	// Option #2: (kafka_api_key, kafka_api_secret, kafka_rest_endpoint)
-	// Option #3 (primary): (kafka_api_key, kafka_api_secret, kafka_rest_endpoint, kafka_id)
-	allKafkaAttributesAreSet := (kafkaApiKey != "") && (kafkaApiSecret != "") && (kafkaRestEndpoint != "")
-	allKafkaAttributesAreNotSet := (kafkaApiKey == "") && (kafkaApiSecret == "") && (kafkaRestEndpoint == "")
-	justOneOrTwoKafkaAttributesAreSet := !(allKafkaAttributesAreSet || allKafkaAttributesAreNotSet)
-	if justOneOrTwoKafkaAttributesAreSet {
-		return nil, diag.Errorf("(kafka_api_key, kafka_api_secret, kafka_rest_endpoint) or (kafka_api_key, kafka_api_secret, kafka_rest_endpoint, kafka_id) attributes should be set or not set in the provider block at the same time")
-	}
-
-	// All 4 attributes should be set or not set at the same time
-	allSchemaRegistryAttributesAreSet := (schemaRegistryApiKey != "") && (schemaRegistryApiSecret != "") && (schemaRegistryRestEndpoint != "" || catalogRestEndpoint != "") && (schemaRegistryClusterId != "")
-	allSchemaRegistryAttributesAreNotSet := (schemaRegistryApiKey == "") && (schemaRegistryApiSecret == "") && (schemaRegistryRestEndpoint == "" || catalogRestEndpoint == "") && (schemaRegistryClusterId == "")
-	justSubsetOfSchemaRegistryAttributesAreSet := !(allSchemaRegistryAttributesAreSet || allSchemaRegistryAttributesAreNotSet)
-	if justSubsetOfSchemaRegistryAttributesAreSet {
-		return nil, diag.Errorf("All 4 schema_registry_api_key, schema_registry_api_secret, schema_registry_rest_endpoint, schema_registry_id attributes should be set or not set in the provider block at the same time")
-	}
-
-	allCatalogAttributesAreSet := (schemaRegistryApiKey != "") && (schemaRegistryApiSecret != "") && (schemaRegistryRestEndpoint != "" || catalogRestEndpoint != "") && (schemaRegistryClusterId != "")
-	allCatalogAttributesAreNotSet := (schemaRegistryApiKey == "") && (schemaRegistryApiSecret == "") && (schemaRegistryRestEndpoint == "" || catalogRestEndpoint == "") && (schemaRegistryClusterId == "")
-	justSubsetOfCatalogAttributesAreSet := !(allCatalogAttributesAreSet || allCatalogAttributesAreNotSet)
-	if justSubsetOfCatalogAttributesAreSet {
-		return nil, diag.Errorf("All 4 schema_registry_api_key, schema_registry_api_secret, catalog_rest_endpoint, schema_registry_id attributes should be set or not set in the provider block at the same time")
-	}
-
-	// All 7 attributes should be set or not set at the same time
-	allFlinkAttributesAreSet := (flinkApiKey != "") && (flinkApiSecret != "") && (flinkRestEndpoint != "") && (flinkOrganizationId != "") && (flinkEnvironmentId != "") && (flinkComputePoolId != "") && (flinkPrincipalId != "")
-	allFlinkAttributesAreNotSet := (flinkApiKey == "") && (flinkApiSecret == "") && (flinkRestEndpoint == "") && (flinkOrganizationId == "") && (flinkEnvironmentId == "") && (flinkComputePoolId == "") && (flinkPrincipalId == "")
-	justSubsetOfFlinkAttributesAreSet := !(allFlinkAttributesAreSet || allFlinkAttributesAreNotSet)
-	if justSubsetOfFlinkAttributesAreSet {
-		return nil, diag.Errorf("All 7 flink_api_key, flink_api_secret, flink_rest_endpoint, organization_id, environment_id, flink_compute_pool_id, flink_principal_id attributes should be set or not set in the provider block at the same time")
-	}
-
-	allTableflowAttributesAreSet := (tableflowApiKey != "") && (tableflowApiSecret != "")
-	allTableflowAttributesAreNotSet := (tableflowApiKey == "") && (tableflowApiSecret == "")
-	justOneTableflowAttributeSet := !(allTableflowAttributesAreSet || allTableflowAttributesAreNotSet)
-	if justOneTableflowAttributeSet {
-		return nil, diag.Errorf("Both tableflow_api_key and tableflow_api_secret should be set or not set in the provider block at the same time")
-	}
-
 	userAgent := p.UserAgent(terraformProviderUserAgent, fmt.Sprintf("%s (https://confluent.cloud; support@confluent.io)", providerVersion))
 	if additionalUserAgent != "" {
 		userAgent = fmt.Sprintf("%s %s", additionalUserAgent, userAgent)
@@ -555,6 +531,12 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 		acceptanceTestMode = true
 	}
 	tflog.Info(ctx, fmt.Sprintf("Provider: acceptance test mode is %t\n", acceptanceTestMode))
+
+	liveProductionTestMode := false
+	if os.Getenv("TF_ACC_PROD") == "1" {
+		liveProductionTestMode = true
+	}
+	tflog.Info(ctx, fmt.Sprintf("Provider: live production test mode is %t\n", liveProductionTestMode))
 
 	apiKeysCfg := apikeys.NewConfiguration()
 	byokCfg := byok.NewConfiguration()
@@ -581,6 +563,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	oidcCfg := oidc.NewConfiguration()
 	orgCfg := org.NewConfiguration()
 	piCfg := pi.NewConfiguration()
+	piv2Cfg := piv2.NewConfiguration()
 	quotasCfg := quotas.NewConfiguration()
 	srcmCfg := srcm.NewConfiguration()
 	ssoCfg := sso.NewConfiguration()
@@ -610,6 +593,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	oidcCfg.Servers[0].URL = endpoint
 	orgCfg.Servers[0].URL = endpoint
 	piCfg.Servers[0].URL = endpoint
+	piv2Cfg.Servers[0].URL = endpoint
 	quotasCfg.Servers[0].URL = endpoint
 	srcmCfg.Servers[0].URL = endpoint
 	ssoCfg.Servers[0].URL = endpoint
@@ -640,6 +624,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	oidcCfg.UserAgent = userAgent
 	orgCfg.UserAgent = userAgent
 	piCfg.UserAgent = userAgent
+	piv2Cfg.UserAgent = userAgent
 	quotasCfg.UserAgent = userAgent
 	srcmCfg.UserAgent = userAgent
 	ssoCfg.UserAgent = userAgent
@@ -681,6 +666,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	oidcCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	orgCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	piCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
+	piv2Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	quotasCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	srcmCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	ssoCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
@@ -692,13 +678,35 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	var stsOAuthToken *STSToken
 	var err diag.Diagnostics
 	var oauthEnabled bool
+	var resourceMetadataFlags ResourceMetadataSetFlags
 	if _, ok := d.GetOk(paramOAuthBlockName); ok {
 		oauthEnabled = true
 		externalOAuthToken, stsOAuthToken, err = initializeOAuthConfigs(ctx, d, secureTokenServiceClient)
 		if err != nil {
 			return nil, err
 		}
-		if err := validateOAuthAndProviderAPIKeysCoexist(cloudApiKey, cloudApiSecret, kafkaApiKey, kafkaApiSecret, schemaRegistryApiKey, schemaRegistryApiSecret, flinkApiKey, flinkApiSecret, tableflowApiKey, tableflowApiSecret); err != nil {
+		if err = validateOAuthAndProviderAPIKeysCoexist(
+			cloudApiKey, cloudApiSecret,
+			kafkaApiKey, kafkaApiSecret,
+			schemaRegistryApiKey, schemaRegistryApiSecret,
+			flinkApiKey, flinkApiSecret,
+			tableflowApiKey, tableflowApiSecret); err != nil {
+			return nil, err
+		}
+		// Verify that the resources specific attributes should NOT be partially set when OAuth is enabled
+		if resourceMetadataFlags, err = validateAllOrNoneAttributesSetForResourcesWithOAuth(
+			kafkaClusterId, kafkaRestEndpoint,
+			schemaRegistryClusterId, schemaRegistryRestEndpoint, catalogRestEndpoint,
+			flinkOrganizationId, flinkEnvironmentId, flinkComputePoolId, flinkRestEndpoint, flinkPrincipalId); err != nil {
+			return nil, err
+		}
+	} else {
+		resourceMetadataFlags, err = validateAllOrNoneAttributesSetForResources(
+			kafkaApiKey, kafkaApiSecret, kafkaClusterId, kafkaRestEndpoint,
+			schemaRegistryApiKey, schemaRegistryApiSecret, schemaRegistryClusterId, schemaRegistryRestEndpoint, catalogRestEndpoint,
+			flinkApiKey, flinkApiSecret, flinkOrganizationId, flinkEnvironmentId, flinkComputePoolId, flinkRestEndpoint, flinkPrincipalId,
+			tableflowApiKey, tableflowApiSecret)
+		if err != nil {
 			return nil, err
 		}
 	}
@@ -728,6 +736,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 		oidcClient:                      oidc.NewAPIClient(oidcCfg),
 		orgClient:                       org.NewAPIClient(orgCfg),
 		piClient:                        pi.NewAPIClient(piCfg),
+		piV2Client:                      piv2.NewAPIClient(piv2Cfg),
 		srcmClient:                      srcm.NewAPIClient(srcmCfg),
 		catalogRestClientFactory:        catalogRestClientFactory,
 		flinkRestClientFactory:          flinkRestClientFactory,
@@ -763,13 +772,14 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 		stsToken:                        stsOAuthToken,
 
 		// For simplicity, treat 3 (for Kafka), 4 (for SR), 4 (for catalog), 7 (for Flink), and 2 (for Tableflow) variables as a "single" one
-		isKafkaMetadataSet:           allKafkaAttributesAreSet,
+		isKafkaMetadataSet:           resourceMetadataFlags.isKafkaMetadataSet,
 		isKafkaClusterIdSet:          kafkaClusterId != "",
-		isSchemaRegistryMetadataSet:  allSchemaRegistryAttributesAreSet,
-		isCatalogRegistryMetadataSet: allCatalogAttributesAreSet,
-		isFlinkMetadataSet:           allFlinkAttributesAreSet,
-		isTableflowMetadataSet:       allTableflowAttributesAreSet,
+		isSchemaRegistryMetadataSet:  resourceMetadataFlags.isSchemaRegistryMetadataSet,
+		isCatalogRegistryMetadataSet: resourceMetadataFlags.isCatalogMetadataSet,
+		isFlinkMetadataSet:           resourceMetadataFlags.isFlinkMetadataSet,
+		isTableflowMetadataSet:       resourceMetadataFlags.isTableflowMetadataSet,
 		isAcceptanceTestMode:         acceptanceTestMode,
+		isLiveProductionTestMode:     liveProductionTestMode,
 		isOAuthEnabled:               oauthEnabled,
 	}
 
@@ -883,7 +893,12 @@ func providerOAuthSchema() *schema.Schema {
 	}
 }
 
-func validateOAuthAndProviderAPIKeysCoexist(cloudApiKey, cloudApiSecret, kafkaApiKey, kafkaApiSecret, schemaRegistryApiKey, schemaRegistryApiSecret, flinkApiKey, flinkApiSecret, tableflowApiKey, tableflowApiSecret string) diag.Diagnostics {
+func validateOAuthAndProviderAPIKeysCoexist(
+	cloudApiKey, cloudApiSecret,
+	kafkaApiKey, kafkaApiSecret,
+	schemaRegistryApiKey, schemaRegistryApiSecret,
+	flinkApiKey, flinkApiSecret,
+	tableflowApiKey, tableflowApiSecret string) diag.Diagnostics {
 	if cloudApiKey != "" || cloudApiSecret != "" {
 		return diag.Errorf("(cloud_api_key, cloud_api_secret) attributes should not be set in the provider block when oauth block is present")
 	}
@@ -902,8 +917,9 @@ func validateOAuthAndProviderAPIKeysCoexist(cloudApiKey, cloudApiSecret, kafkaAp
 	return nil
 }
 
-func SleepIfNotTestMode(d time.Duration, isAcceptanceTestMode bool) {
-	if isAcceptanceTestMode {
+func SleepIfNotTestMode(d time.Duration, isAcceptanceTestMode bool, isLiveProductionTestMode bool) {
+	// In live production test mode, use full delay since we're testing against real infrastructure
+	if isAcceptanceTestMode && !isLiveProductionTestMode {
 		time.Sleep(500 * time.Millisecond)
 		return
 	}

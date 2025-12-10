@@ -111,14 +111,14 @@ live-test:
 	@echo "Running live integration tests against Confluent Cloud..."
 	@if [ -z "$(TF_LIVE_TEST_GROUPS)" ]; then \
 		echo "Running ALL live tests with parallel execution..."; \
-		TF_ACC=1 TF_ACC_PROD=1 $(GOCMD) test ./internal/provider/ -v -run=".*Live$$" -tags="live_test,all" -timeout 1440m -parallel 100; \
+		TF_ACC=1 TF_ACC_PROD=1 $(GOCMD) test ./internal/provider/ -v -run=".*Live$$|.*DriftDetection$$" -tags="live_test,all" -timeout 1440m -parallel 100; \
 	else \
 		echo "Running live tests for groups: $(TF_LIVE_TEST_GROUPS) with parallel execution..."; \
 		TAGS="live_test"; \
 		for group in $$(echo "$(TF_LIVE_TEST_GROUPS)" | tr ',' ' '); do \
 			TAGS="$$TAGS,$$group"; \
 		done; \
-		TF_ACC=1 TF_ACC_PROD=1 $(GOCMD) test ./internal/provider/ -v -run=".*Live$$" -tags="$$TAGS" -timeout 1440m -parallel 100; \
+		TF_ACC=1 TF_ACC_PROD=1 $(GOCMD) test ./internal/provider/ -v -run=".*Live$$|.*DriftDetection$$" -tags="$$TAGS" -timeout 1440m -parallel 100; \
 	fi
 	@echo "Finished running live integration tests against Confluent Cloud"
 
@@ -158,6 +158,10 @@ live-test-data-catalog:
 .PHONY: live-test-tableflow
 live-test-tableflow:
 	@$(MAKE) live-test TF_LIVE_TEST_GROUPS="tableflow"
+
+.PHONY: live-test-drift
+live-test-drift:
+	@$(MAKE) live-test TF_LIVE_TEST_GROUPS="drift"
 
 .PHONY: live-test-essential
 live-test-essential:

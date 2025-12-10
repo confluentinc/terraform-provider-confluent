@@ -29,9 +29,9 @@ import (
 )
 
 const (
-	// Using Google's OIDC configuration for the update step to test changing providers
-	updatedIssuer  = "https://accounts.google.com"
-	updatedJwksUri = "https://www.googleapis.com/oauth2/v3/certs"
+	// Using Okta's OIDC configuration for the update step to test changing providers
+	updatedIssuer  = "https://example.okta.com/oauth2/default"
+	updatedJwksUri = "https://example.okta.com/oauth2/default/v1/keys"
 )
 
 func TestAccIdentityProviderLive(t *testing.T) {
@@ -54,58 +54,58 @@ func TestAccIdentityProviderLive(t *testing.T) {
 	}
 
 	// Generate unique names for test resources to avoid conflicts
-    randomSuffix := rand.Intn(100000)
-    identityProviderResourceLabel := "test_live_identity_provider"
-    resourceName := fmt.Sprintf("confluent_identity_provider.%s", identityProviderResourceLabel)
+	randomSuffix := rand.Intn(100000)
+	identityProviderResourceLabel := "test_live_identity_provider"
+	resourceName := fmt.Sprintf("confluent_identity_provider.%s", identityProviderResourceLabel)
 
-    // Initial resource attributes
-    initialDisplayName := fmt.Sprintf("tf-live-idp-%d", randomSuffix)
-    initialDescription := "Test IdP (Initial)"
-    initialIssuer := "https://login.microsoftonline.com/common/v2.0"
-    initialJwksUri := "https://login.microsoftonline.com/common/discovery/v2.0/keys"
+	// Initial resource attributes
+	initialDisplayName := fmt.Sprintf("tf-live-idp-%d", randomSuffix)
+	initialDescription := "Test IdP (Initial)"
+	initialIssuer := "https://login.microsoftonline.com/common/v2.0"
+	initialJwksUri := "https://login.microsoftonline.com/common/discovery/v2.0/keys"
 
-    // Updated resource attributes
-    updatedDisplayName := fmt.Sprintf("tf-live-idp-updated-%d", randomSuffix)
-    updatedDescription := "Test IdP (Updated with Google OIDC)"
-    updatedIdentityClaim := "claims.email"
+	// Updated resource attributes
+	updatedDisplayName := fmt.Sprintf("tf-live-idp-updated-%d", randomSuffix)
+	updatedDescription := "Test IdP (Updated with Okta OIDC)"
+	updatedIdentityClaim := "claims.email"
 
-    resource.Test(t, resource.TestCase{
-        PreCheck:          func() { testAccPreCheck(t) },
-        ProviderFactories: testAccProviderFactories,
-        CheckDestroy:      testAccCheckIdentityProviderLiveDestroy,
-        Steps: []resource.TestStep{
-            // Step 1: Test Create
-            {
-                Config: testAccCheckIdentityProviderLiveConfig(endpoint, identityProviderResourceLabel, initialDisplayName, initialDescription, initialIssuer, initialJwksUri, apiKey, apiSecret),
-                Check: resource.ComposeTestCheckFunc(
-                    testAccCheckIdentityProviderLiveExists(resourceName),
-                    resource.TestCheckResourceAttr(resourceName, "display_name", initialDisplayName),
-                    resource.TestCheckResourceAttr(resourceName, "description", initialDescription),
-                    resource.TestCheckResourceAttr(resourceName, "issuer", initialIssuer),
-                    resource.TestCheckResourceAttr(resourceName, "jwks_uri", initialJwksUri),
-                    resource.TestCheckResourceAttr(resourceName, "identity_claim", "claims.sub"),
-                    resource.TestCheckResourceAttrSet(resourceName, "id"),
-                ),
-            },
-            // Step 2: Test Update all attributes
-            {
-                Config: testAccCheckIdentityProviderLiveConfigWithUpdate(endpoint, identityProviderResourceLabel, updatedDisplayName, updatedDescription, updatedIssuer, updatedJwksUri, updatedIdentityClaim, apiKey, apiSecret),
-                Check: resource.ComposeTestCheckFunc(
-                    testAccCheckIdentityProviderLiveExists(resourceName),
-                    resource.TestCheckResourceAttr(resourceName, "display_name", updatedDisplayName),
-                    resource.TestCheckResourceAttr(resourceName, "description", updatedDescription),
-                    resource.TestCheckResourceAttr(resourceName, "issuer", updatedIssuer),
-                    resource.TestCheckResourceAttr(resourceName, "jwks_uri", updatedJwksUri),
-                    resource.TestCheckResourceAttr(resourceName, "identity_claim", updatedIdentityClaim),
-                ),
-            },
-            // Step 3: Test Import (after update)
-            {
-                ResourceName:      resourceName,
-                ImportState:       true,
-                ImportStateVerify: true,
-            },
-            // Step 4: Test API Error Handling with invalid input
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckIdentityProviderLiveDestroy,
+		Steps: []resource.TestStep{
+			// Step 1: Test Create
+			{
+				Config: testAccCheckIdentityProviderLiveConfig(endpoint, identityProviderResourceLabel, initialDisplayName, initialDescription, initialIssuer, initialJwksUri, apiKey, apiSecret),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckIdentityProviderLiveExists(resourceName),
+					resource.TestCheckResourceAttr(resourceName, "display_name", initialDisplayName),
+					resource.TestCheckResourceAttr(resourceName, "description", initialDescription),
+					resource.TestCheckResourceAttr(resourceName, "issuer", initialIssuer),
+					resource.TestCheckResourceAttr(resourceName, "jwks_uri", initialJwksUri),
+					resource.TestCheckResourceAttr(resourceName, "identity_claim", "claims.sub"),
+					resource.TestCheckResourceAttrSet(resourceName, "id"),
+				),
+			},
+			// Step 2: Test Update all attributes
+			{
+				Config: testAccCheckIdentityProviderLiveConfigWithUpdate(endpoint, identityProviderResourceLabel, updatedDisplayName, updatedDescription, updatedIssuer, updatedJwksUri, updatedIdentityClaim, apiKey, apiSecret),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckIdentityProviderLiveExists(resourceName),
+					resource.TestCheckResourceAttr(resourceName, "display_name", updatedDisplayName),
+					resource.TestCheckResourceAttr(resourceName, "description", updatedDescription),
+					resource.TestCheckResourceAttr(resourceName, "issuer", updatedIssuer),
+					resource.TestCheckResourceAttr(resourceName, "jwks_uri", updatedJwksUri),
+					resource.TestCheckResourceAttr(resourceName, "identity_claim", updatedIdentityClaim),
+				),
+			},
+			// Step 3: Test Import (after update)
+			{
+				ResourceName:      resourceName,
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+			// Step 4: Test API Error Handling with invalid input
 			{
 				Config: testAccCheckIdentityProviderLiveConfig(
 					endpoint,
