@@ -69,7 +69,8 @@ func TestAccConnectorLive(t *testing.T) {
 		CheckDestroy:      testAccCheckConnectorLiveDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckConnectorLiveConfig(endpoint, connectorResourceLabel, connectorName, fmt.Sprintf("%s-topic", connectorName), kafkaClusterId, kafkaRestEndpoint, apiKey, apiSecret, kafkaApiKey, kafkaApiSecret),
+				// Create connector without offsets first (offsets cannot be set during creation)
+				Config: testAccCheckConnectorLiveConfigWithoutOffsets(endpoint, connectorResourceLabel, connectorName, fmt.Sprintf("%s-topic", connectorName), kafkaClusterId, kafkaRestEndpoint, apiKey, apiSecret, kafkaApiKey, kafkaApiSecret),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckConnectorLiveExists(fmt.Sprintf("confluent_connector.%s", connectorResourceLabel)),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_connector.%s", connectorResourceLabel), "config_nonsensitive.name", connectorName),
@@ -95,16 +96,6 @@ func TestAccConnectorLive(t *testing.T) {
 					clusterId := resources[fmt.Sprintf("confluent_connector.%s", connectorResourceLabel)].Primary.Attributes["kafka_cluster.0.id"]
 					return environmentId + "/" + clusterId + "/" + connectorName, nil
 				},
-			},
-			{
-				// Test offset type conversion and backward compatibility with various edge cases
-				Config: testAccCheckConnectorOffsetsConversionLiveConfig(endpoint, connectorResourceLabel, connectorName, fmt.Sprintf("%s-topic", connectorName), kafkaClusterId, kafkaRestEndpoint, apiKey, apiSecret, kafkaApiKey, kafkaApiSecret),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckConnectorLiveExists(fmt.Sprintf("confluent_connector.%s", connectorResourceLabel)),
-					// If offset type conversion failed, connector update would fail
-					// Successful update means offsets were sent with correct types
-					resource.TestCheckResourceAttrSet(fmt.Sprintf("confluent_connector.%s", connectorResourceLabel), "id"),
-				),
 			},
 		},
 	})
@@ -153,14 +144,16 @@ func TestAccConnectorUpdateLive(t *testing.T) {
 		CheckDestroy:      testAccCheckConnectorLiveDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckConnectorLiveConfig(endpoint, connectorResourceLabel, connectorName, fmt.Sprintf("%s-topic", connectorName), kafkaClusterId, kafkaRestEndpoint, apiKey, apiSecret, kafkaApiKey, kafkaApiSecret),
+				// Create connector without offsets first (offsets cannot be set during creation)
+				Config: testAccCheckConnectorLiveConfigWithoutOffsets(endpoint, connectorResourceLabel, connectorName, fmt.Sprintf("%s-topic", connectorName), kafkaClusterId, kafkaRestEndpoint, apiKey, apiSecret, kafkaApiKey, kafkaApiSecret),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckConnectorLiveExists(fmt.Sprintf("confluent_connector.%s", connectorResourceLabel)),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_connector.%s", connectorResourceLabel), "config_nonsensitive.max.interval", "1000"),
 				),
 			},
 			{
-				Config: testAccCheckConnectorUpdateLiveConfig(endpoint, connectorResourceLabel, connectorName, fmt.Sprintf("%s-topic", connectorName), kafkaClusterId, kafkaRestEndpoint, apiKey, apiSecret, kafkaApiKey, kafkaApiSecret),
+				// Update config (without offsets - offset operations are not permitted for this connector type)
+				Config: testAccCheckConnectorUpdateLiveConfigWithoutOffsets(endpoint, connectorResourceLabel, connectorName, fmt.Sprintf("%s-topic", connectorName), kafkaClusterId, kafkaRestEndpoint, apiKey, apiSecret, kafkaApiKey, kafkaApiSecret),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckConnectorLiveExists(fmt.Sprintf("confluent_connector.%s", connectorResourceLabel)),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_connector.%s", connectorResourceLabel), "config_nonsensitive.max.interval", "2000"),
@@ -201,7 +194,7 @@ func testAccCheckConnectorLiveExists(resourceName string) resource.TestCheckFunc
 	}
 }
 
-func testAccCheckConnectorLiveConfig(endpoint, connectorResourceLabel, connectorName, topicName, kafkaClusterId, kafkaRestEndpoint, apiKey, apiSecret, kafkaApiKey, kafkaApiSecret string) string {
+func testAccCheckConnectorLiveConfigWithoutOffsets(endpoint, connectorResourceLabel, connectorName, topicName, kafkaClusterId, kafkaRestEndpoint, apiKey, apiSecret, kafkaApiKey, kafkaApiSecret string) string {
 	return fmt.Sprintf(`
 	provider "confluent" {
 		endpoint         = "%s"
@@ -245,25 +238,12 @@ func testAccCheckConnectorLiveConfig(endpoint, connectorResourceLabel, connector
 			"kafka.api.secret" = "%s"
 		}
 
-		# Test offset type conversion: PostgreSQL CDC format with LSN, boolean, and string values
-		# Numeric strings should be converted to int64, boolean strings to bool, others remain strings
-		offsets {
-			partition = {
-				"lsn" = "123456789"
-			}
-			offset = {
-				"lsn_proc"    = "true"
-				"messageType" = "INSERT"
-				"txId"        = "12345"
-			}
-		}
-
 		depends_on = [confluent_kafka_topic.connector_topic]
 	}
 	`, endpoint, apiKey, apiSecret, kafkaClusterId, topicName, kafkaRestEndpoint, kafkaApiKey, kafkaApiSecret, connectorResourceLabel, kafkaClusterId, connectorName, kafkaApiKey, kafkaApiSecret)
 }
 
-func testAccCheckConnectorUpdateLiveConfig(endpoint, connectorResourceLabel, connectorName, topicName, kafkaClusterId, kafkaRestEndpoint, apiKey, apiSecret, kafkaApiKey, kafkaApiSecret string) string {
+func testAccCheckConnectorUpdateLiveConfigWithoutOffsets(endpoint, connectorResourceLabel, connectorName, topicName, kafkaClusterId, kafkaRestEndpoint, apiKey, apiSecret, kafkaApiKey, kafkaApiSecret string) string {
 	return fmt.Sprintf(`
 	provider "confluent" {
 		endpoint         = "%s"
@@ -307,92 +287,8 @@ func testAccCheckConnectorUpdateLiveConfig(endpoint, connectorResourceLabel, con
 			"kafka.api.secret" = "%s"
 		}
 
-		# Test offset type conversion: PostgreSQL CDC format with LSN, boolean, and string values
-		# Numeric strings should be converted to int64, boolean strings to bool, others remain strings
-		offsets {
-			partition = {
-				"lsn" = "123456789"
-			}
-			offset = {
-				"lsn_proc"    = "true"
-				"messageType" = "INSERT"
-				"txId"        = "12345"
-			}
-		}
-
 		depends_on = [confluent_kafka_topic.connector_topic]
 	}
 	`, endpoint, apiKey, apiSecret, kafkaClusterId, topicName, kafkaRestEndpoint, kafkaApiKey, kafkaApiSecret, connectorResourceLabel, kafkaClusterId, connectorName, kafkaApiKey, kafkaApiSecret)
 }
 
-func testAccCheckConnectorOffsetsConversionLiveConfig(endpoint, connectorResourceLabel, connectorName, topicName, kafkaClusterId, kafkaRestEndpoint, apiKey, apiSecret, kafkaApiKey, kafkaApiSecret string) string {
-	return fmt.Sprintf(`
-	provider "confluent" {
-		endpoint         = "%s"
-		cloud_api_key    = "%s"
-		cloud_api_secret = "%s"
-	}
-
-	# Create the Kafka topic that the connector will use
-	resource "confluent_kafka_topic" "connector_topic" {
-		kafka_cluster {
-			id = "%s"
-		}
-		topic_name         = "%s"
-		partitions_count   = 6
-		rest_endpoint      = "%s"
-		credentials {
-			key    = "%s"
-			secret = "%s"
-		}
-	}
-
-	resource "confluent_connector" "%s" {
-		environment {
-			id = "env-zyg27z"
-		}
-		kafka_cluster {
-			id = "%s"
-		}
-
-		config_nonsensitive = {
-			"name"            = "%s"
-			"connector.class" = "DatagenSource"
-			"kafka.topic"     = confluent_kafka_topic.connector_topic.topic_name
-			"quickstart"      = "ORDERS"
-			"max.interval"    = "1000"
-			"tasks.max"       = "1"
-		}
-
-		config_sensitive = {
-			"kafka.api.key"    = "%s"
-			"kafka.api.secret" = "%s"
-		}
-
-		# Test conversions: numeric strings → int64, boolean strings → bool
-		offsets {
-			partition = {
-				"lsn" = "123456789"
-			}
-			offset = {
-				"lsn_proc"    = "true"
-				"txId"        = "12345"
-			}
-		}
-
-		# Test backward compatibility: non-numeric strings remain strings
-		offsets {
-			partition = {
-				"lsn" = "987654321"
-			}
-			offset = {
-				"lsn_proc"    = "false"
-				"messageType" = "INSERT"
-				"invalid_num" = "123abc"
-			}
-		}
-
-		depends_on = [confluent_kafka_topic.connector_topic]
-	}
-	`, endpoint, apiKey, apiSecret, kafkaClusterId, topicName, kafkaRestEndpoint, kafkaApiKey, kafkaApiSecret, connectorResourceLabel, kafkaClusterId, connectorName, kafkaApiKey, kafkaApiSecret)
-}
