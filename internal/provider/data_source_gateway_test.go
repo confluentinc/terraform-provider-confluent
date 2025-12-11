@@ -15,6 +15,7 @@ import (
 const (
 	awsPeeringGatewayScenarioName                     = "confluent_gateway AWS Peering Gateway Spec Data Source Lifecycle"
 	awsEgressPrivateLinkGatewayScenarioName           = "confluent_gateway AWS Egress Private Link Gateway Spec Data Source Lifecycle"
+	awsIngressPrivateLinkGatewayScenarioName          = "confluent_gateway AWS Ingress Private Link Gateway Spec Data Source Lifecycle"
 	azurePeeringGatewayScenarioName                   = "confluent_gateway Azure Peering Gateway Spec Data Source Lifecycle"
 	azureEgressPrivateLinkGatewayScenarioName         = "confluent_gateway Azure Egress Private Link Gateway Spec Data Source Lifecycle"
 	gcpEgressPrivateServiceConnectGatewayScenarioName = "confluent_gateway GCP Egress Private Service Connect Gateway Spec Data Source Lifecycle"
@@ -432,6 +433,64 @@ func testAccCheckDataSourceGateway(mockServerUrl, resourceId, resourceName strin
 	  }
 	}
 	`, mockServerUrl, resourceName, resourceId)
+}
+
+func TestAccDataSourceGatewayAwsIngressPrivateLinkGatewaySpec(t *testing.T) {
+	ctx := context.Background()
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
+
+	mockServerUrl := wiremockContainer.URI
+	wiremockClient := wiremock.NewClient(mockServerUrl)
+	// nolint:errcheck
+	defer wiremockClient.Reset()
+
+	// nolint:errcheck
+	defer wiremockClient.ResetAllScenarios()
+
+	readAwsIngressPrivateLinkGatewayResponse, _ := os.ReadFile("../testdata/gateway/read_aws_ingress_private_link_gateway.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/networking/v1/gateways/gw-ingress123")).
+		InScenario(awsIngressPrivateLinkGatewayScenarioName).
+		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
+		WillReturn(
+			string(readAwsIngressPrivateLinkGatewayResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	gatewayResourceName := "aws_ingress_private_link_gateway"
+	fullGatewayResourceName := fmt.Sprintf("data.confluent_gateway.%s", gatewayResourceName)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckDataSourceGateway(mockServerUrl, "gw-ingress123", gatewayResourceName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckGatewayExists(fullGatewayResourceName),
+					resource.TestCheckResourceAttr(fullGatewayResourceName, "id", "gw-ingress123"),
+					resource.TestCheckResourceAttr(fullGatewayResourceName, "display_name", "prod-ingress-gateway"),
+					resource.TestCheckResourceAttr(fullGatewayResourceName, "environment.#", "1"),
+					resource.TestCheckResourceAttr(fullGatewayResourceName, "environment.0.id", "env-abc123"),
+					resource.TestCheckResourceAttr(fullGatewayResourceName, "aws_ingress_private_link_gateway.#", "1"),
+					// resource.TestCheckResourceAttr(fullGatewayResourceName, "aws_egress_private_link_gateway.#", "0"),
+					// resource.TestCheckResourceAttr(fullGatewayResourceName, "aws_peering_gateway.#", "0"),
+					// resource.TestCheckResourceAttr(fullGatewayResourceName, "aws_private_network_interface_gateway.#", "0"),
+					// resource.TestCheckResourceAttr(fullGatewayResourceName, "azure_peering_gateway.#", "0"),
+					// resource.TestCheckResourceAttr(fullGatewayResourceName, "azure_egress_private_link_gateway.#", "0"),
+					// resource.TestCheckResourceAttr(fullGatewayResourceName, "gcp_egress_private_service_connect_gateway.#", "0"),
+					// resource.TestCheckResourceAttr(fullGatewayResourceName, "gcp_peering_gateway.#", "0"),
+					resource.TestCheckResourceAttr(fullGatewayResourceName, "aws_ingress_private_link_gateway.0.region", "us-west-2"),
+					resource.TestCheckResourceAttr(fullGatewayResourceName, "aws_ingress_private_link_gateway.0.vpc_endpoint_service_name", "com.amazonaws.vpce.us-west-2.vpce-svc-00000000000000000"),
+				),
+			},
+		},
+	})
 }
 
 func testAccCheckGatewayExists(resourceName string) resource.TestCheckFunc {
