@@ -3,7 +3,7 @@
 page_title: "confluent_connect_artifact.md Data Source - terraform-provider-confluent"
 subcategory: ""
 description: |-
-  
+
 ---
 
 # confluent_connect_artifact Data Source
@@ -51,7 +51,7 @@ The following arguments are supported:
 * `id` - (Required String) The ID of the Connect Artifact.
 * `environment` - (Required Block) The Environment that the Connect Artifact belongs to, for example, `env-abc123`. It supports the following:
   * `id` - (Required String) The ID of the Environment that the Connect Artifact belongs to.
-* `cloud` - (Required String) Cloud provider where the Connect Artifact archive is uploaded.
+* `cloud` - (Required String) Cloud provider where the Connect Artifact archive is uploaded. Accepted values are: `AWS`, `AZURE`.
 
 ## Attributes Reference
 
@@ -59,4 +59,4 @@ In addition to the arguments listed above, the following computed attributes are
 
 * `display_name` - (String) The unique name of the Connect Artifact per cloud, environment scope.
 * `content_format` - (String) Archive format of the Connect Artifact. Supported formats are `JAR` and `ZIP`.
-* `description` - (String) Description of the Connect Artifact. 
+* `description` - (String) Description of the Connect Artifact.
