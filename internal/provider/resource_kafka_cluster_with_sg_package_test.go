@@ -302,7 +302,11 @@ func testAccCheckClusterDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccCheckClusterConfig(mockServerUrl, clusterType string, maxEcku int32) string {
+func testAccCheckClusterConfig(mockServerUrl, clusterType string, maxEcku ...int32) string {
+	var maxEckuConfig string
+	if len(maxEcku) > 0 && maxEcku[0] > 0 {
+		maxEckuConfig = fmt.Sprintf("\n\t\t\tmax_ecku = %v", maxEcku[0])
+	}
 	return fmt.Sprintf(`
 	provider "confluent" {
  		endpoint = "%s"
@@ -312,15 +316,14 @@ func testAccCheckClusterConfig(mockServerUrl, clusterType string, maxEcku int32)
 		availability = "%s"
 		cloud = "%s"
 		region = "%s"
-		%s {
-			max_ecku = %v
+		%s {%s
 		}
 	
 	  	environment {
 			id = "%s"
 	  	}
 	}
-	`, mockServerUrl, kafkaDisplayName, kafkaAvailability, kafkaCloud, kafkaRegion, clusterType, maxEcku, testEnvironmentId)
+	`, mockServerUrl, kafkaDisplayName, kafkaAvailability, kafkaCloud, kafkaRegion, clusterType, maxEckuConfig, testEnvironmentId)
 }
 
 func testAccCheckClusterExists(n string) resource.TestCheckFunc {
