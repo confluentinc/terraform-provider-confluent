@@ -39,6 +39,8 @@ const (
 	testEnvironmentId                                          = "env-1jrymj"
 	kafkaNetworkId                                             = "n-123abc"
 	kafkaDisplayName                                           = "TestCluster"
+	kafkaMaxEcku                                               = 5
+	kafkaMaxEckuUpdated                                        = 3
 	kafkaApiVersion                                            = "cmk/v2"
 	kafkaKind                                                  = "Cluster"
 	kafkaAvailability                                          = "SINGLE_ZONE"
@@ -208,7 +210,7 @@ func TestAccClusterWithSGPackage(t *testing.T) {
 		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckClusterConfig(mockServerUrl, paramBasicCluster),
+				Config: testAccCheckClusterConfig(mockServerUrl, paramBasicCluster, kafkaMaxEcku),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckClusterExists(fullKafkaResourceLabel),
 					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "id", kafkaClusterId),
@@ -219,7 +221,8 @@ func TestAccClusterWithSGPackage(t *testing.T) {
 					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "bootstrap_endpoint", kafkaBootstrapEndpoint),
 					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "cloud", kafkaCloud),
 					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "basic.#", "1"),
-					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "basic.0.%", "0"),
+					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "basic.0.%", "1"),
+					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "basic.0.max_ecku", "5"),
 					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "standard.#", "0"),
 					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "environment.#", "1"),
 					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "environment.0.id", testEnvironmentId),
@@ -230,7 +233,7 @@ func TestAccClusterWithSGPackage(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckClusterConfig(mockServerUrl, paramStandardCluster),
+				Config: testAccCheckClusterConfig(mockServerUrl, paramStandardCluster, kafkaMaxEckuUpdated),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckClusterExists(fullKafkaResourceLabel),
 					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "id", kafkaClusterId),
@@ -242,8 +245,9 @@ func TestAccClusterWithSGPackage(t *testing.T) {
 					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "basic.#", "0"),
 					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "enterprise.#", "0"),
 					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "freight.#", "0"),
-					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "standard.0.%", "0"),
+					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "standard.0.%", "1"),
 					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "standard.#", "1"),
+					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "standard.0.max_ecku", "3"),
 					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "display_name", kafkaDisplayName),
 					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "environment.#", "1"),
 					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "environment.0.id", testEnvironmentId),
@@ -298,7 +302,11 @@ func testAccCheckClusterDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccCheckClusterConfig(mockServerUrl, clusterType string) string {
+func testAccCheckClusterConfig(mockServerUrl, clusterType string, maxEcku ...int32) string {
+	var maxEckuConfig string
+	if len(maxEcku) > 0 && maxEcku[0] > 0 {
+		maxEckuConfig = fmt.Sprintf("\n\t\t\tmax_ecku = %v", maxEcku[0])
+	}
 	return fmt.Sprintf(`
 	provider "confluent" {
  		endpoint = "%s"
@@ -308,13 +316,14 @@ func testAccCheckClusterConfig(mockServerUrl, clusterType string) string {
 		availability = "%s"
 		cloud = "%s"
 		region = "%s"
-		%s {}
+		%s {%s
+		}
 	
 	  	environment {
 			id = "%s"
 	  	}
 	}
-	`, mockServerUrl, kafkaDisplayName, kafkaAvailability, kafkaCloud, kafkaRegion, clusterType, testEnvironmentId)
+	`, mockServerUrl, kafkaDisplayName, kafkaAvailability, kafkaCloud, kafkaRegion, clusterType, maxEckuConfig, testEnvironmentId)
 }
 
 func testAccCheckClusterExists(n string) resource.TestCheckFunc {
