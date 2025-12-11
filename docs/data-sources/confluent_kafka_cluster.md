@@ -88,6 +88,8 @@ In addition to the preceding arguments, the following attributes are exported:
 
 -> **Note:** The `freight` Kafka cluster type is only available in AWS currently.
 
+-> **Note:** Refer to [eCKU/CKU comparison](https://docs.confluent.io/cloud/current/clusters/cluster-types.html#ecku-cku-comparison) documentation for the minimum/maximum eCKU requirements for each cluster type.
+
 - `network` (Optional Configuration Block) supports the following:
     - `id` - (Required String) The ID of the Network that the Kafka cluster belongs to, for example, `n-abc123`.
 - `byok_key` (Optional Configuration Block) supports the following:
