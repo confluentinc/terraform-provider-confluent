@@ -308,6 +308,16 @@ func metadataSchema() *schema.Schema {
 }
 
 func SetSchemaDiff(ctx context.Context, diff *schema.ResourceDiff, meta interface{}) error {
+	// Validate that ruleset block is not empty if present
+	if tfRuleset := diff.Get(paramRuleset).([]interface{}); len(tfRuleset) == 1 && tfRuleset[0] == nil {
+		return fmt.Errorf("ruleset block is empty: if defined, it must contain at least one domain_rules or migration_rules entry. Either populate the block or remove it entirely")
+	}
+
+	// Validate that metadata block is not empty if present
+	if tfMetadata := diff.Get(paramMetadata).([]interface{}); len(tfMetadata) == 1 && tfMetadata[0] == nil {
+		return fmt.Errorf("metadata block is empty: if defined, it must contain at least one tags, properties, or sensitive entry. Either populate the block or remove it entirely")
+	}
+
 	if !diff.HasChange(paramSchema) {
 		return nil
 	}
@@ -362,7 +372,7 @@ func SetSchemaDiff(ctx context.Context, diff *schema.ResourceDiff, meta interfac
 			ruleset.SetDomainRules([]sr.Rule{})
 			ruleset.SetMigrationRules([]sr.Rule{})
 			createSchemaRequest.SetRuleSet(*ruleset)
-		} else { //this is the case when a ruleset is not empty after an operation.
+		} else if tfRuleset[0] != nil { //this is the case when a ruleset is not empty after an operation.
 			ruleset := sr.NewRuleSet()
 			tfRulesetMap := tfRuleset[0].(map[string]interface{})
 			if tfRulesetMap[paramDomainRules] != nil {
@@ -374,7 +384,7 @@ func SetSchemaDiff(ctx context.Context, diff *schema.ResourceDiff, meta interfac
 			createSchemaRequest.SetRuleSet(*ruleset)
 		}
 	}
-	if tfMetadata := diff.Get(paramMetadata).([]interface{}); len(tfMetadata) == 1 {
+	if tfMetadata := diff.Get(paramMetadata).([]interface{}); len(tfMetadata) == 1 && tfMetadata[0] != nil {
 		metadata := sr.NewMetadata()
 		tfMetadataMap := tfMetadata[0].(map[string]interface{})
 		if tfMetadataMap[paramTags] != nil {
@@ -584,7 +594,7 @@ func schemaCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 		ruleset.SetDomainRules([]sr.Rule{})
 		ruleset.SetMigrationRules([]sr.Rule{})
 		createSchemaRequest.SetRuleSet(*ruleset)
-	} else if tfRuleset := d.Get(paramRuleset).([]interface{}); len(tfRuleset) == 1 { //this is the case when a ruleset is not empty after an operation.
+	} else if tfRuleset := d.Get(paramRuleset).([]interface{}); len(tfRuleset) == 1 && tfRuleset[0] != nil { //this is the case when a ruleset is not empty after an operation.
 		ruleset := sr.NewRuleSet()
 		tfRulesetMap := tfRuleset[0].(map[string]interface{})
 		if tfRulesetMap[paramDomainRules] != nil {
@@ -595,7 +605,7 @@ func schemaCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 		}
 		createSchemaRequest.SetRuleSet(*ruleset)
 	}
-	if tfMetadata := d.Get(paramMetadata).([]interface{}); len(tfMetadata) == 1 {
+	if tfMetadata := d.Get(paramMetadata).([]interface{}); len(tfMetadata) == 1 && tfMetadata[0] != nil {
 		metadata := sr.NewMetadata()
 		tfMetadataMap := tfMetadata[0].(map[string]interface{})
 		if tfMetadataMap[paramTags] != nil {
