@@ -308,16 +308,6 @@ func metadataSchema() *schema.Schema {
 }
 
 func SetSchemaDiff(ctx context.Context, diff *schema.ResourceDiff, meta interface{}) error {
-	// Validate that ruleset block is not empty if present
-	if tfRuleset := diff.Get(paramRuleset).([]interface{}); len(tfRuleset) == 1 && tfRuleset[0] == nil {
-		return fmt.Errorf("ruleset block is empty: if defined, it must contain at least one domain_rules or migration_rules entry. Either populate the block or remove it entirely")
-	}
-
-	// Validate that metadata block is not empty if present
-	if tfMetadata := diff.Get(paramMetadata).([]interface{}); len(tfMetadata) == 1 && tfMetadata[0] == nil {
-		return fmt.Errorf("metadata block is empty: if defined, it must contain at least one tags, properties, or sensitive entry. Either populate the block or remove it entirely")
-	}
-
 	if !diff.HasChange(paramSchema) {
 		return nil
 	}
