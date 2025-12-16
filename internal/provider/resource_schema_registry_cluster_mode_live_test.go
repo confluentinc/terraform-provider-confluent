@@ -64,6 +64,7 @@ func TestAccSchemaRegistryClusterModeLive(t *testing.T) {
 		ProviderFactories: testAccProviderFactories,
 		CheckDestroy:      testAccCheckSchemaRegistryClusterModeLiveDestroy,
 		Steps: []resource.TestStep{
+			// Step 1: Create with READWRITE mode
 			{
 				Config: testAccCheckSchemaRegistryClusterModeLiveConfig(endpoint, clusterModeResourceLabel, apiKey, apiSecret, schemaRegistryApiKey, schemaRegistryApiSecret, schemaRegistryRestEndpoint, schemaRegistryId),
 				Check: resource.ComposeTestCheckFunc(
@@ -72,61 +73,13 @@ func TestAccSchemaRegistryClusterModeLive(t *testing.T) {
 					resource.TestCheckResourceAttrSet(fmt.Sprintf("confluent_schema_registry_cluster_mode.%s", clusterModeResourceLabel), "id"),
 				),
 			},
+			// Step 2: Test Import
 			{
 				ResourceName:      fmt.Sprintf("confluent_schema_registry_cluster_mode.%s", clusterModeResourceLabel),
 				ImportState:       true,
 				ImportStateVerify: true,
 			},
-		},
-	})
-}
-
-func TestAccSchemaRegistryClusterModeUpdateLive(t *testing.T) {
-	// Disable parallel execution since this test modifies global cluster mode
-	// t.Parallel()
-
-	// Skip this test unless explicitly enabled
-	if os.Getenv("TF_ACC_PROD") == "" {
-		t.Skip("Skipping live test. Set TF_ACC_PROD=1 to run this test.")
-	}
-
-	// Read credentials and configuration from environment variables (populated by Vault)
-	apiKey := os.Getenv("CONFLUENT_CLOUD_API_KEY")
-	apiSecret := os.Getenv("CONFLUENT_CLOUD_API_SECRET")
-	endpoint := os.Getenv("CONFLUENT_CLOUD_ENDPOINT")
-	if endpoint == "" {
-		endpoint = "https://api.confluent.cloud" // Use default endpoint if not set
-	}
-
-	// Read Schema Registry credentials from environment variables
-	schemaRegistryApiKey := os.Getenv("SCHEMA_REGISTRY_API_KEY")
-	schemaRegistryApiSecret := os.Getenv("SCHEMA_REGISTRY_API_SECRET")
-	schemaRegistryRestEndpoint := os.Getenv("SCHEMA_REGISTRY_REST_ENDPOINT")
-	schemaRegistryId := os.Getenv("SCHEMA_REGISTRY_ID")
-
-	// Validate required environment variables are present
-	if apiKey == "" || apiSecret == "" {
-		t.Fatal("CONFLUENT_CLOUD_API_KEY and CONFLUENT_CLOUD_API_SECRET must be set for live tests")
-	}
-
-	if schemaRegistryApiKey == "" || schemaRegistryApiSecret == "" || schemaRegistryRestEndpoint == "" || schemaRegistryId == "" {
-		t.Fatal("SCHEMA_REGISTRY_API_KEY, SCHEMA_REGISTRY_API_SECRET, SCHEMA_REGISTRY_REST_ENDPOINT, and SCHEMA_REGISTRY_ID must be set for Schema Registry live tests")
-	}
-
-	clusterModeResourceLabel := "test_live_schema_registry_cluster_mode_update"
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: testAccProviderFactories,
-		CheckDestroy:      testAccCheckSchemaRegistryClusterModeLiveDestroy,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccCheckSchemaRegistryClusterModeLiveConfig(endpoint, clusterModeResourceLabel, apiKey, apiSecret, schemaRegistryApiKey, schemaRegistryApiSecret, schemaRegistryRestEndpoint, schemaRegistryId),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckSchemaRegistryClusterModeLiveExists(fmt.Sprintf("confluent_schema_registry_cluster_mode.%s", clusterModeResourceLabel)),
-					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_schema_registry_cluster_mode.%s", clusterModeResourceLabel), "mode", "READWRITE"),
-				),
-			},
+			// Step 3: Update to READONLY mode
 			{
 				Config: testAccCheckSchemaRegistryClusterModeUpdateLiveConfig(endpoint, clusterModeResourceLabel, apiKey, apiSecret, schemaRegistryApiKey, schemaRegistryApiSecret, schemaRegistryRestEndpoint, schemaRegistryId),
 				Check: resource.ComposeTestCheckFunc(
@@ -134,8 +87,8 @@ func TestAccSchemaRegistryClusterModeUpdateLive(t *testing.T) {
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_schema_registry_cluster_mode.%s", clusterModeResourceLabel), "mode", "READONLY"),
 				),
 			},
+			// Step 4: Reset to READWRITE for subsequent test runs
 			{
-				// Reset back to READWRITE to ensure other tests can run
 				Config: testAccCheckSchemaRegistryClusterModeLiveConfig(endpoint, clusterModeResourceLabel, apiKey, apiSecret, schemaRegistryApiKey, schemaRegistryApiSecret, schemaRegistryRestEndpoint, schemaRegistryId),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSchemaRegistryClusterModeLiveExists(fmt.Sprintf("confluent_schema_registry_cluster_mode.%s", clusterModeResourceLabel)),
