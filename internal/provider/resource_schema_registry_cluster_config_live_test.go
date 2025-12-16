@@ -64,6 +64,7 @@ func TestAccSchemaRegistryClusterConfigLive(t *testing.T) {
 		ProviderFactories: testAccProviderFactories,
 		CheckDestroy:      testAccCheckSchemaRegistryClusterConfigLiveDestroy,
 		Steps: []resource.TestStep{
+			// Step 1: Create with BACKWARD compatibility
 			{
 				Config: testAccCheckSchemaRegistryClusterConfigLiveConfig(endpoint, clusterConfigResourceLabel, apiKey, apiSecret, schemaRegistryApiKey, schemaRegistryApiSecret, schemaRegistryRestEndpoint, schemaRegistryId),
 				Check: resource.ComposeTestCheckFunc(
@@ -72,61 +73,13 @@ func TestAccSchemaRegistryClusterConfigLive(t *testing.T) {
 					resource.TestCheckResourceAttrSet(fmt.Sprintf("confluent_schema_registry_cluster_config.%s", clusterConfigResourceLabel), "id"),
 				),
 			},
+			// Step 2: Test Import
 			{
 				ResourceName:      fmt.Sprintf("confluent_schema_registry_cluster_config.%s", clusterConfigResourceLabel),
 				ImportState:       true,
 				ImportStateVerify: true,
 			},
-		},
-	})
-}
-
-func TestAccSchemaRegistryClusterConfigUpdateLive(t *testing.T) {
-	// Disable parallel execution since this test modifies global cluster config
-	// t.Parallel()
-
-	// Skip this test unless explicitly enabled
-	if os.Getenv("TF_ACC_PROD") == "" {
-		t.Skip("Skipping live test. Set TF_ACC_PROD=1 to run this test.")
-	}
-
-	// Read credentials and configuration from environment variables (populated by Vault)
-	apiKey := os.Getenv("CONFLUENT_CLOUD_API_KEY")
-	apiSecret := os.Getenv("CONFLUENT_CLOUD_API_SECRET")
-	endpoint := os.Getenv("CONFLUENT_CLOUD_ENDPOINT")
-	if endpoint == "" {
-		endpoint = "https://api.confluent.cloud" // Use default endpoint if not set
-	}
-
-	// Read Schema Registry credentials from environment variables
-	schemaRegistryApiKey := os.Getenv("SCHEMA_REGISTRY_API_KEY")
-	schemaRegistryApiSecret := os.Getenv("SCHEMA_REGISTRY_API_SECRET")
-	schemaRegistryRestEndpoint := os.Getenv("SCHEMA_REGISTRY_REST_ENDPOINT")
-	schemaRegistryId := os.Getenv("SCHEMA_REGISTRY_ID")
-
-	// Validate required environment variables are present
-	if apiKey == "" || apiSecret == "" {
-		t.Fatal("CONFLUENT_CLOUD_API_KEY and CONFLUENT_CLOUD_API_SECRET must be set for live tests")
-	}
-
-	if schemaRegistryApiKey == "" || schemaRegistryApiSecret == "" || schemaRegistryRestEndpoint == "" || schemaRegistryId == "" {
-		t.Fatal("SCHEMA_REGISTRY_API_KEY, SCHEMA_REGISTRY_API_SECRET, SCHEMA_REGISTRY_REST_ENDPOINT, and SCHEMA_REGISTRY_ID must be set for Schema Registry live tests")
-	}
-
-	clusterConfigResourceLabel := "test_live_schema_registry_cluster_config_update"
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: testAccProviderFactories,
-		CheckDestroy:      testAccCheckSchemaRegistryClusterConfigLiveDestroy,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccCheckSchemaRegistryClusterConfigLiveConfig(endpoint, clusterConfigResourceLabel, apiKey, apiSecret, schemaRegistryApiKey, schemaRegistryApiSecret, schemaRegistryRestEndpoint, schemaRegistryId),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckSchemaRegistryClusterConfigLiveExists(fmt.Sprintf("confluent_schema_registry_cluster_config.%s", clusterConfigResourceLabel)),
-					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_schema_registry_cluster_config.%s", clusterConfigResourceLabel), "compatibility_level", "BACKWARD"),
-				),
-			},
+			// Step 3: Update to FORWARD compatibility
 			{
 				Config: testAccCheckSchemaRegistryClusterConfigUpdateLiveConfig(endpoint, clusterConfigResourceLabel, apiKey, apiSecret, schemaRegistryApiKey, schemaRegistryApiSecret, schemaRegistryRestEndpoint, schemaRegistryId),
 				Check: resource.ComposeTestCheckFunc(
@@ -134,8 +87,8 @@ func TestAccSchemaRegistryClusterConfigUpdateLive(t *testing.T) {
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_schema_registry_cluster_config.%s", clusterConfigResourceLabel), "compatibility_level", "FORWARD"),
 				),
 			},
+			// Step 4: Reset to BACKWARD for subsequent test runs
 			{
-				// Reset back to BACKWARD to ensure consistent state for other tests
 				Config: testAccCheckSchemaRegistryClusterConfigLiveConfig(endpoint, clusterConfigResourceLabel, apiKey, apiSecret, schemaRegistryApiKey, schemaRegistryApiSecret, schemaRegistryRestEndpoint, schemaRegistryId),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSchemaRegistryClusterConfigLiveExists(fmt.Sprintf("confluent_schema_registry_cluster_config.%s", clusterConfigResourceLabel)),

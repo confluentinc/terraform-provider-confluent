@@ -25,10 +25,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
+// TestAccKafkaClusterConfigLive tests the full CRUD lifecycle for kafka_cluster_config.
+// DO NOT use t.Parallel() - this test modifies cluster-wide configuration which is global state.
 func TestAccKafkaClusterConfigLive(t *testing.T) {
-	// Enable parallel execution for I/O bound operations
-	t.Parallel()
-
 	// Skip this test unless explicitly enabled
 	if os.Getenv("TF_ACC_PROD") == "" {
 		t.Skip("Skipping live test. Set TF_ACC_PROD=1 to run this test.")
@@ -64,6 +63,7 @@ func TestAccKafkaClusterConfigLive(t *testing.T) {
 		ProviderFactories: testAccProviderFactories,
 		CheckDestroy:      testAccCheckKafkaClusterConfigLiveDestroy,
 		Steps: []resource.TestStep{
+			// Step 1: Create with initial config values
 			{
 				Config: testAccCheckKafkaClusterConfigLiveConfig(endpoint, configResourceLabel, kafkaClusterId, kafkaRestEndpoint, apiKey, apiSecret, kafkaApiKey, kafkaApiSecret),
 				Check: resource.ComposeTestCheckFunc(
@@ -74,63 +74,19 @@ func TestAccKafkaClusterConfigLive(t *testing.T) {
 					resource.TestCheckResourceAttrSet(fmt.Sprintf("confluent_kafka_cluster_config.%s", configResourceLabel), "id"),
 				),
 			},
-			// Import step removed due to IMPORT_KAFKA_REST_ENDPOINT requirement
-			// The create and read functionality is already validated above
-		},
-	})
-}
-
-func TestAccKafkaClusterConfigUpdateLive(t *testing.T) {
-	// Enable parallel execution for I/O bound operations
-	t.Parallel()
-
-	// Skip this test unless explicitly enabled
-	if os.Getenv("TF_ACC_PROD") == "" {
-		t.Skip("Skipping live test. Set TF_ACC_PROD=1 to run this test.")
-	}
-
-	// Read credentials and configuration from environment variables (populated by Vault)
-	apiKey := os.Getenv("CONFLUENT_CLOUD_API_KEY")
-	apiSecret := os.Getenv("CONFLUENT_CLOUD_API_SECRET")
-	endpoint := os.Getenv("CONFLUENT_CLOUD_ENDPOINT")
-	if endpoint == "" {
-		endpoint = "https://api.confluent.cloud" // Use default endpoint if not set
-	}
-
-	// Read Kafka cluster details from environment variables
-	kafkaClusterId := os.Getenv("KAFKA_DEDICATED_AWS_CLUSTER_ID")
-	kafkaApiKey := os.Getenv("KAFKA_DEDICATED_AWS_API_KEY")
-	kafkaApiSecret := os.Getenv("KAFKA_DEDICATED_AWS_API_SECRET")
-	kafkaRestEndpoint := os.Getenv("KAFKA_DEDICATED_AWS_REST_ENDPOINT")
-
-	// Validate required environment variables are present
-	if apiKey == "" || apiSecret == "" {
-		t.Fatal("CONFLUENT_CLOUD_API_KEY and CONFLUENT_CLOUD_API_SECRET must be set for live tests")
-	}
-
-	if kafkaClusterId == "" || kafkaApiKey == "" || kafkaApiSecret == "" || kafkaRestEndpoint == "" {
-		t.Fatal("KAFKA_DEDICATED_AWS_CLUSTER_ID, KAFKA_DEDICATED_AWS_API_KEY, KAFKA_DEDICATED_AWS_API_SECRET, and KAFKA_DEDICATED_AWS_REST_ENDPOINT must be set for Kafka Cluster Config live tests")
-	}
-
-	configResourceLabel := "test_live_kafka_cluster_config_update"
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: testAccProviderFactories,
-		CheckDestroy:      testAccCheckKafkaClusterConfigLiveDestroy,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccCheckKafkaClusterConfigLiveConfig(endpoint, configResourceLabel, kafkaClusterId, kafkaRestEndpoint, apiKey, apiSecret, kafkaApiKey, kafkaApiSecret),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckKafkaClusterConfigLiveExists(fmt.Sprintf("confluent_kafka_cluster_config.%s", configResourceLabel)),
-					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster_config.%s", configResourceLabel), "config.auto.create.topics.enable", "false"),
-					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster_config.%s", configResourceLabel), "config.num.partitions", "3"),
-				),
-			},
+			// Step 2: Update config values
 			{
 				Config: testAccCheckKafkaClusterConfigUpdateLiveConfig(endpoint, configResourceLabel, kafkaClusterId, kafkaRestEndpoint, apiKey, apiSecret, kafkaApiKey, kafkaApiSecret),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckKafkaClusterConfigLiveExists(fmt.Sprintf("confluent_kafka_cluster_config.%s", configResourceLabel)),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster_config.%s", configResourceLabel), "config.auto.create.topics.enable", "true"),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster_config.%s", configResourceLabel), "config.num.partitions", "6"),
+				),
+			},
+			// Step 3: Reset to default state for subsequent test runs
+			{
+				Config: testAccCheckKafkaClusterConfigResetLiveConfig(endpoint, configResourceLabel, kafkaClusterId, kafkaRestEndpoint, apiKey, apiSecret, kafkaApiKey, kafkaApiSecret),
+				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster_config.%s", configResourceLabel), "config.auto.create.topics.enable", "true"),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster_config.%s", configResourceLabel), "config.num.partitions", "6"),
 				),
@@ -196,6 +152,33 @@ func testAccCheckKafkaClusterConfigLiveConfig(endpoint, configResourceLabel, kaf
 }
 
 func testAccCheckKafkaClusterConfigUpdateLiveConfig(endpoint, configResourceLabel, kafkaClusterId, kafkaRestEndpoint, apiKey, apiSecret, kafkaApiKey, kafkaApiSecret string) string {
+	return fmt.Sprintf(`
+	provider "confluent" {
+		endpoint         = "%s"
+		cloud_api_key    = "%s"
+		cloud_api_secret = "%s"
+	}
+
+	resource "confluent_kafka_cluster_config" "%s" {
+		kafka_cluster {
+			id = "%s"
+		}
+		rest_endpoint = "%s"
+		credentials {
+			key    = "%s"
+			secret = "%s"
+		}
+		config = {
+			"auto.create.topics.enable" = "true"
+			"num.partitions"             = "6"
+		}
+	}
+	`, endpoint, apiKey, apiSecret, configResourceLabel, kafkaClusterId, kafkaRestEndpoint, kafkaApiKey, kafkaApiSecret)
+}
+
+// testAccCheckKafkaClusterConfigResetLiveConfig resets the cluster config to default values
+// so subsequent test runs start with a known state.
+func testAccCheckKafkaClusterConfigResetLiveConfig(endpoint, configResourceLabel, kafkaClusterId, kafkaRestEndpoint, apiKey, apiSecret, kafkaApiKey, kafkaApiSecret string) string {
 	return fmt.Sprintf(`
 	provider "confluent" {
 		endpoint         = "%s"
