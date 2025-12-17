@@ -1,3 +1,10 @@
+## 2.57.0 (December 17th, 2025)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.56.0...v2.57.0)
+
+**New features:**
+* Added the `max_ecku` attribute to the `confluent_kafka_cluster` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_cluster) and the corresponding data source.
+
 ## 2.56.0 (December 15th, 2025)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.55.0...v2.56.0)
