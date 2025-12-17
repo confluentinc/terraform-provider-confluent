@@ -68,6 +68,7 @@ func TestAccKafkaClusterBasicLive(t *testing.T) {
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "cloud", "AWS"),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "region", "us-east-1"),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "basic.#", "1"),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "basic.0.max_ecku", "5"),
 					resource.TestCheckResourceAttrSet(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "bootstrap_endpoint"),
 					resource.TestCheckResourceAttrSet(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "rest_endpoint"),
 					resource.TestCheckResourceAttrSet(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "rbac_crn"),
@@ -516,6 +517,7 @@ func TestAccKafkaClusterAvailabilityDriftMultiZoneToHighLive(t *testing.T) {
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "cloud", "AWS"),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "region", "us-east-1"),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "standard.#", "1"),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "standard.0.max_ecku", "5"),
 				),
 			},
 			{
@@ -553,6 +555,7 @@ func testAccCheckKafkaClusterBasicLiveConfig(endpoint, environmentResourceLabel,
 		cloud        = "AWS"
 		region       = "us-east-1"
 		basic {}
+		max_ecku     = 5
 
 		environment {
 			id = confluent_environment.%s.id
@@ -811,6 +814,7 @@ func testAccCheckKafkaClusterAvailabilityDriftMultiZoneConfig(endpoint, environm
 		availability = "MULTI_ZONE"
 		cloud        = "AWS"
 		region       = "us-east-1"
+		max_ecku     = 5
 		standard {}
 
 		environment {
@@ -841,6 +845,7 @@ func testAccCheckKafkaClusterAvailabilityDriftHighConfig(endpoint, environmentRe
 		availability = "HIGH"
 		cloud        = "AWS"
 		region       = "us-east-1"
+		max_ecku     = 5
 		standard {}
 
 		environment {
