@@ -68,6 +68,7 @@ func TestAccKafkaClusterBasicLive(t *testing.T) {
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "cloud", "AWS"),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "region", "us-east-1"),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "basic.#", "1"),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "basic.0.max_ecku", "5"),
 					resource.TestCheckResourceAttrSet(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "bootstrap_endpoint"),
 					resource.TestCheckResourceAttrSet(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "rest_endpoint"),
 					resource.TestCheckResourceAttrSet(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "rbac_crn"),
@@ -130,6 +131,7 @@ func TestAccKafkaClusterStandardLive(t *testing.T) {
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "cloud", "AWS"),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "region", "us-east-1"),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "standard.#", "1"),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "standard.0.max_ecku", "10"),
 					resource.TestCheckResourceAttrSet(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "bootstrap_endpoint"),
 					resource.TestCheckResourceAttrSet(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "rest_endpoint"),
 					resource.TestCheckResourceAttrSet(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "rbac_crn"),
@@ -192,6 +194,7 @@ func TestAccKafkaClusterEnterpriseLive(t *testing.T) {
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "cloud", "AWS"),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "region", "us-east-1"),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "enterprise.#", "1"),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "enterprise.0.max_ecku", "5"),
 					resource.TestCheckResourceAttrSet(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "bootstrap_endpoint"),
 					resource.TestCheckResourceAttrSet(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "rest_endpoint"),
 					resource.TestCheckResourceAttrSet(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "rbac_crn"),
@@ -393,6 +396,7 @@ func TestAccKafkaClusterFreightLive(t *testing.T) {
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "cloud", "AWS"),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "region", "us-east-1"),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "freight.#", "1"),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "freight.0.max_ecku", "152"),
 					// Freight clusters should have zones information
 					resource.TestCheckResourceAttrSet(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "freight.0.zones.#"),
 					resource.TestCheckResourceAttrSet(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "rbac_crn"),
@@ -457,6 +461,7 @@ func TestAccKafkaClusterAvailabilityDriftSingleZoneToLowLive(t *testing.T) {
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "cloud", "AWS"),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "region", "us-east-1"),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "basic.#", "1"),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "basic.0.max_ecku", "50"),
 				),
 			},
 			{
@@ -516,6 +521,7 @@ func TestAccKafkaClusterAvailabilityDriftMultiZoneToHighLive(t *testing.T) {
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "cloud", "AWS"),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "region", "us-east-1"),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "standard.#", "1"),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "standard.0.max_ecku", "5"),
 				),
 			},
 			{
@@ -552,7 +558,7 @@ func testAccCheckKafkaClusterBasicLiveConfig(endpoint, environmentResourceLabel,
 		availability = "SINGLE_ZONE"
 		cloud        = "AWS"
 		region       = "us-east-1"
-		basic {}
+		basic {max_ecku     = 5}
 
 		environment {
 			id = confluent_environment.%s.id
@@ -612,7 +618,7 @@ func testAccCheckKafkaClusterEnterpriseLiveConfig(endpoint, environmentResourceL
 		availability = "HIGH"
 		cloud        = "AWS"
 		region       = "us-east-1"
-		enterprise {}
+		enterprise {max_ecku     = 5}
 
 		environment {
 			id = confluent_environment.%s.id
@@ -811,7 +817,7 @@ func testAccCheckKafkaClusterAvailabilityDriftMultiZoneConfig(endpoint, environm
 		availability = "MULTI_ZONE"
 		cloud        = "AWS"
 		region       = "us-east-1"
-		standard {}
+		standard {max_ecku     = 5}
 
 		environment {
 			id = confluent_environment.%s.id
@@ -841,7 +847,7 @@ func testAccCheckKafkaClusterAvailabilityDriftHighConfig(endpoint, environmentRe
 		availability = "HIGH"
 		cloud        = "AWS"
 		region       = "us-east-1"
-		standard {}
+		standard {max_ecku     = 5}
 
 		environment {
 			id = confluent_environment.%s.id
