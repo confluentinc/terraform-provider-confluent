@@ -554,8 +554,7 @@ func testAccCheckKafkaClusterBasicLiveConfig(endpoint, environmentResourceLabel,
 		availability = "SINGLE_ZONE"
 		cloud        = "AWS"
 		region       = "us-east-1"
-		basic {}
-		max_ecku     = 5
+		basic {max_ecku     = 5}
 
 		environment {
 			id = confluent_environment.%s.id
@@ -814,8 +813,7 @@ func testAccCheckKafkaClusterAvailabilityDriftMultiZoneConfig(endpoint, environm
 		availability = "MULTI_ZONE"
 		cloud        = "AWS"
 		region       = "us-east-1"
-		max_ecku     = 5
-		standard {}
+		standard {max_ecku     = 5}
 
 		environment {
 			id = confluent_environment.%s.id
@@ -845,8 +843,7 @@ func testAccCheckKafkaClusterAvailabilityDriftHighConfig(endpoint, environmentRe
 		availability = "HIGH"
 		cloud        = "AWS"
 		region       = "us-east-1"
-		max_ecku     = 5
-		standard {}
+		standard {max_ecku     = 5}
 
 		environment {
 			id = confluent_environment.%s.id
