@@ -71,6 +71,8 @@ func TestAccKafkaClusterDataSourceLive(t *testing.T) {
 					resource.TestCheckResourceAttrSet(fmt.Sprintf("data.confluent_kafka_cluster.%s", kafkaClusterDataSourceLabel), "region"),
 					resource.TestCheckResourceAttrSet(fmt.Sprintf("data.confluent_kafka_cluster.%s", kafkaClusterDataSourceLabel), "bootstrap_endpoint"),
 					resource.TestCheckResourceAttrSet(fmt.Sprintf("data.confluent_kafka_cluster.%s", kafkaClusterDataSourceLabel), "rest_endpoint"),
+					resource.TestCheckResourceAttrSet(fmt.Sprintf("data.confluent_kafka_cluster.%s", kafkaClusterDataSourceLabel), "rest_endpoint"),
+					resource.TestCheckResourceAttr(fmt.Sprintf("data.confluent_kafka_cluster.%s", kafkaClusterDataSourceLabel), "standard.0.max_ecku", "10"),
 				),
 			},
 		},
@@ -92,4 +94,4 @@ func testAccCheckKafkaClusterDataSourceLiveConfig(endpoint, kafkaClusterDataSour
 		}
 	}
 	`, endpoint, apiKey, apiSecret, kafkaClusterDataSourceLabel, kafkaClusterId)
-} 
+}
