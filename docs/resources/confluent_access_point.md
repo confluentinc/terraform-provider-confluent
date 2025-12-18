@@ -20,7 +20,7 @@ resource "confluent_environment" "development" {
 }
 
 resource "confluent_access_point" "aws" {
-  display_name = "access_point"
+  display_name = "access_point_egress"
   environment {
     id = confluent_environment.development.id
   }
@@ -33,7 +33,7 @@ resource "confluent_access_point" "aws" {
 }
 
 resource "confluent_access_point" "azure" {
-  display_name = "access_point"
+  display_name = "access_point_egress"
   environment {
     id = confluent_environment.development.id
   }
@@ -60,7 +60,7 @@ resource "confluent_access_point" "gcp" {
 }
 
 resource "confluent_access_point" "pni" {
-  display_name = "access_point"
+  display_name = "access_point_egress"
   environment {
     id = confluent_environment.development.id
   }
@@ -75,6 +75,19 @@ resource "confluent_access_point" "pni" {
   depends_on = [
     aws_network_interface_permission.main
   ]
+}
+
+resource "confluent_access_point" "aws_ingress" {
+  display_name = "access_point_ingress"
+  environment {
+    id = confluent_environment.development.id
+  }
+  gateway {
+    id = confluent_gateway.ingress.id
+  }
+  aws_ingress_private_link_endpoint {
+    vpc_endpoint_id = "vpce-00000000000000000"
+  }
 }
 ```
 
@@ -91,6 +104,8 @@ The following arguments are supported:
 - `aws_egress_private_link_endpoint` (Optional Configuration Block) supports the following:
   - `vpc_endpoint_service_name` - (Required String) AWS VPC Endpoint Service that can be used to establish connections for all zones, for example `com.amazonaws.vpce.us-west-2.vpce-svc-0d3be37e21708ecd3`.
   - `enable_high_availability` - (Optional Boolean) Whether a resource should be provisioned with high availability. Endpoints deployed with high availability have network interfaces deployed in multiple AZs. Defaults to `false`.
+- `aws_ingress_private_link_endpoint` (Optional Configuration Block) supports the following:
+  - `vpc_endpoint_id` - (Required String) ID of a VPC Endpoint that will be connected to the VPC Endpoint service, for example, `vpce-00000000000000000`.
 - `azure_egress_private_link_endpoint` (Optional Configuration Block) supports the following:
   - `private_link_service_resource_id` - (Required String) Resource ID of the Azure Private Link service.
   - `private_link_subresource_name` - (Optional String) Name of the subresource for the Private Endpoint to connect to.
@@ -105,6 +120,9 @@ In addition to the preceding arguments, the following attributes are exported:
 - `aws_egress_private_link_endpoint` (Optional Configuration Block) supports the following:
   - `vpc_endpoint_id` - (Required String) The ID of a VPC Endpoint (if any) that is connected to the VPC Endpoint service, for example, `vpce-00000000000000000`.
   - `vpc_endpoint_dns_name` - (Required String) The DNS name of a VPC Endpoint (if any) that is connected to the VPC Endpoint service, for example, `*.vpce-00000000000000000-abcd1234.s3.us-west-2.vpce.amazonaws.com`.
+- `aws_ingress_private_link_endpoint` (Optional Configuration Block) supports the following:
+  - `vpc_endpoint_service_name` - (Required String) ID of the Confluent Cloud VPC Endpoint service used for PrivateLink, for example, `com.amazonaws.vpce.us-west-2.vpce-svc-00000000000000000`.
+  - `dns_domain` - (Required String) DNS domain name used to configure the Private Hosted Zone for the Access Point, for example, `ap123abc.us-west-2.aws.accesspoint.confluent.cloud`.
 - `aws_private_network_interface` (Optional Configuration Block) supports the following:
   - `network_interfaces` - (Required List of Strings) List of the IDs of the Elastic Network Interfaces, for example: `["eni-00000000000000000", "eni-00000000000000001", "eni-00000000000000002", "eni-00000000000000003", "eni-00000000000000004", "eni-00000000000000005"]`
   - `account` - (Required String) The AWS account ID associated with the ENIs you are using for the Confluent Private Network Interface, for example: `000000000000`.

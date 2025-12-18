@@ -27,6 +27,7 @@ import (
 const (
 	paramAwsPeeringGateway                     = "aws_peering_gateway"
 	paramAwsEgressPrivateLinkGateway           = "aws_egress_private_link_gateway"
+	paramAwsIngressPrivateLinkGateway          = "aws_ingress_private_link_gateway"
 	paramAwsPrivateNetworkInterfaceGateway     = "aws_private_network_interface_gateway"
 	paramAzureEgressPrivateLinkGateway         = "azure_egress_private_link_gateway"
 	paramAzurePeeringGateway                   = "azure_peering_gateway"
@@ -51,6 +52,7 @@ func gatewayDataSource() *schema.Resource {
 				Computed: true,
 			},
 			paramAwsEgressPrivateLinkGateway:           awsEgressPrivateLinkGatewayDataSourceSchema(),
+			paramAwsIngressPrivateLinkGateway:          awsIngressPrivateLinkGatewayDataSourceSchema(),
 			paramAwsPeeringGateway:                     awsPeeringGatewaySpecDataSourceSchema(),
 			paramAwsPrivateNetworkInterfaceGateway:     awsPrivateNetworkInterfaceGatewayDataSourceSchema(),
 			paramAzureEgressPrivateLinkGateway:         azureEgressPrivateLinkGatewayDataSourceSchema(),
@@ -86,6 +88,25 @@ func awsEgressPrivateLinkGatewayDataSourceSchema() *schema.Schema {
 					Computed: true,
 				},
 				paramPrincipalArn: {
+					Type:     schema.TypeString,
+					Computed: true,
+				},
+			},
+		},
+		Computed: true,
+	}
+}
+
+func awsIngressPrivateLinkGatewayDataSourceSchema() *schema.Schema {
+	return &schema.Schema{
+		Type: schema.TypeList,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramRegion: {
+					Type:     schema.TypeString,
+					Computed: true,
+				},
+				paramVpcEndpointServiceName: {
 					Type:     schema.TypeString,
 					Computed: true,
 				},
