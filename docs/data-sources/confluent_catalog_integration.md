@@ -89,4 +89,7 @@ In addition to the preceding arguments, the following attributes are exported:
     - `endpoint` - (Required String) The catalog integration connection endpoint for Snowflake Open Catalog.
     - `warehouse` - (Required String) Warehouse name of the Snowflake Open Catalog.
     - `allowed_scope` - (Required String) Allowed scope of the Snowflake Open Catalog.
+- `unity` (Optional Configuration Block) supports the following:
+    - `workspace_endpoint` - (Required String) The Databricks workspace URL associated with the Unity Catalog.
+    - `catalog_name` - (Required String) The name of the catalog within Unity Catalog.
 - `suspended` - (Optional Boolean) Indicates whether the Catalog Integration should be suspended.
