@@ -281,7 +281,7 @@ func uploadCustomConnectorVersionPlugin(ctx context.Context, c *Client, filename
 		return "", fmt.Errorf(`error uploading Plugin : error fetching presigned upload URL: %s`, err)
 	}
 
-	if err := uploadFile(createdPresignedUrl.GetUploadUrl(), filename, createdPresignedUrl.GetUploadFormData(), createdPresignedUrl.GetContentFormat(), cloud, false); err != nil {
+	if err := uploadFile(createdPresignedUrl.GetUploadUrl(), filename, createdPresignedUrl.GetUploadFormData(), createdPresignedUrl.GetContentFormat(), cloud, false, false); err != nil {
 		return "", fmt.Errorf(`error uploading Plugin: error uploading a file: %s`, err)
 	}
 	return createdPresignedUrl.GetUploadId(), nil
