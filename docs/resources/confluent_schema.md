@@ -12,6 +12,8 @@ description: |-
 
 `confluent_schema` provides a Schema resource that enables creating, evolving, and deleting Schemas on a Schema Registry cluster on Confluent Cloud.
 
+`confluent_schema` enables managing the latest version or a specific version of a schema. By design, `confluent_schema` won't destroy all versions of a schema, which differs from Confluent Platform, which permits hard delete on all schema versions at once.
+
 -> **Note:** It is recommended to set `lifecycle { prevent_destroy = true }` on production instances to prevent accidental schema deletion. This setting rejects plans that would destroy or recreate the schema, such as attempting to change uneditable attributes. Read more about it in the [Terraform docs](https://www.terraform.io/language/meta-arguments/lifecycle#prevent_destroy).
 
 ## Example Usage
