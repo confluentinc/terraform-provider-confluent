@@ -49,6 +49,9 @@ In addition to the preceding arguments, the following attributes are exported:
 - `aws_egress_private_link_gateway` (Optional Configuration Block) supports the following:
   - `region` - (Required String) AWS region of the Egress Private Link Gateway.
   - `principal_arn` - (Required String) The principal ARN used by the AWS Egress Private Link Gateway.
+- `aws_ingress_private_link_gateway` (Optional Configuration Block) supports the following:
+  - `region` - (Required String) AWS region of the Ingress Private Link Gateway.
+  - `vpc_endpoint_service_name` - (Required String) The ID of the AWS VPC Endpoint Service that can be used to establish connections for all zones, for example, `com.amazonaws.vpce.us-west-2.vpce-svc-00000000000000000`.
 - `aws_peering_gateway` (Optional Configuration Block) supports the following:
   - `region` - (Required String) AWS region of the Peering Gateway.
 - `aws_private_network_interface_gateway` (Optional Configuration Block) supports the following:
