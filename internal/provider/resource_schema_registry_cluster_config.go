@@ -58,6 +58,12 @@ func schemaRegistryClusterConfigResource() *schema.Resource {
 				Optional: true,
 				Computed: true,
 			},
+			paramNormalize: {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Computed:    true,
+				Description: "If true, then schemas are automatically normalized when registered or when passed during lookups. This means that clients do not have to pass the \"normalize\" query parameter to have normalization occur.",
+			},
 		},
 		CustomizeDiff: customdiff.Sequence(resourceCredentialBlockValidationWithOAuth),
 	}
@@ -78,13 +84,21 @@ func schemaRegistryClusterConfigCreate(ctx context.Context, d *schema.ResourceDa
 	}
 	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 
-	if _, ok := d.GetOk(paramCompatibilityLevel); ok {
-		compatibilityLevel := d.Get(paramCompatibilityLevel).(string)
-		compatibilityGroup := d.Get(paramCompatibilityGroup).(string)
+	createConfigRequest := sr.NewConfigUpdateRequest()
+	hasConfigToUpdate := false
 
-		createConfigRequest := sr.NewConfigUpdateRequest()
-		createConfigRequest.SetCompatibility(compatibilityLevel)
-		createConfigRequest.SetCompatibilityGroup(compatibilityGroup)
+	if compatibilityLevel, ok := d.GetOk(paramCompatibilityLevel); ok {
+		createConfigRequest.SetCompatibility(compatibilityLevel.(string))
+		createConfigRequest.SetCompatibilityGroup(d.Get(paramCompatibilityGroup).(string))
+		hasConfigToUpdate = true
+	}
+	if _, ok := d.GetOk(paramNormalize); ok {
+		createConfigRequest.SetNormalize(d.Get(paramNormalize).(bool))
+		hasConfigToUpdate = true
+	}
+
+	if hasConfigToUpdate {
+
 		createModeRequestJson, err := json.Marshal(createConfigRequest)
 		if err != nil {
 			return diag.Errorf("error creating Schema Registry Cluster Config: error marshaling %#v to json: %s", createConfigRequest, createDescriptiveError(err))
@@ -200,6 +214,10 @@ func readSchemaRegistryClusterConfigAndSetAttributes(ctx context.Context, d *sch
 		return nil, err
 	}
 
+	if err := d.Set(paramNormalize, schemaRegistryClusterConfig.GetNormalize()); err != nil {
+		return nil, err
+	}
+
 	if !c.isMetadataSetInProviderBlock {
 		if err := setKafkaCredentials(c.clusterApiKey, c.clusterApiSecret, d, c.externalAccessToken != nil); err != nil {
 			return nil, err
@@ -218,15 +236,22 @@ func readSchemaRegistryClusterConfigAndSetAttributes(ctx context.Context, d *sch
 }
 
 func schemaRegistryClusterConfigUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if d.HasChangesExcept(paramCredentials, paramCompatibilityLevel, paramCompatibilityGroup) {
-		return diag.Errorf("error updating Schema Registry Cluster Config %q: only %q, %q and %q blocks can be updated for Schema Registry Cluster Config", d.Id(), paramCredentials, paramCompatibilityLevel, paramCompatibilityGroup)
+	if d.HasChangesExcept(paramCredentials, paramCompatibilityLevel, paramCompatibilityGroup, paramNormalize) {
+		return diag.Errorf("error updating Schema Registry Cluster Config %q: only %q, %q, %q and %q blocks can be updated for Schema Registry Cluster Config", d.Id(), paramCredentials, paramCompatibilityLevel, paramCompatibilityGroup, paramNormalize)
 	}
-	if d.HasChange(paramCompatibilityLevel) || d.HasChanges(paramCompatibilityGroup) {
-		updatedCompatibilityLevel := d.Get(paramCompatibilityLevel).(string)
-		updatedCompatibilityGroup := d.Get(paramCompatibilityGroup).(string)
+	if d.HasChange(paramCompatibilityLevel) || d.HasChange(paramCompatibilityGroup) || d.HasChange(paramNormalize) {
 		updateConfigRequest := sr.NewConfigUpdateRequest()
-		updateConfigRequest.SetCompatibility(updatedCompatibilityLevel)
-		updateConfigRequest.SetCompatibilityGroup(updatedCompatibilityGroup)
+
+		if compatibilityLevel := d.Get(paramCompatibilityLevel).(string); compatibilityLevel != "" {
+			updateConfigRequest.SetCompatibility(compatibilityLevel)
+		}
+		if compatibilityGroup := d.Get(paramCompatibilityGroup).(string); compatibilityGroup != "" {
+			updateConfigRequest.SetCompatibilityGroup(compatibilityGroup)
+		}
+		if _, ok := d.GetOk(paramNormalize); ok {
+			updateConfigRequest.SetNormalize(d.Get(paramNormalize).(bool))
+		}
+
 		restEndpoint, err := extractSchemaRegistryRestEndpoint(meta.(*Client), d, false)
 		if err != nil {
 			return diag.Errorf("error updating Schema Registry Cluster Config: %s", createDescriptiveError(err))
