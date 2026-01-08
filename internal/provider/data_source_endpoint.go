@@ -231,13 +231,9 @@ func endpointDataSourceRead(ctx context.Context, d *schema.ResourceData, meta in
 			paramEndpoint:       endpoint.GetEndpoint(),
 		}
 
-		// Set endpoint_type based on service type
+		// Set endpoint_type
 		if endpoint.HasEndpointType() {
-			endpointType := endpoint.GetEndpointType()
-			// The endpoint type is a oneOf type, we need to extract the string value
-			// Based on the model, it should have a method to get the value
-			// For now, we'll convert it to string
-			endpointData[paramEndpointType] = fmt.Sprintf("%v", endpointType)
+			endpointData[paramEndpointType] = endpoint.GetEndpointType()
 		}
 
 		// Set environment
