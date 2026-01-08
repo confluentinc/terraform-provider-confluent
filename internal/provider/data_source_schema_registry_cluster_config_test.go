@@ -28,7 +28,7 @@ import (
 
 const (
 	SchemaRegistryClusterCompatibilityLevelDataSourceScenarioName           = "confluent_schema_registry_cluster_config Data Source Lifecycle"
-	testNumberOfSchemaRegistryClusterCompatibilityLevelDataSourceAttributes = 6
+	testNumberOfSchemaRegistryClusterCompatibilityLevelDataSourceAttributes = 7
 )
 
 var fullSchemaRegistryClusterCompatibilityLevelDataSourceLabel = fmt.Sprintf("data.confluent_schema_registry_cluster_config.%s", testSchemaResourceLabel)
@@ -82,6 +82,7 @@ func TestAccDataSchemaRegistryClusterCompatibilityLevelSchema(t *testing.T) {
 					resource.TestCheckResourceAttr(fullSchemaRegistryClusterCompatibilityLevelDataSourceLabel, "credentials.0.secret", testSchemaRegistrySecret),
 					resource.TestCheckResourceAttr(fullSchemaRegistryClusterCompatibilityLevelDataSourceLabel, "compatibility_level", testSchemaRegistryClusterCompatibilityLevel),
 					resource.TestCheckResourceAttr(fullSchemaRegistryClusterCompatibilityLevelDataSourceLabel, "compatibility_group", testSchemaRegistryClusterCompatibilityGroup),
+					resource.TestCheckResourceAttr(fullSchemaRegistryClusterCompatibilityLevelDataSourceLabel, "normalize", "true"),
 					resource.TestCheckResourceAttr(fullSchemaRegistryClusterCompatibilityLevelDataSourceLabel, "%", strconv.Itoa(testNumberOfSchemaRegistryClusterCompatibilityLevelDataSourceAttributes)),
 				),
 			},
