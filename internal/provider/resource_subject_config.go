@@ -118,37 +118,24 @@ func subjectConfigCreate(ctx context.Context, d *schema.ResourceData, meta inter
 	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 	subjectName := d.Get(paramSubjectName).(string)
 
-	// Check if any config fields are set
-	hasCompatibility := false
-	if _, ok := d.GetOk(paramCompatibilityLevel); ok {
-		hasCompatibility = true
+	createConfigRequest := sr.NewConfigUpdateRequest()
+	hasConfigToUpdate := false
+
+	if compatibilityLevel, ok := d.GetOk(paramCompatibilityLevel); ok {
+		createConfigRequest.SetCompatibility(compatibilityLevel.(string))
+		createConfigRequest.SetCompatibilityGroup(d.Get(paramCompatibilityGroup).(string))
+		hasConfigToUpdate = true
 	}
-	hasNormalize := false
 	if _, ok := d.GetOk(paramNormalize); ok {
-		hasNormalize = true
+		createConfigRequest.SetNormalize(d.Get(paramNormalize).(bool))
+		hasConfigToUpdate = true
 	}
-	hasAlias := false
-	if _, ok := d.GetOk(paramAlias); ok {
-		hasAlias = true
+	if alias, ok := d.GetOk(paramAlias); ok {
+		createConfigRequest.SetAlias(alias.(string))
+		hasConfigToUpdate = true
 	}
 
-	if hasCompatibility || hasNormalize || hasAlias {
-		createConfigRequest := sr.NewConfigUpdateRequest()
-
-		if hasCompatibility {
-			compatibilityLevel := d.Get(paramCompatibilityLevel).(string)
-			compatibilityGroup := d.Get(paramCompatibilityGroup).(string)
-			createConfigRequest.SetCompatibility(compatibilityLevel)
-			createConfigRequest.SetCompatibilityGroup(compatibilityGroup)
-		}
-		if hasNormalize {
-			normalize := d.Get(paramNormalize).(bool)
-			createConfigRequest.SetNormalize(normalize)
-		}
-		if hasAlias {
-			alias := d.Get(paramAlias).(string)
-			createConfigRequest.SetAlias(alias)
-		}
+	if hasConfigToUpdate {
 
 		createConfigRequestJson, err := json.Marshal(createConfigRequest)
 		if err != nil {
@@ -332,7 +319,6 @@ func subjectConfigUpdate(ctx context.Context, d *schema.ResourceData, meta inter
 	if d.HasChange(paramCompatibilityLevel) || d.HasChange(paramCompatibilityGroup) || d.HasChange(paramNormalize) || d.HasChange(paramAlias) {
 		updateConfigRequest := sr.NewConfigUpdateRequest()
 
-		// Always set all fields to ensure proper update
 		if compatibilityLevel := d.Get(paramCompatibilityLevel).(string); compatibilityLevel != "" {
 			updateConfigRequest.SetCompatibility(compatibilityLevel)
 		}

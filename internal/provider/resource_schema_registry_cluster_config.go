@@ -84,29 +84,20 @@ func schemaRegistryClusterConfigCreate(ctx context.Context, d *schema.ResourceDa
 	}
 	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 
-	// Check if any config fields are set
-	hasCompatibility := false
-	if _, ok := d.GetOk(paramCompatibilityLevel); ok {
-		hasCompatibility = true
+	createConfigRequest := sr.NewConfigUpdateRequest()
+	hasConfigToUpdate := false
+
+	if compatibilityLevel, ok := d.GetOk(paramCompatibilityLevel); ok {
+		createConfigRequest.SetCompatibility(compatibilityLevel.(string))
+		createConfigRequest.SetCompatibilityGroup(d.Get(paramCompatibilityGroup).(string))
+		hasConfigToUpdate = true
 	}
-	hasNormalize := false
 	if _, ok := d.GetOk(paramNormalize); ok {
-		hasNormalize = true
+		createConfigRequest.SetNormalize(d.Get(paramNormalize).(bool))
+		hasConfigToUpdate = true
 	}
 
-	if hasCompatibility || hasNormalize {
-		createConfigRequest := sr.NewConfigUpdateRequest()
-
-		if hasCompatibility {
-			compatibilityLevel := d.Get(paramCompatibilityLevel).(string)
-			compatibilityGroup := d.Get(paramCompatibilityGroup).(string)
-			createConfigRequest.SetCompatibility(compatibilityLevel)
-			createConfigRequest.SetCompatibilityGroup(compatibilityGroup)
-		}
-		if hasNormalize {
-			normalize := d.Get(paramNormalize).(bool)
-			createConfigRequest.SetNormalize(normalize)
-		}
+	if hasConfigToUpdate {
 
 		createModeRequestJson, err := json.Marshal(createConfigRequest)
 		if err != nil {
@@ -251,7 +242,6 @@ func schemaRegistryClusterConfigUpdate(ctx context.Context, d *schema.ResourceDa
 	if d.HasChange(paramCompatibilityLevel) || d.HasChange(paramCompatibilityGroup) || d.HasChange(paramNormalize) {
 		updateConfigRequest := sr.NewConfigUpdateRequest()
 
-		// Always set all fields to ensure proper update
 		if compatibilityLevel := d.Get(paramCompatibilityLevel).(string); compatibilityLevel != "" {
 			updateConfigRequest.SetCompatibility(compatibilityLevel)
 		}
