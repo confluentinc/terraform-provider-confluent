@@ -248,9 +248,8 @@ func schemaRegistryClusterConfigUpdate(ctx context.Context, d *schema.ResourceDa
 		if compatibilityGroup := d.Get(paramCompatibilityGroup).(string); compatibilityGroup != "" {
 			updateConfigRequest.SetCompatibilityGroup(compatibilityGroup)
 		}
-		if _, ok := d.GetOk(paramNormalize); ok {
-			updateConfigRequest.SetNormalize(d.Get(paramNormalize).(bool))
-		}
+		// Always set normalize when updating since GetOk returns false for bool zero values
+		updateConfigRequest.SetNormalize(d.Get(paramNormalize).(bool))
 
 		restEndpoint, err := extractSchemaRegistryRestEndpoint(meta.(*Client), d, false)
 		if err != nil {

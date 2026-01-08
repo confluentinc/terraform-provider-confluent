@@ -325,9 +325,8 @@ func subjectConfigUpdate(ctx context.Context, d *schema.ResourceData, meta inter
 		if compatibilityGroup := d.Get(paramCompatibilityGroup).(string); compatibilityGroup != "" {
 			updateConfigRequest.SetCompatibilityGroup(compatibilityGroup)
 		}
-		if _, ok := d.GetOk(paramNormalize); ok {
-			updateConfigRequest.SetNormalize(d.Get(paramNormalize).(bool))
-		}
+		// Always set normalize when updating since GetOk returns false for bool zero values
+		updateConfigRequest.SetNormalize(d.Get(paramNormalize).(bool))
 		if alias := d.Get(paramAlias).(string); alias != "" {
 			updateConfigRequest.SetAlias(alias)
 		}
