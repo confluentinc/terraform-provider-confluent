@@ -113,7 +113,7 @@ The following arguments are supported:
 
 - `compatibility_level` - (Optional String) The Compatibility Level of the specified subject. Accepted values are: `BACKWARD`, `BACKWARD_TRANSITIVE`, `FORWARD`, `FORWARD_TRANSITIVE`, `FULL`, `FULL_TRANSITIVE`, and `NONE`. See the [Compatibility Types](https://docs.confluent.io/platform/current/schema-registry/avro.html#compatibility-types) for more details.
 - `compatibility_group` - (Optional String) The Compatibility Group of the specified subject.
-- `normalize` - (Optional Boolean) If `true`, then schemas are automatically normalized when registered or when passed during lookups. This means that clients do not have to pass the `normalize` query parameter to have normalization occur. Defaults to `false`.
+- `normalize` - (Optional Boolean) Whether schemas are automatically normalized when registered or passed during lookups.
 - `alias` - (Optional String) The subject name that this subject is an alias for. Any reference to this subject will be replaced by the alias. See [Subject Aliases](https://docs.confluent.io/platform/current/schema-registry/fundamentals/index.html#subject-aliases) for more details.
 
 -> **Note:** To create an alias for a subject, you create a new subject config where `subject_name` is the alias and `alias` points to the real subject. For example, to create an alias `short-name` that points to subject `very-long-subject-name`, set `subject_name = "short-name"` and `alias = "very-long-subject-name"`.

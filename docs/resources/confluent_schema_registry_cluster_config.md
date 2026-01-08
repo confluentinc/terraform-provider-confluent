@@ -84,7 +84,7 @@ The following arguments are supported:
 
 - `compatibility_level` - (Optional String) The global Schema Registry compatibility level. Accepted values are: `BACKWARD`, `BACKWARD_TRANSITIVE`, `FORWARD`, `FORWARD_TRANSITIVE`, `FULL`, `FULL_TRANSITIVE`, and `NONE`. See the [Compatibility Types](https://docs.confluent.io/platform/current/schema-registry/avro.html#compatibility-types) for more details.
 - `compatibility_group` - (Optional String) The global Schema Registry compatibility group.
-- `normalize` - (Optional Boolean) If `true`, then schemas are automatically normalized when registered or when passed during lookups. This means that clients do not have to pass the `normalize` query parameter to have normalization occur. Defaults to `false`.
+- `normalize` - (Optional Boolean) Whether schemas are automatically normalized when registered or passed during lookups.
 
 ## Attributes Reference
 

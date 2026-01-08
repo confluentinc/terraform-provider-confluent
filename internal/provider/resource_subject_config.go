@@ -89,7 +89,7 @@ func subjectConfigResource() *schema.Resource {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Computed:    true,
-				Description: "If true, then schemas are automatically normalized when registered or when passed during lookups. This means that clients do not have to pass the \"normalize\" query parameter to have normalization occur.",
+				Description: "Whether schemas are automatically normalized when registered or passed during lookups.",
 			},
 			paramAlias: {
 				Type:        schema.TypeString,
@@ -325,8 +325,9 @@ func subjectConfigUpdate(ctx context.Context, d *schema.ResourceData, meta inter
 		if compatibilityGroup := d.Get(paramCompatibilityGroup).(string); compatibilityGroup != "" {
 			updateConfigRequest.SetCompatibilityGroup(compatibilityGroup)
 		}
-		// Always set normalize when updating since GetOk returns false for bool zero values
-		updateConfigRequest.SetNormalize(d.Get(paramNormalize).(bool))
+		if d.HasChange(paramNormalize) {
+			updateConfigRequest.SetNormalize(d.Get(paramNormalize).(bool))
+		}
 		if alias := d.Get(paramAlias).(string); alias != "" {
 			updateConfigRequest.SetAlias(alias)
 		}

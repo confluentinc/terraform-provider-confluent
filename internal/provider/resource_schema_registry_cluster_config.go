@@ -62,7 +62,7 @@ func schemaRegistryClusterConfigResource() *schema.Resource {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Computed:    true,
-				Description: "If true, then schemas are automatically normalized when registered or when passed during lookups. This means that clients do not have to pass the \"normalize\" query parameter to have normalization occur.",
+				Description: "Whether or not schemas are automatically normalized when registered or passed during lookups.",
 			},
 		},
 		CustomizeDiff: customdiff.Sequence(resourceCredentialBlockValidationWithOAuth),
@@ -248,8 +248,9 @@ func schemaRegistryClusterConfigUpdate(ctx context.Context, d *schema.ResourceDa
 		if compatibilityGroup := d.Get(paramCompatibilityGroup).(string); compatibilityGroup != "" {
 			updateConfigRequest.SetCompatibilityGroup(compatibilityGroup)
 		}
-		// Always set normalize when updating since GetOk returns false for bool zero values
-		updateConfigRequest.SetNormalize(d.Get(paramNormalize).(bool))
+		if d.HasChange(paramNormalize) {
+			updateConfigRequest.SetNormalize(d.Get(paramNormalize).(bool))
+		}
 
 		restEndpoint, err := extractSchemaRegistryRestEndpoint(meta.(*Client), d, false)
 		if err != nil {
