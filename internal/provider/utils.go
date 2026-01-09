@@ -32,6 +32,7 @@ import (
 	"strings"
 	"time"
 
+	end "github.com/confluentinc/ccloud-sdk-go-v2-internal/endpoint/v1"
 	apikeys "github.com/confluentinc/ccloud-sdk-go-v2/apikeys/v2"
 	byok "github.com/confluentinc/ccloud-sdk-go-v2/byok/v1"
 	cam "github.com/confluentinc/ccloud-sdk-go-v2/cam/v1"
@@ -566,6 +567,25 @@ func (c *Client) netDnsApiContext(ctx context.Context) context.Context {
 	}
 
 	tflog.Warn(ctx, "Could not find Cloud API Key or OAuth Token for Network DNS Forwarder client")
+	return ctx
+}
+
+func (c *Client) endApiContext(ctx context.Context) context.Context {
+	if c.oauthToken != nil && c.stsToken != nil {
+		if err := c.fetchOrOverrideSTSOAuthTokenFromApiContext(ctx); err != nil {
+			tflog.Error(ctx, fmt.Sprintf("Failed to get OAuth token for Endpoint client: %v", err))
+		}
+		return context.WithValue(ctx, end.ContextAccessToken, c.stsToken.AccessToken)
+	}
+
+	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
+		return context.WithValue(ctx, end.ContextBasicAuth, end.BasicAuth{
+			UserName: c.cloudApiKey,
+			Password: c.cloudApiSecret,
+		})
+	}
+
+	tflog.Warn(ctx, "Could not find Cloud API Key or OAuth Token for Endpoint client")
 	return ctx
 }
 
