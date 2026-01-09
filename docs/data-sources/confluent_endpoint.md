@@ -12,7 +12,7 @@ description: |-
 
 `confluent_endpoint` describes an Endpoint data source.
 
-An Endpoint object represents a Fully Qualified Domain Name (FQDN) for a Confluent service resource via a specific networking solution for a given Confluent Cloud environment. This API provides a list of Confluent Cloud endpoints filtered by service, cloud provider, region, etc.
+An Endpoint object represents a Fully Qualified Domain Name (FQDN) for a Confluent service resource via a specific networking solution for a given Confluent Cloud environment. Endpoints can be filtered by service, cloud provider, region, etc.
 
 ## Example Usage
 
