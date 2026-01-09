@@ -45,6 +45,11 @@ func schemaRegistryClusterConfigDataSource() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			paramNormalize: {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "If true, then schemas are automatically normalized when registered or when passed during lookups.",
+			},
 		},
 	}
 }
