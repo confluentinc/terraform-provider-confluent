@@ -3,7 +3,7 @@
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.57.0...v2.58.0)
 
 **New features:**
-* Added Azure support for `confluent_connect_artifact` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_connect_artifact)
+* Added Azure support for `confluent_connect_artifact` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_connect_artifact) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_connect_artifact)
 
 ## 2.57.0 (December 17th, 2025)
 
