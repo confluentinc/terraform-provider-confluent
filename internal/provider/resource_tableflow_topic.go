@@ -271,7 +271,7 @@ func tableflowTopicCreate(ctx context.Context, d *schema.ResourceData, meta inte
 		tableflowTopicSpec.SetTableFormats(tableFormats)
 	}
 
-	tableflowTopicSpec.Config = tableflow.NewTableflowV1TableFlowTopicConfigsSpec()
+	tableflowTopicSpec.Config = &tableflow.TableflowV1TableFlowTopicConfigsSpec{} // don't call NewTableflowV1TableFlowTopicConfigsSpec() because it explicitly sets RecordFailureStrategy to "SUSPEND"
 	if retentionMs := d.Get(paramRetentionMs).(string); retentionMs != "" {
 		tableflowTopicSpec.Config.SetRetentionMs(retentionMs)
 	}
@@ -579,7 +579,7 @@ func tableflowTopicUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 	clusterId := extractStringValueFromBlock(d, paramKafkaCluster, paramId)
 
 	updateTableflowTopicSpec := tableflow.NewTableflowV1TableflowTopicSpecUpdate()
-	updateTableflowTopicSpec.Config = &tableflow.TableflowV1TableFlowTopicConfigsSpec{} // don't call NewTableflowV1TableFlowTopicConfigsSpec() because it explicitlysets RecordFailureStrategy to "SUSPEND"
+	updateTableflowTopicSpec.Config = &tableflow.TableflowV1TableFlowTopicConfigsSpec{} // don't call NewTableflowV1TableFlowTopicConfigsSpec() because it explicitly sets RecordFailureStrategy to "SUSPEND"
 	updateTableflowTopicSpec.SetEnvironment(tableflow.GlobalObjectReference{Id: environmentId})
 	updateTableflowTopicSpec.SetKafkaCluster(tableflow.EnvScopedObjectReference{Id: clusterId})
 	if d.HasChange(paramRetentionMs) {

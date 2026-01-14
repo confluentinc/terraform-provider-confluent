@@ -12,6 +12,8 @@ description: |-
 
 `confluent_schema` provides a Schema resource that enables creating, evolving, and deleting Schemas on a Schema Registry cluster on Confluent Cloud.
 
+`confluent_schema` enables managing the latest version or a specific version of a schema. By design, `confluent_schema` won't destroy all versions of a schema, which differs from Confluent Platform, which permits hard delete on all schema versions at once.
+
 -> **Note:** It is recommended to set `lifecycle { prevent_destroy = true }` on production instances to prevent accidental schema deletion. This setting rejects plans that would destroy or recreate the schema, such as attempting to change uneditable attributes. Read more about it in the [Terraform docs](https://www.terraform.io/language/meta-arguments/lifecycle#prevent_destroy).
 
 ## Example Usage
@@ -101,7 +103,7 @@ The following arguments are supported:
     - `name` - (Required String) The name of the subject, representing the subject under which the referenced schema is registered.
     - `subject_name` - (Required String) The name for the reference. (For Avro Schema, the reference name is the fully qualified schema name, for JSON Schema it is a URL, and for Protobuf Schema, it is the name of another Protobuf file.)
     - `version` - (Required Integer) The version, representing the exact version of the schema under the registered subject.
-- `metadata` - (Optional Block) See [here](https://docs.confluent.io/platform/7.5/schema-registry/fundamentals/data-contracts.html) for more details. Supports the following:
+- `metadata` - (Optional Block) See [here](https://docs.confluent.io/platform/7.5/schema-registry/fundamentals/data-contracts.html) for more details. Do not define an empty `metadata {}` block; only include it if you intend to define at least one `properties`, `tags`, or `sensitive` entry. Supports the following:
     - `properties` - (Optional Map) The custom properties to set:
       - `name` - (Required String) The setting name.
       - `value` - (Required String) The setting value.
@@ -137,6 +139,8 @@ The following arguments are supported:
 
 
 -> **Note:** Schema rules (`ruleset`) are only available with the [Stream Governance Advanced package](https://docs.confluent.io/cloud/current/stream-governance/packages.html#packages).
+
+!> **Warning:** Do not define an empty `ruleset {}` block. Only include the `ruleset` block if you intend to define at least one `domain_rules` or `migration_rules` entry. If you don't need schema rules, omit the `ruleset` block entirely.
 
 -> **Note:** The Confluent Cloud Console uses the following default values: `on_success = "NONE"` and `on_failure = "ERROR"`. However, the TF Provider sets its defaults to `on_success = "NONE,NONE"` and `on_failure = "ERROR,ERROR"`.
 

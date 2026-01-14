@@ -68,11 +68,15 @@ In addition to the preceding arguments, the following attributes are exported:
 - `cloud` - (Required String) The cloud service provider that runs the Kafka cluster. Accepted values are: `AWS`, `AZURE`, and `GCP`.
 - `region` - (Required String) The cloud service provider region where the Kafka cluster is running, for example, `us-west-2`. See [Cloud Providers and Regions](https://docs.confluent.io/cloud/current/clusters/regions.html#cloud-providers-and-regions) for a full list of options for AWS, Azure, and GCP.
 - `basic` - (Optional Configuration Block) The configuration of the Basic Kafka cluster.
+  - `max_ecku` - (Optional Number) The maximum number of Elastic Confluent Kafka Units (eCKUs) that Kafka clusters should auto-scale to. Kafka clusters with "HIGH" availability must have at least two eCKUs. For more details, see [Maximum eCKU requirements](https://docs.confluent.io/cloud/current/clusters/cluster-types.html#minimum-maximum-ecku-requirements).
 - `standard` - (Optional Configuration Block) The configuration of the Standard Kafka cluster.
+  - `max_ecku` - (Optional Number) The maximum number of Elastic Confluent Kafka Units (eCKUs) that Kafka clusters should auto-scale to. Kafka clusters with "HIGH" availability must have at least two eCKUs. For more details, see [Maximum eCKU requirements](https://docs.confluent.io/cloud/current/clusters/cluster-types.html#minimum-maximum-ecku-requirements).
 - `enterprise` - (Optional Configuration Block) The configuration of the Enterprise Kafka cluster.
+  - `max_ecku` - (Optional Number) The maximum number of Elastic Confluent Kafka Units (eCKUs) that Kafka clusters should auto-scale to. Kafka clusters with "HIGH" availability must have at least two eCKUs. For more details, see [Maximum eCKU requirements](https://docs.confluent.io/cloud/current/clusters/cluster-types.html#minimum-maximum-ecku-requirements).
 - `freight` - (Optional Configuration Block) The configuration of the Freight Kafka cluster.
   - `zones` - (Required List of String) The list of zones the cluster is in.
       - On AWS, zones are AWS [AZ IDs](https://docs.aws.amazon.com/ram/latest/userguide/working-with-az-ids.html), for example, `use1-az3`.
+  - `max_ecku` - (Optional Number) The maximum number of Elastic Confluent Kafka Units (eCKUs) that Kafka clusters should auto-scale to. Kafka clusters with "HIGH" availability must have at least two eCKUs. For more details, see [Maximum eCKU requirements](https://docs.confluent.io/cloud/current/clusters/cluster-types.html#minimum-maximum-ecku-requirements).
 - `dedicated` - (Optional Configuration Block) The configuration of the Dedicated Kafka cluster. It supports the following:
     - `cku` - (Required Number) The number of Confluent Kafka Units (CKUs) for Dedicated cluster types. The minimum number of CKUs for `SINGLE_ZONE` dedicated clusters is `1` whereas `MULTI_ZONE` dedicated clusters must have `2` CKUs or more.
     - `zones` - (Required List of String) The list of zones the cluster is in.
@@ -83,6 +87,8 @@ In addition to the preceding arguments, the following attributes are exported:
 -> **Note:** At least one from the `basic`, `standard`, `dedicated`, `enterprise` or `freight` configuration blocks should be specified.
 
 -> **Note:** The `freight` Kafka cluster type is only available in AWS currently.
+
+-> **Note:** Refer to [eCKU/CKU comparison](https://docs.confluent.io/cloud/current/clusters/cluster-types.html#ecku-cku-comparison) documentation for the minimum/maximum eCKU requirements for each cluster type.
 
 - `network` (Optional Configuration Block) supports the following:
     - `id` - (Required String) The ID of the Network that the Kafka cluster belongs to, for example, `n-abc123`.

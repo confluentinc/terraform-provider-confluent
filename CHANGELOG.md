@@ -1,3 +1,27 @@
+## 2.58.0 (January 13th, 2026)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.57.0...v2.58.0)
+
+**New features:** 
+* Added Azure support for `confluent_connect_artifact` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_connect_artifact) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_connect_artifact).
+
+## 2.57.0 (December 17th, 2025)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.56.0...v2.57.0)
+
+**New features:**
+* Added the `max_ecku` attribute to the `confluent_kafka_cluster` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_cluster) and the corresponding data source.
+
+## 2.56.0 (December 15th, 2025)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.55.0...v2.56.0)
+
+**Bug Fixes:**
+* Fixed a panic in the `confluent_schema` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema) when the ruleset block is empty.
+* Fixed an issue in the `confluent_tableflow_topic` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_tableflow_topic) where topics could not be created with the `error_handling.mode` attribute set to skip or log.
+* Updated the `confluent_kafka_cluster` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_cluster) to resolve Terraform drift for the `availability` attribute (`SINGLE_ZONE` → `LOW` or `MULTI_ZONE` → `HIGH`).
+* Updated the documentation for the `confluent_schema` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema) to add a warning against creating empty ruleset and metadata blocks.
+
 ## 2.55.0 (December 2nd, 2025)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.54.0...v2.55.0)

@@ -256,9 +256,13 @@ The following arguments are supported:
 - `cloud` - (Required String) The cloud service provider that runs the Kafka cluster. Accepted values are: `AWS`, `AZURE`, and `GCP`.
 - `region` - (Required String) The cloud service provider region where the Kafka cluster is running, for example, `us-west-2`. See [Cloud Providers and Regions](https://docs.confluent.io/cloud/current/clusters/regions.html#cloud-providers-and-regions) for a full list of options for AWS, Azure, and GCP.
 - `basic` - (Optional Configuration Block) The configuration of the Basic Kafka cluster.
+  - `max_ecku` - (Optional Number) The maximum number of Elastic Confluent Kafka Units (eCKUs) that Kafka clusters should auto-scale to. Kafka clusters with "HIGH" availability must have at least two eCKUs.
 - `standard` - (Optional Configuration Block) The configuration of the Standard Kafka cluster.
+  - `max_ecku` - (Optional Number) The maximum number of Elastic Confluent Kafka Units (eCKUs) that Kafka clusters should auto-scale to. Kafka clusters with "HIGH" availability must have at least two eCKUs.
 - `enterprise` - (Optional Configuration Block) The configuration of the Enterprise Kafka cluster.
+  - `max_ecku` - (Optional Number) The maximum number of Elastic Confluent Kafka Units (eCKUs) that Kafka clusters should auto-scale to. Kafka clusters with "HIGH" availability must have at least two eCKUs.
 - `freight` - (Optional Configuration Block) The configuration of the Freight Kafka cluster.
+  - `max_ecku` - (Optional Number) The maximum number of Elastic Confluent Kafka Units (eCKUs) that Kafka clusters should auto-scale to. Kafka clusters with "HIGH" availability must have at least two eCKUs.
 - `dedicated` - (Optional Configuration Block) The configuration of the Dedicated Kafka cluster. It supports the following:
   - `cku` - (Required Number) The number of Confluent Kafka Units (CKUs) for Dedicated cluster types. The minimum number of CKUs for `SINGLE_ZONE` dedicated clusters is `1` whereas `MULTI_ZONE` dedicated clusters must have `2` CKUs or more.
 
@@ -269,6 +273,8 @@ The following arguments are supported:
 !> **Warning:** You can only upgrade clusters from `basic` to `standard`.
 
 -> **Note:** Currently, provisioning of a Dedicated Kafka cluster takes around 25 minutes on average but might take up to 24 hours. If you can't wait for the `terraform apply` step to finish, you can exit it and import the cluster by using the `terraform import` command once it has been provisioned. When the cluster is provisioned, you will receive an email notification, and you can also follow updates on the Target Environment web page of the Confluent Cloud website.
+
+-> **Note:** Refer to [eCKU/CKU comparison](https://docs.confluent.io/cloud/current/clusters/cluster-types.html#ecku-cku-comparison) documentation for the minimum/maximum eCKU requirements for each cluster type. 
 
 - `environment` (Required Configuration Block) supports the following:
     - `id` - (Required String) The ID of the Environment that the Kafka cluster belongs to, for example, `env-abc123`.
@@ -286,7 +292,7 @@ In addition to the preceding arguments, the following attributes are exported:
 - `kind` - (Required String) A kind of the Kafka cluster, for example, `Cluster`.
 - `bootstrap_endpoint` - (Required String) The bootstrap endpoint used by Kafka clients to connect to the Kafka cluster. (e.g., `SASL_SSL://pkc-00000.us-central1.gcp.confluent.cloud:9092`).
 - `rest_endpoint` - (Required String) The REST endpoint of the Kafka cluster (e.g., `https://pkc-00000.us-central1.gcp.confluent.cloud:443`).
-- `rbac_crn` - (Required String) The Confluent Resource Name of the Kafka cluster, for example, `crn://confluent.cloud/organization=1111aaaa-11aa-11aa-11aa-111111aaaaaa/environment=env-abc123/cloud-cluster=lkc-abc123`.
+- `rbac_crn` - (Required String) The Confluent Resource Name (CRN) of the Kafka cluster, for example, `crn://confluent.cloud/organization=1111aaaa-11aa-11aa-11aa-111111aaaaaa/environment=env-abc123/cloud-cluster=lkc-abc123`. Some resources, like topics, require appending the Kafka cluster ID for creating role bindings, for example, `/kafka=lkc-123abc`. For more information, see [confluent_role_binding Resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_role_binding).
 - `dedicated` - (Optional Configuration Block) The configuration of the Dedicated Kafka cluster. It supports the following:
   - `zones` - (Required List of String) The list of zones the cluster is in.
     - On AWS, zones are AWS [AZ IDs](https://docs.aws.amazon.com/ram/latest/userguide/working-with-az-ids.html), for example, `use1-az3`.

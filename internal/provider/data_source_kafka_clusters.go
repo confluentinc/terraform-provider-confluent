@@ -194,9 +194,17 @@ func populateKafkaClusterResult(cluster v2.CmkV2Cluster) (map[string]interface{}
 	}
 	// Set a specific cluster type
 	if cluster.Spec.Config.CmkV2Basic != nil {
-		mp[paramBasicCluster] = []interface{}{make(map[string]string)}
+		basicConfig := map[string]interface{}{}
+		if cluster.GetSpec().Config.CmkV2Basic.MaxEcku != nil && cluster.GetSpec().Config.CmkV2Basic.GetMaxEcku() > 0 {
+			basicConfig[paramMaxEcku] = cluster.GetSpec().Config.CmkV2Basic.GetMaxEcku()
+		}
+		mp[paramBasicCluster] = []interface{}{basicConfig}
 	} else if cluster.Spec.Config.CmkV2Standard != nil {
-		mp[paramStandardCluster] = []interface{}{make(map[string]string)}
+		standardConfig := map[string]interface{}{}
+		if cluster.GetSpec().Config.CmkV2Standard.MaxEcku != nil && cluster.GetSpec().Config.CmkV2Standard.GetMaxEcku() > 0 {
+			standardConfig[paramMaxEcku] = cluster.GetSpec().Config.CmkV2Standard.GetMaxEcku()
+		}
+		mp[paramStandardCluster] = []interface{}{standardConfig}
 	} else if cluster.Spec.Config.CmkV2Dedicated != nil {
 		mp[paramDedicatedCluster] = []interface{}{map[string]interface{}{
 			paramCku:           cluster.Status.GetCku(),
@@ -204,11 +212,19 @@ func populateKafkaClusterResult(cluster v2.CmkV2Cluster) (map[string]interface{}
 			paramZones:         cluster.Spec.Config.CmkV2Dedicated.GetZones(),
 		}}
 	} else if cluster.Spec.Config.CmkV2Enterprise != nil {
-		mp[paramEnterpriseCluster] = []interface{}{make(map[string]string)}
+		enterpriseConfig := map[string]interface{}{}
+		if cluster.GetSpec().Config.CmkV2Enterprise.MaxEcku != nil && cluster.GetSpec().Config.CmkV2Enterprise.GetMaxEcku() > 0 {
+			enterpriseConfig[paramMaxEcku] = cluster.GetSpec().Config.CmkV2Enterprise.GetMaxEcku()
+		}
+		mp[paramEnterpriseCluster] = []interface{}{enterpriseConfig}
 	} else if cluster.Spec.Config.CmkV2Freight != nil {
-		mp[paramFreightCluster] = []interface{}{map[string]interface{}{
+		freightConfig := map[string]interface{}{
 			paramZones: cluster.Spec.Config.CmkV2Freight.GetZones(),
-		}}
+		}
+		if cluster.GetSpec().Config.CmkV2Freight.MaxEcku != nil && cluster.GetSpec().Config.CmkV2Freight.GetMaxEcku() > 0 {
+			freightConfig[paramMaxEcku] = cluster.GetSpec().Config.CmkV2Freight.GetMaxEcku()
+		}
+		mp[paramFreightCluster] = []interface{}{freightConfig}
 	}
 	return mp, nil
 }
