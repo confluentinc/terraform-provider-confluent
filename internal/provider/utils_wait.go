@@ -30,6 +30,7 @@ const (
 	govCloudNotAvailableErrorMessage = "this service is not available in confluent cloud for government"
 	stateUp                          = "UP"
 	stateCreated                     = "CREATED"
+	stateExpired                     = "EXPIRED"
 	acceptanceTestModeWaitTime       = 1 * time.Second
 	acceptanceTestModePollInterval   = 1 * time.Second
 
@@ -352,7 +353,7 @@ func waitForGatewayToProvision(ctx context.Context, c *Client, environmentId, ga
 	delay, pollInterval := getDelayAndPollInterval(5*time.Second, 1*time.Minute, c.isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
 		Pending: []string{stateProvisioning},
-		Target:  []string{stateReady, stateCreated},
+		Target:  []string{stateReady, stateCreated, stateExpired},
 		Refresh: gatewayProvisionStatus(c.netGWApiContext(ctx), c, environmentId, gatewayId),
 		Timeout: networkingAPICreateTimeout,
 		// TODO: increase delay
@@ -1228,14 +1229,18 @@ func gatewayProvisionStatus(ctx context.Context, c *Client, environmentId string
 			return nil, stateUnknown, err
 		}
 
-		tflog.Debug(ctx, fmt.Sprintf("Waiting for Gateway %q provisioning status to become %q: current status is %q", gatewayId, stateReady, gateway.Status.GetPhase()), map[string]interface{}{gatewayKey: gatewayId})
-		if gateway.Status.GetPhase() == stateProvisioning || gateway.Status.GetPhase() == stateReady || gateway.Status.GetPhase() == stateCreated {
-			return gateway, gateway.Status.GetPhase(), nil
-		} else if gateway.Status.GetPhase() == stateFailed {
-			return nil, stateFailed, fmt.Errorf("access point %q provisioning status is %q: %s", gatewayId, stateFailed, gateway.Status.GetErrorMessage())
+		phase := gateway.Status.GetPhase()
+		tflog.Debug(ctx, fmt.Sprintf("Waiting for Gateway %q provisioning status to become %q: current status is %q", gatewayId, stateReady, phase), map[string]interface{}{gatewayKey: gatewayId})
+		if phase == stateProvisioning || phase == stateReady || phase == stateCreated {
+			return gateway, phase, nil
+		} else if phase == stateFailed {
+			return nil, stateFailed, fmt.Errorf("gateway %q provisioning status is %q: %s", gatewayId, stateFailed, gateway.Status.GetErrorMessage())
+		} else if phase == stateExpired {
+			// gateway has timed out waiting for connections, can only be deleted
+			return gateway, phase, nil
 		}
-		// Access Point is in an unexpected state
-		return nil, stateUnexpected, fmt.Errorf("access point %q is an unexpected state %q: %s", gatewayId, gateway.Status.GetPhase(), gateway.Status.GetErrorMessage())
+		// Gateway is in an unexpected state
+		return nil, stateUnexpected, fmt.Errorf("gateway %q is in an unexpected state %q: %s", gatewayId, phase, gateway.Status.GetErrorMessage())
 	}
 }
 

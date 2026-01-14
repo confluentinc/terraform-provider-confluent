@@ -13,6 +13,7 @@ import (
 
 const (
 	AwsEgressAccessPointDataSourceScenarioName       = "confluent_access_point AWS Egress Private Link Endpoint Data Source Lifecycle"
+	AwsIngressAccessPointDataSourceScenarioName      = "confluent_access_point AWS Ingress Private Link Endpoint Data Source Lifecycle"
 	AwsPrivateNetworkInterfaceDataSourceScenarioName = "confluent_access_point AWS Private Network Interface Data Source Lifecycle"
 	AzureEgressAccessPointDataSourceScenarioName     = "confluent_access_point Azure Egress Private Link Endpoint Data Source Lifecycle"
 	GcpEgressAccessPointDataSourceScenarioName       = "confluent_access_point Gcp Egress Private Service Connect Endpoint Data Source Lifecycle"
@@ -250,6 +251,65 @@ func TestAccDataSourceAccessPointGcpEgressPrivateServiceConnectEndpoint(t *testi
 					resource.TestCheckResourceAttr(fullAccessPointResourceName, "gcp_egress_private_service_connect_endpoint.0.private_service_connect_endpoint_connection_id", "1234567890987654321"),
 					resource.TestCheckResourceAttr(fullAccessPointResourceName, "gcp_egress_private_service_connect_endpoint.0.private_service_connect_endpoint_ip_address", "10.2.255.255"),
 					resource.TestCheckResourceAttr(fullAccessPointResourceName, "gcp_egress_private_service_connect_endpoint.0.private_service_connect_endpoint_name", "plapstgc493ll4"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccDataSourceAccessPointAwsIngressPrivateLinkEndpoint(t *testing.T) {
+	ctx := context.Background()
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
+
+	mockServerUrl := wiremockContainer.URI
+	wiremockClient := wiremock.NewClient(mockServerUrl)
+	// nolint:errcheck
+	defer wiremockClient.Reset()
+
+	// nolint:errcheck
+	defer wiremockClient.ResetAllScenarios()
+
+	readAwsIngressAccessPointResponse, _ := os.ReadFile("../testdata/network_access_point/read_created_aws_ingress_ap.json")
+	readAccessPointStub := wiremock.Get(wiremock.URLPathEqualTo("/networking/v1/access-points/ap-ingress123")).
+		InScenario(AwsIngressAccessPointDataSourceScenarioName).
+		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
+		WillReturn(
+			string(readAwsIngressAccessPointResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		)
+
+	_ = wiremockClient.StubFor(readAccessPointStub)
+
+	accessPointResourceName := "aws_ingress_private_link_endpoint_access_point"
+	fullAccessPointResourceName := fmt.Sprintf("data.confluent_access_point.%s", accessPointResourceName)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckDataSourceAccessPoint(mockServerUrl, "ap-ingress123", accessPointResourceName),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(fullAccessPointResourceName, "id", "ap-ingress123"),
+					resource.TestCheckResourceAttr(fullAccessPointResourceName, "display_name", "prod-ingress-ap-1"),
+					resource.TestCheckResourceAttr(fullAccessPointResourceName, "environment.#", "1"),
+					resource.TestCheckResourceAttr(fullAccessPointResourceName, "environment.0.id", "env-abc123"),
+					resource.TestCheckResourceAttr(fullAccessPointResourceName, "gateway.#", "1"),
+					resource.TestCheckResourceAttr(fullAccessPointResourceName, "gateway.0.id", "gw-ingress123"),
+					resource.TestCheckResourceAttr(fullAccessPointResourceName, "aws_ingress_private_link_endpoint.#", "1"),
+					// resource.TestCheckResourceAttr(fullAccessPointResourceName, "aws_egress_private_link_endpoint.#", "0"),
+					// resource.TestCheckResourceAttr(fullAccessPointResourceName, "aws_private_network_interface.#", "0"),
+					// resource.TestCheckResourceAttr(fullAccessPointResourceName, "azure_egress_private_link_endpoint.#", "0"),
+					// resource.TestCheckResourceAttr(fullAccessPointResourceName, "gcp_egress_private_service_connect_endpoint.#", "0"),
+					resource.TestCheckResourceAttr(fullAccessPointResourceName, "aws_ingress_private_link_endpoint.0.vpc_endpoint_id", "vpce-00000000000000000"),
+					resource.TestCheckResourceAttr(fullAccessPointResourceName, "aws_ingress_private_link_endpoint.0.vpc_endpoint_service_name", "com.amazonaws.vpce.us-west-2.vpce-svc-00000000000000000"),
+					resource.TestCheckResourceAttr(fullAccessPointResourceName, "aws_ingress_private_link_endpoint.0.dns_domain", "ap123abc.us-west-2.aws.accesspoint.confluent.cloud"),
 				),
 			},
 		},
