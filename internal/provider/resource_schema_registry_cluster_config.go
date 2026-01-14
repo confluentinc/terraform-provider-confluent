@@ -62,7 +62,7 @@ func schemaRegistryClusterConfigResource() *schema.Resource {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Computed:    true,
-				Description: "Whether or not schemas are automatically normalized when registered or passed during lookups.",
+				Description: "Whether schemas are automatically normalized when registered or passed during lookups.",
 			},
 		},
 		CustomizeDiff: customdiff.Sequence(resourceCredentialBlockValidationWithOAuth),

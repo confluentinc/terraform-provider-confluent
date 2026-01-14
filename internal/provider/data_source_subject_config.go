@@ -54,7 +54,7 @@ func subjectConfigDataSource() *schema.Resource {
 			paramNormalize: {
 				Type:        schema.TypeBool,
 				Computed:    true,
-				Description: "If true, then schemas are automatically normalized when registered or when passed during lookups.",
+				Description: "Whether schemas are automatically normalized when registered or when passed during lookups.",
 			},
 			paramAlias: {
 				Type:        schema.TypeString,
