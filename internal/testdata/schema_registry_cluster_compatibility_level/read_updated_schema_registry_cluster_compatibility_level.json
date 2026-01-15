@@ -1,4 +1,5 @@
 {
   "compatibilityLevel": "BACKWARD_TRANSITIVE",
-  "compatibilityGroup": "abc.cg.version"
+  "compatibilityGroup": "abc.cg.version",
+  "normalize": true
 }

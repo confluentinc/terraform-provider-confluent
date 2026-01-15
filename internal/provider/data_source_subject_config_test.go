@@ -28,7 +28,7 @@ import (
 
 const (
 	subjectCompatibilityLevelDataSourceScenarioName           = "confluent_subject_config Data Source Lifecycle"
-	testNumberOfSubjectCompatibilityLevelDataSourceAttributes = 7
+	testNumberOfSubjectCompatibilityLevelDataSourceAttributes = 9
 )
 
 var fullSubjectCompatibilityLevelDataSourceLabel = fmt.Sprintf("data.confluent_subject_config.%s", testSchemaResourceLabel)
@@ -83,6 +83,8 @@ func TestAccDataSubjectCompatibilityLevelSchema(t *testing.T) {
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelDataSourceLabel, "subject_name", testSubjectName),
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelDataSourceLabel, "compatibility_level", testSubjectCompatibilityLevel),
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelDataSourceLabel, "compatibility_group", testSubjectCompatibilityGroup),
+					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelDataSourceLabel, "normalize", "true"),
+					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelDataSourceLabel, "alias", ""),
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelDataSourceLabel, "%", strconv.Itoa(testNumberOfSubjectCompatibilityLevelDataSourceAttributes)),
 				),
 			},
@@ -107,4 +109,78 @@ func testAccCheckSubjectCompatibilityLevelDataSourceConfig(confluentCloudBaseUrl
 	  subject_name = "%s"
 	}
 	`, confluentCloudBaseUrl, testSchemaResourceLabel, testStreamGovernanceClusterId, mockServerUrl, testSchemaRegistryKey, testSchemaRegistrySecret, testSubjectName)
+}
+
+func TestAccDataSubjectConfigWithAlias(t *testing.T) {
+	ctx := context.Background()
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
+
+	mockSchemaTestServerUrl := wiremockContainer.URI
+	confluentCloudBaseUrl := ""
+	wiremockClient := wiremock.NewClient(mockSchemaTestServerUrl)
+	// nolint:errcheck
+	defer wiremockClient.Reset()
+
+	// nolint:errcheck
+	defer wiremockClient.ResetAllScenarios()
+
+	testAliasSubjectName := "orders-alias-value"
+	testAliasTarget := "orders-original-subject-value"
+	aliasSubjectConfigPath := fmt.Sprintf("/config/%s", testAliasSubjectName)
+	aliasDataSourceScenarioName := "confluent_subject_config Data Source With Alias Lifecycle"
+	aliasDataSourceLabel := "test_subject_config_alias_ds"
+
+	readSubjectConfigWithAliasResponse, _ := ioutil.ReadFile("../testdata/subject_compatibility_level/read_created_subject_config_with_alias.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(aliasSubjectConfigPath)).
+		InScenario(aliasDataSourceScenarioName).
+		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
+		WillReturn(
+			string(readSubjectConfigWithAliasResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	fullAliasDataSourceLabel := fmt.Sprintf("data.confluent_subject_config.%s", aliasDataSourceLabel)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckSubjectConfigWithAliasDataSourceConfig(confluentCloudBaseUrl, mockSchemaTestServerUrl, aliasDataSourceLabel, testAliasSubjectName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckSchemaExists(fullAliasDataSourceLabel),
+					resource.TestCheckResourceAttr(fullAliasDataSourceLabel, "id", fmt.Sprintf("%s/%s", testStreamGovernanceClusterId, testAliasSubjectName)),
+					resource.TestCheckResourceAttr(fullAliasDataSourceLabel, "subject_name", testAliasSubjectName),
+					resource.TestCheckResourceAttr(fullAliasDataSourceLabel, "alias", testAliasTarget),
+					resource.TestCheckResourceAttr(fullAliasDataSourceLabel, "compatibility_level", "BACKWARD"),
+					resource.TestCheckResourceAttr(fullAliasDataSourceLabel, "normalize", "false"),
+				),
+			},
+		},
+	})
+}
+
+func testAccCheckSubjectConfigWithAliasDataSourceConfig(confluentCloudBaseUrl, mockServerUrl, dataSourceLabel, subjectName string) string {
+	return fmt.Sprintf(`
+	provider "confluent" {
+      endpoint = "%s"
+    }
+	data "confluent_subject_config" "%s" {
+	  schema_registry_cluster {
+        id = "%s"
+      }
+      rest_endpoint = "%s"
+      credentials {
+        key = "%s"
+        secret = "%s"
+	  }
+	  subject_name = "%s"
+	}
+	`, confluentCloudBaseUrl, dataSourceLabel, testStreamGovernanceClusterId, mockServerUrl, testSchemaRegistryKey, testSchemaRegistrySecret, subjectName)
 }

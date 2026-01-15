@@ -135,6 +135,92 @@ func testAccCheckSchemaRegistryClusterConfigUpdateLiveConfig(endpoint, clusterCo
 	`, endpoint, apiKey, apiSecret, schemaRegistryApiKey, schemaRegistryApiSecret, schemaRegistryRestEndpoint, schemaRegistryId, clusterConfigResourceLabel)
 }
 
+func TestAccSchemaRegistryClusterConfigNormalizeLive(t *testing.T) {
+	// Disable parallel execution since this test modifies global cluster config
+	// t.Parallel()
+
+	// Skip this test unless explicitly enabled
+	if os.Getenv("TF_ACC_PROD") == "" {
+		t.Skip("Skipping live test. Set TF_ACC_PROD=1 to run this test.")
+	}
+
+	// Read credentials and configuration from environment variables (populated by Vault)
+	apiKey := os.Getenv("CONFLUENT_CLOUD_API_KEY")
+	apiSecret := os.Getenv("CONFLUENT_CLOUD_API_SECRET")
+	endpoint := os.Getenv("CONFLUENT_CLOUD_ENDPOINT")
+	if endpoint == "" {
+		endpoint = "https://api.confluent.cloud" // Use default endpoint if not set
+	}
+
+	// Read Schema Registry credentials from environment variables
+	schemaRegistryApiKey := os.Getenv("SCHEMA_REGISTRY_API_KEY")
+	schemaRegistryApiSecret := os.Getenv("SCHEMA_REGISTRY_API_SECRET")
+	schemaRegistryRestEndpoint := os.Getenv("SCHEMA_REGISTRY_REST_ENDPOINT")
+	schemaRegistryId := os.Getenv("SCHEMA_REGISTRY_ID")
+
+	// Validate required environment variables are present
+	if apiKey == "" || apiSecret == "" {
+		t.Fatal("CONFLUENT_CLOUD_API_KEY and CONFLUENT_CLOUD_API_SECRET must be set for live tests")
+	}
+
+	if schemaRegistryApiKey == "" || schemaRegistryApiSecret == "" || schemaRegistryRestEndpoint == "" || schemaRegistryId == "" {
+		t.Fatal("SCHEMA_REGISTRY_API_KEY, SCHEMA_REGISTRY_API_SECRET, SCHEMA_REGISTRY_REST_ENDPOINT, and SCHEMA_REGISTRY_ID must be set for Schema Registry live tests")
+	}
+
+	clusterConfigResourceLabel := "test_live_schema_registry_cluster_config_normalize"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckSchemaRegistryClusterConfigLiveDestroy,
+		Steps: []resource.TestStep{
+			// Step 1: Create with normalize = true
+			{
+				Config: testAccCheckSchemaRegistryClusterConfigNormalizeLiveConfig(endpoint, clusterConfigResourceLabel, apiKey, apiSecret, schemaRegistryApiKey, schemaRegistryApiSecret, schemaRegistryRestEndpoint, schemaRegistryId, true),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckSchemaRegistryClusterConfigLiveExists(fmt.Sprintf("confluent_schema_registry_cluster_config.%s", clusterConfigResourceLabel)),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_schema_registry_cluster_config.%s", clusterConfigResourceLabel), "compatibility_level", "BACKWARD"),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_schema_registry_cluster_config.%s", clusterConfigResourceLabel), "normalize", "true"),
+					resource.TestCheckResourceAttrSet(fmt.Sprintf("confluent_schema_registry_cluster_config.%s", clusterConfigResourceLabel), "id"),
+				),
+			},
+			// Step 2: Test Import
+			{
+				ResourceName:      fmt.Sprintf("confluent_schema_registry_cluster_config.%s", clusterConfigResourceLabel),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+			// Step 3: Update normalize to false
+			{
+				Config: testAccCheckSchemaRegistryClusterConfigNormalizeLiveConfig(endpoint, clusterConfigResourceLabel, apiKey, apiSecret, schemaRegistryApiKey, schemaRegistryApiSecret, schemaRegistryRestEndpoint, schemaRegistryId, false),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckSchemaRegistryClusterConfigLiveExists(fmt.Sprintf("confluent_schema_registry_cluster_config.%s", clusterConfigResourceLabel)),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_schema_registry_cluster_config.%s", clusterConfigResourceLabel), "normalize", "false"),
+				),
+			},
+		},
+	})
+}
+
+func testAccCheckSchemaRegistryClusterConfigNormalizeLiveConfig(endpoint, clusterConfigResourceLabel, apiKey, apiSecret, schemaRegistryApiKey, schemaRegistryApiSecret, schemaRegistryRestEndpoint, schemaRegistryId string, normalize bool) string {
+	return fmt.Sprintf(`
+	provider "confluent" {
+		endpoint                       = "%s"
+		cloud_api_key                  = "%s"
+		cloud_api_secret               = "%s"
+		schema_registry_api_key        = "%s"
+		schema_registry_api_secret     = "%s"
+		schema_registry_rest_endpoint  = "%s"
+		schema_registry_id             = "%s"
+	}
+
+	resource "confluent_schema_registry_cluster_config" "%s" {
+		compatibility_level = "BACKWARD"
+		normalize           = %t
+	}
+	`, endpoint, apiKey, apiSecret, schemaRegistryApiKey, schemaRegistryApiSecret, schemaRegistryRestEndpoint, schemaRegistryId, clusterConfigResourceLabel, normalize)
+}
+
 func testAccCheckSchemaRegistryClusterConfigLiveExists(resourceName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[resourceName]
