@@ -116,7 +116,7 @@ The following arguments are supported:
 - `normalize` - (Optional Boolean) Whether schemas are automatically normalized when registered or passed during lookups.
 - `alias` - (Optional String) The subject name that this subject is an alias for. Any reference to this subject will be replaced by the alias. See [Subject Aliases](https://docs.confluent.io/platform/current/schema-registry/fundamentals/index.html#subject-aliases) for more details.
 
--> **Note:** To create an alias for a subject, you create a new subject config where `subject_name` is the alias and `alias` points to the real subject. For example, to create an alias `short-name` that points to subject `very-long-subject-name`, set `subject_name = "short-name"` and `alias = "very-long-subject-name"`.
+-> **Note:** To create an alias for a subject, create a new subject config where `subject_name` is the alias and `alias` points to the real subject. For example, to create an alias `short-name` that points to subject `very-long-subject-name`, set `subject_name = "short-name"` and `alias = "very-long-subject-name"`.
 
 ## Attributes Reference
 
