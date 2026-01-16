@@ -61,20 +61,6 @@ func endpointDataSource() *schema.Resource {
 							Optional:    true,
 							Description: "The resource associated with the endpoint. The resource can be one of Kafka Cluster ID (example: `lkc-12345`), or Schema Registry Cluster ID (example: `lsrc-12345`). May be omitted if not associated with a resource.",
 						},
-						paramGateway: gatewayDataSourceSchema(),
-						paramAccessPoint: {
-							Type: schema.TypeList,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									paramId: {
-										Type:     schema.TypeString,
-										Optional: true,
-									},
-								},
-							},
-							Optional:    true,
-							Description: "The access point to which this belongs.",
-						},
 						paramCloud: {
 							Type:        schema.TypeString,
 							Optional:    true,
@@ -200,8 +186,6 @@ func endpointDataSourceRead(ctx context.Context, d *schema.ResourceData, meta in
 
 	service := d.Get(fmt.Sprintf("%s.0.%s", paramFilter, paramService)).(string)
 	resource := d.Get(fmt.Sprintf("%s.0.%s", paramFilter, paramEndpointResource)).(string)
-	gatewayId := extractStringValueFromBlock(d, fmt.Sprintf("%s.0.%s", paramFilter, paramGateway), paramId)
-	accessPointId := extractStringValueFromBlock(d, fmt.Sprintf("%s.0.%s", paramFilter, paramAccessPoint), paramId)
 	cloud := d.Get(fmt.Sprintf("%s.0.%s", paramFilter, paramCloud)).(string)
 	region := d.Get(fmt.Sprintf("%s.0.%s", paramFilter, paramRegion)).(string)
 	var isPrivate *bool
@@ -213,7 +197,7 @@ func endpointDataSourceRead(ctx context.Context, d *schema.ResourceData, meta in
 	tflog.Debug(ctx, fmt.Sprintf("Reading Endpoints with filters: environment=%q, service=%q", environmentId, service))
 
 	c := meta.(*Client)
-	endpoints, err := loadEndpoints(c.endApiContext(ctx), c, environmentId, service, resource, gatewayId, accessPointId, cloud, region, isPrivate)
+	endpoints, err := loadEndpoints(c.endApiContext(ctx), c, environmentId, service, resource, cloud, region, isPrivate)
 	if err != nil {
 		return diag.Errorf("error reading endpoints: %s", createDescriptiveError(err))
 	}
@@ -297,13 +281,13 @@ func endpointDataSourceRead(ctx context.Context, d *schema.ResourceData, meta in
 	return nil
 }
 
-func loadEndpoints(ctx context.Context, c *Client, environmentId, service, resource, gatewayId, accessPointId, cloud, region string, isPrivate *bool) ([]end.EndpointV1Endpoint, error) {
+func loadEndpoints(ctx context.Context, c *Client, environmentId, service, resource, cloud, region string, isPrivate *bool) ([]end.EndpointV1Endpoint, error) {
 	endpoints := make([]end.EndpointV1Endpoint, 0)
 
 	allEndpointsAreCollected := false
 	pageToken := ""
 	for !allEndpointsAreCollected {
-		endpointsPageList, resp, err := executeListEndpoints(ctx, c, environmentId, service, resource, gatewayId, accessPointId, cloud, region, isPrivate, pageToken)
+		endpointsPageList, resp, err := executeListEndpoints(ctx, c, environmentId, service, resource, cloud, region, isPrivate, pageToken)
 		if err != nil {
 			return nil, fmt.Errorf("error reading endpoints: %s", createDescriptiveError(err, resp))
 		}
@@ -329,19 +313,12 @@ func loadEndpoints(ctx context.Context, c *Client, environmentId, service, resou
 	return endpoints, nil
 }
 
-func executeListEndpoints(ctx context.Context, c *Client, environmentId, service, resource, gatewayId, accessPointId, cloud, region string, isPrivate *bool, pageToken string) (end.EndpointV1EndpointList, *http.Response, error) {
+func executeListEndpoints(ctx context.Context, c *Client, environmentId, service, resource, cloud, region string, isPrivate *bool, pageToken string) (end.EndpointV1EndpointList, *http.Response, error) {
 	request := c.endClient.EndpointsEndpointV1Api.ListEndpointV1Endpoints(ctx).Environment(environmentId).Service(service).PageSize(listEndpointsPageSize)
 
 	if resource != "" {
 		request = request.Resource(resource)
 	}
-	// error out calling the gateway and access point filters
-	// if gatewayId != "" {
-	// 	request = request.Gateway(gatewayId)
-	// }
-	// if accessPointId != "" {
-	// 	request = request.AccessPoint(accessPointId)
-	// }
 	if cloud != "" {
 		request = request.Cloud(cloud)
 	}
