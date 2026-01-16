@@ -29,10 +29,11 @@ import (
 )
 
 const (
-	paramService      = "service"
-	paramAccessPoint  = "access_point"
-	paramIsPrivate    = "is_private"
-	paramEndpointType = "endpoint_type"
+	paramService          = "service"
+	paramAccessPoint      = "access_point"
+	paramIsPrivate        = "is_private"
+	paramEndpointType     = "endpoint_type"
+	paramEndpointResource = "resource"
 
 	listEndpointsPageSize = 100
 )
@@ -55,7 +56,7 @@ func endpointDataSource() *schema.Resource {
 							Required:    true,
 							Description: "The Confluent Cloud service. Accepted values are: `KAFKA`, `SCHEMA_REGISTRY`, `FLINK`.",
 						},
-						paramResource: {
+						paramEndpointResource: {
 							Type:        schema.TypeString,
 							Optional:    true,
 							Description: "The resource associated with the endpoint. The resource can be one of Kafka Cluster ID (example: `lkc-12345`), or Schema Registry Cluster ID (example: `lsrc-12345`). May be omitted if not associated with a resource.",
@@ -154,7 +155,7 @@ func endpointsSchema() *schema.Schema {
 					Description: "The endpoint type for the service.",
 				},
 				paramEnvironment: environmentDataSourceSchema(),
-				paramResource: {
+				paramEndpointResource: {
 					Type: schema.TypeList,
 					Elem: &schema.Resource{
 						Schema: map[string]*schema.Schema{
@@ -198,7 +199,7 @@ func endpointDataSourceRead(ctx context.Context, d *schema.ResourceData, meta in
 	}
 
 	service := d.Get(fmt.Sprintf("%s.0.%s", paramFilter, paramService)).(string)
-	resource := d.Get(fmt.Sprintf("%s.0.%s", paramFilter, paramResource)).(string)
+	resource := d.Get(fmt.Sprintf("%s.0.%s", paramFilter, paramEndpointResource)).(string)
 	gatewayId := extractStringValueFromBlock(d, fmt.Sprintf("%s.0.%s", paramFilter, paramGateway), paramId)
 	accessPointId := extractStringValueFromBlock(d, fmt.Sprintf("%s.0.%s", paramFilter, paramAccessPoint), paramId)
 	cloud := d.Get(fmt.Sprintf("%s.0.%s", paramFilter, paramCloud)).(string)
@@ -255,7 +256,7 @@ func endpointDataSourceRead(ctx context.Context, d *schema.ResourceData, meta in
 			if resource.HasKind() {
 				resourceData[paramKind] = resource.GetKind()
 			}
-			endpointData[paramResource] = []map[string]interface{}{resourceData}
+			endpointData[paramEndpointResource] = []map[string]interface{}{resourceData}
 		}
 
 		// Set gateway

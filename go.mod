@@ -1,9 +1,9 @@
 module github.com/confluentinc/terraform-provider-confluent
 
-go 1.24.9
+go 1.24.11
 
 require (
-	github.com/confluentinc/ccloud-sdk-go-v2-internal/endpoint v0.3.0
+	github.com/confluentinc/ccloud-sdk-go-v2-internal/endpoint v0.4.0
 	github.com/confluentinc/ccloud-sdk-go-v2/apikeys v0.4.0
 	github.com/confluentinc/ccloud-sdk-go-v2/byok v0.0.2
 	github.com/confluentinc/ccloud-sdk-go-v2/cam v0.3.0
@@ -52,7 +52,7 @@ require (
 	github.com/moby/sys/userns v0.1.0 // indirect
 	github.com/sergi/go-diff v1.3.2-0.20230802210424-5b0b94c5c0d3 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
-	golang.org/x/oauth2 v0.30.0 // indirect
+	golang.org/x/oauth2 v0.34.0 // indirect
 )
 
 require (
