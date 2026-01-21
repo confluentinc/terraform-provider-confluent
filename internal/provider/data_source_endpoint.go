@@ -189,12 +189,14 @@ func endpointDataSourceRead(ctx context.Context, d *schema.ResourceData, meta in
 	cloud := d.Get(fmt.Sprintf("%s.0.%s", paramFilter, paramCloud)).(string)
 	region := d.Get(fmt.Sprintf("%s.0.%s", paramFilter, paramRegion)).(string)
 	var isPrivate *bool
-	if v, ok := d.GetOk(fmt.Sprintf("%s.0.%s", paramFilter, paramIsPrivate)); ok {
+	// Use GetOkExists() instead of GetOk() because GetOk() returns false for boolean false values
+	// We need to check if the key exists in the configuration, not just if it has a non-zero value
+	if v, exists := d.GetOkExists(fmt.Sprintf("%s.0.%s", paramFilter, paramIsPrivate)); exists {
 		val := v.(bool)
 		isPrivate = &val
 	}
 
-	tflog.Debug(ctx, fmt.Sprintf("Reading Endpoints with filters: environment=%q, service=%q", environmentId, service))
+	tflog.Debug(ctx, fmt.Sprintf("Reading Endpoints with filters: environment=%q, service=%q, resource=%q, cloud=%q, region=%q, isPrivate=%v", environmentId, service, resource, cloud, region, isPrivate))
 
 	c := meta.(*Client)
 	endpoints, err := loadEndpoints(c.endApiContext(ctx), c, environmentId, service, resource, cloud, region, isPrivate)
