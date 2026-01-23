@@ -78,12 +78,14 @@ func kafkaClustersSchema() *schema.Schema {
 				paramEnterpriseCluster: enterpriseClusterDataSourceSchema(),
 				paramFreightCluster:    freightClusterDataSourceSchema(),
 				paramBootStrapEndpoint: {
-					Type:     schema.TypeString,
-					Computed: true,
+					Type:       schema.TypeString,
+					Computed:   true,
+					Deprecated: "Please use the endpoint attribute instead.",
 				},
 				paramRestEndpoint: {
-					Type:     schema.TypeString,
-					Computed: true,
+					Type:       schema.TypeString,
+					Computed:   true,
+					Deprecated: "Please use the endpoint attribute instead.",
 				},
 				paramRbacCrn: {
 					Type:     schema.TypeString,

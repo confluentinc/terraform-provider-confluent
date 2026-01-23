@@ -68,7 +68,7 @@ The following arguments are supported:
 - `kafka_cluster` - (Optional Configuration Block) supports the following:
   - `id` - (Required String) The ID of the Kafka cluster, for example, `lkc-abc123`.
 - `topic_name` - (Required String) The name of the topic, for example, `orders-1`. The topic name can be up to 255 characters in length and can contain only alphanumeric characters, hyphens, and underscores.
-- `rest_endpoint` - (Optional String) The REST endpoint of the Kafka cluster, for example, `https://pkc-00000.us-central1.gcp.confluent.cloud:443`).
+- `rest_endpoint` - (Optional String, **Deprecated**) The REST endpoint of the Kafka cluster, for example, `https://pkc-00000.us-central1.gcp.confluent.cloud:443`. Please use the `endpoint` attribute instead.
 - `credentials` (Optional Configuration Block) supports the following:
     - `key` - (Required String) The Kafka API Key.
     - `secret` - (Required String) The Kafka API Secret.
