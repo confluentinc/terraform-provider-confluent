@@ -886,6 +886,7 @@ func clusterLinkKafkaClusterBlockSchema(blockName string) *schema.Schema {
 					ValidateFunc: validation.StringMatch(regexp.MustCompile("^http"), "the REST endpoint must start with 'https://'"),
 					// A user should provide a value for either "paramRestEndpoint" or "paramBootStrapEndpoint" attribute
 					ExactlyOneOf: oneOfEndpointsKeys,
+					Deprecated:   "Please use the endpoint attribute instead.",
 				},
 				paramBootStrapEndpoint: {
 					Type:        schema.TypeString,
@@ -894,6 +895,7 @@ func clusterLinkKafkaClusterBlockSchema(blockName string) *schema.Schema {
 					Description: "The bootstrap endpoint used by Kafka clients to connect to the Kafka cluster. (e.g., `SASL_SSL://pkc-00000.us-central1.gcp.confluent.cloud:9092` or `pkc-00000.us-central1.gcp.confluent.cloud:9092`).",
 					// A user should provide a value for either "paramRestEndpoint" or "paramBootStrapEndpoint" attribute
 					ExactlyOneOf: oneOfEndpointsKeys,
+					Deprecated:   "Please use the endpoint attribute instead.",
 				},
 				paramCredentials: {
 					Type:        schema.TypeList,

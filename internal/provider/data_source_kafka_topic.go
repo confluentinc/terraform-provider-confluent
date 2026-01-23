@@ -32,8 +32,9 @@ func kafkaTopicDataSource() *schema.Resource {
 				Required: true,
 			},
 			paramRestEndpoint: {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:       schema.TypeString,
+				Required:   true,
+				Deprecated: "Please use the endpoint attribute instead.",
 			},
 			paramCredentials: credentialsSchema(),
 			paramPartitionsCount: {

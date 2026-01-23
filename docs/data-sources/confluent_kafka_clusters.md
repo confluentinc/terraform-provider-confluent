@@ -62,8 +62,8 @@ In addition to the preceding arguments, the following attributes are exported:
       - `id` - (Required String) The ID of the Network that the Kafka cluster belongs to, for example, `n-abc123`.
   - `byok_key` (Optional Configuration Block) supports the following:
       - `id` - (Required String) The ID of the Confluent key that is used to encrypt the data in the Kafka cluster, for example, `cck-lye5m`.
-  - `bootstrap_endpoint` - (Required String) The bootstrap endpoint used by Kafka clients to connect to the Kafka cluster. (e.g., `pkc-00000.us-central1.gcp.confluent.cloud:9092`).
-  - `rest_endpoint` - (Required String) The REST endpoint of the Kafka cluster (e.g., `https://pkc-00000.us-central1.gcp.confluent.cloud:443`).
+  - `bootstrap_endpoint` - (Required String, **Deprecated**) The bootstrap endpoint used by Kafka clients to connect to the Kafka cluster. (e.g., `pkc-00000.us-central1.gcp.confluent.cloud:9092`). Please use the `endpoint` attribute instead.
+  - `rest_endpoint` - (Required String, **Deprecated**) The REST endpoint of the Kafka cluster (e.g., `https://pkc-00000.us-central1.gcp.confluent.cloud:443`). Please use the `endpoint` attribute instead.
   - `rbac_crn` - (Required String) The Confluent Resource Name of the Kafka cluster, for example, `crn://confluent.cloud/organization=1111aaaa-11aa-11aa-11aa-111111aaaaaa/environment=env-abc123/cloud-cluster=lkc-abc123`.
   - `endpoints` - (Optional List) The list of endpoints for connecting to the Kafka cluster. These endpoints provide different network access methods or regions for connecting to the cluster:
       - `access_point_id` - (Required String) The ID of the Access Point that the endpoint corresponds to. Access Point IDs `PUBLIC` and `PRIVATE_LINK` are reserved.
