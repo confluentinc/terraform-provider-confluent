@@ -151,11 +151,13 @@ func kafkaResource() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "The bootstrap endpoint used by Kafka clients to connect to the Kafka cluster.",
+				Deprecated:  "Please use the endpoints attribute instead.",
 			},
 			paramRestEndpoint: {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "The REST endpoint of the Kafka cluster.",
+				Deprecated:  "Please use the endpoints attribute instead.",
 			},
 			paramRbacCrn: {
 				Type:     schema.TypeString,
