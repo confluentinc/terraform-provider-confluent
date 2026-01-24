@@ -979,7 +979,7 @@ func testAccCheckResourceAccessPointAwsIngressWithIdSet(mockServerUrl, name stri
 		}
 		aws_ingress_private_link_endpoint {
 			vpc_endpoint_id = "vpce-00000000000000000"
-		}
+  		}
 	}
 	`, mockServerUrl, name)
 }

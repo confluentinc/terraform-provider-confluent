@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	netgw "github.com/confluentinc/ccloud-sdk-go-v2/networking-gateway/v1"
@@ -38,6 +39,35 @@ const (
 	// https://github.com/confluentinc/api/blob/master/networking-gateway/minispec.yaml#L443
 	listGatewaysPageSize = 99
 )
+
+// normalizeGatewayPhases normalizes phase values to lowercase for API
+func normalizeGatewayPhases(phases []string) []string {
+	if len(phases) == 0 {
+		return phases
+	}
+
+	normalized := make([]string, len(phases))
+	validPhases := map[string]string{
+		"PROVISIONING":   "provisioning",
+		"CREATED":        "created",
+		"ACTIVE":         "active", // API expects "active" but returns "ready" in response, so map "ready" input to "active" for API filter
+		"READY":          "active",
+		"FAILED":         "failed",
+		"DEPROVISIONING": "deprovisioning",
+		"EXPIRED":        "expired",
+	}
+
+	for i, phase := range phases {
+		upperPhase := strings.ToUpper(strings.TrimSpace(phase))
+		if mappedPhase, ok := validPhases[upperPhase]; ok {
+			normalized[i] = mappedPhase
+		} else {
+			normalized[i] = strings.ToLower(upperPhase)
+		}
+	}
+
+	return normalized
+}
 
 func gatewaysDataSource() *schema.Resource {
 	return &schema.Resource{
@@ -79,7 +109,7 @@ func gatewaysDataSource() *schema.Resource {
 							Type:        schema.TypeList,
 							Elem:        &schema.Schema{Type: schema.TypeString},
 							Optional:    true,
-							Description: "Filter the results by exact match for status.phase. Pass multiple times to see results matching any of the values. Valid values are: `CREATED`, `PROVISIONING`, `READY`, `FAILED`, `DEPROVISIONING`, `EXPIRED`.",
+							Description: "Filter the results by exact match for status.phase. Pass multiple times to see results matching any of the values. Valid values are: `CREATED`, `PROVISIONING`, `ACTIVE`, `FAILED`, `DEPROVISIONING`, `EXPIRED`.",
 						},
 					},
 				},
@@ -127,7 +157,8 @@ func gatewaysDataSourceRead(ctx context.Context, d *schema.ResourceData, meta in
 	ids := convertToStringSlice(d.Get(fmt.Sprintf("%s.0.%s", paramFilter, paramId)).([]interface{}))
 	regions := convertToStringSlice(d.Get(fmt.Sprintf("%s.0.%s", paramFilter, paramRegion)).([]interface{}))
 	displayNames := convertToStringSlice(d.Get(fmt.Sprintf("%s.0.%s", paramFilter, paramDisplayName)).([]interface{}))
-	phases := convertToStringSlice(d.Get(fmt.Sprintf("%s.0.%s", paramFilter, paramPhase)).([]interface{}))
+	phasesRaw := convertToStringSlice(d.Get(fmt.Sprintf("%s.0.%s", paramFilter, paramPhase)).([]interface{}))
+	phases := normalizeGatewayPhases(phasesRaw)
 
 	c := meta.(*Client)
 	gateways, err := loadGateways(c.netGWApiContext(ctx), c, environmentId, gatewayTypes, ids, regions, displayNames, phases)
