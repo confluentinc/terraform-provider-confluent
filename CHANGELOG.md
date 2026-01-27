@@ -1,3 +1,10 @@
+## 2.59.0 (January 26th, 2026)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.58.0...v2.59.0)
+
+**New features:**
+* Added support for schema normalization (`normalize` field) and subject aliases (`alias` field) to the `confluent_subject_config` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_subject_config) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_subject_config), and `confluent_schema_registry_cluster_config` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema_registry_cluster_config) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_schema_registry_cluster_config).
+
 ## 2.58.0 (January 13th, 2026)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.57.0...v2.58.0)
