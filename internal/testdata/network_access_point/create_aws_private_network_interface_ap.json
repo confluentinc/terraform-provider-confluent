@@ -12,7 +12,8 @@
     "config": {
       "kind": "AwsPrivateNetworkInterface",
       "network_interfaces": ["eni-00000000000000000", "eni-00000000000000001", "eni-00000000000000002", "eni-00000000000000003", "eni-00000000000000004", "eni-00000000000000005"],
-      "account": "000000000000"
+      "account": "000000000000",
+      "egress_routes": ["172.31.0.0/16", "10.108.16.0/21"]
     },
     "display_name": "prod-ap-1",
     "environment": {

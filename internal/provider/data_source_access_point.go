@@ -155,6 +155,11 @@ func awsPrivateNetworkInterfaceDataSourceSchema() *schema.Schema {
 					Type:     schema.TypeString,
 					Computed: true,
 				},
+				paramRoutes: {
+					Type:     schema.TypeList,
+					Computed: true,
+					Elem:     &schema.Schema{Type: schema.TypeString},
+				},
 			},
 		},
 		Computed: true,

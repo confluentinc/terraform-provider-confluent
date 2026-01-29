@@ -222,6 +222,14 @@ func paramAwsPrivateNetworkInterfaceSchema() *schema.Schema {
 					ForceNew:    true,
 					Description: "The AWS account ID associated with the ENIs you are using for the Confluent Private Network Interface.",
 				},
+				paramRoutes: {
+					Type:        schema.TypeList,
+					Optional:    true,
+					Computed:    true,
+					MaxItems:    10,
+					Elem:        &schema.Schema{Type: schema.TypeString},
+					Description: "List of egress CIDR routes for the Confluent Private Network Interface.",
+				},
 			},
 		},
 		ExactlyOneOf: acceptedEndpointConfig,
@@ -273,6 +281,10 @@ func accessPointCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 			Kind:              awsPrivateNetworkInterface,
 			NetworkInterfaces: &networkInterfaces,
 			Account:           netap.PtrString(extractStringValueFromBlock(d, paramAwsPrivateNetworkInterface, paramAccount)),
+		}
+		if routesRaw, ok := d.GetOk(fmt.Sprintf("%s.0.%s", paramAwsPrivateNetworkInterface, paramRoutes)); ok {
+			routes := convertToStringSlice(routesRaw.([]interface{}))
+			config.NetworkingV1AwsPrivateNetworkInterface.EgressRoutes = &routes
 		}
 		spec.SetConfig(config)
 	} else if isGcpEgressPrivateServiceConnectEndpoint {
@@ -383,7 +395,7 @@ func accessPointDelete(ctx context.Context, d *schema.ResourceData, meta interfa
 
 func accessPointUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	if d.HasChangesExcept(paramDisplayName, paramAwsPrivateNetworkInterface) {
-		return diag.Errorf("error updating Access Point %q: only %q, %q attributes can be updated for Access Point", d.Id(), paramDisplayName, paramNetworkInterfaces)
+		return diag.Errorf("error updating Access Point %q: only %q, %q, %q attributes can be updated for Access Point", d.Id(), paramDisplayName, paramNetworkInterfaces, paramRoutes)
 	}
 
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
@@ -396,12 +408,21 @@ func accessPointUpdate(ctx context.Context, d *schema.ResourceData, meta interfa
 		updateAccessPointSpec.SetDisplayName(d.Get(paramDisplayName).(string))
 	}
 
-	if d.HasChange(paramAwsPrivateNetworkInterface) && d.HasChange(fmt.Sprintf("%s.0.%s", paramAwsPrivateNetworkInterface, paramNetworkInterfaces)) {
-		networkInterfaces := convertToStringSlice(d.Get(fmt.Sprintf("%s.0.%s", paramAwsPrivateNetworkInterface, paramNetworkInterfaces)).(*schema.Set).List())
-		updateAccessPointSpec.SetConfig(netap.NetworkingV1AwsPrivateNetworkInterfaceAsNetworkingV1AccessPointSpecUpdateConfigOneOf(&netap.NetworkingV1AwsPrivateNetworkInterface{
-			Kind:              paramAwsPrivateNetworkInterface,
-			NetworkInterfaces: &networkInterfaces,
-		}))
+	if d.HasChange(paramAwsPrivateNetworkInterface) &&
+		(d.HasChange(fmt.Sprintf("%s.0.%s", paramAwsPrivateNetworkInterface, paramNetworkInterfaces)) ||
+			d.HasChange(fmt.Sprintf("%s.0.%s", paramAwsPrivateNetworkInterface, paramRoutes))) {
+		updatedConfig := netap.NetworkingV1AwsPrivateNetworkInterface{
+			Kind: paramAwsPrivateNetworkInterface,
+		}
+		if d.HasChange(fmt.Sprintf("%s.0.%s", paramAwsPrivateNetworkInterface, paramNetworkInterfaces)) {
+			networkInterfaces := convertToStringSlice(d.Get(fmt.Sprintf("%s.0.%s", paramAwsPrivateNetworkInterface, paramNetworkInterfaces)).(*schema.Set).List())
+			updatedConfig.NetworkInterfaces = &networkInterfaces
+		}
+		if d.HasChange(fmt.Sprintf("%s.0.%s", paramAwsPrivateNetworkInterface, paramRoutes)) {
+			routes := convertToStringSlice(d.Get(fmt.Sprintf("%s.0.%s", paramAwsPrivateNetworkInterface, paramRoutes)).([]interface{}))
+			updatedConfig.EgressRoutes = &routes
+		}
+		updateAccessPointSpec.SetConfig(netap.NetworkingV1AwsPrivateNetworkInterfaceAsNetworkingV1AccessPointSpecUpdateConfigOneOf(&updatedConfig))
 	}
 
 	updateAccessPoint.SetSpec(*updateAccessPointSpec)
@@ -488,6 +509,7 @@ func setAccessPointAttributes(d *schema.ResourceData, accessPoint netap.Networki
 		if err := d.Set(paramAwsPrivateNetworkInterface, []interface{}{map[string]interface{}{
 			paramNetworkInterfaces: accessPoint.Spec.Config.NetworkingV1AwsPrivateNetworkInterface.GetNetworkInterfaces(),
 			paramAccount:           accessPoint.Spec.Config.NetworkingV1AwsPrivateNetworkInterface.GetAccount(),
+			paramRoutes:            accessPoint.Spec.Config.NetworkingV1AwsPrivateNetworkInterface.GetEgressRoutes(),
 		}}); err != nil {
 			return nil, err
 		}

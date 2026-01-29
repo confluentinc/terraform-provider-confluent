@@ -70,6 +70,7 @@ resource "confluent_access_point" "pni" {
   aws_private_network_interface {
     network_interfaces = aws_network_interface.main[*].id
     account            = var.aws_account_id
+    routes             = ["172.31.0.0/16", "10.108.16.0/21"]
   }
 
   depends_on = [
@@ -96,6 +97,10 @@ The following arguments are supported:
   - `private_link_subresource_name` - (Optional String) Name of the subresource for the Private Endpoint to connect to.
 - `gcp_egress_private_service_connect_endpoint` (Optional Configuration Block) supports the following:
   - `private_service_connect_endpoint_target` - (Required String) URI of the service attachment for the published service that the Private Service Connect Endpoint connects to, or "all-google-apis" for global Google APIs.
+- `aws_private_network_interface` (Optional Configuration Block) supports the following:
+  - `network_interfaces` - (Required List of Strings) List of the IDs of the Elastic Network Interfaces, for example: `["eni-00000000000000000", "eni-00000000000000001", "eni-00000000000000002", "eni-00000000000000003", "eni-00000000000000004", "eni-00000000000000005"]`
+  - `account` - (Required String) The AWS account ID associated with the ENIs you are using for the Confluent Private Network Interface, for example: `000000000000`.
+  - `routes` - (Optional List of Strings) List of egress CIDR routes for the Confluent Private Network Interface, for example: `["172.31.0.0/16", "10.108.16.0/21"]`.
 
 ## Attributes Reference
 
@@ -108,6 +113,7 @@ In addition to the preceding arguments, the following attributes are exported:
 - `aws_private_network_interface` (Optional Configuration Block) supports the following:
   - `network_interfaces` - (Required List of Strings) List of the IDs of the Elastic Network Interfaces, for example: `["eni-00000000000000000", "eni-00000000000000001", "eni-00000000000000002", "eni-00000000000000003", "eni-00000000000000004", "eni-00000000000000005"]`
   - `account` - (Required String) The AWS account ID associated with the ENIs you are using for the Confluent Private Network Interface, for example: `000000000000`.
+  - `routes` - (Optional List of Strings) List of egress CIDR routes for the Confluent Private Network Interface, for example: `["172.31.0.0/16", "10.108.16.0/21"]`.
 - `azure_egress_private_link_endpoint` (Optional Configuration Block) supports the following:
   - `private_endpoint_resource_id` - (Required String) Resource ID of the Private Endpoint (if any) that is connected to the Private Link service.
   - `private_endpoint_domain` - (Required String) Domain of the Private Endpoint (if any) that is connected to the Private Link service.
