@@ -102,6 +102,27 @@ func waitForCreatedTableflowApiKeyToSync(ctx context.Context, c *TableflowRestCl
 	return nil
 }
 
+func waitForCreatedGlobalApiKeyToSync(ctx context.Context, c *Client, globalApiKey, globalApiSecret string) error {
+	delay, pollInterval := getDelayAndPollInterval(15*time.Second, 1*time.Minute, c.isAcceptanceTestMode)
+	stateConf := &resource.StateChangeConf{
+		Pending: []string{stateInProgress},
+		Target:  []string{stateDone},
+		Refresh: globalApiKeySyncStatus(ctx, c, globalApiKey, globalApiSecret),
+		// Default timeout for a resource
+		// https://www.terraform.io/plugin/sdkv2/resources/retries-and-customizable-timeouts
+		// Based on the tests, Global API Key takes about 10 seconds to sync (similar to Cloud API Key)
+		Timeout:      20 * time.Minute,
+		Delay:        delay,
+		PollInterval: pollInterval,
+	}
+
+	tflog.Debug(ctx, fmt.Sprintf("Waiting for Global API Key %q to sync", globalApiKey), map[string]interface{}{apiKeyLoggingKey: globalApiKey})
+	if _, err := stateConf.WaitForStateContext(c.orgApiContext(ctx)); err != nil {
+		return err
+	}
+	return nil
+}
+
 func waitForKafkaClusterToProvision(ctx context.Context, c *Client, environmentId, clusterId, clusterType string) error {
 	delay, pollInterval := getDelayAndPollInterval(5*time.Second, 1*time.Minute, c.isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
@@ -1632,6 +1653,26 @@ func cloudApiKeySyncStatus(ctx context.Context, c *Client, cloudApiKey, cloudApi
 		} else {
 			tflog.Debug(ctx, fmt.Sprintf("Exiting Cloud API Key %q sync process: Received unexpected response when listing Environments: %#v", cloudApiKey, resp), map[string]interface{}{apiKeyLoggingKey: cloudApiKey})
 			return nil, stateUnexpected, fmt.Errorf("error listing Environments using Kafka API Key %q: received a response with unexpected %d status code", cloudApiKey, resp.StatusCode)
+		}
+	}
+}
+
+func globalApiKeySyncStatus(ctx context.Context, c *Client, globalApiKey, globalApiSecret string) resource.StateRefreshFunc {
+	return func() (result interface{}, s string, err error) {
+		_, resp, err := c.orgClient.EnvironmentsOrgV2Api.ListOrgV2Environments(orgApiContext(ctx, globalApiKey, globalApiSecret)).Execute()
+		if resp != nil && resp.StatusCode == http.StatusOK {
+			tflog.Debug(ctx, fmt.Sprintf("Finishing Global API Key %q sync process: Received %d status code when listing environments", globalApiKey, resp.StatusCode), map[string]interface{}{apiKeyLoggingKey: globalApiKey})
+			return 0, stateDone, nil
+			// Status codes for unsynced API Keys might change over time, so it's safer to rely on a timeout to fail
+		} else if resp != nil && (resp.StatusCode == http.StatusForbidden || resp.StatusCode == http.StatusUnauthorized) {
+			tflog.Debug(ctx, fmt.Sprintf("Performing Global API Key %q sync process: Received %d status code when listing environments", globalApiKey, resp.StatusCode), map[string]interface{}{apiKeyLoggingKey: globalApiKey})
+			return 0, stateInProgress, nil
+		} else if err != nil {
+			tflog.Debug(ctx, fmt.Sprintf("Exiting Global API Key %q sync process: Failed when listing Environments: %s", globalApiKey, createDescriptiveError(err, resp)), map[string]interface{}{apiKeyLoggingKey: globalApiKey})
+			return nil, stateFailed, fmt.Errorf("error listing Environments using Global API Key %q: %s", globalApiKey, createDescriptiveError(err, resp))
+		} else {
+			tflog.Debug(ctx, fmt.Sprintf("Exiting Global API Key %q sync process: Received unexpected response when listing Environments: %#v", globalApiKey, resp), map[string]interface{}{apiKeyLoggingKey: globalApiKey})
+			return nil, stateUnexpected, fmt.Errorf("error listing Environments using Global API Key %q: received a response with unexpected %d status code", globalApiKey, resp.StatusCode)
 		}
 	}
 }
