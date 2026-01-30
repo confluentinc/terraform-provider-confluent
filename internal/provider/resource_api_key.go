@@ -45,6 +45,8 @@ const (
 	cloudKindInLowercase     = "cloud"
 	tableflowKind            = "Tableflow"
 	tableflowKindInLowercase = "tableflow"
+	globalKind               = "Global"
+	globalKindInLowercase    = "global"
 
 	iamApiVersion       = "iam/v2"
 	cmkApiVersion       = "cmk/v2"
@@ -53,13 +55,14 @@ const (
 	ksqldbcmApiVersion  = "ksqldbcm/v2"
 	fcpmApiVersion      = "fcpm/v2"
 	tableflowApiVersion = "tableflow/v1"
+	globalApiVersion    = "global/v1"
 )
 
 var acceptedOwnerKinds = []string{serviceAccountKind, userKind}
-var acceptedResourceKinds = []string{clusterKind, regionKind, tableflowKind}
+var acceptedResourceKinds = []string{clusterKind, regionKind, tableflowKind, globalKind}
 
 var acceptedOwnerApiVersions = []string{iamApiVersion}
-var acceptedResourceApiVersions = []string{cmkApiVersion, srcmV2ApiVersion, srcmV3ApiVersion, ksqldbcmApiVersion, fcpmApiVersion, tableflowApiVersion}
+var acceptedResourceApiVersions = []string{cmkApiVersion, srcmV2ApiVersion, srcmV3ApiVersion, ksqldbcmApiVersion, fcpmApiVersion, tableflowApiVersion, globalApiVersion}
 
 func apiKeyResource() *schema.Resource {
 	return &schema.Resource{
@@ -139,6 +142,9 @@ func apiKeyCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 		}
 		if apiVersion == tableflowApiVersion {
 			spec.Resource.SetApiVersion(tableflowApiVersion)
+		}
+		if apiVersion == globalApiVersion {
+			spec.Resource.SetApiVersion(globalApiVersion)
 		}
 
 		if isFlinkApiKey(apikeys.IamV2ApiKey{Spec: spec}) {
@@ -508,6 +514,10 @@ func isTableflowApiKey(apiKey apikeys.IamV2ApiKey) bool {
 	return apiKey.Spec.Resource.GetKind() == tableflowKind && apiKey.Spec.Resource.GetId() == tableflowKindInLowercase
 }
 
+func isGlobalApiKey(apiKey apikeys.IamV2ApiKey) bool {
+	return apiKey.Spec.Resource.GetKind() == globalKind && apiKey.Spec.Resource.GetId() == globalKindInLowercase
+}
+
 func waitForApiKeyToSync(ctx context.Context, c *Client, createdApiKey apikeys.IamV2ApiKey, isResourceSpecificApiKey bool, environmentId string) error {
 	// For Kafka API Key use Kafka REST API's List Topics request and wait for http.StatusOK
 	// For Cloud API Key use Org API's List Environments request and wait for http.StatusOK
@@ -535,6 +545,10 @@ func waitForApiKeyToSync(ctx context.Context, c *Client, createdApiKey apikeys.I
 			tableflowRestClient := c.tableflowRestClientFactory.CreateTableflowRestClient(createdApiKey.GetId(), createdApiKey.Spec.GetSecret(), false, c.oauthToken, c.stsToken)
 			if err := waitForCreatedTableflowApiKeyToSync(ctx, tableflowRestClient, c.isAcceptanceTestMode); err != nil {
 				return fmt.Errorf("error waiting for Tableflow API Key %q to sync: %s", createdApiKey.GetId(), createDescriptiveError(err))
+			}
+		} else if isGlobalApiKey(createdApiKey) {
+			if err := waitForCreatedGlobalApiKeyToSync(ctx, c, createdApiKey.GetId(), createdApiKey.Spec.GetSecret()); err != nil {
+				return fmt.Errorf("error waiting for Global API Key %q to sync: %s", createdApiKey.GetId(), createDescriptiveError(err))
 			}
 		} else {
 			resourceJson, err := json.Marshal(createdApiKey.Spec.GetResource())
