@@ -353,7 +353,7 @@ func waitForGatewayToProvision(ctx context.Context, c *Client, environmentId, ga
 	delay, pollInterval := getDelayAndPollInterval(5*time.Second, 1*time.Minute, c.isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
 		Pending: []string{stateProvisioning},
-		Target:  []string{stateReady, stateCreated, stateExpired},
+		Target:  []string{stateReady, stateCreated},
 		Refresh: gatewayProvisionStatus(c.netGWApiContext(ctx), c, environmentId, gatewayId),
 		Timeout: networkingAPICreateTimeout,
 		// TODO: increase delay
@@ -1237,7 +1237,7 @@ func gatewayProvisionStatus(ctx context.Context, c *Client, environmentId string
 			return nil, stateFailed, fmt.Errorf("gateway %q provisioning status is %q: %s", gatewayId, stateFailed, gateway.Status.GetErrorMessage())
 		} else if phase == stateExpired {
 			// gateway has timed out waiting for connections, can only be deleted
-			return gateway, phase, nil
+			return nil, stateExpired, fmt.Errorf("gateway %q provisioning status is %q: gateway has timed out waiting for connections and can only be deleted. %s", gatewayId, stateExpired, gateway.Status.GetErrorMessage())
 		}
 		// Gateway is in an unexpected state
 		return nil, stateUnexpected, fmt.Errorf("gateway %q is in an unexpected state %q: %s", gatewayId, phase, gateway.Status.GetErrorMessage())
