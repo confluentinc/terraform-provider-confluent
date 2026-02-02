@@ -1,0 +1,77 @@
+{
+  "api_version": "sql/v1",
+  "kind": "MaterializedTable",
+  "name": "table1",
+  "organization_id": "1111aaaa-11aa-11aa-11aa-111111aaaaaa",
+  "environment_id": "env-abc123",
+  "spec": {
+    "kafka_cluster_id": "lkc01",
+    "compute_pool_id": "lfcp-x7rgx2",
+    "principal": "sa-yo9j87",
+    "stopped": true,
+    "table_options": {},
+    "session_options": {},
+    "columns": [
+      {
+        "name": "user_id",
+        "type": "type1",
+        "comment": "string",
+        "kind": "Physical"
+      },
+      {
+        "name": "user_id2",
+        "type": "type2",
+        "comment": "string2",
+        "kind": "Physical"
+      },
+      {
+        "name": "user_id3",
+        "type": "type3",
+        "comment": "string3",
+        "kind": "Computed",
+        "expression": "expression1",
+        "virtual": true
+      }
+    ],
+    "watermark": {
+      "column_name": "col1234",
+      "expression": "exp1234"
+    },
+    "constraints": [
+      {
+        "name": "pk_orders",
+        "kind": "PRIMARY_KEY",
+        "column_names": [
+          "user_id",
+          "product_id"
+        ],
+        "enforced": false
+      },
+      {
+        "name": "pk_orders2",
+        "kind": "PRIMARY_KEY",
+        "column_names": [
+          "user_id2",
+          "product_id2"
+        ],
+        "enforced": true
+      }
+    ],
+    "distributed_by": {
+      "column_names": [
+        "keys",
+        "passwords"
+      ],
+      "buckets": 10
+    },
+    "query": "SELECT user_id, product_id, price, quantity FROM orders WHERE price > 100;"
+  },
+  "status": {
+    "phase": "RUNNING",
+    "detail": "Materialized table is running.",
+    "warnings": [],
+    "creation_statement": "CREATE OR ALTER MATERIALIZED TABLE high-value-orders AS SELECT user_id, product_id, price, quantity FROM orders WHERE price > 100;",
+    "scaling_status": {},
+    "version": 3
+  }
+}

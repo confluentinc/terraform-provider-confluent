@@ -1,0 +1,64 @@
+{
+  "api_version": "sql/v1",
+  "kind": "MaterializedTableList",
+  "metadata": {
+    "self": "",
+    "next": ""
+  },
+  "data": [
+    {
+      "api_version": "sql/v1",
+      "kind": "MaterializedTable",
+      "name": "table1",
+      "organization_id": "1111aaaa-11aa-11aa-11aa-111111aaaaaa",
+      "environment_id": "env-abc123",
+      "spec": {
+        "kafka_cluster_id": "lkc01",
+        "compute_pool_id": "lfcp-x7rgx1",
+        "principal": "u-yo9j87",
+        "stopped": false,
+        "table_options": {},
+        "session_options": {},
+        "columns": [
+          {
+            "name": "user_id",
+            "type": "type1",
+            "comment": "string",
+            "kind": "Physical"
+          }
+        ],
+        "watermark": {
+          "column_name": "col123",
+          "expression": "exp123"
+        },
+        "constraints": [
+          {
+            "name": "pk_orders",
+            "kind": "PRIMARY_KEY",
+            "column_names": [
+              "user_id",
+              "product_id"
+            ],
+            "enforced": false
+          }
+        ],
+        "distributed_by": {
+          "column_names": [
+            "keys",
+            "passwords"
+          ],
+          "buckets": 10
+        },
+        "query": "SELECT user_id, product_id, price, quantity FROM orders WHERE price > 1000;"
+      },
+      "status": {
+        "phase": "RUNNING",
+        "detail": "Materialized table is running.",
+        "warnings": [],
+        "creation_statement": "CREATE OR ALTER MATERIALIZED TABLE high-value-orders AS SELECT user_id, product_id, price, quantity FROM orders WHERE price > 1000;",
+        "scaling_status": {},
+        "version": 3
+      }
+    }
+  ]
+}
