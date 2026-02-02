@@ -34,6 +34,7 @@ const (
 
 	gatewayUrlPath               = "/networking/v1/gateways"
 	awsGatewayId                 = "gw-def456"
+	awsIngressGatewayId          = "gw-ingress123"
 	awsPrivateNetworkInterfaceId = "gw-abc789"
 	azureGatewayId               = "gw-abc456"
 	gatewayResourceLabel         = "confluent_gateway.main"
@@ -404,6 +405,135 @@ func testAccCheckResourceGatewayAwsPrivateNetworkInterfaceConfig(mockServerUrl, 
 		aws_private_network_interface_gateway {
 			region = "us-east-2"
 			zones = ["us-east-2a", "us-east-2b"]
+		}
+	}
+	`, mockServerUrl, name)
+}
+
+func TestAccGatewayAwsIngressPrivateLink(t *testing.T) {
+	ctx := context.Background()
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
+
+	mockServerUrl := wiremockContainer.URI
+	wiremockClient := wiremock.NewClient(mockServerUrl)
+	// nolint:errcheck
+	defer wiremockClient.Reset()
+
+	// nolint:errcheck
+	defer wiremockClient.ResetAllScenarios()
+	createGatewayResponse, _ := ioutil.ReadFile("../testdata/gateway/create_aws_ingress_private_link_gateway.json")
+	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(gatewayUrlPath)).
+		InScenario(GatewayScenarioName).
+		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
+		WillSetStateTo(scenarioStateGatewayIsProvisioning).
+		WillReturn(
+			string(createGatewayResponse),
+			contentTypeJSONHeader,
+			http.StatusCreated,
+		))
+
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", gatewayUrlPath, awsIngressGatewayId))).
+		InScenario(GatewayScenarioName).
+		WhenScenarioStateIs(scenarioStateGatewayIsProvisioning).
+		WillSetStateTo(scenarioStateGatewayHasBeenCreated).
+		WillReturn(
+			string(createGatewayResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	readGatewayResponse, _ := ioutil.ReadFile("../testdata/gateway/read_aws_ingress_private_link_gateway.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", gatewayUrlPath, awsIngressGatewayId))).
+		InScenario(GatewayScenarioName).
+		WhenScenarioStateIs(scenarioStateGatewayHasBeenCreated).
+		WillReturn(
+			string(readGatewayResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	readUpdatedGatewayResponse, _ := ioutil.ReadFile("../testdata/gateway/read_updated_aws_ingress_private_link_gateway.json")
+	_ = wiremockClient.StubFor(wiremock.Patch(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", gatewayUrlPath, awsIngressGatewayId))).
+		InScenario(GatewayScenarioName).
+		WhenScenarioStateIs(scenarioStateGatewayHasBeenCreated).
+		WillSetStateTo(scenarioStateGatewayHasBeenUpdated).
+		WillReturn(
+			string(readUpdatedGatewayResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", gatewayUrlPath, awsIngressGatewayId))).
+		InScenario(GatewayScenarioName).
+		WhenScenarioStateIs(scenarioStateGatewayHasBeenUpdated).
+		WillReturn(
+			string(readUpdatedGatewayResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", gatewayUrlPath, awsIngressGatewayId))).
+		InScenario(GatewayScenarioName).
+		WillReturn(
+			"",
+			contentTypeJSONHeader,
+			http.StatusNoContent,
+		))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		// https://www.terraform.io/docs/extend/testing/acceptance-tests/teststep.html
+		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckResourceGatewayAwsIngressPrivateLinkConfig(mockServerUrl, "prod-ingress-gateway"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(gatewayResourceLabel, "id", awsIngressGatewayId),
+					resource.TestCheckResourceAttr(gatewayResourceLabel, "display_name", "prod-ingress-gateway"),
+					resource.TestCheckResourceAttr(gatewayResourceLabel, "aws_ingress_private_link_gateway.#", "1"),
+					resource.TestCheckResourceAttr(gatewayResourceLabel, "aws_ingress_private_link_gateway.0.region", "us-west-2"),
+					resource.TestCheckResourceAttr(gatewayResourceLabel, "aws_ingress_private_link_gateway.0.vpc_endpoint_service_name", "com.amazonaws.vpce.us-west-2.vpce-svc-00000000000000000"),
+					resource.TestCheckResourceAttr(gatewayResourceLabel, "aws_egress_private_link_gateway.#", "0"),
+					resource.TestCheckResourceAttr(gatewayResourceLabel, "aws_private_network_interface_gateway.#", "0"),
+					resource.TestCheckResourceAttr(gatewayResourceLabel, "azure_egress_private_link_gateway.#", "0"),
+				),
+			},
+			{
+				Config: testAccCheckResourceGatewayAwsIngressPrivateLinkConfig(mockServerUrl, "prod-ingress-gateway-new"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(gatewayResourceLabel, "id", awsIngressGatewayId),
+					resource.TestCheckResourceAttr(gatewayResourceLabel, "display_name", "prod-ingress-gateway-new"),
+					resource.TestCheckResourceAttr(gatewayResourceLabel, "aws_ingress_private_link_gateway.#", "1"),
+					resource.TestCheckResourceAttr(gatewayResourceLabel, "aws_ingress_private_link_gateway.0.region", "us-west-2"),
+					resource.TestCheckResourceAttr(gatewayResourceLabel, "aws_ingress_private_link_gateway.0.vpc_endpoint_service_name", "com.amazonaws.vpce.us-west-2.vpce-svc-00000000000000000"),
+					resource.TestCheckResourceAttr(gatewayResourceLabel, "aws_egress_private_link_gateway.#", "0"),
+					resource.TestCheckResourceAttr(gatewayResourceLabel, "aws_private_network_interface_gateway.#", "0"),
+					resource.TestCheckResourceAttr(gatewayResourceLabel, "azure_egress_private_link_gateway.#", "0"),
+				),
+			},
+		},
+	})
+}
+
+func testAccCheckResourceGatewayAwsIngressPrivateLinkConfig(mockServerUrl, name string) string {
+	return fmt.Sprintf(`
+    provider "confluent" {
+        endpoint = "%s"
+    }
+
+	resource "confluent_gateway" "main" {
+		display_name = "%s"
+		environment {
+			id = "env-abc123"
+		}
+		aws_ingress_private_link_gateway {
+			region = "us-west-2"
 		}
 	}
 	`, mockServerUrl, name)
