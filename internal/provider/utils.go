@@ -20,6 +20,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	fg "github.com/confluentinc/ccloud-sdk-go-v2-internal/flink-gateway/v1"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -92,6 +93,7 @@ const (
 	apiKeyLoggingKey                          = "api_key_id"
 	computePoolLoggingKey                     = "compute_pool_id"
 	flinkArtifactLoggingKey                   = "flink_artifact_id"
+	flinkMaterializedTableLoggingKey          = "flink_materialized_table_id"
 	flinkConnectionLoggingKey                 = "flink_connection_id"
 	flinkStatementLoggingKey                  = "flink_statement_key_id"
 	networkLoggingKey                         = "network_key_id"
@@ -774,6 +776,7 @@ type CatalogRestClient struct {
 
 type FlinkRestClient struct {
 	apiClient                    *fgb.APIClient
+	apiClientInternal            *fg.APIClient
 	externalAccessToken          *OAuthToken
 	organizationId               string
 	environmentId                string
@@ -894,6 +897,28 @@ func (c *FlinkRestClient) apiContext(ctx context.Context) context.Context {
 
 	if c.flinkApiKey != "" && c.flinkApiSecret != "" {
 		return context.WithValue(ctx, fgb.ContextBasicAuth, fgb.BasicAuth{
+			UserName: c.flinkApiKey,
+			Password: c.flinkApiSecret,
+		})
+	}
+
+	tflog.Warn(ctx, fmt.Sprintf("Could not find Flink API Key or OAuth token for Flink %q", c.restEndpoint))
+	return ctx
+}
+
+func (c *FlinkRestClient) fgApiContext(ctx context.Context) context.Context {
+	if c.externalAccessToken != nil {
+		currToken := c.externalAccessToken
+		token, err := fetchExternalOAuthToken(ctx, currToken.TokenUrl, currToken.ClientId, currToken.ClientSecret, currToken.Scope, currToken.IdentityPoolId, currToken, currToken.HTTPClient)
+		if err != nil {
+			tflog.Error(ctx, fmt.Sprintf("Failed to get OAuth token for Flink rest client: %v", err))
+		}
+		c.externalAccessToken = token
+		return context.WithValue(ctx, fg.ContextAccessToken, c.externalAccessToken.AccessToken)
+	}
+
+	if c.flinkApiKey != "" && c.flinkApiSecret != "" {
+		return context.WithValue(ctx, fg.ContextBasicAuth, fg.BasicAuth{
 			UserName: c.flinkApiKey,
 			Password: c.flinkApiSecret,
 		})
@@ -1358,20 +1383,20 @@ func uploadFile(url, filePath string, formFields map[string]any, fileExtension, 
 			Body(&buffer).
 			ReceiveSuccess(nil)
 	} else if cloud == "AZURE" && isConnectArtifact {
-			fileContent, readErr := os.ReadFile(filePath)
-			if readErr != nil {
-				return readErr
-			}
+		fileContent, readErr := os.ReadFile(filePath)
+		if readErr != nil {
+			return readErr
+		}
 
-			_, err = sling.New().
-				Client(client).
-				Base(url).
-				Set("x-ms-blob-type", "BlockBlob").
-				Set("Content-Type", contentFormat).
-				Set("Content-Length", strconv.Itoa(len(fileContent))).
-				Put("").
-				Body(bytes.NewReader(fileContent)).
-				ReceiveSuccess(nil)
+		_, err = sling.New().
+			Client(client).
+			Base(url).
+			Set("x-ms-blob-type", "BlockBlob").
+			Set("Content-Type", contentFormat).
+			Set("Content-Length", strconv.Itoa(len(fileContent))).
+			Put("").
+			Body(bytes.NewReader(fileContent)).
+			ReceiveSuccess(nil)
 	} else {
 		_, err = sling.New().
 			Client(client).

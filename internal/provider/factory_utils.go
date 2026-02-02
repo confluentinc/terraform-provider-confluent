@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/go-retryablehttp"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 
+	fg "github.com/confluentinc/ccloud-sdk-go-v2-internal/flink-gateway/v1"
 	dc "github.com/confluentinc/ccloud-sdk-go-v2/data-catalog/v1"
 	fgb "github.com/confluentinc/ccloud-sdk-go-v2/flink-gateway/v1"
 	kafkarestv3 "github.com/confluentinc/ccloud-sdk-go-v2/kafkarest/v3"
@@ -41,6 +42,38 @@ func (f FlinkRestClientFactory) CreateFlinkRestClient(restEndpoint, organization
 
 	return &FlinkRestClient{
 		apiClient:                    fgb.NewAPIClient(config),
+		externalAccessToken:          token,
+		organizationId:               organizationId,
+		environmentId:                environmentId,
+		computePoolId:                computePoolId,
+		principalId:                  principalId,
+		flinkApiKey:                  flinkApiKey,
+		flinkApiSecret:               flinkApiSecret,
+		restEndpoint:                 restEndpoint,
+		isMetadataSetInProviderBlock: isMetadataSetInProviderBlock,
+	}
+}
+
+func (f FlinkRestClientFactory) CreateFlinkRestClientInternal(restEndpoint, organizationId, environmentId, computePoolId, principalId, flinkApiKey, flinkApiSecret string, isMetadataSetInProviderBlock bool, token *OAuthToken) *FlinkRestClient {
+	var opts []RetryableClientFactoryOption = []RetryableClientFactoryOption{}
+	config := fg.NewConfiguration()
+
+	if f.maxRetries != nil {
+		opts = append(opts, WithMaxRetries(*f.maxRetries))
+	}
+
+	config.UserAgent = f.userAgent
+	config.Servers[0].URL = restEndpoint
+
+	baseFactory := NewRetryableClientFactory(f.ctx, opts...)
+
+	config.HTTPClient = baseFactory.CreateRetryableClient()
+	if token != nil {
+		config.DefaultHeader = map[string]string{"confluent-identity-pool-id": token.IdentityPoolId}
+	}
+
+	return &FlinkRestClient{
+		apiClientInternal:            fg.NewAPIClient(config),
 		externalAccessToken:          token,
 		organizationId:               organizationId,
 		environmentId:                environmentId,
