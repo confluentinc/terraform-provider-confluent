@@ -2,8 +2,6 @@ module github.com/confluentinc/terraform-provider-confluent
 
 go 1.24.10
 
-toolchain go1.24.11
-
 require (
 	github.com/confluentinc/ccloud-sdk-go-v2/apikeys v0.4.0
 	github.com/confluentinc/ccloud-sdk-go-v2/byok v0.0.2
