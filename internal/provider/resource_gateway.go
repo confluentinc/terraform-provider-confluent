@@ -30,11 +30,12 @@ import (
 
 const (
 	awsEgressPrivateLinkGatewaySpecKind       = "AwsEgressPrivateLinkGatewaySpec"
+	awsIngressPrivateLinkGatewaySpecKind      = "AwsIngressPrivateLinkGatewaySpec"
 	awsPrivateNetworkInterfaceGatewaySpecKind = "AwsPrivateNetworkInterfaceGatewaySpec"
 	azureEgressPrivateLinkGatewaySpecKind     = "AzureEgressPrivateLinkGatewaySpec"
 )
 
-var acceptedGatewayTypes = []string{paramAwsEgressPrivateLinkGateway, paramAwsPrivateNetworkInterfaceGateway, paramAzureEgressPrivateLinkGateway}
+var acceptedGatewayTypes = []string{paramAwsEgressPrivateLinkGateway, paramAwsIngressPrivateLinkGateway, paramAwsPrivateNetworkInterfaceGateway, paramAzureEgressPrivateLinkGateway}
 
 func gatewayResource() *schema.Resource {
 	return &schema.Resource{
@@ -54,6 +55,7 @@ func gatewayResource() *schema.Resource {
 			},
 			paramEnvironment:                       environmentSchema(),
 			paramAwsEgressPrivateLinkGateway:       awsEgressPrivateLinkGatewaySchema(),
+			paramAwsIngressPrivateLinkGateway:      awsIngressPrivateLinkGatewaySchema(),
 			paramAwsPrivateNetworkInterfaceGateway: awsPrivateNetworkInterfaceGatewaySchema(),
 			paramAzureEgressPrivateLinkGateway:     azureEgressPrivateLinkGatewaySchema(),
 		},
@@ -76,6 +78,33 @@ func awsEgressPrivateLinkGatewaySchema() *schema.Schema {
 				paramPrincipalArn: {
 					Type:     schema.TypeString,
 					Computed: true,
+				},
+			},
+		},
+		MinItems:     1,
+		MaxItems:     1,
+		ExactlyOneOf: acceptedGatewayTypes,
+	}
+}
+
+func awsIngressPrivateLinkGatewaySchema() *schema.Schema {
+	return &schema.Schema{
+		Type:     schema.TypeList,
+		ForceNew: true,
+		Computed: true,
+		Optional: true,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramRegion: {
+					Type:        schema.TypeString,
+					Required:    true,
+					ForceNew:    true,
+					Description: "AWS region of the Ingress Private Link Gateway.",
+				},
+				paramVpcEndpointServiceName: {
+					Type:        schema.TypeString,
+					Computed:    true,
+					Description: "The ID of the AWS VPC Endpoint Service that can be used to establish connections for all zones.",
 				},
 			},
 		},
@@ -155,6 +184,7 @@ func gatewayCreate(ctx context.Context, d *schema.ResourceData, meta interface{}
 	createGatewayRequest.Spec.SetDisplayName(d.Get(paramDisplayName).(string))
 
 	isAwsEgressPrivateLink := len(d.Get(paramAwsEgressPrivateLinkGateway).([]interface{})) > 0
+	isAwsIngressPrivateLink := len(d.Get(paramAwsIngressPrivateLinkGateway).([]interface{})) > 0
 	isAwsPrivateNetworkInterface := len(d.Get(paramAwsPrivateNetworkInterfaceGateway).([]interface{})) > 0
 	isAzureEgressPrivateLink := len(d.Get(paramAzureEgressPrivateLinkGateway).([]interface{})) > 0
 
@@ -162,6 +192,12 @@ func gatewayCreate(ctx context.Context, d *schema.ResourceData, meta interface{}
 		region := extractStringValueFromBlock(d, paramAwsEgressPrivateLinkGateway, paramRegion)
 		createGatewayRequest.Spec.SetConfig(netgw.NetworkingV1AwsEgressPrivateLinkGatewaySpecAsNetworkingV1GatewaySpecConfigOneOf(netgw.NewNetworkingV1AwsEgressPrivateLinkGatewaySpec(
 			awsEgressPrivateLinkGatewaySpecKind,
+			region,
+		)))
+	} else if isAwsIngressPrivateLink {
+		region := extractStringValueFromBlock(d, paramAwsIngressPrivateLinkGateway, paramRegion)
+		createGatewayRequest.Spec.SetConfig(netgw.NetworkingV1AwsIngressPrivateLinkGatewaySpecAsNetworkingV1GatewaySpecConfigOneOf(netgw.NewNetworkingV1AwsIngressPrivateLinkGatewaySpec(
+			awsIngressPrivateLinkGatewaySpecKind,
 			region,
 		)))
 	} else if isAwsPrivateNetworkInterface {
@@ -263,6 +299,13 @@ func setGatewayAttributes(d *schema.ResourceData, gateway netgw.NetworkingV1Gate
 		if err := d.Set(paramAwsEgressPrivateLinkGateway, []interface{}{map[string]interface{}{
 			paramRegion:       gateway.Spec.Config.NetworkingV1AwsEgressPrivateLinkGatewaySpec.GetRegion(),
 			paramPrincipalArn: gateway.Status.CloudGateway.NetworkingV1AwsEgressPrivateLinkGatewayStatus.GetPrincipalArn(),
+		}}); err != nil {
+			return nil, err
+		}
+	} else if gateway.Spec.GetConfig().NetworkingV1AwsIngressPrivateLinkGatewaySpec != nil && gateway.Status.GetCloudGateway().NetworkingV1AwsIngressPrivateLinkGatewayStatus != nil {
+		if err := d.Set(paramAwsIngressPrivateLinkGateway, []interface{}{map[string]interface{}{
+			paramRegion:                 gateway.Spec.Config.NetworkingV1AwsIngressPrivateLinkGatewaySpec.GetRegion(),
+			paramVpcEndpointServiceName: gateway.Status.CloudGateway.NetworkingV1AwsIngressPrivateLinkGatewayStatus.GetVpcEndpointServiceName(),
 		}}); err != nil {
 			return nil, err
 		}
