@@ -1,0 +1,8 @@
+{
+  "error": {
+    "code": 404,
+    "message": "Access Point not found",
+    "status": "NOT_FOUND"
+  }
+}
+
