@@ -352,6 +352,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_endpoint":                           endpointDataSource(),
 				"confluent_dns_record":                         dnsRecordDataSource(),
 				"confluent_gateway":                            gatewayDataSource(),
+				"confluent_gateways":                           gatewaysDataSource(),
 				"confluent_organization":                       organizationDataSource(),
 				"confluent_peering":                            peeringDataSource(),
 				"confluent_transit_gateway_attachment":         transitGatewayAttachmentDataSource(),
