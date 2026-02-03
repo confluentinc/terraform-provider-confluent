@@ -35,6 +35,7 @@ import (
 	ccp "github.com/confluentinc/ccloud-sdk-go-v2/connect-custom-plugin/v1"
 	connect "github.com/confluentinc/ccloud-sdk-go-v2/connect/v1"
 	dc "github.com/confluentinc/ccloud-sdk-go-v2/data-catalog/v1"
+	end "github.com/confluentinc/ccloud-sdk-go-v2/endpoint/v1"
 	fa "github.com/confluentinc/ccloud-sdk-go-v2/flink-artifact/v1"
 	fcpm "github.com/confluentinc/ccloud-sdk-go-v2/flink/v2"
 	iamip "github.com/confluentinc/ccloud-sdk-go-v2/iam-ip-filtering/v2"
@@ -117,6 +118,7 @@ type Client struct {
 	stsClient                       *sts.APIClient
 	piClient                        *pi.APIClient
 	piV2Client                      *piv2.APIClient
+	endClient                       *end.APIClient
 	userAgent                       string
 	catalogRestEndpoint             string
 	cloudApiKey                     string
@@ -347,6 +349,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_kafka_client_quota":                 kafkaClientQuotaDataSource(),
 				"confluent_network":                            networkDataSource(),
 				"confluent_access_point":                       accessPointDataSource(),
+				"confluent_endpoint":                           endpointDataSource(),
 				"confluent_dns_record":                         dnsRecordDataSource(),
 				"confluent_gateway":                            gatewayDataSource(),
 				"confluent_gateways":                           gatewaysDataSource(),
@@ -561,6 +564,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	netIpCfg := netip.NewConfiguration()
 	netPLCfg := netpl.NewConfiguration()
 	netDnsCfg := dns.NewConfiguration()
+	endCfg := end.NewConfiguration()
 	oidcCfg := oidc.NewConfiguration()
 	orgCfg := org.NewConfiguration()
 	piCfg := pi.NewConfiguration()
@@ -591,6 +595,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	netAccessPointCfg.Servers[0].URL = endpoint
 	netGatewayCfg.Servers[0].URL = endpoint
 	netDnsCfg.Servers[0].URL = endpoint
+	endCfg.Servers[0].URL = endpoint
 	oidcCfg.Servers[0].URL = endpoint
 	orgCfg.Servers[0].URL = endpoint
 	piCfg.Servers[0].URL = endpoint
@@ -621,6 +626,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	netGatewayCfg.UserAgent = userAgent
 	netIpCfg.UserAgent = userAgent
 	netDnsCfg.UserAgent = userAgent
+	endCfg.UserAgent = userAgent
 	netPLCfg.UserAgent = userAgent
 	oidcCfg.UserAgent = userAgent
 	orgCfg.UserAgent = userAgent
@@ -664,6 +670,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	netIpCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	netPLCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	netDnsCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
+	endCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	oidcCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	orgCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	piCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
@@ -734,6 +741,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 		netIpClient:                     netip.NewAPIClient(netIpCfg),
 		netPLClient:                     netpl.NewAPIClient(netPLCfg),
 		netDnsClient:                    dns.NewAPIClient(netDnsCfg),
+		endClient:                       end.NewAPIClient(endCfg),
 		oidcClient:                      oidc.NewAPIClient(oidcCfg),
 		orgClient:                       org.NewAPIClient(orgCfg),
 		piClient:                        pi.NewAPIClient(piCfg),
