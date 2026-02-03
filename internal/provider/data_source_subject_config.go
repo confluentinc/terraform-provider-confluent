@@ -51,6 +51,16 @@ func subjectConfigDataSource() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			paramNormalize: {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Whether schemas are automatically normalized when registered or when passed during lookups.",
+			},
+			paramAlias: {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The subject name that this subject is an alias for.",
+			},
 		},
 	}
 }
