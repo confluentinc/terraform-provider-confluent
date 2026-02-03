@@ -113,7 +113,8 @@ func TestAccAwsTransitGatewayAttachmentAccess(t *testing.T) {
 	_ = wiremockClient.StubFor(deleteAwsTransitGatewayAttachmentStub)
 
 	readDeprovisioningAwsTransitGatewayAttachmentResponse, _ := ioutil.ReadFile("../testdata/transit_gateway_attachment/aws/read_deprovisioning_transit_gateway_attachment.json")
-	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(awsTransitGatewayAttachmentUrlPath)).
+
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(awsTransitGatewayAttachmentUrlPath)).
 		InScenario(awsTransitGatewayAttachmentScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(awsTransitGatewayAttachmentEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateAwsTransitGatewayAttachmentIsDeprovisioning).
