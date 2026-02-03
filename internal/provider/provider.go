@@ -26,7 +26,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
-	end "github.com/confluentinc/ccloud-sdk-go-v2-internal/endpoint/v1"
 	apikeys "github.com/confluentinc/ccloud-sdk-go-v2/apikeys/v2"
 	byok "github.com/confluentinc/ccloud-sdk-go-v2/byok/v1"
 	cam "github.com/confluentinc/ccloud-sdk-go-v2/cam/v1"
@@ -36,6 +35,7 @@ import (
 	ccp "github.com/confluentinc/ccloud-sdk-go-v2/connect-custom-plugin/v1"
 	connect "github.com/confluentinc/ccloud-sdk-go-v2/connect/v1"
 	dc "github.com/confluentinc/ccloud-sdk-go-v2/data-catalog/v1"
+	end "github.com/confluentinc/ccloud-sdk-go-v2/endpoint/v1"
 	fa "github.com/confluentinc/ccloud-sdk-go-v2/flink-artifact/v1"
 	fcpm "github.com/confluentinc/ccloud-sdk-go-v2/flink/v2"
 	iamip "github.com/confluentinc/ccloud-sdk-go-v2/iam-ip-filtering/v2"

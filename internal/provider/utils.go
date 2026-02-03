@@ -32,7 +32,6 @@ import (
 	"strings"
 	"time"
 
-	end "github.com/confluentinc/ccloud-sdk-go-v2-internal/endpoint/v1"
 	apikeys "github.com/confluentinc/ccloud-sdk-go-v2/apikeys/v2"
 	byok "github.com/confluentinc/ccloud-sdk-go-v2/byok/v1"
 	cam "github.com/confluentinc/ccloud-sdk-go-v2/cam/v1"
@@ -42,6 +41,7 @@ import (
 	ccp "github.com/confluentinc/ccloud-sdk-go-v2/connect-custom-plugin/v1"
 	connect "github.com/confluentinc/ccloud-sdk-go-v2/connect/v1"
 	dc "github.com/confluentinc/ccloud-sdk-go-v2/data-catalog/v1"
+	end "github.com/confluentinc/ccloud-sdk-go-v2/endpoint/v1"
 	fa "github.com/confluentinc/ccloud-sdk-go-v2/flink-artifact/v1"
 	fgb "github.com/confluentinc/ccloud-sdk-go-v2/flink-gateway/v1"
 	fcpm "github.com/confluentinc/ccloud-sdk-go-v2/flink/v2"
@@ -1378,20 +1378,20 @@ func uploadFile(url, filePath string, formFields map[string]any, fileExtension, 
 			Body(&buffer).
 			ReceiveSuccess(nil)
 	} else if cloud == "AZURE" && isConnectArtifact {
-			fileContent, readErr := os.ReadFile(filePath)
-			if readErr != nil {
-				return readErr
-			}
+		fileContent, readErr := os.ReadFile(filePath)
+		if readErr != nil {
+			return readErr
+		}
 
-			_, err = sling.New().
-				Client(client).
-				Base(url).
-				Set("x-ms-blob-type", "BlockBlob").
-				Set("Content-Type", contentFormat).
-				Set("Content-Length", strconv.Itoa(len(fileContent))).
-				Put("").
-				Body(bytes.NewReader(fileContent)).
-				ReceiveSuccess(nil)
+		_, err = sling.New().
+			Client(client).
+			Base(url).
+			Set("x-ms-blob-type", "BlockBlob").
+			Set("Content-Type", contentFormat).
+			Set("Content-Length", strconv.Itoa(len(fileContent))).
+			Put("").
+			Body(bytes.NewReader(fileContent)).
+			ReceiveSuccess(nil)
 	} else {
 		_, err = sling.New().
 			Client(client).
