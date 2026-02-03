@@ -109,12 +109,12 @@ github.com/confluentinc/ccloud-sdk-go-v2/mds v0.3.0 h1:DaipFGVdZjAE8eSztUrA/4b74
 github.com/confluentinc/ccloud-sdk-go-v2/mds v0.3.0/go.mod h1:ufn9In8kDsyJ7Nru2ygpAaWdGw7DSDTOTtDhQVSmZjs=
 github.com/confluentinc/ccloud-sdk-go-v2/networking v0.14.0 h1:btDFGijvzpWaKLKztc7S9YenbtGTsHgjs4+fNuyYceI=
 github.com/confluentinc/ccloud-sdk-go-v2/networking v0.14.0/go.mod h1:6BDrwG6OfSnT++Yr3mXStvmy4Jb8uMtdfKK7sZO/X+M=
-github.com/confluentinc/ccloud-sdk-go-v2/networking-access-point v0.5.0 h1:q2sfstoFDF/ZUs0MapOzalwIjp4UjL6CK+cMNZmdzNM=
-github.com/confluentinc/ccloud-sdk-go-v2/networking-access-point v0.5.0/go.mod h1:HV1xGUwTsGEU3Mgvc+7Ya/0HRpUO69L2rqqxO7LeWMc=
+github.com/confluentinc/ccloud-sdk-go-v2/networking-access-point v0.9.0 h1:TxnANYua8aJaMakIa3yLO71SXXL91IZwzGsmCVC7bsw=
+github.com/confluentinc/ccloud-sdk-go-v2/networking-access-point v0.9.0/go.mod h1:rjSoyola5PiBfQAx/u10VxFiLoatJ55fI/3bysXx9cw=
 github.com/confluentinc/ccloud-sdk-go-v2/networking-dnsforwarder v0.4.0 h1:LT8trYIkMZ7EFM7nZZOkmH12B7AgOEvZYZjw86nazD0=
 github.com/confluentinc/ccloud-sdk-go-v2/networking-dnsforwarder v0.4.0/go.mod h1:HPu3Cd7HQ2NdTeL6f3nvrsFB69N9yugB/W4qV8wqE/c=
-github.com/confluentinc/ccloud-sdk-go-v2/networking-gateway v0.2.0 h1:a3eTOQy6tlbcZIFzcAKQPoZALi6Csg4phlCQLPyUdsA=
-github.com/confluentinc/ccloud-sdk-go-v2/networking-gateway v0.2.0/go.mod h1:zDswAVbulZWmPVEREWPU6jvwi5E7Q95SdY7abYdqVfA=
+github.com/confluentinc/ccloud-sdk-go-v2/networking-gateway v0.6.0 h1:yzZnjcf65T6V0L4/ltR59FgqlpOBE8MEi9dQqXz/CGo=
+github.com/confluentinc/ccloud-sdk-go-v2/networking-gateway v0.6.0/go.mod h1:Aox8xwUbS/AK1w9PCFQWI2SiYhpwwV9c7MFZrPMFD2A=
 github.com/confluentinc/ccloud-sdk-go-v2/networking-ip v0.2.0 h1:ZHNF2DeqVlNPuKGZ41SBMLGj8GBlvvcwOPnfZLZXA/4=
 github.com/confluentinc/ccloud-sdk-go-v2/networking-ip v0.2.0/go.mod h1:KTShFBZA7WG8LcxlWjJpoZFdWkJ+uOw3dDuwAHs5eKU=
 github.com/confluentinc/ccloud-sdk-go-v2/networking-privatelink v0.3.0 h1:mC0E1nKUt57AxMM4Lpdfd+KA/YZwJVwro9ER+dCUFi8=
@@ -595,8 +595,8 @@ golang.org/x/oauth2 v0.0.0-20191202225959-858c2ad4c8b6/go.mod h1:gOpvHmFTYa4Iltr
 golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d/go.mod h1:gOpvHmFTYa4IltrdGE7lF6nIHvwfUNPOp7c8zoXwtLw=
 golang.org/x/oauth2 v0.0.0-20210218202405-ba52d332ba99/go.mod h1:KelEdhl1UZF7XfJ4dDtk6s++YSgaE7mD/BuKKDLBl4A=
 golang.org/x/oauth2 v0.0.0-20210323180902-22b0adad7558/go.mod h1:KelEdhl1UZF7XfJ4dDtk6s++YSgaE7mD/BuKKDLBl4A=
-golang.org/x/oauth2 v0.30.0 h1:dnDm7JmhM45NNpd8FDDeLhK6FwqbOf4MLCM9zb1BOHI=
-golang.org/x/oauth2 v0.30.0/go.mod h1:B++QgG3ZKulg6sRPGD/mqlHQs5rB3Ml9erfeDY7xKlU=
+golang.org/x/oauth2 v0.34.0 h1:hqK/t4AKgbqWkdkcAeI8XLmbK+4m4G5YeQRrmiotGlw=
+golang.org/x/oauth2 v0.34.0/go.mod h1:lzm5WQJQwKZ3nwavOZ3IS5Aulzxi68dUSgRHujetwEA=
 golang.org/x/sync v0.0.0-20180314180146-1d60e4601c6f/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
 golang.org/x/sync v0.0.0-20181108010431-42b317875d0f/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
 golang.org/x/sync v0.0.0-20181221193216-37e7f081c4d4/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
