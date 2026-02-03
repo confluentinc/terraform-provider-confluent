@@ -125,7 +125,7 @@ func TestAccDataSourceGatewaysWithFilters(t *testing.T) {
 		WithQueryParam("environment", wiremock.EqualTo("env-abc123")).
 		WithQueryParam("page_size", wiremock.EqualTo(strconv.Itoa(listGatewaysPageSize))).
 		WithQueryParam("gateway_type", wiremock.EqualTo("AwsIngressPrivateLink")).
-		WithQueryParam("status.phase", wiremock.EqualTo("READY")).
+		WithQueryParam("status.phase", wiremock.EqualTo("active")).
 		InScenario(gatewaysDataSourceScenarioName).
 		WillReturn(
 			string(readGatewaysFilteredResponse),
