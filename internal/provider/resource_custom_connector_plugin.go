@@ -18,14 +18,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"path/filepath"
+	"strings"
+
 	ccp "github.com/confluentinc/ccloud-sdk-go-v2/connect-custom-plugin/v1"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"net/http"
-	"path/filepath"
-	"strings"
 )
 
 const (
@@ -221,7 +222,7 @@ func uploadCustomConnectorPlugin(ctx context.Context, c *Client, filename, cloud
 		return "", fmt.Errorf(`error uploading Custom Connector Plugin: error fetching presigned upload URL: %s`, err)
 	}
 
-	if err := uploadFile(createdPresignedUrl.GetUploadUrl(), filename, createdPresignedUrl.GetUploadFormData(), createdPresignedUrl.GetContentFormat(), cloud, false, false); err != nil {
+	if err := uploadFile(createdPresignedUrl.GetUploadUrl(), filename, createdPresignedUrl.GetUploadFormData(), createdPresignedUrl.GetContentFormat(), cloud); err != nil {
 		return "", fmt.Errorf(`error uploading Custom Connector Plugin: error uploading a file: %s`, err)
 	}
 	return createdPresignedUrl.GetUploadId(), nil

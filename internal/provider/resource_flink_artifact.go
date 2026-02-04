@@ -4,15 +4,16 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"path/filepath"
+	"regexp"
+	"strings"
+
 	fa "github.com/confluentinc/ccloud-sdk-go-v2/flink-artifact/v1"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"net/http"
-	"path/filepath"
-	"regexp"
-	"strings"
 )
 
 var acceptedRuntimeLanguage = []string{"python", "java"}
@@ -156,7 +157,7 @@ func artifactCreate(ctx context.Context, d *schema.ResourceData, meta interface{
 		return diag.Errorf("error uploading Flink Artifact: error fetching presigned upload URL %s", createDescriptiveError(err, res))
 	}
 
-	if err := uploadFile(resp.GetUploadUrl(), artifactFile, resp.GetUploadFormData(), resp.GetContentFormat(), cloud, true, false); err != nil {
+	if err := uploadFile(resp.GetUploadUrl(), artifactFile, resp.GetUploadFormData(), resp.GetContentFormat(), cloud); err != nil {
 		return diag.Errorf("error uploading Flink Artifact: %s", createDescriptiveError(err, res))
 	}
 
