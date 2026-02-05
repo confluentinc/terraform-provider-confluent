@@ -1,3 +1,10 @@
+## 2.61.0 (February 5th, 2026)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.60.0...v2.61.0)
+
+**Bug fixes:**
+* Fixed an issue in `confluent_custom_connector_plugin` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_custom_connector_plugin) and `confluent_custom_connector_plugin_version` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_custom_connector_plugin_version) where plugins could not be uploaded to Azure.
+
 ## 2.60.0 (February 2nd, 2026)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.59.0...v2.60.0)
