@@ -22,8 +22,7 @@ resource "confluent_plugin" "source" {
     description = "Custom connect plugin for versioning."
     cloud = "AWS"
     environment {
-          id = "env-devc0k7oxp"
-        }
+        id = "env-devc0k7oxp"
     }
 }
 ```
