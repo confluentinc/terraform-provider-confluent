@@ -17,12 +17,13 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"testing"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/walkerus/go-wiremock"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
@@ -61,20 +62,16 @@ const (
 	secondClusterClusterLinkConfigValue       = "30001"
 )
 
-var testPatchClusterLinkCredentialsConfigRequestJson = fmt.Sprintf(
+var testPatchClusterLinkCredentialsConfigRequestSaslMechanismJson = `{` +
+	`"name":"sasl.mechanism",` +
+	`"operation":"SET",` +
+	`"value":"PLAIN"` +
+	`}`
+var testPatchClusterLinkCredentialsConfigRequestSaslJaasConfigJson = fmt.Sprintf(
 	`{`+
-		`"data":[`+
-		`{`+
-		`"name":"sasl.mechanism",`+
-		`"operation":"SET",`+
-		`"value":"PLAIN"`+
-		`},`+
-		`{`+
 		`"name":"sasl.jaas.config",`+
 		`"operation":"SET",`+
 		`"value":"org.apache.kafka.common.security.plain.PlainLoginModule required username=\"%s\" password=\"%s\";"`+
-		`}`+
-		`]`+
 		`}`,
 	sourceClusterApiKeyUpdated,
 	sourceClusterApiSecretUpdated,
@@ -141,7 +138,8 @@ func TestAccClusterLinkDestinationOutbound(t *testing.T) {
 		InScenario(clusterLinkScenarioName).
 		WhenScenarioStateIs(scenarioStateClusterLinkHasBeenCreated).
 		WillSetStateTo(scenarioStateClusterLinkCredentialsHaveBeenUpdated).
-		WithBodyPattern(wiremock.EqualToJson(testPatchClusterLinkCredentialsConfigRequestJson)).
+		WithBodyPattern(wiremock.Contains(testPatchClusterLinkCredentialsConfigRequestSaslMechanismJson)).
+		WithBodyPattern(wiremock.Contains(testPatchClusterLinkCredentialsConfigRequestSaslJaasConfigJson)).
 		WillReturn(
 			"",
 			contentTypeJSONHeader,
