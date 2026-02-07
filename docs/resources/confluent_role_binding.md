@@ -123,6 +123,12 @@ resource "confluent_role_binding" "kek-example-rb" {
   crn_pattern = "${data.confluent_schema_registry_cluster.example.resource_name}/kek=kek-name"
 }
 
+resource "confluent_role_binding" "flink-developer-compute-pool-example-rb" {
+  principal   = "User:${confluent_service_account.test.id}"
+  role_name   = "FlinkDeveloper"
+  crn_pattern = "${confluent_environment.stag.resource_name}/flink-region=${confluent_flink_compute_pool.example.cloud}.${confluent_flink_compute_pool.example.region}/compute-pool=${confluent_flink_compute_pool.example.id}"
+}
+
 locals {
   connector_name = lookup(confluent_connector.test.config_nonsensitive, "name", "\"name\" attribute is missing")
 }
