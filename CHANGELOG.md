@@ -1,3 +1,10 @@
+## 2.62.0 (February 9th, 2026)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.61.0...v2.62.0)
+
+**New features:**
+* Updates the `confluent_certificate_pool` [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_certificate_pool) to allow searching by `display_name` when the display name is unique.
+
 ## 2.61.0 (February 5th, 2026)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.60.0...v2.61.0)
