@@ -108,6 +108,7 @@ func kafkaTopicResource() *schema.Resource {
 				Optional:     true,
 				Description:  "The REST endpoint of the Kafka cluster (e.g., `https://pkc-00000.us-central1.gcp.confluent.cloud:443`).",
 				ValidateFunc: validation.StringMatch(regexp.MustCompile("^http"), "the REST endpoint must start with 'https://'"),
+				Deprecated:   "Please use the endpoints attribute instead.",
 			},
 			paramConfigs: {
 				Type: schema.TypeMap,
