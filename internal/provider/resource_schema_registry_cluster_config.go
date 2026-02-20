@@ -65,7 +65,10 @@ func schemaRegistryClusterConfigResource() *schema.Resource {
 				Description: "Whether schemas are automatically normalized when registered or passed during lookups.",
 			},
 		},
-		CustomizeDiff: customdiff.Sequence(resourceCredentialBlockValidationWithOAuth),
+		CustomizeDiff: customdiff.Sequence(
+			suppressSchemaRegistryClusterConfigMigrationDiff,
+			resourceCredentialBlockValidationWithOAuth,
+		),
 	}
 }
 
@@ -283,4 +286,55 @@ func schemaRegistryClusterConfigUpdate(ctx context.Context, d *schema.ResourceDa
 
 func executeSchemaRegistryClusterConfigUpdate(ctx context.Context, c *SchemaRegistryRestClient, requestData *sr.ConfigUpdateRequest) (sr.ConfigUpdateRequest, *http.Response, error) {
 	return c.apiClient.ConfigV1Api.UpdateTopLevelConfig(c.apiContext(ctx)).ConfigUpdateRequest(*requestData).Execute()
+}
+
+// Suppresses diffs when migrating from Option 1 (resource-level configuration) to Option 2 (provider-level configuration) for the same cluster
+func suppressSchemaRegistryClusterConfigMigrationDiff(ctx context.Context, diff *schema.ResourceDiff, meta interface{}) error {
+	client := meta.(*Client)
+
+	// Supress iff provider has Schema Registry metadata set (Option 2)
+	if !client.isSchemaRegistryMetadataSet {
+		return nil
+	}
+
+	// Verify the old rest_endpoint matches the provider's rest_endpoint and new param is empty/null, then suppress the diff
+	if diff.HasChange(paramRestEndpoint) {
+		oldRestEndpoint, newRestEndpoint := diff.GetChange(paramRestEndpoint)
+		oldRestEndpointStr, oldOk := oldRestEndpoint.(string)
+		newRestEndpointStr, newOk := newRestEndpoint.(string)
+
+		if oldOk && oldRestEndpointStr != "" && (!newOk || newRestEndpointStr == "") {
+			if oldRestEndpointStr == client.schemaRegistryRestEndpoint {
+				if err := diff.SetNew(paramRestEndpoint, oldRestEndpointStr); err != nil {
+					return fmt.Errorf("error suppressing rest_endpoint diff: %s", createDescriptiveError(err))
+				}
+			}
+		}
+	}
+
+	// Verify the old cluster ID matches the provider's cluster ID and new param is empty/null, then suppress the diff
+	if diff.HasChange(paramSchemaRegistryCluster) {
+		oldClusterBlock, newClusterBlock := diff.GetChange(paramSchemaRegistryCluster)
+		oldClusterList, oldOk := oldClusterBlock.([]interface{})
+		newClusterList, newOk := newClusterBlock.([]interface{})
+
+		if oldOk && len(oldClusterList) > 0 && (!newOk || len(newClusterList) == 0) {
+			oldClusterMap, ok := oldClusterList[0].(map[string]interface{})
+			if !ok {
+				return nil
+			}
+			oldClusterId, ok := oldClusterMap[paramId].(string)
+			if !ok || oldClusterId == "" {
+				return nil
+			}
+
+			if oldClusterId == client.schemaRegistryClusterId {
+				if err := diff.SetNew(paramSchemaRegistryCluster, oldClusterBlock); err != nil {
+					return fmt.Errorf("error suppressing schema_registry_cluster diff: %s", createDescriptiveError(err))
+				}
+			}
+		}
+	}
+
+	return nil
 }
