@@ -152,5 +152,10 @@ $ terraform import confluent_access_point.main env-abc123/ap-abc123
 
 ## Getting Started
 The following end-to-end examples might help to get started with `confluent_access_point` resource:
+  * [egress-aws-private-link](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/networking/egress-aws-private-link): AWS Egress Private Link Gateway and Access Point
+  * [egress-azure-private-link](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/networking/egress-azure-private-link): Azure Egress Private Link Gateway and Access Point
+  * [ingress-aws-private-link](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/networking/ingress-aws-private-link): AWS Ingress Private Link Gateway and Access Point
+  * [egress-gcp-private-service-connect](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/networking/egress-gcp-private-service-connect): GCP Egress Private Service Connect Gateway and Access Point
+  * [pni-aws](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/networking/pni-aws): AWS Private Network Interface Gateway and Access Point
   * [enterprise-pni-aws-kafka-rbac](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/enterprise-pni-aws-kafka-rbac): _Enterprise_ Kafka cluster on AWS that is accessible via Confluent Private Network Interface (PNI) with authorization using RBAC
   * [freight-aws-kafka-rbac](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/freight-pni-aws-kafka-rbac): _Freight_ Kafka cluster on AWS that is accessible via Confluent Private Network Interface (PNI) with authorization using RBAC
