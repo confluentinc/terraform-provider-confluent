@@ -9,11 +9,6 @@ variable "confluent_cloud_api_secret" {
   sensitive   = true
 }
 
-variable "environment_id" {
-  description = "The ID of the Confluent Cloud Environment"
-  type        = string
-}
-
 variable "region" {
   description = "The Azure region of the Gateway, for example, eastus"
   type        = string

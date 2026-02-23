@@ -9,11 +9,6 @@ variable "confluent_cloud_api_secret" {
   sensitive   = true
 }
 
-variable "environment_id" {
-  description = "The ID of the Confluent Cloud Environment"
-  type        = string
-}
-
 variable "region" {
   description = "The AWS region of the Private Network Interface Gateway, for example, us-east-1"
   type        = string
