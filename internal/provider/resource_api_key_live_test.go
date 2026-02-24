@@ -262,6 +262,191 @@ func testAccCheckApiKeyUpdateLiveConfig(endpoint, serviceAccountResourceLabel, s
 	`, endpoint, apiKey, apiSecret, serviceAccountResourceLabel, serviceAccountDisplayName, apiKeyResourceLabel, apiKeyDisplayName, serviceAccountResourceLabel, serviceAccountResourceLabel, serviceAccountResourceLabel)
 }
 
+func TestAccGlobalApiKeyLive(t *testing.T) {
+	// Enable parallel execution for I/O bound operations
+	t.Parallel()
+
+	// Skip this test unless explicitly enabled
+	if os.Getenv("TF_ACC_PROD") == "" {
+		t.Skip("Skipping live test. Set TF_ACC_PROD=1 to run this test.")
+	}
+
+	// Read credentials and configuration from environment variables (populated by Vault)
+	apiKey := os.Getenv("CONFLUENT_CLOUD_API_KEY")
+	apiSecret := os.Getenv("CONFLUENT_CLOUD_API_SECRET")
+	endpoint := os.Getenv("CONFLUENT_CLOUD_ENDPOINT")
+	if endpoint == "" {
+		endpoint = "https://api.confluent.cloud" // Use default endpoint if not set
+	}
+
+	// Validate required environment variables are present
+	if apiKey == "" || apiSecret == "" {
+		t.Fatal("CONFLUENT_CLOUD_API_KEY and CONFLUENT_CLOUD_API_SECRET must be set for live tests")
+	}
+
+	// Generate unique names for test resources to avoid conflicts
+	randomSuffix := rand.Intn(100000)
+	serviceAccountDisplayName := fmt.Sprintf("tf-live-sa-global-%d", randomSuffix)
+	apiKeyDisplayName := fmt.Sprintf("tf-live-global-api-key-%d", randomSuffix)
+	serviceAccountResourceLabel := "test_live_service_account_global"
+	apiKeyResourceLabel := "test_live_global_api_key"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckApiKeyLiveDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckGlobalApiKeyLiveConfig(endpoint, serviceAccountResourceLabel, serviceAccountDisplayName, apiKeyResourceLabel, apiKeyDisplayName, apiKey, apiSecret),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckServiceAccountLiveExists(fmt.Sprintf("confluent_service_account.%s", serviceAccountResourceLabel)),
+					testAccCheckApiKeyLiveExists(fmt.Sprintf("confluent_api_key.%s", apiKeyResourceLabel)),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_api_key.%s", apiKeyResourceLabel), "display_name", apiKeyDisplayName),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_api_key.%s", apiKeyResourceLabel), "description", "Test global API key for live testing"),
+					resource.TestCheckResourceAttrSet(fmt.Sprintf("confluent_api_key.%s", apiKeyResourceLabel), "id"),
+					resource.TestCheckResourceAttrSet(fmt.Sprintf("confluent_api_key.%s", apiKeyResourceLabel), "secret"),
+					// Check that owner is set correctly
+					resource.TestCheckResourceAttrSet(fmt.Sprintf("confluent_api_key.%s", apiKeyResourceLabel), "owner.0.id"),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_api_key.%s", apiKeyResourceLabel), "owner.0.api_version", "iam/v2"),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_api_key.%s", apiKeyResourceLabel), "owner.0.kind", "ServiceAccount"),
+					// Check that managed_resource is set correctly for Global API Key
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_api_key.%s", apiKeyResourceLabel), "managed_resource.0.api_version", "global/v1"),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_api_key.%s", apiKeyResourceLabel), "managed_resource.0.id", "global"),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_api_key.%s", apiKeyResourceLabel), "managed_resource.0.kind", "Global"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccGlobalApiKeyUpdateLive(t *testing.T) {
+	// Enable parallel execution for I/O bound operations
+	t.Parallel()
+
+	// Skip this test unless explicitly enabled
+	if os.Getenv("TF_ACC_PROD") == "" {
+		t.Skip("Skipping live test. Set TF_ACC_PROD=1 to run this test.")
+	}
+
+	// Read credentials and configuration from environment variables (populated by Vault)
+	apiKey := os.Getenv("CONFLUENT_CLOUD_API_KEY")
+	apiSecret := os.Getenv("CONFLUENT_CLOUD_API_SECRET")
+	endpoint := os.Getenv("CONFLUENT_CLOUD_ENDPOINT")
+	if endpoint == "" {
+		endpoint = "https://api.confluent.cloud" // Use default endpoint if not set
+	}
+
+	// Validate required environment variables are present
+	if apiKey == "" || apiSecret == "" {
+		t.Fatal("CONFLUENT_CLOUD_API_KEY and CONFLUENT_CLOUD_API_SECRET must be set for live tests")
+	}
+
+	// Generate unique names for test resources to avoid conflicts
+	randomSuffix := rand.Intn(100000)
+	serviceAccountDisplayName := fmt.Sprintf("tf-live-sa-global-update-%d", randomSuffix)
+	apiKeyDisplayName := fmt.Sprintf("tf-live-global-api-key-update-%d", randomSuffix)
+	serviceAccountResourceLabel := "test_live_service_account_global_update"
+	apiKeyResourceLabel := "test_live_global_api_key_update"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckApiKeyLiveDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckGlobalApiKeyLiveConfig(endpoint, serviceAccountResourceLabel, serviceAccountDisplayName, apiKeyResourceLabel, apiKeyDisplayName, apiKey, apiSecret),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckServiceAccountLiveExists(fmt.Sprintf("confluent_service_account.%s", serviceAccountResourceLabel)),
+					testAccCheckApiKeyLiveExists(fmt.Sprintf("confluent_api_key.%s", apiKeyResourceLabel)),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_api_key.%s", apiKeyResourceLabel), "display_name", apiKeyDisplayName),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_api_key.%s", apiKeyResourceLabel), "description", "Test global API key for live testing"),
+					// Check that managed_resource is set correctly for Global API Key
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_api_key.%s", apiKeyResourceLabel), "managed_resource.0.api_version", "global/v1"),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_api_key.%s", apiKeyResourceLabel), "managed_resource.0.id", "global"),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_api_key.%s", apiKeyResourceLabel), "managed_resource.0.kind", "Global"),
+				),
+			},
+			{
+				Config: testAccCheckGlobalApiKeyUpdateLiveConfig(endpoint, serviceAccountResourceLabel, serviceAccountDisplayName, apiKeyResourceLabel, apiKeyDisplayName+"-updated", apiKey, apiSecret),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckServiceAccountLiveExists(fmt.Sprintf("confluent_service_account.%s", serviceAccountResourceLabel)),
+					testAccCheckApiKeyLiveExists(fmt.Sprintf("confluent_api_key.%s", apiKeyResourceLabel)),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_api_key.%s", apiKeyResourceLabel), "display_name", apiKeyDisplayName+"-updated"),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_api_key.%s", apiKeyResourceLabel), "description", "Updated test global API key for live testing"),
+					// Check that managed_resource is unchanged after update
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_api_key.%s", apiKeyResourceLabel), "managed_resource.0.api_version", "global/v1"),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_api_key.%s", apiKeyResourceLabel), "managed_resource.0.id", "global"),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_api_key.%s", apiKeyResourceLabel), "managed_resource.0.kind", "Global"),
+				),
+			},
+		},
+	})
+}
+
+func testAccCheckGlobalApiKeyLiveConfig(endpoint, serviceAccountResourceLabel, serviceAccountDisplayName, apiKeyResourceLabel, apiKeyDisplayName, apiKey, apiSecret string) string {
+	return fmt.Sprintf(`
+	provider "confluent" {
+		endpoint         = "%s"
+		cloud_api_key    = "%s"
+		cloud_api_secret = "%s"
+	}
+
+	resource "confluent_service_account" "%s" {
+		display_name = "%s"
+		description  = "Test service account for global API key live testing"
+	}
+
+	resource "confluent_api_key" "%s" {
+		display_name = "%s"
+		description  = "Test global API key for live testing"
+
+		owner {
+			id          = confluent_service_account.%s.id
+			api_version = confluent_service_account.%s.api_version
+			kind        = confluent_service_account.%s.kind
+		}
+
+		managed_resource {
+			api_version = "global/v1"
+			id          = "global"
+			kind        = "Global"
+		}
+	}
+	`, endpoint, apiKey, apiSecret, serviceAccountResourceLabel, serviceAccountDisplayName, apiKeyResourceLabel, apiKeyDisplayName, serviceAccountResourceLabel, serviceAccountResourceLabel, serviceAccountResourceLabel)
+}
+
+func testAccCheckGlobalApiKeyUpdateLiveConfig(endpoint, serviceAccountResourceLabel, serviceAccountDisplayName, apiKeyResourceLabel, apiKeyDisplayName, apiKey, apiSecret string) string {
+	return fmt.Sprintf(`
+	provider "confluent" {
+		endpoint         = "%s"
+		cloud_api_key    = "%s"
+		cloud_api_secret = "%s"
+	}
+
+	resource "confluent_service_account" "%s" {
+		display_name = "%s"
+		description  = "Test service account for global API key live testing"
+	}
+
+	resource "confluent_api_key" "%s" {
+		display_name = "%s"
+		description  = "Updated test global API key for live testing"
+
+		owner {
+			id          = confluent_service_account.%s.id
+			api_version = confluent_service_account.%s.api_version
+			kind        = confluent_service_account.%s.kind
+		}
+
+		managed_resource {
+			api_version = "global/v1"
+			id          = "global"
+			kind        = "Global"
+		}
+	}
+	`, endpoint, apiKey, apiSecret, serviceAccountResourceLabel, serviceAccountDisplayName, apiKeyResourceLabel, apiKeyDisplayName, serviceAccountResourceLabel, serviceAccountResourceLabel, serviceAccountResourceLabel)
+}
+
 func testAccCheckApiKeyLiveExists(resourceName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[resourceName]
