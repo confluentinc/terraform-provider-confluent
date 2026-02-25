@@ -1,4 +1,4 @@
-# Community Contributed Examples
+# Contributing Examples: Process & Guidelines
 
 Welcome to the community-contributed examples directory! 
 
