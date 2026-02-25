@@ -38,11 +38,24 @@ func schemaRegistryClusterConfigResource() *schema.Resource {
 			StateContext: schemaRegistryClusterConfigImport,
 		},
 		Schema: map[string]*schema.Schema{
-			paramSchemaRegistryCluster: schemaRegistryClusterBlockSchema(),
+			paramSchemaRegistryCluster: {
+				Type: schema.TypeList,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						paramId: {
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "The Schema Registry cluster ID (e.g., `lsrc-abc123`).",
+						},
+					},
+				},
+				Optional: true,
+				MinItems: 1,
+				MaxItems: 1,
+			},
 			paramRestEndpoint: {
 				Type:         schema.TypeString,
 				Optional:     true,
-				ForceNew:     true,
 				Description:  "The REST endpoint of the Schema Registry cluster, for example, `https://psrc-00000.us-central1.gcp.confluent.cloud:443`).",
 				ValidateFunc: validation.StringMatch(regexp.MustCompile("^http"), "the REST endpoint must start with 'https://'"),
 			},
@@ -65,7 +78,7 @@ func schemaRegistryClusterConfigResource() *schema.Resource {
 				Description: "Whether schemas are automatically normalized when registered or passed during lookups.",
 			},
 		},
-		CustomizeDiff: customdiff.Sequence(resourceCredentialBlockValidationWithOAuth),
+		CustomizeDiff: customdiff.Sequence(schemaRegistryClusterConfigForceNewCustomDiff, resourceCredentialBlockValidationWithOAuth),
 	}
 }
 
@@ -187,6 +200,11 @@ func schemaRegistryClusterConfigImport(ctx context.Context, d *schema.ResourceDa
 }
 
 func readSchemaRegistryClusterConfigAndSetAttributes(ctx context.Context, d *schema.ResourceData, c *SchemaRegistryRestClient) ([]*schema.ResourceData, error) {
+	// Keep the original state during migration so CustomizeDiff can detect cluster changes and trigger replacement. A refresh would otherwise overwrite state and hide the diff
+	if c.isMetadataSetInProviderBlock && d.Id() != "" && !d.IsNewResource() && c.clusterId != d.Id() {
+		return []*schema.ResourceData{d}, nil
+	}
+
 	schemaRegistryClusterConfig, resp, err := c.apiClient.ConfigV1Api.GetTopLevelConfig(c.apiContext(ctx)).Execute()
 	if err != nil {
 		tflog.Warn(ctx, fmt.Sprintf("Error reading Schema Registry Cluster Config %q: %s", d.Id(), createDescriptiveError(err, resp)), map[string]interface{}{schemaRegistryClusterConfigLoggingKey: d.Id()})
@@ -228,6 +246,23 @@ func readSchemaRegistryClusterConfigAndSetAttributes(ctx context.Context, d *sch
 		if err := setStringAttributeInListBlockOfSizeOne(paramSchemaRegistryCluster, paramId, c.clusterId, d); err != nil {
 			return nil, err
 		}
+	} else {
+		// Remove old resource-level config on migration, preserving only attributes that existed to prevent overwriting new Option 2 state
+		if d.Get(paramRestEndpoint).(string) != "" {
+			if err := d.Set(paramRestEndpoint, ""); err != nil {
+				return nil, err
+			}
+		}
+		if len(d.Get(paramSchemaRegistryCluster).([]interface{})) > 0 {
+			if err := d.Set(paramSchemaRegistryCluster, nil); err != nil {
+				return nil, err
+			}
+		}
+		if len(d.Get(paramCredentials).([]interface{})) > 0 {
+			if err := d.Set(paramCredentials, nil); err != nil {
+				return nil, err
+			}
+		}
 	}
 
 	d.SetId(createSchemaRegistryClusterConfigId(c.clusterId))
@@ -236,7 +271,7 @@ func readSchemaRegistryClusterConfigAndSetAttributes(ctx context.Context, d *sch
 }
 
 func schemaRegistryClusterConfigUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if d.HasChangesExcept(paramCredentials, paramCompatibilityLevel, paramCompatibilityGroup, paramNormalize) {
+	if d.HasChangesExcept(paramCredentials, paramCompatibilityLevel, paramCompatibilityGroup, paramNormalize, paramRestEndpoint, paramSchemaRegistryCluster) {
 		return diag.Errorf("error updating Schema Registry Cluster Config %q: only %q, %q, %q and %q blocks can be updated for Schema Registry Cluster Config", d.Id(), paramCredentials, paramCompatibilityLevel, paramCompatibilityGroup, paramNormalize)
 	}
 	if d.HasChange(paramCompatibilityLevel) || d.HasChange(paramCompatibilityGroup) || d.HasChange(paramNormalize) {
@@ -283,4 +318,51 @@ func schemaRegistryClusterConfigUpdate(ctx context.Context, d *schema.ResourceDa
 
 func executeSchemaRegistryClusterConfigUpdate(ctx context.Context, c *SchemaRegistryRestClient, requestData *sr.ConfigUpdateRequest) (sr.ConfigUpdateRequest, *http.Response, error) {
 	return c.apiClient.ConfigV1Api.UpdateTopLevelConfig(c.apiContext(ctx)).ConfigUpdateRequest(*requestData).Execute()
+}
+
+// Conditionally set ForceNew for rest_endpoint and schema_registry_cluster so migration between Option 1 and Option 2 doesn’t trigger replacement when the underlying cluster is the same
+func schemaRegistryClusterConfigForceNewCustomDiff(_ context.Context, diff *schema.ResourceDiff, meta interface{}) error {
+	if diff.Id() == "" {
+		return nil
+	}
+
+	client := meta.(*Client)
+
+	var newClusterId string
+	if client.isSchemaRegistryMetadataSet {
+		newClusterId = client.schemaRegistryClusterId
+	} else {
+		srCluster := diff.Get(paramSchemaRegistryCluster).([]interface{})
+		if len(srCluster) > 0 {
+			newClusterId = srCluster[0].(map[string]interface{})[paramId].(string)
+		}
+	}
+
+	sameCluster := newClusterId != "" && diff.Id() == newClusterId
+
+	// ForceNew for rest_endpoint: always when the cluster changes, or when the endpoint itself changes within Option 1
+	// Skip only for same-cluster migration between Option 1 and Option 2
+	if diff.HasChange(paramRestEndpoint) {
+		oldVal, newVal := diff.GetChange(paramRestEndpoint)
+		isMigration := oldVal.(string) == "" || newVal.(string) == ""
+		if !sameCluster || !isMigration {
+			if err := diff.ForceNew(paramRestEndpoint); err != nil {
+				return err
+			}
+		}
+	}
+
+	// ForceNew for schema_registry_cluster: same logic as rest_endpoint.
+	if diff.HasChange(paramSchemaRegistryCluster) {
+		oldVal, newVal := diff.GetChange(paramSchemaRegistryCluster)
+		oldList, newList := oldVal.([]interface{}), newVal.([]interface{})
+		isMigration := len(oldList) == 0 || len(newList) == 0
+		if !sameCluster || !isMigration {
+			if err := diff.ForceNew(paramSchemaRegistryCluster); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
 }
