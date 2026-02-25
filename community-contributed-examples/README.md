@@ -1,6 +1,6 @@
 # Community Contributed Examples
 
-Welcome to the community-contributed examples directory! This section contains Terraform configurations contributed by the community to help address specific use cases not covered in the official Terraform Provider for Confluent documentation.
+Welcome to the community-contributed examples directory! 
 
 ## ⚠️ Important Disclaimer
 
