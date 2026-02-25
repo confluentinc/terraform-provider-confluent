@@ -247,16 +247,21 @@ func readSchemaRegistryClusterConfigAndSetAttributes(ctx context.Context, d *sch
 			return nil, err
 		}
 	} else {
-		// Clear resource-level config from state when using provider-level config (Option 2).
-		// Without this, old Option 1 values would persist in state and cause drift.
-		if err := d.Set(paramRestEndpoint, ""); err != nil {
-			return nil, err
+		// Remove old resource-level config on migration, preserving only attributes that existed to prevent overwriting new Option 2 state
+		if d.Get(paramRestEndpoint).(string) != "" {
+			if err := d.Set(paramRestEndpoint, ""); err != nil {
+				return nil, err
+			}
 		}
-		if err := d.Set(paramSchemaRegistryCluster, nil); err != nil {
-			return nil, err
+		if len(d.Get(paramSchemaRegistryCluster).([]interface{})) > 0 {
+			if err := d.Set(paramSchemaRegistryCluster, nil); err != nil {
+				return nil, err
+			}
 		}
-		if err := d.Set(paramCredentials, nil); err != nil {
-			return nil, err
+		if len(d.Get(paramCredentials).([]interface{})) > 0 {
+			if err := d.Set(paramCredentials, nil); err != nil {
+				return nil, err
+			}
 		}
 	}
 
