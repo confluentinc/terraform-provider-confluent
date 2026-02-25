@@ -200,10 +200,7 @@ func schemaRegistryClusterConfigImport(ctx context.Context, d *schema.ResourceDa
 }
 
 func readSchemaRegistryClusterConfigAndSetAttributes(ctx context.Context, d *schema.ResourceData, c *SchemaRegistryRestClient) ([]*schema.ResourceData, error) {
-	// When migrating to provider-level config (Option 2) with a different cluster,
-	// preserve the existing state so CustomizeDiff can detect the cluster change
-	// and force replacement. Without this, the refresh would overwrite the state
-	// with data from the wrong cluster, hiding the change from the diff.
+	// Keep the original state during migration so CustomizeDiff can detect cluster changes and trigger replacement. A refresh would otherwise overwrite state and hide the diff
 	if c.isMetadataSetInProviderBlock && d.Id() != "" && !d.IsNewResource() && c.clusterId != d.Id() {
 		return []*schema.ResourceData{d}, nil
 	}
@@ -318,21 +315,14 @@ func executeSchemaRegistryClusterConfigUpdate(ctx context.Context, c *SchemaRegi
 	return c.apiClient.ConfigV1Api.UpdateTopLevelConfig(c.apiContext(ctx)).ConfigUpdateRequest(*requestData).Execute()
 }
 
-// schemaRegistryClusterConfigForceNewCustomDiff conditionally applies ForceNew
-// for rest_endpoint and schema_registry_cluster fields. This replaces the static
-// ForceNew schema attribute to support migration between resource-level (Option 1)
-// and provider-level (Option 2) config without triggering unnecessary replacement
-// when the underlying cluster is the same.
+// Conditionally set ForceNew for rest_endpoint and schema_registry_cluster so migration between Option 1 and Option 2 doesn’t trigger replacement when the underlying cluster is the same
 func schemaRegistryClusterConfigForceNewCustomDiff(_ context.Context, diff *schema.ResourceDiff, meta interface{}) error {
-	// Skip for initial resource creation
 	if diff.Id() == "" {
 		return nil
 	}
 
 	client := meta.(*Client)
 
-	// Determine the effective cluster ID that will be used after the change.
-	// Provider-level config takes precedence, matching extractSchemaRegistryClusterId behavior.
 	var newClusterId string
 	if client.isSchemaRegistryMetadataSet {
 		newClusterId = client.schemaRegistryClusterId
@@ -343,45 +333,28 @@ func schemaRegistryClusterConfigForceNewCustomDiff(_ context.Context, diff *sche
 		}
 	}
 
-	currentClusterId := diff.Id()
-	sameCluster := newClusterId != "" && currentClusterId == newClusterId
+	sameCluster := newClusterId != "" && diff.Id() == newClusterId
 
-	// Handle rest_endpoint changes
+	// ForceNew for rest_endpoint: always when the cluster changes, or when the endpoint itself changes within Option 1
+	// Skip only for same-cluster migration between Option 1 and Option 2
 	if diff.HasChange(paramRestEndpoint) {
-		if !sameCluster {
+		oldVal, newVal := diff.GetChange(paramRestEndpoint)
+		isMigration := oldVal.(string) == "" || newVal.(string) == ""
+		if !sameCluster || !isMigration {
 			if err := diff.ForceNew(paramRestEndpoint); err != nil {
 				return err
-			}
-		} else {
-			old, new := diff.GetChange(paramRestEndpoint)
-			// Both values present and different = genuine endpoint change, not migration
-			if old.(string) != "" && new.(string) != "" && old.(string) != new.(string) {
-				if err := diff.ForceNew(paramRestEndpoint); err != nil {
-					return err
-				}
 			}
 		}
 	}
 
-	// Handle schema_registry_cluster block changes
+	// ForceNew for schema_registry_cluster: same logic as rest_endpoint.
 	if diff.HasChange(paramSchemaRegistryCluster) {
-		if !sameCluster {
+		oldVal, newVal := diff.GetChange(paramSchemaRegistryCluster)
+		oldList, newList := oldVal.([]interface{}), newVal.([]interface{})
+		isMigration := len(oldList) == 0 || len(newList) == 0
+		if !sameCluster || !isMigration {
 			if err := diff.ForceNew(paramSchemaRegistryCluster); err != nil {
 				return err
-			}
-		} else {
-			old, new := diff.GetChange(paramSchemaRegistryCluster)
-			oldList := old.([]interface{})
-			newList := new.([]interface{})
-			// Both blocks present with different IDs = genuine cluster change, not migration
-			if len(oldList) > 0 && len(newList) > 0 {
-				oldId := oldList[0].(map[string]interface{})[paramId].(string)
-				newId := newList[0].(map[string]interface{})[paramId].(string)
-				if oldId != newId {
-					if err := diff.ForceNew(paramSchemaRegistryCluster); err != nil {
-						return err
-					}
-				}
 			}
 		}
 	}
