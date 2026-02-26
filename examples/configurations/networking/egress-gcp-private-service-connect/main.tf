@@ -62,6 +62,6 @@ resource "confluent_access_point" "private-service-connect" {
   }
   depends_on = [
     confluent_network.gcp-private-service-connect,
-    data.confluent_gateway
+    data.confluent_gateway.main
   ]
 }
