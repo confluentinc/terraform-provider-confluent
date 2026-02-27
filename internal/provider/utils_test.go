@@ -1455,10 +1455,10 @@ func TestValidateAllOrNoneAttributesSetForResources(t *testing.T) {
 	tests := []struct {
 		name string
 
-		kafkaApiKey, kafkaApiSecret, kafkaID, kafkaRestEndpoint                                                                       string
-		schemaRegistryApiKey, schemaRegistryApiSecret, schemaRegistryClusterId, schemaRegistryRestEndpoint, catalogRestEndpoint       string
-		flinkApiKey, flinkApiSecret, flinkOrganizationId, flinkEnvironmentId, flinkComputePoolId, flinkRestEndpoint, flinkPrincipalId string
-		tableflowApiKey, tableflowApiSecret                                                                                           string
+		kafkaApiKey, kafkaApiSecret, kafkaID, kafkaRestEndpoint                                                                 string
+		schemaRegistryApiKey, schemaRegistryApiSecret, schemaRegistryClusterId, schemaRegistryRestEndpoint, catalogRestEndpoint string
+		flinkApiKey, flinkApiSecret, flinkOrganizationId, flinkEnvironmentId, flinkRestEndpoint, flinkPrincipalId               string
+		tableflowApiKey, tableflowApiSecret                                                                                     string
 
 		shouldErr      bool
 		expectedErrMsg string
@@ -1490,7 +1490,6 @@ func TestValidateAllOrNoneAttributesSetForResources(t *testing.T) {
 			flinkApiSecret:      "flink-secret",
 			flinkOrganizationId: "org-123",
 			flinkEnvironmentId:  "env-456",
-			flinkComputePoolId:  "pool-789",
 			flinkRestEndpoint:   "https://flink.us-east-1.aws.confluent.cloud",
 			flinkPrincipalId:    "u-123456",
 
@@ -1542,10 +1541,9 @@ func TestValidateAllOrNoneAttributesSetForResources(t *testing.T) {
 			flinkApiSecret:      "flink-secret",
 			flinkOrganizationId: "org-123",
 			flinkEnvironmentId:  "env-456",
-			flinkComputePoolId:  "pool-789",
 			flinkRestEndpoint:   "https://flink.us-east-1.aws.confluent.cloud",
 			shouldErr:           true,
-			expectedErrMsg:      "All 7 flink_api_key, flink_api_secret",
+			expectedErrMsg:      "All 6 flink_api_key, flink_api_secret",
 			expectedFlags: ResourceMetadataSetFlags{
 				isKafkaMetadataSet:          false,
 				isSchemaRegistryMetadataSet: false,
@@ -1615,7 +1613,7 @@ func TestValidateAllOrNoneAttributesSetForResources(t *testing.T) {
 			flags, diags := validateAllOrNoneAttributesSetForResources(
 				tt.kafkaApiKey, tt.kafkaApiSecret, tt.kafkaID, tt.kafkaRestEndpoint,
 				tt.schemaRegistryApiKey, tt.schemaRegistryApiSecret, tt.schemaRegistryClusterId, tt.schemaRegistryRestEndpoint, tt.catalogRestEndpoint,
-				tt.flinkApiKey, tt.flinkApiSecret, tt.flinkOrganizationId, tt.flinkEnvironmentId, tt.flinkComputePoolId, tt.flinkRestEndpoint, tt.flinkPrincipalId,
+				tt.flinkApiKey, tt.flinkApiSecret, tt.flinkOrganizationId, tt.flinkEnvironmentId, tt.flinkRestEndpoint, tt.flinkPrincipalId,
 				tt.tableflowApiKey, tt.tableflowApiSecret,
 			)
 
@@ -1728,7 +1726,7 @@ func TestValidateAllOrNoneAttributesSetForResourcesWithOAuth(t *testing.T) {
 			flinkPoolID:       "pool-789",
 			flinkRestEndpoint: "https://flink.us-east-1.aws.confluent.cloud",
 			shouldErr:         true,
-			expectedErrMsg:    "All 5 (flink_rest_endpoint, organization_id, environment_id, flink_compute_pool_id, flink_principal_id)",
+			expectedErrMsg:    "All 4 (flink_rest_endpoint, organization_id, environment_id, flink_principal_id)",
 			expectedFlags: ResourceMetadataSetFlags{
 				isKafkaMetadataSet:          false,
 				isSchemaRegistryMetadataSet: false,
@@ -1756,7 +1754,7 @@ func TestValidateAllOrNoneAttributesSetForResourcesWithOAuth(t *testing.T) {
 			flags, diags := validateAllOrNoneAttributesSetForResourcesWithOAuth(
 				tt.kafkaID, tt.kafkaRestEndpoint,
 				tt.srID, tt.srRestEndpoint, tt.catalogRestEndpoint,
-				tt.flinkOrgID, tt.flinkEnvID, tt.flinkPoolID, tt.flinkRestEndpoint, tt.flinkPrincipalID,
+				tt.flinkOrgID, tt.flinkEnvID, tt.flinkRestEndpoint, tt.flinkPrincipalID,
 			)
 
 			if tt.shouldErr {
