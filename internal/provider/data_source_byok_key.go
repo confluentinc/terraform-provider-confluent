@@ -32,9 +32,15 @@ func byokDataSource() *schema.Resource {
 				Description: "The id of the BYOK key",
 				Required:    true,
 			},
-			paramAws:   awsKeyDataSourceSchema(),
-			paramAzure: azureKeyDataSourceSchema(),
-			paramGcp:   gcpKeyDataSourceSchema(),
+			paramDisplayName: {
+				Type:        schema.TypeString,
+				Description: "A human-readable name for the BYOK key.",
+				Computed:    true,
+			},
+			paramValidation: validationSchema(),
+			paramAws:        awsKeyDataSourceSchema(),
+			paramAzure:      azureKeyDataSourceSchema(),
+			paramGcp:        gcpKeyDataSourceSchema(),
 		},
 	}
 }
