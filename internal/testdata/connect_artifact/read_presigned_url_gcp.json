@@ -1,0 +1,12 @@
+{
+  "api_version": "cam/v1",
+  "cloud": "GCP",
+  "content_format": "JAR",
+  "kind": "PresignedUrl",
+  "upload_form_data": {
+    "bucket": "confluent-custom-connectors-stag-us-central1",
+    "object_path": "staging/ccp/v1/2f37f0b6-f8da-4e8b-bc5f-282ebb0511be/connect-e53bb2e8-8de3-49fa-9fb1-4e3fd9a16b66/plugin.jar"
+  },
+  "upload_id": "e53bb2e8-8de3-49fa-9fb1-4e3fd9a16b66",
+  "upload_url": "TF_TEST_URL"
+}

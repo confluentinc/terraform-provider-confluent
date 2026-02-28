@@ -148,6 +148,67 @@ func TestAccConnectArtifactAzureLive(t *testing.T) {
 	})
 }
 
+func TestAccConnectArtifactGCPLive(t *testing.T) {
+	// Enable parallel execution for I/O bound operations
+	t.Parallel()
+
+	// Skip this test unless explicitly enabled
+	if os.Getenv("TF_ACC_PROD") == "" {
+		t.Skip("Skipping live test. Set TF_ACC_PROD=1 to run this test.")
+	}
+
+	// Read credentials and configuration from environment variables (populated by Vault)
+	apiKey := os.Getenv("CONFLUENT_CLOUD_API_KEY")
+	apiSecret := os.Getenv("CONFLUENT_CLOUD_API_SECRET")
+	endpoint := os.Getenv("CONFLUENT_CLOUD_ENDPOINT")
+	if endpoint == "" {
+		endpoint = "https://api.confluent.cloud" // Use default endpoint if not set
+	}
+
+	// Validate required environment variables are present
+	if apiKey == "" || apiSecret == "" {
+		t.Fatal("CONFLUENT_CLOUD_API_KEY and CONFLUENT_CLOUD_API_SECRET must be set for live tests")
+	}
+
+	// Generate unique names for test resources to avoid conflicts
+	randomSuffix := rand.Intn(100000)
+	artifactDisplayName := fmt.Sprintf("tf-live-artifact-gcp-%d", randomSuffix)
+	artifactResourceLabel := "test_live_connect_artifact_gcp"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckConnectArtifactLiveDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckConnectArtifactLiveConfig(endpoint, artifactResourceLabel, artifactDisplayName, "GCP", apiKey, apiSecret),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckConnectArtifactLiveExists(fmt.Sprintf("confluent_connect_artifact.%s", artifactResourceLabel)),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_connect_artifact.%s", artifactResourceLabel), "display_name", artifactDisplayName),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_connect_artifact.%s", artifactResourceLabel), "cloud", "gcp"),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_connect_artifact.%s", artifactResourceLabel), "content_format", "JAR"),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_connect_artifact.%s", artifactResourceLabel), "description", "A test connect artifact for live testing"),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_connect_artifact.%s", artifactResourceLabel), "environment.0.id", "env-zyg27z"),
+					resource.TestCheckResourceAttrSet(fmt.Sprintf("confluent_connect_artifact.%s", artifactResourceLabel), "id"),
+				),
+			},
+			{
+				ResourceName:            fmt.Sprintf("confluent_connect_artifact.%s", artifactResourceLabel),
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"artifact_file"},
+				ImportStateIdFunc: func(state *terraform.State) (string, error) {
+					resources := state.RootModule().Resources
+					artifactId := resources[fmt.Sprintf("confluent_connect_artifact.%s", artifactResourceLabel)].Primary.ID
+					environmentId := resources[fmt.Sprintf("confluent_connect_artifact.%s", artifactResourceLabel)].Primary.Attributes["environment.0.id"]
+					cloud := resources[fmt.Sprintf("confluent_connect_artifact.%s", artifactResourceLabel)].Primary.Attributes["cloud"]
+					return environmentId + "/" + cloud + "/" + artifactId, nil
+				},
+			},
+		},
+	})
+}
+
 func testAccCheckConnectArtifactLiveDestroy(s *terraform.State) error {
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "confluent_connect_artifact" {
