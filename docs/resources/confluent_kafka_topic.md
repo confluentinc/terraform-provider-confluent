@@ -142,6 +142,7 @@ resource "confluent_kafka_topic" "orders" {
     "retention.ms"                        = "604800000"
     "segment.bytes"                       = "104857600"
     "segment.ms"                          = "604800000"
+    "confluent.schema.validation.context.name" = "default"
   }
   credentials {
     key    = confluent_api_key.app-manager-kafka-api-key.id
