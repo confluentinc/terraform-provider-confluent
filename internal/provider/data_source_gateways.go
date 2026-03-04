@@ -74,7 +74,7 @@ func gatewaysDataSource() *schema.Resource {
 							Type:        schema.TypeList,
 							Elem:        &schema.Schema{Type: schema.TypeString},
 							Optional:    true,
-							Description: "Filter the results by exact match for gateway_type. Pass multiple times to see results matching any of the values. Valid values are: `AwsEgressPrivateLink`, `AwsIngressPrivateLink`, `AwsPeering`, `AwsPrivateNetworkInterface`, `AzureEgressPrivateLink`, `AzurePeering`, `GcpEgressPrivateServiceConnect`, `GcpPeering`.",
+							Description: "Filter the results by exact match for gateway_type. Pass multiple times to see results matching any of the values. Valid values are: `AwsEgressPrivateLink`, `AwsIngressPrivateLink`, `AwsPeering`, `AwsPrivateNetworkInterface`, `AzureEgressPrivateLink`, `AzureIngressPrivateLink`, `AzurePeering`, `GcpEgressPrivateServiceConnect`, `GcpIngressPrivateServiceConnect`, `GcpPeering`.",
 						},
 						paramId: {
 							Type:        schema.TypeList,
@@ -197,6 +197,12 @@ func gatewaysDataSourceRead(ctx context.Context, d *schema.ResourceData, meta in
 				paramRegion:       gateway.Spec.GetConfig().NetworkingV1AzureEgressPrivateLinkGatewaySpec.GetRegion(),
 				paramSubscription: gateway.Status.GetCloudGateway().NetworkingV1AzureEgressPrivateLinkGatewayStatus.GetSubscription(),
 			}}
+		} else if gateway.Spec.GetConfig().NetworkingV1AzureIngressPrivateLinkGatewaySpec != nil && gateway.Status.GetCloudGateway().NetworkingV1AzureIngressPrivateLinkGatewayStatus != nil {
+			gatewayMap[paramAzureIngressPrivateLinkGateway] = []interface{}{map[string]interface{}{
+				paramRegion:                       gateway.Spec.GetConfig().NetworkingV1AzureIngressPrivateLinkGatewaySpec.GetRegion(),
+				paramPrivateLinkServiceAlias:      gateway.Status.GetCloudGateway().NetworkingV1AzureIngressPrivateLinkGatewayStatus.GetPrivateLinkServiceAlias(),
+				paramPrivateLinkServiceResourceId: gateway.Status.GetCloudGateway().NetworkingV1AzureIngressPrivateLinkGatewayStatus.GetPrivateLinkServiceResourceId(),
+			}}
 		} else if gateway.Spec.GetConfig().NetworkingV1AzurePeeringGatewaySpec != nil {
 			gatewayMap[paramAzurePeeringGateway] = []interface{}{map[string]interface{}{
 				paramRegion: gateway.Spec.GetConfig().NetworkingV1AzurePeeringGatewaySpec.GetRegion(),
@@ -209,6 +215,11 @@ func gatewaysDataSourceRead(ctx context.Context, d *schema.ResourceData, meta in
 			gatewayMap[paramGcpEgressPrivateServiceConnectGateway] = []interface{}{map[string]interface{}{
 				paramRegion:  gateway.Spec.GetConfig().NetworkingV1GcpEgressPrivateServiceConnectGatewaySpec.GetRegion(),
 				paramProject: project,
+			}}
+		} else if gateway.Spec.GetConfig().NetworkingV1GcpIngressPrivateServiceConnectGatewaySpec != nil && gateway.Status.GetCloudGateway().NetworkingV1GcpIngressPrivateServiceConnectGatewayStatus != nil {
+			gatewayMap[paramGcpIngressPrivateServiceConnectGateway] = []interface{}{map[string]interface{}{
+				paramRegion: gateway.Spec.GetConfig().NetworkingV1GcpIngressPrivateServiceConnectGatewaySpec.GetRegion(),
+				paramPrivateServiceConnectServiceAttachment: gateway.Status.GetCloudGateway().NetworkingV1GcpIngressPrivateServiceConnectGatewayStatus.GetPrivateServiceConnectServiceAttachment(),
 			}}
 		} else if gateway.Spec.GetConfig().NetworkingV1GcpPeeringGatewaySpec != nil {
 			iamPrincipal := ""
@@ -269,19 +280,19 @@ func executeListGateways(ctx context.Context, c *Client, environmentId string, g
 	request := c.networkingGatewayV1Client.GatewaysNetworkingV1Api.ListNetworkingV1Gateways(ctx).Environment(environmentId).PageSize(listGatewaysPageSize)
 
 	if len(gatewayTypes) > 0 {
-		request = request.GatewayType(gatewayTypes)
+		request = request.GatewayType(netgw.MultipleSearchFilter{Items: gatewayTypes})
 	}
 	if len(ids) > 0 {
-		request = request.Id(ids)
+		request = request.Id(netgw.MultipleSearchFilter{Items: ids})
 	}
 	if len(regions) > 0 {
-		request = request.SpecConfigRegion(regions)
+		request = request.SpecConfigRegion(netgw.MultipleSearchFilter{Items: regions})
 	}
 	if len(displayNames) > 0 {
-		request = request.SpecDisplayName(displayNames)
+		request = request.SpecDisplayName(netgw.MultipleSearchFilter{Items: displayNames})
 	}
 	if len(phases) > 0 {
-		request = request.StatusPhase(phases)
+		request = request.StatusPhase(netgw.MultipleSearchFilter{Items: phases})
 	}
 	if pageToken != "" {
 		request = request.PageToken(pageToken)
