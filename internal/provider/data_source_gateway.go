@@ -25,16 +25,18 @@ import (
 )
 
 const (
-	paramAwsPeeringGateway                     = "aws_peering_gateway"
-	paramAwsEgressPrivateLinkGateway           = "aws_egress_private_link_gateway"
-	paramAwsIngressPrivateLinkGateway          = "aws_ingress_private_link_gateway"
-	paramAwsPrivateNetworkInterfaceGateway     = "aws_private_network_interface_gateway"
-	paramAzureEgressPrivateLinkGateway         = "azure_egress_private_link_gateway"
-	paramAzurePeeringGateway                   = "azure_peering_gateway"
-	paramGcpEgressPrivateServiceConnectGateway = "gcp_egress_private_service_connect_gateway"
-	paramGcpPeeringGateway                     = "gcp_peering_gateway"
-	paramPrincipalArn                          = "principal_arn"
-	paramIAMPrincipal                          = "iam_principal"
+	paramAwsPeeringGateway                       = "aws_peering_gateway"
+	paramAwsEgressPrivateLinkGateway             = "aws_egress_private_link_gateway"
+	paramAwsIngressPrivateLinkGateway            = "aws_ingress_private_link_gateway"
+	paramAwsPrivateNetworkInterfaceGateway       = "aws_private_network_interface_gateway"
+	paramAzureEgressPrivateLinkGateway           = "azure_egress_private_link_gateway"
+	paramAzureIngressPrivateLinkGateway          = "azure_ingress_private_link_gateway"
+	paramAzurePeeringGateway                     = "azure_peering_gateway"
+	paramGcpEgressPrivateServiceConnectGateway   = "gcp_egress_private_service_connect_gateway"
+	paramGcpIngressPrivateServiceConnectGateway  = "gcp_ingress_private_service_connect_gateway"
+	paramGcpPeeringGateway                       = "gcp_peering_gateway"
+	paramPrincipalArn                            = "principal_arn"
+	paramIAMPrincipal                            = "iam_principal"
 )
 
 func gatewayDataSource() *schema.Resource {
