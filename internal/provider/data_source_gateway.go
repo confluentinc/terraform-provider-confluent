@@ -53,14 +53,16 @@ func gatewayDataSource() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			paramAwsEgressPrivateLinkGateway:           awsEgressPrivateLinkGatewayDataSourceSchema(),
-			paramAwsIngressPrivateLinkGateway:          awsIngressPrivateLinkGatewayDataSourceSchema(),
-			paramAwsPeeringGateway:                     awsPeeringGatewaySpecDataSourceSchema(),
-			paramAwsPrivateNetworkInterfaceGateway:     awsPrivateNetworkInterfaceGatewayDataSourceSchema(),
-			paramAzureEgressPrivateLinkGateway:         azureEgressPrivateLinkGatewayDataSourceSchema(),
-			paramAzurePeeringGateway:                   azurePeeringGatewaySpecDataSourceSchema(),
-			paramGcpEgressPrivateServiceConnectGateway: gcpEgressPrivateServiceConnectGatewayDataSourceSchema(),
-			paramGcpPeeringGateway:                     gcpPeeringGatewaySpecDataSourceSchema(),
+			paramAwsEgressPrivateLinkGateway:            awsEgressPrivateLinkGatewayDataSourceSchema(),
+			paramAwsIngressPrivateLinkGateway:           awsIngressPrivateLinkGatewayDataSourceSchema(),
+			paramAwsPeeringGateway:                      awsPeeringGatewaySpecDataSourceSchema(),
+			paramAwsPrivateNetworkInterfaceGateway:      awsPrivateNetworkInterfaceGatewayDataSourceSchema(),
+			paramAzureEgressPrivateLinkGateway:          azureEgressPrivateLinkGatewayDataSourceSchema(),
+			paramAzureIngressPrivateLinkGateway:         azureIngressPrivateLinkGatewayDataSourceSchema(),
+			paramAzurePeeringGateway:                    azurePeeringGatewaySpecDataSourceSchema(),
+			paramGcpEgressPrivateServiceConnectGateway:  gcpEgressPrivateServiceConnectGatewayDataSourceSchema(),
+			paramGcpIngressPrivateServiceConnectGateway: gcpIngressPrivateServiceConnectGatewayDataSourceSchema(),
+			paramGcpPeeringGateway:                      gcpPeeringGatewaySpecDataSourceSchema(),
 		},
 	}
 }
@@ -176,6 +178,32 @@ func azureEgressPrivateLinkGatewayDataSourceSchema() *schema.Schema {
 	}
 }
 
+func azureIngressPrivateLinkGatewayDataSourceSchema() *schema.Schema {
+	return &schema.Schema{
+		Type: schema.TypeList,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramRegion: {
+					Type:        schema.TypeString,
+					Computed:    true,
+					Description: "Azure region of the Ingress Private Link Gateway.",
+				},
+				paramPrivateLinkServiceAlias: {
+					Type:        schema.TypeString,
+					Computed:    true,
+					Description: "Alias of the Confluent Cloud Private Link Service.",
+				},
+				paramPrivateLinkServiceResourceId: {
+					Type:        schema.TypeString,
+					Computed:    true,
+					Description: "Resource ID of the Confluent Cloud Private Link Service.",
+				},
+			},
+		},
+		Computed: true,
+	}
+}
+
 func gcpEgressPrivateServiceConnectGatewayDataSourceSchema() *schema.Schema {
 	return &schema.Schema{
 		Type: schema.TypeList,
@@ -188,6 +216,27 @@ func gcpEgressPrivateServiceConnectGatewayDataSourceSchema() *schema.Schema {
 				paramProject: {
 					Type:     schema.TypeString,
 					Computed: true,
+				},
+			},
+		},
+		Computed: true,
+	}
+}
+
+func gcpIngressPrivateServiceConnectGatewayDataSourceSchema() *schema.Schema {
+	return &schema.Schema{
+		Type: schema.TypeList,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramRegion: {
+					Type:        schema.TypeString,
+					Computed:    true,
+					Description: "GCP region of the Ingress Private Service Connect Gateway.",
+				},
+				paramPrivateServiceConnectServiceAttachment: {
+					Type:        schema.TypeString,
+					Computed:    true,
+					Description: "URI of the Private Service Connect Service Attachment in Confluent Cloud.",
 				},
 			},
 		},
