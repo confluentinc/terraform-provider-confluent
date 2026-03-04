@@ -29,7 +29,7 @@ import (
 	networkinggatewayv1 "github.com/confluentinc/ccloud-sdk-go-v2/networking-gateway/v1"
 )
 
-var acceptedGatewayTypes = []string{paramAwsEgressPrivateLinkGateway, paramAwsIngressPrivateLinkGateway, paramAwsPrivateNetworkInterfaceGateway, paramAzureEgressPrivateLinkGateway}
+var acceptedGatewayTypes = []string{paramAwsEgressPrivateLinkGateway, paramAwsIngressPrivateLinkGateway, paramAwsPrivateNetworkInterfaceGateway, paramAzureEgressPrivateLinkGateway, paramAzureIngressPrivateLinkGateway, paramGcpIngressPrivateServiceConnectGateway}
 
 func gatewayResource() *schema.Resource {
 	return &schema.Resource{
@@ -47,11 +47,13 @@ func gatewayResource() *schema.Resource {
 				Description:  "A name for the Gateway.",
 				ValidateFunc: validation.StringIsNotEmpty,
 			},
-			paramEnvironment:                       environmentSchema(),
-			paramAwsEgressPrivateLinkGateway:       awsEgressPrivateLinkGatewaySchema(),
-			paramAwsIngressPrivateLinkGateway:      awsIngressPrivateLinkGatewaySchema(),
-			paramAwsPrivateNetworkInterfaceGateway: awsPrivateNetworkInterfaceGatewaySchema(),
-			paramAzureEgressPrivateLinkGateway:     azureEgressPrivateLinkGatewaySchema(),
+			paramEnvironment:                            environmentSchema(),
+			paramAwsEgressPrivateLinkGateway:            awsEgressPrivateLinkGatewaySchema(),
+			paramAwsIngressPrivateLinkGateway:           awsIngressPrivateLinkGatewaySchema(),
+			paramAwsPrivateNetworkInterfaceGateway:      awsPrivateNetworkInterfaceGatewaySchema(),
+			paramAzureEgressPrivateLinkGateway:          azureEgressPrivateLinkGatewaySchema(),
+			paramAzureIngressPrivateLinkGateway:         azureIngressPrivateLinkGatewaySchema(),
+			paramGcpIngressPrivateServiceConnectGateway: gcpIngressPrivateServiceConnectGatewaySchema(),
 		},
 	}
 }
@@ -158,6 +160,65 @@ func awsPrivateNetworkInterfaceGatewaySchema() *schema.Schema {
 					Type:        schema.TypeString,
 					Computed:    true,
 					Description: "The AWS account ID associated with the Private Network Interface Gateway.",
+				},
+			},
+		},
+		MinItems:     1,
+		MaxItems:     1,
+		ExactlyOneOf: acceptedGatewayTypes,
+	}
+}
+
+func azureIngressPrivateLinkGatewaySchema() *schema.Schema {
+	return &schema.Schema{
+		Type:     schema.TypeList,
+		ForceNew: true,
+		Computed: true,
+		Optional: true,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramRegion: {
+					Type:        schema.TypeString,
+					Required:    true,
+					ForceNew:    true,
+					Description: "Azure region of the Ingress Private Link Gateway.",
+				},
+				paramPrivateLinkServiceAlias: {
+					Type:        schema.TypeString,
+					Computed:    true,
+					Description: "Alias of the Confluent Cloud Private Link Service.",
+				},
+				paramPrivateLinkServiceResourceId: {
+					Type:        schema.TypeString,
+					Computed:    true,
+					Description: "Resource ID of the Confluent Cloud Private Link Service.",
+				},
+			},
+		},
+		MinItems:     1,
+		MaxItems:     1,
+		ExactlyOneOf: acceptedGatewayTypes,
+	}
+}
+
+func gcpIngressPrivateServiceConnectGatewaySchema() *schema.Schema {
+	return &schema.Schema{
+		Type:     schema.TypeList,
+		ForceNew: true,
+		Computed: true,
+		Optional: true,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramRegion: {
+					Type:        schema.TypeString,
+					Required:    true,
+					ForceNew:    true,
+					Description: "GCP region of the Ingress Private Service Connect Gateway.",
+				},
+				paramPrivateServiceConnectServiceAttachment: {
+					Type:        schema.TypeString,
+					Computed:    true,
+					Description: "URI of the Private Service Connect Service Attachment in Confluent Cloud.",
 				},
 			},
 		},
