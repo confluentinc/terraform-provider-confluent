@@ -643,6 +643,7 @@ func kafkaTopicUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 				continue
 			}
 			if !v.Value.IsSet() {
+				// It will never happen because of the way we construct topicSettingsUpdateBatch
 				continue
 			}
 			expectedValue := *v.Value.Get()
