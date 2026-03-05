@@ -3,7 +3,7 @@
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.62.0...v2.63.0)
 
 **New features:**
-* Added support for resetting topic configs to default values for `confluent_kafka_topic` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_topic).
+* Added support for resetting topic configs to default values for the `confluent_kafka_topic` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_topic).
 
 **Bug fixes:**
 * Updated the docs.
