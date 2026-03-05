@@ -543,8 +543,9 @@ func kafkaTopicUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 	}
 	if d.HasChange(paramConfigs) {
 		// TF Provider allows the following operations for editable topic settings under 'config' block:
-		// 1. Adding new key value pair, for example, "retention.ms" = "600000"
-		// 2. Update a value for existing key value pair, for example, "retention.ms" = "600000" -> "retention.ms" = "600001"
+		// 1. Add a new key-value pair, e.g., "retention.ms" = "600000"
+		// 2. Update the value of an existing key-value pair, e.g., "retention.ms" = "600000" -> "retention.ms" = "600001"
+		// 3. Remove a key-value pair to reset it to the default value, e.g., "retention.ms" = "600001" -> {}
 		// You might find the list of editable topic settings and their limits at
 		// https://docs.confluent.io/cloud/current/client-apps/topics/manage.html#ak-topic-configurations-for-all-ccloud-cluster-types
 
