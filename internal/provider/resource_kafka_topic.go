@@ -569,7 +569,7 @@ func kafkaTopicUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 						Operation: *kafkarestv3.NewNullableString(ptr(configOperationDelete)),
 					})
 				} else {
-					return diag.Errorf("error updating Kafka Topic %q: %q topic setting is read-only and cannot be reset or deleted. "+
+					return diag.Errorf("error updating Kafka Topic %q: %q topic setting is read-only and cannot be reset or removed. "+
 						"Read %s for more details.", d.Id(), oldTopicSettingName, docsUrl)
 				}
 			}
