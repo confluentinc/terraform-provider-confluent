@@ -41,6 +41,7 @@ const (
 	kafkaRestAPIWaitAfterCreate = 10 * time.Second
 	docsUrl                     = "https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_topic"
 	dynamicTopicConfig          = "DYNAMIC_TOPIC_CONFIG"
+	configOperationDelete       = "DELETE"
 )
 
 // https://docs.confluent.io/cloud/current/client-apps/topics/manage.html#ak-topic-configurations-for-all-ccloud-cluster-types
@@ -543,8 +544,9 @@ func kafkaTopicUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 	}
 	if d.HasChange(paramConfigs) {
 		// TF Provider allows the following operations for editable topic settings under 'config' block:
-		// 1. Adding new key value pair, for example, "retention.ms" = "600000"
-		// 2. Update a value for existing key value pair, for example, "retention.ms" = "600000" -> "retention.ms" = "600001"
+		// 1. Add a new key-value pair, e.g., "retention.ms" = "600000"
+		// 2. Update the value of an existing key-value pair, e.g., "retention.ms" = "600000" -> "retention.ms" = "600001"
+		// 3. Remove a key-value pair to reset it to the default value, e.g., "retention.ms" = "600001" -> {}
 		// You might find the list of editable topic settings and their limits at
 		// https://docs.confluent.io/cloud/current/client-apps/topics/manage.html#ak-topic-configurations-for-all-ccloud-cluster-types
 
@@ -553,25 +555,31 @@ func kafkaTopicUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 		// * 'new' topic settings -- all topic settings from TF configuration _after_ changes
 		oldTopicSettingsMap, newTopicSettingsMap := extractOldAndNewSettings(d)
 
-		// Verify that no topic settings were removed (reset to its default value) in TF configuration which is an unsupported operation at the moment
-		for oldTopicSettingName := range oldTopicSettingsMap {
-			if _, ok := newTopicSettingsMap[oldTopicSettingName]; !ok {
-				return diag.Errorf("error updating Kafka Topic %q: reset to topic setting's default value operation (in other words, removing topic settings from 'configs' block) "+
-					"is not supported at the moment. "+
-					"Instead, find its default value at %s and set its current value to the default value.", d.Id(), docsUrl)
-			}
-		}
-
-		// Store only topic settings that were updated in TF configuration.
+		// Store topic settings that were updated or removed in TF configuration.
 		// Will be used for creating a request to Kafka REST API.
 		var topicSettingsUpdateBatch []kafkarestv3.AlterConfigBatchRequestDataData
 
-		// Verify that topics that were changed in TF configuration settings are indeed editable
+		// Operation #3: detect removed configs and add DELETE operations to reset them to default values
+		for oldTopicSettingName := range oldTopicSettingsMap {
+			if _, ok := newTopicSettingsMap[oldTopicSettingName]; !ok {
+				isTopicSettingEditable := stringInSlice(oldTopicSettingName, editableTopicSettings, false)
+				if isTopicSettingEditable {
+					topicSettingsUpdateBatch = append(topicSettingsUpdateBatch, kafkarestv3.AlterConfigBatchRequestDataData{
+						Name:      oldTopicSettingName,
+						Operation: *kafkarestv3.NewNullableString(ptr(configOperationDelete)),
+					})
+				} else {
+					return diag.Errorf("error updating Kafka Topic %q: %q topic setting is read-only and cannot be updated. "+
+						"Read %s for more details.", d.Id(), oldTopicSettingName, docsUrl)
+				}
+			}
+		}
+
+		// Operation #1 and #2: detect added or updated configs
 		for topicSettingName, newTopicSettingValue := range newTopicSettingsMap {
 			oldTopicSettingValue, ok := oldTopicSettingsMap[topicSettingName]
 			isTopicSettingValueUpdated := !(ok && oldTopicSettingValue == newTopicSettingValue)
 			if isTopicSettingValueUpdated {
-				// operation #1 (ok = False) or operation #2 (ok = True, oldTopicSettingValue != newTopicSettingValue)
 				isTopicSettingEditable := stringInSlice(topicSettingName, editableTopicSettings, false)
 				if isTopicSettingEditable {
 					topicSettingsUpdateBatch = append(topicSettingsUpdateBatch, kafkarestv3.AlterConfigBatchRequestDataData{
@@ -628,11 +636,15 @@ func kafkaTopicUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 
 		var updatedTopicSettings, outdatedTopicSettings []string
 		for _, v := range topicSettingsUpdateBatch {
-			if !v.Value.IsSet() {
-				// It will never happen because of the way we construct topicSettingsUpdateBatch
+			topicSettingName := v.Name
+			// Skip verification for DELETE operations since we don't know the default value
+			if v.Operation.IsSet() && *v.Operation.Get() == configOperationDelete {
+				updatedTopicSettings = append(updatedTopicSettings, topicSettingName)
 				continue
 			}
-			topicSettingName := v.Name
+			if !v.Value.IsSet() {
+				continue
+			}
 			expectedValue := *v.Value.Get()
 			actualValue, ok := actualTopicSettings[topicSettingName]
 			if ok && actualValue != expectedValue {
