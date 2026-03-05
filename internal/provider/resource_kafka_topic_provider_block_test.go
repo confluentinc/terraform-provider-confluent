@@ -164,6 +164,7 @@ func TestAccTopicWithEnhancedProviderBlock(t *testing.T) {
 				),
 			},
 			{
+				// Step 2: update configs (add segment.bytes, max.compaction.lag.ms; update sixthConfig) and delete retention.ms
 				Config: testAccCheckTopicUpdatedConfigWithEnhancedProviderBlock(confluentCloudBaseUrl, mockTopicTestServerUrl),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckTopicExists(fullTopicResourceLabel),
@@ -174,9 +175,9 @@ func TestAccTopicWithEnhancedProviderBlock(t *testing.T) {
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "topic_name", topicName),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "partitions_count", strconv.Itoa(partitionCount)),
 					resource.TestCheckNoResourceAttr(fullTopicResourceLabel, "rest_endpoint"),
-					resource.TestCheckResourceAttr(fullTopicResourceLabel, "config.%", "5"),
+					resource.TestCheckResourceAttr(fullTopicResourceLabel, "config.%", "4"),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, fmt.Sprintf("config.%s", firstConfigName), firstConfigValue),
-					resource.TestCheckResourceAttr(fullTopicResourceLabel, fmt.Sprintf("config.%s", secondConfigName), secondConfigUpdatedValue),
+					resource.TestCheckNoResourceAttr(fullTopicResourceLabel, fmt.Sprintf("config.%s", secondConfigName)),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, fmt.Sprintf("config.%s", thirdConfigName), thirdConfigAddedValue),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, fmt.Sprintf("config.%s", fourthConfigName), fourthConfigAddedValue),
 					resource.TestCheckNoResourceAttr(fullTopicResourceLabel, fmt.Sprintf("config.%s", fifthConfigName)),
@@ -236,17 +237,16 @@ func testAccCheckTopicUpdatedConfigWithEnhancedProviderBlock(confluentCloudBaseU
 	  kafka_cluster {
         id = "%s"
       }
-	
+
 	  topic_name = "%s"
 	  partitions_count = "%d"
-	
+
 	  config = {
-		"%s" = "%s"
 		"%s" = "%s"
 		"%s" = "%s"
 		"%s" = "%s"
 		"%s" = "%s"
 	  }
 	}
-	`, confluentCloudBaseUrl, kafkaApiKey, kafkaApiSecret, mockServerUrl, topicResourceLabel, clusterId, topicName, partitionCount, firstConfigName, firstConfigValue, secondConfigName, secondConfigUpdatedValue, thirdConfigName, thirdConfigAddedValue, fourthConfigName, fourthConfigAddedValue, sixthConfigName, sixthConfigUpdatedValue)
+	`, confluentCloudBaseUrl, kafkaApiKey, kafkaApiSecret, mockServerUrl, topicResourceLabel, clusterId, topicName, partitionCount, firstConfigName, firstConfigValue, thirdConfigName, thirdConfigAddedValue, fourthConfigName, fourthConfigAddedValue, sixthConfigName, sixthConfigUpdatedValue)
 }
