@@ -76,6 +76,7 @@ func TestAccKafkaTopicLive(t *testing.T) {
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_topic.%s", topicResourceLabel), "partitions_count", "6"),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_topic.%s", topicResourceLabel), "config.cleanup.policy", "delete"),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_topic.%s", topicResourceLabel), "config.retention.ms", "604800000"),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_topic.%s", topicResourceLabel), "config.max.message.bytes", "1048588"),
 					resource.TestCheckResourceAttrSet(fmt.Sprintf("confluent_kafka_topic.%s", topicResourceLabel), "id"),
 				),
 			},
@@ -133,9 +134,11 @@ func TestAccKafkaTopicUpdateLive(t *testing.T) {
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_topic.%s", topicResourceLabel), "partitions_count", "6"),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_topic.%s", topicResourceLabel), "config.cleanup.policy", "delete"),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_topic.%s", topicResourceLabel), "config.retention.ms", "604800000"),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_topic.%s", topicResourceLabel), "config.max.message.bytes", "1048588"),
 				),
 			},
 			{
+				// Step 2: update partitions count, update retention.ms, and delete max.message.bytes (reset to default)
 				Config: testAccCheckKafkaTopicUpdateLiveConfig(endpoint, topicResourceLabel, topicName, kafkaClusterId, kafkaRestEndpoint, apiKey, apiSecret, kafkaApiKey, kafkaApiSecret),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckKafkaTopicLiveExists(fmt.Sprintf("confluent_kafka_topic.%s", topicResourceLabel)),
@@ -143,6 +146,7 @@ func TestAccKafkaTopicUpdateLive(t *testing.T) {
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_topic.%s", topicResourceLabel), "partitions_count", "8"), // Updated
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_topic.%s", topicResourceLabel), "config.cleanup.policy", "delete"),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_topic.%s", topicResourceLabel), "config.retention.ms", "86400000"), // Updated
+					resource.TestCheckNoResourceAttr(fmt.Sprintf("confluent_kafka_topic.%s", topicResourceLabel), "config.max.message.bytes"),      // Deleted (reset to default)
 				),
 			},
 		},
@@ -168,6 +172,7 @@ func testAccCheckKafkaTopicLiveConfig(endpoint, topicResourceLabel, topicName, k
 		config = {
 			"cleanup.policy" = "delete"
 			"retention.ms"   = "604800000"
+			"max.message.bytes" = "1048588"
 		}
 
 		credentials {
@@ -193,7 +198,7 @@ func testAccCheckKafkaTopicUpdateLiveConfig(endpoint, topicResourceLabel, topicN
 		topic_name       = "%s"
 		partitions_count = 8  # Updated from 6
 		rest_endpoint    = "%s"
-		
+
 		config = {
 			"cleanup.policy" = "delete"
 			"retention.ms"   = "86400000"  # Updated from 604800000 (1 day instead of 7 days)
@@ -238,4 +243,4 @@ func testAccCheckKafkaTopicLiveDestroy(s *terraform.State) error {
 		}
 	}
 	return nil
-} 
+}
