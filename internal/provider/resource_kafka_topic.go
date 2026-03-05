@@ -580,6 +580,7 @@ func kafkaTopicUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 			oldTopicSettingValue, ok := oldTopicSettingsMap[topicSettingName]
 			isTopicSettingValueUpdated := !(ok && oldTopicSettingValue == newTopicSettingValue)
 			if isTopicSettingValueUpdated {
+				// operation #1 (ok = False) or operation #2 (ok = True, oldTopicSettingValue != newTopicSettingValue)
 				isTopicSettingEditable := stringInSlice(topicSettingName, editableTopicSettings, false)
 				if isTopicSettingEditable {
 					topicSettingsUpdateBatch = append(topicSettingsUpdateBatch, kafkarestv3.AlterConfigBatchRequestDataData{
