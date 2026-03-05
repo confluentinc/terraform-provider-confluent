@@ -41,6 +41,7 @@ const (
 	kafkaRestAPIWaitAfterCreate = 10 * time.Second
 	docsUrl                     = "https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_topic"
 	dynamicTopicConfig          = "DYNAMIC_TOPIC_CONFIG"
+	configOperationDelete       = "DELETE"
 )
 
 // https://docs.confluent.io/cloud/current/client-apps/topics/manage.html#ak-topic-configurations-for-all-ccloud-cluster-types
@@ -565,7 +566,7 @@ func kafkaTopicUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 				if isTopicSettingEditable {
 					topicSettingsUpdateBatch = append(topicSettingsUpdateBatch, kafkarestv3.AlterConfigBatchRequestDataData{
 						Name:      oldTopicSettingName,
-						Operation: *kafkarestv3.NewNullableString(ptr("DELETE")),
+						Operation: *kafkarestv3.NewNullableString(ptr(configOperationDelete)),
 					})
 				} else {
 					return diag.Errorf("error updating Kafka Topic %q: %q topic setting is read-only and cannot be updated. "+
@@ -637,7 +638,7 @@ func kafkaTopicUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 		for _, v := range topicSettingsUpdateBatch {
 			topicSettingName := v.Name
 			// Skip verification for DELETE operations since we don't know the default value
-			if v.Operation.IsSet() && *v.Operation.Get() == "DELETE" {
+			if v.Operation.IsSet() && *v.Operation.Get() == configOperationDelete {
 				updatedTopicSettings = append(updatedTopicSettings, topicSettingName)
 				continue
 			}
