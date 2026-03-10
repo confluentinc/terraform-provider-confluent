@@ -257,6 +257,7 @@ func schemaExporterCreate(ctx context.Context, d *schema.ResourceData, meta inte
 		return diag.Errorf("error creating Schema Exporter: error marshaling %#v to json: %s", er, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Schema Exporter: %s", requestJson))
+	tflog.Debug(ctx, fmt.Sprintf("Creating new Schema Exporter with default headers: %v", c.apiClient.GetConfig().DefaultHeader))
 
 	createdExporter, resp, err := request.Execute()
 	if err != nil {
