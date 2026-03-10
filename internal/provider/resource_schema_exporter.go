@@ -149,8 +149,7 @@ func destinationSchemaRegistryClusterBlockSchema() *schema.Schema {
 					DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
 						// During API key -> OAuth migration, ignore diffs on id as it is not required for API key/secret authentication
 						// In this scenario, resource should not be recreated
-						// Only suppress during updates (when resource already exists), not during creation
-						if d.Id() != "" && old == "" && new != "" {
+						if old == "" && new != "" {
 							return true
 						}
 						return false
@@ -252,9 +251,9 @@ func schemaExporterCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	er.SetConfig(constructDestinationSRClusterRequest(d, meta))
 
 	request := c.apiClient.ExportersV1Api.RegisterExporter(c.apiContext(ctx)).ExporterReference(*er)
-	requestJson, err := json.Marshal(er)
+	requestJson, err := json.Marshal(request)
 	if err != nil {
-		return diag.Errorf("error creating Schema Exporter: error marshaling %#v to json: %s", er, createDescriptiveError(err))
+		return diag.Errorf("error creating Schema Exporter: error marshaling %#v to json: %s", request, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Schema Exporter: %s", requestJson))
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Schema Exporter with default headers: %v", c.apiClient.GetConfig().DefaultHeader))
