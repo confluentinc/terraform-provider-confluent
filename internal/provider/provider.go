@@ -341,6 +341,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_ksql_cluster":                       ksqlDataSource(),
 				"confluent_flink_artifact":                     flinkArtifactDataSource(),
 				"confluent_flink_compute_pool":                 computePoolDataSource(),
+				"confluent_flink_compute_pool_config":          computePoolConfigDataSource(),
 				"confluent_flink_connection":                   flinkConnectionDataSource(),
 				"confluent_flink_region":                       flinkRegionDataSource(),
 				"confluent_identity_pool":                      identityPoolDataSource(),
@@ -406,6 +407,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_ksql_cluster":                       ksqlResource(),
 				"confluent_flink_artifact":                     artifactResource(),
 				"confluent_flink_compute_pool":                 computePoolResource(),
+				"confluent_flink_compute_pool_config":          computePoolConfigResource(),
 				"confluent_flink_connection":                   flinkConnectionResource(),
 				"confluent_flink_statement":                    flinkStatementResource(),
 				"confluent_connector":                          connectorResource(),
@@ -705,14 +707,14 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 		if resourceMetadataFlags, err = validateAllOrNoneAttributesSetForResourcesWithOAuth(
 			kafkaClusterId, kafkaRestEndpoint,
 			schemaRegistryClusterId, schemaRegistryRestEndpoint, catalogRestEndpoint,
-			flinkOrganizationId, flinkEnvironmentId, flinkComputePoolId, flinkRestEndpoint, flinkPrincipalId); err != nil {
+			flinkOrganizationId, flinkEnvironmentId, flinkRestEndpoint, flinkPrincipalId); err != nil {
 			return nil, err
 		}
 	} else {
 		resourceMetadataFlags, err = validateAllOrNoneAttributesSetForResources(
 			kafkaApiKey, kafkaApiSecret, kafkaClusterId, kafkaRestEndpoint,
 			schemaRegistryApiKey, schemaRegistryApiSecret, schemaRegistryClusterId, schemaRegistryRestEndpoint, catalogRestEndpoint,
-			flinkApiKey, flinkApiSecret, flinkOrganizationId, flinkEnvironmentId, flinkComputePoolId, flinkRestEndpoint, flinkPrincipalId,
+			flinkApiKey, flinkApiSecret, flinkOrganizationId, flinkEnvironmentId, flinkRestEndpoint, flinkPrincipalId,
 			tableflowApiKey, tableflowApiSecret)
 		if err != nil {
 			return nil, err

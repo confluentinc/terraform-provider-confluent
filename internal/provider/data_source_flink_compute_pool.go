@@ -64,6 +64,10 @@ func computePoolDataSource() *schema.Resource {
 				Type:     schema.TypeInt,
 				Computed: true,
 			},
+			paramDefaultPool: {
+				Type:     schema.TypeBool,
+				Computed: true,
+			},
 			paramApiVersion: {
 				Type:     schema.TypeString,
 				Computed: true,
