@@ -149,7 +149,8 @@ func destinationSchemaRegistryClusterBlockSchema() *schema.Schema {
 					DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
 						// During API key -> OAuth migration, ignore diffs on id as it is not required for API key/secret authentication
 						// In this scenario, resource should not be recreated
-						if old == "" && new != "" {
+						// Only suppress during updates (when resource already exists), not during creation
+						if d.Id() != "" && old == "" && new != "" {
 							return true
 						}
 						return false
