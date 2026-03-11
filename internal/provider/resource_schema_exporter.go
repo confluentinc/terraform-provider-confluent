@@ -270,14 +270,11 @@ func schemaExporterCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	er.SetConfig(constructDestinationSRClusterRequest(d, meta))
 
 	request := c.apiClient.ExportersV1Api.RegisterExporter(c.apiContext(ctx)).ExporterReference(*er)
-	// TODO: remove
-	requestJson, err := json.Marshal(er)
+	requestJson, err := json.Marshal(request)
 	if err != nil {
-		return diag.Errorf("error creating Schema Exporter: error marshaling %#v to json: %s", er, createDescriptiveError(err))
+		return diag.Errorf("error creating Schema Exporter: error marshaling %#v to json: %s", request, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Schema Exporter: %s", requestJson))
-	// TODO: remove
-	tflog.Debug(ctx, fmt.Sprintf("Creating new Schema Exporter with default headers: %v", c.apiClient.GetConfig().DefaultHeader))
 
 	createdExporter, resp, err := request.Execute()
 	if err != nil {
