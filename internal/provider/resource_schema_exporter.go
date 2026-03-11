@@ -195,18 +195,8 @@ func constructDestinationSRClusterRequest(d *schema.ResourceData, meta interface
 
 	// OAuth specific configurations
 	if client.isOAuthEnabled {
-		// Extract OAuth token details from the meta client
-		configs[bearerAuthClientId] = client.oauthToken.ClientId
-		configs[bearerAuthClientSecret] = client.oauthToken.ClientSecret
-		configs[bearerAuthIssuerEndpointUrl] = client.oauthToken.TokenUrl
-		configs[bearerAuthCredentialsSource] = configOAuthBearer
-		configs[bearerAuthIdentityPoolId] = client.oauthToken.IdentityPoolId
-		configs[bearerAuthLogicalCluster] = extractStringValueFromBlock(d, paramDestinationSchemaRegistryCluster, paramId)
-		// The Scope field is optional for Okta, but required for Azure Entra ID
-		// setting arbitrary values may cause exporter exception from backend service
-		if client.oauthToken.Scope != "" {
-			configs[bearerAuthScope] = client.oauthToken.Scope
-		}
+		destinationClusterId := extractStringValueFromBlock(d, paramDestinationSchemaRegistryCluster, paramId)
+		applyOAuthDefaults(configs, client.oauthToken, destinationClusterId)
 		return configs
 	}
 
@@ -215,6 +205,34 @@ func constructDestinationSRClusterRequest(d *schema.ResourceData, meta interface
 	destinationSRClusterApiSecret := extractStringValueFromNestedBlock(d, paramDestinationSchemaRegistryCluster, paramCredentials, paramSecret)
 	configs[basicAuthUserInfoConfig] = fmt.Sprintf("%s:%s", destinationSRClusterApiKey, destinationSRClusterApiSecret)
 	return configs
+}
+
+// applyOAuthDefaults sets OAuth bearer config values from the provider-level OAuthToken
+// only if they are not already specified in the user's config block.
+func applyOAuthDefaults(configs map[string]string, token *OAuthToken, destinationClusterId string) {
+	if _, ok := configs[bearerAuthClientId]; !ok {
+		configs[bearerAuthClientId] = token.ClientId
+	}
+	if _, ok := configs[bearerAuthClientSecret]; !ok {
+		configs[bearerAuthClientSecret] = token.ClientSecret
+	}
+	if _, ok := configs[bearerAuthIssuerEndpointUrl]; !ok {
+		configs[bearerAuthIssuerEndpointUrl] = token.TokenUrl
+	}
+	if _, ok := configs[bearerAuthCredentialsSource]; !ok {
+		configs[bearerAuthCredentialsSource] = configOAuthBearer
+	}
+	if _, ok := configs[bearerAuthIdentityPoolId]; !ok {
+		configs[bearerAuthIdentityPoolId] = token.IdentityPoolId
+	}
+	if _, ok := configs[bearerAuthLogicalCluster]; !ok {
+		configs[bearerAuthLogicalCluster] = destinationClusterId
+	}
+	// The Scope field is optional for Okta, but required for Azure Entra ID
+	// setting arbitrary values may cause exporter exception from backend service
+	if _, ok := configs[bearerAuthScope]; !ok && token.Scope != "" {
+		configs[bearerAuthScope] = token.Scope
+	}
 }
 
 func schemaExporterCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
