@@ -51,7 +51,7 @@ The following arguments are supported:
 * `id` - (Required String) The ID of the Connect Artifact.
 * `environment` - (Required Block) The Environment that the Connect Artifact belongs to, for example, `env-abc123`. It supports the following:
   * `id` - (Required String) The ID of the Environment that the Connect Artifact belongs to.
-* `cloud` - (Required String) Cloud provider where the Connect Artifact archive is uploaded. Accepted values are: `AWS`, `AZURE`.
+* `cloud` - (Required String) Cloud provider where the Connect Artifact archive is uploaded. Accepted values are: `AWS`, `AZURE`, `GCP`.
 
 ## Attributes Reference
 
