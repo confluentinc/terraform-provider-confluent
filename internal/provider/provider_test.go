@@ -96,3 +96,66 @@ func TestSleepIfNotTestMode(t *testing.T) {
 		}
 	})
 }
+
+func TestGetDelayAndPollInterval(t *testing.T) {
+	t.Run("should return 1s/1s in acceptance test mode", func(t *testing.T) {
+		delay, pollInterval := getDelayAndPollInterval(5*time.Minute, 30*time.Second, true)
+
+		if delay != 1*time.Second {
+			t.Errorf("expected delay to be 1s in acceptance test mode, got %v", delay)
+		}
+		if pollInterval != 1*time.Second {
+			t.Errorf("expected pollInterval to be 1s in acceptance test mode, got %v", pollInterval)
+		}
+	})
+
+	t.Run("should return normal values when not in acceptance test mode", func(t *testing.T) {
+		expectedDelay := 5 * time.Minute
+		expectedPollInterval := 30 * time.Second
+		delay, pollInterval := getDelayAndPollInterval(expectedDelay, expectedPollInterval, false)
+
+		if delay != expectedDelay {
+			t.Errorf("expected delay to be %v, got %v", expectedDelay, delay)
+		}
+		if pollInterval != expectedPollInterval {
+			t.Errorf("expected pollInterval to be %v, got %v", expectedPollInterval, pollInterval)
+		}
+	})
+
+	t.Run("should return large delay and poll interval values when not in acceptance test mode", func(t *testing.T) {
+		expectedDelay := 10 * time.Minute
+		expectedPollInterval := 2 * time.Minute
+		delay, pollInterval := getDelayAndPollInterval(expectedDelay, expectedPollInterval, false)
+
+		if delay != expectedDelay {
+			t.Errorf("expected delay to be %v, got %v", expectedDelay, delay)
+		}
+		if pollInterval != expectedPollInterval {
+			t.Errorf("expected pollInterval to be %v, got %v", expectedPollInterval, pollInterval)
+		}
+	})
+
+	t.Run("should ignore normal values and return 1s/1s in acceptance test mode regardless of input", func(t *testing.T) {
+		delay, pollInterval := getDelayAndPollInterval(10*time.Minute, 2*time.Minute, true)
+
+		if delay != 1*time.Second {
+			t.Errorf("expected delay to be 1s in acceptance test mode, got %v", delay)
+		}
+		if pollInterval != 1*time.Second {
+			t.Errorf("expected pollInterval to be 1s in acceptance test mode, got %v", pollInterval)
+		}
+	})
+
+	t.Run("should return small delay and poll interval values when not in acceptance test mode", func(t *testing.T) {
+		expectedDelay := 1 * time.Second
+		expectedPollInterval := 500 * time.Millisecond
+		delay, pollInterval := getDelayAndPollInterval(expectedDelay, expectedPollInterval, false)
+
+		if delay != expectedDelay {
+			t.Errorf("expected delay to be %v, got %v", expectedDelay, delay)
+		}
+		if pollInterval != expectedPollInterval {
+			t.Errorf("expected pollInterval to be %v, got %v", expectedPollInterval, pollInterval)
+		}
+	})
+}
