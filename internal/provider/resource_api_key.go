@@ -462,10 +462,12 @@ func extractStringValueFromNestedBlock(d *schema.ResourceData, outerBlockName st
 }
 
 func validateApiKey(apiKey apikeys.IamV2ApiKey) error {
-	if _, ok := apiKey.GetIdOk(); !ok {
+	id, ok := apiKey.GetIdOk()
+	if !ok || id == nil || *id == "" {
 		return fmt.Errorf("API Key ID is either empty or nil")
 	}
-	if _, ok := apiKey.Spec.GetSecretOk(); !ok {
+	secret, ok := apiKey.Spec.GetSecretOk()
+	if !ok || secret == nil || *secret == "" {
 		return fmt.Errorf("API Key Secret is either empty or nil")
 	}
 	return nil

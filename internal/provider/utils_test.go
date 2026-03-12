@@ -3063,24 +3063,24 @@ func TestValidateApiKey(t *testing.T) {
 			expectErr: true,
 		},
 		{
-			name: "empty string ID still passes (GetIdOk returns true for empty)",
+			name: "empty string ID returns error",
 			apiKey: apikeys.IamV2ApiKey{
 				Id: apikeys.PtrString(""),
 				Spec: &apikeys.IamV2ApiKeySpec{
 					Secret: apikeys.PtrString("supersecret"),
 				},
 			},
-			expectErr: false,
+			expectErr: true,
 		},
 		{
-			name: "empty string secret still passes",
+			name: "empty string secret returns error",
 			apiKey: apikeys.IamV2ApiKey{
 				Id: apikeys.PtrString("ABCDEFGHIJK123"),
 				Spec: &apikeys.IamV2ApiKeySpec{
 					Secret: apikeys.PtrString(""),
 				},
 			},
-			expectErr: false,
+			expectErr: true,
 		},
 	}
 	for _, tt := range tests {

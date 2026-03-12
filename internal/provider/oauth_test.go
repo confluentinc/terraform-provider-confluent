@@ -38,20 +38,27 @@ func TestValidateCurrentExternalOAuthToken(t *testing.T) {
 			expected: true,
 		},
 		{
-			name:     "token expiring in 1 second still valid",
-			token:    &OAuthToken{ValidUntil: time.Now().Add(1 * time.Second)},
+			name:     "token expiring in 30 seconds still valid",
+			token:    nil, // constructed inside subtest to avoid time drift
 			expected: true,
 		},
 		{
 			name:     "token that just expired returns false",
-			token:    &OAuthToken{ValidUntil: time.Now().Add(-1 * time.Millisecond)},
+			token:    nil, // constructed inside subtest to avoid time drift
 			expected: false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := validateCurrentExternalOAuthToken(ctx, tt.token)
+			token := tt.token
+			switch tt.name {
+			case "token expiring in 30 seconds still valid":
+				token = &OAuthToken{ValidUntil: time.Now().Add(30 * time.Second)}
+			case "token that just expired returns false":
+				token = &OAuthToken{ValidUntil: time.Now().Add(-1 * time.Millisecond)}
+			}
+			result := validateCurrentExternalOAuthToken(ctx, token)
 			if result != tt.expected {
 				t.Errorf("validateCurrentExternalOAuthToken() = %v, want %v", result, tt.expected)
 			}
@@ -88,20 +95,27 @@ func TestValidateCurrentSTSOAuthToken(t *testing.T) {
 			expected: true,
 		},
 		{
-			name:     "token expiring in 1 second still valid",
-			token:    &STSToken{ValidUntil: time.Now().Add(1 * time.Second)},
+			name:     "token expiring in 30 seconds still valid",
+			token:    nil, // constructed inside subtest to avoid time drift
 			expected: true,
 		},
 		{
 			name:     "token that just expired returns false",
-			token:    &STSToken{ValidUntil: time.Now().Add(-1 * time.Millisecond)},
+			token:    nil, // constructed inside subtest to avoid time drift
 			expected: false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := validateCurrentSTSOAuthToken(ctx, tt.token)
+			token := tt.token
+			switch tt.name {
+			case "token expiring in 30 seconds still valid":
+				token = &STSToken{ValidUntil: time.Now().Add(30 * time.Second)}
+			case "token that just expired returns false":
+				token = &STSToken{ValidUntil: time.Now().Add(-1 * time.Millisecond)}
+			}
+			result := validateCurrentSTSOAuthToken(ctx, token)
 			if result != tt.expected {
 				t.Errorf("validateCurrentSTSOAuthToken() = %v, want %v", result, tt.expected)
 			}

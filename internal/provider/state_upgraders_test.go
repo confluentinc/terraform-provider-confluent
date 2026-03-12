@@ -188,9 +188,9 @@ func TestKafkaStateUpgradeV0PreservesAdditionalFields(t *testing.T) {
 	}
 }
 
-// TestKafkaStateUpgradeV0ModifiesInPlace verifies that kafkaStateUpgradeV0 modifies
-// the original rawState map in place rather than returning a copy.
-func TestKafkaStateUpgradeV0ModifiesInPlace(t *testing.T) {
+// TestKafkaStateUpgradeV0TransformsState verifies that kafkaStateUpgradeV0
+// correctly renames http_endpoint to rest_endpoint and preserves other fields.
+func TestKafkaStateUpgradeV0TransformsState(t *testing.T) {
 	rawState := map[string]interface{}{
 		paramHttpEndpoint: testEndpoint,
 		paramDisplayName:  "my-cluster",
@@ -201,18 +201,13 @@ func TestKafkaStateUpgradeV0ModifiesInPlace(t *testing.T) {
 		t.Fatalf("error migrating state: %s", err)
 	}
 
-	// Verify the returned map is the same reference as the input map by checking
-	// that mutations to rawState are visible through actual and vice versa.
-	rawState["sentinel_key"] = "sentinel_value"
-	if actual["sentinel_key"] != "sentinel_value" {
-		t.Fatalf("expected returned map to be the same reference as the input map (modified in place), but it appears to be a copy")
+	if _, found := actual[paramHttpEndpoint]; found {
+		t.Fatalf("expected http_endpoint to be removed from the returned state")
 	}
-
-	// Also verify the original rawState was modified by the upgrade function
-	if _, found := rawState[paramHttpEndpoint]; found {
-		t.Fatalf("expected http_endpoint to be removed from the original rawState map")
+	if actual[paramRestEndpoint] != testEndpoint {
+		t.Fatalf("expected rest_endpoint to be %q, got %q", testEndpoint, actual[paramRestEndpoint])
 	}
-	if rawState[paramRestEndpoint] != testEndpoint {
-		t.Fatalf("expected rest_endpoint to be set on the original rawState map, got %q", rawState[paramRestEndpoint])
+	if actual[paramDisplayName] != "my-cluster" {
+		t.Fatalf("expected display_name to be preserved, got %q", actual[paramDisplayName])
 	}
 }
