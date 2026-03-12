@@ -16,6 +16,7 @@ package provider
 
 import (
 	"bytes"
+	"compress/gzip"
 	"context"
 	"fmt"
 	"io"
@@ -2039,6 +2040,16 @@ func TestConvertToStringSlice(t *testing.T) {
 			input:    []interface{}{"only"},
 			expected: []string{"only"},
 		},
+		{
+			name:     "nil items inside slice",
+			input:    []interface{}{nil, "a", nil},
+			expected: []string{"<nil>", "a", "<nil>"},
+		},
+		{
+			name:     "numeric items",
+			input:    []interface{}{0, 1, -1},
+			expected: []string{"0", "1", "-1"},
+		},
 	}
 
 	for _, tt := range tests {
@@ -2082,6 +2093,16 @@ func TestExtractPageToken(t *testing.T) {
 			name:        "empty string",
 			input:       "",
 			expectError: true,
+		},
+		{
+			name:        "page_token with empty value",
+			input:       "https://api.confluent.cloud/iam/v2/service-accounts?page_token=",
+			expectError: true,
+		},
+		{
+			name:     "page_token with encoded characters",
+			input:    "https://api.confluent.cloud/v2/accounts?page_token=abc%3D%3D123",
+			expected: "abc==123",
 		},
 	}
 
@@ -2268,6 +2289,18 @@ func TestExtractCloudAndRegionName(t *testing.T) {
 			input:       "",
 			expectError: true,
 		},
+		{
+			name:           "cloud with empty region (trailing dot)",
+			input:          "aws.",
+			expectedCloud:  "aws",
+			expectedRegion: "",
+		},
+		{
+			name:           "empty cloud with region (leading dot)",
+			input:          ".us-east-1",
+			expectedCloud:  "",
+			expectedRegion: "us-east-1",
+		},
 	}
 
 	for _, tt := range tests {
@@ -2328,6 +2361,21 @@ func TestParseStatementName(t *testing.T) {
 			name:        "empty string is invalid",
 			input:       "",
 			expectError: true,
+		},
+		{
+			name:     "parts with empty middle segment",
+			input:    "env-abc//stmt-name",
+			expected: "stmt-name",
+		},
+		{
+			name:     "parts with empty first segment",
+			input:    "/pool-xyz/stmt-name",
+			expected: "stmt-name",
+		},
+		{
+			name:     "empty statement name at end",
+			input:    "env-abc/pool-xyz/",
+			expected: "",
 		},
 	}
 
@@ -2628,6 +2676,121 @@ func TestCreateDescriptiveError(t *testing.T) {
 			t.Fatalf("createDescriptiveError(nil, resp) = %v, want nil", got)
 		}
 	})
+
+	t.Run("error with gzip compressed response body", func(t *testing.T) {
+		var buf bytes.Buffer
+		gzWriter := gzip.NewWriter(&buf)
+		gzWriter.Write([]byte(`{"error":"gzip compressed error detail"}`))
+		gzWriter.Close()
+
+		err := fmt.Errorf("500 Internal Server Error")
+		resp := &http.Response{
+			StatusCode: 500,
+			Body:       io.NopCloser(&buf),
+		}
+		got := createDescriptiveError(err, resp)
+		if got == nil {
+			t.Fatal("expected non-nil error")
+		}
+		if !strings.Contains(got.Error(), "gzip compressed error detail") {
+			t.Fatalf("expected error to contain decompressed body, got %q", got.Error())
+		}
+	})
+
+	t.Run("error with nil response body", func(t *testing.T) {
+		err := fmt.Errorf("503 Service Unavailable")
+		resp := &http.Response{
+			StatusCode: 503,
+			Body:       nil,
+		}
+		got := createDescriptiveError(err, resp)
+		if got == nil {
+			t.Fatal("expected non-nil error")
+		}
+		if got.Error() != "503 Service Unavailable" {
+			t.Fatalf("expected original error message, got %q", got.Error())
+		}
+	})
+
+	t.Run("error with empty response body", func(t *testing.T) {
+		err := fmt.Errorf("502 Bad Gateway")
+		resp := &http.Response{
+			StatusCode: 502,
+			Body:       io.NopCloser(bytes.NewBufferString("")),
+		}
+		got := createDescriptiveError(err, resp)
+		if got == nil {
+			t.Fatal("expected non-nil error")
+		}
+		if !strings.Contains(got.Error(), "502 Bad Gateway") {
+			t.Fatalf("expected error to contain original message, got %q", got.Error())
+		}
+	})
+
+	t.Run("error with no response provided", func(t *testing.T) {
+		err := fmt.Errorf("connection timeout")
+		got := createDescriptiveError(err)
+		if got == nil {
+			t.Fatal("expected non-nil error")
+		}
+		if got.Error() != "connection timeout" {
+			t.Fatalf("expected 'connection timeout', got %q", got.Error())
+		}
+	})
+}
+
+func TestIsNonKafkaRestApiResourceNotFound(t *testing.T) {
+	tests := []struct {
+		name     string
+		response *http.Response
+		expected bool
+	}{
+		{
+			name:     "nil response returns false",
+			response: nil,
+			expected: false,
+		},
+		{
+			name:     "404 returns true",
+			response: &http.Response{StatusCode: http.StatusNotFound},
+			expected: true,
+		},
+		{
+			name: "403 without invalid API key message returns true",
+			response: &http.Response{
+				StatusCode: http.StatusForbidden,
+				Body:       io.NopCloser(strings.NewReader(`{"error":"not authorized"}`)),
+			},
+			expected: true,
+		},
+		{
+			name: "403 with invalid API key message returns false",
+			response: &http.Response{
+				StatusCode: http.StatusForbidden,
+				Body:       io.NopCloser(strings.NewReader(`{"error":"invalid API key"}`)),
+			},
+			expected: false,
+		},
+		{
+			name:     "200 returns false",
+			response: &http.Response{StatusCode: http.StatusOK},
+			expected: false,
+		},
+		{
+			name:     "500 returns false",
+			response: &http.Response{StatusCode: http.StatusInternalServerError},
+			expected: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := isNonKafkaRestApiResourceNotFound(tt.response)
+			if got != tt.expected {
+				t.Fatalf("isNonKafkaRestApiResourceNotFound() = %v, want %v", got, tt.expected)
+			}
+		})
+	}
 }
 
 func TestIsKafkaApiKey(t *testing.T) {
@@ -2899,6 +3062,26 @@ func TestValidateApiKey(t *testing.T) {
 			},
 			expectErr: true,
 		},
+		{
+			name: "empty string ID still passes (GetIdOk returns true for empty)",
+			apiKey: apikeys.IamV2ApiKey{
+				Id: apikeys.PtrString(""),
+				Spec: &apikeys.IamV2ApiKeySpec{
+					Secret: apikeys.PtrString("supersecret"),
+				},
+			},
+			expectErr: false,
+		},
+		{
+			name: "empty string secret still passes",
+			apiKey: apikeys.IamV2ApiKey{
+				Id: apikeys.PtrString("ABCDEFGHIJK123"),
+				Spec: &apikeys.IamV2ApiKeySpec{
+					Secret: apikeys.PtrString(""),
+				},
+			},
+			expectErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -2957,6 +3140,24 @@ func TestCkuCheck(t *testing.T) {
 			name:         "multi-zone with 10 CKUs is valid",
 			cku:          10,
 			availability: multiZone,
+			expectErr:    false,
+		},
+		{
+			name:         "negative CKU single-zone is invalid",
+			cku:          -1,
+			availability: singleZone,
+			expectErr:    true,
+		},
+		{
+			name:         "negative CKU multi-zone is invalid",
+			cku:          -5,
+			availability: multiZone,
+			expectErr:    true,
+		},
+		{
+			name:         "unknown availability with CKU 0 passes (no check for unknown)",
+			cku:          0,
+			availability: "UNKNOWN",
 			expectErr:    false,
 		},
 	}
@@ -3284,6 +3485,15 @@ func TestInferTypeFromString(t *testing.T) {
 		{name: "plain string", value: "hello", expected: "hello"},
 		{name: "empty string", value: "", expected: ""},
 		{name: "string with spaces", value: "hello world", expected: "hello world"},
+		{name: "uppercase TRUE is parsed as bool", value: "TRUE", expected: true},
+		{name: "uppercase FALSE is parsed as bool", value: "FALSE", expected: false},
+		{name: "mixed case True is parsed as bool", value: "True", expected: true},
+		{name: "1.0 is float not int", value: "1.0", expected: float64(1.0)},
+		{name: "negative float", value: "-3.14", expected: float64(-3.14)},
+		{name: "scientific notation uppercase E", value: "2.5E3", expected: float64(2500)},
+		{name: "integer overflow treated as string", value: "99999999999999999999", expected: "99999999999999999999"},
+		{name: "leading zeros still parsed as int", value: "007", expected: int64(7)},
+		{name: "string that looks numeric but has trailing space", value: "42 ", expected: "42 "},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -3338,6 +3548,45 @@ func TestExtractNonsensitiveConfigs(t *testing.T) {
 			name:     "empty map",
 			configs:  map[string]string{},
 			expected: map[string]string{},
+		},
+		{
+			name: "filters all known ignoredConnectorConfigs",
+			configs: map[string]string{
+				"cloud.environment":                      "prod",
+				"cloud.provider":                         "aws",
+				"connector.crn":                          "crn://confluent.cloud/...",
+				"kafka.endpoint":                         "SASL://pkc-12345.us-east-1.aws.confluent.cloud:9092",
+				"kafka.max.partition.validation.disable": "false",
+				"kafka.region":                           "us-east-1",
+				"connector.class":                        "io.confluent.connect.s3.S3SinkConnector",
+			},
+			expected: map[string]string{
+				"connector.class": "io.confluent.connect.s3.S3SinkConnector",
+			},
+		},
+		{
+			name: "exactly two stars is sensitive",
+			configs: map[string]string{
+				"password": "**",
+				"name":     "test",
+			},
+			expected: map[string]string{
+				"name": "test",
+			},
+		},
+		{
+			name: "mixed sensitive, internal, and normal configs",
+			configs: map[string]string{
+				"kafka.api.key":          "***",
+				"config.internal.offset": "100",
+				"cloud.environment":      "dev",
+				"topics":                 "orders",
+				"output.data.format":     "JSON",
+			},
+			expected: map[string]string{
+				"topics":             "orders",
+				"output.data.format": "JSON",
+			},
 		},
 	}
 	for _, tt := range tests {

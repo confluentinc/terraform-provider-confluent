@@ -346,6 +346,12 @@ func TestAdditionalFields(t *testing.T) {
 			wantLen:       0,
 			wantPairs:     map[string]interface{}{},
 		},
+		{
+			name:          "duplicate keys - later value wins",
+			keysAndValues: []interface{}{"key", "first", "key", "second"},
+			wantLen:       1,
+			wantPairs:     map[string]interface{}{"key": "second"},
+		},
 	}
 
 	for _, tt := range tests {

@@ -187,6 +187,25 @@ func TestBuildExternalOAuthRequest(t *testing.T) {
 			checkFunc:    nil,
 		},
 		{
+			name:         "special characters in credentials are URL encoded",
+			tokenURL:     "https://example.com/oauth/token",
+			clientID:     "client&id=special",
+			clientSecret: "secret+with/chars",
+			customScope:  "",
+			wantErr:      false,
+			checkFunc: func(t *testing.T, req *http.Request) {
+				bodyBytes, _ := io.ReadAll(req.Body)
+				body := string(bodyBytes)
+				// url.Values.Encode() should escape & and = in values
+				if !strings.Contains(body, "client_id=client%26id%3Dspecial") {
+					t.Errorf("expected URL-encoded client_id, got body: %s", body)
+				}
+				if !strings.Contains(body, "client_secret=secret%2Bwith%2Fchars") {
+					t.Errorf("expected URL-encoded client_secret, got body: %s", body)
+				}
+			},
+		},
+		{
 			name:         "empty client credentials still builds request",
 			tokenURL:     "https://example.com/token",
 			clientID:     "",
@@ -353,6 +372,62 @@ func TestParseExternalOAuthResponse(t *testing.T) {
 			clientSecret:   "csec",
 			wantErr:        true,
 			checkFunc:      nil,
+		},
+		{
+			name:           "zero expires_in uses half buffer of zero",
+			body:           `{"access_token":"zero-expiry","token_type":"Bearer","expires_in":0}`,
+			customScope:    "",
+			identityPoolId: "pool-0",
+			tokenUrl:       "https://example.com/token",
+			clientId:       "cid",
+			clientSecret:   "csec",
+			wantErr:        false,
+			checkFunc: func(t *testing.T, token *OAuthToken) {
+				if token.AccessToken != "zero-expiry" {
+					t.Errorf("expected access_token 'zero-expiry', got '%s'", token.AccessToken)
+				}
+				// 0s expiry - buffer = min(3min, 0/2=0) = 0, so ValidUntil = now + 0 - 0 = now
+				// Should be very close to now (within a second)
+				if token.ValidUntil.After(time.Now().Add(1 * time.Second)) {
+					t.Errorf("ValidUntil should be very close to now for zero expiry, got %v", token.ValidUntil)
+				}
+			},
+		},
+		{
+			name:           "expires_in as integer in JSON",
+			body:           `{"access_token":"int-expiry","token_type":"Bearer","expires_in":7200}`,
+			customScope:    "",
+			identityPoolId: "pool-int",
+			tokenUrl:       "https://example.com/token",
+			clientId:       "cid",
+			clientSecret:   "csec",
+			wantErr:        false,
+			checkFunc: func(t *testing.T, token *OAuthToken) {
+				if token.ExpiresInSeconds != "7200" {
+					t.Errorf("expected expires_in_seconds '7200', got '%s'", token.ExpiresInSeconds)
+				}
+				// 7200s - 180s buffer = ~7020s from now
+				expectedMin := time.Now().Add(6900 * time.Second)
+				expectedMax := time.Now().Add(7200 * time.Second)
+				if token.ValidUntil.Before(expectedMin) || token.ValidUntil.After(expectedMax) {
+					t.Errorf("ValidUntil %v not within expected range [%v, %v]", token.ValidUntil, expectedMin, expectedMax)
+				}
+			},
+		},
+		{
+			name:           "response with extra unknown fields is handled gracefully",
+			body:           `{"access_token":"tok","token_type":"Bearer","expires_in":3600,"custom_field":"ignored","nested":{"a":1}}`,
+			customScope:    "",
+			identityPoolId: "",
+			tokenUrl:       "https://example.com/token",
+			clientId:       "cid",
+			clientSecret:   "csec",
+			wantErr:        false,
+			checkFunc: func(t *testing.T, token *OAuthToken) {
+				if token.AccessToken != "tok" {
+					t.Errorf("expected access_token 'tok', got '%s'", token.AccessToken)
+				}
+			},
 		},
 		{
 			name:           "passthrough fields are set correctly",
