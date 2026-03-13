@@ -18,11 +18,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/samber/lo"
 	"net/http"
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/samber/lo"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -172,6 +173,14 @@ func flinkStatementCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	statement := d.Get(paramStatement).(string)
 
 	mergedProperties, sensitiveProperties, _ := extractFlinkProperties(d)
+
+	// Prefer the user specified values
+	if localPrincipalId := extractStringValueFromBlock(d, paramPrincipal, paramId); localPrincipalId != "" {
+		principalId = localPrincipalId
+	}
+	if localComputePoolId := extractStringValueFromBlock(d, paramComputePool, paramId); localComputePoolId != "" {
+		computePoolId = localComputePoolId
+	}
 
 	spec := fgb.NewSqlV1StatementSpec()
 	spec.SetStatement(statement)
