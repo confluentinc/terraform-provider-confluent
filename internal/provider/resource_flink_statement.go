@@ -716,14 +716,11 @@ func extractFlinkComputePoolId(client *Client, d *schema.ResourceData, isImportO
 		if computePoolId != "" {
 			return computePoolId, nil
 		} else {
-			return "", fmt.Errorf("one of provider.flink_compute_pool_id (defaults to FLINK_COMPUTE_POOL_ID environment variable) or IMPORT_FLINK_COMPUTE_POOL_ID environment variable must be set")
+			return "", fmt.Errorf("one of provider.flink_compute_pool_id (defaults to FLINK_COMPUTE_POOL_ID environment variable) or IMPORT_FLINK_COMPUTE_POOL_ID environment variable must be set for import operation")
 		}
 	}
 	computePoolId := extractStringValueFromBlock(d, paramComputePool, paramId)
-	if computePoolId != "" {
-		return computePoolId, nil
-	}
-	return "", fmt.Errorf("one of provider.flink_compute_pool_id (defaults to FLINK_COMPUTE_POOL_ID environment variable) or resource.compute_pool.id must be set")
+	return computePoolId, nil
 }
 
 func extractFlinkPrincipalId(client *Client, d *schema.ResourceData, isImportOperation bool) (string, error) {
