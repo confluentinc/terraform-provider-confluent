@@ -57,7 +57,7 @@ func computePoolConfigDataSource() *schema.Resource {
 
 func computePoolConfigDataSourceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	if err := dataSourceCredentialBlockValidationWithOAuth(d, meta.(*Client).isOAuthEnabled); err != nil {
-		return diag.Errorf("error reading Tag: %s", createDescriptiveError(err))
+		return diag.Errorf("error reading Compute Pool Config: %s", createDescriptiveError(err))
 	}
 	c := meta.(*Client)
 

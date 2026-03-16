@@ -15,7 +15,7 @@ description: |-
 ## Example Usage
 
 ```terraform
-data "confluent_flink_compute_pool" "example" {
+data "confluent_flink_compute_pool_config" "example" {
   id = "org-123"
 }
 

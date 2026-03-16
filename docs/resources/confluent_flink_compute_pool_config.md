@@ -36,7 +36,7 @@ The following arguments are supported:
 In addition to the preceding arguments, the following attributes are exported:
 
 - `api_version` - (Required String) The API Version of the schema version of the Flink Compute Pool Config, for example, `fcpm/v2`.
-- `kind` - (Required String) The kind of the Flink Compute Pool, for example, `ComputePoolConfig`.
+- `kind` - (Required String) The kind of the Flink Compute Pool Config, for example, `OrgComputePoolConfig`.
 
 ## Import
 
