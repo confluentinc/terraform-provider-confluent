@@ -9,6 +9,9 @@
 * Fixed an issue in the `confluent_schema_exporter` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema_exporter) where destination OAuth configs were being overwritten with provider-level values, which was blocking scenarios where the source and destination Schema Registry clusters used different identity providers, tenants, or OAuth credentials.
 * Fixed an issue where the `confluent_catalog_integration` [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_catalog_integration) could not read Snowflake catalog integrations.
 
+**Examples:**
+* Added a [Terraform Provider Examples Index](https://github.com/confluentinc/terraform-provider-confluent/tree/master/docs/examples/supported_examples.md) document to provide users with a list of all supported examples.
+
 ## 2.63.0 (March 5th, 2026)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.62.0...v2.63.0)
