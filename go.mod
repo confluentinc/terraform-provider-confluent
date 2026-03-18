@@ -156,3 +156,5 @@ require (
 )
 
 replace github.com/confluentinc/ccloud-sdk-go-v2/networking-gateway => github.com/confluentinc/ccloud-sdk-go-v2-internal/networking-gateway v0.12.0
+
+replace github.com/confluentinc/ccloud-sdk-go-v2/networking-access-point => github.com/confluentinc/ccloud-sdk-go-v2-internal/networking-access-point v0.12.0
