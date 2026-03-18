@@ -39,11 +39,13 @@ func accessPointDataSource() *schema.Resource {
 				Computed: true,
 			},
 			paramGateway:                                gatewayDataSourceSchema(),
-			paramAwsEgressPrivateLinkEndpoint:           awsEgressPrivateLinkEndpointDataSourceSchema(),
-			paramAwsIngressPrivateLinkEndpoint:          awsIngressPrivateLinkEndpointDataSourceSchema(),
-			paramAzureEgressPrivateLinkEndpoint:         azureEgressPrivateLinkEndpointDataSourceSchema(),
-			paramGcpEgressPrivateServiceConnectEndpoint: gcpEgressPrivateServiceConnectEndpointDataSourceSchema(),
-			paramAwsPrivateNetworkInterface:             awsPrivateNetworkInterfaceDataSourceSchema(),
+			paramAwsEgressPrivateLinkEndpoint:            awsEgressPrivateLinkEndpointDataSourceSchema(),
+			paramAwsIngressPrivateLinkEndpoint:           awsIngressPrivateLinkEndpointDataSourceSchema(),
+			paramAzureEgressPrivateLinkEndpoint:          azureEgressPrivateLinkEndpointDataSourceSchema(),
+			paramAzureIngressPrivateLinkEndpoint:         azureIngressPrivateLinkEndpointDataSourceSchema(),
+			paramGcpEgressPrivateServiceConnectEndpoint:  gcpEgressPrivateServiceConnectEndpointDataSourceSchema(),
+			paramGcpIngressPrivateServiceConnectEndpoint: gcpIngressPrivateServiceConnectEndpointDataSourceSchema(),
+			paramAwsPrivateNetworkInterface:              awsPrivateNetworkInterfaceDataSourceSchema(),
 		},
 	}
 }
@@ -128,6 +130,56 @@ func azureEgressPrivateLinkEndpointDataSourceSchema() *schema.Schema {
 					Type:     schema.TypeList,
 					Computed: true,
 					Elem:     &schema.Schema{Type: schema.TypeString},
+				},
+			},
+		},
+		Computed: true,
+	}
+}
+
+func azureIngressPrivateLinkEndpointDataSourceSchema() *schema.Schema {
+	return &schema.Schema{
+		Type: schema.TypeList,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramPrivateEndpointResourceId: {
+					Type:     schema.TypeString,
+					Computed: true,
+				},
+				paramPrivateLinkServiceAlias: {
+					Type:     schema.TypeString,
+					Computed: true,
+				},
+				paramPrivateLinkServiceResourceId: {
+					Type:     schema.TypeString,
+					Computed: true,
+				},
+				paramDnsDomain: {
+					Type:     schema.TypeString,
+					Computed: true,
+				},
+			},
+		},
+		Computed: true,
+	}
+}
+
+func gcpIngressPrivateServiceConnectEndpointDataSourceSchema() *schema.Schema {
+	return &schema.Schema{
+		Type: schema.TypeList,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramPrivateServiceConnectConnectionId: {
+					Type:     schema.TypeString,
+					Computed: true,
+				},
+				paramPrivateServiceConnectServiceAttachment: {
+					Type:     schema.TypeString,
+					Computed: true,
+				},
+				paramDnsDomain: {
+					Type:     schema.TypeString,
+					Computed: true,
 				},
 			},
 		},
