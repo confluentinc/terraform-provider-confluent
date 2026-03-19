@@ -441,7 +441,7 @@ func resumeExporter(ctx context.Context, d *schema.ResourceData, c *SchemaRegist
 	if isRunning {
 		// resume the exporter last after making any changes
 		_, resp, err := c.apiClient.ExportersV1Api.ResumeExporterByName(c.apiContext(ctx), name).Execute()
-		if err != nil && resp.StatusCode != http.StatusConflict {
+		if err != nil && (resp == nil || resp.StatusCode != http.StatusConflict) {
 			return diag.Errorf("error resuming Schema Exporter (Failed to resume the exporter): %s", createDescriptiveError(err, resp))
 		}
 

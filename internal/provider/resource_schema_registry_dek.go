@@ -24,7 +24,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"io"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -143,8 +142,7 @@ func schemaRegistryDekCreate(ctx context.Context, d *schema.ResourceData, meta i
 
 	createdDek, resp, err := request.Execute()
 	if err != nil {
-		b, err := io.ReadAll(resp.Body)
-		return diag.Errorf("error creating Schema Registry DEK %s, error msg: %s", createDescriptiveError(err, resp), string(b))
+		return diag.Errorf("error creating Schema Registry DEK: %s", createDescriptiveError(err, resp))
 	}
 	d.SetId(dekId)
 
