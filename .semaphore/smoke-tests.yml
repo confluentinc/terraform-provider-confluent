@@ -51,8 +51,16 @@ blocks:
                 fi
 
                 # Report pass/fail metric via OTLP (never fails the pipeline)
-                export SEMAPHORE_OIDC_TOKEN=$(semaphore-oidc-token --audience otlp.telemetry.confluent.cloud 2>/dev/null || true)
-                ./bin/otel-smoke-metric "$RESULT" || true
+                echo "[otel-debug] Obtaining OIDC token..."
+                SEMAPHORE_OIDC_TOKEN=$(semaphore-oidc-token --audience otlp.telemetry.confluent.cloud 2>&1) && \
+                  echo "[otel-debug] OIDC token obtained (length=${#SEMAPHORE_OIDC_TOKEN})" || \
+                  echo "[otel-debug] OIDC token failed: $SEMAPHORE_OIDC_TOKEN"
+                export SEMAPHORE_OIDC_TOKEN
+
+                echo "[otel-debug] Sending metric RESULT=$RESULT to otlp.telemetry.confluent.cloud:4317"
+                echo "[otel-debug] SEMAPHORE_GIT_BRANCH=$SEMAPHORE_GIT_BRANCH SEMAPHORE_JOB_ID=$SEMAPHORE_JOB_ID"
+                OTEL_OUTPUT=$(./bin/otel-smoke-metric "$RESULT" 2>&1) || true
+                echo "[otel-debug] otel-smoke-metric output: $OTEL_OUTPUT"
 
                 exit $RC
               ' EXIT
