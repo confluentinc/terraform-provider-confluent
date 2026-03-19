@@ -1,8 +1,15 @@
+---
+page_title: "Supported Examples"
+subcategory: ""
+description: |-
+  An organized index of Terraform configuration examples for the Confluent Cloud Provider.
+---
+
 <!--
 MAINTENANCE INSTRUCTIONS:
 To regenerate this file when new examples are added, use the following Claude prompt:
 
-"Navigate to the subdirectories of examples/configurations/* and rebuild the supported_examples.md file in docs/examples/.
+"Navigate to the subdirectories of examples/configurations/* and rebuild the supported-examples.md file in docs/guides/.
 
 This file should contain an organized index of links to the terraform examples in the directory and subdirectories of https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations.
 
