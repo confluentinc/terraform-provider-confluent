@@ -8,3 +8,6 @@ Welcome to the community-contributed examples directory! This section contains T
 ### Ingress Gateway: Centralized AWS PrivateLink Architecture
 [Link to Example](https://github.com/j3-signalroom/iac-cc-aws_privatelink-infrastructure_networking-example) 
 
+### Flink SQL & Compute Pool: Real-Time Data Processing Pipeline with AWS Bedrock Integration
+[Link to Example](https://github.com/confluentinc/flink-ai-examples/tree/rt-clinical-data-extraction/demos/rt-clinical-data-extraction) 
+

@@ -1,3 +1,27 @@
+## 2.64.0 (March 17th, 2026)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.63.0...v2.64.0)
+
+**New features:**
+* Added support for a new optional `unity` configuration block to `confluent_catalog_integration` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_catalog_integration) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_catalog_integration) in a General Availability lifecycle stage.
+
+**Bug fixes:**
+* Fixed an issue in the `confluent_schema_exporter` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema_exporter) where destination OAuth configs were being overwritten with provider-level values, which was blocking scenarios where the source and destination Schema Registry clusters used different identity providers, tenants, or OAuth credentials.
+* Fixed an issue where the `confluent_catalog_integration` [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_catalog_integration) could not read Snowflake catalog integrations.
+
+**Examples:**
+* Added a [Terraform Provider Examples Index](https://github.com/confluentinc/terraform-provider-confluent/tree/master/docs/examples/supported_examples.md) document to provide users with a list of all supported examples.
+
+## 2.63.0 (March 5th, 2026)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.62.0...v2.63.0)
+
+**New features:**
+* Added support for resetting topic configs to default values for the `confluent_kafka_topic` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_topic).
+
+**Bug fixes:**
+* Updated the docs.
+
 ## 2.62.0 (February 9th, 2026)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.61.0...v2.62.0)
