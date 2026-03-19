@@ -33,17 +33,27 @@ blocks:
             - . vault-sem-get-secret v1/ci/kv/apif/terraform-provider-confluent/live-testing-data
             - . vault-sem-get-secret v1/ci/kv/apif/terraform-provider-confluent/slack-notifications-live-testing
 
-            # 2. Run smoke tests
+            # 2. Build OTLP metric reporter
+            - go mod vendor
+            - make build-otel-smoke-metric
+
+            # 3. Run smoke tests and report result
             - |
               set -e
 
               trap '
                 RC=$?
+                RESULT=1
                 if [ $RC -ne 0 ]; then
+                  RESULT=0
                   echo "Smoke tests failed, sending Slack notification..."
-
                   curl -X POST -H "Content-type: application/json" --data "{}" "$SLACK_WEBHOOK_URL"
                 fi
+
+                # Report pass/fail metric via OTLP (never fails the pipeline)
+                export SEMAPHORE_OIDC_TOKEN=$(semaphore-oidc-token --audience otlp.telemetry.confluent.cloud 2>/dev/null || true)
+                ./bin/otel-smoke-metric "$RESULT" || true
+
                 exit $RC
               ' EXIT
 
