@@ -19,7 +19,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -188,8 +187,7 @@ func connectorCreate(ctx context.Context, d *schema.ResourceData, meta interface
 
 	createdConnector, resp, err := executeConnectorCreate(c.connectApiContext(ctx), c, environmentId, clusterId, createConnectorRequest)
 	if err != nil {
-		descriptiveError, _ := io.ReadAll(resp.Body)
-		return diag.Errorf("error creating Connector %q: %s: %s", displayName, createDescriptiveError(err, resp), string(descriptiveError))
+		return diag.Errorf("error creating Connector %q: %s", displayName, createDescriptiveError(err, resp))
 	}
 	// There's no ID attribute in createdConnector, so we have to send another request to a different endpoint to get a connector object with ID attribute
 	SleepIfNotTestMode(connectAPIWaitAfterCreate, meta.(*Client).isAcceptanceTestMode, meta.(*Client).isLiveProductionTestMode)
@@ -443,8 +441,7 @@ func connectorUpdate(ctx context.Context, d *schema.ResourceData, meta interface
 		req := c.connectClient.OffsetsConnectV1Api.AlterConnectv1ConnectorOffsetsRequest(c.connectApiContext(ctx), displayName, environmentId, clusterId).ConnectV1AlterOffsetRequest(connectV1AlterOffsetRequest)
 		updatedConnectorOffsets, resp, err := req.Execute()
 		if err != nil {
-			body, _ := io.ReadAll(resp.Body)
-			return diag.Errorf("error updating Connector %q offsets: %s: %s", d.Id(), createDescriptiveError(err, resp), string(body))
+			return diag.Errorf("error updating Connector %q offsets: %s", d.Id(), createDescriptiveError(err, resp))
 		}
 		if err := waitForConnectorOffsetsUpdateToComplete(c.connectApiContext(ctx), c, environmentId, clusterId, displayName); err != nil {
 			return diag.Errorf("error waiting for Connector %q offsets update to complete: %s", d.Id(), createDescriptiveError(err, resp))
