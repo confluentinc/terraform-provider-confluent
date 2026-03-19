@@ -192,7 +192,7 @@ func serviceAccountImport(ctx context.Context, d *schema.ResourceData, meta inte
 	tflog.Debug(ctx, fmt.Sprintf("Importing Service Account %q", d.Id()), map[string]interface{}{serviceAccountLoggingKey: d.Id()})
 	// Mark resource as new to avoid d.Set("") when getting 404
 	d.MarkNewResource()
-	if diagnostics := serviceAccountRead(ctx, d, meta); diagnostics != nil {
+	if diagnostics := serviceAccountRead(ctx, d, meta); len(diagnostics) > 0 {
 		return nil, fmt.Errorf("error importing Service Account %q: %s", d.Id(), diagnostics[0].Summary)
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished importing Service Account %q", d.Id()), map[string]interface{}{serviceAccountLoggingKey: d.Id()})

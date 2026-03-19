@@ -274,7 +274,7 @@ func kafkaClientQuotaImport(ctx context.Context, d *schema.ResourceData, meta in
 	tflog.Debug(ctx, fmt.Sprintf("Importing Kafka Client Quota %q", d.Id()), map[string]interface{}{kafkaClientQuotaLoggingKey: d.Id()})
 	// Mark resource as new to avoid d.Set("") when getting 404
 	d.MarkNewResource()
-	if diagnostics := kafkaClientQuotaRead(ctx, d, meta); diagnostics != nil {
+	if diagnostics := kafkaClientQuotaRead(ctx, d, meta); len(diagnostics) > 0 {
 		return nil, fmt.Errorf("error importing Kafka Client Quota %q: %s", d.Id(), diagnostics[0].Summary)
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished importing Kafka Client Quota %q", d.Id()), map[string]interface{}{kafkaClientQuotaLoggingKey: d.Id()})
