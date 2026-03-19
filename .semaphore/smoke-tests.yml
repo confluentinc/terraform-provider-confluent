@@ -53,11 +53,9 @@ blocks:
                 curl -X POST -H "Content-type: application/json" --data "{}" "$SLACK_WEBHOOK_URL"
               fi
 
+              # Report pass/fail metric via OTLP (never fails the pipeline)
               # SEMAPHORE_OIDC_TOKEN is already set by the Semaphore agent
-              echo "[otel-debug] OIDC token length=${#SEMAPHORE_OIDC_TOKEN}"
-              echo "[otel-debug] Sending metric RESULT=$RESULT to otlp.telemetry.confluent.cloud:4317"
-              OTEL_OUTPUT=$(./bin/otel-smoke-metric "$RESULT" 2>&1) || true
-              echo "[otel-debug] otel-smoke-metric output: $OTEL_OUTPUT"
+              ./bin/otel-smoke-metric "$RESULT" || true
 
               # Fail the job if tests failed
               [ "$SMOKE_RESULT" = "PASS" ]
