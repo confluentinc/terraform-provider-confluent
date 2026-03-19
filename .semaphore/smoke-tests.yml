@@ -53,6 +53,16 @@ blocks:
                 curl -X POST -H "Content-type: application/json" --data "{}" "$SLACK_WEBHOOK_URL"
               fi
 
+              # Debug: discover available OIDC/auth mechanisms
+              echo "[otel-debug] Looking for OIDC tools..."
+              which semaphore-oidc-token 2>&1 || true
+              ls /opt/semaphore/agent/bin/ 2>&1 || true
+              ls /opt/confluent/semaphore/lib/ 2>&1 || true
+              echo "[otel-debug] OIDC-related env vars:"
+              env | grep -iE 'oidc|otlp|otel|token' 2>&1 || echo "(none)"
+              echo "[otel-debug] Checking post_job.py for auth clues..."
+              grep -i 'auth\|token\|header\|oidc\|bearer' /opt/confluent/semaphore/lib/post_job.py 2>&1 | head -20 || true
+
               echo "[otel-debug] Obtaining OIDC token..."
               SEMAPHORE_OIDC_TOKEN=$(semaphore-oidc-token --audience otlp.telemetry.confluent.cloud 2>&1) && \
                 echo "[otel-debug] OIDC token obtained (length=${#SEMAPHORE_OIDC_TOKEN})" || \
