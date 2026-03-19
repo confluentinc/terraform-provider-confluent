@@ -19,7 +19,6 @@ import (
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/resource"
 	"google.golang.org/grpc/credentials"
-	"google.golang.org/grpc/metadata"
 )
 
 func main() {
@@ -46,14 +45,16 @@ func run() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
-	// Inject bearer token via gRPC metadata if available.
-	token := os.Getenv("SEMAPHORE_OIDC_TOKEN")
-	if token != "" {
-		ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+token)
-	}
-
 	opts := []otlpmetricgrpc.Option{
 		otlpmetricgrpc.WithEndpoint(endpoint),
+	}
+
+	// Send bearer token as a gRPC header on every export request.
+	token := os.Getenv("SEMAPHORE_OIDC_TOKEN")
+	if token != "" {
+		opts = append(opts, otlpmetricgrpc.WithHeaders(map[string]string{
+			"authorization": "Bearer " + token,
+		}))
 	}
 	if os.Getenv("OTEL_EXPORTER_OTLP_INSECURE") == "true" {
 		opts = append(opts, otlpmetricgrpc.WithInsecure())
