@@ -458,7 +458,15 @@ func extractStringValueFromBlock(d *schema.ResourceData, blockName string, attri
 
 func extractStringValueFromNestedBlock(d *schema.ResourceData, outerBlockName string, innerBlockName string, attribute string) string {
 	// d.Get() will return "" if the key is not present
-	return d.Get(fmt.Sprintf("%s.0.%s.0.%s", outerBlockName, innerBlockName, attribute)).(string)
+	value := d.Get(fmt.Sprintf("%s.0.%s.0.%s", outerBlockName, innerBlockName, attribute))
+	if value == nil {
+		return ""
+	}
+	str, ok := value.(string)
+	if !ok {
+		return ""
+	}
+	return str
 }
 
 func validateApiKey(apiKey apikeys.IamV2ApiKey) error {
@@ -587,7 +595,7 @@ func apiKeyImport(ctx context.Context, d *schema.ResourceData, meta interface{})
 
 	// Mark resource as new to avoid d.Set("") when getting 404
 	d.MarkNewResource()
-	if diagnostics := apiKeyRead(ctx, d, meta); diagnostics != nil {
+	if diagnostics := apiKeyRead(ctx, d, meta); len(diagnostics) > 0 {
 		return nil, fmt.Errorf("error importing API Key %q: %s", d.Id(), diagnostics[0].Summary)
 	}
 	if err := d.Set(paramSecret, apiKeySecret); err != nil {

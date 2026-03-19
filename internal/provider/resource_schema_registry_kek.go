@@ -24,7 +24,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"io"
 	"net/http"
 	"regexp"
 	"strings"
@@ -146,8 +145,7 @@ func schemaRegistryKekCreate(ctx context.Context, d *schema.ResourceData, meta i
 
 	createdKek, resp, err := request.Execute()
 	if err != nil {
-		b, err := io.ReadAll(resp.Body)
-		return diag.Errorf("error creating Schema Registry KEK %s, error message: %s", createDescriptiveError(err, resp), string(b))
+		return diag.Errorf("error creating Schema Registry KEK: %s", createDescriptiveError(err, resp))
 	}
 	d.SetId(kekId)
 
@@ -304,8 +302,7 @@ func schemaRegistryKekUpdate(ctx context.Context, d *schema.ResourceData, meta i
 
 	updatedKek, resp, err := request.Execute()
 	if err != nil {
-		b, err := io.ReadAll(resp.Body)
-		return diag.Errorf("error updating Schema Registry KEK %s, error message: %s", createDescriptiveError(err, resp), string(b))
+		return diag.Errorf("error updating Schema Registry KEK: %s", createDescriptiveError(err, resp))
 	}
 
 	updatedKekJson, err := json.Marshal(updatedKek)
