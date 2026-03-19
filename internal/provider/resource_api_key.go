@@ -587,7 +587,7 @@ func apiKeyImport(ctx context.Context, d *schema.ResourceData, meta interface{})
 
 	// Mark resource as new to avoid d.Set("") when getting 404
 	d.MarkNewResource()
-	if diagnostics := apiKeyRead(ctx, d, meta); diagnostics != nil {
+	if diagnostics := apiKeyRead(ctx, d, meta); len(diagnostics) > 0 {
 		return nil, fmt.Errorf("error importing API Key %q: %s", d.Id(), diagnostics[0].Summary)
 	}
 	if err := d.Set(paramSecret, apiKeySecret); err != nil {

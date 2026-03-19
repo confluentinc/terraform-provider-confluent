@@ -191,7 +191,7 @@ func groupMappingImport(ctx context.Context, d *schema.ResourceData, meta interf
 	tflog.Debug(ctx, fmt.Sprintf("Importing Group Mapping %q", d.Id()), map[string]interface{}{groupMappingLoggingKey: d.Id()})
 	// Mark resource as new to avoid d.Set("") when getting 404
 	d.MarkNewResource()
-	if diagnostics := groupMappingRead(ctx, d, meta); diagnostics != nil {
+	if diagnostics := groupMappingRead(ctx, d, meta); len(diagnostics) > 0 {
 		return nil, fmt.Errorf("error importing Group Mapping %q: %s", d.Id(), diagnostics[0].Summary)
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished importing Group Mapping %q", d.Id()), map[string]interface{}{groupMappingLoggingKey: d.Id()})
