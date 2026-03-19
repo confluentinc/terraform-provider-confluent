@@ -36,6 +36,9 @@ func run() error {
 	if err != nil {
 		return fmt.Errorf("invalid result value %q: %w", os.Args[1], err)
 	}
+	if result != 0 && result != 1 {
+		return fmt.Errorf("invalid result value %q: must be 0 or 1", os.Args[1])
+	}
 
 	endpoint := os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT")
 	if endpoint == "" {
