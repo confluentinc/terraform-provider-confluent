@@ -458,15 +458,7 @@ func extractStringValueFromBlock(d *schema.ResourceData, blockName string, attri
 
 func extractStringValueFromNestedBlock(d *schema.ResourceData, outerBlockName string, innerBlockName string, attribute string) string {
 	// d.Get() will return "" if the key is not present
-	value := d.Get(fmt.Sprintf("%s.0.%s.0.%s", outerBlockName, innerBlockName, attribute))
-	if value == nil {
-		return ""
-	}
-	str, ok := value.(string)
-	if !ok {
-		return ""
-	}
-	return str
+	return d.Get(fmt.Sprintf("%s.0.%s.0.%s", outerBlockName, innerBlockName, attribute)).(string)
 }
 
 func validateApiKey(apiKey apikeys.IamV2ApiKey) error {
