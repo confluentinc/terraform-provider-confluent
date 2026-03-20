@@ -326,6 +326,9 @@ func TestAccAccessPointAwsPrivateNetworkInterface(t *testing.T) {
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_private_network_interface.0.network_interfaces.0", "eni-00000000000000000"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_private_network_interface.0.network_interfaces.1", "eni-00000000000000001"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_private_network_interface.0.account", "000000000000"),
+					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_private_network_interface.0.routes.#", "2"),
+					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_private_network_interface.0.routes.0", "172.31.0.0/16"),
+					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_private_network_interface.0.routes.1", "10.108.16.0/21"),
 				),
 			},
 			{
@@ -345,6 +348,9 @@ func TestAccAccessPointAwsPrivateNetworkInterface(t *testing.T) {
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_private_network_interface.0.network_interfaces.0", "eni-00000000000000000"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_private_network_interface.0.network_interfaces.1", "eni-00000000000000001"),
 					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_private_network_interface.0.account", "000000000000"),
+					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_private_network_interface.0.routes.#", "2"),
+					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_private_network_interface.0.routes.0", "172.31.0.0/16"),
+					resource.TestCheckResourceAttr(accessPointResourceLabel, "aws_private_network_interface.0.routes.1", "10.108.16.0/21"),
 				),
 			},
 			{
@@ -755,6 +761,7 @@ func testAccCheckResourceAccessPointAwsPrivateNetworkInterfaceWithIdSet(mockServ
 		aws_private_network_interface {
 			account = "000000000000"
 			network_interfaces = ["eni-00000000000000000", "eni-00000000000000001", "eni-00000000000000002", "eni-00000000000000003", "eni-00000000000000004", "eni-00000000000000005"]
+			routes = ["172.31.0.0/16", "10.108.16.0/21"]
 		}
 	}
 	`, mockServerUrl, name)
