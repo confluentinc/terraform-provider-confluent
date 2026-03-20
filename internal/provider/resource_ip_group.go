@@ -177,7 +177,7 @@ func ipGroupImport(ctx context.Context, d *schema.ResourceData, meta interface{}
 	tflog.Debug(ctx, fmt.Sprintf("Importing IP Group %q", d.Id()), map[string]interface{}{ipGroupLoggingKey: d.Id()})
 	// Mark resource as new to avoid d.Set("") when getting 404
 	d.MarkNewResource()
-	if diagnostics := ipGroupRead(ctx, d, meta); diagnostics != nil {
+	if diagnostics := ipGroupRead(ctx, d, meta); len(diagnostics) > 0 {
 		return nil, fmt.Errorf("error importing IP Group %q: %s", d.Id(), diagnostics[0].Summary)
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished importing IP Group %q", d.Id()), map[string]interface{}{ipGroupLoggingKey: d.Id()})

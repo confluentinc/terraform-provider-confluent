@@ -186,7 +186,7 @@ func environmentImport(ctx context.Context, d *schema.ResourceData, meta interfa
 	tflog.Debug(ctx, fmt.Sprintf("Importing Environment %q", d.Id()), map[string]interface{}{environmentLoggingKey: d.Id()})
 	// Mark resource as new to avoid d.Set("") when getting 404
 	d.MarkNewResource()
-	if diagnostics := environmentRead(ctx, d, meta); diagnostics != nil {
+	if diagnostics := environmentRead(ctx, d, meta); len(diagnostics) > 0 {
 		return nil, fmt.Errorf("error importing Environment %q: %s", d.Id(), diagnostics[0].Summary)
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished importing Environment %q", d.Id()), map[string]interface{}{environmentLoggingKey: d.Id()})
