@@ -7,7 +7,7 @@
 * Fixed similar issues across other resources.
 
 **Examples:**
-* Moved `docs/examples/supported_examples.md` to `docs/guides/supported-examples.md` so it appears in the Terraform Registry sidebar under Guides
+* Moved `docs/examples/supported_examples.md` to `docs/guides/supported-examples.md` so it appears in the Terraform Registry sidebar under Guides.
 * Added required `page_title` frontmatter for Registry rendering.
 
 ## 2.64.0 (March 17th, 2026)
