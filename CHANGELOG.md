@@ -1,3 +1,11 @@
+## 2.65.0 (March 20th, 2026)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.64.0...v2.65.0)
+
+**Bug fixes:**
+* Fixed a crash in the `confluent_schema_registry_dek` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema_registry_dek) when DEK creation failed due to network errors.
+* Fixed similar issues across other resources.
+
 ## 2.64.0 (March 17th, 2026)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.63.0...v2.64.0)
