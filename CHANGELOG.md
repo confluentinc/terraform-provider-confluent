@@ -6,6 +6,10 @@
 * Fixed a crash in the `confluent_schema_registry_dek` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema_registry_dek) when DEK creation failed due to network errors.
 * Fixed similar issues across other resources.
 
+**Examples:**
+* Moved `docs/examples/supported_examples.md` to `docs/guides/supported-examples.md` so it appears in the Terraform Registry sidebar under Guides.
+* Added required `page_title` frontmatter for Registry rendering.
+
 ## 2.64.0 (March 17th, 2026)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.63.0...v2.64.0)
