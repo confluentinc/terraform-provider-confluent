@@ -192,7 +192,9 @@ func destinationSchemaRegistryClusterBlockSchema() *schema.Schema {
 func constructDestinationSRClusterRequest(d *schema.ResourceData, meta interface{}) map[string]string {
 	client := meta.(*Client)
 	configs := convertToStringStringMap(d.Get(paramConfigs).(map[string]interface{}))
-	configs[schemaRegistryUrlConfig] = extractStringValueFromBlock(d, paramDestinationSchemaRegistryCluster, paramRestEndpoint)
+	if _, ok := configs[schemaRegistryUrlConfig]; !ok {
+		configs[schemaRegistryUrlConfig] = extractStringValueFromBlock(d, paramDestinationSchemaRegistryCluster, paramRestEndpoint)
+	}
 
 	// OAuth specific configurations
 	if client.isOAuthEnabled {
