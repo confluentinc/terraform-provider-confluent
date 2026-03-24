@@ -32,10 +32,12 @@ resource "confluent_schema_exporter" "main" {
     rest_endpoint = var.destination_schema_registry_rest_endpoint
   }
 
-  # TODO: consider adding sensitive_config {}
+  config_sensitive = {
+    "bearer.auth.client.secret" = "<secret>"
+  }
+
   config = {
     "bearer.auth.client.id" = "<client ID>"
-    "bearer.auth.client.secret" = "<secret>"
     "bearer.auth.identity.pool.id" = var.oauth_destination_identity_pool_id
     "bearer.auth.scope" = "<client ID>/.default"
     "bearer.auth.credentials.source" = "OAUTHBEARER"
