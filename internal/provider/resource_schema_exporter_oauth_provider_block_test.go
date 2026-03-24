@@ -32,6 +32,7 @@ const (
 	testOAuthBearerCredentialsSource = "OAUTHBEARER"
 	testOAuthBearerIssuerEndpointUrl = "https://login.example.com/oauth2/v2.0/token"
 
+	testOAuthBearerUpdatedClientSecret   = "test-oauth-secret-updated"
 	testOAuthBearerUpdatedIdentityPoolId = "pool-updated"
 	testOAuthBearerUpdatedScope          = "test-client-id/.default-updated"
 )
@@ -158,17 +159,21 @@ func TestAccSchemaExporterOAuthWithEnhancedProviderBlock(t *testing.T) {
 					resource.TestCheckResourceAttr(schemaExporterLabel, "status", "RUNNING"),
 					resource.TestCheckResourceAttr(schemaExporterLabel, "subjects.#", "1"),
 					resource.TestCheckResourceAttr(schemaExporterLabel, "subjects.0", "foo"),
-					// Verify exactly 6 user-specified config keys are preserved (no boilerplate)
-					resource.TestCheckResourceAttr(schemaExporterLabel, fmt.Sprintf("%s.%%", paramConfigs), "6"),
+					// Verify exactly 5 non-sensitive config keys (bearer.auth.client.secret is in config_sensitive)
+					resource.TestCheckResourceAttr(schemaExporterLabel, fmt.Sprintf("%s.%%", paramConfigs), "5"),
 					resource.TestCheckResourceAttr(schemaExporterLabel, fmt.Sprintf("%s.bearer.auth.client.id", paramConfigs), testOAuthBearerClientId),
-					resource.TestCheckResourceAttr(schemaExporterLabel, fmt.Sprintf("%s.bearer.auth.client.secret", paramConfigs), testOAuthBearerClientSecret),
 					resource.TestCheckResourceAttr(schemaExporterLabel, fmt.Sprintf("%s.bearer.auth.identity.pool.id", paramConfigs), testOAuthBearerIdentityPoolId),
 					resource.TestCheckResourceAttr(schemaExporterLabel, fmt.Sprintf("%s.bearer.auth.scope", paramConfigs), testOAuthBearerScope),
 					resource.TestCheckResourceAttr(schemaExporterLabel, fmt.Sprintf("%s.bearer.auth.credentials.source", paramConfigs), testOAuthBearerCredentialsSource),
 					resource.TestCheckResourceAttr(schemaExporterLabel, fmt.Sprintf("%s.bearer.auth.issuer.endpoint.url", paramConfigs), testOAuthBearerIssuerEndpointUrl),
+					// Verify bearer.auth.client.secret is NOT in config (it's in config_sensitive)
+					resource.TestCheckNoResourceAttr(schemaExporterLabel, fmt.Sprintf("%s.bearer.auth.client.secret", paramConfigs)),
 					// Verify boilerplate keys are NOT in config
 					resource.TestCheckNoResourceAttr(schemaExporterLabel, fmt.Sprintf("%s.schema.registry.url", paramConfigs)),
 					resource.TestCheckNoResourceAttr(schemaExporterLabel, fmt.Sprintf("%s.bearer.auth.logical.cluster", paramConfigs)),
+					// Verify sensitive config has exactly 1 key
+					resource.TestCheckResourceAttr(schemaExporterLabel, fmt.Sprintf("%s.%%", paramSensitiveConfig), "1"),
+					resource.TestCheckResourceAttr(schemaExporterLabel, fmt.Sprintf("%s.bearer.auth.client.secret", paramSensitiveConfig), testOAuthBearerClientSecret),
 					// Verify destination_schema_registry_cluster block
 					resource.TestCheckResourceAttr(schemaExporterLabel, "destination_schema_registry_cluster.#", "1"),
 					resource.TestCheckResourceAttr(schemaExporterLabel, "destination_schema_registry_cluster.0.rest_endpoint", testOriginalDestinationSchemaRegistryRestEndpoint),
@@ -186,10 +191,9 @@ func TestAccSchemaExporterOAuthWithEnhancedProviderBlock(t *testing.T) {
 					resource.TestCheckResourceAttr(schemaExporterLabel, "status", "PAUSED"),
 					resource.TestCheckResourceAttr(schemaExporterLabel, "subjects.#", "1"),
 					resource.TestCheckResourceAttr(schemaExporterLabel, "subjects.0", "foo3"),
-					// Verify exactly 6 user-specified config keys are preserved after update
-					resource.TestCheckResourceAttr(schemaExporterLabel, fmt.Sprintf("%s.%%", paramConfigs), "6"),
+					// Verify exactly 5 non-sensitive config keys after update
+					resource.TestCheckResourceAttr(schemaExporterLabel, fmt.Sprintf("%s.%%", paramConfigs), "5"),
 					resource.TestCheckResourceAttr(schemaExporterLabel, fmt.Sprintf("%s.bearer.auth.client.id", paramConfigs), testOAuthBearerClientId),
-					resource.TestCheckResourceAttr(schemaExporterLabel, fmt.Sprintf("%s.bearer.auth.client.secret", paramConfigs), testOAuthBearerClientSecret),
 					resource.TestCheckResourceAttr(schemaExporterLabel, fmt.Sprintf("%s.bearer.auth.identity.pool.id", paramConfigs), testOAuthBearerUpdatedIdentityPoolId),
 					resource.TestCheckResourceAttr(schemaExporterLabel, fmt.Sprintf("%s.bearer.auth.scope", paramConfigs), testOAuthBearerUpdatedScope),
 					resource.TestCheckResourceAttr(schemaExporterLabel, fmt.Sprintf("%s.bearer.auth.credentials.source", paramConfigs), testOAuthBearerCredentialsSource),
@@ -197,6 +201,9 @@ func TestAccSchemaExporterOAuthWithEnhancedProviderBlock(t *testing.T) {
 					// Verify boilerplate keys are still NOT in config after update
 					resource.TestCheckNoResourceAttr(schemaExporterLabel, fmt.Sprintf("%s.schema.registry.url", paramConfigs)),
 					resource.TestCheckNoResourceAttr(schemaExporterLabel, fmt.Sprintf("%s.bearer.auth.logical.cluster", paramConfigs)),
+					// Verify sensitive config updated secret is preserved
+					resource.TestCheckResourceAttr(schemaExporterLabel, fmt.Sprintf("%s.%%", paramSensitiveConfig), "1"),
+					resource.TestCheckResourceAttr(schemaExporterLabel, fmt.Sprintf("%s.bearer.auth.client.secret", paramSensitiveConfig), testOAuthBearerUpdatedClientSecret),
 					// Verify destination_schema_registry_cluster block
 					resource.TestCheckResourceAttr(schemaExporterLabel, "destination_schema_registry_cluster.#", "1"),
 					resource.TestCheckResourceAttr(schemaExporterLabel, "destination_schema_registry_cluster.0.rest_endpoint", testDestinationSchemaRegistryRestEndpoint),
@@ -232,19 +239,23 @@ func schemaExporterOAuthResourceConfigWithEnhancedProviderBlock(mockServerUrl st
 		}
 
 		config = {
-			"bearer.auth.client.id"          = "%s"
-			"bearer.auth.client.secret"      = "%s"
-			"bearer.auth.identity.pool.id"   = "%s"
-			"bearer.auth.scope"              = "%s"
-			"bearer.auth.credentials.source" = "%s"
+			"bearer.auth.client.id"           = "%s"
+			"bearer.auth.identity.pool.id"    = "%s"
+			"bearer.auth.scope"               = "%s"
+			"bearer.auth.credentials.source"  = "%s"
 			"bearer.auth.issuer.endpoint.url" = "%s"
+		}
+
+		config_sensitive = {
+			"bearer.auth.client.secret" = "%s"
 		}
 	}
 
  	`, testStreamGovernanceClusterId, mockServerUrl, testSchemaRegistryKey, testSchemaRegistrySecret,
 		testOriginalDestinationSchemaRegistryRestEndpoint, testDestinationSchemaRegistryKey, testDestinationSchemaRegistrySecret,
-		testOAuthBearerClientId, testOAuthBearerClientSecret, testOAuthBearerIdentityPoolId,
-		testOAuthBearerScope, testOAuthBearerCredentialsSource, testOAuthBearerIssuerEndpointUrl)
+		testOAuthBearerClientId, testOAuthBearerIdentityPoolId,
+		testOAuthBearerScope, testOAuthBearerCredentialsSource, testOAuthBearerIssuerEndpointUrl,
+		testOAuthBearerClientSecret)
 }
 
 func schemaExporterOAuthResourceUpdatedConfigWithEnhancedProviderBlock(mockServerUrl string) string {
@@ -272,16 +283,20 @@ func schemaExporterOAuthResourceUpdatedConfigWithEnhancedProviderBlock(mockServe
 		}
 
 		config = {
-			"bearer.auth.client.id"          = "%s"
-			"bearer.auth.client.secret"      = "%s"
-			"bearer.auth.identity.pool.id"   = "%s"
-			"bearer.auth.scope"              = "%s"
-			"bearer.auth.credentials.source" = "%s"
+			"bearer.auth.client.id"           = "%s"
+			"bearer.auth.identity.pool.id"    = "%s"
+			"bearer.auth.scope"               = "%s"
+			"bearer.auth.credentials.source"  = "%s"
 			"bearer.auth.issuer.endpoint.url" = "%s"
+		}
+
+		config_sensitive = {
+			"bearer.auth.client.secret" = "%s"
 		}
 	}
  	`, testStreamGovernanceClusterId, mockServerUrl, testSchemaRegistryKey, testSchemaRegistrySecret,
 		testDestinationSchemaRegistryRestEndpoint, testDestinationSchemaRegistryKey, testDestinationSchemaRegistrySecret,
-		testOAuthBearerClientId, testOAuthBearerClientSecret, testOAuthBearerUpdatedIdentityPoolId,
-		testOAuthBearerUpdatedScope, testOAuthBearerCredentialsSource, testOAuthBearerIssuerEndpointUrl)
+		testOAuthBearerClientId, testOAuthBearerUpdatedIdentityPoolId,
+		testOAuthBearerUpdatedScope, testOAuthBearerCredentialsSource, testOAuthBearerIssuerEndpointUrl,
+		testOAuthBearerUpdatedClientSecret)
 }
