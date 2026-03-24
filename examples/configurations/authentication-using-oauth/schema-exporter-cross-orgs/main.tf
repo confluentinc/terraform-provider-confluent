@@ -37,10 +37,10 @@ resource "confluent_schema_exporter" "main" {
   }
 
   config = {
-    "bearer.auth.client.id" = "<client ID>"
-    "bearer.auth.identity.pool.id" = var.oauth_destination_identity_pool_id
-    "bearer.auth.scope" = "<client ID>/.default"
-    "bearer.auth.credentials.source" = "OAUTHBEARER"
+    "bearer.auth.client.id"           = "<client ID>"
+    "bearer.auth.identity.pool.id"    = var.oauth_destination_identity_pool_id
+    "bearer.auth.scope"               = "<client ID>/.default"
+    "bearer.auth.credentials.source"  = "OAUTHBEARER"
     "bearer.auth.issuer.endpoint.url" = "https://login.microsoftonline.com/<Azure Entra ID>/oauth2/v2.0/token"
   }
 
