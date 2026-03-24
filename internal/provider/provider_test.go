@@ -70,7 +70,10 @@ func testAccPreCheck(t *testing.T) {
 
 func TestProviderGoContainsTfgenMarkers(t *testing.T) {
 	// Locate provider.go relative to this test file.
-	_, thisFile, _, _ := runtime.Caller(0)
+	_, thisFile, _, ok := runtime.Caller(0)
+	if !ok {
+		t.Fatal("runtime.Caller(0) failed: unable to determine test file path")
+	}
 	providerGoPath := filepath.Join(filepath.Dir(thisFile), "provider.go")
 
 	content, err := os.ReadFile(providerGoPath)
