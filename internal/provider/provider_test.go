@@ -16,6 +16,9 @@ package provider
 
 import (
 	"os"
+	"path/filepath"
+	"runtime"
+	"strings"
 	"testing"
 	"time"
 
@@ -62,6 +65,33 @@ func testAccPreCheck(t *testing.T) {
 	canUseApiKeyAndSecret := ccApiKey != "" && ccApiSecret != ""
 	if !canUseApiKeyAndSecret {
 		t.Fatal("Both CONFLUENT_CLOUD_API_KEY and CONFLUENT_CLOUD_API_SECRET must be set for acceptance tests (having them set to fake values is fine)")
+	}
+}
+
+func TestProviderGoContainsTfgenMarkers(t *testing.T) {
+	// Locate provider.go relative to this test file.
+	_, thisFile, _, ok := runtime.Caller(0)
+	if !ok {
+		t.Fatal("runtime.Caller(0) failed: unable to determine test file path")
+	}
+	providerGoPath := filepath.Join(filepath.Dir(thisFile), "provider.go")
+
+	content, err := os.ReadFile(providerGoPath)
+	if err != nil {
+		t.Fatalf("failed to read provider.go: %s", err)
+	}
+	text := string(content)
+
+	markers := []string{
+		"// cli-tfgen:tf-resources",
+		"// cli-tfgen:tf-datasources",
+		"// cli-tfgen:tf-client-fields",
+		"// cli-tfgen:tf-client-init",
+	}
+	for _, marker := range markers {
+		if !strings.Contains(text, marker) {
+			t.Errorf("provider.go is missing required marker %q (needed by cli-terraform-generator --provider-dir)", marker)
+		}
 	}
 }
 

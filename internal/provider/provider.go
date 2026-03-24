@@ -151,6 +151,7 @@ type Client struct {
 	isAcceptanceTestMode            bool
 	isLiveProductionTestMode        bool
 	isOAuthEnabled                  bool
+	// cli-tfgen:tf-client-fields
 }
 
 type ResourceMetadataSetFlags struct {
@@ -385,6 +386,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_business_metadata_binding":          businessMetadataBindingDataSource(),
 				"confluent_schema_registry_kek":                schemaRegistryKekDataSource(),
 				"confluent_schema_registry_dek":                schemaRegistryDekDataSource(),
+				// cli-tfgen:tf-datasources
 			},
 			ResourcesMap: map[string]*schema.Resource{
 				"confluent_catalog_integration":                catalogIntegrationResource(),
@@ -448,6 +450,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_schema_registry_kek":                schemaRegistryKekResource(),
 				"confluent_schema_registry_dek":                schemaRegistryDekResource(),
 				"confluent_catalog_entity_attributes":          catalogEntityAttributesResource(),
+				// cli-tfgen:tf-resources
 			},
 		}
 
@@ -791,6 +794,8 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 		isLiveProductionTestMode:     liveProductionTestMode,
 		isOAuthEnabled:               oauthEnabled,
 	}
+
+	// cli-tfgen:tf-client-init
 
 	return &client, nil
 }
