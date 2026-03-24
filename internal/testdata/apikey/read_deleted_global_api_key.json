@@ -1,0 +1,11 @@
+{
+  "errors": [
+    {
+      "id": "f52c45ec-5ead-47dc-88e5-07f179f5c04c",
+      "status": "404",
+      "code": "api_key_not_found",
+      "title": "Not Found",
+      "detail": "The API Key (id=GLOBAL6K4VMXYD2LDZ) does not exist"
+    }
+  ]
+}
