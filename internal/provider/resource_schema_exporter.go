@@ -24,6 +24,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"github.com/samber/lo"
 	"net/http"
 	"regexp"
 	"strings"
@@ -55,9 +56,6 @@ const (
 
 	schemaExporterAPICreateTimeout = 12 * time.Hour
 )
-
-var standardConfigs = []string{basicAuthUserInfoConfig, schemaRegistryUrlConfig, basicAuthCredentialsSourceConfig}
-var oauthBearerConfigs = []string{bearerAuthClientId, bearerAuthClientSecret, bearerAuthIssuerEndpointUrl, bearerAuthCredentialsSource, bearerAuthScope, bearerAuthIdentityPoolId, bearerAuthLogicalCluster, configOAuthBearer}
 
 func schemaExporterResource() *schema.Resource {
 	return &schema.Resource{
@@ -112,6 +110,16 @@ func schemaExporterResource() *schema.Resource {
 				},
 				Optional: true,
 				Computed: true,
+			},
+			paramSensitiveConfig: {
+				Type: schema.TypeMap,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+				Sensitive: true,
+				Optional:  true,
+				Computed:  true,
+				ForceNew:  false,
 			},
 			paramResetOnUpdate: {
 				Type:     schema.TypeBool,
@@ -191,8 +199,12 @@ func destinationSchemaRegistryClusterBlockSchema() *schema.Schema {
 
 func constructDestinationSRClusterRequest(d *schema.ResourceData, meta interface{}) map[string]string {
 	client := meta.(*Client)
-	configs := convertToStringStringMap(d.Get(paramConfigs).(map[string]interface{}))
-	configs[schemaRegistryUrlConfig] = extractStringValueFromBlock(d, paramDestinationSchemaRegistryCluster, paramRestEndpoint)
+	// Merge non-sensitive and sensitive configs so that values from both blocks reach the API.
+	mergedConfigs, _, _ := extractSRExporterProperties(d)
+	configs := mergedConfigs
+	if _, ok := configs[schemaRegistryUrlConfig]; !ok {
+		configs[schemaRegistryUrlConfig] = extractStringValueFromBlock(d, paramDestinationSchemaRegistryCluster, paramRestEndpoint)
+	}
 
 	// OAuth specific configurations
 	if client.isOAuthEnabled {
@@ -255,6 +267,11 @@ func schemaExporterCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	exporterId := createExporterId(clusterId, d.Get(paramName).(string))
 	name := d.Get(paramName).(string)
 
+	_, sensitiveConfigs, _ := extractSRExporterProperties(d)
+	// basic.auth.user.info is handled internally via destination_schema_registry_cluster credentials,
+	// so ignore it in sensitive_config to avoid drift.
+	delete(sensitiveConfigs, basicAuthUserInfoConfig)
+
 	er := sr.NewExporterReference()
 	er.SetName(name)
 	if v := d.Get(paramContext).(string); v != "" {
@@ -268,6 +285,10 @@ func schemaExporterCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	}
 	er.SetSubjects(subjects)
 	er.SetConfig(constructDestinationSRClusterRequest(d, meta))
+
+	if err := d.Set(paramSensitiveConfig, sensitiveConfigs); err != nil {
+		return diag.FromErr(createDescriptiveError(err))
+	}
 
 	request := c.apiClient.ExportersV1Api.RegisterExporter(c.apiContext(ctx)).ExporterReference(*er)
 	requestJson, err := json.Marshal(request)
@@ -351,7 +372,7 @@ func readSchemaExporterAndSetAttributes(ctx context.Context, d *schema.ResourceD
 		return nil, err
 	}
 
-	if _, err := setSchemaExporterAttributes(d, clusterId, exporter, c, meta); err != nil {
+	if _, err := setSchemaExporterAttributes(d, clusterId, exporter, c, meta, isImportOperation); err != nil {
 		return nil, createDescriptiveError(err)
 	}
 
@@ -389,7 +410,7 @@ func schemaExporterUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 		}
 	}
 
-	if d.HasChanges(paramContextType, paramContext, paramSubjectRenameFormat, paramSubjects, paramConfigs, paramDestinationSchemaRegistryCluster) {
+	if d.HasChanges(paramContextType, paramContext, paramSubjectRenameFormat, paramSubjects, paramConfigs, paramSensitiveConfig, paramDestinationSchemaRegistryCluster) {
 		// pause the exporter whenever there's an update on configs
 		// https://github.com/confluentinc/terraform-provider-confluent/issues/321
 		_, resp, err := c.apiClient.ExportersV1Api.PauseExporterByName(c.apiContext(ctx), name).Execute()
@@ -539,7 +560,7 @@ func schemaExporterImport(ctx context.Context, d *schema.ResourceData, meta inte
 	return []*schema.ResourceData{d}, nil
 }
 
-func setSchemaExporterAttributes(d *schema.ResourceData, clusterId string, exporter sr.ExporterReference, c *SchemaRegistryRestClient, meta interface{}) (*schema.ResourceData, error) {
+func setSchemaExporterAttributes(d *schema.ResourceData, clusterId string, exporter sr.ExporterReference, c *SchemaRegistryRestClient, meta interface{}, isImportOperation bool) (*schema.ResourceData, error) {
 	if !c.isMetadataSetInProviderBlock {
 		if err := setKafkaCredentials(c.clusterApiKey, c.clusterApiSecret, d, c.externalAccessToken != nil); err != nil {
 			return nil, err
@@ -573,9 +594,17 @@ func setSchemaExporterAttributes(d *schema.ResourceData, clusterId string, expor
 		return nil, err
 	}
 
-	removeSensitiveInfoFromConfigs(configs, standardConfigs, oauthBearerConfigs)
-	if err := d.Set(paramConfigs, configs); err != nil {
+	filteredConfigs := filterExporterConfigs(configs, d, isImportOperation)
+	if err := d.Set(paramConfigs, filteredConfigs); err != nil {
 		return nil, err
+	}
+
+	if isImportOperation {
+		// Sensitive config values are redacted by the API, so set to empty on import
+		// (same pattern as the connector resource).
+		if err := d.Set(paramSensitiveConfig, make(map[string]string)); err != nil {
+			return nil, err
+		}
 	}
 
 	d.SetId(createExporterId(clusterId, exporter.GetName()))
@@ -626,14 +655,72 @@ func setDestinationSchemaRegistryClusterAttributes(d *schema.ResourceData, confi
 	return nil
 }
 
-func removeSensitiveInfoFromConfigs(configs map[string]string, keysGroupToRemove ...[]string) {
-	for _, group := range keysGroupToRemove {
-		for _, key := range group {
-			delete(configs, key)
+// exporterBoilerplateConfigs are config keys auto-added by the API that are managed
+// by the destination_schema_registry_cluster block and should not appear in config state.
+var exporterBoilerplateConfigs = []string{
+	schemaRegistryUrlConfig,
+	basicAuthUserInfoConfig,
+	basicAuthCredentialsSourceConfig,
+	bearerAuthClientId,
+	bearerAuthClientSecret,
+	bearerAuthIssuerEndpointUrl,
+	bearerAuthCredentialsSource,
+	bearerAuthScope,
+	bearerAuthIdentityPoolId,
+	bearerAuthLogicalCluster,
+}
+
+// filterExporterConfigs filters the API response config map for storage in TF state.
+//
+// On import: keeps all non-redacted, non-boilerplate keys from the API response so users
+// get a populated config block they can adopt into their .tf files.
+//
+// On normal read: only keeps keys that already exist in state, preserving "[hidden]" values
+// from state. This avoids drift from boilerplate keys the API auto-adds.
+func filterExporterConfigs(apiConfigs map[string]string, d *schema.ResourceData, isImportOperation bool) map[string]string {
+	if isImportOperation {
+		filtered := make(map[string]string)
+		boilerplate := make(map[string]bool, len(exporterBoilerplateConfigs))
+		for _, key := range exporterBoilerplateConfigs {
+			boilerplate[key] = true
+		}
+		for key, value := range apiConfigs {
+			if boilerplate[key] || value == "[hidden]" {
+				continue
+			}
+			filtered[key] = value
+		}
+		return filtered
+	}
+
+	// Normal read: only keep keys already in state
+	currentConfigs := convertToStringStringMap(d.Get(paramConfigs).(map[string]interface{}))
+	filtered := make(map[string]string)
+	for key := range currentConfigs {
+		if apiValue, ok := apiConfigs[key]; ok {
+			if apiValue == "[hidden]" {
+				filtered[key] = currentConfigs[key]
+			} else {
+				filtered[key] = apiValue
+			}
 		}
 	}
+	return filtered
 }
 
 func createExporterId(clusterId, exporterName string) string {
 	return fmt.Sprintf("%s/%s", clusterId, exporterName)
+}
+
+func extractSRExporterProperties(d *schema.ResourceData) (map[string]string, map[string]string, map[string]string) {
+	sensitiveProperties := convertToStringStringMap(d.Get(paramSensitiveConfig).(map[string]interface{}))
+	nonsensitiveProperties := convertToStringStringMap(d.Get(paramConfigs).(map[string]interface{}))
+
+	// Merge both configs
+	properties := lo.Assign(
+		nonsensitiveProperties,
+		sensitiveProperties,
+	)
+
+	return properties, sensitiveProperties, nonsensitiveProperties
 }
