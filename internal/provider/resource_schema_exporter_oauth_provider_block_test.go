@@ -32,6 +32,8 @@ const (
 	testOAuthBearerCredentialsSource = "OAUTHBEARER"
 	testOAuthBearerIssuerEndpointUrl = "https://login.example.com/oauth2/v2.0/token"
 
+	testOAuthDestinationRestEndpoint = "https://lsrc-dest.us-east-2.aws.private.confluent.cloud"
+
 	testOAuthBearerUpdatedClientSecret   = "test-oauth-secret-updated"
 	testOAuthBearerUpdatedIdentityPoolId = "pool-updated"
 	testOAuthBearerUpdatedScope          = "test-client-id/.default-updated"
@@ -176,7 +178,7 @@ func TestAccSchemaExporterOAuthWithEnhancedProviderBlock(t *testing.T) {
 					resource.TestCheckResourceAttr(schemaExporterLabel, fmt.Sprintf("%s.bearer.auth.client.secret", paramSensitiveConfig), testOAuthBearerClientSecret),
 					// Verify destination_schema_registry_cluster block
 					resource.TestCheckResourceAttr(schemaExporterLabel, "destination_schema_registry_cluster.#", "1"),
-					resource.TestCheckResourceAttr(schemaExporterLabel, "destination_schema_registry_cluster.0.rest_endpoint", testOriginalDestinationSchemaRegistryRestEndpoint),
+					resource.TestCheckResourceAttr(schemaExporterLabel, "destination_schema_registry_cluster.0.rest_endpoint", testOAuthDestinationRestEndpoint),
 					resource.TestCheckResourceAttr(schemaExporterLabel, "destination_schema_registry_cluster.0.credentials.#", "1"),
 					resource.TestCheckResourceAttr(schemaExporterLabel, "destination_schema_registry_cluster.0.credentials.0.key", testDestinationSchemaRegistryKey),
 					resource.TestCheckResourceAttr(schemaExporterLabel, "destination_schema_registry_cluster.0.credentials.0.secret", testDestinationSchemaRegistrySecret),
@@ -206,7 +208,7 @@ func TestAccSchemaExporterOAuthWithEnhancedProviderBlock(t *testing.T) {
 					resource.TestCheckResourceAttr(schemaExporterLabel, fmt.Sprintf("%s.bearer.auth.client.secret", paramSensitiveConfig), testOAuthBearerUpdatedClientSecret),
 					// Verify destination_schema_registry_cluster block
 					resource.TestCheckResourceAttr(schemaExporterLabel, "destination_schema_registry_cluster.#", "1"),
-					resource.TestCheckResourceAttr(schemaExporterLabel, "destination_schema_registry_cluster.0.rest_endpoint", testDestinationSchemaRegistryRestEndpoint),
+					resource.TestCheckResourceAttr(schemaExporterLabel, "destination_schema_registry_cluster.0.rest_endpoint", testOAuthDestinationRestEndpoint),
 					resource.TestCheckResourceAttr(schemaExporterLabel, "destination_schema_registry_cluster.0.credentials.#", "1"),
 					resource.TestCheckResourceAttr(schemaExporterLabel, "destination_schema_registry_cluster.0.credentials.0.key", testDestinationSchemaRegistryKey),
 					resource.TestCheckResourceAttr(schemaExporterLabel, "destination_schema_registry_cluster.0.credentials.0.secret", testDestinationSchemaRegistrySecret),
@@ -252,7 +254,7 @@ func schemaExporterOAuthResourceConfigWithEnhancedProviderBlock(mockServerUrl st
 	}
 
  	`, testStreamGovernanceClusterId, mockServerUrl, testSchemaRegistryKey, testSchemaRegistrySecret,
-		testOriginalDestinationSchemaRegistryRestEndpoint, testDestinationSchemaRegistryKey, testDestinationSchemaRegistrySecret,
+		testOAuthDestinationRestEndpoint, testDestinationSchemaRegistryKey, testDestinationSchemaRegistrySecret,
 		testOAuthBearerClientId, testOAuthBearerIdentityPoolId,
 		testOAuthBearerScope, testOAuthBearerCredentialsSource, testOAuthBearerIssuerEndpointUrl,
 		testOAuthBearerClientSecret)
@@ -295,7 +297,7 @@ func schemaExporterOAuthResourceUpdatedConfigWithEnhancedProviderBlock(mockServe
 		}
 	}
  	`, testStreamGovernanceClusterId, mockServerUrl, testSchemaRegistryKey, testSchemaRegistrySecret,
-		testDestinationSchemaRegistryRestEndpoint, testDestinationSchemaRegistryKey, testDestinationSchemaRegistrySecret,
+		testOAuthDestinationRestEndpoint, testDestinationSchemaRegistryKey, testDestinationSchemaRegistrySecret,
 		testOAuthBearerClientId, testOAuthBearerUpdatedIdentityPoolId,
 		testOAuthBearerUpdatedScope, testOAuthBearerCredentialsSource, testOAuthBearerIssuerEndpointUrl,
 		testOAuthBearerUpdatedClientSecret)
