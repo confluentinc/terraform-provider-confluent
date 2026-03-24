@@ -87,3 +87,127 @@ func TestResourceExampleInstanceStateUpgradeV010Empty(t *testing.T) {
 		t.Fatalf("\n\nexpected:\n\n%#v\n\ngot:\n\n%#v\n\n", expected, actual)
 	}
 }
+
+// TestKafkaStateUpgradeV0BothEndpoints verifies that when the state has BOTH
+// http_endpoint and rest_endpoint, the http_endpoint value overwrites rest_endpoint
+// and http_endpoint is removed.
+func TestKafkaStateUpgradeV0BothEndpoints(t *testing.T) {
+	httpValue := "https://pkc-http.us-central1.gcp.confluent.cloud:443"
+	restValue := "https://pkc-rest.us-central1.gcp.confluent.cloud:443"
+
+	rawState := map[string]interface{}{
+		paramHttpEndpoint: httpValue,
+		paramRestEndpoint: restValue,
+	}
+
+	expected := map[string]interface{}{
+		paramRestEndpoint: httpValue,
+	}
+
+	actual, err := kafkaStateUpgradeV0(context.Background(), rawState, nil)
+	if err != nil {
+		t.Fatalf("error migrating state: %s", err)
+	}
+
+	if !reflect.DeepEqual(expected, actual) {
+		t.Fatalf("\n\nexpected:\n\n%#v\n\ngot:\n\n%#v\n\n", expected, actual)
+	}
+
+	if _, found := actual[paramHttpEndpoint]; found {
+		t.Fatalf("expected http_endpoint to be removed from state, but it was still present")
+	}
+}
+
+// TestKafkaStateUpgradeV0NeitherEndpoint verifies that when the state has NEITHER
+// http_endpoint nor rest_endpoint, the upgrade succeeds without error and returns
+// the state unchanged.
+func TestKafkaStateUpgradeV0NeitherEndpoint(t *testing.T) {
+	rawState := map[string]interface{}{
+		paramDisplayName: "my-cluster",
+	}
+
+	expected := map[string]interface{}{
+		paramDisplayName: "my-cluster",
+	}
+
+	actual, err := kafkaStateUpgradeV0(context.Background(), rawState, nil)
+	if err != nil {
+		t.Fatalf("error migrating state: %s", err)
+	}
+
+	if !reflect.DeepEqual(expected, actual) {
+		t.Fatalf("\n\nexpected:\n\n%#v\n\ngot:\n\n%#v\n\n", expected, actual)
+	}
+
+	if _, found := actual[paramRestEndpoint]; found {
+		t.Fatalf("expected rest_endpoint to be absent when neither endpoint was in the original state")
+	}
+}
+
+// TestKafkaStateUpgradeV0PreservesAdditionalFields verifies that all fields besides
+// http_endpoint are preserved through the migration.
+func TestKafkaStateUpgradeV0PreservesAdditionalFields(t *testing.T) {
+	rawState := map[string]interface{}{
+		paramHttpEndpoint:      testEndpoint,
+		paramDisplayName:       "my-cluster",
+		paramCloud:             "GCP",
+		paramRegion:            "us-central1",
+		paramAvailability:      "SINGLE_ZONE",
+		paramBootStrapEndpoint: "SASL_SSL://pkc-012345.us-central1.gcp.confluent.cloud:9092",
+		paramRbacCrn:           "crn://confluent.cloud/kafka=lkc-012345",
+	}
+
+	expected := map[string]interface{}{
+		paramRestEndpoint:      testEndpoint,
+		paramDisplayName:       "my-cluster",
+		paramCloud:             "GCP",
+		paramRegion:            "us-central1",
+		paramAvailability:      "SINGLE_ZONE",
+		paramBootStrapEndpoint: "SASL_SSL://pkc-012345.us-central1.gcp.confluent.cloud:9092",
+		paramRbacCrn:           "crn://confluent.cloud/kafka=lkc-012345",
+	}
+
+	actual, err := kafkaStateUpgradeV0(context.Background(), rawState, nil)
+	if err != nil {
+		t.Fatalf("error migrating state: %s", err)
+	}
+
+	if !reflect.DeepEqual(expected, actual) {
+		t.Fatalf("\n\nexpected:\n\n%#v\n\ngot:\n\n%#v\n\n", expected, actual)
+	}
+
+	if _, found := actual[paramHttpEndpoint]; found {
+		t.Fatalf("expected http_endpoint to be removed from state, but it was still present")
+	}
+
+	// Verify each additional field individually for clearer failure messages
+	for _, key := range []string{paramDisplayName, paramCloud, paramRegion, paramAvailability, paramBootStrapEndpoint, paramRbacCrn} {
+		if actual[key] != expected[key] {
+			t.Fatalf("field %q was not preserved: expected %q, got %q", key, expected[key], actual[key])
+		}
+	}
+}
+
+// TestKafkaStateUpgradeV0TransformsState verifies that kafkaStateUpgradeV0
+// correctly renames http_endpoint to rest_endpoint and preserves other fields.
+func TestKafkaStateUpgradeV0TransformsState(t *testing.T) {
+	rawState := map[string]interface{}{
+		paramHttpEndpoint: testEndpoint,
+		paramDisplayName:  "my-cluster",
+	}
+
+	actual, err := kafkaStateUpgradeV0(context.Background(), rawState, nil)
+	if err != nil {
+		t.Fatalf("error migrating state: %s", err)
+	}
+
+	if _, found := actual[paramHttpEndpoint]; found {
+		t.Fatalf("expected http_endpoint to be removed from the returned state")
+	}
+	if actual[paramRestEndpoint] != testEndpoint {
+		t.Fatalf("expected rest_endpoint to be %q, got %q", testEndpoint, actual[paramRestEndpoint])
+	}
+	if actual[paramDisplayName] != "my-cluster" {
+		t.Fatalf("expected display_name to be preserved, got %q", actual[paramDisplayName])
+	}
+}
