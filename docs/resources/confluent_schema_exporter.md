@@ -126,8 +126,15 @@ The following arguments are supported:
 - `config` - (Optional Map) Block for custom *nonsensitive* configuration properties:
   - `name` - (Required String) The configuration setting name.
   - `value` - (Required String) The configuration setting value.
+- `config_sensitive` - (Optional Map) Block for custom *sensitive* configuration properties:
+  - `name` - (Required String) The configuration setting name, for example, `bearer.auth.client.secret`.
+  - `value` - (Required String, Sensitive) The configuration setting value.
 - `status` - (Optional String) The status of the schema exporter. Accepted values are: `RUNNING` and `PAUSED`.
 - `reset_on_update` - (Optional Boolean) The flag to control whether to reset the exporter when updating configs. Defaults to `false`.
+
+-> **Note:** `schema.registry.url` and `bearer.auth.logical.cluster` are inferred from the `destination_schema_registry_cluster` block and should not be set in `config`.
+
+-> **Note:** Sensitive properties such as `bearer.auth.client.secret` should be placed in `config_sensitive` instead of `config` to avoid exposing their values in the Terraform plan output.
 
 -> **Note:** When using OAuth authentication in the provider block, `destination_schema_registry_cluster.id` is required and credentials blocks for both source and destination schema registry clusters must be removed.
 
