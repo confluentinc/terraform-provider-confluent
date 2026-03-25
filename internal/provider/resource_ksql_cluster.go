@@ -16,10 +16,6 @@ import (
 )
 
 const (
-	paramTopicPrefix              = "topic_prefix"
-	paramCredentialIdentity       = "credential_identity"
-	paramStorage                  = "storage"
-	paramUseDetailedProcessingLog = "use_detailed_processing_log"
 	ksqlCreateTimeout             = 12 * time.Hour
 )
 

@@ -29,22 +29,6 @@ import (
 )
 
 const (
-	paramAwsEgressPrivateLinkEndpoint              = "aws_egress_private_link_endpoint"
-	paramAwsIngressPrivateLinkEndpoint             = "aws_ingress_private_link_endpoint"
-	paramAzureEgressPrivateLinkEndpoint            = "azure_egress_private_link_endpoint"
-	paramGcpEgressPrivateServiceConnectEndpoint    = "gcp_egress_private_service_connect_endpoint"
-	paramAwsPrivateNetworkInterface                = "aws_private_network_interface"
-	paramEnableHighAvailability                    = "enable_high_availability"
-	paramVpcEndpointDnsName                        = "vpc_endpoint_dns_name"
-	paramPrivateLinkSubresourceName                = "private_link_subresource_name"
-	paramPrivateEndpointDomain                     = "private_endpoint_domain"
-	paramPrivateEndpointIpAddress                  = "private_endpoint_ip_address"
-	paramPrivateEndpointCustomDnsConfigDomains     = "private_endpoint_custom_dns_config_domains"
-	paramPrivateServiceConnectEndpointTarget       = "private_service_connect_endpoint_target"
-	paramPrivateServiceConnectEndpointConnectionId = "private_service_connect_endpoint_connection_id"
-	paramPrivateServiceConnectEndpointIpAddress    = "private_service_connect_endpoint_ip_address"
-	paramPrivateServiceConnectEndpointName         = "private_service_connect_endpoint_name"
-	paramNetworkInterfaces                         = "network_interfaces"
 	awsEgressPrivateLinkEndpoint                   = "AwsEgressPrivateLinkEndpoint"
 	awsIngressPrivateLinkEndpoint                  = "AwsIngressPrivateLinkEndpoint"
 	azureEgressPrivateLinkEndpoint                 = "AzureEgressPrivateLinkEndpoint"

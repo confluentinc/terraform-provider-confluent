@@ -29,12 +29,6 @@ import (
 )
 
 const (
-	paramService          = "service"
-	paramAccessPoint      = "access_point"
-	paramIsPrivate        = "is_private"
-	paramEndpointType     = "endpoint_type"
-	paramEndpointResource = "resource"
-
 	listEndpointsPageSize = 100
 )
 

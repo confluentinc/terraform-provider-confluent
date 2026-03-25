@@ -33,14 +33,6 @@ import (
 var acceptedSchemaExporterStatus = []string{stateRunning, statePaused}
 
 const (
-	paramContextType                      = "context_type"
-	paramContext                          = "context"
-	paramSubjectRenameFormat              = "subject_rename_format"
-	paramSubjects                         = "subjects"
-	paramResetOnUpdate                    = "reset_on_update"
-	paramResetOnUpdateDefaultValue        = false
-	paramBasicAuthCredentialsSourceValue  = "USER_INFO"
-	paramDestinationSchemaRegistryCluster = "destination_schema_registry_cluster"
 	basicAuthCredentialsSourceConfig      = "basic.auth.credentials.source"
 	schemaRegistryUrlConfig               = "schema.registry.url"
 	basicAuthUserInfoConfig               = "basic.auth.user.info"

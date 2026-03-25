@@ -31,14 +31,6 @@ import (
 )
 
 const (
-	paramResourceName = "resource_name"
-	paramResourceType = "resource_type"
-	paramPatternType  = "pattern_type"
-	paramPrincipal    = "principal"
-	paramHost         = "host"
-	paramOperation    = "operation"
-	paramPermission   = "permission"
-
 	principalPrefix = "User:"
 )
 

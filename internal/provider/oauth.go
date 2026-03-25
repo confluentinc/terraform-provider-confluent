@@ -18,23 +18,6 @@ import (
 )
 
 const (
-	paramOAuthBlockName            = "oauth"
-	paramOAuthExternalAccessToken  = "oauth_external_access_token"
-	paramOAuthExternalClientId     = "oauth_external_client_id"
-	paramOAuthExternalClientSecret = "oauth_external_client_secret"
-	paramOAuthExternalTokenScope   = "oauth_external_token_scope"
-	paramOAuthExternalTokenURL     = "oauth_external_token_url"
-	paramOAuthIdentityPoolId       = "oauth_identity_pool_id"
-)
-
-const (
-	paramOAuthSTSTokenExpiredInSeconds        = "oauth_sts_token_expired_in_seconds"
-	paramOAuthSTSTokenGrantTypeValue          = "urn:ietf:params:oauth:grant-type:token-exchange"
-	paramOAuthSTSTokenSubjectTokenTypeValue   = "urn:ietf:params:oauth:token-type:jwt"
-	paramOAuthSTSTokenRequestedTokenTypeValue = "urn:ietf:params:oauth:token-type:access_token"
-)
-
-const (
 	externalTokenExpirationBuffer = 3 * time.Minute
 	stsTokenExpirationBuffer      = 1 * time.Minute
 )

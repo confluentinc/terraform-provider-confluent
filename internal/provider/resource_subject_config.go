@@ -30,11 +30,6 @@ import (
 )
 
 const (
-	paramCompatibilityLevel = "compatibility_level"
-	paramCompatibilityGroup = "compatibility_group"
-	paramNormalize          = "normalize"
-	paramAlias              = "alias"
-
 	compatibilityLevelBackward           = "BACKWARD"
 	compatibilityLevelBackwardTransitive = "BACKWARD_TRANSITIVE"
 	compatibilityLevelForward            = "FORWARD"

@@ -24,12 +24,7 @@ import (
 )
 
 const (
-	paramVpcEndpointServiceName                 = "vpc_endpoint_service_name"
 	stateWaitingForConnections                  = "WAITING_FOR_CONNECTIONS"
-	paramZone                                   = "zone"
-	paramPrivateLinkServiceAlias                = "private_link_service_alias"
-	paramPrivateLinkServiceResourceId           = "private_link_service_resource_id"
-	paramPrivateServiceConnectServiceAttachment = "private_service_connect_service_attachment"
 )
 
 func privateLinkAttachmentDataSource() *schema.Resource {

@@ -28,11 +28,6 @@ import (
 )
 
 const (
-	paramThroughput      = "throughput"
-	paramIngressByteRate = "ingress_byte_rate"
-	paramEgressByteRate  = "egress_byte_rate"
-	paramPrincipals      = "principals"
-
 	kafkaQuotasAPIWaitAfterCreate = 30 * time.Second
 	kafkaQuotasAPIWaitAfterUpdate = 15 * time.Second
 )

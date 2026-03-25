@@ -30,17 +30,6 @@ import (
 )
 
 const (
-	paramAwsGlue           = "aws_glue"
-	paramSnowflake         = "snowflake"
-	paramUnity             = "unity"
-	paramEndpoint          = "endpoint"
-	paramClientId          = "client_id"
-	paramClientSecret      = "client_secret"
-	paramWarehouse         = "warehouse"
-	paramAllowedScope      = "allowed_scope"
-	paramWorkspaceEndpoint = "workspace_endpoint"
-	paramCatalogName       = "catalog_name"
-
 	awsGlueSpecKind   = "AwsGlue"
 	snowflakeSpecKind = "Snowflake"
 	unitySpecKind     = "Unity"

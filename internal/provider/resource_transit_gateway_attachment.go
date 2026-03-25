@@ -29,9 +29,6 @@ import (
 )
 
 const (
-	paramRamResourceShareArn        = "ram_resource_share_arn"
-	paramTransitGatewayId           = "transit_gateway_id"
-	paramTransitGatewayAttachmentId = "transit_gateway_attachment_id"
 	awsTransitGatewayAttachmentKind = "AwsTransitGatewayAttachment"
 )
 

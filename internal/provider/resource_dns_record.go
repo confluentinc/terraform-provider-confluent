@@ -29,8 +29,6 @@ import (
 )
 
 const (
-	paramDomain                 = "domain"
-	paramPrivateLinkAccessPoint = "private_link_access_point"
 	privateLinkAccessPoint      = "PrivateLinkAccessPoint"
 )
 

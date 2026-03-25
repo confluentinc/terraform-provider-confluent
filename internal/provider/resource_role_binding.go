@@ -29,9 +29,6 @@ import (
 )
 
 const (
-	paramRoleName   = "role_name"
-	paramCrnPattern = "crn_pattern"
-
 	rbacWaitAfterCreateToSync = 90 * time.Second
 )
 

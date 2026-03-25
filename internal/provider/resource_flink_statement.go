@@ -34,15 +34,6 @@ import (
 )
 
 const (
-	paramStatementName          = "statement_name"
-	paramStatement              = "statement"
-	paramComputePool            = "compute_pool"
-	paramProperties             = "properties"
-	paramPropertiesSensitive    = "properties_sensitive"
-	paramStopped                = "stopped"
-	paramLatestOffsets          = "latest_offsets"
-	paramLatestOffsetsTimestamp = "latest_offsets_timestamp"
-
 	stateCompleted = "COMPLETED"
 	statePending   = "PENDING"
 	stateFailing   = "FAILING"

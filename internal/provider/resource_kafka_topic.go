@@ -31,13 +31,6 @@ import (
 )
 
 const (
-	paramKafkaCluster           = "kafka_cluster"
-	paramTopicName              = "topic_name"
-	paramCredentials            = "credentials"
-	paramPartitionsCount        = "partitions_count"
-	paramKey                    = "key"
-	paramSecret                 = "secret"
-	paramConfigs                = "config"
 	kafkaRestAPIWaitAfterCreate = 10 * time.Second
 	docsUrl                     = "https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_topic"
 	dynamicTopicConfig          = "DYNAMIC_TOPIC_CONFIG"

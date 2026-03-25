@@ -29,12 +29,6 @@ import (
 )
 
 const (
-	paramGateways    = "gateways"
-	paramGatewayType = "gateway_type"
-	paramPhase       = "phase"
-)
-
-const (
 	// The maximum allowable page size - 1 (to avoid off-by-one errors) when listing using Networking Gateway API
 	// https://github.com/confluentinc/api/blob/master/networking-gateway/minispec.yaml#L443
 	listGatewaysPageSize = 99

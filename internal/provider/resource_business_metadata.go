@@ -36,12 +36,6 @@ const (
 	//paramCreateTime = "create_time"
 	//paramUpdateTime  = "update_time"
 	//paramTypeVersion = "type_version"
-
-	paramAttributeDef = "attribute_definition"
-	paramType         = "type"
-	paramIsOptional   = "is_optional"
-	paramDefaultValue = "default_value"
-	paramOptions      = "options"
 )
 
 func businessMetadataResource() *schema.Resource {

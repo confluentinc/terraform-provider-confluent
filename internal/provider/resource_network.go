@@ -32,21 +32,6 @@ import (
 )
 
 const (
-	paramConnectionTypes                         = "connection_types"
-	paramCidr                                    = "cidr"
-	paramReservedCidr                            = "reserved_cidr"
-	paramZones                                   = "zones"
-	paramZoneInfo                                = "zone_info"
-	paramZoneId                                  = "zone_id"
-	paramPrivateLinkEndpointService              = "private_link_endpoint_service"
-	paramPrivateLinkServiceAliases               = "private_link_service_aliases"
-	paramPrivateServiceConnectServiceAttachments = "private_service_connect_service_attachments"
-	paramDnsDomain                               = "dns_domain"
-	paramDnsConfig                               = "dns_config"
-	paramResolution                              = "resolution"
-	paramZonalSubdomains                         = "zonal_subdomains"
-	paramEndpointSuffix                          = "endpoint_suffix"
-
 	connectionTypePrivateLink    = "PRIVATELINK"
 	connectionTypeTransitGateway = "TRANSITGATEWAY"
 	connectionTypePeering        = "PEERING"

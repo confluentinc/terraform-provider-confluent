@@ -32,10 +32,6 @@ import (
 )
 
 const (
-	paramOwner               = "owner"
-	paramResource            = "managed_resource"
-	paramDisableWaitForReady = "disable_wait_for_ready"
-
 	serviceAccountKind       = "ServiceAccount"
 	userKind                 = "User"
 	clusterKind              = "Cluster"

@@ -31,9 +31,6 @@ import (
 )
 
 const (
-	paramTagName     = "tag_name"
-	paramEntityName  = "entity_name"
-	paramEntityType  = "entity_type"
 	schemaEntityType = "sr_schema"
 	fieldEntityType  = "sr_field"
 	recordEntityType = "sr_record"

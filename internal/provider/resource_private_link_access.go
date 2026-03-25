@@ -29,11 +29,6 @@ import (
 )
 
 const (
-	paramNetwork               = "network"
-	paramAccount               = "account"
-	paramSubscription          = "subscription"
-	paramAzure                 = "azure"
-	paramAws                   = "aws"
 	awsPrivateLinkAccessKind   = "AwsPrivateLinkAccess"
 	azurePrivateLinkAccessKind = "AzurePrivateLinkAccess"
 	gcpPrivateLinkAccessKind   = "GcpPrivateServiceConnectAccess"

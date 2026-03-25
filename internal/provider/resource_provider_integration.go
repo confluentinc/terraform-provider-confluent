@@ -30,10 +30,6 @@ import (
 )
 
 const (
-	paramIamRoleUrn          = "iam_role_arn"
-	paramExternalId          = "external_id"
-	paramCustomerRoleArn     = "customer_role_arn"
-	paramUsages              = "usages"
 	AwsIntegrationConfigKind = "AwsIntegrationConfig"
 )
 

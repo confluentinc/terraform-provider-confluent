@@ -30,12 +30,6 @@ import (
 )
 
 const (
-	paramGateway        = "gateway"
-	paramForwardViaIp   = "forward_via_ip"
-	paramForwardViaGcp  = "forward_via_gcp_dns_zones"
-	paramDomains        = "domains"
-	paramDnsServerIps   = "dns_server_ips"
-	paramDomainMappings = "domain_mappings"
 	forwardViaIp        = "ForwardViaIp"
 	forwardViaGcp       = "ForwardViaGcpDnsZones"
 )

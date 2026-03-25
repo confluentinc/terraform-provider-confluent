@@ -29,15 +29,6 @@ import (
 )
 
 const (
-	paramGcp                = "gcp"
-	paramVpc                = "vpc"
-	paramRoutes             = "routes"
-	paramCustomerRegion     = "customer_region"
-	paramTenant             = "tenant"
-	paramVnet               = "vnet"
-	paramProject            = "project"
-	paramVpcNetwork         = "vpc_network"
-	paramImportCustomRoutes = "import_custom_routes"
 	awsPeeringKind          = "AwsPeering"
 	azurePeeringKind        = "AzurePeering"
 	gcpPeeringKind          = "GcpPeering"

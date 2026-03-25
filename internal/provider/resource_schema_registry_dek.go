@@ -30,13 +30,6 @@ import (
 	"strings"
 )
 
-const (
-	paramKekName              = "kek_name"
-	paramAlgorithm            = "algorithm"
-	paramEncryptedKeyMaterial = "encrypted_key_material"
-	paramKeyMaterial          = "key_material"
-)
-
 var acceptedDekAlgorithm = []string{"AES128_GCM", "AES256_GCM", "AES256_SIV"}
 
 func schemaRegistryDekResource() *schema.Resource {

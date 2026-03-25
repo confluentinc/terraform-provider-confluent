@@ -30,11 +30,6 @@ import (
 )
 
 const (
-	paramDocumentationLink         = "documentation_link"
-	paramConnectorClass            = "connector_class"
-	paramConnectorType             = "connector_type"
-	paramSensitiveConfigProperties = "sensitive_config_properties"
-	paramFilename                  = "filename"
 	presignedUrlLocation           = "PRESIGNED_URL_LOCATION"
 )
 

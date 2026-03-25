@@ -30,8 +30,6 @@ import (
 )
 
 const (
-	paramMode = "mode"
-
 	modeReadWrite        = "READWRITE"
 	modeReadOnly         = "READONLY"
 	modeReadOnlyOverride = "READONLY_OVERRIDE"

@@ -42,8 +42,6 @@ const (
 	tfConfigurationFileName = "main.tf"
 	tfStateFileName         = "terraform.tfstate"
 	tfLockFileName          = ".terraform.lock.hcl"
-	paramResources          = "resources"
-	paramOutputPath         = "output_path"
 	defaultTfStateFile      = "terraform.tfstate"
 	defaultVariablesTfFile  = "variables.tf"
 	defaultOutputPath       = "./imported_confluent_infrastructure"

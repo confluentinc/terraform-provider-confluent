@@ -29,8 +29,6 @@ import (
 )
 
 const (
-	paramMaxCfu = "max_cfu"
-
 	fcpmAPICreateTimeout = 1 * time.Hour
 	fcpmAPIDeleteTimeout = 1 * time.Hour
 )

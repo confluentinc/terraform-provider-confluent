@@ -32,7 +32,6 @@ const (
 )
 
 const (
-	paramPackage             = "package"
 	billingPackageEssentials = "ESSENTIALS"
 	billingPackageAdvanced   = "ADVANCED"
 )

@@ -29,16 +29,6 @@ import (
 )
 
 const (
-	paramLinkName                = "link_name"
-	paramSourceKafkaCluster      = "source_kafka_cluster"
-	paramDestinationKafkaCluster = "destination_kafka_cluster"
-	paramLocalKafkaCluster       = "local_kafka_cluster"
-	paramRemoteKafkaCluster      = "remote_kafka_cluster"
-	paramLinkMode                = "link_mode"
-	paramConnectionMode          = "connection_mode"
-	paramClusterLinkId           = "cluster_link_id"
-	paramLinkState               = "link_state"
-
 	bootstrapServersConfigKey = "bootstrap.servers"
 	securityProtocolConfigKey = "security.protocol"
 
@@ -71,11 +61,6 @@ const (
 	importLocalKafkaBootstrapEndpointEnvVar  = "IMPORT_LOCAL_KAFKA_BOOTSTRAP_ENDPOINT"
 	importRemoteKafkaRestEndpointEnvVar      = "IMPORT_REMOTE_KAFKA_REST_ENDPOINT"
 	importRemoteKafkaBootstrapEndpointEnvVar = "IMPORT_REMOTE_KAFKA_BOOTSTRAP_ENDPOINT"
-
-	paramSourceKafkaCredentials      = "source_kafka_cluster.0.credentials"
-	paramDestinationKafkaCredentials = "destination_kafka_cluster.0.credentials"
-	paramLocalKafkaCredentials       = "local_kafka_cluster.0.credentials"
-	paramRemoteKafkaCredentials      = "remote_kafka_cluster.0.credentials"
 
 	docsClusterLinkConfigUrl = "https://docs.confluent.io/cloud/current/multi-cloud/cluster-linking/cluster-links-cc.html#configuring-cluster-link-behavior"
 	dynamicClusterLinkConfig = "DYNAMIC_CLUSTER_LINK_CONFIG"

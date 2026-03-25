@@ -37,12 +37,6 @@ const (
 	connectOffsetsAPIUpdateTimeout = 1 * time.Hour
 	connectAPIWaitAfterCreate      = 5 * time.Second
 
-	paramSensitiveConfig    = "config_sensitive"
-	paramNonSensitiveConfig = "config_nonsensitive"
-	paramOffsetsConfig      = "offsets"
-	paramPartition          = "partition"
-	paramOffset             = "offset"
-
 	connectorConfigAttributeName   = "name"
 	connectorConfigAttributeClass  = "connector.class"
 	connectorConfigAttributeType   = "confluent.connector.type"
@@ -54,7 +48,6 @@ const (
 
 	twoStarsOrMorePattern = "^[*]{2,}"
 
-	paramStatus   = "status"
 	statePaused   = "PAUSED"
 	stateDegraded = "DEGRADED"
 
