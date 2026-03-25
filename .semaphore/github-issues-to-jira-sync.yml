@@ -10,7 +10,7 @@ blocks:
       prologue:
         commands:
           - checkout
-          - . vault-get-secret semaphore/apif/jira-token
+          - . vault-get-secret apif/jira-token
           - |
             if ! gh auth status &>/dev/null; then
               echo "ERROR: GitHub CLI not authenticated. Please ensure GITHUB_TOKEN is properly configured."
