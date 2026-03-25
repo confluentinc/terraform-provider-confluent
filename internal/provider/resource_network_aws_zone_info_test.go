@@ -27,19 +27,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-const (
-	awsPeeringNetworkConnectionType      = connectionTypePeering
-	awsPeeringNetworkRegion              = "us-east-1"
-	firstZoneSubdomainAwsPeeringNetwork  = "use1-az2.pr1jy6.us-east-1.aws.confluent.cloud"
-	secondZoneSubdomainAwsPeeringNetwork = "use1-az5.pr1jy6.us-east-1.aws.confluent.cloud"
-	thirdZoneSubdomainAwsPeeringNetwork  = "use1-az6.pr1jy6.us-east-1.aws.confluent.cloud"
-
-	awsPeeringNetworkCidr         = "255.254.0.0/16"
-	awsPeeringNetworkReservedCidr = "172.20.255.0/24"
-
-	gatewayIDAwsNetwork = "gw-c6lw4wo"
-)
-
 var awsPeeringNetworkZones = []string{"use1-az2",
 	"use1-az5",
 	"use1-az6",

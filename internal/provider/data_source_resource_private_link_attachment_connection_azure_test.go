@@ -24,14 +24,6 @@ import (
 	"testing"
 )
 
-const (
-	privateLinkAttachmentConnectionAzureDataSourceScenarioName = "confluent_private_link_attachment_connection Data Source Lifecycle"
-
-	privateLinkAttachmentConnectionAzureReadUrlPath     = "/networking/v1/private-link-attachment-connections/plattc-xyzuvw1"
-	privateLinkAttachmentConnectionAzureId              = "plattc-xyzuvw1"
-	privateLinkAttachmentConnectionAzureDataSourceLabel = "data.confluent_private_link_attachment_connection.main"
-)
-
 func TestAccDataSourcePrivateLinkAttachmentConnectionAzure(t *testing.T) {
 	ctx := context.Background()
 

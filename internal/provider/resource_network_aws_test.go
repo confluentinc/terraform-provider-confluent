@@ -27,32 +27,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-const (
-	scenarioStateAwsNetworkIsProvisioning = "The new aws network is in provisioning state"
-	scenarioStateAwsNetworkHasBeenCreated = "The new aws network has been just created"
-	scenarioStateAwsNetworkHasBeenDeleted = "The new aws network has been deleted"
-	awsNetworkScenarioName                = "confluent_network aws Resource Lifecycle"
-	awsNetworkCloud                       = "AWS"
-	awsNetworkRegion                      = "us-east-2"
-	awsNetworkConnectionType              = "PRIVATELINK"
-	awsNetworkEnvironmentId               = "env-gz903"
-	awsNetworkDefaultDnsResolution        = "CHASED_PRIVATE"
-	awsNetworkId                          = "n-pr1jy6"
-	awsDnsDomain                          = "pr1jy6.us-east-2.aws.confluent.cloud"
-	awsEndpointSuffix                     = ".pr1jy6.us-east-2.aws.confluent.cloud"
-	awsNetworkVpc                         = "vpc-03e78ba4db7bb1789"
-	awsNetworkAccount                     = "012345678901"
-	awsNetworkPrivateLinkEndpointService  = "com.amazonaws.vpce.us-east-2.vpce-svc-0089db43e25590123"
-	awsNetworkResourceName                = "crn://confluent.cloud/organization=foo/environment=env-gz903/network=n-pr1jy6"
-
-	firstZoneAwsNetwork           = "use2-az1"
-	firstZoneSubdomainAwsNetwork  = "use2-az1.pr1jy6.us-east-2.aws.confluent.cloud"
-	secondZoneAwsNetwork          = "use2-az2"
-	secondZoneSubdomainAwsNetwork = "use2-az2.pr1jy6.us-east-2.aws.confluent.cloud"
-	thirdZoneAwsNetwork           = "use2-az3"
-	thirdZoneSubdomainAwsNetwork  = "use2-az3.pr1jy6.us-east-2.aws.confluent.cloud"
-)
-
 var awsNetworkZones = []string{"use2-az1", "use2-az2", "use2-az3"}
 
 var awsNetworkUrlPath = fmt.Sprintf("/networking/v1/networks/%s", awsNetworkId)

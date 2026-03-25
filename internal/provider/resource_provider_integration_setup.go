@@ -26,12 +26,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-const (
-	// Provider constants
-	providerAzure = "AZURE"
-	providerGcp   = "GCP"
-)
-
 // providerIntegrationSetupResource defines the setup/creation resource for PIM v2 integrations.
 // This resource only handles POST (creates DRAFT integration). Use confluent_provider_integration_authorization for config/validation.
 func providerIntegrationSetupResource() *schema.Resource {

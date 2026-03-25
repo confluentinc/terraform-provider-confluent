@@ -26,10 +26,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-const (
-	kafkaClientQuotaDataSourceScenarioName = "confluent_kafka_client_quota Data Source Lifecycle"
-)
-
 func TestAccDataSourceKafkaClientQuota(t *testing.T) {
 	ctx := context.Background()
 

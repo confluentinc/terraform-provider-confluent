@@ -24,14 +24,6 @@ import (
 	"testing"
 )
 
-const (
-	privateLinkAttachmentGcpResourceScenarioName        = "confluent_private_link_attachment Resource Lifecycle"
-	scenarioStatePrivateLinkAttachmentGcpHasBeenCreated = "A new private link attachment has been just created"
-
-	privateLinkAttachmentGcpUrlPath       = "/networking/v1/private-link-attachments"
-	privateLinkAttachmentGcpResourceLabel = "confluent_private_link_attachment.main"
-)
-
 func TestAccPrivateLinkAttachmentGcp(t *testing.T) {
 	ctx := context.Background()
 

@@ -26,19 +26,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-const (
-	networkingApiVersion              = "networking/v1"
-	ipAddressesDataSourceScenarioName = "confluent_ip_addresses Data Source Lifecycle"
-	ipAddressKind                     = "IpAddress"
-	ipAddressesResourceLabel          = "test_ip_address_label"
-	ipAddressLastPagePageToken        = "dyJpZCI6InNhLTd5OXbybq"
-
-	testIpAddressCloud          = "AWS"
-	testIpAddressServiceConnect = "CONNECT"
-	testIpAddressServiceKafka   = "KAFKA"
-	testIpAddressAddressType    = "EGRESS"
-)
-
 func TestAccDataSourceIpAddresses(t *testing.T) {
 	ctx := context.Background()
 

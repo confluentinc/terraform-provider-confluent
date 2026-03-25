@@ -30,10 +30,6 @@ var testAccProviders map[string]*schema.Provider
 var testAccProvider *schema.Provider
 var testAccProviderFactories map[string]func() (*schema.Provider, error)
 
-const (
-	testVersion = "test-version"
-)
-
 func init() {
 	testAccProvider = New(testVersion, "")()
 	testAccProviders = map[string]*schema.Provider{

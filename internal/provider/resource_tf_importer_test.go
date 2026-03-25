@@ -25,11 +25,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-const (
-	tfImporterResourceScenarioName = "confluent_tf_importer Resource Lifecycle"
-	tfImporterResourceLabel        = "test_importer_resource_label"
-)
-
 func TestAccResourceTfImporter(t *testing.T) {
 	ctx := context.Background()
 

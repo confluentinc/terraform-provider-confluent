@@ -25,10 +25,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-const (
-	dataSourceKafkaScenarioName = "confluent_kafka Data Source Lifecycle"
-)
-
 var fullKafkaDataSourceLabel = fmt.Sprintf("data.confluent_kafka_cluster.%s", kafkaResourceLabel)
 
 func TestAccDataSourceCluster(t *testing.T) {

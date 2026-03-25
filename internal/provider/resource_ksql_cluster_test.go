@@ -26,25 +26,6 @@ import (
 	"testing"
 )
 
-const (
-	scenarioStateKsqlHasBeenCreated   = "A new ksqlDB cluster has been just created"
-	scenarioStateKsqlHasBeenUpdated   = "The new ksqlDB cluster's kind has been just updated"
-	scenarioStateKsqlHasBeenDeleted   = "The new ksqlDB cluster has been deleted"
-	ksqlScenarioName                  = "confluent_ksql_cluster Resource Lifecycle"
-	ksqlResourceLabel                 = "basic-cluster"
-	containerPort                     = "8080"
-	ksqlId                            = "lksql-0000"
-	ksqlDataSourceDisplayName         = "ksqlDB_cluster_0"
-	ksqlApiVersion                    = "ksqldbcm/v2"
-	ksqlKind                          = "Cluster"
-	ksqlCsuTest1                      = "4"
-	ksqlCsuTest2                      = "8"
-	ksqlCredentialIdentity            = "u-a83k9b"
-	ksqlDisplayName                   = "ksqlDB_cluster_0"
-	ksqlUseDetailedProcessingLogTest1 = "true"
-	ksqlUseDetailedProcessingLogTest2 = "false"
-)
-
 var fullKsqlResourceLabel = fmt.Sprintf("confluent_ksql_cluster.%s", ksqlResourceLabel)
 
 var createKsqlPath = "/ksqldbcm/v2/clusters"

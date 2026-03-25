@@ -24,14 +24,6 @@ import (
 	"testing"
 )
 
-const (
-	dekResourceScenarioName        = "confluent_schema_registry_dek Resource Lifecycle"
-	scenarioStateDekHasBeenCreated = "A new dek has been just created"
-	createDekUrlPath               = "/dek-registry/v1/keks/testkek/deks"
-	dekLabel                       = "confluent_schema_registry_dek.mydek"
-	dekUrlPath                     = "/dek-registry/v1/keks/testkek/deks/ts/versions/1"
-)
-
 func TestAccDek(t *testing.T) {
 	ctx := context.Background()
 

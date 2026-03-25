@@ -24,11 +24,6 @@ import (
 	"testing"
 )
 
-const (
-	tagBindingDataSourceScenarioName = "confluent_tag_binding Data Source Lifecycle"
-	tagBindingDataSourceLabel        = "data.confluent_tag_binding.main"
-)
-
 func TestAccDataSourceTagBinding(t *testing.T) {
 	ctx := context.Background()
 

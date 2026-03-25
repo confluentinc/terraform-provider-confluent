@@ -26,11 +26,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-const (
-	groupMappingDataSourceScenarioName = "confluent_group_mapping Data Source Lifecycle"
-	groupMappingLastPagePageToken      = "eyJjcmVhdGVkVGltZSI6WzIwM"
-)
-
 func TestAccDataSourceGroupMapping(t *testing.T) {
 	ctx := context.Background()
 

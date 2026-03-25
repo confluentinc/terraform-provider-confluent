@@ -27,11 +27,6 @@ import (
 	"github.com/walkerus/go-wiremock"
 )
 
-const (
-	scenarioStateSchemaTest1Part2 = "In Test 1 part 2"
-	scenarioStateSchemaTest2      = "In test 2 part 1"
-)
-
 //
 // This is a new test to check specific functionality whereby a schema is updated between Terraform runs.
 // It's actually more to do with ensuring the state is refreshed - see issue #318

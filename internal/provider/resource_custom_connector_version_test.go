@@ -27,13 +27,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-const (
-	scenarioStateCustomConnectorPluginVersionPresignedUrlHasBeenCreated = "The new custom connector plugin version's presigned URL has been just created"
-	scenarioStateCustomConnectorPluginVersionHasBeenCreated             = "The new custom connector plugin version has been just created"
-	scenarioStateCustomConnectorPluginVersionHasBeenDeleted             = "The new custom connector plugin version has been deleted"
-	customConnectorPluginScenarioVersionName                            = "confluent_custom_connector_plugin_version Resource Lifecycle"
-)
-
 func TestAccCustomConnectorPluginVersion(t *testing.T) {
 	ctx := context.Background()
 

@@ -24,16 +24,6 @@ import (
 	"testing"
 )
 
-const (
-	tagBindingResourceScenarioName        = "confluent_tag_binding Resource Lifecycle"
-	scenarioStateTagBindingHasBeenCreated = "A new tag binding has been just created"
-	scenarioStateTagBindingHasBeenPending = "A new tag binding has been just pending"
-	createTagBindingUrlPath               = "/catalog/v1/entity/tags"
-	readCreatedTagBindingUrlPath          = "/catalog/v1/entity/type/sr_schema/name/lsrc-8wrx70:.:100001/tags"
-	deleteCreatedTagBindingUrlPath        = "/catalog/v1/entity/type/sr_schema/name/lsrc-8wrx70:.:100001/tags/tag1"
-	tagBindingLabel                       = "confluent_tag_binding.main"
-)
-
 func TestAccTagBinding(t *testing.T) {
 	ctx := context.Background()
 

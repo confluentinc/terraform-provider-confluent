@@ -28,21 +28,6 @@ import (
 	"strings"
 )
 
-const (
-	paramGcp                = "gcp"
-	paramVpc                = "vpc"
-	paramRoutes             = "routes"
-	paramCustomerRegion     = "customer_region"
-	paramTenant             = "tenant"
-	paramVnet               = "vnet"
-	paramProject            = "project"
-	paramVpcNetwork         = "vpc_network"
-	paramImportCustomRoutes = "import_custom_routes"
-	awsPeeringKind          = "AwsPeering"
-	azurePeeringKind        = "AzurePeering"
-	gcpPeeringKind          = "GcpPeering"
-)
-
 var acceptedCloudProvidersForPeering = []string{paramAws, paramAzure, paramGcp}
 var paramAwsAccount = fmt.Sprintf("%s.0.%s", paramAws, paramAccount)
 var paramAwsVpc = fmt.Sprintf("%s.0.%s", paramAws, paramVpc)

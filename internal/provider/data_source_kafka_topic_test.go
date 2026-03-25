@@ -26,10 +26,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-const (
-	topicDataSourceScenarioName = "confluent_kafka_topic Data Source Lifecycle"
-)
-
 var fullTopicDataSourceLabel = fmt.Sprintf("data.confluent_kafka_topic.%s", topicResourceLabel)
 
 func TestAccDataSourceTopic(t *testing.T) {

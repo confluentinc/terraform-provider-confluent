@@ -24,15 +24,6 @@ import (
 	"testing"
 )
 
-const (
-	networkLinkServiceResourceScenarioName        = "confluent_network_link_service Resource Lifecycle"
-	scenarioStateNetworkLinkServiceHasBeenCreated = "A new network link service has been just created"
-	scenarioStateNetworkLinkServiceHasBeenUpdated = "A new network link service has been just updated"
-
-	networkLinkServiceUrlPath       = "/networking/v1/network-link-services"
-	networkLinkServiceResourceLabel = "confluent_network_link_service.nls"
-)
-
 func TestAccNetworkLinkService(t *testing.T) {
 	ctx := context.Background()
 

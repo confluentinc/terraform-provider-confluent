@@ -26,19 +26,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-const (
-	scenarioStateGcpPlaIsProvisioning          = "The new gcp private link access is provisioning"
-	scenarioStateGcpPlaIsDeprovisioning        = "The new gcp private link access is deprovisioning"
-	scenarioStateGcpPlaHasBeenCreated          = "The new gcp private link access has been just created"
-	scenarioStateGcpPlaIsInDeprovisioningState = "The new gcp private link access is in deprovisioning state"
-	scenarioStateGcpPlaHasBeenDeleted          = "The new gcp private link access's deletion has been just completed"
-	gcpPlaScenarioName                         = "confluent_private_link_access Resource Lifecycle"
-	gcpPlaEnvironmentId                        = "env-j5zwzm"
-	gcpPlaNetworkId                            = "n-6ky22p"
-	gcpPlaId                                   = "pla-gewd7g"
-	gcpPlaProject                              = "test-project"
-)
-
 var gcpPlaUrlPath = fmt.Sprintf("/networking/v1/private-link-accesses/%s", gcpPlaId)
 
 func TestAccGcpPrivateLinkAccess(t *testing.T) {

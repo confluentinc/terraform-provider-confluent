@@ -28,36 +28,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-const (
-	scenarioStateTopicHasBeenCreated       = "A new topic has been just created"
-	scenarioStateTopicHasBeenUpdated       = "A new topic has been just updated"
-	scenarioStateTopicHasBeenDeleted       = "The topic has been deleted"
-	scenarioStateTopicHasBeenUpdateCreated = "The topic has been update created"
-	scenarioStateTopicHasBeenDeletedUpdate = "The topic has been update deleted"
-	topicScenarioName                      = "confluent_kafka_topic Resource Lifecycle"
-	clusterId                              = "lkc-190073"
-	partitionCount                         = 4
-	partitionCountUpdated                  = 6
-	partitionCountUpdated2                 = 2
-	firstConfigName                        = "max.message.bytes"
-	firstConfigValue                       = "12345"
-	secondConfigName                       = "retention.ms"
-	secondConfigValue                      = "6789"
-	thirdConfigName                        = "segment.bytes"
-	thirdConfigAddedValue                  = "104857600"
-	fourthConfigName                       = "max.compaction.lag.ms"
-	fifthConfigName                        = "confluent.topic.type"
-	sixthConfigName                        = "confluent.schema.validation.context.name"
-	sixthConfigValue                       = "default"
-	sixthConfigUpdatedValue                = ".mycontext"
-	fourthConfigAddedValue                 = "604800000"
-	topicName                              = "test_topic_name"
-	topicResourceLabel                     = "test_topic_resource_label"
-	kafkaApiKey                            = "test_key"
-	kafkaApiSecret                         = "test_secret"
-	numberOfResourceAttributes             = "7"
-)
-
 var fullTopicResourceLabel = fmt.Sprintf("confluent_kafka_topic.%s", topicResourceLabel)
 var createKafkaTopicPath = fmt.Sprintf("/kafka/v3/clusters/%s/topics", clusterId)
 var kafkaTopicPath = fmt.Sprintf("/kafka/v3/clusters/%s/topics/%s", clusterId, topicName)

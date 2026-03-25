@@ -14,22 +14,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-const (
-	scenarioConnectArtifactPresignedUrlHasBeenCreated = "The new connect artifact presigned URL has been just created"
-	scenarioStateConnectArtifactHasBeenCreated        = "The new connect artifact has been just created"
-	scenarioStateConnectArtifactIsProvisioning        = "The new connect artifact is in provisioning state"
-	scenarioStateConnectArtifactHasBeenDeleted        = "The new connect artifact has been deleted"
-	connectArtifactScenarioName                       = "confluent_connect_artifact Resource Lifecycle"
-	connectArtifactCloud                              = "AWS"
-	connectArtifactCloudAPIResponse                   = "aws"
-	connectArtifactEnvironmentId                      = "env-gz903"
-	connectArtifactContentFormat                      = "JAR"
-	connectArtifactContentFormatZip                   = "ZIP"
-	connectArtifactDescription                        = "test-description"
-	connectArtifactId                                 = "cca-xryjrg"
-	connectArtifactUniqueName                         = "connect_artifact_0"
-)
-
 var connectArtifactsUrlPath = fmt.Sprintf("/cam/v1/connect-artifacts/%s", connectArtifactId)
 
 func TestAccConnectArtifact(t *testing.T) {

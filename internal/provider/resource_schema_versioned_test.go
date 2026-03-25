@@ -28,44 +28,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-const (
-	scenarioStateSchemaHasBeenCreated = "A new schema has been just created"
-	scenarioStateSchemaHasBeenDeleted = "The schema has been deleted"
-	schemaScenarioName                = "confluent_schema Resource Lifecycle"
-
-	testSubjectName               = "test2"
-	testSchemaIdentifier          = 100001
-	testSchemaVersion             = 8
-	testFormat                    = "AVRO"
-	testStreamGovernanceClusterId = "lsrc-abc123"
-	testSchemaContent             = "foobar"
-	testSchemaContentUpdated      = "foobar2"
-	testSchemaResourceLabel       = "test_schema_resource_label"
-
-	testFirstSchemaReferenceDisplayName = "sampleRecord"
-	testFirstSchemaReferenceSubject     = "test2"
-	testFirstSchemaReferenceVersion     = 9
-
-	testSecondSchemaReferenceDisplayName = "sampleRecord2"
-	testSecondSchemaReferenceSubject     = "test3"
-	testSecondSchemaReferenceVersion     = 3
-
-	testNumberOfSchemaRegistrySchemaResourceAttributes = 15
-
-	testSchemaRegistryKey           = "foo"
-	testSchemaRegistrySecret        = "bar"
-	testSchemaRegistryUpdatedKey    = "foo_new"
-	testSchemaRegistryUpdatedSecret = "bar_new"
-
-	testHardDelete = "false"
-
-	testRecreateOnUpdateTrue  = "true"
-	testRecreateOnUpdateFalse = "false"
-
-	testSkipSchemaValidationDuringPlanFalse = "false"
-	testSkipSchemaValidationDuringPlanTrue  = "true"
-)
-
 var fullSchemaResourceLabel = fmt.Sprintf("confluent_schema.%s", testSchemaResourceLabel)
 var validateSchemaPath = fmt.Sprintf("/compatibility/subjects/%s/versions", testSubjectName)
 var createSchemaPath = fmt.Sprintf("/subjects/%s/versions", testSubjectName)

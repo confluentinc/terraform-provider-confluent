@@ -28,17 +28,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-const (
-	scenarioStateIpGroupHasBeenCreated = "The new IP Group has been just created"
-	scenarioStateIpGroupHasBeenUpdated = "The new IP Group's description have been just updated"
-	scenarioStateIpGroupHasBeenDeleted = "The new IP Group has been deleted"
-	ipGroupResourceScenarioName        = "confluent_ip_group Resource Lifecycle"
-
-	testIPGroupID            = "ipg-wyorq"
-	testIPGroupName          = "CorpNet"
-	testIPGroupResourceLabel = "test_ip_group_resource_label"
-)
-
 var testIPGroupCidrBlocks = []string{"192.168.0.0/24", "192.168.7.0/24"}
 
 func TestAccIPGroup(t *testing.T) {

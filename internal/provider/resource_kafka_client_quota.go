@@ -24,17 +24,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"net/http"
-	"time"
-)
-
-const (
-	paramThroughput      = "throughput"
-	paramIngressByteRate = "ingress_byte_rate"
-	paramEgressByteRate  = "egress_byte_rate"
-	paramPrincipals      = "principals"
-
-	kafkaQuotasAPIWaitAfterCreate = 30 * time.Second
-	kafkaQuotasAPIWaitAfterUpdate = 15 * time.Second
 )
 
 var attributeIngressByteRate = fmt.Sprintf("%s.0.%s", paramThroughput, paramIngressByteRate)

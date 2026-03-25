@@ -26,16 +26,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-const (
-	enterpriseKafkaCloud             = "AWS"
-	enterpriseKafkaRegion            = "us-east-2"
-	enterpriseKafkaBootstrapEndpoint = "lkc-19ynpv.us-east-2.aws.private.confluent.cloud:9092"
-	enterpriseKafkaHttpEndpoint      = "https://lkc-19ynpv.us-east-2.aws.private.confluent.cloud:443"
-	enterpriseKafkaScenarioName      = "confluent_kafka Resource Lifecycle"
-	kafkaDisplayNameUpdated          = "TestClusterUpdated"
-	fullEnterpriseKafkaResourceLabel = "confluent_kafka_cluster.enterprise-cluster"
-)
-
 func TestAccEnterpriseClusterWithSGPackage(t *testing.T) {
 	ctx := context.Background()
 

@@ -26,13 +26,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-const (
-	dataSourceNetworkScenarioName = "confluent_network Data Source Lifecycle"
-	networkDataSourceLabel        = "example"
-	azureNetworkDisplayName       = "s-nk99e"
-	awsNetworkDisplayName         = "s-n9553"
-)
-
 var fullNetworkDataSourceLabel = fmt.Sprintf("data.confluent_network.%s", networkDataSourceLabel)
 
 func TestAccDataSourceNetwork(t *testing.T) {

@@ -27,11 +27,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-const (
-	kafkaMirrorTopicNameWithPrefix              = "us_orders"
-	scenarioStateKafkaMirrorTopicHasBeenStopped = "The Kafka Mirror Topic has been stopped"
-)
-
 var createKafkaMirrorTopicWithPrefixPath = fmt.Sprintf("/kafka/v3/clusters/%s/links/%s/mirrors", destinationClusterId, clusterLinkName)
 var readKafkaMirrorTopicWithPrefixPath = fmt.Sprintf("/kafka/v3/clusters/%s/links/%s/mirrors/%s", destinationClusterId, clusterLinkName, kafkaMirrorTopicNameWithPrefix)
 var deleteKafkaMirrorTopicWithPrefixPath = fmt.Sprintf("/kafka/v3/clusters/%s/topics/%s", destinationClusterId, kafkaMirrorTopicNameWithPrefix)

@@ -27,10 +27,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-const (
-	SRClustersDataSourceScenarioName = "confluent_schema_registry_clusters Data Source Lifecycle"
-)
-
 var environments = []string{"env-1jnw8z", "env-7n1r31"}
 
 func TestAccDataSourceSchemaRegistryClusters(t *testing.T) {

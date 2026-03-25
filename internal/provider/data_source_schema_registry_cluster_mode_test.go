@@ -26,11 +26,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-const (
-	SchemaRegistryClusterModeDataSourceScenarioName           = "confluent_schema_registry_cluster_mode Data Source Lifecycle"
-	testNumberOfSchemaRegistryClusterModeDataSourceAttributes = 5
-)
-
 var fullSchemaRegistryClusterModeDataSourceLabel = fmt.Sprintf("data.confluent_schema_registry_cluster_mode.%s", testSchemaResourceLabel)
 
 func TestAccDataSchemaRegistryClusterModeSchema(t *testing.T) {

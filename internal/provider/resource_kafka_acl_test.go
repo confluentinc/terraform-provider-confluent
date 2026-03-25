@@ -27,20 +27,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-const (
-	scenarioStateAclHasBeenCreated = "A new ACL has been just created"
-	scenarioStateAclHasBeenDeleted = "The ACL has been deleted"
-	aclScenarioName                = "confluent_kafka_acl Resource Lifecycle"
-	aclPatternType                 = "LITERAL"
-	aclResourceName                = "kafka-cluster"
-	aclPrincipalWithResourceId     = "User:sa-abc123"
-	aclHost                        = "*"
-	aclOperation                   = "READ"
-	aclPermission                  = "ALLOW"
-	aclResourceType                = "CLUSTER"
-	aclResourceLabel               = "test_acl_resource_label"
-)
-
 var fullAclResourceLabel = fmt.Sprintf("confluent_kafka_acl.%s", aclResourceLabel)
 var createKafkaAclPath = fmt.Sprintf("/kafka/v3/clusters/%s/acls", clusterId)
 var readKafkaAclPath = fmt.Sprintf("/kafka/v3/clusters/%s/acls?host=%s&operation=%s&pattern_type=%s&permission=%s&principal=%s&resource_name=%s&resource_type=%s", clusterId, aclHost, aclOperation, aclPatternType, aclPermission, aclPrincipalWithResourceId, aclResourceName, aclResourceType)

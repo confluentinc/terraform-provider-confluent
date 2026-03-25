@@ -28,25 +28,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-const (
-	scenarioStateKafkaClientQuotaHasBeenCreated             = "The new Kafka Client Quota has been just created"
-	scenarioStateKafkaClientQuotaDescriptionHaveBeenUpdated = "The new Kafka Client Quota has been just updated"
-	scenarioStateKafkaClientQuotaHasBeenDeleted             = "The new Kafka Client Quota has been deleted"
-	kafkaClientQuotaScenarioName                            = "confluent_kafka_client_quota Resource Lifecycle"
-
-	kafkaClientQuotaId      = "cq-e857e"
-	kafkaClientQuotaUrlPath = "/kafka-quotas/v1/client-quotas/cq-e857e"
-
-	kafkaClientQuotaClusterId     = "lkc-03roj2"
-	kafkaClientQuotaEnvrionmentId = "env-nyyz3d"
-
-	kafkaClientQuotaResourceLabel   = "test_kafka_client_quota_resource_label"
-	kafkaClientQuotaDisplayName     = "QuotaForSA1"
-	kafkaClientQuotaDescription     = "test"
-	kafkaClientQuotaIngressByteRate = "12288"
-	kafkaClientQuotaEgressByteRate  = "12289"
-)
-
 var kafkaClientQuotaPrincipals = []string{"sa-rv1vo7", "sa-jzgzgq"}
 
 func TestAccKafkaClientQuota(t *testing.T) {

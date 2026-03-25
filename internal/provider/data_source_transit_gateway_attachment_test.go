@@ -25,12 +25,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-const (
-	dataSourceTransitGatewayAttachmentScenarioName = "confluent_transit_gateway_attachment Data Source Lifecycle"
-	transitGatewayAttachmentDataSourceLabel        = "example"
-	transitGatewayAttachmentDataSourceDisplayName  = "prod-tgw-use1"
-)
-
 var fullTransitGatewayAttachmentDataSourceLabel = fmt.Sprintf("data.confluent_transit_gateway_attachment.%s", transitGatewayAttachmentDataSourceLabel)
 
 func TestAccDataSourceTransitGatewayAttachment(t *testing.T) {

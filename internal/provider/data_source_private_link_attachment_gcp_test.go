@@ -24,14 +24,6 @@ import (
 	"testing"
 )
 
-const (
-	privateLinkAttachmentGcpDataSourceScenarioName = "confluent_private_link_attachment Data Source Lifecycle"
-
-	privateLinkAttachmentGcpReadUrlPath     = "/networking/v1/private-link-attachments/platt-abcdef"
-	privateLinkAttachmentGcpId              = "platt-abcdef"
-	privateLinkAttachmentGcpDataSourceLabel = "data.confluent_private_link_attachment.main"
-)
-
 func TestAccDataSourcePrivateLinkAttachmentGcp(t *testing.T) {
 	ctx := context.Background()
 

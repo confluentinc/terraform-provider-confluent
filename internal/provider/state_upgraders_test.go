@@ -20,8 +20,6 @@ import (
 	"testing"
 )
 
-const testEndpoint = "https://pkc-012345.us-central1.gcp.confluent.cloud:443"
-
 func testKafkaStateDataV010() map[string]interface{} {
 	return map[string]interface{}{
 		paramHttpEndpoint: testEndpoint,

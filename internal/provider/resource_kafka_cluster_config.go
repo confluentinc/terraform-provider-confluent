@@ -38,8 +38,6 @@ var editableClusterSettings = []string{
 	"log.retention.ms",
 }
 
-const docsClusterConfigUrl = "https://docs.confluent.io/cloud/current/clusters/broker-config.html#change-cluster-settings-for-dedicated-clusters"
-
 func kafkaConfigResource() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: kafkaConfigCreate,

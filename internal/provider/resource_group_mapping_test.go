@@ -26,19 +26,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-const (
-	scenarioStateGroupMappingHasBeenCreated             = "The new group mapping has been just created"
-	scenarioStateGroupMappingDescriptionHaveBeenUpdated = "The new group mapping's description have been just updated"
-	scenarioStateGroupMappingHasBeenDeleted             = "The new group mapping has been deleted"
-	groupMappingScenarioName                            = "confluent_group_mapping Resource Lifecycle"
-
-	groupMappingId            = "group-w4vP"
-	groupMappingResourceLabel = "test_group_mapping_resource_label"
-	groupMappingDisplayName   = "Default"
-	groupMappingFilter        = "\"engineering\" in groups"
-	groupMappingDescription   = "Permission for all users in everyone group"
-)
-
 func TestAccGroupMapping(t *testing.T) {
 	ctx := context.Background()
 

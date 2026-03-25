@@ -26,11 +26,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-const (
-	subjectModeDataSourceScenarioName           = "confluent_subject_mode Data Source Lifecycle"
-	testNumberOfSubjectModeDataSourceAttributes = 6
-)
-
 var fullSubjectModeDataSourceLabel = fmt.Sprintf("data.confluent_subject_mode.%s", testSchemaResourceLabel)
 
 func TestAccDataSubjectModeSchema(t *testing.T) {

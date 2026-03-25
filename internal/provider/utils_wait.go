@@ -26,17 +26,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-const (
-	govCloudNotAvailableErrorMessage = "this service is not available in confluent cloud for government"
-	stateUp                          = "UP"
-	stateCreated                     = "CREATED"
-	stateExpired                     = "EXPIRED"
-	acceptanceTestModeWaitTime       = 1 * time.Second
-	acceptanceTestModePollInterval   = 1 * time.Second
-
-	flinkCarryOverOffsetsProperty = "sql.tables.initial-offset-from"
-)
-
 func waitForCreatedKafkaApiKeyToSync(ctx context.Context, c *KafkaRestClient, isAcceptanceTestMode bool) error {
 	delay, pollInterval := getDelayAndPollInterval(1*time.Minute, 1*time.Minute, isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{

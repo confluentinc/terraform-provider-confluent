@@ -27,11 +27,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-const (
-	paramIssuer  = "issuer"
-	paramJwksUri = "jwks_uri"
-)
-
 func identityProviderResource() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: identityProviderCreate,

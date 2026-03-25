@@ -12,11 +12,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-const (
-	flinkArtifactCloudAzure  = "AZURE"
-	flinkArtifactRegionAzure = "centralus"
-)
-
 func TestAccFlinkArtifactAzure(t *testing.T) {
 	ctx := context.Background()
 

@@ -25,19 +25,6 @@ import (
 	"github.com/walkerus/go-wiremock"
 )
 
-const (
-	scenarioStateDnsRecordIsProvisioning   = "The new dns record is provisioning"
-	scenarioStateDnsRecordHasBeenCreated   = "The new dns record has been just created"
-	scenarioStateDnsRecordHasBeenUpdated   = "The new dns record has been updated"
-	scenarioStateDnsRecordIsDeprovisioning = "The new dns record is deprovisioning"
-	scenarioStateDnsRecordHasBeenDeleted   = "The new dms record's deletion has been just completed"
-	dnsRecordScenarioName                  = "confluent_dns_record Resource Lifecycle"
-
-	dnsRecordUrlPath       = "/networking/v1/dns-records"
-	dnsRecordReadUrlPath   = "/networking/v1/dns-records/dnsrec-abc123"
-	dnsRecordResourceLabel = "confluent_dns_record.main"
-)
-
 func TestAccDnsRecord(t *testing.T) {
 	ctx := context.Background()
 

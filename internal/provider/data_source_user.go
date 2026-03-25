@@ -25,14 +25,6 @@ import (
 	"net/http"
 )
 
-const (
-	// The maximum allowable page size when listing service accounts using IAM V2 API
-	// https://docs.confluent.io/cloud/current/api.html#operation/listIamV2Users
-	listUsersPageSize = 100
-	paramEmail        = "email"
-	paramFullName     = "full_name"
-)
-
 func userDataSource() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: userDataSourceRead,

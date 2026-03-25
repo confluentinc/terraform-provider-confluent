@@ -26,19 +26,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-const (
-	scenarioStateAzurePlaIsProvisioning          = "The new azure private link access is provisioning"
-	scenarioStateAzurePlaIsDeprovisioning        = "The new azure private link access is deprovisioning"
-	scenarioStateAzurePlaHasBeenCreated          = "The new azure private link access has been just created"
-	scenarioStateAzurePlaIsInDeprovisioningState = "The new azure private link access is in deprovisioning state"
-	scenarioStateAzurePlaHasBeenDeleted          = "The new azure private link access's deletion has been just completed"
-	azurePlaScenarioName                         = "confluent_private_link_access Resource Lifecycle"
-	azurePlaEnvironmentId                        = "env-gz903"
-	azurePlaNetworkId                            = "n-p8xo76"
-	azurePlaId                                   = "pla-gz8rlg"
-	azureSubscription                            = "1234abcd-12ab-34cd-1234-123456abcdef"
-)
-
 var azurePlaUrlPath = fmt.Sprintf("/networking/v1/private-link-accesses/%s", azurePlaId)
 
 func TestAccAzurePrivateLinkAccess(t *testing.T) {

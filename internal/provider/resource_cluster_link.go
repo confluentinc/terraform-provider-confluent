@@ -28,59 +28,6 @@ import (
 	"strings"
 )
 
-const (
-	paramLinkName                = "link_name"
-	paramSourceKafkaCluster      = "source_kafka_cluster"
-	paramDestinationKafkaCluster = "destination_kafka_cluster"
-	paramLocalKafkaCluster       = "local_kafka_cluster"
-	paramRemoteKafkaCluster      = "remote_kafka_cluster"
-	paramLinkMode                = "link_mode"
-	paramConnectionMode          = "connection_mode"
-	paramClusterLinkId           = "cluster_link_id"
-	paramLinkState               = "link_state"
-
-	bootstrapServersConfigKey = "bootstrap.servers"
-	securityProtocolConfigKey = "security.protocol"
-
-	saslMechanismConfigKey                   = "sasl.mechanism"
-	saslJaasConfigConfigKey                  = "sasl.jaas.config"
-	saslLoginCallbackHandlerClassConfigKey   = "sasl.login.callback.handler.class"
-	saslOAuthBearerTokenEndpointUrlConfigKey = "sasl.oauthbearer.token.endpoint.url"
-
-	localSecurityProtocolConfigKey                = "local.security.protocol"
-	localSaslMechanismConfigKey                   = "local.sasl.mechanism"
-	localSaslJaasConfigConfigKey                  = "local.sasl.jaas.config"
-	localSaslLoginCallbackHandlerClassConfigKey   = "local.sasl.login.callback.handler.class"
-	localSaslOAuthBearerTokenEndpointUrlConfigKey = "local.sasl.oauthbearer.token.endpoint.url"
-
-	connectionModeConfigKey  = "connection.mode"
-	linkModeConfigKey        = "link.mode"
-	remoteLinkConnectionMode = "remote.link.connection.mode"
-	linkModeDestination      = "DESTINATION"
-	linkModeSource           = "SOURCE"
-	linkModeBidirectional    = "BIDIRECTIONAL"
-	connectionModeInbound    = "INBOUND"
-	connectionModeOutbound   = "OUTBOUND"
-
-	importSourceKafkaRestEndpointEnvVar           = "IMPORT_SOURCE_KAFKA_REST_ENDPOINT"
-	importSourceKafkaBootstrapEndpointEnvVar      = "IMPORT_SOURCE_KAFKA_BOOTSTRAP_ENDPOINT"
-	importDestinationKafkaRestEndpointEnvVar      = "IMPORT_DESTINATION_KAFKA_REST_ENDPOINT"
-	importDestinationKafkaBootstrapEndpointEnvVar = "IMPORT_DESTINATION_KAFKA_BOOTSTRAP_ENDPOINT"
-
-	importLocalKafkaRestEndpointEnvVar       = "IMPORT_LOCAL_KAFKA_REST_ENDPOINT"
-	importLocalKafkaBootstrapEndpointEnvVar  = "IMPORT_LOCAL_KAFKA_BOOTSTRAP_ENDPOINT"
-	importRemoteKafkaRestEndpointEnvVar      = "IMPORT_REMOTE_KAFKA_REST_ENDPOINT"
-	importRemoteKafkaBootstrapEndpointEnvVar = "IMPORT_REMOTE_KAFKA_BOOTSTRAP_ENDPOINT"
-
-	paramSourceKafkaCredentials      = "source_kafka_cluster.0.credentials"
-	paramDestinationKafkaCredentials = "destination_kafka_cluster.0.credentials"
-	paramLocalKafkaCredentials       = "local_kafka_cluster.0.credentials"
-	paramRemoteKafkaCredentials      = "remote_kafka_cluster.0.credentials"
-
-	docsClusterLinkConfigUrl = "https://docs.confluent.io/cloud/current/multi-cloud/cluster-linking/cluster-links-cc.html#configuring-cluster-link-behavior"
-	dynamicClusterLinkConfig = "DYNAMIC_CLUSTER_LINK_CONFIG"
-)
-
 var sourceKafkaCredentialsBlockKey = fmt.Sprintf("%s.0.%s.#", paramSourceKafkaCluster, paramCredentials)
 var destinationKafkaCredentialsBlockKey = fmt.Sprintf("%s.0.%s.#", paramDestinationKafkaCluster, paramCredentials)
 var localKafkaCredentialsBlockKey = fmt.Sprintf("%s.0.%s.#", paramLocalKafkaCluster, paramCredentials)

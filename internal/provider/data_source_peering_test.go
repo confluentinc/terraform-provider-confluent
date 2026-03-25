@@ -25,12 +25,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-const (
-	dataSourcePeeringScenarioName = "confluent_peering Data Source Lifecycle"
-	peeringDataSourceLabel        = "example"
-	peeringDataSourceDisplayName  = "my-test-peering"
-)
-
 var fullPeeringDataSourceLabel = fmt.Sprintf("data.confluent_peering.%s", peeringDataSourceLabel)
 
 func TestAccDataSourcePeering(t *testing.T) {

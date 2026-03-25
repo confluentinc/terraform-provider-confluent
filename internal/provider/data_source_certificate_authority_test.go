@@ -11,10 +11,6 @@ import (
 	"github.com/walkerus/go-wiremock"
 )
 
-const (
-	CertificateAuthorityDataSourceScenarioName = "confluent_certificate_authority Data Source Lifecycle"
-)
-
 func TestAccDataSourceCertificateAuthority(t *testing.T) {
 	ctx := context.Background()
 

@@ -24,16 +24,6 @@ import (
 	"testing"
 )
 
-const (
-	networkLinkServiceDataSourceScenarioName = "confluent_network_link_service Data Source Lifecycle"
-
-	networkLinkServiceReadUrlPath = "/networking/v1/network-link-services/nls-p2k0l1"
-	networkLinkServiceListUrlPath = "/networking/v1/network-link-services"
-	networkLinkServiceId          = "nls-p2k0l1"
-	networkLinkServiceLabel       = "data.confluent_network_link_service.nls"
-	networkLinkServiceDisplayName = "network-link-service-2"
-)
-
 func TestAccDataSourceNetworkLinkService(t *testing.T) {
 	ctx := context.Background()
 
