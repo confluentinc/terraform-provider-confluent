@@ -55,7 +55,7 @@ func flinkConnectionDataSource() *schema.Resource {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ForceNew:     true,
-				Description:  "The REST endpoint of the Flink Connection cluster, for example, `https://flinkv2.us-east-1.aws.confluent.cloud/sql/v1/organizations/1111aaaa-11aa-11aa-11aa-111111aaaaaa/environments/env-abc123`).",
+				Description:  "The REST endpoint of the Flink Connection cluster, for example, `https://flink.us-east-1.aws.confluent.cloud/sql/v1/organizations/1111aaaa-11aa-11aa-11aa-111111aaaaaa/environments/env-abc123`).",
 				ValidateFunc: validation.StringMatch(regexp.MustCompile("^http"), "the REST endpoint must start with 'https://'"),
 			},
 			paramCredentials: credentialsSchema(),
@@ -73,17 +73,17 @@ func connectionDataSourceRead(ctx context.Context, d *schema.ResourceData, meta 
 	}
 	flinkConnections, err := loadFlinkConnections(ctx, flinkRestClient, connectionType)
 	if err != nil {
-		return diag.Errorf("error reading flinkv2 connection %q: %s", connectionName, createDescriptiveError(err))
+		return diag.Errorf("error reading flink connection %q: %s", connectionName, createDescriptiveError(err))
 	}
 
 	for _, flinkConnection := range flinkConnections {
 		if flinkConnection.GetName() == connectionName {
 			fcJson, err := json.Marshal(flinkConnection)
 			if err != nil {
-				return diag.Errorf("error reading flinkv2 connection %q: error marshaling %#v to json: %s", connectionName, flinkConnection, createDescriptiveError(err))
+				return diag.Errorf("error reading flink connection %q: error marshaling %#v to json: %s", connectionName, flinkConnection, createDescriptiveError(err))
 			}
 			if orgHasMultipleFlinkConnectionsWithTargetDisplayName(flinkConnections, connectionName) {
-				return diag.Errorf("error reading flinkv2 connections: there are multiple flinkv2 connections with %q=%q", paramDisplayName, connectionName)
+				return diag.Errorf("error reading flink connections: there are multiple flink connections with %q=%q", paramDisplayName, connectionName)
 			}
 			if _, err := setConnectionDataSourceAttributes(d, flinkConnection, flinkRestClient); err != nil {
 				tflog.Debug(ctx, fmt.Sprintf("Fetched Flink Connection using display name %q: %s", connectionName, fcJson))
@@ -102,7 +102,7 @@ func loadFlinkConnections(ctx context.Context, c *FlinkRestClient, connectionTyp
 	for !done {
 		connectionPageList, resp, err := executeListFlinkConnections(ctx, c, connectionType, pageToken)
 		if err != nil {
-			return nil, fmt.Errorf("error reading flinkv2 connections list: %s", createDescriptiveError(err, resp))
+			return nil, fmt.Errorf("error reading flink connections list: %s", createDescriptiveError(err, resp))
 		}
 		flinkConnections = append(flinkConnections, connectionPageList.GetData()...)
 

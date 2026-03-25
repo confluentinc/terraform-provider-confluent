@@ -104,7 +104,7 @@ func flinkStatementResource() *schema.Resource {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ForceNew:     true,
-				Description:  "The REST endpoint of the Flink Compute Pool cluster, for example, `https://flinkv2.us-east-1.aws.confluent.cloud/sql/v1/organizations/1111aaaa-11aa-11aa-11aa-111111aaaaaa/environments/env-abc123`).",
+				Description:  "The REST endpoint of the Flink Compute Pool cluster, for example, `https://flink.us-east-1.aws.confluent.cloud/sql/v1/organizations/1111aaaa-11aa-11aa-11aa-111111aaaaaa/environments/env-abc123`).",
 				ValidateFunc: validation.StringMatch(regexp.MustCompile("^http"), "the REST endpoint must start with 'https://'"),
 			},
 			paramCredentials: credentialsSchema(),
@@ -240,8 +240,8 @@ func flinkStatementRead(ctx context.Context, d *schema.ResourceData, meta interf
 
 func flinkStatementUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	// Make sure we must have a paramStopped update, or a paramPropertiesSensitive update for version change
-	// stopped: false -> true to trigger flinkv2 statement stopping
-	// stopped: true -> false to trigger flinkv2 statement resuming
+	// stopped: false -> true to trigger flink statement stopping
+	// stopped: true -> false to trigger flink statement resuming
 	if d.HasChangesExcept(paramStopped, paramPropertiesSensitive, paramPrincipal, paramComputePool) {
 		return diag.Errorf(`error updating Flink Statement %q: %q or %q attribute must be updated for Flink Statement, "true" -> "false" to trigger resuming, "false" -> "true" to trigger stopping`, d.Id(), paramStopped, paramPropertiesSensitive)
 	}

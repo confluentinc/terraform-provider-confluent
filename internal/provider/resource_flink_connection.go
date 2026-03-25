@@ -82,13 +82,13 @@ func flinkConnectionResource() *schema.Resource {
 			},
 			paramType: {
 				Type:         schema.TypeString,
-				Description:  "The type of the flinkv2 connection.",
+				Description:  "The type of the flink connection.",
 				ValidateFunc: validation.StringInSlice(acceptedTypes, false),
 				Required:     true,
 			},
 			paramEndpoint: {
 				Type:         schema.TypeString,
-				Description:  "The endpoint of the flinkv2 connection.",
+				Description:  "The endpoint of the flink connection.",
 				ValidateFunc: validation.StringIsNotEmpty,
 				Required:     true,
 			},
@@ -145,7 +145,7 @@ func flinkConnectionResource() *schema.Resource {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ForceNew:     true,
-				Description:  "The REST endpoint of the Flink Connection cluster, for example, `https://flinkv2.us-east-1.aws.confluent.cloud/sql/v1/organizations/1111aaaa-11aa-11aa-11aa-111111aaaaaa/environments/env-abc123`).",
+				Description:  "The REST endpoint of the Flink Connection cluster, for example, `https://flink.us-east-1.aws.confluent.cloud/sql/v1/organizations/1111aaaa-11aa-11aa-11aa-111111aaaaaa/environments/env-abc123`).",
 				ValidateFunc: validation.StringMatch(regexp.MustCompile("^http"), "the REST endpoint must start with 'https://'"),
 			},
 			paramCredentials: credentialsSchema(),
@@ -269,7 +269,7 @@ func connectionRead(ctx context.Context, d *schema.ResourceData, meta interface{
 		return diag.Errorf("error reading Flink Connection: %s", createDescriptiveError(err))
 	}
 	if _, err := readConnectionAndSetAttributes(ctx, d, flinkRestClient, connectionName); err != nil {
-		return diag.FromErr(fmt.Errorf("error reading flinkv2 connection %q: %s", d.Id(), createDescriptiveError(err)))
+		return diag.FromErr(fmt.Errorf("error reading flink connection %q: %s", d.Id(), createDescriptiveError(err)))
 	}
 	return nil
 }
@@ -289,7 +289,7 @@ func readConnectionAndSetAttributes(ctx context.Context, d *schema.ResourceData,
 	}
 	connectionJson, err := json.Marshal(connection)
 	if err != nil {
-		return nil, fmt.Errorf("error reading flinkv2 connection %q: error marshaling %#v to json: %s", d.Id(), connection, createDescriptiveError(err))
+		return nil, fmt.Errorf("error reading flink connection %q: error marshaling %#v to json: %s", d.Id(), connection, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Flink Connection %q: %s", d.Id(), connectionJson), map[string]interface{}{flinkConnectionLoggingKey: d.Id()})
 
@@ -374,7 +374,7 @@ func connectionDelete(ctx context.Context, d *schema.ResourceData, meta interfac
 	resp, err := req.Execute()
 
 	if err != nil {
-		return diag.Errorf("error deleting flinkv2 connection %q: %s", d.Id(), createDescriptiveError(err, resp))
+		return diag.Errorf("error deleting flink connection %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished deleting Flink Connection %q", d.Id()), map[string]interface{}{flinkConnectionLoggingKey: d.Id()})
 	return nil

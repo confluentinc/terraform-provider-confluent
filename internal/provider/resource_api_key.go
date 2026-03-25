@@ -346,7 +346,7 @@ func apiKeyOwnerSchema() *schema.Schema {
 		MaxItems:    1,
 		Required:    true,
 		ForceNew:    true,
-		Description: "The owner to which the API Key belongs. The owner can be one of 'iamv2.v2.User', 'iamv2.v2.ServiceAccount'.",
+		Description: "The owner to which the API Key belongs. The owner can be one of 'iam.v2.User', 'iam.v2.ServiceAccount'.",
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				paramId: {
@@ -383,7 +383,7 @@ func apiKeyResourceSchema() *schema.Schema {
 		// If the resource is not specified, then Cloud API Key gets created
 		Optional:    true,
 		ForceNew:    true,
-		Description: "The resource associated with this object. The only resource that is supported is 'cmkv2.v2.Cluster', 'srcmv3.v2.Cluster', 'srcmv3.v3.Cluster'.",
+		Description: "The resource associated with this object. The only resource that is supported is 'cmk.v2.Cluster', 'srcm.v2.Cluster', 'srcm.v3.Cluster'.",
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				paramId: {

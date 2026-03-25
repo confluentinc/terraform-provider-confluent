@@ -286,7 +286,7 @@ func TestAccKafkaClusterDedicatedWithNetworkLive(t *testing.T) {
 	})
 }
 
-// Test Dedicated cluster - CKU-based with optional networkingv1 and encryption
+// Test Dedicated cluster - CKU-based with optional net and encryption
 func TestAccKafkaClusterDedicatedLive(t *testing.T) {
 	// Disable dedicated tests until cost is figured out
 	t.Skip()

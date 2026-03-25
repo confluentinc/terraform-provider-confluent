@@ -381,7 +381,7 @@ func createGcpSetupWarning(integration providerintegrationv2.PimV2Integration) d
 		{
 			Severity: diag.Warning,
 			Summary:  "⏳ GCP setup required",
-			Detail:   fmt.Sprintf("Integration created successfully! Complete GCP IAM setup:\n\n1. Grant Service Account Token Creator role:\n   gcloud projects add-iam-policy-binding YOUR_PROJECT_ID \\\n     --member=\"serviceAccount:%s\" \\\n     --role=\"roles/iamv2.serviceAccountTokenCreator\" \\\n     --condition=\"expression=request.auth.claims.sub=='%s'\"\n\n2. Grant your service account (%s) permissions based on your connector needs\n\n3. Re-run 'terraform apply' to validate\n\nNote: IAM changes may take 1-7 minutes to propagate.", confluentServiceAccount, confluentServiceAccount, customerServiceAccount),
+			Detail:   fmt.Sprintf("Integration created successfully! Complete GCP IAM setup:\n\n1. Grant Service Account Token Creator role:\n   gcloud projects add-iam-policy-binding YOUR_PROJECT_ID \\\n     --member=\"serviceAccount:%s\" \\\n     --role=\"roles/iam.serviceAccountTokenCreator\" \\\n     --condition=\"expression=request.auth.claims.sub=='%s'\"\n\n2. Grant your service account (%s) permissions based on your connector needs\n\n3. Re-run 'terraform apply' to validate\n\nNote: IAM changes may take 1-7 minutes to propagate.", confluentServiceAccount, confluentServiceAccount, customerServiceAccount),
 		},
 	}
 }

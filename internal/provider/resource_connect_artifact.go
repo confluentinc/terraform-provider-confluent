@@ -181,7 +181,7 @@ func connectArtifactRead(ctx context.Context, d *schema.ResourceData, meta inter
 	}
 
 	if _, err := readConnectArtifactAndSetAttributes(ctx, d, meta, d.Get(paramCloud).(string), artifactId, d.Get(paramArtifactFile).(string), environmentId); err != nil {
-		return diag.FromErr(fmt.Errorf("error reading connectv1 artifact %q: %s", d.Id(), createDescriptiveError(err)))
+		return diag.FromErr(fmt.Errorf("error reading connect artifact %q: %s", d.Id(), createDescriptiveError(err)))
 	}
 
 	return nil
@@ -204,7 +204,7 @@ func readConnectArtifactAndSetAttributes(ctx context.Context, d *schema.Resource
 	}
 	artifactJson, err := json.Marshal(artifact)
 	if err != nil {
-		return nil, fmt.Errorf("error reading connectv1 artifact %q: error marshaling %#v to json: %s", artifactId, artifact, createDescriptiveError(err))
+		return nil, fmt.Errorf("error reading connect artifact %q: error marshaling %#v to json: %s", artifactId, artifact, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Connect Artifact %q: %s", d.Id(), artifactJson), map[string]interface{}{connectArtifactLoggingKey: d.Id()})
 
@@ -263,7 +263,7 @@ func connectArtifactDelete(ctx context.Context, d *schema.ResourceData, meta int
 	resp, err := executeConnectArtifactDelete(c.camV1ApiContext(ctx), c, d.Id(), d.Get(paramCloud).(string), environmentId)
 
 	if err != nil {
-		return diag.Errorf("error deleting connectv1 artifact %q: %s", d.Id(), createDescriptiveError(err, resp))
+		return diag.Errorf("error deleting connect artifact %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished deleting Connect Artifact %q", d.Id()), map[string]interface{}{connectArtifactLoggingKey: d.Id()})
@@ -284,7 +284,7 @@ func connectArtifactImport(ctx context.Context, d *schema.ResourceData, meta int
 	cloudAndArtifactId := d.Id()
 	parts := strings.Split(cloudAndArtifactId, "/")
 	if len(parts) != 3 {
-		return nil, fmt.Errorf("error importing connectv1 artifact: invalid format: expected '<Environment ID>/<cloud>/<Connect Artifact ID>'")
+		return nil, fmt.Errorf("error importing connect artifact: invalid format: expected '<Environment ID>/<cloud>/<Connect Artifact ID>'")
 	}
 
 	artifactId := parts[2]
@@ -296,7 +296,7 @@ func connectArtifactImport(ctx context.Context, d *schema.ResourceData, meta int
 	// Mark resource as new to avoid d.Set("") when getting 404
 	d.MarkNewResource()
 	if _, err := readConnectArtifactAndSetAttributes(ctx, d, meta, cloud, artifactId, artifactFile, envId); err != nil {
-		return nil, fmt.Errorf("error importing connectv1 artifact %q: %s", d.Id(), err)
+		return nil, fmt.Errorf("error importing connect artifact %q: %s", d.Id(), err)
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished importing Connect Artifact %q", d.Id()), map[string]interface{}{connectArtifactLoggingKey: d.Id()})
 	return []*schema.ResourceData{d}, nil
@@ -340,9 +340,9 @@ func connectArtifactProvisionStatus(ctx context.Context, c *Client, environmentI
 		if phase == stateProcessing || phase == stateWaitingForProcessing || phase == stateProvisioning || phase == stateProvisioned || phase == stateReady {
 			return artifact, phase, nil
 		} else if phase == stateFailed {
-			return nil, stateFailed, fmt.Errorf("connectv1 artifact %q provisioning status is %q", artifactId, stateFailed)
+			return nil, stateFailed, fmt.Errorf("connect artifact %q provisioning status is %q", artifactId, stateFailed)
 		}
 		// Connect Artifact is in an unexpected state
-		return nil, stateUnexpected, fmt.Errorf("connectv1 artifact %q is in an unexpected state %q", artifactId, phase)
+		return nil, stateUnexpected, fmt.Errorf("connect artifact %q is in an unexpected state %q", artifactId, phase)
 	}
 }

@@ -108,21 +108,21 @@ func azureKeyDataSourceSchema() *schema.Schema {
 func byokDataSourceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	keyId := d.Get(paramId).(string)
 	if keyId == "" {
-		return diag.Errorf("error reading byokv1 key: byokv1 key id is missing")
+		return diag.Errorf("error reading byok key: byok key id is missing")
 	}
 
-	tflog.Debug(ctx, fmt.Sprintf("Reading byokv1 key %q=%q", paramId, keyId), map[string]interface{}{byokKeyLoggingKey: keyId})
+	tflog.Debug(ctx, fmt.Sprintf("Reading byok key %q=%q", paramId, keyId), map[string]interface{}{byokKeyLoggingKey: keyId})
 
 	c := meta.(*Client)
 	key, resp, err := executeKeyRead(c.byokV1ApiContext(ctx), c, keyId)
 	if err != nil {
-		return diag.Errorf("error reading byokv1 key %q: %s", keyId, createDescriptiveError(err, resp))
+		return diag.Errorf("error reading byok key %q: %s", keyId, createDescriptiveError(err, resp))
 	}
 	keyJson, err := json.Marshal(key)
 	if err != nil {
-		return diag.Errorf("error reading byokv1 key %q: error marshaling %#v to json: %s", keyId, key, createDescriptiveError(err))
+		return diag.Errorf("error reading byok key %q: error marshaling %#v to json: %s", keyId, key, createDescriptiveError(err))
 	}
-	tflog.Debug(ctx, fmt.Sprintf("Fetched byokv1 key %q: %s", keyId, keyJson), map[string]interface{}{byokKeyLoggingKey: keyId})
+	tflog.Debug(ctx, fmt.Sprintf("Fetched byok key %q: %s", keyId, keyJson), map[string]interface{}{byokKeyLoggingKey: keyId})
 
 	if _, err := setKeyAttributes(d, key); err != nil {
 		return diag.FromErr(createDescriptiveError(err))

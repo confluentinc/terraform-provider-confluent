@@ -103,11 +103,11 @@ func testAccCheckFlinkRegionExists(n string) resource.TestCheckFunc {
 		rs, ok := s.RootModule().Resources[n]
 
 		if !ok {
-			return fmt.Errorf("%s flinkv2 region has not been found", n)
+			return fmt.Errorf("%s flink region has not been found", n)
 		}
 
 		if rs.Primary.ID == "" {
-			return fmt.Errorf("ID has not been set for %s flinkv2 region", n)
+			return fmt.Errorf("ID has not been set for %s flink region", n)
 		}
 
 		return nil

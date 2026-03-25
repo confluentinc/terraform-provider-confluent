@@ -64,7 +64,7 @@ func connectArtifactDataSourceRead(ctx context.Context, d *schema.ResourceData, 
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
 
 	if _, err := readConnectArtifactAndSetAttributes(ctx, d, meta, d.Get(paramCloud).(string), artifactId, "", environmentId); err != nil {
-		return diag.FromErr(fmt.Errorf("error reading connectv1 artifact %q: %s", d.Id(), createDescriptiveError(err)))
+		return diag.FromErr(fmt.Errorf("error reading connect artifact %q: %s", d.Id(), createDescriptiveError(err)))
 	}
 
 	return nil

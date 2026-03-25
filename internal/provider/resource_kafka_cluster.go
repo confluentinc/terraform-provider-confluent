@@ -104,7 +104,7 @@ func kafkaResource() *schema.Resource {
 			paramBootStrapEndpoint: {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "The bootstrap endpoint used by Kafka clients to connectv1 to the Kafka cluster.",
+				Description: "The bootstrap endpoint used by Kafka clients to connect to the Kafka cluster.",
 			},
 			paramRestEndpoint: {
 				Type:        schema.TypeString,

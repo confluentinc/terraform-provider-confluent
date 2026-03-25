@@ -152,7 +152,7 @@ func TestAccConnectArtifactAzure(t *testing.T) {
 
 func testAccCheckConnectArtifactDestroyAzure(s *terraform.State) error {
 	c := testAccProvider.Meta().(*Client)
-	// Loop through the resources in state, verifying each connectv1 artifact is destroyed
+	// Loop through the resources in state, verifying each connect artifact is destroyed
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "confluent_connect_artifact" {
 			continue
@@ -167,7 +167,7 @@ func testAccCheckConnectArtifactDestroyAzure(s *terraform.State) error {
 		} else if err == nil && deletedArtifact.GetId() != "" {
 			// Otherwise return the error
 			if deletedArtifact.GetId() == rs.Primary.ID {
-				return fmt.Errorf("connectv1 artifact (%s) still exists", rs.Primary.ID)
+				return fmt.Errorf("connect artifact (%s) still exists", rs.Primary.ID)
 			}
 		}
 		return err

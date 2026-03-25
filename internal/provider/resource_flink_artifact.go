@@ -227,7 +227,7 @@ func artifactRead(ctx context.Context, d *schema.ResourceData, meta interface{})
 	artifactId := d.Id()
 
 	if _, err := readArtifactAndSetAttributes(ctx, d, meta, d.Get(paramRegion).(string), d.Get(paramCloud).(string), artifactId, d.Get(paramArtifactFile).(string), extractStringValueFromBlock(d, paramEnvironment, paramId)); err != nil {
-		return diag.FromErr(fmt.Errorf("error reading flinkv2 artifact %q: %s", d.Id(), createDescriptiveError(err)))
+		return diag.FromErr(fmt.Errorf("error reading flink artifact %q: %s", d.Id(), createDescriptiveError(err)))
 	}
 
 	return nil
@@ -250,7 +250,7 @@ func readArtifactAndSetAttributes(ctx context.Context, d *schema.ResourceData, m
 	}
 	artifactJson, err := json.Marshal(artifact)
 	if err != nil {
-		return nil, fmt.Errorf("error reading flinkv2 artifact %q: error marshaling %#v to json: %s", artifactId, artifact, createDescriptiveError(err))
+		return nil, fmt.Errorf("error reading flink artifact %q: error marshaling %#v to json: %s", artifactId, artifact, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Flink Artifact %q: %s", d.Id(), artifactJson), map[string]interface{}{flinkArtifactLoggingKey: d.Id()})
 
@@ -326,7 +326,7 @@ func artifactDelete(ctx context.Context, d *schema.ResourceData, meta interface{
 	resp, err := req.Execute()
 
 	if err != nil {
-		return diag.Errorf("error deleting flinkv2 artifact %q: %s", d.Id(), createDescriptiveError(err, resp))
+		return diag.Errorf("error deleting flink artifact %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished deleting Flink Artifact %q", d.Id()), map[string]interface{}{flinkArtifactLoggingKey: d.Id()})
@@ -340,7 +340,7 @@ func artifactImport(ctx context.Context, d *schema.ResourceData, meta interface{
 	regionCloudAndArtifactId := d.Id()
 	parts := strings.Split(regionCloudAndArtifactId, "/")
 	if len(parts) != 4 {
-		return nil, fmt.Errorf("error importing flinkv2 artifact: invalid format: expected '<Environment ID>/<region>/<cloud>/<Flink Artifact ID>'")
+		return nil, fmt.Errorf("error importing flink artifact: invalid format: expected '<Environment ID>/<region>/<cloud>/<Flink Artifact ID>'")
 	}
 
 	artifactId := parts[3]
@@ -353,7 +353,7 @@ func artifactImport(ctx context.Context, d *schema.ResourceData, meta interface{
 	// Mark resource as new to avoid d.Set("") when getting 404
 	d.MarkNewResource()
 	if _, err := readArtifactAndSetAttributes(ctx, d, meta, region, cloud, artifactId, artifactFile, envId); err != nil {
-		return nil, fmt.Errorf("error importing flinkv2 artifact %q: %s", d.Id(), err)
+		return nil, fmt.Errorf("error importing flink artifact %q: %s", d.Id(), err)
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished importing Flink Artifact %q", d.Id()), map[string]interface{}{flinkArtifactLoggingKey: d.Id()})
 	return []*schema.ResourceData{d}, nil

@@ -96,7 +96,7 @@ func TestAccAzureBYOKKey(t *testing.T) {
 
 func testAccCheckByokKeyDestroy(s *terraform.State) error {
 	c := testAccProvider.Meta().(*Client)
-	// Loop through the resources in state, verifying each azure byokv1 key is destroyed
+	// Loop through the resources in state, verifying each azure byok key is destroyed
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "confluent_byok_key" {
 			continue

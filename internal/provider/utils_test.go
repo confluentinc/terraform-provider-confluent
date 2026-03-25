@@ -136,8 +136,8 @@ func TestCanUpdateEntityName(t *testing.T) {
 		},
 		{
 			entityType:    recordEntityType,
-			oldEntityName: "lsrc-foobar:.:100004:orgv2.apache.flinkv2.avro.generated.record",
-			newEntityName: "lsrc-foobar:.:100005:orgv2.apache.flinkv2.avro.generated.record",
+			oldEntityName: "lsrc-foobar:.:100004:org.apache.flink.avro.generated.record",
+			newEntityName: "lsrc-foobar:.:100005:org.apache.flink.avro.generated.record",
 			expected:      true,
 		},
 		{
@@ -148,14 +148,14 @@ func TestCanUpdateEntityName(t *testing.T) {
 		},
 		{
 			entityType:    fieldEntityType,
-			oldEntityName: "lsrc-foobar:.:100006:orgv2.apache.flinkv2.avro.generated.record.random_value",
-			newEntityName: "lsrc-foobar:.:100007:orgv2.apache.flinkv2.avro.generated.record.random_value",
+			oldEntityName: "lsrc-foobar:.:100006:org.apache.flink.avro.generated.record.random_value",
+			newEntityName: "lsrc-foobar:.:100007:org.apache.flink.avro.generated.record.random_value",
 			expected:      true,
 		},
 		{
 			entityType:    fieldEntityType,
-			oldEntityName: "flinkv2.avro.generated.record.random_value",
-			newEntityName: "flinkv2.avro.generated.record.random_value",
+			oldEntityName: "flink.avro.generated.record.random_value",
+			newEntityName: "flink.avro.generated.record.random_value",
 			expected:      false,
 		},
 		{
@@ -858,7 +858,7 @@ func TestConvertConfigDataToAlterConfigBatchRequestData(t *testing.T) {
 				},
 				{
 					Name:  "sasl.jaas.config",
-					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("orgv2.apache.kafka.common.security.plain.PlainLoginModule required username=\"test-key\" password=\"test-secret\";")),
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"test-key\" password=\"test-secret\";")),
 				},
 				{
 					Name:  "security.protocol",
@@ -873,7 +873,7 @@ func TestConvertConfigDataToAlterConfigBatchRequestData(t *testing.T) {
 				},
 				{
 					Name:      "sasl.jaas.config",
-					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("orgv2.apache.kafka.common.security.plain.PlainLoginModule required username=\"test-key\" password=\"test-secret\";")),
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"test-key\" password=\"test-secret\";")),
 					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
 				},
 				{
@@ -896,11 +896,11 @@ func TestConvertConfigDataToAlterConfigBatchRequestData(t *testing.T) {
 				},
 				{
 					Name:  "sasl.login.callback.handler.class",
-					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("orgv2.apache.kafka.common.security.oauthbearer.OAuthBearerLoginCallbackHandler")),
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginCallbackHandler")),
 				},
 				{
 					Name:  "sasl.jaas.config",
-					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("orgv2.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required clientId='test-client' scope='test-scope' clientSecret='test-secret' extension_logicalCluster='lkc-123' extension_identityPoolId='pool-123';")),
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required clientId='test-client' scope='test-scope' clientSecret='test-secret' extension_logicalCluster='lkc-123' extension_identityPoolId='pool-123';")),
 				},
 			},
 			expected: []kafkarestv3.AlterConfigBatchRequestDataData{
@@ -916,12 +916,12 @@ func TestConvertConfigDataToAlterConfigBatchRequestData(t *testing.T) {
 				},
 				{
 					Name:      "sasl.login.callback.handler.class",
-					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("orgv2.apache.kafka.common.security.oauthbearer.OAuthBearerLoginCallbackHandler")),
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginCallbackHandler")),
 					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
 				},
 				{
 					Name:      "sasl.jaas.config",
-					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("orgv2.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required clientId='test-client' scope='test-scope' clientSecret='test-secret' extension_logicalCluster='lkc-123' extension_identityPoolId='pool-123';")),
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required clientId='test-client' scope='test-scope' clientSecret='test-secret' extension_logicalCluster='lkc-123' extension_identityPoolId='pool-123';")),
 					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
 				},
 			},
@@ -939,7 +939,7 @@ func TestConvertConfigDataToAlterConfigBatchRequestData(t *testing.T) {
 				},
 				{
 					Name:  "local.sasl.jaas.config",
-					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("orgv2.apache.kafka.common.security.plain.PlainLoginModule required username=\"local-key\" password=\"local-secret\";")),
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"local-key\" password=\"local-secret\";")),
 				},
 			},
 			expected: []kafkarestv3.AlterConfigBatchRequestDataData{
@@ -955,7 +955,7 @@ func TestConvertConfigDataToAlterConfigBatchRequestData(t *testing.T) {
 				},
 				{
 					Name:      "local.sasl.jaas.config",
-					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("orgv2.apache.kafka.common.security.plain.PlainLoginModule required username=\"local-key\" password=\"local-secret\";")),
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"local-key\" password=\"local-secret\";")),
 					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
 				},
 			},
@@ -1100,7 +1100,7 @@ func TestExtractCredentialConfigs(t *testing.T) {
 				},
 				{
 					Name:  "sasl.jaas.config",
-					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("orgv2.apache.kafka.common.security.plain.PlainLoginModule required username=\"test-key\" password=\"test-secret\";")),
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"test-key\" password=\"test-secret\";")),
 				},
 			},
 			expected: []kafkarestv3.AlterConfigBatchRequestDataData{
@@ -1111,7 +1111,7 @@ func TestExtractCredentialConfigs(t *testing.T) {
 				},
 				{
 					Name:      "sasl.jaas.config",
-					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("orgv2.apache.kafka.common.security.plain.PlainLoginModule required username=\"test-key\" password=\"test-secret\";")),
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"test-key\" password=\"test-secret\";")),
 					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
 				},
 			},
@@ -1129,7 +1129,7 @@ func TestExtractCredentialConfigs(t *testing.T) {
 				},
 				{
 					Name:  "sasl.jaas.config",
-					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("orgv2.apache.kafka.common.security.plain.PlainLoginModule required username=\"key\" password=\"secret\";")),
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"key\" password=\"secret\";")),
 				},
 				{
 					Name:  "security.protocol",
@@ -1148,7 +1148,7 @@ func TestExtractCredentialConfigs(t *testing.T) {
 				},
 				{
 					Name:      "sasl.jaas.config",
-					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("orgv2.apache.kafka.common.security.plain.PlainLoginModule required username=\"key\" password=\"secret\";")),
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"key\" password=\"secret\";")),
 					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
 				},
 			},
@@ -1162,7 +1162,7 @@ func TestExtractCredentialConfigs(t *testing.T) {
 				},
 				{
 					Name:  "local.sasl.jaas.config",
-					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("orgv2.apache.kafka.common.security.plain.PlainLoginModule required username=\"local-key\" password=\"local-secret\";")),
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"local-key\" password=\"local-secret\";")),
 				},
 				{
 					Name:  "local.security.protocol",
@@ -1177,7 +1177,7 @@ func TestExtractCredentialConfigs(t *testing.T) {
 				},
 				{
 					Name:      "local.sasl.jaas.config",
-					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("orgv2.apache.kafka.common.security.plain.PlainLoginModule required username=\"local-key\" password=\"local-secret\";")),
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"local-key\" password=\"local-secret\";")),
 					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
 				},
 			},
@@ -1191,7 +1191,7 @@ func TestExtractCredentialConfigs(t *testing.T) {
 				},
 				{
 					Name:  "sasl.jaas.config",
-					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("orgv2.apache.kafka.common.security.plain.PlainLoginModule required username=\"remote-key\" password=\"remote-secret\";")),
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"remote-key\" password=\"remote-secret\";")),
 				},
 				{
 					Name:  "local.sasl.mechanism",
@@ -1199,7 +1199,7 @@ func TestExtractCredentialConfigs(t *testing.T) {
 				},
 				{
 					Name:  "local.sasl.jaas.config",
-					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("orgv2.apache.kafka.common.security.plain.PlainLoginModule required username=\"local-key\" password=\"local-secret\";")),
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"local-key\" password=\"local-secret\";")),
 				},
 				{
 					Name:  "bootstrap.servers",
@@ -1214,7 +1214,7 @@ func TestExtractCredentialConfigs(t *testing.T) {
 				},
 				{
 					Name:      "sasl.jaas.config",
-					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("orgv2.apache.kafka.common.security.plain.PlainLoginModule required username=\"remote-key\" password=\"remote-secret\";")),
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"remote-key\" password=\"remote-secret\";")),
 					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
 				},
 				{
@@ -1224,7 +1224,7 @@ func TestExtractCredentialConfigs(t *testing.T) {
 				},
 				{
 					Name:      "local.sasl.jaas.config",
-					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("orgv2.apache.kafka.common.security.plain.PlainLoginModule required username=\"local-key\" password=\"local-secret\";")),
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"local-key\" password=\"local-secret\";")),
 					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
 				},
 			},
@@ -1276,7 +1276,7 @@ func TestExtractCredentialConfigs(t *testing.T) {
 			input: []kafkarestv3.ConfigData{
 				{
 					Name:  "sasl.jaas.config",
-					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("orgv2.apache.kafka.common.security.plain.PlainLoginModule required username=\"key\" password=\"secret\";")),
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"key\" password=\"secret\";")),
 				},
 				{
 					Name:  "bootstrap.servers",
@@ -1286,7 +1286,7 @@ func TestExtractCredentialConfigs(t *testing.T) {
 			expected: []kafkarestv3.AlterConfigBatchRequestDataData{
 				{
 					Name:      "sasl.jaas.config",
-					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("orgv2.apache.kafka.common.security.plain.PlainLoginModule required username=\"key\" password=\"secret\";")),
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"key\" password=\"secret\";")),
 					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
 				},
 			},
@@ -1340,7 +1340,7 @@ func TestExtractCredentialConfigs(t *testing.T) {
 				},
 				{
 					Name:  "sasl.jaas.config",
-					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("orgv2.apache.kafka.common.security.plain.PlainLoginModule required username=\"remote-key\" password=\"remote-secret\";")),
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"remote-key\" password=\"remote-secret\";")),
 				},
 				{
 					Name:  "local.sasl.mechanism",
@@ -1348,7 +1348,7 @@ func TestExtractCredentialConfigs(t *testing.T) {
 				},
 				{
 					Name:  "local.sasl.jaas.config",
-					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("orgv2.apache.kafka.common.security.plain.PlainLoginModule required username=\"local-key\" password=\"local-secret\";")),
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"local-key\" password=\"local-secret\";")),
 				},
 			},
 			expected: []kafkarestv3.AlterConfigBatchRequestDataData{
@@ -1359,7 +1359,7 @@ func TestExtractCredentialConfigs(t *testing.T) {
 				},
 				{
 					Name:      "sasl.jaas.config",
-					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("orgv2.apache.kafka.common.security.plain.PlainLoginModule required username=\"remote-key\" password=\"remote-secret\";")),
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"remote-key\" password=\"remote-secret\";")),
 					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
 				},
 				{
@@ -1369,7 +1369,7 @@ func TestExtractCredentialConfigs(t *testing.T) {
 				},
 				{
 					Name:      "local.sasl.jaas.config",
-					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("orgv2.apache.kafka.common.security.plain.PlainLoginModule required username=\"local-key\" password=\"local-secret\";")),
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"local-key\" password=\"local-secret\";")),
 					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
 				},
 			},
@@ -1498,7 +1498,7 @@ func TestValidateAllOrNoneAttributesSetForResources(t *testing.T) {
 			flinkOrganizationId: "org-123",
 			flinkEnvironmentId:  "env-456",
 			flinkComputePoolId:  "pool-789",
-			flinkRestEndpoint:   "https://flinkv2.us-east-1.aws.confluent.cloud",
+			flinkRestEndpoint:   "https://flink.us-east-1.aws.confluent.cloud",
 			flinkPrincipalId:    "u-123456",
 
 			tableflowApiKey:    "tf-key",
@@ -1550,7 +1550,7 @@ func TestValidateAllOrNoneAttributesSetForResources(t *testing.T) {
 			flinkOrganizationId: "org-123",
 			flinkEnvironmentId:  "env-456",
 			flinkComputePoolId:  "pool-789",
-			flinkRestEndpoint:   "https://flinkv2.us-east-1.aws.confluent.cloud",
+			flinkRestEndpoint:   "https://flink.us-east-1.aws.confluent.cloud",
 			shouldErr:           true,
 			expectedErrMsg:      "All 7 flink_api_key, flink_api_secret",
 			expectedFlags: ResourceMetadataSetFlags{
@@ -1680,7 +1680,7 @@ func TestValidateAllOrNoneAttributesSetForResourcesWithOAuth(t *testing.T) {
 			flinkOrgID:        "org-123",
 			flinkEnvID:        "env-456",
 			flinkPoolID:       "pool-789",
-			flinkRestEndpoint: "https://flinkv2.us-east-1.aws.confluent.cloud",
+			flinkRestEndpoint: "https://flink.us-east-1.aws.confluent.cloud",
 			flinkPrincipalID:  "u-123456",
 			expectedFlags: ResourceMetadataSetFlags{
 				isKafkaMetadataSet:          true,
@@ -1733,7 +1733,7 @@ func TestValidateAllOrNoneAttributesSetForResourcesWithOAuth(t *testing.T) {
 			flinkOrgID:        "org-123",
 			flinkEnvID:        "env-456",
 			flinkPoolID:       "pool-789",
-			flinkRestEndpoint: "https://flinkv2.us-east-1.aws.confluent.cloud",
+			flinkRestEndpoint: "https://flink.us-east-1.aws.confluent.cloud",
 			shouldErr:         true,
 			expectedErrMsg:    "All 5 (flink_rest_endpoint, organization_id, environment_id, flink_compute_pool_id, flink_principal_id)",
 			expectedFlags: ResourceMetadataSetFlags{
@@ -3526,10 +3526,10 @@ func TestExtractNonsensitiveConfigs(t *testing.T) {
 			configs: map[string]string{
 				"config.internal.something": "value",
 				"cloud.environment":         "prod",
-				"connector.class":           "io.confluent.connectv1.s3.S3SinkConnector",
+				"connector.class":           "io.confluent.connect.s3.S3SinkConnector",
 			},
 			expected: map[string]string{
-				"connector.class": "io.confluent.connectv1.s3.S3SinkConnector",
+				"connector.class": "io.confluent.connect.s3.S3SinkConnector",
 			},
 		},
 		{
@@ -3557,10 +3557,10 @@ func TestExtractNonsensitiveConfigs(t *testing.T) {
 				"kafka.endpoint":                         "SASL://pkc-12345.us-east-1.aws.confluent.cloud:9092",
 				"kafka.max.partition.validation.disable": "false",
 				"kafka.region":                           "us-east-1",
-				"connector.class":                        "io.confluent.connectv1.s3.S3SinkConnector",
+				"connector.class":                        "io.confluent.connect.s3.S3SinkConnector",
 			},
 			expected: map[string]string{
-				"connector.class": "io.confluent.connectv1.s3.S3SinkConnector",
+				"connector.class": "io.confluent.connect.s3.S3SinkConnector",
 			},
 		},
 		{
@@ -3601,7 +3601,7 @@ func TestExtractNonsensitiveConfigs(t *testing.T) {
 func TestExtractRequiredStringValueFromMap(t *testing.T) {
 	config := map[string]string{
 		"name":            "my-connector",
-		"connector.class": "io.confluent.connectv1.s3.S3SinkConnector",
+		"connector.class": "io.confluent.connect.s3.S3SinkConnector",
 	}
 
 	tests := []struct {
@@ -3621,7 +3621,7 @@ func TestExtractRequiredStringValueFromMap(t *testing.T) {
 			name:       "another existing key",
 			key:        "connector.class",
 			configName: "connector config",
-			expected:   "io.confluent.connectv1.s3.S3SinkConnector",
+			expected:   "io.confluent.connect.s3.S3SinkConnector",
 		},
 		{
 			name:       "missing key",

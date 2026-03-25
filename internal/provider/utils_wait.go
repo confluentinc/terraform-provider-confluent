@@ -1165,10 +1165,10 @@ func dnsRecordProvisionStatus(ctx context.Context, c *Client, environmentId stri
 		if dnsRecord.Status.GetPhase() == stateProvisioning || dnsRecord.Status.GetPhase() == stateReady || dnsRecord.Status.GetPhase() == stateCreated {
 			return dnsRecord, dnsRecord.Status.GetPhase(), nil
 		} else if dnsRecord.Status.GetPhase() == stateFailed {
-			return nil, stateFailed, fmt.Errorf("networkingdnsforwarderv1 record %q provisioning status is %q: %s", dnsRecordId, stateFailed, dnsRecord.Status.GetErrorMessage())
+			return nil, stateFailed, fmt.Errorf("dns record %q provisioning status is %q: %s", dnsRecordId, stateFailed, dnsRecord.Status.GetErrorMessage())
 		}
 		// DNS Record is in an unexpected state
-		return nil, stateUnexpected, fmt.Errorf("networkingdnsforwarderv1 record %q is an unexpected state %q: %s", dnsRecordId, dnsRecord.Status.GetPhase(), dnsRecord.Status.GetErrorMessage())
+		return nil, stateUnexpected, fmt.Errorf("dns record %q is an unexpected state %q: %s", dnsRecordId, dnsRecord.Status.GetPhase(), dnsRecord.Status.GetErrorMessage())
 	}
 }
 
@@ -1184,10 +1184,10 @@ func dnsForwarderProvisionStatus(ctx context.Context, c *Client, environmentId s
 		if dnsForwarder.Status.GetPhase() == stateProvisioning || dnsForwarder.Status.GetPhase() == stateReady || dnsForwarder.Status.GetPhase() == stateCreated {
 			return dnsForwarder, dnsForwarder.Status.GetPhase(), nil
 		} else if dnsForwarder.Status.GetPhase() == stateFailed {
-			return nil, stateFailed, fmt.Errorf("networkingdnsforwarderv1 forwarder %q provisioning status is %q: %s", dnsForwarderId, stateFailed, dnsForwarder.Status.GetErrorMessage())
+			return nil, stateFailed, fmt.Errorf("dns forwarder %q provisioning status is %q: %s", dnsForwarderId, stateFailed, dnsForwarder.Status.GetErrorMessage())
 		}
 		// DNS Forwarder is in an unexpected state
-		return nil, stateUnexpected, fmt.Errorf("networkingdnsforwarderv1 forwarder %q is an unexpected state %q: %s", dnsForwarderId, dnsForwarder.Status.GetPhase(), dnsForwarder.Status.GetErrorMessage())
+		return nil, stateUnexpected, fmt.Errorf("dns forwarder %q is an unexpected state %q: %s", dnsForwarderId, dnsForwarder.Status.GetPhase(), dnsForwarder.Status.GetErrorMessage())
 	}
 }
 
@@ -1245,10 +1245,10 @@ func flinkStatementProvisionStatus(ctx context.Context, c *FlinkRestClient, stat
 		if statement.Status.GetPhase() == statePending || statement.Status.GetPhase() == stateRunning || statement.Status.GetPhase() == stateCompleted {
 			return statement, statement.Status.GetPhase(), nil
 		} else if statement.Status.GetPhase() == stateFailed || statement.Status.GetPhase() == stateFailing {
-			return nil, stateFailed, fmt.Errorf("flinkv2 Statement %q provisioning status is %q: %s", statementName, statement.Status.GetPhase(), statement.Status.GetDetail())
+			return nil, stateFailed, fmt.Errorf("Flink Statement %q provisioning status is %q: %s", statementName, statement.Status.GetPhase(), statement.Status.GetDetail())
 		}
 		// Flink Statement is in an unexpected state
-		return nil, stateUnexpected, fmt.Errorf("flinkv2 Statement %q is an unexpected state %q", statementName, statement.Status.GetPhase())
+		return nil, stateUnexpected, fmt.Errorf("Flink Statement %q is an unexpected state %q", statementName, statement.Status.GetPhase())
 	}
 }
 
@@ -1264,10 +1264,10 @@ func flinkStatementUpdatingStatus(ctx context.Context, c *FlinkRestClient, state
 		if statement.Status.GetPhase() == statePending || statement.Status.GetPhase() == stateRunning || statement.Status.GetPhase() == stateCompleted || statement.Status.GetPhase() == stateStopped || statement.Status.GetPhase() == stateStopping {
 			return statement, statement.Status.GetPhase(), nil
 		} else if statement.Status.GetPhase() == stateFailed || statement.Status.GetPhase() == stateFailing {
-			return nil, stateFailed, fmt.Errorf("flinkv2 Statement %q provisioning status is %q", statementName, statement.Status.GetPhase())
+			return nil, stateFailed, fmt.Errorf("Flink Statement %q provisioning status is %q", statementName, statement.Status.GetPhase())
 		}
 		// Flink Statement is in an unexpected state
-		return nil, stateUnexpected, fmt.Errorf("flinkv2 Statement %q is an unexpected state %q", statementName, statement.Status.GetPhase())
+		return nil, stateUnexpected, fmt.Errorf("Flink Statement %q is an unexpected state %q", statementName, statement.Status.GetPhase())
 	}
 }
 
@@ -1283,10 +1283,10 @@ func computePoolProvisionStatus(ctx context.Context, c *Client, environmentId st
 		if computePool.Status.GetPhase() == stateProvisioning || computePool.Status.GetPhase() == stateProvisioned {
 			return computePool, computePool.Status.GetPhase(), nil
 		} else if computePool.Status.GetPhase() == stateFailed {
-			return nil, stateFailed, fmt.Errorf("flinkv2 Compute Pool %q provisioning status is %q", computePoolId, stateFailed)
+			return nil, stateFailed, fmt.Errorf("Flink Compute Pool %q provisioning status is %q", computePoolId, stateFailed)
 		}
 		// Compute Pool is in an unexpected state
-		return nil, stateUnexpected, fmt.Errorf("flinkv2 Compute Pool %q is an unexpected state %q", computePoolId, computePool.Status.GetPhase())
+		return nil, stateUnexpected, fmt.Errorf("Flink Compute Pool %q is an unexpected state %q", computePoolId, computePool.Status.GetPhase())
 	}
 }
 

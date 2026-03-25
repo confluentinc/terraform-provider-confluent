@@ -65,7 +65,7 @@ func TestAccConnectArtifactAWSLive(t *testing.T) {
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_connect_artifact.%s", artifactResourceLabel), "display_name", artifactDisplayName),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_connect_artifact.%s", artifactResourceLabel), "cloud", "aws"),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_connect_artifact.%s", artifactResourceLabel), "content_format", "JAR"),
-					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_connect_artifact.%s", artifactResourceLabel), "description", "A test connectv1 artifact for live testing"),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_connect_artifact.%s", artifactResourceLabel), "description", "A test connect artifact for live testing"),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_connect_artifact.%s", artifactResourceLabel), "environment.0.id", "env-zyg27z"),
 					resource.TestCheckResourceAttrSet(fmt.Sprintf("confluent_connect_artifact.%s", artifactResourceLabel), "id"),
 				),
@@ -126,7 +126,7 @@ func TestAccConnectArtifactAzureLive(t *testing.T) {
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_connect_artifact.%s", artifactResourceLabel), "display_name", artifactDisplayName),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_connect_artifact.%s", artifactResourceLabel), "cloud", "azure"),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_connect_artifact.%s", artifactResourceLabel), "content_format", "JAR"),
-					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_connect_artifact.%s", artifactResourceLabel), "description", "A test connectv1 artifact for live testing"),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_connect_artifact.%s", artifactResourceLabel), "description", "A test connect artifact for live testing"),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_connect_artifact.%s", artifactResourceLabel), "environment.0.id", "env-zyg27z"),
 					resource.TestCheckResourceAttrSet(fmt.Sprintf("confluent_connect_artifact.%s", artifactResourceLabel), "id"),
 				),
@@ -191,7 +191,7 @@ func testAccCheckConnectArtifactLiveConfig(endpoint, artifactResourceLabel, arti
 		display_name   = "%s"
 		cloud          = "%s"
 		content_format = "JAR"
-		description    = "A test connectv1 artifact for live testing"
+		description    = "A test connect artifact for live testing"
 		artifact_file  = "test_artifacts/connect_artifact.jar"
 
 		environment {

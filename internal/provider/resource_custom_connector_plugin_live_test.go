@@ -63,7 +63,7 @@ func TestAccCustomConnectorPluginLive(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckCustomConnectorPluginLiveExists(fmt.Sprintf("confluent_custom_connector_plugin.%s", pluginResourceLabel)),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_custom_connector_plugin.%s", pluginResourceLabel), "display_name", pluginDisplayName),
-					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_custom_connector_plugin.%s", pluginResourceLabel), "connector_class", "io.confluent.kafka.connectv1.datagen.DatagenConnector"),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_custom_connector_plugin.%s", pluginResourceLabel), "connector_class", "io.confluent.kafka.connect.datagen.DatagenConnector"),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_custom_connector_plugin.%s", pluginResourceLabel), "connector_type", "SOURCE"),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_custom_connector_plugin.%s", pluginResourceLabel), "cloud", "AWS"),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_custom_connector_plugin.%s", pluginResourceLabel), "description", "A test custom connector plugin for live testing"),
@@ -178,7 +178,7 @@ func testAccCheckCustomConnectorPluginLiveConfig(endpoint, pluginResourceLabel, 
 		display_name      = "%s"
 		description       = "A test custom connector plugin for live testing"
 		documentation_link = "https://docs.confluent.io/kafka-connectors/datagen/current/overview.html"
-		connector_class   = "io.confluent.kafka.connectv1.datagen.DatagenConnector"
+		connector_class   = "io.confluent.kafka.connect.datagen.DatagenConnector"
 		connector_type    = "SOURCE"
 		cloud             = "AWS"
 		filename          = "test_artifacts/confluentinc-kafka-connect-datagen-0.6.6.zip"
@@ -203,7 +203,7 @@ func testAccCheckCustomConnectorPluginUpdateLiveConfig(endpoint, pluginResourceL
 		display_name      = "%s"
 		description       = "An updated test custom connector plugin for live testing"
 		documentation_link = "https://docs.confluent.io/kafka-connectors/datagen/current/overview.html#updated"
-		connector_class   = "io.confluent.kafka.connectv1.datagen.DatagenConnector"
+		connector_class   = "io.confluent.kafka.connect.datagen.DatagenConnector"
 		connector_type    = "SOURCE"
 		cloud             = "AWS"
 		filename          = "test_artifacts/confluentinc-kafka-connect-datagen-0.6.6.zip"

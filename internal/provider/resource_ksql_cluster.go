@@ -234,7 +234,7 @@ func credentialIdentityBlockSchema() *schema.Schema {
 					Type:         schema.TypeString,
 					Required:     true,
 					ForceNew:     true,
-					Description:  "The credential_identity to which this belongs. The credential_identity can be one of iamv2.v2.User, iamv2.v2.ServiceAccount.",
+					Description:  "The credential_identity to which this belongs. The credential_identity can be one of iam.v2.User, iam.v2.ServiceAccount.",
 					ValidateFunc: validation.StringMatch(regexp.MustCompile("^(u-|sa-)"), "the credential identity must be of the form 'u-' or 'sa-'"),
 				},
 			},
