@@ -10,13 +10,6 @@ import (
 	"testing"
 )
 
-const (
-	createBusinessMetadataBindingSrUrlPath        = "/catalog/v1/entity/businessmetadata"
-	readCreatedBusinessMetadataBindingSrUrlPath   = "/catalog/v1/entity/type/sr_schema/name/lsrc-nrndwv:.:100001/businessmetadata"
-	readUpdatedBusinessMetadataBindingSrUrlPath   = "/catalog/v1/entity/type/sr_schema/name/lsrc-nrndwv:.:100002/businessmetadata"
-	deleteCreatedBusinessMetadataBindingSrUrlPath = "/catalog/v1/entity/type/sr_schema/name/lsrc-nrndwv:.:100002/businessmetadata/bm"
-)
-
 func TestAccBusinessMetadataBindingSrSchema(t *testing.T) {
 	ctx := context.Background()
 

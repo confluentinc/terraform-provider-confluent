@@ -27,22 +27,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-const (
-	scenarioStateManagedConnectorHasBeenValidated     = "The new managed connector config has been just validated"
-	scenarioStateManagedConnectorHasBeenCreating      = "The new managed connector has been creating"
-	scenarioStateManagedConnectorFetchingId           = "The new managed connector is in provisioning state, list all connectors"
-	scenarioStateManagedConnectorIsProvisioning       = "The new managed connector is in provisioning state"
-	scenarioStateManagedConnectorIsRunning1           = "The new managed connector is in running state #1"
-	scenarioStateManagedConnectorHasBeenCreated       = "The new managed connector has been just created"
-	scenarioStateManagedConnectorNameHasBeenUpdated   = "The new managed connector's name has been just updated"
-	scenarioStateManagedConnectorHasBeenDeleted       = "The new managed connector has been deleted"
-	scenarioStateManagedConnectorOffsetHasBeenUpdated = "The managed connector offset has been updated"
-	connectorScenarioName                             = "confluent_connector Resource Lifecycle"
-	sensitiveAttributeKey                             = "foo"
-	sensitiveAttributeValue                           = "bar"
-	sensitiveAttributeUpdatedValue                    = "bar updated"
-)
-
 func TestAccManagedConnector(t *testing.T) {
 	ctx := context.Background()
 

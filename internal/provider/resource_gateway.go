@@ -28,13 +28,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-const (
-	awsEgressPrivateLinkGatewaySpecKind       = "AwsEgressPrivateLinkGatewaySpec"
-	awsIngressPrivateLinkGatewaySpecKind      = "AwsIngressPrivateLinkGatewaySpec"
-	awsPrivateNetworkInterfaceGatewaySpecKind = "AwsPrivateNetworkInterfaceGatewaySpec"
-	azureEgressPrivateLinkGatewaySpecKind     = "AzureEgressPrivateLinkGatewaySpec"
-)
-
 var acceptedGatewayTypes = []string{paramAwsEgressPrivateLinkGateway, paramAwsIngressPrivateLinkGateway, paramAwsPrivateNetworkInterfaceGateway, paramAzureEgressPrivateLinkGateway}
 
 func gatewayResource() *schema.Resource {

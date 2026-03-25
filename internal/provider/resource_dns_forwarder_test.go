@@ -24,17 +24,6 @@ import (
 	"testing"
 )
 
-const (
-	scenarioStateDnsForwarderIsProvisioning = "The new dns forwarder is provisioning"
-	scenarioStateDnsForwarderHasBeenCreated = "The new dns forwarder has been created"
-	dnsForwarderScenarioName                = "confluent_dns_forwarder Resource Lifecycle"
-
-	dnsForwarderUrlPath        = "/networking/v1/dns-forwarders"
-	dnsForwarderReadUrlPath    = "/networking/v1/dns-forwarders/dnsf-xxx"
-	dnsForwarderResourceLabel  = "confluent_dns_forwarder.main"
-	dnsForwarderReadUrlPathGcp = "/networking/v1/dns-forwarders/dnsf-gcp"
-)
-
 func TestAccDnsForwarder(t *testing.T) {
 	ctx := context.Background()
 

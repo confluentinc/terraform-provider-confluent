@@ -25,11 +25,6 @@ import (
 	"testing"
 )
 
-const (
-	kafkaWithDisabledSRApiScenarioName                     = "confluent_kafka Resource (with disabled SR API) Lifecycle"
-	SRApiScenarioStateKafkaHasBeenCreatedWithDisabledSRApi = "A new Kafka Basic cluster has been just created with disabled SR API"
-)
-
 func TestAccClusterWithSGPackageAndDisabledSRApi(t *testing.T) {
 	ctx := context.Background()
 

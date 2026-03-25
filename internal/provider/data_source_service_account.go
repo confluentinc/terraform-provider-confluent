@@ -26,13 +26,6 @@ import (
 	"strings"
 )
 
-const (
-	// The maximum allowable page size - 1 (to avoid off-by-one errors) when listing service accounts using IAM V2 API
-	// https://docs.confluent.io/cloud/current/api.html#operation/listIamV2ServiceAccounts
-	listServiceAccountsPageSize = 99
-	pageTokenQueryParameter     = "page_token"
-)
-
 func serviceAccountDataSource() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: serviceAccountDataSourceRead,

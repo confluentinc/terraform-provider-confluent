@@ -11,14 +11,6 @@ import (
 	"github.com/walkerus/go-wiremock"
 )
 
-const (
-	AwsEgressAccessPointDataSourceScenarioName       = "confluent_access_point AWS Egress Private Link Endpoint Data Source Lifecycle"
-	AwsIngressAccessPointDataSourceScenarioName      = "confluent_access_point AWS Ingress Private Link Endpoint Data Source Lifecycle"
-	AwsPrivateNetworkInterfaceDataSourceScenarioName = "confluent_access_point AWS Private Network Interface Data Source Lifecycle"
-	AzureEgressAccessPointDataSourceScenarioName     = "confluent_access_point Azure Egress Private Link Endpoint Data Source Lifecycle"
-	GcpEgressAccessPointDataSourceScenarioName       = "confluent_access_point Gcp Egress Private Service Connect Endpoint Data Source Lifecycle"
-)
-
 func TestAccDataSourceAccessPointAwsEgressPrivateLinkEndpoint(t *testing.T) {
 	ctx := context.Background()
 

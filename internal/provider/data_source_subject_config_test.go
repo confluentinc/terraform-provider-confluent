@@ -26,11 +26,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-const (
-	subjectCompatibilityLevelDataSourceScenarioName           = "confluent_subject_config Data Source Lifecycle"
-	testNumberOfSubjectCompatibilityLevelDataSourceAttributes = 9
-)
-
 var fullSubjectCompatibilityLevelDataSourceLabel = fmt.Sprintf("data.confluent_subject_config.%s", testSchemaResourceLabel)
 
 func TestAccDataSubjectCompatibilityLevelSchema(t *testing.T) {

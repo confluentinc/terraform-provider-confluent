@@ -26,19 +26,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-const (
-	scenarioStateAwsPeeringIsProvisioning   = "The new aws peering is provisioning"
-	scenarioStateAwsPeeringIsDeprovisioning = "The new aws peering is deprovisioning"
-	scenarioStateAwsPeeringHasBeenCreated   = "The new aws peering has been just created"
-	scenarioStateAwsPeeringHasBeenDeleted   = "The new aws peering's deletion has been just completed"
-	awsPeeringScenarioName                  = "confluent_awsPeering AWS Resource Lifecycle"
-	awsPeeringEnvironmentId                 = "env-gz903"
-	awsPeeringNetworkId                     = "n-6k5026"
-	awsPeeringId                            = "peer-gez27g"
-	awsPeeringVpcId                         = "vpc-090dcc71c69483dc1"
-	awsPeeringCustomerRegion                = "us-west-2"
-)
-
 var awsPeeringRoutes = []string{
 	"10.0.0.0/24",
 	"10.0.0.7/32",

@@ -26,10 +26,6 @@ import (
 	"net/http"
 )
 
-const (
-	listFlinkArtifactsPageSize = 99
-)
-
 func flinkArtifactDataSource() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: flinkArtifactDataSourceRead,

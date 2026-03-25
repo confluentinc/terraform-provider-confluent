@@ -12,22 +12,6 @@ import (
 	"testing"
 )
 
-const (
-	scenarioStateConnectionHasBeenCreated = "A new connection has been just created"
-	scenarioStateConnectionHasBeenUpdated = "A connection has been updated"
-	scenarioStateConnectionHasBeenDeleted = "The connection has been deleted"
-	connectionScenarioName                = "confluent_flink_connection Resource Lifecycle"
-
-	flinkConnectionDisplayName = "Connection1"
-	flinkConnectionNameTest    = "Connection1"
-	flinkConnectionApiVersion  = "sql/v1"
-	flinkConnectionKind        = "Connection"
-	flinkConnectionType        = "OPENAI"
-	flinkEndpoint              = "https://api.openai.com/v1/chat/completions"
-	flinkAPIKey                = "key_1"
-	flinkAPIKeyUpdated         = "key_2"
-)
-
 var createFlinkConnectionPath = fmt.Sprintf("/sql/v1/organizations/%s/environments/%s/connections", flinkOrganizationIdTest, flinkEnvironmentIdTest)
 var readFlinkConnectionPath = fmt.Sprintf("/sql/v1/organizations/%s/environments/%s/connections/%s", flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkConnectionDisplayName)
 

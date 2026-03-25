@@ -24,14 +24,6 @@ import (
 	"testing"
 )
 
-const (
-	privateLinkAttachmentConnectionAzureResourceScenarioName        = "confluent_private_link_attachment_connection Resource Lifecycle"
-	scenarioStatePrivateLinkAttachmentConnectionAzureHasBeenCreated = "A new private link attachment connection has been just created"
-
-	privateLinkAttachmentConnectionAzureUrlPath       = "/networking/v1/private-link-attachment-connections"
-	privateLinkAttachmentConnectionAzureResourceLabel = "confluent_private_link_attachment_connection.main"
-)
-
 func TestAccPrivateLinkAttachmentConnectionAzure(t *testing.T) {
 	ctx := context.Background()
 

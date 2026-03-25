@@ -29,37 +29,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-const (
-	scenarioStateKafkaApiKeyHasBeenCreated                = "The new kafka api key has been just created"
-	scenarioStateKafkaApiKeyHasBeenSyncedFirstRead        = "The new kafka api key has been just synced (read #1)"
-	scenarioStateKafkaApiKeyHasBeenSyncedConfirmationRead = "The new kafka api key has been just synced (final read)"
-	scenarioStateKafkaApiKeyHasBeenUpdated                = "The new kafka api key's description and display_name have been just updated"
-	scenarioStateKafkaApiKeyHasBeenDeleted                = "The new kafka api key has been deleted"
-	kafkaApiKeyScenarioName                               = "confluent_api_key (Kafka API Key) Resource Lifecycle"
-
-	scenarioStateFlinkApiKeyHasBeenCreated                = "The new flink api key has been just created"
-	scenarioStateFlinkApiKeyHasBeenSyncedFirstRead        = "The new flink api key has been just synced (read #1)"
-	scenarioStateFlinkApiKeyHasBeenSyncedConfirmationRead = "The new flink api key has been just synced (final read)"
-	scenarioStateFlinkApiKeyHasBeenUpdated                = "The new flink api key's description and display_name have been just updated"
-	scenarioStateFlinkApiKeyHasBeenDeleted                = "The new flink api key has been deleted"
-	flinkApiKeyScenarioName                               = "confluent_api_key (Flink API Key) Resource Lifecycle"
-
-	scenarioStateCloudApiKeyHasBeenCreated = "The new cloud api key has been just created"
-	scenarioStateCloudApiKeyHasBeenSynced  = "The new cloud api key has been just synced"
-	scenarioStateCloudApiKeyHasBeenUpdated = "The new cloud api key's description and display_name have been just updated"
-	scenarioStateCloudApiKeyHasBeenDeleted = "The new cloud api key has been deleted"
-	cloudApiKeyScenarioName                = "confluent_api_key (Cloud API Key) Resource Lifecycle"
-
-	scenarioStateTableflowApiKeyHasBeenCreated = "The new tableflow api key has been just created"
-	scenarioStateTableflowApiKeyHasBeenSynced  = "The new tableflow api key has been just synced"
-	scenarioStateTableflowApiKeyHasBeenUpdated = "The new tableflow api key's description and display_name have been just updated"
-	scenarioStateTableflowApiKeyHasBeenDeleted = "The new tableflow api key has been deleted"
-	tableflowApiKeyScenarioName                = "confluent_api_key (Tableflow API Key) Resource Lifecycle"
-
-	testShouldDisableBefore = "false"
-	testShouldDisableAfter  = "true"
-)
-
 func TestAccKafkaApiKey(t *testing.T) {
 	ctx := context.Background()
 

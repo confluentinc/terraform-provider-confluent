@@ -26,10 +26,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-const (
-	dataSourceComputePoolScenarioName = "confluent_flink_compute_pool Data Source Lifecycle"
-)
-
 var fullComputePoolDataSourceLabel = fmt.Sprintf("data.confluent_flink_compute_pool.%s", networkDataSourceLabel)
 
 func TestAccDataSourceComputePool(t *testing.T) {

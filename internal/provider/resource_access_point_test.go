@@ -27,23 +27,6 @@ import (
 	"github.com/walkerus/go-wiremock"
 )
 
-const (
-	scenarioStateAccessPointIsProvisioning   = "The new access point is provisioning"
-	scenarioStateAccessPointHasBeenCreated   = "The new access point has been just created"
-	scenarioStateAccessPointHasBeenUpdated   = "The new access point has been updated"
-	scenarioStateAccessPointIsDeprovisioning = "The new access point is deprovisioning"
-	scenarioStateAccessPointHasBeenDeleted   = "The new access point's deletion has been just completed"
-
-	awsEgressAccessPointScenarioName                  = "confluent_access_point Aws Egress Private Link Endpoint Resource Lifecycle"
-	awsIngressAccessPointScenarioName                 = "confluent_access_point Aws Ingress Private Link Endpoint Resource Lifecycle"
-	awsPrivateNetworkInterfaceAccessPointScenarioName = "confluent_access_point Aws Private Network Interface Endpoint Resource Lifecycle"
-	azureEgressAccessPointScenarioName                = "confluent_access_point Azure Egress Private Link Endpoint Resource Lifecycle"
-	gcpEgressAccessPointScenarioName                  = "confluent_access_point Gcp Egress Private Link Endpoint Resource Lifecycle"
-
-	accessPointUrlPath       = "/networking/v1/access-points"
-	accessPointResourceLabel = "confluent_access_point.main"
-)
-
 func TestAccAccessPointAwsEgressPrivateLinkEndpoint(t *testing.T) {
 	ctx := context.Background()
 

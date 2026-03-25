@@ -24,17 +24,6 @@ import (
 	"testing"
 )
 
-const (
-	privateLinkAttachmentConnectionAwsResourceScenarioName        = "confluent_private_link_attachment_connection Resource Lifecycle"
-	scenarioStatePrivateLinkAttachmentConnectionAwsHasBeenCreated = "A new private link attachment connection has been just created"
-	scenarioStatePrivateLinkAttachmentConnectionAwsHasBeenUpdated = "A new private link attachment connection has been just updated"
-	scenarioStatePrivateLinkAttachmentConnectionAwsHasBeenDeleted = "A new private link attachment connection has been just deleted"
-	scenarioStatePrivateLinkAttachmentConnectionProvisioning      = "A new private link attachment connection is being provisioning"
-
-	privateLinkAttachmentConnectionAwsUrlPath       = "/networking/v1/private-link-attachment-connections"
-	privateLinkAttachmentConnectionAwsResourceLabel = "confluent_private_link_attachment_connection.main"
-)
-
 func TestAccPrivateLinkAttachmentConnectionAws(t *testing.T) {
 	ctx := context.Background()
 

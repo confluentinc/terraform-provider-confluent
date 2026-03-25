@@ -26,16 +26,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-const (
-	scenarioStateCertificateAuthorityHasBeenCreated = "The new certificate_authority has been just created"
-	scenarioStateCertificateAuthorityHasBeenUpdated = "The new certificate_authority has been updated"
-	CertificateAuthorityScenarioName                = "confluent_certificate_authority Resource Lifecycle"
-
-	certificateAuthorityUrlPath       = "/iam/v2/certificate-authorities"
-	certificateAuthorityId            = "op-abc123"
-	certificateAuthorityResourceLabel = "confluent_certificate_authority.main"
-)
-
 func TestAccCertificateAuthority(t *testing.T) {
 	ctx := context.Background()
 

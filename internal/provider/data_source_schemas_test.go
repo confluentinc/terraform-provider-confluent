@@ -28,28 +28,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-const (
-	schemasDataSourceScenarioName = "confluent_schemas Data Source Lifecycle"
-	fullSchemasDataSourceLabel    = "data.confluent_schemas.all_schemas"
-	testSchemasDataSourceLabel    = "all_schemas"
-	testSchemasSubjectName        = "some_record"
-	testSchemasSomeRecordV1       = `
-syntax = "proto3";
-package examples;
-message SomeRecord {
-	string value1 = 1;
-}
-`
-	testSchemasSomeRecordV2 = `
-syntax = "proto3";
-package examples;
-message SomeRecord {
-  string value1 = 1;
-  string value2 = 2;
-}
-`
-)
-
 func TestAccDataSourceSchemas(t *testing.T) {
 	ctx := context.Background()
 

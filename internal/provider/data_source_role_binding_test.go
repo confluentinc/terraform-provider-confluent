@@ -25,10 +25,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-const (
-	roleBindingDataSourceScenarioName = "confluent_role_binding Data Source Lifecycle"
-)
-
 func TestAccDataSourceRoleBinding(t *testing.T) {
 	ctx := context.Background()
 

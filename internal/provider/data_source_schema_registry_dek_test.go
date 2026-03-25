@@ -24,11 +24,6 @@ import (
 	"testing"
 )
 
-const (
-	dekDataSourceScenarioName = "confluent_schema_registry_dek Data Source Lifecycle"
-	dekDataSourceLabel        = "data.confluent_schema_registry_dek.dek"
-)
-
 func TestAccDataSourceSchemaRegistryDek(t *testing.T) {
 	ctx := context.Background()
 

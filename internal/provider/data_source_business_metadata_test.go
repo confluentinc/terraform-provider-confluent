@@ -24,12 +24,6 @@ import (
 	"testing"
 )
 
-const (
-	businessMetadataDataSourceScenarioName = "confluent_business_metadata Data Source Lifecycle"
-	testBusinessMetadataName               = "bm"
-	businessMetadataDataSourceLabel        = "data.confluent_business_metadata.main"
-)
-
 func TestAccDataSourceBusinessMetadata(t *testing.T) {
 	ctx := context.Background()
 

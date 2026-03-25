@@ -24,17 +24,6 @@ import (
 	"testing"
 )
 
-const (
-	businessMetadataBindingResourceScenarioName        = "confluent_business_metadata_binding Resource Lifecycle"
-	scenarioStateBusinessMetadataBindingHasBeenCreated = "A new business metadata binding has been just created"
-	scenarioStateBusinessMetadataBindingHasBeenPending = "A new business metadata binding has been just pending"
-	scenarioStateBusinessMetadataBindingHasBeenUpdated = "A new business metadata binding has been just updated"
-	createBusinessMetadataBindingUrlPath               = "/catalog/v1/entity/businessmetadata"
-	readCreatedBusinessMetadataBindingUrlPath          = "/catalog/v1/entity/type/kafka_topic/name/lsrc-8wrx70:lkc-m80307:topic_0/businessmetadata"
-	deleteCreatedBusinessMetadataBindingUrlPath        = "/catalog/v1/entity/type/kafka_topic/name/lsrc-8wrx70:lkc-m80307:topic_0/businessmetadata/bm"
-	businessMetadataBindingLabel                       = "confluent_business_metadata_binding.main"
-)
-
 func TestAccBusinessMetadataBinding(t *testing.T) {
 	ctx := context.Background()
 

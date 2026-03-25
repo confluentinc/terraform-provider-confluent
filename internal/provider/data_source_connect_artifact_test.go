@@ -25,11 +25,6 @@ import (
 	"github.com/walkerus/go-wiremock"
 )
 
-const (
-	connectArtifactDataSourceScenarioName = "confluent_connect_artifact Data Source Lifecycle"
-	connectArtifactDataSourceLabel        = "example"
-)
-
 var fullConnectArtifactDataSourceLabel = fmt.Sprintf("data.confluent_connect_artifact.%s", connectArtifactDataSourceLabel)
 
 func TestAccConnectArtifactDataSource(t *testing.T) {

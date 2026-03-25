@@ -28,11 +28,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-const (
-	paramExternalIdentifier   = "external_identifier"
-	paramCertificateAuthority = "certificate_authority"
-)
-
 func certificatePoolResource() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: certificatePoolCreate,

@@ -27,11 +27,6 @@ import (
 	"strings"
 )
 
-const (
-	paramIdentityProvider = "identity_provider"
-	paramFilter           = "filter"
-)
-
 func identityPoolResource() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: identityPoolCreate,

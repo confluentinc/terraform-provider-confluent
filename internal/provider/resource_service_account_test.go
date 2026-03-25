@@ -26,13 +26,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-const (
-	scenarioStateSaHasBeenCreated             = "The new service account has been just created"
-	scenarioStateSaDescriptionHaveBeenUpdated = "The new service account's description have been just updated"
-	scenarioStateSaHasBeenDeleted             = "The new service account has been deleted"
-	saScenarioName                            = "confluent_service_account Resource Lifecycle"
-)
-
 func TestAccServiceAccount(t *testing.T) {
 	ctx := context.Background()
 

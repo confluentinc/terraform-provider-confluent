@@ -26,18 +26,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-const (
-	scenarioStateIdentityPoolHasBeenCreated             = "The new identity_pool has been just created"
-	scenarioStateIdentityPoolDescriptionHaveBeenUpdated = "The new identity_pool's description have been just updated"
-	scenarioStateIdentityPoolHasBeenDeleted             = "The new identity_pool has been deleted"
-	identityPoolScenarioName                            = "confluent_identity_pool Resource Lifecycle"
-	identityPoolId                                      = "pool-AzXR"
-	identityPoolDisplayName                             = "My Identity Pool"
-	identityPoolDescription                             = "Prod Access to Kafka clusters to Release Engineering"
-	identityPoolIdentityClaim                           = "claims.sub"
-	identityPoolFilter                                  = "claims.aud==\"confluent\" && claims.group!=\"invalid_group\""
-)
-
 func TestAccIdentityPool(t *testing.T) {
 	ctx := context.Background()
 

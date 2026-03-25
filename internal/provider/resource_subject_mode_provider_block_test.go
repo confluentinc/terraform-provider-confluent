@@ -26,21 +26,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-const (
-	scenarioStateSubjectModeHasBeenCreated = "A new subject mode has been just created"
-	scenarioStateSubjectModeHasBeenUpdated = "The subject mode has been updated"
-	scenarioStateSubjectModeHasBeenDeleted = "The subject mode has been deleted"
-	subjectModeScenarioName                = "confluent_subject_mode Resource Lifecycle"
-
-	testSubjectModeResourceLabel = "test_subject_mode_resource_label"
-	testSubjectMode              = "READWRITE"
-	testUpdatedSubjectMode       = "READONLY"
-	testForceFalse               = "false"
-	testForceTrue                = "true"
-
-	testNumberOfSubjectModeResourceAttributes = "7"
-)
-
 var fullSubjectModeResourceLabel = fmt.Sprintf("confluent_subject_mode.%s", testSubjectModeResourceLabel)
 var updateSubjectModePath = fmt.Sprintf("/mode/%s", testSubjectName)
 

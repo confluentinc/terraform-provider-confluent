@@ -24,13 +24,6 @@ import (
 	"testing"
 )
 
-const (
-	kekDataSourceScenarioName = "confluent_schema_registry_kek Data Source Lifecycle"
-	kekUrlPath                = "/dek-registry/v1/keks/testkek"
-	testKekName               = "testkek"
-	kekDataSourceLabel        = "data.confluent_schema_registry_kek.kek"
-)
-
 func TestAccDataSourceSchemaRegistryKek(t *testing.T) {
 	ctx := context.Background()
 

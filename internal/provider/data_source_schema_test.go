@@ -26,10 +26,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-const (
-	schemaDataSourceScenarioName = "confluent_schema Data Source Lifecycle"
-)
-
 var fullSchemaDataSourceLabel = fmt.Sprintf("data.confluent_schema.%s", testSchemaResourceLabel)
 
 func TestAccDataSourceSchema(t *testing.T) {

@@ -25,12 +25,6 @@ import (
 	"net/http"
 )
 
-const (
-	// The maximum allowable page size - 1 (to avoid off-by-one errors) when listing service accounts using CMK V2 API
-	// https://docs.confluent.io/cloud/current/api.html#operation/listCmkV2Clusters
-	listKafkaClustersPageSize = 99
-)
-
 func kafkaDataSource() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: kafkaDataSourceRead,

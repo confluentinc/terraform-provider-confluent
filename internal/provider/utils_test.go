@@ -1875,7 +1875,6 @@ func TestStringToAclResourceType(t *testing.T) {
 }
 
 func TestGetEnv(t *testing.T) {
-	const testEnvKey = "TF_CONFLUENT_TEST_GET_ENV_KEY_12345"
 
 	tests := []struct {
 		name         string

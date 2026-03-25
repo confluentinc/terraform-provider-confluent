@@ -26,19 +26,6 @@ import (
 	"github.com/walkerus/go-wiremock"
 )
 
-const (
-	providerIntegrationScenarioName                = "confluent_provider_integration Resource Lifecycle"
-	scenarioStateProviderIntegrationHasBeenCreated = "The new provider_integration has been just created"
-	scenarioStateProviderIntegrationHasBeenDeleted = "The provider_integration has been deleted"
-	providerIntegrationId                          = "dlz-f3a90de"
-	providerIntegrationDisplayName                 = "s3_provider_integration"
-	providerIntegrationEnvironmentId               = "env-00000"
-	providerIntegrationIamRoleArn                  = "arn:aws:iam::000000000000:role/my-test-aws-role"
-	providerIntegrationExternalId                  = "95c35493-41aa-44f8-9154-5a25cbbc1865"
-	providerIntegrationCustomerRoleARN             = "arn:aws:iam::000000000000:role/my-test-aws-role"
-	providerIntegrationUsage                       = "crn://confluent.cloud/organization=9bb441c4-edef-46ac-8a41-c49e44a3fd9a/environment=env-456xy/cloud-cluster=lkc-123abc/connector=my_datagen_connector"
-)
-
 func TestAccProviderIntegration(t *testing.T) {
 	ctx := context.Background()
 	wiremockContainer, err := setupWiremock(ctx)

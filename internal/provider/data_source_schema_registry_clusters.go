@@ -27,10 +27,6 @@ import (
 	"time"
 )
 
-const (
-	paramClusters = "clusters"
-)
-
 func schemaRegistryClustersDataSource() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: schemaRegistryClustersDataSourceRead,

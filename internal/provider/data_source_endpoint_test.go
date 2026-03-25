@@ -27,19 +27,6 @@ import (
 	"github.com/walkerus/go-wiremock"
 )
 
-const (
-	endpointApiVersion             = "endpoint/v1"
-	endpointDataSourceScenarioName = "confluent_endpoint Data Source Lifecycle"
-	endpointKind                   = "Endpoint"
-	endpointResourceLabel          = "test_endpoint"
-	testEndpointEnvironmentId      = "env-abc123"
-	testEndpointServiceKafka       = "KAFKA"
-	testEndpointServiceSchemaReg   = "SCHEMA_REGISTRY"
-	testEndpointCloud              = "AWS"
-	testEndpointRegion             = "us-west-2"
-	testEndpointResourceId         = "lkc-abc123"
-)
-
 func TestAccDataSourceEndpointKafka(t *testing.T) {
 	ctx := context.Background()
 

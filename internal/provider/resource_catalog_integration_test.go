@@ -25,18 +25,6 @@ import (
 	"github.com/walkerus/go-wiremock"
 )
 
-const (
-	scenarioStateCatalogIntegrationIsProvisioning = "The new catalog integration is provisioning"
-	scenarioStateCatalogIntegrationHasBeenCreated = "The new catalog integration has been just created"
-	scenarioStateCatalogIntegrationHasBeenUpdated = "The new catalog integration has been updated"
-	byobAwsCatalogIntegrationScenarioName         = "confluent_catalog_integration Byob Aws Resource Lifecycle"
-	snowflakeCatalogIntegrationScenarioName       = "confluent_catalog_integration Snowflake Resource Lifecycle"
-	unityCatalogIntegrationScenarioName           = "confluent_catalog_integration Unity Resource Lifecycle"
-
-	catalogIntegrationUrlPath       = "/tableflow/v1/catalog-integrations"
-	catalogIntegrationResourceLabel = "confluent_catalog_integration.main"
-)
-
 func TestAccCatalogIntegrationAwsGlue(t *testing.T) {
 	ctx := context.Background()
 

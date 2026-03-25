@@ -12,26 +12,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-const (
-	scenarioArtifactPresignedUrlHasBeenCreated = "The new flink artifact predesign URL has been just created"
-	scenarioStateFlinkArtifactHasBeenCreated   = "The new flink artifact has been just created"
-	scenarioStateFlinkArtifactHasBeenDeleted   = "The new flink artifact has been deleted"
-	flinkArtifactScenarioName                  = "confluent_flink_artifact Resource Lifecycle"
-	flinkArtifactClass                         = "io.confluent.example.SumScalarFunction"
-	flinkArtifactCloud                         = "AWS"
-	flinkArtifactRegion                        = "us-east-2"
-	flinkArtifactEnvironmentId                 = "env-gz903"
-	flinkArtifactContentFormat                 = "JAR"
-	flinkArtifactRuntimeLanguage               = "JAVA"
-	flinkArtifactDescription                   = "string"
-	flinkArtifactDocumentationLink             = "https://docs.confluent.io/cloud/current/api.html"
-	flinkArtifactId                            = "lfcp-abc123"
-	flinkArtifactUniqueName                    = "flink_artifact_0"
-	flinkArtifactApiVersion                    = "artifact/v1"
-	flinkArtifactKind                          = "FlinkArtifact"
-	flinkVersions                              = "cfa-ver-001"
-)
-
 var flinkArtifactsUrlPath = fmt.Sprintf("/artifact/v1/flink-artifacts/%s", flinkArtifactId)
 
 func TestAccFlinkArtifactAws(t *testing.T) {

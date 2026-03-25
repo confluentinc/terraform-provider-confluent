@@ -24,16 +24,6 @@ import (
 	"testing"
 )
 
-const (
-	networkLinkEndpointResourceScenarioName        = "confluent_network_link_endpoint Resource Lifecycle"
-	scenarioStateNetworkLinkEndpointHasBeenCreated = "A new network link endpoint has been just created"
-	scenarioStateNetworkLinkEndpointHasBeenUpdated = "A new network link endpoint has been just updated"
-	scenarioStateNetworkLinkEndpointHasBeenDeleted = "A new network link endpoint has been just deleted"
-
-	networkLinkEndpointUrlPath       = "/networking/v1/network-link-endpoints"
-	networkLinkEndpointResourceLabel = "confluent_network_link_endpoint.nle"
-)
-
 func TestAccNetworkLinkEndpoint(t *testing.T) {
 	ctx := context.Background()
 

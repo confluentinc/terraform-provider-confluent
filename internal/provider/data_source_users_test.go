@@ -27,10 +27,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-const (
-	usersDataSourceScenarioName = "confluent_users Data Source Lifecycle"
-)
-
 var userIds = []string{"u-1jjv21", "u-1jjv22", "u-1jjv23"}
 
 func TestAccDataSourceUsers(t *testing.T) {
