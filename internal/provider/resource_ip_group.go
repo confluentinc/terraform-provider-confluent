@@ -27,11 +27,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-const (
-	paramGroupName  = "group_name"
-	paramCidrBlocks = "cidr_blocks"
-)
-
 func ipGroupResource() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: ipGroupCreate,

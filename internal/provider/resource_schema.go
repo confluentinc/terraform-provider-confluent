@@ -32,49 +32,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-const (
-	paramSchemaRegistryCluster               = "schema_registry_cluster"
-	schemaRegistryAPIWaitAfterCreateOrDelete = 10 * time.Second
-	paramFormat                              = "format"
-	avroFormat                               = "AVRO"
-	jsonFormat                               = "JSON"
-	protobufFormat                           = "PROTOBUF"
-	paramVersion                             = "version"
-	paramDomainRules                         = "domain_rules"
-	paramMigrationRules                      = "migration_rules"
-	paramExpr                                = "expr"
-	paramTags                                = "tags"
-	paramParams                              = "params"
-	paramOnSuccess                           = "on_success"
-	paramOnFailure                           = "on_failure"
-	paramRuleset                             = "ruleset"
-	paramSensitive                           = "sensitive"
-	paramMetadata                            = "metadata"
-	paramValue                               = "value"
-	paramDisabled                            = "disabled"
-	// unique on a subject level
-	paramSchemaIdentifier                     = "schema_identifier"
-	paramSchema                               = "schema"
-	paramSchemaReference                      = "schema_reference"
-	paramSubjectName                          = "subject_name"
-	paramHardDelete                           = "hard_delete"
-	paramHardDeleteDefaultValue               = false
-	paramForce                                = "force"
-	paramForceDefaultValue                    = false
-	paramRecreateOnUpdate                     = "recreate_on_update"
-	paramRecreateOnUpdateDefaultValue         = false
-	paramSkipValidationDuringPlan             = "skip_validation_during_plan"
-	paramSkipValidationDuringPlanDefaultValue = false
-
-	latestSchemaVersionAndPlaceholderForSchemaIdentifier = "latest"
-)
-
 var acceptedSchemaFormats = []string{avroFormat, jsonFormat, protobufFormat}
-
-const schemaNotCompatibleErrorMessage = `Compatibility check on the schema has failed against one or more versions in the subject, depending on how the compatibility is set.
-See https://docs.confluent.io/platform/current/schema-registry/avro.html#sr-compatibility-types for details.
-For example, if compatibility on the subject is set to BACKWARD, FORWARD, or FULL, the compatibility check is against the latest version.
-If compatibility is set to one of the TRANSITIVE types, the check is against all previous versions.`
 
 func schemaResource() *schema.Resource {
 	return &schema.Resource{

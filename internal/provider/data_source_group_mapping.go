@@ -25,12 +25,6 @@ import (
 	"net/http"
 )
 
-const (
-	// The maximum allowable page size - 1 (to avoid off-by-one errors) when listing group mappings using IAM V2 API
-	// https://docs.confluent.io/cloud/current/api.html#tag/Group-Mappings-(iamv2sso)/operation/listIamV2SsoGroupMappings
-	listGroupMappingsPageSize = 99
-)
-
 func groupMappingDataSource() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: groupMappingDataSourceRead,

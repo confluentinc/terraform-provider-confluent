@@ -15,16 +15,6 @@ import (
 	"strings"
 )
 
-const (
-	paramApiKey          = "api_key"
-	paramAwsAccessKey    = "aws_access_key"
-	paramAwsSecretKey    = "aws_secret_key"
-	paramAwsSessionToken = "aws_session_token"
-	paramServiceKey      = "service_key"
-	paramUsername        = "username"
-	paramPassword        = "password"
-)
-
 var (
 	acceptedTypes               = []string{"OPENAI", "AZUREML", "AZUREOPENAI", "BEDROCK", "SAGEMAKER", "GOOGLEAI", "VERTEXAI", "MONGODB", "PINECONE", "ELASTIC", "COUCHBASE"}
 	ConnectionTypeSecretMapping = map[string][]string{

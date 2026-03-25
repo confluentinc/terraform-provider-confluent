@@ -25,12 +25,6 @@ import (
 	"net/http"
 )
 
-const (
-	// The maximum allowable page size - 1 (to avoid off-by-one errors) when listing peerings using Networking API
-	// https://docs.confluent.io/cloud/current/api.html#operation/listNetworkingV1Peerings
-	listPeeringsPageSize = 99
-)
-
 func peeringDataSource() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: peeringDataSourceRead,

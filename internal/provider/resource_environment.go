@@ -26,10 +26,6 @@ import (
 	"net/http"
 )
 
-const (
-	paramStreamGovernance = "stream_governance"
-)
-
 func environmentResource() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: environmentCreate,

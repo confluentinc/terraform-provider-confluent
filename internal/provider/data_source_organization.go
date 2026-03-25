@@ -23,9 +23,6 @@ import (
 	"strings"
 )
 
-const crnEnvironmentSuffix = "/environment="
-const crnOrgSuffix = "/organization="
-
 func organizationDataSource() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: organizationDataSourceRead,

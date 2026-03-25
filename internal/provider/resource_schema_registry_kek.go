@@ -29,15 +29,6 @@ import (
 	"strings"
 )
 
-const (
-	paramKmsType  = "kms_type"
-	paramKmsKeyId = "kms_key_id"
-	paramShared   = "shared"
-	paramDoc      = "doc"
-
-	paramSharedDefaultValue = false
-)
-
 func schemaRegistryKekResource() *schema.Resource {
 	return &schema.Resource{
 		ReadContext:   schemaRegistryKekRead,

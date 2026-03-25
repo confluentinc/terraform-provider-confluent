@@ -24,10 +24,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-const (
-	paramIds = "ids"
-)
-
 func usersDataSource() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: usersDataSourceRead,

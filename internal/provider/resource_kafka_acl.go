@@ -30,18 +30,6 @@ import (
 	"strings"
 )
 
-const (
-	paramResourceName = "resource_name"
-	paramResourceType = "resource_type"
-	paramPatternType  = "pattern_type"
-	paramPrincipal    = "principal"
-	paramHost         = "host"
-	paramOperation    = "operation"
-	paramPermission   = "permission"
-
-	principalPrefix = "User:"
-)
-
 var acceptedResourceTypes = []string{"UNKNOWN", "ANY", "TOPIC", "GROUP", "CLUSTER", "TRANSACTIONAL_ID", "DELEGATION_TOKEN"}
 var acceptedPatternTypes = []string{"UNKNOWN", "ANY", "MATCH", "LITERAL", "PREFIXED"}
 var acceptedOperations = []string{"UNKNOWN", "ANY", "ALL", "READ", "WRITE", "CREATE", "DELETE", "ALTER", "DESCRIBE", "CLUSTER_ACTION", "DESCRIBE_CONFIGS", "ALTER_CONFIGS", "IDEMPOTENT_WRITE"}

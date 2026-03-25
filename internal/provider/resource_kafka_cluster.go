@@ -31,52 +31,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-const (
-	kafkaClusterTypeBasic            = "Basic"
-	kafkaClusterTypeStandard         = "Standard"
-	kafkaClusterTypeDedicated        = "Dedicated"
-	kafkaClusterTypeEnterprise       = "Enterprise"
-	kafkaClusterTypeFreight          = "Freight"
-	paramBasicCluster                = "basic"
-	paramStandardCluster             = "standard"
-	paramDedicatedCluster            = "dedicated"
-	paramEnterpriseCluster           = "enterprise"
-	paramFreightCluster              = "freight"
-	paramAvailability                = "availability"
-	paramBootStrapEndpoint           = "bootstrap_endpoint"
-	paramRestEndpoint                = "rest_endpoint"
-	paramHttpEndpoint                = "http_endpoint"
-	paramRestEndpointPrivate         = "private_rest_endpoint"
-	paramRestEndpointPrivateRegional = "private_regional_rest_endpoints"
-	paramCatalogEndpoint             = "catalog_endpoint"
-	paramCku                         = "cku"
-	paramMaxEcku                     = "max_ecku"
-	paramEncryptionKey               = "encryption_key"
-	paramRbacCrn                     = "rbac_crn"
-	paramConfluentCustomerKey        = "byok_key"
-	paramEndpoints                   = "endpoints"
-	paramConnectionType              = "connection_type"
-
-	stateInProgress = "IN_PROGRESS"
-	stateDone       = "DONE"
-
-	stateFailed        = "FAILED"
-	stateUnknown       = "UNKNOWN"
-	stateUnexpected    = "UNEXPECTED"
-	stateProvisioned   = "PROVISIONED"
-	stateReady         = "READY"
-	stateRunning       = "RUNNING"
-	stateProvisioning  = "PROVISIONING"
-	statePendingAccept = "PENDING_ACCEPT"
-
-	singleZone       = "SINGLE_ZONE"
-	multiZone        = "MULTI_ZONE"
-	lowAvailability  = "LOW"
-	highAvailability = "HIGH"
-
-	paramAccessPointID = "access_point_id"
-)
-
 var acceptedAvailabilityZones = []string{singleZone, multiZone, lowAvailability, highAvailability}
 var acceptedCloudProviders = []string{"AWS", "AZURE", "GCP"}
 var acceptedClusterTypes = []string{paramBasicCluster, paramStandardCluster, paramDedicatedCluster, paramEnterpriseCluster, paramFreightCluster}
