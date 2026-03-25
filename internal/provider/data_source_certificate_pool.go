@@ -18,7 +18,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	ca "github.com/confluentinc/ccloud-sdk-go-v2/certificate-authority/v2"
+	certificateauthorityv2 "github.com/confluentinc/ccloud-sdk-go-v2/certificate-authority/v2"
 	"net/http"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -83,8 +83,8 @@ func certificatePoolDataSourceReadUsingId(ctx context.Context, d *schema.Resourc
 	tflog.Debug(ctx, fmt.Sprintf("Reading Certificate Pool %q=%q", paramId, certificatePoolId), map[string]interface{}{certificatePoolKey: certificatePoolId})
 
 	c := meta.(*Client)
-	request := c.caClient.CertificateIdentityPoolsIamV2Api.GetIamV2CertificateIdentityPool(c.caApiContext(ctx), certificateProviderId, certificatePoolId)
-	certificatePool, resp, err := c.caClient.CertificateIdentityPoolsIamV2Api.GetIamV2CertificateIdentityPoolExecute(request)
+	request := c.certificateAuthorityV2Client.CertificateIdentityPoolsIamV2Api.GetIamV2CertificateIdentityPool(c.certificateAuthorityV2ApiContext(ctx), certificateProviderId, certificatePoolId)
+	certificatePool, resp, err := c.certificateAuthorityV2Client.CertificateIdentityPoolsIamV2Api.GetIamV2CertificateIdentityPoolExecute(request)
 	if err != nil {
 		return diag.Errorf("error reading Certificate Pool %q: %s", certificatePoolId, createDescriptiveError(err, resp))
 	}
@@ -124,7 +124,7 @@ func certificatePoolDataSourceReadUsingDisplayName(ctx context.Context, d *schem
 	return diag.Errorf("error reading Certificate Pool: Certificate Pool with %q=%q was not found", paramDisplayName, displayName)
 }
 
-func orgHasMultipleCertificatePoolsWithTargetDisplayName(certificatePools []ca.IamV2CertificateIdentityPool, displayName string) bool {
+func orgHasMultipleCertificatePoolsWithTargetDisplayName(certificatePools []certificateauthorityv2.IamV2CertificateIdentityPool, displayName string) bool {
 	var numberOfCertificatePoolsWithTargetDisplayName = 0
 	for _, certificatePool := range certificatePools {
 		if certificatePool.GetDisplayName() == displayName {
@@ -134,8 +134,8 @@ func orgHasMultipleCertificatePoolsWithTargetDisplayName(certificatePools []ca.I
 	return numberOfCertificatePoolsWithTargetDisplayName > 1
 }
 
-func loadCertificatePools(ctx context.Context, c *Client, certificateProviderId string) ([]ca.IamV2CertificateIdentityPool, error) {
-	certificatePools := make([]ca.IamV2CertificateIdentityPool, 0)
+func loadCertificatePools(ctx context.Context, c *Client, certificateProviderId string) ([]certificateauthorityv2.IamV2CertificateIdentityPool, error) {
+	certificatePools := make([]certificateauthorityv2.IamV2CertificateIdentityPool, 0)
 
 	allCertificatePoolsAreCollected := false
 	pageToken := ""
@@ -166,11 +166,11 @@ func loadCertificatePools(ctx context.Context, c *Client, certificateProviderId 
 	return certificatePools, nil
 }
 
-func executeListCertificatePools(ctx context.Context, c *Client, certificateProviderId, pageToken string) (ca.IamV2CertificateIdentityPoolList, *http.Response, error) {
+func executeListCertificatePools(ctx context.Context, c *Client, certificateProviderId, pageToken string) (certificateauthorityv2.IamV2CertificateIdentityPoolList, *http.Response, error) {
 	if pageToken != "" {
-		return c.caClient.CertificateIdentityPoolsIamV2Api.ListIamV2CertificateIdentityPools(c.caApiContext(ctx), certificateProviderId).PageSize(listIdentityPoolsPageSize).PageToken(pageToken).Execute()
+		return c.certificateAuthorityV2Client.CertificateIdentityPoolsIamV2Api.ListIamV2CertificateIdentityPools(c.certificateAuthorityV2ApiContext(ctx), certificateProviderId).PageSize(listIdentityPoolsPageSize).PageToken(pageToken).Execute()
 	} else {
-		return c.caClient.CertificateIdentityPoolsIamV2Api.ListIamV2CertificateIdentityPools(c.caApiContext(ctx), certificateProviderId).PageSize(listIdentityPoolsPageSize).Execute()
+		return c.certificateAuthorityV2Client.CertificateIdentityPoolsIamV2Api.ListIamV2CertificateIdentityPools(c.certificateAuthorityV2ApiContext(ctx), certificateProviderId).PageSize(listIdentityPoolsPageSize).Execute()
 	}
 }
 

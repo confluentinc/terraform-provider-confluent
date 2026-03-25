@@ -259,7 +259,7 @@ func testAccCheckClusterDestroy(s *terraform.State) error {
 			continue
 		}
 		deletedClusterId := rs.Primary.ID
-		req := c.cmkClient.ClustersCmkV2Api.GetCmkV2Cluster(c.cmkApiContext(context.Background()), deletedClusterId).Environment(testEnvironmentId)
+		req := c.cmkV2Client.ClustersCmkV2Api.GetCmkV2Cluster(c.cmkV2ApiContext(context.Background()), deletedClusterId).Environment(testEnvironmentId)
 		deletedCluster, response, err := req.Execute()
 		if response != nil && (response.StatusCode == http.StatusForbidden || response.StatusCode == http.StatusNotFound) {
 			// cmk/v2/clusters/{nonExistentClusterId/deletedClusterID} returns http.StatusForbidden instead of http.StatusNotFound

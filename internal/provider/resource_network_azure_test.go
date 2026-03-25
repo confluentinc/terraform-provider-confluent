@@ -205,7 +205,7 @@ func testAccCheckAzureNetworkDestroy(s *terraform.State) error {
 			continue
 		}
 		deletedAzureNetworkId := rs.Primary.ID
-		req := c.netClient.NetworksNetworkingV1Api.GetNetworkingV1Network(c.netApiContext(context.Background()), deletedAzureNetworkId).Environment(azureNetworkEnvironmentId)
+		req := c.networkingV1Client.NetworksNetworkingV1Api.GetNetworkingV1Network(c.networkingV1ApiContext(context.Background()), deletedAzureNetworkId).Environment(azureNetworkEnvironmentId)
 		deletedAzureNetwork, response, err := req.Execute()
 		if response != nil && response.StatusCode == http.StatusNotFound {
 			return nil

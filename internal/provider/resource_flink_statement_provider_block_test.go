@@ -546,11 +546,11 @@ func testAccCheckFlinkStatementExists(n string) resource.TestCheckFunc {
 		rs, ok := s.RootModule().Resources[n]
 
 		if !ok {
-			return fmt.Errorf("%s flink statement has not been found", n)
+			return fmt.Errorf("%s flinkv2 statement has not been found", n)
 		}
 
 		if rs.Primary.ID == "" {
-			return fmt.Errorf("ID has not been set for %s flink statement", n)
+			return fmt.Errorf("ID has not been set for %s flinkv2 statement", n)
 		}
 
 		return nil

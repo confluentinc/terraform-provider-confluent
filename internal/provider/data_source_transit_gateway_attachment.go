@@ -18,7 +18,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	net "github.com/confluentinc/ccloud-sdk-go-v2/networking/v1"
+	networkingv1 "github.com/confluentinc/ccloud-sdk-go-v2/networking/v1"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -97,7 +97,7 @@ func transitGatewayAttachmentDataSourceReadUsingId(ctx context.Context, d *schem
 	tflog.Debug(ctx, fmt.Sprintf("Reading Transit Gateway Attachment %q=%q", paramId, transitGatewayAttachmentId), map[string]interface{}{transitGatewayAttachmentLoggingKey: transitGatewayAttachmentId})
 
 	c := meta.(*Client)
-	transitGatewayAttachment, resp, err := executeTransitGatewayAttachmentRead(c.netApiContext(ctx), c, environmentId, transitGatewayAttachmentId)
+	transitGatewayAttachment, resp, err := executeTransitGatewayAttachmentRead(c.networkingV1ApiContext(ctx), c, environmentId, transitGatewayAttachmentId)
 	if err != nil {
 		return diag.Errorf("error reading Transit Gateway Attachment %q: %s", transitGatewayAttachmentId, createDescriptiveError(err, resp))
 	}
@@ -113,7 +113,7 @@ func transitGatewayAttachmentDataSourceReadUsingId(ctx context.Context, d *schem
 	return nil
 }
 
-func orgHasMultipleTransitGatewayAttachmentsWithTargetDisplayName(transitGatewayAttachments []net.NetworkingV1TransitGatewayAttachment, displayName string) bool {
+func orgHasMultipleTransitGatewayAttachmentsWithTargetDisplayName(transitGatewayAttachments []networkingv1.NetworkingV1TransitGatewayAttachment, displayName string) bool {
 	var numberOfTransitGatewayAttachmentsWithTargetDisplayName = 0
 	for _, transitGatewayAttachment := range transitGatewayAttachments {
 		if transitGatewayAttachment.Spec.GetDisplayName() == displayName {
@@ -123,8 +123,8 @@ func orgHasMultipleTransitGatewayAttachmentsWithTargetDisplayName(transitGateway
 	return numberOfTransitGatewayAttachmentsWithTargetDisplayName > 1
 }
 
-func loadTransitGatewayAttachments(ctx context.Context, c *Client, environmentId string) ([]net.NetworkingV1TransitGatewayAttachment, error) {
-	transitGatewayAttachments := make([]net.NetworkingV1TransitGatewayAttachment, 0)
+func loadTransitGatewayAttachments(ctx context.Context, c *Client, environmentId string) ([]networkingv1.NetworkingV1TransitGatewayAttachment, error) {
+	transitGatewayAttachments := make([]networkingv1.NetworkingV1TransitGatewayAttachment, 0)
 
 	allTransitGatewayAttachmentsAreCollected := false
 	pageToken := ""
@@ -155,11 +155,11 @@ func loadTransitGatewayAttachments(ctx context.Context, c *Client, environmentId
 	return transitGatewayAttachments, nil
 }
 
-func executeListTransitGatewayAttachments(ctx context.Context, c *Client, environmentId, pageToken string) (net.NetworkingV1TransitGatewayAttachmentList, *http.Response, error) {
+func executeListTransitGatewayAttachments(ctx context.Context, c *Client, environmentId, pageToken string) (networkingv1.NetworkingV1TransitGatewayAttachmentList, *http.Response, error) {
 	if pageToken != "" {
-		return c.netClient.TransitGatewayAttachmentsNetworkingV1Api.ListNetworkingV1TransitGatewayAttachments(c.netApiContext(ctx)).Environment(environmentId).PageSize(listTransitGatewayAttachmentsPageSize).PageToken(pageToken).Execute()
+		return c.networkingV1Client.TransitGatewayAttachmentsNetworkingV1Api.ListNetworkingV1TransitGatewayAttachments(c.networkingV1ApiContext(ctx)).Environment(environmentId).PageSize(listTransitGatewayAttachmentsPageSize).PageToken(pageToken).Execute()
 	} else {
-		return c.netClient.TransitGatewayAttachmentsNetworkingV1Api.ListNetworkingV1TransitGatewayAttachments(c.netApiContext(ctx)).Environment(environmentId).PageSize(listTransitGatewayAttachmentsPageSize).Execute()
+		return c.networkingV1Client.TransitGatewayAttachmentsNetworkingV1Api.ListNetworkingV1TransitGatewayAttachments(c.networkingV1ApiContext(ctx)).Environment(environmentId).PageSize(listTransitGatewayAttachmentsPageSize).Execute()
 	}
 }
 

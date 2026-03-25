@@ -152,7 +152,7 @@ func TestAccCustomConnectorPlugin(t *testing.T) {
 					resource.TestCheckResourceAttr(fullCustomConnectorPluginResourceLabel, "display_name", customConnectorPluginDisplayName),
 					resource.TestCheckResourceAttr(fullCustomConnectorPluginResourceLabel, "description", customConnectorPluginDescription),
 					resource.TestCheckResourceAttr(fullCustomConnectorPluginResourceLabel, "documentation_link", "https://www.confluent.io/hub/confluentinc/kafka-connect-datagen"),
-					resource.TestCheckResourceAttr(fullCustomConnectorPluginResourceLabel, "connector_class", "io.confluent.kafka.connect.datagen.DatagenConnector"),
+					resource.TestCheckResourceAttr(fullCustomConnectorPluginResourceLabel, "connector_class", "io.confluent.kafka.connectv1.datagen.DatagenConnector"),
 					resource.TestCheckResourceAttr(fullCustomConnectorPluginResourceLabel, "connector_type", "SOURCE"),
 					resource.TestCheckResourceAttr(fullCustomConnectorPluginResourceLabel, "sensitive_config_properties.#", strconv.Itoa(len(customConnectorPluginSensitiveProperties))),
 					resource.TestCheckTypeSetElemAttr(fullCustomConnectorPluginResourceLabel, "sensitive_config_properties.*", customConnectorPluginSensitiveProperties[0]),
@@ -175,7 +175,7 @@ func TestAccCustomConnectorPlugin(t *testing.T) {
 					resource.TestCheckResourceAttr(fullCustomConnectorPluginResourceLabel, "display_name", customConnectorPluginUpdatedDisplayName),
 					resource.TestCheckResourceAttr(fullCustomConnectorPluginResourceLabel, "description", customConnectorPluginUpdatedDescription),
 					resource.TestCheckResourceAttr(fullCustomConnectorPluginResourceLabel, "documentation_link", "https://www.confluent.io/hub/confluentinc/kafka-connect-datagen"),
-					resource.TestCheckResourceAttr(fullCustomConnectorPluginResourceLabel, "connector_class", "io.confluent.kafka.connect.datagen.DatagenConnector"),
+					resource.TestCheckResourceAttr(fullCustomConnectorPluginResourceLabel, "connector_class", "io.confluent.kafka.connectv1.datagen.DatagenConnector"),
 					resource.TestCheckResourceAttr(fullCustomConnectorPluginResourceLabel, "connector_type", "SOURCE"),
 					resource.TestCheckResourceAttr(fullCustomConnectorPluginResourceLabel, "sensitive_config_properties.#", strconv.Itoa(len(customConnectorPluginUpdatedSensitiveProperties))),
 					resource.TestCheckTypeSetElemAttr(fullCustomConnectorPluginResourceLabel, "sensitive_config_properties.*", customConnectorPluginUpdatedSensitiveProperties[0]),
@@ -294,7 +294,7 @@ func TestAccCustomConnectorPluginGCP(t *testing.T) {
 					resource.TestCheckResourceAttr(fullCustomConnectorPluginResourceLabel, "display_name", customConnectorPluginDisplayName),
 					resource.TestCheckResourceAttr(fullCustomConnectorPluginResourceLabel, "description", customConnectorPluginDescription),
 					resource.TestCheckResourceAttr(fullCustomConnectorPluginResourceLabel, "documentation_link", "https://www.confluent.io/hub/confluentinc/kafka-connect-datagen"),
-					resource.TestCheckResourceAttr(fullCustomConnectorPluginResourceLabel, "connector_class", "io.confluent.kafka.connect.datagen.DatagenConnector"),
+					resource.TestCheckResourceAttr(fullCustomConnectorPluginResourceLabel, "connector_class", "io.confluent.kafka.connectv1.datagen.DatagenConnector"),
 					resource.TestCheckResourceAttr(fullCustomConnectorPluginResourceLabel, "connector_type", "SOURCE"),
 					resource.TestCheckResourceAttr(fullCustomConnectorPluginResourceLabel, "sensitive_config_properties.#", strconv.Itoa(len(customConnectorPluginSensitiveProperties))),
 					resource.TestCheckTypeSetElemAttr(fullCustomConnectorPluginResourceLabel, "sensitive_config_properties.*", customConnectorPluginSensitiveProperties[0]),
@@ -323,7 +323,7 @@ func testAccCheckCustomConnectorPluginDestroy(s *terraform.State) error {
 			continue
 		}
 		deletedCustomConnectorPluginId := rs.Primary.ID
-		req := c.ccpClient.CustomConnectorPluginsConnectV1Api.GetConnectV1CustomConnectorPlugin(c.ccpApiContext(context.Background()), deletedCustomConnectorPluginId)
+		req := c.connectCustomPluginV1Client.CustomConnectorPluginsConnectV1Api.GetConnectV1CustomConnectorPlugin(c.connectCustomPluginV1ApiContext(context.Background()), deletedCustomConnectorPluginId)
 		deletedCustomConnectorPlugin, response, err := req.Execute()
 		if response != nil && (response.StatusCode == http.StatusForbidden || response.StatusCode == http.StatusNotFound) {
 			// v2/service-accounts/{nonExistentCustomConnectorPluginId/deletedCustomConnectorPluginID} returns http.StatusForbidden instead of http.StatusNotFound
@@ -356,7 +356,7 @@ func testAccCheckCustomConnectorPluginConfig(mockServerUrl, customConnectorPlugi
 		display_name = "%s"
 		description = "%s"
 		documentation_link = "https://www.confluent.io/hub/confluentinc/kafka-connect-datagen"
-		connector_class = "io.confluent.kafka.connect.datagen.DatagenConnector"
+		connector_class = "io.confluent.kafka.connectv1.datagen.DatagenConnector"
 		connector_type = "SOURCE"
 		sensitive_config_properties = [
 			%s
@@ -382,7 +382,7 @@ func testAccCheckCustomConnectorPluginConfigWithCloud(mockServerUrl, customConne
 		display_name = "%s"
 		description = "%s"
 		documentation_link = "https://www.confluent.io/hub/confluentinc/kafka-connect-datagen"
-		connector_class = "io.confluent.kafka.connect.datagen.DatagenConnector"
+		connector_class = "io.confluent.kafka.connectv1.datagen.DatagenConnector"
 		connector_type = "SOURCE"
 		sensitive_config_properties = [
 			%s

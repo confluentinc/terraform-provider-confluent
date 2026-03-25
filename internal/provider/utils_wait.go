@@ -65,7 +65,7 @@ func waitForCreatedCloudApiKeyToSync(ctx context.Context, c *Client, cloudApiKey
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for Cloud API Key %q to sync", cloudApiKey), map[string]interface{}{apiKeyLoggingKey: cloudApiKey})
-	if _, err := stateConf.WaitForStateContext(c.orgApiContext(ctx)); err != nil {
+	if _, err := stateConf.WaitForStateContext(c.orgV2ApiContext(ctx)); err != nil {
 		return err
 	}
 	return nil
@@ -97,7 +97,7 @@ func waitForKafkaClusterToProvision(ctx context.Context, c *Client, environmentI
 	stateConf := &resource.StateChangeConf{
 		Pending: []string{stateProvisioning},
 		Target:  []string{stateProvisioned},
-		Refresh: kafkaClusterProvisionStatus(c.cmkApiContext(ctx), c, environmentId, clusterId),
+		Refresh: kafkaClusterProvisionStatus(c.cmkV2ApiContext(ctx), c, environmentId, clusterId),
 		// https://docs.confluent.io/cloud/current/clusters/cluster-types.html#provisioning-time
 		Timeout:      getTimeoutFor(clusterType),
 		Delay:        delay,
@@ -105,7 +105,7 @@ func waitForKafkaClusterToProvision(ctx context.Context, c *Client, environmentI
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for Kafka Cluster %q provisioning status to become %q", clusterId, stateProvisioned), map[string]interface{}{kafkaClusterLoggingKey: clusterId})
-	if _, err := stateConf.WaitForStateContext(c.cmkApiContext(ctx)); err != nil {
+	if _, err := stateConf.WaitForStateContext(c.cmkV2ApiContext(ctx)); err != nil {
 		return err
 	}
 	return nil
@@ -116,14 +116,14 @@ func waitForKsqlClusterToProvision(ctx context.Context, c *Client, environmentId
 	stateConf := &resource.StateChangeConf{
 		Pending:      []string{stateProvisioning},
 		Target:       []string{stateProvisioned},
-		Refresh:      ksqlClusterProvisionStatus(c.ksqlApiContext(ctx), c, environmentId, clusterId),
+		Refresh:      ksqlClusterProvisionStatus(c.ksqlV2ApiContext(ctx), c, environmentId, clusterId),
 		Timeout:      ksqlCreateTimeout,
 		Delay:        delay,
 		PollInterval: pollInterval,
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for ksqlDB Cluster %q provisioning status to become %v", clusterId, []string{stateUp, stateProvisioned}), map[string]interface{}{ksqlClusterLoggingKey: clusterId})
-	if _, err := stateConf.WaitForStateContext(c.ksqlApiContext(ctx)); err != nil {
+	if _, err := stateConf.WaitForStateContext(c.ksqlV2ApiContext(ctx)); err != nil {
 		return err
 	}
 	return nil
@@ -134,14 +134,14 @@ func waitForPrivateLinkAccessToProvision(ctx context.Context, c *Client, environ
 	stateConf := &resource.StateChangeConf{
 		Pending:      []string{stateProvisioning},
 		Target:       []string{stateReady},
-		Refresh:      privateLinkAccessProvisionStatus(c.netApiContext(ctx), c, environmentId, privateLinkAccessId),
+		Refresh:      privateLinkAccessProvisionStatus(c.networkingV1ApiContext(ctx), c, environmentId, privateLinkAccessId),
 		Timeout:      networkingAPICreateTimeout,
 		Delay:        delay,
 		PollInterval: pollInterval,
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for Private Link Access %q provisioning status to become %q", privateLinkAccessId, stateReady), map[string]interface{}{privateLinkAccessLoggingKey: privateLinkAccessId})
-	if _, err := stateConf.WaitForStateContext(c.netApiContext(ctx)); err != nil {
+	if _, err := stateConf.WaitForStateContext(c.networkingV1ApiContext(ctx)); err != nil {
 		return err
 	}
 	return nil
@@ -152,14 +152,14 @@ func waitForConnectorOffsetsUpdateToComplete(ctx context.Context, c *Client, env
 	stateConf := &resource.StateChangeConf{
 		Pending:      []string{statePending},
 		Target:       []string{stateApplied},
-		Refresh:      connectorOffsetUpdateStatus(c.connectApiContext(ctx), c, environmentId, clusterId, displayName),
+		Refresh:      connectorOffsetUpdateStatus(c.connectV1ApiContext(ctx), c, environmentId, clusterId, displayName),
 		Timeout:      connectOffsetsAPIUpdateTimeout,
 		Delay:        delay,
 		PollInterval: pollInterval,
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for Connector %q offsets update status to become %q", displayName, stateApplied), map[string]interface{}{connectorLoggingKey: displayName})
-	if _, err := stateConf.WaitForStateContext(c.connectApiContext(ctx)); err != nil {
+	if _, err := stateConf.WaitForStateContext(c.connectV1ApiContext(ctx)); err != nil {
 		return err
 	}
 	return nil
@@ -170,14 +170,14 @@ func waitForPrivateLinkAttachmentToProvision(ctx context.Context, c *Client, env
 	stateConf := &resource.StateChangeConf{
 		Pending:      []string{stateProvisioning},
 		Target:       []string{stateReady, stateWaitingForConnections},
-		Refresh:      privateLinkAttachmentProvisionStatus(c.netPLApiContext(ctx), c, environmentId, privateLinkAttachmentId),
+		Refresh:      privateLinkAttachmentProvisionStatus(c.networkingPrivatelinkV1ApiContext(ctx), c, environmentId, privateLinkAttachmentId),
 		Timeout:      networkingAPICreateTimeout,
 		Delay:        delay,
 		PollInterval: pollInterval,
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for Private Link Attachment %q provisioning status to become %q", privateLinkAttachmentId, stateWaitingForConnections), map[string]interface{}{privateLinkAttachmentLoggingKey: privateLinkAttachmentId})
-	if _, err := stateConf.WaitForStateContext(c.netPLApiContext(ctx)); err != nil {
+	if _, err := stateConf.WaitForStateContext(c.networkingPrivatelinkV1ApiContext(ctx)); err != nil {
 		return err
 	}
 	return nil
@@ -188,14 +188,14 @@ func waitForPrivateLinkAttachmentConnectionToProvision(ctx context.Context, c *C
 	stateConf := &resource.StateChangeConf{
 		Pending:      []string{stateProvisioning},
 		Target:       []string{stateReady},
-		Refresh:      privateLinkAttachmentConnectionProvisionStatus(c.netPLApiContext(ctx), c, environmentId, privateLinkAttachmentConnectionId),
+		Refresh:      privateLinkAttachmentConnectionProvisionStatus(c.networkingPrivatelinkV1ApiContext(ctx), c, environmentId, privateLinkAttachmentConnectionId),
 		Timeout:      networkingAPICreateTimeout,
 		Delay:        delay,
 		PollInterval: pollInterval,
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for Private Link Attachment Connection %q provisioning status to become %q", privateLinkAttachmentConnectionId, stateReady), map[string]interface{}{privateLinkAttachmentConnectionLoggingKey: privateLinkAttachmentConnectionId})
-	if _, err := stateConf.WaitForStateContext(c.netPLApiContext(ctx)); err != nil {
+	if _, err := stateConf.WaitForStateContext(c.networkingPrivatelinkV1ApiContext(ctx)); err != nil {
 		return err
 	}
 	return nil
@@ -206,7 +206,7 @@ func waitForNetworkLinkServiceToProvision(ctx context.Context, c *Client, enviro
 	stateConf := &resource.StateChangeConf{
 		Pending: []string{stateProvisioning},
 		Target:  []string{stateReady},
-		Refresh: nlsProvisionStatus(c.netApiContext(ctx), c, environmentId, nlsId),
+		Refresh: nlsProvisionStatus(c.networkingV1ApiContext(ctx), c, environmentId, nlsId),
 		Timeout: networkingAPICreateTimeout,
 		// TODO: increase delay
 		Delay:        delay,
@@ -214,7 +214,7 @@ func waitForNetworkLinkServiceToProvision(ctx context.Context, c *Client, enviro
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for Network Link Service %q provisioning status to become %q", nlsId, stateReady), map[string]interface{}{networkLinkServiceLoggingKey: nlsId})
-	if _, err := stateConf.WaitForStateContext(c.netApiContext(ctx)); err != nil {
+	if _, err := stateConf.WaitForStateContext(c.networkingV1ApiContext(ctx)); err != nil {
 		return err
 	}
 	return nil
@@ -225,7 +225,7 @@ func waitForNetworkToProvision(ctx context.Context, c *Client, environmentId, ne
 	stateConf := &resource.StateChangeConf{
 		Pending: []string{stateProvisioning},
 		Target:  []string{stateReady},
-		Refresh: networkProvisionStatus(c.netApiContext(ctx), c, environmentId, networkId),
+		Refresh: networkProvisionStatus(c.networkingV1ApiContext(ctx), c, environmentId, networkId),
 		Timeout: networkingAPICreateTimeout,
 		// TODO: increase delay
 		Delay:        delay,
@@ -233,7 +233,7 @@ func waitForNetworkToProvision(ctx context.Context, c *Client, environmentId, ne
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for Network %q provisioning status to become %q", networkId, stateReady), map[string]interface{}{networkLoggingKey: networkId})
-	if _, err := stateConf.WaitForStateContext(c.netApiContext(ctx)); err != nil {
+	if _, err := stateConf.WaitForStateContext(c.networkingV1ApiContext(ctx)); err != nil {
 		return err
 	}
 	return nil
@@ -267,7 +267,7 @@ func waitForNetworkLinkEndpointToProvision(ctx context.Context, c *Client, envir
 	stateConf := &resource.StateChangeConf{
 		Pending: []string{stateProvisioning},
 		Target:  []string{stateReady, statePendingAccept, stateInactive},
-		Refresh: nleProvisionStatus(c.netApiContext(ctx), c, environmentId, nleId),
+		Refresh: nleProvisionStatus(c.networkingV1ApiContext(ctx), c, environmentId, nleId),
 		Timeout: networkingAPICreateTimeout,
 		// TODO: increase delay
 		Delay:        delay,
@@ -275,7 +275,7 @@ func waitForNetworkLinkEndpointToProvision(ctx context.Context, c *Client, envir
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for Network Link Endpoint %q provisioning status to become %q", nleId, stateReady), map[string]interface{}{networkLinkEndpointLoggingKey: nleId})
-	if _, err := stateConf.WaitForStateContext(c.netApiContext(ctx)); err != nil {
+	if _, err := stateConf.WaitForStateContext(c.networkingV1ApiContext(ctx)); err != nil {
 		return err
 	}
 	return nil
@@ -286,7 +286,7 @@ func waitForDnsRecordToProvision(ctx context.Context, c *Client, environmentId, 
 	stateConf := &resource.StateChangeConf{
 		Pending: []string{stateProvisioning},
 		Target:  []string{stateReady, stateCreated},
-		Refresh: dnsRecordProvisionStatus(c.netAPApiContext(ctx), c, environmentId, dnsRecordId),
+		Refresh: dnsRecordProvisionStatus(c.networkingAccessPointV1ApiContext(ctx), c, environmentId, dnsRecordId),
 		Timeout: networkingAPICreateTimeout,
 		// TODO: increase delay
 		Delay:        delay,
@@ -294,7 +294,7 @@ func waitForDnsRecordToProvision(ctx context.Context, c *Client, environmentId, 
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for DNS Record %q provisioning status to become %q", dnsRecordId, stateCreated), map[string]interface{}{dnsRecordKey: dnsRecordId})
-	if _, err := stateConf.WaitForStateContext(c.netAPApiContext(ctx)); err != nil {
+	if _, err := stateConf.WaitForStateContext(c.networkingAccessPointV1ApiContext(ctx)); err != nil {
 		return err
 	}
 	return nil
@@ -305,7 +305,7 @@ func waitForDnsForwarderToProvision(ctx context.Context, c *Client, environmentI
 	stateConf := &resource.StateChangeConf{
 		Pending: []string{stateProvisioning},
 		Target:  []string{stateReady, stateCreated},
-		Refresh: dnsForwarderProvisionStatus(c.netDnsApiContext(ctx), c, environmentId, dnsForwarderId),
+		Refresh: dnsForwarderProvisionStatus(c.networkingDnsforwarderV1ApiContext(ctx), c, environmentId, dnsForwarderId),
 		Timeout: networkingAPICreateTimeout,
 		// TODO: increase delay
 		Delay:        delay,
@@ -313,7 +313,7 @@ func waitForDnsForwarderToProvision(ctx context.Context, c *Client, environmentI
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for DNS Forwarder %q provisioning status to become %q", dnsForwarderId, stateReady), map[string]interface{}{accessPointKey: dnsForwarderId})
-	if _, err := stateConf.WaitForStateContext(c.netDnsApiContext(ctx)); err != nil {
+	if _, err := stateConf.WaitForStateContext(c.networkingDnsforwarderV1ApiContext(ctx)); err != nil {
 		return err
 	}
 	return nil
@@ -324,7 +324,7 @@ func waitForAccessPointToProvision(ctx context.Context, c *Client, environmentId
 	stateConf := &resource.StateChangeConf{
 		Pending: []string{stateProvisioning},
 		Target:  []string{stateReady, statePendingAccept, stateCreated},
-		Refresh: accessPointProvisionStatus(c.netAPApiContext(ctx), c, environmentId, accessPointId),
+		Refresh: accessPointProvisionStatus(c.networkingAccessPointV1ApiContext(ctx), c, environmentId, accessPointId),
 		Timeout: networkingAPICreateTimeout,
 		// TODO: increase delay
 		Delay:        delay,
@@ -332,7 +332,7 @@ func waitForAccessPointToProvision(ctx context.Context, c *Client, environmentId
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for Access Point %q provisioning status to become %q", accessPointId, stateReady), map[string]interface{}{accessPointKey: accessPointId})
-	if _, err := stateConf.WaitForStateContext(c.netAPApiContext(ctx)); err != nil {
+	if _, err := stateConf.WaitForStateContext(c.networkingAccessPointV1ApiContext(ctx)); err != nil {
 		return err
 	}
 	return nil
@@ -343,7 +343,7 @@ func waitForGatewayToProvision(ctx context.Context, c *Client, environmentId, ga
 	stateConf := &resource.StateChangeConf{
 		Pending: []string{stateProvisioning},
 		Target:  []string{stateReady, stateCreated},
-		Refresh: gatewayProvisionStatus(c.netGWApiContext(ctx), c, environmentId, gatewayId),
+		Refresh: gatewayProvisionStatus(c.networkingGatewayV1ApiContext(ctx), c, environmentId, gatewayId),
 		Timeout: networkingAPICreateTimeout,
 		// TODO: increase delay
 		Delay:        delay,
@@ -351,7 +351,7 @@ func waitForGatewayToProvision(ctx context.Context, c *Client, environmentId, ga
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for Gateway %q provisioning status to become %q", gatewayId, stateReady), map[string]interface{}{gatewayKey: gatewayId})
-	if _, err := stateConf.WaitForStateContext(c.netGWApiContext(ctx)); err != nil {
+	if _, err := stateConf.WaitForStateContext(c.networkingGatewayV1ApiContext(ctx)); err != nil {
 		return err
 	}
 	return nil
@@ -362,7 +362,7 @@ func waitForComputePoolToProvision(ctx context.Context, c *Client, environmentId
 	stateConf := &resource.StateChangeConf{
 		Pending: []string{stateProvisioning},
 		Target:  []string{stateProvisioned},
-		Refresh: computePoolProvisionStatus(c.fcpmApiContext(ctx), c, environmentId, computePoolId),
+		Refresh: computePoolProvisionStatus(c.flinkV2ApiContext(ctx), c, environmentId, computePoolId),
 		Timeout: fcpmAPICreateTimeout,
 		// TODO: increase delay
 		Delay:        delay,
@@ -370,7 +370,7 @@ func waitForComputePoolToProvision(ctx context.Context, c *Client, environmentId
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for Flink Compute Pool %q provisioning status to become %q", computePoolId, stateProvisioned), map[string]interface{}{computePoolLoggingKey: computePoolId})
-	if _, err := stateConf.WaitForStateContext(c.fcpmApiContext(ctx)); err != nil {
+	if _, err := stateConf.WaitForStateContext(c.flinkV2ApiContext(ctx)); err != nil {
 		return err
 	}
 	return nil
@@ -382,7 +382,7 @@ func waitForAnySchemaRegistryClusterToProvision(ctx context.Context, c *Client, 
 		// stateProvisioning applies when the Schema Registry Cluster is either in the 'provisioning' status or has not yet been created.
 		Pending: []string{stateProvisioning},
 		Target:  []string{stateProvisioned},
-		Refresh: anySchemaRegistryClusterProvisionStatus(c.srcmApiContext(ctx), c, environmentId),
+		Refresh: anySchemaRegistryClusterProvisionStatus(c.srcmV3ApiContext(ctx), c, environmentId),
 		// https://docs.confluent.io/cloud/current/clusters/cluster-types.html#provisioning-time
 		Timeout:      10 * time.Minute,
 		Delay:        delay,
@@ -391,7 +391,7 @@ func waitForAnySchemaRegistryClusterToProvision(ctx context.Context, c *Client, 
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for the start of Schema Registry Cluster provisioning, followed by a status update to %q", stateProvisioned))
 
-	if _, err := stateConf.WaitForStateContext(c.srcmApiContext(ctx)); err != nil {
+	if _, err := stateConf.WaitForStateContext(c.srcmV3ApiContext(ctx)); err != nil {
 		return err
 	}
 	return nil
@@ -403,14 +403,14 @@ func waitForConnectorToProvision(ctx context.Context, c *Client, displayName, en
 		// Allow PROVISIONING -> DEGRADED -> RUNNING transition
 		Pending:      []string{stateProvisioning, stateDegraded},
 		Target:       []string{stateRunning},
-		Refresh:      connectorProvisionStatus(c.connectApiContext(ctx), c, displayName, environmentId, clusterId),
+		Refresh:      connectorProvisionStatus(c.connectV1ApiContext(ctx), c, displayName, environmentId, clusterId),
 		Timeout:      connectAPICreateTimeout,
 		Delay:        delay,
 		PollInterval: pollInterval,
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for Connector %q=%q provisioning status to become %q", paramDisplayName, displayName, stateRunning))
-	if _, err := stateConf.WaitForStateContext(c.connectApiContext(ctx)); err != nil {
+	if _, err := stateConf.WaitForStateContext(c.connectV1ApiContext(ctx)); err != nil {
 		return err
 	}
 	return nil
@@ -421,14 +421,14 @@ func waitForConnectorToChangeStatus(ctx context.Context, c *Client, displayName,
 	stateConf := &resource.StateChangeConf{
 		Pending:      []string{currentStatus},
 		Target:       []string{targetStatus},
-		Refresh:      connectorUpdateStatus(c.connectApiContext(ctx), c, displayName, environmentId, clusterId),
+		Refresh:      connectorUpdateStatus(c.connectV1ApiContext(ctx), c, displayName, environmentId, clusterId),
 		Timeout:      1 * time.Hour,
 		Delay:        delay,
 		PollInterval: pollInterval,
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for Connector %q=%q status to become %q", paramDisplayName, displayName, targetStatus))
-	if _, err := stateConf.WaitForStateContext(c.connectApiContext(ctx)); err != nil {
+	if _, err := stateConf.WaitForStateContext(c.connectV1ApiContext(ctx)); err != nil {
 		return err
 	}
 	return nil
@@ -462,7 +462,7 @@ func waitForPeeringToProvision(ctx context.Context, c *Client, environmentId, pe
 	stateConf := &resource.StateChangeConf{
 		Pending: []string{stateProvisioning},
 		Target:  []string{stateReady, statePendingAccept},
-		Refresh: peeringProvisionStatus(c.netApiContext(ctx), c, environmentId, peeringId),
+		Refresh: peeringProvisionStatus(c.networkingV1ApiContext(ctx), c, environmentId, peeringId),
 		Timeout: networkingAPICreateTimeout,
 		// TODO: increase delay
 		Delay:        delay,
@@ -470,7 +470,7 @@ func waitForPeeringToProvision(ctx context.Context, c *Client, environmentId, pe
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for Peering %q provisioning status to become %q", peeringId, statePendingAccept), map[string]interface{}{networkLoggingKey: peeringId})
-	if _, err := stateConf.WaitForStateContext(c.netApiContext(ctx)); err != nil {
+	if _, err := stateConf.WaitForStateContext(c.networkingV1ApiContext(ctx)); err != nil {
 		return err
 	}
 	return nil
@@ -480,13 +480,13 @@ func waitForTagToProvision(ctx context.Context, c *CatalogRestClient, tagId, tag
 	stateConf := &resource.StateChangeConf{
 		Pending:      []string{stateProvisioning},
 		Target:       []string{stateReady},
-		Refresh:      tagProvisionStatus(c.dataCatalogApiContext(ctx), c, tagId, tagName),
+		Refresh:      tagProvisionStatus(c.dataCatalogV1ApiContext(ctx), c, tagId, tagName),
 		Timeout:      dataCatalogTimeout,
 		PollInterval: time.Second,
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for Tag %q provisioning status to become %q", tagId, stateReady), map[string]interface{}{tagLoggingKey: tagId})
-	if _, err := stateConf.WaitForStateContext(c.dataCatalogApiContext(ctx)); err != nil {
+	if _, err := stateConf.WaitForStateContext(c.dataCatalogV1ApiContext(ctx)); err != nil {
 		return err
 	}
 	return nil
@@ -496,13 +496,13 @@ func waitForBusinessMetadataToProvision(ctx context.Context, c *CatalogRestClien
 	stateConf := &resource.StateChangeConf{
 		Pending:      []string{stateProvisioning},
 		Target:       []string{stateReady},
-		Refresh:      businessMetadataProvisionStatus(c.dataCatalogApiContext(ctx), c, businessMetadataId, businessMetadataName),
+		Refresh:      businessMetadataProvisionStatus(c.dataCatalogV1ApiContext(ctx), c, businessMetadataId, businessMetadataName),
 		Timeout:      dataCatalogTimeout,
 		PollInterval: time.Second,
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for Business Metadata %q provisioning status to become %q", businessMetadataId, stateReady), map[string]interface{}{businessMetadataLoggingKey: businessMetadataId})
-	if _, err := stateConf.WaitForStateContext(c.dataCatalogApiContext(ctx)); err != nil {
+	if _, err := stateConf.WaitForStateContext(c.dataCatalogV1ApiContext(ctx)); err != nil {
 		return err
 	}
 	return nil
@@ -512,13 +512,13 @@ func waitForTagBindingToProvision(ctx context.Context, c *CatalogRestClient, tag
 	stateConf := &resource.StateChangeConf{
 		Pending:      []string{stateProvisioning},
 		Target:       []string{stateReady},
-		Refresh:      tagBindingProvisionStatus(c.dataCatalogApiContext(ctx), c, tagBindingId, tagName, entityName, entityType),
+		Refresh:      tagBindingProvisionStatus(c.dataCatalogV1ApiContext(ctx), c, tagBindingId, tagName, entityName, entityType),
 		Timeout:      dataCatalogTimeout,
 		PollInterval: time.Second,
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for Tag Binding %q provisioning status to become %q", tagBindingId, stateReady), map[string]interface{}{tagBindingLoggingKey: tagBindingId})
-	if _, err := stateConf.WaitForStateContext(c.dataCatalogApiContext(ctx)); err != nil {
+	if _, err := stateConf.WaitForStateContext(c.dataCatalogV1ApiContext(ctx)); err != nil {
 		return err
 	}
 	return nil
@@ -528,13 +528,13 @@ func waitForBusinessMetadataBindingToProvision(ctx context.Context, c *CatalogRe
 	stateConf := &resource.StateChangeConf{
 		Pending:      []string{stateProvisioning},
 		Target:       []string{stateReady},
-		Refresh:      businessMetadataBindingProvisionStatus(c.dataCatalogApiContext(ctx), c, businessMetadataBindingId, businessMetadataName, entityName, entityType),
+		Refresh:      businessMetadataBindingProvisionStatus(c.dataCatalogV1ApiContext(ctx), c, businessMetadataBindingId, businessMetadataName, entityName, entityType),
 		Timeout:      dataCatalogTimeout,
 		PollInterval: time.Second,
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for Business Metadata Binding %q provisioning status to become %q", businessMetadataBindingId, stateReady), map[string]interface{}{businessMetadataBindingLoggingKey: businessMetadataBindingId})
-	if _, err := stateConf.WaitForStateContext(c.dataCatalogApiContext(ctx)); err != nil {
+	if _, err := stateConf.WaitForStateContext(c.dataCatalogV1ApiContext(ctx)); err != nil {
 		return err
 	}
 	return nil
@@ -561,7 +561,7 @@ func waitForTransitGatewayAttachmentToProvision(ctx context.Context, c *Client, 
 	stateConf := &resource.StateChangeConf{
 		Pending: []string{stateProvisioning},
 		Target:  []string{stateReady, statePendingAccept},
-		Refresh: transitGatewayAttachmentProvisionStatus(c.netApiContext(ctx), c, environmentId, transitGatewayAttachmentId),
+		Refresh: transitGatewayAttachmentProvisionStatus(c.networkingV1ApiContext(ctx), c, environmentId, transitGatewayAttachmentId),
 		Timeout: networkingAPICreateTimeout,
 		// TODO: increase delay
 		Delay:        delay,
@@ -569,7 +569,7 @@ func waitForTransitGatewayAttachmentToProvision(ctx context.Context, c *Client, 
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for Transit Gateway Attachment %q provisioning status to become %q", transitGatewayAttachmentId, statePendingAccept), map[string]interface{}{transitGatewayAttachmentLoggingKey: transitGatewayAttachmentId})
-	if _, err := stateConf.WaitForStateContext(c.netApiContext(ctx)); err != nil {
+	if _, err := stateConf.WaitForStateContext(c.networkingV1ApiContext(ctx)); err != nil {
 		return err
 	}
 	return nil
@@ -580,7 +580,7 @@ func waitForKafkaClusterCkuUpdateToComplete(ctx context.Context, c *Client, envi
 	stateConf := &resource.StateChangeConf{
 		Pending: []string{stateInProgress},
 		Target:  []string{stateDone},
-		Refresh: kafkaClusterCkuUpdateStatus(c.cmkApiContext(ctx), c, environmentId, clusterId, cku),
+		Refresh: kafkaClusterCkuUpdateStatus(c.cmkV2ApiContext(ctx), c, environmentId, clusterId, cku),
 		// https://docs.confluent.io/cloud/current/clusters/cluster-types.html#resizing-time
 		Timeout:      getTimeoutFor(kafkaClusterTypeDedicated),
 		Delay:        delay,
@@ -588,7 +588,7 @@ func waitForKafkaClusterCkuUpdateToComplete(ctx context.Context, c *Client, envi
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for Kafka Cluster %q CKU update", clusterId), map[string]interface{}{kafkaClusterLoggingKey: clusterId})
-	if _, err := stateConf.WaitForStateContext(c.cmkApiContext(ctx)); err != nil {
+	if _, err := stateConf.WaitForStateContext(c.cmkV2ApiContext(ctx)); err != nil {
 		return err
 	}
 	return nil
@@ -599,14 +599,14 @@ func waitForDnsRecordToBeDeleted(ctx context.Context, c *Client, environmentId, 
 	stateConf := &resource.StateChangeConf{
 		Pending:      []string{stateInProgress},
 		Target:       []string{stateDone},
-		Refresh:      dnsRecordDeleteStatus(c.netAPApiContext(ctx), c, environmentId, dnsRecordId),
+		Refresh:      dnsRecordDeleteStatus(c.networkingAccessPointV1ApiContext(ctx), c, environmentId, dnsRecordId),
 		Timeout:      networkingAPIDeleteTimeout,
 		Delay:        delay,
 		PollInterval: pollInterval,
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for DNS Record %q to be deleted", dnsRecordId), map[string]interface{}{dnsRecordKey: dnsRecordId})
-	if _, err := stateConf.WaitForStateContext(c.netAPApiContext(ctx)); err != nil {
+	if _, err := stateConf.WaitForStateContext(c.networkingAccessPointV1ApiContext(ctx)); err != nil {
 		return err
 	}
 	return nil
@@ -617,14 +617,14 @@ func waitForAccessPointToBeDeleted(ctx context.Context, c *Client, environmentId
 	stateConf := &resource.StateChangeConf{
 		Pending:      []string{stateInProgress},
 		Target:       []string{stateDone},
-		Refresh:      accessPointDeleteStatus(c.netAPApiContext(ctx), c, environmentId, accessPointId),
+		Refresh:      accessPointDeleteStatus(c.networkingAccessPointV1ApiContext(ctx), c, environmentId, accessPointId),
 		Timeout:      networkingAPIDeleteTimeout,
 		Delay:        delay,
 		PollInterval: pollInterval,
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for Access Point %q to be deleted", accessPointId), map[string]interface{}{accessPointKey: accessPointId})
-	if _, err := stateConf.WaitForStateContext(c.netAPApiContext(ctx)); err != nil {
+	if _, err := stateConf.WaitForStateContext(c.networkingAccessPointV1ApiContext(ctx)); err != nil {
 		return err
 	}
 	return nil
@@ -635,14 +635,14 @@ func waitForPrivateLinkAccessToBeDeleted(ctx context.Context, c *Client, environ
 	stateConf := &resource.StateChangeConf{
 		Pending:      []string{stateInProgress},
 		Target:       []string{stateDone},
-		Refresh:      privateLinkAccessDeleteStatus(c.netApiContext(ctx), c, environmentId, privateLinkAccessId),
+		Refresh:      privateLinkAccessDeleteStatus(c.networkingV1ApiContext(ctx), c, environmentId, privateLinkAccessId),
 		Timeout:      networkingAPIDeleteTimeout,
 		Delay:        delay,
 		PollInterval: pollInterval,
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for Private Link Access %q to be deleted", privateLinkAccessId), map[string]interface{}{privateLinkAccessLoggingKey: privateLinkAccessId})
-	if _, err := stateConf.WaitForStateContext(c.netApiContext(ctx)); err != nil {
+	if _, err := stateConf.WaitForStateContext(c.networkingV1ApiContext(ctx)); err != nil {
 		return err
 	}
 	return nil
@@ -653,14 +653,14 @@ func waitForPrivateLinkAttachmentConnectionToBeDeleted(ctx context.Context, c *C
 	stateConf := &resource.StateChangeConf{
 		Pending:      []string{stateInProgress},
 		Target:       []string{stateDone},
-		Refresh:      plattcDeleteStatus(c.netPLApiContext(ctx), c, environmentId, plattcId),
+		Refresh:      plattcDeleteStatus(c.networkingPrivatelinkV1ApiContext(ctx), c, environmentId, plattcId),
 		Timeout:      networkingAPIDeleteTimeout,
 		Delay:        delay,
 		PollInterval: pollInterval,
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for private link attachment connection %q to be deleted", plattcId), map[string]interface{}{privateLinkAttachmentConnectionLoggingKey: plattcId})
-	if _, err := stateConf.WaitForStateContext(c.netPLApiContext(ctx)); err != nil {
+	if _, err := stateConf.WaitForStateContext(c.networkingPrivatelinkV1ApiContext(ctx)); err != nil {
 		return err
 	}
 	return nil
@@ -671,14 +671,14 @@ func waitForPeeringToBeDeleted(ctx context.Context, c *Client, environmentId, pe
 	stateConf := &resource.StateChangeConf{
 		Pending:      []string{stateInProgress},
 		Target:       []string{stateDone},
-		Refresh:      peeringDeleteStatus(c.netApiContext(ctx), c, environmentId, peeringId),
+		Refresh:      peeringDeleteStatus(c.networkingV1ApiContext(ctx), c, environmentId, peeringId),
 		Timeout:      networkingAPIDeleteTimeout,
 		Delay:        delay,
 		PollInterval: pollInterval,
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for Peering %q to be deleted", peeringId), map[string]interface{}{peeringLoggingKey: peeringId})
-	if _, err := stateConf.WaitForStateContext(c.netApiContext(ctx)); err != nil {
+	if _, err := stateConf.WaitForStateContext(c.networkingV1ApiContext(ctx)); err != nil {
 		return err
 	}
 	return nil
@@ -689,14 +689,14 @@ func waitForNetworkLinkEndpointToBeDeleted(ctx context.Context, c *Client, envir
 	stateConf := &resource.StateChangeConf{
 		Pending:      []string{stateInProgress},
 		Target:       []string{stateDone},
-		Refresh:      nleDeleteStatus(c.netApiContext(ctx), c, environmentId, nleId),
+		Refresh:      nleDeleteStatus(c.networkingV1ApiContext(ctx), c, environmentId, nleId),
 		Timeout:      networkingAPIDeleteTimeout,
 		Delay:        delay,
 		PollInterval: pollInterval,
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for Network Link Endpoint %q to be deleted", nleId), map[string]interface{}{networkLinkEndpointLoggingKey: nleId})
-	if _, err := stateConf.WaitForStateContext(c.netApiContext(ctx)); err != nil {
+	if _, err := stateConf.WaitForStateContext(c.networkingV1ApiContext(ctx)); err != nil {
 		return err
 	}
 	return nil
@@ -707,14 +707,14 @@ func waitForTransitGatewayAttachmentToBeDeleted(ctx context.Context, c *Client, 
 	stateConf := &resource.StateChangeConf{
 		Pending:      []string{stateInProgress},
 		Target:       []string{stateDone},
-		Refresh:      transitGatewayAttachmentDeleteStatus(c.netApiContext(ctx), c, environmentId, transitGatewayAttachmentId),
+		Refresh:      transitGatewayAttachmentDeleteStatus(c.networkingV1ApiContext(ctx), c, environmentId, transitGatewayAttachmentId),
 		Timeout:      networkingAPIDeleteTimeout,
 		Delay:        delay,
 		PollInterval: pollInterval,
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for Transit Gateway Attachment %q to be deleted", transitGatewayAttachmentId), map[string]interface{}{transitGatewayAttachmentLoggingKey: transitGatewayAttachmentId})
-	if _, err := stateConf.WaitForStateContext(c.netApiContext(ctx)); err != nil {
+	if _, err := stateConf.WaitForStateContext(c.networkingV1ApiContext(ctx)); err != nil {
 		return err
 	}
 	return nil
@@ -873,7 +873,7 @@ func kafkaMirrorTopicDeleteStatus(ctx context.Context, c *KafkaRestClient, linkN
 
 func plattcDeleteStatus(ctx context.Context, c *Client, environmentId, plattcId string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		plattc, resp, err := executePlattcRead(c.netPLApiContext(ctx), c, environmentId, plattcId)
+		plattc, resp, err := executePlattcRead(c.networkingPrivatelinkV1ApiContext(ctx), c, environmentId, plattcId)
 		if err != nil {
 			tflog.Warn(ctx, fmt.Sprintf("Error reading Private Link Attachment Connection %q: %s", plattcId, createDescriptiveError(err, resp)), map[string]interface{}{privateLinkAttachmentConnectionLoggingKey: plattcId})
 
@@ -932,7 +932,7 @@ func clusterLinkDeleteStatus(ctx context.Context, c *KafkaRestClient, linkName s
 
 func kafkaClusterCkuUpdateStatus(ctx context.Context, c *Client, environmentId string, clusterId string, desiredCku int32) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		cluster, resp, err := executeKafkaRead(c.cmkApiContext(ctx), c, environmentId, clusterId)
+		cluster, resp, err := executeKafkaRead(c.cmkV2ApiContext(ctx), c, environmentId, clusterId)
 		if err != nil {
 			tflog.Warn(ctx, fmt.Sprintf("Error reading Kafka Cluster %q: %s", clusterId, createDescriptiveError(err, resp)), map[string]interface{}{kafkaClusterLoggingKey: clusterId})
 			return nil, stateUnknown, err
@@ -953,7 +953,7 @@ func kafkaClusterCkuUpdateStatus(ctx context.Context, c *Client, environmentId s
 
 func kafkaClusterProvisionStatus(ctx context.Context, c *Client, environmentId string, clusterId string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		cluster, resp, err := executeKafkaRead(c.cmkApiContext(ctx), c, environmentId, clusterId)
+		cluster, resp, err := executeKafkaRead(c.cmkV2ApiContext(ctx), c, environmentId, clusterId)
 		if err != nil {
 			tflog.Warn(ctx, fmt.Sprintf("Error reading Kafka Cluster %q: %s", clusterId, createDescriptiveError(err, resp)), map[string]interface{}{kafkaClusterLoggingKey: clusterId})
 			return nil, stateUnknown, err
@@ -972,7 +972,7 @@ func kafkaClusterProvisionStatus(ctx context.Context, c *Client, environmentId s
 
 func ksqlClusterProvisionStatus(ctx context.Context, c *Client, environmentId, clusterId string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		cluster, resp, err := executeKsqlRead(c.ksqlApiContext(ctx), c, environmentId, clusterId)
+		cluster, resp, err := executeKsqlRead(c.ksqlV2ApiContext(ctx), c, environmentId, clusterId)
 		if err != nil {
 			tflog.Warn(ctx, fmt.Sprintf("Error reading ksqlDB Cluster %q: %s", clusterId, createDescriptiveError(err, resp)), map[string]interface{}{ksqlClusterLoggingKey: clusterId})
 			return nil, stateUnknown, err
@@ -991,7 +991,7 @@ func ksqlClusterProvisionStatus(ctx context.Context, c *Client, environmentId, c
 
 func anySchemaRegistryClusterProvisionStatus(ctx context.Context, c *Client, environmentId string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		clusters, err := loadSchemaRegistryClusters(c.srcmApiContext(ctx), c, environmentId)
+		clusters, err := loadSchemaRegistryClusters(c.srcmV3ApiContext(ctx), c, environmentId)
 		if err != nil {
 			errorStr := strings.ToLower(err.Error())
 			if strings.Contains(errorStr, govCloudNotAvailableErrorMessage) {
@@ -1022,7 +1022,7 @@ func anySchemaRegistryClusterProvisionStatus(ctx context.Context, c *Client, env
 
 func schemaRegistryClusterProvisionStatus(ctx context.Context, c *Client, environmentId string, clusterId string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		cluster, resp, err := executeSchemaRegistryClusterRead(c.srcmApiContext(ctx), c, environmentId, clusterId)
+		cluster, resp, err := executeSchemaRegistryClusterRead(c.srcmV3ApiContext(ctx), c, environmentId, clusterId)
 		if err != nil {
 			tflog.Warn(ctx, fmt.Sprintf("Error reading Schema Registry Cluster %q: %s", clusterId, createDescriptiveError(err, resp)), map[string]interface{}{schemaRegistryClusterLoggingKey: clusterId})
 			return nil, stateUnknown, err
@@ -1041,7 +1041,7 @@ func schemaRegistryClusterProvisionStatus(ctx context.Context, c *Client, enviro
 
 func privateLinkAccessProvisionStatus(ctx context.Context, c *Client, environmentId string, privateLinkAccessId string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		privateLinkAccess, resp, err := executePrivateLinkAccessRead(c.netApiContext(ctx), c, environmentId, privateLinkAccessId)
+		privateLinkAccess, resp, err := executePrivateLinkAccessRead(c.networkingV1ApiContext(ctx), c, environmentId, privateLinkAccessId)
 		if err != nil {
 			tflog.Warn(ctx, fmt.Sprintf("Error reading Private Link Access %q: %s", privateLinkAccessId, createDescriptiveError(err, resp)), map[string]interface{}{privateLinkAccessLoggingKey: privateLinkAccessId})
 			return nil, stateUnknown, err
@@ -1060,7 +1060,7 @@ func privateLinkAccessProvisionStatus(ctx context.Context, c *Client, environmen
 
 func connectorOffsetUpdateStatus(ctx context.Context, c *Client, environmentId, clusterId, displayName string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		status, resp, err := c.connectClient.OffsetsConnectV1Api.GetConnectv1ConnectorOffsetsRequestStatus(c.connectApiContext(ctx), displayName, environmentId, clusterId).Execute()
+		status, resp, err := c.connectV1Client.OffsetsConnectV1Api.GetConnectv1ConnectorOffsetsRequestStatus(c.connectV1ApiContext(ctx), displayName, environmentId, clusterId).Execute()
 		if err != nil {
 			tflog.Warn(ctx, fmt.Sprintf("Error reading Connector %q offsets update status: %s", displayName, createDescriptiveError(err, resp)), map[string]interface{}{connectorLoggingKey: displayName})
 			return nil, stateUnknown, err
@@ -1079,7 +1079,7 @@ func connectorOffsetUpdateStatus(ctx context.Context, c *Client, environmentId, 
 
 func privateLinkAttachmentProvisionStatus(ctx context.Context, c *Client, environmentId string, privateLinkAttachmentId string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		privateLinkAttachment, resp, err := executePlattRead(c.netPLApiContext(ctx), c, privateLinkAttachmentId, environmentId)
+		privateLinkAttachment, resp, err := executePlattRead(c.networkingPrivatelinkV1ApiContext(ctx), c, privateLinkAttachmentId, environmentId)
 		if err != nil {
 			tflog.Warn(ctx, fmt.Sprintf("Error reading Private Link Attachment %q: %s", privateLinkAttachmentId, createDescriptiveError(err, resp)), map[string]interface{}{privateLinkAttachmentLoggingKey: privateLinkAttachmentId})
 			return nil, stateUnknown, err
@@ -1098,7 +1098,7 @@ func privateLinkAttachmentProvisionStatus(ctx context.Context, c *Client, enviro
 
 func privateLinkAttachmentConnectionProvisionStatus(ctx context.Context, c *Client, environmentId string, privateLinkAttachmentConnectionId string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		privateLinkAttachmentConnection, resp, err := executePlattcRead(c.netPLApiContext(ctx), c, privateLinkAttachmentConnectionId, environmentId)
+		privateLinkAttachmentConnection, resp, err := executePlattcRead(c.networkingPrivatelinkV1ApiContext(ctx), c, privateLinkAttachmentConnectionId, environmentId)
 		if err != nil {
 			tflog.Warn(ctx, fmt.Sprintf("Error reading Private Link Attachment Connection %q: %s", privateLinkAttachmentConnectionId, createDescriptiveError(err, resp)), map[string]interface{}{privateLinkAttachmentConnectionLoggingKey: privateLinkAttachmentConnectionId})
 			return nil, stateUnknown, err
@@ -1117,7 +1117,7 @@ func privateLinkAttachmentConnectionProvisionStatus(ctx context.Context, c *Clie
 
 func nlsProvisionStatus(ctx context.Context, c *Client, environmentId string, nlsId string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		nls, resp, err := executeNLSRead(c.netApiContext(ctx), c, nlsId, environmentId)
+		nls, resp, err := executeNLSRead(c.networkingV1ApiContext(ctx), c, nlsId, environmentId)
 		if err != nil {
 			tflog.Warn(ctx, fmt.Sprintf("Error reading Network Link Service %q: %s", nlsId, createDescriptiveError(err, resp)), map[string]interface{}{networkLinkServiceLoggingKey: nlsId})
 			return nil, stateUnknown, err
@@ -1136,7 +1136,7 @@ func nlsProvisionStatus(ctx context.Context, c *Client, environmentId string, nl
 
 func networkProvisionStatus(ctx context.Context, c *Client, environmentId string, networkId string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		network, resp, err := executeNetworkRead(c.netApiContext(ctx), c, environmentId, networkId)
+		network, resp, err := executeNetworkRead(c.networkingV1ApiContext(ctx), c, environmentId, networkId)
 		if err != nil {
 			tflog.Warn(ctx, fmt.Sprintf("Error reading Network %q: %s", networkId, createDescriptiveError(err, resp)), map[string]interface{}{networkLoggingKey: networkId})
 			return nil, stateUnknown, err
@@ -1155,7 +1155,7 @@ func networkProvisionStatus(ctx context.Context, c *Client, environmentId string
 
 func dnsRecordProvisionStatus(ctx context.Context, c *Client, environmentId string, dnsRecordId string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		dnsRecord, resp, err := executeDnsRecordRead(c.netAPApiContext(ctx), c, environmentId, dnsRecordId)
+		dnsRecord, resp, err := executeDnsRecordRead(c.networkingAccessPointV1ApiContext(ctx), c, environmentId, dnsRecordId)
 		if err != nil {
 			tflog.Warn(ctx, fmt.Sprintf("Error reading DNS Record %q: %s", dnsRecordId, createDescriptiveError(err, resp)), map[string]interface{}{dnsRecordKey: dnsRecordId})
 			return nil, stateUnknown, err
@@ -1165,16 +1165,16 @@ func dnsRecordProvisionStatus(ctx context.Context, c *Client, environmentId stri
 		if dnsRecord.Status.GetPhase() == stateProvisioning || dnsRecord.Status.GetPhase() == stateReady || dnsRecord.Status.GetPhase() == stateCreated {
 			return dnsRecord, dnsRecord.Status.GetPhase(), nil
 		} else if dnsRecord.Status.GetPhase() == stateFailed {
-			return nil, stateFailed, fmt.Errorf("dns record %q provisioning status is %q: %s", dnsRecordId, stateFailed, dnsRecord.Status.GetErrorMessage())
+			return nil, stateFailed, fmt.Errorf("networkingdnsforwarderv1 record %q provisioning status is %q: %s", dnsRecordId, stateFailed, dnsRecord.Status.GetErrorMessage())
 		}
 		// DNS Record is in an unexpected state
-		return nil, stateUnexpected, fmt.Errorf("dns record %q is an unexpected state %q: %s", dnsRecordId, dnsRecord.Status.GetPhase(), dnsRecord.Status.GetErrorMessage())
+		return nil, stateUnexpected, fmt.Errorf("networkingdnsforwarderv1 record %q is an unexpected state %q: %s", dnsRecordId, dnsRecord.Status.GetPhase(), dnsRecord.Status.GetErrorMessage())
 	}
 }
 
 func dnsForwarderProvisionStatus(ctx context.Context, c *Client, environmentId string, dnsForwarderId string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		dnsForwarder, resp, err := executeDnsForwarderRead(c.netDnsApiContext(ctx), c, environmentId, dnsForwarderId)
+		dnsForwarder, resp, err := executeDnsForwarderRead(c.networkingDnsforwarderV1ApiContext(ctx), c, environmentId, dnsForwarderId)
 		if err != nil {
 			tflog.Warn(ctx, fmt.Sprintf("Error reading DNS Forwarder %q: %s", dnsForwarderId, createDescriptiveError(err, resp)), map[string]interface{}{dnsForwarderKey: dnsForwarderId})
 			return nil, stateUnknown, err
@@ -1184,16 +1184,16 @@ func dnsForwarderProvisionStatus(ctx context.Context, c *Client, environmentId s
 		if dnsForwarder.Status.GetPhase() == stateProvisioning || dnsForwarder.Status.GetPhase() == stateReady || dnsForwarder.Status.GetPhase() == stateCreated {
 			return dnsForwarder, dnsForwarder.Status.GetPhase(), nil
 		} else if dnsForwarder.Status.GetPhase() == stateFailed {
-			return nil, stateFailed, fmt.Errorf("dns forwarder %q provisioning status is %q: %s", dnsForwarderId, stateFailed, dnsForwarder.Status.GetErrorMessage())
+			return nil, stateFailed, fmt.Errorf("networkingdnsforwarderv1 forwarder %q provisioning status is %q: %s", dnsForwarderId, stateFailed, dnsForwarder.Status.GetErrorMessage())
 		}
 		// DNS Forwarder is in an unexpected state
-		return nil, stateUnexpected, fmt.Errorf("dns forwarder %q is an unexpected state %q: %s", dnsForwarderId, dnsForwarder.Status.GetPhase(), dnsForwarder.Status.GetErrorMessage())
+		return nil, stateUnexpected, fmt.Errorf("networkingdnsforwarderv1 forwarder %q is an unexpected state %q: %s", dnsForwarderId, dnsForwarder.Status.GetPhase(), dnsForwarder.Status.GetErrorMessage())
 	}
 }
 
 func accessPointProvisionStatus(ctx context.Context, c *Client, environmentId string, accessPointId string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		accessPoint, resp, err := executeAccessPointRead(c.netAPApiContext(ctx), c, environmentId, accessPointId)
+		accessPoint, resp, err := executeAccessPointRead(c.networkingAccessPointV1ApiContext(ctx), c, environmentId, accessPointId)
 		if err != nil {
 			tflog.Warn(ctx, fmt.Sprintf("Error reading Access Point %q: %s", accessPointId, createDescriptiveError(err, resp)), map[string]interface{}{accessPointKey: accessPointId})
 			return nil, stateUnknown, err
@@ -1212,7 +1212,7 @@ func accessPointProvisionStatus(ctx context.Context, c *Client, environmentId st
 
 func gatewayProvisionStatus(ctx context.Context, c *Client, environmentId string, gatewayId string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		gateway, resp, err := executeGatewayRead(c.netAPApiContext(ctx), c, environmentId, gatewayId)
+		gateway, resp, err := executeGatewayRead(c.networkingAccessPointV1ApiContext(ctx), c, environmentId, gatewayId)
 		if err != nil {
 			tflog.Warn(ctx, fmt.Sprintf("Error reading Gateway %q: %s", gatewayId, createDescriptiveError(err, resp)), map[string]interface{}{gatewayKey: gatewayId})
 			return nil, stateUnknown, err
@@ -1245,10 +1245,10 @@ func flinkStatementProvisionStatus(ctx context.Context, c *FlinkRestClient, stat
 		if statement.Status.GetPhase() == statePending || statement.Status.GetPhase() == stateRunning || statement.Status.GetPhase() == stateCompleted {
 			return statement, statement.Status.GetPhase(), nil
 		} else if statement.Status.GetPhase() == stateFailed || statement.Status.GetPhase() == stateFailing {
-			return nil, stateFailed, fmt.Errorf("flink Statement %q provisioning status is %q: %s", statementName, statement.Status.GetPhase(), statement.Status.GetDetail())
+			return nil, stateFailed, fmt.Errorf("flinkv2 Statement %q provisioning status is %q: %s", statementName, statement.Status.GetPhase(), statement.Status.GetDetail())
 		}
 		// Flink Statement is in an unexpected state
-		return nil, stateUnexpected, fmt.Errorf("flink Statement %q is an unexpected state %q", statementName, statement.Status.GetPhase())
+		return nil, stateUnexpected, fmt.Errorf("flinkv2 Statement %q is an unexpected state %q", statementName, statement.Status.GetPhase())
 	}
 }
 
@@ -1264,16 +1264,16 @@ func flinkStatementUpdatingStatus(ctx context.Context, c *FlinkRestClient, state
 		if statement.Status.GetPhase() == statePending || statement.Status.GetPhase() == stateRunning || statement.Status.GetPhase() == stateCompleted || statement.Status.GetPhase() == stateStopped || statement.Status.GetPhase() == stateStopping {
 			return statement, statement.Status.GetPhase(), nil
 		} else if statement.Status.GetPhase() == stateFailed || statement.Status.GetPhase() == stateFailing {
-			return nil, stateFailed, fmt.Errorf("flink Statement %q provisioning status is %q", statementName, statement.Status.GetPhase())
+			return nil, stateFailed, fmt.Errorf("flinkv2 Statement %q provisioning status is %q", statementName, statement.Status.GetPhase())
 		}
 		// Flink Statement is in an unexpected state
-		return nil, stateUnexpected, fmt.Errorf("flink Statement %q is an unexpected state %q", statementName, statement.Status.GetPhase())
+		return nil, stateUnexpected, fmt.Errorf("flinkv2 Statement %q is an unexpected state %q", statementName, statement.Status.GetPhase())
 	}
 }
 
 func computePoolProvisionStatus(ctx context.Context, c *Client, environmentId string, computePoolId string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		computePool, resp, err := executeComputePoolRead(c.fcpmApiContext(ctx), c, environmentId, computePoolId)
+		computePool, resp, err := executeComputePoolRead(c.flinkV2ApiContext(ctx), c, environmentId, computePoolId)
 		if err != nil {
 			tflog.Warn(ctx, fmt.Sprintf("Error reading Flink Compute Pool %q: %s", computePoolId, createDescriptiveError(err, resp)), map[string]interface{}{computePoolLoggingKey: computePoolId})
 			return nil, stateUnknown, err
@@ -1283,16 +1283,16 @@ func computePoolProvisionStatus(ctx context.Context, c *Client, environmentId st
 		if computePool.Status.GetPhase() == stateProvisioning || computePool.Status.GetPhase() == stateProvisioned {
 			return computePool, computePool.Status.GetPhase(), nil
 		} else if computePool.Status.GetPhase() == stateFailed {
-			return nil, stateFailed, fmt.Errorf("flink Compute Pool %q provisioning status is %q", computePoolId, stateFailed)
+			return nil, stateFailed, fmt.Errorf("flinkv2 Compute Pool %q provisioning status is %q", computePoolId, stateFailed)
 		}
 		// Compute Pool is in an unexpected state
-		return nil, stateUnexpected, fmt.Errorf("flink Compute Pool %q is an unexpected state %q", computePoolId, computePool.Status.GetPhase())
+		return nil, stateUnexpected, fmt.Errorf("flinkv2 Compute Pool %q is an unexpected state %q", computePoolId, computePool.Status.GetPhase())
 	}
 }
 
 func nleProvisionStatus(ctx context.Context, c *Client, environmentId string, nleId string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		nle, resp, err := executeNLERead(c.netApiContext(ctx), c, nleId, environmentId)
+		nle, resp, err := executeNLERead(c.networkingV1ApiContext(ctx), c, nleId, environmentId)
 		if err != nil {
 			tflog.Warn(ctx, fmt.Sprintf("Error reading Network Link Endpoint %q: %s", nleId, createDescriptiveError(err, resp)), map[string]interface{}{networkLinkEndpointLoggingKey: nleId})
 			return nil, stateUnknown, err
@@ -1311,7 +1311,7 @@ func nleProvisionStatus(ctx context.Context, c *Client, environmentId string, nl
 
 func connectorProvisionStatus(ctx context.Context, c *Client, displayName, environmentId, clusterId string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		connector, resp, err := executeConnectorStatusCreate(c.connectApiContext(ctx), c, displayName, environmentId, clusterId)
+		connector, resp, err := executeConnectorStatusCreate(c.connectV1ApiContext(ctx), c, displayName, environmentId, clusterId)
 		if err != nil {
 			tflog.Warn(ctx, fmt.Sprintf("Error reading Connector %q=%q: %s", paramDisplayName, displayName, createDescriptiveError(err, resp)))
 			return nil, stateUnknown, err
@@ -1329,7 +1329,7 @@ func connectorProvisionStatus(ctx context.Context, c *Client, displayName, envir
 
 func connectorUpdateStatus(ctx context.Context, c *Client, displayName, environmentId, clusterId string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		connector, resp, err := executeConnectorStatusCreate(c.connectApiContext(ctx), c, displayName, environmentId, clusterId)
+		connector, resp, err := executeConnectorStatusCreate(c.connectV1ApiContext(ctx), c, displayName, environmentId, clusterId)
 		if err != nil {
 			tflog.Warn(ctx, fmt.Sprintf("Error reading Connector %q=%q: %s", paramDisplayName, displayName, createDescriptiveError(err, resp)))
 			return nil, stateUnknown, err
@@ -1353,7 +1353,7 @@ func kafkaMirrorTopicUpdateStatus(ctx context.Context, c *KafkaRestClient, clust
 
 func peeringProvisionStatus(ctx context.Context, c *Client, environmentId string, peeringId string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		peering, resp, err := executePeeringRead(c.netApiContext(ctx), c, environmentId, peeringId)
+		peering, resp, err := executePeeringRead(c.networkingV1ApiContext(ctx), c, environmentId, peeringId)
 		if err != nil {
 			tflog.Warn(ctx, fmt.Sprintf("Error reading Peering %q: %s", peeringId, createDescriptiveError(err, resp)), map[string]interface{}{peeringLoggingKey: peeringId})
 			return nil, stateUnknown, err
@@ -1372,7 +1372,7 @@ func peeringProvisionStatus(ctx context.Context, c *Client, environmentId string
 
 func tagProvisionStatus(ctx context.Context, c *CatalogRestClient, tagId, tagName string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		request := c.apiClient.TypesV1Api.GetTagDefByName(c.dataCatalogApiContext(ctx), tagName)
+		request := c.apiClient.TypesV1Api.GetTagDefByName(c.dataCatalogV1ApiContext(ctx), tagName)
 		tag, resp, err := request.Execute()
 		if err != nil && resp.StatusCode == http.StatusNotFound {
 			return nil, stateProvisioning, nil
@@ -1389,7 +1389,7 @@ func tagProvisionStatus(ctx context.Context, c *CatalogRestClient, tagId, tagNam
 
 func businessMetadataProvisionStatus(ctx context.Context, c *CatalogRestClient, businessMetadataId, businessMetadataName string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		request := c.apiClient.TypesV1Api.GetBusinessMetadataDefByName(c.dataCatalogApiContext(ctx), businessMetadataName)
+		request := c.apiClient.TypesV1Api.GetBusinessMetadataDefByName(c.dataCatalogV1ApiContext(ctx), businessMetadataName)
 		businessMetadata, resp, err := request.Execute()
 		if err != nil && resp.StatusCode == http.StatusNotFound {
 			return nil, stateProvisioning, nil
@@ -1406,7 +1406,7 @@ func businessMetadataProvisionStatus(ctx context.Context, c *CatalogRestClient, 
 
 func tagBindingProvisionStatus(ctx context.Context, c *CatalogRestClient, tagBindingId, tagName, entityName, entityType string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		request := c.apiClient.EntityV1Api.GetTags(c.dataCatalogApiContext(ctx), entityType, entityName)
+		request := c.apiClient.EntityV1Api.GetTags(c.dataCatalogV1ApiContext(ctx), entityType, entityName)
 		tagBindings, resp, err := request.Execute()
 		if err != nil && resp.StatusCode == http.StatusNotFound {
 			return nil, stateProvisioning, nil
@@ -1428,7 +1428,7 @@ func tagBindingProvisionStatus(ctx context.Context, c *CatalogRestClient, tagBin
 
 func businessMetadataBindingProvisionStatus(ctx context.Context, c *CatalogRestClient, businessMetadataBindingId, businessMetadataName, entityName, entityType string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		request := c.apiClient.EntityV1Api.GetBusinessMetadata(c.dataCatalogApiContext(ctx), entityType, entityName)
+		request := c.apiClient.EntityV1Api.GetBusinessMetadata(c.dataCatalogV1ApiContext(ctx), entityType, entityName)
 		businessMetadataBindings, resp, err := request.Execute()
 		if err != nil && resp.StatusCode == http.StatusNotFound {
 			return nil, stateProvisioning, nil
@@ -1473,7 +1473,7 @@ func schemaExporterProvisionStatus(ctx context.Context, c *SchemaRegistryRestCli
 
 func transitGatewayAttachmentProvisionStatus(ctx context.Context, c *Client, environmentId string, transitGatewayAttachmentId string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		transitGatewayAttachment, resp, err := executeTransitGatewayAttachmentRead(c.netApiContext(ctx), c, environmentId, transitGatewayAttachmentId)
+		transitGatewayAttachment, resp, err := executeTransitGatewayAttachmentRead(c.networkingV1ApiContext(ctx), c, environmentId, transitGatewayAttachmentId)
 		if err != nil {
 			tflog.Warn(ctx, fmt.Sprintf("Error reading Peering %q: %s", transitGatewayAttachmentId, createDescriptiveError(err, resp)), map[string]interface{}{transitGatewayAttachmentLoggingKey: transitGatewayAttachmentId})
 			return nil, stateUnknown, err
@@ -1492,7 +1492,7 @@ func transitGatewayAttachmentProvisionStatus(ctx context.Context, c *Client, env
 
 func dnsRecordDeleteStatus(ctx context.Context, c *Client, environmentId, dnsRecordId string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		dnsRecord, resp, err := executeDnsRecordRead(c.netAPApiContext(ctx), c, environmentId, dnsRecordId)
+		dnsRecord, resp, err := executeDnsRecordRead(c.networkingAccessPointV1ApiContext(ctx), c, environmentId, dnsRecordId)
 		if err != nil {
 			tflog.Warn(ctx, fmt.Sprintf("Error reading DNS Record %q: %s", dnsRecordId, createDescriptiveError(err, resp)), map[string]interface{}{dnsRecordKey: dnsRecordId})
 
@@ -1512,7 +1512,7 @@ func dnsRecordDeleteStatus(ctx context.Context, c *Client, environmentId, dnsRec
 
 func accessPointDeleteStatus(ctx context.Context, c *Client, environmentId, accessPointId string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		accessPoint, resp, err := executeAccessPointRead(c.netAPApiContext(ctx), c, environmentId, accessPointId)
+		accessPoint, resp, err := executeAccessPointRead(c.networkingAccessPointV1ApiContext(ctx), c, environmentId, accessPointId)
 		if err != nil {
 			tflog.Warn(ctx, fmt.Sprintf("Error reading Access Point %q: %s", accessPointId, createDescriptiveError(err)), map[string]interface{}{accessPointKey: accessPointId})
 
@@ -1532,7 +1532,7 @@ func accessPointDeleteStatus(ctx context.Context, c *Client, environmentId, acce
 
 func privateLinkAccessDeleteStatus(ctx context.Context, c *Client, environmentId, privateLinkAccessId string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		privateLinkAccess, resp, err := executePrivateLinkAccessRead(c.netApiContext(ctx), c, environmentId, privateLinkAccessId)
+		privateLinkAccess, resp, err := executePrivateLinkAccessRead(c.networkingV1ApiContext(ctx), c, environmentId, privateLinkAccessId)
 		if err != nil {
 			tflog.Warn(ctx, fmt.Sprintf("Error reading Private Link Access %q: %s", privateLinkAccessId, createDescriptiveError(err, resp)), map[string]interface{}{privateLinkAccessLoggingKey: privateLinkAccessId})
 
@@ -1552,7 +1552,7 @@ func privateLinkAccessDeleteStatus(ctx context.Context, c *Client, environmentId
 
 func peeringDeleteStatus(ctx context.Context, c *Client, environmentId, peeringId string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		peering, resp, err := executePeeringRead(c.netApiContext(ctx), c, environmentId, peeringId)
+		peering, resp, err := executePeeringRead(c.networkingV1ApiContext(ctx), c, environmentId, peeringId)
 		if err != nil {
 			tflog.Warn(ctx, fmt.Sprintf("Error reading Peering %q: %s", peeringId, createDescriptiveError(err, resp)), map[string]interface{}{peeringLoggingKey: peeringId})
 
@@ -1572,7 +1572,7 @@ func peeringDeleteStatus(ctx context.Context, c *Client, environmentId, peeringI
 
 func nleDeleteStatus(ctx context.Context, c *Client, environmentId, nleId string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		nle, resp, err := executeNLERead(c.netApiContext(ctx), c, nleId, environmentId)
+		nle, resp, err := executeNLERead(c.networkingV1ApiContext(ctx), c, nleId, environmentId)
 		if err != nil {
 			tflog.Warn(ctx, fmt.Sprintf("Error reading Network Link Endpoint %q: %s", nleId, createDescriptiveError(err, resp)), map[string]interface{}{networkLinkEndpointLoggingKey: nleId})
 
@@ -1592,7 +1592,7 @@ func nleDeleteStatus(ctx context.Context, c *Client, environmentId, nleId string
 
 func transitGatewayAttachmentDeleteStatus(ctx context.Context, c *Client, environmentId, transitGatewayAttachmentId string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		transitGatewayAttachment, resp, err := executeTransitGatewayAttachmentRead(c.netApiContext(ctx), c, environmentId, transitGatewayAttachmentId)
+		transitGatewayAttachment, resp, err := executeTransitGatewayAttachmentRead(c.networkingV1ApiContext(ctx), c, environmentId, transitGatewayAttachmentId)
 		if err != nil {
 			tflog.Warn(ctx, fmt.Sprintf("Error reading Transit Gateway Attachment %q: %s", transitGatewayAttachmentId, createDescriptiveError(err, resp)), map[string]interface{}{transitGatewayAttachmentLoggingKey: transitGatewayAttachmentId})
 
@@ -1612,7 +1612,7 @@ func transitGatewayAttachmentDeleteStatus(ctx context.Context, c *Client, enviro
 
 func cloudApiKeySyncStatus(ctx context.Context, c *Client, cloudApiKey, cloudApiSecret string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		_, resp, err := c.orgClient.EnvironmentsOrgV2Api.ListOrgV2Environments(orgApiContext(ctx, cloudApiKey, cloudApiSecret)).Execute()
+		_, resp, err := c.orgV2Client.EnvironmentsOrgV2Api.ListOrgV2Environments(orgV2ApiContext(ctx, cloudApiKey, cloudApiSecret)).Execute()
 		if resp != nil && resp.StatusCode == http.StatusOK {
 			tflog.Debug(ctx, fmt.Sprintf("Finishing Cloud API Key %q sync process: Received %d status code when listing environments", cloudApiKey, resp.StatusCode), map[string]interface{}{apiKeyLoggingKey: cloudApiKey})
 			return 0, stateDone, nil
@@ -1725,14 +1725,14 @@ func waitForKafkaClusterToBeDeleted(ctx context.Context, c *Client, environmentI
 	stateConf := &resource.StateChangeConf{
 		Pending:      []string{stateInProgress},
 		Target:       []string{stateDone},
-		Refresh:      kafkaClusterDeleteStatus(c.cmkApiContext(ctx), c, environmentId, clusterId),
+		Refresh:      kafkaClusterDeleteStatus(c.cmkV2ApiContext(ctx), c, environmentId, clusterId),
 		Timeout:      30 * time.Minute, // Kafka clusters can take up to 30 minutes to be fully deleted
 		Delay:        delay,
 		PollInterval: pollInterval,
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for Kafka Cluster %q to be deleted", clusterId), map[string]interface{}{kafkaClusterLoggingKey: clusterId})
-	if _, err := stateConf.WaitForStateContext(c.cmkApiContext(ctx)); err != nil {
+	if _, err := stateConf.WaitForStateContext(c.cmkV2ApiContext(ctx)); err != nil {
 		return err
 	}
 	return nil
@@ -1740,7 +1740,7 @@ func waitForKafkaClusterToBeDeleted(ctx context.Context, c *Client, environmentI
 
 func kafkaClusterDeleteStatus(ctx context.Context, c *Client, environmentId, clusterId string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
-		cluster, resp, err := executeKafkaRead(c.cmkApiContext(ctx), c, environmentId, clusterId)
+		cluster, resp, err := executeKafkaRead(c.cmkV2ApiContext(ctx), c, environmentId, clusterId)
 		if err != nil {
 			tflog.Warn(ctx, fmt.Sprintf("Error reading Kafka Cluster %q: %s", clusterId, createDescriptiveError(err, resp)), map[string]interface{}{kafkaClusterLoggingKey: clusterId})
 

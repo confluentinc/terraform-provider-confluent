@@ -160,9 +160,9 @@ func loadUsers(ctx context.Context, c *Client) ([]v2.IamV2User, error) {
 
 func executeListUsers(ctx context.Context, c *Client, pageToken string) (v2.IamV2UserList, *http.Response, error) {
 	if pageToken != "" {
-		return c.iamClient.UsersIamV2Api.ListIamV2Users(c.iamApiContext(ctx)).PageSize(listUsersPageSize).PageToken(pageToken).Execute()
+		return c.iamV2Client.UsersIamV2Api.ListIamV2Users(c.iamV2ApiContext(ctx)).PageSize(listUsersPageSize).PageToken(pageToken).Execute()
 	} else {
-		return c.iamClient.UsersIamV2Api.ListIamV2Users(c.iamApiContext(ctx)).PageSize(listUsersPageSize).Execute()
+		return c.iamV2Client.UsersIamV2Api.ListIamV2Users(c.iamV2ApiContext(ctx)).PageSize(listUsersPageSize).Execute()
 	}
 }
 
@@ -170,7 +170,7 @@ func userDataSourceReadUsingId(ctx context.Context, d *schema.ResourceData, meta
 	tflog.Debug(ctx, fmt.Sprintf("Reading User %q=%q", paramId, userId), map[string]interface{}{userLoggingKey: userId})
 
 	c := meta.(*Client)
-	user, resp, err := executeUserRead(c.iamApiContext(ctx), c, userId)
+	user, resp, err := executeUserRead(c.iamV2ApiContext(ctx), c, userId)
 	if err != nil {
 		return diag.Errorf("error reading User %q: %s", userId, createDescriptiveError(err, resp))
 	}
@@ -220,6 +220,6 @@ func orgHasMultipleUsersWithTargetEmail(users []v2.IamV2User, email string) bool
 }
 
 func executeUserRead(ctx context.Context, c *Client, userId string) (v2.IamV2User, *http.Response, error) {
-	req := c.iamClient.UsersIamV2Api.GetIamV2User(c.iamApiContext(ctx), userId)
+	req := c.iamV2Client.UsersIamV2Api.GetIamV2User(c.iamV2ApiContext(ctx), userId)
 	return req.Execute()
 }

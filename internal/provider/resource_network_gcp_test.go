@@ -197,7 +197,7 @@ func testAccCheckGcpNetworkDestroy(s *terraform.State) error {
 			continue
 		}
 		deletedGcpNetworkId := rs.Primary.ID
-		req := c.netClient.NetworksNetworkingV1Api.GetNetworkingV1Network(c.netApiContext(context.Background()), deletedGcpNetworkId).Environment(gcpNetworkEnvironmentId)
+		req := c.networkingV1Client.NetworksNetworkingV1Api.GetNetworkingV1Network(c.networkingV1ApiContext(context.Background()), deletedGcpNetworkId).Environment(gcpNetworkEnvironmentId)
 		deletedGcpNetwork, response, err := req.Execute()
 		if response != nil && response.StatusCode == http.StatusNotFound {
 			return nil

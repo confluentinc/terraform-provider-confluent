@@ -246,7 +246,7 @@ func testAccCheckEnvironmentDestroy(s *terraform.State) error {
 			continue
 		}
 		deletedEnvironmentId := rs.Primary.ID
-		req := c.orgClient.EnvironmentsOrgV2Api.GetOrgV2Environment(c.orgApiContext(context.Background()), deletedEnvironmentId)
+		req := c.orgV2Client.EnvironmentsOrgV2Api.GetOrgV2Environment(c.orgV2ApiContext(context.Background()), deletedEnvironmentId)
 		deletedEnvironment, response, err := req.Execute()
 		if response != nil && (response.StatusCode == http.StatusForbidden || response.StatusCode == http.StatusNotFound) {
 			// v2/environments/{nonExistentEnvId/deletedEnvID} returns http.StatusNotFound

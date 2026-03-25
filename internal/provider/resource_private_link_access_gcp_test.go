@@ -182,7 +182,7 @@ func testAccCheckGcpPlaDestroy(s *terraform.State) error {
 			continue
 		}
 		deletedPrivateLinkAccessId := rs.Primary.ID
-		req := c.netClient.PrivateLinkAccessesNetworkingV1Api.GetNetworkingV1PrivateLinkAccess(c.netApiContext(context.Background()), deletedPrivateLinkAccessId).Environment(gcpPlaEnvironmentId)
+		req := c.networkingV1Client.PrivateLinkAccessesNetworkingV1Api.GetNetworkingV1PrivateLinkAccess(c.networkingV1ApiContext(context.Background()), deletedPrivateLinkAccessId).Environment(gcpPlaEnvironmentId)
 		deletedPrivateLinkAccess, response, err := req.Execute()
 		if response != nil && response.StatusCode == http.StatusNotFound {
 			return nil

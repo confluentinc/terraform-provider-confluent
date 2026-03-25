@@ -127,9 +127,9 @@ func loadEnvironments(ctx context.Context, c *Client) ([]v2.OrgV2Environment, er
 
 func executeListEnvironments(ctx context.Context, c *Client, pageToken string) (v2.OrgV2EnvironmentList, *http.Response, error) {
 	if pageToken != "" {
-		return c.orgClient.EnvironmentsOrgV2Api.ListOrgV2Environments(c.orgApiContext(ctx)).PageSize(listEnvironmentsPageSize).PageToken(pageToken).Execute()
+		return c.orgV2Client.EnvironmentsOrgV2Api.ListOrgV2Environments(c.orgV2ApiContext(ctx)).PageSize(listEnvironmentsPageSize).PageToken(pageToken).Execute()
 	} else {
-		return c.orgClient.EnvironmentsOrgV2Api.ListOrgV2Environments(c.orgApiContext(ctx)).PageSize(listEnvironmentsPageSize).Execute()
+		return c.orgV2Client.EnvironmentsOrgV2Api.ListOrgV2Environments(c.orgV2ApiContext(ctx)).PageSize(listEnvironmentsPageSize).Execute()
 	}
 }
 
@@ -137,7 +137,7 @@ func environmentDataSourceReadUsingId(ctx context.Context, d *schema.ResourceDat
 	tflog.Debug(ctx, fmt.Sprintf("Reading Environment %q=%q", paramId, environmentId), map[string]interface{}{environmentLoggingKey: environmentId})
 
 	c := meta.(*Client)
-	environment, resp, err := executeEnvironmentRead(c.orgApiContext(ctx), c, environmentId)
+	environment, resp, err := executeEnvironmentRead(c.orgV2ApiContext(ctx), c, environmentId)
 	if err != nil {
 		return diag.Errorf("error reading Environment %q: %s", environmentId, createDescriptiveError(err, resp))
 	}

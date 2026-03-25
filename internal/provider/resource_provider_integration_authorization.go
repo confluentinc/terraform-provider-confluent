@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"strings"
 
-	piv2 "github.com/confluentinc/ccloud-sdk-go-v2/provider-integration/v2"
+	providerintegrationv2 "github.com/confluentinc/ccloud-sdk-go-v2/provider-integration/v2"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -111,7 +111,7 @@ func providerIntegrationAuthorizationCreate(ctx context.Context, d *schema.Resou
 	tflog.Info(ctx, fmt.Sprintf("Starting authorization Create for integration %s", integrationId))
 
 	// First, read the integration to get current state
-	req := c.piV2Client.IntegrationsPimV2Api.GetPimV2Integration(c.piV2ApiContext(ctx), integrationId).Environment(environmentId)
+	req := c.providerIntegrationV2Client.IntegrationsPimV2Api.GetPimV2Integration(c.providerIntegrationV2ApiContext(ctx), integrationId).Environment(environmentId)
 	integration, resp, err := req.Execute()
 	if err != nil {
 		return diag.FromErr(createDescriptiveError(err, resp))
@@ -124,7 +124,7 @@ func providerIntegrationAuthorizationCreate(ctx context.Context, d *schema.Resou
 	}
 
 	// Build config based on provider type
-	var updateConfig piv2.PimV2IntegrationUpdateConfigOneOf
+	var updateConfig providerintegrationv2.PimV2IntegrationUpdateConfigOneOf
 	provider := integration.GetProvider()
 
 	switch strings.ToUpper(provider) {
@@ -136,11 +136,11 @@ func providerIntegrationAuthorizationCreate(ctx context.Context, d *schema.Resou
 		azureMap := azureConfig[0].(map[string]interface{})
 		customerTenantId := azureMap[paramAzureCustomerTenantId].(string)
 
-		azureIntegrationConfig := &piv2.PimV2AzureIntegrationConfig{
+		azureIntegrationConfig := &providerintegrationv2.PimV2AzureIntegrationConfig{
 			Kind:                  "AzureIntegrationConfig",
 			CustomerAzureTenantId: &customerTenantId,
 		}
-		updateConfig = piv2.PimV2AzureIntegrationConfigAsPimV2IntegrationUpdateConfigOneOf(azureIntegrationConfig)
+		updateConfig = providerintegrationv2.PimV2AzureIntegrationConfigAsPimV2IntegrationUpdateConfigOneOf(azureIntegrationConfig)
 
 	case providerGcp:
 		gcpConfig := d.Get(paramGcpAuth).([]interface{})
@@ -150,28 +150,28 @@ func providerIntegrationAuthorizationCreate(ctx context.Context, d *schema.Resou
 		gcpMap := gcpConfig[0].(map[string]interface{})
 		customerServiceAccount := gcpMap[paramGcpCustomerServiceAccount].(string)
 
-		gcpIntegrationConfig := &piv2.PimV2GcpIntegrationConfig{
+		gcpIntegrationConfig := &providerintegrationv2.PimV2GcpIntegrationConfig{
 			Kind:                         "GcpIntegrationConfig",
 			CustomerGoogleServiceAccount: &customerServiceAccount,
 		}
-		updateConfig = piv2.PimV2GcpIntegrationConfigAsPimV2IntegrationUpdateConfigOneOf(gcpIntegrationConfig)
+		updateConfig = providerintegrationv2.PimV2GcpIntegrationConfigAsPimV2IntegrationUpdateConfigOneOf(gcpIntegrationConfig)
 
 	default:
 		return diag.Errorf("Unsupported provider: %s", provider)
 	}
 
-	var updatedIntegration *piv2.PimV2Integration
+	var updatedIntegration *providerintegrationv2.PimV2Integration
 
 	// Only PATCH if integration is still in DRAFT status
 	if status == "DRAFT" {
 		// PATCH the integration with the customer configuration to change status from DRAFT to CREATED
 		tflog.Info(ctx, fmt.Sprintf("Updating provider integration %q with customer configuration", integrationId))
 
-		updateReq := piv2.PimV2IntegrationUpdate{}
+		updateReq := providerintegrationv2.PimV2IntegrationUpdate{}
 		updateReq.SetConfig(updateConfig)
-		updateReq.SetEnvironment(piv2.ObjectReference{Id: environmentId})
+		updateReq.SetEnvironment(providerintegrationv2.ObjectReference{Id: environmentId})
 
-		patchApiReq := c.piV2Client.IntegrationsPimV2Api.UpdatePimV2Integration(c.piV2ApiContext(ctx), integrationId).PimV2IntegrationUpdate(updateReq)
+		patchApiReq := c.providerIntegrationV2Client.IntegrationsPimV2Api.UpdatePimV2Integration(c.providerIntegrationV2ApiContext(ctx), integrationId).PimV2IntegrationUpdate(updateReq)
 		patchedIntegration, _, err := patchApiReq.Execute()
 		if err != nil {
 			return diag.Errorf("Failed to update provider integration %q with customer configuration: %s", integrationId, createDescriptiveError(err))
@@ -209,7 +209,7 @@ func providerIntegrationAuthorizationRead(ctx context.Context, d *schema.Resourc
 	integrationId := d.Id()
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
 
-	req := c.piV2Client.IntegrationsPimV2Api.GetPimV2Integration(c.piV2ApiContext(ctx), integrationId).Environment(environmentId)
+	req := c.providerIntegrationV2Client.IntegrationsPimV2Api.GetPimV2Integration(c.providerIntegrationV2ApiContext(ctx), integrationId).Environment(environmentId)
 	integration, resp, err := req.Execute()
 	if err != nil {
 		tflog.Warn(ctx, fmt.Sprintf("Error reading provider integration authorization %q: %s", d.Id(), createDescriptiveError(err)), map[string]interface{}{providerIntegrationLoggingKey: d.Id()})
@@ -257,7 +257,7 @@ func providerIntegrationAuthorizationRead(ctx context.Context, d *schema.Resourc
 	d.SetId(integration.GetId())
 
 	// Always validate to show warnings if cloud provider setup is incomplete
-	return validateIntegrationSetup(ctx, c, integration.GetId(), environmentId, integration.GetStatus(), piv2.PimV2IntegrationUpdateConfigOneOf{})
+	return validateIntegrationSetup(ctx, c, integration.GetId(), environmentId, integration.GetStatus(), providerintegrationv2.PimV2IntegrationUpdateConfigOneOf{})
 }
 
 func providerIntegrationAuthorizationUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -293,19 +293,19 @@ func providerIntegrationAuthorizationImport(ctx context.Context, d *schema.Resou
 }
 
 // validateIntegrationSetup validates the integration configuration and returns warnings if setup is incomplete
-func validateIntegrationSetup(ctx context.Context, c *Client, integrationId, environmentId, status string, updateConfig piv2.PimV2IntegrationUpdateConfigOneOf) diag.Diagnostics {
+func validateIntegrationSetup(ctx context.Context, c *Client, integrationId, environmentId, status string, updateConfig providerintegrationv2.PimV2IntegrationUpdateConfigOneOf) diag.Diagnostics {
 	tflog.Info(ctx, fmt.Sprintf("Validating integration %q configuration...", integrationId))
 
 	// Build validate request with correct types
-	validateReq := piv2.PimV2IntegrationValidateRequest{}
+	validateReq := providerintegrationv2.PimV2IntegrationValidateRequest{}
 	validateReq.SetId(integrationId)
-	validateReq.SetEnvironment(piv2.GlobalObjectReference{Id: environmentId})
+	validateReq.SetEnvironment(providerintegrationv2.GlobalObjectReference{Id: environmentId})
 
 	// For CREATED integrations, don't send config (it's already set)
 	// For DRAFT integrations that were just patched, use the config from the update
 	if status == "DRAFT" && (updateConfig.PimV2AzureIntegrationConfig != nil || updateConfig.PimV2GcpIntegrationConfig != nil) {
 		// Convert config to validate request config type
-		var validateConfig piv2.PimV2IntegrationValidateRequestConfigOneOf
+		var validateConfig providerintegrationv2.PimV2IntegrationValidateRequestConfigOneOf
 		if updateConfig.PimV2AzureIntegrationConfig != nil {
 			validateConfig.PimV2AzureIntegrationConfig = updateConfig.PimV2AzureIntegrationConfig
 		}
@@ -316,7 +316,7 @@ func validateIntegrationSetup(ctx context.Context, c *Client, integrationId, env
 	}
 	// For CREATED integrations, don't set config - the integration already has it
 
-	validateApiReq := c.piV2Client.IntegrationsPimV2Api.ValidatePimV2Integration(c.piV2ApiContext(ctx)).PimV2IntegrationValidateRequest(validateReq)
+	validateApiReq := c.providerIntegrationV2Client.IntegrationsPimV2Api.ValidatePimV2Integration(c.providerIntegrationV2ApiContext(ctx)).PimV2IntegrationValidateRequest(validateReq)
 	_, err := validateApiReq.Execute()
 	if err != nil {
 		// Return a warning instead of an error so the resource is created successfully
@@ -324,7 +324,7 @@ func validateIntegrationSetup(ctx context.Context, c *Client, integrationId, env
 		tflog.Warn(ctx, fmt.Sprintf("Validation failed for integration %q: %s", integrationId, createDescriptiveError(err)))
 
 		// Read the integration to determine the provider type for appropriate warning
-		req := c.piV2Client.IntegrationsPimV2Api.GetPimV2Integration(c.piV2ApiContext(ctx), integrationId).Environment(environmentId)
+		req := c.providerIntegrationV2Client.IntegrationsPimV2Api.GetPimV2Integration(c.providerIntegrationV2ApiContext(ctx), integrationId).Environment(environmentId)
 		integration, resp, readErr := req.Execute()
 		if readErr != nil {
 			return diag.FromErr(createDescriptiveError(readErr, resp))
@@ -353,7 +353,7 @@ func validateIntegrationSetup(ctx context.Context, c *Client, integrationId, env
 }
 
 // createAzureSetupWarning creates an Azure-specific setup warning with detailed instructions
-func createAzureSetupWarning(integration piv2.PimV2Integration) diag.Diagnostics {
+func createAzureSetupWarning(integration providerintegrationv2.PimV2Integration) diag.Diagnostics {
 	appId := "unknown"
 	if integration.Config != nil && integration.Config.PimV2AzureIntegrationConfig != nil {
 		appId = integration.Config.PimV2AzureIntegrationConfig.GetConfluentMultiTenantAppId()
@@ -369,7 +369,7 @@ func createAzureSetupWarning(integration piv2.PimV2Integration) diag.Diagnostics
 }
 
 // createGcpSetupWarning creates a GCP-specific setup warning with detailed instructions
-func createGcpSetupWarning(integration piv2.PimV2Integration) diag.Diagnostics {
+func createGcpSetupWarning(integration providerintegrationv2.PimV2Integration) diag.Diagnostics {
 	confluentServiceAccount := "unknown"
 	customerServiceAccount := "unknown"
 	if integration.Config != nil && integration.Config.PimV2GcpIntegrationConfig != nil {
@@ -381,7 +381,7 @@ func createGcpSetupWarning(integration piv2.PimV2Integration) diag.Diagnostics {
 		{
 			Severity: diag.Warning,
 			Summary:  "⏳ GCP setup required",
-			Detail:   fmt.Sprintf("Integration created successfully! Complete GCP IAM setup:\n\n1. Grant Service Account Token Creator role:\n   gcloud projects add-iam-policy-binding YOUR_PROJECT_ID \\\n     --member=\"serviceAccount:%s\" \\\n     --role=\"roles/iam.serviceAccountTokenCreator\" \\\n     --condition=\"expression=request.auth.claims.sub=='%s'\"\n\n2. Grant your service account (%s) permissions based on your connector needs\n\n3. Re-run 'terraform apply' to validate\n\nNote: IAM changes may take 1-7 minutes to propagate.", confluentServiceAccount, confluentServiceAccount, customerServiceAccount),
+			Detail:   fmt.Sprintf("Integration created successfully! Complete GCP IAM setup:\n\n1. Grant Service Account Token Creator role:\n   gcloud projects add-iam-policy-binding YOUR_PROJECT_ID \\\n     --member=\"serviceAccount:%s\" \\\n     --role=\"roles/iamv2.serviceAccountTokenCreator\" \\\n     --condition=\"expression=request.auth.claims.sub=='%s'\"\n\n2. Grant your service account (%s) permissions based on your connector needs\n\n3. Re-run 'terraform apply' to validate\n\nNote: IAM changes may take 1-7 minutes to propagate.", confluentServiceAccount, confluentServiceAccount, customerServiceAccount),
 		},
 	}
 }

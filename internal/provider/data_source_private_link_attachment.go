@@ -122,8 +122,8 @@ func privateLinkAttachmentDataSourceRead(ctx context.Context, d *schema.Resource
 	tflog.Debug(ctx, fmt.Sprintf("Reading Private Link Attachment %q=%q", paramId, plattId), map[string]interface{}{privateLinkAttachmentLoggingKey: plattId})
 
 	c := meta.(*Client)
-	request := c.netPLClient.PrivateLinkAttachmentsNetworkingV1Api.GetNetworkingV1PrivateLinkAttachment(c.netPLApiContext(ctx), plattId).Environment(environmentId)
-	platt, resp, err := c.netPLClient.PrivateLinkAttachmentsNetworkingV1Api.GetNetworkingV1PrivateLinkAttachmentExecute(request)
+	request := c.networkingPrivatelinkV1Client.PrivateLinkAttachmentsNetworkingV1Api.GetNetworkingV1PrivateLinkAttachment(c.networkingPrivatelinkV1ApiContext(ctx), plattId).Environment(environmentId)
+	platt, resp, err := c.networkingPrivatelinkV1Client.PrivateLinkAttachmentsNetworkingV1Api.GetNetworkingV1PrivateLinkAttachmentExecute(request)
 	if err != nil {
 		return diag.Errorf("error reading Private Link Attachment %q: %s", plattId, createDescriptiveError(err, resp))
 	}

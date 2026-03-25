@@ -37,7 +37,7 @@ var testPatchClusterLinkCredentialsConfigRequestSaslJaasConfigJson = fmt.Sprintf
 	`{`+
 		`"name":"sasl.jaas.config",`+
 		`"operation":"SET",`+
-		`"value":"org.apache.kafka.common.security.plain.PlainLoginModule required username=\"%s\" password=\"%s\";"`+
+		`"value":"orgv2.apache.kafka.common.security.plain.PlainLoginModule required username=\"%s\" password=\"%s\";"`+
 		`}`,
 	sourceClusterApiKeyUpdated,
 	sourceClusterApiSecretUpdated,

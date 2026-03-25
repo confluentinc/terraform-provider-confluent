@@ -166,7 +166,7 @@ func testAccCheckGroupMappingDestroy(s *terraform.State) error {
 			continue
 		}
 		deletedGroupMappingId := rs.Primary.ID
-		req := c.ssoClient.GroupMappingsIamV2SsoApi.GetIamV2SsoGroupMapping(c.iamApiContext(context.Background()), deletedGroupMappingId)
+		req := c.ssoV2Client.GroupMappingsIamV2SsoApi.GetIamV2SsoGroupMapping(c.iamV2ApiContext(context.Background()), deletedGroupMappingId)
 		deletedGroupMapping, response, err := req.Execute()
 		if response != nil && (response.StatusCode == http.StatusForbidden || response.StatusCode == http.StatusNotFound) {
 			// iam/v2/sso/{nonExistentGroupMappingId/deletedGroupMappingID} returns http.StatusForbidden instead of http.StatusNotFound

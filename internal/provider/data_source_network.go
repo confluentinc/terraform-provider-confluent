@@ -18,7 +18,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	net "github.com/confluentinc/ccloud-sdk-go-v2/networking/v1"
+	networkingv1 "github.com/confluentinc/ccloud-sdk-go-v2/networking/v1"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -141,7 +141,7 @@ func networkDataSourceReadUsingId(ctx context.Context, d *schema.ResourceData, m
 	tflog.Debug(ctx, fmt.Sprintf("Reading Network %q=%q", paramId, networkId), map[string]interface{}{networkLoggingKey: networkId})
 
 	c := meta.(*Client)
-	network, resp, err := executeNetworkRead(c.netApiContext(ctx), c, environmentId, networkId)
+	network, resp, err := executeNetworkRead(c.networkingV1ApiContext(ctx), c, environmentId, networkId)
 	if err != nil {
 		return diag.Errorf("error reading Network %q: %s", networkId, createDescriptiveError(err, resp))
 	}
@@ -157,7 +157,7 @@ func networkDataSourceReadUsingId(ctx context.Context, d *schema.ResourceData, m
 	return nil
 }
 
-func orgHasMultipleNetworksWithTargetDisplayName(clusters []net.NetworkingV1Network, displayName string) bool {
+func orgHasMultipleNetworksWithTargetDisplayName(clusters []networkingv1.NetworkingV1Network, displayName string) bool {
 	var numberOfClustersWithTargetDisplayName = 0
 	for _, cluster := range clusters {
 		if cluster.Spec.GetDisplayName() == displayName {
@@ -167,8 +167,8 @@ func orgHasMultipleNetworksWithTargetDisplayName(clusters []net.NetworkingV1Netw
 	return numberOfClustersWithTargetDisplayName > 1
 }
 
-func loadNetworks(ctx context.Context, c *Client, environmentId string) ([]net.NetworkingV1Network, error) {
-	networks := make([]net.NetworkingV1Network, 0)
+func loadNetworks(ctx context.Context, c *Client, environmentId string) ([]networkingv1.NetworkingV1Network, error) {
+	networks := make([]networkingv1.NetworkingV1Network, 0)
 
 	allNetworksAreCollected := false
 	pageToken := ""
@@ -199,11 +199,11 @@ func loadNetworks(ctx context.Context, c *Client, environmentId string) ([]net.N
 	return networks, nil
 }
 
-func executeListNetworks(ctx context.Context, c *Client, environmentId, pageToken string) (net.NetworkingV1NetworkList, *http.Response, error) {
+func executeListNetworks(ctx context.Context, c *Client, environmentId, pageToken string) (networkingv1.NetworkingV1NetworkList, *http.Response, error) {
 	if pageToken != "" {
-		return c.netClient.NetworksNetworkingV1Api.ListNetworkingV1Networks(c.netApiContext(ctx)).Environment(environmentId).PageSize(listNetworksPageSize).PageToken(pageToken).Execute()
+		return c.networkingV1Client.NetworksNetworkingV1Api.ListNetworkingV1Networks(c.networkingV1ApiContext(ctx)).Environment(environmentId).PageSize(listNetworksPageSize).PageToken(pageToken).Execute()
 	} else {
-		return c.netClient.NetworksNetworkingV1Api.ListNetworkingV1Networks(c.netApiContext(ctx)).Environment(environmentId).PageSize(listNetworksPageSize).Execute()
+		return c.networkingV1Client.NetworksNetworkingV1Api.ListNetworkingV1Networks(c.networkingV1ApiContext(ctx)).Environment(environmentId).PageSize(listNetworksPageSize).Execute()
 	}
 }
 
