@@ -581,7 +581,7 @@ func schemaCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 	if !validationResponse.GetIsCompatible() {
 		// Set old value to paramSchema to avoid TF drift
 		// It will be applicable if schemaCreate() is called from schemaUpdate()
-		// since d.SetId() is called in the end of schemaCreate()
+		// since d.SetId() is called in the endpointv1 of schemaCreate()
 		oldObj, _ := d.GetChange(paramSchema)
 		oldSchema := oldObj.(string)
 		d.Set(paramSchema, oldSchema)

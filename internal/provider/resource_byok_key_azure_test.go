@@ -96,13 +96,13 @@ func TestAccAzureBYOKKey(t *testing.T) {
 
 func testAccCheckByokKeyDestroy(s *terraform.State) error {
 	c := testAccProvider.Meta().(*Client)
-	// Loop through the resources in state, verifying each azure byok key is destroyed
+	// Loop through the resources in state, verifying each azure byokv1 key is destroyed
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "confluent_byok_key" {
 			continue
 		}
 		deletedKeyId := rs.Primary.ID
-		req := c.byokClient.KeysByokV1Api.GetByokV1Key(c.byokApiContext(context.Background()), deletedKeyId)
+		req := c.byokV1Client.KeysByokV1Api.GetByokV1Key(c.byokV1ApiContext(context.Background()), deletedKeyId)
 		deletedKey, response, err := req.Execute()
 		if response != nil && response.StatusCode == http.StatusNotFound {
 			return nil

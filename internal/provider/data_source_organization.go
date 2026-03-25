@@ -45,7 +45,7 @@ func organizationDataSourceRead(ctx context.Context, d *schema.ResourceData, met
 	tflog.Debug(ctx, "Reading Organization")
 
 	c := meta.(*Client)
-	environments, resp, err := c.orgClient.EnvironmentsOrgV2Api.ListOrgV2Environments(c.orgApiContext(ctx)).Execute()
+	environments, resp, err := c.orgV2Client.EnvironmentsOrgV2Api.ListOrgV2Environments(c.orgV2ApiContext(ctx)).Execute()
 	if err != nil {
 		return diag.Errorf("error reading Environments: %s", createDescriptiveError(err, resp))
 	}

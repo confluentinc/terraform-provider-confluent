@@ -152,13 +152,13 @@ func TestAccConnectArtifactAzure(t *testing.T) {
 
 func testAccCheckConnectArtifactDestroyAzure(s *terraform.State) error {
 	c := testAccProvider.Meta().(*Client)
-	// Loop through the resources in state, verifying each connect artifact is destroyed
+	// Loop through the resources in state, verifying each connectv1 artifact is destroyed
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "confluent_connect_artifact" {
 			continue
 		}
 		deletedArtifactId := rs.Primary.ID
-		req := c.camClient.ConnectArtifactsCamV1Api.GetCamV1ConnectArtifact(c.camApiContext(context.Background()), deletedArtifactId).
+		req := c.camV1Client.ConnectArtifactsCamV1Api.GetCamV1ConnectArtifact(c.camV1ApiContext(context.Background()), deletedArtifactId).
 			SpecCloud(connectArtifactCloudAzure).
 			Environment(connectArtifactEnvironmentId)
 		deletedArtifact, response, err := req.Execute()
@@ -167,7 +167,7 @@ func testAccCheckConnectArtifactDestroyAzure(s *terraform.State) error {
 		} else if err == nil && deletedArtifact.GetId() != "" {
 			// Otherwise return the error
 			if deletedArtifact.GetId() == rs.Primary.ID {
-				return fmt.Errorf("connect artifact (%s) still exists", rs.Primary.ID)
+				return fmt.Errorf("connectv1 artifact (%s) still exists", rs.Primary.ID)
 			}
 		}
 		return err

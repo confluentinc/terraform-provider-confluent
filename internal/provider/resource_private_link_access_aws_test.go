@@ -183,7 +183,7 @@ func testAccCheckAwsPlaDestroy(s *terraform.State) error {
 			continue
 		}
 		deletedPrivateLinkAccessId := rs.Primary.ID
-		req := c.netClient.PrivateLinkAccessesNetworkingV1Api.GetNetworkingV1PrivateLinkAccess(c.netApiContext(context.Background()), deletedPrivateLinkAccessId).Environment(awsPlaEnvironmentId)
+		req := c.networkingV1Client.PrivateLinkAccessesNetworkingV1Api.GetNetworkingV1PrivateLinkAccess(c.networkingV1ApiContext(context.Background()), deletedPrivateLinkAccessId).Environment(awsPlaEnvironmentId)
 		deletedPrivateLinkAccess, response, err := req.Execute()
 		if response != nil && response.StatusCode == http.StatusNotFound {
 			return nil

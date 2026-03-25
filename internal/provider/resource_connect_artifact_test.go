@@ -292,13 +292,13 @@ func TestAccConnectArtifactZip(t *testing.T) {
 
 func testAccCheckConnectArtifactDestroy(s *terraform.State) error {
 	c := testAccProvider.Meta().(*Client)
-	// Loop through the resources in state, verifying each connect artifact is destroyed
+	// Loop through the resources in state, verifying each connectv1 artifact is destroyed
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "confluent_connect_artifact" {
 			continue
 		}
 		deletedArtifactId := rs.Primary.ID
-		req := c.camClient.ConnectArtifactsCamV1Api.GetCamV1ConnectArtifact(c.camApiContext(context.Background()), deletedArtifactId).
+		req := c.camV1Client.ConnectArtifactsCamV1Api.GetCamV1ConnectArtifact(c.camV1ApiContext(context.Background()), deletedArtifactId).
 			SpecCloud(connectArtifactCloud).
 			Environment(connectArtifactEnvironmentId)
 		deletedArtifact, response, err := req.Execute()
@@ -307,7 +307,7 @@ func testAccCheckConnectArtifactDestroy(s *terraform.State) error {
 		} else if err == nil && deletedArtifact.GetId() != "" {
 			// Otherwise return the error
 			if deletedArtifact.GetId() == rs.Primary.ID {
-				return fmt.Errorf("connect artifact (%s) still exists", rs.Primary.ID)
+				return fmt.Errorf("connectv1 artifact (%s) still exists", rs.Primary.ID)
 			}
 		}
 		return err
@@ -355,10 +355,10 @@ func testAccCheckConnectArtifactExists(n string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
-			return fmt.Errorf("connect artifact resource %s not found", n)
+			return fmt.Errorf("connectv1 artifact resource %s not found", n)
 		}
 		if rs.Primary.ID == "" {
-			return fmt.Errorf("connect artifact resource %s has no ID set", n)
+			return fmt.Errorf("connectv1 artifact resource %s has no ID set", n)
 		}
 		return nil
 	}

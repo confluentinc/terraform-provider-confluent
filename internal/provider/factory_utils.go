@@ -8,7 +8,7 @@ import (
 	"github.com/hashicorp/go-retryablehttp"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 
-	dc "github.com/confluentinc/ccloud-sdk-go-v2/data-catalog/v1"
+	datacatalogv1 "github.com/confluentinc/ccloud-sdk-go-v2/data-catalog/v1"
 	fgb "github.com/confluentinc/ccloud-sdk-go-v2/flink-gateway/v1"
 	kafkarestv3 "github.com/confluentinc/ccloud-sdk-go-v2/kafkarest/v3"
 	schemaregistry "github.com/confluentinc/ccloud-sdk-go-v2/schema-registry/v1"
@@ -96,7 +96,7 @@ func (f CatalogRestClientFactory) CreateCatalogRestClient(restEndpoint, clusterI
 	var opts []RetryableClientFactoryOption = []RetryableClientFactoryOption{}
 
 	// Setup DC API Client
-	dataCatalogConfig := dc.NewConfiguration()
+	dataCatalogConfig := datacatalogv1.NewConfiguration()
 	if f.maxRetries != nil {
 		opts = append(opts, WithMaxRetries(*f.maxRetries))
 	}
@@ -109,7 +109,7 @@ func (f CatalogRestClientFactory) CreateCatalogRestClient(restEndpoint, clusterI
 	}
 
 	return &CatalogRestClient{
-		apiClient:                    dc.NewAPIClient(dataCatalogConfig),
+		apiClient:                    datacatalogv1.NewAPIClient(dataCatalogConfig),
 		externalAccessToken:          token,
 		clusterId:                    clusterId,
 		clusterApiKey:                clusterApiKey,

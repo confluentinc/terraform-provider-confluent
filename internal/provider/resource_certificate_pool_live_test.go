@@ -101,7 +101,7 @@ func TestAccCertificatePoolLive(t *testing.T) {
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_certificate_pool.%s", poolResourceLabel), "display_name", poolUpdatedDisplayName),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_certificate_pool.%s", poolResourceLabel), "description", "Updated Certificate Pool description"),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_certificate_pool.%s", poolResourceLabel), "external_identifier", "CN"),
-					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_certificate_pool.%s", poolResourceLabel), "filter", "CN=='test-ca.confluent.io'"),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_certificate_pool.%s", poolResourceLabel), "filter", "CN=='test-certificateauthorityv2.confluent.io'"),
 				),
 			},
 			{
@@ -128,7 +128,7 @@ func testAccCheckCertificatePoolLiveDestroy(s *terraform.State) error {
 		}
 		deletedPoolId := rs.Primary.ID
 		certificateAuthorityId := rs.Primary.Attributes["certificate_authority.0.id"]
-		req := c.caClient.CertificateIdentityPoolsIamV2Api.GetIamV2CertificateIdentityPool(c.caApiContext(context.Background()), certificateAuthorityId, deletedPoolId)
+		req := c.certificateAuthorityV2Client.CertificateIdentityPoolsIamV2Api.GetIamV2CertificateIdentityPool(c.certificateAuthorityV2ApiContext(context.Background()), certificateAuthorityId, deletedPoolId)
 		deletedPool, response, err := req.Execute()
 		if response != nil && (response.StatusCode == http.StatusForbidden || response.StatusCode == http.StatusNotFound) {
 			// If the error is equivalent to http.StatusNotFound, the Certificate Pool is destroyed.
@@ -212,7 +212,7 @@ func testAccCheckCertificatePoolUpdateLiveConfig(endpoint, caResourceLabel, pool
 		display_name = "%s"
 		description = "Updated Certificate Pool description"
 		external_identifier = "CN"
-		filter = "CN=='test-ca.confluent.io'"
+		filter = "CN=='test-certificateauthorityv2.confluent.io'"
 	}
 	`, endpoint, apiKey, apiSecret, poolResourceLabel, certificateAuthorityId, poolDisplayName)
 	}
@@ -241,7 +241,7 @@ EOT
 		display_name = "%s"
 		description = "Updated Certificate Pool description"
 		external_identifier = "CN"
-		filter = "CN=='test-ca.confluent.io'"
+		filter = "CN=='test-certificateauthorityv2.confluent.io'"
 	}
 	`, endpoint, apiKey, apiSecret, caResourceLabel, caDisplayName, certChain, poolResourceLabel, caResourceLabel, poolDisplayName)
 }

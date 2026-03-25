@@ -206,8 +206,8 @@ func gatewayDataSourceRead(ctx context.Context, d *schema.ResourceData, meta int
 	tflog.Debug(ctx, fmt.Sprintf("Reading Gateway %q=%q", paramId, gatewayId), map[string]interface{}{gatewayKey: gatewayId})
 
 	c := meta.(*Client)
-	request := c.netGatewayClient.GatewaysNetworkingV1Api.GetNetworkingV1Gateway(c.netGWApiContext(ctx), gatewayId).Environment(environmentId)
-	gateway, resp, err := c.netGatewayClient.GatewaysNetworkingV1Api.GetNetworkingV1GatewayExecute(request)
+	request := c.networkingGatewayV1Client.GatewaysNetworkingV1Api.GetNetworkingV1Gateway(c.networkingGatewayV1ApiContext(ctx), gatewayId).Environment(environmentId)
+	gateway, resp, err := c.networkingGatewayV1Client.GatewaysNetworkingV1Api.GetNetworkingV1GatewayExecute(request)
 	if err != nil {
 		return diag.Errorf("error reading Gateway %q: %s", gatewayId, createDescriptiveError(err, resp))
 	}

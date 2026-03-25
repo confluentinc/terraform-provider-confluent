@@ -157,8 +157,8 @@ func populateKafkaClusterResult(cluster v2.CmkV2Cluster) (map[string]interface{}
 		paramId: cluster.Spec.Network.GetId(),
 	}
 
-	byok := make([]interface{}, 1)
-	byok[0] = map[string]interface{}{
+	byokv1 := make([]interface{}, 1)
+	byokv1[0] = map[string]interface{}{
 		paramId: cluster.Spec.Byok.GetId(),
 	}
 
@@ -188,7 +188,7 @@ func populateKafkaClusterResult(cluster v2.CmkV2Cluster) (map[string]interface{}
 
 		paramEnvironment:          env,
 		paramNetwork:              network,
-		paramConfluentCustomerKey: byok,
+		paramConfluentCustomerKey: byokv1,
 
 		paramEndpoints: constructEndpointsBlockValue(cluster.Spec.GetEndpoints()),
 	}

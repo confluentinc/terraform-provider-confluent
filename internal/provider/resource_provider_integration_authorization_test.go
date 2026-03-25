@@ -177,7 +177,7 @@ func TestAccProviderIntegrationAuthorizationGcp(t *testing.T) {
 		InScenario(providerIntegrationAuthScenarioName).
 		WhenScenarioStateIs(scenarioStateProviderIntegrationV2AuthHasBeenCreated).
 		WillReturn(
-			`{"errors":[{"status":"400","code":"bad_request","detail":"missing 'iam.serviceAccounts.getAccessToken' permission"}]}`,
+			`{"errors":[{"status":"400","code":"bad_request","detail":"missing 'iamv2.serviceAccounts.getAccessToken' permission"}]}`,
 			contentTypeJSONHeader,
 			http.StatusBadRequest,
 		)

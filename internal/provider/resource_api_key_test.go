@@ -800,7 +800,7 @@ func testAccCheckApiKeyDestroy(s *terraform.State) error {
 			continue
 		}
 		deletedApiKeyId := rs.Primary.ID
-		req := c.apiKeysClient.APIKeysIamV2Api.GetIamV2ApiKey(c.apiKeysApiContext(context.Background()), deletedApiKeyId)
+		req := c.apiKeysV2Client.APIKeysIamV2Api.GetIamV2ApiKey(c.apiKeysV2ApiContext(context.Background()), deletedApiKeyId)
 		deletedApiKey, response, err := req.Execute()
 		if response != nil && (response.StatusCode == http.StatusForbidden) {
 			return nil

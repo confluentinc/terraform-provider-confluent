@@ -191,7 +191,7 @@ func testAccCheckKafkaClientQuotaDestroy(s *terraform.State) error {
 			continue
 		}
 		deletedKafkaClientQuotaId := rs.Primary.ID
-		req := c.quotasClient.ClientQuotasKafkaQuotasV1Api.GetKafkaQuotasV1ClientQuota(c.quotasApiContext(context.Background()), deletedKafkaClientQuotaId)
+		req := c.kafkaQuotasV1Client.ClientQuotasKafkaQuotasV1Api.GetKafkaQuotasV1ClientQuota(c.kafkaQuotasV1ApiContext(context.Background()), deletedKafkaClientQuotaId)
 		deletedKafkaClientQuota, response, err := req.Execute()
 		if response != nil && (response.StatusCode == http.StatusForbidden || response.StatusCode == http.StatusNotFound) {
 			// v2/service-accounts/{nonExistentKafkaClientQuotaId/deletedKafkaClientQuotaID} returns http.StatusForbidden instead of http.StatusNotFound

@@ -9,7 +9,7 @@ import (
 	"regexp"
 	"strings"
 
-	fa "github.com/confluentinc/ccloud-sdk-go-v2/flink-artifact/v1"
+	flinkartifactv1 "github.com/confluentinc/ccloud-sdk-go-v2/flink-artifact/v1"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -143,16 +143,16 @@ func artifactCreate(ctx context.Context, d *schema.ResourceData, meta interface{
 
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
 
-	request := fa.ArtifactV1PresignedUrlRequest{
-		Cloud:       fa.PtrString(cloud),
-		Region:      fa.PtrString(region),
-		Environment: fa.PtrString(environmentId),
+	request := flinkartifactv1.ArtifactV1PresignedUrlRequest{
+		Cloud:       flinkartifactv1.PtrString(cloud),
+		Region:      flinkartifactv1.PtrString(region),
+		Environment: flinkartifactv1.PtrString(environmentId),
 	}
 	if contentFormat != "" {
 		request.SetContentFormat(contentFormat)
 	}
 
-	resp, res, err := getFlinkPresignedUrl(c.faApiContext(ctx), c, request)
+	resp, res, err := getFlinkPresignedUrl(c.flinkArtifactV1ApiContext(ctx), c, request)
 	if err != nil {
 		return diag.Errorf("error uploading Flink Artifact: error fetching presigned upload URL %s", createDescriptiveError(err, res))
 	}
@@ -161,16 +161,16 @@ func artifactCreate(ctx context.Context, d *schema.ResourceData, meta interface{
 		return diag.Errorf("error uploading Flink Artifact: %s", createDescriptiveError(err, res))
 	}
 
-	createArtifactRequest := fa.InlineObject{
+	createArtifactRequest := flinkartifactv1.InlineObject{
 		DisplayName: name,
 		Cloud:       cloud,
 		Region:      region,
 		Class:       &class,
 		Environment: environmentId,
-		UploadSource: fa.InlineObjectUploadSourceOneOf{
-			ArtifactV1UploadSourcePresignedUrl: &fa.ArtifactV1UploadSourcePresignedUrl{
-				Location: fa.PtrString("PRESIGNED_URL_LOCATION"),
-				UploadId: fa.PtrString(resp.GetUploadId()),
+		UploadSource: flinkartifactv1.InlineObjectUploadSourceOneOf{
+			ArtifactV1UploadSourcePresignedUrl: &flinkartifactv1.ArtifactV1UploadSourcePresignedUrl{
+				Location: flinkartifactv1.PtrString("PRESIGNED_URL_LOCATION"),
+				UploadId: flinkartifactv1.PtrString(resp.GetUploadId()),
 			},
 		},
 	}
@@ -190,7 +190,7 @@ func artifactCreate(ctx context.Context, d *schema.ResourceData, meta interface{
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Flink Artifact: %s", createArtifactRequestJson))
 
-	createdArtifact, res, err := executeArtifactCreate(c.faApiContext(ctx), c, createArtifactRequest)
+	createdArtifact, res, err := executeArtifactCreate(c.flinkArtifactV1ApiContext(ctx), c, createArtifactRequest)
 	if err != nil {
 		return diag.Errorf("error creating Flink Artifact %q: %s", createdArtifact.GetId(), createDescriptiveError(err, res))
 	}
@@ -206,18 +206,18 @@ func artifactCreate(ctx context.Context, d *schema.ResourceData, meta interface{
 	return artifactRead(ctx, d, meta)
 }
 
-func getFlinkPresignedUrl(ctx context.Context, c *Client, request fa.ArtifactV1PresignedUrlRequest) (fa.ArtifactV1PresignedUrl, *http.Response, error) {
-	resp := c.faClient.PresignedUrlsArtifactV1Api.PresignedUploadUrlArtifactV1PresignedUrl(c.faApiContext(ctx)).ArtifactV1PresignedUrlRequest(request)
+func getFlinkPresignedUrl(ctx context.Context, c *Client, request flinkartifactv1.ArtifactV1PresignedUrlRequest) (flinkartifactv1.ArtifactV1PresignedUrl, *http.Response, error) {
+	resp := c.flinkArtifactV1Client.PresignedUrlsArtifactV1Api.PresignedUploadUrlArtifactV1PresignedUrl(c.flinkArtifactV1ApiContext(ctx)).ArtifactV1PresignedUrlRequest(request)
 	return resp.Execute()
 }
 
-func executeArtifactCreate(ctx context.Context, c *Client, artifact fa.InlineObject) (fa.ArtifactV1FlinkArtifact, *http.Response, error) {
-	req := c.faClient.FlinkArtifactsArtifactV1Api.CreateArtifactV1FlinkArtifact(c.faApiContext(ctx)).Region(artifact.GetRegion()).Cloud(artifact.GetCloud()).InlineObject(artifact)
+func executeArtifactCreate(ctx context.Context, c *Client, artifact flinkartifactv1.InlineObject) (flinkartifactv1.ArtifactV1FlinkArtifact, *http.Response, error) {
+	req := c.flinkArtifactV1Client.FlinkArtifactsArtifactV1Api.CreateArtifactV1FlinkArtifact(c.flinkArtifactV1ApiContext(ctx)).Region(artifact.GetRegion()).Cloud(artifact.GetCloud()).InlineObject(artifact)
 	return req.Execute()
 }
 
-func executeArtifactRead(ctx context.Context, c *Client, region, cloud, artifactID, envId string) (fa.ArtifactV1FlinkArtifact, *http.Response, error) {
-	req := c.faClient.FlinkArtifactsArtifactV1Api.GetArtifactV1FlinkArtifact(c.faApiContext(ctx), artifactID).Region(region).Cloud(cloud).Environment(envId)
+func executeArtifactRead(ctx context.Context, c *Client, region, cloud, artifactID, envId string) (flinkartifactv1.ArtifactV1FlinkArtifact, *http.Response, error) {
+	req := c.flinkArtifactV1Client.FlinkArtifactsArtifactV1Api.GetArtifactV1FlinkArtifact(c.flinkArtifactV1ApiContext(ctx), artifactID).Region(region).Cloud(cloud).Environment(envId)
 	return req.Execute()
 }
 
@@ -227,7 +227,7 @@ func artifactRead(ctx context.Context, d *schema.ResourceData, meta interface{})
 	artifactId := d.Id()
 
 	if _, err := readArtifactAndSetAttributes(ctx, d, meta, d.Get(paramRegion).(string), d.Get(paramCloud).(string), artifactId, d.Get(paramArtifactFile).(string), extractStringValueFromBlock(d, paramEnvironment, paramId)); err != nil {
-		return diag.FromErr(fmt.Errorf("error reading flink artifact %q: %s", d.Id(), createDescriptiveError(err)))
+		return diag.FromErr(fmt.Errorf("error reading flinkv2 artifact %q: %s", d.Id(), createDescriptiveError(err)))
 	}
 
 	return nil
@@ -236,7 +236,7 @@ func artifactRead(ctx context.Context, d *schema.ResourceData, meta interface{})
 func readArtifactAndSetAttributes(ctx context.Context, d *schema.ResourceData, meta interface{}, region, cloud, artifactId, artifactFile, envId string) ([]*schema.ResourceData, error) {
 	c := meta.(*Client)
 
-	artifact, resp, err := executeArtifactRead(c.faApiContext(ctx), c, region, cloud, artifactId, envId)
+	artifact, resp, err := executeArtifactRead(c.flinkArtifactV1ApiContext(ctx), c, region, cloud, artifactId, envId)
 	if err != nil {
 		tflog.Warn(ctx, fmt.Sprintf("Error reading Flink Artifact %q: %s", d.Id(), createDescriptiveError(err, resp)), map[string]interface{}{flinkArtifactLoggingKey: d.Id()})
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
@@ -250,7 +250,7 @@ func readArtifactAndSetAttributes(ctx context.Context, d *schema.ResourceData, m
 	}
 	artifactJson, err := json.Marshal(artifact)
 	if err != nil {
-		return nil, fmt.Errorf("error reading flink artifact %q: error marshaling %#v to json: %s", artifactId, artifact, createDescriptiveError(err))
+		return nil, fmt.Errorf("error reading flinkv2 artifact %q: error marshaling %#v to json: %s", artifactId, artifact, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Flink Artifact %q: %s", d.Id(), artifactJson), map[string]interface{}{flinkArtifactLoggingKey: d.Id()})
 
@@ -262,7 +262,7 @@ func readArtifactAndSetAttributes(ctx context.Context, d *schema.ResourceData, m
 
 	return []*schema.ResourceData{d}, nil
 }
-func getVersions(versionsStruct []fa.ArtifactV1FlinkArtifactVersion) []map[string]string {
+func getVersions(versionsStruct []flinkartifactv1.ArtifactV1FlinkArtifactVersion) []map[string]string {
 	versions := []map[string]string{}
 	for i := 0; i < len(versionsStruct); i++ {
 		versions = append(versions, make(map[string]string))
@@ -270,7 +270,7 @@ func getVersions(versionsStruct []fa.ArtifactV1FlinkArtifactVersion) []map[strin
 	}
 	return versions
 }
-func setArtifactAttributes(d *schema.ResourceData, artifact fa.ArtifactV1FlinkArtifact, artifactFile string) (*schema.ResourceData, error) {
+func setArtifactAttributes(d *schema.ResourceData, artifact flinkartifactv1.ArtifactV1FlinkArtifact, artifactFile string) (*schema.ResourceData, error) {
 	if err := d.Set(paramDisplayName, artifact.GetDisplayName()); err != nil {
 		return nil, err
 	}
@@ -322,11 +322,11 @@ func setArtifactAttributes(d *schema.ResourceData, artifact fa.ArtifactV1FlinkAr
 func artifactDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	tflog.Debug(ctx, fmt.Sprintf("Deleting Flink Artifact %q", d.Id()), map[string]interface{}{flinkArtifactLoggingKey: d.Id()})
 	c := meta.(*Client)
-	req := c.faClient.FlinkArtifactsArtifactV1Api.DeleteArtifactV1FlinkArtifact(c.faApiContext(ctx), d.Id()).Region(d.Get(paramRegion).(string)).Cloud(d.Get(paramCloud).(string)).Environment(extractStringValueFromBlock(d, paramEnvironment, paramId))
+	req := c.flinkArtifactV1Client.FlinkArtifactsArtifactV1Api.DeleteArtifactV1FlinkArtifact(c.flinkArtifactV1ApiContext(ctx), d.Id()).Region(d.Get(paramRegion).(string)).Cloud(d.Get(paramCloud).(string)).Environment(extractStringValueFromBlock(d, paramEnvironment, paramId))
 	resp, err := req.Execute()
 
 	if err != nil {
-		return diag.Errorf("error deleting flink artifact %q: %s", d.Id(), createDescriptiveError(err, resp))
+		return diag.Errorf("error deleting flinkv2 artifact %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Finished deleting Flink Artifact %q", d.Id()), map[string]interface{}{flinkArtifactLoggingKey: d.Id()})
@@ -340,7 +340,7 @@ func artifactImport(ctx context.Context, d *schema.ResourceData, meta interface{
 	regionCloudAndArtifactId := d.Id()
 	parts := strings.Split(regionCloudAndArtifactId, "/")
 	if len(parts) != 4 {
-		return nil, fmt.Errorf("error importing flink artifact: invalid format: expected '<Environment ID>/<region>/<cloud>/<Flink Artifact ID>'")
+		return nil, fmt.Errorf("error importing flinkv2 artifact: invalid format: expected '<Environment ID>/<region>/<cloud>/<Flink Artifact ID>'")
 	}
 
 	artifactId := parts[3]
@@ -353,7 +353,7 @@ func artifactImport(ctx context.Context, d *schema.ResourceData, meta interface{
 	// Mark resource as new to avoid d.Set("") when getting 404
 	d.MarkNewResource()
 	if _, err := readArtifactAndSetAttributes(ctx, d, meta, region, cloud, artifactId, artifactFile, envId); err != nil {
-		return nil, fmt.Errorf("error importing flink artifact %q: %s", d.Id(), err)
+		return nil, fmt.Errorf("error importing flinkv2 artifact %q: %s", d.Id(), err)
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished importing Flink Artifact %q", d.Id()), map[string]interface{}{flinkArtifactLoggingKey: d.Id()})
 	return []*schema.ResourceData{d}, nil

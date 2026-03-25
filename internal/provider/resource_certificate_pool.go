@@ -21,7 +21,7 @@ import (
 	"net/http"
 	"strings"
 
-	ca "github.com/confluentinc/ccloud-sdk-go-v2/certificate-authority/v2"
+	certificateauthorityv2 "github.com/confluentinc/ccloud-sdk-go-v2/certificate-authority/v2"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -72,7 +72,7 @@ func certificatePoolCreate(ctx context.Context, d *schema.ResourceData, meta int
 
 	certificateAuthorityId := extractStringValueFromBlock(d, paramCertificateAuthority, paramId)
 
-	createCertificatePoolRequest := ca.NewIamV2CertificateIdentityPool()
+	createCertificatePoolRequest := certificateauthorityv2.NewIamV2CertificateIdentityPool()
 	createCertificatePoolRequest.SetDisplayName(d.Get(paramDisplayName).(string))
 	createCertificatePoolRequest.SetDescription(d.Get(paramDescription).(string))
 	createCertificatePoolRequest.SetExternalIdentifier(d.Get(paramExternalIdentifier).(string))
@@ -84,7 +84,7 @@ func certificatePoolCreate(ctx context.Context, d *schema.ResourceData, meta int
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Certificate Pool: %s", createCertificatePoolRequestJson))
 
-	req := c.caClient.CertificateIdentityPoolsIamV2Api.CreateIamV2CertificateIdentityPool(c.caApiContext(ctx), certificateAuthorityId).IamV2CertificateIdentityPool(*createCertificatePoolRequest)
+	req := c.certificateAuthorityV2Client.CertificateIdentityPoolsIamV2Api.CreateIamV2CertificateIdentityPool(c.certificateAuthorityV2ApiContext(ctx), certificateAuthorityId).IamV2CertificateIdentityPool(*createCertificatePoolRequest)
 	createdCertificatePool, resp, err := req.Execute()
 	if err != nil {
 		return diag.Errorf("error creating Certificate Pool %q: %s", createdCertificatePool.GetId(), createDescriptiveError(err, resp))
@@ -100,8 +100,8 @@ func certificatePoolCreate(ctx context.Context, d *schema.ResourceData, meta int
 	return certificatePoolRead(ctx, d, meta)
 }
 
-func executecertificatePoolRead(ctx context.Context, c *Client, certificateAuthorityId, certificatePoolId string) (ca.IamV2CertificateIdentityPool, *http.Response, error) {
-	req := c.caClient.CertificateIdentityPoolsIamV2Api.GetIamV2CertificateIdentityPool(c.caApiContext(ctx), certificateAuthorityId, certificatePoolId)
+func executecertificatePoolRead(ctx context.Context, c *Client, certificateAuthorityId, certificatePoolId string) (certificateauthorityv2.IamV2CertificateIdentityPool, *http.Response, error) {
+	req := c.certificateAuthorityV2Client.CertificateIdentityPoolsIamV2Api.GetIamV2CertificateIdentityPool(c.certificateAuthorityV2ApiContext(ctx), certificateAuthorityId, certificatePoolId)
 	return req.Execute()
 }
 
@@ -121,7 +121,7 @@ func certificatePoolRead(ctx context.Context, d *schema.ResourceData, meta inter
 func readCertificatePoolAndSetAttributes(ctx context.Context, d *schema.ResourceData, meta interface{}, certificateAuthorityId, certificatePoolId string) ([]*schema.ResourceData, error) {
 	c := meta.(*Client)
 
-	certificatePool, resp, err := executecertificatePoolRead(c.caApiContext(ctx), c, certificateAuthorityId, certificatePoolId)
+	certificatePool, resp, err := executecertificatePoolRead(c.certificateAuthorityV2ApiContext(ctx), c, certificateAuthorityId, certificatePoolId)
 	if err != nil {
 		tflog.Warn(ctx, fmt.Sprintf("Error reading Certificate Pool %q: %s", certificatePoolId, createDescriptiveError(err)), map[string]interface{}{certificatePoolKey: d.Id()})
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
@@ -148,7 +148,7 @@ func readCertificatePoolAndSetAttributes(ctx context.Context, d *schema.Resource
 	return []*schema.ResourceData{d}, nil
 }
 
-func setCertificatePoolAttributes(d *schema.ResourceData, certificatePool ca.IamV2CertificateIdentityPool, certificateAuthorityId string) (*schema.ResourceData, error) {
+func setCertificatePoolAttributes(d *schema.ResourceData, certificatePool certificateauthorityv2.IamV2CertificateIdentityPool, certificateAuthorityId string) (*schema.ResourceData, error) {
 	if err := d.Set(paramDisplayName, certificatePool.GetDisplayName()); err != nil {
 		return nil, err
 	}
@@ -174,7 +174,7 @@ func certificatePoolDelete(ctx context.Context, d *schema.ResourceData, meta int
 	certificateAuthorityId := extractStringValueFromBlock(d, paramCertificateAuthority, paramId)
 	c := meta.(*Client)
 
-	req := c.caClient.CertificateIdentityPoolsIamV2Api.DeleteIamV2CertificateIdentityPool(c.caApiContext(ctx), certificateAuthorityId, d.Id())
+	req := c.certificateAuthorityV2Client.CertificateIdentityPoolsIamV2Api.DeleteIamV2CertificateIdentityPool(c.certificateAuthorityV2ApiContext(ctx), certificateAuthorityId, d.Id())
 	_, resp, err := req.Execute()
 
 	if err != nil {
@@ -191,7 +191,7 @@ func certificatePoolUpdate(ctx context.Context, d *schema.ResourceData, meta int
 		return diag.Errorf("error updating Certificate Pool %q: only %q, %q, %q, %q attributes can be updated for Certificate Pool", d.Id(), paramDisplayName, paramDescription, paramExternalIdentifier, paramFilter)
 	}
 
-	updateCertificatePool := ca.NewIamV2CertificateIdentityPool()
+	updateCertificatePool := certificateauthorityv2.NewIamV2CertificateIdentityPool()
 
 	updateCertificatePool.SetDisplayName(d.Get(paramDisplayName).(string))
 	updateCertificatePool.SetDescription(d.Get(paramDescription).(string))
@@ -206,7 +206,7 @@ func certificatePoolUpdate(ctx context.Context, d *schema.ResourceData, meta int
 
 	c := meta.(*Client)
 	certificateAuthorityId := extractStringValueFromBlock(d, paramCertificateAuthority, paramId)
-	req := c.caClient.CertificateIdentityPoolsIamV2Api.UpdateIamV2CertificateIdentityPool(c.caApiContext(ctx), certificateAuthorityId, d.Id()).IamV2CertificateIdentityPool(*updateCertificatePool)
+	req := c.certificateAuthorityV2Client.CertificateIdentityPoolsIamV2Api.UpdateIamV2CertificateIdentityPool(c.certificateAuthorityV2ApiContext(ctx), certificateAuthorityId, d.Id()).IamV2CertificateIdentityPool(*updateCertificatePool)
 	updatedCertificatePool, resp, err := req.Execute()
 
 	if err != nil {

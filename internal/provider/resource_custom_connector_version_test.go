@@ -129,7 +129,7 @@ func TestAccCustomConnectorPluginVersion(t *testing.T) {
 					resource.TestCheckResourceAttr(fullCustomConnectorPluginResourceLabel, "sensitive_config_properties.0", "keys"),
 					resource.TestCheckResourceAttr(fullCustomConnectorPluginResourceLabel, "connector_class.#", "1"),
 					resource.TestCheckResourceAttr(fullCustomConnectorPluginResourceLabel, "connector_class.0.%", "2"),
-					resource.TestCheckResourceAttr(fullCustomConnectorPluginResourceLabel, "connector_class.0.connector_class_name", "io.confluent.kafka.connect.datagen.DatagenConnector"),
+					resource.TestCheckResourceAttr(fullCustomConnectorPluginResourceLabel, "connector_class.0.connector_class_name", "io.confluent.kafka.connectv1.datagen.DatagenConnector"),
 					resource.TestCheckResourceAttr(fullCustomConnectorPluginResourceLabel, "connector_class.0.connector_type", "SOURCE"),
 					resource.TestCheckResourceAttr(fullCustomConnectorPluginResourceLabel, "environment.0.id", "env-00000"),
 				),
@@ -164,7 +164,7 @@ func testAccCheckCustomConnectorPluginVersionConfig(mockServerUrl, customConnect
       cloud = "AWS"
       documentation_link          = "https://github.com/confluentinc/kafka-connect-datagen"
       connector_class {
-          connector_class_name    = "io.confluent.kafka.connect.datagen.DatagenConnector"
+          connector_class_name    = "io.confluent.kafka.connectv1.datagen.DatagenConnector"
           connector_type          = "SOURCE"
         }
       sensitive_config_properties = [ "passwords", "keys", "tokens"]

@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"net/http"
 
-	oidc "github.com/confluentinc/ccloud-sdk-go-v2/identity-provider/v2"
+	identityproviderv2 "github.com/confluentinc/ccloud-sdk-go-v2/identity-provider/v2"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -76,7 +76,7 @@ func identityProviderUpdate(ctx context.Context, d *schema.ResourceData, meta in
 		return diag.Errorf("error updating Identity Provider %q: only %q, %q, %q, %q, %q attributes can be updated for Identity Provider", d.Id(), paramDisplayName, paramDescription, paramIssuer, paramJwksUri, paramIdentityClaim)
 	}
 
-	updateIdentityProviderRequest := oidc.NewIamV2IdentityProvider()
+	updateIdentityProviderRequest := identityproviderv2.NewIamV2IdentityProvider()
 
 	if d.HasChange(paramDisplayName) {
 		updatedDisplayName := d.Get(paramDisplayName).(string)
@@ -106,7 +106,7 @@ func identityProviderUpdate(ctx context.Context, d *schema.ResourceData, meta in
 	tflog.Debug(ctx, fmt.Sprintf("Updating Identity Provider %q: %s", d.Id(), updateIdentityProviderRequestJson), map[string]interface{}{identityProviderLoggingKey: d.Id()})
 
 	c := meta.(*Client)
-	updatedIdentityProvider, resp, err := c.oidcClient.IdentityProvidersIamV2Api.UpdateIamV2IdentityProvider(c.oidcApiContext(ctx), d.Id()).IamV2IdentityProvider(*updateIdentityProviderRequest).Execute()
+	updatedIdentityProvider, resp, err := c.identityProviderV2Client.IdentityProvidersIamV2Api.UpdateIamV2IdentityProvider(c.identityProviderV2ApiContext(ctx), d.Id()).IamV2IdentityProvider(*updateIdentityProviderRequest).Execute()
 
 	if err != nil {
 		return diag.Errorf("error updating Identity Provider %q: %s", d.Id(), createDescriptiveError(err, resp))
@@ -130,7 +130,7 @@ func identityProviderCreate(ctx context.Context, d *schema.ResourceData, meta in
 	jwksUri := d.Get(paramJwksUri).(string)
 	identityClaim := d.Get(paramIdentityClaim).(string)
 
-	createIdentityProviderRequest := oidc.NewIamV2IdentityProvider()
+	createIdentityProviderRequest := identityproviderv2.NewIamV2IdentityProvider()
 	createIdentityProviderRequest.SetDisplayName(displayName)
 	createIdentityProviderRequest.SetDescription(description)
 	createIdentityProviderRequest.SetIssuer(issuer)
@@ -145,7 +145,7 @@ func identityProviderCreate(ctx context.Context, d *schema.ResourceData, meta in
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Identity Provider: %s", createIdentityProviderRequestJson))
 
-	createdIdentityProvider, resp, err := executeIdentityProviderCreate(c.oidcApiContext(ctx), c, createIdentityProviderRequest)
+	createdIdentityProvider, resp, err := executeIdentityProviderCreate(c.identityProviderV2ApiContext(ctx), c, createIdentityProviderRequest)
 	if err != nil {
 		return diag.Errorf("error creating Identity Provider: %s", createDescriptiveError(err, resp))
 	}
@@ -160,8 +160,8 @@ func identityProviderCreate(ctx context.Context, d *schema.ResourceData, meta in
 	return identityProviderRead(ctx, d, meta)
 }
 
-func executeIdentityProviderCreate(ctx context.Context, c *Client, identityProvider *oidc.IamV2IdentityProvider) (oidc.IamV2IdentityProvider, *http.Response, error) {
-	req := c.oidcClient.IdentityProvidersIamV2Api.CreateIamV2IdentityProvider(c.oidcApiContext(ctx)).IamV2IdentityProvider(*identityProvider)
+func executeIdentityProviderCreate(ctx context.Context, c *Client, identityProvider *identityproviderv2.IamV2IdentityProvider) (identityproviderv2.IamV2IdentityProvider, *http.Response, error) {
+	req := c.identityProviderV2Client.IdentityProvidersIamV2Api.CreateIamV2IdentityProvider(c.identityProviderV2ApiContext(ctx)).IamV2IdentityProvider(*identityProvider)
 	return req.Execute()
 }
 
@@ -169,7 +169,7 @@ func identityProviderDelete(ctx context.Context, d *schema.ResourceData, meta in
 	tflog.Debug(ctx, fmt.Sprintf("Deleting Identity Provider %q", d.Id()), map[string]interface{}{identityProviderLoggingKey: d.Id()})
 	c := meta.(*Client)
 
-	req := c.oidcClient.IdentityProvidersIamV2Api.DeleteIamV2IdentityProvider(c.oidcApiContext(ctx), d.Id())
+	req := c.identityProviderV2Client.IdentityProvidersIamV2Api.DeleteIamV2IdentityProvider(c.identityProviderV2ApiContext(ctx), d.Id())
 	resp, err := req.Execute()
 
 	if err != nil {
@@ -184,7 +184,7 @@ func identityProviderDelete(ctx context.Context, d *schema.ResourceData, meta in
 func identityProviderRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	tflog.Debug(ctx, fmt.Sprintf("Reading Identity Provider %q", d.Id()), map[string]interface{}{identityProviderLoggingKey: d.Id()})
 	c := meta.(*Client)
-	identityProvider, resp, err := executeIdentityProviderRead(c.oidcApiContext(ctx), c, d.Id())
+	identityProvider, resp, err := executeIdentityProviderRead(c.identityProviderV2ApiContext(ctx), c, d.Id())
 	if err != nil {
 		tflog.Warn(ctx, fmt.Sprintf("Error reading Identity Provider %q: %s", d.Id(), createDescriptiveError(err, resp)), map[string]interface{}{identityProviderLoggingKey: d.Id()})
 
@@ -211,12 +211,12 @@ func identityProviderRead(ctx context.Context, d *schema.ResourceData, meta inte
 
 	return nil
 }
-func executeIdentityProviderRead(ctx context.Context, c *Client, identityProviderId string) (oidc.IamV2IdentityProvider, *http.Response, error) {
-	req := c.oidcClient.IdentityProvidersIamV2Api.GetIamV2IdentityProvider(c.oidcApiContext(ctx), identityProviderId)
+func executeIdentityProviderRead(ctx context.Context, c *Client, identityProviderId string) (identityproviderv2.IamV2IdentityProvider, *http.Response, error) {
+	req := c.identityProviderV2Client.IdentityProvidersIamV2Api.GetIamV2IdentityProvider(c.identityProviderV2ApiContext(ctx), identityProviderId)
 	return req.Execute()
 }
 
-func setIdentityProviderAttributes(d *schema.ResourceData, identityProvider oidc.IamV2IdentityProvider) (*schema.ResourceData, error) {
+func setIdentityProviderAttributes(d *schema.ResourceData, identityProvider identityproviderv2.IamV2IdentityProvider) (*schema.ResourceData, error) {
 	if err := d.Set(paramDisplayName, identityProvider.GetDisplayName()); err != nil {
 		return nil, createDescriptiveError(err)
 	}

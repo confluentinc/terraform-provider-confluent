@@ -110,7 +110,7 @@ func TestAccProviderIntegrationSetupGcpDataSourceLive(t *testing.T) {
 	apiSecret := os.Getenv("CONFLUENT_CLOUD_API_SECRET")
 	endpoint := os.Getenv("CONFLUENT_CLOUD_ENDPOINT")
 	environmentId := "env-zyg27z"                                                                            // Hardcoded test environment
-	gcpServiceAccount := fmt.Sprintf("test-sa-%d@test-project-123456.iam.gserviceaccount.com", randomSuffix) // Unique test service account
+	gcpServiceAccount := fmt.Sprintf("test-sa-%d@test-project-123456.iamv2.gserviceaccount.com", randomSuffix) // Unique test service account
 
 	// Validate required environment variables are present
 	if apiKey == "" || apiSecret == "" {

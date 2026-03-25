@@ -155,7 +155,7 @@ func testAccCheckCustomConnectorVersionLiveConfig(endpoint, pluginResourceLabel,
 		cloud             = "AWS"
 		documentation_link = "https://docs.confluent.io/kafka-connectors/datagen/current/overview.html"
 		connector_class {
-			connector_class_name = "io.confluent.kafka.connect.datagen.DatagenConnector"
+			connector_class_name = "io.confluent.kafka.connectv1.datagen.DatagenConnector"
 			connector_type       = "SOURCE"
 		}
 		sensitive_config_properties = [

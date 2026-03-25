@@ -28,10 +28,10 @@ import (
 	"testing"
 	"time"
 
-	apikeys "github.com/confluentinc/ccloud-sdk-go-v2/apikeys/v2"
-	ccpm "github.com/confluentinc/ccloud-sdk-go-v2/ccpm/v1"
+	apikeysv2 "github.com/confluentinc/ccloud-sdk-go-v2/apikeys/v2"
+	ccpmv1 "github.com/confluentinc/ccloud-sdk-go-v2/ccpm/v1"
 	kafkarestv3 "github.com/confluentinc/ccloud-sdk-go-v2/kafkarest/v3"
-	dns "github.com/confluentinc/ccloud-sdk-go-v2/networking-dnsforwarder/v1"
+	networkingdnsforwarderv1 "github.com/confluentinc/ccloud-sdk-go-v2/networking-dnsforwarder/v1"
 	sr "github.com/confluentinc/ccloud-sdk-go-v2/schema-registry/v1"
 )
 
@@ -136,8 +136,8 @@ func TestCanUpdateEntityName(t *testing.T) {
 		},
 		{
 			entityType:    recordEntityType,
-			oldEntityName: "lsrc-foobar:.:100004:org.apache.flink.avro.generated.record",
-			newEntityName: "lsrc-foobar:.:100005:org.apache.flink.avro.generated.record",
+			oldEntityName: "lsrc-foobar:.:100004:orgv2.apache.flinkv2.avro.generated.record",
+			newEntityName: "lsrc-foobar:.:100005:orgv2.apache.flinkv2.avro.generated.record",
 			expected:      true,
 		},
 		{
@@ -148,14 +148,14 @@ func TestCanUpdateEntityName(t *testing.T) {
 		},
 		{
 			entityType:    fieldEntityType,
-			oldEntityName: "lsrc-foobar:.:100006:org.apache.flink.avro.generated.record.random_value",
-			newEntityName: "lsrc-foobar:.:100007:org.apache.flink.avro.generated.record.random_value",
+			oldEntityName: "lsrc-foobar:.:100006:orgv2.apache.flinkv2.avro.generated.record.random_value",
+			newEntityName: "lsrc-foobar:.:100007:orgv2.apache.flinkv2.avro.generated.record.random_value",
 			expected:      true,
 		},
 		{
 			entityType:    fieldEntityType,
-			oldEntityName: "flink.avro.generated.record.random_value",
-			newEntityName: "flink.avro.generated.record.random_value",
+			oldEntityName: "flinkv2.avro.generated.record.random_value",
+			newEntityName: "flinkv2.avro.generated.record.random_value",
 			expected:      false,
 		},
 		{
@@ -179,16 +179,16 @@ func TestCanUpdateEntityName(t *testing.T) {
 func TestIsSchemaRegistryApiKey(t *testing.T) {
 	tests := []struct {
 		name     string
-		apiKey   apikeys.IamV2ApiKey
+		apiKey   apikeysv2.IamV2ApiKey
 		expected bool
 	}{
 		{
 			name: "SR API Key with api_version=srcm/v3",
-			apiKey: apikeys.IamV2ApiKey{
-				Spec: &apikeys.IamV2ApiKeySpec{
-					Resource: &apikeys.ObjectReference{
-						Kind:       apikeys.PtrString(schemaRegistryKind),
-						ApiVersion: apikeys.PtrString(srcmV3ApiVersion),
+			apiKey: apikeysv2.IamV2ApiKey{
+				Spec: &apikeysv2.IamV2ApiKeySpec{
+					Resource: &apikeysv2.ObjectReference{
+						Kind:       apikeysv2.PtrString(schemaRegistryKind),
+						ApiVersion: apikeysv2.PtrString(srcmV3ApiVersion),
 					},
 				},
 			},
@@ -196,11 +196,11 @@ func TestIsSchemaRegistryApiKey(t *testing.T) {
 		},
 		{
 			name: "SR API Key with api_version=srcm/v2",
-			apiKey: apikeys.IamV2ApiKey{
-				Spec: &apikeys.IamV2ApiKeySpec{
-					Resource: &apikeys.ObjectReference{
-						Kind:       apikeys.PtrString(schemaRegistryKind),
-						ApiVersion: apikeys.PtrString(srcmV2ApiVersion),
+			apiKey: apikeysv2.IamV2ApiKey{
+				Spec: &apikeysv2.IamV2ApiKeySpec{
+					Resource: &apikeysv2.ObjectReference{
+						Kind:       apikeysv2.PtrString(schemaRegistryKind),
+						ApiVersion: apikeysv2.PtrString(srcmV2ApiVersion),
 					},
 				},
 			},
@@ -208,11 +208,11 @@ func TestIsSchemaRegistryApiKey(t *testing.T) {
 		},
 		{
 			name: "Kafka API Key",
-			apiKey: apikeys.IamV2ApiKey{
-				Spec: &apikeys.IamV2ApiKeySpec{
-					Resource: &apikeys.ObjectReference{
-						Kind:       apikeys.PtrString(schemaRegistryKind),
-						ApiVersion: apikeys.PtrString(cmkApiVersion),
+			apiKey: apikeysv2.IamV2ApiKey{
+				Spec: &apikeysv2.IamV2ApiKeySpec{
+					Resource: &apikeysv2.ObjectReference{
+						Kind:       apikeysv2.PtrString(schemaRegistryKind),
+						ApiVersion: apikeysv2.PtrString(cmkApiVersion),
 					},
 				},
 			},
@@ -220,11 +220,11 @@ func TestIsSchemaRegistryApiKey(t *testing.T) {
 		},
 		{
 			name: "Cloud API Key",
-			apiKey: apikeys.IamV2ApiKey{
-				Spec: &apikeys.IamV2ApiKeySpec{
-					Resource: &apikeys.ObjectReference{
-						Kind:       apikeys.PtrString("Cloud"),
-						ApiVersion: apikeys.PtrString(iamApiVersion),
+			apiKey: apikeysv2.IamV2ApiKey{
+				Spec: &apikeysv2.IamV2ApiKeySpec{
+					Resource: &apikeysv2.ObjectReference{
+						Kind:       apikeysv2.PtrString("Cloud"),
+						ApiVersion: apikeysv2.PtrString(iamApiVersion),
 					},
 				},
 			},
@@ -246,8 +246,8 @@ func TestConvertToStringObjectMap(t *testing.T) {
 		map1 := map[string]string{
 			"example": "zone1,project1",
 		}
-		map1Expected := map[string]dns.NetworkingV1ForwardViaGcpDnsZonesDomainMappings{
-			"example": {Zone: dns.PtrString("zone1"), Project: dns.PtrString("project1")},
+		map1Expected := map[string]networkingdnsforwarderv1.NetworkingV1ForwardViaGcpDnsZonesDomainMappings{
+			"example": {Zone: networkingdnsforwarderv1.PtrString("zone1"), Project: networkingdnsforwarderv1.PtrString("project1")},
 		}
 		actual, _ := convertToStringObjectMap(map1)
 
@@ -260,8 +260,8 @@ func TestConvertToStringObjectMap(t *testing.T) {
 		map1 := map[string]string{
 			"example": " zone1,  project1",
 		}
-		map1Expected := map[string]dns.NetworkingV1ForwardViaGcpDnsZonesDomainMappings{
-			"example": {Zone: dns.PtrString("zone1"), Project: dns.PtrString("project1")},
+		map1Expected := map[string]networkingdnsforwarderv1.NetworkingV1ForwardViaGcpDnsZonesDomainMappings{
+			"example": {Zone: networkingdnsforwarderv1.PtrString("zone1"), Project: networkingdnsforwarderv1.PtrString("project1")},
 		}
 		actual, _ := convertToStringObjectMap(map1)
 
@@ -274,8 +274,8 @@ func TestConvertToStringObjectMap(t *testing.T) {
 		map1 := map[string]string{
 			"example": "zone1,project1xyz",
 		}
-		map1Expected := map[string]dns.NetworkingV1ForwardViaGcpDnsZonesDomainMappings{
-			"example": {Zone: dns.PtrString("zone1"), Project: dns.PtrString("project1")},
+		map1Expected := map[string]networkingdnsforwarderv1.NetworkingV1ForwardViaGcpDnsZonesDomainMappings{
+			"example": {Zone: networkingdnsforwarderv1.PtrString("zone1"), Project: networkingdnsforwarderv1.PtrString("project1")},
 		}
 		actual, _ := convertToStringObjectMap(map1)
 
@@ -288,8 +288,8 @@ func TestConvertToStringObjectMap(t *testing.T) {
 		map1 := map[string]string{
 			"example": "zone1 project1",
 		}
-		map1Expected := map[string]dns.NetworkingV1ForwardViaGcpDnsZonesDomainMappings{
-			"example": {Zone: dns.PtrString("zone1"), Project: dns.PtrString("project1")},
+		map1Expected := map[string]networkingdnsforwarderv1.NetworkingV1ForwardViaGcpDnsZonesDomainMappings{
+			"example": {Zone: networkingdnsforwarderv1.PtrString("zone1"), Project: networkingdnsforwarderv1.PtrString("project1")},
 		}
 		actual, _ := convertToStringObjectMap(map1)
 
@@ -624,7 +624,7 @@ func TestBuildTfRules(t *testing.T) {
 
 func TestBuildTfConnectorClasses(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
-		classes := []ccpm.CcpmV1ConnectorClass{
+		classes := []ccpmv1.CcpmV1ConnectorClass{
 			{
 				ClassName: "Class1",
 				Type:      "SOURCE",
@@ -650,7 +650,7 @@ func TestBuildTfConnectorClasses(t *testing.T) {
 	})
 
 	t.Run("success empty", func(t *testing.T) {
-		classes := []ccpm.CcpmV1ConnectorClass{
+		classes := []ccpmv1.CcpmV1ConnectorClass{
 			{
 				ClassName: "",
 				Type:      "SOURCE",
@@ -668,7 +668,7 @@ func TestBuildTfConnectorClasses(t *testing.T) {
 	})
 
 	t.Run("fail wrong value", func(t *testing.T) {
-		classes := []ccpm.CcpmV1ConnectorClass{
+		classes := []ccpmv1.CcpmV1ConnectorClass{
 			{
 				ClassName: "name1",
 				Type:      "SOURCE",
@@ -696,13 +696,13 @@ func TestBuildConnectorClass(t *testing.T) {
 
 		connectorClass := []interface{}{connectorClasses, connectorClasses2}
 		actual := buildConnectorClass(connectorClass)
-		classes := make([]ccpm.CcpmV1ConnectorClass, 2)
+		classes := make([]ccpmv1.CcpmV1ConnectorClass, 2)
 
-		class := ccpm.NewCcpmV1ConnectorClassWithDefaults()
+		class := ccpmv1.NewCcpmV1ConnectorClassWithDefaults()
 		class.SetClassName("Class1")
 		class.SetType("SOURCE")
 
-		class2 := ccpm.NewCcpmV1ConnectorClassWithDefaults()
+		class2 := ccpmv1.NewCcpmV1ConnectorClassWithDefaults()
 		class2.SetClassName("Class2")
 		class2.SetType("SOURCE")
 
@@ -725,13 +725,13 @@ func TestBuildConnectorClass(t *testing.T) {
 
 		connectorClass := []interface{}{connectorClasses, connectorClasses2}
 		actual := buildConnectorClass(connectorClass)
-		classes := make([]ccpm.CcpmV1ConnectorClass, 2)
+		classes := make([]ccpmv1.CcpmV1ConnectorClass, 2)
 
-		class := ccpm.NewCcpmV1ConnectorClassWithDefaults()
+		class := ccpmv1.NewCcpmV1ConnectorClassWithDefaults()
 		class.SetClassName("Class1")
 		class.SetType("SOURCE")
 
-		class2 := ccpm.NewCcpmV1ConnectorClassWithDefaults()
+		class2 := ccpmv1.NewCcpmV1ConnectorClassWithDefaults()
 		class2.SetClassName("")
 		class2.SetType("")
 
@@ -754,13 +754,13 @@ func TestBuildConnectorClass(t *testing.T) {
 
 		connectorClass := []interface{}{connectorClasses, connectorClasses2}
 		actual := buildConnectorClass(connectorClass)
-		classes := make([]ccpm.CcpmV1ConnectorClass, 2)
+		classes := make([]ccpmv1.CcpmV1ConnectorClass, 2)
 
-		class := ccpm.NewCcpmV1ConnectorClassWithDefaults()
+		class := ccpmv1.NewCcpmV1ConnectorClassWithDefaults()
 		class.SetClassName("Class1")
 		class.SetType("SOURCE")
 
-		class2 := ccpm.NewCcpmV1ConnectorClassWithDefaults()
+		class2 := ccpmv1.NewCcpmV1ConnectorClassWithDefaults()
 		class2.SetClassName("Class2")
 		class2.SetType("")
 
@@ -858,7 +858,7 @@ func TestConvertConfigDataToAlterConfigBatchRequestData(t *testing.T) {
 				},
 				{
 					Name:  "sasl.jaas.config",
-					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"test-key\" password=\"test-secret\";")),
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("orgv2.apache.kafka.common.security.plain.PlainLoginModule required username=\"test-key\" password=\"test-secret\";")),
 				},
 				{
 					Name:  "security.protocol",
@@ -873,7 +873,7 @@ func TestConvertConfigDataToAlterConfigBatchRequestData(t *testing.T) {
 				},
 				{
 					Name:      "sasl.jaas.config",
-					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"test-key\" password=\"test-secret\";")),
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("orgv2.apache.kafka.common.security.plain.PlainLoginModule required username=\"test-key\" password=\"test-secret\";")),
 					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
 				},
 				{
@@ -896,11 +896,11 @@ func TestConvertConfigDataToAlterConfigBatchRequestData(t *testing.T) {
 				},
 				{
 					Name:  "sasl.login.callback.handler.class",
-					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginCallbackHandler")),
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("orgv2.apache.kafka.common.security.oauthbearer.OAuthBearerLoginCallbackHandler")),
 				},
 				{
 					Name:  "sasl.jaas.config",
-					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required clientId='test-client' scope='test-scope' clientSecret='test-secret' extension_logicalCluster='lkc-123' extension_identityPoolId='pool-123';")),
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("orgv2.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required clientId='test-client' scope='test-scope' clientSecret='test-secret' extension_logicalCluster='lkc-123' extension_identityPoolId='pool-123';")),
 				},
 			},
 			expected: []kafkarestv3.AlterConfigBatchRequestDataData{
@@ -916,12 +916,12 @@ func TestConvertConfigDataToAlterConfigBatchRequestData(t *testing.T) {
 				},
 				{
 					Name:      "sasl.login.callback.handler.class",
-					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginCallbackHandler")),
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("orgv2.apache.kafka.common.security.oauthbearer.OAuthBearerLoginCallbackHandler")),
 					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
 				},
 				{
 					Name:      "sasl.jaas.config",
-					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required clientId='test-client' scope='test-scope' clientSecret='test-secret' extension_logicalCluster='lkc-123' extension_identityPoolId='pool-123';")),
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("orgv2.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required clientId='test-client' scope='test-scope' clientSecret='test-secret' extension_logicalCluster='lkc-123' extension_identityPoolId='pool-123';")),
 					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
 				},
 			},
@@ -939,7 +939,7 @@ func TestConvertConfigDataToAlterConfigBatchRequestData(t *testing.T) {
 				},
 				{
 					Name:  "local.sasl.jaas.config",
-					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"local-key\" password=\"local-secret\";")),
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("orgv2.apache.kafka.common.security.plain.PlainLoginModule required username=\"local-key\" password=\"local-secret\";")),
 				},
 			},
 			expected: []kafkarestv3.AlterConfigBatchRequestDataData{
@@ -955,7 +955,7 @@ func TestConvertConfigDataToAlterConfigBatchRequestData(t *testing.T) {
 				},
 				{
 					Name:      "local.sasl.jaas.config",
-					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"local-key\" password=\"local-secret\";")),
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("orgv2.apache.kafka.common.security.plain.PlainLoginModule required username=\"local-key\" password=\"local-secret\";")),
 					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
 				},
 			},
@@ -1100,7 +1100,7 @@ func TestExtractCredentialConfigs(t *testing.T) {
 				},
 				{
 					Name:  "sasl.jaas.config",
-					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"test-key\" password=\"test-secret\";")),
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("orgv2.apache.kafka.common.security.plain.PlainLoginModule required username=\"test-key\" password=\"test-secret\";")),
 				},
 			},
 			expected: []kafkarestv3.AlterConfigBatchRequestDataData{
@@ -1111,7 +1111,7 @@ func TestExtractCredentialConfigs(t *testing.T) {
 				},
 				{
 					Name:      "sasl.jaas.config",
-					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"test-key\" password=\"test-secret\";")),
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("orgv2.apache.kafka.common.security.plain.PlainLoginModule required username=\"test-key\" password=\"test-secret\";")),
 					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
 				},
 			},
@@ -1129,7 +1129,7 @@ func TestExtractCredentialConfigs(t *testing.T) {
 				},
 				{
 					Name:  "sasl.jaas.config",
-					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"key\" password=\"secret\";")),
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("orgv2.apache.kafka.common.security.plain.PlainLoginModule required username=\"key\" password=\"secret\";")),
 				},
 				{
 					Name:  "security.protocol",
@@ -1148,7 +1148,7 @@ func TestExtractCredentialConfigs(t *testing.T) {
 				},
 				{
 					Name:      "sasl.jaas.config",
-					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"key\" password=\"secret\";")),
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("orgv2.apache.kafka.common.security.plain.PlainLoginModule required username=\"key\" password=\"secret\";")),
 					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
 				},
 			},
@@ -1162,7 +1162,7 @@ func TestExtractCredentialConfigs(t *testing.T) {
 				},
 				{
 					Name:  "local.sasl.jaas.config",
-					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"local-key\" password=\"local-secret\";")),
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("orgv2.apache.kafka.common.security.plain.PlainLoginModule required username=\"local-key\" password=\"local-secret\";")),
 				},
 				{
 					Name:  "local.security.protocol",
@@ -1177,7 +1177,7 @@ func TestExtractCredentialConfigs(t *testing.T) {
 				},
 				{
 					Name:      "local.sasl.jaas.config",
-					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"local-key\" password=\"local-secret\";")),
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("orgv2.apache.kafka.common.security.plain.PlainLoginModule required username=\"local-key\" password=\"local-secret\";")),
 					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
 				},
 			},
@@ -1191,7 +1191,7 @@ func TestExtractCredentialConfigs(t *testing.T) {
 				},
 				{
 					Name:  "sasl.jaas.config",
-					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"remote-key\" password=\"remote-secret\";")),
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("orgv2.apache.kafka.common.security.plain.PlainLoginModule required username=\"remote-key\" password=\"remote-secret\";")),
 				},
 				{
 					Name:  "local.sasl.mechanism",
@@ -1199,7 +1199,7 @@ func TestExtractCredentialConfigs(t *testing.T) {
 				},
 				{
 					Name:  "local.sasl.jaas.config",
-					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"local-key\" password=\"local-secret\";")),
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("orgv2.apache.kafka.common.security.plain.PlainLoginModule required username=\"local-key\" password=\"local-secret\";")),
 				},
 				{
 					Name:  "bootstrap.servers",
@@ -1214,7 +1214,7 @@ func TestExtractCredentialConfigs(t *testing.T) {
 				},
 				{
 					Name:      "sasl.jaas.config",
-					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"remote-key\" password=\"remote-secret\";")),
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("orgv2.apache.kafka.common.security.plain.PlainLoginModule required username=\"remote-key\" password=\"remote-secret\";")),
 					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
 				},
 				{
@@ -1224,7 +1224,7 @@ func TestExtractCredentialConfigs(t *testing.T) {
 				},
 				{
 					Name:      "local.sasl.jaas.config",
-					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"local-key\" password=\"local-secret\";")),
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("orgv2.apache.kafka.common.security.plain.PlainLoginModule required username=\"local-key\" password=\"local-secret\";")),
 					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
 				},
 			},
@@ -1276,7 +1276,7 @@ func TestExtractCredentialConfigs(t *testing.T) {
 			input: []kafkarestv3.ConfigData{
 				{
 					Name:  "sasl.jaas.config",
-					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"key\" password=\"secret\";")),
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("orgv2.apache.kafka.common.security.plain.PlainLoginModule required username=\"key\" password=\"secret\";")),
 				},
 				{
 					Name:  "bootstrap.servers",
@@ -1286,7 +1286,7 @@ func TestExtractCredentialConfigs(t *testing.T) {
 			expected: []kafkarestv3.AlterConfigBatchRequestDataData{
 				{
 					Name:      "sasl.jaas.config",
-					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"key\" password=\"secret\";")),
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("orgv2.apache.kafka.common.security.plain.PlainLoginModule required username=\"key\" password=\"secret\";")),
 					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
 				},
 			},
@@ -1340,7 +1340,7 @@ func TestExtractCredentialConfigs(t *testing.T) {
 				},
 				{
 					Name:  "sasl.jaas.config",
-					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"remote-key\" password=\"remote-secret\";")),
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("orgv2.apache.kafka.common.security.plain.PlainLoginModule required username=\"remote-key\" password=\"remote-secret\";")),
 				},
 				{
 					Name:  "local.sasl.mechanism",
@@ -1348,7 +1348,7 @@ func TestExtractCredentialConfigs(t *testing.T) {
 				},
 				{
 					Name:  "local.sasl.jaas.config",
-					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"local-key\" password=\"local-secret\";")),
+					Value: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("orgv2.apache.kafka.common.security.plain.PlainLoginModule required username=\"local-key\" password=\"local-secret\";")),
 				},
 			},
 			expected: []kafkarestv3.AlterConfigBatchRequestDataData{
@@ -1359,7 +1359,7 @@ func TestExtractCredentialConfigs(t *testing.T) {
 				},
 				{
 					Name:      "sasl.jaas.config",
-					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"remote-key\" password=\"remote-secret\";")),
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("orgv2.apache.kafka.common.security.plain.PlainLoginModule required username=\"remote-key\" password=\"remote-secret\";")),
 					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
 				},
 				{
@@ -1369,7 +1369,7 @@ func TestExtractCredentialConfigs(t *testing.T) {
 				},
 				{
 					Name:      "local.sasl.jaas.config",
-					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("org.apache.kafka.common.security.plain.PlainLoginModule required username=\"local-key\" password=\"local-secret\";")),
+					Value:     *kafkarestv3.NewNullableString(kafkarestv3.PtrString("orgv2.apache.kafka.common.security.plain.PlainLoginModule required username=\"local-key\" password=\"local-secret\";")),
 					Operation: *kafkarestv3.NewNullableString(kafkarestv3.PtrString("SET")),
 				},
 			},
@@ -1498,7 +1498,7 @@ func TestValidateAllOrNoneAttributesSetForResources(t *testing.T) {
 			flinkOrganizationId: "org-123",
 			flinkEnvironmentId:  "env-456",
 			flinkComputePoolId:  "pool-789",
-			flinkRestEndpoint:   "https://flink.us-east-1.aws.confluent.cloud",
+			flinkRestEndpoint:   "https://flinkv2.us-east-1.aws.confluent.cloud",
 			flinkPrincipalId:    "u-123456",
 
 			tableflowApiKey:    "tf-key",
@@ -1550,7 +1550,7 @@ func TestValidateAllOrNoneAttributesSetForResources(t *testing.T) {
 			flinkOrganizationId: "org-123",
 			flinkEnvironmentId:  "env-456",
 			flinkComputePoolId:  "pool-789",
-			flinkRestEndpoint:   "https://flink.us-east-1.aws.confluent.cloud",
+			flinkRestEndpoint:   "https://flinkv2.us-east-1.aws.confluent.cloud",
 			shouldErr:           true,
 			expectedErrMsg:      "All 7 flink_api_key, flink_api_secret",
 			expectedFlags: ResourceMetadataSetFlags{
@@ -1680,7 +1680,7 @@ func TestValidateAllOrNoneAttributesSetForResourcesWithOAuth(t *testing.T) {
 			flinkOrgID:        "org-123",
 			flinkEnvID:        "env-456",
 			flinkPoolID:       "pool-789",
-			flinkRestEndpoint: "https://flink.us-east-1.aws.confluent.cloud",
+			flinkRestEndpoint: "https://flinkv2.us-east-1.aws.confluent.cloud",
 			flinkPrincipalID:  "u-123456",
 			expectedFlags: ResourceMetadataSetFlags{
 				isKafkaMetadataSet:          true,
@@ -1733,7 +1733,7 @@ func TestValidateAllOrNoneAttributesSetForResourcesWithOAuth(t *testing.T) {
 			flinkOrgID:        "org-123",
 			flinkEnvID:        "env-456",
 			flinkPoolID:       "pool-789",
-			flinkRestEndpoint: "https://flink.us-east-1.aws.confluent.cloud",
+			flinkRestEndpoint: "https://flinkv2.us-east-1.aws.confluent.cloud",
 			shouldErr:         true,
 			expectedErrMsg:    "All 5 (flink_rest_endpoint, organization_id, environment_id, flink_compute_pool_id, flink_principal_id)",
 			expectedFlags: ResourceMetadataSetFlags{
@@ -2795,16 +2795,16 @@ func TestIsNonKafkaRestApiResourceNotFound(t *testing.T) {
 func TestIsKafkaApiKey(t *testing.T) {
 	tests := []struct {
 		name     string
-		apiKey   apikeys.IamV2ApiKey
+		apiKey   apikeysv2.IamV2ApiKey
 		expected bool
 	}{
 		{
 			name: "Kafka API Key with Cluster kind and cmk/v2",
-			apiKey: apikeys.IamV2ApiKey{
-				Spec: &apikeys.IamV2ApiKeySpec{
-					Resource: &apikeys.ObjectReference{
-						Kind:       apikeys.PtrString(clusterKind),
-						ApiVersion: apikeys.PtrString(cmkApiVersion),
+			apiKey: apikeysv2.IamV2ApiKey{
+				Spec: &apikeysv2.IamV2ApiKeySpec{
+					Resource: &apikeysv2.ObjectReference{
+						Kind:       apikeysv2.PtrString(clusterKind),
+						ApiVersion: apikeysv2.PtrString(cmkApiVersion),
 					},
 				},
 			},
@@ -2812,11 +2812,11 @@ func TestIsKafkaApiKey(t *testing.T) {
 		},
 		{
 			name: "Not Kafka - SR kind with srcm/v3",
-			apiKey: apikeys.IamV2ApiKey{
-				Spec: &apikeys.IamV2ApiKeySpec{
-					Resource: &apikeys.ObjectReference{
-						Kind:       apikeys.PtrString(schemaRegistryKind),
-						ApiVersion: apikeys.PtrString(srcmV3ApiVersion),
+			apiKey: apikeysv2.IamV2ApiKey{
+				Spec: &apikeysv2.IamV2ApiKeySpec{
+					Resource: &apikeysv2.ObjectReference{
+						Kind:       apikeysv2.PtrString(schemaRegistryKind),
+						ApiVersion: apikeysv2.PtrString(srcmV3ApiVersion),
 					},
 				},
 			},
@@ -2824,11 +2824,11 @@ func TestIsKafkaApiKey(t *testing.T) {
 		},
 		{
 			name: "Not Kafka - Cluster kind but wrong api version",
-			apiKey: apikeys.IamV2ApiKey{
-				Spec: &apikeys.IamV2ApiKeySpec{
-					Resource: &apikeys.ObjectReference{
-						Kind:       apikeys.PtrString(clusterKind),
-						ApiVersion: apikeys.PtrString(srcmV2ApiVersion),
+			apiKey: apikeysv2.IamV2ApiKey{
+				Spec: &apikeysv2.IamV2ApiKeySpec{
+					Resource: &apikeysv2.ObjectReference{
+						Kind:       apikeysv2.PtrString(clusterKind),
+						ApiVersion: apikeysv2.PtrString(srcmV2ApiVersion),
 					},
 				},
 			},
@@ -2836,11 +2836,11 @@ func TestIsKafkaApiKey(t *testing.T) {
 		},
 		{
 			name: "Not Kafka - Region kind with fcpm/v2",
-			apiKey: apikeys.IamV2ApiKey{
-				Spec: &apikeys.IamV2ApiKeySpec{
-					Resource: &apikeys.ObjectReference{
-						Kind:       apikeys.PtrString(regionKind),
-						ApiVersion: apikeys.PtrString(fcpmApiVersion),
+			apiKey: apikeysv2.IamV2ApiKey{
+				Spec: &apikeysv2.IamV2ApiKeySpec{
+					Resource: &apikeysv2.ObjectReference{
+						Kind:       apikeysv2.PtrString(regionKind),
+						ApiVersion: apikeysv2.PtrString(fcpmApiVersion),
 					},
 				},
 			},
@@ -2860,16 +2860,16 @@ func TestIsKafkaApiKey(t *testing.T) {
 func TestIsFlinkApiKey(t *testing.T) {
 	tests := []struct {
 		name     string
-		apiKey   apikeys.IamV2ApiKey
+		apiKey   apikeysv2.IamV2ApiKey
 		expected bool
 	}{
 		{
 			name: "Flink API Key with Region kind and fcpm/v2",
-			apiKey: apikeys.IamV2ApiKey{
-				Spec: &apikeys.IamV2ApiKeySpec{
-					Resource: &apikeys.ObjectReference{
-						Kind:       apikeys.PtrString(regionKind),
-						ApiVersion: apikeys.PtrString(fcpmApiVersion),
+			apiKey: apikeysv2.IamV2ApiKey{
+				Spec: &apikeysv2.IamV2ApiKeySpec{
+					Resource: &apikeysv2.ObjectReference{
+						Kind:       apikeysv2.PtrString(regionKind),
+						ApiVersion: apikeysv2.PtrString(fcpmApiVersion),
 					},
 				},
 			},
@@ -2877,11 +2877,11 @@ func TestIsFlinkApiKey(t *testing.T) {
 		},
 		{
 			name: "Not Flink - Cluster kind with cmk/v2",
-			apiKey: apikeys.IamV2ApiKey{
-				Spec: &apikeys.IamV2ApiKeySpec{
-					Resource: &apikeys.ObjectReference{
-						Kind:       apikeys.PtrString(clusterKind),
-						ApiVersion: apikeys.PtrString(cmkApiVersion),
+			apiKey: apikeysv2.IamV2ApiKey{
+				Spec: &apikeysv2.IamV2ApiKeySpec{
+					Resource: &apikeysv2.ObjectReference{
+						Kind:       apikeysv2.PtrString(clusterKind),
+						ApiVersion: apikeysv2.PtrString(cmkApiVersion),
 					},
 				},
 			},
@@ -2889,11 +2889,11 @@ func TestIsFlinkApiKey(t *testing.T) {
 		},
 		{
 			name: "Not Flink - Region kind but wrong api version",
-			apiKey: apikeys.IamV2ApiKey{
-				Spec: &apikeys.IamV2ApiKeySpec{
-					Resource: &apikeys.ObjectReference{
-						Kind:       apikeys.PtrString(regionKind),
-						ApiVersion: apikeys.PtrString(cmkApiVersion),
+			apiKey: apikeysv2.IamV2ApiKey{
+				Spec: &apikeysv2.IamV2ApiKeySpec{
+					Resource: &apikeysv2.ObjectReference{
+						Kind:       apikeysv2.PtrString(regionKind),
+						ApiVersion: apikeysv2.PtrString(cmkApiVersion),
 					},
 				},
 			},
@@ -2913,16 +2913,16 @@ func TestIsFlinkApiKey(t *testing.T) {
 func TestIsKsqlDbClusterApiKey(t *testing.T) {
 	tests := []struct {
 		name     string
-		apiKey   apikeys.IamV2ApiKey
+		apiKey   apikeysv2.IamV2ApiKey
 		expected bool
 	}{
 		{
 			name: "ksqlDB API Key with ksqlDB kind and ksqldbcm/v2",
-			apiKey: apikeys.IamV2ApiKey{
-				Spec: &apikeys.IamV2ApiKeySpec{
-					Resource: &apikeys.ObjectReference{
-						Kind:       apikeys.PtrString(ksqlDbKind),
-						ApiVersion: apikeys.PtrString(ksqldbcmApiVersion),
+			apiKey: apikeysv2.IamV2ApiKey{
+				Spec: &apikeysv2.IamV2ApiKeySpec{
+					Resource: &apikeysv2.ObjectReference{
+						Kind:       apikeysv2.PtrString(ksqlDbKind),
+						ApiVersion: apikeysv2.PtrString(ksqldbcmApiVersion),
 					},
 				},
 			},
@@ -2930,11 +2930,11 @@ func TestIsKsqlDbClusterApiKey(t *testing.T) {
 		},
 		{
 			name: "ksqlDB API Key with Cluster kind and ksqldbcm/v2",
-			apiKey: apikeys.IamV2ApiKey{
-				Spec: &apikeys.IamV2ApiKeySpec{
-					Resource: &apikeys.ObjectReference{
-						Kind:       apikeys.PtrString(clusterKind),
-						ApiVersion: apikeys.PtrString(ksqldbcmApiVersion),
+			apiKey: apikeysv2.IamV2ApiKey{
+				Spec: &apikeysv2.IamV2ApiKeySpec{
+					Resource: &apikeysv2.ObjectReference{
+						Kind:       apikeysv2.PtrString(clusterKind),
+						ApiVersion: apikeysv2.PtrString(ksqldbcmApiVersion),
 					},
 				},
 			},
@@ -2942,11 +2942,11 @@ func TestIsKsqlDbClusterApiKey(t *testing.T) {
 		},
 		{
 			name: "Not ksqlDB - ksqlDB kind but wrong api version",
-			apiKey: apikeys.IamV2ApiKey{
-				Spec: &apikeys.IamV2ApiKeySpec{
-					Resource: &apikeys.ObjectReference{
-						Kind:       apikeys.PtrString(ksqlDbKind),
-						ApiVersion: apikeys.PtrString(cmkApiVersion),
+			apiKey: apikeysv2.IamV2ApiKey{
+				Spec: &apikeysv2.IamV2ApiKeySpec{
+					Resource: &apikeysv2.ObjectReference{
+						Kind:       apikeysv2.PtrString(ksqlDbKind),
+						ApiVersion: apikeysv2.PtrString(cmkApiVersion),
 					},
 				},
 			},
@@ -2954,11 +2954,11 @@ func TestIsKsqlDbClusterApiKey(t *testing.T) {
 		},
 		{
 			name: "Not ksqlDB - Region kind with ksqldbcm/v2",
-			apiKey: apikeys.IamV2ApiKey{
-				Spec: &apikeys.IamV2ApiKeySpec{
-					Resource: &apikeys.ObjectReference{
-						Kind:       apikeys.PtrString(regionKind),
-						ApiVersion: apikeys.PtrString(ksqldbcmApiVersion),
+			apiKey: apikeysv2.IamV2ApiKey{
+				Spec: &apikeysv2.IamV2ApiKeySpec{
+					Resource: &apikeysv2.ObjectReference{
+						Kind:       apikeysv2.PtrString(regionKind),
+						ApiVersion: apikeysv2.PtrString(ksqldbcmApiVersion),
 					},
 				},
 			},
@@ -2978,15 +2978,15 @@ func TestIsKsqlDbClusterApiKey(t *testing.T) {
 func TestIsTableflowApiKey(t *testing.T) {
 	tests := []struct {
 		name     string
-		apiKey   apikeys.IamV2ApiKey
+		apiKey   apikeysv2.IamV2ApiKey
 		expected bool
 	}{
 		{
 			name: "Tableflow API Key",
-			apiKey: apikeys.IamV2ApiKey{
-				Spec: &apikeys.IamV2ApiKeySpec{
-					Resource: &apikeys.ObjectReference{
-						Kind: apikeys.PtrString(tableflowKind),
+			apiKey: apikeysv2.IamV2ApiKey{
+				Spec: &apikeysv2.IamV2ApiKeySpec{
+					Resource: &apikeysv2.ObjectReference{
+						Kind: apikeysv2.PtrString(tableflowKind),
 						Id:   tableflowKindInLowercase,
 					},
 				},
@@ -2995,10 +2995,10 @@ func TestIsTableflowApiKey(t *testing.T) {
 		},
 		{
 			name: "Not Tableflow - wrong kind",
-			apiKey: apikeys.IamV2ApiKey{
-				Spec: &apikeys.IamV2ApiKeySpec{
-					Resource: &apikeys.ObjectReference{
-						Kind: apikeys.PtrString(clusterKind),
+			apiKey: apikeysv2.IamV2ApiKey{
+				Spec: &apikeysv2.IamV2ApiKeySpec{
+					Resource: &apikeysv2.ObjectReference{
+						Kind: apikeysv2.PtrString(clusterKind),
 						Id:   tableflowKindInLowercase,
 					},
 				},
@@ -3007,10 +3007,10 @@ func TestIsTableflowApiKey(t *testing.T) {
 		},
 		{
 			name: "Not Tableflow - wrong id",
-			apiKey: apikeys.IamV2ApiKey{
-				Spec: &apikeys.IamV2ApiKeySpec{
-					Resource: &apikeys.ObjectReference{
-						Kind: apikeys.PtrString(tableflowKind),
+			apiKey: apikeysv2.IamV2ApiKey{
+				Spec: &apikeysv2.IamV2ApiKeySpec{
+					Resource: &apikeysv2.ObjectReference{
+						Kind: apikeysv2.PtrString(tableflowKind),
 						Id:   "wrong-id",
 					},
 				},
@@ -3031,52 +3031,52 @@ func TestIsTableflowApiKey(t *testing.T) {
 func TestValidateApiKey(t *testing.T) {
 	tests := []struct {
 		name      string
-		apiKey    apikeys.IamV2ApiKey
+		apiKey    apikeysv2.IamV2ApiKey
 		expectErr bool
 	}{
 		{
 			name: "valid API key with both ID and secret",
-			apiKey: apikeys.IamV2ApiKey{
-				Id: apikeys.PtrString("ABCDEFGHIJK123"),
-				Spec: &apikeys.IamV2ApiKeySpec{
-					Secret: apikeys.PtrString("supersecret"),
+			apiKey: apikeysv2.IamV2ApiKey{
+				Id: apikeysv2.PtrString("ABCDEFGHIJK123"),
+				Spec: &apikeysv2.IamV2ApiKeySpec{
+					Secret: apikeysv2.PtrString("supersecret"),
 				},
 			},
 			expectErr: false,
 		},
 		{
 			name: "missing secret",
-			apiKey: apikeys.IamV2ApiKey{
-				Id:   apikeys.PtrString("ABCDEFGHIJK123"),
-				Spec: &apikeys.IamV2ApiKeySpec{},
+			apiKey: apikeysv2.IamV2ApiKey{
+				Id:   apikeysv2.PtrString("ABCDEFGHIJK123"),
+				Spec: &apikeysv2.IamV2ApiKeySpec{},
 			},
 			expectErr: true,
 		},
 		{
 			name: "missing ID",
-			apiKey: apikeys.IamV2ApiKey{
-				Spec: &apikeys.IamV2ApiKeySpec{
-					Secret: apikeys.PtrString("supersecret"),
+			apiKey: apikeysv2.IamV2ApiKey{
+				Spec: &apikeysv2.IamV2ApiKeySpec{
+					Secret: apikeysv2.PtrString("supersecret"),
 				},
 			},
 			expectErr: true,
 		},
 		{
 			name: "empty string ID returns error",
-			apiKey: apikeys.IamV2ApiKey{
-				Id: apikeys.PtrString(""),
-				Spec: &apikeys.IamV2ApiKeySpec{
-					Secret: apikeys.PtrString("supersecret"),
+			apiKey: apikeysv2.IamV2ApiKey{
+				Id: apikeysv2.PtrString(""),
+				Spec: &apikeysv2.IamV2ApiKeySpec{
+					Secret: apikeysv2.PtrString("supersecret"),
 				},
 			},
 			expectErr: true,
 		},
 		{
 			name: "empty string secret returns error",
-			apiKey: apikeys.IamV2ApiKey{
-				Id: apikeys.PtrString("ABCDEFGHIJK123"),
-				Spec: &apikeys.IamV2ApiKeySpec{
-					Secret: apikeys.PtrString(""),
+			apiKey: apikeysv2.IamV2ApiKey{
+				Id: apikeysv2.PtrString("ABCDEFGHIJK123"),
+				Spec: &apikeysv2.IamV2ApiKeySpec{
+					Secret: apikeysv2.PtrString(""),
 				},
 			},
 			expectErr: true,
@@ -3526,10 +3526,10 @@ func TestExtractNonsensitiveConfigs(t *testing.T) {
 			configs: map[string]string{
 				"config.internal.something": "value",
 				"cloud.environment":         "prod",
-				"connector.class":           "io.confluent.connect.s3.S3SinkConnector",
+				"connector.class":           "io.confluent.connectv1.s3.S3SinkConnector",
 			},
 			expected: map[string]string{
-				"connector.class": "io.confluent.connect.s3.S3SinkConnector",
+				"connector.class": "io.confluent.connectv1.s3.S3SinkConnector",
 			},
 		},
 		{
@@ -3557,10 +3557,10 @@ func TestExtractNonsensitiveConfigs(t *testing.T) {
 				"kafka.endpoint":                         "SASL://pkc-12345.us-east-1.aws.confluent.cloud:9092",
 				"kafka.max.partition.validation.disable": "false",
 				"kafka.region":                           "us-east-1",
-				"connector.class":                        "io.confluent.connect.s3.S3SinkConnector",
+				"connector.class":                        "io.confluent.connectv1.s3.S3SinkConnector",
 			},
 			expected: map[string]string{
-				"connector.class": "io.confluent.connect.s3.S3SinkConnector",
+				"connector.class": "io.confluent.connectv1.s3.S3SinkConnector",
 			},
 		},
 		{
@@ -3601,7 +3601,7 @@ func TestExtractNonsensitiveConfigs(t *testing.T) {
 func TestExtractRequiredStringValueFromMap(t *testing.T) {
 	config := map[string]string{
 		"name":            "my-connector",
-		"connector.class": "io.confluent.connect.s3.S3SinkConnector",
+		"connector.class": "io.confluent.connectv1.s3.S3SinkConnector",
 	}
 
 	tests := []struct {
@@ -3621,7 +3621,7 @@ func TestExtractRequiredStringValueFromMap(t *testing.T) {
 			name:       "another existing key",
 			key:        "connector.class",
 			configName: "connector config",
-			expected:   "io.confluent.connect.s3.S3SinkConnector",
+			expected:   "io.confluent.connectv1.s3.S3SinkConnector",
 		},
 		{
 			name:       "missing key",
