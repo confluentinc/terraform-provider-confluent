@@ -182,7 +182,7 @@ func testAccCheckIPFilterDestroy(s *terraform.State) error {
 			continue
 		}
 		deletedIPFilterId := rs.Primary.ID
-		req := c.iamIPClient.IPFiltersIamV2Api.GetIamV2IpFilter(c.iamIPApiContext(context.Background()), deletedIPFilterId)
+		req := c.iamIpFilteringV2Client.IPFiltersIamV2Api.GetIamV2IpFilter(c.iamIpFilteringV2ApiContext(context.Background()), deletedIPFilterId)
 		deletedServiceAccount, response, err := req.Execute()
 		if response != nil && (response.StatusCode == http.StatusForbidden || response.StatusCode == http.StatusNotFound) {
 			// v2/ip-filters/{nonExistentSaId/deletedSaID} returns http.StatusForbidden instead of http.StatusNotFound

@@ -187,7 +187,7 @@ func testAccCheckAzurePeeringDestroy(s *terraform.State) error {
 			continue
 		}
 		deletedPeeringId := rs.Primary.ID
-		req := c.netClient.PeeringsNetworkingV1Api.GetNetworkingV1Peering(c.netApiContext(context.Background()), deletedPeeringId).Environment(azurePeeringEnvironmentId)
+		req := c.networkingV1Client.PeeringsNetworkingV1Api.GetNetworkingV1Peering(c.networkingV1ApiContext(context.Background()), deletedPeeringId).Environment(azurePeeringEnvironmentId)
 		deletedPeering, response, err := req.Execute()
 		if response != nil && response.StatusCode == http.StatusNotFound {
 			return nil

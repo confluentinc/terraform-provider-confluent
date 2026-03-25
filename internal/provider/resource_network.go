@@ -18,7 +18,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	net "github.com/confluentinc/ccloud-sdk-go-v2/networking/v1"
+	networkingv1 "github.com/confluentinc/ccloud-sdk-go-v2/networking/v1"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
@@ -242,7 +242,7 @@ func networkCreate(ctx context.Context, d *schema.ResourceData, meta interface{}
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
 	resolution := extractStringValueFromBlock(d, paramDnsConfig, paramResolution)
 
-	spec := net.NewNetworkingV1NetworkSpec()
+	spec := networkingv1.NewNetworkingV1NetworkSpec()
 	if displayName != "" {
 		spec.SetDisplayName(displayName)
 	}
@@ -261,25 +261,25 @@ func networkCreate(ctx context.Context, d *schema.ResourceData, meta interface{}
 	if len(zones) > 0 {
 		spec.SetZones(zones)
 	}
-	spec.SetEnvironment(net.ObjectReference{Id: environmentId})
+	spec.SetEnvironment(networkingv1.ObjectReference{Id: environmentId})
 	if resolution != "" {
-		spec.SetDnsConfig(net.NetworkingV1DnsConfig{Resolution: resolution})
+		spec.SetDnsConfig(networkingv1.NetworkingV1DnsConfig{Resolution: resolution})
 	}
 
-	createNetworkRequest := net.NetworkingV1Network{Spec: spec}
+	createNetworkRequest := networkingv1.NetworkingV1Network{Spec: spec}
 	createNetworkRequestJson, err := json.Marshal(createNetworkRequest)
 	if err != nil {
 		return diag.Errorf("error creating Network: error marshaling %#v to json: %s", createNetworkRequest, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Network: %s", createNetworkRequestJson))
 
-	createdNetwork, resp, err := executeNetworkCreate(c.netApiContext(ctx), c, createNetworkRequest)
+	createdNetwork, resp, err := executeNetworkCreate(c.networkingV1ApiContext(ctx), c, createNetworkRequest)
 	if err != nil {
 		return diag.Errorf("error creating Network %q: %s", createdNetwork.GetId(), createDescriptiveError(err, resp))
 	}
 	d.SetId(createdNetwork.GetId())
 
-	if err := waitForNetworkToProvision(c.netApiContext(ctx), c, environmentId, d.Id()); err != nil {
+	if err := waitForNetworkToProvision(c.networkingV1ApiContext(ctx), c, environmentId, d.Id()); err != nil {
 		return diag.Errorf("error waiting for Network %q to provision: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
@@ -292,13 +292,13 @@ func networkCreate(ctx context.Context, d *schema.ResourceData, meta interface{}
 	return networkRead(ctx, d, meta)
 }
 
-func executeNetworkCreate(ctx context.Context, c *Client, network net.NetworkingV1Network) (net.NetworkingV1Network, *http.Response, error) {
-	req := c.netClient.NetworksNetworkingV1Api.CreateNetworkingV1Network(c.netApiContext(ctx)).NetworkingV1Network(network)
+func executeNetworkCreate(ctx context.Context, c *Client, network networkingv1.NetworkingV1Network) (networkingv1.NetworkingV1Network, *http.Response, error) {
+	req := c.networkingV1Client.NetworksNetworkingV1Api.CreateNetworkingV1Network(c.networkingV1ApiContext(ctx)).NetworkingV1Network(network)
 	return req.Execute()
 }
 
-func executeNetworkRead(ctx context.Context, c *Client, environmentId string, networkId string) (net.NetworkingV1Network, *http.Response, error) {
-	req := c.netClient.NetworksNetworkingV1Api.GetNetworkingV1Network(c.netApiContext(ctx), networkId).Environment(environmentId)
+func executeNetworkRead(ctx context.Context, c *Client, environmentId string, networkId string) (networkingv1.NetworkingV1Network, *http.Response, error) {
+	req := c.networkingV1Client.NetworksNetworkingV1Api.GetNetworkingV1Network(c.networkingV1ApiContext(ctx), networkId).Environment(environmentId)
 	return req.Execute()
 }
 
@@ -318,7 +318,7 @@ func networkRead(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 func readNetworkAndSetAttributes(ctx context.Context, d *schema.ResourceData, meta interface{}, environmentId, networkId string) ([]*schema.ResourceData, error) {
 	c := meta.(*Client)
 
-	network, resp, err := executeNetworkRead(c.netApiContext(ctx), c, environmentId, networkId)
+	network, resp, err := executeNetworkRead(c.networkingV1ApiContext(ctx), c, environmentId, networkId)
 	if err != nil {
 		tflog.Warn(ctx, fmt.Sprintf("Error reading Network %q: %s", d.Id(), createDescriptiveError(err, resp)), map[string]interface{}{networkLoggingKey: d.Id()})
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
@@ -345,7 +345,7 @@ func readNetworkAndSetAttributes(ctx context.Context, d *schema.ResourceData, me
 	return []*schema.ResourceData{d}, nil
 }
 
-func setNetworkAttributes(d *schema.ResourceData, network net.NetworkingV1Network) (*schema.ResourceData, error) {
+func setNetworkAttributes(d *schema.ResourceData, network networkingv1.NetworkingV1Network) (*schema.ResourceData, error) {
 	if err := d.Set(paramDisplayName, network.Spec.GetDisplayName()); err != nil {
 		return nil, err
 	}
@@ -426,7 +426,7 @@ func networkDelete(ctx context.Context, d *schema.ResourceData, meta interface{}
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
 	c := meta.(*Client)
 
-	req := c.netClient.NetworksNetworkingV1Api.DeleteNetworkingV1Network(c.netApiContext(ctx), d.Id()).Environment(environmentId)
+	req := c.networkingV1Client.NetworksNetworkingV1Api.DeleteNetworkingV1Network(c.networkingV1ApiContext(ctx), d.Id()).Environment(environmentId)
 	resp, err := req.Execute()
 
 	if err != nil {
@@ -446,10 +446,10 @@ func networkUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}
 	c := meta.(*Client)
 	updatedDisplayName := d.Get(paramDisplayName).(string)
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
-	updateNetworkRequest := net.NewNetworkingV1NetworkUpdate()
-	updateSpec := net.NewNetworkingV1NetworkSpecUpdate()
+	updateNetworkRequest := networkingv1.NewNetworkingV1NetworkUpdate()
+	updateSpec := networkingv1.NewNetworkingV1NetworkSpecUpdate()
 	updateSpec.SetDisplayName(updatedDisplayName)
-	updateSpec.SetEnvironment(net.ObjectReference{Id: environmentId})
+	updateSpec.SetEnvironment(networkingv1.ObjectReference{Id: environmentId})
 	updateNetworkRequest.SetSpec(*updateSpec)
 	updateNetworkRequestJson, err := json.Marshal(updateNetworkRequest)
 	if err != nil {
@@ -457,7 +457,7 @@ func networkUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Updating Network %q: %s", d.Id(), updateNetworkRequestJson), map[string]interface{}{networkLoggingKey: d.Id()})
 
-	req := c.netClient.NetworksNetworkingV1Api.UpdateNetworkingV1Network(c.netApiContext(ctx), d.Id()).NetworkingV1NetworkUpdate(*updateNetworkRequest)
+	req := c.networkingV1Client.NetworksNetworkingV1Api.UpdateNetworkingV1Network(c.networkingV1ApiContext(ctx), d.Id()).NetworkingV1NetworkUpdate(*updateNetworkRequest)
 	updatedNetwork, resp, err := req.Execute()
 
 	if err != nil {
@@ -613,10 +613,10 @@ func computedGatewaySchema() *schema.Schema {
 	}
 }
 
-func buildZonesInfo(tfZonesInfo []interface{}) []net.NetworkingV1ZoneInfo {
-	zonesInfo := make([]net.NetworkingV1ZoneInfo, len(tfZonesInfo))
+func buildZonesInfo(tfZonesInfo []interface{}) []networkingv1.NetworkingV1ZoneInfo {
+	zonesInfo := make([]networkingv1.NetworkingV1ZoneInfo, len(tfZonesInfo))
 	for index, tfZoneInfo := range tfZonesInfo {
-		zoneInfo := net.NewNetworkingV1ZoneInfo()
+		zoneInfo := networkingv1.NewNetworkingV1ZoneInfo()
 		tfZoneInfoMap := tfZoneInfo.(map[string]interface{})
 		if zoneId, exists := tfZoneInfoMap[paramZoneId].(string); exists {
 			zoneInfo.SetZoneId(zoneId)
@@ -629,7 +629,7 @@ func buildZonesInfo(tfZonesInfo []interface{}) []net.NetworkingV1ZoneInfo {
 	return zonesInfo
 }
 
-func buildTfZonesInfo(zonesInfo []net.NetworkingV1ZoneInfo) *[]map[string]interface{} {
+func buildTfZonesInfo(zonesInfo []networkingv1.NetworkingV1ZoneInfo) *[]map[string]interface{} {
 	tfZonesInfo := make([]map[string]interface{}, len(zonesInfo))
 	for i, zoneInfo := range zonesInfo {
 		tfZonesInfo[i] = *buildTfZoneInfo(zoneInfo)
@@ -637,14 +637,14 @@ func buildTfZonesInfo(zonesInfo []net.NetworkingV1ZoneInfo) *[]map[string]interf
 	return &tfZonesInfo
 }
 
-func buildTfZoneInfo(zoneInfo net.NetworkingV1ZoneInfo) *map[string]interface{} {
+func buildTfZoneInfo(zoneInfo networkingv1.NetworkingV1ZoneInfo) *map[string]interface{} {
 	tfZoneInfo := make(map[string]interface{})
 	tfZoneInfo[paramZoneId] = zoneInfo.GetZoneId()
 	tfZoneInfo[paramCidr] = zoneInfo.GetCidr()
 	return &tfZoneInfo
 }
 
-func getGatewayID(network net.NetworkingV1Network) string {
+func getGatewayID(network networkingv1.NetworkingV1Network) string {
 	gateway := network.Spec.GetGateway()
 	return gateway.GetId()
 }

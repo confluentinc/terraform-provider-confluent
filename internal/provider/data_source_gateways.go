@@ -22,7 +22,7 @@ import (
 	"strings"
 	"time"
 
-	netgw "github.com/confluentinc/ccloud-sdk-go-v2/networking-gateway/v1"
+	networkinggatewayv1 "github.com/confluentinc/ccloud-sdk-go-v2/networking-gateway/v1"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -149,7 +149,7 @@ func gatewaysDataSourceRead(ctx context.Context, d *schema.ResourceData, meta in
 	phases := normalizeGatewayPhases(phasesRaw)
 
 	c := meta.(*Client)
-	gateways, err := loadGateways(c.netGWApiContext(ctx), c, environmentId, gatewayTypes, ids, regions, displayNames, phases)
+	gateways, err := loadGateways(c.networkingGatewayV1ApiContext(ctx), c, environmentId, gatewayTypes, ids, regions, displayNames, phases)
 	if err != nil {
 		return diag.Errorf("error reading Gateways: %s", createDescriptiveError(err))
 	}
@@ -232,8 +232,8 @@ func gatewaysDataSourceRead(ctx context.Context, d *schema.ResourceData, meta in
 	return nil
 }
 
-func loadGateways(ctx context.Context, c *Client, environmentId string, gatewayTypes, ids, regions, displayNames, phases []string) ([]netgw.NetworkingV1Gateway, error) {
-	gateways := make([]netgw.NetworkingV1Gateway, 0)
+func loadGateways(ctx context.Context, c *Client, environmentId string, gatewayTypes, ids, regions, displayNames, phases []string) ([]networkinggatewayv1.NetworkingV1Gateway, error) {
+	gateways := make([]networkinggatewayv1.NetworkingV1Gateway, 0)
 
 	allGatewaysAreCollected := false
 	pageToken := ""
@@ -264,8 +264,8 @@ func loadGateways(ctx context.Context, c *Client, environmentId string, gatewayT
 	return gateways, nil
 }
 
-func executeListGateways(ctx context.Context, c *Client, environmentId string, gatewayTypes, ids, regions, displayNames, phases []string, pageToken string) (netgw.NetworkingV1GatewayList, *http.Response, error) {
-	request := c.netGatewayClient.GatewaysNetworkingV1Api.ListNetworkingV1Gateways(ctx).Environment(environmentId).PageSize(listGatewaysPageSize)
+func executeListGateways(ctx context.Context, c *Client, environmentId string, gatewayTypes, ids, regions, displayNames, phases []string, pageToken string) (networkinggatewayv1.NetworkingV1GatewayList, *http.Response, error) {
+	request := c.networkingGatewayV1Client.GatewaysNetworkingV1Api.ListNetworkingV1Gateways(ctx).Environment(environmentId).PageSize(listGatewaysPageSize)
 
 	if len(gatewayTypes) > 0 {
 		request = request.GatewayType(gatewayTypes)

@@ -18,7 +18,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	net "github.com/confluentinc/ccloud-sdk-go-v2/networking/v1"
+	networkingv1 "github.com/confluentinc/ccloud-sdk-go-v2/networking/v1"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -80,7 +80,7 @@ func peeringCreate(ctx context.Context, d *schema.ResourceData, meta interface{}
 	isAzurePeering := len(d.Get(paramAzure).([]interface{})) > 0
 	isGcpPeering := len(d.Get(paramGcp).([]interface{})) > 0
 
-	spec := net.NewNetworkingV1PeeringSpec()
+	spec := networkingv1.NewNetworkingV1PeeringSpec()
 	if displayName != "" {
 		spec.SetDisplayName(displayName)
 	}
@@ -89,39 +89,39 @@ func peeringCreate(ctx context.Context, d *schema.ResourceData, meta interface{}
 		vpc := d.Get(paramAwsVpc).(string)
 		routes := convertToStringSlice(d.Get(paramAwsRoutes).([]interface{}))
 		customerRegion := d.Get(paramAwsCustomerRegion).(string)
-		spec.SetCloud(net.NetworkingV1PeeringSpecCloudOneOf{NetworkingV1AwsPeering: net.NewNetworkingV1AwsPeering(awsPeeringKind, account, vpc, routes, customerRegion)})
+		spec.SetCloud(networkingv1.NetworkingV1PeeringSpecCloudOneOf{NetworkingV1AwsPeering: networkingv1.NewNetworkingV1AwsPeering(awsPeeringKind, account, vpc, routes, customerRegion)})
 	} else if isAzurePeering {
 		tenant := d.Get(paramAzureTenant).(string)
 		vnet := d.Get(paramAzureVnet).(string)
 		customerRegion := d.Get(paramAzureCustomerRegion).(string)
-		spec.SetCloud(net.NetworkingV1PeeringSpecCloudOneOf{NetworkingV1AzurePeering: net.NewNetworkingV1AzurePeering(azurePeeringKind, tenant, vnet, customerRegion)})
+		spec.SetCloud(networkingv1.NetworkingV1PeeringSpecCloudOneOf{NetworkingV1AzurePeering: networkingv1.NewNetworkingV1AzurePeering(azurePeeringKind, tenant, vnet, customerRegion)})
 	} else if isGcpPeering {
 		project := d.Get(paramGcpProject).(string)
 		vpcNetwork := d.Get(paramGcpVpcNetwork).(string)
 		importCustomerRoutes := d.Get(paramGcpImportCustomRoutes).(bool)
-		gcpPeering := net.NewNetworkingV1GcpPeering(gcpPeeringKind, project, vpcNetwork)
+		gcpPeering := networkingv1.NewNetworkingV1GcpPeering(gcpPeeringKind, project, vpcNetwork)
 		gcpPeering.SetImportCustomRoutes(importCustomerRoutes)
-		spec.SetCloud(net.NetworkingV1PeeringSpecCloudOneOf{NetworkingV1GcpPeering: gcpPeering})
+		spec.SetCloud(networkingv1.NetworkingV1PeeringSpecCloudOneOf{NetworkingV1GcpPeering: gcpPeering})
 	} else {
 		return diag.Errorf("None of %q, %q, %q blocks was provided for confluent_peering resource", paramAws, paramAzure, paramGcp)
 	}
-	spec.SetNetwork(net.ObjectReference{Id: networkId})
-	spec.SetEnvironment(net.ObjectReference{Id: environmentId})
+	spec.SetNetwork(networkingv1.ObjectReference{Id: networkId})
+	spec.SetEnvironment(networkingv1.ObjectReference{Id: environmentId})
 
-	createPeeringRequest := net.NetworkingV1Peering{Spec: spec}
+	createPeeringRequest := networkingv1.NetworkingV1Peering{Spec: spec}
 	createPeeringRequestJson, err := json.Marshal(createPeeringRequest)
 	if err != nil {
 		return diag.Errorf("error creating Peering: error marshaling %#v to json: %s", createPeeringRequest, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Peering: %s", createPeeringRequestJson))
 
-	createdPeering, resp, err := executePeeringCreate(c.netApiContext(ctx), c, createPeeringRequest)
+	createdPeering, resp, err := executePeeringCreate(c.networkingV1ApiContext(ctx), c, createPeeringRequest)
 	if err != nil {
 		return diag.Errorf("error creating Peering %q: %s", createdPeering.GetId(), createDescriptiveError(err, resp))
 	}
 	d.SetId(createdPeering.GetId())
 
-	if err := waitForPeeringToProvision(c.netApiContext(ctx), c, environmentId, d.Id()); err != nil {
+	if err := waitForPeeringToProvision(c.networkingV1ApiContext(ctx), c, environmentId, d.Id()); err != nil {
 		return diag.Errorf("error waiting for Peering %q to provision: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
@@ -134,13 +134,13 @@ func peeringCreate(ctx context.Context, d *schema.ResourceData, meta interface{}
 	return peeringRead(ctx, d, meta)
 }
 
-func executePeeringCreate(ctx context.Context, c *Client, peering net.NetworkingV1Peering) (net.NetworkingV1Peering, *http.Response, error) {
-	req := c.netClient.PeeringsNetworkingV1Api.CreateNetworkingV1Peering(c.netApiContext(ctx)).NetworkingV1Peering(peering)
+func executePeeringCreate(ctx context.Context, c *Client, peering networkingv1.NetworkingV1Peering) (networkingv1.NetworkingV1Peering, *http.Response, error) {
+	req := c.networkingV1Client.PeeringsNetworkingV1Api.CreateNetworkingV1Peering(c.networkingV1ApiContext(ctx)).NetworkingV1Peering(peering)
 	return req.Execute()
 }
 
-func executePeeringRead(ctx context.Context, c *Client, environmentId string, peeringId string) (net.NetworkingV1Peering, *http.Response, error) {
-	req := c.netClient.PeeringsNetworkingV1Api.GetNetworkingV1Peering(c.netApiContext(ctx), peeringId).Environment(environmentId)
+func executePeeringRead(ctx context.Context, c *Client, environmentId string, peeringId string) (networkingv1.NetworkingV1Peering, *http.Response, error) {
+	req := c.networkingV1Client.PeeringsNetworkingV1Api.GetNetworkingV1Peering(c.networkingV1ApiContext(ctx), peeringId).Environment(environmentId)
 	return req.Execute()
 }
 
@@ -160,7 +160,7 @@ func peeringRead(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 func readPeeringAndSetAttributes(ctx context.Context, d *schema.ResourceData, meta interface{}, environmentId, peeringId string) ([]*schema.ResourceData, error) {
 	c := meta.(*Client)
 
-	peering, resp, err := executePeeringRead(c.netApiContext(ctx), c, environmentId, peeringId)
+	peering, resp, err := executePeeringRead(c.networkingV1ApiContext(ctx), c, environmentId, peeringId)
 	if err != nil {
 		tflog.Warn(ctx, fmt.Sprintf("Error reading Peering %q: %s", d.Id(), createDescriptiveError(err, resp)), map[string]interface{}{peeringLoggingKey: d.Id()})
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
@@ -187,7 +187,7 @@ func readPeeringAndSetAttributes(ctx context.Context, d *schema.ResourceData, me
 	return []*schema.ResourceData{d}, nil
 }
 
-func setPeeringAttributes(d *schema.ResourceData, peering net.NetworkingV1Peering) (*schema.ResourceData, error) {
+func setPeeringAttributes(d *schema.ResourceData, peering networkingv1.NetworkingV1Peering) (*schema.ResourceData, error) {
 	if err := d.Set(paramDisplayName, peering.Spec.GetDisplayName()); err != nil {
 		return nil, err
 	}
@@ -234,14 +234,14 @@ func peeringDelete(ctx context.Context, d *schema.ResourceData, meta interface{}
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
 	c := meta.(*Client)
 
-	req := c.netClient.PeeringsNetworkingV1Api.DeleteNetworkingV1Peering(c.netApiContext(ctx), d.Id()).Environment(environmentId)
+	req := c.networkingV1Client.PeeringsNetworkingV1Api.DeleteNetworkingV1Peering(c.networkingV1ApiContext(ctx), d.Id()).Environment(environmentId)
 	resp, err := req.Execute()
 
 	if err != nil {
 		return diag.Errorf("error deleting Peering %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
-	if err := waitForPeeringToBeDeleted(c.netApiContext(ctx), c, environmentId, d.Id()); err != nil {
+	if err := waitForPeeringToBeDeleted(c.networkingV1ApiContext(ctx), c, environmentId, d.Id()); err != nil {
 		return diag.Errorf("error waiting for Peering %q to be deleted: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
@@ -258,10 +258,10 @@ func peeringUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}
 	c := meta.(*Client)
 	updatedDisplayName := d.Get(paramDisplayName).(string)
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
-	updatePeeringRequest := net.NewNetworkingV1PeeringUpdate()
-	updateSpec := net.NewNetworkingV1PeeringSpecUpdate()
+	updatePeeringRequest := networkingv1.NewNetworkingV1PeeringUpdate()
+	updateSpec := networkingv1.NewNetworkingV1PeeringSpecUpdate()
 	updateSpec.SetDisplayName(updatedDisplayName)
-	updateSpec.SetEnvironment(net.ObjectReference{Id: environmentId})
+	updateSpec.SetEnvironment(networkingv1.ObjectReference{Id: environmentId})
 	updatePeeringRequest.SetSpec(*updateSpec)
 	updatePeeringRequestJson, err := json.Marshal(updatePeeringRequest)
 	if err != nil {
@@ -269,7 +269,7 @@ func peeringUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Updating Peering %q: %s", d.Id(), updatePeeringRequestJson), map[string]interface{}{peeringLoggingKey: d.Id()})
 
-	req := c.netClient.PeeringsNetworkingV1Api.UpdateNetworkingV1Peering(c.netApiContext(ctx), d.Id()).NetworkingV1PeeringUpdate(*updatePeeringRequest)
+	req := c.networkingV1Client.PeeringsNetworkingV1Api.UpdateNetworkingV1Peering(c.networkingV1ApiContext(ctx), d.Id()).NetworkingV1PeeringUpdate(*updatePeeringRequest)
 	updatedPeering, resp, err := req.Execute()
 
 	if err != nil {

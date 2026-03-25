@@ -18,7 +18,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	mds "github.com/confluentinc/ccloud-sdk-go-v2/mds/v2"
+	mdsv2 "github.com/confluentinc/ccloud-sdk-go-v2/mds/v2"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -81,7 +81,7 @@ func roleBindingCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 	crnPattern := d.Get(paramCrnPattern).(string)
 	skipSync := d.Get(paramDisableWaitForReady).(bool)
 
-	createRoleBindingRequest := mds.NewIamV2RoleBinding()
+	createRoleBindingRequest := mdsv2.NewIamV2RoleBinding()
 	createRoleBindingRequest.SetPrincipal(principal)
 	createRoleBindingRequest.SetRoleName(roleName)
 	createRoleBindingRequest.SetCrnPattern(crnPattern)
@@ -91,7 +91,7 @@ func roleBindingCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Role Binding: %s", createRoleBindingRequestJson))
 
-	createdRoleBinding, resp, err := executeRoleBindingCreate(c.mdsApiContext(ctx), c, createRoleBindingRequest)
+	createdRoleBinding, resp, err := executeRoleBindingCreate(c.mdsV2ApiContext(ctx), c, createRoleBindingRequest)
 	if err != nil {
 		return diag.Errorf("error creating Role Binding: %s", createDescriptiveError(err, resp))
 	}
@@ -108,8 +108,8 @@ func roleBindingCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 	return roleBindingRead(ctx, d, meta)
 }
 
-func executeRoleBindingCreate(ctx context.Context, c *Client, roleBinding *mds.IamV2RoleBinding) (mds.IamV2RoleBinding, *http.Response, error) {
-	req := c.mdsClient.RoleBindingsIamV2Api.CreateIamV2RoleBinding(c.mdsApiContext(ctx)).IamV2RoleBinding(*roleBinding)
+func executeRoleBindingCreate(ctx context.Context, c *Client, roleBinding *mdsv2.IamV2RoleBinding) (mdsv2.IamV2RoleBinding, *http.Response, error) {
+	req := c.mdsV2Client.RoleBindingsIamV2Api.CreateIamV2RoleBinding(c.mdsV2ApiContext(ctx)).IamV2RoleBinding(*roleBinding)
 	return req.Execute()
 }
 
@@ -124,7 +124,7 @@ func roleBindingDelete(ctx context.Context, d *schema.ResourceData, meta interfa
 	tflog.Debug(ctx, fmt.Sprintf("Deleting Role Binding %q", d.Id()), map[string]interface{}{roleBindingLoggingKey: d.Id()})
 	c := meta.(*Client)
 
-	req := c.mdsClient.RoleBindingsIamV2Api.DeleteIamV2RoleBinding(c.mdsApiContext(ctx), d.Id())
+	req := c.mdsV2Client.RoleBindingsIamV2Api.DeleteIamV2RoleBinding(c.mdsV2ApiContext(ctx), d.Id())
 	resp, err := req.Execute()
 
 	if err != nil {
@@ -139,7 +139,7 @@ func roleBindingDelete(ctx context.Context, d *schema.ResourceData, meta interfa
 func roleBindingRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	tflog.Debug(ctx, fmt.Sprintf("Reading Role Binding %q", d.Id()), map[string]interface{}{roleBindingLoggingKey: d.Id()})
 	c := meta.(*Client)
-	roleBinding, resp, err := executeRoleBindingRead(c.mdsApiContext(ctx), c, d.Id())
+	roleBinding, resp, err := executeRoleBindingRead(c.mdsV2ApiContext(ctx), c, d.Id())
 	if err != nil {
 		tflog.Warn(ctx, fmt.Sprintf("Error reading Role Binding %q: %s", d.Id(), createDescriptiveError(err, resp)), map[string]interface{}{roleBindingLoggingKey: d.Id()})
 
@@ -166,12 +166,12 @@ func roleBindingRead(ctx context.Context, d *schema.ResourceData, meta interface
 
 	return nil
 }
-func executeRoleBindingRead(ctx context.Context, c *Client, roleBindingId string) (mds.IamV2RoleBinding, *http.Response, error) {
-	req := c.mdsClient.RoleBindingsIamV2Api.GetIamV2RoleBinding(c.mdsApiContext(ctx), roleBindingId)
+func executeRoleBindingRead(ctx context.Context, c *Client, roleBindingId string) (mdsv2.IamV2RoleBinding, *http.Response, error) {
+	req := c.mdsV2Client.RoleBindingsIamV2Api.GetIamV2RoleBinding(c.mdsV2ApiContext(ctx), roleBindingId)
 	return req.Execute()
 }
 
-func setRoleBindingAttributes(d *schema.ResourceData, roleBinding mds.IamV2RoleBinding) (*schema.ResourceData, error) {
+func setRoleBindingAttributes(d *schema.ResourceData, roleBinding mdsv2.IamV2RoleBinding) (*schema.ResourceData, error) {
 	if err := d.Set(paramPrincipal, roleBinding.GetPrincipal()); err != nil {
 		return nil, createDescriptiveError(err)
 	}
