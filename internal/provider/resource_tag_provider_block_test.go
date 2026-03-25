@@ -24,16 +24,6 @@ import (
 	"testing"
 )
 
-const (
-	tagResourceScenarioName        = "confluent_tag Resource Lifecycle"
-	scenarioStateTagHasBeenCreated = "A new tag has been just created"
-	scenarioStateTagHasBeenPending = "A new tag has been just pending"
-	scenarioStateTagHasBeenUpdated = "A new tag has been just updated"
-	createTagUrlPath               = "/catalog/v1/types/tagdefs"
-	readCreatedTagUrlPath          = "/catalog/v1/types/tagdefs/test1"
-	tagLabel                       = "confluent_tag.mytag"
-)
-
 func TestAccTagWithEnhancedProviderBlock(t *testing.T) {
 	ctx := context.Background()
 

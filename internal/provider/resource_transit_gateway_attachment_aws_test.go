@@ -26,20 +26,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-const (
-	scenarioStateAwsTransitGatewayAttachmentIsProvisioning   = "The new aws transit  gateway attachment is provisioning"
-	scenarioStateAwsTransitGatewayAttachmentIsDeprovisioning = "The new aws transit  gateway attachment is deprovisioning"
-	scenarioStateAwsTransitGatewayAttachmentHasBeenCreated   = "The new aws transit  gateway attachment has been just created"
-	scenarioStateAwsTransitGatewayAttachmentHasBeenDeleted   = "The new aws transit  gateway attachment's deletion has been just completed"
-	awsTransitGatewayAttachmentScenarioName                  = "confluent_transit_gateway_attachment AWS Resource Lifecycle"
-	awsTransitGatewayAttachmentEnvironmentId                 = "env-m25jqx"
-	awsTransitGatewayAttachmentNetworkId                     = "n-go8qvk"
-	awsTransitGatewayAttachmentId                            = "tgwa-g09wyy"
-	awsTransitGatewayAttachmentRamResourceShareArn           = "arn:aws:ram:us-east-1:012345678901:resource-share/c9babbb0-d697-4af7-a64a-ad96ec32141f"
-	awsTransitGatewayAttachmentTransitGatewayId              = "tgw-0312f0fdeae1f6a08"
-	awsTransitGatewayAttachmentTgwaId                        = "tgw-attach-abc123"
-)
-
 var awsTransitGatewayAttachmentRoutes = []string{
 	"192.168.0.0/16",
 	"172.16.0.0/12",

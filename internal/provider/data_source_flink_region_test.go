@@ -28,16 +28,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-const (
-	dataSourceFlinkRegionScenarioName = "confluent_flink_region Data Source Lifecycle"
-	flinkRegionResourceLabel          = "example"
-	flinkRegionCloudProvider          = "AWS"
-	flinkRegionCloudProviderRegion    = "us-east-1"
-	flinkRegionKind                   = "Region"
-	flinkRegionRestEndpoint           = "https://flink.us-east-1.aws.confluent.cloud"
-	flinkRegionRestEndpointPrivate    = "https://flink.us-east-1.aws.private.confluent.cloud"
-)
-
 var fullFlinkRegionDataSourceLabel = fmt.Sprintf("data.confluent_flink_region.%s", flinkRegionResourceLabel)
 
 func TestAccDataSourceFlinkRegion(t *testing.T) {

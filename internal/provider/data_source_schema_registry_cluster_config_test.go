@@ -26,11 +26,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-const (
-	SchemaRegistryClusterCompatibilityLevelDataSourceScenarioName           = "confluent_schema_registry_cluster_config Data Source Lifecycle"
-	testNumberOfSchemaRegistryClusterCompatibilityLevelDataSourceAttributes = 7
-)
-
 var fullSchemaRegistryClusterCompatibilityLevelDataSourceLabel = fmt.Sprintf("data.confluent_schema_registry_cluster_config.%s", testSchemaResourceLabel)
 
 func TestAccDataSchemaRegistryClusterCompatibilityLevelSchema(t *testing.T) {

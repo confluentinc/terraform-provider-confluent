@@ -25,18 +25,6 @@ import (
 	"github.com/walkerus/go-wiremock"
 )
 
-const (
-	scenarioStateTableflowTopicIsProvisioning = "The new tableflow topic is provisioning"
-	scenarioStateTableflowTopicHasBeenCreated = "The new tableflow topic has been just created"
-	scenarioStateTableflowTopicHasBeenUpdated = "The new tableflow topic has been updated"
-	byobAwsTableflowTopicScenarioName         = "confluent_tableflow_topic Byob Aws Resource Lifecycle"
-	managedStorageTableflowTopicScenarioName  = "confluent_tableflow_topic Managed Storage Resource Lifecycle"
-	azureTableflowTopicScenarioName           = "confluent_tableflow_topic Azure Storage Resource Lifecycle"
-
-	tableflowTopicUrlPath       = "/tableflow/v1/tableflow-topics"
-	tableflowTopicResourceLabel = "confluent_tableflow_topic.main"
-)
-
 func TestAccTableflowTopicByobAws(t *testing.T) {
 	ctx := context.Background()
 

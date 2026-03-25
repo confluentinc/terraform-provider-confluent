@@ -26,19 +26,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-const (
-	scenarioStateAwsPlaIsProvisioning          = "The new aws private link access is provisioning"
-	scenarioStateAwsPlaIsDeprovisioning        = "The new aws private link access is deprovisioning"
-	scenarioStateAwsPlaHasBeenCreated          = "The new aws private link access has been just created"
-	scenarioStateAwsPlaIsInDeprovisioningState = "The new aws private link access is in deprovisioning state"
-	scenarioStateAwsPlaHasBeenDeleted          = "The new aws private link access's deletion has been just completed"
-	awsPlaScenarioName                         = "confluent_private_link_access Resource Lifecycle"
-	awsPlaEnvironmentId                        = "env-5wyjmz"
-	awsPlaNetworkId                            = "n-5p59z6"
-	awsPlaId                                   = "pla-3prjy6"
-	awsAccountNumber                           = "012345678901"
-)
-
 var awsPlaUrlPath = fmt.Sprintf("/networking/v1/private-link-accesses/%s", awsPlaId)
 
 func TestAccAwsPrivateLinkAccess(t *testing.T) {

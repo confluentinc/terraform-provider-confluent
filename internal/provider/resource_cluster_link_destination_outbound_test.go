@@ -28,40 +28,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-const (
-	scenarioStateClusterLinkHasBeenCreated             = "A new cluster link has been just created"
-	scenarioStateClusterLinkHasBeenUpdated             = "A new cluster link has been just updated"
-	scenarioStateClusterLinkCredentialsHaveBeenUpdated = "cluster link credentials have just been updated"
-	scenarioStateClusterLinkHasBeenDeleted             = "The cluster link has been deleted"
-	clusterLinkScenarioName                            = "confluent_cluster_link Resource Lifecycle"
-	sourceClusterId                                    = "lkc-nv0zqv"
-	sourceClusterRestEndpoint                          = "https://pkc-pgq85.us-west-2.aws.confluent.cloud:443"
-	sourceClusterBootstrapEndpoint                     = "SASL_SSL://pkc-pgq85.us-west-2.aws.confluent.cloud:9092"
-	sourceClusterApiKey                                = "sourceClusterApiKeyUpdated"
-	sourceClusterApiKeyUpdated                         = "sourceClusterApiKey"
-	sourceClusterApiSecret                             = "sourceClusterApiSecret"
-	sourceClusterApiSecretUpdated                      = "sourceClusterApiSecretUpdated"
-	destinationClusterId                               = "lkc-81knqq"
-	// mockServerUrl will be used instead for TestAccClusterLinkDestination test
-	destinationClusterRestEndpoint        = "https://pkc-3588w.us-east-1.aws.confluent.cloud:443"
-	destinationClusterBootstrapEndpoint   = "SASL_SSL://pkc-3588w.us-east-1.aws.confluent.cloud:9092"
-	destinationClusterApiKey              = "destinationClusterApiKeyUpdated"
-	destinationClusterApiKeyUpdated       = "destinationClusterApiKey"
-	destinationClusterApiSecret           = "destinationClusterApiSecret"
-	destinationClusterApiSecretUpdated    = "destinationClusterApiSecretUpdated"
-	clusterLinkName                       = "ui-test"
-	clusterLinkMode                       = "DESTINATION"
-	clusterLinkConnectionMode             = "OUTBOUND"
-	clusterLinkResourceLabel              = "test_cluster_link_resource_label"
-	numberOfClusterLinkResourceAttributes = "10"
-
-	firstClusterClusterLinkConfigName         = "acl.sync.ms"
-	firstClusterClusterLinkConfigValue        = "5100"
-	firstClusterClusterLinkConfigUpdatedValue = "5101"
-	secondClusterClusterLinkConfigName        = "consumer.offset.sync.ms"
-	secondClusterClusterLinkConfigValue       = "30001"
-)
-
 var testPatchClusterLinkCredentialsConfigRequestSaslMechanismJson = `{` +
 	`"name":"sasl.mechanism",` +
 	`"operation":"SET",` +

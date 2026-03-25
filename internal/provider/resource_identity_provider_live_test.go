@@ -28,12 +28,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-const (
-	// Using Okta's OIDC configuration for the update step to test changing providers
-	updatedIssuer  = "https://example.okta.com/oauth2/default"
-	updatedJwksUri = "https://example.okta.com/oauth2/default/v1/keys"
-)
-
 func TestAccIdentityProviderLive(t *testing.T) {
 	// Skip this test unless explicitly enabled
 	if os.Getenv("TF_ACC_PROD") == "" {

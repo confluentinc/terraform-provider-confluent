@@ -26,16 +26,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-const (
-	scenarioStateCertificatePoolHasBeenCreated = "The new certificate_pool has been just created"
-	scenarioStateCertificatePoolHasBeenUpdated = "The new certificate_pool has been updated"
-	CertificatePoolScenarioName                = "confluent_certificate_pool Resource Lifecycle"
-
-	certificatePoolUrlPath       = "/iam/v2/certificate-authorities/op-abc123/identity-pools"
-	certificatePoolId            = "pool-def456"
-	certificatePoolResourceLabel = "confluent_certificate_pool.main"
-)
-
 func TestAccCertificatePool(t *testing.T) {
 	ctx := context.Background()
 

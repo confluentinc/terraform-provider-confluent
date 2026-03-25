@@ -27,11 +27,6 @@ import (
 	"github.com/walkerus/go-wiremock"
 )
 
-const (
-	gatewaysDataSourceScenarioName = "confluent_gateways Data Source Lifecycle"
-	gatewaysResourceLabel          = "test_gateways_label"
-)
-
 func TestAccDataSourceGateways(t *testing.T) {
 	ctx := context.Background()
 

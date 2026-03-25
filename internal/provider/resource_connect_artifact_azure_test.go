@@ -13,11 +13,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-const (
-	connectArtifactCloudAzure            = "AZURE"
-	connectArtifactCloudAzureAPIResponse = "azure"
-)
-
 func TestAccConnectArtifactAzure(t *testing.T) {
 	ctx := context.Background()
 

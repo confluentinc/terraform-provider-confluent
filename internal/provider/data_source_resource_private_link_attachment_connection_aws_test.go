@@ -24,14 +24,6 @@ import (
 	"testing"
 )
 
-const (
-	privateLinkAttachmentConnectionAwsDataSourceScenarioName = "confluent_private_link_attachment_connection Data Source Lifecycle"
-
-	privateLinkAttachmentConnectionAwsReadUrlPath     = "/networking/v1/private-link-attachment-connections/plattc-gz20xy"
-	privateLinkAttachmentConnectionAwsId              = "plattc-gz20xy"
-	privateLinkAttachmentConnectionAwsDataSourceLabel = "data.confluent_private_link_attachment_connection.main"
-)
-
 func TestAccDataSourcePrivateLinkAttachmentConnectionAws(t *testing.T) {
 	ctx := context.Background()
 

@@ -24,14 +24,6 @@ import (
 	"testing"
 )
 
-const (
-	kekResourceScenarioName        = "confluent_schema_registry_kek Resource Lifecycle"
-	scenarioStateKekHasBeenCreated = "A new kek has been just created"
-	scenarioStateKekHasBeenUpdated = "A new kek has been just updated"
-	createKekUrlPath               = "/dek-registry/v1/keks"
-	kekLabel                       = "confluent_schema_registry_kek.mykek"
-)
-
 func TestAccKek(t *testing.T) {
 	ctx := context.Background()
 

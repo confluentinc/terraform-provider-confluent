@@ -24,16 +24,6 @@ import (
 	"testing"
 )
 
-const (
-	invitationResourceScenarioName        = "confluent_invitation Data Source Lifecycle"
-	scenarioStateInvitationHasBeenCreated = "A new invitation has been just created"
-	invitationEmail                       = "zli00000000@confluent.io"
-	invitationResourceLabel               = "confluent_invitation.inv"
-
-	createInvitationUrlPath      = "/iam/v2/invitations"
-	readCreatedInvitationUrlPath = "/iam/v2/invitations/i-7od91"
-)
-
 func TestAccInvitation(t *testing.T) {
 	ctx := context.Background()
 

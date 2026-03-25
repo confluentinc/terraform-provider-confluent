@@ -26,34 +26,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-const (
-	scenarioStateAzureNetworkIsProvisioning = "The new azure network is in provisioning state"
-	scenarioStateAzureNetworkHasBeenCreated = "The new azure network has been just created"
-	scenarioStateAzureNetworkHasBeenDeleted = "The new azure network has been deleted"
-	azureNetworkScenarioName                = "confluent_network azure Resource Lifecycle"
-	azureNetworkCloud                       = "AZURE"
-	azureNetworkRegion                      = "centralus"
-	azureNetworkConnectionType              = "PRIVATELINK"
-	azureNetworkEnvironmentId               = "env-gz903"
-	azureNetworkId                          = "n-p8xo76"
-	azureDnsDomain                          = "p8xo76.centralus.azure.confluent.cloud"
-	azureNetworkResourceName                = "crn://confluent.cloud/organization=foo/environment=env-gz903/network=n-p8xo76"
-
-	firstZoneAzureNetwork           = "1"
-	firstZoneSubdomainAzureNetwork  = "az1.p8xo76.centralus.azure.confluent.cloud"
-	secondZoneAzureNetwork          = "2"
-	secondZoneSubdomainAzureNetwork = "az2.p8xo76.centralus.azure.confluent.cloud"
-	thirdZoneAzureNetwork           = "3"
-	thirdZoneSubdomainAzureNetwork  = "az3.p8xo76.centralus.azure.confluent.cloud"
-
-	firstPlaAliasName   = "1"
-	firstPlaAliasValue  = "s-nk99e-privatelink-1.8c43dcd0-695c-1234-bc35-11fe6abb303a.centralus.azure.privatelinkservice"
-	secondPlaAliasName  = "2"
-	secondPlaAliasValue = "s-nk99e-privatelink-2.e4519a80-fcf9-1234-9163-167aa681e792.centralus.azure.privatelinkservice"
-	thirdPlaAliasName   = "3"
-	thirdPlaAliasValue  = "s-nk99e-privatelink-3.cb77af9e-3db1-1234-bf18-0f8dfba7662b.centralus.azure.privatelinkservice"
-)
-
 var azureNetworkUrlPath = fmt.Sprintf("/networking/v1/networks/%s", azureNetworkId)
 
 func TestAccAzureNetwork(t *testing.T) {

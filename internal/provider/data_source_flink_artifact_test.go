@@ -10,10 +10,6 @@ import (
 	"testing"
 )
 
-const (
-	dataSourceFlinkArtifactScenarioName = "confluent_flink_artifact Data Source Lifecycle"
-)
-
 var fullArtifactDataSourceLabel = fmt.Sprintf("data.confluent_flink_artifact.%s", networkDataSourceLabel)
 
 func TestAccDataSourceFlinkArtifact(t *testing.T) {

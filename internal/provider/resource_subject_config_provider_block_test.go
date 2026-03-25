@@ -26,20 +26,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-const (
-	scenarioStateSubjectCompatibilityLevelHasBeenCreated = "A new subject compatibility level has been just created"
-	scenarioStateSubjectCompatibilityLevelHasBeenUpdated = "The subject compatibility level has been updated"
-	scenarioStateSubjectCompatibilityLevelHasBeenDeleted = "The subject compatibility level has been deleted"
-	subjectCompatibilityLevelScenarioName                = "confluent_subject_config Resource Lifecycle"
-
-	testSubjectCompatibilityLevelResourceLabel = "test_subject_compatibility_level_resource_label"
-	testSubjectCompatibilityLevel              = "FULL"
-	testSubjectCompatibilityGroup              = "abc.cg.version"
-	testUpdatedSubjectCompatibilityLevel       = "BACKWARD_TRANSITIVE"
-
-	testNumberOfSubjectCompatibilityLevelResourceAttributes = "9"
-)
-
 var fullSubjectCompatibilityLevelResourceLabel = fmt.Sprintf("confluent_subject_config.%s", testSubjectCompatibilityLevelResourceLabel)
 var updateSubjectCompatibilityLevelPath = fmt.Sprintf("/config/%s", testSubjectName)
 

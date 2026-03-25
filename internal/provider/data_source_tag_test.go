@@ -24,13 +24,6 @@ import (
 	"testing"
 )
 
-const (
-	tagDataSourceScenarioName = "confluent_tag Data Source Lifecycle"
-	tagUrlPath                = "/catalog/v1/types/tagdefs/ttt6"
-	testTagName               = "ttt6"
-	tagDataSourceLabel        = "data.confluent_tag.tag"
-)
-
 func TestAccDataSourceTag(t *testing.T) {
 	ctx := context.Background()
 

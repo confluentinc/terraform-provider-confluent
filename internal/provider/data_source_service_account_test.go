@@ -25,16 +25,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-const (
-	saApiVersion             = "iam/v2"
-	saDataSourceScenarioName = "confluent_service_account Data Source Lifecycle"
-	saId                     = "sa-1jjv26"
-	saDisplayName            = "test_service_account_display_name"
-	saDescription            = "The initial description of service account"
-	saKind                   = "ServiceAccount"
-	saResourceLabel          = "test_sa_resource_label"
-)
-
 func TestAccDataSourceServiceAccount(t *testing.T) {
 	ctx := context.Background()
 

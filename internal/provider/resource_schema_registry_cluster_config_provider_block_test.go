@@ -26,20 +26,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-const (
-	scenarioStateSchemaRegistryClusterCompatibilityLevelHasBeenCreated = "A new subject mode has been just created"
-	scenarioStateSchemaRegistryClusterCompatibilityLevelHasBeenUpdated = "The subject mode has been updated"
-	scenarioStateSchemaRegistryClusterCompatibilityLevelHasBeenDeleted = "The subject mode has been deleted"
-	schemaRegistryClusterCompatibilityLevelScenarioName                = "confluent_schema_registry_cluster_config Resource Lifecycle"
-
-	testSchemaRegistryClusterCompatibilityLevelResourceLabel = "test_subject_compatibility_level_resource_label"
-	testSchemaRegistryClusterCompatibilityLevel              = "FULL"
-	testSchemaRegistryClusterCompatibilityGroup              = "abc.cg.version"
-	testUpdatedSchemaRegistryClusterCompatibilityLevel       = "BACKWARD_TRANSITIVE"
-
-	testNumberOfSchemaRegistryClusterCompatibilityLevelResourceAttributes = "7"
-)
-
 var fullSchemaRegistryClusterCompatibilityLevelResourceLabel = fmt.Sprintf("confluent_schema_registry_cluster_config.%s", testSchemaRegistryClusterCompatibilityLevelResourceLabel)
 var updateSchemaRegistryClusterCompatibilityLevelPath = fmt.Sprintf("/config")
 

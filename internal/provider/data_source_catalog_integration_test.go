@@ -11,10 +11,6 @@ import (
 	"github.com/walkerus/go-wiremock"
 )
 
-const (
-	CatalogIntegrationDataSourceScenarioName = "confluent_catalog_integration Data Source Lifecycle"
-)
-
 func TestAccDataSourceCatalogIntegrationAwsGlue(t *testing.T) {
 	ctx := context.Background()
 

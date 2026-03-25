@@ -26,17 +26,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-const (
-	scenarioStateEnvHasBeenCreated     = "The new environment has been just created"
-	scenarioStateEnvNameHasBeenUpdated = "The new environment's name has been just updated"
-	scenarioStateEnvHasBeenDeleted     = "The new environment has been deleted"
-	envScenarioName                    = "confluent_environment Resource Lifecycle"
-	envScenarioNoSgName                = "confluent_environment Resource Lifecycle Without Stream Governance"
-	expectedCountZero                  = int64(0)
-	expectedCountOne                   = int64(1)
-	expectedCountTwo                   = int64(2)
-)
-
 var contentTypeJSONHeader = map[string]string{"Content-Type": "application/json"}
 
 func TestAccEnvironment(t *testing.T) {

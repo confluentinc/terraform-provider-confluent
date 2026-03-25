@@ -28,24 +28,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-const (
-	scenarioStateIpFilterHasBeenCreated = "The new IP Group has been just created"
-	scenarioStateIpFilterHasBeenUpdated = "The new IP Group's description have been just updated"
-	scenarioStateIpFilterHasBeenDeleted = "The new IP Group has been deleted"
-	ipFilterResourceScenarioName        = "confluent_ip_filter Resource Lifecycle"
-
-	testIPFilterID            = "ipf-w7rg0"
-	testIpFilterName          = "New Filter"
-	testIpFilterResourceGroup = "multiple"
-	testIpFilterResourceScope = "crn://confluent.cloud/organization=1111aaaa-11aa-11aa-11aa-111111aaaaaa"
-
-	testIpFilterUpdatedName          = "Updated Filter"
-	testIpFilterUpdatedResourceGroup = "multiple"
-	testIpFilterUpdatedResourceScope = "crn://confluent.cloud/organization=1111aaaa-11aa-11aa-11aa-111111aaaaaa"
-
-	testIpFilterResourceLabel = "test_ip_filter_resource_label"
-)
-
 var testIpFilterOperationGroups = []string{"MANAGEMENT", "FLINK"}
 var testIpFilterIpGroups = []string{"ipg-3o91o"}
 

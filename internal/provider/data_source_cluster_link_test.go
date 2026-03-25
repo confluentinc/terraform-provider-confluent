@@ -25,11 +25,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-const (
-	clusterLinkDataSourceLabel              = "test_cluster_link_data_source_label"
-	numberOfClusterLinkDataSourceAttributes = "8"
-)
-
 var fullClusterLinkDataSourceLabel = fmt.Sprintf("data.confluent_cluster_link.%s", clusterLinkDataSourceLabel)
 
 func TestAccDataSourceClusterLink(t *testing.T) {

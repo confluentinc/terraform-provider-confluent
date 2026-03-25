@@ -25,11 +25,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-const (
-	dataSourceIdentityPoolScenarioName = "confluent_identity_pool Data Source Lifecycle"
-	identityPoolDataSourceLabel        = "example"
-)
-
 var fullIdentityPoolDataSourceLabel = fmt.Sprintf("data.confluent_identity_pool.%s", identityPoolDataSourceLabel)
 
 func TestAccDataSourceIdentityPool(t *testing.T) {

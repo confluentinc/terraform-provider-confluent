@@ -12,14 +12,6 @@ import (
 	"testing"
 )
 
-const (
-	scenarioStatePluginHasBeenCreated = "The plugin has been just created"
-	scenarioStatePluginHasBeenUpdated = "The plugin has been just updated"
-	scenarioStatePluginHasBeenDeleted = "The  plugin has been deleted"
-	pluginScenarioName                = "confluent_plugin Resource Lifecycle"
-	pluginEnvironment                 = "env-123"
-)
-
 func TestAccPlugin(t *testing.T) {
 	ctx := context.Background()
 

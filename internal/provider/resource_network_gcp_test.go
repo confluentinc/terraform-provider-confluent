@@ -26,34 +26,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-const (
-	scenarioStateGcpNetworkIsProvisioning = "The new gcp network is in provisioning state"
-	scenarioStateGcpNetworkHasBeenCreated = "The new gcp network has been just created"
-	scenarioStateGcpNetworkHasBeenDeleted = "The new gcp network has been deleted"
-	gcpNetworkScenarioName                = "confluent_network gcp Resource Lifecycle"
-	gcpNetworkCloud                       = "GCP"
-	gcpNetworkRegion                      = "us-central1"
-	gcpNetworkConnectionType              = "PRIVATELINK"
-	gcpNetworkEnvironmentId               = "env-j5zwzm"
-	gcpNetworkId                          = "n-6ky22p"
-	gcpDnsDomain                          = "6ky22p.us-central1.gcp.confluent.cloud"
-	gcpNetworkResourceName                = "crn://confluent.cloud/organization=1111aaaa-11aa-11aa-11aa-111111aaaaaa/environment=env-j5zwzm/network=n-6ky22p"
-
-	firstZoneGcpNetwork           = "us-central1-a"
-	firstZoneSubdomainGcpNetwork  = "us-central1-a.6ky22p.us-central1.gcp.confluent.cloud"
-	secondZoneGcpNetwork          = "us-central1-b"
-	secondZoneSubdomainGcpNetwork = "us-central1-b.6ky22p.us-central1.gcp.confluent.cloud"
-	thirdZoneGcpNetwork           = "us-central1-c"
-	thirdZoneSubdomainGcpNetwork  = "us-central1-c.6ky22p.us-central1.gcp.confluent.cloud"
-
-	firstGcpPlaAliasName   = "us-central1-a"
-	firstGcpPlaAliasValue  = "projects/test-project/regions/us-central1/serviceAttachments/s-w2r4v-service-attachment-us-central1-a"
-	secondGcpPlaAliasName  = "us-central1-b"
-	secondGcpPlaAliasValue = "projects/test-project/regions/us-central1/serviceAttachments/s-w2r4v-service-attachment-us-central1-b"
-	thirdGcpPlaAliasName   = "us-central1-c"
-	thirdGcpPlaAliasValue  = "projects/test-project/regions/us-central1/serviceAttachments/s-w2r4v-service-attachment-us-central1-c"
-)
-
 var gcpNetworkUrlPath = fmt.Sprintf("/networking/v1/networks/%s", gcpNetworkId)
 
 func TestAccGcpNetwork(t *testing.T) {

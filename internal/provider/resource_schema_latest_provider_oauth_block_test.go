@@ -60,9 +60,6 @@ func TestAccLatestSchemaWithEnhancedProviderBlockOAuth(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	// Add constants for scenario states
-	const (
-		scenarioStateOAuthSchemaCreated = "OAuth Schema Created"
-	)
 
 	// Temporarily unset API key environment variables to avoid conflict with OAuth logic in provider_test.go
 	oldApiKey := os.Getenv("CONFLUENT_CLOUD_API_KEY")

@@ -25,12 +25,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-const (
-	dataSourcePrivateLinkAccessScenarioName = "confluent_private_link_access Data Source Lifecycle"
-	plaDataSourceLabel                      = "example"
-	plaDataSourceDisplayName                = "prod-pl-use2"
-)
-
 var fullPrivateLinkAccessDataSourceLabel = fmt.Sprintf("data.confluent_private_link_access.%s", plaDataSourceLabel)
 
 func TestAccDataSourcePrivateLinkAccess(t *testing.T) {

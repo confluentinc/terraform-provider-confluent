@@ -27,16 +27,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-const (
-	userApiVersion             = "iam/v2"
-	userDataSourceScenarioName = "confluent_user Data Source Lifecycle"
-	userId                     = "u-1jjv23"
-	userEmail                  = "test3@gmail.com"
-	userFullName               = "Alex #3"
-	userResourceLabel          = "test_user_resource_label"
-	userLastPagePageToken      = "dyJpZCI6InNhLTd5OXbyby"
-)
-
 func TestAccDataSourceUser(t *testing.T) {
 	ctx := context.Background()
 

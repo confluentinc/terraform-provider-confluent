@@ -24,14 +24,6 @@ import (
 	"testing"
 )
 
-const (
-	invitationDataSourceScenarioName = "confluent_invitation Data Source Lifecycle"
-
-	invitationUrlPath = "/iam/v2/invitations/i-gxxn1"
-	invitationId      = "i-gxxn1"
-	invitationLabel   = "data.confluent_invitation.inv"
-)
-
 func TestAccDataSourceInvitation(t *testing.T) {
 	ctx := context.Background()
 

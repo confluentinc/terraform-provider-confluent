@@ -26,11 +26,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-const (
-	ksqlScenarioDataSourceName = "confluent_ksql_cluster Data Source Lifecycle"
-	ksqlDataSourceLabel        = "test_ksql_data_source_label"
-)
-
 var fullKsqlDataSourceLabel = fmt.Sprintf("data.confluent_ksql_cluster.%s", ksqlDataSourceLabel)
 
 var datasourceCommonChecks = resource.ComposeTestCheckFunc(

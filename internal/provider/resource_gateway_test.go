@@ -26,20 +26,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-const (
-	scenarioStateGatewayIsProvisioning = "The new gateway is provisioning"
-	scenarioStateGatewayHasBeenCreated = "The new gateway has been just created"
-	scenarioStateGatewayHasBeenUpdated = "The new gateway has been updated"
-	GatewayScenarioName                = "confluent_gateway Resource Lifecycle"
-
-	gatewayUrlPath               = "/networking/v1/gateways"
-	awsGatewayId                 = "gw-def456"
-	awsIngressGatewayId          = "gw-ingress123"
-	awsPrivateNetworkInterfaceId = "gw-abc789"
-	azureGatewayId               = "gw-abc456"
-	gatewayResourceLabel         = "confluent_gateway.main"
-)
-
 func TestAccGatewayAwsEgressPrivateLink(t *testing.T) {
 	ctx := context.Background()
 
