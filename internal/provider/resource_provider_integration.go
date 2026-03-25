@@ -29,14 +29,6 @@ import (
 	pi "github.com/confluentinc/ccloud-sdk-go-v2/provider-integration/v1"
 )
 
-const (
-	AwsIntegrationConfigKind = "AwsIntegrationConfig"
-)
-
-const (
-	listProviderIntegrationsPageSize = 99
-)
-
 var acceptedProviderIntegrationConfig = []string{paramAws}
 
 func providerIntegrationResource() *schema.Resource {

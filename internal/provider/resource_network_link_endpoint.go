@@ -26,11 +26,6 @@ import (
 	"strings"
 )
 
-const (
-	stateDeProvisioning = "DEPROVISIONING"
-	stateInactive       = "INACTIVE"
-)
-
 func networkLinkEndpointResource() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: networkLinkEndpointCreate,

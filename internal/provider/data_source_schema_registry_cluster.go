@@ -25,17 +25,6 @@ import (
 	"net/http"
 )
 
-const (
-	// The maximum allowable page size - 1 (to avoid off-by-one errors) when listing service accounts using SG V3 API
-	// https://docs.confluent.io/cloud/current/api.html#operation/listSrcmV3Clusters
-	listSchemaRegistryClustersPageSize = 99
-)
-
-const (
-	billingPackageEssentials = "ESSENTIALS"
-	billingPackageAdvanced   = "ADVANCED"
-)
-
 var acceptedBillingPackages = []string{billingPackageEssentials, billingPackageAdvanced}
 
 func schemaRegistryClusterDataSource() *schema.Resource {

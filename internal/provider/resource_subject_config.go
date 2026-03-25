@@ -29,16 +29,6 @@ import (
 	"strings"
 )
 
-const (
-	compatibilityLevelBackward           = "BACKWARD"
-	compatibilityLevelBackwardTransitive = "BACKWARD_TRANSITIVE"
-	compatibilityLevelForward            = "FORWARD"
-	compatibilityLevelForwardTransitive  = "FORWARD_TRANSITIVE"
-	compatibilityLevelFull               = "FULL"
-	compatibilityLevelFullTransitive     = "FULL_TRANSITIVE"
-	compatibilityLevelNone               = "NONE"
-)
-
 var acceptedCompatibilityLevels = []string{compatibilityLevelBackward, compatibilityLevelBackwardTransitive,
 	compatibilityLevelForward, compatibilityLevelForwardTransitive, compatibilityLevelFull, compatibilityLevelFullTransitive,
 	compatibilityLevelNone}

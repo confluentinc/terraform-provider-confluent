@@ -33,18 +33,6 @@ import (
 	fgb "github.com/confluentinc/ccloud-sdk-go-v2/flink-gateway/v1"
 )
 
-const (
-	stateCompleted = "COMPLETED"
-	statePending   = "PENDING"
-	stateFailing   = "FAILING"
-	stateStopping  = "STOPPING"
-
-	stopFlinkStatementErrorFormat   = "error stopping Flink Statement: %s"
-	resumeFlinkStatementErrorFormat = "error resuming Flink Statement: %s"
-
-	statementsAPICreateTimeout = 6 * time.Hour
-)
-
 func flinkStatementResource() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: flinkStatementCreate,

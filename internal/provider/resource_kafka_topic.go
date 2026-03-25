@@ -27,14 +27,6 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
-	"time"
-)
-
-const (
-	kafkaRestAPIWaitAfterCreate = 10 * time.Second
-	docsUrl                     = "https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_topic"
-	dynamicTopicConfig          = "DYNAMIC_TOPIC_CONFIG"
-	configOperationDelete       = "DELETE"
 )
 
 // https://docs.confluent.io/cloud/current/client-apps/topics/manage.html#ak-topic-configurations-for-all-ccloud-cluster-types

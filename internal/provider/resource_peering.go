@@ -28,12 +28,6 @@ import (
 	"strings"
 )
 
-const (
-	awsPeeringKind          = "AwsPeering"
-	azurePeeringKind        = "AzurePeering"
-	gcpPeeringKind          = "GcpPeering"
-)
-
 var acceptedCloudProvidersForPeering = []string{paramAws, paramAzure, paramGcp}
 var paramAwsAccount = fmt.Sprintf("%s.0.%s", paramAws, paramAccount)
 var paramAwsVpc = fmt.Sprintf("%s.0.%s", paramAws, paramVpc)

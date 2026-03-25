@@ -26,14 +26,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-const (
-	// Authorization resource attributes
-
-	// Azure-specific attributes
-
-	// GCP-specific attributes
-)
-
 // providerIntegrationAuthorizationResource defines the authorization resource for PIM v2 integrations.
 // This resource configures customer cloud provider settings (Azure tenant, GCP service account) and validates the integration.
 func providerIntegrationAuthorizationResource() *schema.Resource {

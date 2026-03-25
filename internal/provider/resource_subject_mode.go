@@ -29,13 +29,6 @@ import (
 	"strings"
 )
 
-const (
-	modeReadWrite        = "READWRITE"
-	modeReadOnly         = "READONLY"
-	modeReadOnlyOverride = "READONLY_OVERRIDE"
-	modeImport           = "IMPORT"
-)
-
 var acceptedModes = []string{modeReadWrite, modeReadOnly, modeReadOnlyOverride, modeImport}
 
 func subjectModeResource() *schema.Resource {

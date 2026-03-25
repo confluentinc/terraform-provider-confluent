@@ -28,10 +28,6 @@ import (
 	"strings"
 )
 
-const (
-	awsTransitGatewayAttachmentKind = "AwsTransitGatewayAttachment"
-)
-
 var paramAwsRamResourceShareArn = fmt.Sprintf("%s.0.%s", paramAws, paramRamResourceShareArn)
 var paramAwsTransitGatewayId = fmt.Sprintf("%s.0.%s", paramAws, paramTransitGatewayId)
 

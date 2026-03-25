@@ -29,12 +29,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-const (
-	awsGlueSpecKind   = "AwsGlue"
-	snowflakeSpecKind = "Snowflake"
-	unitySpecKind     = "Unity"
-)
-
 var acceptedCatalogIntegrationConnectionTypes = []string{paramAwsGlue, paramSnowflake, paramUnity}
 
 func catalogIntegrationResource() *schema.Resource {

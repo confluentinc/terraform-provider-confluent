@@ -28,16 +28,6 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
-	"time"
-)
-
-const (
-	connectionTypePrivateLink    = "PRIVATELINK"
-	connectionTypeTransitGateway = "TRANSITGATEWAY"
-	connectionTypePeering        = "PEERING"
-
-	networkingAPICreateTimeout = 2 * time.Hour
-	networkingAPIDeleteTimeout = 5 * time.Hour
 )
 
 var acceptedConnectionTypes = []string{connectionTypePeering, connectionTypeTransitGateway, connectionTypePrivateLink}

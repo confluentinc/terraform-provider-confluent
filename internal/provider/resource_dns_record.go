@@ -28,10 +28,6 @@ import (
 	netap "github.com/confluentinc/ccloud-sdk-go-v2/networking-access-point/v1"
 )
 
-const (
-	privateLinkAccessPoint      = "PrivateLinkAccessPoint"
-)
-
 var acceptedDnsRecordConfig = []string{paramPrivateLinkAccessPoint}
 
 func dnsRecordResource() *schema.Resource {

@@ -25,12 +25,6 @@ import (
 	"net/http"
 )
 
-const (
-	// The maximum allowable page size - 1 (to avoid off-by-one errors) when listing service accounts using SG V3 API
-	// https://docs.confluent.io/cloud/current/api.html#tag/Network-Link-Services-(networkingv1)/operation/listNetworkingV1NetworkLinkServices
-	listNetworkLinkServicesPageSize = 99
-)
-
 func networkLinkServiceDataSource() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: networkLinkServiceDataSourceRead,

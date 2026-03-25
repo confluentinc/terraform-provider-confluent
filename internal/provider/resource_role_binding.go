@@ -25,11 +25,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"net/http"
 	"regexp"
-	"time"
-)
-
-const (
-	rbacWaitAfterCreateToSync = 90 * time.Second
 )
 
 func roleBindingResource() *schema.Resource {

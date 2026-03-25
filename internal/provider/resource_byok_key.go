@@ -13,12 +13,6 @@ import (
 	byok "github.com/confluentinc/ccloud-sdk-go-v2/byok/v1"
 )
 
-const (
-	kindAws   = "AwsKey"
-	kindAzure = "AzureKey"
-	kindGcp   = "GcpKey"
-)
-
 var ()
 
 func byokResource() *schema.Resource {

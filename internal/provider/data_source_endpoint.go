@@ -28,10 +28,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-const (
-	listEndpointsPageSize = 100
-)
-
 func endpointDataSource() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: endpointDataSourceRead,

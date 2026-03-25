@@ -28,14 +28,6 @@ import (
 	netap "github.com/confluentinc/ccloud-sdk-go-v2/networking-access-point/v1"
 )
 
-const (
-	awsEgressPrivateLinkEndpoint                   = "AwsEgressPrivateLinkEndpoint"
-	awsIngressPrivateLinkEndpoint                  = "AwsIngressPrivateLinkEndpoint"
-	azureEgressPrivateLinkEndpoint                 = "AzureEgressPrivateLinkEndpoint"
-	gcpEgressPrivateServiceConnectEndpoint         = "GcpEgressPrivateServiceConnectEndpoint"
-	awsPrivateNetworkInterface                     = "AwsPrivateNetworkInterface"
-)
-
 var acceptedEndpointConfig = []string{paramAwsEgressPrivateLinkEndpoint, paramAwsIngressPrivateLinkEndpoint, paramAzureEgressPrivateLinkEndpoint, paramGcpEgressPrivateServiceConnectEndpoint, paramAwsPrivateNetworkInterface}
 
 func accessPointResource() *schema.Resource {
@@ -188,7 +180,6 @@ func paramGcpEgressPrivateServiceConnectEndpointSchema() *schema.Schema {
 
 					// Suppress the diff shown if the values are equivalent forms of "ALL_GOOGLE_APIS" and "all-google-apis"
 					DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
-						const allGoogleApisNormalized = "all-google-apis"
 
 						normalizedOld := strings.ReplaceAll(strings.ToLower(old), "_", "-")
 						normalizedNew := strings.ReplaceAll(strings.ToLower(new), "_", "-")

@@ -25,11 +25,6 @@ import (
 	"net/http"
 )
 
-const (
-	// The maximum allowable page size - 1 (to avoid off-by-one errors) when listing identity pools
-	listIdentityPoolsPageSize = 99
-)
-
 func identityPoolDataSource() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: identityPoolDataSourceRead,

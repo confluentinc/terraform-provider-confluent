@@ -29,10 +29,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-const (
-	presignedUrlLocation           = "PRESIGNED_URL_LOCATION"
-)
-
 func customConnectorPluginResource() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: customConnectorPluginCreate,

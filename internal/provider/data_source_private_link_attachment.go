@@ -23,10 +23,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-const (
-	stateWaitingForConnections                  = "WAITING_FOR_CONNECTIONS"
-)
-
 func privateLinkAttachmentDataSource() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: privateLinkAttachmentDataSourceRead,

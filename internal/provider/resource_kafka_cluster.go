@@ -31,31 +31,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-const (
-	kafkaClusterTypeBasic            = "Basic"
-	kafkaClusterTypeStandard         = "Standard"
-	kafkaClusterTypeDedicated        = "Dedicated"
-	kafkaClusterTypeEnterprise       = "Enterprise"
-	kafkaClusterTypeFreight          = "Freight"
-
-	stateInProgress = "IN_PROGRESS"
-	stateDone       = "DONE"
-
-	stateFailed        = "FAILED"
-	stateUnknown       = "UNKNOWN"
-	stateUnexpected    = "UNEXPECTED"
-	stateProvisioned   = "PROVISIONED"
-	stateReady         = "READY"
-	stateRunning       = "RUNNING"
-	stateProvisioning  = "PROVISIONING"
-	statePendingAccept = "PENDING_ACCEPT"
-
-	singleZone       = "SINGLE_ZONE"
-	multiZone        = "MULTI_ZONE"
-	lowAvailability  = "LOW"
-	highAvailability = "HIGH"
-)
-
 var acceptedAvailabilityZones = []string{singleZone, multiZone, lowAvailability, highAvailability}
 var acceptedCloudProviders = []string{"AWS", "AZURE", "GCP"}
 var acceptedClusterTypes = []string{paramBasicCluster, paramStandardCluster, paramDedicatedCluster, paramEnterpriseCluster, paramFreightCluster}

@@ -17,11 +17,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-const (
-	stateProcessing           = "PROCESSING"
-	stateWaitingForProcessing = "WAITING_FOR_PROCESSING"
-)
-
 func connectArtifactResource() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: connectArtifactCreate,

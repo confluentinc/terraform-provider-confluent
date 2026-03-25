@@ -30,12 +30,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-const (
-	schemaEntityType = "sr_schema"
-	fieldEntityType  = "sr_field"
-	recordEntityType = "sr_record"
-)
-
 func tagBindingResource() *schema.Resource {
 	return &schema.Resource{
 		ReadContext:   tagBindingRead,

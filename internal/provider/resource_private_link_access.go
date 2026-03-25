@@ -28,12 +28,6 @@ import (
 	"strings"
 )
 
-const (
-	awsPrivateLinkAccessKind   = "AwsPrivateLinkAccess"
-	azurePrivateLinkAccessKind = "AzurePrivateLinkAccess"
-	gcpPrivateLinkAccessKind   = "GcpPrivateServiceConnectAccess"
-)
-
 var acceptedCloudProvidersForPrivateLinkAccess = []string{paramAws, paramAzure, paramGcp}
 
 func privateLinkAccessResource() *schema.Resource {

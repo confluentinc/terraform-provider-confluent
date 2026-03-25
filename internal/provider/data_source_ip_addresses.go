@@ -26,12 +26,6 @@ import (
 	"time"
 )
 
-const (
-	// The maximum allowable page size - 1 (to avoid off-by-one errors) when listing service accounts using IP Addresses API
-	// https://docs.confluent.io/cloud/current/api.html#tag/IP-Addresses-(networkingv1)/operation/listNetworkingV1IpAddresses
-	listIPAddressesPageSize = 99
-)
-
 func ipAddressesDataSource() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: ipAddressesDataSourceRead,

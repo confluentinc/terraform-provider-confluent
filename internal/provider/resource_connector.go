@@ -23,35 +23,12 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"time"
 
 	connect "github.com/confluentinc/ccloud-sdk-go-v2/connect/v1"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/samber/lo"
-)
-
-const (
-	connectAPICreateTimeout        = 24 * time.Hour
-	connectOffsetsAPIUpdateTimeout = 1 * time.Hour
-	connectAPIWaitAfterCreate      = 5 * time.Second
-
-	connectorConfigAttributeName   = "name"
-	connectorConfigAttributeClass  = "connector.class"
-	connectorConfigAttributeType   = "confluent.connector.type"
-	connectorConfigAttributePlugin = "confluent.custom.plugin.id"
-	connectorTypeManaged           = "MANAGED"
-	connectorTypeCustom            = "CUSTOM"
-
-	connectorConfigInternalAttributePrefix = "config.internal."
-
-	twoStarsOrMorePattern = "^[*]{2,}"
-
-	statePaused   = "PAUSED"
-	stateDegraded = "DEGRADED"
-
-	stateApplied = "APPLIED"
 )
 
 var connectorConfigFullAttributeName = fmt.Sprintf("%s.name", paramNonSensitiveConfig)

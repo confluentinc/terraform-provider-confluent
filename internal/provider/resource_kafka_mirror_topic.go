@@ -29,14 +29,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-const (
-	stateActive                      = "ACTIVE"
-	stateStopped                     = "STOPPED"
-	statePendingStopped              = "PENDING_STOPPED"
-	stateFailedOver                  = "FAILED_OVER"
-	statePromoted                    = "PROMOTED"
-)
-
 var acceptedKafkaMirrorTopicStates = []string{stateActive, statePaused, stateFailedOver, statePromoted}
 var acceptedStoppedKafkaMirrorTopicStates = []string{stateStopped, stateFailedOver, statePromoted}
 

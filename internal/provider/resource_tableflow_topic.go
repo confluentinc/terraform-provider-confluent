@@ -29,16 +29,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-const (
-	byobAwsSpecKind        = "ByobAws"
-	managedStorageSpecKind = "Managed"
-	azureSpecKind          = "AzureDataLakeStorageGen2"
-
-	errorHandlingSuspendMode = "SUSPEND"
-	errorHandlingSkipMode    = "SKIP"
-	errorHandlingLogMode     = "LOG"
-)
-
 var acceptedBucketTypes = []string{paramByobAws, paramManagedStorage, paramAzureStorage}
 var acceptedErrorHandlingModes = []string{errorHandlingSuspendMode, errorHandlingSkipMode, errorHandlingLogMode}
 

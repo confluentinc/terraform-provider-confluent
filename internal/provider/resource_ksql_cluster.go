@@ -12,11 +12,6 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
-	"time"
-)
-
-const (
-	ksqlCreateTimeout             = 12 * time.Hour
 )
 
 func ksqlResource() *schema.Resource {
