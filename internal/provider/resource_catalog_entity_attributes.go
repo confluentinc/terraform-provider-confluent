@@ -28,10 +28,6 @@ import (
 	"strings"
 )
 
-const (
-	qualifiedName = "qualifiedName"
-)
-
 func catalogEntityAttributesResource() *schema.Resource {
 	return &schema.Resource{
 		ReadContext:   catalogEntityAttributesRead,

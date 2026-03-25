@@ -29,18 +29,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-const (
-	paramClusterLink                 = "cluster_link"
-	paramMirrorTopicName             = "mirror_topic_name"
-	paramSourceKafkaTopic            = "source_kafka_topic"
-	stateActive                      = "ACTIVE"
-	stateStopped                     = "STOPPED"
-	statePendingStopped              = "PENDING_STOPPED"
-	stateFailedOver                  = "FAILED_OVER"
-	statePromoted                    = "PROMOTED"
-	paramKafkaMirrorTopicCredentials = "kafka_cluster.0.credentials"
-)
-
 var acceptedKafkaMirrorTopicStates = []string{stateActive, statePaused, stateFailedOver, statePromoted}
 var acceptedStoppedKafkaMirrorTopicStates = []string{stateStopped, stateFailedOver, statePromoted}
 

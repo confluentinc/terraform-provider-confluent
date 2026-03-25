@@ -25,14 +25,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"net/http"
 	"strings"
-	"time"
-)
-
-const (
-	paramMaxCfu = "max_cfu"
-
-	fcpmAPICreateTimeout = 1 * time.Hour
-	fcpmAPIDeleteTimeout = 1 * time.Hour
 )
 
 var acceptedComputePoolTypes = []string{paramStandardCluster}

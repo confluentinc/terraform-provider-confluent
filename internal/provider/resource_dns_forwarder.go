@@ -29,17 +29,6 @@ import (
 	dns "github.com/confluentinc/ccloud-sdk-go-v2/networking-dnsforwarder/v1"
 )
 
-const (
-	paramGateway        = "gateway"
-	paramForwardViaIp   = "forward_via_ip"
-	paramForwardViaGcp  = "forward_via_gcp_dns_zones"
-	paramDomains        = "domains"
-	paramDnsServerIps   = "dns_server_ips"
-	paramDomainMappings = "domain_mappings"
-	forwardViaIp        = "ForwardViaIp"
-	forwardViaGcp       = "ForwardViaGcpDnsZones"
-)
-
 var acceptedDnsForwarderConfig = []string{paramForwardViaIp, paramForwardViaGcp}
 
 func dnsForwarderResource() *schema.Resource {

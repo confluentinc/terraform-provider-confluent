@@ -31,30 +31,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-const (
-	paramOwner               = "owner"
-	paramResource            = "managed_resource"
-	paramDisableWaitForReady = "disable_wait_for_ready"
-
-	serviceAccountKind       = "ServiceAccount"
-	userKind                 = "User"
-	clusterKind              = "Cluster"
-	regionKind               = "Region"
-	schemaRegistryKind       = "SchemaRegistry"
-	ksqlDbKind               = "ksqlDB"
-	cloudKindInLowercase     = "cloud"
-	tableflowKind            = "Tableflow"
-	tableflowKindInLowercase = "tableflow"
-
-	iamApiVersion       = "iam/v2"
-	cmkApiVersion       = "cmk/v2"
-	srcmV2ApiVersion    = "srcm/v2"
-	srcmV3ApiVersion    = "srcm/v3"
-	ksqldbcmApiVersion  = "ksqldbcm/v2"
-	fcpmApiVersion      = "fcpm/v2"
-	tableflowApiVersion = "tableflow/v1"
-)
-
 var acceptedOwnerKinds = []string{serviceAccountKind, userKind}
 var acceptedResourceKinds = []string{clusterKind, regionKind, tableflowKind}
 

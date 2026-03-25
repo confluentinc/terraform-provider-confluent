@@ -28,30 +28,6 @@ import (
 	netap "github.com/confluentinc/ccloud-sdk-go-v2/networking-access-point/v1"
 )
 
-const (
-	paramAwsEgressPrivateLinkEndpoint              = "aws_egress_private_link_endpoint"
-	paramAwsIngressPrivateLinkEndpoint             = "aws_ingress_private_link_endpoint"
-	paramAzureEgressPrivateLinkEndpoint            = "azure_egress_private_link_endpoint"
-	paramGcpEgressPrivateServiceConnectEndpoint    = "gcp_egress_private_service_connect_endpoint"
-	paramAwsPrivateNetworkInterface                = "aws_private_network_interface"
-	paramEnableHighAvailability                    = "enable_high_availability"
-	paramVpcEndpointDnsName                        = "vpc_endpoint_dns_name"
-	paramPrivateLinkSubresourceName                = "private_link_subresource_name"
-	paramPrivateEndpointDomain                     = "private_endpoint_domain"
-	paramPrivateEndpointIpAddress                  = "private_endpoint_ip_address"
-	paramPrivateEndpointCustomDnsConfigDomains     = "private_endpoint_custom_dns_config_domains"
-	paramPrivateServiceConnectEndpointTarget       = "private_service_connect_endpoint_target"
-	paramPrivateServiceConnectEndpointConnectionId = "private_service_connect_endpoint_connection_id"
-	paramPrivateServiceConnectEndpointIpAddress    = "private_service_connect_endpoint_ip_address"
-	paramPrivateServiceConnectEndpointName         = "private_service_connect_endpoint_name"
-	paramNetworkInterfaces                         = "network_interfaces"
-	awsEgressPrivateLinkEndpoint                   = "AwsEgressPrivateLinkEndpoint"
-	awsIngressPrivateLinkEndpoint                  = "AwsIngressPrivateLinkEndpoint"
-	azureEgressPrivateLinkEndpoint                 = "AzureEgressPrivateLinkEndpoint"
-	gcpEgressPrivateServiceConnectEndpoint         = "GcpEgressPrivateServiceConnectEndpoint"
-	awsPrivateNetworkInterface                     = "AwsPrivateNetworkInterface"
-)
-
 var acceptedEndpointConfig = []string{paramAwsEgressPrivateLinkEndpoint, paramAwsIngressPrivateLinkEndpoint, paramAzureEgressPrivateLinkEndpoint, paramGcpEgressPrivateServiceConnectEndpoint, paramAwsPrivateNetworkInterface}
 
 func accessPointResource() *schema.Resource {
@@ -204,7 +180,6 @@ func paramGcpEgressPrivateServiceConnectEndpointSchema() *schema.Schema {
 
 					// Suppress the diff shown if the values are equivalent forms of "ALL_GOOGLE_APIS" and "all-google-apis"
 					DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
-						const allGoogleApisNormalized = "all-google-apis"
 
 						normalizedOld := strings.ReplaceAll(strings.ToLower(old), "_", "-")
 						normalizedNew := strings.ReplaceAll(strings.ToLower(new), "_", "-")

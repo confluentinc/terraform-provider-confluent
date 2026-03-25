@@ -30,11 +30,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-const (
-	paramAttributes           = "attributes"
-	paramBusinessMetadataName = "business_metadata_name"
-)
-
 func businessMetadataBindingResource() *schema.Resource {
 	return &schema.Resource{
 		ReadContext:   businessMetadataBindingRead,

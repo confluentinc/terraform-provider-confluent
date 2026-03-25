@@ -29,36 +29,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-const (
-	paramEnableCompaction      = "enable_compaction"
-	paramEnablePartitioning    = "enable_partitioning"
-	paramSuspended             = "suspended"
-	paramRetentionMs           = "retention_ms"
-	paramByobAws               = "byob_aws"
-	paramManagedStorage        = "managed_storage"
-	paramAzureStorage          = "azure_data_lake_storage_gen_2"
-	paramBucketName            = "bucket_name"
-	paramBucketRegion          = "bucket_region"
-	paramProviderIntegrationId = "provider_integration_id"
-	paramTableFormats          = "table_formats"
-	paramTablePath             = "table_path"
-	paramRecordFailureStrategy = "record_failure_strategy"
-	paramErrorHandling         = "error_handling"
-	paramLogTarget             = "log_target"
-	paramWriteMode             = "write_mode"
-	paramStorageAccount        = "storage_account_name"
-	paramContainerName         = "container_name"
-	paramStorageRegion         = "storage_region"
-
-	byobAwsSpecKind        = "ByobAws"
-	managedStorageSpecKind = "Managed"
-	azureSpecKind          = "AzureDataLakeStorageGen2"
-
-	errorHandlingSuspendMode = "SUSPEND"
-	errorHandlingSkipMode    = "SKIP"
-	errorHandlingLogMode     = "LOG"
-)
-
 var acceptedBucketTypes = []string{paramByobAws, paramManagedStorage, paramAzureStorage}
 var acceptedErrorHandlingModes = []string{errorHandlingSuspendMode, errorHandlingSkipMode, errorHandlingLogMode}
 

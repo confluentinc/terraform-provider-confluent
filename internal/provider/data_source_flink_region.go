@@ -27,12 +27,6 @@ import (
 	"strings"
 )
 
-const (
-	// The maximum allowable page size - 1 (to avoid off-by-one errors) when listing flinkRegions using SG V2 API
-	// https://docs.confluent.io/cloud/current/api.html#tag/Regions-(fcpmv2)/operation/listFcpmV2Regions
-	listFlinkRegionsPageSize = 99
-)
-
 func flinkRegionDataSource() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: flinkRegionDataSourceRead,

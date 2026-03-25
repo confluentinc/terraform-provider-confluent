@@ -59,29 +59,6 @@ import (
 	sts "github.com/confluentinc/ccloud-sdk-go-v2/sts/v1"
 )
 
-const (
-	terraformProviderUserAgent = "terraform-provider-confluent"
-)
-
-const (
-	paramApiVersion      = "api_version"
-	paramCloud           = "cloud"
-	paramRegion          = "region"
-	paramOrganization    = "organization"
-	paramEnvironment     = "environment"
-	paramId              = "id"
-	paramDisplayName     = "display_name"
-	paramName            = "name"
-	paramDescription     = "description"
-	paramKind            = "kind"
-	paramCsu             = "csu"
-	paramClass           = "class"
-	paramContentFormat   = "content_format"
-	paramRuntimeLanguage = "runtime_language"
-	paramArtifactFile    = "artifact_file"
-	paramVersions        = "versions"
-)
-
 type Client struct {
 	apiKeysClient                   *apikeys.APIClient
 	byokClient                      *byok.APIClient

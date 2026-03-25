@@ -28,16 +28,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-const (
-	paramService          = "service"
-	paramAccessPoint      = "access_point"
-	paramIsPrivate        = "is_private"
-	paramEndpointType     = "endpoint_type"
-	paramEndpointResource = "resource"
-
-	listEndpointsPageSize = 100
-)
-
 func endpointDataSource() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: endpointDataSourceRead,
