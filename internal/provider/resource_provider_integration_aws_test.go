@@ -142,7 +142,7 @@ func testAccCheckProviderIntegrationDestroy(s *terraform.State) error {
 			continue
 		}
 		deletedProviderIntegrationId := rs.Primary.ID
-		req := c.providerIntegrationV1Client.IntegrationsPimV1Api.GetPimV1Integration(c.networkingV1ApiContext(context.Background()), deletedProviderIntegrationId).Environment(providerIntegrationEnvironmentId)
+		req := c.providerIntegrationV1Client.IntegrationsPimV1Api.GetPimV1Integration(c.providerIntegrationV1ApiContext(context.Background()), deletedProviderIntegrationId).Environment(providerIntegrationEnvironmentId)
 		deletedProviderIntegration, response, err := req.Execute()
 		if response != nil && response.StatusCode == http.StatusNotFound {
 			return nil
