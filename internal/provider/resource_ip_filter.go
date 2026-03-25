@@ -27,14 +27,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-const (
-	paramFilterName      = "filter_name"
-	paramResourceGroup   = "resource_group"
-	paramResourceScope   = "resource_scope"
-	paramOperationGroups = "operation_groups"
-	paramIPGroups        = "ip_groups"
-)
-
 func ipFilterResource() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: ipFilterCreate,

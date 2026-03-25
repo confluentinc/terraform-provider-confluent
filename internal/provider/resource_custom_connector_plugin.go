@@ -29,15 +29,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-const (
-	paramDocumentationLink         = "documentation_link"
-	paramConnectorClass            = "connector_class"
-	paramConnectorType             = "connector_type"
-	paramSensitiveConfigProperties = "sensitive_config_properties"
-	paramFilename                  = "filename"
-	presignedUrlLocation           = "PRESIGNED_URL_LOCATION"
-)
-
 func customConnectorPluginResource() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: customConnectorPluginCreate,

@@ -28,18 +28,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-const (
-	paramCertificateChain         = "certificate_chain"
-	paramCertificateChainFilename = "certificate_chain_filename"
-	paramCrlSource                = "crl_source"
-	paramCrlUrl                   = "crl_url"
-	paramCrlChain                 = "crl_chain"
-	paramCrlUpdatedAt             = "crl_updated_at"
-	paramFingerprints             = "fingerprints"
-	paramExpirationDates          = "expiration_dates"
-	paramSerialNumbers            = "serial_numbers"
-)
-
 func certificateAuthorityResource() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: certificateAuthorityCreate,

@@ -27,34 +27,9 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
-	"time"
 )
 
 var acceptedSchemaExporterStatus = []string{stateRunning, statePaused}
-
-const (
-	paramContextType                      = "context_type"
-	paramContext                          = "context"
-	paramSubjectRenameFormat              = "subject_rename_format"
-	paramSubjects                         = "subjects"
-	paramResetOnUpdate                    = "reset_on_update"
-	paramResetOnUpdateDefaultValue        = false
-	paramBasicAuthCredentialsSourceValue  = "USER_INFO"
-	paramDestinationSchemaRegistryCluster = "destination_schema_registry_cluster"
-	basicAuthCredentialsSourceConfig      = "basic.auth.credentials.source"
-	schemaRegistryUrlConfig               = "schema.registry.url"
-	basicAuthUserInfoConfig               = "basic.auth.user.info"
-
-	bearerAuthClientId          = "bearer.auth.client.id"
-	bearerAuthClientSecret      = "bearer.auth.client.secret"
-	bearerAuthIssuerEndpointUrl = "bearer.auth.issuer.endpoint.url"
-	bearerAuthCredentialsSource = "bearer.auth.credentials.source"
-	bearerAuthScope             = "bearer.auth.scope"
-	bearerAuthIdentityPoolId    = "bearer.auth.identity.pool.id"
-	bearerAuthLogicalCluster    = "bearer.auth.logical.cluster"
-
-	schemaExporterAPICreateTimeout = 12 * time.Hour
-)
 
 var standardConfigs = []string{basicAuthUserInfoConfig, schemaRegistryUrlConfig, basicAuthCredentialsSourceConfig}
 var oauthBearerConfigs = []string{bearerAuthClientId, bearerAuthClientSecret, bearerAuthIssuerEndpointUrl, bearerAuthCredentialsSource, bearerAuthScope, bearerAuthIdentityPoolId, bearerAuthLogicalCluster, configOAuthBearer}

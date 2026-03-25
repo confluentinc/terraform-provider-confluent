@@ -27,16 +27,6 @@ import (
 	"strings"
 )
 
-const (
-	paramVpcEndpointId                        = "vpc_endpoint_id"
-	paramPrivateEndpointResourceId            = "private_endpoint_resource_id"
-	paramPrivateServiceConnectConnectionId    = "private_service_connect_connection_id"
-	paramPrivateLinkAttachment                = "private_link_attachment"
-	paramAwsPrivateLinkAttachmentConnection   = "AwsPrivateLinkAttachmentConnection"
-	paramAzurePrivateLinkAttachmentConnection = "AzurePrivateLinkAttachmentConnection"
-	paramGcpPrivateLinkAttachmentConnection   = "GcpPrivateLinkAttachmentConnection"
-)
-
 var acceptedPrivateLinkAttachmentConnectionKinds = []string{paramAws, paramAzure, paramGcp}
 
 func privateLinkAttachmentConnectionResource() *schema.Resource {

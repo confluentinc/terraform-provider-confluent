@@ -38,26 +38,7 @@ import (
 	zclCty "github.com/zclconf/go-cty/cty"
 )
 
-const (
-	tfConfigurationFileName = "main.tf"
-	tfStateFileName         = "terraform.tfstate"
-	tfLockFileName          = ".terraform.lock.hcl"
-	paramResources          = "resources"
-	paramOutputPath         = "output_path"
-	defaultTfStateFile      = "terraform.tfstate"
-	defaultVariablesTfFile  = "variables.tf"
-	defaultOutputPath       = "./imported_confluent_infrastructure"
-)
-
 type ImporterMode int
-
-const (
-	Cloud ImporterMode = iota
-	Kafka
-	SchemaRegistry
-)
-
-const importerCreateTimeout = 8 * time.Hour
 
 var ImportableResources = []string{
 	// Cloud
@@ -893,7 +874,6 @@ func mapContainsAllKeys(map1, map2 map[string]*Importer) bool {
 }
 
 func overrideUserAgent(client *Client) {
-	const importer = "TFImporter"
 
 	// Add "importer" suffix to the default user agent
 	client.apiKeysClient.GetConfig().UserAgent = fmt.Sprintf("%s %s", client.apiKeysClient.GetConfig().UserAgent, importer)

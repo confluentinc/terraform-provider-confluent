@@ -23,10 +23,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-const (
-	paramNetworkLinkService = "network_link_service"
-)
-
 func networkLinkEndpointDataSource() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: networkLinkEndpointDataSourceRead,

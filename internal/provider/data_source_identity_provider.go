@@ -26,11 +26,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-const (
-	// The maximum allowable page size - 1 (to avoid off-by-one errors) when listing identity providers using IAM V2 API
-	listIdentityProvidersPageSize = 99
-)
-
 func identityProviderDataSource() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: identityProviderDataSourceRead,
