@@ -24,7 +24,7 @@ import (
 	"strings"
 	"time"
 
-	apikeys "github.com/confluentinc/ccloud-sdk-go-v2/apikeys/v2"
+	apikeysv2 "github.com/confluentinc/ccloud-sdk-go-v2/apikeys/v2"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -91,10 +91,10 @@ func apiKeyCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 	ownerId := extractStringValueFromBlock(d, paramOwner, paramId)
 	ownerKind := extractStringValueFromBlock(d, paramOwner, paramKind)
 
-	spec := apikeys.NewIamV2ApiKeySpec()
+	spec := apikeysv2.NewIamV2ApiKeySpec()
 	spec.SetDisplayName(displayName)
 	spec.SetDescription(description)
-	spec.SetOwner(apikeys.ObjectReference{Id: ownerId, Kind: &ownerKind})
+	spec.SetOwner(apikeysv2.ObjectReference{Id: ownerId, Kind: &ownerKind})
 
 	// If paramResource block is present, then the API Key is a resource-specific API key (Kafka, Schema Registry, Flink, ksqlDB, and Tableflow).
 	// https://docs.confluent.io/cloud/current/access-management/authenticate/api-keys/api-keys.html#resource-specific-api-keys
@@ -107,7 +107,7 @@ func apiKeyCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 		resourceId := extractStringValueFromBlock(d, paramResource, paramId)
 		resourceKind := extractStringValueFromBlock(d, paramResource, paramKind)
 		apiVersion := extractStringValueFromBlock(d, paramResource, paramApiVersion)
-		spec.SetResource(apikeys.ObjectReference{Id: resourceId, Kind: &resourceKind})
+		spec.SetResource(apikeysv2.ObjectReference{Id: resourceId, Kind: &resourceKind})
 
 		// Client needs to specify api_version only when creating Flink API Key
 		if apiVersion == fcpmApiVersion {
@@ -117,20 +117,20 @@ func apiKeyCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 			spec.Resource.SetApiVersion(tableflowApiVersion)
 		}
 
-		if isFlinkApiKey(apikeys.IamV2ApiKey{Spec: spec}) {
+		if isFlinkApiKey(apikeysv2.IamV2ApiKey{Spec: spec}) {
 			spec.Resource.SetId(resourceId)
 			spec.Resource.SetEnvironment(environmentId)
 		}
 	}
 
-	createApiKeyRequest := apikeys.IamV2ApiKey{Spec: spec}
+	createApiKeyRequest := apikeysv2.IamV2ApiKey{Spec: spec}
 	createApiKeyRequestJson, err := json.Marshal(createApiKeyRequest)
 	if err != nil {
 		return diag.Errorf("error creating API Key: error marshaling %#v to json: %s", createApiKeyRequest, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new API Key: %s", createApiKeyRequestJson))
 
-	createdApiKey, resp, err := executeApiKeysCreate(c.apiKeysApiContext(ctx), c, &createApiKeyRequest)
+	createdApiKey, resp, err := executeApiKeysCreate(c.apiKeysV2ApiContext(ctx), c, &createApiKeyRequest)
 	if err != nil {
 		return diag.Errorf("error creating API Key %q: %s", createdApiKey.GetId(), createDescriptiveError(err, resp))
 	}
@@ -164,8 +164,8 @@ func apiKeyCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 	return apiKeyRead(ctx, d, meta)
 }
 
-func executeApiKeysCreate(ctx context.Context, c *Client, apiKey *apikeys.IamV2ApiKey) (apikeys.IamV2ApiKey, *http.Response, error) {
-	req := c.apiKeysClient.APIKeysIamV2Api.CreateIamV2ApiKey(c.apiKeysApiContext(ctx)).IamV2ApiKey(*apiKey)
+func executeApiKeysCreate(ctx context.Context, c *Client, apiKey *apikeysv2.IamV2ApiKey) (apikeysv2.IamV2ApiKey, *http.Response, error) {
+	req := c.apiKeysV2Client.APIKeysIamV2Api.CreateIamV2ApiKey(c.apiKeysV2ApiContext(ctx)).IamV2ApiKey(*apiKey)
 	return req.Execute()
 }
 
@@ -176,8 +176,8 @@ func apiKeyUpdate(ctx context.Context, d *schema.ResourceData, meta interface{})
 
 	// When updating the paramDisableWaitForReady, the PATCH API request should be skipped.
 	if d.HasChanges(paramDisplayName, paramDescription) {
-		updateApiKeyRequest := apikeys.NewIamV2ApiKeyUpdate()
-		updateSpec := apikeys.NewIamV2ApiKeySpecUpdate()
+		updateApiKeyRequest := apikeysv2.NewIamV2ApiKeyUpdate()
+		updateSpec := apikeysv2.NewIamV2ApiKeySpecUpdate()
 
 		if d.HasChange(paramDisplayName) {
 			displayName := d.Get(paramDisplayName).(string)
@@ -198,7 +198,7 @@ func apiKeyUpdate(ctx context.Context, d *schema.ResourceData, meta interface{})
 		tflog.Debug(ctx, fmt.Sprintf("Updating API Key %q: %s", d.Id(), updateApiKeyRequestJson), map[string]interface{}{apiKeyLoggingKey: d.Id()})
 
 		c := meta.(*Client)
-		updatedApiKey, resp, err := c.apiKeysClient.APIKeysIamV2Api.UpdateIamV2ApiKey(c.apiKeysApiContext(ctx), d.Id()).IamV2ApiKeyUpdate(*updateApiKeyRequest).Execute()
+		updatedApiKey, resp, err := c.apiKeysV2Client.APIKeysIamV2Api.UpdateIamV2ApiKey(c.apiKeysV2ApiContext(ctx), d.Id()).IamV2ApiKeyUpdate(*updateApiKeyRequest).Execute()
 
 		if err != nil {
 			return diag.Errorf("error updating API Key %q: %s", d.Id(), createDescriptiveError(err, resp))
@@ -218,7 +218,7 @@ func apiKeyDelete(ctx context.Context, d *schema.ResourceData, meta interface{})
 	tflog.Debug(ctx, fmt.Sprintf("Deleting API Key %q", d.Id()), map[string]interface{}{apiKeyLoggingKey: d.Id()})
 	c := meta.(*Client)
 
-	req := c.apiKeysClient.APIKeysIamV2Api.DeleteIamV2ApiKey(c.apiKeysApiContext(ctx), d.Id())
+	req := c.apiKeysV2Client.APIKeysIamV2Api.DeleteIamV2ApiKey(c.apiKeysV2ApiContext(ctx), d.Id())
 	resp, err := req.Execute()
 
 	if err != nil {
@@ -233,7 +233,7 @@ func apiKeyDelete(ctx context.Context, d *schema.ResourceData, meta interface{})
 func apiKeyRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	tflog.Debug(ctx, fmt.Sprintf("Reading API Key %q", d.Id()), map[string]interface{}{apiKeyLoggingKey: d.Id()})
 	c := meta.(*Client)
-	apiKey, resp, err := executeApiKeysRead(c.apiKeysApiContext(ctx), c, d.Id())
+	apiKey, resp, err := executeApiKeysRead(c.apiKeysV2ApiContext(ctx), c, d.Id())
 	if err != nil {
 		tflog.Warn(ctx, fmt.Sprintf("Error reading API Key %q: %s", d.Id(), createDescriptiveError(err, resp)), map[string]interface{}{apiKeyLoggingKey: d.Id()})
 
@@ -261,7 +261,7 @@ func apiKeyRead(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 	return nil
 }
 
-func setApiKeyAttributes(d *schema.ResourceData, apiKey apikeys.IamV2ApiKey) (*schema.ResourceData, error) {
+func setApiKeyAttributes(d *schema.ResourceData, apiKey apikeysv2.IamV2ApiKey) (*schema.ResourceData, error) {
 	if err := d.Set(paramDisplayName, apiKey.Spec.GetDisplayName()); err != nil {
 		return nil, createDescriptiveError(err)
 	}
@@ -292,7 +292,7 @@ func setApiKeyAttributes(d *schema.ResourceData, apiKey apikeys.IamV2ApiKey) (*s
 	return d, nil
 }
 
-func setOwner(apiKey apikeys.IamV2ApiKey, d *schema.ResourceData) error {
+func setOwner(apiKey apikeysv2.IamV2ApiKey, d *schema.ResourceData) error {
 	return d.Set(paramOwner, []interface{}{map[string]interface{}{
 		paramId:         apiKey.Spec.Owner.GetId(),
 		paramKind:       apiKey.Spec.Owner.GetKind(),
@@ -300,7 +300,7 @@ func setOwner(apiKey apikeys.IamV2ApiKey, d *schema.ResourceData) error {
 	}})
 }
 
-func setManagedResource(apiKey apikeys.IamV2ApiKey, environmentId string, d *schema.ResourceData) error {
+func setManagedResource(apiKey apikeysv2.IamV2ApiKey, environmentId string, d *schema.ResourceData) error {
 	// Have to be careful here in case Schema Registry and ksqlDB don't use paramEnvironment
 	kind := apiKey.Spec.Resource.GetKind()
 	// Hack for API Key Mgmt API that temporarily returns schemaRegistryKind / ksqlDbKind instead of clusterKind
@@ -334,8 +334,8 @@ func setManagedResource(apiKey apikeys.IamV2ApiKey, environmentId string, d *sch
 	}
 }
 
-func executeApiKeysRead(ctx context.Context, c *Client, apiKeyId string) (apikeys.IamV2ApiKey, *http.Response, error) {
-	req := c.apiKeysClient.APIKeysIamV2Api.GetIamV2ApiKey(c.apiKeysApiContext(ctx), apiKeyId)
+func executeApiKeysRead(ctx context.Context, c *Client, apiKeyId string) (apikeysv2.IamV2ApiKey, *http.Response, error) {
+	req := c.apiKeysV2Client.APIKeysIamV2Api.GetIamV2ApiKey(c.apiKeysV2ApiContext(ctx), apiKeyId)
 	return req.Execute()
 }
 
@@ -437,7 +437,7 @@ func extractStringValueFromNestedBlock(d *schema.ResourceData, outerBlockName st
 	return d.Get(fmt.Sprintf("%s.0.%s.0.%s", outerBlockName, innerBlockName, attribute)).(string)
 }
 
-func validateApiKey(apiKey apikeys.IamV2ApiKey) error {
+func validateApiKey(apiKey apikeysv2.IamV2ApiKey) error {
 	id, ok := apiKey.GetIdOk()
 	if !ok || id == nil || *id == "" {
 		return fmt.Errorf("API Key ID is either empty or nil")
@@ -451,7 +451,7 @@ func validateApiKey(apiKey apikeys.IamV2ApiKey) error {
 
 // Send a GetCluster request to CMK API to find out rest_endpoint for a given (environmentId, clusterId) pair
 func fetchHttpEndpointOfKafkaCluster(ctx context.Context, c *Client, environmentId, clusterId string) (string, error) {
-	cluster, resp, err := executeKafkaRead(c.cmkApiContext(ctx), c, environmentId, clusterId)
+	cluster, resp, err := executeKafkaRead(c.cmkV2ApiContext(ctx), c, environmentId, clusterId)
 	if err != nil {
 		return "", fmt.Errorf("error reading Kafka Cluster %q: %s", clusterId, createDescriptiveError(err, resp))
 	}
@@ -462,31 +462,31 @@ func fetchHttpEndpointOfKafkaCluster(ctx context.Context, c *Client, environment
 	}
 }
 
-func isKafkaApiKey(apiKey apikeys.IamV2ApiKey) bool {
+func isKafkaApiKey(apiKey apikeysv2.IamV2ApiKey) bool {
 	return apiKey.Spec.Resource.GetKind() == clusterKind && apiKey.Spec.Resource.GetApiVersion() == cmkApiVersion
 }
 
-func isSchemaRegistryApiKey(apiKey apikeys.IamV2ApiKey) bool {
+func isSchemaRegistryApiKey(apiKey apikeysv2.IamV2ApiKey) bool {
 	// At the moment, API Key Mgmt API temporarily returns schemaRegistryKind instead of clusterKind
 	// and api_version="srcm/v2"
 	return (apiKey.Spec.Resource.GetKind() == clusterKind || apiKey.Spec.Resource.GetKind() == schemaRegistryKind) &&
 		(apiKey.Spec.Resource.GetApiVersion() == srcmV3ApiVersion || apiKey.Spec.Resource.GetApiVersion() == srcmV2ApiVersion)
 }
 
-func isFlinkApiKey(apiKey apikeys.IamV2ApiKey) bool {
+func isFlinkApiKey(apiKey apikeysv2.IamV2ApiKey) bool {
 	return apiKey.Spec.Resource.GetKind() == regionKind && apiKey.Spec.Resource.GetApiVersion() == fcpmApiVersion
 }
 
-func isKsqlDbClusterApiKey(apiKey apikeys.IamV2ApiKey) bool {
+func isKsqlDbClusterApiKey(apiKey apikeysv2.IamV2ApiKey) bool {
 	// At the moment, API Key Mgmt API temporarily returns ksqlDbKind instead of clusterKind
 	return (apiKey.Spec.Resource.GetKind() == clusterKind || apiKey.Spec.Resource.GetKind() == ksqlDbKind) && apiKey.Spec.Resource.GetApiVersion() == ksqldbcmApiVersion
 }
 
-func isTableflowApiKey(apiKey apikeys.IamV2ApiKey) bool {
+func isTableflowApiKey(apiKey apikeysv2.IamV2ApiKey) bool {
 	return apiKey.Spec.Resource.GetKind() == tableflowKind && apiKey.Spec.Resource.GetId() == tableflowKindInLowercase
 }
 
-func waitForApiKeyToSync(ctx context.Context, c *Client, createdApiKey apikeys.IamV2ApiKey, isResourceSpecificApiKey bool, environmentId string) error {
+func waitForApiKeyToSync(ctx context.Context, c *Client, createdApiKey apikeysv2.IamV2ApiKey, isResourceSpecificApiKey bool, environmentId string) error {
 	// For Kafka API Key use Kafka REST API's List Topics request and wait for http.StatusOK
 	// For Cloud API Key use Org API's List Environments request and wait for http.StatusOK
 	// For Tableflow API Key skipped the waitForCreatedTableflowApiKeyToSync function for now, until backend support for tableflow secret/key verification is ready

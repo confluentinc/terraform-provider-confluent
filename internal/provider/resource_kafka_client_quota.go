@@ -18,7 +18,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	quotas "github.com/confluentinc/ccloud-sdk-go-v2/kafka-quotas/v1"
+	kafkaquotasv1 "github.com/confluentinc/ccloud-sdk-go-v2/kafka-quotas/v1"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -70,8 +70,8 @@ func kafkaClientQuotaUpdate(ctx context.Context, d *schema.ResourceData, meta in
 		return diag.Errorf("error updating Kafka Client Quota %q: only %q, %q, %q, %q attributes can be updated for Kafka Client Quota", d.Id(), paramDisplayName, paramDescription, paramPrincipals, paramThroughput)
 	}
 
-	updateKafkaClientQuotaRequest := quotas.NewKafkaQuotasV1ClientQuotaUpdate()
-	updateSpec := quotas.NewKafkaQuotasV1ClientQuotaSpecUpdate()
+	updateKafkaClientQuotaRequest := kafkaquotasv1.NewKafkaQuotasV1ClientQuotaUpdate()
+	updateSpec := kafkaquotasv1.NewKafkaQuotasV1ClientQuotaSpecUpdate()
 
 	if d.HasChange(paramDisplayName) {
 		updatedDisplayName := d.Get(paramDisplayName).(string)
@@ -88,7 +88,7 @@ func kafkaClientQuotaUpdate(ctx context.Context, d *schema.ResourceData, meta in
 	if d.HasChange(paramThroughput) {
 		updatedIngressByteRate := d.Get(attributeIngressByteRate).(string)
 		updatedEgressByteRate := d.Get(attributeEgressByteRate).(string)
-		updatedThroughput := quotas.NewKafkaQuotasV1Throughput(updatedIngressByteRate, updatedEgressByteRate)
+		updatedThroughput := kafkaquotasv1.NewKafkaQuotasV1Throughput(updatedIngressByteRate, updatedEgressByteRate)
 		updateSpec.SetThroughput(*updatedThroughput)
 	}
 
@@ -100,7 +100,7 @@ func kafkaClientQuotaUpdate(ctx context.Context, d *schema.ResourceData, meta in
 	tflog.Debug(ctx, fmt.Sprintf("Updating Kafka Client Quota %q: %s", d.Id(), updateKafkaClientQuotaRequestJson), map[string]interface{}{kafkaClientQuotaLoggingKey: d.Id()})
 
 	c := meta.(*Client)
-	updatedClientQuota, resp, err := c.quotasClient.ClientQuotasKafkaQuotasV1Api.UpdateKafkaQuotasV1ClientQuota(c.quotasApiContext(ctx), d.Id()).KafkaQuotasV1ClientQuotaUpdate(*updateKafkaClientQuotaRequest).Execute()
+	updatedClientQuota, resp, err := c.kafkaQuotasV1Client.ClientQuotasKafkaQuotasV1Api.UpdateKafkaQuotasV1ClientQuota(c.kafkaQuotasV1ApiContext(ctx), d.Id()).KafkaQuotasV1ClientQuotaUpdate(*updateKafkaClientQuotaRequest).Execute()
 
 	if err != nil {
 		return diag.Errorf("error updating Kafka Client Quota %q: %s", d.Id(), createDescriptiveError(err, resp))
@@ -129,22 +129,22 @@ func kafkaClientQuotaCreate(ctx context.Context, d *schema.ResourceData, meta in
 
 	globalObjectReferencePrincipals := convertToGlobalObjectReferences(convertSetToStringList(d, paramPrincipals))
 
-	spec := quotas.NewKafkaQuotasV1ClientQuotaSpec()
+	spec := kafkaquotasv1.NewKafkaQuotasV1ClientQuotaSpec()
 	spec.SetDisplayName(displayName)
 	spec.SetDescription(description)
-	spec.SetCluster(quotas.EnvScopedObjectReference{Id: kafkaClusterId})
-	spec.SetEnvironment(quotas.GlobalObjectReference{Id: environmentId})
+	spec.SetCluster(kafkaquotasv1.EnvScopedObjectReference{Id: kafkaClusterId})
+	spec.SetEnvironment(kafkaquotasv1.GlobalObjectReference{Id: environmentId})
 	spec.SetPrincipals(globalObjectReferencePrincipals)
-	spec.SetThroughput(quotas.KafkaQuotasV1Throughput{IngressByteRate: ingressByteRate, EgressByteRate: egressByteRate})
+	spec.SetThroughput(kafkaquotasv1.KafkaQuotasV1Throughput{IngressByteRate: ingressByteRate, EgressByteRate: egressByteRate})
 
-	createKafkaClientQuotaRequest := quotas.KafkaQuotasV1ClientQuota{Spec: spec}
+	createKafkaClientQuotaRequest := kafkaquotasv1.KafkaQuotasV1ClientQuota{Spec: spec}
 	createKafkaClientQuotaRequestJson, err := json.Marshal(createKafkaClientQuotaRequest)
 	if err != nil {
 		return diag.Errorf("error creating Kafka Client Quota: error marshaling %#v to json: %s", createKafkaClientQuotaRequest, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Kafka Client Quota: %s", createKafkaClientQuotaRequestJson))
 
-	createdKafkaClientQuota, resp, err := executeKafkaClientQuotaCreate(c.quotasApiContext(ctx), c, createKafkaClientQuotaRequest)
+	createdKafkaClientQuota, resp, err := executeKafkaClientQuotaCreate(c.kafkaQuotasV1ApiContext(ctx), c, createKafkaClientQuotaRequest)
 	if err != nil {
 		return diag.Errorf("error creating Kafka Client Quota: %s", createDescriptiveError(err, resp))
 	}
@@ -161,8 +161,8 @@ func kafkaClientQuotaCreate(ctx context.Context, d *schema.ResourceData, meta in
 	return kafkaClientQuotaRead(ctx, d, meta)
 }
 
-func executeKafkaClientQuotaCreate(ctx context.Context, c *Client, kafkaClientQuota quotas.KafkaQuotasV1ClientQuota) (quotas.KafkaQuotasV1ClientQuota, *http.Response, error) {
-	req := c.quotasClient.ClientQuotasKafkaQuotasV1Api.CreateKafkaQuotasV1ClientQuota(c.quotasApiContext(ctx)).KafkaQuotasV1ClientQuota(kafkaClientQuota)
+func executeKafkaClientQuotaCreate(ctx context.Context, c *Client, kafkaClientQuota kafkaquotasv1.KafkaQuotasV1ClientQuota) (kafkaquotasv1.KafkaQuotasV1ClientQuota, *http.Response, error) {
+	req := c.kafkaQuotasV1Client.ClientQuotasKafkaQuotasV1Api.CreateKafkaQuotasV1ClientQuota(c.kafkaQuotasV1ApiContext(ctx)).KafkaQuotasV1ClientQuota(kafkaClientQuota)
 	return req.Execute()
 }
 
@@ -170,7 +170,7 @@ func kafkaClientQuotaDelete(ctx context.Context, d *schema.ResourceData, meta in
 	tflog.Debug(ctx, fmt.Sprintf("Deleting Kafka Client Quota %q", d.Id()), map[string]interface{}{kafkaClientQuotaLoggingKey: d.Id()})
 	c := meta.(*Client)
 
-	req := c.quotasClient.ClientQuotasKafkaQuotasV1Api.DeleteKafkaQuotasV1ClientQuota(c.quotasApiContext(ctx), d.Id())
+	req := c.kafkaQuotasV1Client.ClientQuotasKafkaQuotasV1Api.DeleteKafkaQuotasV1ClientQuota(c.kafkaQuotasV1ApiContext(ctx), d.Id())
 	resp, err := req.Execute()
 
 	if err != nil {
@@ -197,7 +197,7 @@ func kafkaClientQuotaRead(ctx context.Context, d *schema.ResourceData, meta inte
 func readKafkaClientQuotaAndSetAttributes(ctx context.Context, d *schema.ResourceData, meta interface{}, kafkaClientQuotaId string) ([]*schema.ResourceData, error) {
 	c := meta.(*Client)
 
-	kafkaClientQuota, resp, err := executeKafkaClientQuotaRead(c.quotasApiContext(ctx), c, kafkaClientQuotaId)
+	kafkaClientQuota, resp, err := executeKafkaClientQuotaRead(c.kafkaQuotasV1ApiContext(ctx), c, kafkaClientQuotaId)
 	if err != nil {
 		tflog.Warn(ctx, fmt.Sprintf("Error reading Kafka Client Quota %q: %s", d.Id(), createDescriptiveError(err, resp)), map[string]interface{}{kafkaClientQuotaLoggingKey: d.Id()})
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
@@ -224,12 +224,12 @@ func readKafkaClientQuotaAndSetAttributes(ctx context.Context, d *schema.Resourc
 	return []*schema.ResourceData{d}, nil
 }
 
-func executeKafkaClientQuotaRead(ctx context.Context, c *Client, kafkaClientQuotaId string) (quotas.KafkaQuotasV1ClientQuota, *http.Response, error) {
-	req := c.quotasClient.ClientQuotasKafkaQuotasV1Api.GetKafkaQuotasV1ClientQuota(c.quotasApiContext(ctx), kafkaClientQuotaId)
+func executeKafkaClientQuotaRead(ctx context.Context, c *Client, kafkaClientQuotaId string) (kafkaquotasv1.KafkaQuotasV1ClientQuota, *http.Response, error) {
+	req := c.kafkaQuotasV1Client.ClientQuotasKafkaQuotasV1Api.GetKafkaQuotasV1ClientQuota(c.kafkaQuotasV1ApiContext(ctx), kafkaClientQuotaId)
 	return req.Execute()
 }
 
-func setKafkaClientQuotaAttributes(d *schema.ResourceData, kafkaClientQuota quotas.KafkaQuotasV1ClientQuota) (*schema.ResourceData, error) {
+func setKafkaClientQuotaAttributes(d *schema.ResourceData, kafkaClientQuota kafkaquotasv1.KafkaQuotasV1ClientQuota) (*schema.ResourceData, error) {
 	if err := d.Set(paramDisplayName, kafkaClientQuota.Spec.GetDisplayName()); err != nil {
 		return nil, createDescriptiveError(err)
 	}
@@ -296,15 +296,15 @@ func throughputSchema() *schema.Schema {
 	}
 }
 
-func convertToGlobalObjectReferences(ids []string) []quotas.GlobalObjectReference {
-	globalObjectReferences := make([]quotas.GlobalObjectReference, len(ids))
+func convertToGlobalObjectReferences(ids []string) []kafkaquotasv1.GlobalObjectReference {
+	globalObjectReferences := make([]kafkaquotasv1.GlobalObjectReference, len(ids))
 	for i, id := range ids {
-		globalObjectReferences[i] = quotas.GlobalObjectReference{Id: id}
+		globalObjectReferences[i] = kafkaquotasv1.GlobalObjectReference{Id: id}
 	}
 	return globalObjectReferences
 }
 
-func convertToListOfIds(globalObjectReferences []quotas.GlobalObjectReference) []string {
+func convertToListOfIds(globalObjectReferences []kafkaquotasv1.GlobalObjectReference) []string {
 	ids := make([]string, len(globalObjectReferences))
 	for i, globalObjectReference := range globalObjectReferences {
 		ids[i] = globalObjectReference.GetId()

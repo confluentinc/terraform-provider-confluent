@@ -18,7 +18,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	net "github.com/confluentinc/ccloud-sdk-go-v2/networking/v1"
+	networkingv1 "github.com/confluentinc/ccloud-sdk-go-v2/networking/v1"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -95,34 +95,34 @@ func privateLinkAccessCreate(ctx context.Context, d *schema.ResourceData, meta i
 	// Non-empty value means GCP project attribute has been set
 	gcpProject := extractStringValueFromBlock(d, paramGcp, paramProject)
 
-	spec := net.NewNetworkingV1PrivateLinkAccessSpec()
+	spec := networkingv1.NewNetworkingV1PrivateLinkAccessSpec()
 	if displayName != "" {
 		spec.SetDisplayName(displayName)
 	}
 	if awsAccount != "" {
-		spec.SetCloud(net.NetworkingV1PrivateLinkAccessSpecCloudOneOf{NetworkingV1AwsPrivateLinkAccess: net.NewNetworkingV1AwsPrivateLinkAccess(awsPrivateLinkAccessKind, awsAccount)})
+		spec.SetCloud(networkingv1.NetworkingV1PrivateLinkAccessSpecCloudOneOf{NetworkingV1AwsPrivateLinkAccess: networkingv1.NewNetworkingV1AwsPrivateLinkAccess(awsPrivateLinkAccessKind, awsAccount)})
 	} else if azureSubscription != "" {
-		spec.SetCloud(net.NetworkingV1PrivateLinkAccessSpecCloudOneOf{NetworkingV1AzurePrivateLinkAccess: net.NewNetworkingV1AzurePrivateLinkAccess(azurePrivateLinkAccessKind, azureSubscription)})
+		spec.SetCloud(networkingv1.NetworkingV1PrivateLinkAccessSpecCloudOneOf{NetworkingV1AzurePrivateLinkAccess: networkingv1.NewNetworkingV1AzurePrivateLinkAccess(azurePrivateLinkAccessKind, azureSubscription)})
 	} else if gcpProject != "" {
-		spec.SetCloud(net.NetworkingV1PrivateLinkAccessSpecCloudOneOf{NetworkingV1GcpPrivateServiceConnectAccess: net.NewNetworkingV1GcpPrivateServiceConnectAccess(gcpPrivateLinkAccessKind, gcpProject)})
+		spec.SetCloud(networkingv1.NetworkingV1PrivateLinkAccessSpecCloudOneOf{NetworkingV1GcpPrivateServiceConnectAccess: networkingv1.NewNetworkingV1GcpPrivateServiceConnectAccess(gcpPrivateLinkAccessKind, gcpProject)})
 	}
-	spec.SetNetwork(net.ObjectReference{Id: networkId})
-	spec.SetEnvironment(net.ObjectReference{Id: environmentId})
+	spec.SetNetwork(networkingv1.ObjectReference{Id: networkId})
+	spec.SetEnvironment(networkingv1.ObjectReference{Id: environmentId})
 
-	createPrivateLinkAccessRequest := net.NetworkingV1PrivateLinkAccess{Spec: spec}
+	createPrivateLinkAccessRequest := networkingv1.NetworkingV1PrivateLinkAccess{Spec: spec}
 	createPrivateLinkAccessRequestJson, err := json.Marshal(createPrivateLinkAccessRequest)
 	if err != nil {
 		return diag.Errorf("error creating Private Link Access: error marshaling %#v to json: %s", createPrivateLinkAccessRequest, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Private Link Access: %s", createPrivateLinkAccessRequestJson))
 
-	createdPrivateLinkAccess, resp, err := executePrivateLinkAccessCreate(c.netApiContext(ctx), c, createPrivateLinkAccessRequest)
+	createdPrivateLinkAccess, resp, err := executePrivateLinkAccessCreate(c.networkingV1ApiContext(ctx), c, createPrivateLinkAccessRequest)
 	if err != nil {
 		return diag.Errorf("error creating Private Link Access %q: %s", createdPrivateLinkAccess.GetId(), createDescriptiveError(err, resp))
 	}
 	d.SetId(createdPrivateLinkAccess.GetId())
 
-	if err := waitForPrivateLinkAccessToProvision(c.netApiContext(ctx), c, environmentId, d.Id()); err != nil {
+	if err := waitForPrivateLinkAccessToProvision(c.networkingV1ApiContext(ctx), c, environmentId, d.Id()); err != nil {
 		return diag.Errorf("error waiting for Private Link Access %q to provision: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
@@ -135,13 +135,13 @@ func privateLinkAccessCreate(ctx context.Context, d *schema.ResourceData, meta i
 	return privateLinkAccessRead(ctx, d, meta)
 }
 
-func executePrivateLinkAccessCreate(ctx context.Context, c *Client, privateLinkAccess net.NetworkingV1PrivateLinkAccess) (net.NetworkingV1PrivateLinkAccess, *http.Response, error) {
-	req := c.netClient.PrivateLinkAccessesNetworkingV1Api.CreateNetworkingV1PrivateLinkAccess(c.netApiContext(ctx)).NetworkingV1PrivateLinkAccess(privateLinkAccess)
+func executePrivateLinkAccessCreate(ctx context.Context, c *Client, privateLinkAccess networkingv1.NetworkingV1PrivateLinkAccess) (networkingv1.NetworkingV1PrivateLinkAccess, *http.Response, error) {
+	req := c.networkingV1Client.PrivateLinkAccessesNetworkingV1Api.CreateNetworkingV1PrivateLinkAccess(c.networkingV1ApiContext(ctx)).NetworkingV1PrivateLinkAccess(privateLinkAccess)
 	return req.Execute()
 }
 
-func executePrivateLinkAccessRead(ctx context.Context, c *Client, environmentId string, privateLinkAccessId string) (net.NetworkingV1PrivateLinkAccess, *http.Response, error) {
-	req := c.netClient.PrivateLinkAccessesNetworkingV1Api.GetNetworkingV1PrivateLinkAccess(c.netApiContext(ctx), privateLinkAccessId).Environment(environmentId)
+func executePrivateLinkAccessRead(ctx context.Context, c *Client, environmentId string, privateLinkAccessId string) (networkingv1.NetworkingV1PrivateLinkAccess, *http.Response, error) {
+	req := c.networkingV1Client.PrivateLinkAccessesNetworkingV1Api.GetNetworkingV1PrivateLinkAccess(c.networkingV1ApiContext(ctx), privateLinkAccessId).Environment(environmentId)
 	return req.Execute()
 }
 
@@ -161,7 +161,7 @@ func privateLinkAccessRead(ctx context.Context, d *schema.ResourceData, meta int
 func readPrivateLinkAccessAndSetAttributes(ctx context.Context, d *schema.ResourceData, meta interface{}, environmentId, privateLinkAccessId string) ([]*schema.ResourceData, error) {
 	c := meta.(*Client)
 
-	privateLinkAccess, resp, err := executePrivateLinkAccessRead(c.netApiContext(ctx), c, environmentId, privateLinkAccessId)
+	privateLinkAccess, resp, err := executePrivateLinkAccessRead(c.networkingV1ApiContext(ctx), c, environmentId, privateLinkAccessId)
 	if err != nil {
 		tflog.Warn(ctx, fmt.Sprintf("Error reading Private Link Access %q: %s", d.Id(), createDescriptiveError(err, resp)), map[string]interface{}{privateLinkAccessLoggingKey: d.Id()})
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
@@ -188,7 +188,7 @@ func readPrivateLinkAccessAndSetAttributes(ctx context.Context, d *schema.Resour
 	return []*schema.ResourceData{d}, nil
 }
 
-func setPrivateLinkAccessAttributes(d *schema.ResourceData, privateLinkAccess net.NetworkingV1PrivateLinkAccess) (*schema.ResourceData, error) {
+func setPrivateLinkAccessAttributes(d *schema.ResourceData, privateLinkAccess networkingv1.NetworkingV1PrivateLinkAccess) (*schema.ResourceData, error) {
 	if err := d.Set(paramDisplayName, privateLinkAccess.Spec.GetDisplayName()); err != nil {
 		return nil, err
 	}
@@ -227,14 +227,14 @@ func privateLinkAccessDelete(ctx context.Context, d *schema.ResourceData, meta i
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
 	c := meta.(*Client)
 
-	req := c.netClient.PrivateLinkAccessesNetworkingV1Api.DeleteNetworkingV1PrivateLinkAccess(c.netApiContext(ctx), d.Id()).Environment(environmentId)
+	req := c.networkingV1Client.PrivateLinkAccessesNetworkingV1Api.DeleteNetworkingV1PrivateLinkAccess(c.networkingV1ApiContext(ctx), d.Id()).Environment(environmentId)
 	resp, err := req.Execute()
 
 	if err != nil {
 		return diag.Errorf("error deleting Private Link Access %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
-	if err := waitForPrivateLinkAccessToBeDeleted(c.netApiContext(ctx), c, environmentId, d.Id(), c.isAcceptanceTestMode); err != nil {
+	if err := waitForPrivateLinkAccessToBeDeleted(c.networkingV1ApiContext(ctx), c, environmentId, d.Id(), c.isAcceptanceTestMode); err != nil {
 		return diag.Errorf("error waiting for Private Link Access %q to be deleted: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
@@ -251,10 +251,10 @@ func privateLinkAccessUpdate(ctx context.Context, d *schema.ResourceData, meta i
 	c := meta.(*Client)
 	updatedDisplayName := d.Get(paramDisplayName).(string)
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
-	updatePrivateLinkAccessRequest := net.NewNetworkingV1PrivateLinkAccessUpdate()
-	updateSpec := net.NewNetworkingV1PrivateLinkAccessSpecUpdate()
+	updatePrivateLinkAccessRequest := networkingv1.NewNetworkingV1PrivateLinkAccessUpdate()
+	updateSpec := networkingv1.NewNetworkingV1PrivateLinkAccessSpecUpdate()
 	updateSpec.SetDisplayName(updatedDisplayName)
-	updateSpec.SetEnvironment(net.ObjectReference{Id: environmentId})
+	updateSpec.SetEnvironment(networkingv1.ObjectReference{Id: environmentId})
 	updatePrivateLinkAccessRequest.SetSpec(*updateSpec)
 	updatePrivateLinkAccessRequestJson, err := json.Marshal(updatePrivateLinkAccessRequest)
 	if err != nil {
@@ -262,7 +262,7 @@ func privateLinkAccessUpdate(ctx context.Context, d *schema.ResourceData, meta i
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Updating Private Link Access %q: %s", d.Id(), updatePrivateLinkAccessRequestJson), map[string]interface{}{privateLinkAccessLoggingKey: d.Id()})
 
-	req := c.netClient.PrivateLinkAccessesNetworkingV1Api.UpdateNetworkingV1PrivateLinkAccess(c.netApiContext(ctx), d.Id()).NetworkingV1PrivateLinkAccessUpdate(*updatePrivateLinkAccessRequest)
+	req := c.networkingV1Client.PrivateLinkAccessesNetworkingV1Api.UpdateNetworkingV1PrivateLinkAccess(c.networkingV1ApiContext(ctx), d.Id()).NetworkingV1PrivateLinkAccessUpdate(*updatePrivateLinkAccessRequest)
 	updatedPrivateLinkAccess, resp, err := req.Execute()
 
 	if err != nil {

@@ -180,7 +180,7 @@ func testAccCheckAwsTransitGatewayAttachmentDestroy(s *terraform.State) error {
 			continue
 		}
 		deletedTransitGatewayAttachmentId := rs.Primary.ID
-		req := c.netClient.TransitGatewayAttachmentsNetworkingV1Api.GetNetworkingV1TransitGatewayAttachment(c.netApiContext(context.Background()), deletedTransitGatewayAttachmentId).Environment(awsTransitGatewayAttachmentEnvironmentId)
+		req := c.networkingV1Client.TransitGatewayAttachmentsNetworkingV1Api.GetNetworkingV1TransitGatewayAttachment(c.networkingV1ApiContext(context.Background()), deletedTransitGatewayAttachmentId).Environment(awsTransitGatewayAttachmentEnvironmentId)
 		deletedTransitGatewayAttachment, response, err := req.Execute()
 		if response != nil && response.StatusCode == http.StatusNotFound {
 			return nil

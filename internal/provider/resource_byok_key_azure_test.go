@@ -102,7 +102,7 @@ func testAccCheckByokKeyDestroy(s *terraform.State) error {
 			continue
 		}
 		deletedKeyId := rs.Primary.ID
-		req := c.byokClient.KeysByokV1Api.GetByokV1Key(c.byokApiContext(context.Background()), deletedKeyId)
+		req := c.byokV1Client.KeysByokV1Api.GetByokV1Key(c.byokV1ApiContext(context.Background()), deletedKeyId)
 		deletedKey, response, err := req.Execute()
 		if response != nil && response.StatusCode == http.StatusNotFound {
 			return nil

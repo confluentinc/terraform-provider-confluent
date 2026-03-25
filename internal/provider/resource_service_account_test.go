@@ -170,7 +170,7 @@ func testAccCheckServiceAccountDestroy(s *terraform.State) error {
 			continue
 		}
 		deletedServiceAccountId := rs.Primary.ID
-		req := c.iamClient.ServiceAccountsIamV2Api.GetIamV2ServiceAccount(c.iamApiContext(context.Background()), deletedServiceAccountId)
+		req := c.iamV2Client.ServiceAccountsIamV2Api.GetIamV2ServiceAccount(c.iamV2ApiContext(context.Background()), deletedServiceAccountId)
 		deletedServiceAccount, response, err := req.Execute()
 		if response != nil && (response.StatusCode == http.StatusForbidden || response.StatusCode == http.StatusNotFound) {
 			// v2/service-accounts/{nonExistentSaId/deletedSaID} returns http.StatusForbidden instead of http.StatusNotFound

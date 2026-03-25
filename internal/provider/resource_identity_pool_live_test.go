@@ -146,7 +146,7 @@ func testAccCheckIdentityPoolLiveDestroy(s *terraform.State) error {
 		identityProviderId := rs.Primary.Attributes["identity_provider.0.id"]
 		identityPoolId := rs.Primary.ID
 
-		_, response, err := c.oidcClient.IdentityPoolsIamV2Api.GetIamV2IdentityPool(c.oidcApiContext(context.Background()), identityProviderId, identityPoolId).Execute()
+		_, response, err := c.identityProviderV2Client.IdentityPoolsIamV2Api.GetIamV2IdentityPool(c.identityProviderV2ApiContext(context.Background()), identityProviderId, identityPoolId).Execute()
 		if err != nil {
 			if isNonKafkaRestApiResourceNotFound(response) {
 				// Resource is gone as expected
