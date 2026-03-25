@@ -29,12 +29,6 @@ import (
 	"time"
 )
 
-const (
-	dataCatalogTimeout            = time.Minute
-	dataCatalogExporterTimeout    = 10 * time.Minute
-	dataCatalogAPIWaitAfterCreate = 30 * time.Second
-)
-
 var defaultEntityTypes = []string{"cf_entity"}
 
 func tagResource() *schema.Resource {

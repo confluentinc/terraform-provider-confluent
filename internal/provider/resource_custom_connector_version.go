@@ -16,11 +16,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-const (
-	paramPluginId           = "plugin_id"
-	paramConnectorClassName = "connector_class_name"
-)
-
 func customConnectorPluginVersionResource() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: customConnectorPluginVersionCreate,

@@ -25,12 +25,6 @@ import (
 	"net/http"
 )
 
-const (
-	// The maximum allowable page size - 1 (to avoid off-by-one errors) when listing transit gateway attachments using Networking API
-	// https://docs.confluent.io/cloud/current/api.html#operation/listNetworkingV1TransitGatewayAttachments
-	listTransitGatewayAttachmentsPageSize = 99
-)
-
 func transitGatewayAttachmentDataSource() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: transitGatewayAttachmentDataSourceRead,

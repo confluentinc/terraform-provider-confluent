@@ -11,12 +11,6 @@ import (
 	"net/http"
 )
 
-const (
-	// The maximum allowable page size - 1 (to avoid off-by-one errors) when listing ksqlDB cluster using ksqldbcm V2 API
-	// https://docs.confluent.io/cloud/current/api.html#operation/listKsqldbcmV2Clusters
-	listKsqlClustersPageSize = 99
-)
-
 func ksqlDataSource() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: ksqlDataSourceRead,

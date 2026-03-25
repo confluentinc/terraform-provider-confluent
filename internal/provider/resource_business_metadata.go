@@ -29,21 +29,6 @@ import (
 	"time"
 )
 
-const (
-	//paramCategory  = "category"
-	//paramCreatedBy = "created_by"
-	//paramUpdatedBy  = "updated_by"
-	//paramCreateTime = "create_time"
-	//paramUpdateTime  = "update_time"
-	//paramTypeVersion = "type_version"
-
-	paramAttributeDef = "attribute_definition"
-	paramType         = "type"
-	paramIsOptional   = "is_optional"
-	paramDefaultValue = "default_value"
-	paramOptions      = "options"
-)
-
 func businessMetadataResource() *schema.Resource {
 	return &schema.Resource{
 		ReadContext:   businessMetadataRead,

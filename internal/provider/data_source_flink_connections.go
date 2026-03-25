@@ -13,11 +13,6 @@ import (
 	"regexp"
 )
 
-const (
-	paramData         = "data"
-	paramStatusDetail = "status_detail"
-)
-
 func flinkConnectionDataSource() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: connectionDataSourceRead,

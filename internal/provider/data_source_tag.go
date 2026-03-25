@@ -25,10 +25,6 @@ import (
 	"regexp"
 )
 
-const (
-	paramEntityTypes = "entity_types"
-)
-
 func tagDataSource() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: tagDataSourceRead,
