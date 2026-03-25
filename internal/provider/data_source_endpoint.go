@@ -22,7 +22,7 @@ import (
 	"strconv"
 	"time"
 
-	end "github.com/confluentinc/ccloud-sdk-go-v2/endpoint/v1"
+	endpointv1 "github.com/confluentinc/ccloud-sdk-go-v2/endpoint/v1"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -189,7 +189,7 @@ func endpointDataSourceRead(ctx context.Context, d *schema.ResourceData, meta in
 	tflog.Debug(ctx, fmt.Sprintf("Reading Endpoints with filters: environment=%q, service=%q, resource=%q, cloud=%q, region=%q, isPrivate=%v", environmentId, service, resource, cloud, region, isPrivate))
 
 	c := meta.(*Client)
-	endpoints, err := loadEndpoints(c.endApiContext(ctx), c, environmentId, service, resource, cloud, region, isPrivate)
+	endpoints, err := loadEndpoints(c.endpointV1ApiContext(ctx), c, environmentId, service, resource, cloud, region, isPrivate)
 	if err != nil {
 		return diag.Errorf("error reading endpoints: %s", createDescriptiveError(err))
 	}
@@ -273,8 +273,8 @@ func endpointDataSourceRead(ctx context.Context, d *schema.ResourceData, meta in
 	return nil
 }
 
-func loadEndpoints(ctx context.Context, c *Client, environmentId, service, resource, cloud, region string, isPrivate *bool) ([]end.EndpointV1Endpoint, error) {
-	endpoints := make([]end.EndpointV1Endpoint, 0)
+func loadEndpoints(ctx context.Context, c *Client, environmentId, service, resource, cloud, region string, isPrivate *bool) ([]endpointv1.EndpointV1Endpoint, error) {
+	endpoints := make([]endpointv1.EndpointV1Endpoint, 0)
 
 	allEndpointsAreCollected := false
 	pageToken := ""
@@ -305,8 +305,8 @@ func loadEndpoints(ctx context.Context, c *Client, environmentId, service, resou
 	return endpoints, nil
 }
 
-func executeListEndpoints(ctx context.Context, c *Client, environmentId, service, resource, cloud, region string, isPrivate *bool, pageToken string) (end.EndpointV1EndpointList, *http.Response, error) {
-	request := c.endClient.EndpointsEndpointV1Api.ListEndpointV1Endpoints(ctx).Environment(environmentId).Service(service).PageSize(listEndpointsPageSize)
+func executeListEndpoints(ctx context.Context, c *Client, environmentId, service, resource, cloud, region string, isPrivate *bool, pageToken string) (endpointv1.EndpointV1EndpointList, *http.Response, error) {
+	request := c.endpointV1Client.EndpointsEndpointV1Api.ListEndpointV1Endpoints(ctx).Environment(environmentId).Service(service).PageSize(listEndpointsPageSize)
 
 	if resource != "" {
 		request = request.Resource(resource)

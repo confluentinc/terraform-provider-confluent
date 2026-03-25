@@ -21,7 +21,7 @@ import (
 	"net/http"
 	"time"
 
-	ca "github.com/confluentinc/ccloud-sdk-go-v2/certificate-authority/v2"
+	certificateauthorityv2 "github.com/confluentinc/ccloud-sdk-go-v2/certificate-authority/v2"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -109,7 +109,7 @@ func certificateAuthorityResource() *schema.Resource {
 func certificateAuthorityCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	c := meta.(*Client)
 
-	createCertificateAuthorityRequest := ca.NewIamV2CreateCertRequest()
+	createCertificateAuthorityRequest := certificateauthorityv2.NewIamV2CreateCertRequest()
 	createCertificateAuthorityRequest.SetDisplayName(d.Get(paramDisplayName).(string))
 	createCertificateAuthorityRequest.SetDescription(d.Get(paramDescription).(string))
 	createCertificateAuthorityRequest.SetCertificateChain(d.Get(paramCertificateChain).(string))
@@ -123,7 +123,7 @@ func certificateAuthorityCreate(ctx context.Context, d *schema.ResourceData, met
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Certificate Authority: %s", createCertificateAuthorityRequestJson))
 
-	req := c.caClient.CertificateAuthoritiesIamV2Api.CreateIamV2CertificateAuthority(c.caApiContext(ctx)).IamV2CreateCertRequest(*createCertificateAuthorityRequest)
+	req := c.certificateAuthorityV2Client.CertificateAuthoritiesIamV2Api.CreateIamV2CertificateAuthority(c.certificateAuthorityV2ApiContext(ctx)).IamV2CreateCertRequest(*createCertificateAuthorityRequest)
 	createdCertificateAuthority, resp, err := req.Execute()
 	if err != nil {
 		return diag.Errorf("error creating Certificate Authority %q: %s", createdCertificateAuthority.GetId(), createDescriptiveError(err, resp))
@@ -139,8 +139,8 @@ func certificateAuthorityCreate(ctx context.Context, d *schema.ResourceData, met
 	return certificateAuthorityRead(ctx, d, meta)
 }
 
-func executecertificateAuthorityRead(ctx context.Context, c *Client, certificateAuthorityId string) (ca.IamV2CertificateAuthority, *http.Response, error) {
-	req := c.caClient.CertificateAuthoritiesIamV2Api.GetIamV2CertificateAuthority(c.caApiContext(ctx), certificateAuthorityId)
+func executecertificateAuthorityRead(ctx context.Context, c *Client, certificateAuthorityId string) (certificateauthorityv2.IamV2CertificateAuthority, *http.Response, error) {
+	req := c.certificateAuthorityV2Client.CertificateAuthoritiesIamV2Api.GetIamV2CertificateAuthority(c.certificateAuthorityV2ApiContext(ctx), certificateAuthorityId)
 	return req.Execute()
 }
 
@@ -159,7 +159,7 @@ func certificateAuthorityRead(ctx context.Context, d *schema.ResourceData, meta 
 func readCertificateAuthorityAndSetAttributes(ctx context.Context, d *schema.ResourceData, meta interface{}, certificateAuthorityId string) ([]*schema.ResourceData, error) {
 	c := meta.(*Client)
 
-	certificateAuthority, resp, err := executecertificateAuthorityRead(c.caApiContext(ctx), c, certificateAuthorityId)
+	certificateAuthority, resp, err := executecertificateAuthorityRead(c.certificateAuthorityV2ApiContext(ctx), c, certificateAuthorityId)
 	if err != nil {
 		tflog.Warn(ctx, fmt.Sprintf("Error reading Certificate Authority %q: %s", certificateAuthorityId, createDescriptiveError(err, resp)), map[string]interface{}{certificateAuthorityKey: d.Id()})
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
@@ -186,7 +186,7 @@ func readCertificateAuthorityAndSetAttributes(ctx context.Context, d *schema.Res
 	return []*schema.ResourceData{d}, nil
 }
 
-func setCertificateAuthorityAttributes(d *schema.ResourceData, certificateAuthority ca.IamV2CertificateAuthority) (*schema.ResourceData, error) {
+func setCertificateAuthorityAttributes(d *schema.ResourceData, certificateAuthority certificateauthorityv2.IamV2CertificateAuthority) (*schema.ResourceData, error) {
 	if err := d.Set(paramDisplayName, certificateAuthority.GetDisplayName()); err != nil {
 		return nil, err
 	}
@@ -223,7 +223,7 @@ func certificateAuthorityDelete(ctx context.Context, d *schema.ResourceData, met
 	tflog.Debug(ctx, fmt.Sprintf("Deleting Certificate Authority %q", d.Id()), map[string]interface{}{certificateAuthorityKey: d.Id()})
 	c := meta.(*Client)
 
-	req := c.caClient.CertificateAuthoritiesIamV2Api.DeleteIamV2CertificateAuthority(c.caApiContext(ctx), d.Id())
+	req := c.certificateAuthorityV2Client.CertificateAuthoritiesIamV2Api.DeleteIamV2CertificateAuthority(c.certificateAuthorityV2ApiContext(ctx), d.Id())
 	_, resp, err := req.Execute()
 
 	if err != nil {
@@ -240,7 +240,7 @@ func certificateAuthorityUpdate(ctx context.Context, d *schema.ResourceData, met
 		return diag.Errorf("error updating CertificateAuthority %q: only %q, %q, %q, %q, %q, %q attributes can be updated for Certificate Authority", d.Id(), paramDisplayName, paramDescription, paramCertificateChain, paramCertificateChainFilename, paramCrlUrl, paramCrlChain)
 	}
 
-	updateCertificateAuthority := ca.NewIamV2UpdateCertRequest()
+	updateCertificateAuthority := certificateauthorityv2.NewIamV2UpdateCertRequest()
 
 	updateCertificateAuthority.SetDisplayName(d.Get(paramDisplayName).(string))
 	updateCertificateAuthority.SetDescription(d.Get(paramDescription).(string))
@@ -256,7 +256,7 @@ func certificateAuthorityUpdate(ctx context.Context, d *schema.ResourceData, met
 	tflog.Debug(ctx, fmt.Sprintf("Updating Certificate Authority %q: %s", d.Id(), updateCertificateAuthorityJson), map[string]interface{}{certificateAuthorityKey: d.Id()})
 
 	c := meta.(*Client)
-	req := c.caClient.CertificateAuthoritiesIamV2Api.UpdateIamV2CertificateAuthority(c.caApiContext(ctx), d.Id()).IamV2UpdateCertRequest(*updateCertificateAuthority)
+	req := c.certificateAuthorityV2Client.CertificateAuthoritiesIamV2Api.UpdateIamV2CertificateAuthority(c.certificateAuthorityV2ApiContext(ctx), d.Id()).IamV2UpdateCertRequest(*updateCertificateAuthority)
 	updatedCertificateAuthority, resp, err := req.Execute()
 
 	if err != nil {

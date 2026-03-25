@@ -140,7 +140,7 @@ func testAccCheckGroupMappingLiveDestroy(s *terraform.State) error {
 			continue
 		}
 		deletedGroupMappingId := rs.Primary.ID
-		req := c.ssoClient.GroupMappingsIamV2SsoApi.GetIamV2SsoGroupMapping(c.ssoApiContext(context.Background()), deletedGroupMappingId)
+		req := c.ssoV2Client.GroupMappingsIamV2SsoApi.GetIamV2SsoGroupMapping(c.ssoV2ApiContext(context.Background()), deletedGroupMappingId)
 		deletedGroupMapping, response, err := req.Execute()
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(response)
 		if isResourceNotFound {

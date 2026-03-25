@@ -81,8 +81,8 @@ func networkLinkEndpointDataSourceRead(ctx context.Context, d *schema.ResourceDa
 	tflog.Debug(ctx, fmt.Sprintf("Reading network link endpoint %q=%q", paramId, nleId), map[string]interface{}{networkLinkEndpointLoggingKey: nleId})
 
 	c := meta.(*Client)
-	request := c.netClient.NetworkLinkEndpointsNetworkingV1Api.GetNetworkingV1NetworkLinkEndpoint(c.netApiContext(ctx), nleId).Environment(environmentId)
-	nle, resp, err := c.netClient.NetworkLinkEndpointsNetworkingV1Api.GetNetworkingV1NetworkLinkEndpointExecute(request)
+	request := c.networkingV1Client.NetworkLinkEndpointsNetworkingV1Api.GetNetworkingV1NetworkLinkEndpoint(c.networkingV1ApiContext(ctx), nleId).Environment(environmentId)
+	nle, resp, err := c.networkingV1Client.NetworkLinkEndpointsNetworkingV1Api.GetNetworkingV1NetworkLinkEndpointExecute(request)
 	if err != nil {
 		return diag.Errorf("error reading network link endpoint %q: %s", nleId, createDescriptiveError(err, resp))
 	}

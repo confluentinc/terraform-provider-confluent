@@ -104,7 +104,7 @@ func testAccCheckProviderIntegrationLiveDestroy(s *terraform.State) error {
 		}
 		deletedPIId := rs.Primary.ID
 		environmentId := rs.Primary.Attributes["environment.0.id"]
-		req := c.piClient.IntegrationsPimV1Api.GetPimV1Integration(c.piApiContext(context.Background()), deletedPIId).Environment(environmentId)
+		req := c.providerIntegrationV1Client.IntegrationsPimV1Api.GetPimV1Integration(c.providerIntegrationV1ApiContext(context.Background()), deletedPIId).Environment(environmentId)
 		deletedPI, response, err := req.Execute()
 		if response != nil && (response.StatusCode == http.StatusForbidden || response.StatusCode == http.StatusNotFound) {
 			return nil

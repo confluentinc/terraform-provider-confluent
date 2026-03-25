@@ -215,7 +215,7 @@ func TestAccKafkaClusterEnterpriseLive(t *testing.T) {
 	})
 }
 
-// Test Dedicated cluster with private networking - requires network dependency
+// Test Dedicated cluster with private networkingv1 - requires network dependency
 func TestAccKafkaClusterDedicatedWithNetworkLive(t *testing.T) {
 	// Disable dedicated tests until cost is figured out
 	t.Skip()
@@ -286,7 +286,7 @@ func TestAccKafkaClusterDedicatedWithNetworkLive(t *testing.T) {
 	})
 }
 
-// Test Dedicated cluster - CKU-based with optional networking and encryption
+// Test Dedicated cluster - CKU-based with optional net and encryption
 func TestAccKafkaClusterDedicatedLive(t *testing.T) {
 	// Disable dedicated tests until cost is figured out
 	t.Skip()
@@ -627,7 +627,7 @@ func testAccCheckKafkaClusterEnterpriseLiveConfig(endpoint, environmentResourceL
 	`, endpoint, apiKey, apiSecret, environmentResourceLabel, environmentDisplayName, clusterResourceLabel, clusterDisplayName, environmentResourceLabel)
 }
 
-// Configuration for Dedicated cluster with private networking
+// Configuration for Dedicated cluster with private networkingv1
 func testAccCheckKafkaClusterDedicatedWithNetworkLiveConfig(endpoint, environmentResourceLabel, environmentDisplayName, networkResourceLabel, networkDisplayName, clusterResourceLabel, clusterDisplayName, apiKey, apiSecret string) string {
 	return fmt.Sprintf(`
 	provider "confluent" {

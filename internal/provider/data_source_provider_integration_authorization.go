@@ -23,7 +23,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
-	piv2 "github.com/confluentinc/ccloud-sdk-go-v2/provider-integration/v2"
+	providerintegrationv2 "github.com/confluentinc/ccloud-sdk-go-v2/provider-integration/v2"
 )
 
 func providerIntegrationAuthorizationDataSource() *schema.Resource {
@@ -94,7 +94,7 @@ func providerIntegrationAuthorizationDataSourceRead(ctx context.Context, d *sche
 	tflog.Debug(ctx, fmt.Sprintf("Reading provider integration v2 authorization data source %q", integrationId), map[string]interface{}{providerIntegrationLoggingKey: integrationId})
 
 	c := meta.(*Client)
-	req := c.piV2Client.IntegrationsPimV2Api.GetPimV2Integration(c.piV2ApiContext(ctx), integrationId).Environment(environmentId)
+	req := c.providerIntegrationV2Client.IntegrationsPimV2Api.GetPimV2Integration(c.providerIntegrationV2ApiContext(ctx), integrationId).Environment(environmentId)
 	integration, _, err := req.Execute()
 	if err != nil {
 		return diag.Errorf("error reading provider integration v2 authorization %q: %s", integrationId, createDescriptiveError(err))
@@ -112,7 +112,7 @@ func providerIntegrationAuthorizationDataSourceRead(ctx context.Context, d *sche
 	return nil
 }
 
-func setProviderIntegrationV2AuthorizationAttributes(d *schema.ResourceData, integration piv2.PimV2Integration) (*schema.ResourceData, error) {
+func setProviderIntegrationV2AuthorizationAttributes(d *schema.ResourceData, integration providerintegrationv2.PimV2Integration) (*schema.ResourceData, error) {
 	if err := d.Set(paramProviderIntegrationIdAuth, integration.GetId()); err != nil {
 		return nil, err
 	}

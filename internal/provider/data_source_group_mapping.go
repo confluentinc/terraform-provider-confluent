@@ -128,9 +128,9 @@ func loadGroupMappings(ctx context.Context, c *Client) ([]v2.IamV2SsoGroupMappin
 
 func executeListGroupMappings(ctx context.Context, c *Client, pageToken string) (v2.IamV2SsoGroupMappingList, *http.Response, error) {
 	if pageToken != "" {
-		return c.ssoClient.GroupMappingsIamV2SsoApi.ListIamV2SsoGroupMappings(c.ssoApiContext(ctx)).PageSize(listGroupMappingsPageSize).PageToken(pageToken).Execute()
+		return c.ssoV2Client.GroupMappingsIamV2SsoApi.ListIamV2SsoGroupMappings(c.ssoV2ApiContext(ctx)).PageSize(listGroupMappingsPageSize).PageToken(pageToken).Execute()
 	} else {
-		return c.ssoClient.GroupMappingsIamV2SsoApi.ListIamV2SsoGroupMappings(c.ssoApiContext(ctx)).PageSize(listGroupMappingsPageSize).Execute()
+		return c.ssoV2Client.GroupMappingsIamV2SsoApi.ListIamV2SsoGroupMappings(c.ssoV2ApiContext(ctx)).PageSize(listGroupMappingsPageSize).Execute()
 	}
 }
 
@@ -138,7 +138,7 @@ func groupMappingDataSourceReadUsingId(ctx context.Context, d *schema.ResourceDa
 	tflog.Debug(ctx, fmt.Sprintf("Reading Group Mapping %q=%q", paramId, groupMappingId), map[string]interface{}{groupMappingLoggingKey: groupMappingId})
 
 	c := meta.(*Client)
-	groupMapping, resp, err := executeGroupMappingRead(c.ssoApiContext(ctx), c, groupMappingId)
+	groupMapping, resp, err := executeGroupMappingRead(c.ssoV2ApiContext(ctx), c, groupMappingId)
 	if err != nil {
 		return diag.Errorf("error reading Group Mapping %q: %s", groupMappingId, createDescriptiveError(err, resp))
 	}

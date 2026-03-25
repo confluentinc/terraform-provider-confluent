@@ -28,10 +28,10 @@ import (
 	"testing"
 	"time"
 
-	apikeys "github.com/confluentinc/ccloud-sdk-go-v2/apikeys/v2"
-	ccpm "github.com/confluentinc/ccloud-sdk-go-v2/ccpm/v1"
+	apikeysv2 "github.com/confluentinc/ccloud-sdk-go-v2/apikeys/v2"
+	ccpmv1 "github.com/confluentinc/ccloud-sdk-go-v2/ccpm/v1"
 	kafkarestv3 "github.com/confluentinc/ccloud-sdk-go-v2/kafkarest/v3"
-	dns "github.com/confluentinc/ccloud-sdk-go-v2/networking-dnsforwarder/v1"
+	networkingdnsforwarderv1 "github.com/confluentinc/ccloud-sdk-go-v2/networking-dnsforwarder/v1"
 	sr "github.com/confluentinc/ccloud-sdk-go-v2/schema-registry/v1"
 )
 
@@ -179,16 +179,16 @@ func TestCanUpdateEntityName(t *testing.T) {
 func TestIsSchemaRegistryApiKey(t *testing.T) {
 	tests := []struct {
 		name     string
-		apiKey   apikeys.IamV2ApiKey
+		apiKey   apikeysv2.IamV2ApiKey
 		expected bool
 	}{
 		{
 			name: "SR API Key with api_version=srcm/v3",
-			apiKey: apikeys.IamV2ApiKey{
-				Spec: &apikeys.IamV2ApiKeySpec{
-					Resource: &apikeys.ObjectReference{
-						Kind:       apikeys.PtrString(schemaRegistryKind),
-						ApiVersion: apikeys.PtrString(srcmV3ApiVersion),
+			apiKey: apikeysv2.IamV2ApiKey{
+				Spec: &apikeysv2.IamV2ApiKeySpec{
+					Resource: &apikeysv2.ObjectReference{
+						Kind:       apikeysv2.PtrString(schemaRegistryKind),
+						ApiVersion: apikeysv2.PtrString(srcmV3ApiVersion),
 					},
 				},
 			},
@@ -196,11 +196,11 @@ func TestIsSchemaRegistryApiKey(t *testing.T) {
 		},
 		{
 			name: "SR API Key with api_version=srcm/v2",
-			apiKey: apikeys.IamV2ApiKey{
-				Spec: &apikeys.IamV2ApiKeySpec{
-					Resource: &apikeys.ObjectReference{
-						Kind:       apikeys.PtrString(schemaRegistryKind),
-						ApiVersion: apikeys.PtrString(srcmV2ApiVersion),
+			apiKey: apikeysv2.IamV2ApiKey{
+				Spec: &apikeysv2.IamV2ApiKeySpec{
+					Resource: &apikeysv2.ObjectReference{
+						Kind:       apikeysv2.PtrString(schemaRegistryKind),
+						ApiVersion: apikeysv2.PtrString(srcmV2ApiVersion),
 					},
 				},
 			},
@@ -208,11 +208,11 @@ func TestIsSchemaRegistryApiKey(t *testing.T) {
 		},
 		{
 			name: "Kafka API Key",
-			apiKey: apikeys.IamV2ApiKey{
-				Spec: &apikeys.IamV2ApiKeySpec{
-					Resource: &apikeys.ObjectReference{
-						Kind:       apikeys.PtrString(schemaRegistryKind),
-						ApiVersion: apikeys.PtrString(cmkApiVersion),
+			apiKey: apikeysv2.IamV2ApiKey{
+				Spec: &apikeysv2.IamV2ApiKeySpec{
+					Resource: &apikeysv2.ObjectReference{
+						Kind:       apikeysv2.PtrString(schemaRegistryKind),
+						ApiVersion: apikeysv2.PtrString(cmkApiVersion),
 					},
 				},
 			},
@@ -220,11 +220,11 @@ func TestIsSchemaRegistryApiKey(t *testing.T) {
 		},
 		{
 			name: "Cloud API Key",
-			apiKey: apikeys.IamV2ApiKey{
-				Spec: &apikeys.IamV2ApiKeySpec{
-					Resource: &apikeys.ObjectReference{
-						Kind:       apikeys.PtrString("Cloud"),
-						ApiVersion: apikeys.PtrString(iamApiVersion),
+			apiKey: apikeysv2.IamV2ApiKey{
+				Spec: &apikeysv2.IamV2ApiKeySpec{
+					Resource: &apikeysv2.ObjectReference{
+						Kind:       apikeysv2.PtrString("Cloud"),
+						ApiVersion: apikeysv2.PtrString(iamApiVersion),
 					},
 				},
 			},
@@ -246,8 +246,8 @@ func TestConvertToStringObjectMap(t *testing.T) {
 		map1 := map[string]string{
 			"example": "zone1,project1",
 		}
-		map1Expected := map[string]dns.NetworkingV1ForwardViaGcpDnsZonesDomainMappings{
-			"example": {Zone: dns.PtrString("zone1"), Project: dns.PtrString("project1")},
+		map1Expected := map[string]networkingdnsforwarderv1.NetworkingV1ForwardViaGcpDnsZonesDomainMappings{
+			"example": {Zone: networkingdnsforwarderv1.PtrString("zone1"), Project: networkingdnsforwarderv1.PtrString("project1")},
 		}
 		actual, _ := convertToStringObjectMap(map1)
 
@@ -260,8 +260,8 @@ func TestConvertToStringObjectMap(t *testing.T) {
 		map1 := map[string]string{
 			"example": " zone1,  project1",
 		}
-		map1Expected := map[string]dns.NetworkingV1ForwardViaGcpDnsZonesDomainMappings{
-			"example": {Zone: dns.PtrString("zone1"), Project: dns.PtrString("project1")},
+		map1Expected := map[string]networkingdnsforwarderv1.NetworkingV1ForwardViaGcpDnsZonesDomainMappings{
+			"example": {Zone: networkingdnsforwarderv1.PtrString("zone1"), Project: networkingdnsforwarderv1.PtrString("project1")},
 		}
 		actual, _ := convertToStringObjectMap(map1)
 
@@ -274,8 +274,8 @@ func TestConvertToStringObjectMap(t *testing.T) {
 		map1 := map[string]string{
 			"example": "zone1,project1xyz",
 		}
-		map1Expected := map[string]dns.NetworkingV1ForwardViaGcpDnsZonesDomainMappings{
-			"example": {Zone: dns.PtrString("zone1"), Project: dns.PtrString("project1")},
+		map1Expected := map[string]networkingdnsforwarderv1.NetworkingV1ForwardViaGcpDnsZonesDomainMappings{
+			"example": {Zone: networkingdnsforwarderv1.PtrString("zone1"), Project: networkingdnsforwarderv1.PtrString("project1")},
 		}
 		actual, _ := convertToStringObjectMap(map1)
 
@@ -288,8 +288,8 @@ func TestConvertToStringObjectMap(t *testing.T) {
 		map1 := map[string]string{
 			"example": "zone1 project1",
 		}
-		map1Expected := map[string]dns.NetworkingV1ForwardViaGcpDnsZonesDomainMappings{
-			"example": {Zone: dns.PtrString("zone1"), Project: dns.PtrString("project1")},
+		map1Expected := map[string]networkingdnsforwarderv1.NetworkingV1ForwardViaGcpDnsZonesDomainMappings{
+			"example": {Zone: networkingdnsforwarderv1.PtrString("zone1"), Project: networkingdnsforwarderv1.PtrString("project1")},
 		}
 		actual, _ := convertToStringObjectMap(map1)
 
@@ -624,7 +624,7 @@ func TestBuildTfRules(t *testing.T) {
 
 func TestBuildTfConnectorClasses(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
-		classes := []ccpm.CcpmV1ConnectorClass{
+		classes := []ccpmv1.CcpmV1ConnectorClass{
 			{
 				ClassName: "Class1",
 				Type:      "SOURCE",
@@ -650,7 +650,7 @@ func TestBuildTfConnectorClasses(t *testing.T) {
 	})
 
 	t.Run("success empty", func(t *testing.T) {
-		classes := []ccpm.CcpmV1ConnectorClass{
+		classes := []ccpmv1.CcpmV1ConnectorClass{
 			{
 				ClassName: "",
 				Type:      "SOURCE",
@@ -668,7 +668,7 @@ func TestBuildTfConnectorClasses(t *testing.T) {
 	})
 
 	t.Run("fail wrong value", func(t *testing.T) {
-		classes := []ccpm.CcpmV1ConnectorClass{
+		classes := []ccpmv1.CcpmV1ConnectorClass{
 			{
 				ClassName: "name1",
 				Type:      "SOURCE",
@@ -696,13 +696,13 @@ func TestBuildConnectorClass(t *testing.T) {
 
 		connectorClass := []interface{}{connectorClasses, connectorClasses2}
 		actual := buildConnectorClass(connectorClass)
-		classes := make([]ccpm.CcpmV1ConnectorClass, 2)
+		classes := make([]ccpmv1.CcpmV1ConnectorClass, 2)
 
-		class := ccpm.NewCcpmV1ConnectorClassWithDefaults()
+		class := ccpmv1.NewCcpmV1ConnectorClassWithDefaults()
 		class.SetClassName("Class1")
 		class.SetType("SOURCE")
 
-		class2 := ccpm.NewCcpmV1ConnectorClassWithDefaults()
+		class2 := ccpmv1.NewCcpmV1ConnectorClassWithDefaults()
 		class2.SetClassName("Class2")
 		class2.SetType("SOURCE")
 
@@ -725,13 +725,13 @@ func TestBuildConnectorClass(t *testing.T) {
 
 		connectorClass := []interface{}{connectorClasses, connectorClasses2}
 		actual := buildConnectorClass(connectorClass)
-		classes := make([]ccpm.CcpmV1ConnectorClass, 2)
+		classes := make([]ccpmv1.CcpmV1ConnectorClass, 2)
 
-		class := ccpm.NewCcpmV1ConnectorClassWithDefaults()
+		class := ccpmv1.NewCcpmV1ConnectorClassWithDefaults()
 		class.SetClassName("Class1")
 		class.SetType("SOURCE")
 
-		class2 := ccpm.NewCcpmV1ConnectorClassWithDefaults()
+		class2 := ccpmv1.NewCcpmV1ConnectorClassWithDefaults()
 		class2.SetClassName("")
 		class2.SetType("")
 
@@ -754,13 +754,13 @@ func TestBuildConnectorClass(t *testing.T) {
 
 		connectorClass := []interface{}{connectorClasses, connectorClasses2}
 		actual := buildConnectorClass(connectorClass)
-		classes := make([]ccpm.CcpmV1ConnectorClass, 2)
+		classes := make([]ccpmv1.CcpmV1ConnectorClass, 2)
 
-		class := ccpm.NewCcpmV1ConnectorClassWithDefaults()
+		class := ccpmv1.NewCcpmV1ConnectorClassWithDefaults()
 		class.SetClassName("Class1")
 		class.SetType("SOURCE")
 
-		class2 := ccpm.NewCcpmV1ConnectorClassWithDefaults()
+		class2 := ccpmv1.NewCcpmV1ConnectorClassWithDefaults()
 		class2.SetClassName("Class2")
 		class2.SetType("")
 
@@ -2795,16 +2795,16 @@ func TestIsNonKafkaRestApiResourceNotFound(t *testing.T) {
 func TestIsKafkaApiKey(t *testing.T) {
 	tests := []struct {
 		name     string
-		apiKey   apikeys.IamV2ApiKey
+		apiKey   apikeysv2.IamV2ApiKey
 		expected bool
 	}{
 		{
 			name: "Kafka API Key with Cluster kind and cmk/v2",
-			apiKey: apikeys.IamV2ApiKey{
-				Spec: &apikeys.IamV2ApiKeySpec{
-					Resource: &apikeys.ObjectReference{
-						Kind:       apikeys.PtrString(clusterKind),
-						ApiVersion: apikeys.PtrString(cmkApiVersion),
+			apiKey: apikeysv2.IamV2ApiKey{
+				Spec: &apikeysv2.IamV2ApiKeySpec{
+					Resource: &apikeysv2.ObjectReference{
+						Kind:       apikeysv2.PtrString(clusterKind),
+						ApiVersion: apikeysv2.PtrString(cmkApiVersion),
 					},
 				},
 			},
@@ -2812,11 +2812,11 @@ func TestIsKafkaApiKey(t *testing.T) {
 		},
 		{
 			name: "Not Kafka - SR kind with srcm/v3",
-			apiKey: apikeys.IamV2ApiKey{
-				Spec: &apikeys.IamV2ApiKeySpec{
-					Resource: &apikeys.ObjectReference{
-						Kind:       apikeys.PtrString(schemaRegistryKind),
-						ApiVersion: apikeys.PtrString(srcmV3ApiVersion),
+			apiKey: apikeysv2.IamV2ApiKey{
+				Spec: &apikeysv2.IamV2ApiKeySpec{
+					Resource: &apikeysv2.ObjectReference{
+						Kind:       apikeysv2.PtrString(schemaRegistryKind),
+						ApiVersion: apikeysv2.PtrString(srcmV3ApiVersion),
 					},
 				},
 			},
@@ -2824,11 +2824,11 @@ func TestIsKafkaApiKey(t *testing.T) {
 		},
 		{
 			name: "Not Kafka - Cluster kind but wrong api version",
-			apiKey: apikeys.IamV2ApiKey{
-				Spec: &apikeys.IamV2ApiKeySpec{
-					Resource: &apikeys.ObjectReference{
-						Kind:       apikeys.PtrString(clusterKind),
-						ApiVersion: apikeys.PtrString(srcmV2ApiVersion),
+			apiKey: apikeysv2.IamV2ApiKey{
+				Spec: &apikeysv2.IamV2ApiKeySpec{
+					Resource: &apikeysv2.ObjectReference{
+						Kind:       apikeysv2.PtrString(clusterKind),
+						ApiVersion: apikeysv2.PtrString(srcmV2ApiVersion),
 					},
 				},
 			},
@@ -2836,11 +2836,11 @@ func TestIsKafkaApiKey(t *testing.T) {
 		},
 		{
 			name: "Not Kafka - Region kind with fcpm/v2",
-			apiKey: apikeys.IamV2ApiKey{
-				Spec: &apikeys.IamV2ApiKeySpec{
-					Resource: &apikeys.ObjectReference{
-						Kind:       apikeys.PtrString(regionKind),
-						ApiVersion: apikeys.PtrString(fcpmApiVersion),
+			apiKey: apikeysv2.IamV2ApiKey{
+				Spec: &apikeysv2.IamV2ApiKeySpec{
+					Resource: &apikeysv2.ObjectReference{
+						Kind:       apikeysv2.PtrString(regionKind),
+						ApiVersion: apikeysv2.PtrString(fcpmApiVersion),
 					},
 				},
 			},
@@ -2860,16 +2860,16 @@ func TestIsKafkaApiKey(t *testing.T) {
 func TestIsFlinkApiKey(t *testing.T) {
 	tests := []struct {
 		name     string
-		apiKey   apikeys.IamV2ApiKey
+		apiKey   apikeysv2.IamV2ApiKey
 		expected bool
 	}{
 		{
 			name: "Flink API Key with Region kind and fcpm/v2",
-			apiKey: apikeys.IamV2ApiKey{
-				Spec: &apikeys.IamV2ApiKeySpec{
-					Resource: &apikeys.ObjectReference{
-						Kind:       apikeys.PtrString(regionKind),
-						ApiVersion: apikeys.PtrString(fcpmApiVersion),
+			apiKey: apikeysv2.IamV2ApiKey{
+				Spec: &apikeysv2.IamV2ApiKeySpec{
+					Resource: &apikeysv2.ObjectReference{
+						Kind:       apikeysv2.PtrString(regionKind),
+						ApiVersion: apikeysv2.PtrString(fcpmApiVersion),
 					},
 				},
 			},
@@ -2877,11 +2877,11 @@ func TestIsFlinkApiKey(t *testing.T) {
 		},
 		{
 			name: "Not Flink - Cluster kind with cmk/v2",
-			apiKey: apikeys.IamV2ApiKey{
-				Spec: &apikeys.IamV2ApiKeySpec{
-					Resource: &apikeys.ObjectReference{
-						Kind:       apikeys.PtrString(clusterKind),
-						ApiVersion: apikeys.PtrString(cmkApiVersion),
+			apiKey: apikeysv2.IamV2ApiKey{
+				Spec: &apikeysv2.IamV2ApiKeySpec{
+					Resource: &apikeysv2.ObjectReference{
+						Kind:       apikeysv2.PtrString(clusterKind),
+						ApiVersion: apikeysv2.PtrString(cmkApiVersion),
 					},
 				},
 			},
@@ -2889,11 +2889,11 @@ func TestIsFlinkApiKey(t *testing.T) {
 		},
 		{
 			name: "Not Flink - Region kind but wrong api version",
-			apiKey: apikeys.IamV2ApiKey{
-				Spec: &apikeys.IamV2ApiKeySpec{
-					Resource: &apikeys.ObjectReference{
-						Kind:       apikeys.PtrString(regionKind),
-						ApiVersion: apikeys.PtrString(cmkApiVersion),
+			apiKey: apikeysv2.IamV2ApiKey{
+				Spec: &apikeysv2.IamV2ApiKeySpec{
+					Resource: &apikeysv2.ObjectReference{
+						Kind:       apikeysv2.PtrString(regionKind),
+						ApiVersion: apikeysv2.PtrString(cmkApiVersion),
 					},
 				},
 			},
@@ -2913,16 +2913,16 @@ func TestIsFlinkApiKey(t *testing.T) {
 func TestIsKsqlDbClusterApiKey(t *testing.T) {
 	tests := []struct {
 		name     string
-		apiKey   apikeys.IamV2ApiKey
+		apiKey   apikeysv2.IamV2ApiKey
 		expected bool
 	}{
 		{
 			name: "ksqlDB API Key with ksqlDB kind and ksqldbcm/v2",
-			apiKey: apikeys.IamV2ApiKey{
-				Spec: &apikeys.IamV2ApiKeySpec{
-					Resource: &apikeys.ObjectReference{
-						Kind:       apikeys.PtrString(ksqlDbKind),
-						ApiVersion: apikeys.PtrString(ksqldbcmApiVersion),
+			apiKey: apikeysv2.IamV2ApiKey{
+				Spec: &apikeysv2.IamV2ApiKeySpec{
+					Resource: &apikeysv2.ObjectReference{
+						Kind:       apikeysv2.PtrString(ksqlDbKind),
+						ApiVersion: apikeysv2.PtrString(ksqldbcmApiVersion),
 					},
 				},
 			},
@@ -2930,11 +2930,11 @@ func TestIsKsqlDbClusterApiKey(t *testing.T) {
 		},
 		{
 			name: "ksqlDB API Key with Cluster kind and ksqldbcm/v2",
-			apiKey: apikeys.IamV2ApiKey{
-				Spec: &apikeys.IamV2ApiKeySpec{
-					Resource: &apikeys.ObjectReference{
-						Kind:       apikeys.PtrString(clusterKind),
-						ApiVersion: apikeys.PtrString(ksqldbcmApiVersion),
+			apiKey: apikeysv2.IamV2ApiKey{
+				Spec: &apikeysv2.IamV2ApiKeySpec{
+					Resource: &apikeysv2.ObjectReference{
+						Kind:       apikeysv2.PtrString(clusterKind),
+						ApiVersion: apikeysv2.PtrString(ksqldbcmApiVersion),
 					},
 				},
 			},
@@ -2942,11 +2942,11 @@ func TestIsKsqlDbClusterApiKey(t *testing.T) {
 		},
 		{
 			name: "Not ksqlDB - ksqlDB kind but wrong api version",
-			apiKey: apikeys.IamV2ApiKey{
-				Spec: &apikeys.IamV2ApiKeySpec{
-					Resource: &apikeys.ObjectReference{
-						Kind:       apikeys.PtrString(ksqlDbKind),
-						ApiVersion: apikeys.PtrString(cmkApiVersion),
+			apiKey: apikeysv2.IamV2ApiKey{
+				Spec: &apikeysv2.IamV2ApiKeySpec{
+					Resource: &apikeysv2.ObjectReference{
+						Kind:       apikeysv2.PtrString(ksqlDbKind),
+						ApiVersion: apikeysv2.PtrString(cmkApiVersion),
 					},
 				},
 			},
@@ -2954,11 +2954,11 @@ func TestIsKsqlDbClusterApiKey(t *testing.T) {
 		},
 		{
 			name: "Not ksqlDB - Region kind with ksqldbcm/v2",
-			apiKey: apikeys.IamV2ApiKey{
-				Spec: &apikeys.IamV2ApiKeySpec{
-					Resource: &apikeys.ObjectReference{
-						Kind:       apikeys.PtrString(regionKind),
-						ApiVersion: apikeys.PtrString(ksqldbcmApiVersion),
+			apiKey: apikeysv2.IamV2ApiKey{
+				Spec: &apikeysv2.IamV2ApiKeySpec{
+					Resource: &apikeysv2.ObjectReference{
+						Kind:       apikeysv2.PtrString(regionKind),
+						ApiVersion: apikeysv2.PtrString(ksqldbcmApiVersion),
 					},
 				},
 			},
@@ -2978,15 +2978,15 @@ func TestIsKsqlDbClusterApiKey(t *testing.T) {
 func TestIsTableflowApiKey(t *testing.T) {
 	tests := []struct {
 		name     string
-		apiKey   apikeys.IamV2ApiKey
+		apiKey   apikeysv2.IamV2ApiKey
 		expected bool
 	}{
 		{
 			name: "Tableflow API Key",
-			apiKey: apikeys.IamV2ApiKey{
-				Spec: &apikeys.IamV2ApiKeySpec{
-					Resource: &apikeys.ObjectReference{
-						Kind: apikeys.PtrString(tableflowKind),
+			apiKey: apikeysv2.IamV2ApiKey{
+				Spec: &apikeysv2.IamV2ApiKeySpec{
+					Resource: &apikeysv2.ObjectReference{
+						Kind: apikeysv2.PtrString(tableflowKind),
 						Id:   tableflowKindInLowercase,
 					},
 				},
@@ -2995,10 +2995,10 @@ func TestIsTableflowApiKey(t *testing.T) {
 		},
 		{
 			name: "Not Tableflow - wrong kind",
-			apiKey: apikeys.IamV2ApiKey{
-				Spec: &apikeys.IamV2ApiKeySpec{
-					Resource: &apikeys.ObjectReference{
-						Kind: apikeys.PtrString(clusterKind),
+			apiKey: apikeysv2.IamV2ApiKey{
+				Spec: &apikeysv2.IamV2ApiKeySpec{
+					Resource: &apikeysv2.ObjectReference{
+						Kind: apikeysv2.PtrString(clusterKind),
 						Id:   tableflowKindInLowercase,
 					},
 				},
@@ -3007,10 +3007,10 @@ func TestIsTableflowApiKey(t *testing.T) {
 		},
 		{
 			name: "Not Tableflow - wrong id",
-			apiKey: apikeys.IamV2ApiKey{
-				Spec: &apikeys.IamV2ApiKeySpec{
-					Resource: &apikeys.ObjectReference{
-						Kind: apikeys.PtrString(tableflowKind),
+			apiKey: apikeysv2.IamV2ApiKey{
+				Spec: &apikeysv2.IamV2ApiKeySpec{
+					Resource: &apikeysv2.ObjectReference{
+						Kind: apikeysv2.PtrString(tableflowKind),
 						Id:   "wrong-id",
 					},
 				},
@@ -3031,52 +3031,52 @@ func TestIsTableflowApiKey(t *testing.T) {
 func TestValidateApiKey(t *testing.T) {
 	tests := []struct {
 		name      string
-		apiKey    apikeys.IamV2ApiKey
+		apiKey    apikeysv2.IamV2ApiKey
 		expectErr bool
 	}{
 		{
 			name: "valid API key with both ID and secret",
-			apiKey: apikeys.IamV2ApiKey{
-				Id: apikeys.PtrString("ABCDEFGHIJK123"),
-				Spec: &apikeys.IamV2ApiKeySpec{
-					Secret: apikeys.PtrString("supersecret"),
+			apiKey: apikeysv2.IamV2ApiKey{
+				Id: apikeysv2.PtrString("ABCDEFGHIJK123"),
+				Spec: &apikeysv2.IamV2ApiKeySpec{
+					Secret: apikeysv2.PtrString("supersecret"),
 				},
 			},
 			expectErr: false,
 		},
 		{
 			name: "missing secret",
-			apiKey: apikeys.IamV2ApiKey{
-				Id:   apikeys.PtrString("ABCDEFGHIJK123"),
-				Spec: &apikeys.IamV2ApiKeySpec{},
+			apiKey: apikeysv2.IamV2ApiKey{
+				Id:   apikeysv2.PtrString("ABCDEFGHIJK123"),
+				Spec: &apikeysv2.IamV2ApiKeySpec{},
 			},
 			expectErr: true,
 		},
 		{
 			name: "missing ID",
-			apiKey: apikeys.IamV2ApiKey{
-				Spec: &apikeys.IamV2ApiKeySpec{
-					Secret: apikeys.PtrString("supersecret"),
+			apiKey: apikeysv2.IamV2ApiKey{
+				Spec: &apikeysv2.IamV2ApiKeySpec{
+					Secret: apikeysv2.PtrString("supersecret"),
 				},
 			},
 			expectErr: true,
 		},
 		{
 			name: "empty string ID returns error",
-			apiKey: apikeys.IamV2ApiKey{
-				Id: apikeys.PtrString(""),
-				Spec: &apikeys.IamV2ApiKeySpec{
-					Secret: apikeys.PtrString("supersecret"),
+			apiKey: apikeysv2.IamV2ApiKey{
+				Id: apikeysv2.PtrString(""),
+				Spec: &apikeysv2.IamV2ApiKeySpec{
+					Secret: apikeysv2.PtrString("supersecret"),
 				},
 			},
 			expectErr: true,
 		},
 		{
 			name: "empty string secret returns error",
-			apiKey: apikeys.IamV2ApiKey{
-				Id: apikeys.PtrString("ABCDEFGHIJK123"),
-				Spec: &apikeys.IamV2ApiKeySpec{
-					Secret: apikeys.PtrString(""),
+			apiKey: apikeysv2.IamV2ApiKey{
+				Id: apikeysv2.PtrString("ABCDEFGHIJK123"),
+				Spec: &apikeysv2.IamV2ApiKeySpec{
+					Secret: apikeysv2.PtrString(""),
 				},
 			},
 			expectErr: true,

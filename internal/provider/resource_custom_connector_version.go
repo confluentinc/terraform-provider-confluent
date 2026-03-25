@@ -9,7 +9,7 @@ import (
 	"regexp"
 	"strings"
 
-	ccpm "github.com/confluentinc/ccloud-sdk-go-v2/ccpm/v1"
+	ccpmv1 "github.com/confluentinc/ccloud-sdk-go-v2/ccpm/v1"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -114,21 +114,21 @@ func customConnectorPluginVersionCreate(ctx context.Context, d *schema.ResourceD
 	version := d.Get(paramVersion).(string)
 	sensitiveConfigProperties := convertToStringSlice(d.Get(paramSensitiveConfigProperties).(*schema.Set).List())
 	//FOR STEP 1: model_ccpm_v1_custom_connect_plugin.go
-	uploadID, err := uploadCustomConnectorVersionPlugin(c.ccpmApiContext(ctx), c, filename, cloud, environmentId)
+	uploadID, err := uploadCustomConnectorVersionPlugin(c.ccpmV1ApiContext(ctx), c, filename, cloud, environmentId)
 	if err != nil {
 		return diag.Errorf("error creating Custom Connector Plugin Version: %s", createDescriptiveError(err))
 	}
 
-	createCustomConnectorVersionRequest := ccpm.NewCcpmV1CustomConnectPluginVersion()
+	createCustomConnectorVersionRequest := ccpmv1.NewCcpmV1CustomConnectPluginVersion()
 
-	createCustomConnectorVersionSpec := ccpm.NewCcpmV1CustomConnectPluginVersionSpec()
-	createCustomConnectorVersionSpec.SetEnvironment(ccpm.EnvScopedObjectReference{Id: environmentId})
+	createCustomConnectorVersionSpec := ccpmv1.NewCcpmV1CustomConnectPluginVersionSpec()
+	createCustomConnectorVersionSpec.SetEnvironment(ccpmv1.EnvScopedObjectReference{Id: environmentId})
 	createCustomConnectorVersionSpec.SetVersion(version)
 	createCustomConnectorVersionSpec.SetDocumentationLink(documentationLink)
 	createCustomConnectorVersionSpec.SetConnectorClasses(connectorClass)
 	createCustomConnectorVersionSpec.SetSensitiveConfigProperties(sensitiveConfigProperties)
-	createCustomConnectorVersionSpec.SetUploadSource(ccpm.CcpmV1CustomConnectPluginVersionSpecUploadSourceOneOf{
-		CcpmV1UploadSourcePresignedUrl: ccpm.NewCcpmV1UploadSourcePresignedUrl(presignedUrlLocation, uploadID),
+	createCustomConnectorVersionSpec.SetUploadSource(ccpmv1.CcpmV1CustomConnectPluginVersionSpecUploadSourceOneOf{
+		CcpmV1UploadSourcePresignedUrl: ccpmv1.NewCcpmV1UploadSourcePresignedUrl(presignedUrlLocation, uploadID),
 	})
 	createCustomConnectorVersionRequest.SetSpec(*createCustomConnectorVersionSpec)
 
@@ -138,7 +138,7 @@ func customConnectorPluginVersionCreate(ctx context.Context, d *schema.ResourceD
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Custom Connector Plugin Version: %s", createCustomConnectorPluginVersionRequestJson))
 
-	createdCustomConnectorPluginVersion, resp, err := executeCustomConnectorPluginVersionCreate(c.ccpmApiContext(ctx), c, createCustomConnectorVersionRequest, pluginId)
+	createdCustomConnectorPluginVersion, resp, err := executeCustomConnectorPluginVersionCreate(c.ccpmV1ApiContext(ctx), c, createCustomConnectorVersionRequest, pluginId)
 	if err != nil {
 		return diag.Errorf("error creating Custom Connector Plugin Version %q: %s", createdCustomConnectorPluginVersion.GetId(), createDescriptiveError(err, resp))
 	}
@@ -158,7 +158,7 @@ func customConnectorPluginVersionDelete(ctx context.Context, d *schema.ResourceD
 	c := meta.(*Client)
 	pluginId := d.Get(paramPluginId).(string)
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
-	req := c.ccpmClient.CustomConnectPluginVersionsCcpmV1Api.DeleteCcpmV1CustomConnectPluginVersion(c.ccpmApiContext(ctx), pluginId, d.Id()).Environment(environmentId)
+	req := c.ccpmV1Client.CustomConnectPluginVersionsCcpmV1Api.DeleteCcpmV1CustomConnectPluginVersion(c.ccpmV1ApiContext(ctx), pluginId, d.Id()).Environment(environmentId)
 	resp, err := req.Execute()
 	if err != nil {
 		return diag.Errorf("error deleting Custom Connector Plugin Version %q: %s", d.Id(), createDescriptiveError(err, resp))
@@ -184,7 +184,7 @@ func customConnectorPluginVersionRead(ctx context.Context, d *schema.ResourceDat
 }
 
 func readCustomConnectorPluginVersionAndSetAttributes(ctx context.Context, d *schema.ResourceData, c *Client, filename, pluginId, envId, cloud string) ([]*schema.ResourceData, error) {
-	customConnectorPluginVersion, resp, err := executeCustomConnectorPluginVersionRead(c.ccpmApiContext(ctx), c, d.Id(), pluginId, envId)
+	customConnectorPluginVersion, resp, err := executeCustomConnectorPluginVersionRead(c.ccpmV1ApiContext(ctx), c, d.Id(), pluginId, envId)
 	if err != nil {
 		tflog.Warn(ctx, fmt.Sprintf("Error reading Custom Connector Plugin Version %q: %s", d.Id(), createDescriptiveError(err, resp)), map[string]interface{}{customConnectorPluginVersionLoggingKey: d.Id()})
 
@@ -212,7 +212,7 @@ func readCustomConnectorPluginVersionAndSetAttributes(ctx context.Context, d *sc
 	return []*schema.ResourceData{d}, nil
 }
 
-func setCustomConnectorPluginVersionAttributes(d *schema.ResourceData, customConnectorPlugin ccpm.CcpmV1CustomConnectPluginVersion, filename, pluginId, cloud string) (*schema.ResourceData, error) {
+func setCustomConnectorPluginVersionAttributes(d *schema.ResourceData, customConnectorPlugin ccpmv1.CcpmV1CustomConnectPluginVersion, filename, pluginId, cloud string) (*schema.ResourceData, error) {
 	spec := customConnectorPlugin.GetSpec()
 
 	if err := d.Set(paramVersion, spec.GetVersion()); err != nil {
@@ -249,13 +249,13 @@ func setCustomConnectorPluginVersionAttributes(d *schema.ResourceData, customCon
 	return d, nil
 }
 
-func executeCustomConnectorPluginVersionCreate(ctx context.Context, c *Client, customConnectorPlugin *ccpm.CcpmV1CustomConnectPluginVersion, pluginId string) (ccpm.CcpmV1CustomConnectPluginVersion, *http.Response, error) {
-	req := c.ccpmClient.CustomConnectPluginVersionsCcpmV1Api.CreateCcpmV1CustomConnectPluginVersion(ctx, pluginId).CcpmV1CustomConnectPluginVersion(*customConnectorPlugin)
+func executeCustomConnectorPluginVersionCreate(ctx context.Context, c *Client, customConnectorPlugin *ccpmv1.CcpmV1CustomConnectPluginVersion, pluginId string) (ccpmv1.CcpmV1CustomConnectPluginVersion, *http.Response, error) {
+	req := c.ccpmV1Client.CustomConnectPluginVersionsCcpmV1Api.CreateCcpmV1CustomConnectPluginVersion(ctx, pluginId).CcpmV1CustomConnectPluginVersion(*customConnectorPlugin)
 	return req.Execute()
 }
 
-func executeCustomConnectorPluginVersionRead(ctx context.Context, c *Client, customConnectorPluginVersionId, pluginId, envId string) (ccpm.CcpmV1CustomConnectPluginVersion, *http.Response, error) {
-	req := c.ccpmClient.CustomConnectPluginVersionsCcpmV1Api.GetCcpmV1CustomConnectPluginVersion(c.ccpmApiContext(ctx), pluginId, customConnectorPluginVersionId).Environment(envId)
+func executeCustomConnectorPluginVersionRead(ctx context.Context, c *Client, customConnectorPluginVersionId, pluginId, envId string) (ccpmv1.CcpmV1CustomConnectPluginVersion, *http.Response, error) {
+	req := c.ccpmV1Client.CustomConnectPluginVersionsCcpmV1Api.GetCcpmV1CustomConnectPluginVersion(c.ccpmV1ApiContext(ctx), pluginId, customConnectorPluginVersionId).Environment(envId)
 	return req.Execute()
 }
 
@@ -265,14 +265,14 @@ func uploadCustomConnectorVersionPlugin(ctx context.Context, c *Client, filename
 		return "", fmt.Errorf(`error uploading Plugin: only file extensions ".jar" and ".zip" are allowed`)
 	}
 
-	createPresignedUrlRequest := *ccpm.NewCcpmV1PresignedUrl()
+	createPresignedUrlRequest := *ccpmv1.NewCcpmV1PresignedUrl()
 	createPresignedUrlRequest.SetContentFormat(extension)
-	createPresignedUrlRequest.SetEnvironment(ccpm.EnvScopedObjectReference{Id: environment})
+	createPresignedUrlRequest.SetEnvironment(ccpmv1.EnvScopedObjectReference{Id: environment})
 	if cloud != "" {
 		createPresignedUrlRequest.SetCloud(cloud)
 	}
 
-	createdPresignedUrl, _, err := c.ccpmClient.PresignedUrlsCcpmV1Api.CreateCcpmV1PresignedUrl(c.ccpmApiContext(ctx)).CcpmV1PresignedUrl(createPresignedUrlRequest).Execute()
+	createdPresignedUrl, _, err := c.ccpmV1Client.PresignedUrlsCcpmV1Api.CreateCcpmV1PresignedUrl(c.ccpmV1ApiContext(ctx)).CcpmV1PresignedUrl(createPresignedUrlRequest).Execute()
 	if err != nil {
 		return "", fmt.Errorf(`error uploading Plugin : error fetching presigned upload URL: %s`, err)
 	}
@@ -309,10 +309,10 @@ func customConnectorPluginVersionImport(ctx context.Context, d *schema.ResourceD
 	return []*schema.ResourceData{d}, nil
 }
 
-func buildConnectorClass(connectorClass []interface{}) []ccpm.CcpmV1ConnectorClass {
-	classes := make([]ccpm.CcpmV1ConnectorClass, len(connectorClass))
+func buildConnectorClass(connectorClass []interface{}) []ccpmv1.CcpmV1ConnectorClass {
+	classes := make([]ccpmv1.CcpmV1ConnectorClass, len(connectorClass))
 	for index, tfClass := range connectorClass {
-		class := ccpm.NewCcpmV1ConnectorClassWithDefaults()
+		class := ccpmv1.NewCcpmV1ConnectorClassWithDefaults()
 		tfClassMap := tfClass.(map[string]interface{})
 		if className, exists := tfClassMap[paramConnectorClassName].(string); exists {
 			class.SetClassName(className)
@@ -325,7 +325,7 @@ func buildConnectorClass(connectorClass []interface{}) []ccpm.CcpmV1ConnectorCla
 	return classes
 }
 
-func buildTfConnectorClasses(classes []ccpm.CcpmV1ConnectorClass) *[]map[string]interface{} {
+func buildTfConnectorClasses(classes []ccpmv1.CcpmV1ConnectorClass) *[]map[string]interface{} {
 	tfClasses := make([]map[string]interface{}, len(classes))
 	for i, class := range classes {
 		tfClasses[i] = *buildTfClasses(class)
@@ -333,7 +333,7 @@ func buildTfConnectorClasses(classes []ccpm.CcpmV1ConnectorClass) *[]map[string]
 	return &tfClasses
 }
 
-func buildTfClasses(class ccpm.CcpmV1ConnectorClass) *map[string]interface{} {
+func buildTfClasses(class ccpmv1.CcpmV1ConnectorClass) *map[string]interface{} {
 	tfClass := make(map[string]interface{})
 	tfClass[paramConnectorClassName] = class.GetClassName()
 	tfClass[paramConnectorType] = class.GetType()

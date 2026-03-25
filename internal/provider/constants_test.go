@@ -14,6 +14,14 @@
 
 package provider
 
+import (
+	"os"
+	"path/filepath"
+	"runtime"
+	"strings"
+	"testing"
+)
+
 const (
 	// mockServerUrl will be used instead for TestAccClusterLinkDestination test
 	// Using Okta's OIDC configuration for the update step to test changing providers
@@ -1117,3 +1125,44 @@ message SomeRecord {
 	userResourceLabel                                  = "test_user_resource_label"
 	usersDataSourceScenarioName                        = "confluent_users Data Source Lifecycle"
 )
+
+// TestNoParamConstantsOutsideConstantsGo ensures all param constants are
+// centralized in constants.go. The cli-terraform-generator's ScanExistingParams
+// reads only constants.go, so scattering param constants in resource files
+// would cause duplicate declarations in generated code.
+func TestNoParamConstantsOutsideConstantsGo(t *testing.T) {
+	_, thisFile, _, ok := runtime.Caller(0)
+	if !ok {
+		t.Fatal("runtime.Caller(0) failed")
+	}
+	dir := filepath.Dir(thisFile)
+
+	files, err := filepath.Glob(filepath.Join(dir, "*.go"))
+	if err != nil {
+		t.Fatalf("failed to glob: %v", err)
+	}
+
+	for _, f := range files {
+		base := filepath.Base(f)
+		if base == "constants.go" || strings.HasSuffix(base, "_test.go") {
+			continue
+		}
+
+		content, err := os.ReadFile(f)
+		if err != nil {
+			t.Fatalf("failed to read %s: %v", base, err)
+		}
+
+		for i, line := range strings.Split(string(content), "\n") {
+			trimmed := strings.TrimSpace(line)
+			if strings.HasPrefix(trimmed, "param") && strings.Contains(trimmed, "= \"") {
+				parts := strings.SplitN(trimmed, "=", 2)
+				name := strings.TrimSpace(parts[0])
+				if strings.HasPrefix(name, "param") && !strings.Contains(name, ":") {
+					t.Errorf("%s:%d declares param constant %q — move it to constants.go",
+						base, i+1, name)
+				}
+			}
+		}
+	}
+}

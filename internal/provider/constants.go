@@ -585,6 +585,7 @@ const (
 	paramZoneId                                    = "zone_id"
 	paramZoneInfo                                  = "zone_info"
 	paramZones                                     = "zones"
+	// cli-tfgen:tf-constants
 	peeringLoggingKey                                    = "peering_id"
 	pluginLoggingKey                                     = "plugin_key_id"
 	presignedUrlLocation                                 = "PRESIGNED_URL_LOCATION"
