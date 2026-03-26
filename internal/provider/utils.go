@@ -1341,7 +1341,7 @@ func extractCloudAndRegionName(resourceId string) (string, string, error) {
 }
 
 func extractOrgIdFromResourceName(resourceName string) (string, error) {
-	// Match any string of non-slash characters after organization= until the next slash or the endpointv1 of the string.
+	// Match any string of non-slash characters after organization= until the next slash or the end of the string.
 	re := regexp.MustCompile(`/organization=([^/]+)(/|$)`)
 	match := re.FindStringSubmatch(resourceName)
 	if len(match) > 1 {
