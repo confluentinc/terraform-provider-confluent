@@ -57,6 +57,7 @@ import (
 	srcmv3 "github.com/confluentinc/ccloud-sdk-go-v2/srcm/v3"
 	ssov2 "github.com/confluentinc/ccloud-sdk-go-v2/sso/v2"
 	stsv1 "github.com/confluentinc/ccloud-sdk-go-v2/sts/v1"
+	// cli-tfgen:tf-imports
 )
 
 type Client struct {
