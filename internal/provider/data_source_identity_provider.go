@@ -143,9 +143,9 @@ func loadIdentityProviders(ctx context.Context, c *Client) ([]v2.IamV2IdentityPr
 
 func executeListIdentityProviders(ctx context.Context, c *Client, pageToken string) (v2.IamV2IdentityProviderList, *http.Response, error) {
 	if pageToken != "" {
-		return c.oidcClient.IdentityProvidersIamV2Api.ListIamV2IdentityProviders(c.oidcApiContext(ctx)).PageSize(listIdentityProvidersPageSize).PageToken(pageToken).Execute()
+		return c.identityProviderV2Client.IdentityProvidersIamV2Api.ListIamV2IdentityProviders(c.identityProviderV2ApiContext(ctx)).PageSize(listIdentityProvidersPageSize).PageToken(pageToken).Execute()
 	} else {
-		return c.oidcClient.IdentityProvidersIamV2Api.ListIamV2IdentityProviders(c.oidcApiContext(ctx)).PageSize(listIdentityProvidersPageSize).Execute()
+		return c.identityProviderV2Client.IdentityProvidersIamV2Api.ListIamV2IdentityProviders(c.identityProviderV2ApiContext(ctx)).PageSize(listIdentityProvidersPageSize).Execute()
 	}
 }
 
@@ -153,7 +153,7 @@ func identityProviderDataSourceReadUsingId(ctx context.Context, d *schema.Resour
 	tflog.Debug(ctx, fmt.Sprintf("Reading Identity Provider %q=%q", paramId, identityProviderId), map[string]interface{}{identityProviderLoggingKey: identityProviderId})
 
 	c := meta.(*Client)
-	identityProvider, resp, err := executeIdentityProviderRead(c.oidcApiContext(ctx), c, identityProviderId)
+	identityProvider, resp, err := executeIdentityProviderRead(c.identityProviderV2ApiContext(ctx), c, identityProviderId)
 	if err != nil {
 		return diag.Errorf("error reading Identity Provider %q: %s", identityProviderId, createDescriptiveError(err, resp))
 	}

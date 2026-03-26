@@ -21,7 +21,7 @@ import (
 	"net/http"
 	"strings"
 
-	netgw "github.com/confluentinc/ccloud-sdk-go-v2/networking-gateway/v1"
+	networkinggatewayv1 "github.com/confluentinc/ccloud-sdk-go-v2/networking-gateway/v1"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -171,9 +171,9 @@ func gatewayCreate(ctx context.Context, d *schema.ResourceData, meta interface{}
 
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
 
-	createGatewayRequest := netgw.NewNetworkingV1Gateway()
-	createGatewayRequest.Spec = netgw.NewNetworkingV1GatewaySpec()
-	createGatewayRequest.Spec.SetEnvironment(netgw.ObjectReference{Id: environmentId})
+	createGatewayRequest := networkinggatewayv1.NewNetworkingV1Gateway()
+	createGatewayRequest.Spec = networkinggatewayv1.NewNetworkingV1GatewaySpec()
+	createGatewayRequest.Spec.SetEnvironment(networkinggatewayv1.ObjectReference{Id: environmentId})
 	createGatewayRequest.Spec.SetDisplayName(d.Get(paramDisplayName).(string))
 
 	isAwsEgressPrivateLink := len(d.Get(paramAwsEgressPrivateLinkGateway).([]interface{})) > 0
@@ -183,27 +183,27 @@ func gatewayCreate(ctx context.Context, d *schema.ResourceData, meta interface{}
 
 	if isAwsEgressPrivateLink {
 		region := extractStringValueFromBlock(d, paramAwsEgressPrivateLinkGateway, paramRegion)
-		createGatewayRequest.Spec.SetConfig(netgw.NetworkingV1AwsEgressPrivateLinkGatewaySpecAsNetworkingV1GatewaySpecConfigOneOf(netgw.NewNetworkingV1AwsEgressPrivateLinkGatewaySpec(
+		createGatewayRequest.Spec.SetConfig(networkinggatewayv1.NetworkingV1AwsEgressPrivateLinkGatewaySpecAsNetworkingV1GatewaySpecConfigOneOf(networkinggatewayv1.NewNetworkingV1AwsEgressPrivateLinkGatewaySpec(
 			awsEgressPrivateLinkGatewaySpecKind,
 			region,
 		)))
 	} else if isAwsIngressPrivateLink {
 		region := extractStringValueFromBlock(d, paramAwsIngressPrivateLinkGateway, paramRegion)
-		createGatewayRequest.Spec.SetConfig(netgw.NetworkingV1AwsIngressPrivateLinkGatewaySpecAsNetworkingV1GatewaySpecConfigOneOf(netgw.NewNetworkingV1AwsIngressPrivateLinkGatewaySpec(
+		createGatewayRequest.Spec.SetConfig(networkinggatewayv1.NetworkingV1AwsIngressPrivateLinkGatewaySpecAsNetworkingV1GatewaySpecConfigOneOf(networkinggatewayv1.NewNetworkingV1AwsIngressPrivateLinkGatewaySpec(
 			awsIngressPrivateLinkGatewaySpecKind,
 			region,
 		)))
 	} else if isAwsPrivateNetworkInterface {
 		region := extractStringValueFromBlock(d, paramAwsPrivateNetworkInterfaceGateway, paramRegion)
 		zones := convertToStringSlice(d.Get(fmt.Sprintf("%s.0.%s", paramAwsPrivateNetworkInterfaceGateway, paramZones)).(*schema.Set).List())
-		createGatewayRequest.Spec.SetConfig(netgw.NetworkingV1AwsPrivateNetworkInterfaceGatewaySpecAsNetworkingV1GatewaySpecConfigOneOf(netgw.NewNetworkingV1AwsPrivateNetworkInterfaceGatewaySpec(
+		createGatewayRequest.Spec.SetConfig(networkinggatewayv1.NetworkingV1AwsPrivateNetworkInterfaceGatewaySpecAsNetworkingV1GatewaySpecConfigOneOf(networkinggatewayv1.NewNetworkingV1AwsPrivateNetworkInterfaceGatewaySpec(
 			awsPrivateNetworkInterfaceGatewaySpecKind,
 			region,
 			zones,
 		)))
 	} else if isAzureEgressPrivateLink {
 		region := extractStringValueFromBlock(d, paramAzureEgressPrivateLinkGateway, paramRegion)
-		createGatewayRequest.Spec.SetConfig(netgw.NetworkingV1AzureEgressPrivateLinkGatewaySpecAsNetworkingV1GatewaySpecConfigOneOf(netgw.NewNetworkingV1AzureEgressPrivateLinkGatewaySpec(
+		createGatewayRequest.Spec.SetConfig(networkinggatewayv1.NetworkingV1AzureEgressPrivateLinkGatewaySpecAsNetworkingV1GatewaySpecConfigOneOf(networkinggatewayv1.NewNetworkingV1AzureEgressPrivateLinkGatewaySpec(
 			azureEgressPrivateLinkGatewaySpecKind,
 			region,
 		)))
@@ -215,14 +215,14 @@ func gatewayCreate(ctx context.Context, d *schema.ResourceData, meta interface{}
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Gateway: %s", createGatewayRequestJson))
 
-	req := c.netGatewayClient.GatewaysNetworkingV1Api.CreateNetworkingV1Gateway(c.netGWApiContext(ctx)).NetworkingV1Gateway(*createGatewayRequest)
+	req := c.networkingGatewayV1Client.GatewaysNetworkingV1Api.CreateNetworkingV1Gateway(c.networkingGatewayV1ApiContext(ctx)).NetworkingV1Gateway(*createGatewayRequest)
 	createdGateway, resp, err := req.Execute()
 	if err != nil {
 		return diag.Errorf("error creating Gateway %q: %s", createdGateway.GetId(), createDescriptiveError(err, resp))
 	}
 	d.SetId(createdGateway.GetId())
 
-	if err := waitForGatewayToProvision(c.netGWApiContext(ctx), c, environmentId, d.Id()); err != nil {
+	if err := waitForGatewayToProvision(c.networkingGatewayV1ApiContext(ctx), c, environmentId, d.Id()); err != nil {
 		return diag.Errorf("error waiting for Gateway %q to provision: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
@@ -235,8 +235,8 @@ func gatewayCreate(ctx context.Context, d *schema.ResourceData, meta interface{}
 	return gatewayRead(ctx, d, meta)
 }
 
-func executeGatewayRead(ctx context.Context, c *Client, environmentId, gatewayId string) (netgw.NetworkingV1Gateway, *http.Response, error) {
-	req := c.netGatewayClient.GatewaysNetworkingV1Api.GetNetworkingV1Gateway(c.netGWApiContext(ctx), gatewayId).Environment(environmentId)
+func executeGatewayRead(ctx context.Context, c *Client, environmentId, gatewayId string) (networkinggatewayv1.NetworkingV1Gateway, *http.Response, error) {
+	req := c.networkingGatewayV1Client.GatewaysNetworkingV1Api.GetNetworkingV1Gateway(c.networkingGatewayV1ApiContext(ctx), gatewayId).Environment(environmentId)
 	return req.Execute()
 }
 
@@ -256,7 +256,7 @@ func gatewayRead(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 func readGatewayAndSetAttributes(ctx context.Context, d *schema.ResourceData, meta interface{}, environmentId, gatewayId string) ([]*schema.ResourceData, error) {
 	c := meta.(*Client)
 
-	gateway, resp, err := executeGatewayRead(c.netGWApiContext(ctx), c, environmentId, gatewayId)
+	gateway, resp, err := executeGatewayRead(c.networkingGatewayV1ApiContext(ctx), c, environmentId, gatewayId)
 	if err != nil {
 		tflog.Warn(ctx, fmt.Sprintf("Error reading Gateway %q: %s", gatewayId, createDescriptiveError(err)), map[string]interface{}{gatewayKey: d.Id()})
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
@@ -283,7 +283,7 @@ func readGatewayAndSetAttributes(ctx context.Context, d *schema.ResourceData, me
 	return []*schema.ResourceData{d}, nil
 }
 
-func setGatewayAttributes(d *schema.ResourceData, gateway netgw.NetworkingV1Gateway) (*schema.ResourceData, error) {
+func setGatewayAttributes(d *schema.ResourceData, gateway networkinggatewayv1.NetworkingV1Gateway) (*schema.ResourceData, error) {
 	if err := d.Set(paramDisplayName, gateway.Spec.GetDisplayName()); err != nil {
 		return nil, err
 	}
@@ -358,7 +358,7 @@ func gatewayDelete(ctx context.Context, d *schema.ResourceData, meta interface{}
 
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
 
-	req := c.netGatewayClient.GatewaysNetworkingV1Api.DeleteNetworkingV1Gateway(c.netGWApiContext(ctx), d.Id()).Environment(environmentId)
+	req := c.networkingGatewayV1Client.GatewaysNetworkingV1Api.DeleteNetworkingV1Gateway(c.networkingGatewayV1ApiContext(ctx), d.Id()).Environment(environmentId)
 	resp, err := req.Execute()
 
 	if err != nil {
@@ -377,11 +377,11 @@ func gatewayUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}
 
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
 
-	updateGateway := netgw.NewNetworkingV1GatewayUpdate()
-	updateGateway.Spec = netgw.NewNetworkingV1GatewaySpecUpdate()
+	updateGateway := networkinggatewayv1.NewNetworkingV1GatewayUpdate()
+	updateGateway.Spec = networkinggatewayv1.NewNetworkingV1GatewaySpecUpdate()
 
 	updateGateway.Spec.SetDisplayName(d.Get(paramDisplayName).(string))
-	updateGateway.Spec.SetEnvironment(netgw.ObjectReference{
+	updateGateway.Spec.SetEnvironment(networkinggatewayv1.ObjectReference{
 		Id: environmentId,
 	})
 
@@ -392,7 +392,7 @@ func gatewayUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}
 	tflog.Debug(ctx, fmt.Sprintf("Updating Gateway %q: %s", d.Id(), updateGatewayJson), map[string]interface{}{gatewayKey: d.Id()})
 
 	c := meta.(*Client)
-	req := c.netGatewayClient.GatewaysNetworkingV1Api.UpdateNetworkingV1Gateway(c.netGWApiContext(ctx), d.Id()).NetworkingV1GatewayUpdate(*updateGateway)
+	req := c.networkingGatewayV1Client.GatewaysNetworkingV1Api.UpdateNetworkingV1Gateway(c.networkingGatewayV1ApiContext(ctx), d.Id()).NetworkingV1GatewayUpdate(*updateGateway)
 	updatedGateway, resp, err := req.Execute()
 
 	if err != nil {

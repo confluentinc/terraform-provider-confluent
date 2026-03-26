@@ -172,7 +172,7 @@ func testAccCheckIPGroupDestroy(s *terraform.State) error {
 			continue
 		}
 		deletedIPGroupId := rs.Primary.ID
-		req := c.iamIPClient.IPGroupsIamV2Api.GetIamV2IpGroup(c.iamIPApiContext(context.Background()), deletedIPGroupId)
+		req := c.iamIpFilteringV2Client.IPGroupsIamV2Api.GetIamV2IpGroup(c.iamIpFilteringV2ApiContext(context.Background()), deletedIPGroupId)
 		deletedServiceAccount, response, err := req.Execute()
 		if response != nil && (response.StatusCode == http.StatusForbidden || response.StatusCode == http.StatusNotFound) {
 			// v2/ip-groups/{nonExistentSaId/deletedSaID} returns http.StatusForbidden instead of http.StatusNotFound

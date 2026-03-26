@@ -22,7 +22,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	ccp "github.com/confluentinc/ccloud-sdk-go-v2/connect-custom-plugin/v1"
+	connectcustompluginv1 "github.com/confluentinc/ccloud-sdk-go-v2/connect-custom-plugin/v1"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -98,7 +98,7 @@ func customConnectorPluginUpdate(ctx context.Context, d *schema.ResourceData, me
 		return diag.Errorf("error updating Custom Connector Plugin %q: only %q, %q, %q, %q attributes can be updated for Custom Connector Plugin", d.Id(), paramDisplayName, paramDescription, paramDocumentationLink, paramSensitiveConfigProperties)
 	}
 
-	updateCustomConnectorPluginRequest := ccp.NewConnectV1CustomConnectorPluginUpdate()
+	updateCustomConnectorPluginRequest := connectcustompluginv1.NewConnectV1CustomConnectorPluginUpdate()
 
 	if d.HasChange(paramDisplayName) {
 		updatedDisplayName := d.Get(paramDisplayName).(string)
@@ -124,7 +124,7 @@ func customConnectorPluginUpdate(ctx context.Context, d *schema.ResourceData, me
 	tflog.Debug(ctx, fmt.Sprintf("Updating Custom Connector Plugin %q: %s", d.Id(), updateCustomConnectorPluginRequestJson), map[string]interface{}{customConnectorPluginLoggingKey: d.Id()})
 
 	c := meta.(*Client)
-	updatedCustomConnectorPlugin, resp, err := c.ccpClient.CustomConnectorPluginsConnectV1Api.UpdateConnectV1CustomConnectorPlugin(c.ccpApiContext(ctx), d.Id()).ConnectV1CustomConnectorPluginUpdate(*updateCustomConnectorPluginRequest).Execute()
+	updatedCustomConnectorPlugin, resp, err := c.connectCustomPluginV1Client.CustomConnectorPluginsConnectV1Api.UpdateConnectV1CustomConnectorPlugin(c.connectCustomPluginV1ApiContext(ctx), d.Id()).ConnectV1CustomConnectorPluginUpdate(*updateCustomConnectorPluginRequest).Execute()
 
 	if err != nil {
 		return diag.Errorf("error updating Custom Connector Plugin %q: %s", d.Id(), createDescriptiveError(err, resp))
@@ -152,13 +152,13 @@ func customConnectorPluginCreate(ctx context.Context, d *schema.ResourceData, me
 	cloud := d.Get(paramCloud).(string)
 
 	// Part 1: Get Upload ID
-	uploadID, err := uploadCustomConnectorPlugin(c.ccpApiContext(ctx), c, filename, cloud)
+	uploadID, err := uploadCustomConnectorPlugin(c.connectCustomPluginV1ApiContext(ctx), c, filename, cloud)
 	if err != nil {
 		return diag.Errorf("error creating Custom Connector Plugin: %s", createDescriptiveError(err))
 	}
 
 	// Part 2: Creating Custom Connector Plugin
-	createCustomConnectorPluginRequest := ccp.NewConnectV1CustomConnectorPlugin()
+	createCustomConnectorPluginRequest := connectcustompluginv1.NewConnectV1CustomConnectorPlugin()
 
 	if cloud != "" {
 		createCustomConnectorPluginRequest.SetCloud(cloud)
@@ -170,8 +170,8 @@ func customConnectorPluginCreate(ctx context.Context, d *schema.ResourceData, me
 	createCustomConnectorPluginRequest.SetConnectorClass(connectorClass)
 	createCustomConnectorPluginRequest.SetConnectorType(connectorType)
 	createCustomConnectorPluginRequest.SetSensitiveConfigProperties(sensitiveConfigProperties)
-	createCustomConnectorPluginRequest.SetUploadSource(ccp.ConnectV1CustomConnectorPluginUploadSourceOneOf{
-		ConnectV1UploadSourcePresignedUrl: ccp.NewConnectV1UploadSourcePresignedUrl(presignedUrlLocation, uploadID),
+	createCustomConnectorPluginRequest.SetUploadSource(connectcustompluginv1.ConnectV1CustomConnectorPluginUploadSourceOneOf{
+		ConnectV1UploadSourcePresignedUrl: connectcustompluginv1.NewConnectV1UploadSourcePresignedUrl(presignedUrlLocation, uploadID),
 	})
 
 	createCustomConnectorPluginRequestJson, err := json.Marshal(createCustomConnectorPluginRequest)
@@ -180,7 +180,7 @@ func customConnectorPluginCreate(ctx context.Context, d *schema.ResourceData, me
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Custom Connector Plugin: %s", createCustomConnectorPluginRequestJson))
 
-	createdCustomConnectorPlugin, resp, err := executeCustomConnectorPluginCreate(c.ccpApiContext(ctx), c, createCustomConnectorPluginRequest)
+	createdCustomConnectorPlugin, resp, err := executeCustomConnectorPluginCreate(c.connectCustomPluginV1ApiContext(ctx), c, createCustomConnectorPluginRequest)
 	if err != nil {
 		return diag.Errorf("error creating Custom Connector Plugin %q: %s", displayName, createDescriptiveError(err, resp))
 	}
@@ -202,13 +202,13 @@ func uploadCustomConnectorPlugin(ctx context.Context, c *Client, filename, cloud
 		return "", fmt.Errorf(`error uploading Custom Connector Plugin: only file extensions ".jar" and ".zip" are allowed`)
 	}
 
-	createPresignedUrlRequest := *ccp.NewConnectV1PresignedUrlRequest()
+	createPresignedUrlRequest := *connectcustompluginv1.NewConnectV1PresignedUrlRequest()
 	createPresignedUrlRequest.SetContentFormat(extension)
 	if cloud != "" {
 		createPresignedUrlRequest.SetCloud(cloud)
 	}
 
-	createdPresignedUrl, _, err := c.ccpClient.PresignedUrlsConnectV1Api.PresignedUploadUrlConnectV1PresignedUrl(c.ccpApiContext(ctx)).ConnectV1PresignedUrlRequest(createPresignedUrlRequest).Execute()
+	createdPresignedUrl, _, err := c.connectCustomPluginV1Client.PresignedUrlsConnectV1Api.PresignedUploadUrlConnectV1PresignedUrl(c.connectCustomPluginV1ApiContext(ctx)).ConnectV1PresignedUrlRequest(createPresignedUrlRequest).Execute()
 	if err != nil {
 		return "", fmt.Errorf(`error uploading Custom Connector Plugin: error fetching presigned upload URL: %s`, err)
 	}
@@ -219,8 +219,8 @@ func uploadCustomConnectorPlugin(ctx context.Context, c *Client, filename, cloud
 	return createdPresignedUrl.GetUploadId(), nil
 }
 
-func executeCustomConnectorPluginCreate(ctx context.Context, c *Client, customConnectorPlugin *ccp.ConnectV1CustomConnectorPlugin) (ccp.ConnectV1CustomConnectorPlugin, *http.Response, error) {
-	req := c.ccpClient.CustomConnectorPluginsConnectV1Api.CreateConnectV1CustomConnectorPlugin(c.ccpApiContext(ctx)).ConnectV1CustomConnectorPlugin(*customConnectorPlugin)
+func executeCustomConnectorPluginCreate(ctx context.Context, c *Client, customConnectorPlugin *connectcustompluginv1.ConnectV1CustomConnectorPlugin) (connectcustompluginv1.ConnectV1CustomConnectorPlugin, *http.Response, error) {
+	req := c.connectCustomPluginV1Client.CustomConnectorPluginsConnectV1Api.CreateConnectV1CustomConnectorPlugin(c.connectCustomPluginV1ApiContext(ctx)).ConnectV1CustomConnectorPlugin(*customConnectorPlugin)
 	return req.Execute()
 }
 
@@ -228,7 +228,7 @@ func customConnectorPluginDelete(ctx context.Context, d *schema.ResourceData, me
 	tflog.Debug(ctx, fmt.Sprintf("Deleting Custom Connector Plugin %q", d.Id()), map[string]interface{}{customConnectorPluginLoggingKey: d.Id()})
 	c := meta.(*Client)
 
-	req := c.ccpClient.CustomConnectorPluginsConnectV1Api.DeleteConnectV1CustomConnectorPlugin(c.ccpApiContext(ctx), d.Id())
+	req := c.connectCustomPluginV1Client.CustomConnectorPluginsConnectV1Api.DeleteConnectV1CustomConnectorPlugin(c.connectCustomPluginV1ApiContext(ctx), d.Id())
 	resp, err := req.Execute()
 
 	if err != nil {
@@ -240,8 +240,8 @@ func customConnectorPluginDelete(ctx context.Context, d *schema.ResourceData, me
 	return nil
 }
 
-func executeCustomConnectorPluginRead(ctx context.Context, c *Client, customConnectorPluginId string) (ccp.ConnectV1CustomConnectorPlugin, *http.Response, error) {
-	req := c.ccpClient.CustomConnectorPluginsConnectV1Api.GetConnectV1CustomConnectorPlugin(c.ccpApiContext(ctx), customConnectorPluginId)
+func executeCustomConnectorPluginRead(ctx context.Context, c *Client, customConnectorPluginId string) (connectcustompluginv1.ConnectV1CustomConnectorPlugin, *http.Response, error) {
+	req := c.connectCustomPluginV1Client.CustomConnectorPluginsConnectV1Api.GetConnectV1CustomConnectorPlugin(c.connectCustomPluginV1ApiContext(ctx), customConnectorPluginId)
 	return req.Execute()
 }
 
@@ -259,7 +259,7 @@ func customConnectorPluginRead(ctx context.Context, d *schema.ResourceData, meta
 }
 
 func readCustomConnectorPluginAndSetAttributes(ctx context.Context, d *schema.ResourceData, c *Client, filename string) ([]*schema.ResourceData, error) {
-	customConnectorPlugin, resp, err := executeCustomConnectorPluginRead(c.ccpApiContext(ctx), c, d.Id())
+	customConnectorPlugin, resp, err := executeCustomConnectorPluginRead(c.connectCustomPluginV1ApiContext(ctx), c, d.Id())
 	if err != nil {
 		tflog.Warn(ctx, fmt.Sprintf("Error reading Custom Connector Plugin %q: %s", d.Id(), createDescriptiveError(err, resp)), map[string]interface{}{customConnectorPluginLoggingKey: d.Id()})
 
@@ -287,7 +287,7 @@ func readCustomConnectorPluginAndSetAttributes(ctx context.Context, d *schema.Re
 	return []*schema.ResourceData{d}, nil
 }
 
-func setCustomConnectorPluginAttributes(d *schema.ResourceData, customConnectorPlugin ccp.ConnectV1CustomConnectorPlugin, filename string) (*schema.ResourceData, error) {
+func setCustomConnectorPluginAttributes(d *schema.ResourceData, customConnectorPlugin connectcustompluginv1.ConnectV1CustomConnectorPlugin, filename string) (*schema.ResourceData, error) {
 	if err := d.Set(paramDisplayName, customConnectorPlugin.GetDisplayName()); err != nil {
 		return nil, createDescriptiveError(err)
 	}

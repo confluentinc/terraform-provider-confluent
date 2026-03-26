@@ -170,7 +170,7 @@ func testAccCheckIdentityPoolDestroy(s *terraform.State) error {
 			continue
 		}
 		deletedIdentityPoolId := rs.Primary.ID
-		req := c.oidcClient.IdentityPoolsIamV2Api.GetIamV2IdentityPool(c.oidcApiContext(context.Background()), identityProviderId, deletedIdentityPoolId)
+		req := c.identityProviderV2Client.IdentityPoolsIamV2Api.GetIamV2IdentityPool(c.identityProviderV2ApiContext(context.Background()), identityProviderId, deletedIdentityPoolId)
 		deletedIdentityPool, response, err := req.Execute()
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(response)
 		if isResourceNotFound {

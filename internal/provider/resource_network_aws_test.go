@@ -206,7 +206,7 @@ func testAccCheckAwsNetworkDestroy(s *terraform.State) error {
 			continue
 		}
 		deletedAwsNetworkId := rs.Primary.ID
-		req := c.netClient.NetworksNetworkingV1Api.GetNetworkingV1Network(c.netApiContext(context.Background()), deletedAwsNetworkId).Environment(awsNetworkEnvironmentId)
+		req := c.networkingV1Client.NetworksNetworkingV1Api.GetNetworkingV1Network(c.networkingV1ApiContext(context.Background()), deletedAwsNetworkId).Environment(awsNetworkEnvironmentId)
 		deletedAwsNetwork, response, err := req.Execute()
 		if response != nil && response.StatusCode == http.StatusNotFound {
 			return nil

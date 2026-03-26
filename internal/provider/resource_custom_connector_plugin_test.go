@@ -323,7 +323,7 @@ func testAccCheckCustomConnectorPluginDestroy(s *terraform.State) error {
 			continue
 		}
 		deletedCustomConnectorPluginId := rs.Primary.ID
-		req := c.ccpClient.CustomConnectorPluginsConnectV1Api.GetConnectV1CustomConnectorPlugin(c.ccpApiContext(context.Background()), deletedCustomConnectorPluginId)
+		req := c.connectCustomPluginV1Client.CustomConnectorPluginsConnectV1Api.GetConnectV1CustomConnectorPlugin(c.connectCustomPluginV1ApiContext(context.Background()), deletedCustomConnectorPluginId)
 		deletedCustomConnectorPlugin, response, err := req.Execute()
 		if response != nil && (response.StatusCode == http.StatusForbidden || response.StatusCode == http.StatusNotFound) {
 			// v2/service-accounts/{nonExistentCustomConnectorPluginId/deletedCustomConnectorPluginID} returns http.StatusForbidden instead of http.StatusNotFound
