@@ -2,7 +2,7 @@
 
 Welcome to the community-contributed examples directory! This section contains Terraform configurations contributed by the community to help address specific use cases not covered in the official Terraform Provider for Confluent documentation.
 
-If you have an example you’d like to contribute, please see the [Contributing Examples: Process & Guidelines](../../community-contributed-examples/README.md))
+If you have an example you’d like to contribute, please see the [Contributing Examples: Process & Guidelines](../../community-contributed-examples/README.md). 
 
 ### [Cluster Link: Private Enterprise to Public Dedicated Cluster](https://github.com/confluentinc/terraform-community-examples/tree/master/cluster-link-private-to-public)
 
