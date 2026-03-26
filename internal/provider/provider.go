@@ -61,42 +61,42 @@ import (
 )
 
 type Client struct {
-	apiKeysV2Client                   *apikeysv2.APIClient
-	byokV1Client                      *byokv1.APIClient
-	iamV2Client                       *iamv2.APIClient
-	iamIpFilteringV2Client                     *iamipfilteringv2.APIClient
+	apiKeysV2Client                 *apikeysv2.APIClient
+	byokV1Client                    *byokv1.APIClient
+	iamV2Client                     *iamv2.APIClient
+	iamIpFilteringV2Client          *iamipfilteringv2.APIClient
 	iamV1Client                     *iamv1.APIClient
-	certificateAuthorityV2Client                        *certificateauthorityv2.APIClient
-	connectCustomPluginV1Client                       *connectcustompluginv1.APIClient
-	ccpmV1Client                      *ccpmv1.APIClient
-	camV1Client                       *camv1.APIClient
-	cmkV2Client                       *cmkv2.APIClient
-	connectV1Client                   *connectv1.APIClient
-	dataCatalogV1Client                   *datacatalogv1.APIClient
+	certificateAuthorityV2Client    *certificateauthorityv2.APIClient
+	connectCustomPluginV1Client     *connectcustompluginv1.APIClient
+	ccpmV1Client                    *ccpmv1.APIClient
+	camV1Client                     *camv1.APIClient
+	cmkV2Client                     *cmkv2.APIClient
+	connectV1Client                 *connectv1.APIClient
+	dataCatalogV1Client             *datacatalogv1.APIClient
 	catalogRestClientFactory        *CatalogRestClientFactory
-	flinkV2Client                      *flinkv2.APIClient
-	flinkArtifactV1Client                        *flinkartifactv1.APIClient
-	networkingV1Client                       *networkingv1.APIClient
-	networkingAccessPointV1Client            *networkingaccesspointv1.APIClient
-	networkingGatewayV1Client                *networkinggatewayv1.APIClient
-	networkingIpV1Client                     *networkingipv1.APIClient
-	networkingPrivatelinkV1Client                     *networkingprivatelinkv1.APIClient
-	networkingDnsforwarderV1Client                    *networkingdnsforwarderv1.APIClient
-	orgV2Client                       *orgv2.APIClient
-	ksqlV2Client                      *ksqlv2.APIClient
+	flinkV2Client                   *flinkv2.APIClient
+	flinkArtifactV1Client           *flinkartifactv1.APIClient
+	networkingV1Client              *networkingv1.APIClient
+	networkingAccessPointV1Client   *networkingaccesspointv1.APIClient
+	networkingGatewayV1Client       *networkinggatewayv1.APIClient
+	networkingIpV1Client            *networkingipv1.APIClient
+	networkingPrivatelinkV1Client   *networkingprivatelinkv1.APIClient
+	networkingDnsforwarderV1Client  *networkingdnsforwarderv1.APIClient
+	orgV2Client                     *orgv2.APIClient
+	ksqlV2Client                    *ksqlv2.APIClient
 	flinkRestClientFactory          *FlinkRestClientFactory
 	kafkaRestClientFactory          *KafkaRestClientFactory
 	schemaRegistryRestClientFactory *SchemaRegistryRestClientFactory
 	tableflowRestClientFactory      *TableflowRestClientFactory
-	mdsV2Client                       *mdsv2.APIClient
-	identityProviderV2Client                      *identityproviderv2.APIClient
-	kafkaQuotasV1Client                    *kafkaquotasv1.APIClient
-	srcmV3Client                      *srcmv3.APIClient
-	ssoV2Client                       *ssov2.APIClient
-	stsV1Client                       *stsv1.APIClient
-	providerIntegrationV1Client                        *providerintegrationv1.APIClient
-	providerIntegrationV2Client                      *providerintegrationv2.APIClient
-	endpointV1Client                       *endpointv1.APIClient
+	mdsV2Client                     *mdsv2.APIClient
+	identityProviderV2Client        *identityproviderv2.APIClient
+	kafkaQuotasV1Client             *kafkaquotasv1.APIClient
+	srcmV3Client                    *srcmv3.APIClient
+	ssoV2Client                     *ssov2.APIClient
+	stsV1Client                     *stsv1.APIClient
+	providerIntegrationV1Client     *providerintegrationv1.APIClient
+	providerIntegrationV2Client     *providerintegrationv2.APIClient
+	endpointV1Client                *endpointv1.APIClient
 	userAgent                       string
 	catalogRestEndpoint             string
 	cloudApiKey                     string
@@ -705,66 +705,66 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	}
 
 	client := Client{
-		apiKeysV2Client:                   apikeysv2.NewAPIClient(apiKeysV2Cfg),
-		byokV1Client:                      byokv1.NewAPIClient(byokV1Cfg),
-		dataCatalogV1Client:                   datacatalogv1.NewAPIClient(dataCatalogV1Cfg),
-		certificateAuthorityV2Client:                        certificateauthorityv2.NewAPIClient(certificateAuthorityV2Cfg),
-		connectCustomPluginV1Client:                       connectcustompluginv1.NewAPIClient(connectCustomPluginV1Cfg),
-		ccpmV1Client:                      ccpmv1.NewAPIClient(ccpmV1Cfg),
-		camV1Client:                       camv1.NewAPIClient(camV1Cfg),
-		cmkV2Client:                       cmkv2.NewAPIClient(cmkV2Cfg),
-		connectV1Client:                   connectv1.NewAPIClient(connectV1Cfg),
-		flinkArtifactV1Client:                        flinkartifactv1.NewAPIClient(flinkArtifactV1Cfg),
-		flinkV2Client:                      flinkv2.NewAPIClient(flinkV2Cfg),
-		iamV2Client:                       iamv2.NewAPIClient(iamV2Cfg),
-		iamIpFilteringV2Client:                     iamipfilteringv2.NewAPIClient(iamIpFilteringV2Cfg),
+		apiKeysV2Client:                 apikeysv2.NewAPIClient(apiKeysV2Cfg),
+		byokV1Client:                    byokv1.NewAPIClient(byokV1Cfg),
+		dataCatalogV1Client:             datacatalogv1.NewAPIClient(dataCatalogV1Cfg),
+		certificateAuthorityV2Client:    certificateauthorityv2.NewAPIClient(certificateAuthorityV2Cfg),
+		connectCustomPluginV1Client:     connectcustompluginv1.NewAPIClient(connectCustomPluginV1Cfg),
+		ccpmV1Client:                    ccpmv1.NewAPIClient(ccpmV1Cfg),
+		camV1Client:                     camv1.NewAPIClient(camV1Cfg),
+		cmkV2Client:                     cmkv2.NewAPIClient(cmkV2Cfg),
+		connectV1Client:                 connectv1.NewAPIClient(connectV1Cfg),
+		flinkArtifactV1Client:           flinkartifactv1.NewAPIClient(flinkArtifactV1Cfg),
+		flinkV2Client:                   flinkv2.NewAPIClient(flinkV2Cfg),
+		iamV2Client:                     iamv2.NewAPIClient(iamV2Cfg),
+		iamIpFilteringV2Client:          iamipfilteringv2.NewAPIClient(iamIpFilteringV2Cfg),
 		iamV1Client:                     iamv1.NewAPIClient(iamV1Cfg),
-		ksqlV2Client:                      ksqlv2.NewAPIClient(ksqlV2Cfg),
-		networkingV1Client:                       networkingv1.NewAPIClient(networkingV1Cfg),
-		networkingAccessPointV1Client:            networkingaccesspointv1.NewAPIClient(networkingAccessPointV1Cfg),
-		networkingGatewayV1Client:                networkinggatewayv1.NewAPIClient(networkingGatewayV1Cfg),
-		networkingIpV1Client:                     networkingipv1.NewAPIClient(networkingIpV1Cfg),
-		networkingPrivatelinkV1Client:                     networkingprivatelinkv1.NewAPIClient(networkingPrivatelinkV1Cfg),
-		networkingDnsforwarderV1Client:                    networkingdnsforwarderv1.NewAPIClient(networkingDnsforwarderV1Cfg),
-		endpointV1Client:                       endpointv1.NewAPIClient(endpointV1Cfg),
-		identityProviderV2Client:                      identityproviderv2.NewAPIClient(identityProviderV2Cfg),
-		orgV2Client:                       orgv2.NewAPIClient(orgV2Cfg),
-		providerIntegrationV1Client:                        providerintegrationv1.NewAPIClient(providerIntegrationV1Cfg),
-		providerIntegrationV2Client:                      providerintegrationv2.NewAPIClient(providerIntegrationV2Cfg),
-		srcmV3Client:                      srcmv3.NewAPIClient(srcmV3Cfg),
+		ksqlV2Client:                    ksqlv2.NewAPIClient(ksqlV2Cfg),
+		networkingV1Client:              networkingv1.NewAPIClient(networkingV1Cfg),
+		networkingAccessPointV1Client:   networkingaccesspointv1.NewAPIClient(networkingAccessPointV1Cfg),
+		networkingGatewayV1Client:       networkinggatewayv1.NewAPIClient(networkingGatewayV1Cfg),
+		networkingIpV1Client:            networkingipv1.NewAPIClient(networkingIpV1Cfg),
+		networkingPrivatelinkV1Client:   networkingprivatelinkv1.NewAPIClient(networkingPrivatelinkV1Cfg),
+		networkingDnsforwarderV1Client:  networkingdnsforwarderv1.NewAPIClient(networkingDnsforwarderV1Cfg),
+		endpointV1Client:                endpointv1.NewAPIClient(endpointV1Cfg),
+		identityProviderV2Client:        identityproviderv2.NewAPIClient(identityProviderV2Cfg),
+		orgV2Client:                     orgv2.NewAPIClient(orgV2Cfg),
+		providerIntegrationV1Client:     providerintegrationv1.NewAPIClient(providerIntegrationV1Cfg),
+		providerIntegrationV2Client:     providerintegrationv2.NewAPIClient(providerIntegrationV2Cfg),
+		srcmV3Client:                    srcmv3.NewAPIClient(srcmV3Cfg),
 		catalogRestClientFactory:        catalogRestClientFactory,
 		flinkRestClientFactory:          flinkRestClientFactory,
 		kafkaRestClientFactory:          kafkaRestClientFactory,
 		schemaRegistryRestClientFactory: schemaRegistryRestClientFactory,
 		tableflowRestClientFactory:      tableflowRestClientFactory,
-		mdsV2Client:                       mdsv2.NewAPIClient(mdsV2Cfg),
-		kafkaQuotasV1Client:                    kafkaquotasv1.NewAPIClient(kafkaQuotasV1Cfg),
-		ssoV2Client:                       ssov2.NewAPIClient(ssoV2Cfg),
-		stsV1Client:                       secureTokenServiceClient,
+		mdsV2Client:                     mdsv2.NewAPIClient(mdsV2Cfg),
+		kafkaQuotasV1Client:             kafkaquotasv1.NewAPIClient(kafkaQuotasV1Cfg),
+		ssoV2Client:                     ssov2.NewAPIClient(ssoV2Cfg),
+		stsV1Client:                     secureTokenServiceClient,
 		// cli-tfgen:tf-client-literal
-		userAgent:                       userAgent,
-		catalogRestEndpoint:             catalogRestEndpoint,
-		cloudApiKey:                     cloudApiKey,
-		cloudApiSecret:                  cloudApiSecret,
-		kafkaClusterId:                  kafkaClusterId,
-		kafkaApiKey:                     kafkaApiKey,
-		kafkaApiSecret:                  kafkaApiSecret,
-		kafkaRestEndpoint:               kafkaRestEndpoint,
-		schemaRegistryClusterId:         schemaRegistryClusterId,
-		schemaRegistryApiKey:            schemaRegistryApiKey,
-		schemaRegistryApiSecret:         schemaRegistryApiSecret,
-		schemaRegistryRestEndpoint:      schemaRegistryRestEndpoint,
-		flinkPrincipalId:                flinkPrincipalId,
-		flinkOrganizationId:             flinkOrganizationId,
-		flinkEnvironmentId:              flinkEnvironmentId,
-		flinkComputePoolId:              flinkComputePoolId,
-		flinkApiKey:                     flinkApiKey,
-		flinkApiSecret:                  flinkApiSecret,
-		flinkRestEndpoint:               flinkRestEndpoint,
-		tableflowApiKey:                 tableflowApiKey,
-		tableflowApiSecret:              tableflowApiSecret,
-		oauthToken:                      externalOAuthToken,
-		stsToken:                        stsOAuthToken,
+		userAgent:                  userAgent,
+		catalogRestEndpoint:        catalogRestEndpoint,
+		cloudApiKey:                cloudApiKey,
+		cloudApiSecret:             cloudApiSecret,
+		kafkaClusterId:             kafkaClusterId,
+		kafkaApiKey:                kafkaApiKey,
+		kafkaApiSecret:             kafkaApiSecret,
+		kafkaRestEndpoint:          kafkaRestEndpoint,
+		schemaRegistryClusterId:    schemaRegistryClusterId,
+		schemaRegistryApiKey:       schemaRegistryApiKey,
+		schemaRegistryApiSecret:    schemaRegistryApiSecret,
+		schemaRegistryRestEndpoint: schemaRegistryRestEndpoint,
+		flinkPrincipalId:           flinkPrincipalId,
+		flinkOrganizationId:        flinkOrganizationId,
+		flinkEnvironmentId:         flinkEnvironmentId,
+		flinkComputePoolId:         flinkComputePoolId,
+		flinkApiKey:                flinkApiKey,
+		flinkApiSecret:             flinkApiSecret,
+		flinkRestEndpoint:          flinkRestEndpoint,
+		tableflowApiKey:            tableflowApiKey,
+		tableflowApiSecret:         tableflowApiSecret,
+		oauthToken:                 externalOAuthToken,
+		stsToken:                   stsOAuthToken,
 
 		// For simplicity, treat 3 (for Kafka), 4 (for SR), 4 (for catalog), 7 (for Flink), and 2 (for Tableflow) variables as a "single" one
 		isKafkaMetadataSet:           resourceMetadataFlags.isKafkaMetadataSet,

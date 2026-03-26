@@ -3,7 +3,6 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/walkerus/go-wiremock"
 	"net/http"
 	"os"
 	"regexp"
@@ -11,6 +10,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/walkerus/go-wiremock"
 )
 
 func TestAccConnectArtifactAzure(t *testing.T) {

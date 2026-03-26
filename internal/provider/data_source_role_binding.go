@@ -18,10 +18,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	mdsv2 "github.com/confluentinc/ccloud-sdk-go-v2/mds/v2"
+
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+
+	mdsv2 "github.com/confluentinc/ccloud-sdk-go-v2/mds/v2"
 )
 
 func roleBindingDataSource() *schema.Resource {

@@ -17,13 +17,13 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/walkerus/go-wiremock"
 )
 
 var contentTypeJSONHeader = map[string]string{"Content-Type": "application/json"}

@@ -21,9 +21,10 @@ import (
 	"strings"
 	"time"
 
-	v3 "github.com/confluentinc/ccloud-sdk-go-v2/srcm/v3"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+
+	srcmv3 "github.com/confluentinc/ccloud-sdk-go-v2/srcm/v3"
 )
 
 func waitForCreatedKafkaApiKeyToSync(ctx context.Context, c *KafkaRestClient, isAcceptanceTestMode bool) error {
@@ -999,7 +1000,7 @@ func anySchemaRegistryClusterProvisionStatus(ctx context.Context, c *Client, env
 				// Return non-nil result to avoid triggering "not found" logic in StateChangeConf.
 				// When result is nil, WaitForStateContext treats it as a missing resource,
 				// causing endless polling.
-				return v3.NewSrcmV3Cluster(), stateProvisioned, nil
+				return srcmv3.NewSrcmV3Cluster(), stateProvisioned, nil
 			}
 
 			tflog.Warn(ctx, fmt.Sprintf("Error reading Schema Registry Clusters in environment %q: %s", environmentId, createDescriptiveError(err)))

@@ -167,4 +167,3 @@ func testAccCheckGatewayLiveConfig(endpoint, gatewayResourceLabel, gatewayDispla
 	}
 	`, endpoint, apiKey, apiSecret, gatewayResourceLabel, gatewayDisplayName, environmentId, awsRegion)
 }
-

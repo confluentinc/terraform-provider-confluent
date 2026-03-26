@@ -18,15 +18,17 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	sr "github.com/confluentinc/ccloud-sdk-go-v2/schema-registry/v1"
+	"net/http"
+	"regexp"
+	"strings"
+
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"net/http"
-	"regexp"
-	"strings"
+
+	schemaregistryv1 "github.com/confluentinc/ccloud-sdk-go-v2/schema-registry/v1"
 )
 
 var acceptedCompatibilityLevels = []string{compatibilityLevelBackward, compatibilityLevelBackwardTransitive,
@@ -103,7 +105,7 @@ func subjectConfigCreate(ctx context.Context, d *schema.ResourceData, meta inter
 	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 	subjectName := d.Get(paramSubjectName).(string)
 
-	createConfigRequest := sr.NewConfigUpdateRequest()
+	createConfigRequest := schemaregistryv1.NewConfigUpdateRequest()
 	hasConfigToUpdate := false
 
 	if compatibilityLevel, ok := d.GetOk(paramCompatibilityLevel); ok {
@@ -302,7 +304,7 @@ func subjectConfigUpdate(ctx context.Context, d *schema.ResourceData, meta inter
 		return diag.Errorf("error updating Subject Config %q: only %q, %q, %q, %q and %q blocks can be updated for Subject Config", d.Id(), paramCredentials, paramCompatibilityLevel, paramCompatibilityGroup, paramNormalize, paramAlias)
 	}
 	if d.HasChange(paramCompatibilityLevel) || d.HasChange(paramCompatibilityGroup) || d.HasChange(paramNormalize) || d.HasChange(paramAlias) {
-		updateConfigRequest := sr.NewConfigUpdateRequest()
+		updateConfigRequest := schemaregistryv1.NewConfigUpdateRequest()
 
 		if compatibilityLevel := d.Get(paramCompatibilityLevel).(string); compatibilityLevel != "" {
 			updateConfigRequest.SetCompatibility(compatibilityLevel)
@@ -347,6 +349,6 @@ func subjectConfigUpdate(ctx context.Context, d *schema.ResourceData, meta inter
 	return subjectConfigRead(ctx, d, meta)
 }
 
-func executeSubjectConfigUpdate(ctx context.Context, c *SchemaRegistryRestClient, requestData *sr.ConfigUpdateRequest, subjectName string) (sr.ConfigUpdateRequest, *http.Response, error) {
+func executeSubjectConfigUpdate(ctx context.Context, c *SchemaRegistryRestClient, requestData *schemaregistryv1.ConfigUpdateRequest, subjectName string) (schemaregistryv1.ConfigUpdateRequest, *http.Response, error) {
 	return c.apiClient.ConfigV1Api.UpdateSubjectLevelConfig(c.apiContext(ctx), subjectName).ConfigUpdateRequest(*requestData).Execute()
 }

@@ -202,4 +202,4 @@ func testAccCheckGroupMappingUpdateLiveConfig(endpoint, groupMappingResourceLabe
 		description  = "Updated live test group mapping for devops team"
 	}
 	`, endpoint, apiKey, apiSecret, groupMappingResourceLabel, groupMappingDisplayName)
-} 
+}

@@ -17,11 +17,12 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
 	"testing"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/walkerus/go-wiremock"
 )
 
 func TestAccPrivateLinkAttachmentConnectionAzure(t *testing.T) {

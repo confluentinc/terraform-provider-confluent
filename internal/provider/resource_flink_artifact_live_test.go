@@ -75,9 +75,9 @@ func TestAccFlinkArtifactAWSLive(t *testing.T) {
 				),
 			},
 			{
-				ResourceName:      fmt.Sprintf("confluent_flink_artifact.%s", artifactResourceLabel),
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            fmt.Sprintf("confluent_flink_artifact.%s", artifactResourceLabel),
+				ImportState:             true,
+				ImportStateVerify:       true,
 				ImportStateVerifyIgnore: []string{"artifact_file"},
 				ImportStateIdFunc: func(state *terraform.State) (string, error) {
 					resources := state.RootModule().Resources
@@ -138,9 +138,9 @@ func TestAccFlinkArtifactAzureLive(t *testing.T) {
 				),
 			},
 			{
-				ResourceName:      fmt.Sprintf("confluent_flink_artifact.%s", artifactResourceLabel),
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            fmt.Sprintf("confluent_flink_artifact.%s", artifactResourceLabel),
+				ImportState:             true,
+				ImportStateVerify:       true,
 				ImportStateVerifyIgnore: []string{"artifact_file"},
 				ImportStateIdFunc: func(state *terraform.State) (string, error) {
 					resources := state.RootModule().Resources
@@ -223,4 +223,3 @@ func testAccCheckFlinkArtifactLiveExists(n string) resource.TestCheckFunc {
 		return nil
 	}
 }
-

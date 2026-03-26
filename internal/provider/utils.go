@@ -32,6 +32,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/dghubble/sling"
+	"github.com/google/uuid"
+	"github.com/hashicorp/go-cty/cty"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+
 	apikeysv2 "github.com/confluentinc/ccloud-sdk-go-v2/apikeys/v2"
 	byokv1 "github.com/confluentinc/ccloud-sdk-go-v2/byok/v1"
 	camv1 "github.com/confluentinc/ccloud-sdk-go-v2/cam/v1"
@@ -43,7 +50,7 @@ import (
 	datacatalogv1 "github.com/confluentinc/ccloud-sdk-go-v2/data-catalog/v1"
 	endpointv1 "github.com/confluentinc/ccloud-sdk-go-v2/endpoint/v1"
 	flinkartifactv1 "github.com/confluentinc/ccloud-sdk-go-v2/flink-artifact/v1"
-	fgb "github.com/confluentinc/ccloud-sdk-go-v2/flink-gateway/v1"
+	flinkgatewayv1 "github.com/confluentinc/ccloud-sdk-go-v2/flink-gateway/v1"
 	flinkv2 "github.com/confluentinc/ccloud-sdk-go-v2/flink/v2"
 	iamipfilteringv2 "github.com/confluentinc/ccloud-sdk-go-v2/iam-ip-filtering/v2"
 	iamv1 "github.com/confluentinc/ccloud-sdk-go-v2/iam/v1"
@@ -62,16 +69,10 @@ import (
 	orgv2 "github.com/confluentinc/ccloud-sdk-go-v2/org/v2"
 	providerintegrationv1 "github.com/confluentinc/ccloud-sdk-go-v2/provider-integration/v1"
 	providerintegrationv2 "github.com/confluentinc/ccloud-sdk-go-v2/provider-integration/v2"
-	schemaregistry "github.com/confluentinc/ccloud-sdk-go-v2/schema-registry/v1"
+	schemaregistryv1 "github.com/confluentinc/ccloud-sdk-go-v2/schema-registry/v1"
 	srcmv3 "github.com/confluentinc/ccloud-sdk-go-v2/srcm/v3"
 	ssov2 "github.com/confluentinc/ccloud-sdk-go-v2/sso/v2"
-	tableflow "github.com/confluentinc/ccloud-sdk-go-v2/tableflow/v1"
-	"github.com/dghubble/sling"
-	"github.com/google/uuid"
-	"github.com/hashicorp/go-cty/cty"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	tableflowv1 "github.com/confluentinc/ccloud-sdk-go-v2/tableflow/v1"
 )
 
 func (c *Client) apiKeysV2ApiContext(ctx context.Context) context.Context {
@@ -700,7 +701,7 @@ type KafkaRestClient struct {
 }
 
 type SchemaRegistryRestClient struct {
-	apiClient                    *schemaregistry.APIClient
+	apiClient                    *schemaregistryv1.APIClient
 	externalAccessToken          *OAuthToken
 	clusterId                    string
 	clusterApiKey                string
@@ -720,7 +721,7 @@ type CatalogRestClient struct {
 }
 
 type FlinkRestClient struct {
-	apiClient                    *fgb.APIClient
+	apiClient                    *flinkgatewayv1.APIClient
 	externalAccessToken          *OAuthToken
 	organizationId               string
 	environmentId                string
@@ -733,7 +734,7 @@ type FlinkRestClient struct {
 }
 
 type TableflowRestClient struct {
-	apiClient                    *tableflow.APIClient
+	apiClient                    *tableflowv1.APIClient
 	oauthToken                   *OAuthToken
 	stsToken                     *STSToken
 	tableflowApiKey              string
@@ -771,11 +772,11 @@ func (c *SchemaRegistryRestClient) apiContext(ctx context.Context) context.Conte
 			tflog.Error(ctx, fmt.Sprintf("Failed to get OAuth token for Schema Registry rest client: %v", err))
 		}
 		c.externalAccessToken = token
-		return context.WithValue(ctx, schemaregistry.ContextAccessToken, c.externalAccessToken.AccessToken)
+		return context.WithValue(ctx, schemaregistryv1.ContextAccessToken, c.externalAccessToken.AccessToken)
 	}
 
 	if c.clusterApiKey != "" && c.clusterApiSecret != "" {
-		return context.WithValue(ctx, schemaregistry.ContextBasicAuth, schemaregistry.BasicAuth{
+		return context.WithValue(ctx, schemaregistryv1.ContextBasicAuth, schemaregistryv1.BasicAuth{
 			UserName: c.clusterApiKey,
 			Password: c.clusterApiSecret,
 		})
@@ -836,11 +837,11 @@ func (c *FlinkRestClient) apiContext(ctx context.Context) context.Context {
 			tflog.Error(ctx, fmt.Sprintf("Failed to get OAuth token for Flink rest client: %v", err))
 		}
 		c.externalAccessToken = token
-		return context.WithValue(ctx, fgb.ContextAccessToken, c.externalAccessToken.AccessToken)
+		return context.WithValue(ctx, flinkgatewayv1.ContextAccessToken, c.externalAccessToken.AccessToken)
 	}
 
 	if c.flinkApiKey != "" && c.flinkApiSecret != "" {
-		return context.WithValue(ctx, fgb.ContextBasicAuth, fgb.BasicAuth{
+		return context.WithValue(ctx, flinkgatewayv1.ContextBasicAuth, flinkgatewayv1.BasicAuth{
 			UserName: c.flinkApiKey,
 			Password: c.flinkApiSecret,
 		})
@@ -853,7 +854,7 @@ func (c *FlinkRestClient) apiContext(ctx context.Context) context.Context {
 // TODO: Tableflow APIs don't support OAuth at this moment, following up in CLI-3534 for OAuth GA
 func (c *TableflowRestClient) apiContext(ctx context.Context) context.Context {
 	if c.tableflowApiKey != "" && c.tableflowApiSecret != "" {
-		return context.WithValue(ctx, tableflow.ContextBasicAuth, tableflow.BasicAuth{
+		return context.WithValue(ctx, tableflowv1.ContextBasicAuth, tableflowv1.BasicAuth{
 			UserName: c.tableflowApiKey,
 			Password: c.tableflowApiSecret,
 		})

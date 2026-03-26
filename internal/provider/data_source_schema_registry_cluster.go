@@ -18,11 +18,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	v3 "github.com/confluentinc/ccloud-sdk-go-v2/srcm/v3"
+	"net/http"
+
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"net/http"
+
+	srcmv3 "github.com/confluentinc/ccloud-sdk-go-v2/srcm/v3"
 )
 
 var acceptedBillingPackages = []string{billingPackageEssentials, billingPackageAdvanced}
@@ -155,7 +157,7 @@ func schemaRegistryDataSourceReadUsingDisplayName(ctx context.Context, d *schema
 	return diag.Errorf("error reading Schema Registry Cluster: SchemaRegistry Cluster with %q=%q was not found", paramDisplayName, displayName)
 }
 
-func setSchemaRegistryClusterAttributes(d *schema.ResourceData, schemaRegistryCluster v3.SrcmV3Cluster) (*schema.ResourceData, error) {
+func setSchemaRegistryClusterAttributes(d *schema.ResourceData, schemaRegistryCluster srcmv3.SrcmV3Cluster) (*schema.ResourceData, error) {
 	if err := d.Set(paramPackage, schemaRegistryCluster.Spec.GetPackage()); err != nil {
 		return nil, err
 	}
@@ -222,7 +224,7 @@ func schemaRegistryDataSourceReadUsingId(ctx context.Context, d *schema.Resource
 	return nil
 }
 
-func orgHasMultipleSchemaRegistryClustersWithTargetDisplayName(clusters []v3.SrcmV3Cluster, displayName string) bool {
+func orgHasMultipleSchemaRegistryClustersWithTargetDisplayName(clusters []srcmv3.SrcmV3Cluster, displayName string) bool {
 	var numberOfClustersWithTargetDisplayName = 0
 	for _, cluster := range clusters {
 		if cluster.Spec.GetDisplayName() == displayName {
@@ -232,8 +234,8 @@ func orgHasMultipleSchemaRegistryClustersWithTargetDisplayName(clusters []v3.Src
 	return numberOfClustersWithTargetDisplayName > 1
 }
 
-func loadSchemaRegistryClusters(ctx context.Context, c *Client, environmentId string) ([]v3.SrcmV3Cluster, error) {
-	clusters := make([]v3.SrcmV3Cluster, 0)
+func loadSchemaRegistryClusters(ctx context.Context, c *Client, environmentId string) ([]srcmv3.SrcmV3Cluster, error) {
+	clusters := make([]srcmv3.SrcmV3Cluster, 0)
 
 	allClustersAreCollected := false
 	pageToken := ""
@@ -264,7 +266,7 @@ func loadSchemaRegistryClusters(ctx context.Context, c *Client, environmentId st
 	return clusters, nil
 }
 
-func executeListSchemaRegistryClusters(ctx context.Context, c *Client, environmentId, pageToken string) (v3.SrcmV3ClusterList, *http.Response, error) {
+func executeListSchemaRegistryClusters(ctx context.Context, c *Client, environmentId, pageToken string) (srcmv3.SrcmV3ClusterList, *http.Response, error) {
 	if pageToken != "" {
 		return c.srcmV3Client.ClustersSrcmV3Api.ListSrcmV3Clusters(c.srcmV3ApiContext(ctx)).Environment(environmentId).PageSize(listSchemaRegistryClustersPageSize).PageToken(pageToken).Execute()
 	} else {
@@ -272,7 +274,7 @@ func executeListSchemaRegistryClusters(ctx context.Context, c *Client, environme
 	}
 }
 
-func executeSchemaRegistryClusterRead(ctx context.Context, c *Client, environmentId string, schemaRegistryClusterId string) (v3.SrcmV3Cluster, *http.Response, error) {
+func executeSchemaRegistryClusterRead(ctx context.Context, c *Client, environmentId string, schemaRegistryClusterId string) (srcmv3.SrcmV3Cluster, *http.Response, error) {
 	req := c.srcmV3Client.ClustersSrcmV3Api.GetSrcmV3Cluster(c.srcmV3ApiContext(ctx), schemaRegistryClusterId).Environment(environmentId)
 	return req.Execute()
 }

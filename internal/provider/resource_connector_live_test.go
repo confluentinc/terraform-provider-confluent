@@ -291,4 +291,3 @@ func testAccCheckConnectorUpdateLiveConfigWithoutOffsets(endpoint, connectorReso
 	}
 	`, endpoint, apiKey, apiSecret, kafkaClusterId, topicName, kafkaRestEndpoint, kafkaApiKey, kafkaApiSecret, connectorResourceLabel, kafkaClusterId, connectorName, kafkaApiKey, kafkaApiSecret)
 }
-

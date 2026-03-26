@@ -18,12 +18,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	ssov2 "github.com/confluentinc/ccloud-sdk-go-v2/sso/v2"
+	"net/http"
+
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"net/http"
+
+	ssov2 "github.com/confluentinc/ccloud-sdk-go-v2/sso/v2"
 )
 
 func groupMappingResource() *schema.Resource {
