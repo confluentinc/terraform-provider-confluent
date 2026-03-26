@@ -18,7 +18,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	sr "github.com/confluentinc/ccloud-sdk-go-v2/schema-registry/v1"
+	schemaregistryv1 "github.com/confluentinc/ccloud-sdk-go-v2/schema-registry/v1"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
@@ -94,7 +94,7 @@ func subjectModeCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 		compatibilityLevel := d.Get(paramMode).(string)
 		force := d.Get(paramForce).(bool)
 
-		createModeRequest := sr.NewModeUpdateRequest()
+		createModeRequest := schemaregistryv1.NewModeUpdateRequest()
 		createModeRequest.SetMode(compatibilityLevel)
 		createModeRequestJson, err := json.Marshal(createModeRequest)
 		if err != nil {
@@ -273,7 +273,7 @@ func subjectModeUpdate(ctx context.Context, d *schema.ResourceData, meta interfa
 	if d.HasChange(paramMode) {
 		updatedMode := d.Get(paramMode).(string)
 		force := d.Get(paramForce).(bool)
-		updateModeRequest := sr.NewModeUpdateRequest()
+		updateModeRequest := schemaregistryv1.NewModeUpdateRequest()
 		updateModeRequest.SetMode(updatedMode)
 		restEndpoint, err := extractSchemaRegistryRestEndpoint(meta.(*Client), d, false)
 		if err != nil {
@@ -305,6 +305,6 @@ func subjectModeUpdate(ctx context.Context, d *schema.ResourceData, meta interfa
 	return subjectModeRead(ctx, d, meta)
 }
 
-func executeSubjectConfigModeUpdate(ctx context.Context, c *SchemaRegistryRestClient, requestData *sr.ModeUpdateRequest, subjectName string, force bool) (sr.ModeUpdateRequest, *http.Response, error) {
+func executeSubjectConfigModeUpdate(ctx context.Context, c *SchemaRegistryRestClient, requestData *schemaregistryv1.ModeUpdateRequest, subjectName string, force bool) (schemaregistryv1.ModeUpdateRequest, *http.Response, error) {
 	return c.apiClient.ModesV1Api.UpdateMode(c.apiContext(ctx), subjectName).ModeUpdateRequest(*requestData).Force(force).Execute()
 }

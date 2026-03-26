@@ -18,7 +18,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	sr "github.com/confluentinc/ccloud-sdk-go-v2/schema-registry/v1"
+	schemaregistryv1 "github.com/confluentinc/ccloud-sdk-go-v2/schema-registry/v1"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
@@ -112,7 +112,7 @@ func schemaRegistryKekCreate(ctx context.Context, d *schema.ResourceData, meta i
 	kekId := createKekId(clusterId, kekName)
 
 	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
-	kekRequest := sr.CreateKekRequest{}
+	kekRequest := schemaregistryv1.CreateKekRequest{}
 	kekRequest.SetName(kekName)
 	kekRequest.SetKmsType(d.Get(paramKmsType).(string))
 	kekRequest.SetKmsKeyId(d.Get(paramKmsKeyId).(string))
@@ -275,7 +275,7 @@ func schemaRegistryKekUpdate(ctx context.Context, d *schema.ResourceData, meta i
 	kekId := createKekId(clusterId, kekName)
 
 	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
-	kekRequest := sr.UpdateKekRequest{}
+	kekRequest := schemaregistryv1.UpdateKekRequest{}
 	kekRequest.SetDoc(d.Get(paramDoc).(string))
 
 	properties := convertToStringStringMap(d.Get(paramProperties).(map[string]interface{}))
@@ -325,7 +325,7 @@ func schemaRegistryKekImport(ctx context.Context, d *schema.ResourceData, meta i
 	return []*schema.ResourceData{d}, nil
 }
 
-func setKekAttributes(d *schema.ResourceData, clusterId string, kek sr.Kek) (*schema.ResourceData, error) {
+func setKekAttributes(d *schema.ResourceData, clusterId string, kek schemaregistryv1.Kek) (*schema.ResourceData, error) {
 	d.SetId(createKekId(clusterId, kek.GetName()))
 	if err := d.Set(paramName, kek.GetName()); err != nil {
 		return nil, err

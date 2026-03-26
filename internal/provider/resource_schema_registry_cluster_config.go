@@ -18,7 +18,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	sr "github.com/confluentinc/ccloud-sdk-go-v2/schema-registry/v1"
+	schemaregistryv1 "github.com/confluentinc/ccloud-sdk-go-v2/schema-registry/v1"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
@@ -84,7 +84,7 @@ func schemaRegistryClusterConfigCreate(ctx context.Context, d *schema.ResourceDa
 	}
 	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 
-	createConfigRequest := sr.NewConfigUpdateRequest()
+	createConfigRequest := schemaregistryv1.NewConfigUpdateRequest()
 	hasConfigToUpdate := false
 
 	if compatibilityLevel, ok := d.GetOk(paramCompatibilityLevel); ok {
@@ -240,7 +240,7 @@ func schemaRegistryClusterConfigUpdate(ctx context.Context, d *schema.ResourceDa
 		return diag.Errorf("error updating Schema Registry Cluster Config %q: only %q, %q, %q and %q blocks can be updated for Schema Registry Cluster Config", d.Id(), paramCredentials, paramCompatibilityLevel, paramCompatibilityGroup, paramNormalize)
 	}
 	if d.HasChange(paramCompatibilityLevel) || d.HasChange(paramCompatibilityGroup) || d.HasChange(paramNormalize) {
-		updateConfigRequest := sr.NewConfigUpdateRequest()
+		updateConfigRequest := schemaregistryv1.NewConfigUpdateRequest()
 
 		if compatibilityLevel := d.Get(paramCompatibilityLevel).(string); compatibilityLevel != "" {
 			updateConfigRequest.SetCompatibility(compatibilityLevel)
@@ -281,6 +281,6 @@ func schemaRegistryClusterConfigUpdate(ctx context.Context, d *schema.ResourceDa
 	return schemaRegistryClusterConfigRead(ctx, d, meta)
 }
 
-func executeSchemaRegistryClusterConfigUpdate(ctx context.Context, c *SchemaRegistryRestClient, requestData *sr.ConfigUpdateRequest) (sr.ConfigUpdateRequest, *http.Response, error) {
+func executeSchemaRegistryClusterConfigUpdate(ctx context.Context, c *SchemaRegistryRestClient, requestData *schemaregistryv1.ConfigUpdateRequest) (schemaregistryv1.ConfigUpdateRequest, *http.Response, error) {
 	return c.apiClient.ConfigV1Api.UpdateTopLevelConfig(c.apiContext(ctx)).ConfigUpdateRequest(*requestData).Execute()
 }
