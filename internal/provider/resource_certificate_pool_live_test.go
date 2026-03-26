@@ -101,7 +101,7 @@ func TestAccCertificatePoolLive(t *testing.T) {
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_certificate_pool.%s", poolResourceLabel), "display_name", poolUpdatedDisplayName),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_certificate_pool.%s", poolResourceLabel), "description", "Updated Certificate Pool description"),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_certificate_pool.%s", poolResourceLabel), "external_identifier", "CN"),
-					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_certificate_pool.%s", poolResourceLabel), "filter", "CN=='test-certificateauthority.confluent.io'"),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_certificate_pool.%s", poolResourceLabel), "filter", "CN=='test-ca.confluent.io'"),
 				),
 			},
 			{
@@ -212,7 +212,7 @@ func testAccCheckCertificatePoolUpdateLiveConfig(endpoint, caResourceLabel, pool
 		display_name = "%s"
 		description = "Updated Certificate Pool description"
 		external_identifier = "CN"
-		filter = "CN=='test-certificateauthority.confluent.io'"
+		filter = "CN=='test-ca.confluent.io'"
 	}
 	`, endpoint, apiKey, apiSecret, poolResourceLabel, certificateAuthorityId, poolDisplayName)
 	}
@@ -241,7 +241,7 @@ EOT
 		display_name = "%s"
 		description = "Updated Certificate Pool description"
 		external_identifier = "CN"
-		filter = "CN=='test-certificateauthority.confluent.io'"
+		filter = "CN=='test-ca.confluent.io'"
 	}
 	`, endpoint, apiKey, apiSecret, caResourceLabel, caDisplayName, certChain, poolResourceLabel, caResourceLabel, poolDisplayName)
 }
@@ -261,4 +261,3 @@ func testAccCheckCertificatePoolLiveExists(n string) resource.TestCheckFunc {
 		return nil
 	}
 }
-
