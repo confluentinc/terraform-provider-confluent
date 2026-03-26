@@ -18,7 +18,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	sr "github.com/confluentinc/ccloud-sdk-go-v2/schema-registry/v1"
+	schemaregistryv1 "github.com/confluentinc/ccloud-sdk-go-v2/schema-registry/v1"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
@@ -115,7 +115,7 @@ func schemaRegistryDekCreate(ctx context.Context, d *schema.ResourceData, meta i
 	dekId := createDekId(clusterId, kekName, subject, algorithm, int32(version))
 
 	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
-	dekRequest := sr.CreateDekRequest{}
+	dekRequest := schemaregistryv1.CreateDekRequest{}
 	dekRequest.SetSubject(subject)
 	dekRequest.SetVersion(int32(version))
 	dekRequest.SetAlgorithm(algorithm)
@@ -293,7 +293,7 @@ func schemaRegistryDekImport(ctx context.Context, d *schema.ResourceData, meta i
 	return []*schema.ResourceData{d}, nil
 }
 
-func setDekAttributes(d *schema.ResourceData, clusterId string, dek sr.Dek) (*schema.ResourceData, error) {
+func setDekAttributes(d *schema.ResourceData, clusterId string, dek schemaregistryv1.Dek) (*schema.ResourceData, error) {
 	d.SetId(createDekId(clusterId, dek.GetKekName(), dek.GetSubject(), dek.GetAlgorithm(), dek.GetVersion()))
 	if err := d.Set(paramKekName, dek.GetKekName()); err != nil {
 		return nil, err
