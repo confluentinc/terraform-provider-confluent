@@ -108,9 +108,9 @@ func TestAccTableflowTopicLive(t *testing.T) {
 				),
 			},
 			{
-				ResourceName:      fmt.Sprintf("confluent_tableflow_topic.%s", tableflowTopicResourceLabel),
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            fmt.Sprintf("confluent_tableflow_topic.%s", tableflowTopicResourceLabel),
+				ImportState:             true,
+				ImportStateVerify:       true,
 				ImportStateVerifyIgnore: []string{"credentials"},
 				ImportStateIdFunc: func(state *terraform.State) (string, error) {
 					resources := state.RootModule().Resources
@@ -131,9 +131,9 @@ func TestAccTableflowTopicLive(t *testing.T) {
 				),
 			},
 			{
-				ResourceName:      fmt.Sprintf("confluent_tableflow_topic.%s", tableflowTopicResourceLabel),
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            fmt.Sprintf("confluent_tableflow_topic.%s", tableflowTopicResourceLabel),
+				ImportState:             true,
+				ImportStateVerify:       true,
 				ImportStateVerifyIgnore: []string{"credentials"},
 				ImportStateIdFunc: func(state *terraform.State) (string, error) {
 					resources := state.RootModule().Resources
@@ -273,4 +273,3 @@ func testAccCheckTableflowTopicLiveConfigUpdate(endpoint, kafkaTopicResourceLabe
 	}
 	`, endpoint, apiKey, apiSecret, kafkaTopicResourceLabel, topicName, kafkaRestEndpoint, kafkaClusterId, kafkaApiKey, kafkaApiSecret, kafkaTopicResourceLabel, tableflowTopicResourceLabel, topicName, environmentId, kafkaClusterId, tableflowApiKey, tableflowApiSecret)
 }
-

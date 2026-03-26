@@ -23,10 +23,9 @@ import (
 	"os"
 	"testing"
 
-	"github.com/walkerus/go-wiremock"
-
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/walkerus/go-wiremock"
 )
 
 func TestAccKafkaApiKey(t *testing.T) {

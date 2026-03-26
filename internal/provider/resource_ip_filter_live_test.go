@@ -284,4 +284,3 @@ func testAccCheckIPFilterLiveExists(n string) resource.TestCheckFunc {
 		return nil
 	}
 }
-

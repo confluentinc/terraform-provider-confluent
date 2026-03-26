@@ -22,11 +22,12 @@ import (
 	"regexp"
 	"strings"
 
-	v3 "github.com/confluentinc/ccloud-sdk-go-v2/kafkarest/v3"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+
+	v3 "github.com/confluentinc/ccloud-sdk-go-v2/kafkarest/v3"
 )
 
 var acceptedKafkaMirrorTopicStates = []string{stateActive, statePaused, stateFailedOver, statePromoted}

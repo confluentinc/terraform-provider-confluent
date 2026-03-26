@@ -18,16 +18,18 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	schemaregistryv1 "github.com/confluentinc/ccloud-sdk-go-v2/schema-registry/v1"
+	"net/http"
+	"regexp"
+	"strconv"
+	"strings"
+
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"net/http"
-	"regexp"
-	"strconv"
-	"strings"
+
+	schemaregistryv1 "github.com/confluentinc/ccloud-sdk-go-v2/schema-registry/v1"
 )
 
 var acceptedDekAlgorithm = []string{"AES128_GCM", "AES256_GCM", "AES256_SIV"}

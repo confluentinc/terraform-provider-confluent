@@ -32,6 +32,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/dghubble/sling"
+	"github.com/google/uuid"
+	"github.com/hashicorp/go-cty/cty"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+
 	apikeysv2 "github.com/confluentinc/ccloud-sdk-go-v2/apikeys/v2"
 	byokv1 "github.com/confluentinc/ccloud-sdk-go-v2/byok/v1"
 	camv1 "github.com/confluentinc/ccloud-sdk-go-v2/cam/v1"
@@ -66,12 +73,6 @@ import (
 	srcmv3 "github.com/confluentinc/ccloud-sdk-go-v2/srcm/v3"
 	ssov2 "github.com/confluentinc/ccloud-sdk-go-v2/sso/v2"
 	tableflowv1 "github.com/confluentinc/ccloud-sdk-go-v2/tableflow/v1"
-	"github.com/dghubble/sling"
-	"github.com/google/uuid"
-	"github.com/hashicorp/go-cty/cty"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func (c *Client) apiKeysV2ApiContext(ctx context.Context) context.Context {

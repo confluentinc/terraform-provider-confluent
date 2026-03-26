@@ -17,11 +17,12 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
 	"testing"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/walkerus/go-wiremock"
 )
 
 func TestAccDataSourceNetworkLinkService(t *testing.T) {
@@ -60,7 +61,7 @@ func TestAccDataSourceNetworkLinkService(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		))
-	
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,

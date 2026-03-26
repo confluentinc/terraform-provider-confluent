@@ -18,13 +18,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	networkingprivatelinkv1 "github.com/confluentinc/ccloud-sdk-go-v2/networking-privatelink/v1"
+	"net/http"
+	"strings"
+
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"net/http"
-	"strings"
+
+	networkingprivatelinkv1 "github.com/confluentinc/ccloud-sdk-go-v2/networking-privatelink/v1"
 )
 
 var acceptedPrivateLinkAttachmentConnectionKinds = []string{paramAws, paramAzure, paramGcp}

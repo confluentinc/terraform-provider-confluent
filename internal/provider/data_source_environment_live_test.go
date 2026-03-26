@@ -64,7 +64,7 @@ func TestAccEnvironmentDataSourceLive(t *testing.T) {
 					resource.TestCheckResourceAttrSet(fmt.Sprintf("confluent_environment.%s", environmentResourceLabel), "id"),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_environment.%s", environmentResourceLabel), "display_name", environmentDisplayName),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_environment.%s", environmentResourceLabel), "stream_governance.0.package", "ESSENTIALS"),
-					
+
 					// Check the data source can find it
 					resource.TestCheckResourceAttrPair(
 						fmt.Sprintf("data.confluent_environment.%s", environmentDataSourceLabel), "id",
@@ -103,4 +103,4 @@ func testAccCheckEnvironmentDataSourceLiveConfig(endpoint, environmentResourceLa
 		id = confluent_environment.%s.id
 	}
 	`, endpoint, apiKey, apiSecret, environmentResourceLabel, environmentDisplayName, environmentDataSourceLabel, environmentResourceLabel)
-} 
+}

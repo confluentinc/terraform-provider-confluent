@@ -280,4 +280,4 @@ func testAccCheckClusterLinkUpdateLiveConfig(endpoint, clusterLinkResourceLabel,
 		}
 	}
 	`, endpoint, apiKey, apiSecret, standardClusterId, clusterLinkResourceLabel, linkName, standardClusterId, standardApiKey, standardApiSecret, dedicatedClusterId, dedicatedRestEndpoint, dedicatedApiKey, dedicatedApiSecret)
-} 
+}
