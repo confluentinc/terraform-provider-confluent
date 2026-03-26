@@ -24,7 +24,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
-	v2 "github.com/confluentinc/ccloud-sdk-go-v2/cmk/v2"
+	cmkv2 "github.com/confluentinc/ccloud-sdk-go-v2/cmk/v2"
 )
 
 func kafkaClustersDataSource() *schema.Resource {
@@ -148,7 +148,7 @@ func kafkaClustersDataSourceRead(ctx context.Context, d *schema.ResourceData, me
 	return nil
 }
 
-func populateKafkaClusterResult(cluster v2.CmkV2Cluster) (map[string]interface{}, error) {
+func populateKafkaClusterResult(cluster cmkv2.CmkV2Cluster) (map[string]interface{}, error) {
 	env := make([]interface{}, 1)
 	env[0] = map[string]interface{}{
 		paramId: cluster.Spec.Environment.GetId(),

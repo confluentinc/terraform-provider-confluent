@@ -24,7 +24,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
-	v2 "github.com/confluentinc/ccloud-sdk-go-v2/iam/v2"
+	iamv2 "github.com/confluentinc/ccloud-sdk-go-v2/iam/v2"
 )
 
 func userDataSource() *schema.Resource {
@@ -128,8 +128,8 @@ func userDataSourceReadUsingEmail(ctx context.Context, d *schema.ResourceData, m
 	return diag.Errorf("error reading User: User with %q=%q was not found", paramEmail, email)
 }
 
-func loadUsers(ctx context.Context, c *Client) ([]v2.IamV2User, error) {
-	users := make([]v2.IamV2User, 0)
+func loadUsers(ctx context.Context, c *Client) ([]iamv2.IamV2User, error) {
+	users := make([]iamv2.IamV2User, 0)
 
 	collectedAllUsers := false
 	pageToken := ""
@@ -160,7 +160,7 @@ func loadUsers(ctx context.Context, c *Client) ([]v2.IamV2User, error) {
 	return users, nil
 }
 
-func executeListUsers(ctx context.Context, c *Client, pageToken string) (v2.IamV2UserList, *http.Response, error) {
+func executeListUsers(ctx context.Context, c *Client, pageToken string) (iamv2.IamV2UserList, *http.Response, error) {
 	if pageToken != "" {
 		return c.iamV2Client.UsersIamV2Api.ListIamV2Users(c.iamV2ApiContext(ctx)).PageSize(listUsersPageSize).PageToken(pageToken).Execute()
 	} else {
@@ -184,7 +184,7 @@ func userDataSourceReadUsingId(ctx context.Context, d *schema.ResourceData, meta
 	return setUserAttributes(d, user)
 }
 
-func setUserAttributes(d *schema.ResourceData, user v2.IamV2User) diag.Diagnostics {
+func setUserAttributes(d *schema.ResourceData, user iamv2.IamV2User) diag.Diagnostics {
 	if err := d.Set(paramApiVersion, user.GetApiVersion()); err != nil {
 		return diag.FromErr(createDescriptiveError(err))
 	}
@@ -201,7 +201,7 @@ func setUserAttributes(d *schema.ResourceData, user v2.IamV2User) diag.Diagnosti
 	return nil
 }
 
-func orgHasMultipleUsersWithTargetFullname(users []v2.IamV2User, fullName string) bool {
+func orgHasMultipleUsersWithTargetFullname(users []iamv2.IamV2User, fullName string) bool {
 	var numberOfUsersWithTargetFullName = 0
 	for _, user := range users {
 		if user.GetFullName() == fullName {
@@ -211,7 +211,7 @@ func orgHasMultipleUsersWithTargetFullname(users []v2.IamV2User, fullName string
 	return numberOfUsersWithTargetFullName > 1
 }
 
-func orgHasMultipleUsersWithTargetEmail(users []v2.IamV2User, email string) bool {
+func orgHasMultipleUsersWithTargetEmail(users []iamv2.IamV2User, email string) bool {
 	var numberOfUsersWithTargetEmail = 0
 	for _, user := range users {
 		if user.GetEmail() == email {
@@ -221,7 +221,7 @@ func orgHasMultipleUsersWithTargetEmail(users []v2.IamV2User, email string) bool
 	return numberOfUsersWithTargetEmail > 1
 }
 
-func executeUserRead(ctx context.Context, c *Client, userId string) (v2.IamV2User, *http.Response, error) {
+func executeUserRead(ctx context.Context, c *Client, userId string) (iamv2.IamV2User, *http.Response, error) {
 	req := c.iamV2Client.UsersIamV2Api.GetIamV2User(c.iamV2ApiContext(ctx), userId)
 	return req.Execute()
 }

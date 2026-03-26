@@ -24,7 +24,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
-	v2 "github.com/confluentinc/ccloud-sdk-go-v2/sso/v2"
+	ssov2 "github.com/confluentinc/ccloud-sdk-go-v2/sso/v2"
 )
 
 func groupMappingDataSource() *schema.Resource {
@@ -96,8 +96,8 @@ func groupMappingDataSourceReadUsingDisplayName(ctx context.Context, d *schema.R
 	return diag.Errorf("error reading Group Mapping: Group Mapping with %q=%q was not found", paramDisplayName, displayName)
 }
 
-func loadGroupMappings(ctx context.Context, c *Client) ([]v2.IamV2SsoGroupMapping, error) {
-	groupMappings := make([]v2.IamV2SsoGroupMapping, 0)
+func loadGroupMappings(ctx context.Context, c *Client) ([]ssov2.IamV2SsoGroupMapping, error) {
+	groupMappings := make([]ssov2.IamV2SsoGroupMapping, 0)
 
 	allGroupMappingsAreCollected := false
 	pageToken := ""
@@ -128,7 +128,7 @@ func loadGroupMappings(ctx context.Context, c *Client) ([]v2.IamV2SsoGroupMappin
 	return groupMappings, nil
 }
 
-func executeListGroupMappings(ctx context.Context, c *Client, pageToken string) (v2.IamV2SsoGroupMappingList, *http.Response, error) {
+func executeListGroupMappings(ctx context.Context, c *Client, pageToken string) (ssov2.IamV2SsoGroupMappingList, *http.Response, error) {
 	if pageToken != "" {
 		return c.ssoV2Client.GroupMappingsIamV2SsoApi.ListIamV2SsoGroupMappings(c.ssoV2ApiContext(ctx)).PageSize(listGroupMappingsPageSize).PageToken(pageToken).Execute()
 	} else {
@@ -156,7 +156,7 @@ func groupMappingDataSourceReadUsingId(ctx context.Context, d *schema.ResourceDa
 	return nil
 }
 
-func orgHasMultipleGroupMappingsWithTargetDisplayName(groupMappings []v2.IamV2SsoGroupMapping, displayName string) bool {
+func orgHasMultipleGroupMappingsWithTargetDisplayName(groupMappings []ssov2.IamV2SsoGroupMapping, displayName string) bool {
 	var numberOfGroupMappingsWithTargetDisplayName = 0
 	for _, groupMapping := range groupMappings {
 		if groupMapping.GetDisplayName() == displayName {

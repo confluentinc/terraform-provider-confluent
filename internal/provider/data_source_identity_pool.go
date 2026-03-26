@@ -24,7 +24,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
-	v2 "github.com/confluentinc/ccloud-sdk-go-v2/identity-provider/v2"
+	identityproviderv2 "github.com/confluentinc/ccloud-sdk-go-v2/identity-provider/v2"
 )
 
 func identityPoolDataSource() *schema.Resource {
@@ -124,7 +124,7 @@ func identityPoolDataSourceReadUsingId(ctx context.Context, d *schema.ResourceDa
 	return nil
 }
 
-func orgHasMultipleIdentityPoolsWithTargetDisplayName(identityPools []v2.IamV2IdentityPool, displayName string) bool {
+func orgHasMultipleIdentityPoolsWithTargetDisplayName(identityPools []identityproviderv2.IamV2IdentityPool, displayName string) bool {
 	var numberOfIdentityPoolsWithTargetDisplayName = 0
 	for _, identityPool := range identityPools {
 		if identityPool.GetDisplayName() == displayName {
@@ -134,8 +134,8 @@ func orgHasMultipleIdentityPoolsWithTargetDisplayName(identityPools []v2.IamV2Id
 	return numberOfIdentityPoolsWithTargetDisplayName > 1
 }
 
-func loadIdentityPools(ctx context.Context, c *Client, identityProviderId string) ([]v2.IamV2IdentityPool, error) {
-	identityPools := make([]v2.IamV2IdentityPool, 0)
+func loadIdentityPools(ctx context.Context, c *Client, identityProviderId string) ([]identityproviderv2.IamV2IdentityPool, error) {
+	identityPools := make([]identityproviderv2.IamV2IdentityPool, 0)
 
 	allIdentityPoolsAreCollected := false
 	pageToken := ""
@@ -166,7 +166,7 @@ func loadIdentityPools(ctx context.Context, c *Client, identityProviderId string
 	return identityPools, nil
 }
 
-func executeListIdentityPools(ctx context.Context, c *Client, identityProviderId, pageToken string) (v2.IamV2IdentityPoolList, *http.Response, error) {
+func executeListIdentityPools(ctx context.Context, c *Client, identityProviderId, pageToken string) (identityproviderv2.IamV2IdentityPoolList, *http.Response, error) {
 	if pageToken != "" {
 		return c.identityProviderV2Client.IdentityPoolsIamV2Api.ListIamV2IdentityPools(c.identityProviderV2ApiContext(ctx), identityProviderId).PageSize(listIdentityPoolsPageSize).PageToken(pageToken).Execute()
 	} else {
