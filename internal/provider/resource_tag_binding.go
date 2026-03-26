@@ -22,7 +22,7 @@ import (
 	"strings"
 	"time"
 
-	dc "github.com/confluentinc/ccloud-sdk-go-v2/data-catalog/v1"
+	datacatalogv1 "github.com/confluentinc/ccloud-sdk-go-v2/data-catalog/v1"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
@@ -100,7 +100,7 @@ func tagBindingCreate(ctx context.Context, d *schema.ResourceData, meta interfac
 	tagBindingId := createTagBindingId(clusterId, tagName, entityName, entityType)
 
 	catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
-	tagBindingRequest := dc.Tag{}
+	tagBindingRequest := datacatalogv1.Tag{}
 	tagBindingRequest.SetEntityName(entityName)
 	tagBindingRequest.SetEntityType(entityType)
 	tagBindingRequest.SetTypeName(tagName)
@@ -111,8 +111,8 @@ func tagBindingCreate(ctx context.Context, d *schema.ResourceData, meta interfac
 		SleepIfNotTestMode(60*time.Second, meta.(*Client).isAcceptanceTestMode, meta.(*Client).isLiveProductionTestMode)
 	}
 
-	request := catalogRestClient.apiClient.EntityV1Api.CreateTags(catalogRestClient.dataCatalogApiContext(ctx))
-	request = request.Tag([]dc.Tag{tagBindingRequest})
+	request := catalogRestClient.apiClient.EntityV1Api.CreateTags(catalogRestClient.dataCatalogV1ApiContext(ctx))
+	request = request.Tag([]datacatalogv1.Tag{tagBindingRequest})
 
 	createTagBindingRequestJson, err := json.Marshal(request)
 	if err != nil {
@@ -132,7 +132,7 @@ func tagBindingCreate(ctx context.Context, d *schema.ResourceData, meta interfac
 	}
 	d.SetId(tagBindingId)
 
-	if err := waitForTagBindingToProvision(catalogRestClient.dataCatalogApiContext(ctx), catalogRestClient, tagBindingId, tagName, entityName, entityType); err != nil {
+	if err := waitForTagBindingToProvision(catalogRestClient.dataCatalogV1ApiContext(ctx), catalogRestClient, tagBindingId, tagName, entityName, entityType); err != nil {
 		return diag.Errorf("error waiting for Tag Binding %q to provision: %s", tagBindingId, createDescriptiveError(err, resp))
 	}
 
@@ -182,7 +182,7 @@ func readTagBindingAndSetAttributes(ctx context.Context, d *schema.ResourceData,
 	tflog.Debug(ctx, fmt.Sprintf("Reading Tag Binding %q=%q", paramId, tagBindingId), map[string]interface{}{tagBindingLoggingKey: tagBindingId})
 
 	catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
-	request := catalogRestClient.apiClient.EntityV1Api.GetTags(catalogRestClient.dataCatalogApiContext(ctx), entityType, entityName)
+	request := catalogRestClient.apiClient.EntityV1Api.GetTags(catalogRestClient.dataCatalogV1ApiContext(ctx), entityType, entityName)
 	tagBindings, resp, err := request.Execute()
 	if err != nil {
 		tflog.Warn(ctx, fmt.Sprintf("Error reading Tag Binding %q: %s", tagBindingId, createDescriptiveError(err, resp)), map[string]interface{}{tagBindingLoggingKey: tagBindingId})
@@ -222,14 +222,14 @@ func readTagBindingAndSetAttributes(ctx context.Context, d *schema.ResourceData,
 	return []*schema.ResourceData{d}, nil
 }
 
-func findTagBindingByTagName(tagBindings []dc.TagResponse, tagName string) (dc.TagResponse, error) {
+func findTagBindingByTagName(tagBindings []datacatalogv1.TagResponse, tagName string) (datacatalogv1.TagResponse, error) {
 	for _, tagBinding := range tagBindings {
 		if tagBinding.GetTypeName() == tagName {
 			return tagBinding, nil
 		}
 	}
 
-	return dc.TagResponse{}, fmt.Errorf("error reading Tag Binding: couldn't find the tag binding: %s", tagName)
+	return datacatalogv1.TagResponse{}, fmt.Errorf("error reading Tag Binding: couldn't find the tag binding: %s", tagName)
 }
 
 func tagBindingDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -254,7 +254,7 @@ func tagBindingDelete(ctx context.Context, d *schema.ResourceData, meta interfac
 	tflog.Debug(ctx, fmt.Sprintf("Deleting Tag Binding %q=%q", paramId, tagBindingId), map[string]interface{}{tagBindingLoggingKey: tagBindingId})
 
 	catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
-	request := catalogRestClient.apiClient.EntityV1Api.DeleteTag(catalogRestClient.dataCatalogApiContext(ctx), entityType, entityName, tagName)
+	request := catalogRestClient.apiClient.EntityV1Api.DeleteTag(catalogRestClient.dataCatalogV1ApiContext(ctx), entityType, entityName, tagName)
 	_, serviceErr := request.Execute()
 	if serviceErr != nil {
 		return diag.Errorf("error deleting Tag Binding %q: %s", tagBindingId, createDescriptiveError(serviceErr))
@@ -311,7 +311,7 @@ func createTagBindingId(clusterId, tagName, entityName, entityType string) strin
 	return fmt.Sprintf("%s/%s/%s/%s", clusterId, tagName, entityName, entityType)
 }
 
-func setTagBindingAttributes(d *schema.ResourceData, clusterId string, tagBinding dc.TagResponse) (*schema.ResourceData, error) {
+func setTagBindingAttributes(d *schema.ResourceData, clusterId string, tagBinding datacatalogv1.TagResponse) (*schema.ResourceData, error) {
 	if err := d.Set(paramTagName, tagBinding.GetTypeName()); err != nil {
 		return nil, err
 	}

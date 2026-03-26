@@ -106,7 +106,7 @@ func identityPoolDataSourceReadUsingId(ctx context.Context, d *schema.ResourceDa
 	tflog.Debug(ctx, fmt.Sprintf("Reading Identity Pool %q=%q", paramId, identityPoolId), map[string]interface{}{identityPoolLoggingKey: identityPoolId})
 
 	c := meta.(*Client)
-	identityPool, resp, err := executeIdentityPoolRead(c.oidcApiContext(ctx), c, identityPoolId, identityProviderId)
+	identityPool, resp, err := executeIdentityPoolRead(c.identityProviderV2ApiContext(ctx), c, identityPoolId, identityProviderId)
 	if err != nil {
 		return diag.Errorf("error reading Identity Pool %q: %s", identityPoolId, createDescriptiveError(err, resp))
 	}
@@ -166,9 +166,9 @@ func loadIdentityPools(ctx context.Context, c *Client, identityProviderId string
 
 func executeListIdentityPools(ctx context.Context, c *Client, identityProviderId, pageToken string) (v2.IamV2IdentityPoolList, *http.Response, error) {
 	if pageToken != "" {
-		return c.oidcClient.IdentityPoolsIamV2Api.ListIamV2IdentityPools(c.oidcApiContext(ctx), identityProviderId).PageSize(listIdentityPoolsPageSize).PageToken(pageToken).Execute()
+		return c.identityProviderV2Client.IdentityPoolsIamV2Api.ListIamV2IdentityPools(c.identityProviderV2ApiContext(ctx), identityProviderId).PageSize(listIdentityPoolsPageSize).PageToken(pageToken).Execute()
 	} else {
-		return c.oidcClient.IdentityPoolsIamV2Api.ListIamV2IdentityPools(c.oidcApiContext(ctx), identityProviderId).PageSize(listIdentityPoolsPageSize).Execute()
+		return c.identityProviderV2Client.IdentityPoolsIamV2Api.ListIamV2IdentityPools(c.identityProviderV2ApiContext(ctx), identityProviderId).PageSize(listIdentityPoolsPageSize).Execute()
 	}
 }
 

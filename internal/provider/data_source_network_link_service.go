@@ -84,7 +84,7 @@ func nlsDataSourceReadUsingId(ctx context.Context, d *schema.ResourceData, meta 
 	tflog.Debug(ctx, fmt.Sprintf("Reading network link service %q", nlsId), map[string]interface{}{networkLinkServiceLoggingKey: nlsId})
 
 	c := meta.(*Client)
-	nls, resp, err := executeNlsRead(c.ssoApiContext(ctx), c, environmentId, nlsId)
+	nls, resp, err := executeNlsRead(c.ssoV2ApiContext(ctx), c, environmentId, nlsId)
 	if err != nil {
 		return diag.Errorf("error reading network link service %q: %s", nlsId, createDescriptiveError(err, resp))
 	}
@@ -101,7 +101,7 @@ func nlsDataSourceReadUsingId(ctx context.Context, d *schema.ResourceData, meta 
 }
 
 func executeNlsRead(ctx context.Context, c *Client, environmentId string, nlsId string) (v1.NetworkingV1NetworkLinkService, *http.Response, error) {
-	req := c.netClient.NetworkLinkServicesNetworkingV1Api.GetNetworkingV1NetworkLinkService(c.netApiContext(ctx), nlsId).Environment(environmentId)
+	req := c.networkingV1Client.NetworkLinkServicesNetworkingV1Api.GetNetworkingV1NetworkLinkService(c.networkingV1ApiContext(ctx), nlsId).Environment(environmentId)
 	return req.Execute()
 }
 
@@ -165,8 +165,8 @@ func loadNetworkLinkServices(ctx context.Context, c *Client, environmentId strin
 
 func executeListNetworkLinkServices(ctx context.Context, c *Client, environmentId, pageToken string) (v1.NetworkingV1NetworkLinkServiceList, *http.Response, error) {
 	if pageToken != "" {
-		return c.netClient.NetworkLinkServicesNetworkingV1Api.ListNetworkingV1NetworkLinkServices(c.netApiContext(ctx)).Environment(environmentId).PageSize(listNetworkLinkServicesPageSize).PageToken(pageToken).Execute()
+		return c.networkingV1Client.NetworkLinkServicesNetworkingV1Api.ListNetworkingV1NetworkLinkServices(c.networkingV1ApiContext(ctx)).Environment(environmentId).PageSize(listNetworkLinkServicesPageSize).PageToken(pageToken).Execute()
 	} else {
-		return c.netClient.NetworkLinkServicesNetworkingV1Api.ListNetworkingV1NetworkLinkServices(c.netApiContext(ctx)).Environment(environmentId).PageSize(listNetworkLinkServicesPageSize).Execute()
+		return c.networkingV1Client.NetworkLinkServicesNetworkingV1Api.ListNetworkingV1NetworkLinkServices(c.networkingV1ApiContext(ctx)).Environment(environmentId).PageSize(listNetworkLinkServicesPageSize).Execute()
 	}
 }

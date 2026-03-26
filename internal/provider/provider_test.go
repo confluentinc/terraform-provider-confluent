@@ -82,7 +82,12 @@ func TestProviderGoContainsTfgenMarkers(t *testing.T) {
 		"// cli-tfgen:tf-resources",
 		"// cli-tfgen:tf-datasources",
 		"// cli-tfgen:tf-client-fields",
-		"// cli-tfgen:tf-client-init",
+		"// cli-tfgen:tf-imports",
+		"// cli-tfgen:tf-client-cfg",
+		"// cli-tfgen:tf-client-endpoint",
+		"// cli-tfgen:tf-client-useragent",
+		"// cli-tfgen:tf-client-httpclient",
+		"// cli-tfgen:tf-client-literal",
 	}
 	for _, marker := range markers {
 		if !strings.Contains(text, marker) {

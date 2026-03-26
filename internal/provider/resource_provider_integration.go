@@ -26,7 +26,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
-	pi "github.com/confluentinc/ccloud-sdk-go-v2/provider-integration/v1"
+	providerintegrationv1 "github.com/confluentinc/ccloud-sdk-go-v2/provider-integration/v1"
 )
 
 var acceptedProviderIntegrationConfig = []string{paramAws}
@@ -102,15 +102,15 @@ func providerIntegrationCreate(ctx context.Context, d *schema.ResourceData, meta
 	c := meta.(*Client)
 
 	displayName := d.Get(paramDisplayName).(string)
-	config := pi.PimV1IntegrationConfigOneOf{}
+	config := providerintegrationv1.PimV1IntegrationConfigOneOf{}
 	var cloud string
 	isAwsConfigs := len(d.Get(paramAws).([]interface{})) > 0
 
 	if isAwsConfigs {
 		cloud = "aws"
-		config.PimV1AwsIntegrationConfig = &pi.PimV1AwsIntegrationConfig{
+		config.PimV1AwsIntegrationConfig = &providerintegrationv1.PimV1AwsIntegrationConfig{
 			Kind:               AwsIntegrationConfigKind,
-			CustomerIamRoleArn: pi.PtrString(extractStringValueFromBlock(d, paramAws, paramCustomerRoleArn)),
+			CustomerIamRoleArn: providerintegrationv1.PtrString(extractStringValueFromBlock(d, paramAws, paramCustomerRoleArn)),
 		}
 	} else {
 		return diag.Errorf("None of %q block was provided for confluent_provider_integration resource", paramAws)
@@ -119,11 +119,11 @@ func providerIntegrationCreate(ctx context.Context, d *schema.ResourceData, meta
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
 
 	// Create the provider integration request
-	createPimRequest := pi.PimV1Integration{}
+	createPimRequest := providerintegrationv1.PimV1Integration{}
 	createPimRequest.SetDisplayName(displayName)
 	createPimRequest.SetProvider(cloud)
 	createPimRequest.SetConfig(config)
-	createPimRequest.SetEnvironment(pi.GlobalObjectReference{Id: environmentId})
+	createPimRequest.SetEnvironment(providerintegrationv1.GlobalObjectReference{Id: environmentId})
 	createPimRequestRequestJson, err := json.Marshal(createPimRequest)
 
 	if err != nil {
@@ -131,7 +131,7 @@ func providerIntegrationCreate(ctx context.Context, d *schema.ResourceData, meta
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Creating new provider integration resource: %s", createPimRequestRequestJson))
-	createdPimResponse, resp, err := executeProviderIntegrationCreate(c.piApiContext(ctx), c, &createPimRequest)
+	createdPimResponse, resp, err := executeProviderIntegrationCreate(c.providerIntegrationV1ApiContext(ctx), c, &createPimRequest)
 	if err != nil {
 		return diag.Errorf("error creating provider integration: %s", createDescriptiveError(err, resp))
 	}
@@ -198,7 +198,7 @@ func providerIntegrationImport(ctx context.Context, d *schema.ResourceData, meta
 
 func readProviderIntegrationAndSetAttributes(ctx context.Context, d *schema.ResourceData, meta interface{}, environmentId, id string) ([]*schema.ResourceData, error) {
 	c := meta.(*Client)
-	pim, resp, err := executeProviderIntegrationRead(c.piApiContext(ctx), c, environmentId, id)
+	pim, resp, err := executeProviderIntegrationRead(c.providerIntegrationV1ApiContext(ctx), c, environmentId, id)
 
 	if err != nil {
 		tflog.Warn(ctx, fmt.Sprintf("Error reading provider integration %q: %s", id, createDescriptiveError(err, resp)), map[string]interface{}{providerIntegrationLoggingKey: d.Id()})
@@ -226,30 +226,30 @@ func readProviderIntegrationAndSetAttributes(ctx context.Context, d *schema.Reso
 	return []*schema.ResourceData{d}, nil
 }
 
-func executeProviderIntegrationCreate(ctx context.Context, c *Client, createPimRequest *pi.PimV1Integration) (pi.PimV1Integration, *http.Response, error) {
-	req := c.piClient.IntegrationsPimV1Api.CreatePimV1Integration(c.piApiContext(ctx)).PimV1Integration(*createPimRequest)
+func executeProviderIntegrationCreate(ctx context.Context, c *Client, createPimRequest *providerintegrationv1.PimV1Integration) (providerintegrationv1.PimV1Integration, *http.Response, error) {
+	req := c.providerIntegrationV1Client.IntegrationsPimV1Api.CreatePimV1Integration(c.providerIntegrationV1ApiContext(ctx)).PimV1Integration(*createPimRequest)
 	return req.Execute()
 }
 
-func executeProviderIntegrationRead(ctx context.Context, c *Client, environmentId string, id string) (pi.PimV1Integration, *http.Response, error) {
-	req := c.piClient.IntegrationsPimV1Api.GetPimV1Integration(c.piApiContext(ctx), id).Environment(environmentId)
+func executeProviderIntegrationRead(ctx context.Context, c *Client, environmentId string, id string) (providerintegrationv1.PimV1Integration, *http.Response, error) {
+	req := c.providerIntegrationV1Client.IntegrationsPimV1Api.GetPimV1Integration(c.providerIntegrationV1ApiContext(ctx), id).Environment(environmentId)
 	return req.Execute()
 }
 
 func executeProviderIntegrationDelete(ctx context.Context, c *Client, environmentId string, pimId string) (*http.Response, error) {
-	req := c.piClient.IntegrationsPimV1Api.DeletePimV1Integration(c.piApiContext(ctx), pimId).Environment(environmentId)
+	req := c.providerIntegrationV1Client.IntegrationsPimV1Api.DeletePimV1Integration(c.providerIntegrationV1ApiContext(ctx), pimId).Environment(environmentId)
 	return req.Execute()
 }
 
-func executeListProviderIntegrations(ctx context.Context, c *Client, environmentId, pageToken string) (pi.PimV1IntegrationList, *http.Response, error) {
+func executeListProviderIntegrations(ctx context.Context, c *Client, environmentId, pageToken string) (providerintegrationv1.PimV1IntegrationList, *http.Response, error) {
 	if pageToken != "" {
-		return c.piClient.IntegrationsPimV1Api.ListPimV1Integrations(c.piApiContext(ctx)).Environment(environmentId).PageSize(listProviderIntegrationsPageSize).PageToken(pageToken).Execute()
+		return c.providerIntegrationV1Client.IntegrationsPimV1Api.ListPimV1Integrations(c.providerIntegrationV1ApiContext(ctx)).Environment(environmentId).PageSize(listProviderIntegrationsPageSize).PageToken(pageToken).Execute()
 	} else {
-		return c.piClient.IntegrationsPimV1Api.ListPimV1Integrations(c.piApiContext(ctx)).Environment(environmentId).PageSize(listProviderIntegrationsPageSize).Execute()
+		return c.providerIntegrationV1Client.IntegrationsPimV1Api.ListPimV1Integrations(c.providerIntegrationV1ApiContext(ctx)).Environment(environmentId).PageSize(listProviderIntegrationsPageSize).Execute()
 	}
 }
 
-func setProviderIntegrationAttributes(d *schema.ResourceData, pim pi.PimV1Integration) (*schema.ResourceData, error) {
+func setProviderIntegrationAttributes(d *schema.ResourceData, pim providerintegrationv1.PimV1Integration) (*schema.ResourceData, error) {
 	if err := d.Set(paramDisplayName, pim.GetDisplayName()); err != nil {
 		return nil, err
 	}
@@ -267,7 +267,7 @@ func setProviderIntegrationAttributes(d *schema.ResourceData, pim pi.PimV1Integr
 	return d, nil
 }
 
-func setProviderIntegrationConfigAttributes(d *schema.ResourceData, config pi.PimV1IntegrationConfigOneOf) error {
+func setProviderIntegrationConfigAttributes(d *schema.ResourceData, config providerintegrationv1.PimV1IntegrationConfigOneOf) error {
 	if config.PimV1AwsIntegrationConfig != nil {
 		if err := d.Set(paramAws, []interface{}{map[string]interface{}{
 			paramIamRoleUrn:      config.PimV1AwsIntegrationConfig.GetIamRoleArn(),

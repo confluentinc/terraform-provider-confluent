@@ -18,7 +18,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	sso "github.com/confluentinc/ccloud-sdk-go-v2/sso/v2"
+	ssov2 "github.com/confluentinc/ccloud-sdk-go-v2/sso/v2"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -61,7 +61,7 @@ func groupMappingUpdate(ctx context.Context, d *schema.ResourceData, meta interf
 		return diag.Errorf("error updating Group Mapping %q: only %q, %q, %q attributes can be updated for Group Mapping", d.Id(), paramFilter, paramDisplayName, paramDescription)
 	}
 
-	updateGroupMappingRequest := sso.NewIamV2SsoGroupMapping()
+	updateGroupMappingRequest := ssov2.NewIamV2SsoGroupMapping()
 
 	if d.HasChange(paramFilter) {
 		updatedFilter := d.Get(paramFilter).(string)
@@ -83,7 +83,7 @@ func groupMappingUpdate(ctx context.Context, d *schema.ResourceData, meta interf
 	tflog.Debug(ctx, fmt.Sprintf("Updating Group Mapping %q: %s", d.Id(), updateGroupMappingRequestJson), map[string]interface{}{groupMappingLoggingKey: d.Id()})
 
 	c := meta.(*Client)
-	updatedGroupMapping, resp, err := c.ssoClient.GroupMappingsIamV2SsoApi.UpdateIamV2SsoGroupMapping(c.ssoApiContext(ctx), d.Id()).IamV2SsoGroupMapping(*updateGroupMappingRequest).Execute()
+	updatedGroupMapping, resp, err := c.ssoV2Client.GroupMappingsIamV2SsoApi.UpdateIamV2SsoGroupMapping(c.ssoV2ApiContext(ctx), d.Id()).IamV2SsoGroupMapping(*updateGroupMappingRequest).Execute()
 
 	if err != nil {
 		return diag.Errorf("error updating Group Mapping %q: %s", d.Id(), createDescriptiveError(err, resp))
@@ -105,7 +105,7 @@ func groupMappingCreate(ctx context.Context, d *schema.ResourceData, meta interf
 	filter := d.Get(paramFilter).(string)
 	description := d.Get(paramDescription).(string)
 
-	createGroupMappingRequest := sso.NewIamV2SsoGroupMapping()
+	createGroupMappingRequest := ssov2.NewIamV2SsoGroupMapping()
 	createGroupMappingRequest.SetDisplayName(displayName)
 	createGroupMappingRequest.SetFilter(filter)
 	createGroupMappingRequest.SetDescription(description)
@@ -115,7 +115,7 @@ func groupMappingCreate(ctx context.Context, d *schema.ResourceData, meta interf
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Group Mapping: %s", createGroupMappingRequestJson))
 
-	createdGroupMapping, resp, err := executeGroupMappingCreate(c.ssoApiContext(ctx), c, createGroupMappingRequest)
+	createdGroupMapping, resp, err := executeGroupMappingCreate(c.ssoV2ApiContext(ctx), c, createGroupMappingRequest)
 	if err != nil {
 		return diag.Errorf("error creating Group Mapping %q: %s", displayName, createDescriptiveError(err, resp))
 	}
@@ -130,8 +130,8 @@ func groupMappingCreate(ctx context.Context, d *schema.ResourceData, meta interf
 	return groupMappingRead(ctx, d, meta)
 }
 
-func executeGroupMappingCreate(ctx context.Context, c *Client, groupMapping *sso.IamV2SsoGroupMapping) (sso.IamV2SsoGroupMapping, *http.Response, error) {
-	req := c.ssoClient.GroupMappingsIamV2SsoApi.CreateIamV2SsoGroupMapping(c.ssoApiContext(ctx)).IamV2SsoGroupMapping(*groupMapping)
+func executeGroupMappingCreate(ctx context.Context, c *Client, groupMapping *ssov2.IamV2SsoGroupMapping) (ssov2.IamV2SsoGroupMapping, *http.Response, error) {
+	req := c.ssoV2Client.GroupMappingsIamV2SsoApi.CreateIamV2SsoGroupMapping(c.ssoV2ApiContext(ctx)).IamV2SsoGroupMapping(*groupMapping)
 	return req.Execute()
 }
 
@@ -139,7 +139,7 @@ func groupMappingDelete(ctx context.Context, d *schema.ResourceData, meta interf
 	tflog.Debug(ctx, fmt.Sprintf("Deleting Group Mapping %q", d.Id()), map[string]interface{}{groupMappingLoggingKey: d.Id()})
 	c := meta.(*Client)
 
-	req := c.ssoClient.GroupMappingsIamV2SsoApi.DeleteIamV2SsoGroupMapping(c.ssoApiContext(ctx), d.Id())
+	req := c.ssoV2Client.GroupMappingsIamV2SsoApi.DeleteIamV2SsoGroupMapping(c.ssoV2ApiContext(ctx), d.Id())
 	resp, err := req.Execute()
 
 	if err != nil {
@@ -151,15 +151,15 @@ func groupMappingDelete(ctx context.Context, d *schema.ResourceData, meta interf
 	return nil
 }
 
-func executeGroupMappingRead(ctx context.Context, c *Client, groupMappingId string) (sso.IamV2SsoGroupMapping, *http.Response, error) {
-	req := c.ssoClient.GroupMappingsIamV2SsoApi.GetIamV2SsoGroupMapping(c.ssoApiContext(ctx), groupMappingId)
+func executeGroupMappingRead(ctx context.Context, c *Client, groupMappingId string) (ssov2.IamV2SsoGroupMapping, *http.Response, error) {
+	req := c.ssoV2Client.GroupMappingsIamV2SsoApi.GetIamV2SsoGroupMapping(c.ssoV2ApiContext(ctx), groupMappingId)
 	return req.Execute()
 }
 
 func groupMappingRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	tflog.Debug(ctx, fmt.Sprintf("Reading Group Mapping %q", d.Id()), map[string]interface{}{groupMappingLoggingKey: d.Id()})
 	c := meta.(*Client)
-	groupMapping, resp, err := executeGroupMappingRead(c.ssoApiContext(ctx), c, d.Id())
+	groupMapping, resp, err := executeGroupMappingRead(c.ssoV2ApiContext(ctx), c, d.Id())
 	if err != nil {
 		tflog.Warn(ctx, fmt.Sprintf("Error reading Group Mapping %q: %s", d.Id(), createDescriptiveError(err, resp)), map[string]interface{}{groupMappingLoggingKey: d.Id()})
 
@@ -198,7 +198,7 @@ func groupMappingImport(ctx context.Context, d *schema.ResourceData, meta interf
 	return []*schema.ResourceData{d}, nil
 }
 
-func setGroupMappingAttributes(d *schema.ResourceData, groupMapping sso.IamV2SsoGroupMapping) (*schema.ResourceData, error) {
+func setGroupMappingAttributes(d *schema.ResourceData, groupMapping ssov2.IamV2SsoGroupMapping) (*schema.ResourceData, error) {
 	if err := d.Set(paramDisplayName, groupMapping.GetDisplayName()); err != nil {
 		return nil, createDescriptiveError(err)
 	}

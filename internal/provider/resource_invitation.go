@@ -18,7 +18,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	iam "github.com/confluentinc/ccloud-sdk-go-v2/iam/v2"
+	iamv2 "github.com/confluentinc/ccloud-sdk-go-v2/iam/v2"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -110,7 +110,7 @@ func readInvitationAndSetAttributes(ctx context.Context, d *schema.ResourceData,
 	tflog.Debug(ctx, fmt.Sprintf("Reading invitation %q=%q", paramId, invitationId), map[string]interface{}{invitationLoggingKey: invitationId})
 
 	c := meta.(*Client)
-	invitation, resp, err := executeInvitationRead(c.iamApiContext(ctx), c, invitationId)
+	invitation, resp, err := executeInvitationRead(c.iamV2ApiContext(ctx), c, invitationId)
 	if err != nil {
 		tflog.Warn(ctx, fmt.Sprintf("Error reading invitation %q: %s", invitationId, createDescriptiveError(err, resp)), map[string]interface{}{invitationLoggingKey: invitationId})
 
@@ -144,7 +144,7 @@ func invitationCreate(ctx context.Context, d *schema.ResourceData, meta interfac
 	email := d.Get(paramEmail).(string)
 	authType := d.Get(paramAuthType).(string)
 
-	createInvitationRequest := iam.IamV2Invitation{}
+	createInvitationRequest := iamv2.IamV2Invitation{}
 	createInvitationRequest.SetEmail(email)
 
 	if len(authType) > 0 {
@@ -157,7 +157,7 @@ func invitationCreate(ctx context.Context, d *schema.ResourceData, meta interfac
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new invitation: %s", createInvitationRequestJson))
 
-	createdInvitation, resp, err := executeInvitationCreate(c.iamApiContext(ctx), c, &createInvitationRequest)
+	createdInvitation, resp, err := executeInvitationCreate(c.iamV2ApiContext(ctx), c, &createInvitationRequest)
 	if err != nil {
 		return diag.Errorf("error creating invitation %s", createDescriptiveError(err, resp))
 	}
@@ -194,7 +194,7 @@ func invitationDelete(ctx context.Context, d *schema.ResourceData, meta interfac
 		return nil
 	}
 
-	req := c.iamClient.InvitationsIamV2Api.DeleteIamV2Invitation(c.iamApiContext(ctx), invitationId)
+	req := c.iamV2Client.InvitationsIamV2Api.DeleteIamV2Invitation(c.iamV2ApiContext(ctx), invitationId)
 	resp, err := req.Execute()
 
 	if err != nil {
@@ -206,17 +206,17 @@ func invitationDelete(ctx context.Context, d *schema.ResourceData, meta interfac
 	return nil
 }
 
-func executeInvitationRead(ctx context.Context, c *Client, invitationId string) (iam.IamV2Invitation, *http.Response, error) {
-	req := c.iamClient.InvitationsIamV2Api.GetIamV2Invitation(c.iamApiContext(ctx), invitationId)
+func executeInvitationRead(ctx context.Context, c *Client, invitationId string) (iamv2.IamV2Invitation, *http.Response, error) {
+	req := c.iamV2Client.InvitationsIamV2Api.GetIamV2Invitation(c.iamV2ApiContext(ctx), invitationId)
 	return req.Execute()
 }
 
-func executeInvitationCreate(ctx context.Context, c *Client, invitation *iam.IamV2Invitation) (iam.IamV2Invitation, *http.Response, error) {
-	req := c.iamClient.InvitationsIamV2Api.CreateIamV2Invitation(c.iamApiContext(ctx)).IamV2Invitation(*invitation)
+func executeInvitationCreate(ctx context.Context, c *Client, invitation *iamv2.IamV2Invitation) (iamv2.IamV2Invitation, *http.Response, error) {
+	req := c.iamV2Client.InvitationsIamV2Api.CreateIamV2Invitation(c.iamV2ApiContext(ctx)).IamV2Invitation(*invitation)
 	return req.Execute()
 }
 
-func setInvitationAttributes(d *schema.ResourceData, invitation iam.IamV2Invitation) (*schema.ResourceData, error) {
+func setInvitationAttributes(d *schema.ResourceData, invitation iamv2.IamV2Invitation) (*schema.ResourceData, error) {
 	if err := d.Set(paramEmail, invitation.GetEmail()); err != nil {
 		return nil, err
 	}

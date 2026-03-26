@@ -26,7 +26,7 @@ import (
 	"regexp"
 	"strings"
 
-	dns "github.com/confluentinc/ccloud-sdk-go-v2/networking-dnsforwarder/v1"
+	networkingdnsforwarderv1 "github.com/confluentinc/ccloud-sdk-go-v2/networking-dnsforwarder/v1"
 )
 
 var acceptedDnsForwarderConfig = []string{paramForwardViaIp, paramForwardViaGcp}
@@ -136,7 +136,7 @@ func dnsForwarderCreate(ctx context.Context, d *schema.ResourceData, meta interf
 
 	isForwardViaGcp := len(d.Get(paramForwardViaGcp).([]interface{})) > 0
 
-	spec := dns.NewNetworkingV1DnsForwarderSpec()
+	spec := networkingdnsforwarderv1.NewNetworkingV1DnsForwarderSpec()
 	if displayName != "" {
 		spec.SetDisplayName(displayName)
 	}
@@ -144,10 +144,10 @@ func dnsForwarderCreate(ctx context.Context, d *schema.ResourceData, meta interf
 		spec.SetDomains(domains)
 	}
 
-	config := dns.NetworkingV1DnsForwarderSpecConfigOneOf{}
+	config := networkingdnsforwarderv1.NetworkingV1DnsForwarderSpecConfigOneOf{}
 	if isForwardViaIp {
 		dnsServerIps := convertToStringSlice(d.Get(fmt.Sprintf("%s.0.%s", paramForwardViaIp, paramDnsServerIps)).(*schema.Set).List())
-		config.NetworkingV1ForwardViaIp = &dns.NetworkingV1ForwardViaIp{DnsServerIps: dnsServerIps, Kind: forwardViaIp}
+		config.NetworkingV1ForwardViaIp = &networkingdnsforwarderv1.NetworkingV1ForwardViaIp{DnsServerIps: dnsServerIps, Kind: forwardViaIp}
 		spec.SetConfig(config)
 	} else if isForwardViaGcp {
 		domainMappingString := convertToStringStringMap(d.Get(fmt.Sprintf("%s.0.%s", paramForwardViaGcp, paramDomainMappings)).(map[string]interface{}))
@@ -155,16 +155,16 @@ func dnsForwarderCreate(ctx context.Context, d *schema.ResourceData, meta interf
 		if err != nil {
 			return diag.Errorf("error creating DNS Forwarder: %s", err)
 		}
-		config.NetworkingV1ForwardViaGcpDnsZones = &dns.NetworkingV1ForwardViaGcpDnsZones{DomainMappings: domainMappings, Kind: forwardViaGcp}
+		config.NetworkingV1ForwardViaGcpDnsZones = &networkingdnsforwarderv1.NetworkingV1ForwardViaGcpDnsZones{DomainMappings: domainMappings, Kind: forwardViaGcp}
 		spec.SetConfig(config)
 	} else {
 		return diag.Errorf("None of %q or %q blocks was provided for confluent_dns_forwarder resource", paramForwardViaIp, paramForwardViaGcp)
 	}
 
-	spec.SetGateway(dns.ObjectReference{Id: gatewayId})
-	spec.SetEnvironment(dns.ObjectReference{Id: environmentId})
+	spec.SetGateway(networkingdnsforwarderv1.ObjectReference{Id: gatewayId})
+	spec.SetEnvironment(networkingdnsforwarderv1.ObjectReference{Id: environmentId})
 
-	createDnsForwarderRequest := dns.NetworkingV1DnsForwarder{Spec: spec}
+	createDnsForwarderRequest := networkingdnsforwarderv1.NetworkingV1DnsForwarder{Spec: spec}
 
 	createDnsForwarderRequestJson, err := json.Marshal(createDnsForwarderRequest)
 
@@ -173,13 +173,13 @@ func dnsForwarderCreate(ctx context.Context, d *schema.ResourceData, meta interf
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new DnsForwarder: %s", createDnsForwarderRequestJson))
 
-	req := c.netDnsClient.DNSForwardersNetworkingV1Api.CreateNetworkingV1DnsForwarder(c.netDnsApiContext(ctx)).NetworkingV1DnsForwarder(createDnsForwarderRequest)
+	req := c.networkingDnsforwarderV1Client.DNSForwardersNetworkingV1Api.CreateNetworkingV1DnsForwarder(c.networkingDnsforwarderV1ApiContext(ctx)).NetworkingV1DnsForwarder(createDnsForwarderRequest)
 	createdDnsForwarder, resp, err := req.Execute()
 	if err != nil {
 		return diag.Errorf("error creating DNS Forwarder %q: %s", createdDnsForwarder.GetId(), createDescriptiveError(err, resp))
 	}
 	d.SetId(createdDnsForwarder.GetId())
-	if err := waitForDnsForwarderToProvision(c.netDnsApiContext(ctx), c, environmentId, d.Id()); err != nil {
+	if err := waitForDnsForwarderToProvision(c.networkingDnsforwarderV1ApiContext(ctx), c, environmentId, d.Id()); err != nil {
 		return diag.Errorf("error waiting for DNS Forwarder %q to provision: %s", d.Id(), (err))
 	}
 
@@ -191,8 +191,8 @@ func dnsForwarderCreate(ctx context.Context, d *schema.ResourceData, meta interf
 	return dnsForwarderRead(ctx, d, meta)
 }
 
-func convertToStringObjectMap(data map[string]string) (map[string]dns.NetworkingV1ForwardViaGcpDnsZonesDomainMappings, error) {
-	stringMap := make(map[string]dns.NetworkingV1ForwardViaGcpDnsZonesDomainMappings)
+func convertToStringObjectMap(data map[string]string) (map[string]networkingdnsforwarderv1.NetworkingV1ForwardViaGcpDnsZonesDomainMappings, error) {
+	stringMap := make(map[string]networkingdnsforwarderv1.NetworkingV1ForwardViaGcpDnsZonesDomainMappings)
 
 	for key, value := range data {
 		if len(strings.Split(value, ",")) != 2 {
@@ -203,14 +203,14 @@ func convertToStringObjectMap(data map[string]string) (map[string]dns.Networking
 		s[1] = strings.TrimSpace(s[1])
 		zone := s[0]
 		project := s[1]
-		stringMap[key] = dns.NetworkingV1ForwardViaGcpDnsZonesDomainMappings{Zone: dns.PtrString(zone), Project: dns.PtrString(project)}
+		stringMap[key] = networkingdnsforwarderv1.NetworkingV1ForwardViaGcpDnsZonesDomainMappings{Zone: networkingdnsforwarderv1.PtrString(zone), Project: networkingdnsforwarderv1.PtrString(project)}
 	}
 
 	return stringMap, nil
 }
 
-func executeDnsForwarderRead(ctx context.Context, c *Client, environmentId string, dnsForwarderId string) (dns.NetworkingV1DnsForwarder, *http.Response, error) {
-	req := c.netDnsClient.DNSForwardersNetworkingV1Api.GetNetworkingV1DnsForwarder(c.netDnsApiContext(ctx), dnsForwarderId).Environment(environmentId)
+func executeDnsForwarderRead(ctx context.Context, c *Client, environmentId string, dnsForwarderId string) (networkingdnsforwarderv1.NetworkingV1DnsForwarder, *http.Response, error) {
+	req := c.networkingDnsforwarderV1Client.DNSForwardersNetworkingV1Api.GetNetworkingV1DnsForwarder(c.networkingDnsforwarderV1ApiContext(ctx), dnsForwarderId).Environment(environmentId)
 	return req.Execute()
 }
 
@@ -230,7 +230,7 @@ func dnsForwarderRead(ctx context.Context, d *schema.ResourceData, meta interfac
 func readDnsForwarderAndSetAttributes(ctx context.Context, d *schema.ResourceData, meta interface{}, environmentId, dnsForwarderId string) ([]*schema.ResourceData, error) {
 	c := meta.(*Client)
 
-	req := c.netDnsClient.DNSForwardersNetworkingV1Api.GetNetworkingV1DnsForwarder(c.netDnsApiContext(ctx), dnsForwarderId).Environment(environmentId)
+	req := c.networkingDnsforwarderV1Client.DNSForwardersNetworkingV1Api.GetNetworkingV1DnsForwarder(c.networkingDnsforwarderV1ApiContext(ctx), dnsForwarderId).Environment(environmentId)
 	dnsForwarder, resp, err := req.Execute()
 	if err != nil {
 		tflog.Warn(ctx, fmt.Sprintf("Error reading DNS Forwarder %q: %s", d.Id(), createDescriptiveError(err, resp)), map[string]interface{}{dnsForwarderKey: d.Id()})
@@ -263,7 +263,7 @@ func dnsForwarderDelete(ctx context.Context, d *schema.ResourceData, meta interf
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
 	c := meta.(*Client)
 
-	req := c.netDnsClient.DNSForwardersNetworkingV1Api.DeleteNetworkingV1DnsForwarder(c.netDnsApiContext(ctx), d.Id()).Environment(environmentId)
+	req := c.networkingDnsforwarderV1Client.DNSForwardersNetworkingV1Api.DeleteNetworkingV1DnsForwarder(c.networkingDnsforwarderV1ApiContext(ctx), d.Id()).Environment(environmentId)
 	resp, err := req.Execute()
 
 	if err != nil {
@@ -283,10 +283,10 @@ func dnsForwarderUpdate(ctx context.Context, d *schema.ResourceData, meta interf
 	c := meta.(*Client)
 	updatedDisplayName := d.Get(paramDisplayName).(string)
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
-	updateDnsForwarderRequest := dns.NewNetworkingV1DnsForwarderUpdate()
-	updateSpec := dns.NewNetworkingV1DnsForwarderSpecUpdate()
+	updateDnsForwarderRequest := networkingdnsforwarderv1.NewNetworkingV1DnsForwarderUpdate()
+	updateSpec := networkingdnsforwarderv1.NewNetworkingV1DnsForwarderSpecUpdate()
 	updateSpec.SetDisplayName(updatedDisplayName)
-	updateSpec.SetEnvironment(dns.ObjectReference{Id: environmentId})
+	updateSpec.SetEnvironment(networkingdnsforwarderv1.ObjectReference{Id: environmentId})
 	updateDnsForwarderRequest.SetSpec(*updateSpec)
 	updateDnsForwarderRequestJson, err := json.Marshal(updateDnsForwarderRequest)
 	if err != nil {
@@ -294,7 +294,7 @@ func dnsForwarderUpdate(ctx context.Context, d *schema.ResourceData, meta interf
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Updating DNS Forwarder %q: %s", d.Id(), updateDnsForwarderRequestJson), map[string]interface{}{dnsForwarderKey: d.Id()})
 
-	req := c.netDnsClient.DNSForwardersNetworkingV1Api.UpdateNetworkingV1DnsForwarder(c.netDnsApiContext(ctx), d.Id()).NetworkingV1DnsForwarderUpdate(*updateDnsForwarderRequest)
+	req := c.networkingDnsforwarderV1Client.DNSForwardersNetworkingV1Api.UpdateNetworkingV1DnsForwarder(c.networkingDnsforwarderV1ApiContext(ctx), d.Id()).NetworkingV1DnsForwarderUpdate(*updateDnsForwarderRequest)
 	updatedDnsForwarder, resp, err := req.Execute()
 
 	if err != nil {
@@ -332,7 +332,7 @@ func dnsForwarderImport(ctx context.Context, d *schema.ResourceData, meta interf
 	return []*schema.ResourceData{d}, nil
 }
 
-func setDnsForwarderAttributes(d *schema.ResourceData, dnsForwarder dns.NetworkingV1DnsForwarder) (*schema.ResourceData, error) {
+func setDnsForwarderAttributes(d *schema.ResourceData, dnsForwarder networkingdnsforwarderv1.NetworkingV1DnsForwarder) (*schema.ResourceData, error) {
 	if err := d.Set(paramDisplayName, dnsForwarder.Spec.GetDisplayName()); err != nil {
 		return nil, err
 	}

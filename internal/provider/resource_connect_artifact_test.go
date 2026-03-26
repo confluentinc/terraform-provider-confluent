@@ -298,7 +298,7 @@ func testAccCheckConnectArtifactDestroy(s *terraform.State) error {
 			continue
 		}
 		deletedArtifactId := rs.Primary.ID
-		req := c.camClient.ConnectArtifactsCamV1Api.GetCamV1ConnectArtifact(c.camApiContext(context.Background()), deletedArtifactId).
+		req := c.camV1Client.ConnectArtifactsCamV1Api.GetCamV1ConnectArtifact(c.camV1ApiContext(context.Background()), deletedArtifactId).
 			SpecCloud(connectArtifactCloud).
 			Environment(connectArtifactEnvironmentId)
 		deletedArtifact, response, err := req.Execute()

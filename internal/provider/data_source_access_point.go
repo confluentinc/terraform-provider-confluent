@@ -193,8 +193,8 @@ func accessPointDataSourceRead(ctx context.Context, d *schema.ResourceData, meta
 	tflog.Debug(ctx, fmt.Sprintf("Reading Access Point %q=%q", paramId, accessPointId), map[string]interface{}{accessPointKey: accessPointId})
 
 	c := meta.(*Client)
-	request := c.netAccessPointClient.AccessPointsNetworkingV1Api.GetNetworkingV1AccessPoint(c.netAPApiContext(ctx), accessPointId).Environment(environmentId)
-	accessPoint, resp, err := c.netAccessPointClient.AccessPointsNetworkingV1Api.GetNetworkingV1AccessPointExecute(request)
+	request := c.networkingAccessPointV1Client.AccessPointsNetworkingV1Api.GetNetworkingV1AccessPoint(c.networkingAccessPointV1ApiContext(ctx), accessPointId).Environment(environmentId)
+	accessPoint, resp, err := c.networkingAccessPointV1Client.AccessPointsNetworkingV1Api.GetNetworkingV1AccessPointExecute(request)
 	if err != nil {
 		return diag.Errorf("error reading Access Point %q: %s", accessPointId, createDescriptiveError(err, resp))
 	}

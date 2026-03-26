@@ -206,7 +206,7 @@ func schemaRegistryDataSourceReadUsingId(ctx context.Context, d *schema.Resource
 	tflog.Debug(ctx, fmt.Sprintf("Reading SchemaRegistry Cluster %q=%q", paramId, clusterId), map[string]interface{}{schemaRegistryClusterLoggingKey: clusterId})
 
 	c := meta.(*Client)
-	cluster, resp, err := executeSchemaRegistryClusterRead(c.srcmApiContext(ctx), c, environmentId, clusterId)
+	cluster, resp, err := executeSchemaRegistryClusterRead(c.srcmV3ApiContext(ctx), c, environmentId, clusterId)
 	if err != nil {
 		return diag.Errorf("error reading Schema Registry Cluster %q: %s", clusterId, createDescriptiveError(err, resp))
 	}
@@ -266,13 +266,13 @@ func loadSchemaRegistryClusters(ctx context.Context, c *Client, environmentId st
 
 func executeListSchemaRegistryClusters(ctx context.Context, c *Client, environmentId, pageToken string) (v3.SrcmV3ClusterList, *http.Response, error) {
 	if pageToken != "" {
-		return c.srcmClient.ClustersSrcmV3Api.ListSrcmV3Clusters(c.srcmApiContext(ctx)).Environment(environmentId).PageSize(listSchemaRegistryClustersPageSize).PageToken(pageToken).Execute()
+		return c.srcmV3Client.ClustersSrcmV3Api.ListSrcmV3Clusters(c.srcmV3ApiContext(ctx)).Environment(environmentId).PageSize(listSchemaRegistryClustersPageSize).PageToken(pageToken).Execute()
 	} else {
-		return c.srcmClient.ClustersSrcmV3Api.ListSrcmV3Clusters(c.srcmApiContext(ctx)).Environment(environmentId).PageSize(listSchemaRegistryClustersPageSize).Execute()
+		return c.srcmV3Client.ClustersSrcmV3Api.ListSrcmV3Clusters(c.srcmV3ApiContext(ctx)).Environment(environmentId).PageSize(listSchemaRegistryClustersPageSize).Execute()
 	}
 }
 
 func executeSchemaRegistryClusterRead(ctx context.Context, c *Client, environmentId string, schemaRegistryClusterId string) (v3.SrcmV3Cluster, *http.Response, error) {
-	req := c.srcmClient.ClustersSrcmV3Api.GetSrcmV3Cluster(c.srcmApiContext(ctx), schemaRegistryClusterId).Environment(environmentId)
+	req := c.srcmV3Client.ClustersSrcmV3Api.GetSrcmV3Cluster(c.srcmV3ApiContext(ctx), schemaRegistryClusterId).Environment(environmentId)
 	return req.Execute()
 }

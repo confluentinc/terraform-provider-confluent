@@ -14,7 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
-	sts "github.com/confluentinc/ccloud-sdk-go-v2/sts/v1"
+	stsv1 "github.com/confluentinc/ccloud-sdk-go-v2/sts/v1"
 )
 
 type OAuthToken struct {
@@ -37,23 +37,23 @@ type STSToken struct {
 	IssuedTokenType  string         `json:"issued_token_type"`
 	IdentityPoolId   string         `json:"identity_pool_id"`
 	ValidUntil       time.Time      `json:"valid_until"`
-	STSClient        *sts.APIClient `json:"sts_client"`
+	STSClient        *stsv1.APIClient `json:"sts_client"`
 }
 
-func fetchSTSOAuthToken(ctx context.Context, subjectToken, identityPoolId, expiredInSeconds string, currToken *STSToken, stsClient *sts.APIClient) (*STSToken, error) {
+func fetchSTSOAuthToken(ctx context.Context, subjectToken, identityPoolId, expiredInSeconds string, currToken *STSToken, stsV1Client *stsv1.APIClient) (*STSToken, error) {
 	// Validate if the current token is still valid, if so, return it
 	if valid := validateCurrentSTSOAuthToken(ctx, currToken); valid {
 		return currToken, nil
 	}
-	return requestNewSTSOAuthToken(ctx, subjectToken, identityPoolId, expiredInSeconds, stsClient)
+	return requestNewSTSOAuthToken(ctx, subjectToken, identityPoolId, expiredInSeconds, stsV1Client)
 }
 
-func requestNewSTSOAuthToken(ctx context.Context, subjectToken, identityPoolId, expiredInSeconds string, stsClient *sts.APIClient) (*STSToken, error) {
-	if stsClient == nil {
+func requestNewSTSOAuthToken(ctx context.Context, subjectToken, identityPoolId, expiredInSeconds string, stsV1Client *stsv1.APIClient) (*STSToken, error) {
+	if stsV1Client == nil {
 		return nil, fmt.Errorf("STS HTTP client is nil, cannot request new STS OAuth token")
 	}
 
-	req := stsClient.OAuthTokensStsV1Api.ExchangeStsV1OauthToken(ctx).
+	req := stsV1Client.OAuthTokensStsV1Api.ExchangeStsV1OauthToken(ctx).
 		GrantType(paramOAuthSTSTokenGrantTypeValue).
 		SubjectToken(subjectToken).
 		IdentityPoolId(identityPoolId).
@@ -97,7 +97,7 @@ func requestNewSTSOAuthToken(ctx context.Context, subjectToken, identityPoolId, 
 	}
 	result.ValidUntil = time.Now().Add(expiryDuration - buffer)
 	result.IdentityPoolId = identityPoolId
-	result.STSClient = stsClient
+	result.STSClient = stsV1Client
 	return result, nil
 }
 
