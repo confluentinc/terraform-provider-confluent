@@ -32,7 +32,7 @@ import (
 	ccpmv1 "github.com/confluentinc/ccloud-sdk-go-v2/ccpm/v1"
 	kafkarestv3 "github.com/confluentinc/ccloud-sdk-go-v2/kafkarest/v3"
 	networkingdnsforwarderv1 "github.com/confluentinc/ccloud-sdk-go-v2/networking-dnsforwarder/v1"
-	sr "github.com/confluentinc/ccloud-sdk-go-v2/schema-registry/v1"
+	schemaregistryv1 "github.com/confluentinc/ccloud-sdk-go-v2/schema-registry/v1"
 )
 
 func testKafkaClusterBlockStateDataV0() map[string]interface{} {
@@ -301,42 +301,42 @@ func TestConvertToStringObjectMap(t *testing.T) {
 
 func TestBuildTfRules(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
-		domainRules := []sr.Rule{
+		domainRules := []schemaregistryv1.Rule{
 			{
-				Name:     sr.PtrString("ABC"),
-				Disabled: sr.PtrBool(false),
-				Doc:      sr.PtrString("Doc"),
-				Expr:     sr.PtrString("EXPR"),
-				Kind:     sr.PtrString("TRANSFORM"),
-				Mode:     sr.PtrString("WRITEREAD"),
-				Type:     sr.PtrString("ENCRYPT"),
+				Name:     schemaregistryv1.PtrString("ABC"),
+				Disabled: schemaregistryv1.PtrBool(false),
+				Doc:      schemaregistryv1.PtrString("Doc"),
+				Expr:     schemaregistryv1.PtrString("EXPR"),
+				Kind:     schemaregistryv1.PtrString("TRANSFORM"),
+				Mode:     schemaregistryv1.PtrString("WRITEREAD"),
+				Type:     schemaregistryv1.PtrString("ENCRYPT"),
 				Tags: &[]string{
 					"PII",
 				},
 				Params: &map[string]string{
 					"encrypt.kek.name": "testkek2",
 				},
-				OnSuccess: sr.PtrString("NONE,NONE"),
-				OnFailure: sr.PtrString("ERROR,ERROR"),
+				OnSuccess: schemaregistryv1.PtrString("NONE,NONE"),
+				OnFailure: schemaregistryv1.PtrString("ERROR,ERROR"),
 			},
 		}
-		migrationRules := []sr.Rule{
+		migrationRules := []schemaregistryv1.Rule{
 			{
-				Name:     sr.PtrString("ABC"),
-				Disabled: sr.PtrBool(false),
-				Doc:      sr.PtrString("Doc"),
-				Expr:     sr.PtrString("EXPR"),
-				Kind:     sr.PtrString("TRANSFORM"),
-				Mode:     sr.PtrString("WRITEREAD"),
-				Type:     sr.PtrString("ENCRYPT"),
+				Name:     schemaregistryv1.PtrString("ABC"),
+				Disabled: schemaregistryv1.PtrBool(false),
+				Doc:      schemaregistryv1.PtrString("Doc"),
+				Expr:     schemaregistryv1.PtrString("EXPR"),
+				Kind:     schemaregistryv1.PtrString("TRANSFORM"),
+				Mode:     schemaregistryv1.PtrString("WRITEREAD"),
+				Type:     schemaregistryv1.PtrString("ENCRYPT"),
 				Tags: &[]string{
 					"PIIM",
 				},
 				Params: &map[string]string{
 					"encrypt.kek.name": "testkekM",
 				},
-				OnSuccess: sr.PtrString("NONE,NONE"),
-				OnFailure: sr.PtrString("ERROR,ERROR"),
+				OnSuccess: schemaregistryv1.PtrString("NONE,NONE"),
+				OnFailure: schemaregistryv1.PtrString("ERROR,ERROR"),
 			},
 		}
 		tfDomainMigrationRules := make(map[string]interface{})
@@ -389,40 +389,40 @@ func TestBuildTfRules(t *testing.T) {
 	})
 
 	t.Run("success, incomplete set", func(t *testing.T) {
-		domainRules := []sr.Rule{
+		domainRules := []schemaregistryv1.Rule{
 			{
-				Name:     sr.PtrString("ABC"),
-				Disabled: sr.PtrBool(false),
-				Expr:     sr.PtrString("EXPR"),
-				Kind:     sr.PtrString("TRANSFORM"),
-				Mode:     sr.PtrString("WRITEREAD"),
-				Type:     sr.PtrString("ENCRYPT"),
+				Name:     schemaregistryv1.PtrString("ABC"),
+				Disabled: schemaregistryv1.PtrBool(false),
+				Expr:     schemaregistryv1.PtrString("EXPR"),
+				Kind:     schemaregistryv1.PtrString("TRANSFORM"),
+				Mode:     schemaregistryv1.PtrString("WRITEREAD"),
+				Type:     schemaregistryv1.PtrString("ENCRYPT"),
 				Tags: &[]string{
 					"PII",
 				},
 				Params: &map[string]string{
 					"encrypt.kek.name": "testkek2",
 				},
-				OnSuccess: sr.PtrString("NONE,NONE"),
-				OnFailure: sr.PtrString("ERROR,ERROR"),
+				OnSuccess: schemaregistryv1.PtrString("NONE,NONE"),
+				OnFailure: schemaregistryv1.PtrString("ERROR,ERROR"),
 			},
 		}
-		migrationRules := []sr.Rule{
+		migrationRules := []schemaregistryv1.Rule{
 			{
-				Name:     sr.PtrString("ABC"),
-				Disabled: sr.PtrBool(false),
-				Expr:     sr.PtrString("EXPR"),
-				Kind:     sr.PtrString("TRANSFORM"),
-				Mode:     sr.PtrString("WRITEREAD"),
-				Type:     sr.PtrString("ENCRYPT"),
+				Name:     schemaregistryv1.PtrString("ABC"),
+				Disabled: schemaregistryv1.PtrBool(false),
+				Expr:     schemaregistryv1.PtrString("EXPR"),
+				Kind:     schemaregistryv1.PtrString("TRANSFORM"),
+				Mode:     schemaregistryv1.PtrString("WRITEREAD"),
+				Type:     schemaregistryv1.PtrString("ENCRYPT"),
 				Tags: &[]string{
 					"PIIM",
 				},
 				Params: &map[string]string{
 					"encrypt.kek.name": "testkekM",
 				},
-				OnSuccess: sr.PtrString("NONE,NONE"),
-				OnFailure: sr.PtrString("ERROR,ERROR"),
+				OnSuccess: schemaregistryv1.PtrString("NONE,NONE"),
+				OnFailure: schemaregistryv1.PtrString("ERROR,ERROR"),
 			},
 		}
 		tfDomainMigrationRules := make(map[string]interface{})
@@ -475,22 +475,22 @@ func TestBuildTfRules(t *testing.T) {
 	})
 
 	t.Run("success, without migration rules", func(t *testing.T) {
-		domainRules := []sr.Rule{
+		domainRules := []schemaregistryv1.Rule{
 			{
-				Name:     sr.PtrString("ABC"),
-				Disabled: sr.PtrBool(false),
-				Expr:     sr.PtrString("EXPR"),
-				Kind:     sr.PtrString("TRANSFORM"),
-				Mode:     sr.PtrString("WRITEREAD"),
-				Type:     sr.PtrString("ENCRYPT"),
+				Name:     schemaregistryv1.PtrString("ABC"),
+				Disabled: schemaregistryv1.PtrBool(false),
+				Expr:     schemaregistryv1.PtrString("EXPR"),
+				Kind:     schemaregistryv1.PtrString("TRANSFORM"),
+				Mode:     schemaregistryv1.PtrString("WRITEREAD"),
+				Type:     schemaregistryv1.PtrString("ENCRYPT"),
 				Tags: &[]string{
 					"PII",
 				},
 				Params: &map[string]string{
 					"encrypt.kek.name": "testkek2",
 				},
-				OnSuccess: sr.PtrString("NONE,NONE"),
-				OnFailure: sr.PtrString("ERROR,ERROR"),
+				OnSuccess: schemaregistryv1.PtrString("NONE,NONE"),
+				OnFailure: schemaregistryv1.PtrString("ERROR,ERROR"),
 			},
 		}
 		tfDomainMigrationRules := make(map[string]interface{})
@@ -516,7 +516,7 @@ func TestBuildTfRules(t *testing.T) {
 		tfDomainMigrationRules[paramDomainRules] = tfRulesDomain
 		tfRuleSet := make([]map[string]interface{}, 1)
 		tfRuleSet[0] = tfDomainMigrationRules
-		actual := buildTfRules(domainRules, []sr.Rule{})
+		actual := buildTfRules(domainRules, []schemaregistryv1.Rule{})
 
 		if !reflect.DeepEqual(*actual, tfRuleSet) {
 			t.Fatalf("Unexpected error: expected %v, got %v", tfRuleSet, *actual)
@@ -524,22 +524,22 @@ func TestBuildTfRules(t *testing.T) {
 	})
 
 	t.Run("success, without domain rules", func(t *testing.T) {
-		migrationRules := []sr.Rule{
+		migrationRules := []schemaregistryv1.Rule{
 			{
-				Name:     sr.PtrString("ABC"),
-				Disabled: sr.PtrBool(false),
-				Expr:     sr.PtrString("EXPR"),
-				Kind:     sr.PtrString("TRANSFORM"),
-				Mode:     sr.PtrString("WRITEREAD"),
-				Type:     sr.PtrString("ENCRYPT"),
+				Name:     schemaregistryv1.PtrString("ABC"),
+				Disabled: schemaregistryv1.PtrBool(false),
+				Expr:     schemaregistryv1.PtrString("EXPR"),
+				Kind:     schemaregistryv1.PtrString("TRANSFORM"),
+				Mode:     schemaregistryv1.PtrString("WRITEREAD"),
+				Type:     schemaregistryv1.PtrString("ENCRYPT"),
 				Tags: &[]string{
 					"PII",
 				},
 				Params: &map[string]string{
 					"encrypt.kek.name": "testkek2",
 				},
-				OnSuccess: sr.PtrString("NONE,NONE"),
-				OnFailure: sr.PtrString("ERROR,ERROR"),
+				OnSuccess: schemaregistryv1.PtrString("NONE,NONE"),
+				OnFailure: schemaregistryv1.PtrString("ERROR,ERROR"),
 			},
 		}
 		tfDomainMigrationRules := make(map[string]interface{})
@@ -565,7 +565,7 @@ func TestBuildTfRules(t *testing.T) {
 		tfDomainMigrationRules[paramMigrationRules] = tfRulesMigration
 		tfRuleSet := make([]map[string]interface{}, 1)
 		tfRuleSet[0] = tfDomainMigrationRules
-		actual := buildTfRules([]sr.Rule{}, migrationRules)
+		actual := buildTfRules([]schemaregistryv1.Rule{}, migrationRules)
 
 		if !reflect.DeepEqual(*actual, tfRuleSet) {
 			t.Fatalf("Unexpected error: expected %v, got %v", tfRuleSet, *actual)
@@ -573,22 +573,22 @@ func TestBuildTfRules(t *testing.T) {
 	})
 
 	t.Run("fail, inconsistent domain rules", func(t *testing.T) {
-		migrationRules := []sr.Rule{
+		migrationRules := []schemaregistryv1.Rule{
 			{
-				Name:     sr.PtrString("ABC"),
-				Disabled: sr.PtrBool(false),
-				Expr:     sr.PtrString("EXPR"),
-				Kind:     sr.PtrString("TRANSFORM"),
-				Mode:     sr.PtrString("WRITEREAD"),
-				Type:     sr.PtrString("ENCRYPT"),
+				Name:     schemaregistryv1.PtrString("ABC"),
+				Disabled: schemaregistryv1.PtrBool(false),
+				Expr:     schemaregistryv1.PtrString("EXPR"),
+				Kind:     schemaregistryv1.PtrString("TRANSFORM"),
+				Mode:     schemaregistryv1.PtrString("WRITEREAD"),
+				Type:     schemaregistryv1.PtrString("ENCRYPT"),
 				Tags: &[]string{
 					"PII",
 				},
 				Params: &map[string]string{
 					"encrypt.kek.name": "testkek2",
 				},
-				OnSuccess: sr.PtrString("NONE,NONE"),
-				OnFailure: sr.PtrString("ERROR,ERROR"),
+				OnSuccess: schemaregistryv1.PtrString("NONE,NONE"),
+				OnFailure: schemaregistryv1.PtrString("ERROR,ERROR"),
 			},
 		}
 		tfDomainMigrationRules := make(map[string]interface{})
@@ -3376,19 +3376,19 @@ func TestIsLatestSchema(t *testing.T) {
 }
 
 func TestFindSchemaById(t *testing.T) {
-	schema1 := sr.Schema{}
+	schema1 := schemaregistryv1.Schema{}
 	schema1.SetId(100)
 	schema1.SetSubject("my-subject")
 
-	schema2 := sr.Schema{}
+	schema2 := schemaregistryv1.Schema{}
 	schema2.SetId(200)
 	schema2.SetSubject("other-subject")
 
-	schema3 := sr.Schema{}
+	schema3 := schemaregistryv1.Schema{}
 	schema3.SetId(100)
 	schema3.SetSubject("other-subject")
 
-	schemas := []sr.Schema{schema1, schema2, schema3}
+	schemas := []schemaregistryv1.Schema{schema1, schema2, schema3}
 
 	tests := []struct {
 		name             string
@@ -3438,17 +3438,17 @@ func TestFindSchemaById(t *testing.T) {
 }
 
 func TestBuildTfSchemaReferences(t *testing.T) {
-	ref1 := sr.SchemaReference{}
+	ref1 := schemaregistryv1.SchemaReference{}
 	ref1.SetSubject("ref-subject-1")
 	ref1.SetName("ref-name-1")
 	ref1.SetVersion(1)
 
-	ref2 := sr.SchemaReference{}
+	ref2 := schemaregistryv1.SchemaReference{}
 	ref2.SetSubject("ref-subject-2")
 	ref2.SetName("ref-name-2")
 	ref2.SetVersion(3)
 
-	result := buildTfSchemaReferences([]sr.SchemaReference{ref1, ref2})
+	result := buildTfSchemaReferences([]schemaregistryv1.SchemaReference{ref1, ref2})
 	if result == nil {
 		t.Fatal("buildTfSchemaReferences returned nil")
 	}

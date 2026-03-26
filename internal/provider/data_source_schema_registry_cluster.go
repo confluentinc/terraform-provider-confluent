@@ -18,11 +18,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	v3 "github.com/confluentinc/ccloud-sdk-go-v2/srcm/v3"
+	"net/http"
+
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"net/http"
+
+	v3 "github.com/confluentinc/ccloud-sdk-go-v2/srcm/v3"
 )
 
 var acceptedBillingPackages = []string{billingPackageEssentials, billingPackageAdvanced}

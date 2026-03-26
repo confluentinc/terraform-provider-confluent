@@ -186,4 +186,3 @@ func testAccCheckCertificateAuthorityLiveExists(n string) resource.TestCheckFunc
 		return nil
 	}
 }
-

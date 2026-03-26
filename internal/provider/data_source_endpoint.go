@@ -22,10 +22,11 @@ import (
 	"strconv"
 	"time"
 
-	endpointv1 "github.com/confluentinc/ccloud-sdk-go-v2/endpoint/v1"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+
+	endpointv1 "github.com/confluentinc/ccloud-sdk-go-v2/endpoint/v1"
 )
 
 func endpointDataSource() *schema.Resource {

@@ -199,4 +199,4 @@ func testAccCheckKafkaMirrorTopicLiveConfig(endpoint, mirrorTopicResourceLabel, 
 		}
 	}
 	`, endpoint, apiKey, apiSecret, standardClusterId, standardClusterId, sourceTopic, standardRestEndpoint, standardApiKey, standardApiSecret, linkName, standardClusterId, standardApiKey, standardApiSecret, dedicatedClusterId, dedicatedRestEndpoint, dedicatedApiKey, dedicatedApiSecret, mirrorTopicResourceLabel, dedicatedClusterId, dedicatedRestEndpoint, dedicatedApiKey, dedicatedApiSecret)
-} 
+}

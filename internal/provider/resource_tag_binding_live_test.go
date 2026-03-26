@@ -283,4 +283,4 @@ func testAccCheckTagBindingLiveConfig(endpoint, tagResourceLabel, schemaResource
 		depends_on = [confluent_tag.%s, confluent_schema.%s]
 	}
 	`, endpoint, apiKey, apiSecret, tagResourceLabel, tagName, schemaRegistryId, schemaRegistryRestEndpoint, schemaRegistryApiKey, schemaRegistryApiSecret, schemaResourceLabel, subjectName, schemaRegistryId, schemaRegistryRestEndpoint, schemaRegistryApiKey, schemaRegistryApiSecret, tagBindingResourceLabel, tagResourceLabel, schemaResourceLabel, schemaResourceLabel, schemaRegistryId, schemaRegistryRestEndpoint, schemaRegistryApiKey, schemaRegistryApiSecret, tagResourceLabel, schemaResourceLabel)
-} 
+}

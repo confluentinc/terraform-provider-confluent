@@ -40,8 +40,8 @@ func providerIntegrationAuthorizationDataSource() *schema.Resource {
 				Computed:    true,
 				Description: "The ID of the provider integration.",
 			},
-			paramAzureAuth: azureAuthDataSourceConfigSchema(),
-			paramGcpAuth:   gcpAuthDataSourceConfigSchema(),
+			paramAzureAuth:   azureAuthDataSourceConfigSchema(),
+			paramGcpAuth:     gcpAuthDataSourceConfigSchema(),
 			paramEnvironment: environmentDataSourceSchema(),
 		},
 	}

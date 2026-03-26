@@ -126,4 +126,3 @@ func testAccCheckByokKeyLiveConfig(endpoint, byokKeyResourceLabel, awsKmsKeyArn,
 	}
 	`, endpoint, apiKey, apiSecret, byokKeyResourceLabel, awsKmsKeyArn)
 }
-
