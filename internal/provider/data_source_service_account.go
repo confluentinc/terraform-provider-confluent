@@ -85,7 +85,7 @@ func serviceAccountDataSourceReadUsingDisplayName(ctx context.Context, d *schema
 	tflog.Debug(ctx, fmt.Sprintf("Reading Service Account %q=%q", paramDisplayName, displayName))
 
 	c := meta.(*Client)
-	serviceAccountList, resp, err := c.iamClient.ServiceAccountsIamV2Api.ListIamV2ServiceAccounts(c.iamApiContext(ctx)).DisplayName(strings.Fields(displayName)).Execute()
+	serviceAccountList, resp, err := c.iamV2Client.ServiceAccountsIamV2Api.ListIamV2ServiceAccounts(c.iamV2ApiContext(ctx)).DisplayName(strings.Fields(displayName)).Execute()
 	if err != nil {
 		return diag.Errorf("error reading Service Account %q: %s", displayName, createDescriptiveError(err, resp))
 	}
@@ -143,9 +143,9 @@ func loadServiceAccounts(ctx context.Context, c *Client) ([]v2.IamV2ServiceAccou
 
 func executeListServiceAccounts(ctx context.Context, c *Client, pageToken string) (v2.IamV2ServiceAccountList, *http.Response, error) {
 	if pageToken != "" {
-		return c.iamClient.ServiceAccountsIamV2Api.ListIamV2ServiceAccounts(c.iamApiContext(ctx)).PageSize(listServiceAccountsPageSize).PageToken(pageToken).Execute()
+		return c.iamV2Client.ServiceAccountsIamV2Api.ListIamV2ServiceAccounts(c.iamV2ApiContext(ctx)).PageSize(listServiceAccountsPageSize).PageToken(pageToken).Execute()
 	} else {
-		return c.iamClient.ServiceAccountsIamV2Api.ListIamV2ServiceAccounts(c.iamApiContext(ctx)).PageSize(listServiceAccountsPageSize).Execute()
+		return c.iamV2Client.ServiceAccountsIamV2Api.ListIamV2ServiceAccounts(c.iamV2ApiContext(ctx)).PageSize(listServiceAccountsPageSize).Execute()
 	}
 }
 
@@ -153,7 +153,7 @@ func serviceAccountDataSourceReadUsingId(ctx context.Context, d *schema.Resource
 	tflog.Debug(ctx, fmt.Sprintf("Reading Service Account %q=%q", paramId, serviceAccountId), map[string]interface{}{serviceAccountLoggingKey: serviceAccountId})
 
 	c := meta.(*Client)
-	serviceAccount, resp, err := executeServiceAccountRead(c.iamApiContext(ctx), c, serviceAccountId)
+	serviceAccount, resp, err := executeServiceAccountRead(c.iamV2ApiContext(ctx), c, serviceAccountId)
 	if err != nil {
 		return diag.Errorf("error reading Service Account %q: %s", serviceAccountId, createDescriptiveError(err, resp))
 	}

@@ -160,7 +160,7 @@ func kafkaDataSourceReadUsingId(ctx context.Context, d *schema.ResourceData, met
 	tflog.Debug(ctx, fmt.Sprintf("Reading Kafka Cluster %q=%q", paramId, clusterId), map[string]interface{}{kafkaClusterLoggingKey: clusterId})
 
 	c := meta.(*Client)
-	cluster, resp, err := executeKafkaRead(c.cmkApiContext(ctx), c, environmentId, clusterId)
+	cluster, resp, err := executeKafkaRead(c.cmkV2ApiContext(ctx), c, environmentId, clusterId)
 	if err != nil {
 		return diag.Errorf("error reading Kafka Cluster %q: %s", clusterId, createDescriptiveError(err, resp))
 	}
@@ -220,9 +220,9 @@ func loadKafkaClusters(ctx context.Context, c *Client, environmentId string) ([]
 
 func executeListKafkaClusters(ctx context.Context, c *Client, environmentId, pageToken string) (v2.CmkV2ClusterList, *http.Response, error) {
 	if pageToken != "" {
-		return c.cmkClient.ClustersCmkV2Api.ListCmkV2Clusters(c.cmkApiContext(ctx)).Environment(environmentId).PageSize(listKafkaClustersPageSize).PageToken(pageToken).Execute()
+		return c.cmkV2Client.ClustersCmkV2Api.ListCmkV2Clusters(c.cmkV2ApiContext(ctx)).Environment(environmentId).PageSize(listKafkaClustersPageSize).PageToken(pageToken).Execute()
 	} else {
-		return c.cmkClient.ClustersCmkV2Api.ListCmkV2Clusters(c.cmkApiContext(ctx)).Environment(environmentId).PageSize(listKafkaClustersPageSize).Execute()
+		return c.cmkV2Client.ClustersCmkV2Api.ListCmkV2Clusters(c.cmkV2ApiContext(ctx)).Environment(environmentId).PageSize(listKafkaClustersPageSize).Execute()
 	}
 }
 

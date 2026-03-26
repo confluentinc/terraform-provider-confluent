@@ -137,7 +137,7 @@ func testAccCheckRoleBindingDestroy(s *terraform.State) error {
 			continue
 		}
 		deletedRoleBindingId := rs.Primary.ID
-		req := c.mdsClient.RoleBindingsIamV2Api.GetIamV2RoleBinding(c.mdsApiContext(context.Background()), deletedRoleBindingId)
+		req := c.mdsV2Client.RoleBindingsIamV2Api.GetIamV2RoleBinding(c.mdsV2ApiContext(context.Background()), deletedRoleBindingId)
 		deletedRoleBinding, response, err := req.Execute()
 		if response != nil && (response.StatusCode == http.StatusForbidden || response.StatusCode == http.StatusNotFound) {
 			return nil

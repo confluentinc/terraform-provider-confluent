@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	ksql "github.com/confluentinc/ccloud-sdk-go-v2/ksql/v2"
+	ksqlv2 "github.com/confluentinc/ccloud-sdk-go-v2/ksql/v2"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -92,29 +92,29 @@ func ksqlCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 	credentialIdentityId := extractStringValueFromBlock(d, paramCredentialIdentity, paramId)
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
 
-	spec := ksql.NewKsqldbcmV2ClusterSpec()
+	spec := ksqlv2.NewKsqldbcmV2ClusterSpec()
 	spec.SetDisplayName(displayName)
 	spec.SetUseDetailedProcessingLog(useDetailedProcessingLog)
 	spec.SetCsu(int32(csu))
 	// TODO: KSQL-1234: Remove placeholders from ObjectReference
-	spec.SetKafkaCluster(ksql.ObjectReference{Id: kafkaClusterId, Environment: &environmentId, ResourceName: "_", Related: "_"})
-	spec.SetCredentialIdentity(ksql.ObjectReference{Id: credentialIdentityId, ResourceName: "_", Related: "_"})
-	spec.SetEnvironment(ksql.ObjectReference{Id: environmentId, ResourceName: "_", Related: "_"})
+	spec.SetKafkaCluster(ksqlv2.ObjectReference{Id: kafkaClusterId, Environment: &environmentId, ResourceName: "_", Related: "_"})
+	spec.SetCredentialIdentity(ksqlv2.ObjectReference{Id: credentialIdentityId, ResourceName: "_", Related: "_"})
+	spec.SetEnvironment(ksqlv2.ObjectReference{Id: environmentId, ResourceName: "_", Related: "_"})
 
-	createKsqlClusterRequest := ksql.KsqldbcmV2Cluster{Spec: spec}
+	createKsqlClusterRequest := ksqlv2.KsqldbcmV2Cluster{Spec: spec}
 	createKsqlClusterRequestJson, err := json.Marshal(createKsqlClusterRequest)
 	if err != nil {
 		return diag.Errorf("error creating ksqlDB Cluster: error marshaling %#v to json: %s", createKsqlClusterRequest, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new ksqlDB Cluster: %s", createKsqlClusterRequestJson))
 
-	createdKsqlCluster, resp, err := executeKsqlCreate(c.ksqlApiContext(ctx), c, &createKsqlClusterRequest)
+	createdKsqlCluster, resp, err := executeKsqlCreate(c.ksqlV2ApiContext(ctx), c, &createKsqlClusterRequest)
 	if err != nil {
 		return diag.Errorf("error creating ksqlDB Cluster %q: %s", createdKsqlCluster.GetId(), createDescriptiveError(err, resp))
 	}
 	d.SetId(createdKsqlCluster.GetId())
 
-	if err := waitForKsqlClusterToProvision(c.ksqlApiContext(ctx), c, environmentId, d.Id()); err != nil {
+	if err := waitForKsqlClusterToProvision(c.ksqlV2ApiContext(ctx), c, environmentId, d.Id()); err != nil {
 		return diag.Errorf("error waiting for ksqlDB Cluster %q to provision: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
@@ -145,7 +145,7 @@ func ksqlDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
 	c := meta.(*Client)
 
-	resp, err := executeKsqlDelete(c.ksqlApiContext(ctx), c, environmentId, d.Id())
+	resp, err := executeKsqlDelete(c.ksqlV2ApiContext(ctx), c, environmentId, d.Id())
 	if err != nil {
 		return diag.Errorf("error deleting ksqlDB Cluster %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
@@ -181,7 +181,7 @@ func ksqlImport(ctx context.Context, d *schema.ResourceData, meta interface{}) (
 func readKsqlClusterAndSetAttributes(ctx context.Context, d *schema.ResourceData, meta interface{}, environmentId, clusterId string) ([]*schema.ResourceData, error) {
 	c := meta.(*Client)
 
-	cluster, resp, err := executeKsqlRead(c.ksqlApiContext(ctx), c, environmentId, clusterId)
+	cluster, resp, err := executeKsqlRead(c.ksqlV2ApiContext(ctx), c, environmentId, clusterId)
 	if err != nil {
 		tflog.Warn(ctx, fmt.Sprintf("Error reading ksqlDB Cluster %q: %s", d.Id(), createDescriptiveError(err, resp)), map[string]interface{}{ksqlClusterLoggingKey: d.Id()})
 
@@ -209,18 +209,18 @@ func readKsqlClusterAndSetAttributes(ctx context.Context, d *schema.ResourceData
 	return []*schema.ResourceData{d}, nil
 }
 
-func executeKsqlCreate(ctx context.Context, c *Client, cluster *ksql.KsqldbcmV2Cluster) (ksql.KsqldbcmV2Cluster, *http.Response, error) {
-	req := c.ksqlClient.ClustersKsqldbcmV2Api.CreateKsqldbcmV2Cluster(c.ksqlApiContext(ctx)).KsqldbcmV2Cluster(*cluster)
+func executeKsqlCreate(ctx context.Context, c *Client, cluster *ksqlv2.KsqldbcmV2Cluster) (ksqlv2.KsqldbcmV2Cluster, *http.Response, error) {
+	req := c.ksqlV2Client.ClustersKsqldbcmV2Api.CreateKsqldbcmV2Cluster(c.ksqlV2ApiContext(ctx)).KsqldbcmV2Cluster(*cluster)
 	return req.Execute()
 }
 
-func executeKsqlRead(ctx context.Context, c *Client, environmentId, clusterId string) (ksql.KsqldbcmV2Cluster, *http.Response, error) {
-	req := c.ksqlClient.ClustersKsqldbcmV2Api.GetKsqldbcmV2Cluster(c.ksqlApiContext(ctx), clusterId).Environment(environmentId)
+func executeKsqlRead(ctx context.Context, c *Client, environmentId, clusterId string) (ksqlv2.KsqldbcmV2Cluster, *http.Response, error) {
+	req := c.ksqlV2Client.ClustersKsqldbcmV2Api.GetKsqldbcmV2Cluster(c.ksqlV2ApiContext(ctx), clusterId).Environment(environmentId)
 	return req.Execute()
 }
 
 func executeKsqlDelete(ctx context.Context, c *Client, environmentId, clusterId string) (*http.Response, error) {
-	req := c.ksqlClient.ClustersKsqldbcmV2Api.DeleteKsqldbcmV2Cluster(c.ksqlApiContext(ctx), clusterId).Environment(environmentId)
+	req := c.ksqlV2Client.ClustersKsqldbcmV2Api.DeleteKsqldbcmV2Cluster(c.ksqlV2ApiContext(ctx), clusterId).Environment(environmentId)
 	resp, err := req.Execute()
 	return resp, err
 }
@@ -246,7 +246,7 @@ func credentialIdentityBlockSchema() *schema.Schema {
 	}
 }
 
-func setKsqlAttributes(d *schema.ResourceData, cluster ksql.KsqldbcmV2Cluster) (*schema.ResourceData, error) {
+func setKsqlAttributes(d *schema.ResourceData, cluster ksqlv2.KsqldbcmV2Cluster) (*schema.ResourceData, error) {
 	if err := d.Set(paramDisplayName, cluster.Spec.GetDisplayName()); err != nil {
 		return nil, createDescriptiveError(err)
 	}

@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"strings"
 
-	piv2 "github.com/confluentinc/ccloud-sdk-go-v2/provider-integration/v2"
+	providerintegrationv2 "github.com/confluentinc/ccloud-sdk-go-v2/provider-integration/v2"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -80,12 +80,12 @@ func providerIntegrationSetupCreate(ctx context.Context, d *schema.ResourceData,
 	provider := d.Get(paramCloud).(string)
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
 
-	createReq := piv2.PimV2Integration{}
+	createReq := providerintegrationv2.PimV2Integration{}
 	createReq.SetDisplayName(displayName)
 	createReq.SetProvider(strings.ToLower(provider))
-	createReq.SetEnvironment(piv2.ObjectReference{Id: environmentId})
+	createReq.SetEnvironment(providerintegrationv2.ObjectReference{Id: environmentId})
 
-	req := c.piV2Client.IntegrationsPimV2Api.CreatePimV2Integration(c.piV2ApiContext(ctx)).PimV2Integration(createReq)
+	req := c.providerIntegrationV2Client.IntegrationsPimV2Api.CreatePimV2Integration(c.providerIntegrationV2ApiContext(ctx)).PimV2Integration(createReq)
 	created, _, err := req.Execute()
 	if err != nil {
 		return diag.FromErr(createDescriptiveError(err))
@@ -99,7 +99,7 @@ func providerIntegrationSetupRead(ctx context.Context, d *schema.ResourceData, m
 	c := meta.(*Client)
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
 
-	req := c.piV2Client.IntegrationsPimV2Api.GetPimV2Integration(c.piV2ApiContext(ctx), d.Id()).Environment(environmentId)
+	req := c.providerIntegrationV2Client.IntegrationsPimV2Api.GetPimV2Integration(c.providerIntegrationV2ApiContext(ctx), d.Id()).Environment(environmentId)
 	pim, resp, err := req.Execute()
 	if err != nil {
 		tflog.Warn(ctx, fmt.Sprintf("Error reading provider integration setup %q: %s", d.Id(), createDescriptiveError(err)), map[string]interface{}{providerIntegrationLoggingKey: d.Id()})
@@ -135,7 +135,7 @@ func providerIntegrationSetupRead(ctx context.Context, d *schema.ResourceData, m
 func providerIntegrationSetupDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	c := meta.(*Client)
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
-	req := c.piV2Client.IntegrationsPimV2Api.DeletePimV2Integration(c.piV2ApiContext(ctx), d.Id()).Environment(environmentId)
+	req := c.providerIntegrationV2Client.IntegrationsPimV2Api.DeletePimV2Integration(c.providerIntegrationV2ApiContext(ctx), d.Id()).Environment(environmentId)
 	_, err := req.Execute()
 	if err != nil {
 		return diag.FromErr(createDescriptiveError(err))

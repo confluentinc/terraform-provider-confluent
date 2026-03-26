@@ -171,7 +171,7 @@ func testAccCheckComputePoolDestroy(s *terraform.State) error {
 			continue
 		}
 		deletedComputePoolId := rs.Primary.ID
-		req := c.netClient.NetworksNetworkingV1Api.GetNetworkingV1Network(c.netApiContext(context.Background()), deletedComputePoolId).Environment(flinkComputePoolEnvironmentId)
+		req := c.networkingV1Client.NetworksNetworkingV1Api.GetNetworkingV1Network(c.networkingV1ApiContext(context.Background()), deletedComputePoolId).Environment(flinkComputePoolEnvironmentId)
 		deletedComputePool, response, err := req.Execute()
 		if response != nil && response.StatusCode == http.StatusNotFound {
 			return nil

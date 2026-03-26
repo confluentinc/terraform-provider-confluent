@@ -367,7 +367,7 @@ func testAccCheckKsqlClusterDestroy(s *terraform.State) error {
 			continue
 		}
 		deletedClusterId := rs.Primary.ID
-		req := c.ksqlClient.ClustersKsqldbcmV2Api.GetKsqldbcmV2Cluster(c.ksqlApiContext(context.Background()), deletedClusterId).Environment(testEnvironmentId)
+		req := c.ksqlV2Client.ClustersKsqldbcmV2Api.GetKsqldbcmV2Cluster(c.ksqlV2ApiContext(context.Background()), deletedClusterId).Environment(testEnvironmentId)
 		deletedCluster, response, err := req.Execute()
 		if response != nil && (response.StatusCode == http.StatusForbidden || response.StatusCode == http.StatusNotFound) {
 			// /ksqldbcm/v2/clusters/{nonExistentClusterId/deletedClusterID} returns http.StatusForbidden instead of http.StatusNotFound
