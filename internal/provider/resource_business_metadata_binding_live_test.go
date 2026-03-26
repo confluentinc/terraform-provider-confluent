@@ -279,4 +279,4 @@ func testAccCheckBusinessMetadataBindingLiveConfig(endpoint, businessMetadataRes
 		depends_on = [confluent_business_metadata.%s, confluent_schema.%s]
 	}
 	`, endpoint, apiKey, apiSecret, businessMetadataResourceLabel, businessMetadataName, schemaRegistryId, schemaRegistryRestEndpoint, schemaRegistryApiKey, schemaRegistryApiSecret, schemaResourceLabel, subjectName, schemaRegistryId, schemaRegistryRestEndpoint, schemaRegistryApiKey, schemaRegistryApiSecret, businessMetadataBindingResourceLabel, businessMetadataResourceLabel, schemaResourceLabel, schemaResourceLabel, schemaRegistryId, schemaRegistryRestEndpoint, schemaRegistryApiKey, schemaRegistryApiSecret, businessMetadataResourceLabel, schemaResourceLabel)
-} 
+}

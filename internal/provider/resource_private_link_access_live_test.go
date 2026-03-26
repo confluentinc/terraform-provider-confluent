@@ -193,4 +193,3 @@ func testAccCheckPrivateLinkAccessLiveConfig(endpoint, plaResourceLabel, plaDisp
 	}
 	`, endpoint, apiKey, apiSecret, plaResourceLabel, plaDisplayName, environmentId, networkId, awsAccountId)
 }
-

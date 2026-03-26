@@ -21,9 +21,8 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/walkerus/go-wiremock"
-
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/walkerus/go-wiremock"
 )
 
 func TestAccCertificateAuthority(t *testing.T) {

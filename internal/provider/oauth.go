@@ -31,12 +31,12 @@ type OAuthToken struct {
 }
 
 type STSToken struct {
-	ExpiresInSeconds string         `json:"expires_in_seconds"`
-	AccessToken      string         `json:"access_token"`
-	TokenType        string         `json:"token_type"`
-	IssuedTokenType  string         `json:"issued_token_type"`
-	IdentityPoolId   string         `json:"identity_pool_id"`
-	ValidUntil       time.Time      `json:"valid_until"`
+	ExpiresInSeconds string           `json:"expires_in_seconds"`
+	AccessToken      string           `json:"access_token"`
+	TokenType        string           `json:"token_type"`
+	IssuedTokenType  string           `json:"issued_token_type"`
+	IdentityPoolId   string           `json:"identity_pool_id"`
+	ValidUntil       time.Time        `json:"valid_until"`
 	STSClient        *stsv1.APIClient `json:"sts_client"`
 }
 

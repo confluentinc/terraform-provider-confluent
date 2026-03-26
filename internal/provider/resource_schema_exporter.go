@@ -18,15 +18,17 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	sr "github.com/confluentinc/ccloud-sdk-go-v2/schema-registry/v1"
+	"net/http"
+	"regexp"
+	"strings"
+
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"net/http"
-	"regexp"
-	"strings"
+
+	schemaregistryv1 "github.com/confluentinc/ccloud-sdk-go-v2/schema-registry/v1"
 )
 
 var acceptedSchemaExporterStatus = []string{stateRunning, statePaused}
@@ -230,7 +232,7 @@ func schemaExporterCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	exporterId := createExporterId(clusterId, d.Get(paramName).(string))
 	name := d.Get(paramName).(string)
 
-	er := sr.NewExporterReference()
+	er := schemaregistryv1.NewExporterReference()
 	er.SetName(name)
 	if v := d.Get(paramContext).(string); v != "" {
 		er.SetContext(v)
@@ -374,7 +376,7 @@ func schemaExporterUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 
 		subjects := convertToStringSlice(d.Get(paramSubjects).(*schema.Set).List())
 
-		req := sr.NewExporterUpdateRequest()
+		req := schemaregistryv1.NewExporterUpdateRequest()
 		if v := d.Get(paramContext).(string); v != "" {
 			req.SetContext(v)
 		}
@@ -514,7 +516,7 @@ func schemaExporterImport(ctx context.Context, d *schema.ResourceData, meta inte
 	return []*schema.ResourceData{d}, nil
 }
 
-func setSchemaExporterAttributes(d *schema.ResourceData, clusterId string, exporter sr.ExporterReference, c *SchemaRegistryRestClient, meta interface{}) (*schema.ResourceData, error) {
+func setSchemaExporterAttributes(d *schema.ResourceData, clusterId string, exporter schemaregistryv1.ExporterReference, c *SchemaRegistryRestClient, meta interface{}) (*schema.ResourceData, error) {
 	if !c.isMetadataSetInProviderBlock {
 		if err := setKafkaCredentials(c.clusterApiKey, c.clusterApiSecret, d, c.externalAccessToken != nil); err != nil {
 			return nil, err

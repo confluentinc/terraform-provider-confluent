@@ -107,9 +107,9 @@ func TestAccCatalogIntegrationLive(t *testing.T) {
 				),
 			},
 			{
-				ResourceName:      fmt.Sprintf("confluent_catalog_integration.%s", ciResourceLabel),
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            fmt.Sprintf("confluent_catalog_integration.%s", ciResourceLabel),
+				ImportState:             true,
+				ImportStateVerify:       true,
 				ImportStateVerifyIgnore: []string{"credentials"},
 				ImportStateIdFunc: func(state *terraform.State) (string, error) {
 					resources := state.RootModule().Resources
@@ -129,9 +129,9 @@ func TestAccCatalogIntegrationLive(t *testing.T) {
 				),
 			},
 			{
-				ResourceName:      fmt.Sprintf("confluent_catalog_integration.%s", ciResourceLabel),
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            fmt.Sprintf("confluent_catalog_integration.%s", ciResourceLabel),
+				ImportState:             true,
+				ImportStateVerify:       true,
 				ImportStateVerifyIgnore: []string{"credentials"},
 				ImportStateIdFunc: func(state *terraform.State) (string, error) {
 					resources := state.RootModule().Resources
@@ -214,4 +214,3 @@ func testAccCheckCatalogIntegrationLiveConfig(endpoint, piResourceLabel, ciResou
 	}
 	`, endpoint, apiKey, apiSecret, piResourceLabel, piDisplayName, environmentId, awsIamRoleArn, ciResourceLabel, ciDisplayName, environmentId, kafkaClusterId, piResourceLabel, tableflowApiKey, tableflowApiSecret)
 }
-

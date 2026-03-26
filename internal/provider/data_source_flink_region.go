@@ -18,13 +18,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	v2 "github.com/confluentinc/ccloud-sdk-go-v2/flink/v2"
+	"net/http"
+	"strings"
+
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"net/http"
-	"strings"
+
+	flinkv2 "github.com/confluentinc/ccloud-sdk-go-v2/flink/v2"
 )
 
 func flinkRegionDataSource() *schema.Resource {
@@ -107,11 +109,11 @@ func executeFlinkRegionDataSourceRead(ctx context.Context, d *schema.ResourceDat
 	return nil
 }
 
-func executeListFlinkRegions(ctx context.Context, c *Client, cloud, region string) (v2.FcpmV2RegionList, *http.Response, error) {
+func executeListFlinkRegions(ctx context.Context, c *Client, cloud, region string) (flinkv2.FcpmV2RegionList, *http.Response, error) {
 	return c.flinkV2Client.RegionsFcpmV2Api.ListFcpmV2Regions(c.flinkV2ApiContext(ctx)).PageSize(listFlinkRegionsPageSize).RegionName(region).Cloud(cloud).Execute()
 }
 
-func setFlinkRegionAttributes(d *schema.ResourceData, flinkRegion v2.FcpmV2Region) (*schema.ResourceData, error) {
+func setFlinkRegionAttributes(d *schema.ResourceData, flinkRegion flinkv2.FcpmV2Region) (*schema.ResourceData, error) {
 	if err := d.Set(paramCloud, flinkRegion.GetCloud()); err != nil {
 		return nil, createDescriptiveError(err)
 	}
@@ -135,7 +137,7 @@ func setFlinkRegionAttributes(d *schema.ResourceData, flinkRegion v2.FcpmV2Regio
 	return d, nil
 }
 
-func executeFlinkRegionRead(ctx context.Context, c *Client, cloud, regionName string) (v2.FcpmV2RegionList, *http.Response, error) {
+func executeFlinkRegionRead(ctx context.Context, c *Client, cloud, regionName string) (flinkv2.FcpmV2RegionList, *http.Response, error) {
 	req := c.flinkV2Client.RegionsFcpmV2Api.ListFcpmV2Regions(c.flinkV2ApiContext(ctx)).Cloud(cloud).RegionName(regionName)
 	return req.Execute()
 }

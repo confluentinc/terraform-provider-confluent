@@ -218,4 +218,3 @@ func testAccCheckCatalogEntityAttributesLiveConfigUpdate(endpoint, entityAttribu
 	}
 	`, endpoint, apiKey, apiSecret, entityAttributesResourceLabel, schemaRegistryId, schemaRegistryRestEndpoint, schemaRegistryApiKey, schemaRegistryApiSecret, environmentId, randomSuffix, randomSuffix)
 }
-

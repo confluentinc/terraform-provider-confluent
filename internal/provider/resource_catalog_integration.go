@@ -21,12 +21,13 @@ import (
 	"net/http"
 	"strings"
 
-	tableflow "github.com/confluentinc/ccloud-sdk-go-v2/tableflow/v1"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+
+	tableflowv1 "github.com/confluentinc/ccloud-sdk-go-v2/tableflow/v1"
 )
 
 var acceptedCatalogIntegrationConnectionTypes = []string{paramAwsGlue, paramSnowflake, paramUnity}
@@ -177,20 +178,20 @@ func catalogIntegrationCreate(ctx context.Context, d *schema.ResourceData, meta 
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
 	clusterId := extractStringValueFromBlock(d, paramKafkaCluster, paramId)
 
-	catalogIntegrationSpec := tableflow.NewTableflowV1CatalogIntegrationSpec()
+	catalogIntegrationSpec := tableflowv1.NewTableflowV1CatalogIntegrationSpec()
 	catalogIntegrationSpec.SetDisplayName(displayName)
-	catalogIntegrationSpec.SetEnvironment(tableflow.GlobalObjectReference{Id: environmentId})
-	catalogIntegrationSpec.SetKafkaCluster(tableflow.EnvScopedObjectReference{Id: clusterId})
+	catalogIntegrationSpec.SetEnvironment(tableflowv1.GlobalObjectReference{Id: environmentId})
+	catalogIntegrationSpec.SetKafkaCluster(tableflowv1.EnvScopedObjectReference{Id: clusterId})
 	if isAwsGlue {
-		catalogIntegrationSpec.SetConfig(tableflow.TableflowV1CatalogIntegrationSpecConfigOneOf{
-			TableflowV1CatalogIntegrationAwsGlueSpec: &tableflow.TableflowV1CatalogIntegrationAwsGlueSpec{
+		catalogIntegrationSpec.SetConfig(tableflowv1.TableflowV1CatalogIntegrationSpecConfigOneOf{
+			TableflowV1CatalogIntegrationAwsGlueSpec: &tableflowv1.TableflowV1CatalogIntegrationAwsGlueSpec{
 				Kind:                  awsGlueSpecKind,
 				ProviderIntegrationId: extractStringValueFromBlock(d, paramAwsGlue, paramProviderIntegrationId),
 			},
 		})
 	} else if isSnowflake {
-		catalogIntegrationSpec.SetConfig(tableflow.TableflowV1CatalogIntegrationSpecConfigOneOf{
-			TableflowV1CatalogIntegrationSnowflakeSpec: &tableflow.TableflowV1CatalogIntegrationSnowflakeSpec{
+		catalogIntegrationSpec.SetConfig(tableflowv1.TableflowV1CatalogIntegrationSpecConfigOneOf{
+			TableflowV1CatalogIntegrationSnowflakeSpec: &tableflowv1.TableflowV1CatalogIntegrationSnowflakeSpec{
 				Kind:         snowflakeSpecKind,
 				Endpoint:     extractStringValueFromBlock(d, paramSnowflake, paramEndpoint),
 				ClientId:     extractStringValueFromBlock(d, paramSnowflake, paramClientId),
@@ -200,8 +201,8 @@ func catalogIntegrationCreate(ctx context.Context, d *schema.ResourceData, meta 
 			},
 		})
 	} else if isUnity {
-		catalogIntegrationSpec.SetConfig(tableflow.TableflowV1CatalogIntegrationSpecConfigOneOf{
-			TableflowV1CatalogIntegrationUnitySpec: &tableflow.TableflowV1CatalogIntegrationUnitySpec{
+		catalogIntegrationSpec.SetConfig(tableflowv1.TableflowV1CatalogIntegrationSpecConfigOneOf{
+			TableflowV1CatalogIntegrationUnitySpec: &tableflowv1.TableflowV1CatalogIntegrationUnitySpec{
 				Kind:              unitySpecKind,
 				WorkspaceEndpoint: extractStringValueFromBlock(d, paramUnity, paramWorkspaceEndpoint),
 				CatalogName:       extractStringValueFromBlock(d, paramUnity, paramCatalogName),
@@ -211,7 +212,7 @@ func catalogIntegrationCreate(ctx context.Context, d *schema.ResourceData, meta 
 		})
 	}
 
-	createCatalogIntegrationRequest := tableflow.NewTableflowV1CatalogIntegration()
+	createCatalogIntegrationRequest := tableflowv1.NewTableflowV1CatalogIntegration()
 	createCatalogIntegrationRequest.SetSpec(*catalogIntegrationSpec)
 
 	createCatalogIntegrationRequestJson, err := json.Marshal(createCatalogIntegrationRequest)
@@ -237,7 +238,7 @@ func catalogIntegrationCreate(ctx context.Context, d *schema.ResourceData, meta 
 	return catalogIntegrationRead(ctx, d, meta)
 }
 
-func executeCatalogIntegrationRead(ctx context.Context, c *TableflowRestClient, environmentId, clusterId, id string) (tableflow.TableflowV1CatalogIntegration, *http.Response, error) {
+func executeCatalogIntegrationRead(ctx context.Context, c *TableflowRestClient, environmentId, clusterId, id string) (tableflowv1.TableflowV1CatalogIntegration, *http.Response, error) {
 	return c.apiClient.CatalogIntegrationsTableflowV1Api.GetTableflowV1CatalogIntegration(c.apiContext(ctx), id).Environment(environmentId).SpecKafkaCluster(clusterId).Execute()
 }
 
@@ -291,7 +292,7 @@ func readCatalogIntegrationAndSetAttributes(ctx context.Context, d *schema.Resou
 	return []*schema.ResourceData{d}, nil
 }
 
-func setCatalogIntegrationAttributes(d *schema.ResourceData, c *TableflowRestClient, catalogIntegration tableflow.TableflowV1CatalogIntegration) (*schema.ResourceData, error) {
+func setCatalogIntegrationAttributes(d *schema.ResourceData, c *TableflowRestClient, catalogIntegration tableflowv1.TableflowV1CatalogIntegration) (*schema.ResourceData, error) {
 	if err := d.Set(paramDisplayName, catalogIntegration.Spec.GetDisplayName()); err != nil {
 		return nil, err
 	}
@@ -409,26 +410,26 @@ func catalogIntegrationUpdate(ctx context.Context, d *schema.ResourceData, meta 
 	}
 	tableflowRestClient := c.tableflowRestClientFactory.CreateTableflowRestClient(tableflowApiKey, tableflowApiSecret, c.isTableflowMetadataSet, c.oauthToken, c.stsToken)
 
-	updateCatalogIntegrationSpec := &tableflow.TableflowV1CatalogIntegrationUpdateSpec{}
-	updateCatalogIntegrationSpec.SetEnvironment(tableflow.GlobalObjectReference{Id: environmentId})
-	updateCatalogIntegrationSpec.SetKafkaCluster(tableflow.EnvScopedObjectReference{Id: clusterId})
+	updateCatalogIntegrationSpec := &tableflowv1.TableflowV1CatalogIntegrationUpdateSpec{}
+	updateCatalogIntegrationSpec.SetEnvironment(tableflowv1.GlobalObjectReference{Id: environmentId})
+	updateCatalogIntegrationSpec.SetKafkaCluster(tableflowv1.EnvScopedObjectReference{Id: clusterId})
 	if d.HasChange(paramDisplayName) {
 		updateCatalogIntegrationSpec.SetDisplayName(d.Get(paramDisplayName).(string))
 
 		isAwsGlue := len(d.Get(paramAwsGlue).([]interface{})) > 0
 		isSnowflake := len(d.Get(paramSnowflake).([]interface{})) > 0
 		if isAwsGlue {
-			updateCatalogIntegrationSpec.SetConfig(tableflow.TableflowV1CatalogIntegrationAwsGlueUpdateSpecAsTableflowV1CatalogIntegrationUpdateSpecConfigOneOf(&tableflow.TableflowV1CatalogIntegrationAwsGlueUpdateSpec{
+			updateCatalogIntegrationSpec.SetConfig(tableflowv1.TableflowV1CatalogIntegrationAwsGlueUpdateSpecAsTableflowV1CatalogIntegrationUpdateSpecConfigOneOf(&tableflowv1.TableflowV1CatalogIntegrationAwsGlueUpdateSpec{
 				Kind: awsGlueSpecKind,
 			}))
 		} else if isSnowflake {
-			updateCatalogIntegrationSpec.SetConfig(tableflow.TableflowV1CatalogIntegrationSnowflakeUpdateSpecAsTableflowV1CatalogIntegrationUpdateSpecConfigOneOf(&tableflow.TableflowV1CatalogIntegrationSnowflakeUpdateSpec{
+			updateCatalogIntegrationSpec.SetConfig(tableflowv1.TableflowV1CatalogIntegrationSnowflakeUpdateSpecAsTableflowV1CatalogIntegrationUpdateSpecConfigOneOf(&tableflowv1.TableflowV1CatalogIntegrationSnowflakeUpdateSpec{
 				Kind: snowflakeSpecKind,
 			}))
 		}
 	}
 	if d.HasChange(paramSnowflake) {
-		updateCatalogIntegrationSpec.SetConfig(tableflow.TableflowV1CatalogIntegrationSnowflakeUpdateSpecAsTableflowV1CatalogIntegrationUpdateSpecConfigOneOf(&tableflow.TableflowV1CatalogIntegrationSnowflakeUpdateSpec{
+		updateCatalogIntegrationSpec.SetConfig(tableflowv1.TableflowV1CatalogIntegrationSnowflakeUpdateSpecAsTableflowV1CatalogIntegrationUpdateSpecConfigOneOf(&tableflowv1.TableflowV1CatalogIntegrationSnowflakeUpdateSpec{
 			Kind: snowflakeSpecKind,
 		}))
 		if d.HasChange(fmt.Sprintf("%s.0.%s", paramSnowflake, paramEndpoint)) {
@@ -448,7 +449,7 @@ func catalogIntegrationUpdate(ctx context.Context, d *schema.ResourceData, meta 
 		}
 	}
 	if d.HasChange(paramUnity) {
-		updateCatalogIntegrationSpec.SetConfig(tableflow.TableflowV1CatalogIntegrationUnityUpdateSpecAsTableflowV1CatalogIntegrationUpdateSpecConfigOneOf(&tableflow.TableflowV1CatalogIntegrationUnityUpdateSpec{
+		updateCatalogIntegrationSpec.SetConfig(tableflowv1.TableflowV1CatalogIntegrationUnityUpdateSpecAsTableflowV1CatalogIntegrationUpdateSpecConfigOneOf(&tableflowv1.TableflowV1CatalogIntegrationUnityUpdateSpec{
 			Kind: unitySpecKind,
 		}))
 		if d.HasChange(fmt.Sprintf("%s.0.%s", paramUnity, paramWorkspaceEndpoint)) {
@@ -465,7 +466,7 @@ func catalogIntegrationUpdate(ctx context.Context, d *schema.ResourceData, meta 
 		}
 	}
 
-	updateCatalogIntegration := tableflow.NewTableflowV1CatalogIntegrationUpdateRequest()
+	updateCatalogIntegration := tableflowv1.NewTableflowV1CatalogIntegrationUpdateRequest()
 	updateCatalogIntegration.SetSpec(*updateCatalogIntegrationSpec)
 
 	updateCatalogIntegrationJson, err := json.Marshal(updateCatalogIntegration)

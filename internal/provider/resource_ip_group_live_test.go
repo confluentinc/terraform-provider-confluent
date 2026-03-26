@@ -173,4 +173,3 @@ func testAccCheckIPGroupLiveExists(n string) resource.TestCheckFunc {
 		return nil
 	}
 }
-

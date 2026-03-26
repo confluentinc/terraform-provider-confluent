@@ -18,11 +18,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	v1 "github.com/confluentinc/ccloud-sdk-go-v2/networking/v1"
+	"net/http"
+
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"net/http"
+
+	networkingv1 "github.com/confluentinc/ccloud-sdk-go-v2/networking/v1"
 )
 
 func networkLinkServiceDataSource() *schema.Resource {
@@ -100,7 +102,7 @@ func nlsDataSourceReadUsingId(ctx context.Context, d *schema.ResourceData, meta 
 	return nil
 }
 
-func executeNlsRead(ctx context.Context, c *Client, environmentId string, nlsId string) (v1.NetworkingV1NetworkLinkService, *http.Response, error) {
+func executeNlsRead(ctx context.Context, c *Client, environmentId string, nlsId string) (networkingv1.NetworkingV1NetworkLinkService, *http.Response, error) {
 	req := c.networkingV1Client.NetworkLinkServicesNetworkingV1Api.GetNetworkingV1NetworkLinkService(c.networkingV1ApiContext(ctx), nlsId).Environment(environmentId)
 	return req.Execute()
 }
@@ -131,8 +133,8 @@ func nlsDataSourceReadUsingDisplayName(ctx context.Context, d *schema.ResourceDa
 	return nil
 }
 
-func loadNetworkLinkServices(ctx context.Context, c *Client, environmentId string) ([]v1.NetworkingV1NetworkLinkService, error) {
-	networkLinks := make([]v1.NetworkingV1NetworkLinkService, 0)
+func loadNetworkLinkServices(ctx context.Context, c *Client, environmentId string) ([]networkingv1.NetworkingV1NetworkLinkService, error) {
+	networkLinks := make([]networkingv1.NetworkingV1NetworkLinkService, 0)
 
 	allNlsAreCollected := false
 	pageToken := ""
@@ -163,7 +165,7 @@ func loadNetworkLinkServices(ctx context.Context, c *Client, environmentId strin
 	return networkLinks, nil
 }
 
-func executeListNetworkLinkServices(ctx context.Context, c *Client, environmentId, pageToken string) (v1.NetworkingV1NetworkLinkServiceList, *http.Response, error) {
+func executeListNetworkLinkServices(ctx context.Context, c *Client, environmentId, pageToken string) (networkingv1.NetworkingV1NetworkLinkServiceList, *http.Response, error) {
 	if pageToken != "" {
 		return c.networkingV1Client.NetworkLinkServicesNetworkingV1Api.ListNetworkingV1NetworkLinkServices(c.networkingV1ApiContext(ctx)).Environment(environmentId).PageSize(listNetworkLinkServicesPageSize).PageToken(pageToken).Execute()
 	} else {

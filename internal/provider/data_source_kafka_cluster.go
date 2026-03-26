@@ -18,11 +18,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	v2 "github.com/confluentinc/ccloud-sdk-go-v2/cmk/v2"
+	"net/http"
+
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"net/http"
+
+	cmkv2 "github.com/confluentinc/ccloud-sdk-go-v2/cmk/v2"
 )
 
 func kafkaDataSource() *schema.Resource {
@@ -176,7 +178,7 @@ func kafkaDataSourceReadUsingId(ctx context.Context, d *schema.ResourceData, met
 	return nil
 }
 
-func orgHasMultipleKafkaClustersWithTargetDisplayName(clusters []v2.CmkV2Cluster, displayName string) bool {
+func orgHasMultipleKafkaClustersWithTargetDisplayName(clusters []cmkv2.CmkV2Cluster, displayName string) bool {
 	var numberOfClustersWithTargetDisplayName = 0
 	for _, cluster := range clusters {
 		if cluster.Spec.GetDisplayName() == displayName {
@@ -186,8 +188,8 @@ func orgHasMultipleKafkaClustersWithTargetDisplayName(clusters []v2.CmkV2Cluster
 	return numberOfClustersWithTargetDisplayName > 1
 }
 
-func loadKafkaClusters(ctx context.Context, c *Client, environmentId string) ([]v2.CmkV2Cluster, error) {
-	clusters := make([]v2.CmkV2Cluster, 0)
+func loadKafkaClusters(ctx context.Context, c *Client, environmentId string) ([]cmkv2.CmkV2Cluster, error) {
+	clusters := make([]cmkv2.CmkV2Cluster, 0)
 
 	allClustersAreCollected := false
 	pageToken := ""
@@ -218,7 +220,7 @@ func loadKafkaClusters(ctx context.Context, c *Client, environmentId string) ([]
 	return clusters, nil
 }
 
-func executeListKafkaClusters(ctx context.Context, c *Client, environmentId, pageToken string) (v2.CmkV2ClusterList, *http.Response, error) {
+func executeListKafkaClusters(ctx context.Context, c *Client, environmentId, pageToken string) (cmkv2.CmkV2ClusterList, *http.Response, error) {
 	if pageToken != "" {
 		return c.cmkV2Client.ClustersCmkV2Api.ListCmkV2Clusters(c.cmkV2ApiContext(ctx)).Environment(environmentId).PageSize(listKafkaClustersPageSize).PageToken(pageToken).Execute()
 	} else {

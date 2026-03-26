@@ -319,4 +319,3 @@ func testAccCheckFlinkComputePoolLiveExists(n string) resource.TestCheckFunc {
 		return nil
 	}
 }
-

@@ -157,4 +157,3 @@ func testAccCheckProviderIntegrationLiveExists(n string) resource.TestCheckFunc 
 		return nil
 	}
 }
-

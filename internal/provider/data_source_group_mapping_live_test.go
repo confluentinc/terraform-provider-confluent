@@ -100,4 +100,4 @@ func testAccCheckGroupMappingDataSourceLiveConfig(endpoint, groupMappingResource
 		id = confluent_group_mapping.%s.id
 	}
 	`, endpoint, apiKey, apiSecret, groupMappingResourceLabel, groupMappingDisplayName, groupMappingDataSourceLabel, groupMappingResourceLabel)
-} 
+}
