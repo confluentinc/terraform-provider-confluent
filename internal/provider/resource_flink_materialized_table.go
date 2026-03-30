@@ -731,27 +731,27 @@ func materializedTableUpdate(ctx context.Context, d *schema.ResourceData, meta i
 		return diag.Errorf("error updating Flink connection %q: only %q, %q, %q, %q, %q, %q, %q, and %q attributes can be updated for Flink Compute Pool", d.Id(), paramQuery, paramStopped, paramComputePool, paramPrincipal, paramColumns, paramWatermarkExpression, paramWatermarkColumnName, paramConstraints)
 	}
 
-	restEndpoint, err := extractFlinkRestEndpoint(meta.(*Client), d, true)
+	restEndpoint, err := extractFlinkRestEndpoint(meta.(*Client), d, false)
 	if err != nil {
 		return diag.Errorf("error updating Flink Materialized Table: %s", createDescriptiveError(err))
 	}
-	organizationId, err := extractFlinkOrganizationId(meta.(*Client), d, true)
+	organizationId, err := extractFlinkOrganizationId(meta.(*Client), d, false)
 	if err != nil {
 		return diag.Errorf("error updating Flink Materialized Table: %s", createDescriptiveError(err))
 	}
-	environmentId, err := extractFlinkEnvironmentId(meta.(*Client), d, true)
+	environmentId, err := extractFlinkEnvironmentId(meta.(*Client), d, false)
 	if err != nil {
 		return diag.Errorf("error updating Flink Materialized Table: %s", createDescriptiveError(err))
 	}
-	computePoolId, err := extractFlinkComputePoolId(meta.(*Client), d, true)
+	computePoolId, err := extractFlinkComputePoolId(meta.(*Client), d, false)
 	if err != nil {
 		return diag.Errorf("error updating Flink Materialized Table: %s", createDescriptiveError(err))
 	}
-	principalId, err := extractFlinkPrincipalId(meta.(*Client), d, true)
+	principalId, err := extractFlinkPrincipalId(meta.(*Client), d, false)
 	if err != nil {
 		return diag.Errorf("error updating Flink Materialized Table: %s", createDescriptiveError(err))
 	}
-	flinkApiKey, flinkApiSecret, err := extractFlinkApiKeyAndApiSecret(meta.(*Client), d, true)
+	flinkApiKey, flinkApiSecret, err := extractFlinkApiKeyAndApiSecret(meta.(*Client), d, false)
 	if err != nil {
 		return diag.Errorf("error updating Flink Materialized Table: %s", createDescriptiveError(err))
 	}
