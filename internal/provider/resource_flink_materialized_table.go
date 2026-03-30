@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
+	"time"
 )
 
 const (
@@ -925,7 +926,41 @@ func materializedTableUpdate(ctx context.Context, d *schema.ResourceData, meta i
 		return diag.Errorf("error updating Flink Materialized Table %q: error marshaling %#v to json: %s", d.Id(), updatedTable, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished updating Flink Materialized Table %q: %s", d.Id(), updatedTableJson), map[string]interface{}{flinkMaterializedTableLoggingKey: d.Id()})
+
+	// The Flink API updates materialized tables asynchronously: the update call returns
+	// immediately with the old state, and the new query takes effect shortly after.
+	// Poll until the API reflects the updated query to avoid storing stale state.
+	if d.HasChange(paramQuery) {
+		expectedQuery := d.Get(paramQuery).(string)
+		if err := waitForMaterializedTableQueryUpdate(ctx, flinkRestClient, organizationId, environmentId, kafkaId, name, expectedQuery); err != nil {
+			tflog.Warn(ctx, fmt.Sprintf("Timed out waiting for Flink Materialized Table %q query to converge: %s", d.Id(), err))
+		}
+	}
+
 	return materializedTableRead(ctx, d, meta)
+}
+
+// waitForMaterializedTableQueryUpdate polls the API until the materialized table's
+// query matches the expected value (after normalization) or a timeout is reached.
+func waitForMaterializedTableQueryUpdate(ctx context.Context, c *FlinkRestClient, orgId, envId, kafkaId, tableName, expectedQuery string) error {
+	expectedNormalized := normalizeFlinkQuery(expectedQuery)
+	timeout := 2 * time.Minute
+	interval := 5 * time.Second
+	deadline := time.Now().Add(timeout)
+
+	for time.Now().Before(deadline) {
+		table, _, err := executeMaterializedTableRead(c.fgApiContext(ctx), c, orgId, envId, kafkaId, tableName)
+		if err == nil {
+			actualNormalized := normalizeFlinkQuery(table.Spec.GetQuery())
+			if actualNormalized == expectedNormalized {
+				tflog.Debug(ctx, fmt.Sprintf("Flink Materialized Table %q query has converged", tableName))
+				return nil
+			}
+			tflog.Debug(ctx, fmt.Sprintf("Waiting for Flink Materialized Table %q query to converge (expected: %q, actual: %q)", tableName, expectedNormalized, actualNormalized))
+		}
+		time.Sleep(interval)
+	}
+	return fmt.Errorf("timed out after %s waiting for query to update", timeout)
 }
 
 func createFlinkMaterializedTableId(environmentId, kafkaId, tableName string) string {
