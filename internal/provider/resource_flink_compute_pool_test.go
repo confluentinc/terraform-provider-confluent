@@ -122,6 +122,7 @@ func TestAccComputePool(t *testing.T) {
 					resource.TestCheckResourceAttr(fullComputePoolResourceLabel, paramCloud, flinkComputePoolCloud),
 					resource.TestCheckResourceAttr(fullComputePoolResourceLabel, paramRegion, flinkComputePoolRegion),
 					resource.TestCheckResourceAttr(fullComputePoolResourceLabel, paramMaxCfu, strconv.Itoa(flinkComputePoolDefaultMaxCfu)),
+					resource.TestCheckResourceAttr(fullComputePoolResourceLabel, paramDefaultPool, "true"),
 					resource.TestCheckResourceAttr(fullComputePoolResourceLabel, fmt.Sprintf("%s.#", paramEnvironment), "1"),
 					resource.TestCheckResourceAttr(fullComputePoolResourceLabel, fmt.Sprintf("%s.0.%s", paramEnvironment, paramId), flinkComputePoolEnvironmentId),
 					resource.TestCheckResourceAttr(fullComputePoolResourceLabel, paramApiVersion, flinkComputePoolApiVersion),
@@ -138,6 +139,7 @@ func TestAccComputePool(t *testing.T) {
 					resource.TestCheckResourceAttr(fullComputePoolResourceLabel, paramCloud, flinkComputePoolCloud),
 					resource.TestCheckResourceAttr(fullComputePoolResourceLabel, paramRegion, flinkComputePoolRegion),
 					resource.TestCheckResourceAttr(fullComputePoolResourceLabel, paramMaxCfu, strconv.Itoa(flinkComputePoolDefaultMaxCfu)),
+					resource.TestCheckResourceAttr(fullComputePoolResourceLabel, paramDefaultPool, "true"),
 					resource.TestCheckResourceAttr(fullComputePoolResourceLabel, fmt.Sprintf("%s.#", paramEnvironment), "1"),
 					resource.TestCheckResourceAttr(fullComputePoolResourceLabel, fmt.Sprintf("%s.0.%s", paramEnvironment, paramId), flinkComputePoolEnvironmentId),
 					resource.TestCheckResourceAttr(fullComputePoolResourceLabel, paramApiVersion, flinkComputePoolApiVersion),
@@ -199,6 +201,7 @@ func testAccCheckComputePoolConfig(mockServerUrl, resourceLabel string) string {
 		  id = "%s"
 	    }
         max_cfu = %d
+		default_pool = true
 	}
 	`, mockServerUrl, resourceLabel, flinkComputePoolDisplayName, flinkComputePoolCloud, flinkComputePoolRegion, flinkComputePoolEnvironmentId, flinkComputePoolDefaultMaxCfu)
 }
@@ -215,6 +218,7 @@ func testAccCheckComputePoolConfigWithoutMaxCfu(mockServerUrl, resourceLabel str
 	    environment {
 		  id = "%s"
 	    }
+		default_pool = true
 	}
 	`, mockServerUrl, resourceLabel, flinkComputePoolDisplayName, flinkComputePoolCloud, flinkComputePoolRegion, flinkComputePoolEnvironmentId)
 }
