@@ -467,17 +467,18 @@ func testAccCheckFlinkStatementWithEnhancedProviderBlockWithoutComputePool(confl
       flink_principal_id = "%s"
       organization_id = "%s"
       environment_id = "%s"
+      flink_compute_pool_id = "%s"
     }
 	resource "confluent_flink_statement" "%s" {
 	  statement_name = "%s"
 	  statement = "%s"
-	
+
 	  properties = {
 		"%s" = "%s"
 	  }
 	}
 	`, confluentCloudBaseUrl, kafkaApiKey, kafkaApiSecret, mockServerUrl, flinkPrincipalIdTest,
-		flinkOrganizationIdTest, flinkEnvironmentIdTest,
+		flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkComputePoolIdTest,
 		flinkStatementResourceLabel, flinkStatementNameTest, flinkStatementTest, flinkFirstPropertyKeyTest, flinkFirstPropertyValueTest)
 }
 
