@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -31,11 +30,7 @@ import (
 )
 
 const (
-	paramMaxCfu      = "max_cfu"
 	paramDefaultPool = "default_pool"
-
-	fcpmAPICreateTimeout = 1 * time.Hour
-	fcpmAPIDeleteTimeout = 1 * time.Hour
 )
 
 var acceptedComputePoolTypes = []string{paramStandardCluster}

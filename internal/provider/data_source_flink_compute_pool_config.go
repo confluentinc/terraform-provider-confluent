@@ -61,7 +61,7 @@ func computePoolConfigDataSourceRead(ctx context.Context, d *schema.ResourceData
 	}
 	c := meta.(*Client)
 
-	req := c.fcpmClient.OrgComputePoolConfigsFcpmV2Api.GetFcpmV2OrgComputePoolConfig(c.fcpmApiContext(ctx))
+	req := c.flinkV2Client.OrgComputePoolConfigsFcpmV2Api.GetFcpmV2OrgComputePoolConfig(c.flinkV2ApiContext(ctx))
 	computePoolConfig, resp, err := req.Execute()
 	if err != nil {
 		return diag.Errorf("error reading Compute Pool Config %q: %s", map[string]interface{}{computePoolConfigLoggingKey: d.Id()}, createDescriptiveError(err, resp))

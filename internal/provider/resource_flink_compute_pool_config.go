@@ -75,7 +75,7 @@ func computePoolConfigCreate(ctx context.Context, d *schema.ResourceData, meta i
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Compute Pool Request: %s", createComputePoolJson))
 
-	req := c.fcpmClient.OrgComputePoolConfigsFcpmV2Api.UpdateFcpmV2OrgComputePoolConfig(c.fcpmApiContext(ctx)).FcpmV2OrgComputePoolConfigUpdate(*computePoolRequest)
+	req := c.flinkV2Client.OrgComputePoolConfigsFcpmV2Api.UpdateFcpmV2OrgComputePoolConfig(c.flinkV2ApiContext(ctx)).FcpmV2OrgComputePoolConfigUpdate(*computePoolRequest)
 	config, resp, err := req.Execute()
 	if err != nil {
 		return diag.Errorf("error creating Compute Pool Config %q: %s", map[string]interface{}{computePoolConfigLoggingKey: d.Id()}, createDescriptiveError(err, resp))
@@ -112,7 +112,7 @@ func computePoolConfigUpdate(ctx context.Context, d *schema.ResourceData, meta i
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Updating Flink Compute Pool Config %q: %s", map[string]interface{}{computePoolConfigLoggingKey: d.Id()}, updateComputePoolRequestJson))
 
-	req := c.fcpmClient.OrgComputePoolConfigsFcpmV2Api.UpdateFcpmV2OrgComputePoolConfig(c.fcpmApiContext(ctx)).FcpmV2OrgComputePoolConfigUpdate(*updateComputePoolRequest)
+	req := c.flinkV2Client.OrgComputePoolConfigsFcpmV2Api.UpdateFcpmV2OrgComputePoolConfig(c.flinkV2ApiContext(ctx)).FcpmV2OrgComputePoolConfigUpdate(*updateComputePoolRequest)
 	updatedComputePool, resp, err := req.Execute()
 
 	if err != nil {
@@ -139,7 +139,7 @@ func computePoolConfigRead(ctx context.Context, d *schema.ResourceData, meta int
 func readComputePoolConfigAndSetAttributes(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	c := meta.(*Client)
 
-	computePoolConfig, resp, err := executeComputePoolConfigRead(c.fcpmApiContext(ctx), c)
+	computePoolConfig, resp, err := executeComputePoolConfigRead(c.flinkV2ApiContext(ctx), c)
 	if err != nil {
 		tflog.Warn(ctx, fmt.Sprintf("Error reading Flink Compute Pool Config %q: %s", map[string]interface{}{computePoolConfigLoggingKey: d.Id()}, createDescriptiveError(err, resp)))
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
@@ -185,7 +185,7 @@ func setComputePoolConfigAttributes(d *schema.ResourceData, computePool fcpm.Fcp
 }
 
 func executeComputePoolConfigRead(ctx context.Context, c *Client) (fcpm.FcpmV2OrgComputePoolConfig, *http.Response, error) {
-	req := c.fcpmClient.OrgComputePoolConfigsFcpmV2Api.GetFcpmV2OrgComputePoolConfig(c.fcpmApiContext(ctx))
+	req := c.flinkV2Client.OrgComputePoolConfigsFcpmV2Api.GetFcpmV2OrgComputePoolConfig(c.flinkV2ApiContext(ctx))
 	return req.Execute()
 }
 
