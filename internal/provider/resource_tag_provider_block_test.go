@@ -17,21 +17,12 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
 	"testing"
-)
 
-const (
-	tagResourceScenarioName        = "confluent_tag Resource Lifecycle"
-	scenarioStateTagHasBeenCreated = "A new tag has been just created"
-	scenarioStateTagHasBeenPending = "A new tag has been just pending"
-	scenarioStateTagHasBeenUpdated = "A new tag has been just updated"
-	createTagUrlPath               = "/catalog/v1/types/tagdefs"
-	readCreatedTagUrlPath          = "/catalog/v1/types/tagdefs/test1"
-	tagLabel                       = "confluent_tag.mytag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/walkerus/go-wiremock"
 )
 
 func TestAccTagWithEnhancedProviderBlock(t *testing.T) {

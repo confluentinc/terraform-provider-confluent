@@ -17,17 +17,12 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-)
-
-const (
-	tfImporterResourceScenarioName = "confluent_tf_importer Resource Lifecycle"
-	tfImporterResourceLabel        = "test_importer_resource_label"
+	"github.com/walkerus/go-wiremock"
 )
 
 func TestAccResourceTfImporter(t *testing.T) {

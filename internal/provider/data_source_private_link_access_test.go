@@ -17,18 +17,12 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-)
-
-const (
-	dataSourcePrivateLinkAccessScenarioName = "confluent_private_link_access Data Source Lifecycle"
-	plaDataSourceLabel                      = "example"
-	plaDataSourceDisplayName                = "prod-pl-use2"
+	"github.com/walkerus/go-wiremock"
 )
 
 var fullPrivateLinkAccessDataSourceLabel = fmt.Sprintf("data.confluent_private_link_access.%s", plaDataSourceLabel)

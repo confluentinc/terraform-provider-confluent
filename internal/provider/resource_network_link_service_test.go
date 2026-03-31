@@ -17,20 +17,12 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
 	"testing"
-)
 
-const (
-	networkLinkServiceResourceScenarioName        = "confluent_network_link_service Resource Lifecycle"
-	scenarioStateNetworkLinkServiceHasBeenCreated = "A new network link service has been just created"
-	scenarioStateNetworkLinkServiceHasBeenUpdated = "A new network link service has been just updated"
-
-	networkLinkServiceUrlPath       = "/networking/v1/network-link-services"
-	networkLinkServiceResourceLabel = "confluent_network_link_service.nls"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/walkerus/go-wiremock"
 )
 
 func TestAccNetworkLinkService(t *testing.T) {

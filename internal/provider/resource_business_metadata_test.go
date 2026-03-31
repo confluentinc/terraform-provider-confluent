@@ -17,21 +17,12 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
 	"testing"
-)
 
-const (
-	businessMetadataResourceScenarioName        = "confluent_business_metadata Data Source Lifecycle"
-	scenarioStateBusinessMetadataHasBeenCreated = "A new business metadata has been just created"
-	scenarioStateBusinessMetadataHasBeenUpdated = "A new business metadata has been just updated"
-	scenarioStateBusinessMetadataHasBeenPending = "A new business metadata has been just pending"
-	createBusinessMetadataUrlPath               = "/catalog/v1/types/businessmetadatadefs"
-	readCreatedBusinessMetadataUrlPath          = "/catalog/v1/types/businessmetadatadefs/bm"
-	businessMetadataLabel                       = "confluent_business_metadata.main"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/walkerus/go-wiremock"
 )
 
 func TestAccBusinessMetadata(t *testing.T) {

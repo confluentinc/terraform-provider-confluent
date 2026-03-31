@@ -26,97 +26,77 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
-	apikeys "github.com/confluentinc/ccloud-sdk-go-v2/apikeys/v2"
-	byok "github.com/confluentinc/ccloud-sdk-go-v2/byok/v1"
-	cam "github.com/confluentinc/ccloud-sdk-go-v2/cam/v1"
-	ccpm "github.com/confluentinc/ccloud-sdk-go-v2/ccpm/v1"
-	ca "github.com/confluentinc/ccloud-sdk-go-v2/certificate-authority/v2"
-	cmk "github.com/confluentinc/ccloud-sdk-go-v2/cmk/v2"
-	ccp "github.com/confluentinc/ccloud-sdk-go-v2/connect-custom-plugin/v1"
-	connect "github.com/confluentinc/ccloud-sdk-go-v2/connect/v1"
-	dc "github.com/confluentinc/ccloud-sdk-go-v2/data-catalog/v1"
-	fa "github.com/confluentinc/ccloud-sdk-go-v2/flink-artifact/v1"
-	fcpm "github.com/confluentinc/ccloud-sdk-go-v2/flink/v2"
-	iamip "github.com/confluentinc/ccloud-sdk-go-v2/iam-ip-filtering/v2"
+	apikeysv2 "github.com/confluentinc/ccloud-sdk-go-v2/apikeys/v2"
+	byokv1 "github.com/confluentinc/ccloud-sdk-go-v2/byok/v1"
+	camv1 "github.com/confluentinc/ccloud-sdk-go-v2/cam/v1"
+	ccpmv1 "github.com/confluentinc/ccloud-sdk-go-v2/ccpm/v1"
+	certificateauthorityv2 "github.com/confluentinc/ccloud-sdk-go-v2/certificate-authority/v2"
+	cmkv2 "github.com/confluentinc/ccloud-sdk-go-v2/cmk/v2"
+	connectcustompluginv1 "github.com/confluentinc/ccloud-sdk-go-v2/connect-custom-plugin/v1"
+	connectv1 "github.com/confluentinc/ccloud-sdk-go-v2/connect/v1"
+	datacatalogv1 "github.com/confluentinc/ccloud-sdk-go-v2/data-catalog/v1"
+	endpointv1 "github.com/confluentinc/ccloud-sdk-go-v2/endpoint/v1"
+	flinkartifactv1 "github.com/confluentinc/ccloud-sdk-go-v2/flink-artifact/v1"
+	flinkv2 "github.com/confluentinc/ccloud-sdk-go-v2/flink/v2"
+	iamipfilteringv2 "github.com/confluentinc/ccloud-sdk-go-v2/iam-ip-filtering/v2"
 	iamv1 "github.com/confluentinc/ccloud-sdk-go-v2/iam/v1"
-	iam "github.com/confluentinc/ccloud-sdk-go-v2/iam/v2"
-	oidc "github.com/confluentinc/ccloud-sdk-go-v2/identity-provider/v2"
-	quotas "github.com/confluentinc/ccloud-sdk-go-v2/kafka-quotas/v1"
-	ksql "github.com/confluentinc/ccloud-sdk-go-v2/ksql/v2"
-	mds "github.com/confluentinc/ccloud-sdk-go-v2/mds/v2"
-	netap "github.com/confluentinc/ccloud-sdk-go-v2/networking-access-point/v1"
-	dns "github.com/confluentinc/ccloud-sdk-go-v2/networking-dnsforwarder/v1"
-	netgw "github.com/confluentinc/ccloud-sdk-go-v2/networking-gateway/v1"
-	netip "github.com/confluentinc/ccloud-sdk-go-v2/networking-ip/v1"
-	netpl "github.com/confluentinc/ccloud-sdk-go-v2/networking-privatelink/v1"
-	net "github.com/confluentinc/ccloud-sdk-go-v2/networking/v1"
-	org "github.com/confluentinc/ccloud-sdk-go-v2/org/v2"
-	pi "github.com/confluentinc/ccloud-sdk-go-v2/provider-integration/v1"
-	piv2 "github.com/confluentinc/ccloud-sdk-go-v2/provider-integration/v2"
-	srcm "github.com/confluentinc/ccloud-sdk-go-v2/srcm/v3"
-	"github.com/confluentinc/ccloud-sdk-go-v2/sso/v2"
-	sts "github.com/confluentinc/ccloud-sdk-go-v2/sts/v1"
-)
-
-const (
-	terraformProviderUserAgent = "terraform-provider-confluent"
-)
-
-const (
-	paramApiVersion      = "api_version"
-	paramCloud           = "cloud"
-	paramRegion          = "region"
-	paramOrganization    = "organization"
-	paramEnvironment     = "environment"
-	paramId              = "id"
-	paramDisplayName     = "display_name"
-	paramName            = "name"
-	paramDescription     = "description"
-	paramKind            = "kind"
-	paramCsu             = "csu"
-	paramClass           = "class"
-	paramContentFormat   = "content_format"
-	paramRuntimeLanguage = "runtime_language"
-	paramArtifactFile    = "artifact_file"
-	paramVersions        = "versions"
+	iamv2 "github.com/confluentinc/ccloud-sdk-go-v2/iam/v2"
+	identityproviderv2 "github.com/confluentinc/ccloud-sdk-go-v2/identity-provider/v2"
+	kafkaquotasv1 "github.com/confluentinc/ccloud-sdk-go-v2/kafka-quotas/v1"
+	ksqlv2 "github.com/confluentinc/ccloud-sdk-go-v2/ksql/v2"
+	mdsv2 "github.com/confluentinc/ccloud-sdk-go-v2/mds/v2"
+	networkingaccesspointv1 "github.com/confluentinc/ccloud-sdk-go-v2/networking-access-point/v1"
+	networkingdnsforwarderv1 "github.com/confluentinc/ccloud-sdk-go-v2/networking-dnsforwarder/v1"
+	networkinggatewayv1 "github.com/confluentinc/ccloud-sdk-go-v2/networking-gateway/v1"
+	networkingipv1 "github.com/confluentinc/ccloud-sdk-go-v2/networking-ip/v1"
+	networkingprivatelinkv1 "github.com/confluentinc/ccloud-sdk-go-v2/networking-privatelink/v1"
+	networkingv1 "github.com/confluentinc/ccloud-sdk-go-v2/networking/v1"
+	orgv2 "github.com/confluentinc/ccloud-sdk-go-v2/org/v2"
+	providerintegrationv1 "github.com/confluentinc/ccloud-sdk-go-v2/provider-integration/v1"
+	providerintegrationv2 "github.com/confluentinc/ccloud-sdk-go-v2/provider-integration/v2"
+	srcmv3 "github.com/confluentinc/ccloud-sdk-go-v2/srcm/v3"
+	ssov2 "github.com/confluentinc/ccloud-sdk-go-v2/sso/v2"
+	stsv1 "github.com/confluentinc/ccloud-sdk-go-v2/sts/v1"
+	// cli-tfgen:tf-imports
 )
 
 type Client struct {
-	apiKeysClient                   *apikeys.APIClient
-	byokClient                      *byok.APIClient
-	iamClient                       *iam.APIClient
-	iamIPClient                     *iamip.APIClient
+	apiKeysV2Client                 *apikeysv2.APIClient
+	byokV1Client                    *byokv1.APIClient
+	iamV2Client                     *iamv2.APIClient
+	iamIpFilteringV2Client          *iamipfilteringv2.APIClient
 	iamV1Client                     *iamv1.APIClient
-	caClient                        *ca.APIClient
-	ccpClient                       *ccp.APIClient
-	ccpmClient                      *ccpm.APIClient
-	camClient                       *cam.APIClient
-	cmkClient                       *cmk.APIClient
-	connectClient                   *connect.APIClient
-	catalogClient                   *dc.APIClient
+	certificateAuthorityV2Client    *certificateauthorityv2.APIClient
+	connectCustomPluginV1Client     *connectcustompluginv1.APIClient
+	ccpmV1Client                    *ccpmv1.APIClient
+	camV1Client                     *camv1.APIClient
+	cmkV2Client                     *cmkv2.APIClient
+	connectV1Client                 *connectv1.APIClient
+	dataCatalogV1Client             *datacatalogv1.APIClient
 	catalogRestClientFactory        *CatalogRestClientFactory
-	fcpmClient                      *fcpm.APIClient
-	faClient                        *fa.APIClient
-	netClient                       *net.APIClient
-	netAccessPointClient            *netap.APIClient
-	netGatewayClient                *netgw.APIClient
-	netIpClient                     *netip.APIClient
-	netPLClient                     *netpl.APIClient
-	netDnsClient                    *dns.APIClient
-	orgClient                       *org.APIClient
-	ksqlClient                      *ksql.APIClient
+	flinkV2Client                   *flinkv2.APIClient
+	flinkArtifactV1Client           *flinkartifactv1.APIClient
+	networkingV1Client              *networkingv1.APIClient
+	networkingAccessPointV1Client   *networkingaccesspointv1.APIClient
+	networkingGatewayV1Client       *networkinggatewayv1.APIClient
+	networkingIpV1Client            *networkingipv1.APIClient
+	networkingPrivatelinkV1Client   *networkingprivatelinkv1.APIClient
+	networkingDnsforwarderV1Client  *networkingdnsforwarderv1.APIClient
+	orgV2Client                     *orgv2.APIClient
+	ksqlV2Client                    *ksqlv2.APIClient
 	flinkRestClientFactory          *FlinkRestClientFactory
 	kafkaRestClientFactory          *KafkaRestClientFactory
 	schemaRegistryRestClientFactory *SchemaRegistryRestClientFactory
 	tableflowRestClientFactory      *TableflowRestClientFactory
-	mdsClient                       *mds.APIClient
-	oidcClient                      *oidc.APIClient
-	quotasClient                    *quotas.APIClient
-	srcmClient                      *srcm.APIClient
-	ssoClient                       *sso.APIClient
-	stsClient                       *sts.APIClient
-	piClient                        *pi.APIClient
-	piV2Client                      *piv2.APIClient
+	mdsV2Client                     *mdsv2.APIClient
+	identityProviderV2Client        *identityproviderv2.APIClient
+	kafkaQuotasV1Client             *kafkaquotasv1.APIClient
+	srcmV3Client                    *srcmv3.APIClient
+	ssoV2Client                     *ssov2.APIClient
+	stsV1Client                     *stsv1.APIClient
+	providerIntegrationV1Client     *providerintegrationv1.APIClient
+	providerIntegrationV2Client     *providerintegrationv2.APIClient
+	endpointV1Client                *endpointv1.APIClient
 	userAgent                       string
 	catalogRestEndpoint             string
 	cloudApiKey                     string
@@ -149,6 +129,7 @@ type Client struct {
 	isAcceptanceTestMode            bool
 	isLiveProductionTestMode        bool
 	isOAuthEnabled                  bool
+	// cli-tfgen:tf-client-fields
 }
 
 type ResourceMetadataSetFlags struct {
@@ -347,8 +328,10 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_kafka_client_quota":                 kafkaClientQuotaDataSource(),
 				"confluent_network":                            networkDataSource(),
 				"confluent_access_point":                       accessPointDataSource(),
+				"confluent_endpoint":                           endpointDataSource(),
 				"confluent_dns_record":                         dnsRecordDataSource(),
 				"confluent_gateway":                            gatewayDataSource(),
+				"confluent_gateways":                           gatewaysDataSource(),
 				"confluent_organization":                       organizationDataSource(),
 				"confluent_peering":                            peeringDataSource(),
 				"confluent_transit_gateway_attachment":         transitGatewayAttachmentDataSource(),
@@ -381,69 +364,71 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_business_metadata_binding":          businessMetadataBindingDataSource(),
 				"confluent_schema_registry_kek":                schemaRegistryKekDataSource(),
 				"confluent_schema_registry_dek":                schemaRegistryDekDataSource(),
+				// cli-tfgen:tf-datasources
 			},
 			ResourcesMap: map[string]*schema.Resource{
-				"confluent_catalog_integration":                   catalogIntegrationResource(),
-				"confluent_api_key":                               apiKeyResource(),
-				"confluent_byok_key":                              byokResource(),
-				"confluent_certificate_authority":                 certificateAuthorityResource(),
-				"confluent_certificate_pool":                      certificatePoolResource(),
-				"confluent_cluster_link":                          clusterLinkResource(),
-				"confluent_connect_artifact":                      connectArtifactResource(),
-				"confluent_ip_group":                              ipGroupResource(),
-				"confluent_ip_filter":                             ipFilterResource(),
-				"confluent_kafka_cluster":                         kafkaResource(),
-				"confluent_kafka_cluster_config":                  kafkaConfigResource(),
-				"confluent_environment":                           environmentResource(),
-				"confluent_identity_pool":                         identityPoolResource(),
-				"confluent_identity_provider":                     identityProviderResource(),
-				"confluent_group_mapping":                         groupMappingResource(),
-				"confluent_kafka_client_quota":                    kafkaClientQuotaResource(),
-				"confluent_ksql_cluster":                          ksqlResource(),
-				"confluent_flink_artifact":                        artifactResource(),
-				"confluent_flink_compute_pool":                    computePoolResource(),
-				"confluent_flink_connection":                      flinkConnectionResource(),
-				"confluent_flink_statement":                       flinkStatementResource(),
-				"confluent_connector":                             connectorResource(),
-				"confluent_custom_connector_plugin":               customConnectorPluginResource(),
-				"confluent_custom_connector_plugin_version":       customConnectorPluginVersionResource(),
-				"confluent_service_account":                       serviceAccountResource(),
-				"confluent_kafka_topic":                           kafkaTopicResource(),
-				"confluent_kafka_mirror_topic":                    kafkaMirrorTopicResource(),
-				"confluent_kafka_acl":                             kafkaAclResource(),
-				"confluent_network":                               networkResource(),
-				"confluent_access_point":                          accessPointResource(),
-				"confluent_dns_forwarder":                         dnsForwarderResource(),
-				"confluent_dns_record":                            dnsRecordResource(),
-				"confluent_gateway":                               gatewayResource(),
-				"confluent_peering":                               peeringResource(),
-				"confluent_plugin":                                pluginResource(),
-				"confluent_private_link_access":                   privateLinkAccessResource(),
-				"confluent_private_link_attachment":               privateLinkAttachmentResource(),
-				"confluent_private_link_attachment_connection":    privateLinkAttachmentConnectionResource(),
-				"confluent_provider_integration":                  providerIntegrationResource(),
-				"confluent_provider_integration_setup":            providerIntegrationSetupResource(),
-				"confluent_provider_integration_authorization":    providerIntegrationAuthorizationResource(),
-				"confluent_role_binding":                          roleBindingResource(),
-				"confluent_schema":                                schemaResource(),
-				"confluent_schema_exporter":                       schemaExporterResource(),
-				"confluent_subject_mode":                          subjectModeResource(),
-				"confluent_subject_config":                        subjectConfigResource(),
-				"confluent_schema_registry_cluster_mode":          schemaRegistryClusterModeResource(),
-				"confluent_schema_registry_cluster_config":        schemaRegistryClusterConfigResource(),
-				"confluent_transit_gateway_attachment":            transitGatewayAttachmentResource(),
-				"confluent_invitation":                            invitationResource(),
-				"confluent_network_link_endpoint":                 networkLinkEndpointResource(),
-				"confluent_network_link_service":                  networkLinkServiceResource(),
-				"confluent_tf_importer":                           tfImporterResource(),
-				"confluent_tableflow_topic":                       tableflowTopicResource(),
-				"confluent_tag":                                   tagResource(),
-				"confluent_tag_binding":                           tagBindingResource(),
-				"confluent_business_metadata":                     businessMetadataResource(),
-				"confluent_business_metadata_binding":             businessMetadataBindingResource(),
-				"confluent_schema_registry_kek":                   schemaRegistryKekResource(),
-				"confluent_schema_registry_dek":                   schemaRegistryDekResource(),
-				"confluent_catalog_entity_attributes":             catalogEntityAttributesResource(),
+				"confluent_catalog_integration":                catalogIntegrationResource(),
+				"confluent_api_key":                            apiKeyResource(),
+				"confluent_byok_key":                           byokResource(),
+				"confluent_certificate_authority":              certificateAuthorityResource(),
+				"confluent_certificate_pool":                   certificatePoolResource(),
+				"confluent_cluster_link":                       clusterLinkResource(),
+				"confluent_connect_artifact":                   connectArtifactResource(),
+				"confluent_ip_group":                           ipGroupResource(),
+				"confluent_ip_filter":                          ipFilterResource(),
+				"confluent_kafka_cluster":                      kafkaResource(),
+				"confluent_kafka_cluster_config":               kafkaConfigResource(),
+				"confluent_environment":                        environmentResource(),
+				"confluent_identity_pool":                      identityPoolResource(),
+				"confluent_identity_provider":                  identityProviderResource(),
+				"confluent_group_mapping":                      groupMappingResource(),
+				"confluent_kafka_client_quota":                 kafkaClientQuotaResource(),
+				"confluent_ksql_cluster":                       ksqlResource(),
+				"confluent_flink_artifact":                     artifactResource(),
+				"confluent_flink_compute_pool":                 computePoolResource(),
+				"confluent_flink_connection":                   flinkConnectionResource(),
+				"confluent_flink_statement":                    flinkStatementResource(),
+				"confluent_connector":                          connectorResource(),
+				"confluent_custom_connector_plugin":            customConnectorPluginResource(),
+				"confluent_custom_connector_plugin_version":    customConnectorPluginVersionResource(),
+				"confluent_service_account":                    serviceAccountResource(),
+				"confluent_kafka_topic":                        kafkaTopicResource(),
+				"confluent_kafka_mirror_topic":                 kafkaMirrorTopicResource(),
+				"confluent_kafka_acl":                          kafkaAclResource(),
+				"confluent_network":                            networkResource(),
+				"confluent_access_point":                       accessPointResource(),
+				"confluent_dns_forwarder":                      dnsForwarderResource(),
+				"confluent_dns_record":                         dnsRecordResource(),
+				"confluent_gateway":                            gatewayResource(),
+				"confluent_peering":                            peeringResource(),
+				"confluent_plugin":                             pluginResource(),
+				"confluent_private_link_access":                privateLinkAccessResource(),
+				"confluent_private_link_attachment":            privateLinkAttachmentResource(),
+				"confluent_private_link_attachment_connection": privateLinkAttachmentConnectionResource(),
+				"confluent_provider_integration":               providerIntegrationResource(),
+				"confluent_provider_integration_setup":         providerIntegrationSetupResource(),
+				"confluent_provider_integration_authorization": providerIntegrationAuthorizationResource(),
+				"confluent_role_binding":                       roleBindingResource(),
+				"confluent_schema":                             schemaResource(),
+				"confluent_schema_exporter":                    schemaExporterResource(),
+				"confluent_subject_mode":                       subjectModeResource(),
+				"confluent_subject_config":                     subjectConfigResource(),
+				"confluent_schema_registry_cluster_mode":       schemaRegistryClusterModeResource(),
+				"confluent_schema_registry_cluster_config":     schemaRegistryClusterConfigResource(),
+				"confluent_transit_gateway_attachment":         transitGatewayAttachmentResource(),
+				"confluent_invitation":                         invitationResource(),
+				"confluent_network_link_endpoint":              networkLinkEndpointResource(),
+				"confluent_network_link_service":               networkLinkServiceResource(),
+				"confluent_tf_importer":                        tfImporterResource(),
+				"confluent_tableflow_topic":                    tableflowTopicResource(),
+				"confluent_tag":                                tagResource(),
+				"confluent_tag_binding":                        tagBindingResource(),
+				"confluent_business_metadata":                  businessMetadataResource(),
+				"confluent_business_metadata_binding":          businessMetadataBindingResource(),
+				"confluent_schema_registry_kek":                schemaRegistryKekResource(),
+				"confluent_schema_registry_dek":                schemaRegistryDekResource(),
+				"confluent_catalog_entity_attributes":          catalogEntityAttributesResource(),
+				// cli-tfgen:tf-resources
 			},
 		}
 
@@ -538,97 +523,103 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	}
 	tflog.Info(ctx, fmt.Sprintf("Provider: live production test mode is %t\n", liveProductionTestMode))
 
-	apiKeysCfg := apikeys.NewConfiguration()
-	byokCfg := byok.NewConfiguration()
-	caCfg := ca.NewConfiguration()
-	camCfg := cam.NewConfiguration()
-	catalogCfg := dc.NewConfiguration()
-	ccpCfg := ccp.NewConfiguration()
-	ccpmCfg := ccpm.NewConfiguration()
-	cmkCfg := cmk.NewConfiguration()
-	connectCfg := connect.NewConfiguration()
-	faCfg := fa.NewConfiguration()
-	fcpmCfg := fcpm.NewConfiguration()
-	iamCfg := iam.NewConfiguration()
-	iamIPCfg := iamip.NewConfiguration()
+	apiKeysV2Cfg := apikeysv2.NewConfiguration()
+	byokV1Cfg := byokv1.NewConfiguration()
+	certificateAuthorityV2Cfg := certificateauthorityv2.NewConfiguration()
+	camV1Cfg := camv1.NewConfiguration()
+	dataCatalogV1Cfg := datacatalogv1.NewConfiguration()
+	connectCustomPluginV1Cfg := connectcustompluginv1.NewConfiguration()
+	ccpmV1Cfg := ccpmv1.NewConfiguration()
+	cmkV2Cfg := cmkv2.NewConfiguration()
+	connectV1Cfg := connectv1.NewConfiguration()
+	flinkArtifactV1Cfg := flinkartifactv1.NewConfiguration()
+	flinkV2Cfg := flinkv2.NewConfiguration()
+	iamV2Cfg := iamv2.NewConfiguration()
+	iamIpFilteringV2Cfg := iamipfilteringv2.NewConfiguration()
 	iamV1Cfg := iamv1.NewConfiguration()
-	ksqlCfg := ksql.NewConfiguration()
-	mdsCfg := mds.NewConfiguration()
-	netAccessPointCfg := netap.NewConfiguration()
-	netGatewayCfg := netgw.NewConfiguration()
-	netCfg := net.NewConfiguration()
-	netIpCfg := netip.NewConfiguration()
-	netPLCfg := netpl.NewConfiguration()
-	netDnsCfg := dns.NewConfiguration()
-	oidcCfg := oidc.NewConfiguration()
-	orgCfg := org.NewConfiguration()
-	piCfg := pi.NewConfiguration()
-	piv2Cfg := piv2.NewConfiguration()
-	quotasCfg := quotas.NewConfiguration()
-	srcmCfg := srcm.NewConfiguration()
-	ssoCfg := sso.NewConfiguration()
-	stsCfg := sts.NewConfiguration()
+	ksqlV2Cfg := ksqlv2.NewConfiguration()
+	mdsV2Cfg := mdsv2.NewConfiguration()
+	networkingAccessPointV1Cfg := networkingaccesspointv1.NewConfiguration()
+	networkingGatewayV1Cfg := networkinggatewayv1.NewConfiguration()
+	networkingV1Cfg := networkingv1.NewConfiguration()
+	networkingIpV1Cfg := networkingipv1.NewConfiguration()
+	networkingPrivatelinkV1Cfg := networkingprivatelinkv1.NewConfiguration()
+	networkingDnsforwarderV1Cfg := networkingdnsforwarderv1.NewConfiguration()
+	endpointV1Cfg := endpointv1.NewConfiguration()
+	identityProviderV2Cfg := identityproviderv2.NewConfiguration()
+	orgV2Cfg := orgv2.NewConfiguration()
+	providerIntegrationV1Cfg := providerintegrationv1.NewConfiguration()
+	providerIntegrationV2Cfg := providerintegrationv2.NewConfiguration()
+	kafkaQuotasV1Cfg := kafkaquotasv1.NewConfiguration()
+	srcmV3Cfg := srcmv3.NewConfiguration()
+	ssoV2Cfg := ssov2.NewConfiguration()
+	stsV1Cfg := stsv1.NewConfiguration()
+	// cli-tfgen:tf-client-cfg
 
-	apiKeysCfg.Servers[0].URL = endpoint
-	byokCfg.Servers[0].URL = endpoint
-	caCfg.Servers[0].URL = endpoint
-	ccpCfg.Servers[0].URL = endpoint
-	ccpmCfg.Servers[0].URL = endpoint
-	camCfg.Servers[0].URL = endpoint
-	cmkCfg.Servers[0].URL = endpoint
-	connectCfg.Servers[0].URL = endpoint
-	faCfg.Servers[0].URL = endpoint
-	fcpmCfg.Servers[0].URL = endpoint
-	iamCfg.Servers[0].URL = endpoint
-	iamIPCfg.Servers[0].URL = endpoint
+	apiKeysV2Cfg.Servers[0].URL = endpoint
+	byokV1Cfg.Servers[0].URL = endpoint
+	certificateAuthorityV2Cfg.Servers[0].URL = endpoint
+	connectCustomPluginV1Cfg.Servers[0].URL = endpoint
+	ccpmV1Cfg.Servers[0].URL = endpoint
+	camV1Cfg.Servers[0].URL = endpoint
+	cmkV2Cfg.Servers[0].URL = endpoint
+	connectV1Cfg.Servers[0].URL = endpoint
+	flinkArtifactV1Cfg.Servers[0].URL = endpoint
+	flinkV2Cfg.Servers[0].URL = endpoint
+	iamV2Cfg.Servers[0].URL = endpoint
+	iamIpFilteringV2Cfg.Servers[0].URL = endpoint
 	iamV1Cfg.Servers[0].URL = endpoint
-	ksqlCfg.Servers[0].URL = endpoint
-	mdsCfg.Servers[0].URL = endpoint
-	netCfg.Servers[0].URL = endpoint
-	netIpCfg.Servers[0].URL = endpoint
-	netPLCfg.Servers[0].URL = endpoint
-	netAccessPointCfg.Servers[0].URL = endpoint
-	netGatewayCfg.Servers[0].URL = endpoint
-	netDnsCfg.Servers[0].URL = endpoint
-	oidcCfg.Servers[0].URL = endpoint
-	orgCfg.Servers[0].URL = endpoint
-	piCfg.Servers[0].URL = endpoint
-	piv2Cfg.Servers[0].URL = endpoint
-	quotasCfg.Servers[0].URL = endpoint
-	srcmCfg.Servers[0].URL = endpoint
-	ssoCfg.Servers[0].URL = endpoint
-	stsCfg.Servers[0].URL = endpoint
+	ksqlV2Cfg.Servers[0].URL = endpoint
+	mdsV2Cfg.Servers[0].URL = endpoint
+	networkingV1Cfg.Servers[0].URL = endpoint
+	networkingIpV1Cfg.Servers[0].URL = endpoint
+	networkingPrivatelinkV1Cfg.Servers[0].URL = endpoint
+	networkingAccessPointV1Cfg.Servers[0].URL = endpoint
+	networkingGatewayV1Cfg.Servers[0].URL = endpoint
+	networkingDnsforwarderV1Cfg.Servers[0].URL = endpoint
+	endpointV1Cfg.Servers[0].URL = endpoint
+	identityProviderV2Cfg.Servers[0].URL = endpoint
+	orgV2Cfg.Servers[0].URL = endpoint
+	providerIntegrationV1Cfg.Servers[0].URL = endpoint
+	providerIntegrationV2Cfg.Servers[0].URL = endpoint
+	kafkaQuotasV1Cfg.Servers[0].URL = endpoint
+	srcmV3Cfg.Servers[0].URL = endpoint
+	ssoV2Cfg.Servers[0].URL = endpoint
+	stsV1Cfg.Servers[0].URL = endpoint
+	// cli-tfgen:tf-client-endpoint
 
-	apiKeysCfg.UserAgent = userAgent
-	byokCfg.UserAgent = userAgent
-	caCfg.UserAgent = userAgent
-	catalogCfg.UserAgent = userAgent
-	ccpCfg.UserAgent = userAgent
-	ccpmCfg.UserAgent = userAgent
-	camCfg.UserAgent = userAgent
-	cmkCfg.UserAgent = userAgent
-	connectCfg.UserAgent = userAgent
-	faCfg.UserAgent = userAgent
-	fcpmCfg.UserAgent = userAgent
-	iamCfg.UserAgent = userAgent
-	iamIPCfg.UserAgent = userAgent
+	apiKeysV2Cfg.UserAgent = userAgent
+	byokV1Cfg.UserAgent = userAgent
+	certificateAuthorityV2Cfg.UserAgent = userAgent
+	dataCatalogV1Cfg.UserAgent = userAgent
+	connectCustomPluginV1Cfg.UserAgent = userAgent
+	ccpmV1Cfg.UserAgent = userAgent
+	camV1Cfg.UserAgent = userAgent
+	cmkV2Cfg.UserAgent = userAgent
+	connectV1Cfg.UserAgent = userAgent
+	flinkArtifactV1Cfg.UserAgent = userAgent
+	flinkV2Cfg.UserAgent = userAgent
+	iamV2Cfg.UserAgent = userAgent
+	iamIpFilteringV2Cfg.UserAgent = userAgent
 	iamV1Cfg.UserAgent = userAgent
-	ksqlCfg.UserAgent = userAgent
-	mdsCfg.UserAgent = userAgent
-	netCfg.UserAgent = userAgent
-	netAccessPointCfg.UserAgent = userAgent
-	netGatewayCfg.UserAgent = userAgent
-	netIpCfg.UserAgent = userAgent
-	netDnsCfg.UserAgent = userAgent
-	netPLCfg.UserAgent = userAgent
-	oidcCfg.UserAgent = userAgent
-	orgCfg.UserAgent = userAgent
-	piCfg.UserAgent = userAgent
-	piv2Cfg.UserAgent = userAgent
-	quotasCfg.UserAgent = userAgent
-	srcmCfg.UserAgent = userAgent
-	ssoCfg.UserAgent = userAgent
-	stsCfg.UserAgent = userAgent
+	ksqlV2Cfg.UserAgent = userAgent
+	mdsV2Cfg.UserAgent = userAgent
+	networkingV1Cfg.UserAgent = userAgent
+	networkingAccessPointV1Cfg.UserAgent = userAgent
+	networkingGatewayV1Cfg.UserAgent = userAgent
+	networkingIpV1Cfg.UserAgent = userAgent
+	networkingDnsforwarderV1Cfg.UserAgent = userAgent
+	endpointV1Cfg.UserAgent = userAgent
+	networkingPrivatelinkV1Cfg.UserAgent = userAgent
+	identityProviderV2Cfg.UserAgent = userAgent
+	orgV2Cfg.UserAgent = userAgent
+	providerIntegrationV1Cfg.UserAgent = userAgent
+	providerIntegrationV2Cfg.UserAgent = userAgent
+	kafkaQuotasV1Cfg.UserAgent = userAgent
+	srcmV3Cfg.UserAgent = userAgent
+	ssoV2Cfg.UserAgent = userAgent
+	stsV1Cfg.UserAgent = userAgent
+	// cli-tfgen:tf-client-useragent
 
 	var catalogRestClientFactory *CatalogRestClientFactory
 	var flinkRestClientFactory *FlinkRestClientFactory
@@ -642,37 +633,39 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	schemaRegistryRestClientFactory = &SchemaRegistryRestClientFactory{ctx: ctx, userAgent: userAgent, maxRetries: &maxRetries}
 	tableflowRestClientFactory = &TableflowRestClientFactory{ctx: ctx, userAgent: userAgent, maxRetries: &maxRetries, endpoint: endpoint}
 
-	apiKeysCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
-	byokCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
-	caCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
-	catalogCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
-	ccpCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
-	ccpmCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
-	camCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
-	cmkCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
-	connectCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
-	faCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
-	fcpmCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
-	iamCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
-	iamIPCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
+	apiKeysV2Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
+	byokV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
+	certificateAuthorityV2Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
+	dataCatalogV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
+	connectCustomPluginV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
+	ccpmV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
+	camV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
+	cmkV2Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
+	connectV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
+	flinkArtifactV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
+	flinkV2Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
+	iamV2Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
+	iamIpFilteringV2Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	iamV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
-	ksqlCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
-	mdsCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
-	netCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
-	netGatewayCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
-	netIpCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
-	netPLCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
-	netDnsCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
-	oidcCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
-	orgCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
-	piCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
-	piv2Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
-	quotasCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
-	srcmCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
-	ssoCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
-	stsCfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
+	ksqlV2Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
+	mdsV2Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
+	networkingV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
+	networkingGatewayV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
+	networkingIpV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
+	networkingPrivatelinkV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
+	networkingDnsforwarderV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
+	endpointV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
+	identityProviderV2Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
+	orgV2Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
+	providerIntegrationV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
+	providerIntegrationV2Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
+	kafkaQuotasV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
+	srcmV3Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
+	ssoV2Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
+	stsV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
+	// cli-tfgen:tf-client-httpclient
 
-	secureTokenServiceClient := sts.NewAPIClient(stsCfg)
+	secureTokenServiceClient := stsv1.NewAPIClient(stsV1Cfg)
 
 	var externalOAuthToken *OAuthToken
 	var stsOAuthToken *STSToken
@@ -712,64 +705,66 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	}
 
 	client := Client{
-		apiKeysClient:                   apikeys.NewAPIClient(apiKeysCfg),
-		byokClient:                      byok.NewAPIClient(byokCfg),
-		catalogClient:                   dc.NewAPIClient(catalogCfg),
-		caClient:                        ca.NewAPIClient(caCfg),
-		ccpClient:                       ccp.NewAPIClient(ccpCfg),
-		ccpmClient:                      ccpm.NewAPIClient(ccpmCfg),
-		camClient:                       cam.NewAPIClient(camCfg),
-		cmkClient:                       cmk.NewAPIClient(cmkCfg),
-		connectClient:                   connect.NewAPIClient(connectCfg),
-		faClient:                        fa.NewAPIClient(faCfg),
-		fcpmClient:                      fcpm.NewAPIClient(fcpmCfg),
-		iamClient:                       iam.NewAPIClient(iamCfg),
-		iamIPClient:                     iamip.NewAPIClient(iamIPCfg),
+		apiKeysV2Client:                 apikeysv2.NewAPIClient(apiKeysV2Cfg),
+		byokV1Client:                    byokv1.NewAPIClient(byokV1Cfg),
+		dataCatalogV1Client:             datacatalogv1.NewAPIClient(dataCatalogV1Cfg),
+		certificateAuthorityV2Client:    certificateauthorityv2.NewAPIClient(certificateAuthorityV2Cfg),
+		connectCustomPluginV1Client:     connectcustompluginv1.NewAPIClient(connectCustomPluginV1Cfg),
+		ccpmV1Client:                    ccpmv1.NewAPIClient(ccpmV1Cfg),
+		camV1Client:                     camv1.NewAPIClient(camV1Cfg),
+		cmkV2Client:                     cmkv2.NewAPIClient(cmkV2Cfg),
+		connectV1Client:                 connectv1.NewAPIClient(connectV1Cfg),
+		flinkArtifactV1Client:           flinkartifactv1.NewAPIClient(flinkArtifactV1Cfg),
+		flinkV2Client:                   flinkv2.NewAPIClient(flinkV2Cfg),
+		iamV2Client:                     iamv2.NewAPIClient(iamV2Cfg),
+		iamIpFilteringV2Client:          iamipfilteringv2.NewAPIClient(iamIpFilteringV2Cfg),
 		iamV1Client:                     iamv1.NewAPIClient(iamV1Cfg),
-		ksqlClient:                      ksql.NewAPIClient(ksqlCfg),
-		netClient:                       net.NewAPIClient(netCfg),
-		netAccessPointClient:            netap.NewAPIClient(netAccessPointCfg),
-		netGatewayClient:                netgw.NewAPIClient(netGatewayCfg),
-		netIpClient:                     netip.NewAPIClient(netIpCfg),
-		netPLClient:                     netpl.NewAPIClient(netPLCfg),
-		netDnsClient:                    dns.NewAPIClient(netDnsCfg),
-		oidcClient:                      oidc.NewAPIClient(oidcCfg),
-		orgClient:                       org.NewAPIClient(orgCfg),
-		piClient:                        pi.NewAPIClient(piCfg),
-		piV2Client:                      piv2.NewAPIClient(piv2Cfg),
-		srcmClient:                      srcm.NewAPIClient(srcmCfg),
+		ksqlV2Client:                    ksqlv2.NewAPIClient(ksqlV2Cfg),
+		networkingV1Client:              networkingv1.NewAPIClient(networkingV1Cfg),
+		networkingAccessPointV1Client:   networkingaccesspointv1.NewAPIClient(networkingAccessPointV1Cfg),
+		networkingGatewayV1Client:       networkinggatewayv1.NewAPIClient(networkingGatewayV1Cfg),
+		networkingIpV1Client:            networkingipv1.NewAPIClient(networkingIpV1Cfg),
+		networkingPrivatelinkV1Client:   networkingprivatelinkv1.NewAPIClient(networkingPrivatelinkV1Cfg),
+		networkingDnsforwarderV1Client:  networkingdnsforwarderv1.NewAPIClient(networkingDnsforwarderV1Cfg),
+		endpointV1Client:                endpointv1.NewAPIClient(endpointV1Cfg),
+		identityProviderV2Client:        identityproviderv2.NewAPIClient(identityProviderV2Cfg),
+		orgV2Client:                     orgv2.NewAPIClient(orgV2Cfg),
+		providerIntegrationV1Client:     providerintegrationv1.NewAPIClient(providerIntegrationV1Cfg),
+		providerIntegrationV2Client:     providerintegrationv2.NewAPIClient(providerIntegrationV2Cfg),
+		srcmV3Client:                    srcmv3.NewAPIClient(srcmV3Cfg),
 		catalogRestClientFactory:        catalogRestClientFactory,
 		flinkRestClientFactory:          flinkRestClientFactory,
 		kafkaRestClientFactory:          kafkaRestClientFactory,
 		schemaRegistryRestClientFactory: schemaRegistryRestClientFactory,
 		tableflowRestClientFactory:      tableflowRestClientFactory,
-		mdsClient:                       mds.NewAPIClient(mdsCfg),
-		quotasClient:                    quotas.NewAPIClient(quotasCfg),
-		ssoClient:                       sso.NewAPIClient(ssoCfg),
-		stsClient:                       secureTokenServiceClient,
-		userAgent:                       userAgent,
-		catalogRestEndpoint:             catalogRestEndpoint,
-		cloudApiKey:                     cloudApiKey,
-		cloudApiSecret:                  cloudApiSecret,
-		kafkaClusterId:                  kafkaClusterId,
-		kafkaApiKey:                     kafkaApiKey,
-		kafkaApiSecret:                  kafkaApiSecret,
-		kafkaRestEndpoint:               kafkaRestEndpoint,
-		schemaRegistryClusterId:         schemaRegistryClusterId,
-		schemaRegistryApiKey:            schemaRegistryApiKey,
-		schemaRegistryApiSecret:         schemaRegistryApiSecret,
-		schemaRegistryRestEndpoint:      schemaRegistryRestEndpoint,
-		flinkPrincipalId:                flinkPrincipalId,
-		flinkOrganizationId:             flinkOrganizationId,
-		flinkEnvironmentId:              flinkEnvironmentId,
-		flinkComputePoolId:              flinkComputePoolId,
-		flinkApiKey:                     flinkApiKey,
-		flinkApiSecret:                  flinkApiSecret,
-		flinkRestEndpoint:               flinkRestEndpoint,
-		tableflowApiKey:                 tableflowApiKey,
-		tableflowApiSecret:              tableflowApiSecret,
-		oauthToken:                      externalOAuthToken,
-		stsToken:                        stsOAuthToken,
+		mdsV2Client:                     mdsv2.NewAPIClient(mdsV2Cfg),
+		kafkaQuotasV1Client:             kafkaquotasv1.NewAPIClient(kafkaQuotasV1Cfg),
+		ssoV2Client:                     ssov2.NewAPIClient(ssoV2Cfg),
+		stsV1Client:                     secureTokenServiceClient,
+		// cli-tfgen:tf-client-literal
+		userAgent:                  userAgent,
+		catalogRestEndpoint:        catalogRestEndpoint,
+		cloudApiKey:                cloudApiKey,
+		cloudApiSecret:             cloudApiSecret,
+		kafkaClusterId:             kafkaClusterId,
+		kafkaApiKey:                kafkaApiKey,
+		kafkaApiSecret:             kafkaApiSecret,
+		kafkaRestEndpoint:          kafkaRestEndpoint,
+		schemaRegistryClusterId:    schemaRegistryClusterId,
+		schemaRegistryApiKey:       schemaRegistryApiKey,
+		schemaRegistryApiSecret:    schemaRegistryApiSecret,
+		schemaRegistryRestEndpoint: schemaRegistryRestEndpoint,
+		flinkPrincipalId:           flinkPrincipalId,
+		flinkOrganizationId:        flinkOrganizationId,
+		flinkEnvironmentId:         flinkEnvironmentId,
+		flinkComputePoolId:         flinkComputePoolId,
+		flinkApiKey:                flinkApiKey,
+		flinkApiSecret:             flinkApiSecret,
+		flinkRestEndpoint:          flinkRestEndpoint,
+		tableflowApiKey:            tableflowApiKey,
+		tableflowApiSecret:         tableflowApiSecret,
+		oauthToken:                 externalOAuthToken,
+		stsToken:                   stsOAuthToken,
 
 		// For simplicity, treat 3 (for Kafka), 4 (for SR), 4 (for catalog), 7 (for Flink), and 2 (for Tableflow) variables as a "single" one
 		isKafkaMetadataSet:           resourceMetadataFlags.isKafkaMetadataSet,
@@ -786,7 +781,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	return &client, nil
 }
 
-func initializeOAuthConfigs(ctx context.Context, d *schema.ResourceData, stsClient *sts.APIClient) (*OAuthToken, *STSToken, diag.Diagnostics) {
+func initializeOAuthConfigs(ctx context.Context, d *schema.ResourceData, stsV1Client *stsv1.APIClient) (*OAuthToken, *STSToken, diag.Diagnostics) {
 	tflog.Info(ctx, "Initializing OAuth settings for Confluent Cloud")
 	providedToken := extractStringValueFromBlock(d, paramOAuthBlockName, paramOAuthExternalAccessToken)
 	identityPoolId := extractStringValueFromBlock(d, paramOAuthBlockName, paramOAuthIdentityPoolId)
@@ -828,7 +823,7 @@ func initializeOAuthConfigs(ctx context.Context, d *schema.ResourceData, stsClie
 	// STS token exchanged from external OAuth token
 	// STS token will be fetched using the STS special client
 	expiredInSeconds := extractStringValueFromBlock(d, paramOAuthBlockName, paramOAuthSTSTokenExpiredInSeconds)
-	stsToken, err := fetchSTSOAuthToken(ctx, oauthToken.AccessToken, identityPoolId, expiredInSeconds, nil, stsClient)
+	stsToken, err := fetchSTSOAuthToken(ctx, oauthToken.AccessToken, identityPoolId, expiredInSeconds, nil, stsV1Client)
 	if err != nil {
 		return nil, nil, diag.FromErr(err)
 	}

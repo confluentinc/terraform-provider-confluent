@@ -17,7 +17,6 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -25,23 +24,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-)
-
-const (
-	scenarioStateComputePoolIsProvisioning = "The new compute pool is in provisioning state"
-	scenarioStateComputePoolHasBeenCreated = "The new compute pool has been just created"
-	scenarioStateComputePoolHasBeenDeleted = "The new compute pool has been deleted"
-	flinkComputePoolScenarioName           = "confluent_flink_compute_pool Resource Lifecycle"
-	flinkComputePoolCloud                  = "AWS"
-	flinkComputePoolRegion                 = "us-east-2"
-	flinkComputePoolEnvironmentId          = "env-gz903"
-	flinkComputePoolResourceName           = "crn://confluent.cloud/organization=foo/environment=env-gz903/flink-region=aws.us-east-2/compute-pool=lfcp-abc123"
-	flinkComputePoolId                     = "lfcp-abc123"
-	flinkComputePoolDisplayName            = "flink_compute_pool_0"
-	flinkComputePoolDefaultMaxCfu          = 5
-	flinkComputePoolApiVersion             = "fcpm/v2"
-	flinkComputePoolKind                   = "ComputePool"
-	flinkComputePoolRestEndpoint           = "https://flink.us-east-2.aws.confluent.cloud/sql/v1alpha1/environments/env-gz903"
+	"github.com/walkerus/go-wiremock"
 )
 
 var flinkComputePoolUrlPath = fmt.Sprintf("/fcpm/v2/compute-pools/%s", flinkComputePoolId)
@@ -188,7 +171,7 @@ func testAccCheckComputePoolDestroy(s *terraform.State) error {
 			continue
 		}
 		deletedComputePoolId := rs.Primary.ID
-		req := c.netClient.NetworksNetworkingV1Api.GetNetworkingV1Network(c.netApiContext(context.Background()), deletedComputePoolId).Environment(flinkComputePoolEnvironmentId)
+		req := c.networkingV1Client.NetworksNetworkingV1Api.GetNetworkingV1Network(c.networkingV1ApiContext(context.Background()), deletedComputePoolId).Environment(flinkComputePoolEnvironmentId)
 		deletedComputePool, response, err := req.Execute()
 		if response != nil && response.StatusCode == http.StatusNotFound {
 			return nil

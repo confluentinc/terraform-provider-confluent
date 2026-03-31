@@ -8,11 +8,11 @@ import (
 	"github.com/hashicorp/go-retryablehttp"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 
-	dc "github.com/confluentinc/ccloud-sdk-go-v2/data-catalog/v1"
-	fgb "github.com/confluentinc/ccloud-sdk-go-v2/flink-gateway/v1"
+	datacatalogv1 "github.com/confluentinc/ccloud-sdk-go-v2/data-catalog/v1"
+	flinkgatewayv1 "github.com/confluentinc/ccloud-sdk-go-v2/flink-gateway/v1"
 	kafkarestv3 "github.com/confluentinc/ccloud-sdk-go-v2/kafkarest/v3"
-	schemaregistry "github.com/confluentinc/ccloud-sdk-go-v2/schema-registry/v1"
-	tableflow "github.com/confluentinc/ccloud-sdk-go-v2/tableflow/v1"
+	schemaregistryv1 "github.com/confluentinc/ccloud-sdk-go-v2/schema-registry/v1"
+	tableflowv1 "github.com/confluentinc/ccloud-sdk-go-v2/tableflow/v1"
 )
 
 type FlinkRestClientFactory struct {
@@ -23,7 +23,7 @@ type FlinkRestClientFactory struct {
 
 func (f FlinkRestClientFactory) CreateFlinkRestClient(restEndpoint, organizationId, environmentId, computePoolId, principalId, flinkApiKey, flinkApiSecret string, isMetadataSetInProviderBlock bool, token *OAuthToken) *FlinkRestClient {
 	var opts []RetryableClientFactoryOption = []RetryableClientFactoryOption{}
-	config := fgb.NewConfiguration()
+	config := flinkgatewayv1.NewConfiguration()
 
 	if f.maxRetries != nil {
 		opts = append(opts, WithMaxRetries(*f.maxRetries))
@@ -40,7 +40,7 @@ func (f FlinkRestClientFactory) CreateFlinkRestClient(restEndpoint, organization
 	}
 
 	return &FlinkRestClient{
-		apiClient:                    fgb.NewAPIClient(config),
+		apiClient:                    flinkgatewayv1.NewAPIClient(config),
 		externalAccessToken:          token,
 		organizationId:               organizationId,
 		environmentId:                environmentId,
@@ -63,7 +63,7 @@ func (f SchemaRegistryRestClientFactory) CreateSchemaRegistryRestClient(restEndp
 	var opts []RetryableClientFactoryOption = []RetryableClientFactoryOption{}
 
 	// Setup SR API Client
-	config := schemaregistry.NewConfiguration()
+	config := schemaregistryv1.NewConfiguration()
 	if f.maxRetries != nil {
 		opts = append(opts, WithMaxRetries(*f.maxRetries))
 	}
@@ -76,7 +76,7 @@ func (f SchemaRegistryRestClientFactory) CreateSchemaRegistryRestClient(restEndp
 	}
 
 	return &SchemaRegistryRestClient{
-		apiClient:                    schemaregistry.NewAPIClient(config),
+		apiClient:                    schemaregistryv1.NewAPIClient(config),
 		externalAccessToken:          token,
 		clusterId:                    clusterId,
 		clusterApiKey:                clusterApiKey,
@@ -96,7 +96,7 @@ func (f CatalogRestClientFactory) CreateCatalogRestClient(restEndpoint, clusterI
 	var opts []RetryableClientFactoryOption = []RetryableClientFactoryOption{}
 
 	// Setup DC API Client
-	dataCatalogConfig := dc.NewConfiguration()
+	dataCatalogConfig := datacatalogv1.NewConfiguration()
 	if f.maxRetries != nil {
 		opts = append(opts, WithMaxRetries(*f.maxRetries))
 	}
@@ -109,7 +109,7 @@ func (f CatalogRestClientFactory) CreateCatalogRestClient(restEndpoint, clusterI
 	}
 
 	return &CatalogRestClient{
-		apiClient:                    dc.NewAPIClient(dataCatalogConfig),
+		apiClient:                    datacatalogv1.NewAPIClient(dataCatalogConfig),
 		externalAccessToken:          token,
 		clusterId:                    clusterId,
 		clusterApiKey:                clusterApiKey,
@@ -164,7 +164,7 @@ type TableflowRestClientFactory struct {
 
 func (f TableflowRestClientFactory) CreateTableflowRestClient(tableflowApiKey, tableflowApiSecret string, isMetadataSetInProviderBlock bool, externalToken *OAuthToken, stsToken *STSToken) *TableflowRestClient {
 	var opts []RetryableClientFactoryOption = []RetryableClientFactoryOption{}
-	config := tableflow.NewConfiguration()
+	config := tableflowv1.NewConfiguration()
 
 	if f.maxRetries != nil {
 		opts = append(opts, WithMaxRetries(*f.maxRetries))
@@ -178,7 +178,7 @@ func (f TableflowRestClientFactory) CreateTableflowRestClient(tableflowApiKey, t
 	}
 
 	return &TableflowRestClient{
-		apiClient:                    tableflow.NewAPIClient(config),
+		apiClient:                    tableflowv1.NewAPIClient(config),
 		oauthToken:                   externalToken,
 		stsToken:                     stsToken,
 		tableflowApiKey:              tableflowApiKey,

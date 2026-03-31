@@ -17,14 +17,14 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"github.com/walkerus/go-wiremock"
 	"net/http"
 	"os"
 	"strconv"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/walkerus/go-wiremock"
 )
 
 //
@@ -60,9 +60,6 @@ func TestAccLatestSchemaWithEnhancedProviderBlockOAuth(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	// Add constants for scenario states
-	const (
-		scenarioStateOAuthSchemaCreated = "OAuth Schema Created"
-	)
 
 	// Temporarily unset API key environment variables to avoid conflict with OAuth logic in provider_test.go
 	oldApiKey := os.Getenv("CONFLUENT_CLOUD_API_KEY")

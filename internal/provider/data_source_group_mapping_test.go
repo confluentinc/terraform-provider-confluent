@@ -17,18 +17,13 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
 	"strconv"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-)
-
-const (
-	groupMappingDataSourceScenarioName = "confluent_group_mapping Data Source Lifecycle"
-	groupMappingLastPagePageToken      = "eyJjcmVhdGVkVGltZSI6WzIwM"
+	"github.com/walkerus/go-wiremock"
 )
 
 func TestAccDataSourceGroupMapping(t *testing.T) {

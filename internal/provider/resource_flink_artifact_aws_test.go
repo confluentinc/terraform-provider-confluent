@@ -3,33 +3,13 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/walkerus/go-wiremock"
 	"net/http"
 	"os"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-)
-
-const (
-	scenarioArtifactPresignedUrlHasBeenCreated = "The new flink artifact predesign URL has been just created"
-	scenarioStateFlinkArtifactHasBeenCreated   = "The new flink artifact has been just created"
-	scenarioStateFlinkArtifactHasBeenDeleted   = "The new flink artifact has been deleted"
-	flinkArtifactScenarioName                  = "confluent_flink_artifact Resource Lifecycle"
-	flinkArtifactClass                         = "io.confluent.example.SumScalarFunction"
-	flinkArtifactCloud                         = "AWS"
-	flinkArtifactRegion                        = "us-east-2"
-	flinkArtifactEnvironmentId                 = "env-gz903"
-	flinkArtifactContentFormat                 = "JAR"
-	flinkArtifactRuntimeLanguage               = "JAVA"
-	flinkArtifactDescription                   = "string"
-	flinkArtifactDocumentationLink             = "https://docs.confluent.io/cloud/current/api.html"
-	flinkArtifactId                            = "lfcp-abc123"
-	flinkArtifactUniqueName                    = "flink_artifact_0"
-	flinkArtifactApiVersion                    = "artifact/v1"
-	flinkArtifactKind                          = "FlinkArtifact"
-	flinkVersions                              = "cfa-ver-001"
+	"github.com/walkerus/go-wiremock"
 )
 
 var flinkArtifactsUrlPath = fmt.Sprintf("/artifact/v1/flink-artifacts/%s", flinkArtifactId)
@@ -180,7 +160,7 @@ func testAccCheckArtifactDestroy(s *terraform.State) error {
 			continue
 		}
 		deletedArtifactId := rs.Primary.ID
-		req := c.faClient.FlinkArtifactsArtifactV1Api.GetArtifactV1FlinkArtifact(c.faApiContext(context.Background()), deletedArtifactId).Cloud(flinkArtifactCloud).Region(flinkArtifactRegion).Environment(flinkArtifactEnvironmentId)
+		req := c.flinkArtifactV1Client.FlinkArtifactsArtifactV1Api.GetArtifactV1FlinkArtifact(c.flinkArtifactV1ApiContext(context.Background()), deletedArtifactId).Cloud(flinkArtifactCloud).Region(flinkArtifactRegion).Environment(flinkArtifactEnvironmentId)
 		deletedArtifact, response, err := req.Execute()
 		if response != nil && response.StatusCode == http.StatusNotFound {
 			return nil

@@ -128,7 +128,7 @@ func testAccCheckCertificatePoolLiveDestroy(s *terraform.State) error {
 		}
 		deletedPoolId := rs.Primary.ID
 		certificateAuthorityId := rs.Primary.Attributes["certificate_authority.0.id"]
-		req := c.caClient.CertificateIdentityPoolsIamV2Api.GetIamV2CertificateIdentityPool(c.caApiContext(context.Background()), certificateAuthorityId, deletedPoolId)
+		req := c.certificateAuthorityV2Client.CertificateIdentityPoolsIamV2Api.GetIamV2CertificateIdentityPool(c.certificateAuthorityV2ApiContext(context.Background()), certificateAuthorityId, deletedPoolId)
 		deletedPool, response, err := req.Execute()
 		if response != nil && (response.StatusCode == http.StatusForbidden || response.StatusCode == http.StatusNotFound) {
 			// If the error is equivalent to http.StatusNotFound, the Certificate Pool is destroyed.
@@ -261,4 +261,3 @@ func testAccCheckCertificatePoolLiveExists(n string) resource.TestCheckFunc {
 		return nil
 	}
 }
-

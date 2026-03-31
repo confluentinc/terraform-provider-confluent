@@ -18,17 +18,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	v2 "github.com/confluentinc/ccloud-sdk-go-v2/sso/v2"
+	"net/http"
+
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"net/http"
-)
 
-const (
-	// The maximum allowable page size - 1 (to avoid off-by-one errors) when listing group mappings using IAM V2 API
-	// https://docs.confluent.io/cloud/current/api.html#tag/Group-Mappings-(iamv2sso)/operation/listIamV2SsoGroupMappings
-	listGroupMappingsPageSize = 99
+	ssov2 "github.com/confluentinc/ccloud-sdk-go-v2/sso/v2"
 )
 
 func groupMappingDataSource() *schema.Resource {
@@ -100,8 +96,8 @@ func groupMappingDataSourceReadUsingDisplayName(ctx context.Context, d *schema.R
 	return diag.Errorf("error reading Group Mapping: Group Mapping with %q=%q was not found", paramDisplayName, displayName)
 }
 
-func loadGroupMappings(ctx context.Context, c *Client) ([]v2.IamV2SsoGroupMapping, error) {
-	groupMappings := make([]v2.IamV2SsoGroupMapping, 0)
+func loadGroupMappings(ctx context.Context, c *Client) ([]ssov2.IamV2SsoGroupMapping, error) {
+	groupMappings := make([]ssov2.IamV2SsoGroupMapping, 0)
 
 	allGroupMappingsAreCollected := false
 	pageToken := ""
@@ -132,11 +128,11 @@ func loadGroupMappings(ctx context.Context, c *Client) ([]v2.IamV2SsoGroupMappin
 	return groupMappings, nil
 }
 
-func executeListGroupMappings(ctx context.Context, c *Client, pageToken string) (v2.IamV2SsoGroupMappingList, *http.Response, error) {
+func executeListGroupMappings(ctx context.Context, c *Client, pageToken string) (ssov2.IamV2SsoGroupMappingList, *http.Response, error) {
 	if pageToken != "" {
-		return c.ssoClient.GroupMappingsIamV2SsoApi.ListIamV2SsoGroupMappings(c.ssoApiContext(ctx)).PageSize(listGroupMappingsPageSize).PageToken(pageToken).Execute()
+		return c.ssoV2Client.GroupMappingsIamV2SsoApi.ListIamV2SsoGroupMappings(c.ssoV2ApiContext(ctx)).PageSize(listGroupMappingsPageSize).PageToken(pageToken).Execute()
 	} else {
-		return c.ssoClient.GroupMappingsIamV2SsoApi.ListIamV2SsoGroupMappings(c.ssoApiContext(ctx)).PageSize(listGroupMappingsPageSize).Execute()
+		return c.ssoV2Client.GroupMappingsIamV2SsoApi.ListIamV2SsoGroupMappings(c.ssoV2ApiContext(ctx)).PageSize(listGroupMappingsPageSize).Execute()
 	}
 }
 
@@ -144,7 +140,7 @@ func groupMappingDataSourceReadUsingId(ctx context.Context, d *schema.ResourceDa
 	tflog.Debug(ctx, fmt.Sprintf("Reading Group Mapping %q=%q", paramId, groupMappingId), map[string]interface{}{groupMappingLoggingKey: groupMappingId})
 
 	c := meta.(*Client)
-	groupMapping, resp, err := executeGroupMappingRead(c.ssoApiContext(ctx), c, groupMappingId)
+	groupMapping, resp, err := executeGroupMappingRead(c.ssoV2ApiContext(ctx), c, groupMappingId)
 	if err != nil {
 		return diag.Errorf("error reading Group Mapping %q: %s", groupMappingId, createDescriptiveError(err, resp))
 	}
@@ -160,7 +156,7 @@ func groupMappingDataSourceReadUsingId(ctx context.Context, d *schema.ResourceDa
 	return nil
 }
 
-func orgHasMultipleGroupMappingsWithTargetDisplayName(groupMappings []v2.IamV2SsoGroupMapping, displayName string) bool {
+func orgHasMultipleGroupMappingsWithTargetDisplayName(groupMappings []ssov2.IamV2SsoGroupMapping, displayName string) bool {
 	var numberOfGroupMappingsWithTargetDisplayName = 0
 	for _, groupMapping := range groupMappings {
 		if groupMapping.GetDisplayName() == displayName {

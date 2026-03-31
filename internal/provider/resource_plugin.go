@@ -4,13 +4,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	ccpm "github.com/confluentinc/ccloud-sdk-go-v2/ccpm/v1"
+	"net/http"
+	"strings"
+
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"net/http"
-	"strings"
+
+	ccpmv1 "github.com/confluentinc/ccloud-sdk-go-v2/ccpm/v1"
 )
 
 func pluginResource() *schema.Resource {
@@ -67,10 +69,10 @@ func pluginCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 	cloud := d.Get(paramCloud).(string)
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
 
-	createPluginRequest := ccpm.NewCcpmV1CustomConnectPlugin()
+	createPluginRequest := ccpmv1.NewCcpmV1CustomConnectPlugin()
 
-	pluginSpec := ccpm.NewCcpmV1CustomConnectPluginSpec()
-	pluginSpec.SetEnvironment(ccpm.EnvScopedObjectReference{Id: environmentId})
+	pluginSpec := ccpmv1.NewCcpmV1CustomConnectPluginSpec()
+	pluginSpec.SetEnvironment(ccpmv1.EnvScopedObjectReference{Id: environmentId})
 	pluginSpec.SetCloud(cloud)
 	pluginSpec.SetDescription(description)
 	pluginSpec.SetDisplayName(displayName)
@@ -82,7 +84,7 @@ func pluginCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 		return diag.Errorf("error creating Plugin: error marshaling %#v to json: %s", createPluginRequest, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Plugin: %s", pluginRequestJson))
-	createdPlugin, resp, err := executePluginCreate(c.ccpmApiContext(ctx), c, createPluginRequest)
+	createdPlugin, resp, err := executePluginCreate(c.ccpmV1ApiContext(ctx), c, createPluginRequest)
 	if err != nil {
 		return diag.Errorf("error creating Plugin %q: %s", displayName, createDescriptiveError(err, resp))
 	}
@@ -101,8 +103,8 @@ func pluginUpdate(ctx context.Context, d *schema.ResourceData, meta interface{})
 	if d.HasChangesExcept(paramDisplayName, paramDescription) {
 		return diag.Errorf("error updating Plugin %q: only %q, %q attributes can be updated for Custom Connector Plugin", d.Id(), paramDisplayName, paramDescription)
 	}
-	updatePluginRequest := ccpm.NewCcpmV1CustomConnectPluginUpdate()
-	updatePluginSpec := ccpm.NewCcpmV1CustomConnectPluginSpecUpdate()
+	updatePluginRequest := ccpmv1.NewCcpmV1CustomConnectPluginUpdate()
+	updatePluginSpec := ccpmv1.NewCcpmV1CustomConnectPluginSpecUpdate()
 	if d.HasChange(paramDisplayName) {
 		updatedDisplayName := d.Get(paramDisplayName).(string)
 		updatePluginSpec.SetDisplayName(updatedDisplayName)
@@ -112,7 +114,7 @@ func pluginUpdate(ctx context.Context, d *schema.ResourceData, meta interface{})
 		updatePluginSpec.SetDescription(updatedDescription)
 	}
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
-	updatePluginSpec.SetEnvironment(ccpm.EnvScopedObjectReference{Id: environmentId})
+	updatePluginSpec.SetEnvironment(ccpmv1.EnvScopedObjectReference{Id: environmentId})
 
 	if d.HasChange(paramDisplayName) || d.HasChange(paramDescription) {
 		updatePluginRequest.SetSpec(*updatePluginSpec)
@@ -124,7 +126,7 @@ func pluginUpdate(ctx context.Context, d *schema.ResourceData, meta interface{})
 	tflog.Debug(ctx, fmt.Sprintf("Updating Plugin %q: %s", d.Id(), updatePluginRequestJson), map[string]interface{}{pluginLoggingKey: d.Id()})
 
 	c := meta.(*Client)
-	updatedPlugin, resp, err := c.ccpmClient.CustomConnectPluginsCcpmV1Api.UpdateCcpmV1CustomConnectPlugin(c.ccpmApiContext(ctx), d.Id()).CcpmV1CustomConnectPluginUpdate(*updatePluginRequest).Execute()
+	updatedPlugin, resp, err := c.ccpmV1Client.CustomConnectPluginsCcpmV1Api.UpdateCcpmV1CustomConnectPlugin(c.ccpmV1ApiContext(ctx), d.Id()).CcpmV1CustomConnectPluginUpdate(*updatePluginRequest).Execute()
 
 	if err != nil {
 		return diag.Errorf("error updating Plugin %q: %s", d.Id(), createDescriptiveError(err, resp))
@@ -153,7 +155,7 @@ func pluginRead(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 }
 
 func readPluginAndSetAttributes(ctx context.Context, d *schema.ResourceData, c *Client, environmentId string) ([]*schema.ResourceData, error) {
-	plugin, resp, err := executePluginRead(c.ccpmApiContext(ctx), c, d.Id(), environmentId)
+	plugin, resp, err := executePluginRead(c.ccpmV1ApiContext(ctx), c, d.Id(), environmentId)
 	if err != nil {
 		tflog.Warn(ctx, fmt.Sprintf("Error reading Plugin %q: %s", d.Id(), createDescriptiveError(err, resp)), map[string]interface{}{pluginLoggingKey: d.Id()})
 
@@ -181,7 +183,7 @@ func readPluginAndSetAttributes(ctx context.Context, d *schema.ResourceData, c *
 	return []*schema.ResourceData{d}, nil
 }
 
-func setPluginAttributes(d *schema.ResourceData, plugin ccpm.CcpmV1CustomConnectPlugin) (*schema.ResourceData, error) {
+func setPluginAttributes(d *schema.ResourceData, plugin ccpmv1.CcpmV1CustomConnectPlugin) (*schema.ResourceData, error) {
 	spec := plugin.GetSpec()
 	if err := d.Set(paramDisplayName, spec.GetDisplayName()); err != nil {
 		return nil, createDescriptiveError(err)
@@ -213,7 +215,7 @@ func pluginDelete(ctx context.Context, d *schema.ResourceData, meta interface{})
 	c := meta.(*Client)
 
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
-	req := c.ccpmClient.CustomConnectPluginsCcpmV1Api.DeleteCcpmV1CustomConnectPlugin(c.ccpmApiContext(ctx), d.Id()).Environment(environmentId)
+	req := c.ccpmV1Client.CustomConnectPluginsCcpmV1Api.DeleteCcpmV1CustomConnectPlugin(c.ccpmV1ApiContext(ctx), d.Id()).Environment(environmentId)
 	resp, err := req.Execute()
 
 	if err != nil {
@@ -223,13 +225,13 @@ func pluginDelete(ctx context.Context, d *schema.ResourceData, meta interface{})
 	return nil
 }
 
-func executePluginCreate(ctx context.Context, c *Client, customConnectorPlugin *ccpm.CcpmV1CustomConnectPlugin) (ccpm.CcpmV1CustomConnectPlugin, *http.Response, error) {
-	req := c.ccpmClient.CustomConnectPluginsCcpmV1Api.CreateCcpmV1CustomConnectPlugin(c.ccpmApiContext(ctx)).CcpmV1CustomConnectPlugin(*customConnectorPlugin)
+func executePluginCreate(ctx context.Context, c *Client, customConnectorPlugin *ccpmv1.CcpmV1CustomConnectPlugin) (ccpmv1.CcpmV1CustomConnectPlugin, *http.Response, error) {
+	req := c.ccpmV1Client.CustomConnectPluginsCcpmV1Api.CreateCcpmV1CustomConnectPlugin(c.ccpmV1ApiContext(ctx)).CcpmV1CustomConnectPlugin(*customConnectorPlugin)
 	return req.Execute()
 }
 
-func executePluginRead(ctx context.Context, c *Client, pluginId, envID string) (ccpm.CcpmV1CustomConnectPlugin, *http.Response, error) {
-	req := c.ccpmClient.CustomConnectPluginsCcpmV1Api.GetCcpmV1CustomConnectPlugin(c.ccpmApiContext(ctx), pluginId).Environment(envID)
+func executePluginRead(ctx context.Context, c *Client, pluginId, envID string) (ccpmv1.CcpmV1CustomConnectPlugin, *http.Response, error) {
+	req := c.ccpmV1Client.CustomConnectPluginsCcpmV1Api.GetCcpmV1CustomConnectPlugin(c.ccpmV1ApiContext(ctx), pluginId).Environment(envID)
 	return req.Execute()
 }
 

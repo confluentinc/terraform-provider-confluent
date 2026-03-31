@@ -23,58 +23,13 @@ import (
 	"sort"
 	"strings"
 
-	cmk "github.com/confluentinc/ccloud-sdk-go-v2/cmk/v2"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-)
 
-const (
-	kafkaClusterTypeBasic            = "Basic"
-	kafkaClusterTypeStandard         = "Standard"
-	kafkaClusterTypeDedicated        = "Dedicated"
-	kafkaClusterTypeEnterprise       = "Enterprise"
-	kafkaClusterTypeFreight          = "Freight"
-	paramBasicCluster                = "basic"
-	paramStandardCluster             = "standard"
-	paramDedicatedCluster            = "dedicated"
-	paramEnterpriseCluster           = "enterprise"
-	paramFreightCluster              = "freight"
-	paramAvailability                = "availability"
-	paramBootStrapEndpoint           = "bootstrap_endpoint"
-	paramRestEndpoint                = "rest_endpoint"
-	paramHttpEndpoint                = "http_endpoint"
-	paramRestEndpointPrivate         = "private_rest_endpoint"
-	paramRestEndpointPrivateRegional = "private_regional_rest_endpoints"
-	paramCatalogEndpoint             = "catalog_endpoint"
-	paramCku                         = "cku"
-	paramMaxEcku                     = "max_ecku"
-	paramEncryptionKey               = "encryption_key"
-	paramRbacCrn                     = "rbac_crn"
-	paramConfluentCustomerKey        = "byok_key"
-	paramEndpoints                   = "endpoints"
-	paramConnectionType              = "connection_type"
-
-	stateInProgress = "IN_PROGRESS"
-	stateDone       = "DONE"
-
-	stateFailed        = "FAILED"
-	stateUnknown       = "UNKNOWN"
-	stateUnexpected    = "UNEXPECTED"
-	stateProvisioned   = "PROVISIONED"
-	stateReady         = "READY"
-	stateRunning       = "RUNNING"
-	stateProvisioning  = "PROVISIONING"
-	statePendingAccept = "PENDING_ACCEPT"
-
-	singleZone       = "SINGLE_ZONE"
-	multiZone        = "MULTI_ZONE"
-	lowAvailability  = "LOW"
-	highAvailability = "HIGH"
-
-	paramAccessPointID = "access_point_id"
+	cmkv2 "github.com/confluentinc/ccloud-sdk-go-v2/cmk/v2"
 )
 
 var acceptedAvailabilityZones = []string{singleZone, multiZone, lowAvailability, highAvailability}
@@ -229,44 +184,44 @@ func resourceKafkaCustomizeDiff(ctx context.Context, diff *schema.ResourceDiff, 
 	return nil
 }
 
-func createMaxEckuUpdateSpec(d *schema.ResourceData, clusterType string, isBasic, isStandard, isEnterprise, isFreight bool) *cmk.CmkV2ClusterSpecUpdate {
-	updateSpec := cmk.NewCmkV2ClusterSpecUpdate()
+func createMaxEckuUpdateSpec(d *schema.ResourceData, clusterType string, isBasic, isStandard, isEnterprise, isFreight bool) *cmkv2.CmkV2ClusterSpecUpdate {
+	updateSpec := cmkv2.NewCmkV2ClusterSpecUpdate()
 
 	if isBasic {
-		config := cmk.NewCmkV2Basic(kafkaClusterTypeBasic)
+		config := cmkv2.NewCmkV2Basic(kafkaClusterTypeBasic)
 		maxEcku := extractBasicMaxEcku(d)
 		if maxEcku > 0 {
 			config.SetMaxEcku(maxEcku)
 		}
-		updateSpec.SetConfig(cmk.CmkV2BasicAsCmkV2ClusterSpecUpdateConfigOneOf(config))
+		updateSpec.SetConfig(cmkv2.CmkV2BasicAsCmkV2ClusterSpecUpdateConfigOneOf(config))
 	} else if isStandard {
-		config := cmk.NewCmkV2Standard(kafkaClusterTypeStandard)
+		config := cmkv2.NewCmkV2Standard(kafkaClusterTypeStandard)
 		maxEcku := extractStandardMaxEcku(d)
 		if maxEcku > 0 {
 			config.SetMaxEcku(maxEcku)
 		}
-		updateSpec.SetConfig(cmk.CmkV2StandardAsCmkV2ClusterSpecUpdateConfigOneOf(config))
+		updateSpec.SetConfig(cmkv2.CmkV2StandardAsCmkV2ClusterSpecUpdateConfigOneOf(config))
 	} else if isEnterprise {
-		config := cmk.NewCmkV2Enterprise(kafkaClusterTypeEnterprise)
+		config := cmkv2.NewCmkV2Enterprise(kafkaClusterTypeEnterprise)
 		maxEcku := extractEnterpriseMaxEcku(d)
 		if maxEcku > 0 {
 			config.SetMaxEcku(maxEcku)
 		}
-		updateSpec.SetConfig(cmk.CmkV2EnterpriseAsCmkV2ClusterSpecUpdateConfigOneOf(config))
+		updateSpec.SetConfig(cmkv2.CmkV2EnterpriseAsCmkV2ClusterSpecUpdateConfigOneOf(config))
 	} else if isFreight {
-		config := cmk.NewCmkV2Freight(kafkaClusterTypeFreight)
+		config := cmkv2.NewCmkV2Freight(kafkaClusterTypeFreight)
 		maxEcku := extractFreightMaxEcku(d)
 		if maxEcku > 0 {
 			config.SetMaxEcku(maxEcku)
 		}
-		updateSpec.SetConfig(cmk.CmkV2FreightAsCmkV2ClusterSpecUpdateConfigOneOf(config))
+		updateSpec.SetConfig(cmkv2.CmkV2FreightAsCmkV2ClusterSpecUpdateConfigOneOf(config))
 	}
 
 	return updateSpec
 }
 
-func executeClusterUpdate(ctx context.Context, c *Client, clusterId string, updateSpec *cmk.CmkV2ClusterSpecUpdate, updateType string) diag.Diagnostics {
-	updateClusterRequest := cmk.NewCmkV2ClusterUpdate()
+func executeClusterUpdate(ctx context.Context, c *Client, clusterId string, updateSpec *cmkv2.CmkV2ClusterSpecUpdate, updateType string) diag.Diagnostics {
+	updateClusterRequest := cmkv2.NewCmkV2ClusterUpdate()
 	updateClusterRequest.SetSpec(*updateSpec)
 
 	updateClusterRequestJson, err := json.Marshal(updateClusterRequest)
@@ -276,7 +231,7 @@ func executeClusterUpdate(ctx context.Context, c *Client, clusterId string, upda
 
 	tflog.Debug(ctx, fmt.Sprintf("Updating Kafka Cluster %q: %s", clusterId, updateClusterRequestJson), map[string]interface{}{kafkaClusterLoggingKey: clusterId})
 
-	req := c.cmkClient.ClustersCmkV2Api.UpdateCmkV2Cluster(c.cmkApiContext(ctx), clusterId).CmkV2ClusterUpdate(*updateClusterRequest)
+	req := c.cmkV2Client.ClustersCmkV2Api.UpdateCmkV2Cluster(c.cmkV2ApiContext(ctx), clusterId).CmkV2ClusterUpdate(*updateClusterRequest)
 
 	updatedCluster, resp, err := req.Execute()
 
@@ -315,15 +270,15 @@ func kafkaUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 	if hasDisplayNameChange && hasMaxEckuChange {
 		updateSpec := createMaxEckuUpdateSpec(d, clusterType, isMaxEckuBasicUpdate, isMaxEckuStandardUpdate, isMaxEckuEnterpriseUpdate, isMaxEckuFreightUpdate)
 		updateSpec.SetDisplayName(displayName)
-		updateSpec.SetEnvironment(cmk.EnvScopedObjectReference{Id: environmentId})
+		updateSpec.SetEnvironment(cmkv2.EnvScopedObjectReference{Id: environmentId})
 
 		if err := executeClusterUpdate(ctx, c, d.Id(), updateSpec, "Combined display_name and Max eCKU"); err != nil {
 			return err
 		}
 	} else if hasDisplayNameChange {
-		updateSpec := cmk.NewCmkV2ClusterSpecUpdate()
+		updateSpec := cmkv2.NewCmkV2ClusterSpecUpdate()
 		updateSpec.SetDisplayName(displayName)
-		updateSpec.SetEnvironment(cmk.EnvScopedObjectReference{Id: environmentId})
+		updateSpec.SetEnvironment(cmkv2.EnvScopedObjectReference{Id: environmentId})
 
 		if err := executeClusterUpdate(ctx, c, d.Id(), updateSpec, "display_name"); err != nil {
 			return err
@@ -337,8 +292,8 @@ func kafkaUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 	isForbiddenDedicatedUpdate := d.HasChange(paramDedicatedCluster) && (d.HasChange(paramBasicCluster) || d.HasChange(paramStandardCluster))
 
 	if isBasicStandardUpdate {
-		updateSpec := cmk.NewCmkV2ClusterSpecUpdate()
-		config := cmk.NewCmkV2Standard(kafkaClusterTypeStandard)
+		updateSpec := cmkv2.NewCmkV2ClusterSpecUpdate()
+		config := cmkv2.NewCmkV2Standard(kafkaClusterTypeStandard)
 
 		// check if user has explicitly specified max_ecku in new Standard configuration
 		// if not, let the backend use the default value for Standard cluster
@@ -347,8 +302,8 @@ func kafkaUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 			config.SetMaxEcku(standardMaxEcku)
 		}
 
-		updateSpec.SetConfig(cmk.CmkV2StandardAsCmkV2ClusterSpecUpdateConfigOneOf(config))
-		updateSpec.SetEnvironment(cmk.EnvScopedObjectReference{Id: environmentId})
+		updateSpec.SetConfig(cmkv2.CmkV2StandardAsCmkV2ClusterSpecUpdateConfigOneOf(config))
+		updateSpec.SetEnvironment(cmkv2.EnvScopedObjectReference{Id: environmentId})
 
 		if err := executeClusterUpdate(ctx, c, d.Id(), updateSpec, "Basic to Standard upgrade"); err != nil {
 			return err
@@ -365,15 +320,15 @@ func kafkaUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 			return diag.FromErr(createDescriptiveError(err))
 		}
 
-		updateSpec := cmk.NewCmkV2ClusterSpecUpdate()
-		updateSpec.SetConfig(cmk.CmkV2DedicatedAsCmkV2ClusterSpecUpdateConfigOneOf(cmk.NewCmkV2Dedicated(kafkaClusterTypeDedicated, cku)))
-		updateSpec.SetEnvironment(cmk.EnvScopedObjectReference{Id: environmentId})
+		updateSpec := cmkv2.NewCmkV2ClusterSpecUpdate()
+		updateSpec.SetConfig(cmkv2.CmkV2DedicatedAsCmkV2ClusterSpecUpdateConfigOneOf(cmkv2.NewCmkV2Dedicated(kafkaClusterTypeDedicated, cku)))
+		updateSpec.SetEnvironment(cmkv2.EnvScopedObjectReference{Id: environmentId})
 
 		if err := executeClusterUpdate(ctx, c, d.Id(), updateSpec, "CKU"); err != nil {
 			return err
 		}
 
-		if err := waitForKafkaClusterCkuUpdateToComplete(c.cmkApiContext(ctx), c, environmentId, d.Id(), cku); err != nil {
+		if err := waitForKafkaClusterCkuUpdateToComplete(c.cmkV2ApiContext(ctx), c, environmentId, d.Id(), cku); err != nil {
 			return diag.Errorf("error waiting for Kafka Cluster %q to perform CKU update: %s", d.Id(), createDescriptiveError(err))
 		}
 	}
@@ -381,7 +336,7 @@ func kafkaUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 	// handle max_ecku-only updates (when display_name is not changing)
 	if !hasDisplayNameChange && hasMaxEckuChange && !isBasicStandardUpdate {
 		updateSpec := createMaxEckuUpdateSpec(d, clusterType, isMaxEckuBasicUpdate, isMaxEckuStandardUpdate, isMaxEckuEnterpriseUpdate, isMaxEckuFreightUpdate)
-		updateSpec.SetEnvironment(cmk.EnvScopedObjectReference{Id: environmentId})
+		updateSpec.SetEnvironment(cmkv2.EnvScopedObjectReference{Id: environmentId})
 
 		if err := executeClusterUpdate(ctx, c, d.Id(), updateSpec, "Max eCKU"); err != nil {
 			return err
@@ -393,8 +348,8 @@ func kafkaUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 	return kafkaRead(ctx, d, meta)
 }
 
-func executeKafkaCreate(ctx context.Context, c *Client, cluster *cmk.CmkV2Cluster) (cmk.CmkV2Cluster, *http.Response, error) {
-	req := c.cmkClient.ClustersCmkV2Api.CreateCmkV2Cluster(c.cmkApiContext(ctx)).CmkV2Cluster(*cluster)
+func executeKafkaCreate(ctx context.Context, c *Client, cluster *cmkv2.CmkV2Cluster) (cmkv2.CmkV2Cluster, *http.Response, error) {
+	req := c.cmkV2Client.ClustersCmkV2Api.CreateCmkV2Cluster(c.cmkV2ApiContext(ctx)).CmkV2Cluster(*cluster)
 	return req.Execute()
 }
 
@@ -410,27 +365,27 @@ func kafkaCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 	networkId := extractStringValueFromBlock(d, paramNetwork, paramId)
 	byokId := extractStringValueFromBlock(d, paramConfluentCustomerKey, paramId)
 
-	spec := cmk.NewCmkV2ClusterSpec()
+	spec := cmkv2.NewCmkV2ClusterSpec()
 	spec.SetDisplayName(displayName)
 	spec.SetAvailability(availability)
 	spec.SetCloud(cloud)
 	spec.SetRegion(region)
 	if clusterType == kafkaClusterTypeBasic {
 		max_ecku := extractBasicMaxEcku(d)
-		config := cmk.NewCmkV2Basic(kafkaClusterTypeBasic)
+		config := cmkv2.NewCmkV2Basic(kafkaClusterTypeBasic)
 		if max_ecku != 0 {
 			config.SetMaxEcku(max_ecku)
 		}
 
-		spec.SetConfig(cmk.CmkV2BasicAsCmkV2ClusterSpecConfigOneOf(config))
+		spec.SetConfig(cmkv2.CmkV2BasicAsCmkV2ClusterSpecConfigOneOf(config))
 	} else if clusterType == kafkaClusterTypeStandard {
 		max_ecku := extractStandardMaxEcku(d)
-		config := cmk.NewCmkV2Standard(kafkaClusterTypeStandard)
+		config := cmkv2.NewCmkV2Standard(kafkaClusterTypeStandard)
 		if max_ecku != 0 {
 			config.SetMaxEcku(max_ecku)
 		}
 
-		spec.SetConfig(cmk.CmkV2StandardAsCmkV2ClusterSpecConfigOneOf(config))
+		spec.SetConfig(cmkv2.CmkV2StandardAsCmkV2ClusterSpecConfigOneOf(config))
 	} else if clusterType == kafkaClusterTypeDedicated {
 		cku := extractCku(d)
 		err := ckuCheck(cku, availability)
@@ -439,61 +394,61 @@ func kafkaCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 		}
 		encryptionKey := extractEncryptionKey(d)
 
-		config := cmk.NewCmkV2Dedicated(kafkaClusterTypeDedicated, cku)
+		config := cmkv2.NewCmkV2Dedicated(kafkaClusterTypeDedicated, cku)
 		if encryptionKey != "" {
 			config.SetEncryptionKey(encryptionKey)
 		}
 
-		spec.SetConfig(cmk.CmkV2DedicatedAsCmkV2ClusterSpecConfigOneOf(config))
+		spec.SetConfig(cmkv2.CmkV2DedicatedAsCmkV2ClusterSpecConfigOneOf(config))
 	} else if clusterType == kafkaClusterTypeEnterprise {
 		max_ecku := extractEnterpriseMaxEcku(d)
-		config := cmk.NewCmkV2Enterprise(kafkaClusterTypeEnterprise)
+		config := cmkv2.NewCmkV2Enterprise(kafkaClusterTypeEnterprise)
 		if max_ecku != 0 {
 			config.SetMaxEcku(max_ecku)
 		}
 
-		spec.SetConfig(cmk.CmkV2EnterpriseAsCmkV2ClusterSpecConfigOneOf(config))
+		spec.SetConfig(cmkv2.CmkV2EnterpriseAsCmkV2ClusterSpecConfigOneOf(config))
 	} else if clusterType == kafkaClusterTypeFreight {
 		max_ecku := extractFreightMaxEcku(d)
-		config := cmk.NewCmkV2Freight(kafkaClusterTypeFreight)
+		config := cmkv2.NewCmkV2Freight(kafkaClusterTypeFreight)
 		if max_ecku != 0 {
 			config.SetMaxEcku(max_ecku)
 		}
 
-		spec.SetConfig(cmk.CmkV2FreightAsCmkV2ClusterSpecConfigOneOf(config))
+		spec.SetConfig(cmkv2.CmkV2FreightAsCmkV2ClusterSpecConfigOneOf(config))
 	} else {
 		return diag.Errorf("error creating Kafka Cluster: unknown Kafka Cluster type was provided: %q", clusterType)
 	}
-	spec.SetEnvironment(cmk.EnvScopedObjectReference{Id: environmentId})
+	spec.SetEnvironment(cmkv2.EnvScopedObjectReference{Id: environmentId})
 	if networkId != "" {
-		spec.SetNetwork(cmk.EnvScopedObjectReference{Id: networkId})
+		spec.SetNetwork(cmkv2.EnvScopedObjectReference{Id: networkId})
 	}
 	if byokId != "" {
-		spec.SetByok(cmk.GlobalObjectReference{Id: byokId})
+		spec.SetByok(cmkv2.GlobalObjectReference{Id: byokId})
 	}
-	createClusterRequest := cmk.CmkV2Cluster{Spec: spec}
+	createClusterRequest := cmkv2.CmkV2Cluster{Spec: spec}
 	createClusterRequestJson, err := json.Marshal(createClusterRequest)
 	if err != nil {
 		return diag.Errorf("error creating Kafka Cluster: error marshaling %#v to json: %s", createClusterRequest, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Kafka Cluster: %s", createClusterRequestJson))
 
-	createdKafkaCluster, resp, err := executeKafkaCreate(c.cmkApiContext(ctx), c, &createClusterRequest)
+	createdKafkaCluster, resp, err := executeKafkaCreate(c.cmkV2ApiContext(ctx), c, &createClusterRequest)
 	if err != nil {
 		return diag.Errorf("error creating Kafka Cluster %q: %s", displayName, createDescriptiveError(err, resp))
 	}
 	d.SetId(createdKafkaCluster.GetId())
 
-	if err := waitForKafkaClusterToProvision(c.cmkApiContext(ctx), c, environmentId, d.Id(), clusterType); err != nil {
+	if err := waitForKafkaClusterToProvision(c.cmkV2ApiContext(ctx), c, environmentId, d.Id(), clusterType); err != nil {
 		return diag.Errorf("error waiting for Kafka Cluster %q to provision: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
-	environment, resp, err := executeEnvironmentRead(c.orgApiContext(ctx), c, environmentId)
+	environment, resp, err := executeEnvironmentRead(c.orgV2ApiContext(ctx), c, environmentId)
 	if err != nil {
 		return diag.Errorf("error reading Environment %q: %s", environmentId, createDescriptiveError(err, resp))
 	}
 	if environment.StreamGovernanceConfig != nil {
-		if err := waitForAnySchemaRegistryClusterToProvision(c.srcmApiContext(ctx), c, environmentId); err != nil {
+		if err := waitForAnySchemaRegistryClusterToProvision(c.srcmV3ApiContext(ctx), c, environmentId); err != nil {
 			return diag.Errorf("error waiting for Schema Registry Cluster to provision: %s", createDescriptiveError(err, resp))
 		}
 	}
@@ -585,14 +540,14 @@ func kafkaDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
 
-	req := c.cmkClient.ClustersCmkV2Api.DeleteCmkV2Cluster(c.cmkApiContext(ctx), d.Id()).Environment(environmentId)
+	req := c.cmkV2Client.ClustersCmkV2Api.DeleteCmkV2Cluster(c.cmkV2ApiContext(ctx), d.Id()).Environment(environmentId)
 	resp, err := req.Execute()
 
 	if err != nil {
 		return diag.Errorf("error deleting Kafka Cluster %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
-	if err := waitForKafkaClusterToBeDeleted(c.cmkApiContext(ctx), c, environmentId, d.Id()); err != nil {
+	if err := waitForKafkaClusterToBeDeleted(c.cmkV2ApiContext(ctx), c, environmentId, d.Id()); err != nil {
 		return diag.Errorf("error waiting for Kafka Cluster %q to be deleted: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
@@ -624,8 +579,8 @@ func kafkaImport(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 	return []*schema.ResourceData{d}, nil
 }
 
-func executeKafkaRead(ctx context.Context, c *Client, environmentId string, clusterId string) (cmk.CmkV2Cluster, *http.Response, error) {
-	req := c.cmkClient.ClustersCmkV2Api.GetCmkV2Cluster(c.cmkApiContext(ctx), clusterId).Environment(environmentId)
+func executeKafkaRead(ctx context.Context, c *Client, environmentId string, clusterId string) (cmkv2.CmkV2Cluster, *http.Response, error) {
+	req := c.cmkV2Client.ClustersCmkV2Api.GetCmkV2Cluster(c.cmkV2ApiContext(ctx), clusterId).Environment(environmentId)
 	return req.Execute()
 }
 
@@ -645,7 +600,7 @@ func kafkaRead(ctx context.Context, d *schema.ResourceData, meta interface{}) di
 func readKafkaClusterAndSetAttributes(ctx context.Context, d *schema.ResourceData, meta interface{}, environmentId, clusterId string) ([]*schema.ResourceData, error) {
 	c := meta.(*Client)
 
-	cluster, resp, err := executeKafkaRead(c.cmkApiContext(ctx), c, environmentId, clusterId)
+	cluster, resp, err := executeKafkaRead(c.cmkV2ApiContext(ctx), c, environmentId, clusterId)
 	if err != nil {
 		tflog.Warn(ctx, fmt.Sprintf("Error reading Kafka Cluster %q: %s", d.Id(), createDescriptiveError(err, resp)), map[string]interface{}{kafkaClusterLoggingKey: d.Id()})
 
@@ -824,7 +779,7 @@ func ckuCheck(cku int32, availability string) error {
 	return nil
 }
 
-func setKafkaClusterAttributes(d *schema.ResourceData, cluster cmk.CmkV2Cluster) (*schema.ResourceData, error) {
+func setKafkaClusterAttributes(d *schema.ResourceData, cluster cmkv2.CmkV2Cluster) (*schema.ResourceData, error) {
 	if err := d.Set(paramApiVersion, cluster.GetApiVersion()); err != nil {
 		return nil, err
 	}
@@ -926,7 +881,7 @@ func setKafkaClusterAttributes(d *schema.ResourceData, cluster cmk.CmkV2Cluster)
 	return d, nil
 }
 
-func constructEndpointsBlockValue(modelMap cmk.ModelMap) []interface{} {
+func constructEndpointsBlockValue(modelMap cmkv2.ModelMap) []interface{} {
 	var endpointsList []interface{}
 
 	// Ensure consistent ordering

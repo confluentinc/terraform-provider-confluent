@@ -20,15 +20,11 @@ import (
 	"fmt"
 	"net/http"
 
-	v2 "github.com/confluentinc/ccloud-sdk-go-v2/identity-provider/v2"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-)
 
-const (
-	// The maximum allowable page size - 1 (to avoid off-by-one errors) when listing identity providers using IAM V2 API
-	listIdentityProvidersPageSize = 99
+	identityproviderv2 "github.com/confluentinc/ccloud-sdk-go-v2/identity-provider/v2"
 )
 
 func identityProviderDataSource() *schema.Resource {
@@ -114,8 +110,8 @@ func identityProviderDataSourceReadUsingDisplayName(ctx context.Context, d *sche
 	return diag.Errorf("error reading Identity Provider: Identity Provider with %q=%q was not found", paramDisplayName, displayName)
 }
 
-func loadIdentityProviders(ctx context.Context, c *Client) ([]v2.IamV2IdentityProvider, error) {
-	identityProviders := make([]v2.IamV2IdentityProvider, 0)
+func loadIdentityProviders(ctx context.Context, c *Client) ([]identityproviderv2.IamV2IdentityProvider, error) {
+	identityProviders := make([]identityproviderv2.IamV2IdentityProvider, 0)
 
 	allIdentityProvidersAreCollected := false
 	pageToken := ""
@@ -146,11 +142,11 @@ func loadIdentityProviders(ctx context.Context, c *Client) ([]v2.IamV2IdentityPr
 	return identityProviders, nil
 }
 
-func executeListIdentityProviders(ctx context.Context, c *Client, pageToken string) (v2.IamV2IdentityProviderList, *http.Response, error) {
+func executeListIdentityProviders(ctx context.Context, c *Client, pageToken string) (identityproviderv2.IamV2IdentityProviderList, *http.Response, error) {
 	if pageToken != "" {
-		return c.oidcClient.IdentityProvidersIamV2Api.ListIamV2IdentityProviders(c.oidcApiContext(ctx)).PageSize(listIdentityProvidersPageSize).PageToken(pageToken).Execute()
+		return c.identityProviderV2Client.IdentityProvidersIamV2Api.ListIamV2IdentityProviders(c.identityProviderV2ApiContext(ctx)).PageSize(listIdentityProvidersPageSize).PageToken(pageToken).Execute()
 	} else {
-		return c.oidcClient.IdentityProvidersIamV2Api.ListIamV2IdentityProviders(c.oidcApiContext(ctx)).PageSize(listIdentityProvidersPageSize).Execute()
+		return c.identityProviderV2Client.IdentityProvidersIamV2Api.ListIamV2IdentityProviders(c.identityProviderV2ApiContext(ctx)).PageSize(listIdentityProvidersPageSize).Execute()
 	}
 }
 
@@ -158,7 +154,7 @@ func identityProviderDataSourceReadUsingId(ctx context.Context, d *schema.Resour
 	tflog.Debug(ctx, fmt.Sprintf("Reading Identity Provider %q=%q", paramId, identityProviderId), map[string]interface{}{identityProviderLoggingKey: identityProviderId})
 
 	c := meta.(*Client)
-	identityProvider, resp, err := executeIdentityProviderRead(c.oidcApiContext(ctx), c, identityProviderId)
+	identityProvider, resp, err := executeIdentityProviderRead(c.identityProviderV2ApiContext(ctx), c, identityProviderId)
 	if err != nil {
 		return diag.Errorf("error reading Identity Provider %q: %s", identityProviderId, createDescriptiveError(err, resp))
 	}
@@ -174,7 +170,7 @@ func identityProviderDataSourceReadUsingId(ctx context.Context, d *schema.Resour
 	return nil
 }
 
-func orgHasMultipleIdentityProvidersWithTargetDisplayName(identityProviders []v2.IamV2IdentityProvider, displayName string) bool {
+func orgHasMultipleIdentityProvidersWithTargetDisplayName(identityProviders []identityproviderv2.IamV2IdentityProvider, displayName string) bool {
 	var numberOfIdentityProvidersWithTargetDisplayName = 0
 	for _, identityProvider := range identityProviders {
 		if identityProvider.GetDisplayName() == displayName {

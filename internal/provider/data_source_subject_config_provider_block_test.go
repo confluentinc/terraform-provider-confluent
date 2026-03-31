@@ -17,13 +17,13 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
 	"strconv"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/walkerus/go-wiremock"
 )
 
 func TestAccDataSubjectCompatibilityLevelSchemaWithEnhancedProviderBlock(t *testing.T) {
@@ -70,6 +70,8 @@ func TestAccDataSubjectCompatibilityLevelSchemaWithEnhancedProviderBlock(t *test
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelDataSourceLabel, "subject_name", testSubjectName),
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelDataSourceLabel, "compatibility_level", testSubjectCompatibilityLevel),
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelDataSourceLabel, "compatibility_group", testSubjectCompatibilityGroup),
+					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelDataSourceLabel, "normalize", "true"),
+					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelDataSourceLabel, "alias", ""),
 					resource.TestCheckResourceAttr(fullSubjectCompatibilityLevelDataSourceLabel, "credentials.#", "0"),
 					resource.TestCheckNoResourceAttr(fullSubjectCompatibilityLevelDataSourceLabel, "credentials.0.key"),
 					resource.TestCheckNoResourceAttr(fullSubjectCompatibilityLevelDataSourceLabel, "credentials.0.secret"),

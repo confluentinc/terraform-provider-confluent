@@ -9,15 +9,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-
 	"github.com/walkerus/go-wiremock"
-)
-
-const (
-	keyArn = "arn:aws:kms:us-west-2:111111111111:key/11111111-1111-1111-1111-111111111111"
-
-	awsKeyScenarioName                = "confluent_aws Key Aws Resource Lifecycle"
-	scenarioStateAwsKeyHasBeenDeleted = "The new aws key's deletion has been just completed"
 )
 
 func TestAccAwsBYOKKey(t *testing.T) {

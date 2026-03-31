@@ -17,22 +17,13 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-)
-
-const (
-	freightKafkaCloud             = "AWS"
-	freightKafkaRegion            = "us-east-2"
-	freightKafkaBootstrapEndpoint = "lkc-19ynpv.us-east-2.aws.private.confluent.cloud:9092"
-	freightKafkaHttpEndpoint      = "https://lkc-19ynpv.us-east-2.aws.private.confluent.cloud:443"
-	freightKafkaScenarioName      = "confluent_kafka Resource Lifecycle"
-	fullFreightKafkaResourceLabel = "confluent_kafka_cluster.freight-cluster"
+	"github.com/walkerus/go-wiremock"
 )
 
 func TestAccFreightClusterWithSGPackage(t *testing.T) {

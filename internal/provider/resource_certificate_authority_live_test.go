@@ -117,7 +117,7 @@ func testAccCheckCertificateAuthorityLiveDestroy(s *terraform.State) error {
 			continue
 		}
 		deletedCAId := rs.Primary.ID
-		req := c.caClient.CertificateAuthoritiesIamV2Api.GetIamV2CertificateAuthority(c.caApiContext(context.Background()), deletedCAId)
+		req := c.certificateAuthorityV2Client.CertificateAuthoritiesIamV2Api.GetIamV2CertificateAuthority(c.certificateAuthorityV2ApiContext(context.Background()), deletedCAId)
 		deletedCA, response, err := req.Execute()
 		if response != nil && (response.StatusCode == http.StatusForbidden || response.StatusCode == http.StatusNotFound) {
 			// If the error is equivalent to http.StatusNotFound, the Certificate Authority is destroyed.
@@ -186,4 +186,3 @@ func testAccCheckCertificateAuthorityLiveExists(n string) resource.TestCheckFunc
 		return nil
 	}
 }
-

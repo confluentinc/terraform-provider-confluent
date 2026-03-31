@@ -17,17 +17,13 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
 	"strconv"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-)
-
-const (
-	kafkaClientQuotaDataSourceScenarioName = "confluent_kafka_client_quota Data Source Lifecycle"
+	"github.com/walkerus/go-wiremock"
 )
 
 func TestAccDataSourceKafkaClientQuota(t *testing.T) {

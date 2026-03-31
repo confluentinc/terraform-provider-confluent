@@ -17,47 +17,13 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-)
-
-const (
-	scenarioStateStatementHasBeenCreated   = "A new statement has been just created"
-	scenarioStateStatementIsPending        = "A new statement is pending"
-	scenarioStateStatementIsDeleting       = "The statement is being deleted"
-	scenarioStateStatementIsResuming       = "The statement is being resumed"
-	scenarioStateStatementHasBeenDeleted   = "The statement has been deleted"
-	scenarioStateStatementHasBeenStopped   = "The statement has been stopped"
-	scenarioStateStatementHasBeenResumed   = "The statement has been resumed"
-	statementScenarioName                  = "confluent_flink_statement Resource Lifecycle"
-	statementWithInitialOffsetScenarioName = "confluent_flink_statement (initial offset) Resource Lifecycle"
-
-	flinkPrincipalIdTest                = "u-yo9j87"
-	flinkPrincipalUpdatedIdTest         = "sa-yo9j87"
-	flinkComputePoolIdTest              = "lfcp-x7rgx1"
-	flinkComputePoolUpdatedIdTest       = "lfcp-x7rgx2"
-	flinkStatementTest                  = "SELECT CURRENT_TIMESTAMP;"
-	flinkStatementWithInitialOffsetTest = "INSERT INTO customers_sink123 (customer_id, name, address, postcode, city, email) SELECT customer_id, name, address, postcode, city, email FROM customers_source123"
-	flinkStatementNameTest              = "workspace-2023-11-15-030109-0408d52d-eaff-4d50-a246-f822a29f2eb9"
-	flinkFirstPropertyKeyTest           = "sql.local-time-zone"
-	flinkFirstPropertyValueTest         = "GMT-08:00"
-	flinkSecondPropertyKeyTest          = "sql.current-catalog"
-	flinkSecondPropertyValueTest        = "test"
-	flinkThirdPropertyKeyTest           = "sql.current-database"
-	flinkThirdPropertyValueTest         = "cluster_0"
-	flinkStatementResourceLabel         = "example"
-
-	latestOffsetsTimestampEmptyValueTest   = "0001-01-01T00:00:00Z"
-	latestOffsetsTimestampStoppedValueTest = "2024-10-14T21:26:07Z"
-
-	latestOffsetFirstValueTest             = "partition:0,offset:9223372036854775808;partition:4,offset:9223372036854775808;partition:3,offset:9223372036854775808;partition:2,offset:9223372036854775808;partition:1,offset:9223372036854775808;partition:5,offset:9223372036854775808"
-	latestOffsetFirstKeyTest               = "customers_source"
-	flinkCarryOverOffsetsPropertyValueTest = "tf-2025-08-20-171534-5f6e0644-dc74-4c30-81c1-cd9eaede302f"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/walkerus/go-wiremock"
 )
 
 var fullFlinkStatementResourceLabel = fmt.Sprintf("confluent_flink_statement.%s", flinkStatementResourceLabel)

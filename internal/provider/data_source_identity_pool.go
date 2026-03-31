@@ -18,16 +18,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	v2 "github.com/confluentinc/ccloud-sdk-go-v2/identity-provider/v2"
+	"net/http"
+
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"net/http"
-)
 
-const (
-	// The maximum allowable page size - 1 (to avoid off-by-one errors) when listing identity pools
-	listIdentityPoolsPageSize = 99
+	identityproviderv2 "github.com/confluentinc/ccloud-sdk-go-v2/identity-provider/v2"
 )
 
 func identityPoolDataSource() *schema.Resource {
@@ -111,7 +108,7 @@ func identityPoolDataSourceReadUsingId(ctx context.Context, d *schema.ResourceDa
 	tflog.Debug(ctx, fmt.Sprintf("Reading Identity Pool %q=%q", paramId, identityPoolId), map[string]interface{}{identityPoolLoggingKey: identityPoolId})
 
 	c := meta.(*Client)
-	identityPool, resp, err := executeIdentityPoolRead(c.oidcApiContext(ctx), c, identityPoolId, identityProviderId)
+	identityPool, resp, err := executeIdentityPoolRead(c.identityProviderV2ApiContext(ctx), c, identityPoolId, identityProviderId)
 	if err != nil {
 		return diag.Errorf("error reading Identity Pool %q: %s", identityPoolId, createDescriptiveError(err, resp))
 	}
@@ -127,7 +124,7 @@ func identityPoolDataSourceReadUsingId(ctx context.Context, d *schema.ResourceDa
 	return nil
 }
 
-func orgHasMultipleIdentityPoolsWithTargetDisplayName(identityPools []v2.IamV2IdentityPool, displayName string) bool {
+func orgHasMultipleIdentityPoolsWithTargetDisplayName(identityPools []identityproviderv2.IamV2IdentityPool, displayName string) bool {
 	var numberOfIdentityPoolsWithTargetDisplayName = 0
 	for _, identityPool := range identityPools {
 		if identityPool.GetDisplayName() == displayName {
@@ -137,8 +134,8 @@ func orgHasMultipleIdentityPoolsWithTargetDisplayName(identityPools []v2.IamV2Id
 	return numberOfIdentityPoolsWithTargetDisplayName > 1
 }
 
-func loadIdentityPools(ctx context.Context, c *Client, identityProviderId string) ([]v2.IamV2IdentityPool, error) {
-	identityPools := make([]v2.IamV2IdentityPool, 0)
+func loadIdentityPools(ctx context.Context, c *Client, identityProviderId string) ([]identityproviderv2.IamV2IdentityPool, error) {
+	identityPools := make([]identityproviderv2.IamV2IdentityPool, 0)
 
 	allIdentityPoolsAreCollected := false
 	pageToken := ""
@@ -169,11 +166,11 @@ func loadIdentityPools(ctx context.Context, c *Client, identityProviderId string
 	return identityPools, nil
 }
 
-func executeListIdentityPools(ctx context.Context, c *Client, identityProviderId, pageToken string) (v2.IamV2IdentityPoolList, *http.Response, error) {
+func executeListIdentityPools(ctx context.Context, c *Client, identityProviderId, pageToken string) (identityproviderv2.IamV2IdentityPoolList, *http.Response, error) {
 	if pageToken != "" {
-		return c.oidcClient.IdentityPoolsIamV2Api.ListIamV2IdentityPools(c.oidcApiContext(ctx), identityProviderId).PageSize(listIdentityPoolsPageSize).PageToken(pageToken).Execute()
+		return c.identityProviderV2Client.IdentityPoolsIamV2Api.ListIamV2IdentityPools(c.identityProviderV2ApiContext(ctx), identityProviderId).PageSize(listIdentityPoolsPageSize).PageToken(pageToken).Execute()
 	} else {
-		return c.oidcClient.IdentityPoolsIamV2Api.ListIamV2IdentityPools(c.oidcApiContext(ctx), identityProviderId).PageSize(listIdentityPoolsPageSize).Execute()
+		return c.identityProviderV2Client.IdentityPoolsIamV2Api.ListIamV2IdentityPools(c.identityProviderV2ApiContext(ctx), identityProviderId).PageSize(listIdentityPoolsPageSize).Execute()
 	}
 }
 

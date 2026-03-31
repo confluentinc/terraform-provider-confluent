@@ -17,25 +17,13 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-)
-
-const (
-	scenarioStateIdentityPoolHasBeenCreated             = "The new identity_pool has been just created"
-	scenarioStateIdentityPoolDescriptionHaveBeenUpdated = "The new identity_pool's description have been just updated"
-	scenarioStateIdentityPoolHasBeenDeleted             = "The new identity_pool has been deleted"
-	identityPoolScenarioName                            = "confluent_identity_pool Resource Lifecycle"
-	identityPoolId                                      = "pool-AzXR"
-	identityPoolDisplayName                             = "My Identity Pool"
-	identityPoolDescription                             = "Prod Access to Kafka clusters to Release Engineering"
-	identityPoolIdentityClaim                           = "claims.sub"
-	identityPoolFilter                                  = "claims.aud==\"confluent\" && claims.group!=\"invalid_group\""
+	"github.com/walkerus/go-wiremock"
 )
 
 func TestAccIdentityPool(t *testing.T) {
@@ -182,7 +170,7 @@ func testAccCheckIdentityPoolDestroy(s *terraform.State) error {
 			continue
 		}
 		deletedIdentityPoolId := rs.Primary.ID
-		req := c.oidcClient.IdentityPoolsIamV2Api.GetIamV2IdentityPool(c.oidcApiContext(context.Background()), identityProviderId, deletedIdentityPoolId)
+		req := c.identityProviderV2Client.IdentityPoolsIamV2Api.GetIamV2IdentityPool(c.identityProviderV2ApiContext(context.Background()), identityProviderId, deletedIdentityPoolId)
 		deletedIdentityPool, response, err := req.Execute()
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(response)
 		if isResourceNotFound {

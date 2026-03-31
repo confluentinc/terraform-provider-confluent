@@ -17,19 +17,12 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
 	"testing"
-)
 
-const (
-	dekResourceScenarioName        = "confluent_schema_registry_dek Resource Lifecycle"
-	scenarioStateDekHasBeenCreated = "A new dek has been just created"
-	createDekUrlPath               = "/dek-registry/v1/keks/testkek/deks"
-	dekLabel                       = "confluent_schema_registry_dek.mydek"
-	dekUrlPath                     = "/dek-registry/v1/keks/testkek/deks/ts/versions/1"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/walkerus/go-wiremock"
 )
 
 func TestAccDek(t *testing.T) {

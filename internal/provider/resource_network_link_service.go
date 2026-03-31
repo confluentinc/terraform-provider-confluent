@@ -18,12 +18,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	net "github.com/confluentinc/ccloud-sdk-go-v2/networking/v1"
+	"net/http"
+	"strings"
+
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"net/http"
-	"strings"
+
+	networkingv1 "github.com/confluentinc/ccloud-sdk-go-v2/networking/v1"
 )
 
 func networkLinkServiceResource() *schema.Resource {
@@ -90,7 +92,7 @@ func acceptSchema() *schema.Schema {
 
 func networkLinkServiceCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 
-	spec := net.NewNetworkingV1NetworkLinkServiceSpec()
+	spec := networkingv1.NewNetworkingV1NetworkLinkServiceSpec()
 
 	displayName := d.Get(paramDisplayName).(string)
 	description := d.Get(paramDescription).(string)
@@ -99,10 +101,10 @@ func networkLinkServiceCreate(ctx context.Context, d *schema.ResourceData, meta 
 
 	spec.SetDisplayName(displayName)
 	spec.SetDescription(description)
-	spec.SetNetwork(net.EnvScopedObjectReference{Id: networkId})
-	spec.SetEnvironment(net.GlobalObjectReference{Id: environmentId})
+	spec.SetNetwork(networkingv1.EnvScopedObjectReference{Id: networkId})
+	spec.SetEnvironment(networkingv1.GlobalObjectReference{Id: environmentId})
 
-	accept := net.NewNetworkingV1NetworkLinkServiceAcceptPolicy()
+	accept := networkingv1.NewNetworkingV1NetworkLinkServiceAcceptPolicy()
 	acceptNetworks := convertToStringSlice(d.Get(fmt.Sprintf("%s.0.%s", paramAccept, paramNetworks)).(*schema.Set).List())
 	accept.SetNetworks(acceptNetworks)
 
@@ -111,11 +113,11 @@ func networkLinkServiceCreate(ctx context.Context, d *schema.ResourceData, meta 
 
 	spec.SetAccept(*accept)
 
-	nls := net.NewNetworkingV1NetworkLinkService()
+	nls := networkingv1.NewNetworkingV1NetworkLinkService()
 	nls.SetSpec(*spec)
 
 	c := meta.(*Client)
-	request := c.netClient.NetworkLinkServicesNetworkingV1Api.CreateNetworkingV1NetworkLinkService(c.netApiContext(ctx))
+	request := c.networkingV1Client.NetworkLinkServicesNetworkingV1Api.CreateNetworkingV1NetworkLinkService(c.networkingV1ApiContext(ctx))
 	request = request.NetworkingV1NetworkLinkService(*nls)
 
 	createNetworkLinkServiceRequestJson, err := json.Marshal(request)
@@ -124,7 +126,7 @@ func networkLinkServiceCreate(ctx context.Context, d *schema.ResourceData, meta 
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Network Link Service: %s", createNetworkLinkServiceRequestJson))
 
-	createdNLS, resp, err := c.netClient.NetworkLinkServicesNetworkingV1Api.CreateNetworkingV1NetworkLinkServiceExecute(request)
+	createdNLS, resp, err := c.networkingV1Client.NetworkLinkServicesNetworkingV1Api.CreateNetworkingV1NetworkLinkServiceExecute(request)
 	if err != nil {
 		return diag.Errorf("error creating Network Link Service %s", createDescriptiveError(err, resp))
 	}
@@ -132,7 +134,7 @@ func networkLinkServiceCreate(ctx context.Context, d *schema.ResourceData, meta 
 	nlsId := createdNLS.GetId()
 	d.SetId(nlsId)
 
-	if err := waitForNetworkLinkServiceToProvision(c.netApiContext(ctx), c, environmentId, d.Id()); err != nil {
+	if err := waitForNetworkLinkServiceToProvision(c.networkingV1ApiContext(ctx), c, environmentId, d.Id()); err != nil {
 		return diag.Errorf("error waiting for Network Link Service %q to provision: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
@@ -195,9 +197,9 @@ func readNetworkLinkServiceAndSetAttributes(ctx context.Context, d *schema.Resou
 	return []*schema.ResourceData{d}, nil
 }
 
-func executeNLSRead(ctx context.Context, c *Client, nlsId string, environmentId string) (net.NetworkingV1NetworkLinkService, *http.Response, error) {
-	request := c.netClient.NetworkLinkServicesNetworkingV1Api.GetNetworkingV1NetworkLinkService(c.netApiContext(ctx), nlsId).Environment(environmentId)
-	return c.netClient.NetworkLinkServicesNetworkingV1Api.GetNetworkingV1NetworkLinkServiceExecute(request)
+func executeNLSRead(ctx context.Context, c *Client, nlsId string, environmentId string) (networkingv1.NetworkingV1NetworkLinkService, *http.Response, error) {
+	request := c.networkingV1Client.NetworkLinkServicesNetworkingV1Api.GetNetworkingV1NetworkLinkService(c.networkingV1ApiContext(ctx), nlsId).Environment(environmentId)
+	return c.networkingV1Client.NetworkLinkServicesNetworkingV1Api.GetNetworkingV1NetworkLinkServiceExecute(request)
 }
 
 func networkLinkServiceDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -207,8 +209,8 @@ func networkLinkServiceDelete(ctx context.Context, d *schema.ResourceData, meta 
 	tflog.Debug(ctx, fmt.Sprintf("deleting Network Link Service %q=%q", paramId, nlsId), map[string]interface{}{networkLinkServiceLoggingKey: nlsId})
 
 	c := meta.(*Client)
-	request := c.netClient.NetworkLinkServicesNetworkingV1Api.DeleteNetworkingV1NetworkLinkService(c.netApiContext(ctx), nlsId).Environment(environmentId)
-	resp, err := c.netClient.NetworkLinkServicesNetworkingV1Api.DeleteNetworkingV1NetworkLinkServiceExecute(request)
+	request := c.networkingV1Client.NetworkLinkServicesNetworkingV1Api.DeleteNetworkingV1NetworkLinkService(c.networkingV1ApiContext(ctx), nlsId).Environment(environmentId)
+	resp, err := c.networkingV1Client.NetworkLinkServicesNetworkingV1Api.DeleteNetworkingV1NetworkLinkServiceExecute(request)
 	if err != nil {
 		return diag.Errorf("error deleting Network Link Service %q: %s", nlsId, createDescriptiveError(err, resp))
 	}
@@ -223,7 +225,7 @@ func networkLinkServiceUpdate(ctx context.Context, d *schema.ResourceData, meta 
 		return diag.Errorf("error updating Network Link Service %q: only %q, %q and %q attributes can be updated for Network Link Endpoint", d.Id(), paramDisplayName, paramDescription, paramAccept)
 	}
 
-	spec := net.NewNetworkingV1NetworkLinkServiceSpecUpdate()
+	spec := networkingv1.NewNetworkingV1NetworkLinkServiceSpecUpdate()
 
 	nlsId := d.Id()
 	displayName := d.Get(paramDisplayName).(string)
@@ -232,9 +234,9 @@ func networkLinkServiceUpdate(ctx context.Context, d *schema.ResourceData, meta 
 
 	spec.SetDisplayName(displayName)
 	spec.SetDescription(description)
-	spec.SetEnvironment(net.GlobalObjectReference{Id: environmentId})
+	spec.SetEnvironment(networkingv1.GlobalObjectReference{Id: environmentId})
 
-	accept := net.NewNetworkingV1NetworkLinkServiceAcceptPolicy()
+	accept := networkingv1.NewNetworkingV1NetworkLinkServiceAcceptPolicy()
 	acceptNetworks := convertToStringSlice(d.Get(fmt.Sprintf("%s.0.%s", paramAccept, paramNetworks)).(*schema.Set).List())
 	accept.SetNetworks(acceptNetworks)
 
@@ -243,11 +245,11 @@ func networkLinkServiceUpdate(ctx context.Context, d *schema.ResourceData, meta 
 
 	spec.SetAccept(*accept)
 
-	nls := net.NewNetworkingV1NetworkLinkServiceUpdate()
+	nls := networkingv1.NewNetworkingV1NetworkLinkServiceUpdate()
 	nls.SetSpec(*spec)
 
 	c := meta.(*Client)
-	request := c.netClient.NetworkLinkServicesNetworkingV1Api.UpdateNetworkingV1NetworkLinkService(c.netApiContext(ctx), nlsId)
+	request := c.networkingV1Client.NetworkLinkServicesNetworkingV1Api.UpdateNetworkingV1NetworkLinkService(c.networkingV1ApiContext(ctx), nlsId)
 	request = request.NetworkingV1NetworkLinkServiceUpdate(*nls)
 
 	updateNetworkLinkServiceRequestJson, err := json.Marshal(request)
@@ -256,7 +258,7 @@ func networkLinkServiceUpdate(ctx context.Context, d *schema.ResourceData, meta 
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Updating new Network Link Service: %s", updateNetworkLinkServiceRequestJson))
 
-	updatedNLS, resp, err := c.netClient.NetworkLinkServicesNetworkingV1Api.UpdateNetworkingV1NetworkLinkServiceExecute(request)
+	updatedNLS, resp, err := c.networkingV1Client.NetworkLinkServicesNetworkingV1Api.UpdateNetworkingV1NetworkLinkServiceExecute(request)
 	if err != nil {
 		return diag.Errorf("error updating Network Link Service, %s", createDescriptiveError(err, resp))
 	}
@@ -292,7 +294,7 @@ func networkLinkServiceImport(ctx context.Context, d *schema.ResourceData, meta 
 	return []*schema.ResourceData{d}, nil
 }
 
-func setNetworkLinkServiceAttributes(d *schema.ResourceData, nls net.NetworkingV1NetworkLinkService) (*schema.ResourceData, error) {
+func setNetworkLinkServiceAttributes(d *schema.ResourceData, nls networkingv1.NetworkingV1NetworkLinkService) (*schema.ResourceData, error) {
 	if err := d.Set(paramDisplayName, nls.Spec.GetDisplayName()); err != nil {
 		return nil, err
 	}
@@ -316,7 +318,7 @@ func setNetworkLinkServiceAttributes(d *schema.ResourceData, nls net.NetworkingV
 	return d, nil
 }
 
-func setAccept(d *schema.ResourceData, nls net.NetworkingV1NetworkLinkService) error {
+func setAccept(d *schema.ResourceData, nls networkingv1.NetworkingV1NetworkLinkService) error {
 	return d.Set(paramAccept, []interface{}{map[string]interface{}{
 		paramNetworks:     nls.Spec.Accept.GetNetworks(),
 		paramEnvironments: nls.Spec.Accept.GetEnvironments(),

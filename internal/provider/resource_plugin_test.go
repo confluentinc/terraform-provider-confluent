@@ -3,21 +3,14 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"testing"
-)
 
-const (
-	scenarioStatePluginHasBeenCreated = "The plugin has been just created"
-	scenarioStatePluginHasBeenUpdated = "The plugin has been just updated"
-	scenarioStatePluginHasBeenDeleted = "The  plugin has been deleted"
-	pluginScenarioName                = "confluent_plugin Resource Lifecycle"
-	pluginEnvironment                 = "env-123"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/walkerus/go-wiremock"
 )
 
 func TestAccPlugin(t *testing.T) {

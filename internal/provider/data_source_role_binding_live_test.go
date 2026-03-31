@@ -64,12 +64,12 @@ func TestAccRoleBindingDataSourceLive(t *testing.T) {
 					// Check the service account was created
 					resource.TestCheckResourceAttrSet(fmt.Sprintf("confluent_service_account.%s", serviceAccountResourceLabel), "id"),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_service_account.%s", serviceAccountResourceLabel), "display_name", serviceAccountDisplayName),
-					
+
 					// Check the role binding was created
 					resource.TestCheckResourceAttrSet(fmt.Sprintf("confluent_role_binding.%s", roleBindingResourceLabel), "id"),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_role_binding.%s", roleBindingResourceLabel), "role_name", "MetricsViewer"),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_role_binding.%s", roleBindingResourceLabel), "crn_pattern", "crn://confluent.cloud/organization=424fb7bf-40c2-433f-81a5-c45942a6a539"),
-					
+
 					// Check the data source can find it
 					resource.TestCheckResourceAttrPair(
 						fmt.Sprintf("data.confluent_role_binding.%s", roleBindingDataSourceLabel), "id",
@@ -116,4 +116,4 @@ func testAccCheckRoleBindingDataSourceLiveConfig(endpoint, serviceAccountResourc
 		id = confluent_role_binding.%s.id
 	}
 	`, endpoint, apiKey, apiSecret, serviceAccountResourceLabel, serviceAccountDisplayName, roleBindingResourceLabel, serviceAccountResourceLabel, roleBindingDataSourceLabel, roleBindingResourceLabel)
-} 
+}

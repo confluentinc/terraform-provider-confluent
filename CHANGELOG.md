@@ -1,3 +1,78 @@
+## 2.66.0 (March 30th, 2026)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.65.0...v2.66.0)
+
+**New features:**
+* Added GCP support for `confluent_connect_artifact` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_connect_artifact) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_connect_artifact).
+
+## 2.65.0 (March 20th, 2026)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.64.0...v2.65.0)
+
+**Bug fixes:**
+* Fixed a crash in the `confluent_schema_registry_dek` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema_registry_dek) when DEK creation failed due to network errors.
+* Fixed similar issues across other resources.
+
+**Examples:**
+* Moved `docs/examples/supported_examples.md` to `docs/guides/supported-examples.md` so it appears in the Terraform Registry sidebar under Guides.
+* Added required `page_title` frontmatter for Registry rendering.
+
+## 2.64.0 (March 17th, 2026)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.63.0...v2.64.0)
+
+**New features:**
+* Added support for a new optional `unity` configuration block to `confluent_catalog_integration` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_catalog_integration) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_catalog_integration) in a General Availability lifecycle stage.
+
+**Bug fixes:**
+* Fixed an issue in the `confluent_schema_exporter` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema_exporter) where destination OAuth configs were being overwritten with provider-level values, which was blocking scenarios where the source and destination Schema Registry clusters used different identity providers, tenants, or OAuth credentials.
+* Fixed an issue where the `confluent_catalog_integration` [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_catalog_integration) could not read Snowflake catalog integrations.
+
+**Examples:**
+* Added a [Terraform Provider Examples Index](https://github.com/confluentinc/terraform-provider-confluent/tree/master/docs/examples/supported_examples.md) document to provide users with a list of all supported examples.
+
+## 2.63.0 (March 5th, 2026)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.62.0...v2.63.0)
+
+**New features:**
+* Added support for resetting topic configs to default values for the `confluent_kafka_topic` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_topic).
+
+**Bug fixes:**
+* Updated the docs.
+
+## 2.62.0 (February 9th, 2026)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.61.0...v2.62.0)
+
+**New features:**
+* Updates the `confluent_certificate_pool` [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_certificate_pool) to allow searching by `display_name` when the display name is unique.
+
+## 2.61.0 (February 5th, 2026)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.60.0...v2.61.0)
+
+**Bug fixes:**
+* Fixed an issue in `confluent_custom_connector_plugin` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_custom_connector_plugin) and `confluent_custom_connector_plugin_version` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_custom_connector_plugin_version) where plugins could not be uploaded to Azure.
+
+## 2.60.0 (February 2nd, 2026)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.59.0...v2.60.0)
+
+**New features:**
+* Added `confluent_endpoint` [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_endpoint).
+* Added `confluent_gateways` [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_gateways) to support optionally filtering `confluent_gateway` data sources by `gateway_type`, `id`, `display_name`, `region`, or `phase`.
+* Updated `confluent_access_point` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_access_point) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_access_point) to support the new optional `aws_ingress_private_link_endpoint` configuration block.
+* Updated `confluent_gateway` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_gateway) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_gateway) to support the new optional `aws_ingress_private_link_endpoint` configuration block.
+* Added support for schema normalization (`normalize` field) and subject aliases (`alias` field) to the `confluent_subject_config` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_subject_config) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_subject_config), and `confluent_schema_registry_cluster_config` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema_registry_cluster_config) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_schema_registry_cluster_config).
+
+## 2.59.0 (January 26th, 2026)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.58.0...v2.59.0)
+
+**Bug Fixes:**
+* General bug fixes and improvements.
+
 ## 2.58.0 (January 13th, 2026)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.57.0...v2.58.0)

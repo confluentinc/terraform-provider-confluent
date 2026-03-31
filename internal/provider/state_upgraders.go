@@ -16,9 +16,10 @@ package provider
 
 import (
 	"context"
+	"regexp"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"regexp"
 )
 
 func kafkaResourceV0() *schema.Resource {

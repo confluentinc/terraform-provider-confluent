@@ -28,12 +28,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-const (
-	// Using Okta's OIDC configuration for the update step to test changing providers
-	updatedIssuer  = "https://example.okta.com/oauth2/default"
-	updatedJwksUri = "https://example.okta.com/oauth2/default/v1/keys"
-)
-
 func TestAccIdentityProviderLive(t *testing.T) {
 	// Skip this test unless explicitly enabled
 	if os.Getenv("TF_ACC_PROD") == "" {
@@ -137,7 +131,7 @@ func testAccCheckIdentityProviderLiveExists(resourceName string) resource.TestCh
 		}
 
 		c := testAccProvider.Meta().(*Client)
-		_, resp, err := c.oidcClient.IdentityProvidersIamV2Api.GetIamV2IdentityProvider(c.oidcApiContext(context.Background()), rs.Primary.ID).Execute()
+		_, resp, err := c.identityProviderV2Client.IdentityProvidersIamV2Api.GetIamV2IdentityProvider(c.identityProviderV2ApiContext(context.Background()), rs.Primary.ID).Execute()
 
 		if err != nil {
 			return fmt.Errorf("identity provider (%s) was not found: %s", rs.Primary.ID, createDescriptiveError(err, resp))
@@ -156,7 +150,7 @@ func testAccCheckIdentityProviderLiveDestroy(s *terraform.State) error {
 			continue
 		}
 		deletedIdentityProviderId := rs.Primary.ID
-		_, response, err := c.oidcClient.IdentityProvidersIamV2Api.GetIamV2IdentityProvider(c.oidcApiContext(context.Background()), deletedIdentityProviderId).Execute()
+		_, response, err := c.identityProviderV2Client.IdentityProvidersIamV2Api.GetIamV2IdentityProvider(c.identityProviderV2ApiContext(context.Background()), deletedIdentityProviderId).Execute()
 
 		if err != nil {
 			if isNonKafkaRestApiResourceNotFound(response) {

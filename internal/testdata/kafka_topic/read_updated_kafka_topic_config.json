@@ -460,19 +460,19 @@
       },
       "cluster_id": "lkc-190073",
       "name": "retention.ms",
-      "value": "67890",
+      "value": "604800000",
       "is_read_only": false,
       "is_sensitive": false,
-      "source": "DYNAMIC_TOPIC_CONFIG",
+      "source": "DEFAULT_CONFIG",
       "synonyms": [
         {
-          "name": "retention.ms",
-          "value": "67890",
-          "source": "DYNAMIC_TOPIC_CONFIG"
+          "name": "log.retention.ms",
+          "value": "604800000",
+          "source": "DEFAULT_CONFIG"
         }
       ],
       "topic_name": "read_created_kafka_topic",
-      "is_default": false
+      "is_default": true
     },
     {
       "kind": "KafkaTopicConfig",

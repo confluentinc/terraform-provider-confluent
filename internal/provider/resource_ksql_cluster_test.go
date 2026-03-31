@@ -17,32 +17,14 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
 	"regexp"
 	"testing"
-)
 
-const (
-	scenarioStateKsqlHasBeenCreated   = "A new ksqlDB cluster has been just created"
-	scenarioStateKsqlHasBeenUpdated   = "The new ksqlDB cluster's kind has been just updated"
-	scenarioStateKsqlHasBeenDeleted   = "The new ksqlDB cluster has been deleted"
-	ksqlScenarioName                  = "confluent_ksql_cluster Resource Lifecycle"
-	ksqlResourceLabel                 = "basic-cluster"
-	containerPort                     = "8080"
-	ksqlId                            = "lksql-0000"
-	ksqlDataSourceDisplayName         = "ksqlDB_cluster_0"
-	ksqlApiVersion                    = "ksqldbcm/v2"
-	ksqlKind                          = "Cluster"
-	ksqlCsuTest1                      = "4"
-	ksqlCsuTest2                      = "8"
-	ksqlCredentialIdentity            = "u-a83k9b"
-	ksqlDisplayName                   = "ksqlDB_cluster_0"
-	ksqlUseDetailedProcessingLogTest1 = "true"
-	ksqlUseDetailedProcessingLogTest2 = "false"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/walkerus/go-wiremock"
 )
 
 var fullKsqlResourceLabel = fmt.Sprintf("confluent_ksql_cluster.%s", ksqlResourceLabel)
@@ -386,7 +368,7 @@ func testAccCheckKsqlClusterDestroy(s *terraform.State) error {
 			continue
 		}
 		deletedClusterId := rs.Primary.ID
-		req := c.ksqlClient.ClustersKsqldbcmV2Api.GetKsqldbcmV2Cluster(c.ksqlApiContext(context.Background()), deletedClusterId).Environment(testEnvironmentId)
+		req := c.ksqlV2Client.ClustersKsqldbcmV2Api.GetKsqldbcmV2Cluster(c.ksqlV2ApiContext(context.Background()), deletedClusterId).Environment(testEnvironmentId)
 		deletedCluster, response, err := req.Execute()
 		if response != nil && (response.StatusCode == http.StatusForbidden || response.StatusCode == http.StatusNotFound) {
 			// /ksqldbcm/v2/clusters/{nonExistentClusterId/deletedClusterID} returns http.StatusForbidden instead of http.StatusNotFound

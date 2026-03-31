@@ -20,16 +20,12 @@ import (
 	"fmt"
 	"net/http"
 
-	iamip "github.com/confluentinc/ccloud-sdk-go-v2/iam-ip-filtering/v2"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-)
 
-const (
-	paramGroupName  = "group_name"
-	paramCidrBlocks = "cidr_blocks"
+	iamipfilteringv2 "github.com/confluentinc/ccloud-sdk-go-v2/iam-ip-filtering/v2"
 )
 
 func ipGroupResource() *schema.Resource {
@@ -75,7 +71,7 @@ func ipGroupUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}
 	tflog.Debug(ctx, fmt.Sprintf("Updating IP Group %q: %s", d.Id(), updateIPGroupRequestJson), map[string]interface{}{ipGroupLoggingKey: d.Id()})
 
 	c := meta.(*Client)
-	updatedIPGroup, resp, err := c.iamIPClient.IPGroupsIamV2Api.UpdateIamV2IpGroup(c.iamIPApiContext(ctx), d.Id()).IamV2IpGroup(*updateIPGroupRequest).Execute()
+	updatedIPGroup, resp, err := c.iamIpFilteringV2Client.IPGroupsIamV2Api.UpdateIamV2IpGroup(c.iamIpFilteringV2ApiContext(ctx), d.Id()).IamV2IpGroup(*updateIPGroupRequest).Execute()
 
 	if err != nil {
 		return diag.Errorf("error updating IP Group %q: %s", d.Id(), createDescriptiveError(err, resp))
@@ -101,7 +97,7 @@ func ipGroupCreate(ctx context.Context, d *schema.ResourceData, meta interface{}
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new IP Group: %s", createIPGroupRequestJson))
 
-	createdIPGroup, resp, err := executeIPGroupCreate(c.iamIPApiContext(ctx), c, createIPGroupRequest)
+	createdIPGroup, resp, err := executeIPGroupCreate(c.iamIpFilteringV2ApiContext(ctx), c, createIPGroupRequest)
 	if err != nil {
 		return diag.Errorf("error creating IP Group %q: %s", d.Get(paramGroupName), createDescriptiveError(err, resp))
 	}
@@ -116,8 +112,8 @@ func ipGroupCreate(ctx context.Context, d *schema.ResourceData, meta interface{}
 	return ipGroupRead(ctx, d, meta)
 }
 
-func executeIPGroupCreate(ctx context.Context, c *Client, ipGroup *iamip.IamV2IpGroup) (iamip.IamV2IpGroup, *http.Response, error) {
-	req := c.iamIPClient.IPGroupsIamV2Api.CreateIamV2IpGroup(c.iamIPApiContext(ctx)).IamV2IpGroup(*ipGroup)
+func executeIPGroupCreate(ctx context.Context, c *Client, ipGroup *iamipfilteringv2.IamV2IpGroup) (iamipfilteringv2.IamV2IpGroup, *http.Response, error) {
+	req := c.iamIpFilteringV2Client.IPGroupsIamV2Api.CreateIamV2IpGroup(c.iamIpFilteringV2ApiContext(ctx)).IamV2IpGroup(*ipGroup)
 	return req.Execute()
 }
 
@@ -125,7 +121,7 @@ func ipGroupDelete(ctx context.Context, d *schema.ResourceData, meta interface{}
 	tflog.Debug(ctx, fmt.Sprintf("Deleting IP Group %q", d.Id()), map[string]interface{}{ipGroupLoggingKey: d.Id()})
 	c := meta.(*Client)
 
-	req := c.iamIPClient.IPGroupsIamV2Api.DeleteIamV2IpGroup(c.iamIPApiContext(ctx), d.Id())
+	req := c.iamIpFilteringV2Client.IPGroupsIamV2Api.DeleteIamV2IpGroup(c.iamIpFilteringV2ApiContext(ctx), d.Id())
 	resp, err := req.Execute()
 
 	if err != nil {
@@ -137,15 +133,15 @@ func ipGroupDelete(ctx context.Context, d *schema.ResourceData, meta interface{}
 	return nil
 }
 
-func executeIPGroupRead(ctx context.Context, c *Client, ipGroupId string) (iamip.IamV2IpGroup, *http.Response, error) {
-	req := c.iamIPClient.IPGroupsIamV2Api.GetIamV2IpGroup(c.iamIPApiContext(ctx), ipGroupId)
+func executeIPGroupRead(ctx context.Context, c *Client, ipGroupId string) (iamipfilteringv2.IamV2IpGroup, *http.Response, error) {
+	req := c.iamIpFilteringV2Client.IPGroupsIamV2Api.GetIamV2IpGroup(c.iamIpFilteringV2ApiContext(ctx), ipGroupId)
 	return req.Execute()
 }
 
 func ipGroupRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	tflog.Debug(ctx, fmt.Sprintf("Reading IP Group %q", d.Id()), map[string]interface{}{ipGroupLoggingKey: d.Id()})
 	c := meta.(*Client)
-	ipGroup, resp, err := executeIPGroupRead(c.iamIPApiContext(ctx), c, d.Id())
+	ipGroup, resp, err := executeIPGroupRead(c.iamIpFilteringV2ApiContext(ctx), c, d.Id())
 	if err != nil {
 		tflog.Warn(ctx, fmt.Sprintf("Error reading IP Group %q: %s", d.Id(), createDescriptiveError(err, resp)), map[string]interface{}{ipGroupLoggingKey: d.Id()})
 
@@ -177,14 +173,14 @@ func ipGroupImport(ctx context.Context, d *schema.ResourceData, meta interface{}
 	tflog.Debug(ctx, fmt.Sprintf("Importing IP Group %q", d.Id()), map[string]interface{}{ipGroupLoggingKey: d.Id()})
 	// Mark resource as new to avoid d.Set("") when getting 404
 	d.MarkNewResource()
-	if diagnostics := ipGroupRead(ctx, d, meta); diagnostics != nil {
+	if diagnostics := ipGroupRead(ctx, d, meta); len(diagnostics) > 0 {
 		return nil, fmt.Errorf("error importing IP Group %q: %s", d.Id(), diagnostics[0].Summary)
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished importing IP Group %q", d.Id()), map[string]interface{}{ipGroupLoggingKey: d.Id()})
 	return []*schema.ResourceData{d}, nil
 }
 
-func setIPGroupAttributes(d *schema.ResourceData, ipGroup iamip.IamV2IpGroup) (*schema.ResourceData, error) {
+func setIPGroupAttributes(d *schema.ResourceData, ipGroup iamipfilteringv2.IamV2IpGroup) (*schema.ResourceData, error) {
 	if err := d.Set(paramGroupName, ipGroup.GetGroupName()); err != nil {
 		return nil, createDescriptiveError(err)
 	}
@@ -195,11 +191,11 @@ func setIPGroupAttributes(d *schema.ResourceData, ipGroup iamip.IamV2IpGroup) (*
 	return d, nil
 }
 
-func buildIPGroupRequest(d *schema.ResourceData) *iamip.IamV2IpGroup {
+func buildIPGroupRequest(d *schema.ResourceData) *iamipfilteringv2.IamV2IpGroup {
 	groupName := d.Get(paramGroupName).(string)
 	cidrBlocks := convertToStringSlice(d.Get(paramCidrBlocks).(*schema.Set).List())
 
-	req := iamip.NewIamV2IpGroup()
+	req := iamipfilteringv2.NewIamV2IpGroup()
 	req.SetGroupName(groupName)
 	req.SetCidrBlocks(cidrBlocks)
 	return req

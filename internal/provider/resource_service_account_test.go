@@ -17,20 +17,13 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-)
-
-const (
-	scenarioStateSaHasBeenCreated             = "The new service account has been just created"
-	scenarioStateSaDescriptionHaveBeenUpdated = "The new service account's description have been just updated"
-	scenarioStateSaHasBeenDeleted             = "The new service account has been deleted"
-	saScenarioName                            = "confluent_service_account Resource Lifecycle"
+	"github.com/walkerus/go-wiremock"
 )
 
 func TestAccServiceAccount(t *testing.T) {
@@ -177,7 +170,7 @@ func testAccCheckServiceAccountDestroy(s *terraform.State) error {
 			continue
 		}
 		deletedServiceAccountId := rs.Primary.ID
-		req := c.iamClient.ServiceAccountsIamV2Api.GetIamV2ServiceAccount(c.iamApiContext(context.Background()), deletedServiceAccountId)
+		req := c.iamV2Client.ServiceAccountsIamV2Api.GetIamV2ServiceAccount(c.iamV2ApiContext(context.Background()), deletedServiceAccountId)
 		deletedServiceAccount, response, err := req.Execute()
 		if response != nil && (response.StatusCode == http.StatusForbidden || response.StatusCode == http.StatusNotFound) {
 			// v2/service-accounts/{nonExistentSaId/deletedSaID} returns http.StatusForbidden instead of http.StatusNotFound

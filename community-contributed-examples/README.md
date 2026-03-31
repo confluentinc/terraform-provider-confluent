@@ -1,6 +1,6 @@
-# Community Contributed Examples
+# Contributing Examples: Process & Guidelines
 
-Welcome to the community-contributed examples directory! This section contains Terraform configurations contributed by the community to help address specific use cases not covered in the official Terraform Provider for Confluent documentation.
+Welcome to the community-contributed examples directory! 
 
 ## ⚠️ Important Disclaimer
 
@@ -25,8 +25,8 @@ We welcome community contributions! If you have a working Terraform configuratio
 
 ### Contribution Process
 
-1. **Clone this repository** and create a new branch for your contribution
-2. **Create your example directory** under `community-contributed-examples/` with a descriptive name
+1. **Clone the [terraform-community-examples](https://github.com/confluentinc/terraform-community-examples) repository** and create a new branch for your contribution
+2. **Create your example directory** under the repository with a descriptive name
 3. **Include your Terraform files** (`.tf` files) and any supporting documentation
 4. **Use the PR template** when submitting your pull request (see [contribution_pr_template.md](./contribution_pr_template.md))
 5. **Submit your PR** for review by the API team
