@@ -1552,7 +1552,7 @@ func TestValidateAllOrNoneAttributesSetForResources(t *testing.T) {
 			flinkComputePoolId:  "pool-789",
 			flinkRestEndpoint:   "https://flink.us-east-1.aws.confluent.cloud",
 			shouldErr:           true,
-			expectedErrMsg:      "All 7 flink_api_key, flink_api_secret",
+			expectedErrMsg:      "All 6 flink_api_key, flink_api_secret",
 			expectedFlags: ResourceMetadataSetFlags{
 				isKafkaMetadataSet:          false,
 				isSchemaRegistryMetadataSet: false,
@@ -1735,7 +1735,7 @@ func TestValidateAllOrNoneAttributesSetForResourcesWithOAuth(t *testing.T) {
 			flinkPoolID:       "pool-789",
 			flinkRestEndpoint: "https://flink.us-east-1.aws.confluent.cloud",
 			shouldErr:         true,
-			expectedErrMsg:    "All 5 (flink_rest_endpoint, organization_id, environment_id, flink_compute_pool_id, flink_principal_id)",
+			expectedErrMsg:    "All 4 (flink_rest_endpoint, organization_id, environment_id, flink_principal_id)",
 			expectedFlags: ResourceMetadataSetFlags{
 				isKafkaMetadataSet:          false,
 				isSchemaRegistryMetadataSet: false,
