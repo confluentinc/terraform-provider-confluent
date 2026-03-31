@@ -29,10 +29,6 @@ import (
 	flinkv2 "github.com/confluentinc/ccloud-sdk-go-v2/flink/v2"
 )
 
-const (
-	paramDefaultPool = "default_pool"
-)
-
 var acceptedComputePoolTypes = []string{paramStandardCluster}
 
 func computePoolResource() *schema.Resource {

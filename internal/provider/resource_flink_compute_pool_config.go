@@ -11,11 +11,6 @@ import (
 	"net/http"
 )
 
-const (
-	paramDefaultPoolEnabled = "default_compute_pool_enabled"
-	paramMaxCFU             = "default_max_cfu"
-)
-
 func computePoolConfigResource() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: computePoolConfigCreate,
