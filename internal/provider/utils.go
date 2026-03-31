@@ -75,6 +75,80 @@ import (
 	tableflowv1 "github.com/confluentinc/ccloud-sdk-go-v2/tableflow/v1"
 )
 
+const (
+	byokKeyLoggingKey                         = "byok_key_id"
+	connectArtifactLoggingKey                 = "connect_artifact_id"
+	certificateAuthorityKey                   = "certificate_authority_id"
+	certificatePoolKey                        = "certificate_pool_id"
+	crnKafkaSuffix                            = "/kafka="
+	kafkaAclLoggingKey                        = "kafka_acl_id"
+	kafkaClusterLoggingKey                    = "kafka_cluster_id"
+	kafkaClusterConfigLoggingKey              = "kafka_cluster_config_id"
+	schemaRegistryClusterLoggingKey           = "schema_registry_cluster_id"
+	kafkaTopicLoggingKey                      = "kafka_topic_id"
+	serviceAccountLoggingKey                  = "service_account_id"
+	userLoggingKey                            = "user_id"
+	environmentLoggingKey                     = "environment_id"
+	tfImporterLoggingKey                      = "tf_importer_environment_id"
+	roleBindingLoggingKey                     = "role_binding_id"
+	apiKeyLoggingKey                          = "api_key_id"
+	computePoolLoggingKey                     = "compute_pool_id"
+	computePoolConfigLoggingKey               = "compute_pool_config_id"
+	flinkArtifactLoggingKey                   = "flink_artifact_id"
+	flinkConnectionLoggingKey                 = "flink_connection_id"
+	flinkStatementLoggingKey                  = "flink_statement_key_id"
+	networkLoggingKey                         = "network_key_id"
+	customConnectorPluginLoggingKey           = "custom_connector_plugin_key_id"
+	customConnectorPluginVersionLoggingKey    = "custom_connector_plugin_version_key_id"
+	pluginLoggingKey                          = "plugin_key_id"
+	connectorLoggingKey                       = "connector_key_id"
+	groupMappingLoggingKey                    = "group_mapping_id"
+	privateLinkAccessLoggingKey               = "private_link_access_id"
+	privateLinkAttachmentLoggingKey           = "private_link_attachment_id"
+	privateLinkAttachmentConnectionLoggingKey = "private_link_attachment_connection_id"
+	networkLinkEndpointLoggingKey             = "network_link_endpoint_id"
+	networkLinkServiceLoggingKey              = "network_link_service_id"
+	peeringLoggingKey                         = "peering_id"
+	dnsForwarderKey                           = "dns_forwarder_id"
+	dnsRecordKey                              = "dns_record_id"
+	accessPointKey                            = "access_point_id"
+	gatewayKey                                = "gateway_id"
+	transitGatewayAttachmentLoggingKey        = "transit_gateway_attachment_id"
+	ksqlClusterLoggingKey                     = "ksql_cluster_id"
+	identityProviderLoggingKey                = "identity_provider_id"
+	identityPoolLoggingKey                    = "identity_pool_id"
+	ipGroupLoggingKey                         = "ip_group_id"
+	ipFilterLoggingKey                        = "ip_filter_id"
+	paramIdentityClaim                        = "identity_claim"
+	clusterLinkLoggingKey                     = "cluster_link_id"
+	kafkaMirrorTopicLoggingKey                = "kafka_mirror_topic_id"
+	kafkaClientQuotaLoggingKey                = "kafka_client_quota_id"
+	schemaLoggingKey                          = "schema_id"
+	schemaExporterLoggingKey                  = "schema_exporter_id"
+	tagLoggingKey                             = "tag_id"
+	tagBindingLoggingKey                      = "tag_binding_id"
+	businessMetadataLoggingKey                = "business_metadata_id"
+	businessMetadataBindingLoggingKey         = "business_metadata_binding_id"
+	subjectModeLoggingKey                     = "subject_mode_id"
+	subjectConfigLoggingKey                   = "subject_config_id"
+	schemaRegistryClusterModeLoggingKey       = "schema_registry_cluster_mode_id"
+	schemaRegistryClusterConfigLoggingKey     = "schema_registry_cluster_config_id"
+	invitationLoggingKey                      = "invitation_id"
+	tfCustomConnectorPluginTestUrl            = "TF_TEST_URL"
+	flinkOrganizationIdTest                   = "1111aaaa-11aa-11aa-11aa-111111aaaaaa"
+	flinkEnvironmentIdTest                    = "env-abc123"
+	schemaRegistryKekKey                      = "kek_id"
+	schemaRegistryDekKey                      = "dek_id"
+	entityAttributesLoggingKey                = "entity_attributes_id"
+	providerIntegrationLoggingKey             = "provider_integration_id"
+	tableflowTopicKey                         = "tableflow_topic_id"
+	catalogIntegrationKey                     = "catalog_integration_id"
+
+	deprecationMessageMajorRelease3 = "The %q %s has been deprecated and will be removed in the next major version of the provider (3.0.0). " +
+		"Refer to the Upgrade Guide at https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/guides/version-3-upgrade for more details. " +
+		"The guide will be published once version 3.0.0 is released."
+)
+
 func (c *Client) apiKeysV2ApiContext(ctx context.Context) context.Context {
 	if c.oauthToken != nil && c.stsToken != nil {
 		if err := c.fetchOrOverrideSTSOAuthTokenFromApiContext(ctx); err != nil {
@@ -294,11 +368,11 @@ func (c *Client) providerIntegrationV2ApiContext(ctx context.Context) context.Co
 		if err := c.fetchOrOverrideSTSOAuthTokenFromApiContext(ctx); err != nil {
 			tflog.Error(ctx, fmt.Sprintf("Failed to get OAuth token for Provider Integration v2 client: %v", err))
 		}
-		return context.WithValue(ctx, providerintegrationv2.ContextAccessToken, c.stsToken.AccessToken)
+		return context.WithValue(ctx, piv2.ContextAccessToken, c.stsToken.AccessToken)
 	}
 
 	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
-		return context.WithValue(ctx, providerintegrationv2.ContextBasicAuth, providerintegrationv2.BasicAuth{
+		return context.WithValue(ctx, piv2.ContextBasicAuth, piv2.BasicAuth{
 			UserName: c.cloudApiKey,
 			Password: c.cloudApiSecret,
 		})
@@ -327,16 +401,16 @@ func (c *Client) iamV1ApiContext(ctx context.Context) context.Context {
 	return ctx
 }
 
-func (c *Client) mdsV2ApiContext(ctx context.Context) context.Context {
+func (c *Client) mdsApiContext(ctx context.Context) context.Context {
 	if c.oauthToken != nil && c.stsToken != nil {
 		if err := c.fetchOrOverrideSTSOAuthTokenFromApiContext(ctx); err != nil {
 			tflog.Error(ctx, fmt.Sprintf("Failed to get OAuth token for MDS client: %v", err))
 		}
-		return context.WithValue(ctx, mdsv2.ContextAccessToken, c.stsToken.AccessToken)
+		return context.WithValue(ctx, mds.ContextAccessToken, c.stsToken.AccessToken)
 	}
 
 	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
-		return context.WithValue(ctx, mdsv2.ContextBasicAuth, mdsv2.BasicAuth{
+		return context.WithValue(ctx, mds.ContextBasicAuth, mds.BasicAuth{
 			UserName: c.cloudApiKey,
 			Password: c.cloudApiSecret,
 		})
@@ -346,16 +420,16 @@ func (c *Client) mdsV2ApiContext(ctx context.Context) context.Context {
 	return ctx
 }
 
-func (c *Client) networkingV1ApiContext(ctx context.Context) context.Context {
+func (c *Client) netApiContext(ctx context.Context) context.Context {
 	if c.oauthToken != nil && c.stsToken != nil {
 		if err := c.fetchOrOverrideSTSOAuthTokenFromApiContext(ctx); err != nil {
 			tflog.Error(ctx, fmt.Sprintf("Failed to get OAuth token for Networking client: %v", err))
 		}
-		return context.WithValue(ctx, networkingv1.ContextAccessToken, c.stsToken.AccessToken)
+		return context.WithValue(ctx, net.ContextAccessToken, c.stsToken.AccessToken)
 	}
 
 	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
-		return context.WithValue(ctx, networkingv1.ContextBasicAuth, networkingv1.BasicAuth{
+		return context.WithValue(ctx, net.ContextBasicAuth, net.BasicAuth{
 			UserName: c.cloudApiKey,
 			Password: c.cloudApiSecret,
 		})
@@ -365,16 +439,16 @@ func (c *Client) networkingV1ApiContext(ctx context.Context) context.Context {
 	return ctx
 }
 
-func (c *Client) flinkArtifactV1ApiContext(ctx context.Context) context.Context {
+func (c *Client) faApiContext(ctx context.Context) context.Context {
 	if c.oauthToken != nil && c.stsToken != nil {
 		if err := c.fetchOrOverrideSTSOAuthTokenFromApiContext(ctx); err != nil {
 			tflog.Error(ctx, fmt.Sprintf("Failed to get OAuth token for Flink artifact client: %v", err))
 		}
-		return context.WithValue(ctx, flinkartifactv1.ContextAccessToken, c.stsToken.AccessToken)
+		return context.WithValue(ctx, fa.ContextAccessToken, c.stsToken.AccessToken)
 	}
 
 	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
-		return context.WithValue(ctx, flinkartifactv1.ContextBasicAuth, flinkartifactv1.BasicAuth{
+		return context.WithValue(ctx, fa.ContextBasicAuth, fa.BasicAuth{
 			UserName: c.cloudApiKey,
 			Password: c.cloudApiSecret,
 		})
@@ -384,16 +458,16 @@ func (c *Client) flinkArtifactV1ApiContext(ctx context.Context) context.Context 
 	return ctx
 }
 
-func (c *Client) flinkV2ApiContext(ctx context.Context) context.Context {
+func (c *Client) fcpmApiContext(ctx context.Context) context.Context {
 	if c.oauthToken != nil && c.stsToken != nil {
 		if err := c.fetchOrOverrideSTSOAuthTokenFromApiContext(ctx); err != nil {
 			tflog.Error(ctx, fmt.Sprintf("Failed to get OAuth token for Flink client: %v", err))
 		}
-		return context.WithValue(ctx, flinkv2.ContextAccessToken, c.stsToken.AccessToken)
+		return context.WithValue(ctx, fcpm.ContextAccessToken, c.stsToken.AccessToken)
 	}
 
 	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
-		return context.WithValue(ctx, flinkv2.ContextBasicAuth, flinkv2.BasicAuth{
+		return context.WithValue(ctx, fcpm.ContextBasicAuth, fcpm.BasicAuth{
 			UserName: c.cloudApiKey,
 			Password: c.cloudApiSecret,
 		})
@@ -403,16 +477,16 @@ func (c *Client) flinkV2ApiContext(ctx context.Context) context.Context {
 	return ctx
 }
 
-func (c *Client) networkingAccessPointV1ApiContext(ctx context.Context) context.Context {
+func (c *Client) netAPApiContext(ctx context.Context) context.Context {
 	if c.oauthToken != nil && c.stsToken != nil {
 		if err := c.fetchOrOverrideSTSOAuthTokenFromApiContext(ctx); err != nil {
 			tflog.Error(ctx, fmt.Sprintf("Failed to get OAuth token for network access point client: %v", err))
 		}
-		return context.WithValue(ctx, networkingaccesspointv1.ContextAccessToken, c.stsToken.AccessToken)
+		return context.WithValue(ctx, netap.ContextAccessToken, c.stsToken.AccessToken)
 	}
 
 	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
-		return context.WithValue(ctx, networkingaccesspointv1.ContextBasicAuth, networkingaccesspointv1.BasicAuth{
+		return context.WithValue(ctx, netap.ContextBasicAuth, netap.BasicAuth{
 			UserName: c.cloudApiKey,
 			Password: c.cloudApiSecret,
 		})
@@ -422,16 +496,16 @@ func (c *Client) networkingAccessPointV1ApiContext(ctx context.Context) context.
 	return ctx
 }
 
-func (c *Client) networkingGatewayV1ApiContext(ctx context.Context) context.Context {
+func (c *Client) netGWApiContext(ctx context.Context) context.Context {
 	if c.oauthToken != nil && c.stsToken != nil {
 		if err := c.fetchOrOverrideSTSOAuthTokenFromApiContext(ctx); err != nil {
 			tflog.Error(ctx, fmt.Sprintf("Failed to get OAuth token for network gateway client: %v", err))
 		}
-		return context.WithValue(ctx, networkinggatewayv1.ContextAccessToken, c.stsToken.AccessToken)
+		return context.WithValue(ctx, netgw.ContextAccessToken, c.stsToken.AccessToken)
 	}
 
 	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
-		return context.WithValue(ctx, networkinggatewayv1.ContextBasicAuth, networkinggatewayv1.BasicAuth{
+		return context.WithValue(ctx, netgw.ContextBasicAuth, netgw.BasicAuth{
 			UserName: c.cloudApiKey,
 			Password: c.cloudApiSecret,
 		})
@@ -441,16 +515,16 @@ func (c *Client) networkingGatewayV1ApiContext(ctx context.Context) context.Cont
 	return ctx
 }
 
-func (c *Client) networkingIpV1ApiContext(ctx context.Context) context.Context {
+func (c *Client) netIPApiContext(ctx context.Context) context.Context {
 	if c.oauthToken != nil && c.stsToken != nil {
 		if err := c.fetchOrOverrideSTSOAuthTokenFromApiContext(ctx); err != nil {
 			tflog.Error(ctx, fmt.Sprintf("Failed to get OAuth token for network IP client: %v", err))
 		}
-		return context.WithValue(ctx, networkingipv1.ContextAccessToken, c.stsToken.AccessToken)
+		return context.WithValue(ctx, netip.ContextAccessToken, c.stsToken.AccessToken)
 	}
 
 	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
-		return context.WithValue(ctx, networkingipv1.ContextBasicAuth, networkingipv1.BasicAuth{
+		return context.WithValue(ctx, netip.ContextBasicAuth, netip.BasicAuth{
 			UserName: c.cloudApiKey,
 			Password: c.cloudApiSecret,
 		})
@@ -460,16 +534,16 @@ func (c *Client) networkingIpV1ApiContext(ctx context.Context) context.Context {
 	return ctx
 }
 
-func (c *Client) networkingPrivatelinkV1ApiContext(ctx context.Context) context.Context {
+func (c *Client) netPLApiContext(ctx context.Context) context.Context {
 	if c.oauthToken != nil && c.stsToken != nil {
 		if err := c.fetchOrOverrideSTSOAuthTokenFromApiContext(ctx); err != nil {
 			tflog.Error(ctx, fmt.Sprintf("Failed to get OAuth token for network private link client: %v", err))
 		}
-		return context.WithValue(ctx, networkingprivatelinkv1.ContextAccessToken, c.stsToken.AccessToken)
+		return context.WithValue(ctx, netpl.ContextAccessToken, c.stsToken.AccessToken)
 	}
 
 	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
-		return context.WithValue(ctx, networkingprivatelinkv1.ContextBasicAuth, networkingprivatelinkv1.BasicAuth{
+		return context.WithValue(ctx, netpl.ContextBasicAuth, netpl.BasicAuth{
 			UserName: c.cloudApiKey,
 			Password: c.cloudApiSecret,
 		})
@@ -479,16 +553,16 @@ func (c *Client) networkingPrivatelinkV1ApiContext(ctx context.Context) context.
 	return ctx
 }
 
-func (c *Client) networkingDnsforwarderV1ApiContext(ctx context.Context) context.Context {
+func (c *Client) netDnsApiContext(ctx context.Context) context.Context {
 	if c.oauthToken != nil && c.stsToken != nil {
 		if err := c.fetchOrOverrideSTSOAuthTokenFromApiContext(ctx); err != nil {
 			tflog.Error(ctx, fmt.Sprintf("Failed to get OAuth token for DNS client: %v", err))
 		}
-		return context.WithValue(ctx, networkingdnsforwarderv1.ContextAccessToken, c.stsToken.AccessToken)
+		return context.WithValue(ctx, dns.ContextAccessToken, c.stsToken.AccessToken)
 	}
 
 	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
-		return context.WithValue(ctx, networkingdnsforwarderv1.ContextBasicAuth, networkingdnsforwarderv1.BasicAuth{
+		return context.WithValue(ctx, dns.ContextBasicAuth, dns.BasicAuth{
 			UserName: c.cloudApiKey,
 			Password: c.cloudApiSecret,
 		})
@@ -498,16 +572,16 @@ func (c *Client) networkingDnsforwarderV1ApiContext(ctx context.Context) context
 	return ctx
 }
 
-func (c *Client) endpointV1ApiContext(ctx context.Context) context.Context {
+func (c *Client) endApiContext(ctx context.Context) context.Context {
 	if c.oauthToken != nil && c.stsToken != nil {
 		if err := c.fetchOrOverrideSTSOAuthTokenFromApiContext(ctx); err != nil {
 			tflog.Error(ctx, fmt.Sprintf("Failed to get OAuth token for Endpoint client: %v", err))
 		}
-		return context.WithValue(ctx, endpointv1.ContextAccessToken, c.stsToken.AccessToken)
+		return context.WithValue(ctx, end.ContextAccessToken, c.stsToken.AccessToken)
 	}
 
 	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
-		return context.WithValue(ctx, endpointv1.ContextBasicAuth, endpointv1.BasicAuth{
+		return context.WithValue(ctx, end.ContextBasicAuth, end.BasicAuth{
 			UserName: c.cloudApiKey,
 			Password: c.cloudApiSecret,
 		})
@@ -517,16 +591,16 @@ func (c *Client) endpointV1ApiContext(ctx context.Context) context.Context {
 	return ctx
 }
 
-func (c *Client) srcmV3ApiContext(ctx context.Context) context.Context {
+func (c *Client) srcmApiContext(ctx context.Context) context.Context {
 	if c.oauthToken != nil && c.stsToken != nil {
 		if err := c.fetchOrOverrideSTSOAuthTokenFromApiContext(ctx); err != nil {
 			tflog.Error(ctx, fmt.Sprintf("Failed to get OAuth token for SRCM client: %v", err))
 		}
-		return context.WithValue(ctx, srcmv3.ContextAccessToken, c.stsToken.AccessToken)
+		return context.WithValue(ctx, srcm.ContextAccessToken, c.stsToken.AccessToken)
 	}
 
 	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
-		return context.WithValue(ctx, srcmv3.ContextBasicAuth, srcmv3.BasicAuth{
+		return context.WithValue(ctx, srcm.ContextBasicAuth, srcm.BasicAuth{
 			UserName: c.cloudApiKey,
 			Password: c.cloudApiSecret,
 		})
@@ -536,16 +610,16 @@ func (c *Client) srcmV3ApiContext(ctx context.Context) context.Context {
 	return ctx
 }
 
-func (c *Client) connectV1ApiContext(ctx context.Context) context.Context {
+func (c *Client) connectApiContext(ctx context.Context) context.Context {
 	if c.oauthToken != nil && c.stsToken != nil {
 		if err := c.fetchOrOverrideSTSOAuthTokenFromApiContext(ctx); err != nil {
 			tflog.Error(ctx, fmt.Sprintf("Failed to get OAuth token for Connect client: %v", err))
 		}
-		return context.WithValue(ctx, connectv1.ContextAccessToken, c.stsToken.AccessToken)
+		return context.WithValue(ctx, connect.ContextAccessToken, c.stsToken.AccessToken)
 	}
 
 	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
-		return context.WithValue(ctx, connectv1.ContextBasicAuth, connectv1.BasicAuth{
+		return context.WithValue(ctx, connect.ContextBasicAuth, connect.BasicAuth{
 			UserName: c.cloudApiKey,
 			Password: c.cloudApiSecret,
 		})
@@ -555,16 +629,16 @@ func (c *Client) connectV1ApiContext(ctx context.Context) context.Context {
 	return ctx
 }
 
-func (c *Client) orgV2ApiContext(ctx context.Context) context.Context {
+func (c *Client) orgApiContext(ctx context.Context) context.Context {
 	if c.oauthToken != nil && c.stsToken != nil {
 		if err := c.fetchOrOverrideSTSOAuthTokenFromApiContext(ctx); err != nil {
 			tflog.Error(ctx, fmt.Sprintf("Failed to get OAuth token for Organization client: %v", err))
 		}
-		return context.WithValue(ctx, orgv2.ContextAccessToken, c.stsToken.AccessToken)
+		return context.WithValue(ctx, org.ContextAccessToken, c.stsToken.AccessToken)
 	}
 
 	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
-		return context.WithValue(ctx, orgv2.ContextBasicAuth, orgv2.BasicAuth{
+		return context.WithValue(ctx, org.ContextBasicAuth, org.BasicAuth{
 			UserName: c.cloudApiKey,
 			Password: c.cloudApiSecret,
 		})
@@ -574,16 +648,16 @@ func (c *Client) orgV2ApiContext(ctx context.Context) context.Context {
 	return ctx
 }
 
-func (c *Client) ksqlV2ApiContext(ctx context.Context) context.Context {
+func (c *Client) ksqlApiContext(ctx context.Context) context.Context {
 	if c.oauthToken != nil && c.stsToken != nil {
 		if err := c.fetchOrOverrideSTSOAuthTokenFromApiContext(ctx); err != nil {
 			tflog.Error(ctx, fmt.Sprintf("Failed to get OAuth token for KSQL client: %v", err))
 		}
-		return context.WithValue(ctx, ksqlv2.ContextAccessToken, c.stsToken.AccessToken)
+		return context.WithValue(ctx, ksql.ContextAccessToken, c.stsToken.AccessToken)
 	}
 
 	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
-		return context.WithValue(ctx, ksqlv2.ContextBasicAuth, ksqlv2.BasicAuth{
+		return context.WithValue(ctx, ksql.ContextBasicAuth, ksql.BasicAuth{
 			UserName: c.cloudApiKey,
 			Password: c.cloudApiSecret,
 		})
@@ -593,16 +667,16 @@ func (c *Client) ksqlV2ApiContext(ctx context.Context) context.Context {
 	return ctx
 }
 
-func (c *Client) identityProviderV2ApiContext(ctx context.Context) context.Context {
+func (c *Client) oidcApiContext(ctx context.Context) context.Context {
 	if c.oauthToken != nil && c.stsToken != nil {
 		if err := c.fetchOrOverrideSTSOAuthTokenFromApiContext(ctx); err != nil {
 			tflog.Error(ctx, fmt.Sprintf("Failed to get OAuth token for Identity Provider client: %v", err))
 		}
-		return context.WithValue(ctx, identityproviderv2.ContextAccessToken, c.stsToken.AccessToken)
+		return context.WithValue(ctx, oidc.ContextAccessToken, c.stsToken.AccessToken)
 	}
 
 	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
-		return context.WithValue(ctx, identityproviderv2.ContextBasicAuth, identityproviderv2.BasicAuth{
+		return context.WithValue(ctx, oidc.ContextBasicAuth, oidc.BasicAuth{
 			UserName: c.cloudApiKey,
 			Password: c.cloudApiSecret,
 		})
@@ -612,16 +686,16 @@ func (c *Client) identityProviderV2ApiContext(ctx context.Context) context.Conte
 	return ctx
 }
 
-func (c *Client) kafkaQuotasV1ApiContext(ctx context.Context) context.Context {
+func (c *Client) quotasApiContext(ctx context.Context) context.Context {
 	if c.oauthToken != nil && c.stsToken != nil {
 		if err := c.fetchOrOverrideSTSOAuthTokenFromApiContext(ctx); err != nil {
 			tflog.Error(ctx, fmt.Sprintf("Failed to get OAuth token for Kafka Quotas client: %v", err))
 		}
-		return context.WithValue(ctx, kafkaquotasv1.ContextAccessToken, c.stsToken.AccessToken)
+		return context.WithValue(ctx, quotas.ContextAccessToken, c.stsToken.AccessToken)
 	}
 
 	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
-		return context.WithValue(ctx, kafkaquotasv1.ContextBasicAuth, kafkaquotasv1.BasicAuth{
+		return context.WithValue(ctx, quotas.ContextBasicAuth, quotas.BasicAuth{
 			UserName: c.cloudApiKey,
 			Password: c.cloudApiSecret,
 		})
@@ -631,9 +705,9 @@ func (c *Client) kafkaQuotasV1ApiContext(ctx context.Context) context.Context {
 	return ctx
 }
 
-func orgV2ApiContext(ctx context.Context, cloudApiKey, cloudApiSecret string) context.Context {
+func orgApiContext(ctx context.Context, cloudApiKey, cloudApiSecret string) context.Context {
 	if cloudApiKey != "" && cloudApiSecret != "" {
-		return context.WithValue(ctx, orgv2.ContextBasicAuth, orgv2.BasicAuth{
+		return context.WithValue(ctx, org.ContextBasicAuth, org.BasicAuth{
 			UserName: cloudApiKey,
 			Password: cloudApiSecret,
 		})
@@ -701,7 +775,7 @@ type KafkaRestClient struct {
 }
 
 type SchemaRegistryRestClient struct {
-	apiClient                    *schemaregistryv1.APIClient
+	apiClient                    *schemaregistry.APIClient
 	externalAccessToken          *OAuthToken
 	clusterId                    string
 	clusterApiKey                string
@@ -711,7 +785,7 @@ type SchemaRegistryRestClient struct {
 }
 
 type CatalogRestClient struct {
-	apiClient                    *datacatalogv1.APIClient
+	apiClient                    *dc.APIClient
 	externalAccessToken          *OAuthToken
 	clusterId                    string
 	clusterApiKey                string
@@ -721,7 +795,7 @@ type CatalogRestClient struct {
 }
 
 type FlinkRestClient struct {
-	apiClient                    *flinkgatewayv1.APIClient
+	apiClient                    *fgb.APIClient
 	externalAccessToken          *OAuthToken
 	organizationId               string
 	environmentId                string
@@ -734,7 +808,7 @@ type FlinkRestClient struct {
 }
 
 type TableflowRestClient struct {
-	apiClient                    *tableflowv1.APIClient
+	apiClient                    *tableflow.APIClient
 	oauthToken                   *OAuthToken
 	stsToken                     *STSToken
 	tableflowApiKey              string
@@ -772,11 +846,11 @@ func (c *SchemaRegistryRestClient) apiContext(ctx context.Context) context.Conte
 			tflog.Error(ctx, fmt.Sprintf("Failed to get OAuth token for Schema Registry rest client: %v", err))
 		}
 		c.externalAccessToken = token
-		return context.WithValue(ctx, schemaregistryv1.ContextAccessToken, c.externalAccessToken.AccessToken)
+		return context.WithValue(ctx, schemaregistry.ContextAccessToken, c.externalAccessToken.AccessToken)
 	}
 
 	if c.clusterApiKey != "" && c.clusterApiSecret != "" {
-		return context.WithValue(ctx, schemaregistryv1.ContextBasicAuth, schemaregistryv1.BasicAuth{
+		return context.WithValue(ctx, schemaregistry.ContextBasicAuth, schemaregistry.BasicAuth{
 			UserName: c.clusterApiKey,
 			Password: c.clusterApiSecret,
 		})
@@ -786,7 +860,7 @@ func (c *SchemaRegistryRestClient) apiContext(ctx context.Context) context.Conte
 	return ctx
 }
 
-func (c *SchemaRegistryRestClient) dataCatalogV1ApiContext(ctx context.Context) context.Context {
+func (c *SchemaRegistryRestClient) dataCatalogApiContext(ctx context.Context) context.Context {
 	if c.externalAccessToken != nil {
 		currToken := c.externalAccessToken
 		token, err := fetchExternalOAuthToken(ctx, currToken.TokenUrl, currToken.ClientId, currToken.ClientSecret, currToken.Scope, currToken.IdentityPoolId, currToken, currToken.HTTPClient)
@@ -794,11 +868,11 @@ func (c *SchemaRegistryRestClient) dataCatalogV1ApiContext(ctx context.Context) 
 			tflog.Error(ctx, fmt.Sprintf("Failed to get OAuth token for Data Catalog rest client: %v", err))
 		}
 		c.externalAccessToken = token
-		return context.WithValue(ctx, datacatalogv1.ContextAccessToken, c.externalAccessToken.AccessToken)
+		return context.WithValue(ctx, dc.ContextAccessToken, c.externalAccessToken.AccessToken)
 	}
 
 	if c.clusterApiKey != "" && c.clusterApiSecret != "" {
-		return context.WithValue(ctx, datacatalogv1.ContextBasicAuth, datacatalogv1.BasicAuth{
+		return context.WithValue(ctx, dc.ContextBasicAuth, dc.BasicAuth{
 			UserName: c.clusterApiKey,
 			Password: c.clusterApiSecret,
 		})
@@ -808,7 +882,7 @@ func (c *SchemaRegistryRestClient) dataCatalogV1ApiContext(ctx context.Context) 
 	return ctx
 }
 
-func (c *CatalogRestClient) dataCatalogV1ApiContext(ctx context.Context) context.Context {
+func (c *CatalogRestClient) dataCatalogApiContext(ctx context.Context) context.Context {
 	if c.externalAccessToken != nil {
 		currToken := c.externalAccessToken
 		token, err := fetchExternalOAuthToken(ctx, currToken.TokenUrl, currToken.ClientId, currToken.ClientSecret, currToken.Scope, currToken.IdentityPoolId, currToken, currToken.HTTPClient)
@@ -816,11 +890,11 @@ func (c *CatalogRestClient) dataCatalogV1ApiContext(ctx context.Context) context
 			tflog.Error(ctx, fmt.Sprintf("Failed to get OAuth token for Stream Governance Cluster rest client: %v", err))
 		}
 		c.externalAccessToken = token
-		return context.WithValue(ctx, datacatalogv1.ContextAccessToken, c.externalAccessToken.AccessToken)
+		return context.WithValue(ctx, dc.ContextAccessToken, c.externalAccessToken.AccessToken)
 	}
 
 	if c.clusterApiKey != "" && c.clusterApiSecret != "" {
-		return context.WithValue(ctx, datacatalogv1.ContextBasicAuth, datacatalogv1.BasicAuth{
+		return context.WithValue(ctx, dc.ContextBasicAuth, dc.BasicAuth{
 			UserName: c.clusterApiKey,
 			Password: c.clusterApiSecret,
 		})
@@ -837,11 +911,11 @@ func (c *FlinkRestClient) apiContext(ctx context.Context) context.Context {
 			tflog.Error(ctx, fmt.Sprintf("Failed to get OAuth token for Flink rest client: %v", err))
 		}
 		c.externalAccessToken = token
-		return context.WithValue(ctx, flinkgatewayv1.ContextAccessToken, c.externalAccessToken.AccessToken)
+		return context.WithValue(ctx, fgb.ContextAccessToken, c.externalAccessToken.AccessToken)
 	}
 
 	if c.flinkApiKey != "" && c.flinkApiSecret != "" {
-		return context.WithValue(ctx, flinkgatewayv1.ContextBasicAuth, flinkgatewayv1.BasicAuth{
+		return context.WithValue(ctx, fgb.ContextBasicAuth, fgb.BasicAuth{
 			UserName: c.flinkApiKey,
 			Password: c.flinkApiSecret,
 		})
@@ -854,7 +928,7 @@ func (c *FlinkRestClient) apiContext(ctx context.Context) context.Context {
 // TODO: Tableflow APIs don't support OAuth at this moment, following up in CLI-3534 for OAuth GA
 func (c *TableflowRestClient) apiContext(ctx context.Context) context.Context {
 	if c.tableflowApiKey != "" && c.tableflowApiSecret != "" {
-		return context.WithValue(ctx, tableflowv1.ContextBasicAuth, tableflowv1.BasicAuth{
+		return context.WithValue(ctx, tableflow.ContextBasicAuth, tableflow.BasicAuth{
 			UserName: c.tableflowApiKey,
 			Password: c.tableflowApiSecret,
 		})
@@ -1463,7 +1537,7 @@ func extractCredentialConfigs(configs []kafkarestv3.ConfigData) []kafkarestv3.Al
 func validateAllOrNoneAttributesSetForResources(
 	kafkaApiKey, kafkaApiSecret, kafkaID, kafkaRestEndpoint,
 	schemaRegistryApiKey, schemaRegistryApiSecret, schemaRegistryClusterId, schemaRegistryRestEndpoint, catalogRestEndpoint,
-	flinkApiKey, flinkApiSecret, flinkOrganizationId, flinkEnvironmentId, flinkComputePoolId, flinkRestEndpoint, flinkPrincipalId,
+	flinkApiKey, flinkApiSecret, flinkOrganizationId, flinkEnvironmentId, flinkRestEndpoint, flinkPrincipalId,
 	tableflowApiKey, tableflowApiSecret string) (ResourceMetadataSetFlags, diag.Diagnostics) {
 	var flags ResourceMetadataSetFlags
 	// 3 or 4 attributes should be set or not set at the same time
@@ -1489,11 +1563,11 @@ func validateAllOrNoneAttributesSetForResources(
 	flags.isCatalogMetadataSet = allSchemaRegistryAttributesAreSet
 
 	// All 7 attributes should be set or not set at the same time
-	allFlinkAttributesAreSet := (flinkApiKey != "") && (flinkApiSecret != "") && (flinkRestEndpoint != "") && (flinkOrganizationId != "") && (flinkEnvironmentId != "") && (flinkComputePoolId != "") && (flinkPrincipalId != "")
-	allFlinkAttributesAreNotSet := (flinkApiKey == "") && (flinkApiSecret == "") && (flinkRestEndpoint == "") && (flinkOrganizationId == "") && (flinkEnvironmentId == "") && (flinkComputePoolId == "") && (flinkPrincipalId == "")
+	allFlinkAttributesAreSet := (flinkApiKey != "") && (flinkApiSecret != "") && (flinkRestEndpoint != "") && (flinkOrganizationId != "") && (flinkEnvironmentId != "") && (flinkPrincipalId != "")
+	allFlinkAttributesAreNotSet := (flinkApiKey == "") && (flinkApiSecret == "") && (flinkRestEndpoint == "") && (flinkOrganizationId == "") && (flinkEnvironmentId == "") && (flinkPrincipalId == "")
 	justSubsetOfFlinkAttributesAreSet := !(allFlinkAttributesAreSet || allFlinkAttributesAreNotSet)
 	if justSubsetOfFlinkAttributesAreSet {
-		return flags, diag.Errorf("All 7 flink_api_key, flink_api_secret, flink_rest_endpoint, organization_id, environment_id, flink_compute_pool_id, flink_principal_id attributes should be set or not set in the provider block at the same time")
+		return flags, diag.Errorf("All 6 flink_api_key, flink_api_secret, flink_rest_endpoint, organization_id, environment_id, flink_principal_id attributes should be set or not set in the provider block at the same time")
 	}
 	flags.isFlinkMetadataSet = allFlinkAttributesAreSet
 
@@ -1511,7 +1585,7 @@ func validateAllOrNoneAttributesSetForResources(
 func validateAllOrNoneAttributesSetForResourcesWithOAuth(
 	kafkaID, kafkaRestEndpoint,
 	srID, srRestEndpoint, catalogRestEndpoint,
-	flinkOrganizationId, flinkEnvironmentId, flinkComputePoolId, flinkRestEndpoint, flinkPrincipalId string) (ResourceMetadataSetFlags, diag.Diagnostics) {
+	flinkOrganizationId, flinkEnvironmentId, flinkRestEndpoint, flinkPrincipalId string) (ResourceMetadataSetFlags, diag.Diagnostics) {
 	var flags ResourceMetadataSetFlags
 	// When OAuth is enabled, the Kafka ID and rest endpoint should be set or not set at the same time
 	allKafkaAttributesAreSet := (kafkaID != "") && (kafkaRestEndpoint != "")
@@ -1534,11 +1608,11 @@ func validateAllOrNoneAttributesSetForResourcesWithOAuth(
 	flags.isCatalogMetadataSet = allSchemaRegistryAttributesAreSet
 
 	// When OAuth is enabled, all Flink related attributes below should be set or not set at the same time
-	allFlinkAttributesAreSet := (flinkRestEndpoint != "") && (flinkOrganizationId != "") && (flinkEnvironmentId != "") && (flinkComputePoolId != "") && (flinkPrincipalId != "")
-	allFlinkAttributesAreNotSet := (flinkRestEndpoint == "") && (flinkOrganizationId == "") && (flinkEnvironmentId == "") && (flinkComputePoolId == "") && (flinkPrincipalId == "")
+	allFlinkAttributesAreSet := (flinkRestEndpoint != "") && (flinkOrganizationId != "") && (flinkEnvironmentId != "") && (flinkPrincipalId != "")
+	allFlinkAttributesAreNotSet := (flinkRestEndpoint == "") && (flinkOrganizationId == "") && (flinkEnvironmentId == "") && (flinkPrincipalId == "")
 	justSubsetOfFlinkAttributesAreSet := !(allFlinkAttributesAreSet || allFlinkAttributesAreNotSet)
 	if justSubsetOfFlinkAttributesAreSet {
-		return flags, diag.Errorf("All 5 (flink_rest_endpoint, organization_id, environment_id, flink_compute_pool_id, flink_principal_id) attributes should be set or not set in the provider block at the same time with OAuth enabled")
+		return flags, diag.Errorf("All 4 (flink_rest_endpoint, organization_id, environment_id, flink_principal_id) attributes should be set or not set in the provider block at the same time with OAuth enabled")
 	}
 	flags.isFlinkMetadataSet = allFlinkAttributesAreSet
 
