@@ -64,14 +64,14 @@ func computePoolConfigDataSourceRead(ctx context.Context, d *schema.ResourceData
 	req := c.fcpmClient.OrgComputePoolConfigsFcpmV2Api.GetFcpmV2OrgComputePoolConfig(c.fcpmApiContext(ctx))
 	computePoolConfig, resp, err := req.Execute()
 	if err != nil {
-		return diag.Errorf("error reading Compute Pool Config %q: %s", map[string]interface{}{computePoolLoggingConfigKey: d.Id()}, createDescriptiveError(err, resp))
+		return diag.Errorf("error reading Compute Pool Config %q: %s", map[string]interface{}{computePoolConfigLoggingKey: d.Id()}, createDescriptiveError(err, resp))
 	}
 	computePoolConfigJson, err := json.Marshal(computePoolConfig)
 	if err != nil {
-		return diag.Errorf("error reading Compute Pool Config %q: error marshaling %#v to json: %s", map[string]interface{}{computePoolLoggingConfigKey: d.Id()}, computePoolConfig, createDescriptiveError(err))
+		return diag.Errorf("error reading Compute Pool Config %q: error marshaling %#v to json: %s", map[string]interface{}{computePoolConfigLoggingKey: d.Id()}, computePoolConfig, createDescriptiveError(err))
 	}
 	d.SetId(computePoolConfig.GetOrganizationId())
-	tflog.Debug(ctx, fmt.Sprintf("Fetched Compute Pool Config %q: %s", map[string]interface{}{computePoolLoggingConfigKey: d.Id()}, computePoolConfigJson))
+	tflog.Debug(ctx, fmt.Sprintf("Fetched Compute Pool Config %q: %s", map[string]interface{}{computePoolConfigLoggingKey: d.Id()}, computePoolConfigJson))
 	if _, err := setComputePoolConfigAttributes(d, computePoolConfig); err != nil {
 		return diag.FromErr(createDescriptiveError(err))
 	}
