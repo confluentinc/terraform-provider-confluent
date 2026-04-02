@@ -280,19 +280,19 @@ func executeListGateways(ctx context.Context, c *Client, environmentId string, g
 	request := c.networkingGatewayV1Client.GatewaysNetworkingV1Api.ListNetworkingV1Gateways(ctx).Environment(environmentId).PageSize(listGatewaysPageSize)
 
 	if len(gatewayTypes) > 0 {
-		request = request.GatewayType(netgw.MultipleSearchFilter{Items: gatewayTypes})
+		request = request.GatewayType(gatewayTypes)
 	}
 	if len(ids) > 0 {
-		request = request.Id(netgw.MultipleSearchFilter{Items: ids})
+		request = request.Id(ids)
 	}
 	if len(regions) > 0 {
-		request = request.SpecConfigRegion(netgw.MultipleSearchFilter{Items: regions})
+		request = request.SpecConfigRegion(regions)
 	}
 	if len(displayNames) > 0 {
-		request = request.SpecDisplayName(netgw.MultipleSearchFilter{Items: displayNames})
+		request = request.SpecDisplayName(displayNames)
 	}
 	if len(phases) > 0 {
-		request = request.StatusPhase(netgw.MultipleSearchFilter{Items: phases})
+		request = request.StatusPhase(phases)
 	}
 	if pageToken != "" {
 		request = request.PageToken(pageToken)
