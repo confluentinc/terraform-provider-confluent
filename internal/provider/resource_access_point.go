@@ -232,10 +232,9 @@ func paramAwsPrivateNetworkInterfaceSchema() *schema.Schema {
 					Description: "The AWS account ID associated with the ENIs you are using for the Confluent Private Network Interface.",
 				},
 				paramRoutes: {
-					Type:        schema.TypeList,
-					Optional:    true,
-					Computed:    true,
-					MaxItems:    10,
+					Type:     schema.TypeList,
+					Optional: true,
+					MaxItems: 10,
 					Elem:        &schema.Schema{Type: schema.TypeString},
 					Description: "List of egress CIDR routes for the Confluent Private Network Interface.",
 				},
