@@ -1,6 +1,6 @@
 module github.com/confluentinc/terraform-provider-confluent
 
-go 1.25.7
+go 1.25.8
 
 require (
 	github.com/confluentinc/ccloud-sdk-go-v2/apikeys v0.4.0
@@ -149,6 +149,6 @@ require (
 	google.golang.org/protobuf v1.35.2 // indirect
 )
 
-replace github.com/confluentinc/ccloud-sdk-go-v2/networking-gateway => github.com/confluentinc/ccloud-sdk-go-v2-internal/networking-gateway v0.12.0
+replace github.com/confluentinc/ccloud-sdk-go-v2/networking-gateway => github.com/confluentinc/ccloud-sdk-go-v2-internal/networking-gateway v0.13.0
 
-replace github.com/confluentinc/ccloud-sdk-go-v2/networking-access-point => github.com/confluentinc/ccloud-sdk-go-v2-internal/networking-access-point v0.12.0
+replace github.com/confluentinc/ccloud-sdk-go-v2/networking-access-point => github.com/confluentinc/ccloud-sdk-go-v2-internal/networking-access-point v0.13.0
