@@ -7,7 +7,7 @@
 * Updated `confluent_flink_compute_pool` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_flink_compute_pool) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_flink_compute_pool) to support default Flink Compute Pool.
   
 **Bug fixes:**
-* Fixed an issue for `confluent_flink_statement` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_flink_statement) and `confluent_flink_connection`[resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_flink_connection) where the Identity Pool ID always override `principal.id` when OAuth is enabled.
+* Fixed an issue for `confluent_flink_statement` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_flink_statement) and `confluent_flink_connection` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_flink_connection) where the Identity Pool ID always overrides `principal.id` when OAuth is enabled.
 * Updated the docs with instructions for issue above.
 
 ## 2.66.0 (March 30th, 2026)
