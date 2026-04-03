@@ -14,7 +14,7 @@ description: |-
 
 ## Example Usage
 
-### Option #1: Manage multiple Flink Compute Pools in the same Terraform workspace
+### Option #1: Manage multiple Flink Connections in the same Terraform workspace
 
 ```terraform
 provider "confluent" {
@@ -45,11 +45,11 @@ data "confluent_flink_connection" "main" {
 }
 
 output "connection_output" {
-  value = data.confluent_flink_connection.main.
+  value = data.confluent_flink_connection.main.status
 }
 ```
 
-### Option #2: Manage a single Kafka cluster in the same Terraform workspace
+### Option #2: Manage a single Flink Connection in the same Terraform workspace
 
 ```terraform
 provider "confluent" {
@@ -68,7 +68,7 @@ data "confluent_flink_connection" "main" {
 }
 
 output "connection_output" {
-  value = data.confluent_flink_connection.main.
+  value = data.confluent_flink_connection.main.status
 }
 ```
 
@@ -94,6 +94,16 @@ The following arguments are supported:
 
 -> **Note:** Use Option #2 to simplify the key rotation process. When using Option #1, to rotate a Flink API key, create a new Flink API key, update the `credentials` block in all configuration files to use the new Flink API key, run `terraform apply -target="confluent_flink_connection.example"`, and remove the old Flink API key. Alternatively, in case the old Flink API Key was deleted already, you might need to run `terraform plan -refresh=false -target="confluent_flink_connection.example" -out=rotate-flink-api-key` and `terraform apply rotate-flink-api-key` instead.
 
+-> **Note:** When using OAuth to authenticate a Flink Connection, if the intended `principal.id` is a service account instead of an Identity Pool, make sure the Identity Pool has an `Assigner` role binding on the service account. Otherwise, you may encounter a 403 Forbidden error. For example:
+
+```hcl
+resource "confluent_role_binding" "identity-pool-assigner" {
+  principal   = "User:pool-abc123"
+  role_name   = "Assigner"
+  crn_pattern = "${data.confluent_organization.main.resource_name}/service-account=sa-def456"
+}
+```
+
 - `display_name` - (Required String) The name of the Flink Connection.
 - `type` - (Optional String) The type of the Flink Connection. The accepted values are: `OPENAI`, `AZUREML`, `AZUREOPENAI`, `BEDROCK`, `SAGEMAKER`, `GOOGLEAI`, `VERTEXAI`, `MONGODB`, `PINECONE`, `ELASTIC` and `COUCHBASE`.
 
@@ -105,4 +115,3 @@ In addition to the preceding arguments, the following attributes are exported:
 - `data` - (Required String) The authentication data of the Flink Connection.
 - `status` - (Required String) The status of the Flink Connection.
 - `status_detail` - (Required String) The status details of the Flink Connection.
-- 
