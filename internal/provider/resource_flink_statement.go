@@ -703,9 +703,6 @@ func extractFlinkComputePoolId(client *Client, d *schema.ResourceData, isImportO
 }
 
 func extractFlinkPrincipalId(client *Client, d *schema.ResourceData, isImportOperation bool) (string, error) {
-	if client.isOAuthEnabled {
-		return client.oauthToken.IdentityPoolId, nil
-	}
 	if client.isFlinkMetadataSet {
 		return client.flinkPrincipalId, nil
 	}

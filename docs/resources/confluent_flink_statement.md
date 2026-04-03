@@ -143,6 +143,16 @@ The following arguments are supported:
 
 !> **Warning:** Use Option #2 to avoid exposing sensitive `credentials` value in a state file. When using Option #1, Terraform doesn't encrypt the sensitive `credentials` value of the `confluent_flink_statement` resource, so you must keep your state file secure to avoid exposing it. Refer to the [Terraform documentation](https://www.terraform.io/docs/language/state/sensitive-data.html) to learn more about securing your state file.
 
+-> **Note:** When using OAuth to authenticate a Flink statement, if the intended `principal.id` is a service account instead of an Identity Pool, make sure the Identity Pool has an `Assigner` role binding on the service account. Otherwise, you may encounter a 403 Forbidden error. For example:
+
+```shell
+  resource "confluent_role_binding" "identity-pool-assigner" {
+    principal   = "User:pool-abc123"
+    role_name   = "Assigner"
+    crn_pattern = "${data.confluent_organization.main.resource_name}/service-account=sa-def456"
+  }
+```
+
 ## Attributes Reference
 
 In addition to the preceding arguments, the following attributes are exported:
