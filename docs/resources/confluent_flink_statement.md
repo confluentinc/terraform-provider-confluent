@@ -145,12 +145,12 @@ The following arguments are supported:
 
 -> **Note:** When using OAuth to authenticate a Flink statement, if the intended `principal.id` is a service account instead of an Identity Pool, make sure the Identity Pool has an `Assigner` role binding on the service account. Otherwise, you may encounter a 403 Forbidden error. For example:
 
-```shell
-  resource "confluent_role_binding" "identity-pool-assigner" {
-    principal   = "User:pool-abc123"
-    role_name   = "Assigner"
-    crn_pattern = "${data.confluent_organization.main.resource_name}/service-account=sa-def456"
-  }
+```hcl
+resource "confluent_role_binding" "identity-pool-assigner" {
+  principal   = "User:pool-abc123"
+  role_name   = "Assigner"
+  crn_pattern = "${data.confluent_organization.main.resource_name}/service-account=sa-def456"
+}
 ```
 
 ## Attributes Reference
