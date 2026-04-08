@@ -18,14 +18,16 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	sr "github.com/confluentinc/ccloud-sdk-go-v2/schema-registry/v1"
+	"net/http"
+	"regexp"
+
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"net/http"
-	"regexp"
+
+	schemaregistryv1 "github.com/confluentinc/ccloud-sdk-go-v2/schema-registry/v1"
 )
 
 func schemaRegistryClusterConfigResource() *schema.Resource {
@@ -58,6 +60,12 @@ func schemaRegistryClusterConfigResource() *schema.Resource {
 				Optional: true,
 				Computed: true,
 			},
+			paramNormalize: {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Computed:    true,
+				Description: "Whether schemas are automatically normalized when registered or passed during lookups.",
+			},
 		},
 		CustomizeDiff: customdiff.Sequence(resourceCredentialBlockValidationWithOAuth),
 	}
@@ -78,13 +86,21 @@ func schemaRegistryClusterConfigCreate(ctx context.Context, d *schema.ResourceDa
 	}
 	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 
-	if _, ok := d.GetOk(paramCompatibilityLevel); ok {
-		compatibilityLevel := d.Get(paramCompatibilityLevel).(string)
-		compatibilityGroup := d.Get(paramCompatibilityGroup).(string)
+	createConfigRequest := schemaregistryv1.NewConfigUpdateRequest()
+	hasConfigToUpdate := false
 
-		createConfigRequest := sr.NewConfigUpdateRequest()
-		createConfigRequest.SetCompatibility(compatibilityLevel)
-		createConfigRequest.SetCompatibilityGroup(compatibilityGroup)
+	if compatibilityLevel, ok := d.GetOk(paramCompatibilityLevel); ok {
+		createConfigRequest.SetCompatibility(compatibilityLevel.(string))
+		createConfigRequest.SetCompatibilityGroup(d.Get(paramCompatibilityGroup).(string))
+		hasConfigToUpdate = true
+	}
+	if _, ok := d.GetOk(paramNormalize); ok {
+		createConfigRequest.SetNormalize(d.Get(paramNormalize).(bool))
+		hasConfigToUpdate = true
+	}
+
+	if hasConfigToUpdate {
+
 		createModeRequestJson, err := json.Marshal(createConfigRequest)
 		if err != nil {
 			return diag.Errorf("error creating Schema Registry Cluster Config: error marshaling %#v to json: %s", createConfigRequest, createDescriptiveError(err))
@@ -200,6 +216,10 @@ func readSchemaRegistryClusterConfigAndSetAttributes(ctx context.Context, d *sch
 		return nil, err
 	}
 
+	if err := d.Set(paramNormalize, schemaRegistryClusterConfig.GetNormalize()); err != nil {
+		return nil, err
+	}
+
 	if !c.isMetadataSetInProviderBlock {
 		if err := setKafkaCredentials(c.clusterApiKey, c.clusterApiSecret, d, c.externalAccessToken != nil); err != nil {
 			return nil, err
@@ -218,15 +238,22 @@ func readSchemaRegistryClusterConfigAndSetAttributes(ctx context.Context, d *sch
 }
 
 func schemaRegistryClusterConfigUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if d.HasChangesExcept(paramCredentials, paramCompatibilityLevel, paramCompatibilityGroup) {
-		return diag.Errorf("error updating Schema Registry Cluster Config %q: only %q, %q and %q blocks can be updated for Schema Registry Cluster Config", d.Id(), paramCredentials, paramCompatibilityLevel, paramCompatibilityGroup)
+	if d.HasChangesExcept(paramCredentials, paramCompatibilityLevel, paramCompatibilityGroup, paramNormalize) {
+		return diag.Errorf("error updating Schema Registry Cluster Config %q: only %q, %q, %q and %q blocks can be updated for Schema Registry Cluster Config", d.Id(), paramCredentials, paramCompatibilityLevel, paramCompatibilityGroup, paramNormalize)
 	}
-	if d.HasChange(paramCompatibilityLevel) || d.HasChanges(paramCompatibilityGroup) {
-		updatedCompatibilityLevel := d.Get(paramCompatibilityLevel).(string)
-		updatedCompatibilityGroup := d.Get(paramCompatibilityGroup).(string)
-		updateConfigRequest := sr.NewConfigUpdateRequest()
-		updateConfigRequest.SetCompatibility(updatedCompatibilityLevel)
-		updateConfigRequest.SetCompatibilityGroup(updatedCompatibilityGroup)
+	if d.HasChange(paramCompatibilityLevel) || d.HasChange(paramCompatibilityGroup) || d.HasChange(paramNormalize) {
+		updateConfigRequest := schemaregistryv1.NewConfigUpdateRequest()
+
+		if compatibilityLevel := d.Get(paramCompatibilityLevel).(string); compatibilityLevel != "" {
+			updateConfigRequest.SetCompatibility(compatibilityLevel)
+		}
+		if compatibilityGroup := d.Get(paramCompatibilityGroup).(string); compatibilityGroup != "" {
+			updateConfigRequest.SetCompatibilityGroup(compatibilityGroup)
+		}
+		if d.HasChange(paramNormalize) {
+			updateConfigRequest.SetNormalize(d.Get(paramNormalize).(bool))
+		}
+
 		restEndpoint, err := extractSchemaRegistryRestEndpoint(meta.(*Client), d, false)
 		if err != nil {
 			return diag.Errorf("error updating Schema Registry Cluster Config: %s", createDescriptiveError(err))
@@ -256,6 +283,6 @@ func schemaRegistryClusterConfigUpdate(ctx context.Context, d *schema.ResourceDa
 	return schemaRegistryClusterConfigRead(ctx, d, meta)
 }
 
-func executeSchemaRegistryClusterConfigUpdate(ctx context.Context, c *SchemaRegistryRestClient, requestData *sr.ConfigUpdateRequest) (sr.ConfigUpdateRequest, *http.Response, error) {
+func executeSchemaRegistryClusterConfigUpdate(ctx context.Context, c *SchemaRegistryRestClient, requestData *schemaregistryv1.ConfigUpdateRequest) (schemaregistryv1.ConfigUpdateRequest, *http.Response, error) {
 	return c.apiClient.ConfigV1Api.UpdateTopLevelConfig(c.apiContext(ctx)).ConfigUpdateRequest(*requestData).Execute()
 }

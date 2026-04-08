@@ -20,11 +20,12 @@ import (
 	"fmt"
 	"net/http"
 
-	iam "github.com/confluentinc/ccloud-sdk-go-v2/iam/v2"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+
+	iamv2 "github.com/confluentinc/ccloud-sdk-go-v2/iam/v2"
 )
 
 func serviceAccountResource() *schema.Resource {
@@ -67,7 +68,7 @@ func serviceAccountUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 		return diag.Errorf("error updating Service Account %q: only %q and %q attributes can be updated for Service Account", d.Id(), paramDisplayName, paramDescription)
 	}
 
-	updateServiceAccountRequest := iam.NewIamV2ServiceAccount()
+	updateServiceAccountRequest := iamv2.NewIamV2ServiceAccount()
 
 	if d.HasChange(paramDisplayName) {
 		displayName := d.Get(paramDisplayName).(string)
@@ -86,7 +87,7 @@ func serviceAccountUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 	tflog.Debug(ctx, fmt.Sprintf("Updating Service Account %q: %s", d.Id(), updateServiceAccountRequestJson), map[string]interface{}{serviceAccountLoggingKey: d.Id()})
 
 	c := meta.(*Client)
-	updatedServiceAccount, resp, err := c.iamClient.ServiceAccountsIamV2Api.UpdateIamV2ServiceAccount(c.iamApiContext(ctx), d.Id()).IamV2ServiceAccount(*updateServiceAccountRequest).Execute()
+	updatedServiceAccount, resp, err := c.iamV2Client.ServiceAccountsIamV2Api.UpdateIamV2ServiceAccount(c.iamV2ApiContext(ctx), d.Id()).IamV2ServiceAccount(*updateServiceAccountRequest).Execute()
 
 	if err != nil {
 		return diag.Errorf("error updating Service Account %q: %s", d.Id(), createDescriptiveError(err, resp))
@@ -107,7 +108,7 @@ func serviceAccountCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	displayName := d.Get(paramDisplayName).(string)
 	description := d.Get(paramDescription).(string)
 
-	createServiceAccountRequest := iam.NewIamV2ServiceAccount()
+	createServiceAccountRequest := iamv2.NewIamV2ServiceAccount()
 	createServiceAccountRequest.SetDisplayName(displayName)
 	createServiceAccountRequest.SetDescription(description)
 	createServiceAccountRequestJson, err := json.Marshal(createServiceAccountRequest)
@@ -116,7 +117,7 @@ func serviceAccountCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Service Account: %s", createServiceAccountRequestJson))
 
-	createdServiceAccount, resp, err := executeServiceAccountCreate(c.iamApiContext(ctx), c, createServiceAccountRequest)
+	createdServiceAccount, resp, err := executeServiceAccountCreate(c.iamV2ApiContext(ctx), c, createServiceAccountRequest)
 	if err != nil {
 		return diag.Errorf("error creating Service Account %q: %s", displayName, createDescriptiveError(err, resp))
 	}
@@ -131,8 +132,8 @@ func serviceAccountCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	return serviceAccountRead(ctx, d, meta)
 }
 
-func executeServiceAccountCreate(ctx context.Context, c *Client, serviceAccount *iam.IamV2ServiceAccount) (iam.IamV2ServiceAccount, *http.Response, error) {
-	req := c.iamClient.ServiceAccountsIamV2Api.CreateIamV2ServiceAccount(c.iamApiContext(ctx)).IamV2ServiceAccount(*serviceAccount)
+func executeServiceAccountCreate(ctx context.Context, c *Client, serviceAccount *iamv2.IamV2ServiceAccount) (iamv2.IamV2ServiceAccount, *http.Response, error) {
+	req := c.iamV2Client.ServiceAccountsIamV2Api.CreateIamV2ServiceAccount(c.iamV2ApiContext(ctx)).IamV2ServiceAccount(*serviceAccount)
 	return req.Execute()
 }
 
@@ -140,7 +141,7 @@ func serviceAccountDelete(ctx context.Context, d *schema.ResourceData, meta inte
 	tflog.Debug(ctx, fmt.Sprintf("Deleting Service Account %q", d.Id()), map[string]interface{}{serviceAccountLoggingKey: d.Id()})
 	c := meta.(*Client)
 
-	req := c.iamClient.ServiceAccountsIamV2Api.DeleteIamV2ServiceAccount(c.iamApiContext(ctx), d.Id())
+	req := c.iamV2Client.ServiceAccountsIamV2Api.DeleteIamV2ServiceAccount(c.iamV2ApiContext(ctx), d.Id())
 	resp, err := req.Execute()
 
 	if err != nil {
@@ -152,15 +153,15 @@ func serviceAccountDelete(ctx context.Context, d *schema.ResourceData, meta inte
 	return nil
 }
 
-func executeServiceAccountRead(ctx context.Context, c *Client, serviceAccountId string) (iam.IamV2ServiceAccount, *http.Response, error) {
-	req := c.iamClient.ServiceAccountsIamV2Api.GetIamV2ServiceAccount(c.iamApiContext(ctx), serviceAccountId)
+func executeServiceAccountRead(ctx context.Context, c *Client, serviceAccountId string) (iamv2.IamV2ServiceAccount, *http.Response, error) {
+	req := c.iamV2Client.ServiceAccountsIamV2Api.GetIamV2ServiceAccount(c.iamV2ApiContext(ctx), serviceAccountId)
 	return req.Execute()
 }
 
 func serviceAccountRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	tflog.Debug(ctx, fmt.Sprintf("Reading Service Account %q", d.Id()), map[string]interface{}{serviceAccountLoggingKey: d.Id()})
 	c := meta.(*Client)
-	serviceAccount, resp, err := executeServiceAccountRead(c.iamApiContext(ctx), c, d.Id())
+	serviceAccount, resp, err := executeServiceAccountRead(c.iamV2ApiContext(ctx), c, d.Id())
 	if err != nil {
 		tflog.Warn(ctx, fmt.Sprintf("Error reading Service Account %q: %s", d.Id(), createDescriptiveError(err, resp)), map[string]interface{}{serviceAccountLoggingKey: d.Id()})
 
@@ -192,7 +193,7 @@ func serviceAccountImport(ctx context.Context, d *schema.ResourceData, meta inte
 	tflog.Debug(ctx, fmt.Sprintf("Importing Service Account %q", d.Id()), map[string]interface{}{serviceAccountLoggingKey: d.Id()})
 	// Mark resource as new to avoid d.Set("") when getting 404
 	d.MarkNewResource()
-	if diagnostics := serviceAccountRead(ctx, d, meta); diagnostics != nil {
+	if diagnostics := serviceAccountRead(ctx, d, meta); len(diagnostics) > 0 {
 		return nil, fmt.Errorf("error importing Service Account %q: %s", d.Id(), diagnostics[0].Summary)
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished importing Service Account %q", d.Id()), map[string]interface{}{serviceAccountLoggingKey: d.Id()})

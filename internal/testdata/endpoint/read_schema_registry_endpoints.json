@@ -1,0 +1,26 @@
+{
+  "api_version": "endpoint/v1",
+  "data": [
+    {
+      "api_version": "endpoint/v1",
+      "kind": "Endpoint",
+      "id": "ep-sr-123",
+      "cloud": "AWS",
+      "region": "us-west-2",
+      "service": "SCHEMA_REGISTRY",
+      "is_private": true,
+      "connection_type": "PRIVATE_LINK",
+      "endpoint": "https://psrc-abc123-usw2.aws.glb.confluent.cloud",
+      "endpoint_type": "REST",
+      "environment": {
+        "id": "env-abc123"
+      },
+      "resource": {
+        "id": "lsrc-abc123",
+        "kind": "Cluster"
+      }
+    }
+  ],
+  "kind": "EndpointList",
+  "metadata": {}
+}

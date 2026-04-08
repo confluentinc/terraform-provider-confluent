@@ -27,13 +27,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-const (
-	paramSchemas                    = "schemas"
-	paramSchemasFilterDeleted       = "deleted"
-	paramSchemasFilterLatestOnly    = "latest_only"
-	paramSchemasFilterSubjectPrefix = "subject_prefix"
-)
-
 func schemasDataSource() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: schemasDataSourceRead,

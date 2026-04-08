@@ -43,6 +43,14 @@ semaphore:
             - "rbac"
             - "data_catalog"
             - "tableflow"
+            - "smoke"
+    - name: "Smoke Tests - PROD"
+      description: "Lightweight smoke tests that validate provider auth and basic read operations against Confluent Cloud"
+      scheduled: true
+      at: "*/15 * * * *"
+      branch: master
+      pipeline_file: ".semaphore/smoke-tests.yml"
+      status: ACTIVE
 make:
   enable: true
 sonarqube:

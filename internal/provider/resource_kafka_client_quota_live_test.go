@@ -266,4 +266,4 @@ func testAccCheckKafkaClientQuotaUpdateLiveConfigUpdated(endpoint, quotaResource
 		principals = [confluent_service_account.quota_test_sa.id]
 	}
 	`, endpoint, apiKey, apiSecret, quotaDisplayName, quotaResourceLabel, quotaDisplayName, kafkaClusterId)
-} 
+}

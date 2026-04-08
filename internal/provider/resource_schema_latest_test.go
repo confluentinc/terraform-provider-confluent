@@ -17,8 +17,6 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -26,71 +24,8 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-)
-
-const (
-	testCreateSchemaRequestJson = `{
-  "references": [
-    {
-      "name": "sampleRecord2",
-      "subject": "test3",
-      "version": 3
-    },
-    {
-      "name": "sampleRecord",
-      "subject": "test2",
-      "version": 9
-    }
-  ],
- "ruleSet" : {
-    "domainRules" : [ {   
-        "disabled" : false,                                                          
-        "doc" : "",
-        "expr" : "",
-        "kind" : "TRANSFORM",
-        "mode" : "WRITEREAD",
-        "name" : "encrypt",
-        "onFailure" : "ERROR,ERROR",
-        "onSuccess" : "NONE,NONE",
-        "params" : {
-            "encrypt.kek.name" : "testkek2"
-            },
-        "tags" : [ "PIIIII" ],
-        "type" : "ENCRYPT"
-        }, {
-        "disabled" : false,
-        "doc" : "",
-        "expr" : "",
-        "kind" : "TRANSFORM",
-        "mode" : "WRITEREAD",
-        "name" : "encryptPII",
-        "onFailure" : "ERROR,ERROR",
-        "onSuccess" : "NONE,NONE",
-        "params" : {
-            "encrypt.kek.name" : "testkek2"
-            },
-         "tags" : [ "PII" ],
-         "type" : "ENCRYPT"
-         } ],
-	"migrationRules" : [ {   
-		"disabled" : false,                                                          
-        "doc" : "",
-        "expr" : "",
-        "kind" : "TRANSFORM",
-        "mode" : "WRITEREAD",
-        "name" : "encrypt",
-        "onFailure" : "ERROR,ERROR",
-        "onSuccess" : "NONE,NONE",
-        "params" : {
-            "encrypt.kek.name" : "testkekM"
-            },
-        "tags" : [ "PIm" ],
-        "type" : "ENCRYPT"
-         } ]
-},
-  "schema": "foobar",
-  "schemaType": "AVRO"
-}`
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/walkerus/go-wiremock"
 )
 
 func TestAccLatestSchema(t *testing.T) {

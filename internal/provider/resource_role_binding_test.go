@@ -17,26 +17,13 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-)
-
-const (
-	scenarioStateRoleBindingHasBeenCreated = "The new role binding has been just created"
-	scenarioStateRoleBindingHasBeenDeleted = "The requested role binding has been deleted"
-	rolebindingScenarioName                = "confluent_role_binding Resource Lifecycle"
-	roleBindingId                          = "rb-OOXL7"
-	roleBindingUrlPath                     = "/iam/v2/role-bindings/rb-OOXL7"
-
-	rbPrincipal     = "User:u-vr99n5"
-	rbRolename      = "CloudClusterAdmin"
-	rbCrn           = "crn://confluent.cloud/organization=0d9c5d94-e4fe-44ec-9cf1-bd99761fca75/environment=env-ym2y0k/cloud-cluster=lkc-xrk0ng"
-	rbResourceLabel = "test_rb_resource_label"
+	"github.com/walkerus/go-wiremock"
 )
 
 func TestAccRoleBinding(t *testing.T) {
@@ -150,7 +137,7 @@ func testAccCheckRoleBindingDestroy(s *terraform.State) error {
 			continue
 		}
 		deletedRoleBindingId := rs.Primary.ID
-		req := c.mdsClient.RoleBindingsIamV2Api.GetIamV2RoleBinding(c.mdsApiContext(context.Background()), deletedRoleBindingId)
+		req := c.mdsV2Client.RoleBindingsIamV2Api.GetIamV2RoleBinding(c.mdsV2ApiContext(context.Background()), deletedRoleBindingId)
 		deletedRoleBinding, response, err := req.Execute()
 		if response != nil && (response.StatusCode == http.StatusForbidden || response.StatusCode == http.StatusNotFound) {
 			return nil

@@ -21,6 +21,8 @@ Check each item in the checklist to ensure high-quality Terraform development pr
 - [ ] I have attached manual Terraform verification results or screenshots in the `Test & Review` section below.
 - [ ] I have included appropriate Terraform acceptance or unit tests for any new resource, data source, or functionality.
 - [ ] I have included appropriate Terraform live testing for any new resource, data source, or functionality.
+- [ ] I have included a testing thread with main.tf file in #terraform-provider-development-testing.
+- [ ] I have included rate limit/load testing results.
 - [ ] I confirm that this PR introduces no breaking changes or backward compatibility issues.
 - [ ] I have updated the corresponding documentation and include relevant examples for this PR.
 - [ ] I have indicated the potential customer impact if something goes wrong in the `Blast Radius` section below.

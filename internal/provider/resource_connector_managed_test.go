@@ -21,26 +21,9 @@ import (
 	"os"
 	"testing"
 
-	"github.com/walkerus/go-wiremock"
-
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-)
-
-const (
-	scenarioStateManagedConnectorHasBeenValidated     = "The new managed connector config has been just validated"
-	scenarioStateManagedConnectorHasBeenCreating      = "The new managed connector has been creating"
-	scenarioStateManagedConnectorFetchingId           = "The new managed connector is in provisioning state, list all connectors"
-	scenarioStateManagedConnectorIsProvisioning       = "The new managed connector is in provisioning state"
-	scenarioStateManagedConnectorIsRunning1           = "The new managed connector is in running state #1"
-	scenarioStateManagedConnectorHasBeenCreated       = "The new managed connector has been just created"
-	scenarioStateManagedConnectorNameHasBeenUpdated   = "The new managed connector's name has been just updated"
-	scenarioStateManagedConnectorHasBeenDeleted       = "The new managed connector has been deleted"
-	scenarioStateManagedConnectorOffsetHasBeenUpdated = "The managed connector offset has been updated"
-	connectorScenarioName                             = "confluent_connector Resource Lifecycle"
-	sensitiveAttributeKey                             = "foo"
-	sensitiveAttributeValue                           = "bar"
-	sensitiveAttributeUpdatedValue                    = "bar updated"
+	"github.com/walkerus/go-wiremock"
 )
 
 func TestAccManagedConnector(t *testing.T) {
@@ -367,7 +350,7 @@ func testAccCheckConnectorDestroy(s *terraform.State) error {
 		deletedConnectorName := rs.Primary.Attributes["config_nonsensitive.name"]
 		deletedConnectorEnvId := rs.Primary.Attributes["environment.0.id"]
 		deletedConnectorKafkaClusterId := rs.Primary.Attributes["kafka_cluster.0.id"]
-		req := c.connectClient.ConnectorsConnectV1Api.ReadConnectv1Connector(c.connectApiContext(context.Background()), deletedConnectorName, deletedConnectorEnvId, deletedConnectorKafkaClusterId)
+		req := c.connectV1Client.ConnectorsConnectV1Api.ReadConnectv1Connector(c.connectV1ApiContext(context.Background()), deletedConnectorName, deletedConnectorEnvId, deletedConnectorKafkaClusterId)
 		_, response, _ := req.Execute()
 		if isNonKafkaRestApiResourceNotFound(response) {
 			return nil

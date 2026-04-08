@@ -75,9 +75,9 @@ func TestAccFlinkArtifactAWSLive(t *testing.T) {
 				),
 			},
 			{
-				ResourceName:      fmt.Sprintf("confluent_flink_artifact.%s", artifactResourceLabel),
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            fmt.Sprintf("confluent_flink_artifact.%s", artifactResourceLabel),
+				ImportState:             true,
+				ImportStateVerify:       true,
 				ImportStateVerifyIgnore: []string{"artifact_file"},
 				ImportStateIdFunc: func(state *terraform.State) (string, error) {
 					resources := state.RootModule().Resources
@@ -138,9 +138,9 @@ func TestAccFlinkArtifactAzureLive(t *testing.T) {
 				),
 			},
 			{
-				ResourceName:      fmt.Sprintf("confluent_flink_artifact.%s", artifactResourceLabel),
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            fmt.Sprintf("confluent_flink_artifact.%s", artifactResourceLabel),
+				ImportState:             true,
+				ImportStateVerify:       true,
 				ImportStateVerifyIgnore: []string{"artifact_file"},
 				ImportStateIdFunc: func(state *terraform.State) (string, error) {
 					resources := state.RootModule().Resources
@@ -166,7 +166,7 @@ func testAccCheckFlinkArtifactLiveDestroy(s *terraform.State) error {
 		environmentId := rs.Primary.Attributes["environment.0.id"]
 		cloud := rs.Primary.Attributes["cloud"]
 		region := rs.Primary.Attributes["region"]
-		req := c.faClient.FlinkArtifactsArtifactV1Api.GetArtifactV1FlinkArtifact(c.faApiContext(context.Background()), deletedArtifactId).Region(region).Cloud(cloud).Environment(environmentId)
+		req := c.flinkArtifactV1Client.FlinkArtifactsArtifactV1Api.GetArtifactV1FlinkArtifact(c.flinkArtifactV1ApiContext(context.Background()), deletedArtifactId).Region(region).Cloud(cloud).Environment(environmentId)
 		deletedArtifact, response, err := req.Execute()
 		if response != nil && (response.StatusCode == http.StatusForbidden || response.StatusCode == http.StatusNotFound) {
 			return nil
@@ -223,4 +223,3 @@ func testAccCheckFlinkArtifactLiveExists(n string) resource.TestCheckFunc {
 		return nil
 	}
 }
-

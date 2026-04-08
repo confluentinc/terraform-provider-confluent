@@ -18,20 +18,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	v1 "github.com/confluentinc/ccloud-sdk-go-v2/networking/v1"
+	"net/http"
+
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"net/http"
-)
 
-const (
-	paramEnvironments = "environments"
-	paramNetworks     = "networks"
-	paramAccept       = "accept"
-	// The maximum allowable page size - 1 (to avoid off-by-one errors) when listing service accounts using SG V3 API
-	// https://docs.confluent.io/cloud/current/api.html#tag/Network-Link-Services-(networkingv1)/operation/listNetworkingV1NetworkLinkServices
-	listNetworkLinkServicesPageSize = 99
+	networkingv1 "github.com/confluentinc/ccloud-sdk-go-v2/networking/v1"
 )
 
 func networkLinkServiceDataSource() *schema.Resource {
@@ -93,7 +86,7 @@ func nlsDataSourceReadUsingId(ctx context.Context, d *schema.ResourceData, meta 
 	tflog.Debug(ctx, fmt.Sprintf("Reading network link service %q", nlsId), map[string]interface{}{networkLinkServiceLoggingKey: nlsId})
 
 	c := meta.(*Client)
-	nls, resp, err := executeNlsRead(c.ssoApiContext(ctx), c, environmentId, nlsId)
+	nls, resp, err := executeNlsRead(c.ssoV2ApiContext(ctx), c, environmentId, nlsId)
 	if err != nil {
 		return diag.Errorf("error reading network link service %q: %s", nlsId, createDescriptiveError(err, resp))
 	}
@@ -109,8 +102,8 @@ func nlsDataSourceReadUsingId(ctx context.Context, d *schema.ResourceData, meta 
 	return nil
 }
 
-func executeNlsRead(ctx context.Context, c *Client, environmentId string, nlsId string) (v1.NetworkingV1NetworkLinkService, *http.Response, error) {
-	req := c.netClient.NetworkLinkServicesNetworkingV1Api.GetNetworkingV1NetworkLinkService(c.netApiContext(ctx), nlsId).Environment(environmentId)
+func executeNlsRead(ctx context.Context, c *Client, environmentId string, nlsId string) (networkingv1.NetworkingV1NetworkLinkService, *http.Response, error) {
+	req := c.networkingV1Client.NetworkLinkServicesNetworkingV1Api.GetNetworkingV1NetworkLinkService(c.networkingV1ApiContext(ctx), nlsId).Environment(environmentId)
 	return req.Execute()
 }
 
@@ -140,8 +133,8 @@ func nlsDataSourceReadUsingDisplayName(ctx context.Context, d *schema.ResourceDa
 	return nil
 }
 
-func loadNetworkLinkServices(ctx context.Context, c *Client, environmentId string) ([]v1.NetworkingV1NetworkLinkService, error) {
-	networkLinks := make([]v1.NetworkingV1NetworkLinkService, 0)
+func loadNetworkLinkServices(ctx context.Context, c *Client, environmentId string) ([]networkingv1.NetworkingV1NetworkLinkService, error) {
+	networkLinks := make([]networkingv1.NetworkingV1NetworkLinkService, 0)
 
 	allNlsAreCollected := false
 	pageToken := ""
@@ -172,10 +165,10 @@ func loadNetworkLinkServices(ctx context.Context, c *Client, environmentId strin
 	return networkLinks, nil
 }
 
-func executeListNetworkLinkServices(ctx context.Context, c *Client, environmentId, pageToken string) (v1.NetworkingV1NetworkLinkServiceList, *http.Response, error) {
+func executeListNetworkLinkServices(ctx context.Context, c *Client, environmentId, pageToken string) (networkingv1.NetworkingV1NetworkLinkServiceList, *http.Response, error) {
 	if pageToken != "" {
-		return c.netClient.NetworkLinkServicesNetworkingV1Api.ListNetworkingV1NetworkLinkServices(c.netApiContext(ctx)).Environment(environmentId).PageSize(listNetworkLinkServicesPageSize).PageToken(pageToken).Execute()
+		return c.networkingV1Client.NetworkLinkServicesNetworkingV1Api.ListNetworkingV1NetworkLinkServices(c.networkingV1ApiContext(ctx)).Environment(environmentId).PageSize(listNetworkLinkServicesPageSize).PageToken(pageToken).Execute()
 	} else {
-		return c.netClient.NetworkLinkServicesNetworkingV1Api.ListNetworkingV1NetworkLinkServices(c.netApiContext(ctx)).Environment(environmentId).PageSize(listNetworkLinkServicesPageSize).Execute()
+		return c.networkingV1Client.NetworkLinkServicesNetworkingV1Api.ListNetworkingV1NetworkLinkServices(c.networkingV1ApiContext(ctx)).Environment(environmentId).PageSize(listNetworkLinkServicesPageSize).Execute()
 	}
 }

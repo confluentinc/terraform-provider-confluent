@@ -167,6 +167,15 @@ live-test-drift:
 live-test-essential:
 	@$(MAKE) live-test TF_LIVE_TEST_GROUPS="core,kafka"
 
+.PHONY: live-test-smoke
+live-test-smoke:
+	@$(MAKE) live-test TF_LIVE_TEST_GROUPS="smoke"
+
+.PHONY: build-otel-smoke-metric
+build-otel-smoke-metric:
+	$(GOBUILD) -o ./$(BUILD_DIR)/otel-smoke-metric ./cmd/otel-smoke-metric
+
+
 install: build
 	mkdir -p ~/.terraform.d/plugins/$(GOOS)_$(GOARCH)
 	cp ./$(BUILD_DIR)/$(GOOS)-$(GOARCH)/$(NAME) ~/.terraform.d/plugins/$(GOOS)_$(GOARCH)/

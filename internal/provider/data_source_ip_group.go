@@ -51,8 +51,8 @@ func ipGroupDataSourceRead(ctx context.Context, d *schema.ResourceData, meta int
 	tflog.Debug(ctx, fmt.Sprintf("Reading IP Group %q=%q", paramId, ipGroupID), map[string]interface{}{ipGroupLoggingKey: ipGroupID})
 
 	c := meta.(*Client)
-	request := c.iamIPClient.IPGroupsIamV2Api.GetIamV2IpGroup(c.iamIPApiContext(ctx), ipGroupID)
-	ipGroup, resp, err := c.iamIPClient.IPGroupsIamV2Api.GetIamV2IpGroupExecute(request)
+	request := c.iamIpFilteringV2Client.IPGroupsIamV2Api.GetIamV2IpGroup(c.iamIpFilteringV2ApiContext(ctx), ipGroupID)
+	ipGroup, resp, err := c.iamIpFilteringV2Client.IPGroupsIamV2Api.GetIamV2IpGroupExecute(request)
 	if err != nil {
 		return diag.Errorf("error reading IP Group %q: %s", ipGroupID, createDescriptiveError(err, resp))
 	}

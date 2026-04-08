@@ -17,18 +17,13 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
 	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-)
-
-const (
-	ksqlScenarioDataSourceName = "confluent_ksql_cluster Data Source Lifecycle"
-	ksqlDataSourceLabel        = "test_ksql_data_source_label"
+	"github.com/walkerus/go-wiremock"
 )
 
 var fullKsqlDataSourceLabel = fmt.Sprintf("data.confluent_ksql_cluster.%s", ksqlDataSourceLabel)

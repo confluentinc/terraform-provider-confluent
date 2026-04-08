@@ -18,28 +18,17 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	sr "github.com/confluentinc/ccloud-sdk-go-v2/schema-registry/v1"
+	"net/http"
+	"regexp"
+	"strings"
+
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"net/http"
-	"regexp"
-	"strings"
-)
 
-const (
-	paramCompatibilityLevel = "compatibility_level"
-	paramCompatibilityGroup = "compatibility_group"
-
-	compatibilityLevelBackward           = "BACKWARD"
-	compatibilityLevelBackwardTransitive = "BACKWARD_TRANSITIVE"
-	compatibilityLevelForward            = "FORWARD"
-	compatibilityLevelForwardTransitive  = "FORWARD_TRANSITIVE"
-	compatibilityLevelFull               = "FULL"
-	compatibilityLevelFullTransitive     = "FULL_TRANSITIVE"
-	compatibilityLevelNone               = "NONE"
+	schemaregistryv1 "github.com/confluentinc/ccloud-sdk-go-v2/schema-registry/v1"
 )
 
 var acceptedCompatibilityLevels = []string{compatibilityLevelBackward, compatibilityLevelBackwardTransitive,
@@ -83,6 +72,18 @@ func subjectConfigResource() *schema.Resource {
 				Optional: true,
 				Computed: true,
 			},
+			paramNormalize: {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Computed:    true,
+				Description: "Whether schemas are automatically normalized when registered or passed during lookups.",
+			},
+			paramAlias: {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				Description: "The subject name that this subject is an alias for. Any reference to this subject will be replaced by the alias.",
+			},
 		},
 		CustomizeDiff: customdiff.Sequence(resourceCredentialBlockValidationWithOAuth),
 	}
@@ -104,13 +105,25 @@ func subjectConfigCreate(ctx context.Context, d *schema.ResourceData, meta inter
 	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 	subjectName := d.Get(paramSubjectName).(string)
 
-	if _, ok := d.GetOk(paramCompatibilityLevel); ok {
-		compatibilityLevel := d.Get(paramCompatibilityLevel).(string)
-		compatibilityGroup := d.Get(paramCompatibilityGroup).(string)
+	createConfigRequest := schemaregistryv1.NewConfigUpdateRequest()
+	hasConfigToUpdate := false
 
-		createConfigRequest := sr.NewConfigUpdateRequest()
-		createConfigRequest.SetCompatibility(compatibilityLevel)
-		createConfigRequest.SetCompatibilityGroup(compatibilityGroup)
+	if compatibilityLevel, ok := d.GetOk(paramCompatibilityLevel); ok {
+		createConfigRequest.SetCompatibility(compatibilityLevel.(string))
+		createConfigRequest.SetCompatibilityGroup(d.Get(paramCompatibilityGroup).(string))
+		hasConfigToUpdate = true
+	}
+	if _, ok := d.GetOk(paramNormalize); ok {
+		createConfigRequest.SetNormalize(d.Get(paramNormalize).(bool))
+		hasConfigToUpdate = true
+	}
+	if alias, ok := d.GetOk(paramAlias); ok {
+		createConfigRequest.SetAlias(alias.(string))
+		hasConfigToUpdate = true
+	}
+
+	if hasConfigToUpdate {
+
 		createConfigRequestJson, err := json.Marshal(createConfigRequest)
 		if err != nil {
 			return diag.Errorf("error creating Subject Config: error marshaling %#v to json: %s", createConfigRequest, createDescriptiveError(err))
@@ -261,6 +274,14 @@ func readSubjectConfigAndSetAttributes(ctx context.Context, d *schema.ResourceDa
 		return nil, err
 	}
 
+	if err := d.Set(paramNormalize, subjectConfig.GetNormalize()); err != nil {
+		return nil, err
+	}
+
+	if err := d.Set(paramAlias, subjectConfig.GetAlias()); err != nil {
+		return nil, err
+	}
+
 	if !c.isMetadataSetInProviderBlock {
 		if err := setKafkaCredentials(c.clusterApiKey, c.clusterApiSecret, d, c.externalAccessToken != nil); err != nil {
 			return nil, err
@@ -279,18 +300,28 @@ func readSubjectConfigAndSetAttributes(ctx context.Context, d *schema.ResourceDa
 }
 
 func subjectConfigUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if d.HasChangesExcept(paramCredentials, paramCompatibilityLevel, paramCompatibilityGroup) {
-		return diag.Errorf("error updating Subject Config %q: only %q, %q and %q blocks can be updated for Subject Config", d.Id(), paramCredentials, paramCompatibilityLevel, paramCompatibilityGroup)
+	if d.HasChangesExcept(paramCredentials, paramCompatibilityLevel, paramCompatibilityGroup, paramNormalize, paramAlias) {
+		return diag.Errorf("error updating Subject Config %q: only %q, %q, %q, %q and %q blocks can be updated for Subject Config", d.Id(), paramCredentials, paramCompatibilityLevel, paramCompatibilityGroup, paramNormalize, paramAlias)
 	}
-	if d.HasChange(paramCompatibilityLevel) || d.HasChanges(paramCompatibilityGroup) {
-		updatedCompatibilityLevel := d.Get(paramCompatibilityLevel).(string)
-		updatedCompatibilityGroup := d.Get(paramCompatibilityGroup).(string)
-		updateConfigRequest := sr.NewConfigUpdateRequest()
-		updateConfigRequest.SetCompatibility(updatedCompatibilityLevel)
-		updateConfigRequest.SetCompatibilityGroup(updatedCompatibilityGroup)
+	if d.HasChange(paramCompatibilityLevel) || d.HasChange(paramCompatibilityGroup) || d.HasChange(paramNormalize) || d.HasChange(paramAlias) {
+		updateConfigRequest := schemaregistryv1.NewConfigUpdateRequest()
+
+		if compatibilityLevel := d.Get(paramCompatibilityLevel).(string); compatibilityLevel != "" {
+			updateConfigRequest.SetCompatibility(compatibilityLevel)
+		}
+		if compatibilityGroup := d.Get(paramCompatibilityGroup).(string); compatibilityGroup != "" {
+			updateConfigRequest.SetCompatibilityGroup(compatibilityGroup)
+		}
+		if d.HasChange(paramNormalize) {
+			updateConfigRequest.SetNormalize(d.Get(paramNormalize).(bool))
+		}
+		if alias := d.Get(paramAlias).(string); alias != "" {
+			updateConfigRequest.SetAlias(alias)
+		}
+
 		restEndpoint, err := extractSchemaRegistryRestEndpoint(meta.(*Client), d, false)
 		if err != nil {
-			return diag.Errorf("error updating Schema: %s", createDescriptiveError(err))
+			return diag.Errorf("error updating Subject Config: %s", createDescriptiveError(err))
 		}
 		clusterId, err := extractSchemaRegistryClusterId(meta.(*Client), d, false)
 		if err != nil {
@@ -298,7 +329,7 @@ func subjectConfigUpdate(ctx context.Context, d *schema.ResourceData, meta inter
 		}
 		clusterApiKey, clusterApiSecret, err := extractSchemaRegistryClusterApiKeyAndApiSecret(meta.(*Client), d, false)
 		if err != nil {
-			return diag.Errorf("error updating Schema: %s", createDescriptiveError(err))
+			return diag.Errorf("error updating Subject Config: %s", createDescriptiveError(err))
 		}
 		schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
 		subjectName := d.Get(paramSubjectName).(string)
@@ -318,6 +349,6 @@ func subjectConfigUpdate(ctx context.Context, d *schema.ResourceData, meta inter
 	return subjectConfigRead(ctx, d, meta)
 }
 
-func executeSubjectConfigUpdate(ctx context.Context, c *SchemaRegistryRestClient, requestData *sr.ConfigUpdateRequest, subjectName string) (sr.ConfigUpdateRequest, *http.Response, error) {
+func executeSubjectConfigUpdate(ctx context.Context, c *SchemaRegistryRestClient, requestData *schemaregistryv1.ConfigUpdateRequest, subjectName string) (schemaregistryv1.ConfigUpdateRequest, *http.Response, error) {
 	return c.apiClient.ConfigV1Api.UpdateSubjectLevelConfig(c.apiContext(ctx), subjectName).ConfigUpdateRequest(*requestData).Execute()
 }

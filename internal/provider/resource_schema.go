@@ -24,57 +24,16 @@ import (
 	"strings"
 	"time"
 
-	sr "github.com/confluentinc/ccloud-sdk-go-v2/schema-registry/v1"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-)
 
-const (
-	paramSchemaRegistryCluster               = "schema_registry_cluster"
-	schemaRegistryAPIWaitAfterCreateOrDelete = 10 * time.Second
-	paramFormat                              = "format"
-	avroFormat                               = "AVRO"
-	jsonFormat                               = "JSON"
-	protobufFormat                           = "PROTOBUF"
-	paramVersion                             = "version"
-	paramDomainRules                         = "domain_rules"
-	paramMigrationRules                      = "migration_rules"
-	paramExpr                                = "expr"
-	paramTags                                = "tags"
-	paramParams                              = "params"
-	paramOnSuccess                           = "on_success"
-	paramOnFailure                           = "on_failure"
-	paramRuleset                             = "ruleset"
-	paramSensitive                           = "sensitive"
-	paramMetadata                            = "metadata"
-	paramValue                               = "value"
-	paramDisabled                            = "disabled"
-	// unique on a subject level
-	paramSchemaIdentifier                     = "schema_identifier"
-	paramSchema                               = "schema"
-	paramSchemaReference                      = "schema_reference"
-	paramSubjectName                          = "subject_name"
-	paramHardDelete                           = "hard_delete"
-	paramHardDeleteDefaultValue               = false
-	paramForce                                = "force"
-	paramForceDefaultValue                    = false
-	paramRecreateOnUpdate                     = "recreate_on_update"
-	paramRecreateOnUpdateDefaultValue         = false
-	paramSkipValidationDuringPlan             = "skip_validation_during_plan"
-	paramSkipValidationDuringPlanDefaultValue = false
-
-	latestSchemaVersionAndPlaceholderForSchemaIdentifier = "latest"
+	schemaregistryv1 "github.com/confluentinc/ccloud-sdk-go-v2/schema-registry/v1"
 )
 
 var acceptedSchemaFormats = []string{avroFormat, jsonFormat, protobufFormat}
-
-const schemaNotCompatibleErrorMessage = `Compatibility check on the schema has failed against one or more versions in the subject, depending on how the compatibility is set.
-See https://docs.confluent.io/platform/current/schema-registry/avro.html#sr-compatibility-types for details.
-For example, if compatibility on the subject is set to BACKWARD, FORWARD, or FULL, the compatibility check is against the latest version.
-If compatibility is set to one of the TRANSITIVE types, the check is against all previous versions.`
 
 func schemaResource() *schema.Resource {
 	return &schema.Resource{
@@ -350,7 +309,7 @@ func SetSchemaDiff(ctx context.Context, diff *schema.ResourceDiff, meta interfac
 	schemaContent := newSchema
 	schemaReferences := buildSchemaReferences(diff.Get(paramSchemaReference).(*schema.Set).List())
 
-	createSchemaRequest := sr.NewRegisterSchemaRequest()
+	createSchemaRequest := schemaregistryv1.NewRegisterSchemaRequest()
 	createSchemaRequest.SetSchemaType(format)
 	createSchemaRequest.SetSchema(schemaContent)
 	createSchemaRequest.SetReferences(schemaReferences)
@@ -358,12 +317,12 @@ func SetSchemaDiff(ctx context.Context, diff *schema.ResourceDiff, meta interfac
 	oldRuleset, newRuleset := diff.GetChange(paramRuleset)
 	if tfRuleset := diff.Get(paramRuleset).([]interface{}); len(tfRuleset) == 1 {
 		if len(newRuleset.([]interface{})) == 0 && len(oldRuleset.([]interface{})) > 0 { //this is the case of an advanced package user trying to delete a ruleset. // TODO: Revisit this logic after we add migration rules, this might never be hit.
-			ruleset := sr.NewRuleSet()
-			ruleset.SetDomainRules([]sr.Rule{})
-			ruleset.SetMigrationRules([]sr.Rule{})
+			ruleset := schemaregistryv1.NewRuleSet()
+			ruleset.SetDomainRules([]schemaregistryv1.Rule{})
+			ruleset.SetMigrationRules([]schemaregistryv1.Rule{})
 			createSchemaRequest.SetRuleSet(*ruleset)
 		} else if tfRuleset[0] != nil { //this is the case when a ruleset is not empty after an operation.
-			ruleset := sr.NewRuleSet()
+			ruleset := schemaregistryv1.NewRuleSet()
 			tfRulesetMap := tfRuleset[0].(map[string]interface{})
 			if tfRulesetMap[paramDomainRules] != nil {
 				ruleset.SetDomainRules(buildRules(tfRulesetMap[paramDomainRules].(*schema.Set).List()))
@@ -375,7 +334,7 @@ func SetSchemaDiff(ctx context.Context, diff *schema.ResourceDiff, meta interfac
 		}
 	}
 	if tfMetadata := diff.Get(paramMetadata).([]interface{}); len(tfMetadata) == 1 && tfMetadata[0] != nil {
-		metadata := sr.NewMetadata()
+		metadata := schemaregistryv1.NewMetadata()
 		tfMetadataMap := tfMetadata[0].(map[string]interface{})
 		if tfMetadataMap[paramTags] != nil {
 			metadata.SetTags(convertToStringStringListMap(tfMetadataMap[paramTags].(*schema.Set).List()))
@@ -428,7 +387,7 @@ func SetSchemaDiff(ctx context.Context, diff *schema.ResourceDiff, meta interfac
 	return nil
 }
 
-func schemaLookupCheck(ctx context.Context, diff *schema.ResourceDiff, c *SchemaRegistryRestClient, createSchemaRequest *sr.RegisterSchemaRequest, subjectName, oldSchema string) error {
+func schemaLookupCheck(ctx context.Context, diff *schema.ResourceDiff, c *SchemaRegistryRestClient, createSchemaRequest *schemaregistryv1.RegisterSchemaRequest, subjectName, oldSchema string) error {
 	setOldSchemaValue := func() error {
 		if err := diff.SetNew(paramSchema, oldSchema); err != nil {
 			return fmt.Errorf("error customizing diff Schema: %s", createDescriptiveError(err))
@@ -449,7 +408,7 @@ func schemaLookupCheck(ctx context.Context, diff *schema.ResourceDiff, c *Schema
 	// If original request doesn't match and doesn't have ruleset, try with empty ruleset
 	if !createSchemaRequest.HasRuleSet() {
 		requestWithRuleset := *createSchemaRequest // Create a copy to avoid modifying the original
-		requestWithRuleset.SetRuleSet(*sr.NewRuleSet())
+		requestWithRuleset.SetRuleSet(*schemaregistryv1.NewRuleSet())
 
 		matched, err := trySchemaLookup(ctx, diff, c, &requestWithRuleset, subjectName)
 		if err != nil {
@@ -465,7 +424,7 @@ func schemaLookupCheck(ctx context.Context, diff *schema.ResourceDiff, c *Schema
 }
 
 func trySchemaLookup(ctx context.Context, diff *schema.ResourceDiff, c *SchemaRegistryRestClient,
-	createSchemaRequest *sr.RegisterSchemaRequest, subjectName string) (bool, error) {
+	createSchemaRequest *schemaregistryv1.RegisterSchemaRequest, subjectName string) (bool, error) {
 	createSchemaRequestJson, err := json.Marshal(createSchemaRequest)
 	if err != nil {
 		return false, fmt.Errorf("error marshaling %#v to json: %s",
@@ -493,7 +452,7 @@ func trySchemaLookup(ctx context.Context, diff *schema.ResourceDiff, c *SchemaRe
 	return false, nil
 }
 
-func schemaValidateCheck(ctx context.Context, c *SchemaRegistryRestClient, createSchemaRequest *sr.RegisterSchemaRequest, subjectName string) error {
+func schemaValidateCheck(ctx context.Context, c *SchemaRegistryRestClient, createSchemaRequest *schemaregistryv1.RegisterSchemaRequest, subjectName string) error {
 	createSchemaRequestJson, err := json.Marshal(createSchemaRequest)
 	if err != nil {
 		return fmt.Errorf("error validating Schema: error marshaling %#v to json: %s", createSchemaRequest, createDescriptiveError(err))
@@ -513,7 +472,7 @@ func schemaValidateCheck(ctx context.Context, c *SchemaRegistryRestClient, creat
 	return nil
 }
 
-func schemaLookup(ctx context.Context, c *SchemaRegistryRestClient, createSchemaRequest *sr.RegisterSchemaRequest, subjectName string) (*sr.Schema, bool, error) {
+func schemaLookup(ctx context.Context, c *SchemaRegistryRestClient, createSchemaRequest *schemaregistryv1.RegisterSchemaRequest, subjectName string) (*schemaregistryv1.Schema, bool, error) {
 	// https://github.com/confluentinc/terraform-provider-confluent/issues/196#issuecomment-1426437871
 	// Try both normalize=false and normalize=true
 	nonNormalizedSchema, schemaExists, err := schemaLookupByNormalize(ctx, c, createSchemaRequest, subjectName, false)
@@ -534,7 +493,7 @@ func schemaLookup(ctx context.Context, c *SchemaRegistryRestClient, createSchema
 	return nil, false, nil
 }
 
-func schemaLookupByNormalize(ctx context.Context, c *SchemaRegistryRestClient, createSchemaRequest *sr.RegisterSchemaRequest, subjectName string, shouldNormalize bool) (*sr.Schema, bool, error) {
+func schemaLookupByNormalize(ctx context.Context, c *SchemaRegistryRestClient, createSchemaRequest *schemaregistryv1.RegisterSchemaRequest, subjectName string, shouldNormalize bool) (*schemaregistryv1.Schema, bool, error) {
 	srSchema, resp, err := executeSchemaLookup(ctx, c, createSchemaRequest, subjectName, shouldNormalize)
 
 	if resp != nil {
@@ -574,18 +533,18 @@ func schemaCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 	schemaContent := d.Get(paramSchema).(string)
 	schemaReferences := buildSchemaReferences(d.Get(paramSchemaReference).(*schema.Set).List())
 
-	createSchemaRequest := sr.NewRegisterSchemaRequest()
+	createSchemaRequest := schemaregistryv1.NewRegisterSchemaRequest()
 	createSchemaRequest.SetSchemaType(format)
 	createSchemaRequest.SetSchema(schemaContent)
 	createSchemaRequest.SetReferences(schemaReferences)
 	oldRuleset, newRuleset := d.GetChange(paramRuleset)
 	if len(newRuleset.([]interface{})) == 0 && len(oldRuleset.([]interface{})) > 0 { //this is the case of an advanced package user trying to delete a ruleset.
-		ruleset := sr.NewRuleSet()
-		ruleset.SetDomainRules([]sr.Rule{})
-		ruleset.SetMigrationRules([]sr.Rule{})
+		ruleset := schemaregistryv1.NewRuleSet()
+		ruleset.SetDomainRules([]schemaregistryv1.Rule{})
+		ruleset.SetMigrationRules([]schemaregistryv1.Rule{})
 		createSchemaRequest.SetRuleSet(*ruleset)
 	} else if tfRuleset := d.Get(paramRuleset).([]interface{}); len(tfRuleset) == 1 && tfRuleset[0] != nil { //this is the case when a ruleset is not empty after an operation.
-		ruleset := sr.NewRuleSet()
+		ruleset := schemaregistryv1.NewRuleSet()
 		tfRulesetMap := tfRuleset[0].(map[string]interface{})
 		if tfRulesetMap[paramDomainRules] != nil {
 			ruleset.SetDomainRules(buildRules(tfRulesetMap[paramDomainRules].(*schema.Set).List()))
@@ -596,7 +555,7 @@ func schemaCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 		createSchemaRequest.SetRuleSet(*ruleset)
 	}
 	if tfMetadata := d.Get(paramMetadata).([]interface{}); len(tfMetadata) == 1 && tfMetadata[0] != nil {
-		metadata := sr.NewMetadata()
+		metadata := schemaregistryv1.NewMetadata()
 		tfMetadataMap := tfMetadata[0].(map[string]interface{})
 		if tfMetadataMap[paramTags] != nil {
 			metadata.SetTags(convertToStringStringListMap(tfMetadataMap[paramTags].(*schema.Set).List()))
@@ -884,7 +843,7 @@ func isLatestSchema(schemaIdentifier string) bool {
 	return schemaIdentifier == latestSchemaVersionAndPlaceholderForSchemaIdentifier
 }
 
-func loadSchema(ctx context.Context, d *schema.ResourceData, c *SchemaRegistryRestClient, subjectName string, schemaIdentifier string) (*sr.Schema, bool, error) {
+func loadSchema(ctx context.Context, d *schema.ResourceData, c *SchemaRegistryRestClient, subjectName string, schemaIdentifier string) (*schemaregistryv1.Schema, bool, error) {
 	// Option #1: find the schema identifier of the latest schema
 	var err error
 	if isLatestSchema(schemaIdentifier) {
@@ -914,7 +873,7 @@ func loadSchema(ctx context.Context, d *schema.ResourceData, c *SchemaRegistryRe
 	return &srSchema, !exists, nil
 }
 
-func readSchemaRegistryConfigAndSetAttributes(ctx context.Context, d *schema.ResourceData, c *SchemaRegistryRestClient, subjectName string, schemaIdentifier string) (*sr.Schema, error) {
+func readSchemaRegistryConfigAndSetAttributes(ctx context.Context, d *schema.ResourceData, c *SchemaRegistryRestClient, subjectName string, schemaIdentifier string) (*schemaregistryv1.Schema, error) {
 	isLatestSchemaBool := isLatestSchema(schemaIdentifier)
 	srSchema, isResourceNotFound, err := loadSchema(ctx, d, c, subjectName, schemaIdentifier)
 	if isResourceNotFound && !d.IsNewResource() {
@@ -1009,25 +968,25 @@ func readSchemaRegistryConfigAndSetAttributes(ctx context.Context, d *schema.Res
 	return srSchema, nil
 }
 
-func findSchemaById(schemas []sr.Schema, schemaIdentifier string, subjectName string) (sr.Schema, bool) {
+func findSchemaById(schemas []schemaregistryv1.Schema, schemaIdentifier string, subjectName string) (schemaregistryv1.Schema, bool) {
 	// 'schema' collides with a package name
 	for _, srSchema := range schemas {
 		if strconv.Itoa(int(srSchema.GetId())) == schemaIdentifier && srSchema.GetSubject() == subjectName {
 			return srSchema, true
 		}
 	}
-	return sr.Schema{}, false
+	return schemaregistryv1.Schema{}, false
 }
 
-func executeSchemaValidate(ctx context.Context, c *SchemaRegistryRestClient, requestData *sr.RegisterSchemaRequest, subjectName string) (sr.CompatibilityCheckResponse, *http.Response, error) {
+func executeSchemaValidate(ctx context.Context, c *SchemaRegistryRestClient, requestData *schemaregistryv1.RegisterSchemaRequest, subjectName string) (schemaregistryv1.CompatibilityCheckResponse, *http.Response, error) {
 	return c.apiClient.CompatibilityV1Api.TestCompatibilityForSubject(c.apiContext(ctx), subjectName).RegisterSchemaRequest(*requestData).Verbose(true).Execute()
 }
 
-func executeSchemaLookup(ctx context.Context, c *SchemaRegistryRestClient, requestData *sr.RegisterSchemaRequest, subjectName string, shouldNormalize bool) (sr.Schema, *http.Response, error) {
+func executeSchemaLookup(ctx context.Context, c *SchemaRegistryRestClient, requestData *schemaregistryv1.RegisterSchemaRequest, subjectName string, shouldNormalize bool) (schemaregistryv1.Schema, *http.Response, error) {
 	return c.apiClient.SubjectsV1Api.LookUpSchemaUnderSubject(c.apiContext(ctx), subjectName).RegisterSchemaRequest(*requestData).Normalize(shouldNormalize).Execute()
 }
 
-func executeSchemaCreate(ctx context.Context, c *SchemaRegistryRestClient, requestData *sr.RegisterSchemaRequest, subjectName string) (sr.RegisterSchemaResponse, *http.Response, error) {
+func executeSchemaCreate(ctx context.Context, c *SchemaRegistryRestClient, requestData *schemaregistryv1.RegisterSchemaRequest, subjectName string) (schemaregistryv1.RegisterSchemaResponse, *http.Response, error) {
 	return c.apiClient.SubjectsV1Api.Register(c.apiContext(ctx), subjectName).RegisterSchemaRequest(*requestData).Execute()
 }
 
@@ -1045,10 +1004,10 @@ func executeSchemaDelete(ctx context.Context, c *SchemaRegistryRestClient, subje
 	}
 }
 
-func buildSchemaReferences(tfReferences []interface{}) []sr.SchemaReference {
-	references := make([]sr.SchemaReference, len(tfReferences))
+func buildSchemaReferences(tfReferences []interface{}) []schemaregistryv1.SchemaReference {
+	references := make([]schemaregistryv1.SchemaReference, len(tfReferences))
 	for index, tfReference := range tfReferences {
-		reference := sr.NewSchemaReference()
+		reference := schemaregistryv1.NewSchemaReference()
 		tfReferenceMap := tfReference.(map[string]interface{})
 		if subjectName, exists := tfReferenceMap[paramSubjectName].(string); exists {
 			reference.SetSubject(subjectName)
@@ -1064,7 +1023,7 @@ func buildSchemaReferences(tfReferences []interface{}) []sr.SchemaReference {
 	return references
 }
 
-func buildTfSchemaReferences(schemaReferences []sr.SchemaReference) *[]map[string]interface{} {
+func buildTfSchemaReferences(schemaReferences []schemaregistryv1.SchemaReference) *[]map[string]interface{} {
 	tfSchemaReferences := make([]map[string]interface{}, len(schemaReferences))
 	for i, schemaReference := range schemaReferences {
 		tfSchemaReferences[i] = *buildTfSchemaReference(schemaReference)
@@ -1072,7 +1031,7 @@ func buildTfSchemaReferences(schemaReferences []sr.SchemaReference) *[]map[strin
 	return &tfSchemaReferences
 }
 
-func buildTfSchemaReference(schemaReference sr.SchemaReference) *map[string]interface{} {
+func buildTfSchemaReference(schemaReference schemaregistryv1.SchemaReference) *map[string]interface{} {
 	tfSchemaReference := make(map[string]interface{})
 	tfSchemaReference[paramSubjectName] = schemaReference.GetSubject()
 	tfSchemaReference[paramName] = schemaReference.GetName()
@@ -1203,10 +1162,10 @@ func loadAllSchemas(ctx context.Context, client *Client) (InstanceIdsToNameMap, 
 	return instances, nil
 }
 
-func buildRules(tfRules []interface{}) []sr.Rule {
-	rules := make([]sr.Rule, len(tfRules))
+func buildRules(tfRules []interface{}) []schemaregistryv1.Rule {
+	rules := make([]schemaregistryv1.Rule, len(tfRules))
 	for index, tfRule := range tfRules {
-		rule := sr.NewRule()
+		rule := schemaregistryv1.NewRule()
 		tfRuleMap := tfRule.(map[string]interface{})
 		if name, exists := tfRuleMap[paramName].(string); exists {
 			rule.SetName(name)
@@ -1246,7 +1205,7 @@ func buildRules(tfRules []interface{}) []sr.Rule {
 	return rules
 }
 
-func buildTfRules(domainRules, migrationRules []sr.Rule) *[]map[string]interface{} {
+func buildTfRules(domainRules, migrationRules []schemaregistryv1.Rule) *[]map[string]interface{} {
 	tfDomainMigrationRules := make(map[string]interface{})
 	if len(domainRules) > 0 {
 		tfRules := make([]map[string]interface{}, len(domainRules))

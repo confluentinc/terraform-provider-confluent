@@ -18,6 +18,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -114,7 +115,7 @@ func byokDataSourceRead(ctx context.Context, d *schema.ResourceData, meta interf
 	tflog.Debug(ctx, fmt.Sprintf("Reading byok key %q=%q", paramId, keyId), map[string]interface{}{byokKeyLoggingKey: keyId})
 
 	c := meta.(*Client)
-	key, resp, err := executeKeyRead(c.byokApiContext(ctx), c, keyId)
+	key, resp, err := executeKeyRead(c.byokV1ApiContext(ctx), c, keyId)
 	if err != nil {
 		return diag.Errorf("error reading byok key %q: %s", keyId, createDescriptiveError(err, resp))
 	}

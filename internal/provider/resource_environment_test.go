@@ -17,24 +17,13 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-)
-
-const (
-	scenarioStateEnvHasBeenCreated     = "The new environment has been just created"
-	scenarioStateEnvNameHasBeenUpdated = "The new environment's name has been just updated"
-	scenarioStateEnvHasBeenDeleted     = "The new environment has been deleted"
-	envScenarioName                    = "confluent_environment Resource Lifecycle"
-	envScenarioNoSgName                = "confluent_environment Resource Lifecycle Without Stream Governance"
-	expectedCountZero                  = int64(0)
-	expectedCountOne                   = int64(1)
-	expectedCountTwo                   = int64(2)
+	"github.com/walkerus/go-wiremock"
 )
 
 var contentTypeJSONHeader = map[string]string{"Content-Type": "application/json"}
@@ -257,7 +246,7 @@ func testAccCheckEnvironmentDestroy(s *terraform.State) error {
 			continue
 		}
 		deletedEnvironmentId := rs.Primary.ID
-		req := c.orgClient.EnvironmentsOrgV2Api.GetOrgV2Environment(c.orgApiContext(context.Background()), deletedEnvironmentId)
+		req := c.orgV2Client.EnvironmentsOrgV2Api.GetOrgV2Environment(c.orgV2ApiContext(context.Background()), deletedEnvironmentId)
 		deletedEnvironment, response, err := req.Execute()
 		if response != nil && (response.StatusCode == http.StatusForbidden || response.StatusCode == http.StatusNotFound) {
 			// v2/environments/{nonExistentEnvId/deletedEnvID} returns http.StatusNotFound

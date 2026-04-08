@@ -38,26 +38,7 @@ import (
 	zclCty "github.com/zclconf/go-cty/cty"
 )
 
-const (
-	tfConfigurationFileName = "main.tf"
-	tfStateFileName         = "terraform.tfstate"
-	tfLockFileName          = ".terraform.lock.hcl"
-	paramResources          = "resources"
-	paramOutputPath         = "output_path"
-	defaultTfStateFile      = "terraform.tfstate"
-	defaultVariablesTfFile  = "variables.tf"
-	defaultOutputPath       = "./imported_confluent_infrastructure"
-)
-
 type ImporterMode int
-
-const (
-	Cloud ImporterMode = iota
-	Kafka
-	SchemaRegistry
-)
-
-const importerCreateTimeout = 8 * time.Hour
 
 var ImportableResources = []string{
 	// Cloud
@@ -598,7 +579,7 @@ func createHclFileWithHeader(mode ImporterMode) *hclwrite.File {
 	requiredProvidersBlock := tfBlock.Body().AppendNewBlock("required_providers", nil)
 	requiredProvidersBlock.Body().SetAttributeValue("confluent", zclCty.ObjectVal(map[string]zclCty.Value{
 		"source":  zclCty.StringVal("confluentinc/confluent"),
-		"version": zclCty.StringVal("2.58.0"),
+		"version": zclCty.StringVal("2.67.0"),
 	}))
 
 	providerBlock := body.AppendNewBlock("provider", []string{"confluent"})
@@ -893,22 +874,21 @@ func mapContainsAllKeys(map1, map2 map[string]*Importer) bool {
 }
 
 func overrideUserAgent(client *Client) {
-	const importer = "TFImporter"
 
 	// Add "importer" suffix to the default user agent
-	client.apiKeysClient.GetConfig().UserAgent = fmt.Sprintf("%s %s", client.apiKeysClient.GetConfig().UserAgent, importer)
-	client.byokClient.GetConfig().UserAgent = fmt.Sprintf("%s %s", client.byokClient.GetConfig().UserAgent, importer)
-	client.cmkClient.GetConfig().UserAgent = fmt.Sprintf("%s %s", client.cmkClient.GetConfig().UserAgent, importer)
-	client.connectClient.GetConfig().UserAgent = fmt.Sprintf("%s %s", client.connectClient.GetConfig().UserAgent, importer)
-	client.iamClient.GetConfig().UserAgent = fmt.Sprintf("%s %s", client.iamClient.GetConfig().UserAgent, importer)
+	client.apiKeysV2Client.GetConfig().UserAgent = fmt.Sprintf("%s %s", client.apiKeysV2Client.GetConfig().UserAgent, importer)
+	client.byokV1Client.GetConfig().UserAgent = fmt.Sprintf("%s %s", client.byokV1Client.GetConfig().UserAgent, importer)
+	client.cmkV2Client.GetConfig().UserAgent = fmt.Sprintf("%s %s", client.cmkV2Client.GetConfig().UserAgent, importer)
+	client.connectV1Client.GetConfig().UserAgent = fmt.Sprintf("%s %s", client.connectV1Client.GetConfig().UserAgent, importer)
+	client.iamV2Client.GetConfig().UserAgent = fmt.Sprintf("%s %s", client.iamV2Client.GetConfig().UserAgent, importer)
 	client.iamV1Client.GetConfig().UserAgent = fmt.Sprintf("%s %s", client.iamV1Client.GetConfig().UserAgent, importer)
-	client.mdsClient.GetConfig().UserAgent = fmt.Sprintf("%s %s", client.mdsClient.GetConfig().UserAgent, importer)
-	client.netClient.GetConfig().UserAgent = fmt.Sprintf("%s %s", client.netClient.GetConfig().UserAgent, importer)
-	client.oidcClient.GetConfig().UserAgent = fmt.Sprintf("%s %s", client.oidcClient.GetConfig().UserAgent, importer)
-	client.orgClient.GetConfig().UserAgent = fmt.Sprintf("%s %s", client.orgClient.GetConfig().UserAgent, importer)
-	client.srcmClient.GetConfig().UserAgent = fmt.Sprintf("%s %s", client.srcmClient.GetConfig().UserAgent, importer)
-	client.ksqlClient.GetConfig().UserAgent = fmt.Sprintf("%s %s", client.ksqlClient.GetConfig().UserAgent, importer)
-	client.quotasClient.GetConfig().UserAgent = fmt.Sprintf("%s %s", client.quotasClient.GetConfig().UserAgent, importer)
+	client.mdsV2Client.GetConfig().UserAgent = fmt.Sprintf("%s %s", client.mdsV2Client.GetConfig().UserAgent, importer)
+	client.networkingV1Client.GetConfig().UserAgent = fmt.Sprintf("%s %s", client.networkingV1Client.GetConfig().UserAgent, importer)
+	client.identityProviderV2Client.GetConfig().UserAgent = fmt.Sprintf("%s %s", client.identityProviderV2Client.GetConfig().UserAgent, importer)
+	client.orgV2Client.GetConfig().UserAgent = fmt.Sprintf("%s %s", client.orgV2Client.GetConfig().UserAgent, importer)
+	client.srcmV3Client.GetConfig().UserAgent = fmt.Sprintf("%s %s", client.srcmV3Client.GetConfig().UserAgent, importer)
+	client.ksqlV2Client.GetConfig().UserAgent = fmt.Sprintf("%s %s", client.ksqlV2Client.GetConfig().UserAgent, importer)
+	client.kafkaQuotasV1Client.GetConfig().UserAgent = fmt.Sprintf("%s %s", client.kafkaQuotasV1Client.GetConfig().UserAgent, importer)
 
 	client.userAgent = fmt.Sprintf("%s %s", client.userAgent, importer)
 	client.kafkaRestClientFactory.userAgent = fmt.Sprintf("%s %s", client.kafkaRestClientFactory.userAgent, importer)

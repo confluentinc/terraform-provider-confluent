@@ -17,20 +17,13 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
 	"strconv"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-)
-
-const (
-	dataSourceNetworkScenarioName = "confluent_network Data Source Lifecycle"
-	networkDataSourceLabel        = "example"
-	azureNetworkDisplayName       = "s-nk99e"
-	awsNetworkDisplayName         = "s-n9553"
+	"github.com/walkerus/go-wiremock"
 )
 
 var fullNetworkDataSourceLabel = fmt.Sprintf("data.confluent_network.%s", networkDataSourceLabel)

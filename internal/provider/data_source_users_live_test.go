@@ -90,4 +90,4 @@ func testAccCheckUsersDataSourceLiveExists(resourceName string) resource.TestChe
 
 		return nil
 	}
-} 
+}

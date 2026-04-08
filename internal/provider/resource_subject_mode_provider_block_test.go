@@ -17,28 +17,13 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-)
-
-const (
-	scenarioStateSubjectModeHasBeenCreated = "A new subject mode has been just created"
-	scenarioStateSubjectModeHasBeenUpdated = "The subject mode has been updated"
-	scenarioStateSubjectModeHasBeenDeleted = "The subject mode has been deleted"
-	subjectModeScenarioName                = "confluent_subject_mode Resource Lifecycle"
-
-	testSubjectModeResourceLabel = "test_subject_mode_resource_label"
-	testSubjectMode              = "READWRITE"
-	testUpdatedSubjectMode       = "READONLY"
-	testForceFalse               = "false"
-	testForceTrue                = "true"
-
-	testNumberOfSubjectModeResourceAttributes = "7"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/walkerus/go-wiremock"
 )
 
 var fullSubjectModeResourceLabel = fmt.Sprintf("confluent_subject_mode.%s", testSubjectModeResourceLabel)

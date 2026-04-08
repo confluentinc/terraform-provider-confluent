@@ -9,18 +9,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-
 	"github.com/walkerus/go-wiremock"
-)
-
-const (
-	byokV1Path      = "/byok/v1/keys"
-	keyVaultId      = "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/test-vault/providers/Microsoft.KeyVault/vaults/test-vault"
-	keyUrl          = "https://test-vault.vault.azure.net/keys/test-key/dd554e3117e74ed8bbcd43390e1e3824"
-	azureByokTenant = "11111111-1111-1111-1111-111111111111"
-
-	azureKeyScenarioName                = "confluent_azure Key Azure Resource Lifecycle"
-	scenarioStateAzureKeyHasBeenDeleted = "The new azure key's deletion has been just completed"
 )
 
 func TestAccAzureBYOKKey(t *testing.T) {
@@ -112,7 +101,7 @@ func testAccCheckByokKeyDestroy(s *terraform.State) error {
 			continue
 		}
 		deletedKeyId := rs.Primary.ID
-		req := c.byokClient.KeysByokV1Api.GetByokV1Key(c.byokApiContext(context.Background()), deletedKeyId)
+		req := c.byokV1Client.KeysByokV1Api.GetByokV1Key(c.byokV1ApiContext(context.Background()), deletedKeyId)
 		deletedKey, response, err := req.Execute()
 		if response != nil && response.StatusCode == http.StatusNotFound {
 			return nil

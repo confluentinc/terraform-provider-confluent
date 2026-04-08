@@ -18,19 +18,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	v2 "github.com/confluentinc/ccloud-sdk-go-v2/iam/v2"
+	"net/http"
+	"strings"
+
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"net/http"
-	"strings"
-)
 
-const (
-	// The maximum allowable page size - 1 (to avoid off-by-one errors) when listing service accounts using IAM V2 API
-	// https://docs.confluent.io/cloud/current/api.html#operation/listIamV2ServiceAccounts
-	listServiceAccountsPageSize = 99
-	pageTokenQueryParameter     = "page_token"
+	iamv2 "github.com/confluentinc/ccloud-sdk-go-v2/iam/v2"
 )
 
 func serviceAccountDataSource() *schema.Resource {
@@ -92,7 +87,7 @@ func serviceAccountDataSourceReadUsingDisplayName(ctx context.Context, d *schema
 	tflog.Debug(ctx, fmt.Sprintf("Reading Service Account %q=%q", paramDisplayName, displayName))
 
 	c := meta.(*Client)
-	serviceAccountList, resp, err := c.iamClient.ServiceAccountsIamV2Api.ListIamV2ServiceAccounts(c.iamApiContext(ctx)).DisplayName(strings.Fields(displayName)).Execute()
+	serviceAccountList, resp, err := c.iamV2Client.ServiceAccountsIamV2Api.ListIamV2ServiceAccounts(c.iamV2ApiContext(ctx)).DisplayName(strings.Fields(displayName)).Execute()
 	if err != nil {
 		return diag.Errorf("error reading Service Account %q: %s", displayName, createDescriptiveError(err, resp))
 	}
@@ -116,8 +111,8 @@ func serviceAccountDataSourceReadUsingDisplayName(ctx context.Context, d *schema
 	return nil
 }
 
-func loadServiceAccounts(ctx context.Context, c *Client) ([]v2.IamV2ServiceAccount, error) {
-	serviceAccounts := make([]v2.IamV2ServiceAccount, 0)
+func loadServiceAccounts(ctx context.Context, c *Client) ([]iamv2.IamV2ServiceAccount, error) {
+	serviceAccounts := make([]iamv2.IamV2ServiceAccount, 0)
 
 	allServiceAccountsAreCollected := false
 	pageToken := ""
@@ -148,11 +143,11 @@ func loadServiceAccounts(ctx context.Context, c *Client) ([]v2.IamV2ServiceAccou
 	return serviceAccounts, nil
 }
 
-func executeListServiceAccounts(ctx context.Context, c *Client, pageToken string) (v2.IamV2ServiceAccountList, *http.Response, error) {
+func executeListServiceAccounts(ctx context.Context, c *Client, pageToken string) (iamv2.IamV2ServiceAccountList, *http.Response, error) {
 	if pageToken != "" {
-		return c.iamClient.ServiceAccountsIamV2Api.ListIamV2ServiceAccounts(c.iamApiContext(ctx)).PageSize(listServiceAccountsPageSize).PageToken(pageToken).Execute()
+		return c.iamV2Client.ServiceAccountsIamV2Api.ListIamV2ServiceAccounts(c.iamV2ApiContext(ctx)).PageSize(listServiceAccountsPageSize).PageToken(pageToken).Execute()
 	} else {
-		return c.iamClient.ServiceAccountsIamV2Api.ListIamV2ServiceAccounts(c.iamApiContext(ctx)).PageSize(listServiceAccountsPageSize).Execute()
+		return c.iamV2Client.ServiceAccountsIamV2Api.ListIamV2ServiceAccounts(c.iamV2ApiContext(ctx)).PageSize(listServiceAccountsPageSize).Execute()
 	}
 }
 
@@ -160,7 +155,7 @@ func serviceAccountDataSourceReadUsingId(ctx context.Context, d *schema.Resource
 	tflog.Debug(ctx, fmt.Sprintf("Reading Service Account %q=%q", paramId, serviceAccountId), map[string]interface{}{serviceAccountLoggingKey: serviceAccountId})
 
 	c := meta.(*Client)
-	serviceAccount, resp, err := executeServiceAccountRead(c.iamApiContext(ctx), c, serviceAccountId)
+	serviceAccount, resp, err := executeServiceAccountRead(c.iamV2ApiContext(ctx), c, serviceAccountId)
 	if err != nil {
 		return diag.Errorf("error reading Service Account %q: %s", serviceAccountId, createDescriptiveError(err, resp))
 	}
@@ -176,7 +171,7 @@ func serviceAccountDataSourceReadUsingId(ctx context.Context, d *schema.Resource
 	return nil
 }
 
-func setServiceAccountAttributes(d *schema.ResourceData, serviceAccount v2.IamV2ServiceAccount) (*schema.ResourceData, error) {
+func setServiceAccountAttributes(d *schema.ResourceData, serviceAccount iamv2.IamV2ServiceAccount) (*schema.ResourceData, error) {
 	if err := d.Set(paramApiVersion, serviceAccount.GetApiVersion()); err != nil {
 		return nil, createDescriptiveError(err)
 	}

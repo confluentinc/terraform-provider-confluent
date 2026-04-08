@@ -17,17 +17,13 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
 	"strconv"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-)
-
-const (
-	dataSourceComputePoolScenarioName = "confluent_flink_compute_pool Data Source Lifecycle"
+	"github.com/walkerus/go-wiremock"
 )
 
 var fullComputePoolDataSourceLabel = fmt.Sprintf("data.confluent_flink_compute_pool.%s", networkDataSourceLabel)
@@ -86,6 +82,7 @@ func TestAccDataSourceComputePool(t *testing.T) {
 					resource.TestCheckResourceAttr(fullComputePoolDataSourceLabel, paramCloud, flinkComputePoolCloud),
 					resource.TestCheckResourceAttr(fullComputePoolDataSourceLabel, paramRegion, flinkComputePoolRegion),
 					resource.TestCheckResourceAttr(fullComputePoolDataSourceLabel, paramMaxCfu, strconv.Itoa(flinkComputePoolDefaultMaxCfu)),
+					resource.TestCheckResourceAttr(fullComputePoolDataSourceLabel, paramDefaultPool, "true"),
 					resource.TestCheckResourceAttr(fullComputePoolDataSourceLabel, fmt.Sprintf("%s.#", paramEnvironment), "1"),
 					resource.TestCheckResourceAttr(fullComputePoolDataSourceLabel, fmt.Sprintf("%s.0.%s", paramEnvironment, paramId), flinkComputePoolEnvironmentId),
 					resource.TestCheckResourceAttr(fullComputePoolDataSourceLabel, paramApiVersion, flinkComputePoolApiVersion),
@@ -102,6 +99,7 @@ func TestAccDataSourceComputePool(t *testing.T) {
 					resource.TestCheckResourceAttr(fullComputePoolDataSourceLabel, paramCloud, flinkComputePoolCloud),
 					resource.TestCheckResourceAttr(fullComputePoolDataSourceLabel, paramRegion, flinkComputePoolRegion),
 					resource.TestCheckResourceAttr(fullComputePoolDataSourceLabel, paramMaxCfu, strconv.Itoa(flinkComputePoolDefaultMaxCfu)),
+					resource.TestCheckResourceAttr(fullComputePoolDataSourceLabel, paramDefaultPool, "true"),
 					resource.TestCheckResourceAttr(fullComputePoolDataSourceLabel, fmt.Sprintf("%s.#", paramEnvironment), "1"),
 					resource.TestCheckResourceAttr(fullComputePoolDataSourceLabel, fmt.Sprintf("%s.0.%s", paramEnvironment, paramId), flinkComputePoolEnvironmentId),
 					resource.TestCheckResourceAttr(fullComputePoolDataSourceLabel, paramApiVersion, flinkComputePoolApiVersion),
