@@ -20,7 +20,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	fg "github.com/confluentinc/ccloud-sdk-go-v2-internal/flink-gateway/v1"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -33,47 +32,14 @@ import (
 	"strings"
 	"time"
 
-	apikeys "github.com/confluentinc/ccloud-sdk-go-v2/apikeys/v2"
-	byok "github.com/confluentinc/ccloud-sdk-go-v2/byok/v1"
-	cam "github.com/confluentinc/ccloud-sdk-go-v2/cam/v1"
-	ccpm "github.com/confluentinc/ccloud-sdk-go-v2/ccpm/v1"
-	ca "github.com/confluentinc/ccloud-sdk-go-v2/certificate-authority/v2"
-	cmk "github.com/confluentinc/ccloud-sdk-go-v2/cmk/v2"
-	ccp "github.com/confluentinc/ccloud-sdk-go-v2/connect-custom-plugin/v1"
-	connect "github.com/confluentinc/ccloud-sdk-go-v2/connect/v1"
-	dc "github.com/confluentinc/ccloud-sdk-go-v2/data-catalog/v1"
-	fa "github.com/confluentinc/ccloud-sdk-go-v2/flink-artifact/v1"
-	fgb "github.com/confluentinc/ccloud-sdk-go-v2/flink-gateway/v1"
-	fcpm "github.com/confluentinc/ccloud-sdk-go-v2/flink/v2"
-	iamip "github.com/confluentinc/ccloud-sdk-go-v2/iam-ip-filtering/v2"
-	iamv1 "github.com/confluentinc/ccloud-sdk-go-v2/iam/v1"
-	iam "github.com/confluentinc/ccloud-sdk-go-v2/iam/v2"
-	oidc "github.com/confluentinc/ccloud-sdk-go-v2/identity-provider/v2"
-	quotas "github.com/confluentinc/ccloud-sdk-go-v2/kafka-quotas/v1"
-	kafkarestv3 "github.com/confluentinc/ccloud-sdk-go-v2/kafkarest/v3"
-	ksql "github.com/confluentinc/ccloud-sdk-go-v2/ksql/v2"
-	mds "github.com/confluentinc/ccloud-sdk-go-v2/mds/v2"
-	netap "github.com/confluentinc/ccloud-sdk-go-v2/networking-access-point/v1"
-	dns "github.com/confluentinc/ccloud-sdk-go-v2/networking-dnsforwarder/v1"
-	netgw "github.com/confluentinc/ccloud-sdk-go-v2/networking-gateway/v1"
-	netip "github.com/confluentinc/ccloud-sdk-go-v2/networking-ip/v1"
-	netpl "github.com/confluentinc/ccloud-sdk-go-v2/networking-privatelink/v1"
-	net "github.com/confluentinc/ccloud-sdk-go-v2/networking/v1"
-	org "github.com/confluentinc/ccloud-sdk-go-v2/org/v2"
-	pi "github.com/confluentinc/ccloud-sdk-go-v2/provider-integration/v1"
-	piv2 "github.com/confluentinc/ccloud-sdk-go-v2/provider-integration/v2"
-	schemaregistry "github.com/confluentinc/ccloud-sdk-go-v2/schema-registry/v1"
-	srcm "github.com/confluentinc/ccloud-sdk-go-v2/srcm/v3"
-	"github.com/confluentinc/ccloud-sdk-go-v2/sso/v2"
-	tableflow "github.com/confluentinc/ccloud-sdk-go-v2/tableflow/v1"
 	"github.com/dghubble/sling"
 	"github.com/google/uuid"
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-)
 
+	flinkgatewayinternalv1 "github.com/confluentinc/ccloud-sdk-go-v2-internal/flink-gateway/v1"
 	apikeysv2 "github.com/confluentinc/ccloud-sdk-go-v2/apikeys/v2"
 	byokv1 "github.com/confluentinc/ccloud-sdk-go-v2/byok/v1"
 	camv1 "github.com/confluentinc/ccloud-sdk-go-v2/cam/v1"
@@ -756,7 +722,7 @@ type CatalogRestClient struct {
 }
 
 type FlinkRestClient struct {
-	apiClientInternal            *flinkgatewayv1.APIClient
+	apiClientInternal            *flinkgatewayinternalv1.APIClient
 	apiClient                    *flinkgatewayv1.APIClient
 	externalAccessToken          *OAuthToken
 	organizationId               string
@@ -895,11 +861,11 @@ func (c *FlinkRestClient) fgApiContext(ctx context.Context) context.Context {
 			tflog.Error(ctx, fmt.Sprintf("Failed to get OAuth token for Flink rest client: %v", err))
 		}
 		c.externalAccessToken = token
-		return context.WithValue(ctx, fg.ContextAccessToken, c.externalAccessToken.AccessToken)
+		return context.WithValue(ctx, flinkgatewayinternalv1.ContextAccessToken, c.externalAccessToken.AccessToken)
 	}
 
 	if c.flinkApiKey != "" && c.flinkApiSecret != "" {
-		return context.WithValue(ctx, fg.ContextBasicAuth, fg.BasicAuth{
+		return context.WithValue(ctx, flinkgatewayinternalv1.ContextBasicAuth, flinkgatewayinternalv1.BasicAuth{
 			UserName: c.flinkApiKey,
 			Password: c.flinkApiSecret,
 		})
@@ -1362,21 +1328,6 @@ func uploadFile(url, filePath string, formFields map[string]any, fileExtension, 
 			Set("Content-Type", contentFormat).
 			Put("").
 			Body(&buffer).
-			ReceiveSuccess(nil)
-	} else if cloud == "AZURE" && isConnectArtifact {
-		fileContent, readErr := os.ReadFile(filePath)
-		if readErr != nil {
-			return readErr
-		}
-
-		_, err = sling.New().
-			Client(client).
-			Base(url).
-			Set("x-ms-blob-type", "BlockBlob").
-			Set("Content-Type", contentFormat).
-			Set("Content-Length", strconv.Itoa(len(fileContent))).
-			Put("").
-			Body(bytes.NewReader(fileContent)).
 			ReceiveSuccess(nil)
 	} else {
 		_, err = sling.New().

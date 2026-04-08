@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	flinkgateway "github.com/confluentinc/ccloud-sdk-go-v2-internal/flink-gateway/v1"
+	flinkgatewayinternalv1 "github.com/confluentinc/ccloud-sdk-go-v2-internal/flink-gateway/v1"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -331,12 +331,12 @@ func materializedTableCreate(ctx context.Context, d *schema.ResourceData, meta i
 		isMetadata = len(metadataGet.([]interface{})) > 0
 	}
 
-	table := flinkgateway.SqlV1MaterializedTable{
+	table := flinkgatewayinternalv1.SqlV1MaterializedTable{
 		Name:           displayName,
 		EnvironmentId:  environmentId,
 		OrganizationId: organizationId,
 
-		Spec: flinkgateway.SqlV1MaterializedTableSpec{
+		Spec: flinkgatewayinternalv1.SqlV1MaterializedTableSpec{
 			KafkaClusterId: &kafkaId,
 			ComputePoolId:  &computePoolId,
 			Principal:      &principalId,
@@ -344,12 +344,12 @@ func materializedTableCreate(ctx context.Context, d *schema.ResourceData, meta i
 			Stopped:        &stopped,
 		},
 	}
-	table.Spec.Watermark = &flinkgateway.SqlV1MaterializedTableWatermark{}
-	table.Spec.DistributedBy = &flinkgateway.SqlV1MaterializedTableDistribution{}
+	table.Spec.Watermark = &flinkgatewayinternalv1.SqlV1MaterializedTableWatermark{}
+	table.Spec.DistributedBy = &flinkgatewayinternalv1.SqlV1MaterializedTableDistribution{}
 
-	var computedColumn []flinkgateway.SqlV1MaterializedTableColumnDetails
-	var physicalColumn []flinkgateway.SqlV1MaterializedTableColumnDetails
-	var metadataColumn []flinkgateway.SqlV1MaterializedTableColumnDetails
+	var computedColumn []flinkgatewayinternalv1.SqlV1MaterializedTableColumnDetails
+	var physicalColumn []flinkgatewayinternalv1.SqlV1MaterializedTableColumnDetails
+	var metadataColumn []flinkgatewayinternalv1.SqlV1MaterializedTableColumnDetails
 
 	if isComputed {
 		computedColumn = expandComputedColumns(d)
@@ -361,7 +361,7 @@ func materializedTableCreate(ctx context.Context, d *schema.ResourceData, meta i
 		metadataColumn = expandMetadataColumns(d)
 	}
 
-	var columns []flinkgateway.SqlV1MaterializedTableColumnDetails
+	var columns []flinkgatewayinternalv1.SqlV1MaterializedTableColumnDetails
 	for _, col := range computedColumn {
 		columns = append(columns, col)
 	}
@@ -422,12 +422,12 @@ func materializedTableCreate(ctx context.Context, d *schema.ResourceData, meta i
 	return materializedTableRead(ctx, d, meta)
 }
 
-func executeMaterializedTableCreate(ctx context.Context, c *FlinkRestClient, table flinkgateway.SqlV1MaterializedTable, orgId, environmentId, kafkaId string) (flinkgateway.SqlV1MaterializedTable, *http.Response, error) {
+func executeMaterializedTableCreate(ctx context.Context, c *FlinkRestClient, table flinkgatewayinternalv1.SqlV1MaterializedTable, orgId, environmentId, kafkaId string) (flinkgatewayinternalv1.SqlV1MaterializedTable, *http.Response, error) {
 	req := c.apiClientInternal.MaterializedTablesSqlV1Api.CreateSqlv1MaterializedTable(c.fgApiContext(ctx), orgId, environmentId, kafkaId).SqlV1MaterializedTable(table)
 	return req.Execute()
 }
 
-func executeMaterializedTableRead(ctx context.Context, c *FlinkRestClient, orgId, environmentId, kafkaId, tableName string) (flinkgateway.SqlV1MaterializedTable, *http.Response, error) {
+func executeMaterializedTableRead(ctx context.Context, c *FlinkRestClient, orgId, environmentId, kafkaId, tableName string) (flinkgatewayinternalv1.SqlV1MaterializedTable, *http.Response, error) {
 	req := c.apiClientInternal.MaterializedTablesSqlV1Api.GetSqlv1MaterializedTable(c.fgApiContext(ctx), orgId, environmentId, kafkaId, tableName)
 	return req.Execute()
 }
@@ -498,7 +498,7 @@ func readMaterializedTableAndSetAttributes(ctx context.Context, d *schema.Resour
 	return []*schema.ResourceData{d}, nil
 }
 
-func setMaterializedTableAttributes(d *schema.ResourceData, materializedTable flinkgateway.SqlV1MaterializedTable, c *FlinkRestClient) (*schema.ResourceData, error) {
+func setMaterializedTableAttributes(d *schema.ResourceData, materializedTable flinkgatewayinternalv1.SqlV1MaterializedTable, c *FlinkRestClient) (*schema.ResourceData, error) {
 	if err := d.Set(paramDisplayName, materializedTable.GetName()); err != nil {
 		return nil, err
 	}
@@ -995,7 +995,7 @@ func getStringSet(d *schema.ResourceData, key string) []string {
 	return result
 }
 
-func expandMaterializedTableConstraints(d *schema.ResourceData, key string) []flinkgateway.SqlV1MaterializedTableConstraint {
+func expandMaterializedTableConstraints(d *schema.ResourceData, key string) []flinkgatewayinternalv1.SqlV1MaterializedTableConstraint {
 	raw, ok := d.GetOk(key)
 	if !ok || raw == nil {
 		return nil
@@ -1006,7 +1006,7 @@ func expandMaterializedTableConstraints(d *schema.ResourceData, key string) []fl
 		return nil
 	}
 
-	result := make([]flinkgateway.SqlV1MaterializedTableConstraint, 0, len(list))
+	result := make([]flinkgatewayinternalv1.SqlV1MaterializedTableConstraint, 0, len(list))
 
 	for _, v := range list {
 		m, ok := v.(map[string]interface{})
@@ -1014,7 +1014,7 @@ func expandMaterializedTableConstraints(d *schema.ResourceData, key string) []fl
 			continue
 		}
 
-		var c flinkgateway.SqlV1MaterializedTableConstraint
+		var c flinkgatewayinternalv1.SqlV1MaterializedTableConstraint
 		if name, ok := m["name"].(string); ok && name != "" {
 			c.Name = &name
 		}
@@ -1043,19 +1043,19 @@ func expandMaterializedTableConstraints(d *schema.ResourceData, key string) []fl
 	return result
 }
 
-func expandComputedColumns(d *schema.ResourceData) []flinkgateway.SqlV1MaterializedTableColumnDetails {
+func expandComputedColumns(d *schema.ResourceData) []flinkgatewayinternalv1.SqlV1MaterializedTableColumnDetails {
 	raw, ok := d.GetOk(paramColumnComputed)
 	if !ok || raw == nil {
 		return nil
 	}
 
 	list := raw.([]interface{})
-	result := make([]flinkgateway.SqlV1MaterializedTableColumnDetails, 0, len(list))
+	result := make([]flinkgatewayinternalv1.SqlV1MaterializedTableColumnDetails, 0, len(list))
 
 	for _, v := range list {
 		m := v.(map[string]interface{})
 
-		col := flinkgateway.SqlV1MaterializedTableColumnDetails{}
+		col := flinkgatewayinternalv1.SqlV1MaterializedTableColumnDetails{}
 
 		if name, ok := m[paramComputedName].(string); ok && name != "" {
 			col.SqlV1ComputedColumn.Name = &name
@@ -1076,19 +1076,19 @@ func expandComputedColumns(d *schema.ResourceData) []flinkgateway.SqlV1Materiali
 	return result
 }
 
-func expandPhysicalColumns(d *schema.ResourceData) []flinkgateway.SqlV1MaterializedTableColumnDetails {
+func expandPhysicalColumns(d *schema.ResourceData) []flinkgatewayinternalv1.SqlV1MaterializedTableColumnDetails {
 	raw, ok := d.GetOk("physical_columns")
 	if !ok || raw == nil {
 		return nil
 	}
 
 	list := raw.([]interface{})
-	result := make([]flinkgateway.SqlV1MaterializedTableColumnDetails, 0, len(list))
+	result := make([]flinkgatewayinternalv1.SqlV1MaterializedTableColumnDetails, 0, len(list))
 
 	for _, v := range list {
 		m := v.(map[string]interface{})
 
-		col := flinkgateway.SqlV1MaterializedTableColumnDetails{}
+		col := flinkgatewayinternalv1.SqlV1MaterializedTableColumnDetails{}
 
 		if name, ok := m["name"].(string); ok && name != "" {
 			col.SqlV1PhysicalColumn.Name = name
@@ -1109,19 +1109,19 @@ func expandPhysicalColumns(d *schema.ResourceData) []flinkgateway.SqlV1Materiali
 	return result
 }
 
-func expandMetadataColumns(d *schema.ResourceData) []flinkgateway.SqlV1MaterializedTableColumnDetails {
+func expandMetadataColumns(d *schema.ResourceData) []flinkgatewayinternalv1.SqlV1MaterializedTableColumnDetails {
 	raw, ok := d.GetOk("metadata_columns")
 	if !ok || raw == nil {
 		return nil
 	}
 
 	list := raw.([]interface{})
-	result := make([]flinkgateway.SqlV1MaterializedTableColumnDetails, 0, len(list))
+	result := make([]flinkgatewayinternalv1.SqlV1MaterializedTableColumnDetails, 0, len(list))
 
 	for _, v := range list {
 		m := v.(map[string]interface{})
 
-		col := flinkgateway.SqlV1MaterializedTableColumnDetails{}
+		col := flinkgatewayinternalv1.SqlV1MaterializedTableColumnDetails{}
 
 		if name, ok := m["name"].(string); ok && name != "" {
 			col.SqlV1MetadataColumn.Name = name

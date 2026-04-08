@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	flinkgatewayv1 "github.com/confluentinc/ccloud-sdk-go-v2-internal/flink-gateway/v1"
+	flinkgatewayinternalv1 "github.com/confluentinc/ccloud-sdk-go-v2-internal/flink-gateway/v1"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -312,8 +312,8 @@ func materializedTableDataSourceRead(ctx context.Context, d *schema.ResourceData
 	return nil
 }
 
-func loadMaterializedTables(ctx context.Context, c *FlinkRestClient) ([]flinkgatewayv1.SqlV1MaterializedTable, error) {
-	flinkMaterializedTables := make([]flinkgatewayv1.SqlV1MaterializedTable, 0)
+func loadMaterializedTables(ctx context.Context, c *FlinkRestClient) ([]flinkgatewayinternalv1.SqlV1MaterializedTable, error) {
+	flinkMaterializedTables := make([]flinkgatewayinternalv1.SqlV1MaterializedTable, 0)
 	done := false
 	pageToken := ""
 	for !done {
@@ -324,7 +324,7 @@ func loadMaterializedTables(ctx context.Context, c *FlinkRestClient) ([]flinkgat
 		flinkMaterializedTables = append(flinkMaterializedTables, materializedTablesPageList.GetData()...)
 
 		nextPageUrlString := materializedTablesPageList.GetMetadata().Next
-		nextPageUrlStringNullable := flinkgatewayv1.NewNullableString(nextPageUrlString)
+		nextPageUrlStringNullable := flinkgatewayinternalv1.NewNullableString(nextPageUrlString)
 
 		if nextPageUrlStringNullable.IsSet() {
 			nextPageUrlString2 := *nextPageUrlStringNullable.Get()
@@ -342,7 +342,7 @@ func loadMaterializedTables(ctx context.Context, c *FlinkRestClient) ([]flinkgat
 	}
 	return flinkMaterializedTables, nil
 }
-func executeListFlinkMaterializedTables(ctx context.Context, c *FlinkRestClient, pageToken string) (flinkgatewayv1.SqlV1MaterializedTableList, *http.Response, error) {
+func executeListFlinkMaterializedTables(ctx context.Context, c *FlinkRestClient, pageToken string) (flinkgatewayinternalv1.SqlV1MaterializedTableList, *http.Response, error) {
 	if pageToken != "" {
 		return c.apiClientInternal.MaterializedTablesSqlV1Api.ListSqlv1MaterializedTables(c.fgApiContext(ctx), c.organizationId, c.environmentId).PageSize(listFlinkArtifactsPageSize).PageToken(pageToken).Execute()
 	} else {
