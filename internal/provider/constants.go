@@ -127,6 +127,7 @@ const (
 	flinkConnectionLoggingKey                            = "flink_connection_id"
 	flinkEnvironmentIdTest                               = "env-abc123"
 	flinkOrganizationIdTest                              = "1111aaaa-11aa-11aa-11aa-111111aaaaaa"
+	flinkMaterializedTableLoggingKey                     = "flink_materialized_table_id"
 	flinkStatementLoggingKey                             = "flink_statement_key_id"
 	forwardViaGcp                                        = "ForwardViaGcpDnsZones"
 	forwardViaIp                                         = "ForwardViaIp"
