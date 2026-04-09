@@ -147,6 +147,29 @@ resource "confluent_api_key" "env-manager-tableflow-api-key" {
 }
 ```
 
+### Example Global API Key
+```terraform
+resource "confluent_api_key" "env-manager-global-api-key" {
+  display_name = "env-manager-global-api-key"
+  description  = "Global API Key that is owned by 'env-manager' service account"
+  owner {
+    id          = confluent_service_account.env-manager.id
+    api_version = confluent_service_account.env-manager.api_version
+    kind        = confluent_service_account.env-manager.kind
+  }
+
+  managed_resource {
+    id          = "global"
+    api_version = "global/v1"
+    kind        = "Global"
+  }
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+```
+
 ### Example Cloud API Key
 ```terraform
 resource "confluent_api_key" "env-manager-cloud-api-key" {
