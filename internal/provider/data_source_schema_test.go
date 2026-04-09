@@ -17,17 +17,13 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
 	"strconv"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-)
-
-const (
-	schemaDataSourceScenarioName = "confluent_schema Data Source Lifecycle"
+	"github.com/walkerus/go-wiremock"
 )
 
 var fullSchemaDataSourceLabel = fmt.Sprintf("data.confluent_schema.%s", testSchemaResourceLabel)

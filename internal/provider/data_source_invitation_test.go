@@ -17,19 +17,12 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
 	"testing"
-)
 
-const (
-	invitationDataSourceScenarioName = "confluent_invitation Data Source Lifecycle"
-
-	invitationUrlPath = "/iam/v2/invitations/i-gxxn1"
-	invitationId      = "i-gxxn1"
-	invitationLabel   = "data.confluent_invitation.inv"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/walkerus/go-wiremock"
 )
 
 func TestAccDataSourceInvitation(t *testing.T) {

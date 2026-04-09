@@ -18,18 +18,16 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	dc "github.com/confluentinc/ccloud-sdk-go-v2/data-catalog/v1"
+	"regexp"
+	"strings"
+
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"regexp"
-	"strings"
-)
 
-const (
-	qualifiedName = "qualifiedName"
+	datacatalogv1 "github.com/confluentinc/ccloud-sdk-go-v2/data-catalog/v1"
 )
 
 func catalogEntityAttributesResource() *schema.Resource {
@@ -99,13 +97,13 @@ func catalogEntityAttributesCreate(ctx context.Context, d *schema.ResourceData, 
 	attributes[qualifiedName] = entityName
 
 	catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
-	entityRequest := dc.Entity{}
+	entityRequest := datacatalogv1.Entity{}
 	entityRequest.SetTypeName(entityType)
 	entityRequest.SetAttributes(attributes)
-	entityWithExtInfo := dc.EntityWithExtInfo{}
+	entityWithExtInfo := datacatalogv1.EntityWithExtInfo{}
 	entityWithExtInfo.SetEntity(entityRequest)
 
-	request := catalogRestClient.apiClient.EntityV1Api.PartialEntityUpdate(catalogRestClient.dataCatalogApiContext(ctx))
+	request := catalogRestClient.apiClient.EntityV1Api.PartialEntityUpdate(catalogRestClient.dataCatalogV1ApiContext(ctx))
 	request = request.EntityWithExtInfo(entityWithExtInfo)
 
 	createEntityAttributesRequestJson, err := json.Marshal(request)
@@ -165,7 +163,7 @@ func readEntityAttributesAndSetAttributes(ctx context.Context, d *schema.Resourc
 
 	tflog.Debug(ctx, fmt.Sprintf("Reading Entity Attributes %q=%q", paramId, entityAttributesId), map[string]interface{}{entityAttributesLoggingKey: entityAttributesId})
 
-	request := catalogRestClient.apiClient.EntityV1Api.GetByUniqueAttributes(catalogRestClient.dataCatalogApiContext(ctx), entityType, entityName)
+	request := catalogRestClient.apiClient.EntityV1Api.GetByUniqueAttributes(catalogRestClient.dataCatalogV1ApiContext(ctx), entityType, entityName)
 	entity, resp, err := request.Execute()
 	if err != nil {
 		tflog.Warn(ctx, fmt.Sprintf("Error reading Entity Attributes %q: %s", entityAttributesId, createDescriptiveError(err, resp)), map[string]interface{}{entityAttributesLoggingKey: entityAttributesId})
@@ -217,13 +215,13 @@ func catalogEntityAttributesDelete(ctx context.Context, d *schema.ResourceData, 
 	attributes[qualifiedName] = entityName
 
 	catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
-	entityRequest := dc.Entity{}
+	entityRequest := datacatalogv1.Entity{}
 	entityRequest.SetTypeName(entityType)
 	entityRequest.SetAttributes(attributes)
-	entityWithExtInfo := dc.EntityWithExtInfo{}
+	entityWithExtInfo := datacatalogv1.EntityWithExtInfo{}
 	entityWithExtInfo.SetEntity(entityRequest)
 
-	request := catalogRestClient.apiClient.EntityV1Api.PartialEntityUpdate(catalogRestClient.dataCatalogApiContext(ctx))
+	request := catalogRestClient.apiClient.EntityV1Api.PartialEntityUpdate(catalogRestClient.dataCatalogV1ApiContext(ctx))
 	request = request.EntityWithExtInfo(entityWithExtInfo)
 
 	updateEntityAttributesRequestJson, err := json.Marshal(request)
@@ -267,13 +265,13 @@ func catalogEntityAttributesUpdate(ctx context.Context, d *schema.ResourceData, 
 		attributes[qualifiedName] = entityName
 
 		catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
-		entityRequest := dc.Entity{}
+		entityRequest := datacatalogv1.Entity{}
 		entityRequest.SetTypeName(entityType)
 		entityRequest.SetAttributes(attributes)
-		entityWithExtInfo := dc.EntityWithExtInfo{}
+		entityWithExtInfo := datacatalogv1.EntityWithExtInfo{}
 		entityWithExtInfo.SetEntity(entityRequest)
 
-		request := catalogRestClient.apiClient.EntityV1Api.PartialEntityUpdate(catalogRestClient.dataCatalogApiContext(ctx))
+		request := catalogRestClient.apiClient.EntityV1Api.PartialEntityUpdate(catalogRestClient.dataCatalogV1ApiContext(ctx))
 		request = request.EntityWithExtInfo(entityWithExtInfo)
 
 		updateEntityAttributesRequestJson, err := json.Marshal(request)
@@ -302,7 +300,7 @@ func createEntityAttributesId(entityType, entityName string) string {
 	return fmt.Sprintf("%s/%s", entityType, entityName)
 }
 
-func setEntityAttributesAttributes(d *schema.ResourceData, entity *dc.Entity, c *CatalogRestClient) (*schema.ResourceData, error) {
+func setEntityAttributesAttributes(d *schema.ResourceData, entity *datacatalogv1.Entity, c *CatalogRestClient) (*schema.ResourceData, error) {
 	entityName := d.Get(paramEntityName).(string)
 	if err := d.Set(paramEntityType, entity.GetTypeName()); err != nil {
 		return nil, err

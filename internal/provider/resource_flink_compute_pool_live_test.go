@@ -242,7 +242,7 @@ func testAccCheckFlinkComputePoolLiveDestroy(s *terraform.State) error {
 		}
 		deletedPoolId := rs.Primary.ID
 		environmentId := rs.Primary.Attributes["environment.0.id"]
-		req := c.fcpmClient.ComputePoolsFcpmV2Api.GetFcpmV2ComputePool(c.fcpmApiContext(context.Background()), deletedPoolId).Environment(environmentId)
+		req := c.flinkV2Client.ComputePoolsFcpmV2Api.GetFcpmV2ComputePool(c.flinkV2ApiContext(context.Background()), deletedPoolId).Environment(environmentId)
 		deletedPool, response, err := req.Execute()
 		if response != nil && (response.StatusCode == http.StatusForbidden || response.StatusCode == http.StatusNotFound) {
 			return nil
@@ -319,4 +319,3 @@ func testAccCheckFlinkComputePoolLiveExists(n string) resource.TestCheckFunc {
 		return nil
 	}
 }
-

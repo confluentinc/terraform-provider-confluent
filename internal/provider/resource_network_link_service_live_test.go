@@ -170,4 +170,3 @@ func testAccCheckNetworkLinkServiceLiveConfig(endpoint, nlsResourceLabel, nlsDis
 	}
 	`, endpoint, apiKey, apiSecret, nlsResourceLabel, nlsDisplayName, environmentId, networkId, environmentId)
 }
-

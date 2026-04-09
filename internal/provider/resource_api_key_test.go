@@ -23,47 +23,9 @@ import (
 	"os"
 	"testing"
 
-	"github.com/walkerus/go-wiremock"
-
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-)
-
-const (
-	scenarioStateKafkaApiKeyHasBeenCreated                = "The new kafka api key has been just created"
-	scenarioStateKafkaApiKeyHasBeenSyncedFirstRead        = "The new kafka api key has been just synced (read #1)"
-	scenarioStateKafkaApiKeyHasBeenSyncedConfirmationRead = "The new kafka api key has been just synced (final read)"
-	scenarioStateKafkaApiKeyHasBeenUpdated                = "The new kafka api key's description and display_name have been just updated"
-	scenarioStateKafkaApiKeyHasBeenDeleted                = "The new kafka api key has been deleted"
-	kafkaApiKeyScenarioName                               = "confluent_api_key (Kafka API Key) Resource Lifecycle"
-
-	scenarioStateFlinkApiKeyHasBeenCreated                = "The new flink api key has been just created"
-	scenarioStateFlinkApiKeyHasBeenSyncedFirstRead        = "The new flink api key has been just synced (read #1)"
-	scenarioStateFlinkApiKeyHasBeenSyncedConfirmationRead = "The new flink api key has been just synced (final read)"
-	scenarioStateFlinkApiKeyHasBeenUpdated                = "The new flink api key's description and display_name have been just updated"
-	scenarioStateFlinkApiKeyHasBeenDeleted                = "The new flink api key has been deleted"
-	flinkApiKeyScenarioName                               = "confluent_api_key (Flink API Key) Resource Lifecycle"
-
-	scenarioStateCloudApiKeyHasBeenCreated = "The new cloud api key has been just created"
-	scenarioStateCloudApiKeyHasBeenSynced  = "The new cloud api key has been just synced"
-	scenarioStateCloudApiKeyHasBeenUpdated = "The new cloud api key's description and display_name have been just updated"
-	scenarioStateCloudApiKeyHasBeenDeleted = "The new cloud api key has been deleted"
-	cloudApiKeyScenarioName                = "confluent_api_key (Cloud API Key) Resource Lifecycle"
-
-	scenarioStateTableflowApiKeyHasBeenCreated = "The new tableflow api key has been just created"
-	scenarioStateTableflowApiKeyHasBeenSynced  = "The new tableflow api key has been just synced"
-	scenarioStateTableflowApiKeyHasBeenUpdated = "The new tableflow api key's description and display_name have been just updated"
-	scenarioStateTableflowApiKeyHasBeenDeleted = "The new tableflow api key has been deleted"
-	tableflowApiKeyScenarioName                = "confluent_api_key (Tableflow API Key) Resource Lifecycle"
-
-	scenarioStateGlobalApiKeyHasBeenCreated = "The new global api key has been just created"
-	scenarioStateGlobalApiKeyHasBeenSynced  = "The new global api key has been just synced"
-	scenarioStateGlobalApiKeyHasBeenUpdated = "The new global api key's description and display_name have been just updated"
-	scenarioStateGlobalApiKeyHasBeenDeleted = "The new global api key has been deleted"
-	globalApiKeyScenarioName                = "confluent_api_key (Global API Key) Resource Lifecycle"
-
-	testShouldDisableBefore = "false"
-	testShouldDisableAfter  = "true"
+	"github.com/walkerus/go-wiremock"
 )
 
 func TestAccKafkaApiKey(t *testing.T) {
@@ -1018,7 +980,7 @@ func testAccCheckApiKeyDestroy(s *terraform.State) error {
 			continue
 		}
 		deletedApiKeyId := rs.Primary.ID
-		req := c.apiKeysClient.APIKeysIamV2Api.GetIamV2ApiKey(c.apiKeysApiContext(context.Background()), deletedApiKeyId)
+		req := c.apiKeysV2Client.APIKeysIamV2Api.GetIamV2ApiKey(c.apiKeysV2ApiContext(context.Background()), deletedApiKeyId)
 		deletedApiKey, response, err := req.Execute()
 		if response != nil && (response.StatusCode == http.StatusForbidden) {
 			return nil

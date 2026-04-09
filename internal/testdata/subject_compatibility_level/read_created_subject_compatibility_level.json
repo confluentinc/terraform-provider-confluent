@@ -1,4 +1,6 @@
 {
   "compatibilityLevel": "FULL",
-  "compatibilityGroup": "abc.cg.version"
+  "compatibilityGroup": "abc.cg.version",
+  "normalize": true,
+  "alias": ""
 }

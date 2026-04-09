@@ -18,6 +18,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -68,8 +69,8 @@ func ipFilterDataSourceRead(ctx context.Context, d *schema.ResourceData, meta in
 	tflog.Debug(ctx, fmt.Sprintf("Reading IP Filter %q=%q", paramId, ipFilterID), map[string]interface{}{ipFilterLoggingKey: ipFilterID})
 
 	c := meta.(*Client)
-	request := c.iamIPClient.IPFiltersIamV2Api.GetIamV2IpFilter(c.iamIPApiContext(ctx), ipFilterID)
-	ipFilter, resp, err := c.iamIPClient.IPFiltersIamV2Api.GetIamV2IpFilterExecute(request)
+	request := c.iamIpFilteringV2Client.IPFiltersIamV2Api.GetIamV2IpFilter(c.iamIpFilteringV2ApiContext(ctx), ipFilterID)
+	ipFilter, resp, err := c.iamIpFilteringV2Client.IPFiltersIamV2Api.GetIamV2IpFilterExecute(request)
 	if err != nil {
 		return diag.Errorf("error reading IP Filter %q: %s", ipFilterID, createDescriptiveError(err, resp))
 	}

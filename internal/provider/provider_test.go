@@ -16,6 +16,9 @@ package provider
 
 import (
 	"os"
+	"path/filepath"
+	"runtime"
+	"strings"
 	"testing"
 	"time"
 
@@ -26,10 +29,6 @@ import (
 var testAccProviders map[string]*schema.Provider
 var testAccProvider *schema.Provider
 var testAccProviderFactories map[string]func() (*schema.Provider, error)
-
-const (
-	testVersion = "test-version"
-)
 
 func init() {
 	testAccProvider = New(testVersion, "")()
@@ -65,6 +64,38 @@ func testAccPreCheck(t *testing.T) {
 	}
 }
 
+func TestProviderGoContainsTfgenMarkers(t *testing.T) {
+	// Locate provider.go relative to this test file.
+	_, thisFile, _, ok := runtime.Caller(0)
+	if !ok {
+		t.Fatal("runtime.Caller(0) failed: unable to determine test file path")
+	}
+	providerGoPath := filepath.Join(filepath.Dir(thisFile), "provider.go")
+
+	content, err := os.ReadFile(providerGoPath)
+	if err != nil {
+		t.Fatalf("failed to read provider.go: %s", err)
+	}
+	text := string(content)
+
+	markers := []string{
+		"// cli-tfgen:tf-resources",
+		"// cli-tfgen:tf-datasources",
+		"// cli-tfgen:tf-client-fields",
+		"// cli-tfgen:tf-imports",
+		"// cli-tfgen:tf-client-cfg",
+		"// cli-tfgen:tf-client-endpoint",
+		"// cli-tfgen:tf-client-useragent",
+		"// cli-tfgen:tf-client-httpclient",
+		"// cli-tfgen:tf-client-literal",
+	}
+	for _, marker := range markers {
+		if !strings.Contains(text, marker) {
+			t.Errorf("provider.go is missing required marker %q (needed by cli-terraform-generator --provider-dir)", marker)
+		}
+	}
+}
+
 func TestSleepIfNotTestMode(t *testing.T) {
 	t.Run("should not sleep in acceptance test mode (mock tests)", func(t *testing.T) {
 		start := time.Now()
@@ -93,6 +124,69 @@ func TestSleepIfNotTestMode(t *testing.T) {
 
 		if duration < time.Second {
 			t.Errorf("expected to sleep in live production test mode, but slept for %v\n", duration)
+		}
+	})
+}
+
+func TestGetDelayAndPollInterval(t *testing.T) {
+	t.Run("should return 1s/1s in acceptance test mode", func(t *testing.T) {
+		delay, pollInterval := getDelayAndPollInterval(5*time.Minute, 30*time.Second, true)
+
+		if delay != 1*time.Second {
+			t.Errorf("expected delay to be 1s in acceptance test mode, got %v", delay)
+		}
+		if pollInterval != 1*time.Second {
+			t.Errorf("expected pollInterval to be 1s in acceptance test mode, got %v", pollInterval)
+		}
+	})
+
+	t.Run("should return normal values when not in acceptance test mode", func(t *testing.T) {
+		expectedDelay := 5 * time.Minute
+		expectedPollInterval := 30 * time.Second
+		delay, pollInterval := getDelayAndPollInterval(expectedDelay, expectedPollInterval, false)
+
+		if delay != expectedDelay {
+			t.Errorf("expected delay to be %v, got %v", expectedDelay, delay)
+		}
+		if pollInterval != expectedPollInterval {
+			t.Errorf("expected pollInterval to be %v, got %v", expectedPollInterval, pollInterval)
+		}
+	})
+
+	t.Run("should return large delay and poll interval values when not in acceptance test mode", func(t *testing.T) {
+		expectedDelay := 10 * time.Minute
+		expectedPollInterval := 2 * time.Minute
+		delay, pollInterval := getDelayAndPollInterval(expectedDelay, expectedPollInterval, false)
+
+		if delay != expectedDelay {
+			t.Errorf("expected delay to be %v, got %v", expectedDelay, delay)
+		}
+		if pollInterval != expectedPollInterval {
+			t.Errorf("expected pollInterval to be %v, got %v", expectedPollInterval, pollInterval)
+		}
+	})
+
+	t.Run("should ignore normal values and return 1s/1s in acceptance test mode regardless of input", func(t *testing.T) {
+		delay, pollInterval := getDelayAndPollInterval(10*time.Minute, 2*time.Minute, true)
+
+		if delay != 1*time.Second {
+			t.Errorf("expected delay to be 1s in acceptance test mode, got %v", delay)
+		}
+		if pollInterval != 1*time.Second {
+			t.Errorf("expected pollInterval to be 1s in acceptance test mode, got %v", pollInterval)
+		}
+	})
+
+	t.Run("should return small delay and poll interval values when not in acceptance test mode", func(t *testing.T) {
+		expectedDelay := 1 * time.Second
+		expectedPollInterval := 500 * time.Millisecond
+		delay, pollInterval := getDelayAndPollInterval(expectedDelay, expectedPollInterval, false)
+
+		if delay != expectedDelay {
+			t.Errorf("expected delay to be %v, got %v", expectedDelay, delay)
+		}
+		if pollInterval != expectedPollInterval {
+			t.Errorf("expected pollInterval to be %v, got %v", expectedPollInterval, pollInterval)
 		}
 	})
 }

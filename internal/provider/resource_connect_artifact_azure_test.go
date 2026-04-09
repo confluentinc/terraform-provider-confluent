@@ -3,7 +3,6 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/walkerus/go-wiremock"
 	"net/http"
 	"os"
 	"regexp"
@@ -11,11 +10,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-)
-
-const (
-	connectArtifactCloudAzure            = "AZURE"
-	connectArtifactCloudAzureAPIResponse = "azure"
+	"github.com/walkerus/go-wiremock"
 )
 
 func TestAccConnectArtifactAzure(t *testing.T) {
@@ -163,7 +158,7 @@ func testAccCheckConnectArtifactDestroyAzure(s *terraform.State) error {
 			continue
 		}
 		deletedArtifactId := rs.Primary.ID
-		req := c.camClient.ConnectArtifactsCamV1Api.GetCamV1ConnectArtifact(c.camApiContext(context.Background()), deletedArtifactId).
+		req := c.camV1Client.ConnectArtifactsCamV1Api.GetCamV1ConnectArtifact(c.camV1ApiContext(context.Background()), deletedArtifactId).
 			SpecCloud(connectArtifactCloudAzure).
 			Environment(connectArtifactEnvironmentId)
 		deletedArtifact, response, err := req.Execute()

@@ -18,67 +18,16 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	v3 "github.com/confluentinc/ccloud-sdk-go-v2/kafkarest/v3"
+	"net/http"
+	"regexp"
+	"strings"
+
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"net/http"
-	"regexp"
-	"strings"
-)
 
-const (
-	paramLinkName                = "link_name"
-	paramSourceKafkaCluster      = "source_kafka_cluster"
-	paramDestinationKafkaCluster = "destination_kafka_cluster"
-	paramLocalKafkaCluster       = "local_kafka_cluster"
-	paramRemoteKafkaCluster      = "remote_kafka_cluster"
-	paramLinkMode                = "link_mode"
-	paramConnectionMode          = "connection_mode"
-	paramClusterLinkId           = "cluster_link_id"
-	paramLinkState               = "link_state"
-
-	bootstrapServersConfigKey = "bootstrap.servers"
-	securityProtocolConfigKey = "security.protocol"
-
-	saslMechanismConfigKey                   = "sasl.mechanism"
-	saslJaasConfigConfigKey                  = "sasl.jaas.config"
-	saslLoginCallbackHandlerClassConfigKey   = "sasl.login.callback.handler.class"
-	saslOAuthBearerTokenEndpointUrlConfigKey = "sasl.oauthbearer.token.endpoint.url"
-
-	localSecurityProtocolConfigKey                = "local.security.protocol"
-	localSaslMechanismConfigKey                   = "local.sasl.mechanism"
-	localSaslJaasConfigConfigKey                  = "local.sasl.jaas.config"
-	localSaslLoginCallbackHandlerClassConfigKey   = "local.sasl.login.callback.handler.class"
-	localSaslOAuthBearerTokenEndpointUrlConfigKey = "local.sasl.oauthbearer.token.endpoint.url"
-
-	connectionModeConfigKey  = "connection.mode"
-	linkModeConfigKey        = "link.mode"
-	remoteLinkConnectionMode = "remote.link.connection.mode"
-	linkModeDestination      = "DESTINATION"
-	linkModeSource           = "SOURCE"
-	linkModeBidirectional    = "BIDIRECTIONAL"
-	connectionModeInbound    = "INBOUND"
-	connectionModeOutbound   = "OUTBOUND"
-
-	importSourceKafkaRestEndpointEnvVar           = "IMPORT_SOURCE_KAFKA_REST_ENDPOINT"
-	importSourceKafkaBootstrapEndpointEnvVar      = "IMPORT_SOURCE_KAFKA_BOOTSTRAP_ENDPOINT"
-	importDestinationKafkaRestEndpointEnvVar      = "IMPORT_DESTINATION_KAFKA_REST_ENDPOINT"
-	importDestinationKafkaBootstrapEndpointEnvVar = "IMPORT_DESTINATION_KAFKA_BOOTSTRAP_ENDPOINT"
-
-	importLocalKafkaRestEndpointEnvVar       = "IMPORT_LOCAL_KAFKA_REST_ENDPOINT"
-	importLocalKafkaBootstrapEndpointEnvVar  = "IMPORT_LOCAL_KAFKA_BOOTSTRAP_ENDPOINT"
-	importRemoteKafkaRestEndpointEnvVar      = "IMPORT_REMOTE_KAFKA_REST_ENDPOINT"
-	importRemoteKafkaBootstrapEndpointEnvVar = "IMPORT_REMOTE_KAFKA_BOOTSTRAP_ENDPOINT"
-
-	paramSourceKafkaCredentials      = "source_kafka_cluster.0.credentials"
-	paramDestinationKafkaCredentials = "destination_kafka_cluster.0.credentials"
-	paramLocalKafkaCredentials       = "local_kafka_cluster.0.credentials"
-	paramRemoteKafkaCredentials      = "remote_kafka_cluster.0.credentials"
-
-	docsClusterLinkConfigUrl = "https://docs.confluent.io/cloud/current/multi-cloud/cluster-linking/cluster-links-cc.html#configuring-cluster-link-behavior"
-	dynamicClusterLinkConfig = "DYNAMIC_CLUSTER_LINK_CONFIG"
+	kafkarestv3 "github.com/confluentinc/ccloud-sdk-go-v2/kafkarest/v3"
 )
 
 var sourceKafkaCredentialsBlockKey = fmt.Sprintf("%s.0.%s.#", paramSourceKafkaCluster, paramCredentials)
@@ -198,7 +147,7 @@ func clusterLinkCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 	return clusterLinkRead(ctx, d, meta)
 }
 
-func executeClusterLinkCreate(ctx context.Context, c *KafkaRestClient, requestData v3.CreateLinkRequestData, linkName string) (*http.Response, error) {
+func executeClusterLinkCreate(ctx context.Context, c *KafkaRestClient, requestData kafkarestv3.CreateLinkRequestData, linkName string) (*http.Response, error) {
 	return c.apiClient.ClusterLinkingV3Api.CreateKafkaLink(c.apiContext(ctx), c.clusterId).CreateLinkRequestData(requestData).LinkName(linkName).Execute()
 }
 
@@ -300,7 +249,7 @@ func readClusterLinkAndSetAttributes(ctx context.Context, d *schema.ResourceData
 	return []*schema.ResourceData{d}, nil
 }
 
-func setClusterLinkAttributes(ctx context.Context, d *schema.ResourceData, c *KafkaRestClient, clusterLink v3.ListLinksResponseData,
+func setClusterLinkAttributes(ctx context.Context, d *schema.ResourceData, c *KafkaRestClient, clusterLink kafkarestv3.ListLinksResponseData,
 	linkMode, connectionMode string, clusterLinkMetadata *ClusterLinkMetadata) (*schema.ResourceData, error) {
 	if err := d.Set(paramLinkName, clusterLink.GetLinkName()); err != nil {
 		return nil, err
@@ -417,7 +366,7 @@ func clusterLinkUpdate(ctx context.Context, d *schema.ResourceData, meta interfa
 		if len(credentialConfigs) == 0 {
 			return diag.Errorf("error updating Cluster Link: len(credentialConfigs) is 0")
 		}
-		updateCredentialConfigsRequest := v3.AlterConfigBatchRequestData{
+		updateCredentialConfigsRequest := kafkarestv3.AlterConfigBatchRequestData{
 			Data: credentialConfigs,
 		}
 		resp, err := executeClusterLinkConfigUpdate(ctx, kafkaRestClient, linkName, updateCredentialConfigsRequest)
@@ -453,7 +402,7 @@ func clusterLinkUpdate(ctx context.Context, d *schema.ResourceData, meta interfa
 
 		// Construct a request for Kafka REST API
 		_, newSettingsMapAny := d.GetChange(paramConfigs)
-		updateConfigRequest := v3.AlterConfigBatchRequestData{
+		updateConfigRequest := kafkarestv3.AlterConfigBatchRequestData{
 			Data: extractClusterLinkConfigsAlterConfigBatchRequestData(newSettingsMapAny.(map[string]interface{})),
 		}
 		kafkaRestClient, err := createKafkaRestClientForClusterLink(d, meta)
@@ -589,15 +538,15 @@ func clusterLinkImport(ctx context.Context, d *schema.ResourceData, meta interfa
 	return []*schema.ResourceData{d}, nil
 }
 
-func convertToConfigData(configs map[string]interface{}) []v3.ConfigData {
-	configResult := make([]v3.ConfigData, len(configs))
+func convertToConfigData(configs map[string]interface{}) []kafkarestv3.ConfigData {
+	configResult := make([]kafkarestv3.ConfigData, len(configs))
 
 	i := 0
 	for name, value := range configs {
 		v := value.(string)
-		configResult[i] = v3.ConfigData{
+		configResult[i] = kafkarestv3.ConfigData{
 			Name:  name,
-			Value: *v3.NewNullableString(&v),
+			Value: *kafkarestv3.NewNullableString(&v),
 		}
 		i += 1
 	}
@@ -772,7 +721,7 @@ func createKafkaRestClientForClusterLink(d *schema.ResourceData, meta interface{
 	}
 }
 
-func constructClusterLinkRequest(d *schema.ResourceData, meta interface{}) (v3.CreateLinkRequestData, error) {
+func constructClusterLinkRequest(d *schema.ResourceData, meta interface{}) (kafkarestv3.CreateLinkRequestData, error) {
 	linkMode := d.Get(paramLinkMode).(string)
 	connectionMode := d.Get(paramConnectionMode).(string)
 	clusterLinkSettings := extractClusterLinkConfigsConfigData(d.Get(paramConfigs).(map[string]interface{}))
@@ -791,7 +740,7 @@ func constructClusterLinkRequest(d *schema.ResourceData, meta interface{}) (v3.C
 			// Add top level cluster link configs
 			configs = append(configs, clusterLinkSettings...)
 
-			return v3.CreateLinkRequestData{
+			return kafkarestv3.CreateLinkRequestData{
 				RemoteClusterId: &remoteKafkaClusterId,
 				Configs:         &configs,
 			}, nil
@@ -804,7 +753,7 @@ func constructClusterLinkRequest(d *schema.ResourceData, meta interface{}) (v3.C
 			// Add top level cluster link configs
 			configs = append(configs, clusterLinkSettings...)
 
-			return v3.CreateLinkRequestData{
+			return kafkarestv3.CreateLinkRequestData{
 				RemoteClusterId: &remoteKafkaClusterId,
 				Configs:         &configs,
 			}, nil
@@ -820,7 +769,7 @@ func constructClusterLinkRequest(d *schema.ResourceData, meta interface{}) (v3.C
 			// Add top level cluster link configs
 			configs = append(configs, clusterLinkSettings...)
 
-			return v3.CreateLinkRequestData{
+			return kafkarestv3.CreateLinkRequestData{
 				SourceClusterId: &sourceKafkaClusterId,
 				Configs:         &configs,
 			}, nil
@@ -833,7 +782,7 @@ func constructClusterLinkRequest(d *schema.ResourceData, meta interface{}) (v3.C
 			// Add top level cluster link configs
 			configs = append(configs, clusterLinkSettings...)
 
-			return v3.CreateLinkRequestData{
+			return kafkarestv3.CreateLinkRequestData{
 				SourceClusterId: &sourceKafkaClusterId,
 				Configs:         &configs,
 			}, nil
@@ -852,7 +801,7 @@ func constructClusterLinkRequest(d *schema.ResourceData, meta interface{}) (v3.C
 		// Add top level cluster link configs
 		configs = append(configs, clusterLinkSettings...)
 
-		return v3.CreateLinkRequestData{
+		return kafkarestv3.CreateLinkRequestData{
 			DestinationClusterId: &destinationKafkaClusterId,
 			Configs:              &configs,
 		}, nil
@@ -1045,15 +994,15 @@ func loadClusterLinkConfigs(ctx context.Context, d *schema.ResourceData, c *Kafk
 	return config, nil
 }
 
-func extractClusterLinkConfigsAlterConfigBatchRequestData(configs map[string]interface{}) []v3.AlterConfigBatchRequestDataData {
-	configResult := make([]v3.AlterConfigBatchRequestDataData, len(configs))
+func extractClusterLinkConfigsAlterConfigBatchRequestData(configs map[string]interface{}) []kafkarestv3.AlterConfigBatchRequestDataData {
+	configResult := make([]kafkarestv3.AlterConfigBatchRequestDataData, len(configs))
 
 	i := 0
 	for name, value := range configs {
 		v := value.(string)
-		configResult[i] = v3.AlterConfigBatchRequestDataData{
+		configResult[i] = kafkarestv3.AlterConfigBatchRequestDataData{
 			Name:  name,
-			Value: *v3.NewNullableString(&v),
+			Value: *kafkarestv3.NewNullableString(&v),
 		}
 		i += 1
 	}
@@ -1061,15 +1010,15 @@ func extractClusterLinkConfigsAlterConfigBatchRequestData(configs map[string]int
 	return configResult
 }
 
-func extractClusterLinkConfigsConfigData(configs map[string]interface{}) []v3.ConfigData {
-	configResult := make([]v3.ConfigData, len(configs))
+func extractClusterLinkConfigsConfigData(configs map[string]interface{}) []kafkarestv3.ConfigData {
+	configResult := make([]kafkarestv3.ConfigData, len(configs))
 
 	i := 0
 	for name, value := range configs {
 		v := value.(string)
-		configResult[i] = v3.ConfigData{
+		configResult[i] = kafkarestv3.ConfigData{
 			Name:  name,
-			Value: *v3.NewNullableString(&v),
+			Value: *kafkarestv3.NewNullableString(&v),
 		}
 		i += 1
 	}
@@ -1077,6 +1026,6 @@ func extractClusterLinkConfigsConfigData(configs map[string]interface{}) []v3.Co
 	return configResult
 }
 
-func executeClusterLinkConfigUpdate(ctx context.Context, c *KafkaRestClient, linkName string, requestData v3.AlterConfigBatchRequestData) (*http.Response, error) {
+func executeClusterLinkConfigUpdate(ctx context.Context, c *KafkaRestClient, linkName string, requestData kafkarestv3.AlterConfigBatchRequestData) (*http.Response, error) {
 	return c.apiClient.ClusterLinkingV3Api.UpdateKafkaLinkConfigBatch(c.apiContext(ctx), c.clusterId, linkName).AlterConfigBatchRequestData(requestData).Execute()
 }

@@ -17,19 +17,12 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
 	"testing"
-)
 
-const (
-	kekResourceScenarioName        = "confluent_schema_registry_kek Resource Lifecycle"
-	scenarioStateKekHasBeenCreated = "A new kek has been just created"
-	scenarioStateKekHasBeenUpdated = "A new kek has been just updated"
-	createKekUrlPath               = "/dek-registry/v1/keks"
-	kekLabel                       = "confluent_schema_registry_kek.mykek"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/walkerus/go-wiremock"
 )
 
 func TestAccKek(t *testing.T) {

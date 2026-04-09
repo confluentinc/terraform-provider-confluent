@@ -105,7 +105,7 @@ func testAccCheckIPGroupLiveDestroy(s *terraform.State) error {
 			continue
 		}
 		deletedIPGroupId := rs.Primary.ID
-		req := c.iamIPClient.IPGroupsIamV2Api.GetIamV2IpGroup(c.iamIPApiContext(context.Background()), deletedIPGroupId)
+		req := c.iamIpFilteringV2Client.IPGroupsIamV2Api.GetIamV2IpGroup(c.iamIpFilteringV2ApiContext(context.Background()), deletedIPGroupId)
 		deletedIPGroup, response, err := req.Execute()
 		if response != nil && (response.StatusCode == http.StatusForbidden || response.StatusCode == http.StatusNotFound) {
 			// If the error is equivalent to http.StatusNotFound, the IP Group is destroyed.
@@ -173,4 +173,3 @@ func testAccCheckIPGroupLiveExists(n string) resource.TestCheckFunc {
 		return nil
 	}
 }
-

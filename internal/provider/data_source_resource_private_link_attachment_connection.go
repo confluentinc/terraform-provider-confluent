@@ -18,6 +18,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -122,8 +123,8 @@ func privateLinkAttachmentConnectionDataSourceRead(ctx context.Context, d *schem
 	tflog.Debug(ctx, fmt.Sprintf("Reading Private Link Attachment Connection %q=%q", paramId, plattcId), map[string]interface{}{privateLinkAttachmentConnectionLoggingKey: plattcId})
 
 	c := meta.(*Client)
-	request := c.netPLClient.PrivateLinkAttachmentConnectionsNetworkingV1Api.GetNetworkingV1PrivateLinkAttachmentConnection(c.netPLApiContext(ctx), plattcId).Environment(environmentId)
-	plattc, resp, err := c.netPLClient.PrivateLinkAttachmentConnectionsNetworkingV1Api.GetNetworkingV1PrivateLinkAttachmentConnectionExecute(request)
+	request := c.networkingPrivatelinkV1Client.PrivateLinkAttachmentConnectionsNetworkingV1Api.GetNetworkingV1PrivateLinkAttachmentConnection(c.networkingPrivatelinkV1ApiContext(ctx), plattcId).Environment(environmentId)
+	plattc, resp, err := c.networkingPrivatelinkV1Client.PrivateLinkAttachmentConnectionsNetworkingV1Api.GetNetworkingV1PrivateLinkAttachmentConnectionExecute(request)
 	if err != nil {
 		return diag.Errorf("error reading Private Link Attachment Connection %q: %s", plattcId, createDescriptiveError(err, resp))
 	}

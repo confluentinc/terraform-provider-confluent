@@ -25,32 +25,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
-	netap "github.com/confluentinc/ccloud-sdk-go-v2/networking-access-point/v1"
+	networkingaccesspointv1 "github.com/confluentinc/ccloud-sdk-go-v2/networking-access-point/v1"
 )
 
-const (
-	paramAwsEgressPrivateLinkEndpoint              = "aws_egress_private_link_endpoint"
-	paramAzureEgressPrivateLinkEndpoint            = "azure_egress_private_link_endpoint"
-	paramGcpEgressPrivateServiceConnectEndpoint    = "gcp_egress_private_service_connect_endpoint"
-	paramAwsPrivateNetworkInterface                = "aws_private_network_interface"
-	paramEnableHighAvailability                    = "enable_high_availability"
-	paramVpcEndpointDnsName                        = "vpc_endpoint_dns_name"
-	paramPrivateLinkSubresourceName                = "private_link_subresource_name"
-	paramPrivateEndpointDomain                     = "private_endpoint_domain"
-	paramPrivateEndpointIpAddress                  = "private_endpoint_ip_address"
-	paramPrivateEndpointCustomDnsConfigDomains     = "private_endpoint_custom_dns_config_domains"
-	paramPrivateServiceConnectEndpointTarget       = "private_service_connect_endpoint_target"
-	paramPrivateServiceConnectEndpointConnectionId = "private_service_connect_endpoint_connection_id"
-	paramPrivateServiceConnectEndpointIpAddress    = "private_service_connect_endpoint_ip_address"
-	paramPrivateServiceConnectEndpointName         = "private_service_connect_endpoint_name"
-	paramNetworkInterfaces                         = "network_interfaces"
-	awsEgressPrivateLinkEndpoint                   = "AwsEgressPrivateLinkEndpoint"
-	azureEgressPrivateLinkEndpoint                 = "AzureEgressPrivateLinkEndpoint"
-	gcpEgressPrivateServiceConnectEndpoint         = "GcpEgressPrivateServiceConnectEndpoint"
-	awsPrivateNetworkInterface                     = "AwsPrivateNetworkInterface"
-)
-
-var acceptedEndpointConfig = []string{paramAwsEgressPrivateLinkEndpoint, paramAzureEgressPrivateLinkEndpoint, paramGcpEgressPrivateServiceConnectEndpoint, paramAwsPrivateNetworkInterface}
+var acceptedEndpointConfig = []string{paramAwsEgressPrivateLinkEndpoint, paramAwsIngressPrivateLinkEndpoint, paramAzureEgressPrivateLinkEndpoint, paramGcpEgressPrivateServiceConnectEndpoint, paramAwsPrivateNetworkInterface}
 
 func accessPointResource() *schema.Resource {
 	return &schema.Resource{
@@ -70,6 +48,7 @@ func accessPointResource() *schema.Resource {
 			paramGateway:                                requiredGateway(),
 			paramEnvironment:                            environmentSchema(),
 			paramAwsEgressPrivateLinkEndpoint:           paramAwsEgressPrivateLinkEndpointSchema(),
+			paramAwsIngressPrivateLinkEndpoint:          paramAwsIngressPrivateLinkEndpointSchema(),
 			paramAzureEgressPrivateLinkEndpoint:         paramAzureEgressPrivateLinkEndpointSchema(),
 			paramGcpEgressPrivateServiceConnectEndpoint: paramGcpEgressPrivateServiceConnectEndpointSchema(),
 			paramAwsPrivateNetworkInterface:             paramAwsPrivateNetworkInterfaceSchema(),
@@ -104,6 +83,37 @@ func paramAwsEgressPrivateLinkEndpointSchema() *schema.Schema {
 				paramVpcEndpointDnsName: {
 					Type:     schema.TypeString,
 					Computed: true,
+				},
+			},
+		},
+		ExactlyOneOf: acceptedEndpointConfig,
+	}
+}
+
+func paramAwsIngressPrivateLinkEndpointSchema() *schema.Schema {
+	return &schema.Schema{
+		Type:     schema.TypeList,
+		Optional: true,
+		ForceNew: true,
+		MinItems: 1,
+		MaxItems: 1,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramVpcEndpointId: {
+					Type:        schema.TypeString,
+					Required:    true,
+					ForceNew:    true,
+					Description: "ID of a VPC Endpoint that will be connected to the VPC Endpoint service.",
+				},
+				paramVpcEndpointServiceName: {
+					Type:        schema.TypeString,
+					Computed:    true,
+					Description: "ID of the Confluent Cloud VPC Endpoint service used for PrivateLink.",
+				},
+				paramDnsDomain: {
+					Type:        schema.TypeString,
+					Computed:    true,
+					Description: "DNS domain name used to configure the Private Hosted Zone for the Access Point.",
 				},
 			},
 		},
@@ -170,7 +180,6 @@ func paramGcpEgressPrivateServiceConnectEndpointSchema() *schema.Schema {
 
 					// Suppress the diff shown if the values are equivalent forms of "ALL_GOOGLE_APIS" and "all-google-apis"
 					DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
-						const allGoogleApisNormalized = "all-google-apis"
 
 						normalizedOld := strings.ReplaceAll(strings.ToLower(old), "_", "-")
 						normalizedNew := strings.ReplaceAll(strings.ToLower(new), "_", "-")
@@ -236,28 +245,35 @@ func accessPointCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
 
 	isAwsEgressPrivateLinkEndpoint := len(d.Get(paramAwsEgressPrivateLinkEndpoint).([]interface{})) > 0
+	isAwsIngressPrivateLinkEndpoint := len(d.Get(paramAwsIngressPrivateLinkEndpoint).([]interface{})) > 0
 	isAzureEgressPrivateLinkEndpoint := len(d.Get(paramAzureEgressPrivateLinkEndpoint).([]interface{})) > 0
 	isAwsPrivateNetworkInterface := len(d.Get(paramAwsPrivateNetworkInterface).([]interface{})) > 0
 	isGcpEgressPrivateServiceConnectEndpoint := len(d.Get(paramGcpEgressPrivateServiceConnectEndpoint).([]interface{})) > 0
 
-	spec := netap.NewNetworkingV1AccessPointSpec()
+	spec := networkingaccesspointv1.NewNetworkingV1AccessPointSpec()
 	if displayName != "" {
 		spec.SetDisplayName(displayName)
 	}
-	spec.SetGateway(netap.ObjectReference{Id: gatewayId})
-	spec.SetEnvironment(netap.ObjectReference{Id: environmentId})
+	spec.SetGateway(networkingaccesspointv1.ObjectReference{Id: gatewayId})
+	spec.SetEnvironment(networkingaccesspointv1.ObjectReference{Id: environmentId})
 
-	config := netap.NetworkingV1AccessPointSpecConfigOneOf{}
+	config := networkingaccesspointv1.NetworkingV1AccessPointSpecConfigOneOf{}
 	if isAwsEgressPrivateLinkEndpoint {
 		enableHighAvailability := d.Get(fmt.Sprintf("%s.0.%s", paramAwsEgressPrivateLinkEndpoint, paramEnableHighAvailability)).(bool)
-		config.NetworkingV1AwsEgressPrivateLinkEndpoint = &netap.NetworkingV1AwsEgressPrivateLinkEndpoint{
+		config.NetworkingV1AwsEgressPrivateLinkEndpoint = &networkingaccesspointv1.NetworkingV1AwsEgressPrivateLinkEndpoint{
 			Kind:                   awsEgressPrivateLinkEndpoint,
 			VpcEndpointServiceName: extractStringValueFromBlock(d, paramAwsEgressPrivateLinkEndpoint, paramVpcEndpointServiceName),
-			EnableHighAvailability: netap.PtrBool(enableHighAvailability),
+			EnableHighAvailability: networkingaccesspointv1.PtrBool(enableHighAvailability),
+		}
+		spec.SetConfig(config)
+	} else if isAwsIngressPrivateLinkEndpoint {
+		config.NetworkingV1AwsIngressPrivateLinkEndpoint = &networkingaccesspointv1.NetworkingV1AwsIngressPrivateLinkEndpoint{
+			Kind:          awsIngressPrivateLinkEndpoint,
+			VpcEndpointId: extractStringValueFromBlock(d, paramAwsIngressPrivateLinkEndpoint, paramVpcEndpointId),
 		}
 		spec.SetConfig(config)
 	} else if isAzureEgressPrivateLinkEndpoint {
-		config.NetworkingV1AzureEgressPrivateLinkEndpoint = &netap.NetworkingV1AzureEgressPrivateLinkEndpoint{
+		config.NetworkingV1AzureEgressPrivateLinkEndpoint = &networkingaccesspointv1.NetworkingV1AzureEgressPrivateLinkEndpoint{
 			Kind:                         azureEgressPrivateLinkEndpoint,
 			PrivateLinkServiceResourceId: extractStringValueFromBlock(d, paramAzureEgressPrivateLinkEndpoint, paramPrivateLinkServiceResourceId),
 		}
@@ -269,37 +285,37 @@ func accessPointCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 		spec.SetConfig(config)
 	} else if isAwsPrivateNetworkInterface {
 		networkInterfaces := convertToStringSlice(d.Get(fmt.Sprintf("%s.0.%s", paramAwsPrivateNetworkInterface, paramNetworkInterfaces)).(*schema.Set).List())
-		config.NetworkingV1AwsPrivateNetworkInterface = &netap.NetworkingV1AwsPrivateNetworkInterface{
+		config.NetworkingV1AwsPrivateNetworkInterface = &networkingaccesspointv1.NetworkingV1AwsPrivateNetworkInterface{
 			Kind:              awsPrivateNetworkInterface,
 			NetworkInterfaces: &networkInterfaces,
-			Account:           netap.PtrString(extractStringValueFromBlock(d, paramAwsPrivateNetworkInterface, paramAccount)),
+			Account:           networkingaccesspointv1.PtrString(extractStringValueFromBlock(d, paramAwsPrivateNetworkInterface, paramAccount)),
 		}
 		spec.SetConfig(config)
 	} else if isGcpEgressPrivateServiceConnectEndpoint {
-		config.NetworkingV1GcpEgressPrivateServiceConnectEndpoint = &netap.NetworkingV1GcpEgressPrivateServiceConnectEndpoint{
+		config.NetworkingV1GcpEgressPrivateServiceConnectEndpoint = &networkingaccesspointv1.NetworkingV1GcpEgressPrivateServiceConnectEndpoint{
 			Kind:                                gcpEgressPrivateServiceConnectEndpoint,
 			PrivateServiceConnectEndpointTarget: extractStringValueFromBlock(d, paramGcpEgressPrivateServiceConnectEndpoint, paramPrivateServiceConnectEndpointTarget),
 		}
 		spec.SetConfig(config)
 	} else {
-		return diag.Errorf("None of %q, %q, %q, %q blocks was provided for confluent_access_point resource", paramAwsEgressPrivateLinkEndpoint, paramAzureEgressPrivateLinkEndpoint, paramGcpEgressPrivateServiceConnectEndpoint, paramAwsPrivateNetworkInterface)
+		return diag.Errorf("None of %q, %q, %q, %q, %q blocks was provided for confluent_access_point resource", paramAwsEgressPrivateLinkEndpoint, paramAwsIngressPrivateLinkEndpoint, paramAzureEgressPrivateLinkEndpoint, paramGcpEgressPrivateServiceConnectEndpoint, paramAwsPrivateNetworkInterface)
 	}
 
-	createAccessPointRequest := netap.NetworkingV1AccessPoint{Spec: spec}
+	createAccessPointRequest := networkingaccesspointv1.NetworkingV1AccessPoint{Spec: spec}
 	createAccessPointRequestJson, err := json.Marshal(createAccessPointRequest)
 	if err != nil {
 		return diag.Errorf("error creating Access Point: error marshaling %#v to json: %s", createAccessPointRequest, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Access Point: %s", createAccessPointRequestJson))
 
-	req := c.netAccessPointClient.AccessPointsNetworkingV1Api.CreateNetworkingV1AccessPoint(c.netAPApiContext(ctx)).NetworkingV1AccessPoint(createAccessPointRequest)
+	req := c.networkingAccessPointV1Client.AccessPointsNetworkingV1Api.CreateNetworkingV1AccessPoint(c.networkingAccessPointV1ApiContext(ctx)).NetworkingV1AccessPoint(createAccessPointRequest)
 	createdAccessPoint, resp, err := req.Execute()
 	if err != nil {
 		return diag.Errorf("error creating Access Point %q: %s", createdAccessPoint.GetId(), createDescriptiveError(err, resp))
 	}
 	d.SetId(createdAccessPoint.GetId())
 
-	if err := waitForAccessPointToProvision(c.netAPApiContext(ctx), c, environmentId, d.Id()); err != nil {
+	if err := waitForAccessPointToProvision(c.networkingAccessPointV1ApiContext(ctx), c, environmentId, d.Id()); err != nil {
 		return diag.Errorf("error waiting for Access Point %q to provision: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
@@ -312,8 +328,8 @@ func accessPointCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 	return accessPointRead(ctx, d, meta)
 }
 
-func executeAccessPointRead(ctx context.Context, c *Client, environmentId string, accessPointId string) (netap.NetworkingV1AccessPoint, *http.Response, error) {
-	req := c.netAccessPointClient.AccessPointsNetworkingV1Api.GetNetworkingV1AccessPoint(c.netAPApiContext(ctx), accessPointId).Environment(environmentId)
+func executeAccessPointRead(ctx context.Context, c *Client, environmentId string, accessPointId string) (networkingaccesspointv1.NetworkingV1AccessPoint, *http.Response, error) {
+	req := c.networkingAccessPointV1Client.AccessPointsNetworkingV1Api.GetNetworkingV1AccessPoint(c.networkingAccessPointV1ApiContext(ctx), accessPointId).Environment(environmentId)
 	return req.Execute()
 }
 
@@ -333,7 +349,7 @@ func accessPointRead(ctx context.Context, d *schema.ResourceData, meta interface
 func readAccessPointAndSetAttributes(ctx context.Context, d *schema.ResourceData, meta interface{}, environmentId, accessPointId string) ([]*schema.ResourceData, error) {
 	c := meta.(*Client)
 
-	accessPoint, resp, err := executeAccessPointRead(c.netAPApiContext(ctx), c, environmentId, accessPointId)
+	accessPoint, resp, err := executeAccessPointRead(c.networkingAccessPointV1ApiContext(ctx), c, environmentId, accessPointId)
 	if err != nil {
 		tflog.Warn(ctx, fmt.Sprintf("Error reading Access Point %q: %s", accessPointId, createDescriptiveError(err)), map[string]interface{}{accessPointKey: d.Id()})
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
@@ -365,14 +381,14 @@ func accessPointDelete(ctx context.Context, d *schema.ResourceData, meta interfa
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
 	c := meta.(*Client)
 
-	req := c.netAccessPointClient.AccessPointsNetworkingV1Api.DeleteNetworkingV1AccessPoint(c.netAPApiContext(ctx), d.Id()).Environment(environmentId)
+	req := c.networkingAccessPointV1Client.AccessPointsNetworkingV1Api.DeleteNetworkingV1AccessPoint(c.networkingAccessPointV1ApiContext(ctx), d.Id()).Environment(environmentId)
 	resp, err := req.Execute()
 
 	if err != nil {
 		return diag.Errorf("error deleting Access Point %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
-	if err := waitForAccessPointToBeDeleted(c.netAPApiContext(ctx), c, environmentId, d.Id(), c.isAcceptanceTestMode); err != nil {
+	if err := waitForAccessPointToBeDeleted(c.networkingAccessPointV1ApiContext(ctx), c, environmentId, d.Id(), c.isAcceptanceTestMode); err != nil {
 		return diag.Errorf("error waiting for Access Point %q to be deleted: %s", d.Id(), createDescriptiveError(err))
 	}
 
@@ -388,17 +404,17 @@ func accessPointUpdate(ctx context.Context, d *schema.ResourceData, meta interfa
 
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
 
-	updateAccessPoint := netap.NewNetworkingV1AccessPointUpdate()
+	updateAccessPoint := networkingaccesspointv1.NewNetworkingV1AccessPointUpdate()
 
-	updateAccessPointSpec := netap.NewNetworkingV1AccessPointSpecUpdate()
-	updateAccessPointSpec.SetEnvironment(netap.ObjectReference{Id: environmentId})
+	updateAccessPointSpec := networkingaccesspointv1.NewNetworkingV1AccessPointSpecUpdate()
+	updateAccessPointSpec.SetEnvironment(networkingaccesspointv1.ObjectReference{Id: environmentId})
 	if d.HasChange(paramDisplayName) {
 		updateAccessPointSpec.SetDisplayName(d.Get(paramDisplayName).(string))
 	}
 
 	if d.HasChange(paramAwsPrivateNetworkInterface) && d.HasChange(fmt.Sprintf("%s.0.%s", paramAwsPrivateNetworkInterface, paramNetworkInterfaces)) {
 		networkInterfaces := convertToStringSlice(d.Get(fmt.Sprintf("%s.0.%s", paramAwsPrivateNetworkInterface, paramNetworkInterfaces)).(*schema.Set).List())
-		updateAccessPointSpec.SetConfig(netap.NetworkingV1AwsPrivateNetworkInterfaceAsNetworkingV1AccessPointSpecUpdateConfigOneOf(&netap.NetworkingV1AwsPrivateNetworkInterface{
+		updateAccessPointSpec.SetConfig(networkingaccesspointv1.NetworkingV1AwsPrivateNetworkInterfaceAsNetworkingV1AccessPointSpecUpdateConfigOneOf(&networkingaccesspointv1.NetworkingV1AwsPrivateNetworkInterface{
 			Kind:              paramAwsPrivateNetworkInterface,
 			NetworkInterfaces: &networkInterfaces,
 		}))
@@ -412,7 +428,7 @@ func accessPointUpdate(ctx context.Context, d *schema.ResourceData, meta interfa
 	tflog.Debug(ctx, fmt.Sprintf("Updating Access Point %q: %s", d.Id(), updateAccessPointRequestJson), map[string]interface{}{accessPointKey: d.Id()})
 
 	c := meta.(*Client)
-	req := c.netAccessPointClient.AccessPointsNetworkingV1Api.UpdateNetworkingV1AccessPoint(c.netAPApiContext(ctx), d.Id()).NetworkingV1AccessPointUpdate(*updateAccessPoint)
+	req := c.networkingAccessPointV1Client.AccessPointsNetworkingV1Api.UpdateNetworkingV1AccessPoint(c.networkingAccessPointV1ApiContext(ctx), d.Id()).NetworkingV1AccessPointUpdate(*updateAccessPoint)
 	updatedAccessPoint, resp, err := req.Execute()
 
 	if err != nil {
@@ -450,7 +466,7 @@ func accessPointImport(ctx context.Context, d *schema.ResourceData, meta interfa
 	return []*schema.ResourceData{d}, nil
 }
 
-func setAccessPointAttributes(d *schema.ResourceData, accessPoint netap.NetworkingV1AccessPoint) (*schema.ResourceData, error) {
+func setAccessPointAttributes(d *schema.ResourceData, accessPoint networkingaccesspointv1.NetworkingV1AccessPoint) (*schema.ResourceData, error) {
 	if err := d.Set(paramDisplayName, accessPoint.Spec.GetDisplayName()); err != nil {
 		return nil, err
 	}
@@ -462,6 +478,17 @@ func setAccessPointAttributes(d *schema.ResourceData, accessPoint netap.Networki
 			paramVpcEndpointDnsName:     accessPoint.Status.Config.NetworkingV1AwsEgressPrivateLinkEndpointStatus.GetVpcEndpointDnsName(),
 			paramEnableHighAvailability: accessPoint.Spec.Config.NetworkingV1AwsEgressPrivateLinkEndpoint.GetEnableHighAvailability(),
 		}}); err != nil {
+			return nil, err
+		}
+	} else if accessPoint.Spec.Config.NetworkingV1AwsIngressPrivateLinkEndpoint != nil && accessPoint.Status.Config.NetworkingV1AwsIngressPrivateLinkEndpointStatus != nil {
+		ingressEndpointMap := map[string]interface{}{
+			paramVpcEndpointId:          accessPoint.Spec.Config.NetworkingV1AwsIngressPrivateLinkEndpoint.GetVpcEndpointId(),
+			paramVpcEndpointServiceName: accessPoint.Status.Config.NetworkingV1AwsIngressPrivateLinkEndpointStatus.GetVpcEndpointServiceName(),
+		}
+		if accessPoint.Status.Config.NetworkingV1AwsIngressPrivateLinkEndpointStatus.HasDnsDomain() {
+			ingressEndpointMap[paramDnsDomain] = accessPoint.Status.Config.NetworkingV1AwsIngressPrivateLinkEndpointStatus.GetDnsDomain()
+		}
+		if err := d.Set(paramAwsIngressPrivateLinkEndpoint, []interface{}{ingressEndpointMap}); err != nil {
 			return nil, err
 		}
 	} else if accessPoint.Spec.Config.NetworkingV1AzureEgressPrivateLinkEndpoint != nil && accessPoint.Status.Config.NetworkingV1AzureEgressPrivateLinkEndpointStatus != nil {

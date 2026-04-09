@@ -18,21 +18,17 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	dc "github.com/confluentinc/ccloud-sdk-go-v2/data-catalog/v1"
+	"regexp"
+	"strings"
+	"time"
+
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"regexp"
-	"strings"
-	"time"
-)
 
-const (
-	dataCatalogTimeout            = time.Minute
-	dataCatalogExporterTimeout    = 10 * time.Minute
-	dataCatalogAPIWaitAfterCreate = 30 * time.Second
+	datacatalogv1 "github.com/confluentinc/ccloud-sdk-go-v2/data-catalog/v1"
 )
 
 var defaultEntityTypes = []string{"cf_entity"}
@@ -102,14 +98,14 @@ func tagCreate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagn
 	tagId := createTagId(clusterId, tagName)
 
 	catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
-	tagRequest := dc.TagDef{}
+	tagRequest := datacatalogv1.TagDef{}
 	tagRequest.SetName(tagName)
 	description := d.Get(paramDescription).(string)
 	tagRequest.SetDescription(description)
 	tagRequest.SetEntityTypes(defaultEntityTypes)
 
-	request := catalogRestClient.apiClient.TypesV1Api.CreateTagDefs(catalogRestClient.dataCatalogApiContext(ctx))
-	request = request.TagDef([]dc.TagDef{tagRequest})
+	request := catalogRestClient.apiClient.TypesV1Api.CreateTagDefs(catalogRestClient.dataCatalogV1ApiContext(ctx))
+	request = request.TagDef([]datacatalogv1.TagDef{tagRequest})
 
 	createTagRequestJson, err := json.Marshal(request)
 	if err != nil {
@@ -129,7 +125,7 @@ func tagCreate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagn
 	}
 	d.SetId(tagId)
 
-	if err := waitForTagToProvision(catalogRestClient.dataCatalogApiContext(ctx), catalogRestClient, tagId, tagName); err != nil {
+	if err := waitForTagToProvision(catalogRestClient.dataCatalogV1ApiContext(ctx), catalogRestClient, tagId, tagName); err != nil {
 		return diag.Errorf("error waiting for Tag %q to provision: %s", tagId, createDescriptiveError(err, resp))
 	}
 
@@ -177,7 +173,7 @@ func readTagAndSetAttributes(ctx context.Context, resourceData *schema.ResourceD
 
 	tflog.Debug(ctx, fmt.Sprintf("Reading Tag %q=%q", paramId, tagId), map[string]any{tagLoggingKey: tagId})
 
-	request := client.apiClient.TypesV1Api.GetTagDefByName(client.dataCatalogApiContext(ctx), tagName)
+	request := client.apiClient.TypesV1Api.GetTagDefByName(client.dataCatalogV1ApiContext(ctx), tagName)
 	tag, resp, err := request.Execute()
 	if err != nil {
 		tflog.Warn(ctx, fmt.Sprintf("Error reading Tag %q: %s", tagId, createDescriptiveError(err, resp)), map[string]any{tagLoggingKey: tagId})
@@ -226,7 +222,7 @@ func tagDelete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagn
 	tflog.Debug(ctx, fmt.Sprintf("Deleting Tag %q=%q", paramId, tagId), map[string]any{tagLoggingKey: tagId})
 
 	catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
-	request := catalogRestClient.apiClient.TypesV1Api.DeleteTagDef(catalogRestClient.dataCatalogApiContext(ctx), tagName)
+	request := catalogRestClient.apiClient.TypesV1Api.DeleteTagDef(catalogRestClient.dataCatalogV1ApiContext(ctx), tagName)
 	_, serviceErr := request.Execute()
 	if serviceErr != nil {
 		return diag.Errorf("error deleting Tag %q: %s", tagId, createDescriptiveError(serviceErr))
@@ -260,13 +256,13 @@ func tagUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagn
 	tagId := createTagId(clusterId, tagName)
 
 	catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
-	tagRequest := dc.TagDef{}
+	tagRequest := datacatalogv1.TagDef{}
 	tagRequest.SetName(tagName)
 	description := d.Get(paramDescription).(string)
 	tagRequest.SetDescription(description)
 
-	request := catalogRestClient.apiClient.TypesV1Api.UpdateTagDefs(catalogRestClient.dataCatalogApiContext(ctx))
-	request = request.TagDef([]dc.TagDef{tagRequest})
+	request := catalogRestClient.apiClient.TypesV1Api.UpdateTagDefs(catalogRestClient.dataCatalogV1ApiContext(ctx))
+	request = request.TagDef([]datacatalogv1.TagDef{tagRequest})
 
 	updateTagRequestJson, err := json.Marshal(request)
 	if err != nil {
@@ -335,7 +331,7 @@ func createTagId(clusterId, tagName string) string {
 	return fmt.Sprintf("%s/%s", clusterId, tagName)
 }
 
-func setTagAttributes(d *schema.ResourceData, c *CatalogRestClient, clusterId string, tag dc.TagDef) (*schema.ResourceData, error) {
+func setTagAttributes(d *schema.ResourceData, c *CatalogRestClient, clusterId string, tag datacatalogv1.TagDef) (*schema.ResourceData, error) {
 	if err := d.Set(paramName, tag.GetName()); err != nil {
 		return nil, err
 	}

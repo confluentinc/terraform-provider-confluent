@@ -18,30 +18,17 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	dc "github.com/confluentinc/ccloud-sdk-go-v2/data-catalog/v1"
+	"regexp"
+	"strings"
+	"time"
+
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"regexp"
-	"strings"
-	"time"
-)
 
-const (
-	//paramCategory  = "category"
-	//paramCreatedBy = "created_by"
-	//paramUpdatedBy  = "updated_by"
-	//paramCreateTime = "create_time"
-	//paramUpdateTime  = "update_time"
-	//paramTypeVersion = "type_version"
-
-	paramAttributeDef = "attribute_definition"
-	paramType         = "type"
-	paramIsOptional   = "is_optional"
-	paramDefaultValue = "default_value"
-	paramOptions      = "options"
+	datacatalogv1 "github.com/confluentinc/ccloud-sdk-go-v2/data-catalog/v1"
 )
 
 func businessMetadataResource() *schema.Resource {
@@ -145,15 +132,15 @@ func businessMetadataCreate(ctx context.Context, d *schema.ResourceData, meta in
 	businessMetadataId := createBusinessMetadataId(clusterId, businessMetadataName)
 
 	catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
-	businessMetadataRequest := dc.BusinessMetadataDef{}
+	businessMetadataRequest := datacatalogv1.BusinessMetadataDef{}
 	businessMetadataRequest.SetName(businessMetadataName)
 	description := d.Get(paramDescription).(string)
 	businessMetadataRequest.SetDescription(description)
 	attributeDefs := buildAttributeDefs(d.Get(paramAttributeDef).(*schema.Set).List())
 	businessMetadataRequest.SetAttributeDefs(attributeDefs)
 
-	request := catalogRestClient.apiClient.TypesV1Api.CreateBusinessMetadataDefs(catalogRestClient.dataCatalogApiContext(ctx))
-	request = request.BusinessMetadataDef([]dc.BusinessMetadataDef{businessMetadataRequest})
+	request := catalogRestClient.apiClient.TypesV1Api.CreateBusinessMetadataDefs(catalogRestClient.dataCatalogV1ApiContext(ctx))
+	request = request.BusinessMetadataDef([]datacatalogv1.BusinessMetadataDef{businessMetadataRequest})
 
 	createBusinessMetadataRequestJson, err := json.Marshal(request)
 	if err != nil {
@@ -173,7 +160,7 @@ func businessMetadataCreate(ctx context.Context, d *schema.ResourceData, meta in
 	}
 	d.SetId(businessMetadataId)
 
-	if err := waitForBusinessMetadataToProvision(catalogRestClient.dataCatalogApiContext(ctx), catalogRestClient, businessMetadataId, businessMetadataName); err != nil {
+	if err := waitForBusinessMetadataToProvision(catalogRestClient.dataCatalogV1ApiContext(ctx), catalogRestClient, businessMetadataId, businessMetadataName); err != nil {
 		return diag.Errorf("error waiting for Business Metadata %q to provision: %s", businessMetadataId, createDescriptiveError(err, resp))
 	}
 
@@ -218,7 +205,7 @@ func readBusinessMetadataAndSetAttributes(ctx context.Context, d *schema.Resourc
 	tflog.Debug(ctx, fmt.Sprintf("Reading Business Metadata %q=%q", paramId, businessMetadataId), map[string]interface{}{businessMetadataLoggingKey: businessMetadataId})
 
 	catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
-	request := catalogRestClient.apiClient.TypesV1Api.GetBusinessMetadataDefByName(catalogRestClient.dataCatalogApiContext(ctx), businessMetadataName)
+	request := catalogRestClient.apiClient.TypesV1Api.GetBusinessMetadataDefByName(catalogRestClient.dataCatalogV1ApiContext(ctx), businessMetadataName)
 	businessMetadata, resp, err := request.Execute()
 	if err != nil {
 		tflog.Warn(ctx, fmt.Sprintf("Error reading Business Metadata %q: %s", businessMetadataId, createDescriptiveError(err, resp)), map[string]interface{}{businessMetadataLoggingKey: businessMetadataId})
@@ -266,7 +253,7 @@ func businessMetadataDelete(ctx context.Context, d *schema.ResourceData, meta in
 	tflog.Debug(ctx, fmt.Sprintf("Deleting Business Metadata %q=%q", paramId, businessMetadataId), map[string]interface{}{businessMetadataLoggingKey: businessMetadataId})
 
 	catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
-	request := catalogRestClient.apiClient.TypesV1Api.DeleteBusinessMetadataDef(catalogRestClient.dataCatalogApiContext(ctx), businessMetadataName)
+	request := catalogRestClient.apiClient.TypesV1Api.DeleteBusinessMetadataDef(catalogRestClient.dataCatalogV1ApiContext(ctx), businessMetadataName)
 	_, serviceErr := request.Execute()
 	if serviceErr != nil {
 		return diag.Errorf("error deleting Business Metadata %q: %s", businessMetadataId, createDescriptiveError(serviceErr))
@@ -300,15 +287,15 @@ func businessMetadataUpdate(ctx context.Context, d *schema.ResourceData, meta in
 		businessMetadataId := createBusinessMetadataId(clusterId, businessMetadataName)
 
 		catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
-		businessMetadataRequest := dc.BusinessMetadataDef{}
+		businessMetadataRequest := datacatalogv1.BusinessMetadataDef{}
 		businessMetadataRequest.SetName(businessMetadataName)
 		description := d.Get(paramDescription).(string)
 		businessMetadataRequest.SetDescription(description)
 		attributeDefs := buildAttributeDefs(d.Get(paramAttributeDef).(*schema.Set).List())
 		businessMetadataRequest.SetAttributeDefs(attributeDefs)
 
-		request := catalogRestClient.apiClient.TypesV1Api.UpdateBusinessMetadataDefs(catalogRestClient.dataCatalogApiContext(ctx))
-		request = request.BusinessMetadataDef([]dc.BusinessMetadataDef{businessMetadataRequest})
+		request := catalogRestClient.apiClient.TypesV1Api.UpdateBusinessMetadataDefs(catalogRestClient.dataCatalogV1ApiContext(ctx))
+		request = request.BusinessMetadataDef([]datacatalogv1.BusinessMetadataDef{businessMetadataRequest})
 
 		updateBusinessMetadataRequestJson, err := json.Marshal(request)
 		if err != nil {
@@ -358,10 +345,10 @@ func businessMetadataImport(ctx context.Context, d *schema.ResourceData, meta in
 	return []*schema.ResourceData{d}, nil
 }
 
-func buildAttributeDefs(tfAttributeDefs []interface{}) []dc.AttributeDef {
-	attributeDefs := make([]dc.AttributeDef, len(tfAttributeDefs))
+func buildAttributeDefs(tfAttributeDefs []interface{}) []datacatalogv1.AttributeDef {
+	attributeDefs := make([]datacatalogv1.AttributeDef, len(tfAttributeDefs))
 	for index, tfAttributeDef := range tfAttributeDefs {
-		attributeDef := dc.NewAttributeDef()
+		attributeDef := datacatalogv1.NewAttributeDef()
 		tfAttributeDefMap := tfAttributeDef.(map[string]interface{})
 		if name, exists := tfAttributeDefMap[paramName].(string); exists {
 			attributeDef.SetName(name)
@@ -381,7 +368,7 @@ func buildAttributeDefs(tfAttributeDefs []interface{}) []dc.AttributeDef {
 	return attributeDefs
 }
 
-func buildTfAttributeDefs(attributeDefs []dc.AttributeDef) *[]map[string]interface{} {
+func buildTfAttributeDefs(attributeDefs []datacatalogv1.AttributeDef) *[]map[string]interface{} {
 	tfAttributeDefs := make([]map[string]interface{}, len(attributeDefs))
 	for i, attributeDef := range attributeDefs {
 		tfAttributeDef := make(map[string]interface{})
@@ -400,7 +387,7 @@ func createBusinessMetadataId(clusterId, businessMetadataName string) string {
 	return fmt.Sprintf("%s/%s", clusterId, businessMetadataName)
 }
 
-func setBusinessMetadataAttributes(d *schema.ResourceData, clusterId string, businessMetadata dc.BusinessMetadataDef) (*schema.ResourceData, error) {
+func setBusinessMetadataAttributes(d *schema.ResourceData, clusterId string, businessMetadata datacatalogv1.BusinessMetadataDef) (*schema.ResourceData, error) {
 	if err := d.Set(paramName, businessMetadata.GetName()); err != nil {
 		return nil, err
 	}

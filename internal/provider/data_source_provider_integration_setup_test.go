@@ -25,10 +25,6 @@ import (
 	"github.com/walkerus/go-wiremock"
 )
 
-const (
-	dataSourceProviderIntegrationSetupScenarioName = "confluent_provider_integration_setup Data Source Lifecycle"
-)
-
 func TestAccDataSourceProviderIntegrationSetupAzure(t *testing.T) {
 	ctx := context.Background()
 	wiremockContainer, err := setupWiremock(ctx)

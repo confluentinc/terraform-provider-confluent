@@ -17,7 +17,6 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -26,25 +25,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-)
-
-const (
-	scenarioStateKafkaClientQuotaHasBeenCreated             = "The new Kafka Client Quota has been just created"
-	scenarioStateKafkaClientQuotaDescriptionHaveBeenUpdated = "The new Kafka Client Quota has been just updated"
-	scenarioStateKafkaClientQuotaHasBeenDeleted             = "The new Kafka Client Quota has been deleted"
-	kafkaClientQuotaScenarioName                            = "confluent_kafka_client_quota Resource Lifecycle"
-
-	kafkaClientQuotaId      = "cq-e857e"
-	kafkaClientQuotaUrlPath = "/kafka-quotas/v1/client-quotas/cq-e857e"
-
-	kafkaClientQuotaClusterId     = "lkc-03roj2"
-	kafkaClientQuotaEnvrionmentId = "env-nyyz3d"
-
-	kafkaClientQuotaResourceLabel   = "test_kafka_client_quota_resource_label"
-	kafkaClientQuotaDisplayName     = "QuotaForSA1"
-	kafkaClientQuotaDescription     = "test"
-	kafkaClientQuotaIngressByteRate = "12288"
-	kafkaClientQuotaEgressByteRate  = "12289"
+	"github.com/walkerus/go-wiremock"
 )
 
 var kafkaClientQuotaPrincipals = []string{"sa-rv1vo7", "sa-jzgzgq"}
@@ -210,7 +191,7 @@ func testAccCheckKafkaClientQuotaDestroy(s *terraform.State) error {
 			continue
 		}
 		deletedKafkaClientQuotaId := rs.Primary.ID
-		req := c.quotasClient.ClientQuotasKafkaQuotasV1Api.GetKafkaQuotasV1ClientQuota(c.quotasApiContext(context.Background()), deletedKafkaClientQuotaId)
+		req := c.kafkaQuotasV1Client.ClientQuotasKafkaQuotasV1Api.GetKafkaQuotasV1ClientQuota(c.kafkaQuotasV1ApiContext(context.Background()), deletedKafkaClientQuotaId)
 		deletedKafkaClientQuota, response, err := req.Execute()
 		if response != nil && (response.StatusCode == http.StatusForbidden || response.StatusCode == http.StatusNotFound) {
 			// v2/service-accounts/{nonExistentKafkaClientQuotaId/deletedKafkaClientQuotaID} returns http.StatusForbidden instead of http.StatusNotFound

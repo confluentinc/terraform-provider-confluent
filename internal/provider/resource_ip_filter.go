@@ -20,19 +20,12 @@ import (
 	"fmt"
 	"net/http"
 
-	iamip "github.com/confluentinc/ccloud-sdk-go-v2/iam-ip-filtering/v2"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-)
 
-const (
-	paramFilterName      = "filter_name"
-	paramResourceGroup   = "resource_group"
-	paramResourceScope   = "resource_scope"
-	paramOperationGroups = "operation_groups"
-	paramIPGroups        = "ip_groups"
+	iamipfilteringv2 "github.com/confluentinc/ccloud-sdk-go-v2/iam-ip-filtering/v2"
 )
 
 func ipFilterResource() *schema.Resource {
@@ -97,7 +90,7 @@ func ipFilterUpdate(ctx context.Context, d *schema.ResourceData, meta interface{
 	tflog.Debug(ctx, fmt.Sprintf("Updating IP Filter %q: %s", d.Id(), updateIPFilterRequestJson), map[string]interface{}{ipFilterLoggingKey: d.Id()})
 
 	c := meta.(*Client)
-	updatedIPFilter, resp, err := c.iamIPClient.IPFiltersIamV2Api.UpdateIamV2IpFilter(c.iamIPApiContext(ctx), d.Id()).IamV2IpFilter(*updateIPFilterRequest).Execute()
+	updatedIPFilter, resp, err := c.iamIpFilteringV2Client.IPFiltersIamV2Api.UpdateIamV2IpFilter(c.iamIpFilteringV2ApiContext(ctx), d.Id()).IamV2IpFilter(*updateIPFilterRequest).Execute()
 
 	if err != nil {
 		return diag.Errorf("error updating IP Filter %q: %s", d.Id(), createDescriptiveError(err, resp))
@@ -123,7 +116,7 @@ func ipFilterCreate(ctx context.Context, d *schema.ResourceData, meta interface{
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new IP Filter: %s", createIPFilterRequestJson))
 
-	createdIPFilter, resp, err := executeIPFilterCreate(c.iamIPApiContext(ctx), c, createIPFilterRequest)
+	createdIPFilter, resp, err := executeIPFilterCreate(c.iamIpFilteringV2ApiContext(ctx), c, createIPFilterRequest)
 	if err != nil {
 		return diag.Errorf("error creating IP Filter %q: %s", d.Get(paramFilterName), createDescriptiveError(err, resp))
 	}
@@ -138,8 +131,8 @@ func ipFilterCreate(ctx context.Context, d *schema.ResourceData, meta interface{
 	return ipFilterRead(ctx, d, meta)
 }
 
-func executeIPFilterCreate(ctx context.Context, c *Client, ipFilter *iamip.IamV2IpFilter) (iamip.IamV2IpFilter, *http.Response, error) {
-	req := c.iamIPClient.IPFiltersIamV2Api.CreateIamV2IpFilter(c.iamIPApiContext(ctx)).IamV2IpFilter(*ipFilter)
+func executeIPFilterCreate(ctx context.Context, c *Client, ipFilter *iamipfilteringv2.IamV2IpFilter) (iamipfilteringv2.IamV2IpFilter, *http.Response, error) {
+	req := c.iamIpFilteringV2Client.IPFiltersIamV2Api.CreateIamV2IpFilter(c.iamIpFilteringV2ApiContext(ctx)).IamV2IpFilter(*ipFilter)
 	return req.Execute()
 }
 
@@ -147,7 +140,7 @@ func ipFilterDelete(ctx context.Context, d *schema.ResourceData, meta interface{
 	tflog.Debug(ctx, fmt.Sprintf("Deleting IP Filter %q", d.Id()), map[string]interface{}{ipFilterLoggingKey: d.Id()})
 	c := meta.(*Client)
 
-	req := c.iamIPClient.IPFiltersIamV2Api.DeleteIamV2IpFilter(c.iamIPApiContext(ctx), d.Id())
+	req := c.iamIpFilteringV2Client.IPFiltersIamV2Api.DeleteIamV2IpFilter(c.iamIpFilteringV2ApiContext(ctx), d.Id())
 	resp, err := req.Execute()
 
 	if err != nil {
@@ -159,15 +152,15 @@ func ipFilterDelete(ctx context.Context, d *schema.ResourceData, meta interface{
 	return nil
 }
 
-func executeIPFilterRead(ctx context.Context, c *Client, ipFilterId string) (iamip.IamV2IpFilter, *http.Response, error) {
-	req := c.iamIPClient.IPFiltersIamV2Api.GetIamV2IpFilter(c.iamIPApiContext(ctx), ipFilterId)
+func executeIPFilterRead(ctx context.Context, c *Client, ipFilterId string) (iamipfilteringv2.IamV2IpFilter, *http.Response, error) {
+	req := c.iamIpFilteringV2Client.IPFiltersIamV2Api.GetIamV2IpFilter(c.iamIpFilteringV2ApiContext(ctx), ipFilterId)
 	return req.Execute()
 }
 
 func ipFilterRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	tflog.Debug(ctx, fmt.Sprintf("Reading IP Filter %q", d.Id()), map[string]interface{}{ipFilterLoggingKey: d.Id()})
 	c := meta.(*Client)
-	ipFilter, resp, err := executeIPFilterRead(c.iamIPApiContext(ctx), c, d.Id())
+	ipFilter, resp, err := executeIPFilterRead(c.iamIpFilteringV2ApiContext(ctx), c, d.Id())
 	if err != nil {
 		tflog.Warn(ctx, fmt.Sprintf("Error reading IP Filter %q: %s", d.Id(), createDescriptiveError(err, resp)), map[string]interface{}{ipFilterLoggingKey: d.Id()})
 
@@ -199,14 +192,14 @@ func ipFilterImport(ctx context.Context, d *schema.ResourceData, meta interface{
 	tflog.Debug(ctx, fmt.Sprintf("Importing IP Filter %q", d.Id()), map[string]interface{}{ipFilterLoggingKey: d.Id()})
 	// Mark resource as new to avoid d.Set("") when getting 404
 	d.MarkNewResource()
-	if diagnostics := ipFilterRead(ctx, d, meta); diagnostics != nil {
+	if diagnostics := ipFilterRead(ctx, d, meta); len(diagnostics) > 0 {
 		return nil, fmt.Errorf("error importing IP Filter %q: %s", d.Id(), diagnostics[0].Summary)
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished importing IP Filter %q", d.Id()), map[string]interface{}{ipFilterLoggingKey: d.Id()})
 	return []*schema.ResourceData{d}, nil
 }
 
-func setIPFilterAttributes(d *schema.ResourceData, ipFilter iamip.IamV2IpFilter) (*schema.ResourceData, error) {
+func setIPFilterAttributes(d *schema.ResourceData, ipFilter iamipfilteringv2.IamV2IpFilter) (*schema.ResourceData, error) {
 	if err := d.Set(paramFilterName, ipFilter.GetFilterName()); err != nil {
 		return nil, createDescriptiveError(err)
 	}
@@ -232,14 +225,14 @@ func setIPFilterAttributes(d *schema.ResourceData, ipFilter iamip.IamV2IpFilter)
 	return d, nil
 }
 
-func buildIPFilterRequest(d *schema.ResourceData) *iamip.IamV2IpFilter {
+func buildIPFilterRequest(d *schema.ResourceData) *iamipfilteringv2.IamV2IpFilter {
 	filterName := d.Get(paramFilterName).(string)
 	resourceGroup := d.Get(paramResourceGroup).(string)
 	resourceScope := d.Get(paramResourceScope).(string)
 	operationGroups := convertToStringSlice(d.Get(paramOperationGroups).(*schema.Set).List())
 	ipGroupStrings := convertToStringSlice(d.Get(paramIPGroups).(*schema.Set).List())
 
-	req := iamip.NewIamV2IpFilter()
+	req := iamipfilteringv2.NewIamV2IpFilter()
 	req.SetFilterName(filterName)
 	req.SetResourceGroup(resourceGroup)
 
@@ -250,9 +243,9 @@ func buildIPFilterRequest(d *schema.ResourceData) *iamip.IamV2IpFilter {
 		req.SetOperationGroups(operationGroups)
 	}
 	if len(ipGroupStrings) > 0 {
-		var ipGroupRefs []iamip.GlobalObjectReference
+		var ipGroupRefs []iamipfilteringv2.GlobalObjectReference
 		for _, id := range ipGroupStrings {
-			ipGroupRefs = append(ipGroupRefs, iamip.GlobalObjectReference{Id: id})
+			ipGroupRefs = append(ipGroupRefs, iamipfilteringv2.GlobalObjectReference{Id: id})
 		}
 		req.SetIpGroups(ipGroupRefs)
 	}

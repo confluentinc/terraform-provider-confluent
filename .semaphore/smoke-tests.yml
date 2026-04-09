@@ -1,0 +1,61 @@
+version: v1.0
+name: Smoke Tests for Confluent Provider
+agent:
+  machine:
+    type: s1-prod-ubuntu24-04-amd64-2
+
+auto_cancel:
+  running:
+    when: "false"
+
+global_job_config:
+  prologue:
+    commands:
+      - sem-version go 1.24.9
+      - export "GOPATH=$(go env GOPATH)"
+      - >-
+        export
+        "SEMAPHORE_GIT_DIR=${GOPATH}/src/github.com/confluentinc/${SEMAPHORE_PROJECT_NAME}"
+      - 'export "PATH=${GOPATH}/bin:${PATH}"'
+      - 'mkdir -vp "${SEMAPHORE_GIT_DIR}" "${GOPATH}/bin"'
+      - checkout
+
+execution_time_limit:
+  minutes: 30
+
+blocks:
+  - name: "Smoke Tests"
+    task:
+      jobs:
+        - name: "Run Smoke Tests"
+          commands:
+            # 1. Fetch secrets
+            - . vault-sem-get-secret v1/ci/kv/apif/terraform-provider-confluent/live-testing-data
+            - . vault-sem-get-secret v1/ci/kv/apif/terraform-provider-confluent/slack-notifications-live-testing
+
+            # 2. Build OTLP metric reporter
+            - go mod vendor
+            - make build-otel-smoke-metric
+
+            # 3. Run smoke tests
+            - |
+              echo "Running smoke tests..."
+              make live-test-smoke && echo "PASS" > /tmp/smoke-result || echo "FAIL" > /tmp/smoke-result
+
+            # 4. Report result via OTLP + notify on failure
+            - |
+              SMOKE_RESULT=$(cat /tmp/smoke-result 2>/dev/null || echo "FAIL")
+              if [ "$SMOKE_RESULT" = "PASS" ]; then
+                RESULT=1
+              else
+                RESULT=0
+                echo "Smoke tests failed, sending Slack notification..."
+                curl -X POST -H "Content-type: application/json" --data "{}" "$SLACK_WEBHOOK_URL"
+              fi
+
+              # Report pass/fail metric via OTLP (never fails the pipeline)
+              # SEMAPHORE_OIDC_TOKEN is already set by the Semaphore agent
+              ./bin/otel-smoke-metric "$RESULT" || true
+
+              # Fail the job if tests failed
+              [ "$SMOKE_RESULT" = "PASS" ]

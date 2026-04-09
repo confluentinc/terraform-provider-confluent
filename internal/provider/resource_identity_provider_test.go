@@ -21,23 +21,9 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/walkerus/go-wiremock"
-
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-)
-
-const (
-	scenarioStateIdentityProviderHasBeenCreated             = "The new identity_provider has been just created"
-	scenarioStateIdentityProviderDescriptionHaveBeenUpdated = "The new identity_provider's description have been just updated"
-	scenarioStateIdentityProviderHasBeenDeleted             = "The new identity_provider has been deleted"
-	identityProviderScenarioName                            = "confluent_identity_provider Resource Lifecycle"
-	identityProviderId                                      = "op-4EY"
-	identityProviderDisplayName                             = "My OIDC Provider"
-	identityProviderDescription                             = "fake description"
-	identityProviderIssuer                                  = "https://login.microsoftonline.com/11111111-0000-0000-0000-b3d3d184f1a5/v2.0"
-	identityProviderJwksUri                                 = "https://login.microsoftonline.com/common/discovery/v2.0/keys"
-	identityProviderIdentityClaim                           = "claims.aud"
+	"github.com/walkerus/go-wiremock"
 )
 
 func TestAccIdentityProvider(t *testing.T) {
@@ -186,7 +172,7 @@ func testAccCheckIdentityProviderDestroy(s *terraform.State) error {
 			continue
 		}
 		deletedIdentityProviderId := rs.Primary.ID
-		req := c.oidcClient.IdentityProvidersIamV2Api.GetIamV2IdentityProvider(c.oidcApiContext(context.Background()), deletedIdentityProviderId)
+		req := c.identityProviderV2Client.IdentityProvidersIamV2Api.GetIamV2IdentityProvider(c.identityProviderV2ApiContext(context.Background()), deletedIdentityProviderId)
 		deletedIdentityProvider, response, err := req.Execute()
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(response)
 		if isResourceNotFound {

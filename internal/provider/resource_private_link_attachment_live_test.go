@@ -169,4 +169,3 @@ func testAccCheckPrivateLinkAttachmentLiveConfig(endpoint, plattResourceLabel, p
 	}
 	`, endpoint, apiKey, apiSecret, plattResourceLabel, plattDisplayName, environmentId, awsRegion)
 }
-

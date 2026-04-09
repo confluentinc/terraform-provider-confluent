@@ -17,7 +17,6 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -26,24 +25,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-)
-
-const (
-	scenarioStateIpFilterHasBeenCreated = "The new IP Group has been just created"
-	scenarioStateIpFilterHasBeenUpdated = "The new IP Group's description have been just updated"
-	scenarioStateIpFilterHasBeenDeleted = "The new IP Group has been deleted"
-	ipFilterResourceScenarioName        = "confluent_ip_filter Resource Lifecycle"
-
-	testIPFilterID            = "ipf-w7rg0"
-	testIpFilterName          = "New Filter"
-	testIpFilterResourceGroup = "multiple"
-	testIpFilterResourceScope = "crn://confluent.cloud/organization=1111aaaa-11aa-11aa-11aa-111111aaaaaa"
-
-	testIpFilterUpdatedName          = "Updated Filter"
-	testIpFilterUpdatedResourceGroup = "multiple"
-	testIpFilterUpdatedResourceScope = "crn://confluent.cloud/organization=1111aaaa-11aa-11aa-11aa-111111aaaaaa"
-
-	testIpFilterResourceLabel = "test_ip_filter_resource_label"
+	"github.com/walkerus/go-wiremock"
 )
 
 var testIpFilterOperationGroups = []string{"MANAGEMENT", "FLINK"}
@@ -200,7 +182,7 @@ func testAccCheckIPFilterDestroy(s *terraform.State) error {
 			continue
 		}
 		deletedIPFilterId := rs.Primary.ID
-		req := c.iamIPClient.IPFiltersIamV2Api.GetIamV2IpFilter(c.iamIPApiContext(context.Background()), deletedIPFilterId)
+		req := c.iamIpFilteringV2Client.IPFiltersIamV2Api.GetIamV2IpFilter(c.iamIpFilteringV2ApiContext(context.Background()), deletedIPFilterId)
 		deletedServiceAccount, response, err := req.Execute()
 		if response != nil && (response.StatusCode == http.StatusForbidden || response.StatusCode == http.StatusNotFound) {
 			// v2/ip-filters/{nonExistentSaId/deletedSaID} returns http.StatusForbidden instead of http.StatusNotFound

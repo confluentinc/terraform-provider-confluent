@@ -17,23 +17,13 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-)
-
-const (
-	enterpriseKafkaCloud             = "AWS"
-	enterpriseKafkaRegion            = "us-east-2"
-	enterpriseKafkaBootstrapEndpoint = "lkc-19ynpv.us-east-2.aws.private.confluent.cloud:9092"
-	enterpriseKafkaHttpEndpoint      = "https://lkc-19ynpv.us-east-2.aws.private.confluent.cloud:443"
-	enterpriseKafkaScenarioName      = "confluent_kafka Resource Lifecycle"
-	kafkaDisplayNameUpdated          = "TestClusterUpdated"
-	fullEnterpriseKafkaResourceLabel = "confluent_kafka_cluster.enterprise-cluster"
+	"github.com/walkerus/go-wiremock"
 )
 
 func TestAccEnterpriseClusterWithSGPackage(t *testing.T) {

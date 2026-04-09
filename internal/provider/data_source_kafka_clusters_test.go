@@ -17,25 +17,14 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
 	"strconv"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-)
-
-const (
-	kafkaClustersDataSourceScenarioName = "confluent_kafka_clusters Data Source Lifecycle"
-	kafkaClustersDataSourceLabel        = "test_kafka_clusters_data_source_label"
-	kafkaClustersLastPageToken          = "dyJpZCI6InNhLTd5OXbyby"
-
-	testKafkaHttpEndpoint2      = "https://pkc-3w22w.us-central1.gcp.confluent.cloud:443"
-	testKafkaBootstrapEndpoint2 = "SASL_SSL://pkc-3w22w.us-central1.gcp.confluent.cloud:9092"
-	testKafkaDisplayName2       = "TestCluster #2"
-	testKafkaRbacCrn2           = "crn://confluent.cloud/organization=1111aaaa-11aa-11aa-11aa-111111aaaaaa/environment=env-1jrymj/cloud-cluster=lkc-29ynpv"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/walkerus/go-wiremock"
 )
 
 func TestAccDataSourceKafkaClusters(t *testing.T) {

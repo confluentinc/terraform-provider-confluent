@@ -9,16 +9,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-
 	"github.com/walkerus/go-wiremock"
-)
-
-const (
-	testGcpByokKeyId         = "projects/temp-gear-123456/locations/us-central1/keyRings/byok-test/cryptoKeys/byok-test"
-	testGcpByokSecurityGroup = "cck-abcde@confluent.io"
-
-	gcpKeyScenarioName                = "confluent_aws Key Gcp Resource Lifecycle"
-	scenarioStateGcpKeyHasBeenDeleted = "The new gcp key's deletion has been just completed"
 )
 
 func TestAccGcpBYOKKey(t *testing.T) {

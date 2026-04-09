@@ -18,17 +18,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	fcpm "github.com/confluentinc/ccloud-sdk-go-v2/flink/v2"
+	"net/http"
+
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"net/http"
-)
 
-const (
-	// The maximum allowable page size - 1 (to avoid off-by-one errors) when listing service accounts using CMK V2 API
-	// https://docs.confluent.io/cloud/current/api.html#operation/listNetworkingV1ComputePools
-	listComputePoolsPageSize = 99
+	flinkv2 "github.com/confluentinc/ccloud-sdk-go-v2/flink/v2"
 )
 
 func computePoolDataSource() *schema.Resource {
@@ -62,6 +58,10 @@ func computePoolDataSource() *schema.Resource {
 			},
 			paramMaxCfu: {
 				Type:     schema.TypeInt,
+				Computed: true,
+			},
+			paramDefaultPool: {
+				Type:     schema.TypeBool,
 				Computed: true,
 			},
 			paramApiVersion: {
@@ -125,7 +125,7 @@ func computePoolDataSourceReadUsingId(ctx context.Context, d *schema.ResourceDat
 	tflog.Debug(ctx, fmt.Sprintf("Reading Flink Compute Pool %q=%q", paramId, computePoolId), map[string]interface{}{computePoolLoggingKey: computePoolId})
 
 	c := meta.(*Client)
-	computePool, resp, err := executeComputePoolRead(c.fcpmApiContext(ctx), c, environmentId, computePoolId)
+	computePool, resp, err := executeComputePoolRead(c.flinkV2ApiContext(ctx), c, environmentId, computePoolId)
 	if err != nil {
 		return diag.Errorf("error reading Flink Compute Pool %q: %s", computePoolId, createDescriptiveError(err, resp))
 	}
@@ -141,7 +141,7 @@ func computePoolDataSourceReadUsingId(ctx context.Context, d *schema.ResourceDat
 	return nil
 }
 
-func orgHasMultipleComputePoolsWithTargetDisplayName(clusters []fcpm.FcpmV2ComputePool, displayName string) bool {
+func orgHasMultipleComputePoolsWithTargetDisplayName(clusters []flinkv2.FcpmV2ComputePool, displayName string) bool {
 	var numberOfComputePoolsWithTargetDisplayName = 0
 	for _, cluster := range clusters {
 		if cluster.Spec.GetDisplayName() == displayName {
@@ -151,8 +151,8 @@ func orgHasMultipleComputePoolsWithTargetDisplayName(clusters []fcpm.FcpmV2Compu
 	return numberOfComputePoolsWithTargetDisplayName > 1
 }
 
-func loadComputePools(ctx context.Context, c *Client, environmentId string) ([]fcpm.FcpmV2ComputePool, error) {
-	computePools := make([]fcpm.FcpmV2ComputePool, 0)
+func loadComputePools(ctx context.Context, c *Client, environmentId string) ([]flinkv2.FcpmV2ComputePool, error) {
+	computePools := make([]flinkv2.FcpmV2ComputePool, 0)
 
 	allComputePoolsAreCollected := false
 	pageToken := ""
@@ -183,11 +183,11 @@ func loadComputePools(ctx context.Context, c *Client, environmentId string) ([]f
 	return computePools, nil
 }
 
-func executeListComputePools(ctx context.Context, c *Client, environmentId, pageToken string) (fcpm.FcpmV2ComputePoolList, *http.Response, error) {
+func executeListComputePools(ctx context.Context, c *Client, environmentId, pageToken string) (flinkv2.FcpmV2ComputePoolList, *http.Response, error) {
 	if pageToken != "" {
-		return c.fcpmClient.ComputePoolsFcpmV2Api.ListFcpmV2ComputePools(c.fcpmApiContext(ctx)).Environment(environmentId).PageSize(listComputePoolsPageSize).PageToken(pageToken).Execute()
+		return c.flinkV2Client.ComputePoolsFcpmV2Api.ListFcpmV2ComputePools(c.flinkV2ApiContext(ctx)).Environment(environmentId).PageSize(listComputePoolsPageSize).PageToken(pageToken).Execute()
 	} else {
-		return c.fcpmClient.ComputePoolsFcpmV2Api.ListFcpmV2ComputePools(c.fcpmApiContext(ctx)).Environment(environmentId).PageSize(listComputePoolsPageSize).Execute()
+		return c.flinkV2Client.ComputePoolsFcpmV2Api.ListFcpmV2ComputePools(c.flinkV2ApiContext(ctx)).Environment(environmentId).PageSize(listComputePoolsPageSize).Execute()
 	}
 }
 

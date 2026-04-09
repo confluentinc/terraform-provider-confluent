@@ -9,17 +9,13 @@ import (
 	"strings"
 	"time"
 
-	cam "github.com/confluentinc/ccloud-sdk-go-v2/cam/v1"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-)
 
-const (
-	stateProcessing           = "PROCESSING"
-	stateWaitingForProcessing = "WAITING_FOR_PROCESSING"
+	camv1 "github.com/confluentinc/ccloud-sdk-go-v2/cam/v1"
 )
 
 func connectArtifactResource() *schema.Resource {
@@ -103,29 +99,29 @@ func connectArtifactCreate(ctx context.Context, d *schema.ResourceData, meta int
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
 
 	// Step 1: Get presigned URL
-	request := cam.CamV1PresignedUrlRequest{
-		Cloud:         cam.PtrString(cloud),
-		Environment:   cam.PtrString(environmentId),
-		ContentFormat: cam.PtrString(contentFormat),
+	request := camv1.CamV1PresignedUrlRequest{
+		Cloud:         camv1.PtrString(cloud),
+		Environment:   camv1.PtrString(environmentId),
+		ContentFormat: camv1.PtrString(contentFormat),
 	}
-	resp, res, err := getConnectPresignedUrl(c.camApiContext(ctx), c, request)
+	resp, res, err := getConnectPresignedUrl(c.camV1ApiContext(ctx), c, request)
 	if err != nil {
 		return diag.Errorf("error uploading Connect Artifact: error fetching presigned upload URL %s", createDescriptiveError(err, res))
 	}
 
 	// Step 2: Upload file to presigned URL
-	if err := uploadFile(resp.GetUploadUrl(), artifactFile, resp.GetUploadFormData(), resp.GetContentFormat(), cloud, false, true); err != nil {
+	if err := uploadFile(resp.GetUploadUrl(), artifactFile, resp.GetUploadFormData(), resp.GetContentFormat(), cloud); err != nil {
 		return diag.Errorf("error uploading Connect Artifact: %s", createDescriptiveError(err, res))
 	}
 
 	// Step 3: Create artifact with upload ID
-	createArtifactRequest := cam.CamV1ConnectArtifactSpec{
+	createArtifactRequest := camv1.CamV1ConnectArtifactSpec{
 		DisplayName:   name,
 		Cloud:         cloud,
 		Environment:   environmentId,
-		ContentFormat: cam.PtrString(contentFormat),
-		UploadSource: &cam.CamV1ConnectArtifactSpecUploadSourceOneOf{
-			CamV1UploadSourcePresignedUrl: &cam.CamV1UploadSourcePresignedUrl{
+		ContentFormat: camv1.PtrString(contentFormat),
+		UploadSource: &camv1.CamV1ConnectArtifactSpecUploadSourceOneOf{
+			CamV1UploadSourcePresignedUrl: &camv1.CamV1UploadSourcePresignedUrl{
 				Location: "PRESIGNED_URL_LOCATION",
 				UploadId: resp.GetUploadId(),
 			},
@@ -135,7 +131,7 @@ func connectArtifactCreate(ctx context.Context, d *schema.ResourceData, meta int
 		createArtifactRequest.SetDescription(description)
 	}
 
-	createdArtifact, res, err := executeConnectArtifactCreate(c.camApiContext(ctx), c, createArtifactRequest)
+	createdArtifact, res, err := executeConnectArtifactCreate(c.camV1ApiContext(ctx), c, createArtifactRequest)
 	if err != nil {
 		return diag.Errorf("error creating Connect Artifact: %s", createDescriptiveError(err, res))
 	}
@@ -156,21 +152,21 @@ func connectArtifactCreate(ctx context.Context, d *schema.ResourceData, meta int
 	return connectArtifactRead(ctx, d, meta)
 }
 
-func getConnectPresignedUrl(ctx context.Context, c *Client, request cam.CamV1PresignedUrlRequest) (cam.CamV1PresignedUrl, *http.Response, error) {
-	resp := c.camClient.PresignedUrlsCamV1Api.PresignedUploadUrlCamV1PresignedUrl(c.camApiContext(ctx)).CamV1PresignedUrlRequest(request)
+func getConnectPresignedUrl(ctx context.Context, c *Client, request camv1.CamV1PresignedUrlRequest) (camv1.CamV1PresignedUrl, *http.Response, error) {
+	resp := c.camV1Client.PresignedUrlsCamV1Api.PresignedUploadUrlCamV1PresignedUrl(c.camV1ApiContext(ctx)).CamV1PresignedUrlRequest(request)
 	return resp.Execute()
 }
 
-func executeConnectArtifactCreate(ctx context.Context, c *Client, artifact cam.CamV1ConnectArtifactSpec) (cam.CamV1ConnectArtifact, *http.Response, error) {
-	req := c.camClient.ConnectArtifactsCamV1Api.CreateCamV1ConnectArtifact(c.camApiContext(ctx)).
+func executeConnectArtifactCreate(ctx context.Context, c *Client, artifact camv1.CamV1ConnectArtifactSpec) (camv1.CamV1ConnectArtifact, *http.Response, error) {
+	req := c.camV1Client.ConnectArtifactsCamV1Api.CreateCamV1ConnectArtifact(c.camV1ApiContext(ctx)).
 		SpecCloud(artifact.GetCloud()).
 		Environment(artifact.GetEnvironment()).
-		CamV1ConnectArtifact(cam.CamV1ConnectArtifact{Spec: &artifact})
+		CamV1ConnectArtifact(camv1.CamV1ConnectArtifact{Spec: &artifact})
 	return req.Execute()
 }
 
-func executeConnectArtifactRead(ctx context.Context, c *Client, cloud, artifactID, envId string) (cam.CamV1ConnectArtifact, *http.Response, error) {
-	req := c.camClient.ConnectArtifactsCamV1Api.GetCamV1ConnectArtifact(c.camApiContext(ctx), artifactID).
+func executeConnectArtifactRead(ctx context.Context, c *Client, cloud, artifactID, envId string) (camv1.CamV1ConnectArtifact, *http.Response, error) {
+	req := c.camV1Client.ConnectArtifactsCamV1Api.GetCamV1ConnectArtifact(c.camV1ApiContext(ctx), artifactID).
 		SpecCloud(cloud).
 		Environment(envId)
 	return req.Execute()
@@ -195,7 +191,7 @@ func connectArtifactRead(ctx context.Context, d *schema.ResourceData, meta inter
 func readConnectArtifactAndSetAttributes(ctx context.Context, d *schema.ResourceData, meta interface{}, cloud, artifactId, artifactFile, envId string) ([]*schema.ResourceData, error) {
 	c := meta.(*Client)
 
-	artifact, resp, err := executeConnectArtifactRead(c.camApiContext(ctx), c, cloud, artifactId, envId)
+	artifact, resp, err := executeConnectArtifactRead(c.camV1ApiContext(ctx), c, cloud, artifactId, envId)
 	if err != nil {
 		tflog.Warn(ctx, fmt.Sprintf("Error reading Connect Artifact %q: %s", d.Id(), createDescriptiveError(err, resp)), map[string]interface{}{connectArtifactLoggingKey: d.Id()})
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
@@ -222,7 +218,7 @@ func readConnectArtifactAndSetAttributes(ctx context.Context, d *schema.Resource
 	return []*schema.ResourceData{d}, nil
 }
 
-func setConnectArtifactAttributes(d *schema.ResourceData, artifact cam.CamV1ConnectArtifact, artifactFile string) (*schema.ResourceData, error) {
+func setConnectArtifactAttributes(d *schema.ResourceData, artifact camv1.CamV1ConnectArtifact, artifactFile string) (*schema.ResourceData, error) {
 	spec := artifact.GetSpec()
 	if err := d.Set(paramDisplayName, spec.GetDisplayName()); err != nil {
 		return nil, err
@@ -265,7 +261,7 @@ func connectArtifactDelete(ctx context.Context, d *schema.ResourceData, meta int
 	if environmentId == "" {
 		return diag.Errorf("error deleting Connect Artifact: environment is required and must be specified")
 	}
-	resp, err := executeConnectArtifactDelete(c.camApiContext(ctx), c, d.Id(), d.Get(paramCloud).(string), environmentId)
+	resp, err := executeConnectArtifactDelete(c.camV1ApiContext(ctx), c, d.Id(), d.Get(paramCloud).(string), environmentId)
 
 	if err != nil {
 		return diag.Errorf("error deleting connect artifact %q: %s", d.Id(), createDescriptiveError(err, resp))
@@ -277,7 +273,7 @@ func connectArtifactDelete(ctx context.Context, d *schema.ResourceData, meta int
 }
 
 func executeConnectArtifactDelete(ctx context.Context, c *Client, artifactID, cloud, envId string) (*http.Response, error) {
-	req := c.camClient.ConnectArtifactsCamV1Api.DeleteCamV1ConnectArtifact(c.camApiContext(ctx), artifactID).
+	req := c.camV1Client.ConnectArtifactsCamV1Api.DeleteCamV1ConnectArtifact(c.camV1ApiContext(ctx), artifactID).
 		SpecCloud(cloud).
 		Environment(envId)
 	return req.Execute()
@@ -312,14 +308,14 @@ func waitForConnectArtifactToProvision(ctx context.Context, c *Client, environme
 	stateConf := &resource.StateChangeConf{
 		Pending:      []string{stateProvisioning, stateProcessing, stateWaitingForProcessing},
 		Target:       []string{stateProvisioned, stateReady},
-		Refresh:      connectArtifactProvisionStatus(c.camApiContext(ctx), c, environmentId, artifactId, cloud),
+		Refresh:      connectArtifactProvisionStatus(c.camV1ApiContext(ctx), c, environmentId, artifactId, cloud),
 		Timeout:      1 * time.Hour,
 		Delay:        delay,
 		PollInterval: pollInterval,
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for Connect Artifact %q provisioning status to become %q", artifactId, stateProvisioned), map[string]interface{}{connectArtifactLoggingKey: artifactId})
-	if _, err := stateConf.WaitForStateContext(c.camApiContext(ctx)); err != nil {
+	if _, err := stateConf.WaitForStateContext(c.camV1ApiContext(ctx)); err != nil {
 		return err
 	}
 	return nil

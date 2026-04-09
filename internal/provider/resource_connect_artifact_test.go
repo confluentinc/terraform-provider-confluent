@@ -8,26 +8,9 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/walkerus/go-wiremock"
-
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-)
-
-const (
-	scenarioConnectArtifactPresignedUrlHasBeenCreated = "The new connect artifact presigned URL has been just created"
-	scenarioStateConnectArtifactHasBeenCreated        = "The new connect artifact has been just created"
-	scenarioStateConnectArtifactIsProvisioning        = "The new connect artifact is in provisioning state"
-	scenarioStateConnectArtifactHasBeenDeleted        = "The new connect artifact has been deleted"
-	connectArtifactScenarioName                       = "confluent_connect_artifact Resource Lifecycle"
-	connectArtifactCloud                              = "AWS"
-	connectArtifactCloudAPIResponse                   = "aws"
-	connectArtifactEnvironmentId                      = "env-gz903"
-	connectArtifactContentFormat                      = "JAR"
-	connectArtifactContentFormatZip                   = "ZIP"
-	connectArtifactDescription                        = "test-description"
-	connectArtifactId                                 = "cca-xryjrg"
-	connectArtifactUniqueName                         = "connect_artifact_0"
+	"github.com/walkerus/go-wiremock"
 )
 
 var connectArtifactsUrlPath = fmt.Sprintf("/cam/v1/connect-artifacts/%s", connectArtifactId)
@@ -314,7 +297,7 @@ func testAccCheckConnectArtifactDestroy(s *terraform.State) error {
 			continue
 		}
 		deletedArtifactId := rs.Primary.ID
-		req := c.camClient.ConnectArtifactsCamV1Api.GetCamV1ConnectArtifact(c.camApiContext(context.Background()), deletedArtifactId).
+		req := c.camV1Client.ConnectArtifactsCamV1Api.GetCamV1ConnectArtifact(c.camV1ApiContext(context.Background()), deletedArtifactId).
 			SpecCloud(connectArtifactCloud).
 			Environment(connectArtifactEnvironmentId)
 		deletedArtifact, response, err := req.Execute()

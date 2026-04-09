@@ -17,27 +17,13 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"testing"
-)
 
-const (
-	schemaExporterResourceScenarioName        = "confluent_schema_exporter Resource Lifecycle"
-	scenarioStateSchemaExporterHasBeenCreated = "A new schema exporter has been just created"
-	scenarioStateSchemaExporterHasBeenUpdated = "A new schema exporter has been just updated"
-	createSchemaExporterUrlPath               = "/exporters"
-	readCreatedSchemaExporterUrlPath          = "/exporters/exporter1"
-	readCreatedSchemaExporterStatusUrlPath    = "/exporters/exporter1/status"
-	schemaExporterLabel                       = "confluent_schema_exporter.main"
-
-	testOriginalDestinationSchemaRegistryRestEndpoint = "https://psrc-4xgzx.us-east-2.aws.confluent.cloud"
-	testDestinationSchemaRegistryRestEndpoint         = "https://psrc-5xgzx.us-east-2.aws.confluent.cloud"
-	testDestinationSchemaRegistryKey                  = "foo2"
-	testDestinationSchemaRegistrySecret               = "bar2"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/walkerus/go-wiremock"
 )
 
 func TestAccSchemaExporter(t *testing.T) {

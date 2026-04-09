@@ -18,19 +18,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	v2 "github.com/confluentinc/ccloud-sdk-go-v2/flink/v2"
+	"net/http"
+	"strings"
+
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"net/http"
-	"strings"
-)
 
-const (
-	// The maximum allowable page size - 1 (to avoid off-by-one errors) when listing flinkRegions using SG V2 API
-	// https://docs.confluent.io/cloud/current/api.html#tag/Regions-(fcpmv2)/operation/listFcpmV2Regions
-	listFlinkRegionsPageSize = 99
+	flinkv2 "github.com/confluentinc/ccloud-sdk-go-v2/flink/v2"
 )
 
 func flinkRegionDataSource() *schema.Resource {
@@ -90,7 +86,7 @@ func executeFlinkRegionDataSourceRead(ctx context.Context, d *schema.ResourceDat
 	tflog.Debug(ctx, fmt.Sprintf("Reading Flink Region with %q=%q, %q=%q", paramCloud, cloud, paramRegion, region))
 
 	c := meta.(*Client)
-	flinkRegions, resp, err := executeListFlinkRegions(c.fcpmApiContext(ctx), c, cloud, region)
+	flinkRegions, resp, err := executeListFlinkRegions(c.flinkV2ApiContext(ctx), c, cloud, region)
 	if err != nil {
 		return diag.Errorf("error reading Flink Region: %s", createDescriptiveError(err, resp))
 	}
@@ -113,11 +109,11 @@ func executeFlinkRegionDataSourceRead(ctx context.Context, d *schema.ResourceDat
 	return nil
 }
 
-func executeListFlinkRegions(ctx context.Context, c *Client, cloud, region string) (v2.FcpmV2RegionList, *http.Response, error) {
-	return c.fcpmClient.RegionsFcpmV2Api.ListFcpmV2Regions(c.fcpmApiContext(ctx)).PageSize(listFlinkRegionsPageSize).RegionName(region).Cloud(cloud).Execute()
+func executeListFlinkRegions(ctx context.Context, c *Client, cloud, region string) (flinkv2.FcpmV2RegionList, *http.Response, error) {
+	return c.flinkV2Client.RegionsFcpmV2Api.ListFcpmV2Regions(c.flinkV2ApiContext(ctx)).PageSize(listFlinkRegionsPageSize).RegionName(region).Cloud(cloud).Execute()
 }
 
-func setFlinkRegionAttributes(d *schema.ResourceData, flinkRegion v2.FcpmV2Region) (*schema.ResourceData, error) {
+func setFlinkRegionAttributes(d *schema.ResourceData, flinkRegion flinkv2.FcpmV2Region) (*schema.ResourceData, error) {
 	if err := d.Set(paramCloud, flinkRegion.GetCloud()); err != nil {
 		return nil, createDescriptiveError(err)
 	}
@@ -141,7 +137,7 @@ func setFlinkRegionAttributes(d *schema.ResourceData, flinkRegion v2.FcpmV2Regio
 	return d, nil
 }
 
-func executeFlinkRegionRead(ctx context.Context, c *Client, cloud, regionName string) (v2.FcpmV2RegionList, *http.Response, error) {
-	req := c.fcpmClient.RegionsFcpmV2Api.ListFcpmV2Regions(c.fcpmApiContext(ctx)).Cloud(cloud).RegionName(regionName)
+func executeFlinkRegionRead(ctx context.Context, c *Client, cloud, regionName string) (flinkv2.FcpmV2RegionList, *http.Response, error) {
+	req := c.flinkV2Client.RegionsFcpmV2Api.ListFcpmV2Regions(c.flinkV2ApiContext(ctx)).Cloud(cloud).RegionName(regionName)
 	return req.Execute()
 }

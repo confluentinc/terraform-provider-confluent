@@ -17,7 +17,6 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -26,17 +25,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-)
-
-const (
-	scenarioStateIpGroupHasBeenCreated = "The new IP Group has been just created"
-	scenarioStateIpGroupHasBeenUpdated = "The new IP Group's description have been just updated"
-	scenarioStateIpGroupHasBeenDeleted = "The new IP Group has been deleted"
-	ipGroupResourceScenarioName        = "confluent_ip_group Resource Lifecycle"
-
-	testIPGroupID            = "ipg-wyorq"
-	testIPGroupName          = "CorpNet"
-	testIPGroupResourceLabel = "test_ip_group_resource_label"
+	"github.com/walkerus/go-wiremock"
 )
 
 var testIPGroupCidrBlocks = []string{"192.168.0.0/24", "192.168.7.0/24"}
@@ -183,7 +172,7 @@ func testAccCheckIPGroupDestroy(s *terraform.State) error {
 			continue
 		}
 		deletedIPGroupId := rs.Primary.ID
-		req := c.iamIPClient.IPGroupsIamV2Api.GetIamV2IpGroup(c.iamIPApiContext(context.Background()), deletedIPGroupId)
+		req := c.iamIpFilteringV2Client.IPGroupsIamV2Api.GetIamV2IpGroup(c.iamIpFilteringV2ApiContext(context.Background()), deletedIPGroupId)
 		deletedServiceAccount, response, err := req.Execute()
 		if response != nil && (response.StatusCode == http.StatusForbidden || response.StatusCode == http.StatusNotFound) {
 			// v2/ip-groups/{nonExistentSaId/deletedSaID} returns http.StatusForbidden instead of http.StatusNotFound
