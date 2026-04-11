@@ -32,7 +32,12 @@ func kafkaClustersDataSource() *schema.Resource {
 		ReadContext: kafkaClustersDataSourceRead,
 		Schema: map[string]*schema.Schema{
 			paramEnvironment: environmentDataSourceSchema(),
-			paramClusters:    kafkaClustersSchema(),
+			paramDeletionProtection: {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Filter the results by deletion protection status. Accepted values are `ENABLED`, `DISABLED`.",
+			},
+			paramClusters: kafkaClustersSchema(),
 		},
 	}
 }
@@ -54,6 +59,11 @@ func kafkaClustersSchema() *schema.Schema {
 				},
 				paramNetwork:              optionalNetworkDataSourceSchema(),
 				paramConfluentCustomerKey: optionalByokDataSourceSchema(),
+				paramDeletionProtection: {
+					Type:        schema.TypeBool,
+					Computed:    true,
+					Description: "Enable deletion protection for the Kafka cluster.",
+				},
 				paramApiVersion: {
 					Type:     schema.TypeString,
 					Computed: true,
@@ -127,7 +137,22 @@ func kafkaClustersDataSourceRead(ctx context.Context, d *schema.ResourceData, me
 
 	c := meta.(*Client)
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
-	clusters, err := loadKafkaClusters(ctx, c, environmentId)
+
+	var deletionProtectionFilter *bool
+	if v, ok := d.GetOk(paramDeletionProtection); ok {
+		filterValue := v.(string)
+		if filterValue == "ENABLED" {
+			enabled := true
+			deletionProtectionFilter = &enabled
+		} else if filterValue == "DISABLED" {
+			disabled := false
+			deletionProtectionFilter = &disabled
+		} else {
+			return diag.Errorf("error reading Kafka Clusters: invalid value %q for %s, accepted values are ENABLED or DISABLED", filterValue, paramDeletionProtection)
+		}
+	}
+
+	clusters, err := loadKafkaClusters(ctx, c, environmentId, deletionProtectionFilter)
 	if err != nil {
 		return diag.Errorf("error reading Kafka Clusters: %s", createDescriptiveError(err))
 	}
@@ -170,13 +195,14 @@ func populateKafkaClusterResult(cluster cmkv2.CmkV2Cluster) (map[string]interfac
 	}
 
 	mp := map[string]interface{}{
-		paramId:           cluster.GetId(),
-		paramApiVersion:   cluster.GetApiVersion(),
-		paramKind:         cluster.GetKind(),
-		paramDisplayName:  cluster.Spec.GetDisplayName(),
-		paramAvailability: cluster.Spec.GetAvailability(),
-		paramCloud:        cluster.Spec.GetCloud(),
-		paramRegion:       cluster.Spec.GetRegion(),
+		paramId:                 cluster.GetId(),
+		paramApiVersion:         cluster.GetApiVersion(),
+		paramKind:               cluster.GetKind(),
+		paramDisplayName:        cluster.Spec.GetDisplayName(),
+		paramAvailability:       cluster.Spec.GetAvailability(),
+		paramCloud:              cluster.Spec.GetCloud(),
+		paramRegion:             cluster.Spec.GetRegion(),
+		paramDeletionProtection: cluster.Spec.GetDeletionProtection(),
 		// Reset all 5 cluster types since only one of these 5 should be set
 		paramBasicCluster:      []interface{}{},
 		paramStandardCluster:   []interface{}{},
