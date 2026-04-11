@@ -38,7 +38,7 @@ func loadAllConnectors(ctx context.Context, client *Client) (InstanceIdsToNameMa
 		return instances, diag.FromErr(createDescriptiveError(err))
 	}
 	for _, environment := range environments {
-		kafkaClusters, err := loadKafkaClusters(ctx, client, environment.GetId())
+		kafkaClusters, err := loadKafkaClusters(ctx, client, environment.GetId(), nil)
 		if err != nil {
 			tflog.Warn(ctx, fmt.Sprintf("Error reading Kafka Clusters in Environment %q: %s", environment.GetId(), createDescriptiveError(err)))
 			return instances, diag.FromErr(createDescriptiveError(err))
@@ -192,7 +192,7 @@ func loadAllKafkaClusters(ctx context.Context, client *Client) (InstanceIdsToNam
 		return instances, diag.FromErr(createDescriptiveError(err))
 	}
 	for _, environment := range environments {
-		kafkaClusters, err := loadKafkaClusters(ctx, client, environment.GetId())
+		kafkaClusters, err := loadKafkaClusters(ctx, client, environment.GetId(), nil)
 		if err != nil {
 			tflog.Warn(ctx, fmt.Sprintf("Error reading Kafka Clusters in Environment %q: %s", environment.GetId(), createDescriptiveError(err)))
 			return instances, diag.FromErr(createDescriptiveError(err))
