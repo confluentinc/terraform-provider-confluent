@@ -26,6 +26,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
+	flinkgatewayinternalv1 "github.com/confluentinc/ccloud-sdk-go-v2-internal/flink-gateway/v1"
 	apikeysv2 "github.com/confluentinc/ccloud-sdk-go-v2/apikeys/v2"
 	byokv1 "github.com/confluentinc/ccloud-sdk-go-v2/byok/v1"
 	camv1 "github.com/confluentinc/ccloud-sdk-go-v2/cam/v1"
@@ -76,6 +77,7 @@ type Client struct {
 	catalogRestClientFactory        *CatalogRestClientFactory
 	flinkV2Client                   *flinkv2.APIClient
 	flinkArtifactV1Client           *flinkartifactv1.APIClient
+	flinkGatewayInternalV1Client    *flinkgatewayinternalv1.APIClient
 	networkingV1Client              *networkingv1.APIClient
 	networkingAccessPointV1Client   *networkingaccesspointv1.APIClient
 	networkingGatewayV1Client       *networkinggatewayv1.APIClient
@@ -322,6 +324,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_flink_compute_pool":                 computePoolDataSource(),
 				"confluent_flink_compute_pool_config":          computePoolConfigDataSource(),
 				"confluent_flink_connection":                   flinkConnectionDataSource(),
+				"confluent_flink_materialized_table":           flinkMaterializedTableDataSource(),
 				"confluent_flink_region":                       flinkRegionDataSource(),
 				"confluent_identity_pool":                      identityPoolDataSource(),
 				"confluent_identity_provider":                  identityProviderDataSource(),
@@ -389,6 +392,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_flink_compute_pool":                 computePoolResource(),
 				"confluent_flink_compute_pool_config":          computePoolConfigResource(),
 				"confluent_flink_connection":                   flinkConnectionResource(),
+				"confluent_flink_materialized_table":           flinkMaterializedTableResource(),
 				"confluent_flink_statement":                    flinkStatementResource(),
 				"confluent_connector":                          connectorResource(),
 				"confluent_custom_connector_plugin":            customConnectorPluginResource(),
@@ -536,6 +540,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	connectV1Cfg := connectv1.NewConfiguration()
 	flinkArtifactV1Cfg := flinkartifactv1.NewConfiguration()
 	flinkV2Cfg := flinkv2.NewConfiguration()
+	flinkGatewayInternalV1Cfg := flinkgatewayinternalv1.NewConfiguration()
 	iamV2Cfg := iamv2.NewConfiguration()
 	iamIpFilteringV2Cfg := iamipfilteringv2.NewConfiguration()
 	iamV1Cfg := iamv1.NewConfiguration()
@@ -568,6 +573,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	connectV1Cfg.Servers[0].URL = endpoint
 	flinkArtifactV1Cfg.Servers[0].URL = endpoint
 	flinkV2Cfg.Servers[0].URL = endpoint
+	flinkGatewayInternalV1Cfg.Servers[0].URL = endpoint
 	iamV2Cfg.Servers[0].URL = endpoint
 	iamIpFilteringV2Cfg.Servers[0].URL = endpoint
 	iamV1Cfg.Servers[0].URL = endpoint
@@ -601,6 +607,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	connectV1Cfg.UserAgent = userAgent
 	flinkArtifactV1Cfg.UserAgent = userAgent
 	flinkV2Cfg.UserAgent = userAgent
+	flinkGatewayInternalV1Cfg.UserAgent = userAgent
 	iamV2Cfg.UserAgent = userAgent
 	iamIpFilteringV2Cfg.UserAgent = userAgent
 	iamV1Cfg.UserAgent = userAgent
@@ -646,6 +653,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	connectV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	flinkArtifactV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	flinkV2Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
+	flinkGatewayInternalV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	iamV2Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	iamIpFilteringV2Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	iamV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
@@ -718,6 +726,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 		connectV1Client:                 connectv1.NewAPIClient(connectV1Cfg),
 		flinkArtifactV1Client:           flinkartifactv1.NewAPIClient(flinkArtifactV1Cfg),
 		flinkV2Client:                   flinkv2.NewAPIClient(flinkV2Cfg),
+		flinkGatewayInternalV1Client:    flinkgatewayinternalv1.NewAPIClient(flinkGatewayInternalV1Cfg),
 		iamV2Client:                     iamv2.NewAPIClient(iamV2Cfg),
 		iamIpFilteringV2Client:          iamipfilteringv2.NewAPIClient(iamIpFilteringV2Cfg),
 		iamV1Client:                     iamv1.NewAPIClient(iamV1Cfg),
