@@ -1,3 +1,10 @@
+## 2.68.0 (April 14th, 2026)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.67.0...v2.68.0)
+
+**New features:**
+* Added `routes` attribute to the `aws_private_network_interface` configuration block of `confluent_access_point` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_access_point) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_access_point).
+
 ## 2.67.0 (April 3rd, 2026)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.66.0...v2.67.0)
