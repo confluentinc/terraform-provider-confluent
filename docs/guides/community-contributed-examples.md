@@ -10,3 +10,4 @@ If you have an example you’d like to contribute, please see the [Contributing 
 
 ### [Flink SQL & Compute Pool: Real-Time Data Processing Pipeline with AWS Bedrock Integration](https://github.com/confluentinc/flink-ai-examples/tree/rt-clinical-data-extraction/demos/rt-clinical-data-extraction)
 
+### [OAuth Identity Pool with Flink Service Account Delegation](https://github.com/confluentinc/terraform-community-examples/tree/master/flink-oauth-identity-pool)

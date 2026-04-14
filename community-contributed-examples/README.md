@@ -25,11 +25,10 @@ We welcome community contributions! If you have a working Terraform configuratio
 
 ### Contribution Process
 
-1. **Clone the [terraform-community-examples](https://github.com/confluentinc/terraform-community-examples) repository** and create a new branch for your contribution
-2. **Create your example directory** under the repository with a descriptive name
-3. **Include your Terraform files** (`.tf` files) and any supporting documentation
-4. **Use the PR template** when submitting your pull request (see [contribution_pr_template.md](./contribution_pr_template.md))
-5. **Submit your PR** for review by the API team
+1. **Host your example** in a public GitHub repository (your own repo, [terraform-community-examples](https://github.com/confluentinc/terraform-community-examples), or any other public repo)
+2. **Open a PR** on [terraform-provider-confluent](https://github.com/confluentinc/terraform-provider-confluent) to add a link to your example in [`docs/guides/community-contributed-examples.md`](../docs/guides/community-contributed-examples.md)
+3. **Use the PR template** when submitting your pull request (see [contribution_pr_template.md](./contribution_pr_template.md))
+4. **Submit your PR** for review by the API team
 
 
 ## 📁 Example Structure
@@ -37,14 +36,13 @@ We welcome community contributions! If you have a working Terraform configuratio
 Each contributed example should follow a structure similar to below:
 
 ```
-community-contributed-examples/
-└── your-example-name/
-    ├── README.md             # Explanation of the use case
-    ├── main.tf               # Main Terraform configuration
-    ├── variables.tf          # Variable definitions (if applicable)
-    ├── outputs.tf            # Output definitions (if applicable)
-    ├── terraform.tfvars.example  # Example variable values (if applicable)
-    └── versions.tf           # Provider version constraints (if applicable)
+your-example-name/
+├── README.md             # Explanation of the use case
+├── main.tf               # Main Terraform configuration
+├── variables.tf          # Variable definitions (if applicable)
+├── outputs.tf            # Output definitions (if applicable)
+├── terraform.tfvars.example  # Example variable values (if applicable)
+└── versions.tf           # Provider version constraints (if applicable)
 ```
 
 ## 🏷️ Categories
