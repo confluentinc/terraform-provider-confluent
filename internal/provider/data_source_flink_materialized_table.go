@@ -29,12 +29,12 @@ func flinkMaterializedTableDataSource() *schema.Resource {
 			},
 			paramQuery: {
 				Type:        schema.TypeString,
-				Description: "he query section of the latest Materialized Table.",
+				Description: "The query section of the latest Materialized Table.",
 				Computed:    true,
 			},
 			paramWatermarkColumnName: {
 				Type:        schema.TypeString,
-				Description: "The name of the watermark columns.",
+				Description: "The name of the watermark column.",
 				Computed:    true,
 			},
 			paramWatermarkExpression: {
@@ -319,7 +319,7 @@ func loadMaterializedTables(ctx context.Context, c *FlinkRestClient) ([]flinkgat
 	for !done {
 		materializedTablesPageList, resp, err := executeListFlinkMaterializedTables(ctx, c, pageToken)
 		if err != nil {
-			return nil, fmt.Errorf("error reading flink materialied table list: %s", createDescriptiveError(err, resp))
+			return nil, fmt.Errorf("error reading flink materialized table list: %s", createDescriptiveError(err, resp))
 		}
 		flinkMaterializedTables = append(flinkMaterializedTables, materializedTablesPageList.GetData()...)
 

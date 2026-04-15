@@ -80,7 +80,7 @@ func flinkMaterializedTableResource() *schema.Resource {
 			},
 			paramWatermarkColumnName: {
 				Type:        schema.TypeString,
-				Description: "The name of the watermark columns.",
+				Description: "The name of the watermark column.",
 				Optional:    true,
 			},
 			paramWatermarkExpression: {
@@ -647,7 +647,7 @@ func setMaterializedTableAttributes(d *schema.ResourceData, materializedTable fl
 }
 
 func materializedTableDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	tflog.Debug(ctx, fmt.Sprintf("Deleting Flink Materilaized Table %q", d.Id()), map[string]interface{}{flinkMaterializedTableLoggingKey: d.Id()})
+	tflog.Debug(ctx, fmt.Sprintf("Deleting Flink Materialized Table %q", d.Id()), map[string]interface{}{flinkMaterializedTableLoggingKey: d.Id()})
 
 	restEndpoint, err := extractFlinkRestEndpoint(meta.(*Client), d, false)
 	if err != nil {
