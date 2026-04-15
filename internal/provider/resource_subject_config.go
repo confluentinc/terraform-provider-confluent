@@ -243,6 +243,19 @@ func subjectConfigImport(ctx context.Context, d *schema.ResourceData, meta inter
 }
 
 func readSubjectConfigAndSetAttributes(ctx context.Context, d *schema.ResourceData, c *SchemaRegistryRestClient, subjectName string) ([]*schema.ResourceData, error) {
+	// Check if the subject still exists first, because GetSubjectLevelConfig with
+	// DefaultToGlobal(true) returns the global config even when the subject is gone,
+	// masking the 404 that would otherwise trigger state removal.
+	_, subjectResp, subjectErr := c.apiClient.SubjectsV1Api.GetSchemaByVersion(c.apiContext(ctx), subjectName, latestSchemaVersionAndPlaceholderForSchemaIdentifier).Execute()
+	if subjectErr != nil {
+		isSubjectNotFound := ResponseHasExpectedStatusCode(subjectResp, http.StatusNotFound)
+		if isSubjectNotFound && !d.IsNewResource() {
+			tflog.Warn(ctx, fmt.Sprintf("Removing Subject Config %q in TF state because Subject %q could not be found on the server", d.Id(), subjectName), map[string]interface{}{subjectConfigLoggingKey: d.Id()})
+			d.SetId("")
+			return nil, nil
+		}
+	}
+
 	subjectConfig, resp, err := c.apiClient.ConfigV1Api.GetSubjectLevelConfig(c.apiContext(ctx), subjectName).DefaultToGlobal(true).Execute()
 	if err != nil {
 		tflog.Warn(ctx, fmt.Sprintf("Error reading Subject Config %q: %s", d.Id(), createDescriptiveError(err, resp)), map[string]interface{}{subjectConfigLoggingKey: d.Id()})
