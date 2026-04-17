@@ -31,7 +31,8 @@
       "workspace_endpoint": "https://user1.cloud.databricks.com",
       "catalog_name": "catalog_name",
       "client_id": "client-id",
-      "client_secret": "client-secret"
+      "client_secret": "client-secret",
+      "custom_schema": "my-custom-schema"
     }
   },
   "status": {
