@@ -313,24 +313,6 @@ func materializedTableCreate(ctx context.Context, d *schema.ResourceData, meta i
 
 	stopped := d.Get(paramStopped).(bool)
 
-	var isComputed bool
-	computedGet := d.Get(paramColumnComputed)
-	if computedGet != nil {
-		isComputed = len(computedGet.([]interface{})) > 0
-	}
-
-	var isPhysical bool
-	physicalGet := d.Get(paramColumnPhysical)
-	if physicalGet != nil {
-		isPhysical = len(physicalGet.([]interface{})) > 0
-	}
-
-	var isMetadata bool
-	metadataGet := d.Get(paramColumnMetadata)
-	if metadataGet != nil {
-		isMetadata = len(metadataGet.([]interface{})) > 0
-	}
-
 	table := flinkgatewayinternalv1.SqlV1MaterializedTable{
 		Name:           displayName,
 		EnvironmentId:  environmentId,
@@ -347,32 +329,8 @@ func materializedTableCreate(ctx context.Context, d *schema.ResourceData, meta i
 	table.Spec.Watermark = &flinkgatewayinternalv1.SqlV1MaterializedTableWatermark{}
 	table.Spec.DistributedBy = &flinkgatewayinternalv1.SqlV1MaterializedTableDistribution{}
 
-	var computedColumn []flinkgatewayinternalv1.SqlV1MaterializedTableColumnDetails
-	var physicalColumn []flinkgatewayinternalv1.SqlV1MaterializedTableColumnDetails
-	var metadataColumn []flinkgatewayinternalv1.SqlV1MaterializedTableColumnDetails
-
-	if isComputed {
-		computedColumn = expandComputedColumns(d)
-	}
-	if isPhysical {
-		physicalColumn = expandPhysicalColumns(d)
-	}
-	if isMetadata {
-		metadataColumn = expandMetadataColumns(d)
-	}
-
-	var columns []flinkgatewayinternalv1.SqlV1MaterializedTableColumnDetails
-	for _, col := range computedColumn {
-		columns = append(columns, col)
-	}
-	for _, col := range physicalColumn {
-		columns = append(columns, col)
-	}
-	for _, col := range metadataColumn {
-		columns = append(columns, col)
-	}
-
-	if isPhysical || isComputed || isMetadata {
+	columns := expandAllColumns(d)
+	if len(columns) > 0 {
 		table.Spec.SetColumns(columns)
 	}
 
@@ -795,98 +753,10 @@ func materializedTableUpdate(ctx context.Context, d *schema.ResourceData, meta i
 	}
 
 	if d.HasChange(paramColumns) {
-		columnsList := make([]map[string]interface{}, 0, len(expandComputedColumns(d))+len(expandPhysicalColumns(d))+len(expandMetadataColumns(d)))
-		var isComputed bool
-		computedGet := d.Get(paramColumnComputed)
-		if computedGet != nil {
-			isComputed = len(computedGet.([]interface{})) > 0
+		columns := expandAllColumns(d)
+		if len(columns) > 0 {
+			table.Spec.SetColumns(columns)
 		}
-
-		var isPhysical bool
-		physicalGet := d.Get(paramColumnPhysical)
-		if physicalGet != nil {
-			isPhysical = len(physicalGet.([]interface{})) > 0
-		}
-
-		var isMetadata bool
-		metadataGet := d.Get(paramColumnMetadata)
-		if metadataGet != nil {
-			isMetadata = len(metadataGet.([]interface{})) > 0
-		}
-		m := map[string]interface{}{}
-		if isComputed {
-			for _, col := range expandComputedColumns(d) {
-				if col.SqlV1ComputedColumn != nil {
-					computedCol := col.SqlV1ComputedColumn
-					computedVirtual := false
-					if computedCol.Virtual != nil {
-						computedVirtual = *computedCol.Virtual
-					}
-
-					m[paramColumnComputed] = []map[string]interface{}{
-						{
-							paramComputedName:       computedCol.Name,
-							paramComputedType:       computedCol.Type,
-							paramComputedComment:    computedCol.Comment,
-							paramComputedKind:       computedCol.Kind,
-							paramComputedExpression: computedCol.Expression,
-							paramComputedVirtual:    computedVirtual,
-						},
-					}
-					columnsList = append(columnsList, m)
-				} else {
-					m[paramColumnComputed] = []map[string]interface{}{}
-				}
-			}
-		}
-		if isPhysical {
-			for _, col := range expandComputedColumns(d) {
-				if col.SqlV1PhysicalColumn != nil {
-					physicalCol := col.SqlV1PhysicalColumn
-					m[paramColumnPhysical] = []map[string]interface{}{
-						{
-							paramPhysicalName:    physicalCol.Name,
-							paramPhysicalType:    physicalCol.Type,
-							paramPhysicalComment: physicalCol.Comment,
-							paramPhysicalKind:    physicalCol.Kind,
-						},
-					}
-					columnsList = append(columnsList, m)
-
-				} else {
-					m[paramColumnPhysical] = []map[string]interface{}{}
-				}
-			}
-
-		}
-		if isMetadata {
-			for _, col := range expandComputedColumns(d) {
-				if col.SqlV1MetadataColumn != nil {
-					metadataCol := col.SqlV1MetadataColumn
-					metadataVirtual := false
-					if metadataCol.Virtual != nil {
-						metadataVirtual = *metadataCol.Virtual
-					}
-
-					m[paramColumnMetadata] = []map[string]interface{}{
-						{
-							paramMetadataName:    metadataCol.Name,
-							paramMetadataType:    metadataCol.Type,
-							paramMetadataComment: metadataCol.Comment,
-							paramMetadataKind:    metadataCol.Kind,
-							paramMetadataKey:     metadataCol.MetadataKey,
-							paramMetadataVirtual: metadataVirtual,
-						},
-					}
-					columnsList = append(columnsList, m)
-
-				} else {
-					m[paramColumnMetadata] = []map[string]interface{}{}
-				}
-			}
-
-		}
-		_ = d.Set(paramColumns, columnsList)
 	}
 	if d.HasChange(paramConstraints) {
 		constraints := expandMaterializedTableConstraints(d, paramConstraints)
@@ -1043,106 +913,107 @@ func expandMaterializedTableConstraints(d *schema.ResourceData, key string) []fl
 	return result
 }
 
-func expandComputedColumns(d *schema.ResourceData) []flinkgatewayinternalv1.SqlV1MaterializedTableColumnDetails {
-	raw, ok := d.GetOk(paramColumnComputed)
+func expandAllColumns(d *schema.ResourceData) []flinkgatewayinternalv1.SqlV1MaterializedTableColumnDetails {
+	raw, ok := d.GetOk(paramColumns)
 	if !ok || raw == nil {
 		return nil
 	}
 
-	list := raw.([]interface{})
-	result := make([]flinkgatewayinternalv1.SqlV1MaterializedTableColumnDetails, 0, len(list))
+	columnsList := raw.([]interface{})
+	var result []flinkgatewayinternalv1.SqlV1MaterializedTableColumnDetails
 
-	for _, v := range list {
-		m := v.(map[string]interface{})
-
-		col := flinkgatewayinternalv1.SqlV1MaterializedTableColumnDetails{}
-
-		if name, ok := m[paramComputedName].(string); ok && name != "" {
-			col.SqlV1ComputedColumn.Name = &name
-		}
-		if kind, ok := m[paramComputedKind].(string); ok && kind != "" {
-			col.SqlV1ComputedColumn.Kind = kind
-		}
-		if expr, ok := m[paramComputedExpression].(string); ok && expr != "" {
-			col.SqlV1ComputedColumn.Expression = expr
-		}
-		if virtual, ok := m[paramComputedVirtual].(bool); ok {
-			col.SqlV1ComputedColumn.Virtual = &virtual
+	for _, colRaw := range columnsList {
+		colMap, ok := colRaw.(map[string]interface{})
+		if !ok {
+			continue
 		}
 
-		result = append(result, col)
-	}
-
-	return result
-}
-
-func expandPhysicalColumns(d *schema.ResourceData) []flinkgatewayinternalv1.SqlV1MaterializedTableColumnDetails {
-	raw, ok := d.GetOk("physical_columns")
-	if !ok || raw == nil {
-		return nil
-	}
-
-	list := raw.([]interface{})
-	result := make([]flinkgatewayinternalv1.SqlV1MaterializedTableColumnDetails, 0, len(list))
-
-	for _, v := range list {
-		m := v.(map[string]interface{})
-
-		col := flinkgatewayinternalv1.SqlV1MaterializedTableColumnDetails{}
-
-		if name, ok := m["name"].(string); ok && name != "" {
-			col.SqlV1PhysicalColumn.Name = name
-		}
-		if typ, ok := m["type"].(string); ok && typ != "" {
-			col.SqlV1PhysicalColumn.Type = typ
-		}
-		if comment, ok := m["comment"].(string); ok && comment != "" {
-			col.SqlV1PhysicalColumn.Comment = &comment
-		}
-		if kind, ok := m["kind"].(string); ok && kind != "" {
-			col.SqlV1PhysicalColumn.Kind = kind
+		if computedRaw, ok := colMap[paramColumnComputed]; ok {
+			for _, c := range computedRaw.([]interface{}) {
+				cm, ok := c.(map[string]interface{})
+				if !ok {
+					continue
+				}
+				col := flinkgatewayinternalv1.SqlV1MaterializedTableColumnDetails{
+					SqlV1ComputedColumn: &flinkgatewayinternalv1.SqlV1ComputedColumn{},
+				}
+				if name, ok := cm[paramComputedName].(string); ok && name != "" {
+					col.SqlV1ComputedColumn.Name = &name
+				}
+				if typ, ok := cm[paramComputedType].(string); ok && typ != "" {
+					col.SqlV1ComputedColumn.Type = &typ
+				}
+				if comment, ok := cm[paramComputedComment].(string); ok && comment != "" {
+					col.SqlV1ComputedColumn.Comment = &comment
+				}
+				if kind, ok := cm[paramComputedKind].(string); ok && kind != "" {
+					col.SqlV1ComputedColumn.Kind = kind
+				}
+				if expr, ok := cm[paramComputedExpression].(string); ok && expr != "" {
+					col.SqlV1ComputedColumn.Expression = expr
+				}
+				if virtual, ok := cm[paramComputedVirtual].(bool); ok {
+					col.SqlV1ComputedColumn.Virtual = &virtual
+				}
+				result = append(result, col)
+			}
 		}
 
-		result = append(result, col)
-	}
-
-	return result
-}
-
-func expandMetadataColumns(d *schema.ResourceData) []flinkgatewayinternalv1.SqlV1MaterializedTableColumnDetails {
-	raw, ok := d.GetOk("metadata_columns")
-	if !ok || raw == nil {
-		return nil
-	}
-
-	list := raw.([]interface{})
-	result := make([]flinkgatewayinternalv1.SqlV1MaterializedTableColumnDetails, 0, len(list))
-
-	for _, v := range list {
-		m := v.(map[string]interface{})
-
-		col := flinkgatewayinternalv1.SqlV1MaterializedTableColumnDetails{}
-
-		if name, ok := m["name"].(string); ok && name != "" {
-			col.SqlV1MetadataColumn.Name = name
-		}
-		if typ, ok := m["type"].(string); ok && typ != "" {
-			col.SqlV1MetadataColumn.Type = typ
-		}
-		if comment, ok := m["comment"].(string); ok && comment != "" {
-			col.SqlV1MetadataColumn.Comment = &comment
-		}
-		if kind, ok := m["kind"].(string); ok && kind != "" {
-			col.SqlV1MetadataColumn.Kind = kind
-		}
-		if key, ok := m["metadata_key"].(string); ok && key != "" {
-			col.SqlV1MetadataColumn.MetadataKey = key
-		}
-		if virtual, ok := m["virtual"].(bool); ok {
-			col.SqlV1MetadataColumn.Virtual = &virtual
+		if physicalRaw, ok := colMap[paramColumnPhysical]; ok {
+			for _, p := range physicalRaw.([]interface{}) {
+				pm, ok := p.(map[string]interface{})
+				if !ok {
+					continue
+				}
+				col := flinkgatewayinternalv1.SqlV1MaterializedTableColumnDetails{
+					SqlV1PhysicalColumn: &flinkgatewayinternalv1.SqlV1PhysicalColumn{},
+				}
+				if name, ok := pm[paramPhysicalName].(string); ok && name != "" {
+					col.SqlV1PhysicalColumn.Name = name
+				}
+				if typ, ok := pm[paramPhysicalType].(string); ok && typ != "" {
+					col.SqlV1PhysicalColumn.Type = typ
+				}
+				if comment, ok := pm[paramPhysicalComment].(string); ok && comment != "" {
+					col.SqlV1PhysicalColumn.Comment = &comment
+				}
+				if kind, ok := pm[paramPhysicalKind].(string); ok && kind != "" {
+					col.SqlV1PhysicalColumn.Kind = kind
+				}
+				result = append(result, col)
+			}
 		}
 
-		result = append(result, col)
+		if metadataRaw, ok := colMap[paramColumnMetadata]; ok {
+			for _, md := range metadataRaw.([]interface{}) {
+				mm, ok := md.(map[string]interface{})
+				if !ok {
+					continue
+				}
+				col := flinkgatewayinternalv1.SqlV1MaterializedTableColumnDetails{
+					SqlV1MetadataColumn: &flinkgatewayinternalv1.SqlV1MetadataColumn{},
+				}
+				if name, ok := mm[paramMetadataName].(string); ok && name != "" {
+					col.SqlV1MetadataColumn.Name = name
+				}
+				if typ, ok := mm[paramMetadataType].(string); ok && typ != "" {
+					col.SqlV1MetadataColumn.Type = typ
+				}
+				if comment, ok := mm[paramMetadataComment].(string); ok && comment != "" {
+					col.SqlV1MetadataColumn.Comment = &comment
+				}
+				if kind, ok := mm[paramMetadataKind].(string); ok && kind != "" {
+					col.SqlV1MetadataColumn.Kind = kind
+				}
+				if key, ok := mm[paramMetadataKey].(string); ok && key != "" {
+					col.SqlV1MetadataColumn.MetadataKey = key
+				}
+				if virtual, ok := mm[paramMetadataVirtual].(bool); ok {
+					col.SqlV1MetadataColumn.Virtual = &virtual
+				}
+				result = append(result, col)
+			}
+		}
 	}
 
 	return result
