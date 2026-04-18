@@ -309,7 +309,7 @@ func materializedTableDataSourceRead(ctx context.Context, d *schema.ResourceData
 			return nil
 		}
 	}
-	return nil
+	return diag.Errorf("error reading Flink Materialized Table: materialized table with display_name %q was not found", displayName)
 }
 
 func loadMaterializedTables(ctx context.Context, c *FlinkRestClient) ([]flinkgatewayinternalv1.SqlV1MaterializedTable, error) {

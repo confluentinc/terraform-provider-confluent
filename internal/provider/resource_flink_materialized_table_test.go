@@ -386,18 +386,18 @@ func testAccCheckMaterializedTableExists(n string) resource.TestCheckFunc {
 }
 func testAccCheckMaterializedTableDestroy(s *terraform.State, url string) error {
 	testClient := testAccProvider.Meta().(*Client)
-	c := testClient.flinkRestClientFactory.CreateFlinkRestClient(url, flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkComputePoolIdTest, flinkPrincipalIdTest, kafkaApiKey, kafkaApiSecret, false, testClient.oauthToken)
-	// Loop through the resources in state, verifying each Kafka topic is destroyed
+	c := testClient.flinkRestClientFactory.CreateFlinkRestClientInternal(url, flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkComputePoolIdTest, flinkPrincipalIdTest, kafkaApiKey, kafkaApiSecret, false, testClient.oauthToken)
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "confluent_flink_materialized_table" {
 			continue
 		}
 		deletedId := rs.Primary.ID
-		_, response, err := c.apiClient.ConnectionsSqlV1Api.GetSqlv1Connection(c.apiContext(context.Background()), flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkConnectionNameTest).Execute()
+		tableName := getTableName(deletedId)
+		kafkaId := getKafkaId(deletedId)
+		_, response, err := executeMaterializedTableRead(context.Background(), c, flinkOrganizationIdTest, flinkEnvironmentIdTest, kafkaId, tableName)
 		if response != nil && (response.StatusCode == http.StatusForbidden || response.StatusCode == http.StatusNotFound) {
 			return nil
 		} else if err == nil && deletedId != "" {
-			// Otherwise return the error
 			if deletedId == rs.Primary.ID {
 				return fmt.Errorf("materialized table (%s) still exists", rs.Primary.ID)
 			}
