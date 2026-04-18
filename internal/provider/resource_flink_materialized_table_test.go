@@ -1,3 +1,17 @@
+// Copyright 2021 Confluent Inc. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package provider
 
 import (
@@ -6,7 +20,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/walkerus/go-wiremock"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"testing"
@@ -41,7 +54,7 @@ func TestAccFlinkMaterializedTable(t *testing.T) {
 
 	// nolint:errcheck
 	defer wiremockClient.ResetAllScenarios()
-	createFlinkMaterializedTableResponse, _ := ioutil.ReadFile("../testdata/flink_materialized_table/create_materialized_table.json")
+	createFlinkMaterializedTableResponse, _ := os.ReadFile("../testdata/flink_materialized_table/create_materialized_table.json")
 	createFlinkMaterializedTableStub := wiremock.Post(wiremock.URLPathEqualTo(createFlinkMaterializedTablePath)).
 		InScenario(materializedTableScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
@@ -53,7 +66,7 @@ func TestAccFlinkMaterializedTable(t *testing.T) {
 		)
 	_ = wiremockClient.StubFor(createFlinkMaterializedTableStub)
 
-	readCreatedMaterializedTableResponse, _ := ioutil.ReadFile("../testdata/flink_materialized_table/read_materialized_table.json")
+	readCreatedMaterializedTableResponse, _ := os.ReadFile("../testdata/flink_materialized_table/read_materialized_table.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readFlinkMaterializedTablePath)).
 		InScenario(materializedTableScenarioName).
 		WhenScenarioStateIs(scenarioStateMaterializedTableHasBeenCreated).
@@ -63,8 +76,8 @@ func TestAccFlinkMaterializedTable(t *testing.T) {
 			http.StatusOK,
 		))
 
-	updateFlinkMaterializedTableResponse, _ := ioutil.ReadFile("../testdata/flink_materialized_table/update_materialized_table.json")
-	updateFlinkConnectionStub := wiremock.Put(wiremock.URLPathEqualTo(readFlinkMaterializedTablePath)).
+	updateFlinkMaterializedTableResponse, _ := os.ReadFile("../testdata/flink_materialized_table/update_materialized_table.json")
+	updateFlinkMaterializedTableStub := wiremock.Put(wiremock.URLPathEqualTo(readFlinkMaterializedTablePath)).
 		InScenario(materializedTableScenarioName).
 		WhenScenarioStateIs(scenarioStateMaterializedTableHasBeenCreated).
 		WillSetStateTo(scenarioStateMaterializedTableHasBeenUpdated).
@@ -73,9 +86,9 @@ func TestAccFlinkMaterializedTable(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusCreated,
 		)
-	_ = wiremockClient.StubFor(updateFlinkConnectionStub)
+	_ = wiremockClient.StubFor(updateFlinkMaterializedTableStub)
 
-	readUpdatedFlinkMaterializedTableResponse, _ := ioutil.ReadFile("../testdata/flink_materialized_table/read_materialized_table_updated.json")
+	readUpdatedFlinkMaterializedTableResponse, _ := os.ReadFile("../testdata/flink_materialized_table/read_materialized_table_updated.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readFlinkMaterializedTablePath)).
 		InScenario(materializedTableScenarioName).
 		WhenScenarioStateIs(scenarioStateMaterializedTableHasBeenUpdated).
@@ -85,7 +98,7 @@ func TestAccFlinkMaterializedTable(t *testing.T) {
 			http.StatusOK,
 		))
 
-	deleteConnectionStub := wiremock.Delete(wiremock.URLPathEqualTo(readFlinkMaterializedTablePath)).
+	deleteMaterializedTableStub := wiremock.Delete(wiremock.URLPathEqualTo(readFlinkMaterializedTablePath)).
 		InScenario(materializedTableScenarioName).
 		WhenScenarioStateIs(scenarioStateMaterializedTableHasBeenUpdated).
 		WillSetStateTo(scenarioStateMaterializedTableHasBeenDeleted).
@@ -94,23 +107,20 @@ func TestAccFlinkMaterializedTable(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNoContent,
 		)
-	_ = wiremockClient.StubFor(deleteConnectionStub)
+	_ = wiremockClient.StubFor(deleteMaterializedTableStub)
 
-	readDeletedConnectionResponse, _ := ioutil.ReadFile("../testdata/flink_materialized_table/read_deleted_materialized_table.json")
+	readDeletedMaterializedTableResponse, _ := os.ReadFile("../testdata/flink_materialized_table/read_deleted_materialized_table.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readFlinkMaterializedTablePath)).
 		InScenario(materializedTableScenarioName).
 		WhenScenarioStateIs(scenarioStateMaterializedTableHasBeenDeleted).
 		WillReturn(
-			string(readDeletedConnectionResponse),
+			string(readDeletedMaterializedTableResponse),
 			contentTypeJSONHeader,
 			http.StatusNotFound,
 		))
 
 	flinkMaterializedTableResourceLabel := "test"
 	fullMaterializedTableResourceLabel := fmt.Sprintf("confluent_flink_materialized_table.%s", flinkMaterializedTableResourceLabel)
-	//distributedByColumns := []string{"keys", "passwords"}
-
-	_ = os.Setenv("API_KEY", flinkAPIKeyUpdated)
 	_ = os.Setenv("IMPORT_FLINK_API_KEY", kafkaApiKey)
 	_ = os.Setenv("IMPORT_FLINK_API_SECRET", kafkaApiSecret)
 	_ = os.Setenv("IMPORT_FLINK_REST_ENDPOINT", mockTestServerUrl)
@@ -119,7 +129,6 @@ func TestAccFlinkMaterializedTable(t *testing.T) {
 	_ = os.Setenv("IMPORT_CONFLUENT_ENVIRONMENT_ID", flinkEnvironmentIdTest)
 	_ = os.Setenv("IMPORT_FLINK_COMPUTE_POOL_ID", flinkComputePoolIdTest)
 	defer func() {
-		_ = os.Unsetenv("API_KEY")
 		_ = os.Unsetenv("IMPORT_FLINK_API_KEY")
 		_ = os.Unsetenv("IMPORT_FLINK_API_SECRET")
 		_ = os.Unsetenv("IMPORT_FLINK_REST_ENDPOINT")
@@ -138,7 +147,7 @@ func TestAccFlinkMaterializedTable(t *testing.T) {
 		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckMaterializedTableConfig(mockTestServerUrl, flinkMaterializedTableResourceLabel, flinkAPIKey),
+				Config: testAccCheckMaterializedTableConfig(mockTestServerUrl, flinkMaterializedTableResourceLabel),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMaterializedTableExists(fullMaterializedTableResourceLabel),
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, paramDisplayName, flinkMaterializedTableDisplayName),
@@ -172,7 +181,7 @@ func TestAccFlinkMaterializedTable(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckMaterializedTableConfigUpdated(mockTestServerUrl, flinkMaterializedTableResourceLabel, flinkAPIKeyUpdated),
+				Config: testAccCheckMaterializedTableConfigUpdated(mockTestServerUrl, flinkMaterializedTableResourceLabel),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMaterializedTableExists(fullMaterializedTableResourceLabel),
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, paramDisplayName, flinkMaterializedTableDisplayName),
@@ -237,7 +246,7 @@ func TestAccFlinkMaterializedTable(t *testing.T) {
 	})
 }
 
-func testAccCheckMaterializedTableConfig(mockServerUrl, resourceLabel, apikey string) string {
+func testAccCheckMaterializedTableConfig(mockServerUrl, resourceLabel string) string {
 	return fmt.Sprintf(`
 	provider "confluent" {
     	endpoint = "%s"
@@ -291,7 +300,7 @@ func testAccCheckMaterializedTableConfig(mockServerUrl, resourceLabel, apikey st
 		flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkComputePoolIdTest, flinkMaterializedTableDisplayName, flinkMaterializedTableDatabase)
 }
 
-func testAccCheckMaterializedTableConfigUpdated(mockServerUrl, resourceLabel, apikey string) string {
+func testAccCheckMaterializedTableConfigUpdated(mockServerUrl, resourceLabel string) string {
 	return fmt.Sprintf(`
 	provider "confluent" {
     	endpoint = "%s"

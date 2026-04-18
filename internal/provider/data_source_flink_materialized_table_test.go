@@ -18,8 +18,8 @@ import (
 	"context"
 	"fmt"
 	"github.com/walkerus/go-wiremock"
-	"io/ioutil"
 	"net/http"
+	"os"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -29,7 +29,7 @@ const (
 	dataSourceMaterializedTableScenarioName = "confluent_flink_materialized_table Data Source Lifecycle"
 )
 
-func TestAccDataSourceMaterializedTable(t *testing.T) {
+func TestAccDataSourceFlinkMaterializedTable(t *testing.T) {
 	ctx := context.Background()
 
 	wiremockContainer, err := setupWiremock(ctx)
@@ -46,7 +46,7 @@ func TestAccDataSourceMaterializedTable(t *testing.T) {
 	// nolint:errcheck
 	defer wiremockClient.ResetAllScenarios()
 
-	readCreatedMaterializedTableResponse, _ := ioutil.ReadFile("../testdata/flink_materialized_table/read_materialized_table.json")
+	readCreatedMaterializedTableResponse, _ := os.ReadFile("../testdata/flink_materialized_table/read_materialized_table.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/sql/v1/organizations/1111aaaa-11aa-11aa-11aa-111111aaaaaa/environments/env-abc123/materialized-tables/table1")).
 		InScenario(dataSourceMaterializedTableScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
@@ -56,7 +56,7 @@ func TestAccDataSourceMaterializedTable(t *testing.T) {
 			http.StatusOK,
 		))
 
-	readMaterializedTableResponse, _ := ioutil.ReadFile("../testdata/flink_materialized_table/read_materialized_table_list.json")
+	readMaterializedTableResponse, _ := os.ReadFile("../testdata/flink_materialized_table/read_materialized_table_list.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/sql/v1/organizations/1111aaaa-11aa-11aa-11aa-111111aaaaaa/environments/env-abc123/materialized-tables")).
 		InScenario(dataSourceMaterializedTableScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).

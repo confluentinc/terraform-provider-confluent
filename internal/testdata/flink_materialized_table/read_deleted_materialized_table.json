@@ -2,10 +2,10 @@
   "errors": [
     {
       "id": "ed42afdc-f0d5-4c0d-b428-9fc6ed6e279d",
-      "status": "400",
-      "code": "invalid_filter",
-      "title": "Invalid Filter",
-      "detail": "The 'delorean' resource can't be filtered by 'num_doors'",
+      "status": "404",
+      "code": "not_found",
+      "title": "Not Found",
+      "detail": "The materialized table 'table1' was not found",
       "source": {}
     }
   ]

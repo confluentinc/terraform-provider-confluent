@@ -68,8 +68,7 @@ func flinkMaterializedTableDataSource() *schema.Resource {
 			paramRestEndpoint: {
 				Type:         schema.TypeString,
 				Optional:     true,
-				ForceNew:     true,
-				Description:  "The REST endpoint of the Flink Materialized Table, for example, `https://flink.us-east-1.aws.confluent.cloud/sql/v1/organizations/1111aaaa-11aa-11aa-11aa-111111aaaaaa/environments/env-abc123`).",
+				Description:  "The REST endpoint of the Flink region, for example, `https://flink.us-east-1.aws.confluent.cloud/sql/v1/organizations/1111aaaa-11aa-11aa-11aa-111111aaaaaa/environments/env-abc123`).",
 				ValidateFunc: validation.StringMatch(regexp.MustCompile("^http"), "the REST endpoint must start with 'https://'"),
 			},
 			paramCredentials: credentialsSchema(),
@@ -283,13 +282,6 @@ func materializedTableDataSourceRead(ctx context.Context, d *schema.ResourceData
 		return diag.Errorf("error reading Flink Materialized Table: %s", createDescriptiveError(err))
 	}
 	flinkRestClient := meta.(*Client).flinkRestClientFactory.CreateFlinkRestClientInternal(restEndpoint, organizationId, environmentId, computePoolId, "", flinkApiKey, flinkApiSecret, meta.(*Client).isFlinkMetadataSet, meta.(*Client).oauthToken)
-	if err != nil {
-		return diag.Errorf("error reading Flink Materialized Table: %s", createDescriptiveError(err))
-	}
-
-	if err != nil {
-		return diag.FromErr(err)
-	}
 
 	flinkMaterializedTables, err := loadMaterializedTables(ctx, flinkRestClient)
 	if err != nil {
@@ -302,8 +294,8 @@ func materializedTableDataSourceRead(ctx context.Context, d *schema.ResourceData
 			if err != nil {
 				return diag.Errorf("error reading flink materialized table %q: error marshaling %#v to json: %s", displayName, flinkMaterializedTable, createDescriptiveError(err))
 			}
+			tflog.Debug(ctx, fmt.Sprintf("Fetched Flink Materialized Table using display name %q: %s", displayName, fmtJson))
 			if _, err := setMaterializedTableAttributes(d, flinkMaterializedTable, flinkRestClient); err != nil {
-				tflog.Debug(ctx, fmt.Sprintf("Fetched Flink Materialized Table using display name %q: %s", displayName, fmtJson))
 				return diag.FromErr(createDescriptiveError(err))
 			}
 			return nil

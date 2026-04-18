@@ -107,7 +107,26 @@ The following arguments are supported:
     - `kind` - (Optional String) The type of the constraint, for example, `PRIMARY_KEY`.
     - `column_names` - (Optional Set of Strings) The column names of the constraint.
     - `enforced` - (Optional Boolean) Whether the constraint is enforced. Defaults to `false`.
-- `columns` - (Optional List of Blocks) A list of column definitions. Each `columns` block supports `columns_physical`, `columns_computed`, and `columns_metadata` sub-blocks.
+- `columns` - (Optional List of Blocks) A list of column definitions. Each `columns` block supports the following sub-blocks:
+    - `columns_physical` - (Optional List of Blocks) Physical column definitions. Each block supports:
+        - `column_physical_name` - (Optional String) Name of the physical column.
+        - `column_physical_type` - (Optional String) Type of the physical column.
+        - `column_physical_comment` - (Optional String) Comment for the physical column.
+        - `column_physical_kind` - (Optional String) Kind of the physical column.
+    - `columns_computed` - (Optional List of Blocks) Computed column definitions. Each block supports:
+        - `column_computed_name` - (Optional String) Name of the computed column.
+        - `column_computed_type` - (Optional String) Type of the computed column.
+        - `column_computed_comment` - (Optional String) Comment for the computed column.
+        - `column_computed_kind` - (Optional String) Kind of the computed column.
+        - `column_computed_expression` - (Optional String) Expression of the computed column.
+        - `column_computed_virtual` - (Optional Boolean) Whether the computed column is virtual. Defaults to `false`.
+    - `columns_metadata` - (Optional List of Blocks) Metadata column definitions. Each block supports:
+        - `column_metadata_name` - (Optional String) Name of the metadata column.
+        - `column_metadata_type` - (Optional String) Type of the metadata column.
+        - `column_metadata_comment` - (Optional String) Comment for the metadata column.
+        - `column_metadata_kind` - (Optional String) Kind of the metadata column.
+        - `column_metadata_key` - (Optional String) Metadata key of the metadata column.
+        - `column_metadata_virtual` - (Optional Boolean) Whether the metadata column is virtual. Defaults to `false`.
 
 -> **Note:** A Flink API key consists of a key and a secret. Flink API keys are required to interact with Flink Materialized Tables in Confluent Cloud. Each Flink API key is valid for one specific Flink Region.
 

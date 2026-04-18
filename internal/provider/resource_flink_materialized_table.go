@@ -103,7 +103,7 @@ func flinkMaterializedTableResource() *schema.Resource {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ForceNew:     true,
-				Description:  "The REST endpoint of the Flink Compute Pool cluster, for example, `https://flink.us-east-1.aws.confluent.cloud/sql/v1/organizations/1111aaaa-11aa-11aa-11aa-111111aaaaaa/environments/env-abc123`).",
+				Description:  "The REST endpoint of the Flink region, for example, `https://flink.us-east-1.aws.confluent.cloud/sql/v1/organizations/1111aaaa-11aa-11aa-11aa-111111aaaaaa/environments/env-abc123`).",
 				ValidateFunc: validation.StringMatch(regexp.MustCompile("^http"), "the REST endpoint must start with 'https://'"),
 			},
 			paramStopped: {
@@ -283,27 +283,27 @@ func constraintsSchema() *schema.Schema {
 func materializedTableCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	restEndpoint, err := extractFlinkRestEndpoint(meta.(*Client), d, false)
 	if err != nil {
-		return diag.Errorf("error creating Flink Statement: %s", createDescriptiveError(err))
+		return diag.Errorf("error creating Flink Materialized Table: %s", createDescriptiveError(err))
 	}
 	organizationId, err := extractFlinkOrganizationId(meta.(*Client), d, false)
 	if err != nil {
-		return diag.Errorf("error creating Flink Statement: %s", createDescriptiveError(err))
+		return diag.Errorf("error creating Flink Materialized Table: %s", createDescriptiveError(err))
 	}
 	environmentId, err := extractFlinkEnvironmentId(meta.(*Client), d, false)
 	if err != nil {
-		return diag.Errorf("error creating Flink Statement: %s", createDescriptiveError(err))
+		return diag.Errorf("error creating Flink Materialized Table: %s", createDescriptiveError(err))
 	}
 	computePoolId, err := extractFlinkComputePoolId(meta.(*Client), d, false)
 	if err != nil {
-		return diag.Errorf("error creating Flink Statement: %s", createDescriptiveError(err))
+		return diag.Errorf("error creating Flink Materialized Table: %s", createDescriptiveError(err))
 	}
 	principalId, err := extractFlinkPrincipalId(meta.(*Client), d, false)
 	if err != nil {
-		return diag.Errorf("error creating Flink Statement: %s", createDescriptiveError(err))
+		return diag.Errorf("error creating Flink Materialized Table: %s", createDescriptiveError(err))
 	}
 	flinkApiKey, flinkApiSecret, err := extractFlinkApiKeyAndApiSecret(meta.(*Client), d, false)
 	if err != nil {
-		return diag.Errorf("error creating Flink Statement: %s", createDescriptiveError(err))
+		return diag.Errorf("error creating Flink Materialized Table: %s", createDescriptiveError(err))
 	}
 	flinkRestClient := meta.(*Client).flinkRestClientFactory.CreateFlinkRestClientInternal(restEndpoint, organizationId, environmentId, computePoolId, principalId, flinkApiKey, flinkApiSecret, meta.(*Client).isFlinkMetadataSet, meta.(*Client).oauthToken)
 
@@ -415,9 +415,6 @@ func materializedTableRead(ctx context.Context, d *schema.ResourceData, meta int
 		return diag.Errorf("error reading Flink Materialized Table: %s", createDescriptiveError(err))
 	}
 	flinkRestClient := meta.(*Client).flinkRestClientFactory.CreateFlinkRestClientInternal(restEndpoint, organizationId, environmentId, computePoolId, "", flinkApiKey, flinkApiSecret, meta.(*Client).isFlinkMetadataSet, meta.(*Client).oauthToken)
-	if err != nil {
-		return diag.Errorf("error reading Flink Materialized Table: %s", createDescriptiveError(err))
-	}
 
 	kafkaId := d.Get(paramKafkaCluster).(string)
 
@@ -445,7 +442,7 @@ func readMaterializedTableAndSetAttributes(ctx context.Context, d *schema.Resour
 	if err != nil {
 		return nil, fmt.Errorf("error reading Flink Materialized Table %q: error marshaling %#v to json: %s", materializedTableId, materializedTable, createDescriptiveError(err))
 	}
-	tflog.Debug(ctx, fmt.Sprintf("Fetched Flink Materialed Table %q: %s", d.Id(), materializedTableJson), map[string]interface{}{flinkMaterializedTableLoggingKey: d.Id()})
+	tflog.Debug(ctx, fmt.Sprintf("Fetched Flink Materialized Table %q: %s", d.Id(), materializedTableJson), map[string]interface{}{flinkMaterializedTableLoggingKey: d.Id()})
 
 	if _, err := setMaterializedTableAttributes(d, materializedTable, c); err != nil {
 		return nil, createDescriptiveError(err)
@@ -461,12 +458,6 @@ func setMaterializedTableAttributes(d *schema.ResourceData, materializedTable fl
 		return nil, err
 	}
 	if err := d.Set(paramKafkaCluster, materializedTable.Spec.GetKafkaClusterId()); err != nil {
-		return nil, err
-	}
-	if err := setStringAttributeInListBlockOfSizeOne(paramPrincipal, paramId, materializedTable.Spec.GetPrincipal(), d); err != nil {
-		return nil, err
-	}
-	if err := setStringAttributeInListBlockOfSizeOne(paramComputePool, paramId, materializedTable.Spec.GetComputePoolId(), d); err != nil {
 		return nil, err
 	}
 	if err := d.Set(paramQuery, materializedTable.Spec.GetQuery()); err != nil {
@@ -613,19 +604,19 @@ func materializedTableDelete(ctx context.Context, d *schema.ResourceData, meta i
 	}
 	organizationId, err := extractFlinkOrganizationId(meta.(*Client), d, false)
 	if err != nil {
-		return diag.Errorf("error deleting Materialized Table: %s", createDescriptiveError(err))
+		return diag.Errorf("error deleting Flink Materialized Table: %s", createDescriptiveError(err))
 	}
 	environmentId, err := extractFlinkEnvironmentId(meta.(*Client), d, false)
 	if err != nil {
-		return diag.Errorf("error deleting Materialized Table: %s", createDescriptiveError(err))
+		return diag.Errorf("error deleting Flink Materialized Table: %s", createDescriptiveError(err))
 	}
 	computePoolId, err := extractFlinkComputePoolId(meta.(*Client), d, false)
 	if err != nil {
-		return diag.Errorf("error deleting Materialized Table: %s", createDescriptiveError(err))
+		return diag.Errorf("error deleting Flink Materialized Table: %s", createDescriptiveError(err))
 	}
 	flinkApiKey, flinkApiSecret, err := extractFlinkApiKeyAndApiSecret(meta.(*Client), d, false)
 	if err != nil {
-		return diag.Errorf("error deleting Materialized Table: %s", createDescriptiveError(err))
+		return diag.Errorf("error deleting Flink Materialized Table: %s", createDescriptiveError(err))
 	}
 	flinkRestClient := meta.(*Client).flinkRestClientFactory.CreateFlinkRestClientInternal(restEndpoint, organizationId, environmentId, computePoolId, "", flinkApiKey, flinkApiSecret, meta.(*Client).isFlinkMetadataSet, meta.(*Client).oauthToken)
 
@@ -638,7 +629,7 @@ func materializedTableDelete(ctx context.Context, d *schema.ResourceData, meta i
 		return diag.Errorf("error deleting Flink Materialized Table %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
-	tflog.Debug(ctx, fmt.Sprintf("Finished deleting Flink Materialized Tablel %q", d.Id()), map[string]interface{}{flinkMaterializedTableLoggingKey: d.Id()})
+	tflog.Debug(ctx, fmt.Sprintf("Finished deleting Flink Materialized Table %q", d.Id()), map[string]interface{}{flinkMaterializedTableLoggingKey: d.Id()})
 
 	return nil
 }
@@ -687,7 +678,7 @@ func materializedTableImport(ctx context.Context, d *schema.ResourceData, meta i
 
 func materializedTableUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	if d.HasChangesExcept(paramQuery, paramStopped, paramComputePool, paramPrincipal, paramColumns, paramWatermarkExpression, paramWatermarkColumnName, paramConstraints) {
-		return diag.Errorf("error updating Flink connection %q: only %q, %q, %q, %q, %q, %q, %q, and %q attributes can be updated for Flink Compute Pool", d.Id(), paramQuery, paramStopped, paramComputePool, paramPrincipal, paramColumns, paramWatermarkExpression, paramWatermarkColumnName, paramConstraints)
+		return diag.Errorf("error updating Flink Materialized Table %q: only %q, %q, %q, %q, %q, %q, %q, and %q attributes can be updated for Flink Materialized Table", d.Id(), paramQuery, paramStopped, paramComputePool, paramPrincipal, paramColumns, paramWatermarkExpression, paramWatermarkColumnName, paramConstraints)
 	}
 
 	restEndpoint, err := extractFlinkRestEndpoint(meta.(*Client), d, false)
@@ -716,10 +707,6 @@ func materializedTableUpdate(ctx context.Context, d *schema.ResourceData, meta i
 	}
 	flinkRestClient := meta.(*Client).flinkRestClientFactory.CreateFlinkRestClientInternal(restEndpoint, organizationId, environmentId, computePoolId, principalId, flinkApiKey, flinkApiSecret, meta.(*Client).isFlinkMetadataSet, meta.(*Client).oauthToken)
 
-	if err != nil {
-		return diag.FromErr(createDescriptiveError(err))
-	}
-
 	name := d.Get(paramDisplayName).(string)
 	kafkaId := d.Get(paramKafkaCluster).(string)
 
@@ -737,10 +724,16 @@ func materializedTableUpdate(ctx context.Context, d *schema.ResourceData, meta i
 	}
 
 	if d.HasChange(paramWatermarkExpression) {
+		if table.Spec.Watermark == nil {
+			table.Spec.Watermark = &flinkgatewayinternalv1.SqlV1MaterializedTableWatermark{}
+		}
 		table.Spec.Watermark.SetExpression(d.Get(paramWatermarkExpression).(string))
 	}
 
 	if d.HasChange(paramWatermarkColumnName) {
+		if table.Spec.Watermark == nil {
+			table.Spec.Watermark = &flinkgatewayinternalv1.SqlV1MaterializedTableWatermark{}
+		}
 		table.Spec.Watermark.SetColumnName(d.Get(paramWatermarkColumnName).(string))
 	}
 
@@ -761,19 +754,6 @@ func materializedTableUpdate(ctx context.Context, d *schema.ResourceData, meta i
 	if d.HasChange(paramConstraints) {
 		constraints := expandMaterializedTableConstraints(d, paramConstraints)
 		if len(constraints) > 0 {
-			constraintsList := make([]map[string]interface{}, 0, len(constraints))
-
-			for _, c := range constraints {
-				m := map[string]interface{}{
-					paramConstraintsName:        c.Name,
-					paramConstraintsType:        c.Kind,
-					paramConstraintsColumnNames: schema.NewSet(schema.HashString, toInterfaceSlice(*c.ColumnNames)),
-					paramConstraintsEnforced:    c.Enforced,
-				}
-				constraintsList = append(constraintsList, m)
-			}
-
-			_ = d.Set(paramConstraints, constraintsList)
 			table.Spec.SetConstraints(constraints)
 		}
 	}
@@ -845,8 +825,10 @@ func getTableName(tableId string) string {
 
 func getKafkaId(tableId string) string {
 	parts := strings.Split(tableId, "/")
-	tableName := parts[len(parts)-2]
-	return tableName
+	if len(parts) < 2 {
+		return ""
+	}
+	return parts[len(parts)-2]
 }
 
 func getStringSet(d *schema.ResourceData, key string) []string {

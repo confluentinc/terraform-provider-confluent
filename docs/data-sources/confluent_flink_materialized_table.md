@@ -105,12 +105,12 @@ resource "confluent_role_binding" "identity-pool-assigner" {
 
 In addition to the preceding arguments, the following attributes are exported:
 
-- `kafka_cluster` - (Required String) The ID of the Kafka Cluster hosting the Materialized Table's topic, for example, `lkc-abc123`.
-- `query` - (Required String) The SQL query that defines the Materialized Table.
-- `watermark_column_name` - (Required String) The name of the watermark column.
-- `watermark_expression` - (Required String) The watermark expression.
-- `distributed_by_column_names` - (Required Set of Strings) The names of the columns the table is distributed by.
-- `distributed_by_buckets` - (Required Integer) The number of buckets the table is distributed by.
-- `stopped` - (Required Boolean) Whether the Materialized Table is stopped.
-- `columns` - (Required List of Blocks) The column definitions of the Materialized Table, including physical, computed, and metadata columns.
-- `constraints` - (Required List of Blocks) The table constraints of the Materialized Table.
+- `kafka_cluster` - (String) The ID of the Kafka Cluster hosting the Materialized Table's topic, for example, `lkc-abc123`.
+- `query` - (String) The SQL query that defines the Materialized Table.
+- `watermark_column_name` - (String) The name of the watermark column.
+- `watermark_expression` - (String) The watermark expression.
+- `distributed_by_column_names` - (Set of Strings) The names of the columns the table is distributed by.
+- `distributed_by_buckets` - (Integer) The number of buckets the table is distributed by.
+- `stopped` - (Boolean) Whether the Materialized Table is stopped.
+- `columns` - (List of Blocks) The column definitions of the Materialized Table, including physical, computed, and metadata columns.
+- `constraints` - (List of Blocks) The table constraints of the Materialized Table.
