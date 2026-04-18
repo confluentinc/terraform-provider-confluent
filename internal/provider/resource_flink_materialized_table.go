@@ -460,7 +460,7 @@ func setMaterializedTableAttributes(d *schema.ResourceData, materializedTable fl
 	if err := d.Set(paramKafkaCluster, materializedTable.Spec.GetKafkaClusterId()); err != nil {
 		return nil, err
 	}
-	if err := d.Set(paramQuery, materializedTable.Spec.GetQuery()); err != nil {
+	if err := d.Set(paramQuery, normalizeFlinkQuery(materializedTable.Spec.GetQuery())); err != nil {
 		return nil, err
 	}
 
@@ -488,17 +488,11 @@ func setMaterializedTableAttributes(d *schema.ResourceData, materializedTable fl
 	if materializedTable.Spec.Watermark != nil {
 		_ = d.Set(paramWatermarkColumnName, materializedTable.Spec.Watermark.GetColumnName())
 		_ = d.Set(paramWatermarkExpression, materializedTable.Spec.Watermark.GetExpression())
-	} else {
-		_ = d.Set(paramWatermarkColumnName, nil)
-		_ = d.Set(paramWatermarkExpression, nil)
 	}
 
 	if materializedTable.Spec.DistributedBy != nil {
 		_ = d.Set(paramDistributedByColumnNames, materializedTable.Spec.DistributedBy.GetColumnNames())
 		_ = d.Set(paramDistributedByBuckets, materializedTable.Spec.DistributedBy.GetBuckets())
-	} else {
-		_ = d.Set(paramDistributedByColumnNames, nil)
-		_ = d.Set(paramDistributedByBuckets, nil)
 	}
 
 	err := d.Set(paramStopped, materializedTable.Spec.GetStopped())
@@ -570,8 +564,6 @@ func setMaterializedTableAttributes(d *schema.ResourceData, materializedTable fl
 		}
 
 		_ = d.Set(paramColumns, columnsList)
-	} else {
-		_ = d.Set(paramColumns, nil)
 	}
 
 	if materializedTable.Spec.GetConstraints() != nil {
@@ -587,8 +579,6 @@ func setMaterializedTableAttributes(d *schema.ResourceData, materializedTable fl
 			constraintsList = append(constraintsList, m)
 		}
 		_ = d.Set(paramConstraints, constraintsList)
-	} else {
-		_ = d.Set(paramConstraints, nil)
 	}
 
 	d.SetId(createFlinkMaterializedTableId(materializedTable.GetEnvironmentId(), materializedTable.Spec.GetKafkaClusterId(), materializedTable.GetName()))
