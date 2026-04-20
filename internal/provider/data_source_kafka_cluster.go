@@ -73,7 +73,7 @@ func kafkaDataSource() *schema.Resource {
 			paramDeletionProtection: {
 				Type:        schema.TypeBool,
 				Computed:    true,
-				Description: "Enable deletion protection for the Kafka cluster.",
+				Description: "Whether deletion protection is enabled for the Kafka cluster.",
 			},
 			paramBasicCluster:      basicClusterDataSourceSchema(),
 			paramStandardCluster:   standardClusterDataSourceSchema(),
@@ -143,7 +143,7 @@ func kafkaDataSourceReadUsingDisplayName(ctx context.Context, d *schema.Resource
 	tflog.Debug(ctx, fmt.Sprintf("Reading Kafka Cluster %q=%q", paramDisplayName, displayName))
 
 	c := meta.(*Client)
-	kafkaClusters, err := loadKafkaClusters(ctx, c, environmentId, nil)
+	kafkaClusters, err := loadKafkaClusters(ctx, c, environmentId)
 	if err != nil {
 		return diag.Errorf("error reading Kafka Cluster %q: %s", displayName, createDescriptiveError(err))
 	}
@@ -193,13 +193,13 @@ func orgHasMultipleKafkaClustersWithTargetDisplayName(clusters []cmkv2.CmkV2Clus
 	return numberOfClustersWithTargetDisplayName > 1
 }
 
-func loadKafkaClusters(ctx context.Context, c *Client, environmentId string, deletionProtection *bool) ([]cmkv2.CmkV2Cluster, error) {
+func loadKafkaClusters(ctx context.Context, c *Client, environmentId string) ([]cmkv2.CmkV2Cluster, error) {
 	clusters := make([]cmkv2.CmkV2Cluster, 0)
 
 	allClustersAreCollected := false
 	pageToken := ""
 	for !allClustersAreCollected {
-		clustersPageList, resp, err := executeListKafkaClusters(ctx, c, environmentId, pageToken, deletionProtection)
+		clustersPageList, resp, err := executeListKafkaClusters(ctx, c, environmentId, pageToken)
 		if err != nil {
 			return nil, fmt.Errorf("error reading Kafka Clusters: %s", createDescriptiveError(err, resp))
 		}
@@ -225,15 +225,12 @@ func loadKafkaClusters(ctx context.Context, c *Client, environmentId string, del
 	return clusters, nil
 }
 
-func executeListKafkaClusters(ctx context.Context, c *Client, environmentId, pageToken string, deletionProtection *bool) (cmkv2.CmkV2ClusterList, *http.Response, error) {
-	req := c.cmkV2Client.ClustersCmkV2Api.ListCmkV2Clusters(c.cmkV2ApiContext(ctx)).Environment(environmentId).PageSize(listKafkaClustersPageSize)
+func executeListKafkaClusters(ctx context.Context, c *Client, environmentId, pageToken string) (cmkv2.CmkV2ClusterList, *http.Response, error) {
 	if pageToken != "" {
-		req = req.PageToken(pageToken)
+		return c.cmkV2Client.ClustersCmkV2Api.ListCmkV2Clusters(c.cmkV2ApiContext(ctx)).Environment(environmentId).PageSize(listKafkaClustersPageSize).PageToken(pageToken).Execute()
+	} else {
+		return c.cmkV2Client.ClustersCmkV2Api.ListCmkV2Clusters(c.cmkV2ApiContext(ctx)).Environment(environmentId).PageSize(listKafkaClustersPageSize).Execute()
 	}
-	if deletionProtection != nil {
-		req = req.SpecDeletionProtection(*deletionProtection)
-	}
-	return req.Execute()
 }
 
 func basicClusterDataSourceSchema() *schema.Schema {

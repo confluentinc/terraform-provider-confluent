@@ -32,12 +32,7 @@ func kafkaClustersDataSource() *schema.Resource {
 		ReadContext: kafkaClustersDataSourceRead,
 		Schema: map[string]*schema.Schema{
 			paramEnvironment: environmentDataSourceSchema(),
-			paramDeletionProtection: {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "Filter the results by deletion protection status. Accepted values are `ENABLED`, `DISABLED`.",
-			},
-			paramClusters: kafkaClustersSchema(),
+			paramClusters:    kafkaClustersSchema(),
 		},
 	}
 }
@@ -137,22 +132,7 @@ func kafkaClustersDataSourceRead(ctx context.Context, d *schema.ResourceData, me
 
 	c := meta.(*Client)
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
-
-	var deletionProtectionFilter *bool
-	if v, ok := d.GetOk(paramDeletionProtection); ok {
-		filterValue := v.(string)
-		if filterValue == "ENABLED" {
-			enabled := true
-			deletionProtectionFilter = &enabled
-		} else if filterValue == "DISABLED" {
-			disabled := false
-			deletionProtectionFilter = &disabled
-		} else {
-			return diag.Errorf("error reading Kafka Clusters: invalid value %q for %s, accepted values are ENABLED or DISABLED", filterValue, paramDeletionProtection)
-		}
-	}
-
-	clusters, err := loadKafkaClusters(ctx, c, environmentId, deletionProtectionFilter)
+	clusters, err := loadKafkaClusters(ctx, c, environmentId)
 	if err != nil {
 		return diag.Errorf("error reading Kafka Clusters: %s", createDescriptiveError(err))
 	}
