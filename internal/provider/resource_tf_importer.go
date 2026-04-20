@@ -579,7 +579,7 @@ func createHclFileWithHeader(mode ImporterMode) *hclwrite.File {
 	requiredProvidersBlock := tfBlock.Body().AppendNewBlock("required_providers", nil)
 	requiredProvidersBlock.Body().SetAttributeValue("confluent", zclCty.ObjectVal(map[string]zclCty.Value{
 		"source":  zclCty.StringVal("confluentinc/confluent"),
-		"version": zclCty.StringVal("2.68.0"),
+		"version": zclCty.StringVal("2.69.0"),
 	}))
 
 	providerBlock := body.AppendNewBlock("provider", []string{"confluent"})
