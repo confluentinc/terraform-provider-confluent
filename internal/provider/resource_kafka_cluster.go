@@ -121,7 +121,6 @@ func kafkaResource() *schema.Resource {
 			paramDeletionProtection: {
 				Type:        schema.TypeBool,
 				Optional:    true,
-				Computed:    true,
 				Description: "Enable deletion protection for the Kafka cluster.",
 			},
 			paramEnvironment:          environmentSchema(),
