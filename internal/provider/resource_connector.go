@@ -625,7 +625,7 @@ func loadAllConnectors(ctx context.Context, client *Client) (InstanceIdsToNameMa
 		return instances, diag.FromErr(createDescriptiveError(err))
 	}
 	for _, environment := range environments {
-		kafkaClusters, err := loadKafkaClusters(ctx, client, environment.GetId(), nil)
+		kafkaClusters, err := loadKafkaClusters(ctx, client, environment.GetId())
 		if err != nil {
 			tflog.Warn(ctx, fmt.Sprintf("Error reading Kafka Clusters in Environment %q: %s", environment.GetId(), createDescriptiveError(err)))
 			return instances, diag.FromErr(createDescriptiveError(err))
