@@ -11,7 +11,7 @@ require (
 	github.com/confluentinc/ccloud-sdk-go-v2/cmk v0.25.0
 	github.com/confluentinc/ccloud-sdk-go-v2/connect v0.7.0
 	github.com/confluentinc/ccloud-sdk-go-v2/connect-custom-plugin v0.0.2
-	github.com/confluentinc/ccloud-sdk-go-v2/data-catalog v0.3.1-0.20260420181251-4580d0b68085
+	github.com/confluentinc/ccloud-sdk-go-v2/data-catalog v0.4.0
 	github.com/confluentinc/ccloud-sdk-go-v2/endpoint v0.4.0
 	github.com/confluentinc/ccloud-sdk-go-v2/flink v0.11.0
 	github.com/confluentinc/ccloud-sdk-go-v2/flink-artifact v0.4.0
