@@ -53,7 +53,7 @@ resource "confluent_tableflow_topic" "example" {
 provider "confluent" {
   cloud_api_key        = var.confluent_cloud_api_key    # optionally use CONFLUENT_CLOUD_API_KEY env var
   cloud_api_secret     = var.confluent_cloud_api_secret # optionally use CONFLUENT_CLOUD_API_SECRET env var
-  tableflpw_api_key    = var.tableflow_api_key          # optionally use TABLEFLOW_API_KEY env var
+  tableflow_api_key    = var.tableflow_api_key          # optionally use TABLEFLOW_API_KEY env var
   tableflow_api_secret = var.tableflow_api_secret       # optionally use TABLEFLOW_API_SECRET env var
 }
 
