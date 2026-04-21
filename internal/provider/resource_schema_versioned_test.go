@@ -173,6 +173,19 @@ func TestAccVersionedSchema(t *testing.T) {
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema_reference.1.subject_name", testSecondSchemaReferenceSubject),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema_reference.1.version", strconv.Itoa(testSecondSchemaReferenceVersion)),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "%", strconv.Itoa(testNumberOfSchemaRegistrySchemaResourceAttributes)),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.#", "1"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.%", "3"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.encoding_rules.#", "1"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.encoding_rules.0.%", "11"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.encoding_rules.0.name", "encryptCSPE"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.encoding_rules.0.kind", "TRANSFORM"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.encoding_rules.0.type", "ENCRYPT"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.encoding_rules.0.mode", "WRITEREAD"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.encoding_rules.0.tags.#", "1"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.encoding_rules.0.tags.0", "CSPE"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.encoding_rules.0.params.%", "1"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.encoding_rules.0.params.encrypt.kek.name", "cspe-kek"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.encoding_rules.0.disabled", "false"),
 				),
 			},
 			{
@@ -310,6 +323,16 @@ func testAccCheckSchemaConfig(confluentCloudBaseUrl, mockServerUrl string) strin
 			  "encrypt.kek.name" = "testkekM"
 		  }
 		}
+		encoding_rules {
+		  name = "encryptCSPE"
+		  kind = "TRANSFORM"
+		  type = "ENCRYPT"
+		  mode = "WRITEREAD"
+		  tags = ["CSPE"]
+		  params = {
+			  "encrypt.kek.name" = "cspe-kek"
+		  }
+		}
 	  }
 	}
 	`, confluentCloudBaseUrl, testSchemaResourceLabel, testStreamGovernanceClusterId, mockServerUrl, testSchemaRegistryKey, testSchemaRegistrySecret, testSubjectName, testFormat, testSchemaContent,
@@ -380,6 +403,16 @@ func testAccCheckSchemaConfigWithUpdatedCredentials(confluentCloudBaseUrl, mockS
 		  tags = ["PIm"]
 		  params = {
 			  "encrypt.kek.name" = "testkekM"
+		  }
+		}
+		encoding_rules {
+		  name = "encryptCSPE"
+		  kind = "TRANSFORM"
+		  type = "ENCRYPT"
+		  mode = "WRITEREAD"
+		  tags = ["CSPE"]
+		  params = {
+			  "encrypt.kek.name" = "cspe-kek"
 		  }
 		}
 	  }
