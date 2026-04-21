@@ -144,6 +144,7 @@ func rulesetSchema() *schema.Schema {
 			Schema: map[string]*schema.Schema{
 				paramDomainRules:    ruleSchema(),
 				paramMigrationRules: ruleSchema(),
+				paramEncodingRules:  ruleSchema(),
 			},
 		},
 		MaxItems: 1,
@@ -320,6 +321,7 @@ func SetSchemaDiff(ctx context.Context, diff *schema.ResourceDiff, meta interfac
 			ruleset := schemaregistryv1.NewRuleSet()
 			ruleset.SetDomainRules([]schemaregistryv1.Rule{})
 			ruleset.SetMigrationRules([]schemaregistryv1.Rule{})
+			ruleset.SetEncodingRules([]schemaregistryv1.Rule{})
 			createSchemaRequest.SetRuleSet(*ruleset)
 		} else if tfRuleset[0] != nil { //this is the case when a ruleset is not empty after an operation.
 			ruleset := schemaregistryv1.NewRuleSet()
@@ -329,6 +331,9 @@ func SetSchemaDiff(ctx context.Context, diff *schema.ResourceDiff, meta interfac
 			}
 			if tfRulesetMap[paramMigrationRules] != nil {
 				ruleset.SetMigrationRules(buildRules(tfRulesetMap[paramMigrationRules].(*schema.Set).List()))
+			}
+			if tfRulesetMap[paramEncodingRules] != nil {
+				ruleset.SetEncodingRules(buildRules(tfRulesetMap[paramEncodingRules].(*schema.Set).List()))
 			}
 			createSchemaRequest.SetRuleSet(*ruleset)
 		}
@@ -542,6 +547,7 @@ func schemaCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 		ruleset := schemaregistryv1.NewRuleSet()
 		ruleset.SetDomainRules([]schemaregistryv1.Rule{})
 		ruleset.SetMigrationRules([]schemaregistryv1.Rule{})
+		ruleset.SetEncodingRules([]schemaregistryv1.Rule{})
 		createSchemaRequest.SetRuleSet(*ruleset)
 	} else if tfRuleset := d.Get(paramRuleset).([]interface{}); len(tfRuleset) == 1 && tfRuleset[0] != nil { //this is the case when a ruleset is not empty after an operation.
 		ruleset := schemaregistryv1.NewRuleSet()
@@ -551,6 +557,9 @@ func schemaCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 		}
 		if tfRulesetMap[paramMigrationRules] != nil {
 			ruleset.SetMigrationRules(buildRules(tfRulesetMap[paramMigrationRules].(*schema.Set).List()))
+		}
+		if tfRulesetMap[paramEncodingRules] != nil {
+			ruleset.SetEncodingRules(buildRules(tfRulesetMap[paramEncodingRules].(*schema.Set).List()))
 		}
 		createSchemaRequest.SetRuleSet(*ruleset)
 	}
@@ -926,8 +935,8 @@ func readSchemaRegistryConfigAndSetAttributes(ctx context.Context, d *schema.Res
 	}
 
 	if ruleSet, ok := srSchema.GetRuleSetOk(); ok {
-		if len(ruleSet.GetDomainRules()) > 0 || len(ruleSet.GetMigrationRules()) > 0 {
-			if err := d.Set(paramRuleset, buildTfRules(ruleSet.GetDomainRules(), ruleSet.GetMigrationRules())); err != nil {
+		if len(ruleSet.GetDomainRules()) > 0 || len(ruleSet.GetMigrationRules()) > 0 || len(ruleSet.GetEncodingRules()) > 0 {
+			if err := d.Set(paramRuleset, buildTfRules(ruleSet.GetDomainRules(), ruleSet.GetMigrationRules(), ruleSet.GetEncodingRules())); err != nil {
 				return nil, err
 			}
 		}
@@ -1205,7 +1214,7 @@ func buildRules(tfRules []interface{}) []schemaregistryv1.Rule {
 	return rules
 }
 
-func buildTfRules(domainRules, migrationRules []schemaregistryv1.Rule) *[]map[string]interface{} {
+func buildTfRules(domainRules, migrationRules, encodingRules []schemaregistryv1.Rule) *[]map[string]interface{} {
 	tfDomainMigrationRules := make(map[string]interface{})
 	if len(domainRules) > 0 {
 		tfRules := make([]map[string]interface{}, len(domainRules))
@@ -1244,6 +1253,25 @@ func buildTfRules(domainRules, migrationRules []schemaregistryv1.Rule) *[]map[st
 			tfRules[i] = tfRule
 		}
 		tfDomainMigrationRules[paramMigrationRules] = tfRules
+	}
+	if len(encodingRules) > 0 {
+		tfRules := make([]map[string]interface{}, len(encodingRules))
+		for i, rule := range encodingRules {
+			tfRule := make(map[string]interface{})
+			tfRule[paramName] = rule.GetName()
+			tfRule[paramDoc] = rule.GetDoc()
+			tfRule[paramKind] = rule.GetKind()
+			tfRule[paramMode] = rule.GetMode()
+			tfRule[paramType] = rule.GetType()
+			tfRule[paramExpr] = rule.GetExpr()
+			tfRule[paramOnSuccess] = rule.GetOnSuccess()
+			tfRule[paramOnFailure] = rule.GetOnFailure()
+			tfRule[paramDisabled] = rule.GetDisabled()
+			tfRule[paramTags] = rule.GetTags()
+			tfRule[paramParams] = rule.GetParams()
+			tfRules[i] = tfRule
+		}
+		tfDomainMigrationRules[paramEncodingRules] = tfRules
 	}
 
 	tfRuleSet := make([]map[string]interface{}, 1)
