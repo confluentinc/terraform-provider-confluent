@@ -272,7 +272,7 @@ func testAccCheckMaterializedTableConfig(mockServerUrl, resourceLabel string) st
       }
       display_name  = "%s"
 	  kafka_cluster = "%s"
-      stopped = "false"
+      stopped = false
 	  query = "SELECT user_id, product_id, price, quantity FROM orders WHERE price > 1000;"
       watermark_column_name = "col123"
 	  watermark_expression = "exp123"
@@ -326,7 +326,7 @@ func testAccCheckMaterializedTableConfigUpdated(mockServerUrl, resourceLabel str
       }
       display_name  = "%s"
 	  kafka_cluster = "%s"
-      stopped = "true"
+      stopped = true
 	  query = "SELECT user_id, product_id, price, quantity FROM orders WHERE price > 100;"
       watermark_column_name = "col1234"
 	  watermark_expression = "exp1234"
@@ -403,7 +403,7 @@ func testAccCheckMaterializedTableDestroy(s *terraform.State, url string) error 
 		deletedId := rs.Primary.ID
 		tableName := getTableName(deletedId)
 		kafkaId := getKafkaId(deletedId)
-		_, response, err := executeMaterializedTableRead(context.Background(), c, flinkOrganizationIdTest, flinkEnvironmentIdTest, kafkaId, tableName)
+		_, response, err := executeMaterializedTableRead(c.fgApiContext(context.Background()), c, flinkOrganizationIdTest, flinkEnvironmentIdTest, kafkaId, tableName)
 		if response != nil && (response.StatusCode == http.StatusForbidden || response.StatusCode == http.StatusNotFound) {
 			return nil
 		} else if err == nil && deletedId != "" {

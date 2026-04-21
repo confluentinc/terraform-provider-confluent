@@ -361,7 +361,7 @@ func materializedTableCreate(ctx context.Context, d *schema.ResourceData, meta i
 
 	createMaterializedTableRequestJson, err := json.Marshal(table)
 	if err != nil {
-		return diag.Errorf("error creating Flink Materialized Table: error marshaling %#v to json: %s", createMaterializedTableRequestJson, createDescriptiveError(err))
+		return diag.Errorf("error creating Flink Materialized Table: error marshaling %#v to json: %s", table, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Flink Materialized Table: %s", createMaterializedTableRequestJson))
 
@@ -381,12 +381,12 @@ func materializedTableCreate(ctx context.Context, d *schema.ResourceData, meta i
 }
 
 func executeMaterializedTableCreate(ctx context.Context, c *FlinkRestClient, table flinkgatewayinternalv1.SqlV1MaterializedTable, orgId, environmentId, kafkaId string) (flinkgatewayinternalv1.SqlV1MaterializedTable, *http.Response, error) {
-	req := c.apiClientInternal.MaterializedTablesSqlV1Api.CreateSqlv1MaterializedTable(c.fgApiContext(ctx), orgId, environmentId, kafkaId).SqlV1MaterializedTable(table)
+	req := c.apiClientInternal.MaterializedTablesSqlV1Api.CreateSqlv1MaterializedTable(ctx, orgId, environmentId, kafkaId).SqlV1MaterializedTable(table)
 	return req.Execute()
 }
 
 func executeMaterializedTableRead(ctx context.Context, c *FlinkRestClient, orgId, environmentId, kafkaId, tableName string) (flinkgatewayinternalv1.SqlV1MaterializedTable, *http.Response, error) {
-	req := c.apiClientInternal.MaterializedTablesSqlV1Api.GetSqlv1MaterializedTable(c.fgApiContext(ctx), orgId, environmentId, kafkaId, tableName)
+	req := c.apiClientInternal.MaterializedTablesSqlV1Api.GetSqlv1MaterializedTable(ctx, orgId, environmentId, kafkaId, tableName)
 	return req.Execute()
 }
 
@@ -570,10 +570,16 @@ func setMaterializedTableAttributes(d *schema.ResourceData, materializedTable fl
 		constraintsList := make([]map[string]interface{}, 0, len(materializedTable.Spec.GetConstraints()))
 
 		for _, c := range materializedTable.Spec.GetConstraints() {
+			var columnNamesSet *schema.Set
+			if c.ColumnNames != nil {
+				columnNamesSet = schema.NewSet(schema.HashString, toInterfaceSlice(*c.ColumnNames))
+			} else {
+				columnNamesSet = schema.NewSet(schema.HashString, []interface{}{})
+			}
 			m := map[string]interface{}{
 				paramConstraintsName:        c.Name,
 				paramConstraintsType:        c.Kind,
-				paramConstraintsColumnNames: schema.NewSet(schema.HashString, toInterfaceSlice(*c.ColumnNames)),
+				paramConstraintsColumnNames: columnNamesSet,
 				paramConstraintsEnforced:    c.Enforced,
 			}
 			constraintsList = append(constraintsList, m)

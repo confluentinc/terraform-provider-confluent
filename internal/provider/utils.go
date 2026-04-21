@@ -860,8 +860,15 @@ func (c *FlinkRestClient) fgApiContext(ctx context.Context) context.Context {
 		if err != nil {
 			tflog.Error(ctx, fmt.Sprintf("Failed to get OAuth token for Flink rest client: %v", err))
 		}
-		c.externalAccessToken = token
-		return context.WithValue(ctx, flinkgatewayinternalv1.ContextAccessToken, c.externalAccessToken.AccessToken)
+		if token != nil {
+			c.externalAccessToken = token
+			return context.WithValue(ctx, flinkgatewayinternalv1.ContextAccessToken, c.externalAccessToken.AccessToken)
+		}
+		if currToken.AccessToken != "" {
+			return context.WithValue(ctx, flinkgatewayinternalv1.ContextAccessToken, currToken.AccessToken)
+		}
+		tflog.Warn(ctx, fmt.Sprintf("Could not find Flink OAuth token for Flink %q", c.restEndpoint))
+		return ctx
 	}
 
 	if c.flinkApiKey != "" && c.flinkApiSecret != "" {
