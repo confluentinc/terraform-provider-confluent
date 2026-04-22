@@ -154,3 +154,5 @@ require (
 	google.golang.org/grpc v1.79.3
 	google.golang.org/protobuf v1.36.11 // indirect
 )
+
+replace github.com/confluentinc/ccloud-sdk-go-v2/tableflow v0.5.0 => github.com/confluentinc/ccloud-sdk-go-v2-internal/tableflow v0.25.0
