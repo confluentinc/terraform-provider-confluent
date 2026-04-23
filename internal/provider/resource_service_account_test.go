@@ -52,17 +52,21 @@ func TestAccServiceAccount(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusCreated,
 		)
-	_ = wiremockClient.StubFor(createSaStub)
+	if err := wiremockClient.StubFor(createSaStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readCreatedSaResponse, _ := ioutil.ReadFile("../testdata/service_account/read_created_sa.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/service-accounts/sa-1jjv26")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/service-accounts/sa-1jjv26")).
 		InScenario(saScenarioName).
 		WhenScenarioStateIs(scenarioStateSaHasBeenCreated).
 		WillReturn(
 			string(readCreatedSaResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readUpdatedSaResponse, _ := ioutil.ReadFile("../testdata/service_account/read_updated_sa.json")
 	patchSaStub := wiremock.Patch(wiremock.URLPathEqualTo("/iam/v2/service-accounts/sa-1jjv26")).
@@ -74,26 +78,32 @@ func TestAccServiceAccount(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)
-	_ = wiremockClient.StubFor(patchSaStub)
+	if err := wiremockClient.StubFor(patchSaStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/service-accounts/sa-1jjv26")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/service-accounts/sa-1jjv26")).
 		InScenario(saScenarioName).
 		WhenScenarioStateIs(scenarioStateSaDescriptionHaveBeenUpdated).
 		WillReturn(
 			string(readUpdatedSaResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readDeletedSaResponse, _ := ioutil.ReadFile("../testdata/service_account/read_deleted_sa.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/service-accounts/sa-1jjv26")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/service-accounts/sa-1jjv26")).
 		InScenario(saScenarioName).
 		WhenScenarioStateIs(scenarioStateSaHasBeenDeleted).
 		WillReturn(
 			string(readDeletedSaResponse),
 			contentTypeJSONHeader,
 			http.StatusNotFound,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	deleteSaStub := wiremock.Delete(wiremock.URLPathEqualTo("/iam/v2/service-accounts/sa-1jjv26")).
 		InScenario(saScenarioName).
@@ -104,7 +114,9 @@ func TestAccServiceAccount(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNoContent,
 		)
-	_ = wiremockClient.StubFor(deleteSaStub)
+	if err := wiremockClient.StubFor(deleteSaStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	saDisplayName := "test_service_account_display_name"
 	saDescription := "The initial description of service account"

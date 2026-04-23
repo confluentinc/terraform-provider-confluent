@@ -46,7 +46,7 @@ func TestAccDataSourceNetwork(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	readCreatedAwsNetworkResponse, _ := ioutil.ReadFile("../testdata/network/aws/read_created_network.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(awsNetworkUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(awsNetworkUrlPath)).
 		InScenario(dataSourceNetworkScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(awsNetworkEnvironmentId)).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
@@ -54,10 +54,12 @@ func TestAccDataSourceNetwork(t *testing.T) {
 			string(readCreatedAwsNetworkResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readNetworksResponse, _ := ioutil.ReadFile("../testdata/network/read_networks.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/networking/v1/networks")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/networking/v1/networks")).
 		InScenario(dataSourceNetworkScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(azureNetworkEnvironmentId)).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
@@ -65,7 +67,9 @@ func TestAccDataSourceNetwork(t *testing.T) {
 			string(readNetworksResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },

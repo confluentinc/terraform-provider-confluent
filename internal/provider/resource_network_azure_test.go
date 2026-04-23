@@ -54,10 +54,12 @@ func TestAccAzureNetwork(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusCreated,
 		)
-	_ = wiremockClient.StubFor(createAzureNetworkStub)
+	if err := wiremockClient.StubFor(createAzureNetworkStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readProvisioningAzureNetworkResponse, _ := ioutil.ReadFile("../testdata/network/azure/read_provisioning_network.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(azureNetworkUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(azureNetworkUrlPath)).
 		InScenario(azureNetworkScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(azureNetworkEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateAzureNetworkIsProvisioning).
@@ -66,10 +68,12 @@ func TestAccAzureNetwork(t *testing.T) {
 			string(readProvisioningAzureNetworkResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readCreatedAzureNetworkResponse, _ := ioutil.ReadFile("../testdata/network/azure/read_created_network.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(azureNetworkUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(azureNetworkUrlPath)).
 		InScenario(azureNetworkScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(azureNetworkEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateAzureNetworkHasBeenCreated).
@@ -77,7 +81,9 @@ func TestAccAzureNetwork(t *testing.T) {
 			string(readCreatedAzureNetworkResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	deleteAzureNetworkStub := wiremock.Delete(wiremock.URLPathEqualTo(azureNetworkUrlPath)).
 		InScenario(azureNetworkScenarioName).
@@ -89,10 +95,12 @@ func TestAccAzureNetwork(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNoContent,
 		)
-	_ = wiremockClient.StubFor(deleteAzureNetworkStub)
+	if err := wiremockClient.StubFor(deleteAzureNetworkStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readDeletedAzureNetworkResponse, _ := ioutil.ReadFile("../testdata/network/azure/read_deleted_network.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(azureNetworkUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(azureNetworkUrlPath)).
 		InScenario(azureNetworkScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(azureNetworkEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateAzureNetworkHasBeenDeleted).
@@ -100,7 +108,9 @@ func TestAccAzureNetwork(t *testing.T) {
 			string(readDeletedAzureNetworkResponse),
 			contentTypeJSONHeader,
 			http.StatusNotFound,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	azureNetworkDisplayName := "s-nk99e"
 	azureNetworkResourceLabel := "test"

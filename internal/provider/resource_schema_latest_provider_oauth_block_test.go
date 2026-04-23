@@ -82,12 +82,14 @@ func TestAccLatestSchemaWithEnhancedProviderBlockOAuth(t *testing.T) {
         "token_type": "Bearer",
         "expires_in": 3600
     }`
-	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo("/oauth/token")).
+	if err := wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo("/oauth/token")).
 		WillReturn(
 			oauthTokenResponse,
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	// Mock STS token exchange endpoint
 	stsTokenResponse := `{
@@ -96,50 +98,58 @@ func TestAccLatestSchemaWithEnhancedProviderBlockOAuth(t *testing.T) {
         "expires_in": 3600,
         "scope": "schema-registry"
     }`
-	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo("/sts/v1/oauth2/token")).
+	if err := wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo("/sts/v1/oauth2/token")).
 		WillReturn(
 			stsTokenResponse,
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	// ============================================================
 	// Step 1: Create schema - server returns normal "foobar"
 	// ============================================================
 
 	validateSchemaResponse, _ := os.ReadFile("../testdata/schema_registry_schema/validate_schema.json")
-	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(validateSchemaPath)).
+	if err := wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(validateSchemaPath)).
 		InScenario(schemaScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillReturn(
 			string(validateSchemaResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	createSchemaResponse, _ := os.ReadFile("../testdata/schema_registry_schema/create_schema.json")
-	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(createSchemaPath)).
+	if err := wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(createSchemaPath)).
 		InScenario(schemaScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillReturn(
 			string(createSchemaResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	// For Step 1: Server returns normal "foobar"
 	readLatestSchemaResponse, _ := os.ReadFile("../testdata/schema_registry_schema/read_latest_schema.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readLatestSchemaPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readLatestSchemaPath)).
 		InScenario(schemaScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillReturn(
 			string(readLatestSchemaResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readSchemasResponse, _ := os.ReadFile("../testdata/schema_registry_schema/read_schemas.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readSchemasPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readSchemasPath)).
 		InScenario(schemaScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillSetStateTo(scenarioStateOAuthSchemaCreated).
@@ -147,7 +157,9 @@ func TestAccLatestSchemaWithEnhancedProviderBlockOAuth(t *testing.T) {
 			string(readSchemasResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	// ============================================================
 	// Step 2 (plan-only): Config changes to add whitespace
@@ -155,38 +167,44 @@ func TestAccLatestSchemaWithEnhancedProviderBlockOAuth(t *testing.T) {
 	// ============================================================
 
 	// For Step 2: Keep returning the original "foobar" schema
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readLatestSchemaPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readLatestSchemaPath)).
 		InScenario(schemaScenarioName).
 		WhenScenarioStateIs(scenarioStateOAuthSchemaCreated).
 		WillReturn(
 			string(readLatestSchemaResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readSchemasPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readSchemasPath)).
 		InScenario(schemaScenarioName).
 		WhenScenarioStateIs(scenarioStateOAuthSchemaCreated).
 		WillReturn(
 			string(readSchemasResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	// Mock validation endpoint for the schema with whitespace
-	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(validateSchemaPath)).
+	if err := wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(validateSchemaPath)).
 		InScenario(schemaScenarioName).
 		WhenScenarioStateIs(scenarioStateOAuthSchemaCreated).
 		WillReturn(
 			string(validateSchemaResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	// Mock schema lookup - uses /subjects/{subject}?normalize=false endpoint (different from creation)
 	// The code tries normalize=false first, if it fails (404), it tries normalize=true
 	// We return success on normalize=true to simulate finding the schema after normalization
-	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo("/subjects/test2")).
+	if err := wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo("/subjects/test2")).
 		WithQueryParam("normalize", wiremock.EqualTo("true")).
 		InScenario(schemaScenarioName).
 		WhenScenarioStateIs(scenarioStateOAuthSchemaCreated).
@@ -194,7 +212,9 @@ func TestAccLatestSchemaWithEnhancedProviderBlockOAuth(t *testing.T) {
 			string(readLatestSchemaResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	// Cleanup
 	deleteSchemaStub := wiremock.Delete(wiremock.URLPathEqualTo(deleteSchemaPath)).
@@ -205,17 +225,21 @@ func TestAccLatestSchemaWithEnhancedProviderBlockOAuth(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNoContent,
 		)
-	_ = wiremockClient.StubFor(deleteSchemaStub)
+	if err := wiremockClient.StubFor(deleteSchemaStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readDeletedSaResponse, _ := os.ReadFile("../testdata/schema_registry_schema/read_schemas_after_delete.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readSchemasPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readSchemasPath)).
 		InScenario(schemaScenarioName).
 		WhenScenarioStateIs(scenarioStateSchemaHasBeenDeleted).
 		WillReturn(
 			string(readDeletedSaResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheckOAuth(t) },

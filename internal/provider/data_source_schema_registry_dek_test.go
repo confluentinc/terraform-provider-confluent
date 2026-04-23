@@ -43,14 +43,16 @@ func TestAccDataSourceSchemaRegistryDek(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	readDekResponse, _ := ioutil.ReadFile("../testdata/schema_registry_dek/dek.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(dekUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(dekUrlPath)).
 		InScenario(dekDataSourceScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillReturn(
 			string(readDekResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },

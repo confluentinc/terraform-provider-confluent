@@ -54,52 +54,64 @@ func TestAccTopicWithEnhancedProviderBlock(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusCreated,
 		)
-	_ = wiremockClient.StubFor(createTopicStub)
+	if err := wiremockClient.StubFor(createTopicStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readCreatedTopicResponse, _ := ioutil.ReadFile("../testdata/kafka_topic/read_created_kafka_topic.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(kafkaTopicPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(kafkaTopicPath)).
 		InScenario(topicScenarioName).
 		WhenScenarioStateIs(scenarioStateTopicHasBeenCreated).
 		WillReturn(
 			string(readCreatedTopicResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(kafkaTopicPath)).
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(kafkaTopicPath)).
 		InScenario(topicScenarioName).
 		WhenScenarioStateIs(scenarioStateTopicHasBeenUpdated).
 		WillReturn(
 			string(readCreatedTopicResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readCreatedTopicConfigResponse, _ := ioutil.ReadFile("../testdata/kafka_topic/read_created_kafka_topic_config.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaTopicConfigPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaTopicConfigPath)).
 		InScenario(topicScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillReturn(
 			string(readCreatedTopicConfigResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaTopicConfigPath)).
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaTopicConfigPath)).
 		InScenario(topicScenarioName).
 		WhenScenarioStateIs(scenarioStateTopicHasBeenCreated).
 		WillReturn(
 			string(readCreatedTopicConfigResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(kafkaTopicPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(kafkaTopicPath)).
 		InScenario(topicScenarioName).
 		WhenScenarioStateIs(scenarioStateTopicHasBeenDeleted).
 		WillReturn(
 			"",
 			contentTypeJSONHeader,
 			http.StatusNotFound,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	updateTopicStub := wiremock.Post(wiremock.URLPathEqualTo(updateKafkaTopicConfigPath)).
 		InScenario(topicScenarioName).
@@ -110,17 +122,21 @@ func TestAccTopicWithEnhancedProviderBlock(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNoContent,
 		)
-	_ = wiremockClient.StubFor(updateTopicStub)
+	if err := wiremockClient.StubFor(updateTopicStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readUpdatedTopicConfigResponse, _ := ioutil.ReadFile("../testdata/kafka_topic/read_updated_kafka_topic_config.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaTopicConfigPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaTopicConfigPath)).
 		InScenario(topicScenarioName).
 		WhenScenarioStateIs(scenarioStateTopicHasBeenUpdated).
 		WillReturn(
 			string(readUpdatedTopicConfigResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	deleteTopicStub := wiremock.Delete(wiremock.URLPathEqualTo(kafkaTopicPath)).
 		InScenario(topicScenarioName).
@@ -131,7 +147,9 @@ func TestAccTopicWithEnhancedProviderBlock(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNoContent,
 		)
-	_ = wiremockClient.StubFor(deleteTopicStub)
+	if err := wiremockClient.StubFor(deleteTopicStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },

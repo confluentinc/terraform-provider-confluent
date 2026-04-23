@@ -37,14 +37,16 @@ func TestAccDataFlinkComputePoolConfigSchema(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	readCreatedComputePoolConfigResponse, _ := ioutil.ReadFile("../testdata/flink_compute_pool_config/read_created_compute_pool_config.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/fcpm/v2/compute-pool-config")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/fcpm/v2/compute-pool-config")).
 		InScenario(flinkComputePoolDataSourceConfigScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillReturn(
 			string(readCreatedComputePoolConfigResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },

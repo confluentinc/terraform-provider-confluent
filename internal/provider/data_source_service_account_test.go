@@ -43,24 +43,28 @@ func TestAccDataSourceServiceAccount(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	readCreatedSaResponse, _ := ioutil.ReadFile("../testdata/service_account/read_created_sa.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/service-accounts/sa-1jjv26")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/service-accounts/sa-1jjv26")).
 		InScenario(saDataSourceScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillReturn(
 			string(readCreatedSaResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readServiceAccountsPageOneResponse, _ := ioutil.ReadFile("../testdata/service_account/read_sas.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/service-accounts")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/service-accounts")).
 		WithQueryParam("display_name", wiremock.EqualTo(saDisplayName)).
 		InScenario(saDataSourceScenarioName).
 		WillReturn(
 			string(readServiceAccountsPageOneResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	fullServiceAccountDataSourceLabel := fmt.Sprintf("data.confluent_service_account.%s", saResourceLabel)
 

@@ -43,7 +43,7 @@ func TestAccCatalogIntegrationAwsGlue(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	createCatalogIntegrationResponse, _ := os.ReadFile("../testdata/catalog_integration/create_aws_glue_ci.json")
-	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(catalogIntegrationUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(catalogIntegrationUrlPath)).
 		InScenario(byobAwsCatalogIntegrationScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		//WillSetStateTo(scenarioStateCatalogIntegrationIsProvisioning).
@@ -52,7 +52,9 @@ func TestAccCatalogIntegrationAwsGlue(t *testing.T) {
 			string(createCatalogIntegrationResponse),
 			contentTypeJSONHeader,
 			http.StatusCreated,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	catalogIntegrationReadUrlPath := fmt.Sprintf("%s/tci-abc123", catalogIntegrationUrlPath)
 	/*_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(catalogIntegrationReadUrlPath)).
@@ -66,17 +68,19 @@ func TestAccCatalogIntegrationAwsGlue(t *testing.T) {
 	))*/
 
 	readCreatedCatalogIntegrationResponse, _ := os.ReadFile("../testdata/catalog_integration/read_created_aws_glue_ci.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(catalogIntegrationReadUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(catalogIntegrationReadUrlPath)).
 		InScenario(byobAwsCatalogIntegrationScenarioName).
 		WhenScenarioStateIs(scenarioStateCatalogIntegrationHasBeenCreated).
 		WillReturn(
 			string(readCreatedCatalogIntegrationResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	updatedCatalogIntegrationResponse, _ := os.ReadFile("../testdata/catalog_integration/update_aws_glue_ci.json")
-	_ = wiremockClient.StubFor(wiremock.Patch(wiremock.URLPathEqualTo(catalogIntegrationReadUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Patch(wiremock.URLPathEqualTo(catalogIntegrationReadUrlPath)).
 		InScenario(byobAwsCatalogIntegrationScenarioName).
 		WhenScenarioStateIs(scenarioStateCatalogIntegrationHasBeenCreated).
 		WillSetStateTo(scenarioStateCatalogIntegrationHasBeenUpdated).
@@ -84,24 +88,30 @@ func TestAccCatalogIntegrationAwsGlue(t *testing.T) {
 			string(updatedCatalogIntegrationResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(catalogIntegrationReadUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(catalogIntegrationReadUrlPath)).
 		InScenario(byobAwsCatalogIntegrationScenarioName).
 		WhenScenarioStateIs(scenarioStateCatalogIntegrationHasBeenUpdated).
 		WillReturn(
 			string(updatedCatalogIntegrationResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(catalogIntegrationReadUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(catalogIntegrationReadUrlPath)).
 		InScenario(byobAwsCatalogIntegrationScenarioName).
 		WillReturn(
 			"",
 			contentTypeJSONHeader,
 			http.StatusNoContent,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -163,7 +173,7 @@ func TestAccCatalogIntegrationSnowflake(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	createCatalogIntegrationResponse, _ := os.ReadFile("../testdata/catalog_integration/create_snowflake_ci.json")
-	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(catalogIntegrationUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(catalogIntegrationUrlPath)).
 		InScenario(snowflakeCatalogIntegrationScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		//WillSetStateTo(scenarioStateCatalogIntegrationIsProvisioning).
@@ -172,7 +182,9 @@ func TestAccCatalogIntegrationSnowflake(t *testing.T) {
 			string(createCatalogIntegrationResponse),
 			contentTypeJSONHeader,
 			http.StatusCreated,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	catalogIntegrationReadUrlPath := fmt.Sprintf("%s/tci-abc123", catalogIntegrationUrlPath)
 	/*_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(catalogIntegrationReadUrlPath)).
@@ -186,17 +198,19 @@ func TestAccCatalogIntegrationSnowflake(t *testing.T) {
 	))*/
 
 	readCreatedCatalogIntegrationResponse, _ := os.ReadFile("../testdata/catalog_integration/read_created_snowflake_ci.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(catalogIntegrationReadUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(catalogIntegrationReadUrlPath)).
 		InScenario(snowflakeCatalogIntegrationScenarioName).
 		WhenScenarioStateIs(scenarioStateCatalogIntegrationHasBeenCreated).
 		WillReturn(
 			string(readCreatedCatalogIntegrationResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	updatedCatalogIntegrationResponse, _ := os.ReadFile("../testdata/catalog_integration/update_snowflake_ci.json")
-	_ = wiremockClient.StubFor(wiremock.Patch(wiremock.URLPathEqualTo(catalogIntegrationReadUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Patch(wiremock.URLPathEqualTo(catalogIntegrationReadUrlPath)).
 		InScenario(snowflakeCatalogIntegrationScenarioName).
 		WhenScenarioStateIs(scenarioStateCatalogIntegrationHasBeenCreated).
 		WillSetStateTo(scenarioStateCatalogIntegrationHasBeenUpdated).
@@ -204,24 +218,30 @@ func TestAccCatalogIntegrationSnowflake(t *testing.T) {
 			string(updatedCatalogIntegrationResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(catalogIntegrationReadUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(catalogIntegrationReadUrlPath)).
 		InScenario(snowflakeCatalogIntegrationScenarioName).
 		WhenScenarioStateIs(scenarioStateCatalogIntegrationHasBeenUpdated).
 		WillReturn(
 			string(updatedCatalogIntegrationResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(catalogIntegrationReadUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(catalogIntegrationReadUrlPath)).
 		InScenario(snowflakeCatalogIntegrationScenarioName).
 		WillReturn(
 			"",
 			contentTypeJSONHeader,
 			http.StatusNoContent,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -287,7 +307,7 @@ func TestAccCatalogIntegrationUnity(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	createCatalogIntegrationResponse, _ := os.ReadFile("../testdata/catalog_integration/create_unity_ci.json")
-	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(catalogIntegrationUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(catalogIntegrationUrlPath)).
 		InScenario(unityCatalogIntegrationScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		//WillSetStateTo(scenarioStateCatalogIntegrationIsProvisioning).
@@ -296,22 +316,26 @@ func TestAccCatalogIntegrationUnity(t *testing.T) {
 			string(createCatalogIntegrationResponse),
 			contentTypeJSONHeader,
 			http.StatusCreated,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	catalogIntegrationReadUrlPath := fmt.Sprintf("%s/tci-abc123", catalogIntegrationUrlPath)
 
 	readCreatedCatalogIntegrationResponse, _ := os.ReadFile("../testdata/catalog_integration/read_created_unity_ci.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(catalogIntegrationReadUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(catalogIntegrationReadUrlPath)).
 		InScenario(unityCatalogIntegrationScenarioName).
 		WhenScenarioStateIs(scenarioStateCatalogIntegrationHasBeenCreated).
 		WillReturn(
 			string(readCreatedCatalogIntegrationResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	updatedCatalogIntegrationResponse, _ := os.ReadFile("../testdata/catalog_integration/update_unity_ci.json")
-	_ = wiremockClient.StubFor(wiremock.Patch(wiremock.URLPathEqualTo(catalogIntegrationReadUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Patch(wiremock.URLPathEqualTo(catalogIntegrationReadUrlPath)).
 		InScenario(unityCatalogIntegrationScenarioName).
 		WhenScenarioStateIs(scenarioStateCatalogIntegrationHasBeenCreated).
 		WillSetStateTo(scenarioStateCatalogIntegrationHasBeenUpdated).
@@ -319,24 +343,30 @@ func TestAccCatalogIntegrationUnity(t *testing.T) {
 			string(updatedCatalogIntegrationResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(catalogIntegrationReadUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(catalogIntegrationReadUrlPath)).
 		InScenario(unityCatalogIntegrationScenarioName).
 		WhenScenarioStateIs(scenarioStateCatalogIntegrationHasBeenUpdated).
 		WillReturn(
 			string(updatedCatalogIntegrationResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(catalogIntegrationReadUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(catalogIntegrationReadUrlPath)).
 		InScenario(unityCatalogIntegrationScenarioName).
 		WillReturn(
 			"",
 			contentTypeJSONHeader,
 			http.StatusNoContent,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },

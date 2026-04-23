@@ -43,7 +43,7 @@ func TestAccInvitation(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	createInvitationResponse, _ := ioutil.ReadFile("../testdata/invitation/create_invitation.json")
-	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(createInvitationUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(createInvitationUrlPath)).
 		InScenario(invitationResourceScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillSetStateTo(scenarioStateInvitationHasBeenCreated).
@@ -51,25 +51,31 @@ func TestAccInvitation(t *testing.T) {
 			string(createInvitationResponse),
 			contentTypeJSONHeader,
 			http.StatusCreated,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readCreatedInvitationUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readCreatedInvitationUrlPath)).
 		InScenario(invitationResourceScenarioName).
 		WhenScenarioStateIs(scenarioStateInvitationHasBeenCreated).
 		WillReturn(
 			string(createInvitationResponse),
 			contentTypeJSONHeader,
 			http.StatusCreated,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(readCreatedInvitationUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(readCreatedInvitationUrlPath)).
 		InScenario(invitationResourceScenarioName).
 		WhenScenarioStateIs(scenarioStateInvitationHasBeenCreated).
 		WillReturn(
 			"",
 			contentTypeJSONHeader,
 			http.StatusNoContent,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },

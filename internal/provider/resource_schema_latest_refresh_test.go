@@ -56,37 +56,43 @@ func TestAccLatestRefreshSchema(t *testing.T) {
 	// Schema has not yet been created. Used for test step 1.
 
 	validateSchemaResponse, _ := os.ReadFile("../testdata/schema_registry_schema/validate_schema.json")
-	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(validateSchemaPath)).
+	if err := wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(validateSchemaPath)).
 		InScenario(schemaScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillReturn(
 			string(validateSchemaResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	createSchemaResponse, _ := os.ReadFile("../testdata/schema_registry_schema/create_schema.json")
-	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(createSchemaPath)).
+	if err := wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(createSchemaPath)).
 		InScenario(schemaScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillReturn(
 			string(createSchemaResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readLatestSchemaResponse, _ := os.ReadFile("../testdata/schema_registry_schema/read_latest_schema.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readLatestSchemaPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readLatestSchemaPath)).
 		InScenario(schemaScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillReturn(
 			string(readLatestSchemaResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readSchemasResponse, _ := os.ReadFile("../testdata/schema_registry_schema/read_schemas.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readSchemasPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readSchemasPath)).
 		InScenario(schemaScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillSetStateTo(scenarioStateSchemaTest1Part2).
@@ -94,21 +100,25 @@ func TestAccLatestRefreshSchema(t *testing.T) {
 			string(readSchemasResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	// Created schema but still in test 1, we now have a plan to respond to.
 	// We need to have an intermediate state so we know when we move on to the next tests.
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readLatestSchemaPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readLatestSchemaPath)).
 		InScenario(schemaScenarioName).
 		WhenScenarioStateIs(scenarioStateSchemaTest1Part2).
 		WillReturn(
 			string(readLatestSchemaResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readSchemasPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readSchemasPath)).
 		InScenario(schemaScenarioName).
 		WhenScenarioStateIs(scenarioStateSchemaTest1Part2).
 		WillSetStateTo(scenarioStateSchemaTest2).
@@ -116,39 +126,47 @@ func TestAccLatestRefreshSchema(t *testing.T) {
 			string(readSchemasResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	// On to test step 2 and 3. On refresh, we will return that something has changed compared to step 1.
 	// Planning only o we do not need to create a schema but we do need to validate in step 2.
 
 	readLatestSchemaResponseUpdated, _ := os.ReadFile("../testdata/schema_registry_schema/read_latest_schema_updated.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readLatestSchemaPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readLatestSchemaPath)).
 		InScenario(schemaScenarioName).
 		WhenScenarioStateIs(scenarioStateSchemaTest2).
 		WillReturn(
 			string(readLatestSchemaResponseUpdated),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readSchemasResponseUpdated, _ := os.ReadFile("../testdata/schema_registry_schema/read_schemas_updated.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readSchemasPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readSchemasPath)).
 		InScenario(schemaScenarioName).
 		WhenScenarioStateIs(scenarioStateSchemaTest2).
 		WillReturn(
 			string(readSchemasResponseUpdated),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(validateSchemaPath)).
+	if err := wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(validateSchemaPath)).
 		InScenario(schemaScenarioName).
 		WhenScenarioStateIs(scenarioStateSchemaTest2).
 		WillReturn(
 			string(validateSchemaResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	// Test 2 and 3 done. The delete path is unique so we don't need to worry about the state.
 
@@ -160,17 +178,21 @@ func TestAccLatestRefreshSchema(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNoContent,
 		)
-	_ = wiremockClient.StubFor(deleteSchemaStub)
+	if err := wiremockClient.StubFor(deleteSchemaStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readDeletedSaResponse, _ := os.ReadFile("../testdata/schema_registry_schema/read_schemas_after_delete.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readSchemasPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readSchemasPath)).
 		InScenario(schemaScenarioName).
 		WhenScenarioStateIs(scenarioStateSchemaHasBeenDeleted).
 		WillReturn(
 			string(readDeletedSaResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },

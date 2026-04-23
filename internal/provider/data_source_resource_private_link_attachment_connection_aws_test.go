@@ -43,14 +43,16 @@ func TestAccDataSourcePrivateLinkAttachmentConnectionAws(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	readPrivateLinkAttachmentConnectionAwsResponse, _ := ioutil.ReadFile("../testdata/private_link_attachment_connection/read_aws_plattc.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(privateLinkAttachmentConnectionAwsReadUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(privateLinkAttachmentConnectionAwsReadUrlPath)).
 		InScenario(privateLinkAttachmentConnectionAwsDataSourceScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillReturn(
 			string(readPrivateLinkAttachmentConnectionAwsResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },

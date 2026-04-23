@@ -45,24 +45,28 @@ func TestAccDataSourceIdentityProvider(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	readCreatedIdentityProviderResponse, _ := ioutil.ReadFile("../testdata/identity_provider/read_created_identity_provider.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("/iam/v2/identity-providers/%s", identityProviderId))).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("/iam/v2/identity-providers/%s", identityProviderId))).
 		InScenario(dataSourceIdentityProviderScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillReturn(
 			string(readCreatedIdentityProviderResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readIdentityProvidersResponse, _ := ioutil.ReadFile("../testdata/identity_provider/read_identity_providers.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/identity-providers")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/identity-providers")).
 		InScenario(dataSourceIdentityProviderScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillReturn(
 			string(readIdentityProvidersResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },

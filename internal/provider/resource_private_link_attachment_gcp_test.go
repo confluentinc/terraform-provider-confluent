@@ -43,7 +43,7 @@ func TestAccPrivateLinkAttachmentGcp(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	createPlattResponse, _ := ioutil.ReadFile("../testdata/private_link_attachment/create_gcp_platt.json")
-	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(privateLinkAttachmentGcpUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(privateLinkAttachmentGcpUrlPath)).
 		InScenario(privateLinkAttachmentGcpResourceScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillSetStateTo(scenarioStatePrivateLinkAttachmentGcpHasBeenCreated).
@@ -51,25 +51,31 @@ func TestAccPrivateLinkAttachmentGcp(t *testing.T) {
 			string(createPlattResponse),
 			contentTypeJSONHeader,
 			http.StatusCreated,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readPlattResponse, _ := ioutil.ReadFile("../testdata/private_link_attachment/read_gcp_platt.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(privateLinkAttachmentGcpReadUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(privateLinkAttachmentGcpReadUrlPath)).
 		InScenario(privateLinkAttachmentGcpResourceScenarioName).
 		WhenScenarioStateIs(scenarioStatePrivateLinkAttachmentGcpHasBeenCreated).
 		WillReturn(
 			string(readPlattResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(privateLinkAttachmentGcpReadUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(privateLinkAttachmentGcpReadUrlPath)).
 		InScenario(privateLinkAttachmentGcpResourceScenarioName).
 		WillReturn(
 			"",
 			contentTypeJSONHeader,
 			http.StatusNoContent,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },

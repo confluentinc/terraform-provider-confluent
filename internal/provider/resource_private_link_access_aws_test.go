@@ -54,10 +54,12 @@ func TestAccAwsPrivateLinkAccess(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusCreated,
 		)
-	_ = wiremockClient.StubFor(createAwsPlaStub)
+	if err := wiremockClient.StubFor(createAwsPlaStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readProvisioningAwsPlaResponse, _ := ioutil.ReadFile("../testdata/private_link_access/aws/read_provisioning_pla.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(awsPlaUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(awsPlaUrlPath)).
 		InScenario(awsPlaScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(awsPlaEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateAwsPlaIsProvisioning).
@@ -66,10 +68,12 @@ func TestAccAwsPrivateLinkAccess(t *testing.T) {
 			string(readProvisioningAwsPlaResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readCreatedAwsPlaResponse, _ := ioutil.ReadFile("../testdata/private_link_access/aws/read_created_pla.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(awsPlaUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(awsPlaUrlPath)).
 		InScenario(awsPlaScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(awsPlaEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateAwsPlaHasBeenCreated).
@@ -77,7 +81,9 @@ func TestAccAwsPrivateLinkAccess(t *testing.T) {
 			string(readCreatedAwsPlaResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	deleteAwsPlaStub := wiremock.Delete(wiremock.URLPathEqualTo(awsPlaUrlPath)).
 		InScenario(awsPlaScenarioName).
@@ -89,10 +95,12 @@ func TestAccAwsPrivateLinkAccess(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNoContent,
 		)
-	_ = wiremockClient.StubFor(deleteAwsPlaStub)
+	if err := wiremockClient.StubFor(deleteAwsPlaStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readDeprovisioningAwsPlaResponse, _ := ioutil.ReadFile("../testdata/private_link_access/aws/read_deprovisioning_pla.json")
-	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(awsPlaUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(awsPlaUrlPath)).
 		InScenario(awsPlaScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(awsPlaEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateAwsPlaIsDeprovisioning).
@@ -101,10 +109,12 @@ func TestAccAwsPrivateLinkAccess(t *testing.T) {
 			string(readDeprovisioningAwsPlaResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readDeletedAwsPlaResponse, _ := ioutil.ReadFile("../testdata/private_link_access/aws/read_deleted_pla.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(awsPlaUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(awsPlaUrlPath)).
 		InScenario(awsPlaScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(awsPlaEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateAwsPlaHasBeenDeleted).
@@ -112,7 +122,9 @@ func TestAccAwsPrivateLinkAccess(t *testing.T) {
 			string(readDeletedAwsPlaResponse),
 			contentTypeJSONHeader,
 			http.StatusNotFound,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	awsPlaDisplayName := "prod-pl-use2"
 	awsPlaResourceLabel := "test"

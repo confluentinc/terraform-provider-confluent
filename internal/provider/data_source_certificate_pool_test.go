@@ -29,17 +29,19 @@ func TestAccDataSourceCertificatePool(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	readCertificatePoolResponse, _ := os.ReadFile("../testdata/certificate_pool/create_certificate_pool.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/certificate-authorities/op-abc123/identity-pools/pool-def456")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/certificate-authorities/op-abc123/identity-pools/pool-def456")).
 		InScenario(CertificatePoolDataSourceScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillReturn(
 			string(readCertificatePoolResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	listCertificatePoolsResponse, _ := os.ReadFile("../testdata/certificate_pool/list_certificate_pools.json")
-	_ = wiremockClient.StubFor(
+	if err := wiremockClient.StubFor(
 		wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/certificate-authorities/op-abc123/identity-pools")).
 			WithQueryParam("page_size", wiremock.EqualTo("99")).
 			InScenario(CertificatePoolDataSourceScenarioName).
@@ -49,7 +51,9 @@ func TestAccDataSourceCertificatePool(t *testing.T) {
 				contentTypeJSONHeader,
 				http.StatusOK,
 			),
-	)
+	); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	CertificatePoolResourceName := "data.confluent_certificate_pool.main"
 

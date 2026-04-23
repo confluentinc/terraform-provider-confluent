@@ -58,36 +58,44 @@ func TestAccClusterLinkSourceOutbound(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusCreated,
 		)
-	_ = wiremockClient.StubFor(createClusterLinkStub)
+	if err := wiremockClient.StubFor(createClusterLinkStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readCreatedClusterLinkResponse, _ := ioutil.ReadFile("../testdata/cluster_link/read_created_cluster_link_destination.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readClusterLinkSourceOutboundPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readClusterLinkSourceOutboundPath)).
 		InScenario(clusterLinkScenarioName).
 		WhenScenarioStateIs(scenarioStateClusterLinkHasBeenCreated).
 		WillReturn(
 			string(readCreatedClusterLinkResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readCreatedClusterLinkConfigResponse, _ := ioutil.ReadFile("../testdata/cluster_link/read_created_cluster_link_config.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readClusterLinkSourceOutboundConfigPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readClusterLinkSourceOutboundConfigPath)).
 		InScenario(clusterLinkScenarioName).
 		WhenScenarioStateIs(scenarioStateClusterLinkHasBeenCreated).
 		WillReturn(
 			string(readCreatedClusterLinkConfigResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readClusterLinkSourceOutboundPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readClusterLinkSourceOutboundPath)).
 		InScenario(clusterLinkScenarioName).
 		WhenScenarioStateIs(scenarioStateClusterLinkHasBeenDeleted).
 		WillReturn(
 			"",
 			contentTypeJSONHeader,
 			http.StatusNotFound,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	deleteClusterLinkStub := wiremock.Delete(wiremock.URLPathEqualTo(readClusterLinkSourceOutboundPath)).
 		InScenario(clusterLinkScenarioName).
@@ -98,7 +106,9 @@ func TestAccClusterLinkSourceOutbound(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNoContent,
 		)
-	_ = wiremockClient.StubFor(deleteClusterLinkStub)
+	if err := wiremockClient.StubFor(deleteClusterLinkStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	// Set fake values for secrets since those are required for importing
 	_ = os.Setenv("IMPORT_SOURCE_KAFKA_REST_ENDPOINT", mockClusterLinkTestServerUrl)

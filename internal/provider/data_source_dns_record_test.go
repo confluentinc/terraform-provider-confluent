@@ -40,7 +40,9 @@ func TestAccDataSourceDnsRecord(t *testing.T) {
 			http.StatusOK,
 		)
 
-	_ = wiremockClient.StubFor(readDnsRecordStub)
+	if err := wiremockClient.StubFor(readDnsRecordStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },

@@ -58,9 +58,15 @@ func TestAccAzureBYOKKey(t *testing.T) {
 			http.StatusNoContent,
 		)
 
-	_ = wiremockClient.StubFor(createAzureKeyStub)
-	_ = wiremockClient.StubFor(readAzureKeyStub)
-	_ = wiremockClient.StubFor(deleteAzureKeyStub)
+	if err := wiremockClient.StubFor(createAzureKeyStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
+	if err := wiremockClient.StubFor(readAzureKeyStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
+	if err := wiremockClient.StubFor(deleteAzureKeyStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	azureKeyResourceName := "azure_key"
 	fullAzureKeyResourceName := fmt.Sprintf("confluent_byok_key.%s", azureKeyResourceName)

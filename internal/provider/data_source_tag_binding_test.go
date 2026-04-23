@@ -43,13 +43,15 @@ func TestAccDataSourceTagBinding(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	readTagBindingResponse, _ := ioutil.ReadFile("../testdata/tag/read_tag_binding.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readCreatedTagBindingUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readCreatedTagBindingUrlPath)).
 		InScenario(tagBindingDataSourceScenarioName).
 		WillReturn(
 			string(readTagBindingResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },

@@ -57,10 +57,12 @@ func TestAccSubjectCompatibilityLevelWithEnhancedProviderBlock(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)
-	_ = wiremockClient.StubFor(createSubjectCompatibilityLevelStub)
+	if err := wiremockClient.StubFor(createSubjectCompatibilityLevelStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readCreatedSubjectCompatibilityLevelsResponse, _ := ioutil.ReadFile("../testdata/subject_compatibility_level/read_created_subject_compatibility_level.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(updateSubjectCompatibilityLevelPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(updateSubjectCompatibilityLevelPath)).
 		WithQueryParam("defaultToGlobal", wiremock.EqualTo("true")).
 		InScenario(subjectCompatibilityLevelScenarioName).
 		WhenScenarioStateIs(scenarioStateSubjectCompatibilityLevelHasBeenCreated).
@@ -68,9 +70,11 @@ func TestAccSubjectCompatibilityLevelWithEnhancedProviderBlock(t *testing.T) {
 			string(readCreatedSubjectCompatibilityLevelsResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Put(wiremock.URLPathEqualTo(updateSubjectCompatibilityLevelPath)).
+	if err := wiremockClient.StubFor(wiremock.Put(wiremock.URLPathEqualTo(updateSubjectCompatibilityLevelPath)).
 		InScenario(subjectCompatibilityLevelScenarioName).
 		WhenScenarioStateIs(scenarioStateSubjectCompatibilityLevelHasBeenCreated).
 		WillSetStateTo(scenarioStateSubjectCompatibilityLevelHasBeenUpdated).
@@ -78,10 +82,12 @@ func TestAccSubjectCompatibilityLevelWithEnhancedProviderBlock(t *testing.T) {
 			"",
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readUpdatedSubjectCompatibilityLevelsResponse, _ := ioutil.ReadFile("../testdata/subject_compatibility_level/read_updated_subject_compatibility_level.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(updateSubjectCompatibilityLevelPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(updateSubjectCompatibilityLevelPath)).
 		WithQueryParam("defaultToGlobal", wiremock.EqualTo("true")).
 		InScenario(subjectCompatibilityLevelScenarioName).
 		WhenScenarioStateIs(scenarioStateSubjectCompatibilityLevelHasBeenUpdated).
@@ -89,7 +95,9 @@ func TestAccSubjectCompatibilityLevelWithEnhancedProviderBlock(t *testing.T) {
 			string(readUpdatedSubjectCompatibilityLevelsResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	deleteSubjectCompatibilityLevelStub := wiremock.Delete(wiremock.URLPathEqualTo(updateSubjectCompatibilityLevelPath)).
 		InScenario(subjectCompatibilityLevelScenarioName).
@@ -100,7 +108,9 @@ func TestAccSubjectCompatibilityLevelWithEnhancedProviderBlock(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)
-	_ = wiremockClient.StubFor(deleteSubjectCompatibilityLevelStub)
+	if err := wiremockClient.StubFor(deleteSubjectCompatibilityLevelStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -219,9 +229,11 @@ func TestAccSubjectConfigWithAliasEnhancedProviderBlock(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)
-	_ = wiremockClient.StubFor(createSubjectConfigWithAliasStub)
+	if err := wiremockClient.StubFor(createSubjectConfigWithAliasStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(aliasSubjectConfigPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(aliasSubjectConfigPath)).
 		WithQueryParam("defaultToGlobal", wiremock.EqualTo("true")).
 		InScenario(aliasScenarioName).
 		WhenScenarioStateIs("AliasSubjectConfigCreated").
@@ -229,9 +241,11 @@ func TestAccSubjectConfigWithAliasEnhancedProviderBlock(t *testing.T) {
 			string(createSubjectConfigWithAliasResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Put(wiremock.URLPathEqualTo(aliasSubjectConfigPath)).
+	if err := wiremockClient.StubFor(wiremock.Put(wiremock.URLPathEqualTo(aliasSubjectConfigPath)).
 		InScenario(aliasScenarioName).
 		WhenScenarioStateIs("AliasSubjectConfigCreated").
 		WillSetStateTo("AliasSubjectConfigUpdated").
@@ -239,10 +253,12 @@ func TestAccSubjectConfigWithAliasEnhancedProviderBlock(t *testing.T) {
 			"",
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readUpdatedSubjectConfigWithAliasResponse, _ := ioutil.ReadFile("../testdata/subject_compatibility_level/read_updated_subject_config_with_alias.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(aliasSubjectConfigPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(aliasSubjectConfigPath)).
 		WithQueryParam("defaultToGlobal", wiremock.EqualTo("true")).
 		InScenario(aliasScenarioName).
 		WhenScenarioStateIs("AliasSubjectConfigUpdated").
@@ -250,7 +266,9 @@ func TestAccSubjectConfigWithAliasEnhancedProviderBlock(t *testing.T) {
 			string(readUpdatedSubjectConfigWithAliasResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	deleteSubjectConfigWithAliasStub := wiremock.Delete(wiremock.URLPathEqualTo(aliasSubjectConfigPath)).
 		InScenario(aliasScenarioName).
@@ -261,7 +279,9 @@ func TestAccSubjectConfigWithAliasEnhancedProviderBlock(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)
-	_ = wiremockClient.StubFor(deleteSubjectConfigWithAliasStub)
+	if err := wiremockClient.StubFor(deleteSubjectConfigWithAliasStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	fullAliasResourceLabel := fmt.Sprintf("confluent_subject_config.%s", aliasResourceLabel)
 

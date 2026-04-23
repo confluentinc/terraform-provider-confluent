@@ -53,7 +53,9 @@ func TestAccKafkaApiKey(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusCreated,
 		)
-	_ = wiremockClient.StubFor(createKafkaApiKeyStub)
+	if err := wiremockClient.StubFor(createKafkaApiKeyStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	createKafkaCmkApiResponse, _ := ioutil.ReadFile("../testdata/apikey/read_kafka.json")
 	var createKafkaCmkApiResponseMap map[string]interface{}
@@ -70,7 +72,9 @@ func TestAccKafkaApiKey(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)
-	_ = wiremockClient.StubFor(createCmkApiStub)
+	if err := wiremockClient.StubFor(createCmkApiStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	kafkaRestApi401Response, _ := ioutil.ReadFile("../testdata/apikey/read_list_topics_401.html")
 	listTopicsKafkaRestApi401Stub := wiremock.Get(wiremock.URLPathEqualTo("/kafka/v3/clusters/lkc-zmmq63/topics")).
@@ -82,7 +86,9 @@ func TestAccKafkaApiKey(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusUnauthorized,
 		)
-	_ = wiremockClient.StubFor(listTopicsKafkaRestApi401Stub)
+	if err := wiremockClient.StubFor(listTopicsKafkaRestApi401Stub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	kafkaRestApi200Response, _ := ioutil.ReadFile("../testdata/apikey/read_list_topics_200.json")
 	listTopicsKafkaRestApi200Stub := wiremock.Get(wiremock.URLPathEqualTo("/kafka/v3/clusters/lkc-zmmq63/topics")).
@@ -94,7 +100,9 @@ func TestAccKafkaApiKey(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)
-	_ = wiremockClient.StubFor(listTopicsKafkaRestApi200Stub)
+	if err := wiremockClient.StubFor(listTopicsKafkaRestApi200Stub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	listTopicsKafkaRestApi200ConfirmationStub := wiremock.Get(wiremock.URLPathEqualTo("/kafka/v3/clusters/lkc-zmmq63/topics")).
 		InScenario(kafkaApiKeyScenarioName).
@@ -105,17 +113,21 @@ func TestAccKafkaApiKey(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)
-	_ = wiremockClient.StubFor(listTopicsKafkaRestApi200ConfirmationStub)
+	if err := wiremockClient.StubFor(listTopicsKafkaRestApi200ConfirmationStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readCreatedKafkaApiKeyResponse, _ := ioutil.ReadFile("../testdata/apikey/read_created_kafka_api_key.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/api-keys/7FJIYKQ4SGQDQ72H")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/api-keys/7FJIYKQ4SGQDQ72H")).
 		InScenario(kafkaApiKeyScenarioName).
 		WhenScenarioStateIs(scenarioStateKafkaApiKeyHasBeenCreated).
 		WillReturn(
 			string(readCreatedKafkaApiKeyResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readUpdatedKafkaApiKeyResponse, _ := ioutil.ReadFile("../testdata/apikey/read_updated_kafka_api_key.json")
 	patchKafkaApiKeyStub := wiremock.Patch(wiremock.URLPathEqualTo("/iam/v2/api-keys/7FJIYKQ4SGQDQ72H")).
@@ -127,26 +139,32 @@ func TestAccKafkaApiKey(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)
-	_ = wiremockClient.StubFor(patchKafkaApiKeyStub)
+	if err := wiremockClient.StubFor(patchKafkaApiKeyStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/api-keys/7FJIYKQ4SGQDQ72H")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/api-keys/7FJIYKQ4SGQDQ72H")).
 		InScenario(kafkaApiKeyScenarioName).
 		WhenScenarioStateIs(scenarioStateKafkaApiKeyHasBeenUpdated).
 		WillReturn(
 			string(readUpdatedKafkaApiKeyResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readDeletedKafkaApiKeyResponse, _ := ioutil.ReadFile("../testdata/apikey/read_deleted_kafka_api_key.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/api-keys/7FJIYKQ4SGQDQ72H")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/api-keys/7FJIYKQ4SGQDQ72H")).
 		InScenario(kafkaApiKeyScenarioName).
 		WhenScenarioStateIs(scenarioStateKafkaApiKeyHasBeenDeleted).
 		WillReturn(
 			string(readDeletedKafkaApiKeyResponse),
 			contentTypeJSONHeader,
 			http.StatusForbidden,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 	deleteKafkaApiKeyStub := wiremock.Delete(wiremock.URLPathEqualTo("/iam/v2/api-keys/7FJIYKQ4SGQDQ72H")).
 		InScenario(kafkaApiKeyScenarioName).
 		WhenScenarioStateIs(scenarioStateKafkaApiKeyHasBeenUpdated).
@@ -156,7 +174,9 @@ func TestAccKafkaApiKey(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNoContent,
 		)
-	_ = wiremockClient.StubFor(deleteKafkaApiKeyStub)
+	if err := wiremockClient.StubFor(deleteKafkaApiKeyStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	kafkaApiKeyDisplayName := "CI Kafka API Key"
 	kafkaApiKeyDescription := "This API key provides kafka access to cluster x"
@@ -279,10 +299,12 @@ func TestAccFlinkApiKey(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusCreated,
 		)
-	_ = wiremockClient.StubFor(createFlinkApiKeyStub)
+	if err := wiremockClient.StubFor(createFlinkApiKeyStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readCreatedFlinkApiKeyResponse, _ := ioutil.ReadFile("../testdata/apikey/read_created_flink_api_key.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/api-keys/AK4NBR7MUYHVJMHW")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/api-keys/AK4NBR7MUYHVJMHW")).
 		InScenario(flinkApiKeyScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillSetStateTo(scenarioStateFlinkApiKeyHasBeenCreated).
@@ -290,17 +312,21 @@ func TestAccFlinkApiKey(t *testing.T) {
 			string(readCreatedFlinkApiKeyResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readImportedFlinkApiKeyResponse, _ := ioutil.ReadFile("../testdata/apikey/read_created_flink_api_key.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/api-keys/AK4NBR7MUYHVJMHW")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/api-keys/AK4NBR7MUYHVJMHW")).
 		InScenario(flinkApiKeyScenarioName).
 		WhenScenarioStateIs(scenarioStateFlinkApiKeyHasBeenCreated).
 		WillReturn(
 			string(readImportedFlinkApiKeyResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readUpdatedFlinkApiKeyResponse, _ := ioutil.ReadFile("../testdata/apikey/read_updated_flink_api_key.json")
 	patchFlinkApiKeyStub := wiremock.Patch(wiremock.URLPathEqualTo("/iam/v2/api-keys/AK4NBR7MUYHVJMHW")).
@@ -312,26 +338,32 @@ func TestAccFlinkApiKey(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)
-	_ = wiremockClient.StubFor(patchFlinkApiKeyStub)
+	if err := wiremockClient.StubFor(patchFlinkApiKeyStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/api-keys/AK4NBR7MUYHVJMHW")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/api-keys/AK4NBR7MUYHVJMHW")).
 		InScenario(flinkApiKeyScenarioName).
 		WhenScenarioStateIs(scenarioStateFlinkApiKeyHasBeenUpdated).
 		WillReturn(
 			string(readUpdatedFlinkApiKeyResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readDeletedFlinkApiKeyResponse, _ := ioutil.ReadFile("../testdata/apikey/read_deleted_flink_api_key.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/api-keys/AK4NBR7MUYHVJMHW")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/api-keys/AK4NBR7MUYHVJMHW")).
 		InScenario(flinkApiKeyScenarioName).
 		WhenScenarioStateIs(scenarioStateFlinkApiKeyHasBeenDeleted).
 		WillReturn(
 			string(readDeletedFlinkApiKeyResponse),
 			contentTypeJSONHeader,
 			http.StatusForbidden,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 	deleteFlinkApiKeyStub := wiremock.Delete(wiremock.URLPathEqualTo("/iam/v2/api-keys/AK4NBR7MUYHVJMHW")).
 		InScenario(flinkApiKeyScenarioName).
 		WhenScenarioStateIs(scenarioStateFlinkApiKeyHasBeenUpdated).
@@ -341,7 +373,9 @@ func TestAccFlinkApiKey(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNoContent,
 		)
-	_ = wiremockClient.StubFor(deleteFlinkApiKeyStub)
+	if err := wiremockClient.StubFor(deleteFlinkApiKeyStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	flinkApiKeyDisplayName := "CI Flink API Key"
 	flinkApiKeyDescription := "test description"
@@ -463,7 +497,9 @@ func TestAccTableflowApiKey(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusCreated,
 		)
-	_ = wiremockClient.StubFor(createTableflowApiKeyStub)
+	if err := wiremockClient.StubFor(createTableflowApiKeyStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	tableflowApi401Response, _ := ioutil.ReadFile("../testdata/apikey/read_list_tableflow_regions_401.json")
 	listRegionsTableflowApi401Stub := wiremock.Get(wiremock.URLPathEqualTo("/tableflow/v1/regions")).
@@ -475,7 +511,9 @@ func TestAccTableflowApiKey(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusUnauthorized,
 		)
-	_ = wiremockClient.StubFor(listRegionsTableflowApi401Stub)
+	if err := wiremockClient.StubFor(listRegionsTableflowApi401Stub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	tableflowApi200Response, _ := ioutil.ReadFile("../testdata/apikey/read_list_tableflow_regions_200.json")
 	listRegionsTableflowApi200Stub := wiremock.Get(wiremock.URLPathEqualTo("/tableflow/v1/regions")).
@@ -487,17 +525,21 @@ func TestAccTableflowApiKey(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)
-	_ = wiremockClient.StubFor(listRegionsTableflowApi200Stub)
+	if err := wiremockClient.StubFor(listRegionsTableflowApi200Stub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readCreatedTableflowApiKeyResponse, _ := ioutil.ReadFile("../testdata/apikey/read_created_tableflow_api_key.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/api-keys/HRVR6K4VMXYD2LDZ")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/api-keys/HRVR6K4VMXYD2LDZ")).
 		InScenario(tableflowApiKeyScenarioName).
 		WhenScenarioStateIs(scenarioStateTableflowApiKeyHasBeenCreated).
 		WillReturn(
 			string(readCreatedTableflowApiKeyResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readUpdatedTableflowApiKeyResponse, _ := ioutil.ReadFile("../testdata/apikey/read_updated_tableflow_api_key.json")
 	patchTableflowApiKeyStub := wiremock.Patch(wiremock.URLPathEqualTo("/iam/v2/api-keys/HRVR6K4VMXYD2LDZ")).
@@ -509,16 +551,20 @@ func TestAccTableflowApiKey(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)
-	_ = wiremockClient.StubFor(patchTableflowApiKeyStub)
+	if err := wiremockClient.StubFor(patchTableflowApiKeyStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/api-keys/HRVR6K4VMXYD2LDZ")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/api-keys/HRVR6K4VMXYD2LDZ")).
 		InScenario(tableflowApiKeyScenarioName).
 		WhenScenarioStateIs(scenarioStateTableflowApiKeyHasBeenUpdated).
 		WillReturn(
 			string(readUpdatedTableflowApiKeyResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	deleteTableflowApiKeyStub := wiremock.Delete(wiremock.URLPathEqualTo("/iam/v2/api-keys/HRVR6K4VMXYD2LDZ")).
 		InScenario(tableflowApiKeyScenarioName).
@@ -529,17 +575,21 @@ func TestAccTableflowApiKey(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNoContent,
 		)
-	_ = wiremockClient.StubFor(deleteTableflowApiKeyStub)
+	if err := wiremockClient.StubFor(deleteTableflowApiKeyStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readDeletedTableflowApiKeyResponse, _ := ioutil.ReadFile("../testdata/apikey/read_deleted_tableflow_api_key.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/api-keys/HRVR6K4VMXYD2LDZ")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/api-keys/HRVR6K4VMXYD2LDZ")).
 		InScenario(tableflowApiKeyScenarioName).
 		WhenScenarioStateIs(scenarioStateTableflowApiKeyHasBeenDeleted).
 		WillReturn(
 			string(readDeletedTableflowApiKeyResponse),
 			contentTypeJSONHeader,
 			http.StatusForbidden,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	tableflowApiKeyDisplayName := "CI Tableflow API Key"
 	tableflowApiKeyDescription := "temp description"
@@ -644,7 +694,9 @@ func TestAccCloudApiKey(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusCreated,
 		)
-	_ = wiremockClient.StubFor(createCloudApiKeyStub)
+	if err := wiremockClient.StubFor(createCloudApiKeyStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	listEnvs401Response, _ := ioutil.ReadFile("../testdata/apikey/read_list_envs_401.json")
 	listEnvsOrgApi401Stub := wiremock.Get(wiremock.URLPathEqualTo("/org/v2/environments")).
@@ -656,7 +708,9 @@ func TestAccCloudApiKey(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusUnauthorized,
 		)
-	_ = wiremockClient.StubFor(listEnvsOrgApi401Stub)
+	if err := wiremockClient.StubFor(listEnvsOrgApi401Stub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	listEnvs200Response, _ := ioutil.ReadFile("../testdata/apikey/read_list_envs_200.json")
 	listEnvsOrgApi200Stub := wiremock.Get(wiremock.URLPathEqualTo("/org/v2/environments")).
@@ -668,17 +722,21 @@ func TestAccCloudApiKey(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)
-	_ = wiremockClient.StubFor(listEnvsOrgApi200Stub)
+	if err := wiremockClient.StubFor(listEnvsOrgApi200Stub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readCreatedCloudApiKeyResponse, _ := ioutil.ReadFile("../testdata/apikey/read_created_cloud_api_key.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/api-keys/HRVR6K4VMXYD2LDZ")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/api-keys/HRVR6K4VMXYD2LDZ")).
 		InScenario(cloudApiKeyScenarioName).
 		WhenScenarioStateIs(scenarioStateCloudApiKeyHasBeenCreated).
 		WillReturn(
 			string(readCreatedCloudApiKeyResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readUpdatedCloudApiKeyResponse, _ := ioutil.ReadFile("../testdata/apikey/read_updated_cloud_api_key.json")
 	patchCloudApiKeyStub := wiremock.Patch(wiremock.URLPathEqualTo("/iam/v2/api-keys/HRVR6K4VMXYD2LDZ")).
@@ -690,26 +748,32 @@ func TestAccCloudApiKey(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)
-	_ = wiremockClient.StubFor(patchCloudApiKeyStub)
+	if err := wiremockClient.StubFor(patchCloudApiKeyStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/api-keys/HRVR6K4VMXYD2LDZ")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/api-keys/HRVR6K4VMXYD2LDZ")).
 		InScenario(cloudApiKeyScenarioName).
 		WhenScenarioStateIs(scenarioStateCloudApiKeyHasBeenUpdated).
 		WillReturn(
 			string(readUpdatedCloudApiKeyResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readDeletedCloudApiKeyResponse, _ := ioutil.ReadFile("../testdata/apikey/read_deleted_cloud_api_key.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/api-keys/HRVR6K4VMXYD2LDZ")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/api-keys/HRVR6K4VMXYD2LDZ")).
 		InScenario(cloudApiKeyScenarioName).
 		WhenScenarioStateIs(scenarioStateCloudApiKeyHasBeenDeleted).
 		WillReturn(
 			string(readDeletedCloudApiKeyResponse),
 			contentTypeJSONHeader,
 			http.StatusForbidden,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 	deleteCloudApiKeyStub := wiremock.Delete(wiremock.URLPathEqualTo("/iam/v2/api-keys/HRVR6K4VMXYD2LDZ")).
 		InScenario(cloudApiKeyScenarioName).
 		WhenScenarioStateIs(scenarioStateCloudApiKeyHasBeenUpdated).
@@ -719,7 +783,9 @@ func TestAccCloudApiKey(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNoContent,
 		)
-	_ = wiremockClient.StubFor(deleteCloudApiKeyStub)
+	if err := wiremockClient.StubFor(deleteCloudApiKeyStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	cloudApiKeyDisplayName := "CI Cloud API Key"
 	cloudApiKeyDescription := "temp description"

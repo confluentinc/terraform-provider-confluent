@@ -61,10 +61,12 @@ func TestAccAwsTransitGatewayAttachmentAccess(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusCreated,
 		)
-	_ = wiremockClient.StubFor(createAwsTransitGatewayAttachmentStub)
+	if err := wiremockClient.StubFor(createAwsTransitGatewayAttachmentStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readProvisioningAwsTransitGatewayAttachmentResponse, _ := ioutil.ReadFile("../testdata/transit_gateway_attachment/aws/read_provisioning_transit_gateway_attachment.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(awsTransitGatewayAttachmentUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(awsTransitGatewayAttachmentUrlPath)).
 		InScenario(awsTransitGatewayAttachmentScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(awsTransitGatewayAttachmentEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateAwsTransitGatewayAttachmentIsProvisioning).
@@ -73,10 +75,12 @@ func TestAccAwsTransitGatewayAttachmentAccess(t *testing.T) {
 			string(readProvisioningAwsTransitGatewayAttachmentResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readCreatedAwsTransitGatewayAttachmentResponse, _ := ioutil.ReadFile("../testdata/transit_gateway_attachment/aws/read_created_transit_gateway_attachment.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(awsTransitGatewayAttachmentUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(awsTransitGatewayAttachmentUrlPath)).
 		InScenario(awsTransitGatewayAttachmentScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(awsTransitGatewayAttachmentEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateAwsTransitGatewayAttachmentHasBeenCreated).
@@ -84,7 +88,9 @@ func TestAccAwsTransitGatewayAttachmentAccess(t *testing.T) {
 			string(readCreatedAwsTransitGatewayAttachmentResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	deleteAwsTransitGatewayAttachmentStub := wiremock.Delete(wiremock.URLPathEqualTo(awsTransitGatewayAttachmentUrlPath)).
 		InScenario(awsTransitGatewayAttachmentScenarioName).
@@ -96,11 +102,13 @@ func TestAccAwsTransitGatewayAttachmentAccess(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNoContent,
 		)
-	_ = wiremockClient.StubFor(deleteAwsTransitGatewayAttachmentStub)
+	if err := wiremockClient.StubFor(deleteAwsTransitGatewayAttachmentStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readDeprovisioningAwsTransitGatewayAttachmentResponse, _ := ioutil.ReadFile("../testdata/transit_gateway_attachment/aws/read_deprovisioning_transit_gateway_attachment.json")
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(awsTransitGatewayAttachmentUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(awsTransitGatewayAttachmentUrlPath)).
 		InScenario(awsTransitGatewayAttachmentScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(awsTransitGatewayAttachmentEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateAwsTransitGatewayAttachmentIsDeprovisioning).
@@ -109,10 +117,12 @@ func TestAccAwsTransitGatewayAttachmentAccess(t *testing.T) {
 			string(readDeprovisioningAwsTransitGatewayAttachmentResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readDeletedAwsTransitGatewayAttachmentResponse, _ := ioutil.ReadFile("../testdata/transit_gateway_attachment/aws/read_deleted_transit_gateway_attachment.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(awsTransitGatewayAttachmentUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(awsTransitGatewayAttachmentUrlPath)).
 		InScenario(awsTransitGatewayAttachmentScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(awsTransitGatewayAttachmentEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateAwsTransitGatewayAttachmentHasBeenDeleted).
@@ -120,7 +130,9 @@ func TestAccAwsTransitGatewayAttachmentAccess(t *testing.T) {
 			string(readDeletedAwsTransitGatewayAttachmentResponse),
 			contentTypeJSONHeader,
 			http.StatusNotFound,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	awsTransitGatewayAttachmentDisplayName := "prod-tgw-use1"
 	awsTransitGatewayAttachmentResourceLabel := "test"

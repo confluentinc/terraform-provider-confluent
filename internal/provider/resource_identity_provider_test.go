@@ -52,17 +52,21 @@ func TestAccIdentityProvider(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusCreated,
 		)
-	_ = wiremockClient.StubFor(createSaStub)
+	if err := wiremockClient.StubFor(createSaStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readCreatedSaResponse, _ := ioutil.ReadFile("../testdata/identity_provider/read_created_identity_provider.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("/iam/v2/identity-providers/%s", identityProviderId))).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("/iam/v2/identity-providers/%s", identityProviderId))).
 		InScenario(identityProviderScenarioName).
 		WhenScenarioStateIs(scenarioStateIdentityProviderHasBeenCreated).
 		WillReturn(
 			string(readCreatedSaResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readUpdatedIdentityProviderResponse, _ := ioutil.ReadFile("../testdata/identity_provider/read_updated_identity_provider.json")
 	patchSaStub := wiremock.Patch(wiremock.URLPathEqualTo(fmt.Sprintf("/iam/v2/identity-providers/%s", identityProviderId))).
@@ -74,26 +78,32 @@ func TestAccIdentityProvider(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)
-	_ = wiremockClient.StubFor(patchSaStub)
+	if err := wiremockClient.StubFor(patchSaStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("/iam/v2/identity-providers/%s", identityProviderId))).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("/iam/v2/identity-providers/%s", identityProviderId))).
 		InScenario(identityProviderScenarioName).
 		WhenScenarioStateIs(scenarioStateIdentityProviderDescriptionHaveBeenUpdated).
 		WillReturn(
 			string(readUpdatedIdentityProviderResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readDeletedSaResponse, _ := ioutil.ReadFile("../testdata/identity_provider/read_deleted_identity_provider.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("/iam/v2/identity-providers/%s", identityProviderId))).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("/iam/v2/identity-providers/%s", identityProviderId))).
 		InScenario(identityProviderScenarioName).
 		WhenScenarioStateIs(scenarioStateIdentityProviderHasBeenDeleted).
 		WillReturn(
 			string(readDeletedSaResponse),
 			contentTypeJSONHeader,
 			http.StatusNotFound,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	deleteSaStub := wiremock.Delete(wiremock.URLPathEqualTo(fmt.Sprintf("/iam/v2/identity-providers/%s", identityProviderId))).
 		InScenario(identityProviderScenarioName).
@@ -104,7 +114,9 @@ func TestAccIdentityProvider(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNoContent,
 		)
-	_ = wiremockClient.StubFor(deleteSaStub)
+	if err := wiremockClient.StubFor(deleteSaStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	// in order to test tf update (step #3)
 	identityProviderUpdatedDescription := "fake description updated"

@@ -54,19 +54,23 @@ func TestAccSchemaRegistryClusterCompatibilityLevel(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)
-	_ = wiremockClient.StubFor(createSchemaRegistryClusterCompatibilityLevelStub)
+	if err := wiremockClient.StubFor(createSchemaRegistryClusterCompatibilityLevelStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readCreatedSchemaRegistryClusterCompatibilityLevelsResponse, _ := ioutil.ReadFile("../testdata/schema_registry_cluster_compatibility_level/read_created_schema_registry_cluster_compatibility_level.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(updateSchemaRegistryClusterCompatibilityLevelPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(updateSchemaRegistryClusterCompatibilityLevelPath)).
 		InScenario(schemaRegistryClusterCompatibilityLevelScenarioName).
 		WhenScenarioStateIs(scenarioStateSchemaRegistryClusterCompatibilityLevelHasBeenCreated).
 		WillReturn(
 			string(readCreatedSchemaRegistryClusterCompatibilityLevelsResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Put(wiremock.URLPathEqualTo(updateSchemaRegistryClusterCompatibilityLevelPath)).
+	if err := wiremockClient.StubFor(wiremock.Put(wiremock.URLPathEqualTo(updateSchemaRegistryClusterCompatibilityLevelPath)).
 		InScenario(schemaRegistryClusterCompatibilityLevelScenarioName).
 		WhenScenarioStateIs(scenarioStateSchemaRegistryClusterCompatibilityLevelHasBeenCreated).
 		WillSetStateTo(scenarioStateSchemaRegistryClusterCompatibilityLevelHasBeenUpdated).
@@ -74,17 +78,21 @@ func TestAccSchemaRegistryClusterCompatibilityLevel(t *testing.T) {
 			"",
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readUpdatedSchemaRegistryClusterCompatibilityLevelsResponse, _ := ioutil.ReadFile("../testdata/schema_registry_cluster_compatibility_level/read_updated_schema_registry_cluster_compatibility_level.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(updateSchemaRegistryClusterCompatibilityLevelPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(updateSchemaRegistryClusterCompatibilityLevelPath)).
 		InScenario(schemaRegistryClusterCompatibilityLevelScenarioName).
 		WhenScenarioStateIs(scenarioStateSchemaRegistryClusterCompatibilityLevelHasBeenUpdated).
 		WillReturn(
 			string(readUpdatedSchemaRegistryClusterCompatibilityLevelsResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	deleteSchemaRegistryClusterCompatibilityLevelStub := wiremock.Delete(wiremock.URLPathEqualTo(updateSchemaRegistryClusterCompatibilityLevelPath)).
 		InScenario(schemaRegistryClusterCompatibilityLevelScenarioName).
@@ -95,7 +103,9 @@ func TestAccSchemaRegistryClusterCompatibilityLevel(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)
-	_ = wiremockClient.StubFor(deleteSchemaRegistryClusterCompatibilityLevelStub)
+	if err := wiremockClient.StubFor(deleteSchemaRegistryClusterCompatibilityLevelStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	// Set fake values for secrets since those are required for importing
 	_ = os.Setenv("IMPORT_SCHEMA_REGISTRY_API_KEY", testSchemaRegistryUpdatedKey)

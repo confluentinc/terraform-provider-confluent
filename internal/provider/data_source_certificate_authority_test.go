@@ -29,14 +29,16 @@ func TestAccDataSourceCertificateAuthority(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	readCertificateAuthorityResponse, _ := os.ReadFile("../testdata/certificate_authority/create_certificate_authority_crl.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/certificate-authorities/op-abc123")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/certificate-authorities/op-abc123")).
 		InScenario(CertificateAuthorityDataSourceScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillReturn(
 			string(readCertificateAuthorityResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	CertificateAuthorityResourceName := "data.confluent_certificate_authority.main"
 

@@ -51,17 +51,21 @@ func TestAccClusterConfigWithEnhancedProviderBlock(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusCreated,
 		)
-	_ = wiremockClient.StubFor(createConfigStub)
+	if err := wiremockClient.StubFor(createConfigStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readCreatedConfigResponse, _ := ioutil.ReadFile("../testdata/kafka_config/read_created_kafka_config.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaConfigPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaConfigPath)).
 		InScenario(configScenarioName).
 		WhenScenarioStateIs(scenarioStateConfigHasBeenCreated).
 		WillReturn(
 			string(readCreatedConfigResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readUpdatedConfigResponse, _ := ioutil.ReadFile("../testdata/kafka_config/read_updated_kafka_config.json")
 	patchConfigStub := wiremock.Post(wiremock.URLPathEqualTo(updateKafkaConfigPath)).
@@ -73,16 +77,20 @@ func TestAccClusterConfigWithEnhancedProviderBlock(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)
-	_ = wiremockClient.StubFor(patchConfigStub)
+	if err := wiremockClient.StubFor(patchConfigStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaConfigPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaConfigPath)).
 		InScenario(configScenarioName).
 		WhenScenarioStateIs(scenarioStateConfigHasBeenUpdated).
 		WillReturn(
 			string(readUpdatedConfigResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },

@@ -43,7 +43,7 @@ func TestAccTagWithEnhancedProviderBlock(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	createTagResponse, _ := ioutil.ReadFile("../testdata/tag/create_tag.json")
-	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(createTagUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(createTagUrlPath)).
 		InScenario(tagResourceScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillSetStateTo(scenarioStateTagHasBeenPending).
@@ -51,9 +51,11 @@ func TestAccTagWithEnhancedProviderBlock(t *testing.T) {
 			string(createTagResponse),
 			contentTypeJSONHeader,
 			http.StatusCreated,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readCreatedTagUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readCreatedTagUrlPath)).
 		InScenario(tagResourceScenarioName).
 		WhenScenarioStateIs(scenarioStateTagHasBeenPending).
 		WillSetStateTo(scenarioStateTagHasBeenCreated).
@@ -61,10 +63,12 @@ func TestAccTagWithEnhancedProviderBlock(t *testing.T) {
 			"",
 			contentTypeJSONHeader,
 			http.StatusNotFound,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	updateTagResponse, _ := ioutil.ReadFile("../testdata/tag/update_tag.json")
-	_ = wiremockClient.StubFor(wiremock.Put(wiremock.URLPathEqualTo(createTagUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Put(wiremock.URLPathEqualTo(createTagUrlPath)).
 		InScenario(tagResourceScenarioName).
 		WhenScenarioStateIs(scenarioStateTagHasBeenCreated).
 		WillSetStateTo(scenarioStateTagHasBeenUpdated).
@@ -72,35 +76,43 @@ func TestAccTagWithEnhancedProviderBlock(t *testing.T) {
 			string(updateTagResponse),
 			contentTypeJSONHeader,
 			http.StatusCreated,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readTagResponse, _ := ioutil.ReadFile("../testdata/tag/read_tag.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readCreatedTagUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readCreatedTagUrlPath)).
 		InScenario(tagResourceScenarioName).
 		WhenScenarioStateIs(scenarioStateTagHasBeenCreated).
 		WillReturn(
 			string(readTagResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readUpdatedTagResponse, _ := ioutil.ReadFile("../testdata/tag/read_updated_tag.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readCreatedTagUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readCreatedTagUrlPath)).
 		InScenario(tagResourceScenarioName).
 		WhenScenarioStateIs(scenarioStateTagHasBeenUpdated).
 		WillReturn(
 			string(readUpdatedTagResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(readCreatedTagUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(readCreatedTagUrlPath)).
 		InScenario(tagResourceScenarioName).
 		WillReturn(
 			"",
 			contentTypeJSONHeader,
 			http.StatusNoContent,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },

@@ -43,7 +43,7 @@ func TestAccPrivateLinkAttachmentAws(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	createPlattResponse, _ := ioutil.ReadFile("../testdata/private_link_attachment/create_aws_platt.json")
-	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(privateLinkAttachmentAwsUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(privateLinkAttachmentAwsUrlPath)).
 		InScenario(privateLinkAttachmentAwsResourceScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillSetStateTo(scenarioStatePrivateLinkAttachmentAwsHasBeenCreated).
@@ -51,20 +51,24 @@ func TestAccPrivateLinkAttachmentAws(t *testing.T) {
 			string(createPlattResponse),
 			contentTypeJSONHeader,
 			http.StatusCreated,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readPlattResponse, _ := ioutil.ReadFile("../testdata/private_link_attachment/read_aws_platt.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(privateLinkAttachmentAwsReadUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(privateLinkAttachmentAwsReadUrlPath)).
 		InScenario(privateLinkAttachmentAwsResourceScenarioName).
 		WhenScenarioStateIs(scenarioStatePrivateLinkAttachmentAwsHasBeenCreated).
 		WillReturn(
 			string(readPlattResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	updatedPlattResponse, _ := ioutil.ReadFile("../testdata/private_link_attachment/read_updated_aws_platt.json")
-	_ = wiremockClient.StubFor(wiremock.Patch(wiremock.URLPathEqualTo(privateLinkAttachmentAwsReadUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Patch(wiremock.URLPathEqualTo(privateLinkAttachmentAwsReadUrlPath)).
 		InScenario(privateLinkAttachmentAwsResourceScenarioName).
 		WhenScenarioStateIs(scenarioStatePrivateLinkAttachmentAwsHasBeenCreated).
 		WillSetStateTo(scenarioStatePrivateLinkAttachmentAwsHasBeenUpdated).
@@ -72,24 +76,30 @@ func TestAccPrivateLinkAttachmentAws(t *testing.T) {
 			string(updatedPlattResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(privateLinkAttachmentAwsReadUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(privateLinkAttachmentAwsReadUrlPath)).
 		InScenario(privateLinkAttachmentAwsResourceScenarioName).
 		WhenScenarioStateIs(scenarioStatePrivateLinkAttachmentAwsHasBeenUpdated).
 		WillReturn(
 			string(updatedPlattResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(privateLinkAttachmentAwsReadUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(privateLinkAttachmentAwsReadUrlPath)).
 		InScenario(privateLinkAttachmentAwsResourceScenarioName).
 		WillReturn(
 			"",
 			contentTypeJSONHeader,
 			http.StatusNoContent,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },

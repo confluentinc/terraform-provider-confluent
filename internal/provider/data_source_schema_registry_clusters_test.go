@@ -47,7 +47,7 @@ func TestAccDataSourceSchemaRegistryClusters(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	readEnvironmentsPageOneResponse, _ := ioutil.ReadFile("../testdata/schema_registry_cluster/read_envs_page_1.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/org/v2/environments")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/org/v2/environments")).
 		WithQueryParam("page_size", wiremock.EqualTo(strconv.Itoa(listEnvironmentsPageSize))).
 		InScenario(SRClustersDataSourceScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
@@ -55,10 +55,12 @@ func TestAccDataSourceSchemaRegistryClusters(t *testing.T) {
 			string(readEnvironmentsPageOneResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readClustersResponseOne, _ := ioutil.ReadFile("../testdata/schema_registry_cluster/read_clusters_1jnw8z.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/srcm/v3/clusters")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/srcm/v3/clusters")).
 		InScenario(SRClustersDataSourceScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo("env-1jnw8z")).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
@@ -66,10 +68,12 @@ func TestAccDataSourceSchemaRegistryClusters(t *testing.T) {
 			string(readClustersResponseOne),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readClustersResponseTwo, _ := ioutil.ReadFile("../testdata/schema_registry_cluster/read_clusters_7n1r31.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/srcm/v3/clusters")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/srcm/v3/clusters")).
 		InScenario(SRClustersDataSourceScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo("env-7n1r31")).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
@@ -77,7 +81,9 @@ func TestAccDataSourceSchemaRegistryClusters(t *testing.T) {
 			string(readClustersResponseTwo),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	fullSRClustersDataSourceLabel := fmt.Sprintf("data.confluent_schema_registry_clusters.%s", "main")
 
@@ -135,7 +141,7 @@ func TestAccDataSourceSchemaRegistryClustersPrivate(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	readEnvironmentsPageOneResponse, _ := ioutil.ReadFile("../testdata/schema_registry_cluster/read_envs_page_1.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/org/v2/environments")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/org/v2/environments")).
 		WithQueryParam("page_size", wiremock.EqualTo(strconv.Itoa(listEnvironmentsPageSize))).
 		InScenario(SRClustersDataSourceScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
@@ -143,10 +149,12 @@ func TestAccDataSourceSchemaRegistryClustersPrivate(t *testing.T) {
 			string(readEnvironmentsPageOneResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readClustersResponseOne, _ := ioutil.ReadFile("../testdata/schema_registry_cluster/read_clusters_private_1jnw8z.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/srcm/v3/clusters")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/srcm/v3/clusters")).
 		InScenario(SRClustersDataSourceScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo("env-1jnw8z")).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
@@ -154,10 +162,12 @@ func TestAccDataSourceSchemaRegistryClustersPrivate(t *testing.T) {
 			string(readClustersResponseOne),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readClustersResponseTwo, _ := ioutil.ReadFile("../testdata/schema_registry_cluster/read_clusters_private_7n1r31.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/srcm/v3/clusters")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/srcm/v3/clusters")).
 		InScenario(SRClustersDataSourceScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo("env-7n1r31")).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
@@ -165,7 +175,9 @@ func TestAccDataSourceSchemaRegistryClustersPrivate(t *testing.T) {
 			string(readClustersResponseTwo),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	fullSRClustersDataSourceLabel := fmt.Sprintf("data.confluent_schema_registry_clusters.%s", "main")
 

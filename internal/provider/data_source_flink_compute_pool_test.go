@@ -46,7 +46,7 @@ func TestAccDataSourceComputePool(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	readCreatedAwsComputePoolResponse, _ := ioutil.ReadFile("../testdata/compute_pool/read_created_compute_pool.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/fcpm/v2/compute-pools/lfcp-abc123")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/fcpm/v2/compute-pools/lfcp-abc123")).
 		InScenario(dataSourceComputePoolScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(flinkComputePoolEnvironmentId)).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
@@ -54,10 +54,12 @@ func TestAccDataSourceComputePool(t *testing.T) {
 			string(readCreatedAwsComputePoolResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readComputePoolsResponse, _ := ioutil.ReadFile("../testdata/compute_pool/read_compute_pools.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/fcpm/v2/compute-pools")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/fcpm/v2/compute-pools")).
 		InScenario(dataSourceComputePoolScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(flinkComputePoolEnvironmentId)).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
@@ -65,7 +67,9 @@ func TestAccDataSourceComputePool(t *testing.T) {
 			string(readComputePoolsResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },

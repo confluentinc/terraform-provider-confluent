@@ -46,14 +46,16 @@ func TestAccDataSourceSchemas(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	readCreatedSchemasResponse, _ := ioutil.ReadFile("../testdata/schema_registry_schemas/read_some_record_schemas.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readSchemasPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readSchemasPath)).
 		InScenario(schemasDataSourceScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillReturn(
 			string(readCreatedSchemasResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },

@@ -43,7 +43,7 @@ func TestAccTagBinding(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	createTagBindingResponse, _ := ioutil.ReadFile("../testdata/tag/create_tag_binding.json")
-	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(createTagBindingUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(createTagBindingUrlPath)).
 		InScenario(tagBindingResourceScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillSetStateTo(scenarioStateTagBindingHasBeenPending).
@@ -51,9 +51,11 @@ func TestAccTagBinding(t *testing.T) {
 			string(createTagBindingResponse),
 			contentTypeJSONHeader,
 			http.StatusCreated,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readCreatedTagBindingUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readCreatedTagBindingUrlPath)).
 		InScenario(tagBindingResourceScenarioName).
 		WhenScenarioStateIs(scenarioStateTagBindingHasBeenPending).
 		WillSetStateTo(scenarioStateTagBindingHasBeenCreated).
@@ -61,25 +63,31 @@ func TestAccTagBinding(t *testing.T) {
 			"",
 			contentTypeJSONHeader,
 			http.StatusNotFound,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readTagBindingResponse, _ := ioutil.ReadFile("../testdata/tag/read_tag_binding.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readCreatedTagBindingUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readCreatedTagBindingUrlPath)).
 		InScenario(tagBindingResourceScenarioName).
 		WhenScenarioStateIs(scenarioStateTagBindingHasBeenCreated).
 		WillReturn(
 			string(readTagBindingResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(deleteCreatedTagBindingUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(deleteCreatedTagBindingUrlPath)).
 		InScenario(tagBindingResourceScenarioName).
 		WillReturn(
 			"",
 			contentTypeJSONHeader,
 			http.StatusNoContent,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },

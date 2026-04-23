@@ -53,10 +53,12 @@ func TestAccClusterWithSGPackageAndDisabledSRApi(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusAccepted,
 		)
-	_ = wiremockClient.StubFor(createClusterStub)
+	if err := wiremockClient.StubFor(createClusterStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readCreatedClusterResponse, _ := ioutil.ReadFile("../testdata/kafka/read_created_kafka.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaPath)).
 		InScenario(kafkaWithDisabledSRApiScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(testEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateKafkaHasBeenCreated).
@@ -64,10 +66,12 @@ func TestAccClusterWithSGPackageAndDisabledSRApi(t *testing.T) {
 			string(readCreatedClusterResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readEnvironmentResponse, _ := ioutil.ReadFile("../testdata/environment/read_created_env.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readEnvPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readEnvPath)).
 		InScenario(kafkaWithDisabledSRApiScenarioName).
 		WhenScenarioStateIs(scenarioStateKafkaHasBeenCreated).
 		WillSetStateTo(SRApiScenarioStateKafkaHasBeenCreatedWithDisabledSRApi).
@@ -75,10 +79,12 @@ func TestAccClusterWithSGPackageAndDisabledSRApi(t *testing.T) {
 			string(readEnvironmentResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	schemaRegistryApiNotAvailableResponse, _ := ioutil.ReadFile("../testdata/schema_registry_cluster/not_available.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(listSchemaRegistryClusterUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(listSchemaRegistryClusterUrlPath)).
 		InScenario(kafkaWithDisabledSRApiScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(testEnvironmentId)).
 		WhenScenarioStateIs(SRApiScenarioStateKafkaHasBeenCreatedWithDisabledSRApi).
@@ -87,10 +93,12 @@ func TestAccClusterWithSGPackageAndDisabledSRApi(t *testing.T) {
 			string(schemaRegistryApiNotAvailableResponse),
 			contentTypeJSONHeader,
 			http.StatusForbidden,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readCreatedClusterResponse, _ = ioutil.ReadFile("../testdata/kafka/read_created_kafka.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaPath)).
 		InScenario(kafkaWithDisabledSRApiScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(testEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateKafkaHasBeenCreatedAndSyncIsComplete).
@@ -98,7 +106,9 @@ func TestAccClusterWithSGPackageAndDisabledSRApi(t *testing.T) {
 			string(readCreatedClusterResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readUpdatedClusterResponse, _ := ioutil.ReadFile("../testdata/kafka/read_updated_kafka.json")
 	updateClusterStub := wiremock.Patch(wiremock.URLPathEqualTo(readKafkaPath)).
@@ -110,9 +120,11 @@ func TestAccClusterWithSGPackageAndDisabledSRApi(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)
-	_ = wiremockClient.StubFor(updateClusterStub)
+	if err := wiremockClient.StubFor(updateClusterStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaPath)).
 		InScenario(kafkaWithDisabledSRApiScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(testEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateKafkaHasBeenUpdated).
@@ -120,7 +132,9 @@ func TestAccClusterWithSGPackageAndDisabledSRApi(t *testing.T) {
 			string(readUpdatedClusterResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readDeletedEnvResponse, _ := ioutil.ReadFile("../testdata/kafka/read_deleted_kafka.json")
 
@@ -134,9 +148,11 @@ func TestAccClusterWithSGPackageAndDisabledSRApi(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNoContent,
 		)
-	_ = wiremockClient.StubFor(deleteClusterStub)
+	if err := wiremockClient.StubFor(deleteClusterStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaPath)).
 		InScenario(kafkaWithDisabledSRApiScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(testEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateKafkaHasBeenDeleted).
@@ -144,7 +160,9 @@ func TestAccClusterWithSGPackageAndDisabledSRApi(t *testing.T) {
 			string(readDeletedEnvResponse),
 			contentTypeJSONHeader,
 			http.StatusForbidden,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },

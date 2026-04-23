@@ -53,17 +53,21 @@ func TestAccEnvironment(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusCreated,
 		)
-	_ = wiremockClient.StubFor(createEnvStub)
+	if err := wiremockClient.StubFor(createEnvStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readCreatedEnvResponse, _ := ioutil.ReadFile("../testdata/environment/read_created_env.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/org/v2/environments/env-1jrymj")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/org/v2/environments/env-1jrymj")).
 		InScenario(envScenarioName).
 		WhenScenarioStateIs(scenarioStateEnvHasBeenCreated).
 		WillReturn(
 			string(readCreatedEnvResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readUpdatedEnvResponse, _ := ioutil.ReadFile("../testdata/environment/read_updated_env.json")
 	patchEnvStub := wiremock.Patch(wiremock.URLPathEqualTo("/org/v2/environments/env-1jrymj")).
@@ -75,26 +79,32 @@ func TestAccEnvironment(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)
-	_ = wiremockClient.StubFor(patchEnvStub)
+	if err := wiremockClient.StubFor(patchEnvStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/org/v2/environments/env-1jrymj")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/org/v2/environments/env-1jrymj")).
 		InScenario(envScenarioName).
 		WhenScenarioStateIs(scenarioStateEnvNameHasBeenUpdated).
 		WillReturn(
 			string(readUpdatedEnvResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readDeletedEnvResponse, _ := ioutil.ReadFile("../testdata/environment/read_deleted_env.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/org/v2/environments/env-1jrymj")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/org/v2/environments/env-1jrymj")).
 		InScenario(envScenarioName).
 		WhenScenarioStateIs(scenarioStateEnvHasBeenDeleted).
 		WillReturn(
 			string(readDeletedEnvResponse),
 			contentTypeJSONHeader,
 			http.StatusNotFound,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	deleteEnvStub := wiremock.Delete(wiremock.URLPathEqualTo("/org/v2/environments/env-1jrymj")).
 		InScenario(envScenarioName).
@@ -105,7 +115,9 @@ func TestAccEnvironment(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNoContent,
 		)
-	_ = wiremockClient.StubFor(deleteEnvStub)
+	if err := wiremockClient.StubFor(deleteEnvStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	environmentDisplayName := "test_env_display_name"
 	// in order to test tf update (step #3)
@@ -184,17 +196,21 @@ func TestAccEnvironmentWithoutSg(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusCreated,
 		)
-	_ = wiremockClient.StubFor(createEnvStub)
+	if err := wiremockClient.StubFor(createEnvStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readCreatedEnvResponse, _ := ioutil.ReadFile("../testdata/environment/read_created_env_without_sg.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/org/v2/environments/env-xyz")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/org/v2/environments/env-xyz")).
 		InScenario(envScenarioNoSgName).
 		WhenScenarioStateIs(scenarioStateEnvHasBeenCreated).
 		WillReturn(
 			string(readCreatedEnvResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	deleteEnvStub := wiremock.Delete(wiremock.URLPathEqualTo("/org/v2/environments/env-xyz")).
 		InScenario(envScenarioNoSgName).
@@ -205,7 +221,9 @@ func TestAccEnvironmentWithoutSg(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNoContent,
 		)
-	_ = wiremockClient.StubFor(deleteEnvStub)
+	if err := wiremockClient.StubFor(deleteEnvStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	environmentResourceLabel := "env_resource_label"
 	environmentWithoutSgDisplayName := "env_without_sg"

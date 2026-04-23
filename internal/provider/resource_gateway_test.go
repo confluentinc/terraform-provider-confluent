@@ -42,7 +42,7 @@ func TestAccGatewayAwsEgressPrivateLink(t *testing.T) {
 	// nolint:errcheck
 	defer wiremockClient.ResetAllScenarios()
 	createGatewayResponse, _ := ioutil.ReadFile("../testdata/gateway/create_aws_egress_private_link_gateway.json")
-	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(gatewayUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(gatewayUrlPath)).
 		InScenario(GatewayScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillSetStateTo(scenarioStateGatewayIsProvisioning).
@@ -50,9 +50,11 @@ func TestAccGatewayAwsEgressPrivateLink(t *testing.T) {
 			string(createGatewayResponse),
 			contentTypeJSONHeader,
 			http.StatusCreated,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", gatewayUrlPath, awsGatewayId))).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", gatewayUrlPath, awsGatewayId))).
 		InScenario(GatewayScenarioName).
 		WhenScenarioStateIs(scenarioStateGatewayIsProvisioning).
 		WillSetStateTo(scenarioStateGatewayHasBeenCreated).
@@ -60,20 +62,24 @@ func TestAccGatewayAwsEgressPrivateLink(t *testing.T) {
 			string(createGatewayResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readGatewayResponse, _ := ioutil.ReadFile("../testdata/gateway/read_aws_egress_private_link_gateway.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", gatewayUrlPath, awsGatewayId))).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", gatewayUrlPath, awsGatewayId))).
 		InScenario(GatewayScenarioName).
 		WhenScenarioStateIs(scenarioStateGatewayHasBeenCreated).
 		WillReturn(
 			string(readGatewayResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readUpdatedGatewayResponse, _ := ioutil.ReadFile("../testdata/gateway/read_updated_aws_egress_private_link_gateway.json")
-	_ = wiremockClient.StubFor(wiremock.Patch(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", gatewayUrlPath, awsGatewayId))).
+	if err := wiremockClient.StubFor(wiremock.Patch(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", gatewayUrlPath, awsGatewayId))).
 		InScenario(GatewayScenarioName).
 		WhenScenarioStateIs(scenarioStateGatewayHasBeenCreated).
 		WillSetStateTo(scenarioStateGatewayHasBeenUpdated).
@@ -81,24 +87,30 @@ func TestAccGatewayAwsEgressPrivateLink(t *testing.T) {
 			string(readUpdatedGatewayResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", gatewayUrlPath, awsGatewayId))).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", gatewayUrlPath, awsGatewayId))).
 		InScenario(GatewayScenarioName).
 		WhenScenarioStateIs(scenarioStateGatewayHasBeenUpdated).
 		WillReturn(
 			string(readUpdatedGatewayResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", gatewayUrlPath, awsGatewayId))).
+	if err := wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", gatewayUrlPath, awsGatewayId))).
 		InScenario(GatewayScenarioName).
 		WillReturn(
 			"",
 			contentTypeJSONHeader,
 			http.StatusNoContent,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -151,7 +163,7 @@ func TestAccGatewayAwsPrivateNetworkInterface(t *testing.T) {
 	// nolint:errcheck
 	defer wiremockClient.ResetAllScenarios()
 	createGatewayResponse, _ := ioutil.ReadFile("../testdata/gateway/create_aws_private_network_interface_gateway.json")
-	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(gatewayUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(gatewayUrlPath)).
 		InScenario(GatewayScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillSetStateTo(scenarioStateGatewayIsProvisioning).
@@ -159,9 +171,11 @@ func TestAccGatewayAwsPrivateNetworkInterface(t *testing.T) {
 			string(createGatewayResponse),
 			contentTypeJSONHeader,
 			http.StatusCreated,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", gatewayUrlPath, awsPrivateNetworkInterfaceId))).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", gatewayUrlPath, awsPrivateNetworkInterfaceId))).
 		InScenario(GatewayScenarioName).
 		WhenScenarioStateIs(scenarioStateGatewayIsProvisioning).
 		WillSetStateTo(scenarioStateGatewayHasBeenCreated).
@@ -169,20 +183,24 @@ func TestAccGatewayAwsPrivateNetworkInterface(t *testing.T) {
 			string(createGatewayResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readGatewayResponse, _ := ioutil.ReadFile("../testdata/gateway/read_aws_private_network_interface_gateway.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", gatewayUrlPath, awsPrivateNetworkInterfaceId))).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", gatewayUrlPath, awsPrivateNetworkInterfaceId))).
 		InScenario(GatewayScenarioName).
 		WhenScenarioStateIs(scenarioStateGatewayHasBeenCreated).
 		WillReturn(
 			string(readGatewayResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readUpdatedGatewayResponse, _ := ioutil.ReadFile("../testdata/gateway/read_updated_aws_private_network_interface_gateway.json")
-	_ = wiremockClient.StubFor(wiremock.Patch(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", gatewayUrlPath, awsPrivateNetworkInterfaceId))).
+	if err := wiremockClient.StubFor(wiremock.Patch(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", gatewayUrlPath, awsPrivateNetworkInterfaceId))).
 		InScenario(GatewayScenarioName).
 		WhenScenarioStateIs(scenarioStateGatewayHasBeenCreated).
 		WillSetStateTo(scenarioStateGatewayHasBeenUpdated).
@@ -190,24 +208,30 @@ func TestAccGatewayAwsPrivateNetworkInterface(t *testing.T) {
 			string(readUpdatedGatewayResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", gatewayUrlPath, awsPrivateNetworkInterfaceId))).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", gatewayUrlPath, awsPrivateNetworkInterfaceId))).
 		InScenario(GatewayScenarioName).
 		WhenScenarioStateIs(scenarioStateGatewayHasBeenUpdated).
 		WillReturn(
 			string(readUpdatedGatewayResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", gatewayUrlPath, awsPrivateNetworkInterfaceId))).
+	if err := wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", gatewayUrlPath, awsPrivateNetworkInterfaceId))).
 		InScenario(GatewayScenarioName).
 		WillReturn(
 			"",
 			contentTypeJSONHeader,
 			http.StatusNoContent,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -266,7 +290,7 @@ func TestAccGatewayAzure(t *testing.T) {
 	// nolint:errcheck
 	defer wiremockClient.ResetAllScenarios()
 	createGatewayResponse, _ := ioutil.ReadFile("../testdata/gateway/create_azure_egress_private_link_gateway.json")
-	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(gatewayUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(gatewayUrlPath)).
 		InScenario(GatewayScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillSetStateTo(scenarioStateGatewayIsProvisioning).
@@ -274,9 +298,11 @@ func TestAccGatewayAzure(t *testing.T) {
 			string(createGatewayResponse),
 			contentTypeJSONHeader,
 			http.StatusCreated,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", gatewayUrlPath, azureGatewayId))).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", gatewayUrlPath, azureGatewayId))).
 		InScenario(GatewayScenarioName).
 		WhenScenarioStateIs(scenarioStateGatewayIsProvisioning).
 		WillSetStateTo(scenarioStateGatewayHasBeenCreated).
@@ -284,20 +310,24 @@ func TestAccGatewayAzure(t *testing.T) {
 			string(createGatewayResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readGatewayResponse, _ := ioutil.ReadFile("../testdata/gateway/read_azure_egress_private_link_gateway.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", gatewayUrlPath, azureGatewayId))).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", gatewayUrlPath, azureGatewayId))).
 		InScenario(GatewayScenarioName).
 		WhenScenarioStateIs(scenarioStateGatewayHasBeenCreated).
 		WillReturn(
 			string(readGatewayResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readUpdatedGatewayResponse, _ := ioutil.ReadFile("../testdata/gateway/read_updated_azure_egress_private_link_gateway.json")
-	_ = wiremockClient.StubFor(wiremock.Patch(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", gatewayUrlPath, azureGatewayId))).
+	if err := wiremockClient.StubFor(wiremock.Patch(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", gatewayUrlPath, azureGatewayId))).
 		InScenario(GatewayScenarioName).
 		WhenScenarioStateIs(scenarioStateGatewayHasBeenCreated).
 		WillSetStateTo(scenarioStateGatewayHasBeenUpdated).
@@ -305,24 +335,30 @@ func TestAccGatewayAzure(t *testing.T) {
 			string(readUpdatedGatewayResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", gatewayUrlPath, azureGatewayId))).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", gatewayUrlPath, azureGatewayId))).
 		InScenario(GatewayScenarioName).
 		WhenScenarioStateIs(scenarioStateGatewayHasBeenUpdated).
 		WillReturn(
 			string(readUpdatedGatewayResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", gatewayUrlPath, azureGatewayId))).
+	if err := wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", gatewayUrlPath, azureGatewayId))).
 		InScenario(GatewayScenarioName).
 		WillReturn(
 			"",
 			contentTypeJSONHeader,
 			http.StatusNoContent,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -412,7 +448,7 @@ func TestAccGatewayAwsIngressPrivateLink(t *testing.T) {
 	// nolint:errcheck
 	defer wiremockClient.ResetAllScenarios()
 	createGatewayResponse, _ := ioutil.ReadFile("../testdata/gateway/create_aws_ingress_private_link_gateway.json")
-	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(gatewayUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(gatewayUrlPath)).
 		InScenario(GatewayScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillSetStateTo(scenarioStateGatewayIsProvisioning).
@@ -420,9 +456,11 @@ func TestAccGatewayAwsIngressPrivateLink(t *testing.T) {
 			string(createGatewayResponse),
 			contentTypeJSONHeader,
 			http.StatusCreated,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", gatewayUrlPath, awsIngressGatewayId))).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", gatewayUrlPath, awsIngressGatewayId))).
 		InScenario(GatewayScenarioName).
 		WhenScenarioStateIs(scenarioStateGatewayIsProvisioning).
 		WillSetStateTo(scenarioStateGatewayHasBeenCreated).
@@ -430,20 +468,24 @@ func TestAccGatewayAwsIngressPrivateLink(t *testing.T) {
 			string(createGatewayResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readGatewayResponse, _ := ioutil.ReadFile("../testdata/gateway/read_aws_ingress_private_link_gateway.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", gatewayUrlPath, awsIngressGatewayId))).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", gatewayUrlPath, awsIngressGatewayId))).
 		InScenario(GatewayScenarioName).
 		WhenScenarioStateIs(scenarioStateGatewayHasBeenCreated).
 		WillReturn(
 			string(readGatewayResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readUpdatedGatewayResponse, _ := ioutil.ReadFile("../testdata/gateway/read_updated_aws_ingress_private_link_gateway.json")
-	_ = wiremockClient.StubFor(wiremock.Patch(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", gatewayUrlPath, awsIngressGatewayId))).
+	if err := wiremockClient.StubFor(wiremock.Patch(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", gatewayUrlPath, awsIngressGatewayId))).
 		InScenario(GatewayScenarioName).
 		WhenScenarioStateIs(scenarioStateGatewayHasBeenCreated).
 		WillSetStateTo(scenarioStateGatewayHasBeenUpdated).
@@ -451,24 +493,30 @@ func TestAccGatewayAwsIngressPrivateLink(t *testing.T) {
 			string(readUpdatedGatewayResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", gatewayUrlPath, awsIngressGatewayId))).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", gatewayUrlPath, awsIngressGatewayId))).
 		InScenario(GatewayScenarioName).
 		WhenScenarioStateIs(scenarioStateGatewayHasBeenUpdated).
 		WillReturn(
 			string(readUpdatedGatewayResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", gatewayUrlPath, awsIngressGatewayId))).
+	if err := wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", gatewayUrlPath, awsIngressGatewayId))).
 		InScenario(GatewayScenarioName).
 		WillReturn(
 			"",
 			contentTypeJSONHeader,
 			http.StatusNoContent,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },

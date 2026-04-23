@@ -60,17 +60,21 @@ func TestAccIPFilter(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusCreated,
 		)
-	_ = wiremockClient.StubFor(createIPFilterStub)
+	if err := wiremockClient.StubFor(createIPFilterStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readCreatedIPFilterResponse, _ := ioutil.ReadFile("../testdata/ip_filter/read_created_ip_filter.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("/iam/v2/ip-filters/%s", testIPFilterID))).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("/iam/v2/ip-filters/%s", testIPFilterID))).
 		InScenario(ipFilterResourceScenarioName).
 		WhenScenarioStateIs(scenarioStateIpFilterHasBeenCreated).
 		WillReturn(
 			string(readCreatedIPFilterResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readUpdatedIPFilterResponse, _ := ioutil.ReadFile("../testdata/ip_filter/read_updated_ip_filter.json")
 	patchSaStub := wiremock.Patch(wiremock.URLPathEqualTo(fmt.Sprintf("/iam/v2/ip-filters/%s", testIPFilterID))).
@@ -82,26 +86,32 @@ func TestAccIPFilter(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)
-	_ = wiremockClient.StubFor(patchSaStub)
+	if err := wiremockClient.StubFor(patchSaStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("/iam/v2/ip-filters/%s", testIPFilterID))).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("/iam/v2/ip-filters/%s", testIPFilterID))).
 		InScenario(ipFilterResourceScenarioName).
 		WhenScenarioStateIs(scenarioStateIpFilterHasBeenUpdated).
 		WillReturn(
 			string(readUpdatedIPFilterResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readDeletedIPFilterResponse, _ := ioutil.ReadFile("../testdata/ip_filter/read_deleted_ip_filter.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("/iam/v2/ip-filters/%s", testIPFilterID))).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("/iam/v2/ip-filters/%s", testIPFilterID))).
 		InScenario(ipFilterResourceScenarioName).
 		WhenScenarioStateIs(scenarioStateIpFilterHasBeenDeleted).
 		WillReturn(
 			string(readDeletedIPFilterResponse),
 			contentTypeJSONHeader,
 			http.StatusNotFound,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	deleteIPFilterStub := wiremock.Delete(wiremock.URLPathEqualTo(fmt.Sprintf("/iam/v2/ip-filters/%s", testIPFilterID))).
 		InScenario(ipFilterResourceScenarioName).
@@ -112,7 +122,9 @@ func TestAccIPFilter(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNoContent,
 		)
-	_ = wiremockClient.StubFor(deleteIPFilterStub)
+	if err := wiremockClient.StubFor(deleteIPFilterStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	// in order to test tf update (step #3)
 	fullIPFilterResourceLabel := fmt.Sprintf("confluent_ip_filter.%s", testIpFilterResourceLabel)
