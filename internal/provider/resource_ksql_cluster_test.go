@@ -75,7 +75,9 @@ func TestAccCreateKsqlClusterError(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNotImplemented,
 		)
-	_ = wiremockClient.StubFor(createClusterStub)
+	if err := wiremockClient.StubFor(createClusterStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -118,26 +120,32 @@ func TestAccImportKsqlCluster(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusAccepted,
 		)
-	_ = wiremockClient.StubFor(createClusterStub)
+	if err := wiremockClient.StubFor(createClusterStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readCreatedClusterResponse, _ := ioutil.ReadFile("../testdata/ksql/PROVISIONED_ksql_4_csu.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKsqlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKsqlPath)).
 		InScenario(ksqlScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(testEnvironmentId)).
 		WillReturn(
 			string(readCreatedClusterResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKsqlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKsqlPath)).
 		InScenario(ksqlScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(testEnvironmentId)).
 		WillReturn(
 			string(readCreatedClusterResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	_ = createDefaultDeleteStub(wiremockClient)
 
@@ -191,10 +199,12 @@ func TestAccReadKsqlClusterError(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusAccepted,
 		)
-	_ = wiremockClient.StubFor(createClusterStub)
+	if err := wiremockClient.StubFor(createClusterStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readCreatedClusterResponse, _ := ioutil.ReadFile("../testdata/ksql/501_internal_server_error.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKsqlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKsqlPath)).
 		InScenario(ksqlScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(testEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateKsqlHasBeenCreated).
@@ -202,7 +212,9 @@ func TestAccReadKsqlClusterError(t *testing.T) {
 			string(readCreatedClusterResponse),
 			contentTypeJSONHeader,
 			http.StatusNotImplemented, //blocks retry
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	_ = createDefaultDeleteStub(wiremockClient)
 
@@ -246,10 +258,12 @@ func TestAccKsqlCluster(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusAccepted,
 		)
-	_ = wiremockClient.StubFor(createClusterStub)
+	if err := wiremockClient.StubFor(createClusterStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readCreatedClusterResponse, _ := ioutil.ReadFile("../testdata/ksql/PROVISIONED_ksql_4_csu.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKsqlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKsqlPath)).
 		InScenario(ksqlScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(testEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateKsqlHasBeenCreated).
@@ -257,7 +271,9 @@ func TestAccKsqlCluster(t *testing.T) {
 			string(readCreatedClusterResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	deleteClusterStubGeneral := wiremock.Delete(wiremock.URLPathEqualTo(readKsqlPath)).
 		InScenario(ksqlScenarioName).
@@ -269,7 +285,9 @@ func TestAccKsqlCluster(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNoContent,
 		)
-	_ = wiremockClient.StubFor(deleteClusterStubGeneral)
+	if err := wiremockClient.StubFor(deleteClusterStubGeneral); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	createClusterUpdatedResponse, _ := ioutil.ReadFile("../testdata/ksql/PROVISIONING_ksql_8_csu.json")
 	createClusterStub = wiremock.Post(wiremock.URLPathEqualTo(createKsqlPath)).
@@ -281,7 +299,9 @@ func TestAccKsqlCluster(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusAccepted,
 		)
-	_ = wiremockClient.StubFor(createClusterStub)
+	if err := wiremockClient.StubFor(createClusterStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readUpdatedClusterResponse, _ := ioutil.ReadFile("../testdata/ksql/PROVISIONED_ksql_8_csu.json")
 	updateClusterStub := wiremock.Patch(wiremock.URLPathEqualTo(readKsqlPath)).
@@ -292,9 +312,11 @@ func TestAccKsqlCluster(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)
-	_ = wiremockClient.StubFor(updateClusterStub)
+	if err := wiremockClient.StubFor(updateClusterStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKsqlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKsqlPath)).
 		InScenario(ksqlScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(testEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateKsqlHasBeenUpdated).
@@ -302,7 +324,9 @@ func TestAccKsqlCluster(t *testing.T) {
 			string(readUpdatedClusterResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	deleteClusterStub := wiremock.Delete(wiremock.URLPathEqualTo(readKsqlPath)).
 		InScenario(ksqlScenarioName).
@@ -314,11 +338,13 @@ func TestAccKsqlCluster(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNoContent,
 		)
-	_ = wiremockClient.StubFor(deleteClusterStub)
+	if err := wiremockClient.StubFor(deleteClusterStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readDeletedEnvResponse, _ := ioutil.ReadFile("../testdata/ksql/403_forbidden.json")
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKsqlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKsqlPath)).
 		InScenario(ksqlScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(testEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateKsqlHasBeenDeleted).
@@ -326,7 +352,9 @@ func TestAccKsqlCluster(t *testing.T) {
 			string(readDeletedEnvResponse),
 			contentTypeJSONHeader,
 			http.StatusForbidden,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },

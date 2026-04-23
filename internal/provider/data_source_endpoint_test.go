@@ -45,7 +45,7 @@ func TestAccDataSourceEndpointKafka(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	readEndpointsResponse, _ := os.ReadFile("../testdata/endpoint/read_kafka_endpoints.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/endpoint/v1/endpoints")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/endpoint/v1/endpoints")).
 		WithQueryParam("environment", wiremock.EqualTo(testEndpointEnvironmentId)).
 		WithQueryParam("service", wiremock.EqualTo(testEndpointServiceKafka)).
 		WithQueryParam("page_size", wiremock.EqualTo(strconv.Itoa(listEndpointsPageSize))).
@@ -54,7 +54,9 @@ func TestAccDataSourceEndpointKafka(t *testing.T) {
 			string(readEndpointsResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	fullEndpointDataSourceLabel := fmt.Sprintf("data.confluent_endpoint.%s", endpointResourceLabel)
 
@@ -110,7 +112,7 @@ func TestAccDataSourceEndpointKafkaWithFilters(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	readEndpointsResponse, _ := os.ReadFile("../testdata/endpoint/read_kafka_endpoints_filtered.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/endpoint/v1/endpoints")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/endpoint/v1/endpoints")).
 		WithQueryParam("environment", wiremock.EqualTo(testEndpointEnvironmentId)).
 		WithQueryParam("service", wiremock.EqualTo(testEndpointServiceKafka)).
 		WithQueryParam("cloud", wiremock.EqualTo(testEndpointCloud)).
@@ -122,7 +124,9 @@ func TestAccDataSourceEndpointKafkaWithFilters(t *testing.T) {
 			string(readEndpointsResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	fullEndpointDataSourceLabel := fmt.Sprintf("data.confluent_endpoint.%s", endpointResourceLabel)
 
@@ -162,7 +166,7 @@ func TestAccDataSourceEndpointSchemaRegistry(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	readEndpointsResponse, _ := os.ReadFile("../testdata/endpoint/read_schema_registry_endpoints.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/endpoint/v1/endpoints")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/endpoint/v1/endpoints")).
 		WithQueryParam("environment", wiremock.EqualTo(testEndpointEnvironmentId)).
 		WithQueryParam("service", wiremock.EqualTo(testEndpointServiceSchemaReg)).
 		WithQueryParam("page_size", wiremock.EqualTo(strconv.Itoa(listEndpointsPageSize))).
@@ -171,7 +175,9 @@ func TestAccDataSourceEndpointSchemaRegistry(t *testing.T) {
 			string(readEndpointsResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	fullEndpointDataSourceLabel := fmt.Sprintf("data.confluent_endpoint.%s", endpointResourceLabel)
 
@@ -210,7 +216,7 @@ func TestAccDataSourceEndpointWithResourceFilter(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	readEndpointsResponse, _ := os.ReadFile("../testdata/endpoint/read_kafka_endpoints_with_resource.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/endpoint/v1/endpoints")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/endpoint/v1/endpoints")).
 		WithQueryParam("environment", wiremock.EqualTo(testEndpointEnvironmentId)).
 		WithQueryParam("service", wiremock.EqualTo(testEndpointServiceKafka)).
 		WithQueryParam("resource", wiremock.EqualTo(testEndpointResourceId)).
@@ -220,7 +226,9 @@ func TestAccDataSourceEndpointWithResourceFilter(t *testing.T) {
 			string(readEndpointsResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	fullEndpointDataSourceLabel := fmt.Sprintf("data.confluent_endpoint.%s", endpointResourceLabel)
 

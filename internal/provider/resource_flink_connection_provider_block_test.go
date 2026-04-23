@@ -39,17 +39,21 @@ func TestAccFlinkConnectionProviderBlock(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusCreated,
 		)
-	_ = wiremockClient.StubFor(createFlinkConnectionStub)
+	if err := wiremockClient.StubFor(createFlinkConnectionStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readCreatedConnectionsResponse, _ := ioutil.ReadFile("../testdata/flink_connection/read_connection.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readFlinkConnectionPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readFlinkConnectionPath)).
 		InScenario(connectionScenarioName).
 		WhenScenarioStateIs(scenarioStateConnectionHasBeenCreated).
 		WillReturn(
 			string(readCreatedConnectionsResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	deleteConnectionStub := wiremock.Delete(wiremock.URLPathEqualTo(readFlinkConnectionPath)).
 		InScenario(connectionScenarioName).
@@ -60,17 +64,21 @@ func TestAccFlinkConnectionProviderBlock(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNoContent,
 		)
-	_ = wiremockClient.StubFor(deleteConnectionStub)
+	if err := wiremockClient.StubFor(deleteConnectionStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readDeletedConnectionResponse, _ := ioutil.ReadFile("../testdata/flink_connection/read_deleted_connection.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readFlinkConnectionPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readFlinkConnectionPath)).
 		InScenario(connectionScenarioName).
 		WhenScenarioStateIs(scenarioStateConnectionHasBeenDeleted).
 		WillReturn(
 			string(readDeletedConnectionResponse),
 			contentTypeJSONHeader,
 			http.StatusNotFound,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	flinkConnectionResourceLabel := "test"
 	fullConnectionResourceLabel := fmt.Sprintf("confluent_flink_connection.%s", flinkConnectionResourceLabel)

@@ -43,7 +43,7 @@ func TestAccTableflowTopicByobAws(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	createTableflowTopicResponse, _ := os.ReadFile("../testdata/tableflow_topic/create_byob_aws_tt.json")
-	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(tableflowTopicUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(tableflowTopicUrlPath)).
 		InScenario(byobAwsTableflowTopicScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		//WillSetStateTo(scenarioStateTableflowTopicIsProvisioning).
@@ -52,7 +52,9 @@ func TestAccTableflowTopicByobAws(t *testing.T) {
 			string(createTableflowTopicResponse),
 			contentTypeJSONHeader,
 			http.StatusCreated,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	tableflowTopicReadUrlPath := fmt.Sprintf("%s/topic_1", tableflowTopicUrlPath)
 	/*_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(tableflowTopicReadUrlPath)).
@@ -66,17 +68,19 @@ func TestAccTableflowTopicByobAws(t *testing.T) {
 	))*/
 
 	readCreatedTableflowTopicResponse, _ := os.ReadFile("../testdata/tableflow_topic/read_created_byob_aws_tt.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(tableflowTopicReadUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(tableflowTopicReadUrlPath)).
 		InScenario(byobAwsTableflowTopicScenarioName).
 		WhenScenarioStateIs(scenarioStateTableflowTopicHasBeenCreated).
 		WillReturn(
 			string(readCreatedTableflowTopicResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	updatedTableflowTopicResponse, _ := os.ReadFile("../testdata/tableflow_topic/update_byob_aws_tt.json")
-	_ = wiremockClient.StubFor(wiremock.Patch(wiremock.URLPathEqualTo(tableflowTopicReadUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Patch(wiremock.URLPathEqualTo(tableflowTopicReadUrlPath)).
 		InScenario(byobAwsTableflowTopicScenarioName).
 		WhenScenarioStateIs(scenarioStateTableflowTopicHasBeenCreated).
 		WillSetStateTo(scenarioStateTableflowTopicHasBeenUpdated).
@@ -84,24 +88,30 @@ func TestAccTableflowTopicByobAws(t *testing.T) {
 			string(updatedTableflowTopicResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(tableflowTopicReadUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(tableflowTopicReadUrlPath)).
 		InScenario(byobAwsTableflowTopicScenarioName).
 		WhenScenarioStateIs(scenarioStateTableflowTopicHasBeenUpdated).
 		WillReturn(
 			string(updatedTableflowTopicResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(tableflowTopicReadUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(tableflowTopicReadUrlPath)).
 		InScenario(byobAwsTableflowTopicScenarioName).
 		WillReturn(
 			"",
 			contentTypeJSONHeader,
 			http.StatusNoContent,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -187,7 +197,7 @@ func TestAccTableflowTopicAzure(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	createTableflowTopicResponse, _ := os.ReadFile("../testdata/tableflow_topic/create_azure_tt.json")
-	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(tableflowTopicUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(tableflowTopicUrlPath)).
 		InScenario(azureTableflowTopicScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		//WillSetStateTo(scenarioStateTableflowTopicIsProvisioning).
@@ -196,22 +206,26 @@ func TestAccTableflowTopicAzure(t *testing.T) {
 			string(createTableflowTopicResponse),
 			contentTypeJSONHeader,
 			http.StatusCreated,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	tableflowTopicReadUrlPath := fmt.Sprintf("%s/topic_1", tableflowTopicUrlPath)
 
 	readCreatedTableflowTopicResponse, _ := os.ReadFile("../testdata/tableflow_topic/read_created_azure_tt.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(tableflowTopicReadUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(tableflowTopicReadUrlPath)).
 		InScenario(azureTableflowTopicScenarioName).
 		WhenScenarioStateIs(scenarioStateTableflowTopicHasBeenCreated).
 		WillReturn(
 			string(readCreatedTableflowTopicResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	updatedTableflowTopicResponse, _ := os.ReadFile("../testdata/tableflow_topic/update_azure_tt.json")
-	_ = wiremockClient.StubFor(wiremock.Patch(wiremock.URLPathEqualTo(tableflowTopicReadUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Patch(wiremock.URLPathEqualTo(tableflowTopicReadUrlPath)).
 		InScenario(azureTableflowTopicScenarioName).
 		WhenScenarioStateIs(scenarioStateTableflowTopicHasBeenCreated).
 		WillSetStateTo(scenarioStateTableflowTopicHasBeenUpdated).
@@ -219,24 +233,30 @@ func TestAccTableflowTopicAzure(t *testing.T) {
 			string(updatedTableflowTopicResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(tableflowTopicReadUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(tableflowTopicReadUrlPath)).
 		InScenario(azureTableflowTopicScenarioName).
 		WhenScenarioStateIs(scenarioStateTableflowTopicHasBeenUpdated).
 		WillReturn(
 			string(updatedTableflowTopicResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(tableflowTopicReadUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(tableflowTopicReadUrlPath)).
 		InScenario(azureTableflowTopicScenarioName).
 		WillReturn(
 			"",
 			contentTypeJSONHeader,
 			http.StatusNoContent,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -320,7 +340,7 @@ func TestAccTableflowTopicManagedStorage(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	createTableflowTopicResponse, _ := os.ReadFile("../testdata/tableflow_topic/create_managed_storage_tt.json")
-	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(tableflowTopicUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(tableflowTopicUrlPath)).
 		InScenario(managedStorageTableflowTopicScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		//WillSetStateTo(scenarioStateTableflowTopicIsProvisioning).
@@ -329,7 +349,9 @@ func TestAccTableflowTopicManagedStorage(t *testing.T) {
 			string(createTableflowTopicResponse),
 			contentTypeJSONHeader,
 			http.StatusCreated,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	tableflowTopicReadUrlPath := fmt.Sprintf("%s/topic_1", tableflowTopicUrlPath)
 	/*_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(tableflowTopicReadUrlPath)).
@@ -343,17 +365,19 @@ func TestAccTableflowTopicManagedStorage(t *testing.T) {
 	))*/
 
 	readCreatedTableflowTopicResponse, _ := os.ReadFile("../testdata/tableflow_topic/read_created_managed_storage_tt.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(tableflowTopicReadUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(tableflowTopicReadUrlPath)).
 		InScenario(managedStorageTableflowTopicScenarioName).
 		WhenScenarioStateIs(scenarioStateTableflowTopicHasBeenCreated).
 		WillReturn(
 			string(readCreatedTableflowTopicResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	updatedTableflowTopicResponse, _ := os.ReadFile("../testdata/tableflow_topic/update_managed_storage_tt.json")
-	_ = wiremockClient.StubFor(wiremock.Patch(wiremock.URLPathEqualTo(tableflowTopicReadUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Patch(wiremock.URLPathEqualTo(tableflowTopicReadUrlPath)).
 		InScenario(managedStorageTableflowTopicScenarioName).
 		WhenScenarioStateIs(scenarioStateTableflowTopicHasBeenCreated).
 		WillSetStateTo(scenarioStateTableflowTopicHasBeenUpdated).
@@ -361,24 +385,30 @@ func TestAccTableflowTopicManagedStorage(t *testing.T) {
 			string(updatedTableflowTopicResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(tableflowTopicReadUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(tableflowTopicReadUrlPath)).
 		InScenario(managedStorageTableflowTopicScenarioName).
 		WhenScenarioStateIs(scenarioStateTableflowTopicHasBeenUpdated).
 		WillReturn(
 			string(updatedTableflowTopicResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(tableflowTopicReadUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(tableflowTopicReadUrlPath)).
 		InScenario(managedStorageTableflowTopicScenarioName).
 		WillReturn(
 			"",
 			contentTypeJSONHeader,
 			http.StatusNoContent,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -459,7 +489,7 @@ func TestAccTableflowTopicErrorHandlingLog(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	createTableflowTopicResponse, _ := os.ReadFile("../testdata/tableflow_topic/create_error_handling.json")
-	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(tableflowTopicUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(tableflowTopicUrlPath)).
 		InScenario(managedStorageTableflowTopicScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillSetStateTo(scenarioStateTableflowTopicHasBeenCreated).
@@ -467,21 +497,25 @@ func TestAccTableflowTopicErrorHandlingLog(t *testing.T) {
 			string(createTableflowTopicResponse),
 			contentTypeJSONHeader,
 			http.StatusCreated,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	tableflowTopicReadUrlPath := fmt.Sprintf("%s/topic_1", tableflowTopicUrlPath)
 	readCreatedTableflowTopicResponse, _ := os.ReadFile("../testdata/tableflow_topic/read_created_error_handling.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(tableflowTopicReadUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(tableflowTopicReadUrlPath)).
 		InScenario(managedStorageTableflowTopicScenarioName).
 		WhenScenarioStateIs(scenarioStateTableflowTopicHasBeenCreated).
 		WillReturn(
 			string(readCreatedTableflowTopicResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	updatedTableflowTopicResponse, _ := os.ReadFile("../testdata/tableflow_topic/update_error_handling.json")
-	_ = wiremockClient.StubFor(wiremock.Patch(wiremock.URLPathEqualTo(tableflowTopicReadUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Patch(wiremock.URLPathEqualTo(tableflowTopicReadUrlPath)).
 		InScenario(managedStorageTableflowTopicScenarioName).
 		WhenScenarioStateIs(scenarioStateTableflowTopicHasBeenCreated).
 		WillSetStateTo(scenarioStateTableflowTopicHasBeenUpdated).
@@ -489,24 +523,30 @@ func TestAccTableflowTopicErrorHandlingLog(t *testing.T) {
 			string(updatedTableflowTopicResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(tableflowTopicReadUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(tableflowTopicReadUrlPath)).
 		InScenario(managedStorageTableflowTopicScenarioName).
 		WhenScenarioStateIs(scenarioStateTableflowTopicHasBeenUpdated).
 		WillReturn(
 			string(updatedTableflowTopicResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(tableflowTopicReadUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(tableflowTopicReadUrlPath)).
 		InScenario(managedStorageTableflowTopicScenarioName).
 		WillReturn(
 			"",
 			contentTypeJSONHeader,
 			http.StatusNoContent,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },

@@ -43,7 +43,7 @@ func TestAccNetworkLinkEndpoint(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	createNLEResponse, _ := ioutil.ReadFile("../testdata/network_link_endpoint/read_nle.json")
-	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(networkLinkEndpointUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(networkLinkEndpointUrlPath)).
 		InScenario(networkLinkEndpointResourceScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillSetStateTo(scenarioStateNetworkLinkEndpointHasBeenCreated).
@@ -51,20 +51,24 @@ func TestAccNetworkLinkEndpoint(t *testing.T) {
 			string(createNLEResponse),
 			contentTypeJSONHeader,
 			http.StatusCreated,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readNLEResponse, _ := ioutil.ReadFile("../testdata/network_link_endpoint/read_nle.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(networkLinkEndpointReadUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(networkLinkEndpointReadUrlPath)).
 		InScenario(networkLinkEndpointResourceScenarioName).
 		WhenScenarioStateIs(scenarioStateNetworkLinkEndpointHasBeenCreated).
 		WillReturn(
 			string(readNLEResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	updatedNLEResponse, _ := ioutil.ReadFile("../testdata/network_link_endpoint/updated_nle.json")
-	_ = wiremockClient.StubFor(wiremock.Patch(wiremock.URLPathEqualTo(networkLinkEndpointReadUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Patch(wiremock.URLPathEqualTo(networkLinkEndpointReadUrlPath)).
 		InScenario(networkLinkEndpointResourceScenarioName).
 		WhenScenarioStateIs(scenarioStateNetworkLinkEndpointHasBeenCreated).
 		WillSetStateTo(scenarioStateNetworkLinkEndpointHasBeenUpdated).
@@ -72,34 +76,42 @@ func TestAccNetworkLinkEndpoint(t *testing.T) {
 			string(updatedNLEResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(networkLinkEndpointReadUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(networkLinkEndpointReadUrlPath)).
 		InScenario(networkLinkEndpointResourceScenarioName).
 		WhenScenarioStateIs(scenarioStateNetworkLinkEndpointHasBeenUpdated).
 		WillReturn(
 			string(updatedNLEResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(networkLinkEndpointReadUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(networkLinkEndpointReadUrlPath)).
 		InScenario(networkLinkEndpointResourceScenarioName).
 		WillSetStateTo(scenarioStateNetworkLinkEndpointHasBeenDeleted).
 		WillReturn(
 			"",
 			contentTypeJSONHeader,
 			http.StatusNoContent,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(networkLinkEndpointReadUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(networkLinkEndpointReadUrlPath)).
 		InScenario(networkLinkEndpointResourceScenarioName).
 		WhenScenarioStateIs(scenarioStateNetworkLinkEndpointHasBeenDeleted).
 		WillReturn(
 			"",
 			contentTypeJSONHeader,
 			http.StatusNotFound,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },

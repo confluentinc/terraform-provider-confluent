@@ -45,7 +45,7 @@ func TestAccDataSourcePrivateLinkAccess(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	readCreatedAwsPrivateLinkAccessResponse, _ := ioutil.ReadFile("../testdata/private_link_access/aws/read_created_pla.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(awsPlaUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(awsPlaUrlPath)).
 		InScenario(dataSourcePrivateLinkAccessScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(awsPlaEnvironmentId)).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
@@ -53,10 +53,12 @@ func TestAccDataSourcePrivateLinkAccess(t *testing.T) {
 			string(readCreatedAwsPrivateLinkAccessResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readPlasResponse, _ := ioutil.ReadFile("../testdata/private_link_access/aws/read_plas.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/networking/v1/private-link-accesses")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/networking/v1/private-link-accesses")).
 		InScenario(dataSourcePrivateLinkAccessScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(awsPlaEnvironmentId)).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
@@ -64,7 +66,9 @@ func TestAccDataSourcePrivateLinkAccess(t *testing.T) {
 			string(readPlasResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },

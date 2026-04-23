@@ -45,7 +45,7 @@ func TestAccDataSourcePeering(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	readCreatedAwsPeeringResponse, _ := ioutil.ReadFile("../testdata/peering/aws/read_created_peering.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(awsPeeringUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(awsPeeringUrlPath)).
 		InScenario(dataSourcePeeringScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(awsPeeringEnvironmentId)).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
@@ -53,10 +53,12 @@ func TestAccDataSourcePeering(t *testing.T) {
 			string(readCreatedAwsPeeringResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readPeeringsResponse, _ := ioutil.ReadFile("../testdata/peering/aws/read_peerings.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/networking/v1/peerings")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/networking/v1/peerings")).
 		InScenario(dataSourcePeeringScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(awsPeeringEnvironmentId)).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
@@ -64,7 +66,9 @@ func TestAccDataSourcePeering(t *testing.T) {
 			string(readPeeringsResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },

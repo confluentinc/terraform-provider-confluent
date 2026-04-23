@@ -77,27 +77,33 @@ func TestAccClusterLinkDestinationOutbound(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusCreated,
 		)
-	_ = wiremockClient.StubFor(createClusterLinkStub)
+	if err := wiremockClient.StubFor(createClusterLinkStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readCreatedClusterLinkResponse, _ := ioutil.ReadFile("../testdata/cluster_link/read_created_cluster_link_destination.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readClusterLinkDestinationOutboundPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readClusterLinkDestinationOutboundPath)).
 		InScenario(clusterLinkScenarioName).
 		WhenScenarioStateIs(scenarioStateClusterLinkHasBeenCreated).
 		WillReturn(
 			string(readCreatedClusterLinkResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readCreatedClusterLinkConfigResponse, _ := ioutil.ReadFile("../testdata/cluster_link/read_created_cluster_link_config.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readClusterLinkConfigPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readClusterLinkConfigPath)).
 		InScenario(clusterLinkScenarioName).
 		WhenScenarioStateIs(scenarioStateClusterLinkHasBeenCreated).
 		WillReturn(
 			string(readCreatedClusterLinkConfigResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	patchClusterLinkCredentialsConfigStub := wiremock.Put(wiremock.URLPathEqualTo(updateClusterLinkConfigPath)).
 		InScenario(clusterLinkScenarioName).
@@ -110,9 +116,11 @@ func TestAccClusterLinkDestinationOutbound(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)
-	_ = wiremockClient.StubFor(patchClusterLinkCredentialsConfigStub)
+	if err := wiremockClient.StubFor(patchClusterLinkCredentialsConfigStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readClusterLinkDestinationOutboundPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readClusterLinkDestinationOutboundPath)).
 		InScenario(clusterLinkScenarioName).
 		WhenScenarioStateIs(scenarioStateClusterLinkCredentialsHaveBeenUpdated).
 		WillSetStateTo(scenarioStateClusterLinkHasBeenUpdated).
@@ -120,7 +128,9 @@ func TestAccClusterLinkDestinationOutbound(t *testing.T) {
 			string(readCreatedClusterLinkResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	patchClusterLinkConfigStub := wiremock.Put(wiremock.URLPathEqualTo(updateClusterLinkConfigPath)).
 		InScenario(clusterLinkScenarioName).
@@ -131,35 +141,43 @@ func TestAccClusterLinkDestinationOutbound(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)
-	_ = wiremockClient.StubFor(patchClusterLinkConfigStub)
+	if err := wiremockClient.StubFor(patchClusterLinkConfigStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readUpdatedClusterLinkConfigResponse, _ := ioutil.ReadFile("../testdata/cluster_link/read_updated_cluster_link_config.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readClusterLinkConfigPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readClusterLinkConfigPath)).
 		InScenario(clusterLinkScenarioName).
 		WhenScenarioStateIs(scenarioStateClusterLinkHasBeenUpdated).
 		WillReturn(
 			string(readUpdatedClusterLinkConfigResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readClusterLinkDestinationOutboundPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readClusterLinkDestinationOutboundPath)).
 		InScenario(clusterLinkScenarioName).
 		WhenScenarioStateIs(scenarioStateClusterLinkHasBeenUpdated).
 		WillReturn(
 			string(readCreatedClusterLinkResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readClusterLinkDestinationOutboundPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readClusterLinkDestinationOutboundPath)).
 		InScenario(clusterLinkScenarioName).
 		WhenScenarioStateIs(scenarioStateClusterLinkHasBeenDeleted).
 		WillReturn(
 			"",
 			contentTypeJSONHeader,
 			http.StatusNotFound,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	deleteClusterLinkStub := wiremock.Delete(wiremock.URLPathEqualTo(readClusterLinkDestinationOutboundPath)).
 		InScenario(clusterLinkScenarioName).
@@ -170,7 +188,9 @@ func TestAccClusterLinkDestinationOutbound(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNoContent,
 		)
-	_ = wiremockClient.StubFor(deleteClusterLinkStub)
+	if err := wiremockClient.StubFor(deleteClusterLinkStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	// Set fake values for secrets since those are required for importing
 	_ = os.Setenv("IMPORT_SOURCE_KAFKA_BOOTSTRAP_ENDPOINT", sourceClusterBootstrapEndpoint)

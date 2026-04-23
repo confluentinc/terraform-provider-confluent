@@ -43,7 +43,7 @@ func TestAccDnsRecord(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	createDnsRecordResponse, _ := os.ReadFile("../testdata/network_dns_record/create_dnsrec.json")
-	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(dnsRecordUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(dnsRecordUrlPath)).
 		InScenario(dnsRecordScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillSetStateTo(scenarioStateDnsRecordIsProvisioning).
@@ -51,9 +51,11 @@ func TestAccDnsRecord(t *testing.T) {
 			string(createDnsRecordResponse),
 			contentTypeJSONHeader,
 			http.StatusCreated,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(dnsRecordReadUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(dnsRecordReadUrlPath)).
 		InScenario(dnsRecordScenarioName).
 		WhenScenarioStateIs(scenarioStateDnsRecordIsProvisioning).
 		WillSetStateTo(scenarioStateDnsRecordHasBeenCreated).
@@ -61,20 +63,24 @@ func TestAccDnsRecord(t *testing.T) {
 			string(createDnsRecordResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readCreatedDnsRecordResponse, _ := os.ReadFile("../testdata/network_dns_record/read_created_dnsrec.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(dnsRecordReadUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(dnsRecordReadUrlPath)).
 		InScenario(dnsRecordScenarioName).
 		WhenScenarioStateIs(scenarioStateDnsRecordHasBeenCreated).
 		WillReturn(
 			string(readCreatedDnsRecordResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	updatedDnsRecordResponse, _ := os.ReadFile("../testdata/network_dns_record/updated_dnsrec.json")
-	_ = wiremockClient.StubFor(wiremock.Patch(wiremock.URLPathEqualTo(dnsRecordReadUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Patch(wiremock.URLPathEqualTo(dnsRecordReadUrlPath)).
 		InScenario(dnsRecordScenarioName).
 		WhenScenarioStateIs(scenarioStateDnsRecordHasBeenCreated).
 		WillSetStateTo(scenarioStateDnsRecordHasBeenUpdated).
@@ -82,18 +88,22 @@ func TestAccDnsRecord(t *testing.T) {
 			string(updatedDnsRecordResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(dnsRecordReadUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(dnsRecordReadUrlPath)).
 		InScenario(dnsRecordScenarioName).
 		WhenScenarioStateIs(scenarioStateDnsRecordHasBeenUpdated).
 		WillReturn(
 			string(updatedDnsRecordResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(dnsRecordReadUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(dnsRecordReadUrlPath)).
 		InScenario(dnsRecordScenarioName).
 		WhenScenarioStateIs(scenarioStateDnsRecordHasBeenUpdated).
 		WillSetStateTo(scenarioStateDnsRecordIsDeprovisioning).
@@ -101,10 +111,12 @@ func TestAccDnsRecord(t *testing.T) {
 			"",
 			contentTypeJSONHeader,
 			http.StatusNoContent,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readDeprovisioningDnsRecResponse, _ := os.ReadFile("../testdata/network_dns_record/read_deprovisioning_dnsrec.json")
-	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(dnsRecordReadUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(dnsRecordReadUrlPath)).
 		InScenario(dnsRecordScenarioName).
 		WhenScenarioStateIs(scenarioStateDnsRecordIsDeprovisioning).
 		WillSetStateTo(scenarioStateDnsRecordHasBeenDeleted).
@@ -112,17 +124,21 @@ func TestAccDnsRecord(t *testing.T) {
 			string(readDeprovisioningDnsRecResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readDeletedDnsRecordResponse, _ := os.ReadFile("../testdata/network_dns_record/read_deleted_dnsrec.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(dnsRecordReadUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(dnsRecordReadUrlPath)).
 		InScenario(dnsRecordScenarioName).
 		WhenScenarioStateIs(scenarioStateDnsRecordHasBeenDeleted).
 		WillReturn(
 			string(readDeletedDnsRecordResponse),
 			contentTypeJSONHeader,
 			http.StatusNotFound,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },

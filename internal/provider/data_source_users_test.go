@@ -47,7 +47,7 @@ func TestAccDataSourceUsers(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	readUsersPageOneResponse, _ := ioutil.ReadFile("../testdata/user/read_users_page_1.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/users")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/users")).
 		WithQueryParam("page_size", wiremock.EqualTo(strconv.Itoa(listUsersPageSize))).
 		InScenario(usersDataSourceScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
@@ -55,10 +55,12 @@ func TestAccDataSourceUsers(t *testing.T) {
 			string(readUsersPageOneResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readUsersPageTwoResponse, _ := ioutil.ReadFile("../testdata/user/read_users_page_2.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/users")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/users")).
 		WithQueryParam("page_size", wiremock.EqualTo(strconv.Itoa(listUsersPageSize))).
 		WithQueryParam("page_token", wiremock.EqualTo(userLastPagePageToken)).
 		InScenario(usersDataSourceScenarioName).
@@ -67,7 +69,9 @@ func TestAccDataSourceUsers(t *testing.T) {
 			string(readUsersPageTwoResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	fullUserDataSourceLabel := fmt.Sprintf("data.confluent_users.%s", userResourceLabel)
 

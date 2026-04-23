@@ -55,11 +55,13 @@ func TestAccKafkaClusterAvailabilityDriftSingleZoneToLow(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusAccepted,
 		)
-	_ = wiremockClient.StubFor(createClusterStub)
+	if err := wiremockClient.StubFor(createClusterStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	// Step 2: First GET after creation returns SINGLE_ZONE and transitions to provisioned state
 	readCreatedClusterResponse, _ := ioutil.ReadFile("../testdata/kafka/read_created_kafka.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaPath)).
 		InScenario(availabilityDriftScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(testEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateKafkaCreatedWithSingleZone).
@@ -68,11 +70,13 @@ func TestAccKafkaClusterAvailabilityDriftSingleZoneToLow(t *testing.T) {
 			string(readCreatedClusterResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	// Step 3: Subsequent GETs during step 1 return SINGLE_ZONE and transition to ready state
 	// This allows multiple GETs during step 1 to all return SINGLE_ZONE
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaPath)).
 		InScenario(availabilityDriftScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(testEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateKafkaProvisionedSingleZone).
@@ -81,11 +85,13 @@ func TestAccKafkaClusterAvailabilityDriftSingleZoneToLow(t *testing.T) {
 			string(readCreatedClusterResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	// Step 4: GETs from ready state return SINGLE_ZONE (stay in same state)
 	// This handles any additional GETs during step 1
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaPath)).
 		InScenario(availabilityDriftScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(testEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateKafkaReadyForLowTransition).
@@ -93,12 +99,14 @@ func TestAccKafkaClusterAvailabilityDriftSingleZoneToLow(t *testing.T) {
 			string(readCreatedClusterResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	// Step 5: Transition to returning LOW on GET (simulating API returning V2 billing model value)
 	// This will be called during the plan refresh in step 2
 	readClusterWithLowResponse, _ := ioutil.ReadFile("../testdata/kafka/read_created_kafka_with_low.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaPath)).
 		InScenario(availabilityDriftScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(testEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateKafkaReadyForLowTransition).
@@ -107,10 +115,12 @@ func TestAccKafkaClusterAvailabilityDriftSingleZoneToLow(t *testing.T) {
 			string(readClusterWithLowResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	// Step 5: Subsequent GETs return LOW (after state transition)
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaPath)).
 		InScenario(availabilityDriftScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(testEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateKafkaApiReturnsLow).
@@ -118,44 +128,54 @@ func TestAccKafkaClusterAvailabilityDriftSingleZoneToLow(t *testing.T) {
 			string(readClusterWithLowResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readEnvironmentResponse, _ := ioutil.ReadFile("../testdata/environment/read_created_env_without_sg.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readEnvPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readEnvPath)).
 		InScenario(availabilityDriftScenarioName).
 		WhenScenarioStateIs(scenarioStateKafkaCreatedWithSingleZone).
 		WillReturn(
 			string(readEnvironmentResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readEnvPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readEnvPath)).
 		InScenario(availabilityDriftScenarioName).
 		WhenScenarioStateIs(scenarioStateKafkaProvisionedSingleZone).
 		WillReturn(
 			string(readEnvironmentResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readEnvPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readEnvPath)).
 		InScenario(availabilityDriftScenarioName).
 		WhenScenarioStateIs(scenarioStateKafkaReadyForLowTransition).
 		WillReturn(
 			string(readEnvironmentResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readEnvPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readEnvPath)).
 		InScenario(availabilityDriftScenarioName).
 		WhenScenarioStateIs(scenarioStateKafkaApiReturnsLow).
 		WillReturn(
 			string(readEnvironmentResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	// DELETE stub for cleanup
 	readDeletedKafkaResponse, _ := ioutil.ReadFile("../testdata/kafka/read_deleted_kafka.json")
@@ -169,9 +189,11 @@ func TestAccKafkaClusterAvailabilityDriftSingleZoneToLow(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNoContent,
 		)
-	_ = wiremockClient.StubFor(deleteClusterStub)
+	if err := wiremockClient.StubFor(deleteClusterStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaPath)).
 		InScenario(availabilityDriftScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(testEnvironmentId)).
 		WhenScenarioStateIs("deleted").
@@ -179,7 +201,9 @@ func TestAccKafkaClusterAvailabilityDriftSingleZoneToLow(t *testing.T) {
 			string(readDeletedKafkaResponse),
 			contentTypeJSONHeader,
 			http.StatusForbidden,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -235,11 +259,13 @@ func TestAccKafkaClusterAvailabilityDriftMultiZoneToHigh(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusAccepted,
 		)
-	_ = wiremockClient.StubFor(createClusterStub)
+	if err := wiremockClient.StubFor(createClusterStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	// Step 2: First GET after creation returns MULTI_ZONE and transitions to provisioned state
 	readCreatedClusterResponse, _ := ioutil.ReadFile("../testdata/kafka/read_created_kafka_standard.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaPath)).
 		InScenario(availabilityDriftScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(testEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateKafkaCreatedWithMultiZone).
@@ -248,11 +274,13 @@ func TestAccKafkaClusterAvailabilityDriftMultiZoneToHigh(t *testing.T) {
 			string(readCreatedClusterResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	// Step 3: Subsequent GETs during step 1 return MULTI_ZONE and transition to ready state
 	// This allows multiple GETs during step 1 to all return MULTI_ZONE
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaPath)).
 		InScenario(availabilityDriftScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(testEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateKafkaProvisionedMultiZone).
@@ -261,11 +289,13 @@ func TestAccKafkaClusterAvailabilityDriftMultiZoneToHigh(t *testing.T) {
 			string(readCreatedClusterResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	// Step 4: GETs from ready state return MULTI_ZONE (stay in same state)
 	// This handles any additional GETs during step 1
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaPath)).
 		InScenario(availabilityDriftScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(testEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateKafkaReadyForHighTransition).
@@ -273,12 +303,14 @@ func TestAccKafkaClusterAvailabilityDriftMultiZoneToHigh(t *testing.T) {
 			string(readCreatedClusterResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	// Step 5: Transition to returning HIGH on GET (simulating API returning V2 billing model value)
 	// This will be called during the plan refresh in step 2
 	readClusterWithHighResponse, _ := ioutil.ReadFile("../testdata/kafka/read_created_kafka_standard_with_high.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaPath)).
 		InScenario(availabilityDriftScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(testEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateKafkaReadyForHighTransition).
@@ -287,10 +319,12 @@ func TestAccKafkaClusterAvailabilityDriftMultiZoneToHigh(t *testing.T) {
 			string(readClusterWithHighResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	// Step 5: Subsequent GETs return HIGH (after state transition)
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaPath)).
 		InScenario(availabilityDriftScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(testEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateKafkaApiReturnsHigh).
@@ -298,44 +332,54 @@ func TestAccKafkaClusterAvailabilityDriftMultiZoneToHigh(t *testing.T) {
 			string(readClusterWithHighResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readEnvironmentResponse, _ := ioutil.ReadFile("../testdata/environment/read_created_env_without_sg.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readEnvPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readEnvPath)).
 		InScenario(availabilityDriftScenarioName).
 		WhenScenarioStateIs(scenarioStateKafkaCreatedWithMultiZone).
 		WillReturn(
 			string(readEnvironmentResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readEnvPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readEnvPath)).
 		InScenario(availabilityDriftScenarioName).
 		WhenScenarioStateIs(scenarioStateKafkaProvisionedMultiZone).
 		WillReturn(
 			string(readEnvironmentResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readEnvPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readEnvPath)).
 		InScenario(availabilityDriftScenarioName).
 		WhenScenarioStateIs(scenarioStateKafkaReadyForHighTransition).
 		WillReturn(
 			string(readEnvironmentResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readEnvPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readEnvPath)).
 		InScenario(availabilityDriftScenarioName).
 		WhenScenarioStateIs(scenarioStateKafkaApiReturnsHigh).
 		WillReturn(
 			string(readEnvironmentResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	// DELETE stub for cleanup
 	readDeletedKafkaResponse, _ := ioutil.ReadFile("../testdata/kafka/read_deleted_kafka.json")
@@ -349,9 +393,11 @@ func TestAccKafkaClusterAvailabilityDriftMultiZoneToHigh(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNoContent,
 		)
-	_ = wiremockClient.StubFor(deleteClusterStub)
+	if err := wiremockClient.StubFor(deleteClusterStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaPath)).
 		InScenario(availabilityDriftScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(testEnvironmentId)).
 		WhenScenarioStateIs("deleted").
@@ -359,7 +405,9 @@ func TestAccKafkaClusterAvailabilityDriftMultiZoneToHigh(t *testing.T) {
 			string(readDeletedKafkaResponse),
 			contentTypeJSONHeader,
 			http.StatusForbidden,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },

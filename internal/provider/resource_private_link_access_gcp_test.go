@@ -54,10 +54,12 @@ func TestAccGcpPrivateLinkAccess(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusCreated,
 		)
-	_ = wiremockClient.StubFor(createGcpPlaStub)
+	if err := wiremockClient.StubFor(createGcpPlaStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readProvisioningGcpPlaResponse, _ := ioutil.ReadFile("../testdata/private_link_access/gcp/read_provisioning_pla.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(gcpPlaUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(gcpPlaUrlPath)).
 		InScenario(gcpPlaScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(gcpPlaEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateGcpPlaIsProvisioning).
@@ -66,10 +68,12 @@ func TestAccGcpPrivateLinkAccess(t *testing.T) {
 			string(readProvisioningGcpPlaResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readCreatedGcpPlaResponse, _ := ioutil.ReadFile("../testdata/private_link_access/gcp/read_created_pla.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(gcpPlaUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(gcpPlaUrlPath)).
 		InScenario(gcpPlaScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(gcpPlaEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateGcpPlaHasBeenCreated).
@@ -77,7 +81,9 @@ func TestAccGcpPrivateLinkAccess(t *testing.T) {
 			string(readCreatedGcpPlaResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	deleteGcpPlaStub := wiremock.Delete(wiremock.URLPathEqualTo(gcpPlaUrlPath)).
 		InScenario(gcpPlaScenarioName).
@@ -89,10 +95,12 @@ func TestAccGcpPrivateLinkAccess(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNoContent,
 		)
-	_ = wiremockClient.StubFor(deleteGcpPlaStub)
+	if err := wiremockClient.StubFor(deleteGcpPlaStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readDeprovisioningGcpPlaResponse, _ := ioutil.ReadFile("../testdata/private_link_access/gcp/read_deprovisioning_pla.json")
-	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(gcpPlaUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(gcpPlaUrlPath)).
 		InScenario(gcpPlaScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(gcpPlaEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateGcpPlaIsDeprovisioning).
@@ -101,10 +109,12 @@ func TestAccGcpPrivateLinkAccess(t *testing.T) {
 			string(readDeprovisioningGcpPlaResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readDeletedGcpPlaResponse, _ := ioutil.ReadFile("../testdata/private_link_access/gcp/read_deleted_pla.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(gcpPlaUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(gcpPlaUrlPath)).
 		InScenario(gcpPlaScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(gcpPlaEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateGcpPlaHasBeenDeleted).
@@ -112,7 +122,9 @@ func TestAccGcpPrivateLinkAccess(t *testing.T) {
 			string(readDeletedGcpPlaResponse),
 			contentTypeJSONHeader,
 			http.StatusNotFound,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	gcpPlaDisplayName := "prod-pl-use3"
 	gcpPlaResourceLabel := "test"

@@ -64,24 +64,28 @@ func TestAccDataSourceWithIdKsql(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	provisioningKsqlCluster, _ := ioutil.ReadFile("../testdata/ksql/PROVISIONED_ksql_4_csu.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("/ksqldbcm/v2/clusters/%s", ksqlId))).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("/ksqldbcm/v2/clusters/%s", ksqlId))).
 		InScenario(ksqlScenarioDataSourceName).
 		WithQueryParam("environment", wiremock.EqualTo(testEnvironmentId)).
 		WillReturn(
 			string(provisioningKsqlCluster),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	provisionedKsqlCluster, _ := ioutil.ReadFile("../testdata/ksql/ksql_clusters.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/ksqldbcm/v2/clusters")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/ksqldbcm/v2/clusters")).
 		InScenario(ksqlScenarioDataSourceName).
 		WithQueryParam("environment", wiremock.EqualTo(testEnvironmentId)).
 		WillReturn(
 			string(provisionedKsqlCluster),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -115,14 +119,16 @@ func TestAccDataSourceListKsql(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	provisionedKsqlCluster, _ := ioutil.ReadFile("../testdata/ksql/ksql_clusters.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/ksqldbcm/v2/clusters")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/ksqldbcm/v2/clusters")).
 		InScenario(ksqlScenarioDataSourceName).
 		WithQueryParam("environment", wiremock.EqualTo(testEnvironmentId)).
 		WillReturn(
 			string(provisionedKsqlCluster),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -154,7 +160,7 @@ func TestAccDataSourceKsqlApi5xxError(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	errorResponse, _ := ioutil.ReadFile("../testdata/ksql/501_internal_server_error.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("/ksqldbcm/v2/clusters/%s", ksqlId))).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("/ksqldbcm/v2/clusters/%s", ksqlId))).
 		InScenario(ksqlScenarioDataSourceName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WithQueryParam("environment", wiremock.EqualTo(testEnvironmentId)).
@@ -163,7 +169,9 @@ func TestAccDataSourceKsqlApi5xxError(t *testing.T) {
 			contentTypeJSONHeader,
 			//501 is the only status code without retries, otherwise tests will take 10+ seconds
 			http.StatusNotImplemented,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -195,7 +203,7 @@ func TestAccDataSourceKsqlApi4xxError(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	errorResponse, _ := ioutil.ReadFile("../testdata/ksql/401_Unathorized.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("/ksqldbcm/v2/clusters/%s", ksqlId))).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("/ksqldbcm/v2/clusters/%s", ksqlId))).
 		InScenario(ksqlScenarioDataSourceName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WithQueryParam("environment", wiremock.EqualTo(testEnvironmentId)).
@@ -203,7 +211,9 @@ func TestAccDataSourceKsqlApi4xxError(t *testing.T) {
 			string(errorResponse),
 			contentTypeJSONHeader,
 			http.StatusUnauthorized,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },

@@ -57,19 +57,23 @@ func TestAccSchemaRegistryClusterModeWithEnhancedProviderBlock(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)
-	_ = wiremockClient.StubFor(createSchemaRegistryClusterModeStub)
+	if err := wiremockClient.StubFor(createSchemaRegistryClusterModeStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readCreatedSchemaRegistryClusterModesResponse, _ := ioutil.ReadFile("../testdata/schema_registry_cluster_mode/read_created_schema_registry_cluster_mode.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(updateSchemaRegistryClusterModePath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(updateSchemaRegistryClusterModePath)).
 		InScenario(schemaRegistryClusterModeScenarioName).
 		WhenScenarioStateIs(scenarioStateSchemaRegistryClusterModeHasBeenCreated).
 		WillReturn(
 			string(readCreatedSchemaRegistryClusterModesResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Put(wiremock.URLPathEqualTo(updateSchemaRegistryClusterModePath)).
+	if err := wiremockClient.StubFor(wiremock.Put(wiremock.URLPathEqualTo(updateSchemaRegistryClusterModePath)).
 		InScenario(schemaRegistryClusterModeScenarioName).
 		WhenScenarioStateIs(scenarioStateSchemaRegistryClusterModeHasBeenCreated).
 		WillSetStateTo(scenarioStateSchemaRegistryClusterModeHasBeenUpdated).
@@ -77,17 +81,21 @@ func TestAccSchemaRegistryClusterModeWithEnhancedProviderBlock(t *testing.T) {
 			"",
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readUpdatedSchemaRegistryClusterModesResponse, _ := ioutil.ReadFile("../testdata/schema_registry_cluster_mode/read_updated_schema_registry_cluster_mode.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(updateSchemaRegistryClusterModePath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(updateSchemaRegistryClusterModePath)).
 		InScenario(schemaRegistryClusterModeScenarioName).
 		WhenScenarioStateIs(scenarioStateSchemaRegistryClusterModeHasBeenUpdated).
 		WillReturn(
 			string(readUpdatedSchemaRegistryClusterModesResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	deleteSchemaRegistryClusterModeStub := wiremock.Delete(wiremock.URLPathEqualTo(updateSchemaRegistryClusterModePath)).
 		InScenario(schemaRegistryClusterModeScenarioName).
@@ -98,7 +106,9 @@ func TestAccSchemaRegistryClusterModeWithEnhancedProviderBlock(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)
-	_ = wiremockClient.StubFor(deleteSchemaRegistryClusterModeStub)
+	if err := wiremockClient.StubFor(deleteSchemaRegistryClusterModeStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },

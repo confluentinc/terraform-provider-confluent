@@ -53,7 +53,9 @@ func TestAccProviderIntegration(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusCreated,
 		)
-	_ = wiremockClient.StubFor(createStub)
+	if err := wiremockClient.StubFor(createStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	// Mock the GET of a provider integration
 	readResponse, _ := ioutil.ReadFile("../testdata/provider_integration/read_created_aws_provider_integration.json")
@@ -66,7 +68,9 @@ func TestAccProviderIntegration(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)
-	_ = wiremockClient.StubFor(readStub)
+	if err := wiremockClient.StubFor(readStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	// Mock the DELETE of a provider integration
 	deleteStub := wiremock.Delete(wiremock.URLPathEqualTo(fmt.Sprintf("/pim/v1/integrations/%s", providerIntegrationId))).
@@ -79,7 +83,9 @@ func TestAccProviderIntegration(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNoContent,
 		)
-	_ = wiremockClient.StubFor(deleteStub)
+	if err := wiremockClient.StubFor(deleteStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	// Mock the GET of a deleted provider integration during terraform destroy
 	readDeletedResponse, _ := ioutil.ReadFile("../testdata/provider_integration/read_deleted_aws_provider_integration.json")
@@ -92,7 +98,9 @@ func TestAccProviderIntegration(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNotFound,
 		)
-	_ = wiremockClient.StubFor(readDeletedStub)
+	if err := wiremockClient.StubFor(readDeletedStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	resourceLabel := "test"
 	fullLabel := fmt.Sprintf("confluent_provider_integration.%s", resourceLabel)

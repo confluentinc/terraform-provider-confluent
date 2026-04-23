@@ -44,14 +44,16 @@ func TestAccDataSourceKafkaClientQuota(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	readCreatedKafkaClientQuotaResponse, _ := ioutil.ReadFile("../testdata/kafka_client_quota/read_created_kafka_client_quota.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(kafkaClientQuotaUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(kafkaClientQuotaUrlPath)).
 		InScenario(kafkaClientQuotaDataSourceScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillReturn(
 			string(readCreatedKafkaClientQuotaResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	fullKafkaClientQuotaDataSourceLabel := fmt.Sprintf("data.confluent_kafka_client_quota.%s", kafkaClientQuotaResourceLabel)
 

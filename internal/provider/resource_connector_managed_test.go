@@ -51,7 +51,9 @@ func TestAccManagedConnector(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)
-	_ = wiremockClient.StubFor(validateEnvStub)
+	if err := wiremockClient.StubFor(validateEnvStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	createConnectorStub := wiremock.Post(wiremock.URLPathEqualTo("/connect/v1/environments/env-1j3m9j/clusters/lkc-vnwdjz/connectors")).
 		InScenario(connectorScenarioName).
@@ -62,7 +64,9 @@ func TestAccManagedConnector(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusCreated,
 		)
-	_ = wiremockClient.StubFor(createConnectorStub)
+	if err := wiremockClient.StubFor(createConnectorStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	createdConnectorResponse, _ := os.ReadFile("../testdata/connector/managed/read_created_connectors.json")
 	readCreatedConnectorsStub := wiremock.Get(wiremock.URLPathEqualTo("/connect/v1/environments/env-1j3m9j/clusters/lkc-vnwdjz/connectors")).
@@ -75,7 +79,9 @@ func TestAccManagedConnector(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)
-	_ = wiremockClient.StubFor(readCreatedConnectorsStub)
+	if err := wiremockClient.StubFor(readCreatedConnectorsStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	provisioningConnectorResponse, _ := os.ReadFile("../testdata/connector/managed/read_provisioning_connector.json")
 	readProvisioningConnectorStub := wiremock.Get(wiremock.URLPathEqualTo("/connect/v1/environments/env-1j3m9j/clusters/lkc-vnwdjz/connectors/test_connector/status")).
@@ -87,7 +93,9 @@ func TestAccManagedConnector(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)
-	_ = wiremockClient.StubFor(readProvisioningConnectorStub)
+	if err := wiremockClient.StubFor(readProvisioningConnectorStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	runningConnectorResponse, _ := os.ReadFile("../testdata/connector/managed/read_running_connector.json")
 	readRunningConnectorStub1 := wiremock.Get(wiremock.URLPathEqualTo("/connect/v1/environments/env-1j3m9j/clusters/lkc-vnwdjz/connectors/test_connector/status")).
@@ -99,7 +107,9 @@ func TestAccManagedConnector(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)
-	_ = wiremockClient.StubFor(readRunningConnectorStub1)
+	if err := wiremockClient.StubFor(readRunningConnectorStub1); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readCreatedConnectorStub := wiremock.Get(wiremock.URLPathEqualTo("/connect/v1/environments/env-1j3m9j/clusters/lkc-vnwdjz/connectors")).
 		WithQueryParam("expand", wiremock.EqualTo("info,status,id")).
@@ -111,7 +121,9 @@ func TestAccManagedConnector(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)
-	_ = wiremockClient.StubFor(readCreatedConnectorStub)
+	if err := wiremockClient.StubFor(readCreatedConnectorStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readCreatedConnectorStub2 := wiremock.Get(wiremock.URLPathEqualTo("/connect/v1/environments/env-1j3m9j/clusters/lkc-vnwdjz/connectors")).
 		WithQueryParam("expand", wiremock.EqualTo("info,status,id")).
@@ -122,7 +134,9 @@ func TestAccManagedConnector(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)
-	_ = wiremockClient.StubFor(readCreatedConnectorStub2)
+	if err := wiremockClient.StubFor(readCreatedConnectorStub2); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	updateConnectorStub := wiremock.Put(wiremock.URLPathEqualTo("/connect/v1/environments/env-1j3m9j/clusters/lkc-vnwdjz/connectors/test_connector/config")).
 		InScenario(connectorScenarioName).
@@ -133,7 +147,9 @@ func TestAccManagedConnector(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)
-	_ = wiremockClient.StubFor(updateConnectorStub)
+	if err := wiremockClient.StubFor(updateConnectorStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	updateConnectorOffsetStub := wiremock.Post(wiremock.URLPathEqualTo("/connect/v1/environments/env-1j3m9j/clusters/lkc-vnwdjz/connectors/test_connector/offsets/request")).
 		WhenScenarioStateIs(scenarioStateManagedConnectorNameHasBeenUpdated).
@@ -142,7 +158,9 @@ func TestAccManagedConnector(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusAccepted,
 		)
-	_ = wiremockClient.StubFor(updateConnectorOffsetStub)
+	if err := wiremockClient.StubFor(updateConnectorOffsetStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	updatedConnectorOffsetsResponse, _ := os.ReadFile("../testdata/connector/managed/read_updated_connector_offset_status.json")
 	updatedConnectorOffsetStatusStub := wiremock.Get(wiremock.URLPathEqualTo("/connect/v1/environments/env-1j3m9j/clusters/lkc-vnwdjz/connectors/test_connector/offsets/request/status")).
@@ -153,7 +171,9 @@ func TestAccManagedConnector(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)
-	_ = wiremockClient.StubFor(updatedConnectorOffsetStatusStub)
+	if err := wiremockClient.StubFor(updatedConnectorOffsetStatusStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	updatedConnectorResponse, _ := os.ReadFile("../testdata/connector/managed/read_updated_connectors.json")
 	readUpdatedConnectorStub := wiremock.Get(wiremock.URLPathEqualTo("/connect/v1/environments/env-1j3m9j/clusters/lkc-vnwdjz/connectors")).
@@ -165,7 +185,9 @@ func TestAccManagedConnector(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)
-	_ = wiremockClient.StubFor(readUpdatedConnectorStub)
+	if err := wiremockClient.StubFor(readUpdatedConnectorStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	deleteConnectorResponse, _ := os.ReadFile("../testdata/connector/managed/delete_connector.json")
 	deleteConnectorStub := wiremock.Delete(wiremock.URLPathEqualTo("/connect/v1/environments/env-1j3m9j/clusters/lkc-vnwdjz/connectors/test_connector")).
@@ -177,17 +199,21 @@ func TestAccManagedConnector(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNoContent,
 		)
-	_ = wiremockClient.StubFor(deleteConnectorStub)
+	if err := wiremockClient.StubFor(deleteConnectorStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readDeletedConnectorResponse, _ := os.ReadFile("../testdata/connector/managed/read_deleted_connector.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/connect/v1/environments/env-1j3m9j/clusters/lkc-vnwdjz/connectors/test_connector")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/connect/v1/environments/env-1j3m9j/clusters/lkc-vnwdjz/connectors/test_connector")).
 		InScenario(connectorScenarioName).
 		WhenScenarioStateIs(scenarioStateManagedConnectorHasBeenDeleted).
 		WillReturn(
 			string(readDeletedConnectorResponse),
 			contentTypeJSONHeader,
 			http.StatusNotFound,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	connectorResourceLabel := "test_connector_resource_label"
 	fullConnectorResourceLabel := fmt.Sprintf("confluent_connector.%s", connectorResourceLabel)

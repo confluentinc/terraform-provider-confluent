@@ -42,24 +42,28 @@ func TestAccDataSourceEnvironment(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	readCreatedEnvResponse, _ := ioutil.ReadFile("../testdata/environment/read_created_env.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("/org/v2/environments/%s", testEnvironmentId))).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("/org/v2/environments/%s", testEnvironmentId))).
 		InScenario(envScenarioDataSourceName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillReturn(
 			string(readCreatedEnvResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readEnvironmentsResponse, _ := ioutil.ReadFile("../testdata/environment/read_envs.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/org/v2/environments")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/org/v2/environments")).
 		InScenario(envScenarioDataSourceName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillReturn(
 			string(readEnvironmentsResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },

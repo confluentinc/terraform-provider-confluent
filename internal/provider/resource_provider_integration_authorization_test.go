@@ -45,14 +45,16 @@ func TestAccProviderIntegrationAuthorizationAzure(t *testing.T) {
 
 	// Mock the initial integration read (DRAFT status)
 	createAzureProviderIntegrationV2Response, _ := ioutil.ReadFile("../testdata/provider_integration_setup/create_azure_provider_integration_setup.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("/pim/v2/integrations/%s", azureProviderIntegrationV2AuthId))).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("/pim/v2/integrations/%s", azureProviderIntegrationV2AuthId))).
 		InScenario(providerIntegrationAuthScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillReturn(
 			string(createAzureProviderIntegrationV2Response),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	// Mock the PATCH operation (DRAFT -> CREATED)
 	updateAzureProviderIntegrationV2AuthResponse, _ := ioutil.ReadFile("../testdata/provider_integration_authorization/update_azure_provider_integration_authorization.json")
@@ -65,17 +67,21 @@ func TestAccProviderIntegrationAuthorizationAzure(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)
-	_ = wiremockClient.StubFor(updateAzureProviderIntegrationV2AuthStub)
+	if err := wiremockClient.StubFor(updateAzureProviderIntegrationV2AuthStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	// Mock the integration read after PATCH (CREATED status)
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("/pim/v2/integrations/%s", azureProviderIntegrationV2AuthId))).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("/pim/v2/integrations/%s", azureProviderIntegrationV2AuthId))).
 		InScenario(providerIntegrationAuthScenarioName).
 		WhenScenarioStateIs(scenarioStateProviderIntegrationV2AuthHasBeenCreated).
 		WillReturn(
 			string(updateAzureProviderIntegrationV2AuthResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	// Mock validation failure (returns error to trigger warning)
 	validateAzureProviderIntegrationV2AuthStub := wiremock.Post(wiremock.URLPathEqualTo("/pim/v2/integrations:validate")).
@@ -86,7 +92,9 @@ func TestAccProviderIntegrationAuthorizationAzure(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusBadRequest,
 		)
-	_ = wiremockClient.StubFor(validateAzureProviderIntegrationV2AuthStub)
+	if err := wiremockClient.StubFor(validateAzureProviderIntegrationV2AuthStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	fullAzureProviderIntegrationV2AuthResourceLabel := fmt.Sprintf("confluent_provider_integration_authorization.%s", azureProviderIntegrationV2AuthResourceLabel)
 
@@ -140,14 +148,16 @@ func TestAccProviderIntegrationAuthorizationGcp(t *testing.T) {
 
 	// Mock the initial integration read (DRAFT status)
 	createGcpProviderIntegrationV2Response, _ := ioutil.ReadFile("../testdata/provider_integration_setup/create_gcp_provider_integration_setup.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("/pim/v2/integrations/%s", gcpProviderIntegrationV2AuthId))).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("/pim/v2/integrations/%s", gcpProviderIntegrationV2AuthId))).
 		InScenario(providerIntegrationAuthScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillReturn(
 			string(createGcpProviderIntegrationV2Response),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	// Mock the PATCH operation (DRAFT -> CREATED)
 	updateGcpProviderIntegrationV2AuthResponse, _ := ioutil.ReadFile("../testdata/provider_integration_authorization/update_gcp_provider_integration_authorization.json")
@@ -160,17 +170,21 @@ func TestAccProviderIntegrationAuthorizationGcp(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)
-	_ = wiremockClient.StubFor(updateGcpProviderIntegrationV2AuthStub)
+	if err := wiremockClient.StubFor(updateGcpProviderIntegrationV2AuthStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	// Mock the integration read after PATCH (CREATED status)
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("/pim/v2/integrations/%s", gcpProviderIntegrationV2AuthId))).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("/pim/v2/integrations/%s", gcpProviderIntegrationV2AuthId))).
 		InScenario(providerIntegrationAuthScenarioName).
 		WhenScenarioStateIs(scenarioStateProviderIntegrationV2AuthHasBeenCreated).
 		WillReturn(
 			string(updateGcpProviderIntegrationV2AuthResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	// Mock validation failure (returns error to trigger warning)
 	validateGcpProviderIntegrationV2AuthStub := wiremock.Post(wiremock.URLPathEqualTo("/pim/v2/integrations:validate")).
@@ -181,7 +195,9 @@ func TestAccProviderIntegrationAuthorizationGcp(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusBadRequest,
 		)
-	_ = wiremockClient.StubFor(validateGcpProviderIntegrationV2AuthStub)
+	if err := wiremockClient.StubFor(validateGcpProviderIntegrationV2AuthStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	fullGcpProviderIntegrationV2AuthResourceLabel := fmt.Sprintf("confluent_provider_integration_authorization.%s", gcpProviderIntegrationV2AuthResourceLabel)
 

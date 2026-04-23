@@ -43,14 +43,16 @@ func TestAccDataSourceInvitation(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	readInvitationResponse, _ := ioutil.ReadFile("../testdata/invitation/read_invitation.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(invitationUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(invitationUrlPath)).
 		InScenario(invitationDataSourceScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillReturn(
 			string(readInvitationResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },

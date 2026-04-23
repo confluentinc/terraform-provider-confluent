@@ -53,7 +53,9 @@ func TestAccCustomConnectorPluginVersion(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusCreated,
 		)
-	_ = wiremockClient.StubFor(createCustomConnectorPluginPresignedVersionUrlStub)
+	if err := wiremockClient.StubFor(createCustomConnectorPluginPresignedVersionUrlStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	createCustomConnectorPluginVersionResponse, _ := ioutil.ReadFile("../testdata/custom_connector_plugin_version/create_plugin.json")
 	createCustomConnectorPluginStub := wiremock.Post(wiremock.URLPathEqualTo("/ccpm/v1/plugins/foo/versions")).
@@ -65,10 +67,12 @@ func TestAccCustomConnectorPluginVersion(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusCreated,
 		)
-	_ = wiremockClient.StubFor(createCustomConnectorPluginStub)
+	if err := wiremockClient.StubFor(createCustomConnectorPluginStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readCreatedCustomConnectorPluginVersionResponse, _ := ioutil.ReadFile("../testdata/custom_connector_plugin_version/read_created_plugin.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/ccpm/v1/plugins/foo/versions/dlz-f3a90de")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/ccpm/v1/plugins/foo/versions/dlz-f3a90de")).
 		WithQueryParam("environment", wiremock.EqualTo("env-00000")).
 		InScenario(customConnectorPluginScenarioVersionName).
 		WhenScenarioStateIs(scenarioStateCustomConnectorPluginVersionHasBeenCreated).
@@ -76,10 +80,12 @@ func TestAccCustomConnectorPluginVersion(t *testing.T) {
 			string(readCreatedCustomConnectorPluginVersionResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readDeletedCustomConnectorPluginVersionResponse, _ := ioutil.ReadFile("../testdata/custom_connector_plugin_version/read_deleted_plugin.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/ccpm/v1/plugins/foo/versions/dlz-f3a90de")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/ccpm/v1/plugins/foo/versions/dlz-f3a90de")).
 		InScenario(customConnectorPluginScenarioVersionName).
 		WithQueryParam("environment", wiremock.EqualTo("env-00000")).
 		WhenScenarioStateIs(scenarioStateCustomConnectorPluginVersionHasBeenDeleted).
@@ -87,7 +93,9 @@ func TestAccCustomConnectorPluginVersion(t *testing.T) {
 			string(readDeletedCustomConnectorPluginVersionResponse),
 			contentTypeJSONHeader,
 			http.StatusNotFound,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	deleteCustomConnectorPluginStub := wiremock.Delete(wiremock.URLPathEqualTo("/ccpm/v1/plugins/foo/versions/dlz-f3a90de")).
 		InScenario(customConnectorPluginScenarioVersionName).
@@ -98,7 +106,9 @@ func TestAccCustomConnectorPluginVersion(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNoContent,
 		)
-	_ = wiremockClient.StubFor(deleteCustomConnectorPluginStub)
+	if err := wiremockClient.StubFor(deleteCustomConnectorPluginStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	customConnectorPluginResourceLabel := "test"
 	fullCustomConnectorPluginResourceLabel := fmt.Sprintf("confluent_custom_connector_plugin_version.%s", customConnectorPluginResourceLabel)

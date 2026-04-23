@@ -40,10 +40,12 @@ func TestAccPlugin(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusCreated,
 		)
-	_ = wiremockClient.StubFor(createPluginStub)
+	if err := wiremockClient.StubFor(createPluginStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readCreatedPluginResponse, _ := ioutil.ReadFile("../testdata/plugin/read_created_plugin.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/ccpm/v1/plugins/ccp-devczmp7p7")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/ccpm/v1/plugins/ccp-devczmp7p7")).
 		WithQueryParam("environment", wiremock.EqualTo(pluginEnvironment)).
 		InScenario(pluginScenarioName).
 		WhenScenarioStateIs(scenarioStatePluginHasBeenCreated).
@@ -51,7 +53,9 @@ func TestAccPlugin(t *testing.T) {
 			string(readCreatedPluginResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readUpdatedPluginResponse, _ := ioutil.ReadFile("../testdata/plugin/read_updated_plugin.json")
 	patchPluginStub := wiremock.Patch(wiremock.URLPathEqualTo("/ccpm/v1/plugins/ccp-devczmp7p7")).
@@ -63,16 +67,20 @@ func TestAccPlugin(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)
-	_ = wiremockClient.StubFor(patchPluginStub)
+	if err := wiremockClient.StubFor(patchPluginStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/ccpm/v1/plugins/ccp-devczmp7p7")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/ccpm/v1/plugins/ccp-devczmp7p7")).
 		InScenario(pluginScenarioName).
 		WhenScenarioStateIs(scenarioStatePluginHasBeenUpdated).
 		WillReturn(
 			string(readUpdatedPluginResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	deletePluginStub := wiremock.Delete(wiremock.URLPathEqualTo("/ccpm/v1/plugins/ccp-devczmp7p7")).
 		InScenario(pluginScenarioName).
@@ -83,10 +91,12 @@ func TestAccPlugin(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNoContent,
 		)
-	_ = wiremockClient.StubFor(deletePluginStub)
+	if err := wiremockClient.StubFor(deletePluginStub); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	readDeletedPluginResponse, _ := ioutil.ReadFile("../testdata/plugin/read_deleted_plugin.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/ccpm/v1/plugins/ccp-devczmp7p7")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/ccpm/v1/plugins/ccp-devczmp7p7")).
 		WithQueryParam("environment", wiremock.EqualTo(pluginEnvironment)).
 		InScenario(pluginScenarioName).
 		WhenScenarioStateIs(scenarioStatePluginHasBeenDeleted).
@@ -94,7 +104,9 @@ func TestAccPlugin(t *testing.T) {
 			string(readDeletedPluginResponse),
 			contentTypeJSONHeader,
 			http.StatusNotFound,
-		))
+		)); err != nil {
+		t.Errorf("StubFor failed: %v", err)
+	}
 
 	pluginDisplayName := "plugin-name"
 	pluginDescription := "plugin-description"
