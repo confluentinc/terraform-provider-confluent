@@ -1,6 +1,6 @@
 ## 2.70.0 (April 23rd, 2026)
 
-[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.68.0...v2.69.0)
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.69.0...v2.70.0)
 
 **Bug fixes:**
 * Fix an error that occurs when deleting `confluent_plugin` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_plugin) after deleting all corresponding `confluent_custom_connector_plugin_version` [resources](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_custom_connector_plugin_version).
