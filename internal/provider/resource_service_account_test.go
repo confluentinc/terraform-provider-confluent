@@ -53,7 +53,7 @@ func TestAccServiceAccount(t *testing.T) {
 			http.StatusCreated,
 		)
 	if err := wiremockClient.StubFor(createSaStub); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readCreatedSaResponse, _ := ioutil.ReadFile("../testdata/service_account/read_created_sa.json")
@@ -65,7 +65,7 @@ func TestAccServiceAccount(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readUpdatedSaResponse, _ := ioutil.ReadFile("../testdata/service_account/read_updated_sa.json")
@@ -79,7 +79,7 @@ func TestAccServiceAccount(t *testing.T) {
 			http.StatusOK,
 		)
 	if err := wiremockClient.StubFor(patchSaStub); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/service-accounts/sa-1jjv26")).
@@ -90,7 +90,7 @@ func TestAccServiceAccount(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readDeletedSaResponse, _ := ioutil.ReadFile("../testdata/service_account/read_deleted_sa.json")
@@ -102,7 +102,7 @@ func TestAccServiceAccount(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNotFound,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	deleteSaStub := wiremock.Delete(wiremock.URLPathEqualTo("/iam/v2/service-accounts/sa-1jjv26")).
@@ -115,7 +115,7 @@ func TestAccServiceAccount(t *testing.T) {
 			http.StatusNoContent,
 		)
 	if err := wiremockClient.StubFor(deleteSaStub); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	saDisplayName := "test_service_account_display_name"

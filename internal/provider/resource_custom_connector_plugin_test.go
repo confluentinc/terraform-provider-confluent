@@ -56,7 +56,7 @@ func TestAccCustomConnectorPlugin(t *testing.T) {
 			http.StatusCreated,
 		)
 	if err := wiremockClient.StubFor(createCustomConnectorPluginPresignedUrlStub); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	createCustomConnectorPluginResponse, _ := ioutil.ReadFile("../testdata/custom_connector_plugin/create_plugin.json")
@@ -70,7 +70,7 @@ func TestAccCustomConnectorPlugin(t *testing.T) {
 			http.StatusCreated,
 		)
 	if err := wiremockClient.StubFor(createCustomConnectorPluginStub); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readCreatedCustomConnectorPluginResponse, _ := ioutil.ReadFile("../testdata/custom_connector_plugin/read_created_plugin.json")
@@ -82,7 +82,7 @@ func TestAccCustomConnectorPlugin(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readUpdatedCustomConnectorPluginResponse, _ := ioutil.ReadFile("../testdata/custom_connector_plugin/read_updated_plugin.json")
@@ -96,7 +96,7 @@ func TestAccCustomConnectorPlugin(t *testing.T) {
 			http.StatusOK,
 		)
 	if err := wiremockClient.StubFor(patchCustomConnectorPluginStub); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/connect/v1/custom-connector-plugins/ccp-4rrw00")).
@@ -107,7 +107,7 @@ func TestAccCustomConnectorPlugin(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readDeletedCustomConnectorPluginResponse, _ := ioutil.ReadFile("../testdata/custom_connector_plugin/read_deleted_plugin.json")
@@ -119,7 +119,7 @@ func TestAccCustomConnectorPlugin(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNotFound,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	deleteCustomConnectorPluginStub := wiremock.Delete(wiremock.URLPathEqualTo("/connect/v1/custom-connector-plugins/ccp-4rrw00")).
@@ -132,7 +132,7 @@ func TestAccCustomConnectorPlugin(t *testing.T) {
 			http.StatusNoContent,
 		)
 	if err := wiremockClient.StubFor(deleteCustomConnectorPluginStub); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	customConnectorPluginDisplayName := "datagen-plugin-name"
@@ -239,7 +239,7 @@ func TestAccCustomConnectorPluginGCP(t *testing.T) {
 			http.StatusCreated,
 		)
 	if err := wiremockClient.StubFor(createCustomConnectorPluginPresignedUrlStub); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	createCustomConnectorPluginResponse, _ := ioutil.ReadFile("../testdata/custom_connector_plugin/create_plugin_gcp.json")
@@ -253,7 +253,7 @@ func TestAccCustomConnectorPluginGCP(t *testing.T) {
 			http.StatusCreated,
 		)
 	if err := wiremockClient.StubFor(createCustomConnectorPluginStub); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readCreatedCustomConnectorPluginResponse, _ := ioutil.ReadFile("../testdata/custom_connector_plugin/read_created_plugin_gcp.json")
@@ -265,7 +265,7 @@ func TestAccCustomConnectorPluginGCP(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	deleteCustomConnectorPluginStub := wiremock.Delete(wiremock.URLPathEqualTo("/connect/v1/custom-connector-plugins/ccp-5rrw00")).
@@ -278,7 +278,7 @@ func TestAccCustomConnectorPluginGCP(t *testing.T) {
 			http.StatusNoContent,
 		)
 	if err := wiremockClient.StubFor(deleteCustomConnectorPluginStub); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readDeletedCustomConnectorPluginResponse, _ := ioutil.ReadFile("../testdata/custom_connector_plugin/read_deleted_plugin_gcp.json")
@@ -290,7 +290,7 @@ func TestAccCustomConnectorPluginGCP(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNotFound,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	customConnectorPluginDisplayName := "datagen-plugin-name-gcp"

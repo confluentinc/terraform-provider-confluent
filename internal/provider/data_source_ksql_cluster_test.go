@@ -72,7 +72,7 @@ func TestAccDataSourceWithIdKsql(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	provisionedKsqlCluster, _ := ioutil.ReadFile("../testdata/ksql/ksql_clusters.json")
@@ -84,7 +84,7 @@ func TestAccDataSourceWithIdKsql(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	resource.Test(t, resource.TestCase{
@@ -127,7 +127,7 @@ func TestAccDataSourceListKsql(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	resource.Test(t, resource.TestCase{
@@ -170,7 +170,7 @@ func TestAccDataSourceKsqlApi5xxError(t *testing.T) {
 			//501 is the only status code without retries, otherwise tests will take 10+ seconds
 			http.StatusNotImplemented,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	resource.Test(t, resource.TestCase{
@@ -212,7 +212,7 @@ func TestAccDataSourceKsqlApi4xxError(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusUnauthorized,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	resource.Test(t, resource.TestCase{

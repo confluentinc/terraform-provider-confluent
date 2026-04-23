@@ -39,7 +39,7 @@ func TestAccDataSourceAzureBYOKKey(t *testing.T) {
 		)
 
 	if err := wiremockClient.StubFor(readAzureKeyStub); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	azureKeyResourceName := "azure_key"

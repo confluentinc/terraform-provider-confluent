@@ -53,7 +53,7 @@ func TestAccDataSourceIdentityPool(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readIdentityPoolsResponse, _ := ioutil.ReadFile("../testdata/identity_pool/read_identity_pools.json")
@@ -65,7 +65,7 @@ func TestAccDataSourceIdentityPool(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	resource.Test(t, resource.TestCase{

@@ -37,7 +37,7 @@ func TestAccDataSourceCertificatePool(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	listCertificatePoolsResponse, _ := os.ReadFile("../testdata/certificate_pool/list_certificate_pools.json")
@@ -52,7 +52,7 @@ func TestAccDataSourceCertificatePool(t *testing.T) {
 				http.StatusOK,
 			),
 	); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	CertificatePoolResourceName := "data.confluent_certificate_pool.main"

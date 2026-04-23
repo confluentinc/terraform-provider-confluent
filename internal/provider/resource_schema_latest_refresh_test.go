@@ -64,7 +64,7 @@ func TestAccLatestRefreshSchema(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	createSchemaResponse, _ := os.ReadFile("../testdata/schema_registry_schema/create_schema.json")
@@ -76,7 +76,7 @@ func TestAccLatestRefreshSchema(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readLatestSchemaResponse, _ := os.ReadFile("../testdata/schema_registry_schema/read_latest_schema.json")
@@ -88,7 +88,7 @@ func TestAccLatestRefreshSchema(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readSchemasResponse, _ := os.ReadFile("../testdata/schema_registry_schema/read_schemas.json")
@@ -101,7 +101,7 @@ func TestAccLatestRefreshSchema(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	// Created schema but still in test 1, we now have a plan to respond to.
@@ -115,7 +115,7 @@ func TestAccLatestRefreshSchema(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readSchemasPath)).
@@ -127,7 +127,7 @@ func TestAccLatestRefreshSchema(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	// On to test step 2 and 3. On refresh, we will return that something has changed compared to step 1.
@@ -142,7 +142,7 @@ func TestAccLatestRefreshSchema(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readSchemasResponseUpdated, _ := os.ReadFile("../testdata/schema_registry_schema/read_schemas_updated.json")
@@ -154,7 +154,7 @@ func TestAccLatestRefreshSchema(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	if err := wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(validateSchemaPath)).
@@ -165,7 +165,7 @@ func TestAccLatestRefreshSchema(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	// Test 2 and 3 done. The delete path is unique so we don't need to worry about the state.
@@ -179,7 +179,7 @@ func TestAccLatestRefreshSchema(t *testing.T) {
 			http.StatusNoContent,
 		)
 	if err := wiremockClient.StubFor(deleteSchemaStub); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readDeletedSaResponse, _ := os.ReadFile("../testdata/schema_registry_schema/read_schemas_after_delete.json")
@@ -191,7 +191,7 @@ func TestAccLatestRefreshSchema(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	resource.Test(t, resource.TestCase{

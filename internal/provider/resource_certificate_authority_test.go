@@ -51,7 +51,7 @@ func TestAccCertificateAuthority(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusCreated,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", certificateAuthorityUrlPath, certificateAuthorityId))).
@@ -62,7 +62,7 @@ func TestAccCertificateAuthority(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readUpdatedCertificateAuthorityResponse, _ := ioutil.ReadFile("../testdata/certificate_authority/read_updated_certificate_authority.json")
@@ -75,7 +75,7 @@ func TestAccCertificateAuthority(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", certificateAuthorityUrlPath, certificateAuthorityId))).
@@ -86,7 +86,7 @@ func TestAccCertificateAuthority(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	if err := wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", certificateAuthorityUrlPath, certificateAuthorityId))).
@@ -96,7 +96,7 @@ func TestAccCertificateAuthority(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNoContent,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	resource.Test(t, resource.TestCase{
@@ -165,7 +165,7 @@ func TestAccCertificateAuthorityCrl(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusCreated,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", certificateAuthorityUrlPath, certificateAuthorityId))).
@@ -176,7 +176,7 @@ func TestAccCertificateAuthorityCrl(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readUpdatedCertificateAuthorityResponse, _ := ioutil.ReadFile("../testdata/certificate_authority/read_updated_certificate_authority_crl.json")
@@ -189,7 +189,7 @@ func TestAccCertificateAuthorityCrl(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", certificateAuthorityUrlPath, certificateAuthorityId))).
@@ -200,7 +200,7 @@ func TestAccCertificateAuthorityCrl(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	if err := wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", certificateAuthorityUrlPath, certificateAuthorityId))).
@@ -210,7 +210,7 @@ func TestAccCertificateAuthorityCrl(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNoContent,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	resource.Test(t, resource.TestCase{

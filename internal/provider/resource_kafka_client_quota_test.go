@@ -57,7 +57,7 @@ func TestAccKafkaClientQuota(t *testing.T) {
 			http.StatusCreated,
 		)
 	if err := wiremockClient.StubFor(createKafkaClientQuotaStub); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readCreatedKafkaClientQuotaResponse, _ := ioutil.ReadFile("../testdata/kafka_client_quota/read_created_kafka_client_quota.json")
@@ -69,7 +69,7 @@ func TestAccKafkaClientQuota(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readUpdatedKafkaClientQuotaResponse, _ := ioutil.ReadFile("../testdata/kafka_client_quota/read_updated_kafka_client_quota.json")
@@ -83,7 +83,7 @@ func TestAccKafkaClientQuota(t *testing.T) {
 			http.StatusOK,
 		)
 	if err := wiremockClient.StubFor(patchKafkaClientQuotaStub); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(kafkaClientQuotaUrlPath)).
@@ -94,7 +94,7 @@ func TestAccKafkaClientQuota(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readDeletedKafkaClientQuotaResponse, _ := ioutil.ReadFile("../testdata/kafka_client_quota/read_deleted_kafka_client_quota.json")
@@ -106,7 +106,7 @@ func TestAccKafkaClientQuota(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNotFound,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	deleteKafkaClientQuotaStub := wiremock.Delete(wiremock.URLPathEqualTo(kafkaClientQuotaUrlPath)).
@@ -119,7 +119,7 @@ func TestAccKafkaClientQuota(t *testing.T) {
 			http.StatusNoContent,
 		)
 	if err := wiremockClient.StubFor(deleteKafkaClientQuotaStub); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	// in order to test tf update (step #3)

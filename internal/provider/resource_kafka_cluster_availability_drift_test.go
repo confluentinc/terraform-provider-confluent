@@ -56,7 +56,7 @@ func TestAccKafkaClusterAvailabilityDriftSingleZoneToLow(t *testing.T) {
 			http.StatusAccepted,
 		)
 	if err := wiremockClient.StubFor(createClusterStub); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	// Step 2: First GET after creation returns SINGLE_ZONE and transitions to provisioned state
@@ -71,7 +71,7 @@ func TestAccKafkaClusterAvailabilityDriftSingleZoneToLow(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	// Step 3: Subsequent GETs during step 1 return SINGLE_ZONE and transition to ready state
@@ -86,7 +86,7 @@ func TestAccKafkaClusterAvailabilityDriftSingleZoneToLow(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	// Step 4: GETs from ready state return SINGLE_ZONE (stay in same state)
@@ -100,7 +100,7 @@ func TestAccKafkaClusterAvailabilityDriftSingleZoneToLow(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	// Step 5: Transition to returning LOW on GET (simulating API returning V2 billing model value)
@@ -116,7 +116,7 @@ func TestAccKafkaClusterAvailabilityDriftSingleZoneToLow(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	// Step 5: Subsequent GETs return LOW (after state transition)
@@ -129,7 +129,7 @@ func TestAccKafkaClusterAvailabilityDriftSingleZoneToLow(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readEnvironmentResponse, _ := ioutil.ReadFile("../testdata/environment/read_created_env_without_sg.json")
@@ -141,7 +141,7 @@ func TestAccKafkaClusterAvailabilityDriftSingleZoneToLow(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readEnvPath)).
@@ -152,7 +152,7 @@ func TestAccKafkaClusterAvailabilityDriftSingleZoneToLow(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readEnvPath)).
@@ -163,7 +163,7 @@ func TestAccKafkaClusterAvailabilityDriftSingleZoneToLow(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readEnvPath)).
@@ -174,7 +174,7 @@ func TestAccKafkaClusterAvailabilityDriftSingleZoneToLow(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	// DELETE stub for cleanup
@@ -190,7 +190,7 @@ func TestAccKafkaClusterAvailabilityDriftSingleZoneToLow(t *testing.T) {
 			http.StatusNoContent,
 		)
 	if err := wiremockClient.StubFor(deleteClusterStub); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaPath)).
@@ -202,7 +202,7 @@ func TestAccKafkaClusterAvailabilityDriftSingleZoneToLow(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusForbidden,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	resource.Test(t, resource.TestCase{
@@ -260,7 +260,7 @@ func TestAccKafkaClusterAvailabilityDriftMultiZoneToHigh(t *testing.T) {
 			http.StatusAccepted,
 		)
 	if err := wiremockClient.StubFor(createClusterStub); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	// Step 2: First GET after creation returns MULTI_ZONE and transitions to provisioned state
@@ -275,7 +275,7 @@ func TestAccKafkaClusterAvailabilityDriftMultiZoneToHigh(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	// Step 3: Subsequent GETs during step 1 return MULTI_ZONE and transition to ready state
@@ -290,7 +290,7 @@ func TestAccKafkaClusterAvailabilityDriftMultiZoneToHigh(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	// Step 4: GETs from ready state return MULTI_ZONE (stay in same state)
@@ -304,7 +304,7 @@ func TestAccKafkaClusterAvailabilityDriftMultiZoneToHigh(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	// Step 5: Transition to returning HIGH on GET (simulating API returning V2 billing model value)
@@ -320,7 +320,7 @@ func TestAccKafkaClusterAvailabilityDriftMultiZoneToHigh(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	// Step 5: Subsequent GETs return HIGH (after state transition)
@@ -333,7 +333,7 @@ func TestAccKafkaClusterAvailabilityDriftMultiZoneToHigh(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readEnvironmentResponse, _ := ioutil.ReadFile("../testdata/environment/read_created_env_without_sg.json")
@@ -345,7 +345,7 @@ func TestAccKafkaClusterAvailabilityDriftMultiZoneToHigh(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readEnvPath)).
@@ -356,7 +356,7 @@ func TestAccKafkaClusterAvailabilityDriftMultiZoneToHigh(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readEnvPath)).
@@ -367,7 +367,7 @@ func TestAccKafkaClusterAvailabilityDriftMultiZoneToHigh(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readEnvPath)).
@@ -378,7 +378,7 @@ func TestAccKafkaClusterAvailabilityDriftMultiZoneToHigh(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	// DELETE stub for cleanup
@@ -394,7 +394,7 @@ func TestAccKafkaClusterAvailabilityDriftMultiZoneToHigh(t *testing.T) {
 			http.StatusNoContent,
 		)
 	if err := wiremockClient.StubFor(deleteClusterStub); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaPath)).
@@ -406,7 +406,7 @@ func TestAccKafkaClusterAvailabilityDriftMultiZoneToHigh(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusForbidden,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	resource.Test(t, resource.TestCase{

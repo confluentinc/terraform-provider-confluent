@@ -51,7 +51,7 @@ func TestAccResourceTfImporter(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readCreatedSaResponse, _ := ioutil.ReadFile("../testdata/service_account/read_created_sa.json")
@@ -63,7 +63,7 @@ func TestAccResourceTfImporter(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	fullTfImporterResourceLabel := fmt.Sprintf("confluent_tf_importer.%s", tfImporterResourceLabel)

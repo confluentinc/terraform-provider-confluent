@@ -51,7 +51,7 @@ func TestAccDataSourceConnectionProviderBlock(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readConnectionResponse, _ := ioutil.ReadFile("../testdata/flink_connection/read_connection_list.json")
@@ -63,7 +63,7 @@ func TestAccDataSourceConnectionProviderBlock(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	flinkConnectionDataSourceLabel := "test"

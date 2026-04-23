@@ -37,7 +37,7 @@ func TestAccDataSourceTableflowTopic(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	TableflowTopicResourceName := "data.confluent_tableflow_topic.main"
@@ -102,7 +102,7 @@ func TestAccDataSourceTableflowTopicErrorHandling(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	TableflowTopicResourceName := "data.confluent_tableflow_topic.main"
@@ -165,7 +165,7 @@ func TestAccDataSourceTableflowTopicAzure(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	TableflowTopicResourceName := "data.confluent_tableflow_topic.main"

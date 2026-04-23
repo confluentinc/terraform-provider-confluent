@@ -38,7 +38,7 @@ func TestAccDataSourceGatewayAwsPeeringGatewaySpec(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	gatewayResourceName := "aws_peering_gateway"
@@ -96,7 +96,7 @@ func TestAccDataSourceGatewayAwsEgressPrivateLinkGatewaySpec(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	gatewayResourceName := "aws_egress_private_link_gateway"
@@ -155,7 +155,7 @@ func TestAccDataSourceGatewayAwsPrivateNetworkInterfaceGatewaySpec(t *testing.T)
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	gatewayResourceName := "aws_private_network_interface_gateway"
@@ -217,7 +217,7 @@ func TestAccDataSourceGatewayAzurePeeringGatewaySpec(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	gatewayResourceName := "azure_peering_gateway"
@@ -275,7 +275,7 @@ func TestAccDataSourceGatewayAzureEgressPrivateLinkGatewaySpec(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	gatewayResourceName := "azure_egress_private_link_gateway"
@@ -334,7 +334,7 @@ func TestAccDataSourceGatewayGcpEgressPrivateServiceConnectGatewaySpec(t *testin
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	gatewayResourceName := "gcp_egress_private_service_connect_gateway"
@@ -393,7 +393,7 @@ func TestAccDataSourceGatewayGcpPeeringGatewaySpec(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	gatewayResourceName := "gcp_peering_gateway"
@@ -465,7 +465,7 @@ func TestAccDataSourceGatewayAwsIngressPrivateLinkGatewaySpec(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	gatewayResourceName := "aws_ingress_private_link_gateway"

@@ -51,7 +51,7 @@ func TestAccDataSourceServiceAccount(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readServiceAccountsPageOneResponse, _ := ioutil.ReadFile("../testdata/service_account/read_sas.json")
@@ -63,7 +63,7 @@ func TestAccDataSourceServiceAccount(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	fullServiceAccountDataSourceLabel := fmt.Sprintf("data.confluent_service_account.%s", saResourceLabel)

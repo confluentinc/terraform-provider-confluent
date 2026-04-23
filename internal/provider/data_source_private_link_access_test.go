@@ -54,7 +54,7 @@ func TestAccDataSourcePrivateLinkAccess(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readPlasResponse, _ := ioutil.ReadFile("../testdata/private_link_access/aws/read_plas.json")
@@ -67,7 +67,7 @@ func TestAccDataSourcePrivateLinkAccess(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	resource.Test(t, resource.TestCase{

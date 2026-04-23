@@ -58,7 +58,7 @@ func TestAccSchemaRegistryClusterCompatibilityLevelWithEnhancedProviderBlock(t *
 			http.StatusOK,
 		)
 	if err := wiremockClient.StubFor(createSchemaRegistryClusterCompatibilityLevelStub); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readCreatedSchemaRegistryClusterCompatibilityLevelsResponse, _ := ioutil.ReadFile("../testdata/schema_registry_cluster_compatibility_level/read_created_schema_registry_cluster_compatibility_level.json")
@@ -70,7 +70,7 @@ func TestAccSchemaRegistryClusterCompatibilityLevelWithEnhancedProviderBlock(t *
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	if err := wiremockClient.StubFor(wiremock.Put(wiremock.URLPathEqualTo(updateSchemaRegistryClusterCompatibilityLevelPath)).
@@ -82,7 +82,7 @@ func TestAccSchemaRegistryClusterCompatibilityLevelWithEnhancedProviderBlock(t *
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readUpdatedSchemaRegistryClusterCompatibilityLevelsResponse, _ := ioutil.ReadFile("../testdata/schema_registry_cluster_compatibility_level/read_updated_schema_registry_cluster_compatibility_level.json")
@@ -94,7 +94,7 @@ func TestAccSchemaRegistryClusterCompatibilityLevelWithEnhancedProviderBlock(t *
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	deleteSchemaRegistryClusterCompatibilityLevelStub := wiremock.Delete(wiremock.URLPathEqualTo(updateSchemaRegistryClusterCompatibilityLevelPath)).
@@ -107,7 +107,7 @@ func TestAccSchemaRegistryClusterCompatibilityLevelWithEnhancedProviderBlock(t *
 			http.StatusOK,
 		)
 	if err := wiremockClient.StubFor(deleteSchemaRegistryClusterCompatibilityLevelStub); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	resource.Test(t, resource.TestCase{

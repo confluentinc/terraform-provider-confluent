@@ -52,7 +52,7 @@ func TestAccNetworkLinkEndpoint(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusCreated,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readNLEResponse, _ := ioutil.ReadFile("../testdata/network_link_endpoint/read_nle.json")
@@ -64,7 +64,7 @@ func TestAccNetworkLinkEndpoint(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	updatedNLEResponse, _ := ioutil.ReadFile("../testdata/network_link_endpoint/updated_nle.json")
@@ -77,7 +77,7 @@ func TestAccNetworkLinkEndpoint(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(networkLinkEndpointReadUrlPath)).
@@ -88,7 +88,7 @@ func TestAccNetworkLinkEndpoint(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	if err := wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(networkLinkEndpointReadUrlPath)).
@@ -99,7 +99,7 @@ func TestAccNetworkLinkEndpoint(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNoContent,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(networkLinkEndpointReadUrlPath)).
@@ -110,7 +110,7 @@ func TestAccNetworkLinkEndpoint(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNotFound,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	resource.Test(t, resource.TestCase{

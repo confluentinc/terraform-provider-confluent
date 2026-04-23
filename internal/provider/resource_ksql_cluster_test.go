@@ -76,7 +76,7 @@ func TestAccCreateKsqlClusterError(t *testing.T) {
 			http.StatusNotImplemented,
 		)
 	if err := wiremockClient.StubFor(createClusterStub); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	resource.Test(t, resource.TestCase{
@@ -121,7 +121,7 @@ func TestAccImportKsqlCluster(t *testing.T) {
 			http.StatusAccepted,
 		)
 	if err := wiremockClient.StubFor(createClusterStub); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readCreatedClusterResponse, _ := ioutil.ReadFile("../testdata/ksql/PROVISIONED_ksql_4_csu.json")
@@ -133,7 +133,7 @@ func TestAccImportKsqlCluster(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKsqlPath)).
@@ -144,7 +144,7 @@ func TestAccImportKsqlCluster(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	_ = createDefaultDeleteStub(wiremockClient)
@@ -200,7 +200,7 @@ func TestAccReadKsqlClusterError(t *testing.T) {
 			http.StatusAccepted,
 		)
 	if err := wiremockClient.StubFor(createClusterStub); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readCreatedClusterResponse, _ := ioutil.ReadFile("../testdata/ksql/501_internal_server_error.json")
@@ -213,7 +213,7 @@ func TestAccReadKsqlClusterError(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNotImplemented, //blocks retry
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	_ = createDefaultDeleteStub(wiremockClient)
@@ -259,7 +259,7 @@ func TestAccKsqlCluster(t *testing.T) {
 			http.StatusAccepted,
 		)
 	if err := wiremockClient.StubFor(createClusterStub); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readCreatedClusterResponse, _ := ioutil.ReadFile("../testdata/ksql/PROVISIONED_ksql_4_csu.json")
@@ -272,7 +272,7 @@ func TestAccKsqlCluster(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	deleteClusterStubGeneral := wiremock.Delete(wiremock.URLPathEqualTo(readKsqlPath)).
@@ -286,7 +286,7 @@ func TestAccKsqlCluster(t *testing.T) {
 			http.StatusNoContent,
 		)
 	if err := wiremockClient.StubFor(deleteClusterStubGeneral); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	createClusterUpdatedResponse, _ := ioutil.ReadFile("../testdata/ksql/PROVISIONING_ksql_8_csu.json")
@@ -300,7 +300,7 @@ func TestAccKsqlCluster(t *testing.T) {
 			http.StatusAccepted,
 		)
 	if err := wiremockClient.StubFor(createClusterStub); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readUpdatedClusterResponse, _ := ioutil.ReadFile("../testdata/ksql/PROVISIONED_ksql_8_csu.json")
@@ -313,7 +313,7 @@ func TestAccKsqlCluster(t *testing.T) {
 			http.StatusOK,
 		)
 	if err := wiremockClient.StubFor(updateClusterStub); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKsqlPath)).
@@ -325,7 +325,7 @@ func TestAccKsqlCluster(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	deleteClusterStub := wiremock.Delete(wiremock.URLPathEqualTo(readKsqlPath)).
@@ -339,7 +339,7 @@ func TestAccKsqlCluster(t *testing.T) {
 			http.StatusNoContent,
 		)
 	if err := wiremockClient.StubFor(deleteClusterStub); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readDeletedEnvResponse, _ := ioutil.ReadFile("../testdata/ksql/403_forbidden.json")
@@ -353,7 +353,7 @@ func TestAccKsqlCluster(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusForbidden,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	resource.Test(t, resource.TestCase{

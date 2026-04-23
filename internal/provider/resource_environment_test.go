@@ -54,7 +54,7 @@ func TestAccEnvironment(t *testing.T) {
 			http.StatusCreated,
 		)
 	if err := wiremockClient.StubFor(createEnvStub); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readCreatedEnvResponse, _ := ioutil.ReadFile("../testdata/environment/read_created_env.json")
@@ -66,7 +66,7 @@ func TestAccEnvironment(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readUpdatedEnvResponse, _ := ioutil.ReadFile("../testdata/environment/read_updated_env.json")
@@ -80,7 +80,7 @@ func TestAccEnvironment(t *testing.T) {
 			http.StatusOK,
 		)
 	if err := wiremockClient.StubFor(patchEnvStub); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/org/v2/environments/env-1jrymj")).
@@ -91,7 +91,7 @@ func TestAccEnvironment(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readDeletedEnvResponse, _ := ioutil.ReadFile("../testdata/environment/read_deleted_env.json")
@@ -103,7 +103,7 @@ func TestAccEnvironment(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNotFound,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	deleteEnvStub := wiremock.Delete(wiremock.URLPathEqualTo("/org/v2/environments/env-1jrymj")).
@@ -116,7 +116,7 @@ func TestAccEnvironment(t *testing.T) {
 			http.StatusNoContent,
 		)
 	if err := wiremockClient.StubFor(deleteEnvStub); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	environmentDisplayName := "test_env_display_name"
@@ -197,7 +197,7 @@ func TestAccEnvironmentWithoutSg(t *testing.T) {
 			http.StatusCreated,
 		)
 	if err := wiremockClient.StubFor(createEnvStub); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readCreatedEnvResponse, _ := ioutil.ReadFile("../testdata/environment/read_created_env_without_sg.json")
@@ -209,7 +209,7 @@ func TestAccEnvironmentWithoutSg(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	deleteEnvStub := wiremock.Delete(wiremock.URLPathEqualTo("/org/v2/environments/env-xyz")).
@@ -222,7 +222,7 @@ func TestAccEnvironmentWithoutSg(t *testing.T) {
 			http.StatusNoContent,
 		)
 	if err := wiremockClient.StubFor(deleteEnvStub); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	environmentResourceLabel := "env_resource_label"

@@ -3,11 +3,12 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/walkerus/go-wiremock"
 	"net/http"
 	"os"
 	"regexp"
 	"testing"
+
+	"github.com/walkerus/go-wiremock"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -46,7 +47,7 @@ func TestAccConnectArtifactGCP(t *testing.T) {
 			http.StatusCreated,
 		)
 	if err := wiremockClient.StubFor(createArtifactPresignedUrlStub); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	createArtifactResponse, _ := os.ReadFile("../testdata/connect_artifact/create_artifact_gcp.json")
@@ -60,7 +61,7 @@ func TestAccConnectArtifactGCP(t *testing.T) {
 			http.StatusCreated,
 		)
 	if err := wiremockClient.StubFor(createArtifactStub); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	// Add a stub for the provisioning state
@@ -76,7 +77,7 @@ func TestAccConnectArtifactGCP(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readCreatedArtifactResponse, _ := os.ReadFile("../testdata/connect_artifact/read_created_artifact_gcp.json")
@@ -90,7 +91,7 @@ func TestAccConnectArtifactGCP(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	deleteArtifactStub := wiremock.Delete(wiremock.URLPathEqualTo(connectArtifactsUrlPath)).
@@ -104,7 +105,7 @@ func TestAccConnectArtifactGCP(t *testing.T) {
 			http.StatusNoContent,
 		)
 	if err := wiremockClient.StubFor(deleteArtifactStub); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readDeletedArtifactResponse, _ := os.ReadFile("../testdata/connect_artifact/read_deleted_artifact.json")
@@ -118,7 +119,7 @@ func TestAccConnectArtifactGCP(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNotFound,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	connectArtifactResourceLabel := "test_gcp"

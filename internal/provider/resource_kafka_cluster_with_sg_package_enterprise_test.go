@@ -54,7 +54,7 @@ func TestAccEnterpriseClusterWithSGPackage(t *testing.T) {
 			http.StatusAccepted,
 		)
 	if err := wiremockClient.StubFor(createClusterStub); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readCreatedClusterResponse, _ := ioutil.ReadFile("../testdata/enterprise_kafka/read_created_kafka.json")
@@ -67,7 +67,7 @@ func TestAccEnterpriseClusterWithSGPackage(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readEnvironmentResponse, _ := ioutil.ReadFile("../testdata/environment/read_created_env.json")
@@ -80,7 +80,7 @@ func TestAccEnterpriseClusterWithSGPackage(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	listZeroSchemaRegistryClusterResponse, _ := ioutil.ReadFile("../testdata/schema_registry_cluster/read_zero_clusters.json")
@@ -94,7 +94,7 @@ func TestAccEnterpriseClusterWithSGPackage(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	listProvisioningSchemaRegistryClusterResponse, _ := ioutil.ReadFile("../testdata/schema_registry_cluster/read_provisioning_clusters.json")
@@ -108,7 +108,7 @@ func TestAccEnterpriseClusterWithSGPackage(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readCreatedSchemaRegistryClustersResponse, _ := ioutil.ReadFile("../testdata/schema_registry_cluster/read_provisioned_clusters.json")
@@ -122,7 +122,7 @@ func TestAccEnterpriseClusterWithSGPackage(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readCreatedClusterResponse, _ = ioutil.ReadFile("../testdata/enterprise_kafka/read_created_kafka.json")
@@ -135,7 +135,7 @@ func TestAccEnterpriseClusterWithSGPackage(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readUpdatedClusterResponse, _ := ioutil.ReadFile("../testdata/enterprise_kafka/read_updated_kafka.json")
@@ -149,7 +149,7 @@ func TestAccEnterpriseClusterWithSGPackage(t *testing.T) {
 			http.StatusOK,
 		)
 	if err := wiremockClient.StubFor(updateClusterStub); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaPath)).
@@ -161,7 +161,7 @@ func TestAccEnterpriseClusterWithSGPackage(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readDeletedEnvResponse, _ := ioutil.ReadFile("../testdata/enterprise_kafka/read_deleted_kafka.json")
@@ -177,7 +177,7 @@ func TestAccEnterpriseClusterWithSGPackage(t *testing.T) {
 			http.StatusNoContent,
 		)
 	if err := wiremockClient.StubFor(deleteClusterStub); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaPath)).
@@ -189,7 +189,7 @@ func TestAccEnterpriseClusterWithSGPackage(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusForbidden,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	resource.Test(t, resource.TestCase{

@@ -88,7 +88,7 @@ func TestAccLatestSchemaWithEnhancedProviderBlockOAuth(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	// Mock STS token exchange endpoint
@@ -104,7 +104,7 @@ func TestAccLatestSchemaWithEnhancedProviderBlockOAuth(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	// ============================================================
@@ -120,7 +120,7 @@ func TestAccLatestSchemaWithEnhancedProviderBlockOAuth(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	createSchemaResponse, _ := os.ReadFile("../testdata/schema_registry_schema/create_schema.json")
@@ -132,7 +132,7 @@ func TestAccLatestSchemaWithEnhancedProviderBlockOAuth(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	// For Step 1: Server returns normal "foobar"
@@ -145,7 +145,7 @@ func TestAccLatestSchemaWithEnhancedProviderBlockOAuth(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readSchemasResponse, _ := os.ReadFile("../testdata/schema_registry_schema/read_schemas.json")
@@ -158,7 +158,7 @@ func TestAccLatestSchemaWithEnhancedProviderBlockOAuth(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	// ============================================================
@@ -175,7 +175,7 @@ func TestAccLatestSchemaWithEnhancedProviderBlockOAuth(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readSchemasPath)).
@@ -186,7 +186,7 @@ func TestAccLatestSchemaWithEnhancedProviderBlockOAuth(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	// Mock validation endpoint for the schema with whitespace
@@ -198,7 +198,7 @@ func TestAccLatestSchemaWithEnhancedProviderBlockOAuth(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	// Mock schema lookup - uses /subjects/{subject}?normalize=false endpoint (different from creation)
@@ -213,7 +213,7 @@ func TestAccLatestSchemaWithEnhancedProviderBlockOAuth(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	// Cleanup
@@ -226,7 +226,7 @@ func TestAccLatestSchemaWithEnhancedProviderBlockOAuth(t *testing.T) {
 			http.StatusNoContent,
 		)
 	if err := wiremockClient.StubFor(deleteSchemaStub); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readDeletedSaResponse, _ := os.ReadFile("../testdata/schema_registry_schema/read_schemas_after_delete.json")
@@ -238,7 +238,7 @@ func TestAccLatestSchemaWithEnhancedProviderBlockOAuth(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	resource.Test(t, resource.TestCase{

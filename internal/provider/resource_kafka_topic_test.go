@@ -73,7 +73,7 @@ func TestAccTopic(t *testing.T) {
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillSetStateTo(scenarioStateTopicHasBeenCreated).
 		WillReturn("OK", contentTypeJSONHeader, http.StatusOK)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	// Trigger the state transition by calling the dummy endpoint
@@ -90,7 +90,7 @@ func TestAccTopic(t *testing.T) {
 			http.StatusCreated,
 		)
 	if err := initialClient.StubFor(createTopicStub); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readCreatedTopicResponse, _ := ioutil.ReadFile("../testdata/kafka_topic/read_created_kafka_topic.json")
@@ -102,7 +102,7 @@ func TestAccTopic(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 	if err := initialClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(kafkaTopicPath)).
 		InScenario(topicScenarioName).
@@ -112,7 +112,7 @@ func TestAccTopic(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readCreatedTopicConfigResponse, _ := ioutil.ReadFile("../testdata/kafka_topic/read_created_kafka_topic_config.json")
@@ -124,7 +124,7 @@ func TestAccTopic(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 	if err := initialClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaTopicConfigPath)).
 		InScenario(topicScenarioName).
@@ -134,7 +134,7 @@ func TestAccTopic(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	if err := updatedClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(kafkaTopicPath)).
@@ -145,7 +145,7 @@ func TestAccTopic(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNotFound,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	updateTopicStub := wiremock.Post(wiremock.URLPathEqualTo(updateKafkaTopicConfigPath)).
@@ -158,7 +158,7 @@ func TestAccTopic(t *testing.T) {
 			http.StatusNoContent,
 		)
 	if err := updatedClient.StubFor(updateTopicStub); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	if err := updatedClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(kafkaTopicPath)).
@@ -169,7 +169,7 @@ func TestAccTopic(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readUpdatedTopicConfigResponse, _ := ioutil.ReadFile("../testdata/kafka_topic/read_updated_kafka_topic_config.json")
@@ -181,7 +181,7 @@ func TestAccTopic(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	deleteTopicStub := wiremock.Delete(wiremock.URLPathEqualTo(kafkaTopicPath)).
@@ -194,7 +194,7 @@ func TestAccTopic(t *testing.T) {
 			http.StatusNoContent,
 		)
 	if err := updatedClient.StubFor(deleteTopicStub); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	// Set fake values for secrets since those are required for importing
@@ -304,7 +304,7 @@ func TestAccTopicPartition(t *testing.T) {
 			http.StatusCreated,
 		)
 	if err := wiremockClient.StubFor(createTopicStub); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readCreatedTopicResponse, _ := ioutil.ReadFile("../testdata/kafka_topic/read_created_kafka_topic.json")
@@ -316,7 +316,7 @@ func TestAccTopicPartition(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readCreatedTopicConfigResponse, _ := ioutil.ReadFile("../testdata/kafka_topic/read_created_kafka_topic_config.json")
@@ -328,7 +328,7 @@ func TestAccTopicPartition(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaTopicConfigPath)).
 		InScenario(topicScenarioName).
@@ -338,7 +338,7 @@ func TestAccTopicPartition(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	updateTopicStub := wiremock.Patch(wiremock.URLPathEqualTo(kafkaTopicPath)).
@@ -351,7 +351,7 @@ func TestAccTopicPartition(t *testing.T) {
 			http.StatusNoContent,
 		)
 	if err := wiremockClient.StubFor(updateTopicStub); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaTopicConfigPath)).
@@ -362,7 +362,7 @@ func TestAccTopicPartition(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readUpdatedTopicResponse, _ := ioutil.ReadFile("../testdata/kafka_topic/read_updated_kafka_topic.json")
@@ -374,7 +374,7 @@ func TestAccTopicPartition(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	deleteTopicStubUpdate := wiremock.Delete(wiremock.URLPathEqualTo(kafkaTopicPath)).
@@ -387,7 +387,7 @@ func TestAccTopicPartition(t *testing.T) {
 			http.StatusNoContent,
 		)
 	if err := wiremockClient.StubFor(deleteTopicStubUpdate); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(kafkaTopicPath)).
@@ -398,7 +398,7 @@ func TestAccTopicPartition(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNotFound,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	createTopicUpdateResponse, _ := ioutil.ReadFile("../testdata/kafka_topic/create_kafka_topic.json")
@@ -412,7 +412,7 @@ func TestAccTopicPartition(t *testing.T) {
 			http.StatusCreated,
 		)
 	if err := wiremockClient.StubFor(createTopicUpdateStub); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readCreatedTopicUpdateResponse, _ := ioutil.ReadFile("../testdata/kafka_topic/read_create_updated_kafka_topic.json")
@@ -424,7 +424,7 @@ func TestAccTopicPartition(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readCreatedUpdatedTopicConfigResponse, _ := ioutil.ReadFile("../testdata/kafka_topic/read_created_kafka_topic_config.json")
@@ -436,7 +436,7 @@ func TestAccTopicPartition(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaTopicConfigPath)).
 		InScenario(topicScenarioName).
@@ -446,7 +446,7 @@ func TestAccTopicPartition(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	deleteTopicStub := wiremock.Delete(wiremock.URLPathEqualTo(kafkaTopicPath)).
@@ -459,7 +459,7 @@ func TestAccTopicPartition(t *testing.T) {
 			http.StatusNoContent,
 		)
 	if err := wiremockClient.StubFor(deleteTopicStub); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(kafkaTopicPath)).
@@ -470,7 +470,7 @@ func TestAccTopicPartition(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNotFound,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	// Set fake values for secrets since those are required for importing

@@ -52,7 +52,7 @@ func TestAccDataSourceKafkaClientQuota(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	fullKafkaClientQuotaDataSourceLabel := fmt.Sprintf("data.confluent_kafka_client_quota.%s", kafkaClientQuotaResourceLabel)

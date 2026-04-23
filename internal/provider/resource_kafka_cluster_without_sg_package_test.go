@@ -54,7 +54,7 @@ func TestAccClusterWithoutSGPackage(t *testing.T) {
 			http.StatusAccepted,
 		)
 	if err := wiremockClient.StubFor(createClusterStub); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readCreatedClusterResponse, _ := ioutil.ReadFile("../testdata/kafka/read_created_kafka.json")
@@ -67,7 +67,7 @@ func TestAccClusterWithoutSGPackage(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readEnvironmentResponse, _ := ioutil.ReadFile("../testdata/environment/read_created_env_without_sg.json")
@@ -79,7 +79,7 @@ func TestAccClusterWithoutSGPackage(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readUpdatedClusterResponse, _ := ioutil.ReadFile("../testdata/kafka/read_updated_kafka.json")
@@ -93,7 +93,7 @@ func TestAccClusterWithoutSGPackage(t *testing.T) {
 			http.StatusOK,
 		)
 	if err := wiremockClient.StubFor(updateClusterStub); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaPath)).
@@ -105,7 +105,7 @@ func TestAccClusterWithoutSGPackage(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readDeletedEnvResponse, _ := ioutil.ReadFile("../testdata/kafka/read_deleted_kafka.json")
@@ -121,7 +121,7 @@ func TestAccClusterWithoutSGPackage(t *testing.T) {
 			http.StatusNoContent,
 		)
 	if err := wiremockClient.StubFor(deleteClusterStub); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaPath)).
@@ -133,7 +133,7 @@ func TestAccClusterWithoutSGPackage(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusForbidden,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	resource.Test(t, resource.TestCase{

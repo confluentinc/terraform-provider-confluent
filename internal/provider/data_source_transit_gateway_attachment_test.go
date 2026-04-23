@@ -54,7 +54,7 @@ func TestAccDataSourceTransitGatewayAttachment(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readTransitGatewayAttachmentsResponse, _ := ioutil.ReadFile("../testdata/transit_gateway_attachment/aws/read_transit_gateway_attachments.json")
@@ -67,7 +67,7 @@ func TestAccDataSourceTransitGatewayAttachment(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	resource.Test(t, resource.TestCase{

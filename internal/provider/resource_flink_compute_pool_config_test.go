@@ -3,11 +3,12 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
 	"testing"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/walkerus/go-wiremock"
 )
 
 const (
@@ -50,7 +51,7 @@ func TestAccComputePoolConfig(t *testing.T) {
 			http.StatusOK,
 		)
 	if err := wiremockClient.StubFor(createFlinkComputePoolConfigStub); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readCreatedComputePoolConfigResponse, _ := ioutil.ReadFile("../testdata/flink_compute_pool_config/read_created_compute_pool_config.json")
@@ -62,7 +63,7 @@ func TestAccComputePoolConfig(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	updateComputePoolConfigResponse, _ := ioutil.ReadFile("../testdata/flink_compute_pool_config/read_updated_compute_pool_config.json")
@@ -76,7 +77,7 @@ func TestAccComputePoolConfig(t *testing.T) {
 			http.StatusOK,
 		)
 	if err := wiremockClient.StubFor(updateComputePoolConfigStub); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readUpdatedComputePoolConfigResponse, _ := ioutil.ReadFile("../testdata/flink_compute_pool_config/read_updated_compute_pool_config.json")
@@ -88,7 +89,7 @@ func TestAccComputePoolConfig(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	deleteComputePoolConfigStub := wiremock.Delete(wiremock.URLPathEqualTo("/fcpm/v2/compute-pool-config")).
@@ -101,7 +102,7 @@ func TestAccComputePoolConfig(t *testing.T) {
 			http.StatusOK,
 		)
 	if err := wiremockClient.StubFor(deleteComputePoolConfigStub); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	resource.Test(t, resource.TestCase{

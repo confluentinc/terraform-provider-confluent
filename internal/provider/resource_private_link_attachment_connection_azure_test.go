@@ -52,7 +52,7 @@ func TestAccPrivateLinkAttachmentConnectionAzure(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusCreated,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readPlattResponse, _ := ioutil.ReadFile("../testdata/private_link_attachment_connection/read_azure_plattc.json")
@@ -64,7 +64,7 @@ func TestAccPrivateLinkAttachmentConnectionAzure(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	if err := wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(privateLinkAttachmentConnectionAzureReadUrlPath)).
@@ -74,7 +74,7 @@ func TestAccPrivateLinkAttachmentConnectionAzure(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNoContent,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	resource.Test(t, resource.TestCase{

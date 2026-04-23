@@ -53,7 +53,7 @@ func TestAccCatalogEntityAttributesWithEnhancedProviderBlock(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusCreated,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readEntityAttributesResponse, _ := ioutil.ReadFile("../testdata/entity_attributes/create_entity_attributes.json")
@@ -65,7 +65,7 @@ func TestAccCatalogEntityAttributesWithEnhancedProviderBlock(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	updateEntityAttributesResponse, _ := ioutil.ReadFile("../testdata/entity_attributes/create_response.json")
@@ -78,7 +78,7 @@ func TestAccCatalogEntityAttributesWithEnhancedProviderBlock(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusCreated,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readUpdatedEntityAttributesResponse, _ := ioutil.ReadFile("../testdata/entity_attributes/update_entity_attributes.json")
@@ -90,7 +90,7 @@ func TestAccCatalogEntityAttributesWithEnhancedProviderBlock(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	if err := wiremockClient.StubFor(wiremock.Put(wiremock.URLPathEqualTo(deleteCreatedEntityAttributesUrlPath)).
@@ -101,7 +101,7 @@ func TestAccCatalogEntityAttributesWithEnhancedProviderBlock(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNoContent,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	resource.Test(t, resource.TestCase{

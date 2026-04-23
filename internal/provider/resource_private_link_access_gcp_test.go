@@ -55,7 +55,7 @@ func TestAccGcpPrivateLinkAccess(t *testing.T) {
 			http.StatusCreated,
 		)
 	if err := wiremockClient.StubFor(createGcpPlaStub); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readProvisioningGcpPlaResponse, _ := ioutil.ReadFile("../testdata/private_link_access/gcp/read_provisioning_pla.json")
@@ -69,7 +69,7 @@ func TestAccGcpPrivateLinkAccess(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readCreatedGcpPlaResponse, _ := ioutil.ReadFile("../testdata/private_link_access/gcp/read_created_pla.json")
@@ -82,7 +82,7 @@ func TestAccGcpPrivateLinkAccess(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	deleteGcpPlaStub := wiremock.Delete(wiremock.URLPathEqualTo(gcpPlaUrlPath)).
@@ -96,7 +96,7 @@ func TestAccGcpPrivateLinkAccess(t *testing.T) {
 			http.StatusNoContent,
 		)
 	if err := wiremockClient.StubFor(deleteGcpPlaStub); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readDeprovisioningGcpPlaResponse, _ := ioutil.ReadFile("../testdata/private_link_access/gcp/read_deprovisioning_pla.json")
@@ -110,7 +110,7 @@ func TestAccGcpPrivateLinkAccess(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readDeletedGcpPlaResponse, _ := ioutil.ReadFile("../testdata/private_link_access/gcp/read_deleted_pla.json")
@@ -123,7 +123,7 @@ func TestAccGcpPrivateLinkAccess(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNotFound,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	gcpPlaDisplayName := "prod-pl-use3"

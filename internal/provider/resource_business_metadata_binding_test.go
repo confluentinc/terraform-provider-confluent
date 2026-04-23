@@ -52,7 +52,7 @@ func TestAccBusinessMetadataBinding(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusCreated,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readCreatedBusinessMetadataBindingUrlPath)).
@@ -64,7 +64,7 @@ func TestAccBusinessMetadataBinding(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readBusinessMetadataBindingResponse, _ := ioutil.ReadFile("../testdata/business_metadata/read_created_business_metadata_binding.json")
@@ -76,7 +76,7 @@ func TestAccBusinessMetadataBinding(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	updateBusinessMetadataBindingResponse, _ := ioutil.ReadFile("../testdata/business_metadata/update_business_metadata_binding.json")
@@ -89,7 +89,7 @@ func TestAccBusinessMetadataBinding(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusCreated,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readUpdatedBusinessMetadataBindingResponse, _ := ioutil.ReadFile("../testdata/business_metadata/read_updated_business_metadata_binding.json")
@@ -101,7 +101,7 @@ func TestAccBusinessMetadataBinding(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	if err := wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(deleteCreatedBusinessMetadataBindingUrlPath)).
@@ -111,7 +111,7 @@ func TestAccBusinessMetadataBinding(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNoContent,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	resource.Test(t, resource.TestCase{

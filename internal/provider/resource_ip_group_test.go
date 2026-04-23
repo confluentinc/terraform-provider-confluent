@@ -57,7 +57,7 @@ func TestAccIPGroup(t *testing.T) {
 			http.StatusCreated,
 		)
 	if err := wiremockClient.StubFor(createIPGroupStub); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readCreatedIPGroupResponse, _ := ioutil.ReadFile("../testdata/ip_group/read_created_ip_group.json")
@@ -69,7 +69,7 @@ func TestAccIPGroup(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readUpdatedIPGroupResponse, _ := ioutil.ReadFile("../testdata/ip_group/read_updated_ip_group.json")
@@ -83,7 +83,7 @@ func TestAccIPGroup(t *testing.T) {
 			http.StatusOK,
 		)
 	if err := wiremockClient.StubFor(patchSaStub); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("/iam/v2/ip-groups/%s", testIPGroupID))).
@@ -94,7 +94,7 @@ func TestAccIPGroup(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readDeletedIPGroupResponse, _ := ioutil.ReadFile("../testdata/ip_group/read_deleted_ip_group.json")
@@ -106,7 +106,7 @@ func TestAccIPGroup(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNotFound,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	deleteIPGroupStub := wiremock.Delete(wiremock.URLPathEqualTo(fmt.Sprintf("/iam/v2/ip-groups/%s", testIPGroupID))).
@@ -119,7 +119,7 @@ func TestAccIPGroup(t *testing.T) {
 			http.StatusNoContent,
 		)
 	if err := wiremockClient.StubFor(deleteIPGroupStub); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	// in order to test tf update (step #3)

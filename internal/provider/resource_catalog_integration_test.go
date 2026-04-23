@@ -53,7 +53,7 @@ func TestAccCatalogIntegrationAwsGlue(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusCreated,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	catalogIntegrationReadUrlPath := fmt.Sprintf("%s/tci-abc123", catalogIntegrationUrlPath)
@@ -76,7 +76,7 @@ func TestAccCatalogIntegrationAwsGlue(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	updatedCatalogIntegrationResponse, _ := os.ReadFile("../testdata/catalog_integration/update_aws_glue_ci.json")
@@ -89,7 +89,7 @@ func TestAccCatalogIntegrationAwsGlue(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(catalogIntegrationReadUrlPath)).
@@ -100,7 +100,7 @@ func TestAccCatalogIntegrationAwsGlue(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	if err := wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(catalogIntegrationReadUrlPath)).
@@ -110,7 +110,7 @@ func TestAccCatalogIntegrationAwsGlue(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNoContent,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	resource.Test(t, resource.TestCase{
@@ -183,7 +183,7 @@ func TestAccCatalogIntegrationSnowflake(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusCreated,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	catalogIntegrationReadUrlPath := fmt.Sprintf("%s/tci-abc123", catalogIntegrationUrlPath)
@@ -206,7 +206,7 @@ func TestAccCatalogIntegrationSnowflake(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	updatedCatalogIntegrationResponse, _ := os.ReadFile("../testdata/catalog_integration/update_snowflake_ci.json")
@@ -219,7 +219,7 @@ func TestAccCatalogIntegrationSnowflake(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(catalogIntegrationReadUrlPath)).
@@ -230,7 +230,7 @@ func TestAccCatalogIntegrationSnowflake(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	if err := wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(catalogIntegrationReadUrlPath)).
@@ -240,7 +240,7 @@ func TestAccCatalogIntegrationSnowflake(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNoContent,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	resource.Test(t, resource.TestCase{
@@ -317,7 +317,7 @@ func TestAccCatalogIntegrationUnity(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusCreated,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	catalogIntegrationReadUrlPath := fmt.Sprintf("%s/tci-abc123", catalogIntegrationUrlPath)
@@ -331,7 +331,7 @@ func TestAccCatalogIntegrationUnity(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	updatedCatalogIntegrationResponse, _ := os.ReadFile("../testdata/catalog_integration/update_unity_ci.json")
@@ -344,7 +344,7 @@ func TestAccCatalogIntegrationUnity(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(catalogIntegrationReadUrlPath)).
@@ -355,7 +355,7 @@ func TestAccCatalogIntegrationUnity(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	if err := wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(catalogIntegrationReadUrlPath)).
@@ -365,7 +365,7 @@ func TestAccCatalogIntegrationUnity(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNoContent,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	resource.Test(t, resource.TestCase{

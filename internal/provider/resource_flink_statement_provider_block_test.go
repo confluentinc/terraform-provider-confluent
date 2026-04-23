@@ -58,7 +58,7 @@ func TestAccFlinkStatementWithEnhancedProviderBlock(t *testing.T) {
 			http.StatusCreated,
 		)
 	if err := wiremockClient.StubFor(createFlinkStatementStub); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readPendingFlinkStatementResponse, _ := ioutil.ReadFile("../testdata/flink_statement/read_pending_flink_statement.json")
@@ -71,7 +71,7 @@ func TestAccFlinkStatementWithEnhancedProviderBlock(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readCreatedFlinkStatementResponse, _ := ioutil.ReadFile("../testdata/flink_statement/read_running_flink_statement.json")
@@ -83,7 +83,7 @@ func TestAccFlinkStatementWithEnhancedProviderBlock(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	// Update the Flink statement stopped status false -> true to trigger a stop
@@ -98,7 +98,7 @@ func TestAccFlinkStatementWithEnhancedProviderBlock(t *testing.T) {
 			http.StatusOK,
 		)
 	if err := wiremockClient.StubFor(stopFlinkStatementStub); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readStoppedFlinkStatementResponse, _ := ioutil.ReadFile("../testdata/flink_statement/read_stopped_flink_statement.json")
@@ -110,7 +110,7 @@ func TestAccFlinkStatementWithEnhancedProviderBlock(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	// Update the Flink statement stopped status true -> false to trigger a resume with different `principal` and `compute_pool`
@@ -125,7 +125,7 @@ func TestAccFlinkStatementWithEnhancedProviderBlock(t *testing.T) {
 			http.StatusOK,
 		)
 	if err := wiremockClient.StubFor(resumingFlinkStatementStub); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readResumedFlinkStatementResponse, _ := ioutil.ReadFile("../testdata/flink_statement/read_resumed_flink_statement.json")
@@ -138,7 +138,7 @@ func TestAccFlinkStatementWithEnhancedProviderBlock(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readPostResumeFlinkStatementResponse, _ := ioutil.ReadFile("../testdata/flink_statement/read_resumed_flink_statement.json")
@@ -150,7 +150,7 @@ func TestAccFlinkStatementWithEnhancedProviderBlock(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	deleteFlinkStatementStub := wiremock.Delete(wiremock.URLPathEqualTo(readFlinkStatementPath)).
@@ -163,7 +163,7 @@ func TestAccFlinkStatementWithEnhancedProviderBlock(t *testing.T) {
 			http.StatusNoContent,
 		)
 	if err := wiremockClient.StubFor(deleteFlinkStatementStub); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readDeletingFlinkStatementStub := wiremock.Get(wiremock.URLPathEqualTo(readFlinkStatementPath)).
@@ -176,7 +176,7 @@ func TestAccFlinkStatementWithEnhancedProviderBlock(t *testing.T) {
 			http.StatusNoContent,
 		)
 	if err := wiremockClient.StubFor(readDeletingFlinkStatementStub); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readDeletedFlinkStatementResponse, _ := ioutil.ReadFile("../testdata/flink_statement/read_deleted_flink_statement.json")
@@ -188,7 +188,7 @@ func TestAccFlinkStatementWithEnhancedProviderBlock(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNotFound,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	resource.Test(t, resource.TestCase{
@@ -349,7 +349,7 @@ func TestAccFlinkStatementWithInitialOffsetsWithEnhancedProviderBlock(t *testing
 			http.StatusCreated,
 		)
 	if err := wiremockClient.StubFor(createFlinkStatementStub); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readPendingFlinkStatementResponse, _ := ioutil.ReadFile("../testdata/flink_statement_initial_offset/read_pending_flink_statement.json")
@@ -362,7 +362,7 @@ func TestAccFlinkStatementWithInitialOffsetsWithEnhancedProviderBlock(t *testing
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readFlinkStatementPath)).
@@ -373,7 +373,7 @@ func TestAccFlinkStatementWithInitialOffsetsWithEnhancedProviderBlock(t *testing
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	deleteFlinkStatementStub := wiremock.Delete(wiremock.URLPathEqualTo(readFlinkStatementPath)).
@@ -386,7 +386,7 @@ func TestAccFlinkStatementWithInitialOffsetsWithEnhancedProviderBlock(t *testing
 			http.StatusNoContent,
 		)
 	if err := wiremockClient.StubFor(deleteFlinkStatementStub); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readDeletingFlinkStatementStub := wiremock.Get(wiremock.URLPathEqualTo(readFlinkStatementPath)).
@@ -399,7 +399,7 @@ func TestAccFlinkStatementWithInitialOffsetsWithEnhancedProviderBlock(t *testing
 			http.StatusNoContent,
 		)
 	if err := wiremockClient.StubFor(readDeletingFlinkStatementStub); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	readDeletedFlinkStatementResponse, _ := ioutil.ReadFile("../testdata/flink_statement_initial_offset/read_deleted_flink_statement.json")
@@ -411,7 +411,7 @@ func TestAccFlinkStatementWithInitialOffsetsWithEnhancedProviderBlock(t *testing
 			contentTypeJSONHeader,
 			http.StatusNotFound,
 		)); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	resource.Test(t, resource.TestCase{

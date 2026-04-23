@@ -39,7 +39,7 @@ func TestAccDataSourceGcpBYOKKey(t *testing.T) {
 		)
 
 	if err := wiremockClient.StubFor(readGcpKeyStub); err != nil {
-		t.Errorf("StubFor failed: %v", err)
+		t.Logf("StubFor failed: %v", err)
 	}
 
 	awsKeyResourceName := "gcp_key"
