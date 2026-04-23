@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	flinkgatewayinternalv1 "github.com/confluentinc/ccloud-sdk-go-v2-internal/flink-gateway/v1"
+	flinkgatewayv1 "github.com/confluentinc/ccloud-sdk-go-v2/flink-gateway/v1"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -305,7 +305,7 @@ func materializedTableCreate(ctx context.Context, d *schema.ResourceData, meta i
 	if err != nil {
 		return diag.Errorf("error creating Flink Materialized Table: %s", createDescriptiveError(err))
 	}
-	flinkRestClient := meta.(*Client).flinkRestClientFactory.CreateFlinkRestClientInternal(restEndpoint, organizationId, environmentId, computePoolId, principalId, flinkApiKey, flinkApiSecret, meta.(*Client).isFlinkMetadataSet, meta.(*Client).oauthToken)
+	flinkRestClient := meta.(*Client).flinkRestClientFactory.CreateFlinkRestClient(restEndpoint, organizationId, environmentId, computePoolId, principalId, flinkApiKey, flinkApiSecret, meta.(*Client).isFlinkMetadataSet, meta.(*Client).oauthToken)
 
 	displayName := d.Get(paramDisplayName).(string)
 	kafkaId := d.Get(paramKafkaCluster).(string)
@@ -313,12 +313,12 @@ func materializedTableCreate(ctx context.Context, d *schema.ResourceData, meta i
 
 	stopped := d.Get(paramStopped).(bool)
 
-	table := flinkgatewayinternalv1.SqlV1MaterializedTable{
+	table := flinkgatewayv1.SqlV1MaterializedTable{
 		Name:           displayName,
 		EnvironmentId:  environmentId,
 		OrganizationId: organizationId,
 
-		Spec: flinkgatewayinternalv1.SqlV1MaterializedTableSpec{
+		Spec: flinkgatewayv1.SqlV1MaterializedTableSpec{
 			KafkaClusterId: &kafkaId,
 			ComputePoolId:  &computePoolId,
 			Principal:      &principalId,
@@ -326,32 +326,33 @@ func materializedTableCreate(ctx context.Context, d *schema.ResourceData, meta i
 			Stopped:        &stopped,
 		},
 	}
-	table.Spec.Watermark = &flinkgatewayinternalv1.SqlV1MaterializedTableWatermark{}
-	table.Spec.DistributedBy = &flinkgatewayinternalv1.SqlV1MaterializedTableDistribution{}
-
 	columns := expandAllColumns(d)
 	if len(columns) > 0 {
 		table.Spec.SetColumns(columns)
 	}
 
 	watermarkColumnName := d.Get(paramWatermarkColumnName).(string)
-	if watermarkColumnName != "" {
-		table.Spec.Watermark.SetColumnName(watermarkColumnName)
-	}
-
 	watermarkColumnExpression := d.Get(paramWatermarkExpression).(string)
-	if watermarkColumnExpression != "" {
-		table.Spec.Watermark.SetExpression(watermarkColumnExpression)
+	if watermarkColumnName != "" || watermarkColumnExpression != "" {
+		table.Spec.Watermark = &flinkgatewayv1.SqlV1Watermark{}
+		if watermarkColumnName != "" {
+			table.Spec.Watermark.SetColumn(watermarkColumnName)
+		}
+		if watermarkColumnExpression != "" {
+			table.Spec.Watermark.SetExpression(watermarkColumnExpression)
+		}
 	}
 
 	distributedByBuckets := d.Get(paramDistributedByBuckets).(int)
-	if distributedByBuckets != 0 {
-		table.Spec.DistributedBy.SetBuckets(int32(distributedByBuckets))
-	}
-
 	distributedByColumns := getStringSet(d, paramDistributedByColumnNames)
-	if len(distributedByColumns) > 0 {
-		table.Spec.DistributedBy.SetColumnNames(distributedByColumns)
+	if distributedByBuckets != 0 || len(distributedByColumns) > 0 {
+		table.Spec.Distribution = &flinkgatewayv1.SqlV1Distribution{}
+		if distributedByBuckets != 0 {
+			table.Spec.Distribution.SetBucketCount(int32(distributedByBuckets))
+		}
+		if len(distributedByColumns) > 0 {
+			table.Spec.Distribution.SetKeys(distributedByColumns)
+		}
 	}
 
 	constraints := expandMaterializedTableConstraints(d, paramConstraints)
@@ -365,7 +366,7 @@ func materializedTableCreate(ctx context.Context, d *schema.ResourceData, meta i
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Flink Materialized Table: %s", createMaterializedTableRequestJson))
 
-	createdMaterializedTable, resp, err := executeMaterializedTableCreate(flinkRestClient.fgApiContext(ctx), flinkRestClient, table, organizationId, environmentId, kafkaId)
+	createdMaterializedTable, resp, err := executeMaterializedTableCreate(flinkRestClient.apiContext(ctx), flinkRestClient, table, organizationId, environmentId, kafkaId)
 	if err != nil {
 		return diag.Errorf("error creating Flink Materialized Table %q: %s", createdMaterializedTable.GetName(), createDescriptiveError(err, resp))
 	}
@@ -380,13 +381,13 @@ func materializedTableCreate(ctx context.Context, d *schema.ResourceData, meta i
 	return materializedTableRead(ctx, d, meta)
 }
 
-func executeMaterializedTableCreate(ctx context.Context, c *FlinkRestClient, table flinkgatewayinternalv1.SqlV1MaterializedTable, orgId, environmentId, kafkaId string) (flinkgatewayinternalv1.SqlV1MaterializedTable, *http.Response, error) {
-	req := c.apiClientInternal.MaterializedTablesSqlV1Api.CreateSqlv1MaterializedTable(ctx, orgId, environmentId, kafkaId).SqlV1MaterializedTable(table)
+func executeMaterializedTableCreate(ctx context.Context, c *FlinkRestClient, table flinkgatewayv1.SqlV1MaterializedTable, orgId, environmentId, kafkaId string) (flinkgatewayv1.SqlV1MaterializedTable, *http.Response, error) {
+	req := c.apiClient.MaterializedTablesSqlV1Api.CreateSqlv1MaterializedTable(ctx, orgId, environmentId, kafkaId).SqlV1MaterializedTable(table)
 	return req.Execute()
 }
 
-func executeMaterializedTableRead(ctx context.Context, c *FlinkRestClient, orgId, environmentId, kafkaId, tableName string) (flinkgatewayinternalv1.SqlV1MaterializedTable, *http.Response, error) {
-	req := c.apiClientInternal.MaterializedTablesSqlV1Api.GetSqlv1MaterializedTable(ctx, orgId, environmentId, kafkaId, tableName)
+func executeMaterializedTableRead(ctx context.Context, c *FlinkRestClient, orgId, environmentId, kafkaId, tableName string) (flinkgatewayv1.SqlV1MaterializedTable, *http.Response, error) {
+	req := c.apiClient.MaterializedTablesSqlV1Api.GetSqlv1MaterializedTable(ctx, orgId, environmentId, kafkaId, tableName)
 	return req.Execute()
 }
 
@@ -414,7 +415,7 @@ func materializedTableRead(ctx context.Context, d *schema.ResourceData, meta int
 	if err != nil {
 		return diag.Errorf("error reading Flink Materialized Table: %s", createDescriptiveError(err))
 	}
-	flinkRestClient := meta.(*Client).flinkRestClientFactory.CreateFlinkRestClientInternal(restEndpoint, organizationId, environmentId, computePoolId, "", flinkApiKey, flinkApiSecret, meta.(*Client).isFlinkMetadataSet, meta.(*Client).oauthToken)
+	flinkRestClient := meta.(*Client).flinkRestClientFactory.CreateFlinkRestClient(restEndpoint, organizationId, environmentId, computePoolId, "", flinkApiKey, flinkApiSecret, meta.(*Client).isFlinkMetadataSet, meta.(*Client).oauthToken)
 
 	kafkaId := d.Get(paramKafkaCluster).(string)
 
@@ -426,7 +427,7 @@ func materializedTableRead(ctx context.Context, d *schema.ResourceData, meta int
 }
 
 func readMaterializedTableAndSetAttributes(ctx context.Context, d *schema.ResourceData, orgId, environmentId, kafkaId, materializedTableId string, c *FlinkRestClient) ([]*schema.ResourceData, error) {
-	materializedTable, resp, err := executeMaterializedTableRead(c.fgApiContext(ctx), c, orgId, environmentId, kafkaId, getTableName(materializedTableId))
+	materializedTable, resp, err := executeMaterializedTableRead(c.apiContext(ctx), c, orgId, environmentId, kafkaId, getTableName(materializedTableId))
 	if err != nil {
 		tflog.Warn(ctx, fmt.Sprintf("Error reading Flink Materialized Table %q: %s", d.Id(), createDescriptiveError(err, resp)), map[string]interface{}{flinkMaterializedTableLoggingKey: d.Id()})
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
@@ -453,7 +454,7 @@ func readMaterializedTableAndSetAttributes(ctx context.Context, d *schema.Resour
 	return []*schema.ResourceData{d}, nil
 }
 
-func setMaterializedTableAttributes(d *schema.ResourceData, materializedTable flinkgatewayinternalv1.SqlV1MaterializedTable, c *FlinkRestClient) (*schema.ResourceData, error) {
+func setMaterializedTableAttributes(d *schema.ResourceData, materializedTable flinkgatewayv1.SqlV1MaterializedTable, c *FlinkRestClient) (*schema.ResourceData, error) {
 	if err := d.Set(paramDisplayName, materializedTable.GetName()); err != nil {
 		return nil, err
 	}
@@ -486,13 +487,13 @@ func setMaterializedTableAttributes(d *schema.ResourceData, materializedTable fl
 	}
 
 	if materializedTable.Spec.Watermark != nil {
-		_ = d.Set(paramWatermarkColumnName, materializedTable.Spec.Watermark.GetColumnName())
+		_ = d.Set(paramWatermarkColumnName, materializedTable.Spec.Watermark.GetColumn())
 		_ = d.Set(paramWatermarkExpression, materializedTable.Spec.Watermark.GetExpression())
 	}
 
-	if materializedTable.Spec.DistributedBy != nil {
-		_ = d.Set(paramDistributedByColumnNames, materializedTable.Spec.DistributedBy.GetColumnNames())
-		_ = d.Set(paramDistributedByBuckets, materializedTable.Spec.DistributedBy.GetBuckets())
+	if materializedTable.Spec.Distribution != nil {
+		_ = d.Set(paramDistributedByColumnNames, materializedTable.Spec.Distribution.GetKeys())
+		_ = d.Set(paramDistributedByBuckets, materializedTable.Spec.Distribution.GetBucketCount())
 	}
 
 	err := d.Set(paramStopped, materializedTable.Spec.GetStopped())
@@ -571,14 +572,14 @@ func setMaterializedTableAttributes(d *schema.ResourceData, materializedTable fl
 
 		for _, c := range materializedTable.Spec.GetConstraints() {
 			var columnNamesSet *schema.Set
-			if c.ColumnNames != nil {
-				columnNamesSet = schema.NewSet(schema.HashString, toInterfaceSlice(*c.ColumnNames))
+			if c.Columns != nil {
+				columnNamesSet = schema.NewSet(schema.HashString, toInterfaceSlice(*c.Columns))
 			} else {
 				columnNamesSet = schema.NewSet(schema.HashString, []interface{}{})
 			}
 			m := map[string]interface{}{
 				paramConstraintsName:        c.Name,
-				paramConstraintsType:        c.Kind,
+				paramConstraintsType:        c.Type,
 				paramConstraintsColumnNames: columnNamesSet,
 				paramConstraintsEnforced:    c.Enforced,
 			}
@@ -614,11 +615,11 @@ func materializedTableDelete(ctx context.Context, d *schema.ResourceData, meta i
 	if err != nil {
 		return diag.Errorf("error deleting Flink Materialized Table: %s", createDescriptiveError(err))
 	}
-	flinkRestClient := meta.(*Client).flinkRestClientFactory.CreateFlinkRestClientInternal(restEndpoint, organizationId, environmentId, computePoolId, "", flinkApiKey, flinkApiSecret, meta.(*Client).isFlinkMetadataSet, meta.(*Client).oauthToken)
+	flinkRestClient := meta.(*Client).flinkRestClientFactory.CreateFlinkRestClient(restEndpoint, organizationId, environmentId, computePoolId, "", flinkApiKey, flinkApiSecret, meta.(*Client).isFlinkMetadataSet, meta.(*Client).oauthToken)
 
 	kafkaId := d.Get(paramKafkaCluster).(string)
 
-	req := flinkRestClient.apiClientInternal.MaterializedTablesSqlV1Api.DeleteSqlv1MaterializedTable(flinkRestClient.fgApiContext(ctx), organizationId, environmentId, kafkaId, getTableName(d.Id()))
+	req := flinkRestClient.apiClient.MaterializedTablesSqlV1Api.DeleteSqlv1MaterializedTable(flinkRestClient.apiContext(ctx), organizationId, environmentId, kafkaId, getTableName(d.Id()))
 	resp, err := req.Execute()
 
 	if err != nil {
@@ -657,7 +658,7 @@ func materializedTableImport(ctx context.Context, d *schema.ResourceData, meta i
 	if err != nil {
 		return nil, fmt.Errorf("error importing Flink Materialized Table: %s", createDescriptiveError(err))
 	}
-	flinkRestClient := meta.(*Client).flinkRestClientFactory.CreateFlinkRestClientInternal(restEndpoint, organizationId, environmentId, computePoolId, principalId, flinkApiKey, flinkApiSecret, meta.(*Client).isFlinkMetadataSet, meta.(*Client).oauthToken)
+	flinkRestClient := meta.(*Client).flinkRestClientFactory.CreateFlinkRestClient(restEndpoint, organizationId, environmentId, computePoolId, principalId, flinkApiKey, flinkApiSecret, meta.(*Client).isFlinkMetadataSet, meta.(*Client).oauthToken)
 
 	tableName := getTableName(d.Id())
 	kafkaId := getKafkaId(d.Id())
@@ -701,12 +702,12 @@ func materializedTableUpdate(ctx context.Context, d *schema.ResourceData, meta i
 	if err != nil {
 		return diag.Errorf("error updating Flink Materialized Table: %s", createDescriptiveError(err))
 	}
-	flinkRestClient := meta.(*Client).flinkRestClientFactory.CreateFlinkRestClientInternal(restEndpoint, organizationId, environmentId, computePoolId, principalId, flinkApiKey, flinkApiSecret, meta.(*Client).isFlinkMetadataSet, meta.(*Client).oauthToken)
+	flinkRestClient := meta.(*Client).flinkRestClientFactory.CreateFlinkRestClient(restEndpoint, organizationId, environmentId, computePoolId, principalId, flinkApiKey, flinkApiSecret, meta.(*Client).isFlinkMetadataSet, meta.(*Client).oauthToken)
 
 	name := d.Get(paramDisplayName).(string)
 	kafkaId := d.Get(paramKafkaCluster).(string)
 
-	table, _, err := executeMaterializedTableRead(flinkRestClient.fgApiContext(ctx), flinkRestClient, organizationId, environmentId, kafkaId, name)
+	table, _, err := executeMaterializedTableRead(flinkRestClient.apiContext(ctx), flinkRestClient, organizationId, environmentId, kafkaId, name)
 	if err != nil {
 		return diag.FromErr(createDescriptiveError(err))
 	}
@@ -721,16 +722,16 @@ func materializedTableUpdate(ctx context.Context, d *schema.ResourceData, meta i
 
 	if d.HasChange(paramWatermarkExpression) {
 		if table.Spec.Watermark == nil {
-			table.Spec.Watermark = &flinkgatewayinternalv1.SqlV1MaterializedTableWatermark{}
+			table.Spec.Watermark = &flinkgatewayv1.SqlV1Watermark{}
 		}
 		table.Spec.Watermark.SetExpression(d.Get(paramWatermarkExpression).(string))
 	}
 
 	if d.HasChange(paramWatermarkColumnName) {
 		if table.Spec.Watermark == nil {
-			table.Spec.Watermark = &flinkgatewayinternalv1.SqlV1MaterializedTableWatermark{}
+			table.Spec.Watermark = &flinkgatewayv1.SqlV1Watermark{}
 		}
-		table.Spec.Watermark.SetColumnName(d.Get(paramWatermarkColumnName).(string))
+		table.Spec.Watermark.SetColumn(d.Get(paramWatermarkColumnName).(string))
 	}
 
 	if d.HasChange(paramComputePool) {
@@ -760,7 +761,7 @@ func materializedTableUpdate(ctx context.Context, d *schema.ResourceData, meta i
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Updating Flink Materialized Table %q: %s", d.Id(), updateMaterializedTableRequestJson), map[string]interface{}{flinkMaterializedTableLoggingKey: d.Id()})
 
-	req := flinkRestClient.apiClientInternal.MaterializedTablesSqlV1Api.UpdateSqlv1MaterializedTable(flinkRestClient.fgApiContext(ctx), organizationId, environmentId, kafkaId, name).SqlV1MaterializedTable(table)
+	req := flinkRestClient.apiClient.MaterializedTablesSqlV1Api.UpdateSqlv1MaterializedTable(flinkRestClient.apiContext(ctx), organizationId, environmentId, kafkaId, name).SqlV1MaterializedTable(table)
 	updatedTable, resp, err := req.Execute()
 
 	if err != nil {
@@ -795,7 +796,7 @@ func waitForMaterializedTableQueryUpdate(ctx context.Context, c *FlinkRestClient
 	deadline := time.Now().Add(timeout)
 
 	for time.Now().Before(deadline) {
-		table, _, err := executeMaterializedTableRead(c.fgApiContext(ctx), c, orgId, envId, kafkaId, tableName)
+		table, _, err := executeMaterializedTableRead(c.apiContext(ctx), c, orgId, envId, kafkaId, tableName)
 		if err == nil {
 			actualNormalized := normalizeFlinkQuery(table.Spec.GetQuery())
 			if actualNormalized == expectedNormalized {
@@ -843,7 +844,7 @@ func getStringSet(d *schema.ResourceData, key string) []string {
 	return result
 }
 
-func expandMaterializedTableConstraints(d *schema.ResourceData, key string) []flinkgatewayinternalv1.SqlV1MaterializedTableConstraint {
+func expandMaterializedTableConstraints(d *schema.ResourceData, key string) []flinkgatewayv1.SqlV1Constraint {
 	raw, ok := d.GetOk(key)
 	if !ok || raw == nil {
 		return nil
@@ -854,7 +855,7 @@ func expandMaterializedTableConstraints(d *schema.ResourceData, key string) []fl
 		return nil
 	}
 
-	result := make([]flinkgatewayinternalv1.SqlV1MaterializedTableConstraint, 0, len(list))
+	result := make([]flinkgatewayv1.SqlV1Constraint, 0, len(list))
 
 	for _, v := range list {
 		m, ok := v.(map[string]interface{})
@@ -862,12 +863,12 @@ func expandMaterializedTableConstraints(d *schema.ResourceData, key string) []fl
 			continue
 		}
 
-		var c flinkgatewayinternalv1.SqlV1MaterializedTableConstraint
+		var c flinkgatewayv1.SqlV1Constraint
 		if name, ok := m["name"].(string); ok && name != "" {
 			c.Name = &name
 		}
 		if kind, ok := m["kind"].(string); ok && kind != "" {
-			c.Kind = &kind
+			c.Type = &kind
 		}
 		if enforced, ok := m["enforced"].(bool); ok {
 			c.Enforced = &enforced
@@ -880,7 +881,7 @@ func expandMaterializedTableConstraints(d *schema.ResourceData, key string) []fl
 				}
 			}
 			if len(cols) > 0 {
-				c.ColumnNames = &cols
+				c.Columns = &cols
 			}
 		}
 		result = append(result, c)
@@ -891,14 +892,14 @@ func expandMaterializedTableConstraints(d *schema.ResourceData, key string) []fl
 	return result
 }
 
-func expandAllColumns(d *schema.ResourceData) []flinkgatewayinternalv1.SqlV1MaterializedTableColumnDetails {
+func expandAllColumns(d *schema.ResourceData) []flinkgatewayv1.SqlV1ColumnDetails {
 	raw, ok := d.GetOk(paramColumns)
 	if !ok || raw == nil {
 		return nil
 	}
 
 	columnsList := raw.([]interface{})
-	var result []flinkgatewayinternalv1.SqlV1MaterializedTableColumnDetails
+	var result []flinkgatewayv1.SqlV1ColumnDetails
 
 	for _, colRaw := range columnsList {
 		colMap, ok := colRaw.(map[string]interface{})
@@ -912,8 +913,8 @@ func expandAllColumns(d *schema.ResourceData) []flinkgatewayinternalv1.SqlV1Mate
 				if !ok {
 					continue
 				}
-				col := flinkgatewayinternalv1.SqlV1MaterializedTableColumnDetails{
-					SqlV1ComputedColumn: &flinkgatewayinternalv1.SqlV1ComputedColumn{},
+				col := flinkgatewayv1.SqlV1ColumnDetails{
+					SqlV1ComputedColumn: &flinkgatewayv1.SqlV1ComputedColumn{},
 				}
 				if name, ok := cm[paramComputedName].(string); ok && name != "" {
 					col.SqlV1ComputedColumn.Name = &name
@@ -943,8 +944,8 @@ func expandAllColumns(d *schema.ResourceData) []flinkgatewayinternalv1.SqlV1Mate
 				if !ok {
 					continue
 				}
-				col := flinkgatewayinternalv1.SqlV1MaterializedTableColumnDetails{
-					SqlV1PhysicalColumn: &flinkgatewayinternalv1.SqlV1PhysicalColumn{},
+				col := flinkgatewayv1.SqlV1ColumnDetails{
+					SqlV1PhysicalColumn: &flinkgatewayv1.SqlV1PhysicalColumn{},
 				}
 				if name, ok := pm[paramPhysicalName].(string); ok && name != "" {
 					col.SqlV1PhysicalColumn.Name = name
@@ -968,8 +969,8 @@ func expandAllColumns(d *schema.ResourceData) []flinkgatewayinternalv1.SqlV1Mate
 				if !ok {
 					continue
 				}
-				col := flinkgatewayinternalv1.SqlV1MaterializedTableColumnDetails{
-					SqlV1MetadataColumn: &flinkgatewayinternalv1.SqlV1MetadataColumn{},
+				col := flinkgatewayv1.SqlV1ColumnDetails{
+					SqlV1MetadataColumn: &flinkgatewayv1.SqlV1MetadataColumn{},
 				}
 				if name, ok := mm[paramMetadataName].(string); ok && name != "" {
 					col.SqlV1MetadataColumn.Name = name

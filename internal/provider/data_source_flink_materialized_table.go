@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	flinkgatewayinternalv1 "github.com/confluentinc/ccloud-sdk-go-v2-internal/flink-gateway/v1"
+	flinkgatewayv1 "github.com/confluentinc/ccloud-sdk-go-v2/flink-gateway/v1"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -281,7 +281,7 @@ func materializedTableDataSourceRead(ctx context.Context, d *schema.ResourceData
 	if err != nil {
 		return diag.Errorf("error reading Flink Materialized Table: %s", createDescriptiveError(err))
 	}
-	flinkRestClient := meta.(*Client).flinkRestClientFactory.CreateFlinkRestClientInternal(restEndpoint, organizationId, environmentId, computePoolId, "", flinkApiKey, flinkApiSecret, meta.(*Client).isFlinkMetadataSet, meta.(*Client).oauthToken)
+	flinkRestClient := meta.(*Client).flinkRestClientFactory.CreateFlinkRestClient(restEndpoint, organizationId, environmentId, computePoolId, "", flinkApiKey, flinkApiSecret, meta.(*Client).isFlinkMetadataSet, meta.(*Client).oauthToken)
 
 	flinkMaterializedTables, err := loadMaterializedTables(ctx, flinkRestClient)
 	if err != nil {
@@ -290,12 +290,17 @@ func materializedTableDataSourceRead(ctx context.Context, d *schema.ResourceData
 
 	for _, flinkMaterializedTable := range flinkMaterializedTables {
 		if flinkMaterializedTable.GetName() == displayName {
-			fmtJson, err := json.Marshal(flinkMaterializedTable)
+			kafkaClusterId := flinkMaterializedTable.Spec.GetKafkaClusterId()
+			fullTable, resp, err := executeMaterializedTableRead(flinkRestClient.apiContext(ctx), flinkRestClient, organizationId, environmentId, kafkaClusterId, displayName)
 			if err != nil {
-				return diag.Errorf("error reading flink materialized table %q: error marshaling %#v to json: %s", displayName, flinkMaterializedTable, createDescriptiveError(err))
+				return diag.Errorf("error reading flink materialized table %q: %s", displayName, createDescriptiveError(err, resp))
+			}
+			fmtJson, err := json.Marshal(fullTable)
+			if err != nil {
+				return diag.Errorf("error reading flink materialized table %q: error marshaling %#v to json: %s", displayName, fullTable, createDescriptiveError(err))
 			}
 			tflog.Debug(ctx, fmt.Sprintf("Fetched Flink Materialized Table using display name %q: %s", displayName, fmtJson))
-			if _, err := setMaterializedTableAttributes(d, flinkMaterializedTable, flinkRestClient); err != nil {
+			if _, err := setMaterializedTableAttributes(d, fullTable, flinkRestClient); err != nil {
 				return diag.FromErr(createDescriptiveError(err))
 			}
 			return nil
@@ -304,8 +309,8 @@ func materializedTableDataSourceRead(ctx context.Context, d *schema.ResourceData
 	return diag.Errorf("error reading Flink Materialized Table: materialized table with display_name %q was not found", displayName)
 }
 
-func loadMaterializedTables(ctx context.Context, c *FlinkRestClient) ([]flinkgatewayinternalv1.SqlV1MaterializedTable, error) {
-	flinkMaterializedTables := make([]flinkgatewayinternalv1.SqlV1MaterializedTable, 0)
+func loadMaterializedTables(ctx context.Context, c *FlinkRestClient) ([]flinkgatewayv1.SqlV1MaterializedTable, error) {
+	flinkMaterializedTables := make([]flinkgatewayv1.SqlV1MaterializedTable, 0)
 	done := false
 	pageToken := ""
 	for !done {
@@ -316,7 +321,7 @@ func loadMaterializedTables(ctx context.Context, c *FlinkRestClient) ([]flinkgat
 		flinkMaterializedTables = append(flinkMaterializedTables, materializedTablesPageList.GetData()...)
 
 		nextPageUrlString := materializedTablesPageList.GetMetadata().Next
-		nextPageUrlStringNullable := flinkgatewayinternalv1.NewNullableString(nextPageUrlString)
+		nextPageUrlStringNullable := flinkgatewayv1.NewNullableString(nextPageUrlString)
 
 		if nextPageUrlStringNullable.IsSet() {
 			nextPageUrlString2 := *nextPageUrlStringNullable.Get()
@@ -334,10 +339,10 @@ func loadMaterializedTables(ctx context.Context, c *FlinkRestClient) ([]flinkgat
 	}
 	return flinkMaterializedTables, nil
 }
-func executeListFlinkMaterializedTables(ctx context.Context, c *FlinkRestClient, pageToken string) (flinkgatewayinternalv1.SqlV1MaterializedTableList, *http.Response, error) {
+func executeListFlinkMaterializedTables(ctx context.Context, c *FlinkRestClient, pageToken string) (flinkgatewayv1.SqlV1MaterializedTableList, *http.Response, error) {
 	if pageToken != "" {
-		return c.apiClientInternal.MaterializedTablesSqlV1Api.ListSqlv1MaterializedTables(c.fgApiContext(ctx), c.organizationId, c.environmentId).PageSize(listFlinkArtifactsPageSize).PageToken(pageToken).Execute()
+		return c.apiClient.MaterializedTablesSqlV1Api.ListSqlv1MaterializedTables(c.apiContext(ctx), c.organizationId, c.environmentId).PageSize(listFlinkArtifactsPageSize).PageToken(pageToken).Execute()
 	} else {
-		return c.apiClientInternal.MaterializedTablesSqlV1Api.ListSqlv1MaterializedTables(c.fgApiContext(ctx), c.organizationId, c.environmentId).PageSize(listFlinkArtifactsPageSize).Execute()
+		return c.apiClient.MaterializedTablesSqlV1Api.ListSqlv1MaterializedTables(c.apiContext(ctx), c.organizationId, c.environmentId).PageSize(listFlinkArtifactsPageSize).Execute()
 	}
 }

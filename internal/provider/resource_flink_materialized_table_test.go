@@ -395,7 +395,7 @@ func testAccCheckMaterializedTableExists(n string) resource.TestCheckFunc {
 }
 func testAccCheckMaterializedTableDestroy(s *terraform.State, url string) error {
 	testClient := testAccProvider.Meta().(*Client)
-	c := testClient.flinkRestClientFactory.CreateFlinkRestClientInternal(url, flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkComputePoolIdTest, flinkPrincipalIdTest, kafkaApiKey, kafkaApiSecret, false, testClient.oauthToken)
+	c := testClient.flinkRestClientFactory.CreateFlinkRestClient(url, flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkComputePoolIdTest, flinkPrincipalIdTest, kafkaApiKey, kafkaApiSecret, false, testClient.oauthToken)
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "confluent_flink_materialized_table" {
 			continue
@@ -403,7 +403,7 @@ func testAccCheckMaterializedTableDestroy(s *terraform.State, url string) error 
 		deletedId := rs.Primary.ID
 		tableName := getTableName(deletedId)
 		kafkaId := getKafkaId(deletedId)
-		_, response, err := executeMaterializedTableRead(c.fgApiContext(context.Background()), c, flinkOrganizationIdTest, flinkEnvironmentIdTest, kafkaId, tableName)
+		_, response, err := executeMaterializedTableRead(c.apiContext(context.Background()), c, flinkOrganizationIdTest, flinkEnvironmentIdTest, kafkaId, tableName)
 		if response != nil && (response.StatusCode == http.StatusForbidden || response.StatusCode == http.StatusNotFound) {
 			return nil
 		} else if err == nil && deletedId != "" {

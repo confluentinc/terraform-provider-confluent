@@ -39,7 +39,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
-	flinkgatewayinternalv1 "github.com/confluentinc/ccloud-sdk-go-v2-internal/flink-gateway/v1"
 	apikeysv2 "github.com/confluentinc/ccloud-sdk-go-v2/apikeys/v2"
 	byokv1 "github.com/confluentinc/ccloud-sdk-go-v2/byok/v1"
 	camv1 "github.com/confluentinc/ccloud-sdk-go-v2/cam/v1"
@@ -722,7 +721,6 @@ type CatalogRestClient struct {
 }
 
 type FlinkRestClient struct {
-	apiClientInternal            *flinkgatewayinternalv1.APIClient
 	apiClient                    *flinkgatewayv1.APIClient
 	externalAccessToken          *OAuthToken
 	organizationId               string
@@ -844,35 +842,6 @@ func (c *FlinkRestClient) apiContext(ctx context.Context) context.Context {
 
 	if c.flinkApiKey != "" && c.flinkApiSecret != "" {
 		return context.WithValue(ctx, flinkgatewayv1.ContextBasicAuth, flinkgatewayv1.BasicAuth{
-			UserName: c.flinkApiKey,
-			Password: c.flinkApiSecret,
-		})
-	}
-
-	tflog.Warn(ctx, fmt.Sprintf("Could not find Flink API Key or OAuth token for Flink %q", c.restEndpoint))
-	return ctx
-}
-
-func (c *FlinkRestClient) fgApiContext(ctx context.Context) context.Context {
-	if c.externalAccessToken != nil {
-		currToken := c.externalAccessToken
-		token, err := fetchExternalOAuthToken(ctx, currToken.TokenUrl, currToken.ClientId, currToken.ClientSecret, currToken.Scope, currToken.IdentityPoolId, currToken, currToken.HTTPClient)
-		if err != nil {
-			tflog.Error(ctx, fmt.Sprintf("Failed to get OAuth token for Flink rest client: %v", err))
-		}
-		if token != nil {
-			c.externalAccessToken = token
-			return context.WithValue(ctx, flinkgatewayinternalv1.ContextAccessToken, c.externalAccessToken.AccessToken)
-		}
-		if currToken.AccessToken != "" {
-			return context.WithValue(ctx, flinkgatewayinternalv1.ContextAccessToken, currToken.AccessToken)
-		}
-		tflog.Warn(ctx, fmt.Sprintf("Could not find Flink OAuth token for Flink %q", c.restEndpoint))
-		return ctx
-	}
-
-	if c.flinkApiKey != "" && c.flinkApiSecret != "" {
-		return context.WithValue(ctx, flinkgatewayinternalv1.ContextBasicAuth, flinkgatewayinternalv1.BasicAuth{
 			UserName: c.flinkApiKey,
 			Password: c.flinkApiSecret,
 		})
