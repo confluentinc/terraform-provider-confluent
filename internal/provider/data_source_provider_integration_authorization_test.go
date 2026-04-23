@@ -51,7 +51,9 @@ func TestAccDataSourceProviderIntegrationAuthorizationAzure(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)
-	_ = wiremockClient.StubFor(readStub)
+	if err := wiremockClient.StubFor(readStub); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -97,7 +99,9 @@ func TestAccDataSourceProviderIntegrationAuthorizationGcp(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)
-	_ = wiremockClient.StubFor(readStub)
+	if err := wiremockClient.StubFor(readStub); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },

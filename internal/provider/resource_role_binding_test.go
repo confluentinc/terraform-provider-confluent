@@ -52,27 +52,33 @@ func TestAccRoleBinding(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusCreated,
 		)
-	_ = wiremockClient.StubFor(createRolebindingStub)
+	if err := wiremockClient.StubFor(createRolebindingStub); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readCreatedRolebindingResponse, _ := ioutil.ReadFile("../testdata/role_binding/read_created_role_binding.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(roleBindingUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(roleBindingUrlPath)).
 		InScenario(rolebindingScenarioName).
 		WhenScenarioStateIs(scenarioStateRoleBindingHasBeenCreated).
 		WillReturn(
 			string(readCreatedRolebindingResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readDeletedRolebindingResponse, _ := ioutil.ReadFile("../testdata/role_binding/read_deleted_role_binding.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(roleBindingUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(roleBindingUrlPath)).
 		InScenario(rolebindingScenarioName).
 		WhenScenarioStateIs(scenarioStateRoleBindingHasBeenDeleted).
 		WillReturn(
 			string(readDeletedRolebindingResponse),
 			contentTypeJSONHeader,
 			http.StatusForbidden,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	deleteRolebindingStub := wiremock.Delete(wiremock.URLPathEqualTo(roleBindingUrlPath)).
 		InScenario(rolebindingScenarioName).
@@ -83,7 +89,9 @@ func TestAccRoleBinding(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNoContent,
 		)
-	_ = wiremockClient.StubFor(deleteRolebindingStub)
+	if err := wiremockClient.StubFor(deleteRolebindingStub); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	fullRbResourceLabel := fmt.Sprintf("confluent_role_binding.%s", rbResourceLabel)
 

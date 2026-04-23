@@ -54,9 +54,11 @@ func TestAccAclsWithEnhancedProviderBlock2(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusCreated,
 		)
-	_ = wiremockClient.StubFor(createAclStub)
+	if err := wiremockClient.StubFor(createAclStub); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 	readCreatedAclResponse, _ := ioutil.ReadFile("../testdata/kafka_acl/search_created_kafka_acls.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(createKafkaAclPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(createKafkaAclPath)).
 		WithQueryParam("host", wiremock.EqualTo(aclHost)).
 		WithQueryParam("operation", wiremock.EqualTo(aclOperation)).
 		WithQueryParam("pattern_type", wiremock.EqualTo(aclPatternType)).
@@ -70,10 +72,12 @@ func TestAccAclsWithEnhancedProviderBlock2(t *testing.T) {
 			string(readCreatedAclResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readEmptyAclResponse, _ := ioutil.ReadFile("../testdata/kafka_acl/search_deleted_kafka_acls.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(createKafkaAclPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(createKafkaAclPath)).
 		WithQueryParam("host", wiremock.EqualTo(aclHost)).
 		WithQueryParam("operation", wiremock.EqualTo(aclOperation)).
 		WithQueryParam("pattern_type", wiremock.EqualTo(aclPatternType)).
@@ -87,7 +91,9 @@ func TestAccAclsWithEnhancedProviderBlock2(t *testing.T) {
 			string(readEmptyAclResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readDeletedAclResponse, _ := ioutil.ReadFile("../testdata/kafka_acl/delete_kafka_acls.json")
 	deleteAclStub := wiremock.Delete(wiremock.URLPathEqualTo(createKafkaAclPath)).
@@ -106,7 +112,9 @@ func TestAccAclsWithEnhancedProviderBlock2(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)
-	_ = wiremockClient.StubFor(deleteAclStub)
+	if err := wiremockClient.StubFor(deleteAclStub); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	// Set fake values for secrets since those are required for importing
 	_ = os.Setenv("IMPORT_KAFKA_API_KEY", kafkaApiKey)

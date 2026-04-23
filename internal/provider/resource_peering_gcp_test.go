@@ -54,10 +54,12 @@ func TestAccGcpPeeringAccess(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusCreated,
 		)
-	_ = wiremockClient.StubFor(createGcpPeeringStub)
+	if err := wiremockClient.StubFor(createGcpPeeringStub); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readProvisioningGcpPeeringResponse, _ := ioutil.ReadFile("../testdata/peering/gcp/read_provisioning_peering.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(gcpPeeringUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(gcpPeeringUrlPath)).
 		InScenario(gcpPeeringScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(gcpPeeringEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateGcpPeeringIsProvisioning).
@@ -66,10 +68,12 @@ func TestAccGcpPeeringAccess(t *testing.T) {
 			string(readProvisioningGcpPeeringResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readCreatedGcpPeeringResponse, _ := ioutil.ReadFile("../testdata/peering/gcp/read_created_peering.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(gcpPeeringUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(gcpPeeringUrlPath)).
 		InScenario(gcpPeeringScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(gcpPeeringEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateGcpPeeringHasBeenCreated).
@@ -77,7 +81,9 @@ func TestAccGcpPeeringAccess(t *testing.T) {
 			string(readCreatedGcpPeeringResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	deleteGcpPeeringStub := wiremock.Delete(wiremock.URLPathEqualTo(gcpPeeringUrlPath)).
 		InScenario(gcpPeeringScenarioName).
@@ -89,10 +95,12 @@ func TestAccGcpPeeringAccess(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNoContent,
 		)
-	_ = wiremockClient.StubFor(deleteGcpPeeringStub)
+	if err := wiremockClient.StubFor(deleteGcpPeeringStub); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readDeprovisioningGcpPeeringResponse, _ := ioutil.ReadFile("../testdata/peering/gcp/read_deprovisioning_peering.json")
-	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(awsPeeringUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(awsPeeringUrlPath)).
 		InScenario(gcpPeeringScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(gcpPeeringEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateGcpPeeringIsDeprovisioning).
@@ -101,10 +109,12 @@ func TestAccGcpPeeringAccess(t *testing.T) {
 			string(readDeprovisioningGcpPeeringResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readDeletedGcpPeeringResponse, _ := ioutil.ReadFile("../testdata/peering/gcp/read_deleted_peering.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(gcpPeeringUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(gcpPeeringUrlPath)).
 		InScenario(gcpPeeringScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(gcpPeeringEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateGcpPeeringHasBeenDeleted).
@@ -112,7 +122,9 @@ func TestAccGcpPeeringAccess(t *testing.T) {
 			string(readDeletedGcpPeeringResponse),
 			contentTypeJSONHeader,
 			http.StatusNotFound,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	gcpPeeringDisplayName := "my-test-peering"
 	gcpPeeringResourceLabel := "test"

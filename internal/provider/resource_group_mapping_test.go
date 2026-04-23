@@ -52,17 +52,21 @@ func TestAccGroupMapping(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusCreated,
 		)
-	_ = wiremockClient.StubFor(createGroupMappingStub)
+	if err := wiremockClient.StubFor(createGroupMappingStub); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readCreatedGroupMappingResponse, _ := ioutil.ReadFile("../testdata/group_mapping/read_created_group_mapping.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/sso/group-mappings/group-w4vP")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/sso/group-mappings/group-w4vP")).
 		InScenario(groupMappingScenarioName).
 		WhenScenarioStateIs(scenarioStateGroupMappingHasBeenCreated).
 		WillReturn(
 			string(readCreatedGroupMappingResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readUpdatedGroupMappingResponse, _ := ioutil.ReadFile("../testdata/group_mapping/read_updated_group_mapping.json")
 	patchGroupMappingStub := wiremock.Patch(wiremock.URLPathEqualTo("/iam/v2/sso/group-mappings/group-w4vP")).
@@ -74,26 +78,32 @@ func TestAccGroupMapping(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)
-	_ = wiremockClient.StubFor(patchGroupMappingStub)
+	if err := wiremockClient.StubFor(patchGroupMappingStub); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/sso/group-mappings/group-w4vP")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/sso/group-mappings/group-w4vP")).
 		InScenario(groupMappingScenarioName).
 		WhenScenarioStateIs(scenarioStateGroupMappingDescriptionHaveBeenUpdated).
 		WillReturn(
 			string(readUpdatedGroupMappingResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readDeletedGroupMappingResponse, _ := ioutil.ReadFile("../testdata/group_mapping/read_deleted_group_mapping.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/sso/group-mappings/group-w4vP")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/sso/group-mappings/group-w4vP")).
 		InScenario(groupMappingScenarioName).
 		WhenScenarioStateIs(scenarioStateGroupMappingHasBeenDeleted).
 		WillReturn(
 			string(readDeletedGroupMappingResponse),
 			contentTypeJSONHeader,
 			http.StatusNotFound,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	deleteGroupMappingStub := wiremock.Delete(wiremock.URLPathEqualTo("/iam/v2/sso/group-mappings/group-w4vP")).
 		InScenario(groupMappingScenarioName).
@@ -104,7 +114,9 @@ func TestAccGroupMapping(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNoContent,
 		)
-	_ = wiremockClient.StubFor(deleteGroupMappingStub)
+	if err := wiremockClient.StubFor(deleteGroupMappingStub); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	// in order to test tf update (step #3)
 	groupMappingUpdatedFilter := "\"updated\" in groups"

@@ -29,14 +29,16 @@ func TestAccDataSourceTableflowTopic(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	readTableflowTopicResponse, _ := os.ReadFile("../testdata/tableflow_topic/read_created_byob_aws_tt.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/tableflow/v1/tableflow-topics/topic_1")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/tableflow/v1/tableflow-topics/topic_1")).
 		InScenario(TableflowTopicDataSourceScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillReturn(
 			string(readTableflowTopicResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	TableflowTopicResourceName := "data.confluent_tableflow_topic.main"
 
@@ -92,14 +94,16 @@ func TestAccDataSourceTableflowTopicErrorHandling(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	readTableflowTopicResponse, _ := os.ReadFile("../testdata/tableflow_topic/update_error_handling.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/tableflow/v1/tableflow-topics/topic_1")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/tableflow/v1/tableflow-topics/topic_1")).
 		InScenario(TableflowTopicDataSourceScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillReturn(
 			string(readTableflowTopicResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	TableflowTopicResourceName := "data.confluent_tableflow_topic.main"
 
@@ -153,14 +157,16 @@ func TestAccDataSourceTableflowTopicAzure(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	readTableflowTopicResponse, _ := os.ReadFile("../testdata/tableflow_topic/read_created_azure_tt.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/tableflow/v1/tableflow-topics/topic_1")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/tableflow/v1/tableflow-topics/topic_1")).
 		InScenario(TableflowTopicDataSourceScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillReturn(
 			string(readTableflowTopicResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	TableflowTopicResourceName := "data.confluent_tableflow_topic.main"
 

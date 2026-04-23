@@ -55,10 +55,12 @@ func TestAccComputePool(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusCreated,
 		)
-	_ = wiremockClient.StubFor(createComputePoolStub)
+	if err := wiremockClient.StubFor(createComputePoolStub); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readProvisioningComputePoolResponse, _ := ioutil.ReadFile("../testdata/compute_pool/read_provisioning_compute_pool.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(flinkComputePoolUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(flinkComputePoolUrlPath)).
 		InScenario(flinkComputePoolScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(flinkComputePoolEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateComputePoolIsProvisioning).
@@ -67,10 +69,12 @@ func TestAccComputePool(t *testing.T) {
 			string(readProvisioningComputePoolResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readCreatedComputePoolResponse, _ := ioutil.ReadFile("../testdata/compute_pool/read_created_compute_pool.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(flinkComputePoolUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(flinkComputePoolUrlPath)).
 		InScenario(flinkComputePoolScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(flinkComputePoolEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateComputePoolHasBeenCreated).
@@ -78,7 +82,9 @@ func TestAccComputePool(t *testing.T) {
 			string(readCreatedComputePoolResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	deleteComputePoolStub := wiremock.Delete(wiremock.URLPathEqualTo(flinkComputePoolUrlPath)).
 		InScenario(flinkComputePoolScenarioName).
@@ -90,10 +96,12 @@ func TestAccComputePool(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNoContent,
 		)
-	_ = wiremockClient.StubFor(deleteComputePoolStub)
+	if err := wiremockClient.StubFor(deleteComputePoolStub); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readDeletedComputePoolResponse, _ := ioutil.ReadFile("../testdata/compute_pool/read_deleted_compute_pool.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(flinkComputePoolUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(flinkComputePoolUrlPath)).
 		InScenario(flinkComputePoolScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(flinkComputePoolEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateComputePoolHasBeenDeleted).
@@ -101,7 +109,9 @@ func TestAccComputePool(t *testing.T) {
 			string(readDeletedComputePoolResponse),
 			contentTypeJSONHeader,
 			http.StatusNotFound,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	flinkComputePoolResourceLabel := "test"
 	fullComputePoolResourceLabel := fmt.Sprintf("confluent_flink_compute_pool.%s", flinkComputePoolResourceLabel)

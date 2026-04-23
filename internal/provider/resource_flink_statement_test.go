@@ -54,10 +54,12 @@ func TestAccFlinkStatement2(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusCreated,
 		)
-	_ = wiremockClient.StubFor(createFlinkStatementStub)
+	if err := wiremockClient.StubFor(createFlinkStatementStub); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readPendingFlinkStatementResponse, _ := ioutil.ReadFile("../testdata/flink_statement/read_pending_flink_statement.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readFlinkStatementPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readFlinkStatementPath)).
 		InScenario(statementScenarioName).
 		WhenScenarioStateIs(scenarioStateStatementIsPending).
 		WillSetStateTo(scenarioStateStatementHasBeenCreated).
@@ -65,17 +67,21 @@ func TestAccFlinkStatement2(t *testing.T) {
 			string(readPendingFlinkStatementResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readCreatedFlinkStatementResponse, _ := ioutil.ReadFile("../testdata/flink_statement/read_running_flink_statement.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readFlinkStatementPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readFlinkStatementPath)).
 		InScenario(statementScenarioName).
 		WhenScenarioStateIs(scenarioStateStatementHasBeenCreated).
 		WillReturn(
 			string(readCreatedFlinkStatementResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	// Update the Flink statement stopped status false -> true to trigger a stop
 	stopFlinkStatementResponse, _ := ioutil.ReadFile("../testdata/flink_statement/read_stopped_flink_statement.json")
@@ -88,17 +94,21 @@ func TestAccFlinkStatement2(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)
-	_ = wiremockClient.StubFor(stopFlinkStatementStub)
+	if err := wiremockClient.StubFor(stopFlinkStatementStub); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readStoppedFlinkStatementResponse, _ := ioutil.ReadFile("../testdata/flink_statement/read_stopped_flink_statement.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readFlinkStatementPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readFlinkStatementPath)).
 		InScenario(statementScenarioName).
 		WhenScenarioStateIs(scenarioStateStatementHasBeenStopped).
 		WillReturn(
 			string(readStoppedFlinkStatementResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	// Update the Flink statement stopped status true -> false to trigger a resume with different `principal` and `compute_pool`
 	resumingFlinkStatementResponse, _ := ioutil.ReadFile("../testdata/flink_statement/read_resuming_flink_statement.json")
@@ -111,10 +121,12 @@ func TestAccFlinkStatement2(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)
-	_ = wiremockClient.StubFor(resumingFlinkStatementStub)
+	if err := wiremockClient.StubFor(resumingFlinkStatementStub); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readResumedFlinkStatementResponse, _ := ioutil.ReadFile("../testdata/flink_statement/read_resumed_flink_statement.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readFlinkStatementPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readFlinkStatementPath)).
 		InScenario(statementScenarioName).
 		WhenScenarioStateIs(scenarioStateStatementIsResuming).
 		WillSetStateTo(scenarioStateStatementHasBeenResumed).
@@ -122,17 +134,21 @@ func TestAccFlinkStatement2(t *testing.T) {
 			string(readResumedFlinkStatementResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readPostResumeFlinkStatementResponse, _ := ioutil.ReadFile("../testdata/flink_statement/read_resumed_flink_statement.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readFlinkStatementPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readFlinkStatementPath)).
 		InScenario(statementScenarioName).
 		WhenScenarioStateIs(scenarioStateStatementHasBeenResumed).
 		WillReturn(
 			string(readPostResumeFlinkStatementResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	deleteFlinkStatementStub := wiremock.Delete(wiremock.URLPathEqualTo(readFlinkStatementPath)).
 		InScenario(statementScenarioName).
@@ -143,7 +159,9 @@ func TestAccFlinkStatement2(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNoContent,
 		)
-	_ = wiremockClient.StubFor(deleteFlinkStatementStub)
+	if err := wiremockClient.StubFor(deleteFlinkStatementStub); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readDeletingFlinkStatementStub := wiremock.Get(wiremock.URLPathEqualTo(readFlinkStatementPath)).
 		InScenario(statementScenarioName).
@@ -154,17 +172,21 @@ func TestAccFlinkStatement2(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNoContent,
 		)
-	_ = wiremockClient.StubFor(readDeletingFlinkStatementStub)
+	if err := wiremockClient.StubFor(readDeletingFlinkStatementStub); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readDeletedFlinkStatementResponse, _ := ioutil.ReadFile("../testdata/flink_statement/read_deleted_flink_statement.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readFlinkStatementPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readFlinkStatementPath)).
 		InScenario(statementScenarioName).
 		WhenScenarioStateIs(scenarioStateStatementHasBeenDeleted).
 		WillReturn(
 			string(readDeletedFlinkStatementResponse),
 			contentTypeJSONHeader,
 			http.StatusNotFound,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	// Set fake values for secrets since those are required for importing
 	_ = os.Setenv("IMPORT_FLINK_API_KEY", kafkaApiKey)

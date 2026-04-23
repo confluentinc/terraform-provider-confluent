@@ -43,7 +43,7 @@ func TestAccDnsForwarder(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	createDnsForwarderResponse, _ := ioutil.ReadFile("../testdata/network_dns_forwarder/create_dnsf.json")
-	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(dnsForwarderUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(dnsForwarderUrlPath)).
 		InScenario(dnsForwarderScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillSetStateTo(scenarioStateDnsForwarderIsProvisioning).
@@ -51,9 +51,11 @@ func TestAccDnsForwarder(t *testing.T) {
 			string(createDnsForwarderResponse),
 			contentTypeJSONHeader,
 			http.StatusCreated,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(dnsForwarderReadUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(dnsForwarderReadUrlPath)).
 		InScenario(dnsForwarderScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo("env-xxx")).
 		WhenScenarioStateIs(scenarioStateDnsForwarderIsProvisioning).
@@ -62,10 +64,12 @@ func TestAccDnsForwarder(t *testing.T) {
 			string(createDnsForwarderResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readCreatedDnsForwarderResponse, _ := ioutil.ReadFile("../testdata/network_dns_forwarder/read_created_dnsf.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(dnsForwarderReadUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(dnsForwarderReadUrlPath)).
 		InScenario(dnsForwarderScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo("env-xxx")).
 		WhenScenarioStateIs(scenarioStateDnsForwarderHasBeenCreated).
@@ -73,16 +77,20 @@ func TestAccDnsForwarder(t *testing.T) {
 			string(readCreatedDnsForwarderResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(dnsForwarderReadUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(dnsForwarderReadUrlPath)).
 		InScenario(dnsForwarderScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo("env-xxx")).
 		WillReturn(
 			"",
 			contentTypeJSONHeader,
 			http.StatusNoContent,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -129,7 +137,7 @@ func TestAccDnsForwarderGcp(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	createDnsForwarderResponse, _ := ioutil.ReadFile("../testdata/network_dns_forwarder/create_dnsf_gcp.json")
-	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(dnsForwarderUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(dnsForwarderUrlPath)).
 		InScenario(dnsForwarderScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillSetStateTo(scenarioStateDnsForwarderIsProvisioning).
@@ -137,9 +145,11 @@ func TestAccDnsForwarderGcp(t *testing.T) {
 			string(createDnsForwarderResponse),
 			contentTypeJSONHeader,
 			http.StatusCreated,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(dnsForwarderReadUrlPathGcp)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(dnsForwarderReadUrlPathGcp)).
 		InScenario(dnsForwarderScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo("env-xxxx")).
 		WhenScenarioStateIs(scenarioStateDnsForwarderIsProvisioning).
@@ -148,10 +158,12 @@ func TestAccDnsForwarderGcp(t *testing.T) {
 			string(createDnsForwarderResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readCreatedDnsForwarderResponse, _ := ioutil.ReadFile("../testdata/network_dns_forwarder/read_created_dnsf_gcp.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(dnsForwarderReadUrlPathGcp)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(dnsForwarderReadUrlPathGcp)).
 		InScenario(dnsForwarderScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo("env-xxxx")).
 		WhenScenarioStateIs(scenarioStateDnsForwarderHasBeenCreated).
@@ -159,16 +171,20 @@ func TestAccDnsForwarderGcp(t *testing.T) {
 			string(readCreatedDnsForwarderResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(dnsForwarderReadUrlPathGcp)).
+	if err := wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(dnsForwarderReadUrlPathGcp)).
 		InScenario(dnsForwarderScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo("env-xxxx")).
 		WillReturn(
 			"",
 			contentTypeJSONHeader,
 			http.StatusNoContent,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },

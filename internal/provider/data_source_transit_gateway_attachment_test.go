@@ -45,7 +45,7 @@ func TestAccDataSourceTransitGatewayAttachment(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	readCreatedAwsTransitGatewayAttachmentResponse, _ := ioutil.ReadFile("../testdata/transit_gateway_attachment/aws/read_created_transit_gateway_attachment.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(awsTransitGatewayAttachmentUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(awsTransitGatewayAttachmentUrlPath)).
 		InScenario(dataSourceTransitGatewayAttachmentScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(awsTransitGatewayAttachmentEnvironmentId)).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
@@ -53,10 +53,12 @@ func TestAccDataSourceTransitGatewayAttachment(t *testing.T) {
 			string(readCreatedAwsTransitGatewayAttachmentResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readTransitGatewayAttachmentsResponse, _ := ioutil.ReadFile("../testdata/transit_gateway_attachment/aws/read_transit_gateway_attachments.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/networking/v1/transit-gateway-attachments")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/networking/v1/transit-gateway-attachments")).
 		InScenario(dataSourceTransitGatewayAttachmentScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(awsTransitGatewayAttachmentEnvironmentId)).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
@@ -64,7 +66,9 @@ func TestAccDataSourceTransitGatewayAttachment(t *testing.T) {
 			string(readTransitGatewayAttachmentsResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },

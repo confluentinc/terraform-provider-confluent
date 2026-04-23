@@ -43,7 +43,7 @@ func TestAccPrivateLinkAttachmentConnectionAzure(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	createPlattResponse, _ := ioutil.ReadFile("../testdata/private_link_attachment_connection/create_azure_plattc.json")
-	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(privateLinkAttachmentConnectionAzureUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(privateLinkAttachmentConnectionAzureUrlPath)).
 		InScenario(privateLinkAttachmentConnectionAzureResourceScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillSetStateTo(scenarioStatePrivateLinkAttachmentConnectionAzureHasBeenCreated).
@@ -51,25 +51,31 @@ func TestAccPrivateLinkAttachmentConnectionAzure(t *testing.T) {
 			string(createPlattResponse),
 			contentTypeJSONHeader,
 			http.StatusCreated,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readPlattResponse, _ := ioutil.ReadFile("../testdata/private_link_attachment_connection/read_azure_plattc.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(privateLinkAttachmentConnectionAzureReadUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(privateLinkAttachmentConnectionAzureReadUrlPath)).
 		InScenario(privateLinkAttachmentConnectionAzureResourceScenarioName).
 		WhenScenarioStateIs(scenarioStatePrivateLinkAttachmentConnectionAzureHasBeenCreated).
 		WillReturn(
 			string(readPlattResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(privateLinkAttachmentConnectionAzureReadUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(privateLinkAttachmentConnectionAzureReadUrlPath)).
 		InScenario(privateLinkAttachmentConnectionAzureResourceScenarioName).
 		WillReturn(
 			"",
 			contentTypeJSONHeader,
 			http.StatusNoContent,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },

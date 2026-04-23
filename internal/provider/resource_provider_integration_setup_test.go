@@ -53,17 +53,21 @@ func TestAccProviderIntegrationSetupAzure(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusCreated,
 		)
-	_ = wiremockClient.StubFor(createAzureProviderIntegrationV2Stub)
+	if err := wiremockClient.StubFor(createAzureProviderIntegrationV2Stub); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readCreatedAzureProviderIntegrationV2Response, _ := ioutil.ReadFile("../testdata/provider_integration_setup/create_azure_provider_integration_setup.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("/pim/v2/integrations/%s", azureProviderIntegrationV2Id))).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("/pim/v2/integrations/%s", azureProviderIntegrationV2Id))).
 		InScenario(providerIntegrationSetupScenarioName).
 		WhenScenarioStateIs(scenarioStateProviderIntegrationV2HasBeenCreated).
 		WillReturn(
 			string(readCreatedAzureProviderIntegrationV2Response),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	deleteAzureProviderIntegrationV2Stub := wiremock.Delete(wiremock.URLPathEqualTo(fmt.Sprintf("/pim/v2/integrations/%s", azureProviderIntegrationV2Id))).
 		InScenario(providerIntegrationSetupScenarioName).
@@ -74,17 +78,21 @@ func TestAccProviderIntegrationSetupAzure(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNoContent,
 		)
-	_ = wiremockClient.StubFor(deleteAzureProviderIntegrationV2Stub)
+	if err := wiremockClient.StubFor(deleteAzureProviderIntegrationV2Stub); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readDeletedAzureProviderIntegrationV2Response, _ := ioutil.ReadFile("../testdata/provider_integration/read_deleted_aws_provider_integration.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("/pim/v2/integrations/%s", azureProviderIntegrationV2Id))).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("/pim/v2/integrations/%s", azureProviderIntegrationV2Id))).
 		InScenario(providerIntegrationSetupScenarioName).
 		WhenScenarioStateIs(scenarioStateProviderIntegrationV2HasBeenDeleted).
 		WillReturn(
 			string(readDeletedAzureProviderIntegrationV2Response),
 			contentTypeJSONHeader,
 			http.StatusNotFound,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	fullAzureProviderIntegrationV2ResourceLabel := fmt.Sprintf("confluent_provider_integration_setup.%s", azureProviderIntegrationV2ResourceLabel)
 
@@ -146,17 +154,21 @@ func TestAccProviderIntegrationSetupGcp(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusCreated,
 		)
-	_ = wiremockClient.StubFor(createGcpProviderIntegrationV2Stub)
+	if err := wiremockClient.StubFor(createGcpProviderIntegrationV2Stub); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readCreatedGcpProviderIntegrationV2Response, _ := ioutil.ReadFile("../testdata/provider_integration_setup/create_gcp_provider_integration_setup.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("/pim/v2/integrations/%s", gcpProviderIntegrationV2Id))).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("/pim/v2/integrations/%s", gcpProviderIntegrationV2Id))).
 		InScenario(providerIntegrationSetupScenarioName).
 		WhenScenarioStateIs(scenarioStateProviderIntegrationV2HasBeenCreated).
 		WillReturn(
 			string(readCreatedGcpProviderIntegrationV2Response),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	deleteGcpProviderIntegrationV2Stub := wiremock.Delete(wiremock.URLPathEqualTo(fmt.Sprintf("/pim/v2/integrations/%s", gcpProviderIntegrationV2Id))).
 		InScenario(providerIntegrationSetupScenarioName).
@@ -167,17 +179,21 @@ func TestAccProviderIntegrationSetupGcp(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNoContent,
 		)
-	_ = wiremockClient.StubFor(deleteGcpProviderIntegrationV2Stub)
+	if err := wiremockClient.StubFor(deleteGcpProviderIntegrationV2Stub); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readDeletedGcpProviderIntegrationV2Response, _ := ioutil.ReadFile("../testdata/provider_integration/read_deleted_aws_provider_integration.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("/pim/v2/integrations/%s", gcpProviderIntegrationV2Id))).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("/pim/v2/integrations/%s", gcpProviderIntegrationV2Id))).
 		InScenario(providerIntegrationSetupScenarioName).
 		WhenScenarioStateIs(scenarioStateProviderIntegrationV2HasBeenDeleted).
 		WillReturn(
 			string(readDeletedGcpProviderIntegrationV2Response),
 			contentTypeJSONHeader,
 			http.StatusNotFound,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	fullGcpProviderIntegrationV2ResourceLabel := fmt.Sprintf("confluent_provider_integration_setup.%s", gcpProviderIntegrationV2ResourceLabel)
 

@@ -44,27 +44,31 @@ func TestAccDataSourceGroupMapping(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	readCreatedSaResponse, _ := ioutil.ReadFile("../testdata/group_mapping/read_created_group_mapping.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/sso/group-mappings/group-w4vP")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/sso/group-mappings/group-w4vP")).
 		InScenario(groupMappingDataSourceScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillReturn(
 			string(readCreatedSaResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readGroupMappingsPageOneResponse, _ := ioutil.ReadFile("../testdata/group_mapping/read_group_mappings_page_1.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/sso/group-mappings")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/sso/group-mappings")).
 		WithQueryParam("page_size", wiremock.EqualTo(strconv.Itoa(listGroupMappingsPageSize))).
 		InScenario(groupMappingDataSourceScenarioName).
 		WillReturn(
 			string(readGroupMappingsPageOneResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readGroupMappingsPageTwoResponse, _ := ioutil.ReadFile("../testdata/group_mapping/read_group_mappings_page_2.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/sso/group-mappings")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/sso/group-mappings")).
 		WithQueryParam("page_size", wiremock.EqualTo(strconv.Itoa(listGroupMappingsPageSize))).
 		WithQueryParam("page_token", wiremock.EqualTo(groupMappingLastPagePageToken)).
 		InScenario(groupMappingDataSourceScenarioName).
@@ -73,7 +77,9 @@ func TestAccDataSourceGroupMapping(t *testing.T) {
 			string(readGroupMappingsPageTwoResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	fullGroupMappingDataSourceLabel := fmt.Sprintf("data.confluent_group_mapping.%s", groupMappingResourceLabel)
 

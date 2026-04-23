@@ -39,7 +39,9 @@ func TestAccFlinkArtifactAzure(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusCreated,
 		)
-	_ = wiremockClient.StubFor(createArtifactPresignedUrlStub)
+	if err := wiremockClient.StubFor(createArtifactPresignedUrlStub); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	createArtifactResponse, _ := os.ReadFile("../testdata/flink_artifact/create_artifact_azure.json")
 	createArtifactStub := wiremock.Post(wiremock.URLPathEqualTo("/artifact/v1/flink-artifacts")).
@@ -51,10 +53,12 @@ func TestAccFlinkArtifactAzure(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusCreated,
 		)
-	_ = wiremockClient.StubFor(createArtifactStub)
+	if err := wiremockClient.StubFor(createArtifactStub); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readCreatedArtifactResponse, _ := os.ReadFile("../testdata/flink_artifact/read_created_artifact_azure.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(flinkArtifactsUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(flinkArtifactsUrlPath)).
 		InScenario(flinkArtifactScenarioName).
 		WithQueryParam("region", wiremock.EqualTo(flinkArtifactRegionAzure)).
 		WithQueryParam("cloud", wiremock.EqualTo(flinkArtifactCloudAzure)).
@@ -64,7 +68,9 @@ func TestAccFlinkArtifactAzure(t *testing.T) {
 			string(readCreatedArtifactResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	deleteArtifactStub := wiremock.Delete(wiremock.URLPathEqualTo(flinkArtifactsUrlPath)).
 		InScenario(flinkArtifactScenarioName).
@@ -78,10 +84,12 @@ func TestAccFlinkArtifactAzure(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNoContent,
 		)
-	_ = wiremockClient.StubFor(deleteArtifactStub)
+	if err := wiremockClient.StubFor(deleteArtifactStub); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readDeletedArtifactResponse, _ := os.ReadFile("../testdata/flink_artifact/read_deleted_artifact.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(flinkArtifactsUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(flinkArtifactsUrlPath)).
 		InScenario(flinkArtifactScenarioName).
 		WithQueryParam("region", wiremock.EqualTo(flinkArtifactRegionAzure)).
 		WithQueryParam("cloud", wiremock.EqualTo(flinkArtifactCloudAzure)).
@@ -91,7 +99,9 @@ func TestAccFlinkArtifactAzure(t *testing.T) {
 			string(readDeletedArtifactResponse),
 			contentTypeJSONHeader,
 			http.StatusNotFound,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	flinkArtifactResourceLabel := "test"
 	fullFlinkArtifactResourceLabel := fmt.Sprintf("confluent_flink_artifact.%s", flinkArtifactResourceLabel)

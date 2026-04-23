@@ -43,7 +43,7 @@ func TestAccBusinessMetadata(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	createBusinessMetadataResponse, _ := ioutil.ReadFile("../testdata/business_metadata/create_business_metadata.json")
-	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(createBusinessMetadataUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(createBusinessMetadataUrlPath)).
 		InScenario(businessMetadataResourceScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillSetStateTo(scenarioStateBusinessMetadataHasBeenPending).
@@ -51,9 +51,11 @@ func TestAccBusinessMetadata(t *testing.T) {
 			string(createBusinessMetadataResponse),
 			contentTypeJSONHeader,
 			http.StatusCreated,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readCreatedBusinessMetadataUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readCreatedBusinessMetadataUrlPath)).
 		InScenario(businessMetadataResourceScenarioName).
 		WhenScenarioStateIs(scenarioStateBusinessMetadataHasBeenPending).
 		WillSetStateTo(scenarioStateBusinessMetadataHasBeenCreated).
@@ -61,10 +63,12 @@ func TestAccBusinessMetadata(t *testing.T) {
 			"",
 			contentTypeJSONHeader,
 			http.StatusNotFound,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	updateBusinessMetadataResponse, _ := ioutil.ReadFile("../testdata/business_metadata/update_business_metadata.json")
-	_ = wiremockClient.StubFor(wiremock.Put(wiremock.URLPathEqualTo(createBusinessMetadataUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Put(wiremock.URLPathEqualTo(createBusinessMetadataUrlPath)).
 		InScenario(businessMetadataResourceScenarioName).
 		WhenScenarioStateIs(scenarioStateBusinessMetadataHasBeenCreated).
 		WillSetStateTo(scenarioStateBusinessMetadataHasBeenUpdated).
@@ -72,35 +76,43 @@ func TestAccBusinessMetadata(t *testing.T) {
 			string(updateBusinessMetadataResponse),
 			contentTypeJSONHeader,
 			http.StatusCreated,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readBusinessMetadataResponse, _ := ioutil.ReadFile("../testdata/business_metadata/read_created_business_metadata.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readCreatedBusinessMetadataUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readCreatedBusinessMetadataUrlPath)).
 		InScenario(businessMetadataResourceScenarioName).
 		WhenScenarioStateIs(scenarioStateBusinessMetadataHasBeenCreated).
 		WillReturn(
 			string(readBusinessMetadataResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readUpdatedBusinessMetadataResponse, _ := ioutil.ReadFile("../testdata/business_metadata/read_updated_business_metadata.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readCreatedBusinessMetadataUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readCreatedBusinessMetadataUrlPath)).
 		InScenario(businessMetadataResourceScenarioName).
 		WhenScenarioStateIs(scenarioStateBusinessMetadataHasBeenUpdated).
 		WillReturn(
 			string(readUpdatedBusinessMetadataResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(readCreatedBusinessMetadataUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(readCreatedBusinessMetadataUrlPath)).
 		InScenario(businessMetadataResourceScenarioName).
 		WillReturn(
 			"",
 			contentTypeJSONHeader,
 			http.StatusNoContent,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },

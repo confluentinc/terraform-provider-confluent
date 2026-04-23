@@ -43,7 +43,7 @@ func TestAccSchemaExporterWithEnhancedProviderBlock(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	generalResponse, _ := ioutil.ReadFile("../testdata/schema_exporter/general_response.json")
-	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(createSchemaExporterUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(createSchemaExporterUrlPath)).
 		InScenario(schemaExporterResourceScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillSetStateTo(scenarioStateSchemaExporterHasBeenCreated).
@@ -51,88 +51,108 @@ func TestAccSchemaExporterWithEnhancedProviderBlock(t *testing.T) {
 			string(generalResponse),
 			contentTypeJSONHeader,
 			http.StatusCreated,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	createdExporter, _ := ioutil.ReadFile("../testdata/schema_exporter/created_exporter.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readCreatedSchemaExporterUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readCreatedSchemaExporterUrlPath)).
 		InScenario(schemaExporterResourceScenarioName).
 		WhenScenarioStateIs(scenarioStateSchemaExporterHasBeenCreated).
 		WillReturn(
 			string(createdExporter),
 			contentTypeJSONHeader,
 			http.StatusCreated,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Put(wiremock.URLPathEqualTo(readCreatedSchemaExporterUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Put(wiremock.URLPathEqualTo(readCreatedSchemaExporterUrlPath)).
 		InScenario(schemaExporterResourceScenarioName).
 		WillSetStateTo(scenarioStateSchemaExporterHasBeenUpdated).
 		WillReturn(
 			string(generalResponse),
 			contentTypeJSONHeader,
 			http.StatusCreated,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	updatedExporter, _ := ioutil.ReadFile("../testdata/schema_exporter/updated_exporter.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readCreatedSchemaExporterUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readCreatedSchemaExporterUrlPath)).
 		InScenario(schemaExporterResourceScenarioName).
 		WhenScenarioStateIs(scenarioStateSchemaExporterHasBeenUpdated).
 		WillReturn(
 			string(updatedExporter),
 			contentTypeJSONHeader,
 			http.StatusCreated,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Put(wiremock.URLPathEqualTo(readCreatedSchemaExporterUrlPath+"/pause")).
+	if err := wiremockClient.StubFor(wiremock.Put(wiremock.URLPathEqualTo(readCreatedSchemaExporterUrlPath+"/pause")).
 		InScenario(schemaExporterResourceScenarioName).
 		WillReturn(
 			string(generalResponse),
 			contentTypeJSONHeader,
 			http.StatusCreated,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Put(wiremock.URLPathEqualTo(readCreatedSchemaExporterUrlPath+"/resume")).
+	if err := wiremockClient.StubFor(wiremock.Put(wiremock.URLPathEqualTo(readCreatedSchemaExporterUrlPath+"/resume")).
 		InScenario(schemaExporterResourceScenarioName).
 		WillReturn(
 			string(generalResponse),
 			contentTypeJSONHeader,
 			http.StatusCreated,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Put(wiremock.URLPathEqualTo(readCreatedSchemaExporterUrlPath+"/reset")).
+	if err := wiremockClient.StubFor(wiremock.Put(wiremock.URLPathEqualTo(readCreatedSchemaExporterUrlPath+"/reset")).
 		InScenario(schemaExporterResourceScenarioName).
 		WillReturn(
 			string(generalResponse),
 			contentTypeJSONHeader,
 			http.StatusCreated,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	runningStatusResponse, _ := ioutil.ReadFile("../testdata/schema_exporter/running_status.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readCreatedSchemaExporterStatusUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readCreatedSchemaExporterStatusUrlPath)).
 		InScenario(schemaExporterResourceScenarioName).
 		WhenScenarioStateIs(scenarioStateSchemaExporterHasBeenCreated).
 		WillReturn(
 			string(runningStatusResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	pausedStatusResponse, _ := ioutil.ReadFile("../testdata/schema_exporter/pause_status.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readCreatedSchemaExporterStatusUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readCreatedSchemaExporterStatusUrlPath)).
 		InScenario(schemaExporterResourceScenarioName).
 		WhenScenarioStateIs(scenarioStateSchemaExporterHasBeenUpdated).
 		WillReturn(
 			string(pausedStatusResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(readCreatedSchemaExporterUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(readCreatedSchemaExporterUrlPath)).
 		InScenario(schemaExporterResourceScenarioName).
 		WillReturn(
 			"",
 			contentTypeJSONHeader,
 			http.StatusNoContent,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },

@@ -55,10 +55,12 @@ func TestAccSubjectMode(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)
-	_ = wiremockClient.StubFor(createSubjectModeStub)
+	if err := wiremockClient.StubFor(createSubjectModeStub); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readCreatedSubjectModesResponse, _ := ioutil.ReadFile("../testdata/subject_mode/read_created_subject_mode.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(updateSubjectModePath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(updateSubjectModePath)).
 		WithQueryParam("defaultToGlobal", wiremock.EqualTo("true")).
 		InScenario(subjectModeScenarioName).
 		WhenScenarioStateIs(scenarioStateSubjectModeHasBeenCreated).
@@ -66,7 +68,9 @@ func TestAccSubjectMode(t *testing.T) {
 			string(readCreatedSubjectModesResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	updateSubjectModeStub := wiremock.Put(wiremock.URLPathEqualTo(updateSubjectModePath)).
 		WithQueryParam(paramForce, wiremock.EqualTo(fmt.Sprintf(testForceFalse))).
@@ -78,10 +82,12 @@ func TestAccSubjectMode(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)
-	_ = wiremockClient.StubFor(updateSubjectModeStub)
+	if err := wiremockClient.StubFor(updateSubjectModeStub); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readUpdatedSubjectModesResponse, _ := ioutil.ReadFile("../testdata/subject_mode/read_updated_subject_mode.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(updateSubjectModePath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(updateSubjectModePath)).
 		WithQueryParam("defaultToGlobal", wiremock.EqualTo("true")).
 		InScenario(subjectModeScenarioName).
 		WhenScenarioStateIs(scenarioStateSubjectModeHasBeenUpdated).
@@ -89,7 +95,9 @@ func TestAccSubjectMode(t *testing.T) {
 			string(readUpdatedSubjectModesResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	deleteSubjectModeStub := wiremock.Delete(wiremock.URLPathEqualTo(updateSubjectModePath)).
 		InScenario(subjectModeScenarioName).
@@ -100,7 +108,9 @@ func TestAccSubjectMode(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)
-	_ = wiremockClient.StubFor(deleteSubjectModeStub)
+	if err := wiremockClient.StubFor(deleteSubjectModeStub); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	// Set fake values for secrets since those are required for importing
 	_ = os.Setenv("IMPORT_SCHEMA_REGISTRY_API_KEY", testSchemaRegistryUpdatedKey)

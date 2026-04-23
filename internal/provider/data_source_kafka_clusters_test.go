@@ -45,7 +45,7 @@ func TestAccDataSourceKafkaClusters(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	readClustersPageOneResponse, _ := ioutil.ReadFile("../testdata/kafka/read_kafkas_page_1.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/cmk/v2/clusters")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/cmk/v2/clusters")).
 		WithQueryParam("environment", wiremock.EqualTo(testEnvironmentId)).
 		WithQueryParam("page_size", wiremock.EqualTo(strconv.Itoa(listKafkaClustersPageSize))).
 		InScenario(kafkaClustersDataSourceScenarioName).
@@ -53,10 +53,12 @@ func TestAccDataSourceKafkaClusters(t *testing.T) {
 			string(readClustersPageOneResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readClustersPageTwoResponse, _ := ioutil.ReadFile("../testdata/kafka/read_kafkas_page_2.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/cmk/v2/clusters")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/cmk/v2/clusters")).
 		WithQueryParam("page_size", wiremock.EqualTo(strconv.Itoa(listKafkaClustersPageSize))).
 		WithQueryParam("page_token", wiremock.EqualTo(kafkaClustersLastPageToken)).
 		WithQueryParam("environment", wiremock.EqualTo(testEnvironmentId)).
@@ -65,7 +67,9 @@ func TestAccDataSourceKafkaClusters(t *testing.T) {
 			string(readClustersPageTwoResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	fullKafkaClustersDataSourceLabel := fmt.Sprintf("data.confluent_kafka_clusters.%s", kafkaClustersDataSourceLabel)
 

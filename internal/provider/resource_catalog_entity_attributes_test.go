@@ -45,7 +45,7 @@ func TestAccCatalogEntityAttributes(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	createEntityAttributesResponse, _ := ioutil.ReadFile("../testdata/entity_attributes/create_response.json")
-	_ = wiremockClient.StubFor(wiremock.Put(wiremock.URLPathEqualTo(createEntityAttributesUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Put(wiremock.URLPathEqualTo(createEntityAttributesUrlPath)).
 		InScenario(entityAttributesResourceScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillSetStateTo(scenarioStateEntityAttributesHasBeenCreated).
@@ -53,20 +53,24 @@ func TestAccCatalogEntityAttributes(t *testing.T) {
 			string(createEntityAttributesResponse),
 			contentTypeJSONHeader,
 			http.StatusCreated,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readEntityAttributesResponse, _ := ioutil.ReadFile("../testdata/entity_attributes/create_entity_attributes.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readCreatedEntityAttributesUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readCreatedEntityAttributesUrlPath)).
 		InScenario(entityAttributesResourceScenarioName).
 		WhenScenarioStateIs(scenarioStateEntityAttributesHasBeenCreated).
 		WillReturn(
 			string(readEntityAttributesResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	updateEntityAttributesResponse, _ := ioutil.ReadFile("../testdata/entity_attributes/create_response.json")
-	_ = wiremockClient.StubFor(wiremock.Put(wiremock.URLPathEqualTo(createEntityAttributesUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Put(wiremock.URLPathEqualTo(createEntityAttributesUrlPath)).
 		InScenario(entityAttributesResourceScenarioName).
 		WhenScenarioStateIs(scenarioStateEntityAttributesHasBeenCreated).
 		WillSetStateTo(scenarioStateEntityAttributesHasBeenUpdated).
@@ -74,26 +78,32 @@ func TestAccCatalogEntityAttributes(t *testing.T) {
 			string(updateEntityAttributesResponse),
 			contentTypeJSONHeader,
 			http.StatusCreated,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readUpdatedEntityAttributesResponse, _ := ioutil.ReadFile("../testdata/entity_attributes/update_entity_attributes.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readCreatedEntityAttributesUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readCreatedEntityAttributesUrlPath)).
 		InScenario(entityAttributesResourceScenarioName).
 		WhenScenarioStateIs(scenarioStateEntityAttributesHasBeenUpdated).
 		WillReturn(
 			string(readUpdatedEntityAttributesResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Put(wiremock.URLPathEqualTo(deleteCreatedEntityAttributesUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Put(wiremock.URLPathEqualTo(deleteCreatedEntityAttributesUrlPath)).
 		InScenario(entityAttributesResourceScenarioName).
 		WhenScenarioStateIs(scenarioStateEntityAttributesHasBeenUpdated).
 		WillReturn(
 			"",
 			contentTypeJSONHeader,
 			http.StatusNoContent,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	// Set fake values for secrets since those are required for importing
 	_ = os.Setenv("IMPORT_SCHEMA_REGISTRY_API_KEY", testSchemaRegistryKey)

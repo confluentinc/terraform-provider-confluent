@@ -43,7 +43,7 @@ func TestAccKek(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	createKekResponse, _ := ioutil.ReadFile("../testdata/schema_registry_kek/kek.json")
-	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(createKekUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(createKekUrlPath)).
 		InScenario(kekResourceScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillSetStateTo(scenarioStateKekHasBeenCreated).
@@ -51,19 +51,23 @@ func TestAccKek(t *testing.T) {
 			string(createKekResponse),
 			contentTypeJSONHeader,
 			http.StatusCreated,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(kekUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(kekUrlPath)).
 		InScenario(kekResourceScenarioName).
 		WhenScenarioStateIs(scenarioStateKekHasBeenCreated).
 		WillReturn(
 			string(createKekResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	updateKekResponse, _ := ioutil.ReadFile("../testdata/schema_registry_kek/updated_kek.json")
-	_ = wiremockClient.StubFor(wiremock.Put(wiremock.URLPathEqualTo(kekUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Put(wiremock.URLPathEqualTo(kekUrlPath)).
 		InScenario(kekResourceScenarioName).
 		WhenScenarioStateIs(scenarioStateKekHasBeenCreated).
 		WillSetStateTo(scenarioStateKekHasBeenUpdated).
@@ -71,24 +75,30 @@ func TestAccKek(t *testing.T) {
 			string(updateKekResponse),
 			contentTypeJSONHeader,
 			http.StatusCreated,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(kekUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(kekUrlPath)).
 		InScenario(kekResourceScenarioName).
 		WhenScenarioStateIs(scenarioStateKekHasBeenUpdated).
 		WillReturn(
 			string(updateKekResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(kekUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(kekUrlPath)).
 		InScenario(kekResourceScenarioName).
 		WillReturn(
 			"",
 			contentTypeJSONHeader,
 			http.StatusNoContent,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },

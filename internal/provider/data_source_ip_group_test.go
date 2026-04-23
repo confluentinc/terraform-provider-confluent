@@ -30,14 +30,16 @@ func TestAccDataSourceGroup(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	readIPGroupResponse, _ := os.ReadFile("../testdata/ip_group/read_created_ip_group.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("/iam/v2/ip-groups/%s", testIPGroupID))).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("/iam/v2/ip-groups/%s", testIPGroupID))).
 		InScenario(ipGroupDataSourceScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillReturn(
 			string(readIPGroupResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	fullIPGroupResourceLabel := fmt.Sprintf("data.confluent_ip_group.%s", testIPGroupResourceLabel)
 

@@ -46,14 +46,16 @@ func TestAccDataSourceOrganization(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	readEnvironmentsResponse, _ := ioutil.ReadFile("../testdata/organization/read_environments.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/org/v2/environments")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/org/v2/environments")).
 		InScenario(organizationDataSourceScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillReturn(
 			string(readEnvironmentsResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },

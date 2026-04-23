@@ -42,7 +42,7 @@ func TestAccCertificateAuthority(t *testing.T) {
 	// nolint:errcheck
 	defer wiremockClient.ResetAllScenarios()
 	createCertificateAuthorityResponse, _ := ioutil.ReadFile("../testdata/certificate_authority/create_certificate_authority.json")
-	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(certificateAuthorityUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(certificateAuthorityUrlPath)).
 		InScenario(CertificateAuthorityScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillSetStateTo(scenarioStateCertificateAuthorityHasBeenCreated).
@@ -50,19 +50,23 @@ func TestAccCertificateAuthority(t *testing.T) {
 			string(createCertificateAuthorityResponse),
 			contentTypeJSONHeader,
 			http.StatusCreated,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", certificateAuthorityUrlPath, certificateAuthorityId))).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", certificateAuthorityUrlPath, certificateAuthorityId))).
 		InScenario(CertificateAuthorityScenarioName).
 		WhenScenarioStateIs(scenarioStateCertificateAuthorityHasBeenCreated).
 		WillReturn(
 			string(createCertificateAuthorityResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readUpdatedCertificateAuthorityResponse, _ := ioutil.ReadFile("../testdata/certificate_authority/read_updated_certificate_authority.json")
-	_ = wiremockClient.StubFor(wiremock.Put(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", certificateAuthorityUrlPath, certificateAuthorityId))).
+	if err := wiremockClient.StubFor(wiremock.Put(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", certificateAuthorityUrlPath, certificateAuthorityId))).
 		InScenario(CertificateAuthorityScenarioName).
 		WhenScenarioStateIs(scenarioStateCertificateAuthorityHasBeenCreated).
 		WillSetStateTo(scenarioStateCertificateAuthorityHasBeenUpdated).
@@ -70,24 +74,30 @@ func TestAccCertificateAuthority(t *testing.T) {
 			string(readUpdatedCertificateAuthorityResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", certificateAuthorityUrlPath, certificateAuthorityId))).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", certificateAuthorityUrlPath, certificateAuthorityId))).
 		InScenario(CertificateAuthorityScenarioName).
 		WhenScenarioStateIs(scenarioStateCertificateAuthorityHasBeenUpdated).
 		WillReturn(
 			string(readUpdatedCertificateAuthorityResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", certificateAuthorityUrlPath, certificateAuthorityId))).
+	if err := wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", certificateAuthorityUrlPath, certificateAuthorityId))).
 		InScenario(CertificateAuthorityScenarioName).
 		WillReturn(
 			"",
 			contentTypeJSONHeader,
 			http.StatusNoContent,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -146,7 +156,7 @@ func TestAccCertificateAuthorityCrl(t *testing.T) {
 	// nolint:errcheck
 	defer wiremockClient.ResetAllScenarios()
 	createCertificateAuthorityResponse, _ := ioutil.ReadFile("../testdata/certificate_authority/create_certificate_authority_crl.json")
-	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(certificateAuthorityUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(certificateAuthorityUrlPath)).
 		InScenario(CertificateAuthorityScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillSetStateTo(scenarioStateCertificateAuthorityHasBeenCreated).
@@ -154,19 +164,23 @@ func TestAccCertificateAuthorityCrl(t *testing.T) {
 			string(createCertificateAuthorityResponse),
 			contentTypeJSONHeader,
 			http.StatusCreated,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", certificateAuthorityUrlPath, certificateAuthorityId))).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", certificateAuthorityUrlPath, certificateAuthorityId))).
 		InScenario(CertificateAuthorityScenarioName).
 		WhenScenarioStateIs(scenarioStateCertificateAuthorityHasBeenCreated).
 		WillReturn(
 			string(createCertificateAuthorityResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readUpdatedCertificateAuthorityResponse, _ := ioutil.ReadFile("../testdata/certificate_authority/read_updated_certificate_authority_crl.json")
-	_ = wiremockClient.StubFor(wiremock.Put(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", certificateAuthorityUrlPath, certificateAuthorityId))).
+	if err := wiremockClient.StubFor(wiremock.Put(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", certificateAuthorityUrlPath, certificateAuthorityId))).
 		InScenario(CertificateAuthorityScenarioName).
 		WhenScenarioStateIs(scenarioStateCertificateAuthorityHasBeenCreated).
 		WillSetStateTo(scenarioStateCertificateAuthorityHasBeenUpdated).
@@ -174,24 +188,30 @@ func TestAccCertificateAuthorityCrl(t *testing.T) {
 			string(readUpdatedCertificateAuthorityResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", certificateAuthorityUrlPath, certificateAuthorityId))).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", certificateAuthorityUrlPath, certificateAuthorityId))).
 		InScenario(CertificateAuthorityScenarioName).
 		WhenScenarioStateIs(scenarioStateCertificateAuthorityHasBeenUpdated).
 		WillReturn(
 			string(readUpdatedCertificateAuthorityResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", certificateAuthorityUrlPath, certificateAuthorityId))).
+	if err := wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", certificateAuthorityUrlPath, certificateAuthorityId))).
 		InScenario(CertificateAuthorityScenarioName).
 		WillReturn(
 			"",
 			contentTypeJSONHeader,
 			http.StatusNoContent,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },

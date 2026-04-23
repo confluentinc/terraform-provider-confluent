@@ -43,13 +43,15 @@ func TestAccDataSourceBusinessMetadataBinding(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	readBusinessMetadataBindingResponse, _ := ioutil.ReadFile("../testdata/business_metadata/read_created_business_metadata_binding.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readCreatedBusinessMetadataBindingUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readCreatedBusinessMetadataBindingUrlPath)).
 		InScenario(businessMetadataBindingDataSourceScenarioName).
 		WillReturn(
 			string(readBusinessMetadataBindingResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },

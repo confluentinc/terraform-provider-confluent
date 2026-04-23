@@ -58,14 +58,16 @@ func TestAccConnectArtifactDataSource(t *testing.T) {
 		},
 	})
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("/cam/v1/connect-artifacts/%s", connectArtifactId))).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("/cam/v1/connect-artifacts/%s", connectArtifactId))).
 		InScenario(connectArtifactDataSourceScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillReturn(
 			string(createConnectArtifactResponse),
 			map[string]string{"Content-Type": "application/json"},
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },

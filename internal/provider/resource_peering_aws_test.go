@@ -59,10 +59,12 @@ func TestAccAwsPeeringAccess(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusCreated,
 		)
-	_ = wiremockClient.StubFor(createAwsPeeringStub)
+	if err := wiremockClient.StubFor(createAwsPeeringStub); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readProvisioningAwsPeeringResponse, _ := ioutil.ReadFile("../testdata/peering/aws/read_provisioning_peering.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(awsPeeringUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(awsPeeringUrlPath)).
 		InScenario(awsPeeringScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(awsPeeringEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateAwsPeeringIsProvisioning).
@@ -71,10 +73,12 @@ func TestAccAwsPeeringAccess(t *testing.T) {
 			string(readProvisioningAwsPeeringResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readCreatedAwsPeeringResponse, _ := ioutil.ReadFile("../testdata/peering/aws/read_created_peering.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(awsPeeringUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(awsPeeringUrlPath)).
 		InScenario(awsPeeringScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(awsPeeringEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateAwsPeeringHasBeenCreated).
@@ -82,7 +86,9 @@ func TestAccAwsPeeringAccess(t *testing.T) {
 			string(readCreatedAwsPeeringResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	deleteAwsPeeringStub := wiremock.Delete(wiremock.URLPathEqualTo(awsPeeringUrlPath)).
 		InScenario(awsPeeringScenarioName).
@@ -94,10 +100,12 @@ func TestAccAwsPeeringAccess(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNoContent,
 		)
-	_ = wiremockClient.StubFor(deleteAwsPeeringStub)
+	if err := wiremockClient.StubFor(deleteAwsPeeringStub); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readDeprovisioningAwsPeeringResponse, _ := ioutil.ReadFile("../testdata/peering/aws/read_deprovisioning_peering.json")
-	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(awsPeeringUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(awsPeeringUrlPath)).
 		InScenario(awsPeeringScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(awsPeeringEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateAwsPeeringIsDeprovisioning).
@@ -106,10 +114,12 @@ func TestAccAwsPeeringAccess(t *testing.T) {
 			string(readDeprovisioningAwsPeeringResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readDeletedAwsPeeringResponse, _ := ioutil.ReadFile("../testdata/peering/aws/read_deleted_peering.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(awsPeeringUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(awsPeeringUrlPath)).
 		InScenario(awsPeeringScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(awsPeeringEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateAwsPeeringHasBeenDeleted).
@@ -117,7 +127,9 @@ func TestAccAwsPeeringAccess(t *testing.T) {
 			string(readDeletedAwsPeeringResponse),
 			contentTypeJSONHeader,
 			http.StatusNotFound,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	awsPeeringDisplayName := "my-test-peering"
 	awsPeeringResourceLabel := "test"

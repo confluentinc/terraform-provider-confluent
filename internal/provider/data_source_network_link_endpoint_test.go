@@ -43,14 +43,16 @@ func TestAccDataSourceNetworkLinkEndpoint(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	readNetworkLinkEndpointResponse, _ := ioutil.ReadFile("../testdata/network_link_endpoint/read_nle.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(networkLinkEndpointReadUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(networkLinkEndpointReadUrlPath)).
 		InScenario(networkLinkEndpointDataSourceScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillReturn(
 			string(readNetworkLinkEndpointResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },

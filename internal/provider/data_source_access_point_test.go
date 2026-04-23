@@ -38,7 +38,9 @@ func TestAccDataSourceAccessPointAwsEgressPrivateLinkEndpoint(t *testing.T) {
 			http.StatusOK,
 		)
 
-	_ = wiremockClient.StubFor(readAccessPointStub)
+	if err := wiremockClient.StubFor(readAccessPointStub); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	accessPointResourceName := "aws_egress_private_link_endpoint_access_point"
 	fullAccessPointResourceName := fmt.Sprintf("data.confluent_access_point.%s", accessPointResourceName)
@@ -96,7 +98,9 @@ func TestAccDataSourceAccessPointAwsPrivateNetworkInterface(t *testing.T) {
 			http.StatusOK,
 		)
 
-	_ = wiremockClient.StubFor(readAccessPointStub)
+	if err := wiremockClient.StubFor(readAccessPointStub); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	accessPointResourceName := "aws_private_network_interface_access_point"
 	fullAccessPointResourceName := fmt.Sprintf("data.confluent_access_point.%s", accessPointResourceName)
@@ -158,7 +162,9 @@ func TestAccDataSourceAccessPointAzureEgressPrivateLinkEndpoint(t *testing.T) {
 			http.StatusOK,
 		)
 
-	_ = wiremockClient.StubFor(readAccessPointStub)
+	if err := wiremockClient.StubFor(readAccessPointStub); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	accessPointResourceName := "azure_egress_private_link_endpoint_access_point"
 	fullAccessPointResourceName := fmt.Sprintf("data.confluent_access_point.%s", accessPointResourceName)
@@ -221,7 +227,9 @@ func TestAccDataSourceAccessPointGcpEgressPrivateServiceConnectEndpoint(t *testi
 			http.StatusOK,
 		)
 
-	_ = wiremockClient.StubFor(readAccessPointStub)
+	if err := wiremockClient.StubFor(readAccessPointStub); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	accessPointResourceName := "gcp_egress_private_service_connect_endpoint_access_point"
 	fullAccessPointResourceName := fmt.Sprintf("data.confluent_access_point.%s", accessPointResourceName)
@@ -279,7 +287,9 @@ func TestAccDataSourceAccessPointAwsIngressPrivateLinkEndpoint(t *testing.T) {
 			http.StatusOK,
 		)
 
-	_ = wiremockClient.StubFor(readAccessPointStub)
+	if err := wiremockClient.StubFor(readAccessPointStub); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	accessPointResourceName := "aws_ingress_private_link_endpoint_access_point"
 	fullAccessPointResourceName := fmt.Sprintf("data.confluent_access_point.%s", accessPointResourceName)

@@ -30,14 +30,16 @@ func TestAccDataSourceFilter(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	readIPFilterResponse, _ := os.ReadFile("../testdata/ip_filter/read_created_ip_filter.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("/iam/v2/ip-filters/%s", testIPFilterID))).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("/iam/v2/ip-filters/%s", testIPFilterID))).
 		InScenario(ipFilterDataSourceScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillReturn(
 			string(readIPFilterResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	fullIPGroupResourceLabel := fmt.Sprintf("data.confluent_ip_filter.%s", testIpFilterResourceLabel)
 

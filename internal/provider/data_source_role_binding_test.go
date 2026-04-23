@@ -43,14 +43,16 @@ func TestAccDataSourceRoleBinding(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	readCreatedRolebindingResponse, _ := ioutil.ReadFile("../testdata/role_binding/read_created_role_binding.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(roleBindingUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(roleBindingUrlPath)).
 		InScenario(roleBindingDataSourceScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillReturn(
 			string(readCreatedRolebindingResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	fullRbDataSourceLabel := fmt.Sprintf("data.confluent_role_binding.%s", rbResourceLabel)
 

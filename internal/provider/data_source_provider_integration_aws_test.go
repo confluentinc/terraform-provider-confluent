@@ -52,7 +52,9 @@ func TestAccDataSourceProviderIntegration(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)
-	_ = wiremockClient.StubFor(readStub)
+	if err := wiremockClient.StubFor(readStub); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	// Mock the LIST of the provider integrations
 	listResponse, _ := ioutil.ReadFile("../testdata/provider_integration/read_aws_provider_integrations.json")
@@ -65,7 +67,9 @@ func TestAccDataSourceProviderIntegration(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)
-	_ = wiremockClient.StubFor(listStub)
+	if err := wiremockClient.StubFor(listStub); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	dataSourceLabel := "test"
 	fullLabel := fmt.Sprintf("data.confluent_provider_integration.%s", dataSourceLabel)

@@ -43,14 +43,16 @@ func TestAccDataSourcePrivateLinkAttachmentGcp(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	readPrivateLinkAttachmentGcpResponse, _ := ioutil.ReadFile("../testdata/private_link_attachment/read_gcp_platt.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(privateLinkAttachmentGcpReadUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(privateLinkAttachmentGcpReadUrlPath)).
 		InScenario(privateLinkAttachmentGcpDataSourceScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillReturn(
 			string(readPrivateLinkAttachmentGcpResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
