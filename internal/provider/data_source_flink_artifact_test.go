@@ -31,7 +31,7 @@ func TestAccDataSourceFlinkArtifact(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	readCreatedFlinkArtifactResponse, _ := os.ReadFile("../testdata/flink_artifact/read_created_artifact.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/artifact/v1/flink-artifacts/lfcp-abc123")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/artifact/v1/flink-artifacts/lfcp-abc123")).
 		InScenario(dataSourceFlinkArtifactScenarioName).
 		WithQueryParam("cloud", wiremock.EqualTo("AWS")).
 		WithQueryParam("region", wiremock.EqualTo("us-east-2")).
@@ -41,10 +41,12 @@ func TestAccDataSourceFlinkArtifact(t *testing.T) {
 			string(readCreatedFlinkArtifactResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readArtifactsResponse, _ := os.ReadFile("../testdata/flink_artifact/read_artifact.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/artifact/v1/flink-artifacts")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/artifact/v1/flink-artifacts")).
 		InScenario(dataSourceFlinkArtifactScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(flinkArtifactEnvironmentId)).
 		WithQueryParam("cloud", wiremock.EqualTo("AWS")).
@@ -54,7 +56,9 @@ func TestAccDataSourceFlinkArtifact(t *testing.T) {
 			string(readArtifactsResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },

@@ -38,7 +38,9 @@ func TestAccDataSourceAwsBYOKKey(t *testing.T) {
 			http.StatusOK,
 		)
 
-	_ = wiremockClient.StubFor(readAwsKeyStub)
+	if err := wiremockClient.StubFor(readAwsKeyStub); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	awsKeyResourceName := "aws_key"
 	fullAwsKeyResourceName := fmt.Sprintf("data.confluent_byok_key.%s", awsKeyResourceName)

@@ -42,7 +42,9 @@ func TestAccConnectArtifact(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusCreated,
 		)
-	_ = wiremockClient.StubFor(createArtifactPresignedUrlStub)
+	if err := wiremockClient.StubFor(createArtifactPresignedUrlStub); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	createArtifactResponse, _ := os.ReadFile("../testdata/connect_artifact/create_artifact.json")
 	createArtifactStub := wiremock.Post(wiremock.URLPathEqualTo("/cam/v1/connect-artifacts")).
@@ -54,11 +56,13 @@ func TestAccConnectArtifact(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusCreated,
 		)
-	_ = wiremockClient.StubFor(createArtifactStub)
+	if err := wiremockClient.StubFor(createArtifactStub); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	// Add a stub for the provisioning state
 	provisioningArtifactResponse, _ := os.ReadFile("../testdata/connect_artifact/create_artifact.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(connectArtifactsUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(connectArtifactsUrlPath)).
 		InScenario(connectArtifactScenarioName).
 		WithQueryParam("spec.cloud", wiremock.Matching("(?i)^"+regexp.QuoteMeta(connectArtifactCloudAPIResponse)+"$")).
 		WithQueryParam("environment", wiremock.EqualTo(connectArtifactEnvironmentId)).
@@ -68,10 +72,12 @@ func TestAccConnectArtifact(t *testing.T) {
 			string(provisioningArtifactResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readCreatedArtifactResponse, _ := os.ReadFile("../testdata/connect_artifact/read_created_artifact.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(connectArtifactsUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(connectArtifactsUrlPath)).
 		InScenario(connectArtifactScenarioName).
 		WithQueryParam("spec.cloud", wiremock.Matching("(?i)^"+regexp.QuoteMeta(connectArtifactCloud)+"$")).
 		WithQueryParam("environment", wiremock.EqualTo(connectArtifactEnvironmentId)).
@@ -80,7 +86,9 @@ func TestAccConnectArtifact(t *testing.T) {
 			string(readCreatedArtifactResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	deleteArtifactStub := wiremock.Delete(wiremock.URLPathEqualTo(connectArtifactsUrlPath)).
 		InScenario(connectArtifactScenarioName).
@@ -92,10 +100,12 @@ func TestAccConnectArtifact(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNoContent,
 		)
-	_ = wiremockClient.StubFor(deleteArtifactStub)
+	if err := wiremockClient.StubFor(deleteArtifactStub); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readDeletedArtifactResponse, _ := os.ReadFile("../testdata/connect_artifact/read_deleted_artifact.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(connectArtifactsUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(connectArtifactsUrlPath)).
 		InScenario(connectArtifactScenarioName).
 		WithQueryParam("spec.cloud", wiremock.Matching("(?i)^"+regexp.QuoteMeta(connectArtifactCloud)+"$")).
 		WithQueryParam("environment", wiremock.EqualTo(connectArtifactEnvironmentId)).
@@ -104,7 +114,9 @@ func TestAccConnectArtifact(t *testing.T) {
 			string(readDeletedArtifactResponse),
 			contentTypeJSONHeader,
 			http.StatusNotFound,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	connectArtifactResourceLabel := "test"
 	fullConnectArtifactResourceLabel := fmt.Sprintf("confluent_connect_artifact.%s", connectArtifactResourceLabel)
@@ -179,7 +191,9 @@ func TestAccConnectArtifactZip(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusCreated,
 		)
-	_ = wiremockClient.StubFor(createArtifactPresignedUrlStub)
+	if err := wiremockClient.StubFor(createArtifactPresignedUrlStub); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	createArtifactResponse, _ := os.ReadFile("../testdata/connect_artifact/create_artifact_zip.json")
 	createArtifactStub := wiremock.Post(wiremock.URLPathEqualTo("/cam/v1/connect-artifacts")).
@@ -191,11 +205,13 @@ func TestAccConnectArtifactZip(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusCreated,
 		)
-	_ = wiremockClient.StubFor(createArtifactStub)
+	if err := wiremockClient.StubFor(createArtifactStub); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	// Add a stub for the provisioning state
 	provisioningArtifactResponse, _ := os.ReadFile("../testdata/connect_artifact/create_artifact_zip.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(connectArtifactsUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(connectArtifactsUrlPath)).
 		InScenario(connectArtifactScenarioName).
 		WithQueryParam("spec.cloud", wiremock.Matching("(?i)^"+regexp.QuoteMeta(connectArtifactCloud)+"$")).
 		WithQueryParam("environment", wiremock.EqualTo(connectArtifactEnvironmentId)).
@@ -205,10 +221,12 @@ func TestAccConnectArtifactZip(t *testing.T) {
 			string(provisioningArtifactResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readCreatedArtifactResponse, _ := os.ReadFile("../testdata/connect_artifact/read_created_artifact_zip.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(connectArtifactsUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(connectArtifactsUrlPath)).
 		InScenario(connectArtifactScenarioName).
 		WithQueryParam("spec.cloud", wiremock.Matching("(?i)^"+regexp.QuoteMeta(connectArtifactCloud)+"$")).
 		WithQueryParam("environment", wiremock.EqualTo(connectArtifactEnvironmentId)).
@@ -217,7 +235,9 @@ func TestAccConnectArtifactZip(t *testing.T) {
 			string(readCreatedArtifactResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	deleteArtifactStub := wiremock.Delete(wiremock.URLPathEqualTo(connectArtifactsUrlPath)).
 		InScenario(connectArtifactScenarioName).
@@ -229,10 +249,12 @@ func TestAccConnectArtifactZip(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNoContent,
 		)
-	_ = wiremockClient.StubFor(deleteArtifactStub)
+	if err := wiremockClient.StubFor(deleteArtifactStub); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readDeletedArtifactResponse, _ := os.ReadFile("../testdata/connect_artifact/read_deleted_artifact.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(connectArtifactsUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(connectArtifactsUrlPath)).
 		InScenario(connectArtifactScenarioName).
 		WithQueryParam("spec.cloud", wiremock.Matching("(?i)^"+regexp.QuoteMeta(connectArtifactCloud)+"$")).
 		WithQueryParam("environment", wiremock.EqualTo(connectArtifactEnvironmentId)).
@@ -241,7 +263,9 @@ func TestAccConnectArtifactZip(t *testing.T) {
 			string(readDeletedArtifactResponse),
 			contentTypeJSONHeader,
 			http.StatusNotFound,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	connectArtifactResourceLabel := "test_zip"
 	fullConnectArtifactResourceLabel := fmt.Sprintf("confluent_connect_artifact.%s", connectArtifactResourceLabel)

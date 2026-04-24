@@ -54,10 +54,12 @@ func TestAccGcpNetwork(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusCreated,
 		)
-	_ = wiremockClient.StubFor(createGcpNetworkStub)
+	if err := wiremockClient.StubFor(createGcpNetworkStub); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readProvisioningGcpNetworkResponse, _ := ioutil.ReadFile("../testdata/network/gcp/read_provisioning_network.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(gcpNetworkUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(gcpNetworkUrlPath)).
 		InScenario(gcpNetworkScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(gcpNetworkEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateGcpNetworkIsProvisioning).
@@ -66,10 +68,12 @@ func TestAccGcpNetwork(t *testing.T) {
 			string(readProvisioningGcpNetworkResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readCreatedGcpNetworkResponse, _ := ioutil.ReadFile("../testdata/network/gcp/read_created_network.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(gcpNetworkUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(gcpNetworkUrlPath)).
 		InScenario(gcpNetworkScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(gcpNetworkEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateGcpNetworkHasBeenCreated).
@@ -77,7 +81,9 @@ func TestAccGcpNetwork(t *testing.T) {
 			string(readCreatedGcpNetworkResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	deleteGcpNetworkStub := wiremock.Delete(wiremock.URLPathEqualTo(gcpNetworkUrlPath)).
 		InScenario(gcpNetworkScenarioName).
@@ -89,10 +95,12 @@ func TestAccGcpNetwork(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNoContent,
 		)
-	_ = wiremockClient.StubFor(deleteGcpNetworkStub)
+	if err := wiremockClient.StubFor(deleteGcpNetworkStub); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readDeletedGcpNetworkResponse, _ := ioutil.ReadFile("../testdata/network/gcp/read_deleted_network.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(gcpNetworkUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(gcpNetworkUrlPath)).
 		InScenario(gcpNetworkScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(gcpNetworkEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateGcpNetworkHasBeenDeleted).
@@ -100,7 +108,9 @@ func TestAccGcpNetwork(t *testing.T) {
 			string(readDeletedGcpNetworkResponse),
 			contentTypeJSONHeader,
 			http.StatusNotFound,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	gcpNetworkDisplayName := "s-nk99e"
 	gcpNetworkResourceLabel := "test"

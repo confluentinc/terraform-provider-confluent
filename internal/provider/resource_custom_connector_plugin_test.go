@@ -55,7 +55,9 @@ func TestAccCustomConnectorPlugin(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusCreated,
 		)
-	_ = wiremockClient.StubFor(createCustomConnectorPluginPresignedUrlStub)
+	if err := wiremockClient.StubFor(createCustomConnectorPluginPresignedUrlStub); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	createCustomConnectorPluginResponse, _ := ioutil.ReadFile("../testdata/custom_connector_plugin/create_plugin.json")
 	createCustomConnectorPluginStub := wiremock.Post(wiremock.URLPathEqualTo("/connect/v1/custom-connector-plugins")).
@@ -67,17 +69,21 @@ func TestAccCustomConnectorPlugin(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusCreated,
 		)
-	_ = wiremockClient.StubFor(createCustomConnectorPluginStub)
+	if err := wiremockClient.StubFor(createCustomConnectorPluginStub); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readCreatedCustomConnectorPluginResponse, _ := ioutil.ReadFile("../testdata/custom_connector_plugin/read_created_plugin.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/connect/v1/custom-connector-plugins/ccp-4rrw00")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/connect/v1/custom-connector-plugins/ccp-4rrw00")).
 		InScenario(customConnectorPluginScenarioName).
 		WhenScenarioStateIs(scenarioStateCustomConnectorPluginHasBeenCreated).
 		WillReturn(
 			string(readCreatedCustomConnectorPluginResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readUpdatedCustomConnectorPluginResponse, _ := ioutil.ReadFile("../testdata/custom_connector_plugin/read_updated_plugin.json")
 	patchCustomConnectorPluginStub := wiremock.Patch(wiremock.URLPathEqualTo("/connect/v1/custom-connector-plugins/ccp-4rrw00")).
@@ -89,26 +95,32 @@ func TestAccCustomConnectorPlugin(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)
-	_ = wiremockClient.StubFor(patchCustomConnectorPluginStub)
+	if err := wiremockClient.StubFor(patchCustomConnectorPluginStub); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/connect/v1/custom-connector-plugins/ccp-4rrw00")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/connect/v1/custom-connector-plugins/ccp-4rrw00")).
 		InScenario(customConnectorPluginScenarioName).
 		WhenScenarioStateIs(scenarioStateCustomConnectorPluginDescriptionHaveBeenUpdated).
 		WillReturn(
 			string(readUpdatedCustomConnectorPluginResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readDeletedCustomConnectorPluginResponse, _ := ioutil.ReadFile("../testdata/custom_connector_plugin/read_deleted_plugin.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/connect/v1/custom-connector-plugins/ccp-4rrw00")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/connect/v1/custom-connector-plugins/ccp-4rrw00")).
 		InScenario(customConnectorPluginScenarioName).
 		WhenScenarioStateIs(scenarioStateCustomConnectorPluginHasBeenDeleted).
 		WillReturn(
 			string(readDeletedCustomConnectorPluginResponse),
 			contentTypeJSONHeader,
 			http.StatusNotFound,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	deleteCustomConnectorPluginStub := wiremock.Delete(wiremock.URLPathEqualTo("/connect/v1/custom-connector-plugins/ccp-4rrw00")).
 		InScenario(customConnectorPluginScenarioName).
@@ -119,7 +131,9 @@ func TestAccCustomConnectorPlugin(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNoContent,
 		)
-	_ = wiremockClient.StubFor(deleteCustomConnectorPluginStub)
+	if err := wiremockClient.StubFor(deleteCustomConnectorPluginStub); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	customConnectorPluginDisplayName := "datagen-plugin-name"
 	customConnectorPluginDescription := "datagen-plugin-description"
@@ -224,7 +238,9 @@ func TestAccCustomConnectorPluginGCP(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusCreated,
 		)
-	_ = wiremockClient.StubFor(createCustomConnectorPluginPresignedUrlStub)
+	if err := wiremockClient.StubFor(createCustomConnectorPluginPresignedUrlStub); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	createCustomConnectorPluginResponse, _ := ioutil.ReadFile("../testdata/custom_connector_plugin/create_plugin_gcp.json")
 	createCustomConnectorPluginStub := wiremock.Post(wiremock.URLPathEqualTo("/connect/v1/custom-connector-plugins")).
@@ -236,17 +252,21 @@ func TestAccCustomConnectorPluginGCP(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusCreated,
 		)
-	_ = wiremockClient.StubFor(createCustomConnectorPluginStub)
+	if err := wiremockClient.StubFor(createCustomConnectorPluginStub); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readCreatedCustomConnectorPluginResponse, _ := ioutil.ReadFile("../testdata/custom_connector_plugin/read_created_plugin_gcp.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/connect/v1/custom-connector-plugins/ccp-5rrw00")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/connect/v1/custom-connector-plugins/ccp-5rrw00")).
 		InScenario(customConnectorPluginGCPScenarioName).
 		WhenScenarioStateIs(scenarioStateCustomConnectorPluginHasBeenCreated).
 		WillReturn(
 			string(readCreatedCustomConnectorPluginResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	deleteCustomConnectorPluginStub := wiremock.Delete(wiremock.URLPathEqualTo("/connect/v1/custom-connector-plugins/ccp-5rrw00")).
 		InScenario(customConnectorPluginGCPScenarioName).
@@ -257,17 +277,21 @@ func TestAccCustomConnectorPluginGCP(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNoContent,
 		)
-	_ = wiremockClient.StubFor(deleteCustomConnectorPluginStub)
+	if err := wiremockClient.StubFor(deleteCustomConnectorPluginStub); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readDeletedCustomConnectorPluginResponse, _ := ioutil.ReadFile("../testdata/custom_connector_plugin/read_deleted_plugin_gcp.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/connect/v1/custom-connector-plugins/ccp-5rrw00")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/connect/v1/custom-connector-plugins/ccp-5rrw00")).
 		InScenario(customConnectorPluginGCPScenarioName).
 		WhenScenarioStateIs(scenarioStateCustomConnectorPluginHasBeenDeleted).
 		WillReturn(
 			string(readDeletedCustomConnectorPluginResponse),
 			contentTypeJSONHeader,
 			http.StatusNotFound,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	customConnectorPluginDisplayName := "datagen-plugin-name-gcp"
 	customConnectorPluginDescription := "datagen-plugin-description-gcp"

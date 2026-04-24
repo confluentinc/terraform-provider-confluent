@@ -61,17 +61,21 @@ func TestAccKafkaMirrorTopic(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusCreated,
 		)
-	_ = wiremockClient.StubFor(createClusterLinkStub)
+	if err := wiremockClient.StubFor(createClusterLinkStub); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readCreatedClusterLinkResponse, _ := ioutil.ReadFile("../testdata/kafka_mirror_topic/regular/read_created_kafka_mirror_topic.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaMirrorTopicPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaMirrorTopicPath)).
 		InScenario(kafkaMirrorTopicScenarioName).
 		WhenScenarioStateIs(scenarioStateKafkaMirrorTopicHasBeenCreated).
 		WillReturn(
 			string(readCreatedClusterLinkResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	updateTopicStub := wiremock.Post(wiremock.URLPathEqualTo(pauseKafkaMirrorTopicPath)).
 		InScenario(kafkaMirrorTopicScenarioName).
@@ -82,26 +86,32 @@ func TestAccKafkaMirrorTopic(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNoContent,
 		)
-	_ = wiremockClient.StubFor(updateTopicStub)
+	if err := wiremockClient.StubFor(updateTopicStub); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readUpdatedTopicConfigResponse, _ := ioutil.ReadFile("../testdata/kafka_mirror_topic/regular/read_paused_kafka_mirror_topic.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaMirrorTopicPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaMirrorTopicPath)).
 		InScenario(kafkaMirrorTopicScenarioName).
 		WhenScenarioStateIs(scenarioStateKafkaMirrorTopicHasBeenPaused).
 		WillReturn(
 			string(readUpdatedTopicConfigResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(kafkaTopicPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(kafkaTopicPath)).
 		InScenario(kafkaMirrorTopicScenarioName).
 		WhenScenarioStateIs(scenarioStateKafkaMirrorTopicHasBeenDeleted).
 		WillReturn(
 			"",
 			contentTypeJSONHeader,
 			http.StatusNotFound,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	deleteClusterLinkStub := wiremock.Delete(wiremock.URLPathEqualTo(deleteKafkaMirrorTopicPath)).
 		InScenario(kafkaMirrorTopicScenarioName).
@@ -112,7 +122,9 @@ func TestAccKafkaMirrorTopic(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNoContent,
 		)
-	_ = wiremockClient.StubFor(deleteClusterLinkStub)
+	if err := wiremockClient.StubFor(deleteClusterLinkStub); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	// Set fake values for secrets since those are required for importing
 	_ = os.Setenv("IMPORT_KAFKA_API_KEY", destinationClusterApiKey)

@@ -30,14 +30,16 @@ func TestAccDataSourceGatewayAwsPeeringGatewaySpec(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	readAwsPeeringGatewayResponse, _ := os.ReadFile("../testdata/gateway/read_aws_peering_gateway.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/networking/v1/gateways/gw-abc123")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/networking/v1/gateways/gw-abc123")).
 		InScenario(awsPeeringGatewayScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillReturn(
 			string(readAwsPeeringGatewayResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	gatewayResourceName := "aws_peering_gateway"
 	fullGatewayResourceName := fmt.Sprintf("data.confluent_gateway.%s", gatewayResourceName)
@@ -86,14 +88,16 @@ func TestAccDataSourceGatewayAwsEgressPrivateLinkGatewaySpec(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	readAwsEgressPrivateLinkGatewayResponse, _ := os.ReadFile("../testdata/gateway/read_aws_egress_private_link_gateway.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/networking/v1/gateways/gw-def456")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/networking/v1/gateways/gw-def456")).
 		InScenario(awsEgressPrivateLinkGatewayScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillReturn(
 			string(readAwsEgressPrivateLinkGatewayResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	gatewayResourceName := "aws_egress_private_link_gateway"
 	fullGatewayResourceName := fmt.Sprintf("data.confluent_gateway.%s", gatewayResourceName)
@@ -143,14 +147,16 @@ func TestAccDataSourceGatewayAwsPrivateNetworkInterfaceGatewaySpec(t *testing.T)
 	defer wiremockClient.ResetAllScenarios()
 
 	readAwsEgressPrivateLinkGatewayResponse, _ := os.ReadFile("../testdata/gateway/read_aws_private_network_interface_gateway.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/networking/v1/gateways/gw-abc789")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/networking/v1/gateways/gw-abc789")).
 		InScenario(awsEgressPrivateLinkGatewayScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillReturn(
 			string(readAwsEgressPrivateLinkGatewayResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	gatewayResourceName := "aws_private_network_interface_gateway"
 	fullGatewayResourceName := fmt.Sprintf("data.confluent_gateway.%s", gatewayResourceName)
@@ -203,14 +209,16 @@ func TestAccDataSourceGatewayAzurePeeringGatewaySpec(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	readAzurePeeringGatewayResponse, _ := os.ReadFile("../testdata/gateway/read_azure_peering_gateway.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/networking/v1/gateways/gw-def123")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/networking/v1/gateways/gw-def123")).
 		InScenario(azurePeeringGatewayScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillReturn(
 			string(readAzurePeeringGatewayResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	gatewayResourceName := "azure_peering_gateway"
 	fullGatewayResourceName := fmt.Sprintf("data.confluent_gateway.%s", gatewayResourceName)
@@ -259,14 +267,16 @@ func TestAccDataSourceGatewayAzureEgressPrivateLinkGatewaySpec(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	readAzureEgressPrivateLinkGatewayResponse, _ := os.ReadFile("../testdata/gateway/read_azure_egress_private_link_gateway.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/networking/v1/gateways/gw-abc456")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/networking/v1/gateways/gw-abc456")).
 		InScenario(azureEgressPrivateLinkGatewayScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillReturn(
 			string(readAzureEgressPrivateLinkGatewayResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	gatewayResourceName := "azure_egress_private_link_gateway"
 	fullGatewayResourceName := fmt.Sprintf("data.confluent_gateway.%s", gatewayResourceName)
@@ -316,14 +326,16 @@ func TestAccDataSourceGatewayGcpEgressPrivateServiceConnectGatewaySpec(t *testin
 	defer wiremockClient.ResetAllScenarios()
 
 	readGcpEgressPrivateServiceConnectGatewayResponse, _ := os.ReadFile("../testdata/gateway/read_gcp_egress_private_service_connect_gateway.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/networking/v1/gateways/gw-def456")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/networking/v1/gateways/gw-def456")).
 		InScenario(gcpEgressPrivateServiceConnectGatewayScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillReturn(
 			string(readGcpEgressPrivateServiceConnectGatewayResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	gatewayResourceName := "gcp_egress_private_service_connect_gateway"
 	fullGatewayResourceName := fmt.Sprintf("data.confluent_gateway.%s", gatewayResourceName)
@@ -373,14 +385,16 @@ func TestAccDataSourceGatewayGcpPeeringGatewaySpec(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	readGcpPeeringGatewayResponse, _ := os.ReadFile("../testdata/gateway/read_gcp_peering_gateway.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/networking/v1/gateways/gw-gcp123")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/networking/v1/gateways/gw-gcp123")).
 		InScenario(gcpPeeringGatewayScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillReturn(
 			string(readGcpPeeringGatewayResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	gatewayResourceName := "gcp_peering_gateway"
 	fullGatewayResourceName := fmt.Sprintf("data.confluent_gateway.%s", gatewayResourceName)
@@ -443,14 +457,16 @@ func TestAccDataSourceGatewayAwsIngressPrivateLinkGatewaySpec(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	readAwsIngressPrivateLinkGatewayResponse, _ := os.ReadFile("../testdata/gateway/read_aws_ingress_private_link_gateway.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/networking/v1/gateways/gw-ingress123")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/networking/v1/gateways/gw-ingress123")).
 		InScenario(awsIngressPrivateLinkGatewayScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillReturn(
 			string(readAwsIngressPrivateLinkGatewayResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	gatewayResourceName := "aws_ingress_private_link_gateway"
 	fullGatewayResourceName := fmt.Sprintf("data.confluent_gateway.%s", gatewayResourceName)

@@ -43,24 +43,28 @@ func TestAccDataSourceConnection(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	readCreatedConnectionResponse, _ := ioutil.ReadFile("../testdata/flink_connection/read_connection.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readFlinkConnectionPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readFlinkConnectionPath)).
 		InScenario(dataSourceConnectionScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillReturn(
 			string(readCreatedConnectionResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readConnectionResponse, _ := ioutil.ReadFile("../testdata/flink_connection/read_connection_list.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(createFlinkConnectionPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(createFlinkConnectionPath)).
 		InScenario(dataSourceConnectionScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillReturn(
 			string(readConnectionResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	flinkConnectionDataSourceLabel := "test"
 	fullConnectionDataSourceLabel := fmt.Sprintf("data.confluent_flink_connection.%s", flinkConnectionDataSourceLabel)

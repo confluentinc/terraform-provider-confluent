@@ -43,7 +43,7 @@ func TestAccNetworkLinkService(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	createNLSResponse, _ := ioutil.ReadFile("../testdata/network_link_service/create_nls.json")
-	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(networkLinkServiceUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(networkLinkServiceUrlPath)).
 		InScenario(networkLinkServiceResourceScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillSetStateTo(scenarioStateNetworkLinkServiceHasBeenCreated).
@@ -51,20 +51,24 @@ func TestAccNetworkLinkService(t *testing.T) {
 			string(createNLSResponse),
 			contentTypeJSONHeader,
 			http.StatusCreated,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readNLSResponse, _ := ioutil.ReadFile("../testdata/network_link_service/read_nls.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(networkLinkServiceReadUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(networkLinkServiceReadUrlPath)).
 		InScenario(networkLinkServiceResourceScenarioName).
 		WhenScenarioStateIs(scenarioStateNetworkLinkServiceHasBeenCreated).
 		WillReturn(
 			string(readNLSResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	updatedNLSResponse, _ := ioutil.ReadFile("../testdata/network_link_service/updated_nls.json")
-	_ = wiremockClient.StubFor(wiremock.Patch(wiremock.URLPathEqualTo(networkLinkServiceReadUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Patch(wiremock.URLPathEqualTo(networkLinkServiceReadUrlPath)).
 		InScenario(networkLinkServiceResourceScenarioName).
 		WhenScenarioStateIs(scenarioStateNetworkLinkServiceHasBeenCreated).
 		WillSetStateTo(scenarioStateNetworkLinkServiceHasBeenUpdated).
@@ -72,24 +76,30 @@ func TestAccNetworkLinkService(t *testing.T) {
 			string(updatedNLSResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(networkLinkServiceReadUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(networkLinkServiceReadUrlPath)).
 		InScenario(networkLinkServiceResourceScenarioName).
 		WhenScenarioStateIs(scenarioStateNetworkLinkServiceHasBeenUpdated).
 		WillReturn(
 			string(updatedNLSResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(networkLinkServiceReadUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(networkLinkServiceReadUrlPath)).
 		InScenario(networkLinkServiceResourceScenarioName).
 		WillReturn(
 			"",
 			contentTypeJSONHeader,
 			http.StatusNoContent,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },

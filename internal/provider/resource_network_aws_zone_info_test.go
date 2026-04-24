@@ -64,10 +64,12 @@ func TestAccAwsZoneInfoNetwork(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusCreated,
 		)
-	_ = wiremockClient.StubFor(createAwsNetworkStub)
+	if err := wiremockClient.StubFor(createAwsNetworkStub); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readProvisioningAwsNetworkResponse, _ := ioutil.ReadFile("../testdata/network/aws_zone_info/read_provisioning_network.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(awsNetworkUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(awsNetworkUrlPath)).
 		InScenario(awsNetworkScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(awsNetworkEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateAwsNetworkIsProvisioning).
@@ -76,10 +78,12 @@ func TestAccAwsZoneInfoNetwork(t *testing.T) {
 			string(readProvisioningAwsNetworkResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readCreatedAwsNetworkResponse, _ := ioutil.ReadFile("../testdata/network/aws_zone_info/read_created_network.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(awsNetworkUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(awsNetworkUrlPath)).
 		InScenario(awsNetworkScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(awsNetworkEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateAwsNetworkHasBeenCreated).
@@ -87,7 +91,9 @@ func TestAccAwsZoneInfoNetwork(t *testing.T) {
 			string(readCreatedAwsNetworkResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	deleteAwsNetworkStub := wiremock.Delete(wiremock.URLPathEqualTo(awsNetworkUrlPath)).
 		InScenario(awsNetworkScenarioName).
@@ -99,10 +105,12 @@ func TestAccAwsZoneInfoNetwork(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNoContent,
 		)
-	_ = wiremockClient.StubFor(deleteAwsNetworkStub)
+	if err := wiremockClient.StubFor(deleteAwsNetworkStub); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readDeletedAwsNetworkResponse, _ := ioutil.ReadFile("../testdata/network/aws_zone_info/read_deleted_network.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(awsNetworkUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(awsNetworkUrlPath)).
 		InScenario(awsNetworkScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(awsNetworkEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateAwsNetworkHasBeenDeleted).
@@ -110,7 +118,9 @@ func TestAccAwsZoneInfoNetwork(t *testing.T) {
 			string(readDeletedAwsNetworkResponse),
 			contentTypeJSONHeader,
 			http.StatusNotFound,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	awsNetworkDisplayName := "s-n9553"
 	awsNetworkResourceLabel := "test"

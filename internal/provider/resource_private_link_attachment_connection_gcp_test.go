@@ -43,7 +43,7 @@ func TestAccPrivateLinkAttachmentConnectionGcp(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	createPlattResponse, _ := ioutil.ReadFile("../testdata/private_link_attachment_connection/create_gcp_plattc.json")
-	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(privateLinkAttachmentConnectionGcpUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(privateLinkAttachmentConnectionGcpUrlPath)).
 		InScenario(privateLinkAttachmentConnectionGcpResourceScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillSetStateTo(scenarioStatePrivateLinkAttachmentConnectionGcpHasBeenCreated).
@@ -51,25 +51,31 @@ func TestAccPrivateLinkAttachmentConnectionGcp(t *testing.T) {
 			string(createPlattResponse),
 			contentTypeJSONHeader,
 			http.StatusCreated,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readPlattResponse, _ := ioutil.ReadFile("../testdata/private_link_attachment_connection/read_gcp_plattc.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(privateLinkAttachmentConnectionGcpReadUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(privateLinkAttachmentConnectionGcpReadUrlPath)).
 		InScenario(privateLinkAttachmentConnectionGcpResourceScenarioName).
 		WhenScenarioStateIs(scenarioStatePrivateLinkAttachmentConnectionGcpHasBeenCreated).
 		WillReturn(
 			string(readPlattResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(privateLinkAttachmentConnectionGcpReadUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(privateLinkAttachmentConnectionGcpReadUrlPath)).
 		InScenario(privateLinkAttachmentConnectionGcpResourceScenarioName).
 		WillReturn(
 			"",
 			contentTypeJSONHeader,
 			http.StatusNoContent,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },

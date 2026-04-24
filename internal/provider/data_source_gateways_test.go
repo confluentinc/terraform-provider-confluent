@@ -45,7 +45,7 @@ func TestAccDataSourceGateways(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	readGatewaysResponse, _ := os.ReadFile("../testdata/gateway/list_gateways.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/networking/v1/gateways")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/networking/v1/gateways")).
 		WithQueryParam("environment", wiremock.EqualTo("env-abc123")).
 		WithQueryParam("page_size", wiremock.EqualTo(strconv.Itoa(listGatewaysPageSize))).
 		InScenario(gatewaysDataSourceScenarioName).
@@ -53,7 +53,9 @@ func TestAccDataSourceGateways(t *testing.T) {
 			string(readGatewaysResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	fullGatewaysDataSourceLabel := fmt.Sprintf("data.confluent_gateways.%s", gatewaysResourceLabel)
 
@@ -116,7 +118,7 @@ func TestAccDataSourceGatewaysWithFilters(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	readGatewaysFilteredResponse, _ := os.ReadFile("../testdata/gateway/list_gateways_filtered.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/networking/v1/gateways")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/networking/v1/gateways")).
 		WithQueryParam("environment", wiremock.EqualTo("env-abc123")).
 		WithQueryParam("page_size", wiremock.EqualTo(strconv.Itoa(listGatewaysPageSize))).
 		WithQueryParam("gateway_type", wiremock.EqualTo("AwsIngressPrivateLink")).
@@ -126,7 +128,9 @@ func TestAccDataSourceGatewaysWithFilters(t *testing.T) {
 			string(readGatewaysFilteredResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	fullGatewaysDataSourceLabel := fmt.Sprintf("data.confluent_gateways.%s", gatewaysResourceLabel)
 

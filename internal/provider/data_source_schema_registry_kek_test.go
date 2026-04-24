@@ -43,14 +43,16 @@ func TestAccDataSourceSchemaRegistryKek(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	readKekResponse, _ := ioutil.ReadFile("../testdata/schema_registry_kek/kek.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(kekUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(kekUrlPath)).
 		InScenario(kekDataSourceScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillReturn(
 			string(readKekResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },

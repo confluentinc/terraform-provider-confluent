@@ -54,10 +54,12 @@ func TestAccAzurePrivateLinkAccess(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusCreated,
 		)
-	_ = wiremockClient.StubFor(createAzurePlaStub)
+	if err := wiremockClient.StubFor(createAzurePlaStub); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readProvisioningAzurePlaResponse, _ := ioutil.ReadFile("../testdata/private_link_access/azure/read_provisioning_pla.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(azurePlaUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(azurePlaUrlPath)).
 		InScenario(azurePlaScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(azurePlaEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateAzurePlaIsProvisioning).
@@ -66,10 +68,12 @@ func TestAccAzurePrivateLinkAccess(t *testing.T) {
 			string(readProvisioningAzurePlaResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readCreatedAzurePlaResponse, _ := ioutil.ReadFile("../testdata/private_link_access/azure/read_created_pla.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(azurePlaUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(azurePlaUrlPath)).
 		InScenario(azurePlaScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(azurePlaEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateAzurePlaHasBeenCreated).
@@ -77,7 +81,9 @@ func TestAccAzurePrivateLinkAccess(t *testing.T) {
 			string(readCreatedAzurePlaResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	deleteAzurePlaStub := wiremock.Delete(wiremock.URLPathEqualTo(azurePlaUrlPath)).
 		InScenario(azurePlaScenarioName).
@@ -89,10 +95,12 @@ func TestAccAzurePrivateLinkAccess(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNoContent,
 		)
-	_ = wiremockClient.StubFor(deleteAzurePlaStub)
+	if err := wiremockClient.StubFor(deleteAzurePlaStub); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readDeprovisioningAzurePlaResponse, _ := ioutil.ReadFile("../testdata/private_link_access/azure/read_deprovisioning_pla.json")
-	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(azurePlaUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(azurePlaUrlPath)).
 		InScenario(azurePlaScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(azurePlaEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateAzurePlaIsDeprovisioning).
@@ -101,10 +109,12 @@ func TestAccAzurePrivateLinkAccess(t *testing.T) {
 			string(readDeprovisioningAzurePlaResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readDeletedAzurePlaResponse, _ := ioutil.ReadFile("../testdata/private_link_access/azure/read_deleted_pla.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(azurePlaUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(azurePlaUrlPath)).
 		InScenario(azurePlaScenarioName).
 		WithQueryParam("environment", wiremock.EqualTo(azurePlaEnvironmentId)).
 		WhenScenarioStateIs(scenarioStateAzurePlaHasBeenDeleted).
@@ -112,7 +122,9 @@ func TestAccAzurePrivateLinkAccess(t *testing.T) {
 			string(readDeletedAzurePlaResponse),
 			contentTypeJSONHeader,
 			http.StatusNotFound,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	azurePlaDisplayName := "prod-pl-use3"
 	azurePlaResourceLabel := "test"

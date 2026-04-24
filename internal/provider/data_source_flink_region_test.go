@@ -48,7 +48,7 @@ func TestAccDataSourceFlinkRegion(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	readRegionsResponse, _ := ioutil.ReadFile("../testdata/flink_region/read_regions.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/fcpm/v2/regions")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/fcpm/v2/regions")).
 		InScenario(dataSourceFlinkRegionScenarioName).
 		WithQueryParam("page_size", wiremock.EqualTo(strconv.Itoa(listFlinkRegionsPageSize))).
 		WithQueryParam("cloud", wiremock.EqualTo(flinkRegionCloudProvider)).
@@ -58,7 +58,9 @@ func TestAccDataSourceFlinkRegion(t *testing.T) {
 			string(readRegionsResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },

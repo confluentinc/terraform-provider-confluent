@@ -43,7 +43,7 @@ func TestAccDek(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	createDekResponse, _ := ioutil.ReadFile("../testdata/schema_registry_dek/dek.json")
-	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(createDekUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(createDekUrlPath)).
 		InScenario(dekResourceScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillSetStateTo(scenarioStateDekHasBeenCreated).
@@ -51,24 +51,30 @@ func TestAccDek(t *testing.T) {
 			string(createDekResponse),
 			contentTypeJSONHeader,
 			http.StatusCreated,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(dekUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(dekUrlPath)).
 		InScenario(dekResourceScenarioName).
 		WhenScenarioStateIs(scenarioStateDekHasBeenCreated).
 		WillReturn(
 			string(createDekResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(dekUrlPath)).
+	if err := wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(dekUrlPath)).
 		InScenario(dekResourceScenarioName).
 		WillReturn(
 			"",
 			contentTypeJSONHeader,
 			http.StatusNoContent,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },

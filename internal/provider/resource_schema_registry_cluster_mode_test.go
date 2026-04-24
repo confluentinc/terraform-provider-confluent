@@ -55,17 +55,21 @@ func TestAccSchemaRegistryClusterMode(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)
-	_ = wiremockClient.StubFor(createSchemaRegistryClusterModeStub)
+	if err := wiremockClient.StubFor(createSchemaRegistryClusterModeStub); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readCreatedSchemaRegistryClusterModesResponse, _ := ioutil.ReadFile("../testdata/schema_registry_cluster_mode/read_created_schema_registry_cluster_mode.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(updateSchemaRegistryClusterModePath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(updateSchemaRegistryClusterModePath)).
 		InScenario(schemaRegistryClusterModeScenarioName).
 		WhenScenarioStateIs(scenarioStateSchemaRegistryClusterModeHasBeenCreated).
 		WillReturn(
 			string(readCreatedSchemaRegistryClusterModesResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	updateSchemaRegistryClusterModeStub := wiremock.Put(wiremock.URLPathEqualTo(updateSchemaRegistryClusterModePath)).
 		WithQueryParam(paramForce, wiremock.EqualTo(fmt.Sprintf(testForceFalse))).
@@ -77,17 +81,21 @@ func TestAccSchemaRegistryClusterMode(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)
-	_ = wiremockClient.StubFor(updateSchemaRegistryClusterModeStub)
+	if err := wiremockClient.StubFor(updateSchemaRegistryClusterModeStub); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readUpdatedSchemaRegistryClusterModesResponse, _ := ioutil.ReadFile("../testdata/schema_registry_cluster_mode/read_updated_schema_registry_cluster_mode.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(updateSchemaRegistryClusterModePath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(updateSchemaRegistryClusterModePath)).
 		InScenario(schemaRegistryClusterModeScenarioName).
 		WhenScenarioStateIs(scenarioStateSchemaRegistryClusterModeHasBeenUpdated).
 		WillReturn(
 			string(readUpdatedSchemaRegistryClusterModesResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	deleteSchemaRegistryClusterModeStub := wiremock.Delete(wiremock.URLPathEqualTo(updateSchemaRegistryClusterModePath)).
 		InScenario(schemaRegistryClusterModeScenarioName).
@@ -98,7 +106,9 @@ func TestAccSchemaRegistryClusterMode(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)
-	_ = wiremockClient.StubFor(deleteSchemaRegistryClusterModeStub)
+	if err := wiremockClient.StubFor(deleteSchemaRegistryClusterModeStub); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	// Set fake values for secrets since those are required for importing
 	_ = os.Setenv("IMPORT_SCHEMA_REGISTRY_API_KEY", testSchemaRegistryUpdatedKey)

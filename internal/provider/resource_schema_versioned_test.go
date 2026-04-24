@@ -63,7 +63,9 @@ func TestAccVersionedSchema(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)
-	_ = wiremockClient.StubFor(validateSchemaStub)
+	if err := wiremockClient.StubFor(validateSchemaStub); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	createSchemaResponse, _ := ioutil.ReadFile("../testdata/schema_registry_schema/create_schema.json")
 	createSchemaStub := wiremock.Post(wiremock.URLPathEqualTo(createSchemaPath)).
@@ -76,17 +78,21 @@ func TestAccVersionedSchema(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)
-	_ = wiremockClient.StubFor(createSchemaStub)
+	if err := wiremockClient.StubFor(createSchemaStub); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readCreatedSchemasResponse, _ := ioutil.ReadFile("../testdata/schema_registry_schema/read_schemas.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readSchemasPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readSchemasPath)).
 		InScenario(schemaScenarioName).
 		WhenScenarioStateIs(scenarioStateSchemaHasBeenCreated).
 		WillReturn(
 			string(readCreatedSchemasResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	checkSchemaExistsResponse, _ := ioutil.ReadFile("../testdata/schema_registry_schema/create_schema.json")
 	checkSchemaExistsStub := wiremock.Post(wiremock.URLPathEqualTo(createSchemaPath)).
@@ -98,7 +104,9 @@ func TestAccVersionedSchema(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		)
-	_ = wiremockClient.StubFor(checkSchemaExistsStub)
+	if err := wiremockClient.StubFor(checkSchemaExistsStub); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	deleteSchemaStub := wiremock.Delete(wiremock.URLPathEqualTo(deleteSchemaPath)).
 		InScenario(schemaScenarioName).
@@ -109,17 +117,21 @@ func TestAccVersionedSchema(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNoContent,
 		)
-	_ = wiremockClient.StubFor(deleteSchemaStub)
+	if err := wiremockClient.StubFor(deleteSchemaStub); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readDeletedSaResponse, _ := ioutil.ReadFile("../testdata/schema_registry_schema/read_schemas_after_delete.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readSchemasPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readSchemasPath)).
 		InScenario(schemaScenarioName).
 		WhenScenarioStateIs(scenarioStateSchemaHasBeenDeleted).
 		WillReturn(
 			string(readDeletedSaResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	// Set fake values for secrets since those are required for importing
 	_ = os.Setenv("IMPORT_SCHEMA_REGISTRY_API_KEY", testSchemaRegistryUpdatedKey)

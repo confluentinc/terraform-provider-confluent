@@ -47,7 +47,7 @@ func TestAccDataSourceEnvironments(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	readEnvironmentsPageOneResponse, _ := ioutil.ReadFile("../testdata/environment/read_envs_page_1.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/org/v2/environments")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/org/v2/environments")).
 		WithQueryParam("page_size", wiremock.EqualTo(strconv.Itoa(listEnvironmentsPageSize))).
 		InScenario(environmentsDataSourceScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
@@ -55,7 +55,9 @@ func TestAccDataSourceEnvironments(t *testing.T) {
 			string(readEnvironmentsPageOneResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	fullEnvironmentDataSourceLabel := fmt.Sprintf("data.confluent_environments.%s", envResourceLabel)
 

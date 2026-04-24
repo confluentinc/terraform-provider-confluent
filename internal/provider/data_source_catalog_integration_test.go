@@ -29,14 +29,16 @@ func TestAccDataSourceCatalogIntegrationAwsGlue(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	readCatalogIntegrationResponse, _ := os.ReadFile("../testdata/catalog_integration/read_created_aws_glue_ci.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/tableflow/v1/catalog-integrations/tci-abc123")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/tableflow/v1/catalog-integrations/tci-abc123")).
 		InScenario(CatalogIntegrationDataSourceScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillReturn(
 			string(readCatalogIntegrationResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	CatalogIntegrationResourceName := "data.confluent_catalog_integration.main"
 
@@ -82,14 +84,16 @@ func TestAccDataSourceCatalogIntegrationSnowflake(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	readCatalogIntegrationResponse, _ := os.ReadFile("../testdata/catalog_integration/read_created_snowflake_ci.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/tableflow/v1/catalog-integrations/tci-abc123")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/tableflow/v1/catalog-integrations/tci-abc123")).
 		InScenario(CatalogIntegrationDataSourceScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillReturn(
 			string(readCatalogIntegrationResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	CatalogIntegrationResourceName := "data.confluent_catalog_integration.main"
 
@@ -137,14 +141,16 @@ func TestAccDataSourceCatalogIntegrationUnity(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	readCatalogIntegrationResponse, _ := os.ReadFile("../testdata/catalog_integration/read_created_unity_ci.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/tableflow/v1/catalog-integrations/tci-abc123")).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/tableflow/v1/catalog-integrations/tci-abc123")).
 		InScenario(CatalogIntegrationDataSourceScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillReturn(
 			string(readCatalogIntegrationResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	CatalogIntegrationResourceName := "data.confluent_catalog_integration.main"
 

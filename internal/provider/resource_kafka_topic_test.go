@@ -68,11 +68,13 @@ func TestAccTopic(t *testing.T) {
 	// the scenario state doesn't carry over. This hack creates a dummy endpoint that transitions
 	// the state from "Started" to "A new topic has been just created" on the second instance.
 	dummyPath := "/state-sync"
-	_ = updatedClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(dummyPath)).
+	if err := updatedClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(dummyPath)).
 		InScenario(topicScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillSetStateTo(scenarioStateTopicHasBeenCreated).
-		WillReturn("OK", contentTypeJSONHeader, http.StatusOK))
+		WillReturn("OK", contentTypeJSONHeader, http.StatusOK)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	// Trigger the state transition by calling the dummy endpoint
 	http.Get(mockTopicTestServerUpdatedUrl + dummyPath)
@@ -87,52 +89,64 @@ func TestAccTopic(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusCreated,
 		)
-	_ = initialClient.StubFor(createTopicStub)
+	if err := initialClient.StubFor(createTopicStub); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readCreatedTopicResponse, _ := ioutil.ReadFile("../testdata/kafka_topic/read_created_kafka_topic.json")
-	_ = initialClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(kafkaTopicPath)).
+	if err := initialClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(kafkaTopicPath)).
 		InScenario(topicScenarioName).
 		WhenScenarioStateIs(scenarioStateTopicHasBeenCreated).
 		WillReturn(
 			string(readCreatedTopicResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
-	_ = initialClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(kafkaTopicPath)).
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
+	if err := initialClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(kafkaTopicPath)).
 		InScenario(topicScenarioName).
 		WhenScenarioStateIs(scenarioStateTopicHasBeenUpdated).
 		WillReturn(
 			string(readCreatedTopicResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readCreatedTopicConfigResponse, _ := ioutil.ReadFile("../testdata/kafka_topic/read_created_kafka_topic_config.json")
-	_ = initialClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaTopicConfigPath)).
+	if err := initialClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaTopicConfigPath)).
 		InScenario(topicScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillReturn(
 			string(readCreatedTopicConfigResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
-	_ = initialClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaTopicConfigPath)).
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
+	if err := initialClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaTopicConfigPath)).
 		InScenario(topicScenarioName).
 		WhenScenarioStateIs(scenarioStateTopicHasBeenCreated).
 		WillReturn(
 			string(readCreatedTopicConfigResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
-	_ = updatedClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(kafkaTopicPath)).
+	if err := updatedClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(kafkaTopicPath)).
 		InScenario(topicScenarioName).
 		WhenScenarioStateIs(scenarioStateTopicHasBeenDeleted).
 		WillReturn(
 			"",
 			contentTypeJSONHeader,
 			http.StatusNotFound,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	updateTopicStub := wiremock.Post(wiremock.URLPathEqualTo(updateKafkaTopicConfigPath)).
 		InScenario(topicScenarioName).
@@ -143,26 +157,32 @@ func TestAccTopic(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNoContent,
 		)
-	_ = updatedClient.StubFor(updateTopicStub)
+	if err := updatedClient.StubFor(updateTopicStub); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
-	_ = updatedClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(kafkaTopicPath)).
+	if err := updatedClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(kafkaTopicPath)).
 		InScenario(topicScenarioName).
 		WhenScenarioStateIs(scenarioStateTopicHasBeenUpdated).
 		WillReturn(
 			string(readCreatedTopicResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readUpdatedTopicConfigResponse, _ := ioutil.ReadFile("../testdata/kafka_topic/read_updated_kafka_topic_config.json")
-	_ = updatedClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaTopicConfigPath)).
+	if err := updatedClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaTopicConfigPath)).
 		InScenario(topicScenarioName).
 		WhenScenarioStateIs(scenarioStateTopicHasBeenUpdated).
 		WillReturn(
 			string(readUpdatedTopicConfigResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	deleteTopicStub := wiremock.Delete(wiremock.URLPathEqualTo(kafkaTopicPath)).
 		InScenario(topicScenarioName).
@@ -173,7 +193,9 @@ func TestAccTopic(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNoContent,
 		)
-	_ = updatedClient.StubFor(deleteTopicStub)
+	if err := updatedClient.StubFor(deleteTopicStub); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	// Set fake values for secrets since those are required for importing
 	_ = os.Setenv("IMPORT_KAFKA_API_KEY", kafkaApiKey)
@@ -281,35 +303,43 @@ func TestAccTopicPartition(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusCreated,
 		)
-	_ = wiremockClient.StubFor(createTopicStub)
+	if err := wiremockClient.StubFor(createTopicStub); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readCreatedTopicResponse, _ := ioutil.ReadFile("../testdata/kafka_topic/read_created_kafka_topic.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(kafkaTopicPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(kafkaTopicPath)).
 		InScenario(topicScenarioName).
 		WhenScenarioStateIs(scenarioStateTopicHasBeenCreated).
 		WillReturn(
 			string(readCreatedTopicResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readCreatedTopicConfigResponse, _ := ioutil.ReadFile("../testdata/kafka_topic/read_created_kafka_topic_config.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaTopicConfigPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaTopicConfigPath)).
 		InScenario(topicScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillReturn(
 			string(readCreatedTopicConfigResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaTopicConfigPath)).
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaTopicConfigPath)).
 		InScenario(topicScenarioName).
 		WhenScenarioStateIs(scenarioStateTopicHasBeenCreated).
 		WillReturn(
 			string(readCreatedTopicConfigResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	updateTopicStub := wiremock.Patch(wiremock.URLPathEqualTo(kafkaTopicPath)).
 		InScenario(topicScenarioName).
@@ -320,26 +350,32 @@ func TestAccTopicPartition(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNoContent,
 		)
-	_ = wiremockClient.StubFor(updateTopicStub)
+	if err := wiremockClient.StubFor(updateTopicStub); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaTopicConfigPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaTopicConfigPath)).
 		InScenario(topicScenarioName).
 		WhenScenarioStateIs(scenarioStateTopicHasBeenUpdated).
 		WillReturn(
 			string(readCreatedTopicConfigResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readUpdatedTopicResponse, _ := ioutil.ReadFile("../testdata/kafka_topic/read_updated_kafka_topic.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(kafkaTopicPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(kafkaTopicPath)).
 		InScenario(topicScenarioName).
 		WhenScenarioStateIs(scenarioStateTopicHasBeenUpdated).
 		WillReturn(
 			string(readUpdatedTopicResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	deleteTopicStubUpdate := wiremock.Delete(wiremock.URLPathEqualTo(kafkaTopicPath)).
 		InScenario(topicScenarioName).
@@ -350,16 +386,20 @@ func TestAccTopicPartition(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNoContent,
 		)
-	_ = wiremockClient.StubFor(deleteTopicStubUpdate)
+	if err := wiremockClient.StubFor(deleteTopicStubUpdate); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(kafkaTopicPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(kafkaTopicPath)).
 		InScenario(topicScenarioName).
 		WhenScenarioStateIs(scenarioStateTopicHasBeenDeletedUpdate).
 		WillReturn(
 			"",
 			contentTypeJSONHeader,
 			http.StatusNotFound,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	createTopicUpdateResponse, _ := ioutil.ReadFile("../testdata/kafka_topic/create_kafka_topic.json")
 	createTopicUpdateStub := wiremock.Post(wiremock.URLPathEqualTo(createKafkaTopicPath)).
@@ -371,35 +411,43 @@ func TestAccTopicPartition(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusCreated,
 		)
-	_ = wiremockClient.StubFor(createTopicUpdateStub)
+	if err := wiremockClient.StubFor(createTopicUpdateStub); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readCreatedTopicUpdateResponse, _ := ioutil.ReadFile("../testdata/kafka_topic/read_create_updated_kafka_topic.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(kafkaTopicPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(kafkaTopicPath)).
 		InScenario(topicScenarioName).
 		WhenScenarioStateIs(scenarioStateTopicHasBeenUpdateCreated).
 		WillReturn(
 			string(readCreatedTopicUpdateResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	readCreatedUpdatedTopicConfigResponse, _ := ioutil.ReadFile("../testdata/kafka_topic/read_created_kafka_topic_config.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaTopicConfigPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaTopicConfigPath)).
 		InScenario(topicScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillReturn(
 			string(readCreatedUpdatedTopicConfigResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaTopicConfigPath)).
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readKafkaTopicConfigPath)).
 		InScenario(topicScenarioName).
 		WhenScenarioStateIs(scenarioStateTopicHasBeenUpdateCreated).
 		WillReturn(
 			string(readCreatedUpdatedTopicConfigResponse),
 			contentTypeJSONHeader,
 			http.StatusOK,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	deleteTopicStub := wiremock.Delete(wiremock.URLPathEqualTo(kafkaTopicPath)).
 		InScenario(topicScenarioName).
@@ -410,16 +458,20 @@ func TestAccTopicPartition(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusNoContent,
 		)
-	_ = wiremockClient.StubFor(deleteTopicStub)
+	if err := wiremockClient.StubFor(deleteTopicStub); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(kafkaTopicPath)).
+	if err := wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(kafkaTopicPath)).
 		InScenario(topicScenarioName).
 		WhenScenarioStateIs(scenarioStateTopicHasBeenDeleted).
 		WillReturn(
 			"",
 			contentTypeJSONHeader,
 			http.StatusNotFound,
-		))
+		)); err != nil {
+		t.Logf("StubFor failed: %v", err)
+	}
 
 	// Set fake values for secrets since those are required for importing
 	_ = os.Setenv("IMPORT_KAFKA_API_KEY", kafkaApiKey)
