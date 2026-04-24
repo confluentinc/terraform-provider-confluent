@@ -20,26 +20,26 @@
       }
     ],
     "watermark": {
-      "column_name": "col123",
+      "column": "col123",
       "expression": "exp123"
     },
     "constraints": [
       {
         "name": "pk_orders",
-        "kind": "PRIMARY_KEY",
-        "column_names": [
+        "type": "PRIMARY_KEY",
+        "columns": [
           "user_id",
           "product_id"
         ],
         "enforced": false
       }
     ],
-    "distributed_by": {
-      "column_names": [
+    "distribution": {
+      "keys": [
         "keys",
         "passwords"
       ],
-      "buckets": 10
+      "bucket_count": 10
     },
     "query": "SELECT user_id, product_id, price, quantity FROM orders WHERE price > 1000;"
   },

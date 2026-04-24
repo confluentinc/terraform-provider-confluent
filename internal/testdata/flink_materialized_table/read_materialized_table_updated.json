@@ -34,14 +34,14 @@
       }
     ],
     "watermark": {
-      "column_name": "col1234",
+      "column": "col1234",
       "expression": "exp1234"
     },
     "constraints": [
       {
         "name": "pk_orders",
-        "kind": "PRIMARY_KEY",
-        "column_names": [
+        "type": "PRIMARY_KEY",
+        "columns": [
           "user_id",
           "product_id"
         ],
@@ -49,20 +49,20 @@
       },
       {
         "name": "pk_orders2",
-        "kind": "PRIMARY_KEY",
-        "column_names": [
+        "type": "PRIMARY_KEY",
+        "columns": [
           "user_id2",
           "product_id2"
         ],
         "enforced": true
       }
     ],
-    "distributed_by": {
-      "column_names": [
+    "distribution": {
+      "keys": [
         "keys",
         "passwords"
       ],
-      "buckets": 10
+      "bucket_count": 10
     },
     "query": "SELECT user_id, product_id, price, quantity FROM orders WHERE price > 100;"
   },
