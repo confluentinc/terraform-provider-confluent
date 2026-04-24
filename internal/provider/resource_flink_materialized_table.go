@@ -15,39 +15,6 @@ import (
 	"time"
 )
 
-const (
-	paramQuery                    = "query"
-	paramWatermarkColumnName      = "watermark_column_name"
-	paramWatermarkExpression      = "watermark_expression"
-	paramDistributedByColumnNames = "distributed_by_column_names"
-	paramDistributedByBuckets     = "distributed_by_buckets"
-	paramColumns                  = "columns"
-	paramConstraints              = "constraints"
-	paramColumnComputed           = "columns_computed"
-	paramColumnPhysical           = "columns_physical"
-	paramColumnMetadata           = "columns_metadata"
-	paramComputedName             = "column_computed_name"
-	paramComputedKind             = "column_computed_kind"
-	paramComputedComment          = "column_computed_comment"
-	paramComputedType             = "column_computed_type"
-	paramComputedExpression       = "column_computed_expression"
-	paramComputedVirtual          = "column_computed_virtual"
-	paramPhysicalName             = "column_physical_name"
-	paramPhysicalKind             = "column_physical_kind"
-	paramPhysicalComment          = "column_physical_comment"
-	paramPhysicalType             = "column_physical_type"
-	paramMetadataName             = "column_metadata_name"
-	paramMetadataKind             = "column_metadata_kind"
-	paramMetadataComment          = "column_metadata_comment"
-	paramMetadataType             = "column_metadata_type"
-	paramMetadataKey              = "column_metadata_key"
-	paramMetadataVirtual          = "column_metadata_virtual"
-	paramConstraintsType          = "kind"
-	paramConstraintsName          = "name"
-	paramConstraintsColumnNames   = "column_names"
-	paramConstraintsEnforced      = "enforced"
-)
-
 func flinkMaterializedTableResource() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: materializedTableCreate,
