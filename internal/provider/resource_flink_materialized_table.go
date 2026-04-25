@@ -32,12 +32,14 @@ func flinkMaterializedTableResource() *schema.Resource {
 			paramDisplayName: {
 				Type:        schema.TypeString,
 				Required:    true,
+				ForceNew:    true,
 				Description: "The unique name of the materialized table.",
 			},
 			paramKafkaCluster: {
 				Type:        schema.TypeString,
 				Description: "The Kafka Cluster Id hosting the Materialized Table's topic.",
 				Required:    true,
+				ForceNew:    true,
 			},
 			paramQuery: {
 				Type:             schema.TypeString,
@@ -60,11 +62,13 @@ func flinkMaterializedTableResource() *schema.Resource {
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Description: "The names of the columns the table is distributed by.",
 				Optional:    true,
+				ForceNew:    true,
 			},
 			paramDistributedByBuckets: {
 				Type:        schema.TypeInt,
 				Description: "The number of the buckets the table is distributed by.",
 				Optional:    true,
+				ForceNew:    true,
 			},
 			paramRestEndpoint: {
 				Type:         schema.TypeString,
@@ -335,7 +339,7 @@ func materializedTableCreate(ctx context.Context, d *schema.ResourceData, meta i
 
 	createdMaterializedTable, resp, err := executeMaterializedTableCreate(flinkRestClient.apiContext(ctx), flinkRestClient, table, organizationId, environmentId, kafkaId)
 	if err != nil {
-		return diag.Errorf("error creating Flink Materialized Table %q: %s", createdMaterializedTable.GetName(), createDescriptiveError(err, resp))
+		return diag.Errorf("error creating Flink Materialized Table %q: %s", displayName, createDescriptiveError(err, resp))
 	}
 	d.SetId(createFlinkMaterializedTableId(createdMaterializedTable.GetEnvironmentId(), createdMaterializedTable.Spec.GetKafkaClusterId(), createdMaterializedTable.GetName()))
 
@@ -711,15 +715,17 @@ func materializedTableUpdate(ctx context.Context, d *schema.ResourceData, meta i
 
 	if d.HasChange(paramColumns) {
 		columns := expandAllColumns(d)
-		if len(columns) > 0 {
-			table.Spec.SetColumns(columns)
+		if columns == nil {
+			columns = []flinkgatewayv1.SqlV1ColumnDetails{}
 		}
+		table.Spec.SetColumns(columns)
 	}
 	if d.HasChange(paramConstraints) {
 		constraints := expandMaterializedTableConstraints(d, paramConstraints)
-		if len(constraints) > 0 {
-			table.Spec.SetConstraints(constraints)
+		if constraints == nil {
+			constraints = []flinkgatewayv1.SqlV1Constraint{}
 		}
+		table.Spec.SetConstraints(constraints)
 	}
 
 	updateMaterializedTableRequestJson, err := json.Marshal(table)
@@ -831,16 +837,16 @@ func expandMaterializedTableConstraints(d *schema.ResourceData, key string) []fl
 		}
 
 		var c flinkgatewayv1.SqlV1Constraint
-		if name, ok := m["name"].(string); ok && name != "" {
+		if name, ok := m[paramConstraintsName].(string); ok && name != "" {
 			c.Name = &name
 		}
-		if kind, ok := m["kind"].(string); ok && kind != "" {
+		if kind, ok := m[paramConstraintsType].(string); ok && kind != "" {
 			c.Type = &kind
 		}
-		if enforced, ok := m["enforced"].(bool); ok {
+		if enforced, ok := m[paramConstraintsEnforced].(bool); ok {
 			c.Enforced = &enforced
 		}
-		if rawSet, ok := m["column_names"].(*schema.Set); ok && rawSet.Len() > 0 {
+		if rawSet, ok := m[paramConstraintsColumnNames].(*schema.Set); ok && rawSet.Len() > 0 {
 			cols := make([]string, 0, rawSet.Len())
 			for _, col := range rawSet.List() {
 				if s, ok := col.(string); ok && s != "" {
