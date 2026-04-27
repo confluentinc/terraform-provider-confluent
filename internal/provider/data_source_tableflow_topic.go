@@ -53,6 +53,11 @@ func tableflowTopicDataSource() *schema.Resource {
 				Computed:    true,
 				Description: "Retention time in milliseconds for the Tableflow enabled topic.",
 			},
+			paramDataRetentionMs: {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The maximum age, in milliseconds, of data to retain in the table for the Tableflow-enabled topic.",
+			},
 			paramTableFormats: {
 				Type:        schema.TypeSet,
 				Computed:    true,
