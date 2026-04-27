@@ -965,8 +965,8 @@ const (
          "tags" : [ "PII" ],
          "type" : "ENCRYPT"
          } ],
-	"migrationRules" : [ {   
-		"disabled" : false,                                                          
+	"migrationRules" : [ {
+		"disabled" : false,
         "doc" : "",
         "expr" : "",
         "kind" : "TRANSFORM",
@@ -978,6 +978,21 @@ const (
             "encrypt.kek.name" : "testkekM"
             },
         "tags" : [ "PIm" ],
+        "type" : "ENCRYPT"
+         } ],
+	"encodingRules" : [ {
+		"disabled" : false,
+        "doc" : "",
+        "expr" : "",
+        "kind" : "TRANSFORM",
+        "mode" : "WRITEREAD",
+        "name" : "encryptCSPE",
+        "onFailure" : "ERROR,ERROR",
+        "onSuccess" : "NONE,NONE",
+        "params" : {
+            "encrypt.kek.name" : "cspe-kek"
+            },
+        "tags" : [ "CSPE" ],
         "type" : "ENCRYPT"
          } ]
 },
