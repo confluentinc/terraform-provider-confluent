@@ -136,11 +136,23 @@ The following arguments are supported:
     - `disabled` - (Optional Boolean) The boolean flag to control whether the rule should be disabled. Defaults to `false`.
     - `tags` - (Optional String List) The tags to which the rule applies, if any.
     - `params` - (Optional Configuration Block) A set of static parameters for the rule, which is optional. These are key-value pairs that are passed to the rule.
+  - `encoding_rules` - (Optional Block) supports the following:
+    - `name` - (Required String) A user-defined name that can be used to reference the rule.
+    - `doc` - (Optional String) An optional description of the rule. Defaults to "".
+    - `kind` - (Required String) The kind of the rule. Accepted values are `CONDITION` and `TRANSFORM`. `CONDITION` - validate the value of a field, `TRANSFORM` - transform the value of a field. Data quality rules use `CONDITION` kind, data transformation, encryption and migration rules use `TRANSFORM` kind.
+    - `mode` - (Required String) The mode of the rule. Accepted values are `UPGRADE`, `DOWNGRADE`, `UPDOWN`, `WRITE`, `READ`, and `WRITEREAD`.
+    - `type` - (Required String) The type of rule, which invokes a specific rule executor that will run the rule. Google Common Expression Language (`CEL`) is used for data quality and transformation rules, Confluent `ENCRYPT` is used for data encryption rules, and `JSONata` is used for migration rules.
+    - `expr` - (Optional String) The rule body. Data quality and transformation rules use `CEL` language expressions, data migration rules use `JSONata` expressions. Defaults to "".
+    - `on_success` - (Optional String) An optional action to execute if the rule succeeds, otherwise the built-in action type `NONE` is used. For `UPDOWN` and `WRITEREAD` rules, one can specify two actions separated by commas, such as `NONE,ERROR` for a `WRITEREAD` rule. In this case `NONE` applies to `WRITE` and `ERROR` applies to `READ`. Defaults to `NONE,NONE`.
+    - `on_failure` - (Optional String) An optional action to execute if the rule fails, otherwise the built-in action type `ERROR` is used. For `UPDOWN` and `WRITEREAD` rules, one can specify two actions separated by commas, as mentioned above. Defaults to `ERROR,ERROR`.
+    - `disabled` - (Optional Boolean) The boolean flag to control whether the rule should be disabled. Defaults to `false`.
+    - `tags` - (Optional String List) The tags to which the rule applies, if any.
+    - `params` - (Optional Configuration Block) A set of static parameters for the rule, which is optional. These are key-value pairs that are passed to the rule.
 
 
 -> **Note:** Schema rules (`ruleset`) are only available with the [Stream Governance Advanced package](https://docs.confluent.io/cloud/current/stream-governance/packages.html#packages).
 
-!> **Warning:** Do not define an empty `ruleset {}` block. Only include the `ruleset` block if you intend to define at least one `domain_rules` or `migration_rules` entry. If you don't need schema rules, omit the `ruleset` block entirely.
+!> **Warning:** Do not define an empty `ruleset {}` block. Only include the `ruleset` block if you intend to define at least one `domain_rules`, `migration_rules`, or `encoding_rules` entry. If you don't need schema rules, omit the `ruleset` block entirely.
 
 -> **Note:** The Confluent Cloud Console uses the following default values: `on_success = "NONE"` and `on_failure = "ERROR"`. However, the TF Provider sets its defaults to `on_success = "NONE,NONE"` and `on_failure = "ERROR,ERROR"`.
 
@@ -254,6 +266,16 @@ resource "confluent_schema" "avro-purchase" {
           "encrypt.kek.name" = "testkekM"
       }
     }
+    encoding_rules {
+      name = "encryptCSPE"
+      kind = "TRANSFORM"
+      type = "ENCRYPT"
+      mode = "WRITEREAD"
+      tags = ["CSPE"]
+      params = {
+          "encrypt.kek.name" = "cspe-kek"
+      }
+    }
   }
 
   lifecycle {
@@ -338,4 +360,50 @@ resource "confluent_schema" "avro-purchase-v2" {
 ```
 
 -> **Note:** See [this discussion](https://github.com/confluentinc/terraform-provider-confluent/issues/124) for more details.
+
+### Example: Schema with Client-Side Payload Encryption (CSPE)
+
+```terraform
+provider "confluent" {
+  schema_registry_id            = var.schema_registry_id            # optionally use SCHEMA_REGISTRY_ID env var
+  schema_registry_rest_endpoint = var.schema_registry_rest_endpoint # optionally use SCHEMA_REGISTRY_REST_ENDPOINT env var
+  schema_registry_api_key       = var.schema_registry_api_key       # optionally use SCHEMA_REGISTRY_API_KEY env var
+  schema_registry_api_secret    = var.schema_registry_api_secret    # optionally use SCHEMA_REGISTRY_API_SECRET env var
+}
+
+resource "confluent_schema" "avro-user-cspe" {
+  subject_name = "avro-user-value"
+  format       = "AVRO"
+  schema       = file("./schemas/avro/user.avsc")
+
+  ruleset {
+    encoding_rules {
+      name = "encryptSSN"
+      kind = "TRANSFORM"
+      type = "ENCRYPT"
+      mode = "WRITEREAD"
+      tags = ["SSN"]
+      params = {
+        "encrypt.kek.name" = "my-kek-for-ssn"
+      }
+    }
+    encoding_rules {
+      name = "encryptCreditCard"
+      kind = "TRANSFORM"
+      type = "ENCRYPT"
+      mode = "WRITEREAD"
+      tags = ["CREDIT_CARD"]
+      params = {
+        "encrypt.kek.name" = "my-kek-for-cc"
+      }
+    }
+  }
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+```
+
+-> **Note:** `encoding_rules` are used for Client-Side Payload Encryption (CSPE), which encrypts data at the application level before sending to Kafka. This differs from `domain_rules` which are used for Client-Side Field Level Encryption (CSFLE). See [Client-Side Field Level Encryption documentation](https://docs.confluent.io/platform/current/schema-registry/fundamentals/data-contracts.html#client-side-field-level-encryption) for more details on both approaches.
 
