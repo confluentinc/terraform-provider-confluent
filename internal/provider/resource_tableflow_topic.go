@@ -71,6 +71,12 @@ func tableflowTopicResource() *schema.Resource {
 				Default:     "604800000",
 				Description: "The max age of snapshots (Iceberg) or versions (Delta) (snapshot/version expiration) to keep on the table in milliseconds for the Tableflow enabled topic.",
 			},
+			paramDataRetentionMs: {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				Description: "The maximum age, in milliseconds, of data to retain in the table for the Tableflow-enabled topic. The minimum allowed value is 2592000000 milliseconds (equivalent to 30 days).",
+			},
 			paramTableFormats: {
 				Type:        schema.TypeSet,
 				Optional:    true,
@@ -246,6 +252,9 @@ func tableflowTopicCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	if retentionMs := d.Get(paramRetentionMs).(string); retentionMs != "" {
 		tableflowTopicSpec.Config.SetRetentionMs(retentionMs)
 	}
+	if dataRetentionMs := d.Get(paramDataRetentionMs).(string); dataRetentionMs != "" {
+		tableflowTopicSpec.Config.SetDataRetentionMs(dataRetentionMs)
+	}
 	if recordFailureStrategy := d.Get(paramRecordFailureStrategy).(string); recordFailureStrategy != "" {
 		tableflowTopicSpec.Config.SetRecordFailureStrategy(recordFailureStrategy)
 	}
@@ -402,6 +411,9 @@ func setTableflowTopicAttributes(d *schema.ResourceData, c *TableflowRestClient,
 	if err := d.Set(paramRetentionMs, tableflowTopic.GetSpec().Config.GetRetentionMs()); err != nil {
 		return nil, err
 	}
+	if err := d.Set(paramDataRetentionMs, tableflowTopic.GetSpec().Config.GetDataRetentionMs()); err != nil {
+		return nil, err
+	}
 	if err := d.Set(paramTableFormats, tableflowTopic.Spec.GetTableFormats()); err != nil {
 		return nil, err
 	}
@@ -534,8 +546,8 @@ func tableflowTopicDelete(ctx context.Context, d *schema.ResourceData, meta inte
 }
 
 func tableflowTopicUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if d.HasChangesExcept(paramRetentionMs, paramTableFormats, paramRecordFailureStrategy, paramErrorHandling) {
-		return diag.Errorf("error updating Tableflow Topic %q: only %q, %q, %q, %q, %q, %q attributes can be updated for Tableflow Topic", d.Id(), paramRetentionMs, paramTableFormats, paramRecordFailureStrategy, paramErrorHandling, paramMode, paramLogTarget)
+	if d.HasChangesExcept(paramRetentionMs, paramDataRetentionMs, paramTableFormats, paramRecordFailureStrategy, paramErrorHandling) {
+		return diag.Errorf("error updating Tableflow Topic %q: only %q, %q, %q, %q, %q, %q, %q attributes can be updated for Tableflow Topic", d.Id(), paramRetentionMs, paramDataRetentionMs, paramTableFormats, paramRecordFailureStrategy, paramErrorHandling, paramMode, paramLogTarget)
 	}
 
 	c := meta.(*Client)
@@ -555,6 +567,9 @@ func tableflowTopicUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 	updateTableflowTopicSpec.SetKafkaCluster(tableflowv1.EnvScopedObjectReference{Id: clusterId})
 	if d.HasChange(paramRetentionMs) {
 		updateTableflowTopicSpec.Config.SetRetentionMs(d.Get(paramRetentionMs).(string))
+	}
+	if d.HasChange(paramDataRetentionMs) {
+		updateTableflowTopicSpec.Config.SetDataRetentionMs(d.Get(paramDataRetentionMs).(string))
 	}
 	if d.HasChange(paramTableFormats) {
 		updateTableflowTopicSpec.SetTableFormats(convertToStringSlice(d.Get(paramTableFormats).(*schema.Set).List()))
