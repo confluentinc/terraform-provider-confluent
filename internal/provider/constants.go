@@ -513,6 +513,7 @@ const (
 	paramRestEndpoint                                    = "rest_endpoint"
 	paramRestEndpointPrivate                             = "private_rest_endpoint"
 	paramRestEndpointPrivateRegional                     = "private_regional_rest_endpoints"
+	paramDataRetentionMs                                 = "data_retention_ms"
 	paramRetentionMs                                     = "retention_ms"
 	paramRoleName                                        = "role_name"
 	paramRoutes                                          = "routes"

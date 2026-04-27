@@ -29,6 +29,7 @@
       "enable_compaction": true,
       "enable_partitioning": true,
       "retention_ms": "100000000",
+      "data_retention_ms": "2592000000",
       "error_handling": {
         "mode": "SUSPEND"
       }
