@@ -141,7 +141,7 @@ The following arguments are supported:
     - `doc` - (Optional String) An optional description of the rule. Defaults to "".
     - `kind` - (Required String) The kind of the rule. Accepted values are `CONDITION` and `TRANSFORM`. `CONDITION` - validate the value of a field, `TRANSFORM` - transform the value of a field. Data quality rules use `CONDITION` kind, data transformation, encryption and migration rules use `TRANSFORM` kind.
     - `mode` - (Required String) The mode of the rule. Accepted values are `UPGRADE`, `DOWNGRADE`, `UPDOWN`, `WRITE`, `READ`, and `WRITEREAD`.
-    - `type` - (Required String) The type of rule, which invokes a specific rule executor that that will run the rule. Google Common Expression Language (`CEL`) is used for data quality and transformation rules, Confluent `ENCRYPT` is used for data encryption rules, and `JSONata` is used for migration rules.
+    - `type` - (Required String) The type of rule, which invokes a specific rule executor that will run the rule. Google Common Expression Language (`CEL`) is used for data quality and transformation rules, Confluent `ENCRYPT` is used for data encryption rules, and `JSONata` is used for migration rules.
     - `expr` - (Optional String) The rule body. Data quality and transformation rules use `CEL` language expressions, data migration rules use `JSONata` expressions. Defaults to "".
     - `on_success` - (Optional String) An optional action to execute if the rule succeeds, otherwise the built-in action type `NONE` is used. For `UPDOWN` and `WRITEREAD` rules, one can specify two actions separated by commas, such as `NONE,ERROR` for a `WRITEREAD` rule. In this case `NONE` applies to `WRITE` and `ERROR` applies to `READ`. Defaults to `NONE,NONE`.
     - `on_failure` - (Optional String) An optional action to execute if the rule fails, otherwise the built-in action type `ERROR` is used. For `UPDOWN` and `WRITEREAD` rules, one can specify two actions separated by commas, as mentioned above. Defaults to `ERROR,ERROR`.
@@ -151,8 +151,6 @@ The following arguments are supported:
 
 
 -> **Note:** Schema rules (`ruleset`) are only available with the [Stream Governance Advanced package](https://docs.confluent.io/cloud/current/stream-governance/packages.html#packages).
-
--> **Note:** `encoding_rules` are used for Client-Side Payload Encryption (CSPE). See [Client-Side Field Level Encryption](https://docs.confluent.io/platform/current/schema-registry/fundamentals/data-contracts.html#client-side-field-level-encryption) for more details.
 
 !> **Warning:** Do not define an empty `ruleset {}` block. Only include the `ruleset` block if you intend to define at least one `domain_rules`, `migration_rules`, or `encoding_rules` entry. If you don't need schema rules, omit the `ruleset` block entirely.
 
@@ -198,7 +196,6 @@ The following end-to-end examples might help to get started with `confluent_sche
 * [multiple-event-types-avro-schema](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/multiple-event-types-avro-schema)
 * [multiple-event-types-proto-schema](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/multiple-event-types-proto-schema)
 * [field-level-encryption-schema](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/field-level-encryption-schema)
-* [client-side-payload-encryption-schema](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/client-side-payload-encryption-schema)
 
 ## Additional Examples
 
