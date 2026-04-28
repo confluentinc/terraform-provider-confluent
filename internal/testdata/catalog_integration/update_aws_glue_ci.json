@@ -28,7 +28,8 @@
     },
     "config": {
       "kind": "AwsGlue",
-      "provider_integration_id": "cspi-stgce89r7"
+      "provider_integration_id": "cspi-stgce89r7",
+      "custom_database": "my-custom-database"
     }
   },
   "status": {
