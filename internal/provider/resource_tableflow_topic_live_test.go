@@ -105,6 +105,7 @@ func TestAccTableflowTopicLive(t *testing.T) {
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_tableflow_topic.%s", tableflowTopicResourceLabel), "kafka_cluster.0.id", kafkaClusterId),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_tableflow_topic.%s", tableflowTopicResourceLabel), "managed_storage.#", "1"),
 					resource.TestCheckResourceAttrSet(fmt.Sprintf("confluent_tableflow_topic.%s", tableflowTopicResourceLabel), "id"),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_tableflow_topic.%s", tableflowTopicResourceLabel), "data_retention_ms", "2592000000"),
 				),
 			},
 			{
@@ -125,7 +126,8 @@ func TestAccTableflowTopicLive(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckTableflowTopicLiveExists(fmt.Sprintf("confluent_tableflow_topic.%s", tableflowTopicResourceLabel)),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_tableflow_topic.%s", tableflowTopicResourceLabel), "display_name", topicName),
-					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_tableflow_topic.%s", tableflowTopicResourceLabel), "retention_ms", "1209600000"), // 14 days
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_tableflow_topic.%s", tableflowTopicResourceLabel), "retention_ms", "1209600000"),      // 14 days
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_tableflow_topic.%s", tableflowTopicResourceLabel), "data_retention_ms", "5184000000"), // 60 days
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_tableflow_topic.%s", tableflowTopicResourceLabel), "environment.0.id", environmentId),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_tableflow_topic.%s", tableflowTopicResourceLabel), "kafka_cluster.0.id", kafkaClusterId),
 				),
@@ -217,6 +219,7 @@ func testAccCheckTableflowTopicLiveConfig(endpoint, kafkaTopicResourceLabel, tab
 		}
 		managed_storage {}
 		retention_ms = "604800000"
+		data_retention_ms = "2592000000"
 		credentials {
 			key    = "%s"
 			secret = "%s"
@@ -265,6 +268,7 @@ func testAccCheckTableflowTopicLiveConfigUpdate(endpoint, kafkaTopicResourceLabe
 		}
 		managed_storage {}
 		retention_ms = "1209600000"
+		data_retention_ms = "5184000000"
 		credentials {
 			key    = "%s"
 			secret = "%s"
