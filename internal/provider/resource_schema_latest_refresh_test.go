@@ -293,6 +293,16 @@ func testAccCheckLatestRefreshSchemaConfig(confluentCloudBaseUrl, mockServerUrl 
 			  "encrypt.kek.name" = "testkekM"
 		  }
 		}
+		encoding_rules  {
+		  name = "encryptCSPE"
+		  kind = "TRANSFORM"
+		  type = "ENCRYPT"
+		  mode = "WRITEREAD"
+		  tags = ["CSPE"]
+		  params = {
+			  "encrypt.kek.name" = "cspe-kek"
+		  }
+		}
 	  }
 	}
 	`, confluentCloudBaseUrl, testSchemaResourceLabel, testStreamGovernanceClusterId, mockServerUrl, testSchemaRegistryKey, testSchemaRegistrySecret, testSubjectName, testFormat, schemaContent,

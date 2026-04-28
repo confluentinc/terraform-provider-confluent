@@ -174,7 +174,7 @@ func TestAccLatestSchema(t *testing.T) {
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "schema_reference.1.version", strconv.Itoa(testSecondSchemaReferenceVersion)),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "%", strconv.Itoa(testNumberOfSchemaRegistrySchemaResourceAttributes)),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.#", "1"),
-					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.%", "2"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.%", "3"),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.#", "2"),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.0.%", "11"),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.0.doc", ""),
@@ -204,6 +204,21 @@ func TestAccLatestSchema(t *testing.T) {
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.1.tags.0", "PII"),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.1.type", "ENCRYPT"),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.domain_rules.1.disabled", "false"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.encoding_rules.#", "1"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.encoding_rules.0.%", "11"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.encoding_rules.0.doc", ""),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.encoding_rules.0.expr", ""),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.encoding_rules.0.kind", "TRANSFORM"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.encoding_rules.0.mode", "WRITEREAD"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.encoding_rules.0.name", "encryptCSPE"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.encoding_rules.0.on_failure", "ERROR,ERROR"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.encoding_rules.0.on_success", "NONE,NONE"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.encoding_rules.0.params.%", "1"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.encoding_rules.0.params.encrypt.kek.name", "cspe-kek"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.encoding_rules.0.tags.#", "1"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.encoding_rules.0.tags.0", "CSPE"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.encoding_rules.0.type", "ENCRYPT"),
+					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "ruleset.0.encoding_rules.0.disabled", "false"),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "metadata.#", "1"),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "metadata.0.%", "3"),
 					resource.TestCheckResourceAttr(fullSchemaResourceLabel, "metadata.0.properties.%", "2"),
@@ -326,6 +341,16 @@ func testAccCheckLatestSchemaConfig(confluentCloudBaseUrl, mockServerUrl string)
 			  "encrypt.kek.name" = "testkekM"
 		  }
 		}
+		encoding_rules  {
+		  name = "encryptCSPE"
+		  kind = "TRANSFORM"
+		  type = "ENCRYPT"
+		  mode = "WRITEREAD"
+		  tags = ["CSPE"]
+		  params = {
+			  "encrypt.kek.name" = "cspe-kek"
+		  }
+		}
 	  }
 
       schema_reference {
@@ -391,8 +416,18 @@ func testAccCheckLatestSchemaConfigWithUpdatedCredentials(confluentCloudBaseUrl,
 			  "encrypt.kek.name" = "testkekM"
 		  }
 		}
+		encoding_rules  {
+		  name = "encryptCSPE"
+		  kind = "TRANSFORM"
+		  type = "ENCRYPT"
+		  mode = "WRITEREAD"
+		  tags = ["CSPE"]
+		  params = {
+			  "encrypt.kek.name" = "cspe-kek"
+		  }
+		}
 	  }
-	  
+
       schema_reference {
         name = "%s"
         subject_name = "%s"

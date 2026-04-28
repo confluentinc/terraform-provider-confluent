@@ -340,6 +340,7 @@ const (
 	paramDomains                                         = "domains"
 	paramEgressByteRate                                  = "egress_byte_rate"
 	paramEmail                                           = "email"
+	paramEncodingRules                                   = "encoding_rules"
 	paramEnableCompaction                                = "enable_compaction"
 	paramEnableHighAvailability                          = "enable_high_availability"
 	paramEnablePartitioning                              = "enable_partitioning"

@@ -133,6 +133,8 @@ github.com/confluentinc/ccloud-sdk-go-v2/provider-integration v0.2.0 h1:UN2a+aqY
 github.com/confluentinc/ccloud-sdk-go-v2/provider-integration v0.2.0/go.mod h1:TzompS9F0G6awN5xMC+nguNG8ULElN5UqX2XOBOIPuM=
 github.com/confluentinc/ccloud-sdk-go-v2/schema-registry v0.4.0 h1:fBki9LEIQOy82oArfbMJxAh5vGPFg9WvHG3HSnZubyk=
 github.com/confluentinc/ccloud-sdk-go-v2/schema-registry v0.4.0/go.mod h1:uTE8K5/jg75ubJY1Flh6TfBIwVFVOchkLWqVsamwLYc=
+github.com/confluentinc/ccloud-sdk-go-v2/schema-registry v0.5.0 h1:JLXVG3DNXUOTYoL7zVSd4+0tdX79kKuCWkZoJInHSF4=
+github.com/confluentinc/ccloud-sdk-go-v2/schema-registry v0.5.0/go.mod h1:IeFO9LfH2o1qPo/FRVL0LPptgHiZJMvNkqB3nAxCXEs=
 github.com/confluentinc/ccloud-sdk-go-v2/srcm v0.7.3 h1:ozdDSJHruQIgtxS5hwz8Rp8pUSX0i4h9besp2H9NYzU=
 github.com/confluentinc/ccloud-sdk-go-v2/srcm v0.7.3/go.mod h1:cD0AeCMBAWBesmWxWCMgVYNABYgHJ/ahCj7b4HP2R2I=
 github.com/confluentinc/ccloud-sdk-go-v2/sso v0.0.1 h1:WZJYfgXJrvTIYQpCFps/qHF7T8ekgPlX/SFqx4EY2zQ=
