@@ -219,6 +219,10 @@ func pluginDelete(ctx context.Context, d *schema.ResourceData, meta interface{})
 	resp, err := req.Execute()
 
 	if err != nil {
+		if isNonKafkaRestApiResourceNotFound(resp) {
+			tflog.Warn(ctx, fmt.Sprintf("Removing Plugin %q in TF state because Plugin could not be found on the server", d.Id()), map[string]interface{}{pluginLoggingKey: d.Id()})
+			return nil
+		}
 		return diag.Errorf("error deleting Plugin %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished deleting Plugin %q", d.Id()), map[string]interface{}{pluginLoggingKey: d.Id()})

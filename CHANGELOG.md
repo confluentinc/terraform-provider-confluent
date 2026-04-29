@@ -1,3 +1,25 @@
+## 2.70.0 (April 23rd, 2026)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.69.0...v2.70.0)
+
+**Bug fixes:**
+* Fix an error that occurs when deleting `confluent_plugin` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_plugin) after deleting all corresponding `confluent_custom_connector_plugin_version` [resources](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_custom_connector_plugin_version).
+
+## 2.69.0 (April 20th, 2026)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.68.0...v2.69.0)
+
+**Bug fixes:**
+* Resolve an error when reading the `confluent_catalog_entity_attributes` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_catalog_entity_attributes) for a Schema with a tag binding.
+* Fix a typo in the `confluent_catalog_integration` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_catalog_integration) and the `confluent_tableflow_topic` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_tableflow_topic).
+
+## 2.68.0 (April 14th, 2026)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.67.0...v2.68.0)
+
+**New features:**
+* Added `routes` attribute to the `aws_private_network_interface` configuration block of `confluent_access_point` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_access_point) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_access_point).
+
 ## 2.67.0 (April 3rd, 2026)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.66.0...v2.67.0)
