@@ -115,4 +115,8 @@ In addition to the preceding arguments, the following attributes are exported:
     - `bucket_count` - (Integer) The number of buckets the table is distributed by.
 - `stopped` - (Boolean) Whether the Materialized Table is stopped.
 - `columns` - (List of Blocks) The column definitions of the Materialized Table, including physical, computed, and metadata columns.
-- `constraints` - (List of Blocks) The table constraints of the Materialized Table. Each `constraints` block supports `name` (String), `type` (String, e.g. `PRIMARY_KEY`), `columns` (Set of Strings), and `enforced` (Boolean).
+- `constraints` - (List of Blocks) The table constraints of the Materialized Table. Each `constraints` block supports the following:
+    - `name` - (String) The name of the constraint, for example, `pk_orders`.
+    - `type` - (String) The type of the constraint, for example, `PRIMARY_KEY`.
+    - `columns` - (Set of Strings) The column names of the constraint.
+    - `enforced` - (Boolean) Whether the constraint is enforced.
