@@ -273,13 +273,13 @@ func gatewayCreate(ctx context.Context, d *schema.ResourceData, meta interface{}
 		)))
 	} else if isAzureIngressPrivateLink {
 		region := extractStringValueFromBlock(d, paramAzureIngressPrivateLinkGateway, paramRegion)
-		createGatewayRequest.Spec.SetConfig(netgw.NetworkingV1AzureIngressPrivateLinkGatewaySpecAsNetworkingV1GatewaySpecConfigOneOf(netgw.NewNetworkingV1AzureIngressPrivateLinkGatewaySpec(
+		createGatewayRequest.Spec.SetConfig(networkinggatewayv1.NetworkingV1AzureIngressPrivateLinkGatewaySpecAsNetworkingV1GatewaySpecConfigOneOf(networkinggatewayv1.NewNetworkingV1AzureIngressPrivateLinkGatewaySpec(
 			azureIngressPrivateLinkGatewaySpecKind,
 			region,
 		)))
 	} else if isGcpIngressPrivateServiceConnect {
 		region := extractStringValueFromBlock(d, paramGcpIngressPrivateServiceConnectGateway, paramRegion)
-		createGatewayRequest.Spec.SetConfig(netgw.NetworkingV1GcpIngressPrivateServiceConnectGatewaySpecAsNetworkingV1GatewaySpecConfigOneOf(netgw.NewNetworkingV1GcpIngressPrivateServiceConnectGatewaySpec(
+		createGatewayRequest.Spec.SetConfig(networkinggatewayv1.NetworkingV1GcpIngressPrivateServiceConnectGatewaySpecAsNetworkingV1GatewaySpecConfigOneOf(networkinggatewayv1.NewNetworkingV1GcpIngressPrivateServiceConnectGatewaySpec(
 			gcpIngressPrivateServiceConnectGatewaySpecKind,
 			region,
 		)))

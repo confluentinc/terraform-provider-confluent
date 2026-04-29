@@ -362,7 +362,7 @@ func accessPointCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 		}
 		spec.SetConfig(config)
 	} else if isAzureIngressPrivateLinkEndpoint {
-		config.NetworkingV1AzureIngressPrivateLinkEndpoint = &netap.NetworkingV1AzureIngressPrivateLinkEndpoint{
+		config.NetworkingV1AzureIngressPrivateLinkEndpoint = &networkingaccesspointv1.NetworkingV1AzureIngressPrivateLinkEndpoint{
 			Kind:                      azureIngressPrivateLinkEndpoint,
 			PrivateEndpointResourceId: extractStringValueFromBlock(d, paramAzureIngressPrivateLinkEndpoint, paramPrivateEndpointResourceId),
 		}
@@ -386,7 +386,7 @@ func accessPointCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 		}
 		spec.SetConfig(config)
 	} else if isGcpIngressPrivateServiceConnectEndpoint {
-		config.NetworkingV1GcpIngressPrivateServiceConnectEndpoint = &netap.NetworkingV1GcpIngressPrivateServiceConnectEndpoint{
+		config.NetworkingV1GcpIngressPrivateServiceConnectEndpoint = &networkingaccesspointv1.NetworkingV1GcpIngressPrivateServiceConnectEndpoint{
 			Kind:                             gcpIngressPrivateServiceConnectEndpoint,
 			PrivateServiceConnectConnectionId: extractStringValueFromBlock(d, paramGcpIngressPrivateServiceConnectEndpoint, paramPrivateServiceConnectConnectionId),
 		}
