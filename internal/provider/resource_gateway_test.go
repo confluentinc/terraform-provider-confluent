@@ -25,21 +25,6 @@ import (
 	"github.com/walkerus/go-wiremock"
 )
 
-const (
-	scenarioStateGatewayIsProvisioning = "The new gateway is provisioning"
-	scenarioStateGatewayHasBeenCreated = "The new gateway has been just created"
-	scenarioStateGatewayHasBeenUpdated = "The new gateway has been updated"
-	GatewayScenarioName                = "confluent_gateway Resource Lifecycle"
-
-	gatewayUrlPath               = "/networking/v1/gateways"
-	awsGatewayId                 = "gw-def456"
-	awsIngressGatewayId          = "gw-ingress123"
-	awsPrivateNetworkInterfaceId = "gw-abc789"
-	azureGatewayId               = "gw-abc456"
-	azureIngressGatewayId        = "gw-azure-ingress"
-	gcpIngressGatewayId          = "gw-gcp-ingress"
-	gatewayResourceLabel         = "confluent_gateway.main"
-)
 
 func TestAccGatewayAwsEgressPrivateLink(t *testing.T) {
 	ctx := context.Background()
