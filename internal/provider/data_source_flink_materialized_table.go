@@ -32,27 +32,8 @@ func flinkMaterializedTableDataSource() *schema.Resource {
 				Description: "The query section of the latest Materialized Table.",
 				Computed:    true,
 			},
-			paramWatermarkColumnName: {
-				Type:        schema.TypeString,
-				Description: "The name of the watermark column.",
-				Computed:    true,
-			},
-			paramWatermarkExpression: {
-				Type:        schema.TypeString,
-				Description: "The watermark expression.",
-				Computed:    true,
-			},
-			paramDistributedByColumnNames: {
-				Type:        schema.TypeSet,
-				Elem:        &schema.Schema{Type: schema.TypeString},
-				Description: "The names of the columns the table is distributed by.",
-				Computed:    true,
-			},
-			paramDistributedByBuckets: {
-				Type:        schema.TypeInt,
-				Description: "The number of the buckets the table is distributed by.",
-				Computed:    true,
-			},
+			paramWatermark:    watermarkSchemaDataSource(),
+			paramDistribution: distributionSchemaDataSource(),
 
 			paramStopped: {
 				Type:     schema.TypeBool,
@@ -222,6 +203,49 @@ func columnMetadataSchemaDataSource() *schema.Schema {
 	}
 }
 
+func watermarkSchemaDataSource() *schema.Schema {
+	return &schema.Schema{
+		Type:     schema.TypeList,
+		Computed: true,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramWatermarkColumn: {
+					Type:        schema.TypeString,
+					Description: "The name of the watermark column.",
+					Computed:    true,
+				},
+				paramWatermarkExpression: {
+					Type:        schema.TypeString,
+					Description: "The watermark expression.",
+					Computed:    true,
+				},
+			},
+		},
+	}
+}
+
+func distributionSchemaDataSource() *schema.Schema {
+	return &schema.Schema{
+		Type:     schema.TypeList,
+		Computed: true,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramDistributionKeys: {
+					Type:        schema.TypeSet,
+					Elem:        &schema.Schema{Type: schema.TypeString},
+					Description: "The names of the columns the table is distributed by.",
+					Computed:    true,
+				},
+				paramDistributionBucketCount: {
+					Type:        schema.TypeInt,
+					Description: "The number of buckets the table is distributed by.",
+					Computed:    true,
+				},
+			},
+		},
+	}
+}
+
 func constraintsSchemaDataSource() *schema.Schema {
 	return &schema.Schema{
 		Type:     schema.TypeList,
@@ -240,7 +264,7 @@ func constraintsSchemaDataSource() *schema.Schema {
 					Optional:    true,
 					Computed:    true,
 				},
-				paramConstraintsColumnNames: {
+				paramConstraintsColumns: {
 					Type:        schema.TypeSet,
 					Elem:        &schema.Schema{Type: schema.TypeString},
 					Description: "Constraint column names.",

@@ -47,29 +47,8 @@ func flinkMaterializedTableResource() *schema.Resource {
 				Optional:         true,
 				DiffSuppressFunc: suppressFlinkQueryDiff,
 			},
-			paramWatermarkColumnName: {
-				Type:        schema.TypeString,
-				Description: "The name of the watermark column.",
-				Optional:    true,
-			},
-			paramWatermarkExpression: {
-				Type:        schema.TypeString,
-				Description: "The watermark expression.",
-				Optional:    true,
-			},
-			paramDistributedByColumnNames: {
-				Type:        schema.TypeSet,
-				Elem:        &schema.Schema{Type: schema.TypeString},
-				Description: "The names of the columns the table is distributed by.",
-				Optional:    true,
-				ForceNew:    true,
-			},
-			paramDistributedByBuckets: {
-				Type:        schema.TypeInt,
-				Description: "The number of the buckets the table is distributed by.",
-				Optional:    true,
-				ForceNew:    true,
-			},
+			paramWatermark:    watermarkSchema(),
+			paramDistribution: distributionSchema(),
 			paramRestEndpoint: {
 				Type:         schema.TypeString,
 				Optional:     true,
@@ -218,6 +197,56 @@ func columnMetadataSchema() *schema.Schema {
 	}
 }
 
+func watermarkSchema() *schema.Schema {
+	return &schema.Schema{
+		Type:        schema.TypeList,
+		MaxItems:    1,
+		Optional:    true,
+		Description: "The watermark definition for the materialized table.",
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramWatermarkColumn: {
+					Type:        schema.TypeString,
+					Description: "The name of the watermark column.",
+					Optional:    true,
+				},
+				paramWatermarkExpression: {
+					Type:        schema.TypeString,
+					Description: "The watermark expression.",
+					Optional:    true,
+				},
+			},
+		},
+	}
+}
+
+func distributionSchema() *schema.Schema {
+	return &schema.Schema{
+		Type:        schema.TypeList,
+		MaxItems:    1,
+		Optional:    true,
+		ForceNew:    true,
+		Description: "The distribution definition for the materialized table.",
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramDistributionKeys: {
+					Type:        schema.TypeSet,
+					Elem:        &schema.Schema{Type: schema.TypeString},
+					Description: "The names of the columns the table is distributed by.",
+					Optional:    true,
+					ForceNew:    true,
+				},
+				paramDistributionBucketCount: {
+					Type:        schema.TypeInt,
+					Description: "The number of buckets the table is distributed by.",
+					Optional:    true,
+					ForceNew:    true,
+				},
+			},
+		},
+	}
+}
+
 func constraintsSchema() *schema.Schema {
 	return &schema.Schema{
 		Type:     schema.TypeList,
@@ -234,7 +263,7 @@ func constraintsSchema() *schema.Schema {
 					Description: "Type of the constraint.",
 					Optional:    true,
 				},
-				paramConstraintsColumnNames: {
+				paramConstraintsColumns: {
 					Type:        schema.TypeSet,
 					Elem:        &schema.Schema{Type: schema.TypeString},
 					Description: "Constraint column names.",
@@ -302,28 +331,12 @@ func materializedTableCreate(ctx context.Context, d *schema.ResourceData, meta i
 		table.Spec.SetColumns(columns)
 	}
 
-	watermarkColumnName := d.Get(paramWatermarkColumnName).(string)
-	watermarkColumnExpression := d.Get(paramWatermarkExpression).(string)
-	if watermarkColumnName != "" || watermarkColumnExpression != "" {
-		table.Spec.Watermark = &flinkgatewayv1.SqlV1Watermark{}
-		if watermarkColumnName != "" {
-			table.Spec.Watermark.SetColumn(watermarkColumnName)
-		}
-		if watermarkColumnExpression != "" {
-			table.Spec.Watermark.SetExpression(watermarkColumnExpression)
-		}
+	if watermark := expandMaterializedTableWatermark(d); watermark != nil {
+		table.Spec.Watermark = watermark
 	}
 
-	distributedByBuckets := d.Get(paramDistributedByBuckets).(int)
-	distributedByColumns := getStringSet(d, paramDistributedByColumnNames)
-	if distributedByBuckets != 0 || len(distributedByColumns) > 0 {
-		table.Spec.Distribution = &flinkgatewayv1.SqlV1Distribution{}
-		if distributedByBuckets != 0 {
-			table.Spec.Distribution.SetBucketCount(int32(distributedByBuckets))
-		}
-		if len(distributedByColumns) > 0 {
-			table.Spec.Distribution.SetKeys(distributedByColumns)
-		}
+	if distribution := expandMaterializedTableDistribution(d); distribution != nil {
+		table.Spec.Distribution = distribution
 	}
 
 	constraints := expandMaterializedTableConstraints(d, paramConstraints)
@@ -458,13 +471,36 @@ func setMaterializedTableAttributes(d *schema.ResourceData, materializedTable fl
 	}
 
 	if materializedTable.Spec.Watermark != nil {
-		_ = d.Set(paramWatermarkColumnName, materializedTable.Spec.Watermark.GetColumn())
-		_ = d.Set(paramWatermarkExpression, materializedTable.Spec.Watermark.GetExpression())
+		watermarkBlock := []map[string]interface{}{
+			{
+				paramWatermarkColumn:     materializedTable.Spec.Watermark.GetColumn(),
+				paramWatermarkExpression: materializedTable.Spec.Watermark.GetExpression(),
+			},
+		}
+		if err := d.Set(paramWatermark, watermarkBlock); err != nil {
+			return nil, err
+		}
+	} else {
+		if err := d.Set(paramWatermark, []interface{}{}); err != nil {
+			return nil, err
+		}
 	}
 
 	if materializedTable.Spec.Distribution != nil {
-		_ = d.Set(paramDistributedByColumnNames, materializedTable.Spec.Distribution.GetKeys())
-		_ = d.Set(paramDistributedByBuckets, materializedTable.Spec.Distribution.GetBucketCount())
+		keysSet := schema.NewSet(schema.HashString, toInterfaceSlice(materializedTable.Spec.Distribution.GetKeys()))
+		distributionBlock := []map[string]interface{}{
+			{
+				paramDistributionKeys:        keysSet,
+				paramDistributionBucketCount: materializedTable.Spec.Distribution.GetBucketCount(),
+			},
+		}
+		if err := d.Set(paramDistribution, distributionBlock); err != nil {
+			return nil, err
+		}
+	} else {
+		if err := d.Set(paramDistribution, []interface{}{}); err != nil {
+			return nil, err
+		}
 	}
 
 	err := d.Set(paramStopped, materializedTable.Spec.GetStopped())
@@ -542,17 +578,17 @@ func setMaterializedTableAttributes(d *schema.ResourceData, materializedTable fl
 		constraintsList := make([]map[string]interface{}, 0, len(materializedTable.Spec.GetConstraints()))
 
 		for _, c := range materializedTable.Spec.GetConstraints() {
-			var columnNamesSet *schema.Set
+			var columnsSet *schema.Set
 			if c.Columns != nil {
-				columnNamesSet = schema.NewSet(schema.HashString, toInterfaceSlice(*c.Columns))
+				columnsSet = schema.NewSet(schema.HashString, toInterfaceSlice(*c.Columns))
 			} else {
-				columnNamesSet = schema.NewSet(schema.HashString, []interface{}{})
+				columnsSet = schema.NewSet(schema.HashString, []interface{}{})
 			}
 			m := map[string]interface{}{
-				paramConstraintsName:        c.Name,
-				paramConstraintsType:        c.Type,
-				paramConstraintsColumnNames: columnNamesSet,
-				paramConstraintsEnforced:    c.Enforced,
+				paramConstraintsName:     c.Name,
+				paramConstraintsType:     c.Type,
+				paramConstraintsColumns:  columnsSet,
+				paramConstraintsEnforced: c.Enforced,
 			}
 			constraintsList = append(constraintsList, m)
 		}
@@ -645,8 +681,8 @@ func materializedTableImport(ctx context.Context, d *schema.ResourceData, meta i
 }
 
 func materializedTableUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if d.HasChangesExcept(paramQuery, paramStopped, paramComputePool, paramPrincipal, paramColumns, paramWatermarkExpression, paramWatermarkColumnName, paramConstraints) {
-		return diag.Errorf("error updating Flink Materialized Table %q: only %q, %q, %q, %q, %q, %q, %q, and %q attributes can be updated for Flink Materialized Table", d.Id(), paramQuery, paramStopped, paramComputePool, paramPrincipal, paramColumns, paramWatermarkExpression, paramWatermarkColumnName, paramConstraints)
+	if d.HasChangesExcept(paramQuery, paramStopped, paramComputePool, paramPrincipal, paramColumns, paramWatermark, paramConstraints) {
+		return diag.Errorf("error updating Flink Materialized Table %q: only %q, %q, %q, %q, %q, %q, and %q attributes can be updated for Flink Materialized Table", d.Id(), paramQuery, paramStopped, paramComputePool, paramPrincipal, paramColumns, paramWatermark, paramConstraints)
 	}
 
 	restEndpoint, err := extractFlinkRestEndpoint(meta.(*Client), d, false)
@@ -691,18 +727,8 @@ func materializedTableUpdate(ctx context.Context, d *schema.ResourceData, meta i
 		table.Spec.SetStopped(d.Get(paramStopped).(bool))
 	}
 
-	if d.HasChange(paramWatermarkExpression) {
-		if table.Spec.Watermark == nil {
-			table.Spec.Watermark = &flinkgatewayv1.SqlV1Watermark{}
-		}
-		table.Spec.Watermark.SetExpression(d.Get(paramWatermarkExpression).(string))
-	}
-
-	if d.HasChange(paramWatermarkColumnName) {
-		if table.Spec.Watermark == nil {
-			table.Spec.Watermark = &flinkgatewayv1.SqlV1Watermark{}
-		}
-		table.Spec.Watermark.SetColumn(d.Get(paramWatermarkColumnName).(string))
+	if d.HasChange(paramWatermark) {
+		table.Spec.Watermark = expandMaterializedTableWatermark(d)
 	}
 
 	if d.HasChange(paramComputePool) {
@@ -801,20 +827,63 @@ func getKafkaId(tableId string) string {
 	return parts[len(parts)-2]
 }
 
-func getStringSet(d *schema.ResourceData, key string) []string {
-	raw, ok := d.GetOk(key)
+func expandMaterializedTableWatermark(d *schema.ResourceData) *flinkgatewayv1.SqlV1Watermark {
+	raw, ok := d.GetOk(paramWatermark)
 	if !ok || raw == nil {
 		return nil
 	}
+	list := raw.([]interface{})
+	if len(list) == 0 || list[0] == nil {
+		return nil
+	}
+	m := list[0].(map[string]interface{})
+	column, _ := m[paramWatermarkColumn].(string)
+	expression, _ := m[paramWatermarkExpression].(string)
+	if column == "" && expression == "" {
+		return nil
+	}
+	w := &flinkgatewayv1.SqlV1Watermark{}
+	if column != "" {
+		w.SetColumn(column)
+	}
+	if expression != "" {
+		w.SetExpression(expression)
+	}
+	return w
+}
 
-	set := raw.(*schema.Set)
-	result := make([]string, 0, set.Len())
-	for _, v := range set.List() {
-		if s, ok := v.(string); ok && s != "" {
-			result = append(result, s)
+func expandMaterializedTableDistribution(d *schema.ResourceData) *flinkgatewayv1.SqlV1Distribution {
+	raw, ok := d.GetOk(paramDistribution)
+	if !ok || raw == nil {
+		return nil
+	}
+	list := raw.([]interface{})
+	if len(list) == 0 || list[0] == nil {
+		return nil
+	}
+	m := list[0].(map[string]interface{})
+
+	var keys []string
+	if rawSet, ok := m[paramDistributionKeys].(*schema.Set); ok && rawSet.Len() > 0 {
+		keys = make([]string, 0, rawSet.Len())
+		for _, k := range rawSet.List() {
+			if s, ok := k.(string); ok && s != "" {
+				keys = append(keys, s)
+			}
 		}
 	}
-	return result
+	bucketCount, _ := m[paramDistributionBucketCount].(int)
+	if bucketCount == 0 && len(keys) == 0 {
+		return nil
+	}
+	dist := &flinkgatewayv1.SqlV1Distribution{}
+	if len(keys) > 0 {
+		dist.SetKeys(keys)
+	}
+	if bucketCount != 0 {
+		dist.SetBucketCount(int32(bucketCount))
+	}
+	return dist
 }
 
 func expandMaterializedTableConstraints(d *schema.ResourceData, key string) []flinkgatewayv1.SqlV1Constraint {
@@ -840,13 +909,13 @@ func expandMaterializedTableConstraints(d *schema.ResourceData, key string) []fl
 		if name, ok := m[paramConstraintsName].(string); ok && name != "" {
 			c.Name = &name
 		}
-		if kind, ok := m[paramConstraintsType].(string); ok && kind != "" {
-			c.Type = &kind
+		if constraintType, ok := m[paramConstraintsType].(string); ok && constraintType != "" {
+			c.Type = &constraintType
 		}
 		if enforced, ok := m[paramConstraintsEnforced].(bool); ok {
 			c.Enforced = &enforced
 		}
-		if rawSet, ok := m[paramConstraintsColumnNames].(*schema.Set); ok && rawSet.Len() > 0 {
+		if rawSet, ok := m[paramConstraintsColumns].(*schema.Set); ok && rawSet.Len() > 0 {
 			cols := make([]string, 0, rawSet.Len())
 			for _, col := range rawSet.List() {
 				if s, ok := col.(string); ok && s != "" {

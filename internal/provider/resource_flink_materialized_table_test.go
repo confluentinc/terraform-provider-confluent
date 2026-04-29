@@ -152,13 +152,15 @@ func TestAccFlinkMaterializedTable(t *testing.T) {
 					testAccCheckMaterializedTableExists(fullMaterializedTableResourceLabel),
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, paramDisplayName, flinkMaterializedTableDisplayName),
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, paramQuery, "SELECT user_id, product_id, price, quantity FROM orders WHERE price > 1000;"),
-					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, paramWatermarkExpression, "exp123"),
-					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, paramWatermarkColumnName, "col123"),
+					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "watermark.#", "1"),
+					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "watermark.0.column", "col123"),
+					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "watermark.0.expression", "exp123"),
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, paramStopped, "false"),
-					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, paramDistributedByBuckets, "10"),
-					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "distributed_by_column_names.#", "2"),
-					resource.TestCheckTypeSetElemAttr(fullMaterializedTableResourceLabel, "distributed_by_column_names.*", "keys"),
-					resource.TestCheckTypeSetElemAttr(fullMaterializedTableResourceLabel, "distributed_by_column_names.*", "passwords"),
+					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "distribution.#", "1"),
+					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "distribution.0.bucket_count", "10"),
+					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "distribution.0.keys.#", "2"),
+					resource.TestCheckTypeSetElemAttr(fullMaterializedTableResourceLabel, "distribution.0.keys.*", "keys"),
+					resource.TestCheckTypeSetElemAttr(fullMaterializedTableResourceLabel, "distribution.0.keys.*", "passwords"),
 
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "columns.0.columns_physical.0.column_physical_name", "user_id"),
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "columns.0.columns_physical.0.column_physical_kind", "Physical"),
@@ -167,11 +169,11 @@ func TestAccFlinkMaterializedTable(t *testing.T) {
 
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "constraints.#", "1"),
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "constraints.0.name", "pk_orders"),
-					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "constraints.0.kind", "PRIMARY_KEY"),
+					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "constraints.0.type", "PRIMARY_KEY"),
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "constraints.0.enforced", "false"),
-					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "constraints.0.column_names.#", "2"),
-					resource.TestCheckTypeSetElemAttr(fullMaterializedTableResourceLabel, "constraints.0.column_names.*", "user_id"),
-					resource.TestCheckTypeSetElemAttr(fullMaterializedTableResourceLabel, "constraints.0.column_names.*", "product_id"),
+					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "constraints.0.columns.#", "2"),
+					resource.TestCheckTypeSetElemAttr(fullMaterializedTableResourceLabel, "constraints.0.columns.*", "user_id"),
+					resource.TestCheckTypeSetElemAttr(fullMaterializedTableResourceLabel, "constraints.0.columns.*", "product_id"),
 
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, fmt.Sprintf("%s.0.%s", paramEnvironment, paramId), flinkEnvironmentIdTest),
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, fmt.Sprintf("%s.0.%s", paramOrganization, paramId), flinkOrganizationIdTest),
@@ -186,13 +188,15 @@ func TestAccFlinkMaterializedTable(t *testing.T) {
 					testAccCheckMaterializedTableExists(fullMaterializedTableResourceLabel),
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, paramDisplayName, flinkMaterializedTableDisplayName),
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, paramQuery, "SELECT user_id, product_id, price, quantity FROM orders WHERE price > 100;"),
-					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, paramWatermarkExpression, "exp1234"),
-					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, paramWatermarkColumnName, "col1234"),
+					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "watermark.#", "1"),
+					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "watermark.0.column", "col1234"),
+					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "watermark.0.expression", "exp1234"),
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, paramStopped, "true"),
-					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, paramDistributedByBuckets, "10"),
-					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "distributed_by_column_names.#", "2"),
-					resource.TestCheckTypeSetElemAttr(fullMaterializedTableResourceLabel, "distributed_by_column_names.*", "keys"),
-					resource.TestCheckTypeSetElemAttr(fullMaterializedTableResourceLabel, "distributed_by_column_names.*", "passwords"),
+					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "distribution.#", "1"),
+					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "distribution.0.bucket_count", "10"),
+					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "distribution.0.keys.#", "2"),
+					resource.TestCheckTypeSetElemAttr(fullMaterializedTableResourceLabel, "distribution.0.keys.*", "keys"),
+					resource.TestCheckTypeSetElemAttr(fullMaterializedTableResourceLabel, "distribution.0.keys.*", "passwords"),
 
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "columns.#", "3"),
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "columns.0.columns_physical.0.column_physical_name", "user_id"),
@@ -212,17 +216,17 @@ func TestAccFlinkMaterializedTable(t *testing.T) {
 
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "constraints.#", "2"),
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "constraints.0.name", "pk_orders"),
-					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "constraints.0.kind", "PRIMARY_KEY"),
+					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "constraints.0.type", "PRIMARY_KEY"),
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "constraints.0.enforced", "false"),
-					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "constraints.0.column_names.#", "2"),
-					resource.TestCheckTypeSetElemAttr(fullMaterializedTableResourceLabel, "constraints.0.column_names.*", "user_id"),
-					resource.TestCheckTypeSetElemAttr(fullMaterializedTableResourceLabel, "constraints.0.column_names.*", "product_id"),
+					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "constraints.0.columns.#", "2"),
+					resource.TestCheckTypeSetElemAttr(fullMaterializedTableResourceLabel, "constraints.0.columns.*", "user_id"),
+					resource.TestCheckTypeSetElemAttr(fullMaterializedTableResourceLabel, "constraints.0.columns.*", "product_id"),
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "constraints.1.name", "pk_orders2"),
-					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "constraints.1.kind", "PRIMARY_KEY"),
+					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "constraints.1.type", "PRIMARY_KEY"),
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "constraints.1.enforced", "true"),
-					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "constraints.1.column_names.#", "2"),
-					resource.TestCheckTypeSetElemAttr(fullMaterializedTableResourceLabel, "constraints.1.column_names.*", "user_id2"),
-					resource.TestCheckTypeSetElemAttr(fullMaterializedTableResourceLabel, "constraints.1.column_names.*", "product_id2"),
+					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "constraints.1.columns.#", "2"),
+					resource.TestCheckTypeSetElemAttr(fullMaterializedTableResourceLabel, "constraints.1.columns.*", "user_id2"),
+					resource.TestCheckTypeSetElemAttr(fullMaterializedTableResourceLabel, "constraints.1.columns.*", "product_id2"),
 
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, fmt.Sprintf("%s.0.%s", paramEnvironment, paramId), flinkEnvironmentIdTest),
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, fmt.Sprintf("%s.0.%s", paramOrganization, paramId), flinkOrganizationIdTest),
@@ -274,17 +278,21 @@ func testAccCheckMaterializedTableConfig(mockServerUrl, resourceLabel string) st
 	  kafka_cluster = "%s"
       stopped = false
 	  query = "SELECT user_id, product_id, price, quantity FROM orders WHERE price > 1000;"
-      watermark_column_name = "col123"
-	  watermark_expression = "exp123"
-	  distributed_by_buckets = 10
-      distributed_by_column_names = [
-    	"keys",
-    	"passwords"
-      ]
+	  watermark {
+	    column     = "col123"
+	    expression = "exp123"
+	  }
+	  distribution {
+	    bucket_count = 10
+	    keys = [
+	      "keys",
+	      "passwords",
+	    ]
+	  }
 	constraints {
       name = "pk_orders"
-      kind = "PRIMARY_KEY"
-      column_names = ["user_id","product_id"]
+      type = "PRIMARY_KEY"
+      columns = ["user_id","product_id"]
       enforced = false
       }
 	columns {
@@ -328,23 +336,27 @@ func testAccCheckMaterializedTableConfigUpdated(mockServerUrl, resourceLabel str
 	  kafka_cluster = "%s"
       stopped = true
 	  query = "SELECT user_id, product_id, price, quantity FROM orders WHERE price > 100;"
-      watermark_column_name = "col1234"
-	  watermark_expression = "exp1234"
-	  distributed_by_buckets = 10
-      distributed_by_column_names = [
-    	"keys",
-    	"passwords"
-      ]
+	  watermark {
+	    column     = "col1234"
+	    expression = "exp1234"
+	  }
+	  distribution {
+	    bucket_count = 10
+	    keys = [
+	      "keys",
+	      "passwords",
+	    ]
+	  }
 	constraints {
       name = "pk_orders"
-      kind = "PRIMARY_KEY"
-      column_names = ["user_id","product_id"]
+      type = "PRIMARY_KEY"
+      columns = ["user_id","product_id"]
       enforced = false
       }
 	constraints {
       name = "pk_orders2"
-      kind = "PRIMARY_KEY"
-      column_names = ["user_id2","product_id2"]
+      type = "PRIMARY_KEY"
+      columns = ["user_id2","product_id2"]
       enforced = true
       }
 	columns {

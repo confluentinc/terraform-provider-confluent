@@ -107,10 +107,12 @@ In addition to the preceding arguments, the following attributes are exported:
 
 - `kafka_cluster` - (String) The ID of the Kafka Cluster hosting the Materialized Table's topic, for example, `lkc-abc123`.
 - `query` - (String) The SQL query that defines the Materialized Table.
-- `watermark_column_name` - (String) The name of the watermark column.
-- `watermark_expression` - (String) The watermark expression.
-- `distributed_by_column_names` - (Set of Strings) The names of the columns the table is distributed by.
-- `distributed_by_buckets` - (Integer) The number of buckets the table is distributed by.
+- `watermark` - (Configuration Block) The watermark definition for the Materialized Table. Supports the following:
+    - `column` - (String) The name of the watermark column.
+    - `expression` - (String) The watermark expression.
+- `distribution` - (Configuration Block) The distribution definition for the Materialized Table. Supports the following:
+    - `keys` - (Set of Strings) The names of the columns the table is distributed by.
+    - `bucket_count` - (Integer) The number of buckets the table is distributed by.
 - `stopped` - (Boolean) Whether the Materialized Table is stopped.
 - `columns` - (List of Blocks) The column definitions of the Materialized Table, including physical, computed, and metadata columns.
-- `constraints` - (List of Blocks) The table constraints of the Materialized Table.
+- `constraints` - (List of Blocks) The table constraints of the Materialized Table. Each `constraints` block supports `name` (String), `type` (String, e.g. `PRIMARY_KEY`), `columns` (Set of Strings), and `enforced` (Boolean).

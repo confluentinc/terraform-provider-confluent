@@ -120,8 +120,9 @@ func TestAccFlinkMaterializedTableLive(t *testing.T) {
 					resource.TestCheckResourceAttr(fullTableResourceLabel, paramDisplayName, tableDisplayName),
 					resource.TestCheckResourceAttr(fullTableResourceLabel, paramKafkaCluster, kafkaClusterId),
 					resource.TestCheckResourceAttr(fullTableResourceLabel, paramQuery, "SELECT user_id, product_id, price, quantity FROM orders WHERE price > 1000;"),
-					resource.TestCheckResourceAttr(fullTableResourceLabel, paramWatermarkColumnName, "col_event_time"),
-					resource.TestCheckResourceAttr(fullTableResourceLabel, paramWatermarkExpression, "col_event_time - INTERVAL '5' SECOND"),
+					resource.TestCheckResourceAttr(fullTableResourceLabel, "watermark.#", "1"),
+					resource.TestCheckResourceAttr(fullTableResourceLabel, "watermark.0.column", "col_event_time"),
+					resource.TestCheckResourceAttr(fullTableResourceLabel, "watermark.0.expression", "col_event_time - INTERVAL '5' SECOND"),
 					resource.TestCheckResourceAttr(fullTableResourceLabel, paramStopped, "false"),
 					resource.TestCheckResourceAttr(fullTableResourceLabel, fmt.Sprintf("%s.0.%s", paramOrganization, paramId), organizationId),
 					resource.TestCheckResourceAttr(fullTableResourceLabel, fmt.Sprintf("%s.0.%s", paramEnvironment, paramId), environmentId),
@@ -146,7 +147,8 @@ func TestAccFlinkMaterializedTableLive(t *testing.T) {
 					testAccCheckFlinkMaterializedTableLiveExists(fullTableResourceLabel),
 					resource.TestCheckResourceAttr(fullTableResourceLabel, paramDisplayName, tableDisplayName),
 					resource.TestCheckResourceAttr(fullTableResourceLabel, paramQuery, "SELECT user_id, product_id, price, quantity FROM orders WHERE price > 100;"),
-					resource.TestCheckResourceAttr(fullTableResourceLabel, paramWatermarkExpression, "col_event_time - INTERVAL '10' SECOND"),
+					resource.TestCheckResourceAttr(fullTableResourceLabel, "watermark.#", "1"),
+					resource.TestCheckResourceAttr(fullTableResourceLabel, "watermark.0.expression", "col_event_time - INTERVAL '10' SECOND"),
 					resource.TestCheckResourceAttr(fullTableResourceLabel, paramStopped, "true"),
 				),
 			},
@@ -201,9 +203,11 @@ func testAccCheckFlinkMaterializedTableLiveConfig(
 		kafka_cluster = "%s"
 		query         = "%s"
 
-		watermark_column_name = "%s"
-		watermark_expression  = "%s"
-		stopped               = %t
+		watermark {
+			column     = "%s"
+			expression = "%s"
+		}
+		stopped       = %t
 	}
 	`, endpoint, apiKey, apiSecret,
 		tableResourceLabel,
