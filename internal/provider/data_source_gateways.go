@@ -199,11 +199,17 @@ func gatewaysDataSourceRead(ctx context.Context, d *schema.ResourceData, meta in
 				paramRegion:       gateway.Spec.GetConfig().NetworkingV1AzureEgressPrivateLinkGatewaySpec.GetRegion(),
 				paramSubscription: gateway.Status.GetCloudGateway().NetworkingV1AzureEgressPrivateLinkGatewayStatus.GetSubscription(),
 			}}
-		} else if gateway.Spec.GetConfig().NetworkingV1AzureIngressPrivateLinkGatewaySpec != nil && gateway.Status.GetCloudGateway().NetworkingV1AzureIngressPrivateLinkGatewayStatus != nil {
+		} else if gateway.Spec.GetConfig().NetworkingV1AzureIngressPrivateLinkGatewaySpec != nil {
+			privateLinkServiceAlias := ""
+			privateLinkServiceResourceId := ""
+			if gateway.Status.GetCloudGateway().NetworkingV1AzureIngressPrivateLinkGatewayStatus != nil {
+				privateLinkServiceAlias = gateway.Status.CloudGateway.NetworkingV1AzureIngressPrivateLinkGatewayStatus.GetPrivateLinkServiceAlias()
+				privateLinkServiceResourceId = gateway.Status.CloudGateway.NetworkingV1AzureIngressPrivateLinkGatewayStatus.GetPrivateLinkServiceResourceId()
+			}
 			gatewayMap[paramAzureIngressPrivateLinkGateway] = []interface{}{map[string]interface{}{
 				paramRegion:                       gateway.Spec.GetConfig().NetworkingV1AzureIngressPrivateLinkGatewaySpec.GetRegion(),
-				paramPrivateLinkServiceAlias:      gateway.Status.GetCloudGateway().NetworkingV1AzureIngressPrivateLinkGatewayStatus.GetPrivateLinkServiceAlias(),
-				paramPrivateLinkServiceResourceId: gateway.Status.GetCloudGateway().NetworkingV1AzureIngressPrivateLinkGatewayStatus.GetPrivateLinkServiceResourceId(),
+				paramPrivateLinkServiceAlias:      privateLinkServiceAlias,
+				paramPrivateLinkServiceResourceId: privateLinkServiceResourceId,
 			}}
 		} else if gateway.Spec.GetConfig().NetworkingV1AzurePeeringGatewaySpec != nil {
 			gatewayMap[paramAzurePeeringGateway] = []interface{}{map[string]interface{}{
@@ -218,10 +224,14 @@ func gatewaysDataSourceRead(ctx context.Context, d *schema.ResourceData, meta in
 				paramRegion:  gateway.Spec.GetConfig().NetworkingV1GcpEgressPrivateServiceConnectGatewaySpec.GetRegion(),
 				paramProject: project,
 			}}
-		} else if gateway.Spec.GetConfig().NetworkingV1GcpIngressPrivateServiceConnectGatewaySpec != nil && gateway.Status.GetCloudGateway().NetworkingV1GcpIngressPrivateServiceConnectGatewayStatus != nil {
+		} else if gateway.Spec.GetConfig().NetworkingV1GcpIngressPrivateServiceConnectGatewaySpec != nil {
+			privateServiceConnectServiceAttachment := ""
+			if gateway.Status.GetCloudGateway().NetworkingV1GcpIngressPrivateServiceConnectGatewayStatus != nil {
+				privateServiceConnectServiceAttachment = gateway.Status.CloudGateway.NetworkingV1GcpIngressPrivateServiceConnectGatewayStatus.GetPrivateServiceConnectServiceAttachment()
+			}
 			gatewayMap[paramGcpIngressPrivateServiceConnectGateway] = []interface{}{map[string]interface{}{
 				paramRegion: gateway.Spec.GetConfig().NetworkingV1GcpIngressPrivateServiceConnectGatewaySpec.GetRegion(),
-				paramPrivateServiceConnectServiceAttachment: gateway.Status.GetCloudGateway().NetworkingV1GcpIngressPrivateServiceConnectGatewayStatus.GetPrivateServiceConnectServiceAttachment(),
+				paramPrivateServiceConnectServiceAttachment: privateServiceConnectServiceAttachment,
 			}}
 		} else if gateway.Spec.GetConfig().NetworkingV1GcpPeeringGatewaySpec != nil {
 			iamPrincipal := ""
