@@ -23,8 +23,17 @@ func flinkMaterializedTableDataSource() *schema.Resource {
 				Description: "The unique name of the materialized table.",
 			},
 			paramKafkaCluster: {
-				Type:        schema.TypeString,
-				Description: "The Kafka Cluster Id hosting the Materialized Table's topic.",
+				Type: schema.TypeList,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						paramId: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The Kafka cluster ID (e.g., `lkc-12345`).",
+						},
+					},
+				},
+				Description: "The Kafka Cluster hosting the Materialized Table's topic.",
 				Computed:    true,
 			},
 			paramQuery: {
