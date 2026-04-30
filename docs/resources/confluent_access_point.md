@@ -141,7 +141,7 @@ The following arguments are supported:
 - `gcp_egress_private_service_connect_endpoint` (Optional Configuration Block) supports the following:
   - `private_service_connect_endpoint_target` - (Required String) URI of the service attachment for the published service that the Private Service Connect Endpoint connects to, or "all-google-apis" for global Google APIs.
 - `gcp_ingress_private_service_connect_endpoint` (Optional Configuration Block) supports the following:
-  - `private_service_connect_connection_id` - (Required String) The ID of the Private Service Connect connection.
+  - `private_service_connect_connection_id` - (Required String) The ID of the Private Service Connect connection. Must be quoted in HCL to avoid numeric precision loss, for example, `private_service_connect_connection_id = "116002050319319045"`.
 - `aws_private_network_interface` (Optional Configuration Block) supports the following:
   - `network_interfaces` - (Required List of Strings) List of the IDs of the Elastic Network Interfaces, for example: `["eni-00000000000000000", "eni-00000000000000001", "eni-00000000000000002", "eni-00000000000000003", "eni-00000000000000004", "eni-00000000000000005"]`
   - `account` - (Required String) The AWS account ID associated with the ENIs you are using for the Confluent Private Network Interface, for example: `000000000000`.

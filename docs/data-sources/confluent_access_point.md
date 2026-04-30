@@ -79,6 +79,6 @@ In addition to the preceding arguments, the following attributes are exported:
   - `private_service_connect_endpoint_connection_id` - (Required String) Connection ID of the Private Service Connect Endpoint that is connected to the endpoint target.
   - `private_service_connect_endpoint_name` - (Required String) Name of the Private Service Connect Endpoint that is connected to the endpoint target.
 - `gcp_ingress_private_service_connect_endpoint` (Optional Configuration Block) supports the following:
-  - `private_service_connect_connection_id` - (Required String) The ID of the Private Service Connect connection.
+  - `private_service_connect_connection_id` - (Required String) The ID of the Private Service Connect connection. Must be quoted in HCL to avoid numeric precision loss, for example, `private_service_connect_connection_id = "116002050319319045"`.
   - `private_service_connect_service_attachment` - (Required String) URI of the Private Service Connect Service Attachment in Confluent Cloud.
   - `dns_domain` - (Optional String) DNS domain name used to configure the DNS Zone for the Access Point.
