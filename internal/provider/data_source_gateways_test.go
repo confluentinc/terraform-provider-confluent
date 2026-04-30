@@ -65,7 +65,7 @@ func TestAccDataSourceGateways(t *testing.T) {
 				Config: testAccCheckDataSourceGateways(mockServerUrl, gatewaysResourceLabel),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckGatewaysExists(fullGatewaysDataSourceLabel),
-					resource.TestCheckResourceAttr(fullGatewaysDataSourceLabel, "gateways.#", "3"),
+					resource.TestCheckResourceAttr(fullGatewaysDataSourceLabel, "gateways.#", "5"),
 
 					// First gateway - AWS Peering
 					resource.TestCheckResourceAttr(fullGatewaysDataSourceLabel, "gateways.0.id", "gw-abc123"),
@@ -92,6 +92,21 @@ func TestAccDataSourceGateways(t *testing.T) {
 					resource.TestCheckResourceAttr(fullGatewaysDataSourceLabel, "gateways.2.aws_egress_private_link_gateway.0.principal_arn", "arn:aws:iam::123456789012:role"),
 					resource.TestCheckResourceAttr(fullGatewaysDataSourceLabel, "gateways.2.aws_peering_gateway.#", "0"),
 					resource.TestCheckResourceAttr(fullGatewaysDataSourceLabel, "gateways.2.aws_ingress_private_link_gateway.#", "0"),
+
+					// Fourth gateway - Azure Ingress Private Link
+					resource.TestCheckResourceAttr(fullGatewaysDataSourceLabel, "gateways.3.id", "gw-azure-ingress"),
+					resource.TestCheckResourceAttr(fullGatewaysDataSourceLabel, "gateways.3.display_name", "prod-azure-ingress-gateway"),
+					resource.TestCheckResourceAttr(fullGatewaysDataSourceLabel, "gateways.3.azure_ingress_private_link_gateway.#", "1"),
+					resource.TestCheckResourceAttr(fullGatewaysDataSourceLabel, "gateways.3.azure_ingress_private_link_gateway.0.region", "centralus"),
+					resource.TestCheckResourceAttr(fullGatewaysDataSourceLabel, "gateways.3.azure_ingress_private_link_gateway.0.private_link_service_alias", "plattg-123abc-privatelink.00000000-0000-0000-0000-000000000000.centralus.azure.privatelinkservice"),
+					resource.TestCheckResourceAttr(fullGatewaysDataSourceLabel, "gateways.3.azure_ingress_private_link_gateway.0.private_link_service_resource_id", "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/plattg-123abc/providers/Microsoft.Network/privateLinkServices/plattg-123abc-privatelink"),
+
+					// Fifth gateway - GCP Ingress Private Service Connect
+					resource.TestCheckResourceAttr(fullGatewaysDataSourceLabel, "gateways.4.id", "gw-gcp-ingress"),
+					resource.TestCheckResourceAttr(fullGatewaysDataSourceLabel, "gateways.4.display_name", "prod-gcp-ingress-gateway"),
+					resource.TestCheckResourceAttr(fullGatewaysDataSourceLabel, "gateways.4.gcp_ingress_private_service_connect_gateway.#", "1"),
+					resource.TestCheckResourceAttr(fullGatewaysDataSourceLabel, "gateways.4.gcp_ingress_private_service_connect_gateway.0.region", "us-central1"),
+					resource.TestCheckResourceAttr(fullGatewaysDataSourceLabel, "gateways.4.gcp_ingress_private_service_connect_gateway.0.private_service_connect_service_attachment", "projects/traffic-prod/regions/us-central1/serviceAttachments/plattg-abc123-service-attachment"),
 				),
 			},
 		},
