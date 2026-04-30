@@ -32,7 +32,7 @@ const (
 	materializedTableScenarioName                = "confluent_flink_materialized_table Resource Lifecycle"
 
 	flinkMaterializedTableDisplayName = "table1"
-	flinkMaterializedTableDatabase    = "lkc01"
+	flinkMaterializedTableDatabase    = "lkc-01"
 )
 
 var createFlinkMaterializedTablePath = fmt.Sprintf("/sql/v1/organizations/%s/environments/%s/databases/%s/materialized-tables", flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkMaterializedTableDatabase)
@@ -275,7 +275,9 @@ func testAccCheckMaterializedTableConfig(mockServerUrl, resourceLabel string) st
          id = "%s"
       }
       display_name  = "%s"
-	  kafka_cluster = "%s"
+	  kafka_cluster {
+	    id = "%s"
+	  }
       stopped = false
 	  query = "SELECT user_id, product_id, price, quantity FROM orders WHERE price > 1000;"
 	  watermark {
@@ -333,7 +335,9 @@ func testAccCheckMaterializedTableConfigUpdated(mockServerUrl, resourceLabel str
          id = "%s"
       }
       display_name  = "%s"
-	  kafka_cluster = "%s"
+	  kafka_cluster {
+	    id = "%s"
+	  }
       stopped = true
 	  query = "SELECT user_id, product_id, price, quantity FROM orders WHERE price > 100;"
 	  watermark {

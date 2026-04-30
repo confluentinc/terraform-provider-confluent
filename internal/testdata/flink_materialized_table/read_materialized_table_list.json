@@ -13,7 +13,7 @@
       "organization_id": "1111aaaa-11aa-11aa-11aa-111111aaaaaa",
       "environment_id": "env-abc123",
       "spec": {
-        "kafka_cluster_id": "lkc01",
+        "kafka_cluster_id": "lkc-01",
         "compute_pool_id": "lfcp-x7rgx1",
         "principal": "u-yo9j87",
         "stopped": false,

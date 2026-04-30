@@ -89,7 +89,7 @@ func TestAccDataSourceFlinkMaterializedTableLive(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckDataSourceFlinkMaterializedTableLiveExists(fullTableDataSourceLabel),
 					resource.TestCheckResourceAttr(fullTableDataSourceLabel, paramDisplayName, tableDisplayName),
-					resource.TestCheckResourceAttr(fullTableDataSourceLabel, paramKafkaCluster, kafkaClusterId),
+					resource.TestCheckResourceAttr(fullTableDataSourceLabel, fmt.Sprintf("%s.0.%s", paramKafkaCluster, paramId), kafkaClusterId),
 					resource.TestCheckResourceAttr(fullTableDataSourceLabel, fmt.Sprintf("%s.0.%s", paramOrganization, paramId), organizationId),
 					resource.TestCheckResourceAttr(fullTableDataSourceLabel, fmt.Sprintf("%s.0.%s", paramEnvironment, paramId), environmentId),
 					resource.TestCheckResourceAttr(fullTableDataSourceLabel, fmt.Sprintf("%s.0.%s", paramComputePool, paramId), flinkComputePoolId),
@@ -136,7 +136,9 @@ func testAccCheckDataSourceFlinkMaterializedTableLiveConfig(
 		}
 
 		display_name  = "%s"
-		kafka_cluster = "%s"
+		kafka_cluster {
+			id = "%s"
+		}
 		query         = "SELECT user_id, product_id, price, quantity FROM orders WHERE price > 1000;"
 	}
 
