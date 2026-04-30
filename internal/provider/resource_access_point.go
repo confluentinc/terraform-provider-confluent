@@ -179,6 +179,9 @@ func paramAzureIngressPrivateLinkEndpointSchema() *schema.Schema {
 					Required:    true,
 					ForceNew:    true,
 					Description: "Resource ID of a Private Endpoint that will be connected to the Private Link service.",
+					DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+						return strings.EqualFold(old, new)
+					},
 				},
 				paramPrivateLinkServiceAlias: {
 					Type:        schema.TypeString,
