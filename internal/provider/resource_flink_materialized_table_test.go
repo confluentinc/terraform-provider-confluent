@@ -32,7 +32,7 @@ const (
 	materializedTableScenarioName                = "confluent_flink_materialized_table Resource Lifecycle"
 
 	flinkMaterializedTableDisplayName = "table1"
-	flinkMaterializedTableDatabase    = "lkc01"
+	flinkMaterializedTableDatabase    = "lkc-01"
 )
 
 var createFlinkMaterializedTablePath = fmt.Sprintf("/sql/v1/organizations/%s/environments/%s/databases/%s/materialized-tables", flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkMaterializedTableDatabase)
