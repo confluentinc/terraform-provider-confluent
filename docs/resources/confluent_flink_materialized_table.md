@@ -44,7 +44,9 @@ resource "confluent_flink_materialized_table" "example" {
   }
 
   display_name  = "my_materialized_table"
-  kafka_cluster = "lkc-abc123"
+  kafka_cluster {
+    id = confluent_kafka_cluster.basic-cluster.id
+  }  
   query         = "SELECT user_id, product_id, price, quantity FROM orders WHERE price > 1000;"
 
   lifecycle {
