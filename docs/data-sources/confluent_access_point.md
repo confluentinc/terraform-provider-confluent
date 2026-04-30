@@ -64,6 +64,11 @@ In addition to the preceding arguments, the following attributes are exported:
   - `private_endpoint_domain` (Required String) Domain of the Private Endpoint (if any) that is connected to the Private Link service.
   - `private_endpoint_ip_address` (Required String) IP address of the Private Endpoint (if any) that is connected to the Private Link service.
   - `private_endpoint_custom_dns_config_domains` (Required List of Strings) Domains of the Private Endpoint (if any) based off FQDNs in Azure custom DNS configs, which are required in your private DNS setup, for example: `["dbname.database.windows.net", "dbname-region.database.windows.net"]`.
+- `azure_ingress_private_link_endpoint` (Optional Configuration Block) supports the following:
+  - `private_endpoint_resource_id` - (Required String) Resource ID of a Private Endpoint that will be connected to the Private Link service.
+  - `private_link_service_alias` - (Required String) Alias of the Confluent Cloud Private Link Service.
+  - `private_link_service_resource_id` - (Required String) Resource ID of the Confluent Cloud Private Link Service.
+  - `dns_domain` - (Optional String) DNS domain name used to configure the Private DNS Zone for the Access Point.
 - `aws_private_network_interface` (Optional Configuration Block) Supports the following:
   - `network_interfaces` - (Required List of Strings) List of the IDs of the Elastic Network Interfaces, for example: `["eni-00000000000000000", "eni-00000000000000001", "eni-00000000000000002", "eni-00000000000000003", "eni-00000000000000004", "eni-00000000000000005"]`
   - `account` - (Required String) The AWS account ID associated with the ENIs you are using for the Confluent Private Network Interface, for example: `000000000000`.
@@ -73,3 +78,7 @@ In addition to the preceding arguments, the following attributes are exported:
   - `private_service_connect_endpoint_ip_address` - (Required String) IP address of the Private Service Connect Endpoint that is connected to the endpoint target.
   - `private_service_connect_endpoint_connection_id` - (Required String) Connection ID of the Private Service Connect Endpoint that is connected to the endpoint target.
   - `private_service_connect_endpoint_name` - (Required String) Name of the Private Service Connect Endpoint that is connected to the endpoint target.
+- `gcp_ingress_private_service_connect_endpoint` (Optional Configuration Block) supports the following:
+  - `private_service_connect_connection_id` - (Required String) The ID of the Private Service Connect connection.
+  - `private_service_connect_service_attachment` - (Required String) URI of the Private Service Connect Service Attachment in Confluent Cloud.
+  - `dns_domain` - (Optional String) DNS domain name used to configure the DNS Zone for the Access Point.
