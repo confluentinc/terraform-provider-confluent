@@ -96,6 +96,71 @@
           "principal_arn": "arn:aws:iam::123456789012:role"
         }
       }
+    },
+    {
+      "api_version": "networking/v1",
+      "id": "gw-azure-ingress",
+      "kind": "Gateway",
+      "metadata": {
+        "created_at": "2024-02-01T22:25:50.415274Z",
+        "resource_name": "crn://confluent.cloud/organization=1111aaaa/environment=env-abc123/gateway=gw-azure-ingress",
+        "self": "https://api.confluent.cloud/networking/v1/gateways/gw-azure-ingress?environment=env-abc123",
+        "updated_at": "2024-02-01T22:26:10.415274Z"
+      },
+      "spec": {
+        "config": {
+          "kind": "AzureIngressPrivateLinkGatewaySpec",
+          "region": "centralus"
+        },
+        "display_name": "prod-azure-ingress-gateway",
+        "environment": {
+          "api_version": "org/v2",
+          "id": "env-abc123",
+          "kind": "Environment",
+          "related": "https://api.confluent.cloud/v2/environments/env-abc123",
+          "resource_name": "crn://confluent.cloud/organization=1111aaaa/environment=env-abc123"
+        }
+      },
+      "status": {
+        "phase": "READY",
+        "cloud_gateway": {
+          "kind": "AzureIngressPrivateLinkGatewayStatus",
+          "private_link_service_alias": "plattg-123abc-privatelink.00000000-0000-0000-0000-000000000000.centralus.azure.privatelinkservice",
+          "private_link_service_resource_id": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/plattg-123abc/providers/Microsoft.Network/privateLinkServices/plattg-123abc-privatelink"
+        }
+      }
+    },
+    {
+      "api_version": "networking/v1",
+      "id": "gw-gcp-ingress",
+      "kind": "Gateway",
+      "metadata": {
+        "created_at": "2024-02-01T22:25:50.415274Z",
+        "resource_name": "crn://confluent.cloud/organization=1111aaaa/environment=env-abc123/gateway=gw-gcp-ingress",
+        "self": "https://api.confluent.cloud/networking/v1/gateways/gw-gcp-ingress?environment=env-abc123",
+        "updated_at": "2024-02-01T22:26:10.415274Z"
+      },
+      "spec": {
+        "config": {
+          "kind": "GcpIngressPrivateServiceConnectGatewaySpec",
+          "region": "us-central1"
+        },
+        "display_name": "prod-gcp-ingress-gateway",
+        "environment": {
+          "api_version": "org/v2",
+          "id": "env-abc123",
+          "kind": "Environment",
+          "related": "https://api.confluent.cloud/v2/environments/env-abc123",
+          "resource_name": "crn://confluent.cloud/organization=1111aaaa/environment=env-abc123"
+        }
+      },
+      "status": {
+        "phase": "READY",
+        "cloud_gateway": {
+          "kind": "GcpIngressPrivateServiceConnectGatewayStatus",
+          "private_service_connect_service_attachment": "projects/traffic-prod/regions/us-central1/serviceAttachments/plattg-abc123-service-attachment"
+        }
+      }
     }
   ]
 }
