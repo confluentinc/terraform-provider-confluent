@@ -35,12 +35,7 @@ func flinkMaterializedTableResource() *schema.Resource {
 				ForceNew:    true,
 				Description: "The unique name of the materialized table.",
 			},
-			paramKafkaCluster: {
-				Type:        schema.TypeString,
-				Description: "The Kafka Cluster Id hosting the Materialized Table's topic.",
-				Required:    true,
-				ForceNew:    true,
-			},
+			paramKafkaCluster: requiredKafkaClusterBlockSchema(),
 			paramQuery: {
 				Type:             schema.TypeString,
 				Description:      "The query section of the latest Materialized Table.",
@@ -308,7 +303,7 @@ func materializedTableCreate(ctx context.Context, d *schema.ResourceData, meta i
 	flinkRestClient := meta.(*Client).flinkRestClientFactory.CreateFlinkRestClient(restEndpoint, organizationId, environmentId, computePoolId, principalId, flinkApiKey, flinkApiSecret, meta.(*Client).isFlinkMetadataSet, meta.(*Client).oauthToken)
 
 	displayName := d.Get(paramDisplayName).(string)
-	kafkaId := d.Get(paramKafkaCluster).(string)
+	kafkaId := extractStringValueFromBlock(d, paramKafkaCluster, paramId)
 	query := d.Get(paramQuery).(string)
 
 	stopped := d.Get(paramStopped).(bool)
@@ -401,7 +396,7 @@ func materializedTableRead(ctx context.Context, d *schema.ResourceData, meta int
 	}
 	flinkRestClient := meta.(*Client).flinkRestClientFactory.CreateFlinkRestClient(restEndpoint, organizationId, environmentId, computePoolId, "", flinkApiKey, flinkApiSecret, meta.(*Client).isFlinkMetadataSet, meta.(*Client).oauthToken)
 
-	kafkaId := d.Get(paramKafkaCluster).(string)
+	kafkaId := extractStringValueFromBlock(d, paramKafkaCluster, paramId)
 
 	if _, err := readMaterializedTableAndSetAttributes(ctx, d, organizationId, environmentId, kafkaId, materializedTableId, flinkRestClient); err != nil {
 		return diag.FromErr(fmt.Errorf("error reading Flink Materialized Table %q: %s", d.Id(), createDescriptiveError(err)))
@@ -442,7 +437,7 @@ func setMaterializedTableAttributes(d *schema.ResourceData, materializedTable fl
 	if err := d.Set(paramDisplayName, materializedTable.GetName()); err != nil {
 		return nil, err
 	}
-	if err := d.Set(paramKafkaCluster, materializedTable.Spec.GetKafkaClusterId()); err != nil {
+	if err := setStringAttributeInListBlockOfSizeOne(paramKafkaCluster, paramId, materializedTable.Spec.GetKafkaClusterId(), d); err != nil {
 		return nil, err
 	}
 	if err := d.Set(paramQuery, normalizeFlinkQuery(materializedTable.Spec.GetQuery())); err != nil {
@@ -624,7 +619,7 @@ func materializedTableDelete(ctx context.Context, d *schema.ResourceData, meta i
 	}
 	flinkRestClient := meta.(*Client).flinkRestClientFactory.CreateFlinkRestClient(restEndpoint, organizationId, environmentId, computePoolId, "", flinkApiKey, flinkApiSecret, meta.(*Client).isFlinkMetadataSet, meta.(*Client).oauthToken)
 
-	kafkaId := d.Get(paramKafkaCluster).(string)
+	kafkaId := extractStringValueFromBlock(d, paramKafkaCluster, paramId)
 
 	req := flinkRestClient.apiClient.MaterializedTablesSqlV1Api.DeleteSqlv1MaterializedTable(flinkRestClient.apiContext(ctx), organizationId, environmentId, kafkaId, getTableName(d.Id()))
 	resp, err := req.Execute()
@@ -712,7 +707,7 @@ func materializedTableUpdate(ctx context.Context, d *schema.ResourceData, meta i
 	flinkRestClient := meta.(*Client).flinkRestClientFactory.CreateFlinkRestClient(restEndpoint, organizationId, environmentId, computePoolId, principalId, flinkApiKey, flinkApiSecret, meta.(*Client).isFlinkMetadataSet, meta.(*Client).oauthToken)
 
 	name := d.Get(paramDisplayName).(string)
-	kafkaId := d.Get(paramKafkaCluster).(string)
+	kafkaId := extractStringValueFromBlock(d, paramKafkaCluster, paramId)
 
 	table, _, err := executeMaterializedTableRead(flinkRestClient.apiContext(ctx), flinkRestClient, organizationId, environmentId, kafkaId, name)
 	if err != nil {

@@ -118,7 +118,7 @@ func TestAccFlinkMaterializedTableLive(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckFlinkMaterializedTableLiveExists(fullTableResourceLabel),
 					resource.TestCheckResourceAttr(fullTableResourceLabel, paramDisplayName, tableDisplayName),
-					resource.TestCheckResourceAttr(fullTableResourceLabel, paramKafkaCluster, kafkaClusterId),
+					resource.TestCheckResourceAttr(fullTableResourceLabel, fmt.Sprintf("%s.0.%s", paramKafkaCluster, paramId), kafkaClusterId),
 					resource.TestCheckResourceAttr(fullTableResourceLabel, paramQuery, "SELECT user_id, product_id, price, quantity FROM orders WHERE price > 1000;"),
 					resource.TestCheckResourceAttr(fullTableResourceLabel, "watermark.#", "1"),
 					resource.TestCheckResourceAttr(fullTableResourceLabel, "watermark.0.column", "col_event_time"),
@@ -200,7 +200,9 @@ func testAccCheckFlinkMaterializedTableLiveConfig(
 		}
 
 		display_name  = "%s"
-		kafka_cluster = "%s"
+		kafka_cluster {
+			id = "%s"
+		}
 		query         = "%s"
 
 		watermark {

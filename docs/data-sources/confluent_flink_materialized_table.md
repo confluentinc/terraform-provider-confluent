@@ -105,7 +105,8 @@ resource "confluent_role_binding" "identity-pool-assigner" {
 
 In addition to the preceding arguments, the following attributes are exported:
 
-- `kafka_cluster` - (String) The ID of the Kafka Cluster hosting the Materialized Table's topic, for example, `lkc-abc123`.
+- `kafka_cluster` - (Configuration Block) supports the following:
+    - `id` - (String) The ID of the Kafka Cluster hosting the Materialized Table's topic, for example, `lkc-abc123`.
 - `query` - (String) The SQL query that defines the Materialized Table.
 - `watermark` - (Configuration Block) The watermark definition for the Materialized Table. Supports the following:
     - `column` - (String) The name of the watermark column.
