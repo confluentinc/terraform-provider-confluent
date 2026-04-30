@@ -47,7 +47,7 @@ func TestAccDataSourceFlinkMaterializedTable(t *testing.T) {
 	defer wiremockClient.ResetAllScenarios()
 
 	readCreatedMaterializedTableResponse, _ := os.ReadFile("../testdata/flink_materialized_table/read_materialized_table.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/sql/v1/organizations/1111aaaa-11aa-11aa-11aa-111111aaaaaa/environments/env-abc123/databases/lkc01/materialized-tables/table1")).
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/sql/v1/organizations/1111aaaa-11aa-11aa-11aa-111111aaaaaa/environments/env-abc123/databases/lkc-01/materialized-tables/table1")).
 		InScenario(dataSourceMaterializedTableScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillReturn(
