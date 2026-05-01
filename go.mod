@@ -31,6 +31,7 @@ require (
 	github.com/confluentinc/ccloud-sdk-go-v2/networking-privatelink v0.3.0
 	github.com/confluentinc/ccloud-sdk-go-v2/org v0.9.0
 	github.com/confluentinc/ccloud-sdk-go-v2/provider-integration v0.2.0
+	github.com/confluentinc/ccloud-sdk-go-v2/rtce v0.0.0
 	github.com/confluentinc/ccloud-sdk-go-v2/schema-registry v0.5.0
 	github.com/confluentinc/ccloud-sdk-go-v2/srcm v0.7.3
 	github.com/confluentinc/ccloud-sdk-go-v2/sso v0.0.1
@@ -154,3 +155,5 @@ require (
 	google.golang.org/grpc v1.79.3
 	google.golang.org/protobuf v1.36.11 // indirect
 )
+
+replace github.com/confluentinc/ccloud-sdk-go-v2/rtce => /Users/ljiang/.claude/.worktree/cli-terraform-generator/region-env-var/test-suites/specs/rtce
