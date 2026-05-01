@@ -182,6 +182,9 @@ func azureIngressPrivateLinkGatewaySchema() *schema.Schema {
 					Required:    true,
 					ForceNew:    true,
 					Description: "Azure region of the Ingress Private Link Gateway.",
+					DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+						return strings.EqualFold(old, new)
+					},
 				},
 				paramPrivateLinkServiceAlias: {
 					Type:        schema.TypeString,
@@ -214,6 +217,9 @@ func gcpIngressPrivateServiceConnectGatewaySchema() *schema.Schema {
 					Required:    true,
 					ForceNew:    true,
 					Description: "GCP region of the Ingress Private Service Connect Gateway.",
+					DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+						return strings.EqualFold(old, new)
+					},
 				},
 				paramPrivateServiceConnectServiceAttachment: {
 					Type:        schema.TypeString,
