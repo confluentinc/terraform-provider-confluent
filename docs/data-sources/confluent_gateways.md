@@ -91,11 +91,18 @@ In addition to the preceding arguments, the following attributes are exported:
   - `azure_egress_private_link_gateway` (Optional Configuration Block) supports the following:
     - `region` - (Required String) Azure region of the Egress Private Link Gateway.
     - `subscription` - (Required String) The Azure Subscription ID associated with the Confluent Cloud VPC.
+  - `azure_ingress_private_link_gateway` (Optional Configuration Block) supports the following:
+    - `region` - (Required String) Azure region of the Ingress Private Link Gateway.
+    - `private_link_service_alias` - (Required String) Alias of the Confluent Cloud Private Link Service.
+    - `private_link_service_resource_id` - (Required String) Resource ID of the Confluent Cloud Private Link Service.
   - `azure_peering_gateway` (Optional Configuration Block) supports the following:
     - `region` - (Required String) Azure region of the Peering Gateway.
   - `gcp_egress_private_service_connect_gateway` (Optional Configuration Block) supports the following:
     - `region` - (Required String) GCP region of the Egress Private Service Connect Gateway.
     - `project` - (Required String) The GCP project used by the GCP Private Service Connect Gateway.
+  - `gcp_ingress_private_service_connect_gateway` (Optional Configuration Block) supports the following:
+    - `region` - (Required String) GCP region of the Ingress Private Service Connect Gateway.
+    - `private_service_connect_service_attachment` - (Required String) URI of the Private Service Connect Service Attachment in Confluent Cloud.
   - `gcp_peering_gateway` (Optional Configuration Block) supports the following:
     - `region` - (Required String) GCP region of the Peering Gateway.
     - `iam_principal` - (Required String) The IAM principal used by the GCP Peering Gateway.
