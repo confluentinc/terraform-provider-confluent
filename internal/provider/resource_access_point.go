@@ -19,16 +19,18 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"regexp"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
 	networkingaccesspointv1 "github.com/confluentinc/ccloud-sdk-go-v2/networking-access-point/v1"
 )
 
-var acceptedEndpointConfig = []string{paramAwsEgressPrivateLinkEndpoint, paramAwsIngressPrivateLinkEndpoint, paramAzureEgressPrivateLinkEndpoint, paramGcpEgressPrivateServiceConnectEndpoint, paramAwsPrivateNetworkInterface}
+var acceptedEndpointConfig = []string{paramAwsEgressPrivateLinkEndpoint, paramAwsIngressPrivateLinkEndpoint, paramAzureEgressPrivateLinkEndpoint, paramAzureIngressPrivateLinkEndpoint, paramGcpEgressPrivateServiceConnectEndpoint, paramGcpIngressPrivateServiceConnectEndpoint, paramAwsPrivateNetworkInterface}
 
 func accessPointResource() *schema.Resource {
 	return &schema.Resource{
@@ -47,11 +49,13 @@ func accessPointResource() *schema.Resource {
 			},
 			paramGateway:                                requiredGateway(),
 			paramEnvironment:                            environmentSchema(),
-			paramAwsEgressPrivateLinkEndpoint:           paramAwsEgressPrivateLinkEndpointSchema(),
-			paramAwsIngressPrivateLinkEndpoint:          paramAwsIngressPrivateLinkEndpointSchema(),
-			paramAzureEgressPrivateLinkEndpoint:         paramAzureEgressPrivateLinkEndpointSchema(),
-			paramGcpEgressPrivateServiceConnectEndpoint: paramGcpEgressPrivateServiceConnectEndpointSchema(),
-			paramAwsPrivateNetworkInterface:             paramAwsPrivateNetworkInterfaceSchema(),
+			paramAwsEgressPrivateLinkEndpoint:            paramAwsEgressPrivateLinkEndpointSchema(),
+			paramAwsIngressPrivateLinkEndpoint:           paramAwsIngressPrivateLinkEndpointSchema(),
+			paramAzureEgressPrivateLinkEndpoint:          paramAzureEgressPrivateLinkEndpointSchema(),
+			paramAzureIngressPrivateLinkEndpoint:         paramAzureIngressPrivateLinkEndpointSchema(),
+			paramGcpEgressPrivateServiceConnectEndpoint:  paramGcpEgressPrivateServiceConnectEndpointSchema(),
+			paramGcpIngressPrivateServiceConnectEndpoint: paramGcpIngressPrivateServiceConnectEndpointSchema(),
+			paramAwsPrivateNetworkInterface:              paramAwsPrivateNetworkInterfaceSchema(),
 		},
 	}
 }
@@ -163,6 +167,77 @@ func paramAzureEgressPrivateLinkEndpointSchema() *schema.Schema {
 	}
 }
 
+func paramAzureIngressPrivateLinkEndpointSchema() *schema.Schema {
+	return &schema.Schema{
+		Type:     schema.TypeList,
+		Optional: true,
+		ForceNew: true,
+		MinItems: 1,
+		MaxItems: 1,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramPrivateEndpointResourceId: {
+					Type:        schema.TypeString,
+					Required:    true,
+					ForceNew:    true,
+					Description: "Resource ID of a Private Endpoint that will be connected to the Private Link service.",
+					DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+						return strings.EqualFold(old, new)
+					},
+				},
+				paramPrivateLinkServiceAlias: {
+					Type:        schema.TypeString,
+					Computed:    true,
+					Description: "Alias of the Confluent Cloud Private Link Service.",
+				},
+				paramPrivateLinkServiceResourceId: {
+					Type:        schema.TypeString,
+					Computed:    true,
+					Description: "Resource ID of the Confluent Cloud Private Link Service.",
+				},
+				paramDnsDomain: {
+					Type:        schema.TypeString,
+					Computed:    true,
+					Description: "DNS domain name used to configure the Private DNS Zone for the Access Point.",
+				},
+			},
+		},
+		ExactlyOneOf: acceptedEndpointConfig,
+	}
+}
+
+func paramGcpIngressPrivateServiceConnectEndpointSchema() *schema.Schema {
+	return &schema.Schema{
+		Type:     schema.TypeList,
+		Optional: true,
+		ForceNew: true,
+		MinItems: 1,
+		MaxItems: 1,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramPrivateServiceConnectConnectionId: {
+					Type:         schema.TypeString,
+					Required:     true,
+					ForceNew:     true,
+					Description:  "The ID of the Private Service Connect connection. Must be quoted in HCL to avoid numeric precision loss, for example, `private_service_connect_connection_id = \"116002050319319045\"`.",
+					ValidateFunc: validation.StringMatch(regexp.MustCompile(`^[0-9]+$`), "must be a numeric string"),
+				},
+				paramPrivateServiceConnectServiceAttachment: {
+					Type:        schema.TypeString,
+					Computed:    true,
+					Description: "URI of the Private Service Connect Service Attachment in Confluent Cloud.",
+				},
+				paramDnsDomain: {
+					Type:        schema.TypeString,
+					Computed:    true,
+					Description: "DNS domain name used to configure the DNS Zone for the Access Point.",
+				},
+			},
+		},
+		ExactlyOneOf: acceptedEndpointConfig,
+	}
+}
+
 func paramGcpEgressPrivateServiceConnectEndpointSchema() *schema.Schema {
 	return &schema.Schema{
 		Type:     schema.TypeList,
@@ -254,8 +329,10 @@ func accessPointCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 	isAwsEgressPrivateLinkEndpoint := len(d.Get(paramAwsEgressPrivateLinkEndpoint).([]interface{})) > 0
 	isAwsIngressPrivateLinkEndpoint := len(d.Get(paramAwsIngressPrivateLinkEndpoint).([]interface{})) > 0
 	isAzureEgressPrivateLinkEndpoint := len(d.Get(paramAzureEgressPrivateLinkEndpoint).([]interface{})) > 0
+	isAzureIngressPrivateLinkEndpoint := len(d.Get(paramAzureIngressPrivateLinkEndpoint).([]interface{})) > 0
 	isAwsPrivateNetworkInterface := len(d.Get(paramAwsPrivateNetworkInterface).([]interface{})) > 0
 	isGcpEgressPrivateServiceConnectEndpoint := len(d.Get(paramGcpEgressPrivateServiceConnectEndpoint).([]interface{})) > 0
+	isGcpIngressPrivateServiceConnectEndpoint := len(d.Get(paramGcpIngressPrivateServiceConnectEndpoint).([]interface{})) > 0
 
 	spec := networkingaccesspointv1.NewNetworkingV1AccessPointSpec()
 	if displayName != "" {
@@ -290,6 +367,12 @@ func accessPointCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 			config.NetworkingV1AzureEgressPrivateLinkEndpoint.SetPrivateLinkSubresourceName(privateLinkSubresourceName)
 		}
 		spec.SetConfig(config)
+	} else if isAzureIngressPrivateLinkEndpoint {
+		config.NetworkingV1AzureIngressPrivateLinkEndpoint = &networkingaccesspointv1.NetworkingV1AzureIngressPrivateLinkEndpoint{
+			Kind:                      azureIngressPrivateLinkEndpoint,
+			PrivateEndpointResourceId: extractStringValueFromBlock(d, paramAzureIngressPrivateLinkEndpoint, paramPrivateEndpointResourceId),
+		}
+		spec.SetConfig(config)
 	} else if isAwsPrivateNetworkInterface {
 		networkInterfaces := convertToStringSlice(d.Get(fmt.Sprintf("%s.0.%s", paramAwsPrivateNetworkInterface, paramNetworkInterfaces)).(*schema.Set).List())
 		config.NetworkingV1AwsPrivateNetworkInterface = &networkingaccesspointv1.NetworkingV1AwsPrivateNetworkInterface{
@@ -308,8 +391,14 @@ func accessPointCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 			PrivateServiceConnectEndpointTarget: extractStringValueFromBlock(d, paramGcpEgressPrivateServiceConnectEndpoint, paramPrivateServiceConnectEndpointTarget),
 		}
 		spec.SetConfig(config)
+	} else if isGcpIngressPrivateServiceConnectEndpoint {
+		config.NetworkingV1GcpIngressPrivateServiceConnectEndpoint = &networkingaccesspointv1.NetworkingV1GcpIngressPrivateServiceConnectEndpoint{
+			Kind:                             gcpIngressPrivateServiceConnectEndpoint,
+			PrivateServiceConnectConnectionId: extractStringValueFromBlock(d, paramGcpIngressPrivateServiceConnectEndpoint, paramPrivateServiceConnectConnectionId),
+		}
+		spec.SetConfig(config)
 	} else {
-		return diag.Errorf("None of %q, %q, %q, %q, %q blocks was provided for confluent_access_point resource", paramAwsEgressPrivateLinkEndpoint, paramAwsIngressPrivateLinkEndpoint, paramAzureEgressPrivateLinkEndpoint, paramGcpEgressPrivateServiceConnectEndpoint, paramAwsPrivateNetworkInterface)
+		return diag.Errorf("None of %q, %q, %q, %q, %q, %q, %q blocks was provided for confluent_access_point resource", paramAwsEgressPrivateLinkEndpoint, paramAwsIngressPrivateLinkEndpoint, paramAzureEgressPrivateLinkEndpoint, paramAzureIngressPrivateLinkEndpoint, paramGcpEgressPrivateServiceConnectEndpoint, paramGcpIngressPrivateServiceConnectEndpoint, paramAwsPrivateNetworkInterface)
 	}
 
 	createAccessPointRequest := networkingaccesspointv1.NetworkingV1AccessPoint{Spec: spec}
@@ -522,12 +611,29 @@ func setAccessPointAttributes(d *schema.ResourceData, accessPoint networkingacce
 		}}); err != nil {
 			return nil, err
 		}
+	} else if accessPoint.Spec.Config.NetworkingV1AzureIngressPrivateLinkEndpoint != nil && accessPoint.Status.Config.NetworkingV1AzureIngressPrivateLinkEndpointStatus != nil {
+		if err := d.Set(paramAzureIngressPrivateLinkEndpoint, []interface{}{map[string]interface{}{
+			paramPrivateEndpointResourceId:    accessPoint.Spec.Config.NetworkingV1AzureIngressPrivateLinkEndpoint.GetPrivateEndpointResourceId(),
+			paramPrivateLinkServiceAlias:      accessPoint.Status.Config.NetworkingV1AzureIngressPrivateLinkEndpointStatus.GetPrivateLinkServiceAlias(),
+			paramPrivateLinkServiceResourceId: accessPoint.Status.Config.NetworkingV1AzureIngressPrivateLinkEndpointStatus.GetPrivateLinkServiceResourceId(),
+			paramDnsDomain:                    accessPoint.Status.Config.NetworkingV1AzureIngressPrivateLinkEndpointStatus.GetDnsDomain(),
+		}}); err != nil {
+			return nil, err
+		}
 	} else if accessPoint.Spec.Config.NetworkingV1GcpEgressPrivateServiceConnectEndpoint != nil && accessPoint.Status.Config.NetworkingV1GcpEgressPrivateServiceConnectEndpointStatus != nil {
 		if err := d.Set(paramGcpEgressPrivateServiceConnectEndpoint, []interface{}{map[string]interface{}{
 			paramPrivateServiceConnectEndpointTarget:       accessPoint.Spec.Config.NetworkingV1GcpEgressPrivateServiceConnectEndpoint.GetPrivateServiceConnectEndpointTarget(),
 			paramPrivateServiceConnectEndpointName:         accessPoint.Status.Config.NetworkingV1GcpEgressPrivateServiceConnectEndpointStatus.GetPrivateServiceConnectEndpointName(),
 			paramPrivateServiceConnectEndpointConnectionId: accessPoint.Status.Config.NetworkingV1GcpEgressPrivateServiceConnectEndpointStatus.GetPrivateServiceConnectEndpointConnectionId(),
 			paramPrivateServiceConnectEndpointIpAddress:    accessPoint.Status.Config.NetworkingV1GcpEgressPrivateServiceConnectEndpointStatus.GetPrivateServiceConnectEndpointIpAddress(),
+		}}); err != nil {
+			return nil, err
+		}
+	} else if accessPoint.Spec.Config.NetworkingV1GcpIngressPrivateServiceConnectEndpoint != nil && accessPoint.Status.Config.NetworkingV1GcpIngressPrivateServiceConnectEndpointStatus != nil {
+		if err := d.Set(paramGcpIngressPrivateServiceConnectEndpoint, []interface{}{map[string]interface{}{
+			paramPrivateServiceConnectConnectionId:      accessPoint.Spec.Config.NetworkingV1GcpIngressPrivateServiceConnectEndpoint.GetPrivateServiceConnectConnectionId(),
+			paramPrivateServiceConnectServiceAttachment: accessPoint.Status.Config.NetworkingV1GcpIngressPrivateServiceConnectEndpointStatus.GetPrivateServiceConnectServiceAttachment(),
+			paramDnsDomain:                             accessPoint.Status.Config.NetworkingV1GcpIngressPrivateServiceConnectEndpointStatus.GetDnsDomain(),
 		}}); err != nil {
 			return nil, err
 		}

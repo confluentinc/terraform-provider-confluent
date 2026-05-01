@@ -47,6 +47,10 @@ The following arguments are supported:
   - `zones` - (Required List of Strings) AWS availability zone ids of the Private Network Interface Gateway.
 - `azure_egress_private_link_gateway` (Optional Configuration Block) supports the following:
   - `region` - (Required String) Azure region of the Gateway, for example, `eastus`.
+- `azure_ingress_private_link_gateway` (Optional Configuration Block) supports the following:
+  - `region` - (Required String) Azure region of the Ingress Private Link Gateway, for example, `centralus`.
+- `gcp_ingress_private_service_connect_gateway` (Optional Configuration Block) supports the following:
+  - `region` - (Required String) GCP region of the Ingress Private Service Connect Gateway, for example, `us-central1`.
 
 ## Attributes Reference
 
@@ -60,6 +64,11 @@ In addition to the preceding arguments, the following attributes are exported:
   - `account` - (Required String) The AWS account ID associated with the Private Network Interface Gateway.
 - `azure_egress_private_link_gateway` (Optional Configuration Block) supports the following:
   - `subscription` - (Required String) The Azure Subscription ID associated with the Confluent Cloud VPC, for example, `00000000-0000-0000-0000-000000000000`.
+- `azure_ingress_private_link_gateway` (Optional Configuration Block) supports the following:
+  - `private_link_service_alias` - (Required String) Alias of the Confluent Cloud Private Link Service.
+  - `private_link_service_resource_id` - (Required String) Resource ID of the Confluent Cloud Private Link Service.
+- `gcp_ingress_private_service_connect_gateway` (Optional Configuration Block) supports the following:
+  - `private_service_connect_service_attachment` - (Required String) URI of the Private Service Connect Service Attachment in Confluent Cloud.
 
 ## Import
 
