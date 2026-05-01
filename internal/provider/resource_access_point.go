@@ -612,15 +612,12 @@ func setAccessPointAttributes(d *schema.ResourceData, accessPoint networkingacce
 			return nil, err
 		}
 	} else if accessPoint.Spec.Config.NetworkingV1AzureIngressPrivateLinkEndpoint != nil && accessPoint.Status.Config.NetworkingV1AzureIngressPrivateLinkEndpointStatus != nil {
-		ingressEndpointMap := map[string]interface{}{
+		if err := d.Set(paramAzureIngressPrivateLinkEndpoint, []interface{}{map[string]interface{}{
 			paramPrivateEndpointResourceId:    accessPoint.Spec.Config.NetworkingV1AzureIngressPrivateLinkEndpoint.GetPrivateEndpointResourceId(),
 			paramPrivateLinkServiceAlias:      accessPoint.Status.Config.NetworkingV1AzureIngressPrivateLinkEndpointStatus.GetPrivateLinkServiceAlias(),
 			paramPrivateLinkServiceResourceId: accessPoint.Status.Config.NetworkingV1AzureIngressPrivateLinkEndpointStatus.GetPrivateLinkServiceResourceId(),
-		}
-		if accessPoint.Status.Config.NetworkingV1AzureIngressPrivateLinkEndpointStatus.HasDnsDomain() {
-			ingressEndpointMap[paramDnsDomain] = accessPoint.Status.Config.NetworkingV1AzureIngressPrivateLinkEndpointStatus.GetDnsDomain()
-		}
-		if err := d.Set(paramAzureIngressPrivateLinkEndpoint, []interface{}{ingressEndpointMap}); err != nil {
+			paramDnsDomain:                    accessPoint.Status.Config.NetworkingV1AzureIngressPrivateLinkEndpointStatus.GetDnsDomain(),
+		}}); err != nil {
 			return nil, err
 		}
 	} else if accessPoint.Spec.Config.NetworkingV1GcpEgressPrivateServiceConnectEndpoint != nil && accessPoint.Status.Config.NetworkingV1GcpEgressPrivateServiceConnectEndpointStatus != nil {
@@ -633,14 +630,11 @@ func setAccessPointAttributes(d *schema.ResourceData, accessPoint networkingacce
 			return nil, err
 		}
 	} else if accessPoint.Spec.Config.NetworkingV1GcpIngressPrivateServiceConnectEndpoint != nil && accessPoint.Status.Config.NetworkingV1GcpIngressPrivateServiceConnectEndpointStatus != nil {
-		ingressEndpointMap := map[string]interface{}{
+		if err := d.Set(paramGcpIngressPrivateServiceConnectEndpoint, []interface{}{map[string]interface{}{
 			paramPrivateServiceConnectConnectionId:      accessPoint.Spec.Config.NetworkingV1GcpIngressPrivateServiceConnectEndpoint.GetPrivateServiceConnectConnectionId(),
 			paramPrivateServiceConnectServiceAttachment: accessPoint.Status.Config.NetworkingV1GcpIngressPrivateServiceConnectEndpointStatus.GetPrivateServiceConnectServiceAttachment(),
-		}
-		if accessPoint.Status.Config.NetworkingV1GcpIngressPrivateServiceConnectEndpointStatus.HasDnsDomain() {
-			ingressEndpointMap[paramDnsDomain] = accessPoint.Status.Config.NetworkingV1GcpIngressPrivateServiceConnectEndpointStatus.GetDnsDomain()
-		}
-		if err := d.Set(paramGcpIngressPrivateServiceConnectEndpoint, []interface{}{ingressEndpointMap}); err != nil {
+			paramDnsDomain:                             accessPoint.Status.Config.NetworkingV1GcpIngressPrivateServiceConnectEndpointStatus.GetDnsDomain(),
+		}}); err != nil {
 			return nil, err
 		}
 	} else if accessPoint.Spec.Config.NetworkingV1AwsPrivateNetworkInterface != nil {
