@@ -195,6 +195,142 @@ func testAccCheckDataSourceGatewaysWithFilters(mockServerUrl, label string) stri
 	`, mockServerUrl, label)
 }
 
+func TestAccDataSourceGatewaysWithAzureIngressFilter(t *testing.T) {
+	ctx := context.Background()
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
+
+	mockServerUrl := wiremockContainer.URI
+	wiremockClient := wiremock.NewClient(mockServerUrl)
+	// nolint:errcheck
+	defer wiremockClient.Reset()
+	// nolint:errcheck
+	defer wiremockClient.ResetAllScenarios()
+
+	readGatewaysFilteredResponse, _ := os.ReadFile("../testdata/gateway/list_gateways_filtered_azure_ingress.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/networking/v1/gateways")).
+		WithQueryParam("environment", wiremock.EqualTo("env-abc123")).
+		WithQueryParam("page_size", wiremock.EqualTo(strconv.Itoa(listGatewaysPageSize))).
+		WithQueryParam("gateway_type", wiremock.EqualTo("AzureIngressPrivateLink")).
+		WithQueryParam("status.phase", wiremock.EqualTo("active")).
+		InScenario(gatewaysDataSourceScenarioName).
+		WillReturn(
+			string(readGatewaysFilteredResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	fullGatewaysDataSourceLabel := fmt.Sprintf("data.confluent_gateways.%s", gatewaysResourceLabel)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckDataSourceGatewaysWithAzureIngressFilter(mockServerUrl, gatewaysResourceLabel),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckGatewaysExists(fullGatewaysDataSourceLabel),
+					resource.TestCheckResourceAttr(fullGatewaysDataSourceLabel, "gateways.#", "1"),
+					resource.TestCheckResourceAttr(fullGatewaysDataSourceLabel, "gateways.0.id", azureIngressGatewayId),
+					resource.TestCheckResourceAttr(fullGatewaysDataSourceLabel, "gateways.0.display_name", "prod-azure-ingress-gateway"),
+					resource.TestCheckResourceAttr(fullGatewaysDataSourceLabel, "gateways.0.azure_ingress_private_link_gateway.#", "1"),
+					resource.TestCheckResourceAttr(fullGatewaysDataSourceLabel, "gateways.0.azure_ingress_private_link_gateway.0.region", "centralus"),
+					resource.TestCheckResourceAttr(fullGatewaysDataSourceLabel, "gateways.0.azure_ingress_private_link_gateway.0.private_link_service_alias", "plattg-123abc-privatelink.00000000-0000-0000-0000-000000000000.centralus.azure.privatelinkservice"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccDataSourceGatewaysWithGcpIngressFilter(t *testing.T) {
+	ctx := context.Background()
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
+
+	mockServerUrl := wiremockContainer.URI
+	wiremockClient := wiremock.NewClient(mockServerUrl)
+	// nolint:errcheck
+	defer wiremockClient.Reset()
+	// nolint:errcheck
+	defer wiremockClient.ResetAllScenarios()
+
+	readGatewaysFilteredResponse, _ := os.ReadFile("../testdata/gateway/list_gateways_filtered_gcp_ingress.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/networking/v1/gateways")).
+		WithQueryParam("environment", wiremock.EqualTo("env-abc123")).
+		WithQueryParam("page_size", wiremock.EqualTo(strconv.Itoa(listGatewaysPageSize))).
+		WithQueryParam("gateway_type", wiremock.EqualTo("GcpIngressPrivateServiceConnect")).
+		WithQueryParam("status.phase", wiremock.EqualTo("active")).
+		InScenario(gatewaysDataSourceScenarioName).
+		WillReturn(
+			string(readGatewaysFilteredResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	fullGatewaysDataSourceLabel := fmt.Sprintf("data.confluent_gateways.%s", gatewaysResourceLabel)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckDataSourceGatewaysWithGcpIngressFilter(mockServerUrl, gatewaysResourceLabel),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckGatewaysExists(fullGatewaysDataSourceLabel),
+					resource.TestCheckResourceAttr(fullGatewaysDataSourceLabel, "gateways.#", "1"),
+					resource.TestCheckResourceAttr(fullGatewaysDataSourceLabel, "gateways.0.id", gcpIngressGatewayId),
+					resource.TestCheckResourceAttr(fullGatewaysDataSourceLabel, "gateways.0.display_name", "prod-gcp-ingress-gateway"),
+					resource.TestCheckResourceAttr(fullGatewaysDataSourceLabel, "gateways.0.gcp_ingress_private_service_connect_gateway.#", "1"),
+					resource.TestCheckResourceAttr(fullGatewaysDataSourceLabel, "gateways.0.gcp_ingress_private_service_connect_gateway.0.region", "us-central1"),
+					resource.TestCheckResourceAttr(fullGatewaysDataSourceLabel, "gateways.0.gcp_ingress_private_service_connect_gateway.0.private_service_connect_service_attachment", "projects/traffic-prod/regions/us-central1/serviceAttachments/plattg-abc123-service-attachment"),
+				),
+			},
+		},
+	})
+}
+
+func testAccCheckDataSourceGatewaysWithAzureIngressFilter(mockServerUrl, label string) string {
+	return fmt.Sprintf(`
+	provider "confluent" {
+	  endpoint = "%s"
+	}
+	data "confluent_gateways" "%s" {
+	  environment {
+	    id = "env-abc123"
+	  }
+	  filter {
+	    gateway_type = ["AzureIngressPrivateLink"]
+	    phase        = ["READY"]
+	  }
+	}
+	`, mockServerUrl, label)
+}
+
+func testAccCheckDataSourceGatewaysWithGcpIngressFilter(mockServerUrl, label string) string {
+	return fmt.Sprintf(`
+	provider "confluent" {
+	  endpoint = "%s"
+	}
+	data "confluent_gateways" "%s" {
+	  environment {
+	    id = "env-abc123"
+	  }
+	  filter {
+	    gateway_type = ["GcpIngressPrivateServiceConnect"]
+	    phase        = ["READY"]
+	  }
+	}
+	`, mockServerUrl, label)
+}
+
 func testAccCheckGatewaysExists(resourceName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[resourceName]
