@@ -33,10 +33,10 @@ import (
 )
 
 var acceptedOwnerKinds = []string{serviceAccountKind, userKind}
-var acceptedResourceKinds = []string{clusterKind, regionKind, tableflowKind}
+var acceptedResourceKinds = []string{clusterKind, regionKind, tableflowKind, globalKind}
 
 var acceptedOwnerApiVersions = []string{iamApiVersion}
-var acceptedResourceApiVersions = []string{cmkApiVersion, srcmV2ApiVersion, srcmV3ApiVersion, ksqldbcmApiVersion, fcpmApiVersion, tableflowApiVersion}
+var acceptedResourceApiVersions = []string{cmkApiVersion, srcmV2ApiVersion, srcmV3ApiVersion, ksqldbcmApiVersion, fcpmApiVersion, tableflowApiVersion, globalApiVersion}
 
 func apiKeyResource() *schema.Resource {
 	return &schema.Resource{
@@ -97,7 +97,7 @@ func apiKeyCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 	spec.SetDescription(description)
 	spec.SetOwner(apikeysv2.ObjectReference{Id: ownerId, Kind: &ownerKind})
 
-	// If paramResource block is present, then the API Key is a resource-specific API key (Kafka, Schema Registry, Flink, ksqlDB, and Tableflow).
+	// If paramResource block is present, then the API Key is a resource-specific API key (Kafka, Schema Registry, Flink, ksqlDB, Tableflow, and Global).
 	// https://docs.confluent.io/cloud/current/access-management/authenticate/api-keys/api-keys.html#resource-specific-api-keys
 	// Otherwise, it's Cloud API Key.
 	isResourceSpecificApiKey := len(d.Get(paramResource).([]interface{})) > 0
@@ -110,12 +110,14 @@ func apiKeyCreate(ctx context.Context, d *schema.ResourceData, meta interface{})
 		apiVersion := extractStringValueFromBlock(d, paramResource, paramApiVersion)
 		spec.SetResource(apikeysv2.ObjectReference{Id: resourceId, Kind: &resourceKind})
 
-		// Client needs to specify api_version only when creating Flink API Key
 		if apiVersion == fcpmApiVersion {
 			spec.Resource.SetApiVersion(fcpmApiVersion)
 		}
 		if apiVersion == tableflowApiVersion {
 			spec.Resource.SetApiVersion(tableflowApiVersion)
+		}
+		if apiVersion == globalApiVersion {
+			spec.Resource.SetApiVersion(globalApiVersion)
 		}
 
 		if isFlinkApiKey(apikeysv2.IamV2ApiKey{Spec: spec}) {
@@ -272,7 +274,7 @@ func setApiKeyAttributes(d *schema.ResourceData, apiKey apikeysv2.IamV2ApiKey) (
 	if err := setOwner(apiKey, d); err != nil {
 		return nil, createDescriptiveError(err)
 	}
-	// Check whether the API Key is a resource-specific API key (Kafka, Schema Registry, ksqlDB, and Tableflow).
+	// Check whether the API Key is a resource-specific API key (Kafka, Schema Registry, ksqlDB, Tableflow, and Global).
 	// https://docs.confluent.io/cloud/current/access-management/authenticate/api-keys/api-keys.html#resource-specific-api-keys
 	// Otherwise, it's Cloud API Key.
 	resourceKind := strings.ToLower(apiKey.Spec.Resource.GetKind())
@@ -487,10 +489,15 @@ func isTableflowApiKey(apiKey apikeysv2.IamV2ApiKey) bool {
 	return apiKey.Spec.Resource.GetKind() == tableflowKind && apiKey.Spec.Resource.GetId() == tableflowKindInLowercase
 }
 
+func isGlobalApiKey(apiKey apikeysv2.IamV2ApiKey) bool {
+	return apiKey.Spec.Resource.GetKind() == globalKind && apiKey.Spec.Resource.GetId() == globalKindInLowercase
+}
+
 func waitForApiKeyToSync(ctx context.Context, c *Client, createdApiKey apikeysv2.IamV2ApiKey, isResourceSpecificApiKey bool, environmentId string) error {
 	// For Kafka API Key use Kafka REST API's List Topics request and wait for http.StatusOK
 	// For Cloud API Key use Org API's List Environments request and wait for http.StatusOK
-	// For Tableflow API Key skipped the waitForCreatedTableflowApiKeyToSync function for now, until backend support for tableflow secret/key verification is ready
+	// For Tableflow API Key use Tableflow REST API's List Regions request and wait for http.StatusOK
+	// For Global API Key use Org API's List Environments request and wait for http.StatusOK
 
 	if isResourceSpecificApiKey {
 		if isKafkaApiKey(createdApiKey) {
@@ -514,6 +521,10 @@ func waitForApiKeyToSync(ctx context.Context, c *Client, createdApiKey apikeysv2
 			tableflowRestClient := c.tableflowRestClientFactory.CreateTableflowRestClient(createdApiKey.GetId(), createdApiKey.Spec.GetSecret(), false, c.oauthToken, c.stsToken)
 			if err := waitForCreatedTableflowApiKeyToSync(ctx, tableflowRestClient, c.isAcceptanceTestMode); err != nil {
 				return fmt.Errorf("error waiting for Tableflow API Key %q to sync: %s", createdApiKey.GetId(), createDescriptiveError(err))
+			}
+		} else if isGlobalApiKey(createdApiKey) {
+			if err := waitForCreatedGlobalApiKeyToSync(ctx, c, createdApiKey.GetId(), createdApiKey.Spec.GetSecret()); err != nil {
+				return fmt.Errorf("error waiting for Global API Key %q to sync: %s", createdApiKey.GetId(), createDescriptiveError(err))
 			}
 		} else {
 			resourceJson, err := json.Marshal(createdApiKey.Spec.GetResource())
@@ -543,7 +554,7 @@ func apiKeyImport(ctx context.Context, d *schema.ResourceData, meta interface{})
 	envIdAndClusterAPIKeyId := d.Id()
 	parts := strings.Split(envIdAndClusterAPIKeyId, "/")
 	if len(parts) == 1 {
-		tflog.Debug(ctx, fmt.Sprintf("Importing Cloud or Tableflow API Key %q", d.Id()), map[string]interface{}{apiKeyLoggingKey: d.Id()})
+		tflog.Debug(ctx, fmt.Sprintf("Importing Cloud, Tableflow, or Global API Key %q", d.Id()), map[string]interface{}{apiKeyLoggingKey: d.Id()})
 
 	} else if len(parts) == 2 {
 		environmentId := parts[0]
@@ -561,7 +572,7 @@ func apiKeyImport(ctx context.Context, d *schema.ResourceData, meta interface{})
 
 		tflog.Debug(ctx, fmt.Sprintf("Importing Cluster API Key %q", d.Id()), map[string]interface{}{apiKeyLoggingKey: d.Id()})
 	} else {
-		return nil, fmt.Errorf("error importing API Key: invalid format: expected '<env ID>/API Key ID>' for Cluster API Key, or '<API Key ID> for Cloud or Tableflow API Key")
+		return nil, fmt.Errorf("error importing API Key: invalid format: expected '<env ID>/API Key ID>' for Cluster API Key, or '<API Key ID> for Cloud, Tableflow, or Global API Key")
 	}
 
 	// Mark resource as new to avoid d.Set("") when getting 404
