@@ -27,6 +27,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
+// Shared infra the live tests target (also hardcoded in the existing live
+// tests for ksql, role_binding, etc.).
+const (
+	flinkMaterializedTableLiveOrganizationId = "424fb7bf-40c2-433f-81a5-c45942a6a539"
+	flinkMaterializedTableLiveEnvironmentId  = "env-zyg27z"
+)
+
 // The Flink compute pool created by the test must live in the same AWS region
 // as the Kafka cluster it references. We don't have a Vault-supplied region,
 // so derive it from KAFKA_STANDARD_AWS_REST_ENDPOINT (e.g. ".us-east-1.aws.").
@@ -100,8 +107,8 @@ func TestAccFlinkMaterializedTableLive(t *testing.T) {
 					resource.TestCheckResourceAttr(fullTableResourceLabel, paramDisplayName, tableDisplayName),
 					resource.TestCheckResourceAttr(fullTableResourceLabel, fmt.Sprintf("%s.0.%s", paramKafkaCluster, paramId), kafkaClusterId),
 					resource.TestCheckResourceAttr(fullTableResourceLabel, paramStopped, "false"),
-					resource.TestCheckResourceAttr(fullTableResourceLabel, fmt.Sprintf("%s.0.%s", paramOrganization, paramId), "424fb7bf-40c2-433f-81a5-c45942a6a539"),
-					resource.TestCheckResourceAttr(fullTableResourceLabel, fmt.Sprintf("%s.0.%s", paramEnvironment, paramId), "env-zyg27z"),
+					resource.TestCheckResourceAttr(fullTableResourceLabel, fmt.Sprintf("%s.0.%s", paramOrganization, paramId), flinkMaterializedTableLiveOrganizationId),
+					resource.TestCheckResourceAttr(fullTableResourceLabel, fmt.Sprintf("%s.0.%s", paramEnvironment, paramId), flinkMaterializedTableLiveEnvironmentId),
 					resource.TestCheckResourceAttrSet(fullTableResourceLabel, fmt.Sprintf("%s.0.%s", paramComputePool, paramId)),
 					resource.TestCheckResourceAttrSet(fullTableResourceLabel, fmt.Sprintf("%s.0.%s", paramPrincipal, paramId)),
 					resource.TestCheckResourceAttrSet(fullTableResourceLabel, paramRestEndpoint),
@@ -144,8 +151,8 @@ func TestAccFlinkMaterializedTableLive(t *testing.T) {
 					_ = os.Setenv("IMPORT_FLINK_API_SECRET", keyRs.Primary.Attributes["secret"])
 					_ = os.Setenv("IMPORT_FLINK_REST_ENDPOINT", regionRs.Primary.Attributes[paramRestEndpoint])
 					_ = os.Setenv("IMPORT_FLINK_PRINCIPAL_ID", saRs.Primary.ID)
-					_ = os.Setenv("IMPORT_CONFLUENT_ORGANIZATION_ID", "424fb7bf-40c2-433f-81a5-c45942a6a539")
-					_ = os.Setenv("IMPORT_CONFLUENT_ENVIRONMENT_ID", "env-zyg27z")
+					_ = os.Setenv("IMPORT_CONFLUENT_ORGANIZATION_ID", flinkMaterializedTableLiveOrganizationId)
+					_ = os.Setenv("IMPORT_CONFLUENT_ENVIRONMENT_ID", flinkMaterializedTableLiveEnvironmentId)
 					_ = os.Setenv("IMPORT_FLINK_COMPUTE_POOL_ID", poolRs.Primary.ID)
 					return rs.Primary.ID, nil
 				},
@@ -294,18 +301,18 @@ resource "confluent_flink_materialized_table" "%s" {
 		endpoint, apiKey, apiSecret,
 		regionDataSourceLabel, region,
 		saResourceLabel, randomSuffix,
-		saResourceLabel, saResourceLabel, "424fb7bf-40c2-433f-81a5-c45942a6a539", "env-zyg27z",
-		saResourceLabel, saResourceLabel, "424fb7bf-40c2-433f-81a5-c45942a6a539", "env-zyg27z",
-		saResourceLabel, saResourceLabel, "424fb7bf-40c2-433f-81a5-c45942a6a539", saResourceLabel,
-		poolResourceLabel, randomSuffix, region, "env-zyg27z",
+		saResourceLabel, saResourceLabel, flinkMaterializedTableLiveOrganizationId, flinkMaterializedTableLiveEnvironmentId,
+		saResourceLabel, saResourceLabel, flinkMaterializedTableLiveOrganizationId, flinkMaterializedTableLiveEnvironmentId,
+		saResourceLabel, saResourceLabel, flinkMaterializedTableLiveOrganizationId, saResourceLabel,
+		poolResourceLabel, randomSuffix, region, flinkMaterializedTableLiveEnvironmentId,
 		apiKeyResourceLabel, randomSuffix,
 		saResourceLabel, saResourceLabel, saResourceLabel,
 		regionDataSourceLabel, regionDataSourceLabel, regionDataSourceLabel,
-		"env-zyg27z",
+		flinkMaterializedTableLiveEnvironmentId,
 		saResourceLabel, saResourceLabel, saResourceLabel,
 		tableResourceLabel,
-		"424fb7bf-40c2-433f-81a5-c45942a6a539",
-		"env-zyg27z",
+		flinkMaterializedTableLiveOrganizationId,
+		flinkMaterializedTableLiveEnvironmentId,
 		poolResourceLabel,
 		saResourceLabel,
 		regionDataSourceLabel,
