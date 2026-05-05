@@ -405,11 +405,17 @@ func setGatewayAttributes(d *schema.ResourceData, gateway networkinggatewayv1.Ne
 		}}); err != nil {
 			return nil, err
 		}
-	} else if gateway.Spec.GetConfig().NetworkingV1AzureIngressPrivateLinkGatewaySpec != nil && gateway.Status.GetCloudGateway().NetworkingV1AzureIngressPrivateLinkGatewayStatus != nil {
+	} else if gateway.Spec.GetConfig().NetworkingV1AzureIngressPrivateLinkGatewaySpec != nil {
+		privateLinkServiceAlias := ""
+		privateLinkServiceResourceId := ""
+		if gateway.Status.GetCloudGateway().NetworkingV1AzureIngressPrivateLinkGatewayStatus != nil {
+			privateLinkServiceAlias = gateway.Status.CloudGateway.NetworkingV1AzureIngressPrivateLinkGatewayStatus.GetPrivateLinkServiceAlias()
+			privateLinkServiceResourceId = gateway.Status.CloudGateway.NetworkingV1AzureIngressPrivateLinkGatewayStatus.GetPrivateLinkServiceResourceId()
+		}
 		if err := d.Set(paramAzureIngressPrivateLinkGateway, []interface{}{map[string]interface{}{
 			paramRegion:                       gateway.Spec.Config.NetworkingV1AzureIngressPrivateLinkGatewaySpec.GetRegion(),
-			paramPrivateLinkServiceAlias:      gateway.Status.CloudGateway.NetworkingV1AzureIngressPrivateLinkGatewayStatus.GetPrivateLinkServiceAlias(),
-			paramPrivateLinkServiceResourceId: gateway.Status.CloudGateway.NetworkingV1AzureIngressPrivateLinkGatewayStatus.GetPrivateLinkServiceResourceId(),
+			paramPrivateLinkServiceAlias:      privateLinkServiceAlias,
+			paramPrivateLinkServiceResourceId: privateLinkServiceResourceId,
 		}}); err != nil {
 			return nil, err
 		}
@@ -433,10 +439,14 @@ func setGatewayAttributes(d *schema.ResourceData, gateway networkinggatewayv1.Ne
 		}}); err != nil {
 			return nil, err
 		}
-	} else if gateway.Spec.GetConfig().NetworkingV1GcpIngressPrivateServiceConnectGatewaySpec != nil && gateway.Status.GetCloudGateway().NetworkingV1GcpIngressPrivateServiceConnectGatewayStatus != nil {
+	} else if gateway.Spec.GetConfig().NetworkingV1GcpIngressPrivateServiceConnectGatewaySpec != nil {
+		privateServiceConnectServiceAttachment := ""
+		if gateway.Status.GetCloudGateway().NetworkingV1GcpIngressPrivateServiceConnectGatewayStatus != nil {
+			privateServiceConnectServiceAttachment = gateway.Status.CloudGateway.NetworkingV1GcpIngressPrivateServiceConnectGatewayStatus.GetPrivateServiceConnectServiceAttachment()
+		}
 		if err := d.Set(paramGcpIngressPrivateServiceConnectGateway, []interface{}{map[string]interface{}{
 			paramRegion: gateway.Spec.Config.NetworkingV1GcpIngressPrivateServiceConnectGatewaySpec.GetRegion(),
-			paramPrivateServiceConnectServiceAttachment: gateway.Status.CloudGateway.NetworkingV1GcpIngressPrivateServiceConnectGatewayStatus.GetPrivateServiceConnectServiceAttachment(),
+			paramPrivateServiceConnectServiceAttachment: privateServiceConnectServiceAttachment,
 		}}); err != nil {
 			return nil, err
 		}
