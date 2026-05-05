@@ -1232,6 +1232,10 @@ func gatewayProvisionStatus(ctx context.Context, c *Client, environmentId string
 		} else if phase == stateExpired {
 			// gateway has timed out waiting for connections, can only be deleted
 			return nil, stateExpired, fmt.Errorf("gateway %q provisioning status is %q: gateway has timed out waiting for connections and can only be deleted. %s", gatewayId, stateExpired, gateway.Status.GetErrorMessage())
+		} else if phase == stateError {
+			return nil, stateError, fmt.Errorf("gateway %q provisioning status is %q: %s", gatewayId, stateError, gateway.Status.GetErrorMessage())
+		} else if phase == stateDisconnected {
+			return nil, stateDisconnected, fmt.Errorf("gateway %q provisioning status is %q: %s", gatewayId, stateDisconnected, gateway.Status.GetErrorMessage())
 		}
 		// Gateway is in an unexpected state
 		return nil, stateUnexpected, fmt.Errorf("gateway %q is in an unexpected state %q: %s", gatewayId, phase, gateway.Status.GetErrorMessage())
