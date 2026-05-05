@@ -70,6 +70,11 @@ func kafkaDataSource() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			paramDeletionProtection: {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Whether deletion protection is enabled for the Kafka cluster.",
+			},
 			paramBasicCluster:      basicClusterDataSourceSchema(),
 			paramStandardCluster:   standardClusterDataSourceSchema(),
 			paramDedicatedCluster:  dedicatedClusterDataSourceSchema(),
@@ -221,11 +226,11 @@ func loadKafkaClusters(ctx context.Context, c *Client, environmentId string) ([]
 }
 
 func executeListKafkaClusters(ctx context.Context, c *Client, environmentId, pageToken string) (cmkv2.CmkV2ClusterList, *http.Response, error) {
+	req := c.cmkV2Client.ClustersCmkV2Api.ListCmkV2Clusters(c.cmkV2ApiContext(ctx)).Environment(environmentId).PageSize(listKafkaClustersPageSize)
 	if pageToken != "" {
-		return c.cmkV2Client.ClustersCmkV2Api.ListCmkV2Clusters(c.cmkV2ApiContext(ctx)).Environment(environmentId).PageSize(listKafkaClustersPageSize).PageToken(pageToken).Execute()
-	} else {
-		return c.cmkV2Client.ClustersCmkV2Api.ListCmkV2Clusters(c.cmkV2ApiContext(ctx)).Environment(environmentId).PageSize(listKafkaClustersPageSize).Execute()
+		req = req.PageToken(pageToken)
 	}
+	return req.Execute()
 }
 
 func basicClusterDataSourceSchema() *schema.Schema {

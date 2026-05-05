@@ -54,6 +54,11 @@ func kafkaClustersSchema() *schema.Schema {
 				},
 				paramNetwork:              optionalNetworkDataSourceSchema(),
 				paramConfluentCustomerKey: optionalByokDataSourceSchema(),
+				paramDeletionProtection: {
+					Type:        schema.TypeBool,
+					Computed:    true,
+					Description: "Enable deletion protection for the Kafka cluster.",
+				},
 				paramApiVersion: {
 					Type:     schema.TypeString,
 					Computed: true,
@@ -170,13 +175,14 @@ func populateKafkaClusterResult(cluster cmkv2.CmkV2Cluster) (map[string]interfac
 	}
 
 	mp := map[string]interface{}{
-		paramId:           cluster.GetId(),
-		paramApiVersion:   cluster.GetApiVersion(),
-		paramKind:         cluster.GetKind(),
-		paramDisplayName:  cluster.Spec.GetDisplayName(),
-		paramAvailability: cluster.Spec.GetAvailability(),
-		paramCloud:        cluster.Spec.GetCloud(),
-		paramRegion:       cluster.Spec.GetRegion(),
+		paramId:                 cluster.GetId(),
+		paramApiVersion:         cluster.GetApiVersion(),
+		paramKind:               cluster.GetKind(),
+		paramDisplayName:        cluster.Spec.GetDisplayName(),
+		paramAvailability:       cluster.Spec.GetAvailability(),
+		paramCloud:              cluster.Spec.GetCloud(),
+		paramRegion:             cluster.Spec.GetRegion(),
+		paramDeletionProtection: cluster.Spec.GetDeletionProtection(),
 		// Reset all 5 cluster types since only one of these 5 should be set
 		paramBasicCluster:      []interface{}{},
 		paramStandardCluster:   []interface{}{},
