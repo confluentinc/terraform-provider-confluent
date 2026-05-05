@@ -73,10 +73,6 @@ github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDk
 github.com/cloudflare/circl v1.6.1 h1:zqIqSPIndyBh1bjLVVDHMPpVKqp8Su/V+6MeDzzQBQ0=
 github.com/cloudflare/circl v1.6.1/go.mod h1:uddAzsPgqdMAYatqJ0lsjX1oECcQLIlRpzZh3pJrofs=
 github.com/cncf/udpa/go v0.0.0-20191209042840-269d4d468f6f/go.mod h1:M8M6+tZqaGXZJjfX53e64911xZQV5JYwmTeXPW+k8Sc=
-github.com/confluentinc/ccloud-sdk-go-v2-internal/networking-access-point v0.13.0 h1:crG9ZKL8WlY7fX1ooSsODyNKSLhWuOpvThQ/GYlDjK0=
-github.com/confluentinc/ccloud-sdk-go-v2-internal/networking-access-point v0.13.0/go.mod h1:94S6dsLwNBa6zumSRQi81/aM750kLu+HJFXd4jcJz7A=
-github.com/confluentinc/ccloud-sdk-go-v2-internal/networking-gateway v0.13.0 h1:RDHQh6GcaL6JrZock9jsPQCUiwHNNZBiJOrXt7/v2lw=
-github.com/confluentinc/ccloud-sdk-go-v2-internal/networking-gateway v0.13.0/go.mod h1:xr1v1dpdLoFSozNL4Qiv4gNjVlaTgr7mBMVnfjtzdas=
 github.com/confluentinc/ccloud-sdk-go-v2/apikeys v0.4.0 h1:8fWyLwMuy8ec0MVF5Avd54UvbIxhDFhZzanHBVwgxdw=
 github.com/confluentinc/ccloud-sdk-go-v2/apikeys v0.4.0/go.mod h1:wNa9Qg2e2v/+PQsUyKh+qB22hhLkPR6Ahy6rP+1jmGI=
 github.com/confluentinc/ccloud-sdk-go-v2/byok v0.0.2 h1:BV/dPTFVovJPylrcr9lcSmukCVxBxyUeHBr6hp7zUNk=
@@ -119,8 +115,12 @@ github.com/confluentinc/ccloud-sdk-go-v2/mds v0.3.0 h1:DaipFGVdZjAE8eSztUrA/4b74
 github.com/confluentinc/ccloud-sdk-go-v2/mds v0.3.0/go.mod h1:ufn9In8kDsyJ7Nru2ygpAaWdGw7DSDTOTtDhQVSmZjs=
 github.com/confluentinc/ccloud-sdk-go-v2/networking v0.14.0 h1:btDFGijvzpWaKLKztc7S9YenbtGTsHgjs4+fNuyYceI=
 github.com/confluentinc/ccloud-sdk-go-v2/networking v0.14.0/go.mod h1:6BDrwG6OfSnT++Yr3mXStvmy4Jb8uMtdfKK7sZO/X+M=
+github.com/confluentinc/ccloud-sdk-go-v2/networking-access-point v0.10.0 h1:tVwzT8htKDlXzNOCWNMZ1TU/80LhZ1sH6Xm6YzC4whg=
+github.com/confluentinc/ccloud-sdk-go-v2/networking-access-point v0.10.0/go.mod h1:ipbT20AMDVklb9WaQpKNafozAqktfD47WzYI3GpJKEI=
 github.com/confluentinc/ccloud-sdk-go-v2/networking-dnsforwarder v0.4.0 h1:LT8trYIkMZ7EFM7nZZOkmH12B7AgOEvZYZjw86nazD0=
 github.com/confluentinc/ccloud-sdk-go-v2/networking-dnsforwarder v0.4.0/go.mod h1:HPu3Cd7HQ2NdTeL6f3nvrsFB69N9yugB/W4qV8wqE/c=
+github.com/confluentinc/ccloud-sdk-go-v2/networking-gateway v0.7.0 h1:beFrkKcUWf2Frbziwsdxjpcg1JdJBGHp1cc6SRS+t80=
+github.com/confluentinc/ccloud-sdk-go-v2/networking-gateway v0.7.0/go.mod h1:2NZfTmNYHQea+1h6W99nNq0r23/mSQu3Liz8B78z7Dg=
 github.com/confluentinc/ccloud-sdk-go-v2/networking-ip v0.2.0 h1:ZHNF2DeqVlNPuKGZ41SBMLGj8GBlvvcwOPnfZLZXA/4=
 github.com/confluentinc/ccloud-sdk-go-v2/networking-ip v0.2.0/go.mod h1:KTShFBZA7WG8LcxlWjJpoZFdWkJ+uOw3dDuwAHs5eKU=
 github.com/confluentinc/ccloud-sdk-go-v2/networking-privatelink v0.3.0 h1:mC0E1nKUt57AxMM4Lpdfd+KA/YZwJVwro9ER+dCUFi8=
@@ -129,8 +129,6 @@ github.com/confluentinc/ccloud-sdk-go-v2/org v0.9.0 h1:FtaqHX0kBTK7fCQK+9SJcOso+
 github.com/confluentinc/ccloud-sdk-go-v2/org v0.9.0/go.mod h1:X0uaTYPp+mr19W1R/Z1LuB1ePZJZrH7kxnQckDx6zoc=
 github.com/confluentinc/ccloud-sdk-go-v2/provider-integration v0.2.0 h1:UN2a+aqYhk95ro+wVLkeB/8W7n+UV2KsE3jNFbbDCSw=
 github.com/confluentinc/ccloud-sdk-go-v2/provider-integration v0.2.0/go.mod h1:TzompS9F0G6awN5xMC+nguNG8ULElN5UqX2XOBOIPuM=
-github.com/confluentinc/ccloud-sdk-go-v2/schema-registry v0.4.0 h1:fBki9LEIQOy82oArfbMJxAh5vGPFg9WvHG3HSnZubyk=
-github.com/confluentinc/ccloud-sdk-go-v2/schema-registry v0.4.0/go.mod h1:uTE8K5/jg75ubJY1Flh6TfBIwVFVOchkLWqVsamwLYc=
 github.com/confluentinc/ccloud-sdk-go-v2/schema-registry v0.5.0 h1:JLXVG3DNXUOTYoL7zVSd4+0tdX79kKuCWkZoJInHSF4=
 github.com/confluentinc/ccloud-sdk-go-v2/schema-registry v0.5.0/go.mod h1:IeFO9LfH2o1qPo/FRVL0LPptgHiZJMvNkqB3nAxCXEs=
 github.com/confluentinc/ccloud-sdk-go-v2/srcm v0.7.3 h1:ozdDSJHruQIgtxS5hwz8Rp8pUSX0i4h9besp2H9NYzU=
