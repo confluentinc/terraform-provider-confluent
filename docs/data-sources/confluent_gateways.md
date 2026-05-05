@@ -63,7 +63,7 @@ The following arguments are supported:
 - `environment` (Required Configuration Block) supports the following:
   - `id` - (Required String) The ID of the Environment that the Gateways belong to, for example, `env-123abc`.
 - `filter` (Optional Configuration Block) supports the following:
-  - `gateway_type` - (Optional List of Strings) Filter the results by exact match for gateway_type. Pass multiple times to see results matching any of the values. Valid values are: `AwsEgressPrivateLink`, `AwsIngressPrivateLink`, `AwsPeering`, `AwsPrivateNetworkInterface`, `AzureEgressPrivateLink`, `AzurePeering`, `GcpEgressPrivateServiceConnect`, `GcpPeering`.
+  - `gateway_type` - (Optional List of Strings) Filter the results by exact match for gateway_type. Pass multiple times to see results matching any of the values. Valid values are: `AwsEgressPrivateLink`, `AwsIngressPrivateLink`, `AwsPeering`, `AwsPrivateNetworkInterface`, `AzureEgressPrivateLink`, `AzureIngressPrivateLink`, `AzurePeering`, `GcpEgressPrivateServiceConnect`, `GcpIngressPrivateServiceConnect`, `GcpPeering`.
   - `id` - (Optional List of Strings) Filter the results by exact match for id. Pass multiple times to see results matching any of the values, for example, `["gw-abc123", "gw-def456"]`.
   - `region` - (Optional List of Strings) Filter the results by exact match for spec.config.region. Pass multiple times to see results matching any of the values, for example, `["us-east-1", "us-west-2"]`.
   - `display_name` - (Optional List of Strings) Filter the results by exact match for spec.display_name. Pass multiple times to see results matching any of the values, for example, `["prod-gateway-ingress-use1", "prod-gateway-ingress-use2"]`.
