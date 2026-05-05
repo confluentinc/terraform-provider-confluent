@@ -16,6 +16,7 @@
       "kind": "Enterprise",
       "max_ecku": 3
     },
+    "deletion_protection": false,
     "display_name": "TestClusterUpdated",
     "environment": {
       "id": "env-1jrymj",
