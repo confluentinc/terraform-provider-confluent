@@ -1321,6 +1321,132 @@ func testAccCheckResourceAccessPointGcpIngressWithIdSet(mockServerUrl, name stri
 	`, mockServerUrl, name)
 }
 
+func TestAccAccessPointAzureIngressErrorPhase(t *testing.T) {
+	ctx := context.Background()
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
+
+	mockServerUrl := wiremockContainer.URI
+	wiremockClient := wiremock.NewClient(mockServerUrl)
+	// nolint:errcheck
+	defer wiremockClient.Reset()
+	// nolint:errcheck
+	defer wiremockClient.ResetAllScenarios()
+
+	createAccessPointResponse, _ := os.ReadFile("../testdata/network_access_point/create_azure_ingress_ap.json")
+	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(accessPointUrlPath)).
+		InScenario(azureIngressAccessPointScenarioName).
+		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
+		WillSetStateTo(scenarioStateAccessPointIsProvisioning).
+		WillReturn(
+			string(createAccessPointResponse),
+			contentTypeJSONHeader,
+			http.StatusCreated,
+		))
+
+	accessPointReadUrlPath := fmt.Sprintf("%s/ap-azure-ingress123", accessPointUrlPath)
+
+	errorAccessPointResponse, _ := os.ReadFile("../testdata/network_access_point/read_error_azure_ingress_ap.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(accessPointReadUrlPath)).
+		InScenario(azureIngressAccessPointScenarioName).
+		WhenScenarioStateIs(scenarioStateAccessPointIsProvisioning).
+		WillReturn(
+			string(errorAccessPointResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(accessPointReadUrlPath)).
+		InScenario(azureIngressAccessPointScenarioName).
+		WhenScenarioStateIs(scenarioStateAccessPointIsProvisioning).
+		WillSetStateTo(scenarioStateAccessPointHasBeenDeleted).
+		WillReturn("", contentTypeJSONHeader, http.StatusNoContent))
+
+	readDeletedAccessPointResponse, _ := os.ReadFile("../testdata/network_access_point/read_deleted_azure_ingress_ap.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(accessPointReadUrlPath)).
+		InScenario(azureIngressAccessPointScenarioName).
+		WhenScenarioStateIs(scenarioStateAccessPointHasBeenDeleted).
+		WillReturn(string(readDeletedAccessPointResponse), contentTypeJSONHeader, http.StatusNotFound))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccCheckResourceAccessPointAzureIngressWithIdSet(mockServerUrl, "prod-azure-ingress-ap"),
+				ExpectError: regexp.MustCompile(`access point "ap-azure-ingress123" provisioning status is "ERROR": Failed to connect to Private Link Service: endpoint was rejected.`),
+			},
+		},
+	})
+}
+
+func TestAccAccessPointAzureIngressDisconnectedPhase(t *testing.T) {
+	ctx := context.Background()
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
+
+	mockServerUrl := wiremockContainer.URI
+	wiremockClient := wiremock.NewClient(mockServerUrl)
+	// nolint:errcheck
+	defer wiremockClient.Reset()
+	// nolint:errcheck
+	defer wiremockClient.ResetAllScenarios()
+
+	createAccessPointResponse, _ := os.ReadFile("../testdata/network_access_point/create_azure_ingress_ap.json")
+	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(accessPointUrlPath)).
+		InScenario(azureIngressAccessPointScenarioName).
+		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
+		WillSetStateTo(scenarioStateAccessPointIsProvisioning).
+		WillReturn(
+			string(createAccessPointResponse),
+			contentTypeJSONHeader,
+			http.StatusCreated,
+		))
+
+	accessPointReadUrlPath := fmt.Sprintf("%s/ap-azure-ingress123", accessPointUrlPath)
+
+	disconnectedAccessPointResponse, _ := os.ReadFile("../testdata/network_access_point/read_disconnected_azure_ingress_ap.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(accessPointReadUrlPath)).
+		InScenario(azureIngressAccessPointScenarioName).
+		WhenScenarioStateIs(scenarioStateAccessPointIsProvisioning).
+		WillReturn(
+			string(disconnectedAccessPointResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(accessPointReadUrlPath)).
+		InScenario(azureIngressAccessPointScenarioName).
+		WhenScenarioStateIs(scenarioStateAccessPointIsProvisioning).
+		WillSetStateTo(scenarioStateAccessPointHasBeenDeleted).
+		WillReturn("", contentTypeJSONHeader, http.StatusNoContent))
+
+	readDeletedAccessPointResponse, _ := os.ReadFile("../testdata/network_access_point/read_deleted_azure_ingress_ap.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(accessPointReadUrlPath)).
+		InScenario(azureIngressAccessPointScenarioName).
+		WhenScenarioStateIs(scenarioStateAccessPointHasBeenDeleted).
+		WillReturn(string(readDeletedAccessPointResponse), contentTypeJSONHeader, http.StatusNotFound))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccCheckResourceAccessPointAzureIngressWithIdSet(mockServerUrl, "prod-azure-ingress-ap"),
+				ExpectError: regexp.MustCompile(`access point "ap-azure-ingress123" provisioning status is "DISCONNECTED": Private endpoint connection was disconnected.`),
+			},
+		},
+	})
+}
+
 func testAccCheckResourceAccessPointInvalidConfig() string {
 	return `
 	resource "confluent_access_point" "main" {
