@@ -357,6 +357,10 @@ func materializedTableCreate(ctx context.Context, d *schema.ResourceData, meta i
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating Flink Materialized Table %q: %s", d.Id(), createdMaterializedTableJson), map[string]interface{}{flinkMaterializedTableLoggingKey: d.Id()})
 
+	if err := waitForMaterializedTableQueryUpdate(ctx, flinkRestClient, organizationId, environmentId, kafkaId, displayName, query); err != nil {
+		tflog.Warn(ctx, fmt.Sprintf("Timed out waiting for Flink Materialized Table %q query to converge after create: %s", d.Id(), err))
+	}
+
 	return materializedTableRead(ctx, d, meta)
 }
 
@@ -620,11 +624,27 @@ func materializedTableDelete(ctx context.Context, d *schema.ResourceData, meta i
 	flinkRestClient := meta.(*Client).flinkRestClientFactory.CreateFlinkRestClient(restEndpoint, organizationId, environmentId, computePoolId, "", flinkApiKey, flinkApiSecret, meta.(*Client).isFlinkMetadataSet, meta.(*Client).oauthToken)
 
 	kafkaId := extractStringValueFromBlock(d, paramKafkaCluster, paramId)
+	tableName := getTableName(d.Id())
 
-	req := flinkRestClient.apiClient.MaterializedTablesSqlV1Api.DeleteSqlv1MaterializedTable(flinkRestClient.apiContext(ctx), organizationId, environmentId, kafkaId, getTableName(d.Id()))
-	resp, err := req.Execute()
-
-	if err != nil {
+	// The API rejects DELETE with 409 ("has a pending operation") while the materialized
+	// table's underlying SQL statement is still transitioning (e.g. just-created, just-
+	// updated, currently stopping). Poll-and-retry until the pending operation clears or
+	// the timeout is reached.
+	deleteTimeout := 2 * time.Minute
+	deleteInterval := 5 * time.Second
+	deadline := time.Now().Add(deleteTimeout)
+	var resp *http.Response
+	for {
+		req := flinkRestClient.apiClient.MaterializedTablesSqlV1Api.DeleteSqlv1MaterializedTable(flinkRestClient.apiContext(ctx), organizationId, environmentId, kafkaId, tableName)
+		resp, err = req.Execute()
+		if err == nil {
+			break
+		}
+		if resp != nil && resp.StatusCode == http.StatusConflict && time.Now().Before(deadline) {
+			tflog.Debug(ctx, fmt.Sprintf("Flink Materialized Table %q delete returned 409, retrying in %s: %s", d.Id(), deleteInterval, err))
+			time.Sleep(deleteInterval)
+			continue
+		}
 		return diag.Errorf("error deleting Flink Materialized Table %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
