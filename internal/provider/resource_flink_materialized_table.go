@@ -357,8 +357,15 @@ func materializedTableCreate(ctx context.Context, d *schema.ResourceData, meta i
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating Flink Materialized Table %q: %s", d.Id(), createdMaterializedTableJson), map[string]interface{}{flinkMaterializedTableLoggingKey: d.Id()})
 
+	// The Flink API creates materialized tables asynchronously: the create call returns
+	// immediately, but the query is reflected in the GET response only after the
+	// underlying SQL statement has been registered. Poll until the API reflects the
+	// requested query so the subsequent Read returns a complete spec — otherwise
+	// post-apply plans show spurious drift on `query`. Unlike Update, a timeout here
+	// means there's no prior valid state to fall back on, so we surface it as a Create
+	// failure rather than a warning.
 	if err := waitForMaterializedTableQueryUpdate(ctx, flinkRestClient, organizationId, environmentId, kafkaId, displayName, query); err != nil {
-		tflog.Warn(ctx, fmt.Sprintf("Timed out waiting for Flink Materialized Table %q query to converge after create: %s", d.Id(), err))
+		return diag.Errorf("error creating Flink Materialized Table %q: %s", d.Id(), createDescriptiveError(err))
 	}
 
 	return materializedTableRead(ctx, d, meta)
@@ -630,7 +637,7 @@ func materializedTableDelete(ctx context.Context, d *schema.ResourceData, meta i
 	// table's underlying SQL statement is still transitioning (e.g. just-created, just-
 	// updated, currently stopping). Poll-and-retry until the pending operation clears or
 	// the timeout is reached.
-	deleteTimeout := 2 * time.Minute
+	deleteTimeout := 5 * time.Minute
 	deleteInterval := 5 * time.Second
 	deadline := time.Now().Add(deleteTimeout)
 	var resp *http.Response
@@ -642,6 +649,11 @@ func materializedTableDelete(ctx context.Context, d *schema.ResourceData, meta i
 		}
 		if resp != nil && resp.StatusCode == http.StatusConflict && time.Now().Before(deadline) {
 			tflog.Debug(ctx, fmt.Sprintf("Flink Materialized Table %q delete returned 409, retrying in %s: %s", d.Id(), deleteInterval, err))
+			// Drain the body so the underlying TCP connection can be reused
+			// across retry attempts instead of leaking up to one fd per try.
+			if resp.Body != nil {
+				_ = resp.Body.Close()
+			}
 			time.Sleep(deleteInterval)
 			continue
 		}
@@ -805,7 +817,7 @@ func materializedTableUpdate(ctx context.Context, d *schema.ResourceData, meta i
 // query matches the expected value (after normalization) or a timeout is reached.
 func waitForMaterializedTableQueryUpdate(ctx context.Context, c *FlinkRestClient, orgId, envId, kafkaId, tableName, expectedQuery string) error {
 	expectedNormalized := normalizeFlinkQuery(expectedQuery)
-	timeout := 2 * time.Minute
+	timeout := 5 * time.Minute
 	interval := 5 * time.Second
 	deadline := time.Now().Add(timeout)
 
