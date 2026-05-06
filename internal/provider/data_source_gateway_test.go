@@ -483,6 +483,212 @@ func TestAccDataSourceGatewayAwsIngressPrivateLinkGatewaySpec(t *testing.T) {
 	})
 }
 
+func TestAccDataSourceGatewayAzureIngressPrivateLinkGatewaySpec(t *testing.T) {
+	ctx := context.Background()
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
+
+	mockServerUrl := wiremockContainer.URI
+	wiremockClient := wiremock.NewClient(mockServerUrl)
+	// nolint:errcheck
+	defer wiremockClient.Reset()
+	// nolint:errcheck
+	defer wiremockClient.ResetAllScenarios()
+
+	readAzureIngressGatewayResponse, _ := os.ReadFile("../testdata/gateway/read_azure_ingress_private_link_gateway.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/networking/v1/gateways/gw-azure-ingress")).
+		InScenario(azureIngressPrivateLinkGatewayScenarioName).
+		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
+		WillReturn(
+			string(readAzureIngressGatewayResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	gatewayResourceName := "azure_ingress_private_link_gateway"
+	fullGatewayResourceName := fmt.Sprintf("data.confluent_gateway.%s", gatewayResourceName)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckDataSourceGateway(mockServerUrl, azureIngressGatewayId, gatewayResourceName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckGatewayExists(fullGatewayResourceName),
+					resource.TestCheckResourceAttr(fullGatewayResourceName, "id", azureIngressGatewayId),
+					resource.TestCheckResourceAttr(fullGatewayResourceName, "display_name", "prod-azure-ingress-gateway"),
+					resource.TestCheckResourceAttr(fullGatewayResourceName, "environment.#", "1"),
+					resource.TestCheckResourceAttr(fullGatewayResourceName, "environment.0.id", "env-abc123"),
+					resource.TestCheckResourceAttr(fullGatewayResourceName, "azure_ingress_private_link_gateway.#", "1"),
+					resource.TestCheckResourceAttr(fullGatewayResourceName, "azure_ingress_private_link_gateway.0.region", "centralus"),
+					resource.TestCheckResourceAttr(fullGatewayResourceName, "azure_ingress_private_link_gateway.0.private_link_service_alias", "plattg-123abc-privatelink.00000000-0000-0000-0000-000000000000.centralus.azure.privatelinkservice"),
+					resource.TestCheckResourceAttr(fullGatewayResourceName, "azure_ingress_private_link_gateway.0.private_link_service_resource_id", "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/plattg-123abc/providers/Microsoft.Network/privateLinkServices/plattg-123abc-privatelink"),
+					resource.TestCheckResourceAttr(fullGatewayResourceName, "aws_egress_private_link_gateway.#", "0"),
+					resource.TestCheckResourceAttr(fullGatewayResourceName, "aws_ingress_private_link_gateway.#", "0"),
+					resource.TestCheckResourceAttr(fullGatewayResourceName, "azure_egress_private_link_gateway.#", "0"),
+					resource.TestCheckResourceAttr(fullGatewayResourceName, "gcp_egress_private_service_connect_gateway.#", "0"),
+					resource.TestCheckResourceAttr(fullGatewayResourceName, "gcp_ingress_private_service_connect_gateway.#", "0"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccDataSourceGatewayGcpIngressPrivateServiceConnectGatewaySpec(t *testing.T) {
+	ctx := context.Background()
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
+
+	mockServerUrl := wiremockContainer.URI
+	wiremockClient := wiremock.NewClient(mockServerUrl)
+	// nolint:errcheck
+	defer wiremockClient.Reset()
+	// nolint:errcheck
+	defer wiremockClient.ResetAllScenarios()
+
+	readGcpIngressGatewayResponse, _ := os.ReadFile("../testdata/gateway/read_gcp_ingress_private_service_connect_gateway.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/networking/v1/gateways/gw-gcp-ingress")).
+		InScenario(gcpIngressPrivateServiceConnectGatewayScenarioName).
+		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
+		WillReturn(
+			string(readGcpIngressGatewayResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	gatewayResourceName := "gcp_ingress_private_service_connect_gateway"
+	fullGatewayResourceName := fmt.Sprintf("data.confluent_gateway.%s", gatewayResourceName)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckDataSourceGateway(mockServerUrl, gcpIngressGatewayId, gatewayResourceName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckGatewayExists(fullGatewayResourceName),
+					resource.TestCheckResourceAttr(fullGatewayResourceName, "id", gcpIngressGatewayId),
+					resource.TestCheckResourceAttr(fullGatewayResourceName, "display_name", "prod-gcp-ingress-gateway"),
+					resource.TestCheckResourceAttr(fullGatewayResourceName, "environment.#", "1"),
+					resource.TestCheckResourceAttr(fullGatewayResourceName, "environment.0.id", "env-abc123"),
+					resource.TestCheckResourceAttr(fullGatewayResourceName, "gcp_ingress_private_service_connect_gateway.#", "1"),
+					resource.TestCheckResourceAttr(fullGatewayResourceName, "gcp_ingress_private_service_connect_gateway.0.region", "us-central1"),
+					resource.TestCheckResourceAttr(fullGatewayResourceName, "gcp_ingress_private_service_connect_gateway.0.private_service_connect_service_attachment", "projects/traffic-prod/regions/us-central1/serviceAttachments/plattg-abc123-service-attachment"),
+					resource.TestCheckResourceAttr(fullGatewayResourceName, "aws_egress_private_link_gateway.#", "0"),
+					resource.TestCheckResourceAttr(fullGatewayResourceName, "aws_ingress_private_link_gateway.#", "0"),
+					resource.TestCheckResourceAttr(fullGatewayResourceName, "azure_egress_private_link_gateway.#", "0"),
+					resource.TestCheckResourceAttr(fullGatewayResourceName, "azure_ingress_private_link_gateway.#", "0"),
+					resource.TestCheckResourceAttr(fullGatewayResourceName, "gcp_egress_private_service_connect_gateway.#", "0"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccDataSourceGatewayAzureIngressPrivateLinkGatewaySpecProvisioning(t *testing.T) {
+	ctx := context.Background()
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
+
+	mockServerUrl := wiremockContainer.URI
+	wiremockClient := wiremock.NewClient(mockServerUrl)
+	// nolint:errcheck
+	defer wiremockClient.Reset()
+	// nolint:errcheck
+	defer wiremockClient.ResetAllScenarios()
+
+	readProvisioningResponse, _ := os.ReadFile("../testdata/gateway/read_azure_ingress_private_link_gateway_provisioning.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/networking/v1/gateways/gw-azure-ingress")).
+		InScenario(azureIngressPrivateLinkGatewayScenarioName).
+		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
+		WillReturn(
+			string(readProvisioningResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	gatewayResourceName := "azure_ingress_provisioning"
+	fullGatewayResourceName := fmt.Sprintf("data.confluent_gateway.%s", gatewayResourceName)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckDataSourceGateway(mockServerUrl, azureIngressGatewayId, gatewayResourceName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckGatewayExists(fullGatewayResourceName),
+					resource.TestCheckResourceAttr(fullGatewayResourceName, "id", azureIngressGatewayId),
+					resource.TestCheckResourceAttr(fullGatewayResourceName, "azure_ingress_private_link_gateway.#", "1"),
+					resource.TestCheckResourceAttr(fullGatewayResourceName, "azure_ingress_private_link_gateway.0.region", "centralus"),
+					resource.TestCheckResourceAttr(fullGatewayResourceName, "azure_ingress_private_link_gateway.0.private_link_service_alias", ""),
+					resource.TestCheckResourceAttr(fullGatewayResourceName, "azure_ingress_private_link_gateway.0.private_link_service_resource_id", ""),
+				),
+			},
+		},
+	})
+}
+
+func TestAccDataSourceGatewayGcpIngressPrivateServiceConnectGatewaySpecProvisioning(t *testing.T) {
+	ctx := context.Background()
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
+
+	mockServerUrl := wiremockContainer.URI
+	wiremockClient := wiremock.NewClient(mockServerUrl)
+	// nolint:errcheck
+	defer wiremockClient.Reset()
+	// nolint:errcheck
+	defer wiremockClient.ResetAllScenarios()
+
+	readProvisioningResponse, _ := os.ReadFile("../testdata/gateway/read_gcp_ingress_private_service_connect_gateway_provisioning.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/networking/v1/gateways/gw-gcp-ingress")).
+		InScenario(gcpIngressPrivateServiceConnectGatewayScenarioName).
+		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
+		WillReturn(
+			string(readProvisioningResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	gatewayResourceName := "gcp_ingress_provisioning"
+	fullGatewayResourceName := fmt.Sprintf("data.confluent_gateway.%s", gatewayResourceName)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckDataSourceGateway(mockServerUrl, gcpIngressGatewayId, gatewayResourceName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckGatewayExists(fullGatewayResourceName),
+					resource.TestCheckResourceAttr(fullGatewayResourceName, "id", gcpIngressGatewayId),
+					resource.TestCheckResourceAttr(fullGatewayResourceName, "gcp_ingress_private_service_connect_gateway.#", "1"),
+					resource.TestCheckResourceAttr(fullGatewayResourceName, "gcp_ingress_private_service_connect_gateway.0.region", "us-central1"),
+					resource.TestCheckResourceAttr(fullGatewayResourceName, "gcp_ingress_private_service_connect_gateway.0.private_service_connect_service_attachment", ""),
+				),
+			},
+		},
+	})
+}
+
 func testAccCheckGatewayExists(resourceName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[resourceName]
