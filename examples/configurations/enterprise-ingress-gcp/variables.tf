@@ -12,19 +12,16 @@ variable "confluent_cloud_api_secret" {
 variable "environment_name" {
   description = "The name of the Confluent Cloud environment to create."
   type        = string
-  default     = "gcp-ingress-test"
 }
 
 variable "region" {
   description = "The GCP region for the gateway and cluster."
   type        = string
-  default     = "us-central1"
 }
 
 variable "resource_prefix" {
   description = "Prefix for resource display names to avoid collisions."
   type        = string
-  default     = "test"
 }
 
 variable "private_service_connect_connection_id" {

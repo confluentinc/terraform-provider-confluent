@@ -12,19 +12,16 @@ variable "confluent_cloud_api_secret" {
 variable "environment_name" {
   description = "The name of the Confluent Cloud environment to create."
   type        = string
-  default     = "azure-ingress-test"
 }
 
 variable "region" {
   description = "The Azure region for the gateway and cluster."
   type        = string
-  default     = "centralus"
 }
 
 variable "resource_prefix" {
   description = "Prefix for resource display names to avoid collisions."
   type        = string
-  default     = "test"
 }
 
 variable "private_endpoint_resource_id" {

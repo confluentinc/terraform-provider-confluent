@@ -12,18 +12,12 @@ provider "confluent" {
   cloud_api_secret = var.confluent_cloud_api_secret
 }
 
-# -----------------------------------------------------
-# Use an existing environment or create a new one
-# -----------------------------------------------------
 resource "confluent_environment" "main" {
   display_name = var.environment_name
 }
 
-# -----------------------------------------------------
-# 1. Create an Azure Ingress Private Link Gateway
-# -----------------------------------------------------
 resource "confluent_gateway" "azure_ingress" {
-  display_name = "${var.resource_prefix}-azure-ingress-gateway"
+  display_name = "azure-ingress-gateway"
   environment {
     id = confluent_environment.main.id
   }
@@ -32,9 +26,6 @@ resource "confluent_gateway" "azure_ingress" {
   }
 }
 
-# -----------------------------------------------------
-# 2. Create an Enterprise Kafka cluster
-# -----------------------------------------------------
 resource "confluent_kafka_cluster" "enterprise" {
   display_name = "${var.resource_prefix}-cluster"
   availability = "HIGH"
@@ -46,11 +37,6 @@ resource "confluent_kafka_cluster" "enterprise" {
   }
 }
 
-# -----------------------------------------------------
-# 3. Create an Azure Ingress Access Point
-#    This registers your Azure Private Endpoint with
-#    the Confluent ingress gateway.
-# -----------------------------------------------------
 resource "confluent_access_point" "azure_ingress" {
   display_name = "${var.resource_prefix}-azure-ingress-ap"
   environment {
@@ -64,9 +50,6 @@ resource "confluent_access_point" "azure_ingress" {
   }
 }
 
-# -----------------------------------------------------
-# 4. Service account + API key for topic management
-# -----------------------------------------------------
 resource "confluent_service_account" "app-manager" {
   display_name = "${var.resource_prefix}-app-manager"
   description  = "Service account to manage Kafka cluster"
