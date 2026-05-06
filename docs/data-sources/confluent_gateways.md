@@ -63,7 +63,7 @@ The following arguments are supported:
 - `environment` (Required Configuration Block) supports the following:
   - `id` - (Required String) The ID of the Environment that the Gateways belong to, for example, `env-123abc`.
 - `filter` (Optional Configuration Block) supports the following:
-  - `gateway_type` - (Optional List of Strings) Filter the results by exact match for gateway_type. Pass multiple times to see results matching any of the values. Valid values are: `AwsEgressPrivateLink`, `AwsIngressPrivateLink`, `AwsPeering`, `AwsPrivateNetworkInterface`, `AzureEgressPrivateLink`, `AzurePeering`, `GcpEgressPrivateServiceConnect`, `GcpPeering`.
+  - `gateway_type` - (Optional List of Strings) Filter the results by exact match for gateway_type. Pass multiple times to see results matching any of the values. Valid values are: `AwsEgressPrivateLink`, `AwsIngressPrivateLink`, `AwsPeering`, `AwsPrivateNetworkInterface`, `AzureEgressPrivateLink`, `AzureIngressPrivateLink`, `AzurePeering`, `GcpEgressPrivateServiceConnect`, `GcpIngressPrivateServiceConnect`, `GcpPeering`.
   - `id` - (Optional List of Strings) Filter the results by exact match for id. Pass multiple times to see results matching any of the values, for example, `["gw-abc123", "gw-def456"]`.
   - `region` - (Optional List of Strings) Filter the results by exact match for spec.config.region. Pass multiple times to see results matching any of the values, for example, `["us-east-1", "us-west-2"]`.
   - `display_name` - (Optional List of Strings) Filter the results by exact match for spec.display_name. Pass multiple times to see results matching any of the values, for example, `["prod-gateway-ingress-use1", "prod-gateway-ingress-use2"]`.
@@ -91,11 +91,18 @@ In addition to the preceding arguments, the following attributes are exported:
   - `azure_egress_private_link_gateway` (Optional Configuration Block) supports the following:
     - `region` - (Required String) Azure region of the Egress Private Link Gateway.
     - `subscription` - (Required String) The Azure Subscription ID associated with the Confluent Cloud VPC.
+  - `azure_ingress_private_link_gateway` (Optional Configuration Block) supports the following:
+    - `region` - (Required String) Azure region of the Ingress Private Link Gateway.
+    - `private_link_service_alias` - (Required String) Alias of the Confluent Cloud Private Link Service.
+    - `private_link_service_resource_id` - (Required String) Resource ID of the Confluent Cloud Private Link Service.
   - `azure_peering_gateway` (Optional Configuration Block) supports the following:
     - `region` - (Required String) Azure region of the Peering Gateway.
   - `gcp_egress_private_service_connect_gateway` (Optional Configuration Block) supports the following:
     - `region` - (Required String) GCP region of the Egress Private Service Connect Gateway.
     - `project` - (Required String) The GCP project used by the GCP Private Service Connect Gateway.
+  - `gcp_ingress_private_service_connect_gateway` (Optional Configuration Block) supports the following:
+    - `region` - (Required String) GCP region of the Ingress Private Service Connect Gateway.
+    - `private_service_connect_service_attachment` - (Required String) URI of the Private Service Connect Service Attachment in Confluent Cloud.
   - `gcp_peering_gateway` (Optional Configuration Block) supports the following:
     - `region` - (Required String) GCP region of the Peering Gateway.
     - `iam_principal` - (Required String) The IAM principal used by the GCP Peering Gateway.
