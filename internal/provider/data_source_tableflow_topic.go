@@ -98,7 +98,7 @@ func tableflowTopicDataSourceRead(ctx context.Context, d *schema.ResourceData, m
 
 	c := meta.(*Client)
 
-	tableflowApiKey, tableflowApiSecret, err := extractTableflowApiKeyAndApiSecret(c, d, false)
+	tableflowApiKey, tableflowApiSecret, err := extractTableflowApiKeyAndApiSecret(ctx, c, d, false)
 	if err != nil {
 		return diag.Errorf("error reading Tableflow Topic: %s", createDescriptiveError(err))
 	}
