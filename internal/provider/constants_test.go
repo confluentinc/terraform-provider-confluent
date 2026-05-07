@@ -448,6 +448,7 @@ const (
 	kafkaClientQuotaResourceLabel                                       = "test_kafka_client_quota_resource_label"
 	kafkaClientQuotaScenarioName                                        = "confluent_kafka_client_quota Resource Lifecycle"
 	kafkaClientQuotaUrlPath                                             = "/kafka-quotas/v1/client-quotas/cq-e857e"
+	kafkaByokKeyId                                                      = "cck-abcde"
 	kafkaCloud                                                          = "GCP"
 	kafkaClusterId                                                      = "lkc-19ynpv"
 	kafkaClustersDataSourceLabel                                        = "test_kafka_clusters_data_source_label"
