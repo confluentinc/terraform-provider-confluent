@@ -120,7 +120,7 @@ func TestAccFlinkMaterializedTableLive(t *testing.T) {
 					endpoint, apiKey, apiSecret, region, kafkaClusterId,
 					saResourceLabel, poolResourceLabel, apiKeyResourceLabel, regionDataSourceLabel,
 					tableResourceLabel, tableDisplayName, randomSuffix,
-					"SELECT order_id, customer_id, product_id, price FROM examples.marketplace.orders WHERE price > 50",
+					"SELECT order_id, customer_id, product_id, price FROM examples.marketplace.orders WHERE price > 100",
 					true,
 				),
 				Check: resource.ComposeTestCheckFunc(
