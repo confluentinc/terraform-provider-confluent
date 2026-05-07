@@ -1,3 +1,15 @@
+## 2.72.0 (May 7th, 2026)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.71.0...v2.72.0)
+
+**New features:**
+* Updated `confluent_access_point` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_access_point) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_access_point) to support the new optional `azure_ingress_private_link_endpoint` and `gcp_ingress_private_service_connect_endpoint` configuration block.
+* Updated `confluent_gateway` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_gateway) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_gateway) to support the new optional `azure_ingress_private_link_gateway` and `gcp_ingress_private_service_connect_gateway` configuration block.
+
+**Examples:**
+* Added an end-to-end example configuration for [Azure Ingress Private Link](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/enterprise-ingress-azure/).
+* Added an end-to-end example configuration for [GCP Ingress Private Service Connect](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/enterprise-ingress-gcp/).
+
 ## 2.71.0 (April 30th, 2026)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.70.0...v2.71.0)
