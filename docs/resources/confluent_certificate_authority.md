@@ -34,6 +34,7 @@ The following arguments are supported:
 - `certificate_chain` - (Required String, Sensitive) A PEM encoded string containing the signing certificate chain.
 - `crl_url` - (Optional String) The url from which to fetch the CRL for the certificate authority.
 - `crl_chain` - (Optional String, Sensitive) A PEM encoded string containing the CRL for this certificate authority.
+- `require_crl_on_client_certificate` - (Optional Boolean) Whether to require CRL (Certificate Revocation List) validation on client certificates. Defaults to `false`.
 
 ## Attributes Reference
 

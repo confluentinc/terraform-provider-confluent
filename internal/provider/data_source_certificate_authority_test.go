@@ -60,6 +60,7 @@ func TestAccDataSourceCertificateAuthority(t *testing.T) {
 					resource.TestCheckResourceAttr(CertificateAuthorityResourceName, "crl_url", "example.url"),
 					resource.TestCheckResourceAttr(CertificateAuthorityResourceName, "crl_source", "URL"),
 					resource.TestCheckResourceAttr(CertificateAuthorityResourceName, "crl_updated_at", "2017-07-21 17:32:28 +0000 UTC"),
+					resource.TestCheckResourceAttr(CertificateAuthorityResourceName, "require_crl_on_client_certificate", "true"),
 				),
 			},
 		},

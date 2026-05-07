@@ -108,6 +108,7 @@ func TestAccCertificateAuthority(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(certificateAuthorityResourceLabel, "expiration_dates.*", "2017-07-21 17:32:28 +0000 UTC"),
 					resource.TestCheckResourceAttr(certificateAuthorityResourceLabel, "serial_numbers.#", "1"),
 					resource.TestCheckTypeSetElemAttr(certificateAuthorityResourceLabel, "serial_numbers.*", "219C542DE8f6EC7177FA4EE8C3705797"),
+					resource.TestCheckResourceAttr(certificateAuthorityResourceLabel, "require_crl_on_client_certificate", "false"),
 				),
 			},
 			{
@@ -123,6 +124,7 @@ func TestAccCertificateAuthority(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(certificateAuthorityResourceLabel, "expiration_dates.*", "2017-07-21 17:32:28 +0000 UTC"),
 					resource.TestCheckResourceAttr(certificateAuthorityResourceLabel, "serial_numbers.#", "1"),
 					resource.TestCheckTypeSetElemAttr(certificateAuthorityResourceLabel, "serial_numbers.*", "219C542DE8f6EC7177FA4EE8C3705797"),
+					resource.TestCheckResourceAttr(certificateAuthorityResourceLabel, "require_crl_on_client_certificate", "false"),
 				),
 			},
 		},
@@ -215,6 +217,7 @@ func TestAccCertificateAuthorityCrl(t *testing.T) {
 					resource.TestCheckResourceAttr(certificateAuthorityResourceLabel, "crl_url", "example.url"),
 					resource.TestCheckResourceAttr(certificateAuthorityResourceLabel, "crl_source", "URL"),
 					resource.TestCheckResourceAttr(certificateAuthorityResourceLabel, "crl_updated_at", "2017-07-21 17:32:28 +0000 UTC"),
+					resource.TestCheckResourceAttr(certificateAuthorityResourceLabel, "require_crl_on_client_certificate", "true"),
 				),
 			},
 			{
@@ -233,6 +236,7 @@ func TestAccCertificateAuthorityCrl(t *testing.T) {
 					resource.TestCheckResourceAttr(certificateAuthorityResourceLabel, "crl_url", "example-2.url"),
 					resource.TestCheckResourceAttr(certificateAuthorityResourceLabel, "crl_source", "URL"),
 					resource.TestCheckResourceAttr(certificateAuthorityResourceLabel, "crl_updated_at", "2017-07-21 17:32:28 +0000 UTC"),
+					resource.TestCheckResourceAttr(certificateAuthorityResourceLabel, "require_crl_on_client_certificate", "true"),
 				),
 			},
 		},
@@ -266,6 +270,7 @@ func testAccCheckResourceCertificateAuthorityCrlConfig(mockServerUrl, crlUrl str
 		certificate_chain_filename = "certificate.pem"
 		certificate_chain = "ABC123"
 		crl_url = "%s"
+		require_crl_on_client_certificate = true
 	}
 	`, mockServerUrl, crlUrl)
 }
