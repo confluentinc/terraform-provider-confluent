@@ -530,6 +530,7 @@ const (
 	paramRegions                                         = "regions"
 	paramRemoteKafkaCluster                              = "remote_kafka_cluster"
 	paramRemoteKafkaCredentials                          = "remote_kafka_cluster.0.credentials"
+	paramRequireCrlOnClientCertificate                   = "require_crl_on_client_certificate"
 	paramReservedCidr                                    = "reserved_cidr"
 	paramResetOnUpdate                                   = "reset_on_update"
 	paramResetOnUpdateDefaultValue                       = false
