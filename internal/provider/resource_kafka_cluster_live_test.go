@@ -537,6 +537,56 @@ func TestAccKafkaClusterAvailabilityDriftMultiZoneToHighLive(t *testing.T) {
 	})
 }
 
+// Test deletion_protection enable/disable lifecycle on an Enterprise cluster
+func TestAccKafkaClusterDeletionProtectionLive(t *testing.T) {
+	t.Parallel()
+
+	if os.Getenv("TF_ACC_PROD") == "" {
+		t.Skip("Skipping live test. Set TF_ACC_PROD=1 to run this test.")
+	}
+
+	apiKey := os.Getenv("CONFLUENT_CLOUD_API_KEY")
+	apiSecret := os.Getenv("CONFLUENT_CLOUD_API_SECRET")
+	endpoint := os.Getenv("CONFLUENT_CLOUD_ENDPOINT")
+	if endpoint == "" {
+		endpoint = "https://api.confluent.cloud"
+	}
+
+	if apiKey == "" || apiSecret == "" {
+		t.Fatal("CONFLUENT_CLOUD_API_KEY and CONFLUENT_CLOUD_API_SECRET must be set for live tests")
+	}
+
+	clusterDisplayName := fmt.Sprintf("tf-live-dp-%d", rand.Intn(1000000))
+	environmentDisplayName := fmt.Sprintf("tf-live-env-%d", rand.Intn(1000000))
+	clusterResourceLabel := "test_live_dp_cluster"
+	environmentResourceLabel := "test_live_env"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckClusterDestroy,
+		Steps: []resource.TestStep{
+			{
+				// Step 1: Create cluster with deletion_protection=false (default)
+				Config: testAccCheckKafkaClusterDeletionProtectionLiveConfig(endpoint, environmentResourceLabel, environmentDisplayName, clusterResourceLabel, clusterDisplayName, apiKey, apiSecret, false),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckClusterExists(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel)),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "display_name", clusterDisplayName),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "deletion_protection", "false"),
+				),
+			},
+			{
+				// Step 2: Enable deletion_protection=true
+				Config: testAccCheckKafkaClusterDeletionProtectionLiveConfig(endpoint, environmentResourceLabel, environmentDisplayName, clusterResourceLabel, clusterDisplayName, apiKey, apiSecret, true),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckClusterExists(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel)),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "deletion_protection", "true"),
+				),
+			},
+		},
+	})
+}
+
 // Configuration for Basic cluster
 func testAccCheckKafkaClusterBasicLiveConfig(endpoint, environmentResourceLabel, environmentDisplayName, clusterResourceLabel, clusterDisplayName, apiKey, apiSecret string) string {
 	return fmt.Sprintf(`
@@ -854,4 +904,35 @@ func testAccCheckKafkaClusterAvailabilityDriftHighConfig(endpoint, environmentRe
 		}
 	}
 	`, endpoint, apiKey, apiSecret, environmentResourceLabel, environmentDisplayName, clusterResourceLabel, clusterDisplayName, environmentResourceLabel)
+}
+
+// Configuration for deletion protection lifecycle test
+func testAccCheckKafkaClusterDeletionProtectionLiveConfig(endpoint, environmentResourceLabel, environmentDisplayName, clusterResourceLabel, clusterDisplayName, apiKey, apiSecret string, deletionProtection bool) string {
+	return fmt.Sprintf(`
+	provider "confluent" {
+		endpoint         = "%s"
+		cloud_api_key    = "%s"
+		cloud_api_secret = "%s"
+	}
+
+	resource "confluent_environment" "%s" {
+		display_name = "%s"
+		stream_governance {
+			package = "ESSENTIALS"
+		}
+	}
+
+	resource "confluent_kafka_cluster" "%s" {
+		display_name        = "%s"
+		availability        = "SINGLE_ZONE"
+		cloud               = "AWS"
+		region              = "us-east-1"
+		enterprise {max_ecku     = 5}
+		deletion_protection = %t
+
+		environment {
+			id = confluent_environment.%s.id
+		}
+	}
+	`, endpoint, apiKey, apiSecret, environmentResourceLabel, environmentDisplayName, clusterResourceLabel, clusterDisplayName, deletionProtection, environmentResourceLabel)
 }
