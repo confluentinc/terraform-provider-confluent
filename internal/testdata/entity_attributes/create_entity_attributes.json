@@ -85,6 +85,18 @@
       "outputFromProcesses": [],
       "cluster_link": null
     },
+    "classifications": [
+      {
+        "typeName": "MyTag",
+        "attributes": {
+          "__color": "DEFAULT_COLOR"
+        },
+        "entityGuid": "00000000-0000-0000-0000-000000000000",
+        "entityStatus": "ACTIVE",
+        "propagate": false,
+        "removePropagationsOnEntityDelete": false
+      }
+    ],
     "labels": []
   }
 }

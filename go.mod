@@ -1,6 +1,6 @@
 module github.com/confluentinc/terraform-provider-confluent
 
-go 1.24.9
+go 1.25.9
 
 require (
 	github.com/confluentinc/ccloud-sdk-go-v2/apikeys v0.4.0
@@ -11,11 +11,11 @@ require (
 	github.com/confluentinc/ccloud-sdk-go-v2/cmk v0.25.0
 	github.com/confluentinc/ccloud-sdk-go-v2/connect v0.7.0
 	github.com/confluentinc/ccloud-sdk-go-v2/connect-custom-plugin v0.0.2
-	github.com/confluentinc/ccloud-sdk-go-v2/data-catalog v0.2.0
+	github.com/confluentinc/ccloud-sdk-go-v2/data-catalog v0.4.0
 	github.com/confluentinc/ccloud-sdk-go-v2/endpoint v0.4.0
 	github.com/confluentinc/ccloud-sdk-go-v2/flink v0.11.0
 	github.com/confluentinc/ccloud-sdk-go-v2/flink-artifact v0.4.0
-	github.com/confluentinc/ccloud-sdk-go-v2/flink-gateway v0.18.0
+	github.com/confluentinc/ccloud-sdk-go-v2/flink-gateway v0.19.0
 	github.com/confluentinc/ccloud-sdk-go-v2/iam v0.17.0
 	github.com/confluentinc/ccloud-sdk-go-v2/iam-ip-filtering v0.5.0
 	github.com/confluentinc/ccloud-sdk-go-v2/identity-provider v0.3.0
@@ -24,14 +24,14 @@ require (
 	github.com/confluentinc/ccloud-sdk-go-v2/ksql v0.1.0
 	github.com/confluentinc/ccloud-sdk-go-v2/mds v0.3.0
 	github.com/confluentinc/ccloud-sdk-go-v2/networking v0.14.0
-	github.com/confluentinc/ccloud-sdk-go-v2/networking-access-point v0.9.0
+	github.com/confluentinc/ccloud-sdk-go-v2/networking-access-point v0.10.0
 	github.com/confluentinc/ccloud-sdk-go-v2/networking-dnsforwarder v0.4.0
-	github.com/confluentinc/ccloud-sdk-go-v2/networking-gateway v0.6.0
+	github.com/confluentinc/ccloud-sdk-go-v2/networking-gateway v0.7.0
 	github.com/confluentinc/ccloud-sdk-go-v2/networking-ip v0.2.0
 	github.com/confluentinc/ccloud-sdk-go-v2/networking-privatelink v0.3.0
 	github.com/confluentinc/ccloud-sdk-go-v2/org v0.9.0
 	github.com/confluentinc/ccloud-sdk-go-v2/provider-integration v0.2.0
-	github.com/confluentinc/ccloud-sdk-go-v2/schema-registry v0.4.0
+	github.com/confluentinc/ccloud-sdk-go-v2/schema-registry v0.5.0
 	github.com/confluentinc/ccloud-sdk-go-v2/srcm v0.7.3
 	github.com/confluentinc/ccloud-sdk-go-v2/sso v0.0.1
 	github.com/confluentinc/ccloud-sdk-go-v2/sts v0.0.2

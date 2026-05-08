@@ -1,3 +1,45 @@
+## 2.72.0 (May 7th, 2026)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.71.0...v2.72.0)
+
+**New features:**
+* Updated `confluent_access_point` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_access_point) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_access_point) to support the new optional `azure_ingress_private_link_endpoint` and `gcp_ingress_private_service_connect_endpoint` configuration block.
+* Updated `confluent_gateway` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_gateway) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_gateway) to support the new optional `azure_ingress_private_link_gateway` and `gcp_ingress_private_service_connect_gateway` configuration block.
+
+**Examples:**
+* Added an end-to-end example configuration for [Azure Ingress Private Link](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/enterprise-ingress-azure/).
+* Added an end-to-end example configuration for [GCP Ingress Private Service Connect](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/enterprise-ingress-gcp/).
+
+## 2.71.0 (April 30th, 2026)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.70.0...v2.71.0)
+
+**New features:**
+* Added Client-Side-Payload-Encryption support in `confluent_schema` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_schema).
+* Added `confluent_flink_materialized_table` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_flink_materialized_table) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_flink_materialized_table) for managing Materialized Tables in Confluent Cloud.
+
+## 2.70.0 (April 23rd, 2026)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.69.0...v2.70.0)
+
+**Bug fixes:**
+* Fix an error that occurs when deleting `confluent_plugin` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_plugin) after deleting all corresponding `confluent_custom_connector_plugin_version` [resources](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_custom_connector_plugin_version).
+
+## 2.69.0 (April 20th, 2026)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.68.0...v2.69.0)
+
+**Bug fixes:**
+* Resolve an error when reading the `confluent_catalog_entity_attributes` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_catalog_entity_attributes) for a Schema with a tag binding.
+* Fix a typo in the `confluent_catalog_integration` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_catalog_integration) and the `confluent_tableflow_topic` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_tableflow_topic).
+
+## 2.68.0 (April 14th, 2026)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.67.0...v2.68.0)
+
+**New features:**
+* Added `routes` attribute to the `aws_private_network_interface` configuration block of `confluent_access_point` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_access_point) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_access_point).
+
 ## 2.67.0 (April 3rd, 2026)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.66.0...v2.67.0)

@@ -381,7 +381,7 @@ func TestBuildTfRules(t *testing.T) {
 		tfDomainMigrationRules[paramMigrationRules] = tfRulesMigration
 		tfRuleSet := make([]map[string]interface{}, 1)
 		tfRuleSet[0] = tfDomainMigrationRules
-		actual := buildTfRules(domainRules, migrationRules)
+		actual := buildTfRules(domainRules, migrationRules, []schemaregistryv1.Rule{})
 
 		if !reflect.DeepEqual(*actual, tfRuleSet) {
 			t.Fatalf("Unexpected error: expected %v, got %v", tfRuleSet, *actual)
@@ -467,7 +467,7 @@ func TestBuildTfRules(t *testing.T) {
 		tfDomainMigrationRules[paramMigrationRules] = tfRulesMigration
 		tfRuleSet := make([]map[string]interface{}, 1)
 		tfRuleSet[0] = tfDomainMigrationRules
-		actual := buildTfRules(domainRules, migrationRules)
+		actual := buildTfRules(domainRules, migrationRules, []schemaregistryv1.Rule{})
 
 		if !reflect.DeepEqual(*actual, tfRuleSet) {
 			t.Fatalf("Unexpected error: expected %v, got %v", tfRuleSet, *actual)
@@ -516,7 +516,7 @@ func TestBuildTfRules(t *testing.T) {
 		tfDomainMigrationRules[paramDomainRules] = tfRulesDomain
 		tfRuleSet := make([]map[string]interface{}, 1)
 		tfRuleSet[0] = tfDomainMigrationRules
-		actual := buildTfRules(domainRules, []schemaregistryv1.Rule{})
+		actual := buildTfRules(domainRules, []schemaregistryv1.Rule{}, []schemaregistryv1.Rule{})
 
 		if !reflect.DeepEqual(*actual, tfRuleSet) {
 			t.Fatalf("Unexpected error: expected %v, got %v", tfRuleSet, *actual)
@@ -565,7 +565,7 @@ func TestBuildTfRules(t *testing.T) {
 		tfDomainMigrationRules[paramMigrationRules] = tfRulesMigration
 		tfRuleSet := make([]map[string]interface{}, 1)
 		tfRuleSet[0] = tfDomainMigrationRules
-		actual := buildTfRules([]schemaregistryv1.Rule{}, migrationRules)
+		actual := buildTfRules([]schemaregistryv1.Rule{}, migrationRules, []schemaregistryv1.Rule{})
 
 		if !reflect.DeepEqual(*actual, tfRuleSet) {
 			t.Fatalf("Unexpected error: expected %v, got %v", tfRuleSet, *actual)
@@ -614,9 +614,170 @@ func TestBuildTfRules(t *testing.T) {
 		tfDomainMigrationRules[paramMigrationRules] = tfRulesMigration
 		tfRuleSet := make([]map[string]interface{}, 1)
 		tfRuleSet[0] = tfDomainMigrationRules
-		actual := buildTfRules(migrationRules, migrationRules)
+		actual := buildTfRules(migrationRules, migrationRules, []schemaregistryv1.Rule{})
 
 		if reflect.DeepEqual(*actual, tfRuleSet) {
+			t.Fatalf("Unexpected error: expected %v, got %v", tfRuleSet, *actual)
+		}
+	})
+
+	t.Run("With encoding rules (CSPE)", func(t *testing.T) {
+		encodingRules := make([]schemaregistryv1.Rule, 1)
+		var encodingRule schemaregistryv1.Rule
+		encodingRule.SetName("encryptCSPE")
+		encodingRule.SetKind("TRANSFORM")
+		encodingRule.SetMode("WRITEREAD")
+		encodingRule.SetType("ENCRYPT")
+		encodingRule.SetDoc("DOC")
+		encodingRule.SetExpr("EXPR")
+		encodingRule.SetOnSuccess("NONE,NONE")
+		encodingRule.SetOnFailure("ERROR,ERROR")
+		encodingRule.SetDisabled(false)
+		encodingRule.SetTags([]string{"CSPE"})
+		params := make(map[string]string)
+		params["encrypt.kek.name"] = "cspe-kek"
+		encodingRule.SetParams(params)
+		encodingRules[0] = encodingRule
+
+		tfDomainMigrationEncodingRules := make(map[string]interface{})
+		tfRulesEncoding := make([]map[string]interface{}, 1)
+		tfRuleEncoding := make(map[string]interface{})
+		tfRuleEncoding[paramName] = "encryptCSPE"
+		tfRuleEncoding[paramKind] = "TRANSFORM"
+		tfRuleEncoding[paramDoc] = "DOC"
+		tfRuleEncoding[paramMode] = "WRITEREAD"
+		tfRuleEncoding[paramType] = "ENCRYPT"
+		tfRuleEncoding[paramExpr] = "EXPR"
+		tfRuleEncoding[paramOnSuccess] = "NONE,NONE"
+		tfRuleEncoding[paramOnFailure] = "ERROR,ERROR"
+		tfRuleEncoding[paramDisabled] = false
+		tfRuleEncoding[paramTags] = []string{
+			"CSPE",
+		}
+		tfRuleEncoding[paramParams] = map[string]string{
+			"encrypt.kek.name": "cspe-kek",
+		}
+
+		tfRulesEncoding[0] = tfRuleEncoding
+		tfDomainMigrationEncodingRules[paramEncodingRules] = tfRulesEncoding
+		tfRuleSet := make([]map[string]interface{}, 1)
+		tfRuleSet[0] = tfDomainMigrationEncodingRules
+		actual := buildTfRules([]schemaregistryv1.Rule{}, []schemaregistryv1.Rule{}, encodingRules)
+
+		if !reflect.DeepEqual(*actual, tfRuleSet) {
+			t.Fatalf("Unexpected error: expected %v, got %v", tfRuleSet, *actual)
+		}
+	})
+
+	t.Run("With all three rule types", func(t *testing.T) {
+		domainRules := make([]schemaregistryv1.Rule, 1)
+		var domainRule schemaregistryv1.Rule
+		domainRule.SetName("encryptPII")
+		domainRule.SetKind("TRANSFORM")
+		domainRule.SetMode("WRITEREAD")
+		domainRule.SetType("ENCRYPT")
+		domainRule.SetDoc("")
+		domainRule.SetExpr("")
+		domainRule.SetOnSuccess("NONE,NONE")
+		domainRule.SetOnFailure("ERROR,ERROR")
+		domainRule.SetDisabled(false)
+		domainRule.SetTags([]string{"PII"})
+		domainParams := make(map[string]string)
+		domainParams["encrypt.kek.name"] = "testkek2"
+		domainRule.SetParams(domainParams)
+		domainRules[0] = domainRule
+
+		migrationRules := make([]schemaregistryv1.Rule, 1)
+		var migrationRule schemaregistryv1.Rule
+		migrationRule.SetName("migrateEncrypt")
+		migrationRule.SetKind("TRANSFORM")
+		migrationRule.SetMode("WRITEREAD")
+		migrationRule.SetType("ENCRYPT")
+		migrationRule.SetDoc("")
+		migrationRule.SetExpr("")
+		migrationRule.SetOnSuccess("NONE,NONE")
+		migrationRule.SetOnFailure("ERROR,ERROR")
+		migrationRule.SetDisabled(false)
+		migrationRule.SetTags([]string{"MIGRATION"})
+		migrationParams := make(map[string]string)
+		migrationParams["encrypt.kek.name"] = "migration-kek"
+		migrationRule.SetParams(migrationParams)
+		migrationRules[0] = migrationRule
+
+		encodingRules := make([]schemaregistryv1.Rule, 1)
+		var encodingRule schemaregistryv1.Rule
+		encodingRule.SetName("encryptCSPE")
+		encodingRule.SetKind("TRANSFORM")
+		encodingRule.SetMode("WRITEREAD")
+		encodingRule.SetType("ENCRYPT")
+		encodingRule.SetDoc("")
+		encodingRule.SetExpr("")
+		encodingRule.SetOnSuccess("NONE,NONE")
+		encodingRule.SetOnFailure("ERROR,ERROR")
+		encodingRule.SetDisabled(false)
+		encodingRule.SetTags([]string{"CSPE"})
+		encodingParams := make(map[string]string)
+		encodingParams["encrypt.kek.name"] = "cspe-kek"
+		encodingRule.SetParams(encodingParams)
+		encodingRules[0] = encodingRule
+
+		tfAllRules := make(map[string]interface{})
+
+		// Domain rules
+		tfRulesDomain := make([]map[string]interface{}, 1)
+		tfRuleDomain := make(map[string]interface{})
+		tfRuleDomain[paramName] = "encryptPII"
+		tfRuleDomain[paramKind] = "TRANSFORM"
+		tfRuleDomain[paramDoc] = ""
+		tfRuleDomain[paramMode] = "WRITEREAD"
+		tfRuleDomain[paramType] = "ENCRYPT"
+		tfRuleDomain[paramExpr] = ""
+		tfRuleDomain[paramOnSuccess] = "NONE,NONE"
+		tfRuleDomain[paramOnFailure] = "ERROR,ERROR"
+		tfRuleDomain[paramDisabled] = false
+		tfRuleDomain[paramTags] = []string{"PII"}
+		tfRuleDomain[paramParams] = map[string]string{"encrypt.kek.name": "testkek2"}
+		tfRulesDomain[0] = tfRuleDomain
+		tfAllRules[paramDomainRules] = tfRulesDomain
+
+		tfRulesMigration := make([]map[string]interface{}, 1)
+		tfRuleMigration := make(map[string]interface{})
+		tfRuleMigration[paramName] = "migrateEncrypt"
+		tfRuleMigration[paramKind] = "TRANSFORM"
+		tfRuleMigration[paramDoc] = ""
+		tfRuleMigration[paramMode] = "WRITEREAD"
+		tfRuleMigration[paramType] = "ENCRYPT"
+		tfRuleMigration[paramExpr] = ""
+		tfRuleMigration[paramOnSuccess] = "NONE,NONE"
+		tfRuleMigration[paramOnFailure] = "ERROR,ERROR"
+		tfRuleMigration[paramDisabled] = false
+		tfRuleMigration[paramTags] = []string{"MIGRATION"}
+		tfRuleMigration[paramParams] = map[string]string{"encrypt.kek.name": "migration-kek"}
+		tfRulesMigration[0] = tfRuleMigration
+		tfAllRules[paramMigrationRules] = tfRulesMigration
+
+		// Encoding rules
+		tfRulesEncoding := make([]map[string]interface{}, 1)
+		tfRuleEncoding := make(map[string]interface{})
+		tfRuleEncoding[paramName] = "encryptCSPE"
+		tfRuleEncoding[paramKind] = "TRANSFORM"
+		tfRuleEncoding[paramDoc] = ""
+		tfRuleEncoding[paramMode] = "WRITEREAD"
+		tfRuleEncoding[paramType] = "ENCRYPT"
+		tfRuleEncoding[paramExpr] = ""
+		tfRuleEncoding[paramOnSuccess] = "NONE,NONE"
+		tfRuleEncoding[paramOnFailure] = "ERROR,ERROR"
+		tfRuleEncoding[paramDisabled] = false
+		tfRuleEncoding[paramTags] = []string{"CSPE"}
+		tfRuleEncoding[paramParams] = map[string]string{"encrypt.kek.name": "cspe-kek"}
+		tfRulesEncoding[0] = tfRuleEncoding
+		tfAllRules[paramEncodingRules] = tfRulesEncoding
+
+		tfRuleSet := make([]map[string]interface{}, 1)
+		tfRuleSet[0] = tfAllRules
+		actual := buildTfRules(domainRules, migrationRules, encodingRules)
+
+		if !reflect.DeepEqual(*actual, tfRuleSet) {
 			t.Fatalf("Unexpected error: expected %v, got %v", tfRuleSet, *actual)
 		}
 	})
