@@ -58,7 +58,7 @@ func TestAccSubjectCompatibilityLevel(t *testing.T) {
 
 	readCreatedSubjectCompatibilityLevelsResponse, _ := ioutil.ReadFile("../testdata/subject_compatibility_level/read_created_subject_compatibility_level.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(updateSubjectCompatibilityLevelPath)).
-		WithQueryParam("defaultToGlobal", wiremock.EqualTo("true")).
+		WithQueryParam("defaultToGlobal", wiremock.EqualTo("false")).
 		InScenario(subjectCompatibilityLevelScenarioName).
 		WhenScenarioStateIs(scenarioStateSubjectCompatibilityLevelHasBeenCreated).
 		WillReturn(
@@ -79,7 +79,7 @@ func TestAccSubjectCompatibilityLevel(t *testing.T) {
 
 	readUpdatedSubjectCompatibilityLevelsResponse, _ := ioutil.ReadFile("../testdata/subject_compatibility_level/read_updated_subject_compatibility_level.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(updateSubjectCompatibilityLevelPath)).
-		WithQueryParam("defaultToGlobal", wiremock.EqualTo("true")).
+		WithQueryParam("defaultToGlobal", wiremock.EqualTo("false")).
 		InScenario(subjectCompatibilityLevelScenarioName).
 		WhenScenarioStateIs(scenarioStateSubjectCompatibilityLevelHasBeenUpdated).
 		WillReturn(
@@ -209,7 +209,7 @@ func TestAccSubjectConfigWithAlias(t *testing.T) {
 	_ = wiremockClient.StubFor(createSubjectConfigWithAliasStub)
 
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(aliasSubjectConfigPath)).
-		WithQueryParam("defaultToGlobal", wiremock.EqualTo("true")).
+		WithQueryParam("defaultToGlobal", wiremock.EqualTo("false")).
 		InScenario(aliasScenarioName).
 		WhenScenarioStateIs("AliasSubjectConfigCreated").
 		WillReturn(
@@ -230,7 +230,7 @@ func TestAccSubjectConfigWithAlias(t *testing.T) {
 
 	readUpdatedSubjectConfigWithAliasResponse, _ := ioutil.ReadFile("../testdata/subject_compatibility_level/read_updated_subject_config_with_alias.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(aliasSubjectConfigPath)).
-		WithQueryParam("defaultToGlobal", wiremock.EqualTo("true")).
+		WithQueryParam("defaultToGlobal", wiremock.EqualTo("false")).
 		InScenario(aliasScenarioName).
 		WhenScenarioStateIs("AliasSubjectConfigUpdated").
 		WillReturn(
