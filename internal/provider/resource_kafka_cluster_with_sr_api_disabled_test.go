@@ -174,6 +174,7 @@ func TestAccClusterWithSGPackageAndDisabledSRApi(t *testing.T) {
 					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "network.0.id", kafkaNetworkId),
 					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "rest_endpoint", kafkaHttpEndpoint),
 					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "rbac_crn", kafkaRbacCrn),
+					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "deletion_protection", "false"),
 				),
 			},
 			{
@@ -199,6 +200,7 @@ func TestAccClusterWithSGPackageAndDisabledSRApi(t *testing.T) {
 					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "network.0.id", kafkaNetworkId),
 					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "rest_endpoint", kafkaHttpEndpoint),
 					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "rbac_crn", kafkaRbacCrn),
+					resource.TestCheckResourceAttr(fullKafkaResourceLabel, "deletion_protection", "false"),
 				),
 			},
 			{
