@@ -93,6 +93,7 @@ func TestAccDataSourceCluster(t *testing.T) {
 					resource.TestCheckResourceAttr(fullKafkaDataSourceLabel, "network.0.id", kafkaNetworkId),
 					resource.TestCheckResourceAttr(fullKafkaDataSourceLabel, "rest_endpoint", kafkaHttpEndpoint),
 					resource.TestCheckResourceAttr(fullKafkaDataSourceLabel, "rbac_crn", kafkaRbacCrn),
+					resource.TestCheckResourceAttr(fullKafkaDataSourceLabel, "deletion_protection", "false"),
 				),
 			},
 			{
@@ -115,6 +116,7 @@ func TestAccDataSourceCluster(t *testing.T) {
 					resource.TestCheckResourceAttr(fullKafkaDataSourceLabel, "rest_endpoint", kafkaHttpEndpoint),
 					resource.TestCheckResourceAttr(fullKafkaDataSourceLabel, "rbac_crn", kafkaRbacCrn),
 					resource.TestCheckResourceAttr(fullKafkaDataSourceLabel, "endpoints.#", "0"),
+					resource.TestCheckResourceAttr(fullKafkaDataSourceLabel, "deletion_protection", "false"),
 				),
 			},
 		},
