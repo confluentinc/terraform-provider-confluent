@@ -99,7 +99,7 @@ The following arguments are supported:
     - `catalog_name` - (Required String) The name of the catalog within Unity Catalog.
     - `client_id` - (Required String, Sensitive) The OAuth client ID used to authenticate with the Unity Catalog.
     - `client_secret` - (Required String, Sensitive) The OAuth client secret used for authentication with the Unity Catalog.
-- `credentials` (Optional Configuration Block, Ignored when provider-level Tableflow API key is set. See **note** below) supports the following:
+- `credentials` (Optional Configuration Block, ignored when provider-level Tableflow API key is set. See **note** below) supports the following:
     - `key` - (Required String) The Tableflow API Key.
     - `secret` - (Required String, Sensitive) The Tableflow API Secret.
 

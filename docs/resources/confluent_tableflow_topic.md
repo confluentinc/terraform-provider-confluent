@@ -133,7 +133,7 @@ The following arguments are supported:
   - `storage_account_name` - (Required String) The storage account name.
   - `provider_integration_id` - (Required String) The provider integration id.
 - `managed_storage` (Optional Configuration Block) The configuration of the Confluent managed storage. See [Quick Start with Managed Storage](https://docs.confluent.io/cloud/current/topics/tableflow/get-started/quick-start-managed-storage.html#cloud-tableflow-quick-start-managed-storage) for more details.
-- `credentials` (Optional Configuration Block, Ignored when provider-level Tableflow API key is set. See **note** below) supports the following:
+- `credentials` (Optional Configuration Block, ignored when provider-level Tableflow API key is set. See **note** below) supports the following:
     - `key` - (Required String) The Tableflow API Key.
     - `secret` - (Required String, Sensitive) The Tableflow API Secret.
 
