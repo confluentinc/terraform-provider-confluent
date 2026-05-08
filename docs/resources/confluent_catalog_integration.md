@@ -99,13 +99,15 @@ The following arguments are supported:
     - `catalog_name` - (Required String) The name of the catalog within Unity Catalog.
     - `client_id` - (Required String, Sensitive) The OAuth client ID used to authenticate with the Unity Catalog.
     - `client_secret` - (Required String, Sensitive) The OAuth client secret used for authentication with the Unity Catalog.
-- `credentials` (Optional Configuration Block) supports the following:
+- `credentials` (Optional Configuration Block, Ignored when provider-level Tableflow API key is set. See **note** below) supports the following:
     - `key` - (Required String) The Tableflow API Key.
     - `secret` - (Required String, Sensitive) The Tableflow API Secret.
 
 -> **Note:** A Tableflow API key consists of a key and a secret. Tableflow API keys are required to interact with Catalog Integrations in Confluent Cloud.
 
 -> **Note:** Use Option #2 to simplify the key rotation process. When using Option #1, to rotate a Tableflow API key, create a new Tableflow API key, update the `credentials` block in all configuration files to use the new Tableflow API key, run `terraform apply -target="confluent_catalog_integration.example"`, and remove the old Tableflow API key. Alternatively, in case the old Tableflow API Key was deleted already, you might need to run `terraform plan -refresh=false -target="confluent_catalog_integration.example" -out=rotate-tableflow-api-key` and `terraform apply rotate-tableflow-api-key` instead.
+
+-> **Note:** When Tableflow API key and secret are set on the `provider` block (Option #2) **and** a `credentials {}` block is also set on `confluent_catalog_integration` resource (Option #1), the provider-level credentials (`tableflow_api_key`/`tableflow_api_secret`) take precedence and the resource-level `credentials {}` block is ignored. To use resource-level credentials, omit `tableflow_api_key`/`tableflow_api_secret` from the provider block (and unset the `TABLEFLOW_API_KEY`/`TABLEFLOW_API_SECRET` env vars).
 
 !> **Warning:** Use Option #2 to avoid exposing sensitive `credentials` value in a state file. When using Option #1, Terraform doesn't encrypt the sensitive `credentials` value of the `confluent_catalog_integration` resource, so you must keep your state file secure to avoid exposing it. Refer to the [Terraform documentation](https://www.terraform.io/docs/language/state/sensitive-data.html) to learn more about securing your state file.
 

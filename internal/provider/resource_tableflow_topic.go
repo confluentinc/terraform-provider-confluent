@@ -226,7 +226,7 @@ func errorHandlingSchema() *schema.Schema {
 func tableflowTopicCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	c := meta.(*Client)
 
-	tableflowApiKey, tableflowApiSecret, err := extractTableflowApiKeyAndApiSecret(c, d, false)
+	tableflowApiKey, tableflowApiSecret, err := extractTableflowApiKeyAndApiSecret(ctx, c, d, false)
 	if err != nil {
 		return diag.Errorf("error creating Tableflow Topic: %s", createDescriptiveError(err))
 	}
@@ -345,7 +345,7 @@ func tableflowTopicRead(ctx context.Context, d *schema.ResourceData, meta interf
 
 	c := meta.(*Client)
 
-	tableflowApiKey, tableflowApiSecret, err := extractTableflowApiKeyAndApiSecret(c, d, false)
+	tableflowApiKey, tableflowApiSecret, err := extractTableflowApiKeyAndApiSecret(ctx, c, d, false)
 	if err != nil {
 		return diag.Errorf("error creating Tableflow Topic: %s", createDescriptiveError(err))
 	}
@@ -527,7 +527,7 @@ func tableflowTopicDelete(ctx context.Context, d *schema.ResourceData, meta inte
 	clusterId := extractStringValueFromBlock(d, paramKafkaCluster, paramId)
 	c := meta.(*Client)
 
-	tableflowApiKey, tableflowApiSecret, err := extractTableflowApiKeyAndApiSecret(c, d, false)
+	tableflowApiKey, tableflowApiSecret, err := extractTableflowApiKeyAndApiSecret(ctx, c, d, false)
 	if err != nil {
 		return diag.Errorf("error creating Tableflow Topic: %s", createDescriptiveError(err))
 	}
@@ -552,7 +552,7 @@ func tableflowTopicUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 
 	c := meta.(*Client)
 
-	tableflowApiKey, tableflowApiSecret, err := extractTableflowApiKeyAndApiSecret(c, d, false)
+	tableflowApiKey, tableflowApiSecret, err := extractTableflowApiKeyAndApiSecret(ctx, c, d, false)
 	if err != nil {
 		return diag.Errorf("error creating Tableflow Topic: %s", createDescriptiveError(err))
 	}
@@ -631,7 +631,7 @@ func tableflowTopicImport(ctx context.Context, d *schema.ResourceData, meta inte
 
 	c := meta.(*Client)
 
-	tableflowApiKey, tableflowApiSecret, err := extractTableflowApiKeyAndApiSecret(c, d, true)
+	tableflowApiKey, tableflowApiSecret, err := extractTableflowApiKeyAndApiSecret(ctx, c, d, true)
 	if err != nil {
 		return nil, fmt.Errorf("error creating Tableflow Topic: %s", createDescriptiveError(err))
 	}
@@ -658,8 +658,11 @@ func tableflowTopicImport(ctx context.Context, d *schema.ResourceData, meta inte
 	return []*schema.ResourceData{d}, nil
 }
 
-func extractTableflowApiKeyAndApiSecret(client *Client, d *schema.ResourceData, isImportOperation bool) (string, string, error) {
+func extractTableflowApiKeyAndApiSecret(ctx context.Context, client *Client, d *schema.ResourceData, isImportOperation bool) (string, string, error) {
 	if client.isTableflowMetadataSet {
+		if clusterApiKey, _ := extractClusterApiKeyAndApiSecretFromCredentialsBlock(d); clusterApiKey != "" {
+			tflog.Warn(ctx, "Resource-level credentials block is ignored because provider-level tableflow_api_key, tableflow_api_secret are set and take precedence.")
+		}
 		return client.tableflowApiKey, client.tableflowApiSecret, nil
 	}
 	if isImportOperation {
