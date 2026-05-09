@@ -80,8 +80,9 @@ func TestAccFlinkMaterializedTableLive(t *testing.T) {
 	saResourceLabel := "live_flink_mt_sa"
 	poolResourceLabel := "live_flink_mt_pool"
 	apiKeyResourceLabel := "live_flink_mt_api_key"
-	regionDataSourceLabel := "live_flink_mt_region"
 	fullTableResourceLabel := fmt.Sprintf("confluent_flink_materialized_table.%s", tableResourceLabel)
+	flinkRegionId := fmt.Sprintf("aws.%s", region)
+	flinkRegionRestEndpoint := fmt.Sprintf("https://flink.%s.aws.confluent.cloud", region)
 
 	// Prevent IMPORT_* env vars set in ImportStateIdFunc from leaking to other parallel tests.
 	t.Cleanup(unsetFlinkMaterializedTableImportEnv)
@@ -97,7 +98,8 @@ func TestAccFlinkMaterializedTableLive(t *testing.T) {
 			{
 				Config: testAccCheckFlinkMaterializedTableLiveConfig(
 					endpoint, apiKey, apiSecret, region, kafkaClusterId,
-					saResourceLabel, poolResourceLabel, apiKeyResourceLabel, regionDataSourceLabel,
+					saResourceLabel, poolResourceLabel, apiKeyResourceLabel,
+					flinkRegionId, flinkRegionRestEndpoint,
 					tableResourceLabel, tableDisplayName, randomSuffix,
 					"SELECT order_id, customer_id, product_id, price FROM examples.marketplace.orders WHERE price > 100",
 					false,
@@ -118,7 +120,8 @@ func TestAccFlinkMaterializedTableLive(t *testing.T) {
 			{
 				Config: testAccCheckFlinkMaterializedTableLiveConfig(
 					endpoint, apiKey, apiSecret, region, kafkaClusterId,
-					saResourceLabel, poolResourceLabel, apiKeyResourceLabel, regionDataSourceLabel,
+					saResourceLabel, poolResourceLabel, apiKeyResourceLabel,
+					flinkRegionId, flinkRegionRestEndpoint,
 					tableResourceLabel, tableDisplayName, randomSuffix,
 					"SELECT order_id, customer_id, product_id, price FROM examples.marketplace.orders WHERE price > 100",
 					true,
@@ -141,15 +144,14 @@ func TestAccFlinkMaterializedTableLive(t *testing.T) {
 					keyRs := state.RootModule().Resources[fmt.Sprintf("confluent_api_key.%s", apiKeyResourceLabel)]
 					saRs := state.RootModule().Resources[fmt.Sprintf("confluent_service_account.%s", saResourceLabel)]
 					poolRs := state.RootModule().Resources[fmt.Sprintf("confluent_flink_compute_pool.%s", poolResourceLabel)]
-					regionRs := state.RootModule().Resources[fmt.Sprintf("data.confluent_flink_region.%s", regionDataSourceLabel)]
-					if rs == nil || keyRs == nil || saRs == nil || poolRs == nil || regionRs == nil {
+					if rs == nil || keyRs == nil || saRs == nil || poolRs == nil {
 						return "", fmt.Errorf("could not locate prerequisite resources in state for import step")
 					}
 					// ImportStateIdFunc runs immediately before the import, so env vars set here are
 					// visible to the importer (which reads them via extractFlink*).
 					_ = os.Setenv("IMPORT_FLINK_API_KEY", keyRs.Primary.ID)
 					_ = os.Setenv("IMPORT_FLINK_API_SECRET", keyRs.Primary.Attributes["secret"])
-					_ = os.Setenv("IMPORT_FLINK_REST_ENDPOINT", regionRs.Primary.Attributes[paramRestEndpoint])
+					_ = os.Setenv("IMPORT_FLINK_REST_ENDPOINT", flinkRegionRestEndpoint)
 					_ = os.Setenv("IMPORT_FLINK_PRINCIPAL_ID", saRs.Primary.ID)
 					_ = os.Setenv("IMPORT_CONFLUENT_ORGANIZATION_ID", flinkMaterializedTableLiveOrganizationId)
 					_ = os.Setenv("IMPORT_CONFLUENT_ENVIRONMENT_ID", flinkMaterializedTableLiveEnvironmentId)
@@ -194,7 +196,8 @@ func testAccCheckFlinkMaterializedTableLiveDestroy(_ *terraform.State) error {
 
 func testAccCheckFlinkMaterializedTableLiveConfig(
 	endpoint, apiKey, apiSecret, region, kafkaClusterId,
-	saResourceLabel, poolResourceLabel, apiKeyResourceLabel, regionDataSourceLabel,
+	saResourceLabel, poolResourceLabel, apiKeyResourceLabel,
+	flinkRegionId, flinkRegionRestEndpoint,
 	tableResourceLabel, tableDisplayName string,
 	randomSuffix int,
 	query string,
@@ -205,11 +208,6 @@ provider "confluent" {
     endpoint         = "%s"
     cloud_api_key    = "%s"
     cloud_api_secret = "%s"
-}
-
-data "confluent_flink_region" "%s" {
-    cloud  = "AWS"
-    region = "%s"
 }
 
 resource "confluent_service_account" "%s" {
@@ -256,9 +254,9 @@ resource "confluent_api_key" "%s" {
     }
 
     managed_resource {
-        id          = data.confluent_flink_region.%s.id
-        api_version = data.confluent_flink_region.%s.api_version
-        kind        = data.confluent_flink_region.%s.kind
+        id          = "%s"
+        api_version = "fcpm/v2"
+        kind        = "Region"
         environment {
             id = "%s"
         }
@@ -284,7 +282,7 @@ resource "confluent_flink_materialized_table" "%s" {
     principal {
         id = confluent_service_account.%s.id
     }
-    rest_endpoint = data.confluent_flink_region.%s.rest_endpoint
+    rest_endpoint = "%s"
     credentials {
         key    = confluent_api_key.%s.id
         secret = confluent_api_key.%s.secret
@@ -299,7 +297,6 @@ resource "confluent_flink_materialized_table" "%s" {
 }
 `,
 		endpoint, apiKey, apiSecret,
-		regionDataSourceLabel, region,
 		saResourceLabel, randomSuffix,
 		saResourceLabel, saResourceLabel, flinkMaterializedTableLiveOrganizationId, flinkMaterializedTableLiveEnvironmentId,
 		saResourceLabel, saResourceLabel, flinkMaterializedTableLiveOrganizationId, flinkMaterializedTableLiveEnvironmentId,
@@ -307,7 +304,7 @@ resource "confluent_flink_materialized_table" "%s" {
 		poolResourceLabel, randomSuffix, region, flinkMaterializedTableLiveEnvironmentId,
 		apiKeyResourceLabel, randomSuffix,
 		saResourceLabel, saResourceLabel, saResourceLabel,
-		regionDataSourceLabel, regionDataSourceLabel, regionDataSourceLabel,
+		flinkRegionId,
 		flinkMaterializedTableLiveEnvironmentId,
 		saResourceLabel, saResourceLabel, saResourceLabel,
 		tableResourceLabel,
@@ -315,7 +312,7 @@ resource "confluent_flink_materialized_table" "%s" {
 		flinkMaterializedTableLiveEnvironmentId,
 		poolResourceLabel,
 		saResourceLabel,
-		regionDataSourceLabel,
+		flinkRegionRestEndpoint,
 		apiKeyResourceLabel, apiKeyResourceLabel,
 		tableDisplayName, kafkaClusterId,
 		query, stopped,
