@@ -137,8 +137,6 @@ github.com/confluentinc/ccloud-sdk-go-v2/sso v0.0.1 h1:WZJYfgXJrvTIYQpCFps/qHF7T
 github.com/confluentinc/ccloud-sdk-go-v2/sso v0.0.1/go.mod h1:kB+MXWYYg9ohrTCb27LlfpTbuexAzyYAmum105ow0ho=
 github.com/confluentinc/ccloud-sdk-go-v2/sts v0.0.2 h1:QjHlqfA0nMOz4moHZxxWhggUfu2Hnq9PfnI/1H62wEs=
 github.com/confluentinc/ccloud-sdk-go-v2/sts v0.0.2/go.mod h1:j+A/YgmDq0P9kvemjbpVofWv6ZMuL4nFNZOr0YxZJSM=
-github.com/confluentinc/ccloud-sdk-go-v2/tableflow v0.5.0 h1:Wh3+AsUCncoxRPfs0zCJwBY6/FiJfyN9Q/XO8e6sMRI=
-github.com/confluentinc/ccloud-sdk-go-v2/tableflow v0.5.0/go.mod h1:unZupel8OU3/o8MRcL9YiJo+56MalsCtHHCc/ZNi0BI=
 github.com/confluentinc/ccloud-sdk-go-v2/tableflow v0.6.0 h1:wrmpI4UJgWZ4rX1EYqUxUQrfsKMRDehQsIWjcMU/bzs=
 github.com/confluentinc/ccloud-sdk-go-v2/tableflow v0.6.0/go.mod h1:myRmhUEWzpwGqWvdsNk79QH41pkre1G21vmySyGQiWA=
 github.com/containerd/containerd v1.7.29 h1:90fWABQsaN9mJhGkoVnuzEY+o1XDPbg9BTC9QTAHnuE=
