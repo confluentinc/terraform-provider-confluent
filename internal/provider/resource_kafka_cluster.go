@@ -744,8 +744,7 @@ func freightClusterSchema() *schema.Schema {
 				},
 			},
 		},
-		ExactlyOneOf:  acceptedClusterTypes,
-		ConflictsWith: []string{paramConfluentCustomerKey},
+		ExactlyOneOf: acceptedClusterTypes,
 	}
 }
 
@@ -766,7 +765,7 @@ func byokSchema() *schema.Schema {
 				},
 			},
 		},
-		ConflictsWith: []string{paramBasicCluster, paramStandardCluster, paramFreightCluster},
+		ConflictsWith: []string{paramBasicCluster, paramStandardCluster},
 	}
 }
 
