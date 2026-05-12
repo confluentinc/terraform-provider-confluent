@@ -855,3 +855,106 @@ func testAccCheckKafkaClusterAvailabilityDriftHighConfig(endpoint, environmentRe
 	}
 	`, endpoint, apiKey, apiSecret, environmentResourceLabel, environmentDisplayName, clusterResourceLabel, clusterDisplayName, environmentResourceLabel)
 }
+
+func TestAccKafkaClusterFreightWithByokLive(t *testing.T) {
+	t.Parallel()
+
+	if os.Getenv("TF_ACC_PROD") == "" {
+		t.Skip("Skipping live test. Set TF_ACC_PROD=1 to run this test.")
+	}
+
+	apiKey := os.Getenv("CONFLUENT_CLOUD_API_KEY")
+	apiSecret := os.Getenv("CONFLUENT_CLOUD_API_SECRET")
+	endpoint := os.Getenv("CONFLUENT_CLOUD_ENDPOINT")
+	if endpoint == "" {
+		endpoint = "https://api.confluent.cloud"
+	}
+
+	awsKmsKeyArn := os.Getenv("TEST_KMS_KEY_ID")
+
+	if apiKey == "" || apiSecret == "" {
+		t.Fatal("CONFLUENT_CLOUD_API_KEY and CONFLUENT_CLOUD_API_SECRET must be set for live tests")
+	}
+
+	if awsKmsKeyArn == "" {
+		t.Skip("Skipping Freight+BYOK test. TEST_KMS_KEY_ID must be set to an AWS KMS key ARN.")
+	}
+
+	clusterDisplayName := fmt.Sprintf("tf-live-freight-byok-%d", rand.Intn(1000000))
+	environmentDisplayName := fmt.Sprintf("tf-live-env-%d", rand.Intn(1000000))
+	clusterResourceLabel := "test_live_freight_byok_cluster"
+	environmentResourceLabel := "test_live_env"
+	byokKeyResourceLabel := "test_live_byok_key"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckClusterDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckKafkaClusterFreightWithByokLiveConfig(endpoint, environmentResourceLabel, environmentDisplayName, byokKeyResourceLabel, awsKmsKeyArn, clusterResourceLabel, clusterDisplayName, apiKey, apiSecret),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckClusterExists(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel)),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "display_name", clusterDisplayName),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "availability", "HIGH"),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "cloud", "AWS"),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "region", "us-west-2"),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "freight.#", "1"),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "byok_key.#", "1"),
+					resource.TestCheckResourceAttrSet(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "byok_key.0.id"),
+					resource.TestCheckResourceAttrSet(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "rbac_crn"),
+				),
+			},
+			{
+				ResourceName:      fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel),
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateIdFunc: func(state *terraform.State) (string, error) {
+					resources := state.RootModule().Resources
+					clusterId := resources[fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel)].Primary.ID
+					environmentId := resources[fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel)].Primary.Attributes["environment.0.id"]
+					return environmentId + "/" + clusterId, nil
+				},
+			},
+		},
+	})
+}
+
+func testAccCheckKafkaClusterFreightWithByokLiveConfig(endpoint, environmentResourceLabel, environmentDisplayName, byokKeyResourceLabel, awsKmsKeyArn, clusterResourceLabel, clusterDisplayName, apiKey, apiSecret string) string {
+	return fmt.Sprintf(`
+	provider "confluent" {
+		endpoint         = "%s"
+		cloud_api_key    = "%s"
+		cloud_api_secret = "%s"
+	}
+
+	resource "confluent_environment" "%s" {
+		display_name = "%s"
+		stream_governance {
+			package = "ESSENTIALS"
+		}
+	}
+
+	resource "confluent_byok_key" "%s" {
+		aws {
+			key_arn = "%s"
+		}
+	}
+
+	resource "confluent_kafka_cluster" "%s" {
+		display_name = "%s"
+		availability = "HIGH"
+		cloud        = "AWS"
+		region       = "us-west-2"
+		freight {}
+
+		byok_key {
+			id = confluent_byok_key.%s.id
+		}
+
+		environment {
+			id = confluent_environment.%s.id
+		}
+	}
+	`, endpoint, apiKey, apiSecret, environmentResourceLabel, environmentDisplayName, byokKeyResourceLabel, awsKmsKeyArn, clusterResourceLabel, clusterDisplayName, byokKeyResourceLabel, environmentResourceLabel)
+}
