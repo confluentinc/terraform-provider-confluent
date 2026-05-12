@@ -898,7 +898,7 @@ func TestAccKafkaClusterFreightWithByokLive(t *testing.T) {
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "display_name", clusterDisplayName),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "availability", "HIGH"),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "cloud", "AWS"),
-					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "region", "us-east-1"),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "region", "us-west-2"),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "freight.#", "1"),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "byok_key.#", "1"),
 					resource.TestCheckResourceAttrSet(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "byok_key.0.id"),
@@ -945,7 +945,7 @@ func testAccCheckKafkaClusterFreightWithByokLiveConfig(endpoint, environmentReso
 		display_name = "%s"
 		availability = "HIGH"
 		cloud        = "AWS"
-		region       = "us-east-1"
+		region       = "us-west-2"
 		freight {}
 
 		byok_key {
