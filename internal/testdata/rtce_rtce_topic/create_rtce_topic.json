@@ -1,0 +1,21 @@
+{
+  "api_version": "rtce/v1",
+  "kind": "RtceTopic",
+  "metadata": {
+    "self": "https://api.confluent.cloud/rtce/v1/rtce-topics/orders_topic",
+    "resource_name": "crn://confluent.cloud/organization=abc/environment=env-abc123/rtce_topic=orders_topic",
+    "created_at": "2023-10-01T12:00:00Z",
+    "updated_at": "2023-10-01T12:00:00Z"
+  },
+  "spec": {
+    "cloud": "AWS",
+    "description": "Customer orders table for real-time analytics",
+    "environment": {"id": "env-abc123"},
+    "kafka_cluster": {"id": "kaf-abc123"},
+    "region": "us-west-2",
+    "topic_name": "orders_topic"
+  },
+  "status": {
+    "phase": "ACTIVE"
+  }
+}
