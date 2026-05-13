@@ -870,21 +870,20 @@ func TestAccKafkaClusterFreightWithByokLive(t *testing.T) {
 		endpoint = "https://api.confluent.cloud"
 	}
 
-	awsKmsKeyArn := os.Getenv("TEST_KMS_KEY_ID")
+	byokKeyId := os.Getenv("TEST_BYOK_KEY_ID")
 
 	if apiKey == "" || apiSecret == "" {
 		t.Fatal("CONFLUENT_CLOUD_API_KEY and CONFLUENT_CLOUD_API_SECRET must be set for live tests")
 	}
 
-	if awsKmsKeyArn == "" {
-		t.Skip("Skipping Freight+BYOK test. TEST_KMS_KEY_ID must be set to an AWS KMS key ARN.")
+	if byokKeyId == "" {
+		t.Skip("Skipping Freight+BYOK test. TEST_BYOK_KEY_ID must be set to a pre-registered BYOK key ID (e.g., cck-xxxxx).")
 	}
 
 	clusterDisplayName := fmt.Sprintf("tf-live-freight-byok-%d", rand.Intn(1000000))
 	environmentDisplayName := fmt.Sprintf("tf-live-env-%d", rand.Intn(1000000))
 	clusterResourceLabel := "test_live_freight_byok_cluster"
 	environmentResourceLabel := "test_live_env"
-	byokKeyResourceLabel := "test_live_byok_key"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -892,7 +891,7 @@ func TestAccKafkaClusterFreightWithByokLive(t *testing.T) {
 		CheckDestroy:      testAccCheckClusterDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckKafkaClusterFreightWithByokLiveConfig(endpoint, environmentResourceLabel, environmentDisplayName, byokKeyResourceLabel, awsKmsKeyArn, clusterResourceLabel, clusterDisplayName, apiKey, apiSecret),
+				Config: testAccCheckKafkaClusterFreightWithByokLiveConfig(endpoint, environmentResourceLabel, environmentDisplayName, byokKeyId, clusterResourceLabel, clusterDisplayName, apiKey, apiSecret),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckClusterExists(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel)),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "display_name", clusterDisplayName),
@@ -901,7 +900,7 @@ func TestAccKafkaClusterFreightWithByokLive(t *testing.T) {
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "region", "us-west-2"),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "freight.#", "1"),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "byok_key.#", "1"),
-					resource.TestCheckResourceAttrSet(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "byok_key.0.id"),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "byok_key.0.id", byokKeyId),
 					resource.TestCheckResourceAttrSet(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "rbac_crn"),
 				),
 			},
@@ -920,7 +919,7 @@ func TestAccKafkaClusterFreightWithByokLive(t *testing.T) {
 	})
 }
 
-func testAccCheckKafkaClusterFreightWithByokLiveConfig(endpoint, environmentResourceLabel, environmentDisplayName, byokKeyResourceLabel, awsKmsKeyArn, clusterResourceLabel, clusterDisplayName, apiKey, apiSecret string) string {
+func testAccCheckKafkaClusterFreightWithByokLiveConfig(endpoint, environmentResourceLabel, environmentDisplayName, byokKeyId, clusterResourceLabel, clusterDisplayName, apiKey, apiSecret string) string {
 	return fmt.Sprintf(`
 	provider "confluent" {
 		endpoint         = "%s"
@@ -935,12 +934,6 @@ func testAccCheckKafkaClusterFreightWithByokLiveConfig(endpoint, environmentReso
 		}
 	}
 
-	resource "confluent_byok_key" "%s" {
-		aws {
-			key_arn = "%s"
-		}
-	}
-
 	resource "confluent_kafka_cluster" "%s" {
 		display_name = "%s"
 		availability = "HIGH"
@@ -949,12 +942,12 @@ func testAccCheckKafkaClusterFreightWithByokLiveConfig(endpoint, environmentReso
 		freight {}
 
 		byok_key {
-			id = confluent_byok_key.%s.id
+			id = "%s"
 		}
 
 		environment {
 			id = confluent_environment.%s.id
 		}
 	}
-	`, endpoint, apiKey, apiSecret, environmentResourceLabel, environmentDisplayName, byokKeyResourceLabel, awsKmsKeyArn, clusterResourceLabel, clusterDisplayName, byokKeyResourceLabel, environmentResourceLabel)
+	`, endpoint, apiKey, apiSecret, environmentResourceLabel, environmentDisplayName, clusterResourceLabel, clusterDisplayName, byokKeyId, environmentResourceLabel)
 }
