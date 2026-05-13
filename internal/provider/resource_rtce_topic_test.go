@@ -51,7 +51,7 @@ func TestAccRtceRtceTopic(t *testing.T) {
 	// nolint:errcheck
 	defer wiremockClient.ResetAllScenarios()
 
-	createRtceTopicResponse, _ := ioutil.ReadFile("../testdata/rtce_rtce_topic/create_rtce_topic.json")
+	createRtceTopicResponse, _ := ioutil.ReadFile("../testdata/rtce_topic/create_rtce_topic.json")
 	createRtceTopicStub := wiremock.Post(wiremock.URLPathEqualTo("/rtce/v1/rtce-topics")).
 		InScenario(rtce_topicScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
@@ -63,7 +63,7 @@ func TestAccRtceRtceTopic(t *testing.T) {
 		)
 	_ = wiremockClient.StubFor(createRtceTopicStub)
 
-	readCreatedRtceTopicResponse, _ := ioutil.ReadFile("../testdata/rtce_rtce_topic/read_created_rtce_topic.json")
+	readCreatedRtceTopicResponse, _ := ioutil.ReadFile("../testdata/rtce_topic/read_created_rtce_topic.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("/rtce/v1/rtce-topics/%s", rtce_topicTopicName))).
 		InScenario(rtce_topicScenarioName).
 		WhenScenarioStateIs(scenarioStateRtceTopicHasBeenCreated).
@@ -73,7 +73,7 @@ func TestAccRtceRtceTopic(t *testing.T) {
 			http.StatusOK,
 		))
 
-	readUpdatedRtceTopicResponse, _ := ioutil.ReadFile("../testdata/rtce_rtce_topic/read_updated_rtce_topic.json")
+	readUpdatedRtceTopicResponse, _ := ioutil.ReadFile("../testdata/rtce_topic/read_updated_rtce_topic.json")
 	patchRtceTopicStub := wiremock.Patch(wiremock.URLPathEqualTo(fmt.Sprintf("/rtce/v1/rtce-topics/%s", rtce_topicTopicName))).
 		InScenario(rtce_topicScenarioName).
 		WhenScenarioStateIs(scenarioStateRtceTopicHasBeenCreated).
@@ -94,7 +94,7 @@ func TestAccRtceRtceTopic(t *testing.T) {
 			http.StatusOK,
 		))
 
-	readDeletedRtceTopicResponse, _ := ioutil.ReadFile("../testdata/rtce_rtce_topic/read_deleted_rtce_topic.json")
+	readDeletedRtceTopicResponse, _ := ioutil.ReadFile("../testdata/rtce_topic/read_deleted_rtce_topic.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("/rtce/v1/rtce-topics/%s", rtce_topicTopicName))).
 		InScenario(rtce_topicScenarioName).
 		WhenScenarioStateIs(scenarioStateRtceTopicHasBeenDeleted).

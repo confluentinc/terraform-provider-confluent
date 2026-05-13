@@ -46,7 +46,7 @@ func TestAccDataSourceRtceRtceTopic(t *testing.T) {
 	// nolint:errcheck
 	defer wiremockClient.ResetAllScenarios()
 
-	readRtceTopicResponse, _ := ioutil.ReadFile("../testdata/rtce_rtce_topic/read_created_rtce_topic.json")
+	readRtceTopicResponse, _ := ioutil.ReadFile("../testdata/rtce_topic/read_created_rtce_topic.json")
 	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("/rtce/v1/rtce-topics/%s", rtce_topicTopicName))).
 		InScenario(rtce_topicDataSourceScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
