@@ -341,6 +341,7 @@ const (
 	paramDefaultPool                                     = "default_pool"
 	paramDefaultPoolEnabled                              = "default_compute_pool_enabled"
 	paramDefaultValue                                    = "default_value"
+	paramDeletionProtection                              = "deletion_protection"
 	paramDescription                                     = "description"
 	paramDestinationKafkaCluster                         = "destination_kafka_cluster"
 	paramDestinationKafkaCredentials                     = "destination_kafka_cluster.0.credentials"
