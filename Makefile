@@ -106,21 +106,31 @@ testacc:
 
 # Live integration tests with group filtering and concurrency support
 # Usage: make live-test TF_LIVE_TEST_GROUPS="core,kafka" or make live-test (for all)
+# RTCE tests are excluded here because RTCE prod is only enabled in aws.us-east-1;
+# run them via the dedicated `live-test-rtce` target below.
 .PHONY: live-test
 live-test:
 	@echo "Running live integration tests against Confluent Cloud..."
 	@if [ -z "$(TF_LIVE_TEST_GROUPS)" ]; then \
 		echo "Running ALL live tests with parallel execution..."; \
-		TF_ACC=1 TF_ACC_PROD=1 $(GOCMD) test ./internal/provider/ -v -run=".*Live$$|.*DriftDetection$$" -tags="live_test,all" -timeout 1440m -parallel 10; \
+		TF_ACC=1 TF_ACC_PROD=1 $(GOCMD) test ./internal/provider/ -v -run=".*Live$$|.*DriftDetection$$" -skip="Rtce" -tags="live_test,all" -timeout 1440m -parallel 10; \
 	else \
 		echo "Running live tests for groups: $(TF_LIVE_TEST_GROUPS) with parallel execution..."; \
 		TAGS="live_test"; \
 		for group in $$(echo "$(TF_LIVE_TEST_GROUPS)" | tr ',' ' '); do \
 			TAGS="$$TAGS,$$group"; \
 		done; \
-		TF_ACC=1 TF_ACC_PROD=1 $(GOCMD) test ./internal/provider/ -v -run=".*Live$$|.*DriftDetection$$" -tags="$$TAGS" -timeout 1440m -parallel 10; \
+		TF_ACC=1 TF_ACC_PROD=1 $(GOCMD) test ./internal/provider/ -v -run=".*Live$$|.*DriftDetection$$" -skip="Rtce" -tags="$$TAGS" -timeout 1440m -parallel 10; \
 	fi
 	@echo "Finished running live integration tests against Confluent Cloud"
+
+# RTCE live tests — pinned to aws.us-east-1 because that's the only region
+# where RTCE is enabled in prod. Run separately from the main live-test target.
+.PHONY: live-test-rtce
+live-test-rtce:
+	@echo "Running RTCE live integration tests against Confluent Cloud (region=us-east-1)..."
+	TF_ACC=1 TF_ACC_PROD=1 TF_ACC_REGION=us-east-1 $(GOCMD) test ./internal/provider/ -v -run="Rtce.*Live$$" -tags="live_test,all" -timeout 1440m -parallel 10
+	@echo "Finished running RTCE live integration tests"
 
 # Helper targets for common group combinations
 .PHONY: live-test-core
