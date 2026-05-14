@@ -69,6 +69,7 @@ import (
 	orgv2 "github.com/confluentinc/ccloud-sdk-go-v2/org/v2"
 	providerintegrationv1 "github.com/confluentinc/ccloud-sdk-go-v2/provider-integration/v1"
 	providerintegrationv2 "github.com/confluentinc/ccloud-sdk-go-v2/provider-integration/v2"
+	rtcev1 "github.com/confluentinc/ccloud-sdk-go-v2/rtce/v1"
 	schemaregistryv1 "github.com/confluentinc/ccloud-sdk-go-v2/schema-registry/v1"
 	srcmv3 "github.com/confluentinc/ccloud-sdk-go-v2/srcm/v3"
 	ssov2 "github.com/confluentinc/ccloud-sdk-go-v2/sso/v2"
@@ -1545,4 +1546,21 @@ func validateAllOrNoneAttributesSetForResourcesWithOAuth(
 	// Tableflow doesn't support OAuth authentication as of this implementation
 	// So the `flags.areTableflowAllSet` is always false
 	return flags, nil
+}
+
+func (c *Client) rtceV1ApiContext(ctx context.Context) context.Context {
+	if c.oauthToken != nil && c.stsToken != nil {
+		if err := c.fetchOrOverrideSTSOAuthTokenFromApiContext(ctx); err != nil {
+			tflog.Error(ctx, "Failed to get OAuth token for rtceV1 client", map[string]interface{}{"error": err.Error()})
+		}
+		return context.WithValue(ctx, rtcev1.ContextAccessToken, c.stsToken.AccessToken)
+	}
+	if c.cloudApiKey != "" && c.cloudApiSecret != "" {
+		return context.WithValue(ctx, rtcev1.ContextBasicAuth, rtcev1.BasicAuth{
+			UserName: c.cloudApiKey,
+			Password: c.cloudApiSecret,
+		})
+	}
+	tflog.Warn(ctx, "Could not find Cloud API Key or OAuth Token for rtceV1 client")
+	return ctx
 }
