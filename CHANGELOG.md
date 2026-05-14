@@ -4,7 +4,7 @@
 
 **New features:**
 * Updated the `confluent_kafka_cluster` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_cluster) to support self-managed encryption keys (BYOK) for Freight Kafka clusters on AWS.
-* Added the`confluent_rtce_topic` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_rtce_topic) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_rtce_topic) to support the Real Time Context Engine feature on AWS.
+* Added the `confluent_rtce_topic` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_rtce_topic) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_rtce_topic) to support the Real Time Context Engine feature on AWS.
 * Updated the `confluent_api_key` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_api_key) to support Global API Keys.
 
 **Bug fixes:**
