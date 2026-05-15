@@ -56,3 +56,11 @@ blocks:
               
               echo "Running live tests for: ${TF_LIVE_TEST_GROUPS:-all groups}"
               make live-test ${TF_LIVE_TEST_GROUPS:+TF_LIVE_TEST_GROUPS="$TF_LIVE_TEST_GROUPS"}
+
+              # RTCE live tests run separately because they require their own env flags
+              # (e.g. TF_ACC_REGION pinned to a region where RTCE is enabled in prod).
+              # Skip if the caller asked for a specific group that isn't "core" or "all".
+              case "$TF_LIVE_TEST_GROUPS" in
+                ""|*core*) make live-test-rtce ;;
+                *) echo "Skipping live-test-rtce (group filter excludes RTCE)" ;;
+              esac

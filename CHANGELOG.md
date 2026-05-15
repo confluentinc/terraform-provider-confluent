@@ -1,3 +1,16 @@
+## 2.73.0 (May 14th, 2026)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.72.0...v2.73.0)
+
+**New features:**
+* Updated the `confluent_kafka_cluster` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_cluster) to support self-managed encryption keys (BYOK) for Freight Kafka clusters on AWS.
+* Added the `confluent_rtce_topic` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_rtce_topic) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_rtce_topic) to support the Real Time Context Engine feature on AWS.
+* Updated the `confluent_api_key` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_api_key) to support Global API Keys.
+
+**Bug fixes:**
+* Fixed an error where the `confluent_subject_config` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_subject_config) failed with a _404 Not Found_ during `terraform apply` or `terraform destroy` if the underlying subject was deleted out-of-band. Refresh now correctly detects the missing subject and removes it from the state instead.
+* Resolved 5 Dependabot alerts.
+
 ## 2.72.0 (May 7th, 2026)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.71.0...v2.72.0)
