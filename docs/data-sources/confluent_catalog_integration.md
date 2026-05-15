@@ -85,11 +85,14 @@ In addition to the preceding arguments, the following attributes are exported:
 - `display_name` - (Required String) The name of the catalog integration.
 - `aws_glue` (Optional Configuration Block) supports the following:
     - `provider_integration_id` - (Required String) The provider integration id.
+    - `custom_database` - (Computed String) The custom database name to use in AWS Glue.
 - `snowflake` (Optional Configuration Block) supports the following:
     - `endpoint` - (Required String) The catalog integration connection endpoint for Snowflake Open Catalog.
     - `warehouse` - (Required String) Warehouse name of the Snowflake Open Catalog.
     - `allowed_scope` - (Required String) Allowed scope of the Snowflake Open Catalog.
+    - `custom_namespace` - (Computed String) The custom namespace to use in Snowflake Open Catalog.
 - `unity` (Optional Configuration Block) supports the following:
     - `workspace_endpoint` - (Required String) The Databricks workspace URL associated with the Unity Catalog.
     - `catalog_name` - (Required String) The name of the catalog within Unity Catalog.
+    - `custom_schema` - (Computed String) The custom schema name to use in Unity Catalog.
 - `suspended` - (Optional Boolean) Indicates whether the Catalog Integration should be suspended.

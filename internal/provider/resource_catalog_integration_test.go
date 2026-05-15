@@ -123,6 +123,7 @@ func TestAccCatalogIntegrationAwsGlue(t *testing.T) {
 					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "snowflake.#", "0"),
 					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "unity.#", "0"),
 					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "aws_glue.0.provider_integration_id", "cspi-stgce89r7"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "aws_glue.0.custom_database", "my-custom-database"),
 				),
 			},
 			{
@@ -139,6 +140,7 @@ func TestAccCatalogIntegrationAwsGlue(t *testing.T) {
 					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "snowflake.#", "0"),
 					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "unity.#", "0"),
 					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "aws_glue.0.provider_integration_id", "cspi-stgce89r7"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "aws_glue.0.custom_database", "my-custom-database"),
 				),
 			},
 		},
@@ -245,6 +247,7 @@ func TestAccCatalogIntegrationSnowflake(t *testing.T) {
 					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "snowflake.0.endpoint", "https://vuser1_polaris.snowflakecomputing.com/"),
 					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "snowflake.0.warehouse", "warehouse-name"),
 					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "snowflake.0.allowed_scope", "allowed-scope"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "snowflake.0.custom_namespace", "my-custom-namespace"),
 				),
 			},
 			{
@@ -263,6 +266,7 @@ func TestAccCatalogIntegrationSnowflake(t *testing.T) {
 					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "snowflake.0.endpoint", "https://vuser2_polaris.snowflakecomputing.com/"),
 					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "snowflake.0.warehouse", "warehouse-name-2"),
 					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "snowflake.0.allowed_scope", "allowed-scope-2"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "snowflake.0.custom_namespace", "my-custom-namespace"),
 				),
 			},
 		},
@@ -359,6 +363,7 @@ func TestAccCatalogIntegrationUnity(t *testing.T) {
 					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "unity.#", "1"),
 					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "unity.0.workspace_endpoint", "https://user1.cloud.databricks.com"),
 					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "unity.0.catalog_name", "catalog_name"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "unity.0.custom_schema", "my-custom-schema"),
 				),
 			},
 			{
@@ -376,6 +381,7 @@ func TestAccCatalogIntegrationUnity(t *testing.T) {
 					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "unity.#", "1"),
 					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "unity.0.workspace_endpoint", "https://user2.cloud.databricks.com"),
 					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "unity.0.catalog_name", "catalog_name_2"),
+					resource.TestCheckResourceAttr(catalogIntegrationResourceLabel, "unity.0.custom_schema", "my-custom-schema"),
 				),
 			},
 		},
@@ -398,6 +404,7 @@ func testAccCheckResourceCatalogIntegrationAwsGlue(mockServerUrl, display_name s
 		}
 		aws_glue {
 			provider_integration_id = "cspi-stgce89r7"
+			custom_database = "my-custom-database"
 		}
 		credentials {
 			key = "test_key"
@@ -427,6 +434,7 @@ func testAccCheckResourceCatalogIntegrationSnowflake(mockServerUrl, displayName,
 			client_secret = "%s"
 			warehouse = "%s"
 			allowed_scope = "%s"
+			custom_namespace = "my-custom-namespace"
 		}
 		credentials {
 			key = "test_key"
@@ -455,6 +463,7 @@ func testAccCheckResourceCatalogIntegrationUnity(mockServerUrl, displayName, wor
 			catalog_name = "%s"
 			client_id = "%s"
 			client_secret = "%s"
+			custom_schema = "my-custom-schema"
 		}
 		credentials {
 			key = "test_key"
