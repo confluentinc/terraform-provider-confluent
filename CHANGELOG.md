@@ -1,3 +1,36 @@
+## 2.73.0 (May 14th, 2026)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.72.0...v2.73.0)
+
+**New features:**
+* Updated the `confluent_kafka_cluster` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_cluster) to support self-managed encryption keys (BYOK) for Freight Kafka clusters on AWS.
+* Added the `confluent_rtce_topic` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_rtce_topic) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_rtce_topic) to support the Real Time Context Engine feature on AWS.
+* Updated the `confluent_api_key` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_api_key) to support Global API Keys.
+
+**Bug fixes:**
+* Fixed an error where the `confluent_subject_config` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_subject_config) failed with a _404 Not Found_ during `terraform apply` or `terraform destroy` if the underlying subject was deleted out-of-band. Refresh now correctly detects the missing subject and removes it from the state instead.
+* Resolved 5 Dependabot alerts.
+
+## 2.72.0 (May 7th, 2026)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.71.0...v2.72.0)
+
+**New features:**
+* Updated `confluent_access_point` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_access_point) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_access_point) to support the new optional `azure_ingress_private_link_endpoint` and `gcp_ingress_private_service_connect_endpoint` configuration block.
+* Updated `confluent_gateway` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_gateway) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_gateway) to support the new optional `azure_ingress_private_link_gateway` and `gcp_ingress_private_service_connect_gateway` configuration block.
+
+**Examples:**
+* Added an end-to-end example configuration for [Azure Ingress Private Link](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/enterprise-ingress-azure/).
+* Added an end-to-end example configuration for [GCP Ingress Private Service Connect](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/enterprise-ingress-gcp/).
+
+## 2.71.0 (April 30th, 2026)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.70.0...v2.71.0)
+
+**New features:**
+* Added Client-Side-Payload-Encryption support in `confluent_schema` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_schema).
+* Added `confluent_flink_materialized_table` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_flink_materialized_table) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_flink_materialized_table) for managing Materialized Tables in Confluent Cloud.
+
 ## 2.70.0 (April 23rd, 2026)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.69.0...v2.70.0)

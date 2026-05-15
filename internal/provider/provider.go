@@ -54,6 +54,7 @@ import (
 	orgv2 "github.com/confluentinc/ccloud-sdk-go-v2/org/v2"
 	providerintegrationv1 "github.com/confluentinc/ccloud-sdk-go-v2/provider-integration/v1"
 	providerintegrationv2 "github.com/confluentinc/ccloud-sdk-go-v2/provider-integration/v2"
+	rtcev1 "github.com/confluentinc/ccloud-sdk-go-v2/rtce/v1"
 	srcmv3 "github.com/confluentinc/ccloud-sdk-go-v2/srcm/v3"
 	ssov2 "github.com/confluentinc/ccloud-sdk-go-v2/sso/v2"
 	stsv1 "github.com/confluentinc/ccloud-sdk-go-v2/sts/v1"
@@ -129,6 +130,7 @@ type Client struct {
 	isAcceptanceTestMode            bool
 	isLiveProductionTestMode        bool
 	isOAuthEnabled                  bool
+	rtceV1Client                    *rtcev1.APIClient
 	// cli-tfgen:tf-client-fields
 }
 
@@ -322,6 +324,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_flink_compute_pool":                 computePoolDataSource(),
 				"confluent_flink_compute_pool_config":          computePoolConfigDataSource(),
 				"confluent_flink_connection":                   flinkConnectionDataSource(),
+				"confluent_flink_materialized_table":           flinkMaterializedTableDataSource(),
 				"confluent_flink_region":                       flinkRegionDataSource(),
 				"confluent_identity_pool":                      identityPoolDataSource(),
 				"confluent_identity_provider":                  identityProviderDataSource(),
@@ -363,6 +366,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_tag_binding":                        tagBindingDataSource(),
 				"confluent_business_metadata":                  businessMetadataDataSource(),
 				"confluent_business_metadata_binding":          businessMetadataBindingDataSource(),
+				"confluent_rtce_topic":                         rtceTopicDataSource(),
 				"confluent_schema_registry_kek":                schemaRegistryKekDataSource(),
 				"confluent_schema_registry_dek":                schemaRegistryDekDataSource(),
 				// cli-tfgen:tf-datasources
@@ -389,6 +393,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_flink_compute_pool":                 computePoolResource(),
 				"confluent_flink_compute_pool_config":          computePoolConfigResource(),
 				"confluent_flink_connection":                   flinkConnectionResource(),
+				"confluent_flink_materialized_table":           flinkMaterializedTableResource(),
 				"confluent_flink_statement":                    flinkStatementResource(),
 				"confluent_connector":                          connectorResource(),
 				"confluent_custom_connector_plugin":            customConnectorPluginResource(),
@@ -430,6 +435,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_schema_registry_kek":                schemaRegistryKekResource(),
 				"confluent_schema_registry_dek":                schemaRegistryDekResource(),
 				"confluent_catalog_entity_attributes":          catalogEntityAttributesResource(),
+				"confluent_rtce_topic":                         rtceTopic(),
 				// cli-tfgen:tf-resources
 			},
 		}
@@ -553,6 +559,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	providerIntegrationV1Cfg := providerintegrationv1.NewConfiguration()
 	providerIntegrationV2Cfg := providerintegrationv2.NewConfiguration()
 	kafkaQuotasV1Cfg := kafkaquotasv1.NewConfiguration()
+	rtceV1Cfg := rtcev1.NewConfiguration()
 	srcmV3Cfg := srcmv3.NewConfiguration()
 	ssoV2Cfg := ssov2.NewConfiguration()
 	stsV1Cfg := stsv1.NewConfiguration()
@@ -585,6 +592,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	providerIntegrationV1Cfg.Servers[0].URL = endpoint
 	providerIntegrationV2Cfg.Servers[0].URL = endpoint
 	kafkaQuotasV1Cfg.Servers[0].URL = endpoint
+	rtceV1Cfg.Servers[0].URL = endpoint
 	srcmV3Cfg.Servers[0].URL = endpoint
 	ssoV2Cfg.Servers[0].URL = endpoint
 	stsV1Cfg.Servers[0].URL = endpoint
@@ -618,6 +626,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	providerIntegrationV1Cfg.UserAgent = userAgent
 	providerIntegrationV2Cfg.UserAgent = userAgent
 	kafkaQuotasV1Cfg.UserAgent = userAgent
+	rtceV1Cfg.UserAgent = userAgent
 	srcmV3Cfg.UserAgent = userAgent
 	ssoV2Cfg.UserAgent = userAgent
 	stsV1Cfg.UserAgent = userAgent
@@ -662,6 +671,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	providerIntegrationV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	providerIntegrationV2Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	kafkaQuotasV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
+	rtceV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	srcmV3Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	ssoV2Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
 	stsV1Cfg.HTTPClient = NewRetryableClientFactory(ctx, WithMaxRetries(maxRetries)).CreateRetryableClient()
@@ -741,6 +751,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 		tableflowRestClientFactory:      tableflowRestClientFactory,
 		mdsV2Client:                     mdsv2.NewAPIClient(mdsV2Cfg),
 		kafkaQuotasV1Client:             kafkaquotasv1.NewAPIClient(kafkaQuotasV1Cfg),
+		rtceV1Client:                    rtcev1.NewAPIClient(rtceV1Cfg),
 		ssoV2Client:                     ssov2.NewAPIClient(ssoV2Cfg),
 		stsV1Client:                     secureTokenServiceClient,
 		// cli-tfgen:tf-client-literal

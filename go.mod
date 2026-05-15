@@ -15,7 +15,7 @@ require (
 	github.com/confluentinc/ccloud-sdk-go-v2/endpoint v0.4.0
 	github.com/confluentinc/ccloud-sdk-go-v2/flink v0.11.0
 	github.com/confluentinc/ccloud-sdk-go-v2/flink-artifact v0.4.0
-	github.com/confluentinc/ccloud-sdk-go-v2/flink-gateway v0.18.0
+	github.com/confluentinc/ccloud-sdk-go-v2/flink-gateway v0.19.0
 	github.com/confluentinc/ccloud-sdk-go-v2/iam v0.17.0
 	github.com/confluentinc/ccloud-sdk-go-v2/iam-ip-filtering v0.5.0
 	github.com/confluentinc/ccloud-sdk-go-v2/identity-provider v0.3.0
@@ -24,13 +24,14 @@ require (
 	github.com/confluentinc/ccloud-sdk-go-v2/ksql v0.1.0
 	github.com/confluentinc/ccloud-sdk-go-v2/mds v0.3.0
 	github.com/confluentinc/ccloud-sdk-go-v2/networking v0.14.0
-	github.com/confluentinc/ccloud-sdk-go-v2/networking-access-point v0.9.0
+	github.com/confluentinc/ccloud-sdk-go-v2/networking-access-point v0.10.0
 	github.com/confluentinc/ccloud-sdk-go-v2/networking-dnsforwarder v0.4.0
-	github.com/confluentinc/ccloud-sdk-go-v2/networking-gateway v0.6.0
+	github.com/confluentinc/ccloud-sdk-go-v2/networking-gateway v0.7.0
 	github.com/confluentinc/ccloud-sdk-go-v2/networking-ip v0.2.0
 	github.com/confluentinc/ccloud-sdk-go-v2/networking-privatelink v0.3.0
 	github.com/confluentinc/ccloud-sdk-go-v2/org v0.9.0
 	github.com/confluentinc/ccloud-sdk-go-v2/provider-integration v0.2.0
+	github.com/confluentinc/ccloud-sdk-go-v2/rtce v0.1.0
 	github.com/confluentinc/ccloud-sdk-go-v2/schema-registry v0.5.0
 	github.com/confluentinc/ccloud-sdk-go-v2/srcm v0.7.3
 	github.com/confluentinc/ccloud-sdk-go-v2/sso v0.0.1
@@ -76,7 +77,7 @@ require (
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/fatih/color v1.16.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
-	github.com/go-git/go-git/v5 v5.16.5 // indirect
+	github.com/go-git/go-git/v5 v5.19.0 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
@@ -136,19 +137,19 @@ require (
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	github.com/zclconf/go-cty v1.12.1
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.50.0 // indirect
-	go.opentelemetry.io/otel v1.40.0
+	go.opentelemetry.io/otel v1.43.0
 	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc v1.40.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.24.0 // indirect
-	go.opentelemetry.io/otel/metric v1.40.0
-	go.opentelemetry.io/otel/sdk v1.40.0
-	go.opentelemetry.io/otel/sdk/metric v1.40.0
-	go.opentelemetry.io/otel/trace v1.40.0 // indirect
+	go.opentelemetry.io/otel/metric v1.43.0
+	go.opentelemetry.io/otel/sdk v1.43.0
+	go.opentelemetry.io/otel/sdk/metric v1.43.0
+	go.opentelemetry.io/otel/trace v1.43.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.9.0 // indirect
-	golang.org/x/crypto v0.47.0 // indirect
-	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56 // indirect
-	golang.org/x/net v0.49.0 // indirect
-	golang.org/x/sys v0.40.0 // indirect
-	golang.org/x/text v0.33.0 // indirect
+	golang.org/x/crypto v0.50.0 // indirect
+	golang.org/x/exp v0.0.0-20260410095643-746e56fc9e2f // indirect
+	golang.org/x/net v0.53.0 // indirect
+	golang.org/x/sys v0.43.0 // indirect
+	golang.org/x/text v0.36.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260128011058-8636f8732409 // indirect
 	google.golang.org/grpc v1.79.3

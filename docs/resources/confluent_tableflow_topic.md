@@ -120,6 +120,7 @@ The following arguments are supported:
     - `id` - (Required String) The ID of the Kafka cluster, for example, `lkc-abc123`.
 - `display_name` - (Required String) The name of the Kafka topic for which Tableflow is enabled.
 - `retention_ms` - (Optional String) The max age of snapshots (Iceberg) or versions (Delta) (snapshot/version expiration) to keep on the table in milliseconds for the Tableflow enabled topic.
+- `data_retention_ms` - (Optional String) The maximum age, in milliseconds, of data to retain in the table for the Tableflow-enabled topic. The minimum allowed value is `2592000000` milliseconds (equivalent to 30 days).
 - `table_formats` - (Optional List) The supported table formats for the Tableflow-enabled topic. Accepted values are `DELTA`, `ICEBERG`.
 - `record_failure_strategy` - (Optional String, **Deprecated**) The strategy to handle record failures in the Tableflow enabled topic during materialization. Accepted values are `SKIP`, `SUSPEND`. For `SKIP`, we skip the bad records and move to the next record. For `SUSPEND`, we suspend the materialization of the topic.
 - `error_handling` (Optional Configuration Block) supports the following:
@@ -133,13 +134,15 @@ The following arguments are supported:
   - `storage_account_name` - (Required String) The storage account name.
   - `provider_integration_id` - (Required String) The provider integration id.
 - `managed_storage` (Optional Configuration Block) The configuration of the Confluent managed storage. See [Quick Start with Managed Storage](https://docs.confluent.io/cloud/current/topics/tableflow/get-started/quick-start-managed-storage.html#cloud-tableflow-quick-start-managed-storage) for more details.
-- `credentials` (Optional Configuration Block) supports the following:
+- `credentials` (Optional Configuration Block, ignored when provider-level Tableflow API key is set. See **note** below) supports the following:
     - `key` - (Required String) The Tableflow API Key.
     - `secret` - (Required String, Sensitive) The Tableflow API Secret.
 
 -> **Note:** A Tableflow API key consists of a key and a secret. Tableflow API keys are required to interact with Tableflow Topics in Confluent Cloud.
 
 -> **Note:** Use Option #2 to simplify the key rotation process. When using Option #1, to rotate a Tableflow API key, create a new Tableflow API key, update the `credentials` block in all configuration files to use the new Tableflow API key, run `terraform apply -target="confluent_tableflow_topic.example"`, and remove the old Tableflow API key. Alternatively, in case the old Tableflow API Key was deleted already, you might need to run `terraform plan -refresh=false -target="confluent_tableflow_topic.example" -out=rotate-tableflow-api-key` and `terraform apply rotate-tableflow-api-key` instead.
+
+-> **Note:** When Tableflow API key and secret are set on the `provider` block (Option #2) **and** a `credentials {}` block is also set on `confluent_tableflow_topic` resource (Option #1), the provider-level credentials (`tableflow_api_key`/`tableflow_api_secret`) take precedence and the resource-level `credentials {}` block is ignored. To use resource-level credentials, omit `tableflow_api_key`/`tableflow_api_secret` from the provider block (and unset the `TABLEFLOW_API_KEY`/`TABLEFLOW_API_SECRET` env vars).
 
 !> **Warning:** Use Option #2 to avoid exposing sensitive `credentials` value in a state file. When using Option #1, Terraform doesn't encrypt the sensitive `credentials` value of the `confluent_tableflow_topic` resource, so you must keep your state file secure to avoid exposing it. Refer to the [Terraform documentation](https://www.terraform.io/docs/language/state/sensitive-data.html) to learn more about securing your state file.
 

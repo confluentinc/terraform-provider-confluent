@@ -179,7 +179,7 @@ func catalogIntegrationUnitySchema() *schema.Schema {
 func catalogIntegrationCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	c := meta.(*Client)
 
-	tableflowApiKey, tableflowApiSecret, err := extractTableflowApiKeyAndApiSecret(c, d, false)
+	tableflowApiKey, tableflowApiSecret, err := extractTableflowApiKeyAndApiSecret(ctx, c, d, false)
 	if err != nil {
 		return diag.Errorf("error creating Catalog Integration: %s", createDescriptiveError(err))
 	}
@@ -274,7 +274,7 @@ func catalogIntegrationRead(ctx context.Context, d *schema.ResourceData, meta in
 
 	c := meta.(*Client)
 
-	tableflowApiKey, tableflowApiSecret, err := extractTableflowApiKeyAndApiSecret(c, d, false)
+	tableflowApiKey, tableflowApiSecret, err := extractTableflowApiKeyAndApiSecret(ctx, c, d, false)
 	if err != nil {
 		return diag.Errorf("error creating Catalog Integration: %s", createDescriptiveError(err))
 	}
@@ -400,7 +400,7 @@ func catalogIntegrationDelete(ctx context.Context, d *schema.ResourceData, meta 
 	clusterId := extractStringValueFromBlock(d, paramKafkaCluster, paramId)
 	c := meta.(*Client)
 
-	tableflowApiKey, tableflowApiSecret, err := extractTableflowApiKeyAndApiSecret(c, d, false)
+	tableflowApiKey, tableflowApiSecret, err := extractTableflowApiKeyAndApiSecret(ctx, c, d, false)
 	if err != nil {
 		return diag.Errorf("error creating Catalog Integration: %s", createDescriptiveError(err))
 	}
@@ -428,7 +428,7 @@ func catalogIntegrationUpdate(ctx context.Context, d *schema.ResourceData, meta 
 
 	c := meta.(*Client)
 
-	tableflowApiKey, tableflowApiSecret, err := extractTableflowApiKeyAndApiSecret(c, d, false)
+	tableflowApiKey, tableflowApiSecret, err := extractTableflowApiKeyAndApiSecret(ctx, c, d, false)
 	if err != nil {
 		return diag.Errorf("error creating Catalog Integration: %s", createDescriptiveError(err))
 	}
@@ -532,7 +532,7 @@ func catalogIntegrationImport(ctx context.Context, d *schema.ResourceData, meta 
 
 	c := meta.(*Client)
 
-	tableflowApiKey, tableflowApiSecret, err := extractTableflowApiKeyAndApiSecret(c, d, true)
+	tableflowApiKey, tableflowApiSecret, err := extractTableflowApiKeyAndApiSecret(ctx, c, d, true)
 	if err != nil {
 		return nil, fmt.Errorf("error creating Catalog Integration: %s", createDescriptiveError(err))
 	}

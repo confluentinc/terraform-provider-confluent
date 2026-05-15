@@ -66,7 +66,7 @@ func catalogIntegrationDataSourceRead(ctx context.Context, d *schema.ResourceDat
 
 	c := meta.(*Client)
 
-	tableflowApiKey, tableflowApiSecret, err := extractTableflowApiKeyAndApiSecret(c, d, false)
+	tableflowApiKey, tableflowApiSecret, err := extractTableflowApiKeyAndApiSecret(ctx, c, d, false)
 	if err != nil {
 		return diag.Errorf("error reading Catalog Integration: %s", createDescriptiveError(err))
 	}
