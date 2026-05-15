@@ -64,6 +64,12 @@ func identityPoolResource() *schema.Resource {
 				Description:  "A filter expression that must be evaluated to be true to use this identity pool.",
 				ValidateFunc: validation.StringIsNotEmpty,
 			},
+			paramAssignedResourceOwner: {
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
+				Description: "The id of the principal granted the ResourceOwner role at Identity Pool creation. Creates an implicit role binding that is not managed by Terraform and is not removed by `terraform destroy`.",
+			},
 		},
 	}
 }
@@ -123,6 +129,7 @@ func identityPoolCreate(ctx context.Context, d *schema.ResourceData, meta interf
 	description := d.Get(paramDescription).(string)
 	identityClaim := d.Get(paramIdentityClaim).(string)
 	filter := d.Get(paramFilter).(string)
+	assignedResourceOwner := d.Get(paramAssignedResourceOwner).(string)
 
 	createIdentityPoolRequest := identityproviderv2.NewIamV2IdentityPool()
 	createIdentityPoolRequest.SetDisplayName(displayName)
@@ -135,7 +142,7 @@ func identityPoolCreate(ctx context.Context, d *schema.ResourceData, meta interf
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Identity Pool: %s", createIdentityPoolRequestJson))
 
-	createdIdentityPool, resp, err := executeIdentityPoolCreate(c.identityProviderV2ApiContext(ctx), c, createIdentityPoolRequest, identityProviderId)
+	createdIdentityPool, resp, err := executeIdentityPoolCreate(c.identityProviderV2ApiContext(ctx), c, createIdentityPoolRequest, identityProviderId, assignedResourceOwner)
 	if err != nil {
 		return diag.Errorf("error creating Identity Pool: %s", createDescriptiveError(err, resp))
 	}
@@ -150,8 +157,11 @@ func identityPoolCreate(ctx context.Context, d *schema.ResourceData, meta interf
 	return identityPoolRead(ctx, d, meta)
 }
 
-func executeIdentityPoolCreate(ctx context.Context, c *Client, identityPool *identityproviderv2.IamV2IdentityPool, identityProviderId string) (identityproviderv2.IamV2IdentityPool, *http.Response, error) {
+func executeIdentityPoolCreate(ctx context.Context, c *Client, identityPool *identityproviderv2.IamV2IdentityPool, identityProviderId, assignedResourceOwner string) (identityproviderv2.IamV2IdentityPool, *http.Response, error) {
 	req := c.identityProviderV2Client.IdentityPoolsIamV2Api.CreateIamV2IdentityPool(c.identityProviderV2ApiContext(ctx), identityProviderId).IamV2IdentityPool(*identityPool)
+	if assignedResourceOwner != "" {
+		req = req.AssignedResourceOwner(assignedResourceOwner)
+	}
 	return req.Execute()
 }
 
