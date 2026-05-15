@@ -46,6 +46,7 @@ func TestAccIdentityPool(t *testing.T) {
 	createSaStub := wiremock.Post(wiremock.URLPathEqualTo(fmt.Sprintf("/iam/v2/identity-providers/%s/identity-pools", identityProviderId))).
 		InScenario(identityPoolScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
+		WithQueryParam("assigned_resource_owner", wiremock.EqualTo(identityPoolAssignedResourceOwner)).
 		WillSetStateTo(scenarioStateIdentityPoolHasBeenCreated).
 		WillReturn(
 			string(createSaResponse),
@@ -122,7 +123,7 @@ func TestAccIdentityPool(t *testing.T) {
 		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckIdentityPoolConfig(mockServerUrl, identityPoolResourceLabel, identityPoolDisplayName, identityPoolDescription, identityPoolIdentityClaim, identityPoolFilter),
+				Config: testAccCheckIdentityPoolConfig(mockServerUrl, identityPoolResourceLabel, identityPoolDisplayName, identityPoolDescription, identityPoolIdentityClaim, identityPoolFilter, identityPoolAssignedResourceOwner),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckIdentityPoolExists(fullIdentityPoolResourceLabel),
 					resource.TestCheckResourceAttr(fullIdentityPoolResourceLabel, paramId, identityPoolId),
@@ -130,10 +131,11 @@ func TestAccIdentityPool(t *testing.T) {
 					resource.TestCheckResourceAttr(fullIdentityPoolResourceLabel, paramDescription, identityPoolDescription),
 					resource.TestCheckResourceAttr(fullIdentityPoolResourceLabel, paramIdentityClaim, identityPoolIdentityClaim),
 					resource.TestCheckResourceAttr(fullIdentityPoolResourceLabel, paramFilter, identityPoolFilter),
+					resource.TestCheckResourceAttr(fullIdentityPoolResourceLabel, paramAssignedResourceOwner, identityPoolAssignedResourceOwner),
 				),
 			},
 			{
-				Config: testAccCheckIdentityPoolConfig(mockServerUrl, identityPoolResourceLabel, identityPoolUpdatedDisplayName, identityPoolUpdatedDescription, identityPoolUpdatedIdentityClaim, identityPoolUpdatedFilter),
+				Config: testAccCheckIdentityPoolConfig(mockServerUrl, identityPoolResourceLabel, identityPoolUpdatedDisplayName, identityPoolUpdatedDescription, identityPoolUpdatedIdentityClaim, identityPoolUpdatedFilter, identityPoolAssignedResourceOwner),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckIdentityPoolExists(fullIdentityPoolResourceLabel),
 					resource.TestCheckResourceAttr(fullIdentityPoolResourceLabel, paramId, identityPoolId),
@@ -141,12 +143,16 @@ func TestAccIdentityPool(t *testing.T) {
 					resource.TestCheckResourceAttr(fullIdentityPoolResourceLabel, paramDescription, identityPoolUpdatedDescription),
 					resource.TestCheckResourceAttr(fullIdentityPoolResourceLabel, paramIdentityClaim, identityPoolUpdatedIdentityClaim),
 					resource.TestCheckResourceAttr(fullIdentityPoolResourceLabel, paramFilter, identityPoolUpdatedFilter),
+					resource.TestCheckResourceAttr(fullIdentityPoolResourceLabel, paramAssignedResourceOwner, identityPoolAssignedResourceOwner),
 				),
 			},
 			{
 				ResourceName:      fullIdentityPoolResourceLabel,
 				ImportState:       true,
 				ImportStateVerify: true,
+				// assigned_resource_owner is write-only at create and not returned by the API,
+				// so it is absent from imported state. Ignore it during ImportStateVerify.
+				ImportStateVerifyIgnore: []string{paramAssignedResourceOwner},
 				ImportStateIdFunc: func(state *terraform.State) (string, error) {
 					resources := state.RootModule().Resources
 					poolId := resources[fullIdentityPoolResourceLabel].Primary.ID
@@ -186,7 +192,7 @@ func testAccCheckIdentityPoolDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccCheckIdentityPoolConfig(mockServerUrl, identityPoolResourceLabel, identityPoolDisplayName, identityPoolDescription, identityPoolPrincipalClaim, identityPoolFilter string) string {
+func testAccCheckIdentityPoolConfig(mockServerUrl, identityPoolResourceLabel, identityPoolDisplayName, identityPoolDescription, identityPoolPrincipalClaim, identityPoolFilter, identityPoolAssignedResourceOwner string) string {
 	return fmt.Sprintf(`
 	provider "confluent" {
 		endpoint = "%s"
@@ -195,12 +201,13 @@ func testAccCheckIdentityPoolConfig(mockServerUrl, identityPoolResourceLabel, id
         identity_provider {
             id = "%s"
         }
-		display_name    = "%s"
-		description     = "%s"
-		identity_claim  = "%s"
-		filter          = %q
+		display_name            = "%s"
+		description             = "%s"
+		identity_claim          = "%s"
+		filter                  = %q
+		assigned_resource_owner = "%s"
 	}
-	`, mockServerUrl, identityPoolResourceLabel, identityProviderId, identityPoolDisplayName, identityPoolDescription, identityPoolPrincipalClaim, identityPoolFilter)
+	`, mockServerUrl, identityPoolResourceLabel, identityProviderId, identityPoolDisplayName, identityPoolDescription, identityPoolPrincipalClaim, identityPoolFilter, identityPoolAssignedResourceOwner)
 }
 
 func testAccCheckIdentityPoolExists(n string) resource.TestCheckFunc {
