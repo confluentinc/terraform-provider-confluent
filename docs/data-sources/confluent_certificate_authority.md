@@ -49,3 +49,4 @@ In addition to the preceding arguments, the following attributes are exported:
 - `crl_source` - (Optional String) The source specifies whether the Certificate Revocation List (CRL) is updated from either local file uploaded (LOCAL) or from url of CRL (URL). Accepted values are `LOCAL` and `URL`.
 - `crl_url` - (Optional String) The url from which to fetch the CRL for the certificate authority if crl_source is URL.
 - `crl_updated_at` - (Optional String) The timestamp for when CRL was last updated, for example, `2017-07-21T17:32:28Z`.
+- `require_crl_on_client_certificate` - (Optional Boolean) Whether CRL (Certificate Revocation List) validation is required on client certificates.
