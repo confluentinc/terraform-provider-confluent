@@ -433,20 +433,16 @@ func testAccCheckMaterializedTableDestroy(s *terraform.State, url string) error 
 }
 
 // TestAccFlinkMaterializedTableQueryCanonicalization verifies that when the user
-// submits a query containing the three canonicalization patterns observed in
-// INC-10944 — lowercase keywords (`as`), short type aliases (`INT`), and an
-// aggregate-over-window expression — the resource:
-//   - applies successfully (status-phase polling completes regardless of how the
-//     API rewrites the query text),
-//   - stores the user's original query verbatim in state (Solution B preserves it
-//     because normalizeFlinkQuery deems the API's canonical form equivalent), and
+// submits a query containing the canonicalization patterns observed in
+// INC-10944, the resource:
+//   - applies successfully,
+//   - stores the user's original query verbatim in state, and
 //   - shows no drift on a subsequent plan against the same config.
 const flinkMaterializedTableCanonicalDisplayName = "table_canon"
 
 var createFlinkMaterializedTableCanonicalPath = fmt.Sprintf("/sql/v1/organizations/%s/environments/%s/databases/%s/materialized-tables", flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkMaterializedTableDatabase)
 var readFlinkMaterializedTableCanonicalPath = fmt.Sprintf("/sql/v1/organizations/%s/environments/%s/databases/%s/materialized-tables/%s", flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkMaterializedTableDatabase, flinkMaterializedTableCanonicalDisplayName)
 
-// lowercase + INT alias + no parens around the SUM(...) OVER w expression.
 const userSubmittedCanonicalizationQuery = "select order_id, cast(price as int) as p, sum(price) over w as running_total from examples.marketplace.orders window w as (partition by customer_id order by order_id rows between unbounded preceding and current row)"
 
 func TestAccFlinkMaterializedTableQueryCanonicalization(t *testing.T) {

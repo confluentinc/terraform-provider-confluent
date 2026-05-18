@@ -454,13 +454,7 @@ func setMaterializedTableAttributes(d *schema.ResourceData, materializedTable fl
 		return nil, err
 	}
 	// Preserve the user's original query in state whenever the API's canonical form
-	// is semantically equivalent (per normalizeFlinkQuery). The Flink gateway rewrites
-	// queries on parse — uppercases keywords, expands type aliases like INT→INTEGER,
-	// and inserts parens around some expressions — and the normalizer can't fully
-	// undo every rewrite (notably the inserted parens). Storing the user's text when
-	// it normalizes to the same value avoids persistent cosmetic drift on plan; an
-	// out-of-band change to a different query still trips the inequality and updates
-	// state correctly. Same pattern as the AWS provider uses for `policy` JSON.
+	// is semantically equivalent (per normalizeFlinkQuery)
 	apiQuery := materializedTable.Spec.GetQuery()
 	if existing := d.Get(paramQuery).(string); existing == "" || normalizeFlinkQuery(existing) != normalizeFlinkQuery(apiQuery) {
 		if err := d.Set(paramQuery, apiQuery); err != nil {
@@ -673,9 +667,6 @@ func materializedTableDelete(ctx context.Context, d *schema.ResourceData, meta i
 		return diag.Errorf("error deleting Flink Materialized Table %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
-	// Phase 2: the DELETE was accepted, but the resource may remain briefly visible
-	// via GET due to API-side eventual consistency. Poll until GET returns 404 so a
-	// subsequent `terraform apply` recreating an MT with the same name doesn't race.
 	if err := waitForFlinkMaterializedTableToBeDeleted(ctx, flinkRestClient, organizationId, environmentId, kafkaId, tableName, meta.(*Client).isAcceptanceTestMode); err != nil {
 		return diag.Errorf("error waiting for Flink Materialized Table %q to be deleted: %s", d.Id(), createDescriptiveError(err))
 	}
@@ -1079,16 +1070,9 @@ func suppressFlinkQueryDiff(k, old, new string, d *schema.ResourceData) bool {
 }
 
 // flinkQueryKeywordsToUppercase is the set of SQL keywords and common aggregate
-// function names the Flink gateway uppercases on parse. Words are matched on
-// boundaries so we don't clobber identifiers or string-literal contents.
-// Multi-word phrases like `GROUP BY` are handled by listing each word
-// separately (GROUP, BY) so they match in either position.
+// function names the Flink gateway uppercases on parse.
 var flinkQueryKeywordsToUppercase = regexp.MustCompile(`(?i)\b(SELECT|FROM|WHERE|GROUP|ORDER|BY|HAVING|JOIN|LEFT|RIGHT|INNER|OUTER|FULL|ON|AS|AND|OR|NOT|IN|IS|NULL|TRUE|FALSE|CASE|WHEN|THEN|ELSE|END|CAST|UNION|ALL|DISTINCT|PARTITION|OVER|WINDOW|ROWS|RANGE|BETWEEN|UNBOUNDED|PRECEDING|FOLLOWING|CURRENT|ROW|INTERVAL|SUM|COUNT|AVG|MIN|MAX|COALESCE|NULLIF)\b`)
 
-// flinkQueryTypeAliases maps short type names the user may write to the canonical
-// form the Flink gateway returns. Lookup is case-insensitive at the regex level
-// (already uppercased by flinkQueryKeywordsToUppercase) so only the uppercase
-// alias needs to appear here.
 var flinkQueryTypeAliases = map[string]string{
 	"INT":     "INTEGER",
 	"BIGINT":  "BIGINT",
@@ -1098,15 +1082,8 @@ var flinkQueryTypeAliases = map[string]string{
 
 var flinkQueryTypeAliasRegex = regexp.MustCompile(`(?i)\b(INT|BIGINT|VARCHAR|CHAR)\b`)
 
-// flinkQueryWhitespaceNextToParen collapses whitespace adjacent to `(` and `)`,
-// which the Flink gateway strips during canonicalization.
 var flinkQueryWhitespaceNextToParen = regexp.MustCompile(`\s*([()])\s*`)
 
-// flinkQueryStripParensAroundWindowExpr strips parens the Flink gateway inserts
-// around aggregate-over-window expressions like `(SUM(x) OVER w)` or
-// `(SUM(x+y) OVER (PARTITION BY z))`. Matches a paren group whose body contains
-// `OVER` followed by either a window alias or a windowing block, with at most
-// one level of nested parens in the body (RE2 has no recursion).
 var flinkQueryStripParensAroundWindowExpr = regexp.MustCompile(`\(((?:[^()]|\([^()]*\))*?\s+OVER\s+(?:\w+|\([^()]*\)))\)`)
 
 func normalizeFlinkQuery(query string) string {
@@ -1119,9 +1096,7 @@ func normalizeFlinkQuery(query string) string {
 		}
 		return s
 	})
-	// Strip parens around aggregate-over-window expressions BEFORE collapsing
-	// whitespace adjacent to parens — the paren-strip regex relies on the `\s+`
-	// around OVER, which the whitespace-near-paren stripping would remove.
+	// Strip parens around aggregate-over-window expressions
 	for {
 		replaced := flinkQueryStripParensAroundWindowExpr.ReplaceAllString(query, "$1")
 		if replaced == query {
