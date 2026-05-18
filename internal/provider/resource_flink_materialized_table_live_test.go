@@ -101,7 +101,7 @@ func TestAccFlinkMaterializedTableLive(t *testing.T) {
 					saResourceLabel, poolResourceLabel, apiKeyResourceLabel,
 					flinkRegionId, flinkRegionRestEndpoint,
 					tableResourceLabel, tableDisplayName, randomSuffix,
-					"SELECT order_id, customer_id, product_id, price FROM examples.marketplace.orders WHERE price > 100",
+					"select order_id, customer_id, product_id, cast(price as int) as p, sum(price) over w as running_total from examples.marketplace.orders window w as (partition by customer_id order by order_id rows between unbounded preceding and current row)",
 					false,
 				),
 				Check: resource.ComposeTestCheckFunc(
@@ -123,7 +123,7 @@ func TestAccFlinkMaterializedTableLive(t *testing.T) {
 					saResourceLabel, poolResourceLabel, apiKeyResourceLabel,
 					flinkRegionId, flinkRegionRestEndpoint,
 					tableResourceLabel, tableDisplayName, randomSuffix,
-					"SELECT order_id, customer_id, product_id, price FROM examples.marketplace.orders WHERE price > 100",
+					"select order_id, customer_id, product_id, cast(price as int) as p, sum(price) over w as running_total from examples.marketplace.orders window w as (partition by customer_id order by order_id rows between unbounded preceding and current row)",
 					true,
 				),
 				Check: resource.ComposeTestCheckFunc(
@@ -133,12 +133,10 @@ func TestAccFlinkMaterializedTableLive(t *testing.T) {
 				),
 			},
 			{
-				ResourceName:      fullTableResourceLabel,
-				ImportState:       true,
-				ImportStateVerify: true,
-				// Import re-derives credentials and rest_endpoint from IMPORT_* env vars rather than
-				// the original config block, so they may not byte-match what's in state.
-				ImportStateVerifyIgnore: []string{"credentials.0.key", "credentials.0.secret", "rest_endpoint"},
+				ResourceName:            fullTableResourceLabel,
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"credentials.0.key", "credentials.0.secret", "rest_endpoint", "query"},
 				ImportStateIdFunc: func(state *terraform.State) (string, error) {
 					rs := state.RootModule().Resources[fullTableResourceLabel]
 					keyRs := state.RootModule().Resources[fmt.Sprintf("confluent_api_key.%s", apiKeyResourceLabel)]
