@@ -86,6 +86,8 @@ func TestAccCatalogIntegrationLive(t *testing.T) {
 	piDisplayName := fmt.Sprintf("tf-live-pi-for-ci-%d", randomSuffix)
 	ciDisplayName := fmt.Sprintf("tf-live-catalog-integration-%d", randomSuffix)
 	ciDisplayNameUpdated := fmt.Sprintf("tf-live-catalog-integration-updated-%d", randomSuffix)
+	customDatabase := fmt.Sprintf("tf-live-custom-db-%d", randomSuffix)
+	customDatabaseUpdated := fmt.Sprintf("tf-live-custom-db-updated-%d", randomSuffix)
 	piResourceLabel := "test_live_pi_for_ci"
 	ciResourceLabel := "test_live_catalog_integration"
 
@@ -95,7 +97,7 @@ func TestAccCatalogIntegrationLive(t *testing.T) {
 		CheckDestroy:      testAccCheckCatalogIntegrationLiveDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckCatalogIntegrationLiveConfig(endpoint, piResourceLabel, ciResourceLabel, piDisplayName, ciDisplayName, environmentId, kafkaClusterId, awsIamRoleArn, apiKey, apiSecret, tableflowApiKey, tableflowApiSecret),
+				Config: testAccCheckCatalogIntegrationLiveConfig(endpoint, piResourceLabel, ciResourceLabel, piDisplayName, ciDisplayName, customDatabase, environmentId, kafkaClusterId, awsIamRoleArn, apiKey, apiSecret, tableflowApiKey, tableflowApiSecret),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckCatalogIntegrationLiveExists(fmt.Sprintf("confluent_catalog_integration.%s", ciResourceLabel)),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_catalog_integration.%s", ciResourceLabel), "display_name", ciDisplayName),
@@ -103,6 +105,7 @@ func TestAccCatalogIntegrationLive(t *testing.T) {
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_catalog_integration.%s", ciResourceLabel), "kafka_cluster.0.id", kafkaClusterId),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_catalog_integration.%s", ciResourceLabel), "aws_glue.#", "1"),
 					resource.TestCheckResourceAttrSet(fmt.Sprintf("confluent_catalog_integration.%s", ciResourceLabel), "aws_glue.0.provider_integration_id"),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_catalog_integration.%s", ciResourceLabel), "aws_glue.0.custom_database", customDatabase),
 					resource.TestCheckResourceAttrSet(fmt.Sprintf("confluent_catalog_integration.%s", ciResourceLabel), "id"),
 				),
 			},
@@ -120,12 +123,13 @@ func TestAccCatalogIntegrationLive(t *testing.T) {
 				},
 			},
 			{
-				Config: testAccCheckCatalogIntegrationLiveConfig(endpoint, piResourceLabel, ciResourceLabel, piDisplayName, ciDisplayNameUpdated, environmentId, kafkaClusterId, awsIamRoleArn, apiKey, apiSecret, tableflowApiKey, tableflowApiSecret),
+				Config: testAccCheckCatalogIntegrationLiveConfig(endpoint, piResourceLabel, ciResourceLabel, piDisplayName, ciDisplayNameUpdated, customDatabaseUpdated, environmentId, kafkaClusterId, awsIamRoleArn, apiKey, apiSecret, tableflowApiKey, tableflowApiSecret),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckCatalogIntegrationLiveExists(fmt.Sprintf("confluent_catalog_integration.%s", ciResourceLabel)),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_catalog_integration.%s", ciResourceLabel), "display_name", ciDisplayNameUpdated),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_catalog_integration.%s", ciResourceLabel), "environment.0.id", environmentId),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_catalog_integration.%s", ciResourceLabel), "kafka_cluster.0.id", kafkaClusterId),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_catalog_integration.%s", ciResourceLabel), "aws_glue.0.custom_database", customDatabaseUpdated),
 				),
 			},
 			{
@@ -176,7 +180,7 @@ func testAccCheckCatalogIntegrationLiveExists(resourceName string) resource.Test
 	}
 }
 
-func testAccCheckCatalogIntegrationLiveConfig(endpoint, piResourceLabel, ciResourceLabel, piDisplayName, ciDisplayName, environmentId, kafkaClusterId, awsIamRoleArn, apiKey, apiSecret, tableflowApiKey, tableflowApiSecret string) string {
+func testAccCheckCatalogIntegrationLiveConfig(endpoint, piResourceLabel, ciResourceLabel, piDisplayName, ciDisplayName, customDatabase, environmentId, kafkaClusterId, awsIamRoleArn, apiKey, apiSecret, tableflowApiKey, tableflowApiSecret string) string {
 	return fmt.Sprintf(`
 	provider "confluent" {
 		endpoint         = "%s"
@@ -206,11 +210,12 @@ func testAccCheckCatalogIntegrationLiveConfig(endpoint, piResourceLabel, ciResou
 		}
 		aws_glue {
 			provider_integration_id = confluent_provider_integration.%s.id
+			custom_database = "%s"
 		}
 		credentials {
 			key    = "%s"
 			secret = "%s"
 		}
 	}
-	`, endpoint, apiKey, apiSecret, piResourceLabel, piDisplayName, environmentId, awsIamRoleArn, ciResourceLabel, ciDisplayName, environmentId, kafkaClusterId, piResourceLabel, tableflowApiKey, tableflowApiSecret)
+	`, endpoint, apiKey, apiSecret, piResourceLabel, piDisplayName, environmentId, awsIamRoleArn, ciResourceLabel, ciDisplayName, environmentId, kafkaClusterId, piResourceLabel, customDatabase, tableflowApiKey, tableflowApiSecret)
 }
