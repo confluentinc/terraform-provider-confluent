@@ -637,7 +637,7 @@ func materializedTableDelete(ctx context.Context, d *schema.ResourceData, meta i
 	// table's underlying SQL statement is still transitioning (e.g. just-created, just-
 	// updated, currently stopping). Poll-and-retry until the pending operation clears or
 	// the timeout is reached.
-	deleteTimeout := 5 * time.Minute
+	deleteTimeout := 5 * time.Hour
 	deleteInterval := 5 * time.Second
 	deadline := time.Now().Add(deleteTimeout)
 	var resp *http.Response
@@ -817,7 +817,7 @@ func materializedTableUpdate(ctx context.Context, d *schema.ResourceData, meta i
 // query matches the expected value (after normalization) or a timeout is reached.
 func waitForMaterializedTableQueryUpdate(ctx context.Context, c *FlinkRestClient, orgId, envId, kafkaId, tableName, expectedQuery string) error {
 	expectedNormalized := normalizeFlinkQuery(expectedQuery)
-	timeout := 5 * time.Minute
+	timeout := 5 * time.Hour
 	interval := 5 * time.Second
 	deadline := time.Now().Add(timeout)
 
