@@ -60,6 +60,11 @@ func flinkMaterializedTableResource() *schema.Resource {
 			paramColumns:     columnsSchema(),
 			paramConstraints: constraintsSchema(),
 		},
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(materializedTableAPICreateTimeout),
+			Update: schema.DefaultTimeout(materializedTableAPIUpdateTimeout),
+			Delete: schema.DefaultTimeout(materializedTableAPIDeleteTimeout),
+		},
 	}
 }
 
@@ -358,13 +363,10 @@ func materializedTableCreate(ctx context.Context, d *schema.ResourceData, meta i
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating Flink Materialized Table %q: %s", d.Id(), createdMaterializedTableJson), map[string]interface{}{flinkMaterializedTableLoggingKey: d.Id()})
 
 	// The Flink API creates materialized tables asynchronously: the create call returns
-	// immediately, but the query is reflected in the GET response only after the
-	// underlying SQL statement has been registered. Poll until the API reflects the
-	// requested query so the subsequent Read returns a complete spec — otherwise
-	// post-apply plans show spurious drift on `query`. Unlike Update, a timeout here
-	// means there's no prior valid state to fall back on, so we surface it as a Create
-	// failure rather than a warning.
-	if err := waitForMaterializedTableQueryUpdate(ctx, flinkRestClient, organizationId, environmentId, kafkaId, displayName, query); err != nil {
+	// immediately while the underlying SQL statement is still being registered against
+	// the gateway. Poll status.phase until the table reaches its target phase (RUNNING
+	// or STOPPED depending on the requested stopped flag).
+	if err := waitForFlinkMaterializedTableToProvision(ctx, flinkRestClient, organizationId, environmentId, kafkaId, displayName, stopped, meta.(*Client).isAcceptanceTestMode); err != nil {
 		return diag.Errorf("error creating Flink Materialized Table %q: %s", d.Id(), createDescriptiveError(err))
 	}
 
@@ -451,8 +453,19 @@ func setMaterializedTableAttributes(d *schema.ResourceData, materializedTable fl
 	if err := setStringAttributeInListBlockOfSizeOne(paramKafkaCluster, paramId, materializedTable.Spec.GetKafkaClusterId(), d); err != nil {
 		return nil, err
 	}
-	if err := d.Set(paramQuery, normalizeFlinkQuery(materializedTable.Spec.GetQuery())); err != nil {
-		return nil, err
+	// Preserve the user's original query in state whenever the API's canonical form
+	// is semantically equivalent (per normalizeFlinkQuery). The Flink gateway rewrites
+	// queries on parse — uppercases keywords, expands type aliases like INT→INTEGER,
+	// and inserts parens around some expressions — and the normalizer can't fully
+	// undo every rewrite (notably the inserted parens). Storing the user's text when
+	// it normalizes to the same value avoids persistent cosmetic drift on plan; an
+	// out-of-band change to a different query still trips the inequality and updates
+	// state correctly. Same pattern as the AWS provider uses for `policy` JSON.
+	apiQuery := materializedTable.Spec.GetQuery()
+	if existing := d.Get(paramQuery).(string); existing == "" || normalizeFlinkQuery(existing) != normalizeFlinkQuery(apiQuery) {
+		if err := d.Set(paramQuery, apiQuery); err != nil {
+			return nil, err
+		}
 	}
 
 	if !c.isMetadataSetInProviderBlock {
@@ -660,6 +673,13 @@ func materializedTableDelete(ctx context.Context, d *schema.ResourceData, meta i
 		return diag.Errorf("error deleting Flink Materialized Table %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
+	// Phase 2: the DELETE was accepted, but the resource may remain briefly visible
+	// via GET due to API-side eventual consistency. Poll until GET returns 404 so a
+	// subsequent `terraform apply` recreating an MT with the same name doesn't race.
+	if err := waitForFlinkMaterializedTableToBeDeleted(ctx, flinkRestClient, organizationId, environmentId, kafkaId, tableName, meta.(*Client).isAcceptanceTestMode); err != nil {
+		return diag.Errorf("error waiting for Flink Materialized Table %q to be deleted: %s", d.Id(), createDescriptiveError(err))
+	}
+
 	tflog.Debug(ctx, fmt.Sprintf("Finished deleting Flink Materialized Table %q", d.Id()), map[string]interface{}{flinkMaterializedTableLoggingKey: d.Id()})
 
 	return nil
@@ -801,39 +821,15 @@ func materializedTableUpdate(ctx context.Context, d *schema.ResourceData, meta i
 	tflog.Debug(ctx, fmt.Sprintf("Finished updating Flink Materialized Table %q: %s", d.Id(), updatedTableJson), map[string]interface{}{flinkMaterializedTableLoggingKey: d.Id()})
 
 	// The Flink API updates materialized tables asynchronously: the update call returns
-	// immediately with the old state, and the new query takes effect shortly after.
-	// Poll until the API reflects the updated query to avoid storing stale state.
-	if d.HasChange(paramQuery) {
-		expectedQuery := d.Get(paramQuery).(string)
-		if err := waitForMaterializedTableQueryUpdate(ctx, flinkRestClient, organizationId, environmentId, kafkaId, name, expectedQuery); err != nil {
-			tflog.Warn(ctx, fmt.Sprintf("Timed out waiting for Flink Materialized Table %q query to converge: %s", d.Id(), err))
-		}
+	// immediately while the underlying SQL statement transitions through PENDING /
+	// STOPPING before settling. Poll status.phase until it reaches the target phase
+	// matching the desired stopped flag.
+	toStop := d.Get(paramStopped).(bool)
+	if err := waitForFlinkMaterializedTableToBeUpdated(ctx, flinkRestClient, organizationId, environmentId, kafkaId, name, toStop, meta.(*Client).isAcceptanceTestMode); err != nil {
+		return diag.Errorf("error updating Flink Materialized Table %q: %s", d.Id(), createDescriptiveError(err))
 	}
 
 	return materializedTableRead(ctx, d, meta)
-}
-
-// waitForMaterializedTableQueryUpdate polls the API until the materialized table's
-// query matches the expected value (after normalization) or a timeout is reached.
-func waitForMaterializedTableQueryUpdate(ctx context.Context, c *FlinkRestClient, orgId, envId, kafkaId, tableName, expectedQuery string) error {
-	expectedNormalized := normalizeFlinkQuery(expectedQuery)
-	timeout := 5 * time.Minute
-	interval := 5 * time.Second
-	deadline := time.Now().Add(timeout)
-
-	for time.Now().Before(deadline) {
-		table, _, err := executeMaterializedTableRead(c.apiContext(ctx), c, orgId, envId, kafkaId, tableName)
-		if err == nil {
-			actualNormalized := normalizeFlinkQuery(table.Spec.GetQuery())
-			if actualNormalized == expectedNormalized {
-				tflog.Debug(ctx, fmt.Sprintf("Flink Materialized Table %q query has converged", tableName))
-				return nil
-			}
-			tflog.Debug(ctx, fmt.Sprintf("Waiting for Flink Materialized Table %q query to converge (expected: %q, actual: %q)", tableName, expectedNormalized, actualNormalized))
-		}
-		time.Sleep(interval)
-	}
-	return fmt.Errorf("timed out after %s waiting for query to update", timeout)
 }
 
 func createFlinkMaterializedTableId(environmentId, kafkaId, tableName string) string {
@@ -1075,13 +1071,64 @@ func toInterfaceSlice(strs []string) []interface{} {
 	return out
 }
 
-// suppressFlinkQueryDiff suppresses spurious cosmetic differences (backticks, whitespace, formatting)
+// suppressFlinkQueryDiff suppresses spurious cosmetic differences between the
+// user-submitted query and what the Flink gateway returns after canonicalization
+// (backticks, whitespace, keyword case, type aliases).
 func suppressFlinkQueryDiff(k, old, new string, d *schema.ResourceData) bool {
 	return normalizeFlinkQuery(old) == normalizeFlinkQuery(new)
 }
 
+// flinkQueryKeywordsToUppercase is the set of SQL keywords and common aggregate
+// function names the Flink gateway uppercases on parse. Words are matched on
+// boundaries so we don't clobber identifiers or string-literal contents.
+// Multi-word phrases like `GROUP BY` are handled by listing each word
+// separately (GROUP, BY) so they match in either position.
+var flinkQueryKeywordsToUppercase = regexp.MustCompile(`(?i)\b(SELECT|FROM|WHERE|GROUP|ORDER|BY|HAVING|JOIN|LEFT|RIGHT|INNER|OUTER|FULL|ON|AS|AND|OR|NOT|IN|IS|NULL|TRUE|FALSE|CASE|WHEN|THEN|ELSE|END|CAST|UNION|ALL|DISTINCT|PARTITION|OVER|WINDOW|ROWS|RANGE|BETWEEN|UNBOUNDED|PRECEDING|FOLLOWING|CURRENT|ROW|INTERVAL|SUM|COUNT|AVG|MIN|MAX|COALESCE|NULLIF)\b`)
+
+// flinkQueryTypeAliases maps short type names the user may write to the canonical
+// form the Flink gateway returns. Lookup is case-insensitive at the regex level
+// (already uppercased by flinkQueryKeywordsToUppercase) so only the uppercase
+// alias needs to appear here.
+var flinkQueryTypeAliases = map[string]string{
+	"INT":     "INTEGER",
+	"BIGINT":  "BIGINT",
+	"VARCHAR": "STRING",
+	"CHAR":    "STRING",
+}
+
+var flinkQueryTypeAliasRegex = regexp.MustCompile(`(?i)\b(INT|BIGINT|VARCHAR|CHAR)\b`)
+
+// flinkQueryWhitespaceNextToParen collapses whitespace adjacent to `(` and `)`,
+// which the Flink gateway strips during canonicalization.
+var flinkQueryWhitespaceNextToParen = regexp.MustCompile(`\s*([()])\s*`)
+
+// flinkQueryStripParensAroundWindowExpr strips parens the Flink gateway inserts
+// around aggregate-over-window expressions like `(SUM(x) OVER w)` or
+// `(SUM(x+y) OVER (PARTITION BY z))`. Matches a paren group whose body contains
+// `OVER` followed by either a window alias or a windowing block, with at most
+// one level of nested parens in the body (RE2 has no recursion).
+var flinkQueryStripParensAroundWindowExpr = regexp.MustCompile(`\(((?:[^()]|\([^()]*\))*?\s+OVER\s+(?:\w+|\([^()]*\)))\)`)
+
 func normalizeFlinkQuery(query string) string {
 	query = strings.ReplaceAll(query, "`", "")
 	query = regexp.MustCompile(`\s+`).ReplaceAllString(query, " ")
+	query = flinkQueryKeywordsToUppercase.ReplaceAllStringFunc(query, strings.ToUpper)
+	query = flinkQueryTypeAliasRegex.ReplaceAllStringFunc(query, func(s string) string {
+		if canonical, ok := flinkQueryTypeAliases[strings.ToUpper(s)]; ok {
+			return canonical
+		}
+		return s
+	})
+	// Strip parens around aggregate-over-window expressions BEFORE collapsing
+	// whitespace adjacent to parens — the paren-strip regex relies on the `\s+`
+	// around OVER, which the whitespace-near-paren stripping would remove.
+	for {
+		replaced := flinkQueryStripParensAroundWindowExpr.ReplaceAllString(query, "$1")
+		if replaced == query {
+			break
+		}
+		query = replaced
+	}
+	query = flinkQueryWhitespaceNextToParen.ReplaceAllString(query, "$1")
 	return strings.TrimSpace(query)
 }
