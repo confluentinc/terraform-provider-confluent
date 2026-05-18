@@ -67,8 +67,8 @@
     "query": "SELECT user_id, product_id, price, quantity FROM orders WHERE price > 100;"
   },
   "status": {
-    "phase": "RUNNING",
-    "detail": "Materialized table is running.",
+    "phase": "STOPPED",
+    "detail": "Materialized table is stopped.",
     "warnings": [],
     "creation_statement": "CREATE OR ALTER MATERIALIZED TABLE high-value-orders AS SELECT user_id, product_id, price, quantity FROM orders WHERE price > 100;",
     "scaling_status": {},
