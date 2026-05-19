@@ -87,7 +87,6 @@ func TestAccFlinkMaterializedTableLive(t *testing.T) {
 	// Prevent IMPORT_* env vars set in ImportStateIdFunc from leaking to other parallel tests.
 	t.Cleanup(unsetFlinkMaterializedTableImportEnv)
 
-.
 	queryInitial := "select order_id, customer_id, product_id, cast(price as int) as p, sum(price) over w as running_total from examples.marketplace.orders window w as (partition by customer_id order by order_id rows between unbounded preceding and current row)"
 	queryUpdated := "select order_id, customer_id, cast(price as int) as p, sum(price) over w as total from examples.marketplace.orders window w as (partition by customer_id order by order_id rows between unbounded preceding and current row)"
 
