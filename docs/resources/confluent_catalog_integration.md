@@ -88,17 +88,20 @@ The following arguments are supported:
 - `display_name` - (Required String) The name of the catalog integration.
 - `aws_glue` (Optional Configuration Block) supports the following (see [Integrate Tableflow with the AWS Glue Catalog in Confluent Cloud](https://docs.confluent.io/cloud/current/topics/tableflow/how-to-guides/catalog-integration/integrate-with-aws-glue-catalog.html) for more details):
     - `provider_integration_id` - (Required String) The provider integration id.
+    - `custom_database` - (Optional String) The custom database name to use in AWS Glue.
 - `snowflake` (Optional Configuration Block) supports the following (see [Integrate Tableflow with Snowflake Open Catalog or Apache Polaris in Confluent Cloud](https://docs.confluent.io/cloud/current/topics/tableflow/how-to-guides/catalog-integration/integrate-with-snowflake-open-catalog-or-apache-polaris.html) for more details):
     - `endpoint` - (Required String) The catalog integration connection endpoint for Snowflake Open Catalog.
     - `client_id` - (Required String, Sensitive) The client ID of the catalog integration.
     - `client_secret` - (Required String, Sensitive) The client secret of the catalog integration.
     - `warehouse` - (Required String) Warehouse name of the Snowflake Open Catalog, for example, `catalog-name`.
     - `allowed_scope` - (Required String) Allowed scope of the Snowflake Open Catalog.
+    - `custom_namespace` - (Optional String) The custom namespace to use in Snowflake Open Catalog.
 - `unity` (Optional Configuration Block) supports the following (see [Integrate Tableflow with Unity Catalog in Confluent Cloud](https://docs.confluent.io/cloud/current/topics/tableflow/how-to-guides/catalog-integration/integrate-with-unity-catalog.html) for more details):
     - `workspace_endpoint` - (Required String) The Databricks workspace URL associated with the Unity Catalog, for example, `https://user1.cloud.databricks.com`.
     - `catalog_name` - (Required String) The name of the catalog within Unity Catalog.
     - `client_id` - (Required String, Sensitive) The OAuth client ID used to authenticate with the Unity Catalog.
     - `client_secret` - (Required String, Sensitive) The OAuth client secret used for authentication with the Unity Catalog.
+    - `custom_schema` - (Optional String) The custom schema name to use in Unity Catalog.
 - `credentials` (Optional Configuration Block, ignored when provider-level Tableflow API key is set. See **note** below) supports the following:
     - `key` - (Required String) The Tableflow API Key.
     - `secret` - (Required String, Sensitive) The Tableflow API Secret.
