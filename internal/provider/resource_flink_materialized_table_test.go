@@ -431,3 +431,155 @@ func testAccCheckMaterializedTableDestroy(s *terraform.State, url string) error 
 	}
 	return nil
 }
+
+// TestAccFlinkMaterializedTableQueryCanonicalization verifies that when the user
+// submits a query containing a known canonicalization patterns, the resource applies successfully,
+// stores the user's original query verbatim in state, and shows no drift on a subsequent plan against the same config.
+const flinkMaterializedTableCanonicalDisplayName = "table_canon"
+
+var createFlinkMaterializedTableCanonicalPath = fmt.Sprintf("/sql/v1/organizations/%s/environments/%s/databases/%s/materialized-tables", flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkMaterializedTableDatabase)
+var readFlinkMaterializedTableCanonicalPath = fmt.Sprintf("/sql/v1/organizations/%s/environments/%s/databases/%s/materialized-tables/%s", flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkMaterializedTableDatabase, flinkMaterializedTableCanonicalDisplayName)
+
+const userSubmittedCanonicalizationQuery = "select order_id, cast(price as int) as p, sum(price) over w as running_total from examples.marketplace.orders window w as (partition by customer_id order by order_id rows between unbounded preceding and current row)"
+const userSubmittedCanonicalizationQueryUpdated = "select order_id, cast(price as int) as p, sum(quantity) over w as total_quantity from examples.marketplace.orders window w as (partition by customer_id order by order_id rows between unbounded preceding and current row)"
+
+func TestAccFlinkMaterializedTableQueryCanonicalization(t *testing.T) {
+	ctx := context.Background()
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
+
+	mockTestServerUrl := wiremockContainer.URI
+	wiremockClient := wiremock.NewClient(mockTestServerUrl)
+	// nolint:errcheck
+	defer wiremockClient.Reset()
+	// nolint:errcheck
+	defer wiremockClient.ResetAllScenarios()
+
+	const canonScenario = "confluent_flink_materialized_table Canonicalization"
+	const createdState = "canonicalized MT has been created"
+	const updatedState = "canonicalized MT has been updated"
+	const deletedState = "canonicalized MT has been deleted"
+
+	createResponse, _ := os.ReadFile("../testdata/flink_materialized_table/create_canonicalized_materialized_table.json")
+	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(createFlinkMaterializedTableCanonicalPath)).
+		InScenario(canonScenario).
+		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
+		WillSetStateTo(createdState).
+		WillReturn(string(createResponse), contentTypeJSONHeader, http.StatusCreated))
+
+	readResponse, _ := os.ReadFile("../testdata/flink_materialized_table/read_canonicalized_materialized_table.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readFlinkMaterializedTableCanonicalPath)).
+		InScenario(canonScenario).
+		WhenScenarioStateIs(createdState).
+		WillReturn(string(readResponse), contentTypeJSONHeader, http.StatusOK))
+
+	updateResponse, _ := os.ReadFile("../testdata/flink_materialized_table/update_canonicalized_materialized_table.json")
+	_ = wiremockClient.StubFor(wiremock.Put(wiremock.URLPathEqualTo(readFlinkMaterializedTableCanonicalPath)).
+		InScenario(canonScenario).
+		WhenScenarioStateIs(createdState).
+		WillSetStateTo(updatedState).
+		WillReturn(string(updateResponse), contentTypeJSONHeader, http.StatusOK))
+
+	readUpdatedResponse, _ := os.ReadFile("../testdata/flink_materialized_table/read_canonicalized_updated_materialized_table.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readFlinkMaterializedTableCanonicalPath)).
+		InScenario(canonScenario).
+		WhenScenarioStateIs(updatedState).
+		WillReturn(string(readUpdatedResponse), contentTypeJSONHeader, http.StatusOK))
+
+	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(readFlinkMaterializedTableCanonicalPath)).
+		InScenario(canonScenario).
+		WhenScenarioStateIs(updatedState).
+		WillSetStateTo(deletedState).
+		WillReturn("", contentTypeJSONHeader, http.StatusNoContent))
+
+	deletedResponse, _ := os.ReadFile("../testdata/flink_materialized_table/read_deleted_materialized_table.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readFlinkMaterializedTableCanonicalPath)).
+		InScenario(canonScenario).
+		WhenScenarioStateIs(deletedState).
+		WillReturn(string(deletedResponse), contentTypeJSONHeader, http.StatusNotFound))
+
+	resourceLabel := "canon"
+	fullLabel := fmt.Sprintf("confluent_flink_materialized_table.%s", resourceLabel)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy: func(s *terraform.State) error {
+			return testAccCheckMaterializedTableDestroy(s, mockTestServerUrl)
+		},
+		Steps: []resource.TestStep{
+			{
+				// Create with the lowercase user query; fixture returns API-canonical
+				// uppercase form. State must hold the lowercase verbatim.
+				Config: testAccCheckMaterializedTableCanonicalConfig(mockTestServerUrl, resourceLabel, userSubmittedCanonicalizationQuery),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMaterializedTableExists(fullLabel),
+					resource.TestCheckResourceAttr(fullLabel, paramQuery, userSubmittedCanonicalizationQuery),
+				),
+			},
+			{
+				// Re-apply with the same config. Any cosmetic drift surfaced by
+				// the diff machinery would cause this step to fail with
+				// "After applying this test step, the plan was not empty".
+				Config:   testAccCheckMaterializedTableCanonicalConfig(mockTestServerUrl, resourceLabel, userSubmittedCanonicalizationQuery),
+				PlanOnly: true,
+			},
+			{
+				// Update to a different lowercase user query; fixture returns the
+				// new API-canonical uppercase form. State must hold the new
+				// lowercase verbatim — i.e. the empty-state guard must still skip
+				// on the post-Update Read.
+				Config: testAccCheckMaterializedTableCanonicalConfig(mockTestServerUrl, resourceLabel, userSubmittedCanonicalizationQueryUpdated),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMaterializedTableExists(fullLabel),
+					resource.TestCheckResourceAttr(fullLabel, paramQuery, userSubmittedCanonicalizationQueryUpdated),
+				),
+			},
+			{
+				// Re-apply with the updated config — no drift after Update either.
+				Config:   testAccCheckMaterializedTableCanonicalConfig(mockTestServerUrl, resourceLabel, userSubmittedCanonicalizationQueryUpdated),
+				PlanOnly: true,
+			},
+		},
+	})
+}
+
+func testAccCheckMaterializedTableCanonicalConfig(mockServerUrl, resourceLabel, query string) string {
+	return fmt.Sprintf(`
+	provider "confluent" {
+		endpoint = "%s"
+	}
+
+	resource "confluent_flink_materialized_table" "%s" {
+      credentials {
+        key = "%s"
+        secret = "%s"
+      }
+      rest_endpoint = "%s"
+      principal {
+         id = "%s"
+      }
+      organization {
+         id = "%s"
+      }
+      environment {
+         id = "%s"
+      }
+      compute_pool {
+         id = "%s"
+      }
+      display_name = "%s"
+      kafka_cluster {
+        id = "%s"
+      }
+      stopped = false
+      query = "%s"
+}
+	`, mockServerUrl, resourceLabel, kafkaApiKey, kafkaApiSecret, mockServerUrl, flinkPrincipalIdTest,
+		flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkComputePoolIdTest,
+		flinkMaterializedTableCanonicalDisplayName, flinkMaterializedTableDatabase, query)
+}
