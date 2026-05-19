@@ -1301,17 +1301,22 @@ func flinkStatementUpdatingStatus(ctx context.Context, c *FlinkRestClient, state
 	}
 }
 
-func waitForFlinkMaterializedTableToProvision(ctx context.Context, c *FlinkRestClient, orgId, environmentId, kafkaId, tableName string, wantStopped bool, isAcceptanceTestMode bool) error {
+func waitForFlinkMaterializedTableToProvision(ctx context.Context, c *FlinkRestClient, orgId, environmentId, kafkaId, tableName string, wantStopped bool, isAcceptanceTestMode bool, timeout time.Duration) error {
 	delay, pollInterval := getDelayAndPollInterval(5*time.Second, 10*time.Second, isAcceptanceTestMode)
-	target := stateRunning
+	var pendingStates []string
+	var target string
 	if wantStopped {
+		pendingStates = []string{stateCreating, statePending, stateRunning, stateStopping, stateAltering}
 		target = stateStopped
+	} else {
+		pendingStates = []string{stateCreating, statePending, stateStopped, stateStopping, stateAltering}
+		target = stateRunning
 	}
 	stateConf := &resource.StateChangeConf{
-		Pending:      []string{stateCreating, statePending, stateAltering},
+		Pending:      pendingStates,
 		Target:       []string{target},
 		Refresh:      flinkMaterializedTableProvisionStatus(c.apiContext(ctx), c, orgId, environmentId, kafkaId, tableName),
-		Timeout:      materializedTableAPICreateTimeout,
+		Timeout:      timeout,
 		Delay:        delay,
 		PollInterval: pollInterval,
 	}
@@ -1323,7 +1328,7 @@ func waitForFlinkMaterializedTableToProvision(ctx context.Context, c *FlinkRestC
 	return nil
 }
 
-func waitForFlinkMaterializedTableToBeUpdated(ctx context.Context, c *FlinkRestClient, orgId, environmentId, kafkaId, tableName string, toStop bool, isAcceptanceTestMode bool) error {
+func waitForFlinkMaterializedTableToBeUpdated(ctx context.Context, c *FlinkRestClient, orgId, environmentId, kafkaId, tableName string, toStop bool, isAcceptanceTestMode bool, timeout time.Duration) error {
 	delay, pollInterval := getDelayAndPollInterval(5*time.Second, 10*time.Second, isAcceptanceTestMode)
 	var pendingStates, targetStates []string
 	var targetStatusMessage string
@@ -1342,7 +1347,7 @@ func waitForFlinkMaterializedTableToBeUpdated(ctx context.Context, c *FlinkRestC
 		Pending:      pendingStates,
 		Target:       targetStates,
 		Refresh:      flinkMaterializedTableUpdatingStatus(c.apiContext(ctx), c, orgId, environmentId, kafkaId, tableName, targetStatusMessage),
-		Timeout:      materializedTableAPIUpdateTimeout,
+		Timeout:      timeout,
 		Delay:        delay,
 		PollInterval: pollInterval,
 	}
@@ -1354,13 +1359,13 @@ func waitForFlinkMaterializedTableToBeUpdated(ctx context.Context, c *FlinkRestC
 	return nil
 }
 
-func waitForFlinkMaterializedTableToBeDeleted(ctx context.Context, c *FlinkRestClient, orgId, environmentId, kafkaId, tableName string, isAcceptanceTestMode bool) error {
+func waitForFlinkMaterializedTableToBeDeleted(ctx context.Context, c *FlinkRestClient, orgId, environmentId, kafkaId, tableName string, isAcceptanceTestMode bool, timeout time.Duration) error {
 	delay, pollInterval := getDelayAndPollInterval(10*time.Second, 10*time.Second, isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
 		Pending:      []string{stateInProgress},
 		Target:       []string{stateDone},
 		Refresh:      flinkMaterializedTableDeleteStatus(c.apiContext(ctx), c, orgId, environmentId, kafkaId, tableName),
-		Timeout:      materializedTableAPIDeleteTimeout,
+		Timeout:      timeout,
 		Delay:        delay,
 		PollInterval: pollInterval,
 	}

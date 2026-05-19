@@ -365,7 +365,7 @@ func materializedTableCreate(ctx context.Context, d *schema.ResourceData, meta i
 	// immediately while the underlying SQL statement is still being registered against
 	// the gateway. Poll status.phase until the table reaches its target phase (RUNNING
 	// or STOPPED depending on the requested stopped flag).
-	if err := waitForFlinkMaterializedTableToProvision(ctx, flinkRestClient, organizationId, environmentId, kafkaId, displayName, stopped, meta.(*Client).isAcceptanceTestMode); err != nil {
+	if err := waitForFlinkMaterializedTableToProvision(ctx, flinkRestClient, organizationId, environmentId, kafkaId, displayName, stopped, meta.(*Client).isAcceptanceTestMode, d.Timeout(schema.TimeoutCreate)); err != nil {
 		return diag.Errorf("error creating Flink Materialized Table %q: %s", d.Id(), createDescriptiveError(err))
 	}
 
@@ -664,7 +664,7 @@ func materializedTableDelete(ctx context.Context, d *schema.ResourceData, meta i
 		return diag.Errorf("error deleting Flink Materialized Table %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
-	if err := waitForFlinkMaterializedTableToBeDeleted(ctx, flinkRestClient, organizationId, environmentId, kafkaId, tableName, meta.(*Client).isAcceptanceTestMode); err != nil {
+	if err := waitForFlinkMaterializedTableToBeDeleted(ctx, flinkRestClient, organizationId, environmentId, kafkaId, tableName, meta.(*Client).isAcceptanceTestMode, d.Timeout(schema.TimeoutDelete)); err != nil {
 		return diag.Errorf("error waiting for Flink Materialized Table %q to be deleted: %s", d.Id(), createDescriptiveError(err))
 	}
 
@@ -813,7 +813,7 @@ func materializedTableUpdate(ctx context.Context, d *schema.ResourceData, meta i
 	// STOPPING before settling. Poll status.phase until it reaches the target phase
 	// matching the desired stopped flag.
 	toStop := d.Get(paramStopped).(bool)
-	if err := waitForFlinkMaterializedTableToBeUpdated(ctx, flinkRestClient, organizationId, environmentId, kafkaId, name, toStop, meta.(*Client).isAcceptanceTestMode); err != nil {
+	if err := waitForFlinkMaterializedTableToBeUpdated(ctx, flinkRestClient, organizationId, environmentId, kafkaId, name, toStop, meta.(*Client).isAcceptanceTestMode, d.Timeout(schema.TimeoutUpdate)); err != nil {
 		return diag.Errorf("error updating Flink Materialized Table %q: %s", d.Id(), createDescriptiveError(err))
 	}
 
