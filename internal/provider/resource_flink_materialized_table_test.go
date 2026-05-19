@@ -433,11 +433,8 @@ func testAccCheckMaterializedTableDestroy(s *terraform.State, url string) error 
 }
 
 // TestAccFlinkMaterializedTableQueryCanonicalization verifies that when the user
-// submits a query containing the canonicalization patterns observed in
-// INC-10944, the resource:
-//   - applies successfully,
-//   - stores the user's original query verbatim in state, and
-//   - shows no drift on a subsequent plan against the same config.
+// submits a query containing a known canonicalization patterns, the resource applies successfully,
+// stores the user's original query verbatim in state, and shows no drift on a subsequent plan against the same config.
 const flinkMaterializedTableCanonicalDisplayName = "table_canon"
 
 var createFlinkMaterializedTableCanonicalPath = fmt.Sprintf("/sql/v1/organizations/%s/environments/%s/databases/%s/materialized-tables", flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkMaterializedTableDatabase)
