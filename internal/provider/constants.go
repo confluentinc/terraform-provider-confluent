@@ -683,6 +683,7 @@ If compatibility is set to one of the TRANSITIVE types, the check is against all
 	srcmV2ApiVersion                         = "srcm/v2"
 	srcmV3ApiVersion                         = "srcm/v3"
 	stateActive                              = "ACTIVE"
+	stateAltering                            = "ALTERING"
 	stateApplied                             = "APPLIED"
 	stateCompleted                           = "COMPLETED"
 	stateCreated                             = "CREATED"

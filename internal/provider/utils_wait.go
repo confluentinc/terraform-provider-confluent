@@ -1378,7 +1378,7 @@ func waitForFlinkMaterializedTableToBeDeleted(ctx context.Context, c *FlinkRestC
 // PENDING) and may also surface PENDING / STOPPING during transitions. Both are
 // listed here to be tolerant of either.
 func isFlinkMaterializedTableTransitionalPhase(phase string) bool {
-	return phase == stateCreating || phase == statePending || phase == stateStopping
+	return phase == stateCreating || phase == statePending || phase == stateStopping || phase == stateAltering
 }
 
 func flinkMaterializedTableProvisionStatus(ctx context.Context, c *FlinkRestClient, orgId, environmentId, kafkaId, tableName string) resource.StateRefreshFunc {

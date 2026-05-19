@@ -216,3 +216,5 @@ $ terraform import confluent_flink_materialized_table.example env-abc123/lkc-xyz
 ```
 
 !> **Warning:** Do not forget to delete terminal command history afterwards for security purposes.
+
+-> **Note:** After import, the `query` attribute in state will hold the Flink Gateway's **canonical form** (uppercase keywords, `INTEGER` instead of `INT`, backtick-quoted identifiers, etc.), not the original text the table was created with. This is by design, see the [`query` argument note above](#argument-reference), and the next `terraform plan` will show a `~ query` diff against the lowercase value in your HCL. To resolve it, either (a) run `terraform apply` once to overwrite state with your HCL value (the provider will PATCH the API with the same query, which the gateway re-canonicalizes idempotently), (b) update your HCL to match the canonical form shown in state, or (c) add `lifecycle { ignore_changes = [query] }` to the resource if you don't want Terraform to manage `query` going forward.
