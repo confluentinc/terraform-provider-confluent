@@ -103,6 +103,12 @@ func certificateAuthorityResource() *schema.Resource {
 				Description:  "A PEM encoded string containing the CRL for this certificate authority.",
 				ValidateFunc: validation.StringIsNotEmpty,
 			},
+			paramRequireCrlOnClientCertificate: {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "Whether to require CRL validation on client certificates.",
+			},
 		},
 	}
 }
@@ -117,6 +123,7 @@ func certificateAuthorityCreate(ctx context.Context, d *schema.ResourceData, met
 	createCertificateAuthorityRequest.SetCertificateChainFilename(d.Get(paramCertificateChainFilename).(string))
 	createCertificateAuthorityRequest.SetCrlUrl(d.Get(paramCrlUrl).(string))
 	createCertificateAuthorityRequest.SetCrlChain(d.Get(paramCrlChain).(string))
+	createCertificateAuthorityRequest.SetRequireCrlOnClientCertificate(d.Get(paramRequireCrlOnClientCertificate).(bool))
 
 	createCertificateAuthorityRequestJson, err := json.Marshal(createCertificateAuthorityRequest)
 	if err != nil {
@@ -215,6 +222,9 @@ func setCertificateAuthorityAttributes(d *schema.ResourceData, certificateAuthor
 	if err := d.Set(paramCrlUpdatedAt, fmt.Sprint(certificateAuthority.GetCrlUpdatedAt())); err != nil {
 		return nil, err
 	}
+	if err := d.Set(paramRequireCrlOnClientCertificate, certificateAuthority.GetRequireCrlOnClientCertificate()); err != nil {
+		return nil, err
+	}
 
 	d.SetId(certificateAuthority.GetId())
 	return d, nil
@@ -237,8 +247,8 @@ func certificateAuthorityDelete(ctx context.Context, d *schema.ResourceData, met
 }
 
 func certificateAuthorityUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if d.HasChangesExcept(paramDisplayName, paramDescription, paramCertificateChain, paramCertificateChainFilename, paramCrlUrl, paramCrlChain) {
-		return diag.Errorf("error updating CertificateAuthority %q: only %q, %q, %q, %q, %q, %q attributes can be updated for Certificate Authority", d.Id(), paramDisplayName, paramDescription, paramCertificateChain, paramCertificateChainFilename, paramCrlUrl, paramCrlChain)
+	if d.HasChangesExcept(paramDisplayName, paramDescription, paramCertificateChain, paramCertificateChainFilename, paramCrlUrl, paramCrlChain, paramRequireCrlOnClientCertificate) {
+		return diag.Errorf("error updating CertificateAuthority %q: only %q, %q, %q, %q, %q, %q, %q attributes can be updated for Certificate Authority", d.Id(), paramDisplayName, paramDescription, paramCertificateChain, paramCertificateChainFilename, paramCrlUrl, paramCrlChain, paramRequireCrlOnClientCertificate)
 	}
 
 	updateCertificateAuthority := certificateauthorityv2.NewIamV2UpdateCertRequest()
@@ -249,6 +259,7 @@ func certificateAuthorityUpdate(ctx context.Context, d *schema.ResourceData, met
 	updateCertificateAuthority.SetCertificateChainFilename(d.Get(paramCertificateChainFilename).(string))
 	updateCertificateAuthority.SetCrlUrl(d.Get(paramCrlUrl).(string))
 	updateCertificateAuthority.SetCrlChain(d.Get(paramCrlChain).(string))
+	updateCertificateAuthority.SetRequireCrlOnClientCertificate(d.Get(paramRequireCrlOnClientCertificate).(bool))
 
 	updateCertificateAuthorityJson, err := json.Marshal(updateCertificateAuthority)
 	if err != nil {

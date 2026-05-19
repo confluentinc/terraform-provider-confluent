@@ -22,5 +22,6 @@
   "certificate_chain_filename": "certificate.pem",
   "crl_url": "example-2.url",
   "crl_source": "URL",
-  "crl_updated_at": "2017-07-21T17:32:28Z"
+  "crl_updated_at": "2017-07-21T17:32:28Z",
+  "require_crl_on_client_certificate": true
 }
