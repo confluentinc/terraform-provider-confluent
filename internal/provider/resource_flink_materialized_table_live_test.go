@@ -88,7 +88,7 @@ func TestAccFlinkMaterializedTableLive(t *testing.T) {
 	t.Cleanup(unsetFlinkMaterializedTableImportEnv)
 
 	queryInitial := "select order_id, customer_id, product_id, cast(price as int) as p, sum(price) over w as running_total from examples.marketplace.orders window w as (partition by customer_id order by order_id rows between unbounded preceding and current row)"
-	queryUpdated := "select order_id, customer_id, cast(price as int) as p, sum(price) over w as total from examples.marketplace.orders window w as (partition by customer_id order by order_id rows between unbounded preceding and current row)"
+	queryUpdated := "select order_id, customer_id, product_id, cast(price as int) as p, sum(price) over w as running_total from examples.marketplace.orders where price > 100 window w as (partition by customer_id order by order_id rows between unbounded preceding and current row)"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },

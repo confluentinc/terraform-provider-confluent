@@ -1308,7 +1308,7 @@ func waitForFlinkMaterializedTableToProvision(ctx context.Context, c *FlinkRestC
 		target = stateStopped
 	}
 	stateConf := &resource.StateChangeConf{
-		Pending:      []string{stateCreating, statePending},
+		Pending:      []string{stateCreating, statePending, stateAltering},
 		Target:       []string{target},
 		Refresh:      flinkMaterializedTableProvisionStatus(c.apiContext(ctx), c, orgId, environmentId, kafkaId, tableName),
 		Timeout:      materializedTableAPICreateTimeout,
@@ -1329,11 +1329,11 @@ func waitForFlinkMaterializedTableToBeUpdated(ctx context.Context, c *FlinkRestC
 	var targetStatusMessage string
 
 	if toStop {
-		pendingStates = []string{stateCreating, statePending, stateRunning, stateStopping}
+		pendingStates = []string{stateCreating, statePending, stateRunning, stateStopping, stateAltering}
 		targetStates = []string{stateStopped}
 		targetStatusMessage = stateStopped
 	} else {
-		pendingStates = []string{stateCreating, statePending, stateStopped, stateStopping}
+		pendingStates = []string{stateCreating, statePending, stateStopped, stateStopping, stateAltering}
 		targetStates = []string{stateRunning}
 		targetStatusMessage = stateRunning
 	}
