@@ -37,10 +37,9 @@ func flinkMaterializedTableResource() *schema.Resource {
 			},
 			paramKafkaCluster: requiredKafkaClusterBlockSchema(),
 			paramQuery: {
-				Type:             schema.TypeString,
-				Description:      "The query section of the latest Materialized Table.",
-				Optional:         true,
-				DiffSuppressFunc: suppressFlinkQueryDiff,
+				Type:        schema.TypeString,
+				Description: "The query section of the latest Materialized Table.",
+				Optional:    true,
 			},
 			paramWatermark:    watermarkSchema(),
 			paramDistribution: distributionSchema(),
@@ -453,11 +452,9 @@ func setMaterializedTableAttributes(d *schema.ResourceData, materializedTable fl
 	if err := setStringAttributeInListBlockOfSizeOne(paramKafkaCluster, paramId, materializedTable.Spec.GetKafkaClusterId(), d); err != nil {
 		return nil, err
 	}
-	// Preserve the user's original query in state whenever the API's canonical form
-	// is semantically equivalent (per normalizeFlinkQuery)
-	apiQuery := materializedTable.Spec.GetQuery()
-	if existing := d.Get(paramQuery).(string); existing == "" || normalizeFlinkQuery(existing) != normalizeFlinkQuery(apiQuery) {
-		if err := d.Set(paramQuery, apiQuery); err != nil {
+	// Only populate from API on Import (state empty) to avoid Flink Gateway canonicalization drift.
+	if d.Get(paramQuery).(string) == "" {
+		if err := d.Set(paramQuery, materializedTable.Spec.GetQuery()); err != nil {
 			return nil, err
 		}
 	}
@@ -1060,50 +1057,4 @@ func toInterfaceSlice(strs []string) []interface{} {
 		out[i] = s
 	}
 	return out
-}
-
-// suppressFlinkQueryDiff suppresses spurious cosmetic differences between the
-// user-submitted query and what the Flink gateway returns after canonicalization
-// (backticks, whitespace, keyword case, type aliases).
-func suppressFlinkQueryDiff(k, old, new string, d *schema.ResourceData) bool {
-	return normalizeFlinkQuery(old) == normalizeFlinkQuery(new)
-}
-
-// flinkQueryKeywordsToUppercase is the set of SQL keywords and common aggregate
-// function names the Flink gateway uppercases on parse.
-var flinkQueryKeywordsToUppercase = regexp.MustCompile(`(?i)\b(SELECT|FROM|WHERE|GROUP|ORDER|BY|HAVING|JOIN|LEFT|RIGHT|INNER|OUTER|FULL|ON|AS|AND|OR|NOT|IN|IS|NULL|TRUE|FALSE|CASE|WHEN|THEN|ELSE|END|CAST|UNION|ALL|DISTINCT|PARTITION|OVER|WINDOW|ROWS|RANGE|BETWEEN|UNBOUNDED|PRECEDING|FOLLOWING|CURRENT|ROW|INTERVAL|SUM|COUNT|AVG|MIN|MAX|COALESCE|NULLIF)\b`)
-
-var flinkQueryTypeAliases = map[string]string{
-	"INT":     "INTEGER",
-	"BIGINT":  "BIGINT",
-	"VARCHAR": "STRING",
-	"CHAR":    "STRING",
-}
-
-var flinkQueryTypeAliasRegex = regexp.MustCompile(`(?i)\b(INT|BIGINT|VARCHAR|CHAR)\b`)
-
-var flinkQueryWhitespaceNextToParen = regexp.MustCompile(`\s*([()])\s*`)
-
-var flinkQueryStripParensAroundWindowExpr = regexp.MustCompile(`\(((?:[^()]|\([^()]*\))*?\s+OVER\s+(?:\w+|\([^()]*\)))\)`)
-
-func normalizeFlinkQuery(query string) string {
-	query = strings.ReplaceAll(query, "`", "")
-	query = regexp.MustCompile(`\s+`).ReplaceAllString(query, " ")
-	query = flinkQueryKeywordsToUppercase.ReplaceAllStringFunc(query, strings.ToUpper)
-	query = flinkQueryTypeAliasRegex.ReplaceAllStringFunc(query, func(s string) string {
-		if canonical, ok := flinkQueryTypeAliases[strings.ToUpper(s)]; ok {
-			return canonical
-		}
-		return s
-	})
-	// Strip parens around aggregate-over-window expressions
-	for {
-		replaced := flinkQueryStripParensAroundWindowExpr.ReplaceAllString(query, "$1")
-		if replaced == query {
-			break
-		}
-		query = replaced
-	}
-	query = flinkQueryWhitespaceNextToParen.ReplaceAllString(query, "$1")
-	return strings.TrimSpace(query)
 }

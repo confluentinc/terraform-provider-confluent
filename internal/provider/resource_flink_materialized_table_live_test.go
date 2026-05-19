@@ -87,6 +87,10 @@ func TestAccFlinkMaterializedTableLive(t *testing.T) {
 	// Prevent IMPORT_* env vars set in ImportStateIdFunc from leaking to other parallel tests.
 	t.Cleanup(unsetFlinkMaterializedTableImportEnv)
 
+.
+	queryInitial := "select order_id, customer_id, product_id, cast(price as int) as p, sum(price) over w as running_total from examples.marketplace.orders window w as (partition by customer_id order by order_id rows between unbounded preceding and current row)"
+	queryUpdated := "select order_id, customer_id, cast(price as int) as p, sum(price) over w as total from examples.marketplace.orders window w as (partition by customer_id order by order_id rows between unbounded preceding and current row)"
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
@@ -101,7 +105,7 @@ func TestAccFlinkMaterializedTableLive(t *testing.T) {
 					saResourceLabel, poolResourceLabel, apiKeyResourceLabel,
 					flinkRegionId, flinkRegionRestEndpoint,
 					tableResourceLabel, tableDisplayName, randomSuffix,
-					"select order_id, customer_id, product_id, cast(price as int) as p, sum(price) over w as running_total from examples.marketplace.orders window w as (partition by customer_id order by order_id rows between unbounded preceding and current row)",
+					queryInitial,
 					false,
 				),
 				Check: resource.ComposeTestCheckFunc(
@@ -109,6 +113,7 @@ func TestAccFlinkMaterializedTableLive(t *testing.T) {
 					resource.TestCheckResourceAttr(fullTableResourceLabel, paramDisplayName, tableDisplayName),
 					resource.TestCheckResourceAttr(fullTableResourceLabel, fmt.Sprintf("%s.0.%s", paramKafkaCluster, paramId), kafkaClusterId),
 					resource.TestCheckResourceAttr(fullTableResourceLabel, paramStopped, "false"),
+					resource.TestCheckResourceAttr(fullTableResourceLabel, paramQuery, queryInitial),
 					resource.TestCheckResourceAttr(fullTableResourceLabel, fmt.Sprintf("%s.0.%s", paramOrganization, paramId), flinkMaterializedTableLiveOrganizationId),
 					resource.TestCheckResourceAttr(fullTableResourceLabel, fmt.Sprintf("%s.0.%s", paramEnvironment, paramId), flinkMaterializedTableLiveEnvironmentId),
 					resource.TestCheckResourceAttrSet(fullTableResourceLabel, fmt.Sprintf("%s.0.%s", paramComputePool, paramId)),
@@ -118,18 +123,38 @@ func TestAccFlinkMaterializedTableLive(t *testing.T) {
 				),
 			},
 			{
+				// Update query while running. State must hold the query verbatim
+				// , even though the API stores its canonical  form.
+				// This guards against a regression where the post-Update
+				// Read accidentally repopulates state from the API.
 				Config: testAccCheckFlinkMaterializedTableLiveConfig(
 					endpoint, apiKey, apiSecret, region, kafkaClusterId,
 					saResourceLabel, poolResourceLabel, apiKeyResourceLabel,
 					flinkRegionId, flinkRegionRestEndpoint,
 					tableResourceLabel, tableDisplayName, randomSuffix,
-					"select order_id, customer_id, product_id, cast(price as int) as p, sum(price) over w as running_total from examples.marketplace.orders window w as (partition by customer_id order by order_id rows between unbounded preceding and current row)",
+					queryUpdated,
+					false,
+				),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckFlinkMaterializedTableLiveExists(fullTableResourceLabel),
+					resource.TestCheckResourceAttr(fullTableResourceLabel, paramStopped, "false"),
+					resource.TestCheckResourceAttr(fullTableResourceLabel, paramQuery, queryUpdated),
+				),
+			},
+			{
+				Config: testAccCheckFlinkMaterializedTableLiveConfig(
+					endpoint, apiKey, apiSecret, region, kafkaClusterId,
+					saResourceLabel, poolResourceLabel, apiKeyResourceLabel,
+					flinkRegionId, flinkRegionRestEndpoint,
+					tableResourceLabel, tableDisplayName, randomSuffix,
+					queryUpdated,
 					true,
 				),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckFlinkMaterializedTableLiveExists(fullTableResourceLabel),
 					resource.TestCheckResourceAttr(fullTableResourceLabel, paramDisplayName, tableDisplayName),
 					resource.TestCheckResourceAttr(fullTableResourceLabel, paramStopped, "true"),
+					resource.TestCheckResourceAttr(fullTableResourceLabel, paramQuery, queryUpdated),
 				),
 			},
 			{

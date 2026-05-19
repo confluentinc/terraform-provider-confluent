@@ -133,6 +133,10 @@ The following arguments are supported:
 - `kafka_cluster` - (Required Configuration Block) supports the following:
     - `id` - (Required String) The ID of the Kafka Cluster hosting the Materialized Table's topic, for example, `lkc-abc123`.
 - `query` - (Optional String) The SQL query that defines the Materialized Table, for example, `SELECT user_id, product_id, price, quantity FROM orders WHERE price > 1000;`.
+
+  -> **Note:** The Flink Gateway canonicalizes the submitted `query` on parse (uppercases keywords, expands type aliases such as `INT`→`INTEGER`, normalizes parentheses, etc.). To prevent cosmetic drift on every `terraform plan`, the provider preserves the user-submitted `query` verbatim in state and does not refresh it from the API after Create or Update. When you import a Materialized Table, the imported state will hold the API's canonical form; either update your HCL to match it or set `lifecycle { ignore_changes = [query] }`. 
+
+  !> **Warning:** Because the provider does not refresh `query` from the API after Create or Update, **out-of-band changes to the `query` made via the Flink UI, the Confluent CLI, or direct API calls will not be detected by `terraform plan` or `terraform refresh`**. Terraform will continue to report the resource as in-sync with the value in your HCL. To recover from an out-of-band edit, either update your HCL to the new desired query (which will trigger a normal Update on the next apply) or re-import the resource (which will repopulate state from the API's canonical form).
 - `watermark` - (Optional Configuration Block, max 1 item) The watermark definition for the Materialized Table. Supports the following:
     - `column` - (Optional String) The name of the watermark column.
     - `expression` - (Optional String) The watermark expression, for example, `event_time - INTERVAL '5' SECOND`.
