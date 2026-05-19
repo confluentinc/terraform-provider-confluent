@@ -1,0 +1,23 @@
+{
+  "api_version": "sql/v1",
+  "kind": "MaterializedTable",
+  "name": "table_canon",
+  "organization_id": "1111aaaa-11aa-11aa-11aa-111111aaaaaa",
+  "environment_id": "env-abc123",
+  "spec": {
+    "kafka_cluster_id": "lkc-01",
+    "compute_pool_id": "lfcp-x7rgx1",
+    "principal": "u-yo9j87",
+    "stopped": false,
+    "table_options": {},
+    "session_options": {},
+    "query": "SELECT order_id, CAST(price AS INTEGER) AS p, (SUM(quantity) OVER w) AS total_quantity FROM examples.marketplace.orders WINDOW w AS (PARTITION BY customer_id ORDER BY order_id ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)"
+  },
+  "status": {
+    "phase": "RUNNING",
+    "detail": "Materialized table is running.",
+    "warnings": [],
+    "scaling_status": {},
+    "version": 2
+  }
+}
