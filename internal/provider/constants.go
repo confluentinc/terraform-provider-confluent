@@ -58,6 +58,7 @@ const (
 	byobAwsSpecKind                           = "ByobAws"
 	byokKeyLoggingKey                         = "byok_key_id"
 	catalogIntegrationKey                     = "catalog_integration_id"
+	certificateAuthorityAPICreateTimeout      = 10 * time.Minute
 	certificateAuthorityKey                   = "certificate_authority_id"
 	certificatePoolKey                        = "certificate_pool_id"
 	cloudKindInLowercase                      = "cloud"
@@ -93,6 +94,7 @@ const (
 	connectorLoggingKey                       = "connector_key_id"
 	connectorTypeCustom                       = "CUSTOM"
 	connectorTypeManaged                      = "MANAGED"
+	crlUrlLocalFilePlaceholder                = "Local file uploaded"
 	crnEnvironmentSuffix                      = "/environment="
 	crnKafkaSuffix                            = "/kafka="
 	crnOrgSuffix                              = "/organization="
@@ -541,6 +543,7 @@ const (
 	paramRegions                                         = "regions"
 	paramRemoteKafkaCluster                              = "remote_kafka_cluster"
 	paramRemoteKafkaCredentials                          = "remote_kafka_cluster.0.credentials"
+	paramRequireCrlOnClientCertificate                   = "require_crl_on_client_certificate"
 	paramReservedCidr                                    = "reserved_cidr"
 	paramResetOnUpdate                                   = "reset_on_update"
 	paramResetOnUpdateDefaultValue                       = false
@@ -690,6 +693,7 @@ If compatibility is set to one of the TRANSITIVE types, the check is against all
 	stateDeProvisioning                      = "DEPROVISIONING"
 	stateDisconnected                        = "DISCONNECTED"
 	stateDone                                = "DONE"
+	stateEnabled                             = "ENABLED"
 	stateError                               = "ERROR"
 	stateExpired                             = "EXPIRED"
 	stateFailed                              = "FAILED"
