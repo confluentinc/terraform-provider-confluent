@@ -32,9 +32,9 @@ The following arguments are supported:
 - `description` - (Required String) A description of the Certificate Authority.
 - `certificate_chain_filename` - (Required String) The name of the certificate file.
 - `certificate_chain` - (Required String, Sensitive) A PEM encoded string containing the signing certificate chain.
-- `crl_url` - (Optional String) The url from which to fetch the CRL for the certificate authority.
-- `crl_chain` - (Optional String, Sensitive) A PEM encoded string containing the CRL for this certificate authority.
-- `require_crl_on_client_certificate` - (Optional Boolean) Whether to require CRL (Certificate Revocation List) validation on client certificates. Defaults to `false`.
+- `crl_url` - (Optional String) The URL from which Confluent Cloud will fetch the CRL for this Certificate Authority. Only one of `crl_url` or `crl_chain` should be set. When `crl_chain` is uploaded, the backend reports this attribute as `Local file uploaded`.
+- `crl_chain` - (Optional String, Sensitive) A PEM encoded string containing the CRL for this Certificate Authority. Only one of `crl_url` or `crl_chain` should be set.
+- `require_crl_on_client_certificate` - (Optional Boolean) Whether to enforce Certificate Revocation List (CRL) validation on client certificates during mTLS authentication. Defaults to `false`. 
 
 ## Attributes Reference
 
