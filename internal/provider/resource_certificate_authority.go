@@ -94,7 +94,7 @@ func certificateAuthorityResource() *schema.Resource {
 				Optional: true,
 				Computed: true,
 				DiffSuppressFunc: func(_, oldValue, newValue string, _ *schema.ResourceData) bool {
-					return oldValue == "Local file uploaded" && newValue == ""
+					return oldValue == crlUrlLocalFilePlaceholder && newValue == ""
 				},
 				Description: "The url from which to fetch the CRL for the certificate authority. When `crl_chain` is uploaded, the backend reports this as `Local file uploaded`.",
 			},
@@ -128,26 +128,19 @@ func certificateAuthorityCustomizeDiff(_ context.Context, d *schema.ResourceDiff
 	if !triggersBackendCrlUpdate {
 		return nil
 	}
+	crlFields := []string{paramCrlSource, paramCrlUrl, paramCrlUpdatedAt}
 	if d.Get(paramRequireCrlOnClientCertificate).(bool) {
-		if err := d.SetNewComputed(paramCrlSource); err != nil {
-			return err
-		}
-		if err := d.SetNewComputed(paramCrlUrl); err != nil {
-			return err
-		}
-		if err := d.SetNewComputed(paramCrlUpdatedAt); err != nil {
-			return err
+		for _, p := range crlFields {
+			if err := d.SetNewComputed(p); err != nil {
+				return err
+			}
 		}
 		return nil
 	}
-	if err := d.SetNew(paramCrlSource, ""); err != nil {
-		return err
-	}
-	if err := d.SetNew(paramCrlUrl, ""); err != nil {
-		return err
-	}
-	if err := d.SetNew(paramCrlUpdatedAt, ""); err != nil {
-		return err
+	for _, p := range crlFields {
+		if err := d.SetNew(p, ""); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -163,7 +156,7 @@ func certificateAuthorityCreate(ctx context.Context, d *schema.ResourceData, met
 	requireCrl := d.Get(paramRequireCrlOnClientCertificate).(bool)
 	createCertificateAuthorityRequest.SetRequireCrlOnClientCertificate(requireCrl)
 	if requireCrl {
-		if crlUrl := d.Get(paramCrlUrl).(string); crlUrl != "" {
+		if crlUrl := d.Get(paramCrlUrl).(string); crlUrl != "" && crlUrl != crlUrlLocalFilePlaceholder {
 			createCertificateAuthorityRequest.SetCrlUrl(crlUrl)
 		}
 		if crlChain := d.Get(paramCrlChain).(string); crlChain != "" {
@@ -180,7 +173,7 @@ func certificateAuthorityCreate(ctx context.Context, d *schema.ResourceData, met
 	req := c.certificateAuthorityV2Client.CertificateAuthoritiesIamV2Api.CreateIamV2CertificateAuthority(c.certificateAuthorityV2ApiContext(ctx)).IamV2CreateCertRequest(*createCertificateAuthorityRequest)
 	createdCertificateAuthority, resp, err := req.Execute()
 	if err != nil {
-		return diag.Errorf("error creating Certificate Authority %q: %s", createdCertificateAuthority.GetId(), createDescriptiveError(err, resp))
+		return diag.Errorf("error creating Certificate Authority: %s", createDescriptiveError(err, resp))
 	}
 	d.SetId(createdCertificateAuthority.GetId())
 
@@ -319,7 +312,7 @@ func certificateAuthorityUpdate(ctx context.Context, d *schema.ResourceData, met
 	requireCrl := d.Get(paramRequireCrlOnClientCertificate).(bool)
 	updateCertificateAuthority.SetRequireCrlOnClientCertificate(requireCrl)
 	if requireCrl {
-		if crlUrl := d.Get(paramCrlUrl).(string); crlUrl != "" {
+		if crlUrl := d.Get(paramCrlUrl).(string); crlUrl != "" && crlUrl != crlUrlLocalFilePlaceholder {
 			updateCertificateAuthority.SetCrlUrl(crlUrl)
 		}
 		if crlChain := d.Get(paramCrlChain).(string); crlChain != "" {
@@ -341,11 +334,11 @@ func certificateAuthorityUpdate(ctx context.Context, d *schema.ResourceData, met
 		return diag.Errorf("error updating Certificate Authority %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
-	UpdatedCertificateAuthorityJson, err := json.Marshal(updatedCertificateAuthority)
+	updatedCertificateAuthorityJson, err := json.Marshal(updatedCertificateAuthority)
 	if err != nil {
 		return diag.Errorf("error updating Certificate Authority %q: error marshaling %#v to json: %s", d.Id(), updatedCertificateAuthority, createDescriptiveError(err))
 	}
-	tflog.Debug(ctx, fmt.Sprintf("Finished updating Certificate Authority %q: %s", d.Id(), UpdatedCertificateAuthorityJson), map[string]interface{}{certificateAuthorityKey: d.Id()})
+	tflog.Debug(ctx, fmt.Sprintf("Finished updating Certificate Authority %q: %s", d.Id(), updatedCertificateAuthorityJson), map[string]interface{}{certificateAuthorityKey: d.Id()})
 
 	// Wait for the backend to finish reconciliation before Read.
 	if err := waitForCertificateAuthorityToProvision(ctx, c, d.Id()); err != nil {
@@ -358,7 +351,6 @@ func certificateAuthorityUpdate(ctx context.Context, d *schema.ResourceData, met
 func certificateAuthorityImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	tflog.Debug(ctx, fmt.Sprintf("Importing Certificate Authority %q", d.Id()), map[string]interface{}{certificateAuthorityKey: d.Id()})
 
-	// Mark resource as new to avoid d.Set("") when getting 404
 	d.MarkNewResource()
 	if _, err := readCertificateAuthorityAndSetAttributes(ctx, d, meta, d.Id()); err != nil {
 		return nil, fmt.Errorf("error importing Certificate Authority %q: %s", d.Id(), err)
@@ -389,14 +381,7 @@ func normalizeSerialNumber(s string) string {
 		return s
 	}
 	upper := strings.ToUpper(s)
-	containsHexLetters := false
-	for _, c := range upper {
-		if c >= 'A' && c <= 'F' {
-			containsHexLetters = true
-			break
-		}
-	}
-	if containsHexLetters {
+	if strings.ContainsAny(upper, "ABCDEF") {
 		if i, ok := new(big.Int).SetString(upper, 16); ok {
 			return strings.ToUpper(i.Text(16))
 		}

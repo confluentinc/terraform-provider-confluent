@@ -94,6 +94,7 @@ const (
 	connectorLoggingKey                       = "connector_key_id"
 	connectorTypeCustom                       = "CUSTOM"
 	connectorTypeManaged                      = "MANAGED"
+	crlUrlLocalFilePlaceholder                = "Local file uploaded"
 	crnEnvironmentSuffix                      = "/environment="
 	crnKafkaSuffix                            = "/kafka="
 	crnOrgSuffix                              = "/organization="

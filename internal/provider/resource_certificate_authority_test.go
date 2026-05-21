@@ -312,24 +312,8 @@ func TestAccCertificateAuthorityCrlChain(t *testing.T) {
 	})
 }
 
-// TestAccCertificateAuthorityRequireFlipToFalse reproduces the user-reported
-// drift on `require_crl_on_client_certificate = true → false` updates.
-//
-// Scenario:
-//  1. Create with require=true + crl_chain. Backend stamps crl_url=
-//     "Local file uploaded", crl_source="LOCAL".
-//  2. Update with require=false. Backend's GET response is STALE — it returns
-//     require=false (the new value) but the CRL fields are still populated
-//     (cleanup hasn't happened yet). This is exactly what we observed in
-//     real apply against devel.
-//
-// Expected behaviour after the fix: state after Update has crl_url="",
-// crl_source="", crl_updated_at="" (forced by the require=false branch in
-// setCertificateAuthorityAttributes, driven by user intent via d.Get).
-//
-// If this test fails with values like "Local file uploaded" or "LOCAL"
-// surviving in state, the prediction logic is broken and the fix needs more
-// work.
+// Verifies that flipping require_crl_on_client_certificate from true to false clears the CRL
+// metadata in state even when the backend's GET response is stale and still returns populated CRL fields.
 func TestAccCertificateAuthorityRequireFlipToFalse(t *testing.T) {
 	ctx := context.Background()
 
@@ -398,8 +382,6 @@ func TestAccCertificateAuthorityRequireFlipToFalse(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(certificateAuthorityResourceLabel, "id", certificateAuthorityId),
 					resource.TestCheckResourceAttr(certificateAuthorityResourceLabel, "require_crl_on_client_certificate", "false"),
-					// THIS is the assertion that fails today. The user-intent
-					// branch must override the stale backend values.
 					resource.TestCheckResourceAttr(certificateAuthorityResourceLabel, "crl_url", ""),
 					resource.TestCheckResourceAttr(certificateAuthorityResourceLabel, "crl_source", ""),
 					resource.TestCheckResourceAttr(certificateAuthorityResourceLabel, "crl_updated_at", ""),
@@ -409,20 +391,11 @@ func TestAccCertificateAuthorityRequireFlipToFalse(t *testing.T) {
 	})
 }
 
-// TestAccCertificateAuthorityRequireFlipToTrue covers the inverse transition
-// from `TestAccCertificateAuthorityRequireFlipToFalse` — flipping
-// require_crl_on_client_certificate from false to true. The user reported
-// drift on this path after the initial fix landed.
-//
-// Without the CustomizeDiff handling for the `require → true` direction,
-// Terraform Core's planner takes the prior state's "" values for the Computed
-// crl_* fields (since there's no diff entry — they're Computed and not in
-// config), the apply persists "", and the next refresh sees the backend has
-// re-populated them — producing the spurious "Changes to Outputs" diff.
-//
-// With SetNewComputed for the crl_* fields when require flips to true, the
-// plan marks them as "(known after apply)", Read fills them in from the
-// backend during Apply, and the post-apply state matches the backend.
+// TestAccCertificateAuthorityRequireFlipToTrue verifies the inverse of
+// TestAccCertificateAuthorityRequireFlipToFalse: flipping
+// require_crl_on_client_certificate from false to true must produce state
+// matching the backend-populated CRL fields after apply (not the prior empty
+// values), which requires SetNewComputed in CustomizeDiff.
 func TestAccCertificateAuthorityRequireFlipToTrue(t *testing.T) {
 	ctx := context.Background()
 
@@ -475,7 +448,7 @@ func TestAccCertificateAuthorityRequireFlipToTrue(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Step 1 — Create with require=false. State should have empty CRL fields.
 			{
-				Config: testAccCheckResourceCertificateAuthorityRequireFlipToTrueConfig(mockServerUrl, false),
+				Config: testAccCheckResourceCertificateAuthorityRequireFlipConfig(mockServerUrl, false),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(certificateAuthorityResourceLabel, "id", certificateAuthorityId),
 					resource.TestCheckResourceAttr(certificateAuthorityResourceLabel, "require_crl_on_client_certificate", "false"),
@@ -488,7 +461,7 @@ func TestAccCertificateAuthorityRequireFlipToTrue(t *testing.T) {
 			// the prior state). This is the assertion that fails without the
 			// SetNewComputed branch in CustomizeDiff.
 			{
-				Config: testAccCheckResourceCertificateAuthorityRequireFlipToTrueConfig(mockServerUrl, true),
+				Config: testAccCheckResourceCertificateAuthorityRequireFlipConfig(mockServerUrl, true),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(certificateAuthorityResourceLabel, "id", certificateAuthorityId),
 					resource.TestCheckResourceAttr(certificateAuthorityResourceLabel, "require_crl_on_client_certificate", "true"),
@@ -498,23 +471,6 @@ func TestAccCertificateAuthorityRequireFlipToTrue(t *testing.T) {
 			},
 		},
 	})
-}
-
-func testAccCheckResourceCertificateAuthorityRequireFlipToTrueConfig(mockServerUrl string, requireCrl bool) string {
-	return fmt.Sprintf(`
-    provider "confluent" {
-        endpoint = "%s"
-    }
-
-	resource "confluent_certificate_authority" "main" {
-		display_name = "my-ca"
-		description = "example-description"
-		certificate_chain_filename = "certificate.pem"
-		certificate_chain = "ABC123"
-		crl_chain = "DEF456"
-		require_crl_on_client_certificate = %t
-	}
-	`, mockServerUrl, requireCrl)
 }
 
 func testAccCheckResourceCertificateAuthorityRequireFlipConfig(mockServerUrl string, requireCrl bool) string {
