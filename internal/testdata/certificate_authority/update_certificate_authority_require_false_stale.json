@@ -20,9 +20,9 @@
     "219C542DE8f6EC7177FA4EE8C3705797"
   ],
   "certificate_chain_filename": "certificate.pem",
-  "crl_url": "example.url",
-  "crl_source": "URL",
+  "crl_url": "Local file uploaded",
+  "crl_source": "LOCAL",
   "crl_updated_at": "2017-07-21T17:32:28Z",
-  "require_crl_on_client_certificate": true,
+  "require_crl_on_client_certificate": false,
   "state": "ENABLED"
 }
