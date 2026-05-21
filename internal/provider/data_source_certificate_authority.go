@@ -83,6 +83,11 @@ func certificateAuthorityDataSource() *schema.Resource {
 				Computed:    true,
 				Description: "The timestamp for when CRL was last updated.",
 			},
+			paramRequireCrlOnClientCertificate: {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Whether CRL validation is required on client certificates.",
+			},
 		},
 	}
 }
@@ -104,7 +109,7 @@ func certificateAuthorityDataSourceRead(ctx context.Context, d *schema.ResourceD
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Certificate Authority %q: %s", certificateAuthorityId, certificateAuthorityJson), map[string]interface{}{certificateAuthorityKey: certificateAuthorityId})
 
-	if _, err := setCertificateAuthorityAttributes(d, certificateAuthority); err != nil {
+	if _, err := setCertificateAuthorityAttributes(d, certificateAuthority, false); err != nil {
 		return diag.FromErr(createDescriptiveError(err))
 	}
 	return nil
