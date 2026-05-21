@@ -20,5 +20,6 @@
     "219C542DE8f6EC7177FA4EE8C3705797"
   ],
   "certificate_chain_filename": "certificate.pem",
-  "require_crl_on_client_certificate": false
+  "require_crl_on_client_certificate": false,
+  "state": "ENABLED"
 }

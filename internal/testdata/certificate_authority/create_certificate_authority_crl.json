@@ -23,5 +23,6 @@
   "crl_url": "example.url",
   "crl_source": "URL",
   "crl_updated_at": "2017-07-21T17:32:28Z",
-  "require_crl_on_client_certificate": true
+  "require_crl_on_client_certificate": true,
+  "state": "ENABLED"
 }
