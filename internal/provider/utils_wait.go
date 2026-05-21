@@ -398,6 +398,24 @@ func waitForComputePoolToProvision(ctx context.Context, c *Client, environmentId
 	return nil
 }
 
+// waitForCertificateAuthorityToProvision waits until the CA's backend State becomes ENABLED after a Create or Update
+func waitForCertificateAuthorityToProvision(ctx context.Context, c *Client, certificateAuthorityId string) error {
+	delay, pollInterval := getDelayAndPollInterval(5*time.Second, 30*time.Second, c.isAcceptanceTestMode)
+	stateConf := &resource.StateChangeConf{
+		Pending:      []string{stateProvisioning, ""},
+		Target:       []string{stateEnabled},
+		Refresh:      certificateAuthorityProvisionStatus(c.certificateAuthorityV2ApiContext(ctx), c, certificateAuthorityId),
+		Timeout:      certificateAuthorityAPICreateTimeout,
+		Delay:        delay,
+		PollInterval: pollInterval,
+	}
+	tflog.Debug(ctx, fmt.Sprintf("Waiting for Certificate Authority %q provisioning status to become %q", certificateAuthorityId, stateEnabled), map[string]interface{}{certificateAuthorityKey: certificateAuthorityId})
+	if _, err := stateConf.WaitForStateContext(c.certificateAuthorityV2ApiContext(ctx)); err != nil {
+		return err
+	}
+	return nil
+}
+
 func waitForAnySchemaRegistryClusterToProvision(ctx context.Context, c *Client, environmentId string) error {
 	delay, pollInterval := getDelayAndPollInterval(5*time.Second, 5*time.Second, c.isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
@@ -1317,6 +1335,29 @@ func computePoolProvisionStatus(ctx context.Context, c *Client, environmentId st
 		}
 		// Compute Pool is in an unexpected state
 		return nil, stateUnexpected, fmt.Errorf("Flink Compute Pool %q is an unexpected state %q", computePoolId, computePool.Status.GetPhase())
+	}
+}
+
+func certificateAuthorityProvisionStatus(ctx context.Context, c *Client, certificateAuthorityId string) resource.StateRefreshFunc {
+	return func() (result interface{}, s string, err error) {
+		ca, resp, err := executecertificateAuthorityRead(c.certificateAuthorityV2ApiContext(ctx), c, certificateAuthorityId)
+		if err != nil {
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Certificate Authority %q: %s", certificateAuthorityId, createDescriptiveError(err, resp)), map[string]interface{}{certificateAuthorityKey: certificateAuthorityId})
+			return nil, stateUnknown, err
+		}
+		state := ca.GetState()
+		tflog.Debug(ctx, fmt.Sprintf("Waiting for Certificate Authority %q provisioning status to become %q: current status is %q", certificateAuthorityId, stateEnabled, state), map[string]interface{}{certificateAuthorityKey: certificateAuthorityId})
+		if state == "" {
+			// Backend hasn't yet populated state — treat as still provisioning.
+			return ca, stateProvisioning, nil
+		}
+		if state == stateProvisioning || state == stateEnabled {
+			return ca, state, nil
+		}
+		if state == stateFailed {
+			return nil, stateFailed, fmt.Errorf("Certificate Authority %q provisioning status is %q", certificateAuthorityId, stateFailed)
+		}
+		return nil, stateUnexpected, fmt.Errorf("Certificate Authority %q is in an unexpected state %q", certificateAuthorityId, state)
 	}
 }
 
