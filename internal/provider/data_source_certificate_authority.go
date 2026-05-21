@@ -83,6 +83,11 @@ func certificateAuthorityDataSource() *schema.Resource {
 				Computed:    true,
 				Description: "The timestamp for when CRL was last updated.",
 			},
+			paramRequireCrlOnClientCertificate: {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Whether CRL validation is required on client certificates.",
+			},
 		},
 	}
 }

@@ -107,7 +107,8 @@ func TestAccCertificateAuthority(t *testing.T) {
 					resource.TestCheckResourceAttr(certificateAuthorityResourceLabel, "expiration_dates.#", "1"),
 					resource.TestCheckTypeSetElemAttr(certificateAuthorityResourceLabel, "expiration_dates.*", "2017-07-21 17:32:28 +0000 UTC"),
 					resource.TestCheckResourceAttr(certificateAuthorityResourceLabel, "serial_numbers.#", "1"),
-					resource.TestCheckTypeSetElemAttr(certificateAuthorityResourceLabel, "serial_numbers.*", "219C542DE8f6EC7177FA4EE8C3705797"),
+					resource.TestCheckTypeSetElemAttr(certificateAuthorityResourceLabel, "serial_numbers.*", "219C542DE8F6EC7177FA4EE8C3705797"),
+					resource.TestCheckResourceAttr(certificateAuthorityResourceLabel, "require_crl_on_client_certificate", "false"),
 				),
 			},
 			{
@@ -122,7 +123,8 @@ func TestAccCertificateAuthority(t *testing.T) {
 					resource.TestCheckResourceAttr(certificateAuthorityResourceLabel, "expiration_dates.#", "1"),
 					resource.TestCheckTypeSetElemAttr(certificateAuthorityResourceLabel, "expiration_dates.*", "2017-07-21 17:32:28 +0000 UTC"),
 					resource.TestCheckResourceAttr(certificateAuthorityResourceLabel, "serial_numbers.#", "1"),
-					resource.TestCheckTypeSetElemAttr(certificateAuthorityResourceLabel, "serial_numbers.*", "219C542DE8f6EC7177FA4EE8C3705797"),
+					resource.TestCheckTypeSetElemAttr(certificateAuthorityResourceLabel, "serial_numbers.*", "219C542DE8F6EC7177FA4EE8C3705797"),
+					resource.TestCheckResourceAttr(certificateAuthorityResourceLabel, "require_crl_on_client_certificate", "false"),
 				),
 			},
 		},
@@ -211,10 +213,11 @@ func TestAccCertificateAuthorityCrl(t *testing.T) {
 					resource.TestCheckResourceAttr(certificateAuthorityResourceLabel, "expiration_dates.#", "1"),
 					resource.TestCheckTypeSetElemAttr(certificateAuthorityResourceLabel, "expiration_dates.*", "2017-07-21 17:32:28 +0000 UTC"),
 					resource.TestCheckResourceAttr(certificateAuthorityResourceLabel, "serial_numbers.#", "1"),
-					resource.TestCheckTypeSetElemAttr(certificateAuthorityResourceLabel, "serial_numbers.*", "219C542DE8f6EC7177FA4EE8C3705797"),
+					resource.TestCheckTypeSetElemAttr(certificateAuthorityResourceLabel, "serial_numbers.*", "219C542DE8F6EC7177FA4EE8C3705797"),
 					resource.TestCheckResourceAttr(certificateAuthorityResourceLabel, "crl_url", "example.url"),
 					resource.TestCheckResourceAttr(certificateAuthorityResourceLabel, "crl_source", "URL"),
 					resource.TestCheckResourceAttr(certificateAuthorityResourceLabel, "crl_updated_at", "2017-07-21 17:32:28 +0000 UTC"),
+					resource.TestCheckResourceAttr(certificateAuthorityResourceLabel, "require_crl_on_client_certificate", "true"),
 				),
 			},
 			{
@@ -229,14 +232,279 @@ func TestAccCertificateAuthorityCrl(t *testing.T) {
 					resource.TestCheckResourceAttr(certificateAuthorityResourceLabel, "expiration_dates.#", "1"),
 					resource.TestCheckTypeSetElemAttr(certificateAuthorityResourceLabel, "expiration_dates.*", "2017-07-21 17:32:28 +0000 UTC"),
 					resource.TestCheckResourceAttr(certificateAuthorityResourceLabel, "serial_numbers.#", "1"),
-					resource.TestCheckTypeSetElemAttr(certificateAuthorityResourceLabel, "serial_numbers.*", "219C542DE8f6EC7177FA4EE8C3705797"),
+					resource.TestCheckTypeSetElemAttr(certificateAuthorityResourceLabel, "serial_numbers.*", "219C542DE8F6EC7177FA4EE8C3705797"),
 					resource.TestCheckResourceAttr(certificateAuthorityResourceLabel, "crl_url", "example-2.url"),
 					resource.TestCheckResourceAttr(certificateAuthorityResourceLabel, "crl_source", "URL"),
 					resource.TestCheckResourceAttr(certificateAuthorityResourceLabel, "crl_updated_at", "2017-07-21 17:32:28 +0000 UTC"),
+					resource.TestCheckResourceAttr(certificateAuthorityResourceLabel, "require_crl_on_client_certificate", "true"),
 				),
 			},
 		},
 	})
+}
+
+func TestAccCertificateAuthorityCrlChain(t *testing.T) {
+	ctx := context.Background()
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
+
+	mockServerUrl := wiremockContainer.URI
+	wiremockClient := wiremock.NewClient(mockServerUrl)
+	// nolint:errcheck
+	defer wiremockClient.Reset()
+
+	// nolint:errcheck
+	defer wiremockClient.ResetAllScenarios()
+	createCertificateAuthorityResponse, _ := ioutil.ReadFile("../testdata/certificate_authority/create_certificate_authority_crl_local.json")
+	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(certificateAuthorityUrlPath)).
+		InScenario(CertificateAuthorityScenarioName).
+		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
+		WillSetStateTo(scenarioStateCertificateAuthorityHasBeenCreated).
+		WillReturn(
+			string(createCertificateAuthorityResponse),
+			contentTypeJSONHeader,
+			http.StatusCreated,
+		))
+
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", certificateAuthorityUrlPath, certificateAuthorityId))).
+		InScenario(CertificateAuthorityScenarioName).
+		WhenScenarioStateIs(scenarioStateCertificateAuthorityHasBeenCreated).
+		WillReturn(
+			string(createCertificateAuthorityResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", certificateAuthorityUrlPath, certificateAuthorityId))).
+		InScenario(CertificateAuthorityScenarioName).
+		WillReturn(
+			"",
+			contentTypeJSONHeader,
+			http.StatusNoContent,
+		))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckResourceCertificateAuthorityCrlChainConfig(mockServerUrl),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(certificateAuthorityResourceLabel, "id", certificateAuthorityId),
+					resource.TestCheckResourceAttr(certificateAuthorityResourceLabel, "display_name", "my-ca"),
+					resource.TestCheckResourceAttr(certificateAuthorityResourceLabel, "description", "example-description"),
+					// Backend stamped the synthetic placeholder — state must capture it,
+					// and the DiffSuppressFunc on crl_url must absorb the resulting
+					// state-vs-empty-config mismatch without producing drift.
+					resource.TestCheckResourceAttr(certificateAuthorityResourceLabel, "crl_url", "Local file uploaded"),
+					resource.TestCheckResourceAttr(certificateAuthorityResourceLabel, "crl_source", "LOCAL"),
+					resource.TestCheckResourceAttr(certificateAuthorityResourceLabel, "require_crl_on_client_certificate", "true"),
+				),
+				// No ExpectNonEmptyPlan: true here — the test will fail if the
+				// post-apply plan is non-empty, which is exactly what would happen
+				// if the schema regressed back to Optional-only.
+			},
+		},
+	})
+}
+
+// Verifies that flipping require_crl_on_client_certificate from true to false clears the CRL
+// metadata in state even when the backend's GET response is stale and still returns populated CRL fields.
+func TestAccCertificateAuthorityRequireFlipToFalse(t *testing.T) {
+	ctx := context.Background()
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
+
+	mockServerUrl := wiremockContainer.URI
+	wiremockClient := wiremock.NewClient(mockServerUrl)
+	// nolint:errcheck
+	defer wiremockClient.Reset()
+	// nolint:errcheck
+	defer wiremockClient.ResetAllScenarios()
+
+	// Step 1 — Create response: require=true with populated CRL fields.
+	createResp, _ := ioutil.ReadFile("../testdata/certificate_authority/create_certificate_authority_crl_local.json")
+	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(certificateAuthorityUrlPath)).
+		InScenario(CertificateAuthorityScenarioName).
+		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
+		WillSetStateTo(scenarioStateCertificateAuthorityHasBeenCreated).
+		WillReturn(string(createResp), contentTypeJSONHeader, http.StatusCreated))
+
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", certificateAuthorityUrlPath, certificateAuthorityId))).
+		InScenario(CertificateAuthorityScenarioName).
+		WhenScenarioStateIs(scenarioStateCertificateAuthorityHasBeenCreated).
+		WillReturn(string(createResp), contentTypeJSONHeader, http.StatusOK))
+
+	// Step 2 — Update response: require=false, but CRL fields still populated
+	// (STALE — simulating the backend's async-cleanup window).
+	updateResp, _ := ioutil.ReadFile("../testdata/certificate_authority/update_certificate_authority_require_false_stale.json")
+	_ = wiremockClient.StubFor(wiremock.Put(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", certificateAuthorityUrlPath, certificateAuthorityId))).
+		InScenario(CertificateAuthorityScenarioName).
+		WhenScenarioStateIs(scenarioStateCertificateAuthorityHasBeenCreated).
+		WillSetStateTo(scenarioStateCertificateAuthorityHasBeenUpdated).
+		WillReturn(string(updateResp), contentTypeJSONHeader, http.StatusOK))
+
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", certificateAuthorityUrlPath, certificateAuthorityId))).
+		InScenario(CertificateAuthorityScenarioName).
+		WhenScenarioStateIs(scenarioStateCertificateAuthorityHasBeenUpdated).
+		WillReturn(string(updateResp), contentTypeJSONHeader, http.StatusOK))
+
+	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", certificateAuthorityUrlPath, certificateAuthorityId))).
+		InScenario(CertificateAuthorityScenarioName).
+		WillReturn("", contentTypeJSONHeader, http.StatusNoContent))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		Steps: []resource.TestStep{
+			// Step 1 — Create with require=true + crl_chain.
+			{
+				Config: testAccCheckResourceCertificateAuthorityRequireFlipConfig(mockServerUrl, true),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(certificateAuthorityResourceLabel, "id", certificateAuthorityId),
+					resource.TestCheckResourceAttr(certificateAuthorityResourceLabel, "require_crl_on_client_certificate", "true"),
+					resource.TestCheckResourceAttr(certificateAuthorityResourceLabel, "crl_url", "Local file uploaded"),
+					resource.TestCheckResourceAttr(certificateAuthorityResourceLabel, "crl_source", "LOCAL"),
+				),
+			},
+			// Step 2 — Update to require=false. Backend response still has
+			// populated CRL fields (stale). State MUST end up with crl_*="".
+			{
+				Config: testAccCheckResourceCertificateAuthorityRequireFlipConfig(mockServerUrl, false),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(certificateAuthorityResourceLabel, "id", certificateAuthorityId),
+					resource.TestCheckResourceAttr(certificateAuthorityResourceLabel, "require_crl_on_client_certificate", "false"),
+					resource.TestCheckResourceAttr(certificateAuthorityResourceLabel, "crl_url", ""),
+					resource.TestCheckResourceAttr(certificateAuthorityResourceLabel, "crl_source", ""),
+					resource.TestCheckResourceAttr(certificateAuthorityResourceLabel, "crl_updated_at", ""),
+				),
+			},
+		},
+	})
+}
+
+// TestAccCertificateAuthorityRequireFlipToTrue verifies the inverse of
+// TestAccCertificateAuthorityRequireFlipToFalse: flipping
+// require_crl_on_client_certificate from false to true must produce state
+// matching the backend-populated CRL fields after apply (not the prior empty
+// values), which requires SetNewComputed in CustomizeDiff.
+func TestAccCertificateAuthorityRequireFlipToTrue(t *testing.T) {
+	ctx := context.Background()
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
+
+	mockServerUrl := wiremockContainer.URI
+	wiremockClient := wiremock.NewClient(mockServerUrl)
+	// nolint:errcheck
+	defer wiremockClient.Reset()
+	// nolint:errcheck
+	defer wiremockClient.ResetAllScenarios()
+
+	// Step 1 — Create response: require=false, no CRL populated.
+	createResp, _ := ioutil.ReadFile("../testdata/certificate_authority/create_certificate_authority.json")
+	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(certificateAuthorityUrlPath)).
+		InScenario(CertificateAuthorityScenarioName).
+		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
+		WillSetStateTo(scenarioStateCertificateAuthorityHasBeenCreated).
+		WillReturn(string(createResp), contentTypeJSONHeader, http.StatusCreated))
+
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", certificateAuthorityUrlPath, certificateAuthorityId))).
+		InScenario(CertificateAuthorityScenarioName).
+		WhenScenarioStateIs(scenarioStateCertificateAuthorityHasBeenCreated).
+		WillReturn(string(createResp), contentTypeJSONHeader, http.StatusOK))
+
+	// Step 2 — Update response: require=true, CRL fields populated by backend.
+	updateResp, _ := ioutil.ReadFile("../testdata/certificate_authority/create_certificate_authority_crl_local.json")
+	_ = wiremockClient.StubFor(wiremock.Put(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", certificateAuthorityUrlPath, certificateAuthorityId))).
+		InScenario(CertificateAuthorityScenarioName).
+		WhenScenarioStateIs(scenarioStateCertificateAuthorityHasBeenCreated).
+		WillSetStateTo(scenarioStateCertificateAuthorityHasBeenUpdated).
+		WillReturn(string(updateResp), contentTypeJSONHeader, http.StatusOK))
+
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", certificateAuthorityUrlPath, certificateAuthorityId))).
+		InScenario(CertificateAuthorityScenarioName).
+		WhenScenarioStateIs(scenarioStateCertificateAuthorityHasBeenUpdated).
+		WillReturn(string(updateResp), contentTypeJSONHeader, http.StatusOK))
+
+	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(fmt.Sprintf("%s/%s", certificateAuthorityUrlPath, certificateAuthorityId))).
+		InScenario(CertificateAuthorityScenarioName).
+		WillReturn("", contentTypeJSONHeader, http.StatusNoContent))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		Steps: []resource.TestStep{
+			// Step 1 — Create with require=false. State should have empty CRL fields.
+			{
+				Config: testAccCheckResourceCertificateAuthorityRequireFlipConfig(mockServerUrl, false),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(certificateAuthorityResourceLabel, "id", certificateAuthorityId),
+					resource.TestCheckResourceAttr(certificateAuthorityResourceLabel, "require_crl_on_client_certificate", "false"),
+					resource.TestCheckResourceAttr(certificateAuthorityResourceLabel, "crl_url", ""),
+					resource.TestCheckResourceAttr(certificateAuthorityResourceLabel, "crl_source", ""),
+				),
+			},
+			// Step 2 — Update to require=true with crl_chain. State MUST end up
+			// with the backend-populated CRL fields (NOT the empty values from
+			// the prior state). This is the assertion that fails without the
+			// SetNewComputed branch in CustomizeDiff.
+			{
+				Config: testAccCheckResourceCertificateAuthorityRequireFlipConfig(mockServerUrl, true),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(certificateAuthorityResourceLabel, "id", certificateAuthorityId),
+					resource.TestCheckResourceAttr(certificateAuthorityResourceLabel, "require_crl_on_client_certificate", "true"),
+					resource.TestCheckResourceAttr(certificateAuthorityResourceLabel, "crl_url", "Local file uploaded"),
+					resource.TestCheckResourceAttr(certificateAuthorityResourceLabel, "crl_source", "LOCAL"),
+				),
+			},
+		},
+	})
+}
+
+func testAccCheckResourceCertificateAuthorityRequireFlipConfig(mockServerUrl string, requireCrl bool) string {
+	return fmt.Sprintf(`
+    provider "confluent" {
+        endpoint = "%s"
+    }
+
+	resource "confluent_certificate_authority" "main" {
+		display_name = "my-ca"
+		description = "example-description"
+		certificate_chain_filename = "certificate.pem"
+		certificate_chain = "ABC123"
+		crl_chain = "DEF456"
+		require_crl_on_client_certificate = %t
+	}
+	`, mockServerUrl, requireCrl)
+}
+
+func testAccCheckResourceCertificateAuthorityCrlChainConfig(mockServerUrl string) string {
+	return fmt.Sprintf(`
+    provider "confluent" {
+        endpoint = "%s"
+    }
+
+	resource "confluent_certificate_authority" "main" {
+		display_name = "my-ca"
+		description = "example-description"
+		certificate_chain_filename = "certificate.pem"
+		certificate_chain = "ABC123"
+		crl_chain = "DEF456"
+		require_crl_on_client_certificate = true
+	}
+	`, mockServerUrl)
 }
 
 func testAccCheckResourceCertificateAuthorityConfig(mockServerUrl, description string) string {
@@ -266,6 +534,7 @@ func testAccCheckResourceCertificateAuthorityCrlConfig(mockServerUrl, crlUrl str
 		certificate_chain_filename = "certificate.pem"
 		certificate_chain = "ABC123"
 		crl_url = "%s"
+		require_crl_on_client_certificate = true
 	}
 	`, mockServerUrl, crlUrl)
 }
