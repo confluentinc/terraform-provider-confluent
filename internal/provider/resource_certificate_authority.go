@@ -128,7 +128,6 @@ func certificateAuthorityCustomizeDiff(_ context.Context, d *schema.ResourceDiff
 	if !triggersBackendCrlUpdate {
 		return nil
 	}
-	// Operation with require_crl=true → backend will populate CRL metadata.
 	if d.Get(paramRequireCrlOnClientCertificate).(bool) {
 		if err := d.SetNewComputed(paramCrlSource); err != nil {
 			return err
@@ -141,7 +140,6 @@ func certificateAuthorityCustomizeDiff(_ context.Context, d *schema.ResourceDiff
 		}
 		return nil
 	}
-	// Operation with require_crl=false → backend will clear CRL metadata.
 	if err := d.SetNew(paramCrlSource, ""); err != nil {
 		return err
 	}
@@ -164,8 +162,6 @@ func certificateAuthorityCreate(ctx context.Context, d *schema.ResourceData, met
 	createCertificateAuthorityRequest.SetCertificateChainFilename(d.Get(paramCertificateChainFilename).(string))
 	requireCrl := d.Get(paramRequireCrlOnClientCertificate).(bool)
 	createCertificateAuthorityRequest.SetRequireCrlOnClientCertificate(requireCrl)
-	// omit crl_url & crl_chain fields from the JSON payload when require=false
-	// send the user-provided values when require=true
 	if requireCrl {
 		if crlUrl := d.Get(paramCrlUrl).(string); crlUrl != "" {
 			createCertificateAuthorityRequest.SetCrlUrl(crlUrl)
@@ -274,7 +270,7 @@ func setCertificateAuthorityAttributes(d *schema.ResourceData, certificateAuthor
 	} else {
 		requireCrl = certificateAuthority.GetRequireCrlOnClientCertificate()
 	}
-	if requireCrl {
+	if !isManagedResourceRead || requireCrl {
 		if err := d.Set(paramCrlSource, certificateAuthority.GetCrlSource()); err != nil {
 			return nil, err
 		}
