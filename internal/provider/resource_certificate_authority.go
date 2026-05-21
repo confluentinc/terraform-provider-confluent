@@ -208,14 +208,22 @@ func certificateAuthorityRead(ctx context.Context, d *schema.ResourceData, meta 
 
 	certificateAuthorityId := d.Id()
 
-	if _, err := readCertificateAuthorityAndSetAttributes(ctx, d, meta, certificateAuthorityId, true); err != nil {
+	if _, err := readCertificateAuthorityAndSetAttributes(ctx, d, meta, certificateAuthorityId); err != nil {
 		return diag.FromErr(fmt.Errorf("error reading Certificate Authority %q: %s", certificateAuthorityId, createDescriptiveError(err)))
+	}
+
+	if !d.Get(paramRequireCrlOnClientCertificate).(bool) {
+		for _, p := range []string{paramCrlSource, paramCrlUrl, paramCrlUpdatedAt} {
+			if err := d.Set(p, ""); err != nil {
+				return diag.FromErr(err)
+			}
+		}
 	}
 
 	return nil
 }
 
-func readCertificateAuthorityAndSetAttributes(ctx context.Context, d *schema.ResourceData, meta interface{}, certificateAuthorityId string, isManagedResourceRead bool) ([]*schema.ResourceData, error) {
+func readCertificateAuthorityAndSetAttributes(ctx context.Context, d *schema.ResourceData, meta interface{}, certificateAuthorityId string) ([]*schema.ResourceData, error) {
 	c := meta.(*Client)
 
 	certificateAuthority, resp, err := executecertificateAuthorityRead(c.certificateAuthorityV2ApiContext(ctx), c, certificateAuthorityId)
@@ -236,7 +244,7 @@ func readCertificateAuthorityAndSetAttributes(ctx context.Context, d *schema.Res
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Certificate Authority %q: %s", d.Id(), certificateAuthorityJson), map[string]interface{}{certificateAuthorityKey: d.Id()})
 
-	if _, err := setCertificateAuthorityAttributes(d, certificateAuthority, isManagedResourceRead); err != nil {
+	if _, err := setCertificateAuthorityAttributes(d, certificateAuthority); err != nil {
 		return nil, createDescriptiveError(err)
 	}
 
@@ -245,7 +253,7 @@ func readCertificateAuthorityAndSetAttributes(ctx context.Context, d *schema.Res
 	return []*schema.ResourceData{d}, nil
 }
 
-func setCertificateAuthorityAttributes(d *schema.ResourceData, certificateAuthority certificateauthorityv2.IamV2CertificateAuthority, isManagedResourceRead bool) (*schema.ResourceData, error) {
+func setCertificateAuthorityAttributes(d *schema.ResourceData, certificateAuthority certificateauthorityv2.IamV2CertificateAuthority) (*schema.ResourceData, error) {
 	if err := d.Set(paramDisplayName, certificateAuthority.GetDisplayName()); err != nil {
 		return nil, err
 	}
@@ -264,34 +272,16 @@ func setCertificateAuthorityAttributes(d *schema.ResourceData, certificateAuthor
 	if err := d.Set(paramSerialNumbers, normalizeSerialNumbers(certificateAuthority.GetSerialNumbers())); err != nil {
 		return nil, err
 	}
-	var requireCrl bool
-	if isManagedResourceRead {
-		requireCrl = d.Get(paramRequireCrlOnClientCertificate).(bool)
-	} else {
-		requireCrl = certificateAuthority.GetRequireCrlOnClientCertificate()
+	if err := d.Set(paramCrlSource, certificateAuthority.GetCrlSource()); err != nil {
+		return nil, err
 	}
-	if !isManagedResourceRead || requireCrl {
-		if err := d.Set(paramCrlSource, certificateAuthority.GetCrlSource()); err != nil {
-			return nil, err
-		}
-		if err := d.Set(paramCrlUrl, certificateAuthority.GetCrlUrl()); err != nil {
-			return nil, err
-		}
-		if err := d.Set(paramCrlUpdatedAt, fmt.Sprint(certificateAuthority.GetCrlUpdatedAt())); err != nil {
-			return nil, err
-		}
-	} else {
-		if err := d.Set(paramCrlSource, ""); err != nil {
-			return nil, err
-		}
-		if err := d.Set(paramCrlUrl, ""); err != nil {
-			return nil, err
-		}
-		if err := d.Set(paramCrlUpdatedAt, ""); err != nil {
-			return nil, err
-		}
+	if err := d.Set(paramCrlUrl, certificateAuthority.GetCrlUrl()); err != nil {
+		return nil, err
 	}
-	if err := d.Set(paramRequireCrlOnClientCertificate, requireCrl); err != nil {
+	if err := d.Set(paramCrlUpdatedAt, fmt.Sprint(certificateAuthority.GetCrlUpdatedAt())); err != nil {
+		return nil, err
+	}
+	if err := d.Set(paramRequireCrlOnClientCertificate, certificateAuthority.GetRequireCrlOnClientCertificate()); err != nil {
 		return nil, err
 	}
 
@@ -370,7 +360,7 @@ func certificateAuthorityImport(ctx context.Context, d *schema.ResourceData, met
 
 	// Mark resource as new to avoid d.Set("") when getting 404
 	d.MarkNewResource()
-	if _, err := readCertificateAuthorityAndSetAttributes(ctx, d, meta, d.Id(), false); err != nil {
+	if _, err := readCertificateAuthorityAndSetAttributes(ctx, d, meta, d.Id()); err != nil {
 		return nil, fmt.Errorf("error importing Certificate Authority %q: %s", d.Id(), err)
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished importing Certificate Authority %q", d.Id()), map[string]interface{}{certificateAuthorityKey: d.Id()})
