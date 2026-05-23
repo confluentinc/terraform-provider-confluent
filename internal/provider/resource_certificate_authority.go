@@ -128,16 +128,21 @@ func certificateAuthorityCustomizeDiff(_ context.Context, d *schema.ResourceDiff
 	if !triggersBackendCrlUpdate {
 		return nil
 	}
-	crlFields := []string{paramCrlSource, paramCrlUrl, paramCrlUpdatedAt}
 	if d.Get(paramRequireCrlOnClientCertificate).(bool) {
-		for _, p := range crlFields {
-			if err := d.SetNewComputed(p); err != nil {
+		if err := d.SetNewComputed(paramCrlSource); err != nil {
+			return err
+		}
+		if err := d.SetNewComputed(paramCrlUpdatedAt); err != nil {
+			return err
+		}
+		if d.Get(paramCrlUrl).(string) == "" {
+			if err := d.SetNewComputed(paramCrlUrl); err != nil {
 				return err
 			}
 		}
 		return nil
 	}
-	for _, p := range crlFields {
+	for _, p := range []string{paramCrlSource, paramCrlUrl} {
 		if err := d.SetNew(p, ""); err != nil {
 			return err
 		}
@@ -183,11 +188,6 @@ func certificateAuthorityCreate(ctx context.Context, d *schema.ResourceData, met
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished creating Certificate Authority %q: %s", d.Id(), createdCertificateAuthorityJson), map[string]interface{}{certificateAuthorityKey: d.Id()})
 
-	// Wait for the backend to finish provisioning and to settle any async CRL-metadata reconciliation
-	if err := waitForCertificateAuthorityToProvision(ctx, c, d.Id()); err != nil {
-		return diag.Errorf("error waiting for Certificate Authority %q to provision: %s", d.Id(), createDescriptiveError(err))
-	}
-
 	return certificateAuthorityRead(ctx, d, meta)
 }
 
@@ -203,14 +203,6 @@ func certificateAuthorityRead(ctx context.Context, d *schema.ResourceData, meta 
 
 	if _, err := readCertificateAuthorityAndSetAttributes(ctx, d, meta, certificateAuthorityId); err != nil {
 		return diag.FromErr(fmt.Errorf("error reading Certificate Authority %q: %s", certificateAuthorityId, createDescriptiveError(err)))
-	}
-
-	if !d.Get(paramRequireCrlOnClientCertificate).(bool) {
-		for _, p := range []string{paramCrlSource, paramCrlUrl, paramCrlUpdatedAt} {
-			if err := d.Set(p, ""); err != nil {
-				return diag.FromErr(err)
-			}
-		}
 	}
 
 	return nil
@@ -271,7 +263,11 @@ func setCertificateAuthorityAttributes(d *schema.ResourceData, certificateAuthor
 	if err := d.Set(paramCrlUrl, certificateAuthority.GetCrlUrl()); err != nil {
 		return nil, err
 	}
-	if err := d.Set(paramCrlUpdatedAt, fmt.Sprint(certificateAuthority.GetCrlUpdatedAt())); err != nil {
+	crlUpdatedAt := ""
+	if !certificateAuthority.GetCrlUpdatedAt().IsZero() {
+		crlUpdatedAt = fmt.Sprint(certificateAuthority.GetCrlUpdatedAt())
+	}
+	if err := d.Set(paramCrlUpdatedAt, crlUpdatedAt); err != nil {
 		return nil, err
 	}
 	if err := d.Set(paramRequireCrlOnClientCertificate, certificateAuthority.GetRequireCrlOnClientCertificate()); err != nil {
@@ -339,11 +335,6 @@ func certificateAuthorityUpdate(ctx context.Context, d *schema.ResourceData, met
 		return diag.Errorf("error updating Certificate Authority %q: error marshaling %#v to json: %s", d.Id(), updatedCertificateAuthority, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished updating Certificate Authority %q: %s", d.Id(), updatedCertificateAuthorityJson), map[string]interface{}{certificateAuthorityKey: d.Id()})
-
-	// Wait for the backend to finish reconciliation before Read.
-	if err := waitForCertificateAuthorityToProvision(ctx, c, d.Id()); err != nil {
-		return diag.Errorf("error waiting for Certificate Authority %q to settle after update: %s", d.Id(), createDescriptiveError(err))
-	}
 
 	return certificateAuthorityRead(ctx, d, meta)
 }

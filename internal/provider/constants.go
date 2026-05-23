@@ -58,7 +58,6 @@ const (
 	byobAwsSpecKind                           = "ByobAws"
 	byokKeyLoggingKey                         = "byok_key_id"
 	catalogIntegrationKey                     = "catalog_integration_id"
-	certificateAuthorityAPICreateTimeout      = 10 * time.Minute
 	certificateAuthorityKey                   = "certificate_authority_id"
 	certificatePoolKey                        = "certificate_pool_id"
 	cloudKindInLowercase                      = "cloud"
