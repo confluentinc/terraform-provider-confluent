@@ -93,6 +93,9 @@ func certificateAuthorityResource() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
+				// When crl_chain is uploaded, the backend reports crl_url as "Local file uploaded"
+				// while the user leaves it unset in config (newValue == ""). Suppress that specific
+				// diff to avoid perpetual drift; explicit URLs (newValue != "") still diff normally.
 				DiffSuppressFunc: func(_, oldValue, newValue string, _ *schema.ResourceData) bool {
 					return oldValue == crlUrlLocalFilePlaceholder && newValue == ""
 				},
