@@ -101,6 +101,7 @@ func TestAccDataSourceKafkaClusters(t *testing.T) {
 					resource.TestCheckResourceAttr(fullKafkaClustersDataSourceLabel, "clusters.0.network.0.id", kafkaNetworkId),
 					resource.TestCheckResourceAttr(fullKafkaClustersDataSourceLabel, "clusters.0.rest_endpoint", kafkaHttpEndpoint),
 					resource.TestCheckResourceAttr(fullKafkaClustersDataSourceLabel, "clusters.0.rbac_crn", kafkaRbacCrn),
+					resource.TestCheckResourceAttr(fullKafkaClustersDataSourceLabel, "clusters.0.deletion_protection", "false"),
 
 					resource.TestCheckResourceAttr(fullKafkaClustersDataSourceLabel, "clusters.1.id", "lkc-29ynpv"),
 					resource.TestCheckResourceAttr(fullKafkaClustersDataSourceLabel, "clusters.1.api_version", kafkaApiVersion),
@@ -123,6 +124,7 @@ func TestAccDataSourceKafkaClusters(t *testing.T) {
 					resource.TestCheckResourceAttr(fullKafkaClustersDataSourceLabel, "clusters.1.network.0.id", kafkaNetworkId),
 					resource.TestCheckResourceAttr(fullKafkaClustersDataSourceLabel, "clusters.1.rest_endpoint", testKafkaHttpEndpoint2),
 					resource.TestCheckResourceAttr(fullKafkaClustersDataSourceLabel, "clusters.1.rbac_crn", testKafkaRbacCrn2),
+					resource.TestCheckResourceAttr(fullKafkaClustersDataSourceLabel, "clusters.1.deletion_protection", "false"),
 				),
 			},
 		},

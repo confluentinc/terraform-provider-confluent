@@ -17,6 +17,7 @@
         "config": {
           "kind": "Basic"
         },
+        "deletion_protection": false,
         "display_name": "TestCluster #2",
         "environment": {
           "api_version": "org/v2",

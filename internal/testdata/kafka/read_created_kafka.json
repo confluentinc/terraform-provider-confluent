@@ -15,6 +15,7 @@
       "kind": "Basic",
       "max_ecku": 5
     },
+    "deletion_protection": false,
     "display_name": "TestCluster",
     "environment": {
       "api_version": "v2",
