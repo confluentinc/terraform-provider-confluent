@@ -47,7 +47,6 @@ func tagResource() *schema.Resource {
 			paramRestEndpoint: {
 				Type:         schema.TypeString,
 				Optional:     true,
-				ForceNew:     true,
 				Description:  "The REST endpoint of the Schema Registry cluster, for example, `https://psrc-00000.us-central1.gcp.confluent.cloud:443`).",
 				ValidateFunc: validation.StringMatch(regexp.MustCompile("^http"), "the REST endpoint must start with 'https://'"),
 			},
@@ -235,7 +234,7 @@ func tagDelete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagn
 }
 
 func tagUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
-	if d.HasChangeExcept(paramDescription) {
+	if d.HasChangesExcept(paramDescription, paramRestEndpoint) {
 		return diag.Errorf("error updating Tag %q: only %q attribute can be updated for Tag", d.Id(), paramDescription)
 	}
 
