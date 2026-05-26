@@ -104,6 +104,7 @@ const (
 	defaultOutputPath                         = "./imported_confluent_infrastructure"
 	defaultTfStateFile                        = "terraform.tfstate"
 	defaultVariablesTfFile                    = "variables.tf"
+	deletionProtectedClusterErrorMessage      = "Error: Cluster deletion is blocked by deletion protection. Disable deletion_protection before deleting the cluster."
 	deprecationMessageMajorRelease3           = "The %q %s has been deprecated and will be removed in the next major version of the provider (3.0.0). " +
 		"Refer to the Upgrade Guide at https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/guides/version-3-upgrade for more details. " +
 		"The guide will be published once version 3.0.0 is released."
@@ -116,6 +117,7 @@ const (
 	dynamicTopicConfig                                   = "DYNAMIC_TOPIC_CONFIG"
 	entityAttributesLoggingKey                           = "entity_attributes_id"
 	environmentLoggingKey                                = "environment_id"
+	errorCodeDeletionProtectionEnabled                   = "deletion_protection_enabled"
 	errorHandlingLogMode                                 = "LOG"
 	errorHandlingSkipMode                                = "SKIP"
 	errorHandlingSuspendMode                             = "SUSPEND"

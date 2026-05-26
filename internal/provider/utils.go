@@ -874,6 +874,42 @@ func setStringAttributeInListBlockOfSizeOne(blockName, attributeName, attributeV
 	}})
 }
 
+func errorCodesFromError(err error) []string {
+	genericOpenAPIError, ok := err.(GenericOpenAPIError)
+	if !ok {
+		return nil
+	}
+
+	// reflectedFailure represents a reflected value of the failure model. Since values under
+	// interfaces are not addressable and the GetErrors method could be defined on a pointer
+	// receiver, we create a new pointer and set the value of the failure model to it.
+	reflectedFailure := reflect.ValueOf(genericOpenAPIError.Model())
+	reflectedFailurePointer := reflect.New(reflectedFailure.Type())
+	reflectedFailurePointer.Elem().Set(reflectedFailure)
+
+	reflectedGetErrorsMethod := reflectedFailurePointer.MethodByName("GetErrors")
+	if !reflectedGetErrorsMethod.IsValid() || reflectedGetErrorsMethod.Type().NumIn() != 0 || reflectedGetErrorsMethod.Type().NumOut() != 1 {
+		return nil
+	}
+	reflectedErrors := reflectedGetErrorsMethod.Call(nil)[0]
+	if !reflectedErrors.IsValid() || reflectedErrors.Kind() != reflect.Slice {
+		return nil
+	}
+	var errorCodes []string
+	for i := 0; i < reflectedErrors.Len(); i++ {
+		reflectedApiErrorGetCodeMethod := reflectedErrors.Index(i).Addr().MethodByName("GetCode")
+		if !reflectedApiErrorGetCodeMethod.IsValid() || reflectedApiErrorGetCodeMethod.Type().NumIn() != 0 || reflectedApiErrorGetCodeMethod.Type().NumOut() != 1 {
+			continue
+		}
+		reflectedErrorCode := reflectedApiErrorGetCodeMethod.Call(nil)[0]
+		if !reflectedErrorCode.IsValid() || reflectedErrorCode.Kind() != reflect.String {
+			continue
+		}
+		errorCodes = append(errorCodes, reflectedErrorCode.Interface().(string))
+	}
+	return errorCodes
+}
+
 // createDescriptiveError will convert GenericOpenAPIError error into an error with a more descriptive error message.
 // diag.FromErr(createDescriptiveError(err)) should be used instead of diag.FromErr(err) in this project
 // since GenericOpenAPIError.Error() returns just HTTP status code and its generic name (i.e., "400 Bad Request")
