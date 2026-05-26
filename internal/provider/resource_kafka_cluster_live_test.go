@@ -537,8 +537,49 @@ func TestAccKafkaClusterAvailabilityDriftMultiZoneToHighLive(t *testing.T) {
 	})
 }
 
+func TestAccKafkaClusterDeletionProtectionTrueLive(t *testing.T) {
+	t.Parallel()
+
+	if os.Getenv("TF_ACC_PROD") == "" {
+		t.Skip("Skipping live test. Set TF_ACC_PROD=1 to run this test.")
+	}
+
+	apiKey := os.Getenv("CONFLUENT_CLOUD_API_KEY")
+	apiSecret := os.Getenv("CONFLUENT_CLOUD_API_SECRET")
+	endpoint := os.Getenv("CONFLUENT_CLOUD_ENDPOINT")
+	if endpoint == "" {
+		endpoint = "https://api.confluent.cloud"
+	}
+
+	if apiKey == "" || apiSecret == "" {
+		t.Fatal("CONFLUENT_CLOUD_API_KEY and CONFLUENT_CLOUD_API_SECRET must be set for live tests")
+	}
+
+	clusterDisplayName := fmt.Sprintf("tf-live-dp-%d", rand.Intn(1000000))
+	environmentDisplayName := fmt.Sprintf("tf-live-env-%d", rand.Intn(1000000))
+	clusterResourceLabel := "test_live_dp_cluster"
+	environmentResourceLabel := "test_live_env"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckClusterDestroy,
+		Steps: []resource.TestStep{
+			{
+				// Step 1: Create cluster with deletion_protection=true
+				Config: testAccCheckKafkaClusterDeletionProtectionLiveConfig(endpoint, environmentResourceLabel, environmentDisplayName, clusterResourceLabel, clusterDisplayName, apiKey, apiSecret, true),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckClusterExists(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel)),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "display_name", clusterDisplayName),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "deletion_protection", "false"),
+				),
+			},
+		},
+	})
+}
+
 // Test deletion_protection enable/disable lifecycle on an Enterprise cluster
-func TestAccKafkaClusterDeletionProtectionLive(t *testing.T) {
+func TestAccKafkaClusterDeletionProtectionFalseToTrueLive(t *testing.T) {
 	t.Parallel()
 
 	if os.Getenv("TF_ACC_PROD") == "" {
