@@ -571,9 +571,17 @@ func TestAccKafkaClusterDeletionProtectionTrueLive(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckClusterExists(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel)),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "display_name", clusterDisplayName),
-					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "deletion_protection", "false"),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "deletion_protection", "true"),
 				),
 			},
+			{
+				// Step 2: Set deletion_protection=false to allow test cleanup deletion.
+				Config: testAccCheckKafkaClusterDeletionProtectionLiveConfig(endpoint, environmentResourceLabel, environmentDisplayName, clusterResourceLabel, clusterDisplayName, apiKey, apiSecret, false),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckClusterExists(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel)),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "deletion_protection", "false"),
+				),
+			}
 		},
 	})
 }
@@ -622,6 +630,14 @@ func TestAccKafkaClusterDeletionProtectionFalseToTrueLive(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckClusterExists(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel)),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "deletion_protection", "true"),
+				),
+			},
+			{
+				// Step 3: Set deletion_protection=false to allow test cleanup deletion.
+				Config: testAccCheckKafkaClusterDeletionProtectionLiveConfig(endpoint, environmentResourceLabel, environmentDisplayName, clusterResourceLabel, clusterDisplayName, apiKey, apiSecret, false),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckClusterExists(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel)),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "deletion_protection", "false"),
 				),
 			},
 		},
