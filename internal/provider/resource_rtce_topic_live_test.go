@@ -80,12 +80,10 @@ resource "confluent_service_account" "prerequisite" {
   display_name = "tf-live-prereq-sa-%d"
 }
 
-data "confluent_organization" "prerequisite" {}
-
 resource "confluent_role_binding" "prerequisite" {
   principal   = "User:${confluent_service_account.prerequisite.id}"
   role_name   = "OrganizationAdmin"
-  crn_pattern = replace(data.confluent_organization.prerequisite.resource_name, "/[a-z]+\\.cpdev\\.cloud/", "confluent.cloud")
+  crn_pattern = "crn://confluent.cloud/organization=`+liveTestOrganizationId+`"
 }
 
 resource "confluent_api_key" "prerequisite" {

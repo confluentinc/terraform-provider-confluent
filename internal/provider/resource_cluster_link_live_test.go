@@ -213,7 +213,7 @@ func testAccCheckClusterLinkLiveConfig(endpoint, clusterLinkResourceLabel, linkN
 	data "confluent_kafka_cluster" "standard_cluster" {
 		id = "%s"
 		environment {
-			id = "env-zyg27z"
+			id = "`+liveTestEnvironmentId+`"
 		}
 	}
 
@@ -252,7 +252,7 @@ func testAccCheckClusterLinkUpdateLiveConfig(endpoint, clusterLinkResourceLabel,
 	data "confluent_kafka_cluster" "standard_cluster" {
 		id = "%s"
 		environment {
-			id = "env-zyg27z"
+			id = "`+liveTestEnvironmentId+`"
 		}
 	}
 

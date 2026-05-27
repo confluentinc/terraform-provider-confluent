@@ -138,7 +138,7 @@ func testAccCheckKafkaMirrorTopicLiveConfig(endpoint, mirrorTopicResourceLabel, 
 	data "confluent_kafka_cluster" "standard_cluster" {
 		id = "%s"
 		environment {
-			id = "env-zyg27z"
+			id = "`+liveTestEnvironmentId+`"
 		}
 	}
 
