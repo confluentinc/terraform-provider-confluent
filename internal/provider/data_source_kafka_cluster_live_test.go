@@ -64,7 +64,7 @@ func TestAccKafkaClusterDataSourceLive(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					// Check the data source can find the cluster
 					resource.TestCheckResourceAttr(fmt.Sprintf("data.confluent_kafka_cluster.%s", kafkaClusterDataSourceLabel), "id", kafkaClusterId),
-					resource.TestCheckResourceAttr(fmt.Sprintf("data.confluent_kafka_cluster.%s", kafkaClusterDataSourceLabel), "environment.0.id", "env-zyg27z"),
+					resource.TestCheckResourceAttr(fmt.Sprintf("data.confluent_kafka_cluster.%s", kafkaClusterDataSourceLabel), "environment.0.id", liveTestEnvironmentId),
 					resource.TestCheckResourceAttrSet(fmt.Sprintf("data.confluent_kafka_cluster.%s", kafkaClusterDataSourceLabel), "display_name"),
 					resource.TestCheckResourceAttrSet(fmt.Sprintf("data.confluent_kafka_cluster.%s", kafkaClusterDataSourceLabel), "availability"),
 					resource.TestCheckResourceAttrSet(fmt.Sprintf("data.confluent_kafka_cluster.%s", kafkaClusterDataSourceLabel), "cloud"),
@@ -89,8 +89,8 @@ func testAccCheckKafkaClusterDataSourceLiveConfig(endpoint, kafkaClusterDataSour
 	data "confluent_kafka_cluster" "%s" {
 		id = "%s"
 		environment {
-			id = "env-zyg27z"
+			id = "%s"
 		}
 	}
-	`, endpoint, apiKey, apiSecret, kafkaClusterDataSourceLabel, kafkaClusterId)
+	`, endpoint, apiKey, apiSecret, kafkaClusterDataSourceLabel, kafkaClusterId, liveTestEnvironmentId)
 }

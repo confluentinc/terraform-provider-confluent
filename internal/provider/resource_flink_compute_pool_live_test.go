@@ -45,7 +45,7 @@ func TestAccFlinkComputePoolAWSLive(t *testing.T) {
 		endpoint = "https://api.confluent.cloud"
 	}
 
-	environmentId := "env-zyg27z"
+	environmentId := liveTestEnvironmentId
 
 	// Validate required environment variables are present
 	if apiKey == "" || apiSecret == "" {

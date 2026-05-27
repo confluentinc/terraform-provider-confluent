@@ -64,7 +64,7 @@ func TestAccSchemaRegistryClusterDataSourceLive(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					// Check the data source can find the cluster
 					resource.TestCheckResourceAttr(fmt.Sprintf("data.confluent_schema_registry_cluster.%s", schemaRegistryDataSourceLabel), "id", schemaRegistryId),
-					resource.TestCheckResourceAttr(fmt.Sprintf("data.confluent_schema_registry_cluster.%s", schemaRegistryDataSourceLabel), "environment.0.id", "env-zyg27z"),
+					resource.TestCheckResourceAttr(fmt.Sprintf("data.confluent_schema_registry_cluster.%s", schemaRegistryDataSourceLabel), "environment.0.id", liveTestEnvironmentId),
 					resource.TestCheckResourceAttrSet(fmt.Sprintf("data.confluent_schema_registry_cluster.%s", schemaRegistryDataSourceLabel), "display_name"),
 					resource.TestCheckResourceAttrSet(fmt.Sprintf("data.confluent_schema_registry_cluster.%s", schemaRegistryDataSourceLabel), "cloud"),
 					resource.TestCheckResourceAttrSet(fmt.Sprintf("data.confluent_schema_registry_cluster.%s", schemaRegistryDataSourceLabel), "region"),
@@ -87,8 +87,8 @@ func testAccCheckSchemaRegistryClusterDataSourceLiveConfig(endpoint, schemaRegis
 	data "confluent_schema_registry_cluster" "%s" {
 		id = "%s"
 		environment {
-			id = "env-zyg27z"
+			id = "%s"
 		}
 	}
-	`, endpoint, apiKey, apiSecret, schemaRegistryDataSourceLabel, schemaRegistryId)
+	`, endpoint, apiKey, apiSecret, schemaRegistryDataSourceLabel, schemaRegistryId, liveTestEnvironmentId)
 }

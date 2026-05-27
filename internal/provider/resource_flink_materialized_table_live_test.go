@@ -30,8 +30,8 @@ import (
 // Shared infra the live tests target (also hardcoded in the existing live
 // tests for ksql, role_binding, etc.).
 const (
-	flinkMaterializedTableLiveOrganizationId = "424fb7bf-40c2-433f-81a5-c45942a6a539"
-	flinkMaterializedTableLiveEnvironmentId  = "env-zyg27z"
+	flinkMaterializedTableLiveOrganizationId = liveTestOrganizationId
+	flinkMaterializedTableLiveEnvironmentId  = liveTestEnvironmentId
 )
 
 // The Flink compute pool created by the test must live in the same AWS region
