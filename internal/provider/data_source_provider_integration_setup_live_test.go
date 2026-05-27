@@ -38,7 +38,7 @@ func TestAccProviderIntegrationSetupAzureDataSourceLive(t *testing.T) {
 	apiKey := os.Getenv("CONFLUENT_CLOUD_API_KEY")
 	apiSecret := os.Getenv("CONFLUENT_CLOUD_API_SECRET")
 	endpoint := os.Getenv("CONFLUENT_CLOUD_ENDPOINT")
-	environmentId := "env-zyg27z" // Hardcoded test environment
+	environmentId := liveTestEnvironmentId // Hardcoded test environment
 	azureTenantId := os.Getenv("AZURE_TENANT_ID")
 
 	// Validate required environment variables are present
@@ -109,7 +109,7 @@ func TestAccProviderIntegrationSetupGcpDataSourceLive(t *testing.T) {
 	apiKey := os.Getenv("CONFLUENT_CLOUD_API_KEY")
 	apiSecret := os.Getenv("CONFLUENT_CLOUD_API_SECRET")
 	endpoint := os.Getenv("CONFLUENT_CLOUD_ENDPOINT")
-	environmentId := "env-zyg27z"                                                                            // Hardcoded test environment
+	environmentId := liveTestEnvironmentId                                                                   // Hardcoded test environment
 	gcpServiceAccount := fmt.Sprintf("test-sa-%d@test-project-123456.iam.gserviceaccount.com", randomSuffix) // Unique test service account
 
 	// Validate required environment variables are present

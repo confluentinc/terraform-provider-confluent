@@ -83,7 +83,7 @@ resource "confluent_service_account" "prerequisite" {
 resource "confluent_role_binding" "prerequisite" {
   principal   = "User:${confluent_service_account.prerequisite.id}"
   role_name   = "OrganizationAdmin"
-  crn_pattern = "crn://confluent.cloud/organization=424fb7bf-40c2-433f-81a5-c45942a6a539"
+  crn_pattern = "crn://confluent.cloud/organization=`+liveTestOrganizationId+`"
 }
 
 resource "confluent_api_key" "prerequisite" {
