@@ -48,6 +48,7 @@
     "detail": "Materialized table is being registered.",
     "warnings": [],
     "scaling_status": {},
-    "version": 1
+    "version": 1,
+    "creation_statement": "CREATE OR ALTER MATERIALIZED TABLE table1 AS SELECT user_id, product_id, price, quantity FROM orders WHERE price > 1000;"
   }
 }

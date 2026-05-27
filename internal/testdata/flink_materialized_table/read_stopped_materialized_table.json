@@ -48,6 +48,7 @@
     "detail": "Materialized table is stopped.",
     "warnings": [],
     "scaling_status": {},
-    "version": 3
+    "version": 3,
+    "creation_statement": "CREATE OR ALTER MATERIALIZED TABLE table1 AS SELECT user_id, product_id, price, quantity FROM orders WHERE price > 1000;"
   }
 }

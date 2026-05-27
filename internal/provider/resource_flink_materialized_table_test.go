@@ -583,3 +583,69 @@ func testAccCheckMaterializedTableCanonicalConfig(mockServerUrl, resourceLabel, 
 		flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkComputePoolIdTest,
 		flinkMaterializedTableCanonicalDisplayName, flinkMaterializedTableDatabase, query)
 }
+
+func TestExtractSelectFromCreationStatement(t *testing.T) {
+	tests := []struct {
+		name        string
+		creation    string
+		displayName string
+		want        string
+	}{
+		{
+			name:        "empty input",
+			creation:    "",
+			displayName: "any",
+			want:        "",
+		},
+		{
+			name:        "simple DDL prefix strip",
+			creation:    "CREATE OR ALTER MATERIALIZED TABLE my_table AS SELECT col1 FROM src",
+			displayName: "my_table",
+			want:        "SELECT col1 FROM src",
+		},
+		{
+			name:        "user-lowercase original preserved through strip",
+			creation:    "CREATE OR ALTER MATERIALIZED TABLE table_canon AS select order_id, cast(price as int) as p from src",
+			displayName: "table_canon",
+			want:        "select order_id, cast(price as int) as p from src",
+		},
+		{
+			name:        "fallback boundary: inline DDL with options before AS",
+			creation:    "CREATE OR ALTER MATERIALIZED TABLE t (c1 INT) DISTRIBUTED INTO 4 BUCKETS AS SELECT c1 FROM src",
+			displayName: "t",
+			want:        "SELECT c1 FROM src",
+		},
+		{
+			name:        "fallback boundary: parenthesized SELECT",
+			creation:    "CREATE OR ALTER MATERIALIZED TABLE t AS (SELECT * FROM src)",
+			displayName: "t",
+			want:        "(SELECT * FROM src)",
+		},
+		{
+			name:        "fallback: no recognizable boundary returns input unchanged",
+			creation:    "not a valid creation statement",
+			displayName: "t",
+			want:        "not a valid creation statement",
+		},
+		{
+			name:        "SELECT body contains AS aliases — boundary still correct",
+			creation:    "CREATE OR ALTER MATERIALIZED TABLE t AS SELECT col1 AS alias1, sum(x) AS total FROM src",
+			displayName: "t",
+			want:        "SELECT col1 AS alias1, sum(x) AS total FROM src",
+		},
+		{
+			name:        "display name with hyphen",
+			creation:    "CREATE OR ALTER MATERIALIZED TABLE high-value-orders AS SELECT * FROM orders",
+			displayName: "high-value-orders",
+			want:        "SELECT * FROM orders",
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			got := extractSelectFromCreationStatement(tc.creation, tc.displayName)
+			if got != tc.want {
+				t.Errorf("extractSelectFromCreationStatement\n  creation    = %q\n  displayName = %q\n  got  = %q\n  want = %q", tc.creation, tc.displayName, got, tc.want)
+			}
+		})
+	}
+}

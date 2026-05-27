@@ -132,11 +132,7 @@ The following arguments are supported:
 - `display_name` - (Required String) The unique name of the Materialized Table.
 - `kafka_cluster` - (Required Configuration Block) supports the following:
     - `id` - (Required String) The ID of the Kafka Cluster hosting the Materialized Table's topic, for example, `lkc-abc123`.
-- `query` - (Optional String) The SQL query that defines the Materialized Table, for example, `SELECT user_id, product_id, price, quantity FROM orders WHERE price > 1000;`.
-
-  -> **Note:** The Flink Gateway canonicalizes the submitted `query` on parse (uppercases keywords, expands type aliases such as `INT`→`INTEGER`, normalizes parentheses, etc.). To prevent cosmetic drift on every `terraform plan`, the provider preserves the user-submitted `query` verbatim in state and does not refresh it from the API after Create or Update. When you import a Materialized Table, the imported state will hold the API's canonical form; either update your HCL to match it or set `lifecycle { ignore_changes = [query] }`. 
-
-  !> **Warning:** Because the provider does not refresh `query` from the API after Create or Update, **out-of-band changes to the `query` made via the Flink UI, the Confluent CLI, or direct API calls will not be detected by `terraform plan` or `terraform refresh`**. Terraform will continue to report the resource as in-sync with the value in your HCL. To recover from an out-of-band edit, either update your HCL to the new desired query (which will trigger a normal Update on the next apply) or re-import the resource (which will repopulate state from the API's canonical form).
+- `query` - (Optional String) The SQL query that defines the Materialized Table, for example, `SELECT user_id, product_id, price, quantity FROM orders WHERE price > 1000;`. The provider compares your HCL against `status.creation_statement` from the API (which carries the original user-submitted text, not the Flink Gateway's canonicalized form), so cosmetic differences such as keyword casing and type-alias expansion are not reported as drift while real semantic changes are.
 - `watermark` - (Optional Configuration Block, max 1 item) The watermark definition for the Materialized Table. Supports the following:
     - `column` - (Optional String) The name of the watermark column.
     - `expression` - (Optional String) The watermark expression, for example, `event_time - INTERVAL '5' SECOND`.
@@ -216,5 +212,3 @@ $ terraform import confluent_flink_materialized_table.example env-abc123/lkc-xyz
 ```
 
 !> **Warning:** Do not forget to delete terminal command history afterwards for security purposes.
-
--> **Note:** After import, the `query` attribute in state will hold the Flink Gateway's **canonical form** (uppercase keywords, `INTEGER` instead of `INT`, backtick-quoted identifiers, etc.), not the original text the table was created with. This is by design, see the [`query` argument note above](#argument-reference), and the next `terraform plan` will show a `~ query` diff against the lowercase value in your HCL. To resolve it, either (a) run `terraform apply` once to overwrite state with your HCL value (the provider will PATCH the API with the same query, which the gateway re-canonicalizes idempotently), (b) update your HCL to match the canonical form shown in state, or (c) add `lifecycle { ignore_changes = [query] }` to the resource if you don't want Terraform to manage `query` going forward.
