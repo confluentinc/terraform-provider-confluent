@@ -109,11 +109,11 @@ func testAccCheckRoleBindingDataSourceLiveConfig(endpoint, serviceAccountResourc
 	resource "confluent_role_binding" "%s" {
 		principal   = "User:${confluent_service_account.%s.id}"
 		role_name   = "MetricsViewer"
-		crn_pattern = "crn://confluent.cloud/organization=`+liveTestOrganizationId+`"
+		crn_pattern = "crn://confluent.cloud/organization=%s"
 	}
 
 	data "confluent_role_binding" "%s" {
 		id = confluent_role_binding.%s.id
 	}
-	`, endpoint, apiKey, apiSecret, serviceAccountResourceLabel, serviceAccountDisplayName, roleBindingResourceLabel, serviceAccountResourceLabel, roleBindingDataSourceLabel, roleBindingResourceLabel)
+	`, endpoint, apiKey, apiSecret, serviceAccountResourceLabel, serviceAccountDisplayName, roleBindingResourceLabel, serviceAccountResourceLabel, liveTestOrganizationId, roleBindingDataSourceLabel, roleBindingResourceLabel)
 }

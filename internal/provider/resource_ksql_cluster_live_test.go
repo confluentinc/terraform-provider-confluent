@@ -142,7 +142,7 @@ func testAccCheckKsqlClusterLiveConfig(endpoint, ksqlClusterResourceLabel, ksqlC
 	resource "confluent_role_binding" "live_ksql_sa_rb" {
 		principal   = "User:${confluent_service_account.live_ksql_sa.id}"
 		role_name   = "CloudClusterAdmin"
-		crn_pattern = "crn://confluent.cloud/organization=`+liveTestOrganizationId+`/environment=`+liveTestEnvironmentId+`/cloud-cluster=%s"
+		crn_pattern = "crn://confluent.cloud/organization=%s/environment=%s/cloud-cluster=%s"
 	}
 
 	resource "confluent_ksql_cluster" "%s" {
@@ -155,11 +155,11 @@ func testAccCheckKsqlClusterLiveConfig(endpoint, ksqlClusterResourceLabel, ksqlC
 			id = confluent_service_account.live_ksql_sa.id
 		}
 		environment {
-			id = "`+liveTestEnvironmentId+`"
+			id = "%s"
 		}
 		depends_on = [
 			confluent_role_binding.live_ksql_sa_rb
 		]
 	}
-	`, endpoint, apiKey, apiSecret, ksqlClusterDisplayName, kafkaClusterId, ksqlClusterResourceLabel, ksqlClusterDisplayName, kafkaClusterId)
+	`, endpoint, apiKey, apiSecret, ksqlClusterDisplayName, liveTestOrganizationId, liveTestEnvironmentId, kafkaClusterId, ksqlClusterResourceLabel, ksqlClusterDisplayName, kafkaClusterId, liveTestEnvironmentId)
 }

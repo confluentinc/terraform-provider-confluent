@@ -87,8 +87,8 @@ func testAccCheckSchemaRegistryClusterDataSourceLiveConfig(endpoint, schemaRegis
 	data "confluent_schema_registry_cluster" "%s" {
 		id = "%s"
 		environment {
-			id = "`+liveTestEnvironmentId+`"
+			id = "%s"
 		}
 	}
-	`, endpoint, apiKey, apiSecret, schemaRegistryDataSourceLabel, schemaRegistryId)
+	`, endpoint, apiKey, apiSecret, schemaRegistryDataSourceLabel, schemaRegistryId, liveTestEnvironmentId)
 }

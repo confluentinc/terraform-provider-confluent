@@ -195,7 +195,7 @@ func testAccCheckKafkaClientQuotaLiveConfig(endpoint, quotaResourceLabel, quotaD
 			id = "%s"
 		}
 		environment {
-			id = "`+liveTestEnvironmentId+`"
+			id = "%s"
 		}
 		throughput {
 			ingress_byte_rate = "1048576"  # 1 MB/s
@@ -203,7 +203,7 @@ func testAccCheckKafkaClientQuotaLiveConfig(endpoint, quotaResourceLabel, quotaD
 		}
 		principals = ["<default>"]
 	}
-	`, endpoint, apiKey, apiSecret, quotaResourceLabel, quotaDisplayName, kafkaClusterId)
+	`, endpoint, apiKey, apiSecret, quotaResourceLabel, quotaDisplayName, kafkaClusterId, liveTestEnvironmentId)
 }
 
 func testAccCheckKafkaClientQuotaUpdateLiveConfigWithSA(endpoint, quotaResourceLabel, quotaDisplayName, kafkaClusterId, apiKey, apiSecret string) string {
@@ -226,7 +226,7 @@ func testAccCheckKafkaClientQuotaUpdateLiveConfigWithSA(endpoint, quotaResourceL
 			id = "%s"
 		}
 		environment {
-			id = "`+liveTestEnvironmentId+`"
+			id = "%s"
 		}
 		throughput {
 			ingress_byte_rate = "1048576"  # 1 MB/s
@@ -234,7 +234,7 @@ func testAccCheckKafkaClientQuotaUpdateLiveConfigWithSA(endpoint, quotaResourceL
 		}
 		principals = [confluent_service_account.quota_test_sa.id]
 	}
-	`, endpoint, apiKey, apiSecret, quotaDisplayName, quotaResourceLabel, quotaDisplayName, kafkaClusterId)
+	`, endpoint, apiKey, apiSecret, quotaDisplayName, quotaResourceLabel, quotaDisplayName, kafkaClusterId, liveTestEnvironmentId)
 }
 
 func testAccCheckKafkaClientQuotaUpdateLiveConfigUpdated(endpoint, quotaResourceLabel, quotaDisplayName, kafkaClusterId, apiKey, apiSecret string) string {
@@ -257,7 +257,7 @@ func testAccCheckKafkaClientQuotaUpdateLiveConfigUpdated(endpoint, quotaResource
 			id = "%s"
 		}
 		environment {
-			id = "`+liveTestEnvironmentId+`"
+			id = "%s"
 		}
 		throughput {
 			ingress_byte_rate = "2097152"  # 2 MB/s
@@ -265,5 +265,5 @@ func testAccCheckKafkaClientQuotaUpdateLiveConfigUpdated(endpoint, quotaResource
 		}
 		principals = [confluent_service_account.quota_test_sa.id]
 	}
-	`, endpoint, apiKey, apiSecret, quotaDisplayName, quotaResourceLabel, quotaDisplayName, kafkaClusterId)
+	`, endpoint, apiKey, apiSecret, quotaDisplayName, quotaResourceLabel, quotaDisplayName, kafkaClusterId, liveTestEnvironmentId)
 }

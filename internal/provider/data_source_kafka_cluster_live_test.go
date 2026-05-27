@@ -89,8 +89,8 @@ func testAccCheckKafkaClusterDataSourceLiveConfig(endpoint, kafkaClusterDataSour
 	data "confluent_kafka_cluster" "%s" {
 		id = "%s"
 		environment {
-			id = "`+liveTestEnvironmentId+`"
+			id = "%s"
 		}
 	}
-	`, endpoint, apiKey, apiSecret, kafkaClusterDataSourceLabel, kafkaClusterId)
+	`, endpoint, apiKey, apiSecret, kafkaClusterDataSourceLabel, kafkaClusterId, liveTestEnvironmentId)
 }

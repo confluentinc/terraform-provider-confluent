@@ -218,7 +218,7 @@ func testAccCheckConnectorLiveConfigWithoutOffsets(endpoint, connectorResourceLa
 
 	resource "confluent_connector" "%s" {
 		environment {
-			id = "`+liveTestEnvironmentId+`"
+			id = "%s"
 		}
 		kafka_cluster {
 			id = "%s"
@@ -240,7 +240,7 @@ func testAccCheckConnectorLiveConfigWithoutOffsets(endpoint, connectorResourceLa
 
 		depends_on = [confluent_kafka_topic.connector_topic]
 	}
-	`, endpoint, apiKey, apiSecret, kafkaClusterId, topicName, kafkaRestEndpoint, kafkaApiKey, kafkaApiSecret, connectorResourceLabel, kafkaClusterId, connectorName, kafkaApiKey, kafkaApiSecret)
+	`, endpoint, apiKey, apiSecret, kafkaClusterId, topicName, kafkaRestEndpoint, kafkaApiKey, kafkaApiSecret, connectorResourceLabel, liveTestEnvironmentId, kafkaClusterId, connectorName, kafkaApiKey, kafkaApiSecret)
 }
 
 func testAccCheckConnectorUpdateLiveConfigWithoutOffsets(endpoint, connectorResourceLabel, connectorName, topicName, kafkaClusterId, kafkaRestEndpoint, apiKey, apiSecret, kafkaApiKey, kafkaApiSecret string) string {
@@ -267,7 +267,7 @@ func testAccCheckConnectorUpdateLiveConfigWithoutOffsets(endpoint, connectorReso
 
 	resource "confluent_connector" "%s" {
 		environment {
-			id = "`+liveTestEnvironmentId+`"
+			id = "%s"
 		}
 		kafka_cluster {
 			id = "%s"
@@ -289,5 +289,5 @@ func testAccCheckConnectorUpdateLiveConfigWithoutOffsets(endpoint, connectorReso
 
 		depends_on = [confluent_kafka_topic.connector_topic]
 	}
-	`, endpoint, apiKey, apiSecret, kafkaClusterId, topicName, kafkaRestEndpoint, kafkaApiKey, kafkaApiSecret, connectorResourceLabel, kafkaClusterId, connectorName, kafkaApiKey, kafkaApiSecret)
+	`, endpoint, apiKey, apiSecret, kafkaClusterId, topicName, kafkaRestEndpoint, kafkaApiKey, kafkaApiSecret, connectorResourceLabel, liveTestEnvironmentId, kafkaClusterId, connectorName, kafkaApiKey, kafkaApiSecret)
 }

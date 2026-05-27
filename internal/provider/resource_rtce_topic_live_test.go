@@ -83,7 +83,7 @@ resource "confluent_service_account" "prerequisite" {
 resource "confluent_role_binding" "prerequisite" {
   principal   = "User:${confluent_service_account.prerequisite.id}"
   role_name   = "OrganizationAdmin"
-  crn_pattern = "crn://confluent.cloud/organization=`+liveTestOrganizationId+`"
+  crn_pattern = "crn://confluent.cloud/organization=%s"
 }
 
 resource "confluent_api_key" "prerequisite" {
@@ -159,7 +159,7 @@ resource "confluent_schema" "prerequisite" {
     secret = confluent_api_key.prerequisite_sr.secret
   }
 }
-`, randomSuffix, randomSuffix, cloud, region, randomSuffix, randomSuffix, randomSuffix, randomSuffix)
+`, randomSuffix, randomSuffix, cloud, region, randomSuffix, liveTestOrganizationId, randomSuffix, randomSuffix, randomSuffix)
 }
 
 func testAccRtceTopicPrerequisiteWithProviderConfig(endpoint, apiKey, apiSecret string, randomSuffix int) string {

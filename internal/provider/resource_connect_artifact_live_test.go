@@ -256,8 +256,8 @@ func testAccCheckConnectArtifactLiveConfig(endpoint, artifactResourceLabel, arti
 		artifact_file  = "test_artifacts/connect_artifact.jar"
 
 		environment {
-			id = "`+liveTestEnvironmentId+`"
+			id = "%s"
 		}
 	}
-	`, endpoint, apiKey, apiSecret, artifactResourceLabel, artifactDisplayName, cloud)
+	`, endpoint, apiKey, apiSecret, artifactResourceLabel, artifactDisplayName, cloud, liveTestEnvironmentId)
 }

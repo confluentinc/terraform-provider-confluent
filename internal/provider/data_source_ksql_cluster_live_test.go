@@ -117,7 +117,7 @@ func testAccCheckKsqlClusterDataSourceLiveConfig(endpoint, ksqlClusterResourceLa
 			id = confluent_service_account.live_ksql_sa.id
 		}
 		environment {
-			id = "`+liveTestEnvironmentId+`"
+			id = "%s"
 		}
 		depends_on = [
 			confluent_role_binding.live_ksql_sa_rb
@@ -132,14 +132,14 @@ func testAccCheckKsqlClusterDataSourceLiveConfig(endpoint, ksqlClusterResourceLa
 	resource "confluent_role_binding" "live_ksql_sa_rb" {
 		principal   = "User:${confluent_service_account.live_ksql_sa.id}"
 		role_name   = "CloudClusterAdmin"
-		crn_pattern = "crn://confluent.cloud/organization=`+liveTestOrganizationId+`/environment=`+liveTestEnvironmentId+`/cloud-cluster=%s"
+		crn_pattern = "crn://confluent.cloud/organization=%s/environment=%s/cloud-cluster=%s"
 	}
 
 	data "confluent_ksql_cluster" "%s" {
 		id = confluent_ksql_cluster.%s.id
 		environment {
-			id = "`+liveTestEnvironmentId+`"
+			id = "%s"
 		}
 	}
-	`, endpoint, apiKey, apiSecret, ksqlClusterResourceLabel, ksqlClusterDisplayName, kafkaClusterId, ksqlClusterDisplayName, kafkaClusterId, ksqlClusterDataSourceLabel, ksqlClusterResourceLabel)
+	`, endpoint, apiKey, apiSecret, ksqlClusterResourceLabel, ksqlClusterDisplayName, kafkaClusterId, liveTestEnvironmentId, ksqlClusterDisplayName, liveTestOrganizationId, liveTestEnvironmentId, kafkaClusterId, ksqlClusterDataSourceLabel, ksqlClusterResourceLabel, liveTestEnvironmentId)
 }

@@ -138,7 +138,7 @@ func testAccCheckKafkaMirrorTopicLiveConfig(endpoint, mirrorTopicResourceLabel, 
 	data "confluent_kafka_cluster" "standard_cluster" {
 		id = "%s"
 		environment {
-			id = "`+liveTestEnvironmentId+`"
+			id = "%s"
 		}
 	}
 
@@ -198,5 +198,5 @@ func testAccCheckKafkaMirrorTopicLiveConfig(endpoint, mirrorTopicResourceLabel, 
 			}
 		}
 	}
-	`, endpoint, apiKey, apiSecret, standardClusterId, standardClusterId, sourceTopic, standardRestEndpoint, standardApiKey, standardApiSecret, linkName, standardClusterId, standardApiKey, standardApiSecret, dedicatedClusterId, dedicatedRestEndpoint, dedicatedApiKey, dedicatedApiSecret, mirrorTopicResourceLabel, dedicatedClusterId, dedicatedRestEndpoint, dedicatedApiKey, dedicatedApiSecret)
+	`, endpoint, apiKey, apiSecret, standardClusterId, liveTestEnvironmentId, standardClusterId, sourceTopic, standardRestEndpoint, standardApiKey, standardApiSecret, linkName, standardClusterId, standardApiKey, standardApiSecret, dedicatedClusterId, dedicatedRestEndpoint, dedicatedApiKey, dedicatedApiSecret, mirrorTopicResourceLabel, dedicatedClusterId, dedicatedRestEndpoint, dedicatedApiKey, dedicatedApiSecret)
 }
