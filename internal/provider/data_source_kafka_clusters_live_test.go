@@ -83,10 +83,10 @@ func testAccCheckKafkaClustersDataSourceLiveConfig(endpoint, kafkaClustersDataSo
 
 	data "confluent_kafka_clusters" "%s" {
 		environment {
-			id = "env-zyg27z"
+			id = "%s"
 		}
 	}
-	`, endpoint, apiKey, apiSecret, kafkaClustersDataSourceLabel)
+	`, endpoint, apiKey, apiSecret, kafkaClustersDataSourceLabel, liveTestEnvironmentId)
 }
 
 // testAccCheckKafkaClustersCountAtLeast verifies that at least minCount clusters exist
