@@ -235,7 +235,7 @@ func tagDelete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagn
 
 func tagUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	if d.HasChangesExcept(paramDescription, paramRestEndpoint) {
-		return diag.Errorf("error updating Tag %q: only %q attribute can be updated for Tag", d.Id(), paramDescription)
+		return diag.Errorf("error updating Tag %q: only %q and %q attributes can be updated for Tag", d.Id(), paramDescription, paramRestEndpoint)
 	}
 
 	restEndpoint, err := extractCatalogRestEndpoint(meta.(*Client), d, false)

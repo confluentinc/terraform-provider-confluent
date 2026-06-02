@@ -256,7 +256,7 @@ func schemaRegistryKekDelete(ctx context.Context, d *schema.ResourceData, meta i
 
 func schemaRegistryKekUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	if d.HasChangesExcept(paramCredentials, paramProperties, paramDoc, paramShared, paramHardDelete, paramRestEndpoint) {
-		return diag.Errorf("error updating Schema Registry KEK %q: only %q, %q, %q, %q, %q attributes can be updated for Schema Registry KEK", d.Id(), paramCredentials, paramProperties, paramDoc, paramShared, paramHardDelete)
+		return diag.Errorf("error updating Schema Registry KEK %q: only %q, %q, %q, %q, %q, %q attributes can be updated for Schema Registry KEK", d.Id(), paramCredentials, paramProperties, paramDoc, paramShared, paramHardDelete, paramRestEndpoint)
 	}
 
 	restEndpoint, err := extractSchemaRegistryRestEndpoint(meta.(*Client), d, false)
