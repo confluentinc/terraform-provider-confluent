@@ -18,6 +18,7 @@
           "kind": "Basic",
           "max_ecku": 5
         },
+        "deletion_protection": false,
         "display_name": "TestCluster",
         "environment": {
           "api_version": "org/v2",
@@ -55,6 +56,7 @@
         "config": {
           "kind": "Basic"
         },
+        "deletion_protection": false,
         "display_name": "TestCluster #2",
         "environment": {
           "api_version": "org/v2",
