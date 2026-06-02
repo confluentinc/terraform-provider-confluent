@@ -1,3 +1,10 @@
+## 2.74.0 (June 2nd, 2026)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.73.0...v2.74.0)
+
+**Bug fixes:**
+* `confluent_tag` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_tag) and `confluent_schema_registry_kek` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema_registry_kek) no longer destroy and recreate the resource when only the resource-level rest_endpoint attribute changes. Endpoint changes (region migration, DNS rename, PrivateLink endpoint switch, etc.) now update in-place.
+
 ## 2.73.0 (May 14th, 2026)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.72.0...v2.73.0)
