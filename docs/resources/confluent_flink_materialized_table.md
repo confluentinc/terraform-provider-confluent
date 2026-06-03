@@ -132,7 +132,7 @@ The following arguments are supported:
 - `display_name` - (Required String) The unique name of the Materialized Table.
 - `kafka_cluster` - (Required Configuration Block) supports the following:
     - `id` - (Required String) The ID of the Kafka Cluster hosting the Materialized Table's topic, for example, `lkc-abc123`.
-- `query` - (Optional String) The SQL query that defines the Materialized Table, for example, `SELECT user_id, product_id, price, quantity FROM orders WHERE price > 1000;`.
+- `query` - (Optional String) The SQL query that defines the Materialized Table, for example, `SELECT user_id, product_id, price, quantity FROM orders WHERE price > 1000;`. The provider compares your HCL against `status.creation_statement` from the API (which carries the original user-submitted text, not the Flink Gateway's canonicalized form), so cosmetic differences such as keyword casing and type-alias expansion are not reported as drift while real semantic changes are.
 - `watermark` - (Optional Configuration Block, max 1 item) The watermark definition for the Materialized Table. Supports the following:
     - `column` - (Optional String) The name of the watermark column.
     - `expression` - (Optional String) The watermark expression, for example, `event_time - INTERVAL '5' SECOND`.
