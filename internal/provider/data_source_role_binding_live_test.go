@@ -68,7 +68,7 @@ func TestAccRoleBindingDataSourceLive(t *testing.T) {
 					// Check the role binding was created
 					resource.TestCheckResourceAttrSet(fmt.Sprintf("confluent_role_binding.%s", roleBindingResourceLabel), "id"),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_role_binding.%s", roleBindingResourceLabel), "role_name", "MetricsViewer"),
-					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_role_binding.%s", roleBindingResourceLabel), "crn_pattern", "crn://confluent.cloud/organization=424fb7bf-40c2-433f-81a5-c45942a6a539"),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_role_binding.%s", roleBindingResourceLabel), "crn_pattern", "crn://confluent.cloud/organization="+liveTestOrganizationId),
 
 					// Check the data source can find it
 					resource.TestCheckResourceAttrPair(
@@ -109,11 +109,11 @@ func testAccCheckRoleBindingDataSourceLiveConfig(endpoint, serviceAccountResourc
 	resource "confluent_role_binding" "%s" {
 		principal   = "User:${confluent_service_account.%s.id}"
 		role_name   = "MetricsViewer"
-		crn_pattern = "crn://confluent.cloud/organization=424fb7bf-40c2-433f-81a5-c45942a6a539"
+		crn_pattern = "crn://confluent.cloud/organization=%s"
 	}
 
 	data "confluent_role_binding" "%s" {
 		id = confluent_role_binding.%s.id
 	}
-	`, endpoint, apiKey, apiSecret, serviceAccountResourceLabel, serviceAccountDisplayName, roleBindingResourceLabel, serviceAccountResourceLabel, roleBindingDataSourceLabel, roleBindingResourceLabel)
+	`, endpoint, apiKey, apiSecret, serviceAccountResourceLabel, serviceAccountDisplayName, roleBindingResourceLabel, serviceAccountResourceLabel, liveTestOrganizationId, roleBindingDataSourceLabel, roleBindingResourceLabel)
 }

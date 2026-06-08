@@ -45,7 +45,6 @@ func schemaRegistryKekResource() *schema.Resource {
 			paramRestEndpoint: {
 				Type:         schema.TypeString,
 				Optional:     true,
-				ForceNew:     true,
 				Description:  "The REST endpoint of the Schema Registry cluster, for example, `https://psrc-00000.us-central1.gcp.confluent.cloud:443`).",
 				ValidateFunc: validation.StringMatch(regexp.MustCompile("^http"), "the REST endpoint must start with 'https://'"),
 			},
@@ -256,8 +255,8 @@ func schemaRegistryKekDelete(ctx context.Context, d *schema.ResourceData, meta i
 }
 
 func schemaRegistryKekUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if d.HasChangesExcept(paramCredentials, paramProperties, paramDoc, paramShared, paramHardDelete) {
-		return diag.Errorf("error updating Schema Registry KEK %q: only %q, %q, %q, %q, %q attributes can be updated for Schema Registry KEK", d.Id(), paramCredentials, paramProperties, paramDoc, paramShared, paramHardDelete)
+	if d.HasChangesExcept(paramCredentials, paramProperties, paramDoc, paramShared, paramHardDelete, paramRestEndpoint) {
+		return diag.Errorf("error updating Schema Registry KEK %q: only %q, %q, %q, %q, %q, %q attributes can be updated for Schema Registry KEK", d.Id(), paramCredentials, paramProperties, paramDoc, paramShared, paramHardDelete, paramRestEndpoint)
 	}
 
 	restEndpoint, err := extractSchemaRegistryRestEndpoint(meta.(*Client), d, false)
