@@ -1,3 +1,13 @@
+## 2.75.0 (June 8th, 2026)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.74.0...v2.75.0)
+
+**New features:**
+* Added `require_crl_on_client_certificate` attribute to the `confluent_certificate_authority` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_certificate_authority) and [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_certificate_authority) to support Certificate Revocation List (CRL) validation against client certificates during mTLS authentication.
+
+**Bug fixes:**
+* Fixed perpetual `terraform plan` drift on `crl_url` for `confluent_certificate_authority` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_certificate_authority) created with `crl_chain` (local CRL upload).
+
 ## 2.74.0 (June 2nd, 2026)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.73.0...v2.74.0) 
