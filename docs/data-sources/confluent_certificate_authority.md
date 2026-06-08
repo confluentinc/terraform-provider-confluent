@@ -46,6 +46,7 @@ In addition to the preceding arguments, the following attributes are exported:
 - `fingerprints` (Required List of Strings) The fingerprints for each certificate in the certificate chain, for example, `["B1BC968BD4f49D622AA89A81F2150152A41D829C"]`.
 - `expiration_dates` (Required List of Strings) The expiration dates of certificates in the chain, for example, `["2017-07-21T17:32:28Z"]`.
 - `serial_numbers` (Required List of Strings) The serial numbers for each certificate in the certificate chain.
-- `crl_source` - (Optional String) The source specifies whether the Certificate Revocation List (CRL) is updated from either local file uploaded (LOCAL) or from url of CRL (URL). Accepted values are `LOCAL` and `URL`.
-- `crl_url` - (Optional String) The url from which to fetch the CRL for the certificate authority if crl_source is URL.
+- `crl_source` - (Optional String) The source specifies whether the Certificate Revocation List (CRL) was uploaded inline (`LOCAL`) or is fetched from a URL (`URL`). Accepted values are `LOCAL` and `URL`.
+- `crl_url` - (Optional String) The URL from which Confluent Cloud fetches the CRL for the Certificate Authority when `crl_source` is `URL`. When the CRL was uploaded inline via `crl_chain` on the resource, the backend reports this attribute as `Local file uploaded`.
 - `crl_updated_at` - (Optional String) The timestamp for when CRL was last updated, for example, `2017-07-21T17:32:28Z`.
+- `require_crl_on_client_certificate` - (Required Boolean) Whether Certificate Revocation List (CRL) validation is enforced on client certificates during mTLS authentication. When `true`, a client certificate that is revoked in the CRL — or whose issuer does not match the CRL issuer — is rejected even if the TLS handshake succeeds.
