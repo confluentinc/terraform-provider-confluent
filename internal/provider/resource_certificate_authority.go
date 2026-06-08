@@ -18,9 +18,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"math/big"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -257,7 +255,7 @@ func setCertificateAuthorityAttributes(d *schema.ResourceData, certificateAuthor
 	if err := d.Set(paramExpirationDates, convertTimeToStringSlice(certificateAuthority.GetExpirationDates())); err != nil {
 		return nil, err
 	}
-	if err := d.Set(paramSerialNumbers, normalizeSerialNumbers(certificateAuthority.GetSerialNumbers())); err != nil {
+	if err := d.Set(paramSerialNumbers, certificateAuthority.GetSerialNumbers()); err != nil {
 		return nil, err
 	}
 	if err := d.Set(paramCrlSource, certificateAuthority.GetCrlSource()); err != nil {
@@ -359,33 +357,4 @@ func convertTimeToStringSlice(timeValues []time.Time) []string {
 		s[i] = fmt.Sprint(timeValue)
 	}
 	return s
-}
-
-func normalizeSerialNumbers(serials []string) []string {
-	out := make([]string, len(serials))
-	for i, s := range serials {
-		out[i] = normalizeSerialNumber(s)
-	}
-	return out
-}
-
-func normalizeSerialNumber(s string) string {
-	s = strings.TrimSpace(s)
-	if s == "" {
-		return s
-	}
-	upper := strings.ToUpper(s)
-	if strings.ContainsAny(upper, "ABCDEF") {
-		if i, ok := new(big.Int).SetString(upper, 16); ok {
-			return strings.ToUpper(i.Text(16))
-		}
-		return upper
-	}
-	if i, ok := new(big.Int).SetString(s, 10); ok {
-		return strings.ToUpper(i.Text(16))
-	}
-	if i, ok := new(big.Int).SetString(s, 16); ok {
-		return strings.ToUpper(i.Text(16))
-	}
-	return upper
 }
