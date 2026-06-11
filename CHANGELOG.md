@@ -3,7 +3,7 @@
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.75.0...v2.76.0)
 
 **Bug fixes:**
-* Raised the default create/delete timeouts for the `confluent_access_point` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_access_point) so that slow PROVISIONING -> READY transitions no longer fail terraform apply with the context deadline exceeded error.
+* Raised the default create/delete timeouts for the `confluent_access_point` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_access_point) so that slow PROVISIONING -> READY transitions no longer fail `terraform apply` with the context deadline exceeded error.
 
 ## 2.75.0 (June 8th, 2026)
 
