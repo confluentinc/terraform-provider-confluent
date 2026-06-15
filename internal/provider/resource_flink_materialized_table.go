@@ -237,6 +237,13 @@ func distributionSchema() *schema.Schema {
 					Optional:    true,
 					ForceNew:    true,
 				},
+				paramDistributionKind: {
+					Type:        schema.TypeString,
+					Description: "The kind of distribution. Required when the distribution block is specified.",
+					Optional:    true,
+					Computed:    true,
+					ForceNew:    true,
+				},
 			},
 		},
 	}
@@ -498,6 +505,7 @@ func setMaterializedTableAttributes(d *schema.ResourceData, materializedTable fl
 			{
 				paramDistributionKeys:        keysSet,
 				paramDistributionBucketCount: materializedTable.Spec.Distribution.GetBucketCount(),
+				paramDistributionKind:        materializedTable.Spec.Distribution.GetKind(),
 			},
 		}
 		if err := d.Set(paramDistribution, distributionBlock); err != nil {
@@ -900,7 +908,8 @@ func expandMaterializedTableDistribution(d *schema.ResourceData) *flinkgatewayv1
 		}
 	}
 	bucketCount, _ := m[paramDistributionBucketCount].(int)
-	if bucketCount == 0 && len(keys) == 0 {
+	kind, _ := m[paramDistributionKind].(string)
+	if bucketCount == 0 && len(keys) == 0 && kind == "" {
 		return nil
 	}
 	dist := &flinkgatewayv1.SqlV1Distribution{}
@@ -909,6 +918,9 @@ func expandMaterializedTableDistribution(d *schema.ResourceData) *flinkgatewayv1
 	}
 	if bucketCount != 0 {
 		dist.SetBucketCount(int32(bucketCount))
+	}
+	if kind != "" {
+		dist.SetKind(kind)
 	}
 	return dist
 }
