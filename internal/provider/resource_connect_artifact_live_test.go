@@ -66,7 +66,7 @@ func TestAccConnectArtifactAWSLive(t *testing.T) {
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_connect_artifact.%s", artifactResourceLabel), "cloud", "aws"),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_connect_artifact.%s", artifactResourceLabel), "content_format", "JAR"),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_connect_artifact.%s", artifactResourceLabel), "description", "A test connect artifact for live testing"),
-					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_connect_artifact.%s", artifactResourceLabel), "environment.0.id", "env-zyg27z"),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_connect_artifact.%s", artifactResourceLabel), "environment.0.id", liveTestEnvironmentId),
 					resource.TestCheckResourceAttrSet(fmt.Sprintf("confluent_connect_artifact.%s", artifactResourceLabel), "id"),
 				),
 			},
@@ -127,7 +127,7 @@ func TestAccConnectArtifactAzureLive(t *testing.T) {
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_connect_artifact.%s", artifactResourceLabel), "cloud", "azure"),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_connect_artifact.%s", artifactResourceLabel), "content_format", "JAR"),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_connect_artifact.%s", artifactResourceLabel), "description", "A test connect artifact for live testing"),
-					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_connect_artifact.%s", artifactResourceLabel), "environment.0.id", "env-zyg27z"),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_connect_artifact.%s", artifactResourceLabel), "environment.0.id", liveTestEnvironmentId),
 					resource.TestCheckResourceAttrSet(fmt.Sprintf("confluent_connect_artifact.%s", artifactResourceLabel), "id"),
 				),
 			},
@@ -188,7 +188,7 @@ func TestAccConnectArtifactGCPLive(t *testing.T) {
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_connect_artifact.%s", artifactResourceLabel), "cloud", "gcp"),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_connect_artifact.%s", artifactResourceLabel), "content_format", "JAR"),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_connect_artifact.%s", artifactResourceLabel), "description", "A test connect artifact for live testing"),
-					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_connect_artifact.%s", artifactResourceLabel), "environment.0.id", "env-zyg27z"),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_connect_artifact.%s", artifactResourceLabel), "environment.0.id", liveTestEnvironmentId),
 					resource.TestCheckResourceAttrSet(fmt.Sprintf("confluent_connect_artifact.%s", artifactResourceLabel), "id"),
 				),
 			},
@@ -256,8 +256,8 @@ func testAccCheckConnectArtifactLiveConfig(endpoint, artifactResourceLabel, arti
 		artifact_file  = "test_artifacts/connect_artifact.jar"
 
 		environment {
-			id = "env-zyg27z"
+			id = "%s"
 		}
 	}
-	`, endpoint, apiKey, apiSecret, artifactResourceLabel, artifactDisplayName, cloud)
+	`, endpoint, apiKey, apiSecret, artifactResourceLabel, artifactDisplayName, cloud, liveTestEnvironmentId)
 }

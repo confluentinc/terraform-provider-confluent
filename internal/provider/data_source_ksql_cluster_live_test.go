@@ -74,7 +74,7 @@ func TestAccKsqlClusterDataSourceLive(t *testing.T) {
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_ksql_cluster.%s", ksqlClusterResourceLabel), "display_name", ksqlClusterDisplayName),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_ksql_cluster.%s", ksqlClusterResourceLabel), "csu", "4"),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_ksql_cluster.%s", ksqlClusterResourceLabel), "kafka_cluster.0.id", kafkaClusterId),
-					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_ksql_cluster.%s", ksqlClusterResourceLabel), "environment.0.id", "env-zyg27z"),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_ksql_cluster.%s", ksqlClusterResourceLabel), "environment.0.id", liveTestEnvironmentId),
 
 					// Check the data source can find it
 					resource.TestCheckResourceAttrPair(
@@ -117,7 +117,7 @@ func testAccCheckKsqlClusterDataSourceLiveConfig(endpoint, ksqlClusterResourceLa
 			id = confluent_service_account.live_ksql_sa.id
 		}
 		environment {
-			id = "env-zyg27z"
+			id = "%s"
 		}
 		depends_on = [
 			confluent_role_binding.live_ksql_sa_rb
@@ -132,14 +132,14 @@ func testAccCheckKsqlClusterDataSourceLiveConfig(endpoint, ksqlClusterResourceLa
 	resource "confluent_role_binding" "live_ksql_sa_rb" {
 		principal   = "User:${confluent_service_account.live_ksql_sa.id}"
 		role_name   = "CloudClusterAdmin"
-		crn_pattern = "crn://confluent.cloud/organization=424fb7bf-40c2-433f-81a5-c45942a6a539/environment=env-zyg27z/cloud-cluster=%s"
+		crn_pattern = "crn://confluent.cloud/organization=%s/environment=%s/cloud-cluster=%s"
 	}
 
 	data "confluent_ksql_cluster" "%s" {
 		id = confluent_ksql_cluster.%s.id
 		environment {
-			id = "env-zyg27z"
+			id = "%s"
 		}
 	}
-	`, endpoint, apiKey, apiSecret, ksqlClusterResourceLabel, ksqlClusterDisplayName, kafkaClusterId, ksqlClusterDisplayName, kafkaClusterId, ksqlClusterDataSourceLabel, ksqlClusterResourceLabel)
+	`, endpoint, apiKey, apiSecret, ksqlClusterResourceLabel, ksqlClusterDisplayName, kafkaClusterId, liveTestEnvironmentId, ksqlClusterDisplayName, liveTestOrganizationId, liveTestEnvironmentId, kafkaClusterId, ksqlClusterDataSourceLabel, ksqlClusterResourceLabel, liveTestEnvironmentId)
 }

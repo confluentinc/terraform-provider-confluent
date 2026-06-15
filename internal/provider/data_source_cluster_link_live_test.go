@@ -113,7 +113,7 @@ func testAccCheckClusterLinkDataSourceLiveConfig(endpoint, clusterLinkResourceLa
 	data "confluent_kafka_cluster" "standard_cluster" {
 		id = "%s"
 		environment {
-			id = "env-zyg27z"
+			id = "%s"
 		}
 	}
 
@@ -150,5 +150,5 @@ func testAccCheckClusterLinkDataSourceLiveConfig(endpoint, clusterLinkResourceLa
 			secret = "%s"
 		}
 	}
-	`, endpoint, apiKey, apiSecret, standardClusterId, clusterLinkResourceLabel, linkName, standardClusterId, standardApiKey, standardApiSecret, dedicatedClusterId, dedicatedRestEndpoint, dedicatedApiKey, dedicatedApiSecret, clusterLinkDataSourceLabel, clusterLinkResourceLabel, dedicatedClusterId, dedicatedRestEndpoint, dedicatedApiKey, dedicatedApiSecret)
+	`, endpoint, apiKey, apiSecret, standardClusterId, liveTestEnvironmentId, clusterLinkResourceLabel, linkName, standardClusterId, standardApiKey, standardApiSecret, dedicatedClusterId, dedicatedRestEndpoint, dedicatedApiKey, dedicatedApiSecret, clusterLinkDataSourceLabel, clusterLinkResourceLabel, dedicatedClusterId, dedicatedRestEndpoint, dedicatedApiKey, dedicatedApiSecret)
 }

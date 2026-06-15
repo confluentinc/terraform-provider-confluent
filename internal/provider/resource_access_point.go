@@ -47,8 +47,8 @@ func accessPointResource() *schema.Resource {
 				Optional: true,
 				Computed: true,
 			},
-			paramGateway:                                requiredGateway(),
-			paramEnvironment:                            environmentSchema(),
+			paramGateway:                                 requiredGateway(),
+			paramEnvironment:                             environmentSchema(),
 			paramAwsEgressPrivateLinkEndpoint:            paramAwsEgressPrivateLinkEndpointSchema(),
 			paramAwsIngressPrivateLinkEndpoint:           paramAwsIngressPrivateLinkEndpointSchema(),
 			paramAzureEgressPrivateLinkEndpoint:          paramAzureEgressPrivateLinkEndpointSchema(),
@@ -56,6 +56,10 @@ func accessPointResource() *schema.Resource {
 			paramGcpEgressPrivateServiceConnectEndpoint:  paramGcpEgressPrivateServiceConnectEndpointSchema(),
 			paramGcpIngressPrivateServiceConnectEndpoint: paramGcpIngressPrivateServiceConnectEndpointSchema(),
 			paramAwsPrivateNetworkInterface:              paramAwsPrivateNetworkInterfaceSchema(),
+		},
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(networkingAPICreateTimeout),
+			Delete: schema.DefaultTimeout(networkingAPIDeleteTimeout),
 		},
 	}
 }
@@ -307,9 +311,9 @@ func paramAwsPrivateNetworkInterfaceSchema() *schema.Schema {
 					Description: "The AWS account ID associated with the ENIs you are using for the Confluent Private Network Interface.",
 				},
 				paramRoutes: {
-					Type:     schema.TypeList,
-					Optional: true,
-					MaxItems: 10,
+					Type:        schema.TypeList,
+					Optional:    true,
+					MaxItems:    10,
 					Elem:        &schema.Schema{Type: schema.TypeString},
 					Description: "List of egress CIDR routes for the Confluent Private Network Interface.",
 				},
@@ -393,7 +397,7 @@ func accessPointCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 		spec.SetConfig(config)
 	} else if isGcpIngressPrivateServiceConnectEndpoint {
 		config.NetworkingV1GcpIngressPrivateServiceConnectEndpoint = &networkingaccesspointv1.NetworkingV1GcpIngressPrivateServiceConnectEndpoint{
-			Kind:                             gcpIngressPrivateServiceConnectEndpoint,
+			Kind:                              gcpIngressPrivateServiceConnectEndpoint,
 			PrivateServiceConnectConnectionId: extractStringValueFromBlock(d, paramGcpIngressPrivateServiceConnectEndpoint, paramPrivateServiceConnectConnectionId),
 		}
 		spec.SetConfig(config)
@@ -633,7 +637,7 @@ func setAccessPointAttributes(d *schema.ResourceData, accessPoint networkingacce
 		if err := d.Set(paramGcpIngressPrivateServiceConnectEndpoint, []interface{}{map[string]interface{}{
 			paramPrivateServiceConnectConnectionId:      accessPoint.Spec.Config.NetworkingV1GcpIngressPrivateServiceConnectEndpoint.GetPrivateServiceConnectConnectionId(),
 			paramPrivateServiceConnectServiceAttachment: accessPoint.Status.Config.NetworkingV1GcpIngressPrivateServiceConnectEndpointStatus.GetPrivateServiceConnectServiceAttachment(),
-			paramDnsDomain:                             accessPoint.Status.Config.NetworkingV1GcpIngressPrivateServiceConnectEndpointStatus.GetDnsDomain(),
+			paramDnsDomain: accessPoint.Status.Config.NetworkingV1GcpIngressPrivateServiceConnectEndpointStatus.GetDnsDomain(),
 		}}); err != nil {
 			return nil, err
 		}
