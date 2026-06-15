@@ -158,6 +158,7 @@ func TestAccFlinkMaterializedTable(t *testing.T) {
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, paramStopped, "false"),
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "distribution.#", "1"),
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "distribution.0.bucket_count", "10"),
+					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "distribution.0.kind", "HASH"),
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "distribution.0.keys.#", "2"),
 					resource.TestCheckTypeSetElemAttr(fullMaterializedTableResourceLabel, "distribution.0.keys.*", "keys"),
 					resource.TestCheckTypeSetElemAttr(fullMaterializedTableResourceLabel, "distribution.0.keys.*", "passwords"),
@@ -194,6 +195,7 @@ func TestAccFlinkMaterializedTable(t *testing.T) {
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, paramStopped, "true"),
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "distribution.#", "1"),
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "distribution.0.bucket_count", "10"),
+					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "distribution.0.kind", "HASH"),
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "distribution.0.keys.#", "2"),
 					resource.TestCheckTypeSetElemAttr(fullMaterializedTableResourceLabel, "distribution.0.keys.*", "keys"),
 					resource.TestCheckTypeSetElemAttr(fullMaterializedTableResourceLabel, "distribution.0.keys.*", "passwords"),
@@ -286,6 +288,7 @@ func testAccCheckMaterializedTableConfig(mockServerUrl, resourceLabel string) st
 	  }
 	  distribution {
 	    bucket_count = 10
+	    kind = "HASH"
 	    keys = [
 	      "keys",
 	      "passwords",
@@ -346,6 +349,7 @@ func testAccCheckMaterializedTableConfigUpdated(mockServerUrl, resourceLabel str
 	  }
 	  distribution {
 	    bucket_count = 10
+	    kind = "HASH"
 	    keys = [
 	      "keys",
 	      "passwords",
