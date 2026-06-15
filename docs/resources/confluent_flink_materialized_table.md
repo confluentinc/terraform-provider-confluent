@@ -137,6 +137,7 @@ The following arguments are supported:
     - `column` - (Optional String) The name of the watermark column.
     - `expression` - (Optional String) The watermark expression, for example, `event_time - INTERVAL '5' SECOND`.
 - `distribution` - (Optional Configuration Block, max 1 item) The distribution definition for the Materialized Table. If omitted, Confluent Cloud could derive it automatically (for example, from the query's primary key when a `GROUP BY` is present) and populate it in state. Supports the following:
+    - `kind` - (Required String) The kind of distribution. Required when the `distribution` block is specified. The only currently supported value is `HASH`.
     - `keys` - (Optional Set of Strings) The names of the columns the table is distributed by.
     - `bucket_count` - (Optional Integer) The number of buckets the table is distributed by.
 - `stopped` - (Optional Boolean) Indicates whether the Materialized Table is stopped. Defaults to `false`. Update it to `true` to stop the Materialized Table; subsequently update it to `false` to resume it.

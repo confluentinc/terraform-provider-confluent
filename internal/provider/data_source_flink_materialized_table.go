@@ -248,6 +248,11 @@ func distributionSchemaDataSource() *schema.Schema {
 					Description: "The number of buckets the table is distributed by.",
 					Computed:    true,
 				},
+				paramDistributionKind: {
+					Type:        schema.TypeString,
+					Description: "The kind of distribution.",
+					Computed:    true,
+				},
 			},
 		},
 	}

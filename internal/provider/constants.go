@@ -356,6 +356,7 @@ const (
 	paramDistribution                                    = "distribution"
 	paramDistributionBucketCount                         = "bucket_count"
 	paramDistributionKeys                                = "keys"
+	paramDistributionKind                                = "kind"
 	paramDnsConfig                                       = "dns_config"
 	paramDnsDomain                                       = "dns_domain"
 	paramDnsServerIps                                    = "dns_server_ips"
