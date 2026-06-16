@@ -17,19 +17,12 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
 	"testing"
-)
 
-const (
-	privateLinkAttachmentConnectionGcpDataSourceScenarioName = "confluent_private_link_attachment_connection Data Source Lifecycle"
-
-	privateLinkAttachmentConnectionGcpReadUrlPath     = "/networking/v1/private-link-attachment-connections/plattc-xyzuvw1"
-	privateLinkAttachmentConnectionGcpId              = "plattc-xyzuvw1"
-	privateLinkAttachmentConnectionGcpDataSourceLabel = "data.confluent_private_link_attachment_connection.main"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/walkerus/go-wiremock"
 )
 
 func TestAccDataSourcePrivateLinkAttachmentConnectionGcp(t *testing.T) {

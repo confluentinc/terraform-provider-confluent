@@ -83,6 +83,11 @@ func certificateAuthorityDataSource() *schema.Resource {
 				Computed:    true,
 				Description: "The timestamp for when CRL was last updated.",
 			},
+			paramRequireCrlOnClientCertificate: {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Whether CRL validation is required on client certificates.",
+			},
 		},
 	}
 }
@@ -93,8 +98,8 @@ func certificateAuthorityDataSourceRead(ctx context.Context, d *schema.ResourceD
 	tflog.Debug(ctx, fmt.Sprintf("Reading Certificate Authority %q=%q", paramId, certificateAuthorityId), map[string]interface{}{certificateAuthorityKey: certificateAuthorityId})
 
 	c := meta.(*Client)
-	request := c.caClient.CertificateAuthoritiesIamV2Api.GetIamV2CertificateAuthority(c.caApiContext(ctx), certificateAuthorityId)
-	certificateAuthority, resp, err := c.caClient.CertificateAuthoritiesIamV2Api.GetIamV2CertificateAuthorityExecute(request)
+	request := c.certificateAuthorityV2Client.CertificateAuthoritiesIamV2Api.GetIamV2CertificateAuthority(c.certificateAuthorityV2ApiContext(ctx), certificateAuthorityId)
+	certificateAuthority, resp, err := c.certificateAuthorityV2Client.CertificateAuthoritiesIamV2Api.GetIamV2CertificateAuthorityExecute(request)
 	if err != nil {
 		return diag.Errorf("error reading Certificate Authority %q: %s", certificateAuthorityId, createDescriptiveError(err, resp))
 	}

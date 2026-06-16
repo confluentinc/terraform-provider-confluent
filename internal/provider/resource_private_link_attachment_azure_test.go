@@ -17,19 +17,12 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
 	"testing"
-)
 
-const (
-	privateLinkAttachmentAzureResourceScenarioName        = "confluent_private_link_attachment Resource Lifecycle"
-	scenarioStatePrivateLinkAttachmentAzureHasBeenCreated = "A new private link attachment has been just created"
-
-	privateLinkAttachmentAzureUrlPath       = "/networking/v1/private-link-attachments"
-	privateLinkAttachmentAzureResourceLabel = "confluent_private_link_attachment.main"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/walkerus/go-wiremock"
 )
 
 func TestAccPrivateLinkAttachmentAzure(t *testing.T) {

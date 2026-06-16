@@ -39,10 +39,13 @@ func accessPointDataSource() *schema.Resource {
 				Computed: true,
 			},
 			paramGateway:                                gatewayDataSourceSchema(),
-			paramAwsEgressPrivateLinkEndpoint:           awsEgressPrivateLinkEndpointDataSourceSchema(),
-			paramAzureEgressPrivateLinkEndpoint:         azureEgressPrivateLinkEndpointDataSourceSchema(),
-			paramGcpEgressPrivateServiceConnectEndpoint: gcpEgressPrivateServiceConnectEndpointDataSourceSchema(),
-			paramAwsPrivateNetworkInterface:             awsPrivateNetworkInterfaceDataSourceSchema(),
+			paramAwsEgressPrivateLinkEndpoint:            awsEgressPrivateLinkEndpointDataSourceSchema(),
+			paramAwsIngressPrivateLinkEndpoint:           awsIngressPrivateLinkEndpointDataSourceSchema(),
+			paramAzureEgressPrivateLinkEndpoint:          azureEgressPrivateLinkEndpointDataSourceSchema(),
+			paramAzureIngressPrivateLinkEndpoint:         azureIngressPrivateLinkEndpointDataSourceSchema(),
+			paramGcpEgressPrivateServiceConnectEndpoint:  gcpEgressPrivateServiceConnectEndpointDataSourceSchema(),
+			paramGcpIngressPrivateServiceConnectEndpoint: gcpIngressPrivateServiceConnectEndpointDataSourceSchema(),
+			paramAwsPrivateNetworkInterface:              awsPrivateNetworkInterfaceDataSourceSchema(),
 		},
 	}
 }
@@ -67,6 +70,30 @@ func awsEgressPrivateLinkEndpointDataSourceSchema() *schema.Schema {
 				paramEnableHighAvailability: {
 					Type:     schema.TypeBool,
 					Computed: true,
+				},
+			},
+		},
+		Computed: true,
+	}
+}
+
+func awsIngressPrivateLinkEndpointDataSourceSchema() *schema.Schema {
+	return &schema.Schema{
+		Type: schema.TypeList,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramVpcEndpointId: {
+					Type:     schema.TypeString,
+					Computed: true,
+				},
+				paramVpcEndpointServiceName: {
+					Type:     schema.TypeString,
+					Computed: true,
+				},
+				paramDnsDomain: {
+					Type:        schema.TypeString,
+					Computed:    true,
+					Description: "DNS domain name used to configure the Private Hosted Zone for the Access Point.",
 				},
 			},
 		},
@@ -103,6 +130,56 @@ func azureEgressPrivateLinkEndpointDataSourceSchema() *schema.Schema {
 					Type:     schema.TypeList,
 					Computed: true,
 					Elem:     &schema.Schema{Type: schema.TypeString},
+				},
+			},
+		},
+		Computed: true,
+	}
+}
+
+func azureIngressPrivateLinkEndpointDataSourceSchema() *schema.Schema {
+	return &schema.Schema{
+		Type: schema.TypeList,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramPrivateEndpointResourceId: {
+					Type:     schema.TypeString,
+					Computed: true,
+				},
+				paramPrivateLinkServiceAlias: {
+					Type:     schema.TypeString,
+					Computed: true,
+				},
+				paramPrivateLinkServiceResourceId: {
+					Type:     schema.TypeString,
+					Computed: true,
+				},
+				paramDnsDomain: {
+					Type:     schema.TypeString,
+					Computed: true,
+				},
+			},
+		},
+		Computed: true,
+	}
+}
+
+func gcpIngressPrivateServiceConnectEndpointDataSourceSchema() *schema.Schema {
+	return &schema.Schema{
+		Type: schema.TypeList,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramPrivateServiceConnectConnectionId: {
+					Type:     schema.TypeString,
+					Computed: true,
+				},
+				paramPrivateServiceConnectServiceAttachment: {
+					Type:     schema.TypeString,
+					Computed: true,
+				},
+				paramDnsDomain: {
+					Type:     schema.TypeString,
+					Computed: true,
 				},
 			},
 		},
@@ -155,6 +232,11 @@ func awsPrivateNetworkInterfaceDataSourceSchema() *schema.Schema {
 					Type:     schema.TypeString,
 					Computed: true,
 				},
+				paramRoutes: {
+					Type:     schema.TypeList,
+					Computed: true,
+					Elem:     &schema.Schema{Type: schema.TypeString},
+				},
 			},
 		},
 		Computed: true,
@@ -168,8 +250,8 @@ func accessPointDataSourceRead(ctx context.Context, d *schema.ResourceData, meta
 	tflog.Debug(ctx, fmt.Sprintf("Reading Access Point %q=%q", paramId, accessPointId), map[string]interface{}{accessPointKey: accessPointId})
 
 	c := meta.(*Client)
-	request := c.netAccessPointClient.AccessPointsNetworkingV1Api.GetNetworkingV1AccessPoint(c.netAPApiContext(ctx), accessPointId).Environment(environmentId)
-	accessPoint, resp, err := c.netAccessPointClient.AccessPointsNetworkingV1Api.GetNetworkingV1AccessPointExecute(request)
+	request := c.networkingAccessPointV1Client.AccessPointsNetworkingV1Api.GetNetworkingV1AccessPoint(c.networkingAccessPointV1ApiContext(ctx), accessPointId).Environment(environmentId)
+	accessPoint, resp, err := c.networkingAccessPointV1Client.AccessPointsNetworkingV1Api.GetNetworkingV1AccessPointExecute(request)
 	if err != nil {
 		return diag.Errorf("error reading Access Point %q: %s", accessPointId, createDescriptiveError(err, resp))
 	}

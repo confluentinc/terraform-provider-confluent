@@ -90,6 +90,13 @@ The following arguments are supported:
              `min.compaction.lag.ms`, `min.insync.replicas`, `retention.bytes`, `retention.ms`, `segment.bytes`, `segment.ms`,
              `confluent.key.schema.validation`, `confluent.value.schema.validation`, `confluent.key.subject.name.strategy`, `confluent.value.subject.name.strategy`.
 
+-> **Note:** Removing a topic setting from the config block will reset it to its server-side default value. This is supported for the following topic settings: `cleanup.policy`, `delete.retention.ms`,
+             `max.message.bytes`, `max.compaction.lag.ms`, `message.timestamp.difference.max.ms`,
+             `message.timestamp.before.max.ms`, `message.timestamp.after.max.ms`, `message.timestamp.type`,
+             `min.compaction.lag.ms`, `min.insync.replicas`, `retention.bytes`, `retention.ms`, `segment.bytes`, `segment.ms`,
+             `confluent.key.schema.validation`, `confluent.value.schema.validation`, `confluent.key.subject.name.strategy`, `confluent.value.subject.name.strategy`.
+
+
 -> **Note:** Schema Validation Configuration topic settings:
              `confluent.key.schema.validation`, `confluent.value.schema.validation`, `confluent.key.subject.name.strategy`, `confluent.value.subject.name.strategy`
              are only [available](https://docs.confluent.io/cloud/current/sr/broker-side-schema-validation.html#prerequisites) on [dedicated clusters](https://docs.confluent.io/cloud/current/clusters/cluster-types.html#dedicated-cluster).

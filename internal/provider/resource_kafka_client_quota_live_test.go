@@ -72,7 +72,7 @@ func TestAccKafkaClientQuotaLive(t *testing.T) {
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_client_quota.%s", quotaResourceLabel), "display_name", quotaDisplayName),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_client_quota.%s", quotaResourceLabel), "description", "A test client quota for live testing"),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_client_quota.%s", quotaResourceLabel), "kafka_cluster.0.id", kafkaClusterId),
-					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_client_quota.%s", quotaResourceLabel), "environment.0.id", "env-zyg27z"),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_client_quota.%s", quotaResourceLabel), "environment.0.id", liveTestEnvironmentId),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_client_quota.%s", quotaResourceLabel), "throughput.0.ingress_byte_rate", "1048576"),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_client_quota.%s", quotaResourceLabel), "throughput.0.egress_byte_rate", "2097152"),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_client_quota.%s", quotaResourceLabel), "principals.#", "1"),
@@ -195,7 +195,7 @@ func testAccCheckKafkaClientQuotaLiveConfig(endpoint, quotaResourceLabel, quotaD
 			id = "%s"
 		}
 		environment {
-			id = "env-zyg27z"
+			id = "%s"
 		}
 		throughput {
 			ingress_byte_rate = "1048576"  # 1 MB/s
@@ -203,7 +203,7 @@ func testAccCheckKafkaClientQuotaLiveConfig(endpoint, quotaResourceLabel, quotaD
 		}
 		principals = ["<default>"]
 	}
-	`, endpoint, apiKey, apiSecret, quotaResourceLabel, quotaDisplayName, kafkaClusterId)
+	`, endpoint, apiKey, apiSecret, quotaResourceLabel, quotaDisplayName, kafkaClusterId, liveTestEnvironmentId)
 }
 
 func testAccCheckKafkaClientQuotaUpdateLiveConfigWithSA(endpoint, quotaResourceLabel, quotaDisplayName, kafkaClusterId, apiKey, apiSecret string) string {
@@ -226,7 +226,7 @@ func testAccCheckKafkaClientQuotaUpdateLiveConfigWithSA(endpoint, quotaResourceL
 			id = "%s"
 		}
 		environment {
-			id = "env-zyg27z"
+			id = "%s"
 		}
 		throughput {
 			ingress_byte_rate = "1048576"  # 1 MB/s
@@ -234,7 +234,7 @@ func testAccCheckKafkaClientQuotaUpdateLiveConfigWithSA(endpoint, quotaResourceL
 		}
 		principals = [confluent_service_account.quota_test_sa.id]
 	}
-	`, endpoint, apiKey, apiSecret, quotaDisplayName, quotaResourceLabel, quotaDisplayName, kafkaClusterId)
+	`, endpoint, apiKey, apiSecret, quotaDisplayName, quotaResourceLabel, quotaDisplayName, kafkaClusterId, liveTestEnvironmentId)
 }
 
 func testAccCheckKafkaClientQuotaUpdateLiveConfigUpdated(endpoint, quotaResourceLabel, quotaDisplayName, kafkaClusterId, apiKey, apiSecret string) string {
@@ -257,7 +257,7 @@ func testAccCheckKafkaClientQuotaUpdateLiveConfigUpdated(endpoint, quotaResource
 			id = "%s"
 		}
 		environment {
-			id = "env-zyg27z"
+			id = "%s"
 		}
 		throughput {
 			ingress_byte_rate = "2097152"  # 2 MB/s
@@ -265,5 +265,5 @@ func testAccCheckKafkaClientQuotaUpdateLiveConfigUpdated(endpoint, quotaResource
 		}
 		principals = [confluent_service_account.quota_test_sa.id]
 	}
-	`, endpoint, apiKey, apiSecret, quotaDisplayName, quotaResourceLabel, quotaDisplayName, kafkaClusterId)
-} 
+	`, endpoint, apiKey, apiSecret, quotaDisplayName, quotaResourceLabel, quotaDisplayName, kafkaClusterId, liveTestEnvironmentId)
+}

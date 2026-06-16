@@ -26,25 +26,6 @@ import (
 	"github.com/walkerus/go-wiremock"
 )
 
-const (
-	providerIntegrationSetupScenarioName             = "confluent_provider_integration_setup Resource Lifecycle"
-	scenarioStateProviderIntegrationV2HasBeenCreated = "The new provider_integration_setup has been just created"
-	scenarioStateProviderIntegrationV2HasBeenDeleted = "The provider_integration_setup has been deleted"
-
-	// Azure constants
-	azureProviderIntegrationV2Id               = "cspi-abc123"
-	azureProviderIntegrationV2DisplayName      = "azure-test-integration"
-	azureProviderIntegrationV2EnvironmentId    = "env-00000"
-	azureProviderIntegrationV2MultiTenantAppId = "12345678-1234-1234-1234-123456789abc"
-
-	// GCP constants
-	gcpProviderIntegrationV2Id            = "cspi-def456"
-	gcpProviderIntegrationV2DisplayName   = "gcp-test-integration"
-	gcpProviderIntegrationV2EnvironmentId = "env-00000"
-	gcpProviderIntegrationV2ConfluentSA   = "cspi-def456@cflt-cspi-prod-1.iam.gserviceaccount.com"
-	gcpProviderIntegrationV2CustomerSA    = "test-sa@test-project.iam.gserviceaccount.com"
-)
-
 func TestAccProviderIntegrationSetupAzure(t *testing.T) {
 	ctx := context.Background()
 	wiremockContainer, err := setupWiremock(ctx)
@@ -230,11 +211,6 @@ func TestAccProviderIntegrationSetupGcp(t *testing.T) {
 		},
 	})
 }
-
-const (
-	azureProviderIntegrationV2ResourceLabel = "test_azure"
-	gcpProviderIntegrationV2ResourceLabel   = "test_gcp"
-)
 
 func testAccCheckProviderIntegrationSetupMockDestroy(s *terraform.State) error {
 	// This is handled by wiremock scenarios

@@ -18,43 +18,20 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	sr "github.com/confluentinc/ccloud-sdk-go-v2/schema-registry/v1"
+	"net/http"
+	"regexp"
+	"strings"
+
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"net/http"
-	"regexp"
-	"strings"
-	"time"
+
+	schemaregistryv1 "github.com/confluentinc/ccloud-sdk-go-v2/schema-registry/v1"
 )
 
 var acceptedSchemaExporterStatus = []string{stateRunning, statePaused}
-
-const (
-	paramContextType                      = "context_type"
-	paramContext                          = "context"
-	paramSubjectRenameFormat              = "subject_rename_format"
-	paramSubjects                         = "subjects"
-	paramResetOnUpdate                    = "reset_on_update"
-	paramResetOnUpdateDefaultValue        = false
-	paramBasicAuthCredentialsSourceValue  = "USER_INFO"
-	paramDestinationSchemaRegistryCluster = "destination_schema_registry_cluster"
-	basicAuthCredentialsSourceConfig      = "basic.auth.credentials.source"
-	schemaRegistryUrlConfig               = "schema.registry.url"
-	basicAuthUserInfoConfig               = "basic.auth.user.info"
-
-	bearerAuthClientId          = "bearer.auth.client.id"
-	bearerAuthClientSecret      = "bearer.auth.client.secret"
-	bearerAuthIssuerEndpointUrl = "bearer.auth.issuer.endpoint.url"
-	bearerAuthCredentialsSource = "bearer.auth.credentials.source"
-	bearerAuthScope             = "bearer.auth.scope"
-	bearerAuthIdentityPoolId    = "bearer.auth.identity.pool.id"
-	bearerAuthLogicalCluster    = "bearer.auth.logical.cluster"
-
-	schemaExporterAPICreateTimeout = 12 * time.Hour
-)
 
 var standardConfigs = []string{basicAuthUserInfoConfig, schemaRegistryUrlConfig, basicAuthCredentialsSourceConfig}
 var oauthBearerConfigs = []string{bearerAuthClientId, bearerAuthClientSecret, bearerAuthIssuerEndpointUrl, bearerAuthCredentialsSource, bearerAuthScope, bearerAuthIdentityPoolId, bearerAuthLogicalCluster, configOAuthBearer}
@@ -149,7 +126,8 @@ func destinationSchemaRegistryClusterBlockSchema() *schema.Schema {
 					DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
 						// During API key -> OAuth migration, ignore diffs on id as it is not required for API key/secret authentication
 						// In this scenario, resource should not be recreated
-						if old == "" && new != "" {
+						// Only suppress during updates (when resource already exists), not during creation
+						if d.Id() != "" && old == "" && new != "" {
 							return true
 						}
 						return false
@@ -195,18 +173,8 @@ func constructDestinationSRClusterRequest(d *schema.ResourceData, meta interface
 
 	// OAuth specific configurations
 	if client.isOAuthEnabled {
-		// Extract OAuth token details from the meta client
-		configs[bearerAuthClientId] = client.oauthToken.ClientId
-		configs[bearerAuthClientSecret] = client.oauthToken.ClientSecret
-		configs[bearerAuthIssuerEndpointUrl] = client.oauthToken.TokenUrl
-		configs[bearerAuthCredentialsSource] = configOAuthBearer
-		configs[bearerAuthIdentityPoolId] = client.oauthToken.IdentityPoolId
-		configs[bearerAuthLogicalCluster] = extractStringValueFromBlock(d, paramDestinationSchemaRegistryCluster, paramId)
-		// The Scope field is optional for Okta, but required for Azure Entra ID
-		// setting arbitrary values may cause exporter exception from backend service
-		if client.oauthToken.Scope != "" {
-			configs[bearerAuthScope] = client.oauthToken.Scope
-		}
+		destinationClusterId := extractStringValueFromBlock(d, paramDestinationSchemaRegistryCluster, paramId)
+		applyOAuthDefaults(configs, client.oauthToken, destinationClusterId)
 		return configs
 	}
 
@@ -215,6 +183,34 @@ func constructDestinationSRClusterRequest(d *schema.ResourceData, meta interface
 	destinationSRClusterApiSecret := extractStringValueFromNestedBlock(d, paramDestinationSchemaRegistryCluster, paramCredentials, paramSecret)
 	configs[basicAuthUserInfoConfig] = fmt.Sprintf("%s:%s", destinationSRClusterApiKey, destinationSRClusterApiSecret)
 	return configs
+}
+
+// applyOAuthDefaults sets OAuth bearer config values from the provider-level OAuthToken
+// only if they are not already specified in the user's config block.
+func applyOAuthDefaults(configs map[string]string, token *OAuthToken, destinationClusterId string) {
+	if _, ok := configs[bearerAuthClientId]; !ok {
+		configs[bearerAuthClientId] = token.ClientId
+	}
+	if _, ok := configs[bearerAuthClientSecret]; !ok {
+		configs[bearerAuthClientSecret] = token.ClientSecret
+	}
+	if _, ok := configs[bearerAuthIssuerEndpointUrl]; !ok {
+		configs[bearerAuthIssuerEndpointUrl] = token.TokenUrl
+	}
+	if _, ok := configs[bearerAuthCredentialsSource]; !ok {
+		configs[bearerAuthCredentialsSource] = configOAuthBearer
+	}
+	if _, ok := configs[bearerAuthIdentityPoolId]; !ok {
+		configs[bearerAuthIdentityPoolId] = token.IdentityPoolId
+	}
+	if _, ok := configs[bearerAuthLogicalCluster]; !ok {
+		configs[bearerAuthLogicalCluster] = destinationClusterId
+	}
+	// The Scope field is optional for Okta, but required for Azure Entra ID
+	// setting arbitrary values may cause exporter exception from backend service
+	if _, ok := configs[bearerAuthScope]; !ok && token.Scope != "" {
+		configs[bearerAuthScope] = token.Scope
+	}
 }
 
 func schemaExporterCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -236,7 +232,7 @@ func schemaExporterCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	exporterId := createExporterId(clusterId, d.Get(paramName).(string))
 	name := d.Get(paramName).(string)
 
-	er := sr.NewExporterReference()
+	er := schemaregistryv1.NewExporterReference()
 	er.SetName(name)
 	if v := d.Get(paramContext).(string); v != "" {
 		er.SetContext(v)
@@ -380,7 +376,7 @@ func schemaExporterUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 
 		subjects := convertToStringSlice(d.Get(paramSubjects).(*schema.Set).List())
 
-		req := sr.NewExporterUpdateRequest()
+		req := schemaregistryv1.NewExporterUpdateRequest()
 		if v := d.Get(paramContext).(string); v != "" {
 			req.SetContext(v)
 		}
@@ -441,7 +437,7 @@ func resumeExporter(ctx context.Context, d *schema.ResourceData, c *SchemaRegist
 	if isRunning {
 		// resume the exporter last after making any changes
 		_, resp, err := c.apiClient.ExportersV1Api.ResumeExporterByName(c.apiContext(ctx), name).Execute()
-		if err != nil && resp.StatusCode != http.StatusConflict {
+		if err != nil && (resp == nil || resp.StatusCode != http.StatusConflict) {
 			return diag.Errorf("error resuming Schema Exporter (Failed to resume the exporter): %s", createDescriptiveError(err, resp))
 		}
 
@@ -520,7 +516,7 @@ func schemaExporterImport(ctx context.Context, d *schema.ResourceData, meta inte
 	return []*schema.ResourceData{d}, nil
 }
 
-func setSchemaExporterAttributes(d *schema.ResourceData, clusterId string, exporter sr.ExporterReference, c *SchemaRegistryRestClient, meta interface{}) (*schema.ResourceData, error) {
+func setSchemaExporterAttributes(d *schema.ResourceData, clusterId string, exporter schemaregistryv1.ExporterReference, c *SchemaRegistryRestClient, meta interface{}) (*schema.ResourceData, error) {
 	if !c.isMetadataSetInProviderBlock {
 		if err := setKafkaCredentials(c.clusterApiKey, c.clusterApiSecret, d, c.externalAccessToken != nil); err != nil {
 			return nil, err

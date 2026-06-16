@@ -18,17 +18,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	net "github.com/confluentinc/ccloud-sdk-go-v2/networking/v1"
+	"net/http"
+	"strings"
+
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"net/http"
-	"strings"
-)
 
-const (
-	stateDeProvisioning = "DEPROVISIONING"
-	stateInactive       = "INACTIVE"
+	networkingv1 "github.com/confluentinc/ccloud-sdk-go-v2/networking/v1"
 )
 
 func networkLinkEndpointResource() *schema.Resource {
@@ -90,7 +87,7 @@ func networkLinkServiceSchema() *schema.Schema {
 
 func networkLinkEndpointCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 
-	spec := net.NewNetworkingV1NetworkLinkEndpointSpec()
+	spec := networkingv1.NewNetworkingV1NetworkLinkEndpointSpec()
 
 	displayName := d.Get(paramDisplayName).(string)
 	description := d.Get(paramDescription).(string)
@@ -100,15 +97,15 @@ func networkLinkEndpointCreate(ctx context.Context, d *schema.ResourceData, meta
 
 	spec.SetDisplayName(displayName)
 	spec.SetDescription(description)
-	spec.SetNetwork(net.EnvScopedObjectReference{Id: networkId})
-	spec.SetEnvironment(net.GlobalObjectReference{Id: environmentId})
-	spec.SetNetworkLinkService(net.EnvScopedObjectReference{Id: nlsId})
+	spec.SetNetwork(networkingv1.EnvScopedObjectReference{Id: networkId})
+	spec.SetEnvironment(networkingv1.GlobalObjectReference{Id: environmentId})
+	spec.SetNetworkLinkService(networkingv1.EnvScopedObjectReference{Id: nlsId})
 
-	nle := net.NewNetworkingV1NetworkLinkEndpoint()
+	nle := networkingv1.NewNetworkingV1NetworkLinkEndpoint()
 	nle.SetSpec(*spec)
 
 	c := meta.(*Client)
-	request := c.netClient.NetworkLinkEndpointsNetworkingV1Api.CreateNetworkingV1NetworkLinkEndpoint(c.netApiContext(ctx))
+	request := c.networkingV1Client.NetworkLinkEndpointsNetworkingV1Api.CreateNetworkingV1NetworkLinkEndpoint(c.networkingV1ApiContext(ctx))
 	request = request.NetworkingV1NetworkLinkEndpoint(*nle)
 
 	createNetworkLinkEndpointRequestJson, err := json.Marshal(request)
@@ -117,7 +114,7 @@ func networkLinkEndpointCreate(ctx context.Context, d *schema.ResourceData, meta
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Network Link Endpoint: %s", createNetworkLinkEndpointRequestJson))
 
-	createdNLE, resp, err := c.netClient.NetworkLinkEndpointsNetworkingV1Api.CreateNetworkingV1NetworkLinkEndpointExecute(request)
+	createdNLE, resp, err := c.networkingV1Client.NetworkLinkEndpointsNetworkingV1Api.CreateNetworkingV1NetworkLinkEndpointExecute(request)
 	if err != nil {
 		return diag.Errorf("error creating Network Link Endpoint %s", createDescriptiveError(err, resp))
 	}
@@ -125,7 +122,7 @@ func networkLinkEndpointCreate(ctx context.Context, d *schema.ResourceData, meta
 	nleId := createdNLE.GetId()
 	d.SetId(nleId)
 
-	if err := waitForNetworkLinkEndpointToProvision(c.netApiContext(ctx), c, environmentId, d.Id()); err != nil {
+	if err := waitForNetworkLinkEndpointToProvision(c.networkingV1ApiContext(ctx), c, environmentId, d.Id()); err != nil {
 		return diag.Errorf("error waiting for Network Link Endpoint %q to provision: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
@@ -155,16 +152,16 @@ func networkLinkEndpointRead(ctx context.Context, d *schema.ResourceData, meta i
 	return nil
 }
 
-func executeNLERead(ctx context.Context, c *Client, nleId string, environmentId string) (net.NetworkingV1NetworkLinkEndpoint, *http.Response, error) {
-	request := c.netClient.NetworkLinkEndpointsNetworkingV1Api.GetNetworkingV1NetworkLinkEndpoint(c.netApiContext(ctx), nleId).Environment(environmentId)
-	return c.netClient.NetworkLinkEndpointsNetworkingV1Api.GetNetworkingV1NetworkLinkEndpointExecute(request)
+func executeNLERead(ctx context.Context, c *Client, nleId string, environmentId string) (networkingv1.NetworkingV1NetworkLinkEndpoint, *http.Response, error) {
+	request := c.networkingV1Client.NetworkLinkEndpointsNetworkingV1Api.GetNetworkingV1NetworkLinkEndpoint(c.networkingV1ApiContext(ctx), nleId).Environment(environmentId)
+	return c.networkingV1Client.NetworkLinkEndpointsNetworkingV1Api.GetNetworkingV1NetworkLinkEndpointExecute(request)
 }
 
 func readNetworkLinkEndpointAndSetAttributes(ctx context.Context, d *schema.ResourceData, meta interface{}, nleId string, environmentId string) ([]*schema.ResourceData, error) {
 	tflog.Debug(ctx, fmt.Sprintf("Reading Network Link Endpoint %q=%q", paramId, nleId), map[string]interface{}{networkLinkEndpointLoggingKey: nleId})
 
 	c := meta.(*Client)
-	nle, resp, err := executeNLERead(c.netApiContext(ctx), c, nleId, environmentId)
+	nle, resp, err := executeNLERead(c.networkingV1ApiContext(ctx), c, nleId, environmentId)
 	if err != nil {
 		tflog.Warn(ctx, fmt.Sprintf("Error reading Network Link Endpoint %q: %s", nleId, createDescriptiveError(err, resp)), map[string]interface{}{networkLinkEndpointLoggingKey: nleId})
 
@@ -200,13 +197,13 @@ func networkLinkEndpointDelete(ctx context.Context, d *schema.ResourceData, meta
 	tflog.Debug(ctx, fmt.Sprintf("deleting Network Link Endpoint %q=%q", paramId, nleId), map[string]interface{}{networkLinkEndpointLoggingKey: nleId})
 
 	c := meta.(*Client)
-	request := c.netClient.NetworkLinkEndpointsNetworkingV1Api.DeleteNetworkingV1NetworkLinkEndpoint(c.netApiContext(ctx), nleId).Environment(environmentId)
-	resp, err := c.netClient.NetworkLinkEndpointsNetworkingV1Api.DeleteNetworkingV1NetworkLinkEndpointExecute(request)
+	request := c.networkingV1Client.NetworkLinkEndpointsNetworkingV1Api.DeleteNetworkingV1NetworkLinkEndpoint(c.networkingV1ApiContext(ctx), nleId).Environment(environmentId)
+	resp, err := c.networkingV1Client.NetworkLinkEndpointsNetworkingV1Api.DeleteNetworkingV1NetworkLinkEndpointExecute(request)
 	if err != nil {
 		return diag.Errorf("error deleting Network Link Endpoint %q: %s", nleId, createDescriptiveError(err, resp))
 	}
 
-	if err := waitForNetworkLinkEndpointToBeDeleted(c.netApiContext(ctx), c, environmentId, d.Id()); err != nil {
+	if err := waitForNetworkLinkEndpointToBeDeleted(c.networkingV1ApiContext(ctx), c, environmentId, d.Id()); err != nil {
 		return diag.Errorf("error waiting for Network Link Endpoint %q to be deleted: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
@@ -220,7 +217,7 @@ func networkLinkEndpointUpdate(ctx context.Context, d *schema.ResourceData, meta
 		return diag.Errorf("error updating Network Link Endpoint %q: only %q and %q attributes can be updated for Network Link Endpoint", d.Id(), paramDisplayName, paramDescription)
 	}
 
-	spec := net.NewNetworkingV1NetworkLinkEndpointSpecUpdate()
+	spec := networkingv1.NewNetworkingV1NetworkLinkEndpointSpecUpdate()
 
 	nleId := d.Id()
 	displayName := d.Get(paramDisplayName).(string)
@@ -229,13 +226,13 @@ func networkLinkEndpointUpdate(ctx context.Context, d *schema.ResourceData, meta
 
 	spec.SetDisplayName(displayName)
 	spec.SetDescription(description)
-	spec.SetEnvironment(net.GlobalObjectReference{Id: environmentId})
+	spec.SetEnvironment(networkingv1.GlobalObjectReference{Id: environmentId})
 
-	nle := net.NewNetworkingV1NetworkLinkEndpointUpdate()
+	nle := networkingv1.NewNetworkingV1NetworkLinkEndpointUpdate()
 	nle.SetSpec(*spec)
 
 	c := meta.(*Client)
-	request := c.netClient.NetworkLinkEndpointsNetworkingV1Api.UpdateNetworkingV1NetworkLinkEndpoint(c.netApiContext(ctx), nleId)
+	request := c.networkingV1Client.NetworkLinkEndpointsNetworkingV1Api.UpdateNetworkingV1NetworkLinkEndpoint(c.networkingV1ApiContext(ctx), nleId)
 	request = request.NetworkingV1NetworkLinkEndpointUpdate(*nle)
 
 	updateNetworkLinkEndpointRequestJson, err := json.Marshal(request)
@@ -244,7 +241,7 @@ func networkLinkEndpointUpdate(ctx context.Context, d *schema.ResourceData, meta
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Updating new Network Link Endpoint: %s", updateNetworkLinkEndpointRequestJson))
 
-	updatedNLE, resp, err := c.netClient.NetworkLinkEndpointsNetworkingV1Api.UpdateNetworkingV1NetworkLinkEndpointExecute(request)
+	updatedNLE, resp, err := c.networkingV1Client.NetworkLinkEndpointsNetworkingV1Api.UpdateNetworkingV1NetworkLinkEndpointExecute(request)
 	if err != nil {
 		return diag.Errorf("error updating Network Link Endpoint, %s", createDescriptiveError(err, resp))
 	}
@@ -280,7 +277,7 @@ func networkLinkEndpointImport(ctx context.Context, d *schema.ResourceData, meta
 	return []*schema.ResourceData{d}, nil
 }
 
-func setNetworkLinkEndpointAttributes(d *schema.ResourceData, nle net.NetworkingV1NetworkLinkEndpoint) (*schema.ResourceData, error) {
+func setNetworkLinkEndpointAttributes(d *schema.ResourceData, nle networkingv1.NetworkingV1NetworkLinkEndpoint) (*schema.ResourceData, error) {
 	if err := d.Set(paramDisplayName, nle.Spec.GetDisplayName()); err != nil {
 		return nil, err
 	}

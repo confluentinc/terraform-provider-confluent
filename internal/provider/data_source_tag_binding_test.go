@@ -17,16 +17,12 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
 	"testing"
-)
 
-const (
-	tagBindingDataSourceScenarioName = "confluent_tag_binding Data Source Lifecycle"
-	tagBindingDataSourceLabel        = "data.confluent_tag_binding.main"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/walkerus/go-wiremock"
 )
 
 func TestAccDataSourceTagBinding(t *testing.T) {

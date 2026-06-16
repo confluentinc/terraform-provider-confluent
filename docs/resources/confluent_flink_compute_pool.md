@@ -26,6 +26,7 @@ resource "confluent_flink_compute_pool" "main" {
   cloud            = "AWS"
   region           = "us-east-1"
   max_cfu          = 5
+  default_pool     = true
   environment {
     id = confluent_environment.development.id
   }
@@ -41,6 +42,7 @@ The following arguments are supported:
 - `cloud` - (Required String) The cloud service provider that runs the Flink Compute Pool.
 - `region` - (Required String) The cloud service provider region that hosts the Flink Compute Pool.
 - `max_cfu` - (Required Integer) Maximum number of Confluent Flink Units (CFUs) that the Flink compute pool should auto-scale to. The accepted values are: `5`, `10`, `20`, `30`, `40` and `50`.
+- `default_pool` - (Optional Boolean) Indicate whether the Flink compute pool is a default compute pool or not. Default value is `false`.
 - `environment` (Required Configuration Block) supports the following:
   - `id` - (Required String) The ID of the Environment that the Flink Compute Pool belongs to, for example, `env-abc123`.
 

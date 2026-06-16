@@ -17,16 +17,12 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-)
-
-const (
-	dataSourceConnectionScenarioName = "confluent_flink_connection Data Source Lifecycle"
+	"github.com/walkerus/go-wiremock"
 )
 
 func TestAccDataSourceConnectionProviderBlock(t *testing.T) {

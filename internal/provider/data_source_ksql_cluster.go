@@ -4,17 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	ksql "github.com/confluentinc/ccloud-sdk-go-v2/ksql/v2"
+	"net/http"
+
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"net/http"
-)
 
-const (
-	// The maximum allowable page size - 1 (to avoid off-by-one errors) when listing ksqlDB cluster using ksqldbcm V2 API
-	// https://docs.confluent.io/cloud/current/api.html#operation/listKsqldbcmV2Clusters
-	listKsqlClustersPageSize = 99
+	ksqlv2 "github.com/confluentinc/ccloud-sdk-go-v2/ksql/v2"
 )
 
 func ksqlDataSource() *schema.Resource {
@@ -97,7 +93,7 @@ func ksqlDataSourceReadUsingId(ctx context.Context, d *schema.ResourceData, meta
 	tflog.Debug(ctx, fmt.Sprintf("Reading ksqlDB Cluster %q=%q", paramId, clusterId), map[string]interface{}{ksqlClusterLoggingKey: clusterId})
 
 	c := meta.(*Client)
-	ksqlCluster, resp, err := executeKsqlRead(c.ksqlApiContext(ctx), c, environmentId, clusterId)
+	ksqlCluster, resp, err := executeKsqlRead(c.ksqlV2ApiContext(ctx), c, environmentId, clusterId)
 	if err != nil {
 		return diag.Errorf("error reading ksqlDB cluster %q: %s", clusterId, createDescriptiveError(err, resp))
 	}
@@ -137,7 +133,7 @@ func ksqlDataSourceReadUsingDisplayName(ctx context.Context, d *schema.ResourceD
 	return diag.Errorf("error reading ksqlDB Cluster: ksqlDB Cluster with %q=%q was not found", paramDisplayName, displayName)
 }
 
-func orgHasMultipleKsqlClustersWithTargetDisplayName(clusters []ksql.KsqldbcmV2Cluster, displayName string) bool {
+func orgHasMultipleKsqlClustersWithTargetDisplayName(clusters []ksqlv2.KsqldbcmV2Cluster, displayName string) bool {
 	var numberOfClustersWithTargetDisplayName = 0
 	for _, cluster := range clusters {
 		if cluster.Spec.GetDisplayName() == displayName {
@@ -147,8 +143,8 @@ func orgHasMultipleKsqlClustersWithTargetDisplayName(clusters []ksql.KsqldbcmV2C
 	return numberOfClustersWithTargetDisplayName > 1
 }
 
-func loadKsqlClusters(ctx context.Context, c *Client, environmentId string) ([]ksql.KsqldbcmV2Cluster, error) {
-	clusters := make([]ksql.KsqldbcmV2Cluster, 0)
+func loadKsqlClusters(ctx context.Context, c *Client, environmentId string) ([]ksqlv2.KsqldbcmV2Cluster, error) {
+	clusters := make([]ksqlv2.KsqldbcmV2Cluster, 0)
 
 	allClustersAreCollected := false
 	pageToken := ""
@@ -179,11 +175,11 @@ func loadKsqlClusters(ctx context.Context, c *Client, environmentId string) ([]k
 	return clusters, nil
 }
 
-func executeListKsqlClusters(ctx context.Context, c *Client, environmentId, pageToken string) (ksql.KsqldbcmV2ClusterList, *http.Response, error) {
+func executeListKsqlClusters(ctx context.Context, c *Client, environmentId, pageToken string) (ksqlv2.KsqldbcmV2ClusterList, *http.Response, error) {
 	if pageToken != "" {
-		return c.ksqlClient.ClustersKsqldbcmV2Api.ListKsqldbcmV2Clusters(c.ksqlApiContext(ctx)).Environment(environmentId).PageSize(listKsqlClustersPageSize).PageToken(pageToken).Execute()
+		return c.ksqlV2Client.ClustersKsqldbcmV2Api.ListKsqldbcmV2Clusters(c.ksqlV2ApiContext(ctx)).Environment(environmentId).PageSize(listKsqlClustersPageSize).PageToken(pageToken).Execute()
 	} else {
-		return c.ksqlClient.ClustersKsqldbcmV2Api.ListKsqldbcmV2Clusters(c.ksqlApiContext(ctx)).Environment(environmentId).PageSize(listKsqlClustersPageSize).Execute()
+		return c.ksqlV2Client.ClustersKsqldbcmV2Api.ListKsqldbcmV2Clusters(c.ksqlV2ApiContext(ctx)).Environment(environmentId).PageSize(listKsqlClustersPageSize).Execute()
 	}
 }
 

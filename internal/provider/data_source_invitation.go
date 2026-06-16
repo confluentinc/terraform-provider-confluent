@@ -18,19 +18,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-)
-
-const (
-	paramAcceptedAt    = "accepted_at"
-	paramExpiresAt     = "expires_at"
-	paramAuthType      = "auth_type"
-	paramUser          = "user"
-	paramCreator       = "creator"
-	paramAllowDeletion = "allow_deletion"
-	statusAccepted     = "INVITE_STATUS_ACCEPTED"
 )
 
 func invitationDataSource() *schema.Resource {
@@ -82,7 +73,7 @@ func invitationDataSourceReadUsingId(ctx context.Context, d *schema.ResourceData
 	tflog.Debug(ctx, fmt.Sprintf("Reading invitation %q=%q", paramId, invitationId), map[string]interface{}{invitationLoggingKey: invitationId})
 
 	c := meta.(*Client)
-	invitation, resp, err := executeInvitationRead(c.iamApiContext(ctx), c, invitationId)
+	invitation, resp, err := executeInvitationRead(c.iamV2ApiContext(ctx), c, invitationId)
 	if err != nil {
 		return diag.Errorf("error reading invitation %q: %s", invitationId, createDescriptiveError(err, resp))
 	}

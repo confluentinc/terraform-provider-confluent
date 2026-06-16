@@ -1,3 +1,176 @@
+## 2.76.0 (June 11th, 2026)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.75.0...v2.76.0)
+
+**Bug fixes:**
+* Raised the default create/delete timeouts for the `confluent_access_point` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_access_point) so that slow PROVISIONING -> READY transitions no longer fail `terraform apply` with the context deadline exceeded error.
+
+## 2.75.0 (June 8th, 2026)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.74.0...v2.75.0)
+
+**New features:**
+* Added `require_crl_on_client_certificate` attribute to the `confluent_certificate_authority` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_certificate_authority) and [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_certificate_authority) to support Certificate Revocation List (CRL) validation against client certificates during mTLS authentication.
+
+**Bug fixes:**
+* Fixed perpetual `terraform plan` drift on `crl_url` for `confluent_certificate_authority` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_certificate_authority) created with `crl_chain` (local CRL upload).
+
+## 2.74.0 (June 2nd, 2026)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.73.0...v2.74.0) 
+
+**Bug fixes:**
+* `confluent_tag` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_tag) and `confluent_schema_registry_kek` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema_registry_kek) no longer destroy and recreate the resource when only the resource-level rest_endpoint attribute changes. Endpoint changes (region migration, DNS rename, PrivateLink endpoint switch, etc.) now update in-place.
+
+## 2.73.0 (May 14th, 2026)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.72.0...v2.73.0)
+
+**New features:**
+* Updated the `confluent_kafka_cluster` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_cluster) to support self-managed encryption keys (BYOK) for Freight Kafka clusters on AWS.
+* Added the `confluent_rtce_topic` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_rtce_topic) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_rtce_topic) to support the Real Time Context Engine feature on AWS.
+* Updated the `confluent_api_key` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_api_key) to support Global API Keys.
+
+**Bug fixes:**
+* Fixed an error where the `confluent_subject_config` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_subject_config) failed with a _404 Not Found_ during `terraform apply` or `terraform destroy` if the underlying subject was deleted out-of-band. Refresh now correctly detects the missing subject and removes it from the state instead.
+* Resolved 5 Dependabot alerts.
+
+## 2.72.0 (May 7th, 2026)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.71.0...v2.72.0)
+
+**New features:**
+* Updated `confluent_access_point` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_access_point) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_access_point) to support the new optional `azure_ingress_private_link_endpoint` and `gcp_ingress_private_service_connect_endpoint` configuration block.
+* Updated `confluent_gateway` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_gateway) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_gateway) to support the new optional `azure_ingress_private_link_gateway` and `gcp_ingress_private_service_connect_gateway` configuration block.
+
+**Examples:**
+* Added an end-to-end example configuration for [Azure Ingress Private Link](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/enterprise-ingress-azure/).
+* Added an end-to-end example configuration for [GCP Ingress Private Service Connect](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/enterprise-ingress-gcp/).
+
+## 2.71.0 (April 30th, 2026)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.70.0...v2.71.0)
+
+**New features:**
+* Added Client-Side-Payload-Encryption support in `confluent_schema` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_schema).
+* Added `confluent_flink_materialized_table` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_flink_materialized_table) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_flink_materialized_table) for managing Materialized Tables in Confluent Cloud.
+
+## 2.70.0 (April 23rd, 2026)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.69.0...v2.70.0)
+
+**Bug fixes:**
+* Fix an error that occurs when deleting `confluent_plugin` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_plugin) after deleting all corresponding `confluent_custom_connector_plugin_version` [resources](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_custom_connector_plugin_version).
+
+## 2.69.0 (April 20th, 2026)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.68.0...v2.69.0)
+
+**Bug fixes:**
+* Resolve an error when reading the `confluent_catalog_entity_attributes` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_catalog_entity_attributes) for a Schema with a tag binding.
+* Fix a typo in the `confluent_catalog_integration` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_catalog_integration) and the `confluent_tableflow_topic` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_tableflow_topic).
+
+## 2.68.0 (April 14th, 2026)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.67.0...v2.68.0)
+
+**New features:**
+* Added `routes` attribute to the `aws_private_network_interface` configuration block of `confluent_access_point` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_access_point) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_access_point).
+
+## 2.67.0 (April 3rd, 2026)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.66.0...v2.67.0)
+
+**New features:**
+* Added support for `confluent_flink_compute_pool_config` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_flink_compute_pool_config) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_flink_compute_pool_config) to manage Flink Compute Pool configs, including the default Flink Compute Pool enable flag.
+* Updated `confluent_flink_compute_pool` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_flink_compute_pool) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_flink_compute_pool) to support default Flink Compute Pool.
+  
+**Bug fixes:**
+* Fixed an issue for `confluent_flink_statement` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_flink_statement) and `confluent_flink_connection` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_flink_connection) where the Identity Pool ID always overrides `principal.id` when OAuth is enabled.
+* Updated the docs with instructions for issue above.
+
+## 2.66.0 (March 30th, 2026)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.65.0...v2.66.0)
+
+**New features:**
+* Added GCP support for `confluent_connect_artifact` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_connect_artifact) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_connect_artifact).
+
+## 2.65.0 (March 20th, 2026)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.64.0...v2.65.0)
+
+**Bug fixes:**
+* Fixed a crash in the `confluent_schema_registry_dek` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema_registry_dek) when DEK creation failed due to network errors.
+* Fixed similar issues across other resources.
+
+**Examples:**
+* Moved `docs/examples/supported_examples.md` to `docs/guides/supported-examples.md` so it appears in the Terraform Registry sidebar under Guides.
+* Added required `page_title` frontmatter for Registry rendering.
+
+## 2.64.0 (March 17th, 2026)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.63.0...v2.64.0)
+
+**New features:**
+* Added support for a new optional `unity` configuration block to `confluent_catalog_integration` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_catalog_integration) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_catalog_integration) in a General Availability lifecycle stage.
+
+**Bug fixes:**
+* Fixed an issue in the `confluent_schema_exporter` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema_exporter) where destination OAuth configs were being overwritten with provider-level values, which was blocking scenarios where the source and destination Schema Registry clusters used different identity providers, tenants, or OAuth credentials.
+* Fixed an issue where the `confluent_catalog_integration` [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_catalog_integration) could not read Snowflake catalog integrations.
+
+**Examples:**
+* Added a [Terraform Provider Examples Index](https://github.com/confluentinc/terraform-provider-confluent/tree/master/docs/examples/supported_examples.md) document to provide users with a list of all supported examples.
+
+## 2.63.0 (March 5th, 2026)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.62.0...v2.63.0)
+
+**New features:**
+* Added support for resetting topic configs to default values for the `confluent_kafka_topic` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_topic).
+
+**Bug fixes:**
+* Updated the docs.
+
+## 2.62.0 (February 9th, 2026)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.61.0...v2.62.0)
+
+**New features:**
+* Updates the `confluent_certificate_pool` [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_certificate_pool) to allow searching by `display_name` when the display name is unique.
+
+## 2.61.0 (February 5th, 2026)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.60.0...v2.61.0)
+
+**Bug fixes:**
+* Fixed an issue in `confluent_custom_connector_plugin` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_custom_connector_plugin) and `confluent_custom_connector_plugin_version` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_custom_connector_plugin_version) where plugins could not be uploaded to Azure.
+
+## 2.60.0 (February 2nd, 2026)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.59.0...v2.60.0)
+
+**New features:**
+* Added `confluent_endpoint` [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_endpoint).
+* Added `confluent_gateways` [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_gateways) to support optionally filtering `confluent_gateway` data sources by `gateway_type`, `id`, `display_name`, `region`, or `phase`.
+* Updated `confluent_access_point` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_access_point) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_access_point) to support the new optional `aws_ingress_private_link_endpoint` configuration block.
+* Updated `confluent_gateway` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_gateway) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_gateway) to support the new optional `aws_ingress_private_link_endpoint` configuration block.
+* Added support for schema normalization (`normalize` field) and subject aliases (`alias` field) to the `confluent_subject_config` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_subject_config) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_subject_config), and `confluent_schema_registry_cluster_config` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_schema_registry_cluster_config) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_schema_registry_cluster_config).
+
+## 2.59.0 (January 26th, 2026)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.58.0...v2.59.0)
+
+**Bug Fixes:**
+* General bug fixes and improvements.
+
+## 2.58.0 (January 13th, 2026)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.57.0...v2.58.0)
+
+**New features:** 
+* Added Azure support for `confluent_connect_artifact` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_connect_artifact) and [data-source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_connect_artifact).
+
 ## 2.57.0 (December 17th, 2025)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.56.0...v2.57.0)

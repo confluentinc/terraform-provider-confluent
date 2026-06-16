@@ -65,7 +65,7 @@ func TestAccInvitationDataSourceLive(t *testing.T) {
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_invitation.%s", invitationResourceLabel), "email", invitationEmail),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_invitation.%s", invitationResourceLabel), "auth_type", "AUTH_TYPE_LOCAL"),
 					resource.TestCheckResourceAttrSet(fmt.Sprintf("confluent_invitation.%s", invitationResourceLabel), "status"),
-					
+
 					// Check the data source can find it
 					resource.TestCheckResourceAttrPair(
 						fmt.Sprintf("data.confluent_invitation.%s", invitationDataSourceLabel), "id",
@@ -106,4 +106,4 @@ func testAccCheckInvitationDataSourceLiveConfig(endpoint, invitationResourceLabe
 		id = confluent_invitation.%s.id
 	}
 	`, endpoint, apiKey, apiSecret, invitationResourceLabel, invitationEmail, invitationDataSourceLabel, invitationResourceLabel)
-} 
+}

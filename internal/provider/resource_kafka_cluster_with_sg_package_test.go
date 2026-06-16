@@ -17,39 +17,13 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-)
-
-const (
-	scenarioStateKafkaHasBeenCreated                           = "A new Kafka Basic cluster has been just created"
-	scenarioStateKafkaHasBeenCreatedButZeroSRClusters          = "A new Kafka Basic cluster has been just created: waiting for SR cluster to appear"
-	scenarioStateKafkaHasBeenCreatedButSRClusterIsProvisioning = "A new Kafka Basic cluster has been just created: SR cluster is provisioning"
-	scenarioStateKafkaHasBeenCreatedAndSRClusterIsProvisioned  = "A new Kafka Basic cluster has been just created: SR cluster is provisioned"
-	scenarioStateKafkaHasBeenCreatedAndSyncIsComplete          = "A new Kafka Basic cluster has been just created: sync is complete"
-	scenarioStateKafkaHasBeenUpdated                           = "The new Kafka cluster's kind has been just updated to Standard"
-	scenarioStateKafkaHasBeenDeleted                           = "The new Kafka cluster has been deleted"
-	kafkaScenarioName                                          = "confluent_kafka Resource Lifecycle"
-	kafkaClusterId                                             = "lkc-19ynpv"
-	testEnvironmentId                                          = "env-1jrymj"
-	kafkaNetworkId                                             = "n-123abc"
-	kafkaDisplayName                                           = "TestCluster"
-	kafkaMaxEcku                                               = 5
-	kafkaMaxEckuUpdated                                        = 3
-	kafkaApiVersion                                            = "cmk/v2"
-	kafkaKind                                                  = "Cluster"
-	kafkaAvailability                                          = "SINGLE_ZONE"
-	kafkaCloud                                                 = "GCP"
-	kafkaRegion                                                = "us-central1"
-	kafkaResourceLabel                                         = "basic-cluster"
-	kafkaHttpEndpoint                                          = "https://pkc-0wg55.us-central1.gcp.confluent.cloud:443"
-	kafkaBootstrapEndpoint                                     = "SASL_SSL://pkc-0wg55.us-central1.gcp.confluent.cloud:9092"
-	kafkaRbacCrn                                               = "crn://confluent.cloud/organization=1111aaaa-11aa-11aa-11aa-111111aaaaaa/environment=env-1jrymj/cloud-cluster=lkc-19ynpv"
+	"github.com/walkerus/go-wiremock"
 )
 
 var createKafkaPath = "/cmk/v2/clusters"
@@ -285,7 +259,7 @@ func testAccCheckClusterDestroy(s *terraform.State) error {
 			continue
 		}
 		deletedClusterId := rs.Primary.ID
-		req := c.cmkClient.ClustersCmkV2Api.GetCmkV2Cluster(c.cmkApiContext(context.Background()), deletedClusterId).Environment(testEnvironmentId)
+		req := c.cmkV2Client.ClustersCmkV2Api.GetCmkV2Cluster(c.cmkV2ApiContext(context.Background()), deletedClusterId).Environment(testEnvironmentId)
 		deletedCluster, response, err := req.Execute()
 		if response != nil && (response.StatusCode == http.StatusForbidden || response.StatusCode == http.StatusNotFound) {
 			// cmk/v2/clusters/{nonExistentClusterId/deletedClusterID} returns http.StatusForbidden instead of http.StatusNotFound

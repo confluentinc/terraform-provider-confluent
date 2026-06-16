@@ -72,9 +72,9 @@ func TestAccCustomConnectorPluginLive(t *testing.T) {
 				),
 			},
 			{
-				ResourceName:      fmt.Sprintf("confluent_custom_connector_plugin.%s", pluginResourceLabel),
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            fmt.Sprintf("confluent_custom_connector_plugin.%s", pluginResourceLabel),
+				ImportState:             true,
+				ImportStateVerify:       true,
 				ImportStateVerifyIgnore: []string{"filename"},
 			},
 		},
@@ -214,4 +214,4 @@ func testAccCheckCustomConnectorPluginUpdateLiveConfig(endpoint, pluginResourceL
 		]
 	}
 	`, endpoint, apiKey, apiSecret, pluginResourceLabel, pluginDisplayName)
-} 
+}

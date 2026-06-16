@@ -17,8 +17,8 @@ blocks:
             - sudo chmod -R 777 /Users/semaphore/.local/
             - sudo chown -R semaphore /Users/semaphore/.config/
             - sudo chmod -R 777 /Users/semaphore/.config/
-            - sudo sem-version go 1.24.9
-            - mise use --global go@1.24.9
+            - sudo sem-version go 1.25.9
+            - mise use --global go@1.25.9
             - checkout
             - cd ..
             - wget "https://go.dev/dl/go$(cat terraform-provider-confluent*/.go-version).src.tar.gz"
@@ -34,7 +34,7 @@ blocks:
             - CGO_CFLAGS="-Wno-error=gnu-folding-constant" ./make.bash -v
             - cd ../../
             - export PATH=$(pwd)/go/bin:$PATH
-            - export "GITHUB_TOKEN=$(gh auth token)"
+            - export "GITHUB_TOKEN=${GITHUB_TOKEN_WRITE}"
             - cd terraform-provider-confluent*
             - GOROOT=/Users/semaphore/go VERSION=v1.25.1 ./scripts/run-goreleaser.sh build --config .goreleaser-darwin-fips.yml
             - artifact push workflow dist/darwin-fips_darwin_amd64_v1 --force
@@ -45,9 +45,9 @@ blocks:
       jobs:
         - name: goreleaser
           commands:
-            - sem-version go 1.24.9
+            - sem-version go 1.25.9
             - export "GOPATH=$(go env GOPATH)"
-            - export "GITHUB_TOKEN=$(gh auth token)"
+            - export "GITHUB_TOKEN=${GITHUB_TOKEN_WRITE}"
             - >-
               export
               "SEMAPHORE_GIT_DIR=${GOPATH}/src/github.com/confluentinc/${SEMAPHORE_PROJECT_NAME}"
@@ -56,7 +56,7 @@ blocks:
             - checkout
             - . vault-setup
             # GitHub token is required for running GoReleaser
-            - . vault-sem-get-secret v1/ci/kv/apif/signing_key
+            - . vault-get-secret apif/signing-key
             # Import GPG private key
             - echo -e "${GPG_PRIVATE_KEY}" | gpg --import --batch --no-tty
             - echo "foo" > temp.txt

@@ -17,18 +17,12 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-)
-
-const (
-	dataSourceTransitGatewayAttachmentScenarioName = "confluent_transit_gateway_attachment Data Source Lifecycle"
-	transitGatewayAttachmentDataSourceLabel        = "example"
-	transitGatewayAttachmentDataSourceDisplayName  = "prod-tgw-use1"
+	"github.com/walkerus/go-wiremock"
 )
 
 var fullTransitGatewayAttachmentDataSourceLabel = fmt.Sprintf("data.confluent_transit_gateway_attachment.%s", transitGatewayAttachmentDataSourceLabel)

@@ -17,17 +17,12 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-)
-
-const (
-	clusterLinkDataSourceLabel              = "test_cluster_link_data_source_label"
-	numberOfClusterLinkDataSourceAttributes = "8"
+	"github.com/walkerus/go-wiremock"
 )
 
 var fullClusterLinkDataSourceLabel = fmt.Sprintf("data.confluent_cluster_link.%s", clusterLinkDataSourceLabel)

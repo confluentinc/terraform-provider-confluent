@@ -18,18 +18,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	oidc "github.com/confluentinc/ccloud-sdk-go-v2/identity-provider/v2"
+	"net/http"
+	"strings"
+
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"net/http"
-	"strings"
-)
 
-const (
-	paramIdentityProvider = "identity_provider"
-	paramFilter           = "filter"
+	identityproviderv2 "github.com/confluentinc/ccloud-sdk-go-v2/identity-provider/v2"
 )
 
 func identityPoolResource() *schema.Resource {
@@ -76,7 +73,7 @@ func identityPoolUpdate(ctx context.Context, d *schema.ResourceData, meta interf
 		return diag.Errorf("error updating Identity Pool %q: only %q, %q, %q, %q attributes can be updated for Identity Pool", d.Id(), paramDisplayName, paramDescription, paramIdentityClaim, paramFilter)
 	}
 
-	updateIdentityPoolRequest := oidc.NewIamV2IdentityPool()
+	updateIdentityPoolRequest := identityproviderv2.NewIamV2IdentityPool()
 
 	if d.HasChange(paramDisplayName) {
 		updatedDisplayName := d.Get(paramDisplayName).(string)
@@ -103,7 +100,7 @@ func identityPoolUpdate(ctx context.Context, d *schema.ResourceData, meta interf
 
 	c := meta.(*Client)
 	identityProviderId := extractStringValueFromBlock(d, paramIdentityProvider, paramId)
-	updatedIdentityPool, resp, err := c.oidcClient.IdentityPoolsIamV2Api.UpdateIamV2IdentityPool(c.oidcApiContext(ctx), identityProviderId, d.Id()).IamV2IdentityPool(*updateIdentityPoolRequest).Execute()
+	updatedIdentityPool, resp, err := c.identityProviderV2Client.IdentityPoolsIamV2Api.UpdateIamV2IdentityPool(c.identityProviderV2ApiContext(ctx), identityProviderId, d.Id()).IamV2IdentityPool(*updateIdentityPoolRequest).Execute()
 
 	if err != nil {
 		return diag.Errorf("error updating Identity Pool %q: %s", d.Id(), createDescriptiveError(err, resp))
@@ -127,7 +124,7 @@ func identityPoolCreate(ctx context.Context, d *schema.ResourceData, meta interf
 	identityClaim := d.Get(paramIdentityClaim).(string)
 	filter := d.Get(paramFilter).(string)
 
-	createIdentityPoolRequest := oidc.NewIamV2IdentityPool()
+	createIdentityPoolRequest := identityproviderv2.NewIamV2IdentityPool()
 	createIdentityPoolRequest.SetDisplayName(displayName)
 	createIdentityPoolRequest.SetDescription(description)
 	createIdentityPoolRequest.SetIdentityClaim(identityClaim)
@@ -138,7 +135,7 @@ func identityPoolCreate(ctx context.Context, d *schema.ResourceData, meta interf
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Identity Pool: %s", createIdentityPoolRequestJson))
 
-	createdIdentityPool, resp, err := executeIdentityPoolCreate(c.oidcApiContext(ctx), c, createIdentityPoolRequest, identityProviderId)
+	createdIdentityPool, resp, err := executeIdentityPoolCreate(c.identityProviderV2ApiContext(ctx), c, createIdentityPoolRequest, identityProviderId)
 	if err != nil {
 		return diag.Errorf("error creating Identity Pool: %s", createDescriptiveError(err, resp))
 	}
@@ -153,8 +150,8 @@ func identityPoolCreate(ctx context.Context, d *schema.ResourceData, meta interf
 	return identityPoolRead(ctx, d, meta)
 }
 
-func executeIdentityPoolCreate(ctx context.Context, c *Client, identityPool *oidc.IamV2IdentityPool, identityProviderId string) (oidc.IamV2IdentityPool, *http.Response, error) {
-	req := c.oidcClient.IdentityPoolsIamV2Api.CreateIamV2IdentityPool(c.oidcApiContext(ctx), identityProviderId).IamV2IdentityPool(*identityPool)
+func executeIdentityPoolCreate(ctx context.Context, c *Client, identityPool *identityproviderv2.IamV2IdentityPool, identityProviderId string) (identityproviderv2.IamV2IdentityPool, *http.Response, error) {
+	req := c.identityProviderV2Client.IdentityPoolsIamV2Api.CreateIamV2IdentityPool(c.identityProviderV2ApiContext(ctx), identityProviderId).IamV2IdentityPool(*identityPool)
 	return req.Execute()
 }
 
@@ -163,7 +160,7 @@ func identityPoolDelete(ctx context.Context, d *schema.ResourceData, meta interf
 	identityProviderId := extractStringValueFromBlock(d, paramIdentityProvider, paramId)
 	c := meta.(*Client)
 
-	req := c.oidcClient.IdentityPoolsIamV2Api.DeleteIamV2IdentityPool(c.oidcApiContext(ctx), identityProviderId, d.Id())
+	req := c.identityProviderV2Client.IdentityPoolsIamV2Api.DeleteIamV2IdentityPool(c.identityProviderV2ApiContext(ctx), identityProviderId, d.Id())
 	resp, err := req.Execute()
 
 	if err != nil {
@@ -191,7 +188,7 @@ func identityPoolRead(ctx context.Context, d *schema.ResourceData, meta interfac
 func readIdentityPoolAndSetAttributes(ctx context.Context, d *schema.ResourceData, meta interface{}, identityProviderId, identityPoolId string) ([]*schema.ResourceData, error) {
 	c := meta.(*Client)
 
-	identityPool, resp, err := executeIdentityPoolRead(c.oidcApiContext(ctx), c, d.Id(), identityProviderId)
+	identityPool, resp, err := executeIdentityPoolRead(c.identityProviderV2ApiContext(ctx), c, d.Id(), identityProviderId)
 	if err != nil {
 		tflog.Warn(ctx, fmt.Sprintf("Error reading Identity Pool %q: %s", d.Id(), createDescriptiveError(err, resp)), map[string]interface{}{identityPoolLoggingKey: d.Id()})
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
@@ -218,12 +215,12 @@ func readIdentityPoolAndSetAttributes(ctx context.Context, d *schema.ResourceDat
 	return []*schema.ResourceData{d}, nil
 }
 
-func executeIdentityPoolRead(ctx context.Context, c *Client, identityPoolId, identityProviderId string) (oidc.IamV2IdentityPool, *http.Response, error) {
-	req := c.oidcClient.IdentityPoolsIamV2Api.GetIamV2IdentityPool(c.oidcApiContext(ctx), identityProviderId, identityPoolId)
+func executeIdentityPoolRead(ctx context.Context, c *Client, identityPoolId, identityProviderId string) (identityproviderv2.IamV2IdentityPool, *http.Response, error) {
+	req := c.identityProviderV2Client.IdentityPoolsIamV2Api.GetIamV2IdentityPool(c.identityProviderV2ApiContext(ctx), identityProviderId, identityPoolId)
 	return req.Execute()
 }
 
-func setIdentityPoolAttributes(d *schema.ResourceData, identityPool oidc.IamV2IdentityPool, identityProviderId string) (*schema.ResourceData, error) {
+func setIdentityPoolAttributes(d *schema.ResourceData, identityPool identityproviderv2.IamV2IdentityPool, identityProviderId string) (*schema.ResourceData, error) {
 	if err := d.Set(paramDisplayName, identityPool.GetDisplayName()); err != nil {
 		return nil, createDescriptiveError(err)
 	}

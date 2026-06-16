@@ -25,18 +25,6 @@ import (
 	"github.com/walkerus/go-wiremock"
 )
 
-const (
-	scenarioStateTableflowTopicIsProvisioning = "The new tableflow topic is provisioning"
-	scenarioStateTableflowTopicHasBeenCreated = "The new tableflow topic has been just created"
-	scenarioStateTableflowTopicHasBeenUpdated = "The new tableflow topic has been updated"
-	byobAwsTableflowTopicScenarioName         = "confluent_tableflow_topic Byob Aws Resource Lifecycle"
-	managedStorageTableflowTopicScenarioName  = "confluent_tableflow_topic Managed Storage Resource Lifecycle"
-	azureTableflowTopicScenarioName           = "confluent_tableflow_topic Azure Storage Resource Lifecycle"
-
-	tableflowTopicUrlPath       = "/tableflow/v1/tableflow-topics"
-	tableflowTopicResourceLabel = "confluent_tableflow_topic.main"
-)
-
 func TestAccTableflowTopicByobAws(t *testing.T) {
 	ctx := context.Background()
 
@@ -134,6 +122,7 @@ func TestAccTableflowTopicByobAws(t *testing.T) {
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "enable_partitioning", "true"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "suspended", "false"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "retention_ms", "100000000"),
+					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "data_retention_ms", "2592000000"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "record_failure_strategy", "SUSPEND"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "error_handling.#", "1"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "error_handling.0.mode", "SUSPEND"),
@@ -162,6 +151,7 @@ func TestAccTableflowTopicByobAws(t *testing.T) {
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "enable_partitioning", "true"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "suspended", "false"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "retention_ms", "200000000"),
+					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "data_retention_ms", "2592000000"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "record_failure_strategy", "SKIP"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "error_handling.#", "1"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "error_handling.0.mode", "SKIP"),
@@ -269,6 +259,7 @@ func TestAccTableflowTopicAzure(t *testing.T) {
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "enable_partitioning", "true"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "suspended", "false"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "retention_ms", "100000000"),
+					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "data_retention_ms", "2592000000"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "record_failure_strategy", "SUSPEND"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "table_formats.#", "1"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "table_formats.0", "ICEBERG"),
@@ -296,6 +287,7 @@ func TestAccTableflowTopicAzure(t *testing.T) {
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "enable_partitioning", "true"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "suspended", "false"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "retention_ms", "200000000"),
+					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "data_retention_ms", "2592000000"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "record_failure_strategy", "SKIP"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "table_formats.#", "1"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "table_formats.0", "ICEBERG"),
@@ -411,6 +403,7 @@ func TestAccTableflowTopicManagedStorage(t *testing.T) {
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "enable_partitioning", "true"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "suspended", "false"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "retention_ms", "100000000"),
+					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "data_retention_ms", "2592000000"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "record_failure_strategy", "SKIP"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "error_handling.#", "1"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "error_handling.0.mode", "SKIP"),
@@ -436,6 +429,7 @@ func TestAccTableflowTopicManagedStorage(t *testing.T) {
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "enable_partitioning", "true"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "suspended", "false"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "retention_ms", "200000000"),
+					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "data_retention_ms", "2592000000"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "error_handling.#", "1"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "error_handling.0.mode", "LOG"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "error_handling.0.log_target", "log_topic"),
@@ -539,6 +533,7 @@ func TestAccTableflowTopicErrorHandlingLog(t *testing.T) {
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "enable_partitioning", "true"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "suspended", "false"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "retention_ms", "100000000"),
+					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "data_retention_ms", "2592000000"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "error_handling.#", "1"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "error_handling.0.mode", "LOG"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "error_handling.0.log_target", "log_topic"),
@@ -562,6 +557,7 @@ func TestAccTableflowTopicErrorHandlingLog(t *testing.T) {
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "enable_partitioning", "true"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "suspended", "false"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "retention_ms", "100000000"),
+					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "data_retention_ms", "2592000000"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "error_handling.#", "1"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "error_handling.0.mode", "SUSPEND"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "table_formats.#", "1"),

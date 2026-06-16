@@ -11,8 +11,6 @@ import (
 	"github.com/walkerus/go-wiremock"
 )
 
-const dnsRecordDataSourceScenarioName = "confluent_dns_record Data Source Lifecycle"
-
 var dnsRecordDataSourceLabel = fmt.Sprintf("data.%s", dnsRecordResourceLabel)
 
 func TestAccDataSourceDnsRecord(t *testing.T) {

@@ -17,16 +17,12 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
 	"testing"
-)
 
-const (
-	dekDataSourceScenarioName = "confluent_schema_registry_dek Data Source Lifecycle"
-	dekDataSourceLabel        = "data.confluent_schema_registry_dek.dek"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/walkerus/go-wiremock"
 )
 
 func TestAccDataSourceSchemaRegistryDek(t *testing.T) {

@@ -17,26 +17,13 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
 	"strconv"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-)
-
-const (
-	networkingApiVersion              = "networking/v1"
-	ipAddressesDataSourceScenarioName = "confluent_ip_addresses Data Source Lifecycle"
-	ipAddressKind                     = "IpAddress"
-	ipAddressesResourceLabel          = "test_ip_address_label"
-	ipAddressLastPagePageToken        = "dyJpZCI6InNhLTd5OXbybq"
-
-	testIpAddressCloud          = "AWS"
-	testIpAddressServiceConnect = "CONNECT"
-	testIpAddressServiceKafka   = "KAFKA"
-	testIpAddressAddressType    = "EGRESS"
+	"github.com/walkerus/go-wiremock"
 )
 
 func TestAccDataSourceIpAddresses(t *testing.T) {

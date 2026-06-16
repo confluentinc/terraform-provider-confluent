@@ -12,10 +12,6 @@ import (
 	"github.com/walkerus/go-wiremock"
 )
 
-const (
-	ipGroupDataSourceScenarioName = "confluent_ip_group Data Source Lifecycle"
-)
-
 func TestAccDataSourceGroup(t *testing.T) {
 	ctx := context.Background()
 

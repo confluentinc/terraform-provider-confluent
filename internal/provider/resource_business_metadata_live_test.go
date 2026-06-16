@@ -108,9 +108,9 @@ func TestAccBusinessMetadataLive(t *testing.T) {
 				),
 			},
 			{
-				ResourceName:      fmt.Sprintf("confluent_business_metadata.%s", businessMetadataResourceLabel),
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            fmt.Sprintf("confluent_business_metadata.%s", businessMetadataResourceLabel),
+				ImportState:             true,
+				ImportStateVerify:       true,
 				ImportStateVerifyIgnore: []string{"credentials", "rest_endpoint", "schema_registry_cluster"},
 			},
 		},
@@ -240,4 +240,4 @@ func testAccCheckResourceAttrWithRetryBM(resourceName, attribute, expectedValue 
 
 		return fmt.Errorf("attribute check failed after %d retries: %w", maxRetries, lastErr)
 	}
-} 
+}

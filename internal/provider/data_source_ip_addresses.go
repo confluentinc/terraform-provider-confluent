@@ -17,30 +17,15 @@ package provider
 import (
 	"context"
 	"fmt"
-	net "github.com/confluentinc/ccloud-sdk-go-v2/networking-ip/v1"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"net/http"
 	"strconv"
 	"time"
-)
 
-const (
-	paramIpAddresses  = "ip_addresses"
-	paramIpPrefix     = "ip_prefix"
-	paramServices     = "services"
-	paramAddressTypes = "address_types"
-	paramClouds       = "clouds"
-	paramRegions      = "regions"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
-	paramAddressType = "address_type"
-)
-
-const (
-	// The maximum allowable page size - 1 (to avoid off-by-one errors) when listing service accounts using IP Addresses API
-	// https://docs.confluent.io/cloud/current/api.html#tag/IP-Addresses-(networkingv1)/operation/listNetworkingV1IpAddresses
-	listIPAddressesPageSize = 99
+	networkingv1 "github.com/confluentinc/ccloud-sdk-go-v2/networking-ip/v1"
 )
 
 func ipAddressesDataSource() *schema.Resource {
@@ -144,7 +129,7 @@ func ipAddressesDataSourceRead(ctx context.Context, d *schema.ResourceData, meta
 	addressTypes := convertToStringSlice(d.Get(fmt.Sprintf("%s.0.%s", paramFilter, paramAddressTypes)).([]interface{}))
 
 	c := meta.(*Client)
-	ipAddresses, err := loadIPAddresses(c.netIPApiContext(ctx), c, clouds, regions, services, addressTypes)
+	ipAddresses, err := loadIPAddresses(c.networkingIpV1ApiContext(ctx), c, clouds, regions, services, addressTypes)
 	if err != nil {
 		return diag.Errorf("error reading IP Addresses: %s", createDescriptiveError(err))
 	}
@@ -170,13 +155,13 @@ func ipAddressesDataSourceRead(ctx context.Context, d *schema.ResourceData, meta
 	return nil
 }
 
-func loadIPAddresses(ctx context.Context, c *Client, clouds, regions, services, addressTypes []string) ([]net.NetworkingV1IpAddress, error) {
-	ipAddresses := make([]net.NetworkingV1IpAddress, 0)
+func loadIPAddresses(ctx context.Context, c *Client, clouds, regions, services, addressTypes []string) ([]networkingv1.NetworkingV1IpAddress, error) {
+	ipAddresses := make([]networkingv1.NetworkingV1IpAddress, 0)
 
 	allIPAddressesAreCollected := false
 	pageToken := ""
 	for !allIPAddressesAreCollected {
-		ipAddressesPageList, resp, err := executeListIpAddresses(c.netIPApiContext(ctx), c, clouds, regions, services, addressTypes, pageToken)
+		ipAddressesPageList, resp, err := executeListIpAddresses(c.networkingIpV1ApiContext(ctx), c, clouds, regions, services, addressTypes, pageToken)
 		if err != nil {
 			return nil, fmt.Errorf("error reading IP Addresses: %s", createDescriptiveError(err, resp))
 		}
@@ -202,8 +187,8 @@ func loadIPAddresses(ctx context.Context, c *Client, clouds, regions, services, 
 	return ipAddresses, nil
 }
 
-func executeListIpAddresses(ctx context.Context, c *Client, clouds, regions, services, addressTypes []string, pageToken string) (net.NetworkingV1IpAddressList, *http.Response, error) {
-	request := c.netIpClient.IPAddressesNetworkingV1Api.ListNetworkingV1IpAddresses(c.netIPApiContext(ctx)).PageSize(listIPAddressesPageSize)
+func executeListIpAddresses(ctx context.Context, c *Client, clouds, regions, services, addressTypes []string, pageToken string) (networkingv1.NetworkingV1IpAddressList, *http.Response, error) {
+	request := c.networkingIpV1Client.IPAddressesNetworkingV1Api.ListNetworkingV1IpAddresses(c.networkingIpV1ApiContext(ctx)).PageSize(listIPAddressesPageSize)
 	if len(clouds) > 0 {
 		request = request.Cloud(clouds)
 	}

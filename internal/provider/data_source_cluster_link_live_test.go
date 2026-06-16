@@ -84,14 +84,14 @@ func TestAccClusterLinkDataSourceLive(t *testing.T) {
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_cluster_link.%s", clusterLinkResourceLabel), "link_name", linkName),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_cluster_link.%s", clusterLinkResourceLabel), "link_mode", "DESTINATION"),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_cluster_link.%s", clusterLinkResourceLabel), "connection_mode", "OUTBOUND"),
-					
+
 					// Check the data source attributes
 					resource.TestCheckResourceAttr(fmt.Sprintf("data.confluent_cluster_link.%s", clusterLinkDataSourceLabel), "link_name", linkName),
 					resource.TestCheckResourceAttr(fmt.Sprintf("data.confluent_cluster_link.%s", clusterLinkDataSourceLabel), "kafka_cluster.0.id", dedicatedClusterId),
 					resource.TestCheckResourceAttrSet(fmt.Sprintf("data.confluent_cluster_link.%s", clusterLinkDataSourceLabel), "cluster_link_id"),
 					resource.TestCheckResourceAttrSet(fmt.Sprintf("data.confluent_cluster_link.%s", clusterLinkDataSourceLabel), "link_state"),
 					resource.TestCheckResourceAttrSet(fmt.Sprintf("data.confluent_cluster_link.%s", clusterLinkDataSourceLabel), "id"),
-					
+
 					// Ensure data source and resource have matching attributes
 					resource.TestCheckResourceAttrPair(fmt.Sprintf("confluent_cluster_link.%s", clusterLinkResourceLabel), "cluster_link_id", fmt.Sprintf("data.confluent_cluster_link.%s", clusterLinkDataSourceLabel), "cluster_link_id"),
 					resource.TestCheckResourceAttrPair(fmt.Sprintf("confluent_cluster_link.%s", clusterLinkResourceLabel), "link_name", fmt.Sprintf("data.confluent_cluster_link.%s", clusterLinkDataSourceLabel), "link_name"),
@@ -113,7 +113,7 @@ func testAccCheckClusterLinkDataSourceLiveConfig(endpoint, clusterLinkResourceLa
 	data "confluent_kafka_cluster" "standard_cluster" {
 		id = "%s"
 		environment {
-			id = "env-zyg27z"
+			id = "%s"
 		}
 	}
 
@@ -150,5 +150,5 @@ func testAccCheckClusterLinkDataSourceLiveConfig(endpoint, clusterLinkResourceLa
 			secret = "%s"
 		}
 	}
-	`, endpoint, apiKey, apiSecret, standardClusterId, clusterLinkResourceLabel, linkName, standardClusterId, standardApiKey, standardApiSecret, dedicatedClusterId, dedicatedRestEndpoint, dedicatedApiKey, dedicatedApiSecret, clusterLinkDataSourceLabel, clusterLinkResourceLabel, dedicatedClusterId, dedicatedRestEndpoint, dedicatedApiKey, dedicatedApiSecret)
-} 
+	`, endpoint, apiKey, apiSecret, standardClusterId, liveTestEnvironmentId, clusterLinkResourceLabel, linkName, standardClusterId, standardApiKey, standardApiSecret, dedicatedClusterId, dedicatedRestEndpoint, dedicatedApiKey, dedicatedApiSecret, clusterLinkDataSourceLabel, clusterLinkResourceLabel, dedicatedClusterId, dedicatedRestEndpoint, dedicatedApiKey, dedicatedApiSecret)
+}

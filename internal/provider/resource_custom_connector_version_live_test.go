@@ -83,9 +83,9 @@ func TestAccCustomConnectorVersionLive(t *testing.T) {
 				),
 			},
 			{
-				ResourceName:      fmt.Sprintf("confluent_custom_connector_plugin_version.%s", versionResourceLabel),
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            fmt.Sprintf("confluent_custom_connector_plugin_version.%s", versionResourceLabel),
+				ImportState:             true,
+				ImportStateVerify:       true,
 				ImportStateVerifyIgnore: []string{"filename", "cloud"},
 				ImportStateIdFunc: func(state *terraform.State) (string, error) {
 					resources := state.RootModule().Resources
@@ -170,4 +170,3 @@ func testAccCheckCustomConnectorVersionLiveConfig(endpoint, pluginResourceLabel,
 	}
 	`, endpoint, apiKey, apiSecret, pluginResourceLabel, pluginDisplayName, environmentId, versionResourceLabel, pluginResourceLabel, environmentId)
 }
-

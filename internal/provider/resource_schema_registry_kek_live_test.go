@@ -59,8 +59,8 @@ func TestAccSchemaRegistryKekLive(t *testing.T) {
 	}
 
 	// KEK requires cloud provider KMS credentials
-	kmsType := os.Getenv("TEST_KMS_TYPE")       // e.g., "aws-kms", "azure-kms", "gcp-kms"
-	kmsKeyId := os.Getenv("TEST_KMS_KEY_ID")     // KMS key ARN or ID
+	kmsType := os.Getenv("TEST_KMS_TYPE")    // e.g., "aws-kms", "azure-kms", "gcp-kms"
+	kmsKeyId := os.Getenv("TEST_KMS_KEY_ID") // KMS key ARN or ID
 	if kmsType == "" || kmsKeyId == "" {
 		t.Skip("TEST_KMS_TYPE and TEST_KMS_KEY_ID environment variables must be set for KEK live tests")
 	}
@@ -165,4 +165,3 @@ func testAccCheckSchemaRegistryKekLiveExists(n string) resource.TestCheckFunc {
 		return nil
 	}
 }
-

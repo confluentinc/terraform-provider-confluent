@@ -20,7 +20,7 @@ resource "confluent_environment" "development" {
 }
 
 resource "confluent_gateway" "main" {
-  display_name = "my_gateway"
+  display_name = "my_egress_gateway"
   environment {
     id = confluent_environment.development.id
   }
@@ -40,11 +40,17 @@ The following arguments are supported:
   - `id` - (Required String) The ID of the Environment that the Gateway belongs to, for example, `env-abc123`.
 - `aws_egress_private_link_gateway` (Optional Configuration Block) supports the following:
   - `region` - (Required String) AWS region of the Gateway, for example, `us-east-1`.
+- `aws_ingress_private_link_gateway` (Optional Configuration Block) supports the following:
+  - `region` - (Required String) AWS region of the Ingress Private Link Gateway, for example, `us-east-1`.
 - `aws_private_network_interface_gateway` (Optional Configuration Block) supports the following:
   - `region` - (Required String) AWS region of the Private Network Interface Gateway.
   - `zones` - (Required List of Strings) AWS availability zone ids of the Private Network Interface Gateway.
 - `azure_egress_private_link_gateway` (Optional Configuration Block) supports the following:
   - `region` - (Required String) Azure region of the Gateway, for example, `eastus`.
+- `azure_ingress_private_link_gateway` (Optional Configuration Block) supports the following:
+  - `region` - (Required String) Azure region of the Ingress Private Link Gateway, for example, `centralus`.
+- `gcp_ingress_private_service_connect_gateway` (Optional Configuration Block) supports the following:
+  - `region` - (Required String) GCP region of the Ingress Private Service Connect Gateway, for example, `us-central1`.
 
 ## Attributes Reference
 
@@ -52,10 +58,17 @@ In addition to the preceding arguments, the following attributes are exported:
 
 - `aws_egress_private_link_gateway` (Optional Configuration Block) supports the following:
   - `principal_arn` - (Required String) The principal ARN used by the AWS Egress Private Link Gateway, for example, `arn:aws:iam::123456789012:tenant-1-role`.
+- `aws_ingress_private_link_gateway` (Optional Configuration Block) supports the following:
+  - `vpc_endpoint_service_name` - (Required String) The ID of the AWS VPC Endpoint Service that can be used to establish connections for all zones, for example, `com.amazonaws.vpce.us-west-2.vpce-svc-00000000000000000`.
 - `aws_private_network_interface_gateway` (Optional Configuration Block) supports the following:
   - `account` - (Required String) The AWS account ID associated with the Private Network Interface Gateway.
 - `azure_egress_private_link_gateway` (Optional Configuration Block) supports the following:
   - `subscription` - (Required String) The Azure Subscription ID associated with the Confluent Cloud VPC, for example, `00000000-0000-0000-0000-000000000000`.
+- `azure_ingress_private_link_gateway` (Optional Configuration Block) supports the following:
+  - `private_link_service_alias` - (Required String) Alias of the Confluent Cloud Private Link Service.
+  - `private_link_service_resource_id` - (Required String) Resource ID of the Confluent Cloud Private Link Service.
+- `gcp_ingress_private_service_connect_gateway` (Optional Configuration Block) supports the following:
+  - `private_service_connect_service_attachment` - (Required String) URI of the Private Service Connect Service Attachment in Confluent Cloud.
 
 ## Import
 

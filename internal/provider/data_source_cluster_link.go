@@ -25,7 +25,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
-	v3 "github.com/confluentinc/ccloud-sdk-go-v2/kafkarest/v3"
+	kafkarestv3 "github.com/confluentinc/ccloud-sdk-go-v2/kafkarest/v3"
 )
 
 func clusterLinkDataSource() *schema.Resource {
@@ -125,7 +125,7 @@ func readDataSourceClusterLinkAndSetAttributes(ctx context.Context, d *schema.Re
 	return nil
 }
 
-func setDataSourceClusterLinkAttributes(ctx context.Context, d *schema.ResourceData, c *KafkaRestClient, clusterLink v3.ListLinksResponseData) error {
+func setDataSourceClusterLinkAttributes(ctx context.Context, d *schema.ResourceData, c *KafkaRestClient, clusterLink kafkarestv3.ListLinksResponseData) error {
 	if err := d.Set(paramClusterLinkId, clusterLink.GetClusterLinkId()); err != nil {
 		return err
 	}

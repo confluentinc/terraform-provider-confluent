@@ -32,7 +32,8 @@
       "client_id": "client-id-2",
       "client_secret": "client-secret-2",
       "warehouse": "warehouse-name-2",
-      "allowed_scope": "allowed-scope-2"
+      "allowed_scope": "allowed-scope-2",
+      "custom_namespace": "my-custom-namespace"
     }
   },
   "status": {

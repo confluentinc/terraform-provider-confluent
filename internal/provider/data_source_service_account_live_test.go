@@ -64,7 +64,7 @@ func TestAccServiceAccountDataSourceLive(t *testing.T) {
 					resource.TestCheckResourceAttrSet(fmt.Sprintf("confluent_service_account.%s", serviceAccountResourceLabel), "id"),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_service_account.%s", serviceAccountResourceLabel), "display_name", serviceAccountDisplayName),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_service_account.%s", serviceAccountResourceLabel), "description", "A test service account for live testing data source"),
-					
+
 					// Check the data source can find it
 					resource.TestCheckResourceAttrPair(
 						fmt.Sprintf("data.confluent_service_account.%s", serviceAccountDataSourceLabel), "id",
@@ -101,4 +101,4 @@ func testAccCheckServiceAccountDataSourceLiveConfig(endpoint, serviceAccountReso
 		id = confluent_service_account.%s.id
 	}
 	`, endpoint, apiKey, apiSecret, serviceAccountResourceLabel, serviceAccountDisplayName, serviceAccountDataSourceLabel, serviceAccountResourceLabel)
-} 
+}

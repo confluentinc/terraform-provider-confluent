@@ -17,26 +17,13 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-)
-
-const (
-	scenarioStateSchemaRegistryClusterModeHasBeenCreated = "A new subject mode has been just created"
-	scenarioStateSchemaRegistryClusterModeHasBeenUpdated = "The subject mode has been updated"
-	scenarioStateSchemaRegistryClusterModeHasBeenDeleted = "The subject mode has been deleted"
-	schemaRegistryClusterModeScenarioName                = "confluent_schema_registry_cluster_mode Resource Lifecycle"
-
-	testSchemaRegistryClusterModeResourceLabel = "test_subject_mode_resource_label"
-	testSchemaRegistryClusterMode              = "READWRITE"
-	testUpdatedSchemaRegistryClusterMode       = "READONLY"
-
-	testNumberOfSchemaRegistryClusterModeResourceAttributes = "6"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/walkerus/go-wiremock"
 )
 
 var fullSchemaRegistryClusterModeResourceLabel = fmt.Sprintf("confluent_schema_registry_cluster_mode.%s", testSchemaRegistryClusterModeResourceLabel)

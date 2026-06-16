@@ -17,19 +17,14 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
 	"strconv"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-)
-
-const (
-	environmentsDataSourceScenarioName = "confluent_environments Data Source Lifecycle"
-	envResourceLabel                   = "test_env_resource_label"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/walkerus/go-wiremock"
 )
 
 var environmentIds = []string{"env-1jnw8z", "env-7n1r31", "env-prp21o"}

@@ -23,41 +23,9 @@ import (
 	"os"
 	"testing"
 
-	"github.com/walkerus/go-wiremock"
-
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-)
-
-const (
-	scenarioStateKafkaApiKeyHasBeenCreated                = "The new kafka api key has been just created"
-	scenarioStateKafkaApiKeyHasBeenSyncedFirstRead        = "The new kafka api key has been just synced (read #1)"
-	scenarioStateKafkaApiKeyHasBeenSyncedConfirmationRead = "The new kafka api key has been just synced (final read)"
-	scenarioStateKafkaApiKeyHasBeenUpdated                = "The new kafka api key's description and display_name have been just updated"
-	scenarioStateKafkaApiKeyHasBeenDeleted                = "The new kafka api key has been deleted"
-	kafkaApiKeyScenarioName                               = "confluent_api_key (Kafka API Key) Resource Lifecycle"
-
-	scenarioStateFlinkApiKeyHasBeenCreated                = "The new flink api key has been just created"
-	scenarioStateFlinkApiKeyHasBeenSyncedFirstRead        = "The new flink api key has been just synced (read #1)"
-	scenarioStateFlinkApiKeyHasBeenSyncedConfirmationRead = "The new flink api key has been just synced (final read)"
-	scenarioStateFlinkApiKeyHasBeenUpdated                = "The new flink api key's description and display_name have been just updated"
-	scenarioStateFlinkApiKeyHasBeenDeleted                = "The new flink api key has been deleted"
-	flinkApiKeyScenarioName                               = "confluent_api_key (Flink API Key) Resource Lifecycle"
-
-	scenarioStateCloudApiKeyHasBeenCreated = "The new cloud api key has been just created"
-	scenarioStateCloudApiKeyHasBeenSynced  = "The new cloud api key has been just synced"
-	scenarioStateCloudApiKeyHasBeenUpdated = "The new cloud api key's description and display_name have been just updated"
-	scenarioStateCloudApiKeyHasBeenDeleted = "The new cloud api key has been deleted"
-	cloudApiKeyScenarioName                = "confluent_api_key (Cloud API Key) Resource Lifecycle"
-
-	scenarioStateTableflowApiKeyHasBeenCreated = "The new tableflow api key has been just created"
-	scenarioStateTableflowApiKeyHasBeenSynced  = "The new tableflow api key has been just synced"
-	scenarioStateTableflowApiKeyHasBeenUpdated = "The new tableflow api key's description and display_name have been just updated"
-	scenarioStateTableflowApiKeyHasBeenDeleted = "The new tableflow api key has been deleted"
-	tableflowApiKeyScenarioName                = "confluent_api_key (Tableflow API Key) Resource Lifecycle"
-
-	testShouldDisableBefore = "false"
-	testShouldDisableAfter  = "true"
+	"github.com/walkerus/go-wiremock"
 )
 
 func TestAccKafkaApiKey(t *testing.T) {
@@ -651,6 +619,187 @@ func TestAccTableflowApiKey(t *testing.T) {
 	checkStubCount(t, wiremockClient, patchTableflowApiKeyStub, "PATCH /iam/v2/api-keys/HRVR6K4VMXYD2LDZ", expectedCountOne)
 }
 
+func TestAccGlobalApiKey(t *testing.T) {
+	ctx := context.Background()
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
+
+	mockServerUrl := wiremockContainer.URI
+	wiremockClient := wiremock.NewClient(mockServerUrl)
+	// nolint:errcheck
+	defer wiremockClient.Reset()
+
+	// nolint:errcheck
+	defer wiremockClient.ResetAllScenarios()
+	createGlobalApiKeyResponse, _ := ioutil.ReadFile("../testdata/apikey/create_global_api_key.json")
+	createGlobalApiKeyStub := wiremock.Post(wiremock.URLPathEqualTo("/iam/v2/api-keys")).
+		InScenario(globalApiKeyScenarioName).
+		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
+		WillReturn(
+			string(createGlobalApiKeyResponse),
+			contentTypeJSONHeader,
+			http.StatusCreated,
+		)
+	_ = wiremockClient.StubFor(createGlobalApiKeyStub)
+
+	envApi401Response, _ := ioutil.ReadFile("../testdata/apikey/read_list_envs_401.json")
+	listEnvsGlobalApi401Stub := wiremock.Get(wiremock.URLPathEqualTo("/org/v2/environments")).
+		InScenario(globalApiKeyScenarioName).
+		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
+		WillSetStateTo(scenarioStateGlobalApiKeyHasBeenSynced).
+		WillReturn(
+			string(envApi401Response),
+			contentTypeJSONHeader,
+			http.StatusUnauthorized,
+		)
+	_ = wiremockClient.StubFor(listEnvsGlobalApi401Stub)
+
+	envApi200Response, _ := ioutil.ReadFile("../testdata/apikey/read_list_envs_200.json")
+	listEnvsGlobalApi200Stub := wiremock.Get(wiremock.URLPathEqualTo("/org/v2/environments")).
+		InScenario(globalApiKeyScenarioName).
+		WhenScenarioStateIs(scenarioStateGlobalApiKeyHasBeenSynced).
+		WillSetStateTo(scenarioStateGlobalApiKeyHasBeenCreated).
+		WillReturn(
+			string(envApi200Response),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		)
+	_ = wiremockClient.StubFor(listEnvsGlobalApi200Stub)
+
+	readCreatedGlobalApiKeyResponse, _ := ioutil.ReadFile("../testdata/apikey/read_created_global_api_key.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/api-keys/GLOBAL6K4VMXYD2LDZ")).
+		InScenario(globalApiKeyScenarioName).
+		WhenScenarioStateIs(scenarioStateGlobalApiKeyHasBeenCreated).
+		WillReturn(
+			string(readCreatedGlobalApiKeyResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	readUpdatedGlobalApiKeyResponse, _ := ioutil.ReadFile("../testdata/apikey/read_updated_global_api_key.json")
+	patchGlobalApiKeyStub := wiremock.Patch(wiremock.URLPathEqualTo("/iam/v2/api-keys/GLOBAL6K4VMXYD2LDZ")).
+		InScenario(globalApiKeyScenarioName).
+		WhenScenarioStateIs(scenarioStateGlobalApiKeyHasBeenCreated).
+		WillSetStateTo(scenarioStateGlobalApiKeyHasBeenUpdated).
+		WillReturn(
+			string(readUpdatedGlobalApiKeyResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		)
+	_ = wiremockClient.StubFor(patchGlobalApiKeyStub)
+
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/api-keys/GLOBAL6K4VMXYD2LDZ")).
+		InScenario(globalApiKeyScenarioName).
+		WhenScenarioStateIs(scenarioStateGlobalApiKeyHasBeenUpdated).
+		WillReturn(
+			string(readUpdatedGlobalApiKeyResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	deleteGlobalApiKeyStub := wiremock.Delete(wiremock.URLPathEqualTo("/iam/v2/api-keys/GLOBAL6K4VMXYD2LDZ")).
+		InScenario(globalApiKeyScenarioName).
+		WhenScenarioStateIs(scenarioStateGlobalApiKeyHasBeenUpdated).
+		WillSetStateTo(scenarioStateGlobalApiKeyHasBeenDeleted).
+		WillReturn(
+			"",
+			contentTypeJSONHeader,
+			http.StatusNoContent,
+		)
+	_ = wiremockClient.StubFor(deleteGlobalApiKeyStub)
+
+	readDeletedGlobalApiKeyResponse, _ := ioutil.ReadFile("../testdata/apikey/read_deleted_global_api_key.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo("/iam/v2/api-keys/GLOBAL6K4VMXYD2LDZ")).
+		InScenario(globalApiKeyScenarioName).
+		WhenScenarioStateIs(scenarioStateGlobalApiKeyHasBeenDeleted).
+		WillReturn(
+			string(readDeletedGlobalApiKeyResponse),
+			contentTypeJSONHeader,
+			http.StatusForbidden,
+		))
+
+	globalApiKeyDisplayName := "CI Global API Key"
+	globalApiKeyDescription := "temp description"
+	// in order to test tf update (step #3)
+	globalApiKeyUpdatedDisplayName := "Updated Global API Key"
+	globalApiKeyUpdatedDescription := "updated description"
+	globalApiKeyResourceLabel := "test_global_api_key_resource_label"
+	fullGlobalApiKeyResourceLabel := fmt.Sprintf("confluent_api_key.%s", globalApiKeyResourceLabel)
+	ownerId := "sa-12mgdv"
+	ownerApiVersion := "iam/v2"
+	ownerKind := "ServiceAccount"
+	resourceId := "global"
+	resourceKind := "Global"
+	resourceApiVersion := "global/v1"
+
+	// Set fake values for secrets since those are required for importing
+	os.Setenv("API_KEY_SECRET", "g07o8EyjQvink5NmErBffigyynQXrTsYGKBzIgr3M10Mg+JOgnObYjlqCC1Q1id1")
+	defer func() {
+		os.Unsetenv("API_KEY_SECRET")
+	}()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckApiKeyDestroy,
+		// https://www.terraform.io/docs/extend/testing/acceptance-tests/teststep.html
+		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckGlobalApiKeyConfig(mockServerUrl, globalApiKeyResourceLabel, globalApiKeyDisplayName, globalApiKeyDescription, testShouldDisableBefore, ownerId, ownerApiVersion, ownerKind, resourceApiVersion, resourceId, resourceKind),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckApiKeyExists(fullGlobalApiKeyResourceLabel),
+					resource.TestCheckResourceAttr(fullGlobalApiKeyResourceLabel, "id", "GLOBAL6K4VMXYD2LDZ"),
+					resource.TestCheckResourceAttr(fullGlobalApiKeyResourceLabel, "display_name", globalApiKeyDisplayName),
+					resource.TestCheckResourceAttr(fullGlobalApiKeyResourceLabel, "description", globalApiKeyDescription),
+					resource.TestCheckResourceAttr(fullGlobalApiKeyResourceLabel, "disable_wait_for_ready", "false"),
+					resource.TestCheckResourceAttr(fullGlobalApiKeyResourceLabel, "owner.#", "1"),
+					resource.TestCheckResourceAttr(fullGlobalApiKeyResourceLabel, "owner.0.%", "3"),
+					resource.TestCheckResourceAttr(fullGlobalApiKeyResourceLabel, "owner.0.api_version", "iam/v2"),
+					resource.TestCheckResourceAttr(fullGlobalApiKeyResourceLabel, "owner.0.id", "sa-12mgdv"),
+					resource.TestCheckResourceAttr(fullGlobalApiKeyResourceLabel, "owner.0.kind", "ServiceAccount"),
+					resource.TestCheckResourceAttr(fullGlobalApiKeyResourceLabel, "managed_resource.0.api_version", "global/v1"),
+					resource.TestCheckResourceAttr(fullGlobalApiKeyResourceLabel, "managed_resource.0.kind", "Global"),
+					resource.TestCheckResourceAttr(fullGlobalApiKeyResourceLabel, "managed_resource.0.id", "global"),
+					resource.TestCheckResourceAttr(fullGlobalApiKeyResourceLabel, "secret", "g07o8EyjQvink5NmErBffigyynQXrTsYGKBzIgr3M10Mg+JOgnObYjlqCC1Q1id1"),
+				),
+			},
+			{
+				// https://www.terraform.io/docs/extend/resources/import.html
+				ResourceName:      fullGlobalApiKeyResourceLabel,
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+			{
+				Config: testAccCheckGlobalApiKeyConfig(mockServerUrl, globalApiKeyResourceLabel, globalApiKeyUpdatedDisplayName, globalApiKeyUpdatedDescription, testShouldDisableAfter, ownerId, ownerApiVersion, ownerKind, resourceApiVersion, resourceId, resourceKind),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckApiKeyExists(fullGlobalApiKeyResourceLabel),
+					resource.TestCheckResourceAttr(fullGlobalApiKeyResourceLabel, "id", "GLOBAL6K4VMXYD2LDZ"),
+					resource.TestCheckResourceAttr(fullGlobalApiKeyResourceLabel, "display_name", globalApiKeyUpdatedDisplayName),
+					resource.TestCheckResourceAttr(fullGlobalApiKeyResourceLabel, "description", globalApiKeyUpdatedDescription),
+					resource.TestCheckResourceAttr(fullGlobalApiKeyResourceLabel, "disable_wait_for_ready", "true"),
+					resource.TestCheckResourceAttr(fullGlobalApiKeyResourceLabel, "owner.#", "1"),
+					resource.TestCheckResourceAttr(fullGlobalApiKeyResourceLabel, "owner.0.%", "3"),
+					resource.TestCheckResourceAttr(fullGlobalApiKeyResourceLabel, "owner.0.api_version", "iam/v2"),
+					resource.TestCheckResourceAttr(fullGlobalApiKeyResourceLabel, "owner.0.id", "sa-12mgdv"),
+					resource.TestCheckResourceAttr(fullGlobalApiKeyResourceLabel, "owner.0.kind", "ServiceAccount"),
+					resource.TestCheckResourceAttr(fullGlobalApiKeyResourceLabel, "managed_resource.0.api_version", "global/v1"),
+					resource.TestCheckResourceAttr(fullGlobalApiKeyResourceLabel, "managed_resource.0.kind", "Global"),
+					resource.TestCheckResourceAttr(fullGlobalApiKeyResourceLabel, "managed_resource.0.id", "global"),
+					resource.TestCheckResourceAttr(fullGlobalApiKeyResourceLabel, "secret", "g07o8EyjQvink5NmErBffigyynQXrTsYGKBzIgr3M10Mg+JOgnObYjlqCC1Q1id1"),
+				),
+			},
+		},
+	})
+
+	checkStubCount(t, wiremockClient, createGlobalApiKeyStub, "POST /iam/v2/api-keys", expectedCountOne)
+	checkStubCount(t, wiremockClient, patchGlobalApiKeyStub, "PATCH /iam/v2/api-keys/GLOBAL6K4VMXYD2LDZ", expectedCountOne)
+}
+
 func TestAccCloudApiKey(t *testing.T) {
 	ctx := context.Background()
 
@@ -831,7 +980,7 @@ func testAccCheckApiKeyDestroy(s *terraform.State) error {
 			continue
 		}
 		deletedApiKeyId := rs.Primary.ID
-		req := c.apiKeysClient.APIKeysIamV2Api.GetIamV2ApiKey(c.apiKeysApiContext(context.Background()), deletedApiKeyId)
+		req := c.apiKeysV2Client.APIKeysIamV2Api.GetIamV2ApiKey(c.apiKeysV2ApiContext(context.Background()), deletedApiKeyId)
 		deletedApiKey, response, err := req.Execute()
 		if response != nil && (response.StatusCode == http.StatusForbidden) {
 			return nil
@@ -939,6 +1088,29 @@ func testAccCheckTableflowApiKeyConfig(mockServerUrl, tableflowApiKeyResourceLab
 		}
 	}
 	`, mockServerUrl, tableflowApiKeyResourceLabel, tableflowApiKeyDisplayName, tableflowApiKeyDescription, shouldDisable, ownerId, ownerApiVersion, ownerKind, resourceApiVersion, resourceId, resourceKind)
+}
+
+func testAccCheckGlobalApiKeyConfig(mockServerUrl, globalApiKeyResourceLabel, globalApiKeyDisplayName, globalApiKeyDescription, shouldDisable, ownerId, ownerApiVersion, ownerKind, resourceApiVersion, resourceId, resourceKind string) string {
+	return fmt.Sprintf(`
+	provider "confluent" {
+		endpoint = "%s"
+	}
+	resource "confluent_api_key" "%s" {
+		display_name = "%s"
+		description = "%s"
+		disable_wait_for_ready = %s
+		owner {
+			id = "%s"
+			api_version = "%s"
+			kind = "%s"
+		}
+		managed_resource {
+			api_version = "%s"
+			id = "%s"
+			kind = "%s"
+		}
+	}
+	`, mockServerUrl, globalApiKeyResourceLabel, globalApiKeyDisplayName, globalApiKeyDescription, shouldDisable, ownerId, ownerApiVersion, ownerKind, resourceApiVersion, resourceId, resourceKind)
 }
 
 func testAccCheckApiKeyExists(n string) resource.TestCheckFunc {

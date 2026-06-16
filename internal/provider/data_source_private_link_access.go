@@ -18,17 +18,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	net "github.com/confluentinc/ccloud-sdk-go-v2/networking/v1"
+	"net/http"
+
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"net/http"
-)
 
-const (
-	// The maximum allowable page size - 1 (to avoid off-by-one errors) when listing private link accesses using Networking API
-	// https://docs.confluent.io/cloud/current/api.html#operation/listNetworkingV1PrivateLinkAccesses
-	listPrivateLinkAccessesPageSize = 99
+	networkingv1 "github.com/confluentinc/ccloud-sdk-go-v2/networking/v1"
 )
 
 func privateLinkAccessDataSource() *schema.Resource {
@@ -105,7 +101,7 @@ func privateLinkAccessDataSourceReadUsingId(ctx context.Context, d *schema.Resou
 	tflog.Debug(ctx, fmt.Sprintf("Reading Private Link Access %q=%q", paramId, privateLinkAccessId), map[string]interface{}{privateLinkAccessLoggingKey: privateLinkAccessId})
 
 	c := meta.(*Client)
-	privateLinkAccess, resp, err := executePrivateLinkAccessRead(c.netApiContext(ctx), c, environmentId, privateLinkAccessId)
+	privateLinkAccess, resp, err := executePrivateLinkAccessRead(c.networkingV1ApiContext(ctx), c, environmentId, privateLinkAccessId)
 	if err != nil {
 		return diag.Errorf("error reading Private Link Access %q: %s", privateLinkAccessId, createDescriptiveError(err, resp))
 	}
@@ -121,7 +117,7 @@ func privateLinkAccessDataSourceReadUsingId(ctx context.Context, d *schema.Resou
 	return nil
 }
 
-func orgHasMultiplePrivateLinkAccessesWithTargetDisplayName(privateLinkAccesses []net.NetworkingV1PrivateLinkAccess, displayName string) bool {
+func orgHasMultiplePrivateLinkAccessesWithTargetDisplayName(privateLinkAccesses []networkingv1.NetworkingV1PrivateLinkAccess, displayName string) bool {
 	var numberOfPrivateLinkAccessesWithTargetDisplayName = 0
 	for _, privateLinkAccess := range privateLinkAccesses {
 		if privateLinkAccess.Spec.GetDisplayName() == displayName {
@@ -131,8 +127,8 @@ func orgHasMultiplePrivateLinkAccessesWithTargetDisplayName(privateLinkAccesses 
 	return numberOfPrivateLinkAccessesWithTargetDisplayName > 1
 }
 
-func loadPrivateLinkAccesses(ctx context.Context, c *Client, environmentId string) ([]net.NetworkingV1PrivateLinkAccess, error) {
-	privateLinkAccesses := make([]net.NetworkingV1PrivateLinkAccess, 0)
+func loadPrivateLinkAccesses(ctx context.Context, c *Client, environmentId string) ([]networkingv1.NetworkingV1PrivateLinkAccess, error) {
+	privateLinkAccesses := make([]networkingv1.NetworkingV1PrivateLinkAccess, 0)
 
 	allPrivateLinkAccessesAreCollected := false
 	pageToken := ""
@@ -163,11 +159,11 @@ func loadPrivateLinkAccesses(ctx context.Context, c *Client, environmentId strin
 	return privateLinkAccesses, nil
 }
 
-func executeListPrivateLinkAccesses(ctx context.Context, c *Client, environmentId, pageToken string) (net.NetworkingV1PrivateLinkAccessList, *http.Response, error) {
+func executeListPrivateLinkAccesses(ctx context.Context, c *Client, environmentId, pageToken string) (networkingv1.NetworkingV1PrivateLinkAccessList, *http.Response, error) {
 	if pageToken != "" {
-		return c.netClient.PrivateLinkAccessesNetworkingV1Api.ListNetworkingV1PrivateLinkAccesses(c.netApiContext(ctx)).Environment(environmentId).PageSize(listPrivateLinkAccessesPageSize).PageToken(pageToken).Execute()
+		return c.networkingV1Client.PrivateLinkAccessesNetworkingV1Api.ListNetworkingV1PrivateLinkAccesses(c.networkingV1ApiContext(ctx)).Environment(environmentId).PageSize(listPrivateLinkAccessesPageSize).PageToken(pageToken).Execute()
 	} else {
-		return c.netClient.PrivateLinkAccessesNetworkingV1Api.ListNetworkingV1PrivateLinkAccesses(c.netApiContext(ctx)).Environment(environmentId).PageSize(listPrivateLinkAccessesPageSize).Execute()
+		return c.networkingV1Client.PrivateLinkAccessesNetworkingV1Api.ListNetworkingV1PrivateLinkAccesses(c.networkingV1ApiContext(ctx)).Environment(environmentId).PageSize(listPrivateLinkAccessesPageSize).Execute()
 	}
 }
 

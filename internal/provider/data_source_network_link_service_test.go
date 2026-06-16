@@ -17,21 +17,12 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
 	"testing"
-)
 
-const (
-	networkLinkServiceDataSourceScenarioName = "confluent_network_link_service Data Source Lifecycle"
-
-	networkLinkServiceReadUrlPath = "/networking/v1/network-link-services/nls-p2k0l1"
-	networkLinkServiceListUrlPath = "/networking/v1/network-link-services"
-	networkLinkServiceId          = "nls-p2k0l1"
-	networkLinkServiceLabel       = "data.confluent_network_link_service.nls"
-	networkLinkServiceDisplayName = "network-link-service-2"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/walkerus/go-wiremock"
 )
 
 func TestAccDataSourceNetworkLinkService(t *testing.T) {
@@ -70,7 +61,7 @@ func TestAccDataSourceNetworkLinkService(t *testing.T) {
 			contentTypeJSONHeader,
 			http.StatusOK,
 		))
-	
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,

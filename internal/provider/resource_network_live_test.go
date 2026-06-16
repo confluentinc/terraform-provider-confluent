@@ -233,7 +233,7 @@ func testAccCheckNetworkLiveDestroy(s *terraform.State) error {
 		deletedNetworkId := rs.Primary.ID
 		// Get the actual environment ID from the state, not a hardcoded constant
 		environmentId := rs.Primary.Attributes["environment.0.id"]
-		req := c.netClient.NetworksNetworkingV1Api.GetNetworkingV1Network(c.netApiContext(context.Background()), deletedNetworkId).Environment(environmentId)
+		req := c.networkingV1Client.NetworksNetworkingV1Api.GetNetworkingV1Network(c.networkingV1ApiContext(context.Background()), deletedNetworkId).Environment(environmentId)
 		deletedNetwork, response, err := req.Execute()
 		if response != nil && isNonKafkaRestApiResourceNotFound(response) {
 			// networking/v1/networks/{nonExistentNetworkId/deletedNetworkID} returns http.StatusForbidden instead of http.StatusNotFound

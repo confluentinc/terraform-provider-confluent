@@ -17,24 +17,14 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-)
-
-const (
-	scenarioStateKafkaMirrorTopicHasBeenCreated = "A new Kafka Mirror Topic has been just created"
-	scenarioStateKafkaMirrorTopicHasBeenPaused  = "The Kafka Mirror Topic has been paused"
-	scenarioStateKafkaMirrorTopicHasBeenDeleted = "The Kafka Mirror Topic has been deleted"
-	kafkaMirrorTopicScenarioName                = "confluent_cluster_link Resource Lifecycle"
-	kafkaMirrorTopicResourceLabel               = "test_kafka_mirror_topic_resource_label"
-	kafkaMirrorTopicName                        = "orders"
-	numberOfKafkaMirrorTopicResourceAttributes  = "6"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/walkerus/go-wiremock"
 )
 
 var fullKafkaMirrorTopicResourceLabel = fmt.Sprintf("confluent_kafka_mirror_topic.%s", kafkaMirrorTopicResourceLabel)

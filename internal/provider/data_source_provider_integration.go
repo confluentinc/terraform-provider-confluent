@@ -23,7 +23,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
-	pi "github.com/confluentinc/ccloud-sdk-go-v2/provider-integration/v1"
+	providerintegrationv1 "github.com/confluentinc/ccloud-sdk-go-v2/provider-integration/v1"
 )
 
 func providerIntegrationDataSource() *schema.Resource {
@@ -104,7 +104,7 @@ func providerIntegrationDataSourceRead(ctx context.Context, d *schema.ResourceDa
 func providerIntegrationDataSourceReadUsingId(ctx context.Context, d *schema.ResourceData, meta interface{}, environmentId, pimId string) diag.Diagnostics {
 	tflog.Debug(ctx, fmt.Sprintf("Reading provider integration data source using Id %q", pimId), map[string]interface{}{providerIntegrationLoggingKey: d.Id()})
 	c := meta.(*Client)
-	pim, resp, err := executeProviderIntegrationRead(c.piApiContext(ctx), c, environmentId, pimId)
+	pim, resp, err := executeProviderIntegrationRead(c.providerIntegrationV1ApiContext(ctx), c, environmentId, pimId)
 
 	if err != nil {
 		return diag.Errorf("error reading provider integration data source using Id %q: %s", pimId, createDescriptiveError(err, resp))
@@ -153,8 +153,8 @@ func providerIntegrationDataSourceReadUsingDisplayName(ctx context.Context, d *s
 	return nil
 }
 
-func loadProviderIntegrations(ctx context.Context, c *Client, environmentId string) ([]pi.PimV1Integration, error) {
-	providerIntegrations := make([]pi.PimV1Integration, 0)
+func loadProviderIntegrations(ctx context.Context, c *Client, environmentId string) ([]providerintegrationv1.PimV1Integration, error) {
+	providerIntegrations := make([]providerintegrationv1.PimV1Integration, 0)
 	done := false
 	pageToken := ""
 
@@ -186,7 +186,7 @@ func loadProviderIntegrations(ctx context.Context, c *Client, environmentId stri
 	return providerIntegrations, nil
 }
 
-func orgHasMultipleProviderIntegrationsWithTargetDisplayName(providerIntegrations []pi.PimV1Integration, displayName string) bool {
+func orgHasMultipleProviderIntegrationsWithTargetDisplayName(providerIntegrations []providerintegrationv1.PimV1Integration, displayName string) bool {
 	var counter = 0
 	for _, providerIntegration := range providerIntegrations {
 		if providerIntegration.GetDisplayName() == displayName {

@@ -17,16 +17,12 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-)
-
-const (
-	roleBindingDataSourceScenarioName = "confluent_role_binding Data Source Lifecycle"
+	"github.com/walkerus/go-wiremock"
 )
 
 func TestAccDataSourceRoleBinding(t *testing.T) {

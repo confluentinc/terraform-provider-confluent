@@ -83,6 +83,23 @@
           "onFailure": "ERROR,ERROR",
           "disabled": false
         }
+      ],
+      "encodingRules": [
+        {
+          "name": "encryptCSPE",
+          "kind": "TRANSFORM",
+          "mode": "WRITEREAD",
+          "type": "ENCRYPT",
+          "tags": [
+            "CSPE"
+          ],
+          "params": {
+            "encrypt.kek.name": "cspe-kek"
+          },
+          "onSuccess": "NONE,NONE",
+          "onFailure": "ERROR,ERROR",
+          "disabled": false
+        }
       ]
     }
   }

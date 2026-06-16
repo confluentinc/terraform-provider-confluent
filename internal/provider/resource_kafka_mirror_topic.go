@@ -22,23 +22,12 @@ import (
 	"regexp"
 	"strings"
 
-	v3 "github.com/confluentinc/ccloud-sdk-go-v2/kafkarest/v3"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-)
 
-const (
-	paramClusterLink                 = "cluster_link"
-	paramMirrorTopicName             = "mirror_topic_name"
-	paramSourceKafkaTopic            = "source_kafka_topic"
-	stateActive                      = "ACTIVE"
-	stateStopped                     = "STOPPED"
-	statePendingStopped              = "PENDING_STOPPED"
-	stateFailedOver                  = "FAILED_OVER"
-	statePromoted                    = "PROMOTED"
-	paramKafkaMirrorTopicCredentials = "kafka_cluster.0.credentials"
+	kafkarestv3 "github.com/confluentinc/ccloud-sdk-go-v2/kafkarest/v3"
 )
 
 var acceptedKafkaMirrorTopicStates = []string{stateActive, statePaused, stateFailedOver, statePromoted}
@@ -181,7 +170,7 @@ func readKafkaMirrorTopicAndSetAttributes(ctx context.Context, d *schema.Resourc
 	return []*schema.ResourceData{d}, nil
 }
 
-func setKafkaMirrorTopicAttributes(d *schema.ResourceData, c *KafkaRestClient, kafkaMirrorTopic v3.ListMirrorTopicsResponseData) (*schema.ResourceData, error) {
+func setKafkaMirrorTopicAttributes(d *schema.ResourceData, c *KafkaRestClient, kafkaMirrorTopic kafkarestv3.ListMirrorTopicsResponseData) (*schema.ResourceData, error) {
 	if err := d.Set(paramKafkaCluster, []interface{}{map[string]interface{}{
 		paramId:           c.clusterId,
 		paramRestEndpoint: c.restEndpoint,
@@ -293,7 +282,7 @@ func kafkaMirrorTopicUpdate(ctx context.Context, d *schema.ResourceData, meta in
 		if shouldPauseKafkaMirrorTopic {
 			tflog.Debug(ctx, fmt.Sprintf("Pausing Kafka Mirror Topic %q", d.Id()), map[string]interface{}{kafkaMirrorTopicLoggingKey: d.Id()})
 
-			requestData := v3.AlterMirrorsRequestData{
+			requestData := kafkarestv3.AlterMirrorsRequestData{
 				MirrorTopicNames: &[]string{mirrorTopicName},
 			}
 			_, resp, err := kafkaRestClient.apiClient.ClusterLinkingV3Api.UpdateKafkaMirrorTopicsPause(kafkaRestClient.apiContext(ctx), kafkaRestClient.clusterId, linkName).AlterMirrorsRequestData(requestData).Execute()
@@ -306,7 +295,7 @@ func kafkaMirrorTopicUpdate(ctx context.Context, d *schema.ResourceData, meta in
 		} else if shouldResumeKafkaMirrorTopic {
 			tflog.Debug(ctx, fmt.Sprintf("Resuming Kafka Mirror Topic %q", d.Id()), map[string]interface{}{kafkaMirrorTopicLoggingKey: d.Id()})
 
-			requestData := v3.AlterMirrorsRequestData{
+			requestData := kafkarestv3.AlterMirrorsRequestData{
 				MirrorTopicNames: &[]string{mirrorTopicName},
 			}
 			_, resp, err := kafkaRestClient.apiClient.ClusterLinkingV3Api.UpdateKafkaMirrorTopicsResume(kafkaRestClient.apiContext(ctx), kafkaRestClient.clusterId, linkName).AlterMirrorsRequestData(requestData).Execute()
@@ -319,7 +308,7 @@ func kafkaMirrorTopicUpdate(ctx context.Context, d *schema.ResourceData, meta in
 		} else if shouldFailoverKafkaMirrorTopic {
 			tflog.Debug(ctx, fmt.Sprintf("Running a failover of Kafka Mirror Topic %q", d.Id()), map[string]interface{}{kafkaMirrorTopicLoggingKey: d.Id()})
 
-			requestData := v3.AlterMirrorsRequestData{
+			requestData := kafkarestv3.AlterMirrorsRequestData{
 				MirrorTopicNames: &[]string{mirrorTopicName},
 			}
 			_, resp, err := kafkaRestClient.apiClient.ClusterLinkingV3Api.UpdateKafkaMirrorTopicsFailover(kafkaRestClient.apiContext(ctx), kafkaRestClient.clusterId, linkName).AlterMirrorsRequestData(requestData).Execute()
@@ -332,7 +321,7 @@ func kafkaMirrorTopicUpdate(ctx context.Context, d *schema.ResourceData, meta in
 		} else if shouldPromoteKafkaMirrorTopic {
 			tflog.Debug(ctx, fmt.Sprintf("Running a promote of Kafka Mirror Topic %q", d.Id()), map[string]interface{}{kafkaMirrorTopicLoggingKey: d.Id()})
 
-			requestData := v3.AlterMirrorsRequestData{
+			requestData := kafkarestv3.AlterMirrorsRequestData{
 				MirrorTopicNames: &[]string{mirrorTopicName},
 			}
 			_, resp, err := kafkaRestClient.apiClient.ClusterLinkingV3Api.UpdateKafkaMirrorTopicsPromote(kafkaRestClient.apiContext(ctx), kafkaRestClient.clusterId, linkName).AlterMirrorsRequestData(requestData).Execute()
@@ -404,17 +393,17 @@ func sourceKafkaTopicBlockSchema() *schema.Schema {
 	}
 }
 
-func constructKafkaMirrorTopicRequest(sourceTopicName, mirrorTopicName string) (v3.CreateMirrorTopicRequestData, error) {
+func constructKafkaMirrorTopicRequest(sourceTopicName, mirrorTopicName string) (kafkarestv3.CreateMirrorTopicRequestData, error) {
 	if mirrorTopicName == "" {
 		// Mirror topic name is the same as source topic name: "my-topic"
-		return v3.CreateMirrorTopicRequestData{
+		return kafkarestv3.CreateMirrorTopicRequestData{
 			SourceTopicName: sourceTopicName,
 			// Don't set ReplicationFactor since API returns the following on Cloud:
 			// {"error_code":40002,"message":"Topic replication factor must be 3"} when passing any other value but 3
 		}, nil
 	} else {
 		// Mirror topic name "src_my-topic" where "src_" is the prefix configured on the link overrides source topic name: "my-topic"
-		return v3.CreateMirrorTopicRequestData{
+		return kafkarestv3.CreateMirrorTopicRequestData{
 			SourceTopicName: sourceTopicName,
 			MirrorTopicName: &mirrorTopicName,
 			// Don't set ReplicationFactor since API returns the following on Cloud:
@@ -423,7 +412,7 @@ func constructKafkaMirrorTopicRequest(sourceTopicName, mirrorTopicName string) (
 	}
 }
 
-func executeKafkaMirrorTopicCreate(ctx context.Context, c *KafkaRestClient, requestData v3.CreateMirrorTopicRequestData, linkName string) (*http.Response, error) {
+func executeKafkaMirrorTopicCreate(ctx context.Context, c *KafkaRestClient, requestData kafkarestv3.CreateMirrorTopicRequestData, linkName string) (*http.Response, error) {
 	return c.apiClient.ClusterLinkingV3Api.CreateKafkaMirrorTopic(c.apiContext(ctx), c.clusterId, linkName).CreateMirrorTopicRequestData(requestData).Execute()
 }
 

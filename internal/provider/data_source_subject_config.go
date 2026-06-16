@@ -17,11 +17,12 @@ package provider
 import (
 	"context"
 	"fmt"
+	"regexp"
+
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"regexp"
 )
 
 func subjectConfigDataSource() *schema.Resource {
@@ -50,6 +51,16 @@ func subjectConfigDataSource() *schema.Resource {
 			paramCompatibilityGroup: {
 				Type:     schema.TypeString,
 				Computed: true,
+			},
+			paramNormalize: {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Whether schemas are automatically normalized when registered or when passed during lookups.",
+			},
+			paramAlias: {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The subject name that this subject is an alias for.",
 			},
 		},
 	}

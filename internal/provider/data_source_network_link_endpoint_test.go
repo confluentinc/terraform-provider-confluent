@@ -17,19 +17,12 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
 	"testing"
-)
 
-const (
-	networkLinkEndpointDataSourceScenarioName = "confluent_network_link_endpoint Data Source Lifecycle"
-
-	networkLinkEndpointReadUrlPath = "/networking/v1/network-link-endpoints/nle-6wvqx9"
-	networkLinkEndpointId          = "nle-6wvqx9"
-	networkLinkEndpointLabel       = "data.confluent_network_link_endpoint.nle"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/walkerus/go-wiremock"
 )
 
 func TestAccDataSourceNetworkLinkEndpoint(t *testing.T) {

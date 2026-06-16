@@ -21,28 +21,16 @@ import (
 	"net/http"
 	"strings"
 
-	tableflow "github.com/confluentinc/ccloud-sdk-go-v2/tableflow/v1"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+
+	tableflowv1 "github.com/confluentinc/ccloud-sdk-go-v2/tableflow/v1"
 )
 
-const (
-	paramAwsGlue      = "aws_glue"
-	paramSnowflake    = "snowflake"
-	paramEndpoint     = "endpoint"
-	paramClientId     = "client_id"
-	paramClientSecret = "client_secret"
-	paramWarehouse    = "warehouse"
-	paramAllowedScope = "allowed_scope"
-
-	awsGlueSpecKind   = "AwsGlue"
-	snowflakeSpecKind = "Snowflake"
-)
-
-var acceptedCatalogIntegrationConnectionTypes = []string{paramAwsGlue, paramSnowflake}
+var acceptedCatalogIntegrationConnectionTypes = []string{paramAwsGlue, paramSnowflake, paramUnity}
 
 func catalogIntegrationResource() *schema.Resource {
 	return &schema.Resource{
@@ -70,6 +58,7 @@ func catalogIntegrationResource() *schema.Resource {
 			paramCredentials:  credentialsSchema(),
 			paramAwsGlue:      catalogIntegrationAwsGlueSchema(),
 			paramSnowflake:    catalogIntegrationSnowflakeSchema(),
+			paramUnity:        catalogIntegrationUnitySchema(),
 		},
 		CustomizeDiff: customdiff.Sequence(resourceCredentialBlockValidationWithOAuth),
 	}
@@ -86,6 +75,11 @@ func catalogIntegrationAwsGlueSchema() *schema.Schema {
 					Type:     schema.TypeString,
 					Required: true,
 					ForceNew: true,
+				},
+				paramCustomDatabase: {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "The custom database name to use in AWS Glue.",
 				},
 			},
 		},
@@ -127,6 +121,53 @@ func catalogIntegrationSnowflakeSchema() *schema.Schema {
 					Required:    true,
 					Description: "Allowed scope of the Snowflake Open Catalog.",
 				},
+				paramCustomNamespace: {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "The custom namespace to use in Snowflake Open Catalog.",
+				},
+			},
+		},
+		MinItems:     1,
+		MaxItems:     1,
+		ExactlyOneOf: acceptedCatalogIntegrationConnectionTypes,
+	}
+}
+
+func catalogIntegrationUnitySchema() *schema.Schema {
+	return &schema.Schema{
+		Type:        schema.TypeList,
+		Optional:    true,
+		Description: "The catalog integration connection configuration for Unity Catalog.",
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramWorkspaceEndpoint: {
+					Type:        schema.TypeString,
+					Required:    true,
+					Description: "The Databricks workspace URL associated with the Unity Catalog.",
+				},
+				paramCatalogName: {
+					Type:        schema.TypeString,
+					Required:    true,
+					Description: "The name of the catalog within Unity Catalog.",
+				},
+				paramClientId: {
+					Type:        schema.TypeString,
+					Required:    true,
+					Sensitive:   true,
+					Description: "The OAuth client ID used to authenticate with the Unity Catalog.",
+				},
+				paramClientSecret: {
+					Type:        schema.TypeString,
+					Required:    true,
+					Sensitive:   true,
+					Description: "The OAuth client secret used for authentication with the Unity Catalog.",
+				},
+				paramCustomSchema: {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "The custom schema name to use in Unity Catalog.",
+				},
 			},
 		},
 		MinItems:     1,
@@ -138,7 +179,7 @@ func catalogIntegrationSnowflakeSchema() *schema.Schema {
 func catalogIntegrationCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	c := meta.(*Client)
 
-	tableflowApiKey, tableflowApiSecret, err := extractTableflowApiKeyAndApiSecret(c, d, false)
+	tableflowApiKey, tableflowApiSecret, err := extractTableflowApiKeyAndApiSecret(ctx, c, d, false)
 	if err != nil {
 		return diag.Errorf("error creating Catalog Integration: %s", createDescriptiveError(err))
 	}
@@ -146,36 +187,59 @@ func catalogIntegrationCreate(ctx context.Context, d *schema.ResourceData, meta 
 
 	isAwsGlue := len(d.Get(paramAwsGlue).([]interface{})) > 0
 	isSnowflake := len(d.Get(paramSnowflake).([]interface{})) > 0
+	isUnity := len(d.Get(paramUnity).([]interface{})) > 0
 
 	displayName := d.Get(paramDisplayName).(string)
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
 	clusterId := extractStringValueFromBlock(d, paramKafkaCluster, paramId)
 
-	catalogIntegrationSpec := tableflow.NewTableflowV1CatalogIntegrationSpec()
+	catalogIntegrationSpec := tableflowv1.NewTableflowV1CatalogIntegrationSpec()
 	catalogIntegrationSpec.SetDisplayName(displayName)
-	catalogIntegrationSpec.SetEnvironment(tableflow.GlobalObjectReference{Id: environmentId})
-	catalogIntegrationSpec.SetKafkaCluster(tableflow.EnvScopedObjectReference{Id: clusterId})
+	catalogIntegrationSpec.SetEnvironment(tableflowv1.GlobalObjectReference{Id: environmentId})
+	catalogIntegrationSpec.SetKafkaCluster(tableflowv1.EnvScopedObjectReference{Id: clusterId})
 	if isAwsGlue {
-		catalogIntegrationSpec.SetConfig(tableflow.TableflowV1CatalogIntegrationSpecConfigOneOf{
-			TableflowV1CatalogIntegrationAwsGlueSpec: &tableflow.TableflowV1CatalogIntegrationAwsGlueSpec{
-				Kind:                  awsGlueSpecKind,
-				ProviderIntegrationId: extractStringValueFromBlock(d, paramAwsGlue, paramProviderIntegrationId),
-			},
+		awsGlueSpec := &tableflowv1.TableflowV1CatalogIntegrationAwsGlueSpec{
+			Kind:                  awsGlueSpecKind,
+			ProviderIntegrationId: extractStringValueFromBlock(d, paramAwsGlue, paramProviderIntegrationId),
+		}
+		if v := extractStringValueFromBlock(d, paramAwsGlue, paramCustomDatabase); v != "" {
+			awsGlueSpec.SetCustomDatabase(v)
+		}
+		catalogIntegrationSpec.SetConfig(tableflowv1.TableflowV1CatalogIntegrationSpecConfigOneOf{
+			TableflowV1CatalogIntegrationAwsGlueSpec: awsGlueSpec,
 		})
 	} else if isSnowflake {
-		catalogIntegrationSpec.SetConfig(tableflow.TableflowV1CatalogIntegrationSpecConfigOneOf{
-			TableflowV1CatalogIntegrationSnowflakeSpec: &tableflow.TableflowV1CatalogIntegrationSnowflakeSpec{
-				Kind:         snowflakeSpecKind,
-				Endpoint:     extractStringValueFromBlock(d, paramSnowflake, paramEndpoint),
-				ClientId:     extractStringValueFromBlock(d, paramSnowflake, paramClientId),
-				ClientSecret: extractStringValueFromBlock(d, paramSnowflake, paramClientSecret),
-				Warehouse:    extractStringValueFromBlock(d, paramSnowflake, paramWarehouse),
-				AllowedScope: extractStringValueFromBlock(d, paramSnowflake, paramAllowedScope),
-			},
+		snowflakeSpec := &tableflowv1.TableflowV1CatalogIntegrationSnowflakeSpec{
+			Kind:         snowflakeSpecKind,
+			Endpoint:     extractStringValueFromBlock(d, paramSnowflake, paramEndpoint),
+			ClientId:     extractStringValueFromBlock(d, paramSnowflake, paramClientId),
+			ClientSecret: extractStringValueFromBlock(d, paramSnowflake, paramClientSecret),
+			Warehouse:    extractStringValueFromBlock(d, paramSnowflake, paramWarehouse),
+			AllowedScope: extractStringValueFromBlock(d, paramSnowflake, paramAllowedScope),
+		}
+		if v := extractStringValueFromBlock(d, paramSnowflake, paramCustomNamespace); v != "" {
+			snowflakeSpec.SetCustomNamespace(v)
+		}
+		catalogIntegrationSpec.SetConfig(tableflowv1.TableflowV1CatalogIntegrationSpecConfigOneOf{
+			TableflowV1CatalogIntegrationSnowflakeSpec: snowflakeSpec,
+		})
+	} else if isUnity {
+		unitySpec := &tableflowv1.TableflowV1CatalogIntegrationUnitySpec{
+			Kind:              unitySpecKind,
+			WorkspaceEndpoint: extractStringValueFromBlock(d, paramUnity, paramWorkspaceEndpoint),
+			CatalogName:       extractStringValueFromBlock(d, paramUnity, paramCatalogName),
+			ClientId:          extractStringValueFromBlock(d, paramUnity, paramClientId),
+			ClientSecret:      extractStringValueFromBlock(d, paramUnity, paramClientSecret),
+		}
+		if v := extractStringValueFromBlock(d, paramUnity, paramCustomSchema); v != "" {
+			unitySpec.SetCustomSchema(v)
+		}
+		catalogIntegrationSpec.SetConfig(tableflowv1.TableflowV1CatalogIntegrationSpecConfigOneOf{
+			TableflowV1CatalogIntegrationUnitySpec: unitySpec,
 		})
 	}
 
-	createCatalogIntegrationRequest := tableflow.NewTableflowV1CatalogIntegration()
+	createCatalogIntegrationRequest := tableflowv1.NewTableflowV1CatalogIntegration()
 	createCatalogIntegrationRequest.SetSpec(*catalogIntegrationSpec)
 
 	createCatalogIntegrationRequestJson, err := json.Marshal(createCatalogIntegrationRequest)
@@ -201,7 +265,7 @@ func catalogIntegrationCreate(ctx context.Context, d *schema.ResourceData, meta 
 	return catalogIntegrationRead(ctx, d, meta)
 }
 
-func executeCatalogIntegrationRead(ctx context.Context, c *TableflowRestClient, environmentId, clusterId, id string) (tableflow.TableflowV1CatalogIntegration, *http.Response, error) {
+func executeCatalogIntegrationRead(ctx context.Context, c *TableflowRestClient, environmentId, clusterId, id string) (tableflowv1.TableflowV1CatalogIntegration, *http.Response, error) {
 	return c.apiClient.CatalogIntegrationsTableflowV1Api.GetTableflowV1CatalogIntegration(c.apiContext(ctx), id).Environment(environmentId).SpecKafkaCluster(clusterId).Execute()
 }
 
@@ -210,7 +274,7 @@ func catalogIntegrationRead(ctx context.Context, d *schema.ResourceData, meta in
 
 	c := meta.(*Client)
 
-	tableflowApiKey, tableflowApiSecret, err := extractTableflowApiKeyAndApiSecret(c, d, false)
+	tableflowApiKey, tableflowApiSecret, err := extractTableflowApiKeyAndApiSecret(ctx, c, d, false)
 	if err != nil {
 		return diag.Errorf("error creating Catalog Integration: %s", createDescriptiveError(err))
 	}
@@ -255,7 +319,7 @@ func readCatalogIntegrationAndSetAttributes(ctx context.Context, d *schema.Resou
 	return []*schema.ResourceData{d}, nil
 }
 
-func setCatalogIntegrationAttributes(d *schema.ResourceData, c *TableflowRestClient, catalogIntegration tableflow.TableflowV1CatalogIntegration) (*schema.ResourceData, error) {
+func setCatalogIntegrationAttributes(d *schema.ResourceData, c *TableflowRestClient, catalogIntegration tableflowv1.TableflowV1CatalogIntegration) (*schema.ResourceData, error) {
 	if err := d.Set(paramDisplayName, catalogIntegration.Spec.GetDisplayName()); err != nil {
 		return nil, err
 	}
@@ -270,28 +334,52 @@ func setCatalogIntegrationAttributes(d *schema.ResourceData, c *TableflowRestCli
 	}
 
 	if catalogIntegration.Spec.GetConfig().TableflowV1CatalogIntegrationAwsGlueSpec != nil {
-		if err := d.Set(paramAwsGlue, []interface{}{map[string]interface{}{
+		awsGlueAttributes := map[string]interface{}{
 			paramProviderIntegrationId: catalogIntegration.Spec.GetConfig().TableflowV1CatalogIntegrationAwsGlueSpec.GetProviderIntegrationId(),
-		}}); err != nil {
+		}
+		if catalogIntegration.Spec.GetConfig().TableflowV1CatalogIntegrationAwsGlueSpec.HasCustomDatabase() {
+			awsGlueAttributes[paramCustomDatabase] = catalogIntegration.Spec.GetConfig().TableflowV1CatalogIntegrationAwsGlueSpec.GetCustomDatabase()
+		}
+		if err := d.Set(paramAwsGlue, []interface{}{awsGlueAttributes}); err != nil {
 			return nil, err
 		}
 	} else if catalogIntegration.Spec.GetConfig().TableflowV1CatalogIntegrationSnowflakeSpec != nil {
 		// We cannot read these two values from the backend, so read the stored value instead to prevent drift
-		var clientId, clientSecret string
-		if currentClientId, ok := d.GetOk(fmt.Sprintf("%s.0.%s", paramSnowflake, paramClientId)); ok {
-			clientId = currentClientId.(string)
-		}
-		if currentClientSecret, ok := d.GetOk(fmt.Sprintf("%s.0.%s", paramSnowflake, paramClientSecret)); ok {
-			clientSecret = currentClientSecret.(string)
-		}
+		currentClientId, currentClientIdOk := d.GetOk(fmt.Sprintf("%s.0.%s", paramSnowflake, paramClientId))
+		currentClientSecret, currentClientSecretOk := d.GetOk(fmt.Sprintf("%s.0.%s", paramSnowflake, paramClientSecret))
 
-		if err := d.Set(paramSnowflake, []interface{}{map[string]interface{}{
+		snowflakeAttributes := map[string]interface{}{
 			paramEndpoint:     catalogIntegration.Spec.GetConfig().TableflowV1CatalogIntegrationSnowflakeSpec.GetEndpoint(),
 			paramWarehouse:    catalogIntegration.Spec.GetConfig().TableflowV1CatalogIntegrationSnowflakeSpec.GetWarehouse(),
 			paramAllowedScope: catalogIntegration.Spec.GetConfig().TableflowV1CatalogIntegrationSnowflakeSpec.GetAllowedScope(),
-			paramClientId:     clientId,
-			paramClientSecret: clientSecret,
-		}}); err != nil {
+		}
+		if catalogIntegration.Spec.GetConfig().TableflowV1CatalogIntegrationSnowflakeSpec.HasCustomNamespace() {
+			snowflakeAttributes[paramCustomNamespace] = catalogIntegration.Spec.GetConfig().TableflowV1CatalogIntegrationSnowflakeSpec.GetCustomNamespace()
+		}
+		if currentClientIdOk && currentClientSecretOk {
+			snowflakeAttributes[paramClientId] = currentClientId.(string)
+			snowflakeAttributes[paramClientSecret] = currentClientSecret.(string)
+		}
+		if err := d.Set(paramSnowflake, []interface{}{snowflakeAttributes}); err != nil {
+			return nil, err
+		}
+	} else if catalogIntegration.Spec.GetConfig().TableflowV1CatalogIntegrationUnitySpec != nil {
+		// We cannot read these two values from the backend, so read the stored value instead to prevent drift
+		currentClientId, currentClientIdOk := d.GetOk(fmt.Sprintf("%s.0.%s", paramUnity, paramClientId))
+		currentClientSecret, currentClientSecretOk := d.GetOk(fmt.Sprintf("%s.0.%s", paramUnity, paramClientSecret))
+
+		unityAttributes := map[string]interface{}{
+			paramWorkspaceEndpoint: catalogIntegration.Spec.GetConfig().TableflowV1CatalogIntegrationUnitySpec.GetWorkspaceEndpoint(),
+			paramCatalogName:       catalogIntegration.Spec.GetConfig().TableflowV1CatalogIntegrationUnitySpec.GetCatalogName(),
+		}
+		if catalogIntegration.Spec.GetConfig().TableflowV1CatalogIntegrationUnitySpec.HasCustomSchema() {
+			unityAttributes[paramCustomSchema] = catalogIntegration.Spec.GetConfig().TableflowV1CatalogIntegrationUnitySpec.GetCustomSchema()
+		}
+		if currentClientIdOk && currentClientSecretOk {
+			unityAttributes[paramClientId] = currentClientId.(string)
+			unityAttributes[paramClientSecret] = currentClientSecret.(string)
+		}
+		if err := d.Set(paramUnity, []interface{}{unityAttributes}); err != nil {
 			return nil, err
 		}
 	}
@@ -312,7 +400,7 @@ func catalogIntegrationDelete(ctx context.Context, d *schema.ResourceData, meta 
 	clusterId := extractStringValueFromBlock(d, paramKafkaCluster, paramId)
 	c := meta.(*Client)
 
-	tableflowApiKey, tableflowApiSecret, err := extractTableflowApiKeyAndApiSecret(c, d, false)
+	tableflowApiKey, tableflowApiSecret, err := extractTableflowApiKeyAndApiSecret(ctx, c, d, false)
 	if err != nil {
 		return diag.Errorf("error creating Catalog Integration: %s", createDescriptiveError(err))
 	}
@@ -331,8 +419,8 @@ func catalogIntegrationDelete(ctx context.Context, d *schema.ResourceData, meta 
 }
 
 func catalogIntegrationUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if d.HasChangesExcept(paramDisplayName, paramSnowflake) {
-		return diag.Errorf("error updating Catalog Integration %q: only %q, %q, %q, %q, %q, %q attributes can be updated for Catalog Integration", d.Id(), paramDisplayName, paramEndpoint, paramWarehouse, paramAllowedScope, paramClientId, paramClientSecret)
+	if d.HasChangesExcept(paramDisplayName, paramAwsGlue, paramSnowflake, paramUnity) {
+		return diag.Errorf("error updating Catalog Integration %q: only %q, %q, %q, %q, %q, %q, %q, %q, %q, %q, %q attributes can be updated for Catalog Integration", d.Id(), paramDisplayName, paramCustomDatabase, paramEndpoint, paramWarehouse, paramAllowedScope, paramClientId, paramClientSecret, paramCustomNamespace, paramWorkspaceEndpoint, paramCatalogName, paramCustomSchema)
 	}
 
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
@@ -340,32 +428,40 @@ func catalogIntegrationUpdate(ctx context.Context, d *schema.ResourceData, meta 
 
 	c := meta.(*Client)
 
-	tableflowApiKey, tableflowApiSecret, err := extractTableflowApiKeyAndApiSecret(c, d, false)
+	tableflowApiKey, tableflowApiSecret, err := extractTableflowApiKeyAndApiSecret(ctx, c, d, false)
 	if err != nil {
 		return diag.Errorf("error creating Catalog Integration: %s", createDescriptiveError(err))
 	}
 	tableflowRestClient := c.tableflowRestClientFactory.CreateTableflowRestClient(tableflowApiKey, tableflowApiSecret, c.isTableflowMetadataSet, c.oauthToken, c.stsToken)
 
-	updateCatalogIntegrationSpec := &tableflow.TableflowV1CatalogIntegrationUpdateSpec{}
-	updateCatalogIntegrationSpec.SetEnvironment(tableflow.GlobalObjectReference{Id: environmentId})
-	updateCatalogIntegrationSpec.SetKafkaCluster(tableflow.EnvScopedObjectReference{Id: clusterId})
+	updateCatalogIntegrationSpec := &tableflowv1.TableflowV1CatalogIntegrationUpdateSpec{}
+	updateCatalogIntegrationSpec.SetEnvironment(tableflowv1.GlobalObjectReference{Id: environmentId})
+	updateCatalogIntegrationSpec.SetKafkaCluster(tableflowv1.EnvScopedObjectReference{Id: clusterId})
 	if d.HasChange(paramDisplayName) {
 		updateCatalogIntegrationSpec.SetDisplayName(d.Get(paramDisplayName).(string))
 
 		isAwsGlue := len(d.Get(paramAwsGlue).([]interface{})) > 0
 		isSnowflake := len(d.Get(paramSnowflake).([]interface{})) > 0
 		if isAwsGlue {
-			updateCatalogIntegrationSpec.SetConfig(tableflow.TableflowV1CatalogIntegrationAwsGlueUpdateSpecAsTableflowV1CatalogIntegrationUpdateSpecConfigOneOf(&tableflow.TableflowV1CatalogIntegrationAwsGlueUpdateSpec{
+			updateCatalogIntegrationSpec.SetConfig(tableflowv1.TableflowV1CatalogIntegrationAwsGlueUpdateSpecAsTableflowV1CatalogIntegrationUpdateSpecConfigOneOf(&tableflowv1.TableflowV1CatalogIntegrationAwsGlueUpdateSpec{
 				Kind: awsGlueSpecKind,
 			}))
 		} else if isSnowflake {
-			updateCatalogIntegrationSpec.SetConfig(tableflow.TableflowV1CatalogIntegrationSnowflakeUpdateSpecAsTableflowV1CatalogIntegrationUpdateSpecConfigOneOf(&tableflow.TableflowV1CatalogIntegrationSnowflakeUpdateSpec{
+			updateCatalogIntegrationSpec.SetConfig(tableflowv1.TableflowV1CatalogIntegrationSnowflakeUpdateSpecAsTableflowV1CatalogIntegrationUpdateSpecConfigOneOf(&tableflowv1.TableflowV1CatalogIntegrationSnowflakeUpdateSpec{
 				Kind: snowflakeSpecKind,
 			}))
 		}
 	}
+	if d.HasChange(paramAwsGlue) {
+		updateCatalogIntegrationSpec.SetConfig(tableflowv1.TableflowV1CatalogIntegrationAwsGlueUpdateSpecAsTableflowV1CatalogIntegrationUpdateSpecConfigOneOf(&tableflowv1.TableflowV1CatalogIntegrationAwsGlueUpdateSpec{
+			Kind: awsGlueSpecKind,
+		}))
+		if d.HasChange(fmt.Sprintf("%s.0.%s", paramAwsGlue, paramCustomDatabase)) {
+			updateCatalogIntegrationSpec.Config.TableflowV1CatalogIntegrationAwsGlueUpdateSpec.SetCustomDatabase(extractStringValueFromBlock(d, paramAwsGlue, paramCustomDatabase))
+		}
+	}
 	if d.HasChange(paramSnowflake) {
-		updateCatalogIntegrationSpec.SetConfig(tableflow.TableflowV1CatalogIntegrationSnowflakeUpdateSpecAsTableflowV1CatalogIntegrationUpdateSpecConfigOneOf(&tableflow.TableflowV1CatalogIntegrationSnowflakeUpdateSpec{
+		updateCatalogIntegrationSpec.SetConfig(tableflowv1.TableflowV1CatalogIntegrationSnowflakeUpdateSpecAsTableflowV1CatalogIntegrationUpdateSpecConfigOneOf(&tableflowv1.TableflowV1CatalogIntegrationSnowflakeUpdateSpec{
 			Kind: snowflakeSpecKind,
 		}))
 		if d.HasChange(fmt.Sprintf("%s.0.%s", paramSnowflake, paramEndpoint)) {
@@ -383,9 +479,32 @@ func catalogIntegrationUpdate(ctx context.Context, d *schema.ResourceData, meta 
 		if d.HasChange(fmt.Sprintf("%s.0.%s", paramSnowflake, paramClientSecret)) {
 			updateCatalogIntegrationSpec.Config.TableflowV1CatalogIntegrationSnowflakeUpdateSpec.SetClientSecret(extractStringValueFromBlock(d, paramSnowflake, paramClientSecret))
 		}
+		if d.HasChange(fmt.Sprintf("%s.0.%s", paramSnowflake, paramCustomNamespace)) {
+			updateCatalogIntegrationSpec.Config.TableflowV1CatalogIntegrationSnowflakeUpdateSpec.SetCustomNamespace(extractStringValueFromBlock(d, paramSnowflake, paramCustomNamespace))
+		}
+	}
+	if d.HasChange(paramUnity) {
+		updateCatalogIntegrationSpec.SetConfig(tableflowv1.TableflowV1CatalogIntegrationUnityUpdateSpecAsTableflowV1CatalogIntegrationUpdateSpecConfigOneOf(&tableflowv1.TableflowV1CatalogIntegrationUnityUpdateSpec{
+			Kind: unitySpecKind,
+		}))
+		if d.HasChange(fmt.Sprintf("%s.0.%s", paramUnity, paramWorkspaceEndpoint)) {
+			updateCatalogIntegrationSpec.Config.TableflowV1CatalogIntegrationUnityUpdateSpec.SetWorkspaceEndpoint(extractStringValueFromBlock(d, paramUnity, paramWorkspaceEndpoint))
+		}
+		if d.HasChange(fmt.Sprintf("%s.0.%s", paramUnity, paramCatalogName)) {
+			updateCatalogIntegrationSpec.Config.TableflowV1CatalogIntegrationUnityUpdateSpec.SetCatalogName(extractStringValueFromBlock(d, paramUnity, paramCatalogName))
+		}
+		if d.HasChange(fmt.Sprintf("%s.0.%s", paramUnity, paramClientId)) {
+			updateCatalogIntegrationSpec.Config.TableflowV1CatalogIntegrationUnityUpdateSpec.SetClientId(extractStringValueFromBlock(d, paramUnity, paramClientId))
+		}
+		if d.HasChange(fmt.Sprintf("%s.0.%s", paramUnity, paramClientSecret)) {
+			updateCatalogIntegrationSpec.Config.TableflowV1CatalogIntegrationUnityUpdateSpec.SetClientSecret(extractStringValueFromBlock(d, paramUnity, paramClientSecret))
+		}
+		if d.HasChange(fmt.Sprintf("%s.0.%s", paramUnity, paramCustomSchema)) {
+			updateCatalogIntegrationSpec.Config.TableflowV1CatalogIntegrationUnityUpdateSpec.SetCustomSchema(extractStringValueFromBlock(d, paramUnity, paramCustomSchema))
+		}
 	}
 
-	updateCatalogIntegration := tableflow.NewTableflowV1CatalogIntegrationUpdateRequest()
+	updateCatalogIntegration := tableflowv1.NewTableflowV1CatalogIntegrationUpdateRequest()
 	updateCatalogIntegration.SetSpec(*updateCatalogIntegrationSpec)
 
 	updateCatalogIntegrationJson, err := json.Marshal(updateCatalogIntegration)
@@ -413,7 +532,7 @@ func catalogIntegrationImport(ctx context.Context, d *schema.ResourceData, meta 
 
 	c := meta.(*Client)
 
-	tableflowApiKey, tableflowApiSecret, err := extractTableflowApiKeyAndApiSecret(c, d, true)
+	tableflowApiKey, tableflowApiSecret, err := extractTableflowApiKeyAndApiSecret(ctx, c, d, true)
 	if err != nil {
 		return nil, fmt.Errorf("error creating Catalog Integration: %s", createDescriptiveError(err))
 	}

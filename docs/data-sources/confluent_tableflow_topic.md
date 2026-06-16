@@ -83,6 +83,7 @@ The following arguments are supported:
 In addition to the preceding arguments, the following attributes are exported:
 
 - `retention_ms` - (Optional String) The max age of snapshots (Iceberg) or versions (Delta) (snapshot/version expiration) to keep on the table in milliseconds for the Tableflow enabled topic.
+- `data_retention_ms` - (Optional String) The maximum age, in milliseconds, of data to retain in the table for the Tableflow-enabled topic. The minimum allowed value is `2592000000` milliseconds (equivalent to 30 days).
 - `table_formats` - (Optional List) The supported table formats for the Tableflow-enabled topic.
 - `table_path` - (Optional String) The current storage path where the data and metadata is stored for this table.
 - `record_failure_strategy` - (Optional String, **Deprecated**) The strategy to handle record failures in the Tableflow enabled topic during materialization. For `SKIP`, we skip the bad records and move to the next record. For `SUSPEND`, we suspend the materialization of the topic.

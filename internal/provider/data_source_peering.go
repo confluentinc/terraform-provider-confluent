@@ -18,17 +18,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	net "github.com/confluentinc/ccloud-sdk-go-v2/networking/v1"
+	"net/http"
+
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"net/http"
-)
 
-const (
-	// The maximum allowable page size - 1 (to avoid off-by-one errors) when listing peerings using Networking API
-	// https://docs.confluent.io/cloud/current/api.html#operation/listNetworkingV1Peerings
-	listPeeringsPageSize = 99
+	networkingv1 "github.com/confluentinc/ccloud-sdk-go-v2/networking/v1"
 )
 
 func peeringDataSource() *schema.Resource {
@@ -105,7 +101,7 @@ func peeringDataSourceReadUsingId(ctx context.Context, d *schema.ResourceData, m
 	tflog.Debug(ctx, fmt.Sprintf("Reading Peering %q=%q", paramId, peeringId), map[string]interface{}{peeringLoggingKey: peeringId})
 
 	c := meta.(*Client)
-	peering, resp, err := executePeeringRead(c.netApiContext(ctx), c, environmentId, peeringId)
+	peering, resp, err := executePeeringRead(c.networkingV1ApiContext(ctx), c, environmentId, peeringId)
 	if err != nil {
 		return diag.Errorf("error reading Peering %q: %s", peeringId, createDescriptiveError(err, resp))
 	}
@@ -121,7 +117,7 @@ func peeringDataSourceReadUsingId(ctx context.Context, d *schema.ResourceData, m
 	return nil
 }
 
-func orgHasMultiplePeeringsWithTargetDisplayName(peerings []net.NetworkingV1Peering, displayName string) bool {
+func orgHasMultiplePeeringsWithTargetDisplayName(peerings []networkingv1.NetworkingV1Peering, displayName string) bool {
 	var numberOfPeeringsWithTargetDisplayName = 0
 	for _, peering := range peerings {
 		if peering.Spec.GetDisplayName() == displayName {
@@ -131,8 +127,8 @@ func orgHasMultiplePeeringsWithTargetDisplayName(peerings []net.NetworkingV1Peer
 	return numberOfPeeringsWithTargetDisplayName > 1
 }
 
-func loadPeerings(ctx context.Context, c *Client, environmentId string) ([]net.NetworkingV1Peering, error) {
-	peerings := make([]net.NetworkingV1Peering, 0)
+func loadPeerings(ctx context.Context, c *Client, environmentId string) ([]networkingv1.NetworkingV1Peering, error) {
+	peerings := make([]networkingv1.NetworkingV1Peering, 0)
 
 	allPeeringsAreCollected := false
 	pageToken := ""
@@ -163,11 +159,11 @@ func loadPeerings(ctx context.Context, c *Client, environmentId string) ([]net.N
 	return peerings, nil
 }
 
-func executeListPeerings(ctx context.Context, c *Client, environmentId, pageToken string) (net.NetworkingV1PeeringList, *http.Response, error) {
+func executeListPeerings(ctx context.Context, c *Client, environmentId, pageToken string) (networkingv1.NetworkingV1PeeringList, *http.Response, error) {
 	if pageToken != "" {
-		return c.netClient.PeeringsNetworkingV1Api.ListNetworkingV1Peerings(c.netApiContext(ctx)).Environment(environmentId).PageSize(listPeeringsPageSize).PageToken(pageToken).Execute()
+		return c.networkingV1Client.PeeringsNetworkingV1Api.ListNetworkingV1Peerings(c.networkingV1ApiContext(ctx)).Environment(environmentId).PageSize(listPeeringsPageSize).PageToken(pageToken).Execute()
 	} else {
-		return c.netClient.PeeringsNetworkingV1Api.ListNetworkingV1Peerings(c.netApiContext(ctx)).Environment(environmentId).PageSize(listPeeringsPageSize).Execute()
+		return c.networkingV1Client.PeeringsNetworkingV1Api.ListNetworkingV1Peerings(c.networkingV1ApiContext(ctx)).Environment(environmentId).PageSize(listPeeringsPageSize).Execute()
 	}
 }
 

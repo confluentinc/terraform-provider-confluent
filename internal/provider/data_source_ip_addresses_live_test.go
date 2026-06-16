@@ -95,4 +95,4 @@ func testAccCheckIpAddressesDataSourceLiveExists(resourceName string) resource.T
 
 		return nil
 	}
-} 
+}

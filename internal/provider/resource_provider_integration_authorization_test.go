@@ -26,21 +26,6 @@ import (
 	"github.com/walkerus/go-wiremock"
 )
 
-const (
-	providerIntegrationAuthScenarioName                  = "confluent_provider_integration_authorization Resource Lifecycle"
-	scenarioStateProviderIntegrationV2AuthHasBeenCreated = "The new provider_integration_authorization has been just created"
-	scenarioStateProviderIntegrationV2AuthHasBeenDeleted = "The provider_integration_authorization has been deleted"
-
-	// Azure authorization constants
-	azureProviderIntegrationV2AuthId            = "cspi-abc123"
-	azureProviderIntegrationV2AuthTenantId      = "12345678-1234-1234-1234-123456789abc"
-	azureProviderIntegrationV2AuthEnvironmentId = "env-00000"
-
-	// GCP authorization constants
-	gcpProviderIntegrationV2AuthId            = "cspi-def456"
-	gcpProviderIntegrationV2AuthEnvironmentId = "env-00000"
-)
-
 func TestAccProviderIntegrationAuthorizationAzure(t *testing.T) {
 	ctx := context.Background()
 	wiremockContainer, err := setupWiremock(ctx)
@@ -230,11 +215,6 @@ func TestAccProviderIntegrationAuthorizationGcp(t *testing.T) {
 		},
 	})
 }
-
-const (
-	azureProviderIntegrationV2AuthResourceLabel = "test_azure_auth"
-	gcpProviderIntegrationV2AuthResourceLabel   = "test_gcp_auth"
-)
 
 func testAccCheckProviderIntegrationAuthMockDestroy(s *terraform.State) error {
 	// Authorization resource delete only removes from state, doesn't call API

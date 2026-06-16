@@ -17,21 +17,12 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
 	"testing"
-)
 
-const (
-	invitationResourceScenarioName        = "confluent_invitation Data Source Lifecycle"
-	scenarioStateInvitationHasBeenCreated = "A new invitation has been just created"
-	invitationEmail                       = "zli00000000@confluent.io"
-	invitationResourceLabel               = "confluent_invitation.inv"
-
-	createInvitationUrlPath      = "/iam/v2/invitations"
-	readCreatedInvitationUrlPath = "/iam/v2/invitations/i-7od91"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/walkerus/go-wiremock"
 )
 
 func TestAccInvitation(t *testing.T) {

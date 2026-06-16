@@ -18,12 +18,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	dc "github.com/confluentinc/ccloud-sdk-go-v2/data-catalog/v1"
+	"regexp"
+
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"regexp"
+
+	datacatalogv1 "github.com/confluentinc/ccloud-sdk-go-v2/data-catalog/v1"
 )
 
 func tagBindingDataSource() *schema.Resource {
@@ -92,7 +94,7 @@ func tagBindingDataSourceRead(ctx context.Context, d *schema.ResourceData, meta 
 	tflog.Debug(ctx, fmt.Sprintf("Reading Tag Binding %q=%q", paramId, tagBindingId), map[string]interface{}{tagBindingLoggingKey: tagBindingId})
 
 	catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
-	request := catalogRestClient.apiClient.EntityV1Api.GetTags(catalogRestClient.dataCatalogApiContext(ctx), entityType, entityName)
+	request := catalogRestClient.apiClient.EntityV1Api.GetTags(catalogRestClient.dataCatalogV1ApiContext(ctx), entityType, entityName)
 	tagBindings, resp, err := request.Execute()
 	if err != nil {
 		return diag.Errorf("error reading Tag Binding %q: %s", tagBindingId, createDescriptiveError(err, resp))
@@ -115,7 +117,7 @@ func tagBindingDataSourceRead(ctx context.Context, d *schema.ResourceData, meta 
 	return nil
 }
 
-func setTagBindingDataSourceAttributes(d *schema.ResourceData, clusterId string, tagBinding dc.TagResponse) (*schema.ResourceData, error) {
+func setTagBindingDataSourceAttributes(d *schema.ResourceData, clusterId string, tagBinding datacatalogv1.TagResponse) (*schema.ResourceData, error) {
 	if err := d.Set(paramTagName, tagBinding.GetTypeName()); err != nil {
 		return nil, err
 	}

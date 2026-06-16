@@ -22,17 +22,13 @@ import (
 	"strings"
 	"time"
 
-	dc "github.com/confluentinc/ccloud-sdk-go-v2/data-catalog/v1"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-)
 
-const (
-	paramAttributes           = "attributes"
-	paramBusinessMetadataName = "business_metadata_name"
+	datacatalogv1 "github.com/confluentinc/ccloud-sdk-go-v2/data-catalog/v1"
 )
 
 func businessMetadataBindingResource() *schema.Resource {
@@ -109,7 +105,7 @@ func businessMetadataBindingCreate(ctx context.Context, d *schema.ResourceData, 
 	businessMetadataBindingId := createBusinessMetadataBindingId(clusterId, businessMetadataName, entityName, entityType)
 
 	catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
-	businessMetadataBindingRequest := dc.BusinessMetadata{}
+	businessMetadataBindingRequest := datacatalogv1.BusinessMetadata{}
 	businessMetadataBindingRequest.SetEntityName(entityName)
 	businessMetadataBindingRequest.SetEntityType(entityType)
 	businessMetadataBindingRequest.SetTypeName(businessMetadataName)
@@ -119,8 +115,8 @@ func businessMetadataBindingCreate(ctx context.Context, d *schema.ResourceData, 
 	// https://github.com/confluentinc/terraform-provider-confluent/issues/282 to resolve "error creating Business Metadata Binding 404 Not Found"
 	SleepIfNotTestMode(60*time.Second, meta.(*Client).isAcceptanceTestMode, meta.(*Client).isLiveProductionTestMode)
 
-	request := catalogRestClient.apiClient.EntityV1Api.CreateBusinessMetadata(catalogRestClient.dataCatalogApiContext(ctx))
-	request = request.BusinessMetadata([]dc.BusinessMetadata{businessMetadataBindingRequest})
+	request := catalogRestClient.apiClient.EntityV1Api.CreateBusinessMetadata(catalogRestClient.dataCatalogV1ApiContext(ctx))
+	request = request.BusinessMetadata([]datacatalogv1.BusinessMetadata{businessMetadataBindingRequest})
 
 	createBusinessMetadataBindingRequestJson, err := json.Marshal(request)
 	if err != nil {
@@ -140,7 +136,7 @@ func businessMetadataBindingCreate(ctx context.Context, d *schema.ResourceData, 
 	}
 	d.SetId(businessMetadataBindingId)
 
-	if err := waitForBusinessMetadataBindingToProvision(catalogRestClient.dataCatalogApiContext(ctx), catalogRestClient, businessMetadataBindingId, businessMetadataName, entityName, entityType); err != nil {
+	if err := waitForBusinessMetadataBindingToProvision(catalogRestClient.dataCatalogV1ApiContext(ctx), catalogRestClient, businessMetadataBindingId, businessMetadataName, entityName, entityType); err != nil {
 		return diag.Errorf("error waiting for Business Metadata Binding %q to provision: %s", businessMetadataBindingId, createDescriptiveError(err, resp))
 	}
 
@@ -188,7 +184,7 @@ func readBusinessMetadataBindingAndSetAttributes(ctx context.Context, d *schema.
 	tflog.Debug(ctx, fmt.Sprintf("Reading Business Metadata Binding %q=%q", paramId, businessMetadataBindingId), map[string]interface{}{businessMetadataBindingLoggingKey: businessMetadataBindingId})
 
 	catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
-	request := catalogRestClient.apiClient.EntityV1Api.GetBusinessMetadata(catalogRestClient.dataCatalogApiContext(ctx), entityType, entityName)
+	request := catalogRestClient.apiClient.EntityV1Api.GetBusinessMetadata(catalogRestClient.dataCatalogV1ApiContext(ctx), entityType, entityName)
 	businessMetadataBindings, resp, err := request.Execute()
 	if err != nil {
 		tflog.Warn(ctx, fmt.Sprintf("Error reading Business Metadata Binding %q: %s", businessMetadataBindingId, createDescriptiveError(err, resp)), map[string]interface{}{businessMetadataBindingLoggingKey: businessMetadataBindingId})
@@ -228,14 +224,14 @@ func readBusinessMetadataBindingAndSetAttributes(ctx context.Context, d *schema.
 	return []*schema.ResourceData{d}, nil
 }
 
-func findBusinessMetadataBindingByBusinessMetadataName(businessMetadataBindings []dc.BusinessMetadataResponse, businessMetadataName string) (dc.BusinessMetadataResponse, error) {
+func findBusinessMetadataBindingByBusinessMetadataName(businessMetadataBindings []datacatalogv1.BusinessMetadataResponse, businessMetadataName string) (datacatalogv1.BusinessMetadataResponse, error) {
 	for _, businessMetadataBinding := range businessMetadataBindings {
 		if businessMetadataBinding.GetTypeName() == businessMetadataName {
 			return businessMetadataBinding, nil
 		}
 	}
 
-	return dc.BusinessMetadataResponse{}, fmt.Errorf("error reading Business Metadata Binding: couldn't find the Business Metadata binding: %s", businessMetadataName)
+	return datacatalogv1.BusinessMetadataResponse{}, fmt.Errorf("error reading Business Metadata Binding: couldn't find the Business Metadata binding: %s", businessMetadataName)
 }
 
 func businessMetadataBindingDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -260,7 +256,7 @@ func businessMetadataBindingDelete(ctx context.Context, d *schema.ResourceData, 
 	tflog.Debug(ctx, fmt.Sprintf("Deleting Business Metadata Binding %q=%q", paramId, businessMetadataBindingId), map[string]interface{}{businessMetadataBindingLoggingKey: businessMetadataBindingId})
 
 	catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
-	request := catalogRestClient.apiClient.EntityV1Api.DeleteBusinessMetadata(catalogRestClient.dataCatalogApiContext(ctx), entityType, entityName, businessMetadataName)
+	request := catalogRestClient.apiClient.EntityV1Api.DeleteBusinessMetadata(catalogRestClient.dataCatalogV1ApiContext(ctx), entityType, entityName, businessMetadataName)
 	_, serviceErr := request.Execute()
 	if serviceErr != nil {
 		return diag.Errorf("error deleting Business Metadata Binding %q: %s", businessMetadataBindingId, createDescriptiveError(serviceErr))
@@ -304,14 +300,14 @@ func businessMetadataBindingUpdate(ctx context.Context, d *schema.ResourceData, 
 		businessMetadataBindingId := createBusinessMetadataBindingId(clusterId, businessMetadataName, entityName, entityType)
 
 		catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
-		businessMetadataBindingRequest := dc.BusinessMetadata{}
+		businessMetadataBindingRequest := datacatalogv1.BusinessMetadata{}
 		businessMetadataBindingRequest.SetEntityName(entityName)
 		businessMetadataBindingRequest.SetEntityType(entityType)
 		businessMetadataBindingRequest.SetTypeName(businessMetadataName)
 		businessMetadataBindingRequest.SetAttributes(attributes)
 
-		request := catalogRestClient.apiClient.EntityV1Api.UpdateBusinessMetadata(catalogRestClient.dataCatalogApiContext(ctx))
-		request = request.BusinessMetadata([]dc.BusinessMetadata{businessMetadataBindingRequest})
+		request := catalogRestClient.apiClient.EntityV1Api.UpdateBusinessMetadata(catalogRestClient.dataCatalogV1ApiContext(ctx))
+		request = request.BusinessMetadata([]datacatalogv1.BusinessMetadata{businessMetadataBindingRequest})
 
 		updateBusinessMetadataBindingRequestJson, err := json.Marshal(request)
 		if err != nil {
@@ -367,7 +363,7 @@ func createBusinessMetadataBindingId(clusterId, businessMetadataName, entityName
 	return fmt.Sprintf("%s/%s/%s/%s", clusterId, businessMetadataName, entityName, entityType)
 }
 
-func setBusinessMetadataBindingAttributes(d *schema.ResourceData, clusterId string, businessMetadataBinding dc.BusinessMetadataResponse) (*schema.ResourceData, error) {
+func setBusinessMetadataBindingAttributes(d *schema.ResourceData, clusterId string, businessMetadataBinding datacatalogv1.BusinessMetadataResponse) (*schema.ResourceData, error) {
 	if err := d.Set(paramBusinessMetadataName, businessMetadataBinding.GetTypeName()); err != nil {
 		return nil, err
 	}

@@ -3,7 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/docker/go-connections/nat"
+
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
 )
@@ -14,7 +14,7 @@ type WiremockContainer struct {
 }
 
 func setupWiremock(ctx context.Context) (*WiremockContainer, error) {
-	port := nat.Port("8080")
+	port := "8080"
 	req := testcontainers.ContainerRequest{
 		Image:        "wiremock/wiremock:2.32.0-alpine",
 		ExposedPorts: []string{"8080/tcp"},

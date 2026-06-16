@@ -17,20 +17,12 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
 	"testing"
-)
 
-const (
-	privateLinkAttachmentAwsResourceScenarioName        = "confluent_private_link_attachment Resource Lifecycle"
-	scenarioStatePrivateLinkAttachmentAwsHasBeenCreated = "A new private link attachment has been just created"
-	scenarioStatePrivateLinkAttachmentAwsHasBeenUpdated = "A new private link attachment has been just updated"
-
-	privateLinkAttachmentAwsUrlPath       = "/networking/v1/private-link-attachments"
-	privateLinkAttachmentAwsResourceLabel = "confluent_private_link_attachment.main"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/walkerus/go-wiremock"
 )
 
 func TestAccPrivateLinkAttachmentAws(t *testing.T) {

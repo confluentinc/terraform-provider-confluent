@@ -3,15 +3,12 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/walkerus/go-wiremock"
 	"net/http"
 	"os"
 	"testing"
-)
 
-const (
-	dataSourceFlinkArtifactScenarioName = "confluent_flink_artifact Data Source Lifecycle"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/walkerus/go-wiremock"
 )
 
 var fullArtifactDataSourceLabel = fmt.Sprintf("data.confluent_flink_artifact.%s", networkDataSourceLabel)

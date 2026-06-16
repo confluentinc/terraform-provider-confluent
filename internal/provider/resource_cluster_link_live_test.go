@@ -213,7 +213,7 @@ func testAccCheckClusterLinkLiveConfig(endpoint, clusterLinkResourceLabel, linkN
 	data "confluent_kafka_cluster" "standard_cluster" {
 		id = "%s"
 		environment {
-			id = "env-zyg27z"
+			id = "%s"
 		}
 	}
 
@@ -237,7 +237,7 @@ func testAccCheckClusterLinkLiveConfig(endpoint, clusterLinkResourceLabel, linkN
 			}
 		}
 	}
-	`, endpoint, apiKey, apiSecret, standardClusterId, clusterLinkResourceLabel, linkName, standardClusterId, standardApiKey, standardApiSecret, dedicatedClusterId, dedicatedRestEndpoint, dedicatedApiKey, dedicatedApiSecret)
+	`, endpoint, apiKey, apiSecret, standardClusterId, liveTestEnvironmentId, clusterLinkResourceLabel, linkName, standardClusterId, standardApiKey, standardApiSecret, dedicatedClusterId, dedicatedRestEndpoint, dedicatedApiKey, dedicatedApiSecret)
 }
 
 func testAccCheckClusterLinkUpdateLiveConfig(endpoint, clusterLinkResourceLabel, linkName, standardClusterId, dedicatedClusterId, dedicatedRestEndpoint, apiKey, apiSecret, standardApiKey, standardApiSecret, dedicatedApiKey, dedicatedApiSecret string) string {
@@ -252,7 +252,7 @@ func testAccCheckClusterLinkUpdateLiveConfig(endpoint, clusterLinkResourceLabel,
 	data "confluent_kafka_cluster" "standard_cluster" {
 		id = "%s"
 		environment {
-			id = "env-zyg27z"
+			id = "%s"
 		}
 	}
 
@@ -279,5 +279,5 @@ func testAccCheckClusterLinkUpdateLiveConfig(endpoint, clusterLinkResourceLabel,
 			"acl.sync.ms" = "5100"
 		}
 	}
-	`, endpoint, apiKey, apiSecret, standardClusterId, clusterLinkResourceLabel, linkName, standardClusterId, standardApiKey, standardApiSecret, dedicatedClusterId, dedicatedRestEndpoint, dedicatedApiKey, dedicatedApiSecret)
-} 
+	`, endpoint, apiKey, apiSecret, standardClusterId, liveTestEnvironmentId, clusterLinkResourceLabel, linkName, standardClusterId, standardApiKey, standardApiSecret, dedicatedClusterId, dedicatedRestEndpoint, dedicatedApiKey, dedicatedApiSecret)
+}

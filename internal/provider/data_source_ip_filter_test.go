@@ -12,10 +12,6 @@ import (
 	"github.com/walkerus/go-wiremock"
 )
 
-const (
-	ipFilterDataSourceScenarioName = "confluent_ip_filter Data Source Lifecycle"
-)
-
 func TestAccDataSourceFilter(t *testing.T) {
 	ctx := context.Background()
 

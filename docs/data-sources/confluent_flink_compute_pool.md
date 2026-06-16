@@ -59,6 +59,7 @@ In addition to the preceding arguments, the following attributes are exported:
 - `cloud` - (Required String) The cloud service provider that runs the Flink Compute Pool.
 - `region` - (Required String) The cloud service provider region that hosts the Flink Compute Pool.
 - `max_cfu` - (Required Integer) Maximum number of Confluent Flink Units (CFUs) that the Flink compute pool should auto-scale to.
+- `default_pool` - (Optional Boolean) Indicate whether the Flink compute pool is a default compute pool or not. Default value is `false`.
 - `environment` (Required Configuration Block) supports the following:
   - `id` - (Required String) The ID of the Environment that the Flink Compute Pool belongs to, for example, `env-abc123`.
 - `api_version` - (Required String) The API Version of the schema version of the Flink Compute Pool, for example, `fcpm/v2`.

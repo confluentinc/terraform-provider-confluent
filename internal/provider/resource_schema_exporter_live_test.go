@@ -87,9 +87,9 @@ func TestAccSchemaExporterLive(t *testing.T) {
 				),
 			},
 			{
-				ResourceName:      fmt.Sprintf("confluent_schema_exporter.%s", exporterResourceLabel),
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            fmt.Sprintf("confluent_schema_exporter.%s", exporterResourceLabel),
+				ImportState:             true,
+				ImportStateVerify:       true,
 				ImportStateVerifyIgnore: []string{"credentials", "rest_endpoint", "schema_registry_cluster", "destination_schema_registry_cluster.0.credentials.0.key", "destination_schema_registry_cluster.0.credentials.0.secret", "reset_on_update"},
 			},
 		},
@@ -260,4 +260,4 @@ func testAccCheckSchemaExporterUpdateLiveConfig(endpoint, exporterResourceLabel,
 		}
 	}
 	`, endpoint, apiKey, apiSecret, exporterResourceLabel, exporterName, schemaRegistryId, schemaRegistryRestEndpoint, schemaRegistryApiKey, schemaRegistryApiSecret, destinationRestEndpoint, destinationApiKey, destinationApiSecret)
-} 
+}

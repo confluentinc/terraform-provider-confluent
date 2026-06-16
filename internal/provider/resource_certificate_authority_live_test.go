@@ -75,6 +75,7 @@ func TestAccCertificateAuthorityLive(t *testing.T) {
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_certificate_authority.%s", caResourceLabel), "display_name", caDisplayName),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_certificate_authority.%s", caResourceLabel), "description", "Test Certificate Authority for live testing"),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_certificate_authority.%s", caResourceLabel), "certificate_chain_filename", "ca-cert.pem"),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_certificate_authority.%s", caResourceLabel), "require_crl_on_client_certificate", "false"),
 					resource.TestCheckResourceAttrSet(fmt.Sprintf("confluent_certificate_authority.%s", caResourceLabel), "id"),
 					resource.TestCheckResourceAttrSet(fmt.Sprintf("confluent_certificate_authority.%s", caResourceLabel), "fingerprints.#"),
 					resource.TestCheckResourceAttrSet(fmt.Sprintf("confluent_certificate_authority.%s", caResourceLabel), "expiration_dates.#"),
@@ -117,7 +118,7 @@ func testAccCheckCertificateAuthorityLiveDestroy(s *terraform.State) error {
 			continue
 		}
 		deletedCAId := rs.Primary.ID
-		req := c.caClient.CertificateAuthoritiesIamV2Api.GetIamV2CertificateAuthority(c.caApiContext(context.Background()), deletedCAId)
+		req := c.certificateAuthorityV2Client.CertificateAuthoritiesIamV2Api.GetIamV2CertificateAuthority(c.certificateAuthorityV2ApiContext(context.Background()), deletedCAId)
 		deletedCA, response, err := req.Execute()
 		if response != nil && (response.StatusCode == http.StatusForbidden || response.StatusCode == http.StatusNotFound) {
 			// If the error is equivalent to http.StatusNotFound, the Certificate Authority is destroyed.
@@ -186,4 +187,3 @@ func testAccCheckCertificateAuthorityLiveExists(n string) resource.TestCheckFunc
 		return nil
 	}
 }
-

@@ -17,26 +17,13 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-)
-
-const (
-	scenarioStateGcpPlaIsProvisioning          = "The new gcp private link access is provisioning"
-	scenarioStateGcpPlaIsDeprovisioning        = "The new gcp private link access is deprovisioning"
-	scenarioStateGcpPlaHasBeenCreated          = "The new gcp private link access has been just created"
-	scenarioStateGcpPlaIsInDeprovisioningState = "The new gcp private link access is in deprovisioning state"
-	scenarioStateGcpPlaHasBeenDeleted          = "The new gcp private link access's deletion has been just completed"
-	gcpPlaScenarioName                         = "confluent_private_link_access Resource Lifecycle"
-	gcpPlaEnvironmentId                        = "env-j5zwzm"
-	gcpPlaNetworkId                            = "n-6ky22p"
-	gcpPlaId                                   = "pla-gewd7g"
-	gcpPlaProject                              = "test-project"
+	"github.com/walkerus/go-wiremock"
 )
 
 var gcpPlaUrlPath = fmt.Sprintf("/networking/v1/private-link-accesses/%s", gcpPlaId)
@@ -195,7 +182,7 @@ func testAccCheckGcpPlaDestroy(s *terraform.State) error {
 			continue
 		}
 		deletedPrivateLinkAccessId := rs.Primary.ID
-		req := c.netClient.PrivateLinkAccessesNetworkingV1Api.GetNetworkingV1PrivateLinkAccess(c.netApiContext(context.Background()), deletedPrivateLinkAccessId).Environment(gcpPlaEnvironmentId)
+		req := c.networkingV1Client.PrivateLinkAccessesNetworkingV1Api.GetNetworkingV1PrivateLinkAccess(c.networkingV1ApiContext(context.Background()), deletedPrivateLinkAccessId).Environment(gcpPlaEnvironmentId)
 		deletedPrivateLinkAccess, response, err := req.Execute()
 		if response != nil && response.StatusCode == http.StatusNotFound {
 			return nil

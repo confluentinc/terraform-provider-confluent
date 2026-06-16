@@ -17,18 +17,12 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
 	"testing"
-)
 
-const (
-	kekDataSourceScenarioName = "confluent_schema_registry_kek Data Source Lifecycle"
-	kekUrlPath                = "/dek-registry/v1/keks/testkek"
-	testKekName               = "testkek"
-	kekDataSourceLabel        = "data.confluent_schema_registry_kek.kek"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/walkerus/go-wiremock"
 )
 
 func TestAccDataSourceSchemaRegistryKek(t *testing.T) {

@@ -25,18 +25,6 @@ import (
 	"github.com/walkerus/go-wiremock"
 )
 
-const (
-	scenarioStateKafkaCreatedWithSingleZone  = "Kafka cluster created with SINGLE_ZONE"
-	scenarioStateKafkaProvisionedSingleZone  = "Kafka cluster provisioned with SINGLE_ZONE"
-	scenarioStateKafkaReadyForLowTransition  = "Kafka cluster ready for LOW transition"
-	scenarioStateKafkaApiReturnsLow          = "Kafka cluster API returns LOW (V2 billing model)"
-	scenarioStateKafkaCreatedWithMultiZone   = "Kafka cluster created with MULTI_ZONE"
-	scenarioStateKafkaProvisionedMultiZone   = "Kafka cluster provisioned with MULTI_ZONE"
-	scenarioStateKafkaReadyForHighTransition = "Kafka cluster ready for HIGH transition"
-	scenarioStateKafkaApiReturnsHigh         = "Kafka cluster API returns HIGH (V2 billing model)"
-	availabilityDriftScenarioName            = "confluent_kafka Availability Drift"
-)
-
 // TestAccKafkaClusterAvailabilityDriftSingleZoneToLow tests that DiffSuppressFunc
 // correctly suppresses drift when API returns LOW but config has SINGLE_ZONE
 func TestAccKafkaClusterAvailabilityDriftSingleZoneToLow(t *testing.T) {

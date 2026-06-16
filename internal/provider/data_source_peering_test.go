@@ -17,18 +17,12 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-)
-
-const (
-	dataSourcePeeringScenarioName = "confluent_peering Data Source Lifecycle"
-	peeringDataSourceLabel        = "example"
-	peeringDataSourceDisplayName  = "my-test-peering"
+	"github.com/walkerus/go-wiremock"
 )
 
 var fullPeeringDataSourceLabel = fmt.Sprintf("data.confluent_peering.%s", peeringDataSourceLabel)

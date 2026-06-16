@@ -17,33 +17,55 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"testing"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/walkerus/go-wiremock"
 )
 
 func TestAccTag(t *testing.T) {
 	ctx := context.Background()
 
-	wiremockContainer, err := setupWiremock(ctx)
+	initialContainer, err := setupWiremock(ctx)
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer wiremockContainer.Terminate(ctx)
+	defer initialContainer.Terminate(ctx)
 
-	mockServerUrl := wiremockContainer.URI
-	wiremockClient := wiremock.NewClient(mockServerUrl)
+	updatedContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer updatedContainer.Terminate(ctx)
+
+	mockServerInitialUrl := initialContainer.URI
+	mockServerUpdatedUrl := updatedContainer.URI
+	initialClient := wiremock.NewClient(mockServerInitialUrl)
+	updatedClient := wiremock.NewClient(mockServerUpdatedUrl)
 	// nolint:errcheck
-	defer wiremockClient.Reset()
+	defer initialClient.Reset()
+	defer updatedClient.Reset()
 
 	// nolint:errcheck
-	defer wiremockClient.ResetAllScenarios()
+	defer initialClient.ResetAllScenarios()
+	defer updatedClient.ResetAllScenarios()
+
+	// WireMock scenario state does not transfer between containers. When step 2 switches
+	// to mockServerUpdatedUrl, advance updatedClient from Started to TagHasBeenCreated so
+	// it can serve reads/updates without the resource being recreated.
+	dummyPath := "/state-sync"
+	_ = updatedClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(dummyPath)).
+		InScenario(tagResourceScenarioName).
+		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
+		WillSetStateTo(scenarioStateTagHasBeenCreated).
+		WillReturn("OK", contentTypeJSONHeader, http.StatusOK))
+	http.Get(mockServerUpdatedUrl + dummyPath)
 
 	createTagResponse, _ := ioutil.ReadFile("../testdata/tag/create_tag.json")
-	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(createTagUrlPath)).
+	createTagStub := wiremock.Post(wiremock.URLPathEqualTo(createTagUrlPath)).
 		InScenario(tagResourceScenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
 		WillSetStateTo(scenarioStateTagHasBeenPending).
@@ -51,9 +73,10 @@ func TestAccTag(t *testing.T) {
 			string(createTagResponse),
 			contentTypeJSONHeader,
 			http.StatusCreated,
-		))
+		)
+	_ = initialClient.StubFor(createTagStub)
 
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readCreatedTagUrlPath)).
+	_ = initialClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readCreatedTagUrlPath)).
 		InScenario(tagResourceScenarioName).
 		WhenScenarioStateIs(scenarioStateTagHasBeenPending).
 		WillSetStateTo(scenarioStateTagHasBeenCreated).
@@ -63,8 +86,27 @@ func TestAccTag(t *testing.T) {
 			http.StatusNotFound,
 		))
 
+	readTagResponse, _ := ioutil.ReadFile("../testdata/tag/read_tag.json")
+	_ = initialClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readCreatedTagUrlPath)).
+		InScenario(tagResourceScenarioName).
+		WhenScenarioStateIs(scenarioStateTagHasBeenCreated).
+		WillReturn(
+			string(readTagResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
+	_ = updatedClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readCreatedTagUrlPath)).
+		InScenario(tagResourceScenarioName).
+		WhenScenarioStateIs(scenarioStateTagHasBeenCreated).
+		WillReturn(
+			string(readTagResponse),
+			contentTypeJSONHeader,
+			http.StatusOK,
+		))
+
 	updateTagResponse, _ := ioutil.ReadFile("../testdata/tag/update_tag.json")
-	_ = wiremockClient.StubFor(wiremock.Put(wiremock.URLPathEqualTo(createTagUrlPath)).
+	_ = updatedClient.StubFor(wiremock.Put(wiremock.URLPathEqualTo(createTagUrlPath)).
 		InScenario(tagResourceScenarioName).
 		WhenScenarioStateIs(scenarioStateTagHasBeenCreated).
 		WillSetStateTo(scenarioStateTagHasBeenUpdated).
@@ -74,18 +116,8 @@ func TestAccTag(t *testing.T) {
 			http.StatusCreated,
 		))
 
-	readTagResponse, _ := ioutil.ReadFile("../testdata/tag/read_tag.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readCreatedTagUrlPath)).
-		InScenario(tagResourceScenarioName).
-		WhenScenarioStateIs(scenarioStateTagHasBeenCreated).
-		WillReturn(
-			string(readTagResponse),
-			contentTypeJSONHeader,
-			http.StatusOK,
-		))
-
 	readUpdatedTagResponse, _ := ioutil.ReadFile("../testdata/tag/read_updated_tag.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readCreatedTagUrlPath)).
+	_ = updatedClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readCreatedTagUrlPath)).
 		InScenario(tagResourceScenarioName).
 		WhenScenarioStateIs(scenarioStateTagHasBeenUpdated).
 		WillReturn(
@@ -94,18 +126,19 @@ func TestAccTag(t *testing.T) {
 			http.StatusOK,
 		))
 
-	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(readCreatedTagUrlPath)).
+	deleteTagStub := wiremock.Delete(wiremock.URLPathEqualTo(readCreatedTagUrlPath)).
 		InScenario(tagResourceScenarioName).
 		WillReturn(
 			"",
 			contentTypeJSONHeader,
 			http.StatusNoContent,
-		))
+		)
+	_ = updatedClient.StubFor(deleteTagStub)
 
 	// Set fake values for secrets since those are required for importing
 	_ = os.Setenv("IMPORT_SCHEMA_REGISTRY_API_KEY", testSchemaRegistryUpdatedKey)
 	_ = os.Setenv("IMPORT_SCHEMA_REGISTRY_API_SECRET", testSchemaRegistryUpdatedSecret)
-	_ = os.Setenv("IMPORT_CATALOG_REST_ENDPOINT", mockServerUrl)
+	_ = os.Setenv("IMPORT_CATALOG_REST_ENDPOINT", mockServerUpdatedUrl)
 
 	defer func() {
 		_ = os.Unsetenv("IMPORT_SCHEMA_REGISTRY_API_KEY")
@@ -120,13 +153,13 @@ func TestAccTag(t *testing.T) {
 		// https://www.terraform.io/docs/extend/best-practices/testing.html#built-in-patterns
 		Steps: []resource.TestStep{
 			{
-				Config: tagResourceConfig(mockServerUrl),
+				Config: tagResourceConfig(mockServerInitialUrl),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(tagLabel, "id", fmt.Sprintf("%s/test1", testStreamGovernanceClusterId)),
 					resource.TestCheckResourceAttr(tagLabel, "schema_registry_cluster.#", "1"),
 					resource.TestCheckResourceAttr(tagLabel, "schema_registry_cluster.0.%", "1"),
 					resource.TestCheckResourceAttr(tagLabel, "schema_registry_cluster.0.id", testStreamGovernanceClusterId),
-					resource.TestCheckResourceAttr(tagLabel, "rest_endpoint", mockServerUrl),
+					resource.TestCheckResourceAttr(tagLabel, "rest_endpoint", mockServerInitialUrl),
 					resource.TestCheckResourceAttr(tagLabel, "credentials.#", "1"),
 					resource.TestCheckResourceAttr(tagLabel, "credentials.0.%", "2"),
 					resource.TestCheckResourceAttr(tagLabel, "credentials.0.key", testSchemaRegistryKey),
@@ -139,13 +172,13 @@ func TestAccTag(t *testing.T) {
 				),
 			},
 			{
-				Config: tagResourceUpdatedConfig(mockServerUrl),
+				Config: tagResourceUpdatedConfig(mockServerUpdatedUrl),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(tagLabel, "id", fmt.Sprintf("%s/test1", testStreamGovernanceClusterId)),
 					resource.TestCheckResourceAttr(tagLabel, "schema_registry_cluster.#", "1"),
 					resource.TestCheckResourceAttr(tagLabel, "schema_registry_cluster.0.%", "1"),
 					resource.TestCheckResourceAttr(tagLabel, "schema_registry_cluster.0.id", testStreamGovernanceClusterId),
-					resource.TestCheckResourceAttr(tagLabel, "rest_endpoint", mockServerUrl),
+					resource.TestCheckResourceAttr(tagLabel, "rest_endpoint", mockServerUpdatedUrl),
 					resource.TestCheckResourceAttr(tagLabel, "credentials.#", "1"),
 					resource.TestCheckResourceAttr(tagLabel, "credentials.0.%", "2"),
 					resource.TestCheckResourceAttr(tagLabel, "credentials.0.key", testSchemaRegistryKey),
@@ -159,6 +192,9 @@ func TestAccTag(t *testing.T) {
 			},
 		},
 	})
+
+	checkStubCount(t, initialClient, createTagStub, fmt.Sprintf("POST %s", createTagUrlPath), expectedCountOne)
+	checkStubCount(t, updatedClient, deleteTagStub, fmt.Sprintf("DELETE %s", readCreatedTagUrlPath), expectedCountOne)
 }
 
 func tagResourceConfig(mockServerUrl string) string {

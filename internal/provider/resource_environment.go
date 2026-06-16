@@ -18,16 +18,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	org "github.com/confluentinc/ccloud-sdk-go-v2/org/v2"
+	"net/http"
+
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"net/http"
-)
 
-const (
-	paramStreamGovernance = "stream_governance"
+	orgv2 "github.com/confluentinc/ccloud-sdk-go-v2/org/v2"
 )
 
 func environmentResource() *schema.Resource {
@@ -61,14 +59,14 @@ func environmentUpdate(ctx context.Context, d *schema.ResourceData, meta interfa
 		return diag.Errorf("error updating Environment %q: only %q or %q attributes can be updated for Environment", d.Id(), paramDisplayName, paramStreamGovernance)
 	}
 
-	updateEnvironmentRequest := org.NewOrgV2Environment()
+	updateEnvironmentRequest := orgv2.NewOrgV2Environment()
 	if d.HasChange(paramDisplayName) {
 		updatedDisplayName := d.Get(paramDisplayName).(string)
 		updateEnvironmentRequest.SetDisplayName(updatedDisplayName)
 	}
 	if d.HasChange(getNestedStreamGovernancePackageKey()) {
 		updatedPackage := extractStringValueFromBlock(d, paramStreamGovernance, paramPackage)
-		updateEnvironmentRequest.SetStreamGovernanceConfig(org.OrgV2StreamGovernanceConfig{
+		updateEnvironmentRequest.SetStreamGovernanceConfig(orgv2.OrgV2StreamGovernanceConfig{
 			Package: updatedPackage,
 		})
 	}
@@ -79,7 +77,7 @@ func environmentUpdate(ctx context.Context, d *schema.ResourceData, meta interfa
 	tflog.Debug(ctx, fmt.Sprintf("Updating Environment %q: %s", d.Id(), updateEnvironmentRequestJson), map[string]interface{}{environmentLoggingKey: d.Id()})
 
 	c := meta.(*Client)
-	updatedEnvironment, resp, err := c.orgClient.EnvironmentsOrgV2Api.UpdateOrgV2Environment(c.orgApiContext(ctx), d.Id()).OrgV2Environment(*updateEnvironmentRequest).Execute()
+	updatedEnvironment, resp, err := c.orgV2Client.EnvironmentsOrgV2Api.UpdateOrgV2Environment(c.orgV2ApiContext(ctx), d.Id()).OrgV2Environment(*updateEnvironmentRequest).Execute()
 
 	if err != nil {
 		return diag.Errorf("error updating Environment %q: %s", d.Id(), createDescriptiveError(err, resp))
@@ -98,10 +96,10 @@ func environmentCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 	c := meta.(*Client)
 
 	displayName := d.Get(paramDisplayName).(string)
-	createEnvironmentRequest := org.NewOrgV2Environment()
+	createEnvironmentRequest := orgv2.NewOrgV2Environment()
 	createEnvironmentRequest.SetDisplayName(displayName)
 	if d.HasChange(getNestedStreamGovernancePackageKey()) {
-		createEnvironmentRequest.SetStreamGovernanceConfig(org.OrgV2StreamGovernanceConfig{
+		createEnvironmentRequest.SetStreamGovernanceConfig(orgv2.OrgV2StreamGovernanceConfig{
 			Package: extractStringValueFromBlock(d, paramStreamGovernance, paramPackage)})
 	}
 	createEnvironmentRequestJson, err := json.Marshal(createEnvironmentRequest)
@@ -110,7 +108,7 @@ func environmentCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Environment: %s", createEnvironmentRequestJson))
 
-	createdEnvironment, resp, err := executeEnvironmentCreate(c.orgApiContext(ctx), c, createEnvironmentRequest)
+	createdEnvironment, resp, err := executeEnvironmentCreate(c.orgV2ApiContext(ctx), c, createEnvironmentRequest)
 	if err != nil {
 		return diag.Errorf("error creating Environment %q: %s", displayName, createDescriptiveError(err, resp))
 	}
@@ -125,8 +123,8 @@ func environmentCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 	return environmentRead(ctx, d, meta)
 }
 
-func executeEnvironmentCreate(ctx context.Context, c *Client, environment *org.OrgV2Environment) (org.OrgV2Environment, *http.Response, error) {
-	req := c.orgClient.EnvironmentsOrgV2Api.CreateOrgV2Environment(c.orgApiContext(ctx)).OrgV2Environment(*environment)
+func executeEnvironmentCreate(ctx context.Context, c *Client, environment *orgv2.OrgV2Environment) (orgv2.OrgV2Environment, *http.Response, error) {
+	req := c.orgV2Client.EnvironmentsOrgV2Api.CreateOrgV2Environment(c.orgV2ApiContext(ctx)).OrgV2Environment(*environment)
 	return req.Execute()
 }
 
@@ -134,7 +132,7 @@ func environmentDelete(ctx context.Context, d *schema.ResourceData, meta interfa
 	tflog.Debug(ctx, fmt.Sprintf("Deleting Environment %q", d.Id()), map[string]interface{}{environmentLoggingKey: d.Id()})
 	c := meta.(*Client)
 
-	req := c.orgClient.EnvironmentsOrgV2Api.DeleteOrgV2Environment(c.orgApiContext(ctx), d.Id())
+	req := c.orgV2Client.EnvironmentsOrgV2Api.DeleteOrgV2Environment(c.orgV2ApiContext(ctx), d.Id())
 	resp, err := req.Execute()
 
 	if err != nil {
@@ -146,15 +144,15 @@ func environmentDelete(ctx context.Context, d *schema.ResourceData, meta interfa
 	return nil
 }
 
-func executeEnvironmentRead(ctx context.Context, c *Client, environmentId string) (org.OrgV2Environment, *http.Response, error) {
-	req := c.orgClient.EnvironmentsOrgV2Api.GetOrgV2Environment(c.orgApiContext(ctx), environmentId)
+func executeEnvironmentRead(ctx context.Context, c *Client, environmentId string) (orgv2.OrgV2Environment, *http.Response, error) {
+	req := c.orgV2Client.EnvironmentsOrgV2Api.GetOrgV2Environment(c.orgV2ApiContext(ctx), environmentId)
 	return req.Execute()
 }
 
 func environmentRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	tflog.Debug(ctx, fmt.Sprintf("Reading Environment %q", d.Id()), map[string]interface{}{environmentLoggingKey: d.Id()})
 	c := meta.(*Client)
-	environment, resp, err := executeEnvironmentRead(c.orgApiContext(ctx), c, d.Id())
+	environment, resp, err := executeEnvironmentRead(c.orgV2ApiContext(ctx), c, d.Id())
 	if err != nil {
 		tflog.Warn(ctx, fmt.Sprintf("Error reading Environment %q: %s", d.Id(), createDescriptiveError(err, resp)), map[string]interface{}{environmentLoggingKey: d.Id()})
 
@@ -186,7 +184,7 @@ func environmentImport(ctx context.Context, d *schema.ResourceData, meta interfa
 	tflog.Debug(ctx, fmt.Sprintf("Importing Environment %q", d.Id()), map[string]interface{}{environmentLoggingKey: d.Id()})
 	// Mark resource as new to avoid d.Set("") when getting 404
 	d.MarkNewResource()
-	if diagnostics := environmentRead(ctx, d, meta); diagnostics != nil {
+	if diagnostics := environmentRead(ctx, d, meta); len(diagnostics) > 0 {
 		return nil, fmt.Errorf("error importing Environment %q: %s", d.Id(), diagnostics[0].Summary)
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Finished importing Environment %q", d.Id()), map[string]interface{}{environmentLoggingKey: d.Id()})

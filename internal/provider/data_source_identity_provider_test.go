@@ -25,11 +25,6 @@ import (
 	"github.com/walkerus/go-wiremock"
 )
 
-const (
-	dataSourceIdentityProviderScenarioName = "confluent_identity_provider Data Source Lifecycle"
-	identityProviderDataSourceLabel        = "example"
-)
-
 var fullIdentityProviderDataSourceLabel = fmt.Sprintf("data.confluent_identity_provider.%s", identityProviderDataSourceLabel)
 
 func TestAccDataSourceIdentityProvider(t *testing.T) {

@@ -3,18 +3,13 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/walkerus/go-wiremock"
 	"net/http"
 	"os"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-)
-
-const (
-	flinkArtifactCloudAzure  = "AZURE"
-	flinkArtifactRegionAzure = "centralus"
+	"github.com/walkerus/go-wiremock"
 )
 
 func TestAccFlinkArtifactAzure(t *testing.T) {
@@ -163,7 +158,7 @@ func testAccCheckArtifactDestroyAzure(s *terraform.State) error {
 			continue
 		}
 		deletedArtifactId := rs.Primary.ID
-		req := c.faClient.FlinkArtifactsArtifactV1Api.GetArtifactV1FlinkArtifact(c.faApiContext(context.Background()), deletedArtifactId).Cloud(flinkArtifactCloudAzure).Region(flinkArtifactRegionAzure).Environment(flinkArtifactEnvironmentId)
+		req := c.flinkArtifactV1Client.FlinkArtifactsArtifactV1Api.GetArtifactV1FlinkArtifact(c.flinkArtifactV1ApiContext(context.Background()), deletedArtifactId).Cloud(flinkArtifactCloudAzure).Region(flinkArtifactRegionAzure).Environment(flinkArtifactEnvironmentId)
 		deletedArtifact, response, err := req.Execute()
 		if response != nil && response.StatusCode == http.StatusNotFound {
 			return nil

@@ -11,10 +11,6 @@ import (
 	"github.com/walkerus/go-wiremock"
 )
 
-const (
-	TableflowTopicDataSourceScenarioName = "confluent_tableflow_topic Data Source Lifecycle"
-)
-
 func TestAccDataSourceTableflowTopic(t *testing.T) {
 	ctx := context.Background()
 

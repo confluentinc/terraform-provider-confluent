@@ -18,21 +18,16 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	net "github.com/confluentinc/ccloud-sdk-go-v2/networking/v1"
+	"net/http"
+	"regexp"
+	"strings"
+
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"net/http"
-	"regexp"
-	"strings"
-)
 
-const (
-	paramRamResourceShareArn        = "ram_resource_share_arn"
-	paramTransitGatewayId           = "transit_gateway_id"
-	paramTransitGatewayAttachmentId = "transit_gateway_attachment_id"
-	awsTransitGatewayAttachmentKind = "AwsTransitGatewayAttachment"
+	networkingv1 "github.com/confluentinc/ccloud-sdk-go-v2/networking/v1"
 )
 
 var paramAwsRamResourceShareArn = fmt.Sprintf("%s.0.%s", paramAws, paramRamResourceShareArn)
@@ -74,7 +69,7 @@ func transitGatewayAttachmentCreate(ctx context.Context, d *schema.ResourceData,
 
 	isAwsTransitGatewayAttachment := len(d.Get(paramAws).([]interface{})) > 0
 
-	spec := net.NewNetworkingV1TransitGatewayAttachmentSpec()
+	spec := networkingv1.NewNetworkingV1TransitGatewayAttachmentSpec()
 	if displayName != "" {
 		spec.SetDisplayName(displayName)
 	}
@@ -82,28 +77,28 @@ func transitGatewayAttachmentCreate(ctx context.Context, d *schema.ResourceData,
 		ramResourceShareArn := d.Get(paramAwsRamResourceShareArn).(string)
 		transitGatewayId := d.Get(paramAwsTransitGatewayId).(string)
 		routes := convertToStringSlice(d.Get(paramAwsRoutes).([]interface{}))
-		awsTransitGatewayAttachment := net.NewNetworkingV1AwsTransitGatewayAttachment(awsTransitGatewayAttachmentKind, ramResourceShareArn, transitGatewayId, routes)
-		spec.SetCloud(net.NetworkingV1TransitGatewayAttachmentSpecCloudOneOf{NetworkingV1AwsTransitGatewayAttachment: awsTransitGatewayAttachment})
+		awsTransitGatewayAttachment := networkingv1.NewNetworkingV1AwsTransitGatewayAttachment(awsTransitGatewayAttachmentKind, ramResourceShareArn, transitGatewayId, routes)
+		spec.SetCloud(networkingv1.NetworkingV1TransitGatewayAttachmentSpecCloudOneOf{NetworkingV1AwsTransitGatewayAttachment: awsTransitGatewayAttachment})
 	} else {
 		return diag.Errorf("None of %q blocks was provided for confluent_transit_gateway_attachment resource", paramAws)
 	}
-	spec.SetNetwork(net.ObjectReference{Id: networkId})
-	spec.SetEnvironment(net.ObjectReference{Id: environmentId})
+	spec.SetNetwork(networkingv1.ObjectReference{Id: networkId})
+	spec.SetEnvironment(networkingv1.ObjectReference{Id: environmentId})
 
-	createTransitGatewayAttachmentRequest := net.NetworkingV1TransitGatewayAttachment{Spec: spec}
+	createTransitGatewayAttachmentRequest := networkingv1.NetworkingV1TransitGatewayAttachment{Spec: spec}
 	createTransitGatewayAttachmentRequestJson, err := json.Marshal(createTransitGatewayAttachmentRequest)
 	if err != nil {
 		return diag.Errorf("error creating Transit Gateway Attachment: error marshaling %#v to json: %s", createTransitGatewayAttachmentRequest, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Transit Gateway Attachment: %s", createTransitGatewayAttachmentRequestJson))
 
-	createdTransitGatewayAttachment, resp, err := executeTransitGatewayAttachmentCreate(c.netApiContext(ctx), c, createTransitGatewayAttachmentRequest)
+	createdTransitGatewayAttachment, resp, err := executeTransitGatewayAttachmentCreate(c.networkingV1ApiContext(ctx), c, createTransitGatewayAttachmentRequest)
 	if err != nil {
 		return diag.Errorf("error creating Transit Gateway Attachment %q: %s", createdTransitGatewayAttachment.GetId(), createDescriptiveError(err, resp))
 	}
 	d.SetId(createdTransitGatewayAttachment.GetId())
 
-	if err := waitForTransitGatewayAttachmentToProvision(c.netApiContext(ctx), c, environmentId, d.Id()); err != nil {
+	if err := waitForTransitGatewayAttachmentToProvision(c.networkingV1ApiContext(ctx), c, environmentId, d.Id()); err != nil {
 		return diag.Errorf("error waiting for Transit Gateway Attachment %q to provision: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
@@ -116,13 +111,13 @@ func transitGatewayAttachmentCreate(ctx context.Context, d *schema.ResourceData,
 	return transitGatewayAttachmentRead(ctx, d, meta)
 }
 
-func executeTransitGatewayAttachmentCreate(ctx context.Context, c *Client, transitGatewayAttachment net.NetworkingV1TransitGatewayAttachment) (net.NetworkingV1TransitGatewayAttachment, *http.Response, error) {
-	req := c.netClient.TransitGatewayAttachmentsNetworkingV1Api.CreateNetworkingV1TransitGatewayAttachment(c.netApiContext(ctx)).NetworkingV1TransitGatewayAttachment(transitGatewayAttachment)
+func executeTransitGatewayAttachmentCreate(ctx context.Context, c *Client, transitGatewayAttachment networkingv1.NetworkingV1TransitGatewayAttachment) (networkingv1.NetworkingV1TransitGatewayAttachment, *http.Response, error) {
+	req := c.networkingV1Client.TransitGatewayAttachmentsNetworkingV1Api.CreateNetworkingV1TransitGatewayAttachment(c.networkingV1ApiContext(ctx)).NetworkingV1TransitGatewayAttachment(transitGatewayAttachment)
 	return req.Execute()
 }
 
-func executeTransitGatewayAttachmentRead(ctx context.Context, c *Client, environmentId string, transitGatewayAttachmentId string) (net.NetworkingV1TransitGatewayAttachment, *http.Response, error) {
-	req := c.netClient.TransitGatewayAttachmentsNetworkingV1Api.GetNetworkingV1TransitGatewayAttachment(c.netApiContext(ctx), transitGatewayAttachmentId).Environment(environmentId)
+func executeTransitGatewayAttachmentRead(ctx context.Context, c *Client, environmentId string, transitGatewayAttachmentId string) (networkingv1.NetworkingV1TransitGatewayAttachment, *http.Response, error) {
+	req := c.networkingV1Client.TransitGatewayAttachmentsNetworkingV1Api.GetNetworkingV1TransitGatewayAttachment(c.networkingV1ApiContext(ctx), transitGatewayAttachmentId).Environment(environmentId)
 	return req.Execute()
 }
 
@@ -142,7 +137,7 @@ func transitGatewayAttachmentRead(ctx context.Context, d *schema.ResourceData, m
 func readTransitGatewayAttachmentAndSetAttributes(ctx context.Context, d *schema.ResourceData, meta interface{}, environmentId, transitGatewayAttachmentId string) ([]*schema.ResourceData, error) {
 	c := meta.(*Client)
 
-	transitGatewayAttachment, resp, err := executeTransitGatewayAttachmentRead(c.netApiContext(ctx), c, environmentId, transitGatewayAttachmentId)
+	transitGatewayAttachment, resp, err := executeTransitGatewayAttachmentRead(c.networkingV1ApiContext(ctx), c, environmentId, transitGatewayAttachmentId)
 	if err != nil {
 		tflog.Warn(ctx, fmt.Sprintf("Error reading Transit Gateway Attachment %q: %s", d.Id(), createDescriptiveError(err, resp)), map[string]interface{}{transitGatewayAttachmentLoggingKey: d.Id()})
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
@@ -169,7 +164,7 @@ func readTransitGatewayAttachmentAndSetAttributes(ctx context.Context, d *schema
 	return []*schema.ResourceData{d}, nil
 }
 
-func setTransitGatewayAttachmentAttributes(d *schema.ResourceData, transitGatewayAttachment net.NetworkingV1TransitGatewayAttachment) (*schema.ResourceData, error) {
+func setTransitGatewayAttachmentAttributes(d *schema.ResourceData, transitGatewayAttachment networkingv1.NetworkingV1TransitGatewayAttachment) (*schema.ResourceData, error) {
 	if err := d.Set(paramDisplayName, transitGatewayAttachment.Spec.GetDisplayName()); err != nil {
 		return nil, err
 	}
@@ -200,14 +195,14 @@ func transitGatewayAttachmentDelete(ctx context.Context, d *schema.ResourceData,
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
 	c := meta.(*Client)
 
-	req := c.netClient.TransitGatewayAttachmentsNetworkingV1Api.DeleteNetworkingV1TransitGatewayAttachment(c.netApiContext(ctx), d.Id()).Environment(environmentId)
+	req := c.networkingV1Client.TransitGatewayAttachmentsNetworkingV1Api.DeleteNetworkingV1TransitGatewayAttachment(c.networkingV1ApiContext(ctx), d.Id()).Environment(environmentId)
 	resp, err := req.Execute()
 
 	if err != nil {
 		return diag.Errorf("error deleting Transit Gateway Attachment %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
-	if err := waitForTransitGatewayAttachmentToBeDeleted(c.netApiContext(ctx), c, environmentId, d.Id()); err != nil {
+	if err := waitForTransitGatewayAttachmentToBeDeleted(c.networkingV1ApiContext(ctx), c, environmentId, d.Id()); err != nil {
 		return diag.Errorf("error waiting for Transit Gateway Attachment %q to be deleted: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
@@ -224,10 +219,10 @@ func transitGatewayAttachmentUpdate(ctx context.Context, d *schema.ResourceData,
 	c := meta.(*Client)
 	updatedDisplayName := d.Get(paramDisplayName).(string)
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
-	updateTransitGatewayAttachmentRequest := net.NewNetworkingV1TransitGatewayAttachmentUpdate()
-	updateSpec := net.NewNetworkingV1TransitGatewayAttachmentSpecUpdate()
+	updateTransitGatewayAttachmentRequest := networkingv1.NewNetworkingV1TransitGatewayAttachmentUpdate()
+	updateSpec := networkingv1.NewNetworkingV1TransitGatewayAttachmentSpecUpdate()
 	updateSpec.SetDisplayName(updatedDisplayName)
-	updateSpec.SetEnvironment(net.ObjectReference{Id: environmentId})
+	updateSpec.SetEnvironment(networkingv1.ObjectReference{Id: environmentId})
 	updateTransitGatewayAttachmentRequest.SetSpec(*updateSpec)
 	updateTransitGatewayAttachmentRequestJson, err := json.Marshal(updateTransitGatewayAttachmentRequest)
 	if err != nil {
@@ -235,7 +230,7 @@ func transitGatewayAttachmentUpdate(ctx context.Context, d *schema.ResourceData,
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Updating Transit Gateway Attachment %q: %s", d.Id(), updateTransitGatewayAttachmentRequestJson), map[string]interface{}{transitGatewayAttachmentLoggingKey: d.Id()})
 
-	req := c.netClient.TransitGatewayAttachmentsNetworkingV1Api.UpdateNetworkingV1TransitGatewayAttachment(c.netApiContext(ctx), d.Id()).NetworkingV1TransitGatewayAttachmentUpdate(*updateTransitGatewayAttachmentRequest)
+	req := c.networkingV1Client.TransitGatewayAttachmentsNetworkingV1Api.UpdateNetworkingV1TransitGatewayAttachment(c.networkingV1ApiContext(ctx), d.Id()).NetworkingV1TransitGatewayAttachmentUpdate(*updateTransitGatewayAttachmentRequest)
 	updatedTransitGatewayAttachment, resp, err := req.Execute()
 
 	if err != nil {

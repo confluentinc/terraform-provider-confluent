@@ -18,14 +18,16 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	sr "github.com/confluentinc/ccloud-sdk-go-v2/schema-registry/v1"
+	"net/http"
+	"regexp"
+
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"net/http"
-	"regexp"
+
+	schemaregistryv1 "github.com/confluentinc/ccloud-sdk-go-v2/schema-registry/v1"
 )
 
 func schemaRegistryClusterModeResource() *schema.Resource {
@@ -82,7 +84,7 @@ func schemaRegistryClusterModeCreate(ctx context.Context, d *schema.ResourceData
 	if _, ok := d.GetOk(paramMode); ok {
 		compatibilityLevel := d.Get(paramMode).(string)
 		force := d.Get(paramForce).(bool)
-		createModeRequest := sr.NewModeUpdateRequest()
+		createModeRequest := schemaregistryv1.NewModeUpdateRequest()
 		createModeRequest.SetMode(compatibilityLevel)
 		createModeRequestJson, err := json.Marshal(createModeRequest)
 		if err != nil {
@@ -226,7 +228,7 @@ func schemaRegistryClusterModeUpdate(ctx context.Context, d *schema.ResourceData
 	if d.HasChange(paramMode) {
 		updatedMode := d.Get(paramMode).(string)
 		force := d.Get(paramForce).(bool)
-		updateModeRequest := sr.NewModeUpdateRequest()
+		updateModeRequest := schemaregistryv1.NewModeUpdateRequest()
 		updateModeRequest.SetMode(updatedMode)
 		restEndpoint, err := extractSchemaRegistryRestEndpoint(meta.(*Client), d, false)
 		if err != nil {
@@ -257,6 +259,6 @@ func schemaRegistryClusterModeUpdate(ctx context.Context, d *schema.ResourceData
 	return schemaRegistryClusterModeRead(ctx, d, meta)
 }
 
-func executeSchemaRegistryClusterModeUpdate(ctx context.Context, c *SchemaRegistryRestClient, requestData *sr.ModeUpdateRequest, force bool) (sr.ModeUpdateRequest, *http.Response, error) {
+func executeSchemaRegistryClusterModeUpdate(ctx context.Context, c *SchemaRegistryRestClient, requestData *schemaregistryv1.ModeUpdateRequest, force bool) (schemaregistryv1.ModeUpdateRequest, *http.Response, error) {
 	return c.apiClient.ModesV1Api.UpdateTopLevelMode(c.apiContext(ctx)).ModeUpdateRequest(*requestData).Force(force).Execute()
 }

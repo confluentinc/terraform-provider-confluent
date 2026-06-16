@@ -21,20 +21,15 @@ import (
 	"net/http"
 	"strings"
 
-	netgw "github.com/confluentinc/ccloud-sdk-go-v2/networking-gateway/v1"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+
+	networkinggatewayv1 "github.com/confluentinc/ccloud-sdk-go-v2/networking-gateway/v1"
 )
 
-const (
-	awsEgressPrivateLinkGatewaySpecKind       = "AwsEgressPrivateLinkGatewaySpec"
-	awsPrivateNetworkInterfaceGatewaySpecKind = "AwsPrivateNetworkInterfaceGatewaySpec"
-	azureEgressPrivateLinkGatewaySpecKind     = "AzureEgressPrivateLinkGatewaySpec"
-)
-
-var acceptedGatewayTypes = []string{paramAwsEgressPrivateLinkGateway, paramAwsPrivateNetworkInterfaceGateway, paramAzureEgressPrivateLinkGateway}
+var acceptedGatewayTypes = []string{paramAwsEgressPrivateLinkGateway, paramAwsIngressPrivateLinkGateway, paramAwsPrivateNetworkInterfaceGateway, paramAzureEgressPrivateLinkGateway, paramAzureIngressPrivateLinkGateway, paramGcpIngressPrivateServiceConnectGateway}
 
 func gatewayResource() *schema.Resource {
 	return &schema.Resource{
@@ -52,10 +47,13 @@ func gatewayResource() *schema.Resource {
 				Description:  "A name for the Gateway.",
 				ValidateFunc: validation.StringIsNotEmpty,
 			},
-			paramEnvironment:                       environmentSchema(),
-			paramAwsEgressPrivateLinkGateway:       awsEgressPrivateLinkGatewaySchema(),
-			paramAwsPrivateNetworkInterfaceGateway: awsPrivateNetworkInterfaceGatewaySchema(),
-			paramAzureEgressPrivateLinkGateway:     azureEgressPrivateLinkGatewaySchema(),
+			paramEnvironment:                            environmentSchema(),
+			paramAwsEgressPrivateLinkGateway:            awsEgressPrivateLinkGatewaySchema(),
+			paramAwsIngressPrivateLinkGateway:           awsIngressPrivateLinkGatewaySchema(),
+			paramAwsPrivateNetworkInterfaceGateway:      awsPrivateNetworkInterfaceGatewaySchema(),
+			paramAzureEgressPrivateLinkGateway:          azureEgressPrivateLinkGatewaySchema(),
+			paramAzureIngressPrivateLinkGateway:         azureIngressPrivateLinkGatewaySchema(),
+			paramGcpIngressPrivateServiceConnectGateway: gcpIngressPrivateServiceConnectGatewaySchema(),
 		},
 	}
 }
@@ -76,6 +74,33 @@ func awsEgressPrivateLinkGatewaySchema() *schema.Schema {
 				paramPrincipalArn: {
 					Type:     schema.TypeString,
 					Computed: true,
+				},
+			},
+		},
+		MinItems:     1,
+		MaxItems:     1,
+		ExactlyOneOf: acceptedGatewayTypes,
+	}
+}
+
+func awsIngressPrivateLinkGatewaySchema() *schema.Schema {
+	return &schema.Schema{
+		Type:     schema.TypeList,
+		ForceNew: true,
+		Computed: true,
+		Optional: true,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramRegion: {
+					Type:        schema.TypeString,
+					Required:    true,
+					ForceNew:    true,
+					Description: "AWS region of the Ingress Private Link Gateway.",
+				},
+				paramVpcEndpointServiceName: {
+					Type:        schema.TypeString,
+					Computed:    true,
+					Description: "The ID of the AWS VPC Endpoint Service that can be used to establish connections for all zones.",
 				},
 			},
 		},
@@ -144,38 +169,124 @@ func awsPrivateNetworkInterfaceGatewaySchema() *schema.Schema {
 	}
 }
 
+func azureIngressPrivateLinkGatewaySchema() *schema.Schema {
+	return &schema.Schema{
+		Type:     schema.TypeList,
+		ForceNew: true,
+		Computed: true,
+		Optional: true,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramRegion: {
+					Type:        schema.TypeString,
+					Required:    true,
+					ForceNew:    true,
+					Description: "Azure region of the Ingress Private Link Gateway.",
+					DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+						return strings.EqualFold(old, new)
+					},
+				},
+				paramPrivateLinkServiceAlias: {
+					Type:        schema.TypeString,
+					Computed:    true,
+					Description: "Alias of the Confluent Cloud Private Link Service.",
+				},
+				paramPrivateLinkServiceResourceId: {
+					Type:        schema.TypeString,
+					Computed:    true,
+					Description: "Resource ID of the Confluent Cloud Private Link Service.",
+				},
+			},
+		},
+		MinItems:     1,
+		MaxItems:     1,
+		ExactlyOneOf: acceptedGatewayTypes,
+	}
+}
+
+func gcpIngressPrivateServiceConnectGatewaySchema() *schema.Schema {
+	return &schema.Schema{
+		Type:     schema.TypeList,
+		ForceNew: true,
+		Computed: true,
+		Optional: true,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramRegion: {
+					Type:        schema.TypeString,
+					Required:    true,
+					ForceNew:    true,
+					Description: "GCP region of the Ingress Private Service Connect Gateway.",
+					DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+						return strings.EqualFold(old, new)
+					},
+				},
+				paramPrivateServiceConnectServiceAttachment: {
+					Type:        schema.TypeString,
+					Computed:    true,
+					Description: "URI of the Private Service Connect Service Attachment in Confluent Cloud.",
+				},
+			},
+		},
+		MinItems:     1,
+		MaxItems:     1,
+		ExactlyOneOf: acceptedGatewayTypes,
+	}
+}
+
 func gatewayCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	c := meta.(*Client)
 
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
 
-	createGatewayRequest := netgw.NewNetworkingV1Gateway()
-	createGatewayRequest.Spec = netgw.NewNetworkingV1GatewaySpec()
-	createGatewayRequest.Spec.SetEnvironment(netgw.ObjectReference{Id: environmentId})
+	createGatewayRequest := networkinggatewayv1.NewNetworkingV1Gateway()
+	createGatewayRequest.Spec = networkinggatewayv1.NewNetworkingV1GatewaySpec()
+	createGatewayRequest.Spec.SetEnvironment(networkinggatewayv1.ObjectReference{Id: environmentId})
 	createGatewayRequest.Spec.SetDisplayName(d.Get(paramDisplayName).(string))
 
 	isAwsEgressPrivateLink := len(d.Get(paramAwsEgressPrivateLinkGateway).([]interface{})) > 0
+	isAwsIngressPrivateLink := len(d.Get(paramAwsIngressPrivateLinkGateway).([]interface{})) > 0
 	isAwsPrivateNetworkInterface := len(d.Get(paramAwsPrivateNetworkInterfaceGateway).([]interface{})) > 0
 	isAzureEgressPrivateLink := len(d.Get(paramAzureEgressPrivateLinkGateway).([]interface{})) > 0
+	isAzureIngressPrivateLink := len(d.Get(paramAzureIngressPrivateLinkGateway).([]interface{})) > 0
+	isGcpIngressPrivateServiceConnect := len(d.Get(paramGcpIngressPrivateServiceConnectGateway).([]interface{})) > 0
 
 	if isAwsEgressPrivateLink {
 		region := extractStringValueFromBlock(d, paramAwsEgressPrivateLinkGateway, paramRegion)
-		createGatewayRequest.Spec.SetConfig(netgw.NetworkingV1AwsEgressPrivateLinkGatewaySpecAsNetworkingV1GatewaySpecConfigOneOf(netgw.NewNetworkingV1AwsEgressPrivateLinkGatewaySpec(
+		createGatewayRequest.Spec.SetConfig(networkinggatewayv1.NetworkingV1AwsEgressPrivateLinkGatewaySpecAsNetworkingV1GatewaySpecConfigOneOf(networkinggatewayv1.NewNetworkingV1AwsEgressPrivateLinkGatewaySpec(
 			awsEgressPrivateLinkGatewaySpecKind,
+			region,
+		)))
+	} else if isAwsIngressPrivateLink {
+		region := extractStringValueFromBlock(d, paramAwsIngressPrivateLinkGateway, paramRegion)
+		createGatewayRequest.Spec.SetConfig(networkinggatewayv1.NetworkingV1AwsIngressPrivateLinkGatewaySpecAsNetworkingV1GatewaySpecConfigOneOf(networkinggatewayv1.NewNetworkingV1AwsIngressPrivateLinkGatewaySpec(
+			awsIngressPrivateLinkGatewaySpecKind,
 			region,
 		)))
 	} else if isAwsPrivateNetworkInterface {
 		region := extractStringValueFromBlock(d, paramAwsPrivateNetworkInterfaceGateway, paramRegion)
 		zones := convertToStringSlice(d.Get(fmt.Sprintf("%s.0.%s", paramAwsPrivateNetworkInterfaceGateway, paramZones)).(*schema.Set).List())
-		createGatewayRequest.Spec.SetConfig(netgw.NetworkingV1AwsPrivateNetworkInterfaceGatewaySpecAsNetworkingV1GatewaySpecConfigOneOf(netgw.NewNetworkingV1AwsPrivateNetworkInterfaceGatewaySpec(
+		createGatewayRequest.Spec.SetConfig(networkinggatewayv1.NetworkingV1AwsPrivateNetworkInterfaceGatewaySpecAsNetworkingV1GatewaySpecConfigOneOf(networkinggatewayv1.NewNetworkingV1AwsPrivateNetworkInterfaceGatewaySpec(
 			awsPrivateNetworkInterfaceGatewaySpecKind,
 			region,
 			zones,
 		)))
 	} else if isAzureEgressPrivateLink {
 		region := extractStringValueFromBlock(d, paramAzureEgressPrivateLinkGateway, paramRegion)
-		createGatewayRequest.Spec.SetConfig(netgw.NetworkingV1AzureEgressPrivateLinkGatewaySpecAsNetworkingV1GatewaySpecConfigOneOf(netgw.NewNetworkingV1AzureEgressPrivateLinkGatewaySpec(
+		createGatewayRequest.Spec.SetConfig(networkinggatewayv1.NetworkingV1AzureEgressPrivateLinkGatewaySpecAsNetworkingV1GatewaySpecConfigOneOf(networkinggatewayv1.NewNetworkingV1AzureEgressPrivateLinkGatewaySpec(
 			azureEgressPrivateLinkGatewaySpecKind,
+			region,
+		)))
+	} else if isAzureIngressPrivateLink {
+		region := extractStringValueFromBlock(d, paramAzureIngressPrivateLinkGateway, paramRegion)
+		createGatewayRequest.Spec.SetConfig(networkinggatewayv1.NetworkingV1AzureIngressPrivateLinkGatewaySpecAsNetworkingV1GatewaySpecConfigOneOf(networkinggatewayv1.NewNetworkingV1AzureIngressPrivateLinkGatewaySpec(
+			azureIngressPrivateLinkGatewaySpecKind,
+			region,
+		)))
+	} else if isGcpIngressPrivateServiceConnect {
+		region := extractStringValueFromBlock(d, paramGcpIngressPrivateServiceConnectGateway, paramRegion)
+		createGatewayRequest.Spec.SetConfig(networkinggatewayv1.NetworkingV1GcpIngressPrivateServiceConnectGatewaySpecAsNetworkingV1GatewaySpecConfigOneOf(networkinggatewayv1.NewNetworkingV1GcpIngressPrivateServiceConnectGatewaySpec(
+			gcpIngressPrivateServiceConnectGatewaySpecKind,
 			region,
 		)))
 	}
@@ -186,14 +297,14 @@ func gatewayCreate(ctx context.Context, d *schema.ResourceData, meta interface{}
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Gateway: %s", createGatewayRequestJson))
 
-	req := c.netGatewayClient.GatewaysNetworkingV1Api.CreateNetworkingV1Gateway(c.netGWApiContext(ctx)).NetworkingV1Gateway(*createGatewayRequest)
+	req := c.networkingGatewayV1Client.GatewaysNetworkingV1Api.CreateNetworkingV1Gateway(c.networkingGatewayV1ApiContext(ctx)).NetworkingV1Gateway(*createGatewayRequest)
 	createdGateway, resp, err := req.Execute()
 	if err != nil {
 		return diag.Errorf("error creating Gateway %q: %s", createdGateway.GetId(), createDescriptiveError(err, resp))
 	}
 	d.SetId(createdGateway.GetId())
 
-	if err := waitForGatewayToProvision(c.netGWApiContext(ctx), c, environmentId, d.Id()); err != nil {
+	if err := waitForGatewayToProvision(c.networkingGatewayV1ApiContext(ctx), c, environmentId, d.Id()); err != nil {
 		return diag.Errorf("error waiting for Gateway %q to provision: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
@@ -206,8 +317,8 @@ func gatewayCreate(ctx context.Context, d *schema.ResourceData, meta interface{}
 	return gatewayRead(ctx, d, meta)
 }
 
-func executeGatewayRead(ctx context.Context, c *Client, environmentId, gatewayId string) (netgw.NetworkingV1Gateway, *http.Response, error) {
-	req := c.netGatewayClient.GatewaysNetworkingV1Api.GetNetworkingV1Gateway(c.netGWApiContext(ctx), gatewayId).Environment(environmentId)
+func executeGatewayRead(ctx context.Context, c *Client, environmentId, gatewayId string) (networkinggatewayv1.NetworkingV1Gateway, *http.Response, error) {
+	req := c.networkingGatewayV1Client.GatewaysNetworkingV1Api.GetNetworkingV1Gateway(c.networkingGatewayV1ApiContext(ctx), gatewayId).Environment(environmentId)
 	return req.Execute()
 }
 
@@ -227,7 +338,7 @@ func gatewayRead(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 func readGatewayAndSetAttributes(ctx context.Context, d *schema.ResourceData, meta interface{}, environmentId, gatewayId string) ([]*schema.ResourceData, error) {
 	c := meta.(*Client)
 
-	gateway, resp, err := executeGatewayRead(c.netGWApiContext(ctx), c, environmentId, gatewayId)
+	gateway, resp, err := executeGatewayRead(c.networkingGatewayV1ApiContext(ctx), c, environmentId, gatewayId)
 	if err != nil {
 		tflog.Warn(ctx, fmt.Sprintf("Error reading Gateway %q: %s", gatewayId, createDescriptiveError(err)), map[string]interface{}{gatewayKey: d.Id()})
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
@@ -254,7 +365,7 @@ func readGatewayAndSetAttributes(ctx context.Context, d *schema.ResourceData, me
 	return []*schema.ResourceData{d}, nil
 }
 
-func setGatewayAttributes(d *schema.ResourceData, gateway netgw.NetworkingV1Gateway) (*schema.ResourceData, error) {
+func setGatewayAttributes(d *schema.ResourceData, gateway networkinggatewayv1.NetworkingV1Gateway) (*schema.ResourceData, error) {
 	if err := d.Set(paramDisplayName, gateway.Spec.GetDisplayName()); err != nil {
 		return nil, err
 	}
@@ -263,6 +374,13 @@ func setGatewayAttributes(d *schema.ResourceData, gateway netgw.NetworkingV1Gate
 		if err := d.Set(paramAwsEgressPrivateLinkGateway, []interface{}{map[string]interface{}{
 			paramRegion:       gateway.Spec.Config.NetworkingV1AwsEgressPrivateLinkGatewaySpec.GetRegion(),
 			paramPrincipalArn: gateway.Status.CloudGateway.NetworkingV1AwsEgressPrivateLinkGatewayStatus.GetPrincipalArn(),
+		}}); err != nil {
+			return nil, err
+		}
+	} else if gateway.Spec.GetConfig().NetworkingV1AwsIngressPrivateLinkGatewaySpec != nil && gateway.Status.GetCloudGateway().NetworkingV1AwsIngressPrivateLinkGatewayStatus != nil {
+		if err := d.Set(paramAwsIngressPrivateLinkGateway, []interface{}{map[string]interface{}{
+			paramRegion:                 gateway.Spec.Config.NetworkingV1AwsIngressPrivateLinkGatewaySpec.GetRegion(),
+			paramVpcEndpointServiceName: gateway.Status.CloudGateway.NetworkingV1AwsIngressPrivateLinkGatewayStatus.GetVpcEndpointServiceName(),
 		}}); err != nil {
 			return nil, err
 		}
@@ -287,6 +405,20 @@ func setGatewayAttributes(d *schema.ResourceData, gateway netgw.NetworkingV1Gate
 		}}); err != nil {
 			return nil, err
 		}
+	} else if gateway.Spec.GetConfig().NetworkingV1AzureIngressPrivateLinkGatewaySpec != nil {
+		privateLinkServiceAlias := ""
+		privateLinkServiceResourceId := ""
+		if gateway.Status.GetCloudGateway().NetworkingV1AzureIngressPrivateLinkGatewayStatus != nil {
+			privateLinkServiceAlias = gateway.Status.CloudGateway.NetworkingV1AzureIngressPrivateLinkGatewayStatus.GetPrivateLinkServiceAlias()
+			privateLinkServiceResourceId = gateway.Status.CloudGateway.NetworkingV1AzureIngressPrivateLinkGatewayStatus.GetPrivateLinkServiceResourceId()
+		}
+		if err := d.Set(paramAzureIngressPrivateLinkGateway, []interface{}{map[string]interface{}{
+			paramRegion:                       gateway.Spec.Config.NetworkingV1AzureIngressPrivateLinkGatewaySpec.GetRegion(),
+			paramPrivateLinkServiceAlias:      privateLinkServiceAlias,
+			paramPrivateLinkServiceResourceId: privateLinkServiceResourceId,
+		}}); err != nil {
+			return nil, err
+		}
 	} else if gateway.Spec.GetConfig().NetworkingV1AzurePeeringGatewaySpec != nil {
 		if err := d.Set(paramAzurePeeringGateway, []interface{}{map[string]interface{}{
 			paramRegion: gateway.Spec.Config.NetworkingV1AzurePeeringGatewaySpec.GetRegion(),
@@ -307,6 +439,17 @@ func setGatewayAttributes(d *schema.ResourceData, gateway netgw.NetworkingV1Gate
 		}}); err != nil {
 			return nil, err
 		}
+	} else if gateway.Spec.GetConfig().NetworkingV1GcpIngressPrivateServiceConnectGatewaySpec != nil {
+		privateServiceConnectServiceAttachment := ""
+		if gateway.Status.GetCloudGateway().NetworkingV1GcpIngressPrivateServiceConnectGatewayStatus != nil {
+			privateServiceConnectServiceAttachment = gateway.Status.CloudGateway.NetworkingV1GcpIngressPrivateServiceConnectGatewayStatus.GetPrivateServiceConnectServiceAttachment()
+		}
+		if err := d.Set(paramGcpIngressPrivateServiceConnectGateway, []interface{}{map[string]interface{}{
+			paramRegion: gateway.Spec.Config.NetworkingV1GcpIngressPrivateServiceConnectGatewaySpec.GetRegion(),
+			paramPrivateServiceConnectServiceAttachment: privateServiceConnectServiceAttachment,
+		}}); err != nil {
+			return nil, err
+		}
 	}
 
 	if err := setStringAttributeInListBlockOfSizeOne(paramEnvironment, paramId, gateway.Spec.Environment.GetId(), d); err != nil {
@@ -322,7 +465,7 @@ func gatewayDelete(ctx context.Context, d *schema.ResourceData, meta interface{}
 
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
 
-	req := c.netGatewayClient.GatewaysNetworkingV1Api.DeleteNetworkingV1Gateway(c.netGWApiContext(ctx), d.Id()).Environment(environmentId)
+	req := c.networkingGatewayV1Client.GatewaysNetworkingV1Api.DeleteNetworkingV1Gateway(c.networkingGatewayV1ApiContext(ctx), d.Id()).Environment(environmentId)
 	resp, err := req.Execute()
 
 	if err != nil {
@@ -341,11 +484,11 @@ func gatewayUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}
 
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
 
-	updateGateway := netgw.NewNetworkingV1GatewayUpdate()
-	updateGateway.Spec = netgw.NewNetworkingV1GatewaySpecUpdate()
+	updateGateway := networkinggatewayv1.NewNetworkingV1GatewayUpdate()
+	updateGateway.Spec = networkinggatewayv1.NewNetworkingV1GatewaySpecUpdate()
 
 	updateGateway.Spec.SetDisplayName(d.Get(paramDisplayName).(string))
-	updateGateway.Spec.SetEnvironment(netgw.ObjectReference{
+	updateGateway.Spec.SetEnvironment(networkinggatewayv1.ObjectReference{
 		Id: environmentId,
 	})
 
@@ -356,7 +499,7 @@ func gatewayUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}
 	tflog.Debug(ctx, fmt.Sprintf("Updating Gateway %q: %s", d.Id(), updateGatewayJson), map[string]interface{}{gatewayKey: d.Id()})
 
 	c := meta.(*Client)
-	req := c.netGatewayClient.GatewaysNetworkingV1Api.UpdateNetworkingV1Gateway(c.netGWApiContext(ctx), d.Id()).NetworkingV1GatewayUpdate(*updateGateway)
+	req := c.networkingGatewayV1Client.GatewaysNetworkingV1Api.UpdateNetworkingV1Gateway(c.networkingGatewayV1ApiContext(ctx), d.Id()).NetworkingV1GatewayUpdate(*updateGateway)
 	updatedGateway, resp, err := req.Execute()
 
 	if err != nil {

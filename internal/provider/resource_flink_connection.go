@@ -4,25 +4,17 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	flinkgatewayv1 "github.com/confluentinc/ccloud-sdk-go-v2/flink-gateway/v1"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"net/http"
 	"regexp"
 	"slices"
 	"strings"
-)
 
-const (
-	paramApiKey          = "api_key"
-	paramAwsAccessKey    = "aws_access_key"
-	paramAwsSecretKey    = "aws_secret_key"
-	paramAwsSessionToken = "aws_session_token"
-	paramServiceKey      = "service_key"
-	paramUsername        = "username"
-	paramPassword        = "password"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+
+	flinkgatewayv1 "github.com/confluentinc/ccloud-sdk-go-v2/flink-gateway/v1"
 )
 
 var (

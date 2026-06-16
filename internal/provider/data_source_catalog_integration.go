@@ -48,6 +48,7 @@ func catalogIntegrationDataSource() *schema.Resource {
 			paramCredentials:  credentialsSchema(),
 			paramAwsGlue:      awsGlueDataSourceSchema(),
 			paramSnowflake:    snowflakeDataSourceSchema(),
+			paramUnity:        unityDataSourceSchema(),
 		},
 	}
 }
@@ -65,7 +66,7 @@ func catalogIntegrationDataSourceRead(ctx context.Context, d *schema.ResourceDat
 
 	c := meta.(*Client)
 
-	tableflowApiKey, tableflowApiSecret, err := extractTableflowApiKeyAndApiSecret(c, d, false)
+	tableflowApiKey, tableflowApiSecret, err := extractTableflowApiKeyAndApiSecret(ctx, c, d, false)
 	if err != nil {
 		return diag.Errorf("error reading Catalog Integration: %s", createDescriptiveError(err))
 	}
@@ -97,6 +98,11 @@ func awsGlueDataSourceSchema() *schema.Schema {
 					Type:     schema.TypeString,
 					Computed: true,
 				},
+				paramCustomDatabase: {
+					Type:        schema.TypeString,
+					Computed:    true,
+					Description: "The custom database name to use in AWS Glue.",
+				},
 			},
 		},
 		Computed: true,
@@ -123,6 +129,37 @@ func snowflakeDataSourceSchema() *schema.Schema {
 					Type:        schema.TypeString,
 					Computed:    true,
 					Description: "Allowed scope of the Snowflake Open Catalog.",
+				},
+				paramCustomNamespace: {
+					Type:        schema.TypeString,
+					Computed:    true,
+					Description: "The custom namespace to use in Snowflake Open Catalog.",
+				},
+			},
+		},
+		Computed: true,
+	}
+}
+
+func unityDataSourceSchema() *schema.Schema {
+	return &schema.Schema{
+		Type: schema.TypeList,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				paramWorkspaceEndpoint: {
+					Type:        schema.TypeString,
+					Computed:    true,
+					Description: "The Databricks workspace URL associated with the Unity Catalog.",
+				},
+				paramCatalogName: {
+					Type:        schema.TypeString,
+					Computed:    true,
+					Description: "The name of the catalog within Unity Catalog.",
+				},
+				paramCustomSchema: {
+					Type:        schema.TypeString,
+					Computed:    true,
+					Description: "The custom schema name to use in Unity Catalog.",
 				},
 			},
 		},

@@ -17,7 +17,6 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -27,15 +26,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-)
-
-const (
-	scenarioStateCustomConnectorPluginPresignedUrlHasBeenCreated = "The new custom connector plugin's presigned URL has been just created"
-	scenarioStateCustomConnectorPluginHasBeenCreated             = "The new custom connector plugin has been just created"
-	scenarioStateCustomConnectorPluginDescriptionHaveBeenUpdated = "The new custom connector plugin's description and display name have been just updated"
-	scenarioStateCustomConnectorPluginHasBeenDeleted             = "The new custom connector plugin has been deleted"
-	customConnectorPluginScenarioName                            = "confluent_custom_connector_plugin Resource Lifecycle"
-	customConnectorPluginGCPScenarioName                         = "confluent_custom_connector_plugin GCP Resource Lifecycle"
+	"github.com/walkerus/go-wiremock"
 )
 
 func TestAccCustomConnectorPlugin(t *testing.T) {
@@ -332,7 +323,7 @@ func testAccCheckCustomConnectorPluginDestroy(s *terraform.State) error {
 			continue
 		}
 		deletedCustomConnectorPluginId := rs.Primary.ID
-		req := c.ccpClient.CustomConnectorPluginsConnectV1Api.GetConnectV1CustomConnectorPlugin(c.ccpApiContext(context.Background()), deletedCustomConnectorPluginId)
+		req := c.connectCustomPluginV1Client.CustomConnectorPluginsConnectV1Api.GetConnectV1CustomConnectorPlugin(c.connectCustomPluginV1ApiContext(context.Background()), deletedCustomConnectorPluginId)
 		deletedCustomConnectorPlugin, response, err := req.Execute()
 		if response != nil && (response.StatusCode == http.StatusForbidden || response.StatusCode == http.StatusNotFound) {
 			// v2/service-accounts/{nonExistentCustomConnectorPluginId/deletedCustomConnectorPluginID} returns http.StatusForbidden instead of http.StatusNotFound

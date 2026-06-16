@@ -1,0 +1,14 @@
+{
+  "api_version": "cam/v1",
+  "cloud": "AZURE",
+  "content_format": "JAR",
+  "kind": "PresignedUrl",
+  "upload_form_data": {
+    "storage_account": "confluentconnectors",
+    "container": "custom-connectors",
+    "blob_path": "staging/ccp/v1/2f37f0b6-f8da-4e8b-bc5f-282ebb0511be/connect-e53bb2e8-8de3-49fa-9fb1-4e3fd9a16b66/plugin.jar",
+    "sas_token": "sv=2021-06-08&ss=b&srt=sco&sp=rwdlac&se=2025-08-15T00:00:00Z&st=2025-08-14T20:50:18Z&spr=https&sig=azure-signature-foobar"
+  },
+  "upload_id": "e53bb2e8-8de3-49fa-9fb1-4e3fd9a16b66",
+  "upload_url": "TF_TEST_URL"
+}

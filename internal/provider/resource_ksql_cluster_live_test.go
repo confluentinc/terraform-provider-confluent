@@ -73,7 +73,7 @@ func TestAccKsqlClusterLive(t *testing.T) {
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_ksql_cluster.%s", ksqlClusterResourceLabel), "csu", "4"),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_ksql_cluster.%s", ksqlClusterResourceLabel), "use_detailed_processing_log", "true"),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_ksql_cluster.%s", ksqlClusterResourceLabel), "kafka_cluster.0.id", kafkaClusterId),
-					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_ksql_cluster.%s", ksqlClusterResourceLabel), "environment.0.id", "env-zyg27z"),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_ksql_cluster.%s", ksqlClusterResourceLabel), "environment.0.id", liveTestEnvironmentId),
 					resource.TestCheckResourceAttrSet(fmt.Sprintf("confluent_ksql_cluster.%s", ksqlClusterResourceLabel), "id"),
 					resource.TestCheckResourceAttrSet(fmt.Sprintf("confluent_ksql_cluster.%s", ksqlClusterResourceLabel), "rest_endpoint"),
 					resource.TestCheckResourceAttrSet(fmt.Sprintf("confluent_ksql_cluster.%s", ksqlClusterResourceLabel), "topic_prefix"),
@@ -142,7 +142,7 @@ func testAccCheckKsqlClusterLiveConfig(endpoint, ksqlClusterResourceLabel, ksqlC
 	resource "confluent_role_binding" "live_ksql_sa_rb" {
 		principal   = "User:${confluent_service_account.live_ksql_sa.id}"
 		role_name   = "CloudClusterAdmin"
-		crn_pattern = "crn://confluent.cloud/organization=424fb7bf-40c2-433f-81a5-c45942a6a539/environment=env-zyg27z/cloud-cluster=%s"
+		crn_pattern = "crn://confluent.cloud/organization=%s/environment=%s/cloud-cluster=%s"
 	}
 
 	resource "confluent_ksql_cluster" "%s" {
@@ -155,11 +155,11 @@ func testAccCheckKsqlClusterLiveConfig(endpoint, ksqlClusterResourceLabel, ksqlC
 			id = confluent_service_account.live_ksql_sa.id
 		}
 		environment {
-			id = "env-zyg27z"
+			id = "%s"
 		}
 		depends_on = [
 			confluent_role_binding.live_ksql_sa_rb
 		]
 	}
-	`, endpoint, apiKey, apiSecret, ksqlClusterDisplayName, kafkaClusterId, ksqlClusterResourceLabel, ksqlClusterDisplayName, kafkaClusterId)
+	`, endpoint, apiKey, apiSecret, ksqlClusterDisplayName, liveTestOrganizationId, liveTestEnvironmentId, kafkaClusterId, ksqlClusterResourceLabel, ksqlClusterDisplayName, kafkaClusterId, liveTestEnvironmentId)
 }

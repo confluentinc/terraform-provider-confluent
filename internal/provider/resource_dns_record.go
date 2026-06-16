@@ -25,13 +25,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
-	netap "github.com/confluentinc/ccloud-sdk-go-v2/networking-access-point/v1"
-)
-
-const (
-	paramDomain                 = "domain"
-	paramPrivateLinkAccessPoint = "private_link_access_point"
-	privateLinkAccessPoint      = "PrivateLinkAccessPoint"
+	networkingaccesspointv1 "github.com/confluentinc/ccloud-sdk-go-v2/networking-access-point/v1"
 )
 
 var acceptedDnsRecordConfig = []string{paramPrivateLinkAccessPoint}
@@ -91,17 +85,17 @@ func dnsRecordCreate(ctx context.Context, d *schema.ResourceData, meta interface
 
 	isPrivateLinkAccessPoint := len(d.Get(paramPrivateLinkAccessPoint).([]interface{})) > 0
 
-	spec := netap.NewNetworkingV1DnsRecordSpec()
+	spec := networkingaccesspointv1.NewNetworkingV1DnsRecordSpec()
 	if displayName != "" {
 		spec.SetDisplayName(displayName)
 	}
 	spec.SetDomain(domain)
-	spec.SetGateway(netap.TypedEnvScopedObjectReference{Id: gatewayId})
-	spec.SetEnvironment(netap.ObjectReference{Id: environmentId})
+	spec.SetGateway(networkingaccesspointv1.TypedEnvScopedObjectReference{Id: gatewayId})
+	spec.SetEnvironment(networkingaccesspointv1.ObjectReference{Id: environmentId})
 
-	config := netap.NetworkingV1DnsRecordSpecConfigOneOf{}
+	config := networkingaccesspointv1.NetworkingV1DnsRecordSpecConfigOneOf{}
 	if isPrivateLinkAccessPoint {
-		config.NetworkingV1PrivateLinkAccessPoint = &netap.NetworkingV1PrivateLinkAccessPoint{
+		config.NetworkingV1PrivateLinkAccessPoint = &networkingaccesspointv1.NetworkingV1PrivateLinkAccessPoint{
 			Kind:       privateLinkAccessPoint,
 			ResourceId: extractStringValueFromBlock(d, paramPrivateLinkAccessPoint, paramId),
 		}
@@ -110,21 +104,21 @@ func dnsRecordCreate(ctx context.Context, d *schema.ResourceData, meta interface
 		return diag.Errorf("None of %q blocks was provided for confluent_dns_record resource", paramPrivateLinkAccessPoint)
 	}
 
-	createDnsRecordRequest := netap.NetworkingV1DnsRecord{Spec: spec}
+	createDnsRecordRequest := networkingaccesspointv1.NetworkingV1DnsRecord{Spec: spec}
 	createDnsRecordRequestJson, err := json.Marshal(createDnsRecordRequest)
 	if err != nil {
 		return diag.Errorf("error creating DNS Record: error marshaling %#v to json: %s", createDnsRecordRequest, createDescriptiveError(err))
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new DNS Record: %s", createDnsRecordRequestJson))
 
-	req := c.netAccessPointClient.DNSRecordsNetworkingV1Api.CreateNetworkingV1DnsRecord(c.netAPApiContext(ctx)).NetworkingV1DnsRecord(createDnsRecordRequest)
+	req := c.networkingAccessPointV1Client.DNSRecordsNetworkingV1Api.CreateNetworkingV1DnsRecord(c.networkingAccessPointV1ApiContext(ctx)).NetworkingV1DnsRecord(createDnsRecordRequest)
 	createdDnsRecord, resp, err := req.Execute()
 	if err != nil {
 		return diag.Errorf("error creating DNS Record %q: %s", createdDnsRecord.GetId(), createDescriptiveError(err, resp))
 	}
 	d.SetId(createdDnsRecord.GetId())
 
-	if err := waitForDnsRecordToProvision(c.netAPApiContext(ctx), c, environmentId, d.Id()); err != nil {
+	if err := waitForDnsRecordToProvision(c.networkingAccessPointV1ApiContext(ctx), c, environmentId, d.Id()); err != nil {
 		return diag.Errorf("error waiting for DNS Record %q to provision: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
@@ -137,8 +131,8 @@ func dnsRecordCreate(ctx context.Context, d *schema.ResourceData, meta interface
 	return dnsRecordRead(ctx, d, meta)
 }
 
-func executeDnsRecordRead(ctx context.Context, c *Client, environmentId string, dnsRecordId string) (netap.NetworkingV1DnsRecord, *http.Response, error) {
-	req := c.netAccessPointClient.DNSRecordsNetworkingV1Api.GetNetworkingV1DnsRecord(c.netAPApiContext(ctx), dnsRecordId).Environment(environmentId)
+func executeDnsRecordRead(ctx context.Context, c *Client, environmentId string, dnsRecordId string) (networkingaccesspointv1.NetworkingV1DnsRecord, *http.Response, error) {
+	req := c.networkingAccessPointV1Client.DNSRecordsNetworkingV1Api.GetNetworkingV1DnsRecord(c.networkingAccessPointV1ApiContext(ctx), dnsRecordId).Environment(environmentId)
 	return req.Execute()
 }
 
@@ -158,7 +152,7 @@ func dnsRecordRead(ctx context.Context, d *schema.ResourceData, meta interface{}
 func readDnsRecordAndSetAttributes(ctx context.Context, d *schema.ResourceData, meta interface{}, environmentId, dnsRecordId string) ([]*schema.ResourceData, error) {
 	c := meta.(*Client)
 
-	dnsRecord, resp, err := executeDnsRecordRead(c.netAPApiContext(ctx), c, environmentId, dnsRecordId)
+	dnsRecord, resp, err := executeDnsRecordRead(c.networkingAccessPointV1ApiContext(ctx), c, environmentId, dnsRecordId)
 	if err != nil {
 		tflog.Warn(ctx, fmt.Sprintf("Error reading DNS Record %q: %s", dnsRecordId, createDescriptiveError(err)), map[string]interface{}{dnsRecordKey: d.Id()})
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
@@ -190,14 +184,14 @@ func dnsRecordDelete(ctx context.Context, d *schema.ResourceData, meta interface
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
 	c := meta.(*Client)
 
-	req := c.netAccessPointClient.DNSRecordsNetworkingV1Api.DeleteNetworkingV1DnsRecord(c.netAPApiContext(ctx), d.Id()).Environment(environmentId)
+	req := c.networkingAccessPointV1Client.DNSRecordsNetworkingV1Api.DeleteNetworkingV1DnsRecord(c.networkingAccessPointV1ApiContext(ctx), d.Id()).Environment(environmentId)
 	resp, err := req.Execute()
 
 	if err != nil {
 		return diag.Errorf("error deleting DNS Record %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
-	if err := waitForDnsRecordToBeDeleted(c.netAPApiContext(ctx), c, environmentId, d.Id()); err != nil {
+	if err := waitForDnsRecordToBeDeleted(c.networkingAccessPointV1ApiContext(ctx), c, environmentId, d.Id()); err != nil {
 		return diag.Errorf("error waiting for DNS Record %q to be deleted: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
@@ -213,16 +207,16 @@ func dnsRecordUpdate(ctx context.Context, d *schema.ResourceData, meta interface
 
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
 
-	updateDnsRecord := netap.NewNetworkingV1DnsRecordUpdate()
+	updateDnsRecord := networkingaccesspointv1.NewNetworkingV1DnsRecordUpdate()
 
-	updateDnsRecordSpec := netap.NewNetworkingV1DnsRecordSpecUpdate()
-	updateDnsRecordSpec.SetEnvironment(netap.ObjectReference{Id: environmentId})
+	updateDnsRecordSpec := networkingaccesspointv1.NewNetworkingV1DnsRecordSpecUpdate()
+	updateDnsRecordSpec.SetEnvironment(networkingaccesspointv1.ObjectReference{Id: environmentId})
 	if d.HasChange(paramDisplayName) {
 		updateDnsRecordSpec.SetDisplayName(d.Get(paramDisplayName).(string))
 	}
 	if d.HasChange(paramPrivateLinkAccessPoint) {
-		updateDnsRecordSpec.SetConfig(netap.NetworkingV1DnsRecordSpecUpdateConfigOneOf{
-			NetworkingV1PrivateLinkAccessPoint: &netap.NetworkingV1PrivateLinkAccessPoint{
+		updateDnsRecordSpec.SetConfig(networkingaccesspointv1.NetworkingV1DnsRecordSpecUpdateConfigOneOf{
+			NetworkingV1PrivateLinkAccessPoint: &networkingaccesspointv1.NetworkingV1PrivateLinkAccessPoint{
 				Kind:       privateLinkAccessPoint,
 				ResourceId: extractStringValueFromBlock(d, paramPrivateLinkAccessPoint, paramId),
 			},
@@ -237,7 +231,7 @@ func dnsRecordUpdate(ctx context.Context, d *schema.ResourceData, meta interface
 	tflog.Debug(ctx, fmt.Sprintf("Updating DNS Record %q: %s", d.Id(), updateDnsRecordRequestJson), map[string]interface{}{dnsRecordKey: d.Id()})
 
 	c := meta.(*Client)
-	req := c.netAccessPointClient.DNSRecordsNetworkingV1Api.UpdateNetworkingV1DnsRecord(c.netAPApiContext(ctx), d.Id()).NetworkingV1DnsRecordUpdate(*updateDnsRecord)
+	req := c.networkingAccessPointV1Client.DNSRecordsNetworkingV1Api.UpdateNetworkingV1DnsRecord(c.networkingAccessPointV1ApiContext(ctx), d.Id()).NetworkingV1DnsRecordUpdate(*updateDnsRecord)
 	updatedDnsRecord, resp, err := req.Execute()
 
 	if err != nil {
@@ -275,7 +269,7 @@ func dnsRecordImport(ctx context.Context, d *schema.ResourceData, meta interface
 	return []*schema.ResourceData{d}, nil
 }
 
-func setDnsRecordAttributes(d *schema.ResourceData, dnsRecord netap.NetworkingV1DnsRecord) (*schema.ResourceData, error) {
+func setDnsRecordAttributes(d *schema.ResourceData, dnsRecord networkingaccesspointv1.NetworkingV1DnsRecord) (*schema.ResourceData, error) {
 	if err := d.Set(paramDisplayName, dnsRecord.Spec.GetDisplayName()); err != nil {
 		return nil, err
 	}

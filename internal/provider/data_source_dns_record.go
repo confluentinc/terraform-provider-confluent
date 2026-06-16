@@ -85,8 +85,8 @@ func dnsRecordDataSourceRead(ctx context.Context, d *schema.ResourceData, meta i
 	tflog.Debug(ctx, fmt.Sprintf("Reading DNS Record %q=%q", paramId, dnsRecordId), map[string]interface{}{dnsRecordKey: dnsRecordId})
 
 	c := meta.(*Client)
-	request := c.netAccessPointClient.DNSRecordsNetworkingV1Api.GetNetworkingV1DnsRecord(c.netAPApiContext(ctx), dnsRecordId).Environment(environmentId)
-	dnsRecord, resp, err := c.netAccessPointClient.DNSRecordsNetworkingV1Api.GetNetworkingV1DnsRecordExecute(request)
+	request := c.networkingAccessPointV1Client.DNSRecordsNetworkingV1Api.GetNetworkingV1DnsRecord(c.networkingAccessPointV1ApiContext(ctx), dnsRecordId).Environment(environmentId)
+	dnsRecord, resp, err := c.networkingAccessPointV1Client.DNSRecordsNetworkingV1Api.GetNetworkingV1DnsRecordExecute(request)
 	if err != nil {
 		return diag.Errorf("error reading DNS Record %q: %s", dnsRecordId, createDescriptiveError(err, resp))
 	}

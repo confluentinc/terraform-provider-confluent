@@ -18,23 +18,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	netpl "github.com/confluentinc/ccloud-sdk-go-v2/networking-privatelink/v1"
+	"net/http"
+	"strings"
+
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"net/http"
-	"strings"
-)
 
-const (
-	paramVpcEndpointId                        = "vpc_endpoint_id"
-	paramPrivateEndpointResourceId            = "private_endpoint_resource_id"
-	paramPrivateServiceConnectConnectionId    = "private_service_connect_connection_id"
-	paramPrivateLinkAttachment                = "private_link_attachment"
-	paramAwsPrivateLinkAttachmentConnection   = "AwsPrivateLinkAttachmentConnection"
-	paramAzurePrivateLinkAttachmentConnection = "AzurePrivateLinkAttachmentConnection"
-	paramGcpPrivateLinkAttachmentConnection   = "GcpPrivateLinkAttachmentConnection"
+	networkingprivatelinkv1 "github.com/confluentinc/ccloud-sdk-go-v2/networking-privatelink/v1"
 )
 
 var acceptedPrivateLinkAttachmentConnectionKinds = []string{paramAws, paramAzure, paramGcp}
@@ -171,7 +163,7 @@ func readPrivateLinkAttachmentConnectionAndSetAttributes(ctx context.Context, d 
 	tflog.Debug(ctx, fmt.Sprintf("Reading Private Link Attachment Connection %q=%q", paramId, plattcId), map[string]interface{}{privateLinkAttachmentConnectionLoggingKey: plattcId})
 
 	c := meta.(*Client)
-	plattc, resp, err := executePlattcRead(c.netPLApiContext(ctx), c, plattcId, environmentId)
+	plattc, resp, err := executePlattcRead(c.networkingPrivatelinkV1ApiContext(ctx), c, plattcId, environmentId)
 	if err != nil {
 		tflog.Warn(ctx, fmt.Sprintf("Error reading Private Link Attachment Connection %q: %s", plattcId, createDescriptiveError(err, resp)), map[string]interface{}{privateLinkAttachmentConnectionLoggingKey: plattcId})
 
@@ -200,40 +192,40 @@ func readPrivateLinkAttachmentConnectionAndSetAttributes(ctx context.Context, d 
 	return []*schema.ResourceData{d}, nil
 }
 
-func executePlattcRead(ctx context.Context, c *Client, plattcId string, environmentId string) (netpl.NetworkingV1PrivateLinkAttachmentConnection, *http.Response, error) {
-	request := c.netPLClient.PrivateLinkAttachmentConnectionsNetworkingV1Api.GetNetworkingV1PrivateLinkAttachmentConnection(c.netPLApiContext(ctx), plattcId).Environment(environmentId)
-	return c.netPLClient.PrivateLinkAttachmentConnectionsNetworkingV1Api.GetNetworkingV1PrivateLinkAttachmentConnectionExecute(request)
+func executePlattcRead(ctx context.Context, c *Client, plattcId string, environmentId string) (networkingprivatelinkv1.NetworkingV1PrivateLinkAttachmentConnection, *http.Response, error) {
+	request := c.networkingPrivatelinkV1Client.PrivateLinkAttachmentConnectionsNetworkingV1Api.GetNetworkingV1PrivateLinkAttachmentConnection(c.networkingPrivatelinkV1ApiContext(ctx), plattcId).Environment(environmentId)
+	return c.networkingPrivatelinkV1Client.PrivateLinkAttachmentConnectionsNetworkingV1Api.GetNetworkingV1PrivateLinkAttachmentConnectionExecute(request)
 }
 
 func privateLinkAttachmentConnectionCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 
-	spec := netpl.NewNetworkingV1PrivateLinkAttachmentConnectionSpec()
+	spec := networkingprivatelinkv1.NewNetworkingV1PrivateLinkAttachmentConnectionSpec()
 
 	displayName := d.Get(paramDisplayName).(string)
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
 	plattId := extractStringValueFromBlock(d, paramPrivateLinkAttachment, paramId)
 
 	spec.SetDisplayName(displayName)
-	spec.SetEnvironment(netpl.ObjectReference{Id: environmentId})
-	spec.SetPrivateLinkAttachment(netpl.ObjectReference{Id: plattId})
+	spec.SetEnvironment(networkingprivatelinkv1.ObjectReference{Id: environmentId})
+	spec.SetPrivateLinkAttachment(networkingprivatelinkv1.ObjectReference{Id: plattId})
 
 	vpcEndpointId := extractStringValueFromBlock(d, paramAws, paramVpcEndpointId)
 	privateEndpointResourceId := extractStringValueFromBlock(d, paramAzure, paramPrivateEndpointResourceId)
 	privateServiceConnectConnectionId := extractStringValueFromBlock(d, paramGcp, paramPrivateServiceConnectConnectionId)
 
 	if vpcEndpointId != "" {
-		spec.SetCloud(netpl.NetworkingV1PrivateLinkAttachmentConnectionSpecCloudOneOf{NetworkingV1AwsPrivateLinkAttachmentConnection: netpl.NewNetworkingV1AwsPrivateLinkAttachmentConnection(paramAwsPrivateLinkAttachmentConnection, vpcEndpointId)})
+		spec.SetCloud(networkingprivatelinkv1.NetworkingV1PrivateLinkAttachmentConnectionSpecCloudOneOf{NetworkingV1AwsPrivateLinkAttachmentConnection: networkingprivatelinkv1.NewNetworkingV1AwsPrivateLinkAttachmentConnection(paramAwsPrivateLinkAttachmentConnection, vpcEndpointId)})
 	} else if privateEndpointResourceId != "" {
-		spec.SetCloud(netpl.NetworkingV1PrivateLinkAttachmentConnectionSpecCloudOneOf{NetworkingV1AzurePrivateLinkAttachmentConnection: netpl.NewNetworkingV1AzurePrivateLinkAttachmentConnection(paramAzurePrivateLinkAttachmentConnection, privateEndpointResourceId)})
+		spec.SetCloud(networkingprivatelinkv1.NetworkingV1PrivateLinkAttachmentConnectionSpecCloudOneOf{NetworkingV1AzurePrivateLinkAttachmentConnection: networkingprivatelinkv1.NewNetworkingV1AzurePrivateLinkAttachmentConnection(paramAzurePrivateLinkAttachmentConnection, privateEndpointResourceId)})
 	} else if privateServiceConnectConnectionId != "" {
-		spec.SetCloud(netpl.NetworkingV1PrivateLinkAttachmentConnectionSpecCloudOneOf{NetworkingV1GcpPrivateLinkAttachmentConnection: netpl.NewNetworkingV1GcpPrivateLinkAttachmentConnection(paramGcpPrivateLinkAttachmentConnection, privateServiceConnectConnectionId)})
+		spec.SetCloud(networkingprivatelinkv1.NetworkingV1PrivateLinkAttachmentConnectionSpecCloudOneOf{NetworkingV1GcpPrivateLinkAttachmentConnection: networkingprivatelinkv1.NewNetworkingV1GcpPrivateLinkAttachmentConnection(paramGcpPrivateLinkAttachmentConnection, privateServiceConnectConnectionId)})
 	}
 
-	plattc := netpl.NewNetworkingV1PrivateLinkAttachmentConnection()
+	plattc := networkingprivatelinkv1.NewNetworkingV1PrivateLinkAttachmentConnection()
 	plattc.SetSpec(*spec)
 
 	c := meta.(*Client)
-	request := c.netPLClient.PrivateLinkAttachmentConnectionsNetworkingV1Api.CreateNetworkingV1PrivateLinkAttachmentConnection(c.netPLApiContext(ctx))
+	request := c.networkingPrivatelinkV1Client.PrivateLinkAttachmentConnectionsNetworkingV1Api.CreateNetworkingV1PrivateLinkAttachmentConnection(c.networkingPrivatelinkV1ApiContext(ctx))
 	request = request.NetworkingV1PrivateLinkAttachmentConnection(*plattc)
 
 	createPrivateLinkAttachmentConnectionRequestJson, err := json.Marshal(request)
@@ -242,7 +234,7 @@ func privateLinkAttachmentConnectionCreate(ctx context.Context, d *schema.Resour
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Private Link Attachment Connection: %s", createPrivateLinkAttachmentConnectionRequestJson))
 
-	createdPlattc, resp, err := c.netPLClient.PrivateLinkAttachmentConnectionsNetworkingV1Api.CreateNetworkingV1PrivateLinkAttachmentConnectionExecute(request)
+	createdPlattc, resp, err := c.networkingPrivatelinkV1Client.PrivateLinkAttachmentConnectionsNetworkingV1Api.CreateNetworkingV1PrivateLinkAttachmentConnectionExecute(request)
 	if err != nil {
 		return diag.Errorf("error creating Private Link Attachment Connection %s", createDescriptiveError(err, resp))
 	}
@@ -250,7 +242,7 @@ func privateLinkAttachmentConnectionCreate(ctx context.Context, d *schema.Resour
 	plattcId := createdPlattc.GetId()
 	d.SetId(plattcId)
 
-	if err := waitForPrivateLinkAttachmentConnectionToProvision(c.netPLApiContext(ctx), c, environmentId, d.Id()); err != nil {
+	if err := waitForPrivateLinkAttachmentConnectionToProvision(c.networkingPrivatelinkV1ApiContext(ctx), c, environmentId, d.Id()); err != nil {
 		return diag.Errorf("error waiting for Private Link Attachment Connection %q to provision: %s", plattcId, createDescriptiveError(err))
 	}
 
@@ -269,13 +261,13 @@ func privateLinkAttachmentConnectionDelete(ctx context.Context, d *schema.Resour
 	tflog.Debug(ctx, fmt.Sprintf("deleting Private Link Attachment Connection %q=%q", paramId, plattcId), map[string]interface{}{privateLinkAttachmentConnectionLoggingKey: plattcId})
 
 	c := meta.(*Client)
-	request := c.netPLClient.PrivateLinkAttachmentConnectionsNetworkingV1Api.DeleteNetworkingV1PrivateLinkAttachmentConnection(c.netPLApiContext(ctx), plattcId).Environment(environmentId)
-	resp, err := c.netPLClient.PrivateLinkAttachmentConnectionsNetworkingV1Api.DeleteNetworkingV1PrivateLinkAttachmentConnectionExecute(request)
+	request := c.networkingPrivatelinkV1Client.PrivateLinkAttachmentConnectionsNetworkingV1Api.DeleteNetworkingV1PrivateLinkAttachmentConnection(c.networkingPrivatelinkV1ApiContext(ctx), plattcId).Environment(environmentId)
+	resp, err := c.networkingPrivatelinkV1Client.PrivateLinkAttachmentConnectionsNetworkingV1Api.DeleteNetworkingV1PrivateLinkAttachmentConnectionExecute(request)
 	if err != nil {
 		return diag.Errorf("error deleting Private Link Attachment Connection %q: %s", plattcId, createDescriptiveError(err, resp))
 	}
 
-	if err := waitForPrivateLinkAttachmentConnectionToBeDeleted(c.netApiContext(ctx), c, environmentId, d.Id()); err != nil {
+	if err := waitForPrivateLinkAttachmentConnectionToBeDeleted(c.networkingV1ApiContext(ctx), c, environmentId, d.Id()); err != nil {
 		return diag.Errorf("error waiting for Private Link Attachment Connection %q to be deleted: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
@@ -289,20 +281,20 @@ func privateLinkAttachmentConnectionUpdate(ctx context.Context, d *schema.Resour
 		return diag.Errorf("error updating Private Link Attachment Connection %q: only %q attribute can be updated for Private Link Attachment Connection", d.Id(), paramDisplayName)
 	}
 
-	spec := netpl.NewNetworkingV1PrivateLinkAttachmentConnectionSpecUpdate()
+	spec := networkingprivatelinkv1.NewNetworkingV1PrivateLinkAttachmentConnectionSpecUpdate()
 
 	plattcId := d.Id()
 	displayName := d.Get(paramDisplayName).(string)
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
 
 	spec.SetDisplayName(displayName)
-	spec.SetEnvironment(netpl.ObjectReference{Id: environmentId})
+	spec.SetEnvironment(networkingprivatelinkv1.ObjectReference{Id: environmentId})
 
-	plattc := netpl.NewNetworkingV1PrivateLinkAttachmentConnectionUpdate()
+	plattc := networkingprivatelinkv1.NewNetworkingV1PrivateLinkAttachmentConnectionUpdate()
 	plattc.SetSpec(*spec)
 
 	c := meta.(*Client)
-	request := c.netPLClient.PrivateLinkAttachmentConnectionsNetworkingV1Api.UpdateNetworkingV1PrivateLinkAttachmentConnection(c.netPLApiContext(ctx), plattcId)
+	request := c.networkingPrivatelinkV1Client.PrivateLinkAttachmentConnectionsNetworkingV1Api.UpdateNetworkingV1PrivateLinkAttachmentConnection(c.networkingPrivatelinkV1ApiContext(ctx), plattcId)
 	request = request.NetworkingV1PrivateLinkAttachmentConnectionUpdate(*plattc)
 
 	updatePrivateLinkAttachmentConnectionRequestJson, err := json.Marshal(request)
@@ -311,7 +303,7 @@ func privateLinkAttachmentConnectionUpdate(ctx context.Context, d *schema.Resour
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Updating new Private Link Attachment Connection: %s", updatePrivateLinkAttachmentConnectionRequestJson))
 
-	updatedPlattc, resp, err := c.netPLClient.PrivateLinkAttachmentConnectionsNetworkingV1Api.UpdateNetworkingV1PrivateLinkAttachmentConnectionExecute(request)
+	updatedPlattc, resp, err := c.networkingPrivatelinkV1Client.PrivateLinkAttachmentConnectionsNetworkingV1Api.UpdateNetworkingV1PrivateLinkAttachmentConnectionExecute(request)
 	if err != nil {
 		return diag.Errorf("error updating Private Link Attachment Connection, %s", createDescriptiveError(err, resp))
 	}
@@ -347,7 +339,7 @@ func privateLinkAttachmentConnectionImport(ctx context.Context, d *schema.Resour
 	return []*schema.ResourceData{d}, nil
 }
 
-func setPrivateLinkAttachmentConnectionAttributes(d *schema.ResourceData, plattc netpl.NetworkingV1PrivateLinkAttachmentConnection) (*schema.ResourceData, error) {
+func setPrivateLinkAttachmentConnectionAttributes(d *schema.ResourceData, plattc networkingprivatelinkv1.NetworkingV1PrivateLinkAttachmentConnection) (*schema.ResourceData, error) {
 	if err := d.Set(paramDisplayName, plattc.Spec.GetDisplayName()); err != nil {
 		return nil, err
 	}

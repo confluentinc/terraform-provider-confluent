@@ -11,7 +11,7 @@ auto_cancel:
 global_job_config:
   prologue:
     commands:
-      - sem-version go 1.24.9
+      - sem-version go 1.25.9
       - export "GOPATH=$(go env GOPATH)"
       - >-
         export
@@ -31,7 +31,7 @@ blocks:
           execution_time_limit:
             hours: 2
           commands:
-            - . vault-sem-get-secret v1/ci/kv/apif/terraform-provider-confluent/sonar_token
+            - . vault-get-secret apif/terraform-provider-confluent/sonar-token
             - make all
             # Run make-release CI if the current commit is not tagged
             - if [[ -z $(git tag --points-at HEAD) ]]; then make release-ci; fi

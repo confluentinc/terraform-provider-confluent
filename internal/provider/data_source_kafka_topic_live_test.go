@@ -198,4 +198,4 @@ func testAccCheckKafkaTopicDataSourceLiveDestroy(s *terraform.State) error {
 		}
 	}
 	return nil
-} 
+}

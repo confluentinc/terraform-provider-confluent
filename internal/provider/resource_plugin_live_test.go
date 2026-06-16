@@ -179,4 +179,3 @@ func testAccCheckPluginLiveConfigUpdate(endpoint, pluginResourceLabel, pluginDis
 	}
 	`, endpoint, apiKey, apiSecret, pluginResourceLabel, pluginDisplayName, environmentId)
 }
-

@@ -17,19 +17,12 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-)
-
-const (
-	envScenarioDataSourceName        = "confluent_environment Data Source Lifecycle"
-	environmentDataSourceDisplayName = "test_env_display_name"
-	environmentDataSourceLabel       = "test_env_data_source_label"
-	environmentDataSourceEndpoint    = "crn://confluent.cloud/organization=foo/environment=env-1jrymj"
+	"github.com/walkerus/go-wiremock"
 )
 
 func TestAccDataSourceEnvironment(t *testing.T) {

@@ -17,17 +17,12 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-)
-
-const (
-	dataSourceIdentityPoolScenarioName = "confluent_identity_pool Data Source Lifecycle"
-	identityPoolDataSourceLabel        = "example"
+	"github.com/walkerus/go-wiremock"
 )
 
 var fullIdentityPoolDataSourceLabel = fmt.Sprintf("data.confluent_identity_pool.%s", identityPoolDataSourceLabel)

@@ -17,26 +17,13 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-)
-
-const (
-	scenarioStateGcpPeeringIsProvisioning   = "The new gcp peering is provisioning"
-	scenarioStateGcpPeeringIsDeprovisioning = "The new gcp peering is deprovisioning"
-	scenarioStateGcpPeeringHasBeenCreated   = "The new gcp peering has been just created"
-	scenarioStateGcpPeeringHasBeenDeleted   = "The new gcp peering's deletion has been just completed"
-	gcpPeeringScenarioName                  = "confluent_gcp Peering Gcp Resource Lifecycle"
-	gcpPeeringEnvironmentId                 = "env-gz903"
-	gcpPeeringNetworkId                     = "n-gez54g"
-	gcpPeeringId                            = "peer-6me8yg"
-	gcpProject                              = "superb-gear-123456"
-	gcpVpcNetwork                           = "test-vpc"
+	"github.com/walkerus/go-wiremock"
 )
 
 var gcpPeeringUrlPath = fmt.Sprintf("/networking/v1/peerings/%s", gcpPeeringId)
@@ -200,7 +187,7 @@ func testAccCheckGcpPeeringDestroy(s *terraform.State) error {
 			continue
 		}
 		deletedPeeringId := rs.Primary.ID
-		req := c.netClient.PeeringsNetworkingV1Api.GetNetworkingV1Peering(c.netApiContext(context.Background()), deletedPeeringId).Environment(gcpPeeringEnvironmentId)
+		req := c.networkingV1Client.PeeringsNetworkingV1Api.GetNetworkingV1Peering(c.networkingV1ApiContext(context.Background()), deletedPeeringId).Environment(gcpPeeringEnvironmentId)
 		deletedPeering, response, err := req.Execute()
 		if response != nil && response.StatusCode == http.StatusNotFound {
 			return nil

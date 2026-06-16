@@ -17,14 +17,14 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
 	"strconv"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/walkerus/go-wiremock"
 )
 
 func TestAccTopicWithEnhancedProviderBlock2(t *testing.T) {
@@ -164,6 +164,7 @@ func TestAccTopicWithEnhancedProviderBlock2(t *testing.T) {
 				),
 			},
 			{
+				// Step 2: update configs (add segment.bytes, max.compaction.lag.ms; update sixthConfig) and delete retention.ms
 				Config: testAccCheckTopicUpdatedConfigWithEnhancedProviderBlock2(confluentCloudBaseUrl, mockTopicTestServerUrl),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckTopicExists(fullTopicResourceLabel),
@@ -174,9 +175,9 @@ func TestAccTopicWithEnhancedProviderBlock2(t *testing.T) {
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "topic_name", topicName),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, "partitions_count", strconv.Itoa(partitionCount)),
 					resource.TestCheckNoResourceAttr(fullTopicResourceLabel, "rest_endpoint"),
-					resource.TestCheckResourceAttr(fullTopicResourceLabel, "config.%", "5"),
+					resource.TestCheckResourceAttr(fullTopicResourceLabel, "config.%", "4"),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, fmt.Sprintf("config.%s", firstConfigName), firstConfigValue),
-					resource.TestCheckResourceAttr(fullTopicResourceLabel, fmt.Sprintf("config.%s", secondConfigName), secondConfigUpdatedValue),
+					resource.TestCheckNoResourceAttr(fullTopicResourceLabel, fmt.Sprintf("config.%s", secondConfigName)),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, fmt.Sprintf("config.%s", thirdConfigName), thirdConfigAddedValue),
 					resource.TestCheckResourceAttr(fullTopicResourceLabel, fmt.Sprintf("config.%s", fourthConfigName), fourthConfigAddedValue),
 					resource.TestCheckNoResourceAttr(fullTopicResourceLabel, fmt.Sprintf("config.%s", fifthConfigName)),
@@ -233,14 +234,13 @@ func testAccCheckTopicUpdatedConfigWithEnhancedProviderBlock2(confluentCloudBase
 	resource "confluent_kafka_topic" "%s" {
 	  topic_name = "%s"
 	  partitions_count = "%d"
-	
+
 	  config = {
-		"%s" = "%s"
 		"%s" = "%s"
 		"%s" = "%s"
 		"%s" = "%s"
 		"%s" = "%s"
 	  }
 	}
-	`, confluentCloudBaseUrl, kafkaApiKey, kafkaApiSecret, mockServerUrl, clusterId, topicResourceLabel, topicName, partitionCount, firstConfigName, firstConfigValue, secondConfigName, secondConfigUpdatedValue, thirdConfigName, thirdConfigAddedValue, fourthConfigName, fourthConfigAddedValue, sixthConfigName, sixthConfigUpdatedValue)
+	`, confluentCloudBaseUrl, kafkaApiKey, kafkaApiSecret, mockServerUrl, clusterId, topicResourceLabel, topicName, partitionCount, firstConfigName, firstConfigValue, thirdConfigName, thirdConfigAddedValue, fourthConfigName, fourthConfigAddedValue, sixthConfigName, sixthConfigUpdatedValue)
 }

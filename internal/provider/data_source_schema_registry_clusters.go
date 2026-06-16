@@ -18,17 +18,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	v2 "github.com/confluentinc/ccloud-sdk-go-v2/org/v2"
-	v3 "github.com/confluentinc/ccloud-sdk-go-v2/srcm/v3"
+	"strconv"
+	"time"
+
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"strconv"
-	"time"
-)
 
-const (
-	paramClusters = "clusters"
+	orgv2 "github.com/confluentinc/ccloud-sdk-go-v2/org/v2"
+	srcmv3 "github.com/confluentinc/ccloud-sdk-go-v2/srcm/v3"
 )
 
 func schemaRegistryClustersDataSource() *schema.Resource {
@@ -161,13 +159,13 @@ func schemaRegistryClustersDataSourceRead(ctx context.Context, d *schema.Resourc
 	return nil
 }
 
-func loadAllSRClusters(ctx context.Context, environmentId string, meta interface{}) ([]v3.SrcmV3Cluster, diag.Diagnostics) {
-	var clusters []v3.SrcmV3Cluster
-	var environments []v2.OrgV2Environment
+func loadAllSRClusters(ctx context.Context, environmentId string, meta interface{}) ([]srcmv3.SrcmV3Cluster, diag.Diagnostics) {
+	var clusters []srcmv3.SrcmV3Cluster
+	var environments []orgv2.OrgV2Environment
 	client := meta.(*Client)
 
 	if environmentId != "" {
-		environments = []v2.OrgV2Environment{{Id: ptr(environmentId)}}
+		environments = []orgv2.OrgV2Environment{{Id: ptr(environmentId)}}
 	} else {
 		var err error
 		environments, err = loadEnvironments(ctx, client)
@@ -196,7 +194,7 @@ func loadAllSRClusters(ctx context.Context, environmentId string, meta interface
 	return clusters, nil
 }
 
-func populateSRClusterResult(schemaRegistryCluster v3.SrcmV3Cluster) map[string]interface{} {
+func populateSRClusterResult(schemaRegistryCluster srcmv3.SrcmV3Cluster) map[string]interface{} {
 	env := make([]interface{}, 1)
 	env[0] = map[string]interface{}{
 		paramId: schemaRegistryCluster.Spec.Environment.GetId(),

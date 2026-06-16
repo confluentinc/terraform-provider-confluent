@@ -17,26 +17,13 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-)
-
-const (
-	scenarioStateGroupMappingHasBeenCreated             = "The new group mapping has been just created"
-	scenarioStateGroupMappingDescriptionHaveBeenUpdated = "The new group mapping's description have been just updated"
-	scenarioStateGroupMappingHasBeenDeleted             = "The new group mapping has been deleted"
-	groupMappingScenarioName                            = "confluent_group_mapping Resource Lifecycle"
-
-	groupMappingId            = "group-w4vP"
-	groupMappingResourceLabel = "test_group_mapping_resource_label"
-	groupMappingDisplayName   = "Default"
-	groupMappingFilter        = "\"engineering\" in groups"
-	groupMappingDescription   = "Permission for all users in everyone group"
+	"github.com/walkerus/go-wiremock"
 )
 
 func TestAccGroupMapping(t *testing.T) {
@@ -179,7 +166,7 @@ func testAccCheckGroupMappingDestroy(s *terraform.State) error {
 			continue
 		}
 		deletedGroupMappingId := rs.Primary.ID
-		req := c.ssoClient.GroupMappingsIamV2SsoApi.GetIamV2SsoGroupMapping(c.iamApiContext(context.Background()), deletedGroupMappingId)
+		req := c.ssoV2Client.GroupMappingsIamV2SsoApi.GetIamV2SsoGroupMapping(c.iamV2ApiContext(context.Background()), deletedGroupMappingId)
 		deletedGroupMapping, response, err := req.Execute()
 		if response != nil && (response.StatusCode == http.StatusForbidden || response.StatusCode == http.StatusNotFound) {
 			// iam/v2/sso/{nonExistentGroupMappingId/deletedGroupMappingID} returns http.StatusForbidden instead of http.StatusNotFound

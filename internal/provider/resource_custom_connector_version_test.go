@@ -17,7 +17,6 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -25,13 +24,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-)
-
-const (
-	scenarioStateCustomConnectorPluginVersionPresignedUrlHasBeenCreated = "The new custom connector plugin version's presigned URL has been just created"
-	scenarioStateCustomConnectorPluginVersionHasBeenCreated             = "The new custom connector plugin version has been just created"
-	scenarioStateCustomConnectorPluginVersionHasBeenDeleted             = "The new custom connector plugin version has been deleted"
-	customConnectorPluginScenarioVersionName                            = "confluent_custom_connector_plugin_version Resource Lifecycle"
+	"github.com/walkerus/go-wiremock"
 )
 
 func TestAccCustomConnectorPluginVersion(t *testing.T) {

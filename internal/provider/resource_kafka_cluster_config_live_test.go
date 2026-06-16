@@ -201,4 +201,4 @@ func testAccCheckKafkaClusterConfigResetLiveConfig(endpoint, configResourceLabel
 		}
 	}
 	`, endpoint, apiKey, apiSecret, configResourceLabel, kafkaClusterId, kafkaRestEndpoint, kafkaApiKey, kafkaApiSecret)
-} 
+}

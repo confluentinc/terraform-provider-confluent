@@ -17,8 +17,6 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -26,16 +24,8 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-)
-
-const (
-	dataSourceFlinkRegionScenarioName = "confluent_flink_region Data Source Lifecycle"
-	flinkRegionResourceLabel          = "example"
-	flinkRegionCloudProvider          = "AWS"
-	flinkRegionCloudProviderRegion    = "us-east-1"
-	flinkRegionKind                   = "Region"
-	flinkRegionRestEndpoint           = "https://flink.us-east-1.aws.confluent.cloud"
-	flinkRegionRestEndpointPrivate    = "https://flink.us-east-1.aws.private.confluent.cloud"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/walkerus/go-wiremock"
 )
 
 var fullFlinkRegionDataSourceLabel = fmt.Sprintf("data.confluent_flink_region.%s", flinkRegionResourceLabel)

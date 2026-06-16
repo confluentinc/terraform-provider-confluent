@@ -15,7 +15,7 @@ description: |-
 -> **Note:** It is recommended to set `lifecycle { prevent_destroy = true }` on production instances to prevent accidental Flink Connection deletion. This setting rejects plans that would destroy or recreate the Flink Connection, such as attempting to change uneditable attributes. Read more about it in the [Terraform docs](https://www.terraform.io/language/meta-arguments/lifecycle#prevent_destroy).
 
 ## Example Usage
-### Option #1: Manage multiple Flink Compute Pools in the same Terraform workspace
+### Option #1: Manage multiple Flink Connections in the same Terraform workspace
 
 ```terraform
 provider "confluent" {
@@ -53,7 +53,7 @@ resource "confluent_flink_connection" "connection1" {
 }
 ```
 
-### Option #2: Manage a single Flink Compute Pool in the same Terraform workspace
+### Option #2: Manage a single Flink Connection in the same Terraform workspace
 
 ```terraform
 provider "confluent" {
@@ -109,6 +109,16 @@ The following arguments are supported:
 - `password` - (Optional String) The password  for the connection type. This is valid and required for types `MONGODB` and `COUCHBASE`.
 
 !> **Warning:** Use Option #2 to avoid exposing sensitive `credentials` value in a state file. When using Option #1, Terraform doesn't encrypt the sensitive `credentials` value of the `confluent_flink_connection` resource, so you must keep your state file secure to avoid exposing it. Refer to the [Terraform documentation](https://www.terraform.io/docs/language/state/sensitive-data.html) to learn more about securing your state file.
+
+-> **Note:** When using OAuth to authenticate a Flink Connection, if the intended `principal.id` is a service account instead of an Identity Pool, make sure the Identity Pool has an `Assigner` role binding on the service account. Otherwise, you may encounter a 403 Forbidden error. For example:
+
+```hcl
+resource "confluent_role_binding" "identity-pool-assigner" {
+  principal   = "User:pool-abc123"
+  role_name   = "Assigner"
+  crn_pattern = "${data.confluent_organization.main.resource_name}/service-account=sa-def456"
+}
+```
 
 # Attributes Reference
 

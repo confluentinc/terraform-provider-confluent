@@ -18,6 +18,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -99,7 +100,7 @@ func kafkaClientQuotaDataSourceRead(ctx context.Context, d *schema.ResourceData,
 	kafkaClientQuotaId := d.Get(paramId).(string)
 	tflog.Debug(ctx, fmt.Sprintf("Reading Kafka Client Quota %q", kafkaClientQuotaId), map[string]interface{}{kafkaClientQuotaLoggingKey: kafkaClientQuotaId})
 	c := meta.(*Client)
-	kafkaClientQuota, resp, err := executeKafkaClientQuotaRead(c.mdsApiContext(ctx), c, kafkaClientQuotaId)
+	kafkaClientQuota, resp, err := executeKafkaClientQuotaRead(c.mdsV2ApiContext(ctx), c, kafkaClientQuotaId)
 	if err != nil {
 		return diag.Errorf("error reading Kafka Client Quota %q: %s", kafkaClientQuotaId, createDescriptiveError(err, resp))
 	}

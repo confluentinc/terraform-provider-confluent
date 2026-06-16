@@ -24,7 +24,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
-	piv2 "github.com/confluentinc/ccloud-sdk-go-v2/provider-integration/v2"
+	providerintegrationv2 "github.com/confluentinc/ccloud-sdk-go-v2/provider-integration/v2"
 )
 
 func providerIntegrationSetupDataSource() *schema.Resource {
@@ -88,7 +88,7 @@ func providerIntegrationSetupDataSourceReadUsingId(ctx context.Context, d *schem
 	tflog.Debug(ctx, fmt.Sprintf("Reading provider integration v2 %q=%q", paramId, integrationId), map[string]interface{}{providerIntegrationLoggingKey: integrationId})
 
 	c := meta.(*Client)
-	req := c.piV2Client.IntegrationsPimV2Api.GetPimV2Integration(c.piV2ApiContext(ctx), integrationId).Environment(environmentId)
+	req := c.providerIntegrationV2Client.IntegrationsPimV2Api.GetPimV2Integration(c.providerIntegrationV2ApiContext(ctx), integrationId).Environment(environmentId)
 	integration, _, err := req.Execute()
 	if err != nil {
 		return diag.Errorf("error reading provider integration v2 %q: %s", integrationId, createDescriptiveError(err))
@@ -110,7 +110,7 @@ func providerIntegrationSetupDataSourceReadUsingDisplayName(ctx context.Context,
 	tflog.Debug(ctx, fmt.Sprintf("Reading provider integration v2 %q=%q", paramDisplayName, displayName))
 
 	c := meta.(*Client)
-	req := c.piV2Client.IntegrationsPimV2Api.ListPimV2Integrations(c.piV2ApiContext(ctx)).Environment(environmentId).DisplayName(displayName)
+	req := c.providerIntegrationV2Client.IntegrationsPimV2Api.ListPimV2Integrations(c.providerIntegrationV2ApiContext(ctx)).Environment(environmentId).DisplayName(displayName)
 	integrations, _, err := req.Execute()
 	if err != nil {
 		return diag.Errorf("error reading provider integration v2 %q: %s", displayName, createDescriptiveError(err))
@@ -133,7 +133,7 @@ func providerIntegrationSetupDataSourceReadUsingDisplayName(ctx context.Context,
 	return nil
 }
 
-func setProviderIntegrationV2Attributes(d *schema.ResourceData, integration piv2.PimV2Integration) (*schema.ResourceData, error) {
+func setProviderIntegrationV2Attributes(d *schema.ResourceData, integration providerintegrationv2.PimV2Integration) (*schema.ResourceData, error) {
 	if err := d.Set(paramId, integration.GetId()); err != nil {
 		return nil, err
 	}

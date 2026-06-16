@@ -17,7 +17,6 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -25,27 +24,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-)
-
-const (
-	scenarioStateConfigHasBeenCreated = "A new config has been just created"
-	scenarioStateConfigHasBeenUpdated = "A new config has been just updated"
-	configScenarioName                = "confluent_kafka_cluster_config Resource Lifecycle"
-	firstClusterConfigName            = "auto.create.topics.enable"
-	firstClusterConfigValue           = "false"
-	firstClusterConfigUpdatedValue    = "true"
-	secondClusterConfigName           = "ssl.cipher.suites"
-	secondClusterConfigValue          = "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
-	thirdClusterConfigName            = "num.partitions"
-	thirdClusterConfigValue           = "6"
-	thirdClusterConfigUpdatedValue    = "8"
-	fourthClusterConfigName           = "log.cleaner.max.compaction.lag.ms"
-	fourthClusterConfigAddedValue     = "9223372036854775807"
-	fifthClusterConfigName            = "log.retention.ms"
-	fifthClusterConfigAddedValue      = "604800001"
-	sixthClusterConfigName            = "ssl.enabled.protocols"
-	sixthClusterConfigAddedValue      = "TLSv1.3"
-	configResourceLabel               = "test_config_resource_label"
+	"github.com/walkerus/go-wiremock"
 )
 
 var fullConfigResourceLabel = fmt.Sprintf("confluent_kafka_cluster_config.%s", configResourceLabel)

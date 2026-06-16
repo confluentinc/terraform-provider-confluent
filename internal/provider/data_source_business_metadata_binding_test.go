@@ -17,16 +17,12 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/walkerus/go-wiremock"
 	"io/ioutil"
 	"net/http"
 	"testing"
-)
 
-const (
-	businessMetadataBindingDataSourceScenarioName = "confluent_business_metadata_binding Data Source Lifecycle"
-	businessMetadataBindingDataSourceLabel        = "data.confluent_business_metadata_binding.main"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/walkerus/go-wiremock"
 )
 
 func TestAccDataSourceBusinessMetadataBinding(t *testing.T) {

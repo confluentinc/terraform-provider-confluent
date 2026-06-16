@@ -1,0 +1,42 @@
+{
+  "api_version": "networking/v1",
+  "id": "ap-azure-ingress123",
+  "kind": "AccessPoint",
+  "metadata": {
+    "created_at": "2024-02-01T22:25:50.415274Z",
+    "resource_name": "crn://confluent.cloud/organization=abc123/environment=env-abc123/gateway=gw-azure-ingress123/access-point=ap-azure-ingress123",
+    "self": "https://api.confluent.cloud/networking/v1/access-points/ap-azure-ingress123?environment=env-abc123",
+    "updated_at": "2024-02-01T22:25:50.415274Z"
+  },
+  "spec": {
+    "config": {
+      "kind": "AzureIngressPrivateLinkEndpoint",
+      "private_endpoint_resource_id": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/mygroup/providers/Microsoft.Network/privateEndpoints/my-private-endpoint"
+    },
+    "display_name": "prod-azure-ingress-ap-1",
+    "environment": {
+      "api_version": "org/v2",
+      "id": "env-abc123",
+      "kind": "Environment",
+      "related": "https://api.confluent.cloud/v2/environments/env-abc123",
+      "resource_name": "crn://confluent.cloud/organization=abc123/environment=env-abc123"
+    },
+    "gateway": {
+      "api_version": "networking/v1",
+      "id": "gw-azure-ingress123",
+      "kind": "Gateway",
+      "related": "https://api.confluent.cloud/v2/gateways/gw-azure-ingress123?environment=env-abc123",
+      "resource_name": "crn://confluent.cloud/organization=abc123/environment=env-abc123/gateway=gw-azure-ingress123"
+    }
+  },
+  "status": {
+    "phase": "READY",
+    "config": {
+      "kind": "AzureIngressPrivateLinkEndpointStatus",
+      "private_link_service_alias": "plattg-123abc-privatelink.00000000-0000-0000-0000-000000000000.centralus.azure.privatelinkservice",
+      "private_link_service_resource_id": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/plattg-123abc/providers/Microsoft.Network/privateLinkServices/plattg-123abc-privatelink",
+      "private_endpoint_resource_id": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/mygroup/providers/Microsoft.Network/privateEndpoints/my-private-endpoint",
+      "dns_domain": "ap123abc.centralus.azure.accesspoint.confluent.cloud"
+    }
+  }
+}

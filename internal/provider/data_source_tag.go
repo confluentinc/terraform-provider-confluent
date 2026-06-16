@@ -18,15 +18,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"regexp"
+
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"regexp"
-)
-
-const (
-	paramEntityTypes = "entity_types"
 )
 
 func tagDataSource() *schema.Resource {
@@ -98,7 +95,7 @@ func tagDataSourceRead(ctx context.Context, d *schema.ResourceData, meta interfa
 
 func tagDataSourceReadUsingTagName(ctx context.Context, d *schema.ResourceData, meta interface{}, restEndpoint string, clusterId string, clusterApiKey string, clusterApiSecret string, tagName string) diag.Diagnostics {
 	catalogRestClient := meta.(*Client).catalogRestClientFactory.CreateCatalogRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
-	request := catalogRestClient.apiClient.TypesV1Api.GetTagDefByName(catalogRestClient.dataCatalogApiContext(ctx), tagName)
+	request := catalogRestClient.apiClient.TypesV1Api.GetTagDefByName(catalogRestClient.dataCatalogV1ApiContext(ctx), tagName)
 	tag, resp, err := request.Execute()
 	tagId := createTagId(clusterId, tagName)
 

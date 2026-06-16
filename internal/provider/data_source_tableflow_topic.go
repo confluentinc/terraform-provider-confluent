@@ -53,6 +53,11 @@ func tableflowTopicDataSource() *schema.Resource {
 				Computed:    true,
 				Description: "Retention time in milliseconds for the Tableflow enabled topic.",
 			},
+			paramDataRetentionMs: {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The maximum age, in milliseconds, of data to retain in the table for the Tableflow-enabled topic. The minimum value is 30 days (2592000000ms).",
+			},
 			paramTableFormats: {
 				Type:        schema.TypeSet,
 				Computed:    true,
@@ -98,7 +103,7 @@ func tableflowTopicDataSourceRead(ctx context.Context, d *schema.ResourceData, m
 
 	c := meta.(*Client)
 
-	tableflowApiKey, tableflowApiSecret, err := extractTableflowApiKeyAndApiSecret(c, d, false)
+	tableflowApiKey, tableflowApiSecret, err := extractTableflowApiKeyAndApiSecret(ctx, c, d, false)
 	if err != nil {
 		return diag.Errorf("error reading Tableflow Topic: %s", createDescriptiveError(err))
 	}

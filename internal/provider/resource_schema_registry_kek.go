@@ -18,25 +18,17 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	sr "github.com/confluentinc/ccloud-sdk-go-v2/schema-registry/v1"
+	"net/http"
+	"regexp"
+	"strings"
+
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"io"
-	"net/http"
-	"regexp"
-	"strings"
-)
 
-const (
-	paramKmsType  = "kms_type"
-	paramKmsKeyId = "kms_key_id"
-	paramShared   = "shared"
-	paramDoc      = "doc"
-
-	paramSharedDefaultValue = false
+	schemaregistryv1 "github.com/confluentinc/ccloud-sdk-go-v2/schema-registry/v1"
 )
 
 func schemaRegistryKekResource() *schema.Resource {
@@ -53,7 +45,6 @@ func schemaRegistryKekResource() *schema.Resource {
 			paramRestEndpoint: {
 				Type:         schema.TypeString,
 				Optional:     true,
-				ForceNew:     true,
 				Description:  "The REST endpoint of the Schema Registry cluster, for example, `https://psrc-00000.us-central1.gcp.confluent.cloud:443`).",
 				ValidateFunc: validation.StringMatch(regexp.MustCompile("^http"), "the REST endpoint must start with 'https://'"),
 			},
@@ -122,7 +113,7 @@ func schemaRegistryKekCreate(ctx context.Context, d *schema.ResourceData, meta i
 	kekId := createKekId(clusterId, kekName)
 
 	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
-	kekRequest := sr.CreateKekRequest{}
+	kekRequest := schemaregistryv1.CreateKekRequest{}
 	kekRequest.SetName(kekName)
 	kekRequest.SetKmsType(d.Get(paramKmsType).(string))
 	kekRequest.SetKmsKeyId(d.Get(paramKmsKeyId).(string))
@@ -146,8 +137,7 @@ func schemaRegistryKekCreate(ctx context.Context, d *schema.ResourceData, meta i
 
 	createdKek, resp, err := request.Execute()
 	if err != nil {
-		b, err := io.ReadAll(resp.Body)
-		return diag.Errorf("error creating Schema Registry KEK %s, error message: %s", createDescriptiveError(err, resp), string(b))
+		return diag.Errorf("error creating Schema Registry KEK: %s", createDescriptiveError(err, resp))
 	}
 	d.SetId(kekId)
 
@@ -265,8 +255,8 @@ func schemaRegistryKekDelete(ctx context.Context, d *schema.ResourceData, meta i
 }
 
 func schemaRegistryKekUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if d.HasChangesExcept(paramCredentials, paramProperties, paramDoc, paramShared, paramHardDelete) {
-		return diag.Errorf("error updating Schema Registry KEK %q: only %q, %q, %q, %q, %q attributes can be updated for Schema Registry KEK", d.Id(), paramCredentials, paramProperties, paramDoc, paramShared, paramHardDelete)
+	if d.HasChangesExcept(paramCredentials, paramProperties, paramDoc, paramShared, paramHardDelete, paramRestEndpoint) {
+		return diag.Errorf("error updating Schema Registry KEK %q: only %q, %q, %q, %q, %q, %q attributes can be updated for Schema Registry KEK", d.Id(), paramCredentials, paramProperties, paramDoc, paramShared, paramHardDelete, paramRestEndpoint)
 	}
 
 	restEndpoint, err := extractSchemaRegistryRestEndpoint(meta.(*Client), d, false)
@@ -286,7 +276,7 @@ func schemaRegistryKekUpdate(ctx context.Context, d *schema.ResourceData, meta i
 	kekId := createKekId(clusterId, kekName)
 
 	schemaRegistryRestClient := meta.(*Client).schemaRegistryRestClientFactory.CreateSchemaRegistryRestClient(restEndpoint, clusterId, clusterApiKey, clusterApiSecret, meta.(*Client).isSchemaRegistryMetadataSet, meta.(*Client).oauthToken)
-	kekRequest := sr.UpdateKekRequest{}
+	kekRequest := schemaregistryv1.UpdateKekRequest{}
 	kekRequest.SetDoc(d.Get(paramDoc).(string))
 
 	properties := convertToStringStringMap(d.Get(paramProperties).(map[string]interface{}))
@@ -304,8 +294,7 @@ func schemaRegistryKekUpdate(ctx context.Context, d *schema.ResourceData, meta i
 
 	updatedKek, resp, err := request.Execute()
 	if err != nil {
-		b, err := io.ReadAll(resp.Body)
-		return diag.Errorf("error updating Schema Registry KEK %s, error message: %s", createDescriptiveError(err, resp), string(b))
+		return diag.Errorf("error updating Schema Registry KEK: %s", createDescriptiveError(err, resp))
 	}
 
 	updatedKekJson, err := json.Marshal(updatedKek)
@@ -337,7 +326,7 @@ func schemaRegistryKekImport(ctx context.Context, d *schema.ResourceData, meta i
 	return []*schema.ResourceData{d}, nil
 }
 
-func setKekAttributes(d *schema.ResourceData, clusterId string, kek sr.Kek) (*schema.ResourceData, error) {
+func setKekAttributes(d *schema.ResourceData, clusterId string, kek schemaregistryv1.Kek) (*schema.ResourceData, error) {
 	d.SetId(createKekId(clusterId, kek.GetName()))
 	if err := d.Set(paramName, kek.GetName()); err != nil {
 		return nil, err

@@ -10,28 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
-	byok "github.com/confluentinc/ccloud-sdk-go-v2/byok/v1"
-)
-
-const (
-	paramAzureKeyId         = "key_identifier"
-	paramAzureKeyVaultId    = "key_vault_id"
-	paramAzureTenantId      = "tenant_id"
-	paramAzureApplicationId = "application_id"
-	paramGcpSecurityGroup   = "security_group"
-
-	paramAwsKeyArn = "key_arn"
-	paramGcpKeyId  = "key_id"
-	paramAwsRoles  = "roles"
-
-	paramValidation = "validation"
-	paramPhase      = "phase"
-	paramSince      = "since"
-	paramMessage    = "message"
-
-	kindAws   = "AwsKey"
-	kindAzure = "AzureKey"
-	kindGcp   = "GcpKey"
+	byokv1 "github.com/confluentinc/ccloud-sdk-go-v2/byok/v1"
 )
 
 var ()
@@ -177,8 +156,8 @@ func azureKeySchema() *schema.Schema {
 func byokCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	c := meta.(*Client)
 
-	createByokKeyRequest := byok.NewByokV1Key()
-	
+	createByokKeyRequest := byokv1.NewByokV1Key()
+
 	// Set display name
 	displayName := d.Get(paramDisplayName).(string)
 	createByokKeyRequest.SetDisplayName(displayName)
@@ -192,19 +171,19 @@ func byokCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 	switch {
 	case isAwsKey:
 		key = extractStringValueFromBlock(d, paramAws, paramAwsKeyArn)
-		byokKeyOneOf := byok.ByokV1AwsKeyAsByokV1KeyKeyOneOf(byok.NewByokV1AwsKey(key, kindAws))
+		byokKeyOneOf := byokv1.ByokV1AwsKeyAsByokV1KeyKeyOneOf(byokv1.NewByokV1AwsKey(key, kindAws))
 		createByokKeyRequest.SetKey(byokKeyOneOf)
 
 	case isAzureKey:
 		key = extractStringValueFromBlock(d, paramAzure, paramAzureKeyId)
 		keyVaultId := extractStringValueFromBlock(d, paramAzure, paramAzureKeyVaultId)
 		tenantId := extractStringValueFromBlock(d, paramAzure, paramAzureTenantId)
-		byokKeyOneOf := byok.ByokV1AzureKeyAsByokV1KeyKeyOneOf(byok.NewByokV1AzureKey(key, keyVaultId, kindAzure, tenantId))
+		byokKeyOneOf := byokv1.ByokV1AzureKeyAsByokV1KeyKeyOneOf(byokv1.NewByokV1AzureKey(key, keyVaultId, kindAzure, tenantId))
 		createByokKeyRequest.SetKey(byokKeyOneOf)
 
 	case isGcpKey:
 		key = extractStringValueFromBlock(d, paramGcp, paramGcpKeyId)
-		byokKeyOneOf := byok.ByokV1GcpKeyAsByokV1KeyKeyOneOf(byok.NewByokV1GcpKey(key, kindGcp))
+		byokKeyOneOf := byokv1.ByokV1GcpKeyAsByokV1KeyKeyOneOf(byokv1.NewByokV1GcpKey(key, kindGcp))
 		createByokKeyRequest.SetKey(byokKeyOneOf)
 	default:
 		return diag.Errorf("error creating BYOK Key: expected one of %s, %s, %s params", paramAws, paramAzure, paramGcp)
@@ -236,7 +215,7 @@ func byokDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 
 	c := meta.(*Client)
 
-	req := c.byokClient.KeysByokV1Api.DeleteByokV1Key(c.byokApiContext(ctx), d.Id())
+	req := c.byokV1Client.KeysByokV1Api.DeleteByokV1Key(c.byokV1ApiContext(ctx), d.Id())
 	resp, err := req.Execute()
 	if err != nil {
 		return diag.Errorf("error deleting BYOK Key %q: %s", d.Id(), createDescriptiveError(err, resp))
@@ -255,13 +234,13 @@ func byokRead(ctx context.Context, d *schema.ResourceData, meta interface{}) dia
 	return nil
 }
 
-func executeKeyCreate(ctx context.Context, c *Client, key byok.ByokV1Key) (byok.ByokV1Key, *http.Response, error) {
-	req := c.byokClient.KeysByokV1Api.CreateByokV1Key(c.byokApiContext(ctx)).ByokV1Key(key)
+func executeKeyCreate(ctx context.Context, c *Client, key byokv1.ByokV1Key) (byokv1.ByokV1Key, *http.Response, error) {
+	req := c.byokV1Client.KeysByokV1Api.CreateByokV1Key(c.byokV1ApiContext(ctx)).ByokV1Key(key)
 	return req.Execute()
 }
 
-func executeKeyRead(ctx context.Context, c *Client, id string) (byok.ByokV1Key, *http.Response, error) {
-	req := c.byokClient.KeysByokV1Api.GetByokV1Key(c.byokApiContext(ctx), id)
+func executeKeyRead(ctx context.Context, c *Client, id string) (byokv1.ByokV1Key, *http.Response, error) {
+	req := c.byokV1Client.KeysByokV1Api.GetByokV1Key(c.byokV1ApiContext(ctx), id)
 	return req.Execute()
 }
 
@@ -294,7 +273,7 @@ func readKeyAndSetAttributes(ctx context.Context, d *schema.ResourceData, meta i
 	return []*schema.ResourceData{d}, nil
 }
 
-func setKeyAttributes(d *schema.ResourceData, byokKey byok.ByokV1Key) (*schema.ResourceData, error) {
+func setKeyAttributes(d *schema.ResourceData, byokKey byokv1.ByokV1Key) (*schema.ResourceData, error) {
 	// Set display name
 	if err := d.Set(paramDisplayName, byokKey.GetDisplayName()); err != nil {
 		return nil, err
@@ -357,8 +336,8 @@ func byokUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 	tflog.Debug(ctx, fmt.Sprintf("Updating BYOK Key %q", d.Id()), map[string]interface{}{byokKeyLoggingKey: d.Id()})
 
 	c := meta.(*Client)
-	updateByokKeyRequest := byok.NewByokV1KeyUpdate()
-	
+	updateByokKeyRequest := byokv1.NewByokV1KeyUpdate()
+
 	displayName := d.Get(paramDisplayName).(string)
 	updateByokKeyRequest.SetDisplayName(displayName)
 
@@ -378,8 +357,8 @@ func byokUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) d
 	return byokRead(ctx, d, meta)
 }
 
-func executeKeyUpdate(ctx context.Context, c *Client, id string, keyUpdate byok.ByokV1KeyUpdate) (byok.ByokV1Key, *http.Response, error) {
-	req := c.byokClient.KeysByokV1Api.UpdateByokV1Key(c.byokApiContext(ctx), id).ByokV1KeyUpdate(keyUpdate)
+func executeKeyUpdate(ctx context.Context, c *Client, id string, keyUpdate byokv1.ByokV1KeyUpdate) (byokv1.ByokV1Key, *http.Response, error) {
+	req := c.byokV1Client.KeysByokV1Api.UpdateByokV1Key(c.byokV1ApiContext(ctx), id).ByokV1KeyUpdate(keyUpdate)
 	return req.Execute()
 }
 
