@@ -452,8 +452,8 @@ func setMaterializedTableAttributes(d *schema.ResourceData, materializedTable fl
 	if err := setStringAttributeInListBlockOfSizeOne(paramKafkaCluster, paramId, materializedTable.Spec.GetKafkaClusterId(), d); err != nil {
 		return nil, err
 	}
-	// Source `query` from `status.creation_statement` (carries OriginalQuery, not the gateway-canonicalized form)
-	if err := d.Set(paramQuery, extractSelectFromCreationStatement(materializedTable.Status.GetCreationStatement(), materializedTable.GetName())); err != nil {
+
+	if err := d.Set(paramQuery, materializedTable.Spec.GetQuery()); err != nil {
 		return nil, err
 	}
 
@@ -1055,21 +1055,4 @@ func toInterfaceSlice(strs []string) []interface{} {
 		out[i] = s
 	}
 	return out
-}
-
-func extractSelectFromCreationStatement(creationStmt, displayName string) string {
-	if creationStmt == "" {
-		return ""
-	}
-	prefix := fmt.Sprintf("CREATE OR ALTER MATERIALIZED TABLE %s AS ", displayName)
-	if stripped := strings.TrimPrefix(creationStmt, prefix); stripped != creationStmt {
-		return stripped
-	}
-	upper := strings.ToUpper(creationStmt)
-	for _, anchor := range []string{" AS SELECT", " AS (SELECT"} {
-		if idx := strings.Index(upper, anchor); idx != -1 {
-			return creationStmt[idx+len(" AS "):]
-		}
-	}
-	return creationStmt
 }

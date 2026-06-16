@@ -11,7 +11,7 @@
     "stopped": false,
     "table_options": {},
     "session_options": {},
-    "query": "SELECT order_id, CAST(price AS INTEGER) AS p, (SUM(price) OVER w) AS running_total FROM examples.marketplace.orders WINDOW w AS (PARTITION BY customer_id ORDER BY order_id ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)"
+    "query": "select order_id, cast(price as int) as p, sum(price) over w as running_total from examples.marketplace.orders window w as (partition by customer_id order by order_id rows between unbounded preceding and current row)"
   },
   "status": {
     "phase": "RUNNING",
