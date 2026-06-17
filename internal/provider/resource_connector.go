@@ -611,46 +611,6 @@ func extractConnectorOffsets(d *schema.ResourceData) []map[string]interface{} {
 	return result
 }
 
-func connectorImporter() *Importer {
-	return &Importer{
-		LoadInstanceIds: loadAllConnectors,
-	}
-}
-
-func loadAllConnectors(ctx context.Context, client *Client) (InstanceIdsToNameMap, diag.Diagnostics) {
-	instances := make(InstanceIdsToNameMap)
-
-	environments, err := loadEnvironments(ctx, client)
-	if err != nil {
-		return instances, diag.FromErr(createDescriptiveError(err))
-	}
-	for _, environment := range environments {
-		kafkaClusters, err := loadKafkaClusters(ctx, client, environment.GetId())
-		if err != nil {
-			tflog.Warn(ctx, fmt.Sprintf("Error reading Kafka Clusters in Environment %q: %s", environment.GetId(), createDescriptiveError(err)))
-			return instances, diag.FromErr(createDescriptiveError(err))
-		}
-		for _, kafkaCluster := range kafkaClusters {
-			connectorNames, err := loadConnectorsByEnvironmentIdAndKafkaClusterId(ctx, client, environment.GetId(), kafkaCluster.GetId())
-			if err != nil {
-				tflog.Warn(ctx, fmt.Sprintf("Error reading Connectors in Environment %q and Kafka Cluster %q: %s", environment.GetId(), kafkaCluster.GetId(), createDescriptiveError(err)))
-				return instances, diag.FromErr(createDescriptiveError(err))
-			}
-			connectorNamesJson, err := json.Marshal(connectorNames)
-			if err != nil {
-				return instances, diag.Errorf("error reading Connectors in Environment %q and Kafka Cluster %q: error marshaling %#v to json: %s", environment.GetId(), kafkaCluster.GetId(), connectorNames, createDescriptiveError(err))
-			}
-			tflog.Debug(ctx, fmt.Sprintf("Fetched Connectors in Environment %q and Kafka Cluster %q: %s", environment.GetId(), kafkaCluster.GetId(), connectorNamesJson))
-
-			for _, connectorName := range connectorNames {
-				instanceId := fmt.Sprintf("%s/%s/%s", environment.GetId(), kafkaCluster.GetId(), connectorName)
-				instances[instanceId] = toValidTerraformResourceName(connectorName)
-			}
-		}
-	}
-	return instances, nil
-}
-
 func loadConnectorsByEnvironmentIdAndKafkaClusterId(ctx context.Context, c *Client, environmentId, kafkaClusterId string) ([]string, error) {
 	connectors, resp, err := c.connectV1Client.ConnectorsConnectV1Api.ListConnectv1Connectors(c.connectV1ApiContext(ctx), environmentId, kafkaClusterId).Execute()
 	// Somehow Connect SDK returns response.StatusCode == http.StatusForbidden but err is nil.
