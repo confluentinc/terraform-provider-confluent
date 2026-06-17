@@ -455,6 +455,7 @@ const (
 	paramMaxCFU                                          = "default_max_cfu"
 	paramMaxCfu                                          = "max_cfu"
 	paramMaxEcku                                         = "max_ecku"
+	paramMessage                                         = "message"
 	paramMetadata                                        = "metadata"
 	paramMetadataComment                                 = "column_metadata_comment"
 	paramMetadataKey                                     = "column_metadata_key"
@@ -580,6 +581,7 @@ const (
 	paramServices                                        = "services"
 	paramShared                                          = "shared"
 	paramSharedDefaultValue                              = false
+	paramSince                                           = "since"
 	paramSkipValidationDuringPlan                        = "skip_validation_during_plan"
 	paramSkipValidationDuringPlanDefaultValue            = false
 	paramSnowflake                                       = "snowflake"
@@ -617,6 +619,7 @@ const (
 	paramUseDetailedProcessingLog                        = "use_detailed_processing_log"
 	paramUser                                            = "user"
 	paramUsername                                        = "username"
+	paramValidation                                      = "validation"
 	paramValue                                           = "value"
 	paramVersion                                         = "version"
 	paramVersions                                        = "versions"
