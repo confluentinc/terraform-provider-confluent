@@ -1,0 +1,46 @@
+{
+  "api_version": "switchover/v1",
+  "id": "se-f3a90de",
+  "kind": "SwitchoverEndpoint",
+  "metadata": {
+    "created_at": "2006-01-02T15:04:05-07:00",
+    "deleted_at": "2006-01-02T15:04:05-07:00",
+    "resource_name": "crn://confluent.cloud/organization=9bb441c4-edef-46ac-8a41-c49e44a3fd9a/switchover-endpoint=se-12345",
+    "self": "https://api.confluent.cloud/switchover/v1/switchover-endpoints/se-12345",
+    "updated_at": "2006-01-02T15:04:05-07:00"
+  },
+  "spec": {
+    "display_name": "prod-kafka-dr-endpoint",
+    "dr_endpoint": "glkc-sw-abc-se-12345.global.confluent.cloud",
+    "endpoints": [
+      {
+        "endpoint_filter": {
+          "access_point": "ap-west-xyz",
+          "cloud": "AWS",
+          "gateway": "n-ccn-west-123456",
+          "region": "us-west-2",
+          "resource_id": "lkc-west",
+          "type": "PRIVATE"
+        },
+        "hostname": "lkc-west-platt.us-west-2.aws.private.confluent.cloud",
+        "name": "west-platt"
+      }
+    ],
+    "environment": {
+      "environment": "",
+      "id": "env-00000",
+      "related": "https://api.confluent.cloud/v2/environments/env-00000",
+      "resource_name": "https://api.confluent.cloud/organization=9bb441c4-edef-46ac-8a41-c49e44a3fd9a/environment=env-00000"
+    },
+    "switchover_pair": {
+      "environment": "",
+      "id": "sw-00000",
+      "related": "https://api.confluent.cloud/switchover/v1/switchover-pairs/sw-00000",
+      "resource_name": "https://api.confluent.cloud/organization=9bb441c4-edef-46ac-8a41-c49e44a3fd9a/switchover-pair=sw-00000"
+    },
+    "target": "west-platt"
+  },
+  "status": {
+    "phase": "PROVISIONING"
+  }
+}
