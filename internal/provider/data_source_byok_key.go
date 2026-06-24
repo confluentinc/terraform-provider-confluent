@@ -113,6 +113,9 @@ func gcpByokKeyDataSourceSchema() *schema.Schema {
 
 func byokKeyDataSourceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	byokKeyId := d.Get(paramId).(string)
+	if byokKeyId == "" {
+		return diag.Errorf("error reading byok key: byok key id is missing")
+	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Reading byok key %q=%q", paramId, byokKeyId), map[string]interface{}{byokKeyLoggingKey: byokKeyId})
 
