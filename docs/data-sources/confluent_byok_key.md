@@ -3,14 +3,14 @@
 page_title: "confluent_byok_key Data Source - terraform-provider-confluent"
 subcategory: ""
 description: |-
-  
+   
 ---
 
 # confluent_byok_key Data Source
 
 [![General Availability](https://img.shields.io/badge/Lifecycle%20Stage-General%20Availability-%2345c6e8)](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy)
 
-`confluent_byok_key` describes a Key data source.
+`confluent_byok_key` describes a BYOK Key data source.
 
 ## Example Usage
 
@@ -20,12 +20,12 @@ provider "confluent" {
   cloud_api_secret = var.confluent_cloud_api_secret # optionally use CONFLUENT_CLOUD_API_SECRET env var
 }
 
-data "confluent_byok_key" "example" {
-  id = "cck-abc123"
+data "confluent_byok_key" "azure_key"{
+  id = "cck-abcde"
 }
 
-output "example" {
-  value = data.confluent_byok_key.example
+output "byok" {
+  value = data.confluent_byok_key.azure_key
 }
 ```
 
@@ -34,20 +34,21 @@ output "example" {
 
 The following arguments are supported:
 
-- `id` - (Required String) The ID of the Key, for example, `cck-abc123`.
+- `id` - (Required String) The ID of the BYOK key, for example, `cck-abcde`.
 
 ## Attributes Reference
 
 In addition to the preceding arguments, the following attributes are exported:
 
-- `aws` - (Configuration Block) Supports the following:
-    - `key_arn` - (String) The Amazon Resource Name (ARN) of an AWS KMS key.
-    - `roles` - (String) The Amazon Resource Names (ARNs) of IAM Roles created for this key-environment combination.
-- `azure` - (Configuration Block) Supports the following:
-    - `key_id` - (String) The unique Key Object Identifier URL without version of an Azure Key Vault key.
-    - `key_vault_id` - (String) Key Vault ID containing the key
-    - `tenant_id` - (String) Tenant ID (uuid) hosting the Key Vault containing the key
-    - `application_id` - (String) The Application ID created for this key-environment combination.
-- `gcp` - (Configuration Block) Supports the following:
-    - `key_id` - (String) The Google Cloud Platform key ID.
-    - `security_group` - (String) The Google security group created for this key.
+- `id` - (Required String) The ID of the BYOK key, for example, `cck-abcde`.
+- `aws` (Optional Configuration Block) supports the following:
+    - `key_arn` - (Required String) The Amazon Resource Name (ARN) of an AWS KMS key.
+    - `roles` - (Optional List of Strings) The Amazon Resource Names (ARNs) of IAM Roles created for this key-environment combination.
+- `azure` (Optional Configuration Block) supports the following:
+    - `key_identifier` - (Required String) The unique Key Object Identifier URL of an Azure Key Vault key.
+    - `key_vault_id` - (Required String) Key Vault ID containing the key.
+    - `tenant_id` - (Required String) Tenant ID (uuid) hosting the Key Vault containing the key.
+    - `application_id` - (Optional String) The Application ID created for this key-environment combination.
+- `gcp` (Optional Configuration Block) supports the following:
+    - `key_id` - (Required String) The Google Cloud Platform key ID.
+    - `security_group` - (Optional String) The Google security group created for this key.
