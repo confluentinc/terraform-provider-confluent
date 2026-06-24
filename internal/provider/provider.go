@@ -358,7 +358,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_schema_registry_cluster_mode":       schemaRegistryClusterModeDataSource(),
 				"confluent_user":                               userDataSource(),
 				"confluent_invitation":                         invitationDataSource(),
-				"confluent_byok_key":                           byokDataSource(),
+				"confluent_byok_key":                           byokKeyDataSource(),
 				"confluent_network_link_endpoint":              networkLinkEndpointDataSource(),
 				"confluent_network_link_service":               networkLinkServiceDataSource(),
 				"confluent_tableflow_topic":                    tableflowTopicDataSource(),
