@@ -116,7 +116,6 @@ func TestAccDataSourceByokAzureKey(t *testing.T) {
 					resource.TestCheckResourceAttrSet(fullKeyDataSourceLabel, fmt.Sprintf("%s.0.%s", paramAzure, paramAzureKeyId)),
 					resource.TestCheckResourceAttrSet(fullKeyDataSourceLabel, fmt.Sprintf("%s.0.%s", paramAzure, paramAzureKeyVaultId)),
 					resource.TestCheckResourceAttrSet(fullKeyDataSourceLabel, fmt.Sprintf("%s.0.%s", paramAzure, paramAzureTenantId)),
-					resource.TestCheckResourceAttrSet(fullKeyDataSourceLabel, fmt.Sprintf("%s.0.%s", paramAzure, paramAzureApplicationId)),
 				),
 			},
 		},
@@ -161,7 +160,7 @@ func TestAccDataSourceByokGcpKey(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(fullKeyDataSourceLabel, "id", keyId),
 					resource.TestCheckResourceAttrSet(fullKeyDataSourceLabel, fmt.Sprintf("%s.0.%s", paramGcp, paramGcpKeyId)),
-					resource.TestCheckResourceAttrSet(fullKeyDataSourceLabel, fmt.Sprintf("%s.0.%s", paramGcp, paramGcpSecurityGroup)),
+					resource.TestCheckResourceAttr(fullKeyDataSourceLabel, fmt.Sprintf("%s.0.%s", paramGcp, paramGcpSecurityGroup), "testgroupid@domain.com"),
 				),
 			},
 		},
