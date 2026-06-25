@@ -1,0 +1,28 @@
+{
+  "api_version": "byok/v1",
+  "display_name": "Key for billing cluster",
+  "id": "dlz-f3a90de",
+  "key": {
+    "application_id": "",
+    "key_id": "https://vault-name.vault.azure.net/keys/key-name",
+    "key_vault_id": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/resourcegroup-name/providers/Microsoft.KeyVault/vaults/vault-name",
+    "kind": "AzureKey",
+    "tenant_id": "00000000-0000-0000-0000-000000000000"
+  },
+  "kind": "Key",
+  "metadata": {
+    "created_at": "2006-01-02T15:04:05-07:00",
+    "deleted_at": "2006-01-02T15:04:05-07:00",
+    "resource_name": "crn://confluent.cloud/organization=9bb441c4-edef-46ac-8a41-c49e44a3fd9a/key=cck-12345",
+    "self": "https://api.confluent.cloud/byok/v1/keys/cck-12345",
+    "updated_at": "2006-01-02T15:04:05-07:00"
+  },
+  "provider": "AWS",
+  "state": "IN_USE",
+  "validation": {
+    "message": "Access to key denied.",
+    "phase": "VALID",
+    "region": "us-west-2",
+    "since": "2024-03-20T15:30:00Z"
+  }
+}
