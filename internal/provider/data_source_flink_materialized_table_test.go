@@ -86,6 +86,7 @@ func TestAccDataSourceFlinkMaterializedTable(t *testing.T) {
 					resource.TestCheckResourceAttr(fullTableDataSourceLabel, paramStopped, "false"),
 					resource.TestCheckResourceAttr(fullTableDataSourceLabel, "distribution.#", "1"),
 					resource.TestCheckResourceAttr(fullTableDataSourceLabel, "distribution.0.bucket_count", "10"),
+					resource.TestCheckResourceAttr(fullTableDataSourceLabel, "distribution.0.kind", "HASH"),
 					resource.TestCheckResourceAttr(fullTableDataSourceLabel, "distribution.0.keys.#", "2"),
 					resource.TestCheckTypeSetElemAttr(fullTableDataSourceLabel, "distribution.0.keys.*", "keys"),
 					resource.TestCheckTypeSetElemAttr(fullTableDataSourceLabel, "distribution.0.keys.*", "passwords"),
