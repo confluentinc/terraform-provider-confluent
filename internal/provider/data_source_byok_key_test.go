@@ -69,7 +69,7 @@ func TestAccDataSourceByokAwsKey(t *testing.T) {
 				Config: testAccCheckDataSourceByokKeyConfig(mockServerUrl, keyDataSourceLabel),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(fullKeyDataSourceLabel, "id", keyId),
-					resource.TestCheckResourceAttrSet(fullKeyDataSourceLabel, fmt.Sprintf("%s.0.%s", paramAws, paramAwsKeyArn)),
+					resource.TestCheckResourceAttr(fullKeyDataSourceLabel, fmt.Sprintf("%s.0.%s", paramAws, paramAwsKeyArn), "arn:aws:kms:us-west-2:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab"),
 				),
 			},
 		},
@@ -113,9 +113,9 @@ func TestAccDataSourceByokAzureKey(t *testing.T) {
 				Config: testAccCheckDataSourceByokKeyConfig(mockServerUrl, keyDataSourceLabel),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(fullKeyDataSourceLabel, "id", keyId),
-					resource.TestCheckResourceAttrSet(fullKeyDataSourceLabel, fmt.Sprintf("%s.0.%s", paramAzure, paramAzureKeyId)),
-					resource.TestCheckResourceAttrSet(fullKeyDataSourceLabel, fmt.Sprintf("%s.0.%s", paramAzure, paramAzureKeyVaultId)),
-					resource.TestCheckResourceAttrSet(fullKeyDataSourceLabel, fmt.Sprintf("%s.0.%s", paramAzure, paramAzureTenantId)),
+					resource.TestCheckResourceAttr(fullKeyDataSourceLabel, fmt.Sprintf("%s.0.%s", paramAzure, paramAzureKeyId), "https://vault-name.vault.azure.net/keys/key-name"),
+					resource.TestCheckResourceAttr(fullKeyDataSourceLabel, fmt.Sprintf("%s.0.%s", paramAzure, paramAzureKeyVaultId), "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/resourcegroup-name/providers/Microsoft.KeyVault/vaults/vault-name"),
+					resource.TestCheckResourceAttr(fullKeyDataSourceLabel, fmt.Sprintf("%s.0.%s", paramAzure, paramAzureTenantId), "00000000-0000-0000-0000-000000000000"),
 				),
 			},
 		},
@@ -159,7 +159,7 @@ func TestAccDataSourceByokGcpKey(t *testing.T) {
 				Config: testAccCheckDataSourceByokKeyConfig(mockServerUrl, keyDataSourceLabel),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(fullKeyDataSourceLabel, "id", keyId),
-					resource.TestCheckResourceAttrSet(fullKeyDataSourceLabel, fmt.Sprintf("%s.0.%s", paramGcp, paramGcpKeyId)),
+					resource.TestCheckResourceAttr(fullKeyDataSourceLabel, fmt.Sprintf("%s.0.%s", paramGcp, paramGcpKeyId), "projects/exampleproject/locations/us-central1/keyRings/testkeyring/cryptoKeys/testbyokkey/cryptoKeyVersions/3"),
 					resource.TestCheckResourceAttr(fullKeyDataSourceLabel, fmt.Sprintf("%s.0.%s", paramGcp, paramGcpSecurityGroup), "testgroupid@domain.com"),
 				),
 			},
