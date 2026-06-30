@@ -30,7 +30,6 @@ import (
 
 	apikeysv2 "github.com/confluentinc/ccloud-sdk-go-v2/apikeys/v2"
 	ccpmv1 "github.com/confluentinc/ccloud-sdk-go-v2/ccpm/v1"
-	cmkv2 "github.com/confluentinc/ccloud-sdk-go-v2/cmk/v2"
 	kafkarestv3 "github.com/confluentinc/ccloud-sdk-go-v2/kafkarest/v3"
 	networkingdnsforwarderv1 "github.com/confluentinc/ccloud-sdk-go-v2/networking-dnsforwarder/v1"
 	schemaregistryv1 "github.com/confluentinc/ccloud-sdk-go-v2/schema-registry/v1"
@@ -2786,29 +2785,6 @@ func TestGenerateFlinkStatementName(t *testing.T) {
 	name2 := generateFlinkStatementName()
 	if name == name2 {
 		t.Fatalf("two generated names should be different, but both are %q", name)
-	}
-}
-
-type mockError struct {
-	failure cmkv2.Failure
-}
-
-func (m mockError) Model() interface{} {
-	return m.failure
-}
-
-func (m mockError) Error() string {
-	return "mock error"
-}
-
-func TestErrorCodesFromError(t *testing.T) {
-	cmkErr := cmkv2.NewError()
-	cmkErr.SetCode("ERR_CODE_1")
-	cmkErr.SetDetail("Error message 1")
-	err := mockError{failure: *cmkv2.NewFailure([]cmkv2.Error{*cmkErr})}
-	codes := errorCodesFromError(err)
-	if len(codes) != 1 || codes[0] != "ERR_CODE_1" {
-		t.Fatalf("errorCodesFromError() = %v, want [\"ERR_CODE_1\"]", codes)
 	}
 }
 

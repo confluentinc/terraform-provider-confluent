@@ -562,11 +562,6 @@ func kafkaDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 	resp, err := req.Execute()
 
 	if err != nil {
-		for _, code := range errorCodesFromError(err) {
-			if code == errorCodeDeletionProtectionEnabled {
-				return diag.Errorf(deletionProtectedClusterErrorMessage)
-			}
-		}
 		return diag.Errorf("error deleting Kafka Cluster %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
