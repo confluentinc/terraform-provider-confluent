@@ -1,6 +1,6 @@
 module github.com/confluentinc/terraform-provider-confluent
 
-go 1.25.9
+go 1.25.10
 
 require (
 	github.com/confluentinc/ccloud-sdk-go-v2/apikeys v0.4.0
@@ -8,7 +8,7 @@ require (
 	github.com/confluentinc/ccloud-sdk-go-v2/cam v0.3.0
 	github.com/confluentinc/ccloud-sdk-go-v2/ccpm v0.0.1
 	github.com/confluentinc/ccloud-sdk-go-v2/certificate-authority v0.0.3
-	github.com/confluentinc/ccloud-sdk-go-v2/cmk v0.25.0
+	github.com/confluentinc/ccloud-sdk-go-v2/cmk v0.27.0
 	github.com/confluentinc/ccloud-sdk-go-v2/connect v0.7.0
 	github.com/confluentinc/ccloud-sdk-go-v2/connect-custom-plugin v0.0.2
 	github.com/confluentinc/ccloud-sdk-go-v2/data-catalog v0.4.0
@@ -29,7 +29,7 @@ require (
 	github.com/confluentinc/ccloud-sdk-go-v2/networking-gateway v0.7.0
 	github.com/confluentinc/ccloud-sdk-go-v2/networking-ip v0.2.0
 	github.com/confluentinc/ccloud-sdk-go-v2/networking-privatelink v0.3.0
-	github.com/confluentinc/ccloud-sdk-go-v2/org v0.9.0
+	github.com/confluentinc/ccloud-sdk-go-v2/org v0.12.0
 	github.com/confluentinc/ccloud-sdk-go-v2/provider-integration v0.2.0
 	github.com/confluentinc/ccloud-sdk-go-v2/rtce v0.1.0
 	github.com/confluentinc/ccloud-sdk-go-v2/schema-registry v0.5.0
