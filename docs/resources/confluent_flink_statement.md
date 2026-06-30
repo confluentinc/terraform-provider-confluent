@@ -83,20 +83,78 @@ resource "confluent_flink_statement" "example" {
 }
 ```
 
-Example of `confluent_flink_statement` that creates a model:
-```
-resource "confluent_flink_statement" "example" {
-  statement  = "CREATE MODEL `vector_encoding` INPUT (input STRING) OUTPUT (vector ARRAY<FLOAT>) WITH( 'TASK' = 'classification','PROVIDER' = 'OPENAI','OPENAI.ENDPOINT' = 'https://api.openai.com/v1/embeddings','OPENAI.API_KEY' = '{{sessionconfig/sql.secrets.openaikey}}');"  
-  properties = {
-    "sql.current-catalog"  = var.confluent_environment_display_name
-    "sql.current-database" = var.confluent_kafka_cluster_display_name
+### Example: Create a model using a Flink Connection
+
+Use a [`confluent_flink_connection`](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_flink_connection) resource to
+avoid embedding secrets in statement properties. Note that secrets may still be
+persisted in Terraform state, so be sure to protect your state appropriately.
+
+```terraform
+provider "confluent" {
+  cloud_api_key    = var.confluent_cloud_api_key    # optionally use CONFLUENT_CLOUD_API_KEY env var
+  cloud_api_secret = var.confluent_cloud_api_secret # optionally use CONFLUENT_CLOUD_API_SECRET env var
+}
+
+# Step 1: Create a Flink Connection for OpenAI
+resource "confluent_flink_connection" "openai" {
+  organization {
+    id = data.confluent_organization.main.id
   }
-  properties_sensitive = {
-      "sql.secrets.openaikey" : "***REDACTED***"
+  environment {
+    id = data.confluent_environment.staging.id
   }
+  compute_pool {
+    id = confluent_flink_compute_pool.example.id
+  }
+  principal {
+    id = confluent_service_account.app-manager-flink.id
+  }
+  rest_endpoint = data.confluent_flink_region.main.rest_endpoint
+  credentials {
+    key    = confluent_api_key.env-admin-flink-api-key.id
+    secret = confluent_api_key.env-admin-flink-api-key.secret
+  }
+
+  display_name = "openai-connection"
+  type         = "OPENAI"
+  endpoint     = "https://api.openai.com/v1/embeddings"
+  api_key      = var.openai_api_key
+
   lifecycle {
     prevent_destroy = true
   }
+}
+
+# Step 2: Create a model that references the connection
+resource "confluent_flink_statement" "example" {
+  organization {
+    id = data.confluent_organization.main.id
+  }
+  environment {
+    id = data.confluent_environment.staging.id
+  }
+  compute_pool {
+    id = confluent_flink_compute_pool.example.id
+  }
+  principal {
+    id = confluent_service_account.app-manager-flink.id
+  }
+  rest_endpoint = data.confluent_flink_region.main.rest_endpoint
+  credentials {
+    key    = confluent_api_key.env-admin-flink-api-key.id
+    secret = confluent_api_key.env-admin-flink-api-key.secret
+  }
+  statement = "CREATE MODEL `vector_encoding` INPUT (input STRING) OUTPUT (vector ARRAY<FLOAT>) WITH ('TASK' = 'classification', 'PROVIDER' = 'OPENAI', 'OPENAI.CONNECTION' = 'openai-connection');"
+  properties = {
+    "sql.current-catalog"  = data.confluent_environment.example.display_name
+    "sql.current-database" = data.confluent_kafka_cluster.example.display_name
+  }
+
+  lifecycle {
+    prevent_destroy = true
+  }
+
+  depends_on = [confluent_flink_connection.openai]
 }
 ```
 
@@ -129,7 +187,7 @@ The following arguments are supported:
 - `properties` - (Optional Map) The custom topic settings to set:
     - `name` - (Required String) The setting name, for example, `sql.local-time-zone`.
     - `value` - (Required String) The setting value, for example, `GMT-08:00`.
-- `properties_sensitive` - (Optional Map) Block for sensitive statement properties:
+- `properties_sensitive` - (Optional Map, legacy / not recommended) Block for sensitive statement properties. Prefer using [`confluent_flink_connection`](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_flink_connection) to manage credentials for external services like OpenAI. See the [Manage Flink Connections](https://docs.confluent.io/cloud/current/flink/operate-and-deploy/manage-connections.html) documentation for details.
     - `name` - (Required String) The setting name, for example, `sql.secrets.openaikey`.
     - `value` - (Required String) The setting value, for example, `s1234`.
 
