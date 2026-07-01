@@ -685,9 +685,11 @@ If compatibility is set to one of the TRANSITIVE types, the check is against all
 	srcmV2ApiVersion                         = "srcm/v2"
 	srcmV3ApiVersion                         = "srcm/v3"
 	stateActive                              = "ACTIVE"
+	stateAltering                            = "ALTERING"
 	stateApplied                             = "APPLIED"
 	stateCompleted                           = "COMPLETED"
 	stateCreated                             = "CREATED"
+	stateCreating                            = "CREATING"
 	stateDegraded                            = "DEGRADED"
 	stateDeProvisioning                      = "DEPROVISIONING"
 	stateDisconnected                        = "DISCONNECTED"
@@ -701,6 +703,9 @@ If compatibility is set to one of the TRANSITIVE types, the check is against all
 	stateInactive                            = "INACTIVE"
 	stateInProgress                          = "IN_PROGRESS"
 	statementsAPICreateTimeout               = 6 * time.Hour
+	materializedTableAPICreateTimeout        = 6 * time.Hour
+	materializedTableAPIUpdateTimeout        = 20 * time.Minute
+	materializedTableAPIDeleteTimeout        = 20 * time.Minute
 	statePaused                              = "PAUSED"
 	statePending                             = "PENDING"
 	statePendingAccept                       = "PENDING_ACCEPT"
