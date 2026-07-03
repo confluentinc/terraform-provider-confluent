@@ -20,13 +20,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/http"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-
-	byokv1 "github.com/confluentinc/ccloud-sdk-go-v2/byok/v1"
 )
 
 func byokKeyDataSource() *schema.Resource {
@@ -134,41 +131,4 @@ func byokKeyDataSourceRead(ctx context.Context, d *schema.ResourceData, meta int
 		return diag.FromErr(createDescriptiveError(err))
 	}
 	return nil
-}
-func executeByokKeyRead(ctx context.Context, c *Client, id string) (byokv1.ByokV1Key, *http.Response, error) {
-	req := c.byokV1Client.KeysByokV1Api.GetByokV1Key(c.byokV1ApiContext(ctx), id)
-	return req.Execute()
-}
-
-func setByokKeyAttributes(d *schema.ResourceData, byokKey byokv1.ByokV1Key) (*schema.ResourceData, error) {
-	oneOfKey := byokKey.GetKey()
-
-	switch {
-	case oneOfKey.ByokV1AwsKey != nil:
-		if err := d.Set(paramAws, []interface{}{map[string]interface{}{
-			paramAwsKeyArn: oneOfKey.ByokV1AwsKey.GetKeyArn(),
-			paramAwsRoles:  oneOfKey.ByokV1AwsKey.GetRoles(),
-		}}); err != nil {
-			return nil, err
-		}
-	case oneOfKey.ByokV1AzureKey != nil:
-		if err := d.Set(paramAzure, []interface{}{map[string]interface{}{
-			paramAzureKeyId:         oneOfKey.ByokV1AzureKey.GetKeyId(),
-			paramAzureKeyVaultId:    oneOfKey.ByokV1AzureKey.GetKeyVaultId(),
-			paramAzureTenantId:      oneOfKey.ByokV1AzureKey.GetTenantId(),
-			paramAzureApplicationId: oneOfKey.ByokV1AzureKey.GetApplicationId(),
-		}}); err != nil {
-			return nil, err
-		}
-	case oneOfKey.ByokV1GcpKey != nil:
-		if err := d.Set(paramGcp, []interface{}{map[string]interface{}{
-			paramGcpKeyId:         oneOfKey.ByokV1GcpKey.GetKeyId(),
-			paramGcpSecurityGroup: oneOfKey.ByokV1GcpKey.GetSecurityGroup(),
-		}}); err != nil {
-			return nil, err
-		}
-	}
-
-	d.SetId(byokKey.GetId())
-	return d, nil
 }
