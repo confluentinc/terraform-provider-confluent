@@ -374,7 +374,7 @@ func New(version, userAgent string) func() *schema.Provider {
 			ResourcesMap: map[string]*schema.Resource{
 				"confluent_catalog_integration":                catalogIntegrationResource(),
 				"confluent_api_key":                            apiKeyResource(),
-				"confluent_byok_key":                           byokResource(),
+				"confluent_byok_key":                           byokKeyResource(),
 				"confluent_certificate_authority":              certificateAuthorityResource(),
 				"confluent_certificate_pool":                   certificatePoolResource(),
 				"confluent_cluster_link":                       clusterLinkResource(),
