@@ -76,11 +76,6 @@ func catalogIntegrationAwsGlueSchema() *schema.Schema {
 					Required: true,
 					ForceNew: true,
 				},
-				paramCustomDatabase: {
-					Type:        schema.TypeString,
-					Optional:    true,
-					Description: "The custom database name to use in AWS Glue.",
-				},
 			},
 		},
 		MinItems:     1,
@@ -121,11 +116,6 @@ func catalogIntegrationSnowflakeSchema() *schema.Schema {
 					Required:    true,
 					Description: "Allowed scope of the Snowflake Open Catalog.",
 				},
-				paramCustomNamespace: {
-					Type:        schema.TypeString,
-					Optional:    true,
-					Description: "The custom namespace to use in Snowflake Open Catalog.",
-				},
 			},
 		},
 		MinItems:     1,
@@ -163,11 +153,6 @@ func catalogIntegrationUnitySchema() *schema.Schema {
 					Sensitive:   true,
 					Description: "The OAuth client secret used for authentication with the Unity Catalog.",
 				},
-				paramCustomSchema: {
-					Type:        schema.TypeString,
-					Optional:    true,
-					Description: "The custom schema name to use in Unity Catalog.",
-				},
 			},
 		},
 		MinItems:     1,
@@ -198,44 +183,32 @@ func catalogIntegrationCreate(ctx context.Context, d *schema.ResourceData, meta 
 	catalogIntegrationSpec.SetEnvironment(tableflowv1.GlobalObjectReference{Id: environmentId})
 	catalogIntegrationSpec.SetKafkaCluster(tableflowv1.EnvScopedObjectReference{Id: clusterId})
 	if isAwsGlue {
-		awsGlueSpec := &tableflowv1.TableflowV1CatalogIntegrationAwsGlueSpec{
-			Kind:                  awsGlueSpecKind,
-			ProviderIntegrationId: extractStringValueFromBlock(d, paramAwsGlue, paramProviderIntegrationId),
-		}
-		if v := extractStringValueFromBlock(d, paramAwsGlue, paramCustomDatabase); v != "" {
-			awsGlueSpec.SetCustomDatabase(v)
-		}
 		catalogIntegrationSpec.SetConfig(tableflowv1.TableflowV1CatalogIntegrationSpecConfigOneOf{
-			TableflowV1CatalogIntegrationAwsGlueSpec: awsGlueSpec,
+			TableflowV1CatalogIntegrationAwsGlueSpec: &tableflowv1.TableflowV1CatalogIntegrationAwsGlueSpec{
+				Kind:                  awsGlueSpecKind,
+				ProviderIntegrationId: extractStringValueFromBlock(d, paramAwsGlue, paramProviderIntegrationId),
+			},
 		})
 	} else if isSnowflake {
-		snowflakeSpec := &tableflowv1.TableflowV1CatalogIntegrationSnowflakeSpec{
-			Kind:         snowflakeSpecKind,
-			Endpoint:     extractStringValueFromBlock(d, paramSnowflake, paramEndpoint),
-			ClientId:     extractStringValueFromBlock(d, paramSnowflake, paramClientId),
-			ClientSecret: extractStringValueFromBlock(d, paramSnowflake, paramClientSecret),
-			Warehouse:    extractStringValueFromBlock(d, paramSnowflake, paramWarehouse),
-			AllowedScope: extractStringValueFromBlock(d, paramSnowflake, paramAllowedScope),
-		}
-		if v := extractStringValueFromBlock(d, paramSnowflake, paramCustomNamespace); v != "" {
-			snowflakeSpec.SetCustomNamespace(v)
-		}
 		catalogIntegrationSpec.SetConfig(tableflowv1.TableflowV1CatalogIntegrationSpecConfigOneOf{
-			TableflowV1CatalogIntegrationSnowflakeSpec: snowflakeSpec,
+			TableflowV1CatalogIntegrationSnowflakeSpec: &tableflowv1.TableflowV1CatalogIntegrationSnowflakeSpec{
+				Kind:         snowflakeSpecKind,
+				Endpoint:     extractStringValueFromBlock(d, paramSnowflake, paramEndpoint),
+				ClientId:     extractStringValueFromBlock(d, paramSnowflake, paramClientId),
+				ClientSecret: extractStringValueFromBlock(d, paramSnowflake, paramClientSecret),
+				Warehouse:    extractStringValueFromBlock(d, paramSnowflake, paramWarehouse),
+				AllowedScope: extractStringValueFromBlock(d, paramSnowflake, paramAllowedScope),
+			},
 		})
 	} else if isUnity {
-		unitySpec := &tableflowv1.TableflowV1CatalogIntegrationUnitySpec{
-			Kind:              unitySpecKind,
-			WorkspaceEndpoint: extractStringValueFromBlock(d, paramUnity, paramWorkspaceEndpoint),
-			CatalogName:       extractStringValueFromBlock(d, paramUnity, paramCatalogName),
-			ClientId:          extractStringValueFromBlock(d, paramUnity, paramClientId),
-			ClientSecret:      extractStringValueFromBlock(d, paramUnity, paramClientSecret),
-		}
-		if v := extractStringValueFromBlock(d, paramUnity, paramCustomSchema); v != "" {
-			unitySpec.SetCustomSchema(v)
-		}
 		catalogIntegrationSpec.SetConfig(tableflowv1.TableflowV1CatalogIntegrationSpecConfigOneOf{
-			TableflowV1CatalogIntegrationUnitySpec: unitySpec,
+			TableflowV1CatalogIntegrationUnitySpec: &tableflowv1.TableflowV1CatalogIntegrationUnitySpec{
+				Kind:              unitySpecKind,
+				WorkspaceEndpoint: extractStringValueFromBlock(d, paramUnity, paramWorkspaceEndpoint),
+				CatalogName:       extractStringValueFromBlock(d, paramUnity, paramCatalogName),
+				ClientId:          extractStringValueFromBlock(d, paramUnity, paramClientId),
+				ClientSecret:      extractStringValueFromBlock(d, paramUnity, paramClientSecret),
+			},
 		})
 	}
 
@@ -334,13 +307,9 @@ func setCatalogIntegrationAttributes(d *schema.ResourceData, c *TableflowRestCli
 	}
 
 	if catalogIntegration.Spec.GetConfig().TableflowV1CatalogIntegrationAwsGlueSpec != nil {
-		awsGlueAttributes := map[string]interface{}{
+		if err := d.Set(paramAwsGlue, []interface{}{map[string]interface{}{
 			paramProviderIntegrationId: catalogIntegration.Spec.GetConfig().TableflowV1CatalogIntegrationAwsGlueSpec.GetProviderIntegrationId(),
-		}
-		if catalogIntegration.Spec.GetConfig().TableflowV1CatalogIntegrationAwsGlueSpec.HasCustomDatabase() {
-			awsGlueAttributes[paramCustomDatabase] = catalogIntegration.Spec.GetConfig().TableflowV1CatalogIntegrationAwsGlueSpec.GetCustomDatabase()
-		}
-		if err := d.Set(paramAwsGlue, []interface{}{awsGlueAttributes}); err != nil {
+		}}); err != nil {
 			return nil, err
 		}
 	} else if catalogIntegration.Spec.GetConfig().TableflowV1CatalogIntegrationSnowflakeSpec != nil {
@@ -348,39 +317,46 @@ func setCatalogIntegrationAttributes(d *schema.ResourceData, c *TableflowRestCli
 		currentClientId, currentClientIdOk := d.GetOk(fmt.Sprintf("%s.0.%s", paramSnowflake, paramClientId))
 		currentClientSecret, currentClientSecretOk := d.GetOk(fmt.Sprintf("%s.0.%s", paramSnowflake, paramClientSecret))
 
-		snowflakeAttributes := map[string]interface{}{
-			paramEndpoint:     catalogIntegration.Spec.GetConfig().TableflowV1CatalogIntegrationSnowflakeSpec.GetEndpoint(),
-			paramWarehouse:    catalogIntegration.Spec.GetConfig().TableflowV1CatalogIntegrationSnowflakeSpec.GetWarehouse(),
-			paramAllowedScope: catalogIntegration.Spec.GetConfig().TableflowV1CatalogIntegrationSnowflakeSpec.GetAllowedScope(),
-		}
-		if catalogIntegration.Spec.GetConfig().TableflowV1CatalogIntegrationSnowflakeSpec.HasCustomNamespace() {
-			snowflakeAttributes[paramCustomNamespace] = catalogIntegration.Spec.GetConfig().TableflowV1CatalogIntegrationSnowflakeSpec.GetCustomNamespace()
-		}
 		if currentClientIdOk && currentClientSecretOk {
-			snowflakeAttributes[paramClientId] = currentClientId.(string)
-			snowflakeAttributes[paramClientSecret] = currentClientSecret.(string)
-		}
-		if err := d.Set(paramSnowflake, []interface{}{snowflakeAttributes}); err != nil {
-			return nil, err
+			if err := d.Set(paramSnowflake, []interface{}{map[string]interface{}{
+				paramEndpoint:     catalogIntegration.Spec.GetConfig().TableflowV1CatalogIntegrationSnowflakeSpec.GetEndpoint(),
+				paramWarehouse:    catalogIntegration.Spec.GetConfig().TableflowV1CatalogIntegrationSnowflakeSpec.GetWarehouse(),
+				paramAllowedScope: catalogIntegration.Spec.GetConfig().TableflowV1CatalogIntegrationSnowflakeSpec.GetAllowedScope(),
+				paramClientId:     currentClientId.(string),
+				paramClientSecret: currentClientSecret.(string),
+			}}); err != nil {
+				return nil, err
+			}
+		} else { // The data source version of this block does not set the client ID or secret
+			if err := d.Set(paramSnowflake, []interface{}{map[string]interface{}{
+				paramEndpoint:     catalogIntegration.Spec.GetConfig().TableflowV1CatalogIntegrationSnowflakeSpec.GetEndpoint(),
+				paramWarehouse:    catalogIntegration.Spec.GetConfig().TableflowV1CatalogIntegrationSnowflakeSpec.GetWarehouse(),
+				paramAllowedScope: catalogIntegration.Spec.GetConfig().TableflowV1CatalogIntegrationSnowflakeSpec.GetAllowedScope(),
+			}}); err != nil {
+				return nil, err
+			}
 		}
 	} else if catalogIntegration.Spec.GetConfig().TableflowV1CatalogIntegrationUnitySpec != nil {
 		// We cannot read these two values from the backend, so read the stored value instead to prevent drift
 		currentClientId, currentClientIdOk := d.GetOk(fmt.Sprintf("%s.0.%s", paramUnity, paramClientId))
 		currentClientSecret, currentClientSecretOk := d.GetOk(fmt.Sprintf("%s.0.%s", paramUnity, paramClientSecret))
 
-		unityAttributes := map[string]interface{}{
-			paramWorkspaceEndpoint: catalogIntegration.Spec.GetConfig().TableflowV1CatalogIntegrationUnitySpec.GetWorkspaceEndpoint(),
-			paramCatalogName:       catalogIntegration.Spec.GetConfig().TableflowV1CatalogIntegrationUnitySpec.GetCatalogName(),
-		}
-		if catalogIntegration.Spec.GetConfig().TableflowV1CatalogIntegrationUnitySpec.HasCustomSchema() {
-			unityAttributes[paramCustomSchema] = catalogIntegration.Spec.GetConfig().TableflowV1CatalogIntegrationUnitySpec.GetCustomSchema()
-		}
 		if currentClientIdOk && currentClientSecretOk {
-			unityAttributes[paramClientId] = currentClientId.(string)
-			unityAttributes[paramClientSecret] = currentClientSecret.(string)
-		}
-		if err := d.Set(paramUnity, []interface{}{unityAttributes}); err != nil {
-			return nil, err
+			if err := d.Set(paramUnity, []interface{}{map[string]interface{}{
+				paramWorkspaceEndpoint: catalogIntegration.Spec.GetConfig().TableflowV1CatalogIntegrationUnitySpec.GetWorkspaceEndpoint(),
+				paramCatalogName:       catalogIntegration.Spec.GetConfig().TableflowV1CatalogIntegrationUnitySpec.GetCatalogName(),
+				paramClientId:          currentClientId.(string),
+				paramClientSecret:      currentClientSecret.(string),
+			}}); err != nil {
+				return nil, err
+			}
+		} else { // The data source version of this block does not set the client ID or secret
+			if err := d.Set(paramUnity, []interface{}{map[string]interface{}{
+				paramWorkspaceEndpoint: catalogIntegration.Spec.GetConfig().TableflowV1CatalogIntegrationUnitySpec.GetWorkspaceEndpoint(),
+				paramCatalogName:       catalogIntegration.Spec.GetConfig().TableflowV1CatalogIntegrationUnitySpec.GetCatalogName(),
+			}}); err != nil {
+				return nil, err
+			}
 		}
 	}
 
@@ -419,8 +395,8 @@ func catalogIntegrationDelete(ctx context.Context, d *schema.ResourceData, meta 
 }
 
 func catalogIntegrationUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if d.HasChangesExcept(paramDisplayName, paramAwsGlue, paramSnowflake, paramUnity) {
-		return diag.Errorf("error updating Catalog Integration %q: only %q, %q, %q, %q, %q, %q, %q, %q, %q, %q, %q attributes can be updated for Catalog Integration", d.Id(), paramDisplayName, paramCustomDatabase, paramEndpoint, paramWarehouse, paramAllowedScope, paramClientId, paramClientSecret, paramCustomNamespace, paramWorkspaceEndpoint, paramCatalogName, paramCustomSchema)
+	if d.HasChangesExcept(paramDisplayName, paramSnowflake, paramUnity) {
+		return diag.Errorf("error updating Catalog Integration %q: only %q, %q, %q, %q, %q, %q, %q, %q attributes can be updated for Catalog Integration", d.Id(), paramDisplayName, paramEndpoint, paramWarehouse, paramAllowedScope, paramClientId, paramClientSecret, paramWorkspaceEndpoint, paramCatalogName)
 	}
 
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
@@ -452,14 +428,6 @@ func catalogIntegrationUpdate(ctx context.Context, d *schema.ResourceData, meta 
 			}))
 		}
 	}
-	if d.HasChange(paramAwsGlue) {
-		updateCatalogIntegrationSpec.SetConfig(tableflowv1.TableflowV1CatalogIntegrationAwsGlueUpdateSpecAsTableflowV1CatalogIntegrationUpdateSpecConfigOneOf(&tableflowv1.TableflowV1CatalogIntegrationAwsGlueUpdateSpec{
-			Kind: awsGlueSpecKind,
-		}))
-		if d.HasChange(fmt.Sprintf("%s.0.%s", paramAwsGlue, paramCustomDatabase)) {
-			updateCatalogIntegrationSpec.Config.TableflowV1CatalogIntegrationAwsGlueUpdateSpec.SetCustomDatabase(extractStringValueFromBlock(d, paramAwsGlue, paramCustomDatabase))
-		}
-	}
 	if d.HasChange(paramSnowflake) {
 		updateCatalogIntegrationSpec.SetConfig(tableflowv1.TableflowV1CatalogIntegrationSnowflakeUpdateSpecAsTableflowV1CatalogIntegrationUpdateSpecConfigOneOf(&tableflowv1.TableflowV1CatalogIntegrationSnowflakeUpdateSpec{
 			Kind: snowflakeSpecKind,
@@ -479,9 +447,6 @@ func catalogIntegrationUpdate(ctx context.Context, d *schema.ResourceData, meta 
 		if d.HasChange(fmt.Sprintf("%s.0.%s", paramSnowflake, paramClientSecret)) {
 			updateCatalogIntegrationSpec.Config.TableflowV1CatalogIntegrationSnowflakeUpdateSpec.SetClientSecret(extractStringValueFromBlock(d, paramSnowflake, paramClientSecret))
 		}
-		if d.HasChange(fmt.Sprintf("%s.0.%s", paramSnowflake, paramCustomNamespace)) {
-			updateCatalogIntegrationSpec.Config.TableflowV1CatalogIntegrationSnowflakeUpdateSpec.SetCustomNamespace(extractStringValueFromBlock(d, paramSnowflake, paramCustomNamespace))
-		}
 	}
 	if d.HasChange(paramUnity) {
 		updateCatalogIntegrationSpec.SetConfig(tableflowv1.TableflowV1CatalogIntegrationUnityUpdateSpecAsTableflowV1CatalogIntegrationUpdateSpecConfigOneOf(&tableflowv1.TableflowV1CatalogIntegrationUnityUpdateSpec{
@@ -498,9 +463,6 @@ func catalogIntegrationUpdate(ctx context.Context, d *schema.ResourceData, meta 
 		}
 		if d.HasChange(fmt.Sprintf("%s.0.%s", paramUnity, paramClientSecret)) {
 			updateCatalogIntegrationSpec.Config.TableflowV1CatalogIntegrationUnityUpdateSpec.SetClientSecret(extractStringValueFromBlock(d, paramUnity, paramClientSecret))
-		}
-		if d.HasChange(fmt.Sprintf("%s.0.%s", paramUnity, paramCustomSchema)) {
-			updateCatalogIntegrationSpec.Config.TableflowV1CatalogIntegrationUnityUpdateSpec.SetCustomSchema(extractStringValueFromBlock(d, paramUnity, paramCustomSchema))
 		}
 	}
 
