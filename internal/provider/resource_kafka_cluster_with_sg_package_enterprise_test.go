@@ -208,6 +208,7 @@ func TestAccEnterpriseClusterWithSGPackage(t *testing.T) {
 					resource.TestCheckResourceAttr(fullEnterpriseKafkaResourceLabel, "endpoints.1.connection_type", "PRIVATELINK"),
 					resource.TestCheckResourceAttr(fullEnterpriseKafkaResourceLabel, "endpoints.1.rest_endpoint", "https://lkc-00000-00000.us-central1.gcp.glb.confluent.cloud:443"),
 					resource.TestCheckResourceAttr(fullEnterpriseKafkaResourceLabel, "endpoints.1.bootstrap_endpoint", "lkc-00000-00000.us-central1.gcp.glb.confluent.cloud:9092"),
+					resource.TestCheckResourceAttr(fullEnterpriseKafkaResourceLabel, "deletion_protection", "false"),
 				),
 			},
 			{
@@ -241,6 +242,7 @@ func TestAccEnterpriseClusterWithSGPackage(t *testing.T) {
 					resource.TestCheckResourceAttr(fullEnterpriseKafkaResourceLabel, "endpoints.1.connection_type", "PRIVATELINK"),
 					resource.TestCheckResourceAttr(fullEnterpriseKafkaResourceLabel, "endpoints.1.rest_endpoint", "https://lkc-00000-00000.us-central1.gcp.glb.confluent.cloud:443"),
 					resource.TestCheckResourceAttr(fullEnterpriseKafkaResourceLabel, "endpoints.1.bootstrap_endpoint", "lkc-00000-00000.us-central1.gcp.glb.confluent.cloud:9092"),
+					resource.TestCheckResourceAttr(fullEnterpriseKafkaResourceLabel, "deletion_protection", "false"),
 				),
 			},
 			{

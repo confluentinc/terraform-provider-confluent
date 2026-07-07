@@ -208,6 +208,7 @@ func TestAccFreightClusterWithSGPackage(t *testing.T) {
 					resource.TestCheckResourceAttr(fullFreightKafkaResourceLabel, "endpoints.1.connection_type", "PRIVATELINK"),
 					resource.TestCheckResourceAttr(fullFreightKafkaResourceLabel, "endpoints.1.rest_endpoint", "https://lkc-00000-00000.us-central1.gcp.glb.confluent.cloud:443"),
 					resource.TestCheckResourceAttr(fullFreightKafkaResourceLabel, "endpoints.1.bootstrap_endpoint", "lkc-00000-00000.us-central1.gcp.glb.confluent.cloud:9092"),
+					resource.TestCheckResourceAttr(fullFreightKafkaResourceLabel, "deletion_protection", "false"),
 				),
 			},
 			{
@@ -241,6 +242,7 @@ func TestAccFreightClusterWithSGPackage(t *testing.T) {
 					resource.TestCheckResourceAttr(fullFreightKafkaResourceLabel, "endpoints.1.connection_type", "PRIVATELINK"),
 					resource.TestCheckResourceAttr(fullFreightKafkaResourceLabel, "endpoints.1.rest_endpoint", "https://lkc-00000-00000.us-central1.gcp.glb.confluent.cloud:443"),
 					resource.TestCheckResourceAttr(fullFreightKafkaResourceLabel, "endpoints.1.bootstrap_endpoint", "lkc-00000-00000.us-central1.gcp.glb.confluent.cloud:9092"),
+					resource.TestCheckResourceAttr(fullFreightKafkaResourceLabel, "deletion_protection", "false"),
 				),
 			},
 			{
