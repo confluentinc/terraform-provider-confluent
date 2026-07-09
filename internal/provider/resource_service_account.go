@@ -60,11 +60,6 @@ func serviceAccountResource() *schema.Resource {
 				Computed:    true,
 				Description: "Kind defines the object this REST resource represents.",
 			},
-			paramResourceName: {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "The Confluent Resource Name of the resource.",
-			},
 		},
 	}
 }
@@ -161,9 +156,6 @@ func setServiceAccountAttributes(d *schema.ResourceData, serviceAccount iamv2.Ia
 		return nil, createDescriptiveError(err)
 	}
 	if err := d.Set(paramKind, serviceAccount.GetKind()); err != nil {
-		return nil, createDescriptiveError(err)
-	}
-	if err := d.Set(paramResourceName, serviceAccount.Metadata.GetResourceName()); err != nil {
 		return nil, createDescriptiveError(err)
 	}
 	d.SetId(serviceAccount.GetId())

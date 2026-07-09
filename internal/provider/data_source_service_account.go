@@ -63,11 +63,6 @@ func serviceAccountDataSource() *schema.Resource {
 				Computed:    true,
 				Description: "Kind defines the object this REST resource represents.",
 			},
-			paramResourceName: {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "The Confluent Resource Name of the resource.",
-			},
 		},
 	}
 }
