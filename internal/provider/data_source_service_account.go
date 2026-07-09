@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -34,14 +35,18 @@ func serviceAccountDataSource() *schema.Resource {
 		ReadContext: serviceAccountDataSourceRead,
 		Schema: map[string]*schema.Schema{
 			paramId: {
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "The ID of the service account.",
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ExactlyOneOf: []string{paramId, paramDisplayName},
+				Description:  "The ID of the service account.",
 			},
 			paramDisplayName: {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "A human-readable name for the Service Account",
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ExactlyOneOf: []string{paramId, paramDisplayName},
+				Description:  "A human-readable name for the Service Account",
 			},
 			paramDescription: {
 				Type:        schema.TypeString,
@@ -69,6 +74,45 @@ func serviceAccountDataSource() *schema.Resource {
 
 func serviceAccountDataSourceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	serviceAccountId := d.Get(paramId).(string)
+	displayName := d.Get(paramDisplayName).(string)
+
+	if serviceAccountId != "" {
+		return serviceAccountDataSourceReadUsingId(ctx, d, meta, serviceAccountId)
+	} else if displayName != "" {
+		return serviceAccountDataSourceReadUsingDisplayName(ctx, d, meta, displayName)
+	}
+	return diag.Errorf("error reading service account: exactly one of %q or %q must be specified but they're both empty", paramId, paramDisplayName)
+}
+
+func serviceAccountDataSourceReadUsingDisplayName(ctx context.Context, d *schema.ResourceData, meta interface{}, displayName string) diag.Diagnostics {
+	tflog.Debug(ctx, fmt.Sprintf("Reading service account %q=%q", paramDisplayName, displayName))
+
+	c := meta.(*Client)
+	serviceAccountList, resp, err := c.iamV2Client.ServiceAccountsIamV2Api.ListIamV2ServiceAccounts(c.iamV2ApiContext(ctx)).DisplayName(strings.Fields(displayName)).Execute()
+	if err != nil {
+		return diag.Errorf("error reading service account %q: %s", displayName, createDescriptiveError(err, resp))
+	}
+	serviceAccounts := serviceAccountList.GetData()
+	if len(serviceAccounts) == 0 {
+		return diag.Errorf("error reading service account: service account with %q=%q was not found", paramDisplayName, displayName)
+	}
+	if len(serviceAccounts) > 1 {
+		return diag.Errorf("error reading service account: there are multiple service accounts with %q=%q", paramDisplayName, displayName)
+	}
+	serviceAccount := serviceAccounts[0]
+	serviceAccountJson, err := json.Marshal(serviceAccount)
+	if err != nil {
+		return diag.Errorf("error reading service account %q: error marshaling %#v to json: %s", displayName, serviceAccount, createDescriptiveError(err))
+	}
+	tflog.Debug(ctx, fmt.Sprintf("Fetched service account %q: %s", serviceAccount.GetId(), serviceAccountJson), map[string]interface{}{serviceAccountLoggingKey: serviceAccount.GetId()})
+
+	if _, err := setServiceAccountAttributes(d, serviceAccount); err != nil {
+		return diag.FromErr(createDescriptiveError(err))
+	}
+	return nil
+}
+
+func serviceAccountDataSourceReadUsingId(ctx context.Context, d *schema.ResourceData, meta interface{}, serviceAccountId string) diag.Diagnostics {
 	tflog.Debug(ctx, fmt.Sprintf("Reading service account %q=%q", paramId, serviceAccountId), map[string]interface{}{serviceAccountLoggingKey: serviceAccountId})
 
 	c := meta.(*Client)
