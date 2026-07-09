@@ -71,6 +71,7 @@ func serviceAccountResource() *schema.Resource {
 
 func serviceAccountCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	c := meta.(*Client)
+	createServiceAccountIdentifier := d.Get(paramDisplayName).(string)
 	createServiceAccountRequest := iamv2.NewIamV2ServiceAccount()
 
 	// Set required attributes
@@ -91,7 +92,7 @@ func serviceAccountCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	// Make API call
 	createdServiceAccount, resp, err := executeServiceAccountCreate(c.iamV2ApiContext(ctx), c, createServiceAccountRequest)
 	if err != nil {
-		return diag.Errorf("error creating service account: %s", createDescriptiveError(err, resp))
+		return diag.Errorf("error creating service account %q: %s", createServiceAccountIdentifier, createDescriptiveError(err, resp))
 	}
 
 	d.SetId(createdServiceAccount.GetId())
