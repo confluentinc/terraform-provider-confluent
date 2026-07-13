@@ -3,7 +3,7 @@
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.77.0...v2.78.0)
 
 **Bug fixes:**
-* Resolved 14 Dependabot alerts.
+* Resolved 14 Dependabot alerts ([#1047](https://github.com/confluentinc/terraform-provider-confluent/issues/1047)).
 
 ## 2.77.0 (July 9th, 2026)
 
