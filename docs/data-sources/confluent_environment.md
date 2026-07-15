@@ -42,6 +42,6 @@ The following arguments are supported:
 
 In addition to the preceding arguments, the following attributes are exported:
 
-- `stream_governance` - (Configuration Block) Stream Governance configurations for the environment Supports the following:
+- `stream_governance` - (Configuration Block) Stream Governance configurations for the environment. Supports the following:
     - `package` - (String) Stream Governance Package. Supported values are ESSENTIALS and ADVANCED. Package comparison can be found [here](https://docs.confluent.io/cloud/current/stream-governance/packages.html#features-by-package-type).
 - `resource_name` - (String) The Confluent Resource Name of the Environment.
