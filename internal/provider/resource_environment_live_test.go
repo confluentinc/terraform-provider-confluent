@@ -61,7 +61,7 @@ func TestAccEnvironmentLive(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckEnvironmentExists(fmt.Sprintf("confluent_environment.%s", environmentResourceLabel)),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_environment.%s", environmentResourceLabel), "display_name", environmentDisplayName),
-					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_environment.%s", environmentResourceLabel), getNestedStreamGovernancePackageKey(), environmentSgPackage),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_environment.%s", environmentResourceLabel), fmt.Sprintf("%s.0.%s", paramStreamGovernanceConfig, paramPackage), environmentSgPackage),
 				),
 			},
 			{
@@ -75,7 +75,7 @@ func TestAccEnvironmentLive(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckEnvironmentExists(fmt.Sprintf("confluent_environment.%s", environmentResourceLabel)),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_environment.%s", environmentResourceLabel), "display_name", environmentDisplayName+"-updated"),
-					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_environment.%s", environmentResourceLabel), getNestedStreamGovernancePackageKey(), "ADVANCED"),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_environment.%s", environmentResourceLabel), fmt.Sprintf("%s.0.%s", paramStreamGovernanceConfig, paramPackage), "ADVANCED"),
 				),
 			},
 			{
