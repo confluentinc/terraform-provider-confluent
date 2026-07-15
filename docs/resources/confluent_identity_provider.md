@@ -10,29 +10,19 @@ description: |-
 
 [![General Availability](https://img.shields.io/badge/Lifecycle%20Stage-General%20Availability-%2345c6e8)](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy)
 
-`confluent_identity_provider` provides an Identity Provider resource that enables creating, editing, and deleting identity providers on Confluent Cloud.
+`confluent_identity_provider` provides an Identity Provider resource that enables creating, editing, and deleting Identity Providers on Confluent Cloud.
+
+-> **Note:** It is recommended to set `lifecycle { prevent_destroy = true }` on production instances to prevent accidental identity provider deletion. This setting rejects plans that would destroy or recreate the identity provider, such as attempting to change uneditable attributes. Read more about it in the [Terraform docs](https://www.terraform.io/language/meta-arguments/lifecycle#prevent_destroy).
 
 ## Example Usage
 
-### Example Identity Provider: Azure AD
-
 ```terraform
-resource "confluent_identity_provider" "azure" {
-  display_name = "My OIDC Provider: Azure AD"
-  description  = "My description"
-  issuer       = "https://login.microsoftonline.com/{tenant_id}/v2.0"
-  jwks_uri     = "https://login.microsoftonline.com/common/discovery/v2.0/keys"
-}
-```
-
-### Example Identity Provider: Okta
-
-```terraform
-resource "confluent_identity_provider" "okta" {
-  display_name = "My OIDC Provider: Okta"
-  description  = "My description"
-  issuer       = "https://mycompany.okta.com/oauth2/default"
-  jwks_uri     = "https://mycompany.okta.com/oauth2/default/v1/keys"
+resource "confluent_identity_provider" "example" {
+  display_name = "My OIDC Provider"
+  description = "My OIDC identity provider"
+  issuer = "https://login.microsoftonline.com/{tenantid}/v2.0"
+  jwks_uri = "https://login.microsoftonline.com/common/discovery/v2.0/keys"
+  identity_claim = "claims.sub"
 }
 ```
 
@@ -41,20 +31,16 @@ resource "confluent_identity_provider" "okta" {
 
 The following arguments are supported:
 
-- `display_name` - (Required String) A human-readable name for the Identity Provider.
-- `description` - (Required String) A description for the Identity Provider.
-- `issuer` - (Required String) A publicly reachable issuer URI for the Identity Provider. The unique issuer URI string represents the entity for issuing tokens.
-- `jwks_uri` - (Required String) A publicly reachable JSON Web Key Set (JWKS) URI for the Identity Provider. A JSON Web Key Set (JWKS) provides a set of keys containing the public keys used to verify any JSON Web Token (JWT) issued by your OAuth 2.0 identity provider.
-- `identity_claim` - (Optional String) The JSON Web Token (JWT) claim to extract the authenticating identity to Confluent resources from [Registered Claim Names](https://datatracker.ietf.org/doc/html/rfc7519#section-4.1). This appears in audit log records.
 
--> **Note:** When using Azure AD identity provider, you can find your Azure Tenant ID in the [Azure Portal under Azure Active Directory](https://portal.azure.com/#blade/Microsoft_AAD_IAM/ActiveDirectoryMenuBlade/Overview). Must be a valid **32 character UUID string**.
-
--> **Note:** If the client specifies mapping to one identity pool ID, the identity claim configured with that pool will be used instead.
+- `display_name` - (Required String) The human-readable name of the OAuth identity provider.
+- `description` - (Required String) A description of the identity provider.
+- `identity_claim` - (Optional String) The JSON Web Token (JWT) claim to extract the authenticating identity to Confluent resources from [Registered Claim Names](https://datatracker.ietf.org/doc/html/rfc7519#section-4.1). This appears in audit log records. Note: if the client specifies mapping to one identity pool ID, the identity claim configured with that pool will be used instead. Note - The attribute is in an [Early Access lifecycle stage] (https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy)
+- `issuer` - (Required String) A publicly accessible URL uniquely identifying the OAuth identity provider authorized to issue access tokens.
+- `jwks_uri` - (Required String) A publicly accessible JSON Web Key Set (JWKS) URI for the OAuth identity provider. JWKS provides a set of crypotgraphic keys used to verify the authenticity and integrity of JSON Web Tokens (JWTs) issued by the OAuth identity provider.
 
 ## Attributes Reference
 
 In addition to the preceding arguments, the following attributes are exported:
-
 - `id` - (Required String) The ID of the Identity Provider, for example, `op-abc123`.
 
 ## Import
@@ -70,6 +56,3 @@ $ terraform import confluent_identity_provider.example op-abc123
 ```
 
 !> **Warning:** Do not forget to delete terminal command history afterwards for security purposes.
-
-## External Documentation
-* [Authenticating with OAuth](https://docs.confluent.io/cloud/current/access-management/authenticate/oauth/overview.html).
