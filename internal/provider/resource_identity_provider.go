@@ -56,7 +56,7 @@ func identityProviderResource() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Computed:    true,
-				Description: "The JSON Web Token (JWT) claim to extract the authenticating identity to Confluent resources from [Registered Claim Names](https://datatracker.ietf.org/doc/html/rfc7519#section-4.1). This appears in audit log records. Note: if the client specifies mapping to one identity pool ID, the identity claim configured with that pool will be used instead. Note - The attribute is in an [Early Access lifecycle stage] (https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy)",
+				Description: "The JSON Web Token (JWT) claim to extract the authenticating identity to Confluent resources from [Registered Claim Names](https://datatracker.ietf.org/doc/html/rfc7519#section-4.1). This appears in audit log records. Note: if the client specifies mapping to one identity pool ID, the identity claim configured with that pool will be used instead. Note - The attribute is in an [Early Access lifecycle stage](https://docs.confluent.io/cloud/current/api.html#section/Versioning/API-Lifecycle-Policy)",
 			},
 			paramIssuer: {
 				Type:         schema.TypeString,
@@ -68,7 +68,7 @@ func identityProviderResource() *schema.Resource {
 				Type:         schema.TypeString,
 				Required:     true,
 				ValidateFunc: validation.StringIsNotEmpty,
-				Description:  "A publicly accessible JSON Web Key Set (JWKS) URI for the OAuth identity provider. JWKS provides a set of crypotgraphic keys used to verify the authenticity and integrity of JSON Web Tokens (JWTs) issued by the OAuth identity provider.",
+				Description:  "A publicly accessible JSON Web Key Set (JWKS) URI for the OAuth identity provider. JWKS provides a set of cryptographic keys used to verify the authenticity and integrity of JSON Web Tokens (JWTs) issued by the OAuth identity provider.",
 			},
 		},
 	}
