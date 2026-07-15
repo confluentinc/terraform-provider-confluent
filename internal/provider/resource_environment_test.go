@@ -127,7 +127,7 @@ func TestAccEnvironment(t *testing.T) {
 					testAccCheckEnvironmentExists(fmt.Sprintf("confluent_environment.%s", environmentResourceLabel)),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_environment.%s", environmentResourceLabel), "id", testEnvironmentId),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_environment.%s", environmentResourceLabel), "display_name", environmentDisplayName),
-					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_environment.%s", environmentResourceLabel), getNestedStreamGovernancePackageKey(), "ESSENTIALS"),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_environment.%s", environmentResourceLabel), fmt.Sprintf("%s.0.%s", paramStreamGovernanceConfig, paramPackage), "ESSENTIALS"),
 				),
 			},
 			{
@@ -142,7 +142,7 @@ func TestAccEnvironment(t *testing.T) {
 					testAccCheckEnvironmentExists(fmt.Sprintf("confluent_environment.%s", environmentResourceLabel)),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_environment.%s", environmentResourceLabel), "id", testEnvironmentId),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_environment.%s", environmentResourceLabel), "display_name", environmentDisplayUpdatedName),
-					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_environment.%s", environmentResourceLabel), getNestedStreamGovernancePackageKey(), environmentUpdatedPackage),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_environment.%s", environmentResourceLabel), fmt.Sprintf("%s.0.%s", paramStreamGovernanceConfig, paramPackage), environmentUpdatedPackage),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_environment.%s", environmentResourceLabel), "resource_name", environmentResourceEndpoint),
 				),
 			},
@@ -223,7 +223,7 @@ func TestAccEnvironmentWithoutSg(t *testing.T) {
 					testAccCheckEnvironmentExists(fmt.Sprintf("confluent_environment.%s", environmentResourceLabel)),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_environment.%s", environmentResourceLabel), "id", "env-xyz"),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_environment.%s", environmentResourceLabel), "display_name", environmentWithoutSgDisplayName),
-					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_environment.%s", environmentResourceLabel), getNestedStreamGovernancePackageKey(), ""),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_environment.%s", environmentResourceLabel), fmt.Sprintf("%s.0.%s", paramStreamGovernanceConfig, paramPackage), ""),
 				),
 			},
 			{
