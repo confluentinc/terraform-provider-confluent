@@ -164,6 +164,21 @@ func setRoleBindingAttributes(d *schema.ResourceData, roleBinding mdsv2.IamV2Rol
 	if err := d.Set(paramCrnPattern, roleBinding.GetCrnPattern()); err != nil {
 		return nil, createDescriptiveError(err)
 	}
+	// Explicitly set paramDisableWaitForReady to the default value if unset.
+	// Default is only applied during diff computation (plan time), not during an
+	// arbitrary Read — including the post-import Read — so without this, importing
+	// can leave this Optional+Default field genuinely unset rather than defaulted,
+	// which shows up as a spurious diff on the next plan. See the analogous guards
+	// in resource_api_key.go / resource_tag_binding.go (hand-written; same
+	// disable_wait_for_ready shape) and resource_schema_registry_kek.go /
+	// resource_schema.go / resource_schema_registry_dek.go / resource_subject_mode.go
+	// / resource_schema_registry_cluster_mode.go (other Optional+Default flags with
+	// the identical "Must be unset when importing" doc note).
+	if _, ok := d.GetOk(paramDisableWaitForReady); !ok {
+		if err := d.Set(paramDisableWaitForReady, d.Get(paramDisableWaitForReady)); err != nil {
+			return nil, createDescriptiveError(err)
+		}
+	}
 	d.SetId(roleBinding.GetId())
 	return d, nil
 }
