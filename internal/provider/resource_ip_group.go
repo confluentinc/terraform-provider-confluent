@@ -154,12 +154,8 @@ func ipGroupUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}
 	}
 
 	updateIpGroupRequest := iamipfilteringv2.NewIamV2IpGroup()
-	if d.HasChange(paramGroupName) {
-		updateIpGroupRequest.SetGroupName(d.Get(paramGroupName).(string))
-	}
-	if d.HasChange(paramCidrBlocks) {
-		updateIpGroupRequest.SetCidrBlocks(convertToStringSlice(d.Get(paramCidrBlocks).(*schema.Set).List()))
-	}
+	updateIpGroupRequest.SetGroupName(d.Get(paramGroupName).(string))
+	updateIpGroupRequest.SetCidrBlocks(convertToStringSlice(d.Get(paramCidrBlocks).(*schema.Set).List()))
 
 	updateIpGroupRequestJson, err := json.Marshal(updateIpGroupRequest)
 	if err != nil {
