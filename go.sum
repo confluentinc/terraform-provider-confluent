@@ -109,8 +109,8 @@ github.com/confluentinc/ccloud-sdk-go-v2/kafkarest v0.14.0 h1:PBtG7eLIbaYngsPe42
 github.com/confluentinc/ccloud-sdk-go-v2/kafkarest v0.14.0/go.mod h1:1hTwJlTy/3WPjA6I4tFf3X8RjXRHe0RQhRYfR+gHaqc=
 github.com/confluentinc/ccloud-sdk-go-v2/ksql v0.1.0 h1:dtLqrG3nltpe2xucO8Bj17HPw+mTJG5zYxJksQ7+Yhw=
 github.com/confluentinc/ccloud-sdk-go-v2/ksql v0.1.0/go.mod h1:0LAvd4VqlaRwKU4yvDEkVCtV43yNezt56+hBe9Lmg7Q=
-github.com/confluentinc/ccloud-sdk-go-v2/mds v0.3.0 h1:DaipFGVdZjAE8eSztUrA/4b74kj6k5lZ0EJmK1RqccU=
-github.com/confluentinc/ccloud-sdk-go-v2/mds v0.3.0/go.mod h1:ufn9In8kDsyJ7Nru2ygpAaWdGw7DSDTOTtDhQVSmZjs=
+github.com/confluentinc/ccloud-sdk-go-v2/mds v0.4.0 h1:jIXXhGi+Xn+XYFCErnMvd035QijbYXla1Bo8W7V7lFM=
+github.com/confluentinc/ccloud-sdk-go-v2/mds v0.4.0/go.mod h1:ufn9In8kDsyJ7Nru2ygpAaWdGw7DSDTOTtDhQVSmZjs=
 github.com/confluentinc/ccloud-sdk-go-v2/networking v0.14.0 h1:btDFGijvzpWaKLKztc7S9YenbtGTsHgjs4+fNuyYceI=
 github.com/confluentinc/ccloud-sdk-go-v2/networking v0.14.0/go.mod h1:6BDrwG6OfSnT++Yr3mXStvmy4Jb8uMtdfKK7sZO/X+M=
 github.com/confluentinc/ccloud-sdk-go-v2/networking-access-point v0.10.0 h1:tVwzT8htKDlXzNOCWNMZ1TU/80LhZ1sH6Xm6YzC4whg=
