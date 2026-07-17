@@ -43,14 +43,12 @@ func flinkMaterializedTableDataSource() *schema.Resource {
 			},
 			paramWatermark:    watermarkSchemaDataSource(),
 			paramDistribution: distributionSchemaDataSource(),
-
 			paramStopped: {
 				Type:     schema.TypeBool,
 				Computed: true,
 			},
-			paramColumns:     columnsSchemaDataSource(),
-			paramConstraints: constraintsSchemaDataSource(),
-
+			paramColumns:      columnsSchemaDataSource(),
+			paramConstraints:  constraintsSchemaDataSource(),
 			paramOrganization: optionalIdBlockSchema(),
 			paramEnvironment:  optionalIdBlockSchema(),
 			paramComputePool:  optionalIdBlockSchemaUpdatable(),
