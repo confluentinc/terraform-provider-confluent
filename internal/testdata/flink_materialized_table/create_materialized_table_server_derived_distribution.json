@@ -1,0 +1,30 @@
+{
+  "api_version": "sql/v1",
+  "kind": "MaterializedTable",
+  "name": "table_group_by",
+  "organization_id": "1111aaaa-11aa-11aa-11aa-111111aaaaaa",
+  "environment_id": "env-abc123",
+  "spec": {
+    "kafka_cluster_id": "lkc-01",
+    "compute_pool_id": "lfcp-x7rgx1",
+    "principal": "u-yo9j87",
+    "stopped": false,
+    "table_options": {},
+    "session_options": {},
+    "distribution": {
+      "keys": [
+        "customer_id"
+      ],
+      "bucket_count": 6
+    },
+    "query": "SELECT customer_id, COUNT(*) AS order_count FROM examples.marketplace.orders GROUP BY customer_id;"
+  },
+  "status": {
+    "phase": "RUNNING",
+    "detail": "Materialized table is running.",
+    "warnings": [],
+    "creation_statement": "CREATE OR ALTER MATERIALIZED TABLE table_group_by AS SELECT customer_id, COUNT(*) AS order_count FROM examples.marketplace.orders GROUP BY customer_id;",
+    "scaling_status": {},
+    "version": 1
+  }
+}
