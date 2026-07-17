@@ -12,6 +12,8 @@ description: |-
 
 `confluent_group_mapping` describes a Group Mapping data source.
 
+-> **Note:** See [Group Mapping in Confluent Cloud](https://docs.confluent.io/cloud/current/access-management/authenticate/sso/group-mapping/overview.html) for more details.
+
 ## Example Usage
 
 ```terraform
@@ -20,12 +22,16 @@ provider "confluent" {
   cloud_api_secret = var.confluent_cloud_api_secret # optionally use CONFLUENT_CLOUD_API_SECRET env var
 }
 
-data "confluent_group_mapping" "example" {
+data "confluent_group_mapping" "example_using_id" {
   id = "group-abc123"
 }
 
-output "example" {
-  value = data.confluent_group_mapping.example
+output "example_using_id" {
+  value = data.confluent_group_mapping.example_using_id
+}
+
+data "confluent_group_mapping" "example_using_name" {
+  display_name = "Default"
 }
 ```
 
@@ -34,15 +40,16 @@ output "example" {
 
 The following arguments are supported:
 
-- `id` - (Optional String) The ID of the Group Mapping, for example, `group-abc123`.
+- `id` - (Optional String) The ID of the Group Mapping.
 - `display_name` - (Optional String) The name of the Group Mapping.
 
 -> **Note:** Exactly one from the `id` and `display_name` attributes must be specified.
 
 ## Attributes Reference
 
-In addition to the preceding arguments, the following attributes are exported:
+The following attributes are exported:
 
-- `display_name` - (String) The name of the group mapping.
-- `description` - (String) A description explaining the purpose and use of the group mapping.
-- `filter` - (String) A single group identifier or a condition based on [supported CEL operators](https://docs.confluent.io/cloud/current/access-management/authenticate/sso/group-mapping/overview.html#supported-cel-operators-for-group-mapping) that defines which groups are included.
+- `id` - (Required String) The ID of the Group Mapping (for example, `group-abc123`).
+- `display_name` - (Required String) The name of the Group Mapping.
+- `filter` - (Required String) A single group identifier or a condition based on [supported CEL operators](https://docs.confluent.io/cloud/current/access-management/authenticate/sso/group-mapping/overview.html#supported-cel-operators-for-group-mapping) that defines which groups are included.
+- `description` - (Required String) A description explaining the purpose and use of the group mapping.
