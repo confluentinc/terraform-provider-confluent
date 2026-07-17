@@ -72,9 +72,7 @@ func groupMappingCreate(ctx context.Context, d *schema.ResourceData, meta interf
 	createGroupMappingRequest.SetFilter(d.Get(paramFilter).(string))
 
 	// Set optional attributes
-	if _, ok := d.GetOk(paramDescription); ok {
-		createGroupMappingRequest.SetDescription(d.Get(paramDescription).(string))
-	}
+	createGroupMappingRequest.SetDescription(d.Get(paramDescription).(string))
 
 	// Logging
 	createGroupMappingRequestJson, err := json.Marshal(createGroupMappingRequest)
