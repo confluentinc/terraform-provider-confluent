@@ -372,6 +372,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_schema_registry_kek":                schemaRegistryKekDataSource(),
 				"confluent_schema_registry_dek":                schemaRegistryDekDataSource(),
 				"confluent_switchover_pair":                    switchoverPairDataSource(),
+				"confluent_switchover_endpoint":                switchoverEndpointDataSource(),
 				// cli-tfgen:tf-datasources
 			},
 			ResourcesMap: map[string]*schema.Resource{
@@ -440,6 +441,8 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_catalog_entity_attributes":          catalogEntityAttributesResource(),
 				"confluent_rtce_topic":                         rtceTopic(),
 				"confluent_switchover_pair":                    switchoverPairResource(),
+				"confluent_switchover_endpoint":                switchoverEndpointResource(),
+				"confluent_switchover_pair_failover":           switchoverPairFailoverResource(),
 				// cli-tfgen:tf-resources
 			},
 		}
