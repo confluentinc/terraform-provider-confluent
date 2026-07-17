@@ -71,6 +71,8 @@ github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDk
 github.com/cloudflare/circl v1.6.3 h1:9GPOhQGF9MCYUeXyMYlqTR6a5gTrgR/fBLXvUgtVcg8=
 github.com/cloudflare/circl v1.6.3/go.mod h1:2eXP6Qfat4O/Yhh8BznvKnJ+uzEoTQ6jVKJRn81BiS4=
 github.com/cncf/udpa/go v0.0.0-20191209042840-269d4d468f6f/go.mod h1:M8M6+tZqaGXZJjfX53e64911xZQV5JYwmTeXPW+k8Sc=
+github.com/confluentinc/ccloud-sdk-go-v2-internal/switchover v0.0.0-20260716234419-9fed8981fa8c h1:3MD0b07bfAl0UTgspFYC7R3LkVMWvapm1BcZ5LNxSA4=
+github.com/confluentinc/ccloud-sdk-go-v2-internal/switchover v0.0.0-20260716234419-9fed8981fa8c/go.mod h1:yv1VtjqyqD7G5gpdrzR2hGyIAfEOuLA3aTQW0TZ6Iek=
 github.com/confluentinc/ccloud-sdk-go-v2/apikeys v0.4.0 h1:8fWyLwMuy8ec0MVF5Avd54UvbIxhDFhZzanHBVwgxdw=
 github.com/confluentinc/ccloud-sdk-go-v2/apikeys v0.4.0/go.mod h1:wNa9Qg2e2v/+PQsUyKh+qB22hhLkPR6Ahy6rP+1jmGI=
 github.com/confluentinc/ccloud-sdk-go-v2/byok v0.0.9 h1:TFz/gJ0tPnTsEE56xJwLtU5ykTpfPv0vZwI1jS1QUMg=
