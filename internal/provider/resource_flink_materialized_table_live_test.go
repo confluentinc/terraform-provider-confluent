@@ -76,6 +76,10 @@ func TestAccFlinkMaterializedTableLive(t *testing.T) {
 
 	randomSuffix := rand.Intn(100000)
 	tableDisplayName := fmt.Sprintf("tf_live_mat_table_%d", randomSuffix)
+	// A distinct name for the GROUP BY step. Because display_name is ForceNew, using a new
+	// name recreates the table as a fresh create rather than an in-place update, which avoids
+	// Flink's schema-evolution restrictions (dropping persisted columns, etc.).
+	groupByTableDisplayName := fmt.Sprintf("tf_live_mat_table_gb_%d", randomSuffix)
 	tableResourceLabel := "test_live_flink_materialized_table"
 	saResourceLabel := "live_flink_mt_sa"
 	poolResourceLabel := "live_flink_mt_pool"
@@ -130,6 +134,30 @@ func TestAccFlinkMaterializedTableLive(t *testing.T) {
 					testAccCheckFlinkMaterializedTableLiveExists(fullTableResourceLabel),
 					resource.TestCheckResourceAttr(fullTableResourceLabel, paramDisplayName, tableDisplayName),
 					resource.TestCheckResourceAttr(fullTableResourceLabel, paramStopped, "true"),
+				),
+			},
+			{
+				// Regression coverage for server-derived distribution: a GROUP BY query gives the
+				// table a primary key, so Confluent Cloud derives a `distribution` even though the
+				// config omits it. The config never declares `distribution`, so the framework's
+				// post-apply plan check also asserts the resource is NOT recreated on the next plan
+				// (the bug fixed by marking `distribution` Optional+Computed).
+				Config: testAccCheckFlinkMaterializedTableLiveConfig(
+					endpoint, apiKey, apiSecret, region, kafkaClusterId,
+					saResourceLabel, poolResourceLabel, apiKeyResourceLabel,
+					flinkRegionId, flinkRegionRestEndpoint,
+					tableResourceLabel, groupByTableDisplayName, randomSuffix,
+					"SELECT customer_id, COUNT(*) AS order_count FROM examples.marketplace.orders GROUP BY customer_id",
+					false,
+				),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckFlinkMaterializedTableLiveExists(fullTableResourceLabel),
+					resource.TestCheckResourceAttr(fullTableResourceLabel, paramDisplayName, groupByTableDisplayName),
+					// The server-derived distribution must be populated in state even though the config omitted it.
+					resource.TestCheckResourceAttr(fullTableResourceLabel, "distribution.#", "1"),
+					resource.TestCheckResourceAttr(fullTableResourceLabel, "distribution.0.keys.#", "1"),
+					resource.TestCheckTypeSetElemAttr(fullTableResourceLabel, "distribution.0.keys.*", "customer_id"),
+					resource.TestCheckResourceAttrSet(fullTableResourceLabel, "distribution.0.bucket_count"),
 				),
 			},
 			{
