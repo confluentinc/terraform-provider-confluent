@@ -512,8 +512,9 @@ func TestAccFlinkMaterializedTableServerDerivedDistribution(t *testing.T) {
 			{
 				// Re-planning the same config (still omitting `distribution`) must be a no-op.
 				// Without distribution being Optional+Computed, this produces a `-/+` replacement and fails.
-				Config:   testAccCheckMaterializedTableServerDerivedDistributionConfig(mockTestServerUrl, resourceLabel, groupByDisplayName),
-				PlanOnly: true,
+				Config:             testAccCheckMaterializedTableServerDerivedDistributionConfig(mockTestServerUrl, resourceLabel, groupByDisplayName),
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: false,
 			},
 		},
 	})
