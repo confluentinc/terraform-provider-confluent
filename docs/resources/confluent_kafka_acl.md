@@ -83,7 +83,7 @@ The following arguments are supported:
 - `principal` - (Required String) The principal for the ACL.
 - `operation` - (Required String) The operation type for the ACL. Accepted values are: `ALL`, `READ`, `WRITE`, `CREATE`, `DELETE`, `ALTER`, `DESCRIBE`, `CLUSTER_ACTION`, `DESCRIBE_CONFIGS`, `ALTER_CONFIGS`, and `IDEMPOTENT_WRITE`.  See [Authorization using ACLs](https://docs.confluent.io/platform/current/kafka/authorization.html#operations) to find mappings of `(resource_type, operation)` to one or more Kafka APIs or request types.
 - `permission` - (Required String) The permission for the ACL. Accepted values are: `DENY` and `ALLOW`.
-- `rest_endpoint` - (Optional String) The REST endpoint of the Kafka cluster, for example, `https://pkc-00000.us-central1.gcp.confluent.cloud:443`. This attribute is optional at the resource level because the REST endpoint can also be set in the provider block as `kafka_rest_endpoint` or with the `KAFKA_REST_ENDPOINT` environment variable. One of these is required.
+- `rest_endpoint` - (Optional String) The REST endpoint of the Kafka cluster, for example, `https://pkc-00000.us-central1.gcp.confluent.cloud:443`. This attribute is optional at the resource level because the REST endpoint can also be set in the provider block as `kafka_rest_endpoint` or with the `KAFKA_REST_ENDPOINT` environment variable. One of these is required. See [Option #1](#option-1-manage-multiple-kafka-clusters-in-the-same-terraform-workspace) for more details.
 - `credentials` (Optional Configuration Block) supports the following:
     - `key` - (Required String) The Kafka API Key.
     - `secret` - (Required String, Sensitive) The Kafka API Secret.
