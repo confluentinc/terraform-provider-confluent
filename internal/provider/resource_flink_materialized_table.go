@@ -220,8 +220,9 @@ func distributionSchema() *schema.Schema {
 		Type:        schema.TypeList,
 		MaxItems:    1,
 		Optional:    true,
+		Computed:    true,
 		ForceNew:    true,
-		Description: "The distribution definition for the materialized table.",
+		Description: "The distribution definition for the materialized table. If omitted, Confluent Cloud could derive it from the query automatically.",
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				paramDistributionKeys: {
@@ -229,12 +230,14 @@ func distributionSchema() *schema.Schema {
 					Elem:        &schema.Schema{Type: schema.TypeString},
 					Description: "The names of the columns the table is distributed by.",
 					Optional:    true,
+					Computed:    true,
 					ForceNew:    true,
 				},
 				paramDistributionBucketCount: {
 					Type:        schema.TypeInt,
 					Description: "The number of buckets the table is distributed by.",
 					Optional:    true,
+					Computed:    true,
 					ForceNew:    true,
 				},
 			},
