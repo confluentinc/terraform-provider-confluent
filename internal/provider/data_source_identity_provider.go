@@ -91,25 +91,29 @@ func identityProviderDataSourceReadUsingDisplayName(ctx context.Context, d *sche
 	if err != nil {
 		return diag.Errorf("error reading identity provider %q: %s", displayName, createDescriptiveError(err))
 	}
-	var matchedIdentityProvider identityproviderv2.IamV2IdentityProvider
-	matchCount := 0
-	for _, identityProvider := range identityProviders {
-		if identityProvider.GetDisplayName() == displayName {
-			matchedIdentityProvider = identityProvider
-			matchCount++
-		}
-	}
-	if matchCount == 0 {
-		return diag.Errorf("error reading identity provider: identity provider with %q=%q was not found", paramDisplayName, displayName)
-	}
-	if matchCount > 1 {
+	if hasMultipleIdentityProvidersWithDisplayName(identityProviders, displayName) {
 		return diag.Errorf("error reading identity provider: there are multiple identity providers with %q=%q", paramDisplayName, displayName)
 	}
-
-	if _, err := setIdentityProviderAttributes(d, matchedIdentityProvider); err != nil {
-		return diag.FromErr(createDescriptiveError(err))
+	for _, identityProvider := range identityProviders {
+		if identityProvider.GetDisplayName() == displayName {
+			if _, err := setIdentityProviderAttributes(d, identityProvider); err != nil {
+				return diag.FromErr(createDescriptiveError(err))
+			}
+			return nil
+		}
 	}
-	return nil
+
+	return diag.Errorf("error reading identity provider: identity provider with %q=%q was not found", paramDisplayName, displayName)
+}
+
+func hasMultipleIdentityProvidersWithDisplayName(identityProviders []identityproviderv2.IamV2IdentityProvider, displayName string) bool {
+	count := 0
+	for _, identityProvider := range identityProviders {
+		if identityProvider.GetDisplayName() == displayName {
+			count += 1
+		}
+	}
+	return count > 1
 }
 
 func identityProviderDataSourceReadUsingId(ctx context.Context, d *schema.ResourceData, meta interface{}, identityProviderId string) diag.Diagnostics {
