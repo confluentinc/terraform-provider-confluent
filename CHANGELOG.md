@@ -3,7 +3,7 @@
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.78.0...v2.79.0)
 
 **Bug fixes:**
-* Resolved 14 Dependabot alerts ([#1047](https://github.com/confluentinc/terraform-provider-confluent/issues/1047)).
+* Fixed a bug that caused Terraform state drift for the `confluent_flink_materialized_table` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_flink_materialized_table) by adding the missing `Computed` annotation to the `distribution` block.
 
 ## 2.78.0 (July 13th, 2026)
 
