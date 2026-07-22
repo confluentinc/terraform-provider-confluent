@@ -457,6 +457,7 @@ const (
 	paramMaxCfu                                          = "max_cfu"
 	paramMaxEcku                                         = "max_ecku"
 	paramMetadata                                        = "metadata"
+	paramMetadataColumnNamingScheme                      = "metadata_column_naming_scheme"
 	paramMetadataComment                                 = "column_metadata_comment"
 	paramMetadataKey                                     = "column_metadata_key"
 	paramMetadataKind                                    = "column_metadata_kind"

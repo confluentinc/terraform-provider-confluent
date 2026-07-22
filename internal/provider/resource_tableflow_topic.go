@@ -96,6 +96,12 @@ func tableflowTopicResource() *schema.Resource {
 				Deprecated:  "This attribute is deprecated and will be removed in a future release.",
 				Description: "The strategy to handle record failures in the Tableflow enabled topic during materialization.",
 			},
+			paramMetadataColumnNamingScheme: {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				Description: "The naming scheme for the Tableflow-enabled topic's internal metadata columns in the materialized table, one of \"DEFAULT\" or \"PORTABLE\".",
+			},
 			paramWriteMode: {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -258,6 +264,9 @@ func tableflowTopicCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	if recordFailureStrategy := d.Get(paramRecordFailureStrategy).(string); recordFailureStrategy != "" {
 		tableflowTopicSpec.Config.SetRecordFailureStrategy(recordFailureStrategy)
 	}
+	if metadataColumnNamingScheme := d.Get(paramMetadataColumnNamingScheme).(string); metadataColumnNamingScheme != "" {
+		tableflowTopicSpec.Config.SetMetadataColumnNamingScheme(metadataColumnNamingScheme)
+	}
 
 	if len(d.Get(paramErrorHandling).([]interface{})) > 0 {
 		mode := extractStringValueFromBlock(d, paramErrorHandling, paramMode)
@@ -414,6 +423,9 @@ func setTableflowTopicAttributes(d *schema.ResourceData, c *TableflowRestClient,
 	if err := d.Set(paramDataRetentionMs, tableflowTopic.GetSpec().Config.GetDataRetentionMs()); err != nil {
 		return nil, err
 	}
+	if err := d.Set(paramMetadataColumnNamingScheme, tableflowTopic.GetSpec().Config.GetMetadataColumnNamingScheme()); err != nil {
+		return nil, err
+	}
 	if err := d.Set(paramTableFormats, tableflowTopic.Spec.GetTableFormats()); err != nil {
 		return nil, err
 	}
@@ -546,8 +558,8 @@ func tableflowTopicDelete(ctx context.Context, d *schema.ResourceData, meta inte
 }
 
 func tableflowTopicUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if d.HasChangesExcept(paramRetentionMs, paramDataRetentionMs, paramTableFormats, paramRecordFailureStrategy, paramErrorHandling) {
-		return diag.Errorf("error updating Tableflow Topic %q: only %q, %q, %q, %q, %q, %q, %q attributes can be updated for Tableflow Topic", d.Id(), paramRetentionMs, paramDataRetentionMs, paramTableFormats, paramRecordFailureStrategy, paramErrorHandling, paramMode, paramLogTarget)
+	if d.HasChangesExcept(paramRetentionMs, paramDataRetentionMs, paramTableFormats, paramRecordFailureStrategy, paramMetadataColumnNamingScheme, paramErrorHandling) {
+		return diag.Errorf("error updating Tableflow Topic %q: only %q, %q, %q, %q, %q, %q, %q, %q attributes can be updated for Tableflow Topic", d.Id(), paramRetentionMs, paramDataRetentionMs, paramTableFormats, paramRecordFailureStrategy, paramMetadataColumnNamingScheme, paramErrorHandling, paramMode, paramLogTarget)
 	}
 
 	c := meta.(*Client)
@@ -576,6 +588,9 @@ func tableflowTopicUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 	}
 	if d.HasChange(paramRecordFailureStrategy) {
 		updateTableflowTopicSpec.Config.SetRecordFailureStrategy(d.Get(paramRecordFailureStrategy).(string))
+	}
+	if d.HasChange(paramMetadataColumnNamingScheme) {
+		updateTableflowTopicSpec.Config.SetMetadataColumnNamingScheme(d.Get(paramMetadataColumnNamingScheme).(string))
 	}
 	if d.HasChange(paramErrorHandling) {
 		mode := extractStringValueFromBlock(d, paramErrorHandling, paramMode)
