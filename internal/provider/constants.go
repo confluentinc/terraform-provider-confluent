@@ -457,6 +457,7 @@ const (
 	paramMaxCfu                                          = "max_cfu"
 	paramMaxEcku                                         = "max_ecku"
 	paramMetadata                                        = "metadata"
+	paramMetadataColumnNamingScheme                      = "metadata_column_naming_scheme"
 	paramMetadataComment                                 = "column_metadata_comment"
 	paramMetadataKey                                     = "column_metadata_key"
 	paramMetadataKind                                    = "column_metadata_kind"
@@ -537,7 +538,6 @@ const (
 	paramRamResourceShareArn                             = "ram_resource_share_arn"
 	paramRbacCrn                                         = "rbac_crn"
 	paramRecordFailureStrategy                           = "record_failure_strategy"
-	paramMetadataColumnNamingScheme                      = "metadata_column_naming_scheme"
 	paramRecreateOnUpdate                                = "recreate_on_update"
 	paramRecreateOnUpdateDefaultValue                    = false
 	paramRegion                                          = "region"
