@@ -581,7 +581,7 @@ func TestAccKafkaClusterDeletionProtectionTrueLive(t *testing.T) {
 					testAccCheckClusterExists(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel)),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "deletion_protection", "false"),
 				),
-			}
+			},
 		},
 	})
 }
