@@ -1077,7 +1077,7 @@ func testAccCheckKafkaClusterDeletionProtectionLiveConfig(endpoint, environmentR
 
 	resource "confluent_kafka_cluster" "%s" {
 		display_name        = "%s"
-		availability        = "SINGLE_ZONE"
+		availability        = "HIGH"
 		cloud               = "AWS"
 		region              = "us-east-1"
 		enterprise {max_ecku     = 5}
