@@ -537,6 +537,7 @@ const (
 	paramRamResourceShareArn                             = "ram_resource_share_arn"
 	paramRbacCrn                                         = "rbac_crn"
 	paramRecordFailureStrategy                           = "record_failure_strategy"
+	paramMetadataColumnNamingScheme                      = "metadata_column_naming_scheme"
 	paramRecreateOnUpdate                                = "recreate_on_update"
 	paramRecreateOnUpdateDefaultValue                    = false
 	paramRegion                                          = "region"
