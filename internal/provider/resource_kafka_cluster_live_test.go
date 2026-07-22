@@ -572,6 +572,8 @@ func TestAccKafkaClusterDeletionProtectionTrueLive(t *testing.T) {
 					testAccCheckClusterExists(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel)),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "display_name", clusterDisplayName),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "deletion_protection", "true"),
+					// Enterprise clusters require high-durability availability; guards against regressing to SINGLE_ZONE.
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "availability", "HIGH"),
 				),
 			},
 			{
@@ -580,6 +582,7 @@ func TestAccKafkaClusterDeletionProtectionTrueLive(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckClusterExists(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel)),
 					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "deletion_protection", "false"),
+					resource.TestCheckResourceAttr(fmt.Sprintf("confluent_kafka_cluster.%s", clusterResourceLabel), "availability", "HIGH"),
 				),
 			},
 		},
@@ -1077,7 +1080,7 @@ func testAccCheckKafkaClusterDeletionProtectionLiveConfig(endpoint, environmentR
 
 	resource "confluent_kafka_cluster" "%s" {
 		display_name        = "%s"
-		availability        = "SINGLE_ZONE"
+		availability        = "HIGH"
 		cloud               = "AWS"
 		region              = "us-east-1"
 		enterprise {max_ecku     = 5}
