@@ -31,6 +31,7 @@
       "retention_ms": "100000000",
       "data_retention_ms": "2592000000",
       "record_failure_strategy": "SUSPEND",
+      "metadata_column_naming_scheme": "PORTABLE",
       "error_handling": {
         "mode": "SUSPEND"
       }
