@@ -140,6 +140,8 @@ The following arguments are supported:
     - `kind` - (Required String) The kind of distribution. Required when the `distribution` block is specified. The only currently supported value is `HASH`.
     - `keys` - (Optional Set of Strings) The names of the columns the table is distributed by.
     - `bucket_count` - (Optional Integer) The number of buckets the table is distributed by.
+- `table_options` - (Optional Map) Defines configuration properties for the Materialized Table, equivalent to the SQL `WITH` clause.
+- `session_options` - (Optional Map) Session configurations equivalent to the SQL `SET` statement. Only applicable on creation; ignored on update.
 - `stopped` - (Optional Boolean) Indicates whether the Materialized Table is stopped. Defaults to `false`. Update it to `true` to stop the Materialized Table; subsequently update it to `false` to resume it.
 - `rest_endpoint` - (Optional String) The REST endpoint of the Flink region, for example, `https://flink.us-east-1.aws.confluent.cloud`.
 - `credentials` (Optional Configuration Block) supports the following:

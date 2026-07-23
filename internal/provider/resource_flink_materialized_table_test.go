@@ -162,6 +162,10 @@ func TestAccFlinkMaterializedTable(t *testing.T) {
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "distribution.0.keys.#", "2"),
 					resource.TestCheckTypeSetElemAttr(fullMaterializedTableResourceLabel, "distribution.0.keys.*", "keys"),
 					resource.TestCheckTypeSetElemAttr(fullMaterializedTableResourceLabel, "distribution.0.keys.*", "passwords"),
+					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "table_options.%", "1"),
+					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "table_options.changelog_mode", "upsert"),
+					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "session_options.%", "1"),
+					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "session_options.sql_local_time_zone", "UTC"),
 
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "columns.0.columns_physical.0.column_physical_name", "user_id"),
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "columns.0.columns_physical.0.column_physical_kind", "Physical"),
@@ -199,6 +203,11 @@ func TestAccFlinkMaterializedTable(t *testing.T) {
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "distribution.0.keys.#", "2"),
 					resource.TestCheckTypeSetElemAttr(fullMaterializedTableResourceLabel, "distribution.0.keys.*", "keys"),
 					resource.TestCheckTypeSetElemAttr(fullMaterializedTableResourceLabel, "distribution.0.keys.*", "passwords"),
+					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "table_options.%", "2"),
+					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "table_options.changelog_mode", "upsert"),
+					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "table_options.scan_startup_mode", "earliest-offset"),
+					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "session_options.%", "1"),
+					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "session_options.sql_local_time_zone", "UTC"),
 
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "columns.#", "3"),
 					resource.TestCheckResourceAttr(fullMaterializedTableResourceLabel, "columns.0.columns_physical.0.column_physical_name", "user_id"),
@@ -294,6 +303,12 @@ func testAccCheckMaterializedTableConfig(mockServerUrl, resourceLabel string) st
 	      "passwords",
 	    ]
 	  }
+	  table_options = {
+	    "changelog_mode" = "upsert"
+	  }
+	  session_options = {
+	    "sql_local_time_zone" = "UTC"
+	  }
 	constraints {
       name = "pk_orders"
       type = "PRIMARY_KEY"
@@ -354,6 +369,13 @@ func testAccCheckMaterializedTableConfigUpdated(mockServerUrl, resourceLabel str
 	      "keys",
 	      "passwords",
 	    ]
+	  }
+	  table_options = {
+	    "changelog_mode"    = "upsert"
+	    "scan_startup_mode" = "earliest-offset"
+	  }
+	  session_options = {
+	    "sql_local_time_zone" = "UTC"
 	  }
 	constraints {
       name = "pk_orders"
@@ -555,6 +577,128 @@ func testAccCheckMaterializedTableServerDerivedDistributionConfig(mockServerUrl,
       stopped = false
 	  query = "SELECT customer_id, COUNT(*) AS order_count FROM examples.marketplace.orders GROUP BY customer_id;"
 	  # NOTE: no distribution block on purpose - Confluent Cloud derives it from the query's primary key.
+}
+	`, mockServerUrl, resourceLabel, kafkaApiKey, kafkaApiSecret, mockServerUrl, flinkPrincipalIdTest,
+		flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkComputePoolIdTest, displayName, flinkMaterializedTableDatabase)
+}
+
+// TestAccFlinkMaterializedTableUnmanagedTableAndSessionOptions verifies backward compatibility for
+// configs written before `table_options`/`session_options` existed in the schema: the config omits
+// both entirely, while the server response returns non-empty values for both (e.g. an existing table
+// created before these fields were exposed in Terraform). Because both are Optional+Computed, the
+// provider must accept the API values without proposing a diff. Without Computed, the second PlanOnly
+// step below would show a change (and, for `session_options`, a ForceNew replacement) and fail.
+func TestAccFlinkMaterializedTableUnmanagedTableAndSessionOptions(t *testing.T) {
+	ctx := context.Background()
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
+
+	mockTestServerUrl := wiremockContainer.URI
+	wiremockClient := wiremock.NewClient(mockTestServerUrl)
+	// nolint:errcheck
+	defer wiremockClient.Reset()
+	// nolint:errcheck
+	defer wiremockClient.ResetAllScenarios()
+
+	const scenarioName = "confluent_flink_materialized_table Unmanaged Table And Session Options"
+	const unmanagedDisplayName = "table_unmanaged_options"
+	readUnmanagedPath := fmt.Sprintf("/sql/v1/organizations/%s/environments/%s/databases/%s/materialized-tables/%s", flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkMaterializedTableDatabase, unmanagedDisplayName)
+
+	createResponse, _ := os.ReadFile("../testdata/flink_materialized_table/create_materialized_table_unmanaged_options.json")
+	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(createFlinkMaterializedTablePath)).
+		InScenario(scenarioName).
+		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
+		WillSetStateTo(scenarioStateMaterializedTableHasBeenCreated).
+		WillReturn(string(createResponse), contentTypeJSONHeader, http.StatusCreated))
+
+	readResponse, _ := os.ReadFile("../testdata/flink_materialized_table/read_materialized_table_unmanaged_options.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readUnmanagedPath)).
+		InScenario(scenarioName).
+		WhenScenarioStateIs(scenarioStateMaterializedTableHasBeenCreated).
+		WillReturn(string(readResponse), contentTypeJSONHeader, http.StatusOK))
+
+	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(readUnmanagedPath)).
+		InScenario(scenarioName).
+		WhenScenarioStateIs(scenarioStateMaterializedTableHasBeenCreated).
+		WillSetStateTo(scenarioStateMaterializedTableHasBeenDeleted).
+		WillReturn("", contentTypeJSONHeader, http.StatusNoContent))
+
+	readDeletedResponse, _ := os.ReadFile("../testdata/flink_materialized_table/read_deleted_materialized_table.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readUnmanagedPath)).
+		InScenario(scenarioName).
+		WhenScenarioStateIs(scenarioStateMaterializedTableHasBeenDeleted).
+		WillReturn(string(readDeletedResponse), contentTypeJSONHeader, http.StatusNotFound))
+
+	resourceLabel := "test"
+	fullResourceLabel := fmt.Sprintf("confluent_flink_materialized_table.%s", resourceLabel)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy: func(s *terraform.State) error {
+			return testAccCheckMaterializedTableDestroy(s, mockTestServerUrl)
+		},
+		Steps: []resource.TestStep{
+			{
+				// The config omits `table_options`/`session_options` entirely; the server response supplies both.
+				Config: testAccCheckMaterializedTableUnmanagedOptionsConfig(mockTestServerUrl, resourceLabel, unmanagedDisplayName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMaterializedTableExists(fullResourceLabel),
+					resource.TestCheckResourceAttr(fullResourceLabel, paramDisplayName, unmanagedDisplayName),
+					// The server-returned values must land in state even though the config omitted them.
+					resource.TestCheckResourceAttr(fullResourceLabel, "table_options.%", "1"),
+					resource.TestCheckResourceAttr(fullResourceLabel, "table_options.changelog_mode", "upsert"),
+					resource.TestCheckResourceAttr(fullResourceLabel, "session_options.%", "1"),
+					resource.TestCheckResourceAttr(fullResourceLabel, "session_options.sql_local_time_zone", "UTC"),
+				),
+			},
+			{
+				// Re-planning the same config (still omitting both) must be a no-op: no update, and no
+				// ForceNew replacement despite `session_options` being ForceNew.
+				Config:             testAccCheckMaterializedTableUnmanagedOptionsConfig(mockTestServerUrl, resourceLabel, unmanagedDisplayName),
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: false,
+			},
+		},
+	})
+}
+
+func testAccCheckMaterializedTableUnmanagedOptionsConfig(mockServerUrl, resourceLabel, displayName string) string {
+	return fmt.Sprintf(`
+	provider "confluent" {
+    	endpoint = "%s"
+	}
+
+	resource "confluent_flink_materialized_table" "%s" {
+      credentials {
+        key = "%s"
+        secret = "%s"
+      }
+      rest_endpoint = "%s"
+      principal {
+         id = "%s"
+      }
+      organization {
+         id = "%s"
+      }
+      environment {
+         id = "%s"
+      }
+      compute_pool {
+         id = "%s"
+      }
+      display_name  = "%s"
+	  kafka_cluster {
+	    id = "%s"
+	  }
+      stopped = false
+	  query = "SELECT user_id, product_id, price, quantity FROM orders WHERE price > 1000;"
+	  # NOTE: no table_options/session_options blocks on purpose - simulates a config written
+	  # before these fields existed, against a table that already has them set server-side.
 }
 	`, mockServerUrl, resourceLabel, kafkaApiKey, kafkaApiSecret, mockServerUrl, flinkPrincipalIdTest,
 		flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkComputePoolIdTest, displayName, flinkMaterializedTableDatabase)

@@ -9,8 +9,13 @@
     "compute_pool_id": "lfcp-x7rgx2",
     "principal": "sa-yo9j87",
     "stopped": true,
-    "table_options": {},
-    "session_options": {},
+    "table_options": {
+      "changelog_mode": "upsert",
+      "scan_startup_mode": "earliest-offset"
+    },
+    "session_options": {
+      "sql_local_time_zone": "UTC"
+    },
     "columns": [
       {
         "name": "user_id",

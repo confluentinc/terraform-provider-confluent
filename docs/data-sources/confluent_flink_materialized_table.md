@@ -115,6 +115,8 @@ In addition to the preceding arguments, the following attributes are exported:
     - `kind` - (String) The kind of distribution, for example, `HASH`.
     - `keys` - (Set of Strings) The names of the columns the table is distributed by.
     - `bucket_count` - (Integer) The number of buckets the table is distributed by.
+- `table_options` - (Map) Configuration properties for the Materialized Table, equivalent to the SQL `WITH` clause.
+- `session_options` - (Map) Session configurations equivalent to the SQL `SET` statement.
 - `stopped` - (Boolean) Whether the Materialized Table is stopped.
 - `columns` - (List of Blocks) The column definitions of the Materialized Table, including physical, computed, and metadata columns.
 - `constraints` - (List of Blocks) The table constraints of the Materialized Table. Each `constraints` block supports the following:
