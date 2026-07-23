@@ -120,6 +120,7 @@ func providerIntegrationCreate(ctx context.Context, d *schema.ResourceData, meta
 
 	switch {
 	case isAwsIntegrationConfig:
+		configIdentifier = d.Get(paramDisplayName).(string)
 		awsConfig := providerintegrationv1.NewPimV1AwsIntegrationConfig(kindAwsIntegrationConfig)
 		if _, ok := d.GetOk(fmt.Sprintf("%s.0.%s", paramAws, paramAwsCustomerIamRoleArn)); ok {
 			awsConfig.SetCustomerIamRoleArn(d.Get(fmt.Sprintf("%s.0.%s", paramAws, paramAwsCustomerIamRoleArn)).(string))
