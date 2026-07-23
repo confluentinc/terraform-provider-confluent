@@ -582,6 +582,7 @@ func testAccCheckResourceTableflowTopicByobAws(mockServerUrl string, retention i
 	resource "confluent_tableflow_topic" "main" {
 		display_name = "topic_1"
 		retention_ms = %d
+		metadata_column_naming_scheme = "DEFAULT"
 		error_handling {
 			mode = "SUSPEND"
 		}
@@ -612,6 +613,7 @@ func testAccCheckResourceTableflowTopicByobAwsUpdate(mockServerUrl string, reten
 	resource "confluent_tableflow_topic" "main" {
 		display_name = "topic_1"
 		retention_ms = %d
+		metadata_column_naming_scheme = "PORTABLE"
 		error_handling {
 			mode = "SKIP"
 		}

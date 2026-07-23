@@ -32,6 +32,7 @@ import (
 
 var acceptedBucketTypes = []string{paramByobAws, paramManagedStorage, paramAzureStorage}
 var acceptedErrorHandlingModes = []string{errorHandlingSuspendMode, errorHandlingSkipMode, errorHandlingLogMode}
+var acceptedMetadataColumnNamingSchemes = []string{metadataColumnNamingSchemeDefault, metadataColumnNamingSchemePortable}
 
 func tableflowTopicResource() *schema.Resource {
 	return &schema.Resource{
@@ -97,10 +98,14 @@ func tableflowTopicResource() *schema.Resource {
 				Description: "The strategy to handle record failures in the Tableflow enabled topic during materialization.",
 			},
 			paramMetadataColumnNamingScheme: {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Computed:    true,
-				Description: "The naming scheme for the Tableflow-enabled topic's internal metadata columns in the materialized table, one of \"DEFAULT\" or \"PORTABLE\".",
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				Description:  "The naming scheme for the Tableflow-enabled topic's internal metadata columns in the materialized table, one of \"DEFAULT\" or \"PORTABLE\".",
+				ValidateFunc: validation.StringInSlice(acceptedMetadataColumnNamingSchemes, true),
+				DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+					return strings.EqualFold(old, new)
+				},
 			},
 			paramWriteMode: {
 				Type:        schema.TypeString,
@@ -265,7 +270,7 @@ func tableflowTopicCreate(ctx context.Context, d *schema.ResourceData, meta inte
 		tableflowTopicSpec.Config.SetRecordFailureStrategy(recordFailureStrategy)
 	}
 	if metadataColumnNamingScheme := d.Get(paramMetadataColumnNamingScheme).(string); metadataColumnNamingScheme != "" {
-		tableflowTopicSpec.Config.SetMetadataColumnNamingScheme(metadataColumnNamingScheme)
+		tableflowTopicSpec.Config.SetMetadataColumnNamingScheme(strings.ToUpper(metadataColumnNamingScheme))
 	}
 
 	if len(d.Get(paramErrorHandling).([]interface{})) > 0 {
@@ -590,7 +595,7 @@ func tableflowTopicUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 		updateTableflowTopicSpec.Config.SetRecordFailureStrategy(d.Get(paramRecordFailureStrategy).(string))
 	}
 	if d.HasChange(paramMetadataColumnNamingScheme) {
-		updateTableflowTopicSpec.Config.SetMetadataColumnNamingScheme(d.Get(paramMetadataColumnNamingScheme).(string))
+		updateTableflowTopicSpec.Config.SetMetadataColumnNamingScheme(strings.ToUpper(d.Get(paramMetadataColumnNamingScheme).(string)))
 	}
 	if d.HasChange(paramErrorHandling) {
 		mode := extractStringValueFromBlock(d, paramErrorHandling, paramMode)

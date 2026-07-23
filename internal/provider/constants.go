@@ -214,6 +214,8 @@ const (
 	localSecurityProtocolConfigKey                       = "local.security.protocol"
 	lowAvailability                                      = "LOW"
 	managedStorageSpecKind                               = "Managed"
+	metadataColumnNamingSchemeDefault                    = "DEFAULT"
+	metadataColumnNamingSchemePortable                   = "PORTABLE"
 	modeImport                                           = "IMPORT"
 	modeReadOnly                                         = "READONLY"
 	modeReadOnlyOverride                                 = "READONLY_OVERRIDE"
