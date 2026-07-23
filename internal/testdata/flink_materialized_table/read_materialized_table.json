@@ -9,8 +9,12 @@
     "compute_pool_id": "lfcp-x7rgx1",
     "principal": "u-yo9j87",
     "stopped": false,
-    "table_options": {},
-    "session_options": {},
+    "table_options": {
+      "changelog_mode": "upsert"
+    },
+    "session_options": {
+      "sql_local_time_zone": "UTC"
+    },
     "columns": [
       {
         "name": "user_id",
@@ -39,7 +43,8 @@
         "keys",
         "passwords"
       ],
-      "bucket_count": 10
+      "bucket_count": 10,
+      "kind": "HASH"
     },
     "query": "SELECT user_id, product_id, price, quantity FROM orders WHERE price > 1000;"
   },

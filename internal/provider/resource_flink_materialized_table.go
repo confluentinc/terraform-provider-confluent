@@ -44,6 +44,21 @@ func flinkMaterializedTableResource() *schema.Resource {
 			},
 			paramWatermark:    watermarkSchema(),
 			paramDistribution: distributionSchema(),
+			paramTableOptions: {
+				Type:        schema.TypeMap,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Optional:    true,
+				Computed:    true,
+				Description: "Defines configuration properties for the materialized table, equivalent to the SQL `WITH` clause.",
+			},
+			paramSessionOptions: {
+				Type:        schema.TypeMap,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Optional:    true,
+				Computed:    true,
+				ForceNew:    true,
+				Description: "Session configurations equivalent to the SQL `SET` statement. Only applicable on creation; ignored on update.",
+			},
 			paramRestEndpoint: {
 				Type:         schema.TypeString,
 				Optional:     true,
@@ -240,6 +255,13 @@ func distributionSchema() *schema.Schema {
 					Computed:    true,
 					ForceNew:    true,
 				},
+				paramDistributionKind: {
+					Type:        schema.TypeString,
+					Description: "The kind of distribution. Required when the distribution block is specified.",
+					Optional:    true,
+					Computed:    true,
+					ForceNew:    true,
+				},
 			},
 		},
 	}
@@ -335,6 +357,14 @@ func materializedTableCreate(ctx context.Context, d *schema.ResourceData, meta i
 
 	if distribution := expandMaterializedTableDistribution(d); distribution != nil {
 		table.Spec.Distribution = distribution
+	}
+
+	if tableOptions := convertToStringStringMap(d.Get(paramTableOptions).(map[string]interface{})); len(tableOptions) > 0 {
+		table.Spec.SetTableOptions(tableOptions)
+	}
+
+	if sessionOptions := convertToStringStringMap(d.Get(paramSessionOptions).(map[string]interface{})); len(sessionOptions) > 0 {
+		table.Spec.SetSessionOptions(sessionOptions)
 	}
 
 	constraints := expandMaterializedTableConstraints(d, paramConstraints)
@@ -501,6 +531,7 @@ func setMaterializedTableAttributes(d *schema.ResourceData, materializedTable fl
 			{
 				paramDistributionKeys:        keysSet,
 				paramDistributionBucketCount: materializedTable.Spec.Distribution.GetBucketCount(),
+				paramDistributionKind:        materializedTable.Spec.Distribution.GetKind(),
 			},
 		}
 		if err := d.Set(paramDistribution, distributionBlock); err != nil {
@@ -510,6 +541,13 @@ func setMaterializedTableAttributes(d *schema.ResourceData, materializedTable fl
 		if err := d.Set(paramDistribution, []interface{}{}); err != nil {
 			return nil, err
 		}
+	}
+
+	if err := d.Set(paramTableOptions, materializedTable.Spec.GetTableOptions()); err != nil {
+		return nil, err
+	}
+	if err := d.Set(paramSessionOptions, materializedTable.Spec.GetSessionOptions()); err != nil {
+		return nil, err
 	}
 
 	err := d.Set(paramStopped, materializedTable.Spec.GetStopped())
@@ -711,8 +749,8 @@ func materializedTableImport(ctx context.Context, d *schema.ResourceData, meta i
 }
 
 func materializedTableUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if d.HasChangesExcept(paramQuery, paramStopped, paramComputePool, paramPrincipal, paramColumns, paramWatermark, paramConstraints) {
-		return diag.Errorf("error updating Flink Materialized Table %q: only %q, %q, %q, %q, %q, %q, and %q attributes can be updated for Flink Materialized Table", d.Id(), paramQuery, paramStopped, paramComputePool, paramPrincipal, paramColumns, paramWatermark, paramConstraints)
+	if d.HasChangesExcept(paramQuery, paramStopped, paramComputePool, paramPrincipal, paramColumns, paramWatermark, paramConstraints, paramTableOptions) {
+		return diag.Errorf("error updating Flink Materialized Table %q: only %q, %q, %q, %q, %q, %q, %q, and %q attributes can be updated for Flink Materialized Table", d.Id(), paramQuery, paramStopped, paramComputePool, paramPrincipal, paramColumns, paramWatermark, paramConstraints, paramTableOptions)
 	}
 
 	restEndpoint, err := extractFlinkRestEndpoint(meta.(*Client), d, false)
@@ -782,6 +820,10 @@ func materializedTableUpdate(ctx context.Context, d *schema.ResourceData, meta i
 			constraints = []flinkgatewayv1.SqlV1Constraint{}
 		}
 		table.Spec.SetConstraints(constraints)
+	}
+
+	if d.HasChange(paramTableOptions) {
+		table.Spec.SetTableOptions(convertToStringStringMap(d.Get(paramTableOptions).(map[string]interface{})))
 	}
 
 	updateMaterializedTableRequestJson, err := json.Marshal(table)
@@ -903,7 +945,8 @@ func expandMaterializedTableDistribution(d *schema.ResourceData) *flinkgatewayv1
 		}
 	}
 	bucketCount, _ := m[paramDistributionBucketCount].(int)
-	if bucketCount == 0 && len(keys) == 0 {
+	kind, _ := m[paramDistributionKind].(string)
+	if bucketCount == 0 && len(keys) == 0 && kind == "" {
 		return nil
 	}
 	dist := &flinkgatewayv1.SqlV1Distribution{}
@@ -912,6 +955,9 @@ func expandMaterializedTableDistribution(d *schema.ResourceData) *flinkgatewayv1
 	}
 	if bucketCount != 0 {
 		dist.SetBucketCount(int32(bucketCount))
+	}
+	if kind != "" {
+		dist.SetKind(kind)
 	}
 	return dist
 }

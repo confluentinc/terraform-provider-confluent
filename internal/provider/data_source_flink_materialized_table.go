@@ -43,6 +43,16 @@ func flinkMaterializedTableDataSource() *schema.Resource {
 			},
 			paramWatermark:    watermarkSchemaDataSource(),
 			paramDistribution: distributionSchemaDataSource(),
+			paramTableOptions: {
+				Type:     schema.TypeMap,
+				Elem:     &schema.Schema{Type: schema.TypeString},
+				Computed: true,
+			},
+			paramSessionOptions: {
+				Type:     schema.TypeMap,
+				Elem:     &schema.Schema{Type: schema.TypeString},
+				Computed: true,
+			},
 			paramStopped: {
 				Type:     schema.TypeBool,
 				Computed: true,
@@ -246,6 +256,11 @@ func distributionSchemaDataSource() *schema.Schema {
 				paramDistributionBucketCount: {
 					Type:        schema.TypeInt,
 					Description: "The number of buckets the table is distributed by.",
+					Computed:    true,
+				},
+				paramDistributionKind: {
+					Type:        schema.TypeString,
+					Description: "The kind of distribution.",
 					Computed:    true,
 				},
 			},
