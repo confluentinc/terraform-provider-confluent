@@ -239,6 +239,7 @@ const (
 	paramApiKey                                          = "api_key"
 	paramApiVersion                                      = "api_version"
 	paramArtifactFile                                    = "artifact_file"
+	paramAssignedResourceOwner                           = "assigned_resource_owner"
 	paramAttributeDef                                    = "attribute_definition"
 	paramAttributes                                      = "attributes"
 	paramAuthType                                        = "auth_type"
