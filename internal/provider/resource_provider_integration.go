@@ -33,10 +33,9 @@ import (
 
 // Parameter name constants
 const (
-	paramAwsIntegrationConfig                   = "aws_integration_config"
-	paramAwsIntegrationConfigCustomerIamRoleArn = "customer_iam_role_arn"
-	paramAwsIntegrationConfigExternalId         = "external_id"
-	paramAwsIntegrationConfigIamRoleArn         = "iam_role_arn"
+	paramAwsCustomerIamRoleArn = "customer_role_arn"
+	paramAwsExternalId         = "external_id"
+	paramAwsIamRoleArn         = "iam_role_arn"
 )
 
 // Variant kind constants
@@ -45,7 +44,7 @@ const (
 )
 
 // acceptedConfigVariants defines the list of valid config block types
-var acceptedConfigVariants = []string{paramAwsIntegrationConfig}
+var acceptedConfigVariants = []string{paramAws}
 
 func providerIntegrationResource() *schema.Resource {
 	return &schema.Resource{
@@ -60,36 +59,37 @@ func providerIntegrationResource() *schema.Resource {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				ValidateFunc: validation.StringLenBetween(0, 60),
+				ValidateFunc: validation.StringLenBetween(1, 60),
 				Description:  "Display name of Provider Integration.",
 			},
 			paramUsages: {
-				Type:        schema.TypeSet,
+				Type:        schema.TypeList,
+				Elem:        &schema.Schema{Type: schema.TypeString},
 				Computed:    true,
 				Description: "List of resource crns where this integration is being used.",
 			},
-			paramEnvironment:          environmentSchema(),
-			paramAwsIntegrationConfig: awsIntegrationConfigProviderIntegrationSchema(),
+			paramEnvironment: environmentSchema(),
+			paramAws:         awsProviderIntegrationSchema(),
 		},
 	}
 }
 
-func awsIntegrationConfigProviderIntegrationSchema() *schema.Schema {
+func awsProviderIntegrationSchema() *schema.Schema {
 	return &schema.Schema{
 		Type: schema.TypeList,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
-				paramAwsIntegrationConfigCustomerIamRoleArn: {
+				paramAwsCustomerIamRoleArn: {
 					Type:         schema.TypeString,
 					Optional:     true,
 					Computed:     true,
 					ValidateFunc: validation.StringLenBetween(20, 2048),
 				},
-				paramAwsIntegrationConfigExternalId: {
+				paramAwsExternalId: {
 					Type:     schema.TypeString,
 					Computed: true,
 				},
-				paramAwsIntegrationConfigIamRoleArn: {
+				paramAwsIamRoleArn: {
 					Type:     schema.TypeString,
 					Computed: true,
 				},
@@ -114,20 +114,20 @@ func providerIntegrationCreate(ctx context.Context, d *schema.ResourceData, meta
 	environmentRef.SetId(extractStringValueFromBlock(d, paramEnvironment, paramId))
 	createProviderIntegrationRequest.SetEnvironment(*environmentRef)
 	// Detect which config variant is specified
-	_, isAwsIntegrationConfig := d.GetOk(paramAwsIntegrationConfig)
+	_, isAwsIntegrationConfig := d.GetOk(paramAws)
 
 	var configIdentifier string
 
 	switch {
 	case isAwsIntegrationConfig:
-		awsIntegrationConfigConfig := providerintegrationv1.NewPimV1AwsIntegrationConfig(kindAwsIntegrationConfig)
-		if _, ok := d.GetOk(paramAwsIntegrationConfigCustomerIamRoleArn); ok {
-			awsIntegrationConfigConfig.SetCustomerIamRoleArn(d.Get(paramAwsIntegrationConfigCustomerIamRoleArn).(string))
+		awsConfig := providerintegrationv1.NewPimV1AwsIntegrationConfig(kindAwsIntegrationConfig)
+		if _, ok := d.GetOk(fmt.Sprintf("%s.0.%s", paramAws, paramAwsCustomerIamRoleArn)); ok {
+			awsConfig.SetCustomerIamRoleArn(d.Get(fmt.Sprintf("%s.0.%s", paramAws, paramAwsCustomerIamRoleArn)).(string))
 		}
-		configOneOf := providerintegrationv1.PimV1AwsIntegrationConfigAsPimV1IntegrationConfigOneOf(awsIntegrationConfigConfig)
+		configOneOf := providerintegrationv1.PimV1AwsIntegrationConfigAsPimV1IntegrationConfigOneOf(awsConfig)
 		createProviderIntegrationRequest.SetConfig(configOneOf)
 	default:
-		return diag.Errorf("error creating provider integration: expected one of %s params", paramAwsIntegrationConfig)
+		return diag.Errorf("error creating provider integration: expected one of %s params", paramAws)
 	}
 
 	createProviderIntegrationRequestJson, err := json.Marshal(createProviderIntegrationRequest)
@@ -231,10 +231,10 @@ func setProviderIntegrationAttributes(d *schema.ResourceData, providerIntegratio
 
 	switch {
 	case oneOfConfig.PimV1AwsIntegrationConfig != nil:
-		if err := d.Set(paramAwsIntegrationConfig, []interface{}{map[string]interface{}{
-			paramAwsIntegrationConfigCustomerIamRoleArn: oneOfConfig.PimV1AwsIntegrationConfig.GetCustomerIamRoleArn(),
-			paramAwsIntegrationConfigExternalId:         oneOfConfig.PimV1AwsIntegrationConfig.GetExternalId(),
-			paramAwsIntegrationConfigIamRoleArn:         oneOfConfig.PimV1AwsIntegrationConfig.GetIamRoleArn(),
+		if err := d.Set(paramAws, []interface{}{map[string]interface{}{
+			paramAwsCustomerIamRoleArn: oneOfConfig.PimV1AwsIntegrationConfig.GetCustomerIamRoleArn(),
+			paramAwsExternalId:         oneOfConfig.PimV1AwsIntegrationConfig.GetExternalId(),
+			paramAwsIamRoleArn:         oneOfConfig.PimV1AwsIntegrationConfig.GetIamRoleArn(),
 		}}); err != nil {
 			return nil, err
 		}

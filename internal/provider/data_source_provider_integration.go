@@ -49,29 +49,30 @@ func providerIntegrationDataSource() *schema.Resource {
 				Description:  "Display name of Provider Integration.",
 			},
 			paramUsages: {
-				Type:        schema.TypeSet,
+				Type:        schema.TypeList,
+				Elem:        &schema.Schema{Type: schema.TypeString},
 				Computed:    true,
 				Description: "List of resource crns where this integration is being used.",
 			},
-			paramAwsIntegrationConfig: awsIntegrationConfigProviderIntegrationDataSourceSchema(),
+			paramAws: awsProviderIntegrationDataSourceSchema(),
 		},
 	}
 }
 
-func awsIntegrationConfigProviderIntegrationDataSourceSchema() *schema.Schema {
+func awsProviderIntegrationDataSourceSchema() *schema.Schema {
 	return &schema.Schema{
 		Type: schema.TypeList,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
-				paramAwsIntegrationConfigCustomerIamRoleArn: {
+				paramAwsCustomerIamRoleArn: {
 					Type:     schema.TypeString,
 					Computed: true,
 				},
-				paramAwsIntegrationConfigExternalId: {
+				paramAwsExternalId: {
 					Type:     schema.TypeString,
 					Computed: true,
 				},
-				paramAwsIntegrationConfigIamRoleArn: {
+				paramAwsIamRoleArn: {
 					Type:     schema.TypeString,
 					Computed: true,
 				},
