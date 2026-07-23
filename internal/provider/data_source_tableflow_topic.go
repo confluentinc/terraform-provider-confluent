@@ -74,6 +74,11 @@ func tableflowTopicDataSource() *schema.Resource {
 				Computed:    true,
 				Description: "The strategy to handle record failures in the Tableflow enabled topic during materialization.",
 			},
+			paramMetadataColumnNamingScheme: {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The naming scheme for the Tableflow-enabled topic's internal metadata columns in the materialized table, one of \"DEFAULT\" or \"PORTABLE\".",
+			},
 			paramWriteMode: {
 				Type:        schema.TypeString,
 				Computed:    true,
