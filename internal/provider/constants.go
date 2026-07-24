@@ -385,6 +385,7 @@ const (
 	paramEnvironment                                     = "environment"
 	paramEnvironments                                    = "environments"
 	paramErrorHandling                                   = "error_handling"
+	paramErrorMessage                                    = "error_message"
 	paramExpirationDates                                 = "expiration_dates"
 	paramExpiresAt                                       = "expires_at"
 	paramExpr                                            = "expr"
