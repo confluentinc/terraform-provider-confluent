@@ -54,6 +54,11 @@ func subjectConfigDataSource() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			paramCompatibilityPolicy: {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The compatibility policy (STRICT or LENIENT) that governs how strictly compatibility is enforced when evolving schemas.",
+			},
 			paramNormalize: {
 				Type:        schema.TypeBool,
 				Computed:    true,
