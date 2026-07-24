@@ -35,6 +35,8 @@ var acceptedCompatibilityLevels = []string{compatibilityLevelBackward, compatibi
 	compatibilityLevelForward, compatibilityLevelForwardTransitive, compatibilityLevelFull, compatibilityLevelFullTransitive,
 	compatibilityLevelNone}
 
+var acceptedCompatibilityPolicies = []string{compatibilityPolicyStrict, compatibilityPolicyLenient}
+
 func subjectConfigResource() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: subjectConfigCreate,
@@ -71,6 +73,13 @@ func subjectConfigResource() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
+			},
+			paramCompatibilityPolicy: {
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ValidateFunc: validation.StringInSlice(acceptedCompatibilityPolicies, false),
+				Description:  "The compatibility policy (STRICT or LENIENT) that governs how strictly compatibility is enforced when evolving schemas. Only supported by Confluent Schema Registry.",
 			},
 			paramNormalize: {
 				Type:        schema.TypeBool,
@@ -111,6 +120,10 @@ func subjectConfigCreate(ctx context.Context, d *schema.ResourceData, meta inter
 	if compatibilityLevel, ok := d.GetOk(paramCompatibilityLevel); ok {
 		createConfigRequest.SetCompatibility(compatibilityLevel.(string))
 		createConfigRequest.SetCompatibilityGroup(d.Get(paramCompatibilityGroup).(string))
+		hasConfigToUpdate = true
+	}
+	if compatibilityPolicy, ok := d.GetOk(paramCompatibilityPolicy); ok {
+		createConfigRequest.SetCompatibilityPolicy(compatibilityPolicy.(string))
 		hasConfigToUpdate = true
 	}
 	if _, ok := d.GetOk(paramNormalize); ok {
@@ -277,6 +290,10 @@ func readSubjectConfigAndSetAttributes(ctx context.Context, d *schema.ResourceDa
 		return nil, err
 	}
 
+	if err := d.Set(paramCompatibilityPolicy, subjectConfig.GetCompatibilityPolicy()); err != nil {
+		return nil, err
+	}
+
 	if err := d.Set(paramNormalize, subjectConfig.GetNormalize()); err != nil {
 		return nil, err
 	}
@@ -303,10 +320,10 @@ func readSubjectConfigAndSetAttributes(ctx context.Context, d *schema.ResourceDa
 }
 
 func subjectConfigUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if d.HasChangesExcept(paramCredentials, paramCompatibilityLevel, paramCompatibilityGroup, paramNormalize, paramAlias) {
-		return diag.Errorf("error updating Subject Config %q: only %q, %q, %q, %q and %q blocks can be updated for Subject Config", d.Id(), paramCredentials, paramCompatibilityLevel, paramCompatibilityGroup, paramNormalize, paramAlias)
+	if d.HasChangesExcept(paramCredentials, paramCompatibilityLevel, paramCompatibilityGroup, paramCompatibilityPolicy, paramNormalize, paramAlias) {
+		return diag.Errorf("error updating Subject Config %q: only %q, %q, %q, %q, %q and %q blocks can be updated for Subject Config", d.Id(), paramCredentials, paramCompatibilityLevel, paramCompatibilityGroup, paramCompatibilityPolicy, paramNormalize, paramAlias)
 	}
-	if d.HasChange(paramCompatibilityLevel) || d.HasChange(paramCompatibilityGroup) || d.HasChange(paramNormalize) || d.HasChange(paramAlias) {
+	if d.HasChange(paramCompatibilityLevel) || d.HasChange(paramCompatibilityGroup) || d.HasChange(paramCompatibilityPolicy) || d.HasChange(paramNormalize) || d.HasChange(paramAlias) {
 		updateConfigRequest := schemaregistryv1.NewConfigUpdateRequest()
 
 		if compatibilityLevel := d.Get(paramCompatibilityLevel).(string); compatibilityLevel != "" {
@@ -314,6 +331,9 @@ func subjectConfigUpdate(ctx context.Context, d *schema.ResourceData, meta inter
 		}
 		if compatibilityGroup := d.Get(paramCompatibilityGroup).(string); compatibilityGroup != "" {
 			updateConfigRequest.SetCompatibilityGroup(compatibilityGroup)
+		}
+		if compatibilityPolicy := d.Get(paramCompatibilityPolicy).(string); compatibilityPolicy != "" {
+			updateConfigRequest.SetCompatibilityPolicy(compatibilityPolicy)
 		}
 		if d.HasChange(paramNormalize) {
 			updateConfigRequest.SetNormalize(d.Get(paramNormalize).(bool))
