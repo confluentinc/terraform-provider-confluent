@@ -1,8 +1,9 @@
 module github.com/confluentinc/terraform-provider-confluent
 
-go 1.25.10
+go 1.25.12
 
 require (
+	github.com/confluentinc/ccloud-sdk-go-v2-internal/switchover v0.0.0-20260716234419-9fed8981fa8c
 	github.com/confluentinc/ccloud-sdk-go-v2/apikeys v0.4.0
 	github.com/confluentinc/ccloud-sdk-go-v2/byok v0.0.9
 	github.com/confluentinc/ccloud-sdk-go-v2/cam v0.3.0
