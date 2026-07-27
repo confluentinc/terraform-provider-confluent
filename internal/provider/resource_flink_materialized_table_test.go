@@ -582,6 +582,132 @@ func testAccCheckMaterializedTableServerDerivedDistributionConfig(mockServerUrl,
 		flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkComputePoolIdTest, displayName, flinkMaterializedTableDatabase)
 }
 
+// TestAccFlinkMaterializedTableManagedOptionsSuperset locks in the fix for
+// table_options/session_options drift. The config manages only a SUBSET of the
+// options while the API read returns the FULL effective option set. The provider must persist only the user-managed keys
+// so the follow-up plan is a no-op.
+func TestAccFlinkMaterializedTableManagedOptionsSuperset(t *testing.T) {
+	ctx := context.Background()
+
+	wiremockContainer, err := setupWiremock(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer wiremockContainer.Terminate(ctx)
+
+	mockTestServerUrl := wiremockContainer.URI
+	wiremockClient := wiremock.NewClient(mockTestServerUrl)
+	// nolint:errcheck
+	defer wiremockClient.Reset()
+	// nolint:errcheck
+	defer wiremockClient.ResetAllScenarios()
+
+	const scenarioName = "confluent_flink_materialized_table Managed Options Superset"
+	const supersetDisplayName = "table_options_superset"
+	readSupersetPath := fmt.Sprintf("/sql/v1/organizations/%s/environments/%s/databases/%s/materialized-tables/%s", flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkMaterializedTableDatabase, supersetDisplayName)
+
+	createResponse, _ := os.ReadFile("../testdata/flink_materialized_table/create_materialized_table_options_superset.json")
+	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(createFlinkMaterializedTablePath)).
+		InScenario(scenarioName).
+		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
+		WillSetStateTo(scenarioStateMaterializedTableHasBeenCreated).
+		WillReturn(string(createResponse), contentTypeJSONHeader, http.StatusCreated))
+
+	readResponse, _ := os.ReadFile("../testdata/flink_materialized_table/read_materialized_table_options_superset.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readSupersetPath)).
+		InScenario(scenarioName).
+		WhenScenarioStateIs(scenarioStateMaterializedTableHasBeenCreated).
+		WillReturn(string(readResponse), contentTypeJSONHeader, http.StatusOK))
+
+	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(readSupersetPath)).
+		InScenario(scenarioName).
+		WhenScenarioStateIs(scenarioStateMaterializedTableHasBeenCreated).
+		WillSetStateTo(scenarioStateMaterializedTableHasBeenDeleted).
+		WillReturn("", contentTypeJSONHeader, http.StatusNoContent))
+
+	readDeletedResponse, _ := os.ReadFile("../testdata/flink_materialized_table/read_deleted_materialized_table.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readSupersetPath)).
+		InScenario(scenarioName).
+		WhenScenarioStateIs(scenarioStateMaterializedTableHasBeenDeleted).
+		WillReturn(string(readDeletedResponse), contentTypeJSONHeader, http.StatusNotFound))
+
+	resourceLabel := "test"
+	fullResourceLabel := fmt.Sprintf("confluent_flink_materialized_table.%s", resourceLabel)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy: func(s *terraform.State) error {
+			return testAccCheckMaterializedTableDestroy(s, mockTestServerUrl)
+		},
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckMaterializedTableManagedOptionsSupersetConfig(mockTestServerUrl, resourceLabel, supersetDisplayName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMaterializedTableExists(fullResourceLabel),
+					resource.TestCheckResourceAttr(fullResourceLabel, paramDisplayName, supersetDisplayName),
+					// Only the user-managed keys are persisted, even though the read
+					// returned a larger server-computed map.
+					resource.TestCheckResourceAttr(fullResourceLabel, "table_options.%", "1"),
+					resource.TestCheckResourceAttr(fullResourceLabel, "table_options.kafka.retention.time", "7 d"),
+					resource.TestCheckResourceAttr(fullResourceLabel, "session_options.%", "1"),
+					resource.TestCheckResourceAttr(fullResourceLabel, "session_options.sql.local-time-zone", "UTC"),
+				),
+			},
+			{
+				// Re-planning the same config must be a no-op: the server-added option
+				// keys must not surface as drift (and session_options, being ForceNew,
+				// must not propose a replacement).
+				Config:             testAccCheckMaterializedTableManagedOptionsSupersetConfig(mockTestServerUrl, resourceLabel, supersetDisplayName),
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: false,
+			},
+		},
+	})
+}
+
+func testAccCheckMaterializedTableManagedOptionsSupersetConfig(mockServerUrl, resourceLabel, displayName string) string {
+	return fmt.Sprintf(`
+	provider "confluent" {
+    	endpoint = "%s"
+	}
+
+	resource "confluent_flink_materialized_table" "%s" {
+      credentials {
+        key = "%s"
+        secret = "%s"
+      }
+      rest_endpoint = "%s"
+      principal {
+         id = "%s"
+      }
+      organization {
+         id = "%s"
+      }
+      environment {
+         id = "%s"
+      }
+      compute_pool {
+         id = "%s"
+      }
+      display_name  = "%s"
+	  kafka_cluster {
+	    id = "%s"
+	  }
+      stopped = false
+	  query = "SELECT user_id, product_id, price, quantity FROM orders WHERE price > 1000;"
+      # Config manages only a SUBSET of options; the API read returns a superset.
+      table_options = {
+        "kafka.retention.time" = "7 d"
+      }
+      session_options = {
+        "sql.local-time-zone" = "UTC"
+      }
+}
+	`, mockServerUrl, resourceLabel, kafkaApiKey, kafkaApiSecret, mockServerUrl, flinkPrincipalIdTest,
+		flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkComputePoolIdTest, displayName, flinkMaterializedTableDatabase)
+}
+
 // TestAccFlinkMaterializedTableUnmanagedTableAndSessionOptions verifies backward compatibility for
 // configs written before `table_options`/`session_options` existed in the schema: the config omits
 // both entirely, while the server response returns non-empty values for both (e.g. an existing table

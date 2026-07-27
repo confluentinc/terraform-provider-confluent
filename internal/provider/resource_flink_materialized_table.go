@@ -258,8 +258,7 @@ func distributionSchema() *schema.Schema {
 				paramDistributionKind: {
 					Type:        schema.TypeString,
 					Description: "The kind of distribution. Required when the distribution block is specified.",
-					Optional:    true,
-					Computed:    true,
+					Required:    true,
 					ForceNew:    true,
 				},
 			},
@@ -477,6 +476,23 @@ func readMaterializedTableAndSetAttributes(ctx context.Context, d *schema.Resour
 	return []*schema.ResourceData{d}, nil
 }
 
+// If the config manages a subset, we persist only the user's keys
+// (intersected with the server map) so those server-added defaults don't show up
+// as perpetual drift. This mirrors loadTopicConfigs for confluent_kafka_topic.
+func setServerManagedOptionsMap(d *schema.ResourceData, key string, serverOptions map[string]string) error {
+	userOptions := d.Get(key).(map[string]interface{})
+	if len(userOptions) == 0 {
+		return d.Set(key, serverOptions)
+	}
+	managedOptions := make(map[string]string, len(userOptions))
+	for optionKey := range userOptions {
+		if value, ok := serverOptions[optionKey]; ok {
+			managedOptions[optionKey] = value
+		}
+	}
+	return d.Set(key, managedOptions)
+}
+
 func setMaterializedTableAttributes(d *schema.ResourceData, materializedTable flinkgatewayv1.SqlV1MaterializedTable, c *FlinkRestClient) (*schema.ResourceData, error) {
 	if err := d.Set(paramDisplayName, materializedTable.GetName()); err != nil {
 		return nil, err
@@ -543,10 +559,10 @@ func setMaterializedTableAttributes(d *schema.ResourceData, materializedTable fl
 		}
 	}
 
-	if err := d.Set(paramTableOptions, materializedTable.Spec.GetTableOptions()); err != nil {
+	if err := setServerManagedOptionsMap(d, paramTableOptions, materializedTable.Spec.GetTableOptions()); err != nil {
 		return nil, err
 	}
-	if err := d.Set(paramSessionOptions, materializedTable.Spec.GetSessionOptions()); err != nil {
+	if err := setServerManagedOptionsMap(d, paramSessionOptions, materializedTable.Spec.GetSessionOptions()); err != nil {
 		return nil, err
 	}
 
