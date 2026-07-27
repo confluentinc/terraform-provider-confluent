@@ -432,18 +432,16 @@ func testAccCheckMaterializedTableDestroy(s *terraform.State, url string) error 
 	return nil
 }
 
-// TestAccFlinkMaterializedTableQueryCanonicalization verifies that when the user
-// submits a query containing a known canonicalization patterns, the resource applies successfully,
-// stores the user's original query verbatim in state, and shows no drift on a subsequent plan against the same config.
-const flinkMaterializedTableCanonicalDisplayName = "table_canon"
-
-var createFlinkMaterializedTableCanonicalPath = fmt.Sprintf("/sql/v1/organizations/%s/environments/%s/databases/%s/materialized-tables", flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkMaterializedTableDatabase)
-var readFlinkMaterializedTableCanonicalPath = fmt.Sprintf("/sql/v1/organizations/%s/environments/%s/databases/%s/materialized-tables/%s", flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkMaterializedTableDatabase, flinkMaterializedTableCanonicalDisplayName)
-
-const userSubmittedCanonicalizationQuery = "select order_id, cast(price as int) as p, sum(price) over w as running_total from examples.marketplace.orders window w as (partition by customer_id order by order_id rows between unbounded preceding and current row)"
-const userSubmittedCanonicalizationQueryUpdated = "select order_id, cast(price as int) as p, sum(quantity) over w as total_quantity from examples.marketplace.orders window w as (partition by customer_id order by order_id rows between unbounded preceding and current row)"
-
-func TestAccFlinkMaterializedTableQueryCanonicalization(t *testing.T) {
+// TestAccFlinkMaterializedTableServerDerivedDistribution is a regression test for the bug where a
+// server-derived `distribution` (populated by Confluent Cloud when the query has a primary key,
+// e.g. a GROUP BY) forced the resource to be recreated on every apply because the config omits the
+// `distribution` block. The provider only ever sees the API response, not the query semantics, so
+// the invariant under test is purely provider-side: when the read response contains a
+// `distribution` that the config did not declare, the plan must be empty (no destroy-and-recreate).
+// The distribution values below mirror a real server response (bucket_count=6, keys=[customer_id]).
+// Before marking `distribution` (and its keys/bucket_count) Optional+Computed, the second PlanOnly
+// step below would show a `-/+` replacement and fail.
+func TestAccFlinkMaterializedTableServerDerivedDistribution(t *testing.T) {
 	ctx := context.Background()
 
 	wiremockContainer, err := setupWiremock(ctx)
@@ -459,51 +457,37 @@ func TestAccFlinkMaterializedTableQueryCanonicalization(t *testing.T) {
 	// nolint:errcheck
 	defer wiremockClient.ResetAllScenarios()
 
-	const canonScenario = "confluent_flink_materialized_table Canonicalization"
-	const createdState = "canonicalized MT has been created"
-	const updatedState = "canonicalized MT has been updated"
-	const deletedState = "canonicalized MT has been deleted"
+	const scenarioName = "confluent_flink_materialized_table Server-Derived Distribution"
+	const groupByDisplayName = "table_group_by"
+	readGroupByPath := fmt.Sprintf("/sql/v1/organizations/%s/environments/%s/databases/%s/materialized-tables/%s", flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkMaterializedTableDatabase, groupByDisplayName)
 
-	createResponse, _ := os.ReadFile("../testdata/flink_materialized_table/create_canonicalized_materialized_table.json")
-	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(createFlinkMaterializedTableCanonicalPath)).
-		InScenario(canonScenario).
+	createResponse, _ := os.ReadFile("../testdata/flink_materialized_table/create_materialized_table_server_derived_distribution.json")
+	_ = wiremockClient.StubFor(wiremock.Post(wiremock.URLPathEqualTo(createFlinkMaterializedTablePath)).
+		InScenario(scenarioName).
 		WhenScenarioStateIs(wiremock.ScenarioStateStarted).
-		WillSetStateTo(createdState).
+		WillSetStateTo(scenarioStateMaterializedTableHasBeenCreated).
 		WillReturn(string(createResponse), contentTypeJSONHeader, http.StatusCreated))
 
-	readResponse, _ := os.ReadFile("../testdata/flink_materialized_table/read_canonicalized_materialized_table.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readFlinkMaterializedTableCanonicalPath)).
-		InScenario(canonScenario).
-		WhenScenarioStateIs(createdState).
+	readResponse, _ := os.ReadFile("../testdata/flink_materialized_table/read_materialized_table_server_derived_distribution.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readGroupByPath)).
+		InScenario(scenarioName).
+		WhenScenarioStateIs(scenarioStateMaterializedTableHasBeenCreated).
 		WillReturn(string(readResponse), contentTypeJSONHeader, http.StatusOK))
 
-	updateResponse, _ := os.ReadFile("../testdata/flink_materialized_table/update_canonicalized_materialized_table.json")
-	_ = wiremockClient.StubFor(wiremock.Put(wiremock.URLPathEqualTo(readFlinkMaterializedTableCanonicalPath)).
-		InScenario(canonScenario).
-		WhenScenarioStateIs(createdState).
-		WillSetStateTo(updatedState).
-		WillReturn(string(updateResponse), contentTypeJSONHeader, http.StatusOK))
-
-	readUpdatedResponse, _ := os.ReadFile("../testdata/flink_materialized_table/read_canonicalized_updated_materialized_table.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readFlinkMaterializedTableCanonicalPath)).
-		InScenario(canonScenario).
-		WhenScenarioStateIs(updatedState).
-		WillReturn(string(readUpdatedResponse), contentTypeJSONHeader, http.StatusOK))
-
-	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(readFlinkMaterializedTableCanonicalPath)).
-		InScenario(canonScenario).
-		WhenScenarioStateIs(updatedState).
-		WillSetStateTo(deletedState).
+	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(readGroupByPath)).
+		InScenario(scenarioName).
+		WhenScenarioStateIs(scenarioStateMaterializedTableHasBeenCreated).
+		WillSetStateTo(scenarioStateMaterializedTableHasBeenDeleted).
 		WillReturn("", contentTypeJSONHeader, http.StatusNoContent))
 
-	deletedResponse, _ := os.ReadFile("../testdata/flink_materialized_table/read_deleted_materialized_table.json")
-	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readFlinkMaterializedTableCanonicalPath)).
-		InScenario(canonScenario).
-		WhenScenarioStateIs(deletedState).
-		WillReturn(string(deletedResponse), contentTypeJSONHeader, http.StatusNotFound))
+	readDeletedResponse, _ := os.ReadFile("../testdata/flink_materialized_table/read_deleted_materialized_table.json")
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(readGroupByPath)).
+		InScenario(scenarioName).
+		WhenScenarioStateIs(scenarioStateMaterializedTableHasBeenDeleted).
+		WillReturn(string(readDeletedResponse), contentTypeJSONHeader, http.StatusNotFound))
 
-	resourceLabel := "canon"
-	fullLabel := fmt.Sprintf("confluent_flink_materialized_table.%s", resourceLabel)
+	resourceLabel := "test"
+	fullResourceLabel := fmt.Sprintf("confluent_flink_materialized_table.%s", resourceLabel)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -513,45 +497,33 @@ func TestAccFlinkMaterializedTableQueryCanonicalization(t *testing.T) {
 		},
 		Steps: []resource.TestStep{
 			{
-				// Create with the lowercase user query. The Flink Gateway returns the
-				// user's original (non-canonicalized) query in spec.query, so state
-				// holds the lowercase verbatim.
-				Config: testAccCheckMaterializedTableCanonicalConfig(mockTestServerUrl, resourceLabel, userSubmittedCanonicalizationQuery),
+				// The config omits `distribution` entirely; the server response supplies it.
+				Config: testAccCheckMaterializedTableServerDerivedDistributionConfig(mockTestServerUrl, resourceLabel, groupByDisplayName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckMaterializedTableExists(fullLabel),
-					resource.TestCheckResourceAttr(fullLabel, paramQuery, userSubmittedCanonicalizationQuery),
+					testAccCheckMaterializedTableExists(fullResourceLabel),
+					resource.TestCheckResourceAttr(fullResourceLabel, paramDisplayName, groupByDisplayName),
+					// The server-derived distribution must land in state even though the config omitted it.
+					resource.TestCheckResourceAttr(fullResourceLabel, "distribution.#", "1"),
+					resource.TestCheckResourceAttr(fullResourceLabel, "distribution.0.bucket_count", "6"),
+					resource.TestCheckResourceAttr(fullResourceLabel, "distribution.0.keys.#", "1"),
+					resource.TestCheckTypeSetElemAttr(fullResourceLabel, "distribution.0.keys.*", "customer_id"),
 				),
 			},
 			{
-				// Re-apply with the same config. Any cosmetic drift surfaced by
-				// the diff machinery would cause this step to fail with
-				// "After applying this test step, the plan was not empty".
-				Config:   testAccCheckMaterializedTableCanonicalConfig(mockTestServerUrl, resourceLabel, userSubmittedCanonicalizationQuery),
-				PlanOnly: true,
-			},
-			{
-				// Update to a different lowercase user query. State must hold the new
-				// lowercase verbatim, confirming the post-Update Read also sources
-				// query from spec.query (the user's original form).
-				Config: testAccCheckMaterializedTableCanonicalConfig(mockTestServerUrl, resourceLabel, userSubmittedCanonicalizationQueryUpdated),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckMaterializedTableExists(fullLabel),
-					resource.TestCheckResourceAttr(fullLabel, paramQuery, userSubmittedCanonicalizationQueryUpdated),
-				),
-			},
-			{
-				// Re-apply with the updated config — no drift after Update either.
-				Config:   testAccCheckMaterializedTableCanonicalConfig(mockTestServerUrl, resourceLabel, userSubmittedCanonicalizationQueryUpdated),
-				PlanOnly: true,
+				// Re-planning the same config (still omitting `distribution`) must be a no-op.
+				// Without distribution being Optional+Computed, this produces a `-/+` replacement and fails.
+				Config:             testAccCheckMaterializedTableServerDerivedDistributionConfig(mockTestServerUrl, resourceLabel, groupByDisplayName),
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: false,
 			},
 		},
 	})
 }
 
-func testAccCheckMaterializedTableCanonicalConfig(mockServerUrl, resourceLabel, query string) string {
+func testAccCheckMaterializedTableServerDerivedDistributionConfig(mockServerUrl, resourceLabel, displayName string) string {
 	return fmt.Sprintf(`
 	provider "confluent" {
-		endpoint = "%s"
+    	endpoint = "%s"
 	}
 
 	resource "confluent_flink_materialized_table" "%s" {
@@ -572,14 +544,14 @@ func testAccCheckMaterializedTableCanonicalConfig(mockServerUrl, resourceLabel, 
       compute_pool {
          id = "%s"
       }
-      display_name = "%s"
-      kafka_cluster {
-        id = "%s"
-      }
+      display_name  = "%s"
+	  kafka_cluster {
+	    id = "%s"
+	  }
       stopped = false
-      query = "%s"
+	  query = "SELECT customer_id, COUNT(*) AS order_count FROM examples.marketplace.orders GROUP BY customer_id;"
+	  # NOTE: no distribution block on purpose - Confluent Cloud derives it from the query's primary key.
 }
 	`, mockServerUrl, resourceLabel, kafkaApiKey, kafkaApiSecret, mockServerUrl, flinkPrincipalIdTest,
-		flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkComputePoolIdTest,
-		flinkMaterializedTableCanonicalDisplayName, flinkMaterializedTableDatabase, query)
+		flinkOrganizationIdTest, flinkEnvironmentIdTest, flinkComputePoolIdTest, displayName, flinkMaterializedTableDatabase)
 }

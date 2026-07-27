@@ -136,10 +136,10 @@ The following arguments are supported:
 - `watermark` - (Optional Configuration Block, max 1 item) The watermark definition for the Materialized Table. Supports the following:
     - `column` - (Optional String) The name of the watermark column.
     - `expression` - (Optional String) The watermark expression, for example, `event_time - INTERVAL '5' SECOND`.
-- `distribution` - (Optional Configuration Block, max 1 item) The distribution definition for the Materialized Table. Supports the following:
+- `distribution` - (Optional Configuration Block, max 1 item) The distribution definition for the Materialized Table. If omitted, Confluent Cloud could derive it automatically (for example, from the query's primary key when a `GROUP BY` is present) and populate it in state. Supports the following:
     - `keys` - (Optional Set of Strings) The names of the columns the table is distributed by.
     - `bucket_count` - (Optional Integer) The number of buckets the table is distributed by.
-- `stopped` - (Optional Boolean) Indicates whether the Materialized Table is stopped. Defaults to `false`. Update it to `true` to stop the Materialized Table. Subsequently update it to `false` to resume it.
+- `stopped` - (Optional Boolean) Indicates whether the Materialized Table is stopped. Defaults to `false`. Update it to `true` to stop the Materialized Table; subsequently update it to `false` to resume it.
 - `rest_endpoint` - (Optional String) The REST endpoint of the Flink region, for example, `https://flink.us-east-1.aws.confluent.cloud`.
 - `credentials` (Optional Configuration Block) supports the following:
     - `key` - (Required String) The Flink API Key.

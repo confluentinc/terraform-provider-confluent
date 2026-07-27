@@ -413,64 +413,6 @@ func kafkaAclUpdate(ctx context.Context, d *schema.ResourceData, meta interface{
 	return kafkaAclRead(ctx, d, meta)
 }
 
-func kafkaAclImporter() *Importer {
-	return &Importer{
-		LoadInstanceIds: loadAllKafkaAcls,
-	}
-}
-
-func loadAllKafkaAcls(ctx context.Context, client *Client) (InstanceIdsToNameMap, diag.Diagnostics) {
-	instances := make(InstanceIdsToNameMap)
-
-	kafkaRestClient := client.kafkaRestClientFactory.CreateKafkaRestClient(client.kafkaRestEndpoint, client.kafkaClusterId, client.kafkaApiKey, client.kafkaApiSecret, true, true, client.oauthToken)
-
-	acls, resp, err := kafkaRestClient.apiClient.ACLV3Api.GetKafkaAcls(kafkaRestClient.apiContext(ctx), kafkaRestClient.clusterId).Execute()
-
-	if err != nil {
-		tflog.Warn(ctx, fmt.Sprintf("Error reading Kafka ACLs for Kafka Cluster %q: %s", kafkaRestClient.clusterId, createDescriptiveError(err)), map[string]interface{}{kafkaClusterLoggingKey: kafkaRestClient.clusterId})
-		return nil, diag.FromErr(createDescriptiveError(err, resp))
-	}
-	kafkaAclsJson, err := json.Marshal(acls)
-	if err != nil {
-		return nil, diag.Errorf("error reading Kafka ACLs for Kafka Cluster %q: error marshaling %#v to json: %s", kafkaRestClient.clusterId, acls, createDescriptiveError(err))
-	}
-	tflog.Debug(ctx, fmt.Sprintf("Fetched Kafka ACLs for Kafka Cluster %q: %s", kafkaRestClient.clusterId, kafkaAclsJson))
-
-	// APIF-2038: Kafka REST API only accepts integer ID at the moment
-	serviceAccounts, resp, err := client.iamV1Client.ServiceAccountsV1Api.ListV1ServiceAccounts(client.iamV1ApiContext(ctx)).Execute()
-	users, resp, err := client.iamV1Client.UsersV1Api.ListV1Users(client.iamV1ApiContext(ctx)).Execute()
-
-	principalIdMap := make(map[int32]string)
-
-	for _, principal := range serviceAccounts.GetUsers() {
-		principalIdMap[principal.GetId()] = principal.GetResourceId()
-	}
-	for _, principal := range users.GetUsers() {
-		principalIdMap[principal.GetId()] = principal.GetResourceId()
-	}
-
-	for _, aclData := range acls.GetData() {
-		principalWithResourceId, err := principalWithIntegerIdToPrincipalWithResourceId(principalIdMap, aclData.GetPrincipal())
-		if err != nil {
-			tflog.Warn(ctx, fmt.Sprintf("%s", createDescriptiveError(err)), map[string]interface{}{kafkaClusterLoggingKey: kafkaRestClient.clusterId})
-			continue
-		}
-		acl := Acl{
-			ResourceType: aclData.GetResourceType(),
-			ResourceName: aclData.GetResourceName(),
-			PatternType:  aclData.GetPatternType(),
-			Principal:    principalWithResourceId,
-			Host:         aclData.GetHost(),
-			Operation:    aclData.GetOperation(),
-			Permission:   aclData.GetPermission(),
-		}
-		instanceId := createKafkaAclId(client.kafkaClusterId, acl)
-		instances[instanceId] = toValidTerraformResourceName(createAclInstanceName(acl))
-	}
-
-	return instances, nil
-}
-
 func createAclInstanceName(acl Acl) string {
 	return fmt.Sprintf("%s-%s-%s-%s-%s", acl.Permission, acl.Operation, acl.PatternType, acl.ResourceName, acl.ResourceType)
 }

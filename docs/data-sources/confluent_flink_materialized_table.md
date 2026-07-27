@@ -111,7 +111,7 @@ In addition to the preceding arguments, the following attributes are exported:
 - `watermark` - (Configuration Block) The watermark definition for the Materialized Table. Supports the following:
     - `column` - (String) The name of the watermark column.
     - `expression` - (String) The watermark expression.
-- `distribution` - (Configuration Block) The distribution definition for the Materialized Table. Supports the following:
+- `distribution` - (Configuration Block) The distribution definition for the Materialized Table. This value could be derived automatically by Confluent Cloud (for example, from the query's primary key when a `GROUP BY` is present). Supports the following:
     - `keys` - (Set of Strings) The names of the columns the table is distributed by.
     - `bucket_count` - (Integer) The number of buckets the table is distributed by.
 - `stopped` - (Boolean) Whether the Materialized Table is stopped.

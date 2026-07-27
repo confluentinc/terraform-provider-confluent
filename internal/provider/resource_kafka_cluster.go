@@ -118,6 +118,11 @@ func kafkaResource() *schema.Resource {
 				Description: "The Confluent Resource Name of the Kafka cluster suitable for " +
 					"confluent_role_binding's crn_pattern.",
 			},
+			paramDeletionProtection: {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Description: "Enable deletion protection for the Kafka cluster.",
+			},
 			paramEnvironment:          environmentSchema(),
 			paramConfluentCustomerKey: byokSchema(),
 			paramEndpoints: {
@@ -343,6 +348,16 @@ func kafkaUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 		}
 	}
 
+	if d.HasChange(paramDeletionProtection) {
+		updateSpec := cmkv2.NewCmkV2ClusterSpecUpdate()
+		updateSpec.SetDeletionProtection(d.Get(paramDeletionProtection).(bool))
+		updateSpec.SetEnvironment(cmkv2.EnvScopedObjectReference{Id: environmentId})
+
+		if err := executeClusterUpdate(ctx, c, d.Id(), updateSpec, "deletion_protection"); err != nil {
+			return err
+		}
+	}
+
 	tflog.Debug(ctx, fmt.Sprintf("Finished updating Kafka Cluster %q", d.Id()), map[string]interface{}{kafkaClusterLoggingKey: d.Id()})
 
 	return kafkaRead(ctx, d, meta)
@@ -370,6 +385,9 @@ func kafkaCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) 
 	spec.SetAvailability(availability)
 	spec.SetCloud(cloud)
 	spec.SetRegion(region)
+	if v, ok := d.GetOk(paramDeletionProtection); ok {
+		spec.SetDeletionProtection(v.(bool))
+	}
 	if clusterType == kafkaClusterTypeBasic {
 		max_ecku := extractBasicMaxEcku(d)
 		config := cmkv2.NewCmkV2Basic(kafkaClusterTypeBasic)
@@ -797,6 +815,9 @@ func setKafkaClusterAttributes(d *schema.ResourceData, cluster cmkv2.CmkV2Cluste
 	if err := d.Set(paramRegion, cluster.Spec.GetRegion()); err != nil {
 		return nil, err
 	}
+	if err := d.Set(paramDeletionProtection, cluster.Spec.GetDeletionProtection()); err != nil {
+		return nil, err
+	}
 
 	// Reset all 5 cluster types since only one of these 5 should be set
 	if err := d.Set(paramBasicCluster, []interface{}{}); err != nil {
@@ -957,37 +978,4 @@ func optionalByokDataSourceSchema() *schema.Schema {
 			},
 		},
 	}
-}
-
-func kafkaClusterImporter() *Importer {
-	return &Importer{
-		LoadInstanceIds: loadAllKafkaClusters,
-	}
-}
-
-func loadAllKafkaClusters(ctx context.Context, client *Client) (InstanceIdsToNameMap, diag.Diagnostics) {
-	instances := make(InstanceIdsToNameMap)
-
-	environments, err := loadEnvironments(ctx, client)
-	if err != nil {
-		return instances, diag.FromErr(createDescriptiveError(err))
-	}
-	for _, environment := range environments {
-		kafkaClusters, err := loadKafkaClusters(ctx, client, environment.GetId())
-		if err != nil {
-			tflog.Warn(ctx, fmt.Sprintf("Error reading Kafka Clusters in Environment %q: %s", environment.GetId(), createDescriptiveError(err)))
-			return instances, diag.FromErr(createDescriptiveError(err))
-		}
-		kafkaClustersJson, err := json.Marshal(kafkaClusters)
-		if err != nil {
-			return instances, diag.Errorf("error reading Kafka Clusters in Environment %q: error marshaling %#v to json: %s", environment.GetId(), kafkaClusters, createDescriptiveError(err))
-		}
-		tflog.Debug(ctx, fmt.Sprintf("Fetched Kafka Clusters in Environment %q: %s", environment.GetId(), kafkaClustersJson))
-
-		for _, kafkaCluster := range kafkaClusters {
-			instanceId := fmt.Sprintf("%s/%s", environment.GetId(), kafkaCluster.GetId())
-			instances[instanceId] = toValidTerraformResourceName(kafkaCluster.Spec.GetDisplayName())
-		}
-	}
-	return instances, nil
 }

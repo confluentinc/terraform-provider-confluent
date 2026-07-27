@@ -70,6 +70,11 @@ func kafkaDataSource() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			paramDeletionProtection: {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Whether deletion protection is enabled for the Kafka cluster.",
+			},
 			paramBasicCluster:      basicClusterDataSourceSchema(),
 			paramStandardCluster:   standardClusterDataSourceSchema(),
 			paramDedicatedCluster:  dedicatedClusterDataSourceSchema(),

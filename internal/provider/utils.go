@@ -1073,6 +1073,12 @@ func normalizeCrn(crn string) string {
 	return crn
 }
 
+// suppressSameCrnPattern suppresses diffs when the only difference is encoding
+// (':' vs '%3A') so that logically same CRNs do not trigger force replacement.
+func suppressSameCrnPattern(k, old, new string, d *schema.ResourceData) bool {
+	return normalizeCrn(old) == normalizeCrn(new)
+}
+
 func ptr(s string) *string {
 	return &s
 }

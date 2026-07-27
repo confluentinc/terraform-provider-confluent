@@ -46,6 +46,7 @@ In addition to the preceding arguments, the following attributes are exported:
   - `availability` - (Required String) The availability zone configuration of the Kafka cluster. Accepted values are: `SINGLE_ZONE`, `MULTI_ZONE`, `LOW`, and `HIGH`.
   - `cloud` - (Required String) The cloud service provider that runs the Kafka cluster. Accepted values are: `AWS`, `AZURE`, and `GCP`.
   - `region` - (Required String) The cloud service provider region where the Kafka cluster is running, for example, `us-west-2`. See [Cloud Providers and Regions](https://docs.confluent.io/cloud/current/clusters/regions.html#cloud-providers-and-regions) for a full list of options for AWS, Azure, and GCP.
+  - `deletion_protection` - (Required Boolean) Whether deletion protection is enabled for the Kafka cluster.
   - `basic` - (Optional Configuration Block) The configuration of the Basic Kafka cluster.
   - `standard` - (Optional Configuration Block) The configuration of the Standard Kafka cluster.
   - `enterprise` - (Optional Configuration Block) The configuration of the Enterprise Kafka cluster.

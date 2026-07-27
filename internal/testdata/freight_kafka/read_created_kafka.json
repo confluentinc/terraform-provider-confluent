@@ -17,6 +17,7 @@
       "max_ecku": 5,
       "zones": ["use1-az2", "use1-az3"]
     },
+    "deletion_protection": false,
     "display_name": "TestCluster",
     "environment": {
       "id": "env-1jrymj",

@@ -1,3 +1,25 @@
+## 2.79.0 (July 22nd, 2026)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.78.0...v2.79.0)
+
+**Bug fixes:**
+* Fixed a bug that caused Terraform state drift for the `confluent_flink_materialized_table` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_flink_materialized_table) by adding the missing `Computed` annotation to the `distribution` block.
+
+## 2.78.0 (July 13th, 2026)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.77.0...v2.78.0)
+
+**Bug fixes:**
+* Resolved 14 Dependabot alerts ([#1047](https://github.com/confluentinc/terraform-provider-confluent/issues/1047)).
+
+## 2.77.0 (July 9th, 2026)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.76.0...v2.77.0)
+
+**New features:**
+* Added a new optional `deletion_protection` attribute to the `confluent_kafka_cluster` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_kafka_cluster) to support Kafka cluster deletion protection.
+* Added a new computed `deletion_protection` attribute to the `confluent_kafka_cluster` [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_kafka_cluster) and `confluent_kafka_clusters` [data source](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/data-sources/confluent_kafka_clusters) to support Kafka cluster deletion protection.
+
 ## 2.76.0 (June 11th, 2026)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.75.0...v2.76.0)

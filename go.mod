@@ -1,14 +1,14 @@
 module github.com/confluentinc/terraform-provider-confluent
 
-go 1.25.9
+go 1.25.10
 
 require (
 	github.com/confluentinc/ccloud-sdk-go-v2/apikeys v0.4.0
-	github.com/confluentinc/ccloud-sdk-go-v2/byok v0.0.2
+	github.com/confluentinc/ccloud-sdk-go-v2/byok v0.0.9
 	github.com/confluentinc/ccloud-sdk-go-v2/cam v0.3.0
 	github.com/confluentinc/ccloud-sdk-go-v2/ccpm v0.0.1
 	github.com/confluentinc/ccloud-sdk-go-v2/certificate-authority v0.0.3
-	github.com/confluentinc/ccloud-sdk-go-v2/cmk v0.25.0
+	github.com/confluentinc/ccloud-sdk-go-v2/cmk v0.27.0
 	github.com/confluentinc/ccloud-sdk-go-v2/connect v0.7.0
 	github.com/confluentinc/ccloud-sdk-go-v2/connect-custom-plugin v0.0.2
 	github.com/confluentinc/ccloud-sdk-go-v2/data-catalog v0.4.0
@@ -22,14 +22,14 @@ require (
 	github.com/confluentinc/ccloud-sdk-go-v2/kafka-quotas v0.4.0
 	github.com/confluentinc/ccloud-sdk-go-v2/kafkarest v0.14.0
 	github.com/confluentinc/ccloud-sdk-go-v2/ksql v0.1.0
-	github.com/confluentinc/ccloud-sdk-go-v2/mds v0.3.0
+	github.com/confluentinc/ccloud-sdk-go-v2/mds v0.4.0
 	github.com/confluentinc/ccloud-sdk-go-v2/networking v0.14.0
 	github.com/confluentinc/ccloud-sdk-go-v2/networking-access-point v0.10.0
 	github.com/confluentinc/ccloud-sdk-go-v2/networking-dnsforwarder v0.4.0
 	github.com/confluentinc/ccloud-sdk-go-v2/networking-gateway v0.7.0
 	github.com/confluentinc/ccloud-sdk-go-v2/networking-ip v0.2.0
 	github.com/confluentinc/ccloud-sdk-go-v2/networking-privatelink v0.3.0
-	github.com/confluentinc/ccloud-sdk-go-v2/org v0.9.0
+	github.com/confluentinc/ccloud-sdk-go-v2/org v0.12.0
 	github.com/confluentinc/ccloud-sdk-go-v2/provider-integration v0.2.0
 	github.com/confluentinc/ccloud-sdk-go-v2/rtce v0.1.0
 	github.com/confluentinc/ccloud-sdk-go-v2/schema-registry v0.5.0
@@ -145,11 +145,11 @@ require (
 	go.opentelemetry.io/otel/sdk/metric v1.43.0
 	go.opentelemetry.io/otel/trace v1.43.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.9.0 // indirect
-	golang.org/x/crypto v0.50.0 // indirect
+	golang.org/x/crypto v0.52.0 // indirect
 	golang.org/x/exp v0.0.0-20260410095643-746e56fc9e2f // indirect
-	golang.org/x/net v0.53.0 // indirect
-	golang.org/x/sys v0.43.0 // indirect
-	golang.org/x/text v0.36.0 // indirect
+	golang.org/x/net v0.55.0 // indirect
+	golang.org/x/sys v0.45.0 // indirect
+	golang.org/x/text v0.37.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260128011058-8636f8732409 // indirect
 	google.golang.org/grpc v1.79.3
