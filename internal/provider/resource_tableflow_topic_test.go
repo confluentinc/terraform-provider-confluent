@@ -124,6 +124,7 @@ func TestAccTableflowTopicByobAws(t *testing.T) {
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "retention_ms", "100000000"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "data_retention_ms", "2592000000"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "record_failure_strategy", "SUSPEND"),
+					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "metadata_column_naming_scheme", "DEFAULT"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "error_handling.#", "1"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "error_handling.0.mode", "SUSPEND"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "table_formats.#", "1"),
@@ -153,6 +154,7 @@ func TestAccTableflowTopicByobAws(t *testing.T) {
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "retention_ms", "200000000"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "data_retention_ms", "2592000000"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "record_failure_strategy", "SKIP"),
+					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "metadata_column_naming_scheme", "PORTABLE"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "error_handling.#", "1"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "error_handling.0.mode", "SKIP"),
 					resource.TestCheckResourceAttr(tableflowTopicResourceLabel, "table_formats.#", "1"),
@@ -580,6 +582,7 @@ func testAccCheckResourceTableflowTopicByobAws(mockServerUrl string, retention i
 	resource "confluent_tableflow_topic" "main" {
 		display_name = "topic_1"
 		retention_ms = %d
+		metadata_column_naming_scheme = "DEFAULT"
 		error_handling {
 			mode = "SUSPEND"
 		}
@@ -610,6 +613,7 @@ func testAccCheckResourceTableflowTopicByobAwsUpdate(mockServerUrl string, reten
 	resource "confluent_tableflow_topic" "main" {
 		display_name = "topic_1"
 		retention_ms = %d
+		metadata_column_naming_scheme = "PORTABLE"
 		error_handling {
 			mode = "SKIP"
 		}
