@@ -47,7 +47,8 @@
             "keys",
             "passwords"
           ],
-          "bucket_count": 10
+          "bucket_count": 10,
+          "kind": "HASH"
         },
         "query": "SELECT user_id, product_id, price, quantity FROM orders WHERE price > 1000;"
       },
