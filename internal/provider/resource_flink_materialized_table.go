@@ -37,9 +37,10 @@ func flinkMaterializedTableResource() *schema.Resource {
 			},
 			paramKafkaCluster: requiredKafkaClusterBlockSchema(),
 			paramQuery: {
-				Type:        schema.TypeString,
-				Description: "The query section of the latest Materialized Table.",
-				Optional:    true,
+				Type:             schema.TypeString,
+				Description:      "The query section of the latest Materialized Table.",
+				Optional:         true,
+				DiffSuppressFunc: suppressFlinkQueryDiff,
 			},
 			paramWatermark:    watermarkSchema(),
 			paramDistribution: distributionSchema(),
@@ -1058,4 +1059,15 @@ func toInterfaceSlice(strs []string) []interface{} {
 		out[i] = s
 	}
 	return out
+}
+
+// suppressFlinkQueryDiff suppresses spurious cosmetic differences (backticks, whitespace, formatting)
+func suppressFlinkQueryDiff(k, old, new string, d *schema.ResourceData) bool {
+	return normalizeFlinkQuery(old) == normalizeFlinkQuery(new)
+}
+
+func normalizeFlinkQuery(query string) string {
+	query = strings.ReplaceAll(query, "`", "")
+	query = regexp.MustCompile(`\s+`).ReplaceAllString(query, " ")
+	return strings.TrimSpace(query)
 }
