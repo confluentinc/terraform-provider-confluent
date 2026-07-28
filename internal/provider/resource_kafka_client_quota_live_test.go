@@ -84,6 +84,13 @@ func TestAccKafkaClientQuotaLive(t *testing.T) {
 				ResourceName:      fmt.Sprintf("confluent_kafka_client_quota.%s", quotaResourceLabel),
 				ImportState:       true,
 				ImportStateVerify: true,
+				ImportStateIdFunc: func(state *terraform.State) (string, error) {
+					fullLabel := fmt.Sprintf("confluent_kafka_client_quota.%s", quotaResourceLabel)
+					resources := state.RootModule().Resources
+					kafkaClientQuotaId := resources[fullLabel].Primary.ID
+					environmentId := resources[fullLabel].Primary.Attributes["environment.0.id"]
+					return environmentId + "/" + kafkaClientQuotaId, nil
+				},
 			},
 		},
 	})
