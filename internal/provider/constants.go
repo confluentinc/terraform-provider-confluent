@@ -356,6 +356,7 @@ const (
 	paramDistribution                                    = "distribution"
 	paramDistributionBucketCount                         = "bucket_count"
 	paramDistributionKeys                                = "keys"
+	paramDistributionKind                                = "kind"
 	paramDnsConfig                                       = "dns_config"
 	paramDnsDomain                                       = "dns_domain"
 	paramDnsServerIps                                    = "dns_server_ips"
@@ -579,6 +580,7 @@ const (
 	paramService                                         = "service"
 	paramServiceKey                                      = "service_key"
 	paramServices                                        = "services"
+	paramSessionOptions                                  = "session_options"
 	paramShared                                          = "shared"
 	paramSharedDefaultValue                              = false
 	paramSkipValidationDuringPlan                        = "skip_validation_during_plan"
@@ -603,6 +605,7 @@ const (
 	paramSubscription                                    = "subscription"
 	paramSuspended                                       = "suspended"
 	paramTableFormats                                    = "table_formats"
+	paramTableOptions                                    = "table_options"
 	paramTablePath                                       = "table_path"
 	paramTagName                                         = "tag_name"
 	paramTags                                            = "tags"
