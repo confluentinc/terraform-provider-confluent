@@ -1,3 +1,10 @@
+## 2.80.0 (July 28th, 2026)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.79.0...v2.80.0)
+
+**New features:**
+* Add `table_options` and `session_options` attributes, and update the `distribution` block with the required `distribution.kind` attribute for the `confluent_flink_materialized_table` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_flink_materialized_table).
+
 ## 2.79.0 (July 22nd, 2026)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.78.0...v2.79.0)
