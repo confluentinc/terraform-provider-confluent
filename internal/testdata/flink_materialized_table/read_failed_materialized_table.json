@@ -1,0 +1,25 @@
+{
+  "api_version": "sql/v1",
+  "kind": "MaterializedTable",
+  "name": "table1",
+  "organization_id": "1111aaaa-11aa-11aa-11aa-111111aaaaaa",
+  "environment_id": "env-abc123",
+  "spec": {
+    "kafka_cluster_id": "lkc-01",
+    "compute_pool_id": "lfcp-x7rgx1",
+    "principal": "u-yo9j87",
+    "stopped": false,
+    "table_options": {},
+    "session_options": {},
+    "columns": [],
+    "query": "SELECT user_id, product_id, price, quantity FROM orders WHERE price > 1000;"
+  },
+  "status": {
+    "phase": "FAILED",
+    "detail": "Query validation error: invalid table reference 'orders'.",
+    "warnings": [],
+    "scaling_status": {},
+    "version": 0,
+    "creation_statement": "CREATE OR ALTER MATERIALIZED TABLE table1 AS SELECT user_id, product_id, price, quantity FROM orders WHERE price > 1000;"
+  }
+}
