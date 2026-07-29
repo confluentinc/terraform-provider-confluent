@@ -40,7 +40,7 @@ Two sources: inline ` ```terraform ` blocks inside `docs/**/*.md`, and the ~50 s
   ```
   go build -o terraform-provider-confluent
   ```
-  then point a `dev_overrides` block in `~/.terraformrc` (or `TF_CLI_CONFIG_FILE`) at that binary, and run `terraform validate` in each scenario directory. `dev_overrides` skips `terraform init`/the registry/lock files entirely, and `validate` doesn't need live credentials — just a loadable provider schema. A `validate` failure is a direct "this example no longer applies against the current provider" hit.
+  then point a `dev_overrides` block in a temporary CLI config selected via `TF_CLI_CONFIG_FILE` at that binary. Each scenario still needs an initialized working directory, so run `terraform init -backend=false` before `terraform validate`. The override avoids downloading the locally built provider from the registry; initialization may still download other declared providers or modules unless they are already cached. `validate` doesn't need live credentials — just loadable provider schemas. A `validate` failure is a direct "this example no longer applies against the current provider" hit.
 - For inline doc examples (not standalone files), at minimum write each block to a temp `.tf` file and run `terraform fmt -check` against it to catch syntax-level issues like missing quotes; run full `terraform validate` on them too if the user wants exhaustive checking, since that requires the same `dev_overrides` setup as above per snippet.
 
 ## 5. Typos and broken links
