@@ -1,0 +1,32 @@
+{
+  "api_version": "switchover/v1",
+  "id": "sw-f3a90de",
+  "kind": "SwitchoverPair",
+  "metadata": {
+    "created_at": "2006-01-02T15:04:05-07:00",
+    "deleted_at": "2006-01-02T15:04:05-07:00",
+    "resource_name": "crn://confluent.cloud/organization=9bb441c4-edef-46ac-8a41-c49e44a3fd9a/switchover-pair=sw-12345",
+    "self": "https://api.confluent.cloud/switchover/v1/switchover-pairs/sw-12345",
+    "updated_at": "2006-01-02T15:04:05-07:00"
+  },
+  "spec": {
+    "active_member": "west",
+    "display_name": "prod-kafka-dr_updated",
+    "environment": {
+      "environment": "",
+      "id": "env-00000",
+      "related": "https://api.confluent.cloud/v2/environments/env-00000",
+      "resource_name": "https://api.confluent.cloud/organization=9bb441c4-edef-46ac-8a41-c49e44a3fd9a/environment=env-00000"
+    },
+    "members": [
+      {
+        "environment": "env-00000",
+        "member_id": "lkc-00000",
+        "name": "west"
+      }
+    ]
+  },
+  "status": {
+    "phase": "READY"
+  }
+}
