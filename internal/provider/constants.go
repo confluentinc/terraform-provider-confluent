@@ -293,6 +293,7 @@ const (
 	paramClientSecret                                    = "client_secret"
 	paramCloud                                           = "cloud"
 	paramClouds                                          = "clouds"
+	paramCluster                                         = "kafka_cluster"
 	paramClusterLink                                     = "cluster_link"
 	paramClusterLinkId                                   = "cluster_link_id"
 	paramClusters                                        = "clusters"
