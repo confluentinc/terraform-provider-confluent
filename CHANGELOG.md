@@ -1,3 +1,10 @@
+## 2.81.0 (July 30th, 2026)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.80.0...v2.81.0)
+
+**Bug fixes:**
+* Fixed a bug where creating or updating the `confluent_flink_materialized_table` [resource](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs/resources/confluent_flink_materialized_table) could time out after 5 minutes depending on the formatting of the `query` argument.
+
 ## 2.80.0 (July 28th, 2026)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.79.0...v2.80.0)
