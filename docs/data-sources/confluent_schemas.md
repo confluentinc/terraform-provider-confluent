@@ -88,7 +88,7 @@ The following arguments are supported:
 In addition to the preceding arguments, the following attributes are exported:
 - `schemas` (List of Object) List of schemas. Each schema object exports the following attributes:
   - `subject_name` - (Required String) The name of the subject.
-  - `schema_identifier` - (Required String) The ID of the Schema, for example: `lsrc-abc123/test-subject/100003`.
+  - `schema_identifier` - (Required String) The ID of the Schema, for example: `100003`.
   - `format` - (Required String) The format of the schema. Accepted values are: `AVRO`, `PROTOBUF`, and `JSON`.
   - `schema` - (Required String) The schema string.
   - `schema_reference` - (Optional List) The list of referenced schemas (see [Schema References](https://docs.confluent.io/platform/current/schema-registry/serdes-develop/index.html#schema-references) for more details):

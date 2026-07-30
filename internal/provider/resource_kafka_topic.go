@@ -643,7 +643,7 @@ func kafkaTopicUpdate(ctx context.Context, d *schema.ResourceData, meta interfac
 			}
 		}
 		if len(outdatedTopicSettings) > 0 {
-			diag.Errorf("error updating Kafka Topic %q: topic settings update failed for %#v. "+
+			return diag.Errorf("error updating Kafka Topic %q: topic settings update failed for %#v. "+
 				"Double check that these topic settings are indeed editable and provided target values do not exceed min/max allowed values by reading %s", d.Id(), outdatedTopicSettings, docsUrl)
 		}
 		updatedTopicSettingsJson, err := json.Marshal(updatedTopicSettings)

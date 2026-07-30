@@ -26,7 +26,7 @@ provider "confluent" {
 
 resource "confluent_subject_config" "example" {
   schema_registry_cluster {
-    id = confluent_schema_registry_region.essentials.id
+    id = data.confluent_schema_registry_cluster.essentials.id
   }
   rest_endpoint       = data.confluent_schema_registry_cluster.essentials.rest_endpoint
   subject_name        = "proto-purchase-value"
