@@ -12,27 +12,23 @@ description: |-
 
 `confluent_network_link_endpoint` provides a Network Link Endpoint resource that enables creating, editing, and deleting Network Link Endpoints on Confluent Cloud.
 
--> **Note:** It is recommended to set `lifecycle { prevent_destroy = true }` on production instances to prevent accidental Network Link Endpoint deletion. This setting rejects plans that would destroy or recreate the Network Link Endpoint, such as attempting to change uneditable attributes. Read more about it in the [Terraform docs](https://www.terraform.io/language/meta-arguments/lifecycle#prevent_destroy).
+-> **Note:** It is recommended to set `lifecycle { prevent_destroy = true }` on production instances to prevent accidental network link endpoint deletion. This setting rejects plans that would destroy or recreate the network link endpoint, such as attempting to change uneditable attributes. Read more about it in the [Terraform docs](https://www.terraform.io/language/meta-arguments/lifecycle#prevent_destroy).
 
 ## Example Usage
 
 ```terraform
-resource "confluent_network_link_endpoint" "nle" {
-  display_name = "nle1"
-  description  = "TEST-NLE1"
+resource "confluent_network_link_endpoint" "example" {
   environment {
-    id = "env-xyz456"
+    id = "env-00000"
   }
   network {
-    id = "n-abc123"
+    id = "n-00000"
   }
   network_link_service {
-    id = "nls-g3e1ox"
+    id = "nls-abcde"
   }
-}
-
-output "network_link_endpoint" {
-  value = confluent_network_link_endpoint.nle
+  description = "Connect to Network - analytics hub"
+  display_name = "prod-net-1-nle"
 }
 ```
 
@@ -41,36 +37,31 @@ output "network_link_endpoint" {
 
 The following arguments are supported:
 
-- `display_name` - (Optional String) The name of the Network Link Endpoint.
-- `description` - (Optional String) The description of the Network Link Endpoint.
-- `network` (Required Configuration Block) supports the following:
-  - `id` - (Required String) The ID of the Network that the Network Link Endpoint belongs to, for example, `n-abc123`.
-- `network_link_service` (Required Configuration Block) supports the following:
-  - `id` - (Required String) The ID of the Network Link Service, for example, `nls-g3e1ox`.
-- `environment` (Required Configuration Block) supports the following:
-  - `id` - (Required String) The ID of the Environment that the Network Link Endpoint belongs to, for example, `env-xyz456`.
+
+- `description` - (Optional String) The description of the network link endpoint
+- `display_name` - (Optional String) The name of the network link endpoint
+- `environment` - (Required Configuration Block) The environment to which this belongs. Supports the following:
+    - `id` - (Required String) The ID of the Environment.
+- `network` - (Required Configuration Block) The network to which this belongs. Supports the following:
+    - `id` - (Required String) The ID of the Network.
+- `network_link_service` - (Required Configuration Block) The network_link_service to which this belongs. Supports the following:
+    - `id` - (Required String) The ID of the Network Link Service.
 
 ## Attributes Reference
 
 In addition to the preceding arguments, the following attributes are exported:
-
-- `id` - (Required String) The ID of the Network Link Endpoint, for example, `nle-abc123`.
-- `resource_name` (Required String) The Confluent Resource Name of the Network Link Endpoint.
+- `resource_name` - (Required String) The Confluent Resource Name of the Network Link Endpoint.
 
 ## Import
 
 -> **Note:** `CONFLUENT_CLOUD_API_KEY` and `CONFLUENT_CLOUD_API_SECRET` environment variables must be set before importing a Network Link Endpoint.
 
-You can import a Network Link Endpoint by using Environment ID and Network Link Endpoint ID, in the format `<Environment ID>/<Network Link Endpoint ID>`. The following example shows how to import a Network Link Endpoint:
+You can import a Network Link Endpoint by using the composite ID `<Environment ID>/<Network Link Endpoint ID>`, for example:
 
 ```shell
 $ export CONFLUENT_CLOUD_API_KEY="<cloud_api_key>"
 $ export CONFLUENT_CLOUD_API_SECRET="<cloud_api_secret>"
-$ terraform import confluent_network_link_endpoint.my_nle env-abc123/nle-abc123
+$ terraform import confluent_network_link_endpoint.example env-abc123/net-abc123
 ```
 
 !> **Warning:** Do not forget to delete terminal command history afterwards for security purposes.
-
-## Getting Started
-The following end-to-end examples might help to get started with `confluent_network_link_endpoint` resource:
-* [`cluster-link-over-aws-private-link-networks`](https://github.com/confluentinc/terraform-provider-confluent/tree/master/examples/configurations/cluster-link-over-aws-private-link-networks): Cluster link over two dedicated clusters in separate AWS PrivateLink networks

@@ -3,7 +3,7 @@
 page_title: "confluent_network_link_endpoint Data Source - terraform-provider-confluent"
 subcategory: ""
 description: |-
-   
+  
 ---
 
 # confluent_network_link_endpoint Data Source
@@ -20,15 +20,15 @@ provider "confluent" {
   cloud_api_secret = var.confluent_cloud_api_secret # optionally use CONFLUENT_CLOUD_API_SECRET env var
 }
 
-data "confluent_network_link_endpoint" "nle" {
-  id = "nle-1357"
+data "confluent_network_link_endpoint" "example" {
+  id = "net-abc123"
   environment {
-    id = "env-1234"
+    id = "env-xyz456"
   }
 }
 
-output "network_link_endpoint" {
-  value = data.confluent_network_link_endpoint.nle
+output "example" {
+  value = data.confluent_network_link_endpoint.example
 }
 ```
 
@@ -37,18 +37,18 @@ output "network_link_endpoint" {
 
 The following arguments are supported:
 
-- `id` - (Required String) The ID of the Network Link Endpoint, for example, `nle-zyw30`.
-- `environment` (Required Configuration Block) supports the following:
-  - `id` - (Required String) The ID of the Environment that the Network Link Endpoint belongs to, for example, `env-xyz456`.
+- `id` - (Required String) The ID of the Network Link Endpoint, for example, `net-abc123`.
+- `environment` - (Required Configuration Block) Supports the following:
+    - `id` - (Required String) The ID of the Environment that the Network Link Endpoint belongs to, for example, `env-xyz456`.
 
 ## Attributes Reference
 
 In addition to the preceding arguments, the following attributes are exported:
 
-- `display_name` - (Optional String) The name of the Network Link Endpoint.
-- `description` - (Optional String) The description of the Network Link Endpoint.
-- `network` (Required Configuration Block) supports the following:
-  - `id` - (Required String) The ID of the Network that the Network Link Endpoint belongs to, for example, `n-abc123`.
-- `network_link_service` (Required Configuration Block) supports the following:
-  - `id` - (Required String) The ID of the Network Link Service
-- `resource_name` (Required String) The Confluent Resource Name of the Network Link Endpoint.
+- `description` - (String) The description of the network link endpoint
+- `display_name` - (String) The name of the network link endpoint
+- `network` - (Configuration Block) The network to which this belongs. Supports the following:
+    - `id` - (String) The ID of the Network.
+- `network_link_service` - (Configuration Block) The network_link_service to which this belongs. Supports the following:
+    - `id` - (String) The ID of the Network Link Service.
+- `resource_name` - (String) The Confluent Resource Name of the Network Link Endpoint.
