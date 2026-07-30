@@ -23,9 +23,10 @@ provider "confluent" {
 }
 
 # If the environment (and its Schema Registry cluster) is provisioned in the
-# same Terraform apply command, add it to the data source's depends_on since
-# a hardcoded environment ID below wouldn't otherwise create an implicit
-# dependency.
+# same Terraform apply command, add it to the data source's depends_on. This
+# ensures the Schema Registry cluster has finished provisioning before the
+# data source is queried, even though the environment.id reference below
+# already creates an implicit ordering dependency.
 resource "confluent_environment" "staging" {
   display_name = "staging"
 
@@ -37,7 +38,7 @@ resource "confluent_environment" "staging" {
 # Loads the only Schema Registry cluster in the target environment
 data "confluent_schema_registry_cluster" "example_using_env_id" {
   environment {
-    id = "env-xyz456"
+    id = confluent_environment.staging.id
   }
   depends_on = [
     confluent_environment.staging
