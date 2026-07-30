@@ -30,11 +30,6 @@ import (
 	kafkaquotasv1 "github.com/confluentinc/ccloud-sdk-go-v2/kafka-quotas/v1"
 )
 
-// Parameter name constants
-const (
-	paramCluster = "kafka_cluster"
-)
-
 func kafkaClientQuotaResource() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: kafkaClientQuotaCreate,
