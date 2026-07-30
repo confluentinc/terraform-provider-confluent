@@ -61,7 +61,7 @@ You can import a Network Link Endpoint by using the composite ID `<Environment I
 ```shell
 $ export CONFLUENT_CLOUD_API_KEY="<cloud_api_key>"
 $ export CONFLUENT_CLOUD_API_SECRET="<cloud_api_secret>"
-$ terraform import confluent_network_link_endpoint.example env-abc123/net-abc123
+$ terraform import confluent_network_link_endpoint.example env-abc123/nle-abc123
 ```
 
 !> **Warning:** Do not forget to delete terminal command history afterwards for security purposes.

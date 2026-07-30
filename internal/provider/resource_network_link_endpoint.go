@@ -307,18 +307,18 @@ func networkLinkEndpointProvisionStatus(ctx context.Context, c *Client, environm
 		}
 
 		currentPhase := networkLinkEndpoint.Status.GetPhase()
-		tflog.Debug(ctx, fmt.Sprintf("Waiting for network link endpoint %q provisioning status to become one of %v: current status is %q", networkLinkEndpointId, []string{stateReady, stateExpired, stateDisconnecting, stateInactive}, currentPhase), map[string]interface{}{networkLinkEndpointLoggingKey: networkLinkEndpointId})
+		tflog.Debug(ctx, fmt.Sprintf("Waiting for network link endpoint %q provisioning status to become one of %v: current status is %q", networkLinkEndpointId, []string{statePendingAccept, stateReady, stateExpired, stateDisconnecting, stateInactive}, currentPhase), map[string]interface{}{networkLinkEndpointLoggingKey: networkLinkEndpointId})
 
 		// Check for pending states (still provisioning)
 		switch currentPhase {
 		case stateProvisioning:
 			return networkLinkEndpoint, currentPhase, nil
-		case statePendingAccept:
-			return networkLinkEndpoint, currentPhase, nil
 		}
 
 		// Check for target states (provisioning complete)
 		switch currentPhase {
+		case statePendingAccept:
+			return networkLinkEndpoint, currentPhase, nil
 		case stateReady:
 			return networkLinkEndpoint, currentPhase, nil
 		case stateExpired:
@@ -364,15 +364,15 @@ func networkLinkEndpointProvisionStatus(ctx context.Context, c *Client, environm
 func waitForNetworkLinkEndpointToProvision(ctx context.Context, c *Client, environmentId string, networkLinkEndpointId string) error {
 	delay, pollInterval := getDelayAndPollInterval(5*time.Second, 1*time.Minute, c.isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
-		Pending:      []string{stateProvisioning, statePendingAccept},
-		Target:       []string{stateReady, stateExpired, stateDisconnecting, stateInactive},
+		Pending:      []string{stateProvisioning},
+		Target:       []string{statePendingAccept, stateReady, stateExpired, stateDisconnecting, stateInactive},
 		Refresh:      networkLinkEndpointProvisionStatus(ctx, c, environmentId, networkLinkEndpointId),
 		Timeout:      networkingAPICreateTimeout,
 		Delay:        delay,
 		PollInterval: pollInterval,
 	}
 
-	tflog.Debug(ctx, fmt.Sprintf("Waiting for network link endpoint %q provisioning status to become one of %v", networkLinkEndpointId, []string{stateReady, stateExpired, stateDisconnecting, stateInactive}), map[string]interface{}{networkLinkEndpointLoggingKey: networkLinkEndpointId})
+	tflog.Debug(ctx, fmt.Sprintf("Waiting for network link endpoint %q provisioning status to become one of %v", networkLinkEndpointId, []string{statePendingAccept, stateReady, stateExpired, stateDisconnecting, stateInactive}), map[string]interface{}{networkLinkEndpointLoggingKey: networkLinkEndpointId})
 	if _, err := stateConf.WaitForStateContext(ctx); err != nil {
 		return err
 	}

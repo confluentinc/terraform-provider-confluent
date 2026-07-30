@@ -21,7 +21,7 @@ provider "confluent" {
 }
 
 data "confluent_network_link_endpoint" "example" {
-  id = "net-abc123"
+  id = "nle-abc123"
   environment {
     id = "env-xyz456"
   }
@@ -37,7 +37,7 @@ output "example" {
 
 The following arguments are supported:
 
-- `id` - (Required String) The ID of the Network Link Endpoint, for example, `net-abc123`.
+- `id` - (Required String) The ID of the Network Link Endpoint, for example, `nle-abc123`.
 - `environment` - (Required Configuration Block) Supports the following:
     - `id` - (Required String) The ID of the Environment that the Network Link Endpoint belongs to, for example, `env-xyz456`.
 
