@@ -150,12 +150,6 @@ func TestAccKafkaClientQuota(t *testing.T) {
 				ResourceName:      fullKafkaClientQuotaResourceLabel,
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: func(state *terraform.State) (string, error) {
-					resources := state.RootModule().Resources
-					kafkaClientQuotaId := resources[fullKafkaClientQuotaResourceLabel].Primary.ID
-					environmentId := resources[fullKafkaClientQuotaResourceLabel].Primary.Attributes["environment.0.id"]
-					return environmentId + "/" + kafkaClientQuotaId, nil
-				},
 			},
 			{
 				Config: testAccCheckKafkaClientQuotaConfig(mockServerUrl, kafkaClientQuotaResourceLabel, kafkaClientQuotaUpdatedDisplayName, kafkaClientQuotaUpdatedDescription, kafkaClientQuotaUpdatedPrincipals, kafkaClientQuotaUpdatedIngressByteRate, kafkaClientQuotaUpdatedEgressByteRate),
@@ -180,12 +174,6 @@ func TestAccKafkaClientQuota(t *testing.T) {
 				ResourceName:      fullKafkaClientQuotaResourceLabel,
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: func(state *terraform.State) (string, error) {
-					resources := state.RootModule().Resources
-					kafkaClientQuotaId := resources[fullKafkaClientQuotaResourceLabel].Primary.ID
-					environmentId := resources[fullKafkaClientQuotaResourceLabel].Primary.Attributes["environment.0.id"]
-					return environmentId + "/" + kafkaClientQuotaId, nil
-				},
 			},
 		},
 	})

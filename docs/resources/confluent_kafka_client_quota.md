@@ -71,12 +71,12 @@ In addition to the preceding arguments, the following attributes are exported:
 
 -> **Note:** `CONFLUENT_CLOUD_API_KEY` and `CONFLUENT_CLOUD_API_SECRET` environment variables must be set before importing a Kafka Client Quota.
 
-You can import a Kafka Client Quota by using Environment ID and Kafka Client Quota ID, in the format `<Environment ID>/<Kafka Client Quota ID>`. The following example shows how to import a Kafka Client Quota:
+You can import a Kafka Client Quota by using Kafka Client Quota ID. The following example shows how to import a Kafka Client Quota ID:
 
 ```shell
 $ export CONFLUENT_CLOUD_API_KEY="<cloud_api_key>"
 $ export CONFLUENT_CLOUD_API_SECRET="<cloud_api_secret>"
-$ terraform import confluent_kafka_client_quota.example env-abc123/cq-abc123
+$ terraform import confluent_kafka_client_quota.example cq-abc123
 ```
 
 !> **Warning:** Do not forget to delete terminal command history afterwards for security purposes.

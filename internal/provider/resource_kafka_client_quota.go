@@ -21,7 +21,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -283,20 +282,6 @@ func kafkaClientQuotaDelete(ctx context.Context, d *schema.ResourceData, meta in
 
 func kafkaClientQuotaImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	tflog.Debug(ctx, fmt.Sprintf("Importing kafka client quota %q", d.Id()), map[string]interface{}{kafkaClientQuotaLoggingKey: d.Id()})
-
-	importId := d.Id()
-	parts := strings.Split(importId, "/")
-	if len(parts) != 2 {
-		return nil, fmt.Errorf("error importing kafka client quota: invalid format: expected '<environment ID>/<kafka client quota ID>'")
-	}
-	environmentId := parts[0]
-	resourceId := parts[len(parts)-1]
-	d.SetId(resourceId)
-	if err := d.Set(paramEnvironment, []interface{}{map[string]interface{}{
-		paramId: environmentId,
-	}}); err != nil {
-		return nil, err
-	}
 
 	// Mark resource as new to avoid d.Set("") when getting 404
 	d.MarkNewResource()
