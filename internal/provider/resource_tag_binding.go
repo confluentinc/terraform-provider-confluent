@@ -281,7 +281,7 @@ func tagBindingImport(ctx context.Context, d *schema.ResourceData, meta interfac
 	d.Set(paramEntityName, parts[2])
 	d.Set(paramEntityType, parts[3])
 
-	tflog.Debug(ctx, fmt.Sprintf("Imporing Tag Binding %q=%q", paramId, tagBindingId), map[string]interface{}{tagBindingLoggingKey: tagBindingId})
+	tflog.Debug(ctx, fmt.Sprintf("Importing Tag Binding %q=%q", paramId, tagBindingId), map[string]interface{}{tagBindingLoggingKey: tagBindingId})
 	d.MarkNewResource()
 	if _, err := readTagBindingAndSetAttributes(ctx, d, meta, true); err != nil {
 		return nil, fmt.Errorf("error importing Tag Binding %q: %s", tagBindingId, createDescriptiveError(err))

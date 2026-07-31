@@ -350,7 +350,7 @@ func businessMetadataBindingImport(ctx context.Context, d *schema.ResourceData, 
 	d.Set(paramEntityName, parts[2])
 	d.Set(paramEntityType, parts[3])
 
-	tflog.Debug(ctx, fmt.Sprintf("Imporing Business Metadata Binding %q=%q", paramId, businessMetadataBindingId), map[string]interface{}{businessMetadataBindingLoggingKey: businessMetadataBindingId})
+	tflog.Debug(ctx, fmt.Sprintf("Importing Business Metadata Binding %q=%q", paramId, businessMetadataBindingId), map[string]interface{}{businessMetadataBindingLoggingKey: businessMetadataBindingId})
 	d.MarkNewResource()
 	if _, err := readBusinessMetadataBindingAndSetAttributes(ctx, d, meta, true); err != nil {
 		return nil, fmt.Errorf("error importing Business Metadata Binding %q: %s", businessMetadataBindingId, createDescriptiveError(err))

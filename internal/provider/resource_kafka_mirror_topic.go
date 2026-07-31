@@ -39,7 +39,8 @@ var disallowedTransitionErrorMessage = "the following list of transitions is sup
 	fmt.Sprintf("\n* %q -> %q", stateActive, statePromoted) +
 	fmt.Sprintf("\n* %q -> %q", stateActive, stateFailedOver) +
 	fmt.Sprintf("\n* %q -> %q", statePaused, statePromoted) +
-	fmt.Sprintf("\n* %q -> %q", statePaused, stateFailedOver)
+	fmt.Sprintf("\n* %q -> %q", statePaused, stateFailedOver) +
+	fmt.Sprintf("\n* %q -> %q", stateFailed, stateFailedOver)
 
 func kafkaMirrorTopicResource() *schema.Resource {
 	return &schema.Resource{
