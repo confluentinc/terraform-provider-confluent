@@ -77,7 +77,7 @@ func flinkStatementResource() *schema.Resource {
 				Sensitive: true,
 				Optional:  true,
 				Computed:  true,
-				ForceNew:  false,
+				ForceNew:  true,
 			},
 			paramStopped: {
 				Type:        schema.TypeBool,
