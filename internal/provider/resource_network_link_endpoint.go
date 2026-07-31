@@ -91,12 +91,8 @@ func networkLinkEndpointCreate(ctx context.Context, d *schema.ResourceData, meta
 	spec.SetNetworkLinkService(*networkLinkServiceRef)
 
 	// Set optional attributes
-	if _, ok := d.GetOk(paramDescription); ok {
-		spec.SetDescription(d.Get(paramDescription).(string))
-	}
-	if _, ok := d.GetOk(paramDisplayName); ok {
-		spec.SetDisplayName(d.Get(paramDisplayName).(string))
-	}
+	spec.SetDescription(d.Get(paramDescription).(string))
+	spec.SetDisplayName(d.Get(paramDisplayName).(string))
 
 	createNetworkLinkEndpointRequest := &networkingv1.NetworkingV1NetworkLinkEndpoint{Spec: spec}
 
