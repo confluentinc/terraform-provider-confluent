@@ -14,6 +14,8 @@ description: |-
 
 -> **Note:** It is recommended to set `lifecycle { prevent_destroy = true }` on production instances to prevent accidental Schema Registry Cluster Config deletion. This setting rejects plans that would destroy or recreate the Schema Registry Cluster Config, such as attempting to change uneditable attributes. Read more about it in the [Terraform docs](https://www.terraform.io/language/meta-arguments/lifecycle#prevent_destroy).
 
+-> **Note:** The service account behind the `credentials` block's API key needs, at minimum, the `ResourceOwner` role bound with a `crn_pattern` covering `subject=*` on the target Schema Registry cluster (see the [`confluent_role_binding`](confluent_role_binding.md) resource). For example: `role_name = "ResourceOwner"`, `crn_pattern = format("%s/%s", data.confluent_schema_registry_cluster.essentials.resource_name, "subject=*")`.
+
 ## Example Usage
 
 ### Option #1: Manage multiple Schema Registry clusters in the same Terraform workspace

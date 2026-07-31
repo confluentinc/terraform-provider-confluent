@@ -64,6 +64,13 @@ func identityPoolResource() *schema.Resource {
 				Description:  "A filter expression that must be evaluated to be true to use this identity pool.",
 				ValidateFunc: validation.StringIsNotEmpty,
 			},
+			paramResourceOwner: {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ForceNew:     true,
+				Description:  "The ID of the principal (for example, a Service Account) to assign as the owner of the Identity Pool, decoupling the creator of the resource from its owner. Defaults to the caller if not set. The Confluent Cloud API only accepts this value at creation time: it cannot be changed afterward (changing it recreates the Identity Pool), and it isn't returned by the API afterward, so it won't be populated on `terraform import`.",
+				ValidateFunc: validation.StringIsNotEmpty,
+			},
 		},
 	}
 }
@@ -123,6 +130,7 @@ func identityPoolCreate(ctx context.Context, d *schema.ResourceData, meta interf
 	description := d.Get(paramDescription).(string)
 	identityClaim := d.Get(paramIdentityClaim).(string)
 	filter := d.Get(paramFilter).(string)
+	resourceOwner := d.Get(paramResourceOwner).(string)
 
 	createIdentityPoolRequest := identityproviderv2.NewIamV2IdentityPool()
 	createIdentityPoolRequest.SetDisplayName(displayName)
@@ -135,11 +143,20 @@ func identityPoolCreate(ctx context.Context, d *schema.ResourceData, meta interf
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Creating new Identity Pool: %s", createIdentityPoolRequestJson))
 
-	createdIdentityPool, resp, err := executeIdentityPoolCreate(c.identityProviderV2ApiContext(ctx), c, createIdentityPoolRequest, identityProviderId)
+	createdIdentityPool, resp, err := executeIdentityPoolCreate(c.identityProviderV2ApiContext(ctx), c, createIdentityPoolRequest, identityProviderId, resourceOwner)
 	if err != nil {
 		return diag.Errorf("error creating Identity Pool: %s", createDescriptiveError(err, resp))
 	}
 	d.SetId(createdIdentityPool.GetId())
+
+	// resource_owner is a create-only query param: the API never returns it, so identityPoolRead()
+	// (via setIdentityPoolAttributes()) can't and doesn't set it. Persist the configured value here,
+	// once, so it doesn't disappear from state on the next refresh.
+	if resourceOwner != "" {
+		if err := d.Set(paramResourceOwner, resourceOwner); err != nil {
+			return diag.FromErr(createDescriptiveError(err))
+		}
+	}
 
 	createdIdentityPoolJson, err := json.Marshal(createdIdentityPool)
 	if err != nil {
@@ -150,8 +167,11 @@ func identityPoolCreate(ctx context.Context, d *schema.ResourceData, meta interf
 	return identityPoolRead(ctx, d, meta)
 }
 
-func executeIdentityPoolCreate(ctx context.Context, c *Client, identityPool *identityproviderv2.IamV2IdentityPool, identityProviderId string) (identityproviderv2.IamV2IdentityPool, *http.Response, error) {
+func executeIdentityPoolCreate(ctx context.Context, c *Client, identityPool *identityproviderv2.IamV2IdentityPool, identityProviderId, resourceOwner string) (identityproviderv2.IamV2IdentityPool, *http.Response, error) {
 	req := c.identityProviderV2Client.IdentityPoolsIamV2Api.CreateIamV2IdentityPool(c.identityProviderV2ApiContext(ctx), identityProviderId).IamV2IdentityPool(*identityPool)
+	if resourceOwner != "" {
+		req = req.AssignedResourceOwner(resourceOwner)
+	}
 	return req.Execute()
 }
 

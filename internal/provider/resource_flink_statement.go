@@ -67,6 +67,7 @@ func flinkStatementResource() *schema.Resource {
 				},
 				Optional: true,
 				Computed: true,
+				ForceNew: true,
 			},
 			paramPropertiesSensitive: {
 				Type: schema.TypeMap,
