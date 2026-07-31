@@ -155,23 +155,23 @@ func businessMetadataBindingRead(ctx context.Context, d *schema.ResourceData, me
 	businessMetadataBindingId := d.Id()
 
 	tflog.Debug(ctx, fmt.Sprintf("Reading Business Metadata Binding %q=%q", paramId, businessMetadataBindingId), map[string]interface{}{businessMetadataBindingLoggingKey: businessMetadataBindingId})
-	if _, err := readBusinessMetadataBindingAndSetAttributes(ctx, d, meta); err != nil {
+	if _, err := readBusinessMetadataBindingAndSetAttributes(ctx, d, meta, false); err != nil {
 		return diag.FromErr(fmt.Errorf("error reading Business Metadata Binding %q: %s", businessMetadataBindingId, createDescriptiveError(err)))
 	}
 
 	return nil
 }
 
-func readBusinessMetadataBindingAndSetAttributes(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	restEndpoint, err := extractCatalogRestEndpoint(meta.(*Client), d, false)
+func readBusinessMetadataBindingAndSetAttributes(ctx context.Context, d *schema.ResourceData, meta interface{}, isImportOperation bool) ([]*schema.ResourceData, error) {
+	restEndpoint, err := extractCatalogRestEndpoint(meta.(*Client), d, isImportOperation)
 	if err != nil {
 		return nil, fmt.Errorf("error reading Business Metadata Binding: %s", createDescriptiveError(err))
 	}
-	clusterId, err := extractSchemaRegistryClusterId(meta.(*Client), d, false)
+	clusterId, err := extractSchemaRegistryClusterId(meta.(*Client), d, isImportOperation)
 	if err != nil {
 		return nil, fmt.Errorf("error reading Business Metadata Binding: %s", createDescriptiveError(err))
 	}
-	clusterApiKey, clusterApiSecret, err := extractSchemaRegistryClusterApiKeyAndApiSecret(meta.(*Client), d, false)
+	clusterApiKey, clusterApiSecret, err := extractSchemaRegistryClusterApiKeyAndApiSecret(meta.(*Client), d, isImportOperation)
 	if err != nil {
 		return nil, fmt.Errorf("error reading Business Metadata Binding: %s", createDescriptiveError(err))
 	}
@@ -352,7 +352,7 @@ func businessMetadataBindingImport(ctx context.Context, d *schema.ResourceData, 
 
 	tflog.Debug(ctx, fmt.Sprintf("Imporing Business Metadata Binding %q=%q", paramId, businessMetadataBindingId), map[string]interface{}{businessMetadataBindingLoggingKey: businessMetadataBindingId})
 	d.MarkNewResource()
-	if _, err := readBusinessMetadataBindingAndSetAttributes(ctx, d, meta); err != nil {
+	if _, err := readBusinessMetadataBindingAndSetAttributes(ctx, d, meta, true); err != nil {
 		return nil, fmt.Errorf("error importing Business Metadata Binding %q: %s", businessMetadataBindingId, createDescriptiveError(err))
 	}
 
