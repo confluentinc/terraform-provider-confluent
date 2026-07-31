@@ -214,12 +214,8 @@ func networkLinkEndpointUpdate(ctx context.Context, d *schema.ResourceData, meta
 
 	updateNetworkLinkEndpointRequest := networkingv1.NewNetworkingV1NetworkLinkEndpointUpdate()
 	specUpdate := networkingv1.NewNetworkingV1NetworkLinkEndpointSpecUpdate()
-	if d.HasChange(paramDescription) {
-		specUpdate.SetDescription(d.Get(paramDescription).(string))
-	}
-	if d.HasChange(paramDisplayName) {
-		specUpdate.SetDisplayName(d.Get(paramDisplayName).(string))
-	}
+	specUpdate.SetDescription(d.Get(paramDescription).(string))
+	specUpdate.SetDisplayName(d.Get(paramDisplayName).(string))
 
 	// Environment is required in the update request body for resource identification
 	updateEnvironmentRef := networkingv1.NewGlobalObjectReferenceWithDefaults()
