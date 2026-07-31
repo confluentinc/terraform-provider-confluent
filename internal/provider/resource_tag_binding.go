@@ -154,23 +154,23 @@ func tagBindingRead(ctx context.Context, d *schema.ResourceData, meta interface{
 	tagBindingId := d.Id()
 
 	tflog.Debug(ctx, fmt.Sprintf("Reading Tag Binding %q=%q", paramId, tagBindingId), map[string]interface{}{tagBindingLoggingKey: tagBindingId})
-	if _, err := readTagBindingAndSetAttributes(ctx, d, meta); err != nil {
+	if _, err := readTagBindingAndSetAttributes(ctx, d, meta, false); err != nil {
 		return diag.FromErr(fmt.Errorf("error reading Tag Binding %q: %s", tagBindingId, createDescriptiveError(err)))
 	}
 
 	return nil
 }
 
-func readTagBindingAndSetAttributes(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	restEndpoint, err := extractCatalogRestEndpoint(meta.(*Client), d, false)
+func readTagBindingAndSetAttributes(ctx context.Context, d *schema.ResourceData, meta interface{}, isImportOperation bool) ([]*schema.ResourceData, error) {
+	restEndpoint, err := extractCatalogRestEndpoint(meta.(*Client), d, isImportOperation)
 	if err != nil {
 		return nil, fmt.Errorf("error reading Tag Binding: %s", createDescriptiveError(err))
 	}
-	clusterId, err := extractSchemaRegistryClusterId(meta.(*Client), d, false)
+	clusterId, err := extractSchemaRegistryClusterId(meta.(*Client), d, isImportOperation)
 	if err != nil {
 		return nil, fmt.Errorf("error reading Tag Binding: %s", createDescriptiveError(err))
 	}
-	clusterApiKey, clusterApiSecret, err := extractSchemaRegistryClusterApiKeyAndApiSecret(meta.(*Client), d, false)
+	clusterApiKey, clusterApiSecret, err := extractSchemaRegistryClusterApiKeyAndApiSecret(meta.(*Client), d, isImportOperation)
 	if err != nil {
 		return nil, fmt.Errorf("error reading Tag Binding: %s", createDescriptiveError(err))
 	}
@@ -283,7 +283,7 @@ func tagBindingImport(ctx context.Context, d *schema.ResourceData, meta interfac
 
 	tflog.Debug(ctx, fmt.Sprintf("Imporing Tag Binding %q=%q", paramId, tagBindingId), map[string]interface{}{tagBindingLoggingKey: tagBindingId})
 	d.MarkNewResource()
-	if _, err := readTagBindingAndSetAttributes(ctx, d, meta); err != nil {
+	if _, err := readTagBindingAndSetAttributes(ctx, d, meta, true); err != nil {
 		return nil, fmt.Errorf("error importing Tag Binding %q: %s", tagBindingId, createDescriptiveError(err))
 	}
 
