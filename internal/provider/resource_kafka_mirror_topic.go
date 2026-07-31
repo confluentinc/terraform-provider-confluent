@@ -277,7 +277,7 @@ func kafkaMirrorTopicUpdate(ctx context.Context, d *schema.ResourceData, meta in
 		newStatus := newValue.(string)
 		shouldPauseKafkaMirrorTopic := (oldStatus == stateActive) && (newStatus == statePaused)
 		shouldResumeKafkaMirrorTopic := (oldStatus == statePaused) && (newStatus == stateActive)
-		shouldFailoverKafkaMirrorTopic := (oldStatus == stateActive || oldStatus == statePaused) && (newStatus == stateFailedOver)
+		shouldFailoverKafkaMirrorTopic := (oldStatus == stateActive || oldStatus == statePaused || oldStatus == stateFailed) && (newStatus == stateFailedOver)
 		shouldPromoteKafkaMirrorTopic := (oldStatus == stateActive || oldStatus == statePaused) && (newStatus == statePromoted)
 		if shouldPauseKafkaMirrorTopic {
 			tflog.Debug(ctx, fmt.Sprintf("Pausing Kafka Mirror Topic %q", d.Id()), map[string]interface{}{kafkaMirrorTopicLoggingKey: d.Id()})
