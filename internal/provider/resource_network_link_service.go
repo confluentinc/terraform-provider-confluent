@@ -214,21 +214,15 @@ func networkLinkServiceUpdate(ctx context.Context, d *schema.ResourceData, meta 
 
 	updateNetworkLinkServiceRequest := networkingv1.NewNetworkingV1NetworkLinkServiceUpdate()
 	specUpdate := networkingv1.NewNetworkingV1NetworkLinkServiceSpecUpdate()
-	if d.HasChange(paramAccept) {
-		if acceptList := d.Get(paramAccept).([]interface{}); len(acceptList) > 0 {
-			acceptBlock := acceptList[0].(map[string]interface{})
-			acceptObj := networkingv1.NewNetworkingV1NetworkLinkServiceAcceptPolicyWithDefaults()
-			acceptObj.SetEnvironments(convertToStringSlice(acceptBlock[paramEnvironments].(*schema.Set).List()))
-			acceptObj.SetNetworks(convertToStringSlice(acceptBlock[paramNetworks].(*schema.Set).List()))
-			specUpdate.SetAccept(*acceptObj)
-		}
+	if acceptList := d.Get(paramAccept).([]interface{}); len(acceptList) > 0 {
+		acceptBlock := acceptList[0].(map[string]interface{})
+		acceptObj := networkingv1.NewNetworkingV1NetworkLinkServiceAcceptPolicyWithDefaults()
+		acceptObj.SetEnvironments(convertToStringSlice(acceptBlock[paramEnvironments].(*schema.Set).List()))
+		acceptObj.SetNetworks(convertToStringSlice(acceptBlock[paramNetworks].(*schema.Set).List()))
+		specUpdate.SetAccept(*acceptObj)
 	}
-	if d.HasChange(paramDescription) {
-		specUpdate.SetDescription(d.Get(paramDescription).(string))
-	}
-	if d.HasChange(paramDisplayName) {
-		specUpdate.SetDisplayName(d.Get(paramDisplayName).(string))
-	}
+	specUpdate.SetDescription(d.Get(paramDescription).(string))
+	specUpdate.SetDisplayName(d.Get(paramDisplayName).(string))
 
 	// Environment is required in the update request body for resource identification
 	updateEnvironmentRef := networkingv1.NewGlobalObjectReferenceWithDefaults()
