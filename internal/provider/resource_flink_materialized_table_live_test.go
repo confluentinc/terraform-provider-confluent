@@ -91,6 +91,9 @@ func TestAccFlinkMaterializedTableLive(t *testing.T) {
 	// Prevent IMPORT_* env vars set in ImportStateIdFunc from leaking to other parallel tests.
 	t.Cleanup(unsetFlinkMaterializedTableImportEnv)
 
+	queryInitial := "select order_id, customer_id, product_id, cast(price as int) as p, sum(price) over w as running_total from examples.marketplace.orders window w as (partition by customer_id order by order_id rows between unbounded preceding and current row)"
+	queryUpdated := "select order_id, customer_id, product_id, cast(price as int) as p, sum(price) over w as running_total from examples.marketplace.orders where price > 100 window w as (partition by customer_id order by order_id rows between unbounded preceding and current row)"
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
@@ -105,7 +108,7 @@ func TestAccFlinkMaterializedTableLive(t *testing.T) {
 					saResourceLabel, poolResourceLabel, apiKeyResourceLabel,
 					flinkRegionId, flinkRegionRestEndpoint,
 					tableResourceLabel, tableDisplayName, randomSuffix,
-					"SELECT order_id, customer_id, product_id, price FROM examples.marketplace.orders WHERE price > 100",
+					queryInitial,
 					false,
 				),
 				Check: resource.ComposeTestCheckFunc(
@@ -113,6 +116,7 @@ func TestAccFlinkMaterializedTableLive(t *testing.T) {
 					resource.TestCheckResourceAttr(fullTableResourceLabel, paramDisplayName, tableDisplayName),
 					resource.TestCheckResourceAttr(fullTableResourceLabel, fmt.Sprintf("%s.0.%s", paramKafkaCluster, paramId), kafkaClusterId),
 					resource.TestCheckResourceAttr(fullTableResourceLabel, paramStopped, "false"),
+					resource.TestCheckResourceAttr(fullTableResourceLabel, paramQuery, queryInitial),
 					resource.TestCheckResourceAttr(fullTableResourceLabel, fmt.Sprintf("%s.0.%s", paramOrganization, paramId), flinkMaterializedTableLiveOrganizationId),
 					resource.TestCheckResourceAttr(fullTableResourceLabel, fmt.Sprintf("%s.0.%s", paramEnvironment, paramId), flinkMaterializedTableLiveEnvironmentId),
 					resource.TestCheckResourceAttrSet(fullTableResourceLabel, fmt.Sprintf("%s.0.%s", paramComputePool, paramId)),
@@ -127,13 +131,29 @@ func TestAccFlinkMaterializedTableLive(t *testing.T) {
 					saResourceLabel, poolResourceLabel, apiKeyResourceLabel,
 					flinkRegionId, flinkRegionRestEndpoint,
 					tableResourceLabel, tableDisplayName, randomSuffix,
-					"SELECT order_id, customer_id, product_id, price FROM examples.marketplace.orders WHERE price > 100",
+					queryUpdated,
+					false,
+				),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckFlinkMaterializedTableLiveExists(fullTableResourceLabel),
+					resource.TestCheckResourceAttr(fullTableResourceLabel, paramStopped, "false"),
+					resource.TestCheckResourceAttr(fullTableResourceLabel, paramQuery, queryUpdated),
+				),
+			},
+			{
+				Config: testAccCheckFlinkMaterializedTableLiveConfig(
+					endpoint, apiKey, apiSecret, region, kafkaClusterId,
+					saResourceLabel, poolResourceLabel, apiKeyResourceLabel,
+					flinkRegionId, flinkRegionRestEndpoint,
+					tableResourceLabel, tableDisplayName, randomSuffix,
+					queryUpdated,
 					true,
 				),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckFlinkMaterializedTableLiveExists(fullTableResourceLabel),
 					resource.TestCheckResourceAttr(fullTableResourceLabel, paramDisplayName, tableDisplayName),
 					resource.TestCheckResourceAttr(fullTableResourceLabel, paramStopped, "true"),
+					resource.TestCheckResourceAttr(fullTableResourceLabel, paramQuery, queryUpdated),
 				),
 			},
 			{
@@ -166,7 +186,7 @@ func TestAccFlinkMaterializedTableLive(t *testing.T) {
 				ImportStateVerify: true,
 				// Import re-derives credentials and rest_endpoint from IMPORT_* env vars rather than
 				// the original config block, so they may not byte-match what's in state.
-				ImportStateVerifyIgnore: []string{"credentials.0.key", "credentials.0.secret", "rest_endpoint"},
+				ImportStateVerifyIgnore: []string{"credentials.0.key", "credentials.0.secret", "rest_endpoint", "query"},
 				ImportStateIdFunc: func(state *terraform.State) (string, error) {
 					rs := state.RootModule().Resources[fullTableResourceLabel]
 					keyRs := state.RootModule().Resources[fmt.Sprintf("confluent_api_key.%s", apiKeyResourceLabel)]

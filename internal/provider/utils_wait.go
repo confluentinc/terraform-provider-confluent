@@ -1301,6 +1301,147 @@ func flinkStatementUpdatingStatus(ctx context.Context, c *FlinkRestClient, state
 	}
 }
 
+func waitForFlinkMaterializedTableToProvision(ctx context.Context, c *FlinkRestClient, orgId, environmentId, kafkaId, tableName string, wantStopped bool, isAcceptanceTestMode bool, timeout time.Duration) error {
+	delay, pollInterval := getDelayAndPollInterval(5*time.Second, 10*time.Second, isAcceptanceTestMode)
+	var pendingStates []string
+	var target string
+	if wantStopped {
+		pendingStates = []string{stateCreating, statePending, stateRunning, stateStopping, stateAltering}
+		target = stateStopped
+	} else {
+		pendingStates = []string{stateCreating, statePending, stateStopped, stateStopping, stateAltering}
+		target = stateRunning
+	}
+	stateConf := &resource.StateChangeConf{
+		Pending:      pendingStates,
+		Target:       []string{target},
+		Refresh:      flinkMaterializedTableProvisionStatus(c.apiContext(ctx), c, orgId, environmentId, kafkaId, tableName),
+		Timeout:      timeout,
+		Delay:        delay,
+		PollInterval: pollInterval,
+	}
+
+	tflog.Debug(ctx, fmt.Sprintf("Waiting for Flink Materialized Table %q provisioning status to become %q", tableName, target), map[string]interface{}{flinkMaterializedTableLoggingKey: tableName})
+	if _, err := stateConf.WaitForStateContext(c.apiContext(ctx)); err != nil {
+		return err
+	}
+	return nil
+}
+
+func waitForFlinkMaterializedTableToBeUpdated(ctx context.Context, c *FlinkRestClient, orgId, environmentId, kafkaId, tableName string, toStop bool, isAcceptanceTestMode bool, timeout time.Duration) error {
+	delay, pollInterval := getDelayAndPollInterval(5*time.Second, 10*time.Second, isAcceptanceTestMode)
+	var pendingStates, targetStates []string
+	var targetStatusMessage string
+
+	if toStop {
+		pendingStates = []string{stateCreating, statePending, stateRunning, stateStopping, stateAltering}
+		targetStates = []string{stateStopped}
+		targetStatusMessage = stateStopped
+	} else {
+		pendingStates = []string{stateCreating, statePending, stateStopped, stateStopping, stateAltering}
+		targetStates = []string{stateRunning}
+		targetStatusMessage = stateRunning
+	}
+
+	stateConf := &resource.StateChangeConf{
+		Pending:      pendingStates,
+		Target:       targetStates,
+		Refresh:      flinkMaterializedTableUpdatingStatus(c.apiContext(ctx), c, orgId, environmentId, kafkaId, tableName, targetStatusMessage),
+		Timeout:      timeout,
+		Delay:        delay,
+		PollInterval: pollInterval,
+	}
+
+	tflog.Debug(ctx, fmt.Sprintf("Waiting for Flink Materialized Table %q status to become %q", tableName, targetStatusMessage), map[string]interface{}{flinkMaterializedTableLoggingKey: tableName})
+	if _, err := stateConf.WaitForStateContext(c.apiContext(ctx)); err != nil {
+		return err
+	}
+	return nil
+}
+
+func waitForFlinkMaterializedTableToBeDeleted(ctx context.Context, c *FlinkRestClient, orgId, environmentId, kafkaId, tableName string, isAcceptanceTestMode bool, timeout time.Duration) error {
+	delay, pollInterval := getDelayAndPollInterval(10*time.Second, 10*time.Second, isAcceptanceTestMode)
+	stateConf := &resource.StateChangeConf{
+		Pending:      []string{stateInProgress},
+		Target:       []string{stateDone},
+		Refresh:      flinkMaterializedTableDeleteStatus(c.apiContext(ctx), c, orgId, environmentId, kafkaId, tableName),
+		Timeout:      timeout,
+		Delay:        delay,
+		PollInterval: pollInterval,
+	}
+
+	tflog.Debug(ctx, fmt.Sprintf("Waiting for Flink Materialized Table %q to be deleted", tableName), map[string]interface{}{flinkMaterializedTableLoggingKey: tableName})
+	if _, err := stateConf.WaitForStateContext(c.apiContext(ctx)); err != nil {
+		return err
+	}
+	return nil
+}
+
+// flinkMaterializedTableTransitionalPhases is the set of API phase values we
+// treat as "still in progress" — keep polling. The Flink Materialized Table API
+// uses CREATING for newly-created tables (unlike flink_statement which uses
+// PENDING) and may also surface PENDING / STOPPING during transitions. Both are
+// listed here to be tolerant of either.
+func isFlinkMaterializedTableTransitionalPhase(phase string) bool {
+	return phase == stateCreating || phase == statePending || phase == stateStopping || phase == stateAltering
+}
+
+func flinkMaterializedTableProvisionStatus(ctx context.Context, c *FlinkRestClient, orgId, environmentId, kafkaId, tableName string) resource.StateRefreshFunc {
+	return func() (result interface{}, s string, err error) {
+		table, resp, err := executeMaterializedTableRead(c.apiContext(ctx), c, orgId, environmentId, kafkaId, tableName)
+		if err != nil {
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Flink Materialized Table %q: %s", tableName, createDescriptiveError(err, resp)), map[string]interface{}{flinkMaterializedTableLoggingKey: tableName})
+			return nil, stateUnknown, err
+		}
+
+		phase := table.Status.GetPhase()
+		tflog.Debug(ctx, fmt.Sprintf("Waiting for Flink Materialized Table %q provisioning status to become target: current status is %q", tableName, phase), map[string]interface{}{flinkMaterializedTableLoggingKey: tableName})
+		if isFlinkMaterializedTableTransitionalPhase(phase) || phase == stateRunning || phase == stateStopped {
+			return table, phase, nil
+		} else if phase == stateFailed || phase == stateFailing {
+			return nil, stateFailed, fmt.Errorf("Flink Materialized Table %q provisioning status is %q: %s", tableName, phase, table.Status.GetDetail())
+		}
+		// Flink Materialized Table is in an unexpected state
+		return nil, stateUnexpected, fmt.Errorf("Flink Materialized Table %q is in an unexpected state %q", tableName, phase)
+	}
+}
+
+func flinkMaterializedTableUpdatingStatus(ctx context.Context, c *FlinkRestClient, orgId, environmentId, kafkaId, tableName, targetStatusMessage string) resource.StateRefreshFunc {
+	return func() (result interface{}, s string, err error) {
+		table, resp, err := executeMaterializedTableRead(c.apiContext(ctx), c, orgId, environmentId, kafkaId, tableName)
+		if err != nil {
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Flink Materialized Table %q: %s", tableName, createDescriptiveError(err, resp)), map[string]interface{}{flinkMaterializedTableLoggingKey: tableName})
+			return nil, stateUnknown, err
+		}
+
+		phase := table.Status.GetPhase()
+		tflog.Debug(ctx, fmt.Sprintf("Waiting for Flink Materialized Table %q status to become %q: current status is %q", tableName, targetStatusMessage, phase), map[string]interface{}{flinkMaterializedTableLoggingKey: tableName})
+		if isFlinkMaterializedTableTransitionalPhase(phase) || phase == stateRunning || phase == stateStopped {
+			return table, phase, nil
+		} else if phase == stateFailed || phase == stateFailing {
+			return nil, stateFailed, fmt.Errorf("Flink Materialized Table %q status is %q: %s", tableName, phase, table.Status.GetDetail())
+		}
+		// Flink Materialized Table is in an unexpected state
+		return nil, stateUnexpected, fmt.Errorf("Flink Materialized Table %q is in an unexpected state %q", tableName, phase)
+	}
+}
+
+func flinkMaterializedTableDeleteStatus(ctx context.Context, c *FlinkRestClient, orgId, environmentId, kafkaId, tableName string) resource.StateRefreshFunc {
+	return func() (result interface{}, s string, err error) {
+		table, resp, err := executeMaterializedTableRead(c.apiContext(ctx), c, orgId, environmentId, kafkaId, tableName)
+		if err != nil {
+			tflog.Warn(ctx, fmt.Sprintf("Error reading Flink Materialized Table %q: %s", tableName, createDescriptiveError(err, resp)), map[string]interface{}{flinkMaterializedTableLoggingKey: tableName})
+			// 404 means the materialized table has been deleted.
+			if isNonKafkaRestApiResourceNotFound(resp) {
+				tflog.Debug(ctx, fmt.Sprintf("Finishing Flink Materialized Table %q deletion process: received not-found status when reading", tableName), map[string]interface{}{flinkMaterializedTableLoggingKey: tableName})
+				return 0, stateDone, nil
+			}
+			return nil, stateFailed, err
+		}
+		return table, stateInProgress, nil
+	}
+}
+
 func computePoolProvisionStatus(ctx context.Context, c *Client, environmentId string, computePoolId string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
 		computePool, resp, err := executeComputePoolRead(c.flinkV2ApiContext(ctx), c, environmentId, computePoolId)

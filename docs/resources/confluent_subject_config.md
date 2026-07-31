@@ -24,9 +24,15 @@ provider "confluent" {
   cloud_api_secret = var.confluent_cloud_api_secret # optionally use CONFLUENT_CLOUD_API_SECRET env var
 }
 
+data "confluent_schema_registry_cluster" "essentials" {
+  environment {
+    id = "env-xyz456"
+  }
+}
+
 resource "confluent_subject_config" "example" {
   schema_registry_cluster {
-    id = confluent_schema_registry_region.essentials.id
+    id = data.confluent_schema_registry_cluster.essentials.id
   }
   rest_endpoint       = data.confluent_schema_registry_cluster.essentials.rest_endpoint
   subject_name        = "proto-purchase-value"

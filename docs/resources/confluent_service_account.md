@@ -26,7 +26,7 @@ resource "confluent_service_account" "example-sa" {
 
 The following arguments are supported:
 
-- `display_name` - (Required String) A human-readable name for the Service Account.
+- `display_name` - (Required String) A human-readable name for the Service Account. Must be 64 characters or fewer.
 - `description` - (Optional String) A free-form description of the Service Account.
 
 ## Attributes Reference
