@@ -553,6 +553,7 @@ const (
 	paramResource                                        = "managed_resource"
 	paramResourceGroup                                   = "resource_group"
 	paramResourceName                                    = "resource_name"
+	paramResourceOwner                                   = "resource_owner"
 	paramResources                                       = "resources"
 	paramResourceScope                                   = "resource_scope"
 	paramResourceType                                    = "resource_type"
