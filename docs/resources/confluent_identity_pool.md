@@ -35,24 +35,6 @@ resource "confluent_identity_pool" "example" {
 }
 ```
 
-### Example Identity Pool with a dedicated resource owner
-
-```terraform
-resource "confluent_identity_pool" "example" {
-  identity_provider {
-    id = confluent_identity_provider.azure.id
-  }
-  display_name    = "My Identity Pool"
-  description     = "Prod Access to Kafka clusters to Release Engineering"
-  identity_claim  = "claims.sub"
-  filter          = "claims.aud==\"confluent\" && claims.group!=\"invalid_group\""
-
-  # Decouple the Terraform runner from the resource owner, so the runner doesn't need
-  # elevated permissions to manage this Identity Pool's lifecycle.
-  resource_owner  = confluent_service_account.app-manager.id
-}
-```
-
 ### Example Identity Pool to be used with Okta
 
 ```terraform
@@ -85,9 +67,6 @@ The following arguments are supported:
 - `description` - (Required String) A description for the Identity Pool.
 - `identity_claim` - (Required String) The JSON Web Token (JWT) claim to extract the authenticating identity to Confluent resources from (see [Registered Claim Names](https://datatracker.ietf.org/doc/html/rfc7519#section-4.1) for more details). This appears in the audit log records, showing, for example, that "identity Z used identity pool X to access topic A".
 - `filter` - (Required String) A filter expression in [Supported Common Expression Language (CEL)](https://docs.confluent.io/cloud/current/access-management/authenticate/oauth/identity-pools.html#supported-common-expression-language-cel-filters) that specifies which identities can authenticate using your identity pool (see [Set identity pool filters](https://docs.confluent.io/cloud/current/access-management/authenticate/oauth/identity-pools.html#set-identity-pool-filters) for more details).
-- `resource_owner` - (Optional String, Forces new resource) The ID of the principal (for example, a Service Account) to assign as the owner of the Identity Pool, decoupling the creator of the resource from its owner. Defaults to the caller if not set.
-
--> **Note:** `resource_owner` is accepted by the Confluent Cloud API only at creation time: it cannot be changed afterward (changing it in configuration recreates the Identity Pool), and it isn't returned by the API afterward, so it won't be populated by `terraform import`.
 
 ## Attributes Reference
 
