@@ -94,7 +94,10 @@ func identityPoolDataSourceReadUsingDisplayName(ctx context.Context, d *schema.R
 
 	for _, identityPool := range identityPools {
 		if identityPool.GetDisplayName() == displayName {
-			if _, err := setIdentityPoolAttributes(d, identityPool, identityProviderId); err != nil {
+			if _, err := setIdentityPoolAttributes(d, identityPool); err != nil {
+				return diag.FromErr(createDescriptiveError(err))
+			}
+			if err := d.Set(paramIdentityProvider, []interface{}{map[string]interface{}{paramId: identityProviderId}}); err != nil {
 				return diag.FromErr(createDescriptiveError(err))
 			}
 			return nil
@@ -108,7 +111,7 @@ func identityPoolDataSourceReadUsingId(ctx context.Context, d *schema.ResourceDa
 	tflog.Debug(ctx, fmt.Sprintf("Reading Identity Pool %q=%q", paramId, identityPoolId), map[string]interface{}{identityPoolLoggingKey: identityPoolId})
 
 	c := meta.(*Client)
-	identityPool, resp, err := executeIdentityPoolRead(c.identityProviderV2ApiContext(ctx), c, identityPoolId, identityProviderId)
+	identityPool, resp, err := executeIdentityPoolRead(c.identityProviderV2ApiContext(ctx), c, identityProviderId, identityPoolId)
 	if err != nil {
 		return diag.Errorf("error reading Identity Pool %q: %s", identityPoolId, createDescriptiveError(err, resp))
 	}
@@ -118,7 +121,10 @@ func identityPoolDataSourceReadUsingId(ctx context.Context, d *schema.ResourceDa
 	}
 	tflog.Debug(ctx, fmt.Sprintf("Fetched Identity Pool %q: %s", identityPoolId, identityPoolJson), map[string]interface{}{identityPoolLoggingKey: identityPoolId})
 
-	if _, err := setIdentityPoolAttributes(d, identityPool, identityProviderId); err != nil {
+	if _, err := setIdentityPoolAttributes(d, identityPool); err != nil {
+		return diag.FromErr(createDescriptiveError(err))
+	}
+	if err := d.Set(paramIdentityProvider, []interface{}{map[string]interface{}{paramId: identityProviderId}}); err != nil {
 		return diag.FromErr(createDescriptiveError(err))
 	}
 	return nil
