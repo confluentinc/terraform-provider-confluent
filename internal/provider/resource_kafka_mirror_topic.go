@@ -39,7 +39,8 @@ var disallowedTransitionErrorMessage = "the following list of transitions is sup
 	fmt.Sprintf("\n* %q -> %q", stateActive, statePromoted) +
 	fmt.Sprintf("\n* %q -> %q", stateActive, stateFailedOver) +
 	fmt.Sprintf("\n* %q -> %q", statePaused, statePromoted) +
-	fmt.Sprintf("\n* %q -> %q", statePaused, stateFailedOver)
+	fmt.Sprintf("\n* %q -> %q", statePaused, stateFailedOver) +
+	fmt.Sprintf("\n* %q -> %q", stateFailed, stateFailedOver)
 
 func kafkaMirrorTopicResource() *schema.Resource {
 	return &schema.Resource{
@@ -277,7 +278,7 @@ func kafkaMirrorTopicUpdate(ctx context.Context, d *schema.ResourceData, meta in
 		newStatus := newValue.(string)
 		shouldPauseKafkaMirrorTopic := (oldStatus == stateActive) && (newStatus == statePaused)
 		shouldResumeKafkaMirrorTopic := (oldStatus == statePaused) && (newStatus == stateActive)
-		shouldFailoverKafkaMirrorTopic := (oldStatus == stateActive || oldStatus == statePaused) && (newStatus == stateFailedOver)
+		shouldFailoverKafkaMirrorTopic := (oldStatus == stateActive || oldStatus == statePaused || oldStatus == stateFailed) && (newStatus == stateFailedOver)
 		shouldPromoteKafkaMirrorTopic := (oldStatus == stateActive || oldStatus == statePaused) && (newStatus == statePromoted)
 		if shouldPauseKafkaMirrorTopic {
 			tflog.Debug(ctx, fmt.Sprintf("Pausing Kafka Mirror Topic %q", d.Id()), map[string]interface{}{kafkaMirrorTopicLoggingKey: d.Id()})

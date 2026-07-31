@@ -438,7 +438,8 @@ func trySchemaLookup(ctx context.Context, diff *schema.ResourceDiff, c *SchemaRe
 
 	tflog.Debug(ctx, fmt.Sprintf("Customizing diff new Schema: %s", createSchemaRequestJson))
 
-	registeredSchema, schemaExists, err := schemaLookup(ctx, c, createSchemaRequest, subjectName)
+	schemaIdentifier := diff.Get(paramSchemaIdentifier).(int)
+	_, schemaExists, err := schemaLookup(ctx, c, createSchemaRequest, subjectName, schemaIdentifier)
 	if err != nil {
 		return false, err
 	}
@@ -447,14 +448,9 @@ func trySchemaLookup(ctx context.Context, diff *schema.ResourceDiff, c *SchemaRe
 		return false, nil
 	}
 
-	schemaIdentifier := diff.Get(paramSchemaIdentifier).(int)
-	if int(registeredSchema.GetId()) == schemaIdentifier {
-		// Two schemas that are semantically equivalent
-		// https://docs.confluent.io/platform/current/schema-registry/serdes-develop/index.html#schema-normalization
-		return true, nil
-	}
-
-	return false, nil
+	// Two schemas that are semantically equivalent
+	// https://docs.confluent.io/platform/current/schema-registry/serdes-develop/index.html#schema-normalization
+	return true, nil
 }
 
 func schemaValidateCheck(ctx context.Context, c *SchemaRegistryRestClient, createSchemaRequest *schemaregistryv1.RegisterSchemaRequest, subjectName string) error {
@@ -477,24 +473,26 @@ func schemaValidateCheck(ctx context.Context, c *SchemaRegistryRestClient, creat
 	return nil
 }
 
-func schemaLookup(ctx context.Context, c *SchemaRegistryRestClient, createSchemaRequest *schemaregistryv1.RegisterSchemaRequest, subjectName string) (*schemaregistryv1.Schema, bool, error) {
+func schemaLookup(ctx context.Context, c *SchemaRegistryRestClient, createSchemaRequest *schemaregistryv1.RegisterSchemaRequest, subjectName string, desiredSchemaId int) (*schemaregistryv1.Schema, bool, error) {
 	// https://github.com/confluentinc/terraform-provider-confluent/issues/196#issuecomment-1426437871
-	// Try both normalize=false and normalize=true
+	// Try both normalize=false and normalize=true. A match only counts if its id is the one we're
+	// actually looking for (see #333): otherwise an older/different schema version registered under
+	// the same subject can be mistaken for the desired one, silently masking real drift.
 	nonNormalizedSchema, schemaExists, err := schemaLookupByNormalize(ctx, c, createSchemaRequest, subjectName, false)
 	if err != nil {
 		return nil, false, fmt.Errorf("error looking up Schema: %s", createDescriptiveError(err))
 	}
-	if schemaExists {
-		return nonNormalizedSchema, schemaExists, nil
+	if schemaExists && int(nonNormalizedSchema.GetId()) == desiredSchemaId {
+		return nonNormalizedSchema, true, nil
 	}
 	normalizedSchema, schemaExists, err := schemaLookupByNormalize(ctx, c, createSchemaRequest, subjectName, true)
 	if err != nil {
 		return nil, false, fmt.Errorf("error looking up Schema: %s", createDescriptiveError(err))
 	}
-	if schemaExists {
-		return normalizedSchema, schemaExists, nil
+	if schemaExists && int(normalizedSchema.GetId()) == desiredSchemaId {
+		return normalizedSchema, true, nil
 	}
-	// Requested schema doesn't exist
+	// Neither lookup found a schema matching the desired id
 	return nil, false, nil
 }
 
