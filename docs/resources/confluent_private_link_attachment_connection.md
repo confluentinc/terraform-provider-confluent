@@ -28,7 +28,7 @@ resource "confluent_private_link_attachment_connection" "aws" {
   }
 }
 
-resource confluent_private_link_attachment_connection "azure" {
+resource "confluent_private_link_attachment_connection" "azure" {
   display_name = "prod-azure-central-us-az1-connection"
   environment {
     id = "env-12345"
@@ -41,7 +41,7 @@ resource confluent_private_link_attachment_connection "azure" {
   }
 }
 
-resource confluent_private_link_attachment_connection "gcp" {
+resource "confluent_private_link_attachment_connection" "gcp" {
   display_name = "prod-gcp-uscentral1-connection"
   environment {
     id = "env-12345"

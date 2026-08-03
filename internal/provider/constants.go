@@ -214,6 +214,8 @@ const (
 	localSecurityProtocolConfigKey                       = "local.security.protocol"
 	lowAvailability                                      = "LOW"
 	managedStorageSpecKind                               = "Managed"
+	metadataColumnNamingSchemeDefault                    = "DEFAULT"
+	metadataColumnNamingSchemePortable                   = "PORTABLE"
 	modeImport                                           = "IMPORT"
 	modeReadOnly                                         = "READONLY"
 	modeReadOnlyOverride                                 = "READONLY_OVERRIDE"
@@ -293,6 +295,7 @@ const (
 	paramClientSecret                                    = "client_secret"
 	paramCloud                                           = "cloud"
 	paramClouds                                          = "clouds"
+	paramCluster                                         = "kafka_cluster"
 	paramClusterLink                                     = "cluster_link"
 	paramClusterLinkId                                   = "cluster_link_id"
 	paramClusters                                        = "clusters"
@@ -458,6 +461,7 @@ const (
 	paramMaxCfu                                          = "max_cfu"
 	paramMaxEcku                                         = "max_ecku"
 	paramMetadata                                        = "metadata"
+	paramMetadataColumnNamingScheme                      = "metadata_column_naming_scheme"
 	paramMetadataComment                                 = "column_metadata_comment"
 	paramMetadataKey                                     = "column_metadata_key"
 	paramMetadataKind                                    = "column_metadata_kind"
@@ -689,9 +693,11 @@ If compatibility is set to one of the TRANSITIVE types, the check is against all
 	srcmV2ApiVersion                         = "srcm/v2"
 	srcmV3ApiVersion                         = "srcm/v3"
 	stateActive                              = "ACTIVE"
+	stateAltering                            = "ALTERING"
 	stateApplied                             = "APPLIED"
 	stateCompleted                           = "COMPLETED"
 	stateCreated                             = "CREATED"
+	stateCreating                            = "CREATING"
 	stateDegraded                            = "DEGRADED"
 	stateDeProvisioning                      = "DEPROVISIONING"
 	stateDisconnected                        = "DISCONNECTED"
@@ -705,6 +711,9 @@ If compatibility is set to one of the TRANSITIVE types, the check is against all
 	stateInactive                            = "INACTIVE"
 	stateInProgress                          = "IN_PROGRESS"
 	statementsAPICreateTimeout               = 6 * time.Hour
+	materializedTableAPICreateTimeout        = 6 * time.Hour
+	materializedTableAPIUpdateTimeout        = 20 * time.Minute
+	materializedTableAPIDeleteTimeout        = 20 * time.Minute
 	statePaused                              = "PAUSED"
 	statePending                             = "PENDING"
 	statePendingAccept                       = "PENDING_ACCEPT"

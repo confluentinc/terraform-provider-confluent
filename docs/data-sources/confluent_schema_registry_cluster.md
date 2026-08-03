@@ -12,6 +12,8 @@ description: |-
 
 `data.confluent_schema_registry_cluster` describes a Schema Registry cluster data source.
 
+!> **Warning:** A Schema Registry cluster is provisioned automatically when a `confluent_environment` resource has a `stream_governance` block configured. If you're provisioning the `confluent_environment` resource and referencing `data.confluent_schema_registry_cluster` in the same Terraform apply command, add the `confluent_environment` resource to the `depends_on` argument of the data source. This ensures the Schema Registry cluster exists before the data source is queried.
+
 ## Example Usage
 
 ```terraform
@@ -20,11 +22,27 @@ provider "confluent" {
   cloud_api_secret = var.confluent_cloud_api_secret # optionally use CONFLUENT_CLOUD_API_SECRET env var
 }
 
+# If the environment (and its Schema Registry cluster) is provisioned in the
+# same Terraform apply command, add it to the data source's depends_on. This
+# ensures the Schema Registry cluster has finished provisioning before the
+# data source is queried, even though the environment.id reference below
+# already creates an implicit ordering dependency.
+resource "confluent_environment" "staging" {
+  display_name = "staging"
+
+  stream_governance {
+    package = "ESSENTIALS"
+  }
+}
+
 # Loads the only Schema Registry cluster in the target environment
 data "confluent_schema_registry_cluster" "example_using_env_id" {
   environment {
-    id = "env-xyz456"
+    id = confluent_environment.staging.id
   }
+  depends_on = [
+    confluent_environment.staging
+  ]
 }
 
 output "example_using_env_id" {
