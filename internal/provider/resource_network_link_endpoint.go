@@ -436,7 +436,7 @@ func networkLinkServiceSchema() *schema.Schema {
 					Type:        schema.TypeString,
 					Required:    true,
 					ForceNew:    true,
-					Description: "The unique identifier for the network_link_service.",
+					Description: "The unique identifier for the network link service.",
 				},
 			},
 		},
