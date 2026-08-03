@@ -263,7 +263,7 @@ func identityProviderSchema() *schema.Schema {
 					Type:        schema.TypeString,
 					Required:    true,
 					ForceNew:    true,
-					Description: "The unique identifier for the identity_provider.",
+					Description: "The unique identifier for the identity provider.",
 				},
 			},
 		},
