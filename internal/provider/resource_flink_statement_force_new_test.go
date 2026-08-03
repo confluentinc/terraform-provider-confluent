@@ -23,6 +23,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/stretchr/testify/require"
 	"github.com/walkerus/go-wiremock"
 )
 
@@ -33,6 +34,15 @@ const (
 	scenarioStateStatementV2HasBeenDeleted  = "The statement (v2) has been deleted"
 	statementPropertiesForceNewScenarioName = "confluent_flink_statement Properties ForceNew Lifecycle"
 )
+
+func TestFlinkStatementPropertyReplacementSchema(t *testing.T) {
+	statementResource := flinkStatementResource()
+
+	require.True(t, statementResource.Schema[paramProperties].ForceNew,
+		"ordinary property changes must replace the statement")
+	require.True(t, statementResource.Schema[paramPropertiesSensitive].ForceNew,
+		"sensitive property changes must replace the statement because the Flink API ignores property updates")
+}
 
 // Verifies that changing `properties` drives a real destroy-then-recreate, not an in-place
 // update, and that the resulting state reflects the new properties value.
