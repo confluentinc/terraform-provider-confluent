@@ -90,12 +90,8 @@ func networkLinkServiceCreate(ctx context.Context, d *schema.ResourceData, meta 
 		acceptObj.SetNetworks(convertToStringSlice(acceptBlock[paramNetworks].(*schema.Set).List()))
 		spec.SetAccept(*acceptObj)
 	}
-	if _, ok := d.GetOk(paramDescription); ok {
-		spec.SetDescription(d.Get(paramDescription).(string))
-	}
-	if _, ok := d.GetOk(paramDisplayName); ok {
-		spec.SetDisplayName(d.Get(paramDisplayName).(string))
-	}
+	spec.SetDescription(d.Get(paramDescription).(string))
+	spec.SetDisplayName(d.Get(paramDisplayName).(string))
 
 	createNetworkLinkServiceRequest := &networkingv1.NetworkingV1NetworkLinkService{Spec: spec}
 
