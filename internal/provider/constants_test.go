@@ -787,6 +787,7 @@ const (
 	scenarioStateNetworkLinkEndpointHasBeenDeleted                      = "A new network link endpoint has been just deleted"
 	scenarioStateNetworkLinkEndpointHasBeenUpdated                      = "A new network link endpoint has been just updated"
 	scenarioStateNetworkLinkServiceHasBeenCreated                       = "A new network link service has been just created"
+	scenarioStateNetworkLinkServiceHasBeenDeleted                       = "A new network link service has been just deleted"
 	scenarioStateNetworkLinkServiceHasBeenUpdated                       = "A new network link service has been just updated"
 	scenarioStateOAuthSchemaCreated                                     = "OAuth Schema Created"
 	scenarioStatePluginHasBeenCreated                                   = "The plugin has been just created"
