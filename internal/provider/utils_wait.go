@@ -265,25 +265,6 @@ func waitForFlinkStatementToProvision(ctx context.Context, c *FlinkRestClient, s
 	return nil
 }
 
-func waitForNetworkLinkEndpointToProvision(ctx context.Context, c *Client, environmentId, nleId string) error {
-	delay, pollInterval := getDelayAndPollInterval(5*time.Second, 1*time.Minute, c.isAcceptanceTestMode)
-	stateConf := &resource.StateChangeConf{
-		Pending: []string{stateProvisioning},
-		Target:  []string{stateReady, statePendingAccept, stateInactive},
-		Refresh: nleProvisionStatus(c.networkingV1ApiContext(ctx), c, environmentId, nleId),
-		Timeout: networkingAPICreateTimeout,
-		// TODO: increase delay
-		Delay:        delay,
-		PollInterval: pollInterval,
-	}
-
-	tflog.Debug(ctx, fmt.Sprintf("Waiting for Network Link Endpoint %q provisioning status to become %q", nleId, stateReady), map[string]interface{}{networkLinkEndpointLoggingKey: nleId})
-	if _, err := stateConf.WaitForStateContext(c.networkingV1ApiContext(ctx)); err != nil {
-		return err
-	}
-	return nil
-}
-
 func waitForDnsRecordToProvision(ctx context.Context, c *Client, environmentId, dnsRecordId string) error {
 	delay, pollInterval := getDelayAndPollInterval(5*time.Second, 1*time.Minute, c.isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
@@ -681,24 +662,6 @@ func waitForPeeringToBeDeleted(ctx context.Context, c *Client, environmentId, pe
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Waiting for Peering %q to be deleted", peeringId), map[string]interface{}{peeringLoggingKey: peeringId})
-	if _, err := stateConf.WaitForStateContext(c.networkingV1ApiContext(ctx)); err != nil {
-		return err
-	}
-	return nil
-}
-
-func waitForNetworkLinkEndpointToBeDeleted(ctx context.Context, c *Client, environmentId, nleId string) error {
-	delay, pollInterval := getDelayAndPollInterval(1*time.Minute, 1*time.Minute, c.isAcceptanceTestMode)
-	stateConf := &resource.StateChangeConf{
-		Pending:      []string{stateInProgress},
-		Target:       []string{stateDone},
-		Refresh:      nleDeleteStatus(c.networkingV1ApiContext(ctx), c, environmentId, nleId),
-		Timeout:      networkingAPIDeleteTimeout,
-		Delay:        delay,
-		PollInterval: pollInterval,
-	}
-
-	tflog.Debug(ctx, fmt.Sprintf("Waiting for Network Link Endpoint %q to be deleted", nleId), map[string]interface{}{networkLinkEndpointLoggingKey: nleId})
 	if _, err := stateConf.WaitForStateContext(c.networkingV1ApiContext(ctx)); err != nil {
 		return err
 	}
@@ -1423,25 +1386,6 @@ func computePoolProvisionStatus(ctx context.Context, c *Client, environmentId st
 	}
 }
 
-func nleProvisionStatus(ctx context.Context, c *Client, environmentId string, nleId string) resource.StateRefreshFunc {
-	return func() (result interface{}, s string, err error) {
-		nle, resp, err := executeNLERead(c.networkingV1ApiContext(ctx), c, nleId, environmentId)
-		if err != nil {
-			tflog.Warn(ctx, fmt.Sprintf("Error reading Network Link Endpoint %q: %s", nleId, createDescriptiveError(err, resp)), map[string]interface{}{networkLinkEndpointLoggingKey: nleId})
-			return nil, stateUnknown, err
-		}
-
-		tflog.Debug(ctx, fmt.Sprintf("Waiting for Network Link Endpoint %q provisioning status to become %q: current status is %q", nleId, stateReady, nle.Status.GetPhase()), map[string]interface{}{networkLinkEndpointLoggingKey: nleId})
-		if nle.Status.GetPhase() == stateProvisioning || nle.Status.GetPhase() == stateReady || nle.Status.GetPhase() == stateInactive || nle.Status.GetPhase() == statePendingAccept {
-			return nle, nle.Status.GetPhase(), nil
-		} else if nle.Status.GetPhase() == stateFailed {
-			return nil, stateFailed, fmt.Errorf("network link endpoint %q provisioning status is %q: %s", nleId, stateFailed, nle.Status.GetErrorMessage())
-		}
-		// Network is in an unexpected state
-		return nil, stateUnexpected, fmt.Errorf("network link endpoint %q is an unexpected state %q: %s", nleId, nle.Status.GetPhase(), nle.Status.GetErrorMessage())
-	}
-}
-
 func connectorProvisionStatus(ctx context.Context, c *Client, displayName, environmentId, clusterId string) resource.StateRefreshFunc {
 	return func() (result interface{}, s string, err error) {
 		connector, resp, err := executeConnectorStatusCreate(c.connectV1ApiContext(ctx), c, displayName, environmentId, clusterId)
@@ -1700,26 +1644,6 @@ func peeringDeleteStatus(ctx context.Context, c *Client, environmentId, peeringI
 		}
 		tflog.Debug(ctx, fmt.Sprintf("Performing Peering %q deletion process: Peering %d's status is %q", peeringId, resp.StatusCode, peering.Status.GetPhase()), map[string]interface{}{peeringLoggingKey: peeringId})
 		return peering, stateInProgress, nil
-	}
-}
-
-func nleDeleteStatus(ctx context.Context, c *Client, environmentId, nleId string) resource.StateRefreshFunc {
-	return func() (result interface{}, s string, err error) {
-		nle, resp, err := executeNLERead(c.networkingV1ApiContext(ctx), c, nleId, environmentId)
-		if err != nil {
-			tflog.Warn(ctx, fmt.Sprintf("Error reading Network Link Endpoint %q: %s", nleId, createDescriptiveError(err, resp)), map[string]interface{}{networkLinkEndpointLoggingKey: nleId})
-
-			isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
-			if isResourceNotFound {
-				tflog.Debug(ctx, fmt.Sprintf("Finishing Network Link Endpoint %q deletion process: Received %d status code when reading %q nle", nleId, resp.StatusCode, nleId), map[string]interface{}{networkLinkEndpointLoggingKey: nleId})
-				return 0, stateDone, nil
-			} else {
-				tflog.Debug(ctx, fmt.Sprintf("Exiting Network Link Endpoint %q deletion process: Failed when reading nle: %s: %s", nleId, createDescriptiveError(err, resp), nle.Status.GetErrorMessage()), map[string]interface{}{networkLinkEndpointLoggingKey: nleId})
-				return nil, stateFailed, err
-			}
-		}
-		tflog.Debug(ctx, fmt.Sprintf("Performing Network Link Endpoint %q deletion process: Network Link Endpoint %d's status is %q", nleId, resp.StatusCode, nle.Status.GetPhase()), map[string]interface{}{networkLinkEndpointLoggingKey: nleId})
-		return nle, stateInProgress, nil
 	}
 }
 
