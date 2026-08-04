@@ -32,11 +32,6 @@ import (
 	networkingv1 "github.com/confluentinc/ccloud-sdk-go-v2/networking/v1"
 )
 
-// State constants for async provisioning
-const (
-	stateDisconnecting = "DISCONNECTING"
-)
-
 func networkLinkEndpointResource() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: networkLinkEndpointCreate,
@@ -60,7 +55,7 @@ func networkLinkEndpointResource() *schema.Resource {
 				Description: "The name of the network link endpoint",
 			},
 			paramEnvironment:        environmentSchema(),
-			paramNetwork:            networkSchema(),
+			paramNetwork:            requiredNetworkSchema(),
 			paramNetworkLinkService: networkLinkServiceSchema(),
 			paramResourceName: {
 				Type:        schema.TypeString,
@@ -299,7 +294,7 @@ func networkLinkEndpointProvisionStatus(ctx context.Context, c *Client, environm
 		}
 
 		currentPhase := networkLinkEndpoint.Status.GetPhase()
-		tflog.Debug(ctx, fmt.Sprintf("Waiting for network link endpoint %q provisioning status to become one of %v: current status is %q", networkLinkEndpointId, []string{statePendingAccept, stateReady, stateExpired, stateDisconnecting, stateInactive}, currentPhase), map[string]interface{}{networkLinkEndpointLoggingKey: networkLinkEndpointId})
+		tflog.Debug(ctx, fmt.Sprintf("Waiting for network link endpoint %q provisioning status to become one of %v: current status is %q", networkLinkEndpointId, []string{statePendingAccept, stateReady, stateInactive}, currentPhase), map[string]interface{}{networkLinkEndpointLoggingKey: networkLinkEndpointId})
 
 		// Check for pending states (still provisioning)
 		switch currentPhase {
@@ -312,10 +307,6 @@ func networkLinkEndpointProvisionStatus(ctx context.Context, c *Client, environm
 		case statePendingAccept:
 			return networkLinkEndpoint, currentPhase, nil
 		case stateReady:
-			return networkLinkEndpoint, currentPhase, nil
-		case stateExpired:
-			return networkLinkEndpoint, currentPhase, nil
-		case stateDisconnecting:
 			return networkLinkEndpoint, currentPhase, nil
 		case stateInactive:
 			return networkLinkEndpoint, currentPhase, nil
@@ -334,6 +325,17 @@ func networkLinkEndpointProvisionStatus(ctx context.Context, c *Client, environm
 				}
 			}
 			return nil, stateFailed, fmt.Errorf("network link endpoint %q provisioning status is %q: %s", networkLinkEndpointId, stateFailed, errorMsg)
+		case stateExpired:
+			errorMsg := networkLinkEndpoint.Status.GetErrorMessage()
+			if errorMsg == "" {
+				statusBytes, marshalErr := json.Marshal(networkLinkEndpoint.Status)
+				if marshalErr == nil && len(statusBytes) > 0 {
+					errorMsg = fmt.Sprintf("no error_message provided by the API; status: %s", statusBytes)
+				} else {
+					errorMsg = "no error_message provided by the API"
+				}
+			}
+			return nil, stateExpired, fmt.Errorf("network link endpoint %q provisioning status is %q: %s", networkLinkEndpointId, stateExpired, errorMsg)
 		case stateDisconnected:
 			errorMsg := networkLinkEndpoint.Status.GetErrorMessage()
 			if errorMsg == "" {
@@ -357,14 +359,14 @@ func waitForNetworkLinkEndpointToProvision(ctx context.Context, c *Client, envir
 	delay, pollInterval := getDelayAndPollInterval(5*time.Second, 1*time.Minute, c.isAcceptanceTestMode)
 	stateConf := &resource.StateChangeConf{
 		Pending:      []string{stateProvisioning},
-		Target:       []string{statePendingAccept, stateReady, stateExpired, stateDisconnecting, stateInactive},
+		Target:       []string{statePendingAccept, stateReady, stateInactive},
 		Refresh:      networkLinkEndpointProvisionStatus(ctx, c, environmentId, networkLinkEndpointId),
 		Timeout:      networkingAPICreateTimeout,
 		Delay:        delay,
 		PollInterval: pollInterval,
 	}
 
-	tflog.Debug(ctx, fmt.Sprintf("Waiting for network link endpoint %q provisioning status to become one of %v", networkLinkEndpointId, []string{statePendingAccept, stateReady, stateExpired, stateDisconnecting, stateInactive}), map[string]interface{}{networkLinkEndpointLoggingKey: networkLinkEndpointId})
+	tflog.Debug(ctx, fmt.Sprintf("Waiting for network link endpoint %q provisioning status to become one of %v", networkLinkEndpointId, []string{statePendingAccept, stateReady, stateInactive}), map[string]interface{}{networkLinkEndpointLoggingKey: networkLinkEndpointId})
 	if _, err := stateConf.WaitForStateContext(ctx); err != nil {
 		return err
 	}
@@ -406,26 +408,6 @@ func waitForNetworkLinkEndpointToBeDeleted(ctx context.Context, c *Client, envir
 		return err
 	}
 	return nil
-}
-func networkSchema() *schema.Schema {
-	return &schema.Schema{
-		Type: schema.TypeList,
-		Elem: &schema.Resource{
-			Schema: map[string]*schema.Schema{
-				paramId: {
-					Type:        schema.TypeString,
-					Required:    true,
-					ForceNew:    true,
-					Description: "The unique identifier for the network.",
-				},
-			},
-		},
-		Required:    true,
-		MinItems:    1,
-		MaxItems:    1,
-		ForceNew:    true,
-		Description: "The network to which this belongs.",
-	}
 }
 func networkLinkServiceSchema() *schema.Schema {
 	return &schema.Schema{
