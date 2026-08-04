@@ -85,10 +85,20 @@ func TestAccNetworkLinkService(t *testing.T) {
 
 	_ = wiremockClient.StubFor(wiremock.Delete(wiremock.URLPathEqualTo(networkLinkServiceReadUrlPath)).
 		InScenario(networkLinkServiceResourceScenarioName).
+		WillSetStateTo(scenarioStateNetworkLinkServiceHasBeenDeleted).
 		WillReturn(
 			"",
 			contentTypeJSONHeader,
 			http.StatusNoContent,
+		))
+
+	_ = wiremockClient.StubFor(wiremock.Get(wiremock.URLPathEqualTo(networkLinkServiceReadUrlPath)).
+		InScenario(networkLinkServiceResourceScenarioName).
+		WhenScenarioStateIs(scenarioStateNetworkLinkServiceHasBeenDeleted).
+		WillReturn(
+			"",
+			contentTypeJSONHeader,
+			http.StatusNotFound,
 		))
 
 	resource.Test(t, resource.TestCase{
