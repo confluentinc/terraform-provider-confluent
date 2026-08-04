@@ -56,7 +56,7 @@ func networkLinkServiceResource() *schema.Resource {
 				Description: "The name of the network link service",
 			},
 			paramEnvironment: environmentSchema(),
-			paramNetwork:     networkSchema(),
+			paramNetwork:     requiredNetworkSchema(),
 			paramResourceName: {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -431,25 +431,5 @@ func acceptSchema() *schema.Schema {
 		Computed:    true,
 		MaxItems:    1,
 		Description: "Network Link Service Accept policy",
-	}
-}
-func networkSchema() *schema.Schema {
-	return &schema.Schema{
-		Type: schema.TypeList,
-		Elem: &schema.Resource{
-			Schema: map[string]*schema.Schema{
-				paramId: {
-					Type:        schema.TypeString,
-					Required:    true,
-					ForceNew:    true,
-					Description: "The unique identifier for the network.",
-				},
-			},
-		},
-		Required:    true,
-		MinItems:    1,
-		MaxItems:    1,
-		ForceNew:    true,
-		Description: "The network to which this belongs.",
 	}
 }
