@@ -416,7 +416,7 @@ func acceptSchema() *schema.Schema {
 					Elem:        &schema.Schema{Type: schema.TypeString},
 					Optional:    true,
 					Computed:    true,
-					Description: "List of environments from which connections can be accepted. All networks win the list of environment will be allowed.",
+					Description: "List of environments from which connections can be accepted. All networks within the list of environment will be allowed.",
 				},
 				paramNetworks: {
 					Type:        schema.TypeSet,
