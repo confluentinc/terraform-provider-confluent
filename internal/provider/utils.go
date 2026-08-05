@@ -1079,6 +1079,12 @@ func suppressSameCrnPattern(k, old, new string, d *schema.ResourceData) bool {
 	return normalizeCrn(old) == normalizeCrn(new)
 }
 
+// suppressSameValueIgnoringCase suppresses diffs when the two values differ only
+// by case, for example "AWS" == "aws".
+func suppressSameValueIgnoringCase(k, old, new string, d *schema.ResourceData) bool {
+	return strings.EqualFold(old, new)
+}
+
 func ptr(s string) *string {
 	return &s
 }
