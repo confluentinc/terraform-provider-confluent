@@ -46,6 +46,8 @@ The following arguments are supported:
 In addition to the arguments listed above, the following computed attributes are exported:
 
 * `id` - (String) The ID of the Connect Artifact.
+* `status` - (String) Status of the Connect Artifact.
+* `error_message` - (String) An error message for the Connect Artifact when the status is `FAILED`.
 
 ## Import
 

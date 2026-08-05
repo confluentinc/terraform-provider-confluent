@@ -60,3 +60,5 @@ In addition to the arguments listed above, the following computed attributes are
 * `display_name` - (String) The unique name of the Connect Artifact per cloud, environment scope.
 * `content_format` - (String) Archive format of the Connect Artifact. Supported formats are `JAR` and `ZIP`.
 * `description` - (String) Description of the Connect Artifact.
+* `status` - (String) Status of the Connect Artifact.
+* `error_message` - (String) An error message for the Connect Artifact when the status is `FAILED`.
