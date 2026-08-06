@@ -52,7 +52,7 @@ resource "confluent_dns_forwarder" "main" {
   gateway {
     id = confluent_network.main.gateway[0].id
   }
-  forward_via_gcp_zones {
+  forward_via_gcp_dns_zones {
     domain_mappings = {
         "example.com" = "zone-1,project-1"
     }
@@ -73,10 +73,10 @@ The following arguments are supported:
 - `domains` (Required String List) List of domains for the DNS forwarder to use.
 - `forward_via_ip` (Optional Configuration Block) supports the following:
   - `dns_server_ips` (Required String List) List of IP addresses of the DNS server.
-- `forward_via_gcp_zones` (Optional Configuration Block) supports the following:
+- `forward_via_gcp_dns_zones` (Optional Configuration Block) supports the following:
   - `domain_mappings` (Required Map List) List of Maps which contains the domain to zone and project mapping.
   
--> **Note:** The `forward_via_gcp_zones` and `forward_via_ip` blocks are mutually exclusive, and one of them must be provided.
+-> **Note:** The `forward_via_gcp_dns_zones` and `forward_via_ip` blocks are mutually exclusive, and one of them must be provided.
 
 -> **Note:** The zone and project must be specified in the correct order, separated by a comma, to ensure accurate `domain_mappings`.
 
