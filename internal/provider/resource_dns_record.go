@@ -126,7 +126,7 @@ func dnsRecordCreate(ctx context.Context, d *schema.ResourceData, meta interface
 	if err != nil {
 		return diag.Errorf("error creating DNS Record %q: error marshaling %#v to json: %s", d.Id(), createdDnsRecord, createDescriptiveError(err))
 	}
-	tflog.Debug(ctx, fmt.Sprintf("Finished creating DNS Record %q: %s", d.Id(), createdDnsRecordJson), map[string]interface{}{dnsRecordKey: d.Id()})
+	tflog.Debug(ctx, fmt.Sprintf("Finished creating DNS Record %q: %s", d.Id(), createdDnsRecordJson), map[string]interface{}{dnsRecordLoggingKey: d.Id()})
 
 	return dnsRecordRead(ctx, d, meta)
 }
@@ -137,7 +137,7 @@ func executeDnsRecordRead(ctx context.Context, c *Client, environmentId string, 
 }
 
 func dnsRecordRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	tflog.Debug(ctx, fmt.Sprintf("Reading DNS Record %q", d.Id()), map[string]interface{}{dnsRecordKey: d.Id()})
+	tflog.Debug(ctx, fmt.Sprintf("Reading DNS Record %q", d.Id()), map[string]interface{}{dnsRecordLoggingKey: d.Id()})
 
 	dnsRecordId := d.Id()
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
@@ -154,10 +154,10 @@ func readDnsRecordAndSetAttributes(ctx context.Context, d *schema.ResourceData, 
 
 	dnsRecord, resp, err := executeDnsRecordRead(c.networkingAccessPointV1ApiContext(ctx), c, environmentId, dnsRecordId)
 	if err != nil {
-		tflog.Warn(ctx, fmt.Sprintf("Error reading DNS Record %q: %s", dnsRecordId, createDescriptiveError(err)), map[string]interface{}{dnsRecordKey: d.Id()})
+		tflog.Warn(ctx, fmt.Sprintf("Error reading DNS Record %q: %s", dnsRecordId, createDescriptiveError(err)), map[string]interface{}{dnsRecordLoggingKey: d.Id()})
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
 		if isResourceNotFound && !d.IsNewResource() {
-			tflog.Warn(ctx, fmt.Sprintf("Removing DNS Record %q in TF state because DNS Record could not be found on the server", d.Id()), map[string]interface{}{dnsRecordKey: d.Id()})
+			tflog.Warn(ctx, fmt.Sprintf("Removing DNS Record %q in TF state because DNS Record could not be found on the server", d.Id()), map[string]interface{}{dnsRecordLoggingKey: d.Id()})
 			d.SetId("")
 			return nil, nil
 		}
@@ -168,19 +168,19 @@ func readDnsRecordAndSetAttributes(ctx context.Context, d *schema.ResourceData, 
 	if err != nil {
 		return nil, fmt.Errorf("error reading DNS Record %q: error marshaling %#v to json: %s", dnsRecordId, dnsRecord, createDescriptiveError(err))
 	}
-	tflog.Debug(ctx, fmt.Sprintf("Fetched DNS Record %q: %s", d.Id(), dnsRecordJson), map[string]interface{}{dnsRecordKey: d.Id()})
+	tflog.Debug(ctx, fmt.Sprintf("Fetched DNS Record %q: %s", d.Id(), dnsRecordJson), map[string]interface{}{dnsRecordLoggingKey: d.Id()})
 
 	if _, err := setDnsRecordAttributes(d, dnsRecord); err != nil {
 		return nil, createDescriptiveError(err)
 	}
 
-	tflog.Debug(ctx, fmt.Sprintf("Finished reading DNS Record %q", dnsRecordId), map[string]interface{}{dnsRecordKey: d.Id()})
+	tflog.Debug(ctx, fmt.Sprintf("Finished reading DNS Record %q", dnsRecordId), map[string]interface{}{dnsRecordLoggingKey: d.Id()})
 
 	return []*schema.ResourceData{d}, nil
 }
 
 func dnsRecordDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	tflog.Debug(ctx, fmt.Sprintf("Deleting DNS Record %q", d.Id()), map[string]interface{}{dnsRecordKey: d.Id()})
+	tflog.Debug(ctx, fmt.Sprintf("Deleting DNS Record %q", d.Id()), map[string]interface{}{dnsRecordLoggingKey: d.Id()})
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
 	c := meta.(*Client)
 
@@ -195,7 +195,7 @@ func dnsRecordDelete(ctx context.Context, d *schema.ResourceData, meta interface
 		return diag.Errorf("error waiting for DNS Record %q to be deleted: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
-	tflog.Debug(ctx, fmt.Sprintf("Finished deleting DNS Record %q", d.Id()), map[string]interface{}{dnsRecordKey: d.Id()})
+	tflog.Debug(ctx, fmt.Sprintf("Finished deleting DNS Record %q", d.Id()), map[string]interface{}{dnsRecordLoggingKey: d.Id()})
 
 	return nil
 }
@@ -228,7 +228,7 @@ func dnsRecordUpdate(ctx context.Context, d *schema.ResourceData, meta interface
 	if err != nil {
 		return diag.Errorf("error updating DNS Record %q: error marshaling %#v to json: %s", d.Id(), updateDnsRecordRequestJson, createDescriptiveError(err))
 	}
-	tflog.Debug(ctx, fmt.Sprintf("Updating DNS Record %q: %s", d.Id(), updateDnsRecordRequestJson), map[string]interface{}{dnsRecordKey: d.Id()})
+	tflog.Debug(ctx, fmt.Sprintf("Updating DNS Record %q: %s", d.Id(), updateDnsRecordRequestJson), map[string]interface{}{dnsRecordLoggingKey: d.Id()})
 
 	c := meta.(*Client)
 	req := c.networkingAccessPointV1Client.DNSRecordsNetworkingV1Api.UpdateNetworkingV1DnsRecord(c.networkingAccessPointV1ApiContext(ctx), d.Id()).NetworkingV1DnsRecordUpdate(*updateDnsRecord)
@@ -242,12 +242,12 @@ func dnsRecordUpdate(ctx context.Context, d *schema.ResourceData, meta interface
 	if err != nil {
 		return diag.Errorf("error updating DNS Record %q: error marshaling %#v to json: %s", d.Id(), updatedDnsRecord, createDescriptiveError(err))
 	}
-	tflog.Debug(ctx, fmt.Sprintf("Finished updating DNS Record %q: %s", d.Id(), updatedDnsRecordJson), map[string]interface{}{dnsRecordKey: d.Id()})
+	tflog.Debug(ctx, fmt.Sprintf("Finished updating DNS Record %q: %s", d.Id(), updatedDnsRecordJson), map[string]interface{}{dnsRecordLoggingKey: d.Id()})
 	return dnsRecordRead(ctx, d, meta)
 }
 
 func dnsRecordImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	tflog.Debug(ctx, fmt.Sprintf("Importing DNS Record %q", d.Id()), map[string]interface{}{dnsRecordKey: d.Id()})
+	tflog.Debug(ctx, fmt.Sprintf("Importing DNS Record %q", d.Id()), map[string]interface{}{dnsRecordLoggingKey: d.Id()})
 
 	envIDAndDnsRecordId := d.Id()
 	parts := strings.Split(envIDAndDnsRecordId, "/")
@@ -265,7 +265,7 @@ func dnsRecordImport(ctx context.Context, d *schema.ResourceData, meta interface
 	if _, err := readDnsRecordAndSetAttributes(ctx, d, meta, environmentId, dnsRecordId); err != nil {
 		return nil, fmt.Errorf("error importing DNS Record %q: %s", d.Id(), err)
 	}
-	tflog.Debug(ctx, fmt.Sprintf("Finished importing DNS Record %q", d.Id()), map[string]interface{}{dnsRecordKey: d.Id()})
+	tflog.Debug(ctx, fmt.Sprintf("Finished importing DNS Record %q", d.Id()), map[string]interface{}{dnsRecordLoggingKey: d.Id()})
 	return []*schema.ResourceData{d}, nil
 }
 
