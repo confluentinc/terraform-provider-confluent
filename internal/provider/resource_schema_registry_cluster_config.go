@@ -62,6 +62,13 @@ func schemaRegistryClusterConfigResource() *schema.Resource {
 				Optional: true,
 				Computed: true,
 			},
+			paramCompatibilityPolicy: {
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ValidateFunc: validation.StringInSlice(acceptedCompatibilityPolicies, false),
+				Description:  "The compatibility policy (STRICT or LENIENT) that governs how strictly compatibility is enforced when evolving schemas. Only supported by Confluent Schema Registry.",
+			},
 			paramNormalize: {
 				Type:        schema.TypeBool,
 				Optional:    true,
@@ -94,6 +101,10 @@ func schemaRegistryClusterConfigCreate(ctx context.Context, d *schema.ResourceDa
 	if _, ok := d.GetOk(paramCompatibilityLevel); ok {
 		createConfigRequest.SetCompatibility(d.Get(paramCompatibilityLevel).(string))
 		createConfigRequest.SetCompatibilityGroup(d.Get(paramCompatibilityGroup).(string))
+		hasConfigToUpdate = true
+	}
+	if compatibilityPolicy, ok := d.GetOk(paramCompatibilityPolicy); ok {
+		createConfigRequest.SetCompatibilityPolicy(compatibilityPolicy.(string))
 		hasConfigToUpdate = true
 	}
 	if _, ok := d.GetOk(paramNormalize); ok {
@@ -216,6 +227,10 @@ func readSchemaRegistryClusterConfigAndSetAttributes(ctx context.Context, d *sch
 		return nil, err
 	}
 
+	if err := d.Set(paramCompatibilityPolicy, schemaRegistryClusterConfig.GetCompatibilityPolicy()); err != nil {
+		return nil, err
+	}
+
 	if err := d.Set(paramNormalize, schemaRegistryClusterConfig.GetNormalize()); err != nil {
 		return nil, err
 	}
@@ -238,16 +253,19 @@ func readSchemaRegistryClusterConfigAndSetAttributes(ctx context.Context, d *sch
 }
 
 func schemaRegistryClusterConfigUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if d.HasChangesExcept(paramCredentials, paramCompatibilityLevel, paramCompatibilityGroup, paramNormalize) {
-		return diag.Errorf("error updating Schema Registry Cluster Config %q: only %q, %q, %q and %q blocks can be updated for Schema Registry Cluster Config", d.Id(), paramCredentials, paramCompatibilityLevel, paramCompatibilityGroup, paramNormalize)
+	if d.HasChangesExcept(paramCredentials, paramCompatibilityLevel, paramCompatibilityGroup, paramCompatibilityPolicy, paramNormalize) {
+		return diag.Errorf("error updating Schema Registry Cluster Config %q: only %q, %q, %q, %q and %q blocks can be updated for Schema Registry Cluster Config", d.Id(), paramCredentials, paramCompatibilityLevel, paramCompatibilityGroup, paramCompatibilityPolicy, paramNormalize)
 	}
-	if d.HasChange(paramCompatibilityLevel) || d.HasChange(paramCompatibilityGroup) || d.HasChange(paramNormalize) {
+	if d.HasChange(paramCompatibilityLevel) || d.HasChange(paramCompatibilityGroup) || d.HasChange(paramCompatibilityPolicy) || d.HasChange(paramNormalize) {
 		updateConfigRequest := schemaregistryv1.NewConfigUpdateRequest()
 		if compatibilityLevel := d.Get(paramCompatibilityLevel).(string); compatibilityLevel != "" {
 			updateConfigRequest.SetCompatibility(compatibilityLevel)
 		}
 		if compatibilityGroup := d.Get(paramCompatibilityGroup).(string); compatibilityGroup != "" {
 			updateConfigRequest.SetCompatibilityGroup(compatibilityGroup)
+		}
+		if compatibilityPolicy := d.Get(paramCompatibilityPolicy).(string); compatibilityPolicy != "" {
+			updateConfigRequest.SetCompatibilityPolicy(compatibilityPolicy)
 		}
 		if d.HasChange(paramNormalize) {
 			updateConfigRequest.SetNormalize(d.Get(paramNormalize).(bool))
