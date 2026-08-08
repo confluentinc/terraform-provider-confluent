@@ -312,10 +312,11 @@ func checkStubCount(t *testing.T, client *wiremock.Client, rule *wiremock.StubRu
 	}
 }
 
-// getNestedStreamGovernancePackageKey builds the flatmap address of the nested
-// stream_governance_config package attribute. It used to live in resource_environment.go,
-// which is now generated; only tests reference it, so it moves here rather than into
-// production code. Visible to data_source_environment_test.go and (under its build tag)
+// getNestedStreamGovernancePackageKey builds the flatmap address of the package
+// attribute nested inside the stream_governance block — "stream_governance.0.package".
+// It used to live in resource_environment.go, which is now generated; only tests
+// reference it, so it moves here rather than into production code. Visible to
+// data_source_environment_test.go and (under its build tag)
 // resource_environment_live_test.go, which share this package.
 func getNestedStreamGovernancePackageKey() string {
 	return fmt.Sprintf("%s.0.%s", paramStreamGovernance, paramPackage)
