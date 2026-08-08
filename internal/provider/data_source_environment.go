@@ -155,20 +155,6 @@ func environmentDataSourceReadUsingId(ctx context.Context, d *schema.ResourceDat
 	return nil
 }
 
-func setEnvironmentAttributes(d *schema.ResourceData, environment orgv2.OrgV2Environment) (*schema.ResourceData, error) {
-	if err := d.Set(paramDisplayName, environment.GetDisplayName()); err != nil {
-		return nil, createDescriptiveError(err)
-	}
-	if err := d.Set(paramResourceName, environment.Metadata.GetResourceName()); err != nil {
-		return nil, createDescriptiveError(err)
-	}
-	if err := setStringAttributeInListBlockOfSizeOne(paramStreamGovernance, paramPackage, environment.StreamGovernanceConfig.GetPackage(), d); err != nil {
-		return nil, createDescriptiveError(err)
-	}
-	d.SetId(environment.GetId())
-	return d, nil
-}
-
 func orgHasMultipleEnvsWithTargetDisplayName(environments []orgv2.OrgV2Environment, displayName string) bool {
 	var numberOfEnvironmentsWithTargetDisplayName = 0
 	for _, environment := range environments {
