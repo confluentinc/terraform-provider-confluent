@@ -82,7 +82,7 @@ func dnsRecordDataSourceRead(ctx context.Context, d *schema.ResourceData, meta i
 	dnsRecordId := d.Get(paramId).(string)
 	environmentId := extractStringValueFromBlock(d, paramEnvironment, paramId)
 
-	tflog.Debug(ctx, fmt.Sprintf("Reading DNS Record %q=%q", paramId, dnsRecordId), map[string]interface{}{dnsRecordKey: dnsRecordId})
+	tflog.Debug(ctx, fmt.Sprintf("Reading DNS Record %q=%q", paramId, dnsRecordId), map[string]interface{}{dnsRecordLoggingKey: dnsRecordId})
 
 	c := meta.(*Client)
 	request := c.networkingAccessPointV1Client.DNSRecordsNetworkingV1Api.GetNetworkingV1DnsRecord(c.networkingAccessPointV1ApiContext(ctx), dnsRecordId).Environment(environmentId)
@@ -94,7 +94,7 @@ func dnsRecordDataSourceRead(ctx context.Context, d *schema.ResourceData, meta i
 	if err != nil {
 		return diag.Errorf("error reading DNS Record %q: error marshaling %#v to json: %s", dnsRecordId, dnsRecord, createDescriptiveError(err))
 	}
-	tflog.Debug(ctx, fmt.Sprintf("Fetched DNS Record %q: %s", dnsRecordId, dnsRecordJson), map[string]interface{}{dnsRecordKey: dnsRecordId})
+	tflog.Debug(ctx, fmt.Sprintf("Fetched DNS Record %q: %s", dnsRecordId, dnsRecordJson), map[string]interface{}{dnsRecordLoggingKey: dnsRecordId})
 
 	if _, err := setDnsRecordAttributes(d, dnsRecord); err != nil {
 		return diag.FromErr(createDescriptiveError(err))
