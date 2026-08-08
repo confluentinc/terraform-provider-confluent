@@ -53,6 +53,16 @@ func connectArtifactDataSource() *schema.Resource {
 				Computed:    true,
 				Description: "Description of the Connect Artifact.",
 			},
+			paramStatus: {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Status of the Connect Artifact.",
+			},
+			paramErrorMessage: {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "An error message for the Connect Artifact when the status is FAILED.",
+			},
 		},
 	}
 }

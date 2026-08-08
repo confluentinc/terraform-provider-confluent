@@ -84,6 +84,11 @@ func connectArtifactResource() *schema.Resource {
 				Computed:    true,
 				Description: "Status of the Connect Artifact.",
 			},
+			paramErrorMessage: {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "An error message for the Connect Artifact when the status is FAILED.",
+			},
 		},
 	}
 }
@@ -249,6 +254,13 @@ func setConnectArtifactAttributes(d *schema.ResourceData, artifact camv1.CamV1Co
 		}
 	}
 
+	// Set the error_message attribute if it exists in the schema
+	if _, ok := d.GetOk(paramErrorMessage); ok && artifact.Status != nil {
+		if err := d.Set(paramErrorMessage, artifact.Status.GetErrorMessage()); err != nil {
+			return nil, err
+		}
+	}
+
 	d.SetId(artifact.GetId())
 
 	return d, nil
@@ -341,7 +353,7 @@ func connectArtifactProvisionStatus(ctx context.Context, c *Client, environmentI
 		if phase == stateProcessing || phase == stateWaitingForProcessing || phase == stateProvisioning || phase == stateProvisioned || phase == stateReady {
 			return artifact, phase, nil
 		} else if phase == stateFailed {
-			return nil, stateFailed, fmt.Errorf("connect artifact %q provisioning status is %q", artifactId, stateFailed)
+			return nil, stateFailed, fmt.Errorf("connect artifact %q provisioning status is %q: %s", artifactId, stateFailed, artifact.Status.GetErrorMessage())
 		}
 		// Connect Artifact is in an unexpected state
 		return nil, stateUnexpected, fmt.Errorf("connect artifact %q is in an unexpected state %q", artifactId, phase)
