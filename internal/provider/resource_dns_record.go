@@ -31,11 +31,6 @@ import (
 	networkingaccesspointv1 "github.com/confluentinc/ccloud-sdk-go-v2/networking-access-point/v1"
 )
 
-// Parameter name constants
-const (
-	paramPrivateLinkAccessPointResourceId = "id"
-)
-
 // Variant kind constants
 const (
 	kindPrivateLinkAccessPoint = "PrivateLinkAccessPoint"
