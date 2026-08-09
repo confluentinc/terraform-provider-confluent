@@ -563,6 +563,7 @@ const (
 	paramRestEndpointPrivate                             = "private_rest_endpoint"
 	paramRestEndpointPrivateRegional                     = "private_regional_rest_endpoints"
 	paramDataRetentionMs                                 = "data_retention_ms"
+	paramPrivateLinkAccessPointResourceId                = "id"
 	paramRetentionMs                                     = "retention_ms"
 	paramRoleName                                        = "role_name"
 	paramRoutes                                          = "routes"
