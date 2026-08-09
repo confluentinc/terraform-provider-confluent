@@ -30,8 +30,15 @@ import (
 // Exercises the GCP egress Private Service Connect variant. ALL_GOOGLE_APIS is a
 // Google-managed global target, so it needs no customer-side PSC service standing up
 // first -- unlike the AWS/Azure egress variants, which each need a real endpoint
-// service name from outside Confluent. The GCP gateway it attaches to is still
-// real infrastructure, so it is provisioned ahead of time and passed in by ID.
+// service name from outside Confluent.
+//
+// The gateway it attaches to is provisioned inline rather than pre-existing: creating
+// a confluent_network with connection_types = ["PRIVATELINK"] auto-provisions an
+// associated gateway, exposed as the network's own computed gateway[0].id --
+// confluent_access_point's and confluent_dns_record's own published docs reference it
+// exactly this way (confluent_network.main.gateway[0].id). So the whole chain is
+// created and destroyed by this test; nothing needs pre-provisioning beyond API
+// credentials.
 func TestAccAccessPointGcpEgressLive(t *testing.T) {
 	t.Parallel()
 
@@ -50,18 +57,16 @@ func TestAccAccessPointGcpEgressLive(t *testing.T) {
 		t.Fatal("CONFLUENT_CLOUD_API_KEY and CONFLUENT_CLOUD_API_SECRET must be set for live tests")
 	}
 
-	gatewayId := os.Getenv("CONFLUENT_CLOUD_GCP_GATEWAY_ID")
-	if gatewayId == "" {
-		t.Fatal("CONFLUENT_CLOUD_GCP_GATEWAY_ID must be set: a pre-provisioned GCP gateway to attach the access point to")
-	}
-
 	randomSuffix := rand.Intn(100000)
 	environmentResourceLabel := "test_live_env"
 	environmentDisplayName := fmt.Sprintf("tf-live-env-%d", randomSuffix)
+	networkResourceLabel := "test_live_network"
+	networkDisplayName := fmt.Sprintf("tf-live-network-%d", randomSuffix)
 	accessPointResourceLabel := "test_live_access_point"
 	accessPointDisplayName := fmt.Sprintf("tf-live-access-point-%d", randomSuffix)
 	accessPointDisplayNameUpdated := fmt.Sprintf("tf-live-access-point-updated-%d", randomSuffix)
 	fullAccessPointLabel := fmt.Sprintf("confluent_access_point.%s", accessPointResourceLabel)
+	fullNetworkLabel := fmt.Sprintf("confluent_network.%s", networkResourceLabel)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -69,13 +74,13 @@ func TestAccAccessPointGcpEgressLive(t *testing.T) {
 		CheckDestroy:      testAccCheckAccessPointLiveDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckAccessPointGcpEgressLiveConfig(endpoint, environmentResourceLabel, environmentDisplayName, accessPointResourceLabel, accessPointDisplayName, gatewayId, apiKey, apiSecret),
+				Config: testAccCheckAccessPointGcpEgressLiveConfig(endpoint, environmentResourceLabel, environmentDisplayName, networkResourceLabel, networkDisplayName, accessPointResourceLabel, accessPointDisplayName, apiKey, apiSecret),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckAccessPointLiveExists(fullAccessPointLabel),
 					resource.TestCheckResourceAttr(fullAccessPointLabel, "display_name", accessPointDisplayName),
 					resource.TestCheckResourceAttrSet(fullAccessPointLabel, "id"),
 					resource.TestCheckResourceAttrSet(fullAccessPointLabel, "environment.0.id"),
-					resource.TestCheckResourceAttr(fullAccessPointLabel, "gateway.0.id", gatewayId),
+					resource.TestCheckResourceAttrPair(fullAccessPointLabel, "gateway.0.id", fullNetworkLabel, "gateway.0.id"),
 					resource.TestCheckResourceAttr(fullAccessPointLabel, "gcp_egress_private_service_connect_endpoint.#", "1"),
 					resource.TestCheckResourceAttr(fullAccessPointLabel, "gcp_egress_private_service_connect_endpoint.0.private_service_connect_endpoint_target", "ALL_GOOGLE_APIS"),
 					resource.TestCheckResourceAttrSet(fullAccessPointLabel, "gcp_egress_private_service_connect_endpoint.0.private_service_connect_endpoint_connection_id"),
@@ -97,7 +102,7 @@ func TestAccAccessPointGcpEgressLive(t *testing.T) {
 				// display_name is the only field this variant can update without
 				// forcing recreation -- the gcp_egress block and the gateway it
 				// attaches to are both ForceNew.
-				Config: testAccCheckAccessPointGcpEgressLiveConfig(endpoint, environmentResourceLabel, environmentDisplayName, accessPointResourceLabel, accessPointDisplayNameUpdated, gatewayId, apiKey, apiSecret),
+				Config: testAccCheckAccessPointGcpEgressLiveConfig(endpoint, environmentResourceLabel, environmentDisplayName, networkResourceLabel, networkDisplayName, accessPointResourceLabel, accessPointDisplayNameUpdated, apiKey, apiSecret),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckAccessPointLiveExists(fullAccessPointLabel),
 					resource.TestCheckResourceAttr(fullAccessPointLabel, "display_name", accessPointDisplayNameUpdated),
@@ -107,7 +112,7 @@ func TestAccAccessPointGcpEgressLive(t *testing.T) {
 	})
 }
 
-func testAccCheckAccessPointGcpEgressLiveConfig(endpoint, environmentResourceLabel, environmentDisplayName, accessPointResourceLabel, accessPointDisplayName, gatewayId, apiKey, apiSecret string) string {
+func testAccCheckAccessPointGcpEgressLiveConfig(endpoint, environmentResourceLabel, environmentDisplayName, networkResourceLabel, networkDisplayName, accessPointResourceLabel, accessPointDisplayName, apiKey, apiSecret string) string {
 	return fmt.Sprintf(`
 	provider "confluent" {
 		endpoint         = "%s"
@@ -122,19 +127,32 @@ func testAccCheckAccessPointGcpEgressLiveConfig(endpoint, environmentResourceLab
 		}
 	}
 
+	resource "confluent_network" "%s" {
+		display_name     = "%s"
+		cloud            = "GCP"
+		region           = "us-central1"
+		connection_types = ["PRIVATELINK"]
+		environment {
+			id = confluent_environment.%s.id
+		}
+	}
+
 	resource "confluent_access_point" "%s" {
 		display_name = "%s"
 		environment {
 			id = confluent_environment.%s.id
 		}
 		gateway {
-			id = "%s"
+			id = confluent_network.%s.gateway[0].id
 		}
 		gcp_egress_private_service_connect_endpoint {
 			private_service_connect_endpoint_target = "ALL_GOOGLE_APIS"
 		}
 	}
-	`, endpoint, apiKey, apiSecret, environmentResourceLabel, environmentDisplayName, accessPointResourceLabel, accessPointDisplayName, environmentResourceLabel, gatewayId)
+	`, endpoint, apiKey, apiSecret,
+		environmentResourceLabel, environmentDisplayName,
+		networkResourceLabel, networkDisplayName, environmentResourceLabel,
+		accessPointResourceLabel, accessPointDisplayName, environmentResourceLabel, networkResourceLabel)
 }
 
 func testAccCheckAccessPointLiveExists(resourceName string) resource.TestCheckFunc {
