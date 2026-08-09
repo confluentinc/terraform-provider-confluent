@@ -78,10 +78,13 @@ func flinkComputePoolConfigCreate(ctx context.Context, d *schema.ResourceData, m
 
 	createFlinkComputePoolConfigRequest := flinkv2.NewFcpmV2OrgComputePoolConfigUpdate()
 	spec := flinkv2.NewFcpmV2OrgComputePoolConfigSpec()
+	// GetOkExists, not GetOk: GetOk reports a false bool as unset, so an explicit
+	// default_compute_pool_enabled = false could never be sent. It is deprecated in the SDK but is
+	// still the only way to tell "set to false" from "not set".
 	if _, ok := d.GetOkExists(paramDefaultPoolEnabled); ok {
 		spec.SetDefaultPoolEnabled(d.Get(paramDefaultPoolEnabled).(bool))
 	}
-	if _, ok := d.GetOkExists(paramMaxCFU); ok {
+	if _, ok := d.GetOk(paramMaxCFU); ok {
 		spec.SetDefaultPoolMaxCfu(int32(d.Get(paramMaxCFU).(int)))
 	}
 	createFlinkComputePoolConfigRequest.SetSpec(*spec)
