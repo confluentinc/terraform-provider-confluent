@@ -26,15 +26,15 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func orgComputePoolConfigDataSource() *schema.Resource {
+func flinkComputePoolConfigDataSource() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: orgComputePoolConfigDataSourceRead,
+		ReadContext: flinkComputePoolConfigDataSourceRead,
 		Schema: map[string]*schema.Schema{
 			paramId: {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Computed:    true,
-				Description: "The unique identifier for the org compute pool config.",
+				Description: "The unique identifier for the flink compute pool config.",
 			},
 			paramDefaultPoolEnabled: {
 				Type:        schema.TypeBool,
@@ -60,21 +60,21 @@ func orgComputePoolConfigDataSource() *schema.Resource {
 	}
 }
 
-func orgComputePoolConfigDataSourceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	tflog.Debug(ctx, "Reading org compute pool config")
+func flinkComputePoolConfigDataSourceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	tflog.Debug(ctx, "Reading flink compute pool config")
 
 	c := meta.(*Client)
-	orgComputePoolConfig, resp, err := executeOrgComputePoolConfigRead(c.flinkV2ApiContext(ctx), c)
+	flinkComputePoolConfig, resp, err := executeFlinkComputePoolConfigRead(c.flinkV2ApiContext(ctx), c)
 	if err != nil {
-		return diag.Errorf("error reading org compute pool config: %s", createDescriptiveError(err, resp))
+		return diag.Errorf("error reading flink compute pool config: %s", createDescriptiveError(err, resp))
 	}
-	orgComputePoolConfigJson, err := json.Marshal(orgComputePoolConfig)
+	flinkComputePoolConfigJson, err := json.Marshal(flinkComputePoolConfig)
 	if err != nil {
-		return diag.Errorf("error reading org compute pool config: error marshaling %#v to json: %s", orgComputePoolConfig, createDescriptiveError(err))
+		return diag.Errorf("error reading flink compute pool config: error marshaling %#v to json: %s", flinkComputePoolConfig, createDescriptiveError(err))
 	}
-	tflog.Debug(ctx, fmt.Sprintf("Fetched org compute pool config: %s", orgComputePoolConfigJson))
+	tflog.Debug(ctx, fmt.Sprintf("Fetched flink compute pool config: %s", flinkComputePoolConfigJson))
 
-	if _, err := setOrgComputePoolConfigAttributes(d, orgComputePoolConfig); err != nil {
+	if _, err := setFlinkComputePoolConfigAttributes(d, flinkComputePoolConfig); err != nil {
 		return diag.FromErr(createDescriptiveError(err))
 	}
 

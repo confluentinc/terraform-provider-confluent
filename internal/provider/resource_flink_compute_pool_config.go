@@ -29,16 +29,16 @@ import (
 	flinkv2 "github.com/confluentinc/ccloud-sdk-go-v2/flink/v2"
 )
 
-const orgComputePoolConfigLoggingKey = "org_compute_pool_config_id"
+const flinkComputePoolConfigLoggingKey = "flink_compute_pool_config_id"
 
-func orgComputePoolConfigResource() *schema.Resource {
+func flinkComputePoolConfigResource() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: orgComputePoolConfigCreate,
-		ReadContext:   orgComputePoolConfigRead,
-		UpdateContext: orgComputePoolConfigUpdate,
-		DeleteContext: orgComputePoolConfigDelete,
+		CreateContext: flinkComputePoolConfigCreate,
+		ReadContext:   flinkComputePoolConfigRead,
+		UpdateContext: flinkComputePoolConfigUpdate,
+		DeleteContext: flinkComputePoolConfigDelete,
 		Importer: &schema.ResourceImporter{
-			StateContext: orgComputePoolConfigImport,
+			StateContext: flinkComputePoolConfigImport,
 		},
 		Schema: map[string]*schema.Schema{
 			paramDefaultPoolEnabled: {
@@ -69,14 +69,14 @@ func orgComputePoolConfigResource() *schema.Resource {
 	}
 }
 
-// orgComputePoolConfigCreate sends the configured settings to the update endpoint.
-// The org compute pool config always exists -- the API has no POST, and no way to
+// flinkComputePoolConfigCreate sends the configured settings to the update endpoint.
+// The flink compute pool config always exists -- the API has no POST, and no way to
 // bring one into being -- so "create" here means "take ownership of the existing object
 // and set it to the configured values".
-func orgComputePoolConfigCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func flinkComputePoolConfigCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	c := meta.(*Client)
 
-	createOrgComputePoolConfigRequest := flinkv2.NewFcpmV2OrgComputePoolConfigUpdate()
+	createFlinkComputePoolConfigRequest := flinkv2.NewFcpmV2OrgComputePoolConfigUpdate()
 	spec := flinkv2.NewFcpmV2OrgComputePoolConfigSpec()
 	if _, ok := d.GetOkExists(paramDefaultPoolEnabled); ok {
 		spec.SetDefaultPoolEnabled(d.Get(paramDefaultPoolEnabled).(bool))
@@ -84,94 +84,94 @@ func orgComputePoolConfigCreate(ctx context.Context, d *schema.ResourceData, met
 	if _, ok := d.GetOkExists(paramMaxCFU); ok {
 		spec.SetDefaultPoolMaxCfu(int32(d.Get(paramMaxCFU).(int)))
 	}
-	createOrgComputePoolConfigRequest.SetSpec(*spec)
+	createFlinkComputePoolConfigRequest.SetSpec(*spec)
 
-	createOrgComputePoolConfigRequestJson, err := json.Marshal(createOrgComputePoolConfigRequest)
+	createFlinkComputePoolConfigRequestJson, err := json.Marshal(createFlinkComputePoolConfigRequest)
 	if err != nil {
-		return diag.Errorf("error creating org compute pool config: error marshaling %#v to json: %s", createOrgComputePoolConfigRequest, createDescriptiveError(err))
+		return diag.Errorf("error creating flink compute pool config: error marshaling %#v to json: %s", createFlinkComputePoolConfigRequest, createDescriptiveError(err))
 	}
-	tflog.Debug(ctx, fmt.Sprintf("Creating new org compute pool config: %s", createOrgComputePoolConfigRequestJson))
+	tflog.Debug(ctx, fmt.Sprintf("Creating new flink compute pool config: %s", createFlinkComputePoolConfigRequestJson))
 
-	createdOrgComputePoolConfig, resp, err := executeOrgComputePoolConfigUpdate(c.flinkV2ApiContext(ctx), c, createOrgComputePoolConfigRequest)
+	createdFlinkComputePoolConfig, resp, err := executeFlinkComputePoolConfigUpdate(c.flinkV2ApiContext(ctx), c, createFlinkComputePoolConfigRequest)
 	if err != nil {
-		return diag.Errorf("error creating org compute pool config: %s", createDescriptiveError(err, resp))
+		return diag.Errorf("error creating flink compute pool config: %s", createDescriptiveError(err, resp))
 	}
 
-	d.SetId(createdOrgComputePoolConfig.GetOrganizationId())
+	d.SetId(createdFlinkComputePoolConfig.GetOrganizationId())
 
-	tflog.Debug(ctx, fmt.Sprintf("Finished creating org compute pool config %q", d.Id()), map[string]interface{}{orgComputePoolConfigLoggingKey: d.Id()})
+	tflog.Debug(ctx, fmt.Sprintf("Finished creating flink compute pool config %q", d.Id()), map[string]interface{}{flinkComputePoolConfigLoggingKey: d.Id()})
 
-	return orgComputePoolConfigRead(ctx, d, meta)
+	return flinkComputePoolConfigRead(ctx, d, meta)
 }
 
-func orgComputePoolConfigRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	tflog.Debug(ctx, fmt.Sprintf("Reading org compute pool config %q", d.Id()), map[string]interface{}{orgComputePoolConfigLoggingKey: d.Id()})
+func flinkComputePoolConfigRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	tflog.Debug(ctx, fmt.Sprintf("Reading flink compute pool config %q", d.Id()), map[string]interface{}{flinkComputePoolConfigLoggingKey: d.Id()})
 
 	c := meta.(*Client)
-	orgComputePoolConfig, resp, err := executeOrgComputePoolConfigRead(c.flinkV2ApiContext(ctx), c)
+	flinkComputePoolConfig, resp, err := executeFlinkComputePoolConfigRead(c.flinkV2ApiContext(ctx), c)
 	if err != nil {
-		tflog.Warn(ctx, fmt.Sprintf("Error reading org compute pool config %q: %s", d.Id(), createDescriptiveError(err, resp)), map[string]interface{}{orgComputePoolConfigLoggingKey: d.Id()})
+		tflog.Warn(ctx, fmt.Sprintf("Error reading flink compute pool config %q: %s", d.Id(), createDescriptiveError(err, resp)), map[string]interface{}{flinkComputePoolConfigLoggingKey: d.Id()})
 
 		isResourceNotFound := isNonKafkaRestApiResourceNotFound(resp)
 		if isResourceNotFound && !d.IsNewResource() {
-			tflog.Warn(ctx, fmt.Sprintf("Removing org compute pool config %q in TF state because it could not be found on the server", d.Id()), map[string]interface{}{orgComputePoolConfigLoggingKey: d.Id()})
+			tflog.Warn(ctx, fmt.Sprintf("Removing flink compute pool config %q in TF state because it could not be found on the server", d.Id()), map[string]interface{}{flinkComputePoolConfigLoggingKey: d.Id()})
 			d.SetId("")
 			return nil
 		}
 
 		return diag.FromErr(createDescriptiveError(err, resp))
 	}
-	orgComputePoolConfigJson, err := json.Marshal(orgComputePoolConfig)
+	flinkComputePoolConfigJson, err := json.Marshal(flinkComputePoolConfig)
 	if err != nil {
-		return diag.Errorf("error reading org compute pool config %q: error marshaling %#v to json: %s", d.Id(), orgComputePoolConfig, createDescriptiveError(err))
+		return diag.Errorf("error reading flink compute pool config %q: error marshaling %#v to json: %s", d.Id(), flinkComputePoolConfig, createDescriptiveError(err))
 	}
-	tflog.Debug(ctx, fmt.Sprintf("Fetched org compute pool config %q: %s", d.Id(), orgComputePoolConfigJson), map[string]interface{}{orgComputePoolConfigLoggingKey: d.Id()})
+	tflog.Debug(ctx, fmt.Sprintf("Fetched flink compute pool config %q: %s", d.Id(), flinkComputePoolConfigJson), map[string]interface{}{flinkComputePoolConfigLoggingKey: d.Id()})
 
-	if _, err := setOrgComputePoolConfigAttributes(d, orgComputePoolConfig); err != nil {
+	if _, err := setFlinkComputePoolConfigAttributes(d, flinkComputePoolConfig); err != nil {
 		return diag.FromErr(createDescriptiveError(err))
 	}
 
-	tflog.Debug(ctx, fmt.Sprintf("Finished reading org compute pool config %q", d.Id()), map[string]interface{}{orgComputePoolConfigLoggingKey: d.Id()})
+	tflog.Debug(ctx, fmt.Sprintf("Finished reading flink compute pool config %q", d.Id()), map[string]interface{}{flinkComputePoolConfigLoggingKey: d.Id()})
 
 	return nil
 }
 
-func executeOrgComputePoolConfigRead(ctx context.Context, c *Client) (flinkv2.FcpmV2OrgComputePoolConfig, *http.Response, error) {
+func executeFlinkComputePoolConfigRead(ctx context.Context, c *Client) (flinkv2.FcpmV2OrgComputePoolConfig, *http.Response, error) {
 	req := c.flinkV2Client.OrgComputePoolConfigsFcpmV2Api.GetFcpmV2OrgComputePoolConfig(c.flinkV2ApiContext(ctx))
 	return req.Execute()
 }
 
-func executeOrgComputePoolConfigUpdate(ctx context.Context, c *Client, updateOrgComputePoolConfigRequest *flinkv2.FcpmV2OrgComputePoolConfigUpdate) (flinkv2.FcpmV2OrgComputePoolConfig, *http.Response, error) {
-	req := c.flinkV2Client.OrgComputePoolConfigsFcpmV2Api.UpdateFcpmV2OrgComputePoolConfig(c.flinkV2ApiContext(ctx)).FcpmV2OrgComputePoolConfigUpdate(*updateOrgComputePoolConfigRequest)
+func executeFlinkComputePoolConfigUpdate(ctx context.Context, c *Client, updateFlinkComputePoolConfigRequest *flinkv2.FcpmV2OrgComputePoolConfigUpdate) (flinkv2.FcpmV2OrgComputePoolConfig, *http.Response, error) {
+	req := c.flinkV2Client.OrgComputePoolConfigsFcpmV2Api.UpdateFcpmV2OrgComputePoolConfig(c.flinkV2ApiContext(ctx)).FcpmV2OrgComputePoolConfigUpdate(*updateFlinkComputePoolConfigRequest)
 	return req.Execute()
 }
 
-func setOrgComputePoolConfigAttributes(d *schema.ResourceData, orgComputePoolConfig flinkv2.FcpmV2OrgComputePoolConfig) (*schema.ResourceData, error) {
-	spec := orgComputePoolConfig.GetSpec()
+func setFlinkComputePoolConfigAttributes(d *schema.ResourceData, flinkComputePoolConfig flinkv2.FcpmV2OrgComputePoolConfig) (*schema.ResourceData, error) {
+	spec := flinkComputePoolConfig.GetSpec()
 	if err := d.Set(paramDefaultPoolEnabled, spec.GetDefaultPoolEnabled()); err != nil {
 		return nil, createDescriptiveError(err)
 	}
 	if err := d.Set(paramMaxCFU, spec.GetDefaultPoolMaxCfu()); err != nil {
 		return nil, createDescriptiveError(err)
 	}
-	if err := d.Set(paramApiVersion, orgComputePoolConfig.GetApiVersion()); err != nil {
+	if err := d.Set(paramApiVersion, flinkComputePoolConfig.GetApiVersion()); err != nil {
 		return nil, createDescriptiveError(err)
 	}
-	if err := d.Set(paramKind, orgComputePoolConfig.GetKind()); err != nil {
+	if err := d.Set(paramKind, flinkComputePoolConfig.GetKind()); err != nil {
 		return nil, createDescriptiveError(err)
 	}
-	d.SetId(orgComputePoolConfig.GetOrganizationId())
+	d.SetId(flinkComputePoolConfig.GetOrganizationId())
 	return d, nil
 }
 
-func orgComputePoolConfigUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func flinkComputePoolConfigUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	if d.HasChangesExcept(paramDefaultPoolEnabled, paramMaxCFU) {
-		return diag.Errorf("error updating org compute pool config %q: only %q, %q attributes can be updated for org compute pool config", d.Id(), paramDefaultPoolEnabled, paramMaxCFU)
+		return diag.Errorf("error updating flink compute pool config %q: only %q, %q attributes can be updated for flink compute pool config", d.Id(), paramDefaultPoolEnabled, paramMaxCFU)
 	}
 
 	c := meta.(*Client)
 
-	updateOrgComputePoolConfigRequest := flinkv2.NewFcpmV2OrgComputePoolConfigUpdate()
+	updateFlinkComputePoolConfigRequest := flinkv2.NewFcpmV2OrgComputePoolConfigUpdate()
 	spec := flinkv2.NewFcpmV2OrgComputePoolConfigSpec()
 	if d.HasChange(paramDefaultPoolEnabled) {
 		spec.SetDefaultPoolEnabled(d.Get(paramDefaultPoolEnabled).(bool))
@@ -179,51 +179,51 @@ func orgComputePoolConfigUpdate(ctx context.Context, d *schema.ResourceData, met
 	if d.HasChange(paramMaxCFU) {
 		spec.SetDefaultPoolMaxCfu(int32(d.Get(paramMaxCFU).(int)))
 	}
-	updateOrgComputePoolConfigRequest.SetSpec(*spec)
+	updateFlinkComputePoolConfigRequest.SetSpec(*spec)
 
-	updateOrgComputePoolConfigRequestJson, err := json.Marshal(updateOrgComputePoolConfigRequest)
+	updateFlinkComputePoolConfigRequestJson, err := json.Marshal(updateFlinkComputePoolConfigRequest)
 	if err != nil {
-		return diag.Errorf("error updating org compute pool config %q: error marshaling %#v to json: %s", d.Id(), updateOrgComputePoolConfigRequest, createDescriptiveError(err))
+		return diag.Errorf("error updating flink compute pool config %q: error marshaling %#v to json: %s", d.Id(), updateFlinkComputePoolConfigRequest, createDescriptiveError(err))
 	}
-	tflog.Debug(ctx, fmt.Sprintf("Updating org compute pool config %q: %s", d.Id(), updateOrgComputePoolConfigRequestJson), map[string]interface{}{orgComputePoolConfigLoggingKey: d.Id()})
+	tflog.Debug(ctx, fmt.Sprintf("Updating flink compute pool config %q: %s", d.Id(), updateFlinkComputePoolConfigRequestJson), map[string]interface{}{flinkComputePoolConfigLoggingKey: d.Id()})
 
-	updatedOrgComputePoolConfig, resp, err := executeOrgComputePoolConfigUpdate(c.flinkV2ApiContext(ctx), c, updateOrgComputePoolConfigRequest)
+	updatedFlinkComputePoolConfig, resp, err := executeFlinkComputePoolConfigUpdate(c.flinkV2ApiContext(ctx), c, updateFlinkComputePoolConfigRequest)
 	if err != nil {
-		return diag.Errorf("error updating org compute pool config %q: %s", d.Id(), createDescriptiveError(err, resp))
+		return diag.Errorf("error updating flink compute pool config %q: %s", d.Id(), createDescriptiveError(err, resp))
 	}
 
-	updatedOrgComputePoolConfigJson, err := json.Marshal(updatedOrgComputePoolConfig)
+	updatedFlinkComputePoolConfigJson, err := json.Marshal(updatedFlinkComputePoolConfig)
 	if err != nil {
-		return diag.Errorf("error updating org compute pool config %q: error marshaling %#v to json: %s", d.Id(), updatedOrgComputePoolConfig, createDescriptiveError(err))
+		return diag.Errorf("error updating flink compute pool config %q: error marshaling %#v to json: %s", d.Id(), updatedFlinkComputePoolConfig, createDescriptiveError(err))
 	}
-	tflog.Debug(ctx, fmt.Sprintf("Finished updating org compute pool config %q: %s", d.Id(), updatedOrgComputePoolConfigJson), map[string]interface{}{orgComputePoolConfigLoggingKey: d.Id()})
+	tflog.Debug(ctx, fmt.Sprintf("Finished updating flink compute pool config %q: %s", d.Id(), updatedFlinkComputePoolConfigJson), map[string]interface{}{flinkComputePoolConfigLoggingKey: d.Id()})
 
-	return orgComputePoolConfigRead(ctx, d, meta)
+	return flinkComputePoolConfigRead(ctx, d, meta)
 }
 
-// orgComputePoolConfigDelete drops the org compute pool config from Terraform
+// flinkComputePoolConfigDelete drops the flink compute pool config from Terraform
 // state without calling the API. The object is account-scoped and always exists, so
 // there is no endpoint that removes it; destroying the resource means Terraform stops
 // managing the settings, which keep their last-applied values.
-func orgComputePoolConfigDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	tflog.Debug(ctx, fmt.Sprintf("Deleting org compute pool config %q", d.Id()), map[string]interface{}{orgComputePoolConfigLoggingKey: d.Id()})
+func flinkComputePoolConfigDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	tflog.Debug(ctx, fmt.Sprintf("Deleting flink compute pool config %q", d.Id()), map[string]interface{}{flinkComputePoolConfigLoggingKey: d.Id()})
 
-	tflog.Debug(ctx, fmt.Sprintf("Finished deleting org compute pool config %q", d.Id()), map[string]interface{}{orgComputePoolConfigLoggingKey: d.Id()})
+	tflog.Debug(ctx, fmt.Sprintf("Finished deleting flink compute pool config %q", d.Id()), map[string]interface{}{flinkComputePoolConfigLoggingKey: d.Id()})
 
 	return nil
 }
 
-func orgComputePoolConfigImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	tflog.Debug(ctx, fmt.Sprintf("Importing org compute pool config %q", d.Id()), map[string]interface{}{orgComputePoolConfigLoggingKey: d.Id()})
+func flinkComputePoolConfigImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	tflog.Debug(ctx, fmt.Sprintf("Importing flink compute pool config %q", d.Id()), map[string]interface{}{flinkComputePoolConfigLoggingKey: d.Id()})
 
 	// Mark resource as new to avoid d.Set("") when getting 404
 	d.MarkNewResource()
 
-	if diagnostics := orgComputePoolConfigRead(ctx, d, meta); diagnostics != nil {
-		return nil, fmt.Errorf("error importing org compute pool config %q: %s", d.Id(), diagnostics[0].Summary)
+	if diagnostics := flinkComputePoolConfigRead(ctx, d, meta); diagnostics != nil {
+		return nil, fmt.Errorf("error importing flink compute pool config %q: %s", d.Id(), diagnostics[0].Summary)
 	}
 
-	tflog.Debug(ctx, fmt.Sprintf("Finished importing org compute pool config %q", d.Id()), map[string]interface{}{orgComputePoolConfigLoggingKey: d.Id()})
+	tflog.Debug(ctx, fmt.Sprintf("Finished importing flink compute pool config %q", d.Id()), map[string]interface{}{flinkComputePoolConfigLoggingKey: d.Id()})
 
 	return []*schema.ResourceData{d}, nil
 }
