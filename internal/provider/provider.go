@@ -391,7 +391,7 @@ func New(version, userAgent string) func() *schema.Provider {
 				"confluent_ksql_cluster":                       ksqlResource(),
 				"confluent_flink_artifact":                     artifactResource(),
 				"confluent_flink_compute_pool":                 computePoolResource(),
-				"confluent_flink_compute_pool_config":          computePoolConfigResource(),
+				"confluent_flink_compute_pool_config":          flinkComputePoolConfigResource(),
 				"confluent_flink_connection":                   flinkConnectionResource(),
 				"confluent_flink_materialized_table":           flinkMaterializedTableResource(),
 				"confluent_flink_statement":                    flinkStatementResource(),
