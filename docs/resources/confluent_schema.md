@@ -16,8 +16,6 @@ description: |-
 
 -> **Note:** It is recommended to set `lifecycle { prevent_destroy = true }` on production instances to prevent accidental schema deletion. This setting rejects plans that would destroy or recreate the schema, such as attempting to change uneditable attributes. Read more about it in the [Terraform docs](https://www.terraform.io/language/meta-arguments/lifecycle#prevent_destroy).
 
--> **Note:** If a `confluent_subject_config` manages the same subject as this resource (for example, `confluent_subject_config.example.subject_name` equals `confluent_schema.example.subject_name`), deleting the last schema version under a subject also removes that subject's config on the backend. If Terraform doesn't know about this relationship, it may destroy `confluent_schema` before `confluent_subject_config`, and the latter's deletion will then fail with a `404 Not Found` error since the subject no longer exists. Avoid this by referencing this resource's `subject_name` attribute directly in `confluent_subject_config` (`subject_name = confluent_schema.example.subject_name`) or by adding an explicit `depends_on = [confluent_schema.example]` there, so Terraform destroys `confluent_subject_config` first.
-
 ## Example Usage
 
 ### Option #1: Manage multiple Schema Registry clusters in the same Terraform workspace

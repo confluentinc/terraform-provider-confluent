@@ -67,7 +67,6 @@ func flinkStatementResource() *schema.Resource {
 				},
 				Optional: true,
 				Computed: true,
-				ForceNew: true,
 			},
 			paramPropertiesSensitive: {
 				Type: schema.TypeMap,
@@ -77,7 +76,7 @@ func flinkStatementResource() *schema.Resource {
 				Sensitive: true,
 				Optional:  true,
 				Computed:  true,
-				ForceNew:  true,
+				ForceNew:  false,
 			},
 			paramStopped: {
 				Type:        schema.TypeBool,
@@ -240,26 +239,34 @@ func flinkStatementRead(ctx context.Context, d *schema.ResourceData, meta interf
 }
 
 func flinkStatementUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	// stopped, principal, and compute_pool are the only mutable statement attributes.
+	// Make sure we must have a paramStopped update, or a paramPropertiesSensitive update for version change
 	// stopped: false -> true to trigger flink statement stopping
 	// stopped: true -> false to trigger flink statement resuming
-	if d.HasChangesExcept(paramStopped, paramPrincipal, paramComputePool) {
-		return diag.Errorf(`error updating Flink Statement %q: only %q, %q, and %q attributes can be updated`, d.Id(), paramStopped, paramPrincipal, paramComputePool)
+	if d.HasChangesExcept(paramStopped, paramPropertiesSensitive, paramPrincipal, paramComputePool) {
+		return diag.Errorf(`error updating Flink Statement %q: %q or %q attribute must be updated for Flink Statement, "true" -> "false" to trigger resuming, "false" -> "true" to trigger stopping`, d.Id(), paramStopped, paramPropertiesSensitive)
 	}
-	oldStopped, newStopped := d.GetChange(paramStopped)
+	if d.HasChanges(paramStopped, paramPrincipal, paramComputePool) {
+		oldStopped, newStopped := d.GetChange(paramStopped)
 
-	// The resuming case: principalId, computePoolId can be optionally updated
-	if oldStopped.(bool) == true && newStopped.(bool) == false {
-		return flinkStatementResume(ctx, d, meta)
+		// The resuming case: principalId, computePoolId can be optionally updated
+		if oldStopped.(bool) == true && newStopped.(bool) == false {
+			return flinkStatementResume(ctx, d, meta)
+		}
+		// The stopping case: nothing else except the `stopped` can be updated
+		return flinkStatementStop(ctx, d, meta)
+	} else {
+		_, sensitive, _ := extractFlinkProperties(d)
+		if err := d.Set(paramPropertiesSensitive, sensitive); err != nil {
+			return diag.Errorf("Error setting %q", paramPropertiesSensitive)
+		}
+		return flinkStatementRead(ctx, d, meta)
 	}
-	// The stopping case: nothing else except the `stopped` can be updated
-	return flinkStatementStop(ctx, d, meta)
 }
 
 func flinkStatementStop(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	// Only the `stopped` field can be updated for Flink statement stop
-	if d.HasChangesExcept(paramStopped) {
-		return diag.Errorf(`error stopping Flink Statement %q: only %q attribute can be updated for Flink Statement`, d.Id(), paramStopped)
+	if d.HasChangesExcept(paramStopped, paramPropertiesSensitive) {
+		return diag.Errorf(`error stopping Flink Statement %q: only %q or %q attribute can be updated for Flink Statement`, d.Id(), paramStopped, paramPropertiesSensitive)
 	}
 
 	restEndpoint, err := extractFlinkRestEndpoint(meta.(*Client), d, false)
