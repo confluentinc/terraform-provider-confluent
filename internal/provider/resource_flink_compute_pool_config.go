@@ -77,7 +77,11 @@ func flinkComputePoolConfigCreate(ctx context.Context, d *schema.ResourceData, m
 	c := meta.(*Client)
 
 	createFlinkComputePoolConfigRequest := flinkv2.NewFcpmV2OrgComputePoolConfigUpdate()
-	spec := flinkv2.NewFcpmV2OrgComputePoolConfigSpec()
+	// A bare literal, not NewFcpmV2OrgComputePoolConfigSpec(): an SDK constructor pre-sets any field the
+	// spec declares a default for, and omitempty on a pointer omits only nil -- so a
+	// constructor-initialized spec sends values the user never configured. On a PATCH that
+	// means changing one field silently rewrites the others to their defaults.
+	spec := flinkv2.FcpmV2OrgComputePoolConfigSpec{}
 	// GetOkExists, not GetOk: GetOk reports a false bool as unset, so an explicit
 	// default_compute_pool_enabled = false could never be sent. It is deprecated in the SDK but is
 	// still the only way to tell "set to false" from "not set".
@@ -87,7 +91,7 @@ func flinkComputePoolConfigCreate(ctx context.Context, d *schema.ResourceData, m
 	if _, ok := d.GetOk(paramMaxCFU); ok {
 		spec.SetDefaultPoolMaxCfu(int32(d.Get(paramMaxCFU).(int)))
 	}
-	createFlinkComputePoolConfigRequest.SetSpec(*spec)
+	createFlinkComputePoolConfigRequest.SetSpec(spec)
 
 	createFlinkComputePoolConfigRequestJson, err := json.Marshal(createFlinkComputePoolConfigRequest)
 	if err != nil {
@@ -175,14 +179,18 @@ func flinkComputePoolConfigUpdate(ctx context.Context, d *schema.ResourceData, m
 	c := meta.(*Client)
 
 	updateFlinkComputePoolConfigRequest := flinkv2.NewFcpmV2OrgComputePoolConfigUpdate()
-	spec := flinkv2.NewFcpmV2OrgComputePoolConfigSpec()
+	// A bare literal, not NewFcpmV2OrgComputePoolConfigSpec(): an SDK constructor pre-sets any field the
+	// spec declares a default for, and omitempty on a pointer omits only nil -- so a
+	// constructor-initialized spec sends values the user never configured. On a PATCH that
+	// means changing one field silently rewrites the others to their defaults.
+	spec := flinkv2.FcpmV2OrgComputePoolConfigSpec{}
 	if d.HasChange(paramDefaultPoolEnabled) {
 		spec.SetDefaultPoolEnabled(d.Get(paramDefaultPoolEnabled).(bool))
 	}
 	if d.HasChange(paramMaxCFU) {
 		spec.SetDefaultPoolMaxCfu(int32(d.Get(paramMaxCFU).(int)))
 	}
-	updateFlinkComputePoolConfigRequest.SetSpec(*spec)
+	updateFlinkComputePoolConfigRequest.SetSpec(spec)
 
 	updateFlinkComputePoolConfigRequestJson, err := json.Marshal(updateFlinkComputePoolConfigRequest)
 	if err != nil {
