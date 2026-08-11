@@ -229,30 +229,40 @@ resource "azurerm_key_vault_secret" "connect-xyz-consumer-secret" {
 
 -> **Note:** You must set the `API_KEY_SECRET` (`secret`) environment variable before importing an API Key. This applies whether the provider is authenticated with a Cloud API key/secret or [OAuth credentials](https://registry.terraform.io/providers/confluentinc/confluent/latest/docs#oauth-credentials): the API Key Mgmt API does not return an API Key's secret after creation, so it cannot be read back on import.
 
+-> **Note:** When authenticating with OAuth, `CONFLUENT_CLOUD_API_KEY` and `CONFLUENT_CLOUD_API_SECRET` must not be set (they populate `cloud_api_key` / `cloud_api_secret`, which the provider rejects when an `oauth {}` block is present). Unset them in your shell or CI environment before importing.
+
 You can import a Cluster API Key by using the Environment ID and Cluster API Key ID in the format `<Environment ID>/<Cluster API Key ID>`, for example:
 
+When the provider is authenticated with a Cloud API key/secret:
+
 ```shell
-# Authenticate with a Cloud API key/secret
 $ export CONFLUENT_CLOUD_API_KEY="<cloud_api_key>"
 $ export CONFLUENT_CLOUD_API_SECRET="<cloud_api_secret>"
 $ export API_KEY_SECRET="<api_key_secret>"
 $ terraform import confluent_api_key.example_kafka_api_key "env-abc123/UTT6WDRXX7FHD2GV"
+```
 
-# Authenticate with OAuth (configure the `oauth {}` block in the provider configuration)
+When the provider is authenticated with OAuth (configure the `oauth {}` block in the provider configuration):
+
+```shell
 $ export API_KEY_SECRET="<api_key_secret>"
 $ terraform import confluent_api_key.example_kafka_api_key "env-abc123/UTT6WDRXX7FHD2GV"
 ```
 
 You can import a Cloud or Tableflow API Key by using Cloud or Tableflow API Key ID, for example:
 
+When the provider is authenticated with a Cloud API key/secret:
+
 ```shell
-# Authenticate with a Cloud API key/secret
 $ export CONFLUENT_CLOUD_API_KEY="<cloud_api_key>"
 $ export CONFLUENT_CLOUD_API_SECRET="<cloud_api_secret>"
 $ export API_KEY_SECRET="<api_key_secret>"
 $ terraform import confluent_api_key.example_cloud_api_key "4UEXOMMWIBE5KZQG"
+```
 
-# Authenticate with OAuth (configure the `oauth {}` block in the provider configuration)
+When the provider is authenticated with OAuth (configure the `oauth {}` block in the provider configuration):
+
+```shell
 $ export API_KEY_SECRET="<api_key_secret>"
 $ terraform import confluent_api_key.example_cloud_api_key "4UEXOMMWIBE5KZQG"
 ```
