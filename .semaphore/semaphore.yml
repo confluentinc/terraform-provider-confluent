@@ -37,10 +37,20 @@ blocks:
             - if [[ -z $(git tag --points-at HEAD) ]]; then make release-ci; fi
             # Push coverage artifact
             - artifact push workflow coverage.txt
+      epilogue:
+        always:
+          commands:
+            # Epilogue so a failed run still reports (a timed-out or canceled one won't).
+            # --ignore-missing covers `make all` failing before testacc writes its report.
+            - test-results publish unit-report.xml acceptance-report.xml -N "build-test-release" --ignore-missing
 
 after_pipeline:
   task:
     jobs:
+      - name: Publish Results
+        commands:
+          # 404s when the epilogue published nothing (timed out, or failed before tests ran).
+          - test-results gen-pipeline-report || echo "no test results available"
       - name: Report SonarQube Results
         commands:
           - checkout

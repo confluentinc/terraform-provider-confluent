@@ -10,6 +10,9 @@ prebuilt/
 # Test binary, built with `go test -c`
 *.test
 
+# JUnit XML written by gotestsum under CI and consumed by `test-results publish`
+*-report.xml
+
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
 
