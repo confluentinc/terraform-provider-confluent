@@ -10,6 +10,8 @@ GOENV         := GO111MODULE=on
 GOCMD         := $(GOENV) go
 # Pinned rather than @latest: the JUnit XML it emits is a contract with `test-results publish`.
 GOTESTSUM_VERSION := v1.13.0
+# Per-test terraform debug logs under CI; pushed as a job artifact by .semaphore/semaphore.yml.
+TFLOG_DIR     := tflogs
 GOBUILD       ?= CGO_ENABLED=0 $(GOCMD) build -mod=vendor
 GOOS          ?= $(shell go env GOOS)
 GOARCH        ?= $(shell go env GOARCH)
@@ -115,11 +117,19 @@ else
 	$(GOCMD) test ./...
 endif
 
+# TF_LOG_PATH_MASK routes each test's terraform debug output to its own file rather than the
+# shared stderr stream, so a failure's captured output is the assertion error alone instead of
+# whatever the other parallel tests happened to be logging. .semaphore/semaphore.yml tars
+# $(TFLOG_DIR) into a job artifact; without that push these files die with the agent.
+# The mask must be absolute: go test runs each binary from its own package directory, so a
+# relative path resolves under internal/provider rather than here, and the SDK treats a mask it
+# cannot open as fatal and kills the whole run.
 .PHONY: testacc
 testacc:
 ifeq ($(CI),true)
 	@$(MAKE) gotestsum
-	TF_LOG=debug TF_ACC=1 $(GOENV) gotestsum --format testname --junitfile acceptance-report.xml -- $(TEST) $(TESTARGS) -coverprofile=coverage.txt -covermode=atomic -timeout 120m -failfast
+	mkdir -p $(TFLOG_DIR)
+	TF_LOG=debug TF_LOG_PATH_MASK='$(CURDIR)/$(TFLOG_DIR)/%s.log' TF_ACC=1 $(GOENV) gotestsum --format testname --junitfile acceptance-report.xml -- $(TEST) $(TESTARGS) -coverprofile=coverage.txt -covermode=atomic -timeout 120m -failfast
 else
 	TF_LOG=debug TF_ACC=1 $(GOCMD) test $(TEST) -v $(TESTARGS) -coverprofile=coverage.txt -covermode=atomic -timeout 120m -failfast
 endif
