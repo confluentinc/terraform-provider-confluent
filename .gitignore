@@ -13,6 +13,10 @@ prebuilt/
 # JUnit XML written by gotestsum under CI and consumed by `test-results publish`
 *-report.xml
 
+# Per-test terraform debug logs written by TF_LOG_PATH_MASK under CI, and the artifact tarball
+tflogs/
+tflogs.tar.gz
+
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
 
