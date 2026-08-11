@@ -121,12 +121,15 @@ endif
 # shared stderr stream, so a failure's captured output is the assertion error alone instead of
 # whatever the other parallel tests happened to be logging. .semaphore/semaphore.yml tars
 # $(TFLOG_DIR) into a job artifact; without that push these files die with the agent.
+# The mask must be absolute: go test runs each binary from its own package directory, so a
+# relative path resolves under internal/provider rather than here, and the SDK treats a mask it
+# cannot open as fatal and kills the whole run.
 .PHONY: testacc
 testacc:
 ifeq ($(CI),true)
 	@$(MAKE) gotestsum
 	mkdir -p $(TFLOG_DIR)
-	TF_LOG=debug TF_LOG_PATH_MASK='$(TFLOG_DIR)/%s.log' TF_ACC=1 $(GOENV) gotestsum --format testname --junitfile acceptance-report.xml -- $(TEST) $(TESTARGS) -coverprofile=coverage.txt -covermode=atomic -timeout 120m -failfast
+	TF_LOG=debug TF_LOG_PATH_MASK='$(CURDIR)/$(TFLOG_DIR)/%s.log' TF_ACC=1 $(GOENV) gotestsum --format testname --junitfile acceptance-report.xml -- $(TEST) $(TESTARGS) -coverprofile=coverage.txt -covermode=atomic -timeout 120m -failfast
 else
 	TF_LOG=debug TF_ACC=1 $(GOCMD) test $(TEST) -v $(TESTARGS) -coverprofile=coverage.txt -covermode=atomic -timeout 120m -failfast
 endif
