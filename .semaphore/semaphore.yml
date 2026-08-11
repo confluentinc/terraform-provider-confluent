@@ -40,11 +40,15 @@ blocks:
       epilogue:
         always:
           commands:
-            # Epilogue so a failed run still reports (a timed-out or canceled one won't).
-            # --ignore-missing covers `make all` failing before testacc writes its report.
-            # --trim-output-to is set explicitly because trimming keeps the LAST N characters, and
-            # TF_LOG=debug emits ~1.7k chars of teardown noise after the assertion error; the
-            # default window would keep only that noise and drop the error itself.
+            # First: a non-zero epilogue command skips the rest, and the runs most likely to fail
+            # the publish below are exactly the ones whose debug logs matter. Tarred so ~699
+            # per-test files cost one upload rather than 699. The agent is ephemeral, so this is
+            # the only thing preserving them.
+            - if [ -d tflogs ]; then tar -czf tflogs.tar.gz tflogs && artifact push job tflogs.tar.gz --force; else echo "no terraform debug logs to push"; fi
+            # Epilogue so a failed run still reports; a timed-out or canceled one won't, which now
+            # costs the debug logs above too. --ignore-missing covers `make all` failing before
+            # testacc writes its report. --trim-output-to is a backstop for the stdout that
+            # TF_LOG_PATH_MASK doesn't capture, since trimming keeps the LAST N characters.
             - test-results publish unit-report.xml acceptance-report.xml -N "build-test-release" --ignore-missing --trim-output-to 20000
 
 after_pipeline:
