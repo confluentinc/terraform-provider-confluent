@@ -42,7 +42,10 @@ blocks:
           commands:
             # Epilogue so a failed run still reports (a timed-out or canceled one won't).
             # --ignore-missing covers `make all` failing before testacc writes its report.
-            - test-results publish unit-report.xml acceptance-report.xml -N "build-test-release" --ignore-missing
+            # --trim-output-to is set explicitly because trimming keeps the LAST N characters, and
+            # TF_LOG=debug emits ~1.7k chars of teardown noise after the assertion error; the
+            # default window would keep only that noise and drop the error itself.
+            - test-results publish unit-report.xml acceptance-report.xml -N "build-test-release" --ignore-missing --trim-output-to 20000
 
 after_pipeline:
   task:
