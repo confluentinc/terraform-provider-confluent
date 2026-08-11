@@ -1,3 +1,10 @@
+## 2.82.0 (August 11th, 2026)
+
+[Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.81.0...v2.82.0)
+
+**Bug fixes:**
+* General fixes and improvements. 
+
 ## 2.81.0 (July 30th, 2026)
 
 [Full Changelog](https://github.com/confluentinc/terraform-provider-confluent/compare/v2.80.0...v2.81.0)
