@@ -133,7 +133,7 @@ endif
 live-test:
 	@echo "Running live integration tests against Confluent Cloud..."
 	@if [ "$(CI)" = "true" ]; then \
-		$(MAKE) gotestsum; RUNNER="gotestsum --format testname --junitfile live-report.xml --"; VERBOSE=""; \
+		$(MAKE) gotestsum || exit 1; RUNNER="gotestsum --format testname --junitfile live-report.xml --"; VERBOSE=""; \
 	else \
 		RUNNER="go test"; VERBOSE="-v"; \
 	fi; \
@@ -233,7 +233,7 @@ goimports:
 # live-test then live-test-rtce hours apart, so the repeat would need the module proxy again.
 .PHONY: gotestsum
 gotestsum:
-	@gotestsum --version 2>/dev/null | grep -q '$(GOTESTSUM_VERSION)' || go install gotest.tools/gotestsum@$(GOTESTSUM_VERSION)
+	@gotestsum --version 2>/dev/null | grep -qF '$(GOTESTSUM_VERSION)' || go install gotest.tools/gotestsum@$(GOTESTSUM_VERSION)
 
 .PHONY: tools
 tools: ## Install required tools
