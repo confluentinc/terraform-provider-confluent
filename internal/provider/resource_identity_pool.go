@@ -58,9 +58,13 @@ func identityPoolResource() *schema.Resource {
 				Description: "The JSON Web Token (JWT) claim to extract the authenticating identity to Confluent resources from (see [Registered Claim Names](https://datatracker.ietf.org/doc/html/rfc7519#section-4.1) for more details). This appears in the audit log records, showing, for example, that \"identity Z used identity pool X to access topic A\".",
 			},
 			paramFilter: {
-				Type:         schema.TypeString,
-				Required:     true,
-				ValidateFunc: validation.StringLenBetween(0, 300),
+				Type:     schema.TypeString,
+				Required: true,
+				// Only the lower bound is validated client-side. The spec declares
+				// maxLength: 300, but that ceiling is a per-tenant server-side limit
+				// that can be raised via a feature flag, so enforcing it here rejects
+				// filters the API would accept. The server remains the authority.
+				ValidateFunc: validation.StringIsNotEmpty,
 				Description:  "A filter expression in [Supported Common Expression Language (CEL)](https://docs.confluent.io/cloud/current/access-management/authenticate/oauth/identity-pools.html#supported-common-expression-language-cel-filters) that specifies which identities can authenticate using your identity pool (see [Set identity pool filters](https://docs.confluent.io/cloud/current/access-management/authenticate/oauth/identity-pools.html#set-identity-pool-filters) for more details).",
 			},
 		},
