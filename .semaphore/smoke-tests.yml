@@ -62,11 +62,11 @@ blocks:
       epilogue:
         always:
           commands:
-            # Epilogue so a failed run still reports (a timed-out or canceled one won't).
-            # The file is live-report.xml because live-test-smoke delegates to live-test; -N is
-            # what distinguishes this pipeline's results in the report. --trim-output-to is set
-            # explicitly because trimming keeps the LAST N characters, and teardown noise after an
-            # assertion error would otherwise be all that survives the default window.
+            # In the epilogue so a failed run still reports; a timed-out or canceled one won't.
+            # The file is live-report.xml because live-test-smoke delegates to live-test; -N is what
+            # distinguishes this pipeline in the report. --ignore-missing covers a run that fails
+            # before the report is written. --trim-output-to keeps the LAST N characters; the
+            # 1000-character default drops an assertion that has teardown output after it.
             - test-results publish live-report.xml -N "smoke-tests" --ignore-missing --trim-output-to 20000
 
 after_pipeline:

@@ -88,7 +88,7 @@ fmt: ## Format all go files
 .PHONY: clean
 clean: ## Clean workspace
 	@ $(MAKE) --no-print-directory log-$@
-	rm -rf ./$(BUILD_DIR)
+	rm -rf ./$(BUILD_DIR) ./$(TFLOG_DIR) ./*-report.xml ./$(TFLOG_DIR).tar.gz
 
 .PHONY: deps
 deps: ## Fetch dependencies
@@ -139,6 +139,7 @@ endif
 # Usage: make live-test TF_LIVE_TEST_GROUPS="core,kafka" or make live-test (for all)
 # RTCE tests are excluded here because RTCE prod is only enabled in aws.us-east-1;
 # run them via the dedicated `live-test-rtce` target below.
+# VERBOSE is empty under CI deliberately: -v breaks gotestsum's report, per the note above `test`.
 .PHONY: live-test
 live-test:
 	@echo "Running live integration tests against Confluent Cloud..."
