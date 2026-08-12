@@ -53,9 +53,13 @@ func groupMappingResource() *schema.Resource {
 				Description: "A description explaining the purpose and use of the group mapping.",
 			},
 			paramFilter: {
-				Type:         schema.TypeString,
-				Required:     true,
-				ValidateFunc: validation.StringLenBetween(1, 300),
+				Type:     schema.TypeString,
+				Required: true,
+				// Only the lower bound is validated client-side. The spec declares
+				// maxLength: 300, but that ceiling is a per-tenant server-side limit
+				// that can be raised via a feature flag, so enforcing it here rejects
+				// filters the API would accept. The server remains the authority.
+				ValidateFunc: validation.StringIsNotEmpty,
 				Description:  "A single group identifier or a condition based on [supported CEL operators](https://docs.confluent.io/cloud/current/access-management/authenticate/sso/group-mapping/overview.html#supported-cel-operators-for-group-mapping) that defines which groups are included.",
 			},
 		},
