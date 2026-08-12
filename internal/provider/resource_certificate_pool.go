@@ -59,10 +59,14 @@ func certificatePoolResource() *schema.Resource {
 				ValidateFunc: validation.StringIsNotEmpty,
 			},
 			paramFilter: {
-				Type:         schema.TypeString,
-				Required:     true,
-				Description:  "A filter expression in Supported Common Expression Language (CEL) that specifies which identities can authenticate using your certificate pool.",
-				ValidateFunc: validation.StringLenBetween(1, 300),
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "A filter expression in Supported Common Expression Language (CEL) that specifies which identities can authenticate using your certificate pool.",
+				// Only the lower bound is validated client-side. The spec declares
+				// maxLength: 300, but that ceiling is a per-tenant server-side limit
+				// that can be raised via a feature flag, so enforcing it here rejects
+				// filters the API would accept. The server remains the authority.
+				ValidateFunc: validation.StringIsNotEmpty,
 			},
 		},
 	}
