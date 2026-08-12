@@ -59,3 +59,20 @@ blocks:
 
               # Fail the job if tests failed
               [ "$SMOKE_RESULT" = "PASS" ]
+      epilogue:
+        always:
+          commands:
+            # In the epilogue so a failed run still reports; a timed-out or canceled one won't.
+            # The file is live-report.xml because live-test-smoke delegates to live-test; -N is what
+            # distinguishes this pipeline in the report. --ignore-missing covers a run that fails
+            # before the report is written. --trim-output-to keeps the LAST N characters; the
+            # 1000-character default drops an assertion that has teardown output after it.
+            - test-results publish live-report.xml -N "smoke-tests" --ignore-missing --trim-output-to 20000
+
+after_pipeline:
+  task:
+    jobs:
+      - name: Publish Results
+        commands:
+          # 404s when the epilogue published nothing (timed out, or failed before tests ran).
+          - test-results gen-pipeline-report || echo "no test results available"
